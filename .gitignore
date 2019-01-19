@@ -53,4 +53,5 @@ dkms.conf
 
 # Keil Build log
 /MDK-ARM/robomaster/
+\MDK-ARM\robomaster\bsp_oled.crf
 *.crf
