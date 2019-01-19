@@ -52,6 +52,5 @@ Mkfile.old
 dkms.conf
 
 # Keil Build log
-/MDK-ARM/robomaster/**
-*.crf
-*.dep
+MDK-ARM/robomaster/**
+MDK-ARM/robomaster.uvguix.*
