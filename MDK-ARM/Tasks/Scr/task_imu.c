@@ -16,12 +16,6 @@ IMU_HandleTypeDef himu = {0};
 AHRS_HandleTypeDef hahrs = {0};
 PID_HandleTypeDef imu_temp_ctrl_pid = {0};
 
-/* Not perfact. Shit 1 degree every 24s. */
-
-/* Possible solution: 
- * 1. Fusion sensor data with absolute positional data from gimbal motor in application. 
- */
-
 void IMUTask(void const * argument) {
 	uint32_t last_tick = osKernelSysTick();
 	
