@@ -148,3 +148,44 @@ BSP_StatusTypedef PWM_Set(PWM_NumTypedef n, float duty_cycle) {
 	}
 	return BSP_OK;
 }
+
+BSP_StatusTypedef Power_Set(Power_PortTypedef port ,Power_StatusTypedef state) {
+	GPIO_TypeDef* gpiox;
+	uint16_t gpio_pin;
+	GPIO_PinState s;
+	
+	switch (port) {
+		case POWER_PORT1:
+			gpiox = POWER1_CTRL_GPIO_Port;
+			gpio_pin = POWER1_CTRL_Pin;
+		break;
+		
+		case POWER_PORT2:
+			gpiox = POWER2_CTRL_GPIO_Port;
+			gpio_pin = POWER2_CTRL_Pin;
+		break;
+		
+		case POWER_PORT3:
+			gpiox = POWER3_CTRL_GPIO_Port;
+			gpio_pin = POWER3_CTRL_Pin;
+		break;
+		
+		case POWER_PORT4:
+			gpiox = POWER4_CTRL_GPIO_Port;
+			gpio_pin = POWER4_CTRL_Pin;
+		break;
+	}
+	
+	switch (s) {
+		case POWER_ON:
+			s = GPIO_PIN_RESET;
+		break;
+		
+		case POWER_OFF:
+			s = GPIO_PIN_SET;
+		break;
+	}
+	HAL_GPIO_WritePin(gpiox, gpio_pin, s);
+	
+	return BSP_OK;
+}

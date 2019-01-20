@@ -56,11 +56,25 @@ typedef enum {
 	PWM_IMU_HEAT,
 } PWM_NumTypedef;
 
+typedef enum {
+	POWER_OFF,
+	POWER_ON,
+} Power_StatusTypedef;
+
+typedef enum {
+	POWER_PORT1,
+	POWER_PORT2,
+	POWER_PORT3,
+	POWER_PORT4,
+} Power_PortTypedef;
+
 BSP_StatusTypedef LED_Set(LED_NumTypedef n, LED_StatusTypedef s);
 
 BSP_StatusTypedef Joystick_Update(Joystick_HandleTypedef *hjs);
 
 BSP_StatusTypedef PWM_Start(PWM_NumTypedef n);
 BSP_StatusTypedef PWM_Set(PWM_NumTypedef n, float duty_cycle);
+
+BSP_StatusTypedef Power_Set(Power_PortTypedef port ,Power_StatusTypedef s);
 
 #endif
