@@ -10,4 +10,5 @@ typedef enum {
 	BSP_OK,
 } BSP_StatusTypedef;
 
+void BSP_Delay(uint32_t Delay);
 #endif

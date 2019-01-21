@@ -26,5 +26,5 @@ typedef struct {
 } IMU_HandleTypeDef;
 
 BSP_StatusTypedef IMU_Init(void);
-BSP_StatusTypedef IMU_Update(IMU_HandleTypeDef *himu);
+BSP_StatusTypedef IMU_Update(IMU_HandleTypeDef* himu);
 #endif

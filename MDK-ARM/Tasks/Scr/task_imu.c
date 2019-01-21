@@ -10,25 +10,25 @@
 #include "tool_pid.h"
 
 #define AHRS_TASK_FREQ_HZ (100)
-
+#define AHRS_TASK_STATUS_LED LED3
+ 
 IMU_HandleTypeDef himu = {0};
 
+/* Add mutex? */
 AHRS_HandleTypeDef hahrs = {0};
 PID_HandleTypeDef imu_temp_ctrl_pid = {0};
 
-void IMUTask(void const * argument) {
+void IMUTask(const void* argument) {
 	uint32_t last_tick = osKernelSysTick();
-	
 	float duty_cycle = 0.f;
 	
-	LED_Set(LED2, LED_ON);
+	LED_Set(AHRS_TASK_STATUS_LED, LED_ON);
 	
-	AHRS_Init(&hahrs, AHRS_TASK_FREQ_HZ);
+	IMU_Update(&himu);
+	AHRS_Init(&hahrs, &himu, AHRS_TASK_FREQ_HZ);
 	PID_Init(&imu_temp_ctrl_pid, 5.f, 1.f, 0.f, 1.f);
 	
 	while(1) {
-		LED_Set(LED2, LED_TAGGLE);
-		
 		/* Calculate attitude. */
 		IMU_Update(&himu);
 		AHRS_Update(&hahrs, &himu);
@@ -37,6 +37,7 @@ void IMUTask(void const * argument) {
 		PID_Update(&imu_temp_ctrl_pid, 50.f, himu.temp, &duty_cycle);
 		PWM_Set(PWM_IMU_HEAT, duty_cycle);
 		
+		LED_Set(AHRS_TASK_STATUS_LED, LED_TAGGLE);
 		osDelayUntil(&last_tick, (1000 / AHRS_TASK_FREQ_HZ));
 	}
 }

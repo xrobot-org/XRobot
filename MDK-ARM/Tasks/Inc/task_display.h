@@ -1,6 +1,6 @@
 #ifndef __TASK_DISPLAY__H
 #define __TASK_DISPLAY__H
 
-void DisplayTask(void const * argument);
+void DisplayTask(const void* argument);
 
 #endif

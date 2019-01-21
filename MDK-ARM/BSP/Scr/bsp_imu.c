@@ -125,7 +125,9 @@
 #define IST8310_ADDRESS 						(0x0E)
 #define IST8310_ID		 							(0x10)
 
+#ifndef M_PI
 #define M_PI 3.141592653589793238462643383f
+#endif
 
 #define NSS_Reset()	HAL_GPIO_WritePin(SPI5_NSS_GPIO_Port, SPI5_NSS_Pin, GPIO_PIN_RESET)
 #define NSS_Set()	HAL_GPIO_WritePin(SPI5_NSS_GPIO_Port, SPI5_NSS_Pin, GPIO_PIN_SET)
@@ -173,10 +175,10 @@ static void IMU_MpuWrite(const uint8_t reg, uint8_t data) {
 	
 	NSS_Set();
 	
-	HAL_Delay(10);
+	BSP_Delay(10);
 }
 
-static void IMU_MpuRead(const uint8_t reg, uint8_t *p_data, uint8_t len) {
+static void IMU_MpuRead(const uint8_t reg, uint8_t* p_data, uint8_t len) {
 	tx = (reg | 0x80);
 	
 	NSS_Reset();;
@@ -195,7 +197,7 @@ static void IMU_IstWrite(const uint8_t reg, uint8_t const data) {
 }
 
 /* Make sure the RESET pin of ist8310 is setted to HIGH or FLOATing. */
-static void IMU_IstRead(const uint8_t reg, uint8_t *p_data) {
+static void IMU_IstRead(const uint8_t reg, uint8_t* p_data) {
 	IMU_MpuWrite(MPU6500_I2C_SLV4_ADDR, 0x80 | IST8310_ADDRESS);
 	IMU_MpuWrite(MPU6500_I2C_SLV4_REG, reg);
 	IMU_MpuWrite(MPU6500_I2C_SLV4_CTRL, 0x80);
@@ -211,7 +213,7 @@ static void IMU_CaliGyro(void) {
 		for(uint8_t i = 0; i < 6; i += 2)
 			gyro_offset[i/2] += (buffer[i] << 8) | buffer[i+1];
 		
-		HAL_Delay(5);
+		BSP_Delay(5);
 	}
 	
 	for(uint8_t i = 0; i < 3; i++)
@@ -220,9 +222,9 @@ static void IMU_CaliGyro(void) {
 
 BSP_StatusTypedef IMU_Init(void) {
 	IST_Reset();
-	HAL_Delay(5);
+	BSP_Delay(5);
 	IST_Set();
-	HAL_Delay(5);
+	BSP_Delay(5);
 	
 	IMU_MpuRead(MPU6500_WHO_AM_I, &rx, 1);
 	if (rx != MPU6500_ID)
@@ -230,9 +232,9 @@ BSP_StatusTypedef IMU_Init(void) {
 	
 	/* MPU6500 init. */
 	IMU_MpuWrite(MPU6500_PWR_MGMT_1, 0x80); /* Reset device */
-	HAL_Delay(100);
+	BSP_Delay(100);
 	IMU_MpuWrite(MPU6500_SIGNAL_PATH_RESET, 0x0f); /* Reset device */
-	HAL_Delay(100);
+	BSP_Delay(100);
 	
 	IMU_MpuWrite(MPU6500_PWR_MGMT_1, 0x03); /* Clock source -> gyro-z */
 	IMU_MpuWrite(MPU6500_PWR_MGMT_2, 0x00); /* Enable acc & gyro */
@@ -245,7 +247,7 @@ BSP_StatusTypedef IMU_Init(void) {
 	IMU_MpuWrite(MPU6500_USER_CTRL, 0x30); /* Enable IIC master mode. */
 	IMU_MpuWrite(MPU6500_I2C_MST_CTRL, 0x0d); /* Set IIC 400kHz. */
 	
-	HAL_Delay(100);
+	BSP_Delay(100);
 	
 	IMU_IstRead(IST8310_WAI, &rx);
 	if (rx != IST8310_ID)
@@ -289,7 +291,7 @@ BSP_StatusTypedef IMU_Init(void) {
  *     UP is z
  */
 
-BSP_StatusTypedef IMU_Update(IMU_HandleTypeDef *himu) {
+BSP_StatusTypedef IMU_Update(IMU_HandleTypeDef* himu) {
 	IMU_MpuRead(MPU6500_ACCEL_XOUT_H, buffer, 20);
 	
 	/* View "struct raw" as "array raw", which need "raw" to be a packed struct. */

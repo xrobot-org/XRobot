@@ -14,7 +14,7 @@ BSP_StatusTypedef OLED_DisplayOff(void);
 BSP_StatusTypedef OLED_Refresh(void);
 BSP_StatusTypedef OLED_SetAll(OLED_PenTypedef pen);
 BSP_StatusTypedef OLED_Init(void);
-BSP_StatusTypedef OLED_Print(const char *str);
+BSP_StatusTypedef OLED_Print(const char* str);
 BSP_StatusTypedef OLED_Rewind(void);
 
 #endif

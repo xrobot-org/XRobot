@@ -1,6 +1,6 @@
 #ifndef __TASK_AHRS__H
 #define __TASK_AHRS__H
 
-void IMUTask(void const * argument);
+void IMUTask(const void* argument);
 
 #endif

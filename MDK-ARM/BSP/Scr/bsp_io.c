@@ -4,6 +4,8 @@
 #include "adc.h"
 #include "tim.h"
 
+static uint32_t adc_raw;
+
 BSP_StatusTypedef LED_Set(LED_NumTypedef n, LED_StatusTypedef s) {
 	GPIO_TypeDef* gpiox;
 	uint16_t gpio_pin;
@@ -77,27 +79,46 @@ BSP_StatusTypedef LED_Set(LED_NumTypedef n, LED_StatusTypedef s) {
 	return BSP_OK;
 }
 
-BSP_StatusTypedef Joystick_Update(Joystick_HandleTypedef *hjs) {
+BSP_StatusTypedef Joystick_Update(Joystick_StatusTypedef* val) {
 	HAL_ADC_Start(&hadc1);
 	
 	if (HAL_ADC_PollForConversion(&hadc1, 1))
 		return BSP_FAIL;
 	
-	hjs->raw = HAL_ADC_GetValue(&hadc1);
+	adc_raw = HAL_ADC_GetValue(&hadc1);
 	HAL_ADC_Stop(&hadc1);
 	
-	if (hjs->raw < 500)
-		hjs->status = JOYSTICK_PRESSED;
-	else if (hjs->raw < 1000)
-		hjs->status = JOYSTICK_LEFT;
-	else if (hjs->raw < 2000)
-		hjs->status = JOYSTICK_RIGHT;
-	else if (hjs->raw < 3000)
-		hjs->status = JOYSTICK_UP;
-	else if (hjs->raw < 4000)
-		hjs->status = JOYSTICK_DOWN;
+	if (adc_raw < 500)
+		*val  = JOYSTICK_PRESSED;
+	else if (adc_raw < 1000)
+		*val = JOYSTICK_LEFT;
+	else if (adc_raw < 2000)
+		*val = JOYSTICK_RIGHT;
+	else if (adc_raw < 3000)
+		*val = JOYSTICK_UP;
+	else if (adc_raw < 4000)
+		*val = JOYSTICK_DOWN;
 	else
-		hjs->status = JOYSTICK_MID;
+		*val = JOYSTICK_MID;
+	
+	return BSP_OK;
+}
+
+BSP_StatusTypedef Joystick_WaitInput(void) {
+	Joystick_StatusTypedef js;
+	do {
+		BSP_Delay(20);
+		Joystick_Update(&js);
+	} while (js == JOYSTICK_MID);
+	return BSP_OK;
+}
+
+BSP_StatusTypedef Joystick_WaitNoInput(void) {
+	Joystick_StatusTypedef js;
+	do {
+		BSP_Delay(20);
+		Joystick_Update(&js);
+	} while (js != JOYSTICK_MID);
 	return BSP_OK;
 }
 

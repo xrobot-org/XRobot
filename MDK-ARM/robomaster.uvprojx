@@ -382,19 +382,24 @@
           <GroupName>Application/BSP</GroupName>
           <Files>
             <File>
+              <FileName>bsp_common.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\BSP\Scr\bsp_common.c</FilePath>
+            </File>
+            <File>
               <FileName>bsp_imu.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\BSP\Scr\bsp_imu.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_oled.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\BSP\Scr\bsp_oled.c</FilePath>
-            </File>
-            <File>
               <FileName>bsp_io.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\BSP\Scr\bsp_io.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_oled.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\BSP\Scr\bsp_oled.c</FilePath>
             </File>
             <File>
               <FileName>bsp_uart.c</FileName>
@@ -427,9 +432,19 @@
               <FilePath>.\Tasks\Scr\task_display.c</FilePath>
             </File>
             <File>
+              <FileName>task_comm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Tasks\Scr\task_comm.c</FilePath>
+            </File>
+            <File>
               <FileName>task_imu.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Tasks\Scr\task_imu.c</FilePath>
+            </File>
+            <File>
+              <FileName>task_init.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Tasks\Scr\task_init.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -442,14 +457,19 @@
               <FilePath>.\Tools\Scr\tool_ahrs.c</FilePath>
             </File>
             <File>
+              <FileName>tool_kalmanf.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Tools\Scr\tool_kalmanf.c</FilePath>
+            </File>
+            <File>
               <FileName>tool_pid.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Tools\Scr\tool_pid.c</FilePath>
             </File>
             <File>
-              <FileName>tool_kalmanf.c</FileName>
+              <FileName>tool_protocol.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Tools\Scr\tool_kalmanf.c</FilePath>
+              <FilePath>.\Tools\Scr\tool_protocol.c</FilePath>
             </File>
           </Files>
         </Group>

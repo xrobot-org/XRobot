@@ -31,11 +31,6 @@ typedef enum {
 	JOYSTICK_MID,
 } Joystick_StatusTypedef;
 
-typedef struct {
-	uint32_t raw;
-	Joystick_StatusTypedef status;
-} Joystick_HandleTypedef;
-
 typedef enum {
 	PWM_A,
 	PWM_B,
@@ -70,7 +65,9 @@ typedef enum {
 
 BSP_StatusTypedef LED_Set(LED_NumTypedef n, LED_StatusTypedef s);
 
-BSP_StatusTypedef Joystick_Update(Joystick_HandleTypedef *hjs);
+BSP_StatusTypedef Joystick_Update(Joystick_StatusTypedef* val);
+BSP_StatusTypedef Joystick_WaitInput(void);
+BSP_StatusTypedef Joystick_WaitNoInput(void);
 
 BSP_StatusTypedef PWM_Start(PWM_NumTypedef n);
 BSP_StatusTypedef PWM_Set(PWM_NumTypedef n, float duty_cycle);

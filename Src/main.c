@@ -162,8 +162,7 @@ int main(void)
 		OLED_Print("IMU XX!\n");
 	OLED_Refresh();
 	
-	/* Delay 1 sec after print 8 lines (before cleaning screen). */
-	//HAL_Delay(1000);
+	HAL_Delay(1000);
 	
   /* USER CODE END 2 */
 

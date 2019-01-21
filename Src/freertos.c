@@ -58,7 +58,9 @@
 /* USER CODE BEGIN Includes */     
 #include "task_debug.h"
 #include "task_display.h"
+#include "task_comm.h"
 #include "task_imu.h"
+#include "task_init.h"
 
 /* USER CODE END Includes */
 
@@ -81,7 +83,9 @@
 /* USER CODE BEGIN Variables */
 osThreadId debug_task_id;
 osThreadId display_task_id;
-osThreadId ahrs_task_id;
+osThreadId comm_task_id;
+osThreadId imu_task_id;
+osThreadId init_task_id;
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
@@ -126,15 +130,20 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
 	
-	osThreadDef(debug_task, DebugTask, osPriorityRealtime, 0, 256);
+	osThreadDef(debug_task, DebugTask, osPriorityNormal, 0, 256);
 	debug_task_id = osThreadCreate(osThread(debug_task), NULL);
-	
-	osThreadDef(imu_task, IMUTask, osPriorityRealtime, 0, 256);
-	ahrs_task_id = osThreadCreate(osThread(imu_task), NULL);
 	
 	osThreadDef(display_task, DisplayTask, osPriorityNormal, 0, 128);
 	display_task_id = osThreadCreate(osThread(display_task), NULL);
 	
+	osThreadDef(comm_task, CommTask, osPriorityNormal, 0, 128);
+	comm_task_id = osThreadCreate(osThread(comm_task), NULL);
+	
+	osThreadDef(imu_task, IMUTask, osPriorityRealtime, 0, 256);
+	imu_task_id = osThreadCreate(osThread(imu_task), NULL);
+	
+	osThreadDef(init_task, InitTask, osPriorityNormal, 0, 128);
+	init_task_id = osThreadCreate(osThread(init_task), NULL);
 	
   /* USER CODE END RTOS_THREADS */
 

@@ -4,8 +4,6 @@
 
 #include "bsp_imu.h"
 
-extern volatile float beta; // algorithm gain
-
 typedef struct {
 	struct {
 		float yaw;
@@ -15,7 +13,7 @@ typedef struct {
 	
 } AHRS_HandleTypeDef;
 
-void AHRS_Init(AHRS_HandleTypeDef *hahrs, float sample_freq);
-void AHRS_Update(AHRS_HandleTypeDef *hahrs, const IMU_HandleTypeDef *himu);
+void AHRS_Init(AHRS_HandleTypeDef* hahrs, const IMU_HandleTypeDef* himu, float sample_freq);
+void AHRS_Update(AHRS_HandleTypeDef* hahrs, const IMU_HandleTypeDef* himu);
 
 #endif

@@ -11,14 +11,14 @@ static float Sign(float in) {
 }
 
 /* Set abs_limit little smaller than real world limitation in some cases. */
-void PID_Init(PID_HandleTypeDef *hpid, float kp, float ki, float kd, float abs_limit) {
+void PID_Init(PID_HandleTypeDef* hpid, float kp, float ki, float kd, float abs_limit) {
 	hpid->kp = kp;
 	hpid->ki = ki;
 	hpid->kd = kd;
 	hpid->abs_limit = abs_limit;
 }
 
-void PID_Update(PID_HandleTypeDef *hpid, float set, float get, float *p_out) {
+void PID_Update(PID_HandleTypeDef* hpid, float set, float get, float* p_out) {
 	hpid->error = set - get;
 	
 	/* Present */
