@@ -72,6 +72,9 @@ BSP_StatusTypedef Joystick_WaitNoInput(void);
 BSP_StatusTypedef PWM_Start(PWM_NumTypedef n);
 BSP_StatusTypedef PWM_Set(PWM_NumTypedef n, float duty_cycle);
 
+BSP_StatusTypedef Buzzer_On(void);
+BSP_StatusTypedef Buzzer_Off(void);
+
 BSP_StatusTypedef Power_Set(Power_PortTypedef port ,Power_StatusTypedef s);
 
 #endif

@@ -10,7 +10,7 @@
 #include "tool_pid.h"
 
 #define AHRS_TASK_FREQ_HZ (100)
-#define AHRS_TASK_STATUS_LED LED3
+#define AHRS_TASK_STATUS_LED LED6
  
 IMU_HandleTypeDef himu = {0};
 

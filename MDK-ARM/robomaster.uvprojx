@@ -7,7 +7,7 @@
 
   <Targets>
     <Target>
-      <TargetName>General</TargetName>
+      <TargetName>robomaster</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <pCCUsed>5060750::V5.06 update 6 (build 750)::ARMCC</pCCUsed>
@@ -48,7 +48,7 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>.\robomaster\</OutputDirectory>
+          <OutputDirectory>.\Objects\</OutputDirectory>
           <OutputName>robomaster</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
@@ -311,7 +311,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>0</Optim>
+            <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -337,7 +337,7 @@
               <MiscControls>-Otime</MiscControls>
               <Define>USE_HAL_DRIVER,STM32F427xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;          ../Drivers/STM32F4xx_HAL_Driver/Inc;          ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;          ../Drivers/CMSIS/Include;          ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;          ../Middlewares/Third_Party/FreeRTOS/Source/include;          ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;          ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;          ../Middlewares/Third_Party/FatFs/src;          ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;          ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;          .\BSP\Inc;          .\Tools\Inc;          .\Tasks\Inc</IncludePath>
+              <IncludePath>../Inc;           ../Drivers/STM32F4xx_HAL_Driver/Inc;           ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;           ../Drivers/CMSIS/Include;           ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;           ../Middlewares/Third_Party/FreeRTOS/Source/include;           ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;           ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;           ../Middlewares/Third_Party/FatFs/src;           ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;           ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;           .\BSP\Inc;           .\Tools\Inc;           .\Tasks\Inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -422,6 +422,16 @@
           <GroupName>Application/Task</GroupName>
           <Files>
             <File>
+              <FileName>task_chassis.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Tasks\Scr\task_chassis.c</FilePath>
+            </File>
+            <File>
+              <FileName>task_comm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Tasks\Scr\task_comm.c</FilePath>
+            </File>
+            <File>
               <FileName>task_debug.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Tasks\Scr\task_debug.c</FilePath>
@@ -432,9 +442,9 @@
               <FilePath>.\Tasks\Scr\task_display.c</FilePath>
             </File>
             <File>
-              <FileName>task_comm.c</FileName>
+              <FileName>task_gimbal.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Tasks\Scr\task_comm.c</FilePath>
+              <FilePath>.\Tasks\Scr\task_gimbal.c</FilePath>
             </File>
             <File>
               <FileName>task_imu.c</FileName>
@@ -445,6 +455,11 @@
               <FileName>task_init.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Tasks\Scr\task_init.c</FilePath>
+            </File>
+            <File>
+              <FileName>task_shoot.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Tasks\Scr\task_shoot.c</FilePath>
             </File>
           </Files>
         </Group>

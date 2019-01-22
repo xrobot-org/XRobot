@@ -5,6 +5,7 @@
 #include "tim.h"
 
 static uint32_t adc_raw;
+static Joystick_StatusTypedef js;
 
 BSP_StatusTypedef LED_Set(LED_NumTypedef n, LED_StatusTypedef s) {
 	GPIO_TypeDef* gpiox;
@@ -105,7 +106,6 @@ BSP_StatusTypedef Joystick_Update(Joystick_StatusTypedef* val) {
 }
 
 BSP_StatusTypedef Joystick_WaitInput(void) {
-	Joystick_StatusTypedef js;
 	do {
 		BSP_Delay(20);
 		Joystick_Update(&js);
@@ -114,7 +114,6 @@ BSP_StatusTypedef Joystick_WaitInput(void) {
 }
 
 BSP_StatusTypedef Joystick_WaitNoInput(void) {
-	Joystick_StatusTypedef js;
 	do {
 		BSP_Delay(20);
 		Joystick_Update(&js);
@@ -167,6 +166,16 @@ BSP_StatusTypedef PWM_Set(PWM_NumTypedef n, float duty_cycle) {
 		case PWM_IMU_HEAT: htim3.Instance->CCR2 = (PWM_RESOLUTION * duty_cycle) - 1; break;
 		default: return BSP_FAIL;
 	}
+	return BSP_OK;
+}
+
+BSP_StatusTypedef Buzzer_On(void) {
+	HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_1);
+	return BSP_OK;
+}
+
+BSP_StatusTypedef Buzzer_Off(void) {
+	HAL_TIM_PWM_Stop(&htim12, TIM_CHANNEL_1);
 	return BSP_OK;
 }
 

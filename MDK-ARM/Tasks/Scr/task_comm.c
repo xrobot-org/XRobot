@@ -6,7 +6,7 @@
 
 #include "tool_protocol.h"
 
-#define COMM_TASK_FREQ_HZ (10)
+#define COMM_TASK_FREQ_HZ (20)
 #define COMM_TASK_STATUS_LED LED2
 
 Protocol_PcInfoTypeDef pc_info = {0};

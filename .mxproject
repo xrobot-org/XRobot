@@ -1,7 +1,7 @@
 [PreviousGenFiles]
-HeaderPath=D:/RoboMaster/robomaster/Inc
+HeaderPath=D:/RoboMaster/Project_MCU/robomaster/Inc
 HeaderFiles=ffconf.h;bsp_driver_sd.h;sd_diskio.h;fatfs.h;FreeRTOSConfig.h;stm32f4xx_it.h;stm32f4xx_hal_conf.h;main.h;usb_device.h;usbd_conf.h;usbd_desc.h;usbd_cdc_if.h;fatfs_platform.h;gpio.h;adc.h;can.h;dma.h;sdio.h;spi.h;tim.h;usart.h;usb_otg.h;
-SourcePath=D:/RoboMaster/robomaster/Src
+SourcePath=D:/RoboMaster/Project_MCU/robomaster/Src
 SourceFiles=bsp_driver_sd.c;sd_diskio.c;fatfs.c;freertos.c;stm32f4xx_it.c;stm32f4xx_hal_msp.c;stm32f4xx_hal_timebase_tim.c;main.c;usb_device.c;usbd_conf.c;usbd_desc.c;usbd_cdc_if.c;fatfs_platform.c;gpio.c;adc.c;can.c;dma.c;sdio.c;spi.c;tim.c;usart.c;usb_otg.c;
 
 [PreviousLibFiles]

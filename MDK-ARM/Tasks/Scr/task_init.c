@@ -5,7 +5,7 @@
 #include "bsp_io.h"
 #include "bsp_oled.h"
 
-#define INIT_TASK_STATUS_LED LED4
+#define INIT_TASK_STATUS_LED LED7
 
 void InitTask(const void* argument) {
 	uint32_t last_tick = osKernelSysTick();

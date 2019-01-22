@@ -66,6 +66,7 @@
 /* USER CODE BEGIN Includes */
 #include "bsp_oled.h"
 #include "bsp_imu.h"
+#include "bsp_io.h"
 
 /* USER CODE END Includes */
 
@@ -150,6 +151,10 @@ int main(void)
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 	
+	Buzzer_On();
+	HAL_Delay(500);
+	Buzzer_Off();
+
 	if (OLED_Init() == BSP_OK)
 		OLED_Print("OLED OK.\n");
 	else
@@ -259,7 +264,21 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-
+	while (1) {
+		HAL_GPIO_TogglePin(LED1_GPIO_Port, LED3_Pin);
+		HAL_GPIO_TogglePin(LED2_GPIO_Port, LED3_Pin);
+		HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
+		HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
+		HAL_GPIO_TogglePin(LED4_GPIO_Port, LED3_Pin);
+		HAL_GPIO_TogglePin(LED5_GPIO_Port, LED3_Pin);
+		HAL_GPIO_TogglePin(LED6_GPIO_Port, LED3_Pin);
+		HAL_GPIO_TogglePin(LED7_GPIO_Port, LED3_Pin);
+		HAL_GPIO_TogglePin(LED8_GPIO_Port, LED3_Pin);
+		HAL_GPIO_TogglePin(LED_RED_GPIO_Port, LED_RED_Pin);
+		HAL_GPIO_TogglePin(LED_GRN_GPIO_Port, LED_GRN_Pin);
+		HAL_Delay(500);
+	}
+	
   /* USER CODE END Error_Handler_Debug */
 }
 

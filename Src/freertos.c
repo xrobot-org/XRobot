@@ -55,12 +55,15 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */     
+/* USER CODE BEGIN Includes */    
+#include "task_chassis.h"
+#include "task_comm.h"
 #include "task_debug.h"
 #include "task_display.h"
-#include "task_comm.h"
+#include "task_gimbal.h"
 #include "task_imu.h"
 #include "task_init.h"
+#include "task_shoot.h"
 
 /* USER CODE END Includes */
 
@@ -81,11 +84,14 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+osThreadId chassis_task_id;
+osThreadId comm_task_id;
 osThreadId debug_task_id;
 osThreadId display_task_id;
-osThreadId comm_task_id;
+osThreadId gimbal_task_id;
 osThreadId imu_task_id;
 osThreadId init_task_id;
+osThreadId shoot_task_id;
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
@@ -130,20 +136,29 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
 	
+	osThreadDef(chassis_task, ChassisTask, osPriorityAboveNormal, 0, 128);
+	chassis_task_id = osThreadCreate(osThread(chassis_task), NULL);
+	
+	osThreadDef(comm_task, CommTask, osPriorityNormal, 0, 128);
+	comm_task_id = osThreadCreate(osThread(comm_task), NULL);
+	
 	osThreadDef(debug_task, DebugTask, osPriorityNormal, 0, 256);
 	debug_task_id = osThreadCreate(osThread(debug_task), NULL);
 	
 	osThreadDef(display_task, DisplayTask, osPriorityNormal, 0, 128);
 	display_task_id = osThreadCreate(osThread(display_task), NULL);
 	
-	osThreadDef(comm_task, CommTask, osPriorityNormal, 0, 128);
-	comm_task_id = osThreadCreate(osThread(comm_task), NULL);
+	osThreadDef(gimbal_task, GimbalTask, osPriorityAboveNormal, 0, 128);
+	gimbal_task_id = osThreadCreate(osThread(gimbal_task), NULL);
 	
 	osThreadDef(imu_task, IMUTask, osPriorityRealtime, 0, 256);
 	imu_task_id = osThreadCreate(osThread(imu_task), NULL);
 	
 	osThreadDef(init_task, InitTask, osPriorityNormal, 0, 128);
 	init_task_id = osThreadCreate(osThread(init_task), NULL);
+	
+	osThreadDef(shoot_task, ShootTask, osPriorityAboveNormal, 0, 128);
+	shoot_task_id = osThreadCreate(osThread(shoot_task), NULL);
 	
   /* USER CODE END RTOS_THREADS */
 

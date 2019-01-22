@@ -6,7 +6,7 @@
 #include "bsp_io.h"
 
 #define DISPLAY_TASK_FREQ_HZ (10)
-#define DISPLAY_TASK_STATUS_LED LED1
+#define DISPLAY_TASK_STATUS_LED LED4
 
 void DisplayTask(const void* argument) {
 	uint32_t last_tick = osKernelSysTick();

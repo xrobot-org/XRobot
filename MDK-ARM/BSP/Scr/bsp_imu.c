@@ -161,8 +161,8 @@ static __packed struct {
 }raw;
 
 static int16_t gyro_offset[3] = {0};
-static int16_t magn_offset[3] = {0, 0, 0};
-static int16_t magn_scale[3] = {0, 0, 0};
+static int16_t magn_offset[3] = {0};
+static int16_t magn_scale[3] = {0};
 
 /* Do NOT use hardware NSS. It doesn't implement the same logic. */
 static void IMU_MpuWrite(const uint8_t reg, uint8_t data) {
