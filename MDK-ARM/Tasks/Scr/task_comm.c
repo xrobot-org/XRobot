@@ -9,8 +9,10 @@
 #define COMM_TASK_FREQ_HZ (20)
 #define COMM_TASK_STATUS_LED LED2
 
-Protocol_PcInfoTypeDef pc_info = {0};
-Protocol_JudgeInfoTypeDef judge_info = {0};
+Protocol_PcInfoDownTypeDef pc_down_info;
+Protocol_PcInfoUpTypeDef pc_up_info;
+Protocol_JudgeInfoTypeDef judge_info;
+Protocol_RemoteInfoTypeDef remote_info;
 
 void CommTask(const void* argument) {
 	uint32_t last_tick = osKernelSysTick();

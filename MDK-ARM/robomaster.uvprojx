@@ -337,7 +337,7 @@
               <MiscControls>-Otime</MiscControls>
               <Define>USE_HAL_DRIVER,STM32F427xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;            ../Drivers/STM32F4xx_HAL_Driver/Inc;            ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;            ../Drivers/CMSIS/Include;            ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;            ../Middlewares/Third_Party/FreeRTOS/Source/include;            ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;            ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;            ../Middlewares/Third_Party/FatFs/src;            ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;            ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;            .\BSP\Inc;            .\Tools\Inc;            .\Tasks\Inc</IncludePath>
+              <IncludePath>../Inc;              ../Drivers/STM32F4xx_HAL_Driver/Inc;              ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;              ../Drivers/CMSIS/Include;              ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;              ../Middlewares/Third_Party/FreeRTOS/Source/include;              ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;              ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;              ../Middlewares/Third_Party/FatFs/src;              ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;              ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;              .\BSP\Inc;              .\Tools\Inc;              .\Tasks\Inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -432,9 +432,9 @@
               <FilePath>.\Tasks\Scr\task_comm.c</FilePath>
             </File>
             <File>
-              <FileName>task_debug.c</FileName>
+              <FileName>task_detect.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Tasks\Scr\task_debug.c</FilePath>
+              <FilePath>.\Tasks\Scr\task_detect.c</FilePath>
             </File>
             <File>
               <FileName>task_display.c</FileName>

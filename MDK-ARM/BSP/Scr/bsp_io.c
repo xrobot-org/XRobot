@@ -148,70 +148,75 @@ BSP_StatusTypedef PWM_Start(PWM_NumTypedef n) {
 	return BSP_OK;
 }
 
-BSP_StatusTypedef PWM_Set(PWM_NumTypedef n, float duty_cycle) {
+BSP_StatusTypedef PWM_Set(PWM_NumTypedef n, uint16_t pulse) {
+	if (pulse > PWM_RESOLUTION)
+		return BSP_FAIL;
+	
 	switch(n) {
-		case PWM_A: htim5.Instance->CCR4 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_B: htim5.Instance->CCR3 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_C: htim5.Instance->CCR2 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_D: htim5.Instance->CCR1 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_E: htim4.Instance->CCR4 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_F: htim4.Instance->CCR3 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_G: htim4.Instance->CCR2 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_H: htim4.Instance->CCR1 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_S: htim2.Instance->CCR1 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_T: htim2.Instance->CCR2 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_U: htim2.Instance->CCR3 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_V: htim2.Instance->CCR4 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_W:	htim8.Instance->CCR1 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_X:	htim8.Instance->CCR2 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_Y:	htim8.Instance->CCR3 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_Z:	htim8.Instance->CCR4 = (PWM_RESOLUTION * duty_cycle) - 1; break;
-		case PWM_IMU_HEAT: htim3.Instance->CCR2 = (PWM_RESOLUTION * duty_cycle) - 1; break;
+		case PWM_A: htim5.Instance->CCR4 = pulse; break;
+		case PWM_B: htim5.Instance->CCR3 = pulse; break;
+		case PWM_C: htim5.Instance->CCR2 = pulse; break;
+		case PWM_D: htim5.Instance->CCR1 = pulse; break;
+		case PWM_E: htim4.Instance->CCR4 = pulse; break;
+		case PWM_F: htim4.Instance->CCR3 = pulse; break;
+		case PWM_G: htim4.Instance->CCR2 = pulse; break;
+		case PWM_H: htim4.Instance->CCR1 = pulse; break;
+		case PWM_S: htim2.Instance->CCR1 = pulse; break;
+		case PWM_T: htim2.Instance->CCR2 = pulse; break;
+		case PWM_U: htim2.Instance->CCR3 = pulse; break;
+		case PWM_V: htim2.Instance->CCR4 = pulse; break;
+		case PWM_W:	htim8.Instance->CCR1 = pulse; break;
+		case PWM_X:	htim8.Instance->CCR2 = pulse; break;
+		case PWM_Y:	htim8.Instance->CCR3 = pulse; break;
+		case PWM_Z:	htim8.Instance->CCR4 = pulse; break;
+		case PWM_IMU_HEAT: htim3.Instance->CCR2 = pulse; break;
 		default: return BSP_FAIL;
 	}
 	return BSP_OK;
 }
 
-BSP_StatusTypedef Power_Set(Power_PortTypedef port ,Power_StatusTypedef state) {
-	GPIO_TypeDef* gpiox;
-	uint16_t gpio_pin;
-	GPIO_PinState s;
-	
+BSP_StatusTypedef Power_On(Power_PortTypedef port) {
 	switch (port) {
 		case POWER_PORT1:
-			gpiox = POWER1_CTRL_GPIO_Port;
-			gpio_pin = POWER1_CTRL_Pin;
+			HAL_GPIO_WritePin(POWER1_CTRL_GPIO_Port, POWER1_CTRL_Pin, GPIO_PIN_RESET);
 		break;
 		
 		case POWER_PORT2:
-			gpiox = POWER2_CTRL_GPIO_Port;
-			gpio_pin = POWER2_CTRL_Pin;
+			HAL_GPIO_WritePin(POWER2_CTRL_GPIO_Port, POWER2_CTRL_Pin, GPIO_PIN_RESET);
 		break;
 		
 		case POWER_PORT3:
-			gpiox = POWER3_CTRL_GPIO_Port;
-			gpio_pin = POWER3_CTRL_Pin;
+			HAL_GPIO_WritePin(POWER3_CTRL_GPIO_Port, POWER3_CTRL_Pin, GPIO_PIN_RESET);
 		break;
 		
 		case POWER_PORT4:
-			gpiox = POWER4_CTRL_GPIO_Port;
-			gpio_pin = POWER4_CTRL_Pin;
+			HAL_GPIO_WritePin(POWER4_CTRL_GPIO_Port, POWER4_CTRL_Pin, GPIO_PIN_RESET);
 		break;
 	}
-	
-	switch (s) {
-		case POWER_ON:
-			s = GPIO_PIN_RESET;
-		break;
-		
-		case POWER_OFF:
-			s = GPIO_PIN_SET;
-		break;
-	}
-	HAL_GPIO_WritePin(gpiox, gpio_pin, s);
-	
 	return BSP_OK;
 }
+
+BSP_StatusTypedef Power_Off(Power_PortTypedef port) {
+	switch (port) {
+		case POWER_PORT1:
+			HAL_GPIO_WritePin(POWER1_CTRL_GPIO_Port, POWER1_CTRL_Pin, GPIO_PIN_SET);
+		break;
+		
+		case POWER_PORT2:
+			HAL_GPIO_WritePin(POWER2_CTRL_GPIO_Port, POWER2_CTRL_Pin, GPIO_PIN_SET);
+		break;
+		
+		case POWER_PORT3:
+			HAL_GPIO_WritePin(POWER3_CTRL_GPIO_Port, POWER3_CTRL_Pin, GPIO_PIN_SET);
+		break;
+		
+		case POWER_PORT4:
+			HAL_GPIO_WritePin(POWER4_CTRL_GPIO_Port, POWER4_CTRL_Pin, GPIO_PIN_SET);
+		break;
+	}
+	return BSP_OK;
+}
+
 
 BSP_StatusTypedef Laser_On(void) {
 	HAL_GPIO_WritePin(LASER_GPIO_Port, LASER_Pin, GPIO_PIN_SET);
@@ -223,9 +228,12 @@ BSP_StatusTypedef Laser_Off(void) {
 	return BSP_OK;
 }
 
-BSP_StatusTypedef Friction_On(float duty_cycle) {
-	htim1.Instance->CCR1 = (PWM_RESOLUTION * duty_cycle) - 1;
-	htim1.Instance->CCR4 = (PWM_RESOLUTION * duty_cycle) - 1;
+BSP_StatusTypedef Friction_On(uint16_t pulse) {
+	if (pulse > PWM_RESOLUTION)
+		return BSP_FAIL;
+	
+	htim1.Instance->CCR1 = pulse;
+	htim1.Instance->CCR4 = pulse;
 	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 	return BSP_OK;
@@ -237,8 +245,11 @@ BSP_StatusTypedef Friction_Off(void) {
 	return BSP_OK;
 }
 
-BSP_StatusTypedef Buzzer_On(float duty_cycle) {
-	htim12.Instance->CCR1 = (PWM_RESOLUTION * duty_cycle) - 1;
+BSP_StatusTypedef Buzzer_On(uint16_t pulse) {
+	if (pulse > PWM_RESOLUTION)
+		return BSP_FAIL;
+	
+	htim12.Instance->CCR1 = pulse;
 	HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_1);
 	return BSP_OK;
 }

@@ -5,7 +5,7 @@
 #include "bsp_oled.h"
 #include "bsp_io.h"
 
-#define DISPLAY_TASK_FREQ_HZ (10)
+#define DISPLAY_TASK_FREQ_HZ (100)
 #define DISPLAY_TASK_STATUS_LED LED4
 
 void DisplayTask(const void* argument) {

@@ -8,10 +8,10 @@
 
 #define USE_MAHONY
 
-volatile float q0 = 1.f;
-volatile float q1 = 0.f;
-volatile float q2 = 0.f;
-volatile float q3 = 0.f;
+static volatile float q0 = 1.f;
+static volatile float q1 = 0.f;
+static volatile float q2 = 0.f;
+static volatile float q3 = 0.f;
 
 static volatile float rot_matrix[3][3] = {0.f};
 

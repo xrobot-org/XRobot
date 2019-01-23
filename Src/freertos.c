@@ -58,7 +58,7 @@
 /* USER CODE BEGIN Includes */     
 #include "task_chassis.h"
 #include "task_comm.h"
-#include "task_debug.h"
+#include "task_detect.h"
 #include "task_display.h"
 #include "task_gimbal.h"
 #include "task_imu.h"
@@ -86,7 +86,7 @@
 /* USER CODE BEGIN Variables */
 osThreadId chassis_task_id;
 osThreadId comm_task_id;
-osThreadId debug_task_id;
+osThreadId detect_task_id;
 osThreadId display_task_id;
 osThreadId gimbal_task_id;
 osThreadId imu_task_id;
@@ -142,8 +142,8 @@ void MX_FREERTOS_Init(void) {
 	osThreadDef(comm_task, CommTask, osPriorityNormal, 0, 128);
 	comm_task_id = osThreadCreate(osThread(comm_task), NULL);
 	
-	osThreadDef(debug_task, DebugTask, osPriorityNormal, 0, 256);
-	debug_task_id = osThreadCreate(osThread(debug_task), NULL);
+	osThreadDef(detect_task, DetectTask, osPriorityNormal, 0, 256);
+	detect_task_id = osThreadCreate(osThread(detect_task), NULL);
 	
 	osThreadDef(display_task, DisplayTask, osPriorityNormal, 0, 128);
 	display_task_id = osThreadCreate(osThread(display_task), NULL);

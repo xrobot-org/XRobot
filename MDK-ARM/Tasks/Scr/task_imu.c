@@ -9,13 +9,13 @@
 #include "tool_ahrs.h"
 #include "tool_pid.h"
 
-#define AHRS_TASK_FREQ_HZ (100)
+#define AHRS_TASK_FREQ_HZ (500)
 #define AHRS_TASK_STATUS_LED LED6
  
-IMU_HandleTypeDef himu = {0};
+static IMU_HandleTypeDef imu = {0};
 
 /* Add mutex? */
-AHRS_HandleTypeDef hahrs = {0};
+AHRS_HandleTypeDef gimbal_ahrs = {0};
 PID_HandleTypeDef imu_temp_ctrl_pid = {0};
 
 void IMUTask(const void* argument) {
@@ -24,17 +24,17 @@ void IMUTask(const void* argument) {
 	
 	LED_Set(AHRS_TASK_STATUS_LED, LED_ON);
 	
-	IMU_Update(&himu);
-	AHRS_Init(&hahrs, &himu, AHRS_TASK_FREQ_HZ);
+	IMU_Update(&imu);
+	AHRS_Init(&gimbal_ahrs, &imu, AHRS_TASK_FREQ_HZ);
 	PID_Init(&imu_temp_ctrl_pid, 5.f, 1.f, 0.f, 1.f);
 	
 	while(1) {
 		/* Calculate attitude. */
-		IMU_Update(&himu);
-		AHRS_Update(&hahrs, &himu);
+		IMU_Update(&imu);
+		AHRS_Update(&gimbal_ahrs, &imu);
 		
 		/* Heat IMU to 50C. */
-		PID_Update(&imu_temp_ctrl_pid, 50.f, himu.temp, &duty_cycle);
+		PID_Update(&imu_temp_ctrl_pid, 50.f, imu.temp, &duty_cycle);
 		PWM_Set(PWM_IMU_HEAT, duty_cycle);
 		
 		LED_Set(AHRS_TASK_STATUS_LED, LED_TAGGLE);

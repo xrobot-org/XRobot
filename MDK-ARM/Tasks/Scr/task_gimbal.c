@@ -5,7 +5,7 @@
 #include "bsp_io.h"
 #include "bsp_oled.h"
 
-#define GIMBAL_TASK_FREQ_HZ (50)
+#define GIMBAL_TASK_FREQ_HZ (100)
 #define GIMBAL_TASK_STATUS_LED LED5
 
 void GimbalTask(const void* argument) {

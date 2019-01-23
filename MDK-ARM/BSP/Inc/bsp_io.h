@@ -52,11 +52,6 @@ typedef enum {
 } PWM_NumTypedef;
 
 typedef enum {
-	POWER_OFF,
-	POWER_ON,
-} Power_StatusTypedef;
-
-typedef enum {
 	POWER_PORT1,
 	POWER_PORT2,
 	POWER_PORT3,
@@ -70,17 +65,18 @@ BSP_StatusTypedef Joystick_WaitInput(void);
 BSP_StatusTypedef Joystick_WaitNoInput(void);
 
 BSP_StatusTypedef PWM_Start(PWM_NumTypedef n);
-BSP_StatusTypedef PWM_Set(PWM_NumTypedef n, float duty_cycle);
+BSP_StatusTypedef PWM_Set(PWM_NumTypedef n, uint16_t pulse);
 
-BSP_StatusTypedef Power_Set(Power_PortTypedef port ,Power_StatusTypedef s);
+BSP_StatusTypedef Power_On(Power_PortTypedef port);
+BSP_StatusTypedef Power_Off(Power_PortTypedef port);
 
 BSP_StatusTypedef Laser_On(void);
 BSP_StatusTypedef Laser_Off(void);
 
-BSP_StatusTypedef Friction_On(float duty_cycle);
+BSP_StatusTypedef Friction_On(uint16_t pulse);
 BSP_StatusTypedef Friction_Off(void);
 
-BSP_StatusTypedef Buzzer_On(float duty_cycle);
+BSP_StatusTypedef Buzzer_On(uint16_t pulse);
 BSP_StatusTypedef Buzzer_Off(void);
 
 #endif

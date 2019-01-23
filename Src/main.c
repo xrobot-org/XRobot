@@ -152,7 +152,7 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 	
-	Buzzer_On(0.5f);
+	Buzzer_On(5000);
 	HAL_Delay(100);
 	Buzzer_Off();
 	

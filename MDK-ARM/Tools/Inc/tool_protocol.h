@@ -4,23 +4,60 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef struct {
-	int16_t i;
-	/* Gimble_ModeTypedef mode */
-	/* Shoot_ModeTypedef mode */
-	/* Chassis_ModeTypedef mode */
-	
-} Protocol_PcInfoTypeDef;
+typedef enum {
+	GIMBAL_MODE_AIM,
+	GIMBAL_MODE_PATROL,
+} Gimbal_ModeTypeDef;
 
-typedef struct {
+typedef enum {
+	SHOOT_MODE_IDLE,
+	SHOOT_MODE_SLOW,
+	SHOOT_MODE_FAST,
+	SHOOT_MODE_SUICIDE,
+} Shoot_ModeTypeDef;
+
+typedef enum {
+	CHASSIS_MODE_PATROL,
+	CHASSIS_MODE_DODGE,
+} Chassis_ModeTypeDef;
+
+typedef __packed struct {
+	Gimbal_ModeTypeDef gimbal_mode;
+	Shoot_ModeTypeDef shoot_mode;
+	Chassis_ModeTypeDef chassis_mode;
+} Protocol_PcInfoDownTypeDef;
+
+typedef __packed struct {
+	Gimbal_ModeTypeDef gimbal_mode;
+	Shoot_ModeTypeDef shoot_mode;
+	Chassis_ModeTypeDef chassis_mode;
+} Protocol_PcInfoUpTypeDef;
+
+typedef __packed struct {
 	int16_t i;
 } Protocol_JudgeInfoTypeDef;
 
-void PID_DecodePC(Protocol_PcInfoTypeDef *hp, const uint8_t *raw);
-void PID_EncodePC(Protocol_PcInfoTypeDef *hp, uint8_t *raw);
+typedef __packed struct {
+	__packed struct {
+		int16_t ch[5];
+		uint8_t sw[2];
+	} rc;
+	__packed struct {
+		int16_t x;
+		int16_t y;
+		int16_t z;
+		uint8_t press_left;
+		uint8_t press_right;
+	} mouse;
+	uint16_t key;
+} Protocol_RemoteInfoTypeDef;
 
-void PID_DecodeJudge(Protocol_JudgeInfoTypeDef *hp, const uint8_t *raw);
-void PID_EncodeJudge(Protocol_JudgeInfoTypeDef *hp, uint8_t *raw);
+void Protocol_DecodePC(Protocol_PcInfoDownTypeDef *hp, const uint8_t *raw);
+void Protocol_EncodePC(uint8_t *raw, const Protocol_PcInfoUpTypeDef *hp);
 
+void Protocol_DecodeJudge(Protocol_JudgeInfoTypeDef *hp, const uint8_t *raw);
+void Protocol_EncodeJudge(uint8_t *raw, const Protocol_JudgeInfoTypeDef *hp);
+
+void Protocol_DecodeRemote(Protocol_RemoteInfoTypeDef *hp, const uint8_t *raw);
 
 #endif

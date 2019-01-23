@@ -5,7 +5,7 @@
 #include "bsp_io.h"
 #include "bsp_oled.h"
 
-#define SHOOT_TASK_FREQ_HZ (50)
+#define SHOOT_TASK_FREQ_HZ (100)
 #define SHOOT_TASK_STATUS_LED LED8
 
 void ShootTask(const void* argument) {
@@ -14,7 +14,7 @@ void ShootTask(const void* argument) {
 	LED_Set(SHOOT_TASK_STATUS_LED, LED_ON);
 	
 	while(1) {
-
+		
 		LED_Set(SHOOT_TASK_STATUS_LED, LED_TAGGLE);
 		osDelayUntil(&last_tick, (1000 / SHOOT_TASK_FREQ_HZ));
 	}
