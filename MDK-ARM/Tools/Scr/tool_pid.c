@@ -1,6 +1,7 @@
 #include "tool_pid.h"
 
 #include <math.h>
+#include <stddef.h>
 
 static float AbsClip(float in, float limit) {
 	return (in < -limit) ? -limit : ((in > limit) ? limit : in);
@@ -12,6 +13,9 @@ static float Sign(float in) {
 
 /* Set abs_limit little smaller than real world limitation in some cases. */
 void PID_Init(PID_HandleTypeDef* hpid, float kp, float ki, float kd, float abs_limit) {
+	if (hpid == NULL)
+		return;
+	
 	hpid->kp = kp;
 	hpid->ki = ki;
 	hpid->kd = kd;
@@ -19,6 +23,9 @@ void PID_Init(PID_HandleTypeDef* hpid, float kp, float ki, float kd, float abs_l
 }
 
 void PID_Update(PID_HandleTypeDef* hpid, float set, float get, float* p_out) {
+	if (hpid == NULL || p_out == NULL)
+		return;
+	
 	hpid->error = set - get;
 	
 	/* Present */
@@ -40,4 +47,14 @@ void PID_Update(PID_HandleTypeDef* hpid, float set, float get, float* p_out) {
 		hpid->use_clip = true;
 	
 	*p_out = hpid->cliped;
+}
+
+void PID_Clear(PID_HandleTypeDef* hpid) {
+	if (hpid == NULL)
+		return;
+	
+	hpid->error = hpid->last_error = 0.0f;
+	hpid->out = hpid->proportional = hpid->integral = hpid->derivative = 0.0f;
+	hpid->out = hpid->cliped = 0.0f;
+	hpid->use_clip = false;
 }

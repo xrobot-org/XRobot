@@ -179,6 +179,9 @@ static void IMU_MpuWrite(const uint8_t reg, uint8_t data) {
 }
 
 static void IMU_MpuRead(const uint8_t reg, uint8_t* p_data, uint8_t len) {
+	if (p_data == NULL)
+		return;
+	
 	tx = (reg | 0x80);
 	
 	NSS_Reset();;
@@ -198,6 +201,9 @@ static void IMU_IstWrite(const uint8_t reg, uint8_t const data) {
 
 /* Make sure the RESET pin of ist8310 is setted to HIGH or FLOATing. */
 static void IMU_IstRead(const uint8_t reg, uint8_t* p_data) {
+	if (p_data == NULL)
+		return;
+	
 	IMU_MpuWrite(MPU6500_I2C_SLV4_ADDR, 0x80 | IST8310_ADDRESS);
 	IMU_MpuWrite(MPU6500_I2C_SLV4_REG, reg);
 	IMU_MpuWrite(MPU6500_I2C_SLV4_CTRL, 0x80);
@@ -292,6 +298,9 @@ BSP_StatusTypedef IMU_Init(void) {
  */
 
 BSP_StatusTypedef IMU_Update(IMU_HandleTypeDef* himu) {
+	if (himu == NULL)
+		return BSP_FAIL;
+	
 	IMU_MpuRead(MPU6500_ACCEL_XOUT_H, buffer, 20);
 	
 	/* View "struct raw" as "array raw", which need "raw" to be a packed struct. */

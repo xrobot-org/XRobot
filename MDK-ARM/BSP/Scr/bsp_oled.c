@@ -277,6 +277,9 @@ BSP_StatusTypedef OLED_Init(void) {
 }
 
 BSP_StatusTypedef OLED_Print(const char* str) {
+	if (str == NULL)
+		return BSP_FAIL;
+	
 	modified = true;
 	
 	for(uint16_t i = 0; str[i] != '\0'; i++) {

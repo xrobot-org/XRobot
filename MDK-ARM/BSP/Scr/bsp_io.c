@@ -81,6 +81,9 @@ BSP_StatusTypedef LED_Set(LED_NumTypedef n, LED_StatusTypedef s) {
 }
 
 BSP_StatusTypedef Joystick_Update(Joystick_StatusTypedef* val) {
+	if (val == NULL)
+		return BSP_FAIL;
+	
 	HAL_ADC_Start(&hadc1);
 	
 	if (HAL_ADC_PollForConversion(&hadc1, 1))

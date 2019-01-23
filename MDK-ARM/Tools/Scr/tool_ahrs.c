@@ -40,6 +40,9 @@ static float InvSqrt(float x) {
 }
 
 static void AHRS_UpdateEuler(AHRS_HandleTypeDef* hahrs) {
+	if (hahrs == NULL)
+		return;
+	
 	rot_matrix[0][0] = q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3;
 	rot_matrix[0][1] = 2.f * (q1 * q2 + q0 * q3);
 	rot_matrix[0][2] = 2.f * (q1 * q3 - q0 * q2);
@@ -56,6 +59,9 @@ static void AHRS_UpdateEuler(AHRS_HandleTypeDef* hahrs) {
 }
 
 static void AHRS_UpdateIMU(AHRS_HandleTypeDef* hahrs, const IMU_HandleTypeDef* himu) {
+	if (hahrs == NULL || himu == NULL)
+		return;
+	
 	float ax = himu->accl.x;
 	float ay = himu->accl.y;
 	float az = himu->accl.z;
@@ -147,6 +153,9 @@ static void AHRS_UpdateIMU(AHRS_HandleTypeDef* hahrs, const IMU_HandleTypeDef* h
 }
 
 void AHRS_Init(AHRS_HandleTypeDef* hahrs, const IMU_HandleTypeDef* himu, float sample_freq) {
+	if (hahrs == NULL || himu == NULL)
+		return;
+	
 	inv_sample_freq = 1.0f / sample_freq;
 	
 	/* TODO: Initiate quaternion according to different direction for faster converge */
@@ -168,6 +177,9 @@ void AHRS_Init(AHRS_HandleTypeDef* hahrs, const IMU_HandleTypeDef* himu, float s
 
 /* Pass the sensor data in a NED(North East Down) reference frame. Rotation can be added. */
 void AHRS_Update(AHRS_HandleTypeDef* hahrs, const IMU_HandleTypeDef* himu) {
+	if (hahrs == NULL || himu == NULL)
+		return;
+	
 	float ax = himu->accl.x;
 	float ay = himu->accl.y;
 	float az = himu->accl.z;
