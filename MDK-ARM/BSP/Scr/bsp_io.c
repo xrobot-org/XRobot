@@ -172,16 +172,6 @@ BSP_StatusTypedef PWM_Set(PWM_NumTypedef n, float duty_cycle) {
 	return BSP_OK;
 }
 
-BSP_StatusTypedef Buzzer_On(void) {
-	HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_1);
-	return BSP_OK;
-}
-
-BSP_StatusTypedef Buzzer_Off(void) {
-	HAL_TIM_PWM_Stop(&htim12, TIM_CHANNEL_1);
-	return BSP_OK;
-}
-
 BSP_StatusTypedef Power_Set(Power_PortTypedef port ,Power_StatusTypedef state) {
 	GPIO_TypeDef* gpiox;
 	uint16_t gpio_pin;
@@ -220,5 +210,40 @@ BSP_StatusTypedef Power_Set(Power_PortTypedef port ,Power_StatusTypedef state) {
 	}
 	HAL_GPIO_WritePin(gpiox, gpio_pin, s);
 	
+	return BSP_OK;
+}
+
+BSP_StatusTypedef Laser_On(void) {
+	HAL_GPIO_WritePin(LASER_GPIO_Port, LASER_Pin, GPIO_PIN_SET);
+	return BSP_OK;
+}
+
+BSP_StatusTypedef Laser_Off(void) {
+	HAL_GPIO_WritePin(LASER_GPIO_Port, LASER_Pin, GPIO_PIN_RESET);
+	return BSP_OK;
+}
+
+BSP_StatusTypedef Friction_On(float duty_cycle) {
+	htim1.Instance->CCR1 = (PWM_RESOLUTION * duty_cycle) - 1;
+	htim1.Instance->CCR4 = (PWM_RESOLUTION * duty_cycle) - 1;
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
+	return BSP_OK;
+}
+
+BSP_StatusTypedef Friction_Off(void) {
+	HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_4);
+	return BSP_OK;
+}
+
+BSP_StatusTypedef Buzzer_On(float duty_cycle) {
+	htim12.Instance->CCR1 = (PWM_RESOLUTION * duty_cycle) - 1;
+	HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_1);
+	return BSP_OK;
+}
+
+BSP_StatusTypedef Buzzer_Off(void) {
+	HAL_TIM_PWM_Stop(&htim12, TIM_CHANNEL_1);
 	return BSP_OK;
 }

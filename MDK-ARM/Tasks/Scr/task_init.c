@@ -15,7 +15,7 @@ void InitTask(const void* argument) {
 	
 	OLED_Rewind();
 	
-	OLED_Print("YES<-\nEnter Debug?\n");
+	OLED_Print("Enter Debug?Y<>N\n");
 	Joystick_WaitInput();
 	
 	osDelay(10);

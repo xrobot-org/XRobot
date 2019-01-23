@@ -55,7 +55,7 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */    
+/* USER CODE BEGIN Includes */     
 #include "task_chassis.h"
 #include "task_comm.h"
 #include "task_debug.h"
@@ -184,9 +184,9 @@ void StartDefaultTask(void const * argument)
 
   /* USER CODE BEGIN StartDefaultTask */
 	
+	osThreadTerminate(osThreadGetId());
+	
 	while(1) {
-		HAL_GPIO_TogglePin(LED_GRN_GPIO_Port, LED_GRN_Pin);
-		osDelay(500);
 	}
   /* USER CODE END StartDefaultTask */
 }
