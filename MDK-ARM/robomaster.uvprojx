@@ -52,7 +52,7 @@
           <OutputName>robomaster</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
-          <CreateHexFile>1</CreateHexFile>
+          <CreateHexFile>0</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
           <ListingPath></ListingPath>
@@ -184,6 +184,7 @@
             <hadXRAM>0</hadXRAM>
             <uocXRam>0</uocXRam>
             <RvdsVP>2</RvdsVP>
+            <RvdsMve>0</RvdsMve>
             <hadIRAM2>1</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -384,27 +385,27 @@
             <File>
               <FileName>bsp_common.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\BSP\Scr\bsp_common.c</FilePath>
+              <FilePath>..\BSP\Scr\bsp_common.c</FilePath>
             </File>
             <File>
               <FileName>bsp_imu.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\BSP\Scr\bsp_imu.c</FilePath>
+              <FilePath>..\BSP\Scr\bsp_imu.c</FilePath>
             </File>
             <File>
               <FileName>bsp_io.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\BSP\Scr\bsp_io.c</FilePath>
+              <FilePath>..\BSP\Scr\bsp_io.c</FilePath>
             </File>
             <File>
               <FileName>bsp_oled.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\BSP\Scr\bsp_oled.c</FilePath>
+              <FilePath>..\BSP\Scr\bsp_oled.c</FilePath>
             </File>
             <File>
               <FileName>bsp_uart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\BSP\Scr\bsp_uart.c</FilePath>
+              <FilePath>..\BSP\Scr\bsp_uart.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -424,42 +425,42 @@
             <File>
               <FileName>task_chassis.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Tasks\Scr\task_chassis.c</FilePath>
+              <FilePath>..\Tasks\Scr\task_chassis.c</FilePath>
             </File>
             <File>
               <FileName>task_comm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Tasks\Scr\task_comm.c</FilePath>
+              <FilePath>..\Tasks\Scr\task_comm.c</FilePath>
             </File>
             <File>
               <FileName>task_detect.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Tasks\Scr\task_detect.c</FilePath>
+              <FilePath>..\Tasks\Scr\task_detect.c</FilePath>
             </File>
             <File>
               <FileName>task_display.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Tasks\Scr\task_display.c</FilePath>
+              <FilePath>..\Tasks\Scr\task_display.c</FilePath>
             </File>
             <File>
               <FileName>task_gimbal.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Tasks\Scr\task_gimbal.c</FilePath>
+              <FilePath>..\Tasks\Scr\task_gimbal.c</FilePath>
             </File>
             <File>
               <FileName>task_imu.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Tasks\Scr\task_imu.c</FilePath>
+              <FilePath>..\Tasks\Scr\task_imu.c</FilePath>
             </File>
             <File>
               <FileName>task_init.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Tasks\Scr\task_init.c</FilePath>
+              <FilePath>..\Tasks\Scr\task_init.c</FilePath>
             </File>
             <File>
               <FileName>task_shoot.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Tasks\Scr\task_shoot.c</FilePath>
+              <FilePath>..\Tasks\Scr\task_shoot.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -469,22 +470,22 @@
             <File>
               <FileName>tool_ahrs.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Tools\Scr\tool_ahrs.c</FilePath>
+              <FilePath>..\Tools\Scr\tool_ahrs.c</FilePath>
             </File>
             <File>
               <FileName>tool_kalmanf.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Tools\Scr\tool_kalmanf.c</FilePath>
+              <FilePath>..\Tools\Scr\tool_kalmanf.c</FilePath>
             </File>
             <File>
               <FileName>tool_pid.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Tools\Scr\tool_pid.c</FilePath>
+              <FilePath>..\Tools\Scr\tool_pid.c</FilePath>
             </File>
             <File>
               <FileName>tool_protocol.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Tools\Scr\tool_protocol.c</FilePath>
+              <FilePath>..\Tools\Scr\tool_protocol.c</FilePath>
             </File>
           </Files>
         </Group>

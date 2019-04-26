@@ -214,6 +214,7 @@
       </SystemViewers>
       <DebugDescription>
         <Enable>1</Enable>
+        <EnableFlashSeq>0</EnableFlashSeq>
         <EnableLog>0</EnableLog>
         <Protocol>2</Protocol>
         <DbgClock>10000000</DbgClock>
@@ -234,7 +235,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\BSP\Scr\bsp_common.c</PathWithFileName>
+      <PathWithFileName>..\BSP\Scr\bsp_common.c</PathWithFileName>
       <FilenameWithoutPath>bsp_common.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -246,7 +247,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\BSP\Scr\bsp_imu.c</PathWithFileName>
+      <PathWithFileName>..\BSP\Scr\bsp_imu.c</PathWithFileName>
       <FilenameWithoutPath>bsp_imu.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -258,7 +259,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\BSP\Scr\bsp_io.c</PathWithFileName>
+      <PathWithFileName>..\BSP\Scr\bsp_io.c</PathWithFileName>
       <FilenameWithoutPath>bsp_io.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -270,7 +271,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\BSP\Scr\bsp_oled.c</PathWithFileName>
+      <PathWithFileName>..\BSP\Scr\bsp_oled.c</PathWithFileName>
       <FilenameWithoutPath>bsp_oled.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -282,7 +283,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\BSP\Scr\bsp_uart.c</PathWithFileName>
+      <PathWithFileName>..\BSP\Scr\bsp_uart.c</PathWithFileName>
       <FilenameWithoutPath>bsp_uart.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -322,7 +323,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\Tasks\Scr\task_chassis.c</PathWithFileName>
+      <PathWithFileName>..\Tasks\Scr\task_chassis.c</PathWithFileName>
       <FilenameWithoutPath>task_chassis.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -334,7 +335,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\Tasks\Scr\task_comm.c</PathWithFileName>
+      <PathWithFileName>..\Tasks\Scr\task_comm.c</PathWithFileName>
       <FilenameWithoutPath>task_comm.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -346,7 +347,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\Tasks\Scr\task_detect.c</PathWithFileName>
+      <PathWithFileName>..\Tasks\Scr\task_detect.c</PathWithFileName>
       <FilenameWithoutPath>task_detect.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -358,7 +359,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\Tasks\Scr\task_display.c</PathWithFileName>
+      <PathWithFileName>..\Tasks\Scr\task_display.c</PathWithFileName>
       <FilenameWithoutPath>task_display.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -370,7 +371,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\Tasks\Scr\task_gimbal.c</PathWithFileName>
+      <PathWithFileName>..\Tasks\Scr\task_gimbal.c</PathWithFileName>
       <FilenameWithoutPath>task_gimbal.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -382,7 +383,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\Tasks\Scr\task_imu.c</PathWithFileName>
+      <PathWithFileName>..\Tasks\Scr\task_imu.c</PathWithFileName>
       <FilenameWithoutPath>task_imu.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -394,7 +395,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\Tasks\Scr\task_init.c</PathWithFileName>
+      <PathWithFileName>..\Tasks\Scr\task_init.c</PathWithFileName>
       <FilenameWithoutPath>task_init.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -406,7 +407,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\Tasks\Scr\task_shoot.c</PathWithFileName>
+      <PathWithFileName>..\Tasks\Scr\task_shoot.c</PathWithFileName>
       <FilenameWithoutPath>task_shoot.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -426,7 +427,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\Tools\Scr\tool_ahrs.c</PathWithFileName>
+      <PathWithFileName>..\Tools\Scr\tool_ahrs.c</PathWithFileName>
       <FilenameWithoutPath>tool_ahrs.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -438,7 +439,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\Tools\Scr\tool_kalmanf.c</PathWithFileName>
+      <PathWithFileName>..\Tools\Scr\tool_kalmanf.c</PathWithFileName>
       <FilenameWithoutPath>tool_kalmanf.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -450,7 +451,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\Tools\Scr\tool_pid.c</PathWithFileName>
+      <PathWithFileName>..\Tools\Scr\tool_pid.c</PathWithFileName>
       <FilenameWithoutPath>tool_pid.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -462,7 +463,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\Tools\Scr\tool_protocol.c</PathWithFileName>
+      <PathWithFileName>..\Tools\Scr\tool_protocol.c</PathWithFileName>
       <FilenameWithoutPath>tool_protocol.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -471,7 +472,7 @@
 
   <Group>
     <GroupName>Application/User</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
