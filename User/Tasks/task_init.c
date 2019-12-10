@@ -5,7 +5,7 @@
 #include "io.h"
 #include "oled.h"
 
-#define INIT_TASK_STATUS_LED LED7
+#define INIT_TASK_STATUS_LED LED1
 
 void InitTask(const void* argument) {
 	uint32_t last_tick = osKernelSysTick();

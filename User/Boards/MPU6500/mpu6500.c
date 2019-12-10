@@ -1,5 +1,8 @@
 #include "imu.h"
+#include "board.h"
 #include "main.h"
+
+#include "spi.h"
 
 #define MPU6500_SELF_TEST_XG        (0x00)
 #define MPU6500_SELF_TEST_YG        (0x01)
@@ -176,7 +179,7 @@ static void IMU_MpuWrite(const uint8_t reg, uint8_t data) {
 	
 	NSS_Set();
 	
-	BSP_Delay(10);
+	Board_Delay(10);
 }
 
 static void IMU_MpuRead(const uint8_t reg, uint8_t* p_data, uint8_t len) {
@@ -220,7 +223,7 @@ static void IMU_CaliGyro(void) {
 		for(uint8_t i = 0; i < 6; i += 2)
 			gyro_offset[i/2] += (buffer[i] << 8) | buffer[i+1];
 		
-		BSP_Delay(5);
+		Board_Delay(5);
 	}
 	
 	for(uint8_t i = 0; i < 3; i++)
@@ -229,9 +232,9 @@ static void IMU_CaliGyro(void) {
 
 Board_Status_t IMU_Init(void) {
 	IST_Reset();
-	BSP_Delay(5);
+	Board_Delay(5);
 	IST_Set();
-	BSP_Delay(5);
+	Board_Delay(5);
 	
 	IMU_MpuRead(MPU6500_WHO_AM_I, &rx, 1);
 	if (rx != MPU6500_ID)
@@ -239,9 +242,9 @@ Board_Status_t IMU_Init(void) {
 	
 	/* MPU6500 init. */
 	IMU_MpuWrite(MPU6500_PWR_MGMT_1, 0x80); /* Reset device */
-	BSP_Delay(100);
+	Board_Delay(100);
 	IMU_MpuWrite(MPU6500_SIGNAL_PATH_RESET, 0x0f); /* Reset device */
-	BSP_Delay(100);
+	Board_Delay(100);
 	
 	IMU_MpuWrite(MPU6500_PWR_MGMT_1, 0x03); /* Clock source -> gyro-z */
 	IMU_MpuWrite(MPU6500_PWR_MGMT_2, 0x00); /* Enable acc & gyro */
@@ -254,7 +257,7 @@ Board_Status_t IMU_Init(void) {
 	IMU_MpuWrite(MPU6500_USER_CTRL, 0x30); /* Enable IIC master mode. */
 	IMU_MpuWrite(MPU6500_I2C_MST_CTRL, 0x0d); /* Set IIC 400kHz. */
 	
-	BSP_Delay(100);
+	Board_Delay(100);
 	
 	IMU_IstRead(IST8310_WAI, &rx);
 	if (rx != IST8310_ID)
@@ -298,7 +301,7 @@ Board_Status_t IMU_Init(void) {
  *     UP is z
  */
 
-Board_Status_t IMU_Update(IMU_HandleTypeDef* himu) {
+Board_Status_t IMU_Update(IMU_t* himu) {
 	if (himu == NULL)
 		return BOARD_FAIL;
 	
@@ -308,22 +311,22 @@ Board_Status_t IMU_Update(IMU_HandleTypeDef* himu) {
 	for(uint8_t i = 0; i < 20; i += 2)
 		((int16_t*) & raw)[i/2] = (buffer[i] << 8) | buffer[i+1];
 	
-	himu->temp = 21.f + (float)raw.temp / 333.87f;
+	himu->data.temp = 21.f + (float)raw.temp / 333.87f;
 	
 	/* Rotation and remap are added to all sensor. */
 	
-	himu->accl.x = -(float)raw.accl.y;
-	himu->accl.y = (float)raw.accl.x;
-	himu->accl.z = (float)raw.accl.z;
+	himu->data.accl.x = -(float)raw.accl.y;
+	himu->data.accl.y = (float)raw.accl.x;
+	himu->data.accl.z = (float)raw.accl.z;
 	
 	/* Convert gyroscope raw to degrees/sec, then, to radians/sec */
-	himu->gyro.x = -(float)(raw.gyro.y - gyro_offset[1]) / 16.384f / 180.f * M_PI;
-	himu->gyro.y = (float)(raw.gyro.x - gyro_offset[0]) / 16.384f / 180.f * M_PI;
-	himu->gyro.z = (float)(raw.gyro.z - gyro_offset[2]) / 16.384f / 180.f * M_PI;
+	himu->data.gyro.x = -(float)(raw.gyro.y - gyro_offset[1]) / 16.384f / 180.f * M_PI;
+	himu->data.gyro.y = (float)(raw.gyro.x - gyro_offset[0]) / 16.384f / 180.f * M_PI;
+	himu->data.gyro.z = (float)(raw.gyro.z - gyro_offset[2]) / 16.384f / 180.f * M_PI;
 	
-	himu->magn.x = (float) ((raw.magn.x - magn_offset[0]) * magn_scale[0]);
-	himu->magn.y = (float) ((raw.magn.y - magn_offset[1]) * magn_scale[1]);
-	himu->magn.z = -(float) ((raw.magn.z - magn_offset[2]) * magn_scale[2]);
+	himu->data.magn.x = (float) ((raw.magn.x - magn_offset[0]) * magn_scale[0]);
+	himu->data.magn.y = (float) ((raw.magn.y - magn_offset[1]) * magn_scale[1]);
+	himu->data.magn.z = -(float) ((raw.magn.z - magn_offset[2]) * magn_scale[2]);
 	
 	return BOARD_OK;
 }

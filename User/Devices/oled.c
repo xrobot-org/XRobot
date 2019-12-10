@@ -1,5 +1,7 @@
 #include "oled.h"
+
 #include "main.h"
+#include "spi.h"
 
 #define OLED_CMD_Set()	HAL_GPIO_WritePin(OLED_DC_GPIO_Port, OLED_DC_Pin, GPIO_PIN_SET)
 #define OLED_CMD_Clr()	HAL_GPIO_WritePin(OLED_DC_GPIO_Port, OLED_DC_Pin, GPIO_PIN_RESET)
@@ -10,14 +12,12 @@
 typedef enum {
 	OLED_WriteCMD = 0,
 	OLED_WriteData = 1,
-}OLED_WriteTypedef;
+}OLED_Write_t;
 
 typedef struct {
 	uint8_t column;
 	uint8_t page;
-}OLED_CursorTtpedef;
-
-extern SPI_HandleTypeDef hspi1;
+}OLED_Cursor_t;
 
 const uint8_t oled_font[95][8] = {
 	{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,}, /* " ", 0 */
@@ -174,11 +174,11 @@ static uint8_t oled_gram[8][128] = {
 	0x00,0x08,0x04,0x04,0x08,0x10,0x10,0x08,}
 };
 
-OLED_CursorTtpedef oled_cursor = {0};
+OLED_Cursor_t oled_cursor = {0};
 
-static volatile bool modified = true;
+static bool modified = true;
 
-static void OLED_WriteByte(uint8_t data, OLED_WriteTypedef type) {
+static void OLED_WriteByte(uint8_t data, OLED_Write_t type) {
 	switch(type) {
 		case OLED_WriteCMD:
 			OLED_CMD_Clr();
@@ -244,7 +244,7 @@ Board_Status_t OLED_SetAll(OLED_PenTypedef pen) {
 
 Board_Status_t OLED_Init(void) {
 	OLED_RST_Clr();
-	BSP_Delay(500);
+	Board_Delay(500);
 	OLED_RST_Set();
 	
 	OLED_WriteByte(0xae, OLED_WriteCMD);	/* Dot martix display off. */

@@ -1,5 +1,4 @@
-#ifndef __BSP_OLED__H
-#define __BSP_OLED__H
+#pragma once
 
 #include "board.h"
 
@@ -16,5 +15,3 @@ Board_Status_t OLED_SetAll(OLED_PenTypedef pen);
 Board_Status_t OLED_Init(void);
 Board_Status_t OLED_Print(const char* str);
 Board_Status_t OLED_Rewind(void);
-
-#endif

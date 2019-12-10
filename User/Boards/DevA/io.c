@@ -1,18 +1,11 @@
 #include "io.h"
 #include "main.h"
 
+#include "adc.h"
+#include "tim.h"
+
 static uint32_t adc_raw;
 static Joystick_StatusTypedef js;
-
-
-extern ADC_HandleTypeDef hadc1;
-extern TIM_HandleTypeDef htim1;
-extern TIM_HandleTypeDef htim2;
-extern TIM_HandleTypeDef htim3;
-extern TIM_HandleTypeDef htim4;
-extern TIM_HandleTypeDef htim5;
-extern TIM_HandleTypeDef htim8;
-extern TIM_HandleTypeDef htim12;
 
 Board_Status_t LED_Set(LED_Num_t n, LED_Status_t s) {
 	GPIO_TypeDef* gpiox;
@@ -117,7 +110,7 @@ Board_Status_t Joystick_Update(Joystick_StatusTypedef* val) {
 
 Board_Status_t Joystick_WaitInput(void) {
 	do {
-		BSP_Delay(20);
+		Board_Delay(20);
 		Joystick_Update(&js);
 	} while (js == JOYSTICK_MID);
 	return BOARD_OK;
@@ -125,7 +118,7 @@ Board_Status_t Joystick_WaitInput(void) {
 
 Board_Status_t Joystick_WaitNoInput(void) {
 	do {
-		BSP_Delay(20);
+		Board_Delay(20);
 		Joystick_Update(&js);
 	} while (js != JOYSTICK_MID);
 	return BOARD_OK;

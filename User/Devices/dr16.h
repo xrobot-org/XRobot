@@ -1,20 +1,24 @@
-#ifndef __BSP_OLED__H
-#define __BSP_OLED__H
+#pragma once
 
-#include "bsp_common.h"
+#include "main.h"
 
-typedef enum {
-    OLED_PEN_CLEAR = 0,
-    OLED_PEN_WRITE = 1,
-    OLED_PEN_INVERSION = 2,
-} OLED_PenTypedef;
+typedef struct {
+	uint8_t raw[18];
+	
+	struct {
+		int32_t ch[5];
+		int32_t sw[2];
+	} rc;
+	
+	struct {
+		int32_t x;
+		int32_t y;
+		int32_t z;
+		int32_t press_left;
+		int32_t press_right;
+	} mouse;
+	
+	int32_t key;
+} DR16_t;
 
-BSP_StatusTypedef OLED_DisplayOn(void);
-BSP_StatusTypedef OLED_DisplayOff(void);
-BSP_StatusTypedef OLED_Refresh(void);
-BSP_StatusTypedef OLED_SetAll(OLED_PenTypedef pen);
-BSP_StatusTypedef OLED_Init(void);
-BSP_StatusTypedef OLED_Print(const char* str);
-BSP_StatusTypedef OLED_Rewind(void);
-
-#endif
+void DR16_Decode(DR16_t* raw);

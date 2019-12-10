@@ -4,25 +4,50 @@
 
 typedef struct {
 	struct {
-		float x;
-		float y;
-		float z;
-	} accl;
+		struct {
+			float x;
+			float y;
+			float z;
+		} accl;
+		
+		struct {
+			float x;
+			float y;
+			float z;
+		} gyro;
+		
+		struct {
+			float x;
+			float y;
+			float z;
+		} magn;
+		
+		float temp;
+	} data;
 	
 	struct {
-		float x;
-		float y;
-		float z;
-	} gyro;
+		struct {
+			float x;
+			float y;
+			float z;
+		} gyro_offset;
+		
+		struct {
+			float x;
+			float y;
+			float z;
+		} magn_offset;
+		
+		struct {
+			float x;
+			float y;
+			float z;
+		} magn_scale;
+		
+		float temp;
+	} cali;
 	
-	struct {
-		float x;
-		float y;
-		float z;
-	} magn;
-	
-	float temp;
-} IMU_HandleTypeDef;
+} IMU_t;
 
 Board_Status_t IMU_Init(void);
-Board_Status_t IMU_Update(IMU_HandleTypeDef* himu);
+Board_Status_t IMU_Update(IMU_t* himu);
