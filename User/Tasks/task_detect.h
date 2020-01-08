@@ -1,6 +1,4 @@
-#ifndef __TASK_DETECT__H
-#define __TASK_DETECT__H
+#pragma once
+
 
 void DetectTask(const void* argument);
-
-#endif

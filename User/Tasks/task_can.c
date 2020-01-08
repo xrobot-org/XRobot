@@ -1,5 +1,18 @@
+/*
+	Handle all sending and receiving passing CAN bus.
+	
+	Input:
+		UWB input.
+		Motor feedback.
+	Output:
+		Motor control.
+		
+	Send motor feedback via queue. Send once a single feedback received.
+	
+
+*/
+
 #include "task_can.h"
-#include "main.h"
 #include "cmsis_os.h"
 
 #include "io.h"

@@ -1,15 +1,6 @@
 #include "pid.h"
 
-#include <math.h>
-#include <stddef.h>
-
-static float AbsClip(float in, float limit) {
-	return (in < -limit) ? -limit : ((in > limit) ? limit : in);
-}
-
-static float Sign(float in) {
-	return (in > 0) ? 1.f : 0.f;
-}
+#include "user_math.h"
 
 /* Set abs_limit little smaller than real world limitation in some cases. */
 void PID_Init(PID_t* hpid, float kp, float ki, float kd, float abs_limit) {
@@ -21,7 +12,7 @@ void PID_Init(PID_t* hpid, float kp, float ki, float kd, float abs_limit) {
 	hpid->kd = kd;
 	hpid->abs_limit = abs_limit;
 
-	PID_Clear(hpid);
+	PID_Reset(hpid);
 }
 
 void PID_Update(PID_t* hpid, float set, float get, float* p_out) {
@@ -51,7 +42,7 @@ void PID_Update(PID_t* hpid, float set, float get, float* p_out) {
 	*p_out = hpid->cliped;
 }
 
-void PID_Clear(PID_t* hpid) {
+void PID_Reset(PID_t* hpid) {
 	if (hpid == NULL)
 		return;
 	

@@ -1,37 +1,19 @@
 #include "ahrs.h"
 
-#include <math.h>
-
-#ifndef M_PI
-#define M_PI 3.141592653589793238462643383f
-#endif
-
-#define USE_MAHONY
+#include "user_math.h"
 
 #define TWO_KP 1.f
-#define TWO_Ki 1.f
+#define TWO_KI 1.f
 
 /* 2 * proportional gain (Kp) */
-static volatile float two_kp = TWO_KP;
+static float two_kp = TWO_KP;
 
 /* 2 * integral gain (Ki) */
-static volatile float two_ki = TWO_Ki;
+static float two_ki = TWO_KI;
 
 /* integral error terms scaled by Ki */
-static volatile float integral_fb_x = 0.f,  integral_fb_y = 0.f, integral_fb_z = 0.f; 
+static float integral_fb_x = 0.f,  integral_fb_y = 0.f, integral_fb_z = 0.f; 
 
-/* Fast inverse square-root
- * See: http://en.wikipedia.org/wiki/Fast_inverse_square_root
- */
-static float InvSqrt(float x) {
-	float halfx = 0.5f * x;
-	float y = x;
-	long i = *(long*)&y;
-	i = 0x5f3759df - (i>>1);
-	y = *(float*)&i;
-	y = y * (1.5f - (halfx * y * y));
-	return y;
-}
 
 static void AHRS_UpdateEuler(AHRS_t* hahrs) {
 	if (hahrs == NULL)
@@ -52,9 +34,9 @@ static void AHRS_UpdateEuler(AHRS_t* hahrs) {
 	hahrs->rot_matrix[2][1] = 2.f * (q2 * q3 - q0 * q1);
 	hahrs->rot_matrix[2][2] = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
 	
-	hahrs->eulr.rol = atan2f(hahrs->rot_matrix[1][2], hahrs->rot_matrix[2][2]) * 180.f / M_PI;
-	hahrs->eulr.pit = asinf(hahrs->rot_matrix[0][2]) * 180.f / M_PI;
-	hahrs->eulr.yaw = atan2f(hahrs->rot_matrix[0][1], hahrs->rot_matrix[0][0]) * 180.f / M_PI;
+	hahrs->eulr.rol = atan2f(hahrs->rot_matrix[1][2], hahrs->rot_matrix[2][2]) * 180.f / PI;
+	hahrs->eulr.pit = asinf(hahrs->rot_matrix[0][2]) * 180.f / PI;
+	hahrs->eulr.yaw = atan2f(hahrs->rot_matrix[0][1], hahrs->rot_matrix[0][0]) * 180.f / PI;
 }
 
 static void AHRS_UpdateIMU(AHRS_t* hahrs, const IMU_t* himu) {

@@ -1,5 +1,4 @@
 #include "task_detect.h"
-#include "main.h"
 #include "cmsis_os.h"
 
 #include "io.h"

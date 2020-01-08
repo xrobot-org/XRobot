@@ -57,6 +57,7 @@ osThreadId_t TaskInitHandle;
 
 void task_init(void *argument);
 
+extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
@@ -110,6 +111,8 @@ osKernelInitialize();
 /* USER CODE END Header_task_init */
 void task_init(void *argument)
 {
+  /* init code for USB_DEVICE */
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN task_init */
   /* Infinite loop */
   for(;;)

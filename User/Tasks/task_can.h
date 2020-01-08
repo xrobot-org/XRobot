@@ -1,6 +1,4 @@
-#ifndef __TASK_SHOOT__H
-#define __TASK_SHOOT__H
+#pragma once
 
 void ShootTask(const void* argument);
 
-#endif

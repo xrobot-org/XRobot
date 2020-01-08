@@ -4,106 +4,126 @@
 #include "can.h"
 
 
-Board_Status_t CAN_Device_Init(bool use_motor, bool use_uwb) {
-	CAN_FilterTypeDef  can_filter;
+Board_Status_t CAN_Device_Init() {
+	CAN_FilterTypeDef  can_filter = {0};
 
+	can_filter.FilterBank = 0;
+	can_filter.FilterIdHigh = 0;
+	can_filter.FilterIdLow  = 0;
   can_filter.FilterMode =  CAN_FILTERMODE_IDLIST;
   can_filter.FilterScale = CAN_FILTERSCALE_32BIT;
-  can_filter.FilterIdHigh = 0;
-  can_filter.FilterIdLow  = 0;
   can_filter.FilterMaskIdHigh = 0;
   can_filter.FilterMaskIdLow  = 0;
   can_filter.FilterActivation = ENABLE;
   can_filter.SlaveStartFilterBank  = 14;
+	can_filter.FilterFIFOAssignment = MOTOR_CAN_RX_FIFO;
+		
+	HAL_CAN_ConfigFilter(&hcan1, &can_filter);
+	HAL_CAN_Start(&hcan1);
+	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING);
 
-	if (use_motor) {
-		can_filter.FilterBank = 0;
-		can_filter.FilterFIFOAssignment = MOTOR_CAN_RX_FIFO; // assign to fifo0
-		HAL_CAN_ConfigFilter(&hcan1, &can_filter);
-		HAL_CAN_Start(&hcan1);                          // start can1
-	}
 	
-	if (use_uwb) {
-		can_filter.FilterBank = 14;
-		can_filter.FilterFIFOAssignment = UWB_CAN_RX_FIFO; // assign to fifo1
-		HAL_CAN_ConfigFilter(&hcan2, &can_filter);
-		HAL_CAN_Start(&hcan2);                          // start can2
-	}
+	can_filter.FilterBank = 14;
+	can_filter.FilterFIFOAssignment = UWB_CAN_RX_FIFO;
+	HAL_CAN_ConfigFilter(&hcan2, &can_filter);
+	HAL_CAN_Start(&hcan2);
+	
+	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO1_MSG_PENDING);
+
+	return BOARD_OK;
 }
 
-Board_Status_t CAN_Motor_Init(Motor_t *mlist, uint8_t num) {
-	if (mlist == NULL)
-		return BOARD_FAIL;
-	
-	for(uint8_t i = 0; i<num; i++) {
-		switch (mlist[i].model) {
-			case GM6020:
-				if ((can_devices.gm6020_num + 1) > GM6020_MOTOR_MAX_NUM)
-					return BOARD_FAIL;
-				
-				can_devices.gm6020_num++;
-				break;
-			
-			case M3508:
-			case M2006:
-				if ((can_devices.m3508_m2006_num + 1) > M3508_M2006_MOTOR_MAX_NUM)
-					return BOARD_FAIL;
-				
-				can_devices.m3508_m2006_num++;
-				break;
-		}
-	}
-  HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING); // enable can1 rx interrupt
-}
-
-Board_Status_t CAN_Motor_Receive(Motor_t *mlist) {
-	if (mlist == NULL)
+Board_Status_t CAN_Motor_Receive(Motor_Feedback_t* pm_fb) {
+	if (pm_fb == NULL)
 		return BOARD_FAIL;
 	
 	CAN_RxHeaderTypeDef rx_header;
 	uint8_t             rx_data[8];
 	
-	HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &rx_header, rx_data); //receive can data
+	HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &rx_header, rx_data);
 	
 	uint8_t index;
+	Motor_Model_t model;
 	
-  if ((rx_header.StdId >= GM6020_FEEDBACK_ID_BASE) && (rx_header.StdId <  GM6020_FEEDBACK_ID_BASE + can_devices.gm6020_num)) {
-    index = rx_header.StdId - GM6020_FEEDBACK_ID_BASE; // get motor index by can id
+  if (rx_header.StdId >= GM6020_FEEDBACK_ID_BASE) {
+    index = rx_header.StdId - GM6020_FEEDBACK_ID_BASE;
+		model = GM6020;
 
-	} else if ((rx_header.StdId >= GM6020_FEEDBACK_ID_BASE) && (rx_header.StdId <  GM6020_FEEDBACK_ID_BASE + can_devices.gm6020_num)) {
-    index = rx_header.StdId - GM6020_FEEDBACK_ID_BASE; // get motor index by can id
-	}
+	} else if (rx_header.StdId >= M3508_M2006_FEEDBACK_ID_BASE) {
+    index = rx_header.StdId - M3508_M2006_FEEDBACK_ID_BASE;
+		model = M3508_M2006;
+		
+	} else
+		return BOARD_FAIL;
 	
-	mlist[index].feedback.rotor_angle    = ((rx_data[0] << 8) | rx_data[1]);
-	mlist[index].feedback.rotor_speed    = ((rx_data[2] << 8) | rx_data[3]);
-	mlist[index].feedback.torque_current = ((rx_data[4] << 8) | rx_data[5]);
-	mlist[index].feedback.temp           =   rx_data[6];
+	if (model  == pm_fb[index].model) {
+		pm_fb[index].rotor_angle    = ((rx_data[0] << 8) | rx_data[1]);
+		pm_fb[index].rotor_speed    = ((rx_data[2] << 8) | rx_data[3]);
+		pm_fb[index].torque_current = ((rx_data[4] << 8) | rx_data[5]);
+		pm_fb[index].temp           =   rx_data[6];
+	} else
+		return BOARD_FAIL;
+	
+	return BOARD_OK;
 }
 
-Board_Status_t CAN_Motor_Control(Motor_t *m, int16_t* values) {
+Board_Status_t CAN_Motor_Control(Motor_Control_t* pm) {
 	CAN_TxHeaderTypeDef tx_header;
-  uint8_t             tx_data[2 * can_devices.gm6020_num];
 
-  tx_header.StdId = GM6020_CONTROL_ID_BASE;
   tx_header.IDE   = CAN_ID_STD;
   tx_header.RTR   = CAN_RTR_DATA;
   tx_header.DLC   = 8;
+
+	int16_t max_output_current;
+	uint32_t extand_id;
 	
-	for(int8_t i = 0; i < can_devices.gm6020_num; i++) {
-		if (voltage[i] > GM6020_MOTOR_MAX_ABS_VOLTAGE)
-			voltage[i]  = GM6020_MOTOR_MAX_ABS_VOLTAGE;
+	switch(pm->model) {
+		case GM6020:
+			tx_header.StdId = GM6020_RECEIVE_ID_BASE;
+			extand_id = GM6020_RECEIVE_ID_EXTAND;
+			max_output_current = GM6020_MAX_ABS_VOLTAGE;
+			break;
 		
-		else if (voltage[i] < GM6020_MOTOR_MAX_ABS_VOLTAGE)
-			voltage[i]  = -GM6020_MOTOR_MAX_ABS_VOLTAGE;
+		case M3508_M2006:
+			tx_header.StdId = M3508_M2006_RECEIVE_ID_BASE;
+			extand_id = M3508_M2006_RECEIVE_ID_EXTAND;
+			max_output_current = M3508_MOTOR_MAX_ABS_VOLTAGE;
+			break;
+	}
+	
+  uint8_t tx_data[8];
+	
+	for(int8_t i = 0; i < 4; i++) {
+		if (pm->set_current[i] > 1.f)
+			pm->set_current[i]  = 1.f;
+		
+		else if (pm->set_current[i] < 1.f)
+			pm->set_current[i]  = -1.f;
+		
+		int16_t output_current = max_output_current * pm->set_current[i];
 			
-		tx_data[2 * i] = (voltage[i] >> 8) & 0xff;
-		tx_data[2 * i + 1] = (voltage[i]) & 0xff;
+		tx_data[2 * i] = (output_current >> 8) & 0xff;
+		tx_data[2 * i + 1] = (output_current) & 0xff;
 	}
 	
   HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
-};
-
-
-Board_Status_t CAN_Motor_LimitOutput(Motor_t *m, float percent) {
 	
-}
+	tx_header.StdId = extand_id;
+	
+	for(int8_t i = 4; i < 8; i++) {
+		if (pm->set_current[i] > 1.f)
+			pm->set_current[i]  = 1.f;
+		
+		else if (pm->set_current[i] < 1.f)
+			pm->set_current[i]  = -1.f;
+		
+		int16_t output_current = max_output_current * pm->set_current[i];
+			
+		tx_data[2 * i] = (output_current >> 8) & 0xff;
+		tx_data[2 * i + 1] = (output_current) & 0xff;
+	}
+	
+  HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
+	
+	return BOARD_OK;
+};

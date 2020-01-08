@@ -1,6 +1,5 @@
-#ifndef __TASK_DISPLAY__H
-#define __TASK_DISPLAY__H
+#pragma once
+
 
 void DisplayTask(const void* argument);
 
-#endif

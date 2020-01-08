@@ -1,5 +1,4 @@
 #include "task_init.h"
-#include "main.h"
 #include "cmsis_os.h"
 
 #include "io.h"
@@ -9,7 +8,7 @@
 
 void InitTask(const void* argument) {
 	uint32_t last_tick = osKernelSysTick();
-	Joystick_StatusTypedef js;
+	Joystick_Status_t js;
 	
 	LED_Set(INIT_TASK_STATUS_LED, LED_ON);
 	
@@ -34,6 +33,7 @@ void InitTask(const void* argument) {
 		if (js == JOYSTICK_LEFT) {
 			OLED_Print("YES\n");
 			for (int16_t i = 0; i < 1000; i++) {
+				;
 			}
 		}
 	} else {

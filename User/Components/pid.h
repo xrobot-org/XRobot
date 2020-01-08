@@ -25,4 +25,4 @@ typedef struct {
 
 void PID_Init(PID_t* hpid, float kp, float ki, float kd, float abs_limit);
 void PID_Update(PID_t* hpid, float set, float get, float *p_out);
-void PID_Clear(PID_t* hpid);
+void PID_Reset(PID_t* hpid);

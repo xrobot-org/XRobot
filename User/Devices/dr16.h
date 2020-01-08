@@ -2,8 +2,13 @@
 
 #include "main.h"
 
+#define DR16_RX_BUF_SIZE 36u
+
+#define RC_CH_VALUE_MIN         ((uint16_t)364)
+#define RC_CH_VALUE_OFFSET      ((uint16_t)1024)
+#define RC_CH_VALUE_MAX         ((uint16_t)1684)
+
 typedef struct {
-	uint8_t raw[18];
 	
 	struct {
 		int32_t ch[5];
@@ -21,4 +26,9 @@ typedef struct {
 	int32_t key;
 } DR16_t;
 
-void DR16_Decode(DR16_t* raw);
+
+void DR16_Init(DR16_t* pdr, const uint8_t* raw); /*Need nodifed.*/
+void DR16_Decode(DR16_t* pdr, const uint8_t* raw);
+void DR16_Restart(DR16_t* pdr, const uint8_t* raw); /*Need nodifed.*/
+void DR16_HandleError(DR16_t* pdr, const uint8_t* raw); /*Need nodifed.*/
+

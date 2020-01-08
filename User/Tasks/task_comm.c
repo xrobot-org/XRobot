@@ -1,5 +1,4 @@
 #include "task_comm.h"
-#include "main.h"
 #include "cmsis_os.h"
 
 #include "io.h"
@@ -8,6 +7,8 @@
 
 #define COMM_TASK_FREQ_HZ (20)
 #define COMM_TASK_STATUS_LED LED2
+
+
 
 
 void CommTask(const void* argument) {

@@ -4,7 +4,9 @@
 #include <stdbool.h>
 
 typedef struct {
-	float direction;
+	float vx;
+	float vy;
+	float wz;
 	
 	float left_front;
 	float left_rear;
