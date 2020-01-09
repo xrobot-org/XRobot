@@ -8,40 +8,21 @@
 #define INIT_TASK_STATUS_LED LED1
 
 void InitTask(const void* argument) {
-	uint32_t last_tick = osKernelSysTick();
-	Joystick_Status_t js;
+#if defined ROBOT_TYPE_INFANTRY
 	
-	LED_Set(INIT_TASK_STATUS_LED, LED_ON);
+#elif defined ROBOT_TYPE_HERO
 	
-	OLED_Rewind();
+#elif defined ROBOT_TYPE_ENGINEER
 	
-	OLED_Print("Enter Debug?Y<>N\n");
-	Joystick_WaitInput();
+#elif defined ROBOT_TYPE_DRONE
 	
-	osDelay(10);
-	Joystick_Update(&js);
+#elif defined ROBOT_TYPE_SENTRY
+
+#else
 	
-	if (js == JOYSTICK_LEFT) {
-		OLED_Print("YES\n");
-		OLED_Print("Cali Magnet?\n");
-		
-		Joystick_WaitNoInput();
-		Joystick_WaitInput();
-			
-		osDelay(10);
-		Joystick_Update(&js);
-		
-		if (js == JOYSTICK_LEFT) {
-			OLED_Print("YES\n");
-			for (int16_t i = 0; i < 1000; i++) {
-				;
-			}
-		}
-	} else {
-		OLED_Print("NO\n");
-	}
+	#error: Must define ROBOT_TYPE_XXXX.
 	
-	LED_Set(INIT_TASK_STATUS_LED, LED_OFF);
+#endif
 	
 	osThreadTerminate(osThreadGetId());
 }

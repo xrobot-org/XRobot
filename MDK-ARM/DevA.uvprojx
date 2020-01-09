@@ -7,7 +7,7 @@
 
   <Targets>
     <Target>
-      <TargetName>robomaster</TargetName>
+      <TargetName>DevA</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <pCCUsed>5060750::V5.06 update 6 (build 750)::ARMCC</pCCUsed>
@@ -48,8 +48,8 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>robomaster\</OutputDirectory>
-          <OutputName>robomaster</OutputName>
+          <OutputDirectory>DevA\</OutputDirectory>
+          <OutputName>DevA</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
@@ -134,11 +134,11 @@
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
-            <DriverSelection>4096</DriverSelection>
+            <DriverSelection>4107</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
-          <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3>"" ()</Flash3>
+          <Flash2>STLink\ST-LINKIII-KEIL_SWO.dll</Flash2>
+          <Flash3></Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -312,8 +312,8 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
-            <oTime>1</oTime>
+            <Optim>4</Optim>
+            <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
             <Strict>0</Strict>
@@ -327,8 +327,8 @@
             <uC99>1</uC99>
             <uGnu>0</uGnu>
             <useXO>0</useXO>
-            <v6Lang>4</v6Lang>
-            <v6LangP>3</v6LangP>
+            <v6Lang>1</v6Lang>
+            <v6LangP>1</v6LangP>
             <vShortEn>1</vShortEn>
             <vShortWch>1</vShortWch>
             <v6Lto>0</v6Lto>
@@ -336,9 +336,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_HAL_DRIVER,STM32F427xx,ARM_MATH_CM4</Define>
+              <Define>USE_HAL_DRIVER,STM32F427xx,ARM_MATH_CM4,ROBOT_TYPE_INFANTRY</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;..\User\Boards;..\User\Components;..\User\Devices;..\User\Module;..\User\Tasks;../USB_DEVICE/App;../USB_DEVICE/Target;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;..\Drivers\CMSIS\DSP\Include</IncludePath>
+              <IncludePath>../Core/Inc;../USB_DEVICE/App;../USB_DEVICE/Target;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;..\User\Boards;..\User\Components;..\User\Devices;..\User\Module;..\User\Tasks;..\Drivers\CMSIS\DSP\Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -750,42 +750,47 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Application/User/Boards</GroupName>
+          <GroupName>User/Boards</GroupName>
           <Files>
             <File>
               <FileName>board.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevA\board.c</FilePath>
+              <FilePath>..\User\Boards\board.c</FilePath>
             </File>
             <File>
               <FileName>flash.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevA\flash.c</FilePath>
+              <FilePath>..\User\Boards\flash.c</FilePath>
             </File>
             <File>
               <FileName>io.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevA\io.c</FilePath>
+              <FilePath>..\User\Boards\io.c</FilePath>
             </File>
             <File>
               <FileName>pwm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevA\pwm.c</FilePath>
+              <FilePath>..\User\Boards\pwm.c</FilePath>
             </File>
             <File>
               <FileName>servo.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevA\servo.c</FilePath>
+              <FilePath>..\User\Boards\servo.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>Application/User/Components</GroupName>
+          <GroupName>User/Components</GroupName>
           <Files>
             <File>
               <FileName>ahrs.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\ahrs.c</FilePath>
+            </File>
+            <File>
+              <FileName>bettary.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\bettary.c</FilePath>
             </File>
             <File>
               <FileName>filter.c</FileName>
@@ -825,7 +830,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Application/User/Devices</GroupName>
+          <GroupName>User/Devices</GroupName>
           <Files>
             <File>
               <FileName>can_device.c</FileName>
@@ -843,24 +848,19 @@
               <FilePath>..\User\Devices\joystick.c</FilePath>
             </File>
             <File>
-              <FileName>ist8310.c</FileName>
+              <FileName>oled.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Devices\Compass\ist8310.c</FilePath>
+              <FilePath>..\User\Devices\oled.c</FilePath>
             </File>
             <File>
               <FileName>mpu6500.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Devices\IMU\mpu6500.c</FilePath>
             </File>
-            <File>
-              <FileName>oled.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Devices\oled.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>Application/User/Module</GroupName>
+          <GroupName>User/Module</GroupName>
           <Files>
             <File>
               <FileName>chassis.c</FileName>
@@ -880,7 +880,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Application/User/Tasks</GroupName>
+          <GroupName>User/Tasks</GroupName>
           <Files>
             <File>
               <FileName>task_can.c</FileName>
@@ -949,11 +949,10 @@
   <RTE>
     <apis/>
     <components>
-      <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="5.3.0" condition="ARMv6_7_8-M Device">
-        <package name="CMSIS" schemaVersion="1.3" url="http://www.keil.com/pack/" vendor="ARM" version="5.6.0"/>
+      <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="4.3.0" condition="CMSIS Core">
+        <package name="CMSIS" schemaVersion="1.3" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0"/>
         <targetInfos>
-          <targetInfo name="robomaster"/>
-          <targetInfo name="standard"/>
+          <targetInfo name="DevA"/>
         </targetInfos>
       </component>
     </components>
