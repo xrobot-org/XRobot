@@ -3,17 +3,12 @@
 #include "main.h"
 #include "spi.h"
 
-#ifdef STM32F407xx
-
-#elif defined STM32F427xx
-
 #define OLED_CMD_Set()	HAL_GPIO_WritePin(OLED_DC_GPIO_Port, OLED_DC_Pin, GPIO_PIN_SET)
 #define OLED_CMD_Clr()	HAL_GPIO_WritePin(OLED_DC_GPIO_Port, OLED_DC_Pin, GPIO_PIN_RESET)
 
 #define OLED_RST_Set()	HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_SET)
 #define OLED_RST_Clr()	HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET)
 
-#endif
 
 typedef enum {
 	OLED_WriteCMD = 0,
@@ -185,9 +180,7 @@ OLED_Cursor_t oled_cursor = {0};
 static bool modified = true;
 
 static void OLED_WriteByte(uint8_t data, OLED_Write_t type) {
-#ifdef STM32F407xx
 
-#elif defined STM32F427xx
 	switch(type) {
 		case OLED_WriteCMD:
 			OLED_CMD_Clr();
@@ -197,7 +190,12 @@ static void OLED_WriteByte(uint8_t data, OLED_Write_t type) {
 			OLED_CMD_Set();
 		break;
 	}
+	
+#ifdef OLED_USE_SPI
 	HAL_SPI_Transmit(&hspi1, &data, 1, 10);
+	
+#elif defined OLED_USE_I2C
+	
 #endif
 }
 

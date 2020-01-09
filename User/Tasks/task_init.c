@@ -8,6 +8,7 @@
 #define INIT_TASK_STATUS_LED LED1
 
 void InitTask(const void* argument) {
+
 #if defined ROBOT_TYPE_INFANTRY
 	
 #elif defined ROBOT_TYPE_HERO
