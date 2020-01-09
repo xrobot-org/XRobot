@@ -12,7 +12,7 @@
 static uint8_t usb_buf[256];
 
 Board_Status_t Board_Delay(uint32_t ms) {
-  if (osKernelGetState() == osKernelRunning)
+	if (osKernelGetState() == osKernelRunning)
 		osDelay(ms);
 	else
 		HAL_Delay(ms);
@@ -23,7 +23,7 @@ Board_Status_t Board_Delay(uint32_t ms) {
 uint32_t Board_GetRandomNum(void){
 	static uint32_t rng;
 	HAL_RNG_GenerateRandomNumber(&hrng, &rng);
-  return rng;	
+	return rng;	
 }
 
 int32_t Board_GetRandomRange(int min, int max) {

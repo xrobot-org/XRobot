@@ -22,16 +22,6 @@ typedef enum {
 } LED_Status_t;
 
 typedef enum {
-	JOYSTICK_UP,
-	JOYSTICK_DOWN,
-	JOYSTICK_LEFT,
-	JOYSTICK_RIGHT,
-	JOYSTICK_PRESSED,
-	JOYSTICK_MID,
-} Joystick_Status_t;
-
-
-typedef enum {
 	POWER_PORT1,
 	POWER_PORT2,
 	POWER_PORT3,
@@ -39,10 +29,6 @@ typedef enum {
 } Power_Port_t;
 
 Board_Status_t LED_Set(LED_Num_t n, LED_Status_t s);
-
-Board_Status_t Joystick_Update(Joystick_Status_t* val);
-Board_Status_t Joystick_WaitInput(void);
-Board_Status_t Joystick_WaitNoInput(void);
 
 Board_Status_t Power_On(Power_Port_t port);
 Board_Status_t Power_Off(Power_Port_t port);

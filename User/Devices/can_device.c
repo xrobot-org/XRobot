@@ -10,12 +10,12 @@ Board_Status_t CAN_Device_Init() {
 	can_filter.FilterBank = 0;
 	can_filter.FilterIdHigh = 0;
 	can_filter.FilterIdLow  = 0;
-  can_filter.FilterMode =  CAN_FILTERMODE_IDLIST;
-  can_filter.FilterScale = CAN_FILTERSCALE_32BIT;
-  can_filter.FilterMaskIdHigh = 0;
-  can_filter.FilterMaskIdLow  = 0;
-  can_filter.FilterActivation = ENABLE;
-  can_filter.SlaveStartFilterBank  = 14;
+	can_filter.FilterMode =  CAN_FILTERMODE_IDLIST;
+	can_filter.FilterScale = CAN_FILTERSCALE_32BIT;
+	can_filter.FilterMaskIdHigh = 0;
+	can_filter.FilterMaskIdLow  = 0;
+	can_filter.FilterActivation = ENABLE;
+	can_filter.SlaveStartFilterBank  = 14;
 	can_filter.FilterFIFOAssignment = MOTOR_CAN_RX_FIFO;
 		
 	HAL_CAN_ConfigFilter(&hcan1, &can_filter);
@@ -45,12 +45,12 @@ Board_Status_t CAN_Motor_Receive(Motor_Feedback_t* pm_fb) {
 	uint8_t index;
 	Motor_Model_t model;
 	
-  if (rx_header.StdId >= GM6020_FEEDBACK_ID_BASE) {
-    index = rx_header.StdId - GM6020_FEEDBACK_ID_BASE;
+	if (rx_header.StdId >= GM6020_FEEDBACK_ID_BASE) {
+		index = rx_header.StdId - GM6020_FEEDBACK_ID_BASE;
 		model = GM6020;
 
 	} else if (rx_header.StdId >= M3508_M2006_FEEDBACK_ID_BASE) {
-    index = rx_header.StdId - M3508_M2006_FEEDBACK_ID_BASE;
+		index = rx_header.StdId - M3508_M2006_FEEDBACK_ID_BASE;
 		model = M3508_M2006;
 		
 	} else
@@ -70,9 +70,9 @@ Board_Status_t CAN_Motor_Receive(Motor_Feedback_t* pm_fb) {
 Board_Status_t CAN_Motor_Control(Motor_Control_t* pm) {
 	CAN_TxHeaderTypeDef tx_header;
 
-  tx_header.IDE   = CAN_ID_STD;
-  tx_header.RTR   = CAN_RTR_DATA;
-  tx_header.DLC   = 8;
+	tx_header.IDE   = CAN_ID_STD;
+	tx_header.RTR   = CAN_RTR_DATA;
+	tx_header.DLC   = 8;
 
 	int16_t max_output_current;
 	uint32_t extand_id;
@@ -91,7 +91,7 @@ Board_Status_t CAN_Motor_Control(Motor_Control_t* pm) {
 			break;
 	}
 	
-  uint8_t tx_data[8];
+	uint8_t tx_data[8];
 	
 	for(int8_t i = 0; i < 4; i++) {
 		if (pm->set_current[i] > 1.f)
@@ -106,7 +106,7 @@ Board_Status_t CAN_Motor_Control(Motor_Control_t* pm) {
 		tx_data[2 * i + 1] = (output_current) & 0xff;
 	}
 	
-  HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
+	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
 	
 	tx_header.StdId = extand_id;
 	
@@ -123,7 +123,7 @@ Board_Status_t CAN_Motor_Control(Motor_Control_t* pm) {
 		tx_data[2 * i + 1] = (output_current) & 0xff;
 	}
 	
-  HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
+	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
 	
 	return BOARD_OK;
 };

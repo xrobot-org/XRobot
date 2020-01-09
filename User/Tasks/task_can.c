@@ -19,7 +19,7 @@
 #define CAN_TASK_FREQ_HZ (50)
 #define CAN_TASK_STATUS_LED LED1
 
-void CANTask(const void* argument) {
+void TASK_CAN(const void* argument) {
 	uint32_t last_tick = osKernelSysTick();
 	uint32_t delay_tick = 1000U / CAN_TASK_FREQ_HZ;
 	

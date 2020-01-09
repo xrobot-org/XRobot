@@ -22,9 +22,8 @@ typedef struct {
 		float vx;
 		float vy;
 		float wz;
-	} vector;
+	} vesctor;
 	
-	int mixer;
 	int power_consumpetion;
 } Chassis_t;
 

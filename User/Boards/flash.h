@@ -33,12 +33,10 @@
 #define ADDR_FLASH_SECTOR_23 ((uint32_t)0x081E0000) /* Base address of Sector 23, 128 Kbytes */
 
 
-void Flash_erase_address(uint32_t address, uint16_t len);
-int8_t Flash_write_single_address(uint32_t start_address, uint32_t *buf, uint32_t len);
+void Flash_EraseAddress(uint32_t address, uint16_t len);
+int8_t Flash_WriteSingleAddress(uint32_t start_address, uint32_t *buf, uint32_t len);
+//TODO
 int8_t Flash_write_muli_address(uint32_t start_address, uint32_t end_address, uint32_t *buf, uint32_t len);
 void Flash_read(uint32_t address, uint32_t *buf, uint32_t len);
 uint32_t Flash_ger_sector(uint32_t address);
 uint32_t Flash_get_next_flash_address(uint32_t address);
-
-#endif
-

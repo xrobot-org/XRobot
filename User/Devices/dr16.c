@@ -1,10 +1,13 @@
 #include "dr16.h"
 
+#include "main.h"
+#include "usart.h"
+
 
 /* Made some modification. Be aware when debug.*/
-void DR16_Decode(DR16_t* pdr, const uint8_t* raw){
+Board_Status_t DR16_Decode(DR16_t* pdr, const uint8_t* raw){
 	if (pdr == NULL || raw == NULL)
-		return;
+		return BOARD_FAIL;
 		
 	pdr->rc.ch[0] = (raw[0] | (raw[1] << 8)) & 0x07ff;        
 	pdr->rc.ch[1] = ((raw[1] >> 3) | (raw[2] << 5)) & 0x07ff; 
@@ -28,4 +31,6 @@ void DR16_Decode(DR16_t* pdr, const uint8_t* raw){
 	pdr->rc.ch[2] -= RC_CH_VALUE_OFFSET;
 	pdr->rc.ch[3] -= RC_CH_VALUE_OFFSET;
 	pdr->rc.ch[4] -= RC_CH_VALUE_OFFSET;
+	
+	return BOARD_OK;
 }

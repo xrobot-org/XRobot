@@ -1,5 +1,4 @@
 #include "imu.h"
-#include "board.h"
 #include "main.h"
 
 #include "spi.h"
@@ -105,27 +104,27 @@
 #define MPU6500_ZA_OFFSET_H         (0x7D)
 #define MPU6500_ZA_OFFSET_L         (0x7E)
 
-#define MPU6500_ID									(0x70)
+#define MPU6500_ID					(0x70)
 
-#define IST8310_WAI 								(0x00)
-#define IST8310_STAT1 							(0x02)
-#define IST8310_DATAXL 							(0x03)
-#define IST8310_DATAXM 							(0x04)
-#define IST8310_DATAYL 							(0x05)
-#define IST8310_DATAYM 							(0x06)
-#define IST8310_DATAZL 							(0x07)
-#define IST8310_DATAZM 							(0x08)
-#define IST8310_STAT2 							(0x08)
-#define IST8310_CNTL1		 						(0x0A)
-#define IST8310_CNTL2		 						(0x0B)
-#define IST8310_STR 								(0x0C)
-#define IST8310_TEMPL 							(0x1C)
-#define IST8310_TEMPH 							(0x1D)
-#define IST8310_AVGCNTL 						(0x41)
-#define IST8310_PDCNTL 							(0x42)
+#define IST8310_WAI 				(0x00)
+#define IST8310_STAT1 				(0x02)
+#define IST8310_DATAXL 				(0x03)
+#define IST8310_DATAXM 				(0x04)
+#define IST8310_DATAYL 				(0x05)
+#define IST8310_DATAYM 				(0x06)
+#define IST8310_DATAZL 				(0x07)
+#define IST8310_DATAZM 				(0x08)
+#define IST8310_STAT2 				(0x08)
+#define IST8310_CNTL1		 		(0x0A)
+#define IST8310_CNTL2		 		(0x0B)
+#define IST8310_STR 				(0x0C)
+#define IST8310_TEMPL 				(0x1C)
+#define IST8310_TEMPH 				(0x1D)
+#define IST8310_AVGCNTL 			(0x41)
+#define IST8310_PDCNTL 				(0x42)
 
-#define IST8310_ADDRESS 						(0x0E)
-#define IST8310_ID		 							(0x10)
+#define IST8310_ADDRESS 			(0x0E)
+#define IST8310_ID		 			(0x10)
 
 #ifndef M_PI
 #define M_PI 3.141592653589793238462643383f

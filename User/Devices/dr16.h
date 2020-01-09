@@ -1,6 +1,6 @@
 #pragma once
 
-#include "main.h"
+#include "board.h"
 
 #define DR16_RX_BUF_SIZE 36u
 
@@ -27,8 +27,8 @@ typedef struct {
 } DR16_t;
 
 
-void DR16_Init(DR16_t* pdr, const uint8_t* raw); /*Need nodifed.*/
-void DR16_Decode(DR16_t* pdr, const uint8_t* raw);
-void DR16_Restart(DR16_t* pdr, const uint8_t* raw); /*Need nodifed.*/
-void DR16_HandleError(DR16_t* pdr, const uint8_t* raw); /*Need nodifed.*/
+Board_Status_t DR16_Init(DR16_t* pdr, const uint8_t* raw); /*Need nodifed.*/
+Board_Status_t DR16_Decode(DR16_t* pdr, const uint8_t* raw);
+Board_Status_t DR16_Restart(DR16_t* pdr, const uint8_t* raw); /*Need nodifed.*/
+Board_Status_t DR16_HandleError(DR16_t* pdr, const uint8_t* raw); /*Need nodifed.*/
 

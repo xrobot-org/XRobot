@@ -3,6 +3,7 @@
 
 #include "io.h"
 #include "oled.h"
+#include "joystick.h"
 
 #define INIT_TASK_STATUS_LED LED1
 
