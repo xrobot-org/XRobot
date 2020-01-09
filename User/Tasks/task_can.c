@@ -8,7 +8,6 @@
 		Motor control.
 		
 	Send motor feedback via queue. Send once a single feedback received.
-	
 
 */
 
