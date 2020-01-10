@@ -1,3 +1,9 @@
+/* 
+	根据Matlab教程实现的PID。
+
+*/
+
+
 #include "pid.h"
 
 #include "user_math.h"

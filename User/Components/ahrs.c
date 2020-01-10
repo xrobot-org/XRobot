@@ -1,3 +1,10 @@
+/* 
+	开源的AHRS算法。
+	
+	考虑使用Botch的BSXlite 
+
+*/
+
 #include "ahrs.h"
 
 #include "user_math.h"

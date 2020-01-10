@@ -1,3 +1,8 @@
+/* 
+	麦克纳姆轮的解算算法。
+
+*/
+
 #pragma once
 
 #include <stdint.h>

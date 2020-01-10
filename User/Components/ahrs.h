@@ -1,3 +1,10 @@
+/* 
+	开源的AHRS算法。
+	
+	考虑使用Botch的BSXlite 
+
+*/
+
 #pragma once
 
 #include "imu.h"

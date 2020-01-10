@@ -1,3 +1,7 @@
+/* 
+	裁判系统抽象。
+
+*/
 #pragma once
 
 #include <stdint.h>

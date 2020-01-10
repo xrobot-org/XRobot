@@ -1,3 +1,8 @@
+/* 
+	MPU6500传感器。
+
+*/
+
 #include "imu.h"
 #include "main.h"
 
@@ -139,8 +144,6 @@
 static uint8_t tx, rx;
 static uint8_t buffer[20];
 
-extern SPI_HandleTypeDef hspi5;
-
 static __packed struct {
 	__packed struct {
 		int16_t x;
@@ -162,10 +165,6 @@ static __packed struct {
 		int16_t z;
 	} magn;
 }raw;
-
-static int16_t gyro_offset[3] = {0};
-static int16_t magn_offset[3] = {0};
-static int16_t magn_scale[3] = {0};
 
 /* Do NOT use hardware NSS. It doesn't implement the same logic. */
 static void MPU_Write(const uint8_t reg, uint8_t data) {
@@ -214,24 +213,24 @@ static void IST_Read(const uint8_t reg, uint8_t* p_data) {
 }
 
 /* Remove gyro static error. Be careful of overflow. */
-Board_Status_t IMU_CaliGyro(void) {
+Board_Status_t IMU_CaliGyro(IMU_t* himu) {
 	
 	for(uint8_t i = 0; i < 100; i++) {
 		MPU_Read(MPU6500_GYRO_XOUT_H, buffer, 6);
 		
 		for(uint8_t i = 0; i < 6; i += 2)
-			gyro_offset[i/2] += (buffer[i] << 8) | buffer[i+1];
+			himu->cali.gyro_offset[i/2] += (buffer[i] << 8) | buffer[i+1];
 		
 		Board_Delay(5);
 	}
 	
 	for(uint8_t i = 0; i < 3; i++)
-		gyro_offset[i] /= 100;
+		himu->cali.gyro_offset[i] /= 100;
 	
 	return BOARD_OK;
 }
 
-Board_Status_t IMU_Init(void) {
+Board_Status_t IMU_Init(IMU_t* himu) {
 	IST_Reset();
 	Board_Delay(5);
 	IST_Set();
@@ -290,7 +289,11 @@ Board_Status_t IMU_Init(void) {
 	/* enable slave 0 with data_num bytes reading */
 	MPU_Write(MPU6500_I2C_SLV1_CTRL, 0xd6);
 	
-	IMU_CaliGyro();
+	for(uint8_t i; i < 3; i++) {
+		himu->cali.gyro_offset[i] = 0;
+		himu->cali.magn_offset[i] = 0;
+		himu->cali.magn_scale[i] = 0;
+	}
 	
 	return BOARD_OK;
 }
@@ -321,13 +324,13 @@ Board_Status_t IMU_Update(IMU_t* himu) {
 	himu->data.accl.z = (float)raw.accl.z;
 	
 	/* Convert gyroscope raw to degrees/sec, then, to radians/sec */
-	himu->data.gyro.x = -(float)(raw.gyro.y - gyro_offset[1]) / 16.384f / 180.f * M_PI;
-	himu->data.gyro.y = (float)(raw.gyro.x - gyro_offset[0]) / 16.384f / 180.f * M_PI;
-	himu->data.gyro.z = (float)(raw.gyro.z - gyro_offset[2]) / 16.384f / 180.f * M_PI;
+	himu->data.gyro.x = -(float)(raw.gyro.y - himu->cali.gyro_offset[1]) / 16.384f / 180.f * M_PI;
+	himu->data.gyro.y = (float)(raw.gyro.x - himu->cali.gyro_offset[0]) / 16.384f / 180.f * M_PI;
+	himu->data.gyro.z = (float)(raw.gyro.z - himu->cali.gyro_offset[2]) / 16.384f / 180.f * M_PI;
 	
-	himu->data.magn.x = (float) ((raw.magn.x - magn_offset[0]) * magn_scale[0]);
-	himu->data.magn.y = (float) ((raw.magn.y - magn_offset[1]) * magn_scale[1]);
-	himu->data.magn.z = -(float) ((raw.magn.z - magn_offset[2]) * magn_scale[2]);
+	himu->data.magn.x = (float) ((raw.magn.x - himu->cali.magn_offset[0]) * himu->cali.magn_scale[0]);
+	himu->data.magn.y = (float) ((raw.magn.y - himu->cali.magn_offset[1]) * himu->cali.magn_scale[1]);
+	himu->data.magn.z = -(float) ((raw.magn.z - himu->cali.magn_offset[2]) * himu->cali.magn_scale[2]);
 	
 	return BOARD_OK;
 }

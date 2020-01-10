@@ -913,14 +913,14 @@
               <FilePath>..\User\Tasks\task_ctrl_shoot.c</FilePath>
             </File>
             <File>
+              <FileName>task_debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Tasks\task_debug.c</FilePath>
+            </File>
+            <File>
               <FileName>task_detect.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Tasks\task_detect.c</FilePath>
-            </File>
-            <File>
-              <FileName>task_display.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_display.c</FilePath>
             </File>
             <File>
               <FileName>task_info.c</FileName>

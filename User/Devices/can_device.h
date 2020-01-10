@@ -1,7 +1,12 @@
 #pragma once
+/* Includes ------------------------------------------------------------------*/
 
+/* Include board.h头文件。*/
 #include "board.h"
 
+/* Exported constants --------------------------------------------------------*/
+
+/* Exported defines ----------------------------------------------------------*/
 /* Motor */
 #define GM6020_FEEDBACK_ID_BASE				0x205
 #define GM6020_RECEIVE_ID_BASE				0x1ff
@@ -33,7 +38,9 @@
 #define SUPERCAP_FEEDBACK_ID_BASE				0x000
 #define SUPERCAP_RECEIVE_ID_BASE				0x000
 
+/* Exported macro ------------------------------------------------------------*/
 
+/* Exported types ------------------------------------------------------------*/
 /* Motor */
 typedef enum {
 	GM6020,
@@ -86,6 +93,8 @@ typedef struct {
 	float set_current[M3508_M2006_MAX_NUM];
 } SuperCap_Control_t;
 
+
+/* Exported functions prototypes ---------------------------------------------*/
 /* Universal function */
 Board_Status_t CAN_Device_Init(void);
 

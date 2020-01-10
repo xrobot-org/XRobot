@@ -1,9 +1,21 @@
-#include "can_device.h"
+/* 
+	CAN总线上的设备的配置和运行。
 
+*/
+
+/* Includes ------------------------------------------------------------------*/
+/* Include 自身的头文件，main.h头文件。*/
+#include "can_device.h"
 #include "main.h"
+
+/* Include HAL相关的头文件。*/
 #include "can.h"
 
-
+/* Private typedef -----------------------------------------------------------*/
+/* Private define ------------------------------------------------------------*/
+/* Private macro -------------------------------------------------------------*/
+/* Private variables ---------------------------------------------------------*/
+/* Private function prototypes -----------------------------------------------*/
 Board_Status_t CAN_Device_Init() {
 	CAN_FilterTypeDef  can_filter = {0};
 
