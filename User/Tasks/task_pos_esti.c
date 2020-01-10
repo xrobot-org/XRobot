@@ -3,7 +3,6 @@
 	
 	控制IMU加热到指定温度防止温漂，收集IMU数据给AHRS算法，
 	解算后的数据发送给需要用的任务。
-
 */
 
 #include "task_pos_esti.h"
