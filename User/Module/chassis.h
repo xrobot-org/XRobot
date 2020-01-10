@@ -16,14 +16,18 @@ typedef enum {
 } Chassis_Mode_t;
 
 typedef struct {
+	float vx;
+	float vy;
+	float wz;
+} Control_Vector_t;
+
+typedef struct {
 	Chassis_Mode_t mode;
 	
-	struct {
-		float vx;
-		float vy;
-		float wz;
-	} vesctor;
+	Control_Vector_t vector_set;
+	Control_Vector_t vector_get;
 	
+	int power_limit;
 	int power_consumpetion;
 } Chassis_t;
 

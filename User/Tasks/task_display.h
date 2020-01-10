@@ -1,5 +1,3 @@
 #pragma once
 
-
-void DisplayTask(const void* argument);
-
+void Task_Display(const void* argument);

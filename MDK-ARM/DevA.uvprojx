@@ -923,9 +923,19 @@
               <FilePath>..\User\Tasks\task_display.c</FilePath>
             </File>
             <File>
+              <FileName>task_info.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Tasks\task_info.c</FilePath>
+            </File>
+            <File>
               <FileName>task_init.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Tasks\task_init.c</FilePath>
+            </File>
+            <File>
+              <FileName>task_monitor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Tasks\task_monitor.c</FilePath>
             </File>
             <File>
               <FileName>task_pos_esti.c</FileName>
