@@ -54,7 +54,7 @@
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
-          <BrowseInformation>0</BrowseInformation>
+          <BrowseInformation>1</BrowseInformation>
           <ListingPath></ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
@@ -336,7 +336,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_HAL_DRIVER,STM32F427xx,ARM_MATH_CM4,ROBOT_TYPE_INFANTRY,OLED_USE_SPI</Define>
+              <Define>USE_HAL_DRIVER,STM32F427xx,ARM_MATH_CM4,ROBOT_TYPE_INFANTRY,OLED_USE_SPI,USE_DEV_BOARD_A</Define>
               <Undefine></Undefine>
               <IncludePath>../Core/Inc;../USB_DEVICE/App;../USB_DEVICE/Target;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;..\User\Boards;..\User\Components;..\User\Devices;..\User\Module;..\User\Tasks;..\Drivers\CMSIS\DSP\Include</IncludePath>
             </VariousControls>
@@ -788,9 +788,14 @@
               <FilePath>..\User\Components\ahrs.c</FilePath>
             </File>
             <File>
-              <FileName>bettary.c</FileName>
+              <FileName>capacity.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\bettary.c</FilePath>
+              <FilePath>..\User\Components\capacity.c</FilePath>
+            </File>
+            <File>
+              <FileName>error_detect.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\error_detect.c</FilePath>
             </File>
             <File>
               <FileName>filter.c</FileName>
@@ -856,6 +861,11 @@
               <FileName>mpu6500.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Devices\IMU\mpu6500.c</FilePath>
+            </File>
+            <File>
+              <FileName>bmi088.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Devices\IMU\bmi088.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -936,6 +946,11 @@
               <FileName>task_monitor.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Tasks\task_monitor.c</FilePath>
+            </File>
+            <File>
+              <FileName>task_output.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Tasks\task_output.c</FilePath>
             </File>
             <File>
               <FileName>task_pos_esti.c</FileName>

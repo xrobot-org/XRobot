@@ -15,7 +15,7 @@
 /* Includes ------------------------------------------------------------------*/
 /* Include 自身的头文件，OS头文件。*/
 #include "task_debug.h"
-#include "cmsis_os.h"
+#include "cmsis_os2.h"
 
 /* Include Board相关的头文件。*/
 #include "io.h"
@@ -34,8 +34,9 @@
 
 
 void Task_Debug(const void* argument) {
-	/* 处理硬件相关的初始化。*/
 	uint32_t delay_tick = 1000U / TASK_DEBUG_FREQ_HZ;
+	
+	/* 处理硬件相关的初始化。*/
 	
 	/* 初始化完成后等待一段时间后再开始任务。*/
 	osDelay(TASK_DEBUG_INIT_DELAY);

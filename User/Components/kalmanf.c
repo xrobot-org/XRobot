@@ -6,11 +6,6 @@
 #include "main.h"
 #include "kalmanf.h"
 
-/**
- *@function KarmanFilter_Init
- *@detail		初始化卡尔曼滤波器
- *@para	kal	卡尔曼结构体
- */
 void KalmanFilter_Init(KalmanFilter_t* kal){
 	/* We will set the variables like so, these can also be tuned by the user */
     kal->q_angle = 0.001;
@@ -27,15 +22,6 @@ void KalmanFilter_Init(KalmanFilter_t* kal){
 	
 }
 
-
-/**
-	*@function KalmanFilter_Update		更新卡尔曼滤波器
-	*@para	kal			卡尔曼滤波器结构体
-	*@para	newAngle	测得的角度		度
-	*@para	newRate		测得的角速度	度/秒
-	*@para	dt				周期
-	*@return	卡尔曼滤波后的角度
-	*/
 double KalmanFilter_Update(KalmanFilter_t *kal, double newAngle, double newRate, double dt) {
     kal->rate = newRate - kal->bias;
     kal->angle += dt * kal->rate;

@@ -27,8 +27,7 @@ typedef struct {
 } DR16_t;
 
 
-Board_Status_t DR16_Init(DR16_t* pdr, const uint8_t* raw); /*Need nodifed.*/
+Board_Status_t DR16_Init(DR16_t* pdr); 
 Board_Status_t DR16_Decode(DR16_t* pdr, const uint8_t* raw);
-Board_Status_t DR16_Restart(DR16_t* pdr, const uint8_t* raw); /*Need nodifed.*/
-Board_Status_t DR16_HandleError(DR16_t* pdr, const uint8_t* raw); /*Need nodifed.*/
+Board_Status_t DR16_Restart(void);
 

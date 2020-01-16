@@ -10,13 +10,13 @@ Board_Status_t LED_Set(LED_Num_t n, LED_Status_t s) {
 	uint16_t gpio_pin;
 
 	switch (n) {
-#ifdef STM32F407xx
+#ifdef USE_DEV_BOARD_C
 		case LED_BLU:
 			gpio_pin = LED3_Pin;
 			gpiox = LED3_GPIO_Port;
 		break;
 		
-#elif defined STM32F427xx
+#elif defined USE_DEV_BOARD_A
 		case LED1:
 			gpio_pin = LED1_Pin;
 			gpiox = LED1_GPIO_Port;

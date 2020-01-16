@@ -7,7 +7,14 @@
 
 #include "main.h"
 #include "usart.h"
+#include "dma.h"
 
+
+Board_Status_t DR16_Init(DR16_t* pdr) {
+	memset(pdr, 0, sizeof(DR16_t));
+	
+	return BOARD_OK;
+}
 
 /* Made some modification. Be aware when debug.*/
 Board_Status_t DR16_Decode(DR16_t* pdr, const uint8_t* raw){

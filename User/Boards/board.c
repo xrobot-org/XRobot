@@ -1,5 +1,6 @@
 #include "board.h"
 #include "main.h"
+#include "pin.h"
 
 #include <stdio.h>
 #include <stdarg.h>

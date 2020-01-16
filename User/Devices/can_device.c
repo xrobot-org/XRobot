@@ -15,8 +15,33 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+static CAN_Motor_Feedback_t m_fb[8];
+static CAN_UWB_Feedback_t u_fb;
+static CAN_SuperCap_Feedback_t sc_fb;
+static osThreadId_t allert_id = NULL;
+
 /* Private function prototypes -----------------------------------------------*/
-Board_Status_t CAN_Device_Init() {
+static void CAN_Motor_Decode(CAN_Motor_Feedback_t* fb, const uint8_t* raw) {
+	fb->rotor_angle    = ((raw[0] << 8) | raw[1]);
+	fb->rotor_speed    = ((raw[2] << 8) | raw[3]);
+	fb->torque_current = ((raw[4] << 8) | raw[5]);
+	fb->temp           =   raw[6];
+}
+
+static void CAN_UWB_Decode(CAN_UWB_Feedback_t* fb, const uint8_t* raw) {
+	memcmp(fb->raw,raw,8);
+}
+
+static void CAN_SuperCap_Decode(CAN_SuperCap_Feedback_t* fb, const uint8_t* raw) {
+}
+
+
+Board_Status_t CAN_Device_Init(osThreadId_t* id) {
+	if (id == NULL)
+		allert_id = NULL;
+	else
+		allert_id = *id;
+	
 	CAN_FilterTypeDef  can_filter = {0};
 
 	can_filter.FilterBank = 0;
@@ -45,97 +70,129 @@ Board_Status_t CAN_Device_Init() {
 	return BOARD_OK;
 }
 
-Board_Status_t CAN_Motor_Receive(Motor_Feedback_t* pm_fb) {
-	if (pm_fb == NULL)
-		return BOARD_FAIL;
+Board_Status_t CAN_Motor_GetFeedback(CAN_Motor_Feedback_t* pm_fb) {
+	memcpy(pm_fb, m_fb, MOTOR_MAX_NUM * sizeof(CAN_Motor_Feedback_t));
 	
+	return BOARD_OK;
+}
+
+Board_Status_t CAN_Motor_ControlGimbal(float yaw_speed, float pitch_speed, float fric_speed, float trig_speed) {
+	int16_t yaw_motor = yaw_speed * GM6020_MAX_ABS_VOLTAGE;
+	int16_t pitch_motor = pitch_speed * GM6020_MAX_ABS_VOLTAGE;
+	int16_t fric_motor = fric_speed * M3508_MAX_ABS_VOLTAGE;
+	int16_t trig_motor = trig_speed * M2006_MAX_ABS_VOLTAGE;
+	
+	CAN_TxHeaderTypeDef tx_header;
+
+	tx_header.IDE   = CAN_ID_STD;
+	tx_header.RTR   = CAN_RTR_DATA;
+	tx_header.DLC   = 8;
+	
+	tx_header.StdId = M3508_M2006_RECEIVE_ID_EXTAND;
+
+	uint8_t tx_data[8];
+	tx_data[0] = fric_motor >> 8;
+    tx_data[1] = fric_motor;
+    tx_data[2] = fric_motor >> 8;
+    tx_data[3] = fric_motor;
+    tx_data[4] = trig_motor >> 8;
+    tx_data[5] = trig_motor;
+    tx_data[6] = 0;
+    tx_data[7] = 0;
+	
+	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
+	
+	
+	tx_header.StdId = GM6020_RECEIVE_ID_EXTAND;
+
+	tx_data[0] = yaw_motor >> 8;
+    tx_data[1] = yaw_motor;
+    tx_data[2] = pitch_motor >> 8;
+    tx_data[3] = pitch_motor;
+    tx_data[4] = 0;
+    tx_data[5] = 0;
+    tx_data[6] = 0;
+    tx_data[7] = 0;
+	
+	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
+	
+	return BOARD_OK;
+}
+
+Board_Status_t CAN_Motor_ControlChassis(float m1_speed, float m2_speed, float m3_speed, float m4_speed) {
+	CAN_TxHeaderTypeDef tx_header;
+
+	tx_header.IDE   = CAN_ID_STD;
+	tx_header.RTR   = CAN_RTR_DATA;
+	tx_header.DLC   = 8;
+	tx_header.StdId = M3508_M2006_RECEIVE_ID_BASE;
+
+	
+	int16_t motor1 = m1_speed * M3508_MAX_ABS_VOLTAGE;
+	int16_t motor2 = m2_speed * M3508_MAX_ABS_VOLTAGE;
+	int16_t motor3 = m3_speed * M3508_MAX_ABS_VOLTAGE;
+	int16_t motor4 = m4_speed * M3508_MAX_ABS_VOLTAGE;
+	
+	uint8_t tx_data[8];
+	tx_data[0] = motor1 >> 8;
+    tx_data[1] = motor1;
+    tx_data[2] = motor2 >> 8;
+    tx_data[3] = motor2;
+    tx_data[4] = motor3 >> 8;
+    tx_data[5] = motor3;
+    tx_data[6] = motor4 >> 8;
+    tx_data[7] = motor4;
+	
+	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
+	
+	return BOARD_OK;
+}
+
+
+Board_Status_t CAN_Motor_3508QuickIdSetMode(void) {
+	CAN_TxHeaderTypeDef tx_header;
+
+	tx_header.IDE   = CAN_ID_STD;
+	tx_header.RTR   = CAN_RTR_DATA;
+	tx_header.DLC   = 8;
+	tx_header.StdId = M3508_M2006_ID_SETTING_ID;
+	
+	uint8_t tx_data[8];
+
+	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
+}
+
+void RxFifo0MsgPendingCallback(void) {
 	CAN_RxHeaderTypeDef rx_header;
 	uint8_t             rx_data[8];
 	
 	HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &rx_header, rx_data);
 	
 	uint8_t index;
-	Motor_Model_t model;
 	
 	if (rx_header.StdId >= GM6020_FEEDBACK_ID_BASE) {
 		index = rx_header.StdId - GM6020_FEEDBACK_ID_BASE;
-		model = GM6020;
 
-	} else if (rx_header.StdId >= M3508_M2006_FEEDBACK_ID_BASE) {
-		index = rx_header.StdId - M3508_M2006_FEEDBACK_ID_BASE;
-		model = M3508_M2006;
+		CAN_Motor_Decode(m_fb+index, rx_data);
+		if (allert_id != NULL)
+			osThreadFlagsSet(allert_id, CAN_DEVICE_SIGNAL_MOTOR_RECV);
 		
-	} else
-		return BOARD_FAIL;
-	
-	if (model  == pm_fb[index].model) {
-		pm_fb[index].rotor_angle    = ((rx_data[0] << 8) | rx_data[1]);
-		pm_fb[index].rotor_speed    = ((rx_data[2] << 8) | rx_data[3]);
-		pm_fb[index].torque_current = ((rx_data[4] << 8) | rx_data[5]);
-		pm_fb[index].temp           =   rx_data[6];
-	} else
-		return BOARD_FAIL;
-	
-	return BOARD_OK;
+	} else if (rx_header.StdId == SUPERCAP_FEEDBACK_ID_BASE){
+		CAN_SuperCap_Decode(&sc_fb, rx_data);
+		if (allert_id != NULL)
+			osThreadFlagsSet(allert_id, CAN_DEVICE_SIGNAL_SUPERCAP_RECV);
+	}
 }
 
-Board_Status_t CAN_Motor_Control(Motor_Control_t* pm) {
-	CAN_TxHeaderTypeDef tx_header;
 
-	tx_header.IDE   = CAN_ID_STD;
-	tx_header.RTR   = CAN_RTR_DATA;
-	tx_header.DLC   = 8;
-
-	int16_t max_output_current;
-	uint32_t extand_id;
+void RxFifo1MsgPendingCallback(void) {
+	CAN_RxHeaderTypeDef rx_header;
+	uint8_t             rx_data[8];
 	
-	switch(pm->model) {
-		case GM6020:
-			tx_header.StdId = GM6020_RECEIVE_ID_BASE;
-			extand_id = GM6020_RECEIVE_ID_EXTAND;
-			max_output_current = GM6020_MAX_ABS_VOLTAGE;
-			break;
-		
-		case M3508_M2006:
-			tx_header.StdId = M3508_M2006_RECEIVE_ID_BASE;
-			extand_id = M3508_M2006_RECEIVE_ID_EXTAND;
-			max_output_current = M3508_MOTOR_MAX_ABS_VOLTAGE;
-			break;
-	}
+	HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &rx_header, rx_data);
 	
-	uint8_t tx_data[8];
-	
-	for(int8_t i = 0; i < 4; i++) {
-		if (pm->set_current[i] > 1.f)
-			pm->set_current[i]  = 1.f;
-		
-		else if (pm->set_current[i] < 1.f)
-			pm->set_current[i]  = -1.f;
-		
-		int16_t output_current = max_output_current * pm->set_current[i];
-			
-		tx_data[2 * i] = (output_current >> 8) & 0xff;
-		tx_data[2 * i + 1] = (output_current) & 0xff;
-	}
-	
-	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
-	
-	tx_header.StdId = extand_id;
-	
-	for(int8_t i = 4; i < 8; i++) {
-		if (pm->set_current[i] > 1.f)
-			pm->set_current[i]  = 1.f;
-		
-		else if (pm->set_current[i] < 1.f)
-			pm->set_current[i]  = -1.f;
-		
-		int16_t output_current = max_output_current * pm->set_current[i];
-			
-		tx_data[2 * i] = (output_current >> 8) & 0xff;
-		tx_data[2 * i + 1] = (output_current) & 0xff;
-	}
-	
-	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
-	
-	return BOARD_OK;
-};
+	if (rx_header.StdId == UWB_FEEDBACK_ID_BASE)
+		CAN_UWB_Decode(&u_fb, rx_data);
+		if (allert_id != NULL)
+			osThreadFlagsSet(allert_id, CAN_DEVICE_SIGNAL_UWB_RECV);
+}
