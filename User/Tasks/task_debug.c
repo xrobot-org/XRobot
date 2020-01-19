@@ -13,9 +13,7 @@
 
 
 /* Includes ------------------------------------------------------------------*/
-/* Include 自身的头文件，OS头文件。*/
-#include "task_debug.h"
-#include "cmsis_os2.h"
+#include "task_common.h"
 
 /* Include Board相关的头文件。*/
 #include "io.h"
@@ -25,9 +23,6 @@
 /* Include Module相关的头文件。*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define TASK_DEBUG_FREQ_HZ (50)
-#define TASK_DEBUG_INIT_DELAY (500)
-
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
@@ -35,6 +30,7 @@
 
 void Task_Debug(const void* argument) {
 	uint32_t delay_tick = 1000U / TASK_DEBUG_FREQ_HZ;
+	Task_List_t task_list = *(Task_List_t*)argument;
 	
 	/* 处理硬件相关的初始化。*/
 	

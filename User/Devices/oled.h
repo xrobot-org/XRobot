@@ -8,10 +8,10 @@ typedef enum {
     OLED_PEN_INVERSION = 2,
 } OLED_PenTypedef;
 
-Board_Status_t OLED_DisplayOn(void);
-Board_Status_t OLED_DisplayOff(void);
-Board_Status_t OLED_Refresh(void);
-Board_Status_t OLED_SetAll(OLED_PenTypedef pen);
-Board_Status_t OLED_Init(void);
-Board_Status_t OLED_Print(const char* str);
-Board_Status_t OLED_Rewind(void);
+int OLED_DisplayOn(void);
+int OLED_DisplayOff(void);
+int OLED_Refresh(void);
+int OLED_SetAll(OLED_PenTypedef pen);
+int OLED_Init(void);
+int OLED_Print(const char* str);
+int OLED_Rewind(void);

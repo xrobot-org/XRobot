@@ -40,14 +40,14 @@ typedef enum {
 
 #endif
 
-Board_Status_t LED_Set(LED_Num_t n, LED_Status_t s);
+int LED_Set(LED_Num_t n, LED_Status_t s);
 
 
-Board_Status_t Power_On(Power_Port_t port);
-Board_Status_t Power_Off(Power_Port_t port);
+int Power_On(Power_Port_t port);
+int Power_Off(Power_Port_t port);
 
-Board_Status_t Laser_On(void);
-Board_Status_t Laser_Off(void);
+int Laser_On(void);
+int Laser_Off(void);
 
-Board_Status_t Buzzer_On(uint16_t pulse);
-Board_Status_t Buzzer_Off(void);
+int Buzzer_On(uint16_t pulse);
+int Buzzer_Off(void);

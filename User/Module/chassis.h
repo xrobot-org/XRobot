@@ -1,5 +1,13 @@
 #pragma once
 
+
+/* Includes ------------------------------------------------------------------*/
+#include "pid.h"
+
+/* Exported constants --------------------------------------------------------*/
+/* Exported defines ----------------------------------------------------------*/
+/* Exported macro ------------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
 /*  
 	CHASSIS_MODE_RELAX: Not force applied.
 	CHASSIS_MODE_BREAK: Set to zero speed. Force applied.
@@ -19,19 +27,23 @@ typedef struct {
 	float vx;
 	float vy;
 	float wz;
-} Control_Vector_t;
+}  Chassis_ControlVector_t;
 
 typedef struct {
 	Chassis_Mode_t mode;
+	Chassis_Mode_t last_mode;
 	
-	Control_Vector_t vector_set;
-	Control_Vector_t vector_get;
+	Chassis_ControlVector_t vector_set;
+	Chassis_ControlVector_t vector_get;
 	
 	int power_limit;
 	int power_consumpetion;
+	PID_t motor_pid[4];
+	PID_t follow_pid;
 } Chassis_t;
 
-
+/* Exported functions prototypes ---------------------------------------------*/
 void Chassis_Init(Chassis_t* chassis);
+void Chassis_SetMode(Chassis_t* chassis);
 void Chassis_Control(Chassis_t* chassis);
 void Chassis_SetOutput(Chassis_t* chassis);

@@ -12,14 +12,14 @@
 static uint32_t adc_raw;
 static Joystick_Status_t js;
 
-Board_Status_t Joystick_Update(Joystick_Status_t* val) {
+int Joystick_Update(Joystick_Status_t* val) {
 	if (val == NULL)
-		return BOARD_FAIL;
+		return -1;
 	
 	HAL_ADC_Start(&hadc1);
 	
 	if (HAL_ADC_PollForConversion(&hadc1, 1))
-		return BOARD_FAIL;
+		return -1;
 	
 	adc_raw = HAL_ADC_GetValue(&hadc1);
 	HAL_ADC_Stop(&hadc1);
@@ -37,22 +37,22 @@ Board_Status_t Joystick_Update(Joystick_Status_t* val) {
 	else
 		*val = JOYSTICK_MID;
 	
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t Joystick_WaitInput(void) {
+int Joystick_WaitInput(void) {
 	do {
 		Board_Delay(20);
 		Joystick_Update(&js);
 	} while (js == JOYSTICK_MID);
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t Joystick_WaitNoInput(void) {
+int Joystick_WaitNoInput(void) {
 	do {
 		Board_Delay(20);
 		Joystick_Update(&js);
 	} while (js != JOYSTICK_MID);
-	return BOARD_OK;
+	return 0;
 }
 

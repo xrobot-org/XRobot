@@ -6,8 +6,7 @@
 
 
 /* Includes ------------------------------------------------------------------*/
-/* Include 自身的头文件，OS头文件。*/
-#include "task_debug.h"
+#include "task_common.h"
 #include "cmsis_os.h"
 
 /* Include Board相关的头文件。*/

@@ -893,11 +893,6 @@
           <GroupName>User/Tasks</GroupName>
           <Files>
             <File>
-              <FileName>task_can.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_can.c</FilePath>
-            </File>
-            <File>
               <FileName>task_cli.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Tasks\task_cli.c</FilePath>
@@ -926,11 +921,6 @@
               <FileName>task_debug.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Tasks\task_debug.c</FilePath>
-            </File>
-            <File>
-              <FileName>task_detect.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_detect.c</FilePath>
             </File>
             <File>
               <FileName>task_info.c</FileName>

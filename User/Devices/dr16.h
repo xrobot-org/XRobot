@@ -27,7 +27,7 @@ typedef struct {
 } DR16_t;
 
 
-Board_Status_t DR16_Init(DR16_t* pdr); 
-Board_Status_t DR16_Decode(DR16_t* pdr, const uint8_t* raw);
-Board_Status_t DR16_Restart(void);
+int DR16_Init(DR16_t* pdr); 
+int DR16_Parse(DR16_t* pdr, const uint8_t* raw);
+int DR16_Restart(void);
 

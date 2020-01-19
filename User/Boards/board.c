@@ -12,13 +12,13 @@
 
 static uint8_t usb_buf[256];
 
-Board_Status_t Board_Delay(uint32_t ms) {
+int Board_Delay(uint32_t ms) {
 	if (osKernelGetState() == osKernelRunning)
 		osDelay(ms);
 	else
 		HAL_Delay(ms);
 	
-	return BOARD_OK;
+	return 0;
 }
 
 uint32_t Board_GetRandomNum(void){
@@ -33,7 +33,7 @@ int32_t Board_GetRandomRange(int min, int max) {
 	return random;
 }
 
-Board_Status_t Board_USBPrint(const char *fmt,...) {
+int Board_USBPrint(const char *fmt,...) {
 	static va_list ap;
 	uint16_t len = 0;
 
@@ -43,5 +43,5 @@ Board_Status_t Board_USBPrint(const char *fmt,...) {
 
 	CDC_Transmit_FS(usb_buf, len);
 	
-	return BOARD_OK;
+	return 0;
 }

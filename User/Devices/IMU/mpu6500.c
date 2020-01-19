@@ -213,7 +213,7 @@ static void IST_Read(const uint8_t reg, uint8_t* p_data) {
 }
 
 /* Remove gyro static error. Be careful of overflow. */
-Board_Status_t IMU_CaliGyro(IMU_t* himu) {
+int IMU_CaliGyro(IMU_t* himu) {
 	
 	for(uint8_t i = 0; i < 100; i++) {
 		MPU_Read(MPU6500_GYRO_XOUT_H, buffer, 6);
@@ -227,10 +227,10 @@ Board_Status_t IMU_CaliGyro(IMU_t* himu) {
 	for(uint8_t i = 0; i < 3; i++)
 		himu->cali.gyro_offset[i] /= 100;
 	
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t IMU_Init(IMU_t* himu) {
+int IMU_Init(IMU_t* himu) {
 	IST_Reset();
 	Board_Delay(5);
 	IST_Set();
@@ -238,7 +238,7 @@ Board_Status_t IMU_Init(IMU_t* himu) {
 	
 	MPU_Read(MPU6500_WHO_AM_I, &rx, 1);
 	if (rx != MPU6500_ID)
-		return BOARD_FAIL;
+		return -1;
 	
 	/* MPU6500 init. */
 	MPU_Write(MPU6500_PWR_MGMT_1, 0x80); /* Reset device */
@@ -261,7 +261,7 @@ Board_Status_t IMU_Init(IMU_t* himu) {
 	
 	IST_Read(IST8310_WAI, &rx);
 	if (rx != IST8310_ID)
-		return BOARD_FAIL;
+		return -1;
 	
 	IST_Write(IST8310_CNTL1, 0x00); /* Config as ready mode to access register */
 	IST_Write(IST8310_CNTL2, 0x00); /* Disable interupt */
@@ -295,7 +295,7 @@ Board_Status_t IMU_Init(IMU_t* himu) {
 		himu->cali.magn_scale[i] = 0;
 	}
 	
-	return BOARD_OK;
+	return 0;
 }
 
 /* magn_scale[3] is initially zero. So data from uncalibrated magnentmeter is ignored. */
@@ -305,9 +305,9 @@ Board_Status_t IMU_Init(IMU_t* himu) {
  *     UP is z
  */
 
-Board_Status_t IMU_Update(IMU_t* himu) {
+int IMU_Update(IMU_t* himu) {
 	if (himu == NULL)
-		return BOARD_FAIL;
+		return -1;
 	
 	MPU_Read(MPU6500_ACCEL_XOUT_H, buffer, 20);
 	
@@ -332,5 +332,5 @@ Board_Status_t IMU_Update(IMU_t* himu) {
 	himu->data.magn.y = (float) ((raw.magn.y - himu->cali.magn_offset[1]) * himu->cali.magn_scale[1]);
 	himu->data.magn.z = -(float) ((raw.magn.z - himu->cali.magn_offset[2]) * himu->cali.magn_scale[2]);
 	
-	return BOARD_OK;
+	return 0;
 }

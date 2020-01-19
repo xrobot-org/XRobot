@@ -3,7 +3,10 @@
 
 #include "tim.h"
 
-Board_Status_t PWM_Start(PWM_Num_t n) {
+#define TIM_PSC_APB1 ((APB1_TIMER_CLOCKS/PWM_FREQUENCE)/PWM_RESOLUTION -1)
+#define TIM_PSC_APB2 ((APB2_TIMER_CLOCKS/PWM_FREQUENCE)/PWM_RESOLUTION -1)
+
+int PWM_Start(PWM_Num_t n) {
 	switch(n) {
 		case PWM_A: HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_4); break;
 		case PWM_B: HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_3); break;
@@ -23,12 +26,12 @@ Board_Status_t PWM_Start(PWM_Num_t n) {
 		case PWM_Z:	HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_4); break;
 		case PWM_IMU_HEAT: HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2); break;
 	}
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t PWM_Set(PWM_Num_t n, uint16_t pulse) {
+int PWM_Set(PWM_Num_t n, uint16_t pulse) {
 	if (pulse > PWM_RESOLUTION)
-		return BOARD_FAIL;
+		return -1;
 	
 	switch(n) {
 		case PWM_A: htim5.Instance->CCR4 = pulse; break;
@@ -48,14 +51,14 @@ Board_Status_t PWM_Set(PWM_Num_t n, uint16_t pulse) {
 		case PWM_Y:	htim8.Instance->CCR3 = pulse; break;
 		case PWM_Z:	htim8.Instance->CCR4 = pulse; break;
 		case PWM_IMU_HEAT: htim3.Instance->CCR2 = pulse; break;
-		default: return BOARD_FAIL;
+		default: return -1;
 	}
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t Friction_On(uint16_t pulse) {
+int Friction_On(uint16_t pulse) {
 	if (pulse > PWM_RESOLUTION)
-		return BOARD_FAIL;
+		return -1;
 	
 #ifdef STM32F407xx
 	htim1.Instance->CCR1 = pulse;
@@ -73,10 +76,10 @@ Board_Status_t Friction_On(uint16_t pulse) {
 	
 #endif
 	
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t Friction_Off(void) {
+int Friction_Off(void) {
 #ifdef STM32F407xx
 	HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
@@ -87,5 +90,5 @@ Board_Status_t Friction_Off(void) {
 
 #endif
 	
-	return BOARD_OK;
+	return 0;
 }

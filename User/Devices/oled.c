@@ -205,21 +205,21 @@ static void OLED_WriteByte(uint8_t data, OLED_Write_t type) {
 #endif
 }
 
-Board_Status_t OLED_DisplayOn(void) {
+int OLED_DisplayOn(void) {
 	OLED_WriteByte(0x8d, OLED_WriteCMD);
 	OLED_WriteByte(0x14, OLED_WriteCMD);
 	OLED_WriteByte(0xaf, OLED_WriteCMD);
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t OLED_DisplayOff(void) {
+int OLED_DisplayOff(void) {
 	OLED_WriteByte(0x8d, OLED_WriteCMD);
 	OLED_WriteByte(0x10, OLED_WriteCMD);
 	OLED_WriteByte(0xae, OLED_WriteCMD);
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t OLED_Refresh(void) {
+int OLED_Refresh(void) {
 	if (modified) {
 		for (uint8_t i = 0; i < 8; i++)	{
 			OLED_WriteByte((0xb0 + i), OLED_WriteCMD); /* Set page address y. */
@@ -232,10 +232,10 @@ Board_Status_t OLED_Refresh(void) {
 		modified = false;
 	}
 	
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t OLED_SetAll(OLED_PenTypedef pen) {
+int OLED_SetAll(OLED_PenTypedef pen) {
 	switch(pen) {
 		case OLED_PEN_WRITE:
 			memset(oled_gram, -1, sizeof(oled_gram));
@@ -253,10 +253,10 @@ Board_Status_t OLED_SetAll(OLED_PenTypedef pen) {
 			}
 		break;
 	}
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t OLED_Init(void) {
+int OLED_Init(void) {
 	OLED_RST_Clr();
 	Board_Delay(500);
 	OLED_RST_Set();
@@ -288,12 +288,12 @@ Board_Status_t OLED_Init(void) {
 
 	OLED_Refresh(); /* Display initial picture. */
 	OLED_SetAll(OLED_PEN_CLEAR);  /* Clear memory. */
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t OLED_Print(const char* str) {
+int OLED_Print(const char* str) {
 	if (str == NULL)
-		return BOARD_FAIL;
+		return -1;
 	
 	modified = true;
 	
@@ -323,13 +323,13 @@ Board_Status_t OLED_Print(const char* str) {
 			oled_cursor.column += 8;
 		}
 	}
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t OLED_Rewind(void) {
+int OLED_Rewind(void) {
 	OLED_SetAll(OLED_PEN_CLEAR);
 	
 	oled_cursor.page = 0;
 	oled_cursor.column = 0;
-	return BOARD_OK;
+	return 0;
 }

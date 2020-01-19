@@ -5,7 +5,7 @@
 #include "tim.h"
 
 
-Board_Status_t LED_Set(LED_Num_t n, LED_Status_t s) {
+int LED_Set(LED_Num_t n, LED_Status_t s) {
 	GPIO_TypeDef* gpiox;
 	uint16_t gpio_pin;
 
@@ -82,10 +82,10 @@ Board_Status_t LED_Set(LED_Num_t n, LED_Status_t s) {
 		break;
 	}
 	
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t Power_On(Power_Port_t port) {
+int Power_On(Power_Port_t port) {
 	switch (port) {
 		case POWER_PORT1:
 			HAL_GPIO_WritePin(POWER1_CTRL_GPIO_Port, POWER1_CTRL_Pin, GPIO_PIN_RESET);
@@ -103,10 +103,10 @@ Board_Status_t Power_On(Power_Port_t port) {
 			HAL_GPIO_WritePin(POWER4_CTRL_GPIO_Port, POWER4_CTRL_Pin, GPIO_PIN_RESET);
 		break;
 	}
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t Power_Off(Power_Port_t port) {
+int Power_Off(Power_Port_t port) {
 	switch (port) {
 		case POWER_PORT1:
 			HAL_GPIO_WritePin(POWER1_CTRL_GPIO_Port, POWER1_CTRL_Pin, GPIO_PIN_SET);
@@ -124,23 +124,23 @@ Board_Status_t Power_Off(Power_Port_t port) {
 			HAL_GPIO_WritePin(POWER4_CTRL_GPIO_Port, POWER4_CTRL_Pin, GPIO_PIN_SET);
 		break;
 	}
-	return BOARD_OK;
+	return 0;
 }
 
 
-Board_Status_t Laser_On(void) {
+int Laser_On(void) {
 	HAL_GPIO_WritePin(LASER_GPIO_Port, LASER_Pin, GPIO_PIN_SET);
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t Laser_Off(void) {
+int Laser_Off(void) {
 	HAL_GPIO_WritePin(LASER_GPIO_Port, LASER_Pin, GPIO_PIN_RESET);
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t Buzzer_On(uint16_t pulse) {
+int Buzzer_On(uint16_t pulse) {
 	if (pulse > PWM_RESOLUTION)
-		return BOARD_FAIL;
+		return -1;
 	
 #ifdef STM32F407xx
 	htim4.Instance->CCR1 = pulse;
@@ -152,10 +152,10 @@ Board_Status_t Buzzer_On(uint16_t pulse) {
 	
 #endif
 	
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t Buzzer_Off(void) {
+int Buzzer_Off(void) {
 #ifdef STM32F407xx
 	HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_1);
 		
@@ -164,5 +164,5 @@ Board_Status_t Buzzer_Off(void) {
 	
 #endif
 	
-	return BOARD_OK;
+	return 0;
 }

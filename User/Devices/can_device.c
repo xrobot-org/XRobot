@@ -15,32 +15,37 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static CAN_Motor_Feedback_t m_fb[8];
-static CAN_UWB_Feedback_t u_fb;
-static CAN_SuperCap_Feedback_t sc_fb;
-static osThreadId_t allert_id = NULL;
+static CAN_Device_t can_device;
+static uint8_t chasssis_motor_received = 0;
+static uint8_t gimbal_motor_received = 0;
+static uint32_t unknown_message = 0;
+static bool inited = false;
 
 /* Private function prototypes -----------------------------------------------*/
-static void CAN_Motor_Decode(CAN_Motor_Feedback_t* fb, const uint8_t* raw) {
+static void CAN_Motor_Decode(CAN_MotorFeedback_t* fb, const uint8_t* raw) {
 	fb->rotor_angle    = ((raw[0] << 8) | raw[1]);
 	fb->rotor_speed    = ((raw[2] << 8) | raw[3]);
 	fb->torque_current = ((raw[4] << 8) | raw[5]);
 	fb->temp           =   raw[6];
 }
 
-static void CAN_UWB_Decode(CAN_UWB_Feedback_t* fb, const uint8_t* raw) {
+static void CAN_UWB_Decode(CAN_UWBFeedback_t* fb, const uint8_t* raw) {
 	memcmp(fb->raw,raw,8);
 }
 
-static void CAN_SuperCap_Decode(CAN_SuperCap_Feedback_t* fb, const uint8_t* raw) {
+static void CAN_SuperCap_Decode(CAN_SuperCapFeedback_t* fb, const uint8_t* raw) {
+	
 }
 
-
-Board_Status_t CAN_Device_Init(osThreadId_t* id) {
-	if (id == NULL)
-		allert_id = NULL;
-	else
-		allert_id = *id;
+int CAN_DeviceInit(CAN_Device_t* cd) {
+	if (cd == NULL)
+		return -1;
+	if (inited)
+		return -1;
+	
+	inited = true;
+	
+	can_device = *cd;
 	
 	CAN_FilterTypeDef  can_filter = {0};
 
@@ -53,7 +58,7 @@ Board_Status_t CAN_Device_Init(osThreadId_t* id) {
 	can_filter.FilterMaskIdLow  = 0;
 	can_filter.FilterActivation = ENABLE;
 	can_filter.SlaveStartFilterBank  = 14;
-	can_filter.FilterFIFOAssignment = MOTOR_CAN_RX_FIFO;
+	can_filter.FilterFIFOAssignment = CAN_MOTOR_CAN_RX_FIFO;
 		
 	HAL_CAN_ConfigFilter(&hcan1, &can_filter);
 	HAL_CAN_Start(&hcan1);
@@ -61,26 +66,27 @@ Board_Status_t CAN_Device_Init(osThreadId_t* id) {
 
 	
 	can_filter.FilterBank = 14;
-	can_filter.FilterFIFOAssignment = UWB_CAN_RX_FIFO;
+	can_filter.FilterFIFOAssignment = CAN_UWB_CAN_RX_FIFO;
 	HAL_CAN_ConfigFilter(&hcan2, &can_filter);
 	HAL_CAN_Start(&hcan2);
 	
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO1_MSG_PENDING);
 
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t CAN_Motor_GetFeedback(CAN_Motor_Feedback_t* pm_fb) {
-	memcpy(pm_fb, m_fb, MOTOR_MAX_NUM * sizeof(CAN_Motor_Feedback_t));
-	
-	return BOARD_OK;
+CAN_Device_t* CAN_GetDevice(void) {
+	if (inited) {
+		return &can_device;
+	}
+	return NULL;
 }
 
-Board_Status_t CAN_Motor_ControlGimbal(float yaw_speed, float pitch_speed, float fric_speed, float trig_speed) {
-	int16_t yaw_motor = yaw_speed * GM6020_MAX_ABS_VOLTAGE;
-	int16_t pitch_motor = pitch_speed * GM6020_MAX_ABS_VOLTAGE;
-	int16_t fric_motor = fric_speed * M3508_MAX_ABS_VOLTAGE;
-	int16_t trig_motor = trig_speed * M2006_MAX_ABS_VOLTAGE;
+int CAN_Motor_ControlGimbal(float yaw_speed, float pitch_speed, float fric_speed, float trig_speed) {
+	int16_t yaw_motor = yaw_speed * CAN_GM6020_MAX_ABS_VOLTAGE;
+	int16_t pitch_motor = pitch_speed * CAN_GM6020_MAX_ABS_VOLTAGE;
+	int16_t fric_motor = fric_speed * CAN_M3508_MAX_ABS_VOLTAGE;
+	int16_t trig_motor = trig_speed * CAN_M2006_MAX_ABS_VOLTAGE;
 	
 	CAN_TxHeaderTypeDef tx_header;
 
@@ -88,7 +94,7 @@ Board_Status_t CAN_Motor_ControlGimbal(float yaw_speed, float pitch_speed, float
 	tx_header.RTR   = CAN_RTR_DATA;
 	tx_header.DLC   = 8;
 	
-	tx_header.StdId = M3508_M2006_RECEIVE_ID_EXTAND;
+	tx_header.StdId = CAN_M3508_M2006_RECEIVE_ID_EXTAND;
 
 	uint8_t tx_data[8];
 	tx_data[0] = fric_motor >> 8;
@@ -103,7 +109,7 @@ Board_Status_t CAN_Motor_ControlGimbal(float yaw_speed, float pitch_speed, float
 	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
 	
 	
-	tx_header.StdId = GM6020_RECEIVE_ID_EXTAND;
+	tx_header.StdId = CAN_GM6020_RECEIVE_ID_EXTAND;
 
 	tx_data[0] = yaw_motor >> 8;
     tx_data[1] = yaw_motor;
@@ -116,22 +122,22 @@ Board_Status_t CAN_Motor_ControlGimbal(float yaw_speed, float pitch_speed, float
 	
 	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
 	
-	return BOARD_OK;
+	return 0;
 }
 
-Board_Status_t CAN_Motor_ControlChassis(float m1_speed, float m2_speed, float m3_speed, float m4_speed) {
+int CAN_Motor_ControlChassis(float m1_speed, float m2_speed, float m3_speed, float m4_speed) {
 	CAN_TxHeaderTypeDef tx_header;
 
 	tx_header.IDE   = CAN_ID_STD;
 	tx_header.RTR   = CAN_RTR_DATA;
 	tx_header.DLC   = 8;
-	tx_header.StdId = M3508_M2006_RECEIVE_ID_BASE;
+	tx_header.StdId = CAN_M3508_M2006_RECEIVE_ID_BASE;
 
 	
-	int16_t motor1 = m1_speed * M3508_MAX_ABS_VOLTAGE;
-	int16_t motor2 = m2_speed * M3508_MAX_ABS_VOLTAGE;
-	int16_t motor3 = m3_speed * M3508_MAX_ABS_VOLTAGE;
-	int16_t motor4 = m4_speed * M3508_MAX_ABS_VOLTAGE;
+	int16_t motor1 = m1_speed * CAN_M3508_MAX_ABS_VOLTAGE;
+	int16_t motor2 = m2_speed * CAN_M3508_MAX_ABS_VOLTAGE;
+	int16_t motor3 = m3_speed * CAN_M3508_MAX_ABS_VOLTAGE;
+	int16_t motor4 = m4_speed * CAN_M3508_MAX_ABS_VOLTAGE;
 	
 	uint8_t tx_data[8];
 	tx_data[0] = motor1 >> 8;
@@ -145,21 +151,21 @@ Board_Status_t CAN_Motor_ControlChassis(float m1_speed, float m2_speed, float m3
 	
 	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
 	
-	return BOARD_OK;
+	return 0;
 }
 
-
-Board_Status_t CAN_Motor_3508QuickIdSetMode(void) {
+int CAN_Motor_3508QuickIdSetMode(void) {
 	CAN_TxHeaderTypeDef tx_header;
 
 	tx_header.IDE   = CAN_ID_STD;
 	tx_header.RTR   = CAN_RTR_DATA;
 	tx_header.DLC   = 8;
-	tx_header.StdId = M3508_M2006_ID_SETTING_ID;
+	tx_header.StdId = CAN_M3508_M2006_ID_SETTING_ID;
 	
 	uint8_t tx_data[8];
 
 	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
+	return 0;
 }
 
 void RxFifo0MsgPendingCallback(void) {
@@ -169,21 +175,56 @@ void RxFifo0MsgPendingCallback(void) {
 	HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &rx_header, rx_data);
 	
 	uint8_t index;
-	
-	if (rx_header.StdId >= GM6020_FEEDBACK_ID_BASE) {
-		index = rx_header.StdId - GM6020_FEEDBACK_ID_BASE;
-
-		CAN_Motor_Decode(m_fb+index, rx_data);
-		if (allert_id != NULL)
-			osThreadFlagsSet(allert_id, CAN_DEVICE_SIGNAL_MOTOR_RECV);
+	switch (rx_header.StdId) {
+		case CAN_M3508_M1_ID:
+		case CAN_M3508_M2_ID:
+		case CAN_M3508_M3_ID:
+		case CAN_M3508_M4_ID:
+			index = rx_header.StdId - CAN_M3508_M1_ID;
+			CAN_Motor_Decode(&(can_device.chassis_motor_fb[index]), rx_data);
 		
-	} else if (rx_header.StdId == SUPERCAP_FEEDBACK_ID_BASE){
-		CAN_SuperCap_Decode(&sc_fb, rx_data);
-		if (allert_id != NULL)
-			osThreadFlagsSet(allert_id, CAN_DEVICE_SIGNAL_SUPERCAP_RECV);
+			chasssis_motor_received++;
+			break;
+		
+		case CAN_M3508_FRIC1_ID:
+		case CAN_M3508_FRIC2_ID:
+			index = rx_header.StdId - CAN_M3508_FRIC1_ID;
+			CAN_Motor_Decode(&(can_device.gimbal_motor_fb.fric_fb[index]), rx_data);
+			break;
+		
+		case CAN_M2006_TRIG_ID:
+			CAN_Motor_Decode(&(can_device.gimbal_motor_fb.trig_fb), rx_data);
+			break;
+		
+		case CAN_GM6020_YAW_ID:
+			CAN_Motor_Decode(&(can_device.gimbal_motor_fb.yaw_fb), rx_data);
+			break;
+		
+		case CAN_GM6020_PIT_ID:
+			CAN_Motor_Decode(&(can_device.gimbal_motor_fb.pit_fb), rx_data);
+			break;
+
+			
+
+		case CAN_SUPERCAP_FEEDBACK_ID_BASE:
+			CAN_SuperCap_Decode(&(can_device.supercap_feedback), rx_data);
+			osThreadFlagsSet(can_device.supercap_alert, CAN_DEVICE_SIGNAL_SUPERCAP_RECV);
+			break;
+		default:
+			unknown_message++;
+			break;
+	}
+	
+	if (chasssis_motor_received == CAN_CHASSIS_MOTOR_NUM) {
+		osThreadFlagsSet(can_device.chassis_alert, CAN_DEVICE_SIGNAL_MOTOR_RECV);
+		chasssis_motor_received = 0;
+	}
+	
+	if (gimbal_motor_received == CAN_GIMBAL_MOTOR_NUM) {
+		osThreadFlagsSet(can_device.gimbal_alert, CAN_DEVICE_SIGNAL_MOTOR_RECV);
+		gimbal_motor_received = 0;
 	}
 }
-
 
 void RxFifo1MsgPendingCallback(void) {
 	CAN_RxHeaderTypeDef rx_header;
@@ -191,8 +232,13 @@ void RxFifo1MsgPendingCallback(void) {
 	
 	HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &rx_header, rx_data);
 	
-	if (rx_header.StdId == UWB_FEEDBACK_ID_BASE)
-		CAN_UWB_Decode(&u_fb, rx_data);
-		if (allert_id != NULL)
-			osThreadFlagsSet(allert_id, CAN_DEVICE_SIGNAL_UWB_RECV);
+	switch (rx_header.StdId) {
+		case CAN_UWB_FEEDBACK_ID_BASE:
+			CAN_UWB_Decode(&(can_device.uwb_feedback), rx_data);
+			osThreadFlagsSet(can_device.uwb_alert, CAN_DEVICE_SIGNAL_UWB_RECV);
+			break;
+		default:
+			unknown_message++;
+			break;
+	}
 }

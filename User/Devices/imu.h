@@ -34,6 +34,6 @@ typedef struct {
 	
 } IMU_t;
 
-Board_Status_t IMU_CaliGyro(IMU_t* himu);
-Board_Status_t IMU_Init(IMU_t* himu);
-Board_Status_t IMU_Update(IMU_t* himu);
+int IMU_CaliGyro(IMU_t* himu);
+int IMU_Init(IMU_t* himu);
+int IMU_Update(IMU_t* himu);

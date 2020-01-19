@@ -10,16 +10,16 @@
 #include "dma.h"
 
 
-Board_Status_t DR16_Init(DR16_t* pdr) {
+int DR16_Init(DR16_t* pdr) {
 	memset(pdr, 0, sizeof(DR16_t));
 	
-	return BOARD_OK;
+	return 0;
 }
 
 /* Made some modification. Be aware when debug.*/
-Board_Status_t DR16_Decode(DR16_t* pdr, const uint8_t* raw){
+int DR16_Parse(DR16_t* pdr, const uint8_t* raw){
 	if (pdr == NULL || raw == NULL)
-		return BOARD_FAIL;
+		return -1;
 		
 	pdr->rc.ch[0] = (raw[0] | (raw[1] << 8)) & 0x07ff;        
 	pdr->rc.ch[1] = ((raw[1] >> 3) | (raw[2] << 5)) & 0x07ff; 
@@ -44,5 +44,5 @@ Board_Status_t DR16_Decode(DR16_t* pdr, const uint8_t* raw){
 	pdr->rc.ch[3] -= RC_CH_VALUE_OFFSET;
 	pdr->rc.ch[4] -= RC_CH_VALUE_OFFSET;
 	
-	return BOARD_OK;
+	return 0;
 }
