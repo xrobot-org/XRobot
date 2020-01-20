@@ -478,7 +478,38 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 } 
 
 /* USER CODE BEGIN 1 */
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART1) {
+	  HAL_UART1_RxCpltCallback();
+	  
+  } else if (huart->Instance == USART2){
+	  HAL_UART2_RxCpltCallback();
+	  
+  }else if (huart->Instance == USART2){
+	  HAL_UART3_RxCpltCallback();
+	  
+  }else if (huart->Instance == USART2){
+	  HAL_UART4_RxCpltCallback();
+	  
+  }else if (huart->Instance == USART2){
+	  HAL_UART5_RxCpltCallback();
+	  
+  }else if (huart->Instance == USART2){
+	  HAL_UART6_RxCpltCallback();
+	  
+  }else if (huart->Instance == USART2){
+	  HAL_UART7_RxCpltCallback();
+  }
+}
 
+__weak void HAL_UART1_RxCpltCallback() {}
+__weak void HAL_UART2_RxCpltCallback() {}
+__weak void HAL_UART3_RxCpltCallback() {}
+__weak void HAL_UART4_RxCpltCallback() {}
+__weak void HAL_UART5_RxCpltCallback() {}
+__weak void HAL_UART6_RxCpltCallback() {}
+__weak void HAL_UART7_RxCpltCallback() {}
 /* USER CODE END 1 */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

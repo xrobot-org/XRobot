@@ -3,16 +3,39 @@
 
 */
 
+/* Includes ------------------------------------------------------------------*/
+/* Include 自身的头文件。*/
 #include "dr16.h"
 
-#include "main.h"
+/* Include 标准库。*/
+/* Include HAL相关的头文件。*/
 #include "usart.h"
 #include "dma.h"
 
+/* Include Component相关的头文件。*/
+/* Private define ------------------------------------------------------------*/
+#define DR16_UART_HANDLE huart1
+#define DR16_DMA_HANDLE hdma_usart1_rx
+#define SBUS_RX_BUF_NUM 36u
+/* Private macro -------------------------------------------------------------*/
+/* Private typedef -----------------------------------------------------------*/
+/* Private variables ---------------------------------------------------------*/
+static DR16_t* dr16;
+static bool inited = false;
+static uint8_t raw[SBUS_RX_BUF_NUM];
 
+/* Private function  ---------------------------------------------------------*/
+/* Exported functions --------------------------------------------------------*/
 int DR16_Init(DR16_t* pdr) {
-	memset(pdr, 0, sizeof(DR16_t));
+	if (pdr == NULL)
+		return -1;
+	if (inited)
+		return -1;
 	
+	inited = true;
+	
+	dr16 = pdr;
+	HAL_UART_Receive_DMA(&DR16_UART_HANDLE, raw, SBUS_RX_BUF_NUM);
 	return 0;
 }
 
@@ -46,3 +69,12 @@ int DR16_Parse(DR16_t* pdr, const uint8_t* raw){
 	
 	return 0;
 }
+
+void HAL_UART1_RxCpltCallback()
+{
+	HAL_UART_DMAPause(&DR16_UART_HANDLE);
+	DR16_Parse(dr16, raw);
+	HAL_UART_DMAResume(&DR16_UART_HANDLE);
+	osThreadFlagsSet(dr16->received_alert, DR16_SIGNAL_DATA_RECV);
+}
+

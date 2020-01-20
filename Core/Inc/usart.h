@@ -49,7 +49,13 @@ void MX_USART3_UART_Init(void);
 void MX_USART6_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
+void HAL_UART1_RxCpltCallback(void);
+void HAL_UART2_RxCpltCallback(void);
+void HAL_UART3_RxCpltCallback(void);
+void HAL_UART4_RxCpltCallback(void);
+void HAL_UART5_RxCpltCallback(void);
+void HAL_UART6_RxCpltCallback(void);
+void HAL_UART7_RxCpltCallback(void);
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus
