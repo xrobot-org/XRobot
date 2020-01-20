@@ -1,13 +1,20 @@
 /* 
-	MPU6500传感器。
+	MPU6500 + IST8310 组合惯性测量单元。
 
 */
 
+/* Includes ------------------------------------------------------------------*/
+/* Include 自身的头文件。*/
 #include "imu.h"
-#include "main.h"
 
+/* Include 标准库。*/
+/* Include HAL相关的头文件。*/
 #include "spi.h"
 
+/* Include Component相关的头文件。*/
+#include "user_math.h"
+
+/* Private define ------------------------------------------------------------*/
 #define MPU6500_SELF_TEST_XG        (0x00)
 #define MPU6500_SELF_TEST_YG        (0x01)
 #define MPU6500_SELF_TEST_ZG        (0x02)
@@ -131,16 +138,15 @@
 #define IST8310_ADDRESS 			(0x0E)
 #define IST8310_ID		 			(0x10)
 
-#ifndef M_PI
-#define M_PI 3.141592653589793238462643383f
-#endif
-
+/* Private macro -------------------------------------------------------------*/
 #define NSS_Reset()	HAL_GPIO_WritePin(SPI5_NSS_GPIO_Port, SPI5_NSS_Pin, GPIO_PIN_RESET)
 #define NSS_Set()	HAL_GPIO_WritePin(SPI5_NSS_GPIO_Port, SPI5_NSS_Pin, GPIO_PIN_SET)
 
 #define IST_Reset()	HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_RESET)
 #define IST_Set()	HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_SET)
 
+/* Private typedef -----------------------------------------------------------*/
+/* Private variables ---------------------------------------------------------*/
 static uint8_t tx, rx;
 static uint8_t buffer[20];
 
@@ -166,6 +172,7 @@ static __packed struct {
 	} magn;
 }raw;
 
+/* Private function  ---------------------------------------------------------*/
 /* Do NOT use hardware NSS. It doesn't implement the same logic. */
 static void MPU_Write(const uint8_t reg, uint8_t data) {
 	tx = (reg  & 0x7f);
@@ -212,6 +219,7 @@ static void IST_Read(const uint8_t reg, uint8_t* p_data) {
 	MPU_Read(MPU6500_I2C_SLV4_DI, p_data, 1);
 }
 
+/* Exported functions --------------------------------------------------------*/
 /* Remove gyro static error. Be careful of overflow. */
 int IMU_CaliGyro(IMU_t* himu) {
 	
@@ -324,9 +332,9 @@ int IMU_Update(IMU_t* himu) {
 	himu->data.accl.z = (float)raw.accl.z;
 	
 	/* Convert gyroscope raw to degrees/sec, then, to radians/sec */
-	himu->data.gyro.x = -(float)(raw.gyro.y - himu->cali.gyro_offset[1]) / 16.384f / 180.f * M_PI;
-	himu->data.gyro.y = (float)(raw.gyro.x - himu->cali.gyro_offset[0]) / 16.384f / 180.f * M_PI;
-	himu->data.gyro.z = (float)(raw.gyro.z - himu->cali.gyro_offset[2]) / 16.384f / 180.f * M_PI;
+	himu->data.gyro.x = -(float)(raw.gyro.y - himu->cali.gyro_offset[1]) / 16.384f / 180.f * PI;
+	himu->data.gyro.y = (float)(raw.gyro.x - himu->cali.gyro_offset[0]) / 16.384f / 180.f * PI;
+	himu->data.gyro.z = (float)(raw.gyro.z - himu->cali.gyro_offset[2]) / 16.384f / 180.f * PI;
 	
 	himu->data.magn.x = (float) ((raw.magn.x - himu->cali.magn_offset[0]) * himu->cali.magn_scale[0]);
 	himu->data.magn.y = (float) ((raw.magn.y - himu->cali.magn_offset[1]) * himu->cali.magn_scale[1]);
