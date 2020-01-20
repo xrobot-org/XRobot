@@ -1,13 +1,22 @@
 #pragma once
 
+/* Includes ------------------------------------------------------------------*/
+/* Include cmsis_os2.h头文件。*/
+#include "cmsis_os2.h"
+
+/* Include board.h头文件。*/
 #include "board.h"
 
+/* Exported constants --------------------------------------------------------*/
+/* Exported macro ------------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
 typedef enum {
     OLED_PEN_CLEAR = 0,
     OLED_PEN_WRITE = 1,
     OLED_PEN_INVERSION = 2,
 } OLED_PenTypedef;
 
+/* Exported functions prototypes ---------------------------------------------*/
 int OLED_DisplayOn(void);
 int OLED_DisplayOff(void);
 int OLED_Refresh(void);

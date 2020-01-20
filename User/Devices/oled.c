@@ -1,13 +1,38 @@
 /* 
 	OLED显示模块。
+	
+	使用SPI通信时，需要#define OLED_USE_SPI
+	使用I2C通信时，需要#define OLED_USE_I2C
 
 */
 
-
+/* Includes ------------------------------------------------------------------*/
+/* Include 自身的头文件。*/
 #include "oled.h"
 
-#include "main.h"
+/* Include 标准库。*/
+/* Include HAL相关的头文件。*/
+#ifdef OLED_USE_SPI
 #include "spi.h"
+
+#elif defined OLED_USE_I2C
+#include "i2c.h"
+
+#endif
+
+
+/* Include Component相关的头文件。*/
+/* Private define ------------------------------------------------------------*/
+#ifdef OLED_USE_SPI
+#define OLED_SPI_HANDLE hspi1
+
+#elif defined OLED_USE_I2C
+#define OLED_I2C_HANDLE hi2c1
+
+#endif
+
+/* Private macro -------------------------------------------------------------*/
+#ifdef OLED_USE_SPI
 
 #define OLED_CMD_Set()	HAL_GPIO_WritePin(OLED_DC_GPIO_Port, OLED_DC_Pin, GPIO_PIN_SET)
 #define OLED_CMD_Clr()	HAL_GPIO_WritePin(OLED_DC_GPIO_Port, OLED_DC_Pin, GPIO_PIN_RESET)
@@ -15,7 +40,12 @@
 #define OLED_RST_Set()	HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_SET)
 #define OLED_RST_Clr()	HAL_GPIO_WritePin(OLED_RST_GPIO_Port, OLED_RST_Pin, GPIO_PIN_RESET)
 
+#elif defined OLED_USE_I2C
+#define OLED_I2C_HANDLE hi2c1
 
+#endif
+
+/* Private typedef -----------------------------------------------------------*/
 typedef enum {
 	OLED_WriteCMD = 0,
 	OLED_WriteData = 1,
@@ -26,6 +56,7 @@ typedef struct {
 	uint8_t page;
 }OLED_Cursor_t;
 
+/* Private variables ---------------------------------------------------------*/
 const uint8_t oled_font[95][8] = {
 	{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,}, /* " ", 0 */
 	{0x00,0x00,0x00,0xcf,0xcf,0x00,0x00,0x00,}, /* "!", 1 */
@@ -183,10 +214,12 @@ static uint8_t oled_gram[8][128] = {
 
 OLED_Cursor_t oled_cursor = {0};
 
-static bool modified = true;
+static __IO bool modified = true;
 
+/* Private function -----------------------------------------------*/
 static void OLED_WriteByte(uint8_t data, OLED_Write_t type) {
-
+	
+#ifdef OLED_USE_SPI
 	switch(type) {
 		case OLED_WriteCMD:
 			OLED_CMD_Clr();
@@ -196,15 +229,39 @@ static void OLED_WriteByte(uint8_t data, OLED_Write_t type) {
 			OLED_CMD_Set();
 		break;
 	}
-	
-#ifdef OLED_USE_SPI
-	HAL_SPI_Transmit(&hspi1, &data, 1, 10);
+	HAL_SPI_Transmit_DMA(&OLED_SPI_HANDLE, &data, 1);
 	
 #elif defined OLED_USE_I2C
+	uint8_t cmd_data[2];
 	
+	switch(type) {
+		case OLED_WriteCMD:
+			cmd_data[0] = 0x00;
+		break;
+		
+		case OLED_WriteData:
+			cmd_data[0] = 0x40;
+		break;
+	}
+    cmd_data[1] = data;
+	HAL_I2C_Master_Transmit_DMA(OLED_I2C, OLED_I2C_ADDRESS, cmd_data, 2);
 #endif
 }
 
+static void OLED_WriteSequenceData(uint8_t *data, uint16_t len) {
+#ifdef OLED_USE_SPI
+	OLED_CMD_Set();
+	HAL_SPI_Transmit_DMA(&OLED_SPI_HANDLE, data, len);
+	
+#elif defined OLED_USE_I2C
+	uint8_t cmd_data[2];
+	cmd_data[0] = 0x40;
+    cmd_data[1] = data;
+	HAL_I2C_Master_Transmit_DMA(OLED_I2C, OLED_I2C_ADDRESS, cmd_data, 2);
+#endif
+}
+
+/* Exported functions --------------------------------------------------------*/
 int OLED_DisplayOn(void) {
 	OLED_WriteByte(0x8d, OLED_WriteCMD);
 	OLED_WriteByte(0x14, OLED_WriteCMD);
@@ -225,13 +282,10 @@ int OLED_Refresh(void) {
 			OLED_WriteByte((0xb0 + i), OLED_WriteCMD); /* Set page address y. */
 			OLED_WriteByte((2 & 0x0f), OLED_WriteCMD); /* Set column low address. */
 			OLED_WriteByte(((2 >> 4) + 0x10), OLED_WriteCMD); /* Set column high address. */
-			for (uint8_t n = 0; n < 128; n++) {
-				OLED_WriteByte(oled_gram[i][n], OLED_WriteData);
-			}
+			OLED_WriteSequenceData(oled_gram[i], 128);
 		}
 		modified = false;
 	}
-	
 	return 0;
 }
 
