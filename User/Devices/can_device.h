@@ -1,14 +1,10 @@
 #pragma once
+
 /* Includes ------------------------------------------------------------------*/
 /* Include cmsis_os2.h头文件。*/
 #include "cmsis_os2.h"
 
-/* Include board.h头文件。*/
-#include "board.h"
-
 /* Exported constants --------------------------------------------------------*/
-
-/* Exported defines ----------------------------------------------------------*/
 /* Motor */
 #define CAN_GM6020_FEEDBACK_ID_BASE				0x205
 #define CAN_GM6020_RECEIVE_ID_BASE				0x1ff
@@ -43,11 +39,10 @@
 #define CAN_SUPERCAP_FEEDBACK_ID_BASE				0x000
 #define CAN_SUPERCAP_RECEIVE_ID_BASE				0x000
 
-/* Exported macro ------------------------------------------------------------*/
 #define CAN_DEVICE_SIGNAL_MOTOR_RECV					(1u<<0)
 #define CAN_DEVICE_SIGNAL_UWB_RECV						(1u<<1)
 #define CAN_DEVICE_SIGNAL_SUPERCAP_RECV					(1u<<2)
-
+/* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Motor */
 typedef enum
@@ -124,7 +119,9 @@ typedef struct
 int CAN_DeviceInit(CAN_Device_t* cd);
 CAN_Device_t* CAN_GetDevice(void);
 
-int CAN_MotorControl(float* speed);
+int CAN_Motor_ControlChassis(float m1_speed, float m2_speed, float m3_speed, float m4_speed);
+int CAN_Motor_ControlGimbal(float yaw_speed, float pitch_speed);
+int CAN_Motor_ControlShoot(float fric_speed, float trig_speed);
 
 int CAN_MotorQuickIdSetMode(void);
 int CAN_SuperCapControl(CAN_SuperCapControl_t* sc_ctrl);
