@@ -6,6 +6,7 @@
 /* Private define ------------------------------------------------------------*/
 #define OLED_SPI SPI1
 #define IMU_SPI SPI5
+/* #define XXX_SPI SPIX */
 
 /* Private macro -------------------------------------------------------------*/
 #define IMU_SPI_NSS_Reset()	HAL_GPIO_WritePin(SPI5_NSS_GPIO_Port, SPI5_NSS_Pin, GPIO_PIN_RESET)
@@ -134,6 +135,13 @@ void HAL_SPI_AbortCpltCallback(SPI_HandleTypeDef *hspi) {
 			bsp_spi_callback.imu.AbortCpltCallback();
 		}
     }
+	/* 
+	else if (hspi->Instance == XXX_SPI) {
+		if (bsp_spi_callback.xxx.AbortCpltCallback != NULL) {
+			bsp_spi_callback.xxx.AbortCpltCallback();
+		}
+    }
+	*/
 }
 
 /* Exported functions --------------------------------------------------------*/
@@ -203,6 +211,38 @@ int BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*call
                     return -1;
             }
             break;
+		/*	
+		case BSP_SPI_XXX:
+            switch (type) {
+                case BSP_SPI_TX_COMPLETE_CB:
+                    bsp_spi_callback.xxx.TxCpltCallback = callback;
+                    break;
+                case BSP_SPI_RX_COMPLETE_CB:
+                    bsp_spi_callback.xxx.RxCpltCallback = callback;
+                    break;
+                case BSP_SPI_TX_RX_COMPLETE_CB:
+                    bsp_spi_callback.xxx.TxRxCpltCallback = callback;
+                    break;
+                case BSP_SPI_TX_HALF_COMPLETE_CB:
+                    bsp_spi_callback.xxx.TxHalfCpltCallback = callback;
+                    break;
+                case BSP_SPI_RX_HALF_COMPLETE_CB:
+                    bsp_spi_callback.xxx.RxHalfCpltCallback = callback;
+                    break;
+                case BSP_SPI_TX_RX_HALF_COMPLETE_CB:
+                    bsp_spi_callback.xxx.TxRxHalfCpltCallback = callback;
+                    break;
+                case BSP_SPI_ERROR_CB:
+                    bsp_spi_callback.xxx.ErrorCallback = callback;
+                    break;
+                case BSP_SPI_ABORT_CB:
+                    bsp_spi_callback.xxx.AbortCpltCallback = callback;
+                    break; 
+                default:
+                    return -1;
+            }
+            break;
+			*/
     }
     return 0;
 }
@@ -221,6 +261,12 @@ int BSP_SPI_Transmit(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
         case BSP_SPI_OLED:
             HAL_SPI_Transmit_DMA(&hspi1, data, len);
             break;
+		
+		/*
+		case BSP_SPI_XXX:
+            HAL_SPI_Transmit_DMA(&hspix, data, len);
+            break;
+		*/
     }
     return 0;
 }
@@ -241,6 +287,12 @@ int BSP_SPI_Receive(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
 
         case BSP_SPI_OLED:
             return -1;
+		
+		/*
+		case BSP_SPI_XXX:
+            HAL_SPI_Receive(&hspix, data, len);
+            break;
+		*/
     }
     return 0;
 }

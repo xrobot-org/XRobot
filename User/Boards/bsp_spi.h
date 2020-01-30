@@ -12,6 +12,7 @@
 typedef enum {
     BSP_SPI_OLED,
     BSP_SPI_IMU,
+	/* BSP_SPI_XXX,*/
 } BSP_SPI_t;
 
 typedef enum {
