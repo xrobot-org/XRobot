@@ -30,20 +30,48 @@ int PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min) {
 
 
 int PID_SetParameters(PID_t *pid, float kp, float ki, float kd, float integral_limit, float output_limit) {
+	int ret = 0;
+	
 	if (pid == NULL)
 		return -1;
 	
-	pid->kp = kp;
-	pid->ki = ki;
-	pid->kd = kd;
-	pid->integral_limit = integral_limit;
-	pid->output_limit = output_limit;
+	if (isfinite(kp))
+		pid->kp = kp;
+	else
+		ret = -1;
 
-	return 0;
+	if (isfinite(ki))
+		pid->ki = ki;
+	else
+		ret = -1;
+
+	if (isfinite(kd))
+		pid->kd = kd;
+	else
+		ret = -1;
+
+	if (isfinite(integral_limit))
+		pid->integral_limit = integral_limit;
+	else
+		ret = -1;
+
+	if (isfinite(output_limit))
+		pid->output_limit = output_limit;
+	else
+		ret = -1;
+
+	return ret;
 }
 
 float PID_Calculate(PID_t *pid, float sp, float val, float val_dot, float dt)
-{
+{	
+	if (pid == NULL)
+		return pid->last_output;
+	
+	if (isinf(sp) || isinf(val) || isinf(val_dot) || isinf(dt)) {
+		return pid->last_output;
+	}
+	
 	float i, d;
 
 	/* current error value */
@@ -64,7 +92,10 @@ float PID_Calculate(PID_t *pid, float sp, float val, float val_dot, float dt)
 	} else {
 		d = 0.0f;
 	}
-
+	
+	if (!isfinite(d))
+		d = 0.0f;
+	
 	/* calculate PD output */
 	float output = (error * pid->kp) + (d * pid->kd);
 
@@ -73,10 +104,12 @@ float PID_Calculate(PID_t *pid, float sp, float val, float val_dot, float dt)
 		i = pid->integral + (error * dt);
 
 		/* check for saturation */
-		if ((pid->output_limit < SIGMA || (fabsf(output + (i * pid->ki)) <= pid->output_limit)) &&
-			fabsf(i) <= pid->integral_limit) {
-			/* not saturated, use new integral value */
-			pid->integral = i;
+		if (isfinite(i)) {
+			if ((pid->output_limit < SIGMA || (fabsf(output + (i * pid->ki)) <= pid->output_limit)) &&
+				fabsf(i) <= pid->integral_limit) {
+				/* not saturated, use new integral value */
+				pid->integral = i;
+			}
 		}
 
 		/* add I component to output */
@@ -84,17 +117,18 @@ float PID_Calculate(PID_t *pid, float sp, float val, float val_dot, float dt)
 	}
 
 	/* limit output */
-	if (pid->output_limit > SIGMA) {
-		if (output > pid->output_limit) {
-			output = pid->output_limit;
+	if (isfinite(output)) {
+		if (pid->output_limit > SIGMA) {
+			if (output > pid->output_limit) {
+				output = pid->output_limit;
 
-		} else if (output < -pid->output_limit) {
-			output = -pid->output_limit;
+			} else if (output < -pid->output_limit) {
+				output = -pid->output_limit;
+			}
 		}
+		
+		pid->last_output = output;
 	}
-
-	pid->last_output = output;
-
 
 	return pid->last_output;
 }

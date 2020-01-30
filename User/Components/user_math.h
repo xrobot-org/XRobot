@@ -8,6 +8,7 @@
 
 #include "stm32f427xx.h"
 #include <arm_math.h>
+#include <float.h>
 
 
 float InvSqrt(float x);
