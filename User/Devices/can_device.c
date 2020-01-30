@@ -1,48 +1,46 @@
 /* 
-	CAN总线上的设备。
-	将所有CAN总线上挂载的设备抽象成一个设备进行配置和控制。
+	CAN总线上的设
+	将所有CAN总线上挂载的设抽象成一设进行配和控制
 */
 
 /* Includes ------------------------------------------------------------------*/
-/* Include 自身的头文件。*/
 #include "can_device.h"
 
-/* Include 标准库。*/
+/* Include 标准库*/
 #include <stdbool.h>
 #include <string.h>
 
-/* Include HAL相关的头文件。*/
+/* Include HAL相关的头文件*/
 #include "can.h"
 
-/* Include Component相关的头文件。*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static CAN_Device_t* can_device;
+static CAN_Device_t *can_device;
 static uint8_t chasssis_motor_received = 0;
 static uint8_t gimbal_motor_received = 0;
 static uint32_t unknown_message = 0;
 static bool inited = false;
 
 /* Private function  ---------------------------------------------------------*/
-static void CAN_Motor_Decode(CAN_MotorFeedback_t* fb, const uint8_t* raw) {
+static void CAN_Motor_Decode(CAN_MotorFeedback_t *fb, const uint8_t *raw) {
 	fb->rotor_angle    = ((raw[0] << 8) | raw[1]);
 	fb->rotor_speed    = ((raw[2] << 8) | raw[3]);
 	fb->torque_current = ((raw[4] << 8) | raw[5]);
 	fb->temp           =   raw[6];
 }
 
-static void CAN_UWB_Decode(CAN_UWBFeedback_t* fb, const uint8_t* raw) {
+static void CAN_UWB_Decode(CAN_UWBFeedback_t *fb, const uint8_t *raw) {
 	memcmp(fb->raw,raw,8);
 }
 
-static void CAN_SuperCap_Decode(CAN_SuperCapFeedback_t* fb, const uint8_t* raw) {
+static void CAN_SuperCap_Decode(CAN_SuperCapFeedback_t *fb, const uint8_t *raw) {
 	
 }
 
 /* Exported functions --------------------------------------------------------*/
-int CAN_DeviceInit(CAN_Device_t* cd) {
+int CAN_DeviceInit(CAN_Device_t *cd) {
 	if (cd == NULL)
 		return -1;
 	if (inited)
@@ -80,7 +78,7 @@ int CAN_DeviceInit(CAN_Device_t* cd) {
 	return 0;
 }
 
-CAN_Device_t* CAN_GetDevice(void) {
+CAN_Device_t *CAN_GetDevice(void) {
 	if (inited) {
 		return can_device;
 	}
@@ -167,7 +165,7 @@ int CAN_Motor_ControlShoot(float fric_speed, float trig_speed) {
 	return 0;
 }
 
-int CAN_Motor_3508QuickIdSetMode(void) {
+int CAN_Motor_QuickIdSetMode(void) {
 	CAN_TxHeaderTypeDef tx_header;
 
 	tx_header.StdId = CAN_M3508_M2006_ID_SETTING_ID;
@@ -223,7 +221,7 @@ void RxFifo0MsgPendingCallback(void) {
 
 		case CAN_SUPERCAP_FEEDBACK_ID_BASE:
 			CAN_SuperCap_Decode(&(can_device->supercap_feedback), rx_data);
-			osThreadFlagsSet(can_device->supercap_alert, CAN_DEVICE_SIGNAL_SUPERCAP_RECV);
+			osSignalSet(can_device->supercap_alert, CAN_DEVICE_SIGNAL_SUPERCAP_RECV);
 			break;
 		
 		default:
@@ -232,12 +230,12 @@ void RxFifo0MsgPendingCallback(void) {
 	}
 	
 	if (chasssis_motor_received == CAN_CHASSIS_MOTOR_NUM) {
-		osThreadFlagsSet(can_device->chassis_alert, CAN_DEVICE_SIGNAL_MOTOR_RECV);
+		osSignalSet(can_device->chassis_alert, CAN_DEVICE_SIGNAL_CHASSIS_RECV);
 		chasssis_motor_received = 0;
 	}
 	
 	if (gimbal_motor_received == CAN_GIMBAL_MOTOR_NUM) {
-		osThreadFlagsSet(can_device->gimbal_alert, CAN_DEVICE_SIGNAL_MOTOR_RECV);
+		osSignalSet(can_device->gimbal_alert, CAN_DEVICE_SIGNAL_GIMBAL_RECV);
 		gimbal_motor_received = 0;
 	}
 }
@@ -251,7 +249,7 @@ void RxFifo1MsgPendingCallback(void) {
 	switch (rx_header.StdId) {
 		case CAN_UWB_FEEDBACK_ID_BASE:
 			CAN_UWB_Decode(&(can_device->uwb_feedback), rx_data);
-			osThreadFlagsSet(can_device->uwb_alert, CAN_DEVICE_SIGNAL_UWB_RECV);
+			osSignalSet(can_device->uwb_alert, CAN_DEVICE_SIGNAL_UWB_RECV);
 			break;
 		
 		default:

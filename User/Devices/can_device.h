@@ -1,8 +1,9 @@
 #pragma once
 
+
 /* Includes ------------------------------------------------------------------*/
-/* Include cmsis_os2.h头文件。*/
-#include "cmsis_os2.h"
+/* Include cmsis_os.h头文件 */
+#include "cmsis_os.h"
 
 /* Exported constants --------------------------------------------------------*/
 /* Motor */
@@ -23,7 +24,8 @@
 #define CAN_CHASSIS_MOTOR_NUM			4
 #define CAN_GIMBAL_MOTOR_NUM			5
 
-#define CAN_MOTOR_MAX_ANGLE			8191
+#define CAN_MOTOR_MAX_ENCODER			8191
+#define CAN_MOTOR_ENCODER_TO_RAD		8191
 
 #define CAN_MOTOR_CAN_RX_FIFO		CAN_RX_FIFO0
 
@@ -39,9 +41,11 @@
 #define CAN_SUPERCAP_FEEDBACK_ID_BASE				0x000
 #define CAN_SUPERCAP_RECEIVE_ID_BASE				0x000
 
-#define CAN_DEVICE_SIGNAL_MOTOR_RECV					(1u<<0)
-#define CAN_DEVICE_SIGNAL_UWB_RECV						(1u<<1)
-#define CAN_DEVICE_SIGNAL_SUPERCAP_RECV					(1u<<2)
+#define CAN_DEVICE_SIGNAL_CHASSIS_RECV					(1u<<0)
+#define CAN_DEVICE_SIGNAL_GIMBAL_RECV					(1u<<1)
+#define CAN_DEVICE_SIGNAL_SHOOT_RECV					(1u<<2)
+#define CAN_DEVICE_SIGNAL_UWB_RECV						(1u<<3)
+#define CAN_DEVICE_SIGNAL_SUPERCAP_RECV					(1u<<4)
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Motor */
@@ -96,10 +100,11 @@ typedef struct {
 
 typedef struct
 {
-	osThreadId_t chassis_alert;
-	osThreadId_t gimbal_alert;
-	osThreadId_t uwb_alert;
-	osThreadId_t supercap_alert;
+	osThreadId chassis_alert;
+	osThreadId gimbal_alert;
+	osThreadId shoot_alert;
+	osThreadId uwb_alert;
+	osThreadId supercap_alert;
 	
 	CAN_MotorFeedback_t chassis_motor_fb[4];
 	
@@ -116,13 +121,13 @@ typedef struct
 
 
 /* Exported functions prototypes ---------------------------------------------*/
-int CAN_DeviceInit(CAN_Device_t* cd);
-CAN_Device_t* CAN_GetDevice(void);
+int CAN_DeviceInit(CAN_Device_t *cd);
+CAN_Device_t *CAN_GetDevice(void);
 
 int CAN_Motor_ControlChassis(float m1_speed, float m2_speed, float m3_speed, float m4_speed);
 int CAN_Motor_ControlGimbal(float yaw_speed, float pitch_speed);
 int CAN_Motor_ControlShoot(float fric_speed, float trig_speed);
 
-int CAN_MotorQuickIdSetMode(void);
-int CAN_SuperCapControl(CAN_SuperCapControl_t* sc_ctrl);
+int CAN_Motor_QuickIdSetMode(void);
+int CAN_SuperCapControl(CAN_SuperCapControl_t *sc_ctrl);
 

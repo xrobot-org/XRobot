@@ -20,5 +20,5 @@ typedef struct {
 } KalmanFilter_t;
 
 
-void KalmanFilter_Init(KalmanFilter_t* kal);
-double KalmanFilter_Update(KalmanFilter_t* kal, double newAngle, double newRate, double dt);
+void KalmanFilter_Init(KalmanFilter_t *kal);
+double KalmanFilter_Update(KalmanFilter_t *kal, double newAngle, double newRate, double dt);

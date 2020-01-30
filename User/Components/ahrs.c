@@ -1,8 +1,6 @@
 /* 
 	开源的AHRS算法。
 	
-	考虑使用Botch的BSXlite 
-
 */
 
 #include "ahrs.h"
@@ -22,47 +20,49 @@ static float two_ki = TWO_KI;
 static float integral_fb_x = 0.f,  integral_fb_y = 0.f, integral_fb_z = 0.f; 
 
 
-static void AHRS_UpdateEuler(AHRS_t* hahrs) {
-	if (hahrs == NULL)
-		return;
+static int AHRS_UpdateEuler(AHRS_t *ahrs) {
+	if (ahrs == NULL)
+		return -1;
 	
-	float q0 = hahrs->q0;
-	float q1 = hahrs->q1;
-	float q2 = hahrs->q2;
-	float q3 = hahrs->q3;
+	float q0 = ahrs->q0;
+	float q1 = ahrs->q1;
+	float q2 = ahrs->q2;
+	float q3 = ahrs->q3;
 	
-	hahrs->rot_matrix[0][0] = q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3;
-	hahrs->rot_matrix[0][1] = 2.f * (q1 * q2 + q0 * q3);
-	hahrs->rot_matrix[0][2] = 2.f * (q1 * q3 - q0 * q2);
-	hahrs->rot_matrix[1][0] = 2.f * (q1 * q2 - q0 * q3);
-	hahrs->rot_matrix[1][1] = q0 * q0 - q1 * q1 + q2 * q2 - q3 * q3;
-	hahrs->rot_matrix[1][2] = 2.f * (q2 * q3 + q0 * q1);
-	hahrs->rot_matrix[2][0] = 2.f * (q1 * q3 + q0 * q2);
-	hahrs->rot_matrix[2][1] = 2.f * (q2 * q3 - q0 * q1);
-	hahrs->rot_matrix[2][2] = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
+	ahrs->rot_matrix[0][0] = q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3;
+	ahrs->rot_matrix[0][1] = 2.f * (q1 * q2 + q0 * q3);
+	ahrs->rot_matrix[0][2] = 2.f * (q1 * q3 - q0 * q2);
+	ahrs->rot_matrix[1][0] = 2.f * (q1 * q2 - q0 * q3);
+	ahrs->rot_matrix[1][1] = q0 * q0 - q1 * q1 + q2 * q2 - q3 * q3;
+	ahrs->rot_matrix[1][2] = 2.f * (q2 * q3 + q0 * q1);
+	ahrs->rot_matrix[2][0] = 2.f * (q1 * q3 + q0 * q2);
+	ahrs->rot_matrix[2][1] = 2.f * (q2 * q3 - q0 * q1);
+	ahrs->rot_matrix[2][2] = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
 	
-	hahrs->eulr.rol = atan2f(hahrs->rot_matrix[1][2], hahrs->rot_matrix[2][2]) * 180.f / PI;
-	hahrs->eulr.pit = asinf(hahrs->rot_matrix[0][2]) * 180.f / PI;
-	hahrs->eulr.yaw = atan2f(hahrs->rot_matrix[0][1], hahrs->rot_matrix[0][0]) * 180.f / PI;
+	ahrs->eulr.rol = atan2f(ahrs->rot_matrix[1][2], ahrs->rot_matrix[2][2]) * 180.f / PI;
+	ahrs->eulr.pit = asinf(ahrs->rot_matrix[0][2]) * 180.f / PI;
+	ahrs->eulr.yaw = atan2f(ahrs->rot_matrix[0][1], ahrs->rot_matrix[0][0]) * 180.f / PI;
+	
+	return 0;
 }
 
-static void AHRS_UpdateIMU(AHRS_t* hahrs, const IMU_t* himu) {
-	if (hahrs == NULL || himu == NULL)
-		return;
+static int AHRS_UpdateIMU(AHRS_t* ahrs, const IMU_t* imu) {
+	if (ahrs == NULL || imu == NULL)
+		return -1;
 	
-	float ax = himu->data.accl.x;
-	float ay = himu->data.accl.y;
-	float az = himu->data.accl.z;
+	float ax = imu->data.accl.x;
+	float ay = imu->data.accl.y;
+	float az = imu->data.accl.z;
 	
-	float gx = himu->data.gyro.x;
-	float gy = himu->data.gyro.y;
-	float gz = himu->data.gyro.z;
+	float gx = imu->data.gyro.x;
+	float gy = imu->data.gyro.y;
+	float gz = imu->data.gyro.z;
 	
 	
-	float q0 = hahrs->q0;
-	float q1 = hahrs->q1;
-	float q2 = hahrs->q2;
-	float q3 = hahrs->q3;
+	float q0 = ahrs->q0;
+	float q1 = ahrs->q1;
+	float q2 = ahrs->q2;
+	float q3 = ahrs->q3;
 	
 	/* Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisation) */
 	if(!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
@@ -86,9 +86,9 @@ static void AHRS_UpdateIMU(AHRS_t* hahrs, const IMU_t* himu) {
 		/* Compute and apply integral feedback if enabled */
 		if(two_ki > 0.0f) {
 			/* integral error scaled by Ki */
-			integral_fb_x += two_ki * halfex * hahrs->inv_sample_freq;
-			integral_fb_y += two_ki * halfey * hahrs->inv_sample_freq;
-			integral_fb_z += two_ki * halfez * hahrs->inv_sample_freq;
+			integral_fb_x += two_ki * halfex * ahrs->inv_sample_freq;
+			integral_fb_y += two_ki * halfey * ahrs->inv_sample_freq;
+			integral_fb_z += two_ki * halfez * ahrs->inv_sample_freq;
 			
 			/* apply integral feedback */
 			gx += integral_fb_x;
@@ -108,7 +108,7 @@ static void AHRS_UpdateIMU(AHRS_t* hahrs, const IMU_t* himu) {
 	
 	/* Integrate rate of change of quaternion */
 	
-	#if 0
+#if 0
 	/* pre-multiply common factors */
 	gx *= (0.5f * inv_sample_freq);		
 	gy *= (0.5f * inv_sample_freq);
@@ -122,72 +122,84 @@ static void AHRS_UpdateIMU(AHRS_t* hahrs, const IMU_t* himu) {
 	q2 += (qa * gy - qb * gz + q3 * gx);
 	q3 += (qa * gz + qb * gy - qc * gx);
 	
-	#else
+#else
 	
 	float dq0 = 0.5f*(-q1 * gx - q2 * gy - q3 * gz);
 	float dq1 = 0.5f*(q0 * gx + q2 * gz - q3 * gy);
 	float dq2 = 0.5f*(q0 * gy - q1 * gz + q3 * gx);
 	float dq3 = 0.5f*(q0 * gz + q1 * gy - q2 * gx); 
 
-	hahrs->q0 += hahrs->inv_sample_freq * dq0;
-	hahrs->q1 += hahrs->inv_sample_freq * dq1;
-	hahrs->q2 += hahrs->inv_sample_freq * dq2;
-	hahrs->q3 += hahrs->inv_sample_freq * dq3;
+	ahrs->q0 += ahrs->inv_sample_freq * dq0;
+	ahrs->q1 += ahrs->inv_sample_freq * dq1;
+	ahrs->q2 += ahrs->inv_sample_freq * dq2;
+	ahrs->q3 += ahrs->inv_sample_freq * dq3;
 	
-	#endif
+#endif
 	
 	/* Normalise quaternion */
-	float recip_norm = InvSqrt(hahrs->q0 * hahrs->q0 + hahrs->q1 * hahrs->q1 + hahrs->q2 * hahrs->q2 + hahrs->q3 * hahrs->q3);
-	hahrs->q0 *= recip_norm;
-	hahrs->q1 *= recip_norm;
-	hahrs->q2 *= recip_norm;
-	hahrs->q3 *= recip_norm;
+	float recip_norm = InvSqrt(ahrs->q0 * ahrs->q0 + ahrs->q1 * ahrs->q1 + ahrs->q2 * ahrs->q2 + ahrs->q3 * ahrs->q3);
+	ahrs->q0 *= recip_norm;
+	ahrs->q1 *= recip_norm;
+	ahrs->q2 *= recip_norm;
+	ahrs->q3 *= recip_norm;
 	
-	AHRS_UpdateEuler(hahrs);
+	AHRS_UpdateEuler(ahrs);
+	
+	return 0;
 }
 
-void AHRS_Init(AHRS_t* hahrs, const IMU_t* himu, float sample_freq) {
-	if (hahrs == NULL || himu == NULL)
-		return;
+int AHRS_Init(AHRS_t *ahrs, const IMU_t *imu, float sample_freq) {
+	if (ahrs == NULL || imu == NULL)
+		return -1;
 	
-	hahrs->inv_sample_freq = 1.0f / sample_freq;
+	ahrs->inv_sample_freq = 1.0f / sample_freq;
 	
-	
-	if((himu->data.magn.x == 0.0f) && (himu->data.magn.y == 0.0f) && (himu->data.magn.z == 0.0f)) {
-		hahrs->q0 = 0.794987798f;
-		hahrs->q1 = 0.00132370531f;
-		hahrs->q2 = -0.0234376211f;
-		hahrs->q3 = 0.608368337f;
+#if 0
+	if((imu->data.magn.x == 0.0f) && (imu->data.magn.y == 0.0f) && (imu->data.magn.z == 0.0f)) {
+		ahrs->q0 = 0.794987798f;
+		ahrs->q1 = 0.00132370531f;
+		ahrs->q2 = -0.0234376211f;
+		ahrs->q3 = 0.608368337f;
 	}
+#else
+	
+	ahrs->q0 = 1.f;
+	ahrs->q1 = 0.f;
+	ahrs->q2 = 0.f;
+	ahrs->q3 = 0.f;
+	
+#endif
+	
+	return 0;
 }
 
 /* Pass the sensor data in a NED(North East Down) reference frame. Rotation can be added. */
-void AHRS_Update(AHRS_t* hahrs, const IMU_t* himu) {
-	if (hahrs == NULL || himu == NULL)
-		return;
+int AHRS_Update(AHRS_t *ahrs, const IMU_t *imu) {
+	if (ahrs == NULL || imu == NULL)
+		return -1;
 	
-	float ax = himu->data.accl.x;
-	float ay = himu->data.accl.y;
-	float az = himu->data.accl.z;
+	float ax = imu->data.accl.x;
+	float ay = imu->data.accl.y;
+	float az = imu->data.accl.z;
 	
-	float gx = himu->data.gyro.x;
-	float gy = himu->data.gyro.y;
-	float gz = himu->data.gyro.z;
+	float gx = imu->data.gyro.x;
+	float gy = imu->data.gyro.y;
+	float gz = imu->data.gyro.z;
 	
-	float mx = himu->data.magn.z;
-	float my = himu->data.magn.z;
-	float mz = himu->data.magn.z;
+	float mx = imu->data.magn.z;
+	float my = imu->data.magn.z;
+	float mz = imu->data.magn.z;
 	
-	float q0 = hahrs->q0;
-	float q1 = hahrs->q1;
-	float q2 = hahrs->q2;
-	float q3 = hahrs->q3;
+	float q0 = ahrs->q0;
+	float q1 = ahrs->q1;
+	float q2 = ahrs->q2;
+	float q3 = ahrs->q3;
 	
 	
 	/* Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation) */
 	if((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f)) {
-		AHRS_UpdateIMU(hahrs, himu);
-		return;
+		AHRS_UpdateIMU(ahrs, imu);
+		return 0;
 	}
 	
 	/* Normalise magnetometer measurement */
@@ -247,9 +259,9 @@ void AHRS_Update(AHRS_t* hahrs, const IMU_t* himu) {
 		/* Compute and apply integral feedback if enabled */
 		if(two_ki > 0.0f) {
 			/* integral error scaled by Ki */
-			integral_fb_x += two_ki * halfex * hahrs->inv_sample_freq;
-			integral_fb_y += two_ki * halfey * hahrs->inv_sample_freq;
-			integral_fb_z += two_ki * halfez * hahrs->inv_sample_freq;
+			integral_fb_x += two_ki * halfex * ahrs->inv_sample_freq;
+			integral_fb_y += two_ki * halfey * ahrs->inv_sample_freq;
+			integral_fb_z += two_ki * halfez * ahrs->inv_sample_freq;
 			
 			/* apply integral feedback */
 			gx += integral_fb_x;
@@ -291,19 +303,20 @@ void AHRS_Update(AHRS_t* hahrs, const IMU_t* himu) {
 	float dq2 = 0.5f*(q0 * gy - q1 * gz + q3 * gx);
 	float dq3 = 0.5f*(q0 * gz + q1 * gy - q2 * gx); 
 
-	hahrs->q0 += hahrs->inv_sample_freq * dq0;
-	hahrs->q1 += hahrs->inv_sample_freq * dq1;
-	hahrs->q2 += hahrs->inv_sample_freq * dq2;
-	hahrs->q3 += hahrs->inv_sample_freq * dq3;
+	ahrs->q0 += ahrs->inv_sample_freq * dq0;
+	ahrs->q1 += ahrs->inv_sample_freq * dq1;
+	ahrs->q2 += ahrs->inv_sample_freq * dq2;
+	ahrs->q3 += ahrs->inv_sample_freq * dq3;
 	
 	#endif 
 	
 	/* Normalise quaternion */
-	recip_norm = InvSqrt(hahrs->q0 * hahrs->q0 + hahrs->q1 * hahrs->q1 + hahrs->q2 * hahrs->q2 + hahrs->q3 * hahrs->q3);
-	hahrs->q0 *= recip_norm;
-	hahrs->q1 *= recip_norm;
-	hahrs->q2 *= recip_norm;
-	hahrs->q3 *= recip_norm;
+	recip_norm = InvSqrt(ahrs->q0 * ahrs->q0 + ahrs->q1 * ahrs->q1 + ahrs->q2 * ahrs->q2 + ahrs->q3 * ahrs->q3);
+	ahrs->q0 *= recip_norm;
+	ahrs->q1 *= recip_norm;
+	ahrs->q2 *= recip_norm;
+	ahrs->q3 *= recip_norm;
 	
-	AHRS_UpdateEuler(hahrs);
+	AHRS_UpdateEuler(ahrs);
+	return 0;
 }

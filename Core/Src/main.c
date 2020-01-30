@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -105,17 +105,12 @@ int main(void)
   MX_SDIO_SD_Init();
   MX_SPI1_Init();
   MX_ADC1_Init();
-  MX_USART6_UART_Init();
   MX_SPI5_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM12_Init();
-  MX_USART2_UART_Init();
   MX_TIM8_Init();
   MX_TIM5_Init();
-  MX_USART3_UART_Init();
-  MX_UART8_Init();
-  MX_UART7_Init();
   MX_USART1_UART_Init();
   MX_TIM4_Init();
   MX_TIM1_Init();
@@ -126,13 +121,13 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
-
+ 
   /* Call init function for freertos objects (in freertos.c) */
   MX_FREERTOS_Init(); 
-
+ 
   /* Start scheduler */
   osKernelStart();
-  
+ 
   /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */

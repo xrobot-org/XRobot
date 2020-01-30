@@ -1,7 +1,5 @@
 /* 
 	开源的AHRS算法。
-	
-	考虑使用Botch的BSXlite 
 
 */
 
@@ -27,5 +25,5 @@ typedef struct {
 	
 } AHRS_t;
 
-void AHRS_Init(AHRS_t* hahrs, const IMU_t* himu, float sample_freq);
-void AHRS_Update(AHRS_t* hahrs, const IMU_t* himu);
+int AHRS_Init(AHRS_t *ahrs, const IMU_t *imu, float sample_freq);
+int AHRS_Update(AHRS_t *ahrs, const IMU_t *imu);

@@ -1,7 +1,10 @@
 #pragma once
 
-#include "board.h"
 
+/* Includes ------------------------------------------------------------------*/
+/* Exported constants --------------------------------------------------------*/
+/* Exported macro ------------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
 typedef enum {
 	JOYSTICK_UP,
 	JOYSTICK_DOWN,
@@ -11,7 +14,7 @@ typedef enum {
 	JOYSTICK_MID,
 } Joystick_Status_t;
 
-
-int Joystick_Update(Joystick_Status_t* val);
+/* Exported functions prototypes ---------------------------------------------*/
+int Joystick_Update(Joystick_Status_t *val);
 int Joystick_WaitInput(void);
 int Joystick_WaitNoInput(void);

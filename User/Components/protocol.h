@@ -36,8 +36,8 @@ typedef __packed struct {
 	int16_t i;
 } Protocol_JudgeInfo_t;
 
-void Protocol_DecodePC(Protocol_PcDown_t* hpc, const uint8_t *raw);
-void Protocol_EncodePC(uint8_t* raw, const Protocol_PcDown_t *hpc);
+void Protocol_DecodePC(Protocol_PcDown_t *hpc, const uint8_t *raw);
+void Protocol_EncodePC(uint8_t *raw, const Protocol_PcDown_t *hpc);
 
-void Protocol_DecodeJudge(Protocol_JudgeInfo_t* hjudge, const uint8_t *raw);
-void Protocol_EncodeJudge(uint8_t* raw, const Protocol_JudgeInfo_t *hjudge);
+void Protocol_DecodeJudge(Protocol_JudgeInfo_t *hjudge, const uint8_t *raw);
+void Protocol_EncodeJudge(uint8_t *raw, const Protocol_JudgeInfo_t *hjudge);

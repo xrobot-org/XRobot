@@ -1,44 +1,46 @@
 #pragma once
 
 /* Includes ------------------------------------------------------------------*/
-#include "cmsis_os2.h"
+#include "cmsis_os.h"
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef struct {
-	osThreadId_t cli;
-	osThreadId_t comm;
-	osThreadId_t ctrl_chassis;
-	osThreadId_t ctrl_gimbal;
-	osThreadId_t ctrl_shoot;
-	osThreadId_t debug;
-	osThreadId_t detect;
-	osThreadId_t info;
-	osThreadId_t init;
-	osThreadId_t monitor;
-	osThreadId_t motor;
-	osThreadId_t output;
-	osThreadId_t pos_esti;
-	osThreadId_t referee;
+	osThreadId cli;
+	osThreadId comm;
+	osThreadId ctrl_chassis;
+	osThreadId ctrl_gimbal;
+	osThreadId ctrl_shoot;
+	osThreadId debug;
+	osThreadId info;
+	osThreadId monitor;
+	osThreadId pos_esti;
+	osThreadId referee;
 } Task_List_t;
 
-#define TASK_CAN_FREQ_HZ (50)
-#define TASK_CAN_INIT_DELAY (500)
 
-#define TASK_CTRL_CHASSIS_FREQ_HZ (50)
-#define TASK_CTRL_CHASSIS_INIT_DELAY (500)
+/* 所有任务都要define一个“任务运行频率”和“初始化延时”。 */
+#define TASK_CLI_FREQ_HZ (5u)
+#define TASK_CLI_INIT_DELAY (1000u)
 
-#define TASK_DEBUG_FREQ_HZ (50)
-#define TASK_DEBUG_INIT_DELAY (500)
+#define TASK_CAN_FREQ_HZ (50u)
+#define TASK_CAN_INIT_DELAY (500u)
 
-/* Task_CAN */
-extern osMessageQueueId_t motor_feedback_queue;
-extern osMessageQueueId_t uwb_feedback_queue;
-extern osMessageQueueId_t supercap_feedback_queue;
+#define TASK_CTRL_CHASSIS_FREQ_HZ (50u)
+#define TASK_CTRL_CHASSIS_INIT_DELAY (500u)
 
-/* Task_CAN */
+#define TASK_DEBUG_FREQ_HZ (50u)
+#define TASK_DEBUG_INIT_DELAY (500u)
+
+
+#define TASK_INFO_FREQ_HZ (2u)
+#define TASK_INFO_INIT_DELAY (1000u)
+
+#define TASK_POSESTI_FREQ_HZ (200)
+#define TASK_POSESTI_INIT_DELAY (10)
+
 /* Task_CLI */
 /* Task_Comm */
 /* Task_CtrlChassis */
@@ -53,20 +55,19 @@ extern osMessageQueueId_t supercap_feedback_queue;
 /* Task_PosEsti */
 /* Task_Referee */
 
-
-void Task_CAN(const void* argument);
-void Task_CLI(const void* argument);
-void Task_Comm(const void* argument);
-void Task_CtrlChassis(const void* argument);
-void Task_CtrlGimbal(const void* argument);
-void Task_CtrlShoot(const void* argument);
-void Task_Debug(const void* argument);
-void Task_Detect(const void* argument);
-void Task_Info(const void* argument);
-void Task_Init(const void* argument);
-void Task_Monitor(const void* argument);
-void Task_Output(const void* argument);
-void Task_PosEsti(const void* argument);
-void Task_Referee(const void* argument);
+void Task_CAN(const void *argument);
+void Task_CLI(const void *argument);
+void Task_Comm(const void *argument);
+void Task_CtrlChassis(const void *argument);
+void Task_CtrlGimbal(const void *argument);
+void Task_CtrlShoot(const void *argument);
+void Task_Debug(const void *argument);
+void Task_Detect(const void *argument);
+void Task_Info(const void *argument);
+void Task_Init(const void *argument);
+void Task_Monitor(const void *argument);
+void Task_Output(const void *argument);
+void Task_PosEsti(const void *argument);
+void Task_Referee(const void *argument);
 
 /* Exported functions prototypes ---------------------------------------------*/

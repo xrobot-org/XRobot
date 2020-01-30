@@ -1,18 +1,24 @@
 /* 
-	OLED模块自带的摇杆。
+	OLED模块�?带的摇杆�?
 
 */
 
 
+/* Includes ------------------------------------------------------------------*/
 #include "joystick.h"
 
-#include "main.h"
+/* Include BSP相关的头文件*/
 #include "adc.h"
+#include "bsp_delay.h"
 
+/* Private typedef -----------------------------------------------------------*/
+/* Private define ------------------------------------------------------------*/
+/* Private macro -------------------------------------------------------------*/
+/* Private variables ---------------------------------------------------------*/
 static uint32_t adc_raw;
 static Joystick_Status_t js;
 
-int Joystick_Update(Joystick_Status_t* val) {
+int Joystick_Update(Joystick_Status_t *val) {
 	if (val == NULL)
 		return -1;
 	
@@ -42,7 +48,7 @@ int Joystick_Update(Joystick_Status_t* val) {
 
 int Joystick_WaitInput(void) {
 	do {
-		Board_Delay(20);
+		BSP_Delay(20);
 		Joystick_Update(&js);
 	} while (js == JOYSTICK_MID);
 	return 0;
@@ -50,7 +56,7 @@ int Joystick_WaitInput(void) {
 
 int Joystick_WaitNoInput(void) {
 	do {
-		Board_Delay(20);
+		BSP_Delay(20);
 		Joystick_Update(&js);
 	} while (js != JOYSTICK_MID);
 	return 0;

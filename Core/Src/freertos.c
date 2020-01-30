@@ -6,7 +6,7 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
   * All rights reserved.</center></h2>
   *
   * This software component is licensed by ST under Ultimate Liberty license
@@ -26,7 +26,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */     
-
+#include "task_common.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,19 +46,38 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
+Task_List_t task_list;
 
 /* USER CODE END Variables */
-osThreadId_t TaskInitHandle;
+osThreadId defaultTaskHandle;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
    
 /* USER CODE END FunctionPrototypes */
 
-void task_init(void *argument);
+void StartDefaultTask(void const * argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
+
+/* Hook prototypes */
+void vApplicationIdleHook(void);
+
+/* USER CODE BEGIN 2 */
+__weak void vApplicationIdleHook( void )
+{
+   /* vApplicationIdleHook() will only be called if configUSE_IDLE_HOOK is set
+   to 1 in FreeRTOSConfig.h. It will be called on each iteration of the idle
+   task. It is essential that code added to this hook function never attempts
+   to block in any way (for example, call xQueueReceive() with a block time
+   specified, or call vTaskDelay()). If the application makes use of the
+   vTaskDelete() API function (as this demo application does) then it is also
+   important that vApplicationIdleHook() is permitted to return to its calling
+   function, because it is the responsibility of the idle task to clean up
+   memory allocated by the kernel to any task that has since been deleted. */
+}
+/* USER CODE END 2 */
 
 /**
   * @brief  FreeRTOS initialization
@@ -69,7 +88,6 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
        
   /* USER CODE END Init */
-osKernelInitialize();
 
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
@@ -88,38 +106,71 @@ osKernelInitialize();
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of TaskInit */
-  const osThreadAttr_t TaskInit_attributes = {
-    .name = "TaskInit",
-    .priority = (osPriority_t) osPriorityNormal,
-    .stack_size = 128
-  };
-  TaskInitHandle = osThreadNew(task_init, NULL, &TaskInit_attributes);
+  /* definition and creation of defaultTask */
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+  
+	osThreadDef(cli,			Task_CLI,			osPriorityBelowNormal,	0, 128);
+	osThreadDef(comm,			Task_Comm,			osPriorityHigh,			0, 128);
+	osThreadDef(ctrl_chassis,	Task_CtrlChassis,	osPriorityAboveNormal,	0, 128);
+	osThreadDef(ctrl_gimbal,	Task_CtrlGimbal,	osPriorityAboveNormal,	0, 128);
+	osThreadDef(ctrl_shoot,		Task_CtrlShoot,		osPriorityAboveNormal,	0, 128);
+	osThreadDef(debug,			Task_Debug,			osPriorityRealtime,		0, 128);
+	osThreadDef(info,			Task_Info,			osPriorityBelowNormal,	0, 128);
+	osThreadDef(monitor,		Task_Monitor,		osPriorityNormal,		0, 128);
+	osThreadDef(pos_esti,		Task_PosEsti,		osPriorityRealtime,		0, 128);
+	osThreadDef(referee,		Task_Referee,		osPriorityNormal,		0, 128);
+	
+	//task_list.cli			= osThreadCreate(osThread(cli),				&task_list);
+	//task_list.comm			= osThreadCreate(osThread(comm),			&task_list);
+	//task_list.ctrl_chassis	= osThreadCreate(osThread(ctrl_chassis),	&task_list);
+	//task_list.ctrl_gimbal	= osThreadCreate(osThread(ctrl_gimbal),		&task_list);
+	//task_list.ctrl_shoot	= osThreadCreate(osThread(ctrl_shoot),		&task_list);
+	//task_list.debug			= osThreadCreate(osThread(debug),			&task_list);
+	task_list.info			= osThreadCreate(osThread(info),			&task_list);
+	//task_list.monitor		= osThreadCreate(osThread(monitor),			&task_list);
+	task_list.pos_esti		= osThreadCreate(osThread(pos_esti),		&task_list);
+	//task_list.referee		= osThreadCreate(osThread(referee),			&task_list);
+	
+	
+	#if defined ROBOT_TYPE_INFANTRY
+		
+	#elif defined ROBOT_TYPE_HERO
+		
+	#elif defined ROBOT_TYPE_ENGINEER
+		
+	#elif defined ROBOT_TYPE_DRONE
+		
+	#elif defined ROBOT_TYPE_SENTRY
+
+	#else
+		
+		#error: Must define ROBOT_TYPE_XXXX.
+		
+	#endif
+		
   /* USER CODE END RTOS_THREADS */
 
 }
 
-/* USER CODE BEGIN Header_task_init */
+/* USER CODE BEGIN Header_StartDefaultTask */
 /**
-  * @brief  Function implementing the TaskInit thread.
+  * @brief  Function implementing the defaultTask thread.
   * @param  argument: Not used 
   * @retval None
   */
-/* USER CODE END Header_task_init */
-void task_init(void *argument)
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void const * argument)
 {
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
-  /* USER CODE BEGIN task_init */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END task_init */
+  /* USER CODE BEGIN StartDefaultTask */
+	osThreadTerminate(osThreadGetId());
+	
+  /* USER CODE END StartDefaultTask */
 }
 
 /* Private application code --------------------------------------------------*/

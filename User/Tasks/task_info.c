@@ -7,41 +7,39 @@
 /* Includes ------------------------------------------------------------------*/
 #include "task_common.h"
 
-/* Include Board相关的头文件。*/
-#include "board.h"
+/* Include Board相关的头文件 */
+#include "bsp_led.h"
 
-/* Include Device相关的头文件。*/
-/* Include Component相关的头文件。*/
+/* Include Device相关的头文件 */
+/* Include Component相关的头文件 */
 #include "capacity.h"
 
 /* Include Module相关的头文件。*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define TASK_INFO_FREQ_HZ (5)
-#define TASK_INFO_INIT_DELAY (500)
-
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 
 
-void Task_Info(const void* argument) {
-	uint32_t delay_tick = 1000U / TASK_INFO_FREQ_HZ;
+void Task_Info(const void *argument) {
+	const uint32_t delay_ms = 1000u / TASK_INFO_FREQ_HZ;
+	const Task_List_t task_list = *(Task_List_t*)argument;
+	
 	float battery_voltage;
 	float battery_percentage;
 	float capacitot_percentage;
 	
-	/* 处理硬件相关的初始化。*/
-	
-	/* 初始化完成后等待一段时间后再开始任务。*/
-	osDelay(TASK_INFO_INIT_DELAY);
+	/* 等待一段时间后再开始任务。*/
+	osDelay(TASK_DEBUG_INIT_DELAY);
+	BSP_LED_Set(BSP_LED_GRN, BSP_LED_ON, 1);
+
+	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
-		/* 任务主体。*/
-		//battery_voltage = Board_GetBatteryVoltage();
+		/* 任务主体 */
 		battery_percentage = Capacity_GetBatteryRemain(battery_voltage);
 		
-		//OLED
-		
-		osDelayUntil(delay_tick);
+		BSP_LED_Set(BSP_LED_GRN, BSP_LED_TAGGLE, 1);
+		osDelayUntil(&previous_wake_time, 500u);
 	}
 }

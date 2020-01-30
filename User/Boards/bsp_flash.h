@@ -1,7 +1,10 @@
 #pragma once
 
-#include "main.h"
 
+/* Includes ------------------------------------------------------------------*/
+#include <stdint.h>
+
+/* Exported constants --------------------------------------------------------*/
 /* Base address of the Flash sectors */
 #define ADDR_FLASH_SECTOR_0 ((uint32_t)0x08000000)  /* Base address of Sector 0, 16 Kbytes   */
 #define ADDR_FLASH_SECTOR_1 ((uint32_t)0x08004000)  /* Base address of Sector 1, 16 Kbytes   */
@@ -30,13 +33,12 @@
 
 #define FLASH_END_ADDR ((uint32_t)0x08100000)       /* Base address of Sector 23, 128 Kbytes */
 
-
-
-
-void Flash_EraseAddress(uint32_t address, uint16_t len);
-int8_t Flash_WriteSingleAddress(uint32_t start_address, uint32_t *buf, uint32_t len);
-//TODO
-int8_t Flash_write_muli_address(uint32_t start_address, uint32_t end_address, uint32_t *buf, uint32_t len);
-void Flash_read(uint32_t address, uint32_t *buf, uint32_t len);
-uint32_t Flash_ger_sector(uint32_t address);
-uint32_t Flash_get_next_flash_address(uint32_t address);
+/* Exported macro ------------------------------------------------------------*/
+/* Exported types ------------------------------------------------------------*/
+/* Exported functions prototypes ---------------------------------------------*/
+void BSP_Flash_EraseAddress(uint32_t address, uint16_t len);
+int8_t BSP_Flash_WriteSingleAddress(uint32_t start_address, uint32_t *buf, uint32_t len);
+int8_t BSP_Flash_WriteMuliAddress(uint32_t start_address, uint32_t end_address, uint32_t *buf, uint32_t len);
+void BSP_FlashRead(uint32_t address, uint32_t *buf, uint32_t len);
+uint32_t BSP_Flash_GerSector(uint32_t address);
+uint32_t BSP_Flash_GetNextFlashAddress(uint32_t address);

@@ -10,7 +10,10 @@
 
 #define SIGMA 0.000001f
 
-void PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min) {
+int PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min) {
+	if (pid == NULL)
+		return -1;
+	
 	pid->mode = mode;
 	pid->dt_min = dt_min;
 	pid->kp = 0.0f;
@@ -21,10 +24,15 @@ void PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min) {
 	pid->output_limit = 0.0f;
 	pid->error_previous = 0.0f;
 	pid->last_output = 0.0f;
+	
+	return 0;
 }
 
 
 int PID_SetParameters(PID_t *pid, float kp, float ki, float kd, float integral_limit, float output_limit) {
+	if (pid == NULL)
+		return -1;
+	
 	pid->kp = kp;
 	pid->ki = ki;
 	pid->kd = kd;
@@ -91,7 +99,12 @@ float PID_Calculate(PID_t *pid, float sp, float val, float val_dot, float dt)
 	return pid->last_output;
 }
 
-void PID_ResetIntegral(PID_t *pid)
+int PID_ResetIntegral(PID_t *pid)
 {
+	if (pid == NULL)
+		return -1;
+	
 	pid->integral = 0.0f;
+	
+	return 0;
 }

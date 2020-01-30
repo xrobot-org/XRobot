@@ -43,7 +43,7 @@ typedef struct {
 } Chassis_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-void Chassis_Init(Chassis_t* chassis);
-void Chassis_SetMode(Chassis_t* chassis);
-void Chassis_Control(Chassis_t* chassis);
-void Chassis_SetOutput(Chassis_t* chassis);
+void Chassis_Init(Chassis_t *chassis);
+void Chassis_SetMode(Chassis_t *chassis);
+void Chassis_Control(Chassis_t *chassis);
+void Chassis_SetOutput(Chassis_t *chassis);

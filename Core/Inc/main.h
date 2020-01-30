@@ -70,12 +70,10 @@ void Error_Handler(void);
 #define BUZZER_TIM_PSC_APB2 ((APB2_TIMER_CLOCKS/BUZZER_FREQUENCE)/PWM_RESOLUTION -1)
 #define CMPS_INT_Pin GPIO_PIN_3
 #define CMPS_INT_GPIO_Port GPIOE
-#define CMPS_RST_Pin GPIO_PIN_2
-#define CMPS_RST_GPIO_Port GPIOE
-#define IMU_INT_Pin GPIO_PIN_8
-#define IMU_INT_GPIO_Port GPIOB
-#define HEAT_PWM_Pin GPIO_PIN_5
-#define HEAT_PWM_GPIO_Port GPIOB
+#define MAGN_RST_Pin GPIO_PIN_2
+#define MAGN_RST_GPIO_Port GPIOE
+#define IMU_HEAT_PWM_Pin GPIO_PIN_5
+#define IMU_HEAT_PWM_GPIO_Port GPIOB
 #define LASER_Pin GPIO_PIN_13
 #define LASER_GPIO_Port GPIOG
 #define OLED_DC_Pin GPIO_PIN_9
@@ -110,12 +108,10 @@ void Error_Handler(void);
 #define LED1_GPIO_Port GPIOG
 #define BUZZER_Pin GPIO_PIN_6
 #define BUZZER_GPIO_Port GPIOH
-#define BUTTON_AD_Pin GPIO_PIN_6
-#define BUTTON_AD_GPIO_Port GPIOA
-#define LED_RED_Pin GPIO_PIN_11
-#define LED_RED_GPIO_Port GPIOE
-#define LED_GRN_Pin GPIO_PIN_14
-#define LED_GRN_GPIO_Port GPIOF
+#define LED_R_Pin GPIO_PIN_11
+#define LED_R_GPIO_Port GPIOE
+#define LED_G_Pin GPIO_PIN_14
+#define LED_G_GPIO_Port GPIOF
 #define SD_EXTI_Pin GPIO_PIN_15
 #define SD_EXTI_GPIO_Port GPIOE
 #define OLED_RST_Pin GPIO_PIN_10
