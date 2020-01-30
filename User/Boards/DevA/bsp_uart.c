@@ -19,7 +19,6 @@ static struct {
         void (*AbortCpltCallback)(void);         /* UART Abort Complete Callback          */
         void (*AbortTransmitCpltCallback)(void); /* UART Abort Transmit Complete Callback */
         void (*AbortReceiveCpltCallback)(void);  /* UART Abort Receive Complete Callback  */
-        void (*WakeupCallback)(void);            /* UART Wakeup Callback                  */
     } dr16;
 	/* Add other uart device here. */
 } bsp_uart_callback;
@@ -35,7 +34,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 
 void HAL_UART_TxHalfCpltCallback(UART_HandleTypeDef *huart) {
     if(huart->Instance == DR16_UART) {
-		if (bsp_uart_callback.dr16.TxCpltCallback != NULL) {
+		if (bsp_uart_callback.dr16.TxHalfCpltCallback != NULL) {
 			bsp_uart_callback.dr16.TxHalfCpltCallback();
 		}
     }
@@ -91,14 +90,17 @@ void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart) {
 
 /* Exported functions --------------------------------------------------------*/
 int BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void (*callback)(void)) {
+	if (callback == NULL)
+		return -1;
+	
     switch (uart) {
         case BSP_UART_DR16:
             switch (type) {
                 case BSP_UART_TX_HALFCOMPLETE_CB:
-                    bsp_uart_callback.dr16.TxCpltCallback = callback;
+                    bsp_uart_callback.dr16.TxHalfCpltCallback = callback;
                     break;
                 case BSP_UART_TX_COMPLETE_CB:
-                    bsp_uart_callback.dr16.TxHalfCpltCallback = callback;
+                    bsp_uart_callback.dr16.TxCpltCallback = callback;
                     break;
                 case BSP_UART_RX_HALFCOMPLETE_CB:
                     bsp_uart_callback.dr16.RxHalfCpltCallback = callback;
@@ -118,9 +120,6 @@ int BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void (*
                 case BSP_UART_ABORT_RECEIVE_COMPLETE_CB:
                     bsp_uart_callback.dr16.AbortReceiveCpltCallback = callback;
                     break;
-                case BSP_UART_WAKEUP_CB:
-                    bsp_uart_callback.dr16.WakeupCallback = callback;
-                    break;
                 default:
                     return -1;
             }
@@ -132,8 +131,23 @@ int BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void (*
 }
 
 int BSP_UART_Transmit(BSP_UART_t uart, uint8_t *data, uint16_t len) {
-	return 0;
+	if (data == NULL)
+		return -1;
+	
+    switch (uart) {
+        case BSP_UART_DR16:
+            return -1;
+    }
+    return 0;
 }
 int BSP_UART_Receive(BSP_UART_t uart, uint8_t *data, uint16_t len) {
-	return 0;
+	if (data == NULL)
+		return -1;
+
+    switch (uart) {
+        case BSP_UART_DR16:
+               HAL_UART_Receive_DMA(&huart1, data, len);
+            break;
+    }
+    return 0;
 }
