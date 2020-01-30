@@ -8,6 +8,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "task_common.h"
 
+#include "string.h"
+
 /* Include Board相关的头文件 */
 #include "bsp_pwm.h"
 
@@ -22,28 +24,30 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+static const uint32_t delay_ms = 1000U / TASK_POSESTI_FREQ_HZ;
+static int result = 0;
+static osStatus os_status = osOK;
+
+osPoolDef(ahrs_pool, 2, AHRS_Eulr_s);
+osMessageQDef(ahrs_message, 2, AHRS_Eulr_s);
+
 IMU_t onboard_imu;
 AHRS_t gimbal_ahrs;
 PID_t imu_temp_ctrl_pid;
-int result = 0;
 
-/* Private function prototypes -----------------------------------------------*/
-
-
-
-
-void Task_PosEsti(const void *argument) {
-	const uint32_t delay_ms = 1000U / TASK_POSESTI_FREQ_HZ;
-	const Task_List_t task_list = *(Task_List_t*)argument;
+/* Private function  ---------------------------------------------------------*/
+/* Exported functions --------------------------------------------------------*/
+void Task_PosEsti(void const *argument) {
+	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
+	task_param->pool.ahrs = osPoolCreate(osPool(ahrs_pool));
+	task_param->message.ahrs = osMessageCreate(osMessageQ(ahrs_message), NULL);
 	
-	osDelay(TASK_POSESTI_INIT_DELAY);
-	
-	onboard_imu.received_alert = task_list.pos_esti;
+	onboard_imu.received_alert = task_param->thread.pos_esti;
 	result += IMU_Init(&onboard_imu);
 	
 	result += IMU_StartReceiving(&onboard_imu);
-	osSignalWait(IMU_SIGNAL_DATA_REDY, osWaitForever);
+	osSignalWait(IMU_SIGNAL_RAW_REDY, osWaitForever);
 	result += IMU_Parse(&onboard_imu);
 	
 	result += AHRS_Init(&gimbal_ahrs, &onboard_imu, TASK_POSESTI_FREQ_HZ);
@@ -56,14 +60,20 @@ void Task_PosEsti(const void *argument) {
 	
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
+		/* 任务主体 */
 		result += IMU_StartReceiving(&onboard_imu);
-		osSignalWait(IMU_SIGNAL_DATA_REDY, osWaitForever);
+		osSignalWait(IMU_SIGNAL_RAW_REDY, osWaitForever);
 		result += IMU_Parse(&onboard_imu);
 		
 		result += AHRS_Update(&gimbal_ahrs, &onboard_imu);
+		
+		AHRS_Eulr_s *eulr_to_send;
+		eulr_to_send = osPoolAlloc(task_param->pool.ahrs);
+		memcpy(eulr_to_send, &gimbal_ahrs, sizeof(AHRS_t));
+		os_status += osMessagePut(task_param->message.ahrs, (uint32_t)eulr_to_send, osWaitForever);
 
 		result += BSP_PWM_Set(BSP_PWM_IMU_HEAT, PID_Calculate(&imu_temp_ctrl_pid, 50.f, onboard_imu.data.temp, 0.f, 0.f));
 		
-		osDelayUntil(&previous_wake_time, delay_ms);
+		os_status += osDelayUntil(&previous_wake_time, delay_ms);
 	}
 }

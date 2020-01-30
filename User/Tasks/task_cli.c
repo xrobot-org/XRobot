@@ -14,12 +14,14 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+static const uint32_t delay_ms = 1000U / TASK_CLI_FREQ_HZ;
+static int result = 0;
+static osStatus os_status = osOK;
+
 /* Private function prototypes -----------------------------------------------*/
-
-
-void Task_CLI(const void *argument) {
-	const uint32_t delay_ms = 1000u / TASK_CLI_FREQ_HZ;
-	const Task_List_t task_list = *(Task_List_t*)argument;
+/* Exported functions --------------------------------------------------------*/
+void Task_CLI(void const *argument) {
+	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* 等待一段时间后再开始任务。*/
 	osDelay(TASK_CLI_INIT_DELAY);

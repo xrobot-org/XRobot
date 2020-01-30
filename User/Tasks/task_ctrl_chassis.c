@@ -22,24 +22,26 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-CAN_Device_t cd;
+static const uint32_t delay_ms = 1000U / TASK_CTRL_CHASSIS_FREQ_HZ;
+static int result = 0;
+static osStatus os_status = osOK;
+
+static CAN_Device_t cd;
 
 /* Private function prototypes -----------------------------------------------*/
-
-
-void Task_CtrlChassis(const void *argument) {
-	const uint32_t delay_ms = 1000U / TASK_CTRL_CHASSIS_FREQ_HZ;
-	const Task_List_t task_list = *(Task_List_t*)argument;
+/* Exported functions --------------------------------------------------------*/
+void Task_CtrlChassis(void const *argument) {
+	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	
 	/* 等待一段时间后再开始任务。*/
 	osDelay(TASK_CTRL_CHASSIS_INIT_DELAY);
 	
 	/* 初始化硬件 */
-	cd.chassis_alert = task_list.ctrl_chassis;
-	cd.gimbal_alert = task_list.ctrl_gimbal;
-	cd.uwb_alert = task_list.info;
-	cd.supercap_alert = task_list.ctrl_chassis;
+	cd.chassis_alert = task_param->thread.ctrl_chassis;
+	cd.gimbal_alert = task_param->thread.ctrl_gimbal;
+	cd.uwb_alert = task_param->thread.info;
+	cd.supercap_alert = task_param->thread.ctrl_chassis;
 	
 	CAN_DeviceInit(&cd);
 	
