@@ -132,12 +132,12 @@ static bool inited = false;
 /* Private function  ---------------------------------------------------------*/
 void IMU_RxCpltCallback(void)
 {
-	osSignalSet(gimu->received_alert, IMU_SIGNAL_DATA_REDY);
+	osSignalSet(gimu->received_alert, IMU_SIGNAL_RAW_ACCL_REDY | IMU_SIGNAL_RAW_GYRO_REDY);
 }
 
-void IMU_ExtrIntCallback(void)
+void IMU_ExtIntCallback(void)
 {
-	//osSignalSet(gimu->received_alert, IMU_SIGNAL_DATA_REDY);
+	IMU_StartReceiving(gimu);
 }
 
 static void MPU_WriteSingle(uint8_t reg, uint8_t data) {
@@ -169,8 +169,6 @@ static void MPU_Read(uint8_t reg, uint8_t *data, uint8_t len) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-/* Remove gyro static error. Be careful of overflow. */
-
 int IMU_Init(IMU_t *imu) {
 	if (imu == NULL)
 		return -1;
@@ -191,10 +189,10 @@ int IMU_Init(IMU_t *imu) {
 	
 	MPU_WriteSingle(MPU6500_PWR_MGMT_1, 0x03); /* Clock source -> gyro-z */
 	MPU_WriteSingle(MPU6500_PWR_MGMT_2, 0x00); /* Enable acc & gyro */
-	MPU_WriteSingle(MPU6500_CONFIG, 0x04); /* LPF 41Hz */
+	MPU_WriteSingle(MPU6500_CONFIG, 0x04); /* Disable acc LPF */
 	MPU_WriteSingle(MPU6500_GYRO_CONFIG, 0x18); /* gyro range 0x10:+-1000dps 0x18:+-2000dps */
-	MPU_WriteSingle(MPU6500_ACCEL_CONFIG, 0x18); /* +-2G */
-	MPU_WriteSingle(MPU6500_ACCEL_CONFIG_2, 0x02); /* Enable and set acc LPF */
+	MPU_WriteSingle(MPU6500_ACCEL_CONFIG, 0x10); /* +-8G */
+	MPU_WriteSingle(MPU6500_ACCEL_CONFIG_2, 0x10); /* Disable acc LPF */
 
 	BSP_Delay(10);
 
@@ -211,38 +209,22 @@ IMU_t *IMU_GetDevice(void) {
 	return NULL;
 }
 
-int IMU_CaliGyro(IMU_t *imu) {
-	for(uint8_t i = 0; i < 100; i++) {
-		MPU_Read(MPU6500_GYRO_XOUT_H, buffer, 6);
-		
-		for(uint8_t i = 0; i < 6; i += 2)
-			imu->cali.gyro_offset[i/2] += (buffer[i] << 8) | buffer[i+1];
-		
-		BSP_Delay(5);
-	}
-	
-	for(uint8_t i = 0; i < 3; i++)
-		imu->cali.gyro_offset[i] /= 100;
-	
-	return 0;
-}
-
 int IMU_StartReceiving(IMU_t *imu) {
 	MPU_Read(MPU6500_ACCEL_XOUT_H, (uint8_t*)&(imu->raw), 20);
 	return 0;
 }
 
 /* magn_scale[3] is initially zero. So data from uncalibrated magnentmeter is ignored. */
-/*         x
- *         ^
- *     y < R （RoboMaster trademark）
+/* Sensor use right-handed coordinate system. */
+/*         
+ *     x < R (RoboMaster trademark)
+ *         y
  *     UP is z
  */
 int IMU_Parse(IMU_t *imu) {
 	if (imu == NULL)
 		return -1;
 
-	/* 用了传感器交换字节高低的特性后，好像可以更快更简单 */
 	uint8_t raw[20];
 
 	memcpy(raw, &(imu->raw), sizeof(imu->raw));
@@ -252,19 +234,24 @@ int IMU_Parse(IMU_t *imu) {
 	
 	imu->data.temp = 21.f + (float)imu->raw.temp / 333.87f;
 	
-	/* Rotation and remap are added to all sensor. */
-	imu->data.accl.x = -(float)imu->raw.accl.y;
-	imu->data.accl.y = (float)imu->raw.accl.x;
-	imu->data.accl.z = (float)imu->raw.accl.z;
+	/* TODO: Strage accl data. Potential sensor damage. */
+	imu->data.accl.x = (float)imu->raw.accl.x / 4096.f;
+	imu->data.accl.y = (float)imu->raw.accl.y / 4096.f;
+	imu->data.accl.z = (float)imu->raw.accl.z / 4096.f;
 	
 	/* Convert gyroscope imu_raw to degrees/sec, then, to radians/sec */
-	imu->data.gyro.x = -(float)(imu->raw.gyro.y - imu->cali.gyro_offset[1]) / 16.384f / 180.f * PI;
-	imu->data.gyro.y = (float)(imu->raw.gyro.x - imu->cali.gyro_offset[0]) / 16.384f / 180.f * PI;
+	imu->data.gyro.x = (float)(imu->raw.gyro.x - imu->cali.gyro_offset[0]) / 16.384f / 180.f * PI;
+	imu->data.gyro.y = (float)(imu->raw.gyro.y - imu->cali.gyro_offset[1]) / 16.384f / 180.f * PI;
 	imu->data.gyro.z = (float)(imu->raw.gyro.z - imu->cali.gyro_offset[2]) / 16.384f / 180.f * PI;
 	
-	imu->data.magn.x = (float) ((imu->raw.magn.x - imu->cali.magn_offset[0]) * imu->cali.magn_scale[0]);
-	imu->data.magn.y = (float) ((imu->raw.magn.y - imu->cali.magn_offset[1]) * imu->cali.magn_scale[1]);
-	imu->data.magn.z = -(float) ((imu->raw.magn.z - imu->cali.magn_offset[2]) * imu->cali.magn_scale[2]);
-	
+#if 0
+	imu->data.magn.x = (float)((imu->raw.magn.x - imu->cali.magn_offset[0]) * imu->cali.magn_scale[0]);
+	imu->data.magn.y = (float)((imu->raw.magn.y - imu->cali.magn_offset[1]) * imu->cali.magn_scale[1]);
+	imu->data.magn.z = (float)((imu->raw.magn.z - imu->cali.magn_offset[2]) * imu->cali.magn_scale[2]);
+#else
+	imu->data.magn.x = 0.f;
+	imu->data.magn.y = 0.f;
+	imu->data.magn.z = 0.f;
+#endif
 	return 0;
 }
