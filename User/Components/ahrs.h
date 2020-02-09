@@ -8,11 +8,13 @@
 #include "imu.h"
 
 typedef struct {
-	struct {
-		float yaw;
-		float pit;
-		float rol;
-	} eulr;
+	float yaw;
+	float pit;
+	float rol;
+} AHRS_Eulr_t;
+
+typedef struct {
+	AHRS_Eulr_t eulr;
 
 	float q0;
 	float q1;
