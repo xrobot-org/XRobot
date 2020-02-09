@@ -5,7 +5,7 @@
 
 /* Exported constants --------------------------------------------------------*/
 #define TASK_SIGNAL_CLI_READY					(1u<<0)
-#define TASK_SIGNAL_COMM_READY					(1u<<1)
+#define TASK_SIGNAL_COMMAND_READY					(1u<<1)
 #define TASK_SIGNAL_CTRL_CHASSIS_READY			(1u<<2)
 #define TASK_SIGNAL_CTRL_GIMBAL_READY			(1u<<3)
 #define TASK_SIGNAL_CTRL_SHOOT_READY			(1u<<4)
@@ -19,8 +19,8 @@
 #define TASK_CLI_FREQ_HZ					(5u)
 #define TASK_CLI_INIT_DELAY					(1000u)
 
-#define TASK_COMM_FREQ_HZ					(80u)
-#define TASK_COMM_INIT_DELAY				(20u)
+#define TASK_COMMAND_FREQ_HZ					(80u)
+#define TASK_COMMAND_INIT_DELAY				(20u)
 
 #define TASK_CTRL_CHASSIS_FREQ_HZ			(50u)
 #define TASK_CTRL_CHASSIS_INIT_DELAY		(500u)
@@ -35,7 +35,7 @@
 #define TASK_DEBUG_INIT_DELAY				(500u)
 
 #define TASK_INFO_FREQ_HZ					(2u)
-#define TASK_INFO_INIT_DELAY				(1000u)
+#define TASK_INFO_INIT_DELAY				(100u)
 
 #define TASK_MONITOR_FREQ_HZ				(2u)
 #define TASK_MONITOR_INIT_DELAY				(1000u)
@@ -65,29 +65,19 @@ typedef struct {
 	
 	struct {
 		osPoolId  ahrs;
+		osPoolId  chassis_ctrl_v;
 	} pool;
 	
 	struct {
 		osMessageQId  ahrs;
+		osMessageQId  chassis_ctrl_v;
 	} message;
 	
 	
 } Task_Param_t;
 
-
-/* Task_CLI */
-/* Task_Comm */
-/* Task_CtrlChassis */
-/* Task_CtrlGimbal */
-/* Task_CtrlShoot */
-/* Task_Debug */
-/* Task_Detect */
-/* Task_Info */
-/* Task_Init */
-/* Task_Monitor */
-/* Task_Output */
-/* Task_PosEsti */
-/* Task_Referee */
+/* Exported functions prototypes ---------------------------------------------*/
+int Task_InitParam(Task_Param_t *task_param);
 
 void Task_CAN(void const *argument);
 void Task_CLI(void const *argument);
@@ -104,4 +94,3 @@ void Task_Output(void const *argument);
 void Task_PosEsti(void const *argument);
 void Task_Referee(void const *argument);
 
-/* Exported functions prototypes ---------------------------------------------*/
