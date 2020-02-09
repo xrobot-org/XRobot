@@ -6,7 +6,8 @@
 
 #pragma once
 
-#include "stm32f427xx.h"
+#include "stm32f4xx.h"
+
 #include <arm_math.h>
 #include <float.h>
 
