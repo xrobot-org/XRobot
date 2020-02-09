@@ -28,6 +28,7 @@
 #include "main.h"
 
 /* DMA memory to memory transfer handles -------------------------------------*/
+extern DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 
 /* USER CODE BEGIN Includes */
 

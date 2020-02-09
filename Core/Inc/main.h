@@ -59,63 +59,47 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define APB2_TIMER_CLOCKS 168000000
-#define APB1_TIMER_CLOCKS 84000000
-#define PWM_RESOLUTION 10000
-#define PWM_FREQUENCE 50
-#define PWM_DEFAULT_DUTY 5000
-#define TIM_PSC_APB1 ((APB1_TIMER_CLOCKS/PWM_FREQUENCE)/PWM_RESOLUTION -1)
-#define TIM_PSC_APB2 ((APB2_TIMER_CLOCKS/PWM_FREQUENCE)/PWM_RESOLUTION -1)
-#define BUZZER_FREQUENCE 2731
-#define BUZZER_TIM_PSC_APB2 ((APB2_TIMER_CLOCKS/BUZZER_FREQUENCE)/PWM_RESOLUTION -1)
+#define BUTTON_TRIG_Pin GPIO_PIN_7
+#define BUTTON_TRIG_GPIO_Port GPIOI
+#define LASER_Pin GPIO_PIN_8
+#define LASER_GPIO_Port GPIOC
+#define CMPS_RST_Pin GPIO_PIN_6
+#define CMPS_RST_GPIO_Port GPIOG
+#define IMU_HEAT_PWM_Pin GPIO_PIN_6
+#define IMU_HEAT_PWM_GPIO_Port GPIOF
+#define LED_R_Pin GPIO_PIN_12
+#define LED_R_GPIO_Port GPIOH
 #define CMPS_INT_Pin GPIO_PIN_3
-#define CMPS_INT_GPIO_Port GPIOE
-#define MAGN_RST_Pin GPIO_PIN_2
-#define MAGN_RST_GPIO_Port GPIOE
-#define IMU_HEAT_PWM_Pin GPIO_PIN_5
-#define IMU_HEAT_PWM_GPIO_Port GPIOB
-#define LASER_Pin GPIO_PIN_13
-#define LASER_GPIO_Port GPIOG
-#define OLED_DC_Pin GPIO_PIN_9
-#define OLED_DC_GPIO_Port GPIOB
-#define POWER1_CTRL_Pin GPIO_PIN_2
-#define POWER1_CTRL_GPIO_Port GPIOH
-#define POWER2_CTRL_Pin GPIO_PIN_3
-#define POWER2_CTRL_GPIO_Port GPIOH
-#define POWER3_CTRL_Pin GPIO_PIN_4
-#define POWER3_CTRL_GPIO_Port GPIOH
-#define LED8_Pin GPIO_PIN_8
-#define LED8_GPIO_Port GPIOG
-#define POWER4_CTRL_Pin GPIO_PIN_5
-#define POWER4_CTRL_GPIO_Port GPIOH
-#define LED7_Pin GPIO_PIN_7
-#define LED7_GPIO_Port GPIOG
-#define LED6_Pin GPIO_PIN_6
-#define LED6_GPIO_Port GPIOG
-#define SPI5_NSS_Pin GPIO_PIN_6
-#define SPI5_NSS_GPIO_Port GPIOF
-#define LED5_Pin GPIO_PIN_5
-#define LED5_GPIO_Port GPIOG
-#define LED4_Pin GPIO_PIN_4
-#define LED4_GPIO_Port GPIOG
-#define LED3_Pin GPIO_PIN_3
-#define LED3_GPIO_Port GPIOG
-#define LED2_Pin GPIO_PIN_2
-#define LED2_GPIO_Port GPIOG
-#define USER_KEY_Pin GPIO_PIN_2
-#define USER_KEY_GPIO_Port GPIOB
-#define LED1_Pin GPIO_PIN_1
-#define LED1_GPIO_Port GPIOG
-#define BUZZER_Pin GPIO_PIN_6
-#define BUZZER_GPIO_Port GPIOH
-#define LED_R_Pin GPIO_PIN_11
-#define LED_R_GPIO_Port GPIOE
-#define LED_G_Pin GPIO_PIN_14
-#define LED_G_GPIO_Port GPIOF
-#define SD_EXTI_Pin GPIO_PIN_15
-#define SD_EXTI_GPIO_Port GPIOE
-#define OLED_RST_Pin GPIO_PIN_10
-#define OLED_RST_GPIO_Port GPIOB
+#define CMPS_INT_GPIO_Port GPIOG
+#define CMPS_INT_EXTI_IRQn EXTI3_IRQn
+#define ADC_BAT_Pin GPIO_PIN_10
+#define ADC_BAT_GPIO_Port GPIOF
+#define LED_G_Pin GPIO_PIN_11
+#define LED_G_GPIO_Port GPIOH
+#define LED_B_Pin GPIO_PIN_10
+#define LED_B_GPIO_Port GPIOH
+#define HW0_Pin GPIO_PIN_0
+#define HW0_GPIO_Port GPIOC
+#define HW1_Pin GPIO_PIN_1
+#define HW1_GPIO_Port GPIOC
+#define HW2_Pin GPIO_PIN_2
+#define HW2_GPIO_Port GPIOC
+#define BUZZER_Pin GPIO_PIN_14
+#define BUZZER_GPIO_Port GPIOD
+#define USER_KEY_Pin GPIO_PIN_0
+#define USER_KEY_GPIO_Port GPIOA
+#define ACCL_CS_Pin GPIO_PIN_4
+#define ACCL_CS_GPIO_Port GPIOA
+#define ACCL_INT_Pin GPIO_PIN_4
+#define ACCL_INT_GPIO_Port GPIOC
+#define ACCL_INT_EXTI_IRQn EXTI4_IRQn
+#define GYRO_INT_Pin GPIO_PIN_5
+#define GYRO_INT_GPIO_Port GPIOC
+#define GYRO_INT_EXTI_IRQn EXTI9_5_IRQn
+#define SPI2_CS_Pin GPIO_PIN_12
+#define SPI2_CS_GPIO_Port GPIOB
+#define GYRO_CS_Pin GPIO_PIN_0
+#define GYRO_CS_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

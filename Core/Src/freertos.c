@@ -46,7 +46,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-Task_List_t task_list;
+Task_Param_t task_param;
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
@@ -62,22 +62,21 @@ extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* Hook prototypes */
-void vApplicationIdleHook(void);
+void configureTimerForRunTimeStats(void);
+unsigned long getRunTimeCounterValue(void);
 
-/* USER CODE BEGIN 2 */
-__weak void vApplicationIdleHook( void )
+/* USER CODE BEGIN 1 */
+/* Functions needed when configGENERATE_RUN_TIME_STATS is on */
+__weak void configureTimerForRunTimeStats(void)
 {
-   /* vApplicationIdleHook() will only be called if configUSE_IDLE_HOOK is set
-   to 1 in FreeRTOSConfig.h. It will be called on each iteration of the idle
-   task. It is essential that code added to this hook function never attempts
-   to block in any way (for example, call xQueueReceive() with a block time
-   specified, or call vTaskDelay()). If the application makes use of the
-   vTaskDelete() API function (as this demo application does) then it is also
-   important that vApplicationIdleHook() is permitted to return to its calling
-   function, because it is the responsibility of the idle task to clean up
-   memory allocated by the kernel to any task that has since been deleted. */
+
 }
-/* USER CODE END 2 */
+
+__weak unsigned long getRunTimeCounterValue(void)
+{
+return 0;
+}
+/* USER CODE END 1 */
 
 /**
   * @brief  FreeRTOS initialization
@@ -124,16 +123,16 @@ void MX_FREERTOS_Init(void) {
 	osThreadDef(pos_esti,		Task_PosEsti,		osPriorityRealtime,		0, 128);
 	osThreadDef(referee,		Task_Referee,		osPriorityNormal,		0, 128);
 	
-	//task_list.cli			= osThreadCreate(osThread(cli),				&task_list);
-	//task_list.comm			= osThreadCreate(osThread(comm),			&task_list);
-	//task_list.ctrl_chassis	= osThreadCreate(osThread(ctrl_chassis),	&task_list);
-	//task_list.ctrl_gimbal	= osThreadCreate(osThread(ctrl_gimbal),		&task_list);
-	//task_list.ctrl_shoot	= osThreadCreate(osThread(ctrl_shoot),		&task_list);
-	//task_list.debug			= osThreadCreate(osThread(debug),			&task_list);
-	task_list.info			= osThreadCreate(osThread(info),			&task_list);
-	//task_list.monitor		= osThreadCreate(osThread(monitor),			&task_list);
-	task_list.pos_esti		= osThreadCreate(osThread(pos_esti),		&task_list);
-	//task_list.referee		= osThreadCreate(osThread(referee),			&task_list);
+	task_param.thread.cli			= osThreadCreate(osThread(cli),				&task_param);
+	task_param.thread.comm			= osThreadCreate(osThread(comm),			&task_param);
+	task_param.thread.ctrl_chassis	= osThreadCreate(osThread(ctrl_chassis),	&task_param);
+	task_param.thread.ctrl_gimbal	= osThreadCreate(osThread(ctrl_gimbal),		&task_param);
+	task_param.thread.ctrl_shoot	= osThreadCreate(osThread(ctrl_shoot),		&task_param);
+	task_param.thread.debug			= osThreadCreate(osThread(debug),			&task_param);
+	task_param.thread.info			= osThreadCreate(osThread(info),			&task_param);
+	task_param.thread.monitor		= osThreadCreate(osThread(monitor),			&task_param);
+	task_param.thread.pos_esti		= osThreadCreate(osThread(pos_esti),		&task_param);
+	task_param.thread.referee		= osThreadCreate(osThread(referee),			&task_param);
 	
 	
 	#if defined ROBOT_TYPE_INFANTRY
