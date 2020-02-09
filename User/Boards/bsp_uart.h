@@ -7,10 +7,9 @@
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
-
-/* Exported functions prototypes ---------------------------------------------*/
 typedef enum {
     BSP_UART_DR16,
+	/* BSP_UART_XXX, */
 } BSP_UART_t;
 
 typedef enum {

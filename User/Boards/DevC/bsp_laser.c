@@ -1,31 +1,30 @@
 /* Includes ------------------------------------------------------------------*/
-#include "bsp_usb.h"
-
-#include <string.h>
-#include <stdarg.h>
-#include <stdio.h>
-
-#include "usbd_cdc_if.h"
+#include "bsp_laser.h"
+#include "tim.h"
 
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-uint8_t usb_tx_buf[2048];
-uint8_t usb_rx_buf[2048];
-
-
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-int BSP_USB_Printf(const char *fmt, ...) {
-	static va_list ap;
-	uint16_t len = 0;
+int BSP_Laser_Start(void) {
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+	return 0;
+}
 
-	va_start(ap, fmt);
-	len = vsprintf((char *)usb_tx_buf, fmt, ap);
-	va_end(ap);
-
-	CDC_Transmit_FS(usb_tx_buf, len);
+int BSP_Laser_Set(float duty_cycle) {
+	if (duty_cycle > 1.f)
+		return -1;
 	
+	uint16_t pulse = duty_cycle * UINT16_MAX;
+
+	__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, pulse);
+
+	return 0;
+}
+
+int BSP_Laser_Stop(void) {
+	HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_3);
 	return 0;
 }

@@ -4,7 +4,7 @@
 
 
 /* Private define ------------------------------------------------------------*/
-#define DR16_UART USART1
+#define DR16_UART USART3
 /* #define XXX_UART USARTX */
 
 /* Private macro -------------------------------------------------------------*/
@@ -21,7 +21,19 @@ static struct {
         void (*AbortTransmitCpltCallback)(void); /* UART Abort Transmit Complete Callback */
         void (*AbortReceiveCpltCallback)(void);  /* UART Abort Receive Complete Callback  */
     } dr16;
-	/* Add other uart device here. */
+	
+	/*
+	struct {
+        void (*TxHalfCpltCallback)(void);
+        void (*TxCpltCallback)(void);
+        void (*RxHalfCpltCallback)(void);
+        void (*RxCpltCallback)(void);
+        void (*ErrorCallback)(void);
+        void (*AbortCpltCallback)(void);
+        void (*AbortTransmitCpltCallback)(void);
+        void (*AbortReceiveCpltCallback)(void);
+    } xx;
+	*/
 } bsp_uart_callback;
 
 /* Private function  ---------------------------------------------------------*/

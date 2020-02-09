@@ -5,8 +5,6 @@
 #include <stdint.h>
 
 /* Exported constants --------------------------------------------------------*/
-
-
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef enum {
@@ -29,5 +27,6 @@ typedef enum {
 /* Exported functions prototypes ---------------------------------------------*/
 int BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*callback)(void));
 
+/* Do NOT use hardware NSS when implenting. It doesn't implement the same logic. */
 int BSP_SPI_Transmit(BSP_SPI_t spi, uint8_t *data, uint16_t len);
 int BSP_SPI_Receive(BSP_SPI_t spi, uint8_t *data, uint16_t len);

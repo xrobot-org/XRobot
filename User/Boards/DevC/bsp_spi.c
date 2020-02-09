@@ -4,14 +4,15 @@
 #include "spi.h"
 
 /* Private define ------------------------------------------------------------*/
-#define OLED_SPI SPI1
-#define IMU_SPI SPI5
+#define OLED_SPI SPI2
+#define IMU_SPI SPI1
 /* #define XXX_SPI SPIX */
 
-/* Private macro -------------------------------------------------------------*/
-#define IMU_SPI_NSS_Reset()	HAL_GPIO_WritePin(SPI5_NSS_GPIO_Port, SPI5_NSS_Pin, GPIO_PIN_RESET)
-#define IMU_SPI_NSS_Set()	HAL_GPIO_WritePin(SPI5_NSS_GPIO_Port, SPI5_NSS_Pin, GPIO_PIN_SET)
+#define OLED_SPI_HANDLE (hspi2)
+#define IMU_SPI_HANDLE (hspi1)
+/* #define XXX_SPI_HANDLE (hspix) */
 
+/* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static struct {
@@ -27,15 +28,28 @@ static struct {
     } oled;
 
     struct {
-        void (*TxCpltCallback)(void);             /* SPI Tx Completed callback          */
-        void (*RxCpltCallback)(void);             /* SPI Rx Completed callback          */
-        void (*TxRxCpltCallback)(void);           /* SPI TxRx Completed callback        */
-        void (*TxHalfCpltCallback)(void);         /* SPI Tx Half Completed callback     */
-        void (*RxHalfCpltCallback)(void);         /* SPI Rx Half Completed callback     */
-        void (*TxRxHalfCpltCallback)(void);       /* SPI TxRx Half Completed callback   */
-        void (*ErrorCallback)(void);              /* SPI Error callback                 */
-        void (*AbortCpltCallback)(void);          /* SPI Abort callback                 */
+        void (*TxCpltCallback)(void);
+        void (*RxCpltCallback)(void);
+        void (*TxRxCpltCallback)(void);
+        void (*TxHalfCpltCallback)(void);
+        void (*RxHalfCpltCallback)(void);
+        void (*TxRxHalfCpltCallback)(void);
+        void (*ErrorCallback)(void);
+        void (*AbortCpltCallback)(void);
     } imu;
+	
+	/*
+	struct {
+        void (*TxCpltCallback)(void);
+        void (*RxCpltCallback)(void);
+        void (*TxRxCpltCallback)(void);
+        void (*TxHalfCpltCallback)(void);
+        void (*RxHalfCpltCallback)(void);
+        void (*TxRxHalfCpltCallback)(void);
+        void (*ErrorCallback)(void);
+        void (*AbortCpltCallback)(void);
+    } xxx;
+	*/
 } bsp_spi_callback;
 
 /* Private function  ---------------------------------------------------------*/
@@ -45,7 +59,6 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
 			bsp_spi_callback.oled.TxCpltCallback();
 		}
     } else if (hspi->Instance == IMU_SPI) {
-	    IMU_SPI_NSS_Set();
 		if (bsp_spi_callback.imu.TxCpltCallback != NULL) {
 			bsp_spi_callback.imu.TxCpltCallback();
 		}
@@ -58,7 +71,6 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
 			bsp_spi_callback.oled.RxCpltCallback();
 		}
     } else if (hspi->Instance == IMU_SPI) {
-        IMU_SPI_NSS_Set();
 		if (bsp_spi_callback.imu.RxCpltCallback != NULL) {
 			bsp_spi_callback.imu.RxCpltCallback();
 		}
@@ -253,19 +265,17 @@ int BSP_SPI_Transmit(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
 	
     switch (spi) {
         case BSP_SPI_IMU:
-            /* Do NOT use hardware NSS. It doesn't implement the same logic. */
-            IMU_SPI_NSS_Reset();
-            HAL_SPI_Transmit(&hspi5, data, len, 55);
+            HAL_SPI_Transmit(&IMU_SPI_HANDLE, data, len, 5);
             break;
 
         case BSP_SPI_OLED:
-            HAL_SPI_Transmit(&hspi1, data, len, 55);
-            //HAL_SPI_Transmit_DMA(&hspi1, data, len);
+            //HAL_SPI_Transmit(&OLED_SPI_HANDLE, data, len, 5);
+            HAL_SPI_Transmit_DMA(&OLED_SPI_HANDLE, data, len);
             break;
 		
 		/*
 		case BSP_SPI_XXX:
-            HAL_SPI_Transmit_DMA(&hspix, data, len);
+            HAL_SPI_Transmit_DMA(&XXX_SPI_HANDLE, data, len);
             break;
 		*/
     }
@@ -278,11 +288,10 @@ int BSP_SPI_Receive(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
 
     switch (spi) {
         case BSP_SPI_IMU:
-            IMU_SPI_NSS_Reset();
-            if (len > 1u) {
-                HAL_SPI_Receive_DMA(&hspi5, data, len);
+            if (len > 3u) {
+                HAL_SPI_Receive_DMA(&IMU_SPI_HANDLE, data, len);
             } else {
-                HAL_SPI_Receive(&hspi5, data, len, 55);
+                HAL_SPI_Receive(&IMU_SPI_HANDLE, data, len, 55);
             }
             break;
 
@@ -291,7 +300,7 @@ int BSP_SPI_Receive(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
 		
 		/*
 		case BSP_SPI_XXX:
-            HAL_SPI_Receive(&hspix, data, len);
+            HAL_SPI_Receive(&XXX_SPI_HANDLE, data, len);
             break;
 		*/
     }

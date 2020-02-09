@@ -1,31 +1,27 @@
 /* Includes ------------------------------------------------------------------*/
-#include "bsp_usb.h"
-
-#include <string.h>
-#include <stdarg.h>
-#include <stdio.h>
-
-#include "usbd_cdc_if.h"
+#include "bsp_buzzer.h"
+#include "main.h"
+#include "tim.h"
 
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-uint8_t usb_tx_buf[2048];
-uint8_t usb_rx_buf[2048];
-
-
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-int BSP_USB_Printf(const char *fmt, ...) {
-	static va_list ap;
-	uint16_t len = 0;
+int BSP_Buzzer_Start(void) {
+	return HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3); 
+}
 
-	va_start(ap, fmt);
-	len = vsprintf((char *)usb_tx_buf, fmt, ap);
-	va_end(ap);
-
-	CDC_Transmit_FS(usb_tx_buf, len);
+int BSP_Buzzer_Set(float freq, float duty_cycle) {
+	uint16_t pulse = duty_cycle * UINT16_MAX;
+	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, pulse);
 	
+	pulse = freq;
+	__HAL_TIM_PRESCALER(&htim4, pulse);
 	return 0;
+}
+
+int BSP_Buzzer_Stop(void) {
+	return HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3);
 }

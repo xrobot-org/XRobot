@@ -22,8 +22,9 @@ int BSP_PWM_Set(BSP_PWM_Channel_t ch, float duty_cycle) {
 		return -1;
 	
 	uint16_t pulse = duty_cycle * PWM_RESOLUTION;
+	
 	switch(ch) {
-		case BSP_PWM_IMU_HEAT: htim3.Instance->CCR2 = pulse; break;
+		case BSP_PWM_IMU_HEAT: __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, pulse); break;
 		default: return -1;
 	}
 	return 0;

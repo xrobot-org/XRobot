@@ -2,10 +2,10 @@
 
 
 /* Includes ------------------------------------------------------------------*/
+#include <stdint.h>
+
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions prototypes ---------------------------------------------*/
-int BSP_Buzzer_Start(void);
-int BSP_Buzzer_Set(float freq, float duty_cycle);
-int BSP_Buzzer_Stop(void);
+int BSP_GPIO_RegisterCallback(uint16_t pin, void (*callback)(void));
