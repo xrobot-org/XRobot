@@ -6,6 +6,11 @@
 #include "cmsis_os.h"
 
 /* Exported constants --------------------------------------------------------*/
+#define CAN_OK			0
+#define CAN_ERR			-1
+#define CAN_ERR_NULL	-2
+#define CAN_ERR_INITED	-3
+
 /* Motor */
 #define CAN_GM6020_FEEDBACK_ID_BASE				0x205
 #define CAN_GM6020_RECEIVE_ID_BASE				0x1ff
@@ -55,6 +60,7 @@ typedef enum
     CAN_M3508_M2_ID = 0x202, /* 2 */
     CAN_M3508_M3_ID = 0x203, /* 3 */
     CAN_M3508_M4_ID = 0x204, /* 4 */
+	
     CAN_M3508_FRIC1_ID = 0x205, /* 5 */
     CAN_M3508_FRIC2_ID = 0x206, /* 6 */
     CAN_M2006_TRIG_ID = 0x207, /* 7 */
@@ -121,7 +127,7 @@ typedef struct
 
 
 /* Exported functions prototypes ---------------------------------------------*/
-int CAN_DeviceInit(CAN_Device_t *cd);
+int CAN_DeviceInit(CAN_Device_t *can_device);
 CAN_Device_t *CAN_GetDevice(void);
 
 int CAN_Motor_ControlChassis(float m1_speed, float m2_speed, float m3_speed, float m4_speed);
