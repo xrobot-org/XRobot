@@ -9,7 +9,8 @@
 #include "cmsis_os.h"
 
 /* Exported constants --------------------------------------------------------*/
-#define DR16_SIGNAL_DATA_REDY (1u<<0)
+#define DR16_SIGNAL_RAW_REDY	(1u<<0)
+#define DR16_SIGNAL_DATA_REDY	(1u<<1)
 
 #define DR16_CH_VALUE_MIN			(364u)
 #define DR16_CH_VALUE_MID			(1024u)
