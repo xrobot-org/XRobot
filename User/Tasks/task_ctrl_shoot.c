@@ -6,6 +6,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "task_common.h"
 
+/* Include 标准库*/
 /* Include Board相关的头文件 */
 /* Include Device相关的头文件。*/
 /* Include Component相关的头文件。*/
@@ -23,13 +24,13 @@ static osStatus os_status = osOK;
 void Task_CtrlShoot(void const *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
-	/* 等待一段时间后再开始任务。*/
+	/* Task Setup */
 	osDelay(TASK_CTRL_SHOOT_INIT_DELAY);
 	
 	
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
-		/* 任务主体 */
+		/* Task */
 		
 		
 		osDelayUntil(&previous_wake_time, delay_ms);

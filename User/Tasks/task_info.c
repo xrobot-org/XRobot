@@ -7,8 +7,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "task_common.h"
 
+/* Include 标准库*/
 /* Include Board相关的头文件 */
 #include "bsp_led.h"
+#include "bsp_usb.h"
 
 /* Include Device相关的头文件 */
 /* Include Component相关的头文件 */
@@ -32,13 +34,14 @@ void Task_Info(void const *argument) {
 	float battery_percentage;
 	float capacitot_percentage;
 	
-	/* 等待一段时间后再开始任务。*/
+	/* Task Setup */
 	osDelay(TASK_INFO_INIT_DELAY);
-	BSP_LED_Set(BSP_LED_GRN, BSP_LED_ON, 1);
+	BSP_LED_Set(BSP_LED_GRN, BSP_LED_ON, 0.5f);
 
+	BSP_USB_Printf("hello admin.");
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
-		/* 任务主体 */
+		/* Task */
 		battery_percentage = Capacity_GetBatteryRemain(battery_voltage);
 		
 		BSP_LED_Set(BSP_LED_GRN, BSP_LED_TAGGLE, 1);
