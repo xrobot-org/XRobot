@@ -36,7 +36,6 @@ void LowPassFilter2p_SetParameters(LowPassFilter2p_t *f, float sample_freq, floa
 }
 
 float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample) {
-	
 	// do the filtering
 	float delay_element_0 = sample - f->delay_element_1 * f->a1 - f->delay_element_2 * f->a2;
 
