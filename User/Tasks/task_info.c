@@ -7,7 +7,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "task_common.h"
 
-/* Include 标准库*/
+/* Include 标准库 */
 /* Include Board相关的头文件 */
 #include "bsp_led.h"
 #include "bsp_usb.h"
@@ -16,7 +16,7 @@
 /* Include Component相关的头文件 */
 #include "capacity.h"
 
-/* Include Module相关的头文件。*/
+/* Include Module相关的头文件 */
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -38,7 +38,7 @@ void Task_Info(void const *argument) {
 	osDelay(TASK_INFO_INIT_DELAY);
 	BSP_LED_Set(BSP_LED_GRN, BSP_LED_ON, 0.5f);
 
-	BSP_USB_Printf("hello admin.");
+	//BSP_USB_Printf("hello admin.");
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
 		/* Task */
