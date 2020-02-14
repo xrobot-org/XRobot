@@ -30,44 +30,38 @@ int PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min) {
 
 
 int PID_SetParameters(PID_t *pid, float kp, float ki, float kd, float integral_limit, float output_limit) {
-	int ret = 0;
-	
 	if (pid == NULL)
 		return -1;
 	
 	if (isfinite(kp))
 		pid->kp = kp;
 	else
-		ret = -1;
+		return -1;
 
 	if (isfinite(ki))
 		pid->ki = ki;
 	else
-		ret = -1;
+		return -1;
 
 	if (isfinite(kd))
 		pid->kd = kd;
 	else
-		ret = -1;
+		return -1;
 
 	if (isfinite(integral_limit))
 		pid->integral_limit = integral_limit;
 	else
-		ret = -1;
+		return -1;
 
 	if (isfinite(output_limit))
 		pid->output_limit = output_limit;
 	else
-		ret = -1;
+		return -1;
 
-	return ret;
+	return 0;
 }
 
-float PID_Calculate(PID_t *pid, float sp, float val, float val_dot, float dt)
-{	
-	if (pid == NULL)
-		return pid->last_output;
-	
+float PID_Calculate(PID_t *pid, float sp, float val, float val_dot, float dt) {
 	if (isinf(sp) || isinf(val) || isinf(val_dot) || isinf(dt)) {
 		return pid->last_output;
 	}
@@ -138,8 +132,7 @@ float PID_Calculate(PID_t *pid, float sp, float val, float val_dot, float dt)
 	return pid->last_output;
 }
 
-int PID_ResetIntegral(PID_t *pid)
-{
+int PID_ResetIntegral(PID_t *pid) {
 	if (pid == NULL)
 		return -1;
 	
