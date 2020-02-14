@@ -10,11 +10,11 @@
 /* Includes ------------------------------------------------------------------*/
 #include "task_common.h"
 
-/* Include 标准库*/
+/* Include 标准库 */
 /* Include Board相关的头文件 */
-/* Include Device相关的头文件。*/
-/* Include Component相关的头文件。*/
-/* Include Module相关的头文件。*/
+/* Include Device相关的头文件 */
+/* Include Component相关的头文件 */
+/* Include Module相关的头文件 */
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/

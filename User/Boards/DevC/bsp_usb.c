@@ -1,16 +1,14 @@
 /* Includes ------------------------------------------------------------------*/
 #include "bsp_usb.h"
-
 #include "bsp_delay.h"
+
+#include "usbd_cdc_if.h"
 
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "usbd_cdc_if.h"
-
 /* Private define ------------------------------------------------------------*/
-#define BSP_USBN_TIMEOUT_MS (1000)
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/

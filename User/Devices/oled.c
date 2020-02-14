@@ -30,7 +30,7 @@
 #endif
 
 
-/* Include Component相关的头文件。*/
+/* Include Component相关的头文件 */
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 #ifdef OLED_USE_SPI

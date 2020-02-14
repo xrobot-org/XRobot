@@ -8,20 +8,20 @@
 /* Includes ------------------------------------------------------------------*/
 #include "task_common.h"
 
-/* Include 标准库*/
+/* Include 标准库 */
 #include <string.h>
 
 /* Include Board相关的头文件 */
 #include "bsp_pwm.h"
 
-/* Include Device相关的头文件。*/
+/* Include Device相关的头文件 */
 #include "imu.h"
 
-/* Include Component相关的头文件。*/
+/* Include Component相关的头文件 */
 #include "ahrs.h"
 #include "pid.h"
 
-/* Include Module相关的头文件。*/
+/* Include Module相关的头文件 */
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/

@@ -1,5 +1,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "bsp_servo.h"
+
 #include "main.h"
 #include "tim.h"
 
@@ -14,6 +15,8 @@ float range[BSP_SERVO_NUM];
 /* Exported functions --------------------------------------------------------*/
 int BSP_Servo_Init(BSP_Servo_Channel_t ch, float max_angle) {
 	range[ch] = max_angle;
+	
+	return 0;
 }
 
 int BSP_Servo_Start(BSP_Servo_Channel_t ch) {

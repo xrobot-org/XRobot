@@ -1,7 +1,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "bsp_uart.h"
-#include "usart.h"
 
+#include "usart.h"
 
 /* Private define ------------------------------------------------------------*/
 #define DR16_UART USART3

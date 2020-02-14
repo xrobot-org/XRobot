@@ -6,7 +6,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "dr16.h"
 
-/* Include 标准库*/
+/* Include 标准库 */
 /* Include BSP相关的头文件*/
 #include "bsp_uart.h"
 
