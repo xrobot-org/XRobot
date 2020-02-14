@@ -19,5 +19,5 @@ typedef struct {
 } LowPassFilter2p_t;
 
 void LowPassFilter2p_SetParameters(LowPassFilter2p_t *f, float sample_freq, float cutoff_freq);
-inline float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample);
+float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample);
 float LowPassFilter2p_Reset(LowPassFilter2p_t *f, float sample);
