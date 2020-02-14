@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<Project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="project_projx.xsd">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><Project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" noNamespaceSchemaLocation="project_projx.xsd">
 
   <SchemaVersion>2.1</SchemaVersion>
 
@@ -19,28 +18,28 @@
           <PackID>Keil.STM32F4xx_DFP.2.14.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000-0x2001FFFF) IRAM2(0x10000000-0x1000FFFF) IROM(0x8000000-0x80FFFFF)  CLOCK(25000000) FPU2 CPUTYPE("Cortex-M4")</Cpu>
-          <FlashUtilSpec></FlashUtilSpec>
-          <StartupFile></StartupFile>
-          <FlashDriverDll></FlashDriverDll>
-          <DeviceId></DeviceId>
-          <RegisterFile></RegisterFile>
-          <MemoryEnv></MemoryEnv>
-          <Cmp></Cmp>
-          <Asm></Asm>
-          <Linker></Linker>
-          <OHString></OHString>
-          <InfinionOptionDll></InfinionOptionDll>
-          <SLE66CMisc></SLE66CMisc>
-          <SLE66AMisc></SLE66AMisc>
-          <SLE66LinkerMisc></SLE66LinkerMisc>
+          <FlashUtilSpec/>
+          <StartupFile/>
+          <FlashDriverDll/>
+          <DeviceId/>
+          <RegisterFile/>
+          <MemoryEnv/>
+          <Cmp/>
+          <Asm/>
+          <Linker/>
+          <OHString/>
+          <InfinionOptionDll/>
+          <SLE66CMisc/>
+          <SLE66AMisc/>
+          <SLE66LinkerMisc/>
           <SFDFile>$$Device:STM32F407IGHx$CMSIS\SVD\STM32F40x.svd</SFDFile>
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
-          <BinPath></BinPath>
-          <IncludePath></IncludePath>
-          <LibPath></LibPath>
-          <RegisterFilePath></RegisterFilePath>
-          <DBRegisterFilePath></DBRegisterFilePath>
+          <BinPath/>
+          <IncludePath/>
+          <LibPath/>
+          <RegisterFilePath/>
+          <DBRegisterFilePath/>
           <TargetStatus>
             <Error>0</Error>
             <ExitCodeStop>0</ExitCodeStop>
@@ -55,15 +54,15 @@
           <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>0</BrowseInformation>
-          <ListingPath></ListingPath>
+          <ListingPath/>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
           <BeforeCompile>
             <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name></UserProg1Name>
-            <UserProg2Name></UserProg2Name>
+            <UserProg1Name/>
+            <UserProg2Name/>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
             <nStopU1X>0</nStopU1X>
@@ -72,8 +71,8 @@
           <BeforeMake>
             <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name></UserProg1Name>
-            <UserProg2Name></UserProg2Name>
+            <UserProg1Name/>
+            <UserProg2Name/>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
             <nStopB1X>0</nStopB1X>
@@ -82,15 +81,15 @@
           <AfterMake>
             <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name></UserProg1Name>
-            <UserProg2Name></UserProg2Name>
+            <UserProg1Name/>
+            <UserProg2Name/>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
             <nStopA1X>0</nStopA1X>
             <nStopA2X>0</nStopA2X>
           </AfterMake>
           <SelectedForBatchBuild>0</SelectedForBatchBuild>
-          <SVCSIdString></SVCSIdString>
+          <SVCSIdString/>
         </TargetCommonOption>
         <CommonProperty>
           <UseCPPCompiler>0</UseCPPCompiler>
@@ -104,8 +103,8 @@
           <AssembleAssemblyFile>0</AssembleAssemblyFile>
           <PublicsOnly>0</PublicsOnly>
           <StopOnExitCode>3</StopOnExitCode>
-          <CustomArgument></CustomArgument>
-          <IncludeLibraryModules></IncludeLibraryModules>
+          <CustomArgument/>
+          <IncludeLibraryModules/>
           <ComprImg>0</ComprImg>
         </CommonProperty>
         <DllOption>
@@ -139,10 +138,10 @@
           <bUseTDR>1</bUseTDR>
           <Flash2>STLink\ST-LINKIII-KEIL_SWO.dll</Flash2>
           <Flash3>"" ()</Flash3>
-          <Flash4></Flash4>
-          <pFcarmOut></pFcarmOut>
-          <pFcarmGrp></pFcarmGrp>
-          <pFcArmRoot></pFcArmRoot>
+          <Flash4/>
+          <pFcarmOut/>
+          <pFcarmGrp/>
+          <pFcArmRoot/>
           <FcArmLst>0</FcArmLst>
         </Utilities>
         <TargetArmAds>
@@ -175,7 +174,7 @@
             <RvctClst>0</RvctClst>
             <GenPPlst>0</GenPPlst>
             <AdsCpuType>"Cortex-M4"</AdsCpuType>
-            <RvctDeviceName></RvctDeviceName>
+            <RvctDeviceName/>
             <mOS>0</mOS>
             <uocRom>0</uocRom>
             <uocRam>0</uocRam>
@@ -308,7 +307,7 @@
                 <Size>0x10000</Size>
               </OCR_RVCT10>
             </OnChipMemories>
-            <RvctStartVector></RvctStartVector>
+            <RvctStartVector/>
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
@@ -335,10 +334,10 @@
             <v6WtE>0</v6WtE>
             <v6Rtti>0</v6Rtti>
             <VariousControls>
-              <MiscControls></MiscControls>
+              <MiscControls/>
               <Define>USE_HAL_DRIVER,STM32F407xx,ARM_MATH_CM4,ROBOT_TYPE_INFANTRY,OLED_USE_SPI,USE_DEV_BOARD_C</Define>
-              <Undefine></Undefine>
-              <IncludePath>../Core/Inc;  ../USB_DEVICE/App;  ../USB_DEVICE/Target;  ../Drivers/STM32F4xx_HAL_Driver/Inc;  ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;  ../Middlewares/Third_Party/FreeRTOS/Source/include;  ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;  ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;  ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;  ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;  ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;  ../Drivers/CMSIS/Include;  ..\User\Boards;  ..\User\Components;  ..\User\Devices;  ..\User\Module;  ..\User\Tasks;  ..\Drivers\CMSIS\DSP\Include</IncludePath>
+              <Undefine/>
+              <IncludePath>../Core/Inc;    ../USB_DEVICE/App;    ../USB_DEVICE/Target;    ../Drivers/STM32F4xx_HAL_Driver/Inc;    ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;    ../Middlewares/Third_Party/FreeRTOS/Source/include;    ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;    ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;    ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;    ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;    ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;    ../Drivers/CMSIS/Include;    ..\User\Boards;    ..\User\Components;    ..\User\Devices;    ..\User\Module;    ..\User\Tasks;    ..\Drivers\CMSIS\DSP\Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -353,9 +352,9 @@
             <useXO>0</useXO>
             <uClangAs>0</uClangAs>
             <VariousControls>
-              <MiscControls></MiscControls>
-              <Define></Define>
-              <Undefine></Undefine>
+              <MiscControls/>
+              <Define/>
+              <Undefine/>
               <IncludePath>..\Core\Inc</IncludePath>
             </VariousControls>
           </Aads>
@@ -368,13 +367,13 @@
             <useFile>0</useFile>
             <TextAddressRange>0x08000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
-            <pXoBase></pXoBase>
-            <ScatterFile></ScatterFile>
-            <IncludeLibs></IncludeLibs>
-            <IncludeLibsPath></IncludeLibsPath>
-            <Misc></Misc>
-            <LinkerInputFile></LinkerInputFile>
-            <DisabledWarnings></DisabledWarnings>
+            <pXoBase/>
+            <ScatterFile/>
+            <IncludeLibs/>
+            <IncludeLibsPath/>
+            <Misc/>
+            <LinkerInputFile/>
+            <DisabledWarnings/>
           </LDads>
         </TargetArmAds>
       </TargetOption>
@@ -838,9 +837,9 @@
               <FilePath>..\User\Components\capacity.c</FilePath>
             </File>
             <File>
-              <FileName>err_detect.c</FileName>
+              <FileName>error_detect.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\err_detect.c</FilePath>
+              <FilePath>..\User\Components\error_detect.c</FilePath>
             </File>
             <File>
               <FileName>kalmanf.c</FileName>
@@ -848,9 +847,9 @@
               <FilePath>..\User\Components\kalmanf.c</FilePath>
             </File>
             <File>
-              <FileName>lpf_2p.c</FileName>
+              <FileName>low_pass_filter_2p.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\lpf_2p.c</FilePath>
+              <FilePath>..\User\Components\low_pass_filter_2p.c</FilePath>
             </File>
             <File>
               <FileName>mixer.c</FileName>
@@ -908,9 +907,9 @@
               <FilePath>..\User\Devices\IMU\imu_bmi088.c</FilePath>
             </File>
             <File>
-              <FileName>camp_ist8310.c</FileName>
+              <FileName>comp_ist8310.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Devices\Compass\camp_ist8310.c</FilePath>
+              <FilePath>..\User\Devices\Compass\comp_ist8310.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1007,28 +1006,28 @@
           <PackID>Keil.STM32F4xx_DFP.2.14.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000-0x2001FFFF) IRAM2(0x10000000-0x1000FFFF) IROM(0x8000000-0x80FFFFF)  CLOCK(25000000) FPU2 CPUTYPE("Cortex-M4")</Cpu>
-          <FlashUtilSpec></FlashUtilSpec>
-          <StartupFile></StartupFile>
-          <FlashDriverDll></FlashDriverDll>
-          <DeviceId></DeviceId>
-          <RegisterFile></RegisterFile>
-          <MemoryEnv></MemoryEnv>
-          <Cmp></Cmp>
-          <Asm></Asm>
-          <Linker></Linker>
-          <OHString></OHString>
-          <InfinionOptionDll></InfinionOptionDll>
-          <SLE66CMisc></SLE66CMisc>
-          <SLE66AMisc></SLE66AMisc>
-          <SLE66LinkerMisc></SLE66LinkerMisc>
+          <FlashUtilSpec/>
+          <StartupFile/>
+          <FlashDriverDll/>
+          <DeviceId/>
+          <RegisterFile/>
+          <MemoryEnv/>
+          <Cmp/>
+          <Asm/>
+          <Linker/>
+          <OHString/>
+          <InfinionOptionDll/>
+          <SLE66CMisc/>
+          <SLE66AMisc/>
+          <SLE66LinkerMisc/>
           <SFDFile>$$Device:STM32F407IGHx$CMSIS\SVD\STM32F40x.svd</SFDFile>
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
-          <BinPath></BinPath>
-          <IncludePath></IncludePath>
-          <LibPath></LibPath>
-          <RegisterFilePath></RegisterFilePath>
-          <DBRegisterFilePath></DBRegisterFilePath>
+          <BinPath/>
+          <IncludePath/>
+          <LibPath/>
+          <RegisterFilePath/>
+          <DBRegisterFilePath/>
           <TargetStatus>
             <Error>0</Error>
             <ExitCodeStop>0</ExitCodeStop>
@@ -1043,15 +1042,15 @@
           <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>0</BrowseInformation>
-          <ListingPath></ListingPath>
+          <ListingPath/>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
           <BeforeCompile>
             <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name></UserProg1Name>
-            <UserProg2Name></UserProg2Name>
+            <UserProg1Name/>
+            <UserProg2Name/>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
             <nStopU1X>0</nStopU1X>
@@ -1060,8 +1059,8 @@
           <BeforeMake>
             <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name></UserProg1Name>
-            <UserProg2Name></UserProg2Name>
+            <UserProg1Name/>
+            <UserProg2Name/>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
             <nStopB1X>0</nStopB1X>
@@ -1070,15 +1069,15 @@
           <AfterMake>
             <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name></UserProg1Name>
-            <UserProg2Name></UserProg2Name>
+            <UserProg1Name/>
+            <UserProg2Name/>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
             <nStopA1X>0</nStopA1X>
             <nStopA2X>0</nStopA2X>
           </AfterMake>
           <SelectedForBatchBuild>0</SelectedForBatchBuild>
-          <SVCSIdString></SVCSIdString>
+          <SVCSIdString/>
         </TargetCommonOption>
         <CommonProperty>
           <UseCPPCompiler>0</UseCPPCompiler>
@@ -1092,8 +1091,8 @@
           <AssembleAssemblyFile>0</AssembleAssemblyFile>
           <PublicsOnly>0</PublicsOnly>
           <StopOnExitCode>3</StopOnExitCode>
-          <CustomArgument></CustomArgument>
-          <IncludeLibraryModules></IncludeLibraryModules>
+          <CustomArgument/>
+          <IncludeLibraryModules/>
           <ComprImg>0</ComprImg>
         </CommonProperty>
         <DllOption>
@@ -1127,10 +1126,10 @@
           <bUseTDR>1</bUseTDR>
           <Flash2>STLink\ST-LINKIII-KEIL_SWO.dll</Flash2>
           <Flash3>"" ()</Flash3>
-          <Flash4></Flash4>
-          <pFcarmOut></pFcarmOut>
-          <pFcarmGrp></pFcarmGrp>
-          <pFcArmRoot></pFcArmRoot>
+          <Flash4/>
+          <pFcarmOut/>
+          <pFcarmGrp/>
+          <pFcArmRoot/>
           <FcArmLst>0</FcArmLst>
         </Utilities>
         <TargetArmAds>
@@ -1163,7 +1162,7 @@
             <RvctClst>0</RvctClst>
             <GenPPlst>0</GenPPlst>
             <AdsCpuType>"Cortex-M4"</AdsCpuType>
-            <RvctDeviceName></RvctDeviceName>
+            <RvctDeviceName/>
             <mOS>0</mOS>
             <uocRom>0</uocRom>
             <uocRam>0</uocRam>
@@ -1296,7 +1295,7 @@
                 <Size>0x10000</Size>
               </OCR_RVCT10>
             </OnChipMemories>
-            <RvctStartVector></RvctStartVector>
+            <RvctStartVector/>
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
@@ -1323,9 +1322,9 @@
             <v6WtE>0</v6WtE>
             <v6Rtti>0</v6Rtti>
             <VariousControls>
-              <MiscControls></MiscControls>
+              <MiscControls/>
               <Define>USE_HAL_DRIVER,STM32F407xx,ARM_MATH_CM4,ROBOT_TYPE_INFANTRY,OLED_USE_SPI,USE_DEV_BOARD_C</Define>
-              <Undefine></Undefine>
+              <Undefine/>
               <IncludePath>../Core/Inc; ../USB_DEVICE/App; ../USB_DEVICE/Target; ../Drivers/STM32F4xx_HAL_Driver/Inc; ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy; ../Middlewares/Third_Party/FreeRTOS/Source/include; ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS; ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F; ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc; ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc; ../Drivers/CMSIS/Device/ST/STM32F4xx/Include; ../Drivers/CMSIS/Include; ..\User\Boards; ..\User\Components; ..\User\Devices; ..\User\Module; ..\User\Tasks; ..\Drivers\CMSIS\DSP\Include</IncludePath>
             </VariousControls>
           </Cads>
@@ -1341,9 +1340,9 @@
             <useXO>0</useXO>
             <uClangAs>0</uClangAs>
             <VariousControls>
-              <MiscControls></MiscControls>
-              <Define></Define>
-              <Undefine></Undefine>
+              <MiscControls/>
+              <Define/>
+              <Undefine/>
               <IncludePath>..\Core\Inc</IncludePath>
             </VariousControls>
           </Aads>
@@ -1356,13 +1355,13 @@
             <useFile>0</useFile>
             <TextAddressRange>0x08000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
-            <pXoBase></pXoBase>
-            <ScatterFile></ScatterFile>
-            <IncludeLibs></IncludeLibs>
-            <IncludeLibsPath></IncludeLibsPath>
-            <Misc></Misc>
-            <LinkerInputFile></LinkerInputFile>
-            <DisabledWarnings></DisabledWarnings>
+            <pXoBase/>
+            <ScatterFile/>
+            <IncludeLibs/>
+            <IncludeLibsPath/>
+            <Misc/>
+            <LinkerInputFile/>
+            <DisabledWarnings/>
           </LDads>
         </TargetArmAds>
       </TargetOption>
@@ -1826,9 +1825,9 @@
               <FilePath>..\User\Components\capacity.c</FilePath>
             </File>
             <File>
-              <FileName>err_detect.c</FileName>
+              <FileName>error_detect.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\err_detect.c</FilePath>
+              <FilePath>..\User\Components\error_detect.c</FilePath>
             </File>
             <File>
               <FileName>kalmanf.c</FileName>
@@ -1836,9 +1835,9 @@
               <FilePath>..\User\Components\kalmanf.c</FilePath>
             </File>
             <File>
-              <FileName>lpf_2p.c</FileName>
+              <FileName>low_pass_filter_2p.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\lpf_2p.c</FilePath>
+              <FilePath>..\User\Components\low_pass_filter_2p.c</FilePath>
             </File>
             <File>
               <FileName>mixer.c</FileName>
@@ -1896,9 +1895,9 @@
               <FilePath>..\User\Devices\IMU\imu_bmi088.c</FilePath>
             </File>
             <File>
-              <FileName>camp_ist8310.c</FileName>
+              <FileName>comp_ist8310.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Devices\Compass\camp_ist8310.c</FilePath>
+              <FilePath>..\User\Devices\Compass\comp_ist8310.c</FilePath>
             </File>
           </Files>
         </Group>

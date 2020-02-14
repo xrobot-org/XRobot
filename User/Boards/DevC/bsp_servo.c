@@ -20,7 +20,7 @@ int BSP_Servo_Start(BSP_Servo_Channel_t ch) {
 	switch(ch) {
 		case BSP_SERVO_A: 
 			HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2); 
-		break;
+			break;
 		
 		default:
 			return -1;
@@ -38,7 +38,7 @@ int BSP_Servo_Set(BSP_Servo_Channel_t ch, uint8_t angle) {
 	switch(ch) {
 		case BSP_SERVO_A: 
 			__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, pulse);
-		break;
+			break;
 		
 		default:
 			return -1;
@@ -50,7 +50,7 @@ int BSP_Servo_Stop(BSP_Servo_Channel_t ch) {
 	switch(ch) {
 		case BSP_SERVO_A:
 			HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_2);
-		break;
+			break;
 		
 		default:
 			return -1;

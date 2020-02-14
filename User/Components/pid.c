@@ -78,19 +78,24 @@ float PID_Calculate(PID_t *pid, float sp, float val, float val_dot, float dt)
 	float error = sp - val;
 
 	/* current error derivative */
-	if (pid->mode == PID_MODE_DERIVATIV_CALC) {
-		d = (error - pid->error_previous) / fmaxf(dt, pid->dt_min);
-		pid->error_previous = error;
-
-	} else if (pid->mode == PID_MODE_DERIVATIV_CALC_NO_SP) {
-		d = (-val - pid->error_previous) / fmaxf(dt, pid->dt_min);
-		pid->error_previous = -val;
-
-	} else if (pid->mode == PID_MODE_DERIVATIV_SET) {
-		d = -val_dot;
-
-	} else {
-		d = 0.0f;
+	switch (pid->mode) {
+		case PID_MODE_DERIVATIV_CALC:
+			d = (error - pid->error_previous) / fmaxf(dt, pid->dt_min);
+			pid->error_previous = error;
+			break;
+		
+		case PID_MODE_DERIVATIV_CALC_NO_SP:
+			d = (-val - pid->error_previous) / fmaxf(dt, pid->dt_min);
+			pid->error_previous = -val;
+			break;
+		
+		case PID_MODE_DERIVATIV_SET:
+			d = -val_dot;
+			break;
+		
+		case PID_MODE_DERIVATIV_NONE:
+			d = 0.0f;
+			break;
 	}
 	
 	if (!isfinite(d))

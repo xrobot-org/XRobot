@@ -52,7 +52,7 @@
 typedef struct {
 	struct {
 		osThreadId cli;
-		osThreadId comm;
+		osThreadId command;
 		osThreadId ctrl_chassis;
 		osThreadId ctrl_gimbal;
 		osThreadId ctrl_shoot;
@@ -81,7 +81,7 @@ int Task_InitParam(Task_Param_t *task_param);
 
 void Task_CAN(void const *argument);
 void Task_CLI(void const *argument);
-void Task_Comm(void const *argument);
+void Task_Command(void const *argument);
 void Task_CtrlChassis(void const *argument);
 void Task_CtrlGimbal(void const *argument);
 void Task_CtrlShoot(void const *argument);

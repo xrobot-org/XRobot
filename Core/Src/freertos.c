@@ -113,7 +113,7 @@ void MX_FREERTOS_Init(void) {
   /* add threads, ... */
   
 	osThreadDef(cli,			Task_CLI,			osPriorityBelowNormal,	0, 128);
-	osThreadDef(comm,			Task_Comm,			osPriorityHigh,			0, 128);
+	osThreadDef(command,		Task_Command,		osPriorityHigh,			0, 128);
 	osThreadDef(ctrl_chassis,	Task_CtrlChassis,	osPriorityAboveNormal,	0, 128);
 	osThreadDef(ctrl_gimbal,	Task_CtrlGimbal,	osPriorityAboveNormal,	0, 128);
 	osThreadDef(ctrl_shoot,		Task_CtrlShoot,		osPriorityAboveNormal,	0, 128);
@@ -124,7 +124,7 @@ void MX_FREERTOS_Init(void) {
 	osThreadDef(referee,		Task_Referee,		osPriorityNormal,		0, 128);
 	
 	task_param.thread.cli			= osThreadCreate(osThread(cli),				&task_param);
-	task_param.thread.comm			= osThreadCreate(osThread(comm),			&task_param);
+	task_param.thread.command		= osThreadCreate(osThread(command),			&task_param);
 	task_param.thread.ctrl_chassis	= osThreadCreate(osThread(ctrl_chassis),	&task_param);
 	task_param.thread.ctrl_gimbal	= osThreadCreate(osThread(ctrl_gimbal),		&task_param);
 	task_param.thread.ctrl_shoot	= osThreadCreate(osThread(ctrl_shoot),		&task_param);

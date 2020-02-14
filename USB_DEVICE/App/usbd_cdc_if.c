@@ -68,7 +68,7 @@
 /* Define size for the receive and transmit buffer over CDC */
 /* It's up to user to redefine and/or remove those define */
 #define APP_RX_DATA_SIZE  2048
-#define APP_TX_DATA_SIZE  2048
+#define APP_TX_DATA_SIZE  8
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
@@ -158,8 +158,8 @@ static int8_t CDC_Init_FS(void)
 {
   /* USER CODE BEGIN 3 */
   /* Set Application Buffers */
-  //USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 0);
-  //USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
+  USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 0);
+  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
   return (USBD_OK);
   /* USER CODE END 3 */
 }
@@ -267,7 +267,9 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   /* USER CODE BEGIN 6 */
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, Buf);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-	HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0, (uint32_t)Buf, (uint32_t)usb_rx_buf, *Len);
+	// TODO: memcpy then soft interupt.
+	
+	//HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0, (uint32_t)Buf, (uint32_t)usb_rx_buf, *Len);
   return (USBD_OK);
   /* USER CODE END 6 */
 }

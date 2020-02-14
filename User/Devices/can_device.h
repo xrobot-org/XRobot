@@ -6,10 +6,10 @@
 #include "cmsis_os.h"
 
 /* Exported constants --------------------------------------------------------*/
-#define CAN_OK			0
-#define CAN_ERR			-1
-#define CAN_ERR_NULL	-2
-#define CAN_ERR_INITED	-3
+#define CAN_OK			(0)
+#define CAN_ERR			(-1)
+#define CAN_ERR_NULL	(-2)
+#define CAN_ERR_INITED	(-3)
 
 /* Motor */
 #define CAN_GM6020_FEEDBACK_ID_BASE				0x205
@@ -30,7 +30,6 @@
 #define CAN_GIMBAL_MOTOR_NUM			5
 
 #define CAN_MOTOR_MAX_ENCODER			8191
-#define CAN_MOTOR_ENCODER_TO_RAD		8191
 
 #define CAN_MOTOR_CAN_RX_FIFO		CAN_RX_FIFO0
 
@@ -130,9 +129,9 @@ typedef struct
 int CAN_DeviceInit(CAN_Device_t *can_device);
 CAN_Device_t *CAN_GetDevice(void);
 
-int CAN_Motor_ControlChassis(float m1_speed, float m2_speed, float m3_speed, float m4_speed);
-int CAN_Motor_ControlGimbal(float yaw_speed, float pitch_speed);
-int CAN_Motor_ControlShoot(float fric_speed, float trig_speed);
+int CAN_Motor_ControlChassis(float m1, float m2, float m3, float m4);
+int CAN_Motor_ControlGimbal(float yaw, float pitch);
+int CAN_Motor_ControlShoot(float fric, float trig);
 
 int CAN_Motor_QuickIdSetMode(void);
 int CAN_SuperCapControl(CAN_SuperCapControl_t *sc_ctrl);

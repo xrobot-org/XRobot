@@ -93,11 +93,11 @@ static void BMI_WriteSingle(BMI_Device_t dv, uint8_t reg, uint8_t data) {
 	switch (dv) {
 		case BMI_ACCL:
 			IMU_ACCL_NSS_Reset();
-		break;
+			break;
 		
 		case BMI_GYRO:
 			IMU_GYRO_NSS_Reset();
-		break;
+			break;
 	}
 	
 	BSP_SPI_Transmit(BSP_SPI_IMU, buffer, 2);
@@ -105,11 +105,11 @@ static void BMI_WriteSingle(BMI_Device_t dv, uint8_t reg, uint8_t data) {
 	switch (dv) {
 		case BMI_ACCL:
 			IMU_ACCL_NSS_Set();
-		break;
+			break;
 		
 		case BMI_GYRO:
 			IMU_GYRO_NSS_Set();
-		break;
+			break;
 	}
 	BSP_Delay(5);
 }
@@ -120,11 +120,11 @@ static uint8_t BMI_ReadSingle(BMI_Device_t dv, uint8_t reg) {
 	switch (dv) {
 		case BMI_ACCL:
 			IMU_ACCL_NSS_Reset();
-		break;
+			break;
 		
 		case BMI_GYRO:
 			IMU_GYRO_NSS_Reset();
-		break;
+			break;
 	}
 	
 	BSP_SPI_Transmit(BSP_SPI_IMU, buffer, 1);
@@ -134,12 +134,12 @@ static uint8_t BMI_ReadSingle(BMI_Device_t dv, uint8_t reg) {
 		case BMI_ACCL:
 			IMU_ACCL_NSS_Reset();
 			return buffer[1];
-		break;
+			break;
 		
 		case BMI_GYRO:
 			IMU_GYRO_NSS_Reset();
 			return buffer[0];
-		break;
+			break;
 	}
 }
 
@@ -152,11 +152,11 @@ static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
 	switch (dv) {
 		case BMI_ACCL:
 			IMU_ACCL_NSS_Reset();
-		break;
+			break;
 		
 		case BMI_GYRO:
 			IMU_GYRO_NSS_Reset();
-		break;
+			break;
 	}
 	
 	switch (dv) {
@@ -165,7 +165,7 @@ static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
 			BSP_SPI_Receive(BSP_SPI_IMU, buffer, 1);
 		case BMI_GYRO:
 			BSP_SPI_Receive(BSP_SPI_IMU, data, len);
-		break;
+			break;
 	}
 }
 

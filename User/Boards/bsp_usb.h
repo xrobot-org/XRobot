@@ -6,10 +6,11 @@
 #include <string.h>
 
 /* Exported constants --------------------------------------------------------*/
+#define BSP_USB_OK			(0)
+#define BSP_USB_TIMEOUT		(-2)
+
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
-
-extern uint8_t usb_rx_buf[2048];
 
 /* Exported functions prototypes ---------------------------------------------*/
 int BSP_USB_Printf(const char *fmt, ...);

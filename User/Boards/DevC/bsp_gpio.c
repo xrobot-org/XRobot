@@ -20,20 +20,20 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 			if (bsp_gpio_callback.ACCL_INT_Pin_Callback != NULL) {
 				bsp_gpio_callback.ACCL_INT_Pin_Callback();
 			}
-		break;
+			break;
 			
 		case GYRO_INT_Pin:
 			if (bsp_gpio_callback.GYRO_INT_Pin_Callback != NULL) {
 				bsp_gpio_callback.GYRO_INT_Pin_Callback();
 			}
-		break;
+			break;
 		
 		/*
 		case XXX_Pin:
 			if (bsp_gpio_callback.XXX_Pin_Callback != NULL) {
 				bsp_gpio_callback.XXX_Pin_Callback();
 			}
-		break;
+			break;
 		*/
 		
 		default:
@@ -59,7 +59,7 @@ int BSP_GPIO_RegisterCallback(uint16_t pin, void (*callback)(void)) {
 		/*
 		case XXX_Pin:
 			bsp_gpio_callback.XXX_Pin_Callback = callback;
-		break;
+			break;
 		*/
 		
 		default:
