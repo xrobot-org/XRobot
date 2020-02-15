@@ -62,11 +62,11 @@ void Task_CtrlChassis(void const *argument) {
 			chassis.robot_ctrl_v = evt.value.p;
 		}
 		
-		Chassis_Control(&chassis);
-		
 		/* Wait for motor feedback. */
 		osSignalWait(CAN_DEVICE_SIGNAL_CHASSIS_RECV, osWaitForever);
 		Chassis_UpdateFeedback(&chassis, &cd);
+		
+		Chassis_Control(&chassis);
 		
 		// Check can error
 		CAN_Motor_ControlChassis(
