@@ -53,8 +53,8 @@ void Task_CtrlChassis(void const *argument) {
 	while(1) {
 		/* Task */
 		
-		/* Wait for new rc info. */
-		osEvent evt = osMessageGet(task_param->message.chassis_ctrl_v, 1u);
+		/* Try to get new rc command. */
+		osEvent evt = osMessageGet(task_param->message.chassis_ctrl_v, 0);
 		if (evt.status == osEventMessage) {
 			if (chassis.robot_ctrl_v != NULL) {
 				osPoolFree(task_param->pool.chassis_ctrl_v, chassis.robot_ctrl_v);
