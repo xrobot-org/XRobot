@@ -134,12 +134,13 @@ static uint8_t BMI_ReadSingle(BMI_Device_t dv, uint8_t reg) {
 		case BMI_ACCL:
 			IMU_ACCL_NSS_Reset();
 			return buffer[1];
-			break;
 		
 		case BMI_GYRO:
 			IMU_GYRO_NSS_Reset();
 			return buffer[0];
-			break;
+		
+		default:
+			return 0;
 	}
 }
 

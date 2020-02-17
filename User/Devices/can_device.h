@@ -103,8 +103,7 @@ typedef struct {
 	int16_t power_limit;
 } CAN_SuperCapControl_t;
 
-typedef struct
-{
+typedef struct {
 	osThreadId chassis_alert;
 	osThreadId gimbal_alert;
 	osThreadId shoot_alert;
