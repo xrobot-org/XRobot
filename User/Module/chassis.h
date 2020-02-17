@@ -38,7 +38,7 @@ typedef enum {
 } Chassis_Type_t;
 
 /*  
-	CHASSIS_MODE_RELAX: Not force applied. For all robot when power on.
+	CHASSIS_MODE_RELAX: No force applied. For all robot when power on.
 	CHASSIS_MODE_BREAK: Set to zero speed. Force applied. For all robot when break.
 	CHASSIS_MODE_FOLLOW_GIMBAL: Follow gimbal by follow encoder. For infantry, hero and engineer.
 	CHASSIS_MODE_ROTOR: Constantly rotating. For infantry and hero.
