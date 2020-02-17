@@ -336,9 +336,9 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_HAL_DRIVER,STM32F407xx,ARM_MATH_CM4,ROBOT_TYPE_INFANTRY,OLED_USE_SPI,USE_DEV_BOARD_C</Define>
+              <Define>USE_HAL_DRIVER,STM32F407xx,ARM_MATH_CM4,ROBOT_MODEL_INFANTRY,OLED_USE_SPI,USE_DEV_BOARD_C</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;    ../USB_DEVICE/App;    ../USB_DEVICE/Target;    ../Drivers/STM32F4xx_HAL_Driver/Inc;    ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;    ../Middlewares/Third_Party/FreeRTOS/Source/include;    ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;    ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;    ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;    ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;    ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;    ../Drivers/CMSIS/Include;    ..\User\Boards;    ..\User\Components;    ..\User\Devices;    ..\User\Module;    ..\User\Tasks;    ..\Drivers\CMSIS\DSP\Include</IncludePath>
+              <IncludePath>../Core/Inc;         ../USB_DEVICE/App;         ../USB_DEVICE/Target;         ../Drivers/STM32F4xx_HAL_Driver/Inc;         ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;         ../Middlewares/Third_Party/FreeRTOS/Source/include;         ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;         ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;         ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;         ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;         ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;         ../Drivers/CMSIS/Include;         ..\User\Boards;         ..\User\Components;         ..\User\Devices;         ..\User\Module;         ..\User\Tasks;         ..\Drivers\CMSIS\DSP\Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -886,6 +886,11 @@
               <FileName>user_math.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\user_math.c</FilePath>
+            </File>
+            <File>
+              <FileName>FreeRTOS_CLI.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\FreeRTOS_CLI.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1874,6 +1879,11 @@
               <FileName>user_math.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\user_math.c</FilePath>
+            </File>
+            <File>
+              <FileName>FreeRTOS_CLI.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\FreeRTOS_CLI.c</FilePath>
             </File>
           </Files>
         </Group>

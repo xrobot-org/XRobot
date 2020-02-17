@@ -25,7 +25,9 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */     
+/* USER CODE BEGIN Includes */   
+#include "tim.h"
+
 #include "task_common.h"
 /* USER CODE END Includes */
 
@@ -48,6 +50,9 @@
 /* USER CODE BEGIN Variables */
 Task_Param_t task_param;
 
+/* TIM7 are used to generater high freq tick for debug. */
+__IO unsigned long high_freq_timer_ticks;
+
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 
@@ -67,14 +72,17 @@ unsigned long getRunTimeCounterValue(void);
 
 /* USER CODE BEGIN 1 */
 /* Functions needed when configGENERATE_RUN_TIME_STATS is on */
-__weak void configureTimerForRunTimeStats(void)
+/* Code inside this function should be simple and small. */
+void configureTimerForRunTimeStats(void)
 {
-
+	high_freq_timer_ticks = 0;
+	HAL_TIM_Base_Start_IT(&htim7);
 }
 
-__weak unsigned long getRunTimeCounterValue(void)
+/* High freq timer ticks for runtime stats */
+unsigned long getRunTimeCounterValue(void)
 {
-return 0;
+	return high_freq_timer_ticks;
 }
 /* USER CODE END 1 */
 
@@ -112,7 +120,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   
-	osThreadDef(cli,			Task_CLI,			osPriorityBelowNormal,	0, 128);
+	osThreadDef(cli,			Task_CLI,			osPriorityBelowNormal,	0, 256);
 	osThreadDef(command,		Task_Command,		osPriorityHigh,			0, 128);
 	osThreadDef(ctrl_chassis,	Task_CtrlChassis,	osPriorityAboveNormal,	0, 128);
 	osThreadDef(ctrl_gimbal,	Task_CtrlGimbal,	osPriorityAboveNormal,	0, 128);
@@ -135,19 +143,19 @@ void MX_FREERTOS_Init(void) {
 	task_param.thread.referee		= osThreadCreate(osThread(referee),			&task_param);
 	
 	
-	#if defined ROBOT_TYPE_INFANTRY
+	#if defined ROBOT_MODEL_INFANTRY
 		
-	#elif defined ROBOT_TYPE_HERO
+	#elif defined ROBOT_MODEL_HERO
 		
-	#elif defined ROBOT_TYPE_ENGINEER
+	#elif defined ROBOT_MODEL_ENGINEER
 		
-	#elif defined ROBOT_TYPE_DRONE
+	#elif defined ROBOT_MODEL_DRONE
 		
-	#elif defined ROBOT_TYPE_SENTRY
+	#elif defined ROBOT_MODEL_SENTRY
 
 	#else
 		
-		#error: Must define ROBOT_TYPE_XXXX.
+		#error: Must define ROBOT_MODEL_XXXX.
 		
 	#endif
 		

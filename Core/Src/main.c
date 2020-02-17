@@ -122,6 +122,7 @@ int main(void)
   MX_TIM10_Init();
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
+  MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -196,7 +197,8 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+/* High freq timer ticks for runtime stats */
+extern unsigned long high_freq_timer_ticks;;
 /* USER CODE END 4 */
 
 /**
@@ -216,7 +218,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-
+  /* High freq timer ticks for runtime stats */
+	if (htim->Instance == TIM7) {
+		high_freq_timer_ticks++;
+	}
   /* USER CODE END Callback 1 */
 }
 
