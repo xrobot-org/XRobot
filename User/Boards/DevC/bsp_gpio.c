@@ -11,6 +11,7 @@
 static struct {
 	void (*ACCL_INT_Pin_Callback)(void);
 	void (*GYRO_INT_Pin_Callback)(void);
+	void (*USER_KEY_Pin_Callback)(void);
 	/* void (*XXX_Pin_Callback)(void); */
 } bsp_gpio_callback;
 
@@ -18,22 +19,23 @@ static struct {
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	switch (GPIO_Pin) {
 		case ACCL_INT_Pin:
-			if (bsp_gpio_callback.ACCL_INT_Pin_Callback != NULL) {
+			if (bsp_gpio_callback.ACCL_INT_Pin_Callback)
 				bsp_gpio_callback.ACCL_INT_Pin_Callback();
-			}
 			break;
 			
 		case GYRO_INT_Pin:
-			if (bsp_gpio_callback.GYRO_INT_Pin_Callback != NULL) {
+			if (bsp_gpio_callback.GYRO_INT_Pin_Callback)
 				bsp_gpio_callback.GYRO_INT_Pin_Callback();
-			}
 			break;
-		
+			
+		case USER_KEY_Pin:
+			if (bsp_gpio_callback.USER_KEY_Pin_Callback)
+				bsp_gpio_callback.USER_KEY_Pin_Callback();
+		break;	
 		/*
 		case XXX_Pin:
-			if (bsp_gpio_callback.XXX_Pin_Callback != NULL) {
+			if (bsp_gpio_callback.XXX_Pin_Callback)
 				bsp_gpio_callback.XXX_Pin_Callback();
-			}
 			break;
 		*/
 		
@@ -57,6 +59,9 @@ int BSP_GPIO_RegisterCallback(uint16_t pin, void (*callback)(void)) {
 			bsp_gpio_callback.GYRO_INT_Pin_Callback = callback;
 			break;
 		
+		case USER_KEY_Pin:
+			bsp_gpio_callback.USER_KEY_Pin_Callback = callback;
+			break;
 		/*
 		case XXX_Pin:
 			bsp_gpio_callback.XXX_Pin_Callback = callback;

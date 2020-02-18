@@ -47,9 +47,8 @@ int CAN_DeviceInit(CAN_Device_t *can_device) {
 	if (inited)
 		return CAN_ERR_INITED;
 	
-	inited = true;
-	
 	gcan_device = can_device;
+	inited = true;
 	
 	CAN_FilterTypeDef  can_filter = {0};
 

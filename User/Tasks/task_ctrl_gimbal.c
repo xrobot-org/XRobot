@@ -24,12 +24,17 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static const uint32_t delay_ms = 1000u / TASK_CTRL_GIMBAL_FREQ_HZ;
-static int result = 0;
-static osStatus os_status = osOK;
 
 static CAN_Device_t *cd;
 static AHRS_Eulr_t  *gimbal_eulr;
 static Gimbal_t gimbal;
+
+/* Runtime status. */
+int stat_c_g = 0;
+osStatus os_stat_c_g = osOK;
+#if INCLUDE_uxTaskGetStackHighWaterMark
+uint32_t task_ctrl_gimbal_stack;
+#endif
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -44,7 +49,7 @@ void Task_CtrlGimbal(void const *argument) {
 	
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
-		/* Task */
+		/* Task body */
 		osSignalWait(CAN_DEVICE_SIGNAL_GIMBAL_RECV, osWaitForever);
 		
 		/* Try to get new command. */
@@ -85,5 +90,9 @@ void Task_CtrlGimbal(void const *argument) {
 		CAN_Motor_ControlGimbal(gimbal.yaw_cur_out, gimbal.pit_cur_out);
 		
 		osDelayUntil(&previous_wake_time, delay_ms);
+					
+#if INCLUDE_uxTaskGetStackHighWaterMark
+        task_ctrl_gimbal_stack = uxTaskGetStackHighWaterMark(NULL);
+#endif
 	}
 }

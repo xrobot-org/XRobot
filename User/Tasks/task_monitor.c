@@ -17,8 +17,13 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static const uint32_t delay_ms = 1000u / TASK_MONITOR_FREQ_HZ;
-static int result = 0;
-static osStatus os_status = osOK;
+
+/* Runtime status. */
+int stat_mo = 0;
+osStatus os_stat_mo = osOK;
+#if INCLUDE_uxTaskGetStackHighWaterMark
+uint32_t task_monitor_stack;
+#endif
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -31,9 +36,13 @@ void Task_Monitor(void const *argument) {
 	
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
-		/* Task */
+		/* Task body */
 		
 		
 		osDelayUntil(&previous_wake_time, delay_ms);
+		
+#if INCLUDE_uxTaskGetStackHighWaterMark
+        task_monitor_stack = uxTaskGetStackHighWaterMark(NULL);
+#endif
 	}
 }

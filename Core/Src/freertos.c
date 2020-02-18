@@ -25,7 +25,7 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */   
+/* USER CODE BEGIN Includes */     
 #include "tim.h"
 
 #include "task_common.h"
@@ -51,7 +51,7 @@
 Task_Param_t task_param;
 
 /* TIM7 are used to generater high freq tick for debug. */
-__IO unsigned long high_freq_timer_ticks;
+volatile unsigned long high_freq_timer_ticks;
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
@@ -122,13 +122,12 @@ void MX_FREERTOS_Init(void) {
   
 	osThreadDef(cli,			Task_CLI,			osPriorityBelowNormal,	0, 256);
 	osThreadDef(command,		Task_Command,		osPriorityHigh,			0, 128);
-	osThreadDef(ctrl_chassis,	Task_CtrlChassis,	osPriorityAboveNormal,	0, 128);
-	osThreadDef(ctrl_gimbal,	Task_CtrlGimbal,	osPriorityAboveNormal,	0, 128);
+	osThreadDef(ctrl_chassis,	Task_CtrlChassis,	osPriorityAboveNormal,	0, 256);
+	osThreadDef(ctrl_gimbal,	Task_CtrlGimbal,	osPriorityAboveNormal,	0, 256);
 	osThreadDef(ctrl_shoot,		Task_CtrlShoot,		osPriorityAboveNormal,	0, 128);
-	osThreadDef(debug,			Task_Debug,			osPriorityRealtime,		0, 128);
 	osThreadDef(info,			Task_Info,			osPriorityBelowNormal,	0, 128);
 	osThreadDef(monitor,		Task_Monitor,		osPriorityNormal,		0, 128);
-	osThreadDef(pos_esti,		Task_PosEsti,		osPriorityRealtime,		0, 128);
+	osThreadDef(pos_esti,		Task_PosEsti,		osPriorityRealtime,		0, 256);
 	osThreadDef(referee,		Task_Referee,		osPriorityNormal,		0, 128);
 	
 	task_param.thread.cli			= osThreadCreate(osThread(cli),				&task_param);
@@ -136,11 +135,10 @@ void MX_FREERTOS_Init(void) {
 	task_param.thread.ctrl_chassis	= osThreadCreate(osThread(ctrl_chassis),	&task_param);
 	task_param.thread.ctrl_gimbal	= osThreadCreate(osThread(ctrl_gimbal),		&task_param);
 	task_param.thread.ctrl_shoot	= osThreadCreate(osThread(ctrl_shoot),		&task_param);
-	task_param.thread.debug			= osThreadCreate(osThread(debug),			&task_param);
 	task_param.thread.info			= osThreadCreate(osThread(info),			&task_param);
 	task_param.thread.monitor		= osThreadCreate(osThread(monitor),			&task_param);
 	task_param.thread.pos_esti		= osThreadCreate(osThread(pos_esti),		&task_param);
-	task_param.thread.referee		= osThreadCreate(osThread(referee),			&task_param);
+	//task_param.thread.referee		= osThreadCreate(osThread(referee),			&task_param);
 	
 	
 	#if defined ROBOT_MODEL_INFANTRY

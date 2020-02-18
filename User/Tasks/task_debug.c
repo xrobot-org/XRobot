@@ -23,6 +23,10 @@ static const uint32_t delay_ms = 1000u / TASK_DEBUG_FREQ_HZ;
 static int result = 0;
 static osStatus os_status = osOK;
 
+#if INCLUDE_uxTaskGetStackHighWaterMark
+uint32_t task_debug_stack;
+#endif
+
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_Debug(void const *argument) {
@@ -34,9 +38,13 @@ void Task_Debug(void const *argument) {
 	
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
-		/* Task */
+		/* Task body */
 		
 		
 		osDelayUntil(&previous_wake_time, delay_ms);
+		
+#if INCLUDE_uxTaskGetStackHighWaterMark
+        task_debug_stack = uxTaskGetStackHighWaterMark(NULL);
+#endif
 	}
 }

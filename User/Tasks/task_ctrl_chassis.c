@@ -24,11 +24,16 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static const uint32_t delay_ms = 1000u / TASK_CTRL_CHASSIS_FREQ_HZ;
-static int result = 0;
-static osStatus os_status = osOK;
 
 static CAN_Device_t cd;
 static Chassis_t chassis;
+
+/* Runtime status. */
+int stat_c_c = 0;
+osStatus os_stat_c_c = osOK;
+#if INCLUDE_uxTaskGetStackHighWaterMark
+uint32_t task_ctrl_chassis_stack;
+#endif
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -51,7 +56,7 @@ void Task_CtrlChassis(void const *argument) {
 	
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
-		/* Task */
+		/* Task body */
 		
 		/* Try to get new rc command. */
 		osEvent evt = osMessageGet(task_param->message.chassis_ctrl_v, 0);
@@ -77,5 +82,9 @@ void Task_CtrlChassis(void const *argument) {
 			chassis.motor_cur_out[3]);
 		
 		osDelayUntil(&previous_wake_time, delay_ms);
+		
+#if INCLUDE_uxTaskGetStackHighWaterMark
+        task_ctrl_chassis_stack = uxTaskGetStackHighWaterMark(NULL);
+#endif
 	}
 }

@@ -31,10 +31,10 @@ int DR16_Init(DR16_t *dr16) {
 		return -1;
 
 	gdr16 = dr16;
+	inited = true;
 
 	// BSP_UART_GegesterCallback(DR16_RxCpltCallback);
-	inited = true;
-	return 0;
+	return DR16_OK;
 }
 
 DR16_t *DR16_GetDevice(void) {
@@ -51,7 +51,7 @@ int DR16_StartReceiving(DR16_t *dr16) {
 /* Made some modification. Be aware when debug.*/
 int DR16_Parse(DR16_t *dr16) {
 	if (dr16 == NULL)
-		return -1;
+		return DR16_ERR_NULL;
 		
 	dr16->data.rc.ch[0] = (dr16->raw[0] | (dr16->raw[1] << 8)) & 0x07ff;        
 	dr16->data.rc.ch[1] = ((dr16->raw[1] >> 3) | (dr16->raw[2] << 5)) & 0x07ff; 
@@ -70,7 +70,7 @@ int DR16_Parse(DR16_t *dr16) {
 	dr16->data.key = dr16->raw[14] | (dr16->raw[15] << 8);
 	dr16->data.rc.ch[4] = dr16->raw[16] | (dr16->raw[17] << 8);
 	
-	return 0;
+	return DR16_OK;
 }
 
 

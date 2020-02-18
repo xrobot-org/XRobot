@@ -18,10 +18,15 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static const uint32_t delay_ms = 1000u / TASK_COMMAND_FREQ_HZ;
-static int result = 0;
-static osStatus os_status = osOK;
 
-DR16_t dr16;
+static DR16_t dr16;
+
+/* Runtime status. */
+int stat_co = 0;
+osStatus os_stat_co = osOK;
+#if INCLUDE_uxTaskGetStackHighWaterMark
+uint32_t task_command_stack;
+#endif
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -36,15 +41,22 @@ void Task_Command(void const *argument) {
 	
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
-		/* Task */
-		result += DR16_StartReceiving(&dr16);
+		/* Task body */
+		stat_co += DR16_StartReceiving(&dr16);
 		osSignalWait(DR16_SIGNAL_RAW_REDY, osWaitForever);
-		result += DR16_Parse(&dr16);
+		stat_co += DR16_Parse(&dr16);
+		
+		pvPortMalloc(16);
 		
 		osSignalSet(task_param->thread.ctrl_chassis, DR16_SIGNAL_DATA_REDY);
 		osSignalSet(task_param->thread.ctrl_gimbal, DR16_SIGNAL_DATA_REDY);
 		osSignalSet(task_param->thread.ctrl_shoot, DR16_SIGNAL_DATA_REDY);
 		
 		osDelayUntil(&previous_wake_time, delay_ms);
+		
+#if INCLUDE_uxTaskGetStackHighWaterMark
+		task_command_stack = uxTaskGetStackHighWaterMark(NULL);
+#endif
 	}
+	
 }

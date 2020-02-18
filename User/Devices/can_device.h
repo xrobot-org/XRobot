@@ -11,6 +11,12 @@
 #define CAN_ERR_NULL	(-2)
 #define CAN_ERR_INITED	(-3)
 
+#define CAN_DEVICE_SIGNAL_CHASSIS_RECV					(1u<<0)
+#define CAN_DEVICE_SIGNAL_GIMBAL_RECV					(1u<<1)
+#define CAN_DEVICE_SIGNAL_SHOOT_RECV					(1u<<2)
+#define CAN_DEVICE_SIGNAL_UWB_RECV						(1u<<3)
+#define CAN_DEVICE_SIGNAL_SUPERCAP_RECV					(1u<<4)
+
 /* Motor */
 #define CAN_GM6020_FEEDBACK_ID_BASE				0x205
 #define CAN_GM6020_RECEIVE_ID_BASE				0x1ff
@@ -45,11 +51,6 @@
 #define CAN_SUPERCAP_FEEDBACK_ID_BASE				0x000
 #define CAN_SUPERCAP_RECEIVE_ID_BASE				0x000
 
-#define CAN_DEVICE_SIGNAL_CHASSIS_RECV					(1u<<0)
-#define CAN_DEVICE_SIGNAL_GIMBAL_RECV					(1u<<1)
-#define CAN_DEVICE_SIGNAL_SHOOT_RECV					(1u<<2)
-#define CAN_DEVICE_SIGNAL_UWB_RECV						(1u<<3)
-#define CAN_DEVICE_SIGNAL_SUPERCAP_RECV					(1u<<4)
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Motor */

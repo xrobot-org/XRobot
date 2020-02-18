@@ -88,6 +88,7 @@ void Error_Handler(void);
 #define BUZZER_GPIO_Port GPIOD
 #define USER_KEY_Pin GPIO_PIN_0
 #define USER_KEY_GPIO_Port GPIOA
+#define USER_KEY_EXTI_IRQn EXTI0_IRQn
 #define ACCL_CS_Pin GPIO_PIN_4
 #define ACCL_CS_GPIO_Port GPIOA
 #define ACCL_INT_Pin GPIO_PIN_4

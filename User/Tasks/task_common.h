@@ -2,6 +2,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "cmsis_os.h"
+#include "FreeRTOS.h"
 
 /* Exported constants --------------------------------------------------------*/
 #define TASK_SIGNAL_CLI_READY					(1u<<0)
@@ -56,7 +57,6 @@ typedef struct {
 		osThreadId ctrl_chassis;
 		osThreadId ctrl_gimbal;
 		osThreadId ctrl_shoot;
-		osThreadId debug;
 		osThreadId info;
 		osThreadId monitor;
 		osThreadId pos_esti;
@@ -64,13 +64,19 @@ typedef struct {
 	} thread;
 	
 	struct {
-		osPoolId  ahrs;
-		osPoolId  chassis_ctrl_v;
+		osPoolId ahrs;
+		osPoolId chassis_ctrl_v;
+		osPoolId gimb_eulr;
+		osPoolId ctrl_eulr;
+		osPoolId imu;
 	} pool;
 	
 	struct {
-		osMessageQId  ahrs;
-		osMessageQId  chassis_ctrl_v;
+		osMessageQId ahrs;
+		osMessageQId chassis_ctrl_v;
+		osMessageQId gimb_eulr;
+		osMessageQId ctrl_eulr;
+		osMessageQId imu;
 	} message;
 	
 	
