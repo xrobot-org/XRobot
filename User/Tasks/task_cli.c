@@ -197,17 +197,13 @@ static const CLI_Command_Definition_t xParameterEcho = {
 	-1,
 };
 
-#if INCLUDE_uxTaskGetStackHighWaterMark
-uint32_t task_cli_stack;
-#endif
-
 /* Exported functions --------------------------------------------------------*/
 void Task_CLI(void const *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	char rx_char;
-	uint16_t index;
-	BaseType_t processing;
+	uint16_t index = 0;
+	BaseType_t processing = 0;
 	char *output = FreeRTOS_CLIGetOutputBuffer();
 	static char input[MAX_INPUT_LENGTH];
 	
@@ -252,6 +248,7 @@ void Task_CLI(void const *argument) {
 		BSP_USB_Printf("%c", rx_char);
 		
 		if(rx_char == '\n' | rx_char == '\r'){
+			BSP_USB_Printf("\r\n");
 			do {
 				processing = FreeRTOS_CLIProcessCommand(input, output, MAX_OUTPUT_LENGTH);
 				BSP_USB_Transmit((uint8_t*)output, strlen(output));
@@ -261,7 +258,13 @@ void Task_CLI(void const *argument) {
 			memset(input, 0x00, MAX_INPUT_LENGTH);
 			BSP_USB_Printf("rm>");
 		} else {
-			if(rx_char == '\b') {
+			if (rx_char <= 126 & rx_char >= 32){
+				/* Accepted it as part of the input and placed into the input buffer. */
+				if(index < MAX_INPUT_LENGTH) {
+					input[index] = rx_char;
+					index++;
+				}
+			}else if(rx_char == '\b'| rx_char == 0x7Fu) {
 				/* Erase the last character in the input buffer - if there are any. */
 				if(index > 0) {
 					index--;
@@ -269,17 +272,7 @@ void Task_CLI(void const *argument) {
 					
 					//BSP_USB_Printf("\b \b");
 				}
-			} else {
-				/* Accepted it as part of the input and placed into the input buffer. */
-				if(index < MAX_INPUT_LENGTH) {
-					input[index] = rx_char;
-					index++;
-				}
 			}
 		}
-		rx_char++;
-#if INCLUDE_uxTaskGetStackHighWaterMark
-        task_cli_stack = uxTaskGetStackHighWaterMark(NULL);
-#endif
 	}
 }
