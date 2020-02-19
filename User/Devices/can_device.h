@@ -131,7 +131,7 @@ CAN_Device_t *CAN_GetDevice(void);
 
 int CAN_Motor_ControlChassis(float m1, float m2, float m3, float m4);
 int CAN_Motor_ControlGimbal(float yaw, float pitch);
-int CAN_Motor_ControlShoot(float fric, float trig);
+int CAN_Motor_ControlShoot(float fric1, float fric2, float trig);
 
 int CAN_Motor_QuickIdSetMode(void);
 int CAN_SuperCapControl(CAN_SuperCapControl_t *sc_ctrl);

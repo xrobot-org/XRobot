@@ -139,8 +139,9 @@ int CAN_Motor_ControlGimbal(float yaw, float pitch) {
 	return CAN_OK;
 }
 
-int CAN_Motor_ControlShoot(float fric, float trig) {
-	int16_t fric_motor = fric * CAN_M3508_MAX_ABS_VOLTAGE;
+int CAN_Motor_ControlShoot(float fric1, float fric2, float trig) {
+	int16_t fric1_motor = fric1 * CAN_M3508_MAX_ABS_VOLTAGE;
+	int16_t fric2_motor = fric2 * CAN_M3508_MAX_ABS_VOLTAGE;
 	int16_t trig_motor = trig * CAN_M2006_MAX_ABS_VOLTAGE;
 	
 	CAN_TxHeaderTypeDef tx_header;
@@ -151,10 +152,10 @@ int CAN_Motor_ControlShoot(float fric, float trig) {
 	tx_header.DLC   = 8;
 	
 	uint8_t tx_data[8];
-	tx_data[0] = fric_motor >> 8;
-    tx_data[1] = fric_motor;
-    tx_data[2] = fric_motor >> 8;
-    tx_data[3] = fric_motor;
+	tx_data[0] = fric1_motor >> 8;
+    tx_data[1] = fric1_motor;
+    tx_data[2] = fric2_motor >> 8;
+    tx_data[3] = fric2_motor;
     tx_data[4] = trig_motor >> 8;
     tx_data[5] = trig_motor;
     tx_data[6] = 0;
