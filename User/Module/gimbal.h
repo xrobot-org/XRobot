@@ -78,38 +78,33 @@ typedef enum {
 
 typedef struct {
 	/* common */
-	float control_time;
+	float dt_ms;
 	
 	Gimbal_Mode_t mode;
 	Gimbal_Mode_t last_mode;
 	
-	/* Input */
+	/* Feedback */
 	float yaw_encoder_angle;
 	float pit_encoder_angle;
-	
 	IMU_t *imu;
 	AHRS_Eulr_t *gimb_eulr;
 	
-	
-	/* Set point */
+	/* Input */
 	AHRS_Eulr_t *ctrl_eulr;
 	
-	/* Feedback Control */
+	/* PID set point */
+	float motor_pos_set[4];
+	
+	/* PID */
 	PID_t yaw_inner_pid;
 	PID_t yaw_outer_pid;
 	
 	PID_t pit_inner_pid;
 	PID_t pit_outer_pid;
 	
-	/* PID Out */
-	float motor_rpm_set[4];
-	
-	/* Gimbal Out */
+	/* Output */
 	float pit_cur_out;
 	float yaw_cur_out;
-	
-	int power_limit;
-	int power_consumpetion;
 	
 } Gimbal_t;
 

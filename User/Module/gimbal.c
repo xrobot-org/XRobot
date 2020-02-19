@@ -27,16 +27,16 @@ int Gimbal_Init(Gimbal_t *gimb) {
 	gimb->mode = GIMBAL_MODE_INIT;
 	gimb->last_mode = GIMBAL_MODE_INIT;
 
-	PID_Init(&(gimb->yaw_inner_pid), PID_MODE_DERIVATIV_SET, gimb->control_time);
+	PID_Init(&(gimb->yaw_inner_pid), PID_MODE_DERIVATIV_SET, gimb->dt_ms);
 	PID_SetParameters(&(gimb->yaw_inner_pid), 5.f, 1.f, 0.f, 1.f, 1.f);
 	
-	PID_Init(&(gimb->yaw_outer_pid), PID_MODE_DERIVATIV_NONE, gimb->control_time);
+	PID_Init(&(gimb->yaw_outer_pid), PID_MODE_DERIVATIV_NONE, gimb->dt_ms);
 	PID_SetParameters(&(gimb->yaw_outer_pid), 5.f, 1.f, 0.f, 1.f, 1.f);
 	
-	PID_Init(&(gimb->pit_inner_pid), PID_MODE_DERIVATIV_SET, gimb->control_time);
+	PID_Init(&(gimb->pit_inner_pid), PID_MODE_DERIVATIV_SET, gimb->dt_ms);
 	PID_SetParameters(&(gimb->pit_inner_pid), 5.f, 1.f, 0.f, 1.f, 1.f);
 	
-	PID_Init(&(gimb->pit_outer_pid), PID_MODE_DERIVATIV_NONE, gimb->control_time);
+	PID_Init(&(gimb->pit_outer_pid), PID_MODE_DERIVATIV_NONE, gimb->dt_ms);
 	PID_SetParameters(&(gimb->pit_outer_pid), 5.f, 1.f, 0.f, 1.f, 1.f);
 	
 	return 0;
@@ -113,11 +113,11 @@ int Gimbal_Control(Gimbal_t *gimb) {
 			break;
 		
 		case GIMBAL_MODE_ABSOLUTE:
-			motor_gyro_set = PID_Calculate(&gimb->yaw_inner_pid, gimb->ctrl_eulr->yaw, gimb->gimb_eulr->yaw, gimb->imu->data.gyro.z, 0.f);
-			gimb->yaw_cur_out  = PID_Calculate(&gimb->yaw_outer_pid, motor_gyro_set, gimb->imu->data.gyro.z, 0.f, 0.f);
+			motor_gyro_set = PID_Calculate(&gimb->yaw_inner_pid, gimb->ctrl_eulr->yaw, gimb->gimb_eulr->yaw, gimb->imu->gyro.z, 0.f);
+			gimb->yaw_cur_out  = PID_Calculate(&gimb->yaw_outer_pid, motor_gyro_set, gimb->imu->gyro.z, 0.f, 0.f);
 			
-			motor_gyro_set = PID_Calculate(&gimb->pit_inner_pid, gimb->ctrl_eulr->pit, gimb->gimb_eulr->pit, gimb->imu->data.gyro.x, 0.f);
-			gimb->pit_cur_out  = PID_Calculate(&gimb->pit_outer_pid, motor_gyro_set, gimb->imu->data.gyro.x, 0.f, 0.f);
+			motor_gyro_set = PID_Calculate(&gimb->pit_inner_pid, gimb->ctrl_eulr->pit, gimb->gimb_eulr->pit, gimb->imu->gyro.x, 0.f);
+			gimb->pit_cur_out  = PID_Calculate(&gimb->pit_outer_pid, motor_gyro_set, gimb->imu->gyro.x, 0.f, 0.f);
 			break;
 			
 		case GIMBAL_MODE_FIX:
@@ -125,11 +125,11 @@ int Gimbal_Control(Gimbal_t *gimb) {
 			gimb->ctrl_eulr->pit = 0.f;
 			/* NO break. */
 		case GIMBAL_MODE_RELATIVE:
-			motor_gyro_set = PID_Calculate(&gimb->yaw_inner_pid, gimb->ctrl_eulr->yaw, gimb->yaw_encoder_angle, gimb->imu->data.gyro.z, 0.f);
-			gimb->yaw_cur_out  = PID_Calculate(&gimb->yaw_outer_pid, motor_gyro_set, gimb->imu->data.gyro.z, 0.f, 0.f);
+			motor_gyro_set = PID_Calculate(&gimb->yaw_inner_pid, gimb->ctrl_eulr->yaw, gimb->yaw_encoder_angle, gimb->imu->gyro.z, 0.f);
+			gimb->yaw_cur_out  = PID_Calculate(&gimb->yaw_outer_pid, motor_gyro_set, gimb->imu->gyro.z, 0.f, 0.f);
 			
-			motor_gyro_set = PID_Calculate(&gimb->pit_inner_pid, gimb->ctrl_eulr->pit, gimb->pit_encoder_angle, gimb->imu->data.gyro.x, 0.f);
-			gimb->pit_cur_out  = PID_Calculate(&gimb->pit_outer_pid, motor_gyro_set, gimb->imu->data.gyro.x, 0.f, 0.f);
+			motor_gyro_set = PID_Calculate(&gimb->pit_inner_pid, gimb->ctrl_eulr->pit, gimb->pit_encoder_angle, gimb->imu->gyro.x, 0.f);
+			gimb->pit_cur_out  = PID_Calculate(&gimb->pit_outer_pid, motor_gyro_set, gimb->imu->gyro.x, 0.f, 0.f);
 			break;
 			
 		default:
