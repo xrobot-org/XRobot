@@ -30,7 +30,7 @@ int Chassis_Init(Chassis_t *chas, Chassis_Type_t type) {
 	chas->type = type;
 	
 	for(uint8_t i = 0; i < 4; i++) {
-		PID_Init(&(chas->wheel_pid[i]), PID_MODE_DERIVATIV_NONE, chas->control_time);
+		PID_Init(&(chas->wheel_pid[i]), PID_MODE_DERIVATIV_NONE, chas->dt_ms);
 		PID_SetParameters(&(chas->wheel_pid[i]), 5.f, 1.f, 0.f, 1.f, 1.f);
 	}
 	
@@ -72,7 +72,7 @@ int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode) {
 		return -1;
 	
 	for(uint8_t i = 0; i < 4; i++) {
-		PID_Init(&(chas->wheel_pid[i]), PID_MODE_DERIVATIV_NONE, chas->control_time);
+		PID_Init(&(chas->wheel_pid[i]), PID_MODE_DERIVATIV_NONE, chas->dt_ms);
 		PID_SetParameters(&(chas->wheel_pid[i]), 5.f, 1.f, 0.f, 1.f, 1.f);
 	}
 	
@@ -85,7 +85,7 @@ int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode) {
 			break;
 		
 		case CHASSIS_MODE_FOLLOW_GIMBAL:
-			PID_Init(&(chas->follow_pid), PID_MODE_DERIVATIV_NONE, chas->control_time);
+			PID_Init(&(chas->follow_pid), PID_MODE_DERIVATIV_NONE, chas->dt_ms);
 			PID_SetParameters(&(chas->follow_pid), 5.f, 1.f, 0.f, 1.f, 1.f);
 
 			// TODO
@@ -155,7 +155,7 @@ int Chassis_Control(Chassis_t *chas) {
 		chas->chas_ctrl_v.wz = 0.f;
 		
 	} else if (chas->mode == CHASSIS_MODE_FOLLOW_GIMBAL) {
-		chas->chas_ctrl_v.wz = PID_Calculate(&(chas->follow_pid), 0, chas->gimbal_yaw_angle, 0.f, chas->control_time);
+		chas->chas_ctrl_v.wz = PID_Calculate(&(chas->follow_pid), 0, chas->gimbal_yaw_angle, 0.f, chas->dt_ms);
 		
 	} else if (chas->mode == CHASSIS_MODE_ROTOR) {
 		chas->chas_ctrl_v.wz = 0.8;

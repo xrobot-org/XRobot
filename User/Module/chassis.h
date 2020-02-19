@@ -62,32 +62,34 @@ typedef struct {
 
 typedef struct {
 	/* common */
-	float control_time;
+	float dt_ms;
 	
 	Chassis_Mode_t mode;
 	Chassis_Mode_t last_mode;
-	int wheel_num;
 	
+	/* Chassis design */
 	Chassis_Type_t type;
-	
+	int wheel_num;
 	int (*Mix)(float vx, float vy, float vz, float *out, int len);
 	
-	/* Input */
+	/* Feedback */
 	float gimbal_yaw_angle;
 	float motor_speed[4];
+	
+	/* Input */
 	CtrlVector_t *robot_ctrl_v;
 	
-	/* Set point */
+	/* Mid product */
 	CtrlVector_t chas_ctrl_v;
+	
+	/* Mixer Out / PID set point. */
+	float motor_rpm_set[4];
 	
 	/* PID */
 	PID_t wheel_pid[4];
 	PID_t follow_pid;
 	
-	/* Mixer Out / PID set point. */
-	float motor_rpm_set[4];
-	
-	/* Chassis Out */
+	/* Output */
 	float motor_cur_out[4];
 	
 	int power_limit;
