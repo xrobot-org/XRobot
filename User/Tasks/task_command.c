@@ -46,10 +46,6 @@ void Task_Command(void const *argument) {
 		
 		pvPortMalloc(16);
 		
-		osSignalSet(task_param->thread.ctrl_chassis, DR16_SIGNAL_DATA_REDY);
-		osSignalSet(task_param->thread.ctrl_gimbal, DR16_SIGNAL_DATA_REDY);
-		osSignalSet(task_param->thread.ctrl_shoot, DR16_SIGNAL_DATA_REDY);
-		
 		osDelayUntil(&previous_wake_time, delay_ms);
 	}
 	
