@@ -20,3 +20,15 @@
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 
+/* magn_scale[3] is initially zero. So data from uncalibrated magnentmeter is ignored. */
+int COMP_Parse(COMP_t *comp) {
+	if (comp == NULL)
+		return COMP_ERR_NULL;
+
+	comp->magn.x = (float)((comp->raw[0] - comp->cali.magn_offset[0]) * comp->cali.magn_scale[0]);
+	comp->magn.y = (float)((comp->raw[0] - comp->cali.magn_offset[1]) * comp->cali.magn_scale[1]);
+	comp->magn.z = (float)((comp->raw[0] - comp->cali.magn_offset[2]) * comp->cali.magn_scale[2]);
+	
+	return COMP_OK;
+}
+
