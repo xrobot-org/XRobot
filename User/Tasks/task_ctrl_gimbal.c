@@ -12,8 +12,6 @@
 #include "can_device.h"
 
 /* Include Component相关的头文件 */
-#include "mixer.h"
-#include "pid.h"
 #include "ahrs.h"
 
 /* Include Module相关的头文件 */
@@ -26,15 +24,11 @@
 static const uint32_t delay_ms = 1000u / TASK_CTRL_GIMBAL_FREQ_HZ;
 
 static CAN_Device_t *cd;
-static AHRS_Eulr_t  *gimbal_eulr;
 static Gimbal_t gimbal;
 
 /* Runtime status. */
 int stat_c_g = 0;
 osStatus os_stat_c_g = osOK;
-#if INCLUDE_uxTaskGetStackHighWaterMark
-uint32_t task_ctrl_gimbal_stack;
-#endif
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -47,42 +41,45 @@ void Task_CtrlGimbal(void const *argument) {
 	
 	cd = CAN_GetDevice();
 	
+	Gimbal_Init(&gimbal);
+	
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
 		/* Task body */
-		osSignalWait(CAN_DEVICE_SIGNAL_GIMBAL_RECV, osWaitForever);
 		
 		/* Try to get new command. */
 		osEvent evt = osMessageGet(task_param->message.chassis_ctrl_v, 1u);
 		if (evt.status == osEventMessage) {
-			if (gimbal.ctrl_eulr != NULL) {
-				osPoolFree(task_param->pool.ctrl_eulr, gimbal.ctrl_eulr);
+			if (gimbal.ctrl_eulr) {
+				vPortFree(gimbal.ctrl_eulr);
 			}
 			gimbal.ctrl_eulr = evt.value.p;
 		}
 		
 		/* Wait for new eulr data. */
-		evt = osMessageGet(task_param->message.ahrs, osWaitForever);
+		evt = osMessageGet(task_param->message.gimb_eulr, osWaitForever);
 		if (evt.status == osEventMessage) {
-			if (gimbal.gimb_eulr != NULL) {
-				osPoolFree(task_param->pool.gimb_eulr, gimbal.gimb_eulr);
+			if (gimbal.gimb_eulr) {
+				vPortFree(gimbal.gimb_eulr);
 			}
 			gimbal.gimb_eulr = evt.value.p;
 		}
 		
 		/* Wait for new IMU data. */
-		evt = osMessageGet(task_param->message.ahrs, osWaitForever);
+		evt = osMessageGet(task_param->message.imu, osWaitForever);
 		if (evt.status == osEventMessage) {
-			if (gimbal.imu != NULL) {
-				osPoolFree(task_param->pool.imu, gimbal.imu);
+			if (gimbal.imu) {
+				vPortFree(gimbal.imu);
 			}
 			gimbal.imu = evt.value.p;
 		}
 		
 		/* Wait for motor feedback. */
-		osSignalWait(CAN_DEVICE_SIGNAL_CHASSIS_RECV, osWaitForever);
+		osSignalWait(CAN_DEVICE_SIGNAL_GIMBAL_RECV, osWaitForever);
 		
+		taskENTER_CRITICAL();
 		Gimbal_UpdateFeedback(&gimbal, cd);
+		taskEXIT_CRITICAL();
 		
 		Gimbal_Control(&gimbal);
 		
@@ -90,9 +87,5 @@ void Task_CtrlGimbal(void const *argument) {
 		CAN_Motor_ControlGimbal(gimbal.yaw_cur_out, gimbal.pit_cur_out);
 		
 		osDelayUntil(&previous_wake_time, delay_ms);
-					
-#if INCLUDE_uxTaskGetStackHighWaterMark
-        task_ctrl_gimbal_stack = uxTaskGetStackHighWaterMark(NULL);
-#endif
 	}
 }

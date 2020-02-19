@@ -64,19 +64,15 @@ typedef struct {
 	} thread;
 	
 	struct {
-		osPoolId ahrs;
-		osPoolId chassis_ctrl_v;
-		osPoolId gimb_eulr;
-		osPoolId ctrl_eulr;
-		osPoolId imu;
-	} pool;
-	
-	struct {
-		osMessageQId ahrs;
-		osMessageQId chassis_ctrl_v;
-		osMessageQId gimb_eulr;
-		osMessageQId ctrl_eulr;
 		osMessageQId imu;
+		osMessageQId gimb_eulr;
+		
+		osMessageQId chassis_ctrl_v;
+		
+		
+		osMessageQId ctrl_eulr;
+		
+		osMessageQId shoot_speed;
 	} message;
 	
 	

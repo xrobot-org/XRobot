@@ -30,57 +30,49 @@
 static const uint32_t delay_ms = 1000u / TASK_POSESTI_FREQ_HZ;
 
 
-osPoolDef(ahrs_pool, 2, AHRS_Eulr_t);
-osMessageQDef(ahrs_message, 2, AHRS_Eulr_t);
+osMessageQDef(eulr_message, 2, AHRS_Eulr_t);
 
-static IMU_t onboard_imu;
+static IMU_t imu;
 static AHRS_t gimbal_ahrs;
 static PID_t imu_temp_ctrl_pid;
 
-/* Runtime status. */
-int stat_p_e = 0;
-osStatus os_stat_p_e = osOK;
-#if INCLUDE_uxTaskGetStackHighWaterMark
-uint32_t task_pos_esti_stack;
-#endif
+static osStatus os_status = osOK;
 
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_PosEsti(void const *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
-	task_param->pool.ahrs = osPoolCreate(osPool(ahrs_pool));
-	task_param->message.ahrs = osMessageCreate(osMessageQ(ahrs_message), NULL);
+	task_param->message.gimb_eulr = osMessageCreate(osMessageQ(eulr_message), NULL);
 	
 	/* Init IMU temp control. */
-	stat_p_e += PID_Init(&imu_temp_ctrl_pid, PID_MODE_DERIVATIV_NONE, 1.f/TASK_POSESTI_FREQ_HZ);
-	stat_p_e += PID_SetParameters(&imu_temp_ctrl_pid, .005f, .001f, 0.f, 1.f, 1.f);
+	PID_Init(&imu_temp_ctrl_pid, PID_MODE_DERIVATIV_NONE, 1.f/TASK_POSESTI_FREQ_HZ);
+	PID_SetParameters(&imu_temp_ctrl_pid, .005f, .001f, 0.f, 1.f, 1.f);
 	
-	stat_p_e += BSP_PWM_Set(BSP_PWM_IMU_HEAT, 0.f);
-	stat_p_e += BSP_PWM_Start(BSP_PWM_IMU_HEAT);
+	BSP_PWM_Set(BSP_PWM_IMU_HEAT, 0.f);
+	BSP_PWM_Start(BSP_PWM_IMU_HEAT);
 	
 	
 	/* Init IMU. */
-	onboard_imu.received_alert = task_param->thread.pos_esti;
-	stat_p_e += IMU_Init(&onboard_imu);
+	imu.received_alert = osThreadGetId();
+	IMU_Init(&imu);
 	
-	stat_p_e += IMU_StartReceiving(&onboard_imu);
+	IMU_StartReceiving(&imu);
 	
 	/* Wait for new accl data. */
 	osSignalWait(IMU_SIGNAL_RAW_ACCL_REDY, osWaitForever);
-	stat_p_e += IMU_ParseAccl(&onboard_imu);
+	IMU_ParseAccl(&imu);
 	
 	/* Wait for new gyro data. */
 	osSignalWait(IMU_SIGNAL_RAW_GYRO_REDY, osWaitForever);
-	stat_p_e += IMU_ParseGyro(&onboard_imu);
+	IMU_ParseGyro(&imu);
 	
 	/* Try to get new magn data. */
-	osSignalWait(COMP_SIGNAL_RAW_MAGN_REDY, 0u);
+	//osSignalWait(COMP_SIGNAL_RAW_MAGN_REDY, 0u);
 	//TODO: parse comp
 	
 	/* Init AHRS. */
-	stat_p_e += AHRS_Init(&gimbal_ahrs, &onboard_imu, TASK_POSESTI_FREQ_HZ);
-	
+	AHRS_Init(&gimbal_ahrs, &imu.accl, &imu.gyro, NULL, TASK_POSESTI_FREQ_HZ);
 	
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
@@ -88,36 +80,36 @@ void Task_PosEsti(void const *argument) {
 		
 		/* Wait for new accl data. */
 		osSignalWait(IMU_SIGNAL_RAW_ACCL_REDY, osWaitForever);
-		stat_p_e += IMU_ParseAccl(&onboard_imu);
+		IMU_ParseAccl(&imu);
 		
 		/* Wait for new gyro data. */
 		osSignalWait(IMU_SIGNAL_RAW_GYRO_REDY, osWaitForever);
-		stat_p_e += IMU_ParseGyro(&onboard_imu);
+		IMU_ParseGyro(&imu);
 		
 		/* Try to get new magn data. */
 		osSignalWait(COMP_SIGNAL_RAW_MAGN_REDY, 0u);
 		//TODO: parse comp
 		
 		uint32_t now = osKernelSysTick();
-		stat_p_e += AHRS_Update(&gimbal_ahrs, &onboard_imu);
+		AHRS_Update(&gimbal_ahrs, &imu.accl, &imu.gyro, NULL);
 		
 		AHRS_Eulr_t *eulr_to_send;
-		eulr_to_send = osPoolAlloc(task_param->pool.ahrs);
-		memcpy(eulr_to_send, &(gimbal_ahrs.eulr), sizeof(AHRS_Eulr_t));
+		eulr_to_send = pvPortMalloc(sizeof(AHRS_Eulr_t));
 		
-		/* Drop data if queue is full. */
-		os_stat_p_e = osMessagePut(task_param->message.ahrs, (uint32_t)eulr_to_send, 1);
+		if (eulr_to_send) {
+			memcpy(eulr_to_send, &(gimbal_ahrs.eulr), sizeof(AHRS_Eulr_t));
 		
-		/* Free memory if data dropped. */
-		if (os_stat_p_e == osErrorOS)
-			osPoolFree(task_param->pool.ahrs, eulr_to_send);
-
-		stat_p_e += BSP_PWM_Set(BSP_PWM_IMU_HEAT, PID_Calculate(&imu_temp_ctrl_pid, 50.f, onboard_imu.data.temp, 0.f, 0.f));
+			/* Drop data if queue is full. */
+			os_status = osMessagePut(task_param->message.gimb_eulr, (uint32_t)eulr_to_send, 0);
+			
+			/* Free memory if data dropped. */
+			if (os_status == osErrorOS)
+				vPortFree(eulr_to_send);
+		}
 		
-		os_stat_p_e += osDelayUntil(&previous_wake_time, delay_ms);
 		
-#if INCLUDE_uxTaskGetStackHighWaterMark
-        task_pos_esti_stack = uxTaskGetStackHighWaterMark(NULL);
-#endif
+		BSP_PWM_Set(BSP_PWM_IMU_HEAT, PID_Calculate(&imu_temp_ctrl_pid, 50.f, imu.temp, 0.f, 0.f));
+		
+		osDelayUntil(&previous_wake_time, delay_ms);
 	}
 }

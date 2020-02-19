@@ -31,9 +31,6 @@ static Chassis_t chassis;
 /* Runtime status. */
 int stat_c_c = 0;
 osStatus os_stat_c_c = osOK;
-#if INCLUDE_uxTaskGetStackHighWaterMark
-uint32_t task_ctrl_chassis_stack;
-#endif
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -45,7 +42,7 @@ void Task_CtrlChassis(void const *argument) {
 	osDelay(TASK_CTRL_CHASSIS_INIT_DELAY);
 	
 	/* Init hardware */
-	cd.chassis_alert = task_param->thread.ctrl_chassis;
+	cd.chassis_alert = osThreadGetId();
 	cd.gimbal_alert = task_param->thread.ctrl_gimbal;
 	cd.uwb_alert = task_param->thread.referee;
 	cd.supercap_alert = task_param->thread.ctrl_chassis;
@@ -61,8 +58,8 @@ void Task_CtrlChassis(void const *argument) {
 		/* Try to get new rc command. */
 		osEvent evt = osMessageGet(task_param->message.chassis_ctrl_v, 0);
 		if (evt.status == osEventMessage) {
-			if (chassis.robot_ctrl_v != NULL) {
-				osPoolFree(task_param->pool.chassis_ctrl_v, chassis.robot_ctrl_v);
+			if (chassis.robot_ctrl_v) {
+				vPortFree(chassis.robot_ctrl_v);
 			}
 			chassis.robot_ctrl_v = evt.value.p;
 		}
@@ -70,7 +67,9 @@ void Task_CtrlChassis(void const *argument) {
 		/* Wait for motor feedback. */
 		osSignalWait(CAN_DEVICE_SIGNAL_CHASSIS_RECV, osWaitForever);
 		
+		taskENTER_CRITICAL();
 		Chassis_UpdateFeedback(&chassis, &cd);
+		taskEXIT_CRITICAL();
 		
 		Chassis_Control(&chassis);
 		
@@ -82,9 +81,5 @@ void Task_CtrlChassis(void const *argument) {
 			chassis.motor_cur_out[3]);
 		
 		osDelayUntil(&previous_wake_time, delay_ms);
-		
-#if INCLUDE_uxTaskGetStackHighWaterMark
-        task_ctrl_chassis_stack = uxTaskGetStackHighWaterMark(NULL);
-#endif
 	}
 }

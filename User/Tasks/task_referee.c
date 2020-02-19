@@ -16,9 +16,6 @@ static const uint32_t delay_ms = 1000u / TASK_REFEREE_FREQ_HZ;
 /* Runtime status. */
 int stat_re = 0;
 osStatus os_stat_re = osOK;
-#if INCLUDE_uxTaskGetStackHighWaterMark
-uint32_t task_referee_stack;
-#endif
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -35,9 +32,5 @@ void Task_Referee(void const *argument) {
 		
 		
 		osDelayUntil(&previous_wake_time, delay_ms);
-		
-#if INCLUDE_uxTaskGetStackHighWaterMark
-        task_referee_stack = uxTaskGetStackHighWaterMark(NULL);
-#endif
 	}
 }
