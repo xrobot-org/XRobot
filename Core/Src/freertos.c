@@ -120,7 +120,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   
-	osThreadDef(cli,			Task_CLI,			osPriorityBelowNormal,	0, 256);
+	osThreadDef(cli,			Task_CLI,			osPriorityLow,			0, 256);
 	osThreadDef(command,		Task_Command,		osPriorityHigh,			0, 128);
 	osThreadDef(ctrl_chassis,	Task_CtrlChassis,	osPriorityAboveNormal,	0, 256);
 	osThreadDef(ctrl_gimbal,	Task_CtrlGimbal,	osPriorityAboveNormal,	0, 256);
