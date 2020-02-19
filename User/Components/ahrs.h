@@ -16,19 +16,19 @@ typedef	struct {
 	float x;
 	float y;
 	float z;
-} AHRS_Accl_t;;
+} AHRS_Accl_t;
 	
 typedef	struct {
 	float x;
 	float y;
 	float z;
-} AHRS_Gyro_t;;
+} AHRS_Gyro_t;
 
 typedef	struct {
 	float x;
 	float y;
 	float z;
-} AHRS_Magn_t;;
+} AHRS_Magn_t;
 
 typedef struct {
 	AHRS_Eulr_t eulr;
