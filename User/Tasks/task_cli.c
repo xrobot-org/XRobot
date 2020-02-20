@@ -258,7 +258,7 @@ void Task_CLI(void const *argument) {
 			memset(input, 0x00, MAX_INPUT_LENGTH);
 			BSP_USB_Printf("rm>");
 		} else {
-			if (rx_char <= 126 & rx_char >= 32){
+			if (rx_char <= 126 && rx_char >= 32){
 				/* Accepted it as part of the input and placed into the input buffer. */
 				if(index < MAX_INPUT_LENGTH) {
 					input[index] = rx_char;
