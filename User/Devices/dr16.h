@@ -13,6 +13,7 @@
 #define DR16_ERR_NULL	(-1)
 
 #define DR16_SIGNAL_RAW_REDY	(1u<<5)
+#define DR16_SIGNAL_DATA_REDY	(1u<<6)
 
 #define DR16_CH_VALUE_MIN			(364u)
 #define DR16_CH_VALUE_MID			(1024u)
