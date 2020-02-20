@@ -228,7 +228,7 @@ void Task_CLI(void const *argument) {
 		rx_char = BSP_USB_ReadChar();
 		BSP_USB_Printf("%c", rx_char);
 		
-		if(rx_char == '\n' | rx_char == '\r') {
+		if(rx_char == '\n' || rx_char == '\r') {
 			break;
 		}
 	}
@@ -247,7 +247,7 @@ void Task_CLI(void const *argument) {
 		rx_char = BSP_USB_ReadChar();
 		BSP_USB_Printf("%c", rx_char);
 		
-		if(rx_char == '\n' | rx_char == '\r'){
+		if(rx_char == '\n' || rx_char == '\r'){
 			BSP_USB_Printf("\r\n");
 			do {
 				processing = FreeRTOS_CLIProcessCommand(input, output, MAX_OUTPUT_LENGTH);
@@ -264,7 +264,7 @@ void Task_CLI(void const *argument) {
 					input[index] = rx_char;
 					index++;
 				}
-			}else if(rx_char == '\b'| rx_char == 0x7Fu) {
+			}else if(rx_char == '\b' || rx_char == 0x7Fu) {
 				/* Erase the last character in the input buffer - if there are any. */
 				if(index > 0) {
 					index--;
