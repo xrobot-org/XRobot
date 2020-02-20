@@ -1,7 +1,7 @@
 /* 
 	
 */
-
+#include "mixer.h"
 
 int Mixer_Mecanum(float vx, float vy, float wz, float *out, int len) {
 	if (len == 4) {
