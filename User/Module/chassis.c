@@ -22,15 +22,13 @@
 /* Exported functions --------------------------------------------------------*/
 int Chassis_Init(Chassis_t *chas, Chassis_Type_t type) {
 	if (chas == NULL)
-		return -1;
+		return CHASSIS_ERR_NULL;
 	
 	chas->mode = CHASSIS_MODE_RELAX;
-	chas->last_mode = CHASSIS_MODE_RELAX;
-	chas->robot_ctrl_v = NULL;
 	chas->type = type;
 	
 	for(uint8_t i = 0; i < 4; i++) {
-		PID_Init(&(chas->wheel_pid[i]), PID_MODE_DERIVATIV_NONE, chas->dt_ms);
+		PID_Init(&(chas->wheel_pid[i]), PID_MODE_DERIVATIV_NONE, chas->dt_sec);
 		PID_SetParameters(&(chas->wheel_pid[i]), 5.f, 1.f, 0.f, 1.f, 1.f);
 	}
 	
@@ -62,19 +60,17 @@ int Chassis_Init(Chassis_t *chas, Chassis_Type_t type) {
 		
 		case CHASSIS_MODE_DRONE:
 			// onboard sdk.
-			return -1;
+			return CHASSIS_ERR_TYPE;
 	}
-	return 0;
+	return CHASSIS_OK;
 }
 
 int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode) {
 	if (chas == NULL)
-		return -1;
+		return CHASSIS_ERR_NULL;
 	
-	for(uint8_t i = 0; i < 4; i++) {
-		PID_Init(&(chas->wheel_pid[i]), PID_MODE_DERIVATIV_NONE, chas->dt_ms);
-		PID_SetParameters(&(chas->wheel_pid[i]), 5.f, 1.f, 0.f, 1.f, 1.f);
-	}
+	if (mode == chas->mode)
+		return CHASSIS_OK;
 	
 	// check mode switchable.
 	switch (mode) {
@@ -85,7 +81,7 @@ int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode) {
 			break;
 		
 		case CHASSIS_MODE_FOLLOW_GIMBAL:
-			PID_Init(&(chas->follow_pid), PID_MODE_DERIVATIV_NONE, chas->dt_ms);
+			PID_Init(&(chas->follow_pid), PID_MODE_DERIVATIV_NONE, chas->dt_sec);
 			PID_SetParameters(&(chas->follow_pid), 5.f, 1.f, 0.f, 1.f, 1.f);
 
 			// TODO
@@ -102,17 +98,17 @@ int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode) {
 			break;
 		
 		default:
-			return -1;
+			return CHASSIS_ERR_MODE;
 	}
-	return 0;
+	return CHASSIS_OK;
 }
 
 int Chassis_UpdateFeedback(Chassis_t *chas, CAN_Device_t *can_device) {
 	if (chas == NULL)
-		return -1;
+		return CHASSIS_ERR_NULL;
 	
 	if (can_device == NULL)
-		return -1;
+		return CHASSIS_ERR_NULL;
 	
 	const float raw_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
 	chas->gimbal_yaw_angle = raw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
@@ -123,49 +119,61 @@ int Chassis_UpdateFeedback(Chassis_t *chas, CAN_Device_t *can_device) {
 		chas->motor_speed[i] = raw_peed;
 	}
 	
-	return 0;
+	return CHASSIS_OK;
 }
 
-int Chassis_Control(Chassis_t *chas) {
-	if (chas == NULL)
-		return -1;
+int Chassis_ParseCommand(Chassis_Ctrl_t *chas_ctrl, const DR16_t *dr16) {
+	if (chas_ctrl == NULL)
+		return CHASSIS_ERR_NULL;
 	
-	if (chas->robot_ctrl_v == NULL)
-		return -1;
+	if (dr16 == NULL)
+		return CHASSIS_ERR_NULL;
+	
+	//TODO
+	
+	return CHASSIS_OK;
+}
+
+int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
+	if (chas == NULL)
+		return CHASSIS_ERR_NULL;
+	
+	if (ctrl_v == NULL)
+		return CHASSIS_ERR_NULL;
 	
 	if (chas->Mix == NULL)
-		return -1;
+		return CHASSIS_ERR_NULL;
 	
-	/* robot_ctrl_v -> chas_ctrl_v. */
+	/* robot_ctrl_v -> chas_v. */
 	/* Compute vx and vy. */
 	if (chas->mode == CHASSIS_MODE_BREAK) {
-		chas->chas_ctrl_v.vx = 0.f;
-		chas->chas_ctrl_v.vy = 0.f;
+		chas->chas_v.vx = 0.f;
+		chas->chas_v.vy = 0.f;
 		
 	} else {
 		const float cos_beta = cosf(chas->gimbal_yaw_angle);
 		const float sin_beta = sinf(chas->gimbal_yaw_angle);
 		
-		chas->chas_ctrl_v.vx = cos_beta * chas->robot_ctrl_v->vx - sin_beta * chas->robot_ctrl_v->vy;
-		chas->chas_ctrl_v.vy = sin_beta * chas->robot_ctrl_v->vx - cos_beta * chas->robot_ctrl_v->vy;
+		chas->chas_v.vx = cos_beta * ctrl_v->vx - sin_beta * ctrl_v->vy;
+		chas->chas_v.vy = sin_beta * ctrl_v->vx - cos_beta * ctrl_v->vy;
 	}
 	
 	/* Compute wz. */
 	if (chas->mode == CHASSIS_MODE_BREAK) {
-		chas->chas_ctrl_v.wz = 0.f;
+		chas->chas_v.wz = 0.f;
 		
 	} else if (chas->mode == CHASSIS_MODE_FOLLOW_GIMBAL) {
-		chas->chas_ctrl_v.wz = PID_Calculate(&(chas->follow_pid), 0, chas->gimbal_yaw_angle, 0.f, chas->dt_ms);
+		chas->chas_v.wz = PID_Calculate(&(chas->follow_pid), 0, chas->gimbal_yaw_angle, 0.f, chas->dt_sec);
 		
 	} else if (chas->mode == CHASSIS_MODE_ROTOR) {
-		chas->chas_ctrl_v.wz = 0.8;
+		chas->chas_v.wz = 0.8;
 	}
 	
-	/* chas_ctrl_v -> motor_rpm_set. */
+	/* chas_v -> motor_rpm_set. */
 	chas->Mix(
-		chas->chas_ctrl_v.vx, 
-		chas->chas_ctrl_v.vy,
-		chas->chas_ctrl_v.wz,
+		chas->chas_v.vx, 
+		chas->chas_v.vy,
+		chas->chas_v.wz,
 		chas->motor_rpm_set,
 		chas->wheel_num);
 	
@@ -176,7 +184,7 @@ int Chassis_Control(Chassis_t *chas) {
 			case CHASSIS_MODE_FOLLOW_GIMBAL:
 			case CHASSIS_MODE_ROTOR:
 			case CHASSIS_MODE_INDENPENDENT:
-				chas->motor_cur_out[i] = PID_Calculate(&(chas->wheel_pid[i]), chas->motor_rpm_set[i], chas->motor_speed[i], 0.f, 0.f);
+				chas->motor_cur_out[i] = PID_Calculate(&(chas->wheel_pid[i]), chas->motor_rpm_set[i], chas->motor_speed[i], 0.f, chas->dt_sec);
 				break;
 				
 			case CHASSIS_MODE_OPEN:
@@ -192,8 +200,8 @@ int Chassis_Control(Chassis_t *chas) {
 		}
 	}
 	
-	// TODO: Lilter output.
+	// TODO: Filter output.
 	
 	
-	return 0;
+	return CHASSIS_OK;
 }

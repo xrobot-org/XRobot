@@ -6,6 +6,7 @@
 /* Include Board相关的头文件 */
 /* Include Device相关的头文件 */
 #include "can_device.h"
+#include "dr16.h"
 
 /* Include Component相关的头文件 */
 #include "pid.h"
@@ -14,9 +15,9 @@
 /* Include Module相关的头文件 */
 /* Exported constants --------------------------------------------------------*/
 #define CHASSIS_OK			(0)
-#define CHASSIS_ERR			(-1)
+#define CHASSIS_ERR_NULL	(-1)
 #define CHASSIS_ERR_MODE	(-2)
-#define CHASSIS_ERR_type	(-3)
+#define CHASSIS_ERR_TYPE	(-3)
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
@@ -58,14 +59,17 @@ typedef struct {
 	float vx;
 	float vy;
 	float wz;
-}  CtrlVector_t;
+} Chassis_MoveVector_t;
+
+typedef struct {
+	Chassis_MoveVector_t ctrl_v;
+	Chassis_Mode_t mode;
+} Chassis_Ctrl_t;
 
 typedef struct {
 	/* common */
-	float dt_ms;
-	
+	float dt_sec;
 	Chassis_Mode_t mode;
-	Chassis_Mode_t last_mode;
 	
 	/* Chassis design */
 	Chassis_Type_t type;
@@ -76,11 +80,8 @@ typedef struct {
 	float gimbal_yaw_angle;
 	float motor_speed[4];
 	
-	/* Input */
-	CtrlVector_t *robot_ctrl_v;
-	
 	/* Mid product */
-	CtrlVector_t chas_ctrl_v;
+	Chassis_MoveVector_t chas_v;
 	
 	/* Mixer Out / PID set point. */
 	float motor_rpm_set[4];
@@ -101,4 +102,5 @@ typedef struct {
 int Chassis_Init(Chassis_t *chas, Chassis_Type_t type);
 int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode);
 int Chassis_UpdateFeedback(Chassis_t *chas, CAN_Device_t *can_device);
-int Chassis_Control(Chassis_t *chas);
+int Chassis_ParseCommand(Chassis_Ctrl_t *chas_ctrl, const DR16_t *dr16);
+int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v);
