@@ -62,7 +62,7 @@ int PID_SetParameters(PID_t *pid, float kp, float ki, float kd, float integral_l
 }
 
 float PID_Calculate(PID_t *pid, float sp, float val, float val_dot, float dt) {
-	if (isinf(sp) || isinf(val) || isinf(val_dot) || isinf(dt)) {
+	if (!isfinite(sp) || !isfinite(val) || !isfinite(val_dot) || !isfinite(dt)) {
 		return pid->last_output;
 	}
 	
@@ -84,7 +84,7 @@ float PID_Calculate(PID_t *pid, float sp, float val, float val_dot, float dt) {
 			break;
 		
 		case PID_MODE_DERIVATIV_SET:
-			d = -val_dot;
+			d = val_dot;
 			break;
 		
 		case PID_MODE_DERIVATIV_NONE:
@@ -118,14 +118,8 @@ float PID_Calculate(PID_t *pid, float sp, float val, float val_dot, float dt) {
 	/* limit output */
 	if (isfinite(output)) {
 		if (pid->output_limit > SIGMA) {
-			if (output > pid->output_limit) {
-				output = pid->output_limit;
-
-			} else if (output < -pid->output_limit) {
-				output = -pid->output_limit;
-			}
+			output = AbsClip(output, pid->output_limit);
 		}
-		
 		pid->last_output = output;
 	}
 
