@@ -6,6 +6,7 @@
 /* Include Board相关的头文件  */
 /* Include Device相关的头文件。 */
 #include "can_device.h"
+#include "dr16.h"
 
 /* Include Component相关的头文件。 */
 #include "pid.h"
@@ -19,6 +20,7 @@
 #define GIMBAL_ERR_MODE	(-2)
 
 
+/* 所有这些define最后需要放到一个变量中config中，一个机器人对应一个，保存在flash中. */
 /* PID paramters. */
 #define GIMBAL_ABSOLUTE_YAW_INNER_PID_KP        26.0f
 #define GIMBAL_ABSOLUTE_YAW_INNER_PID_KI        0.0f
@@ -71,26 +73,25 @@ typedef enum {
 	GIMBAL_MODE_RELAX,
 	GIMBAL_MODE_INIT,
 	GIMBAL_MODE_CALI,
-	GIMBAL_MODE_ABSOLUTE, /* Use IMU */
-	GIMBAL_MODE_RELATIVE, /* Use encoder */
-	GIMBAL_MODE_FIX, /* Use encoder */
+	GIMBAL_MODE_ABSOLUTE,
+	GIMBAL_MODE_RELATIVE,
+	GIMBAL_MODE_FIX,
 } Gimbal_Mode_t;
 
 typedef struct {
-	/* common */
-	float dt_ms;
-	
+	AHRS_Eulr_t ctrl_eulr;
 	Gimbal_Mode_t mode;
-	Gimbal_Mode_t last_mode;
+} Gimbal_Ctrl_t;
+
+typedef struct {
+	/* common */
+	float dt_sec;
+	Gimbal_Mode_t mode;
 	
 	/* Feedback */
-	float yaw_encoder_angle;
-	float pit_encoder_angle;
+	AHRS_Eulr_t encoder;
 	IMU_t *imu;
-	AHRS_Eulr_t *gimb_eulr;
-	
-	/* Input */
-	AHRS_Eulr_t *ctrl_eulr;
+	AHRS_Eulr_t *eulr;
 	
 	/* PID set point */
 	float motor_pos_set[4];
@@ -112,4 +113,5 @@ typedef struct {
 int Gimbal_Init(Gimbal_t *gimb);
 int Gimbal_SetMode(Gimbal_t *gimb, Gimbal_Mode_t mode);
 int Gimbal_UpdateFeedback(Gimbal_t *gimb, CAN_Device_t *can_device);
-int Gimbal_Control(Gimbal_t *gimb);
+int Gimbal_ParseCommand(Gimbal_Ctrl_t *chas_ctrl, const DR16_t *dr16);
+int Gimbal_Control(Gimbal_t *gimb, AHRS_Eulr_t *ctrl_eulr);
