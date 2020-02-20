@@ -29,8 +29,7 @@
 /* Private variables ---------------------------------------------------------*/
 static const uint32_t delay_ms = 1000u / TASK_POSESTI_FREQ_HZ;
 
-
-osMessageQDef(eulr_message, 2, AHRS_Eulr_t);
+static osMessageQDef(gimb_eulr_message, 2, AHRS_Eulr_t);
 
 static IMU_t imu;
 static AHRS_t gimbal_ahrs;
@@ -43,7 +42,7 @@ static osStatus os_status = osOK;
 void Task_PosEsti(void const *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
-	task_param->message.gimb_eulr = osMessageCreate(osMessageQ(eulr_message), NULL);
+	task_param->message.gimb_eulr = osMessageCreate(osMessageQ(gimb_eulr_message), NULL);
 	
 	/* Init IMU temp control. */
 	PID_Init(&imu_temp_ctrl_pid, PID_MODE_DERIVATIV_NONE, 1.f/TASK_POSESTI_FREQ_HZ);
@@ -93,8 +92,8 @@ void Task_PosEsti(void const *argument) {
 		uint32_t now = osKernelSysTick();
 		AHRS_Update(&gimbal_ahrs, &imu.accl, &imu.gyro, NULL);
 		
-		AHRS_Eulr_t *eulr_to_send;
-		eulr_to_send = pvPortMalloc(sizeof(AHRS_Eulr_t));
+		/* Copy to new memory then send. */
+		AHRS_Eulr_t *eulr_to_send = pvPortMalloc(sizeof(AHRS_Eulr_t));
 		
 		if (eulr_to_send) {
 			memcpy(eulr_to_send, &(gimbal_ahrs.eulr), sizeof(AHRS_Eulr_t));
