@@ -10,6 +10,8 @@
 /* Include Board相关的头文件 */
 /* Include Device相关的头文件 */
 /* Include Component相关的头文件 */
+#include "shoot.h"
+
 /* Include Module相关的头文件 */
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -17,12 +19,15 @@
 /* Private variables ---------------------------------------------------------*/
 static const uint32_t delay_ms = 1000u / TASK_CTRL_SHOOT_FREQ_HZ;
 
+static CAN_Device_t *cd;
+static DR16_t *dr16;
+
+static Shoot_t shoot;
+static Shoot_Ctrl_t shoot_ctrl;
+
 /* Runtime status. */
 int stat_c_s = 0;
 osStatus os_stat_c_s = osOK;
-#if INCLUDE_uxTaskGetStackHighWaterMark
-uint32_t task_ctrl_shoot_stack;
-#endif
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -32,17 +37,36 @@ void Task_CtrlShoot(void const *argument) {
 	/* Task Setup */
 	osDelay(TASK_CTRL_SHOOT_INIT_DELAY);
 	
+	cd = CAN_GetDevice();
+	dr16 = DR16_GetDevice();
+
+	Shoot_Init(&shoot);
 	
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
 		/* Task body */
 		
+		/* Try to get new rc command. */
+		osSignalWait(DR16_SIGNAL_DATA_REDY, 0);
+		Shoot_ParseCommand(&shoot_ctrl, dr16);
+		
+		/* Wait for motor feedback. */
+		osSignalWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osWaitForever);
+		
+		taskENTER_CRITICAL();
+		Shoot_UpdateFeedback(&shoot, cd);
+		taskEXIT_CRITICAL();
+		
+		Shoot_SetMode(&shoot, shoot_ctrl.mode);
+		Shoot_Control(&shoot, shoot_ctrl.bullet_speed, shoot_ctrl.shoot_freq);
+		
+		// Check can error
+		CAN_Motor_ControlShoot(
+			shoot.fric_cur_out[0],
+			shoot.fric_cur_out[1],
+			shoot.trig_cur_out
+		);
 		
 		osDelayUntil(&previous_wake_time, delay_ms);
-		
-#if INCLUDE_uxTaskGetStackHighWaterMark
-        task_ctrl_shoot_stack = uxTaskGetStackHighWaterMark(NULL);
-#endif
 	}
-
 }

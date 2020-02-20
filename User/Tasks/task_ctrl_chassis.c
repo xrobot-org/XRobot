@@ -10,13 +10,7 @@
 /* Include 标准库 */
 /* Include Board相关的头文件 */
 /* Include Device相关的头文件 */
-#include "can_device.h"
-#include "dr16.h"
-
 /* Include Component相关的头文件 */
-#include "mixer.h"
-#include "pid.h"
-
 /* Include Module相关的头文件 */
 #include "chassis.h"
 
@@ -27,8 +21,10 @@
 static const uint32_t delay_ms = 1000u / TASK_CTRL_CHASSIS_FREQ_HZ;
 
 static CAN_Device_t cd;
+static DR16_t *dr16;
+
 static Chassis_t chassis;
-static Chassis_Ctrl_t *chas_ctrl = NULL;
+static Chassis_Ctrl_t chas_ctrl;
 
 /* Runtime status. */
 int stat_c_c = 0;
@@ -51,12 +47,18 @@ void Task_CtrlChassis(void const *argument) {
 	cd.supercap_alert = task_param->thread.ctrl_chassis;
 	
 	CAN_DeviceInit(&cd);
+	dr16 = DR16_GetDevice();
 	
 	Chassis_Init(&chassis, CHASSIS_TYPE_MECANUM);
+	chassis.dt_sec = (float)delay_ms / 1000.f;
 	
-	uint32_t previous_wake_time = osKernelSysTick();
+	uint32_t previous_wake_tick = osKernelSysTick();
 	while(1) {
 		/* Task body */
+		
+		/* Try to get new rc command. */
+		osSignalWait(DR16_SIGNAL_DATA_REDY, 0);
+		Chassis_ParseCommand(&chas_ctrl, dr16);
 		
 		/* Wait for motor feedback. */
 		osSignalWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osWaitForever);
@@ -65,18 +67,8 @@ void Task_CtrlChassis(void const *argument) {
 		Chassis_UpdateFeedback(&chassis, &cd);
 		taskEXIT_CRITICAL();
 		
-		/* Try to get new rc command. */
-		osSignalWait(DR16_SIGNAL_DATA_REDY, 0);
-		
-		osEvent evt = osMessageGet(task_param->message.chassis_ctrl_v, 0);
-		if (evt.status == osEventMessage) {
-			if (chas_ctrl) {
-				vPortFree(chas_ctrl);
-			}
-			chas_ctrl = evt.value.p;
-		}
-		Chassis_SetMode(&chassis, chas_ctrl->mode);
-		Chassis_Control(&chassis, &chas_ctrl->ctrl_v);
+		Chassis_SetMode(&chassis, chas_ctrl.mode);
+		Chassis_Control(&chassis, &chas_ctrl.ctrl_v);
 		
 		// Check can error
 		CAN_Motor_ControlChassis(
@@ -85,6 +77,6 @@ void Task_CtrlChassis(void const *argument) {
 			chassis.motor_cur_out[2],
 			chassis.motor_cur_out[3]);
 		
-		osDelayUntil(&previous_wake_time, delay_ms);
+		osDelayUntil(&previous_wake_tick, delay_ms);
 	}
 }
