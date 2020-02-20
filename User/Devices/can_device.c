@@ -18,9 +18,13 @@
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static CAN_Device_t *gcan_device;
-static uint8_t chasssis_motor_received = 0;
-static uint8_t gimbal_motor_received = 0;
-static uint32_t unknown_message = 0;
+
+static volatile uint8_t motor_received = 0;
+static volatile uint32_t unknown_message = 0;
+
+static CAN_RxHeaderTypeDef rx_header;
+static uint8_t rx_data[8];
+
 static bool inited = false;
 
 /* Private function  ---------------------------------------------------------*/
@@ -29,6 +33,8 @@ static void CAN_Motor_Decode(CAN_MotorFeedback_t *fb, const uint8_t *raw) {
 	fb->rotor_speed    = ((raw[2] << 8) | raw[3]);
 	fb->torque_current = ((raw[4] << 8) | raw[5]);
 	fb->temp           =   raw[6];
+	
+	motor_received++;
 }
 
 static void CAN_UWB_Decode(CAN_UWBFeedback_t *fb, const uint8_t *raw) {
@@ -181,9 +187,6 @@ int CAN_Motor_QuickIdSetMode(void) {
 }
 
 void RxFifo0MsgPendingCallback(void) {
-	CAN_RxHeaderTypeDef rx_header;
-	uint8_t rx_data[8];
-	
 	HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &rx_header, rx_data);
 	
 	uint8_t index;
@@ -194,30 +197,24 @@ void RxFifo0MsgPendingCallback(void) {
 		case CAN_M3508_M4_ID:
 			index = rx_header.StdId - CAN_M3508_M1_ID;
 			CAN_Motor_Decode(&(gcan_device->chassis_motor_fb[index]), rx_data);
-		
-			chasssis_motor_received++;
 			break;
 		
 		case CAN_M3508_FRIC1_ID:
 		case CAN_M3508_FRIC2_ID:
 			index = rx_header.StdId - CAN_M3508_FRIC1_ID;
 			CAN_Motor_Decode(&(gcan_device->gimbal_motor_fb.fric_fb[index]), rx_data);
-			gimbal_motor_received++;
 			break;
 		
 		case CAN_M2006_TRIG_ID:
 			CAN_Motor_Decode(&(gcan_device->gimbal_motor_fb.trig_fb), rx_data);
-			gimbal_motor_received++;
 			break;
 		
 		case CAN_GM6020_YAW_ID:
 			CAN_Motor_Decode(&(gcan_device->gimbal_motor_fb.yaw_fb), rx_data);
-			gimbal_motor_received++;
 			break;
 		
 		case CAN_GM6020_PIT_ID:
 			CAN_Motor_Decode(&(gcan_device->gimbal_motor_fb.pit_fb), rx_data);
-			gimbal_motor_received++;
 			break;
 
 		case CAN_SUPERCAP_FEEDBACK_ID_BASE:
@@ -230,21 +227,17 @@ void RxFifo0MsgPendingCallback(void) {
 			break;
 	}
 	
-	if (chasssis_motor_received == CAN_CHASSIS_MOTOR_NUM) {
-		osSignalSet(gcan_device->chassis_alert, CAN_DEVICE_SIGNAL_CHASSIS_RECV);
-		chasssis_motor_received = 0;
-	}
-	
-	if (gimbal_motor_received == CAN_GIMBAL_MOTOR_NUM) {
-		osSignalSet(gcan_device->gimbal_alert, CAN_DEVICE_SIGNAL_GIMBAL_RECV);
-		gimbal_motor_received = 0;
+	if (motor_received > CAN_CHASSIS_MOTOR_NUM) {
+		for(uint8_t i = 0; i < 3; i++) {
+			if(gcan_device->motor_alert[i]) {
+				osSignalSet(gcan_device->motor_alert, CAN_DEVICE_SIGNAL_MOTOR_RECV);
+			}
+		}
+		motor_received = 0;
 	}
 }
 
 void RxFifo1MsgPendingCallback(void) {
-	CAN_RxHeaderTypeDef rx_header;
-	uint8_t rx_data[8];
-	
 	HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO1, &rx_header, rx_data);
 	
 	switch (rx_header.StdId) {

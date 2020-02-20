@@ -11,11 +11,9 @@
 #define CAN_ERR_NULL	(-2)
 #define CAN_ERR_INITED	(-3)
 
-#define CAN_DEVICE_SIGNAL_CHASSIS_RECV					(1u<<0)
-#define CAN_DEVICE_SIGNAL_GIMBAL_RECV					(1u<<1)
-#define CAN_DEVICE_SIGNAL_SHOOT_RECV					(1u<<2)
-#define CAN_DEVICE_SIGNAL_UWB_RECV						(1u<<3)
-#define CAN_DEVICE_SIGNAL_SUPERCAP_RECV					(1u<<4)
+#define CAN_DEVICE_SIGNAL_MOTOR_RECV					(1u<<1)
+#define CAN_DEVICE_SIGNAL_UWB_RECV						(1u<<2)
+#define CAN_DEVICE_SIGNAL_SUPERCAP_RECV					(1u<<3)
 
 /* Motor */
 #define CAN_GM6020_FEEDBACK_ID_BASE				0x205
@@ -105,9 +103,7 @@ typedef struct {
 } CAN_SuperCapControl_t;
 
 typedef struct {
-	osThreadId chassis_alert;
-	osThreadId gimbal_alert;
-	osThreadId shoot_alert;
+	osThreadId motor_alert[3];
 	osThreadId uwb_alert;
 	osThreadId supercap_alert;
 	
