@@ -873,11 +873,6 @@
               <FilePath>..\User\Components\protocol.c</FilePath>
             </File>
             <File>
-              <FileName>rc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Components\rc.c</FilePath>
-            </File>
-            <File>
               <FileName>referee.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\referee.c</FilePath>
@@ -1859,11 +1854,6 @@
               <FileName>protocol.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\protocol.c</FilePath>
-            </File>
-            <File>
-              <FileName>rc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Components\rc.c</FilePath>
             </File>
             <File>
               <FileName>referee.c</FileName>
