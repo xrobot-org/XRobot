@@ -64,17 +64,9 @@ typedef struct {
 	} thread;
 	
 	struct {
-		osMessageQId imu;
+		/* Pos esti */
 		osMessageQId gimb_eulr;
-		
-		osMessageQId chassis_ctrl_v;
-		
-		
-		osMessageQId ctrl_eulr;
-		
-		osMessageQId shoot_speed;
 	} message;
-	
 	
 } Task_Param_t;
 
