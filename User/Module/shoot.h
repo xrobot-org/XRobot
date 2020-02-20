@@ -2,43 +2,75 @@
 
 
 /* Includes ------------------------------------------------------------------*/
-/* Include 标准库*/
+/* Include 标准库 */
 /* Include Board相关的头文件 */
-/* Include Device相关的头文件。*/
-/* Include Component相关的头文件。*/
+/* Include Device相关的头文件 */
+#include "can_device.h"
+#include "dr16.h"
+
+/* Include Component相关的头文件 */
 #include "pid.h"
 
-/* Include Module相关的头文件。*/
+/* Include Module相关的头文件 */
 /* Exported constants --------------------------------------------------------*/
+#define SHOOT_BULLET_SPEED_SCALER (2.f)
+#define SHOOT_BULLET_SPEED_BIAS  (1.f)
+
+#define SHOOT_FEEDING_TOOTH_NUM  (8u)
+
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /*  
-	CHASSIS_MODE_RELAX: Not force applied.
-	CHASSIS_MODE_BREAK: Set to zero speed. Force applied.
-	CHASSIS_MODE_FOLLOW_GIMBAL: Follow gimbal by follow encoder.
-	CHASSIS_MODE_INDENPENDENT: Run independently.
-	CHASSIS_MODE_OPEN: Direct apply force without pid control.
+	SHOOT_MODE_RELAX: No force applied.
+	SHOOT_MODE_SAFE: Set to zero speed. Force applied.
+	SHOOT_MODE_STDBY: Ready to switch to FIRE.
+	SHOOT_MODE_FIRE: Ready to shoot.
 */
 
 typedef enum {
-	GIMBAL_MODE_RELAX,
-	GIMBAL_MODE_INIT,
-	GIMBAL_MODE_CALI,
-	GIMBAL_MODE_ABSOLUTE, /* Use IMU */
-	GIMBAL_MODE_RELATIVE, /* Use encoder */
-	GIMBAL_MODE_FIX, /* Use encoder */
+	SHOOT_MODE_RELAX,
+	SHOOT_MODE_SAFE,
+	SHOOT_MODE_STDBY,
+	SHOOT_MODE_FIRE,
 } Shoot_Mode_t;
 
 typedef struct {
-	float motor;
-	Shoot_Mode_t mode ;
-	int mixer;
+	float bullet_speed;
+	float shoot_freq;
+	Shoot_Mode_t mode;
+} Shoot_Ctrl_t;
+
+typedef struct {
+	/* common */
+	float dt_sec;
+	Shoot_Mode_t mode;
+	
+	/* Feedback */
+	float fric_speed[2];
+	float trig_angle;
+	
+	/* Input */
+	
+	/* PID set point */
+	float motor_rpm_set[2];
+	float motor_pos_set;
+	
+	/* PID */
+	PID_t fric_pid[2];
+	PID_t trig_pid;
+	
+	/* Output */
+	float fric_cur_out[2];
+	float trig_cur_out;
+	
+	int heat_limiter;
 	
 } Shoot_t;
 
 
 /* Exported functions prototypes ---------------------------------------------*/
-void Shoot_Init(Shoot_t *shoot);
-void Shoot_SetMode(Shoot_t *shoot);
-void Shoot_Control(Shoot_t *shoot);
-void Shoot_SetOutput(Shoot_t *shoot);
+int Shoot_Init(Shoot_t *shoot);
+int Shoot_SetMode(Shoot_t *shoot, Shoot_Mode_t mode);
+int Shoot_UpdateFeedback(Shoot_t *shoot, CAN_Device_t *can_device);
+int Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16);
+int Shoot_Control(Shoot_t *shoot, float bullet_speed, float shoot_freq);
