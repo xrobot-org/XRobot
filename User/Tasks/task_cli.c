@@ -199,7 +199,7 @@ static const CLI_Command_Definition_t xParameterEcho = {
 
 /* Exported functions --------------------------------------------------------*/
 void Task_CLI(void const *argument) {
-	Task_Param_t *task_param = (Task_Param_t*)argument;
+	//Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	char rx_char;
 	uint16_t index = 0;
@@ -208,7 +208,7 @@ void Task_CLI(void const *argument) {
 	static char input[MAX_INPUT_LENGTH];
 	
 	/* Task Setup */
-	osDelay(TASK_CLI_INIT_DELAY);
+	osDelay(TASK_INIT_DELAY_CLI);
 	
 	/* Register all the command line commands defined immediately above. */
 	FreeRTOS_CLIRegisterCommand(&xTaskStats);
@@ -216,13 +216,11 @@ void Task_CLI(void const *argument) {
 	FreeRTOS_CLIRegisterCommand(&xThreeParameterEcho);
 	FreeRTOS_CLIRegisterCommand(&xParameterEcho);
 	
-	BSP_USB_Init(task_param->thread.cli);
-	
 	/* Save CPU power when CLI not used. */
 	BSP_USB_Printf("Please press Enter to activate this console.\r\n");
 	
 	while(1) {
-		BSP_USB_ReadyReceive();
+		BSP_USB_ReadyReceive(osThreadGetId());
 		osSignalWait(BSP_USB_SIGNAL_BUF_RECV, osWaitForever);
 
 		rx_char = BSP_USB_ReadChar();
@@ -241,7 +239,7 @@ void Task_CLI(void const *argument) {
 		/* Task body */
 		
 		/* Wait for input. */
-		BSP_USB_ReadyReceive();
+		BSP_USB_ReadyReceive(osThreadGetId());
 		osSignalWait(BSP_USB_SIGNAL_BUF_RECV, osWaitForever);
 		
 		rx_char = BSP_USB_ReadChar();
@@ -251,7 +249,7 @@ void Task_CLI(void const *argument) {
 			BSP_USB_Printf("\r\n");
 			do {
 				processing = FreeRTOS_CLIProcessCommand(input, output, MAX_OUTPUT_LENGTH);
-				BSP_USB_Transmit((uint8_t*)output, strlen(output));
+				BSP_USB_Printf(output);
 			} while(processing != pdFALSE);
 			
 			index = 0;
