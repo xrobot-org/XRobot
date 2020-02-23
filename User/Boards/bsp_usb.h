@@ -9,7 +9,9 @@
 
 /* Exported constants --------------------------------------------------------*/
 #define BSP_USB_OK			(0)
-#define BSP_USB_TIMEOUT		(-2)
+#define BSP_USB_ERR_NULL	(-1)
+#define BSP_USB_ERR_INITED	(-2)
+#define BSP_USB_TIMEOUT		(-3)
 
 #define BSP_USB_SIGNAL_BUF_RECV (1u<<0)
 
@@ -19,10 +21,7 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions prototypes ---------------------------------------------*/
-int BSP_USB_Init(osThreadId alert);
-int BSP_USB_ReadyReceive(void);
-
+int BSP_USB_ReadyReceive(osThreadId alert);
 char BSP_USB_ReadChar(void);
 
-int BSP_USB_Transmit(uint8_t *buffer, uint16_t len);	
 int BSP_USB_Printf(const char *fmt, ...);
