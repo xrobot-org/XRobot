@@ -2,6 +2,8 @@
 
 
 /* Includes ------------------------------------------------------------------*/
+#include "cmsis_os.h"
+
 /* Include 标准库 */
 /* Include Board相关的头文件 */
 /* Include Device相关的头文件 */
@@ -36,7 +38,7 @@ typedef enum {
 
 typedef struct {
 	float bullet_speed;
-	float shoot_freq;
+	uint32_t shoot_freq_hz;
 	Shoot_Mode_t mode;
 } Shoot_Ctrl_t;
 
@@ -48,12 +50,11 @@ typedef struct {
 	/* Feedback */
 	float fric_rpm[2];
 	float trig_angle;
-	
-	/* Input */
+	osTimerId trig_timer_id;
 	
 	/* PID set point */
-	float motor_rpm_set[2];
-	float motor_pos_set;
+	float fric_rpm_set[2];
+	float trig_pos_set;
 	
 	/* PID */
 	PID_t fric_pid[2];
@@ -73,4 +74,4 @@ int Shoot_Init(Shoot_t *shoot);
 int Shoot_SetMode(Shoot_t *shoot, Shoot_Mode_t mode);
 int Shoot_UpdateFeedback(Shoot_t *shoot, CAN_Device_t *can_device);
 int Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16);
-int Shoot_Control(Shoot_t *shoot, float bullet_speed, float shoot_freq);
+int Shoot_Control(Shoot_t *shoot, float bullet_speed, uint32_t shoot_freq_hz);

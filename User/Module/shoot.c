@@ -18,13 +18,24 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-/* Private function  ---------------------------------------------------------*/
+/* Private function  ---------------------------------------------------------*/ 
+static void TrigTimerCallback  (void const *arg) {
+	Shoot_t *shoot = (Shoot_t*)arg;
+	
+	shoot->trig_pos_set += 2.f * PI / SHOOT_FEEDING_TOOTH_NUM;
+	
+}
+
 /* Exported functions --------------------------------------------------------*/
+osTimerDef(trig_timer, TrigTimerCallback);
+
 int Shoot_Init(Shoot_t *shoot) {
 	if (shoot == NULL)
 		return -1;
 	
 	shoot->mode = SHOOT_MODE_RELAX;
+	
+	shoot->trig_timer_id = osTimerCreate(osTimer(trig_timer), osTimerPeriodic, shoot);
 
 	for(uint8_t i = 0; i < 2; i++) {
 		PID_Init(&(shoot->fric_pid[i]), PID_MODE_DERIVATIV_NONE, shoot->dt_sec);
@@ -90,19 +101,21 @@ int Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16) {
 	return -1;
 }
 
-int Shoot_Control(Shoot_t *shoot, float bullet_speed, float shoot_freq) {
+int Shoot_Control(Shoot_t *shoot, float bullet_speed, uint32_t shoot_freq_hz) {
 	if (shoot == NULL)
 		return -1;
 	
 	if (shoot->mode == SHOOT_MODE_SAFE) {
 		bullet_speed = 0.f;
-		shoot_freq = 0.f;
+		shoot_freq_hz = 0.f;
 	}
 	
-	shoot->motor_rpm_set[0] = SHOOT_BULLET_SPEED_SCALER * bullet_speed + SHOOT_BULLET_SPEED_BIAS;
-	shoot->motor_rpm_set[1] = SHOOT_BULLET_SPEED_SCALER * bullet_speed + SHOOT_BULLET_SPEED_BIAS;
-	// TODO: 
-	shoot->trig_angle = 0.f;
+	shoot->fric_rpm_set[0] = -SHOOT_BULLET_SPEED_SCALER * bullet_speed - SHOOT_BULLET_SPEED_BIAS;
+	shoot->fric_rpm_set[1] = SHOOT_BULLET_SPEED_SCALER * bullet_speed + SHOOT_BULLET_SPEED_BIAS;
+	
+	uint32_t period_ms = 1000u / shoot_freq_hz;
+	osTimerStart (shoot->trig_timer_id, period_ms);  
+	
 	
 	switch(shoot->mode) {
 		case SHOOT_MODE_RELAX:
@@ -116,9 +129,9 @@ int Shoot_Control(Shoot_t *shoot, float bullet_speed, float shoot_freq) {
 		case SHOOT_MODE_STDBY:
 		case SHOOT_MODE_FIRE:
 			for(uint8_t i = 0; i < 2; i++) {
-				shoot->fric_cur_out[i] = PID_Calculate(&(shoot->fric_pid[i]), shoot->motor_rpm_set[i], shoot->fric_rpm[i], 0.f, shoot->dt_sec);
+				shoot->fric_cur_out[i] = PID_Calculate(&(shoot->fric_pid[i]), shoot->fric_rpm_set[i], shoot->fric_rpm[i], 0.f, shoot->dt_sec);
 			}
-			shoot->trig_cur_out = PID_Calculate(&(shoot->trig_pid), shoot->motor_pos_set, shoot->trig_angle, 0.f, shoot->dt_sec);
+			shoot->trig_cur_out = PID_Calculate(&(shoot->trig_pid), shoot->trig_pos_set, shoot->trig_angle, 0.f, shoot->dt_sec);
 			break;
 		
 		default:
