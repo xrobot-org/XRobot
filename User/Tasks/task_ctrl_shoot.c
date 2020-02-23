@@ -60,7 +60,7 @@ void Task_CtrlShoot(void const *argument) {
 		taskEXIT_CRITICAL();
 		
 		Shoot_SetMode(&shoot, shoot_ctrl.mode);
-		Shoot_Control(&shoot, shoot_ctrl.bullet_speed, shoot_ctrl.shoot_freq);
+		Shoot_Control(&shoot, shoot_ctrl.bullet_speed, shoot_ctrl.shoot_freq_hz);
 		
 		// Check can error
 		CAN_Motor_ControlShoot(
