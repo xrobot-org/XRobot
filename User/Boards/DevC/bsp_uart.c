@@ -202,7 +202,7 @@ int BSP_UART_Receive(BSP_UART_t uart, uint8_t *data, uint16_t len) {
 
     switch (uart) {
         case BSP_UART_DR16:
-               HAL_UART_Receive_DMA(&huart1, data, len);
+			HAL_UART_Receive_DMA(&huart1, data, len);
             break;
 		/*
 		case BSP_UART_XXX:
