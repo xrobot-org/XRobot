@@ -115,8 +115,7 @@ int Chassis_UpdateFeedback(Chassis_t *chas, CAN_Device_t *can_device) {
 	
 	for(uint8_t i = 0; i < 4; i++) {
 		const float raw_peed = can_device->chassis_motor_fb[i].rotor_speed;
-		// TODO.
-		chas->motor_speed[i] = raw_peed;
+		chas->motor_rpm[i] = raw_peed;
 	}
 	
 	return CHASSIS_OK;
@@ -177,6 +176,8 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 		chas->motor_rpm_set,
 		chas->wheel_num);
 	
+	// TODO: Add scaler.
+	
 	/* motor_rpm_set -> motor_cur_out. */
 	for(uint8_t i = 0; i < 4; i++) {
 		switch(chas->mode) {
@@ -184,7 +185,7 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 			case CHASSIS_MODE_FOLLOW_GIMBAL:
 			case CHASSIS_MODE_ROTOR:
 			case CHASSIS_MODE_INDENPENDENT:
-				chas->motor_cur_out[i] = PID_Calculate(&(chas->wheel_pid[i]), chas->motor_rpm_set[i], chas->motor_speed[i], 0.f, chas->dt_sec);
+				chas->motor_cur_out[i] = PID_Calculate(&(chas->wheel_pid[i]), chas->motor_rpm_set[i], chas->motor_rpm[i], 0.f, chas->dt_sec);
 				break;
 				
 			case CHASSIS_MODE_OPEN:

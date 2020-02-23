@@ -46,7 +46,7 @@ typedef struct {
 	Shoot_Mode_t mode;
 	
 	/* Feedback */
-	float fric_speed[2];
+	float fric_rpm[2];
 	float trig_angle;
 	
 	/* Input */

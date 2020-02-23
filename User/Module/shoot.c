@@ -71,8 +71,7 @@ int Shoot_UpdateFeedback(Shoot_t *shoot, CAN_Device_t *can_device) {
 	
 	for(uint8_t i = 0; i < 2; i++) {
 		const float fric_speed = can_device->gimbal_motor_fb.fric_fb[i].rotor_speed;
-		// TODO.
-		shoot->fric_speed[i] = fric_speed;
+		shoot->fric_rpm[i] = fric_speed;
 	}
 	
 	const float trig_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
@@ -102,6 +101,7 @@ int Shoot_Control(Shoot_t *shoot, float bullet_speed, float shoot_freq) {
 	
 	shoot->motor_rpm_set[0] = SHOOT_BULLET_SPEED_SCALER * bullet_speed + SHOOT_BULLET_SPEED_BIAS;
 	shoot->motor_rpm_set[1] = SHOOT_BULLET_SPEED_SCALER * bullet_speed + SHOOT_BULLET_SPEED_BIAS;
+	// TODO: 
 	shoot->trig_angle = 0.f;
 	
 	switch(shoot->mode) {
@@ -116,7 +116,7 @@ int Shoot_Control(Shoot_t *shoot, float bullet_speed, float shoot_freq) {
 		case SHOOT_MODE_STDBY:
 		case SHOOT_MODE_FIRE:
 			for(uint8_t i = 0; i < 2; i++) {
-				shoot->fric_cur_out[i] = PID_Calculate(&(shoot->fric_pid[i]), shoot->motor_rpm_set[i], shoot->fric_speed[i], 0.f, shoot->dt_sec);
+				shoot->fric_cur_out[i] = PID_Calculate(&(shoot->fric_pid[i]), shoot->motor_rpm_set[i], shoot->fric_rpm[i], 0.f, shoot->dt_sec);
 			}
 			shoot->trig_cur_out = PID_Calculate(&(shoot->trig_pid), shoot->motor_pos_set, shoot->trig_angle, 0.f, shoot->dt_sec);
 			break;

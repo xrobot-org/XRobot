@@ -78,7 +78,7 @@ typedef struct {
 	
 	/* Feedback */
 	float gimbal_yaw_angle;
-	float motor_speed[4];
+	float motor_rpm[4];
 	
 	/* Mid product */
 	Chassis_MoveVector_t chas_v;

@@ -80,10 +80,10 @@ int Gimbal_UpdateFeedback(Gimbal_t *gimb, CAN_Device_t *can_device) {
 		return -1;
 	
 	const float yaw_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
-	gimb->encoder.yaw = yaw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
+	gimb->encoder_eulr.yaw = yaw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
 	
 	const float pit_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
-	gimb->encoder.pit = pit_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
+	gimb->encoder_eulr.pit = pit_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
 	
 	return 0;
 }
@@ -123,10 +123,10 @@ int Gimbal_Control(Gimbal_t *gimb, AHRS_Eulr_t *ctrl_eulr) {
 			break;
 		
 		case GIMBAL_MODE_ABSOLUTE:
-			motor_gyro_set = PID_Calculate(&gimb->yaw_inner_pid, ctrl_eulr->yaw, gimb->eulr->yaw, gimb->imu->gyro.z, gimb->dt_sec);
+			motor_gyro_set = PID_Calculate(&gimb->yaw_inner_pid, ctrl_eulr->yaw, gimb->imu_eulr->yaw, gimb->imu->gyro.z, gimb->dt_sec);
 			gimb->yaw_cur_out  = PID_Calculate(&gimb->yaw_outer_pid, motor_gyro_set, gimb->imu->gyro.z, 0.f, gimb->dt_sec);
 			
-			motor_gyro_set = PID_Calculate(&gimb->pit_inner_pid, ctrl_eulr->pit, gimb->eulr->pit, gimb->imu->gyro.x, gimb->dt_sec);
+			motor_gyro_set = PID_Calculate(&gimb->pit_inner_pid, ctrl_eulr->pit, gimb->imu_eulr->pit, gimb->imu->gyro.x, gimb->dt_sec);
 			gimb->pit_cur_out  = PID_Calculate(&gimb->pit_outer_pid, motor_gyro_set, gimb->imu->gyro.x, 0.f, gimb->dt_sec);
 			break;
 			
@@ -135,10 +135,10 @@ int Gimbal_Control(Gimbal_t *gimb, AHRS_Eulr_t *ctrl_eulr) {
 			ctrl_eulr->pit = 0.f;
 			/* NO break. */
 		case GIMBAL_MODE_RELATIVE:
-			motor_gyro_set = PID_Calculate(&gimb->yaw_inner_pid, ctrl_eulr->yaw, gimb->encoder.yaw, gimb->imu->gyro.z, gimb->dt_sec);
+			motor_gyro_set = PID_Calculate(&gimb->yaw_inner_pid, ctrl_eulr->yaw, gimb->encoder_eulr.yaw, gimb->imu->gyro.z, gimb->dt_sec);
 			gimb->yaw_cur_out  = PID_Calculate(&gimb->yaw_outer_pid, motor_gyro_set, gimb->imu->gyro.z, 0.f, gimb->dt_sec);
 			
-			motor_gyro_set = PID_Calculate(&gimb->pit_inner_pid, ctrl_eulr->pit, gimb->encoder.pit, gimb->imu->gyro.x, gimb->dt_sec);
+			motor_gyro_set = PID_Calculate(&gimb->pit_inner_pid, ctrl_eulr->pit, gimb->encoder_eulr.pit, gimb->imu->gyro.x, gimb->dt_sec);
 			gimb->pit_cur_out  = PID_Calculate(&gimb->pit_outer_pid, motor_gyro_set, gimb->imu->gyro.x, 0.f, gimb->dt_sec);
 			break;
 			
