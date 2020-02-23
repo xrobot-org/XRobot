@@ -8,6 +8,8 @@
 
 /* Include 标准库 */
 /* Include Board相关的头文件 */
+#include "bsp_usb.h"
+
 /* Include Device相关的头文件 */
 /* Include Component相关的头文件 */
 /* Include Module相关的头文件 */
@@ -17,7 +19,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static const uint32_t delay_ms = 1000u / TASK_CTRL_GIMBAL_FREQ_HZ;
+static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_CTRL_GIMBAL;
 
 static CAN_Device_t *cd;
 static DR16_t *dr16;
@@ -35,7 +37,7 @@ void Task_CtrlGimbal(void const *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
-	osDelay(TASK_CTRL_GIMBAL_INIT_DELAY);
+	osDelay(TASK_INIT_DELAY_CTRL_GIMBAL);
 	
 	cd = CAN_GetDevice();
 	dr16 = DR16_GetDevice();
@@ -61,10 +63,10 @@ void Task_CtrlGimbal(void const *argument) {
 		/* Wait for new eulr data. */
 		osEvent evt = osMessageGet(task_param->message.gimb_eulr, osWaitForever);
 		if (evt.status == osEventMessage) {
-			if (gimbal.eulr) {
-				vPortFree(gimbal.eulr);
+			if (gimbal.imu_eulr) {
+				vPortFree(gimbal.imu_eulr);
 			}
-			gimbal.eulr = evt.value.p;
+			gimbal.imu_eulr = evt.value.p;
 		}
 		
 		Gimbal_SetMode(&gimbal, gimbal_ctrl.mode);

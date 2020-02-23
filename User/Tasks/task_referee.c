@@ -4,6 +4,8 @@
 
 /* Include 标准库 */
 /* Include Board相关的头文件 */
+#include "bsp_usb.h"
+
 /* Include Device相关的头文件 */
 /* Include Component相关的头文件 */
 /* Include Module相关的头文件 */
@@ -11,7 +13,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static const uint32_t delay_ms = 1000u / TASK_REFEREE_FREQ_HZ;
+static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_REFEREE;
 
 /* Runtime status. */
 int stat_re = 0;
@@ -23,7 +25,7 @@ void Task_Referee(void const *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
-	osDelay(TASK_REFEREE_INIT_DELAY);
+	osDelay(TASK_INIT_DELAY_REFEREE);
 	
 	
 	uint32_t previous_wake_time = osKernelSysTick();

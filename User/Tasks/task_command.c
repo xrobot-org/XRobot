@@ -10,6 +10,8 @@
 #include <string.h>
 
 /* Include Board相关的头文件 */
+#include "bsp_usb.h"
+
 /* Include Device相关的头文件 */
 #include "dr16.h"
 
@@ -36,7 +38,7 @@ void Task_Command(void const *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
-	osDelay(TASK_COMMAND_INIT_DELAY);
+	osDelay(TASK_INIT_DELAY_COMMAND);
 	
 	dr16.received_alert = osThreadGetId();
 	DR16_Init(&dr16);

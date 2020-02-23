@@ -13,6 +13,7 @@
 
 /* Include Board相关的头文件 */
 #include "bsp_pwm.h"
+#include "bsp_usb.h"
 
 /* Include Device相关的头文件 */
 #include "imu.h"
@@ -27,7 +28,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static const uint32_t delay_ms = 1000u / TASK_POSESTI_FREQ_HZ;
+static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_POSESTI;
 
 static osMessageQDef(gimb_eulr_message, 2, AHRS_Eulr_t);
 
@@ -45,7 +46,7 @@ void Task_PosEsti(void const *argument) {
 	task_param->message.gimb_eulr = osMessageCreate(osMessageQ(gimb_eulr_message), NULL);
 	
 	/* Init IMU temp control. */
-	PID_Init(&imu_temp_ctrl_pid, PID_MODE_DERIVATIV_NONE, 1.f/TASK_POSESTI_FREQ_HZ);
+	PID_Init(&imu_temp_ctrl_pid, PID_MODE_DERIVATIV_NONE, 1.f/TASK_FREQ_HZ_POSESTI);
 	PID_SetParameters(&imu_temp_ctrl_pid, .005f, .001f, 0.f, 1.f, 1.f);
 	
 	BSP_PWM_Set(BSP_PWM_IMU_HEAT, 0.f);
@@ -71,7 +72,7 @@ void Task_PosEsti(void const *argument) {
 	//TODO: parse comp
 	
 	/* Init AHRS. */
-	AHRS_Init(&gimbal_ahrs, &imu.accl, &imu.gyro, NULL, TASK_POSESTI_FREQ_HZ);
+	AHRS_Init(&gimbal_ahrs, &imu.accl, &imu.gyro, NULL, TASK_FREQ_HZ_POSESTI);
 	
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {

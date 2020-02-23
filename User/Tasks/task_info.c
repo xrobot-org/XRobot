@@ -21,7 +21,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static const uint32_t delay_ms = 1000u / TASK_INFO_FREQ_HZ;
+static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_INFO;
 
 /* Runtime status. */
 int status = 0;
@@ -34,13 +34,12 @@ void Task_Info(void const *argument) {
 	
 	float battery_voltage;
 	float battery_percentage;
-	float capacitot_percentage;
+	float capacitor_percentage;
 	
 	/* Task Setup */
-	osDelay(TASK_INFO_INIT_DELAY);
+	osDelay(TASK_INIT_DELAY_INFO);
 	BSP_LED_Set(BSP_LED_GRN, BSP_LED_ON, 0.5f);
-
-	//BSP_USB_Printf("hello admin.");
+	
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
 		/* Task body */

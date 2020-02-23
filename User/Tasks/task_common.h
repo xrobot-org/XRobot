@@ -17,35 +17,25 @@
 #define TASK_SIGNAL_REFEREE_READY				(1u<<9)
 
 /* 所有任务都要define一个“任务运行频率”和“初始化延时”。 */
-#define TASK_CLI_FREQ_HZ					(5u)
-#define TASK_CLI_INIT_DELAY					(1000u)
+#define TASK_FREQ_HZ_CLI					(5u)
+#define TASK_FREQ_HZ_COMMAND				(80u)
+#define TASK_FREQ_HZ_CTRL_CHASSIS			(50u)
+#define TASK_FREQ_HZ_CTRL_GIMBAL			(50u)
+#define TASK_FREQ_HZ_CTRL_SHOOT				(50u)
+#define TASK_FREQ_HZ_INFO					(2u)
+#define TASK_FREQ_HZ_MONITOR				(2u)
+#define TASK_FREQ_HZ_POSESTI				(200u)
+#define TASK_FREQ_HZ_REFEREE				(2u)
 
-#define TASK_COMMAND_FREQ_HZ					(80u)
-#define TASK_COMMAND_INIT_DELAY				(20u)
-
-#define TASK_CTRL_CHASSIS_FREQ_HZ			(50u)
-#define TASK_CTRL_CHASSIS_INIT_DELAY		(500u)
-
-#define TASK_CTRL_GIMBAL_FREQ_HZ			(50u)
-#define TASK_CTRL_GIMBAL_INIT_DELAY			(500u)
-
-#define TASK_CTRL_SHOOT_FREQ_HZ				(50u)
-#define TASK_CTRL_SHOOT_INIT_DELAY			(500u)
-
-#define TASK_DEBUG_FREQ_HZ					(50u)
-#define TASK_DEBUG_INIT_DELAY				(500u)
-
-#define TASK_INFO_FREQ_HZ					(2u)
-#define TASK_INFO_INIT_DELAY				(100u)
-
-#define TASK_MONITOR_FREQ_HZ				(2u)
-#define TASK_MONITOR_INIT_DELAY				(1000u)
-
-#define TASK_POSESTI_FREQ_HZ				(200u)
-#define TASK_POSESTI_INIT_DELAY				(10u)
-
-#define TASK_REFEREE_FREQ_HZ				(2u)
-#define TASK_REFEREE_INIT_DELAY				(1000u)
+#define TASK_INIT_DELAY_CLI					(5u)
+#define TASK_INIT_DELAY_COMMAND				(15u)
+#define TASK_INIT_DELAY_CTRL_CHASSIS		(100)
+#define TASK_INIT_DELAY_CTRL_GIMBAL			(200)
+#define TASK_INIT_DELAY_CTRL_SHOOT			(300)
+#define TASK_INIT_DELAY_INFO				(500u)
+#define TASK_INIT_DELAY_MONITOR				(10)
+#define TASK_INIT_DELAY_POSESTI				(0u)
+#define TASK_INIT_DELAY_REFEREE				(400u)
 
 /* Exported defines ----------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
@@ -71,20 +61,13 @@ typedef struct {
 } Task_Param_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int Task_InitParam(Task_Param_t *task_param);
-
-void Task_CAN(void const *argument);
 void Task_CLI(void const *argument);
 void Task_Command(void const *argument);
 void Task_CtrlChassis(void const *argument);
 void Task_CtrlGimbal(void const *argument);
 void Task_CtrlShoot(void const *argument);
-void Task_Debug(void const *argument);
-void Task_Detect(void const *argument);
 void Task_Info(void const *argument);
-void Task_Init(void const *argument);
 void Task_Monitor(void const *argument);
-void Task_Output(void const *argument);
 void Task_PosEsti(void const *argument);
 void Task_Referee(void const *argument);
 

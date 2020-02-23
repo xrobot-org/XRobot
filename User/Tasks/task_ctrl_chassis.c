@@ -9,6 +9,8 @@
 
 /* Include 标准库 */
 /* Include Board相关的头文件 */
+#include "bsp_usb.h"
+
 /* Include Device相关的头文件 */
 /* Include Component相关的头文件 */
 /* Include Module相关的头文件 */
@@ -18,7 +20,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static const uint32_t delay_ms = 1000u / TASK_CTRL_CHASSIS_FREQ_HZ;
+static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_CTRL_CHASSIS;
 
 static CAN_Device_t cd;
 static DR16_t *dr16;
@@ -37,7 +39,7 @@ void Task_CtrlChassis(void const *argument) {
 	
 	
 	/* Task Setup */
-	osDelay(TASK_CTRL_CHASSIS_INIT_DELAY);
+	osDelay(TASK_INIT_DELAY_CTRL_CHASSIS);
 	
 	/* Init hardware */
 	cd.motor_alert[0] = osThreadGetId();

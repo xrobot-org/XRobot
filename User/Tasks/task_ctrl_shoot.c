@@ -8,6 +8,8 @@
 
 /* Include 标准库 */
 /* Include Board相关的头文件 */
+#include "bsp_usb.h"
+
 /* Include Device相关的头文件 */
 /* Include Component相关的头文件 */
 #include "shoot.h"
@@ -17,7 +19,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static const uint32_t delay_ms = 1000u / TASK_CTRL_SHOOT_FREQ_HZ;
+static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_CTRL_SHOOT;
 
 static CAN_Device_t *cd;
 static DR16_t *dr16;
@@ -35,7 +37,7 @@ void Task_CtrlShoot(void const *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
-	osDelay(TASK_CTRL_SHOOT_INIT_DELAY);
+	osDelay(TASK_INIT_DELAY_CTRL_SHOOT);
 	
 	cd = CAN_GetDevice();
 	dr16 = DR16_GetDevice();
