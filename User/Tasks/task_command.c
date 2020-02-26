@@ -28,10 +28,6 @@
 
 static DR16_t dr16;
 
-/* Runtime status. */
-static osStatus os_status = osOK;
-
-
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_Command(void const *argument) {
