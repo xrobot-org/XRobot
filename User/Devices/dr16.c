@@ -62,8 +62,8 @@ int DR16_Parse(DR16_t *dr16) {
 	dr16->data.rc.ch_l_x = (float)(ch_l_x - DR16_CH_VALUE_MID) / (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
 	dr16->data.rc.ch_l_y = (float)(ch_l_y - DR16_CH_VALUE_MID) / (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
 	
-	dr16->data.rc.sw_l = ((dr16->raw[5] >> 4) & 0x3);
-	dr16->data.rc.sw_r = ((dr16->raw[5] >> 4) & 0xC) >> 2;
+	dr16->data.rc.sw_l = (DR16_SwitchPos_t)((dr16->raw[5] >> 4) & 0x3);
+	dr16->data.rc.sw_r = (DR16_SwitchPos_t)(((dr16->raw[5] >> 4) & 0xC) >> 2);
 	
 	dr16->data.mouse.x = dr16->raw[6] | (dr16->raw[7] << 8);
 	dr16->data.mouse.y = dr16->raw[8] | (dr16->raw[9] << 8);
