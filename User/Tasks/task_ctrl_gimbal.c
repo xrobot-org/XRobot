@@ -42,8 +42,9 @@ void Task_CtrlGimbal(void const *argument) {
 	cd = CAN_GetDevice();
 	dr16 = DR16_GetDevice();
 	
-	gimbal.imu = IMU_GetDevice();
 	Gimbal_Init(&gimbal);
+	gimbal.dt_sec = (float)delay_ms / 1000.f;
+	gimbal.imu = IMU_GetDevice();
 	
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
@@ -51,7 +52,7 @@ void Task_CtrlGimbal(void const *argument) {
 		
 		/* Try to get new rc command. */
 		osSignalWait(DR16_SIGNAL_DATA_REDY, 0);
-		Gimbal_ParseCommand(&gimbal_ctrl, dr16);
+		Gimbal_ParseCommand(&gimbal, &gimbal_ctrl, dr16);
 		
 		/* Wait for motor feedback. */
 		osSignalWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osWaitForever);
