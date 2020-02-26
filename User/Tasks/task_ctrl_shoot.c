@@ -43,6 +43,7 @@ void Task_CtrlShoot(void const *argument) {
 	dr16 = DR16_GetDevice();
 
 	Shoot_Init(&shoot);
+	shoot.dt_sec = (float)delay_ms / 1000.f;
 	
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
