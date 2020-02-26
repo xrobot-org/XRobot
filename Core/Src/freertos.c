@@ -138,7 +138,7 @@ void MX_FREERTOS_Init(void) {
 	task_param.thread.info			= osThreadCreate(osThread(info),			&task_param);
 	task_param.thread.monitor		= osThreadCreate(osThread(monitor),			&task_param);
 	task_param.thread.pos_esti		= osThreadCreate(osThread(pos_esti),		&task_param);
-	//task_param.thread.referee		= osThreadCreate(osThread(referee),			&task_param);
+	task_param.thread.referee		= osThreadCreate(osThread(referee),			&task_param);
 	
 	
 	#if defined ROBOT_MODEL_INFANTRY
