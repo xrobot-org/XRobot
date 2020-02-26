@@ -188,7 +188,7 @@ void IMU_AcclIntCallback(void) {
 }
 
 void IMU_GyroIntCallback(void) {
-	BMI_Read(BMI_ACCL, BMI088_GYRO_X_LSB_REG, gimu->raw, 6u);
+	BMI_Read(BMI_GYRO, BMI088_GYRO_X_LSB_REG, gimu->raw, 6u);
 }
 
 /* Exported functions --------------------------------------------------------*/
@@ -215,40 +215,43 @@ int IMU_Init(IMU_t *imu) {
 	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_SOFTRESET_REG, 0xB6);
 	BSP_Delay(3);
 	
-	/* Filter setting: Normal. Output data rate 400. */
-	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_CONF_REG, 0xAA);
+	/* Filter setting: Normal. ODR: 0xAA: 400Hz. 0xA6: 25Hz. */
+	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_CONF_REG, 0xA6);
 	
 	/* 0x00: +-3G. 0x01: +-6G. 0x02: +-12G. 0x03: +-24G. */
 	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_RANGE_REG, 0x01);
 	
-	/* INT1 as output. Open-dtrin. Active High. */
-	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_INT1_IO_CONF_REG, 0x00);
+	/* INT1 as output. Push-pull. Active low. Output. */
+	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_INT1_IO_CONF_REG, 0x08);
 	
-	/* INT2 as output. Open-dtrin. Active High. */
-	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_INT2_IO_CONF_REG, 0x00);
+	/* INT2 as output. Push-pull. Active low. Output. */
+	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_INT2_IO_CONF_REG, 0x08);
 	
 	/* Map data ready interrupt to INT1 and INT2. */
 	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_INT1_INT2_MAP_DATA_REG, 0x44);
 	
 	/* Turn on accl. Now we can read data. */
-	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_PWR_CTRL_REG, 0x44);
+	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_PWR_CTRL_REG, 0x04);
 	BSP_Delay(50);
+	
+	if (BMI_ReadSingle(BMI_ACCL, BMI088_ACCL_ERR_REG) != 0x00)
+		return IMU_ERR_NO_DEV;
 	
 	/* Gyro init. */
 	BMI_WriteSingle(BMI_GYRO, BMI088_GYRO_SOFTRESET_REG, 0xB6);
-	BSP_Delay(3);
+	BSP_Delay(30);
 	
 	/* 0x00: +-2000. 0x01: +-1000. 0x02: +-500. 0x03: +-250. 0x04: +-125. */
-	BMI_WriteSingle(BMI_GYRO, BMI088_GYRO_RANGE_REG, 0x00);
+	BMI_WriteSingle(BMI_GYRO, BMI088_GYRO_RANGE_REG, 0x01);
 
-	/* Filter bw: 47Hz. Output data rate 400. */
-	BMI_WriteSingle(BMI_GYRO, BMI088_GYRO_RANGE_REG, 0x03);
+	/* Filter bw: 47Hz. ODR: 0x03: 400Hz. 0x07: 100Hz. */
+	BMI_WriteSingle(BMI_GYRO, BMI088_GYRO_RANGE_REG, 0x07);
 	
 	/* Map data ready interrupt to INT3 and INT4. */
 	BMI_WriteSingle(BMI_GYRO, BMI088_GYRO_INT_CTRL_REG, 0x80);
 	
 	/* INT3 and INT4 as output. Push-pull. Active low. */
-	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_INT2_IO_CONF_REG, 0x00);
+	BMI_WriteSingle(BMI_ACCL, BMI088_GYRO_INT3_INT4_IO_CONF_REG, 0x00);
 	
 	/* Map data ready interrupt to INT3 and INT3. */
 	BMI_WriteSingle(BMI_ACCL, BMI088_GYRO_INT3_INT4_IO_MAP_REG, 0x81);
@@ -256,6 +259,8 @@ int IMU_Init(IMU_t *imu) {
 	BSP_SPI_RegisterCallback(BSP_SPI_IMU, BSP_SPI_RX_COMPLETE_CB, IMU_RxCpltCallback);
 	BSP_GPIO_RegisterCallback(ACCL_INT_Pin, IMU_AcclIntCallback);
 	BSP_GPIO_RegisterCallback(GYRO_INT_Pin, IMU_GyroIntCallback);
+	
+	BMI_Read(BMI_GYRO, BMI088_GYRO_X_LSB_REG, gimu->raw, 6u);
 	
 	return IMU_OK;
 }
@@ -293,9 +298,9 @@ int IMU_ParseGyro(IMU_t *imu) {
 	float raw_y = (float)(imu->raw[3] | imu->raw[2]);
 	float raw_z = (float)(imu->raw[5] | imu->raw[4]);
 	
-	imu->gyro.x = raw_x / 16.384f / 180.f * PI;
-	imu->gyro.y = raw_y / 16.384f / 180.f * PI;
-	imu->gyro.z = raw_z / 16.384f / 180.f * PI;
+	imu->gyro.x = raw_x / 32.768f / 180.f * PI;
+	imu->gyro.y = raw_y / 32.768f / 180.f * PI;
+	imu->gyro.z = raw_z / 32.768f / 180.f * PI;
 	
 	return IMU_OK;
 }
