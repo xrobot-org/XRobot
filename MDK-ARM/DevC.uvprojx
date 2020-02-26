@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F407xx,ARM_MATH_CM4,ROBOT_MODEL_INFANTRY,OLED_USE_SPI,USE_DEV_BOARD_C</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;                ../USB_DEVICE/App;                ../USB_DEVICE/Target;                ../Drivers/STM32F4xx_HAL_Driver/Inc;                ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;                ../Middlewares/Third_Party/FreeRTOS/Source/include;                ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;                ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;                ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;                ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;                ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;                ../Drivers/CMSIS/Include;                ..\User\Boards;                ..\User\Components;                ..\User\Devices;                ..\User\Module;                ..\User\Tasks;                ..\Drivers\CMSIS\DSP\Include</IncludePath>
+              <IncludePath>../Core/Inc;                 ../USB_DEVICE/App;                 ../USB_DEVICE/Target;                 ../Drivers/STM32F4xx_HAL_Driver/Inc;                 ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;                 ../Middlewares/Third_Party/FreeRTOS/Source/include;                 ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;                 ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;                 ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;                 ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;                 ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;                 ../Drivers/CMSIS/Include;                 ..\User\Boards;                 ..\User\Components;                 ..\User\Devices;                 ..\User\Module;                 ..\User\Tasks;                 ..\Drivers\CMSIS\DSP\Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1977,20 +1977,6 @@
   <RTE>
     <apis/>
     <components>
-      <component Cbundle="ARM Compiler" Cclass="Compiler" Cgroup="Event Recorder" Cvariant="DAP" Cvendor="Keil" Cversion="1.4.0" condition="Cortex-M Device">
-        <package name="ARM_Compiler" schemaVersion="1.4.9" url="http://www.keil.com/pack/" vendor="Keil" version="1.6.1"/>
-        <targetInfos>
-          <targetInfo name="DevC"/>
-          <targetInfo name="Release"/>
-        </targetInfos>
-      </component>
-      <component Cbundle="ARM Compiler" Cclass="Compiler" Cgroup="I/O" Csub="STDIN" Cvariant="ITM" Cvendor="Keil" Cversion="1.2.0" condition="ARMCC Cortex-M with ITM">
-        <package name="ARM_Compiler" schemaVersion="1.4.9" url="http://www.keil.com/pack/" vendor="Keil" version="1.6.1"/>
-        <targetInfos>
-          <targetInfo name="DevC"/>
-          <targetInfo name="Release"/>
-        </targetInfos>
-      </component>
       <component Cbundle="ARM Compiler" Cclass="Compiler" Cgroup="I/O" Csub="STDOUT" Cvariant="ITM" Cvendor="Keil" Cversion="1.2.0" condition="ARMCC Cortex-M with ITM">
         <package name="ARM_Compiler" schemaVersion="1.4.9" url="http://www.keil.com/pack/" vendor="Keil" version="1.6.1"/>
         <targetInfos>
@@ -2013,13 +1999,10 @@
         <targetInfos/>
       </file>
       <file attr="config" category="header" name="Config\EventRecorderConf.h" version="1.1.0">
-        <instance index="0">RTE\Compiler\EventRecorderConf.h</instance>
+        <instance index="0" removed="1">RTE\Compiler\EventRecorderConf.h</instance>
         <component Cbundle="ARM Compiler" Cclass="Compiler" Cgroup="Event Recorder" Cvariant="DAP" Cvendor="Keil" Cversion="1.4.0" condition="Cortex-M Device"/>
         <package name="ARM_Compiler" schemaVersion="1.4.9" url="http://www.keil.com/pack/" vendor="Keil" version="1.6.1"/>
-        <targetInfos>
-          <targetInfo name="DevC"/>
-          <targetInfo name="Release"/>
-        </targetInfos>
+        <targetInfos/>
       </file>
       <file attr="config" category="header" name="CMSIS\Driver\Config\RTE_Device.h" version="2.4.5">
         <instance index="0" removed="1">RTE\Device\STM32F407IGHx\RTE_Device.h</instance>
