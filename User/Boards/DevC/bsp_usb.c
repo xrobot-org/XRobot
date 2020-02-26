@@ -19,7 +19,6 @@ uint8_t usb_rx_buf[BSP_USB_MAX_RX_LEN];
 uint8_t usb_tx_buf[BSP_USB_MAX_TX_LEN];
 
 static uint16_t usb_rx_num = 0;
-static bool inited = false;
 
 /* Private function  ---------------------------------------------------------*/
 static int BSP_USB_Transmit(uint8_t *buffer, uint16_t len) {
