@@ -33,14 +33,14 @@ int DR16_Init(DR16_t *dr16) {
 	gdr16 = dr16;
 	inited = true;
 
-	// BSP_UART_GegesterCallback(DR16_RxCpltCallback);
+	BSP_UART_RegisterCallback(BSP_UART_DR16, BSP_UART_RX_COMPLETE_CB, DR16_RxCpltCallback);
 	return DR16_OK;
 }
 
 DR16_t *DR16_GetDevice(void) {
-	if (inited) {
+	if (inited)
 		return gdr16;
-	}
+	
 	return NULL;
 }
 
@@ -48,29 +48,37 @@ int DR16_StartReceiving(DR16_t *dr16) {
 	return BSP_UART_Receive(BSP_UART_DR16, dr16->raw, DR16_RX_BUF_NUM);
 }
 
-/* Made some modification. Be aware when debug.*/
 int DR16_Parse(DR16_t *dr16) {
 	if (dr16 == NULL)
 		return DR16_ERR_NULL;
-		
-	dr16->data.rc.ch[0] = (dr16->raw[0] | (dr16->raw[1] << 8)) & 0x07ff;        
-	dr16->data.rc.ch[1] = ((dr16->raw[1] >> 3) | (dr16->raw[2] << 5)) & 0x07ff; 
-	dr16->data.rc.ch[2] = ((dr16->raw[2] >> 6) | (dr16->raw[3] << 2) | (dr16->raw[4] << 10)) & 0x07ff;
-	dr16->data.rc.ch[3] = ((dr16->raw[4] >> 1) | (dr16->raw[5] << 7)) & 0x07ff;
-	/* Left switch  */
-	dr16->data.rc.sw[0] = ((dr16->raw[5] >> 4) & 0x3);                  
-	/* Right switch  */
-	dr16->data.rc.sw[1] = ((dr16->raw[5] >> 4) & 0xC) >> 2;       
+	
+	const uint16_t ch_r_x = 0x07ff & (dr16->raw[0] | (dr16->raw[1] << 8));
+	const uint16_t ch_r_y = 0x07ff & ((dr16->raw[1] >> 3) | (dr16->raw[2] << 5));
+	const uint16_t ch_l_x = 0x07ff & ((dr16->raw[2] >> 6) | (dr16->raw[3] << 2) | (dr16->raw[4] << 10));
+	const uint16_t ch_l_y = 0x07ff & ((dr16->raw[4] >> 1) | (dr16->raw[5] << 7));
+	
+	dr16->data.rc.ch_r_x = (float)(ch_r_x - DR16_CH_VALUE_MID) / (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
+	dr16->data.rc.ch_r_y = (float)(ch_r_y - DR16_CH_VALUE_MID) / (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
+	dr16->data.rc.ch_l_x = (float)(ch_l_x - DR16_CH_VALUE_MID) / (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
+	dr16->data.rc.ch_l_y = (float)(ch_l_y - DR16_CH_VALUE_MID) / (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
+	
+	dr16->data.rc.sw_l = ((dr16->raw[5] >> 4) & 0x3);
+	dr16->data.rc.sw_r = ((dr16->raw[5] >> 4) & 0xC) >> 2;
 	
 	dr16->data.mouse.x = dr16->raw[6] | (dr16->raw[7] << 8);
 	dr16->data.mouse.y = dr16->raw[8] | (dr16->raw[9] << 8);
 	dr16->data.mouse.z = dr16->raw[10] | (dr16->raw[11] << 8);
-	dr16->data.mouse.press_left = dr16->raw[12];
-	dr16->data.mouse.press_right = dr16->raw[13];
-	dr16->data.key = dr16->raw[14] | (dr16->raw[15] << 8);
-	dr16->data.rc.ch[4] = dr16->raw[16] | (dr16->raw[17] << 8);
 	
+	dr16->data.mouse.left_click = dr16->raw[12];
+	dr16->data.mouse.right_click = dr16->raw[13];
+	
+	dr16->data.key = dr16->raw[14] | (dr16->raw[15] << 8);
+	
+	dr16->data.rc.ch_res = dr16->raw[16] | (dr16->raw[17] << 8);
+	// TODO: TEST
 	return DR16_OK;
 }
 
-
+bool DR16_KeyPressed(const DR16_t *dr16, DR16_KeyValue_t key) {
+	return dr16->data.key & (1u << key);
+}

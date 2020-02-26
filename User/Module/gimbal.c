@@ -88,15 +88,38 @@ int Gimbal_UpdateFeedback(Gimbal_t *gimb, CAN_Device_t *can_device) {
 	return 0;
 }
 
-int Gimbal_ParseCommand(Gimbal_Ctrl_t *chas_ctrl, const DR16_t *dr16) {
-	if (chas_ctrl == NULL)
+int Gimbal_ParseCommand(Gimbal_t *gimb, Gimbal_Ctrl_t *gimb_ctrl, const DR16_t *dr16) {
+	if (gimb == NULL)
+		return -1;
+	
+	if (gimb_ctrl == NULL)
 		return -1;
 	
 	if (dr16 == NULL)
 		return -1;
 	
-	//TODO
+		/* RC Control. */
+	switch (dr16->data.rc.sw_l) {
+		case DR16_SW_UP:
+		case DR16_SW_MID:
+		case DR16_SW_DOWN:
+			gimb_ctrl->mode = GIMBAL_MODE_ABSOLUTE;
+			break;
+		
+		case DR16_SW_ERR:
+			gimb_ctrl->mode = GIMBAL_MODE_RELAX;
+			break;
+	}
 	
+	gimb_ctrl->ctrl_eulr.yaw += dr16->data.rc.ch_r_x * gimb->dt_sec;
+	gimb_ctrl->ctrl_eulr.pit += dr16->data.rc.ch_r_y * gimb->dt_sec;
+	
+	if ((dr16->data.rc.sw_l == DR16_SW_UP) && (dr16->data.rc.sw_r == DR16_SW_UP)) {
+		/* PC Control. */
+		gimb_ctrl->ctrl_eulr.yaw += (float)dr16->data.mouse.x / 100.f;	
+		gimb_ctrl->ctrl_eulr.pit += (float)dr16->data.mouse.y / 100.f;
+		
+	}
 	return 0;
 }
 

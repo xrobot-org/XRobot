@@ -11,6 +11,8 @@
 /* Include Component相关的头文件 */
 #include "pid.h"
 #include "mixer.h"
+#include "low_pass_filter_2p.h"
+
 
 /* Include Module相关的头文件 */
 /* Exported constants --------------------------------------------------------*/
@@ -92,6 +94,10 @@ typedef struct {
 	
 	/* Output */
 	float motor_cur_out[4];
+	
+	/* Output filter */
+	LowPassFilter2p_t output_filter[4];
+	
 	
 	int power_limit;
 	int power_consumpetion;

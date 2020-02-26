@@ -30,6 +30,8 @@ int Chassis_Init(Chassis_t *chas, Chassis_Type_t type) {
 	for(uint8_t i = 0; i < 4; i++) {
 		PID_Init(&(chas->wheel_pid[i]), PID_MODE_DERIVATIV_NONE, chas->dt_sec);
 		PID_SetParameters(&(chas->wheel_pid[i]), 5.f, 1.f, 0.f, 1.f, 1.f);
+		
+		LowPassFilter2p_SetParameters(&chas->output_filter[i], chas->dt_sec / 1000.f, 100.f);
 	}
 	
 	switch (type) {
@@ -72,7 +74,7 @@ int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode) {
 	if (mode == chas->mode)
 		return CHASSIS_OK;
 	
-	// check mode switchable.
+	// TODO: Check mode switchable.
 	switch (mode) {
 		case CHASSIS_MODE_RELAX:
 			break;
@@ -128,7 +130,47 @@ int Chassis_ParseCommand(Chassis_Ctrl_t *chas_ctrl, const DR16_t *dr16) {
 	if (dr16 == NULL)
 		return CHASSIS_ERR_NULL;
 	
-	//TODO
+	/* RC Control. */
+	switch (dr16->data.rc.sw_l) {
+		case DR16_SW_UP:
+			chas_ctrl->mode = CHASSIS_MODE_BREAK;
+			break;
+		
+		case DR16_SW_MID:
+			chas_ctrl->mode = CHASSIS_MODE_FOLLOW_GIMBAL;
+			break;
+		
+		case DR16_SW_DOWN:
+			chas_ctrl->mode = CHASSIS_MODE_ROTOR;
+			break;
+		
+		case DR16_SW_ERR:
+			chas_ctrl->mode = CHASSIS_MODE_RELAX;
+			break;
+	}
+	
+	chas_ctrl->ctrl_v.vx = dr16->data.rc.ch_l_x;
+	chas_ctrl->ctrl_v.vy = dr16->data.rc.ch_l_y;
+	
+	if ((dr16->data.rc.sw_l == DR16_SW_UP) && (dr16->data.rc.sw_r == DR16_SW_UP)) {
+		/* PC Control. */
+		
+		chas_ctrl->ctrl_v.vx = 0.f;
+		chas_ctrl->ctrl_v.vy = 0.f;
+		if (!DR16_KeyPressed(dr16, DR16_KEY_SHIFT) && !DR16_KeyPressed(dr16, DR16_KEY_CTRL)) {
+			if (DR16_KeyPressed(dr16, DR16_KEY_A))
+				chas_ctrl->ctrl_v.vx -= 1.f;
+			
+			if (DR16_KeyPressed(dr16, DR16_KEY_D))
+				chas_ctrl->ctrl_v.vx += 1.f;
+			
+			if (DR16_KeyPressed(dr16, DR16_KEY_W))
+				chas_ctrl->ctrl_v.vy += 1.f;
+			
+			if (DR16_KeyPressed(dr16, DR16_KEY_S))
+				chas_ctrl->ctrl_v.vy -= 1.f;
+		}
+	}
 	
 	return CHASSIS_OK;
 }
@@ -176,9 +218,13 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 		chas->motor_rpm_set,
 		chas->wheel_num);
 	
-	// TODO: Add scaler.
 	
-	/* motor_rpm_set -> motor_cur_out. */
+	for(uint8_t i = 0; i < 4; i++) {
+		// TODO: Add scaler.
+		chas->motor_rpm_set[i] *= 1000;
+	}
+	
+	/* Compute output from setpiont. */
 	for(uint8_t i = 0; i < 4; i++) {
 		switch(chas->mode) {
 			case CHASSIS_MODE_BREAK:
@@ -201,8 +247,10 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 		}
 	}
 	
-	// TODO: Filter output.
-	
+	/* Filter output. */
+	for(uint8_t i = 0; i < 4; i++) {
+		chas->motor_cur_out[i] = LowPassFilter2p_Apply(&chas->output_filter[i], chas->motor_cur_out[i]);
+	}
 	
 	return CHASSIS_OK;
 }

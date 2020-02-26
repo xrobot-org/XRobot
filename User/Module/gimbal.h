@@ -113,5 +113,5 @@ typedef struct {
 int Gimbal_Init(Gimbal_t *gimb);
 int Gimbal_SetMode(Gimbal_t *gimb, Gimbal_Mode_t mode);
 int Gimbal_UpdateFeedback(Gimbal_t *gimb, CAN_Device_t *can_device);
-int Gimbal_ParseCommand(Gimbal_Ctrl_t *chas_ctrl, const DR16_t *dr16);
+int Gimbal_ParseCommand(Gimbal_t *gimb, Gimbal_Ctrl_t *gimb_ctrl, const DR16_t *dr16);
 int Gimbal_Control(Gimbal_t *gimb, AHRS_Eulr_t *ctrl_eulr);

@@ -96,8 +96,58 @@ int Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16) {
 	
 	if (dr16 == NULL)
 		return -1;
+
 	
-	//TODO
+	/* RC Control. */
+	switch (dr16->data.rc.sw_r) {
+		case DR16_SW_UP:
+			shoot_ctrl->mode = SHOOT_MODE_SAFE;
+			break;
+		
+		case DR16_SW_MID:
+			shoot_ctrl->mode = SHOOT_MODE_STDBY;
+			break;
+		
+		case DR16_SW_DOWN:
+			shoot_ctrl->mode = SHOOT_MODE_FIRE;
+			shoot_ctrl->shoot_freq_hz = 10u;
+			shoot_ctrl->bullet_speed = 10.f;
+			break;
+		
+		case DR16_SW_ERR:
+			shoot_ctrl->mode = SHOOT_MODE_RELAX;
+			break;
+	}
+	
+	if ((dr16->data.rc.sw_l == DR16_SW_UP) && (dr16->data.rc.sw_r == DR16_SW_UP)) {
+		/* PC Control. */
+		if (dr16->data.mouse.left_click) {
+			if (dr16->data.mouse.right_click) {
+				shoot_ctrl->shoot_freq_hz = 5u;
+				shoot_ctrl->bullet_speed = 20.f;
+			} else {
+				shoot_ctrl->shoot_freq_hz = 10u;
+				shoot_ctrl->bullet_speed = 10.f;
+			}
+		} else {
+			shoot_ctrl->shoot_freq_hz = 0u;
+			shoot_ctrl->bullet_speed = 0.f;
+		}
+		
+		if (DR16_KeyPressed(dr16, DR16_KEY_SHIFT) && DR16_KeyPressed(dr16, DR16_KEY_CTRL)) {
+			if (DR16_KeyPressed(dr16, DR16_KEY_A))
+				shoot_ctrl->mode = SHOOT_MODE_SAFE;
+			
+			else if (DR16_KeyPressed(dr16, DR16_KEY_S))
+				shoot_ctrl->mode = SHOOT_MODE_STDBY;
+			
+			else if (DR16_KeyPressed(dr16, DR16_KEY_D))
+				shoot_ctrl->mode = SHOOT_MODE_FIRE;
+			
+			else
+				shoot_ctrl->mode = SHOOT_MODE_RELAX;
+		}
+	}
 	return -1;
 }
 
@@ -114,7 +164,7 @@ int Shoot_Control(Shoot_t *shoot, float bullet_speed, uint32_t shoot_freq_hz) {
 	shoot->fric_rpm_set[1] = SHOOT_BULLET_SPEED_SCALER * bullet_speed + SHOOT_BULLET_SPEED_BIAS;
 	
 	uint32_t period_ms = 1000u / shoot_freq_hz;
-	osTimerStart (shoot->trig_timer_id, period_ms);  
+	osTimerStart(shoot->trig_timer_id, period_ms);  
 	
 	
 	switch(shoot->mode) {

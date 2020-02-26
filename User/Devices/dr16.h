@@ -19,23 +19,28 @@
 #define DR16_CH_VALUE_MID			(1024u)
 #define DR16_CH_VALUE_MAX			(1684u)
 
-#define DR16_SW_UP			(1u)
-#define DR16_SW_MID			(3u)
-#define DR16_SW_DOWN		(2u)
-
-#define DR16_KEY_MASK_W		(1u<<0)
-#define DR16_KEY_MASK_S		(1u<<1)
-#define DR16_KEY_MASK_A		(1u<<2)
-#define DR16_KEY_MASK_D		(1u<<3)
-#define DR16_KEY_MASK_Q		(1u<<4)
-#define DR16_KEY_MASK_E		(1u<<5)
-#define DR16_KEY_MASK_SHIST	(1u<<6)
-#define DR16_KEY_MASK_CTRL	(1u<<7)
-
 #define DR16_RX_BUF_NUM 36u
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
+typedef enum {
+	DR16_SW_ERR = 0,
+	DR16_SW_UP = 1,
+	DR16_SW_MID = 3,
+	DR16_SW_DOWN = 2,
+} DR16_SwitchPos_t;
+
+typedef enum {
+	DR16_KEY_W = 0,
+	DR16_KEY_S,
+	DR16_KEY_A,
+	DR16_KEY_D,
+	DR16_KEY_Q,
+	DR16_KEY_E,
+	DR16_KEY_SHIFT,
+	DR16_KEY_CTRL,
+} DR16_KeyValue_t;
+
 typedef struct {
 	osThreadId received_alert;
 
@@ -43,31 +48,36 @@ typedef struct {
 	
 	struct {
 		struct {
-			uint16_t ch[5];
-			uint8_t sw[2];
+			float ch_l_x;
+			float ch_l_y;
+			float ch_r_x;
+			float ch_r_y;
+			
+			float ch_res;
+			
+			DR16_SwitchPos_t sw_l;
+			DR16_SwitchPos_t sw_r;
 		} rc;
 		
 		struct {
 			int16_t x;
 			int16_t y;
 			int16_t z;
-			bool press_left;
-			bool press_right;
+			bool left_click;
+			bool right_click;
 		} mouse;
 		
 		uint16_t key;
-		uint16_t re; 
+		uint16_t rev;
 	} data;
 } DR16_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
 int DR16_Init(DR16_t *dr16);
 DR16_t *DR16_GetDevice(void);
-
-int DR16_StartReceiving(DR16_t *dr16);
-
-int DR16_Parse(DR16_t *dr16);
 int DR16_Restart(void);
 
+int DR16_StartReceiving(DR16_t *dr16);
+int DR16_Parse(DR16_t *dr16);
 
-
+bool DR16_KeyPressed(const DR16_t *dr16, DR16_KeyValue_t key);
