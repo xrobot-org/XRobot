@@ -10,31 +10,31 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static struct {
+struct {
     struct {
-        void (*TxHalfCpltCallback)(void);        /* UART Tx Half Complete Callback        */
-        void (*TxCpltCallback)(void);            /* UART Tx Complete Callback             */
-        void (*RxHalfCpltCallback)(void);        /* UART Rx Half Complete Callback        */
-        void (*RxCpltCallback)(void);            /* UART Rx Complete Callback             */
-        void (*ErrorCallback)(void);             /* UART Error Callback                   */
-        void (*AbortCpltCallback)(void);         /* UART Abort Complete Callback          */
-        void (*AbortTransmitCpltCallback)(void); /* UART Abort Transmit Complete Callback */
-        void (*AbortReceiveCpltCallback)(void);  /* UART Abort Receive Complete Callback  */
+        void(*TxHalfCpltCallback)(void);        /* UART Tx Half Complete Callback        */
+        void(*TxCpltCallback)(void);            /* UART Tx Complete Callback             */
+        void(*RxHalfCpltCallback)(void);        /* UART Rx Half Complete Callback        */
+        void(*RxCpltCallback)(void);            /* UART Rx Complete Callback             */
+        void(*ErrorCallback)(void);             /* UART Error Callback                   */
+        void(*AbortCpltCallback)(void);         /* UART Abort Complete Callback          */
+        void(*AbortTransmitCpltCallback)(void); /* UART Abort Transmit Complete Callback */
+        void(*AbortReceiveCpltCallback)(void);  /* UART Abort Receive Complete Callback  */
     } dr16;
 	
 	/*
 	struct {
-        void (*TxHalfCpltCallback)(void);
-        void (*TxCpltCallback)(void);
-        void (*RxHalfCpltCallback)(void);
-        void (*RxCpltCallback)(void);
-        void (*ErrorCallback)(void);
-        void (*AbortCpltCallback)(void);
-        void (*AbortTransmitCpltCallback)(void);
-        void (*AbortReceiveCpltCallback)(void);
+        void(*TxHalfCpltCallback)(void);
+        void(*TxCpltCallback)(void);
+        void(*RxHalfCpltCallback)(void);
+        void(*RxCpltCallback)(void);
+        void(*ErrorCallback)(void);
+        void(*AbortCpltCallback)(void);
+        void(*AbortTransmitCpltCallback)(void);
+        void(*AbortReceiveCpltCallback)(void);
     } xx;
 	*/
-} bsp_uart_callback;
+} static bsp_uart_callback;
 
 /* Private function  ---------------------------------------------------------*/
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
