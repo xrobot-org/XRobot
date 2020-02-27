@@ -45,7 +45,7 @@ DR16_t *DR16_GetDevice(void) {
 }
 
 int DR16_StartReceiving(DR16_t *dr16) {
-	return BSP_UART_Receive(BSP_UART_DR16, dr16->raw, DR16_RX_BUF_NUM);
+	return BSP_UART_ReceiveDMA(BSP_UART_DR16, dr16->raw, DR16_RX_BUF_NUM);
 }
 
 int DR16_Parse(DR16_t *dr16) {
