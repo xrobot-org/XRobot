@@ -257,18 +257,14 @@ void Task_CLI(void const *argument) {
 			BSP_USB_Printf("rm>");
 		} else {
 			if (rx_char <= 126 && rx_char >= 32){
-				/* Accepted it as part of the input and placed into the input buffer. */
 				if(index < MAX_INPUT_LENGTH) {
 					input[index] = rx_char;
 					index++;
 				}
 			}else if(rx_char == '\b' || rx_char == 0x7Fu) {
-				/* Erase the last character in the input buffer - if there are any. */
 				if(index > 0) {
 					index--;
 					input[index] = '\0';
-					
-					//BSP_USB_Printf("\b \b");
 				}
 			}
 		}
