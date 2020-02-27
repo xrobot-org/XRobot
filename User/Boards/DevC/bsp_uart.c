@@ -182,7 +182,7 @@ int BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void (*
     return 0;
 }
 
-int BSP_UART_Transmit(BSP_UART_t uart, uint8_t *data, uint16_t len) {
+int BSP_UART_Transmit(BSP_UART_t uart, uint8_t *data, uint16_t len, uint32_t time_out) {
 	if (data == NULL)
 		return -1;
 	
@@ -196,7 +196,39 @@ int BSP_UART_Transmit(BSP_UART_t uart, uint8_t *data, uint16_t len) {
     }
     return 0;
 }
-int BSP_UART_Receive(BSP_UART_t uart, uint8_t *data, uint16_t len) {
+
+int BSP_UART_TransmitDMA(BSP_UART_t uart, uint8_t *data, uint16_t len) {
+	if (data == NULL)
+		return -1;
+	
+    switch (uart) {
+        case BSP_UART_DR16:
+            return -1;
+		/*
+		case BSP_UART_XXX:
+            return -1;
+		*/
+    }
+    return 0;
+}
+
+int BSP_UART_Receive(BSP_UART_t uart, uint8_t *data, uint16_t len, uint32_t time_out) {
+	if (data == NULL)
+		return -1;
+
+    switch (uart) {
+        case BSP_UART_DR16:
+			HAL_UART_Receive(&huart1, data, len, time_out);
+            break;
+		/*
+		case BSP_UART_XXX:
+            return -1;
+		*/
+    }
+    return 0;
+}
+
+int BSP_UART_ReceiveDMA(BSP_UART_t uart, uint8_t *data, uint16_t len) {
 	if (data == NULL)
 		return -1;
 

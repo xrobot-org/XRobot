@@ -243,17 +243,38 @@ int BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*call
     return 0;
 }
 
-int BSP_SPI_Transmit(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
+int BSP_SPI_Transmit(BSP_SPI_t spi, uint8_t *data, uint16_t len, uint32_t time_out) {
 	if (data == NULL)
 		return -1;
 	
     switch (spi) {
         case BSP_SPI_IMU:
-            HAL_SPI_Transmit(&IMU_SPI_HANDLE, data, len, 5);
+            HAL_SPI_Transmit(&IMU_SPI_HANDLE, data, len, time_out);
             break;
 
         case BSP_SPI_OLED:
-            //HAL_SPI_Transmit(&OLED_SPI_HANDLE, data, len, 5);
+           HAL_SPI_Transmit(&OLED_SPI_HANDLE, data, len, time_out);
+            break;
+		
+		/*
+		case BSP_SPI_XXX:
+            HAL_SPI_Transmit_DMA(&XXX_SPI_HANDLE, data, len);
+            break;
+		*/
+    }
+    return 0;
+}
+
+int BSP_SPI_TransmitDMA(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
+	if (data == NULL)
+		return -1;
+	
+    switch (spi) {
+        case BSP_SPI_IMU:
+            HAL_SPI_Transmit_DMA(&IMU_SPI_HANDLE, data, len);
+            break;
+
+        case BSP_SPI_OLED:
             HAL_SPI_Transmit_DMA(&OLED_SPI_HANDLE, data, len);
             break;
 		
@@ -266,17 +287,13 @@ int BSP_SPI_Transmit(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
     return 0;
 }
 
-int BSP_SPI_Receive(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
+int BSP_SPI_Receive(BSP_SPI_t spi, uint8_t *data, uint16_t len, uint32_t time_out) {
 	if (data == NULL)
 		return -1;
 
     switch (spi) {
         case BSP_SPI_IMU:
-            if (len > 2u) {
-                HAL_SPI_Receive_DMA(&IMU_SPI_HANDLE, data, len);
-            } else {
-                HAL_SPI_Receive(&IMU_SPI_HANDLE, data, len, 55);
-            }
+			HAL_SPI_Receive(&IMU_SPI_HANDLE, data, len, time_out);
             break;
 
         case BSP_SPI_OLED:
@@ -290,3 +307,25 @@ int BSP_SPI_Receive(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
     }
     return 0;
 }
+
+int BSP_SPI_ReceiveDMA(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
+	if (data == NULL)
+		return -1;
+
+    switch (spi) {
+        case BSP_SPI_IMU:
+			HAL_SPI_Receive_DMA(&IMU_SPI_HANDLE, data, len);
+            break;
+
+        case BSP_SPI_OLED:
+            return -1;
+		
+		/*
+		case BSP_SPI_XXX:
+            HAL_SPI_Receive(&XXX_SPI_HANDLE, data, len);
+            break;
+		*/
+    }
+    return 0;
+}
+

@@ -27,5 +27,8 @@ typedef enum {
 /* Exported functions prototypes ---------------------------------------------*/
 int BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void (*callback)(void));
 
-int BSP_UART_Transmit(BSP_UART_t uart, uint8_t *data, uint16_t len);
-int BSP_UART_Receive(BSP_UART_t uart, uint8_t *data, uint16_t len);
+int BSP_UART_Transmit(BSP_UART_t uart, uint8_t *data, uint16_t len, uint32_t time_out);
+int BSP_UART_TransmitDMA(BSP_UART_t uart, uint8_t *data, uint16_t len);
+
+int BSP_UART_Receive(BSP_UART_t uart, uint8_t *data, uint16_t len, uint32_t time_out);
+int BSP_UART_ReceiveDMA(BSP_UART_t uart, uint8_t *data, uint16_t len);
