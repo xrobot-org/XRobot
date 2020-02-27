@@ -50,18 +50,15 @@ void Task_CtrlGimbal(void const *argument) {
 	while(1) {
 		/* Task body */
 		
-		/* Try to get new rc command. */
 		osSignalWait(DR16_SIGNAL_DATA_REDY, 0);
 		Gimbal_ParseCommand(&gimbal, &gimbal_ctrl, dr16);
 		
-		/* Wait for motor feedback. */
 		osSignalWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osWaitForever);
 		
 		taskENTER_CRITICAL();
 		Gimbal_UpdateFeedback(&gimbal, cd);
 		taskEXIT_CRITICAL();
 		
-		/* Wait for new eulr data. */
 		osEvent evt = osMessageGet(task_param->message.gimb_eulr, osWaitForever);
 		if (evt.status == osEventMessage) {
 			if (gimbal.imu_eulr) {
