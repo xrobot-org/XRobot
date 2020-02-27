@@ -41,7 +41,6 @@ void Task_CtrlChassis(void const *argument) {
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_CHASSIS);
 	
-	/* Init hardware */
 	cd.motor_alert[0] = osThreadGetId();
 	cd.motor_alert[1] = task_param->thread.ctrl_gimbal;
 	cd.motor_alert[2] = task_param->thread.ctrl_shoot;
@@ -58,11 +57,9 @@ void Task_CtrlChassis(void const *argument) {
 	while(1) {
 		/* Task body */
 		
-		/* Try to get new rc command. */
 		osSignalWait(DR16_SIGNAL_DATA_REDY, 0);
 		Chassis_ParseCommand(&chas_ctrl, dr16);
 		
-		/* Wait for motor feedback. */
 		osSignalWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osWaitForever);
 		
 		taskENTER_CRITICAL();
