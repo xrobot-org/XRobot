@@ -16,42 +16,42 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static struct {
+struct {
     struct {
-        void (*TxCpltCallback)(void);             /* SPI Tx Completed callback          */
-        void (*RxCpltCallback)(void);             /* SPI Rx Completed callback          */
-        void (*TxRxCpltCallback)(void);           /* SPI TxRx Completed callback        */
-        void (*TxHalfCpltCallback)(void);         /* SPI Tx Half Completed callback     */
-        void (*RxHalfCpltCallback)(void);         /* SPI Rx Half Completed callback     */
-        void (*TxRxHalfCpltCallback)(void);       /* SPI TxRx Half Completed callback   */
-        void (*ErrorCallback)(void);              /* SPI Error callback                 */
-        void (*AbortCpltCallback)(void);          /* SPI Abort callback                 */
+        void(*TxCpltCallback)(void);             /* SPI Tx Completed callback          */
+        void(*RxCpltCallback)(void);             /* SPI Rx Completed callback          */
+        void(*TxRxCpltCallback)(void);           /* SPI TxRx Completed callback        */
+        void(*TxHalfCpltCallback)(void);         /* SPI Tx Half Completed callback     */
+        void(*RxHalfCpltCallback)(void);         /* SPI Rx Half Completed callback     */
+        void(*TxRxHalfCpltCallback)(void);       /* SPI TxRx Half Completed callback   */
+        void(*ErrorCallback)(void);              /* SPI Error callback                 */
+        void(*AbortCpltCallback)(void);          /* SPI Abort callback                 */
     } oled;
 
     struct {
-        void (*TxCpltCallback)(void);
-        void (*RxCpltCallback)(void);
-        void (*TxRxCpltCallback)(void);
-        void (*TxHalfCpltCallback)(void);
-        void (*RxHalfCpltCallback)(void);
-        void (*TxRxHalfCpltCallback)(void);
-        void (*ErrorCallback)(void);
-        void (*AbortCpltCallback)(void);
+        void(*TxCpltCallback)(void);
+        void(*RxCpltCallback)(void);
+        void(*TxRxCpltCallback)(void);
+        void(*TxHalfCpltCallback)(void);
+        void(*RxHalfCpltCallback)(void);
+        void(*TxRxHalfCpltCallback)(void);
+        void(*ErrorCallback)(void);
+        void(*AbortCpltCallback)(void);
     } imu;
 	
 	/*
 	struct {
-        void (*TxCpltCallback)(void);
-        void (*RxCpltCallback)(void);
-        void (*TxRxCpltCallback)(void);
-        void (*TxHalfCpltCallback)(void);
-        void (*RxHalfCpltCallback)(void);
-        void (*TxRxHalfCpltCallback)(void);
-        void (*ErrorCallback)(void);
-        void (*AbortCpltCallback)(void);
+        void(*TxCpltCallback)(void);
+        void(*RxCpltCallback)(void);
+        void(*TxRxCpltCallback)(void);
+        void(*TxHalfCpltCallback)(void);
+        void(*RxHalfCpltCallback)(void);
+        void(*TxRxHalfCpltCallback)(void);
+        void(*ErrorCallback)(void);
+        void(*AbortCpltCallback)(void);
     } xxx;
 	*/
-} bsp_spi_callback;
+} static bsp_spi_callback;
 
 /* Private function  ---------------------------------------------------------*/
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
@@ -272,7 +272,7 @@ int BSP_SPI_Receive(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
 
     switch (spi) {
         case BSP_SPI_IMU:
-            if (len > 3u) {
+            if (len > 2u) {
                 HAL_SPI_Receive_DMA(&IMU_SPI_HANDLE, data, len);
             } else {
                 HAL_SPI_Receive(&IMU_SPI_HANDLE, data, len, 55);
