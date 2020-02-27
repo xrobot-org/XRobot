@@ -53,9 +53,6 @@ int CAN_DeviceInit(CAN_Device_t *can_device) {
 	if (inited)
 		return CAN_ERR_INITED;
 	
-	gcan_device = can_device;
-	inited = true;
-	
 	CAN_FilterTypeDef  can_filter = {0};
 
 	can_filter.FilterBank = 0;
@@ -81,6 +78,8 @@ int CAN_DeviceInit(CAN_Device_t *can_device) {
 	
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO1_MSG_PENDING);
 
+	gcan_device = can_device;
+	inited = true;
 	return CAN_OK;
 }
 
