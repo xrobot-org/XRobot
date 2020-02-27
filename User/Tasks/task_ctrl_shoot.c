@@ -49,11 +49,9 @@ void Task_CtrlShoot(void const *argument) {
 	while(1) {
 		/* Task body */
 		
-		/* Try to get new rc command. */
 		osSignalWait(DR16_SIGNAL_DATA_REDY, 0);
 		Shoot_ParseCommand(&shoot_ctrl, dr16);
 		
-		/* Wait for motor feedback. */
 		osSignalWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osWaitForever);
 		
 		taskENTER_CRITICAL();
@@ -63,7 +61,7 @@ void Task_CtrlShoot(void const *argument) {
 		Shoot_SetMode(&shoot, shoot_ctrl.mode);
 		Shoot_Control(&shoot, shoot_ctrl.bullet_speed, shoot_ctrl.shoot_freq_hz);
 		
-		// Check can error
+		// TODO: Check can error.
 		CAN_Motor_ControlShoot(
 			shoot.fric_cur_out[0],
 			shoot.fric_cur_out[1],
