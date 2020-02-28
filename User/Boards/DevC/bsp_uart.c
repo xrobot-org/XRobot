@@ -193,8 +193,9 @@ int BSP_UART_Transmit(BSP_UART_t uart, uint8_t *data, uint16_t len, uint32_t tim
 		case BSP_UART_XXX:
             return -1;
 		*/
+		default:
+			return -1;
     }
-    return 0;
 }
 
 int BSP_UART_TransmitDMA(BSP_UART_t uart, uint8_t *data, uint16_t len) {
@@ -208,8 +209,9 @@ int BSP_UART_TransmitDMA(BSP_UART_t uart, uint8_t *data, uint16_t len) {
 		case BSP_UART_XXX:
             return -1;
 		*/
+		default:
+			return -1;
     }
-    return 0;
 }
 
 int BSP_UART_Receive(BSP_UART_t uart, uint8_t *data, uint16_t len, uint32_t time_out) {
@@ -218,14 +220,14 @@ int BSP_UART_Receive(BSP_UART_t uart, uint8_t *data, uint16_t len, uint32_t time
 
     switch (uart) {
         case BSP_UART_DR16:
-			HAL_UART_Receive(&huart1, data, len, time_out);
-            break;
+			return HAL_UART_Receive(&huart1, data, len, time_out);
 		/*
 		case BSP_UART_XXX:
             return -1;
 		*/
+		default:
+			return -1;
     }
-    return 0;
 }
 
 int BSP_UART_ReceiveDMA(BSP_UART_t uart, uint8_t *data, uint16_t len) {
@@ -234,12 +236,12 @@ int BSP_UART_ReceiveDMA(BSP_UART_t uart, uint8_t *data, uint16_t len) {
 
     switch (uart) {
         case BSP_UART_DR16:
-			HAL_UART_Receive_DMA(&huart1, data, len);
-            break;
+			return HAL_UART_Receive_DMA(&huart1, data, len);
 		/*
 		case BSP_UART_XXX:
             return -1;
 		*/
+		default:
+			return -1;
     }
-    return 0;
 }
