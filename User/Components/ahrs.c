@@ -111,34 +111,19 @@ int AHRS_Init(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyro, co
 	
 	ahrs->inv_sample_freq = 1.0f / sample_freq;
 	
-	if (magn == NULL) {
-		ahrs->q0 = 1.f;
-		ahrs->q1 = 0.f;
-		ahrs->q2 = 0.f;
-		ahrs->q3 = 0.f;
+	ahrs->q0 = 1.f;
+	ahrs->q1 = 0.f;
+	ahrs->q2 = 0.f;
+	ahrs->q3 = 0.f;
+	
+	if (magn) {
+		if((magn->x == 0.0f) && (magn->y == 0.0f) && (magn->z == 0.0f)) {
+			ahrs->q0 = 0.794987798f;
+			ahrs->q1 = 0.00132370531f;
+			ahrs->q2 = -0.0234376211f;
+			ahrs->q3 = 0.608368337f;
+		}
 	}
-	
-#if 1
-	if((magn->x == 0.0f) && (magn->y == 0.0f) && (magn->z == 0.0f)) {
-		ahrs->q0 = 0.794987798f;
-		ahrs->q1 = 0.00132370531f;
-		ahrs->q2 = -0.0234376211f;
-		ahrs->q3 = 0.608368337f;
-	} else {
-		ahrs->q0 = 1.f;
-		ahrs->q1 = 0.f;
-		ahrs->q2 = 0.f;
-		ahrs->q3 = 0.f;
-	}
-#else
-	
-	ahrs->ahrs->q0 = 1.f;
-	ahrs->ahrs->q1 = 0.f;
-	ahrs->ahrs->q2 = 0.f;
-	ahrs->ahrs->q3 = 0.f;
-	
-#endif
-	
 	return 0;
 }
 
