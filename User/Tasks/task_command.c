@@ -39,7 +39,6 @@ void Task_Command(void const *argument) {
 	dr16.received_alert = osThreadGetId();
 	DR16_Init(&dr16);
 	
-	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
 		/* Task body */
 		DR16_StartReceiving(&dr16);

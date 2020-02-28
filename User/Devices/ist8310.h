@@ -10,48 +10,35 @@
 #include "ahrs.h"
 
 /* Exported constants --------------------------------------------------------*/
-#define IMU_OK			(0)
-#define IMU_ERR			(-1)
-#define IMU_ERR_NULL	(-2)
-#define IMU_ERR_INITED	(-3)
-#define IMU_ERR_NO_DEV	(-4)
+#define IST8310_OK			(0)
+#define IST8310_ERR		(-1)
+#define IST8310_ERR_NULL	(-2)
+#define IST8310_ERR_INITED	(-3)
+#define IST8310_ERR_NO_DEV	(-4)
 
-#define IMU_SIGNAL_RAW_ACCL_REDY	(1u<<7)
-#define IMU_SIGNAL_RAW_GYRO_REDY	(1u<<8)
+#define IST8310_SIGNAL_MAGN_NEW_DATA	(1u<<10)
+#define IST8310_SIGNAL_MAGN_RAW_REDY	(1u<<11)
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef struct {
 	osThreadId received_alert;
 
-	uint8_t raw[20];
-	AHRS_Accl_t accl;
-	AHRS_Gyro_t gyro;
+	uint8_t raw[6];
 	
-	float temp;
+	AHRS_Magn_t magn;
 	
 	struct {
-		int gyro_offset[3];
 		int magn_offset[3];
 		int magn_scale[3];
 	} cali;
-} IMU_t;
+} IST8310_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int IMU_Init(IMU_t *imu);
-IMU_t *IMU_GetDevice(void);
+int IST8310_Init(IST8310_t *ist8310);
+IST8310_t *IST8310_GetDevice(void);
 
-int IMU_StartReceiving(IMU_t *imu);
+int IST8310_Restart(void);
 
-/* Sensor use right-handed coordinate system. */
-/*         
-		x < R(logo)
-		    y
-		UP is z
-	All implementation should follow this rule.
- */
-int IMU_ParseAccl(IMU_t *imu);
-int IMU_ParseGyro(IMU_t *imu);
-
-
-int IMU_Restart(void);
+int IST8310_Receive(IST8310_t *ist8310);
+int IST8310_Parse(IST8310_t *ist8310);

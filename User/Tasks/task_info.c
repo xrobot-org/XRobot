@@ -9,6 +9,7 @@
 
 /* Include 标准库 */
 /* Include Board相关的头文件 */
+#include "bsp_adc.h"
 #include "bsp_led.h"
 #include "bsp_usb.h"
 
@@ -28,8 +29,6 @@ static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_INFO;
 void Task_Info(void const *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
-	float battery_voltage;
-	float battery_percentage;
 	float capacitor_percentage;
 	
 	/* Task Setup */
@@ -39,7 +38,9 @@ void Task_Info(void const *argument) {
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
 		/* Task body */
-		battery_percentage = Capacity_GetBatteryRemain(battery_voltage);
+		
+		float battery_voltage = BSP_GetBatteryVoltage();
+		float battery_percentage = Capacity_GetBatteryRemain(battery_voltage);
 		
 		BSP_LED_Set(BSP_LED_GRN, BSP_LED_TAGGLE, 1);
 		osDelayUntil(&previous_wake_time, delay_ms);

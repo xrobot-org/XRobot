@@ -15,10 +15,6 @@
 /* Private variables ---------------------------------------------------------*/
 static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_REFEREE;
 
-/* Runtime status. */
-int stat_re = 0;
-osStatus os_stat_re = osOK;
-
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_Referee(void const *argument) {

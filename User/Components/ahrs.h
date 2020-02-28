@@ -40,6 +40,6 @@ typedef struct {
 	
 } AHRS_t;
 
-int AHRS_Init(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyro, const AHRS_Magn_t *magn, float sample_freq);
+int AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq);
 int AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyro, const AHRS_Magn_t *magn);
 int AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs);

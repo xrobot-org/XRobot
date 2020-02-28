@@ -783,6 +783,11 @@
               <FilePath>..\User\Boards\DevC\bsp_gpio.c</FilePath>
             </File>
             <File>
+              <FileName>bsp_i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Boards\DevC\bsp_i2c.c</FilePath>
+            </File>
+            <File>
               <FileName>bsp_laser.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Boards\DevC\bsp_laser.c</FilePath>
@@ -887,16 +892,16 @@
               <FileType>1</FileType>
               <FilePath>..\User\Components\FreeRTOS_CLI.c</FilePath>
             </File>
-            <File>
-              <FileName>..\..\Users\QuShen\OneDrive\RoboMaster\Tech Group\qdu-robomaster-mcu\Drivers\CMSIS\Lib\ARM\arm_cortexM4lf_math.lib</FileName>
-              <FileType>4</FileType>
-              <FilePath>$TC_ROOT$\..\..\Users\QuShen\OneDrive\RoboMaster\Tech Group\qdu-robomaster-mcu\Drivers\CMSIS\Lib\ARM\arm_cortexM4lf_math.lib</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>User/Devices</GroupName>
           <Files>
+            <File>
+              <FileName>bmi088.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Devices\bmi088.c</FilePath>
+            </File>
             <File>
               <FileName>can_device.c</FileName>
               <FileType>1</FileType>
@@ -908,14 +913,9 @@
               <FilePath>..\User\Devices\dr16.c</FilePath>
             </File>
             <File>
-              <FileName>imu_bmi088.c</FileName>
+              <FileName>ist8310.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Devices\IMU\imu_bmi088.c</FilePath>
-            </File>
-            <File>
-              <FileName>comp_ist8310.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Devices\Compass\comp_ist8310.c</FilePath>
+              <FilePath>..\User\Devices\ist8310.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1771,6 +1771,11 @@
               <FilePath>..\User\Boards\DevC\bsp_gpio.c</FilePath>
             </File>
             <File>
+              <FileName>bsp_i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Boards\DevC\bsp_i2c.c</FilePath>
+            </File>
+            <File>
               <FileName>bsp_laser.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Boards\DevC\bsp_laser.c</FilePath>
@@ -1875,16 +1880,16 @@
               <FileType>1</FileType>
               <FilePath>..\User\Components\FreeRTOS_CLI.c</FilePath>
             </File>
-            <File>
-              <FileName>..\..\Users\QuShen\OneDrive\RoboMaster\Tech Group\qdu-robomaster-mcu\Drivers\CMSIS\Lib\ARM\arm_cortexM4lf_math.lib</FileName>
-              <FileType>4</FileType>
-              <FilePath>$TC_ROOT$\..\..\Users\QuShen\OneDrive\RoboMaster\Tech Group\qdu-robomaster-mcu\Drivers\CMSIS\Lib\ARM\arm_cortexM4lf_math.lib</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>User/Devices</GroupName>
           <Files>
+            <File>
+              <FileName>bmi088.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Devices\bmi088.c</FilePath>
+            </File>
             <File>
               <FileName>can_device.c</FileName>
               <FileType>1</FileType>
@@ -1896,14 +1901,9 @@
               <FilePath>..\User\Devices\dr16.c</FilePath>
             </File>
             <File>
-              <FileName>imu_bmi088.c</FileName>
+              <FileName>ist8310.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Devices\IMU\imu_bmi088.c</FilePath>
-            </File>
-            <File>
-              <FileName>comp_ist8310.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Devices\Compass\comp_ist8310.c</FilePath>
+              <FilePath>..\User\Devices\ist8310.c</FilePath>
             </File>
           </Files>
         </Group>

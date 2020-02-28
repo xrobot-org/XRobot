@@ -7,11 +7,11 @@
 /* Include Device相关的头文件。 */
 #include "can_device.h"
 #include "dr16.h"
+#include "bmi088.h"
 
 /* Include Component相关的头文件。 */
 #include "pid.h"
 #include "ahrs.h"
-#include "imu.h"
 
 /* Include Module相关的头文件。 */
 /* Exported constants --------------------------------------------------------*/\
@@ -90,7 +90,7 @@ typedef struct {
 	
 	/* Feedback */
 	AHRS_Eulr_t encoder_eulr;
-	IMU_t *imu;
+	BMI088_t *imu;
 	AHRS_Eulr_t *imu_eulr;
 	
 	/* PID set point */

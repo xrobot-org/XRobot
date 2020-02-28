@@ -99,14 +99,8 @@ static int AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro
 	return 0;
 }
 
-int AHRS_Init(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyro, const AHRS_Magn_t *magn, float sample_freq) {
+int AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq) {
 	if (ahrs == NULL)
-		return -1;
-	
-	if (accl == NULL)
-		return -1;
-	
-	if (gyro == NULL)
 		return -1;
 	
 	ahrs->inv_sample_freq = 1.0f / sample_freq;
@@ -259,14 +253,20 @@ int AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
 	
     const float siny_cosp = 2.f * (ahrs->q1 * ahrs->q2 - ahrs->q0 * ahrs->q3);
     const float cosy_cosp = 2.f * (ahrs->q0 * ahrs->q0 + ahrs->q1 * ahrs->q1) - 1.f;
-    eulr->yaw = atan2f(siny_cosp, cosy_cosp) * MATH_RADIAN_TO_DEGREE_MULTIPLIER;
+    eulr->yaw = atan2f(siny_cosp, cosy_cosp);
 	
     const float sinp = 2.f * (ahrs->q1 * ahrs->q3 - ahrs->q0 * ahrs->q2);
-	eulr->rol = -asinf(sinp) * MATH_RADIAN_TO_DEGREE_MULTIPLIER;
+	eulr->rol = -asinf(sinp);
 	
     const float sinr_cosp = 2.f * (ahrs->q2 * ahrs->q3 - ahrs->q0 * ahrs->q1);
     const float cosr_cosp = 2.f * (ahrs->q0 * ahrs->q0 + ahrs->q3 * ahrs->q3) - 1.f;
-    eulr->pit = atan2f(sinr_cosp, cosr_cosp) * MATH_RADIAN_TO_DEGREE_MULTIPLIER;
+    eulr->pit = atan2f(sinr_cosp, cosr_cosp);
+	
+	#if 0
+    eulr->yaw *= MATH_RADIAN_TO_DEGREE_MULTIPLIER;
+	eulr->rol *= MATH_RADIAN_TO_DEGREE_MULTIPLIER;
+    eulr->pit *= MATH_RADIAN_TO_DEGREE_MULTIPLIER;
+	#endif
 
 	return 0;
 }

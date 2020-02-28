@@ -44,7 +44,7 @@ void Task_CtrlGimbal(void const *argument) {
 	
 	Gimbal_Init(&gimbal);
 	gimbal.dt_sec = (float)delay_ms / 1000.f;
-	gimbal.imu = IMU_GetDevice();
+	gimbal.imu = BMI088_GetDevice();
 	
 	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
