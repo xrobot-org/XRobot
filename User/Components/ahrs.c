@@ -12,17 +12,6 @@
 /* 2 * proportional gain (Kp) */
 static float beta = BETA;
 
-static int AHRS_UpdateEuler(AHRS_t *ahrs) {
-	if (ahrs == NULL)
-		return -1;
-	/*
-	ahrs->eulr.yaw = atan2f(ahrs->rot_matrix[0][1], ahrs->rot_matrix[0][0])* 180.f / PI;
-	ahrs->eulr.rol = -1.f / sinf(ahrs->rot_matrix[2][0]) * 180.f / PI;
-	ahrs->eulr.pit = atan2f(ahrs->rot_matrix[2][1], ahrs->rot_matrix[2][2])* 180.f / PI;
-	*/
-	return 0;
-}
-
 static int AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyro) {
 	if (ahrs == NULL)
 		return -1;
@@ -106,8 +95,6 @@ static int AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro
 	ahrs->q1 *= recip_norm;
 	ahrs->q2 *= recip_norm;
 	ahrs->q3 *= recip_norm;
-	
-	AHRS_UpdateEuler(ahrs);
 	
 	return 0;
 }
@@ -275,6 +262,26 @@ int AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyro, 
 	ahrs->q2 *= recip_norm;
 	ahrs->q3 *= recip_norm;
 	
-	AHRS_UpdateEuler(ahrs);
+	return 0;
+}
+
+int AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
+	if (ahrs == NULL)
+		return -1;
+	
+	if (ahrs == NULL)
+		return -1;
+	
+    const float siny_cosp = 2.f * (ahrs->q1 * ahrs->q2 - ahrs->q0 * ahrs->q3);
+    const float cosy_cosp = 2.f * (ahrs->q0 * ahrs->q0 + ahrs->q1 * ahrs->q1) - 1.f;
+    eulr->yaw = atan2f(siny_cosp, cosy_cosp) * MATH_RADIAN_TO_DEGREE_MULTIPLIER;
+	
+    const float sinp = 2.f * (ahrs->q1 * ahrs->q3 - ahrs->q0 * ahrs->q2);
+	eulr->rol = -asinf(sinp) * MATH_RADIAN_TO_DEGREE_MULTIPLIER;
+	
+    const float sinr_cosp = 2.f * (ahrs->q2 * ahrs->q3 - ahrs->q0 * ahrs->q1);
+    const float cosr_cosp = 2.f * (ahrs->q0 * ahrs->q0 + ahrs->q3 * ahrs->q3) - 1.f;
+    eulr->pit = atan2f(sinr_cosp, cosr_cosp) * MATH_RADIAN_TO_DEGREE_MULTIPLIER;
+
 	return 0;
 }
