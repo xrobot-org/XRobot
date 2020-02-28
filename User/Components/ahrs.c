@@ -127,7 +127,7 @@ int AHRS_Init(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyro, co
 	return 0;
 }
 
-/* Pass the sensor data in a NED(North East Down) reference frame. Rotation can be added. */
+/* Feed the sensor data in NED(North East Down) reference frame. Rotation can be added. */
 int AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyro, const AHRS_Magn_t *magn) {
 	if (ahrs == NULL)
 		return -1;
