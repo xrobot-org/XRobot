@@ -13,23 +13,22 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_REFEREE;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-void Task_Referee(void *argument) {
-	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_MONITOR;
+void Task_Referee(void const *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_REFEREE);
 	
 	
-	uint32_t tick = osKernelGetTickCount();
+	uint32_t previous_wake_time = osKernelSysTick();
 	while(1) {
 		/* Task body */
-		tick += delay_tick;
 		
 		
-		osDelayUntil(tick);
+		osDelayUntil(&previous_wake_time, delay_ms);
 	}
 }

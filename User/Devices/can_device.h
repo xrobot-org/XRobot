@@ -103,9 +103,9 @@ typedef struct {
 } CAN_SuperCapControl_t;
 
 typedef struct {
-	osThreadId_t motor_alert[3];
-	osThreadId_t uwb_alert;
-	osThreadId_t supercap_alert;
+	osThreadId motor_alert[3];
+	osThreadId uwb_alert;
+	osThreadId supercap_alert;
 	
 	CAN_MotorFeedback_t chassis_motor_fb[4];
 	

@@ -12,19 +12,10 @@
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 int BSP_Delay(uint32_t ms) {
-	switch (osKernelGetState()) {
-		case osKernelRunning:
-			osDelay(ms / 1000 * osKernelGetTickFreq());
-			break;
-		
-		case osKernelInactive:
-		case osKernelReady:
-		case osKernelLocked:
-		case osKernelSuspended:
-		case osKernelError:
-		case osKernelReserved:
-			HAL_Delay(ms);
-			break;
-	}
+    if (osKernelRunning()) {
+		osDelay(ms);
+	} else {
+		HAL_Delay(ms);
+    }
 	return 0;
 }

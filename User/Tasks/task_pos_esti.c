@@ -28,24 +28,24 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+static osMessageQDef(gimb_eulr_message, 2, AHRS_Eulr_t);
+
 BMI088_t bmi088;
 IST8310_t ist8310;
 
 AHRS_t gimbal_ahrs;
-
-/* Debug */
 AHRS_Eulr_t debug_eulr;
 
 static PID_t imu_temp_ctrl_pid;
 
-static osStatus_t os_status = osOK;
+static osStatus os_status = osOK;
 
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-void Task_PosEsti(void *argument) {
+void Task_PosEsti(void const *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
-	task_param->message_q.gimb_eulr = osMessageQueueNew(2, sizeof(AHRS_Eulr_t), NULL);
+	task_param->message.gimb_eulr = osMessageCreate(osMessageQ(gimb_eulr_message), NULL);
 	
 	bmi088.received_alert = osThreadGetId();
 	BMI088_Init(&bmi088);
@@ -54,7 +54,7 @@ void Task_PosEsti(void *argument) {
 	IST8310_Init(&ist8310);
 	
 	IST8310_Receive(&ist8310);
-	osThreadFlagsWait(IST8310_SIGNAL_MAGN_RAW_REDY, osFlagsWaitAll, osWaitForever);
+	osSignalWait(IST8310_SIGNAL_MAGN_RAW_REDY, osWaitForever);
 	
 	IST8310_Parse(&ist8310);
 	
@@ -68,38 +68,37 @@ void Task_PosEsti(void *argument) {
 	
 	while(1) {
 		/* Task body */
-		osThreadFlagsWait(BMI088_SIGNAL_ACCL_NEW_DATA, osFlagsWaitAll, osWaitForever);
+		osSignalWait(BMI088_SIGNAL_ACCL_NEW_DATA, osWaitForever);
 		BMI088_ReceiveAccl(&bmi088);
-		osThreadFlagsWait(BMI088_SIGNAL_ACCL_RAW_REDY, osFlagsWaitAll, osWaitForever);
+		osSignalWait(BMI088_SIGNAL_ACCL_RAW_REDY, osWaitForever);
 		
-		osThreadFlagsWait(BMI088_SIGNAL_GYRO_NEW_DATA, osFlagsWaitAll, osWaitForever);
+		osSignalWait(BMI088_SIGNAL_GYRO_NEW_DATA, osWaitForever);
 		BMI088_ReceiveGyro(&bmi088);
-		osThreadFlagsWait(BMI088_SIGNAL_GYRO_RAW_REDY, osFlagsWaitAll, osWaitForever);
+		osSignalWait(BMI088_SIGNAL_GYRO_RAW_REDY, osWaitForever);
 		
-		
-		if (osThreadFlagsWait(IST8310_SIGNAL_MAGN_NEW_DATA, osFlagsWaitAll, 0u) == IST8310_SIGNAL_MAGN_NEW_DATA) {
+		osEvent evt = osSignalWait(IST8310_SIGNAL_MAGN_NEW_DATA, 0u);
+		if (evt.status == osEventSignal) {
 			IST8310_Receive(&ist8310);
-			osThreadFlagsWait(IST8310_SIGNAL_MAGN_RAW_REDY, osFlagsWaitAll, 0u);
+			osSignalWait(IST8310_SIGNAL_MAGN_RAW_REDY, 0u);
 		}
 		
-		osKernelLock();
+		taskENTER_CRITICAL();
 		BMI088_ParseAccl(&bmi088);
 		BMI088_ParseGyro(&bmi088);
 		IST8310_Parse(&ist8310);
-		osKernelUnlock();
+		taskEXIT_CRITICAL();
 		
-		uint32_t now = osKernelGetTickCount();
+		uint32_t now = osKernelSysTick();
 		AHRS_Update(&gimbal_ahrs, &bmi088.accl, &bmi088.gyro, &ist8310.magn);
-		
-		/* Debug */
 		AHRS_GetEulr(&debug_eulr, &gimbal_ahrs);
+		// TODO: debug.
 		
 		AHRS_Eulr_t *eulr_to_send = pvPortMalloc(sizeof(AHRS_Eulr_t));
 		
 		if (eulr_to_send) {
 			AHRS_GetEulr(eulr_to_send, &gimbal_ahrs);
 			
-			os_status = osMessageQueuePut(task_param->message_q.gimb_eulr, eulr_to_send, 0, 0);
+			os_status = osMessagePut(task_param->message.gimb_eulr, (uint32_t)eulr_to_send, 0);
 			
 			if (os_status == osErrorOS)
 				vPortFree(eulr_to_send);

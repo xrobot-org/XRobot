@@ -153,7 +153,7 @@ static bool inited = false;
 /* Private function  ---------------------------------------------------------*/
 void IMU_RxCpltCallback(void)
 {
-	osThreadFlagsSet(gimu->received_alert, IMU_SIGNAL_RAW_ACCL_REDY | IMU_SIGNAL_RAW_GYRO_REDY);
+	osSignalSet(gimu->received_alert, IMU_SIGNAL_RAW_ACCL_REDY | IMU_SIGNAL_RAW_GYRO_REDY);
 }
 
 void IMU_ExtIntCallback(void)

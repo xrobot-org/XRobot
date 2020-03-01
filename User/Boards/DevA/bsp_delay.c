@@ -10,7 +10,7 @@
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 int BSP_Delay(uint32_t ms) {
-    if (osKernelGetState()) {
+    if (osKernelRunning()) {
 		osDelay(ms);
 	} else {
 		HAL_Delay(ms);
