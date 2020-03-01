@@ -64,11 +64,11 @@ static void IST8310_Read(uint8_t reg, uint8_t *data, uint8_t len) {
 }
 
 static void IST8310_MasterRxCpltCallback(void) {
-	osSignalSet(gist8310->received_alert, IST8310_SIGNAL_MAGN_RAW_REDY);
+	osThreadFlagsSet(gist8310->received_alert, IST8310_SIGNAL_MAGN_RAW_REDY);
 }
 
 static void IST8310_IntCallback(void) {
-	osSignalSet(gist8310->received_alert, IST8310_SIGNAL_MAGN_NEW_DATA);
+	osThreadFlagsSet(gist8310->received_alert, IST8310_SIGNAL_MAGN_NEW_DATA);
 }
 
 /* Exported functions --------------------------------------------------------*/

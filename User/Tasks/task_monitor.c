@@ -18,26 +18,27 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_MONITOR;
 
 /* Runtime status. */
 int stat_mo = 0;
-osStatus os_stat_mo = osOK;
+osStatus_t os_stat_mo = osOK;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-void Task_Monitor(void const *argument) {
-	Task_Param_t *task_param = (Task_Param_t*)argument;
+void Task_Monitor(void *argument) {
+	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_MONITOR;
+	const Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_MONITOR);
 	
 	
-	uint32_t previous_wake_time = osKernelSysTick();
+	uint32_t tick = osKernelGetTickCount();
 	while(1) {
 		/* Task body */
+		tick += delay_tick;
 		
 		
-		osDelayUntil(&previous_wake_time, delay_ms);
+		osDelayUntil(tick);
 	}
 }

@@ -50,7 +50,7 @@ typedef struct {
 	/* Feedback */
 	float fric_rpm[2];
 	float trig_angle;
-	osTimerId trig_timer_id;
+	osTimerId_t trig_timer_id;
 	
 	/* PID set point */
 	float fric_rpm_set[2];

@@ -22,7 +22,7 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef struct {
-	osThreadId received_alert;
+	osThreadId_t received_alert;
 
 	uint8_t raw[6];
 	

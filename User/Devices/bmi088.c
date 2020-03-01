@@ -162,20 +162,20 @@ static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
 static void BMI088_RxCpltCallback(void) {
 	if (HAL_GPIO_ReadPin(ACCL_CS_GPIO_Port, ACCL_CS_Pin) == GPIO_PIN_RESET) {
 		BMI088_ACCL_NSS_SET();
-		osSignalSet(gimu->received_alert, BMI088_SIGNAL_ACCL_RAW_REDY);
+		osThreadFlagsSet(gimu->received_alert, BMI088_SIGNAL_ACCL_RAW_REDY);
 	}
 	if (HAL_GPIO_ReadPin(GYRO_CS_GPIO_Port, GYRO_CS_Pin) == GPIO_PIN_RESET) {
 		BMI088_GYRO_NSS_SET();
-		osSignalSet(gimu->received_alert, BMI088_SIGNAL_GYRO_RAW_REDY);
+		osThreadFlagsSet(gimu->received_alert, BMI088_SIGNAL_GYRO_RAW_REDY);
 	}
 }
 
 static void BMI088_AcclIntCallback(void) {
-	osSignalSet(gimu->received_alert, BMI088_SIGNAL_ACCL_NEW_DATA);
+	osThreadFlagsSet(gimu->received_alert, BMI088_SIGNAL_ACCL_NEW_DATA);
 }
 
 static void BMI088_GyroIntCallback(void) {
-	osSignalSet(gimu->received_alert, BMI088_SIGNAL_GYRO_NEW_DATA);
+	osThreadFlagsSet(gimu->received_alert, BMI088_SIGNAL_GYRO_NEW_DATA);
 }
 
 /* Exported functions --------------------------------------------------------*/

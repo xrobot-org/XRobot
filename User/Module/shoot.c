@@ -19,7 +19,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/ 
-static void TrigTimerCallback  (void const *arg) {
+static void TrigTimerCallback  (void *arg) {
 	Shoot_t *shoot = (Shoot_t*)arg;
 	
 	shoot->trig_pos_set += 2.f * PI / SHOOT_FEEDING_TOOTH_NUM;
@@ -27,7 +27,6 @@ static void TrigTimerCallback  (void const *arg) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-osTimerDef(trig_timer, TrigTimerCallback);
 
 int Shoot_Init(Shoot_t *shoot) {
 	if (shoot == NULL)
@@ -35,7 +34,7 @@ int Shoot_Init(Shoot_t *shoot) {
 	
 	shoot->mode = SHOOT_MODE_RELAX;
 	
-	shoot->trig_timer_id = osTimerCreate(osTimer(trig_timer), osTimerPeriodic, shoot);
+	shoot->trig_timer_id = osTimerNew(TrigTimerCallback, osTimerOnce, shoot, NULL);
 
 	for(uint8_t i = 0; i < 2; i++) {
 		PID_Init(&(shoot->fric_pid[i]), PID_MODE_DERIVATIV_NONE, shoot->dt_sec);
@@ -160,11 +159,16 @@ int Shoot_Control(Shoot_t *shoot, float bullet_speed, uint32_t shoot_freq_hz) {
 		shoot_freq_hz = 0.f;
 	}
 	
-	shoot->fric_rpm_set[0] = -SHOOT_BULLET_SPEED_SCALER * bullet_speed - SHOOT_BULLET_SPEED_BIAS;
-	shoot->fric_rpm_set[1] = SHOOT_BULLET_SPEED_SCALER * bullet_speed + SHOOT_BULLET_SPEED_BIAS;
+	shoot->fric_rpm_set[0] = SHOOT_BULLET_SPEED_SCALER * bullet_speed + SHOOT_BULLET_SPEED_BIAS;
+	shoot->fric_rpm_set[1] = -shoot->fric_rpm_set[0];
 	
-	uint32_t period_ms = 1000u / shoot_freq_hz;
-	osTimerStart(shoot->trig_timer_id, period_ms);  
+	// TODO
+	if (shoot_freq_hz > 0) {
+		uint32_t period_tick = osKernelGetTickFreq() / shoot_freq_hz;
+		if (!osTimerIsRunning(shoot->trig_timer_id)) {
+			osTimerStart(shoot->trig_timer_id, period_tick);  
+		}
+	}
 	
 	
 	switch(shoot->mode) {

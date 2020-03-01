@@ -218,7 +218,7 @@ void RxFifo0MsgPendingCallback(void) {
 
 		case CAN_SUPERCAP_FEEDBACK_ID_BASE:
 			CAN_SuperCap_Decode(&(gcan_device->supercap_feedback), rx_data);
-			osSignalSet(gcan_device->supercap_alert, CAN_DEVICE_SIGNAL_SUPERCAP_RECV);
+			osThreadFlagsSet(gcan_device->supercap_alert, CAN_DEVICE_SIGNAL_SUPERCAP_RECV);
 			break;
 		
 		default:
@@ -229,7 +229,7 @@ void RxFifo0MsgPendingCallback(void) {
 	if (motor_received > CAN_CHASSIS_MOTOR_NUM) {
 		for(uint8_t i = 0; i < 3; i++) {
 			if(gcan_device->motor_alert[i]) {
-				osSignalSet(gcan_device->motor_alert, CAN_DEVICE_SIGNAL_MOTOR_RECV);
+				osThreadFlagsSet(gcan_device->motor_alert, CAN_DEVICE_SIGNAL_MOTOR_RECV);
 			}
 		}
 		motor_received = 0;
@@ -242,7 +242,7 @@ void RxFifo1MsgPendingCallback(void) {
 	switch (rx_header.StdId) {
 		case CAN_UWB_FEEDBACK_ID_BASE:
 			CAN_UWB_Decode(&(gcan_device->uwb_feedback), rx_data);
-			osSignalSet(gcan_device->uwb_alert, CAN_DEVICE_SIGNAL_UWB_RECV);
+			osThreadFlagsSet(gcan_device->uwb_alert, CAN_DEVICE_SIGNAL_UWB_RECV);
 			break;
 		
 		default:

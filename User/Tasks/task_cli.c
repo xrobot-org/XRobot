@@ -198,7 +198,7 @@ static const CLI_Command_Definition_t xParameterEcho = {
 };
 
 /* Exported functions --------------------------------------------------------*/
-void Task_CLI(void const *argument) {
+void Task_CLI(void *argument) {
 	//Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	char rx_char;
@@ -221,7 +221,7 @@ void Task_CLI(void const *argument) {
 	
 	while(1) {
 		BSP_USB_ReadyReceive(osThreadGetId());
-		osSignalWait(BSP_USB_SIGNAL_BUF_RECV, osWaitForever);
+		osThreadFlagsWait(BSP_USB_SIGNAL_BUF_RECV, osFlagsWaitAll, osWaitForever);
 
 		rx_char = BSP_USB_ReadChar();
 		BSP_USB_Printf("%c", rx_char);
@@ -240,7 +240,7 @@ void Task_CLI(void const *argument) {
 		
 		/* Wait for input. */
 		BSP_USB_ReadyReceive(osThreadGetId());
-		osSignalWait(BSP_USB_SIGNAL_BUF_RECV, osWaitForever);
+		osThreadFlagsWait(BSP_USB_SIGNAL_BUF_RECV, osFlagsWaitAll, osWaitForever);
 		
 		rx_char = BSP_USB_ReadChar();
 		BSP_USB_Printf("%c", rx_char);

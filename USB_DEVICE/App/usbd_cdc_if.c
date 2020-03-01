@@ -65,6 +65,8 @@
 /* USER CODE BEGIN PRIVATE_DEFINES */
 /* Define size for the receive and transmit buffer over CDC */
 /* It's up to user to redefine and/or remove those define */
+#define APP_RX_DATA_SIZE 2
+#define APP_TX_DATA_SIZE 2
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
@@ -77,7 +79,6 @@
   */
 
 /* USER CODE BEGIN PRIVATE_MACRO */
-
 /* USER CODE END PRIVATE_MACRO */
 
 /**
@@ -88,6 +89,14 @@
   * @brief Private variables.
   * @{
   */
+/* Create buffer for reception and transmission           */
+/* It's up to user to redefine and/or remove those define */
+/** Received data over USB are stored in this buffer      */
+uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
+
+/** Data to send over USB CDC are stored in this buffer   */
+uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
+
 /* USER CODE BEGIN PRIVATE_VARIABLES */
 /* 
 	uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
@@ -109,7 +118,7 @@
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
 /* USER CODE BEGIN EXPORTED_VARIABLES */
-extern osThreadId gbsp_usb_alert;
+extern osThreadId_t gbsp_usb_alert;
 extern uint16_t usb_rx_num;
 extern uint8_t usb_rx_buf[BSP_USB_MAX_RX_LEN];
 extern uint8_t usb_tx_buf[BSP_USB_MAX_TX_LEN];
@@ -261,7 +270,7 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-	osSignalSet(gbsp_usb_alert, BSP_USB_SIGNAL_BUF_RECV);
+	osThreadFlagsSet(gbsp_usb_alert, BSP_USB_SIGNAL_BUF_RECV);
 
   return (USBD_OK);
   /* USER CODE END 6 */

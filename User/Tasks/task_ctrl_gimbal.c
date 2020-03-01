@@ -19,7 +19,6 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_CTRL_GIMBAL;
 
 static CAN_Device_t *cd;
 static DR16_t *dr16;
@@ -27,14 +26,11 @@ static DR16_t *dr16;
 static Gimbal_t gimbal;
 static Gimbal_Ctrl_t gimbal_ctrl;
 
-/* Runtime status. */
-int stat_c_g = 0;
-osStatus os_stat_c_g = osOK;
-
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-void Task_CtrlGimbal(void const *argument) {
-	Task_Param_t *task_param = (Task_Param_t*)argument;
+void Task_CtrlGimbal(void *argument) {
+	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_GIMBAL;
+	const Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_GIMBAL);
@@ -43,36 +39,33 @@ void Task_CtrlGimbal(void const *argument) {
 	dr16 = DR16_GetDevice();
 	
 	Gimbal_Init(&gimbal);
-	gimbal.dt_sec = (float)delay_ms / 1000.f;
+	gimbal.dt_sec = delay_tick / (float)osKernelGetTickFreq();
 	gimbal.imu = BMI088_GetDevice();
 	
-	uint32_t previous_wake_time = osKernelSysTick();
+	uint32_t tick = osKernelGetTickCount();
 	while(1) {
 		/* Task body */
+		tick += delay_tick;
 		
-		osSignalWait(DR16_SIGNAL_DATA_REDY, 0);
+		osThreadFlagsWait(DR16_SIGNAL_DATA_REDY, osFlagsWaitAll, 0);
 		Gimbal_ParseCommand(&gimbal, &gimbal_ctrl, dr16);
 		
-		osSignalWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osWaitForever);
-		
-		taskENTER_CRITICAL();
-		Gimbal_UpdateFeedback(&gimbal, cd);
-		taskEXIT_CRITICAL();
-		
-		osEvent evt = osMessageGet(task_param->message.gimb_eulr, osWaitForever);
-		if (evt.status == osEventMessage) {
-			if (gimbal.imu_eulr) {
-				vPortFree(gimbal.imu_eulr);
-			}
-			gimbal.imu_eulr = evt.value.p;
+		if (osThreadFlagsWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osFlagsWaitAll, delay_tick) == CAN_DEVICE_SIGNAL_MOTOR_RECV) {
+			osKernelLock ();
+			Gimbal_UpdateFeedback(&gimbal, cd);
+			osKernelUnlock();
+			
+			osStatus_t stat = osMessageQueueGet(task_param->message_q.gimb_eulr, gimbal.imu_eulr, NULL, osWaitForever);
+			
+			Gimbal_SetMode(&gimbal, gimbal_ctrl.mode);
+			Gimbal_Control(&gimbal, &gimbal_ctrl.ctrl_eulr);
+			vPortFree(gimbal.imu_eulr);
+			
+			CAN_Motor_ControlGimbal(gimbal.yaw_cur_out, gimbal.pit_cur_out);
+			
+			osDelayUntil(tick);
+		} else {
+			CAN_Motor_ControlGimbal(0.f, 0.f);
 		}
-		
-		Gimbal_SetMode(&gimbal, gimbal_ctrl.mode);
-		Gimbal_Control(&gimbal, &gimbal_ctrl.ctrl_eulr);
-		
-		// Check can error
-		CAN_Motor_ControlGimbal(gimbal.yaw_cur_out, gimbal.pit_cur_out);
-		
-		osDelayUntil(&previous_wake_time, delay_ms);
 	}
 }
