@@ -20,17 +20,21 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 
-static CAN_Device_t *cd = NULL;
-static DR16_t *dr16 = NULL;
+static CAN_Device_t *cd;
+static DR16_t *dr16;
 
 static Shoot_t shoot;
 static Shoot_Ctrl_t shoot_ctrl;
+
+/* Runtime status. */
+int stat_c_s = 0;
+osStatus_t os_stat_c_s = osOK;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_CtrlShoot(void *argument) {
 	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_SHOOT;
-	//const Task_Param_t *task_param = (Task_Param_t*)argument;
+	const Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_SHOOT);

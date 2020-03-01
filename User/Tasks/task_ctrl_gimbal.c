@@ -19,8 +19,9 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static CAN_Device_t *cd = NULL;
-static DR16_t *dr16 = NULL;
+
+static CAN_Device_t *cd;
+static DR16_t *dr16;
 
 static Gimbal_t gimbal;
 static Gimbal_Ctrl_t gimbal_ctrl;
@@ -54,11 +55,11 @@ void Task_CtrlGimbal(void *argument) {
 			Gimbal_UpdateFeedback(&gimbal, cd);
 			osKernelUnlock();
 			
-			//osStatus_t stat = osMessageQueueGet(task_param->message_q.gimb_eulr, gimbal.imu_eulr, NULL, osWaitForever);
+			osStatus_t stat = osMessageQueueGet(task_param->message_q.gimb_eulr, gimbal.imu_eulr, NULL, osWaitForever);
 			
 			Gimbal_SetMode(&gimbal, gimbal_ctrl.mode);
 			Gimbal_Control(&gimbal, &gimbal_ctrl.ctrl_eulr);
-			//vPortFree(gimbal.imu_eulr);
+			vPortFree(gimbal.imu_eulr);
 			
 			CAN_Motor_ControlGimbal(gimbal.yaw_cur_out, gimbal.pit_cur_out);
 			

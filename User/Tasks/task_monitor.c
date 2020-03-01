@@ -18,11 +18,16 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+
+/* Runtime status. */
+int stat_mo = 0;
+osStatus_t os_stat_mo = osOK;
+
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_Monitor(void *argument) {
 	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_MONITOR;
-	//const Task_Param_t *task_param = (Task_Param_t*)argument;
+	const Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_MONITOR);

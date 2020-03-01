@@ -38,6 +38,8 @@ AHRS_Eulr_t debug_eulr;
 
 static PID_t imu_temp_ctrl_pid;
 
+static osStatus_t os_status = osOK;
+
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_PosEsti(void *argument) {
@@ -91,18 +93,17 @@ void Task_PosEsti(void *argument) {
 		
 		/* Debug */
 		AHRS_GetEulr(&debug_eulr, &gimbal_ahrs);
-		#if 0
+		
 		AHRS_Eulr_t *eulr_to_send = pvPortMalloc(sizeof(AHRS_Eulr_t));
 		
 		if (eulr_to_send) {
 			AHRS_GetEulr(eulr_to_send, &gimbal_ahrs);
 			
-			const osStatus_t stat = osMessageQueuePut(task_param->message_q.gimb_eulr, eulr_to_send, 0, 0);
+			os_status = osMessageQueuePut(task_param->message_q.gimb_eulr, eulr_to_send, 0, 0);
 			
-			if (stat == osErrorOS)
+			if (os_status == osErrorOS)
 				vPortFree(eulr_to_send);
 		}
-		#endif
 		BSP_PWM_Set(BSP_PWM_IMU_HEAT, PID_Calculate(&imu_temp_ctrl_pid, 50.f, bmi088.temp, 0.f, 0.f));
 	}
 }

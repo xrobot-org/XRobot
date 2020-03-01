@@ -80,9 +80,9 @@ typedef enum {
 } BMI_Device_t;
 
 /* Private variables ---------------------------------------------------------*/
-static uint8_t buffer[2] = {0};
-BMI088_t *gbmi088 = NULL;
-bool inited = false;
+static uint8_t buffer[2];
+static BMI088_t *gimu;
+static bool inited = false;
 
 /* Private function  ---------------------------------------------------------*/
 static void BMI_WriteSingle(BMI_Device_t dv, uint8_t reg, uint8_t data) {
@@ -162,20 +162,20 @@ static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
 static void BMI088_RxCpltCallback(void) {
 	if (HAL_GPIO_ReadPin(ACCL_CS_GPIO_Port, ACCL_CS_Pin) == GPIO_PIN_RESET) {
 		BMI088_ACCL_NSS_SET();
-		osThreadFlagsSet(gbmi088->received_alert, BMI088_SIGNAL_ACCL_RAW_REDY);
+		osThreadFlagsSet(gimu->received_alert, BMI088_SIGNAL_ACCL_RAW_REDY);
 	}
 	if (HAL_GPIO_ReadPin(GYRO_CS_GPIO_Port, GYRO_CS_Pin) == GPIO_PIN_RESET) {
 		BMI088_GYRO_NSS_SET();
-		osThreadFlagsSet(gbmi088->received_alert, BMI088_SIGNAL_GYRO_RAW_REDY);
+		osThreadFlagsSet(gimu->received_alert, BMI088_SIGNAL_GYRO_RAW_REDY);
 	}
 }
 
 static void BMI088_AcclIntCallback(void) {
-	osThreadFlagsSet(gbmi088->received_alert, BMI088_SIGNAL_ACCL_NEW_DATA);
+	osThreadFlagsSet(gimu->received_alert, BMI088_SIGNAL_ACCL_NEW_DATA);
 }
 
 static void BMI088_GyroIntCallback(void) {
-	osThreadFlagsSet(gbmi088->received_alert, BMI088_SIGNAL_GYRO_NEW_DATA);
+	osThreadFlagsSet(gimu->received_alert, BMI088_SIGNAL_GYRO_NEW_DATA);
 }
 
 /* Exported functions --------------------------------------------------------*/
@@ -244,7 +244,7 @@ int BMI088_Init(BMI088_t *bmi088) {
 	
 	BSP_Delay(10);
 	
-	gbmi088 = bmi088;
+	gimu = bmi088;
 	inited = true;
 	
 	BSP_GPIO_EnableIRQ(ACCL_INT_Pin);
@@ -254,18 +254,18 @@ int BMI088_Init(BMI088_t *bmi088) {
 
 BMI088_t *BMI088_GetDevice(void) {
 	if (inited) {
-		return gbmi088;
+		return gimu;
 	}
 	return NULL;
 }
 
 int BMI088_ReceiveAccl(BMI088_t *bmi088) {
-	BMI_Read(BMI_ACCL, BMI088_ACCL_X_LSB_REG, gbmi088->raw, 7u);
+	BMI_Read(BMI_ACCL, BMI088_ACCL_X_LSB_REG, gimu->raw, 7u);
 	return BMI088_OK;
-	//BMI_Read(BMI_ACCL, BMI088_TEMP_MSB_REG, gbmi088->raw + 6u, 2u);
+	//BMI_Read(BMI_ACCL, BMI088_TEMP_MSB_REG, gimu->raw + 6u, 2u);
 }
 int BMI088_ReceiveGyro(BMI088_t *bmi088) {
-	BMI_Read(BMI_GYRO, BMI088_GYRO_X_LSB_REG, &gbmi088->raw[7], 6u);
+	BMI_Read(BMI_GYRO, BMI088_GYRO_X_LSB_REG, &gimu->raw[7], 6u);
 	return BMI088_OK;
 }
 
