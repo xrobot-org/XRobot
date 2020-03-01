@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F407xx,ROBOT_MODEL_INFANTRY,OLED_USE_SPI,USE_DEV_BOARD_C</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;                            ../USB_DEVICE/App;                            ../USB_DEVICE/Target;                            ../Drivers/STM32F4xx_HAL_Driver/Inc;                            ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;                            ../Middlewares/Third_Party/FreeRTOS/Source/include;                            ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;                            ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;                            ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;                            ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;                            ../Drivers/CMSIS/Include;                            ..\User\Boards;                            ..\User\Components;                            ..\User\Devices;                            ..\User\Module;                            ..\User\Tasks;                            ..\Drivers\CMSIS\DSP\Include;      ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2</IncludePath>
+              <IncludePath>../Core/Inc;                               ../USB_DEVICE/App;                               ../USB_DEVICE/Target;                               ../Drivers/STM32F4xx_HAL_Driver/Inc;                               ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;                               ../Middlewares/Third_Party/FreeRTOS/Source/include;                               ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;                               ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;                               ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;                               ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;                               ../Drivers/CMSIS/Include;                               ..\User\Boards;                               ..\User\Components;                               ..\User\Devices;                               ..\User\Module;                               ..\User\Tasks;                               ..\Drivers\CMSIS\DSP\Include;         ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -975,7 +975,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>::Compiler</GroupName>
+          <GroupName>::CMSIS</GroupName>
         </Group>
       </Groups>
     </Target>
@@ -1948,7 +1948,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>::Compiler</GroupName>
+          <GroupName>::CMSIS</GroupName>
         </Group>
       </Groups>
     </Target>
@@ -1957,8 +1957,8 @@
   <RTE>
     <apis/>
     <components>
-      <component Cbundle="ARM Compiler" Cclass="Compiler" Cgroup="I/O" Csub="STDOUT" Cvariant="ITM" Cvendor="Keil" Cversion="1.2.0" condition="ARMCC Cortex-M with ITM">
-        <package name="ARM_Compiler" schemaVersion="1.4.9" url="http://www.keil.com/pack/" vendor="Keil" version="1.6.1"/>
+      <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="5.3.0" condition="ARMv6_7_8-M Device">
+        <package name="CMSIS" schemaVersion="1.3" url="http://www.keil.com/pack/" vendor="ARM" version="5.6.0"/>
         <targetInfos>
           <targetInfo name="DevC"/>
           <targetInfo name="Release"/>

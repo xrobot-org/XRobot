@@ -21,14 +21,10 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static CAN_Device_t cd;
-static DR16_t *dr16;
+static DR16_t *dr16 = NULL;
 
 static Chassis_t chassis;
 static Chassis_Ctrl_t chas_ctrl;
-
-/* Runtime status. */
-int stat_c_c = 0;
-osStatus_t os_stat_c_c = osOK;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/

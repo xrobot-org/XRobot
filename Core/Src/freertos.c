@@ -48,66 +48,72 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-static Task_Param_t task_param;
+Task_Param_t task_param = {0};
 
 /* TIM7 are used to generater high freq tick for debug. */
 volatile unsigned long high_freq_timer_ticks;
 
-const osThreadAttr_t cli_attributes = {
+static const osThreadAttr_t cli_attr = {
   .name = "cli",
   .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 128
+  .stack_size = 256
 };
 
-const osThreadAttr_t command_attributes = {
+static const osThreadAttr_t command_attr = {
   .name = "command",
   .priority = (osPriority_t) osPriorityHigh,
-  .stack_size = 128
+  .stack_size = 256
 };
 
-const osThreadAttr_t defaultTask_attributes = {
+static const osThreadAttr_t ctrl_chassis_attr = {
   .name = "ctrl_chassis",
   .priority = (osPriority_t) osPriorityAboveNormal,
   .stack_size = 256
 };
 
-const osThreadAttr_t ctrl_gimbal_attributes = {
+static const osThreadAttr_t ctrl_gimbal_attr = {
   .name = "ctrl_gimbal",
   .priority = (osPriority_t) osPriorityAboveNormal,
   .stack_size = 256
 };
 
-const osThreadAttr_t ctrl_shoot_attributes = {
+static const osThreadAttr_t ctrl_shoot_attr = {
   .name = "ctrl_shoot",
   .priority = (osPriority_t) osPriorityAboveNormal,
   .stack_size = 256
 };
 
-const osThreadAttr_t info_attributes = {
+static const osThreadAttr_t info_attr = {
   .name = "info",
   .priority = (osPriority_t) osPriorityBelowNormal,
-  .stack_size = 128
+  .stack_size = 256
 };
 
-const osThreadAttr_t monitor_attributes = {
+static const osThreadAttr_t monitor_attr = {
   .name = "monitor",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 256
+};
+
+static const osThreadAttr_t pos_esti_attr = {
+  .name = "pos_esti",
   .priority = (osPriority_t) osPriorityRealtime,
   .stack_size = 256
 };
 
-const osThreadAttr_t pos_esti_attributes = {
-  .name = "pos_esti",
+static const osThreadAttr_t referee_attr = {
+  .name = "referee",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 128
+  .stack_size = 256
 };
 
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
-const osThreadAttr_t referee_attributes = {
-  .name = "referee",
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 128
+  .stack_size = 256
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -173,15 +179,15 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
 
-	task_param.thread.cli			= osThreadNew(Task_CLI, &task_param, &defaultTask_attributes);
-	task_param.thread.command		= osThreadNew(Task_Command, &task_param, &defaultTask_attributes);
-	task_param.thread.ctrl_chassis	= osThreadNew(Task_CtrlChassis, &task_param, &defaultTask_attributes);
-	task_param.thread.ctrl_gimbal	= osThreadNew(Task_CtrlGimbal, &task_param, &defaultTask_attributes);
-	task_param.thread.ctrl_shoot	= osThreadNew(Task_CtrlShoot, &task_param, &defaultTask_attributes);
-	task_param.thread.info			= osThreadNew(Task_Info, &task_param, &defaultTask_attributes);
-	task_param.thread.monitor		= osThreadNew(Task_Monitor, &task_param, &defaultTask_attributes);
-	task_param.thread.pos_esti		= osThreadNew(Task_PosEsti, &task_param, &defaultTask_attributes);
-	task_param.thread.referee		= osThreadNew(Task_Referee, &task_param, &defaultTask_attributes);
+	task_param.thread.cli			= osThreadNew(Task_CLI,			&task_param, &cli_attr);
+	task_param.thread.command		= osThreadNew(Task_Command,		&task_param, &command_attr);
+	task_param.thread.ctrl_chassis	= osThreadNew(Task_CtrlChassis,	&task_param, &ctrl_chassis_attr);
+	task_param.thread.ctrl_gimbal	= osThreadNew(Task_CtrlGimbal,	&task_param, &ctrl_gimbal_attr);
+	task_param.thread.ctrl_shoot	= osThreadNew(Task_CtrlShoot,	&task_param, &ctrl_shoot_attr);
+	task_param.thread.info			= osThreadNew(Task_Info,		&task_param, &info_attr);
+	task_param.thread.monitor		= osThreadNew(Task_Monitor,		&task_param, &monitor_attr);
+	task_param.thread.pos_esti		= osThreadNew(Task_PosEsti,		&task_param, &pos_esti_attr);
+	task_param.thread.referee		= osThreadNew(Task_Referee,		&task_param, &referee_attr);
 	
 	
 	#if defined ROBOT_MODEL_INFANTRY

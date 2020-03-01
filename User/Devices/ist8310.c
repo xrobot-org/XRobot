@@ -40,7 +40,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static IST8310_t *gist8310;
+static IST8310_t *gist8310 = NULL;
 static bool inited = false;
 
 /* Private function  ---------------------------------------------------------*/

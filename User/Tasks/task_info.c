@@ -22,14 +22,13 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_Info(void *argument) {
 	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_INFO;
-	const Task_Param_t *task_param = (Task_Param_t*)argument;
+	//const Task_Param_t *task_param = (Task_Param_t*)argument;
 	
-	float capacitor_percentage;
+	//float capacitor_percentage;
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_INFO);

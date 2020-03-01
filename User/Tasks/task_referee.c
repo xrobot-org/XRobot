@@ -18,7 +18,7 @@
 /* Exported functions --------------------------------------------------------*/
 void Task_Referee(void *argument) {
 	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_MONITOR;
-	Task_Param_t *task_param = (Task_Param_t*)argument;
+	//Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_REFEREE);
