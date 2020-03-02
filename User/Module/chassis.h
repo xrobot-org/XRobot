@@ -80,23 +80,23 @@ typedef struct {
 	
 	/* Feedback */
 	float gimbal_yaw_angle;
-	float motor_rpm[4];
+	float *motor_rpm;
 	
 	/* Mid product */
 	Chassis_MoveVector_t chas_v;
 	
 	/* Mixer Out / PID set point. */
-	float motor_rpm_set[4];
+	float *motor_rpm_set;
 	
 	/* PID */
-	PID_t wheel_pid[4];
+	PID_t *motor_pid;
 	PID_t follow_pid;
 	
 	/* Output */
-	float motor_cur_out[4];
+	float *motor_cur_out;
 	
 	/* Output filter */
-	LowPassFilter2p_t output_filter[4];
+	LowPassFilter2p_t *output_filter;
 	
 	
 	int power_limit;

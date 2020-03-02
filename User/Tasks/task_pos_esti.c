@@ -14,6 +14,7 @@
 /* Include Board相关的头文件 */
 #include "bsp_pwm.h"
 #include "bsp_usb.h"
+#include "bsp_mm.h"
 
 /* Include Device相关的头文件 */
 #include "bmi088.h"
@@ -91,9 +92,8 @@ void Task_PosEsti(void const *argument) {
 		uint32_t now = osKernelSysTick();
 		AHRS_Update(&gimbal_ahrs, &bmi088.accl, &bmi088.gyro, &ist8310.magn);
 		AHRS_GetEulr(&debug_eulr, &gimbal_ahrs);
-		// TODO: debug.
 		
-		AHRS_Eulr_t *eulr_to_send = pvPortMalloc(sizeof(AHRS_Eulr_t));
+		AHRS_Eulr_t *eulr_to_send = BSP_Malloc(sizeof(*eulr_to_send));
 		
 		if (eulr_to_send) {
 			AHRS_GetEulr(eulr_to_send, &gimbal_ahrs);
@@ -101,7 +101,7 @@ void Task_PosEsti(void const *argument) {
 			os_status = osMessagePut(task_param->message.gimb_eulr, (uint32_t)eulr_to_send, 0);
 			
 			if (os_status == osErrorOS)
-				vPortFree(eulr_to_send);
+				BSP_Free(eulr_to_send);
 		}
 		BSP_PWM_Set(BSP_PWM_IMU_HEAT, PID_Calculate(&imu_temp_ctrl_pid, 50.f, bmi088.temp, 0.f, 0.f));
 	}

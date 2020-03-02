@@ -9,6 +9,7 @@
 /* Include 标准库 */
 /* Include Board相关的头文件 */
 #include "bsp_usb.h"
+#include "bsp_mm.h"
 
 /* Include Device相关的头文件 */
 /* Include Component相关的头文件 */
@@ -62,7 +63,7 @@ void Task_CtrlGimbal(void const *argument) {
 		osEvent evt = osMessageGet(task_param->message.gimb_eulr, osWaitForever);
 		if (evt.status == osEventMessage) {
 			if (gimbal.imu_eulr) {
-				vPortFree(gimbal.imu_eulr);
+				BSP_Free(gimbal.imu_eulr);
 			}
 			gimbal.imu_eulr = evt.value.p;
 		}

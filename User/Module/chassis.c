@@ -9,9 +9,12 @@
 
 /* Include 标准库 */
 /* Include Board相关的头文件 */
+#include "bsp_mm.h"
+
 /* Include Device相关的头文件 */
 /* Include Component相关的头文件 */
 #include "user_math.h"
+#include "power_limit.h"
 
 /* Include Module相关的头文件 */
 /* Private typedef -----------------------------------------------------------*/
@@ -26,14 +29,7 @@ int Chassis_Init(Chassis_t *chas, Chassis_Type_t type) {
 	
 	chas->mode = CHASSIS_MODE_RELAX;
 	chas->type = type;
-	
-	for(uint8_t i = 0; i < 4; i++) {
-		PID_Init(&(chas->wheel_pid[i]), PID_MODE_DERIVATIV_NONE, chas->dt_sec);
-		PID_SetParameters(&(chas->wheel_pid[i]), 5.f, 1.f, 0.f, 1.f, 1.f);
-		
-		LowPassFilter2p_SetParameters(&chas->output_filter[i], chas->dt_sec / 1000.f, 100.f);
-	}
-	
+
 	switch (type) {
 		case CHASSIS_TYPE_MECANUM:
 			chas->wheel_num = 4;
@@ -64,7 +60,48 @@ int Chassis_Init(Chassis_t *chas, Chassis_Type_t type) {
 			// onboard sdk.
 			return CHASSIS_ERR_TYPE;
 	}
+	
+	chas->motor_rpm = BSP_Malloc(chas->wheel_num * sizeof(*chas->motor_rpm));
+	if(chas->motor_rpm == NULL)
+		goto error1;
+	
+	chas->motor_rpm_set = BSP_Malloc(chas->wheel_num * sizeof(*chas->motor_rpm_set));
+	if(chas->motor_rpm_set == NULL)
+		goto error2;
+	
+	chas->motor_pid = BSP_Malloc(chas->wheel_num * sizeof(*chas->motor_pid));
+	if(chas->motor_pid == NULL)
+		goto error3;
+	
+	chas->motor_cur_out = BSP_Malloc(chas->wheel_num * sizeof(*chas->motor_cur_out));
+	if(chas->motor_cur_out == NULL)
+		goto error4;
+	
+	chas->output_filter = BSP_Malloc(chas->wheel_num * sizeof(*chas->output_filter));
+	if(chas->output_filter == NULL)
+		goto error5;
+		
+	for(uint8_t i = 0; i < 4; i++) {
+		PID_Init(&(chas->motor_pid[i]), PID_MODE_DERIVATIV_NONE, chas->dt_sec);
+		PID_SetParameters(&(chas->motor_pid[i]), 5.f, 1.f, 0.f, 1.f, 1.f);
+		
+		LowPassFilter2p_SetParameters(&chas->output_filter[i], chas->dt_sec / 1000.f, 100.f);
+	}
+	
 	return CHASSIS_OK;
+	
+error6:
+	BSP_Free(chas->output_filter);
+error5:
+	BSP_Free(chas->motor_cur_out);
+error4:
+	BSP_Free(chas->motor_pid);
+error3:
+	BSP_Free(chas->motor_rpm_set);
+error2:
+	BSP_Free(chas->motor_rpm);
+error1:
+	return CHASSIS_ERR_NULL;
 }
 
 int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode) {
@@ -231,7 +268,7 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 			case CHASSIS_MODE_FOLLOW_GIMBAL:
 			case CHASSIS_MODE_ROTOR:
 			case CHASSIS_MODE_INDENPENDENT:
-				chas->motor_cur_out[i] = PID_Calculate(&(chas->wheel_pid[i]), chas->motor_rpm_set[i], chas->motor_rpm[i], 0.f, chas->dt_sec);
+				chas->motor_cur_out[i] = PID_Calculate(&(chas->motor_pid[i]), chas->motor_rpm_set[i], chas->motor_rpm[i], 0.f, chas->dt_sec);
 				break;
 				
 			case CHASSIS_MODE_OPEN:
@@ -251,6 +288,9 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 	for(uint8_t i = 0; i < 4; i++) {
 		chas->motor_cur_out[i] = LowPassFilter2p_Apply(&chas->output_filter[i], chas->motor_cur_out[i]);
 	}
+	
+	PowerLimit_Apply(80.f, 25.f, chas->motor_cur_out, chas->wheel_num);
+	
 	
 	return CHASSIS_OK;
 }
