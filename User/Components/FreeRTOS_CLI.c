@@ -94,9 +94,6 @@ configAPPLICATION_PROVIDES_cOutputBuffer is provided to allow the application
 writer to provide their own cOutputBuffer declaration in cases where the
 buffer needs to be placed at a fixed address (rather than by the linker). */
 
-/* This config should be defined in FreeRTOSConfig.h. But due to the limition of CubeMX I put it here. */
-#define configCOMMAND_INT_MAX_OUTPUT_SIZE  512
-
 #if( configAPPLICATION_PROVIDES_cOutputBuffer == 0 )
 	static char cOutputBuffer[ configCOMMAND_INT_MAX_OUTPUT_SIZE ];
 #else
