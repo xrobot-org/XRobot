@@ -56,22 +56,25 @@ void Task_CtrlChassis(void const *argument) {
 		osSignalWait(DR16_SIGNAL_DATA_REDY, 0);
 		Chassis_ParseCommand(&chas_ctrl, dr16);
 		
-		osSignalWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osWaitForever);
+		if (osSignalWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, delay_ms).status == osEventSignal) {
 		
-		taskENTER_CRITICAL();
-		Chassis_UpdateFeedback(&chassis, &cd);
-		taskEXIT_CRITICAL();
-		
-		Chassis_SetMode(&chassis, chas_ctrl.mode);
-		Chassis_Control(&chassis, &chas_ctrl.ctrl_v);
-		
-		// Check can error
-		CAN_Motor_ControlChassis(
-			chassis.motor_cur_out[0],
-			chassis.motor_cur_out[1],
-			chassis.motor_cur_out[2],
-			chassis.motor_cur_out[3]);
-		
-		osDelayUntil(&previous_wake_tick, delay_ms);
+			taskENTER_CRITICAL();
+			Chassis_UpdateFeedback(&chassis, &cd);
+			taskEXIT_CRITICAL();
+			
+			Chassis_SetMode(&chassis, chas_ctrl.mode);
+			Chassis_Control(&chassis, &chas_ctrl.ctrl_v);
+			
+			// Check can error
+			CAN_Motor_ControlChassis(
+				chassis.motor_cur_out[0],
+				chassis.motor_cur_out[1],
+				chassis.motor_cur_out[2],
+				chassis.motor_cur_out[3]);
+			
+			osDelayUntil(&previous_wake_tick, delay_ms);
+		} else {
+			CAN_Motor_ControlChassis(0.f, 0.f, 0.f, 0.f);
+		}
 	}
 }

@@ -160,8 +160,9 @@ int Shoot_Control(Shoot_t *shoot, float bullet_speed, uint32_t shoot_freq_hz) {
 		shoot_freq_hz = 0.f;
 	}
 	
-	shoot->fric_rpm_set[0] = -SHOOT_BULLET_SPEED_SCALER * bullet_speed - SHOOT_BULLET_SPEED_BIAS;
-	shoot->fric_rpm_set[1] = SHOOT_BULLET_SPEED_SCALER * bullet_speed + SHOOT_BULLET_SPEED_BIAS;
+	shoot->fric_rpm_set[0] = SHOOT_BULLET_SPEED_SCALER * bullet_speed + SHOOT_BULLET_SPEED_BIAS;
+	shoot->fric_rpm_set[1] = -shoot->fric_rpm_set[0];
+
 	
 	uint32_t period_ms = 1000u / shoot_freq_hz;
 	osTimerStart(shoot->trig_timer_id, period_ms);  

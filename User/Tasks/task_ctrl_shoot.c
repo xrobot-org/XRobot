@@ -46,22 +46,25 @@ void Task_CtrlShoot(void const *argument) {
 		osSignalWait(DR16_SIGNAL_DATA_REDY, 0);
 		Shoot_ParseCommand(&shoot_ctrl, dr16);
 		
-		osSignalWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osWaitForever);
-		
-		taskENTER_CRITICAL();
-		Shoot_UpdateFeedback(&shoot, cd);
-		taskEXIT_CRITICAL();
-		
-		Shoot_SetMode(&shoot, shoot_ctrl.mode);
-		Shoot_Control(&shoot, shoot_ctrl.bullet_speed, shoot_ctrl.shoot_freq_hz);
-		
-		// TODO: Check can error.
-		CAN_Motor_ControlShoot(
-			shoot.fric_cur_out[0],
-			shoot.fric_cur_out[1],
-			shoot.trig_cur_out
-		);
-		
-		osDelayUntil(&previous_wake_time, delay_ms);
+		if (osSignalWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osWaitForever).status == osEventSignal) {
+			
+			taskENTER_CRITICAL();
+			Shoot_UpdateFeedback(&shoot, cd);
+			taskEXIT_CRITICAL();
+			
+			Shoot_SetMode(&shoot, shoot_ctrl.mode);
+			Shoot_Control(&shoot, shoot_ctrl.bullet_speed, shoot_ctrl.shoot_freq_hz);
+			
+			// TODO: Check can error.
+			CAN_Motor_ControlShoot(
+				shoot.fric_cur_out[0],
+				shoot.fric_cur_out[1],
+				shoot.trig_cur_out
+			);
+			
+			osDelayUntil(&previous_wake_time, delay_ms);
+		} else {
+			CAN_Motor_ControlShoot(0.f, 0.f, 0.f);
+		}
 	}
 }

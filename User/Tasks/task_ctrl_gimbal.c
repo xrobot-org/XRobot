@@ -50,26 +50,29 @@ void Task_CtrlGimbal(void const *argument) {
 		osSignalWait(DR16_SIGNAL_DATA_REDY, 0);
 		Gimbal_ParseCommand(&gimbal, &gimbal_ctrl, dr16);
 		
-		osSignalWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osWaitForever);
-		
-		taskENTER_CRITICAL();
-		Gimbal_UpdateFeedback(&gimbal, cd);
-		taskEXIT_CRITICAL();
-		
-		osEvent evt = osMessageGet(task_param->message.gimb_eulr, osWaitForever);
-		if (evt.status == osEventMessage) {
-			if (gimbal.imu_eulr) {
-				BSP_Free(gimbal.imu_eulr);
+		if (osSignalWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osWaitForever).status == osEventSignal) {
+			
+			taskENTER_CRITICAL();
+			Gimbal_UpdateFeedback(&gimbal, cd);
+			taskEXIT_CRITICAL();
+			
+			osEvent evt = osMessageGet(task_param->message.gimb_eulr, osWaitForever);
+			if (evt.status == osEventMessage) {
+				if (gimbal.imu_eulr) {
+					BSP_Free(gimbal.imu_eulr);
+				}
+				gimbal.imu_eulr = evt.value.p;
 			}
-			gimbal.imu_eulr = evt.value.p;
+			
+			Gimbal_SetMode(&gimbal, gimbal_ctrl.mode);
+			Gimbal_Control(&gimbal, &gimbal_ctrl.ctrl_eulr);
+			
+			// Check can error
+			CAN_Motor_ControlGimbal(gimbal.yaw_cur_out, gimbal.pit_cur_out);
+			
+			osDelayUntil(&previous_wake_time, delay_ms);
+		} else {
+			CAN_Motor_ControlGimbal(0.f, 0.f);
 		}
-		
-		Gimbal_SetMode(&gimbal, gimbal_ctrl.mode);
-		Gimbal_Control(&gimbal, &gimbal_ctrl.ctrl_eulr);
-		
-		// Check can error
-		CAN_Motor_ControlGimbal(gimbal.yaw_cur_out, gimbal.pit_cur_out);
-		
-		osDelayUntil(&previous_wake_time, delay_ms);
 	}
 }
