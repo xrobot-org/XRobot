@@ -25,8 +25,7 @@
 /* Include Module相关的头文件 */
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define MAX_INPUT_LENGTH    50
-#define MAX_OUTPUT_LENGTH   100
+#define MAX_INPUT_LENGTH    64
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -91,7 +90,7 @@ static BaseType_t RunTimeStatsCommand(char *out_buffer, size_t len, const char *
 
 static BaseType_t ThreeParameterEchoCommand(char *out_buffer, size_t len, const char *command_string) {
 	const char *param;
-	BaseType_t param_len, xReturn;
+	BaseType_t param_len, rtn;
 	static int param_num = 0;
 	
 	(void)command_string;
@@ -103,7 +102,7 @@ static BaseType_t ThreeParameterEchoCommand(char *out_buffer, size_t len, const 
 
 		param_num = 1L;
 
-		xReturn = pdPASS;
+		rtn = pdPASS;
 	} else {
 		param = FreeRTOS_CLIGetParameter(command_string, param_num, &param_len);
 
@@ -115,20 +114,20 @@ static BaseType_t ThreeParameterEchoCommand(char *out_buffer, size_t len, const 
 		strncat(out_buffer, "\r\n", strlen("\r\n"));
 
 		if(param_num == 3L) {
-			xReturn = pdFALSE;
+			rtn = pdFALSE;
 			param_num = 0L;
 		} else {
-			xReturn = pdTRUE;
+			rtn = pdTRUE;
 			param_num++;
 		}
 	}
 
-	return xReturn;
+	return rtn;
 }
 
 static BaseType_t ParameterEchoCommand(char *out_buffer, size_t len, const char *command_string) {
 	const char *param;
-	BaseType_t param_len, xReturn;
+	BaseType_t param_len, rtn;
 	static int param_num = 0;
 
 	(void)command_string;
@@ -140,7 +139,7 @@ static BaseType_t ParameterEchoCommand(char *out_buffer, size_t len, const char 
 		
 		param_num = 1L;
 		
-		xReturn = pdPASS;
+		rtn = pdPASS;
 	} else {
 		param = FreeRTOS_CLIGetParameter
 						(
@@ -155,18 +154,18 @@ static BaseType_t ParameterEchoCommand(char *out_buffer, size_t len, const char 
 			strncat(out_buffer, param, param_len);
 			strncat(out_buffer, "\r\n", strlen("\r\n"));
 			
-			xReturn = pdTRUE;
+			rtn = pdTRUE;
 			param_num++;
 		} else {
 			out_buffer[0] = 0x00;
 
-			xReturn = pdFALSE;
+			rtn = pdFALSE;
 
 			param_num = 0;
 		}
 	}
 
-	return xReturn;
+	return rtn;
 }
 
 static const CLI_Command_Definition_t xRunTimeStats = {
@@ -248,7 +247,7 @@ void Task_CLI(void const *argument) {
 		if(rx_char == '\n' || rx_char == '\r'){
 			BSP_USB_Printf("\r\n");
 			do {
-				processing = FreeRTOS_CLIProcessCommand(input, output, MAX_OUTPUT_LENGTH);
+				processing = FreeRTOS_CLIProcessCommand(input, output, configCOMMAND_INT_MAX_OUTPUT_SIZE);
 				BSP_USB_Printf(output);
 			} while(processing != pdFALSE);
 			
