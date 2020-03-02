@@ -69,6 +69,7 @@ static void IST8310_MasterRxCpltCallback(void) {
 
 static void IST8310_IntCallback(void) {
 	osSignalSet(gist8310->received_alert, IST8310_SIGNAL_MAGN_NEW_DATA);
+	IST8310_Read(IST8310_DATAXL, gist8310->raw, 6u);
 }
 
 /* Exported functions --------------------------------------------------------*/
@@ -90,7 +91,11 @@ int IST8310_Init(IST8310_t *ist8310) {
 	BSP_GPIO_RegisterCallback(ACCL_INT_Pin, IST8310_IntCallback);
 	
 	/* Init. */
-	IST8310_WriteSingle(IST8310_CNTL2, 0x08);
+	/* 0x00: Stand-By mode. 0x01: Single measurement mode. */
+	
+	/* 0x08: Data ready function enable. 0x04: DRDY signal active */
+	IST8310_WriteSingle(IST8310_CNTL2, 0x0C);
+	
 	IST8310_WriteSingle(IST8310_AVGCNTL, 0x02);
 	IST8310_WriteSingle(IST8310_PDCNTL, 0xC0);
 	BSP_Delay(10);
@@ -110,7 +115,7 @@ IST8310_t *IST8310_GetDevice(void) {
 }
 
 int IST8310_Receive(IST8310_t *ist8310){
-	IST8310_Read(IST8310_DATAXL, gist8310->raw, 6u);
+	IST8310_WriteSingle(IST8310_CNTL1, 0x01);
 	return IST8310_OK;
 }
 
