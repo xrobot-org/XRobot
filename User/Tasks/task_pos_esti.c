@@ -39,8 +39,6 @@ AHRS_Eulr_t debug_eulr;
 
 static PID_t imu_temp_ctrl_pid;
 
-static osStatus os_status = osOK;
-
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_PosEsti(void const *argument) {
@@ -98,7 +96,7 @@ void Task_PosEsti(void const *argument) {
 		if (eulr_to_send) {
 			AHRS_GetEulr(eulr_to_send, &gimbal_ahrs);
 			
-			os_status = osMessagePut(task_param->message.gimb_eulr, (uint32_t)eulr_to_send, 0);
+			osStatus os_status = osMessagePut(task_param->message.gimb_eulr, (uint32_t)eulr_to_send, 0);
 			
 			if (os_status == osErrorOS)
 				BSP_Free(eulr_to_send);

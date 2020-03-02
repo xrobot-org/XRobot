@@ -28,10 +28,6 @@ static DR16_t *dr16;
 static Gimbal_t gimbal;
 static Gimbal_Ctrl_t gimbal_ctrl;
 
-/* Runtime status. */
-int stat_c_g = 0;
-osStatus os_stat_c_g = osOK;
-
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_CtrlGimbal(void const *argument) {

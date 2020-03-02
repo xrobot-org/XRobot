@@ -20,10 +20,6 @@
 /* Private variables ---------------------------------------------------------*/
 static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_MONITOR;
 
-/* Runtime status. */
-int stat_mo = 0;
-osStatus os_stat_mo = osOK;
-
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_Monitor(void const *argument) {

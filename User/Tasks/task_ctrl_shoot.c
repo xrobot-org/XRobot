@@ -27,10 +27,6 @@ static DR16_t *dr16;
 static Shoot_t shoot;
 static Shoot_Ctrl_t shoot_ctrl;
 
-/* Runtime status. */
-int stat_c_s = 0;
-osStatus os_stat_c_s = osOK;
-
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_CtrlShoot(void const *argument) {

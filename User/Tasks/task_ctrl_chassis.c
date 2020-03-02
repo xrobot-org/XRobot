@@ -28,10 +28,6 @@ static DR16_t *dr16;
 static Chassis_t chassis;
 static Chassis_Ctrl_t chas_ctrl;
 
-/* Runtime status. */
-int stat_c_c = 0;
-osStatus os_stat_c_c = osOK;
-
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_CtrlChassis(void const *argument) {
