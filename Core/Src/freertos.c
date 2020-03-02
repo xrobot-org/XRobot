@@ -120,15 +120,15 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   
-	osThreadDef(cli,			Task_CLI,			osPriorityLow,			0, 300);
-	osThreadDef(command,		Task_Command,		osPriorityHigh,			0, 200);
-	osThreadDef(ctrl_chassis,	Task_CtrlChassis,	osPriorityAboveNormal,	0, 200);
+	osThreadDef(cli,			Task_CLI,			osPriorityLow,			0, 256);
+	osThreadDef(command,		Task_Command,		osPriorityHigh,			0, 128);
+	osThreadDef(ctrl_chassis,	Task_CtrlChassis,	osPriorityAboveNormal,	0, 128);
 	osThreadDef(ctrl_gimbal,	Task_CtrlGimbal,	osPriorityAboveNormal,	0, 256);
-	osThreadDef(ctrl_shoot,		Task_CtrlShoot,		osPriorityAboveNormal,	0, 200);
-	osThreadDef(info,			Task_Info,			osPriorityBelowNormal,	0, 256);
-	osThreadDef(monitor,		Task_Monitor,		osPriorityNormal,		0, 150);
-	osThreadDef(pos_esti,		Task_PosEsti,		osPriorityRealtime,		0, 500);
-	osThreadDef(referee,		Task_Referee,		osPriorityNormal,		0, 150);
+	osThreadDef(ctrl_shoot,		Task_CtrlShoot,		osPriorityAboveNormal,	0, 128);
+	osThreadDef(info,			Task_Info,			osPriorityBelowNormal,	0, 128);
+	osThreadDef(monitor,		Task_Monitor,		osPriorityNormal,		0, 128);
+	osThreadDef(pos_esti,		Task_PosEsti,		osPriorityRealtime,		0, 256);
+	osThreadDef(referee,		Task_Referee,		osPriorityNormal,		0, 128);
 	
 	task_param.thread.cli			= osThreadCreate(osThread(cli),				&task_param);
 	task_param.thread.command		= osThreadCreate(osThread(command),			&task_param);
