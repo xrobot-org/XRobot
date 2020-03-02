@@ -242,26 +242,27 @@ void Task_CLI(void const *argument) {
 		osSignalWait(BSP_USB_SIGNAL_BUF_RECV, osWaitForever);
 		
 		rx_char = BSP_USB_ReadChar();
-		BSP_USB_Printf("%c", rx_char);
 		
-		if(rx_char == '\n' || rx_char == '\r'){
-			BSP_USB_Printf("\r\n");
-			do {
-				processing = FreeRTOS_CLIProcessCommand(input, output, configCOMMAND_INT_MAX_OUTPUT_SIZE);
-				BSP_USB_Printf(output);
-			} while(processing != pdFALSE);
-			
-			index = 0;
-			memset(input, 0x00, MAX_INPUT_LENGTH);
-			BSP_USB_Printf("rm>");
+		if (rx_char <= 126 && rx_char >= 32){
+			if(index < MAX_INPUT_LENGTH) {
+				BSP_USB_Printf("%c", rx_char);
+				input[index] = rx_char;
+				index++;
+			}
 		} else {
-			if (rx_char <= 126 && rx_char >= 32){
-				if(index < MAX_INPUT_LENGTH) {
-					input[index] = rx_char;
-					index++;
-				}
+			if(rx_char == '\n' || rx_char == '\r'){
+				BSP_USB_Printf("\r\n");
+				do {
+					processing = FreeRTOS_CLIProcessCommand(input, output, configCOMMAND_INT_MAX_OUTPUT_SIZE);
+					BSP_USB_Printf(output);
+				} while(processing != pdFALSE);
+				
+				index = 0;
+				memset(input, 0x00, MAX_INPUT_LENGTH);
+				BSP_USB_Printf("rm>");
 			}else if(rx_char == '\b' || rx_char == 0x7Fu) {
 				if(index > 0) {
+					BSP_USB_Printf("%c", rx_char);
 					index--;
 					input[index] = '\0';
 				}
