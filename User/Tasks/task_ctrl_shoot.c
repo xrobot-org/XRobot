@@ -34,8 +34,6 @@ osStatus os_stat_c_s = osOK;
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_CtrlShoot(void const *argument) {
-	Task_Param_t *task_param = (Task_Param_t*)argument;
-	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_SHOOT);
 	

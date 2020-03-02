@@ -18,7 +18,7 @@ static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_REFEREE
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_Referee(void const *argument) {
-	Task_Param_t *task_param = (Task_Param_t*)argument;
+	//Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_REFEREE);

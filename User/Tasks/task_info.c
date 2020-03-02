@@ -27,9 +27,9 @@ static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_INFO;
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_Info(void const *argument) {
-	Task_Param_t *task_param = (Task_Param_t*)argument;
+	//Task_Param_t *task_param = (Task_Param_t*)argument;
 	
-	float capacitor_percentage;
+	//float capacitor_percentage;
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_INFO);

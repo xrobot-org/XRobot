@@ -45,7 +45,7 @@ void Task_CtrlChassis(void const *argument) {
 	cd.motor_alert[1] = task_param->thread.ctrl_gimbal;
 	cd.motor_alert[2] = task_param->thread.ctrl_shoot;
 	cd.uwb_alert = task_param->thread.referee;
-	cd.supercap_alert = task_param->thread.ctrl_chassis;
+	cd.supercap_alert = osThreadGetId();;
 	
 	CAN_DeviceInit(&cd);
 	dr16 = DR16_GetDevice();
