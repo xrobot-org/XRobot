@@ -90,8 +90,6 @@ int Chassis_Init(Chassis_t *chas, Chassis_Type_t type) {
 	
 	return CHASSIS_OK;
 	
-error6:
-	BSP_Free(chas->output_filter);
 error5:
 	BSP_Free(chas->motor_cur_out);
 error4:
