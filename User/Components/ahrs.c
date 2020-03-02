@@ -112,10 +112,10 @@ int AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq) {
 	
 	if (magn) {
 		if((magn->x == 0.0f) && (magn->y == 0.0f) && (magn->z == 0.0f)) {
-			ahrs->q0 = 0.794987798f;
-			ahrs->q1 = 0.00132370531f;
-			ahrs->q2 = -0.0234376211f;
-			ahrs->q3 = 0.608368337f;
+			ahrs->q0 = 0.800884545f;
+			ahrs->q1 = 0.00862364192f;
+			ahrs->q2 = -0.00283267116f;
+			ahrs->q3 = 0.598749936f;
 		}
 	}
 	return 0;
