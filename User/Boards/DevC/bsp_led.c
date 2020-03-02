@@ -9,7 +9,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static bool led[3];
+static uint32_t led_stats;
 
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -45,23 +45,23 @@ int BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, float duty_cycle) {
 	switch (s) {
 		case BSP_LED_ON:
 			HAL_TIM_PWM_Start(&htim5, tim_ch);
-			led[tim_ch] = true;
+			led_stats |= tim_ch;
 			break;
 		
 		case BSP_LED_OFF:
 			HAL_TIM_PWM_Stop(&htim5, tim_ch);
-			led[tim_ch] = false;
+			led_stats &= ~tim_ch;
 			break;
 		
 		case BSP_LED_TAGGLE:
-			if(led[tim_ch]) {
+			if(led_stats & tim_ch) {
 				HAL_TIM_PWM_Stop(&htim5, tim_ch);
-				led[tim_ch] = false;
+				led_stats &= ~tim_ch;
 			} else {
 				HAL_TIM_PWM_Start(&htim5, tim_ch);
-				led[tim_ch] = true;
+				led_stats |= tim_ch;
 			}
-			return -1;
+			break;
 		
 		default:
 			return -1;
