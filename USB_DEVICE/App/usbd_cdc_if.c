@@ -77,7 +77,8 @@
   */
 
 /* USER CODE BEGIN PRIVATE_MACRO */
-
+#define APP_RX_DATA_SIZE 2
+#define APP_TX_DATA_SIZE 2
 /* USER CODE END PRIVATE_MACRO */
 
 /**
@@ -88,13 +89,15 @@
   * @brief Private variables.
   * @{
   */
-/* USER CODE BEGIN PRIVATE_VARIABLES */
-/* 
-	uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
-	uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
-	This 2 should be deleted every time project regenarated.
+/* Create buffer for reception and transmission           */
+/* It's up to user to redefine and/or remove those define */
+/** Received data over USB are stored in this buffer      */
+uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
 
-*/
+/** Data to send over USB CDC are stored in this buffer   */
+uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
+
+/* USER CODE BEGIN PRIVATE_VARIABLES */
 /* USER CODE END PRIVATE_VARIABLES */
 
 /**
@@ -110,7 +113,6 @@ extern USBD_HandleTypeDef hUsbDeviceFS;
 
 /* USER CODE BEGIN EXPORTED_VARIABLES */
 extern osThreadId gbsp_usb_alert;
-extern uint16_t usb_rx_num;
 extern uint8_t usb_rx_buf[BSP_USB_MAX_RX_LEN];
 extern uint8_t usb_tx_buf[BSP_USB_MAX_TX_LEN];
 
