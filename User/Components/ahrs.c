@@ -250,23 +250,28 @@ int AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
 	
 	if (ahrs == NULL)
 		return -1;
-	
-    const float siny_cosp = 2.f * (ahrs->q1 * ahrs->q2 - ahrs->q0 * ahrs->q3);
-    const float cosy_cosp = 2.f * (ahrs->q0 * ahrs->q0 + ahrs->q1 * ahrs->q1) - 1.f;
-    eulr->yaw = atan2f(siny_cosp, cosy_cosp);
-	
-    const float sinp = 2.f * (ahrs->q1 * ahrs->q3 - ahrs->q0 * ahrs->q2);
-	eulr->rol = -asinf(sinp);
-	
-    const float sinr_cosp = 2.f * (ahrs->q2 * ahrs->q3 - ahrs->q0 * ahrs->q1);
-    const float cosr_cosp = 2.f * (ahrs->q0 * ahrs->q0 + ahrs->q3 * ahrs->q3) - 1.f;
+
+    const float sinr_cosp = 2.f * (ahrs->q0 * ahrs->q1 + ahrs->q2 * ahrs->q3);
+    const float cosr_cosp = 1.f - 2.f * (ahrs->q1 * ahrs->q1 + ahrs->q2 * ahrs->q2);
     eulr->pit = atan2f(sinr_cosp, cosr_cosp);
 	
-	#if 0
+    const float sinp  = 2.f * (ahrs->q0 * ahrs->q2 - ahrs->q3 * ahrs->q1);
+    
+	if (fabs(sinp) >= 1.f)
+        eulr->rol = copysignf(PI / 2.f, sinp);
+    else
+        eulr->rol = asinf(sinp);
+    
+	
+    const float siny_cosp = 2.f * (ahrs->q0 * ahrs->q3 + ahrs->q1 * ahrs->q2);
+    const float cosy_cosp = 1.f - 2.f * (ahrs->q2 * ahrs->q2 + ahrs->q3 * ahrs->q3);
+    eulr->yaw = atan2f(siny_cosp , cosy_cosp);
+    
+    #if 1
     eulr->yaw *= MATH_RADIAN_TO_DEGREE_MULTIPLIER;
-	eulr->rol *= MATH_RADIAN_TO_DEGREE_MULTIPLIER;
+    eulr->rol *= MATH_RADIAN_TO_DEGREE_MULTIPLIER;
     eulr->pit *= MATH_RADIAN_TO_DEGREE_MULTIPLIER;
-	#endif
-
-	return 0;
+    #endif
+    
+    return 0;
 }
