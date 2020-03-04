@@ -3,19 +3,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "cmsis_os.h"
 #include "FreeRTOS.h"
+#include "task.h"
 
 /* Exported constants --------------------------------------------------------*/
-#define TASK_SIGNAL_CLI_READY					(1u<<0)
-#define TASK_SIGNAL_COMMAND_READY					(1u<<1)
-#define TASK_SIGNAL_CTRL_CHASSIS_READY			(1u<<2)
-#define TASK_SIGNAL_CTRL_GIMBAL_READY			(1u<<3)
-#define TASK_SIGNAL_CTRL_SHOOT_READY			(1u<<4)
-#define TASK_SIGNAL_DEBUG_READY					(1u<<5)
-#define TASK_SIGNAL_INFO_READY					(1u<<6)
-#define TASK_SIGNAL_MONITOR_READY				(1u<<7)
-#define TASK_SIGNAL_POSESTI_READY				(1u<<8)
-#define TASK_SIGNAL_REFEREE_READY				(1u<<9)
-
 /* 所有任务都要define一个“任务运行频率”和“初始化延时”。 */
 #define TASK_FREQ_HZ_CLI					(5u)
 #define TASK_FREQ_HZ_COMMAND				(80u)
