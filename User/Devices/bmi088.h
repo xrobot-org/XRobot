@@ -6,6 +6,8 @@
 
 /* Include cmsis_os.h头文件 */
 #include "cmsis_os.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 #include "ahrs.h"
 
@@ -16,10 +18,10 @@
 #define BMI088_ERR_INITED	(-3)
 #define BMI088_ERR_NO_DEV	(-4)
 
-#define BMI088_SIGNAL_GYRO_NEW_DATA	(1u<<6)
-#define BMI088_SIGNAL_ACCL_NEW_DATA	(1u<<7)
-#define BMI088_SIGNAL_GYRO_RAW_REDY	(1u<<8)
-#define BMI088_SIGNAL_ACCL_RAW_REDY	(1u<<9)
+#define BMI088_SIGNAL_GYRO_NEW_DATA	(1u<<0)
+#define BMI088_SIGNAL_ACCL_NEW_DATA	(1u<<1)
+#define BMI088_SIGNAL_GYRO_RAW_REDY	(1u<<2)
+#define BMI088_SIGNAL_ACCL_RAW_REDY	(1u<<3)
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/

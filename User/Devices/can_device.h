@@ -11,9 +11,9 @@
 #define CAN_ERR_NULL	(-2)
 #define CAN_ERR_INITED	(-3)
 
-#define CAN_DEVICE_SIGNAL_MOTOR_RECV					(1u<<1)
-#define CAN_DEVICE_SIGNAL_UWB_RECV						(1u<<2)
-#define CAN_DEVICE_SIGNAL_SUPERCAP_RECV					(1u<<3)
+#define CAN_DEVICE_SIGNAL_MOTOR_RECV					(1u<<4)
+#define CAN_DEVICE_SIGNAL_UWB_RECV						(1u<<5)
+#define CAN_DEVICE_SIGNAL_SUPERCAP_RECV					(1u<<6)
 
 /* Motor */
 #define CAN_GM6020_FEEDBACK_ID_BASE				0x205

@@ -16,8 +16,8 @@
 #define IST8310_ERR_INITED	(-3)
 #define IST8310_ERR_NO_DEV	(-4)
 
-#define IST8310_SIGNAL_MAGN_NEW_DATA	(1u<<10)
-#define IST8310_SIGNAL_MAGN_RAW_REDY	(1u<<11)
+#define IST8310_SIGNAL_MAGN_NEW_DATA	(1u<<9)
+#define IST8310_SIGNAL_MAGN_RAW_REDY	(1u<<10)
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
