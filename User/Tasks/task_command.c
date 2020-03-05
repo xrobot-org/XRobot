@@ -29,7 +29,7 @@ static DR16_t dr16;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-void Task_Command(void const *argument) {
+void Task_Command(void *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
@@ -41,11 +41,11 @@ void Task_Command(void const *argument) {
 	while(1) {
 		/* Task body */
 		DR16_StartReceiving(&dr16);
-		osSignalWait(DR16_SIGNAL_RAW_REDY, osWaitForever);
+		osThreadFlagsWait(DR16_SIGNAL_RAW_REDY, osFlagsWaitAll, osWaitForever);
 		DR16_Parse(&dr16);
 		
-		osSignalSet(task_param->thread.ctrl_chassis, DR16_SIGNAL_DATA_REDY);
-		osSignalSet(task_param->thread.ctrl_gimbal, DR16_SIGNAL_DATA_REDY);
-		osSignalSet(task_param->thread.ctrl_shoot, DR16_SIGNAL_DATA_REDY);
+		osThreadFlagsSet(task_param->thread.ctrl_chassis, DR16_SIGNAL_DATA_REDY);
+		osThreadFlagsSet(task_param->thread.ctrl_gimbal, DR16_SIGNAL_DATA_REDY);
+		osThreadFlagsSet(task_param->thread.ctrl_shoot, DR16_SIGNAL_DATA_REDY);
 	}
 }

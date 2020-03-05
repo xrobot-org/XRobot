@@ -53,15 +53,75 @@ Task_Param_t task_param;
 /* TIM7 are used to generater high freq tick for debug. */
 volatile unsigned long high_freq_timer_ticks;
 
+static const osThreadAttr_t cli_attr = {
+  .name = "cli",
+  .priority = (osPriority_t) osPriorityLow,
+  .stack_size = 512
+};
+
+static const osThreadAttr_t command_attr = {
+  .name = "command",
+  .priority = (osPriority_t) osPriorityHigh,
+  .stack_size = 256
+};
+
+static const osThreadAttr_t ctrl_chassis_attr = {
+  .name = "ctrl_chassis",
+  .priority = (osPriority_t) osPriorityAboveNormal,
+  .stack_size = 512
+};
+
+static const osThreadAttr_t ctrl_gimbal_attr = {
+  .name = "ctrl_gimbal",
+  .priority = (osPriority_t) osPriorityAboveNormal,
+  .stack_size = 512
+};
+
+static const osThreadAttr_t ctrl_shoot_attr = {
+  .name = "ctrl_shoot",
+  .priority = (osPriority_t) osPriorityAboveNormal,
+  .stack_size = 512
+};
+
+static const osThreadAttr_t info_attr = {
+  .name = "info",
+  .priority = (osPriority_t) osPriorityBelowNormal,
+  .stack_size = 512
+};
+
+static const osThreadAttr_t monitor_attr = {
+  .name = "monitor",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 256
+};
+
+static const osThreadAttr_t pos_esti_attr = {
+  .name = "pos_esti",
+  .priority = (osPriority_t) osPriorityRealtime,
+  .stack_size = 1024
+};
+
+static const osThreadAttr_t referee_attr = {
+  .name = "referee",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 256
+};
+
 /* USER CODE END Variables */
-osThreadId defaultTaskHandle;
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 256
+};
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
    
 /* USER CODE END FunctionPrototypes */
 
-void StartDefaultTask(void const * argument);
+void StartDefaultTask(void *argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -113,32 +173,20 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  
-	osThreadDef(cli,			Task_CLI,			osPriorityLow,			0, 256);
-	osThreadDef(command,		Task_Command,		osPriorityHigh,			0, 128);
-	osThreadDef(ctrl_chassis,	Task_CtrlChassis,	osPriorityAboveNormal,	0, 128);
-	osThreadDef(ctrl_gimbal,	Task_CtrlGimbal,	osPriorityAboveNormal,	0, 256);
-	osThreadDef(ctrl_shoot,		Task_CtrlShoot,		osPriorityAboveNormal,	0, 128);
-	osThreadDef(info,			Task_Info,			osPriorityBelowNormal,	0, 128);
-	osThreadDef(monitor,		Task_Monitor,		osPriorityNormal,		0, 128);
-	osThreadDef(pos_esti,		Task_PosEsti,		osPriorityRealtime,		0, 256);
-	osThreadDef(referee,		Task_Referee,		osPriorityNormal,		0, 128);
-	
-	task_param.thread.cli			= osThreadCreate(osThread(cli),				&task_param);
-	task_param.thread.command		= osThreadCreate(osThread(command),			&task_param);
-	task_param.thread.ctrl_chassis	= osThreadCreate(osThread(ctrl_chassis),	&task_param);
-	task_param.thread.ctrl_gimbal	= osThreadCreate(osThread(ctrl_gimbal),		&task_param);
-	task_param.thread.ctrl_shoot	= osThreadCreate(osThread(ctrl_shoot),		&task_param);
-	task_param.thread.info			= osThreadCreate(osThread(info),			&task_param);
-	task_param.thread.monitor		= osThreadCreate(osThread(monitor),			&task_param);
-	task_param.thread.pos_esti		= osThreadCreate(osThread(pos_esti),		&task_param);
-	task_param.thread.referee		= osThreadCreate(osThread(referee),			&task_param);
+	task_param.thread.cli			= osThreadNew(Task_CLI,			&task_param, &cli_attr);
+	task_param.thread.command		= osThreadNew(Task_Command,		&task_param, &command_attr);
+	task_param.thread.ctrl_chassis	= osThreadNew(Task_CtrlChassis,	&task_param, &ctrl_chassis_attr);
+	task_param.thread.ctrl_gimbal	= osThreadNew(Task_CtrlGimbal,	&task_param, &ctrl_gimbal_attr);
+	task_param.thread.ctrl_shoot	= osThreadNew(Task_CtrlShoot,	&task_param, &ctrl_shoot_attr);
+	task_param.thread.info			= osThreadNew(Task_Info,		&task_param, &info_attr);
+	task_param.thread.monitor		= osThreadNew(Task_Monitor,		&task_param, &monitor_attr);
+	task_param.thread.pos_esti		= osThreadNew(Task_PosEsti,		&task_param, &pos_esti_attr);
+	task_param.thread.referee		= osThreadNew(Task_Referee,		&task_param, &referee_attr);
 	
 	
 	#if defined ROBOT_MODEL_INFANTRY
@@ -168,7 +216,7 @@ void MX_FREERTOS_Init(void) {
   * @retval None
   */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
+void StartDefaultTask(void *argument)
 {
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();

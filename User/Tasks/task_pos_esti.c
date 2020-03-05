@@ -29,8 +29,6 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static osMessageQDef(gimb_eulr_message, 2, AHRS_Eulr_t);
-
 BMI088_t bmi088;
 IST8310_t ist8310;
 
@@ -41,11 +39,9 @@ static PID_t imu_temp_ctrl_pid;
 
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-void Task_PosEsti(void const *argument) {
+void Task_PosEsti(void *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
-	
-	task_param->message.gimb_eulr = osMessageCreate(osMessageQ(gimb_eulr_message), NULL);
-	
+
 	bmi088.received_alert = osThreadGetId();
 	BMI088_Init(&bmi088);
 	
@@ -53,7 +49,7 @@ void Task_PosEsti(void const *argument) {
 	IST8310_Init(&ist8310);
 	
 	IST8310_Receive(&ist8310);
-	osSignalWait(IST8310_SIGNAL_MAGN_RAW_REDY, osWaitForever);
+	osThreadFlagsWait(IST8310_SIGNAL_MAGN_RAW_REDY, osFlagsWaitAll, 0);
 	
 	IST8310_Parse(&ist8310);
 	
@@ -67,18 +63,18 @@ void Task_PosEsti(void const *argument) {
 	
 	while(1) {
 		/* Task body */
-		osSignalWait(BMI088_SIGNAL_ACCL_NEW_DATA, osWaitForever);
+		osThreadFlagsWait(BMI088_SIGNAL_ACCL_NEW_DATA, osFlagsWaitAll, osWaitForever);
 		BMI088_ReceiveAccl(&bmi088);
-		osSignalWait(BMI088_SIGNAL_ACCL_RAW_REDY, osWaitForever);
+		osThreadFlagsWait(BMI088_SIGNAL_ACCL_RAW_REDY, osFlagsWaitAll, osWaitForever);
 		
-		osSignalWait(BMI088_SIGNAL_GYRO_NEW_DATA, osWaitForever);
+		osThreadFlagsWait(BMI088_SIGNAL_GYRO_NEW_DATA, osFlagsWaitAll, osWaitForever);
 		BMI088_ReceiveGyro(&bmi088);
-		osSignalWait(BMI088_SIGNAL_GYRO_RAW_REDY, osWaitForever);
+		osThreadFlagsWait(BMI088_SIGNAL_GYRO_RAW_REDY, osFlagsWaitAll, osWaitForever);
 		
-		osEvent evt = osSignalWait(IST8310_SIGNAL_MAGN_NEW_DATA, 0u);
-		if (evt.status == osEventSignal) {
+		uint32_t flag = osThreadFlagsWait(IST8310_SIGNAL_MAGN_NEW_DATA, osFlagsWaitAll, 0u);
+		if (flag & IST8310_SIGNAL_MAGN_NEW_DATA) {
 			IST8310_Receive(&ist8310);
-			osSignalWait(IST8310_SIGNAL_MAGN_RAW_REDY, 0u);
+			osThreadFlagsWait(IST8310_SIGNAL_MAGN_RAW_REDY, osFlagsWaitAll, 0u);
 		}
 		
 		taskENTER_CRITICAL();
@@ -91,16 +87,19 @@ void Task_PosEsti(void const *argument) {
 		AHRS_Update(&gimbal_ahrs, &bmi088.accl, &bmi088.gyro, &ist8310.magn);
 		AHRS_GetEulr(&debug_eulr, &gimbal_ahrs);
 		
+		#if 0
 		AHRS_Eulr_t *eulr_to_send = BSP_Malloc(sizeof(*eulr_to_send));
 		
 		if (eulr_to_send) {
 			AHRS_GetEulr(eulr_to_send, &gimbal_ahrs);
 			
-			osStatus os_status = osMessagePut(task_param->message.gimb_eulr, (uint32_t)eulr_to_send, 0);
+			osStatus os_status = osMessageQueuePut(task_param->message.gimb_eulr, eulr_to_send, 0, 0);
 			
 			if (os_status == osErrorOS)
 				BSP_Free(eulr_to_send);
 		}
+		#endif
+		
 		BSP_PWM_Set(BSP_PWM_IMU_HEAT, PID_Calculate(&imu_temp_ctrl_pid, 50.f, bmi088.temp, 0.f, 0.f));
 	}
 }

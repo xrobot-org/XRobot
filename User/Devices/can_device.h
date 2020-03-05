@@ -54,17 +54,17 @@
 /* Motor */
 typedef enum
 {
-    CAN_M3508_M1_ID = 0x201, /* 1 */
-    CAN_M3508_M2_ID = 0x202, /* 2 */
-    CAN_M3508_M3_ID = 0x203, /* 3 */
-    CAN_M3508_M4_ID = 0x204, /* 4 */
+	CAN_M3508_M1_ID = 0x201, /* 1 */
+	CAN_M3508_M2_ID = 0x202, /* 2 */
+	CAN_M3508_M3_ID = 0x203, /* 3 */
+	CAN_M3508_M4_ID = 0x204, /* 4 */
 	
-    CAN_M3508_FRIC1_ID = 0x205, /* 5 */
-    CAN_M3508_FRIC2_ID = 0x206, /* 6 */
-    CAN_M2006_TRIG_ID = 0x207, /* 7 */
+	CAN_M3508_FRIC1_ID = 0x205, /* 5 */
+	CAN_M3508_FRIC2_ID = 0x206, /* 6 */
+	CAN_M2006_TRIG_ID = 0x207, /* 7 */
 
-    CAN_GM6020_YAW_ID = 0x209, /* 5 */
-    CAN_GM6020_PIT_ID = 0x20A, /* 6 */
+	CAN_GM6020_YAW_ID = 0x209, /* 5 */
+	CAN_GM6020_PIT_ID = 0x20A, /* 6 */
 } CAN_MotorId_t;
 
 typedef struct {
@@ -103,9 +103,9 @@ typedef struct {
 } CAN_SuperCapControl_t;
 
 typedef struct {
-	osThreadId motor_alert[3];
-	osThreadId uwb_alert;
-	osThreadId supercap_alert;
+	osThreadId_t motor_alert[3];
+	osThreadId_t uwb_alert;
+	osThreadId_t supercap_alert;
 	
 	CAN_MotorFeedback_t chassis_motor_fb[4];
 	

@@ -26,7 +26,7 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef struct {
-	osThreadId received_alert;
+	osThreadId_t received_alert;
 
 	uint8_t raw[25];
 	AHRS_Accl_t accl;
@@ -45,9 +45,9 @@ BMI088_t *BMI088_GetDevice(void);
 int BMI088_Restart(void);
 
 /* Sensor use right-handed coordinate system. */
-/*         
+/*		 
 		x < R(logo)
-		    y
+			y
 		UP is z
 	All implementation should follow this rule.
  */

@@ -32,32 +32,32 @@
 /* Exported types ------------------------------------------------------------*/
 typedef struct {
 	struct {
-		osThreadId cli;
-		osThreadId command;
-		osThreadId ctrl_chassis;
-		osThreadId ctrl_gimbal;
-		osThreadId ctrl_shoot;
-		osThreadId info;
-		osThreadId monitor;
-		osThreadId pos_esti;
-		osThreadId referee;
+		osThreadId_t cli;
+		osThreadId_t command;
+		osThreadId_t ctrl_chassis;
+		osThreadId_t ctrl_gimbal;
+		osThreadId_t ctrl_shoot;
+		osThreadId_t info;
+		osThreadId_t monitor;
+		osThreadId_t pos_esti;
+		osThreadId_t referee;
 	} thread;
 	
 	struct {
 		/* Pos esti */
-		osMessageQId gimb_eulr;
-	} message;
+		osMessageQueueId_t gimb_eulr;
+	} messageq;
 	
 } Task_Param_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-void Task_CLI(void const *argument);
-void Task_Command(void const *argument);
-void Task_CtrlChassis(void const *argument);
-void Task_CtrlGimbal(void const *argument);
-void Task_CtrlShoot(void const *argument);
-void Task_Info(void const *argument);
-void Task_Monitor(void const *argument);
-void Task_PosEsti(void const *argument);
-void Task_Referee(void const *argument);
+void Task_CLI(void *argument);
+void Task_Command(void *argument);
+void Task_CtrlChassis(void *argument);
+void Task_CtrlGimbal(void *argument);
+void Task_CtrlShoot(void *argument);
+void Task_Info(void *argument);
+void Task_Monitor(void *argument);
+void Task_PosEsti(void *argument);
+void Task_Referee(void *argument);
 

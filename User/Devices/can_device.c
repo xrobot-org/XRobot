@@ -29,10 +29,10 @@ static bool inited = false;
 
 /* Private function  ---------------------------------------------------------*/
 static void CAN_Motor_Decode(CAN_MotorFeedback_t *fb, const uint8_t *raw) {
-	fb->rotor_angle    = ((raw[0] << 8) | raw[1]);
-	fb->rotor_speed    = ((raw[2] << 8) | raw[3]);
+	fb->rotor_angle = ((raw[0] << 8) | raw[1]);
+	fb->rotor_speed = ((raw[2] << 8) | raw[3]);
 	fb->torque_current = ((raw[4] << 8) | raw[5]);
-	fb->temp           =   raw[6];
+	fb->temp = raw[6];
 	
 	motor_received++;
 }
@@ -105,13 +105,13 @@ int CAN_Motor_ControlChassis(float m1, float m2, float m3, float m4) {
 
 	uint8_t tx_data[8];
 	tx_data[0] = motor1 >> 8;
-    tx_data[1] = motor1;
-    tx_data[2] = motor2 >> 8;
-    tx_data[3] = motor2;
-    tx_data[4] = motor3 >> 8;
-    tx_data[5] = motor3;
-    tx_data[6] = motor4 >> 8;
-    tx_data[7] = motor4;
+	tx_data[1] = motor1;
+	tx_data[2] = motor2 >> 8;
+	tx_data[3] = motor2;
+	tx_data[4] = motor3 >> 8;
+	tx_data[5] = motor3;
+	tx_data[6] = motor4 >> 8;
+	tx_data[7] = motor4;
 	
 	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
 	
@@ -131,13 +131,13 @@ int CAN_Motor_ControlGimbal(float yaw, float pitch) {
 
 	uint8_t tx_data[8];
 	tx_data[0] = yaw_motor >> 8;
-    tx_data[1] = yaw_motor;
-    tx_data[2] = pitch_motor >> 8;
-    tx_data[3] = pitch_motor;
-    tx_data[4] = 0;
-    tx_data[5] = 0;
-    tx_data[6] = 0;
-    tx_data[7] = 0;
+	tx_data[1] = yaw_motor;
+	tx_data[2] = pitch_motor >> 8;
+	tx_data[3] = pitch_motor;
+	tx_data[4] = 0;
+	tx_data[5] = 0;
+	tx_data[6] = 0;
+	tx_data[7] = 0;
 	
 	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
 	
@@ -158,13 +158,13 @@ int CAN_Motor_ControlShoot(float fric1, float fric2, float trig) {
 	
 	uint8_t tx_data[8];
 	tx_data[0] = fric1_motor >> 8;
-    tx_data[1] = fric1_motor;
-    tx_data[2] = fric2_motor >> 8;
-    tx_data[3] = fric2_motor;
-    tx_data[4] = trig_motor >> 8;
-    tx_data[5] = trig_motor;
-    tx_data[6] = 0;
-    tx_data[7] = 0;
+	tx_data[1] = fric1_motor;
+	tx_data[2] = fric2_motor >> 8;
+	tx_data[3] = fric2_motor;
+	tx_data[4] = trig_motor >> 8;
+	tx_data[5] = trig_motor;
+	tx_data[6] = 0;
+	tx_data[7] = 0;
 	
 	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0);
 	
@@ -218,7 +218,7 @@ void RxFifo0MsgPendingCallback(void) {
 
 		case CAN_SUPERCAP_FEEDBACK_ID_BASE:
 			CAN_SuperCap_Decode(&(gcan_device->supercap_feedback), rx_data);
-			osSignalSet(gcan_device->supercap_alert, CAN_DEVICE_SIGNAL_SUPERCAP_RECV);
+			osThreadFlagsSet(gcan_device->supercap_alert, CAN_DEVICE_SIGNAL_SUPERCAP_RECV);
 			break;
 		
 		default:
@@ -229,7 +229,7 @@ void RxFifo0MsgPendingCallback(void) {
 	if (motor_received > CAN_CHASSIS_MOTOR_NUM) {
 		for(uint8_t i = 0; i < 3; i++) {
 			if(gcan_device->motor_alert[i]) {
-				osSignalSet(gcan_device->motor_alert, CAN_DEVICE_SIGNAL_MOTOR_RECV);
+				osThreadFlagsSet(gcan_device->motor_alert, CAN_DEVICE_SIGNAL_MOTOR_RECV);
 			}
 		}
 		motor_received = 0;
@@ -242,7 +242,7 @@ void RxFifo1MsgPendingCallback(void) {
 	switch (rx_header.StdId) {
 		case CAN_UWB_FEEDBACK_ID_BASE:
 			CAN_UWB_Decode(&(gcan_device->uwb_feedback), rx_data);
-			osSignalSet(gcan_device->uwb_alert, CAN_DEVICE_SIGNAL_UWB_RECV);
+			osThreadFlagsSet(gcan_device->uwb_alert, CAN_DEVICE_SIGNAL_UWB_RECV);
 			break;
 		
 		default:

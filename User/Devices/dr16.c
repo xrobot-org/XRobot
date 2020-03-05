@@ -19,7 +19,7 @@ static bool inited = false;
 
 /* Private function  ---------------------------------------------------------*/
 void DR16_RxCpltCallback(void) {
-	osSignalSet(gdr16->received_alert, DR16_SIGNAL_RAW_REDY);
+	osThreadFlagsSet(gdr16->received_alert, DR16_SIGNAL_RAW_REDY);
 }
 
 /* Exported functions --------------------------------------------------------*/

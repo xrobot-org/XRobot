@@ -20,8 +20,6 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_CTRL_CHASSIS;
-
 static CAN_Device_t cd;
 static DR16_t *dr16;
 
@@ -30,7 +28,8 @@ static Chassis_Ctrl_t chas_ctrl;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-void Task_CtrlChassis(void const *argument) {
+void Task_CtrlChassis(void *argument) {
+	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_MONITOR;
 	const Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	
@@ -47,16 +46,17 @@ void Task_CtrlChassis(void const *argument) {
 	dr16 = DR16_GetDevice();
 	
 	Chassis_Init(&chassis, CHASSIS_TYPE_MECANUM);
-	chassis.dt_sec = (float)delay_ms / 1000.f;
+	chassis.dt_sec = (float)delay_tick / 1000.f;
 	
-	uint32_t previous_wake_tick = osKernelSysTick();
+	uint32_t tick = osKernelGetTickCount();
 	while(1) {
 		/* Task body */
+		tick += delay_tick;
 		
-		osSignalWait(DR16_SIGNAL_DATA_REDY, 0);
+		osThreadFlagsWait(DR16_SIGNAL_DATA_REDY, osFlagsWaitAll, 0);
 		Chassis_ParseCommand(&chas_ctrl, dr16);
 		
-		if (osSignalWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, delay_ms).status == osEventSignal) {
+		if (osThreadFlagsWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osFlagsWaitAll, delay_tick)!= osFlagsErrorTimeout) {
 		
 			taskENTER_CRITICAL();
 			Chassis_UpdateFeedback(&chassis, &cd);
@@ -72,7 +72,7 @@ void Task_CtrlChassis(void const *argument) {
 				chassis.motor_cur_out[2],
 				chassis.motor_cur_out[3]);
 			
-			osDelayUntil(&previous_wake_tick, delay_ms);
+			osDelayUntil(tick);
 		} else {
 			CAN_Motor_ControlChassis(0.f, 0.f, 0.f, 0.f);
 		}

@@ -22,27 +22,25 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_INFO;
-
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-void Task_Info(void const *argument) {
-	//Task_Param_t *task_param = (Task_Param_t*)argument;
-	
-	//float capacitor_percentage;
+void Task_Info(void *argument) {
+	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_MONITOR;
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_INFO);
 	BSP_LED_Set(BSP_LED_GRN, BSP_LED_ON, 0.5f);
 	
-	uint32_t previous_wake_time = osKernelSysTick();
+	uint32_t tick = osKernelGetTickCount();
 	while(1) {
 		/* Task body */
+		tick += delay_tick;
 		
 		float battery_voltage = BSP_GetBatteryVoltage();
 		float battery_percentage = Capacity_GetBatteryRemain(battery_voltage);
 		
 		BSP_LED_Set(BSP_LED_GRN, BSP_LED_TAGGLE, 1);
-		osDelayUntil(&previous_wake_time, delay_ms);
+		
+		osDelayUntil(tick);
 	}
 }

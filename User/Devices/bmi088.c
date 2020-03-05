@@ -20,51 +20,51 @@
 #include "user_math.h"
 
 /* Private define ------------------------------------------------------------*/
-#define BMI088_ACCL_CHIP_ID_REG            (0x00)
-#define BMI088_ACCL_ERR_REG                (0x02)
-#define BMI088_ACCL_STATUS_REG             (0x03)
-#define BMI088_ACCL_X_LSB_REG              (0x12)
-#define BMI088_ACCL_X_MSB_REG              (0x13)
-#define BMI088_ACCL_Y_LSB_REG              (0x14)
-#define BMI088_ACCL_Y_MSB_REG              (0x15)
-#define BMI088_ACCL_Z_LSB_REG              (0x16)
-#define BMI088_ACCL_Z_MSB_REG              (0x17)
-#define BMI088_ACCL_SENSORTIME_0_REG       (0x18)
-#define BMI088_ACCL_SENSORTIME_1_REG       (0x19)
-#define BMI088_ACCL_SENSORTIME_2_REG       (0x1A)
-#define BMI088_ACCL_INT_STAT_1_REG         (0x1D)
-#define BMI088_TEMP_MSB_REG                (0x22)
-#define BMI088_TEMP_LSB_REG                (0x23)
-#define BMI088_ACCL_CONF_REG               (0x40)
-#define BMI088_ACCL_RANGE_REG              (0x41)
-#define BMI088_ACCL_INT1_IO_CONF_REG       (0x53)
-#define BMI088_ACCL_INT2_IO_CONF_REG       (0x54)
-#define BMI088_ACCL_INT1_INT2_MAP_DATA_REG (0x58)
-#define BMI088_ACCL_SELF_TEST_REG          (0x6D)
-#define BMI088_ACCL_PWR_CONF_REG           (0x7C)
-#define BMI088_ACCL_PWR_CTRL_REG           (0x7D)
-#define BMI088_ACCL_SOFTRESET_REG          (0x7E)
+#define BMI088_ACCL_CHIP_ID_REG				(0x00)
+#define BMI088_ACCL_ERR_REG					(0x02)
+#define BMI088_ACCL_STATUS_REG				(0x03)
+#define BMI088_ACCL_X_LSB_REG				(0x12)
+#define BMI088_ACCL_X_MSB_REG				(0x13)
+#define BMI088_ACCL_Y_LSB_REG				(0x14)
+#define BMI088_ACCL_Y_MSB_REG				(0x15)
+#define BMI088_ACCL_Z_LSB_REG				(0x16)
+#define BMI088_ACCL_Z_MSB_REG				(0x17)
+#define BMI088_ACCL_SENSORTIME_0_REG		(0x18)
+#define BMI088_ACCL_SENSORTIME_1_REG		(0x19)
+#define BMI088_ACCL_SENSORTIME_2_REG		(0x1A)
+#define BMI088_ACCL_INT_STAT_1_REG			(0x1D)
+#define BMI088_TEMP_MSB_REG					(0x22)
+#define BMI088_TEMP_LSB_REG					(0x23)
+#define BMI088_ACCL_CONF_REG				(0x40)
+#define BMI088_ACCL_RANGE_REG				(0x41)
+#define BMI088_ACCL_INT1_IO_CONF_REG		(0x53)
+#define BMI088_ACCL_INT2_IO_CONF_REG		(0x54)
+#define BMI088_ACCL_INT1_INT2_MAP_DATA_REG	(0x58)
+#define BMI088_ACCL_SELF_TEST_REG			(0x6D)
+#define BMI088_ACCL_PWR_CONF_REG			(0x7C)
+#define BMI088_ACCL_PWR_CTRL_REG			(0x7D)
+#define BMI088_ACCL_SOFTRESET_REG			(0x7E)
 
-#define BMI088_ACCL_CHIP_ID                (0x1E)
+#define BMI088_ACCL_CHIP_ID					(0x1E)
 
-#define BMI088_GYRO_CHIP_ID_REG                (0x00)
-#define BMI088_GYRO_X_LSB_REG                  (0x02)
-#define BMI088_GYRO_X_MSB_REG                  (0x03)
-#define BMI088_GYRO_Y_LSB_REG                  (0x04)
-#define BMI088_GYRO_Y_MSB_REG                  (0x05)
-#define BMI088_GYRO_Z_LSB_REG                  (0x06)
-#define BMI088_GYRO_Z_MSB_REG                  (0x07)
-#define BMI088_GYRO_INT_STAT_1_REG             (0x0A)
-#define BMI088_GYRO_RANGE_REG                  (0x0F)
-#define BMI088_GYRO_BANDWIDTH_REG              (0x10)
-#define BMI088_GYRO_LPM1_REG                   (0x11)
-#define BMI088_GYRO_SOFTRESET_REG              (0x14)
-#define BMI088_GYRO_INT_CTRL_REG               (0x15)
-#define BMI088_GYRO_INT3_INT4_IO_CONF_REG      (0x16)
-#define BMI088_GYRO_INT3_INT4_IO_MAP_REG       (0x18)
-#define BMI088_GYRO_SELF_TEST_REG              (0x3C)
+#define BMI088_GYRO_CHIP_ID_REG				(0x00)
+#define BMI088_GYRO_X_LSB_REG				(0x02)
+#define BMI088_GYRO_X_MSB_REG				(0x03)
+#define BMI088_GYRO_Y_LSB_REG				(0x04)
+#define BMI088_GYRO_Y_MSB_REG				(0x05)
+#define BMI088_GYRO_Z_LSB_REG				(0x06)
+#define BMI088_GYRO_Z_MSB_REG				(0x07)
+#define BMI088_GYRO_INT_STAT_1_REG			(0x0A)
+#define BMI088_GYRO_RANGE_REG				(0x0F)
+#define BMI088_GYRO_BANDWIDTH_REG			(0x10)
+#define BMI088_GYRO_LPM1_REG				(0x11)
+#define BMI088_GYRO_SOFTRESET_REG			(0x14)
+#define BMI088_GYRO_INT_CTRL_REG			(0x15)
+#define BMI088_GYRO_INT3_INT4_IO_CONF_REG	(0x16)
+#define BMI088_GYRO_INT3_INT4_IO_MAP_REG	(0x18)
+#define BMI088_GYRO_SELF_TEST_REG			(0x3C)
 
-#define BMI088_GYRO_CHIP_ID                    (0x0F)
+#define BMI088_GYRO_CHIP_ID					(0x0F)
 
 /* Private macro -------------------------------------------------------------*/
 #define BMI088_ACCL_NSS_SET()		HAL_GPIO_WritePin(ACCL_CS_GPIO_Port, ACCL_CS_Pin, GPIO_PIN_SET)
@@ -89,6 +89,7 @@ static void BMI_WriteSingle(BMI_Device_t dv, uint8_t reg, uint8_t data) {
 	buffer[0] = (reg  & 0x7f);
 	buffer[1] = data;
 	
+	BSP_Delay(1);
 	switch (dv) {
 		case BMI_ACCL:
 			BMI088_ACCL_NSS_RESET();
@@ -110,10 +111,10 @@ static void BMI_WriteSingle(BMI_Device_t dv, uint8_t reg, uint8_t data) {
 			BMI088_GYRO_NSS_SET();
 			break;
 	}
-	BSP_Delay(5);
 }
 
 static uint8_t BMI_ReadSingle(BMI_Device_t dv, uint8_t reg) {
+	BSP_Delay(1);
 	switch (dv) {
 		case BMI_ACCL:
 			BMI088_ACCL_NSS_RESET();
@@ -162,20 +163,20 @@ static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
 static void BMI088_RxCpltCallback(void) {
 	if (HAL_GPIO_ReadPin(ACCL_CS_GPIO_Port, ACCL_CS_Pin) == GPIO_PIN_RESET) {
 		BMI088_ACCL_NSS_SET();
-		osSignalSet(gimu->received_alert, BMI088_SIGNAL_ACCL_RAW_REDY);
+		osThreadFlagsSet(gimu->received_alert, BMI088_SIGNAL_ACCL_RAW_REDY);
 	}
 	if (HAL_GPIO_ReadPin(GYRO_CS_GPIO_Port, GYRO_CS_Pin) == GPIO_PIN_RESET) {
 		BMI088_GYRO_NSS_SET();
-		osSignalSet(gimu->received_alert, BMI088_SIGNAL_GYRO_RAW_REDY);
+		osThreadFlagsSet(gimu->received_alert, BMI088_SIGNAL_GYRO_RAW_REDY);
 	}
 }
 
 static void BMI088_AcclIntCallback(void) {
-	osSignalSet(gimu->received_alert, BMI088_SIGNAL_ACCL_NEW_DATA);
+	osThreadFlagsSet(gimu->received_alert, BMI088_SIGNAL_ACCL_NEW_DATA);
 }
 
 static void BMI088_GyroIntCallback(void) {
-	osSignalSet(gimu->received_alert, BMI088_SIGNAL_GYRO_NEW_DATA);
+	osThreadFlagsSet(gimu->received_alert, BMI088_SIGNAL_GYRO_NEW_DATA);
 }
 
 /* Exported functions --------------------------------------------------------*/

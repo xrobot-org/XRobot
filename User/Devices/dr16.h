@@ -42,7 +42,7 @@ typedef enum {
 } DR16_KeyValue_t;
 
 typedef struct {
-	osThreadId received_alert;
+	osThreadId_t received_alert;
 
 	uint8_t raw[DR16_RX_BUF_NUM];
 	

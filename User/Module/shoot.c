@@ -19,7 +19,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/ 
-static void TrigTimerCallback  (void const *arg) {
+static void TrigTimerCallback  (void *arg) {
 	Shoot_t *shoot = (Shoot_t*)arg;
 	
 	shoot->trig_pos_set += 2.f * PI / SHOOT_FEEDING_TOOTH_NUM;
@@ -27,15 +27,13 @@ static void TrigTimerCallback  (void const *arg) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-osTimerDef(trig_timer, TrigTimerCallback);
-
 int Shoot_Init(Shoot_t *shoot) {
 	if (shoot == NULL)
 		return -1;
 	
 	shoot->mode = SHOOT_MODE_RELAX;
 	
-	shoot->trig_timer_id = osTimerCreate(osTimer(trig_timer), osTimerPeriodic, shoot);
+	shoot->trig_timer_id = osTimerNew(TrigTimerCallback, osTimerPeriodic, shoot, NULL);
 
 	for(uint8_t i = 0; i < 2; i++) {
 		PID_Init(&(shoot->fric_pid[i]), PID_MODE_DERIVATIV_NONE, shoot->dt_sec);

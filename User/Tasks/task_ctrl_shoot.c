@@ -19,8 +19,6 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static const uint32_t delay_ms = osKernelSysTickFrequency / TASK_FREQ_HZ_CTRL_SHOOT;
-
 static CAN_Device_t *cd;
 static DR16_t *dr16;
 
@@ -29,7 +27,8 @@ static Shoot_Ctrl_t shoot_ctrl;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-void Task_CtrlShoot(void const *argument) {
+void Task_CtrlShoot(void *argument) {
+	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_SHOOT;
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_SHOOT);
 	
@@ -37,16 +36,17 @@ void Task_CtrlShoot(void const *argument) {
 	dr16 = DR16_GetDevice();
 
 	Shoot_Init(&shoot);
-	shoot.dt_sec = (float)delay_ms / 1000.f;
+	shoot.dt_sec = (float)delay_tick / 1000.f;
 	
-	uint32_t previous_wake_time = osKernelSysTick();
+	uint32_t tick = osKernelGetTickCount();
 	while(1) {
 		/* Task body */
+		tick += delay_tick;
 		
-		osSignalWait(DR16_SIGNAL_DATA_REDY, 0);
+		osThreadFlagsWait(DR16_SIGNAL_DATA_REDY, osFlagsWaitAll, 0);
 		Shoot_ParseCommand(&shoot_ctrl, dr16);
 		
-		if (osSignalWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osWaitForever).status == osEventSignal) {
+		if (osThreadFlagsWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osFlagsWaitAll, delay_tick)!= osFlagsErrorTimeout) {
 			
 			taskENTER_CRITICAL();
 			Shoot_UpdateFeedback(&shoot, cd);
@@ -62,7 +62,7 @@ void Task_CtrlShoot(void const *argument) {
 				shoot.trig_cur_out
 			);
 			
-			osDelayUntil(&previous_wake_time, delay_ms);
+			osDelayUntil(tick);
 		} else {
 			CAN_Motor_ControlShoot(0.f, 0.f, 0.f);
 		}
