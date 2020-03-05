@@ -8,9 +8,9 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef enum {
-    OLED_PEN_CLEAR = 0,
-    OLED_PEN_WRITE = 1,
-    OLED_PEN_INVERSION = 2,
+	OLED_PEN_CLEAR = 0,
+	OLED_PEN_WRITE = 1,
+	OLED_PEN_INVERSION = 2,
 } OLED_Pen_t;
 
 typedef struct {

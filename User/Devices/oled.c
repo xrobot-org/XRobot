@@ -193,7 +193,7 @@ static void OLED_WriteByte(uint8_t data, OLED_Write_t type) {
 			cmd_data[0] = 0x40;
 		break;
 	}
-    cmd_data[1] = data;
+	cmd_data[1] = data;
 	HAL_I2C_Master_Transmit_DMA(OLED_I2C, OLED_I2C_ADDRESS, cmd_data, 2);
 #endif
 	
@@ -209,7 +209,7 @@ static void OLED_WriteSequenceData(uint8_t *data, uint16_t len) {
 // TODO
 	uint8_t cmd_data[2];
 	cmd_data[0] = 0x40;
-    cmd_data[1] = data;
+	cmd_data[1] = data;
 	HAL_I2C_Master_Transmit_DMA(OLED_I2C, OLED_I2C_ADDRESS, cmd_data, 2);
 #endif
 }
@@ -236,8 +236,8 @@ int OLED_Init(OLED_t *oled) {
 	OLED_WriteByte(0xae, OLED_WriteCMD);	/* Dot martix display off. */
 	OLED_WriteByte(0x00, OLED_WriteCMD);	/* Set lower column address:(00H~0FH). */
 	OLED_WriteByte(0x10, OLED_WriteCMD);	/* Set higher column address:(10H~1FH). */
-	OLED_WriteByte(0x20, OLED_WriteCMD);    /* Set Memory Addressing Mode */
-	OLED_WriteByte(0x10, OLED_WriteCMD);    /* 00,Horizontal Addressing Mode;01,Vertical Addressing Mode;10,Page Addressing Mode (RESET);11,Invalid */
+	OLED_WriteByte(0x20, OLED_WriteCMD);	/* Set Memory Addressing Mode */
+	OLED_WriteByte(0x10, OLED_WriteCMD);	/* 00,Horizontal Addressing Mode;01,Vertical Addressing Mode;10,Page Addressing Mode (RESET);11,Invalid */
 	OLED_WriteByte(0x32, OLED_WriteCMD);	/* Set pump voltage 8v. */
 	OLED_WriteByte(0x40, OLED_WriteCMD);	/* Set display start line:(40H~7FH). */
 	OLED_WriteByte(0x81, OLED_WriteCMD);	/* Contarst control. */
@@ -261,8 +261,8 @@ int OLED_Init(OLED_t *oled) {
 	OLED_WriteByte(0x12, OLED_WriteCMD);
 	OLED_WriteByte(0xdb, OLED_WriteCMD);	/* Set vcom deselect level. */
 	OLED_WriteByte(0x20, OLED_WriteCMD);
-    OLED_WriteByte(0x8d, OLED_WriteCMD);    /* Set DC-DC enable */
-    OLED_WriteByte(0x14, OLED_WriteCMD);
+	OLED_WriteByte(0x8d, OLED_WriteCMD);	/* Set DC-DC enable */
+	OLED_WriteByte(0x14, OLED_WriteCMD);
 	OLED_WriteByte(0xaf, OLED_WriteCMD);	/* Display on. */
 	
 	memcmp(oled->gram, gram_logo, sizeof(oled->gram));
@@ -363,9 +363,9 @@ int OLED_DisplayOff(OLED_t *oled) {
 
 void OLED_SetCursor(uint8_t x, uint8_t y)
 {	
-	OLED_WriteByte((0xb0 + y), OLED_WriteCMD);              //set page address y
-    OLED_WriteByte(((x&0xf0)>>4)|0x10, OLED_WriteCMD);      //set column high address
-    OLED_WriteByte((x&0x0f), OLED_WriteCMD);                //set column low address
+	OLED_WriteByte((0xb0 + y), OLED_WriteCMD);			  //set page address y
+	OLED_WriteByte(((x&0xf0)>>4)|0x10, OLED_WriteCMD);	  //set column high address
+	OLED_WriteByte((x&0x0f), OLED_WriteCMD);				//set column low address
 }
 
 int OLED_Refresh(OLED_t *oled) {

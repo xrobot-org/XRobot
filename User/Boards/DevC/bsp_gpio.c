@@ -56,7 +56,7 @@ int BSP_GPIO_RegisterCallback(uint16_t pin, void (*callback)(void)) {
 	if (callback == NULL)
 		return -1;
 	
-    switch (pin) {
+	switch (pin) {
 		case ACCL_INT_Pin:
 			bsp_gpio_callback.ACCL_INT_Pin_Callback = callback;
 			break;
@@ -81,11 +81,11 @@ int BSP_GPIO_RegisterCallback(uint16_t pin, void (*callback)(void)) {
 		default:
 			return -1;
 	}
-    return 0;
+	return 0;
 }
 
 int BSP_GPIO_EnableIRQ(uint16_t pin) {
-    switch (pin) {
+	switch (pin) {
 		case ACCL_INT_Pin:
 			HAL_NVIC_EnableIRQ(ACCL_INT_EXTI_IRQn);
 			break;
@@ -110,11 +110,11 @@ int BSP_GPIO_EnableIRQ(uint16_t pin) {
 		default:
 			return -1;
 	}
-    return 0;
+	return 0;
 }
 
 int BSP_GPIO_DisableIRQ(uint16_t pin) {
-    switch (pin) {
+	switch (pin) {
 		case ACCL_INT_Pin:
 			HAL_NVIC_DisableIRQ(ACCL_INT_EXTI_IRQn);
 			break;
@@ -139,5 +139,5 @@ int BSP_GPIO_DisableIRQ(uint16_t pin) {
 		default:
 			return -1;
 	}
-    return 0;
+	return 0;
 }
