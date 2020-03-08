@@ -220,7 +220,7 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 	if (chas->Mix == NULL)
 		return CHASSIS_ERR_NULL;
 	
-	/* robot_ctrl_v -> chas_v. */
+	/* ctrl_v -> chas_v. */
 	/* Compute vx and vy. */
 	if (chas->mode == CHASSIS_MODE_BREAK) {
 		chas->chas_v.vx = 0.f;
@@ -253,14 +253,10 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 		chas->motor_rpm_set,
 		chas->wheel_num);
 	
-	
+	/* Compute output from setpiont. */
 	for(uint8_t i = 0; i < 4; i++) {
 		// TODO: Add scaler.
 		chas->motor_rpm_set[i] *= 1000;
-	}
-	
-	/* Compute output from setpiont. */
-	for(uint8_t i = 0; i < 4; i++) {
 		switch(chas->mode) {
 			case CHASSIS_MODE_BREAK:
 			case CHASSIS_MODE_FOLLOW_GIMBAL:

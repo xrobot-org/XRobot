@@ -97,11 +97,6 @@ typedef struct {
 	
 	/* Output filter */
 	LowPassFilter2p_t *output_filter;
-	
-	
-	int power_limit;
-	int power_consumpetion;
-	
 } Chassis_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
