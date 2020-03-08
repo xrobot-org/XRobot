@@ -52,9 +52,9 @@ void Task_CtrlGimbal(void *argument) {
 		
 		if (osThreadFlagsWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osFlagsWaitAll, delay_tick)!= osFlagsErrorTimeout) {
 			//TODO: IMU eulr
-			taskENTER_CRITICAL();
+			osKernelLock();
 			Gimbal_UpdateFeedback(&gimbal, cd);
-			taskEXIT_CRITICAL();
+			osKernelUnlock();
 			
 			Gimbal_SetMode(&gimbal, gimbal_ctrl.mode);
 			Gimbal_Control(&gimbal, &gimbal_ctrl.ctrl_eulr);

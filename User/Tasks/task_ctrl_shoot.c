@@ -48,9 +48,9 @@ void Task_CtrlShoot(void *argument) {
 		
 		if (osThreadFlagsWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osFlagsWaitAll, delay_tick)!= osFlagsErrorTimeout) {
 			
-			taskENTER_CRITICAL();
+			osKernelLock();
 			Shoot_UpdateFeedback(&shoot, cd);
-			taskEXIT_CRITICAL();
+			osKernelUnlock();
 			
 			Shoot_SetMode(&shoot, shoot_ctrl.mode);
 			Shoot_Control(&shoot, shoot_ctrl.bullet_speed, shoot_ctrl.shoot_freq_hz);

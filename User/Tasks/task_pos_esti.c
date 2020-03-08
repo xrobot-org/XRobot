@@ -77,11 +77,11 @@ void Task_PosEsti(void *argument) {
 			osThreadFlagsWait(IST8310_SIGNAL_MAGN_RAW_REDY, osFlagsWaitAll, 0u);
 		}
 		
-		taskENTER_CRITICAL();
+		osKernelLock();
 		BMI088_ParseAccl(&bmi088);
 		BMI088_ParseGyro(&bmi088);
 		IST8310_Parse(&ist8310);
-		taskEXIT_CRITICAL();
+		osKernelUnlock();
 		
 		uint32_t now = osKernelSysTick();
 		AHRS_Update(&gimbal_ahrs, &bmi088.accl, &bmi088.gyro, &ist8310.magn);

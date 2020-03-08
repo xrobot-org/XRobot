@@ -58,9 +58,9 @@ void Task_CtrlChassis(void *argument) {
 		
 		if (osThreadFlagsWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osFlagsWaitAll, delay_tick)!= osFlagsErrorTimeout) {
 		
-			taskENTER_CRITICAL();
+			osKernelLock();
 			Chassis_UpdateFeedback(&chassis, &cd);
-			taskEXIT_CRITICAL();
+			osKernelUnlock();
 			
 			Chassis_SetMode(&chassis, chas_ctrl.mode);
 			Chassis_Control(&chassis, &chas_ctrl.ctrl_v);
