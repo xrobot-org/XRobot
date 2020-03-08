@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-typedef enum PID_MODE {
+typedef enum {
 	/* Use PID_MODE_DERIVATIV_NONE for a PI controller (vs PID) */
 	PID_MODE_DERIVATIV_NONE = 0,
 	/* PID_MODE_DERIVATIV_CALC calculates discrete derivative from previous error,
