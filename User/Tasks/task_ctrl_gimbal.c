@@ -50,7 +50,7 @@ void Task_CtrlGimbal(void *argument) {
 		osThreadFlagsWait(DR16_SIGNAL_DATA_REDY, osFlagsWaitAll, 0);
 		Gimbal_ParseCommand(&gimbal, &gimbal_ctrl, dr16);
 		
-		if (osThreadFlagsWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osFlagsWaitAll, delay_tick)!= osFlagsErrorTimeout) {
+		if (osThreadFlagsWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
 			//TODO: IMU eulr
 			osKernelLock();
 			Gimbal_UpdateFeedback(&gimbal, cd);
