@@ -46,7 +46,7 @@ void Task_CtrlShoot(void *argument) {
 		osThreadFlagsWait(DR16_SIGNAL_DATA_REDY, osFlagsWaitAll, 0);
 		Shoot_ParseCommand(&shoot_ctrl, dr16);
 		
-		if (osThreadFlagsWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osFlagsWaitAll, delay_tick)!= osFlagsErrorTimeout) {
+		if (osThreadFlagsWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
 			
 			osKernelLock();
 			Shoot_UpdateFeedback(&shoot, cd);
