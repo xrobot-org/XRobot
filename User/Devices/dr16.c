@@ -44,6 +44,11 @@ DR16_t *DR16_GetDevice(void) {
 	return NULL;
 }
 
+int DR16_Restart(void) {
+	// TODO
+	return DR16_OK;
+}
+
 int DR16_StartReceiving(DR16_t *dr16) {
 	return BSP_UART_ReceiveDMA(BSP_UART_DR16, dr16->raw, DR16_RX_BUF_NUM);
 }
@@ -77,6 +82,14 @@ int DR16_Parse(DR16_t *dr16) {
 	dr16->data.rc.ch_res = dr16->raw[16] | (dr16->raw[17] << 8);
 	// TODO: TEST
 	return DR16_OK;
+}
+
+bool DR16_DataCorrupted(DR16_t *dr16) {
+	if (dr16 == NULL)
+		return DR16_ERR_NULL;
+	
+	// TODO
+	return true;
 }
 
 bool DR16_KeyPressed(const DR16_t *dr16, DR16_KeyValue_t key) {

@@ -79,5 +79,6 @@ int DR16_Restart(void);
 
 int DR16_StartReceiving(DR16_t *dr16);
 int DR16_Parse(DR16_t *dr16);
+bool DR16_DataCorrupted(DR16_t *dr16);
 
 bool DR16_KeyPressed(const DR16_t *dr16, DR16_KeyValue_t key);

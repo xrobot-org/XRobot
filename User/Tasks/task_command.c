@@ -44,8 +44,13 @@ void Task_Command(void *argument) {
 		osThreadFlagsWait(DR16_SIGNAL_RAW_REDY, osFlagsWaitAll, osWaitForever);
 		DR16_Parse(&dr16);
 		
-		osThreadFlagsSet(task_param->thread.ctrl_chassis, DR16_SIGNAL_DATA_REDY);
-		osThreadFlagsSet(task_param->thread.ctrl_gimbal, DR16_SIGNAL_DATA_REDY);
-		osThreadFlagsSet(task_param->thread.ctrl_shoot, DR16_SIGNAL_DATA_REDY);
+		// Check command error
+		if (DR16_DataCorrupted(&dr16)) {
+			DR16_Restart();
+		} else {
+			osThreadFlagsSet(task_param->thread.ctrl_chassis, DR16_SIGNAL_DATA_REDY);
+			osThreadFlagsSet(task_param->thread.ctrl_gimbal, DR16_SIGNAL_DATA_REDY);
+			osThreadFlagsSet(task_param->thread.ctrl_shoot, DR16_SIGNAL_DATA_REDY);
+		}
 	}
 }
