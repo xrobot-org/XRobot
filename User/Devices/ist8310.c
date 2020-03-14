@@ -18,21 +18,21 @@
 
 /* Include Component相关的头文件 */
 /* Private define ------------------------------------------------------------*/
-#define IST8310_WAI 			(0x00)
-#define IST8310_STAT1	(0x02)
-#define IST8310_DATAXL	(0x03)
-#define IST8310_STAT2	(0x09)
-#define IST8310_CNTL1	(0x0A)
-#define IST8310_CNTL2	(0x0B)
-#define IST8310_STR		(0x0C)
-#define IST8310_TEMPL	(0x1C)
-#define IST8310_TEMPH	(0x1D)
-#define IST8310_AVGCNTL	(0x41)
-#define IST8310_PDCNTL	(0x42)
+#define IST8310_WAI				(0x00)
+#define IST8310_STAT1			(0x02)
+#define IST8310_DATAXL			(0x03)
+#define IST8310_STAT2			(0x09)
+#define IST8310_CNTL1			(0x0A)
+#define IST8310_CNTL2			(0x0B)
+#define IST8310_STR				(0x0C)
+#define IST8310_TEMPL			(0x1C)
+#define IST8310_TEMPH			(0x1D)
+#define IST8310_AVGCNTL			(0x41)
+#define IST8310_PDCNTL			(0x42)
 
-#define IST8310_CHIP_ID				(0x10)
+#define IST8310_CHIP_ID			(0x10)
 
-#define IST8310_IIC_ADDRESS			(0x0E)
+#define IST8310_IIC_ADDRESS		(0x0E)
 
 /* Private macro -------------------------------------------------------------*/
 #define IST8310_GYRO_NSS_SET()		HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_SET)
