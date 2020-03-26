@@ -47,7 +47,7 @@ float BSP_GetBatteryVoltage(void) {
 	uint32_t raw = HAL_ADC_GetValue(&hadc3);
 	float voltage = (float)raw * voltage_vrefint_proportion * 10.090909090909090909090909090909f;
 
-    return voltage;
+	return voltage;
 }
 uint8_t BSP_GetHardwareVersion(void) {
 	return 1u;
