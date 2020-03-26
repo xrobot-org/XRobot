@@ -16,7 +16,7 @@
 /* Private variables ---------------------------------------------------------*/
 static struct {
 	 struct {
-		void (*TxCpltCallback)(void);             /* SPI Tx Completed callback          */
+		void (*TxCpltCallback)(void);             	/* SPI Tx Completed callback          */
 		  void (*RxCpltCallback)(void);             /* SPI Rx Completed callback          */
 		  void (*TxRxCpltCallback)(void);           /* SPI TxRx Completed callback        */
 		  void (*TxHalfCpltCallback)(void);         /* SPI Tx Half Completed callback     */
