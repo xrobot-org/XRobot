@@ -878,6 +878,11 @@
               <FilePath>..\User\Components\referee.c</FilePath>
             </File>
             <File>
+              <FileName>robot_config.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\robot_config.c</FilePath>
+            </File>
+            <File>
               <FileName>user_math.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\user_math.c</FilePath>
@@ -1859,6 +1864,11 @@
               <FileName>referee.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\referee.c</FilePath>
+            </File>
+            <File>
+              <FileName>robot_config.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\robot_config.c</FilePath>
             </File>
             <File>
               <FileName>user_math.c</FileName>
