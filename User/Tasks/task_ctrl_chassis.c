@@ -46,7 +46,7 @@ void Task_CtrlChassis(void *argument) {
 	dr16 = DR16_GetDevice();
 	
 	Chassis_Init(&chassis, CHASSIS_TYPE_MECANUM);
-	chassis.dt_sec = (float)delay_tick / 1000.f;
+	chassis.dt_sec = (float)delay_tick / (float)osKernelGetTickFreq();
 	
 	uint32_t tick = osKernelGetTickCount();
 	while(1) {

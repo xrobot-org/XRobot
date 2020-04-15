@@ -198,7 +198,7 @@ static const CLI_Command_Definition_t xParameterEcho = {
 
 /* Exported functions --------------------------------------------------------*/
 void Task_CLI(void *argument) {
-	//Task_Param_t *task_param = (Task_Param_t*)argument;
+	//const Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	char rx_char;
 	uint16_t index = 0;

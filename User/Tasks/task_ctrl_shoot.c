@@ -36,7 +36,7 @@ void Task_CtrlShoot(void *argument) {
 	dr16 = DR16_GetDevice();
 
 	Shoot_Init(&shoot);
-	shoot.dt_sec = (float)delay_tick / 1000.f;
+	shoot.dt_sec = (float)delay_tick / (float)osKernelGetTickFreq();
 	
 	uint32_t tick = osKernelGetTickCount();
 	while(1) {

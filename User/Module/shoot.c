@@ -22,7 +22,7 @@
 static void TrigTimerCallback  (void *arg) {
 	Shoot_t *shoot = (Shoot_t*)arg;
 	
-	shoot->trig_pos_set += 2.f * PI / SHOOT_FEEDING_TOOTH_NUM;
+	shoot->trig_angle_set += 2.f * PI / SHOOT_FEEDING_TOOTH_NUM;
 	
 }
 
@@ -149,7 +149,7 @@ int Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16) {
 	return -1;
 }
 
-int Shoot_Control(Shoot_t *shoot, float bullet_speed, uint32_t shoot_freq_hz) {
+int Shoot_Control(Shoot_t *shoot, float bullet_speed, float shoot_freq_hz) {
 	if (shoot == NULL)
 		return -1;
 	
@@ -163,7 +163,9 @@ int Shoot_Control(Shoot_t *shoot, float bullet_speed, uint32_t shoot_freq_hz) {
 
 	
 	uint32_t period_ms = 1000u / shoot_freq_hz;
-	osTimerStart(shoot->trig_timer_id, period_ms);  
+	if (!osTimerIsRunning(shoot->trig_timer_id))
+		osTimerStart(shoot->trig_timer_id, period_ms);  
+	
 	
 	
 	switch(shoot->mode) {
@@ -178,9 +180,9 @@ int Shoot_Control(Shoot_t *shoot, float bullet_speed, uint32_t shoot_freq_hz) {
 		case SHOOT_MODE_STDBY:
 		case SHOOT_MODE_FIRE:
 			for(uint8_t i = 0; i < 2; i++) {
-				shoot->fric_cur_out[i] = PID_Calculate(&(shoot->fric_pid[i]), shoot->fric_rpm_set[i], shoot->fric_rpm[i], 0.f, shoot->dt_sec);
+				shoot->fric_cur_out[i] = PID_Calculate(&shoot->fric_pid[i], shoot->fric_rpm_set[i], shoot->fric_rpm[i], 0.f, shoot->dt_sec);
 			}
-			shoot->trig_cur_out = PID_Calculate(&(shoot->trig_pid), shoot->trig_pos_set, shoot->trig_angle, 0.f, shoot->dt_sec);
+			shoot->trig_cur_out = PID_Calculate(&shoot->trig_pid, shoot->trig_angle_set, shoot->trig_angle, 0.f, shoot->dt_sec);
 			break;
 		
 		default:

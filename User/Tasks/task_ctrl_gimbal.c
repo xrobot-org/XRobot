@@ -30,7 +30,7 @@ static Gimbal_Ctrl_t gimbal_ctrl;
 /* Exported functions --------------------------------------------------------*/
 void Task_CtrlGimbal(void *argument) {
 	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_GIMBAL;
-	Task_Param_t *task_param = (Task_Param_t*)argument;
+	const Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_GIMBAL);
@@ -39,7 +39,7 @@ void Task_CtrlGimbal(void *argument) {
 	dr16 = DR16_GetDevice();
 	
 	Gimbal_Init(&gimbal);
-	gimbal.dt_sec = (float)delay_tick / 1000.f;
+	gimbal.dt_sec = (float)delay_tick / (float)osKernelGetTickFreq();
 	gimbal.imu = BMI088_GetDevice();
 	
 	uint32_t tick = osKernelGetTickCount();
@@ -51,7 +51,9 @@ void Task_CtrlGimbal(void *argument) {
 		Gimbal_ParseCommand(&gimbal, &gimbal_ctrl, dr16);
 		
 		if (osThreadFlagsWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
-			//TODO: IMU eulr
+			osStatus os_status = osMessageQueueGet(task_param->messageq.gimb_eulr, gimbal.imu_eulr, NULL, 0);
+			
+			
 			osKernelLock();
 			Gimbal_UpdateFeedback(&gimbal, cd);
 			osKernelUnlock();

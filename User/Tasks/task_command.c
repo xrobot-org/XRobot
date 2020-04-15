@@ -30,7 +30,7 @@ static DR16_t dr16;
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_Command(void *argument) {
-	Task_Param_t *task_param = (Task_Param_t*)argument;
+	const Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_COMMAND);

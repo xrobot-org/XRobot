@@ -157,6 +157,7 @@ int Gimbal_Control(Gimbal_t *gimb, AHRS_Eulr_t *ctrl_eulr) {
 			ctrl_eulr->yaw = 0.f;
 			ctrl_eulr->pit = 0.f;
 			/* NO break. */
+		
 		case GIMBAL_MODE_RELATIVE:
 			motor_gyro_set = PID_Calculate(&gimb->yaw_inner_pid, ctrl_eulr->yaw, gimb->encoder_eulr.yaw, gimb->imu->gyro.z, gimb->dt_sec);
 			gimb->yaw_cur_out  = PID_Calculate(&gimb->yaw_outer_pid, motor_gyro_set, gimb->imu->gyro.z, 0.f, gimb->dt_sec);

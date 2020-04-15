@@ -40,7 +40,7 @@ static PID_t imu_temp_ctrl_pid;
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_PosEsti(void *argument) {
-	Task_Param_t *task_param = (Task_Param_t*)argument;
+	const Task_Param_t *task_param = (Task_Param_t*)argument;
 
 	bmi088.received_alert = osThreadGetId();
 	BMI088_Init(&bmi088);
@@ -87,18 +87,16 @@ void Task_PosEsti(void *argument) {
 		AHRS_Update(&gimbal_ahrs, &bmi088.accl, &bmi088.gyro, &ist8310.magn);
 		AHRS_GetEulr(&debug_eulr, &gimbal_ahrs);
 		
-		#if 0
 		AHRS_Eulr_t *eulr_to_send = BSP_Malloc(sizeof(*eulr_to_send));
 		
 		if (eulr_to_send) {
 			AHRS_GetEulr(eulr_to_send, &gimbal_ahrs);
 			
-			osStatus os_status = osMessageQueuePut(task_param->message.gimb_eulr, eulr_to_send, 0, 0);
+			osStatus os_status = osMessageQueuePut(task_param->messageq.gimb_eulr, eulr_to_send, 0, 0);
 			
 			if (os_status == osErrorOS)
 				BSP_Free(eulr_to_send);
 		}
-		#endif
 		
 		BSP_PWM_Set(BSP_PWM_IMU_HEAT, PID_Calculate(&imu_temp_ctrl_pid, 50.f, bmi088.temp, 0.f, 0.f));
 	}

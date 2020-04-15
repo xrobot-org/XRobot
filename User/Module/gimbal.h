@@ -89,12 +89,9 @@ typedef struct {
 	Gimbal_Mode_t mode;
 	
 	/* Feedback */
-	AHRS_Eulr_t encoder_eulr;
 	BMI088_t *imu;
 	AHRS_Eulr_t *imu_eulr;
-	
-	/* PID set point */
-	float motor_pos_set[4];
+	AHRS_Eulr_t encoder_eulr;
 	
 	/* PID */
 	PID_t yaw_inner_pid;
