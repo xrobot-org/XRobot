@@ -12,6 +12,7 @@
 /* Include Component相关的头文件。 */
 #include "pid.h"
 #include "ahrs.h"
+#include "low_pass_filter_2p.h"
 
 /* Include Module相关的头文件。 */
 /* Exported constants --------------------------------------------------------*/\
@@ -101,9 +102,12 @@ typedef struct {
 	PID_t pit_outer_pid;
 	
 	/* Output */
-	float pit_cur_out;
 	float yaw_cur_out;
+	float pit_cur_out;
 	
+	/* Output filter */
+	LowPassFilter2p_t yaw_output_filter;
+	LowPassFilter2p_t pit_output_filter;
 } Gimbal_t;
 
 /* Exported functions prototypes ---------------------------------------------*/

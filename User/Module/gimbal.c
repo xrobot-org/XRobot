@@ -38,6 +38,8 @@ int Gimbal_Init(Gimbal_t *gimb) {
 	PID_Init(&(gimb->pit_outer_pid), PID_MODE_DERIVATIV_NONE, gimb->dt_sec);
 	PID_SetParameters(&(gimb->pit_outer_pid), 5.f, 1.f, 0.f, 1.f, 1.f);
 	
+	LowPassFilter2p_Init(&(gimb->yaw_output_filter), 1000.f / gimb->dt_sec, 100.f);
+	LowPassFilter2p_Init(&(gimb->pit_output_filter), 1000.f / gimb->dt_sec, 100.f);
 	return 0;
 }
 
@@ -146,11 +148,11 @@ int Gimbal_Control(Gimbal_t *gimb, AHRS_Eulr_t *ctrl_eulr) {
 			break;
 		
 		case GIMBAL_MODE_ABSOLUTE:
-			motor_gyro_set = PID_Calculate(&gimb->yaw_inner_pid, ctrl_eulr->yaw, gimb->imu_eulr->yaw, gimb->imu->gyro.z, gimb->dt_sec);
-			gimb->yaw_cur_out  = PID_Calculate(&gimb->yaw_outer_pid, motor_gyro_set, gimb->imu->gyro.z, 0.f, gimb->dt_sec);
+			motor_gyro_set = PID_Calculate(&(gimb->yaw_inner_pid), ctrl_eulr->yaw, gimb->imu_eulr->yaw, gimb->imu->gyro.z, gimb->dt_sec);
+			gimb->yaw_cur_out  = PID_Calculate(&(gimb->yaw_outer_pid), motor_gyro_set, gimb->imu->gyro.z, 0.f, gimb->dt_sec);
 			
-			motor_gyro_set = PID_Calculate(&gimb->pit_inner_pid, ctrl_eulr->pit, gimb->imu_eulr->pit, gimb->imu->gyro.x, gimb->dt_sec);
-			gimb->pit_cur_out  = PID_Calculate(&gimb->pit_outer_pid, motor_gyro_set, gimb->imu->gyro.x, 0.f, gimb->dt_sec);
+			motor_gyro_set = PID_Calculate(&(gimb->pit_inner_pid), ctrl_eulr->pit, gimb->imu_eulr->pit, gimb->imu->gyro.x, gimb->dt_sec);
+			gimb->pit_cur_out  = PID_Calculate(&(gimb->pit_outer_pid), motor_gyro_set, gimb->imu->gyro.x, 0.f, gimb->dt_sec);
 			break;
 			
 		case GIMBAL_MODE_FIX:
@@ -159,18 +161,21 @@ int Gimbal_Control(Gimbal_t *gimb, AHRS_Eulr_t *ctrl_eulr) {
 			/* NO break. */
 		
 		case GIMBAL_MODE_RELATIVE:
-			motor_gyro_set = PID_Calculate(&gimb->yaw_inner_pid, ctrl_eulr->yaw, gimb->encoder_eulr.yaw, gimb->imu->gyro.z, gimb->dt_sec);
-			gimb->yaw_cur_out  = PID_Calculate(&gimb->yaw_outer_pid, motor_gyro_set, gimb->imu->gyro.z, 0.f, gimb->dt_sec);
+			motor_gyro_set = PID_Calculate(&(gimb->yaw_inner_pid), ctrl_eulr->yaw, gimb->encoder_eulr.yaw, gimb->imu->gyro.z, gimb->dt_sec);
+			gimb->yaw_cur_out  = PID_Calculate(&(gimb->yaw_outer_pid), motor_gyro_set, gimb->imu->gyro.z, 0.f, gimb->dt_sec);
 			
-			motor_gyro_set = PID_Calculate(&gimb->pit_inner_pid, ctrl_eulr->pit, gimb->encoder_eulr.pit, gimb->imu->gyro.x, gimb->dt_sec);
-			gimb->pit_cur_out  = PID_Calculate(&gimb->pit_outer_pid, motor_gyro_set, gimb->imu->gyro.x, 0.f, gimb->dt_sec);
+			motor_gyro_set = PID_Calculate(&(gimb->pit_inner_pid), ctrl_eulr->pit, gimb->encoder_eulr.pit, gimb->imu->gyro.x, gimb->dt_sec);
+			gimb->pit_cur_out  = PID_Calculate(&(gimb->pit_outer_pid), motor_gyro_set, gimb->imu->gyro.x, 0.f, gimb->dt_sec);
 			break;
 			
 		default:
 			return -1;
 	}
 	
-	// TODO: Filter output.
+	/* Filter output. */
+	gimb->yaw_cur_out = LowPassFilter2p_Apply(&(gimb->yaw_output_filter), gimb->yaw_cur_out);
+	gimb->pit_cur_out = LowPassFilter2p_Apply(&(gimb->pit_output_filter), gimb->pit_cur_out);
+	
 	
 	return 0;
 }

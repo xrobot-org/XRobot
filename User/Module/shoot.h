@@ -12,6 +12,7 @@
 
 /* Include Component相关的头文件 */
 #include "pid.h"
+#include "low_pass_filter_2p.h"
 
 /* Include Module相关的头文件 */
 /* Exported constants --------------------------------------------------------*/
@@ -65,6 +66,11 @@ typedef struct {
 	float trig_cur_out;
 	
 	int heat_limiter;
+	
+	/* Output filter */
+	LowPassFilter2p_t fric_output_filter[2];
+	LowPassFilter2p_t trig_output_filter;
+
 } Shoot_t;
 
 
