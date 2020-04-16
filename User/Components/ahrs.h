@@ -1,6 +1,6 @@
 /* 
 	开源的AHRS算法。
-
+	MadgwickAHRS
 */
 
 #pragma once

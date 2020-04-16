@@ -1,9 +1,3 @@
-/* 
-	Modified from https://github.com/PX4/Firmware/blob/master/src/lib/pid/pid.cpp
-
-*/
-
-
 #include "power_limit.h"
 
 #include "user_math.h"

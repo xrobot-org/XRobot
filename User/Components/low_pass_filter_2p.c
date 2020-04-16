@@ -2,11 +2,12 @@
 	二阶低通滤波器。
 
 */
+
 #include "low_pass_filter_2p.h"
 
 #include "user_math.h"
 
-void LowPassFilter2p_SetParameters(LowPassFilter2p_t *f, float sample_freq, float cutoff_freq) {
+void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq, float cutoff_freq) {
 	f->cutoff_freq = cutoff_freq;
 	
 	f->delay_element_1 = 0.0f;

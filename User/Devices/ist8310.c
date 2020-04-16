@@ -46,7 +46,6 @@ static bool inited = false;
 /* Private function  ---------------------------------------------------------*/
 static void IST8310_WriteSingle(uint8_t reg, uint8_t data) {
 	BSP_I2C_Transmit(BSP_I2C_COMP, reg, &data, 2u, 20u);
-	
 }
 
 static uint8_t IST8310_ReadSingle(uint8_t reg) {

@@ -3,6 +3,8 @@
 
 */
 
+#pragma once
+
 typedef struct {
 	float cutoff_freq;
 	
@@ -18,6 +20,6 @@ typedef struct {
 		
 } LowPassFilter2p_t;
 
-void LowPassFilter2p_SetParameters(LowPassFilter2p_t *f, float sample_freq, float cutoff_freq);
+void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq, float cutoff_freq);
 float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample);
 float LowPassFilter2p_Reset(LowPassFilter2p_t *f, float sample);

@@ -838,6 +838,11 @@
               <FilePath>..\User\Components\error_detect.c</FilePath>
             </File>
             <File>
+              <FileName>heat_limit.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\heat_limit.c</FilePath>
+            </File>
+            <File>
               <FileName>kalmanf.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\kalmanf.c</FilePath>
@@ -1824,6 +1829,11 @@
               <FileName>error_detect.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\error_detect.c</FilePath>
+            </File>
+            <File>
+              <FileName>heat_limit.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\heat_limit.c</FilePath>
             </File>
             <File>
               <FileName>kalmanf.c</FileName>

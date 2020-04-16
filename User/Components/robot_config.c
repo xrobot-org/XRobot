@@ -1,9 +1,3 @@
-/* 
-	Modified from https://github.com/PX4/Firmware/blob/master/src/lib/pid/pid.cpp
-
-*/
-
-
 #include "robot_config.h"
 static const RobotConfig_t config_infantry = {0
 	
