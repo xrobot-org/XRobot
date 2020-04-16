@@ -81,11 +81,11 @@ int Chassis_Init(Chassis_t *chas, Chassis_Type_t type) {
 	if(chas->output_filter == NULL)
 		goto error5;
 		
-	for(uint8_t i = 0; i < 4; i++) {
+	for(uint8_t i = 0; i < chas->wheel_num; i++) {
 		PID_Init(&(chas->motor_pid[i]), PID_MODE_DERIVATIV_NONE, chas->dt_sec);
 		PID_SetParameters(&(chas->motor_pid[i]), 5.f, 1.f, 0.f, 1.f, 1.f);
 		
-		LowPassFilter2p_SetParameters(&chas->output_filter[i], chas->dt_sec / 1000.f, 100.f);
+		LowPassFilter2p_Init(&(chas->output_filter[i]), 1000.f / chas->dt_sec, 100.f);
 	}
 	
 	return CHASSIS_OK;
@@ -280,7 +280,7 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 	
 	/* Filter output. */
 	for(uint8_t i = 0; i < 4; i++) {
-		chas->motor_cur_out[i] = LowPassFilter2p_Apply(&chas->output_filter[i], chas->motor_cur_out[i]);
+		chas->motor_cur_out[i] = LowPassFilter2p_Apply(&(chas->output_filter[i]), chas->motor_cur_out[i]);
 	}
 	
 	PowerLimit_Apply(80.f, 25.f, chas->motor_cur_out, chas->wheel_num);
