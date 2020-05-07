@@ -33,7 +33,7 @@ BMI088_t bmi088;
 IST8310_t ist8310;
 
 AHRS_t gimbal_ahrs;
-AHRS_Eulr_t debug_eulr;
+AHRS_Eulr_t eulr_to_send;
 
 static PID_t imu_temp_ctrl_pid;
 
@@ -85,17 +85,10 @@ void Task_PosEsti(void *argument) {
 		
 		uint32_t now = osKernelSysTick();
 		AHRS_Update(&gimbal_ahrs, &bmi088.accl, &bmi088.gyro, &ist8310.magn);
-		AHRS_GetEulr(&debug_eulr, &gimbal_ahrs);
-		
-		AHRS_Eulr_t *eulr_to_send = BSP_Malloc(sizeof(*eulr_to_send));
-		
-		if (eulr_to_send) {
-			AHRS_GetEulr(eulr_to_send, &gimbal_ahrs);
+		AHRS_GetEulr(&eulr_to_send, &gimbal_ahrs);
+		osStatus os_status = osMessageQueuePut(task_param->messageq.gimb_eulr, &eulr_to_send, 0, 0);
 			
-			osStatus os_status = osMessageQueuePut(task_param->messageq.gimb_eulr, eulr_to_send, 0, 0);
-			
-			if (os_status == osErrorOS)
-				BSP_Free(eulr_to_send);
+		if (os_status == osErrorOS) {
 		}
 		
 		BSP_PWM_Set(BSP_PWM_IMU_HEAT, PID_Calculate(&imu_temp_ctrl_pid, 50.f, bmi088.temp, 0.f, 0.f));

@@ -53,7 +53,6 @@ void Task_CtrlGimbal(void *argument) {
 		if (osThreadFlagsWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
 			osStatus os_status = osMessageQueueGet(task_param->messageq.gimb_eulr, gimbal.imu_eulr, NULL, 0);
 			
-			
 			osKernelLock();
 			Gimbal_UpdateFeedback(&gimbal, cd);
 			osKernelUnlock();
