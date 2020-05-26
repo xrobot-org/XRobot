@@ -828,6 +828,11 @@
               <FilePath>..\User\Components\ahrs.c</FilePath>
             </File>
             <File>
+              <FileName>ballistics.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\ballistics.c</FilePath>
+            </File>
+            <File>
               <FileName>capacity.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\capacity.c</FilePath>
@@ -1819,6 +1824,11 @@
               <FileName>ahrs.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\ahrs.c</FilePath>
+            </File>
+            <File>
+              <FileName>ballistics.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\ballistics.c</FilePath>
             </File>
             <File>
               <FileName>capacity.c</FileName>
