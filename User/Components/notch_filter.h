@@ -3,6 +3,8 @@
 
 */
 
+#pragma once
+
 typedef struct {
 	float notch_freq;
 	float bandwidth;
@@ -18,6 +20,6 @@ typedef struct {
 		
 } NotchFilter_t;
 
-void NotchFilter_SetParameters(NotchFilter_t *f, float sample_freq, float notch_freq, float bandwidth);
+void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq, float bandwidth);
 float NotchFilter_Apply(NotchFilter_t *f, float sample);
 float NotchFilter_Reset(NotchFilter_t *f, float sample);

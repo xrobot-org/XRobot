@@ -9,7 +9,7 @@
 
 
 
-void NotchFilter_SetParameters(NotchFilter_t *f, float sample_freq, float notch_freq, float bandwidth) {
+void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq, float bandwidth) {
 	f->notch_freq = notch_freq;
 	f->bandwidth = bandwidth;
 	
@@ -41,14 +41,14 @@ void NotchFilter_SetParameters(NotchFilter_t *f, float sample_freq, float notch_
 }
 
 inline float NotchFilter_Apply(NotchFilter_t *f, float sample) {
-		// Direct Form II implementation
-		const float delay_element_0 = sample - f->delay_element_1 * f->a1 - f->delay_element_2 * f->a2;
-		const float output = delay_element_0 * f->b0 + f->delay_element_1 * f->b1 + f->delay_element_2 * f->b2;
+	// Direct Form II implementation
+	const float delay_element_0 = sample - f->delay_element_1 * f->a1 - f->delay_element_2 * f->a2;
+	const float output = delay_element_0 * f->b0 + f->delay_element_1 * f->b1 + f->delay_element_2 * f->b2;
 
-		f->delay_element_2 = f->delay_element_1;
-		f->delay_element_1 = delay_element_0;
+	f->delay_element_2 = f->delay_element_1;
+	f->delay_element_1 = delay_element_0;
 
-		return output;
+	return output;
 }
 
 float NotchFilter_Reset(NotchFilter_t *f, float sample) {
