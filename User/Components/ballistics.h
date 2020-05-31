@@ -1,14 +1,14 @@
 /* 
-	剩余电流算法。
+	弹道补偿算法。
 	
-	通过电压值计算剩余电量。
+	。
 */
 
 #pragma once
 
 
 typedef struct {
-	
+	int place_holder;
 } Ballistics_t;
 
 void Ballistics_Init(Ballistics_t *b, float sample_freq, float notch_freq, float bandwidth);
