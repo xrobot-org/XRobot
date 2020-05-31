@@ -18,8 +18,7 @@
 
 #pragma pack(push, 1)
 
-typedef enum
-{
+typedef enum {
 	GAME_STATE_CMD_ID					= 0x0001,
 	GAME_RESULT_CMD_ID					= 0x0002,
 	GAME_ROBOT_HP_CMD_ID				= 0x0003,
@@ -39,16 +38,14 @@ typedef enum
 	IDCustomData,
 }referee_cmd_id_t;
 
-typedef  struct
-{
+typedef  struct {
   uint8_t SOF;
   uint16_t data_length;
   uint8_t seq;
   uint8_t CRC8;
 } frame_header_struct_t;
 
-typedef enum
-{
+typedef enum {
   STEP_HEADER_SOF 	= 0,
   STEP_LENGTH_LOW	= 1,
   STEP_LENGTH_HIGH	= 2,
@@ -57,8 +54,7 @@ typedef enum
   STEP_DATA_CRC16	= 5,
 } unpack_step_e;
 
-typedef struct
-{
+typedef struct {
   frame_header_struct_t *p_header;
   uint16_t data_len;
   uint8_t protocol_packet[REF_PROTOCOL_FRAME_MAX_SIZE];
