@@ -13,6 +13,8 @@
 
 /* Include Device相关的头文件 */
 /* Include Component相关的头文件 */
+#include "robot_config.h"
+
 /* Include Module相关的头文件 */
 #include "chassis.h"
 
@@ -32,8 +34,7 @@ void Task_CtrlChassis(void *argument) {
 	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_MONITOR;
 	const Task_Param_t *task_param = (Task_Param_t*)argument;
 	
-	
-	/* Task Setup */
+	/* Device Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_CHASSIS);
 	
 	cd.motor_alert[0] = osThreadGetId();
@@ -45,9 +46,11 @@ void Task_CtrlChassis(void *argument) {
 	CAN_DeviceInit(&cd);
 	dr16 = DR16_GetDevice();
 	
-	Chassis_Init(&chassis, CHASSIS_TYPE_MECANUM);
+	/* Module Setup */
+	Chassis_Init(&chassis, &(RobotConfig_Get(ROBOT_CONFIG_MODEL_INFANTRY)->chassis_param));
 	chassis.dt_sec = (float)delay_tick / (float)osKernelGetTickFreq();
 	
+	/* Task Setup */
 	uint32_t tick = osKernelGetTickCount();
 	while(1) {
 		/* Task body */
@@ -62,7 +65,7 @@ void Task_CtrlChassis(void *argument) {
 			Chassis_UpdateFeedback(&chassis, &cd);
 			osKernelUnlock();
 			
-			Chassis_SetMode(&chassis, chas_ctrl.mode);
+			Chassis_SetMode(&chassis, chas_ctrl.mode, &(RobotConfig_Get(ROBOT_CONFIG_MODEL_INFANTRY)->chassis_param));
 			Chassis_Control(&chassis, &chas_ctrl.ctrl_v);
 			
 			// Check can error

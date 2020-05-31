@@ -20,23 +20,23 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-int Gimbal_Init(Gimbal_t *gimb) {
+int Gimbal_Init(Gimbal_t *gimb, const Gimbal_Params_t *gimb_param) {
 	if (gimb == NULL)
 		return -1;
 	
 	gimb->mode = GIMBAL_MODE_INIT;
 
 	PID_Init(&(gimb->yaw_inner_pid), PID_MODE_DERIVATIV_SET, gimb->dt_sec);
-	PID_SetParameters(&(gimb->yaw_inner_pid), 5.f, 1.f, 0.f, 1.f, 1.f);
+	PID_SetParams(&(gimb->yaw_inner_pid), &(gimb_param->yaw_inner_pid_param));
 	
 	PID_Init(&(gimb->yaw_outer_pid), PID_MODE_DERIVATIV_NONE, gimb->dt_sec);
-	PID_SetParameters(&(gimb->yaw_outer_pid), 5.f, 1.f, 0.f, 1.f, 1.f);
+	PID_SetParams(&(gimb->yaw_outer_pid), &(gimb_param->yaw_outer_pid_param));
 	
 	PID_Init(&(gimb->pit_inner_pid), PID_MODE_DERIVATIV_SET, gimb->dt_sec);
-	PID_SetParameters(&(gimb->pit_inner_pid), 5.f, 1.f, 0.f, 1.f, 1.f);
+	PID_SetParams(&(gimb->pit_inner_pid), &(gimb_param->pit_inner_pid_param));
 	
 	PID_Init(&(gimb->pit_outer_pid), PID_MODE_DERIVATIV_NONE, gimb->dt_sec);
-	PID_SetParameters(&(gimb->pit_outer_pid), 5.f, 1.f, 0.f, 1.f, 1.f);
+	PID_SetParams(&(gimb->pit_outer_pid), &(gimb_param->pit_outer_pid_param));
 	
 	LowPassFilter2p_Init(&(gimb->yaw_output_filter), 1000.f / gimb->dt_sec, 100.f);
 	LowPassFilter2p_Init(&(gimb->pit_output_filter), 1000.f / gimb->dt_sec, 100.f);

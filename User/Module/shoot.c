@@ -27,7 +27,7 @@ static void TrigTimerCallback  (void *arg) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-int Shoot_Init(Shoot_t *shoot) {
+int Shoot_Init(Shoot_t *shoot, const Shoot_Params_t *shoot_param) {
 	if (shoot == NULL)
 		return -1;
 	
@@ -37,13 +37,13 @@ int Shoot_Init(Shoot_t *shoot) {
 
 	for(uint8_t i = 0; i < 2; i++) {
 		PID_Init(&(shoot->fric_pid[i]), PID_MODE_DERIVATIV_NONE, shoot->dt_sec);
-		PID_SetParameters(&(shoot->fric_pid[i]), 5.f, 1.f, 0.f, 1.f, 1.f);
+		PID_SetParams(&(shoot->fric_pid[i]), &(shoot_param->fric_pid_param[i]));
 		
 		LowPassFilter2p_Init(&(shoot->fric_output_filter[i]), 1000.f / shoot->dt_sec, 100.f);
 	}
 	
 	PID_Init(&(shoot->trig_pid), PID_MODE_DERIVATIV_NONE, shoot->dt_sec);
-	PID_SetParameters(&(shoot->trig_pid), 5.f, 1.f, 0.f, 1.f, 1.f);
+	PID_SetParams(&(shoot->trig_pid), &(shoot_param->trig_pid_param));
 	
 	LowPassFilter2p_Init(&(shoot->trig_output_filter), 1000.f / shoot->dt_sec, 100.f);
 	return 0;

@@ -28,32 +28,32 @@ int PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min) {
 }
 
 
-int PID_SetParameters(PID_t *pid, float kp, float ki, float kd, float integral_limit, float output_limit) {
+int PID_SetParams(PID_t *pid, const PID_Params_t *param) {
 	if (pid == NULL)
 		return -1;
 	
-	if (isfinite(kp))
-		pid->kp = kp;
+	if (isfinite(param->kp))
+		pid->kp = param->kp;
 	else
 		return -1;
 
-	if (isfinite(ki))
-		pid->ki = ki;
+	if (isfinite(param->ki))
+		pid->ki = param->ki;
 	else
 		return -1;
 
-	if (isfinite(kd))
-		pid->kd = kd;
+	if (isfinite(param->kd))
+		pid->kd = param->kd;
 	else
 		return -1;
 
-	if (isfinite(integral_limit))
-		pid->integral_limit = integral_limit;
+	if (isfinite(param->integral_limit))
+		pid->integral_limit = param->integral_limit;
 	else
 		return -1;
 
-	if (isfinite(output_limit))
-		pid->output_limit = output_limit;
+	if (isfinite(param->output_limit))
+		pid->output_limit = param->output_limit;
 	else
 		return -1;
 

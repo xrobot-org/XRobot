@@ -6,7 +6,6 @@
 
 #include <stdint.h>
 
-
 #include "chassis.h"
 #include "gimbal.h"
 #include "shoot.h"
@@ -21,17 +20,11 @@ typedef enum {
 } RobotConfig_Model_t;
 
 typedef struct {
-	struct {
-		int place_holder;
-	}chassis;
+	const Chassis_Params_t chassis_param;
+	const Gimbal_Params_t gimbal_param;
+	const Shoot_Params_t shoot_param;
 	
-	struct {
-		int place_holder;
-	}gimbal;
-	
-	struct {
-		int place_holder;
-	}shoot;
+	/* Xxx_Params_t xxx_param; */
 } RobotConfig_t;
 
 const RobotConfig_t *RobotConfig_Get(RobotConfig_Model_t model);

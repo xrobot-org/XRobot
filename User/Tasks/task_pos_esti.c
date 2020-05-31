@@ -36,6 +36,13 @@ AHRS_t gimbal_ahrs;
 AHRS_Eulr_t eulr_to_send;
 
 static PID_t imu_temp_ctrl_pid;
+static const PID_Params_t imu_temp_ctrl_pid_param = {
+	.kp = 0.5,
+	.ki = 0.5,
+	.kd = 0.5,
+	.integral_limit = 0.5,
+	.output_limit = 0.5,
+};
 
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -56,7 +63,7 @@ void Task_PosEsti(void *argument) {
 	AHRS_Init(&gimbal_ahrs, &ist8310.magn, BMI088_GetUpdateFreq(&bmi088));
 	
 	PID_Init(&imu_temp_ctrl_pid, PID_MODE_DERIVATIV_NONE, 1.f/BMI088_GetUpdateFreq(&bmi088));
-	PID_SetParameters(&imu_temp_ctrl_pid, .005f, .001f, 0.f, 1.f, 1.f);
+	PID_SetParams(&imu_temp_ctrl_pid, &imu_temp_ctrl_pid_param);
 	
 	BSP_PWM_Set(BSP_PWM_IMU_HEAT, 0.f);
 	BSP_PWM_Start(BSP_PWM_IMU_HEAT);

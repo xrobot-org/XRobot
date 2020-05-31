@@ -12,9 +12,11 @@
 
 /* Include Device相关的头文件 */
 /* Include Component相关的头文件 */
-#include "shoot.h"
+#include "robot_config.h"
 
 /* Include Module相关的头文件 */
+#include "shoot.h"
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -34,8 +36,8 @@ void Task_CtrlShoot(void *argument) {
 	
 	cd = CAN_GetDevice();
 	dr16 = DR16_GetDevice();
-
-	Shoot_Init(&shoot);
+	
+	Shoot_Init(&shoot, &(RobotConfig_Get(ROBOT_CONFIG_MODEL_INFANTRY)->shoot_param));
 	shoot.dt_sec = (float)delay_tick / (float)osKernelGetTickFreq();
 	
 	uint32_t tick = osKernelGetTickCount();

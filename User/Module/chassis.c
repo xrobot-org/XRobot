@@ -23,14 +23,13 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-int Chassis_Init(Chassis_t *chas, Chassis_Type_t type) {
+int Chassis_Init(Chassis_t *chas, const Chassis_Params_t *chas_param) {
 	if (chas == NULL)
 		return CHASSIS_ERR_NULL;
 	
 	chas->mode = CHASSIS_MODE_RELAX;
-	chas->type = type;
 
-	switch (type) {
+	switch (chas_param->type) {
 		case CHASSIS_TYPE_MECANUM:
 			chas->wheel_num = 4;
 			chas->Mix = Mixer_Mecanum;
@@ -83,7 +82,7 @@ int Chassis_Init(Chassis_t *chas, Chassis_Type_t type) {
 		
 	for(uint8_t i = 0; i < chas->wheel_num; i++) {
 		PID_Init(&(chas->motor_pid[i]), PID_MODE_DERIVATIV_NONE, chas->dt_sec);
-		PID_SetParameters(&(chas->motor_pid[i]), 5.f, 1.f, 0.f, 1.f, 1.f);
+		PID_SetParams(&(chas->motor_pid[i]), &(chas_param->motor_pid_param[i]));
 		
 		LowPassFilter2p_Init(&(chas->output_filter[i]), 1000.f / chas->dt_sec, 100.f);
 	}
@@ -102,7 +101,7 @@ error1:
 	return CHASSIS_ERR_NULL;
 }
 
-int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode) {
+int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode, const Chassis_Params_t *chas_param) {
 	if (chas == NULL)
 		return CHASSIS_ERR_NULL;
 	
@@ -119,7 +118,7 @@ int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode) {
 		
 		case CHASSIS_MODE_FOLLOW_GIMBAL:
 			PID_Init(&(chas->follow_pid), PID_MODE_DERIVATIV_NONE, chas->dt_sec);
-			PID_SetParameters(&(chas->follow_pid), 5.f, 1.f, 0.f, 1.f, 1.f);
+			PID_SetParams(&(chas->follow_pid), &(chas_param->follow_pid_param));
 
 			// TODO
 		

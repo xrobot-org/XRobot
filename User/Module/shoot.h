@@ -73,9 +73,13 @@ typedef struct {
 
 } Shoot_t;
 
+typedef struct {
+	PID_Params_t fric_pid_param[2];
+	PID_Params_t trig_pid_param;
+} Shoot_Params_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int Shoot_Init(Shoot_t *shoot);
+int Shoot_Init(Shoot_t *shoot, const Shoot_Params_t *shoot_param);
 int Shoot_SetMode(Shoot_t *shoot, Shoot_Mode_t mode);
 int Shoot_UpdateFeedback(Shoot_t *shoot, CAN_Device_t *can_device);
 int Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16);

@@ -13,6 +13,8 @@
 
 /* Include Device相关的头文件 */
 /* Include Component相关的头文件 */
+#include "robot_config.h"
+
 /* Include Module相关的头文件 */
 #include "gimbal.h"
 
@@ -38,7 +40,7 @@ void Task_CtrlGimbal(void *argument) {
 	cd = CAN_GetDevice();
 	dr16 = DR16_GetDevice();
 	
-	Gimbal_Init(&gimbal);
+	Gimbal_Init(&gimbal, &(RobotConfig_Get(ROBOT_CONFIG_MODEL_INFANTRY)->gimbal_param));
 	gimbal.dt_sec = (float)delay_tick / (float)osKernelGetTickFreq();
 	gimbal.imu = BMI088_GetDevice();
 	
