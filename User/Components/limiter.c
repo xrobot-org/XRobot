@@ -1,6 +1,15 @@
-#include "power_limit.h"
+/* 
+	Modified from https://github.com/PX4/Firmware/blob/master/src/lib/pid/pid.cpp
+
+*/
+
+#include "limiter.h"
 
 #include "user_math.h"
+
+int HeatLimiter_Apply(float heat_limit, float vbat, float dt_sec) {
+	return 0;
+}
 
 int PowerLimit_Apply(float power_limit, float vbat, float *motor, uint32_t len) {
 	if (motor == NULL)
