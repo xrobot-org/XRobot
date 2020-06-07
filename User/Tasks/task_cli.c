@@ -282,15 +282,16 @@ void Task_CLI(void *argument) {
 				index++;
 			}
 		} else {
-			if(rx_char == '\n' || rx_char == '\r') {
+			if(rx_char == '\n' || rx_char == '\r') {\
 				BSP_USB_Printf("\r\n");
-				do {
-					processing = FreeRTOS_CLIProcessCommand(input, output, configCOMMAND_INT_MAX_OUTPUT_SIZE);
-					BSP_USB_Printf(output);
-				} while(processing != pdFALSE);
-				
-				index = 0;
-				memset(input, 0x00, MAX_INPUT_LENGTH);
+				if (index > 0) {
+					do {
+						processing = FreeRTOS_CLIProcessCommand(input, output, configCOMMAND_INT_MAX_OUTPUT_SIZE);
+						BSP_USB_Printf(output);
+					} while(processing != pdFALSE);
+					index = 0;
+					memset(input, 0x00, MAX_INPUT_LENGTH);
+				}
 				BSP_USB_Printf("rm>");
 			}else if(rx_char == '\b' || rx_char == 0x7Fu) {
 				if(index > 0) {
