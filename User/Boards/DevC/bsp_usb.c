@@ -44,7 +44,6 @@ char BSP_USB_ReadChar(void) {
 	return usb_rx_buf[0];
 }
 
-
 int BSP_USB_Printf(const char *fmt, ...) {
 	static va_list ap;
 	uint16_t len = 0;

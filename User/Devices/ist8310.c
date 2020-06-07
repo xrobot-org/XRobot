@@ -113,7 +113,7 @@ IST8310_t *IST8310_GetDevice(void) {
 	return NULL;
 }
 
-int IST8310_Receive(IST8310_t *ist8310){
+int IST8310_Receive(IST8310_t *ist8310) {
 	IST8310_WriteSingle(IST8310_CNTL1, 0x01);
 	return IST8310_OK;
 }

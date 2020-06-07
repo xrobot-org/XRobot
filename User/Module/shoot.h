@@ -12,7 +12,7 @@
 
 /* Include Component相关的头文件 */
 #include "pid.h"
-#include "low_pass_filter_2p.h"
+#include "filter.h"
 
 /* Include Module相关的头文件 */
 /* Exported constants --------------------------------------------------------*/

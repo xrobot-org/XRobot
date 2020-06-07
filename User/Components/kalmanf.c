@@ -6,7 +6,7 @@
 #include "main.h"
 #include "kalmanf.h"
 
-void KalmanFilter_Init(KalmanFilter_t *kal){
+void KalmanFilter_Init(KalmanFilter_t *kal) {
 	/* We will set the variables like so, these can also be tuned by the user */
 	kal->q_angle = 0.001;
 	kal->q_bias = 0.003;

@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F407xx,ROBOT_MODEL_INFANTRY,OLED_USE_SPI,USE_DEV_BOARD_C</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;                                 ../USB_DEVICE/App;                                 ../USB_DEVICE/Target;                                 ../Drivers/STM32F4xx_HAL_Driver/Inc;                                 ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;                                 ../Middlewares/Third_Party/FreeRTOS/Source/include;                                 ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;                                 ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;                                 ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;                                 ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;                                 ../Drivers/CMSIS/Include;                                 ..\User\Boards;                                 ..\User\Components;                                 ..\User\Devices;                                 ..\User\Module;                                 ..\User\Tasks;                                 ..\Drivers\CMSIS\DSP\Include;   ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2</IncludePath>
+              <IncludePath>../Core/Inc;                                  ../USB_DEVICE/App;                                  ../USB_DEVICE/Target;                                  ../Drivers/STM32F4xx_HAL_Driver/Inc;                                  ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;                                  ../Middlewares/Third_Party/FreeRTOS/Source/include;                                  ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;                                  ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;                                  ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;                                  ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;                                  ../Drivers/CMSIS/Include;                                  ..\User\Boards;                                  ..\User\Components;                                  ..\User\Devices;                                  ..\User\Module;                                  ..\User\Tasks;                                  ..\Drivers\CMSIS\DSP\Include;    ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -843,9 +843,9 @@
               <FilePath>..\User\Components\error_detect.c</FilePath>
             </File>
             <File>
-              <FileName>heat_limit.c</FileName>
+              <FileName>filter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\heat_limit.c</FilePath>
+              <FilePath>..\User\Components\filter.c</FilePath>
             </File>
             <File>
               <FileName>kalmanf.c</FileName>
@@ -853,9 +853,9 @@
               <FilePath>..\User\Components\kalmanf.c</FilePath>
             </File>
             <File>
-              <FileName>low_pass_filter_2p.c</FileName>
+              <FileName>limiter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\low_pass_filter_2p.c</FilePath>
+              <FilePath>..\User\Components\limiter.c</FilePath>
             </File>
             <File>
               <FileName>mixer.c</FileName>
@@ -863,19 +863,9 @@
               <FilePath>..\User\Components\mixer.c</FilePath>
             </File>
             <File>
-              <FileName>notch_filter.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Components\notch_filter.c</FilePath>
-            </File>
-            <File>
               <FileName>pid.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\pid.c</FilePath>
-            </File>
-            <File>
-              <FileName>power_limit.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Components\power_limit.c</FilePath>
             </File>
             <File>
               <FileName>protocol.c</FileName>
@@ -1841,9 +1831,9 @@
               <FilePath>..\User\Components\error_detect.c</FilePath>
             </File>
             <File>
-              <FileName>heat_limit.c</FileName>
+              <FileName>filter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\heat_limit.c</FilePath>
+              <FilePath>..\User\Components\filter.c</FilePath>
             </File>
             <File>
               <FileName>kalmanf.c</FileName>
@@ -1851,9 +1841,9 @@
               <FilePath>..\User\Components\kalmanf.c</FilePath>
             </File>
             <File>
-              <FileName>low_pass_filter_2p.c</FileName>
+              <FileName>limiter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\low_pass_filter_2p.c</FilePath>
+              <FilePath>..\User\Components\limiter.c</FilePath>
             </File>
             <File>
               <FileName>mixer.c</FileName>
@@ -1861,19 +1851,9 @@
               <FilePath>..\User\Components\mixer.c</FilePath>
             </File>
             <File>
-              <FileName>notch_filter.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Components\notch_filter.c</FilePath>
-            </File>
-            <File>
               <FileName>pid.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\pid.c</FilePath>
-            </File>
-            <File>
-              <FileName>power_limit.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Components\power_limit.c</FilePath>
             </File>
             <File>
               <FileName>protocol.c</FileName>
