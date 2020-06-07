@@ -63,7 +63,7 @@ static BaseType_t TaskStatsCommand(char *out_buffer, size_t len, const char *com
 	/* Remove compile time warnings about unused parameters, and check the
 	write buffer is not NULL.  NOTE - for simplicity, this example assumes the
 	write buffer length is adequate, so does not check for buffer overflows. */
-	(void) command_string;
+	(void)command_string;
 	(void)len;
 	configASSERT(out_buffer);
 
@@ -72,6 +72,13 @@ static BaseType_t TaskStatsCommand(char *out_buffer, size_t len, const char *com
 
 	return pdFALSE;
 }
+
+static const CLI_Command_Definition_t task_stats = {
+	"task-stats",
+	"\r\ntask-stats:\r\n Displays a table showing the state of each FreeRTOS task\r\n\r\n",
+	TaskStatsCommand,
+	0, 
+};
 
 static BaseType_t RunTimeStatsCommand(char *out_buffer, size_t len, const char *command_string) {
 	const char * const header = 
@@ -88,13 +95,18 @@ static BaseType_t RunTimeStatsCommand(char *out_buffer, size_t len, const char *
 	return pdFALSE;
 }
 
+static const CLI_Command_Definition_t run_time_stats = {
+	"run-time-stats",
+	"\r\nrun-time-stats:\r\n Displays a table showing how much processing time each FreeRTOS task has used\r\n\r\n",
+	RunTimeStatsCommand,
+	0,
+};
+
 static BaseType_t ThreeParameterEchoCommand(char *out_buffer, size_t len, const char *command_string) {
 	const char *param;
 	BaseType_t param_len, rtn;
 	static int param_num = 0;
 	
-	(void)command_string;
-	(void)len;
 	configASSERT(out_buffer);
 
 	if(param_num == 0) {
@@ -125,13 +137,18 @@ static BaseType_t ThreeParameterEchoCommand(char *out_buffer, size_t len, const 
 	return rtn;
 }
 
-static BaseType_t ParameterEchoCommand(char *out_buffer, size_t len, const char *command_string) {
+static const CLI_Command_Definition_t three_parameter_echo = {
+	"echo-3",
+	"\r\necho-3 <param1> <param2> <param3>:\r\n Expects 3 parameters, echos each in turn\r\n\r\n",
+	ThreeParameterEchoCommand,
+	3,
+};
+
+static BaseType_t EchoCommand(char *out_buffer, size_t len, const char *command_string) {
 	const char *param;
 	BaseType_t param_len, rtn;
 	static int param_num = 0;
-
-	(void)command_string;
-	(void)len;
+	
 	configASSERT(out_buffer);
 
 	if(param_num == 0) {
@@ -141,12 +158,7 @@ static BaseType_t ParameterEchoCommand(char *out_buffer, size_t len, const char 
 		
 		rtn = pdPASS;
 	} else {
-		param = FreeRTOS_CLIGetParameter
-						(
-							command_string,		/* The command string itself. */
-							param_num,		/* Return the next parameter. */
-							&param_len	/* Store the parameter string length. */
-						);
+		param = FreeRTOS_CLIGetParameter(command_string, param_num, &param_len);
 
 		if(param != NULL) {
 			memset(out_buffer, 0x00, len);
@@ -168,37 +180,56 @@ static BaseType_t ParameterEchoCommand(char *out_buffer, size_t len, const char 
 	return rtn;
 }
 
-static const CLI_Command_Definition_t xRunTimeStats = {
-	"run-time-stats",
-	"\r\nrun-time-stats:\r\n Displays a table showing how much processing time each FreeRTOS task has used\r\n\r\n",
-	RunTimeStatsCommand,
-	0,
-};
-
-static const CLI_Command_Definition_t xTaskStats = {
-	"task-stats",
-	"\r\ntask-stats:\r\n Displays a table showing the state of each FreeRTOS task\r\n\r\n",
-	TaskStatsCommand,
-	0, 
-};
-
-static const CLI_Command_Definition_t xThreeParameterEcho = {
-	"echo-3",
-	"\r\necho-3 <param1> <param2> <param3>:\r\n Expects 3 parameters, echos each in turn\r\n\r\n",
-	ThreeParameterEchoCommand,
-	3,
-};
-
-static const CLI_Command_Definition_t xParameterEcho = {
+static const CLI_Command_Definition_t echo = {
 	"echo",
 	"\r\necho <...>:\r\n Take variable number of parameters, echos each in turn\r\n\r\n",
-	ParameterEchoCommand,
+	EchoCommand,
 	-1,
+};
+
+static BaseType_t SetModelCommand(char *out_buffer, size_t len, const char *command_string) {
+	const char *param;
+	BaseType_t param_len;
+	
+	configASSERT(out_buffer);
+	
+	param = FreeRTOS_CLIGetParameter(command_string, 1, &param_len);
+	configASSERT(param);
+	
+	memset(out_buffer, 0x00, len);
+	sprintf(out_buffer, "Set robot model to: ");
+	switch (*param) {
+		case 'I':
+			strcat(out_buffer, "Infantry.\r\n");
+			break;
+		case 'H':
+			strcat(out_buffer, "Hero\r\n.");
+			break;
+		case 'E':
+			strcat(out_buffer, "Engineer.\r\n");
+			break;
+		case 'D':
+			strcat(out_buffer, "Drone.\r\n");
+			break;
+		case 'S':
+			strcat(out_buffer, "Sentry.\r\n");
+			break;
+		default:
+			strcat(out_buffer, "Unknow model. Check help for avaliable options.\r\n");
+	}
+	return pdFALSE;
+}
+
+static const CLI_Command_Definition_t set_model = {
+	"set-model",
+	"\r\nset-model <model>:\r\n Set robot model. Expext:I[nfantry], H[ero], E[ngineer], D[rone] and S[entry]\r\n\r\n",
+	SetModelCommand,
+	1,
 };
 
 /* Exported functions --------------------------------------------------------*/
 void Task_CLI(void *argument) {
-	//const Task_Param_t *task_param = (Task_Param_t*)argument;
+	//Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	char rx_char;
 	uint16_t index = 0;
@@ -210,13 +241,14 @@ void Task_CLI(void *argument) {
 	osDelay(TASK_INIT_DELAY_CLI);
 	
 	/* Register all the command line commands defined immediately above. */
-	FreeRTOS_CLIRegisterCommand(&xTaskStats);
-	FreeRTOS_CLIRegisterCommand(&xRunTimeStats);
-	FreeRTOS_CLIRegisterCommand(&xThreeParameterEcho);
-	FreeRTOS_CLIRegisterCommand(&xParameterEcho);
+	FreeRTOS_CLIRegisterCommand(&task_stats);
+	FreeRTOS_CLIRegisterCommand(&run_time_stats);
+	FreeRTOS_CLIRegisterCommand(&three_parameter_echo);
+	FreeRTOS_CLIRegisterCommand(&echo);
+	FreeRTOS_CLIRegisterCommand(&set_model);
 	
 	/* Save CPU power when CLI not used. */
-	BSP_USB_Printf("Please press Enter to activate this console.\r\n");
+	BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
 	
 	while(1) {
 		BSP_USB_ReadyReceive(osThreadGetId());
@@ -243,14 +275,14 @@ void Task_CLI(void *argument) {
 		
 		rx_char = BSP_USB_ReadChar();
 		
-		if (rx_char <= 126 && rx_char >= 32){
+		if (rx_char <= 126 && rx_char >= 32) {
 			if(index < MAX_INPUT_LENGTH) {
 				BSP_USB_Printf("%c", rx_char);
 				input[index] = rx_char;
 				index++;
 			}
 		} else {
-			if(rx_char == '\n' || rx_char == '\r'){
+			if(rx_char == '\n' || rx_char == '\r') {
 				BSP_USB_Printf("\r\n");
 				do {
 					processing = FreeRTOS_CLIProcessCommand(input, output, configCOMMAND_INT_MAX_OUTPUT_SIZE);
