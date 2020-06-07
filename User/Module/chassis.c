@@ -12,9 +12,11 @@
 #include "bsp_mm.h"
 
 /* Include Device相关的头文件 */
+#include "can_device.h"
+
 /* Include Component相关的头文件 */
 #include "user_math.h"
-#include "power_limit.h"
+#include "limiter.h"
 
 /* Include Module相关的头文件 */
 /* Private typedef -----------------------------------------------------------*/
@@ -28,31 +30,31 @@ int Chassis_Init(Chassis_t *chas, const Chassis_Params_t *chas_param) {
 		return CHASSIS_ERR_NULL;
 	
 	chas->mode = CHASSIS_MODE_RELAX;
-
+	Mixer_Mode_t mixer_mode;
 	switch (chas_param->type) {
 		case CHASSIS_TYPE_MECANUM:
 			chas->wheel_num = 4;
-			chas->Mix = Mixer_Mecanum;
+			mixer_mode = MIXER_MECANUM;
 			break;
 		
 		case CHASSIS_MODE_PARLFIX4:
 			chas->wheel_num = 4;
-			chas->Mix = Mixer_ParlFix4;
+			mixer_mode = MIXER_PARLFIX4;
 			break;
 		
 		case CHASSIS_MODE_PARLFIX2:
 			chas->wheel_num = 2;
-			chas->Mix = Mixer_ParlFix2;
+			mixer_mode = MIXER_PARLFIX2;
 			break;
 		
 		case CHASSIS_MODE_OMNI_CROSS:
 			chas->wheel_num = 4;
-			chas->Mix = Mixer_OmniCross;
+			mixer_mode = MIXER_OMNICROSS;
 			break;
 		
 		case CHASSIS_MODE_OMNI_PLUS:
 			chas->wheel_num = 4;
-			chas->Mix = Mixer_OmniPlus;
+			mixer_mode = MIXER_OMNIPLUS;
 			break;
 		
 		case CHASSIS_MODE_DRONE:
@@ -86,6 +88,9 @@ int Chassis_Init(Chassis_t *chas, const Chassis_Params_t *chas_param) {
 		
 		LowPassFilter2p_Init(&(chas->output_filter[i]), 1000.f / chas->dt_sec, 100.f);
 	}
+	
+	Mixer_Init(&(chas->mixer), mixer_mode);
+	chas->motor_scaler = CAN_M3508_MAX_ABS_VOLTAGE;
 	
 	return CHASSIS_OK;
 	
@@ -216,9 +221,6 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 	if (ctrl_v == NULL)
 		return CHASSIS_ERR_NULL;
 	
-	if (chas->Mix == NULL)
-		return CHASSIS_ERR_NULL;
-	
 	/* ctrl_v -> chas_v. */
 	/* Compute vx and vy. */
 	if (chas->mode == CHASSIS_MODE_BREAK) {
@@ -245,7 +247,8 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 	}
 	
 	/* chas_v -> motor_rpm_set. */
-	chas->Mix(
+	Mixer_Apply(
+		&(chas->mixer),
 		chas->chas_v.vx, 
 		chas->chas_v.vy,
 		chas->chas_v.wz,
@@ -275,14 +278,10 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 			default:
 				return -1;
 		}
-	}
-	
-	/* Filter output. */
-	for(uint8_t i = 0; i < 4; i++) {
+		
+		/* Filter output. */
 		chas->motor_cur_out[i] = LowPassFilter2p_Apply(&(chas->output_filter[i]), chas->motor_cur_out[i]);
 	}
-	
-	PowerLimit_Apply(80.f, 25.f, chas->motor_cur_out, chas->wheel_num);
 	
 	
 	return CHASSIS_OK;

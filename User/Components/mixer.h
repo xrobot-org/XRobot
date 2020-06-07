@@ -8,8 +8,17 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-int Mixer_Mecanum(float vx, float vy, float wz, float *out, int len);
-int Mixer_ParlFix4(float vx, float vy, float wz, float *out, int len);
-int Mixer_ParlFix2(float vx, float vy, float wz, float *out, int len);
-int Mixer_OmniCross(float vx, float vy, float wz, float *out, int len);
-int Mixer_OmniPlus(float vx, float vy, float wz, float *out, int len);
+typedef enum {
+	MIXER_MECANUM,
+	MIXER_PARLFIX4,
+	MIXER_PARLFIX2,
+	MIXER_OMNICROSS,
+	MIXER_OMNIPLUS,
+} Mixer_Mode_t;
+
+typedef struct {
+	Mixer_Mode_t mode;
+} Mixer_t;
+
+int Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode);
+int Mixer_Apply(Mixer_t *mixer, float vx, float vy, float wz, float *out, int len);

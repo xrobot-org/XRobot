@@ -11,7 +11,7 @@
 /* Include Component相关的头文件 */
 #include "pid.h"
 #include "mixer.h"
-#include "low_pass_filter_2p.h"
+#include "filter.h"
 
 
 /* Include Module相关的头文件 */
@@ -75,7 +75,7 @@ typedef struct {
 	
 	/* Chassis design */
 	int wheel_num;
-	int (*Mix)(float vx, float vy, float vz, float *out, int len);
+	Mixer_t mixer;
 	
 	/* Feedback */
 	float gimbal_yaw_angle;
@@ -86,6 +86,7 @@ typedef struct {
 	
 	/* Mixer Out / PID set point. */
 	float *motor_rpm_set;
+	float motor_scaler;
 	
 	/* PID */
 	PID_t *motor_pid;

@@ -4,44 +4,49 @@
 
 #include "mixer.h"
 
-int Mixer_Mecanum(float vx, float vy, float wz, float *out, int len) {
-	if (len == 4) {
-		out[0] = -vx - vy + wz;
-		out[1] = vx - vy + wz;
-		out[2] = vx + vy + wz;
-		out[3] = -vx + vy + wz;
-		return 0;
-	} else {
-		return -1;
-	}
+int Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode) {
+	mixer->mode = mode;
 }
 
-int Mixer_ParlFix4(float vx, float vy, float wz, float *out, int len) {
-	if (len == 4) {
-		out[0] = -vx;
-		out[1] = vx;
-		out[2] = vx;
-		out[3] = -vx;
-		return 0;
-	} else {
-		return -1;
-	}
-}
 
-int Mixer_ParlFix2(float vx, float vy, float wz, float *out, int len) {
-	if (len == 2) {
-		out[0] = -vx;
-		out[1] = vx;
-		return 0;
-	} else {
-		return -1;
+int Mixer_Apply(Mixer_t *mixer, float vx, float vy, float wz, float *out, int len) {
+	switch (mixer->mode) {
+		case MIXER_MECANUM:
+			if (len == 4) {
+				out[0] = -vx - vy + wz;
+				out[1] = vx - vy + wz;
+				out[2] = vx + vy + wz;
+				out[3] = -vx + vy + wz;
+			} else {
+				goto error;
+			}
+			break;
+			
+		case MIXER_PARLFIX4:
+			if (len == 4) {
+				out[0] = -vx;
+				out[1] = vx;
+				out[2] = vx;
+				out[3] = -vx;
+			} else {
+				goto error;
+			}
+		case MIXER_PARLFIX2:
+			if (len == 2) {
+				out[0] = -vx;
+				out[1] = vx;
+			} else {
+				goto error;
+			}
+		case MIXER_OMNICROSS:
+		case MIXER_OMNIPLUS:
+			goto error;
+			
 	}
-}
-
-int Mixer_OmniCross(float vx, float vy, float wz, float *out, int len) {
 	return 0;
-}
-
-int Mixer_OmniPlus(float vx, float vy, float wz, float *out, int len) {
-	return 0;
+	
+error:
+	for (uint8_t i = 0; i< len;i++) 
+		out[i] = 0;
+	return -1;
 }
