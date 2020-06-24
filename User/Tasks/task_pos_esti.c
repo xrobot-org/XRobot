@@ -62,8 +62,7 @@ void Task_PosEsti(void *argument) {
 	
 	AHRS_Init(&gimbal_ahrs, &ist8310.magn, BMI088_GetUpdateFreq(&bmi088));
 	
-	PID_Init(&imu_temp_ctrl_pid, PID_MODE_DERIVATIV_NONE, 1.f/BMI088_GetUpdateFreq(&bmi088));
-	PID_SetParams(&imu_temp_ctrl_pid, &imu_temp_ctrl_pid_param);
+	PID_Init(&imu_temp_ctrl_pid, PID_MODE_DERIVATIV_NONE, 1.f/BMI088_GetUpdateFreq(&bmi088), &imu_temp_ctrl_pid_param);
 	
 	BSP_PWM_Set(BSP_PWM_IMU_HEAT, 0.f);
 	BSP_PWM_Start(BSP_PWM_IMU_HEAT);
@@ -98,6 +97,6 @@ void Task_PosEsti(void *argument) {
 		if (os_status == osErrorOS) {
 		}
 		
-		BSP_PWM_Set(BSP_PWM_IMU_HEAT, PID_Calculate(&imu_temp_ctrl_pid, 50.f, bmi088.temp, 0.f, 0.f));
+		BSP_PWM_Set(BSP_PWM_IMU_HEAT, PID_Calc(&imu_temp_ctrl_pid, 50.f, bmi088.temp, 0.f, 0.f));
 	}
 }
