@@ -33,27 +33,27 @@ int Chassis_Init(Chassis_t *chas, const Chassis_Params_t *chas_param) {
 	Mixer_Mode_t mixer_mode;
 	switch (chas_param->type) {
 		case CHASSIS_TYPE_MECANUM:
-			chas->wheel_num = 4;
+			chas->num_wheel = 4;
 			mixer_mode = MIXER_MECANUM;
 			break;
 		
 		case CHASSIS_MODE_PARLFIX4:
-			chas->wheel_num = 4;
+			chas->num_wheel = 4;
 			mixer_mode = MIXER_PARLFIX4;
 			break;
 		
 		case CHASSIS_MODE_PARLFIX2:
-			chas->wheel_num = 2;
+			chas->num_wheel = 2;
 			mixer_mode = MIXER_PARLFIX2;
 			break;
 		
 		case CHASSIS_MODE_OMNI_CROSS:
-			chas->wheel_num = 4;
+			chas->num_wheel = 4;
 			mixer_mode = MIXER_OMNICROSS;
 			break;
 		
 		case CHASSIS_MODE_OMNI_PLUS:
-			chas->wheel_num = 4;
+			chas->num_wheel = 4;
 			mixer_mode = MIXER_OMNIPLUS;
 			break;
 		
@@ -62,27 +62,27 @@ int Chassis_Init(Chassis_t *chas, const Chassis_Params_t *chas_param) {
 			return CHASSIS_ERR_TYPE;
 	}
 	
-	chas->motor_rpm = BSP_Malloc(chas->wheel_num * sizeof(*chas->motor_rpm));
+	chas->motor_rpm = BSP_Malloc(chas->num_wheel * sizeof(*chas->motor_rpm));
 	if(chas->motor_rpm == NULL)
 		goto error1;
 	
-	chas->motor_rpm_set = BSP_Malloc(chas->wheel_num * sizeof(*chas->motor_rpm_set));
+	chas->motor_rpm_set = BSP_Malloc(chas->num_wheel * sizeof(*chas->motor_rpm_set));
 	if(chas->motor_rpm_set == NULL)
 		goto error2;
 	
-	chas->motor_pid = BSP_Malloc(chas->wheel_num * sizeof(*chas->motor_pid));
+	chas->motor_pid = BSP_Malloc(chas->num_wheel * sizeof(*chas->motor_pid));
 	if(chas->motor_pid == NULL)
 		goto error3;
 	
-	chas->motor_cur_out = BSP_Malloc(chas->wheel_num * sizeof(*chas->motor_cur_out));
+	chas->motor_cur_out = BSP_Malloc(chas->num_wheel * sizeof(*chas->motor_cur_out));
 	if(chas->motor_cur_out == NULL)
 		goto error4;
 	
-	chas->output_filter = BSP_Malloc(chas->wheel_num * sizeof(*chas->output_filter));
+	chas->output_filter = BSP_Malloc(chas->num_wheel * sizeof(*chas->output_filter));
 	if(chas->output_filter == NULL)
 		goto error5;
 		
-	for(uint8_t i = 0; i < chas->wheel_num; i++) {
+	for(uint8_t i = 0; i < chas->num_wheel; i++) {
 		PID_Init(&(chas->motor_pid[i]), PID_MODE_DERIVATIV_NONE, chas->dt_sec,&(chas_param->motor_pid_param[i]));
 		
 		LowPassFilter2p_Init(&(chas->output_filter[i]), 1000.f / chas->dt_sec, 100.f);
@@ -245,18 +245,10 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 	}
 	
 	/* chas_v -> motor_rpm_set. */
-	Mixer_Apply(
-		&(chas->mixer),
-		chas->chas_v.vx, 
-		chas->chas_v.vy,
-		chas->chas_v.wz,
-		chas->motor_rpm_set,
-		chas->wheel_num);
+	Mixer_Apply(&(chas->mixer), chas->chas_v.vx, chas->chas_v.vy, chas->chas_v.wz, chas->motor_rpm_set, chas->num_wheel);
 	
 	/* Compute output from setpiont. */
 	for(uint8_t i = 0; i < 4; i++) {
-		// TODO: Add scaler.
-		chas->motor_rpm_set[i] *= 1000;
 		switch(chas->mode) {
 			case CHASSIS_MODE_BREAK:
 			case CHASSIS_MODE_FOLLOW_GIMBAL:

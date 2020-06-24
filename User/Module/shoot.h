@@ -19,7 +19,7 @@
 #define SHOOT_BULLET_SPEED_SCALER (2.f)
 #define SHOOT_BULLET_SPEED_BIAS  (1.f)
 
-#define SHOOT_FEEDING_TOOTH_NUM  (8u)
+#define SHOOT_NUM_FEEDING_TOOTH  (8u)
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/

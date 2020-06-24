@@ -226,7 +226,7 @@ void RxFifo0MsgPendingCallback(void) {
 			break;
 	}
 	
-	if (motor_received > CAN_CHASSIS_MOTOR_NUM) {
+	if (motor_received > CAN_CHASSIS_NUM_MOTOR) {
 		for(uint8_t i = 0; i < 3; i++) {
 			if(gcan_device->motor_alert[i]) {
 				osThreadFlagsSet(gcan_device->motor_alert, CAN_DEVICE_SIGNAL_MOTOR_RECV);

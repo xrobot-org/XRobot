@@ -19,7 +19,7 @@
 #define DR16_CH_VALUE_MID			(1024u)
 #define DR16_CH_VALUE_MAX			(1684u)
 
-#define DR16_RX_BUF_NUM 36u
+#define DR16_RX_BUF_LENGTH 36u
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
@@ -44,7 +44,7 @@ typedef enum {
 typedef struct {
 	osThreadId_t received_alert;
 
-	uint8_t raw[DR16_RX_BUF_NUM];
+	uint8_t raw[DR16_RX_BUF_LENGTH];
 	
 	struct {
 		struct {

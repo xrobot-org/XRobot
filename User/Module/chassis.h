@@ -74,7 +74,7 @@ typedef struct {
 	Chassis_Mode_t mode;
 	
 	/* Chassis design */
-	int wheel_num;
+	int num_wheel;
 	Mixer_t mixer;
 	
 	/* Feedback */

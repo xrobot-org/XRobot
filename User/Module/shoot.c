@@ -22,8 +22,7 @@
 static void TrigTimerCallback  (void *arg) {
 	Shoot_t *shoot = (Shoot_t*)arg;
 	
-	shoot->trig_angle_set += 2.f * PI / SHOOT_FEEDING_TOOTH_NUM;
-	
+	shoot->trig_angle_set += 2.f * PI / SHOOT_NUM_FEEDING_TOOTH;
 }
 
 /* Exported functions --------------------------------------------------------*/
