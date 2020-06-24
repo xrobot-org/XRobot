@@ -15,6 +15,7 @@
 
 /* Include Board相关的头文件 */
 #include "bsp_usb.h"
+#include "bsp_flash.h"
 
 /* Include Device相关的头文件 */
 /* Include Component相关的头文件 */
@@ -102,91 +103,6 @@ static const CLI_Command_Definition_t run_time_stats = {
 	0,
 };
 
-static BaseType_t ThreeParameterEchoCommand(char *out_buffer, size_t len, const char *command_string) {
-	const char *param;
-	BaseType_t param_len, rtn;
-	static int param_num = 0;
-	
-	configASSERT(out_buffer);
-
-	if(param_num == 0) {
-		sprintf(out_buffer, "The three parameters were:\r\n");
-
-		param_num = 1L;
-
-		rtn = pdPASS;
-	} else {
-		param = FreeRTOS_CLIGetParameter(command_string, param_num, &param_len);
-
-		configASSERT(param);
-
-		memset(out_buffer, 0x00, len);
-		sprintf(out_buffer, "%d: ", param_num);
-		strncat(out_buffer, param, param_len);
-		strncat(out_buffer, "\r\n", strlen("\r\n"));
-
-		if(param_num == 3L) {
-			rtn = pdFALSE;
-			param_num = 0L;
-		} else {
-			rtn = pdTRUE;
-			param_num++;
-		}
-	}
-
-	return rtn;
-}
-
-static const CLI_Command_Definition_t three_parameter_echo = {
-	"echo-3",
-	"\r\necho-3 <param1> <param2> <param3>:\r\n Expects 3 parameters, echos each in turn\r\n\r\n",
-	ThreeParameterEchoCommand,
-	3,
-};
-
-static BaseType_t EchoCommand(char *out_buffer, size_t len, const char *command_string) {
-	const char *param;
-	BaseType_t param_len, rtn;
-	static int param_num = 0;
-	
-	configASSERT(out_buffer);
-
-	if(param_num == 0) {
-		sprintf(out_buffer, "The parameters were:\r\n");
-		
-		param_num = 1L;
-		
-		rtn = pdPASS;
-	} else {
-		param = FreeRTOS_CLIGetParameter(command_string, param_num, &param_len);
-
-		if(param != NULL) {
-			memset(out_buffer, 0x00, len);
-			sprintf(out_buffer, "%d: ", param_num);
-			strncat(out_buffer, param, param_len);
-			strncat(out_buffer, "\r\n", strlen("\r\n"));
-			
-			rtn = pdTRUE;
-			param_num++;
-		} else {
-			out_buffer[0] = 0x00;
-
-			rtn = pdFALSE;
-
-			param_num = 0;
-		}
-	}
-
-	return rtn;
-}
-
-static const CLI_Command_Definition_t echo = {
-	"echo",
-	"\r\necho <...>:\r\n Take variable number of parameters, echos each in turn\r\n\r\n",
-	EchoCommand,
-	-1,
-};
-
 static BaseType_t SetModelCommand(char *out_buffer, size_t len, const char *command_string) {
 	const char *param;
 	BaseType_t param_len;
@@ -243,13 +159,12 @@ void Task_CLI(void *argument) {
 	/* Register all the command line commands defined immediately above. */
 	FreeRTOS_CLIRegisterCommand(&task_stats);
 	FreeRTOS_CLIRegisterCommand(&run_time_stats);
-	FreeRTOS_CLIRegisterCommand(&three_parameter_echo);
-	FreeRTOS_CLIRegisterCommand(&echo);
 	FreeRTOS_CLIRegisterCommand(&set_model);
 	
 	/* Save CPU power when CLI not used. */
 	BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
-	
+	//BSP_FLASH_Save();
+	//BSP_FLASH_Validate();
 	while(1) {
 		BSP_USB_ReadyReceive(osThreadGetId());
 		osThreadFlagsWait(BSP_USB_SIGNAL_BUF_RECV, osFlagsWaitAll, osWaitForever);
