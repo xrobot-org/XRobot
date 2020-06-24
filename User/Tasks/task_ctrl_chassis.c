@@ -56,10 +56,9 @@ void Task_CtrlChassis(void *argument) {
 		/* Task body */
 		tick += delay_tick;
 		
-		osThreadFlagsWait(DR16_SIGNAL_DATA_REDY, osFlagsWaitAll, 0);
-		Chassis_ParseCommand(&chas_ctrl, dr16);
-		
-		if (osThreadFlagsWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
+		uint32_t flag = DR16_SIGNAL_DATA_REDY | CAN_DEVICE_SIGNAL_MOTOR_RECV;
+		if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
+			Chassis_ParseCommand(&chas_ctrl, dr16);
 		
 			osKernelLock();
 			Chassis_UpdateFeedback(&chassis, &cd);

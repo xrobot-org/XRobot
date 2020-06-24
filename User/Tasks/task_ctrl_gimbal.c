@@ -49,10 +49,10 @@ void Task_CtrlGimbal(void *argument) {
 		/* Task body */
 		tick += delay_tick;
 		
-		osThreadFlagsWait(DR16_SIGNAL_DATA_REDY, osFlagsWaitAll, 0);
-		Gimbal_ParseCommand(&gimbal, &gimbal_ctrl, dr16);
-		
-		if (osThreadFlagsWait(CAN_DEVICE_SIGNAL_MOTOR_RECV, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
+		uint32_t flag = DR16_SIGNAL_DATA_REDY | CAN_DEVICE_SIGNAL_MOTOR_RECV;
+		if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
+			Gimbal_ParseCommand(&gimbal, &gimbal_ctrl, dr16);
+			
 			osStatus os_status = osMessageQueueGet(task_param->messageq.gimb_eulr, gimbal.imu_eulr, NULL, 0);
 			
 			osKernelLock();
@@ -62,7 +62,6 @@ void Task_CtrlGimbal(void *argument) {
 			Gimbal_SetMode(&gimbal, gimbal_ctrl.mode);
 			Gimbal_Control(&gimbal, &gimbal_ctrl.ctrl_eulr);
 			
-			// Check can error
 			CAN_Motor_ControlGimbal(gimbal.yaw_cur_out, gimbal.pit_cur_out);
 			
 			osDelayUntil(tick);
