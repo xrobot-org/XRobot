@@ -76,6 +76,7 @@ typedef struct {
 typedef struct {
 	PID_Params_t fric_pid_param[2];
 	PID_Params_t trig_pid_param;
+	float low_pass_cutoff;
 } Shoot_Params_t;
 
 /* Exported functions prototypes ---------------------------------------------*/

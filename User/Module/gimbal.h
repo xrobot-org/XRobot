@@ -77,6 +77,8 @@ typedef struct {
 	
 	PID_Params_t pit_inner_pid_param;
 	PID_Params_t pit_outer_pid_param;
+	
+	float low_pass_cutoff;
 } Gimbal_Params_t;
 
 /* Exported functions prototypes ---------------------------------------------*/

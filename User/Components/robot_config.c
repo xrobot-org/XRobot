@@ -37,6 +37,7 @@ static const RobotConfig_t config_infantry = {
 			.integral_limit = 0.5,
 			.output_limit = 0.5,
 		},
+		.low_pass_cutoff = 100.f,
 	},
 	
 	.gimbal_param = {
@@ -69,6 +70,7 @@ static const RobotConfig_t config_infantry = {
 			.integral_limit = 0.5,
 			.output_limit = 0.5,
 		},
+		.low_pass_cutoff = 100.f,
 	},
 	
 	.shoot_param = {
@@ -94,6 +96,7 @@ static const RobotConfig_t config_infantry = {
 			.integral_limit = 0.5,
 			.output_limit = 0.5,
 		},
+		.low_pass_cutoff = 100.f,
 	},
 };
 
@@ -126,6 +129,7 @@ static const RobotConfig_t config_sentry = {
 			.integral_limit= 0.5,
 			.output_limit = 0.5,
 		},
+		.low_pass_cutoff = 100.f,
 	},
 	
 	.gimbal_param = {
@@ -158,6 +162,7 @@ static const RobotConfig_t config_sentry = {
 			.integral_limit = 0.5,
 			.output_limit = 0.5,
 		},
+		.low_pass_cutoff = 100.f,
 	},
 	
 	.shoot_param = {
@@ -183,6 +188,8 @@ static const RobotConfig_t config_sentry = {
 			.integral_limit = 0.5,
 			.output_limit = 0.5,
 		},
+		
+		.low_pass_cutoff = 100.f,
 	},
 };
 

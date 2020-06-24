@@ -103,6 +103,7 @@ typedef struct {
 	Chassis_Type_t type;
 	PID_Params_t *motor_pid_param;
 	PID_Params_t follow_pid_param;
+	float low_pass_cutoff;
 } Chassis_Params_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
