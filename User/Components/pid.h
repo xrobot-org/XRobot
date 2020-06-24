@@ -41,7 +41,6 @@ typedef struct {
 	float output_limit;
 } PID_Params_t;
 
-int PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min);
-int PID_SetParams(PID_t *pid, const PID_Params_t *param);
-float PID_Calculate(PID_t *pid, float sp, float val, float val_dot, float dt);
+int PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min, const PID_Params_t *param) ;
+float PID_Calc(PID_t *pid, float sp, float val, float val_dot, float dt);
 int PID_ResetIntegral(PID_t *pid);

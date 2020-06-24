@@ -36,14 +36,12 @@ int Shoot_Init(Shoot_t *shoot, const Shoot_Params_t *shoot_param) {
 	shoot->trig_timer_id = osTimerNew(TrigTimerCallback, osTimerPeriodic, shoot, NULL);
 
 	for(uint8_t i = 0; i < 2; i++) {
-		PID_Init(&(shoot->fric_pid[i]), PID_MODE_DERIVATIV_NONE, shoot->dt_sec);
-		PID_SetParams(&(shoot->fric_pid[i]), &(shoot_param->fric_pid_param[i]));
+		PID_Init(&(shoot->fric_pid[i]), PID_MODE_DERIVATIV_NONE, shoot->dt_sec,&(shoot_param->fric_pid_param[i]));
 		
 		LowPassFilter2p_Init(&(shoot->fric_output_filter[i]), 1000.f / shoot->dt_sec, 100.f);
 	}
 	
-	PID_Init(&(shoot->trig_pid), PID_MODE_DERIVATIV_NONE, shoot->dt_sec);
-	PID_SetParams(&(shoot->trig_pid), &(shoot_param->trig_pid_param));
+	PID_Init(&(shoot->trig_pid), PID_MODE_DERIVATIV_NONE, shoot->dt_sec,&(shoot_param->trig_pid_param));
 	
 	LowPassFilter2p_Init(&(shoot->trig_output_filter), 1000.f / shoot->dt_sec, 100.f);
 	return 0;
@@ -178,16 +176,15 @@ int Shoot_Control(Shoot_t *shoot, float bullet_speed, float shoot_freq_hz) {
 			case SHOOT_MODE_SAFE:
 			case SHOOT_MODE_STDBY:
 			case SHOOT_MODE_FIRE:
-				shoot->fric_cur_out[i] = PID_Calculate(&(shoot->fric_pid[i]), shoot->fric_rpm_set[i], shoot->fric_rpm[i], 0.f, shoot->dt_sec);
+				shoot->fric_cur_out[i] = PID_Calc(&(shoot->fric_pid[i]), shoot->fric_rpm_set[i], shoot->fric_rpm[i], 0.f, shoot->dt_sec);
 				
-				/* Filter output. */
-				shoot->fric_cur_out[i] = LowPassFilter2p_Apply(&(shoot->fric_output_filter[i]), shoot->fric_cur_out[i]);
 				break;
 			
 			default:
 				return -1;
 		}
-		
+		/* Filter output. */
+		shoot->fric_cur_out[i] = LowPassFilter2p_Apply(&(shoot->fric_output_filter[i]), shoot->fric_cur_out[i]);	
 	}
 	
 	switch(shoot->mode) {
@@ -198,7 +195,7 @@ int Shoot_Control(Shoot_t *shoot, float bullet_speed, float shoot_freq_hz) {
 		case SHOOT_MODE_SAFE:
 		case SHOOT_MODE_STDBY:
 		case SHOOT_MODE_FIRE:
-			shoot->trig_cur_out = PID_Calculate(&(shoot->trig_pid), shoot->trig_angle_set, shoot->trig_angle, 0.f, shoot->dt_sec);
+			shoot->trig_cur_out = PID_Calc(&(shoot->trig_pid), shoot->trig_angle_set, shoot->trig_angle, 0.f, shoot->dt_sec);
 			
 			/* Filter output. */
 			shoot->trig_cur_out = LowPassFilter2p_Apply(&(shoot->trig_output_filter), shoot->trig_cur_out);

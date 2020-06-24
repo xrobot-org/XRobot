@@ -9,27 +9,13 @@
 
 #define SIGMA 0.000001f
 
-int PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min) {
+int PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min, const PID_Params_t *param) {
 	if (pid == NULL)
 		return -1;
 	
-	pid->mode = mode;
-	pid->dt_min = dt_min;
-	pid->kp = 0.0f;
-	pid->ki = 0.0f;
-	pid->kd = 0.0f;
-	pid->integral = 0.0f;
-	pid->integral_limit = 0.0f;
-	pid->output_limit = 0.0f;
-	pid->error_previous = 0.0f;
-	pid->last_output = 0.0f;
-	
-	return 0;
-}
-
-
-int PID_SetParams(PID_t *pid, const PID_Params_t *param) {
-	if (pid == NULL)
+	if (isfinite(dt_min))
+		pid->dt_min = dt_min;
+	else
 		return -1;
 	
 	if (isfinite(param->kp))
@@ -57,10 +43,14 @@ int PID_SetParams(PID_t *pid, const PID_Params_t *param) {
 	else
 		return -1;
 
+	pid->mode = mode;
+	pid->output_limit = 0.0f;
+	pid->error_previous = 0.0f;
+	pid->last_output = 0.0f;
 	return 0;
 }
 
-float PID_Calculate(PID_t *pid, float sp, float val, float val_dot, float dt) {
+float PID_Calc(PID_t *pid, float sp, float val, float val_dot, float dt) {
 	if (!isfinite(sp) || !isfinite(val) || !isfinite(val_dot) || !isfinite(dt)) {
 		return pid->last_output;
 	}

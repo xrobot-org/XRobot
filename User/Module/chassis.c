@@ -83,8 +83,7 @@ int Chassis_Init(Chassis_t *chas, const Chassis_Params_t *chas_param) {
 		goto error5;
 		
 	for(uint8_t i = 0; i < chas->wheel_num; i++) {
-		PID_Init(&(chas->motor_pid[i]), PID_MODE_DERIVATIV_NONE, chas->dt_sec);
-		PID_SetParams(&(chas->motor_pid[i]), &(chas_param->motor_pid_param[i]));
+		PID_Init(&(chas->motor_pid[i]), PID_MODE_DERIVATIV_NONE, chas->dt_sec,&(chas_param->motor_pid_param[i]));
 		
 		LowPassFilter2p_Init(&(chas->output_filter[i]), 1000.f / chas->dt_sec, 100.f);
 	}
@@ -122,8 +121,7 @@ int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode, const Chassis_Params_t
 			break;
 		
 		case CHASSIS_MODE_FOLLOW_GIMBAL:
-			PID_Init(&(chas->follow_pid), PID_MODE_DERIVATIV_NONE, chas->dt_sec);
-			PID_SetParams(&(chas->follow_pid), &(chas_param->follow_pid_param));
+			PID_Init(&(chas->follow_pid), PID_MODE_DERIVATIV_NONE, chas->dt_sec,&(chas_param->follow_pid_param));
 
 			// TODO
 		
@@ -240,7 +238,7 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 		chas->chas_v.wz = 0.f;
 		
 	} else if (chas->mode == CHASSIS_MODE_FOLLOW_GIMBAL) {
-		chas->chas_v.wz = PID_Calculate(&(chas->follow_pid), 0, chas->gimbal_yaw_angle, 0.f, chas->dt_sec);
+		chas->chas_v.wz = PID_Calc(&(chas->follow_pid), 0, chas->gimbal_yaw_angle, 0.f, chas->dt_sec);
 		
 	} else if (chas->mode == CHASSIS_MODE_ROTOR) {
 		chas->chas_v.wz = 0.8;
@@ -264,7 +262,7 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 			case CHASSIS_MODE_FOLLOW_GIMBAL:
 			case CHASSIS_MODE_ROTOR:
 			case CHASSIS_MODE_INDENPENDENT:
-				chas->motor_cur_out[i] = PID_Calculate(&(chas->motor_pid[i]), chas->motor_rpm_set[i], chas->motor_rpm[i], 0.f, chas->dt_sec);
+				chas->motor_cur_out[i] = PID_Calc(&(chas->motor_pid[i]), chas->motor_rpm_set[i], chas->motor_rpm[i], 0.f, chas->dt_sec);
 				break;
 				
 			case CHASSIS_MODE_OPEN:
