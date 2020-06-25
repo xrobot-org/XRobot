@@ -44,7 +44,7 @@ int PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min, const PID_Params_t *para
 		return -1;
 
 	pid->mode = mode;
-	pid->output_limit = 0.0f;
+	pid->integral = 0.0f;
 	pid->error_previous = 0.0f;
 	pid->last_output = 0.0f;
 	return 0;

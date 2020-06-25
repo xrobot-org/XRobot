@@ -83,7 +83,7 @@ int Chassis_Init(Chassis_t *chas, const Chassis_Params_t *chas_param) {
 		goto error5;
 		
 	for(uint8_t i = 0; i < chas->num_wheel; i++) {
-		PID_Init(&(chas->motor_pid[i]), PID_MODE_DERIVATIV_NONE, chas->dt_sec,&(chas_param->motor_pid_param[i]));
+		PID_Init(&(chas->motor_pid[i]), PID_MODE_DERIVATIV_NONE, chas->dt_sec, &(chas_param->motor_pid_param[i]));
 		
 		LowPassFilter2p_Init(&(chas->output_filter[i]), 1000.f / chas->dt_sec, 100.f);
 	}
@@ -121,7 +121,7 @@ int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode, const Chassis_Params_t
 			break;
 		
 		case CHASSIS_MODE_FOLLOW_GIMBAL:
-			PID_Init(&(chas->follow_pid), PID_MODE_DERIVATIV_NONE, chas->dt_sec,&(chas_param->follow_pid_param));
+			PID_Init(&(chas->follow_pid), PID_MODE_DERIVATIV_NONE, chas->dt_sec, &(chas_param->follow_pid_param));
 
 			// TODO
 		
