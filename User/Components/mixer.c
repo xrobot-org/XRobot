@@ -6,6 +6,7 @@
 
 int Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode) {
 	mixer->mode = mode;
+	return 0;
 }
 
 

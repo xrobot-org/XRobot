@@ -245,7 +245,7 @@ int AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyro, 
 }
 
 int AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
-	if (ahrs == NULL)
+	if (eulr == NULL)
 		return -1;
 	
 	if (ahrs == NULL)
