@@ -37,13 +37,13 @@ void Task_CtrlChassis(void *argument) {
 	/* Device Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_CHASSIS);
 	
-	cd.motor_alert[0] = osThreadGetId();
-	cd.motor_alert[1] = task_param->thread.ctrl_gimbal;
-	cd.motor_alert[2] = task_param->thread.ctrl_shoot;
-	cd.uwb_alert = task_param->thread.referee;
-	cd.supercap_alert = osThreadGetId();;
+	osThreadId recv_motor_allert[3] = {
+		osThreadGetId(),
+		task_param->thread.ctrl_gimbal,
+		task_param->thread.ctrl_shoot
+	};
 	
-	CAN_DeviceInit(&cd);
+	CAN_DeviceInit(&cd, recv_motor_allert, 3, task_param->thread.referee, osThreadGetId());
 	dr16 = DR16_GetDevice();
 	
 	/* Module Setup */

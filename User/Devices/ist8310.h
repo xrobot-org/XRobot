@@ -35,7 +35,7 @@ typedef struct {
 } IST8310_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int IST8310_Init(IST8310_t *ist8310);
+int IST8310_Init(IST8310_t *ist8310, osThreadId_t thread_alert);
 IST8310_t *IST8310_GetDevice(void);
 
 int IST8310_Restart(void);

@@ -72,7 +72,7 @@ static void IST8310_IntCallback(void) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-int IST8310_Init(IST8310_t *ist8310) {
+int IST8310_Init(IST8310_t *ist8310, osThreadId_t thread_alert) {
 	if (ist8310 == NULL)
 		return IST8310_ERR_NULL;
 	

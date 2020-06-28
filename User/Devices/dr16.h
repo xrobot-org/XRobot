@@ -42,7 +42,7 @@ typedef enum {
 } DR16_KeyValue_t;
 
 typedef struct {
-	osThreadId_t received_alert;
+	osThreadId_t thread_alert;
 
 	uint8_t raw[DR16_RX_BUF_LENGTH];
 	
@@ -73,7 +73,7 @@ typedef struct {
 } DR16_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int DR16_Init(DR16_t *dr16);
+int DR16_Init(DR16_t *dr16, osThreadId_t thread_alert);
 DR16_t *DR16_GetDevice(void);
 int DR16_Restart(void);
 

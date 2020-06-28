@@ -103,7 +103,8 @@ typedef struct {
 } CAN_SuperCapControl_t;
 
 typedef struct {
-	osThreadId_t motor_alert[3];
+	osThreadId_t *motor_alert;
+	uint8_t motor_alert_len;
 	osThreadId_t uwb_alert;
 	osThreadId_t supercap_alert;
 	
@@ -122,7 +123,13 @@ typedef struct {
 
 
 /* Exported functions prototypes ---------------------------------------------*/
-int CAN_DeviceInit(CAN_Device_t *can_device);
+int CAN_DeviceInit(
+	CAN_Device_t *can_device,
+	osThreadId_t *motor_alert,
+	uint8_t motor_alert_len,
+	osThreadId_t uwb_alert,
+	osThreadId_t supercap_alert);
+
 CAN_Device_t *CAN_GetDevice(void);
 
 int CAN_Motor_ControlChassis(float m1, float m2, float m3, float m4);

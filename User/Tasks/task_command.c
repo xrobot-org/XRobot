@@ -35,8 +35,7 @@ void Task_Command(void *argument) {
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_COMMAND);
 	
-	dr16.received_alert = osThreadGetId();
-	DR16_Init(&dr16);
+	DR16_Init(&dr16, osThreadGetId());
 	
 	while(1) {
 		/* Task body */

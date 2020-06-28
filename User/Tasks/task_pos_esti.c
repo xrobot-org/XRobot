@@ -49,11 +49,8 @@ static const PID_Params_t imu_temp_ctrl_pid_param = {
 void Task_PosEsti(void *argument) {
 	const Task_Param_t *task_param = (Task_Param_t*)argument;
 
-	bmi088.received_alert = osThreadGetId();
-	BMI088_Init(&bmi088);
-	
-	ist8310.received_alert = osThreadGetId();
-	IST8310_Init(&ist8310);
+	BMI088_Init(&bmi088, osThreadGetId());
+	IST8310_Init(&ist8310, osThreadGetId());
 	
 	IST8310_Receive(&ist8310);
 	osThreadFlagsWait(IST8310_SIGNAL_MAGN_RAW_REDY, osFlagsWaitAll, 0);

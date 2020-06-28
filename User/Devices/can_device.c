@@ -46,12 +46,26 @@ static void CAN_SuperCap_Decode(CAN_SuperCapFeedback_t *fb, const uint8_t *raw) 
 }
 
 /* Exported functions --------------------------------------------------------*/
-int CAN_DeviceInit(CAN_Device_t *can_device) {
+int CAN_DeviceInit(
+	CAN_Device_t *can_device,
+	osThreadId_t *motor_alert,
+	uint8_t motor_alert_len,
+	osThreadId_t uwb_alert,
+	osThreadId_t supercap_alert) {
+		
 	if (can_device == NULL)
+		return CAN_ERR_NULL;
+	
+	if (motor_alert == NULL)
 		return CAN_ERR_NULL;
 	
 	if (inited)
 		return CAN_ERR_INITED;
+	
+	can_device->motor_alert_len = motor_alert_len;
+	can_device->motor_alert = motor_alert;
+	can_device->uwb_alert = uwb_alert;
+	can_device->supercap_alert = supercap_alert;
 	
 	CAN_FilterTypeDef  can_filter = {0};
 
@@ -227,7 +241,7 @@ void RxFifo0MsgPendingCallback(void) {
 	}
 	
 	if (motor_received > CAN_CHASSIS_NUM_MOTOR) {
-		for(uint8_t i = 0; i < 3; i++) {
+		for(uint8_t i = 0; i < gcan_device->motor_alert_len; i++) {
 			if(gcan_device->motor_alert[i]) {
 				osThreadFlagsSet(gcan_device->motor_alert, CAN_DEVICE_SIGNAL_MOTOR_RECV);
 			}

@@ -26,7 +26,7 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef struct {
-	osThreadId_t received_alert;
+	osThreadId_t thread_alert;
 
 	uint8_t raw[25];
 	AHRS_Accl_t accl;
@@ -40,7 +40,8 @@ typedef struct {
 } BMI088_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int BMI088_Init(BMI088_t *bmi088);
+
+int BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert);
 BMI088_t *BMI088_GetDevice(void);
 int BMI088_Restart(void);
 
