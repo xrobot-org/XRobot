@@ -53,8 +53,7 @@ void Task_CtrlShoot(void *argument) {
 			Shoot_UpdateFeedback(&shoot, cd);
 			osKernelUnlock();
 			
-			Shoot_SetMode(&shoot, shoot_ctrl.mode);
-			Shoot_Control(&shoot, shoot_ctrl.bullet_speed, shoot_ctrl.shoot_freq_hz);
+			Shoot_Control(&shoot, &shoot_ctrl);
 			
 			// TODO: Check can error.
 			CAN_Motor_ControlShoot(

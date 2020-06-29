@@ -16,6 +16,10 @@
 
 /* Include Module相关的头文件 */
 /* Exported constants --------------------------------------------------------*/
+#define SHOOT_OK		(0)
+#define SHOOT_ERR		(-1)
+#define SHOOT_ERR_MODE	(-2)
+
 #define SHOOT_BULLET_SPEED_SCALER (2.f)
 #define SHOOT_BULLET_SPEED_BIAS  (1.f)
 
@@ -44,6 +48,14 @@ typedef struct {
 } Shoot_Ctrl_t;
 
 typedef struct {
+	PID_Params_t fric_pid_param[2];
+	PID_Params_t trig_pid_param;
+	float low_pass_cutoff;
+} Shoot_Params_t;
+
+typedef struct {
+	const Shoot_Params_t *params;
+	
 	/* common */
 	float dt_sec;
 	Shoot_Mode_t mode;
@@ -73,15 +85,9 @@ typedef struct {
 
 } Shoot_t;
 
-typedef struct {
-	PID_Params_t fric_pid_param[2];
-	PID_Params_t trig_pid_param;
-	float low_pass_cutoff;
-} Shoot_Params_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
 int Shoot_Init(Shoot_t *shoot, const Shoot_Params_t *shoot_param);
-int Shoot_SetMode(Shoot_t *shoot, Shoot_Mode_t mode);
 int Shoot_UpdateFeedback(Shoot_t *shoot, CAN_Device_t *can_device);
 int Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16);
-int Shoot_Control(Shoot_t *shoot, float bullet_speed, float shoot_freq_hz);
+int Shoot_Control(Shoot_t *shoot, Shoot_Ctrl_t *shoot_ctrl);

@@ -64,8 +64,7 @@ void Task_CtrlChassis(void *argument) {
 			Chassis_UpdateFeedback(&chassis, &cd);
 			osKernelUnlock();
 			
-			Chassis_SetMode(&chassis, chas_ctrl.mode, &(RobotConfig_Get(ROBOT_CONFIG_MODEL_INFANTRY)->chassis_param));
-			Chassis_Control(&chassis, &chas_ctrl.ctrl_v);
+			Chassis_Control(&chassis, &chas_ctrl);
 			
 			// Check can error
 			CAN_Motor_ControlChassis(

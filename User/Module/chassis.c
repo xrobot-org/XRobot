@@ -24,6 +24,41 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/
+static int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode) {
+	if (chas == NULL)
+		return CHASSIS_ERR_NULL;
+	
+	if (mode == chas->mode)
+		return CHASSIS_OK;
+	
+	chas->mode = mode;
+	
+	// TODO: Check mode switchable.
+	switch (mode) {
+		case CHASSIS_MODE_RELAX:
+			break;
+		
+		case CHASSIS_MODE_BREAK:
+			break;
+		
+		case CHASSIS_MODE_FOLLOW_GIMBAL:
+			break;
+		
+		case CHASSIS_MODE_ROTOR:
+			break;
+		
+		case CHASSIS_MODE_INDENPENDENT:
+			break;
+		
+		case CHASSIS_MODE_OPEN:
+			break;
+		
+		default:
+			return CHASSIS_ERR_MODE;
+	}
+	return CHASSIS_OK;
+}
+
 /* Exported functions --------------------------------------------------------*/
 int Chassis_Init(Chassis_t *chas, const Chassis_Params_t *chas_param) {
 	if (chas == NULL)
@@ -88,6 +123,8 @@ int Chassis_Init(Chassis_t *chas, const Chassis_Params_t *chas_param) {
 		LowPassFilter2p_Init(&(chas->output_filter[i]), 1000.f / chas->dt_sec, 100.f);
 	}
 	
+	PID_Init(&(chas->follow_pid), PID_MODE_DERIVATIV_NONE, chas->dt_sec, &(chas_param->follow_pid_param));
+	
 	Mixer_Init(&(chas->mixer), mixer_mode);
 	chas->motor_scaler = CAN_M3508_MAX_ABS_VOLTAGE;
 	
@@ -105,42 +142,6 @@ error1:
 	return CHASSIS_ERR_NULL;
 }
 
-int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode, const Chassis_Params_t *chas_param) {
-	if (chas == NULL)
-		return CHASSIS_ERR_NULL;
-	
-	if (mode == chas->mode)
-		return CHASSIS_OK;
-	
-	// TODO: Check mode switchable.
-	switch (mode) {
-		case CHASSIS_MODE_RELAX:
-			break;
-		
-		case CHASSIS_MODE_BREAK:
-			break;
-		
-		case CHASSIS_MODE_FOLLOW_GIMBAL:
-			PID_Init(&(chas->follow_pid), PID_MODE_DERIVATIV_NONE, chas->dt_sec, &(chas_param->follow_pid_param));
-
-			// TODO
-		
-			break;
-		case CHASSIS_MODE_ROTOR:
-			break;
-		
-		case CHASSIS_MODE_INDENPENDENT:
-			// TODO
-			break;
-		
-		case CHASSIS_MODE_OPEN:
-			break;
-		
-		default:
-			return CHASSIS_ERR_MODE;
-	}
-	return CHASSIS_OK;
-}
 
 int Chassis_UpdateFeedback(Chassis_t *chas, CAN_Device_t *can_device) {
 	if (chas == NULL)
@@ -153,8 +154,8 @@ int Chassis_UpdateFeedback(Chassis_t *chas, CAN_Device_t *can_device) {
 	chas->gimbal_yaw_angle = raw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
 	
 	for(uint8_t i = 0; i < 4; i++) {
-		const float raw_peed = can_device->chassis_motor_fb[i].rotor_speed;
-		chas->motor_rpm[i] = raw_peed;
+		const float raw_speed = can_device->chassis_motor_fb[i].rotor_speed;
+		chas->motor_rpm[i] = raw_speed; // TODO
 	}
 	
 	return CHASSIS_OK;
@@ -212,12 +213,14 @@ int Chassis_ParseCommand(Chassis_Ctrl_t *chas_ctrl, const DR16_t *dr16) {
 	return CHASSIS_OK;
 }
 
-int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
+int Chassis_Control(Chassis_t *chas, Chassis_Ctrl_t *chas_ctrl) {
 	if (chas == NULL)
 		return CHASSIS_ERR_NULL;
 	
-	if (ctrl_v == NULL)
+	if (chas_ctrl == NULL)
 		return CHASSIS_ERR_NULL;
+	
+	Chassis_SetMode(chas, chas_ctrl->mode);
 	
 	/* ctrl_v -> chas_v. */
 	/* Compute vx and vy. */
@@ -229,8 +232,8 @@ int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v) {
 		const float cos_beta = cosf(chas->gimbal_yaw_angle);
 		const float sin_beta = sinf(chas->gimbal_yaw_angle);
 		
-		chas->chas_v.vx = cos_beta * ctrl_v->vx - sin_beta * ctrl_v->vy;
-		chas->chas_v.vy = sin_beta * ctrl_v->vx - cos_beta * ctrl_v->vy;
+		chas->chas_v.vx = cos_beta * chas_ctrl->ctrl_v.vx - sin_beta * chas_ctrl->ctrl_v.vy;
+		chas->chas_v.vy = sin_beta * chas_ctrl->ctrl_v.vx - cos_beta * chas_ctrl->ctrl_v.vy;
 	}
 	
 	/* Compute wz. */

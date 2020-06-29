@@ -15,7 +15,7 @@
 #include "filter.h"
 
 /* Include Module相关的头文件。 */
-/* Exported constants --------------------------------------------------------*/\
+/* Exported constants --------------------------------------------------------*/
 #define GIMBAL_OK		(0)
 #define GIMBAL_ERR		(-1)
 #define GIMBAL_ERR_MODE	(-2)
@@ -46,6 +46,18 @@ typedef struct {
 } Gimbal_Ctrl_t;
 
 typedef struct {
+	PID_Params_t yaw_inner_pid_param;
+	PID_Params_t yaw_outer_pid_param;
+	
+	PID_Params_t pit_inner_pid_param;
+	PID_Params_t pit_outer_pid_param;
+	
+	float low_pass_cutoff;
+} Gimbal_Params_t;
+
+typedef struct {
+	const Gimbal_Params_t *params;
+	
 	/* common */
 	float dt_sec;
 	Gimbal_Mode_t mode;
@@ -71,19 +83,9 @@ typedef struct {
 	LowPassFilter2p_t pit_output_filter;
 } Gimbal_t;
 
-typedef struct {
-	PID_Params_t yaw_inner_pid_param;
-	PID_Params_t yaw_outer_pid_param;
-	
-	PID_Params_t pit_inner_pid_param;
-	PID_Params_t pit_outer_pid_param;
-	
-	float low_pass_cutoff;
-} Gimbal_Params_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
 int Gimbal_Init(Gimbal_t *gimb, const Gimbal_Params_t *gimb_param);
-int Gimbal_SetMode(Gimbal_t *gimb, Gimbal_Mode_t mode);
 int Gimbal_UpdateFeedback(Gimbal_t *gimb, CAN_Device_t *can_device);
-int Gimbal_ParseCommand(Gimbal_t *gimb, Gimbal_Ctrl_t *gimb_ctrl, const DR16_t *dr16);
-int Gimbal_Control(Gimbal_t *gimb, AHRS_Eulr_t *ctrl_eulr);
+int Gimbal_ParseCommand(Gimbal_Ctrl_t *gimb_ctrl, const DR16_t *dr16);
+int Gimbal_Control(Gimbal_t *gimb, Gimbal_Ctrl_t *gimb_ctrl);

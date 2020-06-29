@@ -59,8 +59,7 @@ void Task_CtrlGimbal(void *argument) {
 			Gimbal_UpdateFeedback(&gimbal, cd);
 			osKernelUnlock();
 			
-			Gimbal_SetMode(&gimbal, gimbal_ctrl.mode);
-			Gimbal_Control(&gimbal, &gimbal_ctrl.ctrl_eulr);
+			Gimbal_Control(&gimbal, &gimbal_ctrl);
 			
 			CAN_Motor_ControlGimbal(gimbal.yaw_cur_out, gimbal.pit_cur_out);
 			

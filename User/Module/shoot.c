@@ -25,6 +25,35 @@ static void TrigTimerCallback  (void *arg) {
 	shoot->trig_angle_set += 2.f * PI / SHOOT_NUM_FEEDING_TOOTH;
 }
 
+static int Shoot_SetMode(Shoot_t *shoot, Shoot_Mode_t mode) {
+	if (shoot == NULL)
+		return -1;
+	
+	if (mode == shoot->mode)
+		return SHOOT_OK;
+	
+	shoot->mode = mode;
+	
+	// TODO: Check mode switchable.
+	switch (mode) {
+		case SHOOT_MODE_RELAX:
+			break;
+		
+		case SHOOT_MODE_SAFE:
+			break;
+		
+		case SHOOT_MODE_STDBY:
+			break;
+		
+		case SHOOT_MODE_FIRE:
+			break;
+		
+		default:
+			return -1;
+	}
+	return 0;
+}
+
 /* Exported functions --------------------------------------------------------*/
 int Shoot_Init(Shoot_t *shoot, const Shoot_Params_t *shoot_param) {
 	if (shoot == NULL)
@@ -46,30 +75,6 @@ int Shoot_Init(Shoot_t *shoot, const Shoot_Params_t *shoot_param) {
 	return 0;
 }
 
-int Shoot_SetMode(Shoot_t *shoot, Shoot_Mode_t mode) {
-	if (shoot == NULL)
-		return -1;
-	
-	
-	// check mode switchable.
-	switch (mode) {
-		case SHOOT_MODE_RELAX:
-			break;
-		
-		case SHOOT_MODE_SAFE:
-			break;
-		
-		case SHOOT_MODE_STDBY:
-			break;
-		
-		case SHOOT_MODE_FIRE:
-			break;
-		
-		default:
-			return -1;
-	}
-	return 0;
-}
 
 int Shoot_UpdateFeedback(Shoot_t *shoot, CAN_Device_t *can_device) {
 	if (shoot == NULL)
@@ -149,20 +154,22 @@ int Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16) {
 	return -1;
 }
 
-int Shoot_Control(Shoot_t *shoot, float bullet_speed, float shoot_freq_hz) {
+int Shoot_Control(Shoot_t *shoot, Shoot_Ctrl_t *shoot_ctrl) {
 	if (shoot == NULL)
 		return -1;
 	
+	Shoot_SetMode(shoot, shoot_ctrl->mode);
+	
 	if (shoot->mode == SHOOT_MODE_SAFE) {
-		bullet_speed = 0.f;
-		shoot_freq_hz = 0.f;
+		shoot_ctrl->bullet_speed = 0.f;
+		shoot_ctrl->shoot_freq_hz = 0.f;
 	}
 	
-	shoot->fric_rpm_set[0] = SHOOT_BULLET_SPEED_SCALER * bullet_speed + SHOOT_BULLET_SPEED_BIAS;
+	shoot->fric_rpm_set[0] = SHOOT_BULLET_SPEED_SCALER * shoot_ctrl->bullet_speed + SHOOT_BULLET_SPEED_BIAS;
 	shoot->fric_rpm_set[1] = -shoot->fric_rpm_set[0];
 
 	
-	uint32_t period_ms = 1000u / shoot_freq_hz;
+	uint32_t period_ms = 1000u / shoot_ctrl->shoot_freq_hz;
 	if (!osTimerIsRunning(shoot->trig_timer_id))
 		osTimerStart(shoot->trig_timer_id, period_ms);  
 	

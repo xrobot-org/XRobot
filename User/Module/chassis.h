@@ -69,6 +69,15 @@ typedef struct {
 } Chassis_Ctrl_t;
 
 typedef struct {
+	Chassis_Type_t type;
+	PID_Params_t *motor_pid_param;
+	PID_Params_t follow_pid_param;
+	float low_pass_cutoff;
+} Chassis_Params_t;
+
+typedef struct {
+	const Chassis_Params_t *params;
+	
 	/* common */
 	float dt_sec;
 	Chassis_Mode_t mode;
@@ -99,16 +108,8 @@ typedef struct {
 	LowPassFilter2p_t *output_filter;
 } Chassis_t;
 
-typedef struct {
-	Chassis_Type_t type;
-	PID_Params_t *motor_pid_param;
-	PID_Params_t follow_pid_param;
-	float low_pass_cutoff;
-} Chassis_Params_t;
-
 /* Exported functions prototypes ---------------------------------------------*/
 int Chassis_Init(Chassis_t *chas, const Chassis_Params_t *chas_param);
-int Chassis_SetMode(Chassis_t *chas, Chassis_Mode_t mode, const Chassis_Params_t *chas_param);
 int Chassis_UpdateFeedback(Chassis_t *chas, CAN_Device_t *can_device);
 int Chassis_ParseCommand(Chassis_Ctrl_t *chas_ctrl, const DR16_t *dr16);
-int Chassis_Control(Chassis_t *chas, const Chassis_MoveVector_t *ctrl_v);
+int Chassis_Control(Chassis_t *chas, Chassis_Ctrl_t *chas_ctrl);
