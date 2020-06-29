@@ -1,5 +1,5 @@
 /* 
-
+	限制器
 */
 
 #pragma once

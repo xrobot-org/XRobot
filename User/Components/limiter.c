@@ -1,6 +1,5 @@
 /* 
-	Modified from https://github.com/PX4/Firmware/blob/master/src/lib/pid/pid.cpp
-
+	限制器
 */
 
 #include "limiter.h"
