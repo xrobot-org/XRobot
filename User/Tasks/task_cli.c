@@ -30,7 +30,7 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static const char* const welcom_message = 
+static const char* const CLI_WELCOME_MESSAGE = 
 	"\r\n"
 	"  ______         __           _______               __              \r\n"
 	" |   __ \\.-----.|  |--.-----.|   |   |.---.-.-----.|  |_.-----.----.\r\n"
@@ -163,8 +163,6 @@ void Task_CLI(void *argument) {
 	
 	/* Save CPU power when CLI not used. */
 	BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
-	//BSP_FLASH_Save();
-	//BSP_FLASH_Validate();
 	while(1) {
 		BSP_USB_ReadyReceive(osThreadGetId());
 		osThreadFlagsWait(BSP_USB_SIGNAL_BUF_RECV, osFlagsWaitAll, osWaitForever);
@@ -177,7 +175,7 @@ void Task_CLI(void *argument) {
 		}
 	}
 	
-	BSP_USB_Printf(welcom_message);
+	BSP_USB_Printf(CLI_WELCOME_MESSAGE);
 	
 	BSP_USB_Printf("rm>");
 	
