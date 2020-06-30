@@ -63,12 +63,12 @@ typedef struct {
 			int16_t x;
 			int16_t y;
 			int16_t z;
-			bool left_click;
-			bool right_click;
+			bool l_click;
+			bool r_click;
 		} mouse;
 		
 		uint16_t key;
-		uint16_t rev;
+		uint16_t res;
 	} data;
 } DR16_t;
 

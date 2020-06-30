@@ -77,8 +77,8 @@ int DR16_Parse(DR16_t *dr16) {
 	dr16->data.mouse.y = dr16->raw[8] | (dr16->raw[9] << 8);
 	dr16->data.mouse.z = dr16->raw[10] | (dr16->raw[11] << 8);
 	
-	dr16->data.mouse.left_click = dr16->raw[12];
-	dr16->data.mouse.right_click = dr16->raw[13];
+	dr16->data.mouse.l_click = dr16->raw[12];
+	dr16->data.mouse.r_click = dr16->raw[13];
 	
 	dr16->data.key = dr16->raw[14] | (dr16->raw[15] << 8);
 	

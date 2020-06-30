@@ -40,8 +40,8 @@ static const PID_Params_t imu_temp_ctrl_pid_param = {
 	.kp = 0.5,
 	.ki = 0.5,
 	.kd = 0.5,
-	.integral_limit = 0.5,
-	.output_limit = 0.5,
+	.i_limit = 0.5,
+	.out_limit = 0.5,
 };
 
 /* Private function  ---------------------------------------------------------*/
@@ -59,7 +59,7 @@ void Task_PosEsti(void *argument) {
 	
 	AHRS_Init(&gimbal_ahrs, &ist8310.magn, BMI088_GetUpdateFreq(&bmi088));
 	
-	PID_Init(&imu_temp_ctrl_pid, PID_MODE_DERIVATIV_NONE, 1.f/BMI088_GetUpdateFreq(&bmi088), &imu_temp_ctrl_pid_param);
+	PID_Init(&imu_temp_ctrl_pid, PID_MODE_NO_D, 1.f/BMI088_GetUpdateFreq(&bmi088), &imu_temp_ctrl_pid_param);
 	
 	BSP_PWM_Set(BSP_PWM_IMU_HEAT, 0.f);
 	BSP_PWM_Start(BSP_PWM_IMU_HEAT);

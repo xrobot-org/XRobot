@@ -37,7 +37,6 @@ typedef struct {
 	float q3;
 
 	float inv_sample_freq;
-	
 } AHRS_t;
 
 int AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq);

@@ -37,7 +37,7 @@ void Task_CtrlShoot(void *argument) {
 	cd = CAN_GetDevice();
 	dr16 = DR16_GetDevice();
 	
-	Shoot_Init(&shoot, &(RobotConfig_Get(ROBOT_CONFIG_MODEL_INFANTRY)->shoot_param));
+	Shoot_Init(&shoot, &(RobotConfig_Get(ROBOT_CONFIG_MODEL_INFANTRY)->param.shoot));
 	shoot.dt_sec = (float)delay_tick / (float)osKernelGetTickFreq();
 	
 	uint32_t tick = osKernelGetTickCount();

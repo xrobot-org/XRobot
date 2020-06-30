@@ -33,26 +33,26 @@ int PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min, const PID_Params_t *para
 	else
 		return -1;
 
-	if (isfinite(param->integral_limit))
-		pid->integral_limit = param->integral_limit;
+	if (isfinite(param->i_limit))
+		pid->i_limit = param->i_limit;
 	else
 		return -1;
 
-	if (isfinite(param->output_limit))
-		pid->output_limit = param->output_limit;
+	if (isfinite(param->out_limit))
+		pid->out_limit = param->out_limit;
 	else
 		return -1;
 
 	pid->mode = mode;
-	pid->integral = 0.0f;
-	pid->error_previous = 0.0f;
-	pid->last_output = 0.0f;
+	pid->i = 0.0f;
+	pid->err_last = 0.0f;
+	pid->out_last = 0.0f;
 	return 0;
 }
 
 float PID_Calc(PID_t *pid, float sp, float val, float val_dot, float dt) {
 	if (!isfinite(sp) || !isfinite(val) || !isfinite(val_dot) || !isfinite(dt)) {
-		return pid->last_output;
+		return pid->out_last;
 	}
 	
 	float i, d;
@@ -62,21 +62,21 @@ float PID_Calc(PID_t *pid, float sp, float val, float val_dot, float dt) {
 
 	/* current error derivative */
 	switch (pid->mode) {
-		case PID_MODE_DERIVATIV_CALC:
-			d = (error - pid->error_previous) / fmaxf(dt, pid->dt_min);
-			pid->error_previous = error;
+		case PID_MODE_CALC_D:
+			d = (error - pid->err_last) / fmaxf(dt, pid->dt_min);
+			pid->err_last = error;
 			break;
 		
-		case PID_MODE_DERIVATIV_CALC_NO_SP:
-			d = (-val - pid->error_previous) / fmaxf(dt, pid->dt_min);
-			pid->error_previous = -val;
+		case PID_MODE_CALC_D_NO_SP:
+			d = (-val - pid->err_last) / fmaxf(dt, pid->dt_min);
+			pid->err_last = -val;
 			break;
 		
-		case PID_MODE_DERIVATIV_SET:
+		case PID_MODE_SET_D:
 			d = val_dot;
 			break;
 		
-		case PID_MODE_DERIVATIV_NONE:
+		case PID_MODE_NO_D:
 			d = 0.0f;
 			break;
 	}
@@ -88,38 +88,38 @@ float PID_Calc(PID_t *pid, float sp, float val, float val_dot, float dt) {
 	float output = (error * pid->kp) + (d * pid->kd);
 
 	if (pid->ki > SIGMA) {
-		// Calculate the error integral and check for saturation
-		i = pid->integral + (error * dt);
+		// Calculate the error i and check for saturation
+		i = pid->i + (error * dt);
 
 		/* check for saturation */
 		if (isfinite(i)) {
-			if ((pid->output_limit < SIGMA || (fabsf(output + (i * pid->ki)) <= pid->output_limit)) &&
-				fabsf(i) <= pid->integral_limit) {
-				/* not saturated, use new integral value */
-				pid->integral = i;
+			if ((pid->out_limit < SIGMA || (fabsf(output + (i * pid->ki)) <= pid->out_limit)) &&
+				fabsf(i) <= pid->i_limit) {
+				/* not saturated, use new i value */
+				pid->i = i;
 			}
 		}
 
 		/* add I component to output */
-		output += pid->integral * pid->ki;
+		output += pid->i * pid->ki;
 	}
 
 	/* limit output */
 	if (isfinite(output)) {
-		if (pid->output_limit > SIGMA) {
-			output = AbsClip(output, pid->output_limit);
+		if (pid->out_limit > SIGMA) {
+			output = AbsClip(output, pid->out_limit);
 		}
-		pid->last_output = output;
+		pid->out_last = output;
 	}
 
-	return pid->last_output;
+	return pid->out_last;
 }
 
 int PID_ResetIntegral(PID_t *pid) {
 	if (pid == NULL)
 		return -1;
 	
-	pid->integral = 0.0f;
+	pid->i = 0.0f;
 	
 	return 0;
 }

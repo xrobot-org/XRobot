@@ -40,18 +40,27 @@ typedef enum {
 	GIMBAL_MODE_FIX,
 } Gimbal_Mode_t;
 
+enum Gimbal_PID_e{
+	GIMBAL_PID_YAW_IN = 0,
+	GIMBAL_PID_YAW_OUT,
+	GIMBAL_PID_PIT_IN,
+	GIMBAL_PID_PIT_OUT,
+	GIMBAL_PID_NUM,
+};
+
+enum Gimbal_LPF_e{
+	GIMBAL_LPF_YAW = 0,
+	GIMBAL_LPF_PIT,
+	GIMBAL_LPF_NUM,
+};
+
 typedef struct {
-	AHRS_Eulr_t ctrl_eulr;
+	AHRS_Eulr_t eulr;
 	Gimbal_Mode_t mode;
 } Gimbal_Ctrl_t;
 
 typedef struct {
-	PID_Params_t yaw_inner_pid_param;
-	PID_Params_t yaw_outer_pid_param;
-	
-	PID_Params_t pit_inner_pid_param;
-	PID_Params_t pit_outer_pid_param;
-	
+	PID_Params_t pid[GIMBAL_PID_NUM];
 	float low_pass_cutoff;
 } Gimbal_Params_t;
 
@@ -68,24 +77,19 @@ typedef struct {
 	AHRS_Eulr_t encoder_eulr;
 	
 	/* PID */
-	PID_t yaw_inner_pid;
-	PID_t yaw_outer_pid;
-	
-	PID_t pit_inner_pid;
-	PID_t pit_outer_pid;
+	PID_t pid[GIMBAL_PID_NUM];
 	
 	/* Output */
 	float yaw_cur_out;
 	float pit_cur_out;
 	
 	/* Output filter */
-	LowPassFilter2p_t yaw_output_filter;
-	LowPassFilter2p_t pit_output_filter;
+	LowPassFilter2p_t filter[GIMBAL_LPF_NUM];
 } Gimbal_t;
 
 
 /* Exported functions prototypes ---------------------------------------------*/
-int Gimbal_Init(Gimbal_t *gimb, const Gimbal_Params_t *gimb_param);
-int Gimbal_UpdateFeedback(Gimbal_t *gimb, CAN_Device_t *can_device);
-int Gimbal_ParseCommand(Gimbal_Ctrl_t *gimb_ctrl, const DR16_t *dr16);
-int Gimbal_Control(Gimbal_t *gimb, Gimbal_Ctrl_t *gimb_ctrl);
+int Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *g_param);
+int Gimbal_UpdateFeedback(Gimbal_t *g, CAN_Device_t *can_device);
+int Gimbal_ParseCommand(Gimbal_Ctrl_t *g_ctrl, const DR16_t *dr16);
+int Gimbal_Control(Gimbal_t *g, Gimbal_Ctrl_t *g_ctrl);

@@ -20,19 +20,19 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/ 
 static void TrigTimerCallback  (void *arg) {
-	Shoot_t *shoot = (Shoot_t*)arg;
+	Shoot_t *s = (Shoot_t*)arg;
 	
-	shoot->trig_angle_set += 2.f * PI / SHOOT_NUM_FEEDING_TOOTH;
+	s->trig_angle_set += 2.f * PI / SHOOT_NUM_FEEDING_TOOTH;
 }
 
-static int Shoot_SetMode(Shoot_t *shoot, Shoot_Mode_t mode) {
-	if (shoot == NULL)
+static int Shoot_SetMode(Shoot_t *s, Shoot_Mode_t mode) {
+	if (s == NULL)
 		return -1;
 	
-	if (mode == shoot->mode)
+	if (mode == s->mode)
 		return SHOOT_OK;
 	
-	shoot->mode = mode;
+	s->mode = mode;
 	
 	// TODO: Check mode switchable.
 	switch (mode) {
@@ -55,29 +55,29 @@ static int Shoot_SetMode(Shoot_t *shoot, Shoot_Mode_t mode) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-int Shoot_Init(Shoot_t *shoot, const Shoot_Params_t *shoot_param) {
-	if (shoot == NULL)
+int Shoot_Init(Shoot_t *s, const Shoot_Params_t *shoot_param) {
+	if (s == NULL)
 		return -1;
 	
-	shoot->mode = SHOOT_MODE_RELAX;
+	s->mode = SHOOT_MODE_RELAX;
 	
-	shoot->trig_timer_id = osTimerNew(TrigTimerCallback, osTimerPeriodic, shoot, NULL);
+	s->trig_timer_id = osTimerNew(TrigTimerCallback, osTimerPeriodic, s, NULL);
 
 	for(uint8_t i = 0; i < 2; i++) {
-		PID_Init(&(shoot->fric_pid[i]), PID_MODE_DERIVATIV_NONE, shoot->dt_sec, &(shoot_param->fric_pid_param[i]));
+		PID_Init(&(s->fric_pid[i]), PID_MODE_NO_D, s->dt_sec, &(shoot_param->fric_pid_param[i]));
 		
-		LowPassFilter2p_Init(&(shoot->fric_output_filter[i]), 1000.f / shoot->dt_sec, 100.f);
+		LowPassFilter2p_Init(&(s->fric_output_filter[i]), 1000.f / s->dt_sec, 100.f);
 	}
 	
-	PID_Init(&(shoot->trig_pid), PID_MODE_DERIVATIV_NONE, shoot->dt_sec, &(shoot_param->trig_pid_param));
+	PID_Init(&(s->trig_pid), PID_MODE_NO_D, s->dt_sec, &(shoot_param->trig_pid_param));
 	
-	LowPassFilter2p_Init(&(shoot->trig_output_filter), 1000.f / shoot->dt_sec, 100.f);
+	LowPassFilter2p_Init(&(s->trig_output_filter), 1000.f / s->dt_sec, 100.f);
 	return 0;
 }
 
 
-int Shoot_UpdateFeedback(Shoot_t *shoot, CAN_Device_t *can_device) {
-	if (shoot == NULL)
+int Shoot_UpdateFeedback(Shoot_t *s, CAN_Device_t *can_device) {
+	if (s == NULL)
 		return -1;
 	
 	if (can_device == NULL)
@@ -85,11 +85,11 @@ int Shoot_UpdateFeedback(Shoot_t *shoot, CAN_Device_t *can_device) {
 	
 	for(uint8_t i = 0; i < 2; i++) {
 		const float fric_speed = can_device->gimbal_motor_fb.fric_fb[i].rotor_speed;
-		shoot->fric_rpm[i] = fric_speed;
+		s->fric_rpm[i] = fric_speed;
 	}
 	
 	const float trig_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
-	shoot->trig_angle = trig_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
+	s->trig_angle = trig_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
 	
 	return 0;
 }
@@ -124,8 +124,8 @@ int Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16) {
 	
 	if ((dr16->data.rc.sw_l == DR16_SW_UP) && (dr16->data.rc.sw_r == DR16_SW_UP)) {
 		/* PC Control. */
-		if (dr16->data.mouse.left_click) {
-			if (dr16->data.mouse.right_click) {
+		if (dr16->data.mouse.l_click) {
+			if (dr16->data.mouse.r_click) {
 				shoot_ctrl->shoot_freq_hz = 5u;
 				shoot_ctrl->bullet_speed = 20.f;
 			} else {
@@ -154,43 +154,43 @@ int Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16) {
 	return -1;
 }
 
-int Shoot_Control(Shoot_t *shoot, Shoot_Ctrl_t *shoot_ctrl) {
-	if (shoot == NULL)
+int Shoot_Control(Shoot_t *s, Shoot_Ctrl_t *shoot_ctrl) {
+	if (s == NULL)
 		return -1;
 	
-	Shoot_SetMode(shoot, shoot_ctrl->mode);
+	Shoot_SetMode(s, shoot_ctrl->mode);
 	
-	if (shoot->mode == SHOOT_MODE_SAFE) {
+	if (s->mode == SHOOT_MODE_SAFE) {
 		shoot_ctrl->bullet_speed = 0.f;
 		shoot_ctrl->shoot_freq_hz = 0.f;
 	}
 	
-	shoot->fric_rpm_set[0] = SHOOT_BULLET_SPEED_SCALER * shoot_ctrl->bullet_speed + SHOOT_BULLET_SPEED_BIAS;
-	shoot->fric_rpm_set[1] = -shoot->fric_rpm_set[0];
+	s->fric_rpm_set[0] = SHOOT_BULLET_SPEED_SCALER * shoot_ctrl->bullet_speed + SHOOT_BULLET_SPEED_BIAS;
+	s->fric_rpm_set[1] = -s->fric_rpm_set[0];
 
 	
 	uint32_t period_ms = 1000u / shoot_ctrl->shoot_freq_hz;
-	if (!osTimerIsRunning(shoot->trig_timer_id))
-		osTimerStart(shoot->trig_timer_id, period_ms);  
+	if (!osTimerIsRunning(s->trig_timer_id))
+		osTimerStart(s->trig_timer_id, period_ms);  
 	
-	switch(shoot->mode) {
+	switch(s->mode) {
 		case SHOOT_MODE_RELAX:
-			shoot->trig_cur_out = 0.f;
+			s->trig_cur_out = 0.f;
 		
 			for(uint8_t i = 0; i < 2; i++) {
-				shoot->fric_cur_out[i] = 0.f;
+				s->fric_cur_out[i] = 0.f;
 			}
 			break;
 		
 		case SHOOT_MODE_SAFE:
 		case SHOOT_MODE_STDBY:
 		case SHOOT_MODE_FIRE:
-			shoot->trig_cur_out = PID_Calc(&(shoot->trig_pid), shoot->trig_angle_set, shoot->trig_angle, 0.f, shoot->dt_sec);
-			shoot->trig_cur_out = LowPassFilter2p_Apply(&(shoot->trig_output_filter), shoot->trig_cur_out);
+			s->trig_cur_out = PID_Calc(&(s->trig_pid), s->trig_angle_set, s->trig_angle, 0.f, s->dt_sec);
+			s->trig_cur_out = LowPassFilter2p_Apply(&(s->trig_output_filter), s->trig_cur_out);
 		
 			for(uint8_t i = 0; i < 2; i++) {
-				shoot->fric_cur_out[i] = PID_Calc(&(shoot->fric_pid[i]), shoot->fric_rpm_set[i], shoot->fric_rpm[i], 0.f, shoot->dt_sec);
-				shoot->fric_cur_out[i] = LowPassFilter2p_Apply(&(shoot->fric_output_filter[i]), shoot->fric_cur_out[i]);
+				s->fric_cur_out[i] = PID_Calc(&(s->fric_pid[i]), s->fric_rpm_set[i], s->fric_rpm[i], 0.f, s->dt_sec);
+				s->fric_cur_out[i] = LowPassFilter2p_Apply(&(s->fric_output_filter[i]), s->fric_cur_out[i]);
 			}
 			break;
 		

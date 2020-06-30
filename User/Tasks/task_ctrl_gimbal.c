@@ -40,7 +40,7 @@ void Task_CtrlGimbal(void *argument) {
 	cd = CAN_GetDevice();
 	dr16 = DR16_GetDevice();
 	
-	Gimbal_Init(&gimbal, &(RobotConfig_Get(ROBOT_CONFIG_MODEL_INFANTRY)->gimbal_param));
+	Gimbal_Init(&gimbal, &(RobotConfig_Get(ROBOT_CONFIG_MODEL_INFANTRY)->param.gimbal));
 	gimbal.dt_sec = (float)delay_tick / (float)osKernelGetTickFreq();
 	gimbal.imu = BMI088_GetDevice();
 	
@@ -51,7 +51,7 @@ void Task_CtrlGimbal(void *argument) {
 		
 		uint32_t flag = DR16_SIGNAL_DATA_REDY | CAN_DEVICE_SIGNAL_MOTOR_RECV;
 		if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
-			Gimbal_ParseCommand(&gimbal, &gimbal_ctrl, dr16);
+			Gimbal_ParseCommand(&gimbal_ctrl, dr16);
 			
 			osStatus os_status = osMessageQueueGet(task_param->messageq.gimb_eulr, gimbal.imu_eulr, NULL, 0);
 			

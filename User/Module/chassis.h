@@ -109,7 +109,7 @@ typedef struct {
 } Chassis_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int Chassis_Init(Chassis_t *chas, const Chassis_Params_t *chas_param);
-int Chassis_UpdateFeedback(Chassis_t *chas, CAN_Device_t *can_device);
-int Chassis_ParseCommand(Chassis_Ctrl_t *chas_ctrl, const DR16_t *dr16);
-int Chassis_Control(Chassis_t *chas, Chassis_Ctrl_t *chas_ctrl);
+int Chassis_Init(Chassis_t *c, const Chassis_Params_t *chas_param);
+int Chassis_UpdateFeedback(Chassis_t *c, CAN_Device_t *can_device);
+int Chassis_ParseCommand(Chassis_Ctrl_t *c_ctrl, const DR16_t *dr16);
+int Chassis_Control(Chassis_t *c, Chassis_Ctrl_t *c_ctrl);

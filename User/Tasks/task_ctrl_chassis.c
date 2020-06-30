@@ -47,7 +47,7 @@ void Task_CtrlChassis(void *argument) {
 	dr16 = DR16_GetDevice();
 	
 	/* Module Setup */
-	Chassis_Init(&chassis, &(RobotConfig_Get(ROBOT_CONFIG_MODEL_INFANTRY)->chassis_param));
+	Chassis_Init(&chassis, &(RobotConfig_Get(ROBOT_CONFIG_MODEL_INFANTRY)->param.chassis));
 	chassis.dt_sec = (float)delay_tick / (float)osKernelGetTickFreq();
 	
 	/* Task Setup */

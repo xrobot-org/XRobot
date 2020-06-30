@@ -10,6 +10,7 @@
 #include "gimbal.h"
 #include "shoot.h"
 
+#define ROBOT_CONFIG_ADDRESS 
 
 typedef enum {
 	ROBOT_CONFIG_MODEL_INFANTRY,
@@ -20,9 +21,11 @@ typedef enum {
 } RobotConfig_Model_t;
 
 typedef struct {
-	const Chassis_Params_t chassis_param;
-	const Gimbal_Params_t gimbal_param;
-	const Shoot_Params_t shoot_param;
+	struct {
+		const Chassis_Params_t chassis;
+		const Gimbal_Params_t gimbal;
+		const Shoot_Params_t shoot;
+	} param;
 	
 	/* Xxx_Params_t xxx_param; */
 } RobotConfig_t;

@@ -21,8 +21,8 @@ void KalmanFilter_Init(KalmanFilter_t *kal) {
 	
 }
 
-double KalmanFilter_Update(KalmanFilter_t *kal, double newAngle, double newRate, double dt) {
-	kal->rate = newRate - kal->bias;
+double KalmanFilter_Update(KalmanFilter_t *kal, double new_angle, double new_rate, double dt) {
+	kal->rate = new_rate - kal->bias;
 	kal->angle += dt * kal->rate;
 
 	kal->p[0][0] += dt * (dt*kal->p[1][1] - kal->p[0][1] - kal->p[1][0] + kal->q_angle);
@@ -35,7 +35,7 @@ double KalmanFilter_Update(KalmanFilter_t *kal, double newAngle, double newRate,
 	kal->k[0] = kal->p[0][0] / kal->s;
 	kal->k[1] = kal->p[1][0] / kal->s;
    
-	kal->y = newAngle - kal->angle;
+	kal->y = new_angle - kal->angle;
 
 	kal->angle += kal->k[0] * kal->y;
 	kal->bias += kal->k[1] * kal->y;

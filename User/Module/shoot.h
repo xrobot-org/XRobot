@@ -31,7 +31,7 @@
 	SHOOT_MODE_RELAX: No force applied.
 	SHOOT_MODE_SAFE: Set to zero speed. Force applied.
 	SHOOT_MODE_STDBY: Ready to switch to FIRE.
-	SHOOT_MODE_FIRE: Ready to shoot.
+	SHOOT_MODE_FIRE: Ready to s.
 */
 
 typedef enum {
@@ -87,7 +87,7 @@ typedef struct {
 
 
 /* Exported functions prototypes ---------------------------------------------*/
-int Shoot_Init(Shoot_t *shoot, const Shoot_Params_t *shoot_param);
-int Shoot_UpdateFeedback(Shoot_t *shoot, CAN_Device_t *can_device);
+int Shoot_Init(Shoot_t *s, const Shoot_Params_t *shoot_param);
+int Shoot_UpdateFeedback(Shoot_t *s, CAN_Device_t *can_device);
 int Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16);
-int Shoot_Control(Shoot_t *shoot, Shoot_Ctrl_t *shoot_ctrl);
+int Shoot_Control(Shoot_t *s, Shoot_Ctrl_t *shoot_ctrl);
