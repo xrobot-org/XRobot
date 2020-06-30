@@ -4,6 +4,7 @@
 #include "tim.h"
 
 #include <stdbool.h>
+#include "user_math.h"
 
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -14,7 +15,7 @@ static uint32_t led_stats;
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 
-int BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, float duty_cycle) {
+int8_t BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, float32_t duty_cycle) {
 	if (duty_cycle > 1.f)
 		return -1;
 	

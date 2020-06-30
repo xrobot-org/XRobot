@@ -21,7 +21,7 @@ uint8_t usb_tx_buf[BSP_USB_MAX_TX_LEN];
 static uint16_t usb_rx_num = 0;
 
 /* Private function  ---------------------------------------------------------*/
-static int BSP_USB_Transmit(uint8_t *buffer, uint16_t len) {
+static int8_t BSP_USB_Transmit(uint8_t *buffer, uint16_t len) {
 	while(CDC_Transmit_FS(buffer, len) != USBD_OK) {
 		BSP_Delay(10);
 	}
@@ -30,7 +30,7 @@ static int BSP_USB_Transmit(uint8_t *buffer, uint16_t len) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-int BSP_USB_ReadyReceive(osThreadId_t alert) {
+int8_t BSP_USB_ReadyReceive(osThreadId_t alert) {
 	if (alert == NULL)
 		return BSP_USB_ERR_NULL;
 	
@@ -44,7 +44,7 @@ char BSP_USB_ReadChar(void) {
 	return usb_rx_buf[0];
 }
 
-int BSP_USB_Printf(const char *fmt, ...) {
+int8_t BSP_USB_Printf(const char *fmt, ...) {
 	static va_list ap;
 	uint16_t len = 0;
 	

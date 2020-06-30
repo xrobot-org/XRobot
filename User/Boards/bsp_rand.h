@@ -9,4 +9,4 @@
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions prototypes ---------------------------------------------*/
 uint32_t BSP_GetRandomNum(void);
-int32_t BSP_GetRandomRangle(int min, int max);
+int32_t BSP_GetRandomRangle(int32_t min, int int32_t);

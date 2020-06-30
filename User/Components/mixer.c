@@ -4,13 +4,13 @@
 
 #include "mixer.h"
 
-int Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode) {
+int8_t Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode) {
 	mixer->mode = mode;
 	return 0;
 }
 
 
-int Mixer_Apply(Mixer_t *mixer, float vx, float vy, float wz, float *out, int len) {
+int8_t Mixer_Apply(Mixer_t *mixer, float32_t vx, float32_t vy, float32_t wz, float32_t *out, int8_t len) {
 	switch (mixer->mode) {
 		case MIXER_MECANUM:
 			if (len == 4) {

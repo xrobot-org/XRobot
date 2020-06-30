@@ -42,42 +42,42 @@ typedef enum {
 } Shoot_Mode_t;
 
 typedef struct {
-	float bullet_speed;
-	float shoot_freq_hz;
+	float32_t bullet_speed;
+	float32_t shoot_freq_hz;
 	Shoot_Mode_t mode;
 } Shoot_Ctrl_t;
 
 typedef struct {
 	PID_Params_t fric_pid_param[2];
 	PID_Params_t trig_pid_param;
-	float low_pass_cutoff;
+	float32_t low_pass_cutoff;
 } Shoot_Params_t;
 
 typedef struct {
 	const Shoot_Params_t *params;
 	
 	/* common */
-	float dt_sec;
+	float32_t dt_sec;
 	Shoot_Mode_t mode;
 	osTimerId_t trig_timer_id;
 	
 	/* Feedback */
-	float fric_rpm[2];
-	float trig_angle;
+	float32_t fric_rpm[2];
+	float32_t trig_angle;
 	
 	/* PID set point */
-	float fric_rpm_set[2];
-	float trig_angle_set;
+	float32_t fric_rpm_set[2];
+	float32_t trig_angle_set;
 	
 	/* PID */
 	PID_t fric_pid[2];
 	PID_t trig_pid;
 	
 	/* Output */
-	float fric_cur_out[2];
-	float trig_cur_out;
+	float32_t fric_cur_out[2];
+	float32_t trig_cur_out;
 	
-	int heat_limiter;
+	int8_t heat_limiter;
 	
 	/* Output filter */
 	LowPassFilter2p_t fric_output_filter[2];
@@ -87,7 +87,7 @@ typedef struct {
 
 
 /* Exported functions prototypes ---------------------------------------------*/
-int Shoot_Init(Shoot_t *s, const Shoot_Params_t *shoot_param);
-int Shoot_UpdateFeedback(Shoot_t *s, CAN_Device_t *can_device);
-int Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16);
-int Shoot_Control(Shoot_t *s, Shoot_Ctrl_t *shoot_ctrl);
+int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *shoot_param);
+int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_Device_t *can_device);
+int8_t Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16);
+int8_t Shoot_Control(Shoot_t *s, Shoot_Ctrl_t *shoot_ctrl);

@@ -8,4 +8,4 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions prototypes ---------------------------------------------*/
-int BSP_Delay(uint32_t ms);
+int8_t BSP_Delay(uint32_t ms);

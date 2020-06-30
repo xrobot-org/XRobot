@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "user_math.h"
 
 typedef enum {
 	MIXER_MECANUM,
@@ -20,5 +21,5 @@ typedef struct {
 	Mixer_Mode_t mode;
 } Mixer_t;
 
-int Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode);
-int Mixer_Apply(Mixer_t *mixer, float vx, float vy, float wz, float *out, int len);
+int8_t Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode);
+int8_t Mixer_Apply(Mixer_t *mixer, float32_t vx, float32_t vy, float32_t wz, float32_t *out, int8_t len);

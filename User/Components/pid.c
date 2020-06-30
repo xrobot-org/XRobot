@@ -5,11 +5,9 @@
 
 #include "pid.h"
 
-#include "user_math.h"
-
 #define SIGMA 0.000001f
 
-int PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min, const PID_Params_t *param) {
+int8_t PID_Init(PID_t *pid, PID_Mode_t mode, float32_t dt_min, const PID_Params_t *param) {
 	if (pid == NULL)
 		return -1;
 	
@@ -50,15 +48,15 @@ int PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min, const PID_Params_t *para
 	return 0;
 }
 
-float PID_Calc(PID_t *pid, float sp, float val, float val_dot, float dt) {
+float32_t PID_Calc(PID_t *pid, float32_t sp, float32_t val, float32_t val_dot, float32_t dt) {
 	if (!isfinite(sp) || !isfinite(val) || !isfinite(val_dot) || !isfinite(dt)) {
 		return pid->out_last;
 	}
 	
-	float i, d;
+	float32_t i, d;
 
 	/* current error value */
-	float error = sp - val;
+	float32_t error = sp - val;
 
 	/* current error derivative */
 	switch (pid->mode) {
@@ -85,7 +83,7 @@ float PID_Calc(PID_t *pid, float sp, float val, float val_dot, float dt) {
 		d = 0.0f;
 	
 	/* calculate PD output */
-	float output = (error * pid->kp) + (d * pid->kd);
+	float32_t output = (error * pid->kp) + (d * pid->kd);
 
 	if (pid->ki > SIGMA) {
 		// Calculate the error i and check for saturation
@@ -115,7 +113,7 @@ float PID_Calc(PID_t *pid, float sp, float val, float val_dot, float dt) {
 	return pid->out_last;
 }
 
-int PID_ResetIntegral(PID_t *pid) {
+int8_t PID_ResetIntegral(PID_t *pid) {
 	if (pid == NULL)
 		return -1;
 	

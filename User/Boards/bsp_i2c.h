@@ -25,10 +25,10 @@ typedef enum {
 } BSP_I2C_Callback_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int BSP_I2C_RegisterCallback(BSP_I2C_t i2c, BSP_I2C_Callback_t type, void (*callback)(void));
+int8_t BSP_I2C_RegisterCallback(BSP_I2C_t i2c, BSP_I2C_Callback_t type, void (*callback)(void));
 
-int BSP_I2C_Transmit(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len, uint32_t time_out);
-int BSP_I2C_TransmitDMA(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len);
+int8_t BSP_I2C_Transmit(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len, uint32_t time_out);
+int8_t BSP_I2C_TransmitDMA(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len);
 
-int BSP_I2C_Receive(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len, uint32_t time_out);
-int BSP_I2C_ReceiveDMA(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len);
+int8_t BSP_I2C_Receive(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len, uint32_t time_out);
+int8_t BSP_I2C_ReceiveDMA(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len);

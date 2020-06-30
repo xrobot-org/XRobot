@@ -3,6 +3,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
+#include "user_math.h"
 
 /* Exported constants --------------------------------------------------------*/
 #define BSP_LAZER_RESOLUTION 10000
@@ -12,7 +13,7 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions prototypes ---------------------------------------------*/
-int BSP_Fric_Start(void);
-int BSP_Fric_Set(float duty_cycle);
-int BSP_Fric_Stop(void);
+int8_t BSP_Fric_Start(void);
+int8_t BSP_Fric_Set(float32_t duty_cycle);
+int8_t BSP_Fric_Stop(void);
 

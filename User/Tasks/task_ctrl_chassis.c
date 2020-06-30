@@ -48,7 +48,7 @@ void Task_CtrlChassis(void *argument) {
 	
 	/* Module Setup */
 	Chassis_Init(&chassis, &(RobotConfig_Get(ROBOT_CONFIG_MODEL_INFANTRY)->param.chassis));
-	chassis.dt_sec = (float)delay_tick / (float)osKernelGetTickFreq();
+	chassis.dt_sec = (float32_t)delay_tick / (float32_t)osKernelGetTickFreq();
 	
 	/* Task Setup */
 	uint32_t tick = osKernelGetTickCount();

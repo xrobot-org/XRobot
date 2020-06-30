@@ -3,18 +3,20 @@
 
 #include "tim.h"
 
+#include "user_math.h"
+
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-int BSP_Laser_Start(void) {
+int8_t BSP_Laser_Start(void) {
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
 	return 0;
 }
 
-int BSP_Laser_Set(float duty_cycle) {
+int8_t BSP_Laser_Set(float32_t duty_cycle) {
 	if (duty_cycle > 1.f)
 		return -1;
 	
@@ -25,7 +27,7 @@ int BSP_Laser_Set(float duty_cycle) {
 	return 0;
 }
 
-int BSP_Laser_Stop(void) {
+int8_t BSP_Laser_Stop(void) {
 	HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_3);
 	return 0;
 }

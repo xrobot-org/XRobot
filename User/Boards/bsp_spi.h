@@ -25,10 +25,10 @@ typedef enum {
 } BSP_SPI_Callback_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*callback)(void));
+int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*callback)(void));
 
-int BSP_SPI_Transmit(BSP_SPI_t spi, uint8_t *data, uint16_t len, uint32_t time_out);
-int BSP_SPI_TransmitDMA(BSP_SPI_t spi, uint8_t *data, uint16_t len);
+int8_t BSP_SPI_Transmit(BSP_SPI_t spi, uint8_t *data, uint16_t len, uint32_t time_out);
+int8_t BSP_SPI_TransmitDMA(BSP_SPI_t spi, uint8_t *data, uint16_t len);
 
-int BSP_SPI_Receive(BSP_SPI_t spi, uint8_t *data, uint16_t len, uint32_t time_out);
-int BSP_SPI_ReceiveDMA(BSP_SPI_t spi, uint8_t *data, uint16_t len);
+int8_t BSP_SPI_Receive(BSP_SPI_t spi, uint8_t *data, uint16_t len, uint32_t time_out);
+int8_t BSP_SPI_ReceiveDMA(BSP_SPI_t spi, uint8_t *data, uint16_t len);

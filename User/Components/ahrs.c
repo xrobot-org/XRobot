@@ -10,9 +10,9 @@
 #define BETA .033f
 
 /* 2 * proportional gain (Kp) */
-static float beta = BETA;
+static float32_t beta = BETA;
 
-static int AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyro) {
+static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyro) {
 	if (ahrs == NULL)
 		return -1;
 	
@@ -22,18 +22,18 @@ static int AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro
 	if (gyro == NULL)
 		return -1;
 	
-	float ax = accl->x;
-	float ay = accl->y;
-	float az = accl->z;
+	float32_t ax = accl->x;
+	float32_t ay = accl->y;
+	float32_t az = accl->z;
 	
-	float gx = gyro->x;
-	float gy = gyro->y;
-	float gz = gyro->z;
+	float32_t gx = gyro->x;
+	float32_t gy = gyro->y;
+	float32_t gz = gyro->z;
 	
-	float recip_norm;
-	float s0, s1, s2, s3;
-	float q_dot1, q_dot2, q_dot3, q_dot4;
-	float _2q0, _2q1, _2q2, _2q3, _4q0, _4q1, _4q2 ,_8q1, _8q2, q0q0, q1q1, q2q2, q3q3;
+	float32_t recip_norm;
+	float32_t s0, s1, s2, s3;
+	float32_t q_dot1, q_dot2, q_dot3, q_dot4;
+	float32_t _2q0, _2q1, _2q2, _2q3, _4q0, _4q1, _4q2 ,_8q1, _8q2, q0q0, q1q1, q2q2, q3q3;
 
 	// Rate of change of quaternion from gyroscope
 	q_dot1 = 0.5f * (-ahrs->q1 * gx - ahrs->q2 * gy - ahrs->q3 * gz);
@@ -99,7 +99,7 @@ static int AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro
 	return 0;
 }
 
-int AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq) {
+int8_t AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float32_t sample_freq) {
 	if (ahrs == NULL)
 		return -1;
 	
@@ -122,7 +122,7 @@ int AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq) {
 }
 
 /* Feed the sensor data in NED(North East Down) reference frame. Rotation can be added. */
-int AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyro, const AHRS_Magn_t *magn) {
+int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyro, const AHRS_Magn_t *magn) {
 	if (ahrs == NULL)
 		return -1;
 	
@@ -132,32 +132,32 @@ int AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyro, 
 	if (gyro == NULL)
 		return -1;
 	
-	float recip_norm;
-	float s0, s1, s2, s3;
-	float q_dot1, q_dot2, q_dot3, q_dot4;
-	float hx, hy;
-	float _2q0mx, _2q0my, _2q0mz, _2q1mx, _2bx, _2bz, _4bx, _4bz, _2q0, _2q1, _2q2, _2q3, _2q0q2, _2q2q3, q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;
+	float32_t recip_norm;
+	float32_t s0, s1, s2, s3;
+	float32_t q_dot1, q_dot2, q_dot3, q_dot4;
+	float32_t hx, hy;
+	float32_t _2q0mx, _2q0my, _2q0mz, _2q1mx, _2bx, _2bz, _4bx, _4bz, _2q0, _2q1, _2q2, _2q3, _2q0q2, _2q2q3, q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3, q2q2, q2q3, q3q3;
 
 	if (magn == NULL)
 		return AHRS_UpdateIMU(ahrs, accl, gyro);
 	
 	
-	float mx = magn->x;
-	float my = magn->y;
-	float mz = magn->z;
+	float32_t mx = magn->x;
+	float32_t my = magn->y;
+	float32_t mz = magn->z;
 	
 	// Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation)
 	if((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f)) {
 		return AHRS_UpdateIMU(ahrs, accl, gyro);
 	}
 	
-	float ax = accl->x;
-	float ay = accl->y;
-	float az = accl->z;
+	float32_t ax = accl->x;
+	float32_t ay = accl->y;
+	float32_t az = accl->z;
 	
-	float gx = gyro->x;
-	float gy = gyro->y;
-	float gz = gyro->z;
+	float32_t gx = gyro->x;
+	float32_t gy = gyro->y;
+	float32_t gz = gyro->z;
 	
 	// Rate of change of quaternion from gyroscope
 	q_dot1 = 0.5f * (-ahrs->q1 * gx - ahrs->q2 * gy - ahrs->q3 * gz);
@@ -244,18 +244,18 @@ int AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyro, 
 	return 0;
 }
 
-int AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
+int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
 	if (eulr == NULL)
 		return -1;
 	
 	if (ahrs == NULL)
 		return -1;
 
-	const float sinr_cosp = 2.f * (ahrs->q0 * ahrs->q1 + ahrs->q2 * ahrs->q3);
-	const float cosr_cosp = 1.f - 2.f * (ahrs->q1 * ahrs->q1 + ahrs->q2 * ahrs->q2);
+	const float32_t sinr_cosp = 2.f * (ahrs->q0 * ahrs->q1 + ahrs->q2 * ahrs->q3);
+	const float32_t cosr_cosp = 1.f - 2.f * (ahrs->q1 * ahrs->q1 + ahrs->q2 * ahrs->q2);
 	eulr->pit = atan2f(sinr_cosp, cosr_cosp);
 	
-	const float sinp  = 2.f * (ahrs->q0 * ahrs->q2 - ahrs->q3 * ahrs->q1);
+	const float32_t sinp  = 2.f * (ahrs->q0 * ahrs->q2 - ahrs->q3 * ahrs->q1);
 	
 	if (fabs(sinp) >= 1.f)
 		eulr->rol = copysignf(PI / 2.f, sinp);
@@ -263,8 +263,8 @@ int AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
 		eulr->rol = asinf(sinp);
 	
 	
-	const float siny_cosp = 2.f * (ahrs->q0 * ahrs->q3 + ahrs->q1 * ahrs->q2);
-	const float cosy_cosp = 1.f - 2.f * (ahrs->q2 * ahrs->q2 + ahrs->q3 * ahrs->q3);
+	const float32_t siny_cosp = 2.f * (ahrs->q0 * ahrs->q3 + ahrs->q1 * ahrs->q2);
+	const float32_t cosy_cosp = 1.f - 2.f * (ahrs->q2 * ahrs->q2 + ahrs->q3 * ahrs->q3);
 	eulr->yaw = atan2f(siny_cosp , cosy_cosp);
 	
 	#if 1

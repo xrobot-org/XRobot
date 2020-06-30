@@ -8,6 +8,8 @@
 /* Include cmsis_os.h头文件 */
 #include "cmsis_os.h"
 
+#include "user_math.h"
+
 /* Exported constants --------------------------------------------------------*/
 #define DR16_OK			(0)
 #define DR16_ERR_NULL	(-1)
@@ -48,12 +50,12 @@ typedef struct {
 	
 	struct {
 		struct {
-			float ch_l_x;
-			float ch_l_y;
-			float ch_r_x;
-			float ch_r_y;
+			float32_t ch_l_x;
+			float32_t ch_l_y;
+			float32_t ch_r_x;
+			float32_t ch_r_y;
 			
-			float ch_res;
+			float32_t ch_res;
 			
 			DR16_SwitchPos_t sw_l;
 			DR16_SwitchPos_t sw_r;
@@ -73,12 +75,12 @@ typedef struct {
 } DR16_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int DR16_Init(DR16_t *dr16, osThreadId_t thread_alert);
+int8_t DR16_Init(DR16_t *dr16, osThreadId_t thread_alert);
 DR16_t *DR16_GetDevice(void);
-int DR16_Restart(void);
+int8_t DR16_Restart(void);
 
-int DR16_StartReceiving(DR16_t *dr16);
-int DR16_Parse(DR16_t *dr16);
+int8_t DR16_StartReceiving(DR16_t *dr16);
+int8_t DR16_Parse(DR16_t *dr16);
 bool DR16_DataCorrupted(DR16_t *dr16);
 
 bool DR16_KeyPressed(const DR16_t *dr16, DR16_KeyValue_t key);

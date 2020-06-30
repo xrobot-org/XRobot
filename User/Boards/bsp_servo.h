@@ -3,6 +3,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
+#include "user_math.h"
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
@@ -16,7 +17,7 @@ typedef enum {
 	BSP_SERVO_F,
 	BSP_SERVO_G,
 	BSP_SERVO_H,
-#ifdef USE_DEV_BOARD_A
+#ifdef DEV_BOARD_A
 	BSP_SERVO_S,
 	BSP_SERVO_T,
 	BSP_SERVO_U,
@@ -30,7 +31,7 @@ typedef enum {
 } BSP_Servo_Channel_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int BSP_Servo_Init(BSP_Servo_Channel_t ch, float max_angle);
-int BSP_Servo_Start(BSP_Servo_Channel_t ch);
-int BSP_Servo_Set(BSP_Servo_Channel_t ch, uint8_t angle);
-int BSP_Servo_Stop(BSP_Servo_Channel_t ch);
+int8_t BSP_Servo_Init(BSP_Servo_Channel_t ch, float32_t max_angle);
+int8_t BSP_Servo_Start(BSP_Servo_Channel_t ch);
+int8_t BSP_Servo_Set(BSP_Servo_Channel_t ch, uint8_t angle);
+int8_t BSP_Servo_Stop(BSP_Servo_Channel_t ch);

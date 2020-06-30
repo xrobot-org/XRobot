@@ -11,15 +11,13 @@
 /* Include Board相关的头文件 */
 /* Include Device相关的头文件 */
 /* Include Component相关的头文件 */
-#include "user_math.h"
-
 /* Include Module相关的头文件 */
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/
-int Gimbal_SetMode(Gimbal_t *g, Gimbal_Mode_t mode) {
+int8_t Gimbal_SetMode(Gimbal_t *g, Gimbal_Mode_t mode) {
 	if (g == NULL)
 		return -1;
 	
@@ -54,7 +52,7 @@ int Gimbal_SetMode(Gimbal_t *g, Gimbal_Mode_t mode) {
 	return 0;
 }
 /* Exported functions --------------------------------------------------------*/
-int Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *g_param) {
+int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *g_param) {
 	if (g == NULL)
 		return -1;
 	
@@ -71,23 +69,23 @@ int Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *g_param) {
 }
 
 
-int Gimbal_UpdateFeedback(Gimbal_t *g, CAN_Device_t *can_device) {
+int8_t Gimbal_UpdateFeedback(Gimbal_t *g, CAN_Device_t *can_device) {
 	if (g == NULL)
 		return -1;
 	
 	if (can_device == NULL)
 		return -1;
 	
-	const float yaw_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
-	g->encoder_eulr.yaw = yaw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
+	const float32_t yaw_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
+	g->encoder_eulr.yaw = yaw_angle / (float32_t)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
 	
-	const float pit_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
-	g->encoder_eulr.pit = pit_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
+	const float32_t pit_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
+	g->encoder_eulr.pit = pit_angle / (float32_t)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
 	
 	return 0;
 }
 
-int Gimbal_ParseCommand(Gimbal_Ctrl_t *g_ctrl, const DR16_t *dr16) {
+int8_t Gimbal_ParseCommand(Gimbal_Ctrl_t *g_ctrl, const DR16_t *dr16) {
 	if (g_ctrl == NULL)
 		return -1;
 	
@@ -112,14 +110,14 @@ int Gimbal_ParseCommand(Gimbal_Ctrl_t *g_ctrl, const DR16_t *dr16) {
 	
 	if ((dr16->data.rc.sw_l == DR16_SW_UP) && (dr16->data.rc.sw_r == DR16_SW_UP)) {
 		/* PC Control. */
-		g_ctrl->eulr.yaw += (float)dr16->data.mouse.x / 100.f;	
-		g_ctrl->eulr.pit += (float)dr16->data.mouse.y / 100.f;
+		g_ctrl->eulr.yaw += (float32_t)dr16->data.mouse.x / 100.f;	
+		g_ctrl->eulr.pit += (float32_t)dr16->data.mouse.y / 100.f;
 		
 	}
 	return 0;
 }
 
-int Gimbal_Control(Gimbal_t *g, Gimbal_Ctrl_t *g_ctrl) {
+int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Ctrl_t *g_ctrl) {
 	if (g == NULL)
 		return -1;
 	
@@ -131,7 +129,7 @@ int Gimbal_Control(Gimbal_t *g, Gimbal_Ctrl_t *g_ctrl) {
 	
 	Gimbal_SetMode(g, g_ctrl->mode);
 	
-	float motor_gyro_set;
+	float32_t motor_gyro_set;
 	
 	switch(g->mode) {
 		case GIMBAL_MODE_RELAX:

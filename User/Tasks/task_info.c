@@ -16,6 +16,7 @@
 /* Include Device相关的头文件 */
 /* Include Component相关的头文件 */
 #include "capacity.h"
+#include "user_math.h"
 
 /* Include Module相关的头文件 */
 /* Private typedef -----------------------------------------------------------*/
@@ -36,8 +37,8 @@ void Task_Info(void *argument) {
 		/* Task body */
 		tick += delay_tick;
 		
-		float battery_voltage = BSP_GetBatteryVoltage();
-		float battery_percentage = Capacity_GetBatteryRemain(battery_voltage);
+		float32_t battery_voltage = BSP_GetBatteryVoltage();
+		float32_t battery_percentage = Capacity_GetBatteryRemain(battery_voltage);
 		
 		BSP_LED_Set(BSP_LED_GRN, BSP_LED_TAGGLE, 1);
 		

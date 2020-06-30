@@ -2,10 +2,12 @@
 
 
 /* Includes ------------------------------------------------------------------*/
+#include "user_math.h"
+
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions prototypes ---------------------------------------------*/
-int BSP_Buzzer_Start(void);
-int BSP_Buzzer_Set(float freq, float duty_cycle);
-int BSP_Buzzer_Stop(void);
+int8_t BSP_Buzzer_Start(void);
+int8_t BSP_Buzzer_Set(float32_t freq, float32_t duty_cycle);
+int8_t BSP_Buzzer_Stop(void);

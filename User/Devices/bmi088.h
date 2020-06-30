@@ -32,18 +32,18 @@ typedef struct {
 	AHRS_Accl_t accl;
 	AHRS_Gyro_t gyro;
 	
-	float temp;
+	float32_t temp;
 	
 	struct {
-		int gyro_offset[3];
+		int8_t gyro_offset[3];
 	} cali;
 } BMI088_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
 
-int BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert);
+int8_t BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert);
 BMI088_t *BMI088_GetDevice(void);
-int BMI088_Restart(void);
+int8_t BMI088_Restart(void);
 
 /* Sensor use right-handed coordinate system. */
 /*		 
@@ -52,8 +52,8 @@ int BMI088_Restart(void);
 		UP is z
 	All implementation should follow this rule.
  */
-int BMI088_ReceiveAccl(BMI088_t *bmi088);
-int BMI088_ReceiveGyro(BMI088_t *bmi088);
-int BMI088_ParseAccl(BMI088_t *bmi088);
-int BMI088_ParseGyro(BMI088_t *bmi088);
-float BMI088_GetUpdateFreq(BMI088_t *bmi088);
+int8_t BMI088_ReceiveAccl(BMI088_t *bmi088);
+int8_t BMI088_ReceiveGyro(BMI088_t *bmi088);
+int8_t BMI088_ParseAccl(BMI088_t *bmi088);
+int8_t BMI088_ParseGyro(BMI088_t *bmi088);
+float32_t BMI088_GetUpdateFreq(BMI088_t *bmi088);

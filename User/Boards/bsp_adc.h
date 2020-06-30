@@ -2,12 +2,12 @@
 
 
 /* Includes ------------------------------------------------------------------*/
-#include <stdint.h>
+#include "user_math.h"
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions prototypes ---------------------------------------------*/
-float BSP_GetTemprater(void);
-float BSP_GetBatteryVoltage(void);
+float32_t BSP_GetTemprater(void);
+float32_t BSP_GetBatteryVoltage(void);
 uint8_t BSP_GetHardwareVersion(void);

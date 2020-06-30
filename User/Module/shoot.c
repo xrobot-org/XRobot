@@ -25,7 +25,7 @@ static void TrigTimerCallback  (void *arg) {
 	s->trig_angle_set += 2.f * PI / SHOOT_NUM_FEEDING_TOOTH;
 }
 
-static int Shoot_SetMode(Shoot_t *s, Shoot_Mode_t mode) {
+static int8_t Shoot_SetMode(Shoot_t *s, Shoot_Mode_t mode) {
 	if (s == NULL)
 		return -1;
 	
@@ -55,7 +55,7 @@ static int Shoot_SetMode(Shoot_t *s, Shoot_Mode_t mode) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-int Shoot_Init(Shoot_t *s, const Shoot_Params_t *shoot_param) {
+int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *shoot_param) {
 	if (s == NULL)
 		return -1;
 	
@@ -76,7 +76,7 @@ int Shoot_Init(Shoot_t *s, const Shoot_Params_t *shoot_param) {
 }
 
 
-int Shoot_UpdateFeedback(Shoot_t *s, CAN_Device_t *can_device) {
+int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_Device_t *can_device) {
 	if (s == NULL)
 		return -1;
 	
@@ -84,16 +84,16 @@ int Shoot_UpdateFeedback(Shoot_t *s, CAN_Device_t *can_device) {
 		return -1;
 	
 	for(uint8_t i = 0; i < 2; i++) {
-		const float fric_speed = can_device->gimbal_motor_fb.fric_fb[i].rotor_speed;
+		const float32_t fric_speed = can_device->gimbal_motor_fb.fric_fb[i].rotor_speed;
 		s->fric_rpm[i] = fric_speed;
 	}
 	
-	const float trig_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
-	s->trig_angle = trig_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
+	const float32_t trig_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
+	s->trig_angle = trig_angle / (float32_t)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
 	
 	return 0;
 }
-int Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16) {
+int8_t Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16) {
 	if (shoot_ctrl == NULL)
 		return -1;
 	
@@ -154,7 +154,7 @@ int Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16) {
 	return -1;
 }
 
-int Shoot_Control(Shoot_t *s, Shoot_Ctrl_t *shoot_ctrl) {
+int8_t Shoot_Control(Shoot_t *s, Shoot_Ctrl_t *shoot_ctrl) {
 	if (s == NULL)
 		return -1;
 	

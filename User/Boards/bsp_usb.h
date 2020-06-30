@@ -21,7 +21,7 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions prototypes ---------------------------------------------*/
-int BSP_USB_ReadyReceive(osThreadId_t alert);
+int8_t BSP_USB_ReadyReceive(osThreadId_t alert);
 char BSP_USB_ReadChar(void);
 
-int BSP_USB_Printf(const char *fmt, ...);
+int8_t BSP_USB_Printf(const char *fmt, ...);

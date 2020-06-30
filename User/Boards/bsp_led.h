@@ -3,6 +3,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
+#include "user_math.h"
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
@@ -14,7 +15,7 @@ typedef enum {
 } BSP_LED_Status_t;
 
 typedef enum {
-#ifdef USE_DEV_BOARD_A
+#ifdef DEV_BOARD_A
 	BSP_LED1,
 	BSP_LED2,
 	BSP_LED3,
@@ -23,7 +24,7 @@ typedef enum {
 	BSP_LED6,
 	BSP_LED7,
 	BSP_LED8,
-#elif defined USE_DEV_BOARD_C
+#elif defined DEV_BOARD_C
 	BSP_LED_BLU,
 #endif
 	BSP_LED_RED,
@@ -33,4 +34,4 @@ typedef enum {
 /* Exported functions prototypes ---------------------------------------------*/
 
 /* 用于A板时，会无视duty_cycle的值。使用B板时，duty_cycle才有效*/
-int BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, float duty_cycle);
+int8_t BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, float32_t duty_cycle);

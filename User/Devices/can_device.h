@@ -5,6 +5,8 @@
 /* Include cmsis_os.h头文件 */
 #include "cmsis_os.h"
 
+#include "user_math.h"
+
 /* Exported constants --------------------------------------------------------*/
 #define CAN_OK			(0)
 #define CAN_ERR			(-1)
@@ -123,7 +125,7 @@ typedef struct {
 
 
 /* Exported functions prototypes ---------------------------------------------*/
-int CAN_DeviceInit(
+int8_t CAN_DeviceInit(
 	CAN_Device_t *can_device,
 	osThreadId_t *motor_alert,
 	uint8_t motor_alert_len,
@@ -132,10 +134,10 @@ int CAN_DeviceInit(
 
 CAN_Device_t *CAN_GetDevice(void);
 
-int CAN_Motor_ControlChassis(float m1, float m2, float m3, float m4);
-int CAN_Motor_ControlGimbal(float yaw, float pitch);
-int CAN_Motor_ControlShoot(float fric1, float fric2, float trig);
+int8_t CAN_Motor_ControlChassis(float32_t m1, float32_t m2, float32_t m3, float32_t m4);
+int8_t CAN_Motor_ControlGimbal(float32_t yaw, float32_t pitch);
+int8_t CAN_Motor_ControlShoot(float32_t fric1, float32_t fric2, float32_t trig);
 
-int CAN_Motor_QuickIdSetMode(void);
-int CAN_SuperCapControl(CAN_SuperCapControl_t *sc_ctrl);
+int8_t CAN_Motor_QuickIdSetMode(void);
+int8_t CAN_SuperCapControl(CAN_SuperCapControl_t *sc_ctrl);
 

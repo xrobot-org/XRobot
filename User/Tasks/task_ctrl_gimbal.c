@@ -41,7 +41,7 @@ void Task_CtrlGimbal(void *argument) {
 	dr16 = DR16_GetDevice();
 	
 	Gimbal_Init(&gimbal, &(RobotConfig_Get(ROBOT_CONFIG_MODEL_INFANTRY)->param.gimbal));
-	gimbal.dt_sec = (float)delay_tick / (float)osKernelGetTickFreq();
+	gimbal.dt_sec = (float32_t)delay_tick / (float32_t)osKernelGetTickFreq();
 	gimbal.imu = BMI088_GetDevice();
 	
 	uint32_t tick = osKernelGetTickCount();

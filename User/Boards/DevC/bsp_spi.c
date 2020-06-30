@@ -141,7 +141,7 @@ void HAL_SPI_AbortCpltCallback(SPI_HandleTypeDef *hspi) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-int BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*callback)(void)) {
+int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*callback)(void)) {
 	if (callback == NULL)
 		return -1;
 	
@@ -245,7 +245,7 @@ int BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*call
 	return 0;
 }
 
-int BSP_SPI_Transmit(BSP_SPI_t spi, uint8_t *data, uint16_t len, uint32_t time_out) {
+int8_t BSP_SPI_Transmit(BSP_SPI_t spi, uint8_t *data, uint16_t len, uint32_t time_out) {
 	if (data == NULL)
 		return -1;
 	
@@ -265,7 +265,7 @@ int BSP_SPI_Transmit(BSP_SPI_t spi, uint8_t *data, uint16_t len, uint32_t time_o
 	}
 }
 
-int BSP_SPI_TransmitDMA(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
+int8_t BSP_SPI_TransmitDMA(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
 	if (data == NULL)
 		return -1;
 	
@@ -286,7 +286,7 @@ int BSP_SPI_TransmitDMA(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
 	}
 }
 
-int BSP_SPI_Receive(BSP_SPI_t spi, uint8_t *data, uint16_t len, uint32_t time_out) {
+int8_t BSP_SPI_Receive(BSP_SPI_t spi, uint8_t *data, uint16_t len, uint32_t time_out) {
 	if (data == NULL)
 		return -1;
 
@@ -307,7 +307,7 @@ int BSP_SPI_Receive(BSP_SPI_t spi, uint8_t *data, uint16_t len, uint32_t time_ou
 	}
 }
 
-int BSP_SPI_ReceiveDMA(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
+int8_t BSP_SPI_ReceiveDMA(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
 	if (data == NULL)
 		return -1;
 

@@ -72,7 +72,7 @@ static void IST8310_IntCallback(void) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-int IST8310_Init(IST8310_t *ist8310, osThreadId_t thread_alert) {
+int8_t IST8310_Init(IST8310_t *ist8310, osThreadId_t thread_alert) {
 	if (ist8310 == NULL)
 		return IST8310_ERR_NULL;
 	
@@ -113,12 +113,12 @@ IST8310_t *IST8310_GetDevice(void) {
 	return NULL;
 }
 
-int IST8310_Receive(IST8310_t *ist8310) {
+int8_t IST8310_Receive(IST8310_t *ist8310) {
 	IST8310_WriteSingle(IST8310_CNTL1, 0x01);
 	return IST8310_OK;
 }
 
-int IST8310_Parse(IST8310_t *ist8310) {
+int8_t IST8310_Parse(IST8310_t *ist8310) {
 	if (ist8310 == NULL)
 		return IST8310_ERR_NULL;
 
@@ -126,9 +126,9 @@ int IST8310_Parse(IST8310_t *ist8310) {
 	const int16_t raw_y = ((ist8310->raw[3] << 8) | ist8310->raw[2]);
 	const int16_t raw_z = ((ist8310->raw[5] << 8) | ist8310->raw[4]);
 	
-	ist8310->magn.x = (float)raw_x / 3.3f;
-	ist8310->magn.y = (float)raw_y / 3.3f;
-	ist8310->magn.z = (float)raw_z / 3.3f;
+	ist8310->magn.x = (float32_t)raw_x / 3.3f;
+	ist8310->magn.y = (float32_t)raw_y / 3.3f;
+	ist8310->magn.z = (float32_t)raw_z / 3.3f;
 	
 	return IST8310_OK;
 }

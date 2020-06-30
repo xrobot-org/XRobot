@@ -11,7 +11,7 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-int BSP_Delay(uint32_t ms) {
+int8_t BSP_Delay(uint32_t ms) {
 	uint32_t ticks = ms / portTICK_PERIOD_MS;
 	
 	switch (osKernelGetState()) {

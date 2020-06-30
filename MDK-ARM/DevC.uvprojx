@@ -54,7 +54,7 @@
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
-          <BrowseInformation>0</BrowseInformation>
+          <BrowseInformation>1</BrowseInformation>
           <ListingPath></ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
@@ -336,7 +336,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_HAL_DRIVER,STM32F407xx,ROBOT_MODEL_INFANTRY,OLED_USE_SPI,USE_DEV_BOARD_C</Define>
+              <Define>USE_HAL_DRIVER,STM32F407xx,ROBOT_MODEL_INFANTRY,OLED_USE_SPI,DEV_BOARD_C</Define>
               <Undefine></Undefine>
               <IncludePath>../Core/Inc;                                      ../USB_DEVICE/App;                                      ../USB_DEVICE/Target;                                      ../Drivers/STM32F4xx_HAL_Driver/Inc;                                      ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;                                      ../Middlewares/Third_Party/FreeRTOS/Source/include;                                      ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;                                      ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;                                      ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;                                      ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;                                      ../Drivers/CMSIS/Include;                                      ..\User\Boards;                                      ..\User\Components;                                      ..\User\Devices;                                      ..\User\Module;                                      ..\User\Tasks;                                      ..\Drivers\CMSIS\DSP\Include;        ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2</IncludePath>
             </VariousControls>
@@ -828,6 +828,11 @@
               <FilePath>..\User\Components\ahrs.c</FilePath>
             </File>
             <File>
+              <FileName>auto_aimer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\auto_aimer.c</FilePath>
+            </File>
+            <File>
               <FileName>ballistics.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\ballistics.c</FilePath>
@@ -836,6 +841,11 @@
               <FileName>capacity.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\capacity.c</FilePath>
+            </File>
+            <File>
+              <FileName>command.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\command.c</FilePath>
             </File>
             <File>
               <FileName>error_detect.c</FileName>
@@ -936,6 +946,11 @@
               <FileName>shoot.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Module\shoot.c</FilePath>
+            </File>
+            <File>
+              <FileName>turret.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Module\turret.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1816,6 +1831,11 @@
               <FilePath>..\User\Components\ahrs.c</FilePath>
             </File>
             <File>
+              <FileName>auto_aimer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\auto_aimer.c</FilePath>
+            </File>
+            <File>
               <FileName>ballistics.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\ballistics.c</FilePath>
@@ -1824,6 +1844,11 @@
               <FileName>capacity.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\capacity.c</FilePath>
+            </File>
+            <File>
+              <FileName>command.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\command.c</FilePath>
             </File>
             <File>
               <FileName>error_detect.c</FileName>
@@ -1924,6 +1949,11 @@
               <FileName>shoot.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Module\shoot.c</FilePath>
+            </File>
+            <File>
+              <FileName>turret.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Module\turret.c</FilePath>
             </File>
           </Files>
         </Group>

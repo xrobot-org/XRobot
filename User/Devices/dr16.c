@@ -24,7 +24,7 @@ void DR16_RxCpltCallback(void) {
 
 /* Exported functions --------------------------------------------------------*/
 
-int DR16_Init(DR16_t *dr16, osThreadId_t thread_alert) {
+int8_t DR16_Init(DR16_t *dr16, osThreadId_t thread_alert) {
 	if (dr16 == NULL)
 		return -1;
 	
@@ -47,16 +47,16 @@ DR16_t *DR16_GetDevice(void) {
 	return NULL;
 }
 
-int DR16_Restart(void) {
+int8_t DR16_Restart(void) {
 	// TODO
 	return DR16_OK;
 }
 
-int DR16_StartReceiving(DR16_t *dr16) {
+int8_t DR16_StartReceiving(DR16_t *dr16) {
 	return BSP_UART_ReceiveDMA(BSP_UART_DR16, dr16->raw, DR16_RX_BUF_LENGTH);
 }
 
-int DR16_Parse(DR16_t *dr16) {
+int8_t DR16_Parse(DR16_t *dr16) {
 	if (dr16 == NULL)
 		return DR16_ERR_NULL;
 	
@@ -65,10 +65,10 @@ int DR16_Parse(DR16_t *dr16) {
 	const uint16_t ch_l_x = 0x07ff & ((dr16->raw[2] >> 6) | (dr16->raw[3] << 2) | (dr16->raw[4] << 10));
 	const uint16_t ch_l_y = 0x07ff & ((dr16->raw[4] >> 1) | (dr16->raw[5] << 7));
 	
-	dr16->data.rc.ch_r_x = (float)(ch_r_x - DR16_CH_VALUE_MID) / (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
-	dr16->data.rc.ch_r_y = (float)(ch_r_y - DR16_CH_VALUE_MID) / (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
-	dr16->data.rc.ch_l_x = (float)(ch_l_x - DR16_CH_VALUE_MID) / (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
-	dr16->data.rc.ch_l_y = (float)(ch_l_y - DR16_CH_VALUE_MID) / (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
+	dr16->data.rc.ch_r_x = (float32_t)(ch_r_x - DR16_CH_VALUE_MID) / (float32_t)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
+	dr16->data.rc.ch_r_y = (float32_t)(ch_r_y - DR16_CH_VALUE_MID) / (float32_t)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
+	dr16->data.rc.ch_l_x = (float32_t)(ch_l_x - DR16_CH_VALUE_MID) / (float32_t)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
+	dr16->data.rc.ch_l_y = (float32_t)(ch_l_y - DR16_CH_VALUE_MID) / (float32_t)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
 	
 	dr16->data.rc.sw_l = (DR16_SwitchPos_t)((dr16->raw[5] >> 4) & 0x3);
 	dr16->data.rc.sw_r = (DR16_SwitchPos_t)(((dr16->raw[5] >> 4) & 0xC) >> 2);

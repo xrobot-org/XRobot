@@ -46,7 +46,7 @@ static void CAN_SuperCap_Decode(CAN_SuperCapFeedback_t *fb, const uint8_t *raw) 
 }
 
 /* Exported functions --------------------------------------------------------*/
-int CAN_DeviceInit(
+int8_t CAN_DeviceInit(
 	CAN_Device_t *can_device,
 	osThreadId_t *motor_alert,
 	uint8_t motor_alert_len,
@@ -104,7 +104,7 @@ CAN_Device_t *CAN_GetDevice(void) {
 	return NULL;
 }
 
-int CAN_Motor_ControlChassis(float m1, float m2, float m3, float m4) {
+int8_t CAN_Motor_ControlChassis(float32_t m1, float32_t m2, float32_t m3, float32_t m4) {
 	int16_t motor1 = m1 * CAN_M3508_MAX_ABS_VOLTAGE;
 	int16_t motor2 = m2 * CAN_M3508_MAX_ABS_VOLTAGE;
 	int16_t motor3 = m3 * CAN_M3508_MAX_ABS_VOLTAGE;
@@ -132,7 +132,7 @@ int CAN_Motor_ControlChassis(float m1, float m2, float m3, float m4) {
 	return CAN_OK;
 }
 
-int CAN_Motor_ControlGimbal(float yaw, float pitch) {
+int8_t CAN_Motor_ControlGimbal(float32_t yaw, float32_t pitch) {
 	int16_t yaw_motor = yaw * CAN_GM6020_MAX_ABS_VOLTAGE;
 	int16_t pitch_motor = pitch * CAN_GM6020_MAX_ABS_VOLTAGE;
 	
@@ -158,7 +158,7 @@ int CAN_Motor_ControlGimbal(float yaw, float pitch) {
 	return CAN_OK;
 }
 
-int CAN_Motor_ControlShoot(float fric1, float fric2, float trig) {
+int8_t CAN_Motor_ControlShoot(float32_t fric1, float32_t fric2, float32_t trig) {
 	int16_t fric1_motor = fric1 * CAN_M3508_MAX_ABS_VOLTAGE;
 	int16_t fric2_motor = fric2 * CAN_M3508_MAX_ABS_VOLTAGE;
 	int16_t trig_motor = trig * CAN_M2006_MAX_ABS_VOLTAGE;
@@ -185,7 +185,7 @@ int CAN_Motor_ControlShoot(float fric1, float fric2, float trig) {
 	return CAN_OK;
 }
 
-int CAN_Motor_QuickIdSetMode(void) {
+int8_t CAN_Motor_QuickIdSetMode(void) {
 	CAN_TxHeaderTypeDef tx_header;
 
 	tx_header.StdId = CAN_M3508_M2006_ID_SETTING_ID;

@@ -7,10 +7,10 @@
 #include "capacity.h"
 
 
-float Capacity_GetBatteryRemain(float voltage) {
-	float percentage;
-	float voltage_2 = voltage * voltage;
-	float voltage_3 = voltage_2 * voltage;
+float32_t Capacity_GetBatteryRemain(float32_t voltage) {
+	float32_t percentage;
+	float32_t voltage_2 = voltage * voltage;
+	float32_t voltage_3 = voltage_2 * voltage;
 	
 	if(voltage < 19.5f)
 		percentage = 0.0f;
@@ -35,8 +35,8 @@ float Capacity_GetBatteryRemain(float voltage) {
 }
 
 
-float Capacity_GetCapacitorRemain(float voltage) {
-	float percentage;
+float32_t Capacity_GetCapacitorRemain(float32_t voltage) {
+	float32_t percentage;
 	
 	percentage = (voltage - 19.5f) / (25.5f - 19.5f);
 	

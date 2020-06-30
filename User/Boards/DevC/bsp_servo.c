@@ -4,22 +4,24 @@
 #include "main.h"
 #include "tim.h"
 
+#include "user_math.h"
+
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-float range[BSP_SERVO_NUM];
+float32_t range[BSP_SERVO_NUM];
 
 
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-int BSP_Servo_Init(BSP_Servo_Channel_t ch, float max_angle) {
+int8_t BSP_Servo_Init(BSP_Servo_Channel_t ch, float32_t max_angle) {
 	range[ch] = max_angle;
 	
 	return 0;
 }
 
-int BSP_Servo_Start(BSP_Servo_Channel_t ch) {
+int8_t BSP_Servo_Start(BSP_Servo_Channel_t ch) {
 	switch(ch) {
 		case BSP_SERVO_A: 
 			HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2); 
@@ -32,7 +34,7 @@ int BSP_Servo_Start(BSP_Servo_Channel_t ch) {
 }
 
 
-int BSP_Servo_Set(BSP_Servo_Channel_t ch, uint8_t angle) {
+int8_t BSP_Servo_Set(BSP_Servo_Channel_t ch, uint8_t angle) {
 	if (angle > 1.f)
 		return -1;
 	
@@ -49,7 +51,7 @@ int BSP_Servo_Set(BSP_Servo_Channel_t ch, uint8_t angle) {
 	return 0;
 }
 
-int BSP_Servo_Stop(BSP_Servo_Channel_t ch) {
+int8_t BSP_Servo_Stop(BSP_Servo_Channel_t ch) {
 	switch(ch) {
 		case BSP_SERVO_A:
 			HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_2);

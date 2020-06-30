@@ -108,7 +108,7 @@ void HAL_I2C_AbortCpltCallback(I2C_HandleTypeDef *hi2c) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-int BSP_I2C_RegisterCallback(BSP_I2C_t i2c, BSP_I2C_Callback_t type, void (*callback)(void)) {
+int8_t BSP_I2C_RegisterCallback(BSP_I2C_t i2c, BSP_I2C_Callback_t type, void (*callback)(void)) {
 	if (callback == NULL)
 		return -1;
 	
@@ -187,7 +187,7 @@ int BSP_I2C_RegisterCallback(BSP_I2C_t i2c, BSP_I2C_Callback_t type, void (*call
 	return 0;
 }
 
-int BSP_I2C_Transmit(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len, uint32_t time_out) {
+int8_t BSP_I2C_Transmit(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len, uint32_t time_out) {
 	if (data == NULL)
 		return -1;
 	
@@ -204,7 +204,7 @@ int BSP_I2C_Transmit(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t le
 	}
 }
 
-int BSP_I2C_TransmitDMA(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len) {
+int8_t BSP_I2C_TransmitDMA(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len) {
 	if (data == NULL)
 		return -1;
 	
@@ -217,7 +217,7 @@ int BSP_I2C_TransmitDMA(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t
 	}
 }
 
-int BSP_I2C_Receive(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len, uint32_t time_out) {
+int8_t BSP_I2C_Receive(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len, uint32_t time_out) {
 	if (data == NULL)
 		return -1;
 
@@ -230,7 +230,7 @@ int BSP_I2C_Receive(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len
 	}
 }
 
-int BSP_I2C_ReceiveDMA(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len) {
+int8_t BSP_I2C_ReceiveDMA(BSP_I2C_t i2c, uint16_t address, uint8_t *data, uint16_t len) {
 	if (data == NULL)
 		return -1;
 

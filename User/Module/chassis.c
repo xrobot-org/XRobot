@@ -24,7 +24,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/
-static int Chassis_SetMode(Chassis_t *c, Chassis_Mode_t mode) {
+static int8_t Chassis_SetMode(Chassis_t *c, Chassis_Mode_t mode) {
 	if (c == NULL)
 		return CHASSIS_ERR_NULL;
 	
@@ -60,7 +60,7 @@ static int Chassis_SetMode(Chassis_t *c, Chassis_Mode_t mode) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-int Chassis_Init(Chassis_t *c, const Chassis_Params_t *chas_param) {
+int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *chas_param) {
 	if (c == NULL)
 		return CHASSIS_ERR_NULL;
 	
@@ -143,25 +143,25 @@ error1:
 }
 
 
-int Chassis_UpdateFeedback(Chassis_t *c, CAN_Device_t *can_device) {
+int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_Device_t *can_device) {
 	if (c == NULL)
 		return CHASSIS_ERR_NULL;
 	
 	if (can_device == NULL)
 		return CHASSIS_ERR_NULL;
 	
-	const float raw_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
-	c->gimbal_yaw_angle = raw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
+	const float32_t raw_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
+	c->gimbal_yaw_angle = raw_angle / (float32_t)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
 	
 	for(uint8_t i = 0; i < 4; i++) {
-		const float raw_speed = can_device->chassis_motor_fb[i].rotor_speed;
+		const float32_t raw_speed = can_device->chassis_motor_fb[i].rotor_speed;
 		c->motor_rpm[i] = raw_speed; // TODO
 	}
 	
 	return CHASSIS_OK;
 }
 
-int Chassis_ParseCommand(Chassis_Ctrl_t *c_ctrl, const DR16_t *dr16) {
+int8_t Chassis_ParseCommand(Chassis_Ctrl_t *c_ctrl, const DR16_t *dr16) {
 	if (c_ctrl == NULL)
 		return CHASSIS_ERR_NULL;
 	
@@ -213,7 +213,7 @@ int Chassis_ParseCommand(Chassis_Ctrl_t *c_ctrl, const DR16_t *dr16) {
 	return CHASSIS_OK;
 }
 
-int Chassis_Control(Chassis_t *c, Chassis_Ctrl_t *c_ctrl) {
+int8_t Chassis_Control(Chassis_t *c, Chassis_Ctrl_t *c_ctrl) {
 	if (c == NULL)
 		return CHASSIS_ERR_NULL;
 	
@@ -222,33 +222,33 @@ int Chassis_Control(Chassis_t *c, Chassis_Ctrl_t *c_ctrl) {
 	
 	Chassis_SetMode(c, c_ctrl->mode);
 	
-	/* ctrl_v -> chas_v. */
+	/* ctrl_v -> move_vec. */
 	/* Compute vx and vy. */
 	if (c->mode == CHASSIS_MODE_BREAK) {
-		c->chas_v.vx = 0.f;
-		c->chas_v.vy = 0.f;
+		c->move_vec.vx = 0.f;
+		c->move_vec.vy = 0.f;
 		
 	} else {
-		const float cos_beta = cosf(c->gimbal_yaw_angle);
-		const float sin_beta = sinf(c->gimbal_yaw_angle);
+		const float32_t cos_beta = cosf(c->gimbal_yaw_angle);
+		const float32_t sin_beta = sinf(c->gimbal_yaw_angle);
 		
-		c->chas_v.vx = cos_beta * c_ctrl->ctrl_v.vx - sin_beta * c_ctrl->ctrl_v.vy;
-		c->chas_v.vy = sin_beta * c_ctrl->ctrl_v.vx - cos_beta * c_ctrl->ctrl_v.vy;
+		c->move_vec.vx = cos_beta * c_ctrl->ctrl_v.vx - sin_beta * c_ctrl->ctrl_v.vy;
+		c->move_vec.vy = sin_beta * c_ctrl->ctrl_v.vx - cos_beta * c_ctrl->ctrl_v.vy;
 	}
 	
 	/* Compute wz. */
 	if (c->mode == CHASSIS_MODE_BREAK) {
-		c->chas_v.wz = 0.f;
+		c->move_vec.wz = 0.f;
 		
 	} else if (c->mode == CHASSIS_MODE_FOLLOW_GIMBAL) {
-		c->chas_v.wz = PID_Calc(&(c->follow_pid), 0, c->gimbal_yaw_angle, 0.f, c->dt_sec);
+		c->move_vec.wz = PID_Calc(&(c->follow_pid), 0, c->gimbal_yaw_angle, 0.f, c->dt_sec);
 		
 	} else if (c->mode == CHASSIS_MODE_ROTOR) {
-		c->chas_v.wz = 0.8;
+		c->move_vec.wz = 0.8;
 	}
 	
-	/* chas_v -> motor_rpm_set. */
-	Mixer_Apply(&(c->mixer), c->chas_v.vx, c->chas_v.vy, c->chas_v.wz, c->motor_rpm_set, c->num_wheel);
+	/* move_vec -> motor_rpm_set. */
+	Mixer_Apply(&(c->mixer), c->move_vec.vx, c->move_vec.vy, c->move_vec.wz, c->motor_rpm_set, c->num_wheel);
 	
 	/* Compute output from setpiont. */
 	for(uint8_t i = 0; i < 4; i++) {

@@ -180,7 +180,7 @@ static void BMI088_GyroIntCallback(void) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-int BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert) {
+int8_t BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert) {
 	if (bmi088 == NULL)
 		return BMI088_ERR_NULL;
 	
@@ -263,17 +263,17 @@ BMI088_t *BMI088_GetDevice(void) {
 	return NULL;
 }
 
-int BMI088_ReceiveAccl(BMI088_t *bmi088) {
+int8_t BMI088_ReceiveAccl(BMI088_t *bmi088) {
 	BMI_Read(BMI_ACCL, BMI088_ACCL_X_LSB_REG, gimu->raw, 7u);
 	return BMI088_OK;
 	//BMI_Read(BMI_ACCL, BMI088_TEMP_MSB_REG, gimu->raw + 6u, 2u);
 }
-int BMI088_ReceiveGyro(BMI088_t *bmi088) {
+int8_t BMI088_ReceiveGyro(BMI088_t *bmi088) {
 	BMI_Read(BMI_GYRO, BMI088_GYRO_X_LSB_REG, &gimu->raw[7], 6u);
 	return BMI088_OK;
 }
 
-int BMI088_ParseAccl(BMI088_t *bmi088) {
+int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
 	uint16_t raw_temp = (bmi088->raw[0] << 3) | (bmi088->raw[1] >> 5);
 	
 	if(raw_temp > 1023)
@@ -286,14 +286,14 @@ int BMI088_ParseAccl(BMI088_t *bmi088) {
 	const int16_t raw_z = ((bmi088->raw[6] << 8) | bmi088->raw[5]);
 	
 	/* 3G: 10920. 6G: 5460. 12G: 2730. 24G: 1365. */
-	bmi088->accl.x = (float)raw_x / 10920.f;
-	bmi088->accl.y = (float)raw_y / 10920.f;
-	bmi088->accl.z = (float)raw_z / 10920.f;
+	bmi088->accl.x = (float32_t)raw_x / 10920.f;
+	bmi088->accl.y = (float32_t)raw_y / 10920.f;
+	bmi088->accl.z = (float32_t)raw_z / 10920.f;
 	
 	return BMI088_OK;
 }
 
-int BMI088_ParseGyro(BMI088_t *bmi088) {
+int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 	/* Gyroscope imu_raw -> degrees/sec -> radians/sec */
 	const int16_t raw_x = ((bmi088->raw[8] << 8) | bmi088->raw[7]);
 	const int16_t raw_y = ((bmi088->raw[10] << 8) | bmi088->raw[9]);
@@ -307,6 +307,6 @@ int BMI088_ParseGyro(BMI088_t *bmi088) {
 	return BMI088_OK;
 }
 
-float BMI088_GetUpdateFreq(BMI088_t *bmi088) {
+float32_t BMI088_GetUpdateFreq(BMI088_t *bmi088) {
 	return 100.f;
 }
