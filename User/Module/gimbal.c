@@ -17,7 +17,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/
-int8_t Gimbal_SetMode(Gimbal_t *g, Gimbal_Mode_t mode) {
+int8_t Gimbal_SetMode(Gimbal_t *g, CMD_Gimbal_Mode_t mode) {
 	if (g == NULL)
 		return -1;
 	
@@ -85,39 +85,7 @@ int8_t Gimbal_UpdateFeedback(Gimbal_t *g, CAN_Device_t *can_device) {
 	return 0;
 }
 
-int8_t Gimbal_ParseCommand(Gimbal_Ctrl_t *g_ctrl, const DR16_t *dr16) {
-	if (g_ctrl == NULL)
-		return -1;
-	
-	if (dr16 == NULL)
-		return -1;
-	
-		/* RC Control. */
-	switch (dr16->data.rc.sw_l) {
-		case DR16_SW_UP:
-		case DR16_SW_MID:
-		case DR16_SW_DOWN:
-			g_ctrl->mode = GIMBAL_MODE_ABSOLUTE;
-			break;
-		
-		case DR16_SW_ERR:
-			g_ctrl->mode = GIMBAL_MODE_RELAX;
-			break;
-	}
-	
-	g_ctrl->eulr.yaw += dr16->data.rc.ch_r_x;
-	g_ctrl->eulr.pit += dr16->data.rc.ch_r_y;
-	
-	if ((dr16->data.rc.sw_l == DR16_SW_UP) && (dr16->data.rc.sw_r == DR16_SW_UP)) {
-		/* PC Control. */
-		g_ctrl->eulr.yaw += (float32_t)dr16->data.mouse.x / 100.f;	
-		g_ctrl->eulr.pit += (float32_t)dr16->data.mouse.y / 100.f;
-		
-	}
-	return 0;
-}
-
-int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Ctrl_t *g_ctrl) {
+int8_t Gimbal_Control(Gimbal_t *g, CMD_Gimbal_Ctrl_t *g_ctrl) {
 	if (g == NULL)
 		return -1;
 	
@@ -169,7 +137,6 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Ctrl_t *g_ctrl) {
 	/* Filter output. */
 	g->yaw_cur_out = LowPassFilter2p_Apply(&(g->filter[GIMBAL_LPF_YAW]), g->yaw_cur_out);
 	g->pit_cur_out = LowPassFilter2p_Apply(&(g->filter[GIMBAL_LPF_YAW]), g->pit_cur_out);
-	
 	
 	return 0;
 }

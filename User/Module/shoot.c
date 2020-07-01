@@ -25,7 +25,7 @@ static void TrigTimerCallback  (void *arg) {
 	s->trig_angle_set += 2.f * PI / SHOOT_NUM_FEEDING_TOOTH;
 }
 
-static int8_t Shoot_SetMode(Shoot_t *s, Shoot_Mode_t mode) {
+static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
 	if (s == NULL)
 		return -1;
 	
@@ -93,83 +93,23 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_Device_t *can_device) {
 	
 	return 0;
 }
-int8_t Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16) {
-	if (shoot_ctrl == NULL)
-		return -1;
-	
-	if (dr16 == NULL)
-		return -1;
 
-	
-	/* RC Control. */
-	switch (dr16->data.rc.sw_r) {
-		case DR16_SW_UP:
-			shoot_ctrl->mode = SHOOT_MODE_SAFE;
-			break;
-		
-		case DR16_SW_MID:
-			shoot_ctrl->mode = SHOOT_MODE_STDBY;
-			break;
-		
-		case DR16_SW_DOWN:
-			shoot_ctrl->mode = SHOOT_MODE_FIRE;
-			shoot_ctrl->shoot_freq_hz = 10u;
-			shoot_ctrl->bullet_speed = 10.f;
-			break;
-		
-		case DR16_SW_ERR:
-			shoot_ctrl->mode = SHOOT_MODE_RELAX;
-			break;
-	}
-	
-	if ((dr16->data.rc.sw_l == DR16_SW_UP) && (dr16->data.rc.sw_r == DR16_SW_UP)) {
-		/* PC Control. */
-		if (dr16->data.mouse.l_click) {
-			if (dr16->data.mouse.r_click) {
-				shoot_ctrl->shoot_freq_hz = 5u;
-				shoot_ctrl->bullet_speed = 20.f;
-			} else {
-				shoot_ctrl->shoot_freq_hz = 10u;
-				shoot_ctrl->bullet_speed = 10.f;
-			}
-		} else {
-			shoot_ctrl->shoot_freq_hz = 0u;
-			shoot_ctrl->bullet_speed = 0.f;
-		}
-		
-		if (DR16_KeyPressed(dr16, DR16_KEY_SHIFT) && DR16_KeyPressed(dr16, DR16_KEY_CTRL)) {
-			if (DR16_KeyPressed(dr16, DR16_KEY_A))
-				shoot_ctrl->mode = SHOOT_MODE_SAFE;
-			
-			else if (DR16_KeyPressed(dr16, DR16_KEY_S))
-				shoot_ctrl->mode = SHOOT_MODE_STDBY;
-			
-			else if (DR16_KeyPressed(dr16, DR16_KEY_D))
-				shoot_ctrl->mode = SHOOT_MODE_FIRE;
-			
-			else
-				shoot_ctrl->mode = SHOOT_MODE_RELAX;
-		}
-	}
-	return -1;
-}
-
-int8_t Shoot_Control(Shoot_t *s, Shoot_Ctrl_t *shoot_ctrl) {
+int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
 	if (s == NULL)
 		return -1;
 	
-	Shoot_SetMode(s, shoot_ctrl->mode);
+	Shoot_SetMode(s, s_ctrl->mode);
 	
 	if (s->mode == SHOOT_MODE_SAFE) {
-		shoot_ctrl->bullet_speed = 0.f;
-		shoot_ctrl->shoot_freq_hz = 0.f;
+		s_ctrl->bullet_speed = 0.f;
+		s_ctrl->shoot_freq_hz = 0.f;
 	}
 	
-	s->fric_rpm_set[0] = SHOOT_BULLET_SPEED_SCALER * shoot_ctrl->bullet_speed + SHOOT_BULLET_SPEED_BIAS;
+	s->fric_rpm_set[0] = SHOOT_BULLET_SPEED_SCALER * s_ctrl->bullet_speed + SHOOT_BULLET_SPEED_BIAS;
 	s->fric_rpm_set[1] = -s->fric_rpm_set[0];
 
 	
-	uint32_t period_ms = 1000u / shoot_ctrl->shoot_freq_hz;
+	uint32_t period_ms = 1000u / s_ctrl->shoot_freq_hz;
 	if (!osTimerIsRunning(s->trig_timer_id))
 		osTimerStart(s->trig_timer_id, period_ms);  
 	
@@ -197,6 +137,5 @@ int8_t Shoot_Control(Shoot_t *s, Shoot_Ctrl_t *shoot_ctrl) {
 		default:
 			return -1;
 	}
-	
 	return 0;
 }

@@ -46,6 +46,9 @@ typedef struct {
 	struct {
 		/* Pos esti */
 		osMessageQueueId_t gimb_eulr;
+		
+		/* Command */
+		osMessageQueueId_t cmd;
 	} messageq;
 	
 } Task_Param_t;

@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
 #include "user_math.h"
 
 typedef enum {

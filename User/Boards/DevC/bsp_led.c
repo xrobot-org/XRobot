@@ -3,7 +3,6 @@
 
 #include "tim.h"
 
-#include <stdbool.h>
 #include "user_math.h"
 
 /* Private define ------------------------------------------------------------*/

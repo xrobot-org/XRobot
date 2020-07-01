@@ -10,9 +10,10 @@
 #include "bmi088.h"
 
 /* Include Component相关的头文件。 */
-#include "pid.h"
 #include "ahrs.h"
+#include "cmd.h"
 #include "filter.h"
+#include "pid.h"
 #include "user_math.h"
 
 /* Include Module相关的头文件。 */
@@ -23,24 +24,6 @@
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
-/*  
-	GIMBAL_MODE_RELAX: No force applied.
-	GIMBAL_MODE_INIT: .
-	GIMBAL_MODE_CALI: Get mid point.
-	GIMBAL_MODE_ABSOLUTE: Follow IMU data.
-	GIMBAL_MODE_RELATIVE: Follow encoder data.
-	GIMBAL_MODE_FIX: Set to a fix angle. Force applied.
-*/
-
-typedef enum {
-	GIMBAL_MODE_RELAX,
-	GIMBAL_MODE_INIT,
-	GIMBAL_MODE_CALI,
-	GIMBAL_MODE_ABSOLUTE,
-	GIMBAL_MODE_RELATIVE,
-	GIMBAL_MODE_FIX,
-} Gimbal_Mode_t;
-
 enum Gimbal_PID_e{
 	GIMBAL_PID_YAW_IN = 0,
 	GIMBAL_PID_YAW_OUT,
@@ -56,11 +39,6 @@ enum Gimbal_LPF_e{
 };
 
 typedef struct {
-	AHRS_Eulr_t eulr;
-	Gimbal_Mode_t mode;
-} Gimbal_Ctrl_t;
-
-typedef struct {
 	PID_Params_t pid[GIMBAL_PID_NUM];
 	float32_t low_pass_cutoff;
 } Gimbal_Params_t;
@@ -70,7 +48,7 @@ typedef struct {
 	
 	/* common */
 	float32_t dt_sec;
-	Gimbal_Mode_t mode;
+	CMD_Gimbal_Mode_t mode;
 	
 	/* Feedback */
 	BMI088_t *imu;
@@ -92,5 +70,4 @@ typedef struct {
 /* Exported functions prototypes ---------------------------------------------*/
 int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *g_param);
 int8_t Gimbal_UpdateFeedback(Gimbal_t *g, CAN_Device_t *can_device);
-int8_t Gimbal_ParseCommand(Gimbal_Ctrl_t *g_ctrl, const DR16_t *dr16);
-int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Ctrl_t *g_ctrl);
+int8_t Gimbal_Control(Gimbal_t *g, CMD_Gimbal_Ctrl_t *g_ctrl);

@@ -23,10 +23,9 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static CAN_Device_t cd;
-static DR16_t *dr16;
 
 static Chassis_t chassis;
-static Chassis_Ctrl_t chas_ctrl;
+static CMD_t cmd;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -44,8 +43,7 @@ void Task_CtrlChassis(void *argument) {
 	};
 	
 	CAN_DeviceInit(&cd, recv_motor_allert, 3, task_param->thread.referee, osThreadGetId());
-	dr16 = DR16_GetDevice();
-	
+
 	/* Module Setup */
 	Chassis_Init(&chassis, &(RobotConfig_Get(ROBOT_CONFIG_MODEL_INFANTRY)->param.chassis));
 	chassis.dt_sec = (float32_t)delay_tick / (float32_t)osKernelGetTickFreq();
@@ -56,15 +54,15 @@ void Task_CtrlChassis(void *argument) {
 		/* Task body */
 		tick += delay_tick;
 		
-		uint32_t flag = DR16_SIGNAL_DATA_REDY | CAN_DEVICE_SIGNAL_MOTOR_RECV;
+		uint32_t flag = CAN_DEVICE_SIGNAL_MOTOR_RECV;
 		if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
-			Chassis_ParseCommand(&chas_ctrl, dr16);
+			osMessageQueueGet(task_param->messageq.cmd, &cmd, NULL, 0);
 		
 			osKernelLock();
 			Chassis_UpdateFeedback(&chassis, &cd);
 			osKernelUnlock();
 			
-			Chassis_Control(&chassis, &chas_ctrl);
+			Chassis_Control(&chassis, &(cmd.chassis));
 			
 			// Check can error
 			CAN_Motor_ControlChassis(

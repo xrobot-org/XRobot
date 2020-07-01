@@ -7,7 +7,6 @@
 #include "can_device.h"
 
 /* Include 标准库 */
-#include <stdbool.h>
 #include <string.h>
 
 /* Include HAL相关的头文件 */

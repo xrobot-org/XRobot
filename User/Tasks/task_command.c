@@ -26,11 +26,15 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static DR16_t dr16;
+static CMD_RC_t rc;
+static CMD_t cmd;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_Command(void *argument) {
-	const Task_Param_t *task_param = (Task_Param_t*)argument;
+	Task_Param_t *task_param = (Task_Param_t*)argument;
+	
+	task_param->messageq.cmd = osMessageQueueNew(3u, sizeof(CMD_t), NULL);
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_COMMAND);
@@ -41,15 +45,16 @@ void Task_Command(void *argument) {
 		/* Task body */
 		DR16_StartReceiving(&dr16);
 		osThreadFlagsWait(DR16_SIGNAL_RAW_REDY, osFlagsWaitAll, osWaitForever);
-		DR16_Parse(&dr16);
 		
-		// Check command error
-		if (DR16_DataCorrupted(&dr16)) {
+		if (DR16_Parse(&dr16, &rc)) {
 			DR16_Restart();
+			
 		} else {
-			osThreadFlagsSet(task_param->thread.ctrl_chassis, DR16_SIGNAL_DATA_REDY);
-			osThreadFlagsSet(task_param->thread.ctrl_gimbal, DR16_SIGNAL_DATA_REDY);
-			osThreadFlagsSet(task_param->thread.ctrl_shoot, DR16_SIGNAL_DATA_REDY);
+			CMD_Parse(&rc, &cmd);
+			osStatus os_status = osMessageQueuePut(task_param->messageq.cmd, &cmd, 0, 0);
+			
+			if (os_status == osErrorOS) {
+			}
 		}
 	}
 }

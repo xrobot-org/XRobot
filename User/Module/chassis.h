@@ -9,7 +9,7 @@
 #include "dr16.h"
 
 /* Include Component相关的头文件 */
-#include "command.h"
+#include "cmd.h"
 #include "filter.h"
 #include "mixer.h"
 #include "pid.h"
@@ -43,11 +43,6 @@ typedef enum {
 } Chassis_Type_t;
 
 typedef struct {
-	MoveVector_t ctrl_v;
-	Chassis_Mode_t mode;
-} Chassis_Ctrl_t;
-
-typedef struct {
 	Chassis_Type_t type;
 	PID_Params_t *motor_pid_param;
 	PID_Params_t follow_pid_param;
@@ -59,7 +54,7 @@ typedef struct {
 	
 	/* common */
 	float32_t dt_sec;
-	Chassis_Mode_t mode;
+	CMD_Chassis_Mode_t mode;
 	
 	/* Chassis design */
 	int8_t num_wheel;
@@ -90,5 +85,4 @@ typedef struct {
 /* Exported functions prototypes ---------------------------------------------*/
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *chas_param);
 int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_Device_t *can_device);
-int8_t Chassis_ParseCommand(Chassis_Ctrl_t *c_ctrl, const DR16_t *dr16);
-int8_t Chassis_Control(Chassis_t *c, Chassis_Ctrl_t *c_ctrl);
+int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl);

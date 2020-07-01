@@ -47,7 +47,9 @@ static const PID_Params_t imu_temp_ctrl_pid_param = {
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_PosEsti(void *argument) {
-	const Task_Param_t *task_param = (Task_Param_t*)argument;
+	Task_Param_t *task_param = (Task_Param_t*)argument;
+	
+	task_param->messageq.gimb_eulr = osMessageQueueNew(3u, sizeof(AHRS_Eulr_t), NULL);
 
 	BMI088_Init(&bmi088, osThreadGetId());
 	IST8310_Init(&ist8310, osThreadGetId());

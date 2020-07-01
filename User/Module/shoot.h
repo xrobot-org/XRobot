@@ -11,6 +11,7 @@
 #include "dr16.h"
 
 /* Include Component相关的头文件 */
+#include "cmd.h"
 #include "pid.h"
 #include "filter.h"
 
@@ -27,26 +28,6 @@
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
-/*  
-	SHOOT_MODE_RELAX: No force applied.
-	SHOOT_MODE_SAFE: Set to zero speed. Force applied.
-	SHOOT_MODE_STDBY: Ready to switch to FIRE.
-	SHOOT_MODE_FIRE: Ready to s.
-*/
-
-typedef enum {
-	SHOOT_MODE_RELAX,
-	SHOOT_MODE_SAFE,
-	SHOOT_MODE_STDBY,
-	SHOOT_MODE_FIRE,
-} Shoot_Mode_t;
-
-typedef struct {
-	float32_t bullet_speed;
-	float32_t shoot_freq_hz;
-	Shoot_Mode_t mode;
-} Shoot_Ctrl_t;
-
 typedef struct {
 	PID_Params_t fric_pid_param[2];
 	PID_Params_t trig_pid_param;
@@ -58,7 +39,7 @@ typedef struct {
 	
 	/* common */
 	float32_t dt_sec;
-	Shoot_Mode_t mode;
+	CMD_Shoot_Mode_t mode;
 	osTimerId_t trig_timer_id;
 	
 	/* Feedback */
@@ -89,5 +70,4 @@ typedef struct {
 /* Exported functions prototypes ---------------------------------------------*/
 int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *shoot_param);
 int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_Device_t *can_device);
-int8_t Shoot_ParseCommand(Shoot_Ctrl_t *shoot_ctrl, const DR16_t *dr16);
-int8_t Shoot_Control(Shoot_t *s, Shoot_Ctrl_t *shoot_ctrl);
+int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl);

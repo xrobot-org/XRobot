@@ -24,7 +24,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/
-static int8_t Chassis_SetMode(Chassis_t *c, Chassis_Mode_t mode) {
+static int8_t Chassis_SetMode(Chassis_t *c, CMD_Chassis_Mode_t mode) {
 	if (c == NULL)
 		return CHASSIS_ERR_NULL;
 	
@@ -161,59 +161,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_Device_t *can_device) {
 	return CHASSIS_OK;
 }
 
-int8_t Chassis_ParseCommand(Chassis_Ctrl_t *c_ctrl, const DR16_t *dr16) {
-	if (c_ctrl == NULL)
-		return CHASSIS_ERR_NULL;
-	
-	if (dr16 == NULL)
-		return CHASSIS_ERR_NULL;
-	
-	/* RC Control. */
-	switch (dr16->data.rc.sw_l) {
-		case DR16_SW_UP:
-			c_ctrl->mode = CHASSIS_MODE_BREAK;
-			break;
-		
-		case DR16_SW_MID:
-			c_ctrl->mode = CHASSIS_MODE_FOLLOW_GIMBAL;
-			break;
-		
-		case DR16_SW_DOWN:
-			c_ctrl->mode = CHASSIS_MODE_ROTOR;
-			break;
-		
-		case DR16_SW_ERR:
-			c_ctrl->mode = CHASSIS_MODE_RELAX;
-			break;
-	}
-	
-	c_ctrl->ctrl_v.vx = dr16->data.rc.ch_l_x;
-	c_ctrl->ctrl_v.vy = dr16->data.rc.ch_l_y;
-	
-	if ((dr16->data.rc.sw_l == DR16_SW_UP) && (dr16->data.rc.sw_r == DR16_SW_UP)) {
-		/* PC Control. */
-		
-		c_ctrl->ctrl_v.vx = 0.f;
-		c_ctrl->ctrl_v.vy = 0.f;
-		if (!DR16_KeyPressed(dr16, DR16_KEY_SHIFT) && !DR16_KeyPressed(dr16, DR16_KEY_CTRL)) {
-			if (DR16_KeyPressed(dr16, DR16_KEY_A))
-				c_ctrl->ctrl_v.vx -= 1.f;
-			
-			if (DR16_KeyPressed(dr16, DR16_KEY_D))
-				c_ctrl->ctrl_v.vx += 1.f;
-			
-			if (DR16_KeyPressed(dr16, DR16_KEY_W))
-				c_ctrl->ctrl_v.vy += 1.f;
-			
-			if (DR16_KeyPressed(dr16, DR16_KEY_S))
-				c_ctrl->ctrl_v.vy -= 1.f;
-		}
-	}
-	
-	return CHASSIS_OK;
-}
-
-int8_t Chassis_Control(Chassis_t *c, Chassis_Ctrl_t *c_ctrl) {
+int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
 	if (c == NULL)
 		return CHASSIS_ERR_NULL;
 	
@@ -275,7 +223,5 @@ int8_t Chassis_Control(Chassis_t *c, Chassis_Ctrl_t *c_ctrl) {
 		/* Filter output. */
 		c->motor_cur_out[i] = LowPassFilter2p_Apply(&(c->output_filter[i]), c->motor_cur_out[i]);
 	}
-	
-	
 	return CHASSIS_OK;
 }
