@@ -31,16 +31,16 @@ static bool DR16_DataCorrupted(const DR16_t *dr16) {
 	const uint16_t ch_l_x = 0x07ff & ((dr16->raw[2] >> 6) | (dr16->raw[3] << 2) | (dr16->raw[4] << 10));
 	const uint16_t ch_l_y = 0x07ff & ((dr16->raw[4] >> 1) | (dr16->raw[5] << 7));
 	
-	if ((ch_r_x < DR16_CH_VALUE_MIN) && (ch_r_x > DR16_CH_VALUE_MAX))
+	if ((ch_r_x < DR16_CH_VALUE_MIN) || (ch_r_x > DR16_CH_VALUE_MAX))
 		return true;
 	
-	if ((ch_r_y < DR16_CH_VALUE_MIN) && (ch_r_y > DR16_CH_VALUE_MAX))
+	if ((ch_r_y < DR16_CH_VALUE_MIN) || (ch_r_y > DR16_CH_VALUE_MAX))
 		return true;
 	
-	if ((ch_l_x < DR16_CH_VALUE_MIN) && (ch_l_x > DR16_CH_VALUE_MAX))
+	if ((ch_l_x < DR16_CH_VALUE_MIN) || (ch_l_x > DR16_CH_VALUE_MAX))
 		return true;
 	
-	if ((ch_l_y < DR16_CH_VALUE_MIN) && (ch_l_y > DR16_CH_VALUE_MAX))
+	if ((ch_l_y < DR16_CH_VALUE_MIN) || (ch_l_y > DR16_CH_VALUE_MAX))
 		return true;
 	
 	return false;
