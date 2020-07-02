@@ -7,7 +7,7 @@
 #include "bmi088.h"
 
 /* Include 标准库 */
-#include "string.h"
+#include <string.h>
 
 /* Include BSP相关的头文件 */
 #include "bsp_delay.h"
