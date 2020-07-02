@@ -68,6 +68,6 @@ typedef struct {
 
 
 /* Exported functions prototypes ---------------------------------------------*/
-int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *shoot_param);
+int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float32_t dt_sec);
 int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_Device_t *can_device);
 int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl);

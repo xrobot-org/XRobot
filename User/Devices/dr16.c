@@ -83,8 +83,11 @@ int8_t DR16_Parse(const DR16_t *dr16, CMD_RC_t *rc)  {
 	if (dr16 == NULL)
 		return DR16_ERR_NULL;
 	
-	if (DR16_DataCorrupted(dr16))
+	if (DR16_DataCorrupted(dr16)) {
 		return DR16_ERR_NULL;
+	} else {
+		memset(rc, 0, sizeof(*rc));
+	}
 	
 	const uint16_t ch_r_x = 0x07ff & (dr16->raw[0] | (dr16->raw[1] << 8));
 	const uint16_t ch_r_y = 0x07ff & ((dr16->raw[1] >> 3) | (dr16->raw[2] << 5));

@@ -83,6 +83,6 @@ typedef struct {
 } Chassis_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *chas_param);
+int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float32_t dt_sec);
 int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_Device_t *can_device);
 int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl);

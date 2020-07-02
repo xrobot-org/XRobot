@@ -55,21 +55,22 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *shoot_param) {
+int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float32_t dt_sec) {
 	if (s == NULL)
 		return -1;
 	
 	s->mode = SHOOT_MODE_RELAX;
+	s->dt_sec = dt_sec;
 	
 	s->trig_timer_id = osTimerNew(TrigTimerCallback, osTimerPeriodic, s, NULL);
 
 	for(uint8_t i = 0; i < 2; i++) {
-		PID_Init(&(s->fric_pid[i]), PID_MODE_NO_D, s->dt_sec, &(shoot_param->fric_pid_param[i]));
+		PID_Init(&(s->fric_pid[i]), PID_MODE_NO_D, s->dt_sec, &(param->fric_pid_param[i]));
 		
 		LowPassFilter2p_Init(&(s->fric_output_filter[i]), 1000.f / s->dt_sec, 100.f);
 	}
 	
-	PID_Init(&(s->trig_pid), PID_MODE_NO_D, s->dt_sec, &(shoot_param->trig_pid_param));
+	PID_Init(&(s->trig_pid), PID_MODE_NO_D, s->dt_sec, &(param->trig_pid_param));
 	
 	LowPassFilter2p_Init(&(s->trig_output_filter), 1000.f / s->dt_sec, 100.f);
 	return 0;

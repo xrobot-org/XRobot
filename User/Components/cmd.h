@@ -70,12 +70,6 @@ typedef struct {
 	float32_t shoot_freq_hz;
 } CMD_Shoot_Ctrl_t;
 
-typedef struct {
-	CMD_Chassis_Ctrl_t chassis;
-	CMD_Gimbal_Ctrl_t gimbal;
-	CMD_Shoot_Ctrl_t shoot;
-} CMD_t;
-
 typedef enum {
 	CMD_SW_ERR = 0,
 	CMD_SW_UP = 1,
@@ -84,15 +78,31 @@ typedef enum {
 } CMD_SwitchPos_t;
 
 typedef enum {
-	DR16_KEY_W = 0,
-	DR16_KEY_S,
-	DR16_KEY_A,
-	DR16_KEY_D,
-	DR16_KEY_Q,
-	DR16_KEY_E,
-	DR16_KEY_SHIFT,
-	DR16_KEY_CTRL,
+	CMD_KEY_W = 0,
+	CMD_KEY_S,
+	CMD_KEY_A,
+	CMD_KEY_D,
+	CMD_KEY_Q,
+	CMD_KEY_E,
+	CMD_KEY_SHIFT,
+	CMD_KEY_CTRL,
 } CMD_KeyValue_t;
+
+typedef struct {
+	bool pc_ctrl;
+	
+	float32_t sens_mouse;
+	float32_t sens_rc;
+	
+	CMD_Chassis_Ctrl_t chassis;
+	CMD_Gimbal_Ctrl_t gimbal;
+	CMD_Shoot_Ctrl_t shoot;
+} CMD_t;
+
+typedef struct {
+	float32_t sens_mouse;
+	float32_t sens_rc;
+} CMD_Params_t;
 
 typedef struct {
 	float32_t ch_l_x;
@@ -117,5 +127,5 @@ typedef struct {
 	uint16_t res;
 } CMD_RC_t;
 
-bool CMD_KeyPressed(const CMD_RC_t *rc, CMD_KeyValue_t key);
+int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param);
 int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd);

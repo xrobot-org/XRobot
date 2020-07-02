@@ -68,6 +68,6 @@ typedef struct {
 
 
 /* Exported functions prototypes ---------------------------------------------*/
-int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *g_param);
+int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float32_t dt_sec, BMI088_t *imu);
 int8_t Gimbal_UpdateFeedback(Gimbal_t *g, CAN_Device_t *can_device);
 int8_t Gimbal_Control(Gimbal_t *g, CMD_Gimbal_Ctrl_t *g_ctrl);

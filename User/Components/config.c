@@ -1,4 +1,4 @@
-#include "robot_config.h"
+#include "config.h"
 
 static PID_Params_t infantry_chassis_pid_array[4] = {{
 		.kp = 0.5,
@@ -27,7 +27,7 @@ static PID_Params_t infantry_chassis_pid_array[4] = {{
 	},
 };
 
-static const RobotConfig_t config_infantry = {
+static const Config_Robot_t config_infantry = {
 	.param = {
 		.chassis = {
 			.motor_pid_param = infantry_chassis_pid_array,
@@ -98,25 +98,47 @@ static const RobotConfig_t config_infantry = {
 		},
 	},
 };
+static const Config_Robot_t config_hero;
+static const Config_Robot_t config_engineer;
+static const Config_Robot_t config_drone;
+static const Config_Robot_t config_sentry;
+		
+static const Config_User_t user_default = {
+	.param = {
+		.cmd = {
+			.sens_mouse = 0.5f,
+			.sens_rc = 0.5f,
+		},
+		
+	},
+};
 
-static const RobotConfig_t config_hero;
-static const RobotConfig_t config_engineer;
-static const RobotConfig_t config_drone;
-static const RobotConfig_t config_sentry;;
-
-const RobotConfig_t *RobotConfig_Get(RobotConfig_Model_t model) {
+const Config_Robot_t *Config_GetRobot(Config_Model_t model) {
 	switch (model) {
-		case ROBOT_CONFIG_MODEL_INFANTRY:
+		case CONFIG_ROBOT_MODEL_INFANTRY:
 			return &config_infantry;
-		case ROBOT_CONFIG_MODEL_HERO:
+		case CONFIG_ROBOT_MODEL_HERO:
 			return &config_hero;
-		case ROBOT_CONFIG_MODEL_ENGINEER:
+		case CONFIG_ROBOT_MODEL_ENGINEER:
 			return &config_engineer;
-		case ROBOT_CONFIG_MODEL_DRONE:
+		case CONFIG_ROBOT_MODEL_DRONE:
 			return &config_drone;
-		case ROBOT_CONFIG_MODEL_SENTRY:
+		case CONFIG_ROBOT_MODEL_SENTRY:
 			return &config_sentry;
 		default:
 			return NULL;
 	}
+}
+
+const Config_User_t *Config_GetUser(Config_UserName_t user) {
+	switch (user) {
+		case CONFIG_USER_DEFAULT:
+			return &user_default;
+		default:
+			return NULL;
+	}
+}
+
+const Config_Robot_t **RobotConfig_GetDefault(void) {
+	return NULL;
 }

@@ -848,6 +848,11 @@
               <FilePath>..\User\Components\cmd.c</FilePath>
             </File>
             <File>
+              <FileName>config.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\config.c</FilePath>
+            </File>
+            <File>
               <FileName>error_detect.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\error_detect.c</FilePath>
@@ -886,11 +891,6 @@
               <FileName>referee.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\referee.c</FilePath>
-            </File>
-            <File>
-              <FileName>robot_config.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Components\robot_config.c</FilePath>
             </File>
             <File>
               <FileName>user_math.c</FileName>
@@ -1851,6 +1851,11 @@
               <FilePath>..\User\Components\cmd.c</FilePath>
             </File>
             <File>
+              <FileName>config.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\config.c</FilePath>
+            </File>
+            <File>
               <FileName>error_detect.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\error_detect.c</FilePath>
@@ -1889,11 +1894,6 @@
               <FileName>referee.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\referee.c</FilePath>
-            </File>
-            <File>
-              <FileName>robot_config.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Components\robot_config.c</FilePath>
             </File>
             <File>
               <FileName>user_math.c</FileName>

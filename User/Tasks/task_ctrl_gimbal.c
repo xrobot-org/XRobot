@@ -8,12 +8,9 @@
 
 /* Include 标准库 */
 /* Include Board相关的头文件 */
-#include "bsp_usb.h"
-#include "bsp_mm.h"
-
 /* Include Device相关的头文件 */
 /* Include Component相关的头文件 */
-#include "robot_config.h"
+#include "config.h"
 
 /* Include Module相关的头文件 */
 #include "gimbal.h"
@@ -24,8 +21,9 @@
 /* Private variables ---------------------------------------------------------*/
 static CAN_Device_t *cd;
 
+static CMD_t *cmd;
+
 static Gimbal_t gimbal;
-static CMD_t cmd;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -38,9 +36,11 @@ void Task_CtrlGimbal(void *argument) {
 	
 	cd = CAN_GetDevice();
 	
-	Gimbal_Init(&gimbal, &(RobotConfig_Get(ROBOT_CONFIG_MODEL_INFANTRY)->param.gimbal));
-	gimbal.dt_sec = (float32_t)delay_tick / (float32_t)osKernelGetTickFreq();
-	gimbal.imu = BMI088_GetDevice();
+	Gimbal_Init(
+		&gimbal, 
+		&(Config_GetRobot(CONFIG_ROBOT_MODEL_INFANTRY)->param.gimbal),
+		(float32_t)delay_tick / (float32_t)osKernelGetTickFreq(),
+		BMI088_GetDevice());
 	
 	uint32_t tick = osKernelGetTickCount();
 	while(1) {
@@ -51,13 +51,13 @@ void Task_CtrlGimbal(void *argument) {
 		if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
 			
 			osMessageQueueGet(task_param->messageq.gimb_eulr, gimbal.imu_eulr, NULL, 0);
-			osMessageQueueGet(task_param->messageq.cmd, &cmd, NULL, 0);
+			osMessageQueueGet(task_param->messageq.cmd, cmd, NULL, 0);
 			
 			osKernelLock();
 			Gimbal_UpdateFeedback(&gimbal, cd);
 			osKernelUnlock();
 			
-			Gimbal_Control(&gimbal, &(cmd.gimbal));
+			Gimbal_Control(&gimbal, &(cmd->gimbal));
 			
 			CAN_Motor_ControlGimbal(gimbal.yaw_cur_out, gimbal.pit_cur_out);
 			

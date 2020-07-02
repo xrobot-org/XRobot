@@ -60,13 +60,15 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_Chassis_Mode_t mode) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *chas_param) {
+int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float32_t dt_sec) {
 	if (c == NULL)
 		return CHASSIS_ERR_NULL;
 	
+	c->dt_sec = dt_sec;
+	
 	c->mode = CHASSIS_MODE_RELAX;
 	Mixer_Mode_t mixer_mode;
-	switch (chas_param->type) {
+	switch (param->type) {
 		case CHASSIS_TYPE_MECANUM:
 			c->num_wheel = 4;
 			mixer_mode = MIXER_MECANUM;
@@ -118,12 +120,12 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *chas_param) {
 		goto error5;
 		
 	for(uint8_t i = 0; i < c->num_wheel; i++) {
-		PID_Init(&(c->motor_pid[i]), PID_MODE_NO_D, c->dt_sec, &(chas_param->motor_pid_param[i]));
+		PID_Init(&(c->motor_pid[i]), PID_MODE_NO_D, c->dt_sec, &(param->motor_pid_param[i]));
 		
 		LowPassFilter2p_Init(&(c->output_filter[i]), 1000.f / c->dt_sec, 100.f);
 	}
 	
-	PID_Init(&(c->follow_pid), PID_MODE_NO_D, c->dt_sec, &(chas_param->follow_pid_param));
+	PID_Init(&(c->follow_pid), PID_MODE_NO_D, c->dt_sec, &(param->follow_pid_param));
 	
 	Mixer_Init(&(c->mixer), mixer_mode);
 	c->motor_scaler = CAN_M3508_MAX_ABS_VOLTAGE;

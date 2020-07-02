@@ -16,11 +16,9 @@
 #include "dr16.h"
 
 /* Include Component相关的头文件 */
-/* Include Module相关的头文件 */
-#include "chassis.h"
-#include "gimbal.h"
-#include "shoot.h"
+#include "config.h"
 
+/* Include Module相关的头文件 */
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -40,6 +38,7 @@ void Task_Command(void *argument) {
 	osDelay(TASK_INIT_DELAY_COMMAND);
 	
 	DR16_Init(&dr16, osThreadGetId());
+	CMD_Init(&cmd, &(Config_GetUser(CONFIG_USER_DEFAULT)->param.cmd));
 	
 	while(1) {
 		/* Task body */

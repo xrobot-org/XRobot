@@ -52,16 +52,18 @@ int8_t Gimbal_SetMode(Gimbal_t *g, CMD_Gimbal_Mode_t mode) {
 	return 0;
 }
 /* Exported functions --------------------------------------------------------*/
-int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *g_param) {
+int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float32_t dt_sec, BMI088_t *imu){
 	if (g == NULL)
 		return -1;
 	
 	g->mode = GIMBAL_MODE_INIT;
+	g->dt_sec = dt_sec;
+	g->imu = imu;
 
-	PID_Init(&(g->pid[GIMBAL_PID_PIT_IN]), PID_MODE_SET_D, g->dt_sec, &(g_param->pid[GIMBAL_PID_PIT_IN]));
-	PID_Init(&(g->pid[GIMBAL_PID_YAW_OUT]), PID_MODE_NO_D, g->dt_sec, &(g_param->pid[GIMBAL_PID_YAW_OUT]));
-	PID_Init(&(g->pid[GIMBAL_PID_PIT_IN]), PID_MODE_SET_D, g->dt_sec, &(g_param->pid[GIMBAL_PID_PIT_IN]));
-	PID_Init(&(g->pid[GIMBAL_PID_PIT_OUT]), PID_MODE_NO_D, g->dt_sec, &(g_param->pid[GIMBAL_PID_PIT_OUT]));
+	PID_Init(&(g->pid[GIMBAL_PID_PIT_IN]), PID_MODE_SET_D, g->dt_sec, &(param->pid[GIMBAL_PID_PIT_IN]));
+	PID_Init(&(g->pid[GIMBAL_PID_YAW_OUT]), PID_MODE_NO_D, g->dt_sec, &(param->pid[GIMBAL_PID_YAW_OUT]));
+	PID_Init(&(g->pid[GIMBAL_PID_PIT_IN]), PID_MODE_SET_D, g->dt_sec, &(param->pid[GIMBAL_PID_PIT_IN]));
+	PID_Init(&(g->pid[GIMBAL_PID_PIT_OUT]), PID_MODE_NO_D, g->dt_sec, &(param->pid[GIMBAL_PID_PIT_OUT]));
 	
 	LowPassFilter2p_Init(&(g->filter[GIMBAL_LPF_YAW]), 1000.f / g->dt_sec, 100.f);
 	LowPassFilter2p_Init(&(g->filter[GIMBAL_LPF_PIT]), 1000.f / g->dt_sec, 100.f);
