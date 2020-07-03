@@ -8,7 +8,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-volatile float32_t voltage_vrefint_proportion = 8.0586080586080586080586080586081e-4f;
+volatile float32_t volt_vrefint_proportion = 8.0586080586080586080586080586081e-4f;
 
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -27,11 +27,11 @@ float32_t BSP_GetTemprater(void) {
 	HAL_ADC_Start(&hadc1);
 	HAL_ADC_PollForConversion(&hadc1, 5u);
 	uint32_t raw = HAL_ADC_GetValue(&hadc1);
-	float32_t temp = (float32_t)raw * voltage_vrefint_proportion;
+	float32_t temp = (float32_t)raw * volt_vrefint_proportion;
 	return (temp - 0.76f) * 400.0f + 25.0f;
 }
 
-float32_t BSP_GetBatteryVoltage(void) {
+float32_t BSP_GetBatteryVolt(void) {
 	ADC_ChannelConfTypeDef sConfig;
 	
 	sConfig.Channel = ADC_CHANNEL_8;
@@ -46,9 +46,9 @@ float32_t BSP_GetBatteryVoltage(void) {
 	HAL_ADC_Start(&hadc3);
 	HAL_ADC_PollForConversion(&hadc3, 5u);
 	uint32_t raw = HAL_ADC_GetValue(&hadc3);
-	float32_t voltage = (float32_t)raw * voltage_vrefint_proportion * 10.090909090909090909090909090909f;
+	float32_t volt = (float32_t)raw * volt_vrefint_proportion * 10.090909090909090909090909090909f;
 
-	return voltage;
+	return volt;
 }
 uint8_t BSP_GetHardwareVersion(void) {
 	return 1u;

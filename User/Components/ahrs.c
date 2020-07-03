@@ -268,9 +268,9 @@ int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
 	eulr->yaw = atan2f(siny_cosp , cosy_cosp);
 	
 	#if 1
-	eulr->yaw *= MATH_RADIAN_TO_DEGREE_MULTIPLIER;
-	eulr->rol *= MATH_RADIAN_TO_DEGREE_MULTIPLIER;
-	eulr->pit *= MATH_RADIAN_TO_DEGREE_MULTIPLIER;
+	eulr->yaw *= MATH_RAD_TO_DEG_MULT;
+	eulr->rol *= MATH_RAD_TO_DEG_MULT;
+	eulr->pit *= MATH_RAD_TO_DEG_MULT;
 	#endif
 	
 	return 0;

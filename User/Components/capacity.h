@@ -8,5 +8,5 @@
 
 #include "user_math.h"
 
-float32_t Capacity_GetBatteryRemain(float32_t voltage);
-float32_t Capacity_GetCapacitorRemain(float32_t voltage);
+float32_t Capacity_GetBatteryRemain(float32_t volt);
+float32_t Capacity_GetCapacitorRemain(float32_t volt);

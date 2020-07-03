@@ -128,7 +128,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float32_t dt_se
 	PID_Init(&(c->follow_pid), PID_MODE_NO_D, c->dt_sec, &(param->follow_pid_param));
 	
 	Mixer_Init(&(c->mixer), mixer_mode);
-	c->motor_scaler = CAN_M3508_MAX_ABS_VOLTAGE;
+	c->motor_scaler = CAN_M3508_MAX_ABS_VOLT;
 	
 	return CHASSIS_OK;
 	

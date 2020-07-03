@@ -299,9 +299,9 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 	const int16_t raw_z = ((bmi088->raw[12] << 8) | bmi088->raw[11]);
 	
 	/* FS125: 262.144. FS250: 131.072. FS500: 65.536. FS1000: 32.768. FS2000: 16.384.*/
-	bmi088->gyro.x = raw_x / 32.768f * MATH_DEGREE_TO_RADIAN_MULTIPLIER;
-	bmi088->gyro.y = raw_y / 32.768f * MATH_DEGREE_TO_RADIAN_MULTIPLIER;
-	bmi088->gyro.z = raw_z / 32.768f * MATH_DEGREE_TO_RADIAN_MULTIPLIER;
+	bmi088->gyro.x = raw_x / 32.768f * MATH_DEG_TO_RAD_MULT;
+	bmi088->gyro.y = raw_y / 32.768f * MATH_DEG_TO_RAD_MULT;
+	bmi088->gyro.z = raw_z / 32.768f * MATH_DEG_TO_RAD_MULT;
 	
 	return BMI088_OK;
 }

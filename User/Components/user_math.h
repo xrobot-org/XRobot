@@ -14,8 +14,8 @@
 #include <float.h>
 #include <stdbool.h>
 
-#define MATH_DEGREE_TO_RADIAN_MULTIPLIER	(0.01745329251f)
-#define MATH_RADIAN_TO_DEGREE_MULTIPLIER	(57.2957795131f)
+#define MATH_DEG_TO_RAD_MULT	(0.01745329251f)
+#define MATH_RAD_TO_DEG_MULT	(57.2957795131f)
 
 typedef struct {
 	float32_t vx;

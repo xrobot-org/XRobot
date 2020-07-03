@@ -11,7 +11,7 @@
 float BSP_GetTemprater(void) {
 	return 0.f;
 }
-float BSP_GetBatteryVoltage(void) {
+float BSP_GetBatteryVolt(void) {
 	return 0.f;
 }
 uint8_t BSP_GetHardwareVersion(void) {

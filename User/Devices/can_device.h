@@ -27,9 +27,9 @@
 #define CAN_M3508_M2006_RECEIVE_ID_EXTAND			0x1ff
 #define CAN_M3508_M2006_ID_SETTING_ID				0x700
 
-#define CAN_GM6020_MAX_ABS_VOLTAGE			30000
-#define CAN_M3508_MAX_ABS_VOLTAGE			16384
-#define CAN_M2006_MAX_ABS_VOLTAGE			10000
+#define CAN_GM6020_MAX_ABS_VOLT			30000
+#define CAN_M3508_MAX_ABS_VOLT			16384
+#define CAN_M2006_MAX_ABS_VOLT			10000
 
 #define CAN_MOTOR_MAX_NUM				9
 #define CAN_CHASSIS_NUM_MOTOR			4
@@ -94,8 +94,8 @@ typedef union {
 
 /* Super capacitor */
 typedef struct {
-	uint16_t cap_voltage;
-	int16_t  battery_voltage;
+	uint16_t cap_volt;
+	int16_t  battery_volt;
 	int16_t  power_limit;
 	uint8_t  temp;
 } CAN_SuperCapFeedback_t;

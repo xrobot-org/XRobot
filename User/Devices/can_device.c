@@ -104,10 +104,10 @@ CAN_Device_t *CAN_GetDevice(void) {
 }
 
 int8_t CAN_Motor_ControlChassis(float32_t m1, float32_t m2, float32_t m3, float32_t m4) {
-	int16_t motor1 = m1 * CAN_M3508_MAX_ABS_VOLTAGE;
-	int16_t motor2 = m2 * CAN_M3508_MAX_ABS_VOLTAGE;
-	int16_t motor3 = m3 * CAN_M3508_MAX_ABS_VOLTAGE;
-	int16_t motor4 = m4 * CAN_M3508_MAX_ABS_VOLTAGE;
+	int16_t motor1 = m1 * CAN_M3508_MAX_ABS_VOLT;
+	int16_t motor2 = m2 * CAN_M3508_MAX_ABS_VOLT;
+	int16_t motor3 = m3 * CAN_M3508_MAX_ABS_VOLT;
+	int16_t motor4 = m4 * CAN_M3508_MAX_ABS_VOLT;
 	
 	CAN_TxHeaderTypeDef tx_header;
 
@@ -132,8 +132,8 @@ int8_t CAN_Motor_ControlChassis(float32_t m1, float32_t m2, float32_t m3, float3
 }
 
 int8_t CAN_Motor_ControlGimbal(float32_t yaw, float32_t pitch) {
-	int16_t yaw_motor = yaw * CAN_GM6020_MAX_ABS_VOLTAGE;
-	int16_t pitch_motor = pitch * CAN_GM6020_MAX_ABS_VOLTAGE;
+	int16_t yaw_motor = yaw * CAN_GM6020_MAX_ABS_VOLT;
+	int16_t pitch_motor = pitch * CAN_GM6020_MAX_ABS_VOLT;
 	
 	CAN_TxHeaderTypeDef tx_header;
 
@@ -158,9 +158,9 @@ int8_t CAN_Motor_ControlGimbal(float32_t yaw, float32_t pitch) {
 }
 
 int8_t CAN_Motor_ControlShoot(float32_t fric1, float32_t fric2, float32_t trig) {
-	int16_t fric1_motor = fric1 * CAN_M3508_MAX_ABS_VOLTAGE;
-	int16_t fric2_motor = fric2 * CAN_M3508_MAX_ABS_VOLTAGE;
-	int16_t trig_motor = trig * CAN_M2006_MAX_ABS_VOLTAGE;
+	int16_t fric1_motor = fric1 * CAN_M3508_MAX_ABS_VOLT;
+	int16_t fric2_motor = fric2 * CAN_M3508_MAX_ABS_VOLT;
+	int16_t trig_motor = trig * CAN_M2006_MAX_ABS_VOLT;
 	
 	CAN_TxHeaderTypeDef tx_header;
 
