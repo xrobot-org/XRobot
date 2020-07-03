@@ -863,6 +863,11 @@
               <FilePath>..\User\Components\filter.c</FilePath>
             </File>
             <File>
+              <FileName>hud.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\hud.c</FilePath>
+            </File>
+            <File>
               <FileName>kalmanf.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\kalmanf.c</FilePath>
@@ -1864,6 +1869,11 @@
               <FileName>filter.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\filter.c</FilePath>
+            </File>
+            <File>
+              <FileName>hud.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\hud.c</FilePath>
             </File>
             <File>
               <FileName>kalmanf.c</FileName>
