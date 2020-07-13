@@ -18,7 +18,7 @@ int8_t PowerLimit_Apply(float32_t power_limit, float32_t vbat, float32_t *motor,
 	}
 	
 	if (power_limit > 0.f) {
-		if((total_current * vbat) > power_limit) {
+		if ((total_current * vbat) > power_limit) {
 			float32_t current_scale = total_current / power_limit / vbat;
 			for(uint32_t i = 0; i < len; i++) {
 				*motor *= current_scale;

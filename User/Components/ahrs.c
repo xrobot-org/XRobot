@@ -42,7 +42,7 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_G
 	q_dot4 = 0.5f * (ahrs->q0 * gz + ahrs->q1 * gy - ahrs->q2 * gx);
 
 	// Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisation)
-	if(!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
+	if (!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
 
 		// Normalise accelerometer measurement
 		recip_norm = InvSqrt(ax * ax + ay * ay + az * az);
@@ -111,7 +111,7 @@ int8_t AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float32_t sample_freq) {
 	ahrs->q3 = 0.f;
 	
 	if (magn) {
-		if((magn->x == 0.0f) && (magn->y == 0.0f) && (magn->z == 0.0f)) {
+		if ((magn->x == 0.0f) && (magn->y == 0.0f) && (magn->z == 0.0f)) {
 			ahrs->q0 = 0.800884545f;
 			ahrs->q1 = 0.00862364192f;
 			ahrs->q2 = -0.00283267116f;
@@ -147,7 +147,7 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyr
 	float32_t mz = magn->z;
 	
 	// Use IMU algorithm if magnetometer measurement invalid (avoids NaN in magnetometer normalisation)
-	if((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f)) {
+	if ((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f)) {
 		return AHRS_UpdateIMU(ahrs, accl, gyro);
 	}
 	
@@ -166,7 +166,7 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl, const AHRS_Gyro_t *gyr
 	q_dot4 = 0.5f * (ahrs->q0 * gz + ahrs->q1 * gy - ahrs->q2 * gx);
 
 	// Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisation)
-	if(!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
+	if (!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
 
 		// Normalise accelerometer measurement
 		recip_norm = InvSqrt(ax * ax + ay * ay + az * az);

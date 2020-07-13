@@ -170,7 +170,7 @@ void Task_CLI(void *argument) {
 		rx_char = BSP_USB_ReadChar();
 		BSP_USB_Printf("%c", rx_char);
 		
-		if(rx_char == '\n' || rx_char == '\r') {
+		if (rx_char == '\n' || rx_char == '\r') {
 			break;
 		}
 	}
@@ -189,13 +189,13 @@ void Task_CLI(void *argument) {
 		rx_char = BSP_USB_ReadChar();
 		
 		if (rx_char <= 126 && rx_char >= 32) {
-			if(index < MAX_INPUT_LENGTH) {
+			if (index < MAX_INPUT_LENGTH) {
 				BSP_USB_Printf("%c", rx_char);
 				input[index] = rx_char;
 				index++;
 			}
 		} else {
-			if(rx_char == '\n' || rx_char == '\r') {\
+			if (rx_char == '\n' || rx_char == '\r') {\
 				BSP_USB_Printf("\r\n");
 				if (index > 0) {
 					do {
@@ -206,8 +206,8 @@ void Task_CLI(void *argument) {
 					memset(input, 0x00, MAX_INPUT_LENGTH);
 				}
 				BSP_USB_Printf("rm>");
-			}else if(rx_char == '\b' || rx_char == 0x7Fu) {
-				if(index > 0) {
+			} else if (rx_char == '\b' || rx_char == 0x7Fu) {
+				if (index > 0) {
 					BSP_USB_Printf("%c", rx_char);
 					index--;
 					input[index] = '\0';

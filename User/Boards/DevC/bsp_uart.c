@@ -38,7 +38,7 @@ struct {
 
 /* Private function  ---------------------------------------------------------*/
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
-	if(huart->Instance == DR16_UART) {
+	if (huart->Instance == DR16_UART) {
 		if (bsp_uart_callback.dr16.TxCpltCallback) {
 			bsp_uart_callback.dr16.TxCpltCallback();
 		}
@@ -46,7 +46,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 void HAL_UART_TxHalfCpltCallback(UART_HandleTypeDef *huart) {
-	if(huart->Instance == DR16_UART) {
+	if (huart->Instance == DR16_UART) {
 		if (bsp_uart_callback.dr16.TxHalfCpltCallback) {
 			bsp_uart_callback.dr16.TxHalfCpltCallback();
 		}
@@ -54,7 +54,7 @@ void HAL_UART_TxHalfCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	if(huart->Instance == DR16_UART) {
+	if (huart->Instance == DR16_UART) {
 		if (bsp_uart_callback.dr16.RxCpltCallback) {
 			bsp_uart_callback.dr16.RxCpltCallback();
 		}
@@ -62,7 +62,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart) {
-	if(huart->Instance == DR16_UART) {
+	if (huart->Instance == DR16_UART) {
 		if (bsp_uart_callback.dr16.RxHalfCpltCallback) {
 			bsp_uart_callback.dr16.RxHalfCpltCallback();
 		}
@@ -70,7 +70,7 @@ void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
-	if(huart->Instance == DR16_UART) {
+	if (huart->Instance == DR16_UART) {
 		if (bsp_uart_callback.dr16.ErrorCallback) {
 			bsp_uart_callback.dr16.ErrorCallback();
 		}
@@ -78,7 +78,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
 }
 
 void HAL_UART_AbortCpltCallback(UART_HandleTypeDef *huart) {
-	if(huart->Instance == DR16_UART) {
+	if (huart->Instance == DR16_UART) {
 		if (bsp_uart_callback.dr16.AbortCpltCallback) {
 			bsp_uart_callback.dr16.AbortCpltCallback();
 		}
@@ -86,7 +86,7 @@ void HAL_UART_AbortCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 void HAL_UART_AbortTransmitCpltCallback(UART_HandleTypeDef *huart) {
-	if(huart->Instance == DR16_UART) {
+	if (huart->Instance == DR16_UART) {
 		if (bsp_uart_callback.dr16.AbortTransmitCpltCallback) {
 			bsp_uart_callback.dr16.AbortTransmitCpltCallback();
 		}
@@ -94,7 +94,7 @@ void HAL_UART_AbortTransmitCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart) {
-	if(huart->Instance == DR16_UART) {
+	if (huart->Instance == DR16_UART) {
 		if (bsp_uart_callback.dr16.AbortReceiveCpltCallback) {
 			bsp_uart_callback.dr16.AbortReceiveCpltCallback();
 		}

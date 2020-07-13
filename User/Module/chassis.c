@@ -100,23 +100,23 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float32_t dt_se
 	}
 	
 	c->motor_rpm = BSP_Malloc(c->num_wheel * sizeof(*c->motor_rpm));
-	if(c->motor_rpm == NULL)
+	if (c->motor_rpm == NULL)
 		goto error1;
 	
 	c->motor_rpm_set = BSP_Malloc(c->num_wheel * sizeof(*c->motor_rpm_set));
-	if(c->motor_rpm_set == NULL)
+	if (c->motor_rpm_set == NULL)
 		goto error2;
 	
 	c->motor_pid = BSP_Malloc(c->num_wheel * sizeof(*c->motor_pid));
-	if(c->motor_pid == NULL)
+	if (c->motor_pid == NULL)
 		goto error3;
 	
 	c->motor_cur_out = BSP_Malloc(c->num_wheel * sizeof(*c->motor_cur_out));
-	if(c->motor_cur_out == NULL)
+	if (c->motor_cur_out == NULL)
 		goto error4;
 	
 	c->output_filter = BSP_Malloc(c->num_wheel * sizeof(*c->output_filter));
-	if(c->output_filter == NULL)
+	if (c->output_filter == NULL)
 		goto error5;
 		
 	for(uint8_t i = 0; i < c->num_wheel; i++) {

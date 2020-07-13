@@ -21,7 +21,7 @@ float32_t BSP_GetTemprater(void) {
 	sConfig.Offset = 0;
 	
   
-	if(HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
 		Error_Handler();
 	
 	HAL_ADC_Start(&hadc1);
@@ -40,7 +40,7 @@ float32_t BSP_GetBatteryVolt(void) {
 	sConfig.Offset = 0;
 	
   
-	if(HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK)
+	if (HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK)
 		Error_Handler();
 	
 	HAL_ADC_Start(&hadc3);

@@ -54,7 +54,7 @@ int8_t BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, float32_t duty_cycl
 			break;
 		
 		case BSP_LED_TAGGLE:
-			if(led_stats & tim_ch) {
+			if (led_stats & tim_ch) {
 				HAL_TIM_PWM_Stop(&htim5, tim_ch);
 				led_stats &= ~tim_ch;
 			} else {

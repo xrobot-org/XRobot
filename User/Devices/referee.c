@@ -49,21 +49,41 @@ typedef enum {
 } Referee_CMDID_t;
 
 /* Private variables ---------------------------------------------------------*/
+static Referee_t *gref;
+static bool inited = false;
+
 /* Private function  ---------------------------------------------------------*/
 static void Referee_RxCpltCallback(void) {
-	
+	osThreadFlagsSet(gref->thread_alert, REFEREE_SIGNAL_RAW_REDY);
 }
 
+
 /* Exported functions --------------------------------------------------------*/
+int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert) {
+	if (ref == NULL)
+		return -1;
+	
+	if (inited)
+		return -1;
+	
+	ref->thread_alert = thread_alert;
+	
+	BSP_UART_RegisterCallback(BSP_UART_DR16, BSP_UART_RX_COMPLETE_CB, Referee_RxCpltCallback);
+	
+	gref = ref;
+	inited = true;
+	return 0;
+}
+
 int8_t Referee_Update(Referee_t *ref, const uint8_t *buf) {
 	// TODO: verify CRC.
 	Referee_FrameHeader_t *header = (Referee_FrameHeader_t*)buf;
 	buf += sizeof(Referee_FrameHeader_t);
 	
-	if(header->sof != REF_HEADER_SOF)
+	if (header->sof != REF_HEADER_SOF)
 		return -1;
 	
-	//if(header->crc8 != )
+	//if (header->crc8 != )
 	//	return -1;
 	
 	Referee_CMDID_t *cmd_id = (Referee_CMDID_t*)buf; 

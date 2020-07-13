@@ -11,8 +11,9 @@
 
 #include "user_math.h"
 
-
 /* Exported constants --------------------------------------------------------*/
+#define REFEREE_SIGNAL_RAW_REDY (1u<<6)
+
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef __packed struct {
@@ -267,9 +268,9 @@ typedef __packed struct {
 
 /* Exported functions prototypes ---------------------------------------------*/
 
-int8_t Referee_Init(Referee_t *dr16, osThreadId_t thread_alert);
+int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert);
 Referee_t *Referee_GetDevice(void);
 int8_t Referee_Restart(void);
 
-int8_t Referee_StartReceiving(Referee_t *dr16);
+int8_t Referee_StartReceiving(Referee_t *ref);
 int8_t Referee_Parse(Referee_t *ref, const uint8_t *buf);

@@ -275,7 +275,7 @@ int8_t BMI088_ReceiveGyro(BMI088_t *bmi088) {
 int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
 	uint16_t raw_temp = (bmi088->raw[0] << 3) | (bmi088->raw[1] >> 5);
 	
-	if(raw_temp > 1023)
+	if (raw_temp > 1023)
 		raw_temp -= 2014;
 	
 	bmi088->temp = raw_temp * 0.125f + 21.f;
