@@ -16,25 +16,25 @@
 /* Private variables ---------------------------------------------------------*/
 static struct {
 	 struct {
-		void (*TxCpltCallback)(void);             	/* SPI Tx Completed callback          */
-		  void (*RxCpltCallback)(void);             /* SPI Rx Completed callback          */
-		  void (*TxRxCpltCallback)(void);           /* SPI TxRx Completed callback        */
-		  void (*TxHalfCpltCallback)(void);         /* SPI Tx Half Completed callback     */
-		  void (*RxHalfCpltCallback)(void);         /* SPI Rx Half Completed callback     */
-		  void (*TxRxHalfCpltCallback)(void);       /* SPI TxRx Half Completed callback   */
-		  void (*ErrorCallback)(void);              /* SPI Error callback                 */
-		  void (*AbortCpltCallback)(void);          /* SPI Abort callback                 */
+		void (*TxCpltCallback)(void); /* SPI Tx Completed callback */
+		  void (*RxCpltCallback)(void); /* SPI Rx Completed callback */
+		  void (*TxRxCpltCallback)(void); /* SPI TxRx Completed callback */
+		  void (*TxHalfCpltCallback)(void); /* SPI Tx Half Completed callback */
+		  void (*RxHalfCpltCallback)(void); /* SPI Rx Half Completed callback */
+		  void (*TxRxHalfCpltCallback)(void); /* SPI TxRx Half Completed callback */
+		  void (*ErrorCallback)(void); /* SPI Error callback */
+		  void (*AbortCpltCallback)(void); /* SPI Abort callback */
 	 } oled;
 
 	 struct {
-		  void (*TxCpltCallback)(void);             /* SPI Tx Completed callback          */
-		  void (*RxCpltCallback)(void);             /* SPI Rx Completed callback          */
-		  void (*TxRxCpltCallback)(void);           /* SPI TxRx Completed callback        */
-		  void (*TxHalfCpltCallback)(void);         /* SPI Tx Half Completed callback     */
-		  void (*RxHalfCpltCallback)(void);         /* SPI Rx Half Completed callback     */
-		  void (*TxRxHalfCpltCallback)(void);       /* SPI TxRx Half Completed callback   */
-		  void (*ErrorCallback)(void);              /* SPI Error callback                 */
-		  void (*AbortCpltCallback)(void);          /* SPI Abort callback            	 */
+		  void (*TxCpltCallback)(void); /* SPI Tx Completed callback */
+		  void (*RxCpltCallback)(void); /* SPI Rx Completed callback */
+		  void (*TxRxCpltCallback)(void); /* SPI TxRx Completed callback */
+		  void (*TxHalfCpltCallback)(void); /* SPI Tx Half Completed callback */
+		  void (*RxHalfCpltCallback)(void); /* SPI Rx Half Completed callback */
+		  void (*TxRxHalfCpltCallback)(void); /* SPI TxRx Half Completed callback */
+		  void (*ErrorCallback)(void); /* SPI Error callback */
+		  void (*AbortCpltCallback)(void); /* SPI Abort callback */
 	 } imu;
 } bsp_spi_callback;
 

@@ -21,7 +21,7 @@
 #define ADDR_FLASH_SECTOR_11 ((uint32_t)0x080E0000) /* Base address of Sector 11, 128 Kbytes */
 
 #ifndef FALSH_SIZE_LARGE
-#   define ADDR_FLASH_END 		((uint32_t)0x08100000)       /* End address for flash */
+#   define ADDR_FLASH_END ((uint32_t)0x08100000) /* End address for flash */
 #else
 #   define ADDR_FLASH_SECTOR_12 ((uint32_t)0x08100000) /* Base address of Sector 12, 16 Kbytes  */
 #   define ADDR_FLASH_SECTOR_13 ((uint32_t)0x08104000) /* Base address of Sector 13, 16 Kbytes  */
@@ -35,7 +35,7 @@
 #   define ADDR_FLASH_SECTOR_21 ((uint32_t)0x081A0000) /* Base address of Sector 21, 128 Kbytes */
 #   define ADDR_FLASH_SECTOR_22 ((uint32_t)0x081C0000) /* Base address of Sector 22, 128 Kbytes */
 #   define ADDR_FLASH_SECTOR_23 ((uint32_t)0x081E0000) /* Base address of Sector 23, 128 Kbytes */
-#   define ADDR_FLASH_END 		((uint32_t)0x08200000)       /* End address for flash */
+#   define ADDR_FLASH_END ((uint32_t)0x08200000) /* End address for flash */
 #endif
 
 

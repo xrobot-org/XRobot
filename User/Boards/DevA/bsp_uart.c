@@ -12,12 +12,12 @@
 /* Private variables ---------------------------------------------------------*/
 static struct {
 	struct {
-		void (*TxHalfCpltCallback)(void);        /* UART Tx Half Complete Callback        */
-		void (*TxCpltCallback)(void);            /* UART Tx Complete Callback             */
-		void (*RxHalfCpltCallback)(void);        /* UART Rx Half Complete Callback        */
-		void (*RxCpltCallback)(void);            /* UART Rx Complete Callback             */
-		void (*ErrorCallback)(void);             /* UART Error Callback                   */
-		void (*AbortCpltCallback)(void);         /* UART Abort Complete Callback          */
+		void (*TxHalfCpltCallback)(void); /* UART Tx Half Complete Callback */
+		void (*TxCpltCallback)(void); /* UART Tx Complete Callback */
+		void (*RxHalfCpltCallback)(void); /* UART Rx Half Complete Callback */
+		void (*RxCpltCallback)(void); /* UART Rx Complete Callback */
+		void (*ErrorCallback)(void); /* UART Error Callback */
+		void (*AbortCpltCallback)(void); /* UART Abort Complete Callback */
 		void (*AbortTransmitCpltCallback)(void); /* UART Abort Transmit Complete Callback */
 		void (*AbortReceiveCpltCallback)(void);  /* UART Abort Receive Complete Callback  */
 	} dr16;

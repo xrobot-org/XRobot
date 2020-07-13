@@ -12,62 +12,62 @@
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 static uint32_t BSP_Flash_GerSector(uint32_t address) {
-    uint32_t sector = NULL;
-    if ((address < ADDR_FLASH_SECTOR_1) && (address >= ADDR_FLASH_SECTOR_0)) {
-        sector = ADDR_FLASH_SECTOR_0;
+	uint32_t sector = NULL;
+	if ((address < ADDR_FLASH_SECTOR_1) && (address >= ADDR_FLASH_SECTOR_0)) {
+		sector = ADDR_FLASH_SECTOR_0;
 	} else if ((address < ADDR_FLASH_SECTOR_2) && (address >= ADDR_FLASH_SECTOR_1)) {
-        sector = ADDR_FLASH_SECTOR_1;
-    } else if ((address < ADDR_FLASH_SECTOR_3) && (address >= ADDR_FLASH_SECTOR_2)) {
-        sector = ADDR_FLASH_SECTOR_2;
-    } else if ((address < ADDR_FLASH_SECTOR_4) && (address >= ADDR_FLASH_SECTOR_3)) {
-        sector = ADDR_FLASH_SECTOR_3;
-    } else if ((address < ADDR_FLASH_SECTOR_5) && (address >= ADDR_FLASH_SECTOR_4)) {
-        sector = ADDR_FLASH_SECTOR_4;
-    } else if ((address < ADDR_FLASH_SECTOR_6) && (address >= ADDR_FLASH_SECTOR_5)) {
-        sector = ADDR_FLASH_SECTOR_5;
-    } else if ((address < ADDR_FLASH_SECTOR_7) && (address >= ADDR_FLASH_SECTOR_6)) {
-        sector = ADDR_FLASH_SECTOR_6;
-    } else if ((address < ADDR_FLASH_SECTOR_8) && (address >= ADDR_FLASH_SECTOR_7)) {
-        sector = ADDR_FLASH_SECTOR_7;
-    } else if ((address < ADDR_FLASH_SECTOR_9) && (address >= ADDR_FLASH_SECTOR_8)) {
-        sector = ADDR_FLASH_SECTOR_8;
-    } else if ((address < ADDR_FLASH_SECTOR_10) && (address >= ADDR_FLASH_SECTOR_9)) {
-        sector = ADDR_FLASH_SECTOR_9;
-    } else if ((address < ADDR_FLASH_SECTOR_11) && (address >= ADDR_FLASH_SECTOR_10)) {
-        sector = ADDR_FLASH_SECTOR_10;
+		sector = ADDR_FLASH_SECTOR_1;
+	} else if ((address < ADDR_FLASH_SECTOR_3) && (address >= ADDR_FLASH_SECTOR_2)) {
+		sector = ADDR_FLASH_SECTOR_2;
+	} else if ((address < ADDR_FLASH_SECTOR_4) && (address >= ADDR_FLASH_SECTOR_3)) {
+		sector = ADDR_FLASH_SECTOR_3;
+	} else if ((address < ADDR_FLASH_SECTOR_5) && (address >= ADDR_FLASH_SECTOR_4)) {
+		sector = ADDR_FLASH_SECTOR_4;
+	} else if ((address < ADDR_FLASH_SECTOR_6) && (address >= ADDR_FLASH_SECTOR_5)) {
+		sector = ADDR_FLASH_SECTOR_5;
+	} else if ((address < ADDR_FLASH_SECTOR_7) && (address >= ADDR_FLASH_SECTOR_6)) {
+		sector = ADDR_FLASH_SECTOR_6;
+	} else if ((address < ADDR_FLASH_SECTOR_8) && (address >= ADDR_FLASH_SECTOR_7)) {
+		sector = ADDR_FLASH_SECTOR_7;
+	} else if ((address < ADDR_FLASH_SECTOR_9) && (address >= ADDR_FLASH_SECTOR_8)) {
+		sector = ADDR_FLASH_SECTOR_8;
+	} else if ((address < ADDR_FLASH_SECTOR_10) && (address >= ADDR_FLASH_SECTOR_9)) {
+		sector = ADDR_FLASH_SECTOR_9;
+	} else if ((address < ADDR_FLASH_SECTOR_11) && (address >= ADDR_FLASH_SECTOR_10)) {
+		sector = ADDR_FLASH_SECTOR_10;
 #ifdef FALSH_SIZE_LARGE
 	} else if ((address < ADDR_FLASH_SECTOR_12) && (address >= ADDR_FLASH_SECTOR_11)) {
-        sector = ADDR_FLASH_SECTOR_11;
+		sector = ADDR_FLASH_SECTOR_11;
 	} else if ((address < ADDR_FLASH_SECTOR_13) && (address >= ADDR_FLASH_SECTOR_12)) {
-        sector = ADDR_FLASH_SECTOR_12;
+		sector = ADDR_FLASH_SECTOR_12;
 	} else if ((address < ADDR_FLASH_SECTOR_14) && (address >= ADDR_FLASH_SECTOR_13)) {
-        sector = ADDR_FLASH_SECTOR_13;
+		sector = ADDR_FLASH_SECTOR_13;
 	} else if ((address < ADDR_FLASH_SECTOR_15) && (address >= ADDR_FLASH_SECTOR_14)) {
-        sector = ADDR_FLASH_SECTOR_14;
+		sector = ADDR_FLASH_SECTOR_14;
 	} else if ((address < ADDR_FLASH_SECTOR_16) && (address >= ADDR_FLASH_SECTOR_15)) {
-        sector = ADDR_FLASH_SECTOR_15;
+		sector = ADDR_FLASH_SECTOR_15;
 	} else if ((address < ADDR_FLASH_SECTOR_17) && (address >= ADDR_FLASH_SECTOR_16)) {
-        sector = ADDR_FLASH_SECTOR_16;
+		sector = ADDR_FLASH_SECTOR_16;
 	} else if ((address < ADDR_FLASH_SECTOR_18) && (address >= ADDR_FLASH_SECTOR_17)) {
-        sector = ADDR_FLASH_SECTOR_17;
+		sector = ADDR_FLASH_SECTOR_17;
 	} else if ((address < ADDR_FLASH_SECTOR_19) && (address >= ADDR_FLASH_SECTOR_18)) {
-        sector = ADDR_FLASH_SECTOR_18;
+		sector = ADDR_FLASH_SECTOR_18;
 	} else if ((address < ADDR_FLASH_SECTOR_20) && (address >= ADDR_FLASH_SECTOR_19)) {
-        sector = ADDR_FLASH_SECTOR_19;
+		sector = ADDR_FLASH_SECTOR_19;
 	} else if ((address < ADDR_FLASH_SECTOR_21) && (address >= ADDR_FLASH_SECTOR_20)) {
-        sector = ADDR_FLASH_SECTOR_20;
+		sector = ADDR_FLASH_SECTOR_20;
 	} else if ((address < ADDR_FLASH_SECTOR_22) && (address >= ADDR_FLASH_SECTOR_21)) {
-        sector = ADDR_FLASH_SECTOR_21;
+		sector = ADDR_FLASH_SECTOR_21;
 	} else if ((address < ADDR_FLASH_SECTOR_23) && (address >= ADDR_FLASH_SECTOR_22)) {
-        sector = ADDR_FLASH_SECTOR_22;
+		sector = ADDR_FLASH_SECTOR_22;
 	} else if ((address < ADDR_FLASH_END) && (address >= ADDR_FLASH_SECTOR_23)) {
-        sector = ADDR_FLASH_SECTOR_23;
+		sector = ADDR_FLASH_SECTOR_23;
 #else 
-    } else if ((address < ADDR_FLASH_END) && (address >= ADDR_FLASH_SECTOR_11)) {
-        sector = ADDR_FLASH_SECTOR_11;
+	} else if ((address < ADDR_FLASH_END) && (address >= ADDR_FLASH_SECTOR_11)) {
+		sector = ADDR_FLASH_SECTOR_11;
 	}
 #endif
-    return sector;
+	return sector;
 }
 
 void BSP_Flash_EraseSectorAt(uint32_t address) {

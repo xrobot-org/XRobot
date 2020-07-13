@@ -16,15 +16,15 @@
 /* Private variables ---------------------------------------------------------*/
 struct {
 	struct {
-		void (*MasterTxCpltCallback)(void);           /*!< I2C Master Tx Transfer completed callback */
-		void (*MasterRxCpltCallback)(void);           /*!< I2C Master Rx Transfer completed callback */
-		void (*SlaveTxCpltCallback)(void);            /*!< I2C Slave Tx Transfer completed callback  */
-		void (*SlaveRxCpltCallback)(void);            /*!< I2C Slave Rx Transfer completed callback  */
-		void (*ListenCpltCallback)(void);             /*!< I2C Listen Complete callback              */
-		void (*MemTxCpltCallback)(void);              /*!< I2C Memory Tx Transfer completed callback */
-		void (*MemRxCpltCallback)(void);              /*!< I2C Memory Rx Transfer completed callback */
-		void (*ErrorCallback)(void);                  /*!< I2C Error callback                        */
-		void (*AbortCpltCallback)(void);              /*!< I2C Abort callback                        */
+		void (*MasterTxCpltCallback)(void);	/* I2C Master Tx Transfer completed callback */
+		void (*MasterRxCpltCallback)(void);	/* I2C Master Rx Transfer completed callback */
+		void (*SlaveTxCpltCallback)(void);	/* I2C Slave Tx Transfer completed callback  */
+		void (*SlaveRxCpltCallback)(void);	/* I2C Slave Rx Transfer completed callback  */
+		void (*ListenCpltCallback)(void);	/* I2C Listen Complete callback */
+		void (*MemTxCpltCallback)(void);	/* I2C Memory Tx Transfer completed callback */
+		void (*MemRxCpltCallback)(void);	/* I2C Memory Rx Transfer completed callback */
+		void (*ErrorCallback)(void);		/* I2C Error callback */
+		void (*AbortCpltCallback)(void);	/* I2C Abort callback */
 	} comp;
 	
 	/*

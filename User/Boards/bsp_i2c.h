@@ -13,15 +13,15 @@ typedef enum {
 } BSP_I2C_t;
 
 typedef enum {
-	HAL_I2C_MASTER_TX_COMPLETE_CB,	/* I2C Master Tx Transfer completed callback ID  */
-	HAL_I2C_MASTER_RX_COMPLETE_CB,	/* I2C Master Rx Transfer completed callback ID  */
-	HAL_I2C_SLAVE_TX_COMPLETE_CB,	/* I2C Slave Tx Transfer completed callback ID   */
-	HAL_I2C_SLAVE_RX_COMPLETE_CB,	/* I2C Slave Rx Transfer completed callback ID   */
-	HAL_I2C_LISTEN_COMPLETE_CB,		/* I2C Listen Complete callback ID               */
-	HAL_I2C_MEM_TX_COMPLETE_CB,		/* I2C Memory Tx Transfer callback ID            */
-	HAL_I2C_MEM_RX_COMPLETE_CB,		/* I2C Memory Rx Transfer completed callback ID  */
-	HAL_I2C_ERROR_CB,				/* I2C Error callback ID                         */
-	HAL_I2C_ABORT_CB,				/* I2C Abort callback ID                         */
+	HAL_I2C_MASTER_TX_COMPLETE_CB,	/* I2C Master Tx Transfer completed callback ID */
+	HAL_I2C_MASTER_RX_COMPLETE_CB,	/* I2C Master Rx Transfer completed callback ID */
+	HAL_I2C_SLAVE_TX_COMPLETE_CB,	/* I2C Slave Tx Transfer completed callback ID */
+	HAL_I2C_SLAVE_RX_COMPLETE_CB,	/* I2C Slave Rx Transfer completed callback ID */
+	HAL_I2C_LISTEN_COMPLETE_CB,		/* I2C Listen Complete callback ID */
+	HAL_I2C_MEM_TX_COMPLETE_CB,		/* I2C Memory Tx Transfer callback ID */
+	HAL_I2C_MEM_RX_COMPLETE_CB,		/* I2C Memory Rx Transfer completed callback ID */
+	HAL_I2C_ERROR_CB,				/* I2C Error callback ID */
+	HAL_I2C_ABORT_CB,				/* I2C Abort callback ID */
 } BSP_I2C_Callback_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
