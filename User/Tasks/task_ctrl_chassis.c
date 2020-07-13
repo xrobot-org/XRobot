@@ -35,7 +35,7 @@ void Task_CtrlChassis(void *argument) {
 	/* Device Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_CHASSIS);
 	
-	osThreadId recv_motor_allert[3] = {
+	osThreadId_t recv_motor_allert[3] = {
 		osThreadGetId(),
 		task_param->thread.ctrl_gimbal,
 		task_param->thread.ctrl_shoot

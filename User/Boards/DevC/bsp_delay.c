@@ -1,5 +1,5 @@
 /* Includes ------------------------------------------------------------------*/
-#include "cmsis_os.h"
+#include "cmsis_os2.h"
 
 #include "bsp_delay.h"
 
@@ -12,7 +12,8 @@
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 int8_t BSP_Delay(uint32_t ms) {
-	uint32_t ticks = ms / portTICK_PERIOD_MS;
+	uint32_t tick_period = 1000u / osKernelGetTickFreq();
+	uint32_t ticks = ms / tick_period;
 	
 	switch (osKernelGetState()) {
 		case osKernelRunning:

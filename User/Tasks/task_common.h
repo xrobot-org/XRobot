@@ -1,7 +1,7 @@
 #pragma once
 
 /* Includes ------------------------------------------------------------------*/
-#include "cmsis_os.h"
+#include "cmsis_os2.h"
 #include "FreeRTOS.h"
 #include "task.h"
 

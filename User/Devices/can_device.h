@@ -2,8 +2,8 @@
 
 
 /* Includes ------------------------------------------------------------------*/
-/* Include cmsis_os.h头文件 */
-#include "cmsis_os.h"
+/* Include cmsis_os2.h头文件 */
+#include "cmsis_os2.h"
 
 #include "user_math.h"
 

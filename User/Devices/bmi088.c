@@ -71,7 +71,7 @@
 
 #define BMI088_GYRO_NSS_SET()		HAL_GPIO_WritePin(GYRO_CS_GPIO_Port, GYRO_CS_Pin, GPIO_PIN_SET)
 #define BMI088_GYRO_NSS_RESET()	HAL_GPIO_WritePin(GYRO_CS_GPIO_Port, GYRO_CS_Pin, GPIO_PIN_RESET)
-		
+
 /* Private typedef -----------------------------------------------------------*/
 typedef enum {
 	BMI_ACCL,

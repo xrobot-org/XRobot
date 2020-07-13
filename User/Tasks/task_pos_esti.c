@@ -88,12 +88,11 @@ void Task_PosEsti(void *argument) {
 		IST8310_Parse(&ist8310);
 		osKernelUnlock();
 		
-		uint32_t now = osKernelSysTick();
 		AHRS_Update(&gimbal_ahrs, &bmi088.accl, &bmi088.gyro, &ist8310.magn);
 		AHRS_GetEulr(&eulr_to_send, &gimbal_ahrs);
-		osStatus os_status = osMessageQueuePut(task_param->messageq.gimb_eulr, &eulr_to_send, 0, 0);
+		osStatus_t os_status = osMessageQueuePut(task_param->messageq.gimb_eulr, &eulr_to_send, 0, 0);
 			
-		if (os_status == osErrorOS) {
+		if (os_status != osOK) {
 		}
 		
 		BSP_PWM_Set(BSP_PWM_IMU_HEAT, PID_Calc(&imu_temp_ctrl_pid, 50.f, bmi088.temp, 0.f, 0.f));

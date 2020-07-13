@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "cmsis_os.h"
+#include "cmsis_os2.h"
 
 /* Exported constants --------------------------------------------------------*/
 #define BSP_USB_OK			(0)

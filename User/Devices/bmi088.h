@@ -4,17 +4,15 @@
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 
-/* Include cmsis_os.h头文件 */
-#include "cmsis_os.h"
-#include "FreeRTOS.h"
-#include "task.h"
+/* Include cmsis_os2.h头文件 */
+#include "cmsis_os2.h"
 
 #include "ahrs.h"
 
 /* Exported constants --------------------------------------------------------*/
 #define BMI088_OK			(0)
 #define BMI088_ERR			(-1)
-#define BMI088_ERR_NULL	(-2)
+#define BMI088_ERR_NULL		(-2)
 #define BMI088_ERR_INITED	(-3)
 #define BMI088_ERR_NO_DEV	(-4)
 
@@ -40,7 +38,6 @@ typedef struct {
 } BMI088_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-
 int8_t BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert);
 BMI088_t *BMI088_GetDevice(void);
 int8_t BMI088_Restart(void);

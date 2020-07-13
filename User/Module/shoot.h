@@ -2,7 +2,7 @@
 
 
 /* Includes ------------------------------------------------------------------*/
-#include "cmsis_os.h"
+#include "cmsis_os2.h"
 
 /* Include 标准库 */
 /* Include Board相关的头文件 */

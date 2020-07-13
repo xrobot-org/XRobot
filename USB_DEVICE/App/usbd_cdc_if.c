@@ -112,7 +112,7 @@ uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
 /* USER CODE BEGIN EXPORTED_VARIABLES */
-extern osThreadId gbsp_usb_alert;
+extern osThreadId_t gbsp_usb_alert;
 extern uint8_t usb_rx_buf[BSP_USB_MAX_RX_LEN];
 extern uint8_t usb_tx_buf[BSP_USB_MAX_TX_LEN];
 

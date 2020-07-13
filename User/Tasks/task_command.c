@@ -50,9 +50,9 @@ void Task_Command(void *argument) {
 			
 		} else {
 			CMD_Parse(&rc, &cmd);
-			osStatus os_status = osMessageQueuePut(task_param->messageq.cmd, &cmd, 0, 0);
+			osStatus_t os_status = osMessageQueuePut(task_param->messageq.cmd, &cmd, 0, 0);
 			
-			if (os_status == osErrorOS) {
+			if (os_status != osOK) {
 			}
 		}
 	}
