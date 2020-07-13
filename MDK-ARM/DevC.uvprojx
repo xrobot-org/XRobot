@@ -743,9 +743,9 @@
               <FilePath>..\User\Boards\DevC\bsp_buzzer.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_crc.c</FileName>
+              <FileName>bsp_crc32.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_crc.c</FilePath>
+              <FilePath>..\User\Boards\DevC\bsp_crc32.c</FilePath>
             </File>
             <File>
               <FileName>bsp_delay.c</FileName>
@@ -853,6 +853,11 @@
               <FilePath>..\User\Components\config.c</FilePath>
             </File>
             <File>
+              <FileName>crc16.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\crc16.c</FilePath>
+            </File>
+            <File>
               <FileName>error_detect.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\error_detect.c</FilePath>
@@ -893,11 +898,6 @@
               <FilePath>..\User\Components\protocol.c</FilePath>
             </File>
             <File>
-              <FileName>referee.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Components\referee.c</FilePath>
-            </File>
-            <File>
               <FileName>user_math.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\user_math.c</FilePath>
@@ -932,6 +932,11 @@
               <FileType>1</FileType>
               <FilePath>..\User\Devices\ist8310.c</FilePath>
             </File>
+            <File>
+              <FileName>referee.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Devices\referee.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -951,11 +956,6 @@
               <FileName>shoot.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Module\shoot.c</FilePath>
-            </File>
-            <File>
-              <FileName>turret.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Module\turret.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1751,9 +1751,9 @@
               <FilePath>..\User\Boards\DevC\bsp_buzzer.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_crc.c</FileName>
+              <FileName>bsp_crc32.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_crc.c</FilePath>
+              <FilePath>..\User\Boards\DevC\bsp_crc32.c</FilePath>
             </File>
             <File>
               <FileName>bsp_delay.c</FileName>
@@ -1861,6 +1861,11 @@
               <FilePath>..\User\Components\config.c</FilePath>
             </File>
             <File>
+              <FileName>crc16.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Components\crc16.c</FilePath>
+            </File>
+            <File>
               <FileName>error_detect.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\error_detect.c</FilePath>
@@ -1901,11 +1906,6 @@
               <FilePath>..\User\Components\protocol.c</FilePath>
             </File>
             <File>
-              <FileName>referee.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Components\referee.c</FilePath>
-            </File>
-            <File>
               <FileName>user_math.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Components\user_math.c</FilePath>
@@ -1940,6 +1940,11 @@
               <FileType>1</FileType>
               <FilePath>..\User\Devices\ist8310.c</FilePath>
             </File>
+            <File>
+              <FileName>referee.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Devices\referee.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1959,11 +1964,6 @@
               <FileName>shoot.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Module\shoot.c</FilePath>
-            </File>
-            <File>
-              <FileName>turret.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Module\turret.c</FilePath>
             </File>
           </Files>
         </Group>
