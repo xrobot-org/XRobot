@@ -4,21 +4,16 @@
 */
 
 /* Includes ------------------------------------------------------------------*/
-#include "task_common.h"
+#include "task\user_task.h"
 
-/* Include 标准库 */
 #include <string.h>
 
-/* Include Board相关的头文件 */
 #include "board\usb.h"
 
-/* Include Device相关的头文件 */
-#include "dr16.h"
+#include "device\dr16.h"
 
-/* Include Component相关的头文件 */
-#include "config.h"
+#include "component\config.h"
 
-/* Include Module相关的头文件 */
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/

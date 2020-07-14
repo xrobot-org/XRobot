@@ -5,7 +5,6 @@
 
 #include "user_math.h"
 
-
 float32_t InvSqrt(float32_t x) {
 #if 0
 	float32_t out;

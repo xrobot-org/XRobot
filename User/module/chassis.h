@@ -2,21 +2,21 @@
 
 
 /* Includes ------------------------------------------------------------------*/
-/* Include 标准库 */
-/* Include Board相关的头文件 */
-/* Include Device相关的头文件 */
-#include "can_device.h"
-#include "dr16.h"
-
-/* Include Component相关的头文件 */
-#include "cmd.h"
-#include "filter.h"
-#include "mixer.h"
-#include "pid.h"
-#include "user_math.h"
 
 
-/* Include Module相关的头文件 */
+
+#include "device\can_device.h"
+#include "device\dr16.h"
+
+
+#include "component\cmd.h"
+#include "component\filter.h"
+#include "component\mixer.h"
+#include "component\pid.h"
+#include "component\user_math.h"
+
+
+
 /* Exported constants --------------------------------------------------------*/
 #define CHASSIS_OK			(0)
 #define CHASSIS_ERR_NULL	(-1)

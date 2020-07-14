@@ -5,8 +5,8 @@
 /* Include cmsis_os2.h头文件 */
 #include "cmsis_os2.h"
 
-#include "cmd.h"
-#include "user_math.h"
+#include "component\cmd.h"
+#include "component\user_math.h"
 
 /* Exported constants --------------------------------------------------------*/
 #define DR16_OK			(0)

@@ -6,17 +6,15 @@
 /* Includes ------------------------------------------------------------------*/
 #include "bmi088.h"
 
-/* Include 标准库 */
 #include <string.h>
 
-/* Include BSP相关的头文件 */
+#include "gpio.h"
+
 #include "board\delay.h"
 #include "board\spi.h"
 #include "board\gpio.h"
-#include "gpio.h"
 
-/* Include Component相关的头文件 */
-#include "user_math.h"
+#include "component\user_math.h"
 
 /* Private define ------------------------------------------------------------*/
 #define BMI088_ACCL_CHIP_ID_REG				(0x00)

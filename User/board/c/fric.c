@@ -4,7 +4,7 @@
 
 #include "tim.h"
 
-#include "user_math.h"
+#include "component\user_math.h"
 
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/

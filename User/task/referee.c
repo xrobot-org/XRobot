@@ -1,16 +1,11 @@
 
 /* Includes ------------------------------------------------------------------*/
-#include "task_common.h"
+#include "task\user_task.h"
 
-/* Include 标准库 */
-/* Include Board相关的头文件 */
 #include "board\usb.h"
 
-/* Include Device相关的头文件 */
-#include "referee.h"
+#include "device\referee.h"
 
-/* Include Component相关的头文件 */
-/* Include Module相关的头文件 */
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/

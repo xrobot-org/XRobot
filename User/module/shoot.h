@@ -4,18 +4,18 @@
 /* Includes ------------------------------------------------------------------*/
 #include "cmsis_os2.h"
 
-/* Include 标准库 */
-/* Include Board相关的头文件 */
-/* Include Device相关的头文件 */
-#include "can_device.h"
-#include "dr16.h"
 
-/* Include Component相关的头文件 */
-#include "cmd.h"
-#include "pid.h"
-#include "filter.h"
 
-/* Include Module相关的头文件 */
+
+#include "device\can_device.h"
+#include "device\dr16.h"
+
+
+#include "component\cmd.h"
+#include "component\pid.h"
+#include "component\filter.h"
+
+
 /* Exported constants --------------------------------------------------------*/
 #define SHOOT_OK		(0)
 #define SHOOT_ERR		(-1)

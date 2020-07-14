@@ -2,19 +2,19 @@
 
 
 /* Includes ------------------------------------------------------------------*/
-/* Include 标准库 */
+
 /* Include Board相关的头文件  */
 /* Include Device相关的头文件。 */
-#include "can_device.h"
-#include "dr16.h"
-#include "bmi088.h"
+#include "device\can_device.h"
+#include "device\dr16.h"
+#include "device\bmi088.h"
 
 /* Include Component相关的头文件。 */
-#include "ahrs.h"
-#include "cmd.h"
-#include "filter.h"
-#include "pid.h"
-#include "user_math.h"
+#include "component\ahrs.h"
+#include "component\cmd.h"
+#include "component\filter.h"
+#include "component\pid.h"
+#include "component\user_math.h"
 
 /* Include Module相关的头文件。 */
 /* Exported constants --------------------------------------------------------*/

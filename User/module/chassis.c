@@ -7,18 +7,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "chassis.h"
 
-/* Include 标准库 */
-/* Include Board相关的头文件 */
 #include "board\mm.h"
 
-/* Include Device相关的头文件 */
-#include "can_device.h"
+#include "device\can_device.h"
 
-/* Include Component相关的头文件 */
-#include "user_math.h"
-#include "limiter.h"
+#include "component\user_math.h"
+#include "component\limiter.h"
 
-/* Include Module相关的头文件 */
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/

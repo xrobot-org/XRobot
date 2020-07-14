@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F407xx,ROBOT_MODEL_INFANTRY,OLED_USE_SPI,DEV_BOARD_C</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../USB_DEVICE/App;../USB_DEVICE/Target;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;..\User\board;..\User\component;..\User\device;..\User\Module;..\User\task;..\Drivers\CMSIS\DSP\Include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;..\User</IncludePath>
+              <IncludePath>../Core/Inc;../USB_DEVICE/App;../USB_DEVICE/Target;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;..\Drivers\CMSIS\DSP\Include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;..\User</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -913,11 +913,6 @@
           <GroupName>User/device</GroupName>
           <Files>
             <File>
-              <FileName>gimbal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\module\gimbal.c</FilePath>
-            </File>
-            <File>
               <FileName>bmi088.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\device\bmi088.c</FilePath>
@@ -945,12 +940,17 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>User/Module</GroupName>
+          <GroupName>User/module</GroupName>
           <Files>
             <File>
               <FileName>chassis.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\module\chassis.c</FilePath>
+            </File>
+            <File>
+              <FileName>gimbal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\module\gimbal.c</FilePath>
             </File>
             <File>
               <FileName>shoot.c</FileName>
@@ -963,49 +963,49 @@
           <GroupName>User/task</GroupName>
           <Files>
             <File>
-              <FileName>task_cli.c</FileName>
+              <FileName>cli.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_cli.c</FilePath>
+              <FilePath>..\User\task\cli.c</FilePath>
             </File>
             <File>
-              <FileName>task_command.c</FileName>
+              <FileName>command.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_command.c</FilePath>
+              <FilePath>..\User\task\command.c</FilePath>
             </File>
             <File>
-              <FileName>task_ctrl_chassis.c</FileName>
+              <FileName>ctrl_chassis.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_ctrl_chassis.c</FilePath>
+              <FilePath>..\User\task\ctrl_chassis.c</FilePath>
             </File>
             <File>
-              <FileName>task_ctrl_gimbal.c</FileName>
+              <FileName>ctrl_gimbal.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_ctrl_gimbal.c</FilePath>
+              <FilePath>..\User\task\ctrl_gimbal.c</FilePath>
             </File>
             <File>
-              <FileName>task_ctrl_shoot.c</FileName>
+              <FileName>ctrl_shoot.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_ctrl_shoot.c</FilePath>
+              <FilePath>..\User\task\ctrl_shoot.c</FilePath>
             </File>
             <File>
-              <FileName>task_info.c</FileName>
+              <FileName>info.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_info.c</FilePath>
+              <FilePath>..\User\task\info.c</FilePath>
             </File>
             <File>
-              <FileName>task_monitor.c</FileName>
+              <FileName>monitor.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_monitor.c</FilePath>
+              <FilePath>..\User\task\monitor.c</FilePath>
             </File>
             <File>
-              <FileName>task_pos_esti.c</FileName>
+              <FileName>pos_esti.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_pos_esti.c</FilePath>
+              <FilePath>..\User\task\pos_esti.c</FilePath>
             </File>
             <File>
-              <FileName>task_referee.c</FileName>
+              <FileName>referee.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_referee.c</FilePath>
+              <FilePath>..\User\task\referee.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1921,11 +1921,6 @@
           <GroupName>User/device</GroupName>
           <Files>
             <File>
-              <FileName>gimbal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\module\gimbal.c</FilePath>
-            </File>
-            <File>
               <FileName>bmi088.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\device\bmi088.c</FilePath>
@@ -1953,12 +1948,17 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>User/Module</GroupName>
+          <GroupName>User/module</GroupName>
           <Files>
             <File>
               <FileName>chassis.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\module\chassis.c</FilePath>
+            </File>
+            <File>
+              <FileName>gimbal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\module\gimbal.c</FilePath>
             </File>
             <File>
               <FileName>shoot.c</FileName>
@@ -1971,49 +1971,49 @@
           <GroupName>User/task</GroupName>
           <Files>
             <File>
-              <FileName>task_cli.c</FileName>
+              <FileName>cli.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_cli.c</FilePath>
+              <FilePath>..\User\task\cli.c</FilePath>
             </File>
             <File>
-              <FileName>task_command.c</FileName>
+              <FileName>command.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_command.c</FilePath>
+              <FilePath>..\User\task\command.c</FilePath>
             </File>
             <File>
-              <FileName>task_ctrl_chassis.c</FileName>
+              <FileName>ctrl_chassis.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_ctrl_chassis.c</FilePath>
+              <FilePath>..\User\task\ctrl_chassis.c</FilePath>
             </File>
             <File>
-              <FileName>task_ctrl_gimbal.c</FileName>
+              <FileName>ctrl_gimbal.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_ctrl_gimbal.c</FilePath>
+              <FilePath>..\User\task\ctrl_gimbal.c</FilePath>
             </File>
             <File>
-              <FileName>task_ctrl_shoot.c</FileName>
+              <FileName>ctrl_shoot.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_ctrl_shoot.c</FilePath>
+              <FilePath>..\User\task\ctrl_shoot.c</FilePath>
             </File>
             <File>
-              <FileName>task_info.c</FileName>
+              <FileName>info.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_info.c</FilePath>
+              <FilePath>..\User\task\info.c</FilePath>
             </File>
             <File>
-              <FileName>task_monitor.c</FileName>
+              <FileName>monitor.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_monitor.c</FilePath>
+              <FilePath>..\User\task\monitor.c</FilePath>
             </File>
             <File>
-              <FileName>task_pos_esti.c</FileName>
+              <FileName>pos_esti.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_pos_esti.c</FilePath>
+              <FilePath>..\User\task\pos_esti.c</FilePath>
             </File>
             <File>
-              <FileName>task_referee.c</FileName>
+              <FileName>referee.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\task_referee.c</FilePath>
+              <FilePath>..\User\task\referee.c</FilePath>
             </File>
           </Files>
         </Group>

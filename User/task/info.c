@@ -5,20 +5,16 @@
 
 
 /* Includes ------------------------------------------------------------------*/
-#include "task_common.h"
+#include "task\user_task.h"
 
-/* Include 标准库 */
-/* Include Board相关的头文件 */
 #include "board\adc.h"
 #include "board\led.h"
 #include "board\usb.h"
 
-/* Include Device相关的头文件 */
-/* Include Component相关的头文件 */
-#include "capacity.h"
-#include "user_math.h"
+#include "component\capacity.h"
+#include "component\user_math.h"
 
-/* Include Module相关的头文件 */
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/

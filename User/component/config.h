@@ -6,11 +6,11 @@
 
 #include <stdint.h>
 
-#include "cmd.h"
+#include "component\cmd.h"
 
-#include "chassis.h"
-#include "gimbal.h"
-#include "shoot.h"
+#include "module\chassis.h"
+#include "module\gimbal.h"
+#include "module\shoot.h"
 
 #define CONFIG_ADDRESS 
 

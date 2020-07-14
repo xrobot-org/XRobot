@@ -6,10 +6,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "can_device.h"
 
-/* Include 标准库 */
 #include <string.h>
 
-/* Include HAL相关的头文件 */
 #include "can.h"
 
 /* Private define ------------------------------------------------------------*/

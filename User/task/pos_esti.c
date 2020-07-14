@@ -6,25 +6,21 @@
 */
 
 /* Includes ------------------------------------------------------------------*/
-#include "task_common.h"
+#include "task\user_task.h"
 
-/* Include 标准库 */
 #include <string.h>
 
-/* Include Board相关的头文件 */
 #include "board\pwm.h"
 #include "board\usb.h"
 #include "board\mm.h"
 
-/* Include Device相关的头文件 */
-#include "bmi088.h"
-#include "ist8310.h"
+#include "device\bmi088.h"
+#include "device\ist8310.h"
 
-/* Include Component相关的头文件 */
-#include "ahrs.h"
-#include "pid.h"
+#include "component\ahrs.h"
+#include "component\pid.h"
 
-/* Include Module相关的头文件 */
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/

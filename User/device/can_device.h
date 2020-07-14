@@ -5,7 +5,7 @@
 /* Include cmsis_os2.h头文件 */
 #include "cmsis_os2.h"
 
-#include "user_math.h"
+#include "component\user_math.h"
 
 /* Exported constants --------------------------------------------------------*/
 #define CAN_OK			(0)

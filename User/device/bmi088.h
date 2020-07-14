@@ -7,7 +7,7 @@
 /* Include cmsis_os2.h头文件 */
 #include "cmsis_os2.h"
 
-#include "ahrs.h"
+#include "component\ahrs.h"
 
 /* Exported constants --------------------------------------------------------*/
 #define BMI088_OK			(0)

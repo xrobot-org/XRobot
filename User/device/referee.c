@@ -6,12 +6,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "referee.h"
 
-/* Include BSP相关的头文件 */
 #include "board\delay.h"
 #include "board\uart.h"
 
-/* Include Component相关的头文件 */
-#include "user_math.h"
+#include "component\user_math.h"
 
 /* Private define ------------------------------------------------------------*/
 #define REF_HEADER_SOF (0xA5)

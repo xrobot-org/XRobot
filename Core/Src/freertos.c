@@ -28,7 +28,7 @@
 /* USER CODE BEGIN Includes */     
 #include "tim.h"
 
-#include "task_common.h"
+#include "task\user_task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

@@ -6,7 +6,6 @@
 
 #include "capacity.h"
 
-
 float32_t Capacity_GetBatteryRemain(float32_t volt) {
 	float32_t percentage;
 	float32_t volt_2 = volt * volt;

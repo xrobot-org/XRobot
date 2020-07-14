@@ -7,13 +7,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "shoot.h"
 
-/* Include 标准库 */
-/* Include Board相关的头文件 */
-/* Include Device相关的头文件 */
-/* Include Component相关的头文件 */
-#include "user_math.h"
+#include "component\user_math.h"
 
-/* Include Module相关的头文件 */
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/

@@ -1,19 +1,14 @@
 /*
-	控制射击。
+	控制云台。
 
 */
 
 /* Includes ------------------------------------------------------------------*/
-#include "task_common.h"
+#include "task\user_task.h"
 
-/* Include 标准库 */
-/* Include Board相关的头文件 */
-/* Include Device相关的头文件 */
-/* Include Component相关的头文件 */
-#include "config.h"
+#include "component\config.h"
 
-/* Include Module相关的头文件 */
-#include "shoot.h"
+#include "module\gimbal.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -23,22 +18,24 @@ static CAN_Device_t *cd;
 
 static CMD_t *cmd;
 
-static Shoot_t shoot;
+static Gimbal_t gimbal;
 
 /* Private function prototypes -----------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-void Task_CtrlShoot(void *argument) {
-	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_SHOOT;
+void Task_CtrlGimbal(void *argument) {
+	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_GIMBAL;
 	const Task_Param_t *task_param = (Task_Param_t*)argument;
+	
 	/* Task Setup */
-	osDelay(TASK_INIT_DELAY_CTRL_SHOOT);
+	osDelay(TASK_INIT_DELAY_CTRL_GIMBAL);
 	
 	cd = CAN_GetDevice();
-
-	Shoot_Init(
-		&shoot, 
-		&(Config_GetRobot(CONFIG_ROBOT_MODEL_INFANTRY)->param.shoot),
-		(float32_t)delay_tick / (float32_t)osKernelGetTickFreq());
+	
+	Gimbal_Init(
+		&gimbal, 
+		&(Config_GetRobot(CONFIG_ROBOT_MODEL_INFANTRY)->param.gimbal),
+		(float32_t)delay_tick / (float32_t)osKernelGetTickFreq(),
+		BMI088_GetDevice());
 	
 	uint32_t tick = osKernelGetTickCount();
 	while(1) {
@@ -47,24 +44,21 @@ void Task_CtrlShoot(void *argument) {
 		
 		uint32_t flag = CAN_DEVICE_SIGNAL_MOTOR_RECV;
 		if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
+			
+			osMessageQueueGet(task_param->messageq.gimb_eulr, gimbal.imu_eulr, NULL, 0);
 			osMessageQueueGet(task_param->messageq.cmd, cmd, NULL, 0);
 			
 			osKernelLock();
-			Shoot_UpdateFeedback(&shoot, cd);
+			Gimbal_UpdateFeedback(&gimbal, cd);
 			osKernelUnlock();
 			
-			Shoot_Control(&shoot, &(cmd->shoot));
+			Gimbal_Control(&gimbal, &(cmd->gimbal));
 			
-			// TODO: Check can error.
-			CAN_Motor_ControlShoot(
-				shoot.fric_cur_out[0],
-				shoot.fric_cur_out[1],
-				shoot.trig_cur_out
-			);
+			CAN_Motor_ControlGimbal(gimbal.yaw_cur_out, gimbal.pit_cur_out);
 			
 			osDelayUntil(tick);
 		} else {
-			CAN_Motor_ControlShoot(0.f, 0.f, 0.f);
+			CAN_Motor_ControlGimbal(0.f, 0.f);
 		}
 	}
 }

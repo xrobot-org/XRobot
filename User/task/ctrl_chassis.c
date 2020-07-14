@@ -5,16 +5,11 @@
 
 
 /* Includes ------------------------------------------------------------------*/
-#include "task_common.h"
+#include "task\user_task.h"
 
-/* Include 标准库 */
-/* Include Board相关的头文件 */
-/* Include Device相关的头文件 */
-/* Include Component相关的头文件 */
-#include "config.h"
+#include "component\config.h"
 
-/* Include Module相关的头文件 */
-#include "chassis.h"
+#include "module\chassis.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/

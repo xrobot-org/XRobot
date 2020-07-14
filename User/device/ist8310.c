@@ -6,17 +6,15 @@
 /* Includes ------------------------------------------------------------------*/
 #include "ist8310.h"
 
-/* Include 标准库。*/
-#include "stdbool.h"
-#include "string.h"
+#include <stdbool.h>
+#include <string.h>
 
-/* Include BSP相关的头文件 */
+#include "gpio.h"
+
 #include "board\delay.h"
 #include "board\i2c.h"
 #include "board\gpio.h"
-#include "gpio.h"
 
-/* Include Component相关的头文件 */
 /* Private define ------------------------------------------------------------*/
 #define IST8310_WAI				(0x00)
 #define IST8310_STAT1			(0x02)

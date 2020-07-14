@@ -7,23 +7,19 @@
 */
 
 /* Includes ------------------------------------------------------------------*/
-#include "task_common.h"
+#include "task\user_task.h"
 
-/* Include 标准库 */
 #include <stdio.h>
 #include <stdbool.h>
 
-/* Include Board相关的头文件 */
 #include "board\usb.h"
 #include "board\flash.h"
 
-/* Include Device相关的头文件 */
-/* Include Component相关的头文件 */
 #include "FreeRTOS.h"
-#include "FreeRTOS_CLI.h"
 #include "task.h"
+#include "component\FreeRTOS_CLI.h"
 
-/* Include Module相关的头文件 */
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 #define MAX_INPUT_LENGTH	64
