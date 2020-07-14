@@ -18,16 +18,29 @@
 #define DR16_CH_VALUE_MID		(1024u)
 #define DR16_CH_VALUE_MAX		(1684u)
 
-#define DR16_RX_BUF_LENGTH 36u
-
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
+typedef __packed struct {
+	uint16_t ch_r_x:11;
+	uint16_t ch_r_y:11;
+	uint16_t ch_l_x:11;
+	uint16_t ch_l_y:11;
+	uint8_t sw_l:2;
+	uint8_t sw_r:2;
+	int16_t x;
+	int16_t y;
+	int16_t z;
+	uint8_t press_l;
+	uint8_t press_r;
+	uint16_t key;
+	uint16_t res;
+} DR16_Data_t;
 
 
 typedef struct {
 	osThreadId_t thread_alert;
 
-	uint8_t raw[DR16_RX_BUF_LENGTH];
+	DR16_Data_t data;
 } DR16_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
