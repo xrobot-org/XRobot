@@ -9,6 +9,7 @@
 /* Exported types ------------------------------------------------------------*/
 typedef enum {
 	BSP_UART_DR16,
+	BSP_UART_REF,
 	/* BSP_UART_XXX, */
 } BSP_UART_t;
 
