@@ -3,6 +3,7 @@
 */
 
 #include "main.h"
+
 #include "kalmanf.h"
 
 void KalmanFilter_Init(KalmanFilter_t *kal) {

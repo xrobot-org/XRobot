@@ -4,7 +4,7 @@
 */
 
 /* Includes ------------------------------------------------------------------*/
-#include "task\user_task.h"
+#include "user_task.h"
 
 #include "component\config.h"
 

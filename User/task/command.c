@@ -4,15 +4,16 @@
 */
 
 /* Includes ------------------------------------------------------------------*/
-#include "task\user_task.h"
+#include "user_task.h"
 
 #include <string.h>
 
 #include "board\usb.h"
 
+#include "component\config.h"
+
 #include "device\dr16.h"
 
-#include "component\config.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/

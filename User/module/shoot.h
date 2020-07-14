@@ -4,17 +4,12 @@
 /* Includes ------------------------------------------------------------------*/
 #include "cmsis_os2.h"
 
-
-
-
-#include "device\can_device.h"
-#include "device\dr16.h"
-
-
 #include "component\cmd.h"
 #include "component\pid.h"
 #include "component\filter.h"
 
+#include "device\can_device.h"
+#include "device\dr16.h"
 
 /* Exported constants --------------------------------------------------------*/
 #define SHOOT_OK		(0)

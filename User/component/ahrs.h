@@ -7,7 +7,6 @@
 
 #include "user_math.h"
 
-
 typedef struct {
 	float32_t yaw;
 	float32_t pit;

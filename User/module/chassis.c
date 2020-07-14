@@ -9,10 +9,10 @@
 
 #include "board\mm.h"
 
-#include "device\can_device.h"
-
 #include "component\user_math.h"
 #include "component\limiter.h"
+
+#include "device\can_device.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/

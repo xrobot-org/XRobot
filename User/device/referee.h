@@ -6,7 +6,6 @@
 /* Includes ------------------------------------------------------------------*/
 #pragma once
 
-/* Include cmsis_os2.h头文件 */
 #include "cmsis_os2.h"
 
 #include "component\user_math.h"

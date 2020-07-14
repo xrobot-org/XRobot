@@ -6,7 +6,7 @@
 */
 
 /* Includes ------------------------------------------------------------------*/
-#include "task\user_task.h"
+#include "user_task.h"
 
 #include <string.h>
 
@@ -14,11 +14,12 @@
 #include "board\usb.h"
 #include "board\mm.h"
 
+#include "component\ahrs.h"
+#include "component\pid.h"
+
 #include "device\bmi088.h"
 #include "device\ist8310.h"
 
-#include "component\ahrs.h"
-#include "component\pid.h"
 
 
 /* Private typedef -----------------------------------------------------------*/

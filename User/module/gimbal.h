@@ -2,21 +2,17 @@
 
 
 /* Includes ------------------------------------------------------------------*/
-
-/* Include Board相关的头文件  */
-/* Include Device相关的头文件。 */
-#include "device\can_device.h"
-#include "device\dr16.h"
-#include "device\bmi088.h"
-
-/* Include Component相关的头文件。 */
 #include "component\ahrs.h"
 #include "component\cmd.h"
 #include "component\filter.h"
 #include "component\pid.h"
 #include "component\user_math.h"
 
-/* Include Module相关的头文件。 */
+#include "device\can_device.h"
+#include "device\dr16.h"
+#include "device\bmi088.h"
+
+
 /* Exported constants --------------------------------------------------------*/
 #define GIMBAL_OK		(0)
 #define GIMBAL_ERR		(-1)

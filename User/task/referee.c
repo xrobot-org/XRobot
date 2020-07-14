@@ -1,6 +1,6 @@
 
 /* Includes ------------------------------------------------------------------*/
-#include "task\user_task.h"
+#include "user_task.h"
 
 #include "board\usb.h"
 
