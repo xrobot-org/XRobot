@@ -17,6 +17,36 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef __packed struct {
+	uint8_t sof;
+	uint16_t data_length;
+	uint8_t seq;
+	uint8_t crc8;
+} Referee_FrameHeader_t;
+
+typedef enum {
+	REF_CMD_ID_GAME_STATUS			= 0x0001,
+	REF_CMD_ID_GAME_RESULT			= 0x0002,
+	REF_CMD_ID_GAME_ROBOT_HP		= 0x0003,
+	REF_CMD_ID_DART_STATUS			= 0x0004,
+	REF_CMD_ID_ICRA_ZONE_STATUS		= 0x0005,
+	REF_CMD_ID_FIELD_EVENTS			= 0x0101,
+	REF_CMD_ID_SUPPLY_ACTION		= 0x0102,
+	REF_CMD_ID_WARNING				= 0x0104,
+	REF_CMD_ID_DART_COUNTDOWN		= 0x0105,
+	REF_CMD_ID_ROBOT_STATUS			= 0x0201,
+	REF_CMD_ID_POWER_HEAT_DATA		= 0x0202,
+	REF_CMD_ID_ROBOT_POS			= 0x0203,
+	REF_CMD_ID_ROBOT_BUFF			= 0x0204,
+	REF_CMD_ID_DRONE_ENERGY			= 0x0205,
+	REF_CMD_ID_ROBOT_DMG			= 0x0206,
+	REF_CMD_ID_SHOOT_DATA			= 0x0207,
+	REF_CMD_ID_BULLET_REMAINING		= 0x0208,
+	REF_CMD_ID_RFID					= 0x0209,
+	REF_CMD_ID_DART_CLIENT			= 0x020A,
+	REF_CMD_ID_INTER_STUDENT		= 0x0301,
+} Referee_CMDID_t;
+
+typedef __packed struct {
 	uint8_t game_type:4;
 	uint8_t game_progress:4;
 	uint16_t stage_remain_time;
@@ -242,6 +272,9 @@ typedef __packed struct {
 
 typedef __packed struct {
 	osThreadId_t thread_alert;
+	
+	Referee_FrameHeader_t header;
+	Referee_CMDID_t cmd_id;
 
 	Referee_GameStatus_t			game_status;
 	Referee_GameResult_t			game_result;
@@ -263,6 +296,8 @@ typedef __packed struct {
 	Referee_RFID_t					rfid;
 	Referee_DartClient_t			dart_client;
 	Referee_InterStudent_Custom_t	custom;
+	
+	uint16_t tail;
 } Referee_t;
 
 
@@ -272,5 +307,9 @@ int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert);
 Referee_t *Referee_GetDevice(void);
 int8_t Referee_Restart(void);
 
-int8_t Referee_StartReceiving(Referee_t *ref);
-int8_t Referee_Parse(Referee_t *ref, const uint8_t *buf);
+int8_t Referee_StartReceivingHeader(Referee_t *ref);
+int8_t Referee_StartReceivingCMDID(Referee_t *ref);
+int8_t Referee_StartReceivingData(Referee_t *ref);
+int8_t Referee_StartReceivingTail(Referee_t *ref);
+
+int8_t Referee_CheckHeader(Referee_t *ref);
