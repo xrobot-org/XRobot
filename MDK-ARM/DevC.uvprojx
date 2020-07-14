@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F407xx,ROBOT_MODEL_INFANTRY,OLED_USE_SPI,DEV_BOARD_C</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;                                      ../USB_DEVICE/App;                                      ../USB_DEVICE/Target;                                      ../Drivers/STM32F4xx_HAL_Driver/Inc;                                      ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;                                      ../Middlewares/Third_Party/FreeRTOS/Source/include;                                      ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;                                      ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;                                      ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;                                      ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;                                      ../Drivers/CMSIS/Include;                                      ..\User\Boards;                                      ..\User\Components;                                      ..\User\Devices;                                      ..\User\Module;                                      ..\User\Tasks;                                      ..\Drivers\CMSIS\DSP\Include;        ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2</IncludePath>
+              <IncludePath>../Core/Inc;../USB_DEVICE/App;../USB_DEVICE/Target;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;..\User\board;..\User\component;..\User\device;..\User\Module;..\User\task;..\Drivers\CMSIS\DSP\Include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;..\User</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -730,212 +730,217 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>User/Boards</GroupName>
+          <GroupName>User/board</GroupName>
           <Files>
             <File>
-              <FileName>bsp_adc.c</FileName>
+              <FileName>adc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_adc.c</FilePath>
+              <FilePath>..\User\board\c\adc.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_buzzer.c</FileName>
+              <FileName>buzzer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_buzzer.c</FilePath>
+              <FilePath>..\User\board\c\buzzer.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_crc32.c</FileName>
+              <FileName>crc32.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_crc32.c</FilePath>
+              <FilePath>..\User\board\c\crc32.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_delay.c</FileName>
+              <FileName>delay.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_delay.c</FilePath>
+              <FilePath>..\User\board\c\delay.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_flash.c</FileName>
+              <FileName>flash.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_flash.c</FilePath>
+              <FilePath>..\User\board\c\flash.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_fric.c</FileName>
+              <FileName>fric.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_fric.c</FilePath>
+              <FilePath>..\User\board\c\fric.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_gpio.c</FileName>
+              <FileName>gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_gpio.c</FilePath>
+              <FilePath>..\User\board\c\gpio.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_i2c.c</FileName>
+              <FileName>i2c.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_i2c.c</FilePath>
+              <FilePath>..\User\board\c\i2c.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_laser.c</FileName>
+              <FileName>laser.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_laser.c</FilePath>
+              <FilePath>..\User\board\c\laser.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_led.c</FileName>
+              <FileName>led.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_led.c</FilePath>
+              <FilePath>..\User\board\c\led.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_mm.c</FileName>
+              <FileName>mm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_mm.c</FilePath>
+              <FilePath>..\User\board\c\mm.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_pwm.c</FileName>
+              <FileName>pwm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_pwm.c</FilePath>
+              <FilePath>..\User\board\c\pwm.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_rand.c</FileName>
+              <FileName>rand.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_rand.c</FilePath>
+              <FilePath>..\User\board\c\rand.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_servo.c</FileName>
+              <FileName>servo.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_servo.c</FilePath>
+              <FilePath>..\User\board\c\servo.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_spi.c</FileName>
+              <FileName>spi.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_spi.c</FilePath>
+              <FilePath>..\User\board\c\spi.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_uart.c</FileName>
+              <FileName>uart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_uart.c</FilePath>
+              <FilePath>..\User\board\c\uart.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_usb.c</FileName>
+              <FileName>usb.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_usb.c</FilePath>
+              <FilePath>..\User\board\c\usb.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>User/Components</GroupName>
+          <GroupName>User/component</GroupName>
           <Files>
             <File>
               <FileName>ahrs.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\ahrs.c</FilePath>
+              <FilePath>..\User\component\ahrs.c</FilePath>
             </File>
             <File>
               <FileName>auto_aimer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\auto_aimer.c</FilePath>
+              <FilePath>..\User\component\auto_aimer.c</FilePath>
             </File>
             <File>
               <FileName>ballistics.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\ballistics.c</FilePath>
+              <FilePath>..\User\component\ballistics.c</FilePath>
             </File>
             <File>
               <FileName>capacity.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\capacity.c</FilePath>
+              <FilePath>..\User\component\capacity.c</FilePath>
             </File>
             <File>
               <FileName>cmd.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\cmd.c</FilePath>
+              <FilePath>..\User\component\cmd.c</FilePath>
             </File>
             <File>
               <FileName>config.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\config.c</FilePath>
+              <FilePath>..\User\component\config.c</FilePath>
             </File>
             <File>
               <FileName>crc16.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\crc16.c</FilePath>
+              <FilePath>..\User\component\crc16.c</FilePath>
             </File>
             <File>
               <FileName>error_detect.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\error_detect.c</FilePath>
+              <FilePath>..\User\component\error_detect.c</FilePath>
             </File>
             <File>
               <FileName>filter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\filter.c</FilePath>
+              <FilePath>..\User\component\filter.c</FilePath>
             </File>
             <File>
               <FileName>hud.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\hud.c</FilePath>
+              <FilePath>..\User\component\hud.c</FilePath>
             </File>
             <File>
               <FileName>kalmanf.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\kalmanf.c</FilePath>
+              <FilePath>..\User\component\kalmanf.c</FilePath>
             </File>
             <File>
               <FileName>limiter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\limiter.c</FilePath>
+              <FilePath>..\User\component\limiter.c</FilePath>
             </File>
             <File>
               <FileName>mixer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\mixer.c</FilePath>
+              <FilePath>..\User\component\mixer.c</FilePath>
             </File>
             <File>
               <FileName>pid.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\pid.c</FilePath>
+              <FilePath>..\User\component\pid.c</FilePath>
             </File>
             <File>
               <FileName>protocol.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\protocol.c</FilePath>
+              <FilePath>..\User\component\protocol.c</FilePath>
             </File>
             <File>
               <FileName>user_math.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\user_math.c</FilePath>
+              <FilePath>..\User\component\user_math.c</FilePath>
             </File>
             <File>
               <FileName>FreeRTOS_CLI.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\FreeRTOS_CLI.c</FilePath>
+              <FilePath>..\User\component\FreeRTOS_CLI.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>User/Devices</GroupName>
+          <GroupName>User/device</GroupName>
           <Files>
+            <File>
+              <FileName>gimbal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\module\gimbal.c</FilePath>
+            </File>
             <File>
               <FileName>bmi088.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Devices\bmi088.c</FilePath>
+              <FilePath>..\User\device\bmi088.c</FilePath>
             </File>
             <File>
               <FileName>can_device.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Devices\can_device.c</FilePath>
+              <FilePath>..\User\device\can_device.c</FilePath>
             </File>
             <File>
               <FileName>dr16.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Devices\dr16.c</FilePath>
+              <FilePath>..\User\device\dr16.c</FilePath>
             </File>
             <File>
               <FileName>ist8310.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Devices\ist8310.c</FilePath>
+              <FilePath>..\User\device\ist8310.c</FilePath>
             </File>
             <File>
               <FileName>referee.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Devices\referee.c</FilePath>
+              <FilePath>..\User\device\referee.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -945,67 +950,62 @@
             <File>
               <FileName>chassis.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Module\chassis.c</FilePath>
-            </File>
-            <File>
-              <FileName>gimbal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Module\gimbal.c</FilePath>
+              <FilePath>..\User\module\chassis.c</FilePath>
             </File>
             <File>
               <FileName>shoot.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Module\shoot.c</FilePath>
+              <FilePath>..\User\module\shoot.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>User/Tasks</GroupName>
+          <GroupName>User/task</GroupName>
           <Files>
             <File>
               <FileName>task_cli.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_cli.c</FilePath>
+              <FilePath>..\User\task\task_cli.c</FilePath>
             </File>
             <File>
               <FileName>task_command.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_command.c</FilePath>
+              <FilePath>..\User\task\task_command.c</FilePath>
             </File>
             <File>
               <FileName>task_ctrl_chassis.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_ctrl_chassis.c</FilePath>
+              <FilePath>..\User\task\task_ctrl_chassis.c</FilePath>
             </File>
             <File>
               <FileName>task_ctrl_gimbal.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_ctrl_gimbal.c</FilePath>
+              <FilePath>..\User\task\task_ctrl_gimbal.c</FilePath>
             </File>
             <File>
               <FileName>task_ctrl_shoot.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_ctrl_shoot.c</FilePath>
+              <FilePath>..\User\task\task_ctrl_shoot.c</FilePath>
             </File>
             <File>
               <FileName>task_info.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_info.c</FilePath>
+              <FilePath>..\User\task\task_info.c</FilePath>
             </File>
             <File>
               <FileName>task_monitor.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_monitor.c</FilePath>
+              <FilePath>..\User\task\task_monitor.c</FilePath>
             </File>
             <File>
               <FileName>task_pos_esti.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_pos_esti.c</FilePath>
+              <FilePath>..\User\task\task_pos_esti.c</FilePath>
             </File>
             <File>
               <FileName>task_referee.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_referee.c</FilePath>
+              <FilePath>..\User\task\task_referee.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1346,7 +1346,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F407xx,ARM_MATH_CM4,ROBOT_TYPE_INFANTRY,OLED_USE_SPI,USE_DEV_BOARD_C</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc; ../USB_DEVICE/App; ../USB_DEVICE/Target; ../Drivers/STM32F4xx_HAL_Driver/Inc; ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy; ../Middlewares/Third_Party/FreeRTOS/Source/include; ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS; ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F; ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc; ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc; ../Drivers/CMSIS/Device/ST/STM32F4xx/Include; ../Drivers/CMSIS/Include; ..\User\Boards; ..\User\Components; ..\User\Devices; ..\User\Module; ..\User\Tasks; ..\Drivers\CMSIS\DSP\Include</IncludePath>
+              <IncludePath>../Core/Inc; ../USB_DEVICE/App; ../USB_DEVICE/Target; ../Drivers/STM32F4xx_HAL_Driver/Inc; ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy; ../Middlewares/Third_Party/FreeRTOS/Source/include; ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS; ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F; ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc; ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc; ../Drivers/CMSIS/Device/ST/STM32F4xx/Include; ../Drivers/CMSIS/Include; ..\User\board; ..\User\component; ..\User\device; ..\User\Module; ..\User\task; ..\Drivers\CMSIS\DSP\Include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1738,212 +1738,217 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>User/Boards</GroupName>
+          <GroupName>User/board</GroupName>
           <Files>
             <File>
-              <FileName>bsp_adc.c</FileName>
+              <FileName>adc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_adc.c</FilePath>
+              <FilePath>..\User\board\c\adc.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_buzzer.c</FileName>
+              <FileName>buzzer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_buzzer.c</FilePath>
+              <FilePath>..\User\board\c\buzzer.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_crc32.c</FileName>
+              <FileName>crc32.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_crc32.c</FilePath>
+              <FilePath>..\User\board\c\crc32.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_delay.c</FileName>
+              <FileName>delay.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_delay.c</FilePath>
+              <FilePath>..\User\board\c\delay.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_flash.c</FileName>
+              <FileName>flash.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_flash.c</FilePath>
+              <FilePath>..\User\board\c\flash.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_fric.c</FileName>
+              <FileName>fric.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_fric.c</FilePath>
+              <FilePath>..\User\board\c\fric.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_gpio.c</FileName>
+              <FileName>gpio.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_gpio.c</FilePath>
+              <FilePath>..\User\board\c\gpio.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_i2c.c</FileName>
+              <FileName>i2c.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_i2c.c</FilePath>
+              <FilePath>..\User\board\c\i2c.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_laser.c</FileName>
+              <FileName>laser.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_laser.c</FilePath>
+              <FilePath>..\User\board\c\laser.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_led.c</FileName>
+              <FileName>led.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_led.c</FilePath>
+              <FilePath>..\User\board\c\led.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_mm.c</FileName>
+              <FileName>mm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_mm.c</FilePath>
+              <FilePath>..\User\board\c\mm.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_pwm.c</FileName>
+              <FileName>pwm.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_pwm.c</FilePath>
+              <FilePath>..\User\board\c\pwm.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_rand.c</FileName>
+              <FileName>rand.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_rand.c</FilePath>
+              <FilePath>..\User\board\c\rand.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_servo.c</FileName>
+              <FileName>servo.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_servo.c</FilePath>
+              <FilePath>..\User\board\c\servo.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_spi.c</FileName>
+              <FileName>spi.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_spi.c</FilePath>
+              <FilePath>..\User\board\c\spi.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_uart.c</FileName>
+              <FileName>uart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_uart.c</FilePath>
+              <FilePath>..\User\board\c\uart.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_usb.c</FileName>
+              <FileName>usb.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Boards\DevC\bsp_usb.c</FilePath>
+              <FilePath>..\User\board\c\usb.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>User/Components</GroupName>
+          <GroupName>User/component</GroupName>
           <Files>
             <File>
               <FileName>ahrs.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\ahrs.c</FilePath>
+              <FilePath>..\User\component\ahrs.c</FilePath>
             </File>
             <File>
               <FileName>auto_aimer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\auto_aimer.c</FilePath>
+              <FilePath>..\User\component\auto_aimer.c</FilePath>
             </File>
             <File>
               <FileName>ballistics.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\ballistics.c</FilePath>
+              <FilePath>..\User\component\ballistics.c</FilePath>
             </File>
             <File>
               <FileName>capacity.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\capacity.c</FilePath>
+              <FilePath>..\User\component\capacity.c</FilePath>
             </File>
             <File>
               <FileName>cmd.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\cmd.c</FilePath>
+              <FilePath>..\User\component\cmd.c</FilePath>
             </File>
             <File>
               <FileName>config.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\config.c</FilePath>
+              <FilePath>..\User\component\config.c</FilePath>
             </File>
             <File>
               <FileName>crc16.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\crc16.c</FilePath>
+              <FilePath>..\User\component\crc16.c</FilePath>
             </File>
             <File>
               <FileName>error_detect.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\error_detect.c</FilePath>
+              <FilePath>..\User\component\error_detect.c</FilePath>
             </File>
             <File>
               <FileName>filter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\filter.c</FilePath>
+              <FilePath>..\User\component\filter.c</FilePath>
             </File>
             <File>
               <FileName>hud.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\hud.c</FilePath>
+              <FilePath>..\User\component\hud.c</FilePath>
             </File>
             <File>
               <FileName>kalmanf.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\kalmanf.c</FilePath>
+              <FilePath>..\User\component\kalmanf.c</FilePath>
             </File>
             <File>
               <FileName>limiter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\limiter.c</FilePath>
+              <FilePath>..\User\component\limiter.c</FilePath>
             </File>
             <File>
               <FileName>mixer.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\mixer.c</FilePath>
+              <FilePath>..\User\component\mixer.c</FilePath>
             </File>
             <File>
               <FileName>pid.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\pid.c</FilePath>
+              <FilePath>..\User\component\pid.c</FilePath>
             </File>
             <File>
               <FileName>protocol.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\protocol.c</FilePath>
+              <FilePath>..\User\component\protocol.c</FilePath>
             </File>
             <File>
               <FileName>user_math.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\user_math.c</FilePath>
+              <FilePath>..\User\component\user_math.c</FilePath>
             </File>
             <File>
               <FileName>FreeRTOS_CLI.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Components\FreeRTOS_CLI.c</FilePath>
+              <FilePath>..\User\component\FreeRTOS_CLI.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>User/Devices</GroupName>
+          <GroupName>User/device</GroupName>
           <Files>
+            <File>
+              <FileName>gimbal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\module\gimbal.c</FilePath>
+            </File>
             <File>
               <FileName>bmi088.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Devices\bmi088.c</FilePath>
+              <FilePath>..\User\device\bmi088.c</FilePath>
             </File>
             <File>
               <FileName>can_device.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Devices\can_device.c</FilePath>
+              <FilePath>..\User\device\can_device.c</FilePath>
             </File>
             <File>
               <FileName>dr16.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Devices\dr16.c</FilePath>
+              <FilePath>..\User\device\dr16.c</FilePath>
             </File>
             <File>
               <FileName>ist8310.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Devices\ist8310.c</FilePath>
+              <FilePath>..\User\device\ist8310.c</FilePath>
             </File>
             <File>
               <FileName>referee.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Devices\referee.c</FilePath>
+              <FilePath>..\User\device\referee.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1953,67 +1958,62 @@
             <File>
               <FileName>chassis.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Module\chassis.c</FilePath>
-            </File>
-            <File>
-              <FileName>gimbal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\Module\gimbal.c</FilePath>
+              <FilePath>..\User\module\chassis.c</FilePath>
             </File>
             <File>
               <FileName>shoot.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Module\shoot.c</FilePath>
+              <FilePath>..\User\module\shoot.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>User/Tasks</GroupName>
+          <GroupName>User/task</GroupName>
           <Files>
             <File>
               <FileName>task_cli.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_cli.c</FilePath>
+              <FilePath>..\User\task\task_cli.c</FilePath>
             </File>
             <File>
               <FileName>task_command.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_command.c</FilePath>
+              <FilePath>..\User\task\task_command.c</FilePath>
             </File>
             <File>
               <FileName>task_ctrl_chassis.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_ctrl_chassis.c</FilePath>
+              <FilePath>..\User\task\task_ctrl_chassis.c</FilePath>
             </File>
             <File>
               <FileName>task_ctrl_gimbal.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_ctrl_gimbal.c</FilePath>
+              <FilePath>..\User\task\task_ctrl_gimbal.c</FilePath>
             </File>
             <File>
               <FileName>task_ctrl_shoot.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_ctrl_shoot.c</FilePath>
+              <FilePath>..\User\task\task_ctrl_shoot.c</FilePath>
             </File>
             <File>
               <FileName>task_info.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_info.c</FilePath>
+              <FilePath>..\User\task\task_info.c</FilePath>
             </File>
             <File>
               <FileName>task_monitor.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_monitor.c</FilePath>
+              <FilePath>..\User\task\task_monitor.c</FilePath>
             </File>
             <File>
               <FileName>task_pos_esti.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_pos_esti.c</FilePath>
+              <FilePath>..\User\task\task_pos_esti.c</FilePath>
             </File>
             <File>
               <FileName>task_referee.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\Tasks\task_referee.c</FilePath>
+              <FilePath>..\User\task\task_referee.c</FilePath>
             </File>
           </Files>
         </Group>
