@@ -56,55 +56,55 @@ volatile unsigned long high_freq_timer_ticks;
 static const osThreadAttr_t cli_attr = {
   .name = "cli",
   .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 512
+  .stack_size = 512,
 };
 
 static const osThreadAttr_t command_attr = {
   .name = "command",
   .priority = (osPriority_t) osPriorityHigh,
-  .stack_size = 256
+  .stack_size = 512,
 };
 
 static const osThreadAttr_t ctrl_chassis_attr = {
   .name = "ctrl_chassis",
   .priority = (osPriority_t) osPriorityAboveNormal,
-  .stack_size = 512
+  .stack_size = 512,
 };
 
 static const osThreadAttr_t ctrl_gimbal_attr = {
   .name = "ctrl_gimbal",
   .priority = (osPriority_t) osPriorityAboveNormal,
-  .stack_size = 512
+  .stack_size = 512,
 };
 
 static const osThreadAttr_t ctrl_shoot_attr = {
   .name = "ctrl_shoot",
   .priority = (osPriority_t) osPriorityAboveNormal,
-  .stack_size = 512
+  .stack_size = 512,
 };
 
 static const osThreadAttr_t info_attr = {
   .name = "info",
   .priority = (osPriority_t) osPriorityBelowNormal,
-  .stack_size = 512
+  .stack_size = 512,
 };
 
 static const osThreadAttr_t monitor_attr = {
   .name = "monitor",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 256
+  .stack_size = 256,
 };
 
 static const osThreadAttr_t pos_esti_attr = {
   .name = "pos_esti",
   .priority = (osPriority_t) osPriorityRealtime,
-  .stack_size = 1024
+  .stack_size = 1024,
 };
 
 static const osThreadAttr_t referee_attr = {
   .name = "referee",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 256
+  .stack_size = 512,
 };
 
 /* USER CODE END Variables */
