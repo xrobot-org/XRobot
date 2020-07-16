@@ -78,7 +78,7 @@ int8_t DR16_StartReceiving(DR16_t *dr16) {
 	return BSP_UART_ReceiveDMA(BSP_UART_DR16, (uint8_t*)&(dr16->data), sizeof(DR16_Data_t));
 }
 
-int8_t DR16_Parse(const DR16_t *dr16, CMD_RC_t *rc)  {
+int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc)  {
 	if (dr16 == NULL)
 		return DR16_ERR_NULL;
 	

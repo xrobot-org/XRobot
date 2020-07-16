@@ -49,4 +49,4 @@ DR16_t *DR16_GetDevice(void);
 int8_t DR16_Restart(void);
 
 int8_t DR16_StartReceiving(DR16_t *dr16);
-int8_t DR16_Parse(const DR16_t *dr16, CMD_RC_t *rc);
+int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc);
