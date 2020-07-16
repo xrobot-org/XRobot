@@ -64,10 +64,10 @@
 #define BMI088_GYRO_CHIP_ID					(0x0F)
 
 /* Private macro -------------------------------------------------------------*/
-#define BMI088_ACCL_NSS_SET()		HAL_GPIO_WritePin(ACCL_CS_GPIO_Port, ACCL_CS_Pin, GPIO_PIN_SET)
+#define BMI088_ACCL_NSS_SET()	HAL_GPIO_WritePin(ACCL_CS_GPIO_Port, ACCL_CS_Pin, GPIO_PIN_SET)
 #define BMI088_ACCL_NSS_RESET()	HAL_GPIO_WritePin(ACCL_CS_GPIO_Port, ACCL_CS_Pin, GPIO_PIN_RESET)
 
-#define BMI088_GYRO_NSS_SET()		HAL_GPIO_WritePin(GYRO_CS_GPIO_Port, GYRO_CS_Pin, GPIO_PIN_SET)
+#define BMI088_GYRO_NSS_SET()	HAL_GPIO_WritePin(GYRO_CS_GPIO_Port, GYRO_CS_Pin, GPIO_PIN_SET)
 #define BMI088_GYRO_NSS_RESET()	HAL_GPIO_WritePin(GYRO_CS_GPIO_Port, GYRO_CS_Pin, GPIO_PIN_RESET)
 
 /* Private typedef -----------------------------------------------------------*/
@@ -97,7 +97,7 @@ static void BMI_WriteSingle(BMI_Device_t dv, uint8_t reg, uint8_t data) {
 			break;
 	}
 	
-	BSP_SPI_Transmit(BSP_SPI_IMU, buffer, 2u, 20u);
+	HAL_SPI_Transmit(BSP_SPI_GetHandle(BSP_SPI_IMU), buffer, 2u, 20u);
 	
 	switch (dv) {
 		case BMI_ACCL:
@@ -122,8 +122,8 @@ static uint8_t BMI_ReadSingle(BMI_Device_t dv, uint8_t reg) {
 			break;
 	}
 	buffer[0] = (reg | 0x80);
-	BSP_SPI_Transmit(BSP_SPI_IMU, buffer, 1u, 20u);
-	BSP_SPI_Receive(BSP_SPI_IMU, buffer, 2u, 20u);
+	HAL_SPI_Transmit(BSP_SPI_GetHandle(BSP_SPI_IMU), buffer, 1u, 20u);
+	HAL_SPI_Receive(BSP_SPI_GetHandle(BSP_SPI_IMU), buffer, 2u, 20u);
 	
 	switch (dv) {
 		case BMI_ACCL:
@@ -153,8 +153,8 @@ static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
 			break;
 	}
 	buffer[0] = (reg | 0x80);
-	BSP_SPI_Transmit(BSP_SPI_IMU, buffer, 1u, 20u);
-	BSP_SPI_ReceiveDMA(BSP_SPI_IMU, data, len);
+	HAL_SPI_Transmit(BSP_SPI_GetHandle(BSP_SPI_IMU), buffer, 1u, 20u);
+	HAL_SPI_Receive_DMA(BSP_SPI_GetHandle(BSP_SPI_IMU), data, len);
 }
 
 static void BMI088_RxCpltCallback(void) {

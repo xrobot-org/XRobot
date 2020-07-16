@@ -5,14 +5,6 @@
 #include "spi.h"
 
 /* Private define ------------------------------------------------------------*/
-#define OLED_SPI SPI2
-#define IMU_SPI SPI1
-/* #define XXX_SPI SPIX */
-
-#define OLED_SPI_HANDLE (hspi2)
-#define IMU_SPI_HANDLE (hspi1)
-/* #define XXX_SPI_HANDLE (hspix) */
-
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -54,81 +46,96 @@ struct {
 } static bsp_spi_callback;
 
 /* Private function  ---------------------------------------------------------*/
+static SPI_TypeDef *UART_GetInstance(BSP_SPI_t uart) {
+	switch (uart) {
+		case BSP_SPI_OLED:
+			return SPI2;
+		case BSP_SPI_IMU:
+			return SPI1;
+		/*
+		case BSP_SPI_XXX:
+			return SPIX;
+		*/
+		default:
+			return NULL;
+	}
+}
+
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == OLED_SPI) {
+	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.TxCpltCallback)
 			bsp_spi_callback.oled.TxCpltCallback();
-	} else if (hspi->Instance == IMU_SPI) {
+	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.TxCpltCallback)
 			bsp_spi_callback.imu.TxCpltCallback();
 	}
 }
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == OLED_SPI) {
+	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.RxCpltCallback)
 			bsp_spi_callback.oled.RxCpltCallback();
-	} else if (hspi->Instance == IMU_SPI) {
+	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.RxCpltCallback)
 			bsp_spi_callback.imu.RxCpltCallback();
 	}
 }
 
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == OLED_SPI) {
+	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.TxRxCpltCallback)
 			bsp_spi_callback.oled.TxRxCpltCallback();
-	} else if (hspi->Instance == IMU_SPI) {
+	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.TxRxCpltCallback)
 			bsp_spi_callback.imu.TxRxCpltCallback();
 	}
 }
 
 void HAL_SPI_TxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == OLED_SPI) {
+	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.TxHalfCpltCallback)
 			bsp_spi_callback.oled.TxHalfCpltCallback();
-	} else if (hspi->Instance == IMU_SPI) {
+	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.TxHalfCpltCallback)
 			bsp_spi_callback.imu.TxHalfCpltCallback();
 	}
 }
 
 void HAL_SPI_RxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == OLED_SPI) {
+	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.RxHalfCpltCallback)
 			bsp_spi_callback.oled.RxHalfCpltCallback();
-	} else if (hspi->Instance == IMU_SPI) {
+	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.RxHalfCpltCallback)
 			bsp_spi_callback.imu.RxHalfCpltCallback();
 	}
 }
 
 void HAL_SPI_TxRxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == OLED_SPI) {
+	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.TxRxHalfCpltCallback)
 			bsp_spi_callback.oled.TxRxHalfCpltCallback();
-	} else if (hspi->Instance == IMU_SPI) {
+	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.TxRxHalfCpltCallback)
 			bsp_spi_callback.imu.TxRxHalfCpltCallback();
 	}
 }
 
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == OLED_SPI) {
+	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.ErrorCallback)
 			bsp_spi_callback.oled.ErrorCallback();
-	} else if (hspi->Instance == IMU_SPI) {
+	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.ErrorCallback)
 			bsp_spi_callback.imu.ErrorCallback();
 	}
 }
 
 void HAL_SPI_AbortCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == OLED_SPI) {
+	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.AbortCpltCallback)
 			bsp_spi_callback.oled.AbortCpltCallback();
-	} else if (hspi->Instance == IMU_SPI) {
+	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.AbortCpltCallback)
 			bsp_spi_callback.imu.AbortCpltCallback();
 	}
@@ -141,6 +148,21 @@ void HAL_SPI_AbortCpltCallback(SPI_HandleTypeDef *hspi) {
 }
 
 /* Exported functions --------------------------------------------------------*/
+SPI_HandleTypeDef *BSP_SPI_GetHandle(BSP_SPI_t spi) {
+		switch (spi) {
+		case BSP_SPI_OLED:
+			return &hspi2;
+		case BSP_SPI_IMU:
+			return &hspi1;
+		/*
+		case BSP_SPI_XXX:
+			return &hspiX;
+		*/
+		default:
+			return NULL;
+	}
+}
+
 int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*callback)(void)) {
 	if (callback == NULL)
 		return -1;
@@ -244,87 +266,3 @@ int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*c
 	}
 	return 0;
 }
-
-int8_t BSP_SPI_Transmit(BSP_SPI_t spi, uint8_t *data, uint16_t len, uint32_t time_out) {
-	if (data == NULL)
-		return -1;
-	
-	switch (spi) {
-		case BSP_SPI_IMU:
-			return HAL_SPI_Transmit(&IMU_SPI_HANDLE, data, len, time_out);
-
-		case BSP_SPI_OLED:
-			return HAL_SPI_Transmit(&OLED_SPI_HANDLE, data, len, time_out);
-		
-		/*
-		case BSP_SPI_XXX:
-			return HAL_SPI_Transmit_DMA(&XXX_SPI_HANDLE, data, len);
-		*/
-		default:
-			return -1;
-	}
-}
-
-int8_t BSP_SPI_TransmitDMA(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
-	if (data == NULL)
-		return -1;
-	
-	switch (spi) {
-		case BSP_SPI_IMU:
-			return HAL_SPI_Transmit_DMA(&IMU_SPI_HANDLE, data, len);
-
-		case BSP_SPI_OLED:
-			return HAL_SPI_Transmit_DMA(&OLED_SPI_HANDLE, data, len);
-		
-		/*
-		case BSP_SPI_XXX:
-			HAL_SPI_Transmit_DMA(&XXX_SPI_HANDLE, data, len);
-			break;
-		*/
-		default:
-			return -1;
-	}
-}
-
-int8_t BSP_SPI_Receive(BSP_SPI_t spi, uint8_t *data, uint16_t len, uint32_t time_out) {
-	if (data == NULL)
-		return -1;
-
-	switch (spi) {
-		case BSP_SPI_IMU:
-			return HAL_SPI_Receive(&IMU_SPI_HANDLE, data, len, time_out);
-
-		case BSP_SPI_OLED:
-			return -1;
-		
-		/*
-		case BSP_SPI_XXX:
-			HAL_SPI_Receive(&XXX_SPI_HANDLE, data, len);
-			break;
-		*/
-		default:
-			return -1;
-	}
-}
-
-int8_t BSP_SPI_ReceiveDMA(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
-	if (data == NULL)
-		return -1;
-
-	switch (spi) {
-		case BSP_SPI_IMU:
-			return HAL_SPI_Receive_DMA(&IMU_SPI_HANDLE, data, len);
-
-		case BSP_SPI_OLED:
-			return -1;
-		
-		/*
-		case BSP_SPI_XXX:
-			HAL_SPI_Receive(&XXX_SPI_HANDLE, data, len);
-			break;
-		*/
-		default:
-			return -1;
-	}
-}
-

@@ -70,12 +70,13 @@ DR16_t *DR16_GetDevice(void) {
 }
 
 int8_t DR16_Restart(void) {
-	// TODO
+	__HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_DR16));
+	__HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_DR16));
 	return DR16_OK;
 }
 
 int8_t DR16_StartReceiving(DR16_t *dr16) {
-	return BSP_UART_ReceiveDMA(BSP_UART_DR16, (uint8_t*)&(dr16->data), sizeof(DR16_Data_t));
+	return HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_DR16), (uint8_t*)&(dr16->data), sizeof(DR16_Data_t));
 }
 
 int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc)  {
