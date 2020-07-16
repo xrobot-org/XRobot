@@ -55,7 +55,7 @@ int8_t DR16_Init(DR16_t *dr16, osThreadId_t thread_alert) {
 	
 	dr16->thread_alert = thread_alert;
 	
-	BSP_UART_RegisterCallback(BSP_UART_DR16, BSP_UART_RX_COMPLETE_CB, DR16_RxCpltCallback);
+	BSP_UART_RegisterCallback(BSP_UART_DR16, BSP_UART_RX_CPLT_CB, DR16_RxCpltCallback);
 	
 	gdr16 = dr16;
 	inited = true;

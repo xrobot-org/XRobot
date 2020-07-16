@@ -43,12 +43,12 @@ static bool inited = false;
 
 /* Private function  ---------------------------------------------------------*/
 static void IST8310_WriteSingle(uint8_t reg, uint8_t data) {
-	BSP_I2C_Transmit(BSP_I2C_COMP, reg, &data, 2u, 20u);
+	HAL_I2C_Master_Transmit(BSP_I2C_GetHandle(BSP_I2C_COMP), reg, &data, 2u, 20u);
 }
 
 static uint8_t IST8310_ReadSingle(uint8_t reg) {
 	uint8_t buffer;
-	BSP_I2C_Receive(BSP_I2C_COMP, reg, &buffer, 2u, 20u);
+	HAL_I2C_Master_Receive(BSP_I2C_GetHandle(BSP_I2C_COMP), reg, &buffer, 2u, 20u);
 	
 	return buffer;
 }
@@ -57,7 +57,7 @@ static void IST8310_Read(uint8_t reg, uint8_t *data, uint8_t len) {
 	if (data == NULL)
 		return;
 	
-	BSP_I2C_ReceiveDMA(BSP_I2C_COMP, reg, data, len);
+	HAL_I2C_Master_Receive_DMA(BSP_I2C_GetHandle(BSP_I2C_COMP), reg, data, len);
 }
 
 static void IST8310_MasterRxCpltCallback(void) {
@@ -84,7 +84,7 @@ int8_t IST8310_Init(IST8310_t *ist8310, osThreadId_t thread_alert) {
 		return IST8310_ERR_NO_DEV;
 	
 	BSP_GPIO_DisableIRQ(ACCL_INT_Pin);
-	BSP_I2C_RegisterCallback(BSP_I2C_COMP, HAL_I2C_MASTER_RX_COMPLETE_CB, IST8310_MasterRxCpltCallback);
+	BSP_I2C_RegisterCallback(BSP_I2C_COMP, HAL_I2C_MASTER_RX_CPLT_CB, IST8310_MasterRxCpltCallback);
 	BSP_GPIO_RegisterCallback(ACCL_INT_Pin, IST8310_IntCallback);
 	
 	/* Init. */

@@ -1,23 +1,20 @@
 /* Includes ------------------------------------------------------------------*/
 #include "board\spi.h"
 
-#include "main.h"
-#include "spi.h"
-
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 struct {
 	struct {
-		void(*TxCpltCallback)(void);		/* SPI Tx Completed callback */
-		void(*RxCpltCallback)(void);		/* SPI Rx Completed callback */
-		void(*TxRxCpltCallback)(void);		/* SPI TxRx Completed callback */
-		void(*TxHalfCpltCallback)(void);	/* SPI Tx Half Completed callback */
-		void(*RxHalfCpltCallback)(void);	/* SPI Rx Half Completed callback */
-		void(*TxRxHalfCpltCallback)(void);	/* SPI TxRx Half Completed callback */
-		void(*ErrorCallback)(void);			/* SPI Error callback */
-		void(*AbortCpltCallback)(void);		/* SPI Abort callback */
+		void(*TxCpltCallback)(void);
+		void(*RxCpltCallback)(void);
+		void(*TxRxCpltCallback)(void);
+		void(*TxHalfCpltCallback)(void);
+		void(*RxHalfCpltCallback)(void);
+		void(*TxRxHalfCpltCallback)(void);
+		void(*ErrorCallback)(void);
+		void(*AbortCpltCallback)(void);
 	} oled;
 
 	struct {
@@ -170,22 +167,22 @@ int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*c
 	switch (spi) {
 		case BSP_SPI_IMU:
 			switch (type) {
-				case BSP_SPI_TX_COMPLETE_CB:
+				case BSP_SPI_TX_CPLT_CB:
 					bsp_spi_callback.imu.TxCpltCallback = callback;
 					break;
-				case BSP_SPI_RX_COMPLETE_CB:
+				case BSP_SPI_RX_CPLT_CB:
 					bsp_spi_callback.imu.RxCpltCallback = callback;
 					break;
-				case BSP_SPI_TX_RX_COMPLETE_CB:
+				case BSP_SPI_TX_RX_CPLT_CB:
 					bsp_spi_callback.imu.TxRxCpltCallback = callback;
 					break;
-				case BSP_SPI_TX_HALF_COMPLETE_CB:
+				case BSP_SPI_TX_HALF_CPLT_CB:
 					bsp_spi_callback.imu.TxHalfCpltCallback = callback;
 					break;
-				case BSP_SPI_RX_HALF_COMPLETE_CB:
+				case BSP_SPI_RX_HALF_CPLT_CB:
 					bsp_spi_callback.imu.RxHalfCpltCallback = callback;
 					break;
-				case BSP_SPI_TX_RX_HALF_COMPLETE_CB:
+				case BSP_SPI_TX_RX_HALF_CPLT_CB:
 					bsp_spi_callback.imu.TxRxHalfCpltCallback = callback;
 					break;
 				case BSP_SPI_ERROR_CB:
@@ -201,22 +198,22 @@ int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*c
 
 		case BSP_SPI_OLED:
 			switch (type) {
-				case BSP_SPI_TX_COMPLETE_CB:
+				case BSP_SPI_TX_CPLT_CB:
 					bsp_spi_callback.oled.TxCpltCallback = callback;
 					break;
-				case BSP_SPI_RX_COMPLETE_CB:
+				case BSP_SPI_RX_CPLT_CB:
 					bsp_spi_callback.oled.RxCpltCallback = callback;
 					break;
-				case BSP_SPI_TX_RX_COMPLETE_CB:
+				case BSP_SPI_TX_RX_CPLT_CB:
 					bsp_spi_callback.oled.TxRxCpltCallback = callback;
 					break;
-				case BSP_SPI_TX_HALF_COMPLETE_CB:
+				case BSP_SPI_TX_HALF_CPLT_CB:
 					bsp_spi_callback.oled.TxHalfCpltCallback = callback;
 					break;
-				case BSP_SPI_RX_HALF_COMPLETE_CB:
+				case BSP_SPI_RX_HALF_CPLT_CB:
 					bsp_spi_callback.oled.RxHalfCpltCallback = callback;
 					break;
-				case BSP_SPI_TX_RX_HALF_COMPLETE_CB:
+				case BSP_SPI_TX_RX_HALF_CPLT_CB:
 					bsp_spi_callback.oled.TxRxHalfCpltCallback = callback;
 					break;
 				case BSP_SPI_ERROR_CB:
@@ -232,22 +229,22 @@ int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*c
 		/*	
 		case BSP_SPI_XXX:
 			switch (type) {
-				case BSP_SPI_TX_COMPLETE_CB:
+				case BSP_SPI_TX_CPLT_CB:
 					bsp_spi_callback.xxx.TxCpltCallback = callback;
 					break;
-				case BSP_SPI_RX_COMPLETE_CB:
+				case BSP_SPI_RX_CPLT_CB:
 					bsp_spi_callback.xxx.RxCpltCallback = callback;
 					break;
-				case BSP_SPI_TX_RX_COMPLETE_CB:
+				case BSP_SPI_TX_RX_CPLT_CB:
 					bsp_spi_callback.xxx.TxRxCpltCallback = callback;
 					break;
-				case BSP_SPI_TX_HALF_COMPLETE_CB:
+				case BSP_SPI_TX_HALF_CPLT_CB:
 					bsp_spi_callback.xxx.TxHalfCpltCallback = callback;
 					break;
-				case BSP_SPI_RX_HALF_COMPLETE_CB:
+				case BSP_SPI_RX_HALF_CPLT_CB:
 					bsp_spi_callback.xxx.RxHalfCpltCallback = callback;
 					break;
-				case BSP_SPI_TX_RX_HALF_COMPLETE_CB:
+				case BSP_SPI_TX_RX_HALF_CPLT_CB:
 					bsp_spi_callback.xxx.TxRxHalfCpltCallback = callback;
 					break;
 				case BSP_SPI_ERROR_CB:

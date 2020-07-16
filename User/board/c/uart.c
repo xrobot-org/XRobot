@@ -1,33 +1,31 @@
 /* Includes ------------------------------------------------------------------*/
 #include "board\uart.h"
 
-#include "usart.h"
-
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 struct {
 	struct {
-		void(*TxHalfCpltCallback)(void);		/* UART Tx Half Complete Callback */
-		void(*TxCpltCallback)(void);			/* UART Tx Complete Callback */
-		void(*RxHalfCpltCallback)(void);		/* UART Rx Half Complete Callback */
-		void(*RxCpltCallback)(void);			/* UART Rx Complete Callback */
-		void(*ErrorCallback)(void);				/* UART Error Callback */
-		void(*AbortCpltCallback)(void);			/* UART Abort Complete Callback */
-		void(*AbortTransmitCpltCallback)(void);	/* UART Abort Transmit Complete Callback */
-		void(*AbortReceiveCpltCallback)(void);	/* UART Abort Receive Complete Callback  */
+		void(*TxHalfCpltCallback)(void);
+		void(*TxCpltCallback)(void);
+		void(*RxHalfCpltCallback)(void);
+		void(*RxCpltCallback)(void);
+		void(*ErrorCallback)(void);
+		void(*AbortCpltCallback)(void);
+		void(*AbortTransmitCpltCallback)(void);
+		void(*AbortReceiveCpltCallback)(void);
 	} dr16;
 	
 	struct {
-		void(*TxHalfCpltCallback)(void);		/* UART Tx Half Complete Callback */
-		void(*TxCpltCallback)(void);			/* UART Tx Complete Callback */
-		void(*RxHalfCpltCallback)(void);		/* UART Rx Half Complete Callback */
-		void(*RxCpltCallback)(void);			/* UART Rx Complete Callback */
-		void(*ErrorCallback)(void);				/* UART Error Callback */
-		void(*AbortCpltCallback)(void);			/* UART Abort Complete Callback */
-		void(*AbortTransmitCpltCallback)(void);	/* UART Abort Transmit Complete Callback */
-		void(*AbortReceiveCpltCallback)(void);	/* UART Abort Receive Complete Callback  */
+		void(*TxHalfCpltCallback)(void);
+		void(*TxCpltCallback)(void);
+		void(*RxHalfCpltCallback)(void);
+		void(*RxCpltCallback)(void);
+		void(*ErrorCallback)(void);
+		void(*AbortCpltCallback)(void);
+		void(*AbortTransmitCpltCallback)(void);
+		void(*AbortReceiveCpltCallback)(void);
 	} ref;
 	
 	/*
@@ -189,25 +187,25 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void
 				case BSP_UART_TX_HALFCOMPLETE_CB:
 					bsp_uart_callback.dr16.TxHalfCpltCallback = callback;
 					break;
-				case BSP_UART_TX_COMPLETE_CB:
+				case BSP_UART_TX_CPLT_CB:
 					bsp_uart_callback.dr16.TxCpltCallback = callback;
 					break;
 				case BSP_UART_RX_HALFCOMPLETE_CB:
 					bsp_uart_callback.dr16.RxHalfCpltCallback = callback;
 					break;
-				case BSP_UART_RX_COMPLETE_CB:
+				case BSP_UART_RX_CPLT_CB:
 					bsp_uart_callback.dr16.RxCpltCallback = callback;
 					break;
 				case BSP_UART_ERROR_CB:
 					bsp_uart_callback.dr16.ErrorCallback = callback;
 					break;
-				case BSP_UART_ABORT_COMPLETE_CB:
+				case BSP_UART_ABORT_CPLT_CB:
 					bsp_uart_callback.dr16.AbortCpltCallback = callback;
 					break;
-				case BSP_UART_ABORT_TRANSMIT_COMPLETE_CB:
+				case BSP_UART_ABORT_TRANSMIT_CPLT_CB:
 					bsp_uart_callback.dr16.AbortTransmitCpltCallback = callback;
 					break;
-				case BSP_UART_ABORT_RECEIVE_COMPLETE_CB:
+				case BSP_UART_ABORT_RECEIVE_CPLT_CB:
 					bsp_uart_callback.dr16.AbortReceiveCpltCallback = callback;
 					break;
 				default:
@@ -220,25 +218,25 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void
 				case BSP_UART_TX_HALFCOMPLETE_CB:
 					bsp_uart_callback.ref.TxHalfCpltCallback = callback;
 					break;
-				case BSP_UART_TX_COMPLETE_CB:
+				case BSP_UART_TX_CPLT_CB:
 					bsp_uart_callback.ref.TxCpltCallback = callback;
 					break;
 				case BSP_UART_RX_HALFCOMPLETE_CB:
 					bsp_uart_callback.ref.RxHalfCpltCallback = callback;
 					break;
-				case BSP_UART_RX_COMPLETE_CB:
+				case BSP_UART_RX_CPLT_CB:
 					bsp_uart_callback.ref.RxCpltCallback = callback;
 					break;
 				case BSP_UART_ERROR_CB:
 					bsp_uart_callback.ref.ErrorCallback = callback;
 					break;
-				case BSP_UART_ABORT_COMPLETE_CB:
+				case BSP_UART_ABORT_CPLT_CB:
 					bsp_uart_callback.ref.AbortCpltCallback = callback;
 					break;
-				case BSP_UART_ABORT_TRANSMIT_COMPLETE_CB:
+				case BSP_UART_ABORT_TRANSMIT_CPLT_CB:
 					bsp_uart_callback.ref.AbortTransmitCpltCallback = callback;
 					break;
-				case BSP_UART_ABORT_RECEIVE_COMPLETE_CB:
+				case BSP_UART_ABORT_RECEIVE_CPLT_CB:
 					bsp_uart_callback.ref.AbortReceiveCpltCallback = callback;
 					break;
 				default:
@@ -251,25 +249,25 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void
 				case BSP_UART_TX_HALFCOMPLETE_CB:
 					bsp_uart_callback.xxx.TxHalfCpltCallback = callback;
 					break;
-				case BSP_UART_TX_COMPLETE_CB:
+				case BSP_UART_TX_CPLT_CB:
 					bsp_uart_callback.xxx.TxCpltCallback = callback;
 					break;
 				case BSP_UART_RX_HALFCOMPLETE_CB:
 					bsp_uart_callback.xxx.RxHalfCpltCallback = callback;
 					break;
-				case BSP_UART_RX_COMPLETE_CB:
+				case BSP_UART_RX_CPLT_CB:
 					bsp_uart_callback.xxx.RxCpltCallback = callback;
 					break;
 				case BSP_UART_ERROR_CB:
 					bsp_uart_callback.xxx.ErrorCallback = callback;
 					break;
-				case BSP_UART_ABORT_COMPLETE_CB:
+				case BSP_UART_ABORT_CPLT_CB:
 					bsp_uart_callback.xxx.AbortCpltCallback = callback;
 					break;
-				case BSP_UART_ABORT_TRANSMIT_COMPLETE_CB:
+				case BSP_UART_ABORT_TRANSMIT_CPLT_CB:
 					bsp_uart_callback.xxx.AbortTransmitCpltCallback = callback;
 					break;
-				case BSP_UART_ABORT_RECEIVE_COMPLETE_CB:
+				case BSP_UART_ABORT_RECEIVE_CPLT_CB:
 					bsp_uart_callback.xxx.AbortReceiveCpltCallback = callback;
 					break;
 				default:

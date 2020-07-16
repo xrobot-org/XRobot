@@ -204,7 +204,7 @@ int8_t BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert) {
 	BSP_GPIO_DisableIRQ(ACCL_INT_Pin);
 	BSP_GPIO_DisableIRQ(GYRO_INT_Pin);
 	
-	BSP_SPI_RegisterCallback(BSP_SPI_IMU, BSP_SPI_RX_COMPLETE_CB, BMI088_RxCpltCallback);
+	BSP_SPI_RegisterCallback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB, BMI088_RxCpltCallback);
 	BSP_GPIO_RegisterCallback(ACCL_INT_Pin, BMI088_AcclIntCallback);
 	BSP_GPIO_RegisterCallback(GYRO_INT_Pin, BMI088_GyroIntCallback);
 	
