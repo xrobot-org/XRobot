@@ -93,6 +93,29 @@ static const CLI_Command_Definition_t task_stats = {
 	0, 
 };
 
+static BaseType_t HeapStatsCommand(char *out_buffer, size_t len, const char *command_string) {
+	const char *const header = 
+		"total(B)	free(B)	used(B)\r\n"
+		"*******************************\r\n";
+	(void)command_string;
+	(void)len;
+	configASSERT(out_buffer);
+	HeapStats_t heap_stats;
+	
+	strcpy(out_buffer, header);
+	vPortGetHeapStats(&heap_stats);
+	sprintf(out_buffer + strlen(header), "%d\t\t%d\t%d\r\n", configTOTAL_HEAP_SIZE, heap_stats.xAvailableHeapSpaceInBytes,configTOTAL_HEAP_SIZE - heap_stats.xAvailableHeapSpaceInBytes);
+
+	return pdFALSE;
+}
+
+static const CLI_Command_Definition_t heap_stats = {
+	"heap-stats",
+	"\r\nheap-stats:\r\n Displays a table showing the state of memory\r\n\r\n",
+	HeapStatsCommand,
+	0, 
+};
+
 static BaseType_t RunTimeStatsCommand(char *out_buffer, size_t len, const char *command_string) {
 	const char * const header = 
 		"Task            Abs Time      % Time\r\n"
@@ -174,6 +197,7 @@ void Task_CLI(void *argument) {
 	FreeRTOS_CLIRegisterCommand(&run_time_stats);
 	FreeRTOS_CLIRegisterCommand(&set_model);
 	FreeRTOS_CLIRegisterCommand(&endian);
+	FreeRTOS_CLIRegisterCommand(&heap_stats);
 	
 	/* Save CPU power when CLI not used. */
 	BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
