@@ -34,19 +34,7 @@ static const char* const CLI_WELCOME_MESSAGE =
 	" |___|__||_____||_____|_____||__|_|__||___._|_____||____|_____|__|  \r\n"
 	"           Q I N G D A O  U N I V E R S I T Y    2 0 2 0            \r\n"
 	" -------------------------------------------------------------------\r\n"
-	" Robot Model: "
-#if defined ROBOT_MODEL_INFANTRY	
-	"Infantry. "
-#elif defined ROBOT_MODEL_HERO
-	"Hero. "
-#elif defined ROBOT_MODEL_ENGINEER
-	"Engineer. "
-#elif defined ROBOT_MODEL_DRONE
-	"Drone. "
-#elif defined ROBOT_MODEL_SENTRY
-	"Sentry. "
-#endif
-	" Firmware Version: 0.0.1\r\n"
+	" Firmware Version: 0.0.1                                            \r\n"
 	" -------------------------------------------------------------------\r\n"
 	" FreeRTOS CLI. Type 'help' to view a list of registered commands.   \r\n"
 	"\r\n";
@@ -62,16 +50,17 @@ static BaseType_t EndianCommand(char *out_buffer, size_t len, const char *comman
     uint16_t force_convert = ((uint16_t*)list)[0];
 	
 	i += sprintf(out_buffer + i, "a[2] = {0x11, 0x22}\r\n");
-	i += sprintf(out_buffer + i, "Force convert to uint16 list, we got: %x\r\n", force_convert);
+	i += sprintf(out_buffer + i, "Force convert to uint16 list, we got: 0x%x\r\n", force_convert);
 
     uint16_t assembled = list[0] | (list[1] << 8);
-    i += sprintf(out_buffer + i, "Manually assemble a[1], a[0], we got: %x\r\n", assembled);
+    i += sprintf(out_buffer + i, "Manually assemble a[1], a[0], we got: 0x%x\r\n", assembled);
 	
 	if (force_convert == assembled)
 		i += sprintf(out_buffer + i, "Small endian\r\n");
 	else
 		i += sprintf(out_buffer + i, "Big endian\r\n");
 
+	strcat(out_buffer, "\r\n");
 	return pdFALSE;
 }
 
@@ -87,7 +76,6 @@ static BaseType_t TaskStatsCommand(char *out_buffer, size_t len, const char *com
 	const char *const header = 
 		"Task          State  Priority  Stack	#\r\n"
 		"************************************************\r\n";
-
 	(void)command_string;
 	(void)len;
 	configASSERT(out_buffer);
@@ -140,23 +128,24 @@ static BaseType_t SetModelCommand(char *out_buffer, size_t len, const char *comm
 	sprintf(out_buffer, "Set robot model to: ");
 	switch (*param) {
 		case 'I':
-			strcat(out_buffer, "Infantry.\r\n");
+			strcat(out_buffer, "Infantry.");
 			break;
 		case 'H':
-			strcat(out_buffer, "Hero\r\n.");
+			strcat(out_buffer, "Hero.");
 			break;
 		case 'E':
-			strcat(out_buffer, "Engineer.\r\n");
+			strcat(out_buffer, "Engineer.");
 			break;
 		case 'D':
-			strcat(out_buffer, "Drone.\r\n");
+			strcat(out_buffer, "Drone.");
 			break;
 		case 'S':
-			strcat(out_buffer, "Sentry.\r\n");
+			strcat(out_buffer, "Sentry.");
 			break;
 		default:
-			strcat(out_buffer, "Unknow model. Check help for avaliable options.\r\n");
+			strcat(out_buffer, "Unknow model. Check help for avaliable options.");
 	}
+	strcat(out_buffer, "\r\n");
 	return pdFALSE;
 }
 
@@ -180,7 +169,7 @@ void Task_CLI(void *argument) {
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_CLI);
 	
-	/* Register all the command line commands defined immediately above. */
+	/* Register all the commands. */
 	FreeRTOS_CLIRegisterCommand(&task_stats);
 	FreeRTOS_CLIRegisterCommand(&run_time_stats);
 	FreeRTOS_CLIRegisterCommand(&set_model);
