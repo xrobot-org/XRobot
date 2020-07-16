@@ -52,14 +52,42 @@ static const char* const CLI_WELCOME_MESSAGE =
 	"\r\n";
 	
 /* Private function ----------------------------------------------------------*/
+static BaseType_t EndianCommand(char *out_buffer, size_t len, const char *command_string) {
+	(void)command_string;
+	(void)len;
+	configASSERT(out_buffer);
+	
+    int i = 0;
+	uint8_t list[2] = {0x11, 0x22};
+    uint16_t force_convert = ((uint16_t*)list)[0];
+	
+	i += sprintf(out_buffer + i, "a[2] = {0x11, 0x22}\r\n");
+	i += sprintf(out_buffer + i, "Force convert to uint16 list, we got: %x\r\n", force_convert);
+
+    uint16_t assembled = list[0] | (list[1] << 8);
+    i += sprintf(out_buffer + i, "Manually assemble a[1], a[0], we got: %x\r\n", assembled);
+	
+	if (force_convert == assembled)
+		i += sprintf(out_buffer + i, "Small endian\r\n");
+	else
+		i += sprintf(out_buffer + i, "Big endian\r\n");
+
+	return pdFALSE;
+}
+
+static const CLI_Command_Definition_t endian = {
+	"endian",
+	"\r\nendian:\r\n Endian experiment.\r\n\r\n",
+	EndianCommand,
+	0, 
+};
+
+
 static BaseType_t TaskStatsCommand(char *out_buffer, size_t len, const char *command_string) {
 	const char *const header = 
 		"Task          State  Priority  Stack	#\r\n"
 		"************************************************\r\n";
 
-	/* Remove compile time warnings about unused parameters, and check the
-	write buffer is not NULL.  NOTE - for simplicity, this example assumes the
-	write buffer length is adequate, so does not check for buffer overflows. */
 	(void)command_string;
 	(void)len;
 	configASSERT(out_buffer);
@@ -156,6 +184,7 @@ void Task_CLI(void *argument) {
 	FreeRTOS_CLIRegisterCommand(&task_stats);
 	FreeRTOS_CLIRegisterCommand(&run_time_stats);
 	FreeRTOS_CLIRegisterCommand(&set_model);
+	FreeRTOS_CLIRegisterCommand(&endian);
 	
 	/* Save CPU power when CLI not used. */
 	BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
