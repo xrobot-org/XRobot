@@ -7,6 +7,9 @@
 #include "user_math.h"
 
 void LowPassFilter2p_Init(LowPassFilter2p_t *f, float32_t sample_freq, float32_t cutoff_freq) {
+	if (f == NULL)
+		return;
+	
 	f->cutoff_freq = cutoff_freq;
 	
 	f->delay_element_1 = 0.0f;
@@ -36,6 +39,9 @@ void LowPassFilter2p_Init(LowPassFilter2p_t *f, float32_t sample_freq, float32_t
 }
 
 float32_t LowPassFilter2p_Apply(LowPassFilter2p_t *f, float32_t sample) {
+	if (f == NULL)
+		return 0.f;
+	
 	// do the filtering
 	float32_t delay_element_0 = sample - f->delay_element_1 * f->a1 - f->delay_element_2 * f->a2;
 
@@ -54,6 +60,9 @@ float32_t LowPassFilter2p_Apply(LowPassFilter2p_t *f, float32_t sample) {
 }
 
 float32_t LowPassFilter2p_Reset(LowPassFilter2p_t *f, float32_t sample) {
+	if (f == NULL)
+		return 0.f;
+	
 	const float32_t dval = sample / (f->b0 + f->b1 + f->b2);
 
 	if (isfinite(dval)) {
@@ -69,6 +78,9 @@ float32_t LowPassFilter2p_Reset(LowPassFilter2p_t *f, float32_t sample) {
 }
 
 void NotchFilter_Init(NotchFilter_t *f, float32_t sample_freq, float32_t notch_freq, float32_t bandwidth) {
+	if (f == NULL)
+		return;
+		
 	f->notch_freq = notch_freq;
 	f->bandwidth = bandwidth;
 	
@@ -100,6 +112,9 @@ void NotchFilter_Init(NotchFilter_t *f, float32_t sample_freq, float32_t notch_f
 }
 
 inline float32_t NotchFilter_Apply(NotchFilter_t *f, float32_t sample) {
+	if (f == NULL)
+		return 0.f;
+	
 	// Direct Form II implementation
 	const float32_t delay_element_0 = sample - f->delay_element_1 * f->a1 - f->delay_element_2 * f->a2;
 	const float32_t output = delay_element_0 * f->b0 + f->delay_element_1 * f->b1 + f->delay_element_2 * f->b2;
@@ -111,6 +126,9 @@ inline float32_t NotchFilter_Apply(NotchFilter_t *f, float32_t sample) {
 }
 
 float32_t NotchFilter_Reset(NotchFilter_t *f, float32_t sample) {
+	if (f == NULL)
+		return 0.f;
+	
 	float32_t dval = sample;
 
 	if (fabsf(f->b0 + f->b1 + f->b2) > FLT_EPSILON) {
