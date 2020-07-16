@@ -116,6 +116,27 @@ static const CLI_Command_Definition_t heap_stats = {
 	0, 
 };
 
+static BaseType_t TempCommand(char *out_buffer, size_t len, const char *command_string) {
+	const char *const header = 
+		"CPU(C)\r\n"
+		"*******************************\r\n";
+	(void)command_string;
+	(void)len;
+	configASSERT(out_buffer);
+	
+	strcpy(out_buffer, header);
+	sprintf(out_buffer + strlen(header), "%.2f\r\n", -1.f); //TODO
+
+	return pdFALSE;
+}
+
+static const CLI_Command_Definition_t temp_stats = {
+	"temp-stats",
+	"\r\nheap-stats:\r\n Displays a table showing the state of temperature\r\n\r\n",
+	TempCommand,
+	0, 
+};
+
 static BaseType_t RunTimeStatsCommand(char *out_buffer, size_t len, const char *command_string) {
 	const char * const header = 
 		"Task            Abs Time      % Time\r\n"
@@ -198,6 +219,7 @@ void Task_CLI(void *argument) {
 	FreeRTOS_CLIRegisterCommand(&set_model);
 	FreeRTOS_CLIRegisterCommand(&endian);
 	FreeRTOS_CLIRegisterCommand(&heap_stats);
+	FreeRTOS_CLIRegisterCommand(&temp_stats);
 	
 	/* Save CPU power when CLI not used. */
 	BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
