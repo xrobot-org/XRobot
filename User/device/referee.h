@@ -193,21 +193,23 @@ typedef __packed struct {
 	uint16_t operator_cmd_launch_time;
 } Referee_DartClient_t;
 
+typedef uint16_t Referee_Tail_t;
+
 typedef enum {
-	REF_BOT_RED_HERO		= 1,
-	REF_BOT_RED_ENGINEER	= 2,
-	REF_BOT_RED_INFANTRY_1	= 3,
-	REF_BOT_RED_INFANTRY_2	= 4,
-	REF_BOT_RED_INFANTRY_3	= 5,
-	REF_BOT_RED_DRONE		= 6,
-	REF_BOT_RED_SENTRY		= 7,
-	REF_BOT_BLU_HERO		= 11,
-	REF_BOT_BLU_ENGINEER	= 12,
-	REF_BOT_BLU_INFANTRY_1	= 13,
-	REF_BOT_BLU_INFANTRY_2	= 14,
-	REF_BOT_BLU_INFANTRY_3	= 15,
-	REF_BOT_BLU_DRONE		= 16,
-	REF_BOT_BLU_SENTRY		= 17,
+	REF_BOT_RED_HERO		= 0x0001,
+	REF_BOT_RED_ENGINEER	= 0x0002,
+	REF_BOT_RED_INFANTRY_1	= 0x0003,
+	REF_BOT_RED_INFANTRY_2	= 0x0004,
+	REF_BOT_RED_INFANTRY_3	= 0x0005,
+	REF_BOT_RED_DRONE		= 0x0006,
+	REF_BOT_RED_SENTRY		= 0x0007,
+	REF_BOT_BLU_HERO		= 0x000B,
+	REF_BOT_BLU_ENGINEER	= 0x000C,
+	REF_BOT_BLU_INFANTRY_1	= 0x000D,
+	REF_BOT_BLU_INFANTRY_2	= 0x000E,
+	REF_BOT_BLU_INFANTRY_3	= 0x000F,
+	REF_BOT_BLU_DRONE		= 0x0010,
+	REF_BOT_BLU_SENTRY		= 0x0011,
 } Referee_RobotID_t;
 
 typedef enum {
@@ -296,12 +298,10 @@ typedef __packed struct {
 	Referee_DartClient_t			dart_client;
 	Referee_InterStudent_Custom_t	custom;
 	
-	uint16_t tail;
+	Referee_Tail_t tail;
 } Referee_t;
 
-
 /* Exported functions prototypes ---------------------------------------------*/
-
 int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert);
 Referee_t *Referee_GetDevice(void);
 int8_t Referee_Restart(void);
@@ -311,4 +311,5 @@ int8_t Referee_StartReceivingCMDID(Referee_t *ref);
 int8_t Referee_StartReceivingData(Referee_t *ref);
 int8_t Referee_StartReceivingTail(Referee_t *ref);
 
-int8_t Referee_CheckHeader(Referee_t *ref);
+
+bool Referee_CheckHeader(Referee_t *ref);

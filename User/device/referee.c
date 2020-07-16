@@ -9,6 +9,8 @@
 #include "board\delay.h"
 #include "board\uart.h"
 
+#include "component\crc8.h"
+#include "component\crc16.h"
 #include "component\user_math.h"
 
 /* Private define ------------------------------------------------------------*/
@@ -128,13 +130,12 @@ int8_t Referee_StartReceivingData(Referee_t *ref) {
 }
 
 int8_t Referee_StartReceivingTail(Referee_t *ref) {
-	return BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->tail), sizeof(uint16_t));
+	return BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->tail), sizeof(Referee_Tail_t));
 }
 
-int8_t Referee_CheckHeader(Referee_t *ref) {
-	if (ref->header.sof != REF_HEADER_SOF)
-		return -1;
-	
-	// TODO: verify CRC8.
-	return 0;
+
+bool Referee_CheckHeader(Referee_t *ref) {
+	bool con1 = (ref->header.sof == REF_HEADER_SOF);
+	bool con2 = CRC8_Verify((uint8_t*)&(ref->header), sizeof(Referee_FrameHeader_t));
+	return con1 && con2;
 }
