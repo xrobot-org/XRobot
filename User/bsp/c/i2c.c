@@ -21,15 +21,14 @@ struct {
 	/*
 	struct {
 		void (*MasterTxCpltCallback)(void);
-		void (* MasterRxCpltCallback)(void);
-		void (* SlaveTxCpltCallback)(void);
-		void (* SlaveRxCpltCallback)(void);
-		void (* ListenCpltCallback)(void);
-		void (* MemTxCpltCallback)(void);
-		void (* MemRxCpltCallback)(void);
-		void (* ErrorCallback)(void);
-		void (* AbortCpltCallback)(void);
-		void (* AddrCallback)(uint8_t TransferDirection, uint16_t AddrMatchCode);
+		void (*MasterRxCpltCallback)(void);
+		void (*SlaveTxCpltCallback)(void);
+		void (*SlaveRxCpltCallback)(void);
+		void (*ListenCpltCallback)(void);
+		void (*MemTxCpltCallback)(void);
+		void (*MemRxCpltCallback)(void);
+		void (*ErrorCallback)(void);
+		void (*AbortCpltCallback)(void);
 	} xxx;
 	*/
 } static bsp_i2c_callback;
