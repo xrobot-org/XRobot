@@ -79,7 +79,7 @@ typedef enum {
 
 /* Private variables ---------------------------------------------------------*/
 static uint8_t buffer[2];
-uint8_t rxbuf[BMI088_LEN_RX_BUFF];
+static uint8_t rxbuf[BMI088_LEN_RX_BUFF];
 
 static BMI088_t *gimu;
 static bool inited = false;
