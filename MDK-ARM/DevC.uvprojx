@@ -962,11 +962,6 @@
               <FilePath>..\User\component\pid.c</FilePath>
             </File>
             <File>
-              <FileName>protocol.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\component\protocol.c</FilePath>
-            </File>
-            <File>
               <FileName>user_math.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\component\user_math.c</FilePath>
@@ -1968,11 +1963,6 @@
               <FileName>pid.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\component\pid.c</FilePath>
-            </File>
-            <File>
-              <FileName>protocol.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\component\protocol.c</FilePath>
             </File>
             <File>
               <FileName>user_math.c</FileName>
