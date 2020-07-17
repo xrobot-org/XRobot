@@ -80,8 +80,7 @@ typedef struct {
 typedef union {
 	uint8_t raw[CAN_UWB_RX_FIFO_SIZE];
 	
-	__packed struct
-	{
+	struct __packed {
 		int16_t coor_x;
 		int16_t coor_y;
 		uint16_t yaw;
