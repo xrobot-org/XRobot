@@ -38,7 +38,7 @@ struct {
 static I2C_TypeDef *I2C_GetInstance(BSP_I2C_t i2c) {
 	switch (i2c) {
 		case BSP_I2C_COMP:
-			return I2C2;
+			return I2C3;
 		/*
 		case BSP_I2C_XXX:
 			return &I2CX;
@@ -115,7 +115,7 @@ void HAL_I2C_AbortCpltCallback(I2C_HandleTypeDef *hi2c) {
 I2C_HandleTypeDef *BSP_I2C_GetHandle(BSP_I2C_t i2c) {
 		switch (i2c) {
 		case BSP_I2C_COMP:
-			return &hi2c2;
+			return &hi2c3;
 		/*
 		case BSP_I2C_XXX:
 			return &hi2cX;
