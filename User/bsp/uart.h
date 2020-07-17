@@ -23,6 +23,7 @@ typedef enum {
 	BSP_UART_ABORT_TX_CPLT_CB,
 	BSP_UART_ABORT_RX_CPLT_CB,
 	BSP_UART_WAKEUP_CB,
+	BSP_UART_IDLE_LINE_CB,
 } BSP_UART_Callback_t;
 
 /* Exported functions prototypes ---------------------------------------------*/

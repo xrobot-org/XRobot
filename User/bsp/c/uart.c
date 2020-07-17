@@ -234,6 +234,9 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void
 				case BSP_UART_ABORT_RX_CPLT_CB:
 					bsp_uart_callback.dr16.AbortRxCpltCallback = callback;
 					break;
+				case BSP_UART_IDLE_LINE_CB:
+					bsp_uart_callback.dr16.IdleLineCallback = callback;
+					break;
 				default:
 					return -1;
 			}
@@ -265,6 +268,8 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void
 				case BSP_UART_ABORT_RX_CPLT_CB:
 					bsp_uart_callback.ref.AbortRxCpltCallback = callback;
 					break;
+				case BSP_UART_IDLE_LINE_CB:
+					bsp_uart_callback.ref.IdleLineCallback = callback;
 				default:
 					return -1;
 			}
@@ -296,6 +301,8 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void
 				case BSP_UART_ABORT_RX_CPLT_CB:
 					bsp_uart_callback.xxx.AbortRxCpltCallback = callback;
 					break;
+				case BSP_UART_IDLE_LINE_CB:
+					bsp_uart_callback.xxx.IdleLineCallback = callback;
 				default:
 					return -1;
 			}
