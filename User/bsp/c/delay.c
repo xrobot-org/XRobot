@@ -1,7 +1,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "cmsis_os2.h"
 
-#include "board\delay.h"
+#include "bsp\delay.h"
 
 #include "main.h"
 

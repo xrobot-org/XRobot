@@ -10,9 +10,9 @@
 
 #include <string.h>
 
-#include "board\pwm.h"
-#include "board\usb.h"
-#include "board\mm.h"
+#include "bsp\pwm.h"
+#include "bsp\usb.h"
+#include "bsp\mm.h"
 
 #include "component\ahrs.h"
 #include "component\pid.h"

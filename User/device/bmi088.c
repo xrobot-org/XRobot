@@ -10,9 +10,9 @@
 
 #include "gpio.h"
 
-#include "board\delay.h"
-#include "board\spi.h"
-#include "board\gpio.h"
+#include "bsp\delay.h"
+#include "bsp\spi.h"
+#include "bsp\gpio.h"
 
 #include "component\user_math.h"
 

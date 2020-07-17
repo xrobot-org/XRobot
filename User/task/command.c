@@ -8,7 +8,7 @@
 
 #include <string.h>
 
-#include "board\usb.h"
+#include "bsp\usb.h"
 
 #include "component\config.h"
 

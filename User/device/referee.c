@@ -6,8 +6,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "referee.h"
 
-#include "board\delay.h"
-#include "board\uart.h"
+#include "bsp\delay.h"
+#include "bsp\uart.h"
 
 #include "component\crc8.h"
 #include "component\crc16.h"

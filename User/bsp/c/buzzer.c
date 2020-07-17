@@ -1,7 +1,10 @@
 /* Includes ------------------------------------------------------------------*/
-#include "board\crc32.h"
+#include "bsp\buzzer.h"
 
-#include "crc.h"
+#include "main.h"
+#include "tim.h"
+
+#include "component\user_math.h"
 
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -9,14 +12,19 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-uint32_t BSP_GetCrc32CheckSum(uint32_t *data, uint32_t len) {
-	return HAL_CRC_Calculate(&hcrc, data, len) == HAL_OK;
+int8_t BSP_Buzzer_Start(void) {
+	return HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3); 
 }
 
-bool BSP_VerifyCrc32CheckSum(uint32_t *data, uint32_t len) {
-	return 1;
+int8_t BSP_Buzzer_Set(float32_t freq, float32_t duty_cycle) {
+	uint16_t pulse = duty_cycle * UINT16_MAX;
+	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, pulse);
+	
+	pulse = freq;
+	__HAL_TIM_PRESCALER(&htim4, pulse);
+	return 0;
 }
 
-bool BSP_AppendCrc32CheckSum(uint32_t *data, uint32_t len) {
-	return HAL_CRC_Accumulate(&hcrc, data, len) == HAL_OK;
+int8_t BSP_Buzzer_Stop(void) {
+	return HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3);
 }

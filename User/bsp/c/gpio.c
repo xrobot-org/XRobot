@@ -1,5 +1,5 @@
 /* Includes ------------------------------------------------------------------*/
-#include "board\gpio.h"
+#include "bsp\gpio.h"
 
 #include "main.h"
 #include "gpio.h"

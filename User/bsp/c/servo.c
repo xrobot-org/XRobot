@@ -1,5 +1,5 @@
 /* Includes ------------------------------------------------------------------*/
-#include "board\servo.h"
+#include "bsp\servo.h"
 
 #include "main.h"
 #include "tim.h"

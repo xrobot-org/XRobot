@@ -12,8 +12,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#include "board\usb.h"
-#include "board\flash.h"
+#include "bsp\usb.h"
+#include "bsp\flash.h"
 
 #include "FreeRTOS.h"
 #include "task.h"

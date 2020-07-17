@@ -7,7 +7,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "chassis.h"
 
-#include "board\mm.h"
+#include "bsp\mm.h"
 
 #include "component\user_math.h"
 #include "component\limiter.h"

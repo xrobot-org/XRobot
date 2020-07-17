@@ -1,6 +1,6 @@
 /* Includes ------------------------------------------------------------------*/
-#include "board\usb.h"
-#include "board\delay.h"
+#include "bsp\usb.h"
+#include "bsp\delay.h"
 
 #include "usbd_cdc_if.h"
 

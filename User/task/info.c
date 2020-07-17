@@ -7,9 +7,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "user_task.h"
 
-#include "board\adc.h"
-#include "board\led.h"
-#include "board\usb.h"
+#include "bsp\adc.h"
+#include "bsp\led.h"
+#include "bsp\usb.h"
 
 #include "component\capacity.h"
 #include "component\user_math.h"

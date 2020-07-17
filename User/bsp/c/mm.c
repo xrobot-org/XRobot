@@ -1,7 +1,7 @@
 /* Includes ------------------------------------------------------------------*/
-#include "board\rand.h"
+#include "bsp\mm.h"
 
-#include "rng.h"
+#include "FreeRTOS.h"
 
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -9,3 +9,10 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
+inline void *BSP_Malloc(size_t size) {
+	return pvPortMalloc(size);
+}
+
+inline void BSP_Free(void *pv) {
+	vPortFree(pv);
+}

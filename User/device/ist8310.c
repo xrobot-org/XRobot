@@ -11,9 +11,9 @@
 
 #include "gpio.h"
 
-#include "board\delay.h"
-#include "board\i2c.h"
-#include "board\gpio.h"
+#include "bsp\delay.h"
+#include "bsp\i2c.h"
+#include "bsp\gpio.h"
 
 /* Private define ------------------------------------------------------------*/
 #define IST8310_WAI				(0x00)

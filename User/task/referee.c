@@ -2,7 +2,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "user_task.h"
 
-#include "board\usb.h"
+#include "bsp\usb.h"
 
 #include "device\referee.h"
 
