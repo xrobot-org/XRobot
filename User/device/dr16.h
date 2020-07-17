@@ -36,7 +36,6 @@ typedef struct __packed {
 	uint16_t res;
 } DR16_Data_t;
 
-
 typedef struct {
 	osThreadId_t thread_alert;
 
