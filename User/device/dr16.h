@@ -20,7 +20,7 @@
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
-typedef __packed struct {
+typedef struct __packed {
 	uint16_t ch_r_x:11;
 	uint16_t ch_r_y:11;
 	uint16_t ch_l_x:11;
