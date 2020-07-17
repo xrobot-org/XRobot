@@ -26,7 +26,6 @@
 typedef struct {
 	osThreadId_t thread_alert;
 
-	uint8_t raw[25];
 	AHRS_Accl_t accl;
 	AHRS_Gyro_t gyro;
 	
