@@ -13,8 +13,8 @@ struct {
 		void(*RxCpltCallback)(void);
 		void(*ErrorCallback)(void);
 		void(*AbortCpltCallback)(void);
-		void(*AbortTransmitCpltCallback)(void);
-		void(*AbortReceiveCpltCallback)(void);
+		void(*AbortTxCpltCallback)(void);
+		void(*AbortRxCpltCallback)(void);
 	} dr16;
 	
 	struct {
@@ -24,8 +24,8 @@ struct {
 		void(*RxCpltCallback)(void);
 		void(*ErrorCallback)(void);
 		void(*AbortCpltCallback)(void);
-		void(*AbortTransmitCpltCallback)(void);
-		void(*AbortReceiveCpltCallback)(void);
+		void(*AbortTxCpltCallback)(void);
+		void(*AbortRxCpltCallback)(void);
 	} ref;
 	
 	/*
@@ -36,8 +36,8 @@ struct {
 		void(*RxCpltCallback)(void);
 		void(*ErrorCallback)(void);
 		void(*AbortCpltCallback)(void);
-		void(*AbortTransmitCpltCallback)(void);
-		void(*AbortReceiveCpltCallback)(void);
+		void(*AbortTxCpltCallback)(void);
+		void(*AbortRxCpltCallback)(void);
 	} xxx;
 	*/
 } static bsp_uart_callback;
@@ -132,30 +132,30 @@ void HAL_UART_AbortCpltCallback(UART_HandleTypeDef *huart) {
 
 void HAL_UART_AbortTransmitCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart->Instance == UART_GetInstance(BSP_UART_DR16)) {
-		if (bsp_uart_callback.dr16.AbortTransmitCpltCallback) {
-			bsp_uart_callback.dr16.AbortTransmitCpltCallback();
+		if (bsp_uart_callback.dr16.AbortTxCpltCallback) {
+			bsp_uart_callback.dr16.AbortTxCpltCallback();
 		}
 	} else if (huart->Instance == UART_GetInstance(BSP_UART_REF)) {
-		if (bsp_uart_callback.ref.AbortTransmitCpltCallback) {
-			bsp_uart_callback.ref.AbortTransmitCpltCallback();
+		if (bsp_uart_callback.ref.AbortTxCpltCallback) {
+			bsp_uart_callback.ref.AbortTxCpltCallback();
 		}
 	}
 }
 
 void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart->Instance == UART_GetInstance(BSP_UART_DR16)) {
-		if (bsp_uart_callback.dr16.AbortReceiveCpltCallback) {
-			bsp_uart_callback.dr16.AbortReceiveCpltCallback();
+		if (bsp_uart_callback.dr16.AbortRxCpltCallback) {
+			bsp_uart_callback.dr16.AbortRxCpltCallback();
 		}
 	} else if (huart->Instance == UART_GetInstance(BSP_UART_REF)) {
-		if (bsp_uart_callback.ref.AbortReceiveCpltCallback) {
-			bsp_uart_callback.ref.AbortReceiveCpltCallback();
+		if (bsp_uart_callback.ref.AbortRxCpltCallback) {
+			bsp_uart_callback.ref.AbortRxCpltCallback();
 		}
 	}
 	/* 
 	else if (hspi->Instance == XXX_UART) {
-		if (bsp_uart_callback.xxx.AbortReceiveCpltCallback) {
-			bsp_uart_callback.xxx.AbortReceiveCpltCallback();
+		if (bsp_uart_callback.xxx.AbortRxCpltCallback) {
+			bsp_uart_callback.xxx.AbortRxCpltCallback();
 		}
 	}
 	*/
@@ -184,13 +184,13 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void
 	switch (uart) {
 		case BSP_UART_DR16:
 			switch (type) {
-				case BSP_UART_TX_HALFCOMPLETE_CB:
+				case BSP_UART_TX_HALF_CPLT_CB:
 					bsp_uart_callback.dr16.TxHalfCpltCallback = callback;
 					break;
 				case BSP_UART_TX_CPLT_CB:
 					bsp_uart_callback.dr16.TxCpltCallback = callback;
 					break;
-				case BSP_UART_RX_HALFCOMPLETE_CB:
+				case BSP_UART_RX_HALF_CPLT_CB:
 					bsp_uart_callback.dr16.RxHalfCpltCallback = callback;
 					break;
 				case BSP_UART_RX_CPLT_CB:
@@ -202,11 +202,11 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void
 				case BSP_UART_ABORT_CPLT_CB:
 					bsp_uart_callback.dr16.AbortCpltCallback = callback;
 					break;
-				case BSP_UART_ABORT_TRANSMIT_CPLT_CB:
-					bsp_uart_callback.dr16.AbortTransmitCpltCallback = callback;
+				case BSP_UART_ABORT_TX_CPLT_CB:
+					bsp_uart_callback.dr16.AbortTxCpltCallback = callback;
 					break;
-				case BSP_UART_ABORT_RECEIVE_CPLT_CB:
-					bsp_uart_callback.dr16.AbortReceiveCpltCallback = callback;
+				case BSP_UART_ABORT_RX_CPLT_CB:
+					bsp_uart_callback.dr16.AbortRxCpltCallback = callback;
 					break;
 				default:
 					return -1;
@@ -215,13 +215,13 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void
 			
 		case BSP_UART_REF:
 			switch (type) {
-				case BSP_UART_TX_HALFCOMPLETE_CB:
+				case BSP_UART_TX_HALF_CPLT_CB:
 					bsp_uart_callback.ref.TxHalfCpltCallback = callback;
 					break;
 				case BSP_UART_TX_CPLT_CB:
 					bsp_uart_callback.ref.TxCpltCallback = callback;
 					break;
-				case BSP_UART_RX_HALFCOMPLETE_CB:
+				case BSP_UART_RX_HALF_CPLT_CB:
 					bsp_uart_callback.ref.RxHalfCpltCallback = callback;
 					break;
 				case BSP_UART_RX_CPLT_CB:
@@ -233,11 +233,11 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void
 				case BSP_UART_ABORT_CPLT_CB:
 					bsp_uart_callback.ref.AbortCpltCallback = callback;
 					break;
-				case BSP_UART_ABORT_TRANSMIT_CPLT_CB:
-					bsp_uart_callback.ref.AbortTransmitCpltCallback = callback;
+				case BSP_UART_ABORT_TX_CPLT_CB:
+					bsp_uart_callback.ref.AbortTxCpltCallback = callback;
 					break;
-				case BSP_UART_ABORT_RECEIVE_CPLT_CB:
-					bsp_uart_callback.ref.AbortReceiveCpltCallback = callback;
+				case BSP_UART_ABORT_RX_CPLT_CB:
+					bsp_uart_callback.ref.AbortRxCpltCallback = callback;
 					break;
 				default:
 					return -1;
@@ -246,13 +246,13 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void
 		/*
 		case BSP_UART_XXX:
 			switch (type) {
-				case BSP_UART_TX_HALFCOMPLETE_CB:
+				case BSP_UART_TX_HALF_CPLT_CB:
 					bsp_uart_callback.xxx.TxHalfCpltCallback = callback;
 					break;
 				case BSP_UART_TX_CPLT_CB:
 					bsp_uart_callback.xxx.TxCpltCallback = callback;
 					break;
-				case BSP_UART_RX_HALFCOMPLETE_CB:
+				case BSP_UART_RX_HALF_CPLT_CB:
 					bsp_uart_callback.xxx.RxHalfCpltCallback = callback;
 					break;
 				case BSP_UART_RX_CPLT_CB:
@@ -264,11 +264,11 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void
 				case BSP_UART_ABORT_CPLT_CB:
 					bsp_uart_callback.xxx.AbortCpltCallback = callback;
 					break;
-				case BSP_UART_ABORT_TRANSMIT_CPLT_CB:
-					bsp_uart_callback.xxx.AbortTransmitCpltCallback = callback;
+				case BSP_UART_ABORT_TX_CPLT_CB:
+					bsp_uart_callback.xxx.AbortTxCpltCallback = callback;
 					break;
-				case BSP_UART_ABORT_RECEIVE_CPLT_CB:
-					bsp_uart_callback.xxx.AbortReceiveCpltCallback = callback;
+				case BSP_UART_ABORT_RX_CPLT_CB:
+					bsp_uart_callback.xxx.AbortRxCpltCallback = callback;
 					break;
 				default:
 					return -1;
