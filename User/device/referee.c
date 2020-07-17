@@ -15,18 +15,27 @@
 
 /* Private define ------------------------------------------------------------*/
 #define REF_HEADER_SOF (0xA5)
+#define REF_LEN_RX_BUFF (0xFF)
 
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static Referee_t *gref;
 static bool inited = false;
+static uint8_t rxbuf[REF_LEN_RX_BUFF];
 
 /* Private function  ---------------------------------------------------------*/
 static void Referee_RxCpltCallback(void) {
 	osThreadFlagsSet(gref->thread_alert, REFEREE_SIGNAL_RAW_REDY);
 }
 
+static void Referee_IdleLineCallback(void) {
+	HAL_UART_AbortReceive_IT(BSP_UART_GetHandle(BSP_UART_REF));
+}
+
+static void Referee_AbortRxCpltCallback(void) {
+	osThreadFlagsSet(gref->thread_alert, REFEREE_SIGNAL_RAW_REDY);
+}
 
 /* Exported functions --------------------------------------------------------*/
 int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert) {
@@ -38,7 +47,10 @@ int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert) {
 	
 	ref->thread_alert = thread_alert;
 	
-	BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_RX_COMPLETE_CB, Referee_RxCpltCallback);
+	BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_RX_CPLT_CB, Referee_RxCpltCallback);
+	BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_ABORT_RX_CPLT_CB, Referee_AbortRxCpltCallback);
+	
+	__HAL_UART_ENABLE_IT(BSP_UART_GetHandle(BSP_UART_REF), UART_IT_IDLE);
 	
 	gref = ref;
 	inited = true;
@@ -51,91 +63,134 @@ Referee_t *Referee_GetDevice(void) {
 	
 	return NULL;
 }
+
 int8_t Referee_Restart(void) {
-	// TODO
+	__HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_DR16));
+	__HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_DR16));
 	return 0;
 }
 
-int8_t Referee_StartReceivingHeader(Referee_t *ref) {
-	return BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->header), sizeof(Referee_FrameHeader_t));
+int8_t Referee_StartReceiving(Referee_t *ref) {
+	return HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_REF), rxbuf, sizeof(REF_LEN_RX_BUFF));
 }
 
-int8_t Referee_StartReceivingCMDID(Referee_t *ref) {
-	return BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->cmd_id), sizeof(Referee_CMDID_t));
-}
-
-int8_t Referee_StartReceivingData(Referee_t *ref) {
-	switch (ref->cmd_id) {
+int8_t Referee_Parse(Referee_t *ref) {
+	uint8_t data_length = REF_LEN_RX_BUFF - __HAL_DMA_GET_COUNTER(BSP_UART_GetHandle(BSP_UART_REF)->hdmarx);
+	
+	uint8_t index = 0;
+	
+	Referee_Header_t *header = (Referee_Header_t*)(rxbuf + index);
+	index += sizeof(Referee_Header_t);
+	if (index >= data_length)
+		return -1;
+	
+	if (CRC8_Verify((uint8_t*)header, sizeof(Referee_Header_t)))
+		return -1;
+	
+	if (header->sof != REF_HEADER_SOF)
+		return -1;
+	
+	Referee_CMDID_t *cmd_id = (Referee_CMDID_t*)(rxbuf + index);
+	index += sizeof(Referee_CMDID_t);
+	if (index >= data_length)
+		return -1;
+	
+	void *target = (rxbuf + index);
+	void *origin;
+	size_t size;
+	
+	switch (*cmd_id) {
 		case REF_CMD_ID_GAME_STATUS:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->game_status), sizeof(Referee_GameStatus_t));
+			origin = &(ref->game_status);
+			size = sizeof(Referee_GameStatus_t);
 			break;
 		case REF_CMD_ID_GAME_RESULT:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->game_result), sizeof(Referee_GameResult_t));
+			origin = &(ref->game_result); 
+			size = sizeof(Referee_GameResult_t);
 			break;
 		case REF_CMD_ID_GAME_ROBOT_HP:	
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->game_robot_hp), sizeof(Referee_GameRobotHP_t));
+			origin = &(ref->game_robot_hp);
+			size = sizeof(Referee_GameRobotHP_t);
 			break;
 		case REF_CMD_ID_DART_STATUS:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->dart_status), sizeof(Referee_DartStatus_t));
+			origin = &(ref->dart_status);
+			size = sizeof(Referee_DartStatus_t);
 			break;
 		case REF_CMD_ID_ICRA_ZONE_STATUS:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->icra_zone), sizeof(Referee_ICRAZoneStatus_t));
+			origin = &(ref->icra_zone);
+			size = sizeof(Referee_ICRAZoneStatus_t);
 			break;
 		case REF_CMD_ID_FIELD_EVENTS:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->field_event), sizeof(Referee_FieldEvents_t));
+			origin = &(ref->field_event);
+			size = sizeof(Referee_FieldEvents_t);
 			break;
 		case REF_CMD_ID_SUPPLY_ACTION:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->supply_action), sizeof(Referee_SupplyAction_t));
+			origin = &(ref->supply_action);
+			size = sizeof(Referee_SupplyAction_t);
 			break;
 		case REF_CMD_ID_WARNING:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->warning), sizeof(Referee_Warning_t));
+			origin = &(ref->warning);
+			size = sizeof(Referee_Warning_t);
 			break;
 		case REF_CMD_ID_DART_COUNTDOWN:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->dart_countdown), sizeof(Referee_DartCountdown_t));
+			origin = &(ref->dart_countdown);
+			size = sizeof(Referee_DartCountdown_t);
 			break;
 		case REF_CMD_ID_ROBOT_STATUS:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->robot_status), sizeof(Referee_RobotStatus_t));
+			origin = &(ref->robot_status);
+			size = sizeof(Referee_RobotStatus_t);
 			break;
 		case REF_CMD_ID_POWER_HEAT_DATA:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->power_heat), sizeof(Referee_PowerHeat_t));
+			origin = &(ref->power_heat);
+			size = sizeof(Referee_PowerHeat_t);
 			break;
 		case REF_CMD_ID_ROBOT_POS:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->robot_pos), sizeof(Referee_RobotPos_t));
+			origin = &(ref->robot_pos);
+			size = sizeof(Referee_RobotPos_t);
 			break;
 		case REF_CMD_ID_ROBOT_BUFF:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->robot_buff), sizeof(Referee_RobotBuff_t));
+			origin = &(ref->robot_buff);
+			size = sizeof(Referee_RobotBuff_t);
 			break;
 		case REF_CMD_ID_DRONE_ENERGY:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->drone_energy), sizeof(Referee_DroneEnergy_t));
+			origin = &(ref->drone_energy);
+			size = sizeof(Referee_DroneEnergy_t);
 			break;
 		case REF_CMD_ID_ROBOT_DMG:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->robot_danage), sizeof(Referee_RobotDamage_t));
+			origin = &(ref->robot_danage);
+			size = sizeof(Referee_RobotDamage_t);
 			break;
 		case REF_CMD_ID_SHOOT_DATA:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->shoot_data), sizeof(Referee_ShootData_t));
+			origin = &(ref->shoot_data);
+			size = sizeof(Referee_ShootData_t);
 			break;
 		case REF_CMD_ID_BULLET_REMAINING:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->bullet_remain), sizeof(Referee_BulletRemain_t));
+			origin = &(ref->bullet_remain);
+			size = sizeof(Referee_BulletRemain_t);
 			break;
 		case REF_CMD_ID_RFID:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->rfid), sizeof(Referee_RFID_t));
+			origin = &(ref->rfid);
+			size = sizeof(Referee_RFID_t);
 			break;
 		case REF_CMD_ID_DART_CLIENT:
-			BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->dart_client), sizeof(Referee_DartClient_t));
+			origin = &(ref->dart_client);
+			size = sizeof(Referee_DartClient_t);
 			break;
 		default:
 			return -1;
 	}
+	index += size;
+	if (index >= data_length)
+		return -1;
+	
+	index += sizeof(Referee_Tail_t);
+	if (index != data_length)
+		return -1;
+	
+	if (CRC16_Verify((uint8_t*)header, sizeof(Referee_Header_t)))
+		memcpy(target, origin, size);
+	else
+		return -1;
+	
 	return 0;
-}
-
-int8_t Referee_StartReceivingTail(Referee_t *ref) {
-	return BSP_UART_ReceiveDMA(BSP_UART_REF, (uint8_t*)&(ref->tail), sizeof(Referee_Tail_t));
-}
-
-
-bool Referee_CheckHeader(Referee_t *ref) {
-	bool con1 = (ref->header.sof == REF_HEADER_SOF);
-	bool con2 = CRC8_Verify((uint8_t*)&(ref->header), sizeof(Referee_FrameHeader_t));
-	return con1 && con2;
 }

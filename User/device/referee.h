@@ -15,12 +15,12 @@
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t sof;
 	uint16_t data_length;
 	uint8_t seq;
 	uint8_t crc8;
-} Referee_FrameHeader_t;
+} Referee_Header_t;
 
 typedef enum {
 	REF_CMD_ID_GAME_STATUS			= 0x0001,
@@ -45,17 +45,17 @@ typedef enum {
 	REF_CMD_ID_INTER_STUDENT		= 0x0301,
 } Referee_CMDID_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t game_type:4;
 	uint8_t game_progress:4;
 	uint16_t stage_remain_time;
 } Referee_GameStatus_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t winner;
 } Referee_GameResult_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint16_t red_1;
 	uint16_t red_2;
 	uint16_t red_3;
@@ -76,39 +76,39 @@ typedef __packed struct {
 	uint16_t blue_base;
 } Referee_GameRobotHP_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t dart_belong;
 	uint16_t stage_remain_time;
 } Referee_DartStatus_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t place_holder; // TODO
 } Referee_ICRAZoneStatus_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t copter_pad:2;
 	uint8_t energy_mech:2;
 	uint8_t virtual_shield:1;
 	uint32_t res:27;
 } Referee_FieldEvents_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t supply_id;
 	uint8_t robot_id;
 	uint8_t supply_step;
 	uint8_t supply_sum;
 } Referee_SupplyAction_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t level;
 	uint8_t robot_id;
 } Referee_Warning_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t countdown;
 } Referee_DartCountdown_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t robot_id;
 	uint8_t robot_level;
 	uint16_t remain_hp;
@@ -125,7 +125,7 @@ typedef __packed struct {
 	uint8_t power_shoot_output:1;
 } Referee_RobotStatus_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint16_t chassis_volt;
 	uint16_t chassis_amp;
 	float32_t chassis_watt;
@@ -135,14 +135,14 @@ typedef __packed struct {
 	uint16_t shoot_17_opt_heat;
 } Referee_PowerHeat_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	float32_t x;
 	float32_t y;
 	float32_t z;
 	float32_t yaw;
 } Referee_RobotPos_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t healing:1;
 	uint8_t cooling_acc:1;
 	uint8_t defense_buff:1;
@@ -150,27 +150,27 @@ typedef __packed struct {
 	uint8_t res:4;
 } Referee_RobotBuff_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint16_t energy_point;
 	uint8_t attack_countdown;
 } Referee_DroneEnergy_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t armor_id:4;
 	uint8_t damage_type:4;
 } Referee_RobotDamage_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t bullet_type;
 	uint8_t bullet_freq;
 	float32_t bullet_speed;
 } Referee_ShootData_t;	
 
-typedef __packed struct {
+typedef struct __packed {
 	uint16_t bullet_remain;
 } Referee_BulletRemain_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t base:1;
 	uint8_t high_ground:1;
 	uint8_t energy_mech:1;
@@ -181,7 +181,7 @@ typedef __packed struct {
 	uint32_t res:24;
 } Referee_RFID_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t opening;
 	uint8_t target;
 	uint8_t target_changable_countdown;
@@ -238,24 +238,24 @@ typedef enum {
 	REF_STDNT_CMD_ID_CUSTOM		= 0x0200,
 } Referee_StudentCMDID_t;
 
-typedef __packed struct {
+typedef  struct __packed {
 	Referee_StudentCMDID_t data_cmd_id;
 	uint16_t id_sender;
 	uint16_t id_receiver;
 	uint8_t *data;
 } Referee_InterStudent_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t place_holder;
 } Referee_InterStudent_Custom_t;
 
 /* op: 0: no op; 1: del layer; 2: del all */
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t op;
 	uint8_t num_layer;
 } Referee_InterStudent_UIDel_t;
 
-typedef __packed struct {
+typedef struct __packed {
 	uint8_t name[3];
 	uint8_t type_op:3;
 	uint8_t type_ele:3;
@@ -271,12 +271,9 @@ typedef __packed struct {
 	uint16_t y_end:11;
 } Referee_InterStudent_UIEle_t;
 
-typedef __packed struct {
+typedef struct {
 	osThreadId_t thread_alert;
 	
-	Referee_FrameHeader_t header;
-	Referee_CMDID_t cmd_id;
-
 	Referee_GameStatus_t			game_status;
 	Referee_GameResult_t			game_result;
 	Referee_GameRobotHP_t			game_robot_hp;
@@ -298,7 +295,6 @@ typedef __packed struct {
 	Referee_DartClient_t			dart_client;
 	Referee_InterStudent_Custom_t	custom;
 	
-	Referee_Tail_t tail;
 } Referee_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -306,10 +302,5 @@ int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert);
 Referee_t *Referee_GetDevice(void);
 int8_t Referee_Restart(void);
 
-int8_t Referee_StartReceivingHeader(Referee_t *ref);
-int8_t Referee_StartReceivingCMDID(Referee_t *ref);
-int8_t Referee_StartReceivingData(Referee_t *ref);
-int8_t Referee_StartReceivingTail(Referee_t *ref);
-
-
-bool Referee_CheckHeader(Referee_t *ref);
+int8_t Referee_StartReceiving(Referee_t *ref);
+int8_t Referee_Parse(Referee_t *ref);

@@ -27,19 +27,11 @@ void Task_Referee(void *argument) {
 		/* Task body */
 		tick += delay_tick;
 		
-		Referee_StartReceivingHeader(&ref);
+		Referee_StartReceiving(&ref);
 		osThreadFlagsWait(REFEREE_SIGNAL_RAW_REDY, osFlagsWaitAll, osWaitForever);
 		
-		if (Referee_CheckHeader(&ref)) {
-			Referee_StartReceivingCMDID(&ref);
-			osThreadFlagsWait(REFEREE_SIGNAL_RAW_REDY, osFlagsWaitAll, osWaitForever);
-			
-			Referee_StartReceivingData(&ref);
-			osThreadFlagsWait(REFEREE_SIGNAL_RAW_REDY, osFlagsWaitAll, osWaitForever);
-			
-			Referee_StartReceivingTail(&ref);
-			osThreadFlagsWait(REFEREE_SIGNAL_RAW_REDY, osFlagsWaitAll, osWaitForever);
-		}
+		Referee_Parse(&ref);
+		
 		osDelayUntil(tick);
 	}
 }
