@@ -11,7 +11,7 @@
 #include "component\user_math.h"
 
 /* Exported constants --------------------------------------------------------*/
-#define REFEREE_SIGNAL_RAW_REDY (1u<<6)
+#define REFEREE_SIGNAL_RAW_REDY (1u<<9)
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
