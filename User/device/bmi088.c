@@ -187,7 +187,6 @@ int8_t BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert) {
 	if (inited)
 		return BMI088_ERR_INITED;
 	
-	
 	bmi088->thread_alert = thread_alert;
 	
 	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_SOFTRESET_REG, 0xB6);
