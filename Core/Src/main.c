@@ -186,7 +186,7 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 /* High freq timer ticks for runtime stats */
-extern unsigned long high_freq_timer_ticks;;
+extern unsigned long high_freq_timer_ticks;
 /* USER CODE END 4 */
 
  /**
