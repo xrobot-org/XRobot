@@ -897,11 +897,6 @@
               <FilePath>..\User\component\ahrs.c</FilePath>
             </File>
             <File>
-              <FileName>auto_aimer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\component\auto_aimer.c</FilePath>
-            </File>
-            <File>
               <FileName>ballistics.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\component\ballistics.c</FilePath>
@@ -940,11 +935,6 @@
               <FileName>filter.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\component\filter.c</FilePath>
-            </File>
-            <File>
-              <FileName>hud.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\component\hud.c</FilePath>
             </File>
             <File>
               <FileName>limiter.c</FileName>
@@ -1900,11 +1890,6 @@
               <FilePath>..\User\component\ahrs.c</FilePath>
             </File>
             <File>
-              <FileName>auto_aimer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\component\auto_aimer.c</FilePath>
-            </File>
-            <File>
               <FileName>ballistics.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\component\ballistics.c</FilePath>
@@ -1943,11 +1928,6 @@
               <FileName>filter.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\component\filter.c</FilePath>
-            </File>
-            <File>
-              <FileName>hud.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\component\hud.c</FilePath>
             </File>
             <File>
               <FileName>limiter.c</FileName>
