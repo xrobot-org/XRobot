@@ -25,7 +25,7 @@
 #include "task.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "board/uart.h"
+#include "bsp/uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
