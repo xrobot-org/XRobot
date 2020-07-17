@@ -26,5 +26,6 @@ typedef enum {
 } BSP_UART_Callback_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
+void BSP_UART_IRQHandler(UART_HandleTypeDef *huart);
 UART_HandleTypeDef *BSP_UART_GetHandle(BSP_UART_t uart);
 int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void (*callback)(void));

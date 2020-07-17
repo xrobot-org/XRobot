@@ -15,6 +15,7 @@ struct {
 		void(*AbortCpltCallback)(void);
 		void(*AbortTxCpltCallback)(void);
 		void(*AbortRxCpltCallback)(void);
+		void(*IdleLineCallback)(void);
 	} dr16;
 	
 	struct {
@@ -26,6 +27,7 @@ struct {
 		void(*AbortCpltCallback)(void);
 		void(*AbortTxCpltCallback)(void);
 		void(*AbortRxCpltCallback)(void);
+		void(*IdleLineCallback)(void);
 	} ref;
 	
 	/*
@@ -38,6 +40,7 @@ struct {
 		void(*AbortCpltCallback)(void);
 		void(*AbortTxCpltCallback)(void);
 		void(*AbortRxCpltCallback)(void);
+		void(*IdleLineCallback)(void);
 	} xxx;
 	*/
 } static bsp_uart_callback;
@@ -162,6 +165,29 @@ void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 /* Exported functions --------------------------------------------------------*/
+void BSP_UART_IRQHandler(UART_HandleTypeDef *huart) {
+	if (__HAL_UART_GET_FLAG(huart, UART_FLAG_IDLE)) {
+		__HAL_UART_CLEAR_FLAG(huart, UART_FLAG_IDLE);
+		if (huart->Instance == UART_GetInstance(BSP_UART_DR16)) {
+			if (bsp_uart_callback.dr16.IdleLineCallback) {
+				bsp_uart_callback.dr16.IdleLineCallback();
+			}
+		} else if (huart->Instance == UART_GetInstance(BSP_UART_REF)) {
+			if (bsp_uart_callback.ref.IdleLineCallback) {
+				bsp_uart_callback.ref.IdleLineCallback();
+			}
+		}
+		/* 
+		else if (hspi->Instance == XXX_UART) {
+			if (bsp_uart_callback.xxx.IdleLineCallback) {
+				bsp_uart_callback.xxx.IdleLineCallback();
+			}
+		}
+		*/
+		return;
+	}
+}
+
 UART_HandleTypeDef *BSP_UART_GetHandle(BSP_UART_t uart) {
 		switch (uart) {
 		case BSP_UART_DR16:
