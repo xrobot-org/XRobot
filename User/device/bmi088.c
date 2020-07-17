@@ -79,7 +79,7 @@ typedef enum {
 
 /* Private variables ---------------------------------------------------------*/
 static uint8_t buffer[2];
-static uint8_t rxbuf[BMI088_LEN_RX_BUFF];
+static uint8_t bmi088_rxbuf[BMI088_LEN_RX_BUFF];
 
 static BMI088_t *gimu;
 static bool inited = false;
@@ -263,26 +263,35 @@ BMI088_t *BMI088_GetDevice(void) {
 }
 
 int8_t BMI088_ReceiveAccl(BMI088_t *bmi088) {
-	BMI_Read(BMI_ACCL, BMI088_ACCL_X_LSB_REG, rxbuf, BMI088_LEN_RX_BUFF);
+	if (bmi088 == NULL)
+		return BMI088_ERR_NULL;
+	
+	BMI_Read(BMI_ACCL, BMI088_ACCL_X_LSB_REG, bmi088_rxbuf, BMI088_LEN_RX_BUFF);
 	return BMI088_OK;
 }
 
 int8_t BMI088_ReceiveGyro(BMI088_t *bmi088) {
-	BMI_Read(BMI_GYRO, BMI088_GYRO_X_LSB_REG, rxbuf + 7, 6u);
+	if (bmi088 == NULL)
+		return BMI088_ERR_NULL;
+	
+	BMI_Read(BMI_GYRO, BMI088_GYRO_X_LSB_REG, bmi088_rxbuf + 7, 6u);
 	return BMI088_OK;
 }
 
 int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
-	const int16_t *raw_x = (int16_t *)(rxbuf + 1);
-	const int16_t *raw_y = (int16_t *)(rxbuf + 3);
-	const int16_t *raw_z = (int16_t *)(rxbuf + 5);
+	if (bmi088 == NULL)
+		return BMI088_ERR_NULL;
+	
+	const int16_t *raw_x = (int16_t *)(bmi088_rxbuf + 1);
+	const int16_t *raw_y = (int16_t *)(bmi088_rxbuf + 3);
+	const int16_t *raw_z = (int16_t *)(bmi088_rxbuf + 5);
 	
 	/* 3G: 10920. 6G: 5460. 12G: 2730. 24G: 1365. */
 	bmi088->accl.x = (float32_t)*raw_x / 5460.f;
 	bmi088->accl.y = (float32_t)*raw_y / 5460.f;
 	bmi088->accl.z = (float32_t)*raw_z / 5460.f;
 	
-	uint16_t raw_temp = (rxbuf[17] << 3) | (rxbuf[18] >> 5);
+	uint16_t raw_temp = (bmi088_rxbuf[17] << 3) | (bmi088_rxbuf[18] >> 5);
 	
 	if (raw_temp > 1023)
 		raw_temp -= 2048;
@@ -293,10 +302,13 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
 }
 
 int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
+	if (bmi088 == NULL)
+		return BMI088_ERR_NULL;
+	
 	/* Gyroscope imu_raw -> degrees/sec -> radians/sec */
-	const int16_t *raw_x = (int16_t *)(rxbuf + 7);
-	const int16_t *raw_y = (int16_t *)(rxbuf + 9);
-	const int16_t *raw_z = (int16_t *)(rxbuf + 11);
+	const int16_t *raw_x = (int16_t *)(bmi088_rxbuf + 7);
+	const int16_t *raw_y = (int16_t *)(bmi088_rxbuf + 9);
+	const int16_t *raw_z = (int16_t *)(bmi088_rxbuf + 11);
 	
 	/* FS125: 262.144. FS250: 131.072. FS500: 65.536. FS1000: 32.768. FS2000: 16.384.*/
 	bmi088->gyro.x = (float32_t)*raw_x / 32.768f * MATH_DEG_TO_RAD_MULT;
