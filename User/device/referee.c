@@ -49,6 +49,7 @@ int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert) {
 	
 	BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_RX_CPLT_CB, Referee_RxCpltCallback);
 	BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_ABORT_RX_CPLT_CB, Referee_AbortRxCpltCallback);
+	BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_IDLE_LINE_CB, Referee_IdleLineCallback);
 	
 	__HAL_UART_ENABLE_IT(BSP_UART_GetHandle(BSP_UART_REF), UART_IT_IDLE);
 	
