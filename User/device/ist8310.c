@@ -35,7 +35,7 @@
 #define IST8310_LEN_RX_BUFF (6)
 /* Private macro -------------------------------------------------------------*/
 #define IST8310_SET()		HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_SET)
-#define IST8310_RESET()	HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_RESET)
+#define IST8310_RESET()		HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_RESET)
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -68,7 +68,6 @@ static void IST8310_Write(uint8_t reg, uint8_t *data, uint8_t len) {
 	
 	HAL_I2C_Mem_Write_DMA(BSP_I2C_GetHandle(BSP_I2C_COMP), IST8310_IIC_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT, data, len);
 }
-
 
 static void IST8310_MemRxCpltCallback(void) {
 	osThreadFlagsSet(gist8310->thread_alert, SIGNAL_IST8310_MAGN_RAW_REDY);
@@ -104,8 +103,8 @@ int8_t IST8310_Init(IST8310_t *ist8310, osThreadId_t thread_alert) {
 	/* Init. */
 	/* 0x00: Stand-By mode. 0x01: Single measurement mode. */
 	
-	/* 0x08: Data ready function enable. 0x04: DRDY signal active */
-	IST8310_WriteSingle(IST8310_CNTL2, 0x0C);
+	/* 0x08: Data ready function enable. DRDY signal active low*/
+	IST8310_WriteSingle(IST8310_CNTL2, 0x08);
 	
 	IST8310_WriteSingle(IST8310_AVGCNTL, 0x02);
 	IST8310_WriteSingle(IST8310_PDCNTL, 0xC0);
