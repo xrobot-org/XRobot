@@ -42,7 +42,7 @@ void Task_CtrlShoot(void *argument) {
 		tick += delay_tick;
 		
 		uint32_t flag = SIGNAL_CAN_MOTOR_RECV;
-		if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
+		if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) == osFlagsErrorTimeout) {
 			CAN_Motor_ControlShoot(0.f, 0.f, 0.f);
 			
 		} else {

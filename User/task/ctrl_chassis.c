@@ -53,7 +53,7 @@ void Task_CtrlChassis(void *argument) {
 		
 		uint32_t flag = SIGNAL_CAN_MOTOR_RECV;
 		
-		if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
+		if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) == osFlagsErrorTimeout) {
 			CAN_Motor_ControlChassis(0.f, 0.f, 0.f, 0.f);
 			
 		} else {
