@@ -52,25 +52,26 @@ void Task_CtrlChassis(void *argument) {
 		tick += delay_tick;
 		
 		uint32_t flag = SIGNAL_CAN_MOTOR_RECV;
+		
 		if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
+			CAN_Motor_ControlChassis(0.f, 0.f, 0.f, 0.f);
+			
+		} else {
 			osMessageQueueGet(task_param->messageq.cmd, cmd, NULL, 0);
 		
 			osKernelLock();
 			Chassis_UpdateFeedback(&chassis, &cd);
-			osKernelUnlock();
-			
 			Chassis_Control(&chassis, &(cmd->chassis));
-			
-			// Check can error
+			// TODO: Check can error
 			CAN_Motor_ControlChassis(
 				chassis.motor_cur_out[0],
 				chassis.motor_cur_out[1],
 				chassis.motor_cur_out[2],
 				chassis.motor_cur_out[3]);
 			
+			osKernelUnlock();
+			
 			osDelayUntil(tick);
-		} else {
-			CAN_Motor_ControlChassis(0.f, 0.f, 0.f, 0.f);
 		}
 	}
 }

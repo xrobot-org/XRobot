@@ -43,24 +43,22 @@ void Task_CtrlShoot(void *argument) {
 		
 		uint32_t flag = SIGNAL_CAN_MOTOR_RECV;
 		if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
+			CAN_Motor_ControlShoot(0.f, 0.f, 0.f);
+			
+		} else {
 			osMessageQueueGet(task_param->messageq.cmd, cmd, NULL, 0);
 			
 			osKernelLock();
 			Shoot_UpdateFeedback(&shoot, cd);
-			osKernelUnlock();
-			
 			Shoot_Control(&shoot, &(cmd->shoot));
-			
-			// TODO: Check can error.
 			CAN_Motor_ControlShoot(
 				shoot.fric_cur_out[0],
 				shoot.fric_cur_out[1],
 				shoot.trig_cur_out
 			);
+			osKernelUnlock();
 			
 			osDelayUntil(tick);
-		} else {
-			CAN_Motor_ControlShoot(0.f, 0.f, 0.f);
 		}
 	}
 }
