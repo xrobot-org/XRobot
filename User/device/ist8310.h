@@ -11,7 +11,7 @@
 
 /* Exported constants --------------------------------------------------------*/
 #define IST8310_OK			(0)
-#define IST8310_ERR		(-1)
+#define IST8310_ERR			(-1)
 #define IST8310_ERR_NULL	(-2)
 #define IST8310_ERR_INITED	(-3)
 #define IST8310_ERR_NO_DEV	(-4)
