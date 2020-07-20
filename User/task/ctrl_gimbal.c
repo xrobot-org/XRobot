@@ -31,12 +31,15 @@ void Task_CtrlGimbal(void *argument) {
 	
 	Gimbal_Init(
 		&gimbal, 
-		&(Config_GetRobot(CONFIG_ROBOT_MODEL_INFANTRY)->param.gimbal),
+		&(task_param->config->param.gimbal),
 		(float32_t)delay_tick / (float32_t)osKernelGetTickFreq(),
 		BMI088_GetDevice());
 	
 	uint32_t tick = osKernelGetTickCount();
 	while(1) {
+#ifdef DEBUG
+		task_param->stack_water_mark.ctrl_gimbal = uxTaskGetStackHighWaterMark(NULL);
+#endif
 		/* Task body */
 		tick += delay_tick;
 		
@@ -58,8 +61,5 @@ void Task_CtrlGimbal(void *argument) {
 		} else {
 			CAN_Motor_ControlGimbal(0.f, 0.f);
 		}
-#ifdef DEBUG
-		task_param->stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
-#endif
 	}
 }

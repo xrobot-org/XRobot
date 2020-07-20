@@ -65,6 +65,9 @@ void Task_PosEsti(void *argument) {
 	BSP_PWM_Start(BSP_PWM_IMU_HEAT);
 	
 	while(1) {
+#ifdef DEBUG
+		task_param->stack_water_mark.pos_esti = uxTaskGetStackHighWaterMark(NULL);
+#endif
 		/* Task body */
 		osThreadFlagsWait(SIGNAL_BMI088_ACCL_NEW_DATA, osFlagsWaitAll, osWaitForever);
 		BMI088_ReceiveAccl(&bmi088);
@@ -89,8 +92,5 @@ void Task_PosEsti(void *argument) {
 		
 		BSP_PWM_Set(BSP_PWM_IMU_HEAT, PID_Calc(&imu_temp_ctrl_pid, 50.f, bmi088.temp, 0.f, 0.f));
 		
-#ifdef DEBUG
-		task_param->stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
-#endif
 	}
 }

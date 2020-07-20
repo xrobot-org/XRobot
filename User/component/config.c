@@ -157,6 +157,6 @@ const Config_User_t *Config_GetUser(Config_UserName_t user) {
 	}
 }
 
-const Config_Robot_t **RobotConfig_GetDefault(void) {
-	return NULL;
+const Config_Robot_t *Config_GetRobotDefalult(void) {
+	return &config_infantry;
 }

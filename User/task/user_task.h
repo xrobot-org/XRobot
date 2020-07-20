@@ -5,6 +5,8 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "component/config.h"
+
 /* Exported constants --------------------------------------------------------*/
 /* 所有任务都要define一个“任务运行频率”和“初始化延时”。 */
 #define TASK_FREQ_HZ_CLI					(5u)
@@ -50,6 +52,8 @@ typedef struct {
 		/* Command */
 		osMessageQueueId_t cmd;
 	} messageq;
+		
+	Config_Robot_t *config;
 	
 	#ifdef DEBUG
 	struct {
@@ -65,8 +69,16 @@ typedef struct {
 	} stack_water_mark;
 	#endif
 	
-	
 } Task_Param_t;
+
+extern const osThreadAttr_t command_attr;
+extern const osThreadAttr_t ctrl_chassis_attr;
+extern const osThreadAttr_t ctrl_gimbal_attr;
+extern const osThreadAttr_t ctrl_shoot_attr;
+extern const osThreadAttr_t info_attr;
+extern const osThreadAttr_t monitor_attr;
+extern const osThreadAttr_t pos_esti_attr;
+extern const osThreadAttr_t referee_attr;
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Task_CLI(void *argument);

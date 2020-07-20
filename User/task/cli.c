@@ -26,6 +26,8 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+Task_Param_t task_param;
+
 static const char* const CLI_WELCOME_MESSAGE = 
 	"\r\n"
 	"  ______         __           _______               __              \r\n"
@@ -160,8 +162,6 @@ static char input[MAX_INPUT_LENGTH];
 /* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_CLI(void *argument) {
-	Task_Param_t *task_param = (Task_Param_t*)argument;
-	
 	uint16_t index = 0;
 	BaseType_t processing = 0;
 	char rx_char;
@@ -175,7 +175,23 @@ void Task_CLI(void *argument) {
 	FreeRTOS_CLIRegisterCommand(&stats);
 	FreeRTOS_CLIRegisterCommand(&set_model);
 	
-	/* Save CPU power when CLI not used. */
+	/* Init robot part. */
+	task_param.config = Config_GetRobotDefalult();
+	
+	task_param.thread.cli			= osThreadGetId();
+	
+	osKernelLock();
+	task_param.thread.command		= osThreadNew(Task_Command,		&task_param, &command_attr);
+	task_param.thread.ctrl_chassis	= osThreadNew(Task_CtrlChassis,	&task_param, &ctrl_chassis_attr);
+	task_param.thread.ctrl_gimbal	= osThreadNew(Task_CtrlGimbal,	&task_param, &ctrl_gimbal_attr);
+	task_param.thread.ctrl_shoot	= osThreadNew(Task_CtrlShoot,	&task_param, &ctrl_shoot_attr);
+	task_param.thread.info			= osThreadNew(Task_Info,		&task_param, &info_attr);
+	task_param.thread.monitor		= osThreadNew(Task_Monitor,		&task_param, &monitor_attr);
+	task_param.thread.pos_esti		= osThreadNew(Task_PosEsti,		&task_param, &pos_esti_attr);
+	task_param.thread.referee		= osThreadNew(Task_Referee,		&task_param, &referee_attr);
+	osKernelUnlock();
+	
+	/* Command Line Interface part. */
 	BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
 	while(1) {
 		BSP_USB_ReadyReceive(osThreadGetId());
@@ -194,6 +210,9 @@ void Task_CLI(void *argument) {
 	BSP_USB_Printf("rm>");
 	
 	while(1) {
+#ifdef DEBUG
+		task_param.stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
+#endif
 		/* Task body */
 		
 		/* Wait for input. */
@@ -228,8 +247,5 @@ void Task_CLI(void *argument) {
 				}
 			}
 		}
-#ifdef DEBUG
-		task_param->stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
-#endif
 	}
 }

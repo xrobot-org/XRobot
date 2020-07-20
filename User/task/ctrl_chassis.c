@@ -39,12 +39,15 @@ void Task_CtrlChassis(void *argument) {
 	/* Module Setup */
 	Chassis_Init(
 		&chassis,
-		&(Config_GetRobot(CONFIG_ROBOT_MODEL_INFANTRY)->param.chassis),
+		&(task_param->config->param.chassis),
 		(float32_t)delay_tick / (float32_t)osKernelGetTickFreq());
 	
 	/* Task Setup */
 	uint32_t tick = osKernelGetTickCount();
 	while(1) {
+#ifdef DEBUG
+		task_param->stack_water_mark.ctrl_chassis = uxTaskGetStackHighWaterMark(NULL);
+#endif
 		/* Task body */
 		tick += delay_tick;
 		
@@ -69,8 +72,5 @@ void Task_CtrlChassis(void *argument) {
 		} else {
 			CAN_Motor_ControlChassis(0.f, 0.f, 0.f, 0.f);
 		}
-#ifdef DEBUG
-		task_param->stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
-#endif
 	}
 }

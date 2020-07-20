@@ -48,64 +48,15 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-Task_Param_t task_param;
-
-/* TIM7 are used to generater high freq tick for debug. */
-volatile unsigned long high_freq_timer_ticks;
 
 static const osThreadAttr_t cli_attr = {
   .name = "cli",
   .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 512,
+  .stack_size = 256 * 4,
 };
 
-static const osThreadAttr_t command_attr = {
-  .name = "command",
-  .priority = (osPriority_t) osPriorityHigh,
-  .stack_size = 512,
-};
-
-static const osThreadAttr_t ctrl_chassis_attr = {
-  .name = "ctrl_chassis",
-  .priority = (osPriority_t) osPriorityAboveNormal,
-  .stack_size = 512,
-};
-
-static const osThreadAttr_t ctrl_gimbal_attr = {
-  .name = "ctrl_gimbal",
-  .priority = (osPriority_t) osPriorityAboveNormal,
-  .stack_size = 512,
-};
-
-static const osThreadAttr_t ctrl_shoot_attr = {
-  .name = "ctrl_shoot",
-  .priority = (osPriority_t) osPriorityAboveNormal,
-  .stack_size = 512,
-};
-
-static const osThreadAttr_t info_attr = {
-  .name = "info",
-  .priority = (osPriority_t) osPriorityBelowNormal,
-  .stack_size = 512,
-};
-
-static const osThreadAttr_t monitor_attr = {
-  .name = "monitor",
-  .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 256,
-};
-
-static const osThreadAttr_t pos_esti_attr = {
-  .name = "pos_esti",
-  .priority = (osPriority_t) osPriorityRealtime,
-  .stack_size = 1024,
-};
-
-static const osThreadAttr_t referee_attr = {
-  .name = "referee",
-  .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 512,
-};
+/* TIM7 are used to generater high freq tick for debug. */
+volatile unsigned long high_freq_timer_ticks;
 
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
@@ -113,7 +64,7 @@ osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
   .priority = (osPriority_t) osPriorityNormal,
-  .stack_size = 256 * 4
+  .stack_size = 512
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -129,6 +80,7 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 /* Hook prototypes */
 void configureTimerForRunTimeStats(void);
 unsigned long getRunTimeCounterValue(void);
+void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char *pcTaskName);
 
 /* USER CODE BEGIN 1 */
 /* Functions needed when configGENERATE_RUN_TIME_STATS is on */
@@ -145,6 +97,16 @@ unsigned long getRunTimeCounterValue(void)
 	return high_freq_timer_ticks;
 }
 /* USER CODE END 1 */
+
+/* USER CODE BEGIN 4 */
+void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char *pcTaskName)
+{
+   /* Run time stack overflow checking is performed if
+   configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
+   called if a stack overflow is detected. */
+	//while(1);
+}
+/* USER CODE END 4 */
 
 /**
   * @brief  FreeRTOS initialization
@@ -178,33 +140,8 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-	task_param.thread.cli			= osThreadNew(Task_CLI,			&task_param, &cli_attr);
-	task_param.thread.command		= osThreadNew(Task_Command,		&task_param, &command_attr);
-	task_param.thread.ctrl_chassis	= osThreadNew(Task_CtrlChassis,	&task_param, &ctrl_chassis_attr);
-	task_param.thread.ctrl_gimbal	= osThreadNew(Task_CtrlGimbal,	&task_param, &ctrl_gimbal_attr);
-	task_param.thread.ctrl_shoot	= osThreadNew(Task_CtrlShoot,	&task_param, &ctrl_shoot_attr);
-	task_param.thread.info			= osThreadNew(Task_Info,		&task_param, &info_attr);
-	task_param.thread.monitor		= osThreadNew(Task_Monitor,		&task_param, &monitor_attr);
-	task_param.thread.pos_esti		= osThreadNew(Task_PosEsti,		&task_param, &pos_esti_attr);
-	task_param.thread.referee		= osThreadNew(Task_Referee,		&task_param, &referee_attr);
+  osThreadNew(Task_CLI, NULL, &cli_attr);
 	
-	
-	#if defined ROBOT_MODEL_INFANTRY
-		
-	#elif defined ROBOT_MODEL_HERO
-		
-	#elif defined ROBOT_MODEL_ENGINEER
-		
-	#elif defined ROBOT_MODEL_DRONE
-		
-	#elif defined ROBOT_MODEL_SENTRY
-
-	#else
-		
-		#error: Must define ROBOT_MODEL_XXXX.
-		
-	#endif
-		
   /* USER CODE END RTOS_THREADS */
 
 }
@@ -228,7 +165,7 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
-     
+ 
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -31,6 +31,9 @@ void Task_Info(void *argument) {
 	
 	uint32_t tick = osKernelGetTickCount();
 	while(1) {
+#ifdef DEBUG
+		task_param->stack_water_mark.info = uxTaskGetStackHighWaterMark(NULL);
+#endif
 		/* Task body */
 		tick += delay_tick;
 		
@@ -40,8 +43,5 @@ void Task_Info(void *argument) {
 		BSP_LED_Set(BSP_LED_GRN, BSP_LED_TAGGLE, 1);
 		
 		osDelayUntil(tick);
-#ifdef DEBUG
-		task_param->stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
-#endif
 	}
 }

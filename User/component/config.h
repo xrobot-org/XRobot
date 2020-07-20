@@ -31,8 +31,9 @@ typedef const struct {
 		const Chassis_Params_t chassis;
 		const Gimbal_Params_t gimbal;
 		const Shoot_Params_t shoot;
-		const CMD_Params_t cmd;
 	} param;
+	
+	const Config_Model_t model;
 } Config_Robot_t;
 
 typedef const struct {
@@ -42,4 +43,6 @@ typedef const struct {
 } Config_User_t;
 
 const Config_Robot_t *Config_GetRobot(Config_Model_t model);
+const Config_Robot_t *Config_GetRobotDefalult(void);
+
 const Config_User_t *Config_GetUser(Config_UserName_t user);

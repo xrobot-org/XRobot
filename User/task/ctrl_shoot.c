@@ -30,11 +30,14 @@ void Task_CtrlShoot(void *argument) {
 
 	Shoot_Init(
 		&shoot, 
-		&(Config_GetRobot(CONFIG_ROBOT_MODEL_INFANTRY)->param.shoot),
+		&(task_param->config->param.shoot),
 		(float32_t)delay_tick / (float32_t)osKernelGetTickFreq());
 	
 	uint32_t tick = osKernelGetTickCount();
 	while(1) {
+#ifdef DEBUG
+		task_param->stack_water_mark.ctrl_shoot = uxTaskGetStackHighWaterMark(NULL);
+#endif
 		/* Task body */
 		tick += delay_tick;
 		
@@ -59,8 +62,5 @@ void Task_CtrlShoot(void *argument) {
 		} else {
 			CAN_Motor_ControlShoot(0.f, 0.f, 0.f);
 		}
-#ifdef DEBUG
-		task_param->stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
-#endif
 	}
 }

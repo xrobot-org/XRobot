@@ -30,6 +30,9 @@ void Task_Command(void *argument) {
 	CMD_Init(&cmd, &(Config_GetUser(CONFIG_USER_DEFAULT)->param.cmd));
 	
 	while(1) {
+#ifdef DEBUG
+		task_param->stack_water_mark.command = uxTaskGetStackHighWaterMark(NULL);
+#endif
 		/* Task body */
 		DR16_StartReceiving(&dr16);
 		osThreadFlagsWait(SIGNAL_DR16_RAW_REDY, osFlagsWaitAll, osWaitForever);
@@ -44,8 +47,5 @@ void Task_Command(void *argument) {
 			if (os_status != osOK) {
 			}
 		}
-#ifdef DEBUG
-		task_param->stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
-#endif
 	}
 }
