@@ -23,7 +23,7 @@ static DR16_t dr16;
 static CMD_RC_t rc;
 static CMD_t cmd;
 
-/* Private function prototypes -----------------------------------------------*/
+/* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_Command(void *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
@@ -51,5 +51,8 @@ void Task_Command(void *argument) {
 			if (os_status != osOK) {
 			}
 		}
+#ifdef DEBUG
+		task_param->stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
+#endif
 	}
 }

@@ -51,6 +51,21 @@ typedef struct {
 		osMessageQueueId_t cmd;
 	} messageq;
 	
+	#ifdef DEBUG
+	struct {
+		UBaseType_t cli;
+		UBaseType_t command;
+		UBaseType_t ctrl_chassis;
+		UBaseType_t ctrl_gimbal;
+		UBaseType_t ctrl_shoot;
+		UBaseType_t info;
+		UBaseType_t monitor;
+		UBaseType_t pos_esti;
+		UBaseType_t referee;
+	} stack_water_mark;
+	#endif
+	
+	
 } Task_Param_t;
 
 /* Exported functions prototypes ---------------------------------------------*/

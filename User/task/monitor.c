@@ -13,10 +13,11 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-/* Private function prototypes -----------------------------------------------*/
+/* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_Monitor(void *argument) {
 	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_MONITOR;
+	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_REFEREE);
@@ -29,5 +30,8 @@ void Task_Monitor(void *argument) {
 		
 		
 		osDelayUntil(tick);
+#ifdef DEBUG
+		task_param->stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
+#endif
 	}
 }

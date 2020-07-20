@@ -15,16 +15,14 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static CAN_Device_t *cd;
-
 static CMD_t *cmd;
-
 static Shoot_t shoot;
 
-/* Private function prototypes -----------------------------------------------*/
+/* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_CtrlShoot(void *argument) {
 	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_SHOOT;
-	const Task_Param_t *task_param = (Task_Param_t*)argument;
+	Task_Param_t *task_param = (Task_Param_t*)argument;
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_SHOOT);
 	
@@ -61,5 +59,8 @@ void Task_CtrlShoot(void *argument) {
 		} else {
 			CAN_Motor_ControlShoot(0.f, 0.f, 0.f);
 		}
+#ifdef DEBUG
+		task_param->stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
+#endif
 	}
 }

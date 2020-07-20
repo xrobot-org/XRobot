@@ -39,7 +39,6 @@ static const char* const CLI_WELCOME_MESSAGE =
 	" FreeRTOS CLI. Type 'help' to view a list of registered commands.   \r\n"
 	"\r\n";
 	
-/* Private function ----------------------------------------------------------*/
 static BaseType_t EndianCommand(char *out_buffer, size_t len, const char *command_string) {
 	(void)command_string;
 	(void)len;
@@ -200,15 +199,17 @@ static const CLI_Command_Definition_t set_model = {
 	1,
 };
 
+static char input[MAX_INPUT_LENGTH];
+
+/* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_CLI(void *argument) {
-	//Task_Param_t *task_param = (Task_Param_t*)argument;
+	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
-	char rx_char;
 	uint16_t index = 0;
 	BaseType_t processing = 0;
+	char rx_char;
 	char *output = FreeRTOS_CLIGetOutputBuffer();
-	static char input[MAX_INPUT_LENGTH];
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_CLI);
@@ -274,5 +275,8 @@ void Task_CLI(void *argument) {
 				}
 			}
 		}
+#ifdef DEBUG
+		task_param->stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
+#endif
 	}
 }

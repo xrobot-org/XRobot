@@ -19,10 +19,11 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-/* Private function prototypes -----------------------------------------------*/
+/* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_Info(void *argument) {
 	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_MONITOR;
+	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_INFO);
@@ -39,5 +40,8 @@ void Task_Info(void *argument) {
 		BSP_LED_Set(BSP_LED_GRN, BSP_LED_TAGGLE, 1);
 		
 		osDelayUntil(tick);
+#ifdef DEBUG
+		task_param->stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
+#endif
 	}
 }

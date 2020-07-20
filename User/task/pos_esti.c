@@ -47,7 +47,8 @@ void Task_PosEsti(void *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	task_param->messageq.gimb_eulr = osMessageQueueNew(3u, sizeof(AHRS_Eulr_t), NULL);
-
+	
+	
 	BMI088_Init(&bmi088, osThreadGetId());
 	IST8310_Init(&ist8310, osThreadGetId());
 	
@@ -73,12 +74,6 @@ void Task_PosEsti(void *argument) {
 		BMI088_ReceiveGyro(&bmi088);
 		osThreadFlagsWait(BMI088_SIGNAL_GYRO_RAW_REDY, osFlagsWaitAll, osWaitForever);
 		
-		uint32_t flag = osThreadFlagsWait(IST8310_SIGNAL_MAGN_NEW_DATA, osFlagsWaitAll, 0u);
-		if (flag & IST8310_SIGNAL_MAGN_NEW_DATA) {
-			IST8310_Receive(&ist8310);
-			osThreadFlagsWait(IST8310_SIGNAL_MAGN_RAW_REDY, osFlagsWaitAll, 0u);
-		}
-		
 		osKernelLock();
 		BMI088_ParseAccl(&bmi088);
 		BMI088_ParseGyro(&bmi088);
@@ -93,5 +88,9 @@ void Task_PosEsti(void *argument) {
 		}
 		
 		BSP_PWM_Set(BSP_PWM_IMU_HEAT, PID_Calc(&imu_temp_ctrl_pid, 50.f, bmi088.temp, 0.f, 0.f));
+		
+#ifdef DEBUG
+		task_param->stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
+#endif
 	}
 }

@@ -15,16 +15,14 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static CAN_Device_t *cd;
-
 static CMD_t *cmd;
-
 static Gimbal_t gimbal;
 
-/* Private function prototypes -----------------------------------------------*/
+/* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_CtrlGimbal(void *argument) {
 	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_GIMBAL;
-	const Task_Param_t *task_param = (Task_Param_t*)argument;
+	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_GIMBAL);
@@ -60,5 +58,8 @@ void Task_CtrlGimbal(void *argument) {
 		} else {
 			CAN_Motor_ControlGimbal(0.f, 0.f);
 		}
+#ifdef DEBUG
+		task_param->stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
+#endif
 	}
 }

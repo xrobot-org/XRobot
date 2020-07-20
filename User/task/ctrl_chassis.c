@@ -16,16 +16,14 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static CAN_Device_t cd;
-
 static CMD_t *cmd;
-
 static Chassis_t chassis;
 
-/* Private function prototypes -----------------------------------------------*/
+/* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_CtrlChassis(void *argument) {
 	const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_MONITOR;
-	const Task_Param_t *task_param = (Task_Param_t*)argument;
+	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
 	/* Device Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_CHASSIS);
@@ -71,5 +69,8 @@ void Task_CtrlChassis(void *argument) {
 		} else {
 			CAN_Motor_ControlChassis(0.f, 0.f, 0.f, 0.f);
 		}
+#ifdef DEBUG
+		task_param->stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
+#endif
 	}
 }
