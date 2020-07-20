@@ -6,14 +6,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "user_task.h"
 
-#include <string.h>
-
-#include "bsp\usb.h"
-
-#include "component\config.h"
-
 #include "device\dr16.h"
-
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
