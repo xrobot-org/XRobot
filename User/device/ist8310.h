@@ -16,16 +16,13 @@
 #define IST8310_ERR_INITED	(-3)
 #define IST8310_ERR_NO_DEV	(-4)
 
-#define IST8310_SIGNAL_MAGN_NEW_DATA	(1u<<9)
-#define IST8310_SIGNAL_MAGN_RAW_REDY	(1u<<10)
+#define IST8310_SIGNAL_MAGN_RAW_REDY	(1u<<8)
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef struct {
-	osThreadId_t received_alert;
+	osThreadId_t thread_alert;
 
-	uint8_t raw[6];
-	
 	AHRS_Magn_t magn;
 	
 	struct {
