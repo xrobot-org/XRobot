@@ -44,25 +44,39 @@ static const char* const CLI_WELCOME_MESSAGE =
 /* experiment */
 static BaseType_t EndianCommand(char *out_buffer, size_t len, const char *command_string) {
 	(void)command_string;
-	(void)len;
 	configASSERT(out_buffer);
 	
-    int i = 0;
+	int32_t printed = 0;
+	len -= 1;
+	
 	uint8_t list[2] = {0x11, 0x22};
     uint16_t force_convert = ((uint16_t*)list)[0];
-	
-	i += sprintf(out_buffer + i, "a[2] = {0x11, 0x22}\r\n");
-	i += sprintf(out_buffer + i, "Force convert to uint16 list, we got: 0x%x\r\n", force_convert);
-
     uint16_t assembled = list[0] | (list[1] << 8);
-    i += sprintf(out_buffer + i, "Manually assemble a[1], a[0], we got: 0x%x\r\n", assembled);
 	
-	if (force_convert == assembled)
-		i += sprintf(out_buffer + i, "Small endian\r\n");
-	else
-		i += sprintf(out_buffer + i, "Big endian\r\n");
+	printed = snprintf(out_buffer, len, "a[2] = {0x11, 0x22}\r\n");
+	out_buffer += printed;
+	len -= printed;
+	
+	printed = snprintf(out_buffer, len, "Force convert to uint16 list, we got: 0x%x\r\n", force_convert);
+	out_buffer += printed;
+	len -= printed;
 
-	strcat(out_buffer, "\r\n");
+    printed = snprintf(out_buffer, len, "Manually assemble a[1], a[0], we got: 0x%x\r\n", assembled);
+	out_buffer += printed;
+	len -= printed;
+	
+	if (force_convert == assembled) {
+		printed = snprintf(out_buffer, len, "Small endian\r\n");
+		out_buffer += printed;
+		len -= printed;
+	}
+	else {
+		printed = snprintf(out_buffer, len, "Big endian\r\n");
+		out_buffer += printed;
+		len -= printed;
+	}
+
+	strncat(out_buffer, "\r\n", len);
 	return pdFALSE;
 }
 
@@ -75,38 +89,60 @@ static const CLI_Command_Definition_t endian = {
 
 /* debug */
 static BaseType_t StatsCommand(char *out_buffer, size_t len, const char *command_string) {
-	const char *const task_list_header = 
+	static const char *const task_list_header = 
 		"Task list\r\n"
 		"Task          State  Priority  Stack	#\r\n"
 		"************************************************\r\n";
 	
-	const char *const run_time_header = 
+	static const char *const run_time_header = 
 		"Run time stats\r\n"
 		"Task            Abs Time      % Time\r\n"
 		"****************************************\r\n";
 
-	const char *const heap_header = 
+	static const char *const heap_header = 
 		"Heap stats\r\n"
 		"total(B)	free(B)	used(B)\r\n"
 		"*******************************\r\n";
 	
 	(void)command_string;
-	(void)len;
-	HeapStats_t heap_stats;
-	
 	configASSERT(out_buffer);
-
-	strcpy(out_buffer, task_list_header);
-	vTaskList(out_buffer + strlen(out_buffer));
-
-	strcat(out_buffer, run_time_header);
-	vTaskGetRunTimeStats(out_buffer + strlen(out_buffer));
 	
-	strcat(out_buffer, heap_header);
-	vPortGetHeapStats(&heap_stats);
-	sprintf(out_buffer + strlen(out_buffer), "%d\t\t%d\t%d\r\n", configTOTAL_HEAP_SIZE, heap_stats.xAvailableHeapSpaceInBytes,configTOTAL_HEAP_SIZE - heap_stats.xAvailableHeapSpaceInBytes);
-
-	return pdFALSE;
+	static uint8_t stage = 0;
+	
+	len -= 1;
+	
+	HeapStats_t heap_stats;
+	switch (stage) {
+		case 0:
+			strncpy(out_buffer, task_list_header, len);
+			stage ++;
+			return pdPASS;
+		case 1:
+			vTaskList(out_buffer);
+			stage ++;
+			return pdPASS;
+		case 2:
+			strncat(out_buffer, run_time_header, len);
+			stage ++;
+			return pdPASS;
+		case 3:
+			vTaskGetRunTimeStats(out_buffer);
+			stage ++;
+			return pdPASS;
+		case 4:
+			strncat(out_buffer, heap_header, len);
+			stage ++;
+			return pdPASS;
+		case 5:	
+			vPortGetHeapStats(&heap_stats);
+			snprintf(out_buffer + strlen(out_buffer), len, "%d\t\t%d\t%d\r\n", configTOTAL_HEAP_SIZE, heap_stats.xAvailableHeapSpaceInBytes,configTOTAL_HEAP_SIZE - heap_stats.xAvailableHeapSpaceInBytes);
+			stage ++;
+			return pdPASS;
+		default:
+			stage = 0;
+			return pdFALSE;
+	}
+	
 }
 
 static const CLI_Command_Definition_t stats = {
