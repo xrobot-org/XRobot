@@ -38,7 +38,8 @@ static const char* const CLI_WELCOME_MESSAGE =
 	" -------------------------------------------------------------------\r\n"
 	" FreeRTOS CLI. Type 'help' to view a list of registered commands.   \r\n"
 	"\r\n";
-	
+
+/* experiment */
 static BaseType_t EndianCommand(char *out_buffer, size_t len, const char *command_string) {
 	(void)command_string;
 	(void)len;
@@ -70,7 +71,7 @@ static const CLI_Command_Definition_t endian = {
 	0, 
 };
 
-
+/* debug */
 static BaseType_t StatsCommand(char *out_buffer, size_t len, const char *command_string) {
 	const char *const task_list_header = 
 		"Task list\r\n"
@@ -108,29 +109,8 @@ static BaseType_t StatsCommand(char *out_buffer, size_t len, const char *command
 
 static const CLI_Command_Definition_t stats = {
 	"stats",
-	"\r\nstats:\r\n Displays a table showing the state of each FreeRTOS task\r\n\r\n",
+	"\r\nstats:\r\n Displays a table showing the state of FreeRTOS\r\n\r\n",
 	StatsCommand,
-	0, 
-};
-
-static BaseType_t TempCommand(char *out_buffer, size_t len, const char *command_string) {
-	const char *const header = 
-		"CPU(C)\r\n"
-		"*******************************\r\n";
-	(void)command_string;
-	(void)len;
-	configASSERT(out_buffer);
-	
-	strcpy(out_buffer, header);
-	sprintf(out_buffer + strlen(header), "%.2f\r\n", -1.f); //TODO
-
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t temp_stats = {
-	"temp-stats",
-	"\r\nheap-stats:\r\n Displays a table showing the state of temperature\r\n\r\n",
-	TempCommand,
 	0, 
 };
 
@@ -191,10 +171,9 @@ void Task_CLI(void *argument) {
 	osDelay(TASK_INIT_DELAY_CLI);
 	
 	/* Register all the commands. */
+	FreeRTOS_CLIRegisterCommand(&endian);
 	FreeRTOS_CLIRegisterCommand(&stats);
 	FreeRTOS_CLIRegisterCommand(&set_model);
-	FreeRTOS_CLIRegisterCommand(&endian);
-	FreeRTOS_CLIRegisterCommand(&temp_stats);
 	
 	/* Save CPU power when CLI not used. */
 	BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
