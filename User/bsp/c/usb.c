@@ -47,15 +47,10 @@ int8_t BSP_USB_Printf(const char *fmt, ...) {
 	uint16_t len = 0;
 	
 	va_start(ap, fmt);
-	len = vsprintf((char*)usb_tx_buf, fmt, ap);
+	len = vsnprintf((char*)usb_tx_buf, BSP_USB_MAX_TX_LEN, fmt, ap);
 	va_end(ap);
 	
-	if (len < BSP_USB_MAX_TX_LEN) {
-		BSP_USB_Transmit(usb_tx_buf, len);
-	} else {
-		/* memory access out of bounds */
-		while(1);
-	}
+	BSP_USB_Transmit(usb_tx_buf, len);
 	
 	return BSP_USB_OK;
 }
