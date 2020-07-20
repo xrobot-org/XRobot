@@ -18,7 +18,6 @@ osThreadId_t gbsp_usb_alert = NULL;
 uint8_t usb_rx_buf[BSP_USB_MAX_RX_LEN];
 uint8_t usb_tx_buf[BSP_USB_MAX_TX_LEN];
 
-static uint16_t usb_rx_num = 0;
 
 /* Private function  ---------------------------------------------------------*/
 static int8_t BSP_USB_Transmit(uint8_t *buffer, uint16_t len) {
@@ -36,7 +35,6 @@ int8_t BSP_USB_ReadyReceive(osThreadId_t alert) {
 	
 	gbsp_usb_alert = alert;
 	CDC_ReadyReceive();
-	memset(usb_rx_buf, 0, usb_rx_num);
 	return BSP_USB_OK;
 }
 
@@ -45,14 +43,19 @@ char BSP_USB_ReadChar(void) {
 }
 
 int8_t BSP_USB_Printf(const char *fmt, ...) {
-	static va_list ap;
+	va_list ap;
 	uint16_t len = 0;
 	
 	va_start(ap, fmt);
 	len = vsprintf((char*)usb_tx_buf, fmt, ap);
 	va_end(ap);
 	
-	BSP_USB_Transmit(usb_tx_buf, len);
+	if (len < BSP_USB_MAX_TX_LEN) {
+		BSP_USB_Transmit(usb_tx_buf, len);
+	} else {
+		/* memory access out of bounds */
+		while(1);
+	}
 	
 	return BSP_USB_OK;
 }
