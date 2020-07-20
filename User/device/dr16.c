@@ -17,12 +17,12 @@ static bool inited = false;
 
 /* Private function  ---------------------------------------------------------*/
 void DR16_RxCpltCallback(void) {
-	osThreadFlagsSet(gdr16->thread_alert, DR16_SIGNAL_RAW_REDY);
+	osThreadFlagsSet(gdr16->thread_alert, SIGNAL_DR16_RAW_REDY);
 }
 
 static bool DR16_DataCorrupted(const DR16_t *dr16) {
 	if (dr16 == NULL)
-		return DR16_ERR_NULL;
+		return DEVICE_ERR_NULL;
 	
 	if ((dr16->data.ch_r_x < DR16_CH_VALUE_MIN) || (dr16->data.ch_r_x > DR16_CH_VALUE_MAX))
 		return true;
@@ -59,7 +59,7 @@ int8_t DR16_Init(DR16_t *dr16, osThreadId_t thread_alert) {
 	
 	gdr16 = dr16;
 	inited = true;
-	return DR16_OK;
+	return DEVICE_OK;
 }
 
 DR16_t *DR16_GetDevice(void) {
@@ -72,7 +72,7 @@ DR16_t *DR16_GetDevice(void) {
 int8_t DR16_Restart(void) {
 	__HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_DR16));
 	__HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_DR16));
-	return DR16_OK;
+	return DEVICE_OK;
 }
 
 int8_t DR16_StartReceiving(DR16_t *dr16) {
@@ -81,10 +81,10 @@ int8_t DR16_StartReceiving(DR16_t *dr16) {
 
 int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc)  {
 	if (dr16 == NULL)
-		return DR16_ERR_NULL;
+		return DEVICE_ERR_NULL;
 	
 	if (DR16_DataCorrupted(dr16)) {
-		return DR16_ERR_NULL;
+		return DEVICE_ERR;
 	} else {
 		memset(rc, 0, sizeof(*rc));
 	}
@@ -110,5 +110,5 @@ int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc)  {
 	
 	rc->ch_res = (float32_t)(dr16->data.res - DR16_CH_VALUE_MID) / full_range;
 	// TODO: TEST
-	return DR16_OK;
+	return DEVICE_OK;
 }

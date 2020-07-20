@@ -7,17 +7,11 @@
 /* Include cmsis_os2.h头文件 */
 #include "cmsis_os2.h"
 
+#include "device.h"
+
 #include "component\ahrs.h"
 
 /* Exported constants --------------------------------------------------------*/
-#define IST8310_OK			(0)
-#define IST8310_ERR			(-1)
-#define IST8310_ERR_NULL	(-2)
-#define IST8310_ERR_INITED	(-3)
-#define IST8310_ERR_NO_DEV	(-4)
-
-#define IST8310_SIGNAL_MAGN_RAW_REDY	(1u<<8)
-
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef struct {

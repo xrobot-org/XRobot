@@ -51,13 +51,13 @@ int8_t CAN_DeviceInit(
 	osThreadId_t supercap_alert) {
 		
 	if (can_device == NULL)
-		return CAN_ERR_NULL;
+		return DEVICE_ERR_NULL;
 	
 	if (motor_alert == NULL)
-		return CAN_ERR_NULL;
+		return DEVICE_ERR_NULL;
 	
 	if (inited)
-		return CAN_ERR_INITED;
+		return DEVICE_ERR_INITED;
 	
 	can_device->motor_alert_len = motor_alert_len;
 	can_device->motor_alert = motor_alert;
@@ -91,7 +91,7 @@ int8_t CAN_DeviceInit(
 
 	gcan_device = can_device;
 	inited = true;
-	return CAN_OK;
+	return DEVICE_OK;
 }
 
 CAN_Device_t *CAN_GetDevice(void) {
@@ -126,7 +126,7 @@ int8_t CAN_Motor_ControlChassis(float32_t m1, float32_t m2, float32_t m3, float3
 	
 	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
 	
-	return CAN_OK;
+	return DEVICE_OK;
 }
 
 int8_t CAN_Motor_ControlGimbal(float32_t yaw, float32_t pitch) {
@@ -152,7 +152,7 @@ int8_t CAN_Motor_ControlGimbal(float32_t yaw, float32_t pitch) {
 	
 	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
 	
-	return CAN_OK;
+	return DEVICE_OK;
 }
 
 int8_t CAN_Motor_ControlShoot(float32_t fric1, float32_t fric2, float32_t trig) {
@@ -179,7 +179,7 @@ int8_t CAN_Motor_ControlShoot(float32_t fric1, float32_t fric2, float32_t trig) 
 	
 	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0);
 	
-	return CAN_OK;
+	return DEVICE_OK;
 }
 
 int8_t CAN_Motor_QuickIdSetMode(void) {
@@ -193,7 +193,7 @@ int8_t CAN_Motor_QuickIdSetMode(void) {
 	uint8_t tx_data[8];
 
 	HAL_CAN_AddTxMessage(&hcan1, &tx_header, tx_data, (uint32_t*)CAN_TX_MAILBOX0); 
-	return CAN_OK;
+	return DEVICE_OK;
 }
 
 void RxFifo0MsgPendingCallback(void) {
@@ -229,7 +229,7 @@ void RxFifo0MsgPendingCallback(void) {
 
 		case CAN_SUPERCAP_FEEDBACK_ID_BASE:
 			CAN_SuperCap_Decode(&(gcan_device->supercap_feedback), rx_data);
-			osThreadFlagsSet(gcan_device->supercap_alert, CAN_DEVICE_SIGNAL_SUPERCAP_RECV);
+			osThreadFlagsSet(gcan_device->supercap_alert, SIGNAL_CAN_SUPERCAP_RECV);
 			break;
 		
 		default:
@@ -240,7 +240,7 @@ void RxFifo0MsgPendingCallback(void) {
 	if (motor_received > CAN_CHASSIS_NUM_MOTOR) {
 		for(uint8_t i = 0; i < gcan_device->motor_alert_len; i++) {
 			if (gcan_device->motor_alert[i]) {
-				osThreadFlagsSet(gcan_device->motor_alert, CAN_DEVICE_SIGNAL_MOTOR_RECV);
+				osThreadFlagsSet(gcan_device->motor_alert, SIGNAL_CAN_MOTOR_RECV);
 			}
 		}
 		motor_received = 0;
@@ -253,7 +253,7 @@ void RxFifo1MsgPendingCallback(void) {
 	switch (rx_header.StdId) {
 		case CAN_UWB_FEEDBACK_ID_BASE:
 			CAN_UWB_Decode(&(gcan_device->uwb_feedback), rx_data);
-			osThreadFlagsSet(gcan_device->uwb_alert, CAN_DEVICE_SIGNAL_UWB_RECV);
+			osThreadFlagsSet(gcan_device->uwb_alert, SIGNAL_CAN_UWB_RECV);
 			break;
 		
 		default:

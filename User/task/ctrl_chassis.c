@@ -48,7 +48,7 @@ void Task_CtrlChassis(void *argument) {
 		/* Task body */
 		tick += delay_tick;
 		
-		uint32_t flag = CAN_DEVICE_SIGNAL_MOTOR_RECV;
+		uint32_t flag = SIGNAL_CAN_MOTOR_RECV;
 		if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
 			osMessageQueueGet(task_param->messageq.cmd, cmd, NULL, 0);
 		

@@ -26,7 +26,7 @@ static uint8_t rxbuf[REF_LEN_RX_BUFF];
 
 /* Private function  ---------------------------------------------------------*/
 static void Referee_RxCpltCallback(void) {
-	osThreadFlagsSet(gref->thread_alert, REFEREE_SIGNAL_RAW_REDY);
+	osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY);
 }
 
 static void Referee_IdleLineCallback(void) {
@@ -34,16 +34,16 @@ static void Referee_IdleLineCallback(void) {
 }
 
 static void Referee_AbortRxCpltCallback(void) {
-	osThreadFlagsSet(gref->thread_alert, REFEREE_SIGNAL_RAW_REDY);
+	osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY);
 }
 
 /* Exported functions --------------------------------------------------------*/
 int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert) {
 	if (ref == NULL)
-		return -1;
+		return DEVICE_ERR_NULL;
 	
 	if (inited)
-		return -1;
+		return DEVICE_ERR_INITED;
 	
 	ref->thread_alert = thread_alert;
 	
@@ -83,18 +83,18 @@ int8_t Referee_Parse(Referee_t *ref) {
 	Referee_Header_t *header = (Referee_Header_t*)(rxbuf + index);
 	index += sizeof(Referee_Header_t);
 	if (index >= data_length)
-		return -1;
+		return DEVICE_ERR;
 	
 	if (CRC8_Verify((uint8_t*)header, sizeof(Referee_Header_t)))
-		return -1;
+		return DEVICE_ERR;
 	
 	if (header->sof != REF_HEADER_SOF)
-		return -1;
+		return DEVICE_ERR;
 	
 	Referee_CMDID_t *cmd_id = (Referee_CMDID_t*)(rxbuf + index);
 	index += sizeof(Referee_CMDID_t);
 	if (index >= data_length)
-		return -1;
+		return DEVICE_ERR;
 	
 	void *target = (rxbuf + index);
 	void *origin;
@@ -178,20 +178,20 @@ int8_t Referee_Parse(Referee_t *ref) {
 			size = sizeof(Referee_DartClient_t);
 			break;
 		default:
-			return -1;
+			return DEVICE_ERR;
 	}
 	index += size;
 	if (index >= data_length)
-		return -1;
+		return DEVICE_ERR;
 	
 	index += sizeof(Referee_Tail_t);
 	if (index != data_length)
-		return -1;
+		return DEVICE_ERR;
 	
 	if (CRC16_Verify((uint8_t*)header, sizeof(Referee_Header_t)))
 		memcpy(target, origin, size);
 	else
-		return -1;
+		return DEVICE_ERR;
 	
-	return 0;
+	return DEVICE_OK;
 }

@@ -8,11 +8,11 @@
 
 #include "cmsis_os2.h"
 
+#include "device.h"
+
 #include "component\user_math.h"
 
 /* Exported constants --------------------------------------------------------*/
-#define REFEREE_SIGNAL_RAW_REDY (1u<<9)
-
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef struct __packed {

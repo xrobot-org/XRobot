@@ -34,8 +34,8 @@
 
 #define IST8310_LEN_RX_BUFF (6)
 /* Private macro -------------------------------------------------------------*/
-#define IST8310_GYRO_NSS_SET()		HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_SET)
-#define IST8310_GYRO_NSS_RESET()	HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_RESET)
+#define IST8310_SET()		HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_SET)
+#define IST8310_RESET()	HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_RESET)
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -62,8 +62,16 @@ static void IST8310_Read(uint8_t reg, uint8_t *data, uint8_t len) {
 	HAL_I2C_Mem_Read_DMA(BSP_I2C_GetHandle(BSP_I2C_COMP), IST8310_IIC_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT, data, len);
 }
 
+static void IST8310_Write(uint8_t reg, uint8_t *data, uint8_t len) {
+	if (data == NULL)
+		return;
+	
+	HAL_I2C_Mem_Write_DMA(BSP_I2C_GetHandle(BSP_I2C_COMP), IST8310_IIC_ADDRESS, reg, I2C_MEMADD_SIZE_8BIT, data, len);
+}
+
+
 static void IST8310_MemRxCpltCallback(void) {
-	osThreadFlagsSet(gist8310->thread_alert, IST8310_SIGNAL_MAGN_RAW_REDY);
+	osThreadFlagsSet(gist8310->thread_alert, SIGNAL_IST8310_MAGN_RAW_REDY);
 }
 
 static void IST8310_IntCallback(void) {
@@ -73,25 +81,25 @@ static void IST8310_IntCallback(void) {
 /* Exported functions --------------------------------------------------------*/
 int8_t IST8310_Init(IST8310_t *ist8310, osThreadId_t thread_alert) {
 	if (ist8310 == NULL)
-		return IST8310_ERR_NULL;
+		return DEVICE_ERR_NULL;
 	
 	if (inited)
-		return IST8310_ERR_INITED;
+		return DEVICE_ERR_INITED;
 	
 	ist8310->thread_alert = thread_alert;
 	
-	IST8310_GYRO_NSS_RESET();
+	IST8310_RESET();
 	BSP_Delay(50);
-	IST8310_GYRO_NSS_SET();
+	IST8310_SET();
 	BSP_Delay(50);
 	
 	if (IST8310_ReadSingle(IST8310_WAI) != IST8310_CHIP_ID)
-		return IST8310_ERR_NO_DEV;
+		return DEVICE_ERR_NO_DEV;
 	
-	BSP_GPIO_DisableIRQ(ACCL_INT_Pin);
+	BSP_GPIO_DisableIRQ(CMPS_INT_Pin);
 	
 	BSP_I2C_RegisterCallback(BSP_I2C_COMP, HAL_I2C_MEM_RX_CPLT_CB, IST8310_MemRxCpltCallback);
-	BSP_GPIO_RegisterCallback(ACCL_INT_Pin, IST8310_IntCallback);
+	BSP_GPIO_RegisterCallback(CMPS_INT_Pin, IST8310_IntCallback);
 	
 	/* Init. */
 	/* 0x00: Stand-By mode. 0x01: Single measurement mode. */
@@ -106,8 +114,8 @@ int8_t IST8310_Init(IST8310_t *ist8310, osThreadId_t thread_alert) {
 	gist8310 = ist8310;
 	inited = true;
 	
-	BSP_GPIO_EnableIRQ(ACCL_INT_Pin);
-	return IST8310_OK;
+	BSP_GPIO_EnableIRQ(CMPS_INT_Pin);
+	return DEVICE_OK;
 }
 
 IST8310_t *IST8310_GetDevice(void) {
@@ -118,13 +126,14 @@ IST8310_t *IST8310_GetDevice(void) {
 }
 
 int8_t IST8310_Receive(IST8310_t *ist8310) {
-	IST8310_WriteSingle(IST8310_CNTL1, 0x01);
-	return IST8310_OK;
+	uint8_t data = 1;
+	IST8310_Write(IST8310_CNTL1, &data, 1);
+	return DEVICE_OK;
 }
 
 int8_t IST8310_Parse(IST8310_t *ist8310) {
 	if (ist8310 == NULL)
-		return IST8310_ERR_NULL;
+		return DEVICE_ERR_NULL;
 
 	const int16_t *raw_x = (int16_t *)(ist8310_rxbuf + 0);
 	const int16_t *raw_y = (int16_t *)(ist8310_rxbuf + 2);
@@ -134,5 +143,5 @@ int8_t IST8310_Parse(IST8310_t *ist8310) {
 	ist8310->magn.y = (float32_t)*raw_y * 3.f / 20.f;
 	ist8310->magn.z = (float32_t)*raw_z * 3.f / 20.f;
 	
-	return IST8310_OK;
+	return DEVICE_OK;
 }

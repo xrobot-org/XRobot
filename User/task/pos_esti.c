@@ -29,7 +29,7 @@
 BMI088_t bmi088;
 IST8310_t ist8310;
 
-AHRS_t gimbal_ahrs;
+static AHRS_t gimbal_ahrs;
 AHRS_Eulr_t eulr_to_send;
 
 static PID_t imu_temp_ctrl_pid;
@@ -53,7 +53,7 @@ void Task_PosEsti(void *argument) {
 	IST8310_Init(&ist8310, osThreadGetId());
 	
 	IST8310_Receive(&ist8310);
-	osThreadFlagsWait(IST8310_SIGNAL_MAGN_RAW_REDY, osFlagsWaitAll, 0);
+	osThreadFlagsWait(SIGNAL_IST8310_MAGN_RAW_REDY, osFlagsWaitAll, 0);
 	
 	IST8310_Parse(&ist8310);
 	
@@ -66,13 +66,13 @@ void Task_PosEsti(void *argument) {
 	
 	while(1) {
 		/* Task body */
-		osThreadFlagsWait(BMI088_SIGNAL_ACCL_NEW_DATA, osFlagsWaitAll, osWaitForever);
+		osThreadFlagsWait(SIGNAL_BMI088_ACCL_NEW_DATA, osFlagsWaitAll, osWaitForever);
 		BMI088_ReceiveAccl(&bmi088);
-		osThreadFlagsWait(BMI088_SIGNAL_ACCL_RAW_REDY, osFlagsWaitAll, osWaitForever);
+		osThreadFlagsWait(SIGNAL_BMI088_ACCL_RAW_REDY, osFlagsWaitAll, osWaitForever);
 		
-		osThreadFlagsWait(BMI088_SIGNAL_GYRO_NEW_DATA, osFlagsWaitAll, osWaitForever);
+		osThreadFlagsWait(SIGNAL_BMI088_GYRO_NEW_DATA, osFlagsWaitAll, osWaitForever);
 		BMI088_ReceiveGyro(&bmi088);
-		osThreadFlagsWait(BMI088_SIGNAL_GYRO_RAW_REDY, osFlagsWaitAll, osWaitForever);
+		osThreadFlagsWait(SIGNAL_BMI088_GYRO_RAW_REDY, osFlagsWaitAll, osWaitForever);
 		
 		osKernelLock();
 		BMI088_ParseAccl(&bmi088);

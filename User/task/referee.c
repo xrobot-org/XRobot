@@ -29,7 +29,7 @@ void Task_Referee(void *argument) {
 		tick += delay_tick;
 		
 		Referee_StartReceiving(&ref);
-		osThreadFlagsWait(REFEREE_SIGNAL_RAW_REDY, osFlagsWaitAll, osWaitForever);
+		osThreadFlagsWait(SIGNAL_REFEREE_RAW_REDY, osFlagsWaitAll, osWaitForever);
 		
 		Referee_Parse(&ref);
 		

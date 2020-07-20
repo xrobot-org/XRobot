@@ -163,29 +163,29 @@ static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
 static void BMI088_RxCpltCallback(void) {
 	if (HAL_GPIO_ReadPin(ACCL_CS_GPIO_Port, ACCL_CS_Pin) == GPIO_PIN_RESET) {
 		BMI088_ACCL_NSS_SET();
-		osThreadFlagsSet(gimu->thread_alert, BMI088_SIGNAL_ACCL_RAW_REDY);
+		osThreadFlagsSet(gimu->thread_alert, SIGNAL_BMI088_ACCL_RAW_REDY);
 	}
 	if (HAL_GPIO_ReadPin(GYRO_CS_GPIO_Port, GYRO_CS_Pin) == GPIO_PIN_RESET) {
 		BMI088_GYRO_NSS_SET();
-		osThreadFlagsSet(gimu->thread_alert, BMI088_SIGNAL_GYRO_RAW_REDY);
+		osThreadFlagsSet(gimu->thread_alert, SIGNAL_BMI088_GYRO_RAW_REDY);
 	}
 }
 
 static void BMI088_AcclIntCallback(void) {
-	osThreadFlagsSet(gimu->thread_alert, BMI088_SIGNAL_ACCL_NEW_DATA);
+	osThreadFlagsSet(gimu->thread_alert, SIGNAL_BMI088_ACCL_NEW_DATA);
 }
 
 static void BMI088_GyroIntCallback(void) {
-	osThreadFlagsSet(gimu->thread_alert, BMI088_SIGNAL_GYRO_NEW_DATA);
+	osThreadFlagsSet(gimu->thread_alert, SIGNAL_BMI088_GYRO_NEW_DATA);
 }
 
 /* Exported functions --------------------------------------------------------*/
 int8_t BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert) {
 	if (bmi088 == NULL)
-		return BMI088_ERR_NULL;
+		return DEVICE_ERR_NULL;
 	
 	if (inited)
-		return BMI088_ERR_INITED;
+		return DEVICE_ERR_INITED;
 	
 	bmi088->thread_alert = thread_alert;
 	
@@ -197,10 +197,10 @@ int8_t BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert) {
 	BMI_ReadSingle(BMI_ACCL, BMI088_ACCL_CHIP_ID_REG);
 	
 	if (BMI_ReadSingle(BMI_ACCL, BMI088_ACCL_CHIP_ID_REG) != BMI088_ACCL_CHIP_ID)
-		return BMI088_ERR_NO_DEV;
+		return DEVICE_ERR_NO_DEV;
 	
 	if (BMI_ReadSingle(BMI_GYRO, BMI088_GYRO_CHIP_ID_REG) != BMI088_GYRO_CHIP_ID)
-		return BMI088_ERR_NO_DEV;
+		return DEVICE_ERR_NO_DEV;
 	
 	
 	BSP_GPIO_DisableIRQ(ACCL_INT_Pin);
@@ -252,7 +252,7 @@ int8_t BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert) {
 	
 	BSP_GPIO_EnableIRQ(ACCL_INT_Pin);
 	BSP_GPIO_EnableIRQ(GYRO_INT_Pin);
-	return BMI088_OK;
+	return DEVICE_OK;
 }
 
 BMI088_t *BMI088_GetDevice(void) {
@@ -264,23 +264,23 @@ BMI088_t *BMI088_GetDevice(void) {
 
 int8_t BMI088_ReceiveAccl(BMI088_t *bmi088) {
 	if (bmi088 == NULL)
-		return BMI088_ERR_NULL;
+		return DEVICE_ERR_NULL;
 	
 	BMI_Read(BMI_ACCL, BMI088_ACCL_X_LSB_REG, bmi088_rxbuf, BMI088_LEN_RX_BUFF);
-	return BMI088_OK;
+	return DEVICE_OK;
 }
 
 int8_t BMI088_ReceiveGyro(BMI088_t *bmi088) {
 	if (bmi088 == NULL)
-		return BMI088_ERR_NULL;
+		return DEVICE_ERR_NULL;
 	
 	BMI_Read(BMI_GYRO, BMI088_GYRO_X_LSB_REG, bmi088_rxbuf + 7, 6u);
-	return BMI088_OK;
+	return DEVICE_OK;
 }
 
 int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
 	if (bmi088 == NULL)
-		return BMI088_ERR_NULL;
+		return DEVICE_ERR_NULL;
 	
 	const int16_t *raw_x = (int16_t *)(bmi088_rxbuf + 1);
 	const int16_t *raw_y = (int16_t *)(bmi088_rxbuf + 3);
@@ -298,12 +298,12 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
 	
 	bmi088->temp = raw_temp * 0.125f + 23.f;
 	
-	return BMI088_OK;
+	return DEVICE_OK;
 }
 
 int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 	if (bmi088 == NULL)
-		return BMI088_ERR_NULL;
+		return DEVICE_ERR_NULL;
 	
 	/* Gyroscope imu_raw -> degrees/sec -> radians/sec */
 	const int16_t *raw_x = (int16_t *)(bmi088_rxbuf + 7);
@@ -315,7 +315,7 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 	bmi088->gyro.y = (float32_t)*raw_y / 32.768f * MATH_DEG_TO_RAD_MULT;
 	bmi088->gyro.z = (float32_t)*raw_z / 32.768f * MATH_DEG_TO_RAD_MULT;
 	
-	return BMI088_OK;
+	return DEVICE_ERR_NULL;
 }
 
 float32_t BMI088_GetUpdateFreq(BMI088_t *bmi088) {

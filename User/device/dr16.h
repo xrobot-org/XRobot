@@ -5,14 +5,12 @@
 /* Include cmsis_os2.h头文件 */
 #include "cmsis_os2.h"
 
+#include "device.h"
+
 #include "component\cmd.h"
 #include "component\user_math.h"
 
 /* Exported constants --------------------------------------------------------*/
-#define DR16_OK			(0)
-#define DR16_ERR_NULL	(-1)
-
-#define DR16_SIGNAL_RAW_REDY	(1u<<7)
 
 #define DR16_CH_VALUE_MIN		(364u)
 #define DR16_CH_VALUE_MID		(1024u)

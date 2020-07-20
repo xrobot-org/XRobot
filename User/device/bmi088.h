@@ -7,20 +7,11 @@
 /* Include cmsis_os2.h头文件 */
 #include "cmsis_os2.h"
 
+#include "device.h"
+
 #include "component\ahrs.h"
 
 /* Exported constants --------------------------------------------------------*/
-#define BMI088_OK			(0)
-#define BMI088_ERR			(-1)
-#define BMI088_ERR_NULL		(-2)
-#define BMI088_ERR_INITED	(-3)
-#define BMI088_ERR_NO_DEV	(-4)
-
-#define BMI088_SIGNAL_GYRO_NEW_DATA	(1u<<0)
-#define BMI088_SIGNAL_ACCL_NEW_DATA	(1u<<1)
-#define BMI088_SIGNAL_GYRO_RAW_REDY	(1u<<2)
-#define BMI088_SIGNAL_ACCL_RAW_REDY	(1u<<3)
-
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef struct {

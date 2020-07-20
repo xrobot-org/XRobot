@@ -5,18 +5,11 @@
 /* Include cmsis_os2.h头文件 */
 #include "cmsis_os2.h"
 
+#include "device.h"
+
 #include "component\user_math.h"
 
 /* Exported constants --------------------------------------------------------*/
-#define CAN_OK			(0)
-#define CAN_ERR			(-1)
-#define CAN_ERR_NULL	(-2)
-#define CAN_ERR_INITED	(-3)
-
-#define CAN_DEVICE_SIGNAL_MOTOR_RECV			(1u<<4)
-#define CAN_DEVICE_SIGNAL_UWB_RECV				(1u<<5)
-#define CAN_DEVICE_SIGNAL_SUPERCAP_RECV			(1u<<6)
-
 /* Motor */
 #define CAN_GM6020_FEEDBACK_ID_BASE				0x205
 #define CAN_GM6020_RECEIVE_ID_BASE				0x1ff

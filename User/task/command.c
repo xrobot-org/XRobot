@@ -39,7 +39,7 @@ void Task_Command(void *argument) {
 	while(1) {
 		/* Task body */
 		DR16_StartReceiving(&dr16);
-		osThreadFlagsWait(DR16_SIGNAL_RAW_REDY, osFlagsWaitAll, osWaitForever);
+		osThreadFlagsWait(SIGNAL_DR16_RAW_REDY, osFlagsWaitAll, osWaitForever);
 		
 		if (DR16_ParseRC(&dr16, &rc)) {
 			DR16_Restart();
