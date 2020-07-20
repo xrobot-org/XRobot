@@ -16,7 +16,7 @@
 #define BSP_USB_SIGNAL_BUF_RECV (1u<<0)
 
 #define BSP_USB_MAX_RX_LEN	256
-#define BSP_USB_MAX_TX_LEN	256
+#define BSP_USB_MAX_TX_LEN	1024
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
