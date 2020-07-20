@@ -71,47 +71,45 @@ static const CLI_Command_Definition_t endian = {
 };
 
 
-static BaseType_t TaskStatsCommand(char *out_buffer, size_t len, const char *command_string) {
-	const char *const header = 
+static BaseType_t StatsCommand(char *out_buffer, size_t len, const char *command_string) {
+	const char *const task_list_header = 
+		"Task list\r\n"
 		"Task          State  Priority  Stack	#\r\n"
 		"************************************************\r\n";
-	(void)command_string;
-	(void)len;
-	configASSERT(out_buffer);
+	
+	const char *const run_time_header = 
+		"Run time stats\r\n"
+		"Task            Abs Time      % Time\r\n"
+		"****************************************\r\n";
 
-	strcpy(out_buffer, header);
-	vTaskList(out_buffer + strlen(header));
-
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t task_stats = {
-	"task-stats",
-	"\r\ntask-stats:\r\n Displays a table showing the state of each FreeRTOS task\r\n\r\n",
-	TaskStatsCommand,
-	0, 
-};
-
-static BaseType_t HeapStatsCommand(char *out_buffer, size_t len, const char *command_string) {
-	const char *const header = 
+	const char *const heap_header = 
+		"Heap stats\r\n"
 		"total(B)	free(B)	used(B)\r\n"
 		"*******************************\r\n";
+	
 	(void)command_string;
 	(void)len;
-	configASSERT(out_buffer);
 	HeapStats_t heap_stats;
 	
-	strcpy(out_buffer, header);
+	configASSERT(out_buffer);
+
+	strcpy(out_buffer, task_list_header);
+	vTaskList(out_buffer + strlen(out_buffer));
+
+	strcat(out_buffer, run_time_header);
+	vTaskGetRunTimeStats(out_buffer + strlen(out_buffer));
+	
+	strcat(out_buffer, heap_header);
 	vPortGetHeapStats(&heap_stats);
-	sprintf(out_buffer + strlen(header), "%d\t\t%d\t%d\r\n", configTOTAL_HEAP_SIZE, heap_stats.xAvailableHeapSpaceInBytes,configTOTAL_HEAP_SIZE - heap_stats.xAvailableHeapSpaceInBytes);
+	sprintf(out_buffer + strlen(out_buffer), "%d\t\t%d\t%d\r\n", configTOTAL_HEAP_SIZE, heap_stats.xAvailableHeapSpaceInBytes,configTOTAL_HEAP_SIZE - heap_stats.xAvailableHeapSpaceInBytes);
 
 	return pdFALSE;
 }
 
-static const CLI_Command_Definition_t heap_stats = {
-	"heap-stats",
-	"\r\nheap-stats:\r\n Displays a table showing the state of memory\r\n\r\n",
-	HeapStatsCommand,
+static const CLI_Command_Definition_t stats = {
+	"stats",
+	"\r\nstats:\r\n Displays a table showing the state of each FreeRTOS task\r\n\r\n",
+	StatsCommand,
 	0, 
 };
 
@@ -134,28 +132,6 @@ static const CLI_Command_Definition_t temp_stats = {
 	"\r\nheap-stats:\r\n Displays a table showing the state of temperature\r\n\r\n",
 	TempCommand,
 	0, 
-};
-
-static BaseType_t RunTimeStatsCommand(char *out_buffer, size_t len, const char *command_string) {
-	const char * const header = 
-		"Task            Abs Time      % Time\r\n"
-		"****************************************\r\n";
-
-	(void)command_string;
-	(void)len;
-	configASSERT(out_buffer);
-
-	strcpy(out_buffer, header);
-	vTaskGetRunTimeStats(out_buffer + strlen(header));
-
-	return pdFALSE;
-}
-
-static const CLI_Command_Definition_t run_time_stats = {
-	"run-time-stats",
-	"\r\nrun-time-stats:\r\n Displays a table showing how much processing time each FreeRTOS task has used\r\n\r\n",
-	RunTimeStatsCommand,
-	0,
 };
 
 static BaseType_t SetModelCommand(char *out_buffer, size_t len, const char *command_string) {
@@ -215,11 +191,9 @@ void Task_CLI(void *argument) {
 	osDelay(TASK_INIT_DELAY_CLI);
 	
 	/* Register all the commands. */
-	FreeRTOS_CLIRegisterCommand(&task_stats);
-	FreeRTOS_CLIRegisterCommand(&run_time_stats);
+	FreeRTOS_CLIRegisterCommand(&stats);
 	FreeRTOS_CLIRegisterCommand(&set_model);
 	FreeRTOS_CLIRegisterCommand(&endian);
-	FreeRTOS_CLIRegisterCommand(&heap_stats);
 	FreeRTOS_CLIRegisterCommand(&temp_stats);
 	
 	/* Save CPU power when CLI not used. */
