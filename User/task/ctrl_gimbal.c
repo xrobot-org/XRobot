@@ -43,7 +43,7 @@ void Task_CtrlGimbal(void *argument) {
 		uint32_t flag = SIGNAL_CAN_MOTOR_RECV;
 		if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != osFlagsErrorTimeout) {
 			
-			osMessageQueueGet(task_param->messageq.gimb_eulr, gimbal.imu_eulr, NULL, 0);
+			osMessageQueueGet(task_param->messageq.gimb_eulr, gimbal.eulr.imu, NULL, 0);
 			osMessageQueueGet(task_param->messageq.cmd, cmd, NULL, 0);
 			
 			osKernelLock();
@@ -52,7 +52,7 @@ void Task_CtrlGimbal(void *argument) {
 			
 			Gimbal_Control(&gimbal, &(cmd->gimbal));
 			
-			CAN_Motor_ControlGimbal(gimbal.yaw_cur_out, gimbal.pit_cur_out);
+			CAN_Motor_ControlGimbal(gimbal.cur_out[GIMBAL_ACTR_YAW], gimbal.cur_out[GIMBAL_ACTR_PIT]);
 			
 			osDelayUntil(tick);
 		} else {

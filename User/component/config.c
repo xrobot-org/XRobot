@@ -43,24 +43,42 @@ static const Config_Robot_t config_infantry = {
 		
 		.gimbal = {
 			.pid = {{
+				/* GIMBAL_PID_YAW_IN */
 				.kp = 0.5,
 				.ki = 0.5,
 				.kd = 0.5,
 				.i_limit = 0.5,
 				.out_limit = 0.5,
 			},{
+				/* GIMBAL_PID_YAW_OUT */
 				.kp = 0.5,
 				.ki = 0.5,
 				.kd = 0.5,
 				.i_limit = 0.5,
 				.out_limit = 0.5,
 			},{
+				/* GIMBAL_PID_PIT_IN */
 				.kp = 0.5,
 				.ki = 0.5,
 				.kd = 0.5,
 				.i_limit = 0.5,
 				.out_limit = 0.5,
 			},{
+				/* GIMBAL_PID_PIT_OUT */
+				.kp = 0.5,
+				.ki = 0.5,
+				.kd = 0.5,
+				.i_limit = 0.5,
+				.out_limit = 0.5,
+			},{
+				/* GIMBAL_PID_REL_YAW */
+				.kp = 0.5,
+				.ki = 0.5,
+				.kd = 0.5,
+				.i_limit = 0.5,
+				.out_limit = 0.5,
+			},{
+				/* GIMBAL_PID_REL_PIT, */
 				.kp = 0.5,
 				.ki = 0.5,
 				.kd = 0.5,

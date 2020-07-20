@@ -25,13 +25,15 @@ enum Gimbal_PID_e{
 	GIMBAL_PID_YAW_OUT,
 	GIMBAL_PID_PIT_IN,
 	GIMBAL_PID_PIT_OUT,
+	GIMBAL_PID_REL_YAW,
+	GIMBAL_PID_REL_PIT,
 	GIMBAL_PID_NUM,
 };
 
-enum Gimbal_LPF_e{
-	GIMBAL_LPF_YAW = 0,
-	GIMBAL_LPF_PIT,
-	GIMBAL_LPF_NUM,
+enum Gimbal_Acuator_e{
+	GIMBAL_ACTR_YAW = 0,
+	GIMBAL_ACTR_PIT,
+	GIMBAL_ACTR_NUM,
 };
 
 typedef struct {
@@ -48,18 +50,20 @@ typedef struct {
 	
 	/* Feedback */
 	BMI088_t *imu;
-	AHRS_Eulr_t *imu_eulr;
-	AHRS_Eulr_t encoder_eulr;
+	
+	struct {
+		AHRS_Eulr_t *imu;
+		AHRS_Eulr_t encoder;
+	} eulr;
 	
 	/* PID */
 	PID_t pid[GIMBAL_PID_NUM];
 	
 	/* Output */
-	float32_t yaw_cur_out;
-	float32_t pit_cur_out;
+	float32_t cur_out[GIMBAL_ACTR_NUM];
 	
 	/* Output filter */
-	LowPassFilter2p_t filter[GIMBAL_LPF_NUM];
+	LowPassFilter2p_t filter[GIMBAL_ACTR_NUM];
 } Gimbal_t;
 
 
