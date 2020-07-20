@@ -60,8 +60,8 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float32_t dt_sec, 
 	PID_Init(&(g->pid[GIMBAL_PID_PIT_IN]), PID_MODE_SET_D, g->dt_sec, &(param->pid[GIMBAL_PID_PIT_IN]));
 	PID_Init(&(g->pid[GIMBAL_PID_PIT_OUT]), PID_MODE_NO_D, g->dt_sec, &(param->pid[GIMBAL_PID_PIT_OUT]));
 	
-	LowPassFilter2p_Init(&(g->filter[GIMBAL_LPF_YAW]), 1000.f / g->dt_sec, 100.f);
-	LowPassFilter2p_Init(&(g->filter[GIMBAL_LPF_PIT]), 1000.f / g->dt_sec, 100.f);
+	for (uint8_t i  = 0; i < GIMBAL_LPF_NUM; i++)
+		LowPassFilter2p_Init(&(g->filter[i]), 1.f / g->dt_sec, 100.f);
 	return 0;
 }
 
