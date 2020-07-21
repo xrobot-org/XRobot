@@ -42,7 +42,7 @@ typedef struct {
 } Gimbal_Params_t;
 
 typedef struct {
-	const Gimbal_Params_t *params;
+	Gimbal_Params_t *params;
 	
 	/* common */
 	float32_t dt_sec;

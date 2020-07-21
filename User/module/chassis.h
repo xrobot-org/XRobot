@@ -44,7 +44,7 @@ typedef struct {
 } Chassis_Params_t;
 
 typedef struct {
-	const Chassis_Params_t *params;
+	Chassis_Params_t *params;
 	
 	/* common */
 	float32_t dt_sec;

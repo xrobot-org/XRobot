@@ -30,7 +30,7 @@ typedef struct {
 } Shoot_Params_t;
 
 typedef struct {
-	const Shoot_Params_t *params;
+	Shoot_Params_t *params;
 	
 	/* common */
 	float32_t dt_sec;

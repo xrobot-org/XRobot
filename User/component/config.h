@@ -26,19 +26,19 @@ typedef enum {
 	CONFIG_USER_DEFAULT,
 } Config_UserName_t;
 
-typedef const struct {
-	const struct {
-		const Chassis_Params_t chassis;
-		const Gimbal_Params_t gimbal;
-		const Shoot_Params_t shoot;
+typedef struct {
+	struct {
+		Chassis_Params_t chassis;
+		Gimbal_Params_t gimbal;
+		Shoot_Params_t shoot;
 	} param;
 	
-	const Config_Model_t model;
+	Config_Model_t model;
 } Config_Robot_t;
 
-typedef const struct {
-	const struct {
-		const CMD_Params_t cmd;
+typedef struct {
+	struct {
+		CMD_Params_t cmd;
 	} param;
 } Config_User_t;
 
