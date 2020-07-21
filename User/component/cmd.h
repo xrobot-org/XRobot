@@ -35,7 +35,6 @@ typedef enum {
 typedef enum {
 	GIMBAL_MODE_RELAX,
 	GIMBAL_MODE_INIT,
-	GIMBAL_MODE_CALI,
 	GIMBAL_MODE_ABSOLUTE,
 	GIMBAL_MODE_RELATIVE,
 	GIMBAL_MODE_FIX,
@@ -66,8 +65,8 @@ typedef struct {
 
 typedef struct {
 	CMD_Shoot_Mode_t mode;
-	float32_t bullet_speed;
-	float32_t shoot_freq_hz;
+	float bullet_speed;
+	float shoot_freq_hz;
 } CMD_Shoot_Ctrl_t;
 
 typedef enum {
@@ -91,8 +90,8 @@ typedef enum {
 typedef struct {
 	bool pc_ctrl;
 	
-	float32_t sens_mouse;
-	float32_t sens_rc;
+	float sens_mouse;
+	float sens_rc;
 	
 	CMD_Chassis_Ctrl_t chassis;
 	CMD_Gimbal_Ctrl_t gimbal;
@@ -100,17 +99,17 @@ typedef struct {
 } CMD_t;
 
 typedef struct {
-	float32_t sens_mouse;
-	float32_t sens_rc;
+	float sens_mouse;
+	float sens_rc;
 } CMD_Params_t;
 
 typedef struct {
-	float32_t ch_l_x;
-	float32_t ch_l_y;
-	float32_t ch_r_x;
-	float32_t ch_r_y;
+	float ch_l_x;
+	float ch_l_y;
+	float ch_r_x;
+	float ch_r_y;
 	
-	float32_t ch_res;
+	float ch_res;
 	
 	CMD_SwitchPos_t sw_l;
 	CMD_SwitchPos_t sw_r;

@@ -126,9 +126,9 @@ int8_t CAN_DeviceInit(
 
 CAN_Device_t *CAN_GetDevice(void);
 
-int8_t CAN_Motor_ControlChassis(float32_t m1, float32_t m2, float32_t m3, float32_t m4);
-int8_t CAN_Motor_ControlGimbal(float32_t yaw, float32_t pitch);
-int8_t CAN_Motor_ControlShoot(float32_t fric1, float32_t fric2, float32_t trig);
+int8_t CAN_Motor_ControlChassis(float m1, float m2, float m3, float m4);
+int8_t CAN_Motor_ControlGimbal(float yaw, float pitch);
+int8_t CAN_Motor_ControlShoot(float fric1, float fric2, float trig);
 
 int8_t CAN_Motor_QuickIdSetMode(void);
 int8_t CAN_SuperCapControl(CAN_SuperCapControl_t *sc_ctrl);

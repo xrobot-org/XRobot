@@ -128,7 +128,7 @@ typedef struct __packed {
 typedef struct __packed {
 	uint16_t chassis_volt;
 	uint16_t chassis_amp;
-	float32_t chassis_watt;
+	float chassis_watt;
 	uint16_t chassis_pwr_buff;
 	uint16_t shoot_17_heat;
 	uint16_t shoot_42_heat;
@@ -136,10 +136,10 @@ typedef struct __packed {
 } Referee_PowerHeat_t;
 
 typedef struct __packed {
-	float32_t x;
-	float32_t y;
-	float32_t z;
-	float32_t yaw;
+	float x;
+	float y;
+	float z;
+	float yaw;
 } Referee_RobotPos_t;
 
 typedef struct __packed {
@@ -163,7 +163,7 @@ typedef struct __packed {
 typedef struct __packed {
 	uint8_t bullet_type;
 	uint8_t bullet_freq;
-	float32_t bullet_speed;
+	float bullet_speed;
 } Referee_ShootData_t;	
 
 typedef struct __packed {

@@ -13,18 +13,22 @@
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 int8_t BSP_Buzzer_Start(void) {
-	return HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3); 
+	if (HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3) == HAL_OK)
+		return 0;
+	return -1;
 }
 
-int8_t BSP_Buzzer_Set(float32_t freq, float32_t duty_cycle) {
+int8_t BSP_Buzzer_Set(float freq, float duty_cycle) {
 	uint16_t pulse = duty_cycle * UINT16_MAX;
 	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, pulse);
 	
-	pulse = freq;
+	pulse = (uint16_t)freq;
 	__HAL_TIM_PRESCALER(&htim4, pulse);
 	return 0;
 }
 
 int8_t BSP_Buzzer_Stop(void) {
-	return HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3);
+	if (HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3) == HAL_OK)
+		return 0;
+	return -1;
 }

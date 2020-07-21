@@ -56,8 +56,6 @@ static USART_TypeDef *UART_GetInstance(BSP_UART_t uart) {
 		case BSP_UART_XXX:
 			return USARTX;
 		*/
-		default:
-			return NULL;
 	}
 }
 
@@ -198,8 +196,6 @@ UART_HandleTypeDef *BSP_UART_GetHandle(BSP_UART_t uart) {
 		case BSP_UART_XXX:
 			return &huartX;
 		*/
-		default:
-			return NULL;
 	}
 }
 
@@ -237,8 +233,6 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void
 				case BSP_UART_IDLE_LINE_CB:
 					bsp_uart_callback.dr16.IdleLineCallback = callback;
 					break;
-				default:
-					return -1;
 			}
 			break;
 			
@@ -270,8 +264,6 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void
 					break;
 				case BSP_UART_IDLE_LINE_CB:
 					bsp_uart_callback.ref.IdleLineCallback = callback;
-				default:
-					return -1;
 			}
 			break;
 		/*
@@ -308,8 +300,6 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void
 			}
 			break;
 		*/
-		default:
-			return -1;
 	}
 	return 0;
 }

@@ -32,7 +32,7 @@ void Task_CtrlGimbal(void *argument) {
 	Gimbal_Init(
 		&gimbal, 
 		&(task_param->config->param.gimbal),
-		(float32_t)delay_tick / (float32_t)osKernelGetTickFreq(),
+		(float)delay_tick / (float)osKernelGetTickFreq(),
 		BMI088_GetDevice());
 	
 	uint32_t tick = osKernelGetTickCount();

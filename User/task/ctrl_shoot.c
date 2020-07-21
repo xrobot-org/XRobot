@@ -31,7 +31,7 @@ void Task_CtrlShoot(void *argument) {
 	Shoot_Init(
 		&shoot, 
 		&(task_param->config->param.shoot),
-		(float32_t)delay_tick / (float32_t)osKernelGetTickFreq());
+		(float)delay_tick / (float)osKernelGetTickFreq());
 	
 	uint32_t tick = osKernelGetTickCount();
 	while(1) {

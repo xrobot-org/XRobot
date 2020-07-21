@@ -1,6 +1,6 @@
 #include "config.h"
 
-static PID_Params_t infantry_chassis_pid_array[4] = {{
+static const PID_Params_t infantry_chassis_pid_array[4] = {{
 		.kp = 0.5,
 		.ki = 0.5,
 		.kd = 0.5,
@@ -143,8 +143,6 @@ const Config_Robot_t *Config_GetRobot(Config_Model_t model) {
 			return &config_drone;
 		case CONFIG_ROBOT_MODEL_SENTRY:
 			return &config_sentry;
-		default:
-			return NULL;
 	}
 }
 
@@ -152,8 +150,6 @@ const Config_User_t *Config_GetUser(Config_UserName_t user) {
 	switch (user) {
 		case CONFIG_USER_DEFAULT:
 			return &user_default;
-		default:
-			return NULL;
 	}
 }
 

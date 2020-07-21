@@ -10,7 +10,7 @@
 #include "user_math.h"
 
 typedef enum {
-	/* Use PID_MODE_NO_D for a PI controller (vs PID) */
+	/* Use PID_MODE_NO_D for a M_PI controller (vs PID) */
 	PID_MODE_NO_D = 0,
 	/* PID_MODE_CALC_D calculates discrete derivative from previous error,
 	 * val_dot in pid_calculate() will be ignored */
@@ -24,25 +24,25 @@ typedef enum {
 
 typedef struct {
 	PID_Mode_t mode;
-	float32_t dt_min;
-	float32_t kp;
-	float32_t ki;
-	float32_t kd;
-	float32_t i;
-	float32_t i_limit;
-	float32_t out_limit;
-	float32_t err_last;
-	float32_t out_last;
+	float dt_min;
+	float kp;
+	float ki;
+	float kd;
+	float i;
+	float i_limit;
+	float out_limit;
+	float err_last;
+	float out_last;
 } PID_t;
 
 typedef struct {
-	float32_t kp;
-	float32_t ki;
-	float32_t kd;
-	float32_t i_limit;
-	float32_t out_limit;
+	float kp;
+	float ki;
+	float kd;
+	float i_limit;
+	float out_limit;
 } PID_Params_t;
 
-int8_t PID_Init(PID_t *pid, PID_Mode_t mode, float32_t dt_min, const PID_Params_t *param) ;
-float32_t PID_Calc(PID_t *pid, float32_t sp, float32_t val, float32_t val_dot, float32_t dt);
+int8_t PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min, const PID_Params_t *param) ;
+float PID_Calc(PID_t *pid, float sp, float val, float val_dot, float dt);
 int8_t PID_ResetIntegral(PID_t *pid);

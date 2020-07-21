@@ -39,7 +39,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-uint8_t ist8310_rxbuf[IST8310_LEN_RX_BUFF];
+uint8_t ist8310_rxbuf[IST8310_LEN_RX_BUFF];  //TODO: Add static when release
 
 static IST8310_t *gist8310;
 static bool inited = false;
@@ -125,6 +125,7 @@ IST8310_t *IST8310_GetDevice(void) {
 }
 
 int8_t IST8310_Receive(IST8310_t *ist8310) {
+	(void)ist8310;
 	uint8_t data = 1;
 	IST8310_Write(IST8310_CNTL1, &data, 1);
 	return DEVICE_OK;
@@ -133,14 +134,28 @@ int8_t IST8310_Receive(IST8310_t *ist8310) {
 int8_t IST8310_Parse(IST8310_t *ist8310) {
 	if (ist8310 == NULL)
 		return DEVICE_ERR_NULL;
-
+	
+	#if 1
+	/* Gyroscope imu_raw -> degrees/sec -> radians/sec */
+	int16_t raw_x, raw_y, raw_z;
+	memcpy(&raw_x, ist8310_rxbuf + 0, sizeof(int16_t));
+	memcpy(&raw_y, ist8310_rxbuf + 2, sizeof(int16_t));
+	memcpy(&raw_z, ist8310_rxbuf + 4, sizeof(int16_t));
+	
+	ist8310->magn.x = (float)raw_x * 3.f / 20.f;
+	ist8310->magn.y = (float)raw_y * 3.f / 20.f;
+	ist8310->magn.z = (float)raw_z * 3.f / 20.f;
+	
+	#else
 	const int16_t *raw_x = (int16_t *)(ist8310_rxbuf + 0);
 	const int16_t *raw_y = (int16_t *)(ist8310_rxbuf + 2);
 	const int16_t *raw_z = (int16_t *)(ist8310_rxbuf + 4);
 	
-	ist8310->magn.x = (float32_t)*raw_x * 3.f / 20.f;
-	ist8310->magn.y = (float32_t)*raw_y * 3.f / 20.f;
-	ist8310->magn.z = (float32_t)*raw_z * 3.f / 20.f;
+	ist8310->magn.x = (float)*raw_x * 3.f / 20.f;
+	ist8310->magn.y = (float)*raw_y * 3.f / 20.f;
+	ist8310->magn.z = (float)*raw_z * 3.f / 20.f;
+	#endif
+	
 	
 	return DEVICE_OK;
 }

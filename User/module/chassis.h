@@ -38,16 +38,16 @@ typedef enum {
 
 typedef struct {
 	Chassis_Type_t type;
-	PID_Params_t *motor_pid_param;
+	const PID_Params_t *motor_pid_param;
 	PID_Params_t follow_pid_param;
-	float32_t low_pass_cutoff;
+	float low_pass_cutoff;
 } Chassis_Params_t;
 
 typedef struct {
-	Chassis_Params_t *params;
+	const Chassis_Params_t *params;
 	
 	/* common */
-	float32_t dt_sec;
+	float dt_sec;
 	CMD_Chassis_Mode_t mode;
 	
 	/* Chassis design */
@@ -55,28 +55,28 @@ typedef struct {
 	Mixer_t mixer;
 	
 	/* Feedback */
-	float32_t gimbal_yaw_angle;
-	float32_t *motor_rpm;
+	float gimbal_yaw_angle;
+	float *motor_rpm;
 	
 	/* Mid product */
 	MoveVector_t move_vec;
 	
 	/* Mixer Out / PID set point. */
-	float32_t *motor_rpm_set;
-	float32_t motor_scaler;
+	float *motor_rpm_set;
+	float motor_scaler;
 	
 	/* PID */
 	PID_t *motor_pid;
 	PID_t follow_pid;
 	
 	/* Output */
-	float32_t *motor_cur_out;
+	float *motor_cur_out;
 	
 	/* Output filter */
 	LowPassFilter2p_t *output_filter;
 } Chassis_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float32_t dt_sec);
+int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec);
 int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_Device_t *can_device);
 int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl);

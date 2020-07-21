@@ -40,7 +40,7 @@ void Task_CtrlChassis(void *argument) {
 	Chassis_Init(
 		&chassis,
 		&(task_param->config->param.chassis),
-		(float32_t)delay_tick / (float32_t)osKernelGetTickFreq());
+		(float)delay_tick / (float)osKernelGetTickFreq());
 	
 	/* Task Setup */
 	uint32_t tick = osKernelGetTickCount();

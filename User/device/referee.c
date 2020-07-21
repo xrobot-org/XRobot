@@ -72,11 +72,14 @@ int8_t Referee_Restart(void) {
 }
 
 int8_t Referee_StartReceiving(Referee_t *ref) {
-	return HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_REF), rxbuf, sizeof(REF_LEN_RX_BUFF));
+	(void)ref;
+	if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_REF), rxbuf, sizeof(REF_LEN_RX_BUFF)) == HAL_OK)
+		return DEVICE_OK;
+	return DEVICE_ERR;
 }
 
 int8_t Referee_Parse(Referee_t *ref) {
-	uint8_t data_length = REF_LEN_RX_BUFF - __HAL_DMA_GET_COUNTER(BSP_UART_GetHandle(BSP_UART_REF)->hdmarx);
+	uint32_t data_length = REF_LEN_RX_BUFF - __HAL_DMA_GET_COUNTER(BSP_UART_GetHandle(BSP_UART_REF)->hdmarx);
 	
 	uint8_t index = 0;
 	

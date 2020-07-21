@@ -23,8 +23,6 @@ void Task_Command(void *argument) {
 	
 	task_param->messageq.cmd = osMessageQueueNew(9u, sizeof(CMD_t), NULL);
 	
-	osStatus_t os_status;
-	
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_COMMAND);
 	
@@ -45,10 +43,7 @@ void Task_Command(void *argument) {
 		} else {
 			CMD_Parse(&rc, &cmd);
 			for (uint8_t i = 0; i < 3; i++)
-				os_status = osMessageQueuePut(task_param->messageq.cmd, &cmd, 0, 0);
-			
-			if (os_status != osOK) {
-			}
+				osMessageQueuePut(task_param->messageq.cmd, &cmd, 0, 0);
 		}
 	}
 }

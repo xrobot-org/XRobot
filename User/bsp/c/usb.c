@@ -47,7 +47,7 @@ int8_t BSP_USB_Printf(const char *fmt, ...) {
 	uint16_t len = 0;
 	
 	va_start(ap, fmt);
-	len = vsnprintf((char*)usb_tx_buf, BSP_USB_MAX_TX_LEN, fmt, ap);
+	len = (uint16_t)vsnprintf((char*)usb_tx_buf, BSP_USB_MAX_TX_LEN, fmt, ap);
 	va_end(ap);
 	
 	BSP_USB_Transmit(usb_tx_buf, len);

@@ -16,18 +16,21 @@ int8_t BSP_Delay(uint32_t ms) {
 	uint32_t ticks = ms / tick_period;
 	
 	switch (osKernelGetState()) {
+		case osKernelError:
+		case osKernelReserved:
+		case osKernelLocked:
+		case osKernelSuspended:
+			break;
+		
 		case osKernelRunning:
 			osDelay(ticks ? ticks : 1);
 			break;
 		
 		case osKernelInactive:
 		case osKernelReady:
-		case osKernelLocked:
-		case osKernelSuspended:
-		case osKernelError:
-		case osKernelReserved:
 			HAL_Delay(ms);
 			break;
+		
 	}
 	return 0;
 }

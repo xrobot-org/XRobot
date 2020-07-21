@@ -14,10 +14,10 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/ 
-static void TrigTimerCallback  (void *arg) {
+static void TrigTimerCallback(void *arg) {
 	Shoot_t *s = (Shoot_t*)arg;
 	
-	s->trig_angle_set += 2.f * PI / SHOOT_NUM_FEEDING_TOOTH;
+	s->trig_angle_set += 2.f * M_PI / SHOOT_NUM_FEEDING_TOOTH;
 }
 
 static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
@@ -42,15 +42,12 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
 		
 		case SHOOT_MODE_FIRE:
 			break;
-		
-		default:
-			return -1;
 	}
 	return 0;
 }
 
 /* Exported functions --------------------------------------------------------*/
-int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float32_t dt_sec) {
+int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float dt_sec) {
 	if (s == NULL)
 		return -1;
 	
@@ -80,12 +77,12 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_Device_t *can_device) {
 		return -1;
 	
 	for(uint8_t i = 0; i < 2; i++) {
-		const float32_t fric_speed = can_device->gimbal_motor_fb.fric_fb[i].rotor_speed;
+		const float fric_speed = can_device->gimbal_motor_fb.fric_fb[i].rotor_speed;
 		s->fric_rpm[i] = fric_speed;
 	}
 	
-	const float32_t trig_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
-	s->trig_angle = trig_angle / (float32_t)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
+	const float trig_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
+	s->trig_angle = trig_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * M_PI;
 	
 	return 0;
 }
@@ -105,7 +102,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
 	s->fric_rpm_set[1] = -s->fric_rpm_set[0];
 
 	
-	uint32_t period_ms = 1000u / s_ctrl->shoot_freq_hz;
+	uint32_t period_ms = 1000u / (uint32_t)s_ctrl->shoot_freq_hz;
 	if (!osTimerIsRunning(s->trig_timer_id))
 		osTimerStart(s->trig_timer_id, period_ms);  
 	
@@ -129,9 +126,6 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
 				s->fric_cur_out[i] = LowPassFilter2p_Apply(&(s->fric_output_filter[i]), s->fric_cur_out[i]);
 			}
 			break;
-		
-		default:
-			return -1;
 	}
 	return 0;
 }

@@ -14,6 +14,6 @@
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions prototypes ---------------------------------------------*/
 int8_t BSP_Fric_Start(void);
-int8_t BSP_Fric_Set(float32_t duty_cycle);
+int8_t BSP_Fric_Set(float duty_cycle);
 int8_t BSP_Fric_Stop(void);
 

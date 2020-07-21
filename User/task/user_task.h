@@ -53,7 +53,7 @@ typedef struct {
 		osMessageQueueId_t cmd;
 	} messageq;
 		
-	Config_Robot_t *config;
+	const Config_Robot_t *config;
 	
 	#ifdef DEBUG
 	struct {

@@ -5,9 +5,9 @@
 
 #include "user_math.h"
 
-float32_t InvSqrt(float32_t x) {
+float InvSqrt(float x) {
 #if 0
-	float32_t out;
+	float out;
 	arm_sqrt_f32(x, &out);
 	return 1.f/out;
 #else
@@ -15,10 +15,10 @@ float32_t InvSqrt(float32_t x) {
 #endif
 }
 
-float32_t AbsClip(float32_t in, float32_t limit) {
+float AbsClip(float in, float limit) {
 	return (in < -limit) ? -limit : ((in > limit) ? limit : in);
 }
 
-float32_t Sign(float32_t in) {
+float Sign(float in) {
 	return (in > 0) ? 1.f : 0.f;
 }

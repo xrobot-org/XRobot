@@ -28,9 +28,9 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_Gimbal_Mode_t mode) {
 static bool Gimbal_Steady(Gimbal_t *g) {
 	static uint8_t steady;
 	
-	bool con1 = g->imu->gyro.x < 0.1;
-	bool con2 = g->imu->gyro.y < 0.1;
-	bool con3 = g->imu->gyro.z < 0.1;
+	bool con1 = g->imu->gyro.x < 0.1f;
+	bool con2 = g->imu->gyro.y < 0.1f;
+	bool con3 = g->imu->gyro.z < 0.1f;
 	
 	if (con1 && con2 && con3)	
 		steady++;
@@ -45,7 +45,7 @@ static bool Gimbal_Steady(Gimbal_t *g) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float32_t dt_sec, BMI088_t *imu){
+int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec, BMI088_t *imu){
 	if (g == NULL)
 		return -1;
 	
@@ -72,11 +72,11 @@ int8_t Gimbal_UpdateFeedback(Gimbal_t *g, CAN_Device_t *can_device) {
 	if (can_device == NULL)
 		return -1;
 	
-	const float32_t yaw_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
-	g->eulr.encoder.yaw = yaw_angle / (float32_t)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
+	const float yaw_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
+	g->eulr.encoder.yaw = yaw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * M_PI;
 	
-	const float32_t pit_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
-	g->eulr.encoder.pit = pit_angle / (float32_t)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
+	const float pit_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
+	g->eulr.encoder.pit = pit_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * M_PI;
 	
 	return 0;
 }
@@ -93,7 +93,7 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_Gimbal_Ctrl_t *g_ctrl) {
 	
 	Gimbal_SetMode(g, g_ctrl->mode);
 	
-	float32_t motor_gyro_set;
+	float motor_gyro_set;
 	
 	switch(g->mode) {
 		case GIMBAL_MODE_RELAX:
@@ -123,9 +123,6 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_Gimbal_Ctrl_t *g_ctrl) {
 			g->cur_out[GIMBAL_ACTR_YAW] = PID_Calc(&(g->pid[GIMBAL_PID_REL_YAW]), g_ctrl->eulr.yaw, g->eulr.encoder.yaw, g->imu->gyro.z, g->dt_sec);
 			g->cur_out[GIMBAL_ACTR_PIT] = PID_Calc(&(g->pid[GIMBAL_PID_REL_PIT]), g_ctrl->eulr.pit, g->eulr.encoder.pit, g->imu->gyro.x, g->dt_sec);
 			break;
-			
-		default:
-			return -1;
 	}
 	
 	

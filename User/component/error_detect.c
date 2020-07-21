@@ -3,3 +3,7 @@
 */
 
 #include "error_detect.h"
+
+static void fun(void) {
+	return;
+}

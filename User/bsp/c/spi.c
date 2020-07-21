@@ -43,8 +43,8 @@ struct {
 } static bsp_spi_callback;
 
 /* Private function  ---------------------------------------------------------*/
-static SPI_TypeDef *UART_GetInstance(BSP_SPI_t uart) {
-	switch (uart) {
+static SPI_TypeDef *SPI_GetInstance(BSP_SPI_t spi) {
+	switch (spi) {
 		case BSP_SPI_OLED:
 			return SPI2;
 		case BSP_SPI_IMU:
@@ -53,86 +53,84 @@ static SPI_TypeDef *UART_GetInstance(BSP_SPI_t uart) {
 		case BSP_SPI_XXX:
 			return SPIX;
 		*/
-		default:
-			return NULL;
 	}
 }
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
+	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.TxCpltCallback)
 			bsp_spi_callback.oled.TxCpltCallback();
-	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
+	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.TxCpltCallback)
 			bsp_spi_callback.imu.TxCpltCallback();
 	}
 }
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
+	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.RxCpltCallback)
 			bsp_spi_callback.oled.RxCpltCallback();
-	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
+	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.RxCpltCallback)
 			bsp_spi_callback.imu.RxCpltCallback();
 	}
 }
 
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
+	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.TxRxCpltCallback)
 			bsp_spi_callback.oled.TxRxCpltCallback();
-	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
+	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.TxRxCpltCallback)
 			bsp_spi_callback.imu.TxRxCpltCallback();
 	}
 }
 
 void HAL_SPI_TxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
+	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.TxHalfCpltCallback)
 			bsp_spi_callback.oled.TxHalfCpltCallback();
-	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
+	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.TxHalfCpltCallback)
 			bsp_spi_callback.imu.TxHalfCpltCallback();
 	}
 }
 
 void HAL_SPI_RxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
+	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.RxHalfCpltCallback)
 			bsp_spi_callback.oled.RxHalfCpltCallback();
-	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
+	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.RxHalfCpltCallback)
 			bsp_spi_callback.imu.RxHalfCpltCallback();
 	}
 }
 
 void HAL_SPI_TxRxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
+	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.TxRxHalfCpltCallback)
 			bsp_spi_callback.oled.TxRxHalfCpltCallback();
-	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
+	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.TxRxHalfCpltCallback)
 			bsp_spi_callback.imu.TxRxHalfCpltCallback();
 	}
 }
 
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
+	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.ErrorCallback)
 			bsp_spi_callback.oled.ErrorCallback();
-	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
+	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.ErrorCallback)
 			bsp_spi_callback.imu.ErrorCallback();
 	}
 }
 
 void HAL_SPI_AbortCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == UART_GetInstance(BSP_SPI_OLED)) {
+	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
 		if (bsp_spi_callback.oled.AbortCpltCallback)
 			bsp_spi_callback.oled.AbortCpltCallback();
-	} else if (hspi->Instance == UART_GetInstance(BSP_SPI_IMU)) {
+	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
 		if (bsp_spi_callback.imu.AbortCpltCallback)
 			bsp_spi_callback.imu.AbortCpltCallback();
 	}
@@ -155,8 +153,6 @@ SPI_HandleTypeDef *BSP_SPI_GetHandle(BSP_SPI_t spi) {
 		case BSP_SPI_XXX:
 			return &hspiX;
 		*/
-		default:
-			return NULL;
 	}
 }
 
@@ -190,9 +186,7 @@ int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*c
 					break;
 				case BSP_SPI_ABORT_CB:
 					bsp_spi_callback.imu.AbortCpltCallback = callback;
-					break; 
-				default:
-					return -1;
+					break;
 			}
 			break;
 
@@ -222,8 +216,6 @@ int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*c
 				case BSP_SPI_ABORT_CB:
 					bsp_spi_callback.oled.AbortCpltCallback = callback;
 					break;
-				default:
-					return -1;
 			}
 			break;
 		/*	
@@ -258,8 +250,6 @@ int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*c
 			}
 			break;
 		*/
-		default:
-			return -1;
 	}
 	return 0;
 }

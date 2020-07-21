@@ -26,11 +26,11 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-BMI088_t bmi088;
-IST8310_t ist8310;
+BMI088_t bmi088; //TODO: Add static when release
+IST8310_t ist8310; //TODO: Add static when release
 
 static AHRS_t gimbal_ahrs;
-AHRS_Eulr_t eulr_to_send;
+AHRS_Eulr_t eulr_to_send; //TODO: Add static when release
 
 static PID_t imu_temp_ctrl_pid;
 static const PID_Params_t imu_temp_ctrl_pid_param = {

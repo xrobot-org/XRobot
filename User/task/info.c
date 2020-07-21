@@ -37,8 +37,10 @@ void Task_Info(void *argument) {
 		/* Task body */
 		tick += delay_tick;
 		
-		float32_t battery_volt = BSP_GetBatteryVolt();
-		float32_t battery_percentage = Capacity_GetBatteryRemain(battery_volt);
+		float battery_volt = BSP_GetBatteryVolt();
+		float battery_percentage = Capacity_GetBatteryRemain(battery_volt);
+		
+		(void)battery_percentage;
 		
 		BSP_LED_Set(BSP_LED_GRN, BSP_LED_TAGGLE, 1);
 		

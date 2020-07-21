@@ -9,22 +9,26 @@
 #include "stm32f4xx.h"
 #define ARM_MATH_CM4
 
-#include <arm_math.h>
-
+#include <math.h>
 #include <float.h>
 #include <stdbool.h>
+#include <string.h>
 
 #define MATH_DEG_TO_RAD_MULT	(0.01745329251f)
 #define MATH_RAD_TO_DEG_MULT	(57.2957795131f)
 
+#ifndef M_PI
+    #define M_PI 3.14159265358979323846f
+#endif
+
 typedef struct {
-	float32_t vx;
-	float32_t vy;
-	float32_t wz;
+	float vx;
+	float vy;
+	float wz;
 } MoveVector_t;
 
-float32_t InvSqrt(float32_t x);
+float InvSqrt(float x);
 
-float32_t AbsClip(float32_t in, float32_t limit);
+float AbsClip(float in, float limit);
 
-float32_t Sign(float32_t in);
+float Sign(float in);

@@ -42,8 +42,6 @@ static I2C_TypeDef *I2C_GetInstance(BSP_I2C_t i2c) {
 		case BSP_I2C_XXX:
 			return &I2CX;
 		*/
-		default:
-			return NULL;
 	}
 }
 
@@ -119,8 +117,6 @@ I2C_HandleTypeDef *BSP_I2C_GetHandle(BSP_I2C_t i2c) {
 		case BSP_I2C_XXX:
 			return &hi2cX;
 		*/
-		default:
-			return NULL;
 	}
 }
 
@@ -158,8 +154,6 @@ int8_t BSP_I2C_RegisterCallback(BSP_I2C_t i2c, BSP_I2C_Callback_t type, void (*c
 				case HAL_I2C_ABORT_CB:
 					bsp_i2c_callback.comp.AbortCpltCallback = callback;
 					break;
-				default:
-					return -1;
 			}
 			break;
 		/*	
@@ -197,8 +191,6 @@ int8_t BSP_I2C_RegisterCallback(BSP_I2C_t i2c, BSP_I2C_Callback_t type, void (*c
 			}
 			break;
 		*/
-		default:
-			return -1;
 	}
 	return 0;
 }

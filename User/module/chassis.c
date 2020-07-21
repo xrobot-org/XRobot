@@ -47,15 +47,12 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_Chassis_Mode_t mode) {
 		
 		case CHASSIS_MODE_OPEN:
 			break;
-		
-		default:
-			return CHASSIS_ERR_MODE;
 	}
 	return CHASSIS_OK;
 }
 
 /* Exported functions --------------------------------------------------------*/
-int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float32_t dt_sec) {
+int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec) {
 	if (c == NULL)
 		return CHASSIS_ERR_NULL;
 	
@@ -94,23 +91,23 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float32_t dt_se
 			return CHASSIS_ERR_TYPE;
 	}
 	
-	c->motor_rpm = BSP_Malloc(c->num_wheel * sizeof(*c->motor_rpm));
+	c->motor_rpm = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->motor_rpm));
 	if (c->motor_rpm == NULL)
 		goto error1;
 	
-	c->motor_rpm_set = BSP_Malloc(c->num_wheel * sizeof(*c->motor_rpm_set));
+	c->motor_rpm_set = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->motor_rpm_set));
 	if (c->motor_rpm_set == NULL)
 		goto error2;
 	
-	c->motor_pid = BSP_Malloc(c->num_wheel * sizeof(*c->motor_pid));
+	c->motor_pid = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->motor_pid));
 	if (c->motor_pid == NULL)
 		goto error3;
 	
-	c->motor_cur_out = BSP_Malloc(c->num_wheel * sizeof(*c->motor_cur_out));
+	c->motor_cur_out = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->motor_cur_out));
 	if (c->motor_cur_out == NULL)
 		goto error4;
 	
-	c->output_filter = BSP_Malloc(c->num_wheel * sizeof(*c->output_filter));
+	c->output_filter = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->output_filter));
 	if (c->output_filter == NULL)
 		goto error5;
 		
@@ -147,11 +144,11 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_Device_t *can_device) {
 	if (can_device == NULL)
 		return CHASSIS_ERR_NULL;
 	
-	const float32_t raw_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
-	c->gimbal_yaw_angle = raw_angle / (float32_t)CAN_MOTOR_MAX_ENCODER * 2.f * PI;
+	const float raw_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
+	c->gimbal_yaw_angle = raw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * M_PI;
 	
 	for(uint8_t i = 0; i < 4; i++) {
-		const float32_t raw_speed = can_device->chassis_motor_fb[i].rotor_speed;
+		const float raw_speed = can_device->chassis_motor_fb[i].rotor_speed;
 		c->motor_rpm[i] = raw_speed; // TODO
 	}
 	
@@ -174,8 +171,8 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
 		c->move_vec.vy = 0.f;
 		
 	} else {
-		const float32_t cos_beta = cosf(c->gimbal_yaw_angle);
-		const float32_t sin_beta = sinf(c->gimbal_yaw_angle);
+		const float cos_beta = cosf(c->gimbal_yaw_angle);
+		const float sin_beta = sinf(c->gimbal_yaw_angle);
 		
 		c->move_vec.vx = cos_beta * c_ctrl->ctrl_v.vx - sin_beta * c_ctrl->ctrl_v.vy;
 		c->move_vec.vy = sin_beta * c_ctrl->ctrl_v.vx - cos_beta * c_ctrl->ctrl_v.vy;
@@ -189,7 +186,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
 		c->move_vec.wz = PID_Calc(&(c->follow_pid), 0, c->gimbal_yaw_angle, 0.f, c->dt_sec);
 		
 	} else if (c->mode == CHASSIS_MODE_ROTOR) {
-		c->move_vec.wz = 0.8;
+		c->move_vec.wz = 0.8f;
 	}
 	
 	/* move_vec -> motor_rpm_set. */
@@ -212,9 +209,6 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
 			case CHASSIS_MODE_RELAX:
 				c->motor_cur_out[i] = 0;
 				break;
-			
-			default:
-				return -1;
 		}
 		
 		/* Filter output. */

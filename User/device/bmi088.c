@@ -6,8 +6,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "bmi088.h"
 
-#include <string.h>
-
 #include "gpio.h"
 
 #include "bsp\delay.h"
@@ -136,9 +134,6 @@ static uint8_t BMI_ReadSingle(BMI_Device_t dv, uint8_t reg) {
 		case BMI_GYRO:
 			BMI088_GYRO_NSS_SET();
 			return buffer[0];
-		
-		default:
-			return 0;
 	}
 }
 
@@ -282,16 +277,30 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
 	if (bmi088 == NULL)
 		return DEVICE_ERR_NULL;
 	
-	const int16_t *raw_x = (int16_t *)(bmi088_rxbuf + 1);
-	const int16_t *raw_y = (int16_t *)(bmi088_rxbuf + 3);
-	const int16_t *raw_z = (int16_t *)(bmi088_rxbuf + 5);
+	#if 1
+	int16_t raw_x, raw_y, raw_z;
+	memcpy(&raw_x, bmi088_rxbuf + 1, sizeof(int16_t));
+	memcpy(&raw_y, bmi088_rxbuf + 3, sizeof(int16_t));
+	memcpy(&raw_z, bmi088_rxbuf + 5, sizeof(int16_t));
 	
 	/* 3G: 10920. 6G: 5460. 12G: 2730. 24G: 1365. */
-	bmi088->accl.x = (float32_t)*raw_x / 5460.f;
-	bmi088->accl.y = (float32_t)*raw_y / 5460.f;
-	bmi088->accl.z = (float32_t)*raw_z / 5460.f;
+	bmi088->accl.x = (float)raw_x / 5460.f;
+	bmi088->accl.y = (float)raw_y / 5460.f;
+	bmi088->accl.z = (float)raw_z / 5460.f;
 	
-	uint16_t raw_temp = (bmi088_rxbuf[17] << 3) | (bmi088_rxbuf[18] >> 5);
+	#else
+	const int16_t *praw_x = (int16_t *)(bmi088_rxbuf + 1);
+	const int16_t *praw_y = (int16_t *)(bmi088_rxbuf + 3);
+	const int16_t *praw_z = (int16_t *)(bmi088_rxbuf + 5);
+	
+	/* 3G: 10920. 6G: 5460. 12G: 2730. 24G: 1365. */
+	bmi088->accl.x = (float)*praw_x / 5460.f;
+	bmi088->accl.y = (float)*praw_y / 5460.f;
+	bmi088->accl.z = (float)*praw_z / 5460.f;
+	
+	#endif
+	
+	uint16_t raw_temp = ((bmi088_rxbuf[17] << 3) | (bmi088_rxbuf[18] >> 5)) & 0xFFFF;
 	
 	if (raw_temp > 1023)
 		raw_temp -= 2048;
@@ -305,19 +314,36 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 	if (bmi088 == NULL)
 		return DEVICE_ERR_NULL;
 	
+	#if 1
+	/* Gyroscope imu_raw -> degrees/sec -> radians/sec */
+	int16_t raw_x, raw_y, raw_z;
+	memcpy(&raw_x, bmi088_rxbuf + 7, sizeof(int16_t));
+	memcpy(&raw_y, bmi088_rxbuf + 9, sizeof(int16_t));
+	memcpy(&raw_z, bmi088_rxbuf + 11, sizeof(int16_t));
+	
+	/* FS125: 262.144. FS250: 131.072. FS500: 65.536. FS1000: 32.768. FS2000: 16.384.*/
+	/* 3G: 10920. 6G: 5460. 12G: 2730. 24G: 1365. */
+	bmi088->gyro.x = (float)raw_x / 32.768f * MATH_DEG_TO_RAD_MULT;
+	bmi088->gyro.y = (float)raw_y / 32.768f * MATH_DEG_TO_RAD_MULT;
+	bmi088->gyro.z = (float)raw_z / 32.768f * MATH_DEG_TO_RAD_MULT;
+	
+	#else
 	/* Gyroscope imu_raw -> degrees/sec -> radians/sec */
 	const int16_t *raw_x = (int16_t *)(bmi088_rxbuf + 7);
 	const int16_t *raw_y = (int16_t *)(bmi088_rxbuf + 9);
 	const int16_t *raw_z = (int16_t *)(bmi088_rxbuf + 11);
 	
 	/* FS125: 262.144. FS250: 131.072. FS500: 65.536. FS1000: 32.768. FS2000: 16.384.*/
-	bmi088->gyro.x = (float32_t)*raw_x / 32.768f * MATH_DEG_TO_RAD_MULT;
-	bmi088->gyro.y = (float32_t)*raw_y / 32.768f * MATH_DEG_TO_RAD_MULT;
-	bmi088->gyro.z = (float32_t)*raw_z / 32.768f * MATH_DEG_TO_RAD_MULT;
+	bmi088->gyro.x = (float)*raw_x / 32.768f * MATH_DEG_TO_RAD_MULT;
+	bmi088->gyro.y = (float)*raw_y / 32.768f * MATH_DEG_TO_RAD_MULT;
+	bmi088->gyro.z = (float)*raw_z / 32.768f * MATH_DEG_TO_RAD_MULT;
+	#endif
+	
 	
 	return DEVICE_ERR_NULL;
 }
 
-float32_t BMI088_GetUpdateFreq(BMI088_t *bmi088) {
+float BMI088_GetUpdateFreq(BMI088_t *bmi088) {
+	(void)bmi088;
 	return 100.f;
 }

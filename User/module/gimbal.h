@@ -37,15 +37,15 @@ enum Gimbal_Acuator_e{
 };
 
 typedef struct {
-	PID_Params_t pid[GIMBAL_PID_NUM];
-	float32_t low_pass_cutoff;
+	const PID_Params_t pid[GIMBAL_PID_NUM];
+	float low_pass_cutoff;
 } Gimbal_Params_t;
 
 typedef struct {
 	Gimbal_Params_t *params;
 	
 	/* common */
-	float32_t dt_sec;
+	float dt_sec;
 	CMD_Gimbal_Mode_t mode;
 	
 	/* Feedback */
@@ -60,7 +60,7 @@ typedef struct {
 	PID_t pid[GIMBAL_PID_NUM];
 	
 	/* Output */
-	float32_t cur_out[GIMBAL_ACTR_NUM];
+	float cur_out[GIMBAL_ACTR_NUM];
 	
 	/* Output filter */
 	LowPassFilter2p_t filter[GIMBAL_ACTR_NUM];
@@ -68,6 +68,6 @@ typedef struct {
 
 
 /* Exported functions prototypes ---------------------------------------------*/
-int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float32_t dt_sec, BMI088_t *imu);
+int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec, BMI088_t *imu);
 int8_t Gimbal_UpdateFeedback(Gimbal_t *g, CAN_Device_t *can_device);
 int8_t Gimbal_Control(Gimbal_t *g, CMD_Gimbal_Ctrl_t *g_ctrl);

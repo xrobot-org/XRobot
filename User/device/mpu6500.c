@@ -261,9 +261,9 @@ int IMU_Parse(IMU_t *imu) {
 	imu->data.accl.z = (float)imu->raw.accl.z / 4096.f;
 	
 	/* Convert gyroscope imu_raw to degrees/sec, then, to radians/sec */
-	imu->data.gyro.x = (float)(imu->raw.gyro.x - imu->cali.gyro_offset[0]) / 16.384f / 180.f * PI;
-	imu->data.gyro.y = (float)(imu->raw.gyro.y - imu->cali.gyro_offset[1]) / 16.384f / 180.f * PI;
-	imu->data.gyro.z = (float)(imu->raw.gyro.z - imu->cali.gyro_offset[2]) / 16.384f / 180.f * PI;
+	imu->data.gyro.x = (float)(imu->raw.gyro.x - imu->cali.gyro_offset[0]) / 16.384f / 180.f * M_PI;
+	imu->data.gyro.y = (float)(imu->raw.gyro.y - imu->cali.gyro_offset[1]) / 16.384f / 180.f * M_PI;
+	imu->data.gyro.z = (float)(imu->raw.gyro.z - imu->cali.gyro_offset[2]) / 16.384f / 180.f * M_PI;
 	
 #if 0
 	imu->data.magn.x = (float)((imu->raw.magn.x - imu->cali.magn_offset[0]) * imu->cali.magn_scale[0]);

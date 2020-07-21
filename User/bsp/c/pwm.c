@@ -22,7 +22,7 @@ int8_t BSP_PWM_Start(BSP_PWM_Channel_t ch) {
 	return 0;
 }
 
-int8_t BSP_PWM_Set(BSP_PWM_Channel_t ch, float32_t duty_cycle) {
+int8_t BSP_PWM_Set(BSP_PWM_Channel_t ch, float duty_cycle) {
 	if (duty_cycle > 1.f)
 		return -1;
 	

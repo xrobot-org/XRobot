@@ -20,7 +20,7 @@ typedef struct {
 	AHRS_Accl_t accl;
 	AHRS_Gyro_t gyro;
 	
-	float32_t temp;
+	float temp;
 	
 	struct {
 		int8_t gyro_offset[3];
@@ -43,4 +43,4 @@ int8_t BMI088_ReceiveAccl(BMI088_t *bmi088);
 int8_t BMI088_ReceiveGyro(BMI088_t *bmi088);
 int8_t BMI088_ParseAccl(BMI088_t *bmi088);
 int8_t BMI088_ParseGyro(BMI088_t *bmi088);
-float32_t BMI088_GetUpdateFreq(BMI088_t *bmi088);
+float BMI088_GetUpdateFreq(BMI088_t *bmi088);

@@ -16,7 +16,7 @@ static DR16_t *gdr16;
 static bool inited = false;
 
 /* Private function  ---------------------------------------------------------*/
-void DR16_RxCpltCallback(void) {
+static void DR16_RxCpltCallback(void) {
 	osThreadFlagsSet(gdr16->thread_alert, SIGNAL_DR16_RAW_REDY);
 }
 
@@ -76,7 +76,9 @@ int8_t DR16_Restart(void) {
 }
 
 int8_t DR16_StartReceiving(DR16_t *dr16) {
-	return HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_DR16), (uint8_t*)&(dr16->data), sizeof(DR16_Data_t));
+	if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_DR16), (uint8_t*)&(dr16->data), sizeof(DR16_Data_t)) == HAL_OK)
+		return DEVICE_OK;
+	return DEVICE_ERR;
 }
 
 int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc)  {
@@ -89,12 +91,12 @@ int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc)  {
 		memset(rc, 0, sizeof(*rc));
 	}
 	
-	float32_t full_range = (float32_t)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
+	float full_range = (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
 	
-	rc->ch_r_x = (float32_t)(dr16->data.ch_r_x - DR16_CH_VALUE_MID) / full_range;
-	rc->ch_r_y = (float32_t)(dr16->data.ch_r_y - DR16_CH_VALUE_MID) / full_range;
-	rc->ch_l_x = (float32_t)(dr16->data.ch_l_x - DR16_CH_VALUE_MID) / full_range;
-	rc->ch_l_y = (float32_t)(dr16->data.ch_l_y - DR16_CH_VALUE_MID) / full_range;
+	rc->ch_r_x = (float)(dr16->data.ch_r_x - DR16_CH_VALUE_MID) / full_range;
+	rc->ch_r_y = (float)(dr16->data.ch_r_y - DR16_CH_VALUE_MID) / full_range;
+	rc->ch_l_x = (float)(dr16->data.ch_l_x - DR16_CH_VALUE_MID) / full_range;
+	rc->ch_l_y = (float)(dr16->data.ch_l_y - DR16_CH_VALUE_MID) / full_range;
 	
 	rc->sw_l = (CMD_SwitchPos_t)dr16->data.sw_l;
 	rc->sw_r = (CMD_SwitchPos_t)dr16->data.sw_r;
@@ -108,7 +110,7 @@ int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc)  {
 	
 	rc->key = dr16->data.key;
 	
-	rc->ch_res = (float32_t)(dr16->data.res - DR16_CH_VALUE_MID) / full_range;
+	rc->ch_res = (float)(dr16->data.res - DR16_CH_VALUE_MID) / full_range;
 	// TODO: TEST
 	return DEVICE_OK;
 }

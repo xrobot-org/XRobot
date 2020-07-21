@@ -18,7 +18,7 @@ int8_t BSP_Fric_Start(void) {
 	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
 	return 0;
 }
-int8_t BSP_Fric_Set(float32_t duty_cycle) {
+int8_t BSP_Fric_Set(float duty_cycle) {
 	uint16_t pulse = duty_cycle * UINT16_MAX;
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse);
 	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, pulse);

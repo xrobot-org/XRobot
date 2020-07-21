@@ -6,7 +6,7 @@
 
 #include "user_math.h"
 
-void LowPassFilter2p_Init(LowPassFilter2p_t *f, float32_t sample_freq, float32_t cutoff_freq) {
+void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq, float cutoff_freq) {
 	if (f == NULL)
 		return;
 	
@@ -26,31 +26,31 @@ void LowPassFilter2p_Init(LowPassFilter2p_t *f, float32_t sample_freq, float32_t
 
 		return;
 	}
-	const float32_t fr = sample_freq / f->cutoff_freq;
-	const float32_t ohm = tanf(PI / fr);
-	const float32_t c = 1.0f + 2.0f * cosf(PI / 4.0f) * ohm + ohm * ohm;
+	const float fr = sample_freq / f->cutoff_freq;
+	const float ohm = tanf(M_PI / fr);
+	const float c = 1.0f + 2.0f * cosf(M_PI / 4.0f) * ohm + ohm * ohm;
 
 	f->b0 = ohm * ohm / c;
 	f->b1 = 2.0f * f->b0;
 	f->b2 = f->b0;
 
 	f->a1 = 2.0f * (ohm * ohm - 1.0f) / c;
-	f->a2 = (1.0f - 2.0f * cosf(PI / 4.0f) * ohm + ohm * ohm) / c;
+	f->a2 = (1.0f - 2.0f * cosf(M_PI / 4.0f) * ohm + ohm * ohm) / c;
 }
 
-float32_t LowPassFilter2p_Apply(LowPassFilter2p_t *f, float32_t sample) {
+float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample) {
 	if (f == NULL)
 		return 0.f;
 	
 	// do the filtering
-	float32_t delay_element_0 = sample - f->delay_element_1 * f->a1 - f->delay_element_2 * f->a2;
+	float delay_element_0 = sample - f->delay_element_1 * f->a1 - f->delay_element_2 * f->a2;
 
 	if (isinf(delay_element_0)) {
 		// don't allow bad values to propagate via the filter
 		delay_element_0 = sample;
 	}
 
-	const float32_t output = delay_element_0 * f->b0 + f->delay_element_1 * f->b1 + f->delay_element_2 * f->b2;
+	const float output = delay_element_0 * f->b0 + f->delay_element_1 * f->b1 + f->delay_element_2 * f->b2;
 
 	f->delay_element_2 = f->delay_element_1;
 	f->delay_element_1 = delay_element_0;
@@ -59,11 +59,11 @@ float32_t LowPassFilter2p_Apply(LowPassFilter2p_t *f, float32_t sample) {
 	return output;
 }
 
-float32_t LowPassFilter2p_Reset(LowPassFilter2p_t *f, float32_t sample) {
+float LowPassFilter2p_Reset(LowPassFilter2p_t *f, float sample) {
 	if (f == NULL)
 		return 0.f;
 	
-	const float32_t dval = sample / (f->b0 + f->b1 + f->b2);
+	const float dval = sample / (f->b0 + f->b1 + f->b2);
 
 	if (isfinite(dval)) {
 		f->delay_element_1 = dval;
@@ -77,7 +77,7 @@ float32_t LowPassFilter2p_Reset(LowPassFilter2p_t *f, float32_t sample) {
 	return LowPassFilter2p_Apply(f, sample);
 }
 
-void NotchFilter_Init(NotchFilter_t *f, float32_t sample_freq, float32_t notch_freq, float32_t bandwidth) {
+void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq, float bandwidth) {
 	if (f == NULL)
 		return;
 		
@@ -99,9 +99,9 @@ void NotchFilter_Init(NotchFilter_t *f, float32_t sample_freq, float32_t notch_f
 		return;
 	}
 
-	const float32_t alpha = tanf(PI * bandwidth / sample_freq);
-	const float32_t beta = -cosf(2.f * PI* notch_freq / sample_freq);
-	const float32_t a0_inv = 1.f / (alpha + 1.f);
+	const float alpha = tanf(M_PI * bandwidth / sample_freq);
+	const float beta = -cosf(2.f * M_PI* notch_freq / sample_freq);
+	const float a0_inv = 1.f / (alpha + 1.f);
 
 	f->b0 = a0_inv;
 	f->b1 = 2.f * beta * a0_inv;
@@ -111,13 +111,13 @@ void NotchFilter_Init(NotchFilter_t *f, float32_t sample_freq, float32_t notch_f
 	f->a2 = (1.f - alpha) * a0_inv;
 }
 
-inline float32_t NotchFilter_Apply(NotchFilter_t *f, float32_t sample) {
+inline float NotchFilter_Apply(NotchFilter_t *f, float sample) {
 	if (f == NULL)
 		return 0.f;
 	
 	// Direct Form II implementation
-	const float32_t delay_element_0 = sample - f->delay_element_1 * f->a1 - f->delay_element_2 * f->a2;
-	const float32_t output = delay_element_0 * f->b0 + f->delay_element_1 * f->b1 + f->delay_element_2 * f->b2;
+	const float delay_element_0 = sample - f->delay_element_1 * f->a1 - f->delay_element_2 * f->a2;
+	const float output = delay_element_0 * f->b0 + f->delay_element_1 * f->b1 + f->delay_element_2 * f->b2;
 
 	f->delay_element_2 = f->delay_element_1;
 	f->delay_element_1 = delay_element_0;
@@ -125,11 +125,11 @@ inline float32_t NotchFilter_Apply(NotchFilter_t *f, float32_t sample) {
 	return output;
 }
 
-float32_t NotchFilter_Reset(NotchFilter_t *f, float32_t sample) {
+float NotchFilter_Reset(NotchFilter_t *f, float sample) {
 	if (f == NULL)
 		return 0.f;
 	
-	float32_t dval = sample;
+	float dval = sample;
 
 	if (fabsf(f->b0 + f->b1 + f->b2) > FLT_EPSILON) {
 		dval = dval / (f->b0 + f->b1 + f->b2);
