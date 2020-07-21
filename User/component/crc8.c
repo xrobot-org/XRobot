@@ -29,6 +29,9 @@ uint8_t CRC8_Calc(const uint8_t *buf, size_t len, uint8_t crc) {
 }
 
 bool CRC8_Verify(const uint8_t *buf, size_t len) {
+	if (len < 2)
+		return false;
+	
     uint8_t expected = CRC8_Calc(buf, len - sizeof(uint8_t), CRC8_INIT);
 	return expected == buf[len - sizeof(uint8_t)];
 }
