@@ -188,7 +188,7 @@ int8_t Referee_Parse(Referee_t *ref) {
 		return DEVICE_ERR;
 	
 	index += sizeof(Referee_Tail_t);
-	if (index != data_length)
+	if (index != (data_length - 1))
 		return DEVICE_ERR;
 	
 	if (CRC16_Verify((uint8_t*)header, sizeof(Referee_Header_t)))
