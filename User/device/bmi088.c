@@ -122,7 +122,7 @@ static uint8_t BMI_ReadSingle(BMI_Device_t dv, uint8_t reg) {
 			BMI088_GYRO_NSS_RESET();
 			break;
 	}
-	buffer[0] = (reg | 0x80);
+	buffer[0] = (uint8_t)(reg | 0x80);
 	HAL_SPI_Transmit(BSP_SPI_GetHandle(BSP_SPI_IMU), buffer, 1u, 20u);
 	HAL_SPI_Receive(BSP_SPI_GetHandle(BSP_SPI_IMU), buffer, 2u, 20u);
 	
@@ -150,7 +150,7 @@ static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
 			BMI088_GYRO_NSS_RESET();
 			break;
 	}
-	buffer[0] = (reg | 0x80);
+	buffer[0] = (uint8_t)(reg | 0x80);
 	HAL_SPI_Transmit(BSP_SPI_GetHandle(BSP_SPI_IMU), buffer, 1u, 20u);
 	HAL_SPI_Receive_DMA(BSP_SPI_GetHandle(BSP_SPI_IMU), data, len);
 }
@@ -300,7 +300,7 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
 	
 	#endif
 	
-	uint16_t raw_temp = ((bmi088_rxbuf[17] << 3) | (bmi088_rxbuf[18] >> 5)) & 0xFFFF;
+	uint16_t raw_temp = (uint16_t)((bmi088_rxbuf[17] << 3) | (bmi088_rxbuf[18] >> 5));
 	
 	if (raw_temp > 1023)
 		raw_temp -= 2048;

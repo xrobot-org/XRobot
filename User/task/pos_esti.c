@@ -26,7 +26,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-BMI088_t bmi088; //TODO: Add static when release
+static BMI088_t bmi088;
 IST8310_t ist8310; //TODO: Add static when release
 
 static AHRS_t gimbal_ahrs;
@@ -69,11 +69,11 @@ void Task_PosEsti(void *argument) {
 		task_param->stack_water_mark.pos_esti = uxTaskGetStackHighWaterMark(NULL);
 #endif
 		/* Task body */
-		osThreadFlagsWait(SIGNAL_BMI088_ACCL_NEW_DATA, osFlagsWaitAll, osWaitForever);
+		osThreadFlagsWait(SIGNAL_BMI088_ACCL_NEW_DATA | SIGNAL_BMI088_GYRO_NEW_DATA, osFlagsWaitAll, osWaitForever);
+		
 		BMI088_ReceiveAccl(&bmi088);
 		osThreadFlagsWait(SIGNAL_BMI088_ACCL_RAW_REDY, osFlagsWaitAll, osWaitForever);
 		
-		osThreadFlagsWait(SIGNAL_BMI088_GYRO_NEW_DATA, osFlagsWaitAll, osWaitForever);
 		BMI088_ReceiveGyro(&bmi088);
 		osThreadFlagsWait(SIGNAL_BMI088_GYRO_RAW_REDY, osFlagsWaitAll, osWaitForever);
 		
