@@ -48,7 +48,7 @@ static BaseType_t EndianCommand(char *out_buffer, size_t len, const char *comman
 	if (out_buffer == NULL)
 		return pdFALSE;
 	
-	const uint8_t list[2] = {0x11, 0x22};
+	uint8_t list[2] = {0x11, 0x22};
     uint16_t force_convert = ((uint16_t*)list)[0];
     uint16_t assembled = (uint16_t)(list[0] | (list[1] << 8));
 	
@@ -242,7 +242,7 @@ void Task_CLI(void *argument) {
 	task_param.thread.ctrl_shoot	= osThreadNew(Task_CtrlShoot,	&task_param, &ctrl_shoot_attr);
 	task_param.thread.info			= osThreadNew(Task_Info,		&task_param, &info_attr);
 	task_param.thread.monitor		= osThreadNew(Task_Monitor,		&task_param, &monitor_attr);
-	task_param.thread.pos_esti		= osThreadNew(Task_PosEsti,		&task_param, &pos_esti_attr);
+	task_param.thread.atti_esti		= osThreadNew(Task_AttiEsti,	&task_param, &atti_esti_attr);
 	task_param.thread.referee		= osThreadNew(Task_Referee,		&task_param, &referee_attr);
 	osKernelUnlock();
 	

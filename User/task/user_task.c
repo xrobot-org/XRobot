@@ -37,8 +37,8 @@ const osThreadAttr_t monitor_attr = {
   .stack_size = 128 * 4,
 };
 
-const osThreadAttr_t pos_esti_attr = {
-  .name = "pos_esti",
+const osThreadAttr_t atti_esti_attr = {
+  .name = "atti_esti",
   .priority = (osPriority_t) osPriorityRealtime,
   .stack_size = 256 * 4,
 };

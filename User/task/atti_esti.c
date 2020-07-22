@@ -43,11 +43,10 @@ static const PID_Params_t imu_temp_ctrl_pid_param = {
 
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
-void Task_PosEsti(void *argument) {
+void Task_AttiEsti(void *argument) {
 	Task_Param_t *task_param = (Task_Param_t*)argument;
 	
-	task_param->messageq.gimb_eulr = osMessageQueueNew(3u, sizeof(AHRS_Eulr_t), NULL);
-	
+	task_param->messageq.gimbal_eulr = osMessageQueueNew(3u, sizeof(AHRS_Eulr_t), NULL);
 	
 	BMI088_Init(&bmi088, osThreadGetId());
 	IST8310_Init(&ist8310, osThreadGetId());
@@ -66,7 +65,7 @@ void Task_PosEsti(void *argument) {
 	
 	while(1) {
 #ifdef DEBUG
-		task_param->stack_water_mark.pos_esti = uxTaskGetStackHighWaterMark(NULL);
+		task_param->stack_water_mark.atti_esti = uxTaskGetStackHighWaterMark(NULL);
 #endif
 		/* Task body */
 		osThreadFlagsWait(SIGNAL_BMI088_ACCL_NEW_DATA | SIGNAL_BMI088_GYRO_NEW_DATA, osFlagsWaitAll, osWaitForever);
@@ -85,7 +84,7 @@ void Task_PosEsti(void *argument) {
 		
 		AHRS_Update(&gimbal_ahrs, &bmi088.accl, &bmi088.gyro, &ist8310.magn);
 		AHRS_GetEulr(&eulr_to_send, &gimbal_ahrs);
-		osStatus_t os_status = osMessageQueuePut(task_param->messageq.gimb_eulr, &eulr_to_send, 0, 0);
+		osStatus_t os_status = osMessageQueuePut(task_param->messageq.gimbal_eulr, &eulr_to_send, 0, 0);
 			
 		if (os_status != osOK) {
 		}

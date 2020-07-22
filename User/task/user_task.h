@@ -41,17 +41,21 @@ typedef struct {
 		osThreadId_t ctrl_shoot;
 		osThreadId_t info;
 		osThreadId_t monitor;
-		osThreadId_t pos_esti;
+		osThreadId_t atti_esti;
 		osThreadId_t referee;
 	} thread;
 	
 	struct {
 		/* Pos esti */
-		osMessageQueueId_t gimb_eulr;
+		osMessageQueueId_t gimbal_eulr;
 		
 		/* Command */
 		osMessageQueueId_t cmd;
 	} messageq;
+	
+	struct {
+		osMutexId_t pose_ready;
+	} mutex;
 		
 	const Config_Robot_t *config;
 	
@@ -64,7 +68,7 @@ typedef struct {
 		UBaseType_t ctrl_shoot;
 		UBaseType_t info;
 		UBaseType_t monitor;
-		UBaseType_t pos_esti;
+		UBaseType_t atti_esti;
 		UBaseType_t referee;
 	} stack_water_mark;
 	#endif
@@ -77,7 +81,7 @@ extern const osThreadAttr_t ctrl_gimbal_attr;
 extern const osThreadAttr_t ctrl_shoot_attr;
 extern const osThreadAttr_t info_attr;
 extern const osThreadAttr_t monitor_attr;
-extern const osThreadAttr_t pos_esti_attr;
+extern const osThreadAttr_t atti_esti_attr;
 extern const osThreadAttr_t referee_attr;
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -88,6 +92,6 @@ void Task_CtrlGimbal(void *argument);
 void Task_CtrlShoot(void *argument);
 void Task_Info(void *argument);
 void Task_Monitor(void *argument);
-void Task_PosEsti(void *argument);
+void Task_AttiEsti(void *argument);
 void Task_Referee(void *argument);
 

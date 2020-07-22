@@ -948,6 +948,11 @@
           <GroupName>User/task</GroupName>
           <Files>
             <File>
+              <FileName>atti_esti.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\atti_esti.c</FilePath>
+            </File>
+            <File>
               <FileName>cli.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\cli.c</FilePath>
@@ -981,11 +986,6 @@
               <FileName>monitor.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\monitor.c</FilePath>
-            </File>
-            <File>
-              <FileName>pos_esti.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\task\pos_esti.c</FilePath>
             </File>
             <File>
               <FileName>referee.c</FileName>
@@ -2498,6 +2498,11 @@
           <GroupName>User/task</GroupName>
           <Files>
             <File>
+              <FileName>atti_esti.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\atti_esti.c</FilePath>
+            </File>
+            <File>
               <FileName>cli.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\cli.c</FilePath>
@@ -2531,11 +2536,6 @@
               <FileName>monitor.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\monitor.c</FilePath>
-            </File>
-            <File>
-              <FileName>pos_esti.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\task\pos_esti.c</FilePath>
             </File>
             <File>
               <FileName>referee.c</FileName>
