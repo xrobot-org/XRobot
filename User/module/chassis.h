@@ -1,6 +1,5 @@
 #pragma once
 
-
 /* Includes ------------------------------------------------------------------*/
 #include "component\cmd.h"
 #include "component\filter.h"

@@ -4,10 +4,10 @@
 
 #include "usbd_cdc_if.h"
 
-#include <stdbool.h>
-#include <string.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/

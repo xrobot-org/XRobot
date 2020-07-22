@@ -2,15 +2,17 @@
 	裁判系统抽象。
 
 */
-
-/* Includes ------------------------------------------------------------------*/
 #pragma once
 
-#include "cmsis_os2.h"
+/* Includes ------------------------------------------------------------------*/
+#include <stdint.h>
+#include <stdbool.h>
 
-#include "device.h"
+#include <cmsis_os2.h>
 
 #include "component\user_math.h"
+
+#include "device\device.h"
 
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/

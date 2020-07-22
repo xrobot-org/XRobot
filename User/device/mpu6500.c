@@ -7,7 +7,7 @@
 #include "imu.h"
 
 /* Include 标准库 */
-#include "stdbool.h"
+#include <stdbool.h>
 #include "string.h"
 
 /* Include BSP相关的头文件 */

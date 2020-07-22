@@ -3,8 +3,9 @@
 */
 
 #pragma once
-
-#include "user_math.h"
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #define CRC8_INIT 0xFF
 

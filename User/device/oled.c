@@ -18,7 +18,7 @@
 /* Include HAL相关的头文件。*/
 #include "bsp_delay.h"
 #include "bsp_spi.h"
-#include "gpio.h"
+#include <gpio.h>
 
 #ifdef OLED_USE_SPI
 #include "spi.h"

@@ -6,6 +6,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "can_device.h"
 
+#include <stdbool.h>
+#include <string.h>
+
 #include "bsp\can.h"
 
 #include "component\user_math.h"

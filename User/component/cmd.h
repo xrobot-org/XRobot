@@ -4,7 +4,10 @@
 
 #pragma once
 
-#include "user_math.h"
+
+#include <stdint.h>
+#include <stdbool.h>
+
 #include "ahrs.h"
 
 /*  

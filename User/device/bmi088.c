@@ -6,7 +6,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "bmi088.h"
 
-#include "gpio.h"
+#include <stdbool.h>
+#include <string.h>
+
+#include <gpio.h>
 
 #include "bsp\delay.h"
 #include "bsp\spi.h"

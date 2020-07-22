@@ -1,7 +1,7 @@
 #pragma once
 
 /* Includes ------------------------------------------------------------------*/
-#include "cmsis_os2.h"
+#include <cmsis_os2.h>
 #include "FreeRTOS.h"
 #include "task.h"
 
@@ -54,7 +54,7 @@ typedef struct {
 	} messageq;
 	
 	struct {
-		osMutexId_t pose_ready;
+		osMutexId_t atti_ready;
 	} mutex;
 		
 	const Config_Robot_t *config;

@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "gpio.h"
+#include <gpio.h>
 
 #include "bsp\delay.h"
 #include "bsp\i2c.h"

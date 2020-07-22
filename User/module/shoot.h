@@ -1,8 +1,7 @@
 #pragma once
 
-
 /* Includes ------------------------------------------------------------------*/
-#include "cmsis_os2.h"
+#include <cmsis_os2.h>
 
 #include "component\cmd.h"
 #include "component\pid.h"

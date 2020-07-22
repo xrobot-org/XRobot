@@ -1,8 +1,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "bsp\buzzer.h"
 
-#include "main.h"
-#include "tim.h"
+#include <main.h>
+#include <tim.h>
 
 #include "component\user_math.h"
 
@@ -19,7 +19,7 @@ int8_t BSP_Buzzer_Start(void) {
 }
 
 int8_t BSP_Buzzer_Set(float freq, float duty_cycle) {
-	uint16_t pulse = duty_cycle * UINT16_MAX;
+	uint16_t pulse = (uint16_t)(duty_cycle * (float)UINT16_MAX);
 	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, pulse);
 	
 	pulse = (uint16_t)freq;

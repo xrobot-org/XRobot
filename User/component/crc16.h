@@ -1,6 +1,7 @@
 #pragma once
-
 #include "user_math.h"
+
+#include <stdbool.h>
 
 #define CRC16_INIT 0XFFFF
 

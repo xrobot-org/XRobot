@@ -3,7 +3,6 @@
 
 */
 
-
 #pragma once
 
 #include "stm32f4xx.h"
@@ -11,8 +10,6 @@
 
 #include <math.h>
 #include <float.h>
-#include <stdbool.h>
-#include <string.h>
 
 #define MATH_DEG_TO_RAD_MULT	(0.01745329251f)
 #define MATH_RAD_TO_DEG_MULT	(57.2957795131f)

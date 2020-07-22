@@ -863,6 +863,11 @@
               <FilePath>..\User\component\crc16.c</FilePath>
             </File>
             <File>
+              <FileName>error_detect.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\component\error_detect.c</FilePath>
+            </File>
+            <File>
               <FileName>filter.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\component\filter.c</FilePath>
@@ -2411,6 +2416,11 @@
               <FileName>crc16.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\component\crc16.c</FilePath>
+            </File>
+            <File>
+              <FileName>error_detect.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\component\error_detect.c</FilePath>
             </File>
             <File>
               <FileName>filter.c</FileName>

@@ -1,13 +1,11 @@
 #pragma once
 
-
 /* Includes ------------------------------------------------------------------*/
-/* Include cmsis_os2.h头文件 */
-#include "cmsis_os2.h"
-
-#include "device.h"
+#include <cmsis_os2.h>
 
 #include "component\user_math.h"
+
+#include "device\device.h"
 
 /* Exported constants --------------------------------------------------------*/
 /* Motor */

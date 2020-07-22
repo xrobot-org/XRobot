@@ -8,7 +8,7 @@
 #include "joystick.h"
 
 /* Include BSP相关的头文件*/
-#include "adc.h"
+#include <adc.h>
 #include "bsp_delay.h"
 
 /* Private typedef -----------------------------------------------------------*/

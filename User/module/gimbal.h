@@ -1,6 +1,5 @@
 #pragma once
 
-
 /* Includes ------------------------------------------------------------------*/
 #include "component\ahrs.h"
 #include "component\cmd.h"

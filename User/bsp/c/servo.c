@@ -1,8 +1,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "bsp\servo.h"
 
-#include "main.h"
-#include "tim.h"
+#include <main.h>
+#include <tim.h>
 
 #include "component\user_math.h"
 

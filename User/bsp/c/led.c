@@ -1,7 +1,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "bsp\led.h"
 
-#include "tim.h"
+#include <tim.h>
 
 #include "component\user_math.h"
 
@@ -19,8 +19,7 @@ int8_t BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, float duty_cycle) {
 		return -1;
 	
 	uint32_t tim_ch;
-	uint16_t pulse = duty_cycle * UINT16_MAX;
-	
+	uint16_t pulse = (uint16_t)(duty_cycle * (float)UINT16_MAX);
 	
 	switch (ch) {
 		case BSP_LED_RED:
@@ -37,9 +36,6 @@ int8_t BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, float duty_cycle) {
 			__HAL_TIM_SET_COMPARE(&htim5, TIM_CHANNEL_1, pulse);
 			tim_ch = TIM_CHANNEL_1;
 			break;
-		
-		default:
-			return -1;
 	}
 	
 	switch (s) {
@@ -62,9 +58,6 @@ int8_t BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, float duty_cycle) {
 				led_stats |= tim_ch;
 			}
 			break;
-		
-		default:
-			return -1;
 	}
 	
 	return 0;

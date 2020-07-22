@@ -4,6 +4,9 @@
 
 #include "limiter.h"
 
+#include <stddef.h>
+#include <math.h>
+
 int8_t HeatLimiter_Apply(float heat_limit, float vbat, float dt_sec) {
 	(void)heat_limit;
 	(void)vbat;
