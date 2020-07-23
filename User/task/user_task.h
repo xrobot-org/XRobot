@@ -5,11 +5,10 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-#include "component/config.h"
+#include "module\robot.h"
 
 /* Exported constants --------------------------------------------------------*/
 /* 所有任务都要define一个“任务运行频率”和“初始化延时”。 */
-#define TASK_FREQ_HZ_CLI					(5u)
 #define TASK_FREQ_HZ_COMMAND				(80u)
 #define TASK_FREQ_HZ_CTRL_CHASSIS			(50u)
 #define TASK_FREQ_HZ_CTRL_GIMBAL			(50u)
@@ -19,7 +18,6 @@
 #define TASK_FREQ_HZ_POSESTI				(200u)
 #define TASK_FREQ_HZ_REFEREE				(2u)
 
-#define TASK_INIT_DELAY_CLI					(5u)
 #define TASK_INIT_DELAY_COMMAND				(15u)
 #define TASK_INIT_DELAY_CTRL_CHASSIS		(100)
 #define TASK_INIT_DELAY_CTRL_GIMBAL			(200)
@@ -56,8 +54,9 @@ typedef struct {
 	struct {
 		osMutexId_t atti_ready;
 	} mutex;
-		
-	const Config_Robot_t *config;
+	
+	const Robot_Config_t *config_robot;
+	const Robot_UserConfig_t *config_user;
 	
 	#ifdef DEBUG
 	struct {

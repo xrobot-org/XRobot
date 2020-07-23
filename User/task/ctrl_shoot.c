@@ -6,7 +6,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "user_task.h"
 
-#include "component\config.h"
+#include "module\robot.h"
 
 #include "module\shoot.h"
 
@@ -30,7 +30,7 @@ void Task_CtrlShoot(void *argument) {
 
 	Shoot_Init(
 		&shoot, 
-		&(task_param->config->param.shoot),
+		&(task_param->config_robot->param.shoot),
 		(float)delay_tick / (float)osKernelGetTickFreq());
 	
 	uint32_t tick = osKernelGetTickCount();

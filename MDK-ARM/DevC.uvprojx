@@ -848,11 +848,6 @@
               <FilePath>..\User\component\cmd.c</FilePath>
             </File>
             <File>
-              <FileName>config.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\component\config.c</FilePath>
-            </File>
-            <File>
               <FileName>crc8.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\component\crc8.c</FilePath>
@@ -941,6 +936,11 @@
               <FileName>gimbal.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\module\gimbal.c</FilePath>
+            </File>
+            <File>
+              <FileName>robot.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\module\robot.c</FilePath>
             </File>
             <File>
               <FileName>shoot.c</FileName>
@@ -1339,7 +1339,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls>-Wno-padded -Wno-undef -Wno-missing-noreturn -Wno-extra-semi-stmt</MiscControls>
-              <Define>USE_HAL_DRIVER,ROBOT_MODEL_INFANTRY,OLED_USE_SPI,DEV_BOARD_C,STM32F407xx,DEBUG</Define>
+              <Define>USE_HAL_DRIVER,OLED_USE_SPI,DEV_BOARD_C,STM32F407xx,DEBUG</Define>
               <Undefine></Undefine>
               <IncludePath>../Core/Inc;../USB_DEVICE/App;../USB_DEVICE/Target;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;..\Drivers\CMSIS\DSP\Include;..\User</IncludePath>
             </VariousControls>
@@ -2403,11 +2403,6 @@
               <FilePath>..\User\component\cmd.c</FilePath>
             </File>
             <File>
-              <FileName>config.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\component\config.c</FilePath>
-            </File>
-            <File>
               <FileName>crc8.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\component\crc8.c</FilePath>
@@ -2496,6 +2491,11 @@
               <FileName>gimbal.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\module\gimbal.c</FilePath>
+            </File>
+            <File>
+              <FileName>robot.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\module\robot.c</FilePath>
             </File>
             <File>
               <FileName>shoot.c</FileName>

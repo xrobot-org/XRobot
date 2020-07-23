@@ -7,7 +7,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "user_task.h"
 
-#include "component\config.h"
+#include "module\robot.h"
 
 #include "module\chassis.h"
 
@@ -39,7 +39,7 @@ void Task_CtrlChassis(void *argument) {
 	/* Module Setup */
 	Chassis_Init(
 		&chassis,
-		&(task_param->config->param.chassis),
+		&(task_param->config_robot->param.chassis),
 		(float)delay_tick / (float)osKernelGetTickFreq());
 	
 	/* Task Setup */

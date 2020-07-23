@@ -157,8 +157,6 @@ static BaseType_t SetModelCommand(char *out_buffer, size_t len, const char *comm
 	const char *param;
 	BaseType_t param_len;
 	
-	(void)command_string;
-	
 	if (out_buffer == NULL)
 		return pdFALSE;
 	
@@ -191,6 +189,21 @@ static BaseType_t SetModelCommand(char *out_buffer, size_t len, const char *comm
 				case 'S':
 					snprintf(out_buffer, len, "Sentry.");
 					break;
+			}
+			stage ++;
+			return pdPASS;
+		case 2:
+			switch (*param) {
+				case 'I':
+					break;
+				case 'H':
+					break;
+				case 'E':
+					break;
+				case 'D':
+					break;
+				case 'S':
+					break;
 				default:
 					snprintf(out_buffer, len, "Unknow model. Check help for avaliable options.");
 			}
@@ -210,28 +223,9 @@ static const CLI_Command_Definition_t set_model = {
 	1,
 };
 
-static char input[MAX_INPUT_LENGTH];
-
-/* Private function ----------------------------------------------------------*/
-/* Exported functions --------------------------------------------------------*/
-void Task_CLI(void *argument) {
-	(void)argument;
-	
-	uint16_t index = 0;
-	BaseType_t processing = 0;
-	char rx_char;
-	char *output = FreeRTOS_CLIGetOutputBuffer();
-	
-	/* Task Setup */
-	osDelay(TASK_INIT_DELAY_CLI);
-	
-	/* Register all the commands. */
-	FreeRTOS_CLIRegisterCommand(&endian);
-	FreeRTOS_CLIRegisterCommand(&stats);
-	FreeRTOS_CLIRegisterCommand(&set_model);
-	
-	/* Init robot part. */
-	task_param.config = Config_GetRobotDefalult();
+static int8_t CreatTask(void) {
+	task_param.config_robot = Robot_GetConfigDefault();
+	task_param.config_user = Robot_GetUserConfigDefault();
 	
 	task_param.thread.cli = osThreadGetId();
 	
@@ -246,7 +240,30 @@ void Task_CLI(void *argument) {
 	task_param.thread.referee		= osThreadNew(Task_Referee,		&task_param, &referee_attr);
 	osKernelUnlock();
 	
-	/* Command Line Interface part. */
+	return 0;
+}
+
+static char input[MAX_INPUT_LENGTH];
+
+/* Private function ----------------------------------------------------------*/
+/* Exported functions --------------------------------------------------------*/
+void Task_CLI(void *argument) {
+	(void)argument;
+	
+	uint16_t index = 0;
+	BaseType_t processing = 0;
+	char rx_char;
+	char *output = FreeRTOS_CLIGetOutputBuffer();
+	
+	/* Register all the commands. */
+	FreeRTOS_CLIRegisterCommand(&endian);
+	FreeRTOS_CLIRegisterCommand(&stats);
+	FreeRTOS_CLIRegisterCommand(&set_model);
+	
+	/* Init robot part. */
+	CreatTask();
+	
+	/* Command Line Interface. */
 	BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
 	while(1) {
 		BSP_USB_ReadyReceive(osThreadGetId());
@@ -268,8 +285,6 @@ void Task_CLI(void *argument) {
 #ifdef DEBUG
 		task_param.stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
 #endif
-		/* Task body */
-		
 		/* Wait for input. */
 		BSP_USB_ReadyReceive(osThreadGetId());
 		osThreadFlagsWait(BSP_USB_SIGNAL_BUF_RECV, osFlagsWaitAll, osWaitForever);
@@ -298,7 +313,7 @@ void Task_CLI(void *argument) {
 				if (index > 0) {
 					BSP_USB_Printf("%c", rx_char);
 					index--;
-					input[index] = '\0';
+					input[index] = 0;
 				}
 			}
 		}

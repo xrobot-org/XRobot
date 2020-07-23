@@ -6,7 +6,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "user_task.h"
 
-#include "component\config.h"
+#include "module\robot.h"
 
 #include "module\gimbal.h"
 
@@ -31,7 +31,7 @@ void Task_CtrlGimbal(void *argument) {
 	
 	Gimbal_Init(
 		&gimbal, 
-		&(task_param->config->param.gimbal),
+		&(task_param->config_robot->param.gimbal),
 		(float)delay_tick / (float)osKernelGetTickFreq(),
 		BMI088_GetDevice());
 	
