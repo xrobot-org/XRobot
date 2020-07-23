@@ -75,7 +75,7 @@ int8_t Referee_Restart(void) {
 
 int8_t Referee_StartReceiving(Referee_t *ref) {
 	(void)ref;
-	if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_REF), rxbuf, sizeof(REF_LEN_RX_BUFF)) == HAL_OK)
+	if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_REF), rxbuf, REF_LEN_RX_BUFF) == HAL_OK)
 		return DEVICE_OK;
 	return DEVICE_ERR;
 }
