@@ -283,7 +283,25 @@ static const CLI_Command_Definition_t set_user = {
 	1,
 };
 
-static int8_t CreatTask(void) {
+
+/* Private function ----------------------------------------------------------*/
+/* Exported functions --------------------------------------------------------*/
+void Task_CLI(void *argument) {
+	(void)argument;
+	
+	static char input[MAX_INPUT_LENGTH];
+	char *output = FreeRTOS_CLIGetOutputBuffer();
+	char rx_char;
+	uint16_t index = 0;
+	BaseType_t processing = 0;
+	
+	/* Register all the commands. */
+	FreeRTOS_CLIRegisterCommand(&endian);
+	FreeRTOS_CLIRegisterCommand(&stats);
+	FreeRTOS_CLIRegisterCommand(&set_model);
+	FreeRTOS_CLIRegisterCommand(&set_user);
+	
+	/* Init robot. */
 	task_param.config_robot = Robot_GetConfigDefault();
 	task_param.config_pilot = Robot_GetPilotConfigDefault();
 	
@@ -300,36 +318,13 @@ static int8_t CreatTask(void) {
 	task_param.thread.referee		= osThreadNew(Task_Referee,		&task_param, &referee_attr);
 	osKernelUnlock();
 	
-	return 0;
-}
-
-static char input[MAX_INPUT_LENGTH];
-
-/* Private function ----------------------------------------------------------*/
-/* Exported functions --------------------------------------------------------*/
-void Task_CLI(void *argument) {
-	(void)argument;
-	
-	uint16_t index = 0;
-	BaseType_t processing = 0;
-	char rx_char;
-	char *output = FreeRTOS_CLIGetOutputBuffer();
-	
-	/* Register all the commands. */
-	FreeRTOS_CLIRegisterCommand(&endian);
-	FreeRTOS_CLIRegisterCommand(&stats);
-	FreeRTOS_CLIRegisterCommand(&set_model);
-	FreeRTOS_CLIRegisterCommand(&set_user);
-	
-	/* Init robot part. */
-	CreatTask();
 	
 	/* Command Line Interface. */
 	BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
 	while(1) {
 		BSP_USB_ReadyReceive(osThreadGetId());
 		osThreadFlagsWait(BSP_USB_SIGNAL_BUF_RECV, osFlagsWaitAll, osWaitForever);
-
+		
 		rx_char = BSP_USB_ReadChar();
 		
 		if (rx_char == '\n' || rx_char == '\r') {
