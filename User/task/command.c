@@ -27,7 +27,7 @@ void Task_Command(void *argument) {
 	osDelay(TASK_INIT_DELAY_COMMAND);
 	
 	DR16_Init(&dr16, osThreadGetId());
-	CMD_Init(&cmd, &(task_param->config_user->param.cmd));
+	CMD_Init(&cmd, &(task_param->config_pilot->param.cmd));
 	
 	while(1) {
 #ifdef DEBUG

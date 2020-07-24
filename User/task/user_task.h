@@ -56,7 +56,7 @@ typedef struct {
 	} mutex;
 	
 	const Robot_Config_t *config_robot;
-	const Robot_UserConfig_t *config_user;
+	const Robot_PilotConfig_t *config_pilot;
 	
 	#ifdef DEBUG
 	struct {

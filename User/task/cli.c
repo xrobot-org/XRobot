@@ -41,7 +41,6 @@ static const char* const CLI_WELCOME_MESSAGE =
 	" FreeRTOS CLI. Type 'help' to view a list of registered commands.   \r\n"
 	"\r\n";
 
-/* experiment */
 static BaseType_t EndianCommand(char *out_buffer, size_t len, const char *command_string) {
 	(void)command_string;
 	
@@ -88,19 +87,21 @@ static const CLI_Command_Definition_t endian = {
 	0, 
 };
 
-/* debug */
 static BaseType_t StatsCommand(char *out_buffer, size_t len, const char *command_string) {
 	static const char *const task_list_header = 
+		"\r\n"
 		"Task list\r\n"
 		"Task          State  Priority  Stack	#\r\n"
 		"************************************************\r\n";
 	
 	static const char *const run_time_header = 
+		"\r\n"
 		"Run time stats\r\n"
 		"Task            Abs Time      % Time\r\n"
 		"****************************************\r\n";
 
 	static const char *const heap_header = 
+		"\r\n"
 		"Heap stats\r\n"
 		"total(B)	free(B)	used(B)\r\n"
 		"*******************************\r\n";
@@ -123,7 +124,7 @@ static BaseType_t StatsCommand(char *out_buffer, size_t len, const char *command
 			stage ++;
 			return pdPASS;
 		case 2:
-			strncat(out_buffer, run_time_header, len);
+			strncpy(out_buffer, run_time_header, len);
 			stage ++;
 			return pdPASS;
 		case 3:
@@ -131,7 +132,7 @@ static BaseType_t StatsCommand(char *out_buffer, size_t len, const char *command
 			stage ++;
 			return pdPASS;
 		case 4:
-			strncat(out_buffer, heap_header, len);
+			strncpy(out_buffer, heap_header, len);
 			stage ++;
 			return pdPASS;
 		case 5:	
@@ -156,6 +157,7 @@ static const CLI_Command_Definition_t stats = {
 static BaseType_t SetModelCommand(char *out_buffer, size_t len, const char *command_string) {
 	const char *param;
 	BaseType_t param_len;
+	Robot_ID_t id;
 	
 	if (out_buffer == NULL)
 		return pdFALSE;
@@ -170,44 +172,45 @@ static BaseType_t SetModelCommand(char *out_buffer, size_t len, const char *comm
 	switch (stage) {
 		case 0:
 			snprintf(out_buffer, len, "Set robot model to: ");
-			stage ++;
+			stage = 1;
 			return pdPASS;
 		case 1:
+			Robot_GetRobotID(&id);
 			switch (*param) {
 				case 'I':
 					snprintf(out_buffer, len, "Infantry.");
+					id.model = ROBOT_MODEL_INFANTRY;
 					break;
 				case 'H':
 					snprintf(out_buffer, len, "Hero.");
+					id.model = ROBOT_MODEL_HERO;
 					break;
 				case 'E':
 					snprintf(out_buffer, len, "Engineer.");
+					id.model = ROBOT_MODEL_ENGINEER;
 					break;
 				case 'D':
 					snprintf(out_buffer, len, "Drone.");
+					id.model = ROBOT_MODEL_DRONE;
 					break;
 				case 'S':
 					snprintf(out_buffer, len, "Sentry.");
-					break;
-			}
-			stage ++;
-			return pdPASS;
-		case 2:
-			switch (*param) {
-				case 'I':
-					break;
-				case 'H':
-					break;
-				case 'E':
-					break;
-				case 'D':
-					break;
-				case 'S':
+					id.model = ROBOT_MODEL_SENTRY;
 					break;
 				default:
-					snprintf(out_buffer, len, "Unknow model. Check help for avaliable options.");
+					stage = 2;
+					return pdPASS;
 			}
-			stage ++;
+			Robot_SetRobotID(&id);
+			stage = 3;
+			return pdPASS;
+		case 2:
+			snprintf(out_buffer, len, "Unknow model.\r\nCheck help for avaliable options.");
+			stage = 4;
+			return pdPASS;
+		case 3:
+			snprintf(out_buffer, len, "\r\nRestart needed for setting to take effect.");
+			stage = 4;
 			return pdPASS;
 		default:
 			snprintf(out_buffer, len, "\r\n");
@@ -223,9 +226,66 @@ static const CLI_Command_Definition_t set_model = {
 	1,
 };
 
+static BaseType_t SetUserCommand(char *out_buffer, size_t len, const char *command_string) {
+	static const char *const qs = "qs";
+	
+	
+	const char *param;
+	BaseType_t param_len;
+	Robot_ID_t id;
+	
+	if (out_buffer == NULL)
+		return pdFALSE;
+	
+	param = FreeRTOS_CLIGetParameter(command_string, 1, &param_len);
+	
+	if (param == NULL)
+		return pdFALSE;
+	
+	len -= 1;
+	static uint8_t stage = 0;
+	switch (stage) {
+		case 0:
+			snprintf(out_buffer, len, "Set robot pilot to: ");
+			stage = 1;
+			return pdPASS;
+		case 1:
+			Robot_GetRobotID(&id);
+			if (strcmp(qs, param) == 0) {
+				snprintf(out_buffer, len, "QS.");
+				id.pilot = ROBOT_PILOT_QS;
+			} else {
+				stage = 2;
+				return pdPASS;
+			}
+			Robot_SetRobotID(&id);
+			stage = 3;
+			return pdPASS;
+		case 2:
+			snprintf(out_buffer, len, "Unauthorized pilot.\r\nCheck help for avaliable options.");
+			stage = 4;
+			return pdPASS;
+		case 3:
+			snprintf(out_buffer, len, "\r\nRestart needed for setting to take effect.");
+			stage = 4;
+			return pdPASS;
+		default:
+			snprintf(out_buffer, len, "\r\n");
+			stage = 0;
+			return pdFALSE;
+	}
+}
+
+static const CLI_Command_Definition_t set_user = {
+	"set-pilot",
+	"\r\nset-pilot <pilot>:\r\n Set robot pilot. Expext: QS\r\n\r\n",
+	SetUserCommand,
+	1,
+};
+
 static int8_t CreatTask(void) {
 	task_param.config_robot = Robot_GetConfigDefault();
-	task_param.config_user = Robot_GetUserConfigDefault();
+	task_param.config_pilot = Robot_GetPilotConfigDefault();
 	
 	task_param.thread.cli = osThreadGetId();
 	
@@ -259,6 +319,7 @@ void Task_CLI(void *argument) {
 	FreeRTOS_CLIRegisterCommand(&endian);
 	FreeRTOS_CLIRegisterCommand(&stats);
 	FreeRTOS_CLIRegisterCommand(&set_model);
+	FreeRTOS_CLIRegisterCommand(&set_user);
 	
 	/* Init robot part. */
 	CreatTask();
@@ -270,9 +331,9 @@ void Task_CLI(void *argument) {
 		osThreadFlagsWait(BSP_USB_SIGNAL_BUF_RECV, osFlagsWaitAll, osWaitForever);
 
 		rx_char = BSP_USB_ReadChar();
-		BSP_USB_Printf("%c", rx_char);
 		
 		if (rx_char == '\n' || rx_char == '\r') {
+		BSP_USB_Printf("%c", rx_char);
 			break;
 		}
 	}
@@ -304,6 +365,7 @@ void Task_CLI(void *argument) {
 					do {
 						processing = FreeRTOS_CLIProcessCommand(input, output, configCOMMAND_INT_MAX_OUTPUT_SIZE);
 						BSP_USB_Printf(output);
+						memset(output, 0x00, MAX_INPUT_LENGTH);
 					} while(processing != pdFALSE);
 					index = 0;
 					memset(input, 0x00, MAX_INPUT_LENGTH);

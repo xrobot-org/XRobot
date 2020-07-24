@@ -87,9 +87,12 @@ void BSP_Flash_EraseSectorAt(uint32_t address) {
 
 void BSP_Flash_WriteBytes(uint32_t address, const uint8_t *buf, size_t len) {
 	HAL_FLASH_Unlock();
-	for (uint8_t i = 0; i < len; i++) {
+	while(len > 0) {
+		while(FLASH_WaitForLastOperation(50) != HAL_OK);
 		HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE, address, *buf);
+		address++;
 		buf++;
+		len--;
 	}
 	HAL_FLASH_Lock();
 }

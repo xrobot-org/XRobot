@@ -21,8 +21,8 @@ typedef enum {
 } Robot_Model_t;
 
 typedef enum {
-	ROBOT_USER_QS = 0,
-} Robot_User_t;
+	ROBOT_PILOT_QS = 0,
+} Robot_Pilot_t;
 
 typedef struct {
 	Robot_Model_t model;
@@ -45,14 +45,14 @@ typedef struct {
 		void (*MapGimbal)(void);
 		void (*MapShoot)(void);
 	} key_map;
-} Robot_UserConfig_t;
+} Robot_PilotConfig_t;
 
 typedef struct {
 	Robot_Model_t model;
-    Robot_User_t user;
+    Robot_Pilot_t pilot;
 } Robot_ID_t;
 
-const Robot_Config_t *Robot_GetConfigDefault(void);
-const Robot_UserConfig_t *Robot_GetUserConfigDefault(void);
-
+void Robot_GetRobotID(Robot_ID_t *id);
 void Robot_SetRobotID(Robot_ID_t *id);
+const Robot_Config_t *Robot_GetConfigDefault(void);
+const Robot_PilotConfig_t *Robot_GetPilotConfigDefault(void);

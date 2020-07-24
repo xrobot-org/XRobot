@@ -128,7 +128,7 @@ static const Robot_Config_t config_engineer;
 static const Robot_Config_t config_drone;
 static const Robot_Config_t config_sentry;
 
-static const Robot_UserConfig_t user_qs = {
+static const Robot_PilotConfig_t user_qs = {
 	.param = {
 		.cmd = {
 			.sens_mouse = 0.5f,
@@ -138,8 +138,12 @@ static const Robot_UserConfig_t user_qs = {
 	},
 };
 
-static void Robot_GetRobotID(Robot_ID_t *id) {
+void Robot_GetRobotID(Robot_ID_t *id) {
 	BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t*)id, sizeof(Robot_ID_t));
+}
+
+void Robot_SetRobotID(Robot_ID_t *id) {
+	BSP_Flash_WriteBytes(CONFIG_BASE_ADDRESS, (uint8_t*)id, sizeof(Robot_ID_t));
 }
 
 const Robot_Config_t *Robot_GetConfigDefault(void) {
@@ -160,16 +164,12 @@ const Robot_Config_t *Robot_GetConfigDefault(void) {
 	return &config_infantry;
 }
 
-const Robot_UserConfig_t *Robot_GetUserConfigDefault(void) {
+const Robot_PilotConfig_t *Robot_GetPilotConfigDefault(void) {
 	Robot_ID_t id;
 	Robot_GetRobotID(&id);
-	switch (id.user) {
-		case ROBOT_USER_QS:
+	switch (id.pilot) {
+		case ROBOT_PILOT_QS:
 			return &user_qs;
 	}
 	return &user_qs;
-}
-
-void Robot_SetRobotID(Robot_ID_t *id) {
-	BSP_Flash_WriteBytes(CONFIG_BASE_ADDRESS, (uint8_t*)id, sizeof(Robot_ID_t));
 }
