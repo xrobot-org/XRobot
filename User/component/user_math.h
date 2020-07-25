@@ -15,7 +15,7 @@
 #define MATH_RAD_TO_DEG_MULT	(57.2957795131f)
 
 #ifndef M_PI
-    #define M_PI 3.14159265358979323846f
+	#define M_PI 3.14159265358979323846f
 #endif
 
 typedef struct {

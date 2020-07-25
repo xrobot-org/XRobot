@@ -48,8 +48,8 @@ static BaseType_t EndianCommand(char *out_buffer, size_t len, const char *comman
 		return pdFALSE;
 	
 	uint8_t list[2] = {0x11, 0x22};
-    uint16_t force_convert = ((uint16_t*)list)[0];
-    uint16_t assembled = (uint16_t)(list[0] | (list[1] << 8));
+	uint16_t force_convert = ((uint16_t*)list)[0];
+	uint16_t assembled = (uint16_t)(list[0] | (list[1] << 8));
 	
 	len -= 1;
 	static uint8_t stage = 0;

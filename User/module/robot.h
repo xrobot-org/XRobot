@@ -49,7 +49,7 @@ typedef struct {
 
 typedef struct {
 	Robot_Model_t model;
-    Robot_Pilot_t pilot;
+	Robot_Pilot_t pilot;
 } Robot_ID_t;
 
 void Robot_GetRobotID(Robot_ID_t *id);

@@ -1,7 +1,7 @@
 #include "crc16.h"
 
 static const uint16_t crc16_tab[256]= {
-    0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
+	0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
 	0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
 	0x1081, 0x0108, 0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e,
 	0x9cc9, 0x8d40, 0xbfdb, 0xae52, 0xdaed, 0xcb64, 0xf9ff, 0xe876,
@@ -40,7 +40,7 @@ static inline uint16_t CRC16_Byte(uint16_t crc, const uint8_t data) {
 }
 
 uint16_t CRC16_Calc(const uint8_t *buf, size_t len, uint16_t crc) {
-    while (len--)
+	while (len--)
 		crc = CRC16_Byte(crc, *buf++);
 	return crc;
 }
@@ -49,6 +49,6 @@ bool CRC16_Verify(const uint8_t *buf, size_t len) {
 	if (len < 2)
 		return false;
 	
-    uint16_t expected = CRC16_Calc(buf, len - sizeof(uint16_t), CRC16_INIT);
+	uint16_t expected = CRC16_Calc(buf, len - sizeof(uint16_t), CRC16_INIT);
 	return expected == ((const uint16_t*)buf)[len / sizeof(uint16_t) - 1];
 }

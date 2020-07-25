@@ -38,10 +38,10 @@ static bool DR16_DataCorrupted(const DR16_t *dr16) {
 	if ((dr16->data.ch_l_y < DR16_CH_VALUE_MIN) || (dr16->data.ch_l_y > DR16_CH_VALUE_MAX))
 		return true;
 	
-    if (dr16->data.sw_l == 0)
+	if (dr16->data.sw_l == 0)
 		return true;
 	
-    if (dr16->data.sw_r == 0)
+	if (dr16->data.sw_r == 0)
 		return true;
 	
 	return false;

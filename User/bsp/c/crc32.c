@@ -17,7 +17,7 @@ bool BSP_CRC32_Verify(const uint8_t *buf, size_t len) {
 	if (len < 2)
 		return false;
 	
-    uint32_t expected = BSP_CRC32_Calc(buf, len / sizeof(uint32_t) - 1);
+	uint32_t expected = BSP_CRC32_Calc(buf, len / sizeof(uint32_t) - 1);
 	
 	return expected == ((const uint32_t*)buf)[len / sizeof(uint32_t) - 1];
 }
