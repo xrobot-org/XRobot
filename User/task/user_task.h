@@ -74,14 +74,14 @@ typedef struct {
 	
 } Task_Param_t;
 
-extern const osThreadAttr_t command_attr;
-extern const osThreadAttr_t ctrl_chassis_attr;
-extern const osThreadAttr_t ctrl_gimbal_attr;
-extern const osThreadAttr_t ctrl_shoot_attr;
-extern const osThreadAttr_t info_attr;
-extern const osThreadAttr_t monitor_attr;
-extern const osThreadAttr_t atti_esti_attr;
-extern const osThreadAttr_t referee_attr;
+extern const osThreadAttr_t attr_command;
+extern const osThreadAttr_t attr_ctrl_chassis;
+extern const osThreadAttr_t attr_ctrl_gimbal;
+extern const osThreadAttr_t attr_ctrl_shoot;
+extern const osThreadAttr_t attr_info;
+extern const osThreadAttr_t attr_monitor;
+extern const osThreadAttr_t attr_atti_esti;
+extern const osThreadAttr_t attr_referee;
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Task_CLI(void *argument);

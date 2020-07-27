@@ -75,7 +75,7 @@ static BaseType_t EndianCommand(char *out_buffer, size_t len, const char *comman
 	}
 }
 
-static const CLI_Command_Definition_t endian = {
+static const CLI_Command_Definition_t command_endian = {
 	"endian",
 	"\r\nendian:\r\n Endian experiment.\r\n\r\n",
 	EndianCommand,
@@ -142,7 +142,7 @@ static BaseType_t StatsCommand(char *out_buffer, size_t len, const char *command
 	}
 }
 
-static const CLI_Command_Definition_t stats = {
+static const CLI_Command_Definition_t command_stats = {
 	"stats",
 	"\r\nstats:\r\n Displays a table showing the state of FreeRTOS\r\n\r\n",
 	StatsCommand,
@@ -214,7 +214,7 @@ static BaseType_t SetModelCommand(char *out_buffer, size_t len, const char *comm
 	}
 }
 
-static const CLI_Command_Definition_t set_model = {
+static const CLI_Command_Definition_t command_set_model = {
 	"set-model",
 	"\r\nset-model <model>:\r\n Set robot model. Expext:I[nfantry], H[ero], E[ngineer], D[rone] and S[entry]\r\n\r\n",
 	SetModelCommand,
@@ -271,7 +271,7 @@ static BaseType_t SetUserCommand(char *out_buffer, size_t len, const char *comma
 	}
 }
 
-static const CLI_Command_Definition_t set_user = {
+static const CLI_Command_Definition_t command_set_user = {
 	"set-pilot",
 	"\r\nset-pilot <pilot>:\r\n Set robot pilot. Expext: QS\r\n\r\n",
 	SetUserCommand,
@@ -291,10 +291,10 @@ void Task_CLI(void *argument) {
 	BaseType_t processing = 0;
 	
 	/* Register all the commands. */
-	FreeRTOS_CLIRegisterCommand(&endian);
-	FreeRTOS_CLIRegisterCommand(&stats);
-	FreeRTOS_CLIRegisterCommand(&set_model);
-	FreeRTOS_CLIRegisterCommand(&set_user);
+	FreeRTOS_CLIRegisterCommand(&command_endian);
+	FreeRTOS_CLIRegisterCommand(&command_stats);
+	FreeRTOS_CLIRegisterCommand(&command_set_model);
+	FreeRTOS_CLIRegisterCommand(&command_set_user);
 	
 	/* Init robot. */
 	task_param.config_robot = Robot_GetConfigDefault();
@@ -303,16 +303,15 @@ void Task_CLI(void *argument) {
 	task_param.thread.cli = osThreadGetId();
 	
 	osKernelLock();
-	task_param.thread.command		= osThreadNew(Task_Command,		&task_param, &command_attr);
-	task_param.thread.ctrl_chassis	= osThreadNew(Task_CtrlChassis,	&task_param, &ctrl_chassis_attr);
-	task_param.thread.ctrl_gimbal	= osThreadNew(Task_CtrlGimbal,	&task_param, &ctrl_gimbal_attr);
-	task_param.thread.ctrl_shoot	= osThreadNew(Task_CtrlShoot,	&task_param, &ctrl_shoot_attr);
-	task_param.thread.info			= osThreadNew(Task_Info,		&task_param, &info_attr);
-	task_param.thread.monitor		= osThreadNew(Task_Monitor,		&task_param, &monitor_attr);
-	task_param.thread.atti_esti		= osThreadNew(Task_AttiEsti,	&task_param, &atti_esti_attr);
-	task_param.thread.referee		= osThreadNew(Task_Referee,		&task_param, &referee_attr);
+	task_param.thread.command = osThreadNew(Task_Command, &task_param, &attr_command);
+	task_param.thread.ctrl_chassis = osThreadNew(Task_CtrlChassis, &task_param, &attr_ctrl_chassis);
+	task_param.thread.ctrl_gimbal = osThreadNew(Task_CtrlGimbal, &task_param, &attr_ctrl_gimbal);
+	task_param.thread.ctrl_shoot = osThreadNew(Task_CtrlShoot, &task_param, &attr_ctrl_shoot);
+	task_param.thread.info = osThreadNew(Task_Info, &task_param, &attr_info);
+	task_param.thread.monitor = osThreadNew(Task_Monitor, &task_param, &attr_monitor);
+	task_param.thread.atti_esti = osThreadNew(Task_AttiEsti, &task_param, &attr_atti_esti);
+	task_param.thread.referee = osThreadNew(Task_Referee, &task_param, &attr_referee);
 	osKernelUnlock();
-	
 	
 	/* Command Line Interface. */
 	BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
@@ -331,7 +330,6 @@ void Task_CLI(void *argument) {
 	BSP_USB_Printf(CLI_WELCOME_MESSAGE);
 	
 	BSP_USB_Printf("rm>");
-	
 	while(1) {
 #ifdef DEBUG
 		task_param.stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
