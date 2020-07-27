@@ -7,7 +7,7 @@
 #include "component\pid.h"
 #include "component\user_math.h"
 
-#include "device\can_device.h"
+#include "device\can.h"
 #include "device\dr16.h"
 
 /* Exported constants --------------------------------------------------------*/
@@ -77,5 +77,5 @@ typedef struct {
 
 /* Exported functions prototypes ---------------------------------------------*/
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec);
-int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_Device_t *can_device);
+int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_t *can);
 int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl);

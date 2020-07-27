@@ -4,7 +4,7 @@
 */
 
 /* Includes ------------------------------------------------------------------*/
-#include "can_device.h"
+#include "can.h"
 
 #include <stdbool.h>
 #include <string.h>
@@ -17,7 +17,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static CAN_Device_t *gcan_device;
+static CAN_t *gcan;
 
 static volatile uint8_t motor_received = 0;
 static volatile uint32_t unknown_message = 0;
@@ -57,30 +57,30 @@ static void CAN_RxFifo0MsgPendingCallback(void) {
 		case CAN_M3508_M3_ID:
 		case CAN_M3508_M4_ID:
 			index = rx_header.StdId - CAN_M3508_M1_ID;
-			CAN_Motor_Decode(&(gcan_device->chassis_motor_fb[index]), rx_data);
+			CAN_Motor_Decode(&(gcan->chassis_motor_fb[index]), rx_data);
 			break;
 		
 		case CAN_M3508_FRIC1_ID:
 		case CAN_M3508_FRIC2_ID:
 			index = rx_header.StdId - CAN_M3508_FRIC1_ID;
-			CAN_Motor_Decode(&(gcan_device->gimbal_motor_fb.fric_fb[index]), rx_data);
+			CAN_Motor_Decode(&(gcan->gimbal_motor_fb.fric_fb[index]), rx_data);
 			break;
 		
 		case CAN_M2006_TRIG_ID:
-			CAN_Motor_Decode(&(gcan_device->gimbal_motor_fb.trig_fb), rx_data);
+			CAN_Motor_Decode(&(gcan->gimbal_motor_fb.trig_fb), rx_data);
 			break;
 		
 		case CAN_GM6020_YAW_ID:
-			CAN_Motor_Decode(&(gcan_device->gimbal_motor_fb.yaw_fb), rx_data);
+			CAN_Motor_Decode(&(gcan->gimbal_motor_fb.yaw_fb), rx_data);
 			break;
 		
 		case CAN_GM6020_PIT_ID:
-			CAN_Motor_Decode(&(gcan_device->gimbal_motor_fb.pit_fb), rx_data);
+			CAN_Motor_Decode(&(gcan->gimbal_motor_fb.pit_fb), rx_data);
 			break;
 
 		case CAN_SUPERCAP_FEEDBACK_ID_BASE:
-			CAN_SuperCap_Decode(&(gcan_device->supercap_feedback), rx_data);
-			osThreadFlagsSet(gcan_device->supercap_alert, SIGNAL_CAN_SUPERCAP_RECV);
+			CAN_SuperCap_Decode(&(gcan->supercap_feedback), rx_data);
+			osThreadFlagsSet(gcan->supercap_alert, SIGNAL_CAN_SUPERCAP_RECV);
 			break;
 		
 		default:
@@ -89,9 +89,9 @@ static void CAN_RxFifo0MsgPendingCallback(void) {
 	}
 	
 	if (motor_received > CAN_CHASSIS_NUM_MOTOR) {
-		for (uint8_t i = 0; i < gcan_device->motor_alert_len; i++) {
-			if (gcan_device->motor_alert[i]) {
-				osThreadFlagsSet(gcan_device->motor_alert, SIGNAL_CAN_MOTOR_RECV);
+		for (uint8_t i = 0; i < gcan->motor_alert_len; i++) {
+			if (gcan->motor_alert[i]) {
+				osThreadFlagsSet(gcan->motor_alert, SIGNAL_CAN_MOTOR_RECV);
 			}
 		}
 		motor_received = 0;
@@ -103,8 +103,8 @@ static void CAN_RxFifo1MsgPendingCallback(void) {
 	
 	switch (rx_header.StdId) {
 		case CAN_UWB_FEEDBACK_ID_BASE:
-			CAN_UWB_Decode(&(gcan_device->uwb_feedback), rx_data);
-			osThreadFlagsSet(gcan_device->uwb_alert, SIGNAL_CAN_UWB_RECV);
+			CAN_UWB_Decode(&(gcan->uwb_feedback), rx_data);
+			osThreadFlagsSet(gcan->uwb_alert, SIGNAL_CAN_UWB_RECV);
 			break;
 		
 		default:
@@ -114,14 +114,14 @@ static void CAN_RxFifo1MsgPendingCallback(void) {
 }
 
 /* Exported functions --------------------------------------------------------*/
-int8_t CAN_DeviceInit(
-	CAN_Device_t *can_device,
+int8_t CAN_Init(
+	CAN_t *can,
 	osThreadId_t *motor_alert,
 	uint8_t motor_alert_len,
 	osThreadId_t uwb_alert,
 	osThreadId_t supercap_alert) {
 		
-	if (can_device == NULL)
+	if (can == NULL)
 		return DEVICE_ERR_NULL;
 	
 	if (motor_alert == NULL)
@@ -130,10 +130,10 @@ int8_t CAN_DeviceInit(
 	if (inited)
 		return DEVICE_ERR_INITED;
 	
-	can_device->motor_alert_len = motor_alert_len;
-	can_device->motor_alert = motor_alert;
-	can_device->uwb_alert = uwb_alert;
-	can_device->supercap_alert = supercap_alert;
+	can->motor_alert_len = motor_alert_len;
+	can->motor_alert = motor_alert;
+	can->uwb_alert = uwb_alert;
+	can->supercap_alert = supercap_alert;
 	
 	CAN_FilterTypeDef  can_filter = {0};
 
@@ -162,14 +162,14 @@ int8_t CAN_DeviceInit(
 	BSP_CAN_RegisterCallback(BSP_CAN_2, HAL_CAN_RX_FIFO1_MSG_PENDING_CB, CAN_RxFifo1MsgPendingCallback);
 	HAL_CAN_ActivateNotification(BSP_CAN_GetHandle(BSP_CAN_2), CAN_IT_RX_FIFO1_MSG_PENDING);
 
-	gcan_device = can_device;
+	gcan = can;
 	inited = true;
 	return DEVICE_OK;
 }
 
-CAN_Device_t *CAN_GetDevice(void) {
+CAN_t *CAN_GetDevice(void) {
 	if (inited) {
-		return gcan_device;
+		return gcan;
 	}
 	return NULL;
 }

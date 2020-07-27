@@ -69,19 +69,19 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float dt_sec) {
 }
 
 
-int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_Device_t *can_device) {
+int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_t *can) {
 	if (s == NULL)
 		return -1;
 	
-	if (can_device == NULL)
+	if (can == NULL)
 		return -1;
 	
 	for (uint8_t i = 0; i < 2; i++) {
-		const float fric_speed = can_device->gimbal_motor_fb.fric_fb[i].rotor_speed;
+		const float fric_speed = can->gimbal_motor_fb.fric_fb[i].rotor_speed;
 		s->fric_rpm[i] = fric_speed;
 	}
 	
-	const float trig_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
+	const float trig_angle = can->gimbal_motor_fb.yaw_fb.rotor_angle;
 	s->trig_angle = trig_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * M_PI;
 	
 	return 0;

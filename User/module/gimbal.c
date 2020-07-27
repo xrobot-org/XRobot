@@ -65,17 +65,17 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec, BMI0
 }
 
 
-int8_t Gimbal_UpdateFeedback(Gimbal_t *g, CAN_Device_t *can_device) {
+int8_t Gimbal_UpdateFeedback(Gimbal_t *g, CAN_t *can) {
 	if (g == NULL)
 		return -1;
 	
-	if (can_device == NULL)
+	if (can == NULL)
 		return -1;
 	
-	const float yaw_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
+	const float yaw_angle = can->gimbal_motor_fb.yaw_fb.rotor_angle;
 	g->eulr.encoder.yaw = yaw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * M_PI;
 	
-	const float pit_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
+	const float pit_angle = can->gimbal_motor_fb.yaw_fb.rotor_angle;
 	g->eulr.encoder.pit = pit_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * M_PI;
 	
 	return 0;

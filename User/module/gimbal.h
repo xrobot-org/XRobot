@@ -7,7 +7,7 @@
 #include "component\pid.h"
 #include "component\user_math.h"
 
-#include "device\can_device.h"
+#include "device\can.h"
 #include "device\dr16.h"
 #include "device\bmi088.h"
 
@@ -68,5 +68,5 @@ typedef struct {
 
 /* Exported functions prototypes ---------------------------------------------*/
 int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec, BMI088_t *imu);
-int8_t Gimbal_UpdateFeedback(Gimbal_t *g, CAN_Device_t *can_device);
+int8_t Gimbal_UpdateFeedback(Gimbal_t *g, CAN_t *can);
 int8_t Gimbal_Control(Gimbal_t *g, CMD_Gimbal_Ctrl_t *g_ctrl);

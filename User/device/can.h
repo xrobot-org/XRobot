@@ -111,18 +111,18 @@ typedef struct {
 	
 	CAN_UWBFeedback_t uwb_feedback;
 	CAN_SuperCapFeedback_t supercap_feedback;
-} CAN_Device_t;
+} CAN_t;
 
 
 /* Exported functions prototypes ---------------------------------------------*/
-int8_t CAN_DeviceInit(
-	CAN_Device_t *can_device,
+int8_t CAN_Init(
+	CAN_t *can_device,
 	osThreadId_t *motor_alert,
 	uint8_t motor_alert_len,
 	osThreadId_t uwb_alert,
 	osThreadId_t supercap_alert);
 
-CAN_Device_t *CAN_GetDevice(void);
+CAN_t *CAN_GetDevice(void);
 
 int8_t CAN_Motor_ControlChassis(float m1, float m2, float m3, float m4);
 int8_t CAN_Motor_ControlGimbal(float yaw, float pitch);

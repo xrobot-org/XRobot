@@ -12,7 +12,7 @@
 #include "component\user_math.h"
 #include "component\limiter.h"
 
-#include "device\can_device.h"
+#include "device\can.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -137,18 +137,18 @@ error1:
 }
 
 
-int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_Device_t *can_device) {
+int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_t *can) {
 	if (c == NULL)
 		return CHASSIS_ERR_NULL;
 	
-	if (can_device == NULL)
+	if (can == NULL)
 		return CHASSIS_ERR_NULL;
 	
-	const float raw_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
+	const float raw_angle = can->gimbal_motor_fb.yaw_fb.rotor_angle;
 	c->gimbal_yaw_angle = raw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * M_PI;
 	
 	for (uint8_t i = 0; i < 4; i++) {
-		const float raw_speed = can_device->chassis_motor_fb[i].rotor_speed;
+		const float raw_speed = can->chassis_motor_fb[i].rotor_speed;
 		c->motor_rpm[i] = raw_speed; // TODO
 	}
 	

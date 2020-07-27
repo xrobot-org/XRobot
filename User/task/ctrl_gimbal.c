@@ -14,7 +14,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static CAN_Device_t *cd;
+static CAN_t *can;
 static CMD_t *cmd;
 static Gimbal_t gimbal;
 
@@ -27,7 +27,7 @@ void Task_CtrlGimbal(void *argument) {
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_GIMBAL);
 	
-	cd = CAN_GetDevice();
+	can = CAN_GetDevice();
 	
 	Gimbal_Init(
 		&gimbal, 
@@ -52,7 +52,7 @@ void Task_CtrlGimbal(void *argument) {
 			osMessageQueueGet(task_param->messageq.cmd, cmd, NULL, 0);
 			
 			osKernelLock();
-			Gimbal_UpdateFeedback(&gimbal, cd);
+			Gimbal_UpdateFeedback(&gimbal, can);
 			Gimbal_Control(&gimbal, &(cmd->gimbal));
 			CAN_Motor_ControlGimbal(gimbal.cur_out[GIMBAL_ACTR_YAW], gimbal.cur_out[GIMBAL_ACTR_PIT]);
 			osKernelUnlock();

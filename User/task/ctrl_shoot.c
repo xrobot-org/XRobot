@@ -14,7 +14,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static CAN_Device_t *cd;
+static CAN_t *can;
 static CMD_t *cmd;
 static Shoot_t shoot;
 
@@ -26,7 +26,7 @@ void Task_CtrlShoot(void *argument) {
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_SHOOT);
 	
-	cd = CAN_GetDevice();
+	can = CAN_GetDevice();
 
 	Shoot_Init(
 		&shoot, 
@@ -49,7 +49,7 @@ void Task_CtrlShoot(void *argument) {
 			osMessageQueueGet(task_param->messageq.cmd, cmd, NULL, 0);
 			
 			osKernelLock();
-			Shoot_UpdateFeedback(&shoot, cd);
+			Shoot_UpdateFeedback(&shoot, can);
 			Shoot_Control(&shoot, &(cmd->shoot));
 			CAN_Motor_ControlShoot(
 				shoot.fric_cur_out[0],

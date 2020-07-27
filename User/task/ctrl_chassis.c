@@ -15,7 +15,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static CAN_Device_t cd;
+static CAN_t can;
 static CMD_t *cmd;
 static Chassis_t chassis;
 
@@ -34,7 +34,7 @@ void Task_CtrlChassis(void *argument) {
 		task_param->thread.ctrl_shoot
 	};
 	
-	CAN_DeviceInit(&cd, recv_motor_allert, 3, task_param->thread.referee, osThreadGetId());
+	CAN_Init(&can, recv_motor_allert, 3, task_param->thread.referee, osThreadGetId());
 
 	/* Module Setup */
 	Chassis_Init(
@@ -60,7 +60,7 @@ void Task_CtrlChassis(void *argument) {
 			osMessageQueueGet(task_param->messageq.cmd, cmd, NULL, 0);
 		
 			osKernelLock();
-			Chassis_UpdateFeedback(&chassis, &cd);
+			Chassis_UpdateFeedback(&chassis, &can);
 			Chassis_Control(&chassis, &(cmd->chassis));
 			// TODO: Check can error
 			CAN_Motor_ControlChassis(
