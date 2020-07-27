@@ -56,7 +56,7 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float dt_sec) {
 	
 	s->trig_timer_id = osTimerNew(TrigTimerCallback, osTimerPeriodic, s, NULL);
 
-	for(uint8_t i = 0; i < 2; i++) {
+	for (uint8_t i = 0; i < 2; i++) {
 		PID_Init(&(s->fric_pid[i]), PID_MODE_NO_D, s->dt_sec, &(param->fric_pid_param[i]));
 		
 		LowPassFilter2p_Init(&(s->fric_output_filter[i]), 1000.f / s->dt_sec, 100.f);
@@ -76,7 +76,7 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_Device_t *can_device) {
 	if (can_device == NULL)
 		return -1;
 	
-	for(uint8_t i = 0; i < 2; i++) {
+	for (uint8_t i = 0; i < 2; i++) {
 		const float fric_speed = can_device->gimbal_motor_fb.fric_fb[i].rotor_speed;
 		s->fric_rpm[i] = fric_speed;
 	}
@@ -110,7 +110,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
 		case SHOOT_MODE_RELAX:
 			s->trig_cur_out = 0.f;
 		
-			for(uint8_t i = 0; i < 2; i++) {
+			for (uint8_t i = 0; i < 2; i++) {
 				s->fric_cur_out[i] = 0.f;
 			}
 			break;
@@ -121,7 +121,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
 			s->trig_cur_out = PID_Calc(&(s->trig_pid), s->trig_angle_set, s->trig_angle, 0.f, s->dt_sec);
 			s->trig_cur_out = LowPassFilter2p_Apply(&(s->trig_output_filter), s->trig_cur_out);
 		
-			for(uint8_t i = 0; i < 2; i++) {
+			for (uint8_t i = 0; i < 2; i++) {
 				s->fric_cur_out[i] = PID_Calc(&(s->fric_pid[i]), s->fric_rpm_set[i], s->fric_rpm[i], 0.f, s->dt_sec);
 				s->fric_cur_out[i] = LowPassFilter2p_Apply(&(s->fric_output_filter[i]), s->fric_cur_out[i]);
 			}

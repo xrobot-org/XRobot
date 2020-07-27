@@ -13,13 +13,13 @@
 #define TASK_FREQ_HZ_CTRL_CHASSIS			(50u)
 #define TASK_FREQ_HZ_CTRL_GIMBAL			(50u)
 #define TASK_FREQ_HZ_CTRL_SHOOT				(50u)
-#define TASK_FREQ_HZ_INFO					(2u)
+#define TASK_FREQ_HZ_INFO				(2u)
 #define TASK_FREQ_HZ_MONITOR				(2u)
 #define TASK_FREQ_HZ_POSESTI				(200u)
 #define TASK_FREQ_HZ_REFEREE				(2u)
 
 #define TASK_INIT_DELAY_COMMAND				(15u)
-#define TASK_INIT_DELAY_CTRL_CHASSIS		(100)
+#define TASK_INIT_DELAY_CTRL_CHASSIS			(100)
 #define TASK_INIT_DELAY_CTRL_GIMBAL			(200)
 #define TASK_INIT_DELAY_CTRL_SHOOT			(300)
 #define TASK_INIT_DELAY_INFO				(500u)
@@ -58,7 +58,7 @@ typedef struct {
 	const Robot_Config_t *config_robot;
 	const Robot_PilotConfig_t *config_pilot;
 	
-	#ifdef DEBUG
+#ifdef DEBUG
 	struct {
 		UBaseType_t cli;
 		UBaseType_t command;
@@ -70,7 +70,7 @@ typedef struct {
 		UBaseType_t atti_esti;
 		UBaseType_t referee;
 	} stack_water_mark;
-	#endif
+#endif
 	
 } Task_Param_t;
 
@@ -93,4 +93,3 @@ void Task_Info(void *argument);
 void Task_Monitor(void *argument);
 void Task_AttiEsti(void *argument);
 void Task_Referee(void *argument);
-

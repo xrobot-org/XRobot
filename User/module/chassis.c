@@ -111,7 +111,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec) {
 	if (c->output_filter == NULL)
 		goto error5;
 		
-	for(uint8_t i = 0; i < c->num_wheel; i++) {
+	for (uint8_t i = 0; i < c->num_wheel; i++) {
 		PID_Init(&(c->motor_pid[i]), PID_MODE_NO_D, c->dt_sec, &(param->motor_pid_param[i]));
 		
 		LowPassFilter2p_Init(&(c->output_filter[i]), 1.f / c->dt_sec, 100.f);
@@ -147,7 +147,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_Device_t *can_device) {
 	const float raw_angle = can_device->gimbal_motor_fb.yaw_fb.rotor_angle;
 	c->gimbal_yaw_angle = raw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * M_PI;
 	
-	for(uint8_t i = 0; i < 4; i++) {
+	for (uint8_t i = 0; i < 4; i++) {
 		const float raw_speed = can_device->chassis_motor_fb[i].rotor_speed;
 		c->motor_rpm[i] = raw_speed; // TODO
 	}
@@ -193,7 +193,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
 	Mixer_Apply(&(c->mixer), c->move_vec.vx, c->move_vec.vy, c->move_vec.wz, c->motor_rpm_set, c->num_wheel);
 	
 	/* Compute output from setpiont. */
-	for(uint8_t i = 0; i < 4; i++) {
+	for (uint8_t i = 0; i < 4; i++) {
 		switch(c->mode) {
 			case CHASSIS_MODE_BREAK:
 			case CHASSIS_MODE_FOLLOW_GIMBAL:

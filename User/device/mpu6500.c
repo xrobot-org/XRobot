@@ -250,7 +250,7 @@ int IMU_Parse(IMU_t *imu) {
 
 	memcpy(raw, &(imu->raw), sizeof(imu->raw));
 
-	for(uint8_t i = 0; i < 20; i += 2)
+	for (uint8_t i = 0; i < 20; i += 2)
 		((int16_t*) & imu->raw)[i/2] = (raw[i] << 8) | raw[i+1];
 	
 	imu->data.temp = 21.f + (float)imu->raw.temp / 333.87f;

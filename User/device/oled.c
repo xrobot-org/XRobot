@@ -286,7 +286,7 @@ int OLED_PrintRam(OLED_t *oled, const char* str) {
 	
 	oled->modified = true;
 	
-	for(uint16_t i = 0; str[i] != '\0'; i++) {
+	for (uint16_t i = 0; str[i] != '\0'; i++) {
 		uint8_t c = str[i];
 		if (c < 32) {
 			switch (c) {
