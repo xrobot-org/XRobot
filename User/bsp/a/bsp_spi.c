@@ -40,7 +40,7 @@ static struct {
 
 /* Private function  ---------------------------------------------------------*/
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
-	 if(hspi->Instance == OLED_SPI) {
+	 if (hspi->Instance == OLED_SPI) {
 		if (bsp_spi_callback.oled.TxCpltCallback != NULL) {
 			bsp_spi_callback.oled.TxCpltCallback();
 		}
@@ -53,7 +53,7 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
 }
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
-	 if(hspi->Instance == OLED_SPI) {
+	 if (hspi->Instance == OLED_SPI) {
 		  if (bsp_spi_callback.oled.RxCpltCallback != NULL) {
 				bsp_spi_callback.oled.RxCpltCallback();
 		}
@@ -66,7 +66,7 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
 }
 
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
-	if(hspi->Instance == OLED_SPI) {
+	if (hspi->Instance == OLED_SPI) {
 		if (bsp_spi_callback.oled.TxRxCpltCallback != NULL) {
 			bsp_spi_callback.oled.TxRxCpltCallback();
 		}
@@ -78,7 +78,7 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
 }
 
 void HAL_SPI_TxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-	if(hspi->Instance == OLED_SPI) {
+	if (hspi->Instance == OLED_SPI) {
 		if (bsp_spi_callback.oled.TxHalfCpltCallback != NULL) {
 			bsp_spi_callback.oled.TxHalfCpltCallback();
 		}
@@ -90,7 +90,7 @@ void HAL_SPI_TxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
 }
 
 void HAL_SPI_RxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-	if(hspi->Instance == OLED_SPI) {
+	if (hspi->Instance == OLED_SPI) {
 		if (bsp_spi_callback.oled.RxHalfCpltCallback != NULL) {
 			bsp_spi_callback.oled.RxHalfCpltCallback();
 		}
@@ -102,7 +102,7 @@ void HAL_SPI_RxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
 }
 
 void HAL_SPI_TxRxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-	if(hspi->Instance == OLED_SPI) {
+	if (hspi->Instance == OLED_SPI) {
 		if (bsp_spi_callback.oled.TxRxHalfCpltCallback != NULL) {
 			bsp_spi_callback.oled.TxRxHalfCpltCallback();
 		}
@@ -114,7 +114,7 @@ void HAL_SPI_TxRxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
 }
 
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
-	if(hspi->Instance == OLED_SPI) {
+	if (hspi->Instance == OLED_SPI) {
 		if (bsp_spi_callback.oled.ErrorCallback != NULL) {
 			bsp_spi_callback.oled.ErrorCallback();
 		}
@@ -126,7 +126,7 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
 }
 
 void HAL_SPI_AbortCpltCallback(SPI_HandleTypeDef *hspi) {
-	if(hspi->Instance == OLED_SPI) {
+	if (hspi->Instance == OLED_SPI) {
 		if (bsp_spi_callback.oled.AbortCpltCallback != NULL) {
 			bsp_spi_callback.oled.AbortCpltCallback();
 		}
