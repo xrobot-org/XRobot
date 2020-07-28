@@ -17,14 +17,13 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static CAN_t *gcan;
-
 static volatile uint8_t motor_received = 0;
 static volatile uint32_t unknown_message = 0;
 
 static CAN_RxHeaderTypeDef rx_header;
 static uint8_t rx_data[8];
 
+static CAN_t *gcan;
 static bool inited = false;
 
 /* Private function  ---------------------------------------------------------*/
