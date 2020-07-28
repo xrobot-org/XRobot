@@ -2,8 +2,7 @@
 
 
 /* Includes ------------------------------------------------------------------*/
-#include <stdlib.h>
-#include <stdint.h>
+#include <main.h>
 
 /* Exported constants --------------------------------------------------------*/
 /* Base address of the Flash sectors */
@@ -20,7 +19,7 @@
 #define ADDR_FLASH_SECTOR_10 ((uint32_t)0x080C0000) /* Base address of Sector 10, 128 Kbytes */
 #define ADDR_FLASH_SECTOR_11 ((uint32_t)0x080E0000) /* Base address of Sector 11, 128 Kbytes */
 
-#ifndef FALSH_SIZE_LARGE
+#ifdef DEV_BOARD_C 
 #   define ADDR_FLASH_END ((uint32_t)0x08100000) /* End address for flash */
 #else
 #   define ADDR_FLASH_SECTOR_12 ((uint32_t)0x08100000) /* Base address of Sector 12, 16 Kbytes  */
@@ -42,6 +41,7 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 /* Exported functions prototypes ---------------------------------------------*/
-void BSP_Flash_EraseSectorAt(uint32_t address);
+void BSP_Flash_EraseSector(uint32_t sector);
 void BSP_Flash_WriteBytes(uint32_t address, const uint8_t *buf, size_t len);
 void BSP_Flash_ReadBytes(uint32_t address, void *buf, size_t len);
+void BSP_Flash_Sync(void);

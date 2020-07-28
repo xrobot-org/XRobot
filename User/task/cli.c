@@ -31,9 +31,13 @@ static const char* const CLI_WELCOME_MESSAGE =
 	" |___|__||_____||_____|_____||__|_|__||___._|_____||____|_____|__|  \r\n"
 	"           Q I N G D A O  U N I V E R S I T Y    2 0 2 0            \r\n"
 	" -------------------------------------------------------------------\r\n"
-	" Firmware Version: 0.0.1                                            \r\n"
-	" -------------------------------------------------------------------\r\n"
 	" FreeRTOS CLI. Type 'help' to view a list of registered commands.   \r\n"
+	"\r\n";
+
+static const char* const ROBOT_ID_MEAASGE = 
+	" -------------------------------------------------------------------\r\n"
+	" Robot Model: %s\tRobot Pilot: %s \r\n"
+	" -------------------------------------------------------------------\r\n"
 	"\r\n";
 
 static BaseType_t EndianCommand(char *out_buffer, size_t len, const char *command_string) {
@@ -171,34 +175,15 @@ static BaseType_t SetModelCommand(char *out_buffer, size_t len, const char *comm
 			return pdPASS;
 		case 1:
 			Robot_GetRobotID(&id);
-			switch (*param) {
-				case 'I':
-					snprintf(out_buffer, len, "Infantry.");
-					id.model = ROBOT_MODEL_INFANTRY;
-					break;
-				case 'H':
-					snprintf(out_buffer, len, "Hero.");
-					id.model = ROBOT_MODEL_HERO;
-					break;
-				case 'E':
-					snprintf(out_buffer, len, "Engineer.");
-					id.model = ROBOT_MODEL_ENGINEER;
-					break;
-				case 'D':
-					snprintf(out_buffer, len, "Drone.");
-					id.model = ROBOT_MODEL_DRONE;
-					break;
-				case 'S':
-					snprintf(out_buffer, len, "Sentry.");
-					id.model = ROBOT_MODEL_SENTRY;
-					break;
-				default:
-					stage = 2;
-					return pdPASS;
+			if ((id.model = Robot_GetModelByName(param)) == ROBOT_MODEL_NUM) {
+				stage = 2;
+				return pdPASS;
+			} else {
+				snprintf(out_buffer, len, Robot_GetNameByModel(id.model));
+				Robot_SetRobotID(&id);
+				stage = 3;
+				return pdPASS;
 			}
-			Robot_SetRobotID(&id);
-			stage = 3;
-			return pdPASS;
 		case 2:
 			snprintf(out_buffer, len, "Unknow model.\r\nCheck help for avaliable options.");
 			stage = 4;
@@ -221,10 +206,7 @@ static const CLI_Command_Definition_t command_set_model = {
 	1,
 };
 
-static BaseType_t SetUserCommand(char *out_buffer, size_t len, const char *command_string) {
-	static const char *const qs = "qs";
-	
-	
+static BaseType_t SetPilotCommand(char *out_buffer, size_t len, const char *command_string) {
 	const char *param;
 	BaseType_t param_len;
 	Robot_ID_t id;
@@ -245,17 +227,17 @@ static BaseType_t SetUserCommand(char *out_buffer, size_t len, const char *comma
 			stage = 1;
 			return pdPASS;
 		case 1:
+			
 			Robot_GetRobotID(&id);
-			if (strcmp(qs, param) == 0) {
-				snprintf(out_buffer, len, "QS.");
-				id.pilot = ROBOT_PILOT_QS;
-			} else {
+			if ((id.pilot = Robot_GetPilotByName(param)) == ROBOT_PILOT_NUM) {
 				stage = 2;
 				return pdPASS;
+			} else {
+				snprintf(out_buffer, len, Robot_GetNameByPilot(id.pilot));
+				Robot_SetRobotID(&id);
+				stage = 3;
+				return pdPASS;
 			}
-			Robot_SetRobotID(&id);
-			stage = 3;
-			return pdPASS;
 		case 2:
 			snprintf(out_buffer, len, "Unauthorized pilot.\r\nCheck help for avaliable options.");
 			stage = 4;
@@ -274,10 +256,39 @@ static BaseType_t SetUserCommand(char *out_buffer, size_t len, const char *comma
 static const CLI_Command_Definition_t command_set_user = {
 	"set-pilot",
 	"\r\nset-pilot <pilot>:\r\n Set robot pilot. Expext: QS\r\n\r\n",
-	SetUserCommand,
+	SetPilotCommand,
 	1,
 };
 
+static BaseType_t ErrorCommand(char *out_buffer, size_t len, const char *command_string) {
+	(void)command_string;
+	if (out_buffer == NULL)
+		return pdFALSE;
+	
+	len -= 1;
+	static uint8_t stage = 0;
+	switch (stage) {
+		case 0:
+			snprintf(out_buffer, len, "\r\nError status.");
+			stage++;
+			return pdPASS;
+		case 1:
+			
+			stage++;
+			return pdPASS;
+		default:
+			snprintf(out_buffer, len, "\r\n");
+			stage = 0;
+			return pdFALSE;
+	}
+}
+
+static const CLI_Command_Definition_t command_error = {
+	"error",
+	"\r\nerror:\r\n Get robot error status.\r\n\r\n",
+	ErrorCommand,
+	0,
+};
 
 /* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -295,10 +306,19 @@ void Task_CLI(void *argument) {
 	FreeRTOS_CLIRegisterCommand(&command_stats);
 	FreeRTOS_CLIRegisterCommand(&command_set_model);
 	FreeRTOS_CLIRegisterCommand(&command_set_user);
+	FreeRTOS_CLIRegisterCommand(&command_error);
 	
 	/* Init robot. */
-	task_param.config_robot = Robot_GetConfigDefault();
-	task_param.config_pilot = Robot_GetPilotConfigDefault();
+	Robot_GetRobotID(&task_param.robot_id);
+	
+	task_param.config_robot = Robot_GetConfig(task_param.robot_id.model);
+	task_param.config_pilot = Robot_GetPilotConfig(task_param.robot_id.pilot);
+	
+	/* Command Line Interface. */
+	BSP_USB_Printf(
+		ROBOT_ID_MEAASGE, 
+		Robot_GetNameByModel(task_param.robot_id.model),
+		Robot_GetNameByPilot(task_param.robot_id.pilot));
 	
 	task_param.thread.cli = osThreadGetId();
 	

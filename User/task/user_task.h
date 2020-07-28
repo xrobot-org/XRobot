@@ -55,6 +55,7 @@ typedef struct {
 		osMutexId_t atti_ready;
 	} mutex;
 	
+	Robot_ID_t robot_id;
 	const Robot_Config_t *config_robot;
 	const Robot_PilotConfig_t *config_pilot;
 	

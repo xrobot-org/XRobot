@@ -18,10 +18,12 @@ typedef enum {
 	ROBOT_MODEL_ENGINEER,
 	ROBOT_MODEL_DRONE,
 	ROBOT_MODEL_SENTRY,
+	ROBOT_MODEL_NUM,
 } Robot_Model_t;
 
 typedef enum {
 	ROBOT_PILOT_QS = 0,
+	ROBOT_PILOT_NUM,
 } Robot_Pilot_t;
 
 typedef struct {
@@ -54,5 +56,9 @@ typedef struct {
 
 void Robot_GetRobotID(Robot_ID_t *id);
 void Robot_SetRobotID(Robot_ID_t *id);
-const Robot_Config_t *Robot_GetConfigDefault(void);
-const Robot_PilotConfig_t *Robot_GetPilotConfigDefault(void);
+const Robot_Config_t *Robot_GetConfig(Robot_Model_t model);
+const Robot_PilotConfig_t *Robot_GetPilotConfig(Robot_Pilot_t pilot);
+Robot_Model_t Robot_GetModelByName(const char *name);
+Robot_Pilot_t Robot_GetPilotByName(const char *name);
+const char *Robot_GetNameByModel(Robot_Model_t model);
+const char *Robot_GetNameByPilot(Robot_Pilot_t pilot);
