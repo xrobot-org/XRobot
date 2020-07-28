@@ -10,6 +10,7 @@
 typedef enum {
 	BSP_I2C_COMP,
 	/* BSP_I2C_XXX,*/
+	BSP_I2C_NUM,
 } BSP_I2C_t;
 
 typedef enum {
@@ -21,7 +22,8 @@ typedef enum {
 	HAL_I2C_MEM_TX_CPLT_CB,
 	HAL_I2C_MEM_RX_CPLT_CB,
 	HAL_I2C_ERROR_CB,
-	HAL_I2C_ABORT_CB,
+	HAL_I2C_ABORT_CPLT_CB,
+	BSP_I2C_CB_NUM,
 } BSP_I2C_Callback_t;
 
 /* Exported functions prototypes ---------------------------------------------*/

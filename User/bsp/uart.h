@@ -11,6 +11,7 @@ typedef enum {
 	BSP_UART_DR16,
 	BSP_UART_REF,
 	/* BSP_UART_XXX, */
+	BSP_UART_NUM,
 } BSP_UART_t;
 
 typedef enum {
@@ -24,6 +25,7 @@ typedef enum {
 	BSP_UART_ABORT_RX_CPLT_CB,
 	
 	BSP_UART_IDLE_LINE_CB,
+	BSP_UART_CB_NUM,
 } BSP_UART_Callback_t;
 
 /* Exported functions prototypes ---------------------------------------------*/

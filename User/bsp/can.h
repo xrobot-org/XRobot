@@ -10,6 +10,7 @@
 typedef enum {
 	BSP_CAN_1,
 	BSP_CAN_2,
+	BSP_CAN_NUM,
 } BSP_CAN_t;
 
 typedef enum {
@@ -26,6 +27,7 @@ typedef enum {
 	HAL_CAN_SLEEP_CB,
 	HAL_CAN_WAKEUP_FROM_RX_MSG_CB,
 	HAL_CAN_ERROR_CB,
+	BSP_CAN_CB_NUM
 } BSP_CAN_Callback_t;
 
 /* Exported functions prototypes ---------------------------------------------*/

@@ -5,146 +5,65 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-struct {
-	struct {
-		void(*TxCpltCallback)(void);
-		void(*RxCpltCallback)(void);
-		void(*TxRxCpltCallback)(void);
-		void(*TxHalfCpltCallback)(void);
-		void(*RxHalfCpltCallback)(void);
-		void(*TxRxHalfCpltCallback)(void);
-		void(*ErrorCallback)(void);
-		void(*AbortCpltCallback)(void);
-	} oled;
-
-	struct {
-		void(*TxCpltCallback)(void);
-		void(*RxCpltCallback)(void);
-		void(*TxRxCpltCallback)(void);
-		void(*TxHalfCpltCallback)(void);
-		void(*RxHalfCpltCallback)(void);
-		void(*TxRxHalfCpltCallback)(void);
-		void(*ErrorCallback)(void);
-		void(*AbortCpltCallback)(void);
-	} imu;
-	
-	/*
-	struct {
-		void(*TxCpltCallback)(void);
-		void(*RxCpltCallback)(void);
-		void(*TxRxCpltCallback)(void);
-		void(*TxHalfCpltCallback)(void);
-		void(*RxHalfCpltCallback)(void);
-		void(*TxRxHalfCpltCallback)(void);
-		void(*ErrorCallback)(void);
-		void(*AbortCpltCallback)(void);
-	} xxx;
-	*/
-} static bsp_spi_callback;
+static void (*SPI_Callback[BSP_SPI_NUM][BSP_SPI_CB_NUM])(void);
 
 /* Private function  ---------------------------------------------------------*/
-static SPI_TypeDef *SPI_GetInstance(BSP_SPI_t spi) {
-	switch (spi) {
-		case BSP_SPI_OLED:
-			return SPI2;
-		case BSP_SPI_IMU:
-			return SPI1;
-		/*
-		case BSP_SPI_XXX:
-			return SPIX;
-		*/
-	}
+static BSP_SPI_t SPI_Get(SPI_HandleTypeDef *hspi) {
+	if (hspi->Instance == SPI1)
+		return BSP_SPI_IMU;
+	else if (hspi->Instance == SPI2)
+			return BSP_SPI_OLED;
+	/*
+	else if (hspi->Instance == SPIX)
+			return BSP_SPI_XXX;
+	*/
+	else
+		return BSP_SPI_NUM;
 }
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
-		if (bsp_spi_callback.oled.TxCpltCallback)
-			bsp_spi_callback.oled.TxCpltCallback();
-	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
-		if (bsp_spi_callback.imu.TxCpltCallback)
-			bsp_spi_callback.imu.TxCpltCallback();
-	}
+	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_CPLT_CB])
+			SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_CPLT_CB]();
 }
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
-		if (bsp_spi_callback.oled.RxCpltCallback)
-			bsp_spi_callback.oled.RxCpltCallback();
-	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
-		if (bsp_spi_callback.imu.RxCpltCallback)
-			bsp_spi_callback.imu.RxCpltCallback();
-	}
+	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_RX_CPLT_CB])
+		SPI_Callback[SPI_Get(hspi)][BSP_SPI_RX_CPLT_CB]();
 }
 
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
-		if (bsp_spi_callback.oled.TxRxCpltCallback)
-			bsp_spi_callback.oled.TxRxCpltCallback();
-	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
-		if (bsp_spi_callback.imu.TxRxCpltCallback)
-			bsp_spi_callback.imu.TxRxCpltCallback();
-	}
+	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_RX_CPLT_CB])
+		SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_RX_CPLT_CB]();
 }
 
 void HAL_SPI_TxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
-		if (bsp_spi_callback.oled.TxHalfCpltCallback)
-			bsp_spi_callback.oled.TxHalfCpltCallback();
-	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
-		if (bsp_spi_callback.imu.TxHalfCpltCallback)
-			bsp_spi_callback.imu.TxHalfCpltCallback();
-	}
+	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_HALF_CPLT_CB])
+		SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_HALF_CPLT_CB]();
 }
 
 void HAL_SPI_RxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
-		if (bsp_spi_callback.oled.RxHalfCpltCallback)
-			bsp_spi_callback.oled.RxHalfCpltCallback();
-	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
-		if (bsp_spi_callback.imu.RxHalfCpltCallback)
-			bsp_spi_callback.imu.RxHalfCpltCallback();
-	}
+	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_RX_HALF_CPLT_CB])
+		SPI_Callback[SPI_Get(hspi)][BSP_SPI_RX_HALF_CPLT_CB]();
 }
 
 void HAL_SPI_TxRxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
-		if (bsp_spi_callback.oled.TxRxHalfCpltCallback)
-			bsp_spi_callback.oled.TxRxHalfCpltCallback();
-	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
-		if (bsp_spi_callback.imu.TxRxHalfCpltCallback)
-			bsp_spi_callback.imu.TxRxHalfCpltCallback();
-	}
+	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_RX_HALF_CPLT_CB])
+		SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_RX_HALF_CPLT_CB]();
 }
 
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
-		if (bsp_spi_callback.oled.ErrorCallback)
-			bsp_spi_callback.oled.ErrorCallback();
-	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
-		if (bsp_spi_callback.imu.ErrorCallback)
-			bsp_spi_callback.imu.ErrorCallback();
-	}
+	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_ERROR_CB])
+		SPI_Callback[SPI_Get(hspi)][BSP_SPI_ERROR_CB]();
 }
 
 void HAL_SPI_AbortCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (hspi->Instance == SPI_GetInstance(BSP_SPI_OLED)) {
-		if (bsp_spi_callback.oled.AbortCpltCallback)
-			bsp_spi_callback.oled.AbortCpltCallback();
-	} else if (hspi->Instance == SPI_GetInstance(BSP_SPI_IMU)) {
-		if (bsp_spi_callback.imu.AbortCpltCallback)
-			bsp_spi_callback.imu.AbortCpltCallback();
-	}
-	/* 
-	else if (hspi->Instance == XXX_SPI) {
-		if (bsp_spi_callback.xxx.AbortCpltCallback)
-			bsp_spi_callback.xxx.AbortCpltCallback();
-	}
-	*/
+	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_ABORT_CPLT_CB])
+		SPI_Callback[SPI_Get(hspi)][BSP_SPI_ABORT_CPLT_CB]();
 }
 
 /* Exported functions --------------------------------------------------------*/
 SPI_HandleTypeDef *BSP_SPI_GetHandle(BSP_SPI_t spi) {
-		switch (spi) {
+	switch (spi) {
 		case BSP_SPI_OLED:
 			return &hspi2;
 		case BSP_SPI_IMU:
@@ -153,103 +72,14 @@ SPI_HandleTypeDef *BSP_SPI_GetHandle(BSP_SPI_t spi) {
 		case BSP_SPI_XXX:
 			return &hspiX;
 		*/
+		case BSP_SPI_NUM:
+			return NULL;
 	}
 }
 
 int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*callback)(void)) {
 	if (callback == NULL)
 		return -1;
-	
-	switch (spi) {
-		case BSP_SPI_IMU:
-			switch (type) {
-				case BSP_SPI_TX_CPLT_CB:
-					bsp_spi_callback.imu.TxCpltCallback = callback;
-					break;
-				case BSP_SPI_RX_CPLT_CB:
-					bsp_spi_callback.imu.RxCpltCallback = callback;
-					break;
-				case BSP_SPI_TX_RX_CPLT_CB:
-					bsp_spi_callback.imu.TxRxCpltCallback = callback;
-					break;
-				case BSP_SPI_TX_HALF_CPLT_CB:
-					bsp_spi_callback.imu.TxHalfCpltCallback = callback;
-					break;
-				case BSP_SPI_RX_HALF_CPLT_CB:
-					bsp_spi_callback.imu.RxHalfCpltCallback = callback;
-					break;
-				case BSP_SPI_TX_RX_HALF_CPLT_CB:
-					bsp_spi_callback.imu.TxRxHalfCpltCallback = callback;
-					break;
-				case BSP_SPI_ERROR_CB:
-					bsp_spi_callback.imu.ErrorCallback = callback;
-					break;
-				case BSP_SPI_ABORT_CB:
-					bsp_spi_callback.imu.AbortCpltCallback = callback;
-					break;
-			}
-			break;
-
-		case BSP_SPI_OLED:
-			switch (type) {
-				case BSP_SPI_TX_CPLT_CB:
-					bsp_spi_callback.oled.TxCpltCallback = callback;
-					break;
-				case BSP_SPI_RX_CPLT_CB:
-					bsp_spi_callback.oled.RxCpltCallback = callback;
-					break;
-				case BSP_SPI_TX_RX_CPLT_CB:
-					bsp_spi_callback.oled.TxRxCpltCallback = callback;
-					break;
-				case BSP_SPI_TX_HALF_CPLT_CB:
-					bsp_spi_callback.oled.TxHalfCpltCallback = callback;
-					break;
-				case BSP_SPI_RX_HALF_CPLT_CB:
-					bsp_spi_callback.oled.RxHalfCpltCallback = callback;
-					break;
-				case BSP_SPI_TX_RX_HALF_CPLT_CB:
-					bsp_spi_callback.oled.TxRxHalfCpltCallback = callback;
-					break;
-				case BSP_SPI_ERROR_CB:
-					bsp_spi_callback.oled.ErrorCallback = callback;
-					break;
-				case BSP_SPI_ABORT_CB:
-					bsp_spi_callback.oled.AbortCpltCallback = callback;
-					break;
-			}
-			break;
-		/*	
-		case BSP_SPI_XXX:
-			switch (type) {
-				case BSP_SPI_TX_CPLT_CB:
-					bsp_spi_callback.xxx.TxCpltCallback = callback;
-					break;
-				case BSP_SPI_RX_CPLT_CB:
-					bsp_spi_callback.xxx.RxCpltCallback = callback;
-					break;
-				case BSP_SPI_TX_RX_CPLT_CB:
-					bsp_spi_callback.xxx.TxRxCpltCallback = callback;
-					break;
-				case BSP_SPI_TX_HALF_CPLT_CB:
-					bsp_spi_callback.xxx.TxHalfCpltCallback = callback;
-					break;
-				case BSP_SPI_RX_HALF_CPLT_CB:
-					bsp_spi_callback.xxx.RxHalfCpltCallback = callback;
-					break;
-				case BSP_SPI_TX_RX_HALF_CPLT_CB:
-					bsp_spi_callback.xxx.TxRxHalfCpltCallback = callback;
-					break;
-				case BSP_SPI_ERROR_CB:
-					bsp_spi_callback.xxx.ErrorCallback = callback;
-					break;
-				case BSP_SPI_ABORT_CB:
-					bsp_spi_callback.xxx.AbortCpltCallback = callback;
-					break;
-				default:
-					return -1;
-			}
-			break;
-		*/
-	}
+	SPI_Callback[spi][type] = callback;
 	return 0;
 }

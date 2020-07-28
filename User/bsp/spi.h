@@ -11,6 +11,7 @@ typedef enum {
 	BSP_SPI_OLED,
 	BSP_SPI_IMU,
 	/* BSP_SPI_XXX,*/
+	BSP_SPI_NUM,
 } BSP_SPI_t;
 
 typedef enum {
@@ -21,7 +22,8 @@ typedef enum {
 	BSP_SPI_RX_HALF_CPLT_CB,
 	BSP_SPI_TX_RX_HALF_CPLT_CB,
 	BSP_SPI_ERROR_CB,
-	BSP_SPI_ABORT_CB,
+	BSP_SPI_ABORT_CPLT_CB,
+	BSP_SPI_CB_NUM,
 } BSP_SPI_Callback_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
