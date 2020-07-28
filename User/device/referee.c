@@ -22,9 +22,12 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+static volatile uint32_t drop_message = 0;
+
+static uint8_t rxbuf[REF_LEN_RX_BUFF];
+
 static Referee_t *gref;
 static bool inited = false;
-static uint8_t rxbuf[REF_LEN_RX_BUFF];
 
 /* Private function  ---------------------------------------------------------*/
 static void Referee_RxCpltCallback(void) {
@@ -88,18 +91,18 @@ int8_t Referee_Parse(Referee_t *ref) {
 	Referee_Header_t *header = (Referee_Header_t*)(rxbuf + index);
 	index += sizeof(Referee_Header_t);
 	if (index >= data_length)
-		return DEVICE_ERR;
+		goto error;
 	
 	if (CRC8_Verify((uint8_t*)header, sizeof(Referee_Header_t)))
-		return DEVICE_ERR;
+		goto error;
 	
 	if (header->sof != REF_HEADER_SOF)
-		return DEVICE_ERR;
+		goto error;
 	
 	Referee_CMDID_t *cmd_id = (Referee_CMDID_t*)(rxbuf + index);
 	index += sizeof(Referee_CMDID_t);
 	if (index >= data_length)
-		return DEVICE_ERR;
+		goto error;
 	
 	void *target = (rxbuf + index);
 	void *origin;
@@ -187,16 +190,20 @@ int8_t Referee_Parse(Referee_t *ref) {
 	}
 	index += size;
 	if (index >= data_length)
-		return DEVICE_ERR;
+		goto error;
 	
 	index += sizeof(Referee_Tail_t);
 	if (index != (data_length - 1))
-		return DEVICE_ERR;
+		goto error;
 	
 	if (CRC16_Verify((uint8_t*)header, sizeof(Referee_Header_t)))
 		memcpy(target, origin, size);
 	else
-		return DEVICE_ERR;
+		goto error;
 	
 	return DEVICE_OK;
+	
+error:
+	drop_message++;
+	return DEVICE_ERR;
 }
