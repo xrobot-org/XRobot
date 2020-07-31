@@ -342,7 +342,7 @@ void Task_CLI(void *argument) {
 		rx_char = BSP_USB_ReadChar();
 		
 		if (rx_char == '\n' || rx_char == '\r') {
-		BSP_USB_Printf("%c", rx_char);
+			BSP_USB_Printf("%c", rx_char);
 			break;
 		}
 	}
