@@ -31,7 +31,7 @@ void Task_Command(void *argument) {
 	
 	while(1) {
 #ifdef DEBUG
-		task_param->stack_water_mark.command = uxTaskGetStackHighWaterMark(NULL);
+		task_param->stack_water_mark.command = osThreadGetStackSpace(NULL);
 #endif
 		/* Task body */
 		DR16_StartReceiving(&dr16);

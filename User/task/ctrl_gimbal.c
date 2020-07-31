@@ -38,7 +38,7 @@ void Task_CtrlGimbal(void *argument) {
 	uint32_t tick = osKernelGetTickCount();
 	while(1) {
 #ifdef DEBUG
-		task_param->stack_water_mark.ctrl_gimbal = uxTaskGetStackHighWaterMark(NULL);
+		task_param->stack_water_mark.ctrl_gimbal = osThreadGetStackSpace(NULL);
 #endif
 		/* Task body */
 		tick += delay_tick;

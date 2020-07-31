@@ -32,7 +32,7 @@ void Task_Info(void *argument) {
 	uint32_t tick = osKernelGetTickCount();
 	while(1) {
 #ifdef DEBUG
-		task_param->stack_water_mark.info = uxTaskGetStackHighWaterMark(NULL);
+		task_param->stack_water_mark.info = osThreadGetStackSpace(NULL);
 #endif
 		/* Task body */
 		tick += delay_tick;

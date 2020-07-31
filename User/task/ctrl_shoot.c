@@ -36,7 +36,7 @@ void Task_CtrlShoot(void *argument) {
 	uint32_t tick = osKernelGetTickCount();
 	while(1) {
 #ifdef DEBUG
-		task_param->stack_water_mark.ctrl_shoot = uxTaskGetStackHighWaterMark(NULL);
+		task_param->stack_water_mark.ctrl_shoot = osThreadGetStackSpace(NULL);
 #endif
 		/* Task body */
 		tick += delay_tick;

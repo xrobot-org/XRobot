@@ -352,7 +352,7 @@ void Task_CLI(void *argument) {
 	BSP_USB_Printf("rm>");
 	while(1) {
 #ifdef DEBUG
-		task_param.stack_water_mark.cli = uxTaskGetStackHighWaterMark(NULL);
+		task_param.stack_water_mark.cli = osThreadGetStackSpace(NULL);
 #endif
 		/* Wait for input. */
 		BSP_USB_ReadyReceive(osThreadGetId());

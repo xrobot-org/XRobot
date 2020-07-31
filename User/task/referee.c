@@ -26,7 +26,7 @@ void Task_Referee(void *argument) {
 	uint32_t tick = osKernelGetTickCount();
 	while(1) {
 #ifdef DEBUG
-		task_param->stack_water_mark.referee = uxTaskGetStackHighWaterMark(NULL);
+		task_param->stack_water_mark.referee = osThreadGetStackSpace(NULL);
 #endif
 		/* Task body */
 		tick += delay_tick;

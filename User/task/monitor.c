@@ -7,6 +7,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "user_task.h"
 
+#include "bsp\buzzer.h"
 #include "bsp\usb.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -26,7 +27,7 @@ void Task_Monitor(void *argument) {
 	uint32_t tick = osKernelGetTickCount();
 	while(1) {
 #ifdef DEBUG
-		task_param->stack_water_mark.monitor = uxTaskGetStackHighWaterMark(NULL);
+		task_param->stack_water_mark.monitor = osThreadGetStackSpace(NULL);
 #endif
 		/* Task body */
 		tick += delay_tick;

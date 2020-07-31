@@ -65,7 +65,7 @@ void Task_AttiEsti(void *argument) {
 	
 	while(1) {
 #ifdef DEBUG
-		task_param->stack_water_mark.atti_esti = uxTaskGetStackHighWaterMark(NULL);
+		task_param->stack_water_mark.atti_esti = osThreadGetStackSpace(NULL);
 #endif
 		/* Task body */
 		osThreadFlagsWait(SIGNAL_BMI088_ACCL_NEW_DATA | SIGNAL_BMI088_GYRO_NEW_DATA, osFlagsWaitAll, osWaitForever);
