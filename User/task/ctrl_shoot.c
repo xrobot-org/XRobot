@@ -26,7 +26,9 @@ void Task_CtrlShoot(void *argument) {
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_SHOOT);
 	
-	can = CAN_GetDevice();
+	while((can = CAN_GetDevice()) == NULL) {
+		osDelay(delay_tick);
+	}
 
 	Shoot_Init(
 		&shoot, 

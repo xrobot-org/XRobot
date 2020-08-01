@@ -27,7 +27,9 @@ void Task_CtrlGimbal(void *argument) {
 	/* Task Setup */
 	osDelay(TASK_INIT_DELAY_CTRL_GIMBAL);
 	
-	can = CAN_GetDevice();
+	while((can = CAN_GetDevice()) == NULL) {
+		osDelay(delay_tick);
+	}
 	
 	Gimbal_Init(
 		&gimbal, 
