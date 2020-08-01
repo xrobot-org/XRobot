@@ -18,51 +18,50 @@
 #include "component\user_math.h"
 
 /* Private define ------------------------------------------------------------*/
-#define BMI088_ACCL_CHIP_ID_REG				(0x00)
-#define BMI088_ACCL_ERR_REG					(0x02)
-#define BMI088_ACCL_STATUS_REG				(0x03)
-#define BMI088_ACCL_X_LSB_REG				(0x12)
-#define BMI088_ACCL_X_MSB_REG				(0x13)
-#define BMI088_ACCL_Y_LSB_REG				(0x14)
-#define BMI088_ACCL_Y_MSB_REG				(0x15)
-#define BMI088_ACCL_Z_LSB_REG				(0x16)
-#define BMI088_ACCL_Z_MSB_REG				(0x17)
-#define BMI088_ACCL_SENSORTIME_0_REG		(0x18)
-#define BMI088_ACCL_SENSORTIME_1_REG		(0x19)
-#define BMI088_ACCL_SENSORTIME_2_REG		(0x1A)
-#define BMI088_ACCL_INT_STAT_1_REG			(0x1D)
-#define BMI088_TEMP_MSB_REG					(0x22)
-#define BMI088_TEMP_LSB_REG					(0x23)
-#define BMI088_ACCL_CONF_REG				(0x40)
-#define BMI088_ACCL_RANGE_REG				(0x41)
-#define BMI088_ACCL_INT1_IO_CONF_REG		(0x53)
-#define BMI088_ACCL_INT2_IO_CONF_REG		(0x54)
-#define BMI088_ACCL_INT1_INT2_MAP_DATA_REG	(0x58)
-#define BMI088_ACCL_SELF_TEST_REG			(0x6D)
-#define BMI088_ACCL_PWR_CONF_REG			(0x7C)
-#define BMI088_ACCL_PWR_CTRL_REG			(0x7D)
-#define BMI088_ACCL_SOFTRESET_REG			(0x7E)
+#define BMI088_REG_ACCL_CHIP_ID				(0x00)
+#define BMI088_REG_ACCL_ERR					(0x02)
+#define BMI088_REG_ACCL_STATUS				(0x03)
+#define BMI088_REG_ACCL_X_LSB				(0x12)
+#define BMI088_REG_ACCL_X_MSB				(0x13)
+#define BMI088_REG_ACCL_Y_LSB				(0x14)
+#define BMI088_REG_ACCL_Y_MSB				(0x15)
+#define BMI088_REG_ACCL_Z_LSB				(0x16)
+#define BMI088_REG_ACCL_Z_MSB				(0x17)
+#define BMI088_REG_ACCL_SENSORTIME_0		(0x18)
+#define BMI088_REG_ACCL_SENSORTIME_1		(0x19)
+#define BMI088_REG_ACCL_SENSORTIME_2		(0x1A)
+#define BMI088_REG_ACCL_INT_STAT_1			(0x1D)
+#define BMI088_REG_ACCL_TEMP_MSB			(0x22)
+#define BMI088_REG_ACCL_TEMP_LSB			(0x23)
+#define BMI088_REG_ACCL_CONF				(0x40)
+#define BMI088_REG_ACCL_RANGE				(0x41)
+#define BMI088_REG_ACCL_INT1_IO_CONF		(0x53)
+#define BMI088_REG_ACCL_INT2_IO_CONF		(0x54)
+#define BMI088_REG_ACCL_INT1_INT2_MAP_DATA	(0x58)
+#define BMI088_REG_ACCL_SELF_TEST			(0x6D)
+#define BMI088_REG_ACCL_PWR_CONF			(0x7C)
+#define BMI088_REG_ACCL_PWR_CTRL			(0x7D)
+#define BMI088_REG_ACCL_SOFTRESET			(0x7E)
 
-#define BMI088_ACCL_CHIP_ID					(0x1E)
+#define BMI088_REG_GYRO_CHIP_ID				(0x00)
+#define BMI088_REG_GYRO_X_LSB				(0x02)
+#define BMI088_REG_GYRO_X_MSB				(0x03)
+#define BMI088_REG_GYRO_Y_LSB				(0x04)
+#define BMI088_REG_GYRO_Y_MSB				(0x05)
+#define BMI088_REG_GYRO_Z_LSB				(0x06)
+#define BMI088_REG_GYRO_Z_MSB				(0x07)
+#define BMI088_REG_GYRO_INT_STAT_1			(0x0A)
+#define BMI088_REG_GYRO_RANGE				(0x0F)
+#define BMI088_REG_GYRO_BANDWIDTH			(0x10)
+#define BMI088_REG_GYRO_LPM1				(0x11)
+#define BMI088_REG_GYRO_SOFTRESET			(0x14)
+#define BMI088_REG_GYRO_INT_CTRL			(0x15)
+#define BMI088_REG_GYRO_INT3_INT4_IO_CONF	(0x16)
+#define BMI088_REG_GYRO_INT3_INT4_IO_MAP	(0x18)
+#define BMI088_REG_GYRO_SELF_TEST			(0x3C)
 
-#define BMI088_GYRO_CHIP_ID_REG				(0x00)
-#define BMI088_GYRO_X_LSB_REG				(0x02)
-#define BMI088_GYRO_X_MSB_REG				(0x03)
-#define BMI088_GYRO_Y_LSB_REG				(0x04)
-#define BMI088_GYRO_Y_MSB_REG				(0x05)
-#define BMI088_GYRO_Z_LSB_REG				(0x06)
-#define BMI088_GYRO_Z_MSB_REG				(0x07)
-#define BMI088_GYRO_INT_STAT_1_REG			(0x0A)
-#define BMI088_GYRO_RANGE_REG				(0x0F)
-#define BMI088_GYRO_BANDWIDTH_REG			(0x10)
-#define BMI088_GYRO_LPM1_REG				(0x11)
-#define BMI088_GYRO_SOFTRESET_REG			(0x14)
-#define BMI088_GYRO_INT_CTRL_REG			(0x15)
-#define BMI088_GYRO_INT3_INT4_IO_CONF_REG	(0x16)
-#define BMI088_GYRO_INT3_INT4_IO_MAP_REG	(0x18)
-#define BMI088_GYRO_SELF_TEST_REG			(0x3C)
-
-#define BMI088_GYRO_CHIP_ID					(0x0F)
+#define BMI088_CHIP_ID_ACCL					(0x1E)
+#define BMI088_CHIP_ID_GYRO					(0x0F)
 
 #define BMI088_LEN_RX_BUFF (19)
 /* Private macro -------------------------------------------------------------*/
@@ -187,17 +186,17 @@ int8_t BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert) {
 	
 	bmi088->thread_alert = thread_alert;
 	
-	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_SOFTRESET_REG, 0xB6);
-	BMI_WriteSingle(BMI_GYRO, BMI088_GYRO_SOFTRESET_REG, 0xB6);
+	BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_SOFTRESET, 0xB6);
+	BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_SOFTRESET, 0xB6);
 	BSP_Delay(30);
 	
 	/* Switch accl to SPI mode. */
-	BMI_ReadSingle(BMI_ACCL, BMI088_ACCL_CHIP_ID_REG);
+	BMI_ReadSingle(BMI_ACCL, BMI088_CHIP_ID_ACCL);
 	
-	if (BMI_ReadSingle(BMI_ACCL, BMI088_ACCL_CHIP_ID_REG) != BMI088_ACCL_CHIP_ID)
+	if (BMI_ReadSingle(BMI_ACCL, BMI088_REG_ACCL_CHIP_ID) != BMI088_CHIP_ID_ACCL)
 		return DEVICE_ERR_NO_DEV;
 	
-	if (BMI_ReadSingle(BMI_GYRO, BMI088_GYRO_CHIP_ID_REG) != BMI088_GYRO_CHIP_ID)
+	if (BMI_ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID) != BMI088_CHIP_ID_GYRO)
 		return DEVICE_ERR_NO_DEV;
 	
 	
@@ -211,37 +210,37 @@ int8_t BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert) {
 	/* Accl init. */
 	/* Filter setting: Normal. */
 	/* ODR: 0xAA: 400Hz. 0xA9: 200Hz. 0xA8: 100Hz. 0xA6: 25Hz. */
-	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_CONF_REG, 0xA8);
+	BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_CONF, 0xA8);
 	
 	/* 0x00: +-3G. 0x01: +-6G. 0x02: +-12G. 0x03: +-24G. */
-	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_RANGE_REG, 0x01);
+	BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_RANGE, 0x01);
 	
 	/* INT1 as output. Push-pull. Active low. Output. */
-	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_INT1_IO_CONF_REG, 0x08);
+	BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_INT1_IO_CONF, 0x08);
 	
 	/* Map data ready interrupt to INT1. */
-	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_INT1_INT2_MAP_DATA_REG, 0x04);
+	BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_INT1_INT2_MAP_DATA, 0x04);
 	
 	/* Turn on accl. Now we can read data. */
-	BMI_WriteSingle(BMI_ACCL, BMI088_ACCL_PWR_CTRL_REG, 0x04);
+	BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_PWR_CTRL, 0x04);
 	BSP_Delay(50);
 	
 	/* Gyro init. */
 	/* 0x00: +-2000. 0x01: +-1000. 0x02: +-500. 0x03: +-250. 0x04: +-125. */
-	BMI_WriteSingle(BMI_GYRO, BMI088_GYRO_RANGE_REG, 0x01);
+	BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_RANGE, 0x01);
 
 	/* Filter bw: 47Hz. */
 	/* ODR: 0x03: 400Hz. 0x06: 200Hz. 0x07: 100Hz. */
-	BMI_WriteSingle(BMI_GYRO, BMI088_GYRO_BANDWIDTH_REG, 0x07);
+	BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_BANDWIDTH, 0x07);
 	
 	/* INT3 and INT4 as output. Push-pull. Active low. */
-	BMI_WriteSingle(BMI_GYRO, BMI088_GYRO_INT3_INT4_IO_CONF_REG, 0x00);
+	BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_INT3_INT4_IO_CONF, 0x00);
 	
 	/* Map data ready interrupt to INT3. */
-	BMI_WriteSingle(BMI_GYRO, BMI088_GYRO_INT3_INT4_IO_MAP_REG, 0x01);
+	BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_INT3_INT4_IO_MAP, 0x01);
 	
 	/* Enable new data interrupt. */
-	BMI_WriteSingle(BMI_GYRO, BMI088_GYRO_INT_CTRL_REG, 0x80);
+	BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_INT_CTRL, 0x80);
 	
 	BSP_Delay(10);
 	
@@ -264,7 +263,7 @@ int8_t BMI088_ReceiveAccl(BMI088_t *bmi088) {
 	if (bmi088 == NULL)
 		return DEVICE_ERR_NULL;
 	
-	BMI_Read(BMI_ACCL, BMI088_ACCL_X_LSB_REG, bmi088_rxbuf, BMI088_LEN_RX_BUFF);
+	BMI_Read(BMI_ACCL, BMI088_REG_ACCL_X_LSB, bmi088_rxbuf, BMI088_LEN_RX_BUFF);
 	return DEVICE_OK;
 }
 
@@ -272,7 +271,7 @@ int8_t BMI088_ReceiveGyro(BMI088_t *bmi088) {
 	if (bmi088 == NULL)
 		return DEVICE_ERR_NULL;
 	
-	BMI_Read(BMI_GYRO, BMI088_GYRO_X_LSB_REG, bmi088_rxbuf + 7, 6u);
+	BMI_Read(BMI_GYRO, BMI088_REG_GYRO_X_LSB, bmi088_rxbuf + 7, 6u);
 	return DEVICE_OK;
 }
 
@@ -341,7 +340,6 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 	bmi088->gyro.y = (float)*raw_y / 32.768f * MATH_DEG_TO_RAD_MULT;
 	bmi088->gyro.z = (float)*raw_z / 32.768f * MATH_DEG_TO_RAD_MULT;
 	#endif
-	
 	
 	return DEVICE_ERR_NULL;
 }
