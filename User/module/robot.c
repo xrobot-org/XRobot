@@ -33,7 +33,7 @@ static const PID_Params_t infantry_chassis_pid_array[4] = {{
 	},
 };
 
-static const Robot_Config_t config_infantry = {
+static const Robot_Config_t cfg_infantry = {
 	.model = ROBOT_MODEL_INFANTRY,
 	.param = {
 		.chassis = {
@@ -46,7 +46,7 @@ static const Robot_Config_t config_infantry = {
 				.out_limit = 0.5,
 			},
 			.low_pass_cutoff = 100.f,
-		},
+		}, /* chassis */
 		
 		.gimbal = {
 			.pid = {
@@ -93,9 +93,9 @@ static const Robot_Config_t config_infantry = {
 					.i_limit = 0.5,
 					.out_limit = 0.5,
 				},
-			},
+			},  /* pid */
 			.low_pass_cutoff = 100.f,
-		},
+		},  /* gimbal */
 		
 		.shoot = {
 			.fric_pid_param = {
@@ -122,13 +122,14 @@ static const Robot_Config_t config_infantry = {
 				.out_limit = 0.5,
 			},
 			.low_pass_cutoff = 100.f,
-		},
+		},  /* shoot */
 	},
-};
-static const Robot_Config_t config_hero;
-static const Robot_Config_t config_engineer;
-static const Robot_Config_t config_drone;
-static const Robot_Config_t config_sentry;
+}; /* cfg_infantry */
+
+static const Robot_Config_t cfg_hero;
+static const Robot_Config_t cfg_engineer;
+static const Robot_Config_t cfg_drone;
+static const Robot_Config_t cfg_sentry;
 
 static const Robot_PilotConfig_t user_qs = {
 	.param = {
@@ -136,7 +137,6 @@ static const Robot_PilotConfig_t user_qs = {
 			.sens_mouse = 0.5f,
 			.sens_rc = 0.5f,
 		},
-		
 	},
 };
 
@@ -194,20 +194,20 @@ void Robot_SetRobotID(Robot_ID_t *id) {
 const Robot_Config_t *Robot_GetConfig(Robot_Model_t model) {
 	switch (model) {
 		case ROBOT_MODEL_INFANTRY:
-			return &config_infantry;
+			return &cfg_infantry;
 		case ROBOT_MODEL_HERO:
-			return &config_hero;
+			return &cfg_hero;
 		case ROBOT_MODEL_ENGINEER:
-			return &config_engineer;
+			return &cfg_engineer;
 		case ROBOT_MODEL_DRONE:
-			return &config_drone;
+			return &cfg_drone;
 		case ROBOT_MODEL_SENTRY:
-			return &config_sentry;
+			return &cfg_sentry;
 		case ROBOT_MODEL_NUM:
 			/* Default infantry*/
-			return &config_infantry;
+			return &cfg_infantry;
 	}
-	return &config_infantry;
+	return &cfg_infantry;
 }
 
 const Robot_PilotConfig_t *Robot_GetPilotConfig(Robot_Pilot_t pilot) {
