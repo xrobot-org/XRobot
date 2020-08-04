@@ -5,10 +5,8 @@
 #include "component\cmd.h"
 #include "component\filter.h"
 #include "component\pid.h"
-#include "component\user_math.h"
 
 #include "device\can.h"
-#include "device\dr16.h"
 #include "device\bmi088.h"
 
 

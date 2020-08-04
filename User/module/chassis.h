@@ -5,10 +5,8 @@
 #include "component\filter.h"
 #include "component\mixer.h"
 #include "component\pid.h"
-#include "component\user_math.h"
 
 #include "device\can.h"
-#include "device\dr16.h"
 
 /* Exported constants --------------------------------------------------------*/
 #define CHASSIS_OK			(0)

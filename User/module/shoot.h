@@ -8,7 +8,6 @@
 #include "component\filter.h"
 
 #include "device\can.h"
-#include "device\dr16.h"
 
 /* Exported constants --------------------------------------------------------*/
 #define SHOOT_OK		(0)
