@@ -62,7 +62,6 @@ typedef struct {
 	
 	/* Mixer Out / PID set point. */
 	float *motor_rpm_set;
-	float motor_scaler;
 	
 	/* PID */
 	PID_t *motor_pid;
