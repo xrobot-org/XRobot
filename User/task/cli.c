@@ -179,7 +179,7 @@ static BaseType_t SetModelCommand(char *out_buffer, size_t len, const char *comm
 				stage = 2;
 				return pdPASS;
 			} else {
-				snprintf(out_buffer, len, Robot_GetNameByModel(id.model));
+				snprintf(out_buffer, len, "%s", Robot_GetNameByModel(id.model));
 				Robot_SetRobotID(&id);
 				stage = 3;
 				return pdPASS;
@@ -233,7 +233,7 @@ static BaseType_t SetPilotCommand(char *out_buffer, size_t len, const char *comm
 				stage = 2;
 				return pdPASS;
 			} else {
-				snprintf(out_buffer, len, Robot_GetNameByPilot(id.pilot));
+				snprintf(out_buffer, len, "%s", Robot_GetNameByPilot(id.pilot));
 				Robot_SetRobotID(&id);
 				stage = 3;
 				return pdPASS;
