@@ -3,8 +3,6 @@
 
 #include <tim.h>
 
-#include "component\user_math.h"
-
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
@@ -16,7 +14,7 @@ static uint32_t led_stats;
 
 int8_t BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, float duty_cycle) {
 	if (duty_cycle > 1.f)
-		return -1;
+		return BSP_ERR;
 	
 	uint32_t tim_ch;
 	uint16_t pulse = (uint16_t)(duty_cycle * (float)UINT16_MAX);
@@ -60,5 +58,5 @@ int8_t BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, float duty_cycle) {
 			break;
 	}
 	
-	return 0;
+	return BSP_OK;
 }

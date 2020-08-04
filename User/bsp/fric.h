@@ -3,7 +3,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
-#include "component\user_math.h"
+
+#include "bsp/bsp.h"
 
 /* Exported constants --------------------------------------------------------*/
 #define BSP_LAZER_RESOLUTION 10000

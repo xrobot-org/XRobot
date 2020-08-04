@@ -97,7 +97,7 @@ UART_HandleTypeDef *BSP_UART_GetHandle(BSP_UART_t uart) {
 
 int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type, void (*callback)(void)) {
 	if (callback == NULL)
-		return -1;
+		return BSP_ERR_NULL;
 	UART_Callback[uart][type] = callback;
-	return 0;
+	return BSP_OK;
 }

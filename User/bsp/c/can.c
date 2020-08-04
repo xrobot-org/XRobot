@@ -97,7 +97,7 @@ CAN_HandleTypeDef *BSP_CAN_GetHandle(BSP_CAN_t can) {
 
 int8_t BSP_CAN_RegisterCallback(BSP_CAN_t can, BSP_CAN_Callback_t type, void (*callback)(void)) {
 	if (callback == NULL)
-		return -1;
+		return BSP_ERR_NULL;
 	CAN_Callback[can][type] = callback;
-	return 0;
+	return BSP_OK;
 }

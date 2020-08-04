@@ -4,7 +4,6 @@
 #include <main.h>
 #include <cmsis_os2.h>
 
-
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
@@ -20,7 +19,7 @@ int8_t BSP_Delay(uint32_t ms) {
 		case osKernelReserved:
 		case osKernelLocked:
 		case osKernelSuspended:
-			break;
+			return BSP_ERR;
 		
 		case osKernelRunning:
 			osDelay(ticks ? ticks : 1);
@@ -32,5 +31,5 @@ int8_t BSP_Delay(uint32_t ms) {
 			break;
 		
 	}
-	return 0;
+	return BSP_OK;
 }

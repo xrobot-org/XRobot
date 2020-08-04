@@ -337,7 +337,7 @@ void Task_CLI(void *argument) {
 	BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
 	while(1) {
 		BSP_USB_ReadyReceive(osThreadGetId());
-		osThreadFlagsWait(BSP_USB_SIGNAL_BUF_RECV, osFlagsWaitAll, osWaitForever);
+		osThreadFlagsWait(SIGNAL_BSP_USB_BUF_RECV, osFlagsWaitAll, osWaitForever);
 		
 		rx_char = BSP_USB_ReadChar();
 		
@@ -356,7 +356,7 @@ void Task_CLI(void *argument) {
 #endif
 		/* Wait for input. */
 		BSP_USB_ReadyReceive(osThreadGetId());
-		osThreadFlagsWait(BSP_USB_SIGNAL_BUF_RECV, osFlagsWaitAll, osWaitForever);
+		osThreadFlagsWait(SIGNAL_BSP_USB_BUF_RECV, osFlagsWaitAll, osWaitForever);
 		
 		rx_char = BSP_USB_ReadChar();
 		

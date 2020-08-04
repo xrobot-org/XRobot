@@ -4,8 +4,6 @@
 #include <main.h>
 #include <tim.h>
 
-#include "component\user_math.h"
-
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
@@ -14,8 +12,8 @@
 /* Exported functions --------------------------------------------------------*/
 int8_t BSP_Buzzer_Start(void) {
 	if (HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3) == HAL_OK)
-		return 0;
-	return -1;
+		return BSP_OK;
+	return BSP_ERR;
 }
 
 int8_t BSP_Buzzer_Set(float freq, float duty_cycle) {
@@ -24,11 +22,11 @@ int8_t BSP_Buzzer_Set(float freq, float duty_cycle) {
 	
 	pulse = (uint16_t)freq;
 	__HAL_TIM_PRESCALER(&htim4, pulse);
-	return 0;
+	return BSP_OK;
 }
 
 int8_t BSP_Buzzer_Stop(void) {
 	if (HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3) == HAL_OK)
-		return 0;
-	return -1;
+		return BSP_OK;
+	return BSP_ERR;
 }

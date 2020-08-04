@@ -4,6 +4,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include <main.h>
 
+#include "bsp/bsp.h"
+
 /* Exported constants --------------------------------------------------------*/
 /* Base address of the Flash sectors */
 #define ADDR_FLASH_SECTOR_0	((uint32_t)0x08000000)  /* Base address of Sector 0, 16 Kbytes   */
@@ -44,4 +46,3 @@
 void BSP_Flash_EraseSector(uint32_t sector);
 void BSP_Flash_WriteBytes(uint32_t address, const uint8_t *buf, size_t len);
 void BSP_Flash_ReadBytes(uint32_t address, void *buf, size_t len);
-void BSP_Flash_Sync(void);

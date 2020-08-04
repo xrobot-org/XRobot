@@ -262,7 +262,7 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
-	osThreadFlagsSet(gbsp_usb_alert, BSP_USB_SIGNAL_BUF_RECV);
+	osThreadFlagsSet(gbsp_usb_alert, SIGNAL_BSP_USB_BUF_RECV);
 
   return (USBD_OK);
   /* USER CODE END 6 */

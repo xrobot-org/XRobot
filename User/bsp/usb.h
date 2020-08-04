@@ -7,14 +7,9 @@
 
 #include <cmsis_os2.h>
 
+#include "bsp/bsp.h"
+
 /* Exported constants --------------------------------------------------------*/
-#define BSP_USB_OK			(0)
-#define BSP_USB_ERR_NULL	(-1)
-#define BSP_USB_ERR_INITED	(-2)
-#define BSP_USB_TIMEOUT		(-3)
-
-#define BSP_USB_SIGNAL_BUF_RECV (1u<<0)
-
 #define BSP_USB_MAX_RX_LEN	128
 #define BSP_USB_MAX_TX_LEN	1024
 

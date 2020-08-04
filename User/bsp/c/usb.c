@@ -25,17 +25,17 @@ static int8_t BSP_USB_Transmit(uint8_t *buffer, uint16_t len) {
 		BSP_Delay(10);
 	}
 	
-	return BSP_USB_OK;
+	return BSP_OK;
 }
 
 /* Exported functions --------------------------------------------------------*/
 int8_t BSP_USB_ReadyReceive(osThreadId_t alert) {
 	if (alert == NULL)
-		return BSP_USB_ERR_NULL;
+		return BSP_ERR_NULL;
 	
 	gbsp_usb_alert = alert;
 	CDC_ReadyReceive();
-	return BSP_USB_OK;
+	return BSP_OK;
 }
 
 char BSP_USB_ReadChar(void) {
@@ -52,5 +52,4 @@ int8_t BSP_USB_Printf(const char *fmt, ...) {
 	
 	BSP_USB_Transmit(usb_tx_buf, len);
 	
-	return BSP_USB_OK;
 }

@@ -4,8 +4,6 @@
 #include <main.h>
 #include <tim.h>
 
-#include "component\user_math.h"
-
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
@@ -18,7 +16,7 @@ static float range[BSP_SERVO_NUM];
 int8_t BSP_Servo_Init(BSP_Servo_Channel_t ch, float max_angle) {
 	range[ch] = max_angle;
 	
-	return 0;
+	return BSP_OK;
 }
 
 int8_t BSP_Servo_Start(BSP_Servo_Channel_t ch) {
@@ -57,13 +55,13 @@ int8_t BSP_Servo_Start(BSP_Servo_Channel_t ch) {
 		case BSP_SERVO_NUM: 
 			break;
 	}
-	return 0;
+	return BSP_OK;
 }
 
 
 int8_t BSP_Servo_Set(BSP_Servo_Channel_t ch, uint8_t angle) {
 	if (angle > 1.f)
-		return -1;
+		return BSP_ERR;
 	
 	uint16_t pulse = angle * UINT16_MAX;
 	
@@ -102,7 +100,7 @@ int8_t BSP_Servo_Set(BSP_Servo_Channel_t ch, uint8_t angle) {
 		case BSP_SERVO_NUM: 
 			break;
 	}
-	return 0;
+	return BSP_OK;
 }
 
 int8_t BSP_Servo_Stop(BSP_Servo_Channel_t ch) {
@@ -141,5 +139,5 @@ int8_t BSP_Servo_Stop(BSP_Servo_Channel_t ch) {
 		case BSP_SERVO_NUM: 
 			break;
 	}
-	return 0;
+	return BSP_OK;
 }

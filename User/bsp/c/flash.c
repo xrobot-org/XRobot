@@ -5,7 +5,6 @@
 
 #include <main.h>
 
-
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
@@ -48,8 +47,4 @@ void BSP_Flash_WriteBytes(uint32_t address, const uint8_t *buf, size_t len) {
 
 void BSP_Flash_ReadBytes(uint32_t address, void *buf, size_t len) {
 	memcpy(buf, (void*)address, len);
-}
-
-void BSP_Flash_Sync(void) {
-	while(FLASH_WaitForLastOperation(50) != HAL_OK);
 }

@@ -66,7 +66,7 @@ void HAL_I2C_AbortCpltCallback(I2C_HandleTypeDef *hi2c) {
 
 /* Exported functions --------------------------------------------------------*/
 I2C_HandleTypeDef *BSP_I2C_GetHandle(BSP_I2C_t i2c) {
-		switch (i2c) {
+	switch (i2c) {
 		case BSP_I2C_COMP:
 			return &hi2c3;
 		/*
@@ -80,8 +80,8 @@ I2C_HandleTypeDef *BSP_I2C_GetHandle(BSP_I2C_t i2c) {
 
 int8_t BSP_I2C_RegisterCallback(BSP_I2C_t i2c, BSP_I2C_Callback_t type, void (*callback)(void)) {
 	if (callback == NULL)
-		return -1;
+		return BSP_ERR_NULL;
 	I2C_Callback[i2c][type] = callback;
-	return 0;
+	return BSP_OK;
 }
 

@@ -79,7 +79,7 @@ SPI_HandleTypeDef *BSP_SPI_GetHandle(BSP_SPI_t spi) {
 
 int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*callback)(void)) {
 	if (callback == NULL)
-		return -1;
+		return BSP_ERR_NULL;
 	SPI_Callback[spi][type] = callback;
-	return 0;
+	return BSP_OK;
 }
