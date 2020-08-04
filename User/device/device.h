@@ -1,8 +1,3 @@
-/* 
-	裁判系统抽象。
-
-*/
-
 #pragma once
 
 #define DEVICE_OK			(0)
