@@ -20,48 +20,75 @@ static BSP_I2C_t I2C_Get(I2C_HandleTypeDef *hi2c) {
 }
 
 void HAL_I2C_MasterTxCpltCallback(I2C_HandleTypeDef *hi2c) {
-	if (I2C_Callback[I2C_Get(hi2c)][HAL_I2C_MASTER_TX_CPLT_CB])
-		I2C_Callback[I2C_Get(hi2c)][HAL_I2C_MASTER_TX_CPLT_CB]();
+	BSP_I2C_t bsp_i2c = I2C_Get(hi2c);
+	if (bsp_i2c != BSP_I2C_NUM) {
+		if (I2C_Callback[bsp_i2c][HAL_I2C_MASTER_TX_CPLT_CB])
+			I2C_Callback[bsp_i2c][HAL_I2C_MASTER_TX_CPLT_CB]();
+	}
 }
 
 void HAL_I2C_MasterRxCpltCallback(I2C_HandleTypeDef *hi2c) {
-	if (I2C_Callback[I2C_Get(hi2c)][HAL_I2C_MASTER_RX_CPLT_CB])
-		I2C_Callback[I2C_Get(hi2c)][HAL_I2C_MASTER_RX_CPLT_CB]();
+	BSP_I2C_t bsp_i2c = I2C_Get(hi2c);
+	if (bsp_i2c != BSP_I2C_NUM) {
+		if (I2C_Callback[bsp_i2c][HAL_I2C_MASTER_RX_CPLT_CB])
+			I2C_Callback[bsp_i2c][HAL_I2C_MASTER_RX_CPLT_CB]();
+	}
 }
 
 void HAL_I2C_SlaveTxCpltCallback(I2C_HandleTypeDef *hi2c) {
-	if (I2C_Callback[I2C_Get(hi2c)][HAL_I2C_SLAVE_TX_CPLT_CB])
-		I2C_Callback[I2C_Get(hi2c)][HAL_I2C_SLAVE_TX_CPLT_CB]();
+	BSP_I2C_t bsp_i2c = I2C_Get(hi2c);
+	if (bsp_i2c != BSP_I2C_NUM) {
+		if (I2C_Callback[bsp_i2c][HAL_I2C_SLAVE_TX_CPLT_CB])
+			I2C_Callback[bsp_i2c][HAL_I2C_SLAVE_TX_CPLT_CB]();
+	}
 }
 
 void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c) {
-	if (I2C_Callback[I2C_Get(hi2c)][HAL_I2C_SLAVE_RX_CPLT_CB])
-		I2C_Callback[I2C_Get(hi2c)][HAL_I2C_SLAVE_RX_CPLT_CB]();
+	BSP_I2C_t bsp_i2c = I2C_Get(hi2c);
+	if (bsp_i2c != BSP_I2C_NUM) {
+		if (I2C_Callback[bsp_i2c][HAL_I2C_SLAVE_RX_CPLT_CB])
+			I2C_Callback[bsp_i2c][HAL_I2C_SLAVE_RX_CPLT_CB]();
+	}
 }
 
 void HAL_I2C_ListenCpltCallback(I2C_HandleTypeDef *hi2c) {
-	if (I2C_Callback[I2C_Get(hi2c)][HAL_I2C_LISTEN_CPLT_CB])
-		I2C_Callback[I2C_Get(hi2c)][HAL_I2C_LISTEN_CPLT_CB]();
+	BSP_I2C_t bsp_i2c = I2C_Get(hi2c);
+	if (bsp_i2c != BSP_I2C_NUM) {
+		if (I2C_Callback[bsp_i2c][HAL_I2C_LISTEN_CPLT_CB])
+			I2C_Callback[bsp_i2c][HAL_I2C_LISTEN_CPLT_CB]();
+	}
 }
 
 void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c) {
-	if (I2C_Callback[I2C_Get(hi2c)][HAL_I2C_MEM_TX_CPLT_CB])
-		I2C_Callback[I2C_Get(hi2c)][HAL_I2C_MEM_TX_CPLT_CB]();
+	BSP_I2C_t bsp_i2c = I2C_Get(hi2c);
+	if (bsp_i2c != BSP_I2C_NUM) {
+		if (I2C_Callback[bsp_i2c][HAL_I2C_MEM_TX_CPLT_CB])
+			I2C_Callback[bsp_i2c][HAL_I2C_MEM_TX_CPLT_CB]();
+	}
 }
 
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c) {
-	if (I2C_Callback[I2C_Get(hi2c)][HAL_I2C_MEM_RX_CPLT_CB])
-		I2C_Callback[I2C_Get(hi2c)][HAL_I2C_MEM_RX_CPLT_CB]();
+	BSP_I2C_t bsp_i2c = I2C_Get(hi2c);
+	if (bsp_i2c != BSP_I2C_NUM) {
+		if (I2C_Callback[bsp_i2c][HAL_I2C_MEM_RX_CPLT_CB])
+			I2C_Callback[bsp_i2c][HAL_I2C_MEM_RX_CPLT_CB]();
+	}
 }
 
 void HAL_I2C_ErrorCallback(I2C_HandleTypeDef *hi2c) {
-	if (I2C_Callback[I2C_Get(hi2c)][HAL_I2C_ERROR_CB])
-		I2C_Callback[I2C_Get(hi2c)][HAL_I2C_ERROR_CB]();
+	BSP_I2C_t bsp_i2c = I2C_Get(hi2c);
+	if (bsp_i2c != BSP_I2C_NUM) {
+		if (I2C_Callback[bsp_i2c][HAL_I2C_ERROR_CB])
+			I2C_Callback[bsp_i2c][HAL_I2C_ERROR_CB]();
+	}
 }
 
 void HAL_I2C_AbortCpltCallback(I2C_HandleTypeDef *hi2c) {
-	if (I2C_Callback[I2C_Get(hi2c)][HAL_I2C_ABORT_CPLT_CB])
-		I2C_Callback[I2C_Get(hi2c)][HAL_I2C_ABORT_CPLT_CB]();
+	BSP_I2C_t bsp_i2c = I2C_Get(hi2c);
+	if (bsp_i2c != BSP_I2C_NUM) {
+		if (I2C_Callback[bsp_i2c][HAL_I2C_ABORT_CPLT_CB])
+			I2C_Callback[bsp_i2c][HAL_I2C_ABORT_CPLT_CB]();
+	}
 }
 
 /* Exported functions --------------------------------------------------------*/

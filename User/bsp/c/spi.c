@@ -22,43 +22,68 @@ static BSP_SPI_t SPI_Get(SPI_HandleTypeDef *hspi) {
 }
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_CPLT_CB])
-			SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_CPLT_CB]();
+	BSP_SPI_t bsp_spi = SPI_Get(hspi);
+	if (bsp_spi != BSP_SPI_NUM) {
+		if (SPI_Callback[bsp_spi][BSP_SPI_TX_CPLT_CB]) {
+			SPI_Callback[bsp_spi][BSP_SPI_TX_CPLT_CB]();
+		}
+	}
 }
 
 void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_RX_CPLT_CB])
-		SPI_Callback[SPI_Get(hspi)][BSP_SPI_RX_CPLT_CB]();
+	BSP_SPI_t bsp_spi = SPI_Get(hspi);
+	if (bsp_spi != BSP_SPI_NUM) {
+		if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_RX_CPLT_CB])
+			SPI_Callback[SPI_Get(hspi)][BSP_SPI_RX_CPLT_CB]();
+	}
 }
 
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_RX_CPLT_CB])
-		SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_RX_CPLT_CB]();
+	BSP_SPI_t bsp_spi = SPI_Get(hspi);
+	if (bsp_spi != BSP_SPI_NUM) {
+		if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_RX_CPLT_CB])
+			SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_RX_CPLT_CB]();
+	}
 }
 
 void HAL_SPI_TxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_HALF_CPLT_CB])
-		SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_HALF_CPLT_CB]();
+	BSP_SPI_t bsp_spi = SPI_Get(hspi);
+	if (bsp_spi != BSP_SPI_NUM) {
+		if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_HALF_CPLT_CB])
+			SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_HALF_CPLT_CB]();
+	}
 }
 
 void HAL_SPI_RxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_RX_HALF_CPLT_CB])
-		SPI_Callback[SPI_Get(hspi)][BSP_SPI_RX_HALF_CPLT_CB]();
+	BSP_SPI_t bsp_spi = SPI_Get(hspi);
+	if (bsp_spi != BSP_SPI_NUM) {
+		if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_RX_HALF_CPLT_CB])
+			SPI_Callback[SPI_Get(hspi)][BSP_SPI_RX_HALF_CPLT_CB]();
+	}
 }
 
 void HAL_SPI_TxRxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_RX_HALF_CPLT_CB])
-		SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_RX_HALF_CPLT_CB]();
+	BSP_SPI_t bsp_spi = SPI_Get(hspi);
+	if (bsp_spi != BSP_SPI_NUM) {
+		if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_RX_HALF_CPLT_CB])
+			SPI_Callback[SPI_Get(hspi)][BSP_SPI_TX_RX_HALF_CPLT_CB]();
+	}
 }
 
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
-	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_ERROR_CB])
-		SPI_Callback[SPI_Get(hspi)][BSP_SPI_ERROR_CB]();
+	BSP_SPI_t bsp_spi = SPI_Get(hspi);
+	if (bsp_spi != BSP_SPI_NUM) {
+		if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_ERROR_CB])
+			SPI_Callback[SPI_Get(hspi)][BSP_SPI_ERROR_CB]();
+	}
 }
 
 void HAL_SPI_AbortCpltCallback(SPI_HandleTypeDef *hspi) {
-	if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_ABORT_CPLT_CB])
-		SPI_Callback[SPI_Get(hspi)][BSP_SPI_ABORT_CPLT_CB]();
+	BSP_SPI_t bsp_spi = SPI_Get(hspi);
+	if (bsp_spi != BSP_SPI_NUM) {
+		if (SPI_Callback[SPI_Get(hspi)][BSP_SPI_ABORT_CPLT_CB])
+			SPI_Callback[SPI_Get(hspi)][BSP_SPI_ABORT_CPLT_CB]();
+	}
 }
 
 /* Exported functions --------------------------------------------------------*/
