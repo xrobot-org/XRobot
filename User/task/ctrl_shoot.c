@@ -7,7 +7,6 @@
 #include "user_task.h"
 
 #include "module\robot.h"
-
 #include "module\shoot.h"
 
 /* Private typedef -----------------------------------------------------------*/
