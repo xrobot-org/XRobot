@@ -18,12 +18,12 @@ static BSP_UART_t UART_Get(UART_HandleTypeDef *huart) {
 			return BSP_UART_XXX;
 	*/
 	else
-		return BSP_UART_NUM;
+		return BSP_UART_ERR;
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 	BSP_UART_t bsp_uart = UART_Get(huart);
-	if (bsp_uart != BSP_UART_NUM) {
+	if (bsp_uart != BSP_UART_ERR) {
 		if (UART_Callback[bsp_uart][BSP_UART_TX_CPLT_CB]) {
 			UART_Callback[bsp_uart][BSP_UART_TX_CPLT_CB]();
 		}
@@ -32,7 +32,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 
 void HAL_UART_TxHalfCpltCallback(UART_HandleTypeDef *huart) {
 	BSP_UART_t bsp_uart = UART_Get(huart);
-	if (bsp_uart != BSP_UART_NUM) {
+	if (bsp_uart != BSP_UART_ERR) {
 		if (UART_Callback[bsp_uart][BSP_UART_TX_HALF_CPLT_CB]) {
 			UART_Callback[bsp_uart][BSP_UART_TX_HALF_CPLT_CB]();
 		}
@@ -41,7 +41,7 @@ void HAL_UART_TxHalfCpltCallback(UART_HandleTypeDef *huart) {
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	BSP_UART_t bsp_uart = UART_Get(huart);
-	if (bsp_uart != BSP_UART_NUM) {
+	if (bsp_uart != BSP_UART_ERR) {
 		if (UART_Callback[bsp_uart][BSP_UART_RX_CPLT_CB]) {
 			UART_Callback[bsp_uart][BSP_UART_RX_CPLT_CB]();
 		}
@@ -50,7 +50,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart) {
 	BSP_UART_t bsp_uart = UART_Get(huart);
-	if (bsp_uart != BSP_UART_NUM) {
+	if (bsp_uart != BSP_UART_ERR) {
 		if (UART_Callback[bsp_uart][BSP_UART_RX_HALF_CPLT_CB]) {
 			UART_Callback[bsp_uart][BSP_UART_RX_HALF_CPLT_CB]();
 		}
@@ -59,7 +59,7 @@ void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart) {
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
 	BSP_UART_t bsp_uart = UART_Get(huart);
-	if (bsp_uart != BSP_UART_NUM) {
+	if (bsp_uart != BSP_UART_ERR) {
 		if (UART_Callback[bsp_uart][BSP_UART_ERROR_CB]) {
 			UART_Callback[bsp_uart][BSP_UART_ERROR_CB]();
 		}
@@ -68,7 +68,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
 
 void HAL_UART_AbortCpltCallback(UART_HandleTypeDef *huart) {
 	BSP_UART_t bsp_uart = UART_Get(huart);
-	if (bsp_uart != BSP_UART_NUM) {
+	if (bsp_uart != BSP_UART_ERR) {
 		if (UART_Callback[bsp_uart][BSP_UART_ABORT_CPLT_CB]) {
 			UART_Callback[bsp_uart][BSP_UART_ABORT_CPLT_CB]();
 		}
@@ -77,7 +77,7 @@ void HAL_UART_AbortCpltCallback(UART_HandleTypeDef *huart) {
 
 void HAL_UART_AbortTransmitCpltCallback(UART_HandleTypeDef *huart) {
 	BSP_UART_t bsp_uart = UART_Get(huart);
-	if (bsp_uart != BSP_UART_NUM) {
+	if (bsp_uart != BSP_UART_ERR) {
 		if (UART_Callback[bsp_uart][BSP_UART_ABORT_TX_CPLT_CB]) {
 			UART_Callback[bsp_uart][BSP_UART_ABORT_TX_CPLT_CB]();
 		}
@@ -86,7 +86,7 @@ void HAL_UART_AbortTransmitCpltCallback(UART_HandleTypeDef *huart) {
 
 void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart) {
 	BSP_UART_t bsp_uart = UART_Get(huart);
-	if (bsp_uart != BSP_UART_NUM) {
+	if (bsp_uart != BSP_UART_ERR) {
 		if (UART_Callback[bsp_uart][BSP_UART_ABORT_RX_CPLT_CB]) {
 			UART_Callback[bsp_uart][BSP_UART_ABORT_RX_CPLT_CB]();
 		}
@@ -114,7 +114,7 @@ UART_HandleTypeDef *BSP_UART_GetHandle(BSP_UART_t uart) {
 		case BSP_UART_XXX:
 			return &huartX;
 		*/
-		case BSP_UART_NUM:
+		default:
 			return NULL;
 	}
 }

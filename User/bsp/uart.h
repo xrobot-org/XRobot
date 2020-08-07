@@ -14,6 +14,7 @@ typedef enum {
 	BSP_UART_REF,
 	/* BSP_UART_XXX, */
 	BSP_UART_NUM,
+	BSP_UART_ERR,
 } BSP_UART_t;
 
 typedef enum {

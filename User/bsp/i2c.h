@@ -13,6 +13,7 @@ typedef enum {
 	BSP_I2C_COMP,
 	/* BSP_I2C_XXX,*/
 	BSP_I2C_NUM,
+	BSP_I2C_ERR,
 } BSP_I2C_t;
 
 typedef enum {
