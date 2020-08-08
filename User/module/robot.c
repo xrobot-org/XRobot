@@ -2,9 +2,15 @@
 
 #include <string.h>
 
+#include <lfs.h>
+
 #include "bsp/flash.h"
 
 #define CONFIG_BASE_ADDRESS (ADDR_FLASH_END - sizeof(Robot_ID_t))
+
+// variables used by the filesystem
+static lfs_t lfs;
+static lfs_file_t file;
 
 static const PID_Params_t infantry_chassis_pid_array[4] = {{
 		.kp = 0.5,
@@ -121,7 +127,11 @@ static const Robot_Config_t cfg_infantry = {
 				.i_limit = 0.5,
 				.out_limit = 0.5,
 			},
-			.low_pass_cutoff = 100.f,
+			
+			.low_pass_cutoff = {
+				.fric = 100.f,
+				.trig = 100.f,
+			},
 		},  /* shoot */
 	},
 }; /* cfg_infantry */
@@ -138,6 +148,44 @@ static const Robot_PilotConfig_t user_qs = {
 			.sens_rc = 0.5f,
 		},
 	},
+};
+
+static int Robot_Flash_Read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size) {
+	BSP_Flash_ReadBytes((ADDR_FLASH_SECTOR_8 + c->block_size * block + off), buffer, size);
+	return LFS_ERR_OK;
+}
+
+static int Robot_Flash_Prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size) {
+	BSP_Flash_WriteBytes((ADDR_FLASH_SECTOR_8 + c->block_size * block + off), buffer, size);
+	return LFS_ERR_OK;
+}
+
+static int Robot_Flash_Erase(const struct lfs_config *c, lfs_block_t block) {
+	(void)c;
+	BSP_Flash_EraseSector(8 + block);
+	return LFS_ERR_OK;
+}
+
+static int Robot_Flash_Sync(const struct lfs_config *c) {
+	(void)c;
+	return LFS_ERR_OK;
+}
+
+static const struct lfs_config cfg = {
+	// block device operations
+	.read  = Robot_Flash_Read,
+	.prog  = Robot_Flash_Prog,
+	.erase = Robot_Flash_Erase,
+	.sync  = Robot_Flash_Sync,
+
+	// block device configuration
+	.read_size = 4,
+	.prog_size = 4,
+	.block_size = 128 * 1024,
+	.block_count = 4,
+	.cache_size = 16,
+	.lookahead_size = 16,
+	.block_cycles = 500,
 };
 
 void Robot_GetRobotID(Robot_ID_t *id) {
@@ -160,7 +208,7 @@ void Robot_GetRobotID(Robot_ID_t *id) {
 
 		// release any resources we were using
 		err = lfs_unmount(&lfs);
-	} else {
+	}
 	#endif
 	BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t*)id, sizeof(Robot_ID_t));
 }
@@ -185,7 +233,7 @@ void Robot_SetRobotID(Robot_ID_t *id) {
 
 		// release any resources we were using
 		err = lfs_unmount(&lfs);
-	} else {
+	}
 	#endif
 	BSP_Flash_EraseSector(11);
 	BSP_Flash_WriteBytes(CONFIG_BASE_ADDRESS, (uint8_t*)id, sizeof(Robot_ID_t));
