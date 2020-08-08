@@ -903,9 +903,9 @@
               <FilePath>..\User\device\bmi088.c</FilePath>
             </File>
             <File>
-              <FileName>can_device.c</FileName>
+              <FileName>can.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\device\can_device.c</FilePath>
+              <FilePath>..\User\device\can.c</FilePath>
             </File>
             <File>
               <FileName>dr16.c</FileName>
@@ -1278,7 +1278,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x8000000</StartAddress>
-                <Size>0x100000</Size>
+                <Size>0xe0000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -1324,7 +1324,7 @@
             <PlainCh>0</PlainCh>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
-            <wLevel>2</wLevel>
+            <wLevel>0</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <uC99>0</uC99>
@@ -1338,8 +1338,8 @@
             <v6WtE>0</v6WtE>
             <v6Rtti>0</v6Rtti>
             <VariousControls>
-              <MiscControls>-Wno-padded -Wno-undef -Wno-missing-noreturn -Wno-extra-semi-stmt</MiscControls>
-              <Define>USE_HAL_DRIVER,OLED_USE_SPI,DEV_BOARD_C,STM32F407xx,DEBUG</Define>
+              <MiscControls>-Wall</MiscControls>
+              <Define>USE_HAL_DRIVER,OLED_USE_SPI,DEV_BOARD_C,STM32F407xx,DEBUG,LFS_CONFIG=lfs_config.h,</Define>
               <Undefine></Undefine>
               <IncludePath>../Core/Inc;../USB_DEVICE/App;../USB_DEVICE/Target;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;..\Drivers\CMSIS\DSP\Include;..\User</IncludePath>
             </VariousControls>
@@ -2458,9 +2458,9 @@
               <FilePath>..\User\device\bmi088.c</FilePath>
             </File>
             <File>
-              <FileName>can_device.c</FileName>
+              <FileName>can.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\device\can_device.c</FilePath>
+              <FilePath>..\User\device\can.c</FilePath>
             </File>
             <File>
               <FileName>dr16.c</FileName>
