@@ -13,7 +13,7 @@
 
 #define SIGNAL_CAN_MOTOR_RECV			(1u<<4)
 #define SIGNAL_CAN_UWB_RECV				(1u<<5)
-#define SIGNAL_CAN_SUPERCAP_RECV		(1u<<6)
+#define SIGNAL_CAN_CAP_RECV				(1u<<6)
 
 #define SIGNAL_DR16_RAW_REDY			(1u<<7)
 

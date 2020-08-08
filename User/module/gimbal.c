@@ -72,11 +72,8 @@ int8_t Gimbal_UpdateFeedback(Gimbal_t *g, CAN_t *can) {
 	if (can == NULL)
 		return -1;
 	
-	const float yaw_angle = can->gimbal_motor_fb.yaw_fb.rotor_angle;
-	g->eulr.encoder.yaw = yaw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * M_PI;
-	
-	const float pit_angle = can->gimbal_motor_fb.yaw_fb.rotor_angle;
-	g->eulr.encoder.pit = pit_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * M_PI;
+	g->fb.eulr.encoder.yaw = can->gimbal_motor_fb[CAN_MOTOR_GIMBAL_YAW].rotor_angle;
+	g->fb.eulr.encoder.pit = can->gimbal_motor_fb[CAN_MOTOR_GIMBAL_PIT].rotor_angle;
 	
 	return 0;
 }

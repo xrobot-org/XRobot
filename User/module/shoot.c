@@ -80,12 +80,10 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_t *can) {
 		return -1;
 	
 	for (uint8_t i = 0; i < 2; i++) {
-		const float fric_speed = can->gimbal_motor_fb.fric_fb[i].rotor_speed;
-		s->fric_rpm[i] = fric_speed;
+		s->fb.fric_rpm[i] = can->shoot_motor_fb[CAN_MOTOR_SHOOT_FRIC1 + i].rotor_speed;
 	}
 	
-	const float trig_angle = can->gimbal_motor_fb.yaw_fb.rotor_angle;
-	s->trig_angle = trig_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * M_PI;
+	s->fb.trig_angle = can->shoot_motor_fb[CAN_MOTOR_SHOOT_TRIG].rotor_angle;
 	
 	return 0;
 }

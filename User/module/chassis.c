@@ -141,12 +141,10 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_t *can) {
 	if (can == NULL)
 		return CHASSIS_ERR_NULL;
 	
-	const float raw_angle = can->gimbal_motor_fb.yaw_fb.rotor_angle;
-	c->gimbal_yaw_angle = raw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * M_PI;
+	c->fb.gimbal_yaw_angle = can->gimbal_motor_fb[CAN_MOTOR_GIMBAL_YAW].rotor_angle;
 	
-	for (uint8_t i = 0; i < 4; i++) {
-		const float raw_speed = can->chassis_motor_fb[i].rotor_speed;
-		c->motor_rpm[i] = raw_speed; // TODO
+	for (uint8_t i = 0; i < c->num_wheel; i++) {
+		c->fb.motor_rpm[i] = can->chassis_motor_fb[i].rotor_speed;
 	}
 	
 	return CHASSIS_OK;
