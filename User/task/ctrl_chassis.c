@@ -33,7 +33,7 @@ void Task_CtrlChassis(void *argument) {
 		task_param->thread.ctrl_shoot
 	};
 	
-	CAN_Init(&can, recv_motor_allert, 3, task_param->thread.referee, osThreadGetId());
+	CAN_Init(&can, NULL, recv_motor_allert, 3, task_param->thread.referee, osThreadGetId());
 
 	/* Module Setup */
 	Chassis_Init(
@@ -63,10 +63,10 @@ void Task_CtrlChassis(void *argument) {
 			Chassis_Control(&chassis, &(cmd->chassis));
 			// TODO: Check can error
 			CAN_Motor_ControlChassis(
-				chassis.motor_cur_out[0],
-				chassis.motor_cur_out[1],
-				chassis.motor_cur_out[2],
-				chassis.motor_cur_out[3]);
+				chassis.out[0],
+				chassis.out[1],
+				chassis.out[2],
+				chassis.out[3]);
 			
 			osKernelUnlock();
 			

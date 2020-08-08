@@ -53,9 +53,9 @@ void Task_CtrlShoot(void *argument) {
 			Shoot_UpdateFeedback(&shoot, can);
 			Shoot_Control(&shoot, &(cmd->shoot));
 			CAN_Motor_ControlShoot(
-				shoot.fric_cur_out[0],
-				shoot.fric_cur_out[1],
-				shoot.trig_cur_out
+				shoot.out[SHOOT_ACTR_FRIC1],
+				shoot.out[SHOOT_ACTR_FRIC2],
+				shoot.out[SHOOT_ACTR_TRIG]
 			);
 			osKernelUnlock();
 			
