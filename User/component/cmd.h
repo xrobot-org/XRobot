@@ -63,7 +63,7 @@ typedef struct {
 
 typedef struct {
 	CMD_Gimbal_Mode_t mode;
-	AHRS_Eulr_t eulr;
+	AHRS_Eulr_t delta_eulr;
 } CMD_Gimbal_Ctrl_t;
 
 typedef struct {
@@ -91,20 +91,19 @@ typedef enum {
 } CMD_KeyValue_t;
 
 typedef struct {
-	bool pc_ctrl;
-	
 	float sens_mouse;
 	float sens_rc;
+} CMD_Params_t;
+
+typedef struct {
+	bool pc_ctrl;
+	
+	const CMD_Params_t *param;
 	
 	CMD_Chassis_Ctrl_t chassis;
 	CMD_Gimbal_Ctrl_t gimbal;
 	CMD_Shoot_Ctrl_t shoot;
 } CMD_t;
-
-typedef struct {
-	float sens_mouse;
-	float sens_rc;
-} CMD_Params_t;
 
 typedef struct {
 	float ch_l_x;

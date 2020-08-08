@@ -13,8 +13,7 @@ int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
 		return -1;
 	
 	cmd->pc_ctrl = false;
-	cmd->sens_mouse = param->sens_mouse;
-	cmd->sens_rc = param->sens_rc;
+	cmd->param = param;
 	
 	return 0;
 }
@@ -34,8 +33,8 @@ int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd) {
 		cmd->pc_ctrl = false;
 	
 	if (cmd->pc_ctrl) {
-		cmd->gimbal.eulr.yaw += (float)rc->mouse.x * cmd->sens_mouse;
-		cmd->gimbal.eulr.pit += (float)rc->mouse.y * cmd->sens_mouse;
+		cmd->gimbal.delta_eulr.yaw = (float)rc->mouse.x * cmd->param->sens_mouse;
+		cmd->gimbal.delta_eulr.pit = (float)rc->mouse.y * cmd->param->sens_mouse;
 		
 		if (rc->mouse.l_click) {
 			if (rc->mouse.r_click) {
@@ -114,8 +113,8 @@ int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd) {
 			}
 			cmd->chassis.ctrl_v.vx = rc->ch_l_x;
 			cmd->chassis.ctrl_v.vy = rc->ch_l_y;
-			cmd->gimbal.eulr.yaw += rc->ch_r_x * cmd->sens_mouse;
-			cmd->gimbal.eulr.pit += rc->ch_r_y * cmd->sens_mouse;
+			cmd->gimbal.delta_eulr.yaw = rc->ch_r_x * cmd->param->sens_mouse;
+			cmd->gimbal.delta_eulr.pit = rc->ch_r_y * cmd->param->sens_mouse;
 		}
 	}
 	return 0;
