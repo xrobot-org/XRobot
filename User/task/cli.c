@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+#include "bsp\can.h"
 #include "bsp\usb.h"
 #include "bsp\flash.h"
 
@@ -286,6 +287,37 @@ static const CLI_Command_Definition_t command_error = {
 	"error",
 	"\r\nerror:\r\n Get robot error status.\r\n\r\n",
 	Command_Error,
+	0,
+};
+
+static BaseType_t Command_MotorIDQuitckSet(char *out_buffer, size_t len, const char *command_string) {
+	(void)command_string;
+	if (out_buffer == NULL)
+		return pdFALSE;
+	
+	len -= 1;
+	static uint8_t stage = 0;
+	switch (stage) {
+		case 0:
+			snprintf(out_buffer, len, "\r\nEnter ID quick set mode.");
+			stage++;
+			return pdPASS;
+		case 1:
+			CAN_Motor_QuickIdSetMode();
+			snprintf(out_buffer, len, "\r\nDone.");
+			stage++;
+			return pdPASS;
+		default:
+			snprintf(out_buffer, len, "\r\n");
+			stage = 0;
+			return pdFALSE;
+	}
+}
+
+static const CLI_Command_Definition_t command_motor_id_quick_set = {
+	"motor-id-set",
+	"\r\nmotor-id-set:\r\n Enter motor ID quick set mode.\r\n\r\n",
+	Command_MotorIDQuitckSet,
 	0,
 };
 
