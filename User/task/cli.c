@@ -40,7 +40,7 @@ static const char* const ROBOT_ID_MEAASGE =
 	" -------------------------------------------------------------------\r\n"
 	"\r\n";
 
-static BaseType_t EndianCommand(char *out_buffer, size_t len, const char *command_string) {
+static BaseType_t Command_Endian(char *out_buffer, size_t len, const char *command_string) {
 	(void)command_string;
 	
 	if (out_buffer == NULL)
@@ -82,11 +82,11 @@ static BaseType_t EndianCommand(char *out_buffer, size_t len, const char *comman
 static const CLI_Command_Definition_t command_endian = {
 	"endian",
 	"\r\nendian:\r\n Endian experiment.\r\n\r\n",
-	EndianCommand,
+	Command_Endian,
 	0, 
 };
 
-static BaseType_t StatsCommand(char *out_buffer, size_t len, const char *command_string) {
+static BaseType_t Command_Stats(char *out_buffer, size_t len, const char *command_string) {
 	static const char *const task_list_header = 
 		"\r\n"
 		"Task list\r\n"
@@ -149,11 +149,11 @@ static BaseType_t StatsCommand(char *out_buffer, size_t len, const char *command
 static const CLI_Command_Definition_t command_stats = {
 	"stats",
 	"\r\nstats:\r\n Displays a table showing the state of FreeRTOS\r\n\r\n",
-	StatsCommand,
+	Command_Stats,
 	0, 
 };
 
-static BaseType_t SetModelCommand(char *out_buffer, size_t len, const char *command_string) {
+static BaseType_t Command_SetModel(char *out_buffer, size_t len, const char *command_string) {
 	const char *param;
 	BaseType_t param_len;
 	Robot_ID_t id;
@@ -202,11 +202,11 @@ static BaseType_t SetModelCommand(char *out_buffer, size_t len, const char *comm
 static const CLI_Command_Definition_t command_set_model = {
 	"set-model",
 	"\r\nset-model <model>:\r\n Set robot model. Expext:I[nfantry], H[ero], E[ngineer], D[rone] and S[entry]\r\n\r\n",
-	SetModelCommand,
+	Command_SetModel,
 	1,
 };
 
-static BaseType_t SetPilotCommand(char *out_buffer, size_t len, const char *command_string) {
+static BaseType_t Command_SetPilot(char *out_buffer, size_t len, const char *command_string) {
 	const char *param;
 	BaseType_t param_len;
 	Robot_ID_t id;
@@ -227,7 +227,6 @@ static BaseType_t SetPilotCommand(char *out_buffer, size_t len, const char *comm
 			stage = 1;
 			return pdPASS;
 		case 1:
-			
 			Robot_GetRobotID(&id);
 			if ((id.pilot = Robot_GetPilotByName(param)) == ROBOT_PILOT_NUM) {
 				stage = 2;
@@ -256,11 +255,11 @@ static BaseType_t SetPilotCommand(char *out_buffer, size_t len, const char *comm
 static const CLI_Command_Definition_t command_set_user = {
 	"set-pilot",
 	"\r\nset-pilot <pilot>:\r\n Set robot pilot. Expext: QS\r\n\r\n",
-	SetPilotCommand,
+	Command_SetPilot,
 	1,
 };
 
-static BaseType_t ErrorCommand(char *out_buffer, size_t len, const char *command_string) {
+static BaseType_t Command_Error(char *out_buffer, size_t len, const char *command_string) {
 	(void)command_string;
 	if (out_buffer == NULL)
 		return pdFALSE;
@@ -273,7 +272,7 @@ static BaseType_t ErrorCommand(char *out_buffer, size_t len, const char *command
 			stage++;
 			return pdPASS;
 		case 1:
-			
+			//TODO
 			stage++;
 			return pdPASS;
 		default:
