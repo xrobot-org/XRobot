@@ -36,31 +36,40 @@ enum Gimbal_Acuator_e{
 typedef struct {
 	const PID_Params_t pid[GIMBAL_PID_NUM];
 	float low_pass_cutoff;
+	struct {
+		struct {
+			float high;
+			float low;
+		} pitch;
+	} limit;
 } Gimbal_Params_t;
 
 typedef struct {
-	Gimbal_Params_t *params;
+	Gimbal_Params_t *param;
 	
 	/* common */
 	float dt_sec;
 	CMD_Gimbal_Mode_t mode;
 	
-	/* Feedback */
-	BMI088_t *imu;
+	struct {
+		BMI088_t *imu;
+
+		struct {
+			AHRS_Eulr_t *imu;
+			AHRS_Eulr_t encoder;
+		} eulr;
+	} fb;
 	
 	struct {
-		AHRS_Eulr_t *imu;
-		AHRS_Eulr_t encoder;
-	} eulr;
+		AHRS_Eulr_t eulr;
+	} set;
 	
-	/* PID */
 	PID_t pid[GIMBAL_PID_NUM];
 	
-	/* Output */
-	float cur_out[GIMBAL_ACTR_NUM];
-	
-	/* Output filter */
 	LowPassFilter2p_t filter[GIMBAL_ACTR_NUM];
+	
+	float out[GIMBAL_ACTR_NUM];
+	
 } Gimbal_t;
 
 

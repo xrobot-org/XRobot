@@ -7,17 +7,20 @@
 /* Includes ------------------------------------------------------------------*/
 #include "shoot.h"
 
-#include "component\user_math.h"
-
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
+#define SHOOT_BULLET_SPEED_SCALER (2.f)
+#define SHOOT_BULLET_SPEED_BIAS  (1.f)
+
+#define SHOOT_NUM_TRIG_TOOTH (8u)
+
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function  ---------------------------------------------------------*/ 
 static void TrigTimerCallback(void *arg) {
 	Shoot_t *s = (Shoot_t*)arg;
 	
-	s->trig_angle_set += 2.f * M_PI / SHOOT_NUM_FEEDING_TOOTH;
+	s->set.trig_angle += 2.f * M_PI / SHOOT_NUM_TRIG_TOOTH;
 }
 
 static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
@@ -57,14 +60,14 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float dt_sec) {
 	s->trig_timer_id = osTimerNew(TrigTimerCallback, osTimerPeriodic, s, NULL);
 
 	for (uint8_t i = 0; i < 2; i++) {
-		PID_Init(&(s->fric_pid[i]), PID_MODE_NO_D, s->dt_sec, &(param->fric_pid_param[i]));
+		PID_Init(&(s->pid.fric[i]), PID_MODE_NO_D, s->dt_sec, &(param->fric_pid_param[i]));
 		
-		LowPassFilter2p_Init(&(s->fric_output_filter[i]), 1000.f / s->dt_sec, 100.f);
+		LowPassFilter2p_Init(&(s->filter.fric[i]), 1000.f / s->dt_sec, param->low_pass_cutoff.fric);
 	}
 	
-	PID_Init(&(s->trig_pid), PID_MODE_NO_D, s->dt_sec, &(param->trig_pid_param));
+	PID_Init(&(s->pid.trig), PID_MODE_NO_D, s->dt_sec, &(param->trig_pid_param));
 	
-	LowPassFilter2p_Init(&(s->trig_output_filter), 1.f / s->dt_sec, 100.f);
+	LowPassFilter2p_Init(&(s->filter.trig), 1.f / s->dt_sec, param->low_pass_cutoff.trig);
 	return 0;
 }
 
@@ -98,8 +101,8 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
 		s_ctrl->shoot_freq_hz = 0.f;
 	}
 	
-	s->fric_rpm_set[0] = SHOOT_BULLET_SPEED_SCALER * s_ctrl->bullet_speed + SHOOT_BULLET_SPEED_BIAS;
-	s->fric_rpm_set[1] = -s->fric_rpm_set[0];
+	s->set.fric_rpm[0] = SHOOT_BULLET_SPEED_SCALER * s_ctrl->bullet_speed + SHOOT_BULLET_SPEED_BIAS;
+	s->set.fric_rpm[1] = -s->set.fric_rpm[0];
 
 	
 	uint32_t period_ms = 1000u / (uint32_t)s_ctrl->shoot_freq_hz;
@@ -108,22 +111,22 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
 	
 	switch(s->mode) {
 		case SHOOT_MODE_RELAX:
-			s->trig_cur_out = 0.f;
+			s->out[0] = 0.f;
 		
 			for (uint8_t i = 0; i < 2; i++) {
-				s->fric_cur_out[i] = 0.f;
+				s->out[i + 1] = 0.f;
 			}
 			break;
 		
 		case SHOOT_MODE_SAFE:
 		case SHOOT_MODE_STDBY:
 		case SHOOT_MODE_FIRE:
-			s->trig_cur_out = PID_Calc(&(s->trig_pid), s->trig_angle_set, s->trig_angle, 0.f, s->dt_sec);
-			s->trig_cur_out = LowPassFilter2p_Apply(&(s->trig_output_filter), s->trig_cur_out);
+			s->out[0] = PID_Calc(&(s->pid.trig), s->set.trig_angle, s->fb.trig_angle, 0.f, s->dt_sec);
+			s->out[0] = LowPassFilter2p_Apply(&(s->filter.trig), s->out[0]);
 		
 			for (uint8_t i = 0; i < 2; i++) {
-				s->fric_cur_out[i] = PID_Calc(&(s->fric_pid[i]), s->fric_rpm_set[i], s->fric_rpm[i], 0.f, s->dt_sec);
-				s->fric_cur_out[i] = LowPassFilter2p_Apply(&(s->fric_output_filter[i]), s->fric_cur_out[i]);
+				s->out[i + 1] = PID_Calc(&(s->pid.fric[i + 1]), s->set.fric_rpm[i + 1], s->fb.fric_rpm[i + 1], 0.f, s->dt_sec);
+				s->out[i + 1] = LowPassFilter2p_Apply(&(s->filter.fric[i + 1]), s->out[i + 1]);
 			}
 			break;
 	}

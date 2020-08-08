@@ -28,9 +28,9 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_Gimbal_Mode_t mode) {
 static bool Gimbal_Steady(Gimbal_t *g) {
 	static uint8_t steady;
 	
-	bool con1 = g->imu->gyro.x < 0.1f;
-	bool con2 = g->imu->gyro.y < 0.1f;
-	bool con3 = g->imu->gyro.z < 0.1f;
+	bool con1 = g->fb.imu->gyro.x < 0.1f;
+	bool con2 = g->fb.imu->gyro.y < 0.1f;
+	bool con3 = g->fb.imu->gyro.z < 0.1f;
 	
 	if (con1 && con2 && con3)	
 		steady++;
@@ -51,7 +51,7 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec, BMI0
 	
 	g->mode = GIMBAL_MODE_INIT;
 	g->dt_sec = dt_sec;
-	g->imu = imu;
+	g->fb.imu = imu;
 
 	PID_Init(&(g->pid[GIMBAL_PID_PIT_IN]), PID_MODE_SET_D, g->dt_sec, &(param->pid[GIMBAL_PID_PIT_IN]));
 	PID_Init(&(g->pid[GIMBAL_PID_YAW_OUT]), PID_MODE_NO_D, g->dt_sec, &(param->pid[GIMBAL_PID_YAW_OUT]));
@@ -59,7 +59,7 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec, BMI0
 	PID_Init(&(g->pid[GIMBAL_PID_PIT_OUT]), PID_MODE_NO_D, g->dt_sec, &(param->pid[GIMBAL_PID_PIT_OUT]));
 	
 	for (uint8_t i  = 0; i < GIMBAL_ACTR_NUM; i++)
-		LowPassFilter2p_Init(&(g->filter[i]), 1.f / g->dt_sec, 100.f);
+		LowPassFilter2p_Init(&(g->filter[i]), 1.f / g->dt_sec, param->low_pass_cutoff);
 	
 	return 0;
 }
@@ -88,47 +88,46 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_Gimbal_Ctrl_t *g_ctrl) {
 	if (g_ctrl == NULL)
 		return -1;
 	
-	if (g->imu == NULL)
+	if (g->fb.imu == NULL)
 		return -1;
 	
 	Gimbal_SetMode(g, g_ctrl->mode);
 	
-	float motor_gyro_set;
+	g->set.eulr.yaw += g_ctrl->delta_eulr.yaw;
+	g->set.eulr.pit += g_ctrl->delta_eulr.pit;
 	
+	float motor_gyro_set;
 	switch(g->mode) {
 		case GIMBAL_MODE_RELAX:
 			for (uint8_t i  = 0; i < GIMBAL_ACTR_NUM; i++)
-				g->cur_out[i] = 0.f;
+				g->out[i] = 0.f;
 			break;
 		
 		case GIMBAL_MODE_ABSOLUTE:
-			motor_gyro_set = PID_Calc(&(g->pid[GIMBAL_PID_YAW_IN]), g_ctrl->eulr.yaw, g->eulr.imu->yaw, g->imu->gyro.z, g->dt_sec);
-			g->cur_out[GIMBAL_ACTR_YAW] = PID_Calc(&(g->pid[GIMBAL_PID_YAW_OUT]), motor_gyro_set, g->imu->gyro.z, 0.f, g->dt_sec);
+			motor_gyro_set = PID_Calc(&(g->pid[GIMBAL_PID_YAW_IN]), g->set.eulr.yaw, g->fb.eulr.imu->yaw, g->fb.imu->gyro.z, g->dt_sec);
+			g->out[GIMBAL_ACTR_YAW] = PID_Calc(&(g->pid[GIMBAL_PID_YAW_OUT]), motor_gyro_set, g->fb.imu->gyro.z, 0.f, g->dt_sec);
 			
-			motor_gyro_set = PID_Calc(&(g->pid[GIMBAL_PID_PIT_IN]), g_ctrl->eulr.pit, g->eulr.imu->pit, g->imu->gyro.x, g->dt_sec);
-			g->cur_out[GIMBAL_ACTR_PIT] = PID_Calc(&(g->pid[GIMBAL_PID_PIT_OUT]), motor_gyro_set, g->imu->gyro.x, 0.f, g->dt_sec);
+			motor_gyro_set = PID_Calc(&(g->pid[GIMBAL_PID_PIT_IN]), g->set.eulr.pit, g->fb.eulr.imu->pit, g->fb.imu->gyro.x, g->dt_sec);
+			g->out[GIMBAL_ACTR_PIT] = PID_Calc(&(g->pid[GIMBAL_PID_PIT_OUT]), motor_gyro_set, g->fb.imu->gyro.x, 0.f, g->dt_sec);
 			break;
-		
 		
 		case GIMBAL_MODE_INIT:
 			if (Gimbal_Steady(g))
 				g->mode = GIMBAL_MODE_RELAX;
 			
 		case GIMBAL_MODE_FIX:
-			g_ctrl->eulr.yaw = 0.f;
-			g_ctrl->eulr.pit = 0.f;
+			g->set.eulr.pit = 0.f;
+			g->set.eulr.pit = 0.f;
 			/* NO break. */
 		
 		case GIMBAL_MODE_RELATIVE:
-			g->cur_out[GIMBAL_ACTR_YAW] = PID_Calc(&(g->pid[GIMBAL_PID_REL_YAW]), g_ctrl->eulr.yaw, g->eulr.encoder.yaw, g->imu->gyro.z, g->dt_sec);
-			g->cur_out[GIMBAL_ACTR_PIT] = PID_Calc(&(g->pid[GIMBAL_PID_REL_PIT]), g_ctrl->eulr.pit, g->eulr.encoder.pit, g->imu->gyro.x, g->dt_sec);
+			g->out[GIMBAL_ACTR_YAW] = PID_Calc(&(g->pid[GIMBAL_PID_REL_YAW]), g->set.eulr.yaw, g->fb.eulr.encoder.yaw, g->fb.imu->gyro.z, g->dt_sec);
+			g->out[GIMBAL_ACTR_PIT] = PID_Calc(&(g->pid[GIMBAL_PID_REL_PIT]), g->set.eulr.pit, g->fb.eulr.encoder.pit, g->fb.imu->gyro.x, g->dt_sec);
 			break;
 	}
-	
-	
 	/* Filter output. */
 	for (uint8_t i  = 0; i < GIMBAL_ACTR_NUM; i++)
-		g->cur_out[i] = LowPassFilter2p_Apply(&(g->filter[i]), g->cur_out[i]);
+		g->out[i] = LowPassFilter2p_Apply(&(g->filter[i]), g->out[i]);
 	
 	return 0;
 }

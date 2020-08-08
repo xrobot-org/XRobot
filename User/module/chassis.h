@@ -41,7 +41,7 @@ typedef struct {
 } Chassis_Params_t;
 
 typedef struct {
-	const Chassis_Params_t *params;
+	const Chassis_Params_t *param;
 	
 	/* common */
 	float dt_sec;
@@ -51,25 +51,27 @@ typedef struct {
 	int8_t num_wheel;
 	Mixer_t mixer;
 	
-	/* Feedback */
-	float gimbal_yaw_angle;
-	float *motor_rpm;
-	
-	/* Mid product */
 	MoveVector_t move_vec;
 	
-	/* Mixer Out / PID set point. */
-	float *motor_rpm_set;
+	/* Feedback */
+	struct {
+		float gimbal_yaw_angle;
+		float *motor_rpm;
+	} fb;
 	
-	/* PID */
-	PID_t *motor_pid;
-	PID_t follow_pid;
+	struct {
+		float *motor_rpm;
+	} set;
 	
-	/* Output */
-	float *motor_cur_out;
+	struct {
+		PID_t *motor;
+		PID_t follow;
+	} pid;
 	
-	/* Output filter */
-	LowPassFilter2p_t *output_filter;
+	LowPassFilter2p_t *filter;
+	
+	float *out;
+	
 } Chassis_t;
 
 /* Exported functions prototypes ---------------------------------------------*/

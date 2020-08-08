@@ -14,49 +14,58 @@
 #define SHOOT_ERR		(-1)
 #define SHOOT_ERR_MODE	(-2)
 
-#define SHOOT_BULLET_SPEED_SCALER (2.f)
-#define SHOOT_BULLET_SPEED_BIAS  (1.f)
-
-#define SHOOT_NUM_FEEDING_TOOTH  (8u)
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
+enum Shoot_Acuator_e{
+	SHOOT_ACTR_FRIC1 = 0,
+	SHOOT_ACTR_FRIC2,
+	SHOOT_ACTR_TRIG,
+	SHOOT_ACTR_NUM,
+};
+
 typedef struct {
 	const PID_Params_t fric_pid_param[2];
 	PID_Params_t trig_pid_param;
-	float low_pass_cutoff;
+	
+	struct {
+		float fric;
+		float trig;
+	} low_pass_cutoff;
 } Shoot_Params_t;
 
 typedef struct {
-	const Shoot_Params_t *params;
+	const Shoot_Params_t *param;
 	
 	/* common */
 	float dt_sec;
 	CMD_Shoot_Mode_t mode;
 	osTimerId_t trig_timer_id;
 	
-	/* Feedback */
-	float fric_rpm[2];
-	float trig_angle;
+	struct {
+		float fric_rpm[2];
+		float trig_angle;
+	} fb;
 	
-	/* PID set point */
-	float fric_rpm_set[2];
-	float trig_angle_set;
+	struct {
+		float fric_rpm[2];
+		float trig_angle;
+	} set;
 	
-	/* PID */
-	PID_t fric_pid[2];
-	PID_t trig_pid;
+	struct {
+		PID_t fric[2];
+		PID_t trig;
+	} pid;
 	
-	/* Output */
-	float fric_cur_out[2];
-	float trig_cur_out;
+	struct {
+		LowPassFilter2p_t fric[2];
+		LowPassFilter2p_t trig;
+	} filter;
 	
 	int8_t heat_limiter;
 	
-	/* Output filter */
-	LowPassFilter2p_t fric_output_filter[2];
-	LowPassFilter2p_t trig_output_filter;
-
+	float out[SHOOT_ACTR_NUM];
+	
 } Shoot_t;
 
 

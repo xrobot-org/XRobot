@@ -9,7 +9,6 @@
 
 #include "bsp\mm.h"
 
-#include "component\user_math.h"
 #include "component\limiter.h"
 
 #include "device\can.h"
@@ -91,47 +90,45 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec) {
 			return CHASSIS_ERR_TYPE;
 	}
 	
-	c->motor_rpm = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->motor_rpm));
-	if (c->motor_rpm == NULL)
+	c->fb.motor_rpm = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->fb.motor_rpm));
+	if (c->fb.motor_rpm == NULL)
 		goto error1;
 	
-	c->motor_rpm_set = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->motor_rpm_set));
-	if (c->motor_rpm_set == NULL)
+	c->set.motor_rpm = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->set.motor_rpm));
+	if (c->set.motor_rpm == NULL)
 		goto error2;
 	
-	c->motor_pid = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->motor_pid));
-	if (c->motor_pid == NULL)
+	c->pid.motor = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->pid.motor));
+	if (c->pid.motor == NULL)
 		goto error3;
 	
-	c->motor_cur_out = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->motor_cur_out));
-	if (c->motor_cur_out == NULL)
+	c->out = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->out));
+	if (c->out == NULL)
 		goto error4;
 	
-	c->output_filter = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->output_filter));
-	if (c->output_filter == NULL)
+	c->filter = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->filter));
+	if (c->filter == NULL)
 		goto error5;
 		
 	for (uint8_t i = 0; i < c->num_wheel; i++) {
-		PID_Init(&(c->motor_pid[i]), PID_MODE_NO_D, c->dt_sec, &(param->motor_pid_param[i]));
+		PID_Init(&(c->pid.motor[i]), PID_MODE_NO_D, c->dt_sec, &(param->motor_pid_param[i]));
 		
-		LowPassFilter2p_Init(&(c->output_filter[i]), 1.f / c->dt_sec, 100.f);
+		LowPassFilter2p_Init(&(c->filter[i]), 1.f / c->dt_sec, param->low_pass_cutoff);
 	}
 	
-	PID_Init(&(c->follow_pid), PID_MODE_NO_D, c->dt_sec, &(param->follow_pid_param));
+	PID_Init(&(c->pid.follow), PID_MODE_NO_D, c->dt_sec, &(param->follow_pid_param));
 	
 	Mixer_Init(&(c->mixer), mixer_mode);
-	c->motor_scaler = CAN_M3508_MAX_ABS_VOLT;
-	
 	return CHASSIS_OK;
 	
 error5:
-	BSP_Free(c->motor_cur_out);
+	BSP_Free(c->out);
 error4:
-	BSP_Free(c->motor_pid);
+	BSP_Free(c->pid.motor);
 error3:
-	BSP_Free(c->motor_rpm_set);
+	BSP_Free(c->set.motor_rpm);
 error2:
-	BSP_Free(c->motor_rpm);
+	BSP_Free(c->fb.motor_rpm);
 error1:
 	return CHASSIS_ERR_NULL;
 }
@@ -171,8 +168,8 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
 		c->move_vec.vy = 0.f;
 		
 	} else {
-		const float cos_beta = cosf(c->gimbal_yaw_angle);
-		const float sin_beta = sinf(c->gimbal_yaw_angle);
+		const float cos_beta = cosf(c->fb.gimbal_yaw_angle);
+		const float sin_beta = sinf(c->fb.gimbal_yaw_angle);
 		
 		c->move_vec.vx = cos_beta * c_ctrl->ctrl_v.vx - sin_beta * c_ctrl->ctrl_v.vy;
 		c->move_vec.vy = sin_beta * c_ctrl->ctrl_v.vx - cos_beta * c_ctrl->ctrl_v.vy;
@@ -183,14 +180,14 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
 		c->move_vec.wz = 0.f;
 		
 	} else if (c->mode == CHASSIS_MODE_FOLLOW_GIMBAL) {
-		c->move_vec.wz = PID_Calc(&(c->follow_pid), 0, c->gimbal_yaw_angle, 0.f, c->dt_sec);
+		c->move_vec.wz = PID_Calc(&(c->pid.follow), 0, c->fb.gimbal_yaw_angle, 0.f, c->dt_sec);
 		
 	} else if (c->mode == CHASSIS_MODE_ROTOR) {
 		c->move_vec.wz = 0.8f;
 	}
 	
 	/* move_vec -> motor_rpm_set. */
-	Mixer_Apply(&(c->mixer), c->move_vec.vx, c->move_vec.vy, c->move_vec.wz, c->motor_rpm_set, c->num_wheel);
+	Mixer_Apply(&(c->mixer), c->move_vec.vx, c->move_vec.vy, c->move_vec.wz, c->set.motor_rpm, c->num_wheel);
 	
 	/* Compute output from setpiont. */
 	for (uint8_t i = 0; i < 4; i++) {
@@ -199,20 +196,20 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
 			case CHASSIS_MODE_FOLLOW_GIMBAL:
 			case CHASSIS_MODE_ROTOR:
 			case CHASSIS_MODE_INDENPENDENT:
-				c->motor_cur_out[i] = PID_Calc(&(c->motor_pid[i]), c->motor_rpm_set[i], c->motor_rpm[i], 0.f, c->dt_sec);
+				c->out[i] = PID_Calc(&(c->pid.motor[i]), c->set.motor_rpm[i], c->set.motor_rpm[i], 0.f, c->dt_sec);
 				break;
 				
 			case CHASSIS_MODE_OPEN:
-				c->motor_cur_out[i] = c->motor_rpm_set[i];
+				c->out[i] = c->set.motor_rpm[i];
 				break;
 				
 			case CHASSIS_MODE_RELAX:
-				c->motor_cur_out[i] = 0;
+				c->out[i] = 0;
 				break;
 		}
 		
 		/* Filter output. */
-		c->motor_cur_out[i] = LowPassFilter2p_Apply(&(c->output_filter[i]), c->motor_cur_out[i]);
+		c->out[i] = LowPassFilter2p_Apply(&(c->filter[i]), c->out[i]);
 	}
 	return CHASSIS_OK;
 }
