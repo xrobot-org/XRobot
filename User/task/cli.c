@@ -285,7 +285,7 @@ static BaseType_t Command_Error(char *out_buffer, size_t len, const char *comman
 static const CLI_Command_Definition_t command_error = {
 	"error",
 	"\r\nerror:\r\n Get robot error status.\r\n\r\n",
-	ErrorCommand,
+	Command_Error,
 	0,
 };
 
@@ -306,6 +306,7 @@ void Task_CLI(void *argument) {
 	FreeRTOS_CLIRegisterCommand(&command_set_model);
 	FreeRTOS_CLIRegisterCommand(&command_set_user);
 	FreeRTOS_CLIRegisterCommand(&command_error);
+	FreeRTOS_CLIRegisterCommand(&command_motor_id_quick_set);
 	
 	/* Init robot. */
 	Robot_GetRobotID(&task_param.robot_id);
