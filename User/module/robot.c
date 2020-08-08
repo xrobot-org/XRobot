@@ -8,6 +8,10 @@
 
 #define CONFIG_BASE_ADDRESS (ADDR_FLASH_END - sizeof(Robot_ID_t))
 
+// variables used by the filesystem
+static lfs_t lfs;
+static lfs_file_t file;
+
 static const PID_Params_t infantry_chassis_pid_array[4] = {{
 		.kp = 0.5,
 		.ki = 0.5,
@@ -145,6 +149,95 @@ static const Robot_PilotConfig_t user_qs = {
 		},
 	},
 };
+
+static int Robot_Flash_Read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size) {
+	BSP_Flash_ReadBytes((ADDR_FLASH_SECTOR_8 + c->block_size * block + off), buffer, size);
+	return LFS_ERR_OK;
+}
+
+static int Robot_Flash_Prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size) {
+	BSP_Flash_WriteBytes((ADDR_FLASH_SECTOR_8 + c->block_size * block + off), buffer, size);
+	return LFS_ERR_OK;
+}
+
+static int Robot_Flash_Erase(const struct lfs_config *c, lfs_block_t block) {
+	(void)c;
+	BSP_Flash_EraseSector(8 + block);
+	return LFS_ERR_OK;
+}
+
+static int Robot_Flash_Sync(const struct lfs_config *c) {
+	(void)c;
+	return LFS_ERR_OK;
+}
+
+static const struct lfs_config cfg = {
+	// block device operations
+	.read  = Robot_Flash_Read,
+	.prog  = Robot_Flash_Prog,
+	.erase = Robot_Flash_Erase,
+	.sync  = Robot_Flash_Sync,
+
+	// block device configuration
+	.read_size = 4,
+	.prog_size = 4,
+	.block_size = 128 * 1024,
+	.block_count = 4,
+	.cache_size = 16,
+	.lookahead_size = 16,
+	.block_cycles = 500,
+};
+
+void Robot_GetRobotID(Robot_ID_t *id) {
+	#if 0
+    // mount the filesystem
+    int err = lfs_mount(&lfs, &cfg);
+
+    // reformat if we can't mount the filesystem
+    // this should only happen on the first boot
+    if (err) {
+        err = lfs_format(&lfs, &cfg);
+        err = lfs_mount(&lfs, &cfg);
+    }
+	if (!err) {
+		err = lfs_file_open(&lfs, &file, "robot_id", LFS_O_RDWR | LFS_O_CREAT);
+		err = lfs_file_read(&lfs, &file, &id, sizeof(*id));
+		
+		// remember the storage is not updated until the file is closed successfully
+		err = lfs_file_close(&lfs, &file);
+
+		// release any resources we were using
+		err = lfs_unmount(&lfs);
+	}
+	#endif
+	BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t*)id, sizeof(Robot_ID_t));
+}
+
+void Robot_SetRobotID(Robot_ID_t *id) {
+	#if 0
+    // mount the filesystem
+    int err = lfs_mount(&lfs, &cfg);
+
+    // reformat if we can't mount the filesystem
+    // this should only happen on the first boot
+    if (err) {
+        err = lfs_format(&lfs, &cfg);
+        err = lfs_mount(&lfs, &cfg);
+    }
+	if (!err) {
+		err = lfs_file_open(&lfs, &file, "robot_id", LFS_O_RDWR | LFS_O_CREAT);
+		err = lfs_file_write(&lfs, &file, &id, sizeof(*id));
+		
+		// remember the storage is not updated until the file is closed successfully
+		err = lfs_file_close(&lfs, &file);
+
+		// release any resources we were using
+		err = lfs_unmount(&lfs);
+	}
+	#endif
+	BSP_Flash_EraseSector(11);
+	BSP_Flash_WriteBytes(CONFIG_BASE_ADDRESS, (uint8_t*)id, sizeof(Robot_ID_t));
+}
 
 const Robot_Config_t *Robot_GetConfig(Robot_Model_t model) {
 	switch (model) {
