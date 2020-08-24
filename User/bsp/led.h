@@ -1,5 +1,8 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
@@ -36,3 +39,7 @@ typedef enum {
 
 /* 用于A板时，会无视duty_cycle的值。使用B板时，duty_cycle才有效*/
 int8_t BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, float duty_cycle);
+
+#ifdef __cplusplus
+}
+#endif

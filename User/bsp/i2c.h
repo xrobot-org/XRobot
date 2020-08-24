@@ -1,5 +1,8 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 /* Includes ------------------------------------------------------------------*/
 #include <i2c.h>
@@ -32,3 +35,7 @@ typedef enum {
 /* Exported functions prototypes ---------------------------------------------*/
 I2C_HandleTypeDef *BSP_I2C_GetHandle(BSP_I2C_t i2c);
 int8_t BSP_I2C_RegisterCallback(BSP_I2C_t i2c, BSP_I2C_Callback_t type, void (*callback)(void));
+
+#ifdef __cplusplus
+}
+#endif

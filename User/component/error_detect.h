@@ -4,6 +4,10 @@
 
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -56,3 +60,7 @@ ErrorDetect_Unit_t ErrorDetect_GetErrorUnit(void);
 const ErrorDetect_Error_t *ErrorDetect_GetDetail(ErrorDetect_Unit_t unit);
 
 void ErrorDetect_Update(ErrorDetect_Unit_t unit, uint32_t time_current);
+
+#ifdef __cplusplus
+}
+#endif

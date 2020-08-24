@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 /* Includes ------------------------------------------------------------------*/
 #include <cmsis_os2.h>
 
@@ -73,3 +77,7 @@ typedef struct {
 int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float dt_sec);
 int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_t *can);
 int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl);
+
+#ifdef __cplusplus
+}
+#endif

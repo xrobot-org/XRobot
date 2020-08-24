@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 /* Includes ------------------------------------------------------------------*/
 #include <cmsis_os2.h>
 
@@ -122,3 +126,7 @@ int8_t CAN_Motor_ControlShoot(float fric1, float fric2, float trig);
 
 int8_t CAN_Motor_QuickIdSetMode(void);
 int8_t CAN_CapControl(float power_limit);
+
+#ifdef __cplusplus
+}
+#endif

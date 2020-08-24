@@ -1,5 +1,8 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
@@ -24,3 +27,7 @@ int8_t BSP_USB_ReadyReceive(osThreadId_t alert);
 char BSP_USB_ReadChar(void);
 
 int8_t BSP_USB_Printf(const char *fmt, ...);
+
+#ifdef __cplusplus
+}
+#endif

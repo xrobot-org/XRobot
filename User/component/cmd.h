@@ -4,6 +4,10 @@
 
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -130,3 +134,7 @@ typedef struct {
 
 int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param);
 int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd);
+
+#ifdef __cplusplus
+}
+#endif

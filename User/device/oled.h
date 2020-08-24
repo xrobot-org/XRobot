@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 #include <stdbool.h>
@@ -14,7 +18,7 @@ typedef enum {
 } OLED_Pen_t;
 
 typedef struct {
-	uint8_t column;
+	uint8_t column;s
 	uint8_t page;
 }OLED_Cursor_t;
 
@@ -35,3 +39,7 @@ int OLED_SetAllRam(OLED_t *oled, OLED_Pen_t pen);
 int OLED_DisplayOn(OLED_t *oled);
 int OLED_DisplayOff(OLED_t *oled);
 int OLED_Refresh(OLED_t *oled);
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,5 +1,8 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdbool.h>
@@ -16,3 +19,7 @@ typedef enum {
 
 /* Exported functions prototypes ---------------------------------------------*/
 int BSP_Power_Set(BSP_Power_Port_t port, bool s);
+
+#ifdef __cplusplus
+}
+#endif

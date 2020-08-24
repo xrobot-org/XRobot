@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 /* Includes ------------------------------------------------------------------*/
 #include <cmsis_os2.h>
 #include "FreeRTOS.h"
@@ -106,3 +110,7 @@ void Task_Info(void *argument);
 void Task_Monitor(void *argument);
 void Task_AttiEsti(void *argument);
 void Task_Referee(void *argument);
+
+#ifdef __cplusplus
+}
+#endif

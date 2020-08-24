@@ -1,5 +1,8 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 /* Includes ------------------------------------------------------------------*/
 #include <main.h>
@@ -46,3 +49,7 @@
 void BSP_Flash_EraseSector(uint32_t sector);
 void BSP_Flash_WriteBytes(uint32_t address, const uint8_t *buf, size_t len);
 void BSP_Flash_ReadBytes(uint32_t address, void *buf, size_t len);
+
+#ifdef __cplusplus
+}
+#endif

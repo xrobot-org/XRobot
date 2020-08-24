@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 /* Includes ------------------------------------------------------------------*/
 #include "component\cmd.h"
 #include "component\filter.h"
@@ -78,3 +82,7 @@ typedef struct {
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec);
 int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_t *can);
 int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl);
+
+#ifdef __cplusplus
+}
+#endif

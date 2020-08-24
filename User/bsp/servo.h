@@ -1,5 +1,8 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
@@ -36,3 +39,7 @@ int8_t BSP_Servo_Init(BSP_Servo_Channel_t ch, float max_angle);
 int8_t BSP_Servo_Start(BSP_Servo_Channel_t ch);
 int8_t BSP_Servo_Set(BSP_Servo_Channel_t ch, uint8_t angle);
 int8_t BSP_Servo_Stop(BSP_Servo_Channel_t ch);
+
+#ifdef __cplusplus
+}
+#endif

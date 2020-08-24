@@ -5,6 +5,10 @@
 
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include "user_math.h"
 
 typedef struct {
@@ -44,3 +48,7 @@ float LowPassFilter2p_Reset(LowPassFilter2p_t *f, float sample);
 void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq, float bandwidth);
 float NotchFilter_Apply(NotchFilter_t *f, float sample);
 float NotchFilter_Reset(NotchFilter_t *f, float sample);
+
+#ifdef __cplusplus
+}
+#endif

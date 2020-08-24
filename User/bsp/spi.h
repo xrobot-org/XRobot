@@ -1,5 +1,8 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 /* Includes ------------------------------------------------------------------*/
 #include <spi.h>
@@ -32,3 +35,7 @@ typedef enum {
 /* Exported functions prototypes ---------------------------------------------*/
 SPI_HandleTypeDef *BSP_SPI_GetHandle(BSP_SPI_t spi);
 int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type, void (*callback)(void));
+
+#ifdef __cplusplus
+}
+#endif

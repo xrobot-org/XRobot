@@ -5,6 +5,10 @@
 
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include "stm32f4xx.h"
 #define ARM_MATH_CM4
 
@@ -29,3 +33,7 @@ float InvSqrt(float x);
 float AbsClip(float in, float limit);
 
 float Sign(float in);
+
+#ifdef __cplusplus
+}
+#endif

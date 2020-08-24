@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 
@@ -30,3 +34,7 @@ int8_t IST8310_Restart(void);
 
 int8_t IST8310_Receive(IST8310_t *ist8310);
 int8_t IST8310_Parse(IST8310_t *ist8310);
+
+#ifdef __cplusplus
+}
+#endif

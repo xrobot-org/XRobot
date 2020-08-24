@@ -1,5 +1,8 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
@@ -15,3 +18,7 @@
 int8_t BSP_Laser_Start(void);
 int8_t BSP_Laser_Set(float duty_cycle);
 int8_t BSP_Laser_Stop(void);
+
+#ifdef __cplusplus
+}
+#endif

@@ -4,6 +4,10 @@
 
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 #include <stdint.h>
 
 #include "component\cmd.h"
@@ -62,3 +66,7 @@ Robot_Model_t Robot_GetModelByName(const char *name);
 Robot_Pilot_t Robot_GetPilotByName(const char *name);
 const char *Robot_GetNameByModel(Robot_Model_t model);
 const char *Robot_GetNameByPilot(Robot_Pilot_t pilot);
+
+#ifdef __cplusplus
+}
+#endif

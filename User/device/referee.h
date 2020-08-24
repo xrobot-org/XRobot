@@ -4,6 +4,10 @@
 */
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 #include <stdbool.h>
@@ -306,3 +310,7 @@ int8_t Referee_Restart(void);
 
 int8_t Referee_StartReceiving(Referee_t *ref);
 int8_t Referee_Parse(Referee_t *ref);
+
+#ifdef __cplusplus
+}
+#endif

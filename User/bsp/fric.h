@@ -1,5 +1,8 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
@@ -18,3 +21,6 @@ int8_t BSP_Fric_Start(void);
 int8_t BSP_Fric_Set(float duty_cycle);
 int8_t BSP_Fric_Stop(void);
 
+#ifdef __cplusplus
+}
+#endif

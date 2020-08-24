@@ -1,5 +1,8 @@
 #pragma once
 
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 /* Includes ------------------------------------------------------------------*/
 #include <can.h>
@@ -36,3 +39,7 @@ typedef enum {
 /* Exported functions prototypes ---------------------------------------------*/
 CAN_HandleTypeDef *BSP_CAN_GetHandle(BSP_CAN_t can);
 int8_t BSP_CAN_RegisterCallback(BSP_CAN_t can, BSP_CAN_Callback_t type, void (*callback)(void));
+
+#ifdef __cplusplus
+}
+#endif
