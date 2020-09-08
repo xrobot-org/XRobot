@@ -1,8 +1,8 @@
-# 青岛大学 RoboMaster 嵌入式代码开源
+# 青岛大学 RoboMaster 嵌入式 代码开源
 
-UNFINISHED & UNTESTED.
+***UNFINISHED & UNTESTED.***
 
-大部分代码为疫情期间在开发板C型上开发，未连接任何设备。项目编译通过，无内存泄漏，测试了部分功能，但大部分逻辑因为没有条件而没测试。使用后果自负。
+大部分代码为疫情期间在开发板C型上开发，未连接任何设备。项目编译通过，无内存泄漏，测试了部分功能，但大部分逻辑因为没有条件而没测试。
 
 ## 软件功能介绍
 
@@ -27,6 +27,7 @@ UNFINISHED & UNTESTED.
 
 ## 使用说明
 
+针对不同板子需要先用CubeMX生成对应的外设初始化代码，然后再在Keil里操作。
 打开MDK-ARM中的DevC.uvprojx即可。
 
 ## 文件目录结构及文件用途说明
@@ -44,11 +45,11 @@ UNFINISHED & UNTESTED.
 
 | User内 | 内容 |
 | ---- | ----  |
-| bsp | 文件夹包含开发板信息，基于STM32 HAL对板载的外设进行控制|
+| bsp | 文件夹内包含开发板信息，基于STM32 HAL对板载的外设进行控制|
 | component | 包含各种组件，自成一体，相互依赖，但不依赖于其他文件夹|
 | device | 独立于开发板的设备，依赖于HAL和bsp|
-| module | 对机器人各部分的抽象，各模块一起组成机器人|
-| task | 一个个独立的任务：通信、姿态解算、控制各个module|
+| module | 对机器人各模块的抽象，各模块一起组成机器人|
+| task | 独立的任务，module的运行容器，也包含通信、姿态解算等 |
 
 ## 系统介绍
 
@@ -67,8 +68,8 @@ UNFINISHED & UNTESTED.
 ## TODO
 
 - Port LittleFS.
-- Add logging and file on top of LittleFS.
-- Add gimbal soft limit.
+- 添加 logging.
+- 添加 gimbal 软限位.
 - 给BSP想个更好的名字，备选"mcu"。
 - 给BSP USB print加保护，允许不同进程的使用。
   - 给所有BSP加保护
