@@ -65,6 +65,14 @@
 
 ![嵌入式程序结构图](./Image/嵌入式程序结构图.png?raw=true "嵌入式程序结构图")
 
+## 原理介绍
+
+- 软件架构参考参考了[PX4 Architectural Overview](https://dev.px4.io/master/en/concept/architecture.html)
+
+- 云台控制可以参考[PX4 Controller Diagrams](https://dev.px4.io/master/en/flight_stack/controller_diagrams.html)
+
+- 底盘Mixer和CAN的Control Group参考了[PX4 Mixing and Actuators](https://dev.px4.io/master/en/concept/mixing.html)
+
 ## TODO
 
 - Port LittleFS.
@@ -91,5 +99,7 @@
 远期：
 
 1. 添加单元测试。
+
+1. 移植PX4多轴控制部分来控制云台
 
 1. 备赛过程根据进度完成对各兵种的适配。
