@@ -13,10 +13,10 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef enum {
-	BSP_CAN_1,
-	BSP_CAN_2,
-	BSP_CAN_NUM,
-	BSP_CAN_ERR,
+  BSP_CAN_1,
+  BSP_CAN_2,
+  BSP_CAN_NUM,
+  BSP_CAN_ERR,
 } BSP_CAN_t;
 
 typedef enum {
