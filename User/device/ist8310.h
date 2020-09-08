@@ -1,13 +1,12 @@
 #pragma once
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include <stdint.h>
-
 #include <cmsis_os2.h>
+#include <stdint.h>
 
 #include "component\ahrs.h"
 #include "device\device.h"
@@ -16,14 +15,14 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef struct {
-	osThreadId_t thread_alert;
+  osThreadId_t thread_alert;
 
-	AHRS_Magn_t magn;
-	
-	struct {
-		int8_t magn_offset[3];
-		int8_t magn_scale[3];
-	} cali;
+  AHRS_Magn_t magn;
+
+  struct {
+    int8_t magn_offset[3];
+    int8_t magn_scale[3];
+  } cali;
 } IST8310_t;
 
 /* Exported functions prototypes ---------------------------------------------*/

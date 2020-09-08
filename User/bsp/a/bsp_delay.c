@@ -1,6 +1,7 @@
 /* Includes ------------------------------------------------------------------*/
-#include "cmsis_os.h"
 #include "bsp_delay.h"
+
+#include "cmsis_os.h"
 #include "main.h"
 
 /* Private define ------------------------------------------------------------*/
@@ -10,10 +11,10 @@
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 int BSP_Delay(uint32_t ms) {
-	if (osKernelRunning()) {
-		osDelay(ms);
-	} else {
-		HAL_Delay(ms);
-	}
-	return 0;
+  if (osKernelRunning()) {
+    osDelay(ms);
+  } else {
+    HAL_Delay(ms);
+  }
+  return 0;
 }

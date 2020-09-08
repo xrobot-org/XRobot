@@ -1,19 +1,19 @@
-/* 
-	弹道补偿算法。
-	
-	。
+/*
+        弹道补偿算法。
+
+        。
 */
 
 #pragma once
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 #include "ahrs.h"
 
 typedef struct {
-	AHRS_Eulr_t *eulr;
+  AHRS_Eulr_t *eulr;
 } Ballistics_t;
 
 void Ballistics_Init(Ballistics_t *b);

@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
@@ -9,12 +9,12 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef enum {
-	JOYSTICK_UP,
-	JOYSTICK_DOWN,
-	JOYSTICK_LEFT,
-	JOYSTICK_RIGHT,
-	JOYSTICK_PRESSED,
-	JOYSTICK_MID,
+  JOYSTICK_UP,
+  JOYSTICK_DOWN,
+  JOYSTICK_LEFT,
+  JOYSTICK_RIGHT,
+  JOYSTICK_PRESSED,
+  JOYSTICK_MID,
 } Joystick_Status_t;
 
 /* Exported functions prototypes ---------------------------------------------*/

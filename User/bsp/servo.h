@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
@@ -13,25 +13,25 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef enum {
-	BSP_SERVO_A = 0,
-	BSP_SERVO_B,
-	BSP_SERVO_C,
-	BSP_SERVO_D,
-	BSP_SERVO_E,
-	BSP_SERVO_F,
-	BSP_SERVO_G,
-	BSP_SERVO_H,
+  BSP_SERVO_A = 0,
+  BSP_SERVO_B,
+  BSP_SERVO_C,
+  BSP_SERVO_D,
+  BSP_SERVO_E,
+  BSP_SERVO_F,
+  BSP_SERVO_G,
+  BSP_SERVO_H,
 #ifdef DEV_BOARD_A
-	BSP_SERVO_S,
-	BSP_SERVO_T,
-	BSP_SERVO_U,
-	BSP_SERVO_V,
-	BSP_SERVO_W,
-	BSP_SERVO_X,
-	BSP_SERVO_Y,
-	BSP_SERVO_Z,
+  BSP_SERVO_S,
+  BSP_SERVO_T,
+  BSP_SERVO_U,
+  BSP_SERVO_V,
+  BSP_SERVO_W,
+  BSP_SERVO_X,
+  BSP_SERVO_Y,
+  BSP_SERVO_Z,
 #endif
-	BSP_SERVO_NUM,
+  BSP_SERVO_NUM,
 } BSP_Servo_Channel_t;
 
 /* Exported functions prototypes ---------------------------------------------*/

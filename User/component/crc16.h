@@ -1,12 +1,12 @@
 #pragma once
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
-#include "user_math.h"
-
 #include <stdbool.h>
+
+#include "user_math.h"
 
 #define CRC16_INIT 0XFFFF
 

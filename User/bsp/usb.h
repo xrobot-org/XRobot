@@ -1,20 +1,19 @@
 #pragma once
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include <cmsis_os2.h>
 #include <stdint.h>
 #include <string.h>
-
-#include <cmsis_os2.h>
 
 #include "bsp/bsp.h"
 
 /* Exported constants --------------------------------------------------------*/
-#define BSP_USB_MAX_RX_LEN	128
-#define BSP_USB_MAX_TX_LEN	1024
+#define BSP_USB_MAX_RX_LEN 128
+#define BSP_USB_MAX_TX_LEN 1024
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/

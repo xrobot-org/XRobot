@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
@@ -11,10 +11,10 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef enum {
-	POWER_PORT1,
-	POWER_PORT2,
-	POWER_PORT3,
-	POWER_PORT4,
+  POWER_PORT1,
+  POWER_PORT2,
+  POWER_PORT3,
+  POWER_PORT4,
 } BSP_Power_Port_t;
 
 /* Exported functions prototypes ---------------------------------------------*/

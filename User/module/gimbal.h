@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
@@ -9,76 +9,74 @@
 #include "component\cmd.h"
 #include "component\filter.h"
 #include "component\pid.h"
-
-#include "device\can.h"
 #include "device\bmi088.h"
-
+#include "device\can.h"
 
 /* Exported constants --------------------------------------------------------*/
-#define GIMBAL_OK		(0)
-#define GIMBAL_ERR		(-1)
-#define GIMBAL_ERR_MODE	(-2)
+#define GIMBAL_OK (0)
+#define GIMBAL_ERR (-1)
+#define GIMBAL_ERR_MODE (-2)
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
-enum Gimbal_PID_e{
-	GIMBAL_PID_YAW_IN = 0,
-	GIMBAL_PID_YAW_OUT,
-	GIMBAL_PID_PIT_IN,
-	GIMBAL_PID_PIT_OUT,
-	GIMBAL_PID_REL_YAW,
-	GIMBAL_PID_REL_PIT,
-	GIMBAL_PID_NUM,
+enum Gimbal_PID_e {
+  GIMBAL_PID_YAW_IN = 0,
+  GIMBAL_PID_YAW_OUT,
+  GIMBAL_PID_PIT_IN,
+  GIMBAL_PID_PIT_OUT,
+  GIMBAL_PID_REL_YAW,
+  GIMBAL_PID_REL_PIT,
+  GIMBAL_PID_NUM,
 };
 
-enum Gimbal_Acuator_e{
-	GIMBAL_ACTR_YAW = 0,
-	GIMBAL_ACTR_PIT,
-	GIMBAL_ACTR_NUM,
+enum Gimbal_Acuator_e {
+  GIMBAL_ACTR_YAW = 0,
+  GIMBAL_ACTR_PIT,
+  GIMBAL_ACTR_NUM,
 };
 
 typedef struct {
-	const PID_Params_t pid[GIMBAL_PID_NUM];
-	float low_pass_cutoff;
-	struct {
-		struct {
-			float high;
-			float low;
-		} pitch;
-	} limit;
+  const PID_Params_t pid[GIMBAL_PID_NUM];
+  float low_pass_cutoff;
+  struct {
+    struct {
+      float high;
+      float low;
+    } pitch;
+  } limit;
 } Gimbal_Params_t;
 
 typedef struct {
-	Gimbal_Params_t *param;
-	
-	/* common */
-	float dt_sec;
-	CMD_Gimbal_Mode_t mode;
-	
-	struct {
-		BMI088_t *imu;
+  Gimbal_Params_t *param;
 
-		struct {
-			AHRS_Eulr_t *imu;
-			AHRS_Eulr_t encoder;
-		} eulr;
-	} fb;
-	
-	struct {
-		AHRS_Eulr_t eulr;
-	} set;
-	
-	PID_t pid[GIMBAL_PID_NUM];
-	
-	LowPassFilter2p_t filter[GIMBAL_ACTR_NUM];
-	
-	float out[GIMBAL_ACTR_NUM];
-	
+  /* common */
+  float dt_sec;
+  CMD_Gimbal_Mode_t mode;
+
+  struct {
+    BMI088_t *imu;
+
+    struct {
+      AHRS_Eulr_t *imu;
+      AHRS_Eulr_t encoder;
+    } eulr;
+  } fb;
+
+  struct {
+    AHRS_Eulr_t eulr;
+  } set;
+
+  PID_t pid[GIMBAL_PID_NUM];
+
+  LowPassFilter2p_t filter[GIMBAL_ACTR_NUM];
+
+  float out[GIMBAL_ACTR_NUM];
+
 } Gimbal_t;
 
-
 /* Exported functions prototypes ---------------------------------------------*/
-int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec, BMI088_t *imu);
+int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec,
+                   BMI088_t *imu);
 int8_t Gimbal_UpdateFeedback(Gimbal_t *g, CAN_t *can);
 int8_t Gimbal_Control(Gimbal_t *g, CMD_Gimbal_Ctrl_t *g_ctrl);
 

@@ -1,11 +1,11 @@
 /*
-	参考了Linux
+        参考了Linux
 */
 
 #pragma once
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 #include <stdbool.h>

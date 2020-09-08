@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
@@ -13,7 +13,7 @@
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef enum {
-	BSP_PWM_IMU_HEAT,
+  BSP_PWM_IMU_HEAT,
 } BSP_PWM_Channel_t;
 
 /* Exported functions prototypes ---------------------------------------------*/

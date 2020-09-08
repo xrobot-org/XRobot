@@ -10,18 +10,17 @@
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 uint32_t BSP_CRC32_Calc(uint8_t *buf, size_t len) {
-	return HAL_CRC_Calculate(&hcrc, (uint32_t*)buf, len / sizeof(uint32_t));
+  return HAL_CRC_Calculate(&hcrc, (uint32_t *)buf, len / sizeof(uint32_t));
 }
 
 bool BSP_CRC32_Verify(uint8_t *buf, size_t len) {
-	if (len < 2)
-		return false;
-	
-	uint32_t expected = BSP_CRC32_Calc(buf, len / sizeof(uint32_t) - 1);
-	
-	return expected == ((uint32_t*)buf)[len / sizeof(uint32_t) - 1];
+  if (len < 2) return false;
+
+  uint32_t expected = BSP_CRC32_Calc(buf, len / sizeof(uint32_t) - 1);
+
+  return expected == ((uint32_t *)buf)[len / sizeof(uint32_t) - 1];
 }
 
 bool BSP_CRC32_Append(uint8_t *buf, size_t len) {
-	return HAL_CRC_Accumulate(&hcrc, (uint32_t*)buf, len / sizeof(uint32_t));
+  return HAL_CRC_Accumulate(&hcrc, (uint32_t *)buf, len / sizeof(uint32_t));
 }

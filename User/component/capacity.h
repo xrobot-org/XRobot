@@ -1,13 +1,13 @@
-/* 
-	剩余电流算法。
-	
-	通过电压值计算剩余电量。
+/*
+        剩余电流算法。
+
+        通过电压值计算剩余电量。
 */
 
 #pragma once
 
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 #include "user_math.h"
