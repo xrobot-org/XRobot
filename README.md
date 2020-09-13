@@ -73,7 +73,7 @@
 
 ## 原理介绍
 
-- 软件架构参考参考了[PX4 Architectural Overview](https://dev.px4.io/master/en/concept/architecture.html)
+- 软件架构参考了[PX4 Architectural Overview](https://dev.px4.io/master/en/concept/architecture.html)
 
 - 云台控制可以参考[PX4 Controller Diagrams](https://dev.px4.io/master/en/flight_stack/controller_diagrams.html)
 
