@@ -27,8 +27,15 @@
 
 ## 使用说明
 
-针对不同板子需要先用CubeMX生成对应的外设初始化代码，然后再在Keil里操作。
-打开MDK-ARM中的DevC.uvprojx即可。
+- 针对不同板子需要到不同的CubeMX工程文件DevA.ioc、DevC.ioc）。
+
+- 利用CubeMX生成对应的外设初始化代码和Keil工程文件。
+
+  - 因为已经生成过Keil工程文件，所以只会覆盖以前生成的代码，而不会影响手写的代码。
+
+- 打开MDK-ARM中的DevC.uvprojx（或DevA.uvprojx）即可进行编辑、烧写或调试。
+
+- Keil 工程中有两个Target，其中Debug用来调试，不包含编译器优化等；DevC/DevA用来编译输出最终固件。
 
 ## 文件目录结构及文件用途说明
 
