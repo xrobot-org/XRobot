@@ -49,12 +49,6 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
 
-static const osThreadAttr_t cli_attr = {
-  .name = "cli",
-  .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 256 * 4,
-};
-
 /* TIM7 are used to generater high freq tick for debug. */
 volatile unsigned long high_freq_timer_ticks;
 
@@ -142,7 +136,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  osThreadNew(Task_CLI, NULL, &cli_attr);
+  osThreadNew(Task_Init, NULL, &attr_init);
 	
   /* USER CODE END RTOS_THREADS */
 

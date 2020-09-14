@@ -12,8 +12,8 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static DR16_t dr16;
-static CMD_RC_t rc;
-static CMD_t cmd;
+CMD_RC_t rc;
+CMD_t cmd;
 
 /* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
@@ -36,13 +36,11 @@ void Task_Command(void *argument) {
     DR16_StartDmaRecv(&dr16);
     DR16_WaitDmaCplt();
     
-    if (DR16_ParseRC(&dr16, &rc)) {
-      DR16_Restart();
+    DR16_ParseRC(&dr16, &rc);
 
-    } else {
-      CMD_Parse(&rc, &cmd);
-      for (uint8_t i = 0; i < 3; i++)
-        osMessageQueuePut(task_param->msgq.cmd, &cmd, 0, 0);
+    CMD_Parse(&rc, &cmd);
+    for (uint8_t i = 0; i < 3; i++) {
+      osMessageQueuePut(task_param->msgq.cmd, &cmd, 0, 0);
     }
   }
 }

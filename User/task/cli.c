@@ -8,7 +8,6 @@
 
 #include "FreeRTOS.h"
 #include "bsp\can.h"
-#include "bsp\flash.h"
 #include "bsp\usb.h"
 #include "component\FreeRTOS_CLI.h"
 #include "task.h"
@@ -20,7 +19,6 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-Task_Param_t task_param;  // TODO: Add static when release
 
 static const char *const CLI_WELCOME_MESSAGE =
     "\r\n"
@@ -31,12 +29,6 @@ static const char *const CLI_WELCOME_MESSAGE =
     "           Q I N G D A O  U N I V E R S I T Y    2 0 2 0            \r\n"
     " -------------------------------------------------------------------\r\n"
     " FreeRTOS CLI. Type 'help' to view a list of registered commands.   \r\n"
-    "\r\n";
-
-static const char *const ROBOT_ID_MEAASGE =
-    " -------------------------------------------------------------------\r\n"
-    " Robot Model: %s\tRobot Pilot: %s \r\n"
-    " -------------------------------------------------------------------\r\n"
     "\r\n";
 
 static BaseType_t Command_Endian(char *out_buffer, size_t len,
@@ -329,7 +321,7 @@ static const CLI_Command_Definition_t command_motor_id_quick_set = {
 /* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
 void Task_CLI(void *argument) {
-  (void)argument;
+  Task_Param_t *task_param = (Task_Param_t *)argument;
 
   static char input[MAX_INPUT_LENGTH];
   char *output = FreeRTOS_CLIGetOutputBuffer();
@@ -344,37 +336,6 @@ void Task_CLI(void *argument) {
   FreeRTOS_CLIRegisterCommand(&command_set_user);
   FreeRTOS_CLIRegisterCommand(&command_error);
   FreeRTOS_CLIRegisterCommand(&command_motor_id_quick_set);
-
-  /* Init robot. */
-  Robot_GetRobotID(&task_param.robot_id);
-
-  task_param.config_robot = Robot_GetConfig(task_param.robot_id.model);
-  task_param.config_pilot = Robot_GetPilotConfig(task_param.robot_id.pilot);
-
-  /* Command Line Interface. */
-  BSP_USB_Printf(ROBOT_ID_MEAASGE,
-                 Robot_GetNameByModel(task_param.robot_id.model),
-                 Robot_GetNameByPilot(task_param.robot_id.pilot));
-
-  task_param.thread.cli = osThreadGetId();
-
-  osKernelLock();
-  task_param.thread.command =
-      osThreadNew(Task_Command, &task_param, &attr_command);
-  task_param.thread.ctrl_chassis =
-      osThreadNew(Task_CtrlChassis, &task_param, &attr_ctrl_chassis);
-  task_param.thread.ctrl_gimbal =
-      osThreadNew(Task_CtrlGimbal, &task_param, &attr_ctrl_gimbal);
-  task_param.thread.ctrl_shoot =
-      osThreadNew(Task_CtrlShoot, &task_param, &attr_ctrl_shoot);
-  task_param.thread.info = osThreadNew(Task_Info, &task_param, &attr_info);
-  task_param.thread.monitor =
-      osThreadNew(Task_Monitor, &task_param, &attr_monitor);
-  task_param.thread.atti_esti =
-      osThreadNew(Task_AttiEsti, &task_param, &attr_atti_esti);
-  task_param.thread.referee =
-      osThreadNew(Task_Referee, &task_param, &attr_referee);
-  osKernelUnlock();
 
   /* Command Line Interface. */
   BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
@@ -395,7 +356,7 @@ void Task_CLI(void *argument) {
   BSP_USB_Printf("rm>");
   while (1) {
 #ifdef DEBUG
-    task_param.stack_water_mark.cli = osThreadGetStackSpace(NULL);
+    task_param->stack_water_mark.cli = osThreadGetStackSpace(NULL);
 #endif
     /* Wait for input. */
     BSP_USB_ReadyReceive(osThreadGetId());

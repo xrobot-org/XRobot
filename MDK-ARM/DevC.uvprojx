@@ -1057,6 +1057,11 @@
               <FilePath>..\User\task\info.c</FilePath>
             </File>
             <File>
+              <FileName>init.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\init.c</FilePath>
+            </File>
+            <File>
               <FileName>monitor.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\monitor.c</FilePath>
@@ -2679,6 +2684,11 @@
               <FileName>info.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\info.c</FilePath>
+            </File>
+            <File>
+              <FileName>init.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\init.c</FilePath>
             </File>
             <File>
               <FileName>monitor.c</FileName>

@@ -95,6 +95,9 @@ typedef struct {
 
 } Task_Param_t;
 
+extern const osThreadAttr_t attr_init;
+
+extern const osThreadAttr_t attr_cli;
 extern const osThreadAttr_t attr_command;
 extern const osThreadAttr_t attr_ctrl_chassis;
 extern const osThreadAttr_t attr_ctrl_gimbal;
@@ -105,6 +108,8 @@ extern const osThreadAttr_t attr_atti_esti;
 extern const osThreadAttr_t attr_referee;
 
 /* Exported functions prototypes ---------------------------------------------*/
+void Task_Init(void *argument);
+
 void Task_CLI(void *argument);
 void Task_Command(void *argument);
 void Task_CtrlChassis(void *argument);
