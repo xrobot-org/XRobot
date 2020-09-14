@@ -30,10 +30,6 @@ void Task_CtrlGimbal(void *argument) {
     osDelay(delay_tick);
   }
 
-  while ((imu = BMI088_GetDevice()) == NULL) {
-    osDelay(delay_tick);
-  }
-
   Gimbal_Init(&gimbal, &(task_param->config_robot->param.gimbal),
               (float)delay_tick / (float)osKernelGetTickFreq(), imu);
 
@@ -51,9 +47,8 @@ void Task_CtrlGimbal(void *argument) {
       CAN_Motor_ControlGimbal(0.f, 0.f);
 
     } else {
-      osMessageQueueGet(task_param->messageq.gimbal_eulr, gimbal.fb.eulr.imu,
-                        NULL, 0);
-      osMessageQueueGet(task_param->messageq.cmd, cmd, NULL, 0);
+      osMessageQueueGet(task_param->msgq.gimbal_eulr, gimbal.fb.eulr.imu, NULL, 0);
+      osMessageQueueGet(task_param->msgq.cmd, cmd, NULL, 0);
 
       osKernelLock();
       Gimbal_UpdateFeedback(&gimbal, can);

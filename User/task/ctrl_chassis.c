@@ -52,7 +52,7 @@ void Task_CtrlChassis(void *argument) {
       CAN_Motor_ControlChassis(0.f, 0.f, 0.f, 0.f);
 
     } else {
-      osMessageQueueGet(task_param->messageq.cmd, cmd, NULL, 0);
+      osMessageQueueGet(task_param->msgq.cmd, cmd, NULL, 0);
 
       osKernelLock();
       Chassis_UpdateFeedback(&chassis, &can);

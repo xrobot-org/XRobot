@@ -6,6 +6,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "bmi088.h"
 
+#include <cmsis_os2.h>
 #include <gpio.h>
 #include <stdbool.h>
 #include <string.h>
@@ -83,7 +84,7 @@ typedef enum {
 static uint8_t buffer[2];
 static uint8_t bmi088_rxbuf[BMI088_LEN_RX_BUFF];
 
-static BMI088_t *gimu;
+static osThreadId_t thread_alert;
 static bool inited = false;
 
 /* Private function  ---------------------------------------------------------*/
@@ -161,29 +162,29 @@ static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
 static void BMI088_RxCpltCallback(void) {
   if (HAL_GPIO_ReadPin(ACCL_CS_GPIO_Port, ACCL_CS_Pin) == GPIO_PIN_RESET) {
     BMI088_ACCL_NSS_SET();
-    osThreadFlagsSet(gimu->thread_alert, SIGNAL_BMI088_ACCL_RAW_REDY);
+    osThreadFlagsSet(thread_alert, SIGNAL_BMI088_ACCL_RAW_REDY);
   }
   if (HAL_GPIO_ReadPin(GYRO_CS_GPIO_Port, GYRO_CS_Pin) == GPIO_PIN_RESET) {
     BMI088_GYRO_NSS_SET();
-    osThreadFlagsSet(gimu->thread_alert, SIGNAL_BMI088_GYRO_RAW_REDY);
+    osThreadFlagsSet(thread_alert, SIGNAL_BMI088_GYRO_RAW_REDY);
   }
 }
 
 static void BMI088_AcclIntCallback(void) {
-  osThreadFlagsSet(gimu->thread_alert, SIGNAL_BMI088_ACCL_NEW_DATA);
+  osThreadFlagsSet(thread_alert, SIGNAL_BMI088_ACCL_NEW_DATA);
 }
 
 static void BMI088_GyroIntCallback(void) {
-  osThreadFlagsSet(gimu->thread_alert, SIGNAL_BMI088_GYRO_NEW_DATA);
+  osThreadFlagsSet(thread_alert, SIGNAL_BMI088_GYRO_NEW_DATA);
 }
 
 /* Exported functions --------------------------------------------------------*/
-int8_t BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert) {
+int8_t BMI088_Init(BMI088_t *bmi088) {
   if (bmi088 == NULL) return DEVICE_ERR_NULL;
 
   if (inited) return DEVICE_ERR_INITED;
 
-  bmi088->thread_alert = thread_alert;
+  if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
 
   BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_SOFTRESET, 0xB6);
   BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_SOFTRESET, 0xB6);
@@ -243,7 +244,6 @@ int8_t BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert) {
 
   BSP_Delay(10);
 
-  gimu = bmi088;
   inited = true;
 
   BSP_GPIO_EnableIRQ(ACCL_INT_Pin);
@@ -251,25 +251,30 @@ int8_t BMI088_Init(BMI088_t *bmi088, osThreadId_t thread_alert) {
   return DEVICE_OK;
 }
 
-BMI088_t *BMI088_GetDevice(void) {
-  if (inited) {
-    return gimu;
-  }
-  return NULL;
+uint32_t BMI088_WaitNew() {
+  return osThreadFlagsWait(SIGNAL_BMI088_ACCL_NEW_DATA | SIGNAL_BMI088_GYRO_NEW_DATA,
+                      osFlagsWaitAll, osWaitForever);
 }
 
-int8_t BMI088_ReceiveAccl(BMI088_t *bmi088) {
-  if (bmi088 == NULL) return DEVICE_ERR_NULL;
-
+int8_t BMI088_AcclStartDmaRecv() {
   BMI_Read(BMI_ACCL, BMI088_REG_ACCL_X_LSB, bmi088_rxbuf, BMI088_LEN_RX_BUFF);
   return DEVICE_OK;
 }
 
-int8_t BMI088_ReceiveGyro(BMI088_t *bmi088) {
-  if (bmi088 == NULL) return DEVICE_ERR_NULL;
 
+uint32_t BMI088_AcclWaitDmaCplt() {
+  return osThreadFlagsWait(SIGNAL_BMI088_ACCL_RAW_REDY, osFlagsWaitAll,
+                      osWaitForever);
+}
+
+int8_t BMI088_GyroStartDmaRecv() {
   BMI_Read(BMI_GYRO, BMI088_REG_GYRO_X_LSB, bmi088_rxbuf + 7, 6u);
   return DEVICE_OK;
+}
+
+uint32_t BMI088_GyroWaitDmaCplt() {
+  return osThreadFlagsWait(SIGNAL_BMI088_GYRO_RAW_REDY, osFlagsWaitAll,
+                      osWaitForever);
 }
 
 int8_t BMI088_ParseAccl(BMI088_t *bmi088) {

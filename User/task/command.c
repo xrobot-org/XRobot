@@ -20,7 +20,7 @@ static CMD_t cmd;
 void Task_Command(void *argument) {
   Task_Param_t *task_param = (Task_Param_t *)argument;
 
-  task_param->messageq.cmd = osMessageQueueNew(9u, sizeof(CMD_t), NULL);
+  task_param->msgq.cmd = osMessageQueueNew(9u, sizeof(CMD_t), NULL);
 
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_COMMAND);
@@ -42,7 +42,7 @@ void Task_Command(void *argument) {
     } else {
       CMD_Parse(&rc, &cmd);
       for (uint8_t i = 0; i < 3; i++)
-        osMessageQueuePut(task_param->messageq.cmd, &cmd, 0, 0);
+        osMessageQueuePut(task_param->msgq.cmd, &cmd, 0, 0);
     }
   }
 }

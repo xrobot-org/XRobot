@@ -48,12 +48,16 @@ typedef struct {
   } thread;
 
   struct {
-    /* Pos esti */
+    /* imu */
+    osMessageQueueId_t gimbal_accl;
+    osMessageQueueId_t gimbal_gyro;
+    
+    /* Atti esti */
     osMessageQueueId_t gimbal_eulr;
 
     /* Command */
     osMessageQueueId_t cmd;
-  } messageq;
+  } msgq;
 
   struct {
     osMutexId_t atti_ready;

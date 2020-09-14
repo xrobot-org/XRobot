@@ -41,10 +41,16 @@ static const PID_Params_t imu_temp_ctrl_pid_param = {
 void Task_AttiEsti(void *argument) {
   Task_Param_t *task_param = (Task_Param_t *)argument;
 
-  task_param->messageq.gimbal_eulr =
-      osMessageQueueNew(3u, sizeof(AHRS_Eulr_t), NULL);
+  task_param->msgq.gimbal_accl =
+      osMessageQueueNew(6u, sizeof(AHRS_Accl_t), NULL);
+  
+  task_param->msgq.gimbal_eulr =
+      osMessageQueueNew(6u, sizeof(AHRS_Eulr_t), NULL);
+  
+  task_param->msgq.gimbal_gyro =
+      osMessageQueueNew(6u, sizeof(AHRS_Gyro_t), NULL);
 
-  BMI088_Init(&bmi088, osThreadGetId());
+  BMI088_Init(&bmi088);
   IST8310_Init(&ist8310, osThreadGetId());
 
   IST8310_Receive(&ist8310);
@@ -65,16 +71,13 @@ void Task_AttiEsti(void *argument) {
     task_param->stack_water_mark.atti_esti = osThreadGetStackSpace(NULL);
 #endif
     /* Task body */
-    osThreadFlagsWait(SIGNAL_BMI088_ACCL_NEW_DATA | SIGNAL_BMI088_GYRO_NEW_DATA,
-                      osFlagsWaitAll, osWaitForever);
+    BMI088_WaitNew();
 
-    BMI088_ReceiveAccl(&bmi088);
-    osThreadFlagsWait(SIGNAL_BMI088_ACCL_RAW_REDY, osFlagsWaitAll,
-                      osWaitForever);
+    BMI088_AcclStartDmaRecv();
+    BMI088_AcclWaitDmaCplt();
 
-    BMI088_ReceiveGyro(&bmi088);
-    osThreadFlagsWait(SIGNAL_BMI088_GYRO_RAW_REDY, osFlagsWaitAll,
-                      osWaitForever);
+    BMI088_GyroStartDmaRecv();
+    BMI088_GyroWaitDmaCplt();
 
     osKernelLock();
     BMI088_ParseAccl(&bmi088);
@@ -84,12 +87,11 @@ void Task_AttiEsti(void *argument) {
 
     AHRS_Update(&gimbal_ahrs, &bmi088.accl, &bmi088.gyro, &ist8310.magn);
     AHRS_GetEulr(&eulr_to_send, &gimbal_ahrs);
-    osStatus_t os_status = osMessageQueuePut(task_param->messageq.gimbal_eulr,
-                                             &eulr_to_send, 0, 0);
-
-    if (os_status != osOK) {
-    }
-
+    
+    osMessageQueuePut(task_param->msgq.gimbal_accl, &bmi088.accl, 0, 0);
+    osMessageQueuePut(task_param->msgq.gimbal_eulr, &eulr_to_send, 0, 0);
+    osMessageQueuePut(task_param->msgq.gimbal_gyro, &bmi088.gyro, 0, 0);
+                                             
     BSP_PWM_Set(BSP_PWM_IMU_HEAT,
                 PID_Calc(&imu_temp_ctrl_pid, 50.f, bmi088.temp, 0.f, 0.f));
   }

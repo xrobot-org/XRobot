@@ -44,7 +44,7 @@ void Task_CtrlShoot(void *argument) {
         osFlagsErrorTimeout) {
       CAN_Motor_ControlShoot(0.f, 0.f, 0.f);
     } else {
-      osMessageQueueGet(task_param->messageq.cmd, cmd, NULL, 0);
+      osMessageQueueGet(task_param->msgq.cmd, cmd, NULL, 0);
 
       osKernelLock();
       Shoot_UpdateFeedback(&shoot, can);
