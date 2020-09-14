@@ -68,7 +68,7 @@ void HAL_CRC_MspDeInit(CRC_HandleTypeDef* crcHandle)
 
   /* USER CODE END CRC_MspDeInit 1 */
   }
-} 
+}
 
 /* USER CODE BEGIN 1 */
 
