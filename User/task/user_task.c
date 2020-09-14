@@ -1,17 +1,16 @@
 /* Includes ------------------------------------------------------------------*/
 #include "task\user_task.h"
 
-
 const osThreadAttr_t attr_init = {
-  .name = "init",
-  .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 256 * 4,
+    .name = "init",
+    .priority = (osPriority_t)osPriorityLow,
+    .stack_size = 256 * 4,
 };
 
 const osThreadAttr_t attr_cli = {
-  .name = "cli",
-  .priority = (osPriority_t) osPriorityLow,
-  .stack_size = 256 * 4,
+    .name = "cli",
+    .priority = (osPriority_t)osPriorityLow,
+    .stack_size = 256 * 4,
 };
 
 const osThreadAttr_t attr_command = {

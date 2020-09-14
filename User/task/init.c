@@ -1,5 +1,5 @@
 /*
-        底盘任务，用于控制底盘。
+        用于初始化所有任务的任务
 
 */
 
@@ -40,8 +40,7 @@ void Task_Init(void *argument) {
   osKernelLock();
   task_param.thread.atti_esti =
       osThreadNew(Task_AttiEsti, &task_param, &attr_atti_esti);
-  task_param.thread.cli = 
-      osThreadNew(Task_CLI, &task_param, &attr_cli);
+  task_param.thread.cli = osThreadNew(Task_CLI, &task_param, &attr_cli);
   task_param.thread.command =
       osThreadNew(Task_Command, &task_param, &attr_command);
   task_param.thread.ctrl_chassis =
@@ -57,5 +56,5 @@ void Task_Init(void *argument) {
       osThreadNew(Task_Referee, &task_param, &attr_referee);
   osKernelUnlock();
 
-	osThreadTerminate(osThreadGetId());
+  osThreadTerminate(osThreadGetId());
 }

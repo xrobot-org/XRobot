@@ -51,7 +51,7 @@ typedef struct {
     /* imu */
     osMessageQueueId_t gimbal_accl;
     osMessageQueueId_t gimbal_gyro;
-    
+
     /* Atti esti */
     osMessageQueueId_t gimbal_eulr;
 
