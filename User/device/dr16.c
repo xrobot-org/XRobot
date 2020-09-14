@@ -11,6 +11,10 @@
 #include "bsp\uart.h"
 
 /* Private define ------------------------------------------------------------*/
+#define DR16_CH_VALUE_MIN (364u)
+#define DR16_CH_VALUE_MID (1024u)
+#define DR16_CH_VALUE_MAX (1684u)
+
 /* Private macro -------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -54,7 +58,7 @@ int8_t DR16_Init(DR16_t *dr16) {
   if (dr16 == NULL) return DEVICE_ERR_NULL;
 
   if (inited) return DEVICE_ERR_INITED;
-  
+
   if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
 
   BSP_UART_RegisterCallback(BSP_UART_DR16, BSP_UART_RX_CPLT_CB,
@@ -111,6 +115,5 @@ int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc) {
   rc->key = dr16->data.key;
 
   rc->ch_res = ((float)dr16->data.res - DR16_CH_VALUE_MID) / full_range;
-  // TODO: TEST
   return DEVICE_OK;
 }

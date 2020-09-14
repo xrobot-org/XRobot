@@ -252,8 +252,9 @@ int8_t BMI088_Init(BMI088_t *bmi088) {
 }
 
 uint32_t BMI088_WaitNew() {
-  return osThreadFlagsWait(SIGNAL_BMI088_ACCL_NEW_DATA | SIGNAL_BMI088_GYRO_NEW_DATA,
-                      osFlagsWaitAll, osWaitForever);
+  return osThreadFlagsWait(
+      SIGNAL_BMI088_ACCL_NEW_DATA | SIGNAL_BMI088_GYRO_NEW_DATA, osFlagsWaitAll,
+      osWaitForever);
 }
 
 int8_t BMI088_AcclStartDmaRecv() {
@@ -261,10 +262,9 @@ int8_t BMI088_AcclStartDmaRecv() {
   return DEVICE_OK;
 }
 
-
 uint32_t BMI088_AcclWaitDmaCplt() {
   return osThreadFlagsWait(SIGNAL_BMI088_ACCL_RAW_REDY, osFlagsWaitAll,
-                      osWaitForever);
+                           osWaitForever);
 }
 
 int8_t BMI088_GyroStartDmaRecv() {
@@ -274,7 +274,7 @@ int8_t BMI088_GyroStartDmaRecv() {
 
 uint32_t BMI088_GyroWaitDmaCplt() {
   return osThreadFlagsWait(SIGNAL_BMI088_GYRO_RAW_REDY, osFlagsWaitAll,
-                      osWaitForever);
+                           osWaitForever);
 }
 
 int8_t BMI088_ParseAccl(BMI088_t *bmi088) {

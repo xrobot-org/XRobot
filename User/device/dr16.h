@@ -12,11 +12,6 @@ extern "C" {
 #include "device\device.h"
 
 /* Exported constants --------------------------------------------------------*/
-
-#define DR16_CH_VALUE_MIN (364u)
-#define DR16_CH_VALUE_MID (1024u)
-#define DR16_CH_VALUE_MAX (1684u)
-
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
 typedef struct __packed {
