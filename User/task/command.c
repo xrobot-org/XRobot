@@ -25,7 +25,7 @@ void Task_Command(void *argument) {
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_COMMAND);
 
-  DR16_Init(&dr16, osThreadGetId());
+  DR16_Init(&dr16);
   CMD_Init(&cmd, &(task_param->config_pilot->param.cmd));
 
   while (1) {
@@ -33,9 +33,9 @@ void Task_Command(void *argument) {
     task_param->stack_water_mark.command = osThreadGetStackSpace(NULL);
 #endif
     /* Task body */
-    DR16_StartReceiving(&dr16);
-    osThreadFlagsWait(SIGNAL_DR16_RAW_REDY, osFlagsWaitAll, osWaitForever);
-
+    DR16_StartDmaRecv(&dr16);
+    DR16_WaitDmaCplt();
+    
     if (DR16_ParseRC(&dr16, &rc)) {
       DR16_Restart();
 

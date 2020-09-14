@@ -36,17 +36,15 @@ typedef struct __packed {
 } DR16_Data_t;
 
 typedef struct {
-  osThreadId_t thread_alert;
-
   DR16_Data_t data;
 } DR16_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int8_t DR16_Init(DR16_t *dr16, osThreadId_t thread_alert);
-DR16_t *DR16_GetDevice(void);
+int8_t DR16_Init(DR16_t *dr16);
 int8_t DR16_Restart(void);
 
-int8_t DR16_StartReceiving(DR16_t *dr16);
+int8_t DR16_StartDmaRecv(DR16_t *dr16);
+uint32_t DR16_WaitDmaCplt();
 int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc);
 
 #ifdef __cplusplus
