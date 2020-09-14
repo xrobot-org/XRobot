@@ -9,7 +9,7 @@
 #include "bsp\usb.h"
 #include "component\capacity.h"
 #include "component\user_math.h"
-#include "user_task.h"
+#include "task\user_task.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/

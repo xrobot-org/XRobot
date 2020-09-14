@@ -15,7 +15,7 @@
 #include "component\pid.h"
 #include "device\bmi088.h"
 #include "device\ist8310.h"
-#include "user_task.h"
+#include "task\user_task.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/

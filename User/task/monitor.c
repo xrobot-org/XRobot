@@ -6,7 +6,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "bsp\buzzer.h"
 #include "bsp\usb.h"
-#include "user_task.h"
+#include "task\user_task.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
