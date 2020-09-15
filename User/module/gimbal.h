@@ -19,6 +19,8 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
+
+// TODO:改个一眼能看懂的名字
 enum Gimbal_PID_e {
   GIMBAL_PID_YAW_IN = 0,
   GIMBAL_PID_YAW_OUT,
