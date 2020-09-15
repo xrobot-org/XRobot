@@ -13,8 +13,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static CAN_t *can;
-static BMI088_t *imu;
-static CMD_t *cmd;
+static CMD_t cmd;
 static Gimbal_t gimbal;
 
 /* Private function ----------------------------------------------------------*/
@@ -31,7 +30,7 @@ void Task_CtrlGimbal(void *argument) {
   }
 
   Gimbal_Init(&gimbal, &(task_param->config_robot->param.gimbal),
-              (float)delay_tick / (float)osKernelGetTickFreq(), imu);
+              (float)delay_tick / (float)osKernelGetTickFreq());
 
   uint32_t tick = osKernelGetTickCount();
   while (1) {
@@ -48,11 +47,12 @@ void Task_CtrlGimbal(void *argument) {
 
     } else {
       osMessageQueueGet(task_param->msgq.gimbal_eulr, gimbal.fb.eulr.imu, NULL, 0);
-      osMessageQueueGet(task_param->msgq.cmd, cmd, NULL, 0);
+      osMessageQueueGet(task_param->msgq.gimbal_eulr, gimbal.fb.eulr.imu, NULL, 0);
+      osMessageQueueGet(task_param->msgq.cmd, &cmd, NULL, 0);
 
       osKernelLock();
       Gimbal_UpdateFeedback(&gimbal, can);
-      Gimbal_Control(&gimbal, &(cmd->gimbal));
+      Gimbal_Control(&gimbal, &(cmd.gimbal));
       CAN_Motor_ControlGimbal(gimbal.out[GIMBAL_ACTR_YAW],
                               gimbal.out[GIMBAL_ACTR_PIT]);
       osKernelUnlock();
