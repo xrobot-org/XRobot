@@ -334,7 +334,7 @@ int8_t CAN_Motor_ControlGimbal(float yaw, float pitch) {
   motor_tx_data[7] = 0;
 
   HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(BSP_CAN_1), &tx_header, motor_tx_data,
-                       (uint32_t *)CAN_TX_MAILBOX0);
+                       (uint32_t *)CAN_TX_MAILBOX1);
 
   return DEVICE_OK;
 }
@@ -359,7 +359,7 @@ int8_t CAN_Motor_ControlShoot(float fric1, float fric2, float trig) {
   motor_tx_data[7] = 0;
 
   HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(BSP_CAN_1), &tx_header, motor_tx_data,
-                       (uint32_t *)CAN_TX_MAILBOX0);
+                       (uint32_t *)CAN_TX_MAILBOX2);
 
   return DEVICE_OK;
 }
