@@ -13,50 +13,42 @@ extern "C" {
 
 #include "ahrs.h"
 
-/*
-        CHASSIS_MODE_RELAX: No force applied. For all robot when power on.
-        CHASSIS_MODE_BREAK: Set to zero speed. Force applied. For all robot when
-   break. CHASSIS_MODE_FOLLOW_GIMBAL: Follow gimbal by follow encoder. For
-   infantry, hero and engineer. CHASSIS_MODE_ROTOR: Constantly rotating. For
-   infantry and hero. CHASSIS_MODE_INDENPENDENT: Run independently. For sentry
-   and drone. CHASSIS_MODE_OPEN: Direct apply force without pid control. For
-   TEST only.
-*/
 typedef enum {
+  /* No force applied. For all robot when power on. */
   CHASSIS_MODE_RELAX,
+  /* Set to zero speed. Force applied. For all robot when break. */
   CHASSIS_MODE_BREAK,
+  /* Follow gimbal by follow encoder. For infantry, hero and engineer. */
   CHASSIS_MODE_FOLLOW_GIMBAL,
+  /* Constantly rotating. For infantry and hero. */
   CHASSIS_MODE_ROTOR,
+  /* Run independently. For sentry and drone. */
   CHASSIS_MODE_INDENPENDENT,
+  /* Direct apply force without pid control. For TEST only. */
   CHASSIS_MODE_OPEN,
 } CMD_Chassis_Mode_t;
 
-/*
-        GIMBAL_MODE_RELAX: No force applied.
-        GIMBAL_MODE_INIT: .
-        GIMBAL_MODE_CALI: Get mid point.
-        GIMBAL_MODE_ABSOLUTE: Follow IMU data.
-        GIMBAL_MODE_RELATIVE: Follow encoder data.
-        GIMBAL_MODE_FIX: Set to a fix angle. Force applied.
-*/
 typedef enum {
+  /* No force applied. */
   GIMBAL_MODE_RELAX,
+  /* . */
   GIMBAL_MODE_INIT,
+  /* Follow IMU data. */
   GIMBAL_MODE_ABSOLUTE,
+  /* Follow encoder data. */
   GIMBAL_MODE_RELATIVE,
+  /* Set to a fix angle. Force applied. */
   GIMBAL_MODE_FIX,
 } CMD_Gimbal_Mode_t;
 
-/*
-        SHOOT_MODE_RELAX: No force applied.
-        SHOOT_MODE_SAFE: Set to zero speed. Force applied.
-        SHOOT_MODE_STDBY: Ready to switch to FIRE.
-        SHOOT_MODE_FIRE: Ready to shoot.
-*/
 typedef enum {
+  /* No force applied. */
   SHOOT_MODE_RELAX,
+  /* Set to zero speed. Force applied. */
   SHOOT_MODE_SAFE,
+  /* Safty off. */
   SHOOT_MODE_STDBY,
+  /* Shooting. */
   SHOOT_MODE_FIRE,
 } CMD_Shoot_Mode_t;
 
