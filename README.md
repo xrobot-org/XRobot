@@ -31,6 +31,12 @@
 
 - 利用CubeMX生成对应的外设初始化代码和Keil工程文件。
 
+  - 所以每次生成代码后，请利用Git丢弃Middlewares文件夹中的所有改变。原因如下。
+
+    1. 使用了AC6，与CubeMX默认不匹配，会影响到FreeRTOS的移植。
+
+    2. 使用了比CubeMX更新的FreeRTOS版本，降版本会导致部分代码无法编译。
+
   - 因为已经生成过Keil工程文件，所以只会覆盖以前生成的代码，而不会影响手写的代码。
 
 - 打开MDK-ARM中的DevC.uvprojx（或DevA.uvprojx）即可进行编辑、烧写或调试。
