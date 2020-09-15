@@ -166,7 +166,7 @@ static void CAN_RxFifo0MsgPendingCallback(void) {
 
   for (uint8_t i = 0; i < gcan->motor_alert_len; i++) {
     if (gcan->motor_alert[i]) {
-      osThreadFlagsSet(gcan->motor_alert, SIGNAL_CAN_MOTOR_RECV);
+      osThreadFlagsSet(gcan->motor_alert[i], SIGNAL_CAN_MOTOR_RECV);
     }
   }
 }
