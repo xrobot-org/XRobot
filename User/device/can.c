@@ -319,7 +319,7 @@ int8_t CAN_Motor_ControlGimbal(float yaw, float pitch) {
   int16_t yaw_motor = (int16_t)(yaw * (float)CAN_GM6020_MAX_ABS_VOLT);
   int16_t pit_motor = (int16_t)(pitch * (float)CAN_GM6020_MAX_ABS_VOLT);
 
-  tx_header.StdId = CAN_GM6020_CTRL_ID_BASE;
+  tx_header.StdId = CAN_GM6020_CTRL_ID_EXTAND;
   tx_header.IDE = CAN_ID_STD;
   tx_header.RTR = CAN_RTR_DATA;
   tx_header.DLC = CAN_MOTOR_TX_BUF_SIZE;
