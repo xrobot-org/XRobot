@@ -38,8 +38,8 @@ int8_t BMI088_Restart(void);
 uint32_t BMI088_WaitNew();
 
 /*
-  BMI088的Accl和Gyro共用同一个DMA通道，所以一次只能读传感器，即
-  BMI088_AcclStartDmaRecv() 和 BMI088_AcclWaitDmaCplt() 中间不能
+  BMI088的Accl和Gyro共用同一个DMA通道，所以一次只能读一个传感器。
+  即BMI088_AcclStartDmaRecv() 和 BMI088_AcclWaitDmaCplt() 中间不能
   出现 BMI088_GyroStartDmaRecv()。
 */
 int8_t BMI088_AcclStartDmaRecv();
