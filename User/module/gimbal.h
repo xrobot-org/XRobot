@@ -54,7 +54,7 @@ typedef struct {
   CMD_Gimbal_Mode_t mode;
 
   struct {
-    BMI088_t *imu;
+    AHRS_Gyro_t gyro;
 
     struct {
       AHRS_Eulr_t *imu;
@@ -75,8 +75,7 @@ typedef struct {
 } Gimbal_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec,
-                   BMI088_t *imu);
+int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec);
 int8_t Gimbal_UpdateFeedback(Gimbal_t *g, CAN_t *can);
 int8_t Gimbal_Control(Gimbal_t *g, CMD_Gimbal_Ctrl_t *g_ctrl);
 
