@@ -51,13 +51,15 @@ void Task_AttiEsti(void *argument) {
       osMessageQueueNew(6u, sizeof(AHRS_Gyro_t), NULL);
 
   BMI088_Init(&bmi088);
-  IST8310_Init(&ist8310, osThreadGetId());
+  IST8310_Init(&ist8310);
 
-  IST8310_Receive(&ist8310);
-  osThreadFlagsWait(SIGNAL_IST8310_MAGN_RAW_REDY, osFlagsWaitAll, 0);
-
+#if 0
+  ST8310_WaitNew(osWaitForever);
+  ST8310_StartDmaRecv();
+  ST8310_WaitDmaCplt();
   IST8310_Parse(&ist8310);
-
+#endif
+  
   AHRS_Init(&gimbal_ahrs, &ist8310.magn, BMI088_GetUpdateFreq(&bmi088));
 
   PID_Init(&imu_temp_ctrl_pid, PID_MODE_NO_D,
@@ -78,6 +80,14 @@ void Task_AttiEsti(void *argument) {
 
     BMI088_GyroStartDmaRecv();
     BMI088_GyroWaitDmaCplt();
+    
+    
+#if 0
+    if (ST8310_WaitNew(0)) {
+      ST8310_StartDmaRecv();
+      ST8310_WaitDmaCplt();
+    }
+#endif
 
     osKernelLock();
     BMI088_ParseAccl(&bmi088);

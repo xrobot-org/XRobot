@@ -7,6 +7,7 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include <cmsis_os2.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "component\ahrs.h"
 #include "device\device.h"
@@ -26,12 +27,12 @@ typedef struct {
 } IST8310_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-int8_t IST8310_Init(IST8310_t *ist8310, osThreadId_t thread_alert);
-IST8310_t *IST8310_GetDevice(void);
-
+int8_t IST8310_Init(IST8310_t *ist8310);
 int8_t IST8310_Restart(void);
 
-int8_t IST8310_Receive(IST8310_t *ist8310);
+bool ST8310_WaitNew(uint32_t timeout);
+int8_t ST8310_StartDmaRecv();
+uint32_t ST8310_WaitDmaCplt();
 int8_t IST8310_Parse(IST8310_t *ist8310);
 
 #ifdef __cplusplus
