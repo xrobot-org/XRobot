@@ -209,7 +209,7 @@ int8_t CAN_Init(CAN_t *can, CAN_MotorInit_t *motor_init,
   can_filter.FilterBank = 0;
   can_filter.FilterIdHigh = 0;
   can_filter.FilterIdLow = 0;
-  can_filter.FilterMode = CAN_FILTERMODE_IDLIST;
+  can_filter.FilterMode = CAN_FILTERMODE_IDMASK;
   can_filter.FilterScale = CAN_FILTERSCALE_32BIT;
   can_filter.FilterMaskIdHigh = 0;
   can_filter.FilterMaskIdLow = 0;
