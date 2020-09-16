@@ -54,9 +54,12 @@ typedef struct {
 
     /* Atti esti */
     osMessageQueueId_t gimbal_eulr_imu;
-
-    /* Command */
-    osMessageQueueId_t cmd;
+    
+    struct {
+      osMessageQueueId_t chassis;
+      osMessageQueueId_t gimbal;
+      osMessageQueueId_t shoot;
+    }cmd;
   } msgq;
 
   struct {

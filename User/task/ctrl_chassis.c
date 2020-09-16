@@ -59,11 +59,11 @@ void Task_CtrlChassis(void *argument) {
       CAN_Motor_ControlChassis(0.f, 0.f, 0.f, 0.f);
 
     } else {
-      osMessageQueueGet(task_param->msgq.cmd, cmd, NULL, 0);
+      osMessageQueueGet(task_param->msgq.cmd.chassis, &chassis_ctrl, NULL, 0);
 
       osKernelLock();
       Chassis_UpdateFeedback(&chassis, &can);
-      Chassis_Control(&chassis, &(cmd->chassis));
+      Chassis_Control(&chassis, &chassis_ctrl);
       // TODO: Check can error
       CAN_Motor_ControlChassis(chassis.out[0], chassis.out[1], chassis.out[2],
                                chassis.out[3]);

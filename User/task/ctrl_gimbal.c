@@ -54,11 +54,11 @@ void Task_CtrlGimbal(void *argument) {
     } else {
       osMessageQueueGet(task_param->msgq.gimbal_eulr_imu, &(gimbal.feedback.eulr.imu), NULL, 0);
       osMessageQueueGet(task_param->msgq.gimbal_gyro, &(gimbal.feedback.gyro), NULL, 0);
-      osMessageQueueGet(task_param->msgq.cmd, &cmd, NULL, 0);
+      osMessageQueueGet(task_param->msgq.cmd.gimbal, &gimbal_ctrl, NULL, 0);
 
       osKernelLock();
       Gimbal_UpdateFeedback(&gimbal, can);
-      Gimbal_Control(&gimbal, &(cmd.gimbal));
+      Gimbal_Control(&gimbal, &gimbal_ctrl);
       CAN_Motor_ControlGimbal(gimbal.out[GIMBAL_ACTR_YAW],
                               gimbal.out[GIMBAL_ACTR_PIT]);
       osKernelUnlock();
