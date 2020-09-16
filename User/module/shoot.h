@@ -52,8 +52,7 @@ typedef struct {
   包含了初始化参数，中间变量，输出变量。
 */
 typedef struct {
-  const Shoot_Params_t
-      *param; /* 射击的参数，初始化运行时都要使用，用Shoot_Init设定 */
+  const Shoot_Params_t *param; /* 射击的参数，用Shoot_Init设定 */
 
   /* 模块通用 */
 
