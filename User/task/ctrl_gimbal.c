@@ -13,8 +13,14 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static CAN_t *can;
-static CMD_t cmd;
+
+#ifdef DEBUG
+CMD_Gimbal_Ctrl_t gimbal_ctrl;
+Gimbal_t gimbal;
+#else
+static CMD_Gimbal_Ctrl_t gimbal_ctrl;
 static Gimbal_t gimbal;
+#endif
 
 /* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/

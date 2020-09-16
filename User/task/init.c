@@ -19,7 +19,11 @@ static const char *const ROBOT_ID_MEAASGE =
     " -------------------------------------------------------------------\r\n"
     "\r\n";
 
-Task_Param_t task_param;  // TODO: Add static when release
+#ifdef DEBUG
+Task_Param_t task_param;
+#else
+static Task_Param_t task_param;
+#endif
 
 /* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/

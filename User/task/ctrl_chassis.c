@@ -12,9 +12,16 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+
+#ifdef DEBUG
+CAN_t can;
+CMD_Chassis_Ctrl_t chassis_ctrl;
+Chassis_t chassis;
+#else
 static CAN_t can;
-static CMD_t *cmd;
+static CMD_Chassis_Ctrl_t chassis_ctrl;
 static Chassis_t chassis;
+#endif
 
 /* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/

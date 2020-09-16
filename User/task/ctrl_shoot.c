@@ -13,8 +13,14 @@
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static CAN_t *can;
-static CMD_t *cmd;
+
+#ifdef DEBUG
+CMD_Shoot_Ctrl_t shoot_ctrl;
+Shoot_t shoot;
+#else
+static CMD_Shoot_Ctrl_t shoot_ctrl;
 static Shoot_t shoot;
+#endif
 
 /* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/

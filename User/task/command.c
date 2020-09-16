@@ -11,9 +11,15 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static DR16_t dr16;
+#ifdef DEBUG
+DR16_t dr16;
 CMD_RC_t rc;
 CMD_t cmd;
+#else
+static DR16_t dr16;
+static CMD_RC_t rc;
+static CMD_t cmd;
+#endif
 
 /* Private function ----------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/

@@ -21,11 +21,28 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-static BMI088_t bmi088;
+
+#ifdef DEBUG
+BMI088_t bmi088;
 IST8310_t ist8310;  // TODO: Add static when release
 
-static AHRS_t gimbal_ahrs;
+AHRS_t gimbal_ahrs;
 AHRS_Eulr_t eulr_to_send;  // TODO: Add static when release
+
+PID_t imu_temp_ctrl_pid;
+const PID_Params_t imu_temp_ctrl_pid_param = {
+    .kp = 0.5,
+    .ki = 0.5,
+    .kd = 0.5,
+    .i_limit = 0.5,
+    .out_limit = 0.5,
+};
+#else
+static BMI088_t bmi088;
+static IST8310_t ist8310;  // TODO: Add static when release
+
+static AHRS_t gimbal_ahrs;
+static AHRS_Eulr_t eulr_to_send;  // TODO: Add static when release
 
 static PID_t imu_temp_ctrl_pid;
 static const PID_Params_t imu_temp_ctrl_pid_param = {
@@ -35,6 +52,8 @@ static const PID_Params_t imu_temp_ctrl_pid_param = {
     .i_limit = 0.5,
     .out_limit = 0.5,
 };
+#endif
+
 
 /* Private function  ---------------------------------------------------------*/
 /* Exported functions --------------------------------------------------------*/
