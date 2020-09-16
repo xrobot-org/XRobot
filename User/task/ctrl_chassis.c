@@ -62,7 +62,6 @@ void Task_CtrlChassis(void *argument) {
       osKernelLock();
       Chassis_UpdateFeedback(&chassis, &can);
       Chassis_Control(&chassis, &chassis_ctrl);
-      // TODO: Check can error
       CAN_Motor_ControlChassis(chassis.out[0], chassis.out[1], chassis.out[2],
                                chassis.out[3]);
 
