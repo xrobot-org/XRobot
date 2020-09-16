@@ -1,44 +1,28 @@
 /*
-        Modified from
+   Modified from
    https://github.com/PX4/Firmware/blob/master/src/lib/pid/pid.cpp
 
 */
 
 #include "pid.h"
 
+#include <stdbool.h>
+
 #define SIGMA 0.000001f
 
 int8_t PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min,
                 const PID_Params_t *param) {
   if (pid == NULL) return -1;
+                  
+  if (!isfinite(param->kp)) return -1;
+  if (!isfinite(param->ki)) return -1;
+  if (!isfinite(param->kd)) return -1;
+  if (!isfinite(param->i_limit)) return -1;
+  if (!isfinite(param->out_limit)) return -1;
+  pid->param = param;
 
   if (isfinite(dt_min))
     pid->dt_min = dt_min;
-  else
-    return -1;
-
-  if (isfinite(param->kp))
-    pid->kp = param->kp;
-  else
-    return -1;
-
-  if (isfinite(param->ki))
-    pid->ki = param->ki;
-  else
-    return -1;
-
-  if (isfinite(param->kd))
-    pid->kd = param->kd;
-  else
-    return -1;
-
-  if (isfinite(param->i_limit))
-    pid->i_limit = param->i_limit;
-  else
-    return -1;
-
-  if (isfinite(param->out_limit))
-    pid->out_limit = param->out_limit;
   else
     return -1;
 
@@ -83,30 +67,30 @@ float PID_Calc(PID_t *pid, float sp, float val, float val_dot, float dt) {
   if (!isfinite(d)) d = 0.0f;
 
   /* calculate PD output */
-  float output = (error * pid->kp) + (d * pid->kd);
+  float output = (error * pid->param->kp) + (d * pid->param->kd);
 
-  if (pid->ki > SIGMA) {
+  if (pid->param->ki > SIGMA) {
     // Calculate the error i and check for saturation
     i = pid->i + (error * dt);
 
     /* check for saturation */
     if (isfinite(i)) {
-      if ((pid->out_limit < SIGMA ||
-           (fabsf(output + (i * pid->ki)) <= pid->out_limit)) &&
-          fabsf(i) <= pid->i_limit) {
+      if ((pid->param->out_limit < SIGMA ||
+           (fabsf(output + (i * pid->param->ki)) <= pid->param->out_limit)) &&
+          fabsf(i) <= pid->param->i_limit) {
         /* not saturated, use new i value */
         pid->i = i;
       }
     }
 
     /* add I component to output */
-    output += pid->i * pid->ki;
+    output += pid->i * pid->param->ki;
   }
 
   /* limit output */
   if (isfinite(output)) {
-    if (pid->out_limit > SIGMA) {
-      output = AbsClip(output, pid->out_limit);
+    if (pid->param->out_limit > SIGMA) {
+      output = AbsClip(output, pid->param->out_limit);
     }
     pid->out_last = output;
   }

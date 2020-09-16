@@ -29,25 +29,22 @@ typedef enum {
 } PID_Mode_t;
 
 typedef struct {
-  PID_Mode_t mode;
-  float dt_min;
-  float kp;
-  float ki;
-  float kd;
-  float i;
-  float i_limit;
-  float out_limit;
-  float err_last;
-  float out_last;
-} PID_t;
-
-typedef struct {
   float kp;
   float ki;
   float kd;
   float i_limit;
   float out_limit;
 } PID_Params_t;
+
+typedef struct {
+  PID_Mode_t mode;
+  const PID_Params_t *param;
+  
+  float dt_min;
+  float i;
+  float err_last;
+  float out_last;
+} PID_t;
 
 int8_t PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min,
                 const PID_Params_t *param);
