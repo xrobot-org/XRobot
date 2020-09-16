@@ -46,9 +46,8 @@ void Task_CtrlGimbal(void *argument) {
     /* Task body */
     tick += delay_tick;
 
-    uint32_t flag = SIGNAL_CAN_MOTOR_RECV;
-    if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) ==
-        osFlagsErrorTimeout) {
+    const uint32_t flag = SIGNAL_CAN_MOTOR_RECV;
+    if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != flag) {
       CAN_Motor_ControlGimbal(0.f, 0.f);
 
     } else {
