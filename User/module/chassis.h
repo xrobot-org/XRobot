@@ -32,7 +32,7 @@ typedef enum {
   CHASSIS_TYPE_DRONE, /* 底盘为无人机 */
 } Chassis_Type_t;
 
-/* 地盘参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
+/* 底盘参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
   Chassis_Type_t type; /* 底盘类型，底盘的机械设计和轮子选型 */
   const PID_Params_t *motor_pid_param; /* 轮子控制PID的参数 */
@@ -40,7 +40,7 @@ typedef struct {
   float low_pass_cutoff_freq; /* 低通滤波器截止频率 */
 } Chassis_Params_t;
 
-/* 运行的主结构体，所有这个文件里的函数都在操作这个结构体
+/* 运行的主结构体，所有这个文件里的函数都在操作这个结构体。
   包含了初始化参数，中间变量，输出变量。
 */
 typedef struct {
@@ -48,8 +48,8 @@ typedef struct {
 
   /* 模块通用 */
 
-  /* TODO: 考虑放到Control中实时检测dt */
-  float dt_sec; /* 模块运行时间周期，以秒为单位，调用Chassis_UpdateFeedback的周期 */
+  /* TODO: 考虑放到Chassis_Control中实时检测dt */
+  float dt_sec; /* 调用Chassis_UpdateFeedback的周期，以秒为单位， */
   CMD_Chassis_Mode_t mode; /* 底盘模式 */
 
   /* 底盘设计 */
