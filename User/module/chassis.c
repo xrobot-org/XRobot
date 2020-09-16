@@ -1,6 +1,5 @@
 /*
-        底盘模组
-
+  底盘模组
 */
 
 /* Includes ------------------------------------------------------------------*/
@@ -64,27 +63,27 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec) {
       mixer_mode = MIXER_MECANUM;
       break;
 
-    case CHASSIS_MODE_PARLFIX4:
+    case CHASSIS_TYPE_PARLFIX4:
       c->num_wheel = 4;
       mixer_mode = MIXER_PARLFIX4;
       break;
 
-    case CHASSIS_MODE_PARLFIX2:
+    case CHASSIS_TYPE_PARLFIX2:
       c->num_wheel = 2;
       mixer_mode = MIXER_PARLFIX2;
       break;
 
-    case CHASSIS_MODE_OMNI_CROSS:
+    case CHASSIS_TYPE_OMNI_CROSS:
       c->num_wheel = 4;
       mixer_mode = MIXER_OMNICROSS;
       break;
 
-    case CHASSIS_MODE_OMNI_PLUS:
+    case CHASSIS_TYPE_OMNI_PLUS:
       c->num_wheel = 4;
       mixer_mode = MIXER_OMNIPLUS;
       break;
 
-    case CHASSIS_MODE_DRONE:
+    case CHASSIS_TYPE_DRONE:
       // onboard sdk.
       return CHASSIS_ERR_TYPE;
   }

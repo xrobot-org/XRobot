@@ -1,3 +1,7 @@
+/*
+  底盘模组
+*/
+
 #pragma once
 
 #ifdef __cplusplus
@@ -19,21 +23,20 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* Exported types ------------------------------------------------------------*/
-/*
-        CHASSIS_TYPE_MECANUM: For infantry, hero and engineer.
-        CHASSIS_MODE_PARLFIX4: For sentry.
-        CHASSIS_MODE_PARLFIX2: For sentry.
-        CHASSIS_MODE_OMNI_CROSS: Not implemented. Saved for future.
-        CHASSIS_MODE_OMNI_PLUS: Not implemented. Saved for future.
-        CHASSIS_MODE_DRONE: For drone.
-*/
+/* CHASSIS_TYPE_MECANUM: For infantry, hero and engineer. */
+/* CHASSIS_TYPE_PARLFIX4: For sentry. */
+/* CHASSIS_TYPE_PARLFIX2: For sentry. */
+/* CHASSIS_TYPE_OMNI_CROSS: Not implemented. Saved for future. */
+/* CHASSIS_TYPE_OMNI_PLUS: Not implemented. Saved for future. */
+/* CHASSIS_TYPE_DRONE: For drone. */
+
 typedef enum {
   CHASSIS_TYPE_MECANUM,
-  CHASSIS_MODE_PARLFIX4,
-  CHASSIS_MODE_PARLFIX2,
-  CHASSIS_MODE_OMNI_CROSS,
-  CHASSIS_MODE_OMNI_PLUS,
-  CHASSIS_MODE_DRONE,
+  CHASSIS_TYPE_PARLFIX4,
+  CHASSIS_TYPE_PARLFIX2,
+  CHASSIS_TYPE_OMNI_CROSS,
+  CHASSIS_TYPE_OMNI_PLUS,
+  CHASSIS_TYPE_DRONE,
 } Chassis_Type_t;
 
 typedef struct {

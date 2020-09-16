@@ -1,3 +1,7 @@
+/*
+  射击模组
+*/
+
 #pragma once
 
 #ifdef __cplusplus

@@ -1,3 +1,7 @@
+/*
+  云台模组
+*/
+
 #pragma once
 
 #ifdef __cplusplus

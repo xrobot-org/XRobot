@@ -1,7 +1,7 @@
 /*
-        裁判系统抽象。
-
+  裁判系统抽象。
 */
+
 #pragma once
 
 #ifdef __cplusplus
