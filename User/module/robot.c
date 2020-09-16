@@ -142,6 +142,10 @@ static const Robot_Config_t cfg_infantry = {
                             .fric = 100.f,
                             .trig = 100.f,
                         },
+
+                    .bullet_speed_scaler = 1.f,
+                    .bullet_speed_bias = 1.f,
+                    .num_trig_tooth = 8.f,
                 }, /* shoot */
         },
 }; /* cfg_infantry */
