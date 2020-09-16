@@ -52,7 +52,7 @@ static const Robot_Config_t cfg_infantry = {
                             .i_limit = 0.5,
                             .out_limit = 0.5,
                         },
-                    .low_pass_cutoff = 100.f,
+                    .low_pass_cutoff = -1.f,
                 }, /* chassis */
 
             .gimbal =
@@ -93,22 +93,22 @@ static const Robot_Config_t cfg_infantry = {
                             },
                             {
                                 /* GIMBAL_PID_REL_YAW */
-                                .kp = 0.5,
-                                .ki = 0.5,
-                                .kd = 0.5,
+                                .kp = 0.2,
+                                .ki = 0.1,
+                                .kd = 0.1,
                                 .i_limit = 0.5,
                                 .out_limit = 0.5,
                             },
                             {
                                 /* GIMBAL_PID_REL_PIT, */
-                                .kp = 0.5,
-                                .ki = 0.5,
-                                .kd = 0.5,
+                                .kp = 0.2,
+                                .ki = 0.1,
+                                .kd = 0.1,
                                 .i_limit = 0.5,
                                 .out_limit = 0.5,
                             },
                         }, /* pid */
-                    .low_pass_cutoff = 100.f,
+                    .low_pass_cutoff = -1.f,
                 }, /* gimbal */
 
             .shoot =
@@ -139,8 +139,8 @@ static const Robot_Config_t cfg_infantry = {
 
                     .low_pass_cutoff =
                         {
-                            .fric = 100.f,
-                            .trig = 100.f,
+                            .fric = -1.f,
+                            .trig = -1.f,
                         },
 
                     .bullet_speed_scaler = 1.f,
