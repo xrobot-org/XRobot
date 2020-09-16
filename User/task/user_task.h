@@ -12,7 +12,7 @@ extern "C" {
 #include "task.h"
 
 /* Exported constants --------------------------------------------------------*/
-/* 所有任务都要define一个“任务运行频率”和“初始化延时”。 */
+/* 所有任务都要define一个“任务运行频率”和“初始化延时” */
 #define TASK_FREQ_HZ_COMMAND (80u)
 #define TASK_FREQ_HZ_CTRL_CHASSIS (50u)
 #define TASK_FREQ_HZ_CTRL_GIMBAL (50u)
