@@ -66,7 +66,7 @@ static const Robot_Config_t cfg_infantry = {
                 .pid =
                     {
                         {
-                            /* GIMBAL_PID_YAW_IN */
+                            /* GIMBAL_PID_YAW_IN_IDX */
                             .kp = 0.5f,
                             .ki = 0.5f,
                             .kd = 0.5f,
@@ -74,7 +74,7 @@ static const Robot_Config_t cfg_infantry = {
                             .out_limit = 0.5f,
                         },
                         {
-                            /* GIMBAL_PID_YAW_OUT */
+                            /* GIMBAL_PID_YAW_OUT_IDX */
                             .kp = 0.5f,
                             .ki = 0.5f,
                             .kd = 0.5f,
@@ -82,7 +82,7 @@ static const Robot_Config_t cfg_infantry = {
                             .out_limit = 0.5f,
                         },
                         {
-                            /* GIMBAL_PID_PIT_IN */
+                            /* GIMBAL_PID_PIT_IN_IDX */
                             .kp = 0.5f,
                             .ki = 0.5f,
                             .kd = 0.5f,
@@ -90,7 +90,7 @@ static const Robot_Config_t cfg_infantry = {
                             .out_limit = 0.5f,
                         },
                         {
-                            /* GIMBAL_PID_PIT_OUT */
+                            /* GIMBAL_PID_PIT_OUT_IDX */
                             .kp = 0.5f,
                             .ki = 0.5f,
                             .kd = 0.5f,
@@ -98,7 +98,7 @@ static const Robot_Config_t cfg_infantry = {
                             .out_limit = 0.5f,
                         },
                         {
-                            /* GIMBAL_PID_REL_YAW */
+                            /* GIMBAL_PID_REL_YAW_IDX */
                             .kp = 0.2f,
                             .ki = 0.1f,
                             .kd = 0.1f,
@@ -106,7 +106,7 @@ static const Robot_Config_t cfg_infantry = {
                             .out_limit = 0.5f,
                         },
                         {
-                            /* GIMBAL_PID_REL_PIT, */
+                            /* GIMBAL_PID_REL_PIT_IDX, */
                             .kp = 0.2f,
                             .ki = 0.1f,
                             .kd = 0.1f,

@@ -62,8 +62,8 @@ void Task_CtrlGimbal(void *argument) {
       osKernelLock();
       Gimbal_UpdateFeedback(&gimbal, can);
       Gimbal_Control(&gimbal, &gimbal_ctrl);
-      CAN_Motor_ControlGimbal(gimbal.out[GIMBAL_ACTR_YAW],
-                              gimbal.out[GIMBAL_ACTR_PIT]);
+      CAN_Motor_ControlGimbal(gimbal.out[GIMBAL_ACTR_YAW_IDX],
+                              gimbal.out[GIMBAL_ACTR_PIT_IDX]);
       osKernelUnlock();
 
       osDelayUntil(tick);

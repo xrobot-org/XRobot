@@ -58,9 +58,9 @@ void Task_CtrlShoot(void *argument) {
       osKernelLock();
       Shoot_UpdateFeedback(&shoot, can);
       Shoot_Control(&shoot, &shoot_ctrl);
-      CAN_Motor_ControlShoot(shoot.out[SHOOT_ACTR_FRIC1],
-                             shoot.out[SHOOT_ACTR_FRIC2],
-                             shoot.out[SHOOT_ACTR_TRIG]);
+      CAN_Motor_ControlShoot(shoot.out[SHOOT_ACTR_FRIC1_IDX],
+                             shoot.out[SHOOT_ACTR_FRIC2_IDX],
+                             shoot.out[SHOOT_ACTR_TRIG_IDX]);
       osKernelUnlock();
 
       osDelayUntil(tick);
