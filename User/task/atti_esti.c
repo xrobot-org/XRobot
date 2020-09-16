@@ -24,10 +24,10 @@
 
 #ifdef DEBUG
 BMI088_t bmi088;
-IST8310_t ist8310;  // TODO: Add static when release
+IST8310_t ist8310;
 
 AHRS_t gimbal_ahrs;
-AHRS_Eulr_t eulr_to_send;  // TODO: Add static when release
+AHRS_Eulr_t eulr_to_send;
 
 PID_t imu_temp_ctrl_pid;
 const PID_Params_t imu_temp_ctrl_pid_param = {
@@ -39,10 +39,10 @@ const PID_Params_t imu_temp_ctrl_pid_param = {
 };
 #else
 static BMI088_t bmi088;
-static IST8310_t ist8310;  // TODO: Add static when release
+static IST8310_t ist8310;
 
 static AHRS_t gimbal_ahrs;
-static AHRS_Eulr_t eulr_to_send;  // TODO: Add static when release
+static AHRS_Eulr_t eulr_to_send;
 
 static PID_t imu_temp_ctrl_pid;
 static const PID_Params_t imu_temp_ctrl_pid_param = {
