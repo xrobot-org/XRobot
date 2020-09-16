@@ -46,10 +46,16 @@ typedef struct {
       float low;
     } pitch;
   } limit;
+  
+  /* TODO: 能使用命令行修改 */
+  struct {
+    float yaw;
+    float pit;
+  } encoder_center;
 } Gimbal_Params_t;
 
 typedef struct {
-  Gimbal_Params_t *param;
+  const Gimbal_Params_t *param;
 
   /* common */
   float dt_sec;

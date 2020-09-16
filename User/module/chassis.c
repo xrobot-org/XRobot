@@ -49,9 +49,11 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_Chassis_Mode_t mode) {
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec) {
   if (c == NULL) return CHASSIS_ERR_NULL;
 
+  c->param = param;
   c->dt_sec = dt_sec;
 
   c->mode = CHASSIS_MODE_RELAX;
+  
   Mixer_Mode_t mixer_mode;
   switch (param->type) {
     case CHASSIS_TYPE_MECANUM:

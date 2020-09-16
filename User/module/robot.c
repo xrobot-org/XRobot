@@ -109,6 +109,12 @@ static const Robot_Config_t cfg_infantry = {
                             },
                         }, /* pid */
                     .low_pass_cutoff = -1.f,
+                    .encoder_center =
+                        {
+                            .yaw = 3.f,
+                            .pit = 3.f,
+                        },
+
                 }, /* gimbal */
 
             .shoot =

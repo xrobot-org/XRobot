@@ -47,8 +47,10 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
 int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float dt_sec) {
   if (s == NULL) return -1;
 
-  s->mode = SHOOT_MODE_RELAX;
+  s->param = param;
   s->dt_sec = dt_sec;
+  
+  s->mode = SHOOT_MODE_RELAX;
 
   s->trig_timer_id = osTimerNew(TrigTimerCallback, osTimerPeriodic, s, NULL);
 
