@@ -191,7 +191,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
       case CHASSIS_MODE_ROTOR:
       case CHASSIS_MODE_INDENPENDENT:
         c->out[i] = PID_Calc(&(c->pid.motor[i]), c->set_point.motor_rpm[i],
-                             c->set_point.motor_rpm[i], 0.f, c->dt_sec);
+                             c->feedback.motor_rpm[i], 0.f, c->dt_sec);
         break;
 
       case CHASSIS_MODE_OPEN:
