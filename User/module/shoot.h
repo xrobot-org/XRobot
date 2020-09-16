@@ -44,7 +44,7 @@ typedef struct {
   const Shoot_Params_t *param;
 
   /* common */
-  float dt_sec;
+  float dt_sec; /* TODO: 考虑放到Control中实时检测dt */
   CMD_Shoot_Mode_t mode;
   osTimerId_t trig_timer_id;
 

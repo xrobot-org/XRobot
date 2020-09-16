@@ -58,7 +58,7 @@ typedef struct {
   const Gimbal_Params_t *param;
 
   /* common */
-  float dt_sec;
+  float dt_sec; /* TODO: 考虑放到Control中实时检测dt */
   CMD_Gimbal_Mode_t mode;
 
   struct {
