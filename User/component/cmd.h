@@ -31,8 +31,6 @@ typedef enum {
 typedef enum {
   /* No force applied. */
   GIMBAL_MODE_RELAX,
-  /* . */
-  GIMBAL_MODE_INIT,
   /* Follow IMU data. */
   GIMBAL_MODE_ABSOLUTE,
   /* Follow encoder data. */

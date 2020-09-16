@@ -1,8 +1,8 @@
 /*
   云台控制任务
-  
+
   控制云台行为。
-  
+
   从CAN总线接收底盘电机反馈，从IMU接收欧拉角和角速度，
   根据接收到的控制命令，控制电机输出。
 */
@@ -20,9 +20,11 @@ static CAN_t *can;
 
 #ifdef DEBUG
 CMD_Gimbal_Ctrl_t gimbal_ctrl;
+Gimbal_Feedback gimbal_feedback;
 Gimbal_t gimbal;
 #else
 static CMD_Gimbal_Ctrl_t gimbal_ctrl;
+static Gimbal_Feedback gimbal_feedback;
 static Gimbal_t gimbal;
 #endif
 
@@ -55,13 +57,16 @@ void Task_CtrlGimbal(void *argument) {
       CAN_Motor_ControlGimbal(0.f, 0.f);
 
     } else {
-      osMessageQueueGet(task_param->msgq.gimbal_eulr_imu, &(gimbal.feedback.eulr.imu), NULL, 0);
-      osMessageQueueGet(task_param->msgq.gimbal_gyro, &(gimbal.feedback.gyro), NULL, 0);
+      osMessageQueueGet(task_param->msgq.gimbal_eulr_imu,
+                        &(gimbal_feedback.eulr.imu), NULL, 0);
+      osMessageQueueGet(task_param->msgq.gimbal_gyro, &(gimbal_feedback.gyro),
+                        NULL, 0);
       osMessageQueueGet(task_param->msgq.cmd.gimbal, &gimbal_ctrl, NULL, 0);
 
+      Gimbal_CANtoFeedback(&gimbal_feedback, can);
+
       osKernelLock();
-      Gimbal_UpdateFeedback(&gimbal, can);
-      Gimbal_Control(&gimbal, &gimbal_ctrl);
+      Gimbal_Control(&gimbal, &gimbal_feedback, &gimbal_ctrl);
       CAN_Motor_ControlGimbal(gimbal.out[GIMBAL_ACTR_YAW_IDX],
                               gimbal.out[GIMBAL_ACTR_PIT_IDX]);
       osKernelUnlock();

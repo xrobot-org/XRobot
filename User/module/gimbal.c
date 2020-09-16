@@ -14,31 +14,10 @@
 /* Private function  ---------------------------------------------------------*/
 static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_Gimbal_Mode_t mode) {
   if (g == NULL) return -1;
-
   if (mode == g->mode) return GIMBAL_OK;
-
-  if (g->mode != GIMBAL_MODE_INIT) g->mode = mode;
+  g->mode = mode;
 
   return 0;
-}
-
-static bool Gimbal_Steady(Gimbal_t *g) {
-  static uint8_t steady;
-
-  bool con1 = g->feedback.gyro.x < 0.1f;
-  bool con2 = g->feedback.gyro.y < 0.1f;
-  bool con3 = g->feedback.gyro.z < 0.1f;
-
-  if (con1 && con2 && con3)
-    steady++;
-  else {
-    return false;
-  }
-  if (steady > 20) {
-    steady = 0;
-    return true;
-  }
-  return false;
 }
 
 /* Exported functions --------------------------------------------------------*/
@@ -47,8 +26,8 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec) {
 
   g->param = param;
   g->dt_sec = dt_sec;
-  
-  g->mode = GIMBAL_MODE_INIT;
+
+  g->mode = GIMBAL_MODE_RELAX;
 
   PID_Init(&(g->pid[GIMBAL_PID_YAW_IN_IDX]), PID_MODE_SET_D, g->dt_sec,
            &(g->param->pid[GIMBAL_PID_YAW_IN_IDX]));
@@ -58,7 +37,7 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec) {
            &(g->param->pid[GIMBAL_PID_PIT_IN_IDX]));
   PID_Init(&(g->pid[GIMBAL_PID_PIT_OUT_IDX]), PID_MODE_NO_D, g->dt_sec,
            &(g->param->pid[GIMBAL_PID_PIT_OUT_IDX]));
-  
+
   PID_Init(&(g->pid[GIMBAL_PID_REL_YAW_IDX]), PID_MODE_NO_D, g->dt_sec,
            &(g->param->pid[GIMBAL_PID_REL_YAW_IDX]));
   PID_Init(&(g->pid[GIMBAL_PID_REL_PIT_IDX]), PID_MODE_NO_D, g->dt_sec,
@@ -71,22 +50,21 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec) {
   return 0;
 }
 
-int8_t Gimbal_UpdateFeedback(Gimbal_t *g, CAN_t *can) {
-  if (g == NULL) return -1;
-
+int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback, CAN_t *can) {
+  if (gimbal_feedback == NULL) return -1;
   if (can == NULL) return -1;
 
-  g->feedback.eulr.encoder.yaw =
+  gimbal_feedback->eulr.encoder.yaw =
       can->gimbal_motor_feedback[CAN_MOTOR_GIMBAL_YAW].rotor_angle;
-  g->feedback.eulr.encoder.pit =
+  gimbal_feedback->eulr.encoder.pit =
       can->gimbal_motor_feedback[CAN_MOTOR_GIMBAL_PIT].rotor_angle;
 
   return 0;
 }
 
-int8_t Gimbal_Control(Gimbal_t *g, CMD_Gimbal_Ctrl_t *g_ctrl) {
+int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
+                      CMD_Gimbal_Ctrl_t *g_ctrl) {
   if (g == NULL) return -1;
-
   if (g_ctrl == NULL) return -1;
 
   Gimbal_SetMode(g, g_ctrl->mode);
@@ -103,21 +81,17 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_Gimbal_Ctrl_t *g_ctrl) {
     case GIMBAL_MODE_ABSOLUTE:
       motor_gyro_set =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_IN_IDX]), g->set_point.eulr.yaw,
-                   g->feedback.eulr.imu.yaw, g->feedback.gyro.z, g->dt_sec);
+                   fb->eulr.imu.yaw, fb->gyro.z, g->dt_sec);
       g->out[GIMBAL_ACTR_YAW_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_OUT_IDX]), motor_gyro_set,
-                   g->feedback.gyro.z, 0.f, g->dt_sec);
+                   fb->gyro.z, 0.f, g->dt_sec);
 
       motor_gyro_set =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_IN_IDX]), g->set_point.eulr.pit,
-                   g->feedback.eulr.imu.pit, g->feedback.gyro.x, g->dt_sec);
+                   fb->eulr.imu.pit, fb->gyro.x, g->dt_sec);
       g->out[GIMBAL_ACTR_PIT_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_OUT_IDX]), motor_gyro_set,
-                   g->feedback.gyro.x, 0.f, g->dt_sec);
-      break;
-
-    case GIMBAL_MODE_INIT:
-      if (Gimbal_Steady(g)) g->mode = GIMBAL_MODE_RELAX;
+                   fb->gyro.x, 0.f, g->dt_sec);
       break;
 
     case GIMBAL_MODE_FIX:
@@ -128,10 +102,10 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_Gimbal_Ctrl_t *g_ctrl) {
     case GIMBAL_MODE_RELATIVE:
       g->out[GIMBAL_ACTR_YAW_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_REL_YAW_IDX]), g->set_point.eulr.yaw,
-                   g->feedback.eulr.encoder.yaw, g->feedback.gyro.z, g->dt_sec);
+                   fb->eulr.encoder.yaw, fb->gyro.z, g->dt_sec);
       g->out[GIMBAL_ACTR_PIT_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_REL_PIT_IDX]), g->set_point.eulr.pit,
-                   g->feedback.eulr.encoder.pit, g->feedback.gyro.x, g->dt_sec);
+                   fb->eulr.encoder.pit, fb->gyro.x, g->dt_sec);
       break;
   }
   /* Filter output. */
