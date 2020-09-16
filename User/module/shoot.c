@@ -8,10 +8,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define SHOOT_BULLET_SPEED_SCALER (2.f)
-#define SHOOT_BULLET_SPEED_BIAS (1.f)
 
-#define SHOOT_NUM_TRIG_TOOTH (8u)
 
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
@@ -19,7 +16,7 @@
 static void TrigTimerCallback(void *arg) {
   Shoot_t *s = (Shoot_t *)arg;
 
-  s->set.trig_angle += 2.f * M_PI / SHOOT_NUM_TRIG_TOOTH;
+  s->set_point.trig_angle += 2.f * M_PI / s->param->num_trig_tooth;
 }
 
 static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
@@ -96,9 +93,9 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
     s_ctrl->shoot_freq_hz = 0.f;
   }
 
-  s->set.fric_rpm[0] = SHOOT_BULLET_SPEED_SCALER * s_ctrl->bullet_speed +
-                       SHOOT_BULLET_SPEED_BIAS;
-  s->set.fric_rpm[1] = -s->set.fric_rpm[0];
+  s->set_point.fric_rpm[0] = s->param->bullet_speed_scaler * s_ctrl->bullet_speed +
+                             s->param->bullet_speed_bias;
+  s->set_point.fric_rpm[1] = -s->set_point.fric_rpm[0];
 
   uint32_t period_ms = 1000u / (uint32_t)s_ctrl->shoot_freq_hz;
   if (!osTimerIsRunning(s->trig_timer_id))

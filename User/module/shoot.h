@@ -34,6 +34,10 @@ typedef struct {
     float fric;
     float trig;
   } low_pass_cutoff;
+
+  float bullet_speed_scaler;
+  float bullet_speed_bias;
+  float num_trig_tooth;
 } Shoot_Params_t;
 
 typedef struct {
