@@ -17,7 +17,7 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 #define CHASSIS_OK (0)        /* 运行正常 */
-#define CHASSIS_ERR (-1)        /* 运行时发现了其他错误 */
+#define CHASSIS_ERR (-1)      /* 运行时发现了其他错误 */
 #define CHASSIS_ERR_NULL (-2) /* 运行时发现NULL指针 */
 #define CHASSIS_ERR_MODE (-3) /* 运行时配置了错误的CMD_Chassis_Mode_t */
 #define CHASSIS_ERR_TYPE (-4) /* 运行时配置了错误的Chassis_Type_t */
@@ -46,7 +46,7 @@ typedef struct {
 */
 typedef struct {
   const Chassis_Params_t
-      *param; /* 底盘的参数，初始化运行时都要使用，用Chassis_Init设定 */
+      *param; /* 底盘的参数，用Chassis_Init设定 */
 
   /* 模块通用 */
 
@@ -81,10 +81,6 @@ typedef struct {
 } Chassis_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-
-/* 运行的主结构体，所有这个文件里的函数都在操作这个结构体
-  包含了初始化参数，中间变量，输出变量。
-*/
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec);
 int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_t *can);
 int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl);
