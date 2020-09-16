@@ -62,8 +62,6 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec) {
     LowPassFilter2p_Init(&(g->filter[i]), 1.f / g->dt_sec,
                          param->low_pass_cutoff);
 
-  g->feedback.eulr.imu = BSP_Malloc(sizeof(AHRS_Eulr_t));
-
   return 0;
 }
 
@@ -99,14 +97,14 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_Gimbal_Ctrl_t *g_ctrl) {
     case GIMBAL_MODE_ABSOLUTE:
       motor_gyro_set =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_IN]), g->set_point.eulr.yaw,
-                   g->feedback.eulr.imu->yaw, g->feedback.gyro.z, g->dt_sec);
+                   g->feedback.eulr.imu.yaw, g->feedback.gyro.z, g->dt_sec);
       g->out[GIMBAL_ACTR_YAW] =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_OUT]), motor_gyro_set,
                    g->feedback.gyro.z, 0.f, g->dt_sec);
 
       motor_gyro_set =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_IN]), g->set_point.eulr.pit,
-                   g->feedback.eulr.imu->pit, g->feedback.gyro.x, g->dt_sec);
+                   g->feedback.eulr.imu.pit, g->feedback.gyro.x, g->dt_sec);
       g->out[GIMBAL_ACTR_PIT] =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_OUT]), motor_gyro_set,
                    g->feedback.gyro.x, 0.f, g->dt_sec);

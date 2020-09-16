@@ -59,7 +59,7 @@ typedef struct {
     AHRS_Gyro_t gyro;
 
     struct {
-      AHRS_Eulr_t *imu;
+      AHRS_Eulr_t imu;
       AHRS_Eulr_t encoder;
     } eulr;
   } feedback;
