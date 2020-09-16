@@ -68,13 +68,13 @@ typedef struct {
   } set_point;  /* PID计算的目标值 */
 
   struct {
-    PID_t *motor; /* 控制轮子电机用的PID */
+    PID_t *motor; /* 控制轮子电机用的PID的动态数组 */
     PID_t follow; /* 跟随云台用的PID */
   } pid; /* 反馈控制用的PID */
 
   LowPassFilter2p_t *filter; /* 电机输出过滤器 */
 
-  float *out; /* 电机最终的输出值 */
+  float *out; /* 电机最终的输出值的动态数组 */
 
 } Chassis_t;
 
