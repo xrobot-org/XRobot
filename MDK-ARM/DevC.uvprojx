@@ -338,7 +338,7 @@
               <MiscControls>-Wall -Wextra</MiscControls>
               <Define>USE_HAL_DRIVER,DEV_BOARD_C,STM32F407xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;  ../USB_DEVICE/App;  ../USB_DEVICE/Target;  ../Drivers/STM32F4xx_HAL_Driver/Inc;  ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;  ../Middlewares/Third_Party/FreeRTOS/Source/include;  ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;  ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;  ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;  ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;  ../Drivers/CMSIS/Include;  ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;  ..\Drivers\CMSIS\DSP\Include;  ..\User</IncludePath>
+              <IncludePath>../Core/Inc;   ../USB_DEVICE/App;   ../USB_DEVICE/Target;   ../Drivers/STM32F4xx_HAL_Driver/Inc;   ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;   ../Middlewares/Third_Party/FreeRTOS/Source/include;   ../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;   ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;   ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;   ../Drivers/CMSIS/Device/ST/STM32F4xx/Include;   ../Drivers/CMSIS/Include;   ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;   ..\Drivers\CMSIS\DSP\Include;   ..\User</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
