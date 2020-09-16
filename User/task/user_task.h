@@ -84,16 +84,28 @@ typedef struct {
   } stack_water_mark;
 
   struct {
-    UBaseType_t cli;
-    UBaseType_t command;
-    UBaseType_t ctrl_chassis;
-    UBaseType_t ctrl_gimbal;
-    UBaseType_t ctrl_shoot;
-    UBaseType_t info;
-    UBaseType_t monitor;
-    UBaseType_t atti_esti;
-    UBaseType_t referee;
-  } begin;
+    float cli;
+    float command;
+    float ctrl_chassis;
+    float ctrl_gimbal;
+    float ctrl_shoot;
+    float info;
+    float monitor;
+    float atti_esti;
+    float referee;
+  } freq;
+  
+  struct {
+    float cli;
+    float command;
+    float ctrl_chassis;
+    float ctrl_gimbal;
+    float ctrl_shoot;
+    float info;
+    float monitor;
+    float atti_esti;
+    float referee;
+  } last_up_time;
 #endif
 
 } Task_Param_t;
