@@ -47,12 +47,12 @@ typedef struct {
   struct {
     float fric_rpm[2];
     float trig_angle;
-  } fb;
+  } feedback;
 
   struct {
     float fric_rpm[2];
     float trig_angle;
-  } set;
+  } set_point;
 
   struct {
     PID_t fric[2];

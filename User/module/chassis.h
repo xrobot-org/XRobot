@@ -60,11 +60,11 @@ typedef struct {
   struct {
     float gimbal_yaw_angle;
     float *motor_rpm;
-  } fb;
+  } feedback;
 
   struct {
     float *motor_rpm;
-  } set;
+  } set_point;
 
   struct {
     PID_t *motor;

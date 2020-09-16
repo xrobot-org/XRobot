@@ -104,24 +104,24 @@ static CAN_t *gcan;
 static bool inited = false;
 
 /* Private function  ---------------------------------------------------------*/
-static void CAN_Motor_Decode(CAN_MotorFeedback_t *fb, const uint8_t *raw) {
+static void CAN_Motor_Decode(CAN_MotorFeedback_t *feedback, const uint8_t *raw) {
   uint16_t raw_angle = (uint16_t)((raw[0] << 8) | raw[1]);
 
-  fb->rotor_angle = raw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * M_PI;
-  fb->rotor_speed = (int16_t)((raw[2] << 8) | raw[3]);
-  fb->torque_current = (int16_t)((raw[4] << 8) | raw[5]);
-  fb->temp = raw[6];
+  feedback->rotor_angle = raw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.f * M_PI;
+  feedback->rotor_speed = (int16_t)((raw[2] << 8) | raw[3]);
+  feedback->torque_current = (int16_t)((raw[4] << 8) | raw[5]);
+  feedback->temp = raw[6];
 
   motor_received++;
 }
 
-static void CAN_UWB_Decode(CAN_UWBFeedback_t *fb, const uint8_t *raw) {
-  memcmp(&(fb->data), raw, 8);
+static void CAN_UWB_Decode(CAN_UWBFeedback_t *feedback, const uint8_t *raw) {
+  memcmp(&(feedback->data), raw, 8);
 }
 
-static void CAN_Cap_Decode(CAN_CapFeedback_t *fb, const uint8_t *raw) {
+static void CAN_Cap_Decode(CAN_CapFeedback_t *feedback, const uint8_t *raw) {
   // TODO
-  (void)fb;
+  (void)feedback;
   (void)raw;
 }
 
@@ -138,20 +138,20 @@ static void CAN_RxFifo0MsgPendingCallback(void) {
     case CAN_M3508_M3_ID:
     case CAN_M3508_M4_ID:
       index = rx_header.StdId - CAN_M3508_M1_ID;
-      CAN_Motor_Decode(&(gcan->chassis_motor_fb[index]), motor_rx_data);
+      CAN_Motor_Decode(&(gcan->chassis_motor_feedback[index]), motor_rx_data);
       break;
 
     case CAN_M3508_FRIC1_ID:
     case CAN_M3508_FRIC2_ID:
     case CAN_M2006_TRIG_ID:
       index = rx_header.StdId - CAN_M3508_FRIC1_ID;
-      CAN_Motor_Decode(&(gcan->shoot_motor_fb[index]), motor_rx_data);
+      CAN_Motor_Decode(&(gcan->shoot_motor_feedback[index]), motor_rx_data);
       break;
 
     case CAN_GM6020_YAW_ID:
     case CAN_GM6020_PIT_ID:
       index = rx_header.StdId - CAN_GM6020_YAW_ID;
-      CAN_Motor_Decode(&(gcan->gimbal_motor_fb[index]), motor_rx_data);
+      CAN_Motor_Decode(&(gcan->gimbal_motor_feedback[index]), motor_rx_data);
       break;
 
     case CAN_CAP_FB_ID_BASE:

@@ -62,11 +62,11 @@ typedef struct {
       AHRS_Eulr_t *imu;
       AHRS_Eulr_t encoder;
     } eulr;
-  } fb;
+  } feedback;
 
   struct {
     AHRS_Eulr_t eulr;
-  } set;
+  } set_point;
 
   PID_t pid[GIMBAL_PID_NUM];
 

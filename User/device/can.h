@@ -99,9 +99,9 @@ typedef struct {
   osThreadId_t uwb_alert;
   osThreadId_t cap_alert;
 
-  CAN_MotorFeedback_t chassis_motor_fb[CAN_MOTOR_CHASSIS_NUM];
-  CAN_MotorFeedback_t gimbal_motor_fb[CAN_MOTOR_GIMBAL_NUM];
-  CAN_MotorFeedback_t shoot_motor_fb[CAN_MOTORSHOOT_NUM];
+  CAN_MotorFeedback_t chassis_motor_feedback[CAN_MOTOR_CHASSIS_NUM];
+  CAN_MotorFeedback_t gimbal_motor_feedback[CAN_MOTOR_GIMBAL_NUM];
+  CAN_MotorFeedback_t shoot_motor_feedback[CAN_MOTORSHOOT_NUM];
 
   CAN_UWBFeedback_t uwb_feedback;
   CAN_CapFeedback_t cap_feedback;

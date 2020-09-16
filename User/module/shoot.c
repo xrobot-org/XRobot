@@ -76,11 +76,12 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_t *can) {
   if (can == NULL) return -1;
 
   for (uint8_t i = 0; i < 2; i++) {
-    s->fb.fric_rpm[i] =
-        can->shoot_motor_fb[CAN_MOTOR_SHOOT_FRIC1 + i].rotor_speed;
+    s->feedback.fric_rpm[i] =
+        can->shoot_motor_feedback[CAN_MOTOR_SHOOT_FRIC1 + i].rotor_speed;
   }
 
-  s->fb.trig_angle = can->shoot_motor_fb[CAN_MOTOR_SHOOT_TRIG].rotor_angle;
+  s->feedback.trig_angle =
+      can->shoot_motor_feedback[CAN_MOTOR_SHOOT_TRIG].rotor_angle;
 
   return 0;
 }
@@ -115,13 +116,14 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
     case SHOOT_MODE_SAFE:
     case SHOOT_MODE_STDBY:
     case SHOOT_MODE_FIRE:
-      s->out[0] = PID_Calc(&(s->pid.trig), s->set.trig_angle, s->fb.trig_angle,
-                           0.f, s->dt_sec);
+      s->out[0] = PID_Calc(&(s->pid.trig), s->set_point.trig_angle,
+                           s->feedback.trig_angle, 0.f, s->dt_sec);
       s->out[0] = LowPassFilter2p_Apply(&(s->filter.trig), s->out[0]);
 
       for (uint8_t i = 0; i < 2; i++) {
-        s->out[i + 1] = PID_Calc(&(s->pid.fric[i + 1]), s->set.fric_rpm[i + 1],
-                                 s->fb.fric_rpm[i + 1], 0.f, s->dt_sec);
+        s->out[i + 1] =
+            PID_Calc(&(s->pid.fric[i + 1]), s->set_point.fric_rpm[i + 1],
+                     s->feedback.fric_rpm[i + 1], 0.f, s->dt_sec);
         s->out[i + 1] =
             LowPassFilter2p_Apply(&(s->filter.fric[i + 1]), s->out[i + 1]);
       }

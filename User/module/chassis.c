@@ -84,12 +84,13 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec) {
       return CHASSIS_ERR_TYPE;
   }
 
-  c->fb.motor_rpm = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->fb.motor_rpm));
-  if (c->fb.motor_rpm == NULL) goto error1;
+  c->feedback.motor_rpm =
+      BSP_Malloc((size_t)c->num_wheel * sizeof(*c->feedback.motor_rpm));
+  if (c->feedback.motor_rpm == NULL) goto error1;
 
-  c->set.motor_rpm =
-      BSP_Malloc((size_t)c->num_wheel * sizeof(*c->set.motor_rpm));
-  if (c->set.motor_rpm == NULL) goto error2;
+  c->set_point.motor_rpm =
+      BSP_Malloc((size_t)c->num_wheel * sizeof(*c->set_point.motor_rpm));
+  if (c->set_point.motor_rpm == NULL) goto error2;
 
   c->pid.motor = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->pid.motor));
   if (c->pid.motor == NULL) goto error3;
@@ -119,9 +120,9 @@ error5:
 error4:
   BSP_Free(c->pid.motor);
 error3:
-  BSP_Free(c->set.motor_rpm);
+  BSP_Free(c->set_point.motor_rpm);
 error2:
-  BSP_Free(c->fb.motor_rpm);
+  BSP_Free(c->feedback.motor_rpm);
 error1:
   return CHASSIS_ERR_NULL;
 }
@@ -131,11 +132,11 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_t *can) {
 
   if (can == NULL) return CHASSIS_ERR_NULL;
 
-  c->fb.gimbal_yaw_angle =
-      can->gimbal_motor_fb[CAN_MOTOR_GIMBAL_YAW].rotor_angle;
+  c->feedback.gimbal_yaw_angle =
+      can->gimbal_motor_feedback[CAN_MOTOR_GIMBAL_YAW].rotor_angle;
 
   for (uint8_t i = 0; i < c->num_wheel; i++) {
-    c->fb.motor_rpm[i] = can->chassis_motor_fb[i].rotor_speed;
+    c->feedback.motor_rpm[i] = can->chassis_motor_feedback[i].rotor_speed;
   }
 
   return CHASSIS_OK;
@@ -155,8 +156,8 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
     c->move_vec.vy = 0.f;
 
   } else {
-    const float cos_beta = cosf(c->fb.gimbal_yaw_angle);
-    const float sin_beta = sinf(c->fb.gimbal_yaw_angle);
+    const float cos_beta = cosf(c->feedback.gimbal_yaw_angle);
+    const float sin_beta = sinf(c->feedback.gimbal_yaw_angle);
 
     c->move_vec.vx =
         cos_beta * c_ctrl->ctrl_v.vx - sin_beta * c_ctrl->ctrl_v.vy;
@@ -169,8 +170,8 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
     c->move_vec.wz = 0.f;
 
   } else if (c->mode == CHASSIS_MODE_FOLLOW_GIMBAL) {
-    c->move_vec.wz =
-        PID_Calc(&(c->pid.follow), 0, c->fb.gimbal_yaw_angle, 0.f, c->dt_sec);
+    c->move_vec.wz = PID_Calc(&(c->pid.follow), 0, c->feedback.gimbal_yaw_angle,
+                              0.f, c->dt_sec);
 
   } else if (c->mode == CHASSIS_MODE_ROTOR) {
     c->move_vec.wz = 0.8f;
@@ -178,7 +179,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
 
   /* move_vec -> motor_rpm_set. */
   Mixer_Apply(&(c->mixer), c->move_vec.vx, c->move_vec.vy, c->move_vec.wz,
-              c->set.motor_rpm, c->num_wheel);
+              c->set_point.motor_rpm, c->num_wheel);
 
   /* Compute output from setpiont. */
   for (uint8_t i = 0; i < 4; i++) {
@@ -187,12 +188,12 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
       case CHASSIS_MODE_FOLLOW_GIMBAL:
       case CHASSIS_MODE_ROTOR:
       case CHASSIS_MODE_INDENPENDENT:
-        c->out[i] = PID_Calc(&(c->pid.motor[i]), c->set.motor_rpm[i],
-                             c->set.motor_rpm[i], 0.f, c->dt_sec);
+        c->out[i] = PID_Calc(&(c->pid.motor[i]), c->set_point.motor_rpm[i],
+                             c->set_point.motor_rpm[i], 0.f, c->dt_sec);
         break;
 
       case CHASSIS_MODE_OPEN:
-        c->out[i] = c->set.motor_rpm[i];
+        c->out[i] = c->set_point.motor_rpm[i];
         break;
 
       case CHASSIS_MODE_RELAX:
