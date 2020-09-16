@@ -82,8 +82,9 @@ int8_t DR16_StartDmaRecv(DR16_t *dr16) {
   return DEVICE_ERR;
 }
 
-uint32_t DR16_WaitDmaCplt() {
-  return osThreadFlagsWait(SIGNAL_DR16_RAW_REDY, osFlagsWaitAll, osWaitForever);
+bool DR16_WaitDmaCplt(uint32_t timeout) {
+  return (osThreadFlagsWait(SIGNAL_DR16_RAW_REDY, osFlagsWaitAll, timeout) ==
+          SIGNAL_DR16_RAW_REDY);
 }
 
 int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc) {

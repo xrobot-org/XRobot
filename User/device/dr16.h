@@ -39,7 +39,7 @@ int8_t DR16_Init(DR16_t *dr16);
 int8_t DR16_Restart(void);
 
 int8_t DR16_StartDmaRecv(DR16_t *dr16);
-uint32_t DR16_WaitDmaCplt();
+bool DR16_WaitDmaCplt(uint32_t timeout);
 int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc);
 
 #ifdef __cplusplus

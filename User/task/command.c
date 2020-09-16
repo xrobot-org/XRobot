@@ -4,6 +4,8 @@
 */
 
 /* Includes ------------------------------------------------------------------*/
+#include <string.h>
+
 #include "device\dr16.h"
 #include "task\user_task.h"
 
@@ -26,9 +28,12 @@ static CMD_t cmd;
 void Task_Command(void *argument) {
   Task_Param_t *task_param = (Task_Param_t *)argument;
 
-  task_param->msgq.cmd.chassis = osMessageQueueNew(9u, sizeof(CMD_Chassis_Ctrl_t), NULL);
-  task_param->msgq.cmd.gimbal = osMessageQueueNew(9u, sizeof(CMD_Gimbal_Ctrl_t), NULL);
-  task_param->msgq.cmd.shoot = osMessageQueueNew(9u, sizeof(CMD_Shoot_Ctrl_t), NULL);
+  task_param->msgq.cmd.chassis =
+      osMessageQueueNew(9u, sizeof(CMD_Chassis_Ctrl_t), NULL);
+  task_param->msgq.cmd.gimbal =
+      osMessageQueueNew(9u, sizeof(CMD_Gimbal_Ctrl_t), NULL);
+  task_param->msgq.cmd.shoot =
+      osMessageQueueNew(9u, sizeof(CMD_Shoot_Ctrl_t), NULL);
 
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_COMMAND);
@@ -42,9 +47,12 @@ void Task_Command(void *argument) {
 #endif
     /* Task body */
     DR16_StartDmaRecv(&dr16);
-    DR16_WaitDmaCplt();
-    
-    DR16_ParseRC(&dr16, &rc);
+
+    if (DR16_WaitDmaCplt(200)) {
+      DR16_ParseRC(&dr16, &rc);
+    } else {
+      memset(&rc, 0, sizeof(CMD_RC_t));
+    }
 
     CMD_Parse(&rc, &cmd);
     osMessageQueuePut(task_param->msgq.cmd.chassis, &(cmd.chassis), 0, 0);
