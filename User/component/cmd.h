@@ -14,64 +14,50 @@ extern "C" {
 #include "ahrs.h"
 
 typedef enum {
-  /* No force applied. For all robot when power on. */
-  CHASSIS_MODE_RELAX,
-  /* Set to zero speed. Force applied. For all robot when break. */
-  CHASSIS_MODE_BREAK,
-  /* Follow gimbal by follow encoder. For infantry, hero and engineer. */
-  CHASSIS_MODE_FOLLOW_GIMBAL,
-  /* Constantly rotating. For infantry and hero. */
-  CHASSIS_MODE_ROTOR,
-  /* Run independently. For sentry and drone. */
-  CHASSIS_MODE_INDENPENDENT,
-  /* Direct apply force without pid control. For TEST only. */
-  CHASSIS_MODE_OPEN,
-} CMD_Chassis_Mode_t;
+  CHASSIS_MODE_RELAX, /* 放松模式，电机不输出。一般情况底盘初始化之后的模式 */
+  CHASSIS_MODE_BREAK, /* 刹车模式，电机闭环控制保持静止。用于机器人停止状态 */
+  CHASSIS_MODE_FOLLOW_GIMBAL, /* 通过闭环控制使车头方向跟随云台 */
+  CHASSIS_MODE_ROTOR, /* 小陀螺模式，通过闭环控制使底盘不停旋转 */
+  CHASSIS_MODE_INDENPENDENT, /* 独立模式。底盘运行不受云台影响 */
+  CHASSIS_MODE_OPEN, /* 开环模式。底盘运行不受PID控制，直接输出到电机 */
+} CMD_Chassis_Mode_t; /* 底盘运行模式 */
 
 typedef enum {
-  /* No force applied. */
-  GIMBAL_MODE_RELAX,
-  /* Follow IMU data. */
-  GIMBAL_MODE_ABSOLUTE,
-  /* Follow encoder data. */
-  GIMBAL_MODE_RELATIVE,
-  /* Set to a fix angle. Force applied. */
-  GIMBAL_MODE_FIX,
-} CMD_Gimbal_Mode_t;
+  GIMBAL_MODE_RELAX, /* 放松模式，电机不输出。一般情况云台初始化之后的模式 */
+  GIMBAL_MODE_ABSOLUTE, /* 绝对坐标系控制，控制在空间内的绝对姿态 */
+  GIMBAL_MODE_RELATIVE, /* 相对坐标系控制，控制相对于底盘的姿态 */
+  GIMBAL_MODE_FIX, /* 固定模式。将云台固定于相对于底盘的正前方位置 */
+} CMD_Gimbal_Mode_t; /* 云台运行模式 */
 
 typedef enum {
-  /* No force applied. */
-  SHOOT_MODE_RELAX,
-  /* Set to zero speed. Force applied. */
-  SHOOT_MODE_SAFE,
-  /* Safty off. */
-  SHOOT_MODE_STDBY,
-  /* Shooting. */
-  SHOOT_MODE_FIRE,
-} CMD_Shoot_Mode_t;
+  SHOOT_MODE_RELAX, /* 放松模式，电机不输出。一般情况射击初始化之后的模式 */
+  SHOOT_MODE_SAFE, /* 保险模式，电机闭环控制保持静止。保证安全状态 */
+  SHOOT_MODE_STDBY, /* 准备模式，摩擦轮开启。拨弹电机闭环控制保持静止 */
+  SHOOT_MODE_FIRE,  /* 开火模式，摩擦轮开启。拨弹电机开启 */
+} CMD_Shoot_Mode_t; /* 射击运行模式 */
 
 typedef struct {
-  CMD_Chassis_Mode_t mode;
-  MoveVector_t ctrl_v;
-} CMD_Chassis_Ctrl_t;
+  CMD_Chassis_Mode_t mode; /* 底盘运行模式 */
+  MoveVector_t ctrl_v;     /* 底盘控制向量 */
+} CMD_Chassis_Ctrl_t;      /* 底盘控制命令 */
 
 typedef struct {
-  CMD_Gimbal_Mode_t mode;
-  AHRS_Eulr_t delta_eulr;
-} CMD_Gimbal_Ctrl_t;
+  CMD_Gimbal_Mode_t mode; /* 云台运行模式 */
+  AHRS_Eulr_t delta_eulr; /* 欧拉角变化角度 */
+} CMD_Gimbal_Ctrl_t;      /* 云台控制命令 */
 
 typedef struct {
-  CMD_Shoot_Mode_t mode;
-  float bullet_speed;
-  float shoot_freq_hz;
-} CMD_Shoot_Ctrl_t;
+  CMD_Shoot_Mode_t mode; /* 射击运行模式 */
+  float bullet_speed;    /* 子弹初速 */
+  float shoot_freq_hz;   /* 射击频率 */
+} CMD_Shoot_Ctrl_t;      /* 射击控制命令 */
 
 typedef enum {
   CMD_SW_ERR = 0,
   CMD_SW_UP = 1,
   CMD_SW_MID = 3,
   CMD_SW_DOWN = 2,
-} CMD_SwitchPos_t;
+} CMD_SwitchPos_t; /* 拨杆位置 */
 
 typedef enum {
   CMD_KEY_W = 0,
@@ -82,15 +68,15 @@ typedef enum {
   CMD_KEY_E,
   CMD_KEY_SHIFT,
   CMD_KEY_CTRL,
-} CMD_KeyValue_t;
+} CMD_KeyValue_t; /* 键盘按键值 */
 
 typedef struct {
-  float sens_mouse;
-  float sens_rc;
-} CMD_Params_t;
+  float sens_mouse; /* 鼠标灵敏度 */
+  float sens_rc;    /* 遥控器摇杆灵敏度 */
+} CMD_Params_t;     /* 命令参数 */
 
 typedef struct {
-  bool pc_ctrl;
+  bool pc_ctrl; /* 是否使用键鼠控制 */
 
   const CMD_Params_t *param;
 
@@ -100,26 +86,26 @@ typedef struct {
 } CMD_t;
 
 typedef struct {
-  float ch_l_x;
-  float ch_l_y;
-  float ch_r_x;
-  float ch_r_y;
+  float ch_l_x; /* 遥控器左侧摇杆横轴值 */
+  float ch_l_y; /* 遥控器左侧摇杆纵轴值 */
+  float ch_r_x; /* 遥控器右侧摇杆横轴值 */
+  float ch_r_y; /* 遥控器右侧摇杆纵轴值 */
 
-  float ch_res;
+  float ch_res; /* 第五通道值 */
 
-  CMD_SwitchPos_t sw_l;
-  CMD_SwitchPos_t sw_r;
+  CMD_SwitchPos_t sw_l; /* 左侧拨杆位置 */
+  CMD_SwitchPos_t sw_r; /* 右侧拨杆位置 */
 
   struct {
     int16_t x;
     int16_t y;
     int16_t z;
-    bool l_click;
-    bool r_click;
-  } mouse;
+    bool l_click; /* 左键 */
+    bool r_click; /* 右键 */
+  } mouse;        /* 鼠标值 */
 
-  uint16_t key;
-  uint16_t res;
+  uint16_t key; /* 按键值 */
+  uint16_t res; /* 保留，未启用 */
 } CMD_RC_t;
 
 int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param);
