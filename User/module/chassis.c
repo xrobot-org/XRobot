@@ -111,7 +111,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec) {
              &(c->param->motor_pid_param[i]));
 
     LowPassFilter2p_Init(&(c->filter[i]), 1.f / c->dt_sec,
-                         c->param->low_pass_cutoff);
+                         c->param->low_pass_cutoff_freq);
   }
 
   PID_Init(&(c->pid.follow), PID_MODE_NO_D, c->dt_sec,

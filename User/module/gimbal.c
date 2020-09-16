@@ -66,7 +66,7 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec) {
 
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++)
     LowPassFilter2p_Init(&(g->filter[i]), 1.f / g->dt_sec,
-                         g->param->low_pass_cutoff);
+                         g->param->low_pass_cutoff_freq);
 
   return 0;
 }

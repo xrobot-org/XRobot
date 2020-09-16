@@ -37,7 +37,7 @@ typedef struct {
   struct {
     float fric;
     float trig;
-  } low_pass_cutoff;
+  } low_pass_cutoff_freq;
 
   float bullet_speed_scaler;
   float bullet_speed_bias;

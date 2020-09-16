@@ -43,7 +43,7 @@ enum Gimbal_Acuator_e {
 
 typedef struct {
   const PID_Params_t pid[GIMBAL_PID_NUM];
-  float low_pass_cutoff;
+  float low_pass_cutoff_freq;
   struct {
     struct {
       float high;

@@ -58,7 +58,7 @@ static const Robot_Config_t cfg_infantry = {
                         .i_limit = 0.5f,
                         .out_limit = 0.5f,
                     },
-                .low_pass_cutoff = -1.f,
+                .low_pass_cutoff_freq = -1.f,
             }, /* chassis */
 
             .gimbal = /* 云台模块参数 */
@@ -114,7 +114,7 @@ static const Robot_Config_t cfg_infantry = {
                             .out_limit = 0.5f,
                         },
                     }, /* pid */
-                .low_pass_cutoff = -1.f,
+                .low_pass_cutoff_freq = -1.f,
                 .encoder_center =
                     {
                         .yaw = 3.f,
@@ -152,7 +152,7 @@ static const Robot_Config_t cfg_infantry = {
                         .out_limit = 0.5f,
                     },
 
-                .low_pass_cutoff =
+                .low_pass_cutoff_freq =
                     {
                         .fric = -1.f,
                         .trig = -1.f,

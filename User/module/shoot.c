@@ -58,13 +58,13 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float dt_sec) {
              &(param->fric_pid_param[i]));
 
     LowPassFilter2p_Init(&(s->filter.fric[i]), 1000.f / s->dt_sec,
-                         param->low_pass_cutoff.fric);
+                         param->low_pass_cutoff_freq.fric);
   }
 
   PID_Init(&(s->pid.trig), PID_MODE_NO_D, s->dt_sec, &(param->trig_pid_param));
 
   LowPassFilter2p_Init(&(s->filter.trig), 1.f / s->dt_sec,
-                       param->low_pass_cutoff.trig);
+                       param->low_pass_cutoff_freq.trig);
   return 0;
 }
 
