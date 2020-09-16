@@ -58,7 +58,7 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec) {
   PID_Init(&(g->pid[GIMBAL_PID_PIT_OUT]), PID_MODE_NO_D, g->dt_sec,
            &(param->pid[GIMBAL_PID_PIT_OUT]));
   
-  PID_Init(&(g->pid[GIMBAL_PID_REL_YAW]), PID_MODE_SET_D, g->dt_sec,
+  PID_Init(&(g->pid[GIMBAL_PID_REL_YAW]), PID_MODE_NO_D, g->dt_sec,
            &(param->pid[GIMBAL_PID_REL_YAW]));
   PID_Init(&(g->pid[GIMBAL_PID_REL_PIT]), PID_MODE_NO_D, g->dt_sec,
            &(param->pid[GIMBAL_PID_REL_PIT]));
