@@ -16,7 +16,6 @@
 /* Private function  ---------------------------------------------------------*/
 static int8_t Chassis_SetMode(Chassis_t *c, CMD_Chassis_Mode_t mode) {
   if (c == NULL) return CHASSIS_ERR_NULL;
-
   if (mode == c->mode) return CHASSIS_OK;
 
   c->mode = mode;
