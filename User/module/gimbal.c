@@ -49,14 +49,19 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec) {
   g->mode = GIMBAL_MODE_INIT;
   g->dt_sec = dt_sec;
 
-  PID_Init(&(g->pid[GIMBAL_PID_PIT_IN]), PID_MODE_SET_D, g->dt_sec,
-           &(param->pid[GIMBAL_PID_PIT_IN]));
+  PID_Init(&(g->pid[GIMBAL_PID_YAW_IN]), PID_MODE_SET_D, g->dt_sec,
+           &(param->pid[GIMBAL_PID_YAW_IN]));
   PID_Init(&(g->pid[GIMBAL_PID_YAW_OUT]), PID_MODE_NO_D, g->dt_sec,
            &(param->pid[GIMBAL_PID_YAW_OUT]));
   PID_Init(&(g->pid[GIMBAL_PID_PIT_IN]), PID_MODE_SET_D, g->dt_sec,
            &(param->pid[GIMBAL_PID_PIT_IN]));
   PID_Init(&(g->pid[GIMBAL_PID_PIT_OUT]), PID_MODE_NO_D, g->dt_sec,
            &(param->pid[GIMBAL_PID_PIT_OUT]));
+  
+  PID_Init(&(g->pid[GIMBAL_PID_REL_YAW]), PID_MODE_SET_D, g->dt_sec,
+           &(param->pid[GIMBAL_PID_REL_YAW]));
+  PID_Init(&(g->pid[GIMBAL_PID_REL_PIT]), PID_MODE_NO_D, g->dt_sec,
+           &(param->pid[GIMBAL_PID_REL_PIT]));
 
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++)
     LowPassFilter2p_Init(&(g->filter[i]), 1.f / g->dt_sec,
@@ -112,6 +117,7 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_Gimbal_Ctrl_t *g_ctrl) {
 
     case GIMBAL_MODE_INIT:
       if (Gimbal_Steady(g)) g->mode = GIMBAL_MODE_RELAX;
+      break;
 
     case GIMBAL_MODE_FIX:
       g->set_point.eulr.pit = 0.f;
