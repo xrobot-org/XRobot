@@ -22,7 +22,7 @@ int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd) {
 
   if (cmd == NULL) return -1;
 
-  /* PC Control. */
+  /* 在PC控制和RC控制间切换. */
   if (CMD_KeyPressed(rc, CMD_KEY_SHIFT) && CMD_KeyPressed(rc, CMD_KEY_CTRL) &&
       CMD_KeyPressed(rc, CMD_KEY_Q))
     cmd->pc_ctrl = true;
@@ -31,6 +31,7 @@ int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd) {
       CMD_KeyPressed(rc, CMD_KEY_E))
     cmd->pc_ctrl = false;
 
+  /* PC键位映射和逻辑. */
   if (cmd->pc_ctrl) {
     cmd->gimbal.delta_eulr.yaw = (float)rc->mouse.x * cmd->param->sens_mouse;
     cmd->gimbal.delta_eulr.pit = (float)rc->mouse.y * cmd->param->sens_mouse;
@@ -62,6 +63,7 @@ int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd) {
         cmd->shoot.mode = SHOOT_MODE_RELAX;
     }
   } else {
+  /* RC键位映射和逻辑. */
     if ((rc->sw_l == CMD_SW_ERR) || (rc->sw_r == CMD_SW_ERR)) {
       cmd->chassis.mode = CHASSIS_MODE_RELAX;
       cmd->gimbal.mode = GIMBAL_MODE_RELAX;
