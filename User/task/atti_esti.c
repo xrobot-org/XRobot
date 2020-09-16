@@ -44,7 +44,7 @@ void Task_AttiEsti(void *argument) {
   task_param->msgq.gimbal_accl =
       osMessageQueueNew(6u, sizeof(AHRS_Accl_t), NULL);
   
-  task_param->msgq.gimbal_eulr =
+  task_param->msgq.gimbal_eulr_imu =
       osMessageQueueNew(6u, sizeof(AHRS_Eulr_t), NULL);
   
   task_param->msgq.gimbal_gyro =
@@ -99,7 +99,7 @@ void Task_AttiEsti(void *argument) {
     AHRS_GetEulr(&eulr_to_send, &gimbal_ahrs);
     
     osMessageQueuePut(task_param->msgq.gimbal_accl, &bmi088.accl, 0, 0);
-    osMessageQueuePut(task_param->msgq.gimbal_eulr, &eulr_to_send, 0, 0);
+    osMessageQueuePut(task_param->msgq.gimbal_eulr_imu, &eulr_to_send, 0, 0);
     osMessageQueuePut(task_param->msgq.gimbal_gyro, &bmi088.gyro, 0, 0);
                                              
     BSP_PWM_Set(BSP_PWM_IMU_HEAT,

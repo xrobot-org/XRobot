@@ -46,7 +46,7 @@ void Task_CtrlGimbal(void *argument) {
       CAN_Motor_ControlGimbal(0.f, 0.f);
 
     } else {
-      osMessageQueueGet(task_param->msgq.gimbal_eulr, &(gimbal.feedback.eulr.imu), NULL, 0);
+      osMessageQueueGet(task_param->msgq.gimbal_eulr_imu, &(gimbal.feedback.eulr.imu), NULL, 0);
       osMessageQueueGet(task_param->msgq.gimbal_gyro, &(gimbal.feedback.gyro), NULL, 0);
       osMessageQueueGet(task_param->msgq.cmd, &cmd, NULL, 0);
 

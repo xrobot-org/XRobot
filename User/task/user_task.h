@@ -53,7 +53,7 @@ typedef struct {
     osMessageQueueId_t gimbal_gyro;
 
     /* Atti esti */
-    osMessageQueueId_t gimbal_eulr;
+    osMessageQueueId_t gimbal_eulr_imu;
 
     /* Command */
     osMessageQueueId_t cmd;
