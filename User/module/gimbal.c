@@ -29,14 +29,15 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec) {
 
   g->mode = GIMBAL_MODE_RELAX;
 
-  PID_Init(&(g->pid[GIMBAL_PID_YAW_IN_IDX]), PID_MODE_SET_D, g->dt_sec,
-           &(g->param->pid[GIMBAL_PID_YAW_IN_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_YAW_OUT_IDX]), PID_MODE_NO_D, g->dt_sec,
-           &(g->param->pid[GIMBAL_PID_YAW_OUT_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_PIT_IN_IDX]), PID_MODE_SET_D, g->dt_sec,
-           &(g->param->pid[GIMBAL_PID_PIT_IN_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_PIT_OUT_IDX]), PID_MODE_NO_D, g->dt_sec,
-           &(g->param->pid[GIMBAL_PID_PIT_OUT_IDX]));
+  PID_Init(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), PID_MODE_NO_D, g->dt_sec,
+           &(g->param->pid[GIMBAL_PID_YAW_ANGLE_IDX]));
+  PID_Init(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), PID_MODE_SET_D, g->dt_sec,
+           &(g->param->pid[GIMBAL_PID_YAW_OMEGA_IDX]));
+
+  PID_Init(&(g->pid[GIMBAL_PID_PIT_ANGLE_IDX]), PID_MODE_NO_D, g->dt_sec,
+           &(g->param->pid[GIMBAL_PID_PIT_ANGLE_IDX]));
+  PID_Init(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), PID_MODE_SET_D, g->dt_sec,
+           &(g->param->pid[GIMBAL_PID_PIT_OMEGA_IDX]));
 
   PID_Init(&(g->pid[GIMBAL_PID_REL_YAW_IDX]), PID_MODE_NO_D, g->dt_sec,
            &(g->param->pid[GIMBAL_PID_REL_YAW_IDX]));
@@ -44,8 +45,13 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec) {
            &(g->param->pid[GIMBAL_PID_REL_PIT_IDX]));
 
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++)
-    LowPassFilter2p_Init(&(g->filter[i]), 1.f / g->dt_sec,
-                         g->param->low_pass_cutoff_freq);
+    LowPassFilter2p_Init(&(g->filter_out[i]), 1.f / g->dt_sec,
+                         g->param->out_low_pass_cutoff_freq);
+
+  for (uint8_t i = 0; i < 2; i++) {
+    LowPassFilter2p_Init(&(g->filter_gyro[i]), 1.f / g->dt_sec,
+                         g->param->gyro_low_pass_cutoff_freq);
+  }
 
   return 0;
 }
@@ -72,26 +78,30 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
   g->set_point.eulr.yaw += g_ctrl->delta_eulr.yaw;
   g->set_point.eulr.pit += g_ctrl->delta_eulr.pit;
 
-  float motor_gyro_set;
+  float filted_gyro_x, filted_gyro_z;
   switch (g->mode) {
     case GIMBAL_MODE_RELAX:
       for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) g->out[i] = 0.f;
       break;
 
     case GIMBAL_MODE_ABSOLUTE:
-      motor_gyro_set =
-          PID_Calc(&(g->pid[GIMBAL_PID_YAW_IN_IDX]), g->set_point.eulr.yaw,
-                   fb->eulr.imu.yaw, fb->gyro.z, g->dt_sec);
-      g->out[GIMBAL_ACTR_YAW_IDX] =
-          PID_Calc(&(g->pid[GIMBAL_PID_YAW_OUT_IDX]), motor_gyro_set,
-                   fb->gyro.z, 0.f, g->dt_sec);
+      /* Filter gyro. */
+      filted_gyro_x = LowPassFilter2p_Apply(&(g->filter_gyro[0]), fb->gyro.x);
+      filted_gyro_z = LowPassFilter2p_Apply(&(g->filter_gyro[1]), fb->gyro.z);
 
-      motor_gyro_set =
-          PID_Calc(&(g->pid[GIMBAL_PID_PIT_IN_IDX]), g->set_point.eulr.pit,
-                   fb->eulr.imu.pit, fb->gyro.x, g->dt_sec);
+      const float yaw_omega_set_point =
+          PID_Calc(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), g->set_point.eulr.yaw,
+                   fb->eulr.imu.yaw, 0.f, g->dt_sec);
+      g->out[GIMBAL_ACTR_YAW_IDX] =
+          PID_Calc(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), yaw_omega_set_point,
+                   fb->gyro.z, filted_gyro_z, g->dt_sec);
+
+      const float pit_omega_set_point =
+          PID_Calc(&(g->pid[GIMBAL_PID_PIT_ANGLE_IDX]), g->set_point.eulr.pit,
+                   fb->eulr.imu.pit, 0.f, g->dt_sec);
       g->out[GIMBAL_ACTR_PIT_IDX] =
-          PID_Calc(&(g->pid[GIMBAL_PID_PIT_OUT_IDX]), motor_gyro_set,
-                   fb->gyro.x, 0.f, g->dt_sec);
+          PID_Calc(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), pit_omega_set_point,
+                   fb->gyro.x, filted_gyro_x, g->dt_sec);
       break;
 
     case GIMBAL_MODE_FIX:
@@ -110,7 +120,7 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
   }
   /* Filter output. */
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++)
-    g->out[i] = LowPassFilter2p_Apply(&(g->filter[i]), g->out[i]);
+    g->out[i] = LowPassFilter2p_Apply(&(g->filter_out[i]), g->out[i]);
 
   return 0;
 }

@@ -66,7 +66,7 @@ float PID_Calc(PID_t *pid, float sp, float val, float val_dot, float dt) {
   if (!isfinite(d)) d = 0.0f;
 
   /* calculate PD output */
-  float output = (error * pid->param->kp) + (d * pid->param->kd);
+  float output = (error * pid->param->kp) - (d * pid->param->kd);
 
   if (pid->param->ki > SIGMA) {
     // Calculate the error i and check for saturation

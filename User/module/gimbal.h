@@ -27,16 +27,16 @@ extern "C" {
 
 /* 用enum组合所有PID，方便访问，配合数组使用 */
 enum Gimbal_PID_e {
-  GIMBAL_PID_YAW_IN_IDX = 0, /* Yaw轴控制的内环PID的索引值 */
-  GIMBAL_PID_YAW_OUT_IDX,    /* Yaw轴控制的外环PID的索引值 */
-  GIMBAL_PID_PIT_IN_IDX,     /* Pitch轴控制的内环PID的索引值 */
-  GIMBAL_PID_PIT_OUT_IDX,    /* Pitch轴控制的外环PID的索引值 */
-  GIMBAL_PID_REL_YAW_IDX,    /* 通过编码器控制时Yaw轴PID的索引值 */
-  GIMBAL_PID_REL_PIT_IDX, /*通过编码器控制时Pitch轴PID的索引值 */
-  GIMBAL_PID_NUM,         /* 总共的PID数量 */
+  GIMBAL_PID_YAW_OMEGA_IDX = 0, /* Yaw轴控制的角速度环PID的索引值 */
+  GIMBAL_PID_YAW_ANGLE_IDX,     /* Yaw轴控制的角度环PID的索引值 */
+  GIMBAL_PID_PIT_OMEGA_IDX, /* Pitch轴控制的角速度环PID的索引值 */
+  GIMBAL_PID_PIT_ANGLE_IDX, /* Pitch轴控制的角度环PID的索引值 */
+  GIMBAL_PID_REL_YAW_IDX,   /* 通过编码器控制时Yaw轴PID的索引值 */
+  GIMBAL_PID_REL_PIT_IDX,   /*通过编码器控制时Pitch轴PID的索引值 */
+  GIMBAL_PID_NUM,           /* 总共的PID数量 */
 };
 
-/* 用enum组合所有输出，方便访问，配合数组使用 */
+/* 用enum组合所有输出，GIMBAL_ACTR_NUM长度的数组都可以用这个枚举访问 */
 enum Gimbal_Acuator_e {
   GIMBAL_ACTR_YAW_IDX = 0, /* Yaw轴控制相关的索引值 */
   GIMBAL_ACTR_PIT_IDX,     /* Pitch轴控制相关的索引值 */
@@ -46,7 +46,8 @@ enum Gimbal_Acuator_e {
 /* 云台参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
   const PID_Params_t pid[GIMBAL_PID_NUM]; /* 云台电机控制PID的参数 */
-  float low_pass_cutoff_freq;             /* 低通滤波器截止频率 */
+  float out_low_pass_cutoff_freq; /* 电机输出低通滤波器截止频率 */
+  float gyro_low_pass_cutoff_freq; /* 陀螺仪数据低通滤波器截止频率 */
   struct {
     struct {
       float high; /* 限位高点 */
@@ -86,12 +87,13 @@ typedef struct {
     AHRS_Eulr_t eulr; /* 表示云台姿态的欧拉角 */
   } set_point;        /* PID计算的目标值 */
 
-  PID_t pid[GIMBAL_PID_NUM]; /* PID数组，通过Gimbal_PID_e里的值访问 */
+  PID_t pid[GIMBAL_PID_NUM]; /* PID数组 */
 
-  LowPassFilter2p_t
-      filter[GIMBAL_ACTR_NUM]; /* 滤波器数组，通过Gimbal_Acuator_e里的值访问 */
+  LowPassFilter2p_t filter_out[GIMBAL_ACTR_NUM]; /* 输出滤波器滤波器数组 */
 
-  float out[GIMBAL_ACTR_NUM]; /* 输出数组，通过Gimbal_Acuator_e里的值访问 */
+  LowPassFilter2p_t filter_gyro[3]; /* 陀螺仪滤波器数组 */
+
+  float out[GIMBAL_ACTR_NUM]; /* 输出数组 */
 
 } Gimbal_t;
 

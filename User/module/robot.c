@@ -66,7 +66,7 @@ static const Robot_Config_t cfg_infantry = {
                 .pid =
                     {
                         {
-                            /* GIMBAL_PID_YAW_IN_IDX */
+                            /* GIMBAL_PID_YAW_OMEGA_IDX */
                             .kp = 0.5f,
                             .ki = 0.5f,
                             .kd = 0.5f,
@@ -74,7 +74,7 @@ static const Robot_Config_t cfg_infantry = {
                             .out_limit = 0.5f,
                         },
                         {
-                            /* GIMBAL_PID_YAW_OUT_IDX */
+                            /* GIMBAL_PID_YAW_ANGLE_IDX */
                             .kp = 0.5f,
                             .ki = 0.5f,
                             .kd = 0.5f,
@@ -82,7 +82,7 @@ static const Robot_Config_t cfg_infantry = {
                             .out_limit = 0.5f,
                         },
                         {
-                            /* GIMBAL_PID_PIT_IN_IDX */
+                            /* GIMBAL_PID_PIT_OMEGA_IDX */
                             .kp = 0.5f,
                             .ki = 0.5f,
                             .kd = 0.5f,
@@ -90,7 +90,7 @@ static const Robot_Config_t cfg_infantry = {
                             .out_limit = 0.5f,
                         },
                         {
-                            /* GIMBAL_PID_PIT_OUT_IDX */
+                            /* GIMBAL_PID_PIT_ANGLE_IDX */
                             .kp = 0.5f,
                             .ki = 0.5f,
                             .kd = 0.5f,
@@ -114,7 +114,8 @@ static const Robot_Config_t cfg_infantry = {
                             .out_limit = 0.5f,
                         },
                     }, /* pid */
-                .low_pass_cutoff_freq = -1.f,
+                .out_low_pass_cutoff_freq = -1.f,
+                .gyro_low_pass_cutoff_freq = 1000.f,
                 .encoder_center =
                     {
                         .yaw = 3.f,
