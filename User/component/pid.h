@@ -24,7 +24,7 @@ typedef struct {
   float kp;        /* 比例项参数 */
   float ki;        /* 积分项参数 */
   float kd;        /* 微分项参数 */
-  float i_limit;   /* 积分项上线 */
+  float i_limit;   /* 积分项上限 */
   float out_limit; /* 输出绝对值限制 */
 } PID_Params_t;    /* PID参数 */
 
