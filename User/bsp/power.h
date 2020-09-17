@@ -4,20 +4,20 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include <stdbool.h>
 
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
+/* Exported constants ------------------------------------------------------- */
+/* Exported macro ----------------------------------------------------------- */
+/* Exported types ----------------------------------------------------------- */
 typedef enum {
   POWER_PORT1,
   POWER_PORT2,
   POWER_PORT3,
   POWER_PORT4,
-} BSP_Power_Port_t;
+} BSP_Power_Port_t; /* 电源输出接口 */
 
-/* Exported functions prototypes ---------------------------------------------*/
+/* Exported functions prototypes -------------------------------------------- */
 int BSP_Power_Set(BSP_Power_Port_t port, bool s);
 
 #ifdef __cplusplus

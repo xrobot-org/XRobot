@@ -3,7 +3,7 @@
         将所有CAN总线上挂载的设抽象成一设进行配和控制
 */
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include "can.h"
 
 #include <stdbool.h>
@@ -13,7 +13,7 @@
 #include "bsp\mm.h"
 #include "component\user_math.h"
 
-/* Private define ------------------------------------------------------------*/
+/* Private define ----------------------------------------------------------- */
 /* Motor */
 /* id		feedback id		control id */
 /* 1-4		0x205 to 0x208  0x1ff */
@@ -54,8 +54,8 @@
 #define CAN_CAP_FB_ID_BASE (0x000)
 #define CAN_CAP_CTRL_ID_BASE (0x000)
 
-/* Private macro -------------------------------------------------------------*/
-/* Private typedef -----------------------------------------------------------*/
+/* Private macro ------------------------------------------------------------ */
+/* Private typedef ---------------------------------------------------------- */
 typedef enum {
   CAN_M3508_M1_ID = 0x201, /* 1 */
   CAN_M3508_M2_ID = 0x202, /* 2 */
@@ -70,7 +70,7 @@ typedef enum {
   CAN_GM6020_PIT_ID = 0x20A, /* 6 */
 } CAN_MotorId_t;
 
-/* Private variables ---------------------------------------------------------*/
+/* Private variables -------------------------------------------------------- */
 static uint8_t motor_received = 0;
 static uint32_t unknown_message = 0;
 
@@ -103,7 +103,7 @@ static const CAN_MotorInit_t default_motor_init = {
 static CAN_t *gcan;
 static bool inited = false;
 
-/* Private function  ---------------------------------------------------------*/
+/* Private function  -------------------------------------------------------- */
 static void CAN_Motor_Decode(CAN_MotorFeedback_t *feedback, const uint8_t *raw) {
   uint16_t raw_angle = (uint16_t)((raw[0] << 8) | raw[1]);
 
@@ -187,7 +187,7 @@ static void CAN_RxFifo1MsgPendingCallback(void) {
   }
 }
 
-/* Exported functions --------------------------------------------------------*/
+/* Exported functions ------------------------------------------------------- */
 int8_t CAN_Init(CAN_t *can, CAN_MotorInit_t *motor_init,
                 osThreadId_t *motor_alert, uint8_t motor_alert_len,
                 osThreadId_t uwb_alert, osThreadId_t cap_alert) {

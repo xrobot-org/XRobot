@@ -4,15 +4,15 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include <stdint.h>
 
 #include "component\ahrs.h"
 #include "device\device.h"
 
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
+/* Exported constants ------------------------------------------------------- */
+/* Exported macro ----------------------------------------------------------- */
+/* Exported types ----------------------------------------------------------- */
 typedef struct {
   AHRS_Accl_t accl;
   AHRS_Gyro_t gyro;
@@ -24,7 +24,7 @@ typedef struct {
   } cali;
 } BMI088_t;
 
-/* Exported functions prototypes ---------------------------------------------*/
+/* Exported functions prototypes -------------------------------------------- */
 int8_t BMI088_Init(BMI088_t *bmi088);
 int8_t BMI088_Restart(void);
 

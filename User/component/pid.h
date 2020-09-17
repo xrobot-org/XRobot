@@ -1,7 +1,6 @@
 /*
-        Modified from
-   https://github.com/PX4/Firmware/blob/master/src/lib/pid/pid.h
-
+  Modified from
+  https://github.com/PX4/Firmware/blob/master/src/lib/pid/pid.h
 */
 
 #pragma once

@@ -1,3 +1,7 @@
+/*
+  参考了Linux
+*/
+
 #include "crc8.h"
 
 static const uint8_t crc8_tab[256] = {

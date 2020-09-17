@@ -1,6 +1,6 @@
 /*
-        开源的AHRS算法。
-        MadgwickAHRS
+  开源的AHRS算法。
+  MadgwickAHRS
 */
 
 #include "ahrs.h"

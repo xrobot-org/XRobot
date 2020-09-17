@@ -4,14 +4,14 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include <stdint.h>
 
 #include "bsp/bsp.h"
 
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
+/* Exported constants ------------------------------------------------------- */
+/* Exported macro ----------------------------------------------------------- */
+/* Exported types ----------------------------------------------------------- */
 typedef enum {
   BSP_SERVO_A = 0,
   BSP_SERVO_B,
@@ -32,9 +32,9 @@ typedef enum {
   BSP_SERVO_Z,
 #endif
   BSP_SERVO_NUM,
-} BSP_Servo_Channel_t;
+} BSP_Servo_Channel_t;  /* 舵机通道 */
 
-/* Exported functions prototypes ---------------------------------------------*/
+/* Exported functions prototypes -------------------------------------------- */
 int8_t BSP_Servo_Init(BSP_Servo_Channel_t ch, float max_angle);
 int8_t BSP_Servo_Start(BSP_Servo_Channel_t ch);
 int8_t BSP_Servo_Set(BSP_Servo_Channel_t ch, uint8_t angle);

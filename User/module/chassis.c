@@ -2,18 +2,18 @@
   底盘模组
 */
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include "chassis.h"
 
 #include "bsp\mm.h"
 #include "component\limiter.h"
 #include "device\can.h"
 
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
-/* Private function  ---------------------------------------------------------*/
+/* Private typedef ---------------------------------------------------------- */
+/* Private define ----------------------------------------------------------- */
+/* Private macro ------------------------------------------------------------ */
+/* Private variables -------------------------------------------------------- */
+/* Private function  -------------------------------------------------------- */
 static int8_t Chassis_SetMode(Chassis_t *c, CMD_Chassis_Mode_t mode) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (mode == c->mode) return CHASSIS_OK;
@@ -43,7 +43,7 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_Chassis_Mode_t mode) {
   return CHASSIS_OK;
 }
 
-/* Exported functions --------------------------------------------------------*/
+/* Exported functions ------------------------------------------------------- */
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec) {
   if (c == NULL) return CHASSIS_ERR_NULL;
 

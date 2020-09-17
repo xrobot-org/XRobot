@@ -6,7 +6,7 @@
 
 */
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 /* Include 自身的头文件。*/
 #include "oled.h"
 
@@ -31,8 +31,8 @@
 
 
 /* Include Component相关的头文件 */
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
+/* Private define ----------------------------------------------------------- */
+/* Private macro ------------------------------------------------------------ */
 #ifdef OLED_USE_SPI
 
 #define OLED_CMD_Set()	HAL_GPIO_WritePin(OLED_DC_GPIO_Port, OLED_DC_Pin, GPIO_PIN_SET)
@@ -46,14 +46,14 @@
 
 #endif
 
-/* Private typedef -----------------------------------------------------------*/
+/* Private typedef ---------------------------------------------------------- */
 typedef enum {
 	OLED_WriteCMD = 0,
 	OLED_WriteData = 1,
 }OLED_Write_t;
 
 
-/* Private variables ---------------------------------------------------------*/
+/* Private variables -------------------------------------------------------- */
 static const uint8_t oled_font[95][8] = {
 	{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,}, /* " ", 0 */
 	{0x00,0x00,0x00,0xcf,0xcf,0x00,0x00,0x00,}, /* "!", 1 */
@@ -166,7 +166,7 @@ static const uint8_t gram_logo[8][128] = {
 static OLED_t *goled;
 static bool inited = false;
 
-/* Private function -----------------------------------------------*/
+/* Private function ---------------------------------------------- */
 static void OLED_WriteByte(uint8_t data, OLED_Write_t type) {
 	
 #ifdef OLED_USE_SPI
@@ -214,7 +214,7 @@ static void OLED_WriteSequenceData(uint8_t *data, uint16_t len) {
 #endif
 }
 
-/* Exported functions --------------------------------------------------------*/
+/* Exported functions ------------------------------------------------------- */
 int OLED_Init(OLED_t *oled) {
 	if (oled == NULL)
 		return -1;

@@ -1,22 +1,22 @@
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include "bsp_spi.h"
 
 #include "main.h"
 #include "spi.h"
 
-/* Private define ------------------------------------------------------------*/
+/* Private define ----------------------------------------------------------- */
 #define OLED_SPI SPI1
 #define IMU_SPI SPI5
 /* #define XXX_SPI SPIX */
 
-/* Private macro -------------------------------------------------------------*/
+/* Private macro ------------------------------------------------------------ */
 #define IMU_SPI_NSS_Reset() \
   HAL_GPIO_WritePin(SPI5_NSS_GPIO_Port, SPI5_NSS_Pin, GPIO_PIN_RESET)
 #define IMU_SPI_NSS_Set() \
   HAL_GPIO_WritePin(SPI5_NSS_GPIO_Port, SPI5_NSS_Pin, GPIO_PIN_SET)
 
-/* Private typedef -----------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
+/* Private typedef ---------------------------------------------------------- */
+/* Private variables -------------------------------------------------------- */
 static struct {
   struct {
     void (*TxCpltCallback)(void);       /* SPI Tx Completed callback */
@@ -41,7 +41,7 @@ static struct {
   } imu;
 } bsp_spi_callback;
 
-/* Private function  ---------------------------------------------------------*/
+/* Private function  -------------------------------------------------------- */
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
   if (hspi->Instance == OLED_SPI) {
     if (bsp_spi_callback.oled.TxCpltCallback != NULL) {
@@ -147,7 +147,7 @@ void HAL_SPI_AbortCpltCallback(SPI_HandleTypeDef *hspi) {
   */
 }
 
-/* Exported functions --------------------------------------------------------*/
+/* Exported functions ------------------------------------------------------- */
 int BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type,
                              void (*callback)(void)) {
   if (callback == NULL) return -1;

@@ -4,14 +4,14 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include <cmsis_os2.h>
 
 #include "FreeRTOS.h"
 #include "module\robot.h"
 #include "task.h"
 
-/* Exported constants --------------------------------------------------------*/
+/* Exported constants ------------------------------------------------------- */
 /* 所有任务都要define一个“任务运行频率”和“初始化延时” */
 #define TASK_FREQ_HZ_COMMAND (80u)
 #define TASK_FREQ_HZ_CTRL_CHASSIS (50u)
@@ -31,9 +31,9 @@ extern "C" {
 #define TASK_INIT_DELAY_POSESTI (0u)
 #define TASK_INIT_DELAY_REFEREE (400u)
 
-/* Exported defines ----------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
+/* Exported defines --------------------------------------------------------- */
+/* Exported macro ----------------------------------------------------------- */
+/* Exported types ----------------------------------------------------------- */
 typedef struct {
   struct {
     osThreadId_t cli;
@@ -122,7 +122,7 @@ extern const osThreadAttr_t attr_monitor;
 extern const osThreadAttr_t attr_atti_esti;
 extern const osThreadAttr_t attr_referee;
 
-/* Exported functions prototypes ---------------------------------------------*/
+/* Exported functions prototypes -------------------------------------------- */
 void Task_Init(void *argument);
 
 void Task_CLI(void *argument);

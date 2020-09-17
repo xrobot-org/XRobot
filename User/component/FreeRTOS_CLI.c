@@ -101,7 +101,7 @@ buffer needs to be placed at a fixed address (rather than by the linker). */
 #endif
 
 
-/*-----------------------------------------------------------*/
+/*---------------------------------------------------------- */
 
 BaseType_t FreeRTOS_CLIRegisterCommand( const CLI_Command_Definition_t * const pxCommandToRegister )
 {
@@ -142,7 +142,7 @@ BaseType_t xReturn = pdFAIL;
 
 	return xReturn;
 }
-/*-----------------------------------------------------------*/
+/*---------------------------------------------------------- */
 
 BaseType_t FreeRTOS_CLIProcessCommand( const char * const pcCommandInput, char * pcWriteBuffer, size_t xWriteBufferLen  )
 {
@@ -217,13 +217,13 @@ size_t xCommandStringLength;
 
 	return xReturn;
 }
-/*-----------------------------------------------------------*/
+/*---------------------------------------------------------- */
 
 char *FreeRTOS_CLIGetOutputBuffer( void )
 {
 	return cOutputBuffer;
 }
-/*-----------------------------------------------------------*/
+/*---------------------------------------------------------- */
 
 const char *FreeRTOS_CLIGetParameter( const char *pcCommandString, UBaseType_t uxWantedParameter, BaseType_t *pxParameterStringLength )
 {
@@ -279,7 +279,7 @@ const char *pcReturn = NULL;
 
 	return pcReturn;
 }
-/*-----------------------------------------------------------*/
+/*---------------------------------------------------------- */
 
 static BaseType_t prvHelpCommand( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString )
 {
@@ -312,7 +312,7 @@ BaseType_t xReturn;
 
 	return xReturn;
 }
-/*-----------------------------------------------------------*/
+/*---------------------------------------------------------- */
 
 static int8_t prvGetNumberOfParameters( const char *pcCommandString )
 {

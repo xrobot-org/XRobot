@@ -4,13 +4,13 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include <stdbool.h>
 #include <stdint.h>
 
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
+/* Exported constants ------------------------------------------------------- */
+/* Exported macro ----------------------------------------------------------- */
+/* Exported types ----------------------------------------------------------- */
 typedef enum {
   OLED_PEN_CLEAR = 0,
   OLED_PEN_WRITE = 1,
@@ -28,7 +28,7 @@ typedef struct {
   bool modified;
 } OLED_t;
 
-/* Exported functions prototypes ---------------------------------------------*/
+/* Exported functions prototypes -------------------------------------------- */
 int OLED_Init(OLED_t *oled);
 OLED_t *OLED_GetDevice(void);
 

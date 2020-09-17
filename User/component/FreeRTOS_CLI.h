@@ -72,7 +72,7 @@ BaseType_t FreeRTOS_CLIRegisterCommand( const CLI_Command_Definition_t * const p
  */
 BaseType_t FreeRTOS_CLIProcessCommand( const char * const pcCommandInput, char * pcWriteBuffer, size_t xWriteBufferLen  );
 
-/*-----------------------------------------------------------*/
+/*---------------------------------------------------------- */
 
 /*
  * A buffer into which command outputs can be written is declared in the

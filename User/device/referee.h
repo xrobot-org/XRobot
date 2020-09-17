@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include <cmsis_os2.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -16,9 +16,9 @@ extern "C" {
 #include "component\user_math.h"
 #include "device\device.h"
 
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
+/* Exported constants ------------------------------------------------------- */
+/* Exported macro ----------------------------------------------------------- */
+/* Exported types ----------------------------------------------------------- */
 typedef struct __packed {
   uint8_t sof;
   uint16_t data_length;
@@ -301,7 +301,7 @@ typedef struct {
 
 } Referee_t;
 
-/* Exported functions prototypes ---------------------------------------------*/
+/* Exported functions prototypes -------------------------------------------- */
 int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert);
 Referee_t *Referee_GetDevice(void);
 int8_t Referee_Restart(void);

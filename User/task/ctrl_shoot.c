@@ -6,15 +6,15 @@
   从CAN总线接收底盘电机反馈，根据接收到的控制命令，控制电机输出。
 */
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include "module\robot.h"
 #include "module\shoot.h"
 #include "task\user_task.h"
 
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
+/* Private typedef ---------------------------------------------------------- */
+/* Private define ----------------------------------------------------------- */
+/* Private macro ------------------------------------------------------------ */
+/* Private variables -------------------------------------------------------- */
 static CAN_t *can;
 
 #ifdef DEBUG
@@ -25,8 +25,8 @@ static CMD_Shoot_Ctrl_t shoot_ctrl;
 static Shoot_t shoot;
 #endif
 
-/* Private function ----------------------------------------------------------*/
-/* Exported functions --------------------------------------------------------*/
+/* Private function --------------------------------------------------------- */
+/* Exported functions ------------------------------------------------------- */
 void Task_CtrlShoot(void *argument) {
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_SHOOT;
   Task_Param_t *task_param = (Task_Param_t *)argument;

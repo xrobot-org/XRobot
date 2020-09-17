@@ -3,7 +3,7 @@
 
 */
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include "imu.h"
 
 /* Include 标准库 */
@@ -17,7 +17,7 @@
 /* Include Component相关的头文件 */
 #include "user_math.h"
 
-/* Private define ------------------------------------------------------------*/
+/* Private define ----------------------------------------------------------- */
 #define MPU6500_SELF_TEST_XG (0x00)
 #define MPU6500_SELF_TEST_YG (0x01)
 #define MPU6500_SELF_TEST_ZG (0x02)
@@ -121,8 +121,8 @@
 
 #define MPU6500_ID (0x70)
 
-/* Private macro -------------------------------------------------------------*/
-/* Private typedef -----------------------------------------------------------*/
+/* Private macro ------------------------------------------------------------ */
+/* Private typedef ---------------------------------------------------------- */
 __packed struct {
   __packed struct {
     int16_t x;
@@ -144,12 +144,12 @@ __packed struct {
     int16_t z;
   } magn;
 } packed;
-/* Private variables ---------------------------------------------------------*/
+/* Private variables -------------------------------------------------------- */
 static uint8_t buffer[2];
 static IMU_t *gimu;
 static bool inited = false;
 
-/* Private function  ---------------------------------------------------------*/
+/* Private function  -------------------------------------------------------- */
 void IMU_RxCpltCallback(void) {
   osThreadFlagsSet(gimu->received_alert,
                    IMU_SIGNAL_RAW_ACCL_REDY | IMU_SIGNAL_RAW_GYRO_REDY);
@@ -183,7 +183,7 @@ static void MPU_Read(uint8_t reg, uint8_t *data, uint8_t len) {
   BSP_SPI_Receive(BSP_SPI_IMU, data, len);
 }
 
-/* Exported functions --------------------------------------------------------*/
+/* Exported functions ------------------------------------------------------- */
 int IMU_Init(IMU_t *imu) {
   if (imu == NULL) return -1;
 

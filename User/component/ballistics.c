@@ -1,5 +1,5 @@
 /*
-        弹道补偿算法。
+  弹道补偿算法。
 */
 
 #include "ballistics.h"

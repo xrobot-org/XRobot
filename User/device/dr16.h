@@ -4,16 +4,16 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include <cmsis_os2.h>
 
 #include "component\cmd.h"
 #include "component\user_math.h"
 #include "device\device.h"
 
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
+/* Exported constants ------------------------------------------------------- */
+/* Exported macro ----------------------------------------------------------- */
+/* Exported types ----------------------------------------------------------- */
 typedef struct __packed {
   uint16_t ch_r_x : 11;
   uint16_t ch_r_y : 11;
@@ -34,7 +34,7 @@ typedef struct {
   DR16_Data_t data;
 } DR16_t;
 
-/* Exported functions prototypes ---------------------------------------------*/
+/* Exported functions prototypes -------------------------------------------- */
 int8_t DR16_Init(DR16_t *dr16);
 int8_t DR16_Restart(void);
 

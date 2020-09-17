@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include <cmsis_os2.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -12,9 +12,9 @@ extern "C" {
 #include "component\ahrs.h"
 #include "device\device.h"
 
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
+/* Exported constants ------------------------------------------------------- */
+/* Exported macro ----------------------------------------------------------- */
+/* Exported types ----------------------------------------------------------- */
 typedef struct {
   osThreadId_t thread_alert;
 
@@ -26,7 +26,7 @@ typedef struct {
   } cali;
 } IST8310_t;
 
-/* Exported functions prototypes ---------------------------------------------*/
+/* Exported functions prototypes -------------------------------------------- */
 int8_t IST8310_Init(IST8310_t *ist8310);
 int8_t IST8310_Restart(void);
 

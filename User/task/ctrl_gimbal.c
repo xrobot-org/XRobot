@@ -7,15 +7,15 @@
   根据接收到的控制命令，控制电机输出。
 */
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include "module\gimbal.h"
 #include "module\robot.h"
 #include "task\user_task.h"
 
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
+/* Private typedef ---------------------------------------------------------- */
+/* Private define ----------------------------------------------------------- */
+/* Private macro ------------------------------------------------------------ */
+/* Private variables -------------------------------------------------------- */
 static CAN_t *can;
 
 #ifdef DEBUG
@@ -28,8 +28,8 @@ static Gimbal_Feedback gimbal_feedback;
 static Gimbal_t gimbal;
 #endif
 
-/* Private function ----------------------------------------------------------*/
-/* Exported functions --------------------------------------------------------*/
+/* Private function --------------------------------------------------------- */
+/* Exported functions ------------------------------------------------------- */
 void Task_CtrlGimbal(void *argument) {
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_GIMBAL;
   Task_Param_t *task_param = (Task_Param_t *)argument;

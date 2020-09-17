@@ -4,14 +4,14 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include <can.h>
 
 #include "bsp/bsp.h"
 
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
+/* Exported constants ------------------------------------------------------- */
+/* Exported macro ----------------------------------------------------------- */
+/* Exported types ----------------------------------------------------------- */
 typedef enum {
   BSP_CAN_1,
   BSP_CAN_2,
@@ -36,7 +36,7 @@ typedef enum {
   BSP_CAN_CB_NUM
 } BSP_CAN_Callback_t;
 
-/* Exported functions prototypes ---------------------------------------------*/
+/* Exported functions prototypes -------------------------------------------- */
 CAN_HandleTypeDef *BSP_CAN_GetHandle(BSP_CAN_t can);
 int8_t BSP_CAN_RegisterCallback(BSP_CAN_t can, BSP_CAN_Callback_t type,
                                 void (*callback)(void));

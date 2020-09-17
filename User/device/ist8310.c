@@ -3,7 +3,7 @@
 
 */
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include "ist8310.h"
 
 #include <gpio.h>
@@ -14,7 +14,7 @@
 #include "bsp\gpio.h"
 #include "bsp\i2c.h"
 
-/* Private define ------------------------------------------------------------*/
+/* Private define ----------------------------------------------------------- */
 #define IST8310_WAI (0x00)
 #define IST8310_STAT1 (0x02)
 #define IST8310_DATAXL (0x03)
@@ -32,20 +32,20 @@
 #define IST8310_IIC_ADDRESS (0x0E << 1)
 
 #define IST8310_LEN_RX_BUFF (6)
-/* Private macro -------------------------------------------------------------*/
+/* Private macro ------------------------------------------------------------ */
 #define IST8310_SET() \
   HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_SET)
 #define IST8310_RESET() \
   HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_RESET)
 
-/* Private typedef -----------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
+/* Private typedef ---------------------------------------------------------- */
+/* Private variables -------------------------------------------------------- */
 uint8_t ist8310_rxbuf[IST8310_LEN_RX_BUFF];  // TODO: Add static when release
 
 static osThreadId_t thread_alert;
 static bool inited = false;
 
-/* Private function  ---------------------------------------------------------*/
+/* Private function  -------------------------------------------------------- */
 static void IST8310_WriteSingle(uint8_t reg, uint8_t data) {
   HAL_I2C_Mem_Write(BSP_I2C_GetHandle(BSP_I2C_COMP), IST8310_IIC_ADDRESS, reg,
                     I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
@@ -80,7 +80,7 @@ static void IST8310_IntCallback(void) {
   osThreadFlagsSet(thread_alert, SIGNAL_IST8310_MAGN_NEW_DATA);
 }
 
-/* Exported functions --------------------------------------------------------*/
+/* Exported functions ------------------------------------------------------- */
 int8_t IST8310_Init(IST8310_t *ist8310) {
   if (ist8310 == NULL) return DEVICE_ERR_NULL;
 

@@ -6,15 +6,15 @@
   从CAN总线接收底盘电机反馈，根据接收到的控制命令，控制电机输出。
 */
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include "module\chassis.h"
 #include "module\robot.h"
 #include "task\user_task.h"
 
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
+/* Private typedef ---------------------------------------------------------- */
+/* Private define ----------------------------------------------------------- */
+/* Private macro ------------------------------------------------------------ */
+/* Private variables -------------------------------------------------------- */
 
 #ifdef DEBUG
 CAN_t can;
@@ -26,8 +26,8 @@ static CMD_Chassis_Ctrl_t chassis_ctrl;
 static Chassis_t chassis;
 #endif
 
-/* Private function ----------------------------------------------------------*/
-/* Exported functions --------------------------------------------------------*/
+/* Private function --------------------------------------------------------- */
+/* Exported functions ------------------------------------------------------- */
 void Task_CtrlChassis(void *argument) {
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_MONITOR;
   Task_Param_t *task_param = (Task_Param_t *)argument;

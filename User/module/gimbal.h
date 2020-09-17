@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include "component\ahrs.h"
 #include "component\cmd.h"
 #include "component\filter.h"
@@ -16,14 +16,14 @@ extern "C" {
 #include "device\bmi088.h"
 #include "device\can.h"
 
-/* Exported constants --------------------------------------------------------*/
+/* Exported constants ------------------------------------------------------- */
 #define GIMBAL_OK (0)        /* 运行正常 */
 #define GIMBAL_ERR (-1)      /* 运行时发现了其他错误 */
 #define GIMBAL_ERR_NULL (-2) /* 运行时发现NULL指针 */
 #define GIMBAL_ERR_MODE (-3) /* 运行时配置了错误的CMD_Gimbal_Mode_t */
 
-/* Exported macro ------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
+/* Exported macro ----------------------------------------------------------- */
+/* Exported types ----------------------------------------------------------- */
 
 /* 用enum组合所有PID，方便访问，配合数组使用 */
 enum Gimbal_PID_e {
@@ -95,7 +95,7 @@ typedef struct {
 
 } Gimbal_t;
 
-/* Exported functions prototypes ---------------------------------------------*/
+/* Exported functions prototypes -------------------------------------------- */
 int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback, CAN_t *can);
 
 int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec);

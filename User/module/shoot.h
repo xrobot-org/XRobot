@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include <cmsis_os2.h>
 
 #include "component\cmd.h"
@@ -16,14 +16,14 @@ extern "C" {
 #include "component\pid.h"
 #include "device\can.h"
 
-/* Exported constants --------------------------------------------------------*/
+/* Exported constants ------------------------------------------------------- */
 #define SHOOT_OK (0)        /* 运行正常 */
 #define SHOOT_ERR (-1)      /* 运行时发现了其他错误 */
 #define SHOOT_ERR_NULL (-2) /* 运行时发现NULL指针 */
 #define SHOOT_ERR_MODE (-3) /* 运行时配置了错误的CMD_Shoot_Mode_t */
 
-/* Exported macro ------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
+/* Exported macro ----------------------------------------------------------- */
+/* Exported types ----------------------------------------------------------- */
 
 /* 用enum组合所有PID，方便访问，配合数组使用 */
 enum Shoot_Acuator_e {
@@ -87,7 +87,7 @@ typedef struct {
 
 } Shoot_t;
 
-/* Exported functions prototypes ---------------------------------------------*/
+/* Exported functions prototypes -------------------------------------------- */
 int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float dt_sec);
 int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_t *can);
 int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl);

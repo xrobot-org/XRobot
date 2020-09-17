@@ -4,15 +4,15 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include <cmsis_os2.h>
 
 #include "component\user_math.h"
 #include "device\device.h"
 
-/* Exported constants --------------------------------------------------------*/
-/* Exported macro ------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
+/* Exported constants ------------------------------------------------------- */
+/* Exported macro ----------------------------------------------------------- */
+/* Exported types ----------------------------------------------------------- */
 /* Motor */
 typedef enum {
   CAN_MOTOR_M2006 = 0,
@@ -107,7 +107,7 @@ typedef struct {
   CAN_CapFeedback_t cap_feedback;
 } CAN_t;
 
-/* Exported functions prototypes ---------------------------------------------*/
+/* Exported functions prototypes -------------------------------------------- */
 int8_t CAN_Init(CAN_t *can_device, CAN_MotorInit_t *motor_init,
                 osThreadId_t *motor_alert, uint8_t motor_alert_len,
                 osThreadId_t uwb_alert, osThreadId_t cap_alert);

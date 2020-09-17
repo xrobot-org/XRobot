@@ -8,22 +8,22 @@
 extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include "component\cmd.h"
 #include "component\filter.h"
 #include "component\mixer.h"
 #include "component\pid.h"
 #include "device\can.h"
 
-/* Exported constants --------------------------------------------------------*/
+/* Exported constants ------------------------------------------------------- */
 #define CHASSIS_OK (0)        /* 运行正常 */
 #define CHASSIS_ERR (-1)      /* 运行时发现了其他错误 */
 #define CHASSIS_ERR_NULL (-2) /* 运行时发现NULL指针 */
 #define CHASSIS_ERR_MODE (-3) /* 运行时配置了错误的CMD_Chassis_Mode_t */
 #define CHASSIS_ERR_TYPE (-4) /* 运行时配置了错误的Chassis_Type_t */
 
-/* Exported macro ------------------------------------------------------------*/
-/* Exported types ------------------------------------------------------------*/
+/* Exported macro ----------------------------------------------------------- */
+/* Exported types ----------------------------------------------------------- */
 typedef enum {
   CHASSIS_TYPE_MECANUM,    /* 麦克纳姆轮 */
   CHASSIS_TYPE_PARLFIX4,   /* 平行摆设的四个驱动轮 */
@@ -80,7 +80,7 @@ typedef struct {
 
 } Chassis_t;
 
-/* Exported functions prototypes ---------------------------------------------*/
+/* Exported functions prototypes -------------------------------------------- */
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec);
 int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_t *can);
 int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl);

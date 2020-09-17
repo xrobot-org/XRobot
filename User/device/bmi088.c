@@ -3,7 +3,7 @@
 
 */
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include "bmi088.h"
 
 #include <cmsis_os2.h>
@@ -16,7 +16,7 @@
 #include "bsp\spi.h"
 #include "component\user_math.h"
 
-/* Private define ------------------------------------------------------------*/
+/* Private define ----------------------------------------------------------- */
 #define BMI088_REG_ACCL_CHIP_ID (0x00)
 #define BMI088_REG_ACCL_ERR (0x02)
 #define BMI088_REG_ACCL_STATUS (0x03)
@@ -63,7 +63,7 @@
 #define BMI088_CHIP_ID_GYRO (0x0F)
 
 #define BMI088_LEN_RX_BUFF (19)
-/* Private macro -------------------------------------------------------------*/
+/* Private macro ------------------------------------------------------------ */
 #define BMI088_ACCL_NSS_SET() \
   HAL_GPIO_WritePin(ACCL_CS_GPIO_Port, ACCL_CS_Pin, GPIO_PIN_SET)
 #define BMI088_ACCL_NSS_RESET() \
@@ -74,20 +74,20 @@
 #define BMI088_GYRO_NSS_RESET() \
   HAL_GPIO_WritePin(GYRO_CS_GPIO_Port, GYRO_CS_Pin, GPIO_PIN_RESET)
 
-/* Private typedef -----------------------------------------------------------*/
+/* Private typedef ---------------------------------------------------------- */
 typedef enum {
   BMI_ACCL,
   BMI_GYRO,
 } BMI_Device_t;
 
-/* Private variables ---------------------------------------------------------*/
+/* Private variables -------------------------------------------------------- */
 static uint8_t buffer[2];
 static uint8_t bmi088_rxbuf[BMI088_LEN_RX_BUFF];
 
 static osThreadId_t thread_alert;
 static bool inited = false;
 
-/* Private function  ---------------------------------------------------------*/
+/* Private function  -------------------------------------------------------- */
 static void BMI_WriteSingle(BMI_Device_t dv, uint8_t reg, uint8_t data) {
   buffer[0] = (reg & 0x7f);
   buffer[1] = data;
@@ -178,7 +178,7 @@ static void BMI088_GyroIntCallback(void) {
   osThreadFlagsSet(thread_alert, SIGNAL_BMI088_GYRO_NEW_DATA);
 }
 
-/* Exported functions --------------------------------------------------------*/
+/* Exported functions ------------------------------------------------------- */
 int8_t BMI088_Init(BMI088_t *bmi088) {
   if (bmi088 == NULL) return DEVICE_ERR_NULL;
 

@@ -2,7 +2,7 @@
   裁判系统抽象。
 */
 
-/* Includes ------------------------------------------------------------------*/
+/* Includes ----------------------------------------------------------------- */
 #include "referee.h"
 
 #include <string.h>
@@ -13,13 +13,13 @@
 #include "component\crc8.h"
 #include "component\user_math.h"
 
-/* Private define ------------------------------------------------------------*/
+/* Private define ----------------------------------------------------------- */
 #define REF_HEADER_SOF (0xA5)
 #define REF_LEN_RX_BUFF (0xFF)
 
-/* Private macro -------------------------------------------------------------*/
-/* Private typedef -----------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
+/* Private macro ------------------------------------------------------------ */
+/* Private typedef ---------------------------------------------------------- */
+/* Private variables -------------------------------------------------------- */
 static volatile uint32_t drop_message = 0;
 
 static uint8_t rxbuf[REF_LEN_RX_BUFF];
@@ -27,7 +27,7 @@ static uint8_t rxbuf[REF_LEN_RX_BUFF];
 static Referee_t *gref;
 static bool inited = false;
 
-/* Private function  ---------------------------------------------------------*/
+/* Private function  -------------------------------------------------------- */
 static void Referee_RxCpltCallback(void) {
   osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY);
 }
@@ -40,7 +40,7 @@ static void Referee_AbortRxCpltCallback(void) {
   osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY);
 }
 
-/* Exported functions --------------------------------------------------------*/
+/* Exported functions ------------------------------------------------------- */
 int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert) {
   if (ref == NULL) return DEVICE_ERR_NULL;
 
