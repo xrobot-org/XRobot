@@ -11,7 +11,7 @@ extern "C" {
 #include "user_math.h"
 
 typedef struct {
-  float cutoff_freq;
+  float cutoff_freq; /* 截止频率 */
 
   float a1;
   float a2;
@@ -23,11 +23,11 @@ typedef struct {
   float delay_element_1;
   float delay_element_2;
 
-} LowPassFilter2p_t;
+} LowPassFilter2p_t; /* 二阶低通滤波器 */
 
 typedef struct {
-  float notch_freq;
-  float bandwidth;
+  float notch_freq; /* 阻止频率 */
+  float bandwidth;  /* 带宽 */
 
   float a1;
   float a2;
@@ -38,7 +38,7 @@ typedef struct {
   float delay_element_1;
   float delay_element_2;
 
-} NotchFilter_t;
+} NotchFilter_t; /* 带阻滤波器 */
 
 void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq,
                           float cutoff_freq);

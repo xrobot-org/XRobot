@@ -22,10 +22,10 @@ extern "C" {
 #endif
 
 typedef struct {
-  float vx;
-  float vy;
-  float wz;
-} MoveVector_t;
+  float vx;     /* 前后平移 */
+  float vy;     /* 左右平移 */
+  float wz;     /* 转动 */
+} MoveVector_t; /* 移动向量 */
 
 float InvSqrt(float x);
 
