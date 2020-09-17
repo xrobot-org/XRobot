@@ -79,6 +79,12 @@
 
 ## 原理介绍
 
+### 云台控制原理
+
+![云台控制原理（于PX中相同）](./Image/云台控制原理.png "嵌入式程序结构图")
+
+### 其他参考文献
+
 - 软件架构参考了[PX4 Architectural Overview](https://dev.px4.io/master/en/concept/architecture.html)
 
 - 云台控制可以参考[PX4 Controller Diagrams](https://dev.px4.io/master/en/flight_stack/controller_diagrams.html)
