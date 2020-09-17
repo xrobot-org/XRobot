@@ -25,7 +25,7 @@ extern "C" {
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
 
-/* 用enum组合所有PID，方便访问，配合数组使用 */
+/* 用enum组合所有PID，GIMBAL_PID_NUM长度的数组都可以用这个枚举访问 */
 enum Gimbal_PID_e {
   GIMBAL_PID_YAW_OMEGA_IDX = 0, /* Yaw轴控制的角速度环PID的索引值 */
   GIMBAL_PID_YAW_ANGLE_IDX,     /* Yaw轴控制的角度环PID的索引值 */
