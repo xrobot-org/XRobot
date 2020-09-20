@@ -63,7 +63,7 @@ int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd) {
         cmd->shoot.mode = SHOOT_MODE_RELAX;
     }
   } else {
-  /* RC键位映射和逻辑. */
+    /* RC键位映射和逻辑. */
     if ((rc->sw_l == CMD_SW_ERR) || (rc->sw_r == CMD_SW_ERR)) {
       cmd->chassis.mode = CHASSIS_MODE_RELAX;
       cmd->gimbal.mode = GIMBAL_MODE_RELAX;

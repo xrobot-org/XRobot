@@ -12,7 +12,7 @@
 int8_t PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min,
                 const PID_Params_t *param) {
   if (pid == NULL) return -1;
-                  
+
   if (!isfinite(param->kp)) return -1;
   if (!isfinite(param->ki)) return -1;
   if (!isfinite(param->kd)) return -1;
