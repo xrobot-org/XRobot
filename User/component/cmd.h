@@ -93,8 +93,8 @@ typedef struct {
 
   float ch_res; /* 第五通道值 */
 
-  CMD_SwitchPos_t sw_l; /* 左侧拨杆位置 */
   CMD_SwitchPos_t sw_r; /* 右侧拨杆位置 */
+  CMD_SwitchPos_t sw_l; /* 左侧拨杆位置 */
 
   struct {
     int16_t x;
