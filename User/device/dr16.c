@@ -98,10 +98,10 @@ int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc) {
 
   float full_range = (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
 
-  rc->ch_r_x = ((float)dr16->data.ch_r_x - DR16_CH_VALUE_MID) / full_range;
-  rc->ch_r_y = ((float)dr16->data.ch_r_y - DR16_CH_VALUE_MID) / full_range;
-  rc->ch_l_x = ((float)dr16->data.ch_l_x - DR16_CH_VALUE_MID) / full_range;
-  rc->ch_l_y = ((float)dr16->data.ch_l_y - DR16_CH_VALUE_MID) / full_range;
+  rc->ch_r_x = 2 * ((float)dr16->data.ch_r_x - DR16_CH_VALUE_MID) / full_range;
+  rc->ch_r_y = 2 * ((float)dr16->data.ch_r_y - DR16_CH_VALUE_MID) / full_range;
+  rc->ch_l_x = 2 * ((float)dr16->data.ch_l_x - DR16_CH_VALUE_MID) / full_range;
+  rc->ch_l_y = 2 * ((float)dr16->data.ch_l_y - DR16_CH_VALUE_MID) / full_range;
 
   rc->sw_l = (CMD_SwitchPos_t)dr16->data.sw_l;
   rc->sw_r = (CMD_SwitchPos_t)dr16->data.sw_r;
