@@ -102,7 +102,6 @@ void Task_AttiEsti(void *argument) {
     BMI088_GyroStartDmaRecv();
     BMI088_GyroWaitDmaCplt();
     
-    
 #if 0
     if (ST8310_WaitNew(0)) {
       ST8310_StartDmaRecv();
