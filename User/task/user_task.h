@@ -13,10 +13,9 @@ extern "C" {
 
 /* Exported constants ------------------------------------------------------- */
 /* 所有任务都要define一个“任务运行频率”和“初始化延时” */
-#define TASK_FREQ_HZ_COMMAND (80u)
-#define TASK_FREQ_HZ_CTRL_CHASSIS (50u)
-#define TASK_FREQ_HZ_CTRL_GIMBAL (50u)
-#define TASK_FREQ_HZ_CTRL_SHOOT (50u)
+#define TASK_FREQ_HZ_CTRL_CHASSIS (100u)
+#define TASK_FREQ_HZ_CTRL_GIMBAL (100u)
+#define TASK_FREQ_HZ_CTRL_SHOOT (100u)
 #define TASK_FREQ_HZ_INFO (2u)
 #define TASK_FREQ_HZ_MONITOR (2u)
 #define TASK_FREQ_HZ_POSESTI (200u)
