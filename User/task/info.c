@@ -19,7 +19,7 @@
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 void Task_Info(void *argument) {
-  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_MONITOR;
+  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_INFO;
   Task_Param_t *task_param = (Task_Param_t *)argument;
 
   /* Task Setup */
