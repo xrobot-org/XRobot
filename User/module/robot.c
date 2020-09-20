@@ -52,11 +52,11 @@ static const Robot_Config_t cfg_infantry = {
 
                 .follow_pid_param =
                     {
-                        .kp = 0.5f,
-                        .ki = 0.5f,
-                        .kd = 0.5f,
-                        .i_limit = 0.5f,
-                        .out_limit = 0.5f,
+                        .kp = 0.01f,
+                        .ki = 0.f,
+                        .kd = 0.f,
+                        .i_limit = 1.f,
+                        .out_limit = 1.f,
                     },
                 .low_pass_cutoff_freq = -1.f,
             }, /* chassis */
@@ -68,34 +68,34 @@ static const Robot_Config_t cfg_infantry = {
                         {
                             /* GIMBAL_PID_YAW_OMEGA_IDX */
                             .kp = 0.5f,
-                            .ki = 0.5f,
-                            .kd = 0.5f,
-                            .i_limit = 0.5f,
-                            .out_limit = 0.5f,
+                            .ki = 0.f,
+                            .kd = 0.f,
+                            .i_limit = 1.0f,
+                            .out_limit = 1.0f,
                         },
                         {
                             /* GIMBAL_PID_YAW_ANGLE_IDX */
-                            .kp = 0.5f,
-                            .ki = 0.5f,
-                            .kd = 0.5f,
-                            .i_limit = 0.5f,
-                            .out_limit = 0.5f,
+                            .kp = 0.01f,
+                            .ki = 0.f,
+                            .kd = 0.f,
+                            .i_limit = 1.0f,
+                            .out_limit = 1.0f,
                         },
                         {
                             /* GIMBAL_PID_PIT_OMEGA_IDX */
                             .kp = 0.5f,
-                            .ki = 0.5f,
-                            .kd = 0.5f,
-                            .i_limit = 0.5f,
-                            .out_limit = 0.5f,
+                            .ki = 0.f,
+                            .kd = 0.f,
+                            .i_limit = 1.0f,
+                            .out_limit = 1.0f,
                         },
                         {
                             /* GIMBAL_PID_PIT_ANGLE_IDX */
-                            .kp = 0.5f,
-                            .ki = 0.5f,
-                            .kd = 0.5f,
-                            .i_limit = 0.5f,
-                            .out_limit = 0.5f,
+                            .kp = 0.01f,
+                            .ki = 0.f,
+                            .kd = 0.f,
+                            .i_limit = 1.0f,
+                            .out_limit = 1.0f,
                         },
                         {
                             /* GIMBAL_PID_REL_YAW_IDX */
@@ -177,7 +177,7 @@ static const Robot_PilotConfig_t user_qs = {
             .cmd =
                 {
                     .sens_mouse = 0.5f,
-                    .sens_rc = 0.5f,
+                    .sens_rc = 0.01f,
                 },
         },
 };
