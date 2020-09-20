@@ -1,8 +1,8 @@
 /*
   命令接收任务。
-  
+
   接收机器人的控制指令。
-  
+
   从DR16中接收数据，转换为通用的CMD_RC_t控制信号。
   根据CMD_RC_t计算最终命令CMD_t。
   把计算好的CMD_t细分后放到对应的消息队列中。
@@ -36,11 +36,11 @@ void Task_Command(void *argument) {
   Task_Param_t *task_param = (Task_Param_t *)argument;
 
   task_param->msgq.cmd.chassis =
-      osMessageQueueNew(9u, sizeof(CMD_Chassis_Ctrl_t), NULL);
+      osMessageQueueNew(3u, sizeof(CMD_Chassis_Ctrl_t), NULL);
   task_param->msgq.cmd.gimbal =
-      osMessageQueueNew(9u, sizeof(CMD_Gimbal_Ctrl_t), NULL);
+      osMessageQueueNew(3u, sizeof(CMD_Gimbal_Ctrl_t), NULL);
   task_param->msgq.cmd.shoot =
-      osMessageQueueNew(9u, sizeof(CMD_Shoot_Ctrl_t), NULL);
+      osMessageQueueNew(3u, sizeof(CMD_Shoot_Ctrl_t), NULL);
 
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_COMMAND);
@@ -55,7 +55,7 @@ void Task_Command(void *argument) {
     /* Task body */
     DR16_StartDmaRecv(&dr16);
 
-    if (DR16_WaitDmaCplt(200)) {
+    if (DR16_WaitDmaCplt(150)) {
       DR16_ParseRC(&dr16, &rc);
     } else {
       memset(&rc, 0, sizeof(CMD_RC_t));
