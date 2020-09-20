@@ -12,7 +12,7 @@ int8_t Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode) {
 }
 
 int8_t Mixer_Apply(Mixer_t *mixer, float vx, float vy, float wz, float *out,
-                   int8_t len) {
+                   int8_t len, float scale) {
   if (mixer == NULL) return -1;
 
   switch (mixer->mode) {
@@ -46,6 +46,10 @@ int8_t Mixer_Apply(Mixer_t *mixer, float vx, float vy, float wz, float *out,
     case MIXER_OMNICROSS:
     case MIXER_OMNIPLUS:
       goto error;
+  }
+
+  for (int8_t i = 0; i < len; i++) {
+    out[i] *= scale;
   }
   return 0;
 

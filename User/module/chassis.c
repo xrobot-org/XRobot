@@ -184,7 +184,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
 
   /* move_vec -> motor_rpm_set. */
   Mixer_Apply(&(c->mixer), c->move_vec.vx, c->move_vec.vy, c->move_vec.wz,
-              c->set_point.motor_rpm, c->num_wheel);
+              c->set_point.motor_rpm, c->num_wheel, 9000.f);
 
   /* Compute output from setpiont. */
   for (uint8_t i = 0; i < 4; i++) {
