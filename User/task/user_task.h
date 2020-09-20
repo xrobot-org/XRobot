@@ -16,7 +16,7 @@ extern "C" {
 #define TASK_FREQ_HZ_CTRL_CHASSIS (500u)
 #define TASK_FREQ_HZ_CTRL_GIMBAL (500u)
 #define TASK_FREQ_HZ_CTRL_SHOOT (500u)
-#define TASK_FREQ_HZ_INFO (2u)
+#define TASK_FREQ_HZ_INFO (4u)
 #define TASK_FREQ_HZ_MONITOR (2u)
 #define TASK_FREQ_HZ_POSESTI (500u)
 #define TASK_FREQ_HZ_REFEREE (2u)
