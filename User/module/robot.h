@@ -16,12 +16,12 @@ extern "C" {
 #include "module\shoot.h"
 
 typedef enum {
-  ROBOT_MODEL_INFANTRY = 0,
-  ROBOT_MODEL_HERO,
-  ROBOT_MODEL_ENGINEER,
-  ROBOT_MODEL_DRONE,
-  ROBOT_MODEL_SENTRY,
-  ROBOT_MODEL_NUM,
+  ROBOT_MODEL_INFANTRY = 0, /* 步兵机器人 */
+  ROBOT_MODEL_HERO,  /* 步兵机器人 */
+  ROBOT_MODEL_ENGINEER,  /* 工程机器人 */
+  ROBOT_MODEL_DRONE, /* 空中机器人 */
+  ROBOT_MODEL_SENTRY, /* 哨兵机器人 */
+  ROBOT_MODEL_NUM, /* 型号数量 */
 } Robot_Model_t;
 
 typedef enum {
