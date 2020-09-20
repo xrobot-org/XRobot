@@ -20,6 +20,12 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_Chassis_Mode_t mode) {
 
   c->mode = mode;
 
+  /* 切换模式后重置PID和滤波器 */
+  for (uint8_t i = 0; i < c->num_wheel; i++) {
+    PID_ResetIntegral(&(c->pid.motor[i]));
+    LowPassFilter2p_Reset(&(c->filter[i]), 0.f);
+  }
+
   // TODO: Check mode switchable.
   switch (mode) {
     case CHASSIS_MODE_RELAX:
@@ -53,7 +59,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec) {
 
   /* 设置默认模式 */
   c->mode = CHASSIS_MODE_RELAX;
-  
+
   /* 根据参数（param）中的底盘型号初始化Mixer */
   Mixer_Mode_t mixer_mode;
   switch (c->param->type) {
@@ -86,7 +92,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec) {
       // onboard sdk.
       return CHASSIS_ERR_TYPE;
   }
-  
+
   /* 根据底盘型号动态分配控制时使用的变量 */
   c->feedback.motor_rpm =
       BSP_Malloc((size_t)c->num_wheel * sizeof(*c->feedback.motor_rpm));

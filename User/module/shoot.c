@@ -7,8 +7,6 @@
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
-
-
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
@@ -24,6 +22,14 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
   if (mode == s->mode) return SHOOT_OK;
 
   s->mode = mode;
+
+  /* 切换模式后重置PID和滤波器 */
+  for (uint8_t i = 0; i < 2; i++) {
+    PID_ResetIntegral(&(s->pid.fric[i]));
+    LowPassFilter2p_Reset(&(s->filter.fric[i]), 0.f);
+  }
+  PID_ResetIntegral(&(s->pid.trig));
+  LowPassFilter2p_Reset(&(s->filter.trig), 0.f);
 
   // TODO: Check mode switchable.
   switch (mode) {
@@ -48,7 +54,7 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float dt_sec) {
 
   s->param = param;
   s->dt_sec = dt_sec;
-  
+
   s->mode = SHOOT_MODE_RELAX;
 
   s->trig_timer_id = osTimerNew(TrigTimerCallback, osTimerPeriodic, s, NULL);
@@ -94,8 +100,9 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
     s_ctrl->shoot_freq_hz = 0.f;
   }
 
-  s->set_point.fric_rpm[0] = s->param->bullet_speed_scaler * s_ctrl->bullet_speed +
-                             s->param->bullet_speed_bias;
+  s->set_point.fric_rpm[0] =
+      s->param->bullet_speed_scaler * s_ctrl->bullet_speed +
+      s->param->bullet_speed_bias;
   s->set_point.fric_rpm[1] = -s->set_point.fric_rpm[0];
 
   uint32_t period_ms = 1000u / (uint32_t)s_ctrl->shoot_freq_hz;

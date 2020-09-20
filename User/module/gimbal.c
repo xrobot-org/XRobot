@@ -17,6 +17,17 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_Gimbal_Mode_t mode) {
   if (mode == g->mode) return GIMBAL_OK;
   g->mode = mode;
 
+  /* 切换模式后重置PID和滤波器 */
+  for (uint8_t i = 0; i < GIMBAL_PID_NUM; i++) {
+    PID_ResetIntegral(&(g->pid[i]));
+  }
+  for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
+    LowPassFilter2p_Reset(&(g->filter_out[i]), 0.f);
+  }
+  for (uint8_t i = 0; i < 2; i++) {
+    LowPassFilter2p_Reset(&(g->filter_gyro[i]), 0.f);
+  }
+
   return 0;
 }
 
