@@ -1,8 +1,8 @@
 /*
   命令行交互界面（Command Line Interface）任务
-  
+
   实现命令行。
-  
+
   从USB虚拟串口读取数据，结果也打印到USB虚拟串口。
 */
 
@@ -35,23 +35,27 @@ static const char *const CLI_WELCOME_MESSAGE =
     " FreeRTOS CLI. Type 'help' to view a list of registered commands.   \r\n"
     "\r\n";
 
+/* Command示例 */
 static BaseType_t Command_Endian(char *out_buffer, size_t len,
                                  const char *command_string) {
-  (void)command_string;
+  (void)command_string; /* 没用到command_string，消除警告 */
 
   if (out_buffer == NULL) return pdFALSE;
 
+  /* 任务本身相关的内容 */
   uint8_t list[2] = {0x11, 0x22};
   uint16_t force_convert = ((uint16_t *)list)[0];
   uint16_t assembled = (uint16_t)(list[0] | (list[1] << 8));
 
-  len -= 1;
-  static uint8_t stage = 0;
+  len -= 1;                 /* 字符串后面由\0 */
+  static uint8_t stage = 0; /* 有限状态机的状态 */
   switch (stage) {
     case 0:
+      /* 每个状态内只允许由一个print相关函数，以保证安全 */
+      /* 每个print相关函数必须带有长度限制 */
       snprintf(out_buffer, len, "a[2] = {0x11, 0x22}\r\n");
-      stage++;
-      return pdPASS;
+      stage++;       /* 控制状态机运行状态 */
+      return pdPASS; /* 需要继续运行下一状态时返回pdPASS */
     case 1:
       snprintf(out_buffer, len,
                "Force convert to uint16 list, we got: 0x%x\r\n", force_convert);
@@ -69,19 +73,12 @@ static BaseType_t Command_Endian(char *out_buffer, size_t len,
         snprintf(out_buffer, len, "Big endian\r\n");
       stage++;
       return pdPASS;
-    default:
+    default: /* 结束用状态 */
       snprintf(out_buffer, len, "\r\n");
-      stage = 0;
-      return pdFALSE;
+      stage = 0;      /* 重置有限状态机 */
+      return pdFALSE; /* 不需要继续运行下一状态时返回pdFALSE */
   }
 }
-
-static const CLI_Command_Definition_t command_endian = {
-    "endian",
-    "\r\nendian:\r\n Endian experiment.\r\n\r\n",
-    Command_Endian,
-    0,
-};
 
 static BaseType_t Command_Stats(char *out_buffer, size_t len,
                                 const char *command_string) {
@@ -145,13 +142,6 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
   }
 }
 
-static const CLI_Command_Definition_t command_stats = {
-    "stats",
-    "\r\nstats:\r\n Displays a table showing the state of FreeRTOS\r\n\r\n",
-    Command_Stats,
-    0,
-};
-
 static BaseType_t Command_SetModel(char *out_buffer, size_t len,
                                    const char *command_string) {
   const char *param;
@@ -198,14 +188,6 @@ static BaseType_t Command_SetModel(char *out_buffer, size_t len,
       return pdFALSE;
   }
 }
-
-static const CLI_Command_Definition_t command_set_model = {
-    "set-model",
-    "\r\nset-model <model>:\r\n Set robot model. Expext:I[nfantry], H[ero], "
-    "E[ngineer], D[rone] and S[entry]\r\n\r\n",
-    Command_SetModel,
-    1,
-};
 
 static BaseType_t Command_SetPilot(char *out_buffer, size_t len,
                                    const char *command_string) {
@@ -254,13 +236,6 @@ static BaseType_t Command_SetPilot(char *out_buffer, size_t len,
   }
 }
 
-static const CLI_Command_Definition_t command_set_user = {
-    "set-pilot",
-    "\r\nset-pilot <pilot>:\r\n Set robot pilot. Expext: QS\r\n\r\n",
-    Command_SetPilot,
-    1,
-};
-
 static BaseType_t Command_Error(char *out_buffer, size_t len,
                                 const char *command_string) {
   (void)command_string;
@@ -283,13 +258,6 @@ static BaseType_t Command_Error(char *out_buffer, size_t len,
       return pdFALSE;
   }
 }
-
-static const CLI_Command_Definition_t command_error = {
-    "error",
-    "\r\nerror:\r\n Get robot error status.\r\n\r\n",
-    Command_Error,
-    0,
-};
 
 static BaseType_t Command_MotorIDQuitckSet(char *out_buffer, size_t len,
                                            const char *command_string) {
@@ -315,11 +283,78 @@ static BaseType_t Command_MotorIDQuitckSet(char *out_buffer, size_t len,
   }
 }
 
-static const CLI_Command_Definition_t command_motor_id_quick_set = {
-    "motor-id-set",
-    "\r\nmotor-id-set:\r\n Enter motor ID quick set mode.\r\n\r\n",
-    Command_MotorIDQuitckSet,
-    0,
+/*
+static BaseType_t Command_XXX(char *out_buffer, size_t len,
+                                           const char *command_string) {
+  (void)command_string;
+  if (out_buffer == NULL) return pdFALSE;
+
+  len -= 1;
+  static uint8_t stage = 0;
+  switch (stage) {
+    case 0:
+
+      snprintf(out_buffer, len, "\r\nXXX.");
+
+
+      stage++;
+      return pdPASS;
+    case 1:
+      XXX();
+      snprintf(out_buffer, len, "\r\nDone.");
+
+
+      stage++;
+      return pdPASS;
+
+    default:
+      snprintf(out_buffer, len, "\r\n");
+      stage = 0;
+      return pdFALSE;
+  }
+}
+*/
+
+static const CLI_Command_Definition_t command_table[] = {
+    {
+        "endian",
+        "\r\nendian:\r\n Endian experiment.\r\n\r\n",
+        Command_Endian,
+        0,
+    },
+    {
+        "stats",
+        "\r\nstats:\r\n Displays a table showing the state of "
+        "FreeRTOS\r\n\r\n",
+        Command_Stats,
+        0,
+    },
+    {
+        "set-model",
+        "\r\nset-model <model>:\r\n Set robot model. Expext:I[nfantry], "
+        "H[ero], "
+        "E[ngineer], D[rone] and S[entry]\r\n\r\n",
+        Command_SetModel,
+        1,
+    },
+    {
+        "set-pilot",
+        "\r\nset-pilot <pilot>:\r\n Set robot pilot. Expext: QS\r\n\r\n",
+        Command_SetPilot,
+        1,
+    },
+    {
+        "error",
+        "\r\nerror:\r\n Get robot error status.\r\n\r\n",
+        Command_Error,
+        0,
+    },
+    {
+        "motor-id-set",
+        "\r\nmotor-id-set:\r\n Enter motor ID quick set mode.\r\n\r\n",
+        Command_MotorIDQuitckSet,
+        0,
+    },
 };
 
 /* Private function --------------------------------------------------------- */
@@ -334,12 +369,11 @@ void Task_CLI(void *argument) {
   BaseType_t processing = 0;
 
   /* Register all the commands. */
-  FreeRTOS_CLIRegisterCommand(&command_endian);
-  FreeRTOS_CLIRegisterCommand(&command_stats);
-  FreeRTOS_CLIRegisterCommand(&command_set_model);
-  FreeRTOS_CLIRegisterCommand(&command_set_user);
-  FreeRTOS_CLIRegisterCommand(&command_error);
-  FreeRTOS_CLIRegisterCommand(&command_motor_id_quick_set);
+  int num_commands = sizeof(command_table) / sizeof(CLI_Command_Definition_t);
+
+  for (int j = 0; j < num_commands; j++) {
+    FreeRTOS_CLIRegisterCommand(command_table + j);
+  }
 
   /* Command Line Interface. */
   BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
