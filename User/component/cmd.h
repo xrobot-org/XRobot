@@ -86,10 +86,10 @@ typedef struct {
 } CMD_t;
 
 typedef struct {
-  float ch_l_x; /* 遥控器左侧摇杆横轴值 */
-  float ch_l_y; /* 遥控器左侧摇杆纵轴值 */
-  float ch_r_x; /* 遥控器右侧摇杆横轴值 */
-  float ch_r_y; /* 遥控器右侧摇杆纵轴值 */
+  float ch_l_x; /* 遥控器左侧摇杆横轴值，上为正 */
+  float ch_l_y; /* 遥控器左侧摇杆纵轴值，右为正 */
+  float ch_r_x; /* 遥控器右侧摇杆横轴值，上为正 */
+  float ch_r_y; /* 遥控器右侧摇杆纵轴值，右为正 */
 
   float ch_res; /* 第五通道值 */
 
