@@ -47,14 +47,14 @@ static BaseType_t Command_Endian(char *out_buffer, size_t len,
   uint16_t force_convert = ((uint16_t *)list)[0];
   uint16_t assembled = (uint16_t)(list[0] | (list[1] << 8));
 
-  len -= 1;                 /* 字符串后面由\0 */
+  len -= 1;                 /* 字符串后面有\0 */
   static uint8_t stage = 0; /* 有限状态机的状态 */
   switch (stage) {
     case 0:
-      /* 每个状态内只允许由一个print相关函数，以保证安全 */
+      /* 每个状态内只允许有一个print相关函数，以保证安全 */
       /* 每个print相关函数必须带有长度限制 */
       snprintf(out_buffer, len, "a[2] = {0x11, 0x22}\r\n");
-      stage++;       /* 控制状态机运行状态 */
+      stage++;       /* 改变状态机运行状态 */
       return pdPASS; /* 需要继续运行下一状态时返回pdPASS */
     case 1:
       snprintf(out_buffer, len,
@@ -73,7 +73,7 @@ static BaseType_t Command_Endian(char *out_buffer, size_t len,
         snprintf(out_buffer, len, "Big endian\r\n");
       stage++;
       return pdPASS;
-    default: /* 结束用状态 */
+    default: /* 结束时状态 */
       snprintf(out_buffer, len, "\r\n");
       stage = 0;      /* 重置有限状态机 */
       return pdFALSE; /* 不需要继续运行下一状态时返回pdFALSE */
