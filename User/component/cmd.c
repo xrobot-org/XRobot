@@ -114,8 +114,8 @@ int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd) {
       }
       cmd->chassis.ctrl_v.vx = rc->ch_l_x;
       cmd->chassis.ctrl_v.vy = rc->ch_l_y;
-      cmd->gimbal.delta_eulr.yaw = rc->ch_r_x * cmd->param->sens_mouse;
-      cmd->gimbal.delta_eulr.pit = rc->ch_r_y * cmd->param->sens_mouse;
+      cmd->gimbal.delta_eulr.yaw = rc->ch_r_x * cmd->param->sens_rc;
+      cmd->gimbal.delta_eulr.pit = rc->ch_r_y * cmd->param->sens_rc;
     }
   }
   return 0;
