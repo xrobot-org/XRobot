@@ -68,7 +68,7 @@ typedef struct {
 
   struct {
     float *motor_rpm; /* 电机转速的动态数组，单位：RPM */
-  } set_point;        /* PID计算的目标值 */
+  } setpoint;        /* PID计算的目标值 */
 
   struct {
     PID_t *motor; /* 控制轮子电机用的PID的动态数组 */

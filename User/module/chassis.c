@@ -99,9 +99,9 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
       BSP_Malloc((size_t)c->num_wheel * sizeof(*c->feedback.motor_rpm));
   if (c->feedback.motor_rpm == NULL) goto error;
 
-  c->set_point.motor_rpm =
-      BSP_Malloc((size_t)c->num_wheel * sizeof(*c->set_point.motor_rpm));
-  if (c->set_point.motor_rpm == NULL) goto error;
+  c->setpoint.motor_rpm =
+      BSP_Malloc((size_t)c->num_wheel * sizeof(*c->setpoint.motor_rpm));
+  if (c->setpoint.motor_rpm == NULL) goto error;
 
   c->pid.motor = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->pid.motor));
   if (c->pid.motor == NULL) goto error;
@@ -134,7 +134,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
 error:
   /* 动态内存分配错误时，释放已经分配的内存，返回错误值 */
   BSP_Free(c->feedback.motor_rpm);
-  BSP_Free(c->set_point.motor_rpm);
+  BSP_Free(c->setpoint.motor_rpm);
   BSP_Free(c->pid.motor);
   BSP_Free(c->out);
   BSP_Free(c->filter.in);
@@ -192,7 +192,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl, float dt_sec) {
 
   /* move_vec -> motor_rpm_set. */
   Mixer_Apply(&(c->mixer), c->move_vec.vx, c->move_vec.vy, c->move_vec.wz,
-              c->set_point.motor_rpm, c->num_wheel, 9000.0f);
+              c->setpoint.motor_rpm, c->num_wheel, 9000.0f);
 
   /* Compute output from setpiont. */
   for (uint8_t i = 0; i < 4; i++) {
@@ -205,12 +205,12 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl, float dt_sec) {
       case CHASSIS_MODE_FOLLOW_GIMBAL:
       case CHASSIS_MODE_ROTOR:
       case CHASSIS_MODE_INDENPENDENT:
-        c->out[i] = PID_Calc(c->pid.motor + i, c->set_point.motor_rpm[i],
+        c->out[i] = PID_Calc(c->pid.motor + i, c->setpoint.motor_rpm[i],
                              c->feedback.motor_rpm[i], 0.0f, dt_sec);
         break;
 
       case CHASSIS_MODE_OPEN:
-        c->out[i] = c->set_point.motor_rpm[i];
+        c->out[i] = c->setpoint.motor_rpm[i];
         break;
 
       case CHASSIS_MODE_RELAX:

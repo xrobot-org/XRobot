@@ -85,7 +85,7 @@ typedef struct {
 
   struct {
     AHRS_Eulr_t eulr; /* 表示云台姿态的欧拉角 */
-  } set_point;        /* PID计算的目标值 */
+  } setpoint;        /* PID计算的目标值 */
 
   PID_t pid[GIMBAL_PID_NUM]; /* PID数组 */
 

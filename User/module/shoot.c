@@ -13,7 +13,7 @@
 static void TrigTimerCallback(void *arg) {
   Shoot_t *s = (Shoot_t *)arg;
 
-  s->set_point.trig_angle += 2.0f * M_PI / s->param->num_trig_tooth;
+  s->setpoint.trig_angle += 2.0f * M_PI / s->param->num_trig_tooth;
 }
 
 static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
@@ -107,10 +107,10 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl, float dt_sec) {
     s_ctrl->shoot_freq_hz = 0.0f;
   }
 
-  s->set_point.fric_rpm[0] =
+  s->setpoint.fric_rpm[0] =
       s->param->bullet_speed_scaler * s_ctrl->bullet_speed +
       s->param->bullet_speed_bias;
-  s->set_point.fric_rpm[1] = -s->set_point.fric_rpm[0];
+  s->setpoint.fric_rpm[1] = -s->setpoint.fric_rpm[0];
 
   const uint32_t period_ms = 1000u / (uint32_t)s_ctrl->shoot_freq_hz;
   if (period_ms > 0) {
@@ -137,7 +137,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl, float dt_sec) {
           LowPassFilter2p_Apply(&(s->filter.in.trig), s->feedback.trig_angle);
 
       s->out[SHOOT_ACTR_TRIG_IDX] =
-          PID_Calc(&(s->pid.trig), s->set_point.trig_angle,
+          PID_Calc(&(s->pid.trig), s->setpoint.trig_angle,
                    s->feedback.trig_angle, 0.0f, dt_sec);
 
       s->out[SHOOT_ACTR_TRIG_IDX] = LowPassFilter2p_Apply(
@@ -149,7 +149,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl, float dt_sec) {
             &(s->filter.in.fric[i]), s->feedback.fric_rpm[i]);
 
         s->out[SHOOT_ACTR_FRIC1_IDX + i] =
-            PID_Calc(&(s->pid.fric[i]), s->set_point.fric_rpm[i],
+            PID_Calc(&(s->pid.fric[i]), s->setpoint.fric_rpm[i],
                      s->feedback.fric_rpm[i], 0.0f, dt_sec);
 
         s->out[SHOOT_ACTR_FRIC1_IDX + i] = LowPassFilter2p_Apply(

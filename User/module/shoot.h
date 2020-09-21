@@ -73,7 +73,7 @@ typedef struct {
   struct {
     float fric_rpm[2]; /* 摩擦轮电机转速，单位：RPM */
     float trig_angle;  /* 拨弹电机角度，单位：弧度 */
-  } set_point;         /* PID计算的目标值 */
+  } setpoint;         /* PID计算的目标值 */
 
   struct {
     PID_t fric[2]; /* 控制摩擦轮 */
