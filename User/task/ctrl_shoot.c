@@ -49,7 +49,7 @@ void Task_CtrlShoot(void *argument) {
     tick += delay_tick;
 
     const uint32_t flag = SIGNAL_CAN_MOTOR_RECV;
-    if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) == flag) {
+    if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != flag) {
       CAN_Motor_ControlShoot(0.0f, 0.0f, 0.0f);
       
     } else {
