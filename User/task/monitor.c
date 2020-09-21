@@ -5,14 +5,18 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
+#include "bsp\adc.h"
 #include "bsp\buzzer.h"
 #include "bsp\usb.h"
+#include "component/capacity.h"
 #include "task\user_task.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
+float bat_cap;
+
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 void Task_Monitor(void *argument) {
@@ -29,6 +33,9 @@ void Task_Monitor(void *argument) {
 #endif
     /* Task body */
     tick += delay_tick;
+    
+    float vbat = BSP_GetBatteryVolt();
+    bat_cap = Capacity_GetBatteryRemain(vbat);
 
     osDelayUntil(tick);
   }
