@@ -23,7 +23,8 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_Chassis_Mode_t mode) {
   /* 切换模式后重置PID和滤波器 */
   for (uint8_t i = 0; i < c->num_wheel; i++) {
     PID_Reset(c->pid.motor + i);
-    LowPassFilter2p_Reset(c->filter + i, 0.0f);
+    LowPassFilter2p_Reset(c->filter.in + i, 0.0f);
+    LowPassFilter2p_Reset(c->filter.out + i, 0.0f);
   }
 
   // TODO: Check mode switchable.
@@ -50,7 +51,8 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_Chassis_Mode_t mode) {
 }
 
 /* Exported functions ------------------------------------------------------- */
-int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float target_freq) {
+int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
+                    float target_freq) {
   if (c == NULL) return CHASSIS_ERR_NULL;
 
   /* 初始化参数 */
@@ -107,15 +109,20 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float target_fr
   c->out = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->out));
   if (c->out == NULL) goto error;
 
-  c->filter = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->filter));
-  if (c->filter == NULL) goto error;
+  c->filter.in = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->filter.in));
+  if (c->filter.in == NULL) goto error;
+
+  c->filter.out = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->filter.out));
+  if (c->filter.out == NULL) goto error;
 
   for (uint8_t i = 0; i < c->num_wheel; i++) {
     PID_Init(c->pid.motor + i, PID_MODE_NO_D, 1.0f / target_freq,
              &(c->param->motor_pid_param));
 
-    LowPassFilter2p_Init(c->filter + i, target_freq,
-                         c->param->low_pass_cutoff_freq);
+    LowPassFilter2p_Init(c->filter.in + i, target_freq,
+                         c->param->low_pass_cutoff_freq.in);
+    LowPassFilter2p_Init(c->filter.out + i, target_freq,
+                         c->param->low_pass_cutoff_freq.out);
   }
 
   PID_Init(&(c->pid.follow), PID_MODE_NO_D, 1.0f / target_freq,
@@ -126,10 +133,12 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float target_fr
 
 error:
   /* 动态内存分配错误时，释放已经分配的内存，返回错误值 */
-  BSP_Free(c->out);
-  BSP_Free(c->pid.motor);
-  BSP_Free(c->set_point.motor_rpm);
   BSP_Free(c->feedback.motor_rpm);
+  BSP_Free(c->set_point.motor_rpm);
+  BSP_Free(c->pid.motor);
+  BSP_Free(c->out);
+  BSP_Free(c->filter.in);
+  BSP_Free(c->filter.out);
   return CHASSIS_ERR_NULL;
 }
 
@@ -187,6 +196,10 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl, float dt_sec) {
 
   /* Compute output from setpiont. */
   for (uint8_t i = 0; i < 4; i++) {
+    /* Filter feedback. */
+    c->out[i] =
+        LowPassFilter2p_Apply(c->filter.in + i, c->feedback.motor_rpm[i]);
+
     switch (c->mode) {
       case CHASSIS_MODE_BREAK:
       case CHASSIS_MODE_FOLLOW_GIMBAL:
@@ -204,9 +217,8 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl, float dt_sec) {
         c->out[i] = 0;
         break;
     }
-
     /* Filter output. */
-    c->out[i] = LowPassFilter2p_Apply(c->filter + i, c->out[i]);
+    c->out[i] = LowPassFilter2p_Apply(c->filter.out + i, c->out[i]);
   }
   return CHASSIS_OK;
 }

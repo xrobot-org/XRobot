@@ -58,12 +58,12 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float target_freq)
 
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
     LowPassFilter2p_Init(g->filter_out + i, target_freq,
-                         g->param->out_low_pass_cutoff_freq);
+                         g->param->low_pass_cutoff_freq.out);
   }
 
   for (uint8_t i = 0; i < 2; i++) {
     LowPassFilter2p_Init(g->filter_gyro + i, target_freq,
-                         g->param->gyro_low_pass_cutoff_freq);
+                         g->param->low_pass_cutoff_freq.gyro);
   }
 
   g->set_point.eulr.yaw = 70.0f;
@@ -89,14 +89,17 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
   if (g_ctrl == NULL) return -1;
 
   Gimbal_SetMode(g, g_ctrl->mode);
-
+                        
+  /* 设置初始yaw目标值. */
   if (g->set_point.eulr.yaw == 0.0f) {
     g->set_point.eulr.yaw = fb->eulr.imu.yaw;
   }
-
+  
+  /* 处理控制命令. */
   g->set_point.eulr.yaw += g_ctrl->delta_eulr.yaw;
   g->set_point.eulr.pit += g_ctrl->delta_eulr.pit;
 
+  /* 限制set point范围. */
   if (g->set_point.eulr.yaw < -180.0f) {
     g->set_point.eulr.yaw += 360.0f;
   }

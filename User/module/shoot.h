@@ -30,17 +30,24 @@ enum Shoot_Acuator_e {
   SHOOT_ACTR_FRIC1_IDX = 0, /* 1号摩擦轮相关的索引值 */
   SHOOT_ACTR_FRIC2_IDX,     /* 2号摩擦轮相关的索引值 */
   SHOOT_ACTR_TRIG_IDX,      /* 扳机电机相关的索引值 */
-  SHOOT_ACTR_NUM,       /* 总共的动作器数量 */
+  SHOOT_ACTR_NUM,           /* 总共的动作器数量 */
 };
 
 /* 射击参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
-  const PID_Params_t fric_pid_param[2]; /* 摩擦轮电机控制PID的参数 */
-  PID_Params_t trig_pid_param;          /* 扳机电机控制PID的参数 */
+  PID_Params_t fric_pid_param; /* 摩擦轮电机控制PID的参数 */
+  PID_Params_t trig_pid_param; /* 扳机电机控制PID的参数 */
 
   struct {
-    float fric;           /* 摩擦轮电机 */
-    float trig;           /* 扳机电机 */
+    struct {
+      float fric; /* 摩擦轮电机 */
+      float trig; /* 扳机电机 */
+    } in;         /* 输入 */
+
+    struct {
+      float fric;         /* 摩擦轮电机 */
+      float trig;         /* 扳机电机 */
+    } out;                /* 输出 */
   } low_pass_cutoff_freq; /* 低通滤波器截止频率 */
 
   float bullet_speed_scaler; /* 子弹初速和电机转速之间的映射参数 */
@@ -55,7 +62,7 @@ typedef struct {
   const Shoot_Params_t *param; /* 射击的参数，用Shoot_Init设定 */
 
   /* 模块通用 */
-  CMD_Shoot_Mode_t mode; /* 射击模式 */
+  CMD_Shoot_Mode_t mode;     /* 射击模式 */
   osTimerId_t trig_timer_id; /* 控制拨弹电机的软件定时器 */
 
   struct {
@@ -74,9 +81,15 @@ typedef struct {
   } pid;           /* 反馈控制用的PID */
 
   struct {
-    LowPassFilter2p_t fric[2]; /* 过滤摩擦轮 */
-    LowPassFilter2p_t trig;    /* 过滤拨弹电机 */
-  } filter;                    /* 电机输出过滤器 */
+    struct {
+      LowPassFilter2p_t fric[2]; /* 过滤摩擦轮 */
+      LowPassFilter2p_t trig;    /* 过滤拨弹电机 */
+    } in;                        /* 反馈值滤波器 */
+    struct {
+      LowPassFilter2p_t fric[2]; /* 过滤摩擦轮 */
+      LowPassFilter2p_t trig;    /* 过滤拨弹电机 */
+    } out;                       /* 输出值滤波器 */
+  } filter;                      /* 过滤器 */
 
   int8_t heat_limiter; /* 枪管热度占位变量 */
 

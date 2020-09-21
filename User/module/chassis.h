@@ -36,9 +36,14 @@ typedef enum {
 /* 底盘参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
   Chassis_Type_t type; /* 底盘类型，底盘的机械设计和轮子选型 */
-  const PID_Params_t motor_pid_param; /* 轮子控制PID的参数 */
-  PID_Params_t follow_pid_param;      /* 跟随云台PID的参数 */
-  float low_pass_cutoff_freq;         /* 低通滤波器截止频率 */
+  PID_Params_t motor_pid_param;  /* 轮子控制PID的参数 */
+  PID_Params_t follow_pid_param; /* 跟随云台PID的参数 */
+
+  struct {
+    float in;             /* 输入 */
+    float out;            /* 输出 */
+  } low_pass_cutoff_freq; /* 低通滤波器截止频率 */
+
 } Chassis_Params_t;
 
 /* 运行的主结构体，所有这个文件里的函数都在操作这个结构体。
@@ -70,7 +75,10 @@ typedef struct {
     PID_t follow; /* 跟随云台用的PID */
   } pid;          /* 反馈控制用的PID */
 
-  LowPassFilter2p_t *filter; /* 电机输出过滤器 */
+  struct {
+    LowPassFilter2p_t *in;  /* 反馈值滤波器 */
+    LowPassFilter2p_t *out; /* 输出值滤波器 */
+  } filter;                 /* 滤波器 */
 
   float *out; /* 电机最终的输出值的动态数组 */
 
@@ -78,7 +86,8 @@ typedef struct {
 
 /* Exported functions prototypes -------------------------------------------- */
 /* Chassis_Control的目标运行频率 */
-int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float target_freq);
+int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
+                    float target_freq);
 int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_t *can);
 int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl, float dt_sec);
 

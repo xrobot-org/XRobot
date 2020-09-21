@@ -26,10 +26,12 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
   /* 切换模式后重置PID和滤波器 */
   for (uint8_t i = 0; i < 2; i++) {
     PID_Reset(s->pid.fric + i);
-    LowPassFilter2p_Reset(s->filter.fric + i, 0.0f);
+    LowPassFilter2p_Reset(s->filter.in.fric + i, 0.0f);
+    LowPassFilter2p_Reset(s->filter.out.fric + i, 0.0f);
   }
   PID_Reset(&(s->pid.trig));
-  LowPassFilter2p_Reset(&(s->filter.trig), 0.0f);
+  LowPassFilter2p_Reset(&(s->filter.in.trig), 0.0f);
+  LowPassFilter2p_Reset(&(s->filter.out.trig), 0.0f);
 
   // TODO: Check mode switchable.
   switch (mode) {
@@ -60,16 +62,22 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
 
   for (uint8_t i = 0; i < 2; i++) {
     PID_Init(s->pid.fric + i, PID_MODE_NO_D, 1.0f / target_freq,
-             param->fric_pid_param + i);
+             &(param->fric_pid_param));
 
-    LowPassFilter2p_Init(s->filter.fric + i, target_freq,
-                         param->low_pass_cutoff_freq.fric);
+    LowPassFilter2p_Init(s->filter.in.fric + i, target_freq,
+                         param->low_pass_cutoff_freq.in.fric);
+
+    LowPassFilter2p_Init(s->filter.out.fric + i, target_freq,
+                         param->low_pass_cutoff_freq.out.fric);
   }
 
-  PID_Init(&(s->pid.trig), PID_MODE_NO_D, 1.0f / target_freq, &(param->trig_pid_param));
+  PID_Init(&(s->pid.trig), PID_MODE_NO_D, 1.0f / target_freq,
+           &(param->trig_pid_param));
 
-  LowPassFilter2p_Init(&(s->filter.trig), target_freq,
-                       param->low_pass_cutoff_freq.trig);
+  LowPassFilter2p_Init(&(s->filter.in.trig), target_freq,
+                       param->low_pass_cutoff_freq.in.trig);
+  LowPassFilter2p_Init(&(s->filter.out.trig), target_freq,
+                       param->low_pass_cutoff_freq.out.trig);
   return 0;
 }
 
@@ -124,16 +132,28 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl, float dt_sec) {
     case SHOOT_MODE_SAFE:
     case SHOOT_MODE_STDBY:
     case SHOOT_MODE_FIRE:
-      s->out[0] = PID_Calc(&(s->pid.trig), s->set_point.trig_angle,
-                           s->feedback.trig_angle, 0.0f, dt_sec);
-      s->out[0] = LowPassFilter2p_Apply(&(s->filter.trig), s->out[0]);
+      /* Filter feedback. */
+      s->feedback.trig_angle =
+          LowPassFilter2p_Apply(&(s->filter.in.trig), s->feedback.trig_angle);
+
+      s->out[SHOOT_ACTR_TRIG_IDX] =
+          PID_Calc(&(s->pid.trig), s->set_point.trig_angle,
+                   s->feedback.trig_angle, 0.0f, dt_sec);
+
+      s->out[SHOOT_ACTR_TRIG_IDX] = LowPassFilter2p_Apply(
+          &(s->filter.out.trig), s->out[SHOOT_ACTR_TRIG_IDX]);
 
       for (uint8_t i = 0; i < 2; i++) {
-        s->out[i + 1] =
-            PID_Calc(&(s->pid.fric[i + 1]), s->set_point.fric_rpm[i + 1],
-                     s->feedback.fric_rpm[i + 1], 0.0f, dt_sec);
-        s->out[i + 1] =
-            LowPassFilter2p_Apply(&(s->filter.fric[i + 1]), s->out[i + 1]);
+        /* Filter feedback. */
+        s->feedback.fric_rpm[i] = LowPassFilter2p_Apply(
+            &(s->filter.in.fric[i]), s->feedback.fric_rpm[i]);
+
+        s->out[SHOOT_ACTR_FRIC1_IDX + i] =
+            PID_Calc(&(s->pid.fric[i]), s->set_point.fric_rpm[i],
+                     s->feedback.fric_rpm[i], 0.0f, dt_sec);
+
+        s->out[SHOOT_ACTR_FRIC1_IDX + i] = LowPassFilter2p_Apply(
+            &(s->filter.out.fric[i]), s->out[SHOOT_ACTR_FRIC1_IDX + i]);
       }
       break;
   }
