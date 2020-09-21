@@ -105,10 +105,15 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
       s->param->bullet_speed_bias;
   s->set_point.fric_rpm[1] = -s->set_point.fric_rpm[0];
 
-  uint32_t period_ms = 1000u / (uint32_t)s_ctrl->shoot_freq_hz;
-  if (!osTimerIsRunning(s->trig_timer_id))
-    osTimerStart(s->trig_timer_id, period_ms);
-
+  const uint32_t period_ms = 1000u / (uint32_t)s_ctrl->shoot_freq_hz;
+  if (period_ms > 0) {
+    if (!osTimerIsRunning(s->trig_timer_id))
+      osTimerStart(s->trig_timer_id, period_ms);
+  } else {
+    if (osTimerIsRunning(s->trig_timer_id))
+      osTimerStop(s->trig_timer_id);
+  }
+  
   switch (s->mode) {
     case SHOOT_MODE_RELAX:
       s->out[0] = 0.0f;
