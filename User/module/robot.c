@@ -6,38 +6,6 @@
 
 #define CONFIG_BASE_ADDRESS (ADDR_FLASH_END - sizeof(Robot_ID_t))
 
-/* 一个数组包含底盘电机的PID参数 */
-static const PID_Params_t infantry_chassis_pid_array[4] = {
-    {
-        .kp = 0.001f,
-        .ki = 0.0f,
-        .kd = 0.0f,
-        .i_limit = 1.0f,
-        .out_limit = 1.0f,
-    },
-    {
-        .kp = 0.001f,
-        .ki = 0.0f,
-        .kd = 0.0f,
-        .i_limit = 1.0f,
-        .out_limit = 1.0f,
-    },
-    {
-        .kp = 0.001f,
-        .ki = 0.0f,
-        .kd = 0.0f,
-        .i_limit = 1.0f,
-        .out_limit = 1.0f,
-    },
-    {
-        .kp = 0.001f,
-        .ki = 0.0f,
-        .kd = 0.0f,
-        .i_limit = 1.0f,
-        .out_limit = 1.0f,
-    },
-};
-
 static const Robot_Config_t cfg_infantry = {
     .model = ROBOT_MODEL_INFANTRY,
 
@@ -46,9 +14,14 @@ static const Robot_Config_t cfg_infantry = {
         {
             .chassis = /* 底盘模块参数 */
             {
-                /* 一个指针直接指向之前定义的参数数组，长度未知，暂时用这种方式
-                 */
-                .motor_pid_param = infantry_chassis_pid_array,
+                .motor_pid_param =
+                    {
+                        .kp = 0.001f,
+                        .ki = 0.0f,
+                        .kd = 0.0f,
+                        .i_limit = 1.0f,
+                        .out_limit = 1.0f,
+                    },
 
                 .follow_pid_param =
                     {

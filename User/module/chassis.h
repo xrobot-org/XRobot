@@ -36,17 +36,16 @@ typedef enum {
 /* 底盘参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
   Chassis_Type_t type; /* 底盘类型，底盘的机械设计和轮子选型 */
-  const PID_Params_t *motor_pid_param; /* 轮子控制PID的参数 */
-  PID_Params_t follow_pid_param;       /* 跟随云台PID的参数 */
-  float low_pass_cutoff_freq;          /* 低通滤波器截止频率 */
+  const PID_Params_t motor_pid_param; /* 轮子控制PID的参数 */
+  PID_Params_t follow_pid_param;      /* 跟随云台PID的参数 */
+  float low_pass_cutoff_freq;         /* 低通滤波器截止频率 */
 } Chassis_Params_t;
 
 /* 运行的主结构体，所有这个文件里的函数都在操作这个结构体。
   包含了初始化参数，中间变量，输出变量。
 */
 typedef struct {
-  const Chassis_Params_t
-      *param; /* 底盘的参数，用Chassis_Init设定 */
+  const Chassis_Params_t *param; /* 底盘的参数，用Chassis_Init设定 */
 
   /* 模块通用 */
 
