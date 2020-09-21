@@ -104,10 +104,12 @@ static CAN_t *gcan;
 static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
-static void CAN_Motor_Decode(CAN_MotorFeedback_t *feedback, const uint8_t *raw) {
+static void CAN_Motor_Decode(CAN_MotorFeedback_t *feedback,
+                             const uint8_t *raw) {
   uint16_t raw_angle = (uint16_t)((raw[0] << 8) | raw[1]);
 
-  feedback->rotor_angle = raw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.0f * M_PI;
+  feedback->rotor_angle =
+      raw_angle / (float)CAN_MOTOR_MAX_ENCODER * 2.0f * M_PI;
   feedback->rotor_speed = (int16_t)((raw[2] << 8) | raw[3]);
   feedback->torque_current = (int16_t)((raw[4] << 8) | raw[5]);
   feedback->temp = raw[6];

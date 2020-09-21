@@ -25,8 +25,8 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
 
   /* 切换模式后重置PID和滤波器 */
   for (uint8_t i = 0; i < 2; i++) {
-    PID_Reset(&(s->pid.fric[i]));
-    LowPassFilter2p_Reset(&(s->filter.fric[i]), 0.0f);
+    PID_Reset(s->pid.fric + i);
+    LowPassFilter2p_Reset(s->filter.fric + i, 0.0f);
   }
   PID_Reset(&(s->pid.trig));
   LowPassFilter2p_Reset(&(s->filter.trig), 0.0f);
@@ -60,10 +60,10 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float dt_sec) {
   s->trig_timer_id = osTimerNew(TrigTimerCallback, osTimerPeriodic, s, NULL);
 
   for (uint8_t i = 0; i < 2; i++) {
-    PID_Init(&(s->pid.fric[i]), PID_MODE_NO_D, s->dt_sec,
-             &(param->fric_pid_param[i]));
+    PID_Init(s->pid.fric + i, PID_MODE_NO_D, s->dt_sec,
+             param->fric_pid_param + i);
 
-    LowPassFilter2p_Init(&(s->filter.fric[i]), 1000.0f / s->dt_sec,
+    LowPassFilter2p_Init(s->filter.fric + i, 1000.0f / s->dt_sec,
                          param->low_pass_cutoff_freq.fric);
   }
 
@@ -110,10 +110,9 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
     if (!osTimerIsRunning(s->trig_timer_id))
       osTimerStart(s->trig_timer_id, period_ms);
   } else {
-    if (osTimerIsRunning(s->trig_timer_id))
-      osTimerStop(s->trig_timer_id);
+    if (osTimerIsRunning(s->trig_timer_id)) osTimerStop(s->trig_timer_id);
   }
-  
+
   switch (s->mode) {
     case SHOOT_MODE_RELAX:
       s->out[0] = 0.0f;

@@ -19,15 +19,15 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_Gimbal_Mode_t mode) {
 
   /* 切换模式后重置PID和滤波器 */
   for (uint8_t i = 0; i < GIMBAL_PID_NUM; i++) {
-    PID_Reset(&(g->pid[i]));
+    PID_Reset(g->pid + i);
   }
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
-    LowPassFilter2p_Reset(&(g->filter_out[i]), 0.0f);
+    LowPassFilter2p_Reset(g->filter_out + i, 0.0f);
   }
   for (uint8_t i = 0; i < 2; i++) {
-    LowPassFilter2p_Reset(&(g->filter_gyro[i]), 0.0f);
+    LowPassFilter2p_Reset(g->filter_gyro + i, 0.0f);
   }
-  
+
   AHRS_ResetEulr(&(g->set_point.eulr));
 
   return 0;
@@ -58,12 +58,12 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec) {
            &(g->param->pid[GIMBAL_PID_REL_PIT_IDX]));
 
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
-    LowPassFilter2p_Init(&(g->filter_out[i]), 1.0f / g->dt_sec,
+    LowPassFilter2p_Init(g->filter_out + i, 1.0f / g->dt_sec,
                          g->param->out_low_pass_cutoff_freq);
   }
 
   for (uint8_t i = 0; i < 2; i++) {
-    LowPassFilter2p_Init(&(g->filter_gyro[i]), 1.0f / g->dt_sec,
+    LowPassFilter2p_Init(g->filter_gyro + i, 1.0f / g->dt_sec,
                          g->param->gyro_low_pass_cutoff_freq);
   }
 
@@ -148,7 +148,7 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
   }
   /* Filter output. */
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++)
-    g->out[i] = LowPassFilter2p_Apply(&(g->filter_out[i]), g->out[i]);
+    g->out[i] = LowPassFilter2p_Apply(g->filter_out + i, g->out[i]);
 
   return 0;
 }

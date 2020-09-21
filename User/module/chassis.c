@@ -22,8 +22,8 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_Chassis_Mode_t mode) {
 
   /* 切换模式后重置PID和滤波器 */
   for (uint8_t i = 0; i < c->num_wheel; i++) {
-    PID_Reset(&(c->pid.motor[i]));
-    LowPassFilter2p_Reset(&(c->filter[i]), 0.0f);
+    PID_Reset(c->pid.motor + i);
+    LowPassFilter2p_Reset(c->filter + i, 0.0f);
   }
 
   // TODO: Check mode switchable.
@@ -112,10 +112,10 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec) {
   if (c->filter == NULL) goto error;
 
   for (uint8_t i = 0; i < c->num_wheel; i++) {
-    PID_Init(&(c->pid.motor[i]), PID_MODE_NO_D, c->dt_sec,
+    PID_Init(c->pid.motor + i, PID_MODE_NO_D, c->dt_sec,
              &(c->param->motor_pid_param));
 
-    LowPassFilter2p_Init(&(c->filter[i]), 1.0f / c->dt_sec,
+    LowPassFilter2p_Init(c->filter + i, 1.0f / c->dt_sec,
                          c->param->low_pass_cutoff_freq);
   }
 
@@ -193,7 +193,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
       case CHASSIS_MODE_FOLLOW_GIMBAL:
       case CHASSIS_MODE_ROTOR:
       case CHASSIS_MODE_INDENPENDENT:
-        c->out[i] = PID_Calc(&(c->pid.motor[i]), c->set_point.motor_rpm[i],
+        c->out[i] = PID_Calc(c->pid.motor + i, c->set_point.motor_rpm[i],
                              c->feedback.motor_rpm[i], 0.0f, c->dt_sec);
         break;
 
@@ -207,7 +207,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
     }
 
     /* Filter output. */
-    c->out[i] = LowPassFilter2p_Apply(&(c->filter[i]), c->out[i]);
+    c->out[i] = LowPassFilter2p_Apply(c->filter + i, c->out[i]);
   }
   return CHASSIS_OK;
 }
