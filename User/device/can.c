@@ -71,7 +71,6 @@ typedef enum {
 } CAN_MotorId_t;
 
 /* Private variables -------------------------------------------------------- */
-static uint8_t motor_received = 0;
 static uint32_t unknown_message = 0;
 
 static CAN_TxHeaderTypeDef tx_header;
@@ -113,8 +112,6 @@ static void CAN_Motor_Decode(CAN_MotorFeedback_t *feedback,
   feedback->rotor_speed = (int16_t)((raw[2] << 8) | raw[3]);
   feedback->torque_current = (int16_t)((raw[4] << 8) | raw[5]);
   feedback->temp = raw[6];
-
-  motor_received++;
 }
 
 static void CAN_UWB_Decode(CAN_UWBFeedback_t *feedback, const uint8_t *raw) {
