@@ -52,8 +52,8 @@ void Task_Init(void *argument) {
       osThreadNew(Task_CtrlChassis, &task_param, &attr_ctrl_chassis);
   task_param.thread.ctrl_gimbal =
       osThreadNew(Task_CtrlGimbal, &task_param, &attr_ctrl_gimbal);
-  //task_param.thread.ctrl_shoot =
-    //  osThreadNew(Task_CtrlShoot, &task_param, &attr_ctrl_shoot);
+  task_param.thread.ctrl_shoot =
+      osThreadNew(Task_CtrlShoot, &task_param, &attr_ctrl_shoot);
   task_param.thread.info = osThreadNew(Task_Info, &task_param, &attr_info);
   task_param.thread.monitor =
       osThreadNew(Task_Monitor, &task_param, &attr_monitor);
