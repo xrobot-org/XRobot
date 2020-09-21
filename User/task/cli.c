@@ -370,7 +370,6 @@ void Task_CLI(void *argument) {
 
   /* Register all the commands. */
   int num_commands = sizeof(command_table) / sizeof(CLI_Command_Definition_t);
-
   for (int j = 0; j < num_commands; j++) {
     FreeRTOS_CLIRegisterCommand(command_table + j);
   }
