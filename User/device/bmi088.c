@@ -209,8 +209,8 @@ int8_t BMI088_Init(BMI088_t *bmi088) {
 
   /* Accl init. */
   /* Filter setting: Normal. */
-  /* ODR: 0xAA: 400Hz. 0xA9: 200Hz. 0xA8: 100Hz. 0xA6: 25Hz. */
-  BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_CONF, 0xA8);
+  /* ODR: 0xAB: 800Hz. 0xAA: 400Hz. 0xA9: 200Hz. 0xA8: 100Hz. 0xA6: 25Hz. */
+  BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_CONF, 0xAB);
 
   /* 0x00: +-3G. 0x01: +-6G. 0x02: +-12G. 0x03: +-24G. */
   BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_RANGE, 0x01);
@@ -230,8 +230,8 @@ int8_t BMI088_Init(BMI088_t *bmi088) {
   BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_RANGE, 0x01);
 
   /* Filter bw: 47Hz. */
-  /* ODR: 0x03: 400Hz. 0x06: 200Hz. 0x07: 100Hz. */
-  BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_BANDWIDTH, 0x07);
+  /* ODR: 0x02: 1000Hz. 0x03: 400Hz. 0x06: 200Hz. 0x07: 100Hz. */
+  BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_BANDWIDTH, 0x02);
 
   /* INT3 and INT4 as output. Push-pull. Active low. */
   BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_INT3_INT4_IO_CONF, 0x00);
@@ -347,5 +347,5 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 
 float BMI088_GetUpdateFreq(BMI088_t *bmi088) {
   (void)bmi088;
-  return 100.0f;
+  return 800.0f;
 }
