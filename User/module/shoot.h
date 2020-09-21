@@ -55,9 +55,6 @@ typedef struct {
   const Shoot_Params_t *param; /* 射击的参数，用Shoot_Init设定 */
 
   /* 模块通用 */
-
-  /* TODO: 考虑放到Control中实时检测dt */
-  float dt_sec;          /* 调用Shoot_Control的周期，以秒为单位， */
   CMD_Shoot_Mode_t mode; /* 射击模式 */
   osTimerId_t trig_timer_id; /* 控制拨弹电机的软件定时器 */
 
@@ -88,9 +85,9 @@ typedef struct {
 } Shoot_t;
 
 /* Exported functions prototypes -------------------------------------------- */
-int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float dt_sec);
+int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq);
 int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_t *can);
-int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl);
+int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl, float dt_sec);
 
 #ifdef __cplusplus
 }

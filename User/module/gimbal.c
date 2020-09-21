@@ -34,36 +34,35 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_Gimbal_Mode_t mode) {
 }
 
 /* Exported functions ------------------------------------------------------- */
-int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec) {
+int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float target_freq) {
   if (g == NULL) return -1;
 
   g->param = param;
-  g->dt_sec = dt_sec;
 
   g->mode = GIMBAL_MODE_RELAX;
 
-  PID_Init(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), PID_MODE_NO_D, g->dt_sec,
+  PID_Init(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), PID_MODE_NO_D, 1.0f / target_freq,
            &(g->param->pid[GIMBAL_PID_YAW_ANGLE_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), PID_MODE_SET_D, g->dt_sec,
+  PID_Init(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), PID_MODE_SET_D, 1.0f / target_freq,
            &(g->param->pid[GIMBAL_PID_YAW_OMEGA_IDX]));
 
-  PID_Init(&(g->pid[GIMBAL_PID_PIT_ANGLE_IDX]), PID_MODE_NO_D, g->dt_sec,
+  PID_Init(&(g->pid[GIMBAL_PID_PIT_ANGLE_IDX]), PID_MODE_NO_D, 1.0f / target_freq,
            &(g->param->pid[GIMBAL_PID_PIT_ANGLE_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), PID_MODE_SET_D, g->dt_sec,
+  PID_Init(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), PID_MODE_SET_D, 1.0f / target_freq,
            &(g->param->pid[GIMBAL_PID_PIT_OMEGA_IDX]));
 
-  PID_Init(&(g->pid[GIMBAL_PID_REL_YAW_IDX]), PID_MODE_NO_D, g->dt_sec,
+  PID_Init(&(g->pid[GIMBAL_PID_REL_YAW_IDX]), PID_MODE_NO_D, 1.0f / target_freq,
            &(g->param->pid[GIMBAL_PID_REL_YAW_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_REL_PIT_IDX]), PID_MODE_NO_D, g->dt_sec,
+  PID_Init(&(g->pid[GIMBAL_PID_REL_PIT_IDX]), PID_MODE_NO_D, 1.0f / target_freq,
            &(g->param->pid[GIMBAL_PID_REL_PIT_IDX]));
 
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
-    LowPassFilter2p_Init(g->filter_out + i, 1.0f / g->dt_sec,
+    LowPassFilter2p_Init(g->filter_out + i, target_freq,
                          g->param->out_low_pass_cutoff_freq);
   }
 
   for (uint8_t i = 0; i < 2; i++) {
-    LowPassFilter2p_Init(g->filter_gyro + i, 1.0f / g->dt_sec,
+    LowPassFilter2p_Init(g->filter_gyro + i, target_freq,
                          g->param->gyro_low_pass_cutoff_freq);
   }
 
@@ -85,7 +84,7 @@ int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback, CAN_t *can) {
 }
 
 int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
-                      CMD_Gimbal_Ctrl_t *g_ctrl) {
+                      CMD_Gimbal_Ctrl_t *g_ctrl, float dt_sec) {
   if (g == NULL) return -1;
   if (g_ctrl == NULL) return -1;
 
@@ -119,17 +118,17 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
 
       const float yaw_omega_set_point =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), g->set_point.eulr.yaw,
-                   fb->eulr.imu.yaw, 0.0f, g->dt_sec);
+                   fb->eulr.imu.yaw, 0.0f, dt_sec);
       g->out[GIMBAL_ACTR_YAW_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), yaw_omega_set_point,
-                   fb->gyro.z, filted_gyro_z, g->dt_sec);
+                   fb->gyro.z, filted_gyro_z, dt_sec);
 
       const float pit_omega_set_point =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_ANGLE_IDX]), g->set_point.eulr.pit,
-                   fb->eulr.imu.pit, 0.0f, g->dt_sec);
+                   fb->eulr.imu.pit, 0.0f, dt_sec);
       g->out[GIMBAL_ACTR_PIT_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), pit_omega_set_point,
-                   fb->gyro.x, filted_gyro_x, g->dt_sec);
+                   fb->gyro.x, filted_gyro_x, dt_sec);
       break;
 
     case GIMBAL_MODE_FIX:
@@ -140,10 +139,10 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
     case GIMBAL_MODE_RELATIVE:
       g->out[GIMBAL_ACTR_YAW_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_REL_YAW_IDX]), g->set_point.eulr.yaw,
-                   fb->eulr.encoder.yaw, fb->gyro.z, g->dt_sec);
+                   fb->eulr.encoder.yaw, fb->gyro.z, dt_sec);
       g->out[GIMBAL_ACTR_PIT_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_REL_PIT_IDX]), g->set_point.eulr.pit,
-                   fb->eulr.encoder.pit, fb->gyro.x, g->dt_sec);
+                   fb->eulr.encoder.pit, fb->gyro.x, dt_sec);
       break;
   }
   /* Filter output. */

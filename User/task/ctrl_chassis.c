@@ -44,10 +44,11 @@ void Task_CtrlChassis(void *argument) {
 
   /* Module Setup */
   Chassis_Init(&chassis, &(task_param->config_robot->param.chassis),
-               (float)delay_tick / (float)osKernelGetTickFreq());
+               (float)TASK_FREQ_HZ_CTRL_CHASSIS);
 
   /* Task Setup */
   uint32_t tick = osKernelGetTickCount();
+  uint32_t wakeup = HAL_GetTick();
   while (1) {
 #ifdef DEBUG
     task_param->stack_water_mark.ctrl_chassis = osThreadGetStackSpace(NULL);
@@ -63,8 +64,10 @@ void Task_CtrlChassis(void *argument) {
       osMessageQueueGet(task_param->msgq.cmd.chassis, &chassis_ctrl, NULL, 0);
 
       osKernelLock();
+      const uint32_t now = HAL_GetTick();
       Chassis_UpdateFeedback(&chassis, &can);
-      Chassis_Control(&chassis, &chassis_ctrl);
+      Chassis_Control(&chassis, &chassis_ctrl, (float)(now - wakeup)/1000.0f);
+      wakeup = now;
       CAN_Motor_ControlChassis(chassis.out[0], chassis.out[1], chassis.out[2],
                                chassis.out[3]);
 

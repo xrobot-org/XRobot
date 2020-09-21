@@ -79,8 +79,6 @@ typedef struct {
   const Gimbal_Params_t *param; /* 云台的参数，用Gimbal_Init设定 */
 
   /* 模块通用 */
-  /* TODO: 考虑放到Control中实时检测dt */
-  float dt_sec; /* 调用Gimbal_Control的周期，以秒为单位， */
   CMD_Gimbal_Mode_t mode; /* 云台模式 */
 
   struct {
@@ -100,9 +98,9 @@ typedef struct {
 /* Exported functions prototypes -------------------------------------------- */
 int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback, CAN_t *can);
 
-int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec);
+int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float target_freq);
 int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
-                      CMD_Gimbal_Ctrl_t *g_ctrl);
+                      CMD_Gimbal_Ctrl_t *g_ctrl, float dt_sec);
 
 #ifdef __cplusplus
 }

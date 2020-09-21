@@ -49,27 +49,26 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
 }
 
 /* Exported functions ------------------------------------------------------- */
-int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float dt_sec) {
+int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
   if (s == NULL) return -1;
 
   s->param = param;
-  s->dt_sec = dt_sec;
 
   s->mode = SHOOT_MODE_RELAX;
 
   s->trig_timer_id = osTimerNew(TrigTimerCallback, osTimerPeriodic, s, NULL);
 
   for (uint8_t i = 0; i < 2; i++) {
-    PID_Init(s->pid.fric + i, PID_MODE_NO_D, s->dt_sec,
+    PID_Init(s->pid.fric + i, PID_MODE_NO_D, 1.0f / target_freq,
              param->fric_pid_param + i);
 
-    LowPassFilter2p_Init(s->filter.fric + i, 1000.0f / s->dt_sec,
+    LowPassFilter2p_Init(s->filter.fric + i, target_freq,
                          param->low_pass_cutoff_freq.fric);
   }
 
-  PID_Init(&(s->pid.trig), PID_MODE_NO_D, s->dt_sec, &(param->trig_pid_param));
+  PID_Init(&(s->pid.trig), PID_MODE_NO_D, 1.0f / target_freq, &(param->trig_pid_param));
 
-  LowPassFilter2p_Init(&(s->filter.trig), 1.0f / s->dt_sec,
+  LowPassFilter2p_Init(&(s->filter.trig), target_freq,
                        param->low_pass_cutoff_freq.trig);
   return 0;
 }
@@ -90,7 +89,7 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_t *can) {
   return 0;
 }
 
-int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
+int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl, float dt_sec) {
   if (s == NULL) return -1;
 
   Shoot_SetMode(s, s_ctrl->mode);
@@ -126,13 +125,13 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
     case SHOOT_MODE_STDBY:
     case SHOOT_MODE_FIRE:
       s->out[0] = PID_Calc(&(s->pid.trig), s->set_point.trig_angle,
-                           s->feedback.trig_angle, 0.0f, s->dt_sec);
+                           s->feedback.trig_angle, 0.0f, dt_sec);
       s->out[0] = LowPassFilter2p_Apply(&(s->filter.trig), s->out[0]);
 
       for (uint8_t i = 0; i < 2; i++) {
         s->out[i + 1] =
             PID_Calc(&(s->pid.fric[i + 1]), s->set_point.fric_rpm[i + 1],
-                     s->feedback.fric_rpm[i + 1], 0.0f, s->dt_sec);
+                     s->feedback.fric_rpm[i + 1], 0.0f, dt_sec);
         s->out[i + 1] =
             LowPassFilter2p_Apply(&(s->filter.fric[i + 1]), s->out[i + 1]);
       }

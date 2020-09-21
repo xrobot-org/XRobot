@@ -48,9 +48,6 @@ typedef struct {
   const Chassis_Params_t *param; /* 底盘的参数，用Chassis_Init设定 */
 
   /* 模块通用 */
-
-  /* TODO: 考虑放到Chassis_Control中实时检测dt */
-  float dt_sec; /* 调用Chassis_Control的周期，以秒为单位， */
   CMD_Chassis_Mode_t mode; /* 底盘模式 */
 
   /* 底盘设计 */
@@ -80,9 +77,10 @@ typedef struct {
 } Chassis_t;
 
 /* Exported functions prototypes -------------------------------------------- */
-int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec);
+/* Chassis_Control的目标运行频率 */
+int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float target_freq);
 int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_t *can);
-int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl);
+int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl, float dt_sec);
 
 #ifdef __cplusplus
 }

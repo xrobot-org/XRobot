@@ -38,9 +38,10 @@ void Task_CtrlShoot(void *argument) {
   }
 
   Shoot_Init(&shoot, &(task_param->config_robot->param.shoot),
-             (float)delay_tick / (float)osKernelGetTickFreq());
+             (float)TASK_FREQ_HZ_CTRL_SHOOT);
 
   uint32_t tick = osKernelGetTickCount();
+  uint32_t wakeup = HAL_GetTick();
   while (1) {
 #ifdef DEBUG
     task_param->stack_water_mark.ctrl_shoot = osThreadGetStackSpace(NULL);
@@ -56,8 +57,10 @@ void Task_CtrlShoot(void *argument) {
       osMessageQueueGet(task_param->msgq.cmd.shoot, &shoot_ctrl, NULL, 0);
 
       osKernelLock();
+      const uint32_t now = HAL_GetTick();
       Shoot_UpdateFeedback(&shoot, can);
-      Shoot_Control(&shoot, &shoot_ctrl);
+      Shoot_Control(&shoot, &shoot_ctrl, (float)(now - wakeup)/1000.0f);
+      wakeup = now;
       CAN_Motor_ControlShoot(shoot.out[SHOOT_ACTR_FRIC1_IDX],
                              shoot.out[SHOOT_ACTR_FRIC2_IDX],
                              shoot.out[SHOOT_ACTR_TRIG_IDX]);

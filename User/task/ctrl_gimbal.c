@@ -42,9 +42,10 @@ void Task_CtrlGimbal(void *argument) {
   }
 
   Gimbal_Init(&gimbal, &(task_param->config_robot->param.gimbal),
-              (float)delay_tick / (float)osKernelGetTickFreq());
+              (float)TASK_FREQ_HZ_CTRL_GIMBAL);
 
   uint32_t tick = osKernelGetTickCount();
+  uint32_t wakeup = HAL_GetTick();
   while (1) {
 #ifdef DEBUG
     task_param->stack_water_mark.ctrl_gimbal = osThreadGetStackSpace(NULL);
@@ -63,10 +64,11 @@ void Task_CtrlGimbal(void *argument) {
                         NULL, 0);
       osMessageQueueGet(task_param->msgq.cmd.gimbal, &gimbal_ctrl, NULL, 0);
 
-      Gimbal_CANtoFeedback(&gimbal_feedback, can);
-
       osKernelLock();
-      Gimbal_Control(&gimbal, &gimbal_feedback, &gimbal_ctrl);
+      const uint32_t now = HAL_GetTick();
+      Gimbal_CANtoFeedback(&gimbal_feedback, can);
+      Gimbal_Control(&gimbal, &gimbal_feedback, &gimbal_ctrl, (float)(now - wakeup)/1000.0f);
+      wakeup = now;
       CAN_Motor_ControlGimbal(gimbal.out[GIMBAL_ACTR_YAW_IDX],
                               gimbal.out[GIMBAL_ACTR_PIT_IDX]);
       osKernelUnlock();

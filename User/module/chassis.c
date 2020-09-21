@@ -50,12 +50,11 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_Chassis_Mode_t mode) {
 }
 
 /* Exported functions ------------------------------------------------------- */
-int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec) {
+int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float target_freq) {
   if (c == NULL) return CHASSIS_ERR_NULL;
 
   /* 初始化参数 */
   c->param = param;
-  c->dt_sec = dt_sec;
 
   /* 设置默认模式 */
   c->mode = CHASSIS_MODE_RELAX;
@@ -112,14 +111,14 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec) {
   if (c->filter == NULL) goto error;
 
   for (uint8_t i = 0; i < c->num_wheel; i++) {
-    PID_Init(c->pid.motor + i, PID_MODE_NO_D, c->dt_sec,
+    PID_Init(c->pid.motor + i, PID_MODE_NO_D, 1.0f / target_freq,
              &(c->param->motor_pid_param));
 
-    LowPassFilter2p_Init(c->filter + i, 1.0f / c->dt_sec,
+    LowPassFilter2p_Init(c->filter + i, target_freq,
                          c->param->low_pass_cutoff_freq);
   }
 
-  PID_Init(&(c->pid.follow), PID_MODE_NO_D, c->dt_sec,
+  PID_Init(&(c->pid.follow), PID_MODE_NO_D, 1.0f / target_freq,
            &(c->param->follow_pid_param));
 
   Mixer_Init(&(c->mixer), mixer_mode);
@@ -148,7 +147,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_t *can) {
   return CHASSIS_OK;
 }
 
-int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
+int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl, float dt_sec) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (c_ctrl == NULL) return CHASSIS_ERR_NULL;
 
@@ -176,7 +175,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
 
   } else if (c->mode == CHASSIS_MODE_FOLLOW_GIMBAL) {
     c->move_vec.wz = PID_Calc(&(c->pid.follow), 0, c->feedback.gimbal_yaw_angle,
-                              0.0f, c->dt_sec);
+                              0.0f, dt_sec);
 
   } else if (c->mode == CHASSIS_MODE_ROTOR) {
     c->move_vec.wz = 0.8f;
@@ -194,7 +193,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
       case CHASSIS_MODE_ROTOR:
       case CHASSIS_MODE_INDENPENDENT:
         c->out[i] = PID_Calc(c->pid.motor + i, c->set_point.motor_rpm[i],
-                             c->feedback.motor_rpm[i], 0.0f, c->dt_sec);
+                             c->feedback.motor_rpm[i], 0.0f, dt_sec);
         break;
 
       case CHASSIS_MODE_OPEN:
