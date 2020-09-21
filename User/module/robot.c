@@ -10,31 +10,31 @@
 static const PID_Params_t infantry_chassis_pid_array[4] = {
     {
         .kp = 0.001f,
-        .ki = 0.f,
-        .kd = 0.f,
-        .i_limit = 1.f,
-        .out_limit = 1.f,
+        .ki = 0.0f,
+        .kd = 0.0f,
+        .i_limit = 1.0f,
+        .out_limit = 1.0f,
     },
     {
         .kp = 0.001f,
-        .ki = 0.f,
-        .kd = 0.f,
-        .i_limit = 1.f,
-        .out_limit = 1.f,
+        .ki = 0.0f,
+        .kd = 0.0f,
+        .i_limit = 1.0f,
+        .out_limit = 1.0f,
     },
     {
         .kp = 0.001f,
-        .ki = 0.f,
-        .kd = 0.f,
-        .i_limit = 1.f,
-        .out_limit = 1.f,
+        .ki = 0.0f,
+        .kd = 0.0f,
+        .i_limit = 1.0f,
+        .out_limit = 1.0f,
     },
     {
         .kp = 0.001f,
-        .ki = 0.f,
-        .kd = 0.f,
-        .i_limit = 1.f,
-        .out_limit = 1.f,
+        .ki = 0.0f,
+        .kd = 0.0f,
+        .i_limit = 1.0f,
+        .out_limit = 1.0f,
     },
 };
 
@@ -53,12 +53,12 @@ static const Robot_Config_t cfg_infantry = {
                 .follow_pid_param =
                     {
                         .kp = 0.01f,
-                        .ki = 0.f,
-                        .kd = 0.f,
-                        .i_limit = 1.f,
-                        .out_limit = 1.f,
+                        .ki = 0.0f,
+                        .kd = 0.0f,
+                        .i_limit = 1.0f,
+                        .out_limit = 1.0f,
                     },
-                .low_pass_cutoff_freq = -1.f,
+                .low_pass_cutoff_freq = -1.0f,
             }, /* chassis */
 
             .gimbal = /* 云台模块参数 */
@@ -68,32 +68,32 @@ static const Robot_Config_t cfg_infantry = {
                         {
                             /* GIMBAL_PID_YAW_OMEGA_IDX */
                             .kp = 0.5f,
-                            .ki = 0.f,
-                            .kd = 0.f,
+                            .ki = 0.0f,
+                            .kd = 0.0f,
                             .i_limit = 1.0f,
                             .out_limit = 1.0f,
                         },
                         {
                             /* GIMBAL_PID_YAW_ANGLE_IDX */
                             .kp = 0.01f,
-                            .ki = 0.f,
-                            .kd = 0.f,
+                            .ki = 0.0f,
+                            .kd = 0.0f,
                             .i_limit = 1.0f,
                             .out_limit = 1.0f,
                         },
                         {
                             /* GIMBAL_PID_PIT_OMEGA_IDX */
                             .kp = 0.5f,
-                            .ki = 0.f,
-                            .kd = 0.f,
+                            .ki = 0.0f,
+                            .kd = 0.0f,
                             .i_limit = 1.0f,
                             .out_limit = 1.0f,
                         },
                         {
                             /* GIMBAL_PID_PIT_ANGLE_IDX */
                             .kp = 0.01f,
-                            .ki = 0.f,
-                            .kd = 0.f,
+                            .ki = 0.0f,
+                            .kd = 0.0f,
                             .i_limit = 1.0f,
                             .out_limit = 1.0f,
                         },
@@ -114,12 +114,12 @@ static const Robot_Config_t cfg_infantry = {
                             .out_limit = 0.5f,
                         },
                     }, /* pid */
-                .out_low_pass_cutoff_freq = -1.f,
-                .gyro_low_pass_cutoff_freq = 1000.f,
+                .out_low_pass_cutoff_freq = -1.0f,
+                .gyro_low_pass_cutoff_freq = 1000.0f,
                 .encoder_center =
                     {
-                        .yaw = 3.f,
-                        .pit = 3.f,
+                        .yaw = 3.0f,
+                        .pit = 3.0f,
                     },
 
             }, /* gimbal */
@@ -155,13 +155,13 @@ static const Robot_Config_t cfg_infantry = {
 
                 .low_pass_cutoff_freq =
                     {
-                        .fric = -1.f,
-                        .trig = -1.f,
+                        .fric = -1.0f,
+                        .trig = -1.0f,
                     },
 
-                .bullet_speed_scaler = 1.f,
-                .bullet_speed_bias = 1.f,
-                .num_trig_tooth = 8.f,
+                .bullet_speed_scaler = 1.0f,
+                .bullet_speed_bias = 1.0f,
+                .num_trig_tooth = 8.0f,
             }, /* shoot */
         },
 }; /* cfg_infantry */

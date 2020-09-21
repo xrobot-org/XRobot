@@ -287,9 +287,9 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
   memcpy(&raw_z, bmi088_rxbuf + 5, sizeof(int16_t));
 
   /* 3G: 10920. 6G: 5460. 12G: 2730. 24G: 1365. */
-  bmi088->accl.x = (float)raw_x / 5460.f;
-  bmi088->accl.y = (float)raw_y / 5460.f;
-  bmi088->accl.z = (float)raw_z / 5460.f;
+  bmi088->accl.x = (float)raw_x / 5460.0f;
+  bmi088->accl.y = (float)raw_y / 5460.0f;
+  bmi088->accl.z = (float)raw_z / 5460.0f;
 
 #else
   const int16_t *praw_x = (int16_t *)(bmi088_rxbuf + 1);
@@ -297,9 +297,9 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
   const int16_t *praw_z = (int16_t *)(bmi088_rxbuf + 5);
 
   /* 3G: 10920. 6G: 5460. 12G: 2730. 24G: 1365. */
-  bmi088->accl.x = (float)*praw_x / 5460.f;
-  bmi088->accl.y = (float)*praw_y / 5460.f;
-  bmi088->accl.z = (float)*praw_z / 5460.f;
+  bmi088->accl.x = (float)*praw_x / 5460.0f;
+  bmi088->accl.y = (float)*praw_y / 5460.0f;
+  bmi088->accl.z = (float)*praw_z / 5460.0f;
 
 #endif
 
@@ -308,7 +308,7 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
 
   if (raw_temp > 1023) raw_temp -= 2048;
 
-  bmi088->temp = raw_temp * 0.125f + 23.f;
+  bmi088->temp = raw_temp * 0.125f + 23.0f;
 
   return DEVICE_OK;
 }
@@ -348,5 +348,5 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 
 float BMI088_GetUpdateFreq(BMI088_t *bmi088) {
   (void)bmi088;
-  return 100.f;
+  return 100.0f;
 }

@@ -23,7 +23,7 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_Chassis_Mode_t mode) {
   /* 切换模式后重置PID和滤波器 */
   for (uint8_t i = 0; i < c->num_wheel; i++) {
     PID_ResetIntegral(&(c->pid.motor[i]));
-    LowPassFilter2p_Reset(&(c->filter[i]), 0.f);
+    LowPassFilter2p_Reset(&(c->filter[i]), 0.0f);
   }
 
   // TODO: Check mode switchable.
@@ -115,7 +115,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param, float dt_sec) {
     PID_Init(&(c->pid.motor[i]), PID_MODE_NO_D, c->dt_sec,
              &(c->param->motor_pid_param[i]));
 
-    LowPassFilter2p_Init(&(c->filter[i]), 1.f / c->dt_sec,
+    LowPassFilter2p_Init(&(c->filter[i]), 1.0f / c->dt_sec,
                          c->param->low_pass_cutoff_freq);
   }
 
@@ -157,8 +157,8 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
   /* ctrl_v -> move_vec. */
   /* Compute vx and vy. */
   if (c->mode == CHASSIS_MODE_BREAK) {
-    c->move_vec.vx = 0.f;
-    c->move_vec.vy = 0.f;
+    c->move_vec.vx = 0.0f;
+    c->move_vec.vy = 0.0f;
 
   } else {
     const float cos_beta = cosf(c->feedback.gimbal_yaw_angle);
@@ -172,11 +172,11 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
 
   /* Compute wz. */
   if (c->mode == CHASSIS_MODE_BREAK) {
-    c->move_vec.wz = 0.f;
+    c->move_vec.wz = 0.0f;
 
   } else if (c->mode == CHASSIS_MODE_FOLLOW_GIMBAL) {
     c->move_vec.wz = PID_Calc(&(c->pid.follow), 0, c->feedback.gimbal_yaw_angle,
-                              0.f, c->dt_sec);
+                              0.0f, c->dt_sec);
 
   } else if (c->mode == CHASSIS_MODE_ROTOR) {
     c->move_vec.wz = 0.8f;
@@ -184,7 +184,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
 
   /* move_vec -> motor_rpm_set. */
   Mixer_Apply(&(c->mixer), c->move_vec.vx, c->move_vec.vy, c->move_vec.wz,
-              c->set_point.motor_rpm, c->num_wheel, 9000.f);
+              c->set_point.motor_rpm, c->num_wheel, 9000.0f);
 
   /* Compute output from setpiont. */
   for (uint8_t i = 0; i < 4; i++) {
@@ -194,7 +194,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl) {
       case CHASSIS_MODE_ROTOR:
       case CHASSIS_MODE_INDENPENDENT:
         c->out[i] = PID_Calc(&(c->pid.motor[i]), c->set_point.motor_rpm[i],
-                             c->feedback.motor_rpm[i], 0.f, c->dt_sec);
+                             c->feedback.motor_rpm[i], 0.0f, c->dt_sec);
         break;
 
       case CHASSIS_MODE_OPEN:

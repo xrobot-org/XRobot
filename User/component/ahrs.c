@@ -5,6 +5,8 @@
 
 #include "ahrs.h"
 
+#include <string.h>
+
 #include "user_math.h"
 
 #define BETA .033f
@@ -108,10 +110,10 @@ int8_t AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq) {
 
   ahrs->inv_sample_freq = 1.0f / sample_freq;
 
-  ahrs->q0 = 1.f;
-  ahrs->q1 = 0.f;
-  ahrs->q2 = 0.f;
-  ahrs->q3 = 0.f;
+  ahrs->q0 = 1.0f;
+  ahrs->q1 = 0.0f;
+  ahrs->q2 = 0.0f;
+  ahrs->q3 = 0.0f;
 
   if (magn) {
     if ((magn->x == 0.0f) && (magn->y == 0.0f) && (magn->z == 0.0f)) {
@@ -288,21 +290,21 @@ int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
 
   if (ahrs == NULL) return -1;
 
-  const float sinr_cosp = 2.f * (ahrs->q0 * ahrs->q1 + ahrs->q2 * ahrs->q3);
+  const float sinr_cosp = 2.0f * (ahrs->q0 * ahrs->q1 + ahrs->q2 * ahrs->q3);
   const float cosr_cosp =
-      1.f - 2.f * (ahrs->q1 * ahrs->q1 + ahrs->q2 * ahrs->q2);
+      1.0f - 2.0f * (ahrs->q1 * ahrs->q1 + ahrs->q2 * ahrs->q2);
   eulr->pit = atan2f(sinr_cosp, cosr_cosp);
 
-  const float sinp = 2.f * (ahrs->q0 * ahrs->q2 - ahrs->q3 * ahrs->q1);
+  const float sinp = 2.0f * (ahrs->q0 * ahrs->q2 - ahrs->q3 * ahrs->q1);
 
-  if (fabsf(sinp) >= 1.f)
-    eulr->rol = copysignf(M_PI / 2.f, sinp);
+  if (fabsf(sinp) >= 1.0f)
+    eulr->rol = copysignf(M_PI / 2.0f, sinp);
   else
     eulr->rol = asinf(sinp);
 
-  const float siny_cosp = 2.f * (ahrs->q0 * ahrs->q3 + ahrs->q1 * ahrs->q2);
+  const float siny_cosp = 2.0f * (ahrs->q0 * ahrs->q3 + ahrs->q1 * ahrs->q2);
   const float cosy_cosp =
-      1.f - 2.f * (ahrs->q2 * ahrs->q2 + ahrs->q3 * ahrs->q3);
+      1.0f - 2.0f * (ahrs->q2 * ahrs->q2 + ahrs->q3 * ahrs->q3);
   eulr->yaw = atan2f(siny_cosp, cosy_cosp);
 
 #if 1
@@ -313,3 +315,11 @@ int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
 
   return 0;
 }
+
+void AHRS_ResetEulr(AHRS_Eulr_t *eulr) { memset(eulr, 0, sizeof(AHRS_Eulr_t)); }
+
+void AHRS_ResetAccl(AHRS_Accl_t *accl) { memset(accl, 0, sizeof(AHRS_Accl_t)); }
+
+void AHRS_ResetGyro(AHRS_Gyro_t *gyro) { memset(gyro, 0, sizeof(AHRS_Gyro_t)); }
+
+void AHRS_ResetMagn(AHRS_Magn_t *magn) { memset(magn, 0, sizeof(AHRS_Magn_t)); }

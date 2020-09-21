@@ -58,7 +58,7 @@ int8_t BSP_Servo_Start(BSP_Servo_Channel_t ch) {
 }
 
 int8_t BSP_Servo_Set(BSP_Servo_Channel_t ch, uint8_t angle) {
-  if (angle > 1.f) return BSP_ERR;
+  if (angle > 1.0f) return BSP_ERR;
 
   uint16_t pulse = angle * UINT16_MAX;
 

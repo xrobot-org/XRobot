@@ -39,14 +39,14 @@ int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd) {
     if (rc->mouse.l_click) {
       if (rc->mouse.r_click) {
         cmd->shoot.shoot_freq_hz = 5u;
-        cmd->shoot.bullet_speed = 20.f;
+        cmd->shoot.bullet_speed = 20.0f;
       } else {
         cmd->shoot.shoot_freq_hz = 10u;
-        cmd->shoot.bullet_speed = 10.f;
+        cmd->shoot.bullet_speed = 10.0f;
       }
     } else {
       cmd->shoot.shoot_freq_hz = 0u;
-      cmd->shoot.bullet_speed = 0.f;
+      cmd->shoot.bullet_speed = 0.0f;
     }
 
     if (CMD_KeyPressed(rc, CMD_KEY_SHIFT) && CMD_KeyPressed(rc, CMD_KEY_CTRL)) {
@@ -90,22 +90,22 @@ int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd) {
         case CMD_SW_UP:
           cmd->gimbal.mode = GIMBAL_MODE_FIX;
           cmd->shoot.mode = SHOOT_MODE_SAFE;
-          cmd->shoot.shoot_freq_hz = 0.f;
-          cmd->shoot.bullet_speed = 0.f;
+          cmd->shoot.shoot_freq_hz = 0.0f;
+          cmd->shoot.bullet_speed = 0.0f;
           break;
 
         case CMD_SW_MID:
           cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
           cmd->shoot.mode = SHOOT_MODE_STDBY;
-          cmd->shoot.shoot_freq_hz = 0.f;
-          cmd->shoot.bullet_speed = 10.f;
+          cmd->shoot.shoot_freq_hz = 0.0f;
+          cmd->shoot.bullet_speed = 10.0f;
           break;
 
         case CMD_SW_DOWN:
           cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
           cmd->shoot.mode = SHOOT_MODE_FIRE;
           cmd->shoot.shoot_freq_hz = 10u;
-          cmd->shoot.bullet_speed = 10.f;
+          cmd->shoot.bullet_speed = 10.0f;
           break;
 
         case CMD_SW_ERR:

@@ -246,29 +246,29 @@ int IMU_Parse(IMU_t *imu) {
   for (uint8_t i = 0; i < 20; i += 2)
     ((int16_t *)&imu->raw)[i / 2] = (raw[i] << 8) | raw[i + 1];
 
-  imu->data.temp = 21.f + (float)imu->raw.temp / 333.87f;
+  imu->data.temp = 21.0f + (float)imu->raw.temp / 333.87f;
 
   /* TODO: Strage accl data. Potential sensor damage. */
-  imu->data.accl.x = (float)imu->raw.accl.x / 4096.f;
-  imu->data.accl.y = (float)imu->raw.accl.y / 4096.f;
-  imu->data.accl.z = (float)imu->raw.accl.z / 4096.f;
+  imu->data.accl.x = (float)imu->raw.accl.x / 4096.0f;
+  imu->data.accl.y = (float)imu->raw.accl.y / 4096.0f;
+  imu->data.accl.z = (float)imu->raw.accl.z / 4096.0f;
 
   /* Convert gyroscope imu_raw to degrees/sec, then, to radians/sec */
   imu->data.gyro.x = (float)(imu->raw.gyro.x - imu->cali.gyro_offset[0]) /
-                     16.384f / 180.f * M_PI;
+                     16.384f / 180.0f * M_PI;
   imu->data.gyro.y = (float)(imu->raw.gyro.y - imu->cali.gyro_offset[1]) /
-                     16.384f / 180.f * M_PI;
+                     16.384f / 180.0f * M_PI;
   imu->data.gyro.z = (float)(imu->raw.gyro.z - imu->cali.gyro_offset[2]) /
-                     16.384f / 180.f * M_PI;
+                     16.384f / 180.0f * M_PI;
 
 #if 0
 	imu->data.magn.x = (float)((imu->raw.magn.x - imu->cali.magn_offset[0]) * imu->cali.magn_scale[0]);
 	imu->data.magn.y = (float)((imu->raw.magn.y - imu->cali.magn_offset[1]) * imu->cali.magn_scale[1]);
 	imu->data.magn.z = (float)((imu->raw.magn.z - imu->cali.magn_offset[2]) * imu->cali.magn_scale[2]);
 #else
-  imu->data.magn.x = 0.f;
-  imu->data.magn.y = 0.f;
-  imu->data.magn.z = 0.f;
+  imu->data.magn.x = 0.0f;
+  imu->data.magn.y = 0.0f;
+  imu->data.magn.z = 0.0f;
 #endif
   return 0;
 }

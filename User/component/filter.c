@@ -15,7 +15,7 @@ void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq,
   f->delay_element_1 = 0.0f;
   f->delay_element_2 = 0.0f;
 
-  if (f->cutoff_freq <= 0.f) {
+  if (f->cutoff_freq <= 0.0f) {
     // no filtering
     f->b0 = 1.0f;
     f->b1 = 0.0f;
@@ -39,7 +39,7 @@ void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq,
 }
 
 float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample) {
-  if (f == NULL) return 0.f;
+  if (f == NULL) return 0.0f;
 
   // do the filtering
   float delay_element_0 =
@@ -61,7 +61,7 @@ float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample) {
 }
 
 float LowPassFilter2p_Reset(LowPassFilter2p_t *f, float sample) {
-  if (f == NULL) return 0.f;
+  if (f == NULL) return 0.0f;
 
   const float dval = sample / (f->b0 + f->b1 + f->b2);
 
@@ -87,7 +87,7 @@ void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq,
   f->delay_element_1 = 0.0f;
   f->delay_element_2 = 0.0f;
 
-  if (notch_freq <= 0.f) {
+  if (notch_freq <= 0.0f) {
     // no filtering
     f->b0 = 1.0f;
     f->b1 = 0.0f;
@@ -100,19 +100,19 @@ void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq,
   }
 
   const float alpha = tanf(M_PI * bandwidth / sample_freq);
-  const float beta = -cosf(2.f * M_PI * notch_freq / sample_freq);
-  const float a0_inv = 1.f / (alpha + 1.f);
+  const float beta = -cosf(2.0f * M_PI * notch_freq / sample_freq);
+  const float a0_inv = 1.0f / (alpha + 1.0f);
 
   f->b0 = a0_inv;
-  f->b1 = 2.f * beta * a0_inv;
+  f->b1 = 2.0f * beta * a0_inv;
   f->b2 = a0_inv;
 
   f->a1 = f->b1;
-  f->a2 = (1.f - alpha) * a0_inv;
+  f->a2 = (1.0f - alpha) * a0_inv;
 }
 
 inline float NotchFilter_Apply(NotchFilter_t *f, float sample) {
-  if (f == NULL) return 0.f;
+  if (f == NULL) return 0.0f;
 
   // Direct Form II implementation
   const float delay_element_0 =
@@ -127,7 +127,7 @@ inline float NotchFilter_Apply(NotchFilter_t *f, float sample) {
 }
 
 float NotchFilter_Reset(NotchFilter_t *f, float sample) {
-  if (f == NULL) return 0.f;
+  if (f == NULL) return 0.0f;
 
   float dval = sample;
 

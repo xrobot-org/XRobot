@@ -57,7 +57,7 @@ void Task_CtrlChassis(void *argument) {
 
     const uint32_t flag = SIGNAL_CAN_MOTOR_RECV;
     if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != flag) {
-      CAN_Motor_ControlChassis(0.f, 0.f, 0.f, 0.f);
+      CAN_Motor_ControlChassis(0.0f, 0.0f, 0.0f, 0.0f);
 
     } else {
       osMessageQueueGet(task_param->msgq.cmd.chassis, &chassis_ctrl, NULL, 0);

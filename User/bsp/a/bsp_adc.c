@@ -9,6 +9,6 @@
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
-float BSP_GetTemprater(void) { return 0.f; }
-float BSP_GetBatteryVolt(void) { return 0.f; }
+float BSP_GetTemprater(void) { return 0.0f; }
+float BSP_GetBatteryVolt(void) { return 0.0f; }
 uint8_t BSP_GetHardwareVersion(void) { return 1u; }

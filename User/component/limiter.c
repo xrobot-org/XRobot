@@ -18,12 +18,12 @@ int8_t PowerLimit_Apply(float power_limit, float vbat, float *motor,
                         uint32_t len) {
   if (motor == NULL) return -1;
 
-  float total_current = 0.f;
+  float total_current = 0.0f;
   for (uint32_t i = 0; i < len; i++) {
     total_current += fabsf(*motor);
   }
 
-  if (power_limit > 0.f) {
+  if (power_limit > 0.0f) {
     if ((total_current * vbat) > power_limit) {
       float current_scale = total_current / power_limit / vbat;
       for (uint32_t i = 0; i < len; i++) {

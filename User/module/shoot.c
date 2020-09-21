@@ -13,7 +13,7 @@
 static void TrigTimerCallback(void *arg) {
   Shoot_t *s = (Shoot_t *)arg;
 
-  s->set_point.trig_angle += 2.f * M_PI / s->param->num_trig_tooth;
+  s->set_point.trig_angle += 2.0f * M_PI / s->param->num_trig_tooth;
 }
 
 static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
@@ -26,10 +26,10 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
   /* 切换模式后重置PID和滤波器 */
   for (uint8_t i = 0; i < 2; i++) {
     PID_ResetIntegral(&(s->pid.fric[i]));
-    LowPassFilter2p_Reset(&(s->filter.fric[i]), 0.f);
+    LowPassFilter2p_Reset(&(s->filter.fric[i]), 0.0f);
   }
   PID_ResetIntegral(&(s->pid.trig));
-  LowPassFilter2p_Reset(&(s->filter.trig), 0.f);
+  LowPassFilter2p_Reset(&(s->filter.trig), 0.0f);
 
   // TODO: Check mode switchable.
   switch (mode) {
@@ -63,13 +63,13 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float dt_sec) {
     PID_Init(&(s->pid.fric[i]), PID_MODE_NO_D, s->dt_sec,
              &(param->fric_pid_param[i]));
 
-    LowPassFilter2p_Init(&(s->filter.fric[i]), 1000.f / s->dt_sec,
+    LowPassFilter2p_Init(&(s->filter.fric[i]), 1000.0f / s->dt_sec,
                          param->low_pass_cutoff_freq.fric);
   }
 
   PID_Init(&(s->pid.trig), PID_MODE_NO_D, s->dt_sec, &(param->trig_pid_param));
 
-  LowPassFilter2p_Init(&(s->filter.trig), 1.f / s->dt_sec,
+  LowPassFilter2p_Init(&(s->filter.trig), 1.0f / s->dt_sec,
                        param->low_pass_cutoff_freq.trig);
   return 0;
 }
@@ -96,8 +96,8 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
   Shoot_SetMode(s, s_ctrl->mode);
 
   if (s->mode == SHOOT_MODE_SAFE) {
-    s_ctrl->bullet_speed = 0.f;
-    s_ctrl->shoot_freq_hz = 0.f;
+    s_ctrl->bullet_speed = 0.0f;
+    s_ctrl->shoot_freq_hz = 0.0f;
   }
 
   s->set_point.fric_rpm[0] =
@@ -111,10 +111,10 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
 
   switch (s->mode) {
     case SHOOT_MODE_RELAX:
-      s->out[0] = 0.f;
+      s->out[0] = 0.0f;
 
       for (uint8_t i = 0; i < 2; i++) {
-        s->out[i + 1] = 0.f;
+        s->out[i + 1] = 0.0f;
       }
       break;
 
@@ -122,13 +122,13 @@ int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl) {
     case SHOOT_MODE_STDBY:
     case SHOOT_MODE_FIRE:
       s->out[0] = PID_Calc(&(s->pid.trig), s->set_point.trig_angle,
-                           s->feedback.trig_angle, 0.f, s->dt_sec);
+                           s->feedback.trig_angle, 0.0f, s->dt_sec);
       s->out[0] = LowPassFilter2p_Apply(&(s->filter.trig), s->out[0]);
 
       for (uint8_t i = 0; i < 2; i++) {
         s->out[i + 1] =
             PID_Calc(&(s->pid.fric[i + 1]), s->set_point.fric_rpm[i + 1],
-                     s->feedback.fric_rpm[i + 1], 0.f, s->dt_sec);
+                     s->feedback.fric_rpm[i + 1], 0.0f, s->dt_sec);
         s->out[i + 1] =
             LowPassFilter2p_Apply(&(s->filter.fric[i + 1]), s->out[i + 1]);
       }

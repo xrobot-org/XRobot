@@ -22,10 +22,10 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_Gimbal_Mode_t mode) {
     PID_ResetIntegral(&(g->pid[i]));
   }
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
-    LowPassFilter2p_Reset(&(g->filter_out[i]), 0.f);
+    LowPassFilter2p_Reset(&(g->filter_out[i]), 0.0f);
   }
   for (uint8_t i = 0; i < 2; i++) {
-    LowPassFilter2p_Reset(&(g->filter_gyro[i]), 0.f);
+    LowPassFilter2p_Reset(&(g->filter_gyro[i]), 0.0f);
   }
 
   g->set_point.eulr.yaw = 0.f;
@@ -60,16 +60,16 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float dt_sec) {
            &(g->param->pid[GIMBAL_PID_REL_PIT_IDX]));
 
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
-    LowPassFilter2p_Init(&(g->filter_out[i]), 1.f / g->dt_sec,
+    LowPassFilter2p_Init(&(g->filter_out[i]), 1.0f / g->dt_sec,
                          g->param->out_low_pass_cutoff_freq);
   }
 
   for (uint8_t i = 0; i < 2; i++) {
-    LowPassFilter2p_Init(&(g->filter_gyro[i]), 1.f / g->dt_sec,
+    LowPassFilter2p_Init(&(g->filter_gyro[i]), 1.0f / g->dt_sec,
                          g->param->gyro_low_pass_cutoff_freq);
   }
 
-  g->set_point.eulr.yaw = 70.f;
+  g->set_point.eulr.yaw = 70.0f;
 
   return 0;
 }
@@ -93,25 +93,25 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
 
   Gimbal_SetMode(g, g_ctrl->mode);
 
-  if (g->set_point.eulr.yaw == 0.f) {
+  if (g->set_point.eulr.yaw == 0.0f) {
     g->set_point.eulr.yaw = fb->eulr.imu.yaw;
   }
 
   g->set_point.eulr.yaw += g_ctrl->delta_eulr.yaw;
   g->set_point.eulr.pit += g_ctrl->delta_eulr.pit;
 
-  if (g->set_point.eulr.yaw < -180.f) {
-    g->set_point.eulr.yaw += 360.f;
+  if (g->set_point.eulr.yaw < -180.0f) {
+    g->set_point.eulr.yaw += 360.0f;
   }
-  if (g->set_point.eulr.yaw > 180.f) {
-    g->set_point.eulr.yaw -= 360.f;
+  if (g->set_point.eulr.yaw > 180.0f) {
+    g->set_point.eulr.yaw -= 360.0f;
   }
-  g->set_point.eulr.pit = AbsClip(g->set_point.eulr.pit, 90.f);
+  g->set_point.eulr.pit = AbsClip(g->set_point.eulr.pit, 90.0f);
 
   float filted_gyro_x, filted_gyro_z;
   switch (g->mode) {
     case GIMBAL_MODE_RELAX:
-      for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) g->out[i] = 0.f;
+      for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) g->out[i] = 0.0f;
       break;
 
     case GIMBAL_MODE_ABSOLUTE:
@@ -121,14 +121,14 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
 
       const float yaw_omega_set_point =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), g->set_point.eulr.yaw,
-                   fb->eulr.imu.yaw, 0.f, g->dt_sec);
+                   fb->eulr.imu.yaw, 0.0f, g->dt_sec);
       g->out[GIMBAL_ACTR_YAW_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), yaw_omega_set_point,
                    fb->gyro.z, filted_gyro_z, g->dt_sec);
 
       const float pit_omega_set_point =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_ANGLE_IDX]), g->set_point.eulr.pit,
-                   fb->eulr.imu.pit, 0.f, g->dt_sec);
+                   fb->eulr.imu.pit, 0.0f, g->dt_sec);
       g->out[GIMBAL_ACTR_PIT_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), pit_omega_set_point,
                    fb->gyro.x, filted_gyro_x, g->dt_sec);

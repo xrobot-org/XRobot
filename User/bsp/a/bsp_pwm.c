@@ -20,7 +20,7 @@ int BSP_PWM_Start(BSP_PWM_Channel_t ch) {
 }
 
 int BSP_PWM_Set(BSP_PWM_Channel_t ch, float duty_cycle) {
-  if (duty_cycle > 1.f) return -1;
+  if (duty_cycle > 1.0f) return -1;
 
   uint16_t pulse = duty_cycle * PWM_RESOLUTION;
 

@@ -150,18 +150,18 @@ int8_t IST8310_Parse(IST8310_t *ist8310) {
   memcpy(&raw_y, ist8310_rxbuf + 2, sizeof(int16_t));
   memcpy(&raw_z, ist8310_rxbuf + 4, sizeof(int16_t));
 
-  ist8310->magn.x = (float)raw_x * 3.f / 20.f;
-  ist8310->magn.y = (float)raw_y * 3.f / 20.f;
-  ist8310->magn.z = (float)raw_z * 3.f / 20.f;
+  ist8310->magn.x = (float)raw_x * 3.0f / 20.0f;
+  ist8310->magn.y = (float)raw_y * 3.0f / 20.0f;
+  ist8310->magn.z = (float)raw_z * 3.0f / 20.0f;
 
 #else
   const int16_t *raw_x = (int16_t *)(ist8310_rxbuf + 0);
   const int16_t *raw_y = (int16_t *)(ist8310_rxbuf + 2);
   const int16_t *raw_z = (int16_t *)(ist8310_rxbuf + 4);
 
-  ist8310->magn.x = (float)*raw_x * 3.f / 20.f;
-  ist8310->magn.y = (float)*raw_y * 3.f / 20.f;
-  ist8310->magn.z = (float)*raw_z * 3.f / 20.f;
+  ist8310->magn.x = (float)*raw_x * 3.0f / 20.0f;
+  ist8310->magn.y = (float)*raw_y * 3.0f / 20.0f;
+  ist8310->magn.z = (float)*raw_z * 3.0f / 20.0f;
 #endif
 
   return DEVICE_OK;

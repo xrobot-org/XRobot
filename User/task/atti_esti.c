@@ -84,9 +84,9 @@ void Task_AttiEsti(void *argument) {
   AHRS_Init(&gimbal_ahrs, &ist8310.magn, BMI088_GetUpdateFreq(&bmi088));
 
   PID_Init(&imu_temp_ctrl_pid, PID_MODE_NO_D,
-           1.f / BMI088_GetUpdateFreq(&bmi088), &imu_temp_ctrl_pid_param);
+           1.0f / BMI088_GetUpdateFreq(&bmi088), &imu_temp_ctrl_pid_param);
 
-  BSP_PWM_Set(BSP_PWM_IMU_HEAT, 0.f);
+  BSP_PWM_Set(BSP_PWM_IMU_HEAT, 0.0f);
   BSP_PWM_Start(BSP_PWM_IMU_HEAT);
 
   while (1) {
@@ -123,6 +123,6 @@ void Task_AttiEsti(void *argument) {
     osMessageQueuePut(task_param->msgq.gimbal_gyro, &bmi088.gyro, 0, 0);
                                              
     BSP_PWM_Set(BSP_PWM_IMU_HEAT,
-                PID_Calc(&imu_temp_ctrl_pid, 50.f, bmi088.temp, 0.f, 0.f));
+                PID_Calc(&imu_temp_ctrl_pid, 50.0f, bmi088.temp, 0.0f, 0.0f));
   }
 }
