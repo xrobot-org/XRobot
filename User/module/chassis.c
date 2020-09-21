@@ -22,7 +22,7 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_Chassis_Mode_t mode) {
 
   /* 切换模式后重置PID和滤波器 */
   for (uint8_t i = 0; i < c->num_wheel; i++) {
-    PID_ResetIntegral(&(c->pid.motor[i]));
+    PID_Reset(&(c->pid.motor[i]));
     LowPassFilter2p_Reset(&(c->filter[i]), 0.0f);
   }
 

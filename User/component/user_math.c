@@ -4,6 +4,8 @@
 
 #include "user_math.h"
 
+#include <string.h>
+
 float InvSqrt(float x) {
 #if 0
 	float out;
@@ -19,3 +21,5 @@ float AbsClip(float in, float limit) {
 }
 
 float Sign(float in) { return (in > 0) ? 1.0f : 0.0f; }
+
+void ResetMoveVector(MoveVector_t *mv) { memset(mv, 0, sizeof(MoveVector_t)); }

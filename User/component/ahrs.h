@@ -50,6 +50,11 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
                    const AHRS_Gyro_t *gyro, const AHRS_Magn_t *magn);
 int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs);
 
+void AHRS_ResetEulr(AHRS_Eulr_t *eulr);
+void AHRS_ResetAccl(AHRS_Accl_t *accl);
+void AHRS_ResetGyro(AHRS_Gyro_t *gyro);
+void AHRS_ResetMagn(AHRS_Magn_t *magn);
+
 #ifdef __cplusplus
 }
 #endif

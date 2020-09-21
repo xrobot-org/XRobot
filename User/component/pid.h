@@ -42,6 +42,7 @@ int8_t PID_Init(PID_t *pid, PID_Mode_t mode, float dt_min,
                 const PID_Params_t *param);
 float PID_Calc(PID_t *pid, float sp, float val, float val_dot, float dt);
 int8_t PID_ResetIntegral(PID_t *pid);
+int8_t PID_Reset(PID_t *pid);
 
 #ifdef __cplusplus
 }

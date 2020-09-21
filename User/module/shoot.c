@@ -25,10 +25,10 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
 
   /* 切换模式后重置PID和滤波器 */
   for (uint8_t i = 0; i < 2; i++) {
-    PID_ResetIntegral(&(s->pid.fric[i]));
+    PID_Reset(&(s->pid.fric[i]));
     LowPassFilter2p_Reset(&(s->filter.fric[i]), 0.0f);
   }
-  PID_ResetIntegral(&(s->pid.trig));
+  PID_Reset(&(s->pid.trig));
   LowPassFilter2p_Reset(&(s->filter.trig), 0.0f);
 
   // TODO: Check mode switchable.

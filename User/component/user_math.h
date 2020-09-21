@@ -33,6 +33,8 @@ float AbsClip(float in, float limit);
 
 float Sign(float in);
 
+void ResetMoveVector(MoveVector_t *mv);
+
 #ifdef __cplusplus
 }
 #endif

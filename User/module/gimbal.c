@@ -19,7 +19,7 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_Gimbal_Mode_t mode) {
 
   /* 切换模式后重置PID和滤波器 */
   for (uint8_t i = 0; i < GIMBAL_PID_NUM; i++) {
-    PID_ResetIntegral(&(g->pid[i]));
+    PID_Reset(&(g->pid[i]));
   }
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
     LowPassFilter2p_Reset(&(g->filter_out[i]), 0.0f);
@@ -27,10 +27,8 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_Gimbal_Mode_t mode) {
   for (uint8_t i = 0; i < 2; i++) {
     LowPassFilter2p_Reset(&(g->filter_gyro[i]), 0.0f);
   }
-
-  g->set_point.eulr.yaw = 0.f;
-  g->set_point.eulr.pit = 0.f;
-  g->set_point.eulr.rol = 0.f;
+  
+  AHRS_ResetEulr(&(g->set_point.eulr));
 
   return 0;
 }

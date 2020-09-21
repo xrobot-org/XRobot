@@ -104,3 +104,13 @@ int8_t PID_ResetIntegral(PID_t *pid) {
 
   return 0;
 }
+
+int8_t PID_Reset(PID_t *pid) {
+  if (pid == NULL) return -1;
+
+  pid->i = 0.0f;
+  pid->err_last = 0.0f;
+  pid->out_last = 0.0f;
+
+  return 0;
+}
