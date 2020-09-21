@@ -325,7 +325,6 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 
   /* FS125: 262.144. FS250: 131.072. FS500: 65.536. FS1000: 32.768.
    * FS2000: 16.384.*/
-  /* 3G: 10920. 6G: 5460. 12G: 2730. 24G: 1365. */
   bmi088->gyro.x = (float)raw_x / 32.768f * MATH_DEG_TO_RAD_MULT;
   bmi088->gyro.y = (float)raw_y / 32.768f * MATH_DEG_TO_RAD_MULT;
   bmi088->gyro.z = (float)raw_z / 32.768f * MATH_DEG_TO_RAD_MULT;
