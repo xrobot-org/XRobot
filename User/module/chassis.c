@@ -210,7 +210,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl, float dt_sec) {
         break;
 
       case CHASSIS_MODE_OPEN:
-        c->out[i] = c->setpoint.motor_rpm[i];
+        c->out[i] = c->setpoint.motor_rpm[i] / 9000.0f;
         break;
 
       case CHASSIS_MODE_RELAX:
