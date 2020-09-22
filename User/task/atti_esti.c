@@ -43,8 +43,8 @@ static KPID_t imu_temp_ctrl_pid;
 #endif
 
 static const KPID_Params_t imu_temp_ctrl_pid_param = {
-    .k = 0.5f,
-    .p = 0.01f,
+    .k = 0.1f,
+    .p = 1.0f,
     .i = 0.0f,
     .d = 0.0f,
     .i_limit = 1.0f,
@@ -80,7 +80,6 @@ void Task_AttiEsti(void *argument) {
   PID_Init(&imu_temp_ctrl_pid, KPID_MODE_NO_D,
            1.0f / BMI088_GetUpdateFreq(&bmi088), &imu_temp_ctrl_pid_param);
 
-  BSP_PWM_Set(BSP_PWM_IMU_HEAT, 0.0f);
   BSP_PWM_Start(BSP_PWM_IMU_HEAT);
 
   while (1) {
