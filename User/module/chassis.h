@@ -36,8 +36,8 @@ typedef enum {
 /* 底盘参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
   Chassis_Type_t type; /* 底盘类型，底盘的机械设计和轮子选型 */
-  PID_Params_t motor_pid_param;  /* 轮子控制PID的参数 */
-  PID_Params_t follow_pid_param; /* 跟随云台PID的参数 */
+  KPID_Params_t motor_pid_param;  /* 轮子控制PID的参数 */
+  KPID_Params_t follow_pid_param; /* 跟随云台PID的参数 */
 
   struct {
     float in;             /* 输入 */
@@ -71,8 +71,8 @@ typedef struct {
   } setpoint;        /* PID计算的目标值 */
 
   struct {
-    PID_t *motor; /* 控制轮子电机用的PID的动态数组 */
-    PID_t follow; /* 跟随云台用的PID */
+    KPID_t *motor; /* 控制轮子电机用的PID的动态数组 */
+    KPID_t follow; /* 跟随云台用的PID */
   } pid;          /* 反馈控制用的PID */
 
   struct {

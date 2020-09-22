@@ -35,8 +35,8 @@ enum Shoot_Acuator_e {
 
 /* 射击参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
-  PID_Params_t fric_pid_param; /* 摩擦轮电机控制PID的参数 */
-  PID_Params_t trig_pid_param; /* 扳机电机控制PID的参数 */
+  KPID_Params_t fric_pid_param; /* 摩擦轮电机控制PID的参数 */
+  KPID_Params_t trig_pid_param; /* 扳机电机控制PID的参数 */
 
   struct {
     struct {
@@ -76,8 +76,8 @@ typedef struct {
   } setpoint;         /* PID计算的目标值 */
 
   struct {
-    PID_t fric[2]; /* 控制摩擦轮 */
-    PID_t trig;    /* 控制拨弹电机 */
+    KPID_t fric[2]; /* 控制摩擦轮 */
+    KPID_t trig;    /* 控制拨弹电机 */
   } pid;           /* 反馈控制用的PID */
 
   struct {

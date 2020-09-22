@@ -116,7 +116,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
   if (c->filter.out == NULL) goto error;
 
   for (uint8_t i = 0; i < c->num_wheel; i++) {
-    PID_Init(c->pid.motor + i, PID_MODE_NO_D, 1.0f / target_freq,
+    PID_Init(c->pid.motor + i, KPID_MODE_NO_D, target_freq,
              &(c->param->motor_pid_param));
 
     LowPassFilter2p_Init(c->filter.in + i, target_freq,
@@ -125,7 +125,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
                          c->param->low_pass_cutoff_freq.out);
   }
 
-  PID_Init(&(c->pid.follow), PID_MODE_NO_D, 1.0f / target_freq,
+  PID_Init(&(c->pid.follow), KPID_MODE_NO_D, target_freq,
            &(c->param->follow_pid_param));
 
   Mixer_Init(&(c->mixer), mixer_mode);

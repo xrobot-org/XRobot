@@ -13,18 +13,22 @@ static const Robot_Config_t cfg_infantry = {
     .param = {
       .chassis = { /* 底盘模块参数 */ 
           .motor_pid_param = {
-            .kp = 0.001f,
-            .ki = 0.0f,
-            .kd = 0.0f,
+            .k = 0.001f,
+            .p = 1.0f,
+            .i = 0.0f,
+            .d = 0.0f,
             .i_limit = 1.0f,
             .out_limit = 1.0f,
+            .d_cutoff_freq = -1.0f,
           },
           .follow_pid_param = {
-            .kp = 0.01f,
-            .ki = 0.0f,
-            .kd = 0.0f,
+            .k = 0.001f,
+            .p = 1.0f,
+            .i = 0.0f,
+            .d = 0.0f,
             .i_limit = 1.0f,
             .out_limit = 1.0f,
+            .d_cutoff_freq = -1.0f,
           },
           .low_pass_cutoff_freq = {
             .in = -1.0f,
@@ -36,46 +40,58 @@ static const Robot_Config_t cfg_infantry = {
           .pid = {
             {
               /* GIMBAL_PID_YAW_OMEGA_IDX */
-              .kp = 0.5f,
-              .ki = 0.0f,
-              .kd = 0.0f,
+              .k = 0.001f,
+              .p = 1.0f,
+              .i = 0.0f,
+              .d = 0.0f,
               .i_limit = 1.0f,
               .out_limit = 1.0f,
+              .d_cutoff_freq = -1.0f,
             },{
               /* GIMBAL_PID_YAW_ANGLE_IDX */
-              .kp = 0.01f,
-              .ki = 0.0f,
-              .kd = 0.0f,
+              .k = 0.001f,
+              .p = 1.0f,
+              .i = 0.0f,
+              .d = 0.0f,
               .i_limit = 1.0f,
               .out_limit = 1.0f,
+              .d_cutoff_freq = -1.0f,
             },{
               /* GIMBAL_PID_PIT_OMEGA_IDX */
-              .kp = 0.5f,
-              .ki = 0.0f,
-              .kd = 0.0f,
+              .k = 0.001f,
+              .p = 1.0f,
+              .i = 0.0f,
+              .d = 0.0f,
               .i_limit = 1.0f,
               .out_limit = 1.0f,
+              .d_cutoff_freq = -1.0f,
             },{
-                /* GIMBAL_PID_PIT_ANGLE_IDX */
-                .kp = 0.01f,
-                .ki = 0.0f,
-                .kd = 0.0f,
-                .i_limit = 1.0f,
-                .out_limit = 1.0f,
+              /* GIMBAL_PID_PIT_ANGLE_IDX */
+              .k = 0.001f,
+              .p = 1.0f,
+              .i = 0.0f,
+              .d = 0.0f,
+              .i_limit = 1.0f,
+              .out_limit = 1.0f,
+              .d_cutoff_freq = -1.0f,
             },{
-                /* GIMBAL_PID_REL_YAW_IDX */
-                .kp = 0.2f,
-                .ki = 0.1f,
-                .kd = 0.1f,
-                .i_limit = 0.5f,
-                .out_limit = 0.5f,
+              /* GIMBAL_PID_REL_YAW_IDX */
+              .k = 0.001f,
+              .p = 1.0f,
+              .i = 0.1f,
+              .d = 0.1f,
+              .i_limit = 0.5f,
+              .out_limit = 0.5f,
+              .d_cutoff_freq = -1.0f,
             },{
-                /* GIMBAL_PID_REL_PIT_IDX, */
-                .kp = 0.2f,
-                .ki = 0.1f,
-                .kd = 0.1f,
-                .i_limit = 0.5f,
-                .out_limit = 0.5f,
+              /* GIMBAL_PID_REL_PIT_IDX, */
+              .k = 0.001f,
+              .p = 1.0f,
+              .i = 0.1f,
+              .d = 0.1f,
+              .i_limit = 0.5f,
+              .out_limit = 0.5f,
+              .d_cutoff_freq = -1.0f,
             },
           }, /* pid */
           .low_pass_cutoff_freq = {
@@ -90,18 +106,22 @@ static const Robot_Config_t cfg_infantry = {
 
       .shoot = { /* 射击模块参数 */
         .fric_pid_param = {
-          .kp = 0.5f,
-          .ki = 0.5f,
-          .kd = 0.5f,
+          .k = 0.001f,
+          .p = 1.0f,
+          .i = 0.5f,
+          .d = 0.5f,
           .i_limit = 0.5f,
           .out_limit = 0.5f,
+          .d_cutoff_freq = -1.0f,
         },
         .trig_pid_param = {
-          .kp = 0.5f,
-          .ki = 0.5f,
-          .kd = 0.5f,
+          .k = 0.001f,
+          .p = 1.0f,
+          .i = 0.5f,
+          .d = 0.5f,
           .i_limit = 0.5f,
           .out_limit = 0.5f,
+          .d_cutoff_freq = -1.0f,
         },
         .low_pass_cutoff_freq = {
           .in = {

@@ -61,7 +61,7 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
   s->trig_timer_id = osTimerNew(TrigTimerCallback, osTimerPeriodic, s, NULL);
 
   for (uint8_t i = 0; i < 2; i++) {
-    PID_Init(s->pid.fric + i, PID_MODE_NO_D, 1.0f / target_freq,
+    PID_Init(s->pid.fric + i, KPID_MODE_NO_D, target_freq,
              &(param->fric_pid_param));
 
     LowPassFilter2p_Init(s->filter.in.fric + i, target_freq,
@@ -71,7 +71,7 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
                          param->low_pass_cutoff_freq.out.fric);
   }
 
-  PID_Init(&(s->pid.trig), PID_MODE_NO_D, 1.0f / target_freq,
+  PID_Init(&(s->pid.trig), KPID_MODE_NO_D, target_freq,
            &(param->trig_pid_param));
 
   LowPassFilter2p_Init(&(s->filter.in.trig), target_freq,

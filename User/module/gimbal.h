@@ -45,7 +45,7 @@ enum Gimbal_Acuator_e {
 
 /* 云台参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
-  const PID_Params_t pid[GIMBAL_PID_NUM]; /* 云台电机控制PID的参数 */
+  const KPID_Params_t pid[GIMBAL_PID_NUM]; /* 云台电机控制PID的参数 */
   struct {
     float out;            /* 电机输出 */
     float gyro;           /* 陀螺仪数据 */
@@ -87,7 +87,7 @@ typedef struct {
     AHRS_Eulr_t eulr; /* 表示云台姿态的欧拉角 */
   } setpoint;        /* PID计算的目标值 */
 
-  PID_t pid[GIMBAL_PID_NUM]; /* PID数组 */
+  KPID_t pid[GIMBAL_PID_NUM]; /* PID数组 */
 
   LowPassFilter2p_t filter_out[GIMBAL_ACTR_NUM]; /* 输出滤波器滤波器数组 */
 

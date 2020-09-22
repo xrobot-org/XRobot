@@ -41,19 +41,19 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float target_freq)
 
   g->mode = GIMBAL_MODE_RELAX;
 
-  PID_Init(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), PID_MODE_NO_D, 1.0f / target_freq,
+  PID_Init(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), KPID_MODE_NO_D, target_freq,
            &(g->param->pid[GIMBAL_PID_YAW_ANGLE_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), PID_MODE_SET_D, 1.0f / target_freq,
+  PID_Init(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), KPID_MODE_CALC_D_VAL, target_freq,
            &(g->param->pid[GIMBAL_PID_YAW_OMEGA_IDX]));
 
-  PID_Init(&(g->pid[GIMBAL_PID_PIT_ANGLE_IDX]), PID_MODE_NO_D, 1.0f / target_freq,
+  PID_Init(&(g->pid[GIMBAL_PID_PIT_ANGLE_IDX]), KPID_MODE_NO_D, target_freq,
            &(g->param->pid[GIMBAL_PID_PIT_ANGLE_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), PID_MODE_SET_D, 1.0f / target_freq,
+  PID_Init(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), KPID_MODE_CALC_D_VAL, target_freq,
            &(g->param->pid[GIMBAL_PID_PIT_OMEGA_IDX]));
 
-  PID_Init(&(g->pid[GIMBAL_PID_REL_YAW_IDX]), PID_MODE_NO_D, 1.0f / target_freq,
+  PID_Init(&(g->pid[GIMBAL_PID_REL_YAW_IDX]), KPID_MODE_NO_D, target_freq,
            &(g->param->pid[GIMBAL_PID_REL_YAW_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_REL_PIT_IDX]), PID_MODE_NO_D, 1.0f / target_freq,
+  PID_Init(&(g->pid[GIMBAL_PID_REL_PIT_IDX]), KPID_MODE_NO_D, target_freq,
            &(g->param->pid[GIMBAL_PID_REL_PIT_IDX]));
 
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) {

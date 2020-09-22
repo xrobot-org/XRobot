@@ -31,11 +31,11 @@ IST8310_t ist8310;
 AHRS_t gimbal_ahrs;
 AHRS_Eulr_t eulr_to_send;
 
-PID_t imu_temp_ctrl_pid;
-const PID_Params_t imu_temp_ctrl_pid_param = {
-    .kp = 0.5,
-    .ki = 0.5,
-    .kd = 0.5,
+KPID_t imu_temp_ctrl_pid;
+const KPID_Params_t imu_temp_ctrl_pid_param = {
+    .p = 0.5,
+    .i = 0.5,
+    .d = 0.5,
     .i_limit = 0.5,
     .out_limit = 0.5,
 };
@@ -46,11 +46,11 @@ static IST8310_t ist8310;
 static AHRS_t gimbal_ahrs;
 static AHRS_Eulr_t eulr_to_send;
 
-static PID_t imu_temp_ctrl_pid;
-static const PID_Params_t imu_temp_ctrl_pid_param = {
-    .kp = 0.5,
-    .ki = 0.5,
-    .kd = 0.5,
+static KPID_t imu_temp_ctrl_pid;
+static const KPID_Params_t imu_temp_ctrl_pid_param = {
+    .p = 0.5,
+    .i = 0.5,
+    .d = 0.5,
     .i_limit = 0.5,
     .out_limit = 0.5,
 };
@@ -83,7 +83,7 @@ void Task_AttiEsti(void *argument) {
   
   AHRS_Init(&gimbal_ahrs, &ist8310.magn, BMI088_GetUpdateFreq(&bmi088));
 
-  PID_Init(&imu_temp_ctrl_pid, PID_MODE_NO_D,
+  PID_Init(&imu_temp_ctrl_pid, KPID_MODE_NO_D,
            1.0f / BMI088_GetUpdateFreq(&bmi088), &imu_temp_ctrl_pid_param);
 
   BSP_PWM_Set(BSP_PWM_IMU_HEAT, 0.0f);
