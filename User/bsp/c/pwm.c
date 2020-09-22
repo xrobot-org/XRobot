@@ -40,7 +40,7 @@ int8_t BSP_PWM_Set(BSP_PWM_Channel_t ch, float duty_cycle) {
 int8_t BSP_PWM_Stop(BSP_PWM_Channel_t ch) {
   switch (ch) {
     case BSP_PWM_IMU_HEAT:
-      HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_2);
+      HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_2);
       break;
   }
   return BSP_OK;
