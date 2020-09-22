@@ -24,9 +24,6 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_Gimbal_Mode_t mode) {
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
     LowPassFilter2p_Reset(g->filter_out + i, 0.0f);
   }
-  for (uint8_t i = 0; i < 2; i++) {
-    LowPassFilter2p_Reset(g->filter_gyro + i, 0.0f);
-  }
 
   AHRS_ResetEulr(&(g->setpoint.eulr));
 
@@ -34,7 +31,8 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_Gimbal_Mode_t mode) {
 }
 
 /* Exported functions ------------------------------------------------------- */
-int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float target_freq) {
+int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
+                   float target_freq) {
   if (g == NULL) return -1;
 
   g->param = param;
@@ -43,13 +41,13 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float target_freq)
 
   PID_Init(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), KPID_MODE_NO_D, target_freq,
            &(g->param->pid[GIMBAL_PID_YAW_ANGLE_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), KPID_MODE_CALC_D_VAL, target_freq,
-           &(g->param->pid[GIMBAL_PID_YAW_OMEGA_IDX]));
+  PID_Init(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), KPID_MODE_CALC_D_VAL,
+           target_freq, &(g->param->pid[GIMBAL_PID_YAW_OMEGA_IDX]));
 
   PID_Init(&(g->pid[GIMBAL_PID_PIT_ANGLE_IDX]), KPID_MODE_NO_D, target_freq,
            &(g->param->pid[GIMBAL_PID_PIT_ANGLE_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), KPID_MODE_CALC_D_VAL, target_freq,
-           &(g->param->pid[GIMBAL_PID_PIT_OMEGA_IDX]));
+  PID_Init(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), KPID_MODE_CALC_D_VAL,
+           target_freq, &(g->param->pid[GIMBAL_PID_PIT_OMEGA_IDX]));
 
   PID_Init(&(g->pid[GIMBAL_PID_REL_YAW_IDX]), KPID_MODE_NO_D, target_freq,
            &(g->param->pid[GIMBAL_PID_REL_YAW_IDX]));
@@ -59,11 +57,6 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float target_freq)
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
     LowPassFilter2p_Init(g->filter_out + i, target_freq,
                          g->param->low_pass_cutoff_freq.out);
-  }
-
-  for (uint8_t i = 0; i < 2; i++) {
-    LowPassFilter2p_Init(g->filter_gyro + i, target_freq,
-                         g->param->low_pass_cutoff_freq.gyro);
   }
 
   g->setpoint.eulr.yaw = 70.0f;
@@ -89,12 +82,12 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
   if (g_ctrl == NULL) return -1;
 
   Gimbal_SetMode(g, g_ctrl->mode);
-                        
+
   /* 设置初始yaw目标值. */
   if (g->setpoint.eulr.yaw == 0.0f) {
     g->setpoint.eulr.yaw = fb->eulr.imu.yaw;
   }
-  
+
   /* 处理控制命令. */
   g->setpoint.eulr.yaw += g_ctrl->delta_eulr.yaw;
   g->setpoint.eulr.pit += g_ctrl->delta_eulr.pit;
@@ -108,31 +101,27 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
   }
   g->setpoint.eulr.pit = AbsClip(g->setpoint.eulr.pit, 90.0f);
 
-  float filted_gyro_x, filted_gyro_z;
   switch (g->mode) {
     case GIMBAL_MODE_RELAX:
       for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) g->out[i] = 0.0f;
       break;
 
-    case GIMBAL_MODE_ABSOLUTE:
-      /* Filter gyro. */
-      filted_gyro_x = LowPassFilter2p_Apply(&(g->filter_gyro[0]), fb->gyro.x);
-      filted_gyro_z = LowPassFilter2p_Apply(&(g->filter_gyro[1]), fb->gyro.z);
-
+    case GIMBAL_MODE_ABSOLUTE: {
       const float yaw_omega_set_point =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), g->setpoint.eulr.yaw,
                    fb->eulr.imu.yaw, 0.0f, dt_sec);
       g->out[GIMBAL_ACTR_YAW_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), yaw_omega_set_point,
-                   fb->gyro.z, filted_gyro_z, dt_sec);
+                   fb->gyro.z, 0.f, dt_sec);
 
       const float pit_omega_set_point =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_ANGLE_IDX]), g->setpoint.eulr.pit,
                    fb->eulr.imu.pit, 0.0f, dt_sec);
       g->out[GIMBAL_ACTR_PIT_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), pit_omega_set_point,
-                   fb->gyro.x, filted_gyro_x, dt_sec);
+                   fb->gyro.x, 0.f, dt_sec);
       break;
+    }
 
     case GIMBAL_MODE_FIX:
       g->setpoint.eulr.yaw = g->param->encoder_center.yaw;

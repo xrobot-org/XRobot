@@ -91,8 +91,6 @@ typedef struct {
 
   LowPassFilter2p_t filter_out[GIMBAL_ACTR_NUM]; /* 输出滤波器滤波器数组 */
 
-  LowPassFilter2p_t filter_gyro[3]; /* 陀螺仪滤波器数组 */
-
   float out[GIMBAL_ACTR_NUM]; /* 输出数组 */
 
 } Gimbal_t;
