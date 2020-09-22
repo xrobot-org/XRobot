@@ -40,57 +40,57 @@ static const Robot_Config_t cfg_infantry = {
           .pid = {
             {
               /* GIMBAL_PID_YAW_OMEGA_IDX */
-              .k = 0.001f,
+              .k = 0.3f,
               .p = 1.0f,
-              .i = 0.0f,
+              .i = 0.1f,
               .d = 0.0f,
               .i_limit = 1.0f,
               .out_limit = 1.0f,
               .d_cutoff_freq = -1.0f,
             },{
               /* GIMBAL_PID_YAW_ANGLE_IDX */
-              .k = 0.001f,
+              .k = 2.8f,
               .p = 1.0f,
               .i = 0.0f,
               .d = 0.0f,
-              .i_limit = 1.0f,
-              .out_limit = 1.0f,
+              .i_limit = 0.0f,
+              .out_limit = 1000.0f,
               .d_cutoff_freq = -1.0f,
             },{
               /* GIMBAL_PID_PIT_OMEGA_IDX */
-              .k = 0.001f,
+              .k = 0.15f,
               .p = 1.0f,
-              .i = 0.0f,
-              .d = 0.0f,
+              .i = 0.05f,
+              .d = 0.003f,
               .i_limit = 1.0f,
               .out_limit = 1.0f,
               .d_cutoff_freq = -1.0f,
             },{
               /* GIMBAL_PID_PIT_ANGLE_IDX */
-              .k = 0.001f,
+              .k = 7.0f,
               .p = 1.0f,
               .i = 0.0f,
               .d = 0.0f,
+              .i_limit = 0.0f,
+              .out_limit = 1000.0f,
+              .d_cutoff_freq = -1.0f,
+            },{
+              /* GIMBAL_PID_REL_YAW_IDX */
+              .k = 0.1f,
+              .p = 1.0f,
+              .i = 0.01f,
+              .d = 0.001f,
               .i_limit = 1.0f,
               .out_limit = 1.0f,
               .d_cutoff_freq = -1.0f,
             },{
-              /* GIMBAL_PID_REL_YAW_IDX */
-              .k = 0.001f,
-              .p = 1.0f,
-              .i = 0.1f,
-              .d = 0.1f,
-              .i_limit = 0.5f,
-              .out_limit = 0.5f,
-              .d_cutoff_freq = -1.0f,
-            },{
               /* GIMBAL_PID_REL_PIT_IDX, */
-              .k = 0.001f,
+              .k = 0.1f,
               .p = 1.0f,
-              .i = 0.1f,
-              .d = 0.1f,
-              .i_limit = 0.5f,
-              .out_limit = 0.5f,
+              .i = 0.01f,
+              .d = 0.001f,
+              .i_limit = 1.0f,
+              .out_limit = 1.0f,
               .d_cutoff_freq = -1.0f,
             },
           }, /* pid */
