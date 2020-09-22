@@ -20,8 +20,8 @@ typedef enum {
   BSP_SERVO_E,
   BSP_SERVO_F,
   BSP_SERVO_G,
-  BSP_SERVO_H,
 #ifdef DEV_BOARD_A
+  BSP_SERVO_H,
   BSP_SERVO_S,
   BSP_SERVO_T,
   BSP_SERVO_U,

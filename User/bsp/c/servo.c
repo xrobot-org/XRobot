@@ -21,35 +21,31 @@ int8_t BSP_Servo_Init(BSP_Servo_Channel_t ch, float max_angle) {
 int8_t BSP_Servo_Start(BSP_Servo_Channel_t ch) {
   switch (ch) {
     case BSP_SERVO_A:
-      HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+      HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
       break;
 
     case BSP_SERVO_B:
-      HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+      HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
       break;
 
     case BSP_SERVO_C:
-      HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+      HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
       break;
 
     case BSP_SERVO_D:
-      HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+      HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
       break;
 
     case BSP_SERVO_E:
-      HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+      HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
       break;
 
     case BSP_SERVO_F:
-      HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+      HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
       break;
 
     case BSP_SERVO_G:
-      HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
-
-    case BSP_SERVO_H:
-      HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
-      break;
+      HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
 
     case BSP_SERVO_NUM:
       break;
@@ -64,35 +60,31 @@ int8_t BSP_Servo_Set(BSP_Servo_Channel_t ch, uint8_t angle) {
 
   switch (ch) {
     case BSP_SERVO_A:
-      __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, pulse);
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse);
       break;
 
     case BSP_SERVO_B:
-      __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, pulse);
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, pulse);
       break;
 
     case BSP_SERVO_C:
-      __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, pulse);
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, pulse);
       break;
 
     case BSP_SERVO_D:
-      __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, pulse);
+      __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, pulse);
       break;
 
     case BSP_SERVO_E:
-      __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, pulse);
+      __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, pulse);
       break;
 
     case BSP_SERVO_F:
-      __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, pulse);
+      __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, pulse);
       break;
 
     case BSP_SERVO_G:
-      __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, pulse);
-
-    case BSP_SERVO_H:
-      __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, pulse);
-      break;
+      __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, pulse);
 
     case BSP_SERVO_NUM:
       break;
@@ -103,35 +95,31 @@ int8_t BSP_Servo_Set(BSP_Servo_Channel_t ch, uint8_t angle) {
 int8_t BSP_Servo_Stop(BSP_Servo_Channel_t ch) {
   switch (ch) {
     case BSP_SERVO_A:
-      HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_2);
+      HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
       break;
 
     case BSP_SERVO_B:
-      HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_2);
+      HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_2);
       break;
 
     case BSP_SERVO_C:
-      HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_2);
+      HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_3);
       break;
 
     case BSP_SERVO_D:
-      HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_2);
+      HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_4);
       break;
 
     case BSP_SERVO_E:
-      HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_2);
+      HAL_TIM_PWM_Stop(&htim8, TIM_CHANNEL_1);
       break;
 
     case BSP_SERVO_F:
-      HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_2);
+      HAL_TIM_PWM_Stop(&htim8, TIM_CHANNEL_2);
       break;
 
     case BSP_SERVO_G:
-      HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_2);
-
-    case BSP_SERVO_H:
-      HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_2);
-      break;
+      HAL_TIM_PWM_Stop(&htim8, TIM_CHANNEL_3);
 
     case BSP_SERVO_NUM:
       break;

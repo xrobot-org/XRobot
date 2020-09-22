@@ -13,7 +13,7 @@
 int8_t BSP_PWM_Start(BSP_PWM_Channel_t ch) {
   switch (ch) {
     case BSP_PWM_IMU_HEAT:
-      HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+      HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
       break;
   }
   return BSP_OK;
@@ -28,7 +28,7 @@ int8_t BSP_PWM_Set(BSP_PWM_Channel_t ch, float duty_cycle) {
   if (pulse > 0) {
     switch (ch) {
       case BSP_PWM_IMU_HEAT:
-        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, pulse);
+        __HAL_TIM_SET_COMPARE(&htim10, TIM_CHANNEL_1, pulse);
         break;
     }
   } else {
@@ -40,8 +40,9 @@ int8_t BSP_PWM_Set(BSP_PWM_Channel_t ch, float duty_cycle) {
 int8_t BSP_PWM_Stop(BSP_PWM_Channel_t ch) {
   switch (ch) {
     case BSP_PWM_IMU_HEAT:
-      HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_2);
+      HAL_TIM_PWM_Stop(&htim10, TIM_CHANNEL_1);
       break;
   }
+  HAL_GPIO_WritePin(IMU_HEAT_PWM_GPIO_Port, IMU_HEAT_PWM_Pin, GPIO_PIN_RESET);
   return BSP_OK;
 }
