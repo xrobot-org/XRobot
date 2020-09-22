@@ -5,7 +5,6 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "bsp\adc.h"
 #include "bsp\led.h"
 #include "bsp\usb.h"
 #include "component\capacity.h"
@@ -24,7 +23,6 @@ void Task_Info(void *argument) {
 
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_INFO);
-  BSP_LED_Set(BSP_LED_GRN, BSP_LED_ON, 0.5f);
 
   uint32_t tick = osKernelGetTickCount();
   while (1) {
@@ -34,10 +32,6 @@ void Task_Info(void *argument) {
     /* Task body */
     tick += delay_tick;
 
-    float battery_volt = BSP_GetBatteryVolt();
-    float battery_remain = Capacity_GetBatteryRemain(battery_volt);
-
-    (void)battery_remain;
 
     BSP_LED_Set(BSP_LED_GRN, BSP_LED_TAGGLE, 1);
 

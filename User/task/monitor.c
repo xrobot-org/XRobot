@@ -6,6 +6,7 @@
 
 /* Includes ----------------------------------------------------------------- */
 #include "bsp\adc.h"
+#include "bsp\led.h"
 #include "bsp\buzzer.h"
 #include "bsp\usb.h"
 #include "component/capacity.h"
@@ -15,7 +16,7 @@
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
-float bat_cap;
+float battery_remain;
 
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
@@ -33,9 +34,12 @@ void Task_Monitor(void *argument) {
 #endif
     /* Task body */
     tick += delay_tick;
+    float battery_volt = BSP_GetBatteryVolt();
+    battery_remain = Capacity_GetBatteryRemain(battery_volt);
     
-    float vbat = BSP_GetBatteryVolt();
-    bat_cap = Capacity_GetBatteryRemain(vbat);
+    if (battery_remain) {
+      BSP_LED_Set(BSP_LED_RED, BSP_LED_TAGGLE, 1);
+    }
 
     osDelayUntil(tick);
   }
