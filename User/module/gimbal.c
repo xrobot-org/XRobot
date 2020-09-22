@@ -100,28 +100,28 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
     g->setpoint.eulr.yaw -= 360.0f;
   }
   g->setpoint.eulr.pit = AbsClip(g->setpoint.eulr.pit, 90.0f);
-
+  
+  float yaw_omega_set_point, pit_omega_set_point;
   switch (g->mode) {
     case GIMBAL_MODE_RELAX:
       for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) g->out[i] = 0.0f;
       break;
 
-    case GIMBAL_MODE_ABSOLUTE: {
-      const float yaw_omega_set_point =
+    case GIMBAL_MODE_ABSOLUTE:
+      yaw_omega_set_point =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), g->setpoint.eulr.yaw,
                    fb->eulr.imu.yaw, 0.0f, dt_sec);
       g->out[GIMBAL_ACTR_YAW_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), yaw_omega_set_point,
                    fb->gyro.z, 0.f, dt_sec);
 
-      const float pit_omega_set_point =
+      pit_omega_set_point =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_ANGLE_IDX]), g->setpoint.eulr.pit,
                    fb->eulr.imu.pit, 0.0f, dt_sec);
       g->out[GIMBAL_ACTR_PIT_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), pit_omega_set_point,
                    fb->gyro.x, 0.f, dt_sec);
       break;
-    }
 
     case GIMBAL_MODE_FIX:
       g->setpoint.eulr.yaw = g->param->encoder_center.yaw;
