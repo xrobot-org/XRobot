@@ -197,7 +197,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl, float dt_sec) {
   /* Compute output from setpiont. */
   for (uint8_t i = 0; i < 4; i++) {
     /* Filter feedback. */
-    c->out[i] =
+    c->feedback.motor_rpm[i] =
         LowPassFilter2p_Apply(c->filter.in + i, c->feedback.motor_rpm[i]);
 
     switch (c->mode) {
