@@ -416,6 +416,7 @@ void Task_CLI(void *argument) {
                 input, output, configCOMMAND_INT_MAX_OUTPUT_SIZE);
             BSP_USB_Printf(output);
             memset(output, 0x00, MAX_INPUT_LENGTH);
+            osDelay(50);
           } while (processing != pdFALSE);
           index = 0;
           memset(input, 0x00, MAX_INPUT_LENGTH);
