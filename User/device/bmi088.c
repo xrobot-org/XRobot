@@ -303,12 +303,12 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
 
 #endif
 
-  uint16_t raw_temp =
+  int16_t raw_temp =
       (uint16_t)((bmi088_rxbuf[17] << 3) | (bmi088_rxbuf[18] >> 5));
 
   if (raw_temp > 1023) raw_temp -= 2048;
 
-  bmi088->temp = raw_temp * 0.125f + 23.0f;
+  bmi088->temp = (float)raw_temp * 0.125f + 23.0f;
 
   return DEVICE_OK;
 }
