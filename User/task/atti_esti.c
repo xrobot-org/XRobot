@@ -32,13 +32,6 @@ AHRS_t gimbal_ahrs;
 AHRS_Eulr_t eulr_to_send;
 
 KPID_t imu_temp_ctrl_pid;
-const KPID_Params_t imu_temp_ctrl_pid_param = {
-    .p = 0.5,
-    .i = 0.5,
-    .d = 0.5,
-    .i_limit = 0.5,
-    .out_limit = 0.5,
-};
 #else
 static BMI088_t bmi088;
 static IST8310_t ist8310;
@@ -47,15 +40,16 @@ static AHRS_t gimbal_ahrs;
 static AHRS_Eulr_t eulr_to_send;
 
 static KPID_t imu_temp_ctrl_pid;
-static const KPID_Params_t imu_temp_ctrl_pid_param = {
-    .p = 0.5,
-    .i = 0.5,
-    .d = 0.5,
-    .i_limit = 0.5,
-    .out_limit = 0.5,
-};
 #endif
 
+static const KPID_Params_t imu_temp_ctrl_pid_param = {
+    .k = 0.5f,
+    .p = 0.01f,
+    .i = 0.0f,
+    .d = 0.0f,
+    .i_limit = 1.0f,
+    .out_limit = 1.0f,
+};
 
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
@@ -123,6 +117,6 @@ void Task_AttiEsti(void *argument) {
     osMessageQueuePut(task_param->msgq.gimbal_gyro, &bmi088.gyro, 0, 0);
                                              
     BSP_PWM_Set(BSP_PWM_IMU_HEAT,
-                PID_Calc(&imu_temp_ctrl_pid, 50.0f, bmi088.temp, 0.0f, 0.0f));
+                PID_Calc(&imu_temp_ctrl_pid, 40.0f, bmi088.temp, 0.0f, 0.0f));
   }
 }
