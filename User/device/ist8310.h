@@ -16,8 +16,6 @@ extern "C" {
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
 typedef struct {
-  osThreadId_t thread_alert;
-
   AHRS_Magn_t magn;
 
   struct {
@@ -30,9 +28,9 @@ typedef struct {
 int8_t IST8310_Init(IST8310_t *ist8310);
 int8_t IST8310_Restart(void);
 
-bool ST8310_WaitNew(uint32_t timeout);
-int8_t ST8310_StartDmaRecv();
-uint32_t ST8310_WaitDmaCplt();
+bool IST8310_WaitNew(uint32_t timeout);
+int8_t IST8310_StartDmaRecv();
+uint32_t IST8310_WaitDmaCplt();
 int8_t IST8310_Parse(IST8310_t *ist8310);
 
 #ifdef __cplusplus

@@ -108,8 +108,9 @@ int8_t IST8310_Init(IST8310_t *ist8310) {
   /* 0x08: Data ready function enable. DRDY signal active low*/
   IST8310_WriteSingle(IST8310_CNTL2, 0x08);
 
-  IST8310_WriteSingle(IST8310_AVGCNTL, 0x02);
+  IST8310_WriteSingle(IST8310_AVGCNTL, 0x09);
   IST8310_WriteSingle(IST8310_PDCNTL, 0xC0);
+  IST8310_WriteSingle(IST8310_CNTL1, 0x0B);
   BSP_Delay(10);
 
   inited = true;
@@ -118,25 +119,18 @@ int8_t IST8310_Init(IST8310_t *ist8310) {
   return DEVICE_OK;
 }
 
-bool ST8310_WaitNew(uint32_t timeout) {
-  uint8_t data = 1;
-  IST8310_Write(IST8310_CNTL1, &data, 1);
-
-  if (osThreadFlagsWait(SIGNAL_IST8310_MAGN_NEW_DATA, osFlagsWaitAny,
-                        timeout) != 0) {
-    return false;
-  }
-
-  return true;
+bool IST8310_WaitNew(uint32_t timeout) {
+  return (osThreadFlagsWait(SIGNAL_IST8310_MAGN_NEW_DATA, osFlagsWaitAll,
+                        timeout) == SIGNAL_IST8310_MAGN_NEW_DATA);
 }
 
-int8_t ST8310_StartDmaRecv() {
+int8_t IST8310_StartDmaRecv() {
   IST8310_Read(IST8310_DATAXL, ist8310_rxbuf, IST8310_LEN_RX_BUFF);
   return DEVICE_OK;
 }
 
-uint32_t ST8310_WaitDmaCplt() {
-  return osThreadFlagsWait(SIGNAL_BMI088_ACCL_RAW_REDY, osFlagsWaitAll,
+uint32_t IST8310_WaitDmaCplt() {
+  return osThreadFlagsWait(SIGNAL_IST8310_MAGN_RAW_REDY, osFlagsWaitAll,
                            osWaitForever);
 }
 
@@ -152,7 +146,7 @@ int8_t IST8310_Parse(IST8310_t *ist8310) {
 
   ist8310->magn.x = (float)raw_x * 3.0f / 20.0f;
   ist8310->magn.y = (float)raw_y * 3.0f / 20.0f;
-  ist8310->magn.z = (float)raw_z * 3.0f / 20.0f;
+  ist8310->magn.z = (float)-raw_z * 3.0f / 20.0f;
 
 #else
   const int16_t *raw_x = (int16_t *)(ist8310_rxbuf + 0);
