@@ -210,10 +210,10 @@ int8_t BMI088_Init(BMI088_t *bmi088) {
   /* Accl init. */
   /* Filter setting: Normal. */
   /* ODR: 0xAB: 800Hz. 0xAA: 400Hz. 0xA9: 200Hz. 0xA8: 100Hz. 0xA6: 25Hz. */
-  BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_CONF, 0xAB);
+  BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_CONF, 0xAA);
 
   /* 0x00: +-3G. 0x01: +-6G. 0x02: +-12G. 0x03: +-24G. */
-  BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_RANGE, 0x01);
+  BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_RANGE, 0x00);
 
   /* INT1 as output. Push-pull. Active low. Output. */
   BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_INT1_IO_CONF, 0x08);
@@ -227,11 +227,11 @@ int8_t BMI088_Init(BMI088_t *bmi088) {
 
   /* Gyro init. */
   /* 0x00: +-2000. 0x01: +-1000. 0x02: +-500. 0x03: +-250. 0x04: +-125. */
-  BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_RANGE, 0x01);
+  BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_RANGE, 0x02);
 
   /* Filter bw: 47Hz. */
   /* ODR: 0x02: 1000Hz. 0x03: 400Hz. 0x06: 200Hz. 0x07: 100Hz. */
-  BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_BANDWIDTH, 0x02);
+  BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_BANDWIDTH, 0x03);
 
   /* INT3 and INT4 as output. Push-pull. Active low. */
   BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_INT3_INT4_IO_CONF, 0x00);
@@ -287,9 +287,9 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
   memcpy(&raw_z, bmi088_rxbuf + 5, sizeof(int16_t));
 
   /* 3G: 10920. 6G: 5460. 12G: 2730. 24G: 1365. */
-  bmi088->accl.x = (float)raw_x / 5460.0f;
-  bmi088->accl.y = (float)raw_y / 5460.0f;
-  bmi088->accl.z = (float)raw_z / 5460.0f;
+  bmi088->accl.x = (float)raw_x / 10920.0f;
+  bmi088->accl.y = (float)raw_y / 10920.0f;
+  bmi088->accl.z = (float)raw_z / 10920.0f;
 
 #else
   const int16_t *praw_x = (int16_t *)(bmi088_rxbuf + 1);
@@ -325,9 +325,9 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 
   /* FS125: 262.144. FS250: 131.072. FS500: 65.536. FS1000: 32.768.
    * FS2000: 16.384.*/
-  bmi088->gyro.x = (float)raw_x / 32.768f * MATH_DEG_TO_RAD_MULT;
-  bmi088->gyro.y = (float)raw_y / 32.768f * MATH_DEG_TO_RAD_MULT;
-  bmi088->gyro.z = (float)raw_z / 32.768f * MATH_DEG_TO_RAD_MULT;
+  bmi088->gyro.x = (float)raw_x / 65.536f * MATH_DEG_TO_RAD_MULT;
+  bmi088->gyro.y = (float)raw_y / 65.536f * MATH_DEG_TO_RAD_MULT;
+  bmi088->gyro.z = (float)raw_z / 65.536f * MATH_DEG_TO_RAD_MULT;
 
 #else
   /* Gyroscope imu_raw -> degrees/sec -> radians/sec */
@@ -347,5 +347,5 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 
 float BMI088_GetUpdateFreq(BMI088_t *bmi088) {
   (void)bmi088;
-  return 800.0f;
+  return 400.0f;
 }

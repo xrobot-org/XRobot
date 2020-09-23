@@ -9,16 +9,19 @@
 
 #include "user_math.h"
 
-#define BETA .033f
+#define BETA_IMU (0.033f)
+#define BETA_AHRS (0.041f)
 
 /* 2 * proportional gain (Kp) */
-static float beta = BETA;
+static float beta = BETA_IMU;
 
 static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
                              const AHRS_Gyro_t *gyro) {
   if (ahrs == NULL) return -1;
   if (accl == NULL) return -1;
   if (gyro == NULL) return -1;
+
+  beta = BETA_IMU;
 
   float ax = accl->x;
   float ay = accl->y;
@@ -157,6 +160,8 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
   if (ahrs == NULL) return -1;
   if (accl == NULL) return -1;
   if (gyro == NULL) return -1;
+
+  beta = BETA_AHRS;
 
   float recip_norm;
   float s0, s1, s2, s3;
