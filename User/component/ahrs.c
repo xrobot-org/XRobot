@@ -17,9 +17,7 @@ static float beta = BETA;
 static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
                              const AHRS_Gyro_t *gyro) {
   if (ahrs == NULL) return -1;
-
   if (accl == NULL) return -1;
-
   if (gyro == NULL) return -1;
 
   float ax = accl->x;
@@ -116,7 +114,33 @@ int8_t AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq) {
   ahrs->q3 = 0.0f;
 
   if (magn) {
+    float yaw = -atan2(magn->y, magn->x);
+
     if ((magn->x == 0.0f) && (magn->y == 0.0f) && (magn->z == 0.0f)) {
+      ahrs->q0 = 0.800884545f;
+      ahrs->q1 = 0.00862364192f;
+      ahrs->q2 = -0.00283267116f;
+      ahrs->q3 = 0.598749936f;
+
+    } else if ((yaw < (M_PI / 2)) || (yaw > 0.0f)) {
+      ahrs->q0 = 0.997458339f;
+      ahrs->q1 = 0.000336312107f;
+      ahrs->q2 = -0.0057230792f;
+      ahrs->q3 = 0.0740156546;
+
+    } else if ((yaw < M_PI) || (yaw > (M_PI / 2))) {
+      ahrs->q0 = 0.800884545f;
+      ahrs->q1 = 0.00862364192f;
+      ahrs->q2 = -0.00283267116f;
+      ahrs->q3 = 0.598749936f;
+
+    } else if ((yaw < 90.0f) || (yaw > M_PI)) {
+      ahrs->q0 = 0.800884545f;
+      ahrs->q1 = 0.00862364192f;
+      ahrs->q2 = -0.00283267116f;
+      ahrs->q3 = 0.598749936f;
+
+    } else if ((yaw < 90.0f) || (yaw > 0.0f)) {
       ahrs->q0 = 0.800884545f;
       ahrs->q1 = 0.00862364192f;
       ahrs->q2 = -0.00283267116f;
@@ -131,9 +155,7 @@ int8_t AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq) {
 int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
                    const AHRS_Gyro_t *gyro, const AHRS_Magn_t *magn) {
   if (ahrs == NULL) return -1;
-
   if (accl == NULL) return -1;
-
   if (gyro == NULL) return -1;
 
   float recip_norm;
@@ -287,7 +309,6 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
 
 int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
   if (eulr == NULL) return -1;
-
   if (ahrs == NULL) return -1;
 
   const float sinr_cosp = 2.0f * (ahrs->q0 * ahrs->q1 + ahrs->q2 * ahrs->q3);
