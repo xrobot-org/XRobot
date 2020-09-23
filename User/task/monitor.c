@@ -37,8 +37,10 @@ void Task_Monitor(void *argument) {
     float battery_volt = BSP_GetBatteryVolt();
     battery_remain = Capacity_GetBatteryRemain(battery_volt);
     
-    if (battery_remain) {
+    if (battery_remain < 0.2f) {
       BSP_LED_Set(BSP_LED_RED, BSP_LED_TAGGLE, 1);
+    } else {
+      BSP_LED_Set(BSP_LED_RED, BSP_LED_OFF, 1);
     }
 
     osDelayUntil(tick);
