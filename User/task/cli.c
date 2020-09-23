@@ -282,6 +282,32 @@ static BaseType_t Command_MotorIDQuitckSet(char *out_buffer, size_t len,
       return pdFALSE;
   }
 }
+                                           
+static BaseType_t Command_ClearRobotID(char *out_buffer, size_t len,
+                                           const char *command_string) {
+  (void)command_string;
+  if (out_buffer == NULL) return pdFALSE;
+  Robot_ID_t id;
+  
+  len -= 1;
+  static uint8_t stage = 0;
+  switch (stage) {
+    case 0:
+      snprintf(out_buffer, len, "\r\nReset Robot ID stored on flash.");
+      stage++;
+      return pdPASS;
+    case 1:
+      memset(&id, 0, sizeof(Robot_ID_t));
+      Robot_SetRobotID(&id);
+      snprintf(out_buffer, len, "\r\nDone.");
+      stage++;
+      return pdPASS;
+    default:
+      snprintf(out_buffer, len, "\r\n");
+      stage = 0;
+      return pdFALSE;
+  }
+}
 
 /*
 static BaseType_t Command_XXX(char *out_buffer, size_t len,
@@ -339,7 +365,7 @@ static const CLI_Command_Definition_t command_table[] = {
     },
     {
         "set-pilot",
-        "\r\nset-pilot <pilot>:\r\n Set robot pilot. Expext: QS\r\n\r\n",
+        "\r\nset-pilot <pilot>:\r\n Set robot pilot. Expext: qs\r\n\r\n",
         Command_SetPilot,
         1,
     },
@@ -353,6 +379,12 @@ static const CLI_Command_Definition_t command_table[] = {
         "motor-id-set",
         "\r\nmotor-id-set:\r\n Enter motor ID quick set mode.\r\n\r\n",
         Command_MotorIDQuitckSet,
+        0,
+    },
+    {
+        "reset-robot-id",
+        "\r\nreset_robot-id:\r\n Reset Robot ID stored on flash.\r\n\r\n",
+        Command_ClearRobotID,
         0,
     },
 };
