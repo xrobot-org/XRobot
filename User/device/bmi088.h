@@ -18,14 +18,14 @@ typedef struct {
     float x;
     float y;
     float z;
-  } gyro_offset;
-} BMI088_Cali_t;
+  } gyro_offset; /* 陀螺仪偏置 */
+} BMI088_Cali_t; /* BMI088校准数据 */
 
 typedef struct {
   AHRS_Accl_t accl;
   AHRS_Gyro_t gyro;
 
-  float temp;
+  float temp; /* 温度 */
 
   const BMI088_Cali_t *cali;
 } BMI088_t;
