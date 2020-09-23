@@ -76,12 +76,10 @@ static void IST8310_IntCallback(void) {
 /* Exported functions ------------------------------------------------------- */
 int8_t IST8310_Init(IST8310_t *ist8310) {
   if (ist8310 == NULL) return DEVICE_ERR_NULL;
+
   if (inited) return DEVICE_ERR_INITED;
+
   if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
-  
-  if (ist8310->magn_scale.x == 0.0f) ist8310->magn_scale.x = 1.0f;
-  if (ist8310->magn_scale.y == 0.0f) ist8310->magn_scale.y = 1.0f;
-  if (ist8310->magn_scale.z == 0.0f) ist8310->magn_scale.z = 1.0f;
 
   IST8310_RESET();
   BSP_Delay(50);
