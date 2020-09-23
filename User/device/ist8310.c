@@ -158,11 +158,11 @@ int8_t IST8310_Parse(IST8310_t *ist8310) {
   ist8310->magn.z *= 3.0f / 20.0f;
 
   ist8310->magn.x =
-      (ist8310->magn.x - ist8310->magn_offset.x) / ist8310->magn_scale.x;
+      (ist8310->magn.x - ist8310->magn_offset.x) * ist8310->magn_scale.x;
   ist8310->magn.y =
-      (ist8310->magn.y - ist8310->magn_offset.y) / ist8310->magn_scale.y;
+      (ist8310->magn.y - ist8310->magn_offset.y) * ist8310->magn_scale.y;
   ist8310->magn.z =
-      (ist8310->magn.z - ist8310->magn_offset.y) / ist8310->magn_scale.z;
+      (ist8310->magn.z - ist8310->magn_offset.y) * ist8310->magn_scale.z;
 
   return DEVICE_OK;
 }
