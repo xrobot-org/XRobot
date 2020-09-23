@@ -16,8 +16,6 @@ extern "C" {
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
 typedef struct {
-  AHRS_Magn_t magn;
-
   struct {
     float x;
     float y;
@@ -29,10 +27,15 @@ typedef struct {
     float y;
     float z;
   } magn_scale;
+} IST8310_Cali_t;
+
+typedef struct {
+  AHRS_Magn_t magn;
+  const IST8310_Cali_t *cali;
 } IST8310_t;
 
 /* Exported functions prototypes -------------------------------------------- */
-int8_t IST8310_Init(IST8310_t *ist8310);
+int8_t IST8310_Init(IST8310_t *ist8310, const IST8310_Cali_t *cali);
 int8_t IST8310_Restart(void);
 
 bool IST8310_WaitNew(uint32_t timeout);

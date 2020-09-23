@@ -74,12 +74,13 @@ static void IST8310_IntCallback(void) {
 }
 
 /* Exported functions ------------------------------------------------------- */
-int8_t IST8310_Init(IST8310_t *ist8310) {
+int8_t IST8310_Init(IST8310_t *ist8310, const IST8310_Cali_t *cali) {
   if (ist8310 == NULL) return DEVICE_ERR_NULL;
-
+  if (cali == NULL) return DEVICE_ERR_NULL;
   if (inited) return DEVICE_ERR_INITED;
-
   if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
+
+  ist8310->cali = cali;
 
   IST8310_RESET();
   BSP_Delay(50);
@@ -155,12 +156,12 @@ int8_t IST8310_Parse(IST8310_t *ist8310) {
   ist8310->magn.y *= 3.0f / 20.0f;
   ist8310->magn.z *= 3.0f / 20.0f;
 
-  ist8310->magn.x =
-      (ist8310->magn.x - ist8310->magn_offset.x) * ist8310->magn_scale.x;
-  ist8310->magn.y =
-      (ist8310->magn.y - ist8310->magn_offset.y) * ist8310->magn_scale.y;
-  ist8310->magn.z =
-      (ist8310->magn.z - ist8310->magn_offset.y) * ist8310->magn_scale.z;
+  ist8310->magn.x = (ist8310->magn.x - ist8310->cali->magn_offset.x) *
+                    ist8310->cali->magn_scale.x;
+  ist8310->magn.y = (ist8310->magn.y - ist8310->cali->magn_offset.y) *
+                    ist8310->cali->magn_scale.y;
+  ist8310->magn.z = (ist8310->magn.z - ist8310->cali->magn_offset.y) *
+                    ist8310->cali->magn_scale.z;
 
   return DEVICE_OK;
 }

@@ -14,18 +14,24 @@ extern "C" {
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
 typedef struct {
+  struct {
+    float x;
+    float y;
+    float z;
+  } gyro_offset;
+} BMI088_Cali_t;
+
+typedef struct {
   AHRS_Accl_t accl;
   AHRS_Gyro_t gyro;
 
   float temp;
 
-  struct {
-    int8_t gyro_offset[3];
-  } cali;
+  const BMI088_Cali_t *cali;
 } BMI088_t;
 
 /* Exported functions prototypes -------------------------------------------- */
-int8_t BMI088_Init(BMI088_t *bmi088);
+int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali);
 int8_t BMI088_Restart(void);
 
 /* Sensor use right-handed coordinate system. */

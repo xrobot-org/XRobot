@@ -52,6 +52,9 @@ static const KPID_Params_t imu_temp_ctrl_pid_param = {
 };
 uint32_t period;
 
+static const IST8310_Cali_t ist_cali = {0};
+static const BMI088_Cali_t bmi_cali = {0};
+
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 void Task_AttiEsti(void *argument) {
@@ -66,8 +69,8 @@ void Task_AttiEsti(void *argument) {
   task_param->msgq.gimbal_gyro =
       osMessageQueueNew(6u, sizeof(AHRS_Gyro_t), NULL);
 
-  BMI088_Init(&bmi088);
-  IST8310_Init(&ist8310);
+  BMI088_Init(&bmi088, &bmi_cali);
+  IST8310_Init(&ist8310, &ist_cali);
 
   IST8310_WaitNew(osWaitForever);
   IST8310_StartDmaRecv();
