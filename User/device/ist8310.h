@@ -6,8 +6,8 @@ extern "C" {
 
 /* Includes ----------------------------------------------------------------- */
 #include <cmsis_os2.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "component\ahrs.h"
 #include "device\device.h"
@@ -19,9 +19,16 @@ typedef struct {
   AHRS_Magn_t magn;
 
   struct {
-    int8_t magn_offset[3];
-    int8_t magn_scale[3];
-  } cali;
+    int16_t x;
+    int16_t y;
+    int16_t z;
+  } magn_offset;
+
+  struct {
+    int16_t x;
+    int16_t y;
+    int16_t z;
+  } magn_scale;
 } IST8310_t;
 
 /* Exported functions prototypes -------------------------------------------- */

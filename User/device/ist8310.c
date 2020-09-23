@@ -65,13 +65,6 @@ static void IST8310_Read(uint8_t reg, uint8_t *data, uint8_t len) {
                        reg, I2C_MEMADD_SIZE_8BIT, data, len);
 }
 
-static void IST8310_Write(uint8_t reg, uint8_t *data, uint8_t len) {
-  if (data == NULL) return;
-
-  HAL_I2C_Mem_Write_DMA(BSP_I2C_GetHandle(BSP_I2C_COMP), IST8310_IIC_ADDRESS,
-                        reg, I2C_MEMADD_SIZE_8BIT, data, len);
-}
-
 static void IST8310_MemRxCpltCallback(void) {
   osThreadFlagsSet(thread_alert, SIGNAL_IST8310_MAGN_RAW_REDY);
 }
@@ -121,7 +114,7 @@ int8_t IST8310_Init(IST8310_t *ist8310) {
 
 bool IST8310_WaitNew(uint32_t timeout) {
   return (osThreadFlagsWait(SIGNAL_IST8310_MAGN_NEW_DATA, osFlagsWaitAll,
-                        timeout) == SIGNAL_IST8310_MAGN_NEW_DATA);
+                            timeout) == SIGNAL_IST8310_MAGN_NEW_DATA);
 }
 
 int8_t IST8310_StartDmaRecv() {
@@ -138,25 +131,36 @@ int8_t IST8310_Parse(IST8310_t *ist8310) {
   if (ist8310 == NULL) return DEVICE_ERR_NULL;
 
 #if 1
-  /* Gyroscope imu_raw -> degrees/sec -> radians/sec */
+  /* Magn -> T */
   int16_t raw_x, raw_y, raw_z;
   memcpy(&raw_x, ist8310_rxbuf + 0, sizeof(int16_t));
   memcpy(&raw_y, ist8310_rxbuf + 2, sizeof(int16_t));
   memcpy(&raw_z, ist8310_rxbuf + 4, sizeof(int16_t));
 
-  ist8310->magn.x = (float)raw_x * 3.0f / 20.0f;
-  ist8310->magn.y = (float)raw_y * 3.0f / 20.0f;
-  ist8310->magn.z = (float)-raw_z * 3.0f / 20.0f;
+  ist8310->magn.x = (float)raw_x;
+  ist8310->magn.y = (float)raw_y;
+  ist8310->magn.z = (float)-raw_z;
 
 #else
   const int16_t *raw_x = (int16_t *)(ist8310_rxbuf + 0);
   const int16_t *raw_y = (int16_t *)(ist8310_rxbuf + 2);
   const int16_t *raw_z = (int16_t *)(ist8310_rxbuf + 4);
 
-  ist8310->magn.x = (float)*raw_x * 3.0f / 20.0f;
-  ist8310->magn.y = (float)*raw_y * 3.0f / 20.0f;
-  ist8310->magn.z = (float)*raw_z * 3.0f / 20.0f;
+  ist8310->magn.x = (float)*raw_x;
+  ist8310->magn.y = (float)*raw_y;
+  ist8310->magn.z = -(float)*raw_z;
 #endif
+
+  ist8310->magn.x *= 3.0f / 20.0f;
+  ist8310->magn.y *= 3.0f / 20.0f;
+  ist8310->magn.z *= 3.0f / 20.0f;
+
+  ist8310->magn.x =
+      (ist8310->magn.x - ist8310->magn_offset.x) / ist8310->magn_scale.x;
+  ist8310->magn.y =
+      (ist8310->magn.y - ist8310->magn_offset.y) / ist8310->magn_scale.y;
+  ist8310->magn.z =
+      (ist8310->magn.z - ist8310->magn_offset.y) / ist8310->magn_scale.z;
 
   return DEVICE_OK;
 }
