@@ -358,8 +358,7 @@ static const CLI_Command_Definition_t command_table[] = {
     {
         "set-model",
         "\r\nset-model <model>:\r\n Set robot model. Expext:I[nfantry], "
-        "H[ero], "
-        "E[ngineer], D[rone] and S[entry]\r\n\r\n",
+        "H[ero], E[ngineer], D[rone] and S[entry]\r\n\r\n",
         Command_SetModel,
         1,
     },
