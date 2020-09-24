@@ -61,7 +61,8 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
   return 0;
 }
 
-int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback, CAN_t *can) {
+int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback,
+                            const CAN_t *can) {
   if (gimbal_feedback == NULL) return -1;
   if (can == NULL) return -1;
 
@@ -97,7 +98,7 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
     g->setpoint.eulr.yaw -= 360.0f;
   }
   g->setpoint.eulr.pit = AbsClip(g->setpoint.eulr.pit, 90.0f);
-  
+
   float yaw_omega_set_point, pit_omega_set_point;
   switch (g->mode) {
     case GIMBAL_MODE_RELAX:

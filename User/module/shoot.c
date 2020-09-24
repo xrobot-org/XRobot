@@ -81,7 +81,7 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
   return 0;
 }
 
-int8_t Shoot_UpdateFeedback(Shoot_t *s, CAN_t *can) {
+int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
   if (s == NULL) return -1;
 
   if (can == NULL) return -1;

@@ -68,12 +68,12 @@ typedef struct {
 
   struct {
     float *motor_rpm; /* 电机转速的动态数组，单位：RPM */
-  } setpoint;        /* PID计算的目标值 */
+  } setpoint;         /* PID计算的目标值 */
 
   struct {
     KPID_t *motor; /* 控制轮子电机用的PID的动态数组 */
     KPID_t follow; /* 跟随云台用的PID */
-  } pid;          /* 反馈控制用的PID */
+  } pid;           /* 反馈控制用的PID */
 
   struct {
     LowPassFilter2p_t *in;  /* 反馈值滤波器 */

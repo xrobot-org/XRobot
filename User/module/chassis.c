@@ -142,7 +142,7 @@ error:
   return CHASSIS_ERR_NULL;
 }
 
-int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_t *can) {
+int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (can == NULL) return CHASSIS_ERR_NULL;
 

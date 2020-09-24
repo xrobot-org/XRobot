@@ -85,7 +85,7 @@ typedef struct {
 
   struct {
     AHRS_Eulr_t eulr; /* 表示云台姿态的欧拉角 */
-  } setpoint;        /* PID计算的目标值 */
+  } setpoint;         /* PID计算的目标值 */
 
   KPID_t pid[GIMBAL_PID_NUM]; /* PID数组 */
 
@@ -96,7 +96,7 @@ typedef struct {
 } Gimbal_t;
 
 /* Exported functions prototypes -------------------------------------------- */
-int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback, CAN_t *can);
+int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback, const CAN_t *can);
 
 int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
                    float target_freq);
