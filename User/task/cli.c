@@ -447,11 +447,11 @@ void Task_CLI(void *argument) {
             processing = FreeRTOS_CLIProcessCommand(
                 input, output, configCOMMAND_INT_MAX_OUTPUT_SIZE);
             BSP_USB_Printf(output);
-            memset(output, 0x00, MAX_INPUT_LENGTH);
+            memset(output, 0x00, strlen(output));
             osDelay(50);
           } while (processing != pdFALSE);
           index = 0;
-          memset(input, 0x00, MAX_INPUT_LENGTH);
+          memset(input, 0x00, strlen(input));
         }
         BSP_USB_Printf("rm>");
       } else if (rx_char == '\b' || rx_char == 0x7Fu) {
