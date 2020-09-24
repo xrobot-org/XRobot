@@ -58,9 +58,6 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
     LowPassFilter2p_Init(g->filter_out + i, target_freq,
                          g->param->low_pass_cutoff_freq.out);
   }
-
-  g->setpoint.eulr.yaw = 70.0f;
-
   return 0;
 }
 
