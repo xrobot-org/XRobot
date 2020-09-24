@@ -8,7 +8,7 @@ extern "C" {
 #include <cmsis_os2.h>
 
 #include "FreeRTOS.h"
-#include "module\robot.h"
+#include "module\config.h"
 #include "task.h"
 
 /* Exported constants ------------------------------------------------------- */
@@ -64,9 +64,9 @@ typedef struct {
     osMutexId_t atti_ready;
   } mutex;
 
-  Robot_ID_t robot_id;
-  const Robot_Config_t *config_robot;
-  const Robot_PilotConfig_t *config_pilot;
+  Config_t robot_id;
+  const Config_Robot_t *config_robot;
+  const Config_Pilot_t *config_pilot;
 
 #ifdef DEBUG
   struct {

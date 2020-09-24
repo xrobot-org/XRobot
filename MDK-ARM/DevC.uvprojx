@@ -1486,14 +1486,14 @@
               <FilePath>..\User\module\chassis.c</FilePath>
             </File>
             <File>
+              <FileName>config.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\module\config.c</FilePath>
+            </File>
+            <File>
               <FileName>gimbal.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\module\gimbal.c</FilePath>
-            </File>
-            <File>
-              <FileName>robot.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\module\robot.c</FilePath>
             </File>
             <File>
               <FileName>shoot.c</FileName>
@@ -3116,14 +3116,14 @@
               <FilePath>..\User\module\chassis.c</FilePath>
             </File>
             <File>
+              <FileName>config.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\module\config.c</FilePath>
+            </File>
+            <File>
               <FileName>gimbal.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\module\gimbal.c</FilePath>
-            </File>
-            <File>
-              <FileName>robot.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\module\robot.c</FilePath>
             </File>
             <File>
               <FileName>shoot.c</FileName>

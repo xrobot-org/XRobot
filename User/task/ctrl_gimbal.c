@@ -8,8 +8,8 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
+#include "module\config.h"
 #include "module\gimbal.h"
-#include "module\robot.h"
 #include "task\user_task.h"
 
 /* Private typedef ---------------------------------------------------------- */
@@ -67,7 +67,8 @@ void Task_CtrlGimbal(void *argument) {
       osKernelLock();
       const uint32_t now = HAL_GetTick();
       Gimbal_CANtoFeedback(&gimbal_feedback, can);
-      Gimbal_Control(&gimbal, &gimbal_feedback, &gimbal_ctrl, (float)(now - wakeup)/1000.0f);
+      Gimbal_Control(&gimbal, &gimbal_feedback, &gimbal_ctrl,
+                     (float)(now - wakeup) / 1000.0f);
       wakeup = now;
       CAN_Motor_ControlGimbal(gimbal.out[GIMBAL_ACTR_YAW_IDX],
                               gimbal.out[GIMBAL_ACTR_PIT_IDX]);

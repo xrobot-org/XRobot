@@ -1,12 +1,12 @@
-#include "robot.h"
+#include "config.h"
 
 #include <string.h>
 
 #include "bsp/flash.h"
 
-#define CONFIG_BASE_ADDRESS (ADDR_FLASH_END - sizeof(Robot_ID_t))
+#define CONFIG_BASE_ADDRESS (ADDR_FLASH_END - sizeof(Config_t))
 
-static const Robot_Config_t cfg_infantry = {
+static const Config_Robot_t cfg_infantry = {
     .model = ROBOT_MODEL_INFANTRY,
 
     /* 对应模块的参数 */
@@ -140,12 +140,12 @@ static const Robot_Config_t cfg_infantry = {
   }, /* param */
 }; /* cfg_infantry */
 
-static const Robot_Config_t cfg_hero;
-static const Robot_Config_t cfg_engineer;
-static const Robot_Config_t cfg_drone;
-static const Robot_Config_t cfg_sentry;
+static const Config_Robot_t cfg_hero;
+static const Config_Robot_t cfg_engineer;
+static const Config_Robot_t cfg_drone;
+static const Config_Robot_t cfg_sentry;
 
-static const Robot_PilotConfig_t user_qs = {
+static const Config_Pilot_t user_qs = {
     .param = {
       .cmd = {
         .sens_mouse = 0.5f,
@@ -154,16 +154,16 @@ static const Robot_PilotConfig_t user_qs = {
     },
 };
 
-void Robot_GetRobotID(Robot_ID_t *id) {
-  BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t *)id, sizeof(Robot_ID_t));
+void Config_Get(Config_t *id) {
+  BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t *)id, sizeof(Config_t));
 }
 
-void Robot_SetRobotID(Robot_ID_t *id) {
+void Config_Set(Config_t *id) {
   BSP_Flash_EraseSector(11);
-  BSP_Flash_WriteBytes(CONFIG_BASE_ADDRESS, (uint8_t *)id, sizeof(Robot_ID_t));
+  BSP_Flash_WriteBytes(CONFIG_BASE_ADDRESS, (uint8_t *)id, sizeof(Config_t));
 }
 
-const Robot_Config_t *Robot_GetConfig(Robot_Model_t model) {
+const Config_Robot_t *Config_GetRobotCfg(Config_RobotModel_t model) {
   switch (model) {
     case ROBOT_MODEL_INFANTRY:
       return &cfg_infantry;
@@ -182,7 +182,7 @@ const Robot_Config_t *Robot_GetConfig(Robot_Model_t model) {
   return &cfg_infantry;
 }
 
-const Robot_PilotConfig_t *Robot_GetPilotConfig(Robot_Pilot_t pilot) {
+const Config_Pilot_t *Config_GetPilotCfg(Config_PilotName_t pilot) {
   switch (pilot) {
     case ROBOT_PILOT_QS:
       return &user_qs;
@@ -194,7 +194,7 @@ const Robot_PilotConfig_t *Robot_GetPilotConfig(Robot_Pilot_t pilot) {
 }
 
 static const struct {
-  Robot_Model_t model;
+  Config_RobotModel_t model;
   const char *name;
 } model_string_map[] = {
     {ROBOT_MODEL_INFANTRY, "Infantry"}, {ROBOT_MODEL_HERO, "Hero"},
@@ -203,14 +203,14 @@ static const struct {
 };
 
 static const struct {
-  Robot_Pilot_t pilot;
+  Config_PilotName_t pilot;
   const char *name;
 } pilot_string_map[] = {
     {ROBOT_PILOT_QS, "qs"},
     {ROBOT_PILOT_NUM, NULL},
 };
 
-Robot_Model_t Robot_GetModelByName(const char *name) {
+Config_RobotModel_t Config_GetModelByName(const char *name) {
   for (int j = 0; model_string_map[j].name != NULL; j++) {
     if (strstr(model_string_map[j].name, name) != NULL) {
       return model_string_map[j].model;
@@ -219,7 +219,7 @@ Robot_Model_t Robot_GetModelByName(const char *name) {
   return ROBOT_MODEL_NUM; /* No match. */
 }
 
-Robot_Pilot_t Robot_GetPilotByName(const char *name) {
+Config_PilotName_t Config_GetPilotByName(const char *name) {
   for (int j = 0; pilot_string_map[j].name != NULL; j++) {
     if (strcmp(pilot_string_map[j].name, name) == 0) {
       return pilot_string_map[j].pilot;
@@ -228,7 +228,7 @@ Robot_Pilot_t Robot_GetPilotByName(const char *name) {
   return ROBOT_PILOT_NUM; /* No match. */
 }
 
-const char *Robot_GetNameByModel(Robot_Model_t model) {
+const char *Config_GetNameByModel(Config_RobotModel_t model) {
   for (int j = 0; model_string_map[j].name != NULL; j++) {
     if (model_string_map[j].model == model) {
       return model_string_map[j].name;
@@ -237,7 +237,7 @@ const char *Robot_GetNameByModel(Robot_Model_t model) {
   return "Unknown"; /* No match. */
 }
 
-const char *Robot_GetNameByPilot(Robot_Pilot_t pilot) {
+const char *Config_GetNameByPilot(Config_PilotName_t pilot) {
   for (int j = 0; pilot_string_map[j].name != NULL; j++) {
     if (pilot_string_map[j].pilot == pilot) {
       return pilot_string_map[j].name;

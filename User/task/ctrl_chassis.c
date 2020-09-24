@@ -1,14 +1,14 @@
 /*
   底盘控制任务
-  
+
   控制底盘行为。
-  
+
   从CAN总线接收底盘电机反馈，根据接收到的控制命令，控制电机输出。
 */
 
 /* Includes ----------------------------------------------------------------- */
 #include "module\chassis.h"
-#include "module\robot.h"
+#include "module\config.h"
 #include "task\user_task.h"
 
 /* Private typedef ---------------------------------------------------------- */
@@ -66,7 +66,7 @@ void Task_CtrlChassis(void *argument) {
       osKernelLock();
       const uint32_t now = HAL_GetTick();
       Chassis_UpdateFeedback(&chassis, &can);
-      Chassis_Control(&chassis, &chassis_ctrl, (float)(now - wakeup)/1000.0f);
+      Chassis_Control(&chassis, &chassis_ctrl, (float)(now - wakeup) / 1000.0f);
       wakeup = now;
       CAN_Motor_ControlChassis(chassis.out[0], chassis.out[1], chassis.out[2],
                                chassis.out[3]);

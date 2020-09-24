@@ -146,7 +146,7 @@ static BaseType_t Command_SetModel(char *out_buffer, size_t len,
                                    const char *command_string) {
   const char *param;
   BaseType_t param_len;
-  Robot_ID_t id;
+  Config_t id;
 
   if (out_buffer == NULL) return pdFALSE;
 
@@ -162,13 +162,13 @@ static BaseType_t Command_SetModel(char *out_buffer, size_t len,
       stage = 1;
       return pdPASS;
     case 1:
-      Robot_GetRobotID(&id);
-      if ((id.model = Robot_GetModelByName(param)) == ROBOT_MODEL_NUM) {
+      Config_Get(&id);
+      if ((id.model = Config_GetModelByName(param)) == ROBOT_MODEL_NUM) {
         stage = 2;
         return pdPASS;
       } else {
-        snprintf(out_buffer, len, "%s", Robot_GetNameByModel(id.model));
-        Robot_SetRobotID(&id);
+        snprintf(out_buffer, len, "%s", Config_GetNameByModel(id.model));
+        Config_Set(&id);
         stage = 3;
         return pdPASS;
       }
@@ -193,7 +193,7 @@ static BaseType_t Command_SetPilot(char *out_buffer, size_t len,
                                    const char *command_string) {
   const char *param;
   BaseType_t param_len;
-  Robot_ID_t id;
+  Config_t id;
 
   if (out_buffer == NULL) return pdFALSE;
 
@@ -209,13 +209,13 @@ static BaseType_t Command_SetPilot(char *out_buffer, size_t len,
       stage = 1;
       return pdPASS;
     case 1:
-      Robot_GetRobotID(&id);
-      if ((id.pilot = Robot_GetPilotByName(param)) == ROBOT_PILOT_NUM) {
+      Config_Get(&id);
+      if ((id.pilot = Config_GetPilotByName(param)) == ROBOT_PILOT_NUM) {
         stage = 2;
         return pdPASS;
       } else {
-        snprintf(out_buffer, len, "%s", Robot_GetNameByPilot(id.pilot));
-        Robot_SetRobotID(&id);
+        snprintf(out_buffer, len, "%s", Config_GetNameByPilot(id.pilot));
+        Config_Set(&id);
         stage = 3;
         return pdPASS;
       }
@@ -282,13 +282,13 @@ static BaseType_t Command_MotorIDQuitckSet(char *out_buffer, size_t len,
       return pdFALSE;
   }
 }
-                                           
+
 static BaseType_t Command_ClearRobotID(char *out_buffer, size_t len,
-                                           const char *command_string) {
+                                       const char *command_string) {
   (void)command_string;
   if (out_buffer == NULL) return pdFALSE;
-  Robot_ID_t id;
-  
+  Config_t id;
+
   len -= 1;
   static uint8_t stage = 0;
   switch (stage) {
@@ -297,8 +297,8 @@ static BaseType_t Command_ClearRobotID(char *out_buffer, size_t len,
       stage++;
       return pdPASS;
     case 1:
-      memset(&id, 0, sizeof(Robot_ID_t));
-      Robot_SetRobotID(&id);
+      memset(&id, 0, sizeof(Config_t));
+      Config_Set(&id);
       snprintf(out_buffer, len, "\r\nDone.");
       stage++;
       return pdPASS;
@@ -383,7 +383,7 @@ static const CLI_Command_Definition_t command_table[] = {
     },
     {
         "reset-robot-id",
-        "\r\nreset_robot-id:\r\n Reset Robot ID stored on flash.\r\n\r\n",
+        "\r\nreset-robot-id:\r\n Reset Robot ID stored on flash.\r\n\r\n",
         Command_ClearRobotID,
         0,
     },
@@ -448,10 +448,11 @@ void Task_CLI(void *argument) {
                 input, output, configCOMMAND_INT_MAX_OUTPUT_SIZE);
             BSP_USB_Printf(output);
             memset(output, 0x00, strlen(output));
-            osDelay(50);
+            osDelay(10
+            );
           } while (processing != pdFALSE);
           index = 0;
-          memset(input, 0x00, strlen(input));
+          memset(input, 0x00, strlen(input  ));
         }
         BSP_USB_Printf("rm>");
       } else if (rx_char == '\b' || rx_char == 0x7Fu) {

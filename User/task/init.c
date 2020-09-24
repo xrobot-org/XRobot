@@ -1,6 +1,6 @@
 /*
   初始化任务
-  
+
   根据机器人的FLASH配置，决定生成哪些任务。
 */
 
@@ -32,15 +32,15 @@ void Task_Init(void *argument) {
   (void)argument;
 
   /* Init robot. */
-  Robot_GetRobotID(&task_param.robot_id);
+  Config_Get(&task_param.robot_id);
 
-  task_param.config_robot = Robot_GetConfig(task_param.robot_id.model);
-  task_param.config_pilot = Robot_GetPilotConfig(task_param.robot_id.pilot);
+  task_param.config_robot = Config_GetRobotCfg(task_param.robot_id.model);
+  task_param.config_pilot = Config_GetPilotCfg(task_param.robot_id.pilot);
 
   /* Command Line Interface. */
   BSP_USB_Printf(ROBOT_ID_MEAASGE,
-                 Robot_GetNameByModel(task_param.robot_id.model),
-                 Robot_GetNameByPilot(task_param.robot_id.pilot));
+                 Config_GetNameByModel(task_param.robot_id.model),
+                 Config_GetNameByPilot(task_param.robot_id.pilot));
 
   osKernelLock();
   task_param.thread.atti_esti =

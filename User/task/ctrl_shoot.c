@@ -1,13 +1,13 @@
 /*
   射击控制任务
-  
+
   控制射击行为。
-  
+
   从CAN总线接收底盘电机反馈，根据接收到的控制命令，控制电机输出。
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "module\robot.h"
+#include "module\config.h"
 #include "module\shoot.h"
 #include "task\user_task.h"
 
@@ -52,14 +52,14 @@ void Task_CtrlShoot(void *argument) {
     const uint32_t flag = SIGNAL_CAN_MOTOR_RECV;
     if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != flag) {
       CAN_Motor_ControlShoot(0.0f, 0.0f, 0.0f);
-      
+
     } else {
       osMessageQueueGet(task_param->msgq.cmd.shoot, &shoot_ctrl, NULL, 0);
 
       osKernelLock();
       const uint32_t now = HAL_GetTick();
       Shoot_UpdateFeedback(&shoot, can);
-      Shoot_Control(&shoot, &shoot_ctrl, (float)(now - wakeup)/1000.0f);
+      Shoot_Control(&shoot, &shoot_ctrl, (float)(now - wakeup) / 1000.0f);
       wakeup = now;
       CAN_Motor_ControlShoot(shoot.out[SHOOT_ACTR_FRIC1_IDX],
                              shoot.out[SHOOT_ACTR_FRIC2_IDX],
