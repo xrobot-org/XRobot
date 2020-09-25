@@ -57,13 +57,13 @@ uint32_t period;
 void Task_AttiEsti(void *argument) {
   Task_Param_t *task_param = (Task_Param_t *)argument;
 
-  task_param->msgq.gimbal_accl =
+  task_param->msgq.gimbal.accl =
       osMessageQueueNew(6u, sizeof(AHRS_Accl_t), NULL);
 
-  task_param->msgq.gimbal_eulr_imu =
+  task_param->msgq.gimbal.eulr_imu =
       osMessageQueueNew(6u, sizeof(AHRS_Eulr_t), NULL);
 
-  task_param->msgq.gimbal_gyro =
+  task_param->msgq.gimbal.gyro =
       osMessageQueueNew(6u, sizeof(AHRS_Gyro_t), NULL);
 
   BMI088_Init(&bmi088, &task_param->robot_id.cali.bmi088);
@@ -112,9 +112,9 @@ void Task_AttiEsti(void *argument) {
     AHRS_Update(&gimbal_ahrs, &bmi088.accl, &bmi088.gyro, &ist8310.magn);
     AHRS_GetEulr(&eulr_to_send, &gimbal_ahrs);
 
-    osMessageQueuePut(task_param->msgq.gimbal_accl, &bmi088.accl, 0, 0);
-    osMessageQueuePut(task_param->msgq.gimbal_eulr_imu, &eulr_to_send, 0, 0);
-    osMessageQueuePut(task_param->msgq.gimbal_gyro, &bmi088.gyro, 0, 0);
+    osMessageQueuePut(task_param->msgq.gimbal.accl, &bmi088.accl, 0, 0);
+    osMessageQueuePut(task_param->msgq.gimbal.eulr_imu, &eulr_to_send, 0, 0);
+    osMessageQueuePut(task_param->msgq.gimbal.gyro, &bmi088.gyro, 0, 0);
 
     BSP_PWM_Set(BSP_PWM_IMU_HEAT,
                 PID_Calc(&imu_temp_ctrl_pid, 40.0f, bmi088.temp, 0.0f, 0.0f));

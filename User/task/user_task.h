@@ -46,12 +46,11 @@ typedef struct {
   } thread;
 
   struct {
-    /* imu */
-    osMessageQueueId_t gimbal_accl;
-    osMessageQueueId_t gimbal_gyro;
-
-    /* Atti esti */
-    osMessageQueueId_t gimbal_eulr_imu;
+    struct {
+      osMessageQueueId_t accl; /* IMU读取 */
+      osMessageQueueId_t gyro; /* IMU读取 */
+      osMessageQueueId_t eulr_imu; /* 姿态解算得到 */
+    }gimbal;
     
     struct {
       osMessageQueueId_t chassis;
