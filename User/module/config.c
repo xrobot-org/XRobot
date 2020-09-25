@@ -6,7 +6,11 @@
 
 #define CONFIG_BASE_ADDRESS (ADDR_FLASH_END - sizeof(Config_t))
 
+#ifdef DEBUG
+Config_Robot_t cfg_infantry = {
+#else
 static const Config_Robot_t cfg_infantry = {
+#endif
     .model = ROBOT_MODEL_INFANTRY,
 
     /* 对应模块的参数 */
