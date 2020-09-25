@@ -88,7 +88,7 @@ typedef struct {
 /* Chassis_Control的目标运行频率 */
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
                     float target_freq);
-int8_t Chassis_UpdateFeedback(Chassis_t *c, CAN_t *can);
+int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can);
 int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl, float dt_sec);
 
 #ifdef __cplusplus
