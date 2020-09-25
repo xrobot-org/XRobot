@@ -32,7 +32,7 @@ enum Gimbal_PID_e {
   GIMBAL_PID_PIT_OMEGA_IDX, /* Pitch轴控制的角速度环PID的索引值 */
   GIMBAL_PID_PIT_ANGLE_IDX, /* Pitch轴控制的角度环PID的索引值 */
   GIMBAL_PID_REL_YAW_IDX,   /* 通过编码器控制时Yaw轴PID的索引值 */
-  GIMBAL_PID_REL_PIT_IDX,   /*通过编码器控制时Pitch轴PID的索引值 */
+  GIMBAL_PID_REL_PIT_IDX,   /* 通过编码器控制时Pitch轴PID的索引值 */
   GIMBAL_PID_NUM,           /* 总共的PID数量 */
 };
 
