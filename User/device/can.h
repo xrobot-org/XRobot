@@ -18,7 +18,7 @@ typedef enum {
   CAN_MOTOR_M2006 = 0,
   CAN_MOTOR_M3508,
   CAN_MOTOR_GM6020,
-} CAN_Motor_t;
+} CAN_MotorModel_t;
 
 typedef struct {
   float rotor_angle;
@@ -26,6 +26,12 @@ typedef struct {
   float torque_current;
   float temp;
 } CAN_MotorFeedback_t;
+
+typedef struct {
+  CAN_MotorModel_t model;
+  uint8_t id;
+  CAN_MotorFeedback_t feedback;
+} CAN_Motor_t;
 
 enum CAN_MotorChassis_e {
   CAN_MOTOR_CHASSIS_M1 = 0,
@@ -70,19 +76,6 @@ typedef struct {
   CAN_MotorGroupInit_t shoot2;
 } CAN_MotorInit_t;
 
-/* UWB */
-typedef union {
-  struct __packed {
-    int16_t coor_x;
-    int16_t coor_y;
-    uint16_t yaw;
-    int16_t distance[6];
-    uint16_t err_mask : 14;
-    uint16_t sig_level : 2;
-    uint16_t reserved;
-  } data;
-} CAN_UWBFeedback_t;
-
 /* Super capacitor */
 typedef struct {
   uint16_t cap_volt;
@@ -96,21 +89,19 @@ typedef struct {
   CAN_MotorInit_t *motor_init;
   osThreadId_t *motor_alert;
   uint8_t motor_alert_len;
-  osThreadId_t uwb_alert;
   osThreadId_t cap_alert;
 
   CAN_MotorFeedback_t chassis_motor_feedback[CAN_MOTOR_CHASSIS_NUM];
   CAN_MotorFeedback_t gimbal_motor_feedback[CAN_MOTOR_GIMBAL_NUM];
   CAN_MotorFeedback_t shoot_motor_feedback[CAN_MOTORSHOOT_NUM];
 
-  CAN_UWBFeedback_t uwb_feedback;
   CAN_CapFeedback_t cap_feedback;
 } CAN_t;
 
 /* Exported functions prototypes -------------------------------------------- */
 int8_t CAN_Init(CAN_t *can_device, CAN_MotorInit_t *motor_init,
                 osThreadId_t *motor_alert, uint8_t motor_alert_len,
-                osThreadId_t uwb_alert, osThreadId_t cap_alert);
+                osThreadId_t cap_alert);
 
 CAN_t *CAN_GetDevice(void);
 

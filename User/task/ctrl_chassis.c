@@ -39,8 +39,7 @@ void Task_CtrlChassis(void *argument) {
                                        task_param->thread.ctrl_gimbal,
                                        task_param->thread.ctrl_shoot};
 
-  CAN_Init(&can, NULL, recv_motor_allert, 3, task_param->thread.referee,
-           osThreadGetId());
+  CAN_Init(&can, NULL, recv_motor_allert, 3, task_param->thread.referee);
 
   /* Module Setup */
   Chassis_Init(&chassis, &(task_param->config_robot->param.chassis),

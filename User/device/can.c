@@ -40,19 +40,16 @@
 #define CAN_MOTOR_RX_BUF_SIZE (8)
 
 #define CAN_MOTOR_MAX_ENCODER (8191)
-#define CAN_MOTOR_CAN_RX_FIFO CAN_RX_FIFO0
-
-/* UWB */
-#define CAN_UWB_FB_ID_BASE (0x259)
-#define CAN_UWB_RX_BUF_SIZE (22)
-#define CAN_UWB_TX_BUF_SIZE (22)
-
-#define CAN_UWB_MAX_YAW (36000)
-#define CAN_UWB_CAN_RX_FIFO CAN_RX_FIFO1
+#define CAN_MOTOR_RX_FIFO CAN_RX_FIFO0
 
 /* Super capacitor */
 #define CAN_CAP_FB_ID_BASE (0x000)
 #define CAN_CAP_CTRL_ID_BASE (0x000)
+
+#define CAN_CAP_TX_BUF_SIZE (8)
+#define CAN_CAP_RX_BUF_SIZE (8)
+
+#define CAN_CAP_RX_FIFO CAN_RX_FIFO1
 
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
@@ -77,7 +74,8 @@ static CAN_TxHeaderTypeDef tx_header;
 static CAN_RxHeaderTypeDef rx_header;
 static uint8_t motor_rx_data[CAN_MOTOR_TX_BUF_SIZE];
 static uint8_t motor_tx_data[CAN_MOTOR_RX_BUF_SIZE];
-static uint8_t uwb_rx_data[CAN_UWB_RX_BUF_SIZE];
+static uint8_t cap_tx_data[CAN_CAP_TX_BUF_SIZE];
+static uint8_t cap_rx_data[CAN_CAP_RX_BUF_SIZE];
 
 static const CAN_MotorInit_t default_motor_init = {
     .chassis =
@@ -114,10 +112,6 @@ static void CAN_Motor_Decode(CAN_MotorFeedback_t *feedback,
   feedback->temp = raw[6];
 }
 
-static void CAN_UWB_Decode(CAN_UWBFeedback_t *feedback, const uint8_t *raw) {
-  memcmp(&(feedback->data), raw, 8);
-}
-
 static void CAN_Cap_Decode(CAN_CapFeedback_t *feedback, const uint8_t *raw) {
   // TODO
   (void)feedback;
@@ -127,7 +121,7 @@ static void CAN_Cap_Decode(CAN_CapFeedback_t *feedback, const uint8_t *raw) {
 bool CAN_CheckMotorInit(const CAN_MotorInit_t *mi) { return true; }
 
 static void CAN_RxFifo0MsgPendingCallback(void) {
-  HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_1), CAN_MOTOR_CAN_RX_FIFO,
+  HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_1), CAN_MOTOR_RX_FIFO,
                        &rx_header, motor_rx_data);
 
   uint32_t index;
@@ -153,11 +147,6 @@ static void CAN_RxFifo0MsgPendingCallback(void) {
       CAN_Motor_Decode(&(gcan->gimbal_motor_feedback[index]), motor_rx_data);
       break;
 
-    case CAN_CAP_FB_ID_BASE:
-      CAN_Cap_Decode(&(gcan->cap_feedback), motor_rx_data);
-      osThreadFlagsSet(gcan->cap_alert, SIGNAL_CAN_CAP_RECV);
-      break;
-
     default:
       unknown_message++;
       break;
@@ -171,13 +160,13 @@ static void CAN_RxFifo0MsgPendingCallback(void) {
 }
 
 static void CAN_RxFifo1MsgPendingCallback(void) {
-  HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_1), CAN_UWB_CAN_RX_FIFO,
-                       &rx_header, uwb_rx_data);
+  HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_1), CAN_CAP_RX_FIFO,
+                       &rx_header, cap_rx_data);
 
   switch (rx_header.StdId) {
-    case CAN_UWB_FB_ID_BASE:
-      CAN_UWB_Decode(&(gcan->uwb_feedback), uwb_rx_data);
-      osThreadFlagsSet(gcan->uwb_alert, SIGNAL_CAN_UWB_RECV);
+    case CAN_CAP_FB_ID_BASE:
+      CAN_Cap_Decode(&(gcan->cap_feedback), motor_rx_data);
+      osThreadFlagsSet(gcan->cap_alert, SIGNAL_CAN_CAP_RECV);
       break;
 
     default:
@@ -189,7 +178,7 @@ static void CAN_RxFifo1MsgPendingCallback(void) {
 /* Exported functions ------------------------------------------------------- */
 int8_t CAN_Init(CAN_t *can, CAN_MotorInit_t *motor_init,
                 osThreadId_t *motor_alert, uint8_t motor_alert_len,
-                osThreadId_t uwb_alert, osThreadId_t cap_alert) {
+                osThreadId_t cap_alert) {
   if (can == NULL) return DEVICE_ERR_NULL;
 
   if (motor_alert == NULL) return DEVICE_ERR_NULL;
@@ -198,7 +187,6 @@ int8_t CAN_Init(CAN_t *can, CAN_MotorInit_t *motor_init,
 
   can->motor_alert_len = motor_alert_len;
   can->motor_alert = motor_alert;
-  can->uwb_alert = uwb_alert;
   can->cap_alert = cap_alert;
 
   CAN_CheckMotorInit(motor_init);
@@ -214,7 +202,7 @@ int8_t CAN_Init(CAN_t *can, CAN_MotorInit_t *motor_init,
   can_filter.FilterMaskIdLow = 0;
   can_filter.FilterActivation = ENABLE;
   can_filter.SlaveStartFilterBank = 14;
-  can_filter.FilterFIFOAssignment = CAN_MOTOR_CAN_RX_FIFO;
+  can_filter.FilterFIFOAssignment = CAN_MOTOR_RX_FIFO;
 
   HAL_CAN_ConfigFilter(BSP_CAN_GetHandle(BSP_CAN_1), &can_filter);
   HAL_CAN_Start(BSP_CAN_GetHandle(BSP_CAN_1));
@@ -224,7 +212,7 @@ int8_t CAN_Init(CAN_t *can, CAN_MotorInit_t *motor_init,
                                CAN_IT_RX_FIFO0_MSG_PENDING);
 
   can_filter.FilterBank = 14;
-  can_filter.FilterFIFOAssignment = CAN_UWB_CAN_RX_FIFO;
+  can_filter.FilterFIFOAssignment = CAN_CAP_RX_FIFO;
 
   HAL_CAN_ConfigFilter(BSP_CAN_GetHandle(BSP_CAN_2), &can_filter);
   HAL_CAN_Start(BSP_CAN_GetHandle(BSP_CAN_2));
@@ -376,6 +364,13 @@ int8_t CAN_Motor_QuickIdSetMode(void) {
 
 int8_t CAN_CapControl(float power_limit) {
   (void)power_limit;
-  // TODO
+  
+  tx_header.StdId = CAN_M3508_M2006_ID_SETTING_ID;
+  tx_header.IDE = CAN_ID_STD;
+  tx_header.RTR = CAN_RTR_DATA;
+  tx_header.DLC = CAN_MOTOR_TX_BUF_SIZE;
+
+  HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(BSP_CAN_1), &tx_header, cap_tx_data,
+                       (uint32_t *)CAN_TX_MAILBOX0);
   return DEVICE_OK;
 }
