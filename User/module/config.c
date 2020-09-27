@@ -24,6 +24,7 @@ static const Config_Robot_t cfg_infantry = {
             .i_limit = 1.0f,
             .out_limit = 1.0f,
             .d_cutoff_freq = -1.0f,
+            .range = -1.0f,
           },
           .follow_pid_param = {
             .k = 0.001f,
@@ -33,6 +34,7 @@ static const Config_Robot_t cfg_infantry = {
             .i_limit = 1.0f,
             .out_limit = 1.0f,
             .d_cutoff_freq = -1.0f,
+            .range = 2 * M_PI,
           },
           .low_pass_cutoff_freq = {
             .in = -1.0f,
@@ -51,6 +53,7 @@ static const Config_Robot_t cfg_infantry = {
               .i_limit = 1.0f,
               .out_limit = 1.0f,
               .d_cutoff_freq = -1.0f,
+              .range = -1.0f,
             },{
               /* GIMBAL_PID_YAW_ANGLE_IDX */
               .k = 2.8f,
@@ -60,6 +63,7 @@ static const Config_Robot_t cfg_infantry = {
               .i_limit = 0.0f,
               .out_limit = 1000.0f,
               .d_cutoff_freq = -1.0f,
+              .range = 2 * M_PI,
             },{
               /* GIMBAL_PID_PIT_OMEGA_IDX */
               .k = 0.15f,
@@ -69,6 +73,7 @@ static const Config_Robot_t cfg_infantry = {
               .i_limit = 1.0f,
               .out_limit = 1.0f,
               .d_cutoff_freq = -1.0f,
+              .range = -1.0f,
             },{
               /* GIMBAL_PID_PIT_ANGLE_IDX */
               .k = 7.0f,
@@ -78,6 +83,7 @@ static const Config_Robot_t cfg_infantry = {
               .i_limit = 0.0f,
               .out_limit = 1000.0f,
               .d_cutoff_freq = -1.0f,
+              .range = 2 * M_PI,
             },{
               /* GIMBAL_PID_REL_YAW_IDX */
               .k = 0.1f,
@@ -87,6 +93,7 @@ static const Config_Robot_t cfg_infantry = {
               .i_limit = 1.0f,
               .out_limit = 1.0f,
               .d_cutoff_freq = -1.0f,
+              .range = 2 * M_PI,
             },{
               /* GIMBAL_PID_REL_PIT_IDX, */
               .k = 0.1f,
@@ -96,6 +103,7 @@ static const Config_Robot_t cfg_infantry = {
               .i_limit = 1.0f,
               .out_limit = 1.0f,
               .d_cutoff_freq = -1.0f,
+              .range = 2 * M_PI,
             },
           }, /* pid */
           .low_pass_cutoff_freq = {
@@ -126,6 +134,7 @@ static const Config_Robot_t cfg_infantry = {
           .i_limit = 0.5f,
           .out_limit = 0.5f,
           .d_cutoff_freq = -1.0f,
+          .range = 2 * M_PI,
         },
         .low_pass_cutoff_freq = {
           .in = {

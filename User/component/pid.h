@@ -29,6 +29,7 @@ typedef struct {
   float i_limit;       /* 积分项上限 */
   float out_limit;     /* 输出绝对值限制 */
   float d_cutoff_freq; /* D项低通截止频率 */
+  float range;         /* 计算循环误差时使用，大于0时启用 */
 } KPID_Params_t;       /* PID参数 */
 
 typedef struct {

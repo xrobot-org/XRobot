@@ -35,6 +35,8 @@ float Sign(float in);
 
 void ResetMoveVector(MoveVector_t *mv);
 
+float CalcCircleError(float sp, float fb, float range);
+
 #ifdef __cplusplus
 }
 #endif

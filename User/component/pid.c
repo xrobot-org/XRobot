@@ -46,21 +46,27 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float val_dot, float dt) {
     return pid->out_last;
   }
 
-  /* current err value */
-  float err = sp - fb;
+  /* 计算误差值 */
+  float err;
+  if (pid->param->range > 0.0f) {
+    err = CalcCircleError(sp, fb, pid->param->range);
+  } else {
+    err = sp - fb;
+  }
+
   err *= pid->param->k;
 
   float fb_scaled = pid->param->k * fb;
   fb_scaled = LowPassFilter2p_Apply(&(pid->dfilter), fb_scaled);
 
-  /* current err derivative */
+  /* 现在的误差微分 */
   float d;
   switch (pid->mode) {
     case KPID_MODE_CALC_D_ERR:
       d = (err - pid->last.err) / fmaxf(dt, pid->dt_min);
       pid->last.err = err;
       break;
-    
+
     /* 通过fb计算D，避免了由于sp变化导致err突变的问题 */
     /* 当sp不变时，err的微分等于负的fb的微分 */
     case KPID_MODE_CALC_D_FB:
@@ -79,28 +85,28 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float val_dot, float dt) {
 
   if (!isfinite(d)) d = 0.0f;
 
-  /* calculate PD output */
+  /* 计算P和D输出 */
   float output = (err * pid->param->p) + (d * pid->param->d);
 
   if (pid->param->i > SIGMA) {
-    // Calculate the err i and check for saturation
+    /* 计算误差的积分 */
     float i = pid->i + (err * dt);
 
-    /* check for saturation */
+    /* 检查是否饱和 */
     if (isfinite(i)) {
       if ((pid->param->out_limit < SIGMA ||
            (fabsf(output + (i * pid->param->i)) <= pid->param->out_limit)) &&
           fabsf(i) <= pid->param->i_limit) {
-        /* not saturated, use new i value */
+        /* 未饱和，使用新积分 */
         pid->i = i;
       }
     }
 
-    /* add I component to output */
+    /* 给输出添加积分项 */
     output += pid->i * pid->param->i;
   }
 
-  /* limit output */
+  /* 限制输出 */
   if (isfinite(output)) {
     if (pid->param->out_limit > SIGMA) {
       output = AbsClip(output, pid->param->out_limit);
