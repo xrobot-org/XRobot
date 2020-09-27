@@ -41,12 +41,12 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
 
   PID_Init(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), KPID_MODE_NO_D, target_freq,
            &(g->param->pid[GIMBAL_PID_YAW_ANGLE_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), KPID_MODE_CALC_D_ERR,
+  PID_Init(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), KPID_MODE_CALC_D_FB,
            target_freq, &(g->param->pid[GIMBAL_PID_YAW_OMEGA_IDX]));
 
   PID_Init(&(g->pid[GIMBAL_PID_PIT_ANGLE_IDX]), KPID_MODE_NO_D, target_freq,
            &(g->param->pid[GIMBAL_PID_PIT_ANGLE_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), KPID_MODE_CALC_D_ERR,
+  PID_Init(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), KPID_MODE_CALC_D_FB,
            target_freq, &(g->param->pid[GIMBAL_PID_PIT_OMEGA_IDX]));
 
   PID_Init(&(g->pid[GIMBAL_PID_REL_YAW_IDX]), KPID_MODE_NO_D, target_freq,
