@@ -66,8 +66,8 @@ typedef struct {
 
 } Config_t; /* 保存在Flash上的信息 */
 
-void Config_Get(Config_t *id);
-void Config_Set(Config_t *id);
+void Config_Get(Config_t *cfg);
+void Config_Set(Config_t *cfg);
 const Config_Robot_t *Config_GetRobotCfg(Config_RobotModel_t model);
 const Config_Pilot_t *Config_GetPilotCfg(Config_PilotName_t pilot);
 Config_RobotModel_t Config_GetModelByName(const char *name);

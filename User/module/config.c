@@ -167,13 +167,13 @@ static const Config_Pilot_t user_qs = {
     },
 };
 
-void Config_Get(Config_t *id) {
-  BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t *)id, sizeof(Config_t));
+void Config_Get(Config_t *cfg) {
+  BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(Config_t));
 }
 
-void Config_Set(Config_t *id) {
+void Config_Set(Config_t *cfg) {
   BSP_Flash_EraseSector(11);
-  BSP_Flash_WriteBytes(CONFIG_BASE_ADDRESS, (uint8_t *)id, sizeof(Config_t));
+  BSP_Flash_WriteBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(Config_t));
 }
 
 const Config_Robot_t *Config_GetRobotCfg(Config_RobotModel_t model) {
