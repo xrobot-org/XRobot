@@ -20,7 +20,7 @@ extern "C" {
 #define GIMBAL_OK (0)        /* 运行正常 */
 #define GIMBAL_ERR (-1)      /* 运行时发现了其他错误 */
 #define GIMBAL_ERR_NULL (-2) /* 运行时发现NULL指针 */
-#define GIMBAL_ERR_MODE (-3) /* 运行时配置了错误的CMD_Gimbal_Mode_t */
+#define GIMBAL_ERR_MODE (-3) /* 运行时配置了错误的CMD_GimbalMode_t */
 
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
@@ -81,7 +81,7 @@ typedef struct {
   const Gimbal_Params_t *param; /* 云台的参数，用Gimbal_Init设定 */
 
   /* 模块通用 */
-  CMD_Gimbal_Mode_t mode; /* 云台模式 */
+  CMD_GimbalMode_t mode; /* 云台模式 */
 
   struct {
     AHRS_Eulr_t eulr; /* 表示云台姿态的欧拉角 */
@@ -101,7 +101,7 @@ int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback, const CAN_t *can);
 int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
                    float target_freq);
 int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
-                      CMD_Gimbal_Ctrl_t *g_ctrl, float dt_sec);
+                      CMD_GimbalCtrl_t *g_ctrl, float dt_sec);
 
 #ifdef __cplusplus
 }

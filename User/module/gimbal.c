@@ -12,7 +12,7 @@
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
-static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_Gimbal_Mode_t mode) {
+static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_GimbalMode_t mode) {
   if (g == NULL) return -1;
   if (mode == g->mode) return GIMBAL_OK;
   g->mode = mode;
@@ -75,7 +75,7 @@ int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback,
 }
 
 int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
-                      CMD_Gimbal_Ctrl_t *g_ctrl, float dt_sec) {
+                      CMD_GimbalCtrl_t *g_ctrl, float dt_sec) {
   if (g == NULL) return -1;
   if (g_ctrl == NULL) return -1;
 

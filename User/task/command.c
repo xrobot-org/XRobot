@@ -36,11 +36,11 @@ void Task_Command(void *argument) {
   Task_Param_t *task_param = (Task_Param_t *)argument;
 
   task_param->msgq.cmd.chassis =
-      osMessageQueueNew(3u, sizeof(CMD_Chassis_Ctrl_t), NULL);
+      osMessageQueueNew(3u, sizeof(CMD_ChassisCtrl_t), NULL);
   task_param->msgq.cmd.gimbal =
-      osMessageQueueNew(3u, sizeof(CMD_Gimbal_Ctrl_t), NULL);
+      osMessageQueueNew(3u, sizeof(CMD_GimbalCtrl_t), NULL);
   task_param->msgq.cmd.shoot =
-      osMessageQueueNew(3u, sizeof(CMD_Shoot_Ctrl_t), NULL);
+      osMessageQueueNew(3u, sizeof(CMD_ShootCtrl_t), NULL);
 
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_COMMAND);

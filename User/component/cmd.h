@@ -20,37 +20,37 @@ typedef enum {
   CHASSIS_MODE_ROTOR, /* 小陀螺模式，通过闭环控制使底盘不停旋转 */
   CHASSIS_MODE_INDENPENDENT, /* 独立模式。底盘运行不受云台影响 */
   CHASSIS_MODE_OPEN, /* 开环模式。底盘运行不受PID控制，直接输出到电机 */
-} CMD_Chassis_Mode_t; /* 底盘运行模式 */
+} CMD_ChassisMode_t; /* 底盘运行模式 */
 
 typedef enum {
   GIMBAL_MODE_RELAX, /* 放松模式，电机不输出。一般情况云台初始化之后的模式 */
   GIMBAL_MODE_ABSOLUTE, /* 绝对坐标系控制，控制在空间内的绝对姿态 */
   GIMBAL_MODE_RELATIVE, /* 相对坐标系控制，控制相对于底盘的姿态 */
   GIMBAL_MODE_FIX, /* 固定模式。将云台固定于相对于底盘的正前方位置 */
-} CMD_Gimbal_Mode_t; /* 云台运行模式 */
+} CMD_GimbalMode_t; /* 云台运行模式 */
 
 typedef enum {
   SHOOT_MODE_RELAX, /* 放松模式，电机不输出。一般情况射击初始化之后的模式 */
   SHOOT_MODE_SAFE, /* 保险模式，电机闭环控制保持静止。保证安全状态 */
   SHOOT_MODE_STDBY, /* 准备模式，摩擦轮开启。拨弹电机闭环控制保持静止 */
   SHOOT_MODE_FIRE,  /* 开火模式，摩擦轮开启。拨弹电机开启 */
-} CMD_Shoot_Mode_t; /* 射击运行模式 */
+} CMD_ShootMode_t; /* 射击运行模式 */
 
 typedef struct {
-  CMD_Chassis_Mode_t mode; /* 底盘运行模式 */
+  CMD_ChassisMode_t mode; /* 底盘运行模式 */
   MoveVector_t ctrl_v;     /* 底盘控制向量 */
-} CMD_Chassis_Ctrl_t;      /* 底盘控制命令 */
+} CMD_ChassisCtrl_t;      /* 底盘控制命令 */
 
 typedef struct {
-  CMD_Gimbal_Mode_t mode; /* 云台运行模式 */
+  CMD_GimbalMode_t mode; /* 云台运行模式 */
   AHRS_Eulr_t delta_eulr; /* 欧拉角变化角度 */
-} CMD_Gimbal_Ctrl_t;      /* 云台控制命令 */
+} CMD_GimbalCtrl_t;      /* 云台控制命令 */
 
 typedef struct {
-  CMD_Shoot_Mode_t mode; /* 射击运行模式 */
+  CMD_ShootMode_t mode; /* 射击运行模式 */
   float bullet_speed;    /* 子弹初速 */
   float shoot_freq_hz;   /* 射击频率 */
-} CMD_Shoot_Ctrl_t;      /* 射击控制命令 */
+} CMD_ShootCtrl_t;      /* 射击控制命令 */
 
 typedef enum {
   CMD_SW_ERR = 0,
@@ -80,9 +80,9 @@ typedef struct {
 
   const CMD_Params_t *param;
 
-  CMD_Chassis_Ctrl_t chassis;
-  CMD_Gimbal_Ctrl_t gimbal;
-  CMD_Shoot_Ctrl_t shoot;
+  CMD_ChassisCtrl_t chassis;
+  CMD_GimbalCtrl_t gimbal;
+  CMD_ShootCtrl_t shoot;
 } CMD_t;
 
 typedef struct {

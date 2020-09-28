@@ -14,7 +14,7 @@
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
-static int8_t Chassis_SetMode(Chassis_t *c, CMD_Chassis_Mode_t mode) {
+static int8_t Chassis_SetMode(Chassis_t *c, CMD_ChassisMode_t mode) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (mode == c->mode) return CHASSIS_OK;
 
@@ -156,7 +156,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   return CHASSIS_OK;
 }
 
-int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl, float dt_sec) {
+int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCtrl_t *c_ctrl, float dt_sec) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (c_ctrl == NULL) return CHASSIS_ERR_NULL;
 

@@ -18,11 +18,11 @@
 
 #ifdef DEBUG
 CAN_t can;
-CMD_Chassis_Ctrl_t chassis_ctrl;
+CMD_ChassisCtrl_t chassis_ctrl;
 Chassis_t chassis;
 #else
 static CAN_t can;
-static CMD_Chassis_Ctrl_t chassis_ctrl;
+static CMD_ChassisCtrl_t chassis_ctrl;
 static Chassis_t chassis;
 #endif
 

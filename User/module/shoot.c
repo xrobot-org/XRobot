@@ -16,7 +16,7 @@ static void TrigTimerCallback(void *arg) {
   s->setpoint.trig_angle += 2.0f * M_PI / s->param->num_trig_tooth;
 }
 
-static int8_t Shoot_SetMode(Shoot_t *s, CMD_Shoot_Mode_t mode) {
+static int8_t Shoot_SetMode(Shoot_t *s, CMD_ShootMode_t mode) {
   if (s == NULL) return -1;
 
   if (mode == s->mode) return SHOOT_OK;
@@ -97,7 +97,7 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
   return 0;
 }
 
-int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl, float dt_sec) {
+int8_t Shoot_Control(Shoot_t *s, CMD_ShootCtrl_t *s_ctrl, float dt_sec) {
   if (s == NULL) return -1;
 
   Shoot_SetMode(s, s_ctrl->mode);

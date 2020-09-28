@@ -18,10 +18,10 @@
 static CAN_t *can;
 
 #ifdef DEBUG
-CMD_Shoot_Ctrl_t shoot_ctrl;
+CMD_ShootCtrl_t shoot_ctrl;
 Shoot_t shoot;
 #else
-static CMD_Shoot_Ctrl_t shoot_ctrl;
+static CMD_ShootCtrl_t shoot_ctrl;
 static Shoot_t shoot;
 #endif
 

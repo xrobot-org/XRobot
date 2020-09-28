@@ -19,11 +19,11 @@
 static CAN_t *can;
 
 #ifdef DEBUG
-CMD_Gimbal_Ctrl_t gimbal_ctrl;
+CMD_GimbalCtrl_t gimbal_ctrl;
 Gimbal_Feedback gimbal_feedback;
 Gimbal_t gimbal;
 #else
-static CMD_Gimbal_Ctrl_t gimbal_ctrl;
+static CMD_GimbalCtrl_t gimbal_ctrl;
 static Gimbal_Feedback gimbal_feedback;
 static Gimbal_t gimbal;
 #endif

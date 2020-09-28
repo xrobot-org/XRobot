@@ -19,7 +19,7 @@ extern "C" {
 #define CHASSIS_OK (0)        /* 运行正常 */
 #define CHASSIS_ERR (-1)      /* 运行时发现了其他错误 */
 #define CHASSIS_ERR_NULL (-2) /* 运行时发现NULL指针 */
-#define CHASSIS_ERR_MODE (-3) /* 运行时配置了错误的CMD_Chassis_Mode_t */
+#define CHASSIS_ERR_MODE (-3) /* 运行时配置了错误的CMD_ChassisMode_t */
 #define CHASSIS_ERR_TYPE (-4) /* 运行时配置了错误的Chassis_Type_t */
 
 /* Exported macro ----------------------------------------------------------- */
@@ -53,7 +53,7 @@ typedef struct {
   const Chassis_Params_t *param; /* 底盘的参数，用Chassis_Init设定 */
 
   /* 模块通用 */
-  CMD_Chassis_Mode_t mode; /* 底盘模式 */
+  CMD_ChassisMode_t mode; /* 底盘模式 */
 
   /* 底盘设计 */
   int8_t num_wheel; /* 底盘轮子数量 */
@@ -89,7 +89,7 @@ typedef struct {
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
                     float target_freq);
 int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can);
-int8_t Chassis_Control(Chassis_t *c, CMD_Chassis_Ctrl_t *c_ctrl, float dt_sec);
+int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCtrl_t *c_ctrl, float dt_sec);
 
 #ifdef __cplusplus
 }

@@ -20,7 +20,7 @@ extern "C" {
 #define SHOOT_OK (0)        /* 运行正常 */
 #define SHOOT_ERR (-1)      /* 运行时发现了其他错误 */
 #define SHOOT_ERR_NULL (-2) /* 运行时发现NULL指针 */
-#define SHOOT_ERR_MODE (-3) /* 运行时配置了错误的CMD_Shoot_Mode_t */
+#define SHOOT_ERR_MODE (-3) /* 运行时配置了错误的CMD_ShootMode_t */
 
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
@@ -62,7 +62,7 @@ typedef struct {
   const Shoot_Params_t *param; /* 射击的参数，用Shoot_Init设定 */
 
   /* 模块通用 */
-  CMD_Shoot_Mode_t mode;     /* 射击模式 */
+  CMD_ShootMode_t mode;     /* 射击模式 */
   osTimerId_t trig_timer_id; /* 控制拨弹电机的软件定时器 */
 
   struct {
@@ -100,7 +100,7 @@ typedef struct {
 /* Exported functions prototypes -------------------------------------------- */
 int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq);
 int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can);
-int8_t Shoot_Control(Shoot_t *s, CMD_Shoot_Ctrl_t *s_ctrl, float dt_sec);
+int8_t Shoot_Control(Shoot_t *s, CMD_ShootCtrl_t *s_ctrl, float dt_sec);
 
 #ifdef __cplusplus
 }
