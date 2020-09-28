@@ -81,24 +81,25 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
 
   Gimbal_SetMode(g, g_ctrl->mode);
 
-  /* 设置初始yaw目标值. */
+  /* 设置初始yaw目标值 */
   if (g->setpoint.eulr.yaw == 0.0f) {
     g->setpoint.eulr.yaw = fb->eulr.imu.yaw;
   }
 
-  /* 处理控制命令. */
+  /* 处理控制命令 */
   g->setpoint.eulr.yaw += g_ctrl->delta_eulr.yaw;
   g->setpoint.eulr.pit += g_ctrl->delta_eulr.pit;
 
-  /* 限制set point范围. */
-  if (g->setpoint.eulr.yaw < -180.0f) {
-    g->setpoint.eulr.yaw += 360.0f;
+  /* 限制setpoint范围 */
+  if (g->setpoint.eulr.yaw < -M_PI) {
+    g->setpoint.eulr.yaw += 2 * M_PI;
   }
-  if (g->setpoint.eulr.yaw > 180.0f) {
-    g->setpoint.eulr.yaw -= 360.0f;
+  if (g->setpoint.eulr.yaw > M_PI) {
+    g->setpoint.eulr.yaw -= M_PI;
   }
-  g->setpoint.eulr.pit = AbsClip(g->setpoint.eulr.pit, 90.0f);
+  g->setpoint.eulr.pit = AbsClip(g->setpoint.eulr.pit, M_PI / 2.0f);
 
+  /* 控制相关逻辑 */
   float yaw_omega_set_point, pit_omega_set_point;
   switch (g->mode) {
     case GIMBAL_MODE_RELAX:
@@ -124,7 +125,7 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
     case GIMBAL_MODE_FIX:
       g->setpoint.eulr.yaw = g->param->encoder_center.yaw;
       g->setpoint.eulr.pit = g->param->encoder_center.pit;
-      /* NO break. */
+      /* 这里不要加break */
 
     case GIMBAL_MODE_RELATIVE:
       g->out[GIMBAL_ACTR_YAW_IDX] =
@@ -135,7 +136,8 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
                    fb->eulr.encoder.pit, fb->gyro.x, dt_sec);
       break;
   }
-  /* Filter output. */
+
+  /* 输出滤波 */
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++)
     g->out[i] = LowPassFilter2p_Apply(g->filter_out + i, g->out[i]);
 
