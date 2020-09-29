@@ -43,7 +43,7 @@ static KPID_t imu_temp_ctrl_pid;
 #endif
 
 static const KPID_Params_t imu_temp_ctrl_pid_param = {
-    .k = 0.1f,
+    .k = 0.15f,
     .p = 1.0f,
     .i = 0.0f,
     .d = 0.0f,
@@ -55,6 +55,7 @@ uint32_t period;
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 void Task_AttiEsti(void *argument) {
+  (void)argument;
   task_runtime.msgq.gimbal.accl =
       osMessageQueueNew(6u, sizeof(AHRS_Accl_t), NULL);
 
