@@ -309,6 +309,106 @@ static BaseType_t Command_ClearRobotID(char *out_buffer, size_t len,
   }
 }
 
+static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
+                                   const char *command_string) {
+  (void)command_string;
+  if (out_buffer == NULL) return pdFALSE;
+
+  Config_t cfg;
+  AHRS_Gyro_t gyro;
+  uint16_t count = 0;
+  static float x = 0.0f;
+  static float y = 0.0f;
+  static float z = 0.0f;
+  static uint8_t retry = 0;
+
+  len -= 1;
+  static uint8_t stage = 0;
+  switch (stage) {
+    case 0:
+      snprintf(out_buffer, len, "\r\nStart gyroscope calibration.\r\n");
+      stage++;
+      return pdPASS;
+    case 1:
+      snprintf(out_buffer, len, "Please make the controller stable.\r\n");
+      stage++;
+      return pdPASS;
+    case 2:
+      if (osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &gyro, NULL, 5) != osOK) {
+        snprintf(out_buffer, len, "Can not get gyro data.\r\n");
+        stage = 7;
+        return pdPASS;
+      }
+      if (BMI088_GyroStable(&gyro)) {
+        snprintf(out_buffer, len,
+                 "Controller is stable. Start calibation.\r\n");
+        stage++;
+        return pdPASS;
+      } else {
+        retry++;
+        if (retry < 3) {
+          snprintf(out_buffer, len, "Controller is unstable.\r\n");
+          stage = 1;
+        } else {
+          stage = 7;
+        }
+        return pdPASS;
+      }
+    case 3:
+      snprintf(out_buffer, len, "Calibation in progress.\r\n");
+      Config_Get(&cfg);
+      cfg.cali.bmi088.gyro_offset.x = 0.0f;
+      cfg.cali.bmi088.gyro_offset.y = 0.0f;
+      cfg.cali.bmi088.gyro_offset.z = 0.0f;
+      Config_Set(&cfg);
+      while(count < 1000) {
+        bool data_new = (osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &gyro, NULL, 5) == osOK);
+        bool data_good = (gyro.x < 0.03) && (gyro.y < 0.03) && (gyro.z < 0.03);
+        if (data_new && data_good) {
+          x += gyro.x;
+          y += gyro.y;
+          z += gyro.z;
+          count++;
+        }
+      }
+      x /= (float)count;
+      y /= (float)count;
+      z /= (float)count;
+      stage++;
+      return pdPASS;
+    case 4:
+      snprintf(out_buffer, len,
+               "Calibation finished. Write result to flash.\r\n");
+      Config_Get(&cfg);
+      cfg.cali.bmi088.gyro_offset.x = x;
+      cfg.cali.bmi088.gyro_offset.y = y;
+      cfg.cali.bmi088.gyro_offset.z = z;
+      Config_Set(&cfg);
+      stage++;
+      return pdPASS;
+    case 5:
+      snprintf(out_buffer, len, "x:%.5f; y:%.5f; z:%.5f;.\r\n",x,y,z);
+      stage++;
+      return pdPASS;
+    case 6:
+      snprintf(out_buffer, len, "Calibation done.\r\n");
+      stage = 8;
+      return pdPASS;
+    case 7:
+      snprintf(out_buffer, len, "Calibation failed.\r\n");
+      stage = 8;
+      return pdPASS;
+    default:
+      x = 0.0f;
+      y = 0.0f;
+      z = 0.0f;
+      retry = 0;
+      snprintf(out_buffer, len, "\r\n");
+      stage = 0;
+      return pdFALSE;
+  }
+}
+
 /*
 static BaseType_t Command_XXX(char *out_buffer, size_t len,
                                            const char *command_string) {
@@ -386,14 +486,12 @@ static const CLI_Command_Definition_t command_table[] = {
         Command_ClearRobotID,
         0,
     },
-#if 0
     {
         "cali-gyro",
         "\r\ncali-gyro:\r\n Calibrate gyroscope. Remove zero offset.\r\n\r\n",
         Command_CaliGyro,
         0,
     },
-#endif
 };
 
 /* Private function --------------------------------------------------------- */
