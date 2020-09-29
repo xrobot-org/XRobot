@@ -283,8 +283,8 @@ static BaseType_t Command_MotorIDQuitckSet(char *out_buffer, size_t len,
   }
 }
 
-static BaseType_t Command_ClearRobotID(char *out_buffer, size_t len,
-                                       const char *command_string) {
+static BaseType_t Command_ClearConfig(char *out_buffer, size_t len,
+                                      const char *command_string) {
   (void)command_string;
   if (out_buffer == NULL) return pdFALSE;
   Config_t cfg;
@@ -334,7 +334,8 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       stage++;
       return pdPASS;
     case 2:
-      if (osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &gyro, NULL, 5) != osOK) {
+      if (osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &gyro, NULL, 5) !=
+          osOK) {
         snprintf(out_buffer, len, "Can not get gyro data.\r\n");
         stage = 7;
         return pdPASS;
@@ -361,8 +362,9 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       cfg.cali.bmi088.gyro_offset.y = 0.0f;
       cfg.cali.bmi088.gyro_offset.z = 0.0f;
       Config_Set(&cfg);
-      while(count < 1000) {
-        bool data_new = (osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &gyro, NULL, 5) == osOK);
+      while (count < 1000) {
+        bool data_new = (osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &gyro,
+                                           NULL, 5) == osOK);
         bool data_good = (gyro.x < 0.03) && (gyro.y < 0.03) && (gyro.z < 0.03);
         if (data_new && data_good) {
           x += gyro.x;
@@ -387,7 +389,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       stage++;
       return pdPASS;
     case 5:
-      snprintf(out_buffer, len, "x:%.5f; y:%.5f; z:%.5f;.\r\n",x,y,z);
+      snprintf(out_buffer, len, "x:%.5f; y:%.5f; z:%.5f;\r\n", x, y, z);
       stage++;
       return pdPASS;
     case 6:
@@ -481,9 +483,9 @@ static const CLI_Command_Definition_t command_table[] = {
         0,
     },
     {
-        "reset-robot-cfg",
+        "reset-config",
         "\r\nreset-robot-cfg:\r\n Reset Robot config stored on flash.\r\n\r\n",
-        Command_ClearRobotID,
+        Command_ClearConfig,
         0,
     },
     {
