@@ -252,6 +252,10 @@ int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali) {
   return DEVICE_OK;
 }
 
+bool BMI088_GyroStable(AHRS_Gyro_t *gyro) {
+  return ((gyro->x < 0.1f) && (gyro->y < 0.1f) && (gyro->z < 0.1f));
+}
+
 uint32_t BMI088_WaitNew() {
   return osThreadFlagsWait(
       SIGNAL_BMI088_ACCL_NEW_DATA | SIGNAL_BMI088_GYRO_NEW_DATA, osFlagsWaitAll,
@@ -351,6 +355,10 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
   bmi088->gyro.x *= MATH_DEG_TO_RAD_MULT;
   bmi088->gyro.y *= MATH_DEG_TO_RAD_MULT;
   bmi088->gyro.z *= MATH_DEG_TO_RAD_MULT;
+  
+  bmi088->gyro.x -= bmi088->cali->gyro_offset.x;
+  bmi088->gyro.y -= bmi088->cali->gyro_offset.y;
+  bmi088->gyro.z -= bmi088->cali->gyro_offset.z;
 
   return DEVICE_ERR_NULL;
 }

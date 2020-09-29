@@ -6,6 +6,7 @@ extern "C" {
 
 /* Includes ----------------------------------------------------------------- */
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "component\ahrs.h"
 #include "device\device.h"
@@ -33,6 +34,8 @@ typedef struct {
 /* Exported functions prototypes -------------------------------------------- */
 int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali);
 int8_t BMI088_Restart(void);
+
+bool BMI088_GyroStable(AHRS_Gyro_t *gyro);
 
 /* Sensor use right-handed coordinate system. */
 /*
