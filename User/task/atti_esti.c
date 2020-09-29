@@ -50,7 +50,6 @@ static const KPID_Params_t imu_temp_ctrl_pid_param = {
     .i_limit = 1.0f,
     .out_limit = 1.0f,
 };
-uint32_t period;
 
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
@@ -99,10 +98,6 @@ void Task_AttiEsti(void *argument) {
     IST8310_WaitDmaCplt();
 
     osKernelLock();
-    uint32_t now = HAL_GetTick();
-    period = now - pre;
-    pre = now;
-
     BMI088_ParseAccl(&bmi088);
     BMI088_ParseGyro(&bmi088);
     IST8310_Parse(&ist8310);
