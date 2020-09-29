@@ -484,7 +484,7 @@ static const CLI_Command_Definition_t command_table[] = {
     },
     {
         "reset-config",
-        "\r\nreset-robot-cfg:\r\n Reset Robot config stored on flash.\r\n\r\n",
+        "\r\nreset-config:\r\n Reset Robot config stored on flash.\r\n\r\n",
         Command_ClearConfig,
         0,
     },
