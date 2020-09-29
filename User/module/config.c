@@ -4,7 +4,7 @@
 
 #include "bsp/flash.h"
 
-#define CONFIG_BASE_ADDRESS (ADDR_FLASH_END - sizeof(Config_t))
+#define CONFIG_BASE_ADDRESS (ADDR_FLASH_SECTOR_11)
 
 #ifdef DEBUG
 Config_Robot_t cfg_infantry = {
