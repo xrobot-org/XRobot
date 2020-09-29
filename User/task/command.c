@@ -33,24 +33,23 @@ static CMD_t cmd;
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 void Task_Command(void *argument) {
-  Task_Param_t *task_param = (Task_Param_t *)argument;
-
-  task_param->msgq.cmd.chassis =
+  (void)argument;
+  task_runtime.msgq.cmd.chassis =
       osMessageQueueNew(3u, sizeof(CMD_ChassisCtrl_t), NULL);
-  task_param->msgq.cmd.gimbal =
+  task_runtime.msgq.cmd.gimbal =
       osMessageQueueNew(3u, sizeof(CMD_GimbalCtrl_t), NULL);
-  task_param->msgq.cmd.shoot =
+  task_runtime.msgq.cmd.shoot =
       osMessageQueueNew(3u, sizeof(CMD_ShootCtrl_t), NULL);
 
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_COMMAND);
 
   DR16_Init(&dr16);
-  CMD_Init(&cmd, &(task_param->config_pilot->param.cmd));
+  CMD_Init(&cmd, &(task_runtime.config_pilot->param.cmd));
 
   while (1) {
 #ifdef DEBUG
-    task_param->stack_water_mark.command = osThreadGetStackSpace(NULL);
+    task_runtime.stack_water_mark.command = osThreadGetStackSpace(NULL);
 #endif
     /* Task body */
     DR16_StartDmaRecv(&dr16);
@@ -62,8 +61,8 @@ void Task_Command(void *argument) {
     }
 
     CMD_Parse(&rc, &cmd);
-    osMessageQueuePut(task_param->msgq.cmd.chassis, &(cmd.chassis), 0, 0);
-    osMessageQueuePut(task_param->msgq.cmd.gimbal, &(cmd.gimbal), 0, 0);
-    osMessageQueuePut(task_param->msgq.cmd.shoot, &(cmd.shoot), 0, 0);
+    osMessageQueuePut(task_runtime.msgq.cmd.chassis, &(cmd.chassis), 0, 0);
+    osMessageQueuePut(task_runtime.msgq.cmd.gimbal, &(cmd.gimbal), 0, 0);
+    osMessageQueuePut(task_runtime.msgq.cmd.shoot, &(cmd.shoot), 0, 0);
   }
 }

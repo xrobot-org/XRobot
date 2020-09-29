@@ -146,7 +146,7 @@ static BaseType_t Command_SetModel(char *out_buffer, size_t len,
                                    const char *command_string) {
   const char *param;
   BaseType_t param_len;
-  Config_t id;
+  Config_t cfg;
 
   if (out_buffer == NULL) return pdFALSE;
 
@@ -162,13 +162,13 @@ static BaseType_t Command_SetModel(char *out_buffer, size_t len,
       stage = 1;
       return pdPASS;
     case 1:
-      Config_Get(&id);
-      if ((id.model = Config_GetModelByName(param)) == ROBOT_MODEL_NUM) {
+      Config_Get(&cfg);
+      if ((cfg.model = Config_GetModelByName(param)) == ROBOT_MODEL_NUM) {
         stage = 2;
         return pdPASS;
       } else {
-        snprintf(out_buffer, len, "%s", Config_GetNameByModel(id.model));
-        Config_Set(&id);
+        snprintf(out_buffer, len, "%s", Config_GetNameByModel(cfg.model));
+        Config_Set(&cfg);
         stage = 3;
         return pdPASS;
       }
@@ -193,7 +193,7 @@ static BaseType_t Command_SetPilot(char *out_buffer, size_t len,
                                    const char *command_string) {
   const char *param;
   BaseType_t param_len;
-  Config_t id;
+  Config_t cfg;
 
   if (out_buffer == NULL) return pdFALSE;
 
@@ -209,13 +209,13 @@ static BaseType_t Command_SetPilot(char *out_buffer, size_t len,
       stage = 1;
       return pdPASS;
     case 1:
-      Config_Get(&id);
-      if ((id.pilot = Config_GetPilotByName(param)) == ROBOT_PILOT_NUM) {
+      Config_Get(&cfg);
+      if ((cfg.pilot = Config_GetPilotByName(param)) == ROBOT_PILOT_NUM) {
         stage = 2;
         return pdPASS;
       } else {
-        snprintf(out_buffer, len, "%s", Config_GetNameByPilot(id.pilot));
-        Config_Set(&id);
+        snprintf(out_buffer, len, "%s", Config_GetNameByPilot(cfg.pilot));
+        Config_Set(&cfg);
         stage = 3;
         return pdPASS;
       }
@@ -287,7 +287,7 @@ static BaseType_t Command_ClearRobotID(char *out_buffer, size_t len,
                                        const char *command_string) {
   (void)command_string;
   if (out_buffer == NULL) return pdFALSE;
-  Config_t id;
+  Config_t cfg;
 
   len -= 1;
   static uint8_t stage = 0;
@@ -297,8 +297,8 @@ static BaseType_t Command_ClearRobotID(char *out_buffer, size_t len,
       stage++;
       return pdPASS;
     case 1:
-      memset(&id, 0, sizeof(Config_t));
-      Config_Set(&id);
+      memset(&cfg, 0, sizeof(Config_t));
+      Config_Set(&cfg);
       snprintf(out_buffer, len, "\r\nDone.");
       stage++;
       return pdPASS;
@@ -381,18 +381,25 @@ static const CLI_Command_Definition_t command_table[] = {
         0,
     },
     {
-        "reset-robot-id",
-        "\r\nreset-robot-id:\r\n Reset Robot ID stored on flash.\r\n\r\n",
+        "reset-robot-cfg",
+        "\r\nreset-robot-cfg:\r\n Reset Robot config stored on flash.\r\n\r\n",
         Command_ClearRobotID,
         0,
     },
+#if 0
+    {
+        "cali-gyro",
+        "\r\ncali-gyro:\r\n Calibrate gyroscope. Remove zero offset.\r\n\r\n",
+        Command_CaliGyro,
+        0,
+    },
+#endif
 };
 
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 void Task_CLI(void *argument) {
-  Task_Param_t *task_param = (Task_Param_t *)argument;
-
+  (void)argument;
   static char input[MAX_INPUT_LENGTH];
   char *output = FreeRTOS_CLIGetOutputBuffer();
   char rx_char;
@@ -424,7 +431,7 @@ void Task_CLI(void *argument) {
   BSP_USB_Printf("rm>");
   while (1) {
 #ifdef DEBUG
-    task_param->stack_water_mark.cli = osThreadGetStackSpace(NULL);
+    task_runtime.stack_water_mark.cli = osThreadGetStackSpace(NULL);
 #endif
     /* Wait for input. */
     BSP_USB_ReadyReceive(osThreadGetId());
@@ -447,11 +454,9 @@ void Task_CLI(void *argument) {
                 input, output, configCOMMAND_INT_MAX_OUTPUT_SIZE);
             BSP_USB_Printf(output);
             memset(output, 0x00, strlen(output));
-            osDelay(10
-            );
           } while (processing != pdFALSE);
           index = 0;
-          memset(input, 0x00, strlen(input  ));
+          memset(input, 0x00, strlen(input));
         }
         BSP_USB_Printf("rm>");
       } else if (rx_char == '\b' || rx_char == 0x7Fu) {

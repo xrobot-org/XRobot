@@ -1,6 +1,6 @@
 /*
   消息任务
-  
+
   控制对外的指示装置，例如LED、OLED显示器等。
 */
 
@@ -18,8 +18,8 @@
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 void Task_Info(void *argument) {
+  (void)argument;
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_INFO;
-  Task_Param_t *task_param = (Task_Param_t *)argument;
 
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_INFO);
@@ -27,11 +27,10 @@ void Task_Info(void *argument) {
   uint32_t tick = osKernelGetTickCount();
   while (1) {
 #ifdef DEBUG
-    task_param->stack_water_mark.info = osThreadGetStackSpace(NULL);
+    task_runtime.stack_water_mark.info = osThreadGetStackSpace(NULL);
 #endif
     /* Task body */
     tick += delay_tick;
-
 
     BSP_LED_Set(BSP_LED_GRN, BSP_LED_TAGGLE, 1);
 

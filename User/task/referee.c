@@ -1,6 +1,6 @@
 /*
   裁判系统任务。
-  
+
   负责裁判系统的接收和发送。
 */
 
@@ -23,8 +23,8 @@ static Referee_t ref;
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 void Task_Referee(void *argument) {
+  (void)argument;
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_REFEREE;
-  Task_Param_t *task_param = (Task_Param_t *)argument;
 
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_REFEREE);
@@ -34,7 +34,7 @@ void Task_Referee(void *argument) {
   uint32_t tick = osKernelGetTickCount();
   while (1) {
 #ifdef DEBUG
-    task_param->stack_water_mark.referee = osThreadGetStackSpace(NULL);
+    task_runtime.stack_water_mark.referee = osThreadGetStackSpace(NULL);
 #endif
     /* Task body */
     tick += delay_tick;

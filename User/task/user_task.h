@@ -47,16 +47,16 @@ typedef struct {
 
   struct {
     struct {
-      osMessageQueueId_t accl; /* IMU读取 */
-      osMessageQueueId_t gyro; /* IMU读取 */
+      osMessageQueueId_t accl;     /* IMU读取 */
+      osMessageQueueId_t gyro;     /* IMU读取 */
       osMessageQueueId_t eulr_imu; /* 姿态解算得到 */
-    }gimbal;
-    
+    } gimbal;
+
     struct {
       osMessageQueueId_t chassis;
       osMessageQueueId_t gimbal;
       osMessageQueueId_t shoot;
-    }cmd;
+    } cmd;
   } msgq;
 
   struct {
@@ -91,7 +91,7 @@ typedef struct {
     float atti_esti;
     float referee;
   } freq;
-  
+
   struct {
     float cli;
     float command;
@@ -105,7 +105,9 @@ typedef struct {
   } last_up_time;
 #endif
 
-} Task_Param_t;
+} Task_Runtime_t;
+
+extern Task_Runtime_t task_runtime;
 
 extern const osThreadAttr_t attr_init;
 

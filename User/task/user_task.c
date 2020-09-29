@@ -5,9 +5,17 @@
 /* Includes ----------------------------------------------------------------- */
 #include "task\user_task.h"
 
+Task_Runtime_t task_runtime;
+
 const osThreadAttr_t attr_init = {
     .name = "init",
     .priority = (osPriority_t)osPriorityLow,
+    .stack_size = 256 * 4,
+};
+
+const osThreadAttr_t attr_atti_esti = {
+    .name = "atti_esti",
+    .priority = (osPriority_t)osPriorityRealtime,
     .stack_size = 256 * 4,
 };
 
@@ -51,12 +59,6 @@ const osThreadAttr_t attr_monitor = {
     .name = "monitor",
     .priority = (osPriority_t)osPriorityNormal,
     .stack_size = 128 * 4,
-};
-
-const osThreadAttr_t attr_atti_esti = {
-    .name = "atti_esti",
-    .priority = (osPriority_t)osPriorityRealtime,
-    .stack_size = 256 * 4,
 };
 
 const osThreadAttr_t attr_referee = {

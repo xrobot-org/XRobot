@@ -28,8 +28,9 @@ static Shoot_t shoot;
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 void Task_CtrlShoot(void *argument) {
+  (void)argument;
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_SHOOT;
-  Task_Param_t *task_param = (Task_Param_t *)argument;
+
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_CTRL_SHOOT);
 
@@ -37,14 +38,14 @@ void Task_CtrlShoot(void *argument) {
     osDelay(delay_tick);
   }
 
-  Shoot_Init(&shoot, &(task_param->config_robot->param.shoot),
+  Shoot_Init(&shoot, &(task_runtime.config_robot->param.shoot),
              (float)TASK_FREQ_HZ_CTRL_SHOOT);
 
   uint32_t tick = osKernelGetTickCount();
   uint32_t wakeup = HAL_GetTick();
   while (1) {
 #ifdef DEBUG
-    task_param->stack_water_mark.ctrl_shoot = osThreadGetStackSpace(NULL);
+    task_runtime.stack_water_mark.ctrl_shoot = osThreadGetStackSpace(NULL);
 #endif
     /* Task body */
     tick += delay_tick;
@@ -54,7 +55,7 @@ void Task_CtrlShoot(void *argument) {
       CAN_Motor_ControlShoot(0.0f, 0.0f, 0.0f);
 
     } else {
-      osMessageQueueGet(task_param->msgq.cmd.shoot, &shoot_ctrl, NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.cmd.shoot, &shoot_ctrl, NULL, 0);
 
       osKernelLock();
       const uint32_t now = HAL_GetTick();

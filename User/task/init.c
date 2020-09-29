@@ -20,45 +20,36 @@ static const char *const ROBOT_ID_MEAASGE =
     " -------------------------------------------------------------------\r\n"
     "\r\n";
 
-#ifdef DEBUG
-Task_Param_t task_param;
-#else
-static Task_Param_t task_param;
-#endif
-
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 void Task_Init(void *argument) {
   (void)argument;
 
   /* Init robot. */
-  Config_Get(&task_param.robot_id);
+  Config_Get(&task_runtime.robot_id);
 
-  task_param.config_robot = Config_GetRobotCfg(task_param.robot_id.model);
-  task_param.config_pilot = Config_GetPilotCfg(task_param.robot_id.pilot);
+  task_runtime.config_robot = Config_GetRobotCfg(task_runtime.robot_id.model);
+  task_runtime.config_pilot = Config_GetPilotCfg(task_runtime.robot_id.pilot);
 
   /* Command Line Interface. */
   BSP_USB_Printf(ROBOT_ID_MEAASGE,
-                 Config_GetNameByModel(task_param.robot_id.model),
-                 Config_GetNameByPilot(task_param.robot_id.pilot));
+                 Config_GetNameByModel(task_runtime.robot_id.model),
+                 Config_GetNameByPilot(task_runtime.robot_id.pilot));
 
   osKernelLock();
-  task_param.thread.atti_esti =
-      osThreadNew(Task_AttiEsti, &task_param, &attr_atti_esti);
-  task_param.thread.cli = osThreadNew(Task_CLI, &task_param, &attr_cli);
-  task_param.thread.command =
-      osThreadNew(Task_Command, &task_param, &attr_command);
-  task_param.thread.ctrl_chassis =
-      osThreadNew(Task_CtrlChassis, &task_param, &attr_ctrl_chassis);
-  task_param.thread.ctrl_gimbal =
-      osThreadNew(Task_CtrlGimbal, &task_param, &attr_ctrl_gimbal);
-  task_param.thread.ctrl_shoot =
-      osThreadNew(Task_CtrlShoot, &task_param, &attr_ctrl_shoot);
-  task_param.thread.info = osThreadNew(Task_Info, &task_param, &attr_info);
-  task_param.thread.monitor =
-      osThreadNew(Task_Monitor, &task_param, &attr_monitor);
-  task_param.thread.referee =
-      osThreadNew(Task_Referee, &task_param, &attr_referee);
+  task_runtime.thread.atti_esti =
+      osThreadNew(Task_AttiEsti, NULL, &attr_atti_esti);
+  task_runtime.thread.cli = osThreadNew(Task_CLI, NULL, &attr_cli);
+  task_runtime.thread.command = osThreadNew(Task_Command, NULL, &attr_command);
+  task_runtime.thread.ctrl_chassis =
+      osThreadNew(Task_CtrlChassis, NULL, &attr_ctrl_chassis);
+  task_runtime.thread.ctrl_gimbal =
+      osThreadNew(Task_CtrlGimbal, NULL, &attr_ctrl_gimbal);
+  task_runtime.thread.ctrl_shoot =
+      osThreadNew(Task_CtrlShoot, NULL, &attr_ctrl_shoot);
+  task_runtime.thread.info = osThreadNew(Task_Info, NULL, &attr_info);
+  task_runtime.thread.monitor = osThreadNew(Task_Monitor, NULL, &attr_monitor);
+  task_runtime.thread.referee = osThreadNew(Task_Referee, NULL, &attr_referee);
   osKernelUnlock();
 
   osThreadTerminate(osThreadGetId());

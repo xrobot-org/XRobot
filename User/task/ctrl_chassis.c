@@ -29,20 +29,20 @@ static Chassis_t chassis;
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 void Task_CtrlChassis(void *argument) {
+  (void)argument;
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_CHASSIS;
-  Task_Param_t *task_param = (Task_Param_t *)argument;
 
   /* Device Setup */
   osDelay(TASK_INIT_DELAY_CTRL_CHASSIS);
 
   osThreadId_t recv_motor_allert[3] = {osThreadGetId(),
-                                       task_param->thread.ctrl_gimbal,
-                                       task_param->thread.ctrl_shoot};
+                                       task_runtime.thread.ctrl_gimbal,
+                                       task_runtime.thread.ctrl_shoot};
 
-  CAN_Init(&can, NULL, recv_motor_allert, 3, task_param->thread.referee);
+  CAN_Init(&can, NULL, recv_motor_allert, 3, task_runtime.thread.referee);
 
   /* Module Setup */
-  Chassis_Init(&chassis, &(task_param->config_robot->param.chassis),
+  Chassis_Init(&chassis, &(task_runtime.config_robot->param.chassis),
                (float)TASK_FREQ_HZ_CTRL_CHASSIS);
 
   /* Task Setup */
@@ -50,7 +50,7 @@ void Task_CtrlChassis(void *argument) {
   uint32_t wakeup = HAL_GetTick();
   while (1) {
 #ifdef DEBUG
-    task_param->stack_water_mark.ctrl_chassis = osThreadGetStackSpace(NULL);
+    task_runtime.stack_water_mark.ctrl_chassis = osThreadGetStackSpace(NULL);
 #endif
     /* Task body */
     tick += delay_tick;
@@ -60,7 +60,7 @@ void Task_CtrlChassis(void *argument) {
       CAN_Motor_ControlChassis(0.0f, 0.0f, 0.0f, 0.0f);
 
     } else {
-      osMessageQueueGet(task_param->msgq.cmd.chassis, &chassis_ctrl, NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.cmd.chassis, &chassis_ctrl, NULL, 0);
 
       osKernelLock();
       const uint32_t now = HAL_GetTick();

@@ -31,8 +31,8 @@ static Gimbal_t gimbal;
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 void Task_CtrlGimbal(void *argument) {
+  (void)argument;
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_GIMBAL;
-  Task_Param_t *task_param = (Task_Param_t *)argument;
 
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_CTRL_GIMBAL);
@@ -41,14 +41,14 @@ void Task_CtrlGimbal(void *argument) {
     osDelay(delay_tick);
   }
 
-  Gimbal_Init(&gimbal, &(task_param->config_robot->param.gimbal),
+  Gimbal_Init(&gimbal, &(task_runtime.config_robot->param.gimbal),
               (float)TASK_FREQ_HZ_CTRL_GIMBAL);
 
   uint32_t tick = osKernelGetTickCount();
   uint32_t wakeup = HAL_GetTick();
   while (1) {
 #ifdef DEBUG
-    task_param->stack_water_mark.ctrl_gimbal = osThreadGetStackSpace(NULL);
+    task_runtime.stack_water_mark.ctrl_gimbal = osThreadGetStackSpace(NULL);
 #endif
     /* Task body */
     tick += delay_tick;
@@ -58,11 +58,11 @@ void Task_CtrlGimbal(void *argument) {
       CAN_Motor_ControlGimbal(0.0f, 0.0f);
 
     } else {
-      osMessageQueueGet(task_param->msgq.gimbal.eulr_imu,
+      osMessageQueueGet(task_runtime.msgq.gimbal.eulr_imu,
                         &(gimbal_feedback.eulr.imu), NULL, 0);
-      osMessageQueueGet(task_param->msgq.gimbal.gyro, &(gimbal_feedback.gyro),
+      osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &(gimbal_feedback.gyro),
                         NULL, 0);
-      osMessageQueueGet(task_param->msgq.cmd.gimbal, &gimbal_ctrl, NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.cmd.gimbal, &gimbal_ctrl, NULL, 0);
 
       osKernelLock();
       const uint32_t now = HAL_GetTick();
