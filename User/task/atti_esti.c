@@ -79,7 +79,6 @@ void Task_AttiEsti(void *argument) {
 
   BSP_PWM_Start(BSP_PWM_IMU_HEAT);
 
-  uint32_t pre = HAL_GetTick();
   while (1) {
 #ifdef DEBUG
     task_runtime.stack_water_mark.atti_esti = osThreadGetStackSpace(NULL);
