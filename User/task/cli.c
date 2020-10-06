@@ -135,6 +135,16 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
                configTOTAL_HEAP_SIZE - heap_stats.xAvailableHeapSpaceInBytes);
       stage++;
       return pdPASS;
+    case 6:
+      snprintf(out_buffer, len, "\r\nBettary: %.2f %%\r\n",
+               task_runtime.status.battery);
+      stage++;
+      return pdPASS;
+    case 7:
+      snprintf(out_buffer, len, "\r\nCPU temp: %0.2f C\r\n",
+               task_runtime.status.cpu_temp);
+      stage++;
+      return pdPASS;
     default:
       snprintf(out_buffer, len, "\r\n");
       stage = 0;
