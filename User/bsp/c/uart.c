@@ -11,7 +11,7 @@ static void (*UART_Callback[BSP_UART_NUM][BSP_UART_CB_NUM])(void);
 static BSP_UART_t UART_Get(UART_HandleTypeDef *huart) {
   if (huart->Instance == USART3)
     return BSP_UART_DR16;
-  else if (huart->Instance == USART6)
+  else if (huart->Instance == USART1)
     return BSP_UART_REF;
   /*
   else if (huart->Instance == USARTX)
@@ -109,7 +109,7 @@ UART_HandleTypeDef *BSP_UART_GetHandle(BSP_UART_t uart) {
     case BSP_UART_DR16:
       return &huart3;
     case BSP_UART_REF:
-      return &huart6;
+      return &huart1;
     /*
     case BSP_UART_XXX:
             return &huartX;
