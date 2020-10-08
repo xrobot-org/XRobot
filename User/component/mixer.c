@@ -19,9 +19,9 @@ int8_t Mixer_Apply(Mixer_t *mixer, float vx, float vy, float wz, float *out,
     case MIXER_MECANUM:
       if (len == 4) {
         out[0] = -vx - vy + wz;
-        out[1] = vx - vy + wz;
+        out[1] = -vx + vy + wz;
         out[2] = vx + vy + wz;
-        out[3] = -vx + vy + wz;
+        out[3] = vx - vy + wz;
       } else {
         goto error;
       }
