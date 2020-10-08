@@ -10,6 +10,15 @@ extern "C" {
 
 #include "user_math.h"
 
+/* 四轮布局 */
+/* 前 */
+/* 2 1 */
+/* 3 4 */
+
+/* 两轮布局 */
+/* 前 */
+/* 2 1 */
+
 typedef enum {
   MIXER_MECANUM,   /* 麦克纳姆轮 */
   MIXER_PARLFIX4,  /* 平行四驱动轮 */
