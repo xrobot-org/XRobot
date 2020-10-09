@@ -164,30 +164,45 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCtrl_t *c_ctrl, float dt_sec) {
 
   /* ctrl_v -> move_vec. */
   /* Compute vx and vy. */
-  if (c->mode == CHASSIS_MODE_BREAK) {
-    c->move_vec.vx = 0.0f;
-    c->move_vec.vy = 0.0f;
+  const float cos_beta = cosf(c->feedback.gimbal_yaw_angle);
+  const float sin_beta = sinf(c->feedback.gimbal_yaw_angle);
+  
+  switch (c->mode) {
+    case CHASSIS_MODE_BREAK:
+      c->move_vec.vx = 0.0f;
+      c->move_vec.vy = 0.0f;
+      break;
 
-  } else {
-    const float cos_beta = cosf(c->feedback.gimbal_yaw_angle);
-    const float sin_beta = sinf(c->feedback.gimbal_yaw_angle);
+    case CHASSIS_MODE_INDENPENDENT:
+      c->move_vec.vx = c_ctrl->ctrl_v.vx;
+      c->move_vec.vy = c_ctrl->ctrl_v.vx;
+      break;
 
-    c->move_vec.vx =
-        cos_beta * c_ctrl->ctrl_v.vx - sin_beta * c_ctrl->ctrl_v.vy;
-    c->move_vec.vy =
-        sin_beta * c_ctrl->ctrl_v.vx - cos_beta * c_ctrl->ctrl_v.vy;
+    case CHASSIS_MODE_OPEN:
+    case CHASSIS_MODE_RELAX:
+    case CHASSIS_MODE_FOLLOW_GIMBAL:
+    case CHASSIS_MODE_ROTOR:
+      c->move_vec.vx =
+          cos_beta * c_ctrl->ctrl_v.vx - sin_beta * c_ctrl->ctrl_v.vy;
+      c->move_vec.vy =
+          sin_beta * c_ctrl->ctrl_v.vx - cos_beta * c_ctrl->ctrl_v.vy;
   }
 
   /* Compute wz. */
-  if (c->mode == CHASSIS_MODE_BREAK) {
-    c->move_vec.wz = 0.0f;
+  switch (c->mode) {
+    case CHASSIS_MODE_RELAX:
+    case CHASSIS_MODE_BREAK:
+    case CHASSIS_MODE_INDENPENDENT:
+      c->move_vec.wz = 0.0f;
+      break;
 
-  } else if (c->mode == CHASSIS_MODE_FOLLOW_GIMBAL) {
-    c->move_vec.wz = PID_Calc(&(c->pid.follow), 0, c->feedback.gimbal_yaw_angle,
-                              0.0f, dt_sec);
-
-  } else if (c->mode == CHASSIS_MODE_ROTOR) {
-    c->move_vec.wz = 0.8f;
+    case CHASSIS_MODE_OPEN:
+    case CHASSIS_MODE_FOLLOW_GIMBAL:
+      c->move_vec.wz = PID_Calc(&(c->pid.follow), 0,
+                                c->feedback.gimbal_yaw_angle, 0.0f, dt_sec);
+      break;
+    case CHASSIS_MODE_ROTOR:
+      c->move_vec.wz = 0.5f;
   }
 
   /* move_vec -> motor_rpm_set. */
