@@ -162,7 +162,7 @@ static const Config_Pilot_t user_qs = {
     .param = {
       .cmd = {
         .sens_mouse = 0.5f,
-        .sens_rc = 0.01f,
+        .sens_rc = 1.0f,
       },
     },
 };

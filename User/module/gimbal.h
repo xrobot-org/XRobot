@@ -46,10 +46,12 @@ enum Gimbal_Acuator_e {
 /* 云台参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
   const KPID_Params_t pid[GIMBAL_PID_NUM]; /* 云台电机控制PID的参数 */
+  
   struct {
     float out;            /* 电机输出 */
     float gyro;           /* 陀螺仪数据 */
   } low_pass_cutoff_freq; /* 低通滤波器截止频率 */
+  
   struct {
     struct {
       float high; /* 限位高点 */

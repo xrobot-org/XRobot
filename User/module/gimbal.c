@@ -87,8 +87,10 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
   }
 
   /* 处理控制命令 */
-  g->setpoint.eulr.yaw += g_ctrl->delta_eulr.yaw;
-  g->setpoint.eulr.pit += g_ctrl->delta_eulr.pit;
+  g->setpoint.eulr.yaw += g_ctrl->delta_eulr.yaw * dt_sec;
+  g->setpoint.eulr.pit += g_ctrl->delta_eulr.pit * dt_sec;
+  
+  AHRS_ResetEulr(&(g_ctrl->delta_eulr));
 
   /* 限制setpoint范围 */
   if (g->setpoint.eulr.yaw < -M_PI) {
