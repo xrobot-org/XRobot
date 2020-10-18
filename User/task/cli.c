@@ -18,6 +18,10 @@
 #include "task\user_task.h"
 
 /* Private typedef ---------------------------------------------------------- */
+typedef struct {
+  int stage;
+} FiniteStateMachine_t;
+
 /* Private define ----------------------------------------------------------- */
 #define MAX_INPUT_LENGTH 64
 
@@ -38,44 +42,43 @@ static const char *const CLI_WELCOME_MESSAGE =
 /* Command示例 */
 static BaseType_t Command_Endian(char *out_buffer, size_t len,
                                  const char *command_string) {
-  (void)command_string; /* 没用到command_string，消除警告 */
-
   if (out_buffer == NULL) return pdFALSE;
+  (void)command_string; /* 没用到command_string，消除警告 */
+  len -= 1;             /* 字符串后面有\0 */
 
   /* 任务本身相关的内容 */
   uint8_t list[2] = {0x11, 0x22};
   uint16_t force_convert = ((uint16_t *)list)[0];
   uint16_t assembled = (uint16_t)(list[0] | (list[1] << 8));
 
-  len -= 1;                 /* 字符串后面有\0 */
-  static uint8_t stage = 0; /* 有限状态机的状态 */
-  switch (stage) {
+  static FiniteStateMachine_t fsm; /* 有限状态机 */
+  switch (fsm.stage) {
     case 0:
       /* 每个状态内只允许有一个print相关函数，以保证安全 */
       /* 每个print相关函数必须带有长度限制 */
       snprintf(out_buffer, len, "a[2] = {0x11, 0x22}\r\n");
-      stage++;       /* 改变状态机运行状态 */
+      fsm.stage++;   /* 改变状态机运行状态 */
       return pdPASS; /* 需要继续运行下一状态时返回pdPASS */
     case 1:
       snprintf(out_buffer, len,
                "Force convert to uint16 list, we got: 0x%x\r\n", force_convert);
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 2:
       snprintf(out_buffer, len,
                "Manually assemble a[1], a[0], we got: 0x%x\r\n", assembled);
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 3:
       if (force_convert == assembled)
         snprintf(out_buffer, len, "Small endian\r\n");
       else
         snprintf(out_buffer, len, "Big endian\r\n");
-      stage++;
+      fsm.stage++;
       return pdPASS;
     default: /* 结束时状态 */
       snprintf(out_buffer, len, "\r\n");
-      stage = 0;      /* 重置有限状态机 */
+      fsm.stage = 0;  /* 重置有限状态机 */
       return pdFALSE; /* 不需要继续运行下一状态时返回pdFALSE */
   }
 }
@@ -100,54 +103,54 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       "total(B)	free(B)	used(B)\r\n"
       "*******************************\r\n";
 
-  (void)command_string;
   if (out_buffer == NULL) return pdFALSE;
+  (void)command_string;
+  len -= 1;
 
   HeapStats_t heap_stats;
 
-  len -= 1;
-  static uint8_t stage = 0;
-  switch (stage) {
+  static FiniteStateMachine_t fsm;
+  switch (fsm.stage) {
     case 0:
       strncpy(out_buffer, task_list_header, len);
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 1:
       vTaskList(out_buffer);
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 2:
       strncpy(out_buffer, run_time_header, len);
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 3:
       vTaskGetRunTimeStats(out_buffer);
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 4:
       strncpy(out_buffer, heap_header, len);
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 5:
       vPortGetHeapStats(&heap_stats);
       snprintf(out_buffer, len, "%d\t\t%d\t%d\r\n", configTOTAL_HEAP_SIZE,
                heap_stats.xAvailableHeapSpaceInBytes,
                configTOTAL_HEAP_SIZE - heap_stats.xAvailableHeapSpaceInBytes);
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 6:
       snprintf(out_buffer, len, "\r\nBettary: %.2f %%\r\n",
                task_runtime.status.battery);
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 7:
       snprintf(out_buffer, len, "\r\nCPU temp: %0.2f C\r\n",
                task_runtime.status.cpu_temp);
-      stage++;
+      fsm.stage++;
       return pdPASS;
     default:
       snprintf(out_buffer, len, "\r\n");
-      stage = 0;
+      fsm.stage = 0;
       return pdFALSE;
   }
 }
@@ -159,42 +162,41 @@ static BaseType_t Command_SetModel(char *out_buffer, size_t len,
   Config_t cfg;
 
   if (out_buffer == NULL) return pdFALSE;
+  len -= 1;
 
   param = FreeRTOS_CLIGetParameter(command_string, 1, &param_len);
-
   if (param == NULL) return pdFALSE;
 
-  len -= 1;
-  static uint8_t stage = 0;
-  switch (stage) {
+  static FiniteStateMachine_t fsm;
+  switch (fsm.stage) {
     case 0:
       snprintf(out_buffer, len, "Set robot model to: ");
-      stage = 1;
+      fsm.stage = 1;
       return pdPASS;
     case 1:
       Config_Get(&cfg);
       if ((cfg.model = Config_GetModelByName(param)) == ROBOT_MODEL_NUM) {
-        stage = 2;
+        fsm.stage = 2;
         return pdPASS;
       } else {
         snprintf(out_buffer, len, "%s", Config_GetNameByModel(cfg.model));
         Config_Set(&cfg);
-        stage = 3;
+        fsm.stage = 3;
         return pdPASS;
       }
     case 2:
       snprintf(out_buffer, len,
                "Unknow model.\r\nCheck help for avaliable options.");
-      stage = 4;
+      fsm.stage = 4;
       return pdPASS;
     case 3:
       snprintf(out_buffer, len,
                "\r\nRestart needed for setting to take effect.");
-      stage = 4;
+      fsm.stage = 4;
       return pdPASS;
     default:
       snprintf(out_buffer, len, "\r\n");
-      stage = 0;
+      fsm.stage = 0;
       return pdFALSE;
   }
 }
@@ -206,123 +208,124 @@ static BaseType_t Command_SetPilot(char *out_buffer, size_t len,
   Config_t cfg;
 
   if (out_buffer == NULL) return pdFALSE;
+  len -= 1;
 
   param = FreeRTOS_CLIGetParameter(command_string, 1, &param_len);
-
   if (param == NULL) return pdFALSE;
 
-  len -= 1;
-  static uint8_t stage = 0;
-  switch (stage) {
+  static FiniteStateMachine_t fsm;
+  switch (fsm.stage) {
     case 0:
       snprintf(out_buffer, len, "Set robot pilot to: ");
-      stage = 1;
+      fsm.stage = 1;
       return pdPASS;
     case 1:
       Config_Get(&cfg);
       if ((cfg.pilot = Config_GetPilotByName(param)) == ROBOT_PILOT_NUM) {
-        stage = 2;
+        fsm.stage = 2;
         return pdPASS;
       } else {
         snprintf(out_buffer, len, "%s", Config_GetNameByPilot(cfg.pilot));
         Config_Set(&cfg);
-        stage = 3;
+        fsm.stage = 3;
         return pdPASS;
       }
     case 2:
       snprintf(out_buffer, len,
                "Unauthorized pilot.\r\nCheck help for avaliable options.");
-      stage = 4;
+      fsm.stage = 4;
       return pdPASS;
     case 3:
       snprintf(out_buffer, len,
                "\r\nRestart needed for setting to take effect.");
-      stage = 4;
+      fsm.stage = 4;
       return pdPASS;
     default:
       snprintf(out_buffer, len, "\r\n");
-      stage = 0;
+      fsm.stage = 0;
       return pdFALSE;
   }
 }
 
 static BaseType_t Command_Error(char *out_buffer, size_t len,
                                 const char *command_string) {
-  (void)command_string;
   if (out_buffer == NULL) return pdFALSE;
-
+  (void)command_string;
   len -= 1;
-  static uint8_t stage = 0;
-  switch (stage) {
+
+  static FiniteStateMachine_t fsm;
+  switch (fsm.stage) {
     case 0:
       snprintf(out_buffer, len, "\r\nError status.");
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 1:
       // TODO
-      stage++;
+      fsm.stage++;
       return pdPASS;
     default:
       snprintf(out_buffer, len, "\r\n");
-      stage = 0;
+      fsm.stage = 0;
       return pdFALSE;
   }
 }
 
 static BaseType_t Command_MotorIDQuitckSet(char *out_buffer, size_t len,
                                            const char *command_string) {
-  (void)command_string;
   if (out_buffer == NULL) return pdFALSE;
-
+  (void)command_string;
   len -= 1;
-  static uint8_t stage = 0;
-  switch (stage) {
+
+  static FiniteStateMachine_t fsm;
+  switch (fsm.stage) {
     case 0:
       snprintf(out_buffer, len, "\r\nEnter ID quick set mode.");
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 1:
       CAN_Motor_QuickIdSetMode();
       snprintf(out_buffer, len, "\r\nDone.");
-      stage++;
+      fsm.stage++;
       return pdPASS;
     default:
       snprintf(out_buffer, len, "\r\n");
-      stage = 0;
+      fsm.stage = 0;
       return pdFALSE;
   }
 }
 
 static BaseType_t Command_ClearConfig(char *out_buffer, size_t len,
                                       const char *command_string) {
-  (void)command_string;
   if (out_buffer == NULL) return pdFALSE;
+  (void)command_string;
+  len -= 1;
+
   Config_t cfg;
 
-  len -= 1;
-  static uint8_t stage = 0;
-  switch (stage) {
+  static FiniteStateMachine_t fsm;
+  switch (fsm.stage) {
     case 0:
       snprintf(out_buffer, len, "\r\nReset Robot ID stored on flash.");
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 1:
       memset(&cfg, 0, sizeof(Config_t));
       Config_Set(&cfg);
       snprintf(out_buffer, len, "\r\nDone.");
-      stage++;
+      fsm.stage++;
       return pdPASS;
     default:
       snprintf(out_buffer, len, "\r\n");
-      stage = 0;
+      fsm.stage = 0;
       return pdFALSE;
   }
 }
 
 static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
                                    const char *command_string) {
-  (void)command_string;
   if (out_buffer == NULL) return pdFALSE;
+  (void)command_string;
+  len -= 1;
 
   Config_t cfg;
   AHRS_Gyro_t gyro;
@@ -332,36 +335,35 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
   static float z = 0.0f;
   static uint8_t retry = 0;
 
-  len -= 1;
-  static uint8_t stage = 0;
-  switch (stage) {
+  static FiniteStateMachine_t fsm;
+  switch (fsm.stage) {
     case 0:
       snprintf(out_buffer, len, "\r\nStart gyroscope calibration.\r\n");
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 1:
       snprintf(out_buffer, len, "Please make the controller stable.\r\n");
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 2:
       if (osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &gyro, NULL, 5) !=
           osOK) {
         snprintf(out_buffer, len, "Can not get gyro data.\r\n");
-        stage = 7;
+        fsm.stage = 7;
         return pdPASS;
       }
       if (BMI088_GyroStable(&gyro)) {
         snprintf(out_buffer, len,
                  "Controller is stable. Start calibation.\r\n");
-        stage++;
+        fsm.stage++;
         return pdPASS;
       } else {
         retry++;
         if (retry < 3) {
           snprintf(out_buffer, len, "Controller is unstable.\r\n");
-          stage = 1;
+          fsm.stage = 1;
         } else {
-          stage = 7;
+          fsm.stage = 7;
         }
         return pdPASS;
       }
@@ -386,7 +388,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       x /= (float)count;
       y /= (float)count;
       z /= (float)count;
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 4:
       snprintf(out_buffer, len,
@@ -396,19 +398,19 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       cfg.cali.bmi088.gyro_offset.y = y;
       cfg.cali.bmi088.gyro_offset.z = z;
       Config_Set(&cfg);
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 5:
       snprintf(out_buffer, len, "x:%.5f; y:%.5f; z:%.5f;\r\n", x, y, z);
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 6:
       snprintf(out_buffer, len, "Calibation done.\r\n");
-      stage = 8;
+      fsm.stage = 8;
       return pdPASS;
     case 7:
       snprintf(out_buffer, len, "Calibation failed.\r\n");
-      stage = 8;
+      fsm.stage = 8;
       return pdPASS;
     default:
       x = 0.0f;
@@ -416,7 +418,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       z = 0.0f;
       retry = 0;
       snprintf(out_buffer, len, "\r\n");
-      stage = 0;
+      fsm.stage = 0;
       return pdFALSE;
   }
 }
@@ -424,30 +426,30 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
 /*
 static BaseType_t Command_XXX(char *out_buffer, size_t len,
                                            const char *command_string) {
-  (void)command_string;
   if (out_buffer == NULL) return pdFALSE;
-
+  (void)command_string;
   len -= 1;
-  static uint8_t stage = 0;
-  switch (stage) {
+
+  static FiniteStateMachine_t fsm;
+  switch (fsm.stage) {
     case 0:
 
       snprintf(out_buffer, len, "\r\nXXX.");
 
 
-      stage++;
+      fsm.stage++;
       return pdPASS;
     case 1:
       XXX();
       snprintf(out_buffer, len, "\r\nDone.");
 
 
-      stage++;
+      fsm.stage++;
       return pdPASS;
 
     default:
       snprintf(out_buffer, len, "\r\n");
-      stage = 0;
+      fsm.stage = 0;
       return pdFALSE;
   }
 }
