@@ -41,7 +41,7 @@ void Task_CtrlGimbal(void *argument) {
     osDelay(delay_tick);
   }
 
-  Gimbal_Init(&gimbal, &(task_runtime.config_robot->param.gimbal),
+  Gimbal_Init(&gimbal, &(task_runtime.robot_param->gimbal),
               (float)TASK_FREQ_HZ_CTRL_GIMBAL);
 
   uint32_t tick = osKernelGetTickCount();

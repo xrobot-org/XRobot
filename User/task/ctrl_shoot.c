@@ -38,7 +38,7 @@ void Task_CtrlShoot(void *argument) {
     osDelay(delay_tick);
   }
 
-  Shoot_Init(&shoot, &(task_runtime.config_robot->param.shoot),
+  Shoot_Init(&shoot, &(task_runtime.robot_param->shoot),
              (float)TASK_FREQ_HZ_CTRL_SHOOT);
 
   uint32_t tick = osKernelGetTickCount();

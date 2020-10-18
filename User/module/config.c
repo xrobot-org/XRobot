@@ -7,156 +7,151 @@
 #define CONFIG_BASE_ADDRESS (ADDR_FLASH_SECTOR_11)
 
 #ifdef DEBUG
-Config_Robot_t cfg_infantry = {
+Config_RobotParam_t param_infantry = {
 #else
-static const Config_Robot_t cfg_infantry = {
+static const Config_RobotParam_t param_infantry = {
 #endif
-    .model = ROBOT_MODEL_INFANTRY,
+  .chassis = { /* 底盘模块参数 */ 
+    .motor_pid_param = {
+      .k = 0.001f,
+      .p = 1.0f,
+      .i = 0.0f,
+      .d = 0.0f,
+      .i_limit = 1.0f,
+      .out_limit = 1.0f,
+      .d_cutoff_freq = -1.0f,
+      .range = -1.0f,
+    },
+    .follow_pid_param = {
+      .k = 0.001f,
+      .p = 1.0f,
+      .i = 0.0f,
+      .d = 0.0f,
+      .i_limit = 1.0f,
+      .out_limit = 1.0f,
+      .d_cutoff_freq = -1.0f,
+      .range = 2.0f * M_PI,
+    },
+    .low_pass_cutoff_freq = {
+      .in = -1.0f,
+      .out = -1.0f,
+    },
+  }, /* chassis */
 
-    /* 对应模块的参数 */
-    .param = {
-      .chassis = { /* 底盘模块参数 */ 
-          .motor_pid_param = {
-            .k = 0.001f,
-            .p = 1.0f,
-            .i = 0.0f,
-            .d = 0.0f,
-            .i_limit = 1.0f,
-            .out_limit = 1.0f,
-            .d_cutoff_freq = -1.0f,
-            .range = -1.0f,
-          },
-          .follow_pid_param = {
-            .k = 0.001f,
-            .p = 1.0f,
-            .i = 0.0f,
-            .d = 0.0f,
-            .i_limit = 1.0f,
-            .out_limit = 1.0f,
-            .d_cutoff_freq = -1.0f,
-            .range = 2 * M_PI,
-          },
-          .low_pass_cutoff_freq = {
-            .in = -1.0f,
-            .out = -1.0f,
-          },
-      }, /* chassis */
+  .gimbal = { /* 云台模块参数 */
+    .pid = {
+      {
+        /* GIMBAL_PID_YAW_OMEGA_IDX */
+        .k = 0.3f,
+        .p = 1.0f,
+        .i = 0.1f,
+        .d = 0.0f,
+        .i_limit = 1.0f,
+        .out_limit = 1.0f,
+        .d_cutoff_freq = -1.0f,
+        .range = -1.0f,
+      },{
+        /* GIMBAL_PID_YAW_ANGLE_IDX */
+        .k = 2.8f,
+        .p = 1.0f,
+        .i = 0.0f,
+        .d = 0.0f,
+        .i_limit = 0.0f,
+        .out_limit = 1000.0f,
+        .d_cutoff_freq = -1.0f,
+        .range = 2.0f * M_PI,
+      },{
+        /* GIMBAL_PID_PIT_OMEGA_IDX */
+        .k = 0.15f,
+        .p = 1.0f,
+        .i = 0.05f,
+        .d = 0.003f,
+        .i_limit = 1.0f,
+        .out_limit = 1.0f,
+        .d_cutoff_freq = -1.0f,
+        .range = -1.0f,
+      },{
+        /* GIMBAL_PID_PIT_ANGLE_IDX */
+        .k = 7.0f,
+        .p = 1.0f,
+        .i = 0.0f,
+        .d = 0.0f,
+        .i_limit = 0.0f,
+        .out_limit = 1000.0f,
+        .d_cutoff_freq = -1.0f,
+        .range = 2.0f * M_PI,
+      },{
+        /* GIMBAL_PID_REL_YAW_IDX */
+        .k = 0.1f,
+        .p = 1.0f,
+        .i = 0.01f,
+        .d = 0.001f,
+        .i_limit = 1.0f,
+        .out_limit = 1.0f,
+        .d_cutoff_freq = -1.0f,
+        .range = 2.0f * M_PI,
+      },{
+        /* GIMBAL_PID_REL_PIT_IDX, */
+        .k = 0.1f,
+        .p = 1.0f,
+        .i = 0.01f,
+        .d = 0.001f,
+        .i_limit = 1.0f,
+        .out_limit = 1.0f,
+        .d_cutoff_freq = -1.0f,
+        .range = 2.0f * M_PI,
+      },
+    }, /* pid */
+    .low_pass_cutoff_freq = {
+      .out = -1.0f,
+      .gyro = 1000.0f,
+    },
+    .encoder_center = {
+      .yaw = 3.0f,
+      .pit = 3.0f,
+    },
+  }, /* gimbal */
 
-      .gimbal = { /* 云台模块参数 */
-          .pid = {
-            {
-              /* GIMBAL_PID_YAW_OMEGA_IDX */
-              .k = 0.3f,
-              .p = 1.0f,
-              .i = 0.1f,
-              .d = 0.0f,
-              .i_limit = 1.0f,
-              .out_limit = 1.0f,
-              .d_cutoff_freq = -1.0f,
-              .range = -1.0f,
-            },{
-              /* GIMBAL_PID_YAW_ANGLE_IDX */
-              .k = 2.8f,
-              .p = 1.0f,
-              .i = 0.0f,
-              .d = 0.0f,
-              .i_limit = 0.0f,
-              .out_limit = 1000.0f,
-              .d_cutoff_freq = -1.0f,
-              .range = 2 * M_PI,
-            },{
-              /* GIMBAL_PID_PIT_OMEGA_IDX */
-              .k = 0.15f,
-              .p = 1.0f,
-              .i = 0.05f,
-              .d = 0.003f,
-              .i_limit = 1.0f,
-              .out_limit = 1.0f,
-              .d_cutoff_freq = -1.0f,
-              .range = -1.0f,
-            },{
-              /* GIMBAL_PID_PIT_ANGLE_IDX */
-              .k = 7.0f,
-              .p = 1.0f,
-              .i = 0.0f,
-              .d = 0.0f,
-              .i_limit = 0.0f,
-              .out_limit = 1000.0f,
-              .d_cutoff_freq = -1.0f,
-              .range = 2 * M_PI,
-            },{
-              /* GIMBAL_PID_REL_YAW_IDX */
-              .k = 0.1f,
-              .p = 1.0f,
-              .i = 0.01f,
-              .d = 0.001f,
-              .i_limit = 1.0f,
-              .out_limit = 1.0f,
-              .d_cutoff_freq = -1.0f,
-              .range = 2 * M_PI,
-            },{
-              /* GIMBAL_PID_REL_PIT_IDX, */
-              .k = 0.1f,
-              .p = 1.0f,
-              .i = 0.01f,
-              .d = 0.001f,
-              .i_limit = 1.0f,
-              .out_limit = 1.0f,
-              .d_cutoff_freq = -1.0f,
-              .range = 2 * M_PI,
-            },
-          }, /* pid */
-          .low_pass_cutoff_freq = {
-            .out = -1.0f,
-            .gyro = 1000.0f,
-          },
-          .encoder_center = {
-            .yaw = 3.0f,
-            .pit = 3.0f,
-          },
-      }, /* gimbal */
+  .shoot = { /* 射击模块参数 */
+    .fric_pid_param = {
+      .k = 0.001f,
+      .p = 1.0f,
+      .i = 0.5f,
+      .d = 0.5f,
+      .i_limit = 0.5f,
+      .out_limit = 0.5f,
+      .d_cutoff_freq = -1.0f,
+    },
+    .trig_pid_param = {
+      .k = 0.001f,
+      .p = 1.0f,
+      .i = 0.5f,
+      .d = 0.5f,
+      .i_limit = 0.5f,
+      .out_limit = 0.5f,
+      .d_cutoff_freq = -1.0f,
+      .range = 2.0f * M_PI,
+    },
+    .low_pass_cutoff_freq = {
+      .in = {
+        .fric = -1.0f,
+        .trig = -1.0f,
+      },
+      .out = {
+        .fric = -1.0f,
+        .trig = -1.0f,
+      },
+    },
+    .bullet_speed_scaler = 1.0f,
+    .bullet_speed_bias = 1.0f,
+    .num_trig_tooth = 8.0f,
+  }, /* shoot */
+}; /* param_infantry */
 
-      .shoot = { /* 射击模块参数 */
-        .fric_pid_param = {
-          .k = 0.001f,
-          .p = 1.0f,
-          .i = 0.5f,
-          .d = 0.5f,
-          .i_limit = 0.5f,
-          .out_limit = 0.5f,
-          .d_cutoff_freq = -1.0f,
-        },
-        .trig_pid_param = {
-          .k = 0.001f,
-          .p = 1.0f,
-          .i = 0.5f,
-          .d = 0.5f,
-          .i_limit = 0.5f,
-          .out_limit = 0.5f,
-          .d_cutoff_freq = -1.0f,
-          .range = 2 * M_PI,
-        },
-        .low_pass_cutoff_freq = {
-          .in = {
-            .fric = -1.0f,
-            .trig = -1.0f,
-          },
-          .out = {
-            .fric = -1.0f,
-            .trig = -1.0f,
-          },
-        },
-        .bullet_speed_scaler = 1.0f,
-        .bullet_speed_bias = 1.0f,
-        .num_trig_tooth = 8.0f,
-      }, /* shoot */
-  }, /* param */
-}; /* cfg_infantry */
-
-static const Config_Robot_t cfg_hero;
-static const Config_Robot_t cfg_engineer;
-static const Config_Robot_t cfg_drone;
-static const Config_Robot_t cfg_sentry;
+static const Config_RobotParam_t param_hero;
+static const Config_RobotParam_t param_engineer;
+static const Config_RobotParam_t param_drone;
+static const Config_RobotParam_t param_sentry;
 
 static const Config_Pilot_t user_qs = {
     .param = {
@@ -176,23 +171,23 @@ void Config_Set(Config_t *cfg) {
   BSP_Flash_WriteBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(Config_t));
 }
 
-const Config_Robot_t *Config_GetRobotCfg(Config_RobotModel_t model) {
+const Config_RobotParam_t *Config_GetRobotParam(Config_RobotModel_t model) {
   switch (model) {
     case ROBOT_MODEL_INFANTRY:
-      return &cfg_infantry;
+      return &param_infantry;
     case ROBOT_MODEL_HERO:
-      return &cfg_hero;
+      return &param_hero;
     case ROBOT_MODEL_ENGINEER:
-      return &cfg_engineer;
+      return &param_engineer;
     case ROBOT_MODEL_DRONE:
-      return &cfg_drone;
+      return &param_drone;
     case ROBOT_MODEL_SENTRY:
-      return &cfg_sentry;
+      return &param_sentry;
     case ROBOT_MODEL_NUM:
       /* Default infantry*/
-      return &cfg_infantry;
+      return &param_infantry;
   }
-  return &cfg_infantry;
+  return &param_infantry;
 }
 
 const Config_Pilot_t *Config_GetPilotCfg(Config_PilotName_t pilot) {

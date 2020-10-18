@@ -24,23 +24,18 @@ typedef enum {
   ROBOT_MODEL_DRONE,        /* 空中机器人 */
   ROBOT_MODEL_SENTRY,       /* 哨兵机器人 */
   ROBOT_MODEL_NUM,          /* 型号数量 */
-} Config_RobotModel_t;      /* 通过型号来获取对应的Config_Robot_t */
+} Config_RobotModel_t;      /* 对应赛事规则的机器人型号 */
 
 typedef enum {
   ROBOT_PILOT_QS = 0,
   ROBOT_PILOT_NUM,    /* 操作数量 */
-} Config_PilotName_t; /* 通过操作员来获取对应的Config_Pilot_t */
+} Config_PilotName_t; /* 操作员名称 */
 
 typedef struct {
-  Config_RobotModel_t model; /* 型号 */
-
-  struct {
-    Chassis_Params_t chassis; /* 底盘 */
-    Gimbal_Params_t gimbal;   /* 云台 */
-    Shoot_Params_t shoot;     /* 射击 */
-  } param;                    /* 参数 */
-
-} Config_Robot_t; /* 机器人配置 */
+  Chassis_Params_t chassis; /* 底盘 */
+  Gimbal_Params_t gimbal;   /* 云台 */
+  Shoot_Params_t shoot;     /* 射击 */
+} Config_RobotParam_t;      /* 机器人参数，保存后不会变化 */
 
 typedef struct {
   struct {
@@ -64,11 +59,13 @@ typedef struct {
     BMI088_Cali_t bmi088;
   } cali; /* 校准 */
 
-} Config_t; /* 保存在Flash上的信息 */
+  AHRS_Eulr_t mech_zero_eulr; /* 机械零点 */
+
+} Config_t; /* 机器人配置，保存在Flash上的信息，根据机器人变化 */
 
 void Config_Get(Config_t *cfg);
 void Config_Set(Config_t *cfg);
-const Config_Robot_t *Config_GetRobotCfg(Config_RobotModel_t model);
+const Config_RobotParam_t *Config_GetRobotParam(Config_RobotModel_t model);
 const Config_Pilot_t *Config_GetPilotCfg(Config_PilotName_t pilot);
 Config_RobotModel_t Config_GetModelByName(const char *name);
 Config_PilotName_t Config_GetPilotByName(const char *name);

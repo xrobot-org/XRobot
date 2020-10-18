@@ -42,7 +42,7 @@ void Task_CtrlChassis(void *argument) {
   CAN_Init(&can, NULL, recv_motor_allert, 3, task_runtime.thread.referee);
 
   /* Module Setup */
-  Chassis_Init(&chassis, &(task_runtime.config_robot->param.chassis),
+  Chassis_Init(&chassis, &(task_runtime.robot_param->chassis),
                (float)TASK_FREQ_HZ_CTRL_CHASSIS);
 
   /* Task Setup */

@@ -28,7 +28,7 @@ void Task_Init(void *argument) {
   /* Init robot. */
   Config_Get(&task_runtime.robot_id);
 
-  task_runtime.config_robot = Config_GetRobotCfg(task_runtime.robot_id.model);
+  task_runtime.robot_param = Config_GetRobotParam(task_runtime.robot_id.model);
   task_runtime.config_pilot = Config_GetPilotCfg(task_runtime.robot_id.pilot);
 
   /* Command Line Interface. */

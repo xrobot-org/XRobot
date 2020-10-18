@@ -62,14 +62,14 @@ typedef struct {
   struct {
     osMutexId_t atti_ready;
   } mutex;
-  
+
   struct {
     float battery;
     float cpu_temp;
   } status;
 
   Config_t robot_id;
-  const Config_Robot_t *config_robot;
+  const Config_RobotParam_t *robot_param;
   const Config_Pilot_t *config_pilot;
 
 #ifdef DEBUG
