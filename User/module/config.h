@@ -59,7 +59,7 @@ typedef struct {
     BMI088_Cali_t bmi088;
   } cali; /* 校准 */
 
-  AHRS_Eulr_t mech_zero_eulr; /* 机械零点 */
+  AHRS_Eulr_t mech_zero; /* 机械零点 */
 
 } Config_t; /* 机器人配置，保存在Flash上的信息，根据机器人变化 */
 
