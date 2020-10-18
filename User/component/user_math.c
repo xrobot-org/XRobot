@@ -42,3 +42,13 @@ inline float CalcCircleError(float sp, float fb, float range) {
   }
   return error;
 }
+
+inline void CircleAdd(float *origin, float delta, float range) {
+  float out = *origin + delta;
+  if (out > range)
+    out -= range;
+  else if (out < 0)
+    out += range;
+  
+  *origin = out;
+}

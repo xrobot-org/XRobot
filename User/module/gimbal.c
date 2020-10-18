@@ -86,20 +86,13 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
     g->setpoint.eulr.yaw = fb->eulr.imu.yaw;
   }
 
-  /* 处理控制命令 */
-  g->setpoint.eulr.yaw += g_ctrl->delta_eulr.yaw * dt_sec;
-  g->setpoint.eulr.pit += g_ctrl->delta_eulr.pit * dt_sec;
-  
-  AHRS_ResetEulr(&(g_ctrl->delta_eulr));
+  /* 处理控制命令，限制setpoint范围 */
+  CircleAdd(&(g->setpoint.eulr.yaw), g_ctrl->delta_eulr.yaw * dt_sec, 2.0f * M_PI);
+  CircleAdd(&(g->setpoint.eulr.pit), g_ctrl->delta_eulr.pit * dt_sec, 2.0f * M_PI);
 
-  /* 限制setpoint范围 */
-  if (g->setpoint.eulr.yaw < -M_PI) {
-    g->setpoint.eulr.yaw += 2 * M_PI;
-  }
-  if (g->setpoint.eulr.yaw > M_PI) {
-    g->setpoint.eulr.yaw -= M_PI;
-  }
   g->setpoint.eulr.pit = AbsClip(g->setpoint.eulr.pit, M_PI / 2.0f);
+
+  AHRS_ResetEulr(&(g_ctrl->delta_eulr));
 
   /* 控制相关逻辑 */
   float yaw_omega_set_point, pit_omega_set_point;

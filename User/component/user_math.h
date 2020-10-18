@@ -37,6 +37,8 @@ void ResetMoveVector(MoveVector_t *mv);
 
 float CalcCircleError(float sp, float fb, float range);
 
+void CircleAdd(float *origin, float delta, float range);
+
 #ifdef __cplusplus
 }
 #endif
