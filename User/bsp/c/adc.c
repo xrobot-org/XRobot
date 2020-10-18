@@ -12,7 +12,7 @@ static volatile float volt_vrefint_proportion =
 
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
-float BSP_GetTemprater(void) {
+float BSP_GetTemperature(void) {
   ADC_ChannelConfTypeDef sConfig;
 
   sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;

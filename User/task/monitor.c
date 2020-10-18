@@ -41,7 +41,7 @@ void Task_Monitor(void *argument) {
       BSP_LED_Set(BSP_LED_RED, BSP_LED_OFF, 1);
     }
     
-    task_runtime.status.cpu_temp = BSP_GetTemprater();
+    task_runtime.status.cpu_temp = BSP_GetTemperature();
     
     if (task_runtime.status.cpu_temp >35.0f) {
       BSP_LED_Set(BSP_LED_BLU, BSP_LED_ON, 1);
