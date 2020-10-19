@@ -33,23 +33,23 @@ typedef enum {
   SHOOT_MODE_RELAX, /* 放松模式，电机不输出。一般情况射击初始化之后的模式 */
   SHOOT_MODE_SAFE, /* 保险模式，电机闭环控制保持静止。保证安全状态 */
   SHOOT_MODE_STDBY, /* 准备模式，摩擦轮开启。拨弹电机闭环控制保持静止 */
-  SHOOT_MODE_FIRE,  /* 开火模式，摩擦轮开启。拨弹电机开启 */
+  SHOOT_MODE_FIRE, /* 开火模式，摩擦轮开启。拨弹电机开启 */
 } CMD_ShootMode_t; /* 射击运行模式 */
 
 typedef struct {
   CMD_ChassisMode_t mode; /* 底盘运行模式 */
-  MoveVector_t ctrl_v;     /* 底盘控制向量 */
+  MoveVector_t ctrl_v;    /* 底盘控制向量 */
 } CMD_ChassisCtrl_t;      /* 底盘控制命令 */
 
 typedef struct {
-  CMD_GimbalMode_t mode; /* 云台运行模式 */
+  CMD_GimbalMode_t mode;  /* 云台运行模式 */
   AHRS_Eulr_t delta_eulr; /* 欧拉角变化角度 */
-} CMD_GimbalCtrl_t;      /* 云台控制命令 */
+} CMD_GimbalCtrl_t;       /* 云台控制命令 */
 
 typedef struct {
   CMD_ShootMode_t mode; /* 射击运行模式 */
-  float bullet_speed;    /* 子弹初速 */
-  float shoot_freq_hz;   /* 射击频率 */
+  float bullet_speed;   /* 子弹初速 */
+  float shoot_freq_hz;  /* 射击频率 */
 } CMD_ShootCtrl_t;      /* 射击控制命令 */
 
 typedef enum {
