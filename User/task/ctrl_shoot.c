@@ -18,10 +18,10 @@
 static CAN_t *can;
 
 #ifdef DEBUG
-CMD_ShootCtrl_t shoot_ctrl;
+CMD_ShootCmd_t shoot_cmd;
 Shoot_t shoot;
 #else
-static CMD_ShootCtrl_t shoot_ctrl;
+static CMD_ShootCmd_t shoot_cmd;
 static Shoot_t shoot;
 #endif
 
@@ -55,12 +55,12 @@ void Task_CtrlShoot(void *argument) {
       CAN_Motor_ControlShoot(0.0f, 0.0f, 0.0f);
 
     } else {
-      osMessageQueueGet(task_runtime.msgq.cmd.shoot, &shoot_ctrl, NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.cmd.shoot, &shoot_cmd, NULL, 0);
 
       osKernelLock();
       const uint32_t now = HAL_GetTick();
       Shoot_UpdateFeedback(&shoot, can);
-      Shoot_Control(&shoot, &shoot_ctrl, (float)(now - wakeup) / 1000.0f);
+      Shoot_Control(&shoot, &shoot_cmd, (float)(now - wakeup) / 1000.0f);
       wakeup = now;
       CAN_Motor_ControlShoot(shoot.out[SHOOT_ACTR_FRIC1_IDX],
                              shoot.out[SHOOT_ACTR_FRIC2_IDX],

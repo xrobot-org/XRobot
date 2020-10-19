@@ -18,11 +18,11 @@
 
 #ifdef DEBUG
 CAN_t can;
-CMD_ChassisCtrl_t chassis_ctrl;
+CMD_ChassisCmd_t chassis_cmd;
 Chassis_t chassis;
 #else
 static CAN_t can;
-static CMD_ChassisCtrl_t chassis_ctrl;
+static CMD_ChassisCmd_t chassis_cmd;
 static Chassis_t chassis;
 #endif
 
@@ -60,12 +60,12 @@ void Task_CtrlChassis(void *argument) {
       CAN_Motor_ControlChassis(0.0f, 0.0f, 0.0f, 0.0f);
 
     } else {
-      osMessageQueueGet(task_runtime.msgq.cmd.chassis, &chassis_ctrl, NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.cmd.chassis, &chassis_cmd, NULL, 0);
 
       osKernelLock();
       const uint32_t now = HAL_GetTick();
       Chassis_UpdateFeedback(&chassis, &can);
-      Chassis_Control(&chassis, &chassis_ctrl, (float)(now - wakeup) / 1000.0f);
+      Chassis_Control(&chassis, &chassis_cmd, (float)(now - wakeup) / 1000.0f);
       wakeup = now;
       CAN_Motor_ControlChassis(chassis.out[0], chassis.out[1], chassis.out[2],
                                chassis.out[3]);

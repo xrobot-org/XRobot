@@ -38,19 +38,19 @@ typedef enum {
 
 typedef struct {
   CMD_ChassisMode_t mode; /* 底盘运行模式 */
-  MoveVector_t ctrl_v;    /* 底盘控制向量 */
-} CMD_ChassisCtrl_t;      /* 底盘控制命令 */
+  MoveVector_t ctrl_vec;  /* 底盘控制向量 */
+} CMD_ChassisCmd_t;       /* 底盘控制命令 */
 
 typedef struct {
   CMD_GimbalMode_t mode;  /* 云台运行模式 */
   AHRS_Eulr_t delta_eulr; /* 欧拉角变化角度 */
-} CMD_GimbalCtrl_t;       /* 云台控制命令 */
+} CMD_GimbalCmd_t;        /* 云台控制命令 */
 
 typedef struct {
   CMD_ShootMode_t mode; /* 射击运行模式 */
   float bullet_speed;   /* 子弹初速 */
   float shoot_freq_hz;  /* 射击频率 */
-} CMD_ShootCtrl_t;      /* 射击控制命令 */
+} CMD_ShootCmd_t;       /* 射击控制命令 */
 
 typedef enum {
   CMD_SW_ERR = 0,
@@ -80,9 +80,9 @@ typedef struct {
 
   const CMD_Params_t *param;
 
-  CMD_ChassisCtrl_t chassis;
-  CMD_GimbalCtrl_t gimbal;
-  CMD_ShootCtrl_t shoot;
+  CMD_ChassisCmd_t chassis;
+  CMD_GimbalCmd_t gimbal;
+  CMD_ShootCmd_t shoot;
 } CMD_t;
 
 typedef struct {

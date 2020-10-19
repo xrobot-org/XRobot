@@ -74,12 +74,12 @@ int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback,
   return 0;
 }
 
-int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
-                      CMD_GimbalCtrl_t *g_ctrl, float dt_sec) {
+int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb, CMD_GimbalCmd_t *g_cmd,
+                      float dt_sec) {
   if (g == NULL) return -1;
-  if (g_ctrl == NULL) return -1;
+  if (g_cmd == NULL) return -1;
 
-  Gimbal_SetMode(g, g_ctrl->mode);
+  Gimbal_SetMode(g, g_cmd->mode);
 
   /* 设置初始yaw目标值 */
   if (g->setpoint.eulr.yaw == 0.0f) {
@@ -87,12 +87,14 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
   }
 
   /* 处理控制命令，限制setpoint范围 */
-  CircleAdd(&(g->setpoint.eulr.yaw), g_ctrl->delta_eulr.yaw * dt_sec, 2.0f * M_PI);
-  CircleAdd(&(g->setpoint.eulr.pit), g_ctrl->delta_eulr.pit * dt_sec, 2.0f * M_PI);
+  CircleAdd(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw * dt_sec,
+            2.0f * M_PI);
+  CircleAdd(&(g->setpoint.eulr.pit), g_cmd->delta_eulr.pit * dt_sec,
+            2.0f * M_PI);
 
   g->setpoint.eulr.pit = AbsClip(g->setpoint.eulr.pit, M_PI / 2.0f);
 
-  AHRS_ResetEulr(&(g_ctrl->delta_eulr));
+  AHRS_ResetEulr(&(g_cmd->delta_eulr));
 
   /* 控制相关逻辑 */
   float yaw_omega_set_point, pit_omega_set_point;

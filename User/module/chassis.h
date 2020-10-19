@@ -89,7 +89,7 @@ typedef struct {
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
                     float target_freq);
 int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can);
-int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCtrl_t *c_ctrl, float dt_sec);
+int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec);
 
 #ifdef __cplusplus
 }

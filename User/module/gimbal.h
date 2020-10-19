@@ -32,8 +32,8 @@ enum Gimbal_PID_e {
   GIMBAL_PID_PIT_OMEGA_IDX, /* Pitch轴控制的角速度环PID的索引值 */
   GIMBAL_PID_PIT_ANGLE_IDX, /* Pitch轴控制的角度环PID的索引值 */
   GIMBAL_PID_REL_YAW_IDX,   /* 通过编码器控制时Yaw轴PID的索引值 */
-  GIMBAL_PID_REL_PIT_IDX,   /* 通过编码器控制时Pitch轴PID的索引值 */
-  GIMBAL_PID_NUM,           /* 总共的PID数量 */
+  GIMBAL_PID_REL_PIT_IDX, /* 通过编码器控制时Pitch轴PID的索引值 */
+  GIMBAL_PID_NUM,         /* 总共的PID数量 */
 };
 
 /* 用enum组合所有输出，GIMBAL_ACTR_NUM长度的数组都可以用这个枚举访问 */
@@ -46,12 +46,12 @@ enum Gimbal_Acuator_e {
 /* 云台参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
   const KPID_Params_t pid[GIMBAL_PID_NUM]; /* 云台电机控制PID的参数 */
-  
+
   struct {
     float out;            /* 电机输出 */
     float gyro;           /* 陀螺仪数据 */
   } low_pass_cutoff_freq; /* 低通滤波器截止频率 */
-  
+
   struct {
     struct {
       float high; /* 限位高点 */
@@ -102,8 +102,8 @@ int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback, const CAN_t *can);
 
 int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
                    float target_freq);
-int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb,
-                      CMD_GimbalCtrl_t *g_ctrl, float dt_sec);
+int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb, CMD_GimbalCmd_t *g_cmd,
+                      float dt_sec);
 
 #ifdef __cplusplus
 }

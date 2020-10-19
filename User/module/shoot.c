@@ -12,7 +12,8 @@
 /* Private function  -------------------------------------------------------- */
 static void TrigTimerCallback(void *arg) {
   Shoot_t *s = (Shoot_t *)arg;
-  CircleAdd(&(s->setpoint.trig_angle), 2.0f * M_PI / s->param->num_trig_tooth, 2.0f * M_PI);
+  CircleAdd(&(s->setpoint.trig_angle), 2.0f * M_PI / s->param->num_trig_tooth,
+            2.0f * M_PI);
 }
 
 static int8_t Shoot_SetMode(Shoot_t *s, CMD_ShootMode_t mode) {
@@ -96,22 +97,22 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
   return 0;
 }
 
-int8_t Shoot_Control(Shoot_t *s, CMD_ShootCtrl_t *s_ctrl, float dt_sec) {
+int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec) {
   if (s == NULL) return -1;
 
-  Shoot_SetMode(s, s_ctrl->mode);
+  Shoot_SetMode(s, s_cmd->mode);
 
   if (s->mode == SHOOT_MODE_SAFE) {
-    s_ctrl->bullet_speed = 0.0f;
-    s_ctrl->shoot_freq_hz = 0.0f;
+    s_cmd->bullet_speed = 0.0f;
+    s_cmd->shoot_freq_hz = 0.0f;
   }
 
   s->setpoint.fric_rpm[0] =
-      s->param->bullet_speed_scaler * s_ctrl->bullet_speed +
+      s->param->bullet_speed_scaler * s_cmd->bullet_speed +
       s->param->bullet_speed_bias;
   s->setpoint.fric_rpm[1] = -s->setpoint.fric_rpm[0];
 
-  const uint32_t period_ms = 1000u / (uint32_t)s_ctrl->shoot_freq_hz;
+  const uint32_t period_ms = 1000u / (uint32_t)s_cmd->shoot_freq_hz;
   if (period_ms > 0) {
     if (!osTimerIsRunning(s->trig_timer_id))
       osTimerStart(s->trig_timer_id, period_ms);

@@ -35,11 +35,11 @@ static CMD_t cmd;
 void Task_Command(void *argument) {
   (void)argument;
   task_runtime.msgq.cmd.chassis =
-      osMessageQueueNew(3u, sizeof(CMD_ChassisCtrl_t), NULL);
+      osMessageQueueNew(3u, sizeof(CMD_ChassisCmd_t), NULL);
   task_runtime.msgq.cmd.gimbal =
-      osMessageQueueNew(3u, sizeof(CMD_GimbalCtrl_t), NULL);
+      osMessageQueueNew(3u, sizeof(CMD_GimbalCmd_t), NULL);
   task_runtime.msgq.cmd.shoot =
-      osMessageQueueNew(3u, sizeof(CMD_ShootCtrl_t), NULL);
+      osMessageQueueNew(3u, sizeof(CMD_ShootCmd_t), NULL);
 
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_COMMAND);

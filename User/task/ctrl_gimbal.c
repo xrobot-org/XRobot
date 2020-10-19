@@ -19,11 +19,11 @@
 static CAN_t *can;
 
 #ifdef DEBUG
-CMD_GimbalCtrl_t gimbal_ctrl;
+CMD_GimbalCmd_t gimbal_cmd;
 Gimbal_Feedback gimbal_feedback;
 Gimbal_t gimbal;
 #else
-static CMD_GimbalCtrl_t gimbal_ctrl;
+static CMD_GimbalCmd_t gimbal_cmd;
 static Gimbal_Feedback gimbal_feedback;
 static Gimbal_t gimbal;
 #endif
@@ -62,12 +62,12 @@ void Task_CtrlGimbal(void *argument) {
                         &(gimbal_feedback.eulr.imu), NULL, 0);
       osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &(gimbal_feedback.gyro),
                         NULL, 0);
-      osMessageQueueGet(task_runtime.msgq.cmd.gimbal, &gimbal_ctrl, NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.cmd.gimbal, &gimbal_cmd, NULL, 0);
 
       osKernelLock();
       const uint32_t now = HAL_GetTick();
       Gimbal_CANtoFeedback(&gimbal_feedback, can);
-      Gimbal_Control(&gimbal, &gimbal_feedback, &gimbal_ctrl,
+      Gimbal_Control(&gimbal, &gimbal_feedback, &gimbal_cmd,
                      (float)(now - wakeup) / 1000.0f);
       wakeup = now;
       CAN_Motor_ControlGimbal(gimbal.out[GIMBAL_ACTR_YAW_IDX],

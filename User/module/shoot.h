@@ -62,7 +62,7 @@ typedef struct {
   const Shoot_Params_t *param; /* 射击的参数，用Shoot_Init设定 */
 
   /* 模块通用 */
-  CMD_ShootMode_t mode;     /* 射击模式 */
+  CMD_ShootMode_t mode;      /* 射击模式 */
   osTimerId_t trig_timer_id; /* 控制拨弹电机的软件定时器 */
 
   struct {
@@ -73,12 +73,12 @@ typedef struct {
   struct {
     float fric_rpm[2]; /* 摩擦轮电机转速，单位：RPM */
     float trig_angle;  /* 拨弹电机角度，单位：弧度 */
-  } setpoint;         /* PID计算的目标值 */
+  } setpoint;          /* PID计算的目标值 */
 
   struct {
     KPID_t fric[2]; /* 控制摩擦轮 */
     KPID_t trig;    /* 控制拨弹电机 */
-  } pid;           /* 反馈控制用的PID */
+  } pid;            /* 反馈控制用的PID */
 
   struct {
     struct {
@@ -100,7 +100,7 @@ typedef struct {
 /* Exported functions prototypes -------------------------------------------- */
 int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq);
 int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can);
-int8_t Shoot_Control(Shoot_t *s, CMD_ShootCtrl_t *s_ctrl, float dt_sec);
+int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec);
 
 #ifdef __cplusplus
 }

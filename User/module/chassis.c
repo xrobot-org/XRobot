@@ -156,17 +156,17 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   return CHASSIS_OK;
 }
 
-int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCtrl_t *c_ctrl, float dt_sec) {
+int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec) {
   if (c == NULL) return CHASSIS_ERR_NULL;
-  if (c_ctrl == NULL) return CHASSIS_ERR_NULL;
+  if (c_cmd == NULL) return CHASSIS_ERR_NULL;
 
-  Chassis_SetMode(c, c_ctrl->mode);
+  Chassis_SetMode(c, c_cmd->mode);
 
-  /* ctrl_v -> move_vec. */
+  /* ctrl_vec -> move_vec. */
   /* Compute vx and vy. */
   const float cos_beta = cosf(c->feedback.gimbal_yaw_angle);
   const float sin_beta = sinf(c->feedback.gimbal_yaw_angle);
-  
+
   switch (c->mode) {
     case CHASSIS_MODE_BREAK:
       c->move_vec.vx = 0.0f;
@@ -174,8 +174,8 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCtrl_t *c_ctrl, float dt_sec) {
       break;
 
     case CHASSIS_MODE_INDENPENDENT:
-      c->move_vec.vx = c_ctrl->ctrl_v.vx;
-      c->move_vec.vy = c_ctrl->ctrl_v.vx;
+      c->move_vec.vx = c_cmd->ctrl_vec.vx;
+      c->move_vec.vy = c_cmd->ctrl_vec.vx;
       break;
 
     case CHASSIS_MODE_OPEN:
@@ -183,9 +183,9 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCtrl_t *c_ctrl, float dt_sec) {
     case CHASSIS_MODE_FOLLOW_GIMBAL:
     case CHASSIS_MODE_ROTOR:
       c->move_vec.vx =
-          cos_beta * c_ctrl->ctrl_v.vx - sin_beta * c_ctrl->ctrl_v.vy;
+          cos_beta * c_cmd->ctrl_vec.vx - sin_beta * c_cmd->ctrl_vec.vy;
       c->move_vec.vy =
-          sin_beta * c_ctrl->ctrl_v.vx - cos_beta * c_ctrl->ctrl_v.vy;
+          sin_beta * c_cmd->ctrl_vec.vx - cos_beta * c_cmd->ctrl_vec.vy;
   }
 
   /* Compute wz. */
