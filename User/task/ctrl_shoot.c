@@ -29,7 +29,7 @@ static Shoot_t shoot;
 /* Exported functions ------------------------------------------------------- */
 void Task_CtrlShoot(void *argument) {
   (void)argument;
-  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_SHOOT;
+  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_SHOOT;
 
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_CTRL_SHOOT);
@@ -39,7 +39,7 @@ void Task_CtrlShoot(void *argument) {
   }
 
   Shoot_Init(&shoot, &(task_runtime.robot_param->shoot),
-             (float)TASK_FREQ_HZ_CTRL_SHOOT);
+             (float)TASK_FREQ_CTRL_SHOOT);
 
   uint32_t tick = osKernelGetTickCount();
   uint32_t wakeup = HAL_GetTick();

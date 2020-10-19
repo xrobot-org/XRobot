@@ -30,7 +30,7 @@ static Chassis_t chassis;
 /* Exported functions ------------------------------------------------------- */
 void Task_CtrlChassis(void *argument) {
   (void)argument;
-  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_CHASSIS;
+  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_CHASSIS;
 
   /* Device Setup */
   osDelay(TASK_INIT_DELAY_CTRL_CHASSIS);
@@ -43,7 +43,7 @@ void Task_CtrlChassis(void *argument) {
 
   /* Module Setup */
   Chassis_Init(&chassis, &(task_runtime.robot_param->chassis),
-               (float)TASK_FREQ_HZ_CTRL_CHASSIS);
+               (float)TASK_FREQ_CTRL_CHASSIS);
 
   /* Task Setup */
   uint32_t tick = osKernelGetTickCount();

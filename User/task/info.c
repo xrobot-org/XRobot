@@ -19,7 +19,7 @@
 /* Exported functions ------------------------------------------------------- */
 void Task_Info(void *argument) {
   (void)argument;
-  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_INFO;
+  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_INFO;
 
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_INFO);

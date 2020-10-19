@@ -24,7 +24,7 @@ static Referee_t ref;
 /* Exported functions ------------------------------------------------------- */
 void Task_Referee(void *argument) {
   (void)argument;
-  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_REFEREE;
+  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_REFEREE;
 
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_REFEREE);

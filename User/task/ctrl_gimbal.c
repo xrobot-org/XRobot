@@ -32,7 +32,7 @@ static Gimbal_t gimbal;
 /* Exported functions ------------------------------------------------------- */
 void Task_CtrlGimbal(void *argument) {
   (void)argument;
-  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_HZ_CTRL_GIMBAL;
+  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_GIMBAL;
 
   /* Task Setup */
   osDelay(TASK_INIT_DELAY_CTRL_GIMBAL);
@@ -42,7 +42,7 @@ void Task_CtrlGimbal(void *argument) {
   }
 
   Gimbal_Init(&gimbal, &(task_runtime.robot_param->gimbal),
-              (float)TASK_FREQ_HZ_CTRL_GIMBAL);
+              (float)TASK_FREQ_CTRL_GIMBAL);
 
   uint32_t tick = osKernelGetTickCount();
   uint32_t wakeup = HAL_GetTick();
