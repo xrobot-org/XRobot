@@ -253,7 +253,7 @@ int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali) {
 }
 
 bool BMI088_GyroStable(AHRS_Gyro_t *gyro) {
-  return ((gyro->x < 0.1f) && (gyro->y < 0.1f) && (gyro->z < 0.1f));
+  return ((gyro->x < 0.03f) && (gyro->y < 0.03f) && (gyro->z < 0.03f));
 }
 
 uint32_t BMI088_WaitNew() {

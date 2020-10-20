@@ -377,7 +377,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       while (count < 1000) {
         bool data_new = (osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &gyro,
                                            NULL, 5) == osOK);
-        bool data_good = (gyro.x < 0.03) && (gyro.y < 0.03) && (gyro.z < 0.03);
+        bool data_good = BMI088_GyroStable(&gyro);
         if (data_new && data_good) {
           x += gyro.x;
           y += gyro.y;
