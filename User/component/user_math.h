@@ -14,8 +14,8 @@ extern "C" {
 #include <float.h>
 #include <math.h>
 
-#define MATH_DEG_TO_RAD_MULT (0.01745329251f)
-#define MATH_RAD_TO_DEG_MULT (57.2957795131f)
+#define M_DEG2RAD_MULT (0.01745329251f)
+#define M_RAD2DEG_MULT (57.2957795131f)
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846f
