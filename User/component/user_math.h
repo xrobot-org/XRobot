@@ -39,7 +39,7 @@ float Sign(float in);
 
 void ResetMoveVector(MoveVector_t *mv);
 
-float CalcCircleError(float sp, float fb, float range);
+float CircleError(float sp, float fb, float range);
 
 void CircleAdd(float *origin, float delta, float range);
 

@@ -33,12 +33,14 @@ inline void ResetMoveVector(MoveVector_t *mv) {
   memset(mv, 0, sizeof(MoveVector_t));
 }
 
-inline float CalcCircleError(float sp, float fb, float range) {
-  float error = fb - sp;
-  float half_range = range / 2;
-  if (error > half_range) {
-    error -= half_range;
-    return -error;
+inline float CircleError(float sp, float fb, float range) {
+  float error = sp - fb;
+  if (range > 0.0f) {
+    float half_range = range / 2.0f;
+    if (error > half_range) {
+      error -= half_range;
+      return -error;
+    }
   }
   return error;
 }
@@ -47,8 +49,8 @@ inline void CircleAdd(float *origin, float delta, float range) {
   float out = *origin + delta;
   if (out > range)
     out -= range;
-  else if (out < 0)
+  else if (out < 0.0f)
     out += range;
-  
+
   *origin = out;
 }

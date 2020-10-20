@@ -47,13 +47,7 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float val_dot, float dt) {
   }
 
   /* 计算误差值 */
-  float err;
-  if (pid->param->range > 0.0f) {
-    err = CalcCircleError(sp, fb, pid->param->range);
-  } else {
-    err = sp - fb;
-  }
-
+  float err = CircleError(sp, fb, pid->param->range);
   err *= pid->param->k;
 
   float fb_scaled = pid->param->k * fb;
