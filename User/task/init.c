@@ -13,13 +13,6 @@
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
-
-static const char *const ROBOT_ID_MEAASGE =
-    " -------------------------------------------------------------------\r\n"
-    " Robot Model: %s\tRobot Pilot: %s \r\n"
-    " -------------------------------------------------------------------\r\n"
-    "\r\n";
-
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 void Task_Init(void *argument) {
@@ -30,11 +23,6 @@ void Task_Init(void *argument) {
 
   task_runtime.robot_param = Config_GetRobotParam(task_runtime.robot_id.model);
   task_runtime.config_pilot = Config_GetPilotCfg(task_runtime.robot_id.pilot);
-
-  /* Command Line Interface. */
-  BSP_USB_Printf(ROBOT_ID_MEAASGE,
-                 Config_GetNameByModel(task_runtime.robot_id.model),
-                 Config_GetNameByPilot(task_runtime.robot_id.pilot));
 
   osKernelLock();
   task_runtime.thread.atti_esti =

@@ -103,6 +103,11 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       "total(B)	free(B)	used(B)\r\n"
       "*******************************\r\n";
 
+  static const char *const robot_config_header =
+      "\r\n"
+      " Robot Model: %s\tRobot Pilot: %s \r\n"
+      "\r\n";
+
   if (out_buffer == NULL) return pdFALSE;
   (void)command_string;
   len -= 1;
@@ -146,6 +151,12 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
     case 7:
       snprintf(out_buffer, len, "\r\nCPU temp: %0.2f C\r\n",
                task_runtime.status.cpu_temp);
+      fsm.stage++;
+      return pdPASS;
+    case 8:
+      snprintf(out_buffer, len, robot_config_header,
+               Config_GetNameByModel(task_runtime.robot_id.model),
+               Config_GetNameByPilot(task_runtime.robot_id.pilot));
       fsm.stage++;
       return pdPASS;
     default:
