@@ -21,6 +21,10 @@ extern "C" {
 #define M_PI 3.14159265358979323846f
 #endif
 
+#ifndef M_2PI
+#define M_2PI 6.28318530717958647692f
+#endif
+
 typedef struct {
   float vx;     /* 前后平移 */
   float vy;     /* 左右平移 */

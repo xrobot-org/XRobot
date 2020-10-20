@@ -100,7 +100,7 @@ void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq,
   }
 
   const float alpha = tanf(M_PI * bandwidth / sample_freq);
-  const float beta = -cosf(2.0f * M_PI * notch_freq / sample_freq);
+  const float beta = -cosf(M_2PI * notch_freq / sample_freq);
   const float a0_inv = 1.0f / (alpha + 1.0f);
 
   f->b0 = a0_inv;

@@ -125,13 +125,13 @@ int8_t AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq) {
       ahrs->q2 = -0.00283267116f;
       ahrs->q3 = 0.598749936f;
 
-    } else if ((yaw < (M_PI / 2)) || (yaw > 0.0f)) {
+    } else if ((yaw < (M_PI / 2.0f)) || (yaw > 0.0f)) {
       ahrs->q0 = 0.997458339f;
       ahrs->q1 = 0.000336312107f;
       ahrs->q2 = -0.0057230792f;
       ahrs->q3 = 0.0740156546;
 
-    } else if ((yaw < M_PI) || (yaw > (M_PI / 2))) {
+    } else if ((yaw < M_PI) || (yaw > (M_PI / 2.0f))) {
       ahrs->q0 = 0.800884545f;
       ahrs->q1 = 0.00862364192f;
       ahrs->q2 = -0.00283267116f;

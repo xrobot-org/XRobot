@@ -30,7 +30,7 @@ static const Config_RobotParam_t param_infantry = {
       .i_limit = 1.0f,
       .out_limit = 1.0f,
       .d_cutoff_freq = -1.0f,
-      .range = 2.0f * M_PI,
+      .range = M_2PI,
     },
     .low_pass_cutoff_freq = {
       .in = -1.0f,
@@ -59,7 +59,7 @@ static const Config_RobotParam_t param_infantry = {
         .i_limit = 0.0f,
         .out_limit = 1000.0f,
         .d_cutoff_freq = -1.0f,
-        .range = 2.0f * M_PI,
+        .range = M_2PI,
       },{
         /* GIMBAL_PID_PIT_OMEGA_IDX */
         .k = 0.15f,
@@ -79,7 +79,7 @@ static const Config_RobotParam_t param_infantry = {
         .i_limit = 0.0f,
         .out_limit = 1000.0f,
         .d_cutoff_freq = -1.0f,
-        .range = 2.0f * M_PI,
+        .range = M_2PI,
       },{
         /* GIMBAL_PID_REL_YAW_IDX */
         .k = 0.1f,
@@ -89,7 +89,7 @@ static const Config_RobotParam_t param_infantry = {
         .i_limit = 1.0f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
-        .range = 2.0f * M_PI,
+        .range = M_2PI,
       },{
         /* GIMBAL_PID_REL_PIT_IDX, */
         .k = 0.1f,
@@ -99,7 +99,7 @@ static const Config_RobotParam_t param_infantry = {
         .i_limit = 1.0f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
-        .range = 2.0f * M_PI,
+        .range = M_2PI,
       },
     }, /* pid */
     .low_pass_cutoff_freq = {
@@ -130,7 +130,7 @@ static const Config_RobotParam_t param_infantry = {
       .i_limit = 0.5f,
       .out_limit = 0.5f,
       .d_cutoff_freq = -1.0f,
-      .range = 2.0f * M_PI,
+      .range = M_2PI,
     },
     .low_pass_cutoff_freq = {
       .in = {

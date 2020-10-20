@@ -87,10 +87,8 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb, CMD_GimbalCmd_t *g_cmd,
   }
 
   /* 处理控制命令，限制setpoint范围 */
-  CircleAdd(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw * dt_sec,
-            2.0f * M_PI);
-  CircleAdd(&(g->setpoint.eulr.pit), g_cmd->delta_eulr.pit * dt_sec,
-            2.0f * M_PI);
+  CircleAdd(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw * dt_sec, M_2PI);
+  CircleAdd(&(g->setpoint.eulr.pit), g_cmd->delta_eulr.pit * dt_sec, M_2PI);
 
   g->setpoint.eulr.pit = AbsClip(g->setpoint.eulr.pit, M_PI / 2.0f);
 

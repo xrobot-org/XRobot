@@ -12,8 +12,7 @@
 /* Private function  -------------------------------------------------------- */
 static void TrigTimerCallback(void *arg) {
   Shoot_t *s = (Shoot_t *)arg;
-  CircleAdd(&(s->setpoint.trig_angle), 2.0f * M_PI / s->param->num_trig_tooth,
-            2.0f * M_PI);
+  CircleAdd(&(s->setpoint.trig_angle), M_2PI / s->param->num_trig_tooth, M_2PI);
 }
 
 static int8_t Shoot_SetMode(Shoot_t *s, CMD_ShootMode_t mode) {
