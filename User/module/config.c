@@ -1,3 +1,7 @@
+/*
+ * 配置相关
+ */
+
 #include "config.h"
 
 #include <string.h>
@@ -162,15 +166,32 @@ static const Config_Pilot_t user_qs = {
     },
 };
 
+/*!
+ * \brief 从Flash读取配置信息
+ *
+ * \param cfg 配置信息
+ */
 void Config_Get(Config_t *cfg) {
   BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(Config_t));
 }
 
+/*!
+ * \brief 将配置信息写入Flash
+ *
+ * \param cfg 配置信息
+ */
 void Config_Set(Config_t *cfg) {
   BSP_Flash_EraseSector(11);
   BSP_Flash_WriteBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(Config_t));
 }
 
+/*!
+ * \brief 获取机器人参数
+ *
+ * \param model 机器人型号
+ *
+ * \return 机器人参数
+ */
 const Config_RobotParam_t *Config_GetRobotParam(Config_RobotModel_t model) {
   switch (model) {
     case ROBOT_MODEL_INFANTRY:
@@ -190,6 +211,13 @@ const Config_RobotParam_t *Config_GetRobotParam(Config_RobotModel_t model) {
   return &param_infantry;
 }
 
+/*!
+ * \brief 获取操作手配置
+ *
+ * \param pilot 操作手
+ *
+ * \return 操作手配置
+ */
 const Config_Pilot_t *Config_GetPilotCfg(Config_PilotName_t pilot) {
   switch (pilot) {
     case ROBOT_PILOT_QS:
@@ -218,6 +246,13 @@ static const struct {
     {ROBOT_PILOT_NUM, NULL},
 };
 
+/*!
+ * \brief 通过字符串获得机器人型号
+ *
+ * \param name 名字字符串
+ *
+ * \return 机器人模型
+ */
 Config_RobotModel_t Config_GetModelByName(const char *name) {
   for (int j = 0; model_string_map[j].name != NULL; j++) {
     if (strstr(model_string_map[j].name, name) != NULL) {
@@ -227,6 +262,13 @@ Config_RobotModel_t Config_GetModelByName(const char *name) {
   return ROBOT_MODEL_NUM; /* No match. */
 }
 
+/*!
+ * \brief 通过字符串获得操作手
+ *
+ * \param name 名字字符串
+ *
+ * \return 操作手
+ */
 Config_PilotName_t Config_GetPilotByName(const char *name) {
   for (int j = 0; pilot_string_map[j].name != NULL; j++) {
     if (strcmp(pilot_string_map[j].name, name) == 0) {
@@ -236,6 +278,13 @@ Config_PilotName_t Config_GetPilotByName(const char *name) {
   return ROBOT_PILOT_NUM; /* No match. */
 }
 
+/*!
+ * \brief 获得机器人型号对应字符串
+ *
+ * \param model 机器人型号
+ *
+ * \return 字符串
+ */
 const char *Config_GetNameByModel(Config_RobotModel_t model) {
   for (int j = 0; model_string_map[j].name != NULL; j++) {
     if (model_string_map[j].model == model) {
@@ -245,6 +294,13 @@ const char *Config_GetNameByModel(Config_RobotModel_t model) {
   return "Unknown"; /* No match. */
 }
 
+/*!
+ * \brief 获得操作手对应字符串
+ *
+ * \param pilot 操作手
+ *
+ * \return 字符串
+ */
 const char *Config_GetNameByPilot(Config_PilotName_t pilot) {
   for (int j = 0; pilot_string_map[j].name != NULL; j++) {
     if (pilot_string_map[j].pilot == pilot) {

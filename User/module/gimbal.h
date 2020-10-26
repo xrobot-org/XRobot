@@ -1,6 +1,6 @@
 /*
-  云台模组
-*/
+ * 云台模组
+ */
 
 #pragma once
 
@@ -76,9 +76,10 @@ typedef struct {
   } eulr;                /* 欧拉角 */
 } Gimbal_Feedback;
 
-/* 运行的主结构体，所有这个文件里的函数都在操作这个结构体。
-  包含了初始化参数，中间变量，输出变量。
-*/
+/*
+ * 运行的主结构体，所有这个文件里的函数都在操作这个结构体。
+ * 包含了初始化参数，中间变量，输出变量。
+ */
 typedef struct {
   const Gimbal_Params_t *param; /* 云台的参数，用Gimbal_Init设定 */
 
@@ -98,10 +99,39 @@ typedef struct {
 } Gimbal_t;
 
 /* Exported functions prototypes -------------------------------------------- */
+
+/*!
+ * \brief 通过CAN设备更新云台反馈信息
+ *
+ * \param gimbal_feedback 云台反馈信息
+ * \param can CAN设备
+ *
+ * \return 函数运行结果
+ */
 int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback, const CAN_t *can);
 
+/*!
+ * \brief 初始化云台
+ *
+ * \param g 包含云台数据的结构体
+ * \param param 包含云台参数的结构体指针
+ * \param target_freq 任务预期的运行频率
+ *
+ * \return 函数运行结果
+ */
 int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
                    float target_freq);
+
+/*!
+ * \brief 运行云台控制逻辑
+ *
+ * \param g 包含云台数据的结构体
+ * \param fb 云台反馈信息
+ * \param g_cmd 云台控制指令
+ * \param dt_sec 两次调用的时间间隔
+ *
+ * \return 函数运行结果
+ */
 int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb, CMD_GimbalCmd_t *g_cmd,
                       float dt_sec);
 

@@ -50,6 +50,16 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_ShootMode_t mode) {
 }
 
 /* Exported functions ------------------------------------------------------- */
+
+/*!
+ * \brief 初始化射击
+ *
+ * \param s 包含射击数据的结构体
+ * \param param 包含射击参数的结构体指针
+ * \param target_freq 任务预期的运行频率
+ *
+ * \return 函数运行结果
+ */
 int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
   if (s == NULL) return -1;
 
@@ -80,6 +90,14 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
   return 0;
 }
 
+/*!
+ * \brief 更新射击的反馈信息
+ *
+ * \param s 包含射击数据的结构体
+ * \param can CAN设备结构体
+ *
+ * \return 函数运行结果
+ */
 int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
   if (s == NULL) return -1;
 
@@ -96,6 +114,15 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
   return 0;
 }
 
+/*!
+ * \brief 运行射击控制逻辑
+ *
+ * \param s 包含射击数据的结构体
+ * \param s_cmd 射击控制指令
+ * \param dt_sec 两次调用的时间间隔
+ *
+ * \return 函数运行结果
+ */
 int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec) {
   if (s == NULL) return -1;
 

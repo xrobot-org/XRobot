@@ -1,6 +1,6 @@
 /*
-  底盘模组
-*/
+ * 底盘模组
+ */
 
 #pragma once
 
@@ -24,6 +24,8 @@ extern "C" {
 
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
+
+/* 底盘类型（底盘的物理设计） */
 typedef enum {
   CHASSIS_TYPE_MECANUM,    /* 麦克纳姆轮 */
   CHASSIS_TYPE_PARLFIX4,   /* 平行摆设的四个驱动轮 */
@@ -33,7 +35,7 @@ typedef enum {
   CHASSIS_TYPE_DRONE,      /* 底盘为无人机 */
 } Chassis_Type_t;
 
-/* 底盘参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
+/* 底盘参数的结构体，包含所有初始化用的参数，通常是const，存好几组*/
 typedef struct {
   Chassis_Type_t type; /* 底盘类型，底盘的机械设计和轮子选型 */
   KPID_Params_t motor_pid_param;  /* 轮子控制PID的参数 */
@@ -46,9 +48,10 @@ typedef struct {
 
 } Chassis_Params_t;
 
-/* 运行的主结构体，所有这个文件里的函数都在操作这个结构体。
-  包含了初始化参数，中间变量，输出变量。
-*/
+/*
+ * 运行的主结构体，所有这个文件里的函数都在操作这个结构体
+ * 包含了初始化参数，中间变量，输出变量
+ */
 typedef struct {
   const Chassis_Params_t *param; /* 底盘的参数，用Chassis_Init设定 */
 
@@ -85,10 +88,38 @@ typedef struct {
 } Chassis_t;
 
 /* Exported functions prototypes -------------------------------------------- */
-/* Chassis_Control的目标运行频率 */
+
+/*!
+ * \brief 初始化底盘
+ *
+ * \param c 包含底盘数据的结构体
+ * \param param 包含底盘参数的结构体指针
+ * \param target_freq 任务预期的运行频率
+ *
+ * \return 函数运行结果
+ */
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
                     float target_freq);
+
+/*!
+ * \brief 更新底盘的反馈信息
+ *
+ * \param c 包含底盘数据的结构体
+ * \param can CAN设备结构体
+ *
+ * \return 函数运行结果
+ */
 int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can);
+
+/*!
+ * \brief 运行底盘控制逻辑
+ *
+ * \param c 包含底盘数据的结构体
+ * \param c_cmd 底盘控制指令
+ * \param dt_sec 两次调用的时间间隔
+ *
+ * \return 函数运行结果
+ */
 int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec);
 
 #ifdef __cplusplus

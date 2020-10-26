@@ -1,6 +1,6 @@
 /*
-  底盘模组
-*/
+ * 底盘模组
+ */
 
 /* Includes ----------------------------------------------------------------- */
 #include "chassis.h"
@@ -14,6 +14,15 @@
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
+
+/*!
+ * \brief 设置底盘模式
+ *
+ * \param c 包含底盘数据的结构体
+ * \param mode 要设置的模式
+ *
+ * \return 函数运行结果
+ */
 static int8_t Chassis_SetMode(Chassis_t *c, CMD_ChassisMode_t mode) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (mode == c->mode) return CHASSIS_OK;
@@ -51,6 +60,16 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_ChassisMode_t mode) {
 }
 
 /* Exported functions ------------------------------------------------------- */
+
+/*!
+ * \brief 初始化底盘
+ *
+ * \param c 包含底盘数据的结构体
+ * \param param 包含底盘参数的结构体指针
+ * \param target_freq 任务预期的运行频率
+ *
+ * \return 函数运行结果
+ */
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
                     float target_freq) {
   if (c == NULL) return CHASSIS_ERR_NULL;
@@ -142,20 +161,36 @@ error:
   return CHASSIS_ERR_NULL;
 }
 
+/*!
+ * \brief 更新底盘的反馈信息
+ *
+ * \param c 包含底盘数据的结构体
+ * \param can CAN设备结构体
+ *
+ * \return 函数运行结果
+ */
 int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (can == NULL) return CHASSIS_ERR_NULL;
 
-  c->feedback.gimbal_yaw_angle =
-      can->gimbal_motor_feedback[CAN_MOTOR_GIMBAL_YAW].rotor_angle;
+  c->feedback.gimbal_yaw_angle = can->gimbal_motor.name.yaw.rotor_angle;
 
   for (uint8_t i = 0; i < c->num_wheel; i++) {
-    c->feedback.motor_rpm[i] = can->chassis_motor_feedback[i].rotor_speed;
+    c->feedback.motor_rpm[i] = can->chassis_motor.array[i].rotor_speed;
   }
 
   return CHASSIS_OK;
 }
 
+/*!
+ * \brief 运行底盘控制逻辑
+ *
+ * \param c 包含底盘数据的结构体
+ * \param c_cmd 底盘控制指令
+ * \param dt_sec 两次调用的时间间隔
+ *
+ * \return 函数运行结果
+ */
 int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (c_cmd == NULL) return CHASSIS_ERR_NULL;
