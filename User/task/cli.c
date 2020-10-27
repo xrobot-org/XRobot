@@ -155,8 +155,8 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       return pdPASS;
     case 8:
       snprintf(out_buffer, len, robot_config_header,
-               Config_GetNameByModel(task_runtime.robot_id.model),
-               Config_GetNameByPilot(task_runtime.robot_id.pilot));
+               Config_GetNameByModel(task_runtime.robot_cfg.model),
+               Config_GetNameByPilot(task_runtime.robot_cfg.pilot));
       fsm.stage++;
       return pdPASS;
     default:
@@ -521,68 +521,88 @@ static const CLI_Command_Definition_t command_table[] = {
 
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
-void Task_CLI(void *argument) {
-  (void)argument;
-  static char input[MAX_INPUT_LENGTH];
-  char *output = FreeRTOS_CLIGetOutputBuffer();
-  char rx_char;
-  uint16_t index = 0;
-  BaseType_t processing = 0;
 
-  /* Register all the commands. */
+/*!
+ * \brief 命令行交互界面
+ *
+ * \param argument 未使用
+ */
+void Task_CLI(void *argument) {
+  (void)argument;                      /* 未使用argument，消除警告 */
+  static char input[MAX_INPUT_LENGTH]; /* 输入字符串缓存 */
+  char *output = FreeRTOS_CLIGetOutputBuffer(); /* 输出字符串缓存 */
+  char rx_char;                                 /* 接收到的字符 */
+  uint16_t index = 0;                           /* 字符串索引值 */
+  BaseType_t processing = 0;                    /* 命令行解析控制 */
+
+  /* 注册所有命令 */
   int num_commands = sizeof(command_table) / sizeof(CLI_Command_Definition_t);
   for (int j = 0; j < num_commands; j++) {
     FreeRTOS_CLIRegisterCommand(command_table + j);
   }
 
-  /* Command Line Interface. */
+  /* 通过回车键唤醒命令行界面 */
   BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
   while (1) {
+    /* 等待接收到新的字符 */
     BSP_USB_ReadyReceive(osThreadGetId());
     osThreadFlagsWait(SIGNAL_BSP_USB_BUF_RECV, osFlagsWaitAll, osWaitForever);
 
+    /* 读取接收到的新字符 */
     rx_char = BSP_USB_ReadChar();
 
+    /* 进行判断 */
     if (rx_char == '\n' || rx_char == '\r') {
       BSP_USB_Printf("%c", rx_char);
       break;
     }
   }
 
+  /* 打印欢迎信息 */
   BSP_USB_Printf(CLI_WELCOME_MESSAGE);
 
+  /* 开始运行命令行界面 */
   BSP_USB_Printf("rm>");
   while (1) {
 #ifdef DEBUG
+    /* 记录任务所使用的的栈空间 */
     task_runtime.stack_water_mark.cli = osThreadGetStackSpace(NULL);
 #endif
-    /* Wait for input. */
+    /* 等待输入. */
     BSP_USB_ReadyReceive(osThreadGetId());
     osThreadFlagsWait(SIGNAL_BSP_USB_BUF_RECV, osFlagsWaitAll, osWaitForever);
 
+    /* 读取接收到的新字符 */
     rx_char = BSP_USB_ReadChar();
 
     if (rx_char <= 126 && rx_char >= 32) {
+      /* 如果字符是可显示字符，则直接显式，并存入输入缓存中 */
       if (index < MAX_INPUT_LENGTH) {
         BSP_USB_Printf("%c", rx_char);
         input[index] = rx_char;
         index++;
       }
     } else {
+      /* 如果字符是控制字符，则需要进一步判断 */
       if (rx_char == '\n' || rx_char == '\r') {
+        /* 如果输入的是回车，则认为命令输入完毕，进行下一步的解析和运行命令 */
         BSP_USB_Printf("\r\n");
         if (index > 0) {
+          /* 只在输入缓存有内容时起效 */
           do {
+            /* 处理命令 */
             processing = FreeRTOS_CLIProcessCommand(
                 input, output, configCOMMAND_INT_MAX_OUTPUT_SIZE);
-            BSP_USB_Printf(output);
-            memset(output, 0x00, strlen(output));
-          } while (processing != pdFALSE);
-          index = 0;
-          memset(input, 0x00, strlen(input));
+
+            BSP_USB_Printf(output);               /* 打印结果 */
+            memset(output, 0x00, strlen(output)); /* 清空输出缓存 */
+          } while (processing != pdFALSE); /* 是否需要重复运行命令 */
+          index = 0; /* 重置索引，准备接收下一段命令 */
+          memset(input, 0x00, strlen(input)); /* 清空输入缓存 */
         }
         BSP_USB_Printf("rm>");
       } else if (rx_char == '\b' || rx_char == 0x7Fu) {
+        /* 如果输入的是退格键则清空一位输入缓存，同时进行界限保护 */
         if (index > 0) {
           BSP_USB_Printf("%c", rx_char);
           index--;

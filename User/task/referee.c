@@ -22,13 +22,21 @@ static Referee_t ref;
 
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
+
+/*!
+ * \brief 裁判系统
+ *
+ * \param argument 未使用
+ */
 void Task_Referee(void *argument) {
-  (void)argument;
+  (void)argument; /* 未使用argument，消除警告 */
+  
+  /* 计算任务运行到指定频率，需要延时的时间 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_REFEREE;
 
-  /* Task Setup */
-  osDelay(TASK_INIT_DELAY_REFEREE);
+  osDelay(TASK_INIT_DELAY_REFEREE); /* 延时一段时间再开启任务 */
 
+  /* 初始化裁判系统 */
   Referee_Init(&ref, osThreadGetId());
 
   uint32_t tick = osKernelGetTickCount();

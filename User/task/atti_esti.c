@@ -53,8 +53,16 @@ static const KPID_Params_t imu_temp_ctrl_pid_param = {
 
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
+
+/*!
+ * \brief 姿态解算
+ *
+ * \param argument 未使用
+ */
 void Task_AttiEsti(void *argument) {
-  (void)argument;
+  (void)argument; /* 未使用argument，消除警告 */
+
+  /* 创建消息队列 */
   task_runtime.msgq.gimbal.accl =
       osMessageQueueNew(6u, sizeof(AHRS_Accl_t), NULL);
 
@@ -64,51 +72,70 @@ void Task_AttiEsti(void *argument) {
   task_runtime.msgq.gimbal.gyro =
       osMessageQueueNew(6u, sizeof(AHRS_Gyro_t), NULL);
 
-  BMI088_Init(&bmi088, &task_runtime.robot_id.cali.bmi088);
-  IST8310_Init(&ist8310, &task_runtime.robot_id.cali.ist8310);
+  /* 初始化设备 */
+  BMI088_Init(&bmi088, &task_runtime.robot_cfg.cali.bmi088);
+  IST8310_Init(&ist8310, &task_runtime.robot_cfg.cali.ist8310);
 
+  /* 读取一次磁力计数据，用以初始化姿态解算算法 */
   IST8310_WaitNew(osWaitForever);
   IST8310_StartDmaRecv();
   IST8310_WaitDmaCplt();
   IST8310_Parse(&ist8310);
 
+  /* 初始化姿态解算算法 */
   AHRS_Init(&gimbal_ahrs, &ist8310.magn, BMI088_GetUpdateFreq(&bmi088));
 
+  /* 初始化IMU温度控制PID，防止温漂 */
   PID_Init(&imu_temp_ctrl_pid, KPID_MODE_NO_D,
            1.0f / BMI088_GetUpdateFreq(&bmi088), &imu_temp_ctrl_pid_param);
 
+  /* IMU温度控制PWM输出 */
   BSP_PWM_Start(BSP_PWM_IMU_HEAT);
 
   while (1) {
 #ifdef DEBUG
+    /* 记录任务所使用的的栈空间 */
     task_runtime.stack_water_mark.atti_esti = osThreadGetStackSpace(NULL);
 #endif
-    /* Task body */
+    /* 等待IMU新数据 */
     BMI088_WaitNew();
 
+    /* 开始数据接收DMA，加速度计和陀螺仪共用同一个SPI接口，
+     * 一次只能开启一个DMA
+     */
     BMI088_AcclStartDmaRecv();
     BMI088_AcclWaitDmaCplt();
 
     BMI088_GyroStartDmaRecv();
     BMI088_GyroWaitDmaCplt();
 
+    /* 磁力计的数据接收频率远小于IMU，
+     * 这里使用非阻塞操作，保证姿态解算实时性
+     */
     IST8310_WaitNew(0);
     IST8310_StartDmaRecv();
     IST8310_WaitDmaCplt();
 
+    /* 锁住RTOS内核防止数据解析过程中断，造成错误 */
     osKernelLock();
+    /* 接收完所有数据后，把数据从原始字节加工成方便计算的数据 */
     BMI088_ParseAccl(&bmi088);
     BMI088_ParseGyro(&bmi088);
     IST8310_Parse(&ist8310);
     osKernelUnlock();
 
+    /* 根据设备接收到的数据进行姿态解析 */
     AHRS_Update(&gimbal_ahrs, &bmi088.accl, &bmi088.gyro, &ist8310.magn);
+
+    /* 根据解析出来的四元数计算欧拉角 */
     AHRS_GetEulr(&eulr_to_send, &gimbal_ahrs);
 
+    /* 将需要与其他任务分享的数据放到消息队列中 */
     osMessageQueuePut(task_runtime.msgq.gimbal.accl, &bmi088.accl, 0, 0);
     osMessageQueuePut(task_runtime.msgq.gimbal.eulr_imu, &eulr_to_send, 0, 0);
     osMessageQueuePut(task_runtime.msgq.gimbal.gyro, &bmi088.gyro, 0, 0);
 
+    /* PID控制IMU温度，PWM输出 */
     BSP_PWM_Set(BSP_PWM_IMU_HEAT,
                 PID_Calc(&imu_temp_ctrl_pid, 40.0f, bmi088.temp, 0.0f, 0.0f));
   }

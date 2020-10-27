@@ -32,8 +32,16 @@ static CMD_t cmd;
 
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
+
+/*!
+ * \brief 控制指令接收
+ *
+ * \param argument 未使用
+ */
 void Task_Command(void *argument) {
-  (void)argument;
+  (void)argument; /* 未使用argument，消除警告 */
+
+  /* 创建消息队列 */
   task_runtime.msgq.cmd.chassis =
       osMessageQueueNew(3u, sizeof(CMD_ChassisCmd_t), NULL);
   task_runtime.msgq.cmd.gimbal =
@@ -41,26 +49,30 @@ void Task_Command(void *argument) {
   task_runtime.msgq.cmd.shoot =
       osMessageQueueNew(3u, sizeof(CMD_ShootCmd_t), NULL);
 
-  /* Task Setup */
-  osDelay(TASK_INIT_DELAY_COMMAND);
+  osDelay(TASK_INIT_DELAY_COMMAND); /* 延时一段时间再开启任务 */
 
-  DR16_Init(&dr16);
-  CMD_Init(&cmd, &(task_runtime.config_pilot->param.cmd));
+  DR16_Init(&dr16); /* 初始化接收机 */
+  CMD_Init(&cmd, &(task_runtime.config_pilot->param.cmd)); /* 初始话指令处理 */
 
   while (1) {
 #ifdef DEBUG
+    /* 记录任务所使用的的栈空间 */
     task_runtime.stack_water_mark.command = osThreadGetStackSpace(NULL);
 #endif
-    /* Task body */
+    /* 开启串口数据接收 */
     DR16_StartDmaRecv(&dr16);
 
     if (DR16_WaitDmaCplt(150)) {
+      /* 接收成功，则将原始字节处理为容易运算的数据 */
       DR16_ParseRC(&dr16, &rc);
     } else {
+      /* 接收失败，则将指令置零 */
       memset(&rc, 0, sizeof(CMD_RC_t));
     }
 
-    CMD_Parse(&rc, &cmd);
+    CMD_Parse(&rc, &cmd); /* 将接收机数据解析为指令数据 */
+
+    /* 将需要与其他任务分享的数据放到消息队列中 */
     osMessageQueuePut(task_runtime.msgq.cmd.chassis, &(cmd.chassis), 0, 0);
     osMessageQueuePut(task_runtime.msgq.cmd.gimbal, &(cmd.gimbal), 0, 0);
     osMessageQueuePut(task_runtime.msgq.cmd.shoot, &(cmd.shoot), 0, 0);

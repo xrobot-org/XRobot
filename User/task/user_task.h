@@ -43,7 +43,7 @@ typedef struct {
     osThreadId_t monitor;
     osThreadId_t atti_esti;
     osThreadId_t referee;
-  } thread;
+  } thread; /* 各任务，也可以收拾线程 */
 
   struct {
     struct {
@@ -56,7 +56,7 @@ typedef struct {
       osMessageQueueId_t chassis;
       osMessageQueueId_t gimbal;
       osMessageQueueId_t shoot;
-    } cmd;
+    } cmd; /* 控制指令 */
   } msgq;
 
   struct {
@@ -66,11 +66,11 @@ typedef struct {
   struct {
     float battery;
     float cpu_temp;
-  } status;
+  } status; /* 机器人状态 */
 
-  Config_t robot_id;
-  const Config_RobotParam_t *robot_param;
-  const Config_Pilot_t *config_pilot;
+  Config_t robot_cfg;                     /* 机器人配置 */
+  const Config_RobotParam_t *robot_param; /* 机器人参数 */
+  const Config_Pilot_t *config_pilot;     /* 操作手参数 */
 
 #ifdef DEBUG
   struct {
@@ -83,7 +83,7 @@ typedef struct {
     UBaseType_t monitor;
     UBaseType_t atti_esti;
     UBaseType_t referee;
-  } stack_water_mark;
+  } stack_water_mark; /* stack使用 */
 
   struct {
     float cli;
@@ -95,7 +95,7 @@ typedef struct {
     float monitor;
     float atti_esti;
     float referee;
-  } freq;
+  } freq; /* 任务运行频率 */
 
   struct {
     float cli;
@@ -107,7 +107,7 @@ typedef struct {
     float monitor;
     float atti_esti;
     float referee;
-  } last_up_time;
+  } last_up_time; /* 任务最近运行时间 */
 #endif
 
 } Task_Runtime_t;

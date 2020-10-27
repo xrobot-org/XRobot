@@ -28,41 +28,51 @@ static Chassis_t chassis;
 
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
+
+/*!
+ * \brief 控制底盘
+ *
+ * \param argument 未使用
+ */
 void Task_CtrlChassis(void *argument) {
-  (void)argument;
+  (void)argument; /* 未使用argument，消除警告 */
+
+  /* 计算任务运行到指定频率，需要延时的时间 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_CHASSIS;
 
-  /* Device Setup */
-  osDelay(TASK_INIT_DELAY_CTRL_CHASSIS);
+  osDelay(TASK_INIT_DELAY_CTRL_CHASSIS); /* 延时一段时间再开启任务 */
 
+  /* 初始化CAN总线上的设备 */
   osThreadId_t recv_motor_allert[3] = {osThreadGetId(),
                                        task_runtime.thread.ctrl_gimbal,
                                        task_runtime.thread.ctrl_shoot};
 
   CAN_Init(&can, NULL, recv_motor_allert, 3, task_runtime.thread.referee);
 
-  /* Module Setup */
+  /* 初始化底盘 */
   Chassis_Init(&chassis, &(task_runtime.robot_param->chassis),
                (float)TASK_FREQ_CTRL_CHASSIS);
 
-  /* Task Setup */
-  uint32_t tick = osKernelGetTickCount();
-  uint32_t wakeup = HAL_GetTick();
+  uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
+  uint32_t wakeup = HAL_GetTick(); /* 计算任务运行间隔的计时 */
   while (1) {
 #ifdef DEBUG
+    /* 记录任务所使用的的栈空间 */
     task_runtime.stack_water_mark.ctrl_chassis = osThreadGetStackSpace(NULL);
 #endif
-    /* Task body */
-    tick += delay_tick;
+    tick += delay_tick; /* 计算下一个唤醒时刻 */
 
+    /* 等待接收CAN总线新数据 */
     const uint32_t flag = SIGNAL_CAN_MOTOR_RECV;
     if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != flag) {
+      /* 如果没有接收到新数据，则将输出置零，不进行控制 */
       CAN_Motor_ControlChassis(0.0f, 0.0f, 0.0f, 0.0f);
 
     } else {
+      /* 继续读取控制指令 */
       osMessageQueueGet(task_runtime.msgq.cmd.chassis, &chassis_cmd, NULL, 0);
 
-      osKernelLock();
+      osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
       const uint32_t now = HAL_GetTick();
       Chassis_UpdateFeedback(&chassis, &can);
       Chassis_Control(&chassis, &chassis_cmd, (float)(now - wakeup) / 1000.0f);
@@ -72,7 +82,7 @@ void Task_CtrlChassis(void *argument) {
 
       osKernelUnlock();
 
-      osDelayUntil(tick);
+      osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
     }
   }
 }

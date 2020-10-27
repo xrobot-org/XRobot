@@ -15,16 +15,23 @@
 /* Private variables -------------------------------------------------------- */
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
+
+/*!
+ * \brief 初始化
+ *
+ * \param argument 未使用
+ */
 void Task_Init(void *argument) {
-  (void)argument;
+  (void)argument; /* 未使用argument，消除警告 */
 
-  /* Init robot. */
-  Config_Get(&task_runtime.robot_id);
+  Config_Get(&task_runtime.robot_cfg); /* 获取机器人配置 */
 
-  task_runtime.robot_param = Config_GetRobotParam(task_runtime.robot_id.model);
-  task_runtime.config_pilot = Config_GetPilotCfg(task_runtime.robot_id.pilot);
+  /* 获取机器人参数和操作手信息 */
+  task_runtime.robot_param = Config_GetRobotParam(task_runtime.robot_cfg.model);
+  task_runtime.config_pilot = Config_GetPilotCfg(task_runtime.robot_cfg.pilot);
 
   osKernelLock();
+  /* 创建任务 */
   task_runtime.thread.atti_esti =
       osThreadNew(Task_AttiEsti, NULL, &attr_atti_esti);
   task_runtime.thread.cli = osThreadNew(Task_CLI, NULL, &attr_cli);
@@ -40,5 +47,5 @@ void Task_Init(void *argument) {
   task_runtime.thread.referee = osThreadNew(Task_Referee, NULL, &attr_referee);
   osKernelUnlock();
 
-  osThreadTerminate(osThreadGetId());
+  osThreadTerminate(osThreadGetId()); /* 结束自身 */
 }
