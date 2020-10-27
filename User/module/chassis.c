@@ -74,11 +74,8 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
                     float target_freq) {
   if (c == NULL) return CHASSIS_ERR_NULL;
 
-  /* 初始化参数 */
-  c->param = param;
-
-  /* 设置默认模式 */
-  c->mode = CHASSIS_MODE_RELAX;
+  c->param = param;             /* 初始化参数 */
+  c->mode = CHASSIS_MODE_RELAX; /* 设置默认模式 */
 
   /* 根据参数（param）中的底盘型号初始化Mixer */
   Mixer_Mode_t mixer_mode;
@@ -134,6 +131,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
   c->filter.out = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->filter.out));
   if (c->filter.out == NULL) goto error;
 
+  /* 初始化轮子电机控制PID和LPF */
   for (uint8_t i = 0; i < c->num_wheel; i++) {
     PID_Init(c->pid.motor + i, KPID_MODE_NO_D, target_freq,
              &(c->param->motor_pid_param));
@@ -144,10 +142,11 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
                          c->param->low_pass_cutoff_freq.out);
   }
 
+  /* 初始化跟随云台的控制PID */
   PID_Init(&(c->pid.follow), KPID_MODE_NO_D, target_freq,
            &(c->param->follow_pid_param));
 
-  Mixer_Init(&(c->mixer), mixer_mode);
+  Mixer_Init(&(c->mixer), mixer_mode); /* 初始化混合器 */
   return CHASSIS_OK;
 
 error:
@@ -198,11 +197,8 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec) {
 
   Chassis_SetMode(c, c_cmd->mode);
 
-  /* ctrl_vec -> move_vec. */
-  /* Compute vx and vy. */
-  const float cos_beta = cosf(c->feedback.gimbal_yaw_angle);
-  const float sin_beta = sinf(c->feedback.gimbal_yaw_angle);
-
+  /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
+  /* 先计算vx、vy. */
   switch (c->mode) {
     case CHASSIS_MODE_BREAK:
       c->move_vec.vx = 0.0f;
@@ -217,14 +213,17 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec) {
     case CHASSIS_MODE_OPEN:
     case CHASSIS_MODE_RELAX:
     case CHASSIS_MODE_FOLLOW_GIMBAL:
-    case CHASSIS_MODE_ROTOR:
+    case CHASSIS_MODE_ROTOR: {
+      const float cos_beta = cosf(c->feedback.gimbal_yaw_angle);
+      const float sin_beta = sinf(c->feedback.gimbal_yaw_angle);
       c->move_vec.vx =
           cos_beta * c_cmd->ctrl_vec.vx - sin_beta * c_cmd->ctrl_vec.vy;
       c->move_vec.vy =
           sin_beta * c_cmd->ctrl_vec.vx - cos_beta * c_cmd->ctrl_vec.vy;
+    }
   }
 
-  /* Compute wz. */
+  /* 计算wz. */
   switch (c->mode) {
     case CHASSIS_MODE_RELAX:
     case CHASSIS_MODE_BREAK:
@@ -241,13 +240,13 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec) {
       c->move_vec.wz = 0.5f;
   }
 
-  /* move_vec -> motor_rpm_set. */
+  /* move_vec -> motor_rpm_set. 通过运动向量计算轮子转速目标值 */
   Mixer_Apply(&(c->mixer), c->move_vec.vx, c->move_vec.vy, c->move_vec.wz,
               c->setpoint.motor_rpm, c->num_wheel, 9000.0f);
 
-  /* Compute output from setpiont. */
+  /* 根据轮子转速目标值，利用PID计算电机输出值 */
   for (uint8_t i = 0; i < 4; i++) {
-    /* Filter feedback. */
+    /* 输入滤波. */
     c->feedback.motor_rpm[i] =
         LowPassFilter2p_Apply(c->filter.in + i, c->feedback.motor_rpm[i]);
 
@@ -268,7 +267,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec) {
         c->out[i] = 0;
         break;
     }
-    /* Filter output. */
+    /* 输出滤波. */
     c->out[i] = LowPassFilter2p_Apply(c->filter.out + i, c->out[i]);
   }
   return CHASSIS_OK;

@@ -10,11 +10,27 @@
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
+
+/*!
+ * \brief 控制扳机的回调函数
+ *
+ * \param arg 参数，这里输入Shoot_t
+ *
+ * \return 函数运行结果
+ */
 static void TrigTimerCallback(void *arg) {
   Shoot_t *s = (Shoot_t *)arg;
   CircleAdd(&(s->setpoint.trig_angle), M_2PI / s->param->num_trig_tooth, M_2PI);
 }
 
+/*!
+ * \brief 设置射击模式
+ *
+ * \param c 包含射击数据的结构体
+ * \param mode 要设置的模式
+ *
+ * \return 函数运行结果
+ */
 static int8_t Shoot_SetMode(Shoot_t *s, CMD_ShootMode_t mode) {
   if (s == NULL) return -1;
 
@@ -63,9 +79,8 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_ShootMode_t mode) {
 int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
   if (s == NULL) return -1;
 
-  s->param = param;
-
-  s->mode = SHOOT_MODE_RELAX;
+  s->param = param;           /* 初始化参数 */
+  s->mode = SHOOT_MODE_RELAX; /* 设置默认模式 */
 
   s->trig_timer_id = osTimerNew(TrigTimerCallback, osTimerPeriodic, s, NULL);
 
@@ -128,16 +143,19 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec) {
 
   Shoot_SetMode(s, s_cmd->mode);
 
+  /* 根据模式设置射频和初速 */
   if (s->mode == SHOOT_MODE_SAFE) {
     s_cmd->bullet_speed = 0.0f;
     s_cmd->shoot_freq_hz = 0.0f;
   }
 
+  /* 通过初速计算电机转速 */
   s->setpoint.fric_rpm[0] =
       s->param->bullet_speed_scaler * s_cmd->bullet_speed +
       s->param->bullet_speed_bias;
   s->setpoint.fric_rpm[1] = -s->setpoint.fric_rpm[0];
 
+  /* 通过射频电机位置控制 */
   const uint32_t period_ms = 1000u / (uint32_t)s_cmd->shoot_freq_hz;
   if (period_ms > 0) {
     if (!osTimerIsRunning(s->trig_timer_id))

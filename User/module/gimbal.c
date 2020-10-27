@@ -12,6 +12,15 @@
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
+
+/*!
+ * \brief 设置云台模式
+ *
+ * \param c 包含云台数据的结构体
+ * \param mode 要设置的模式
+ *
+ * \return 函数运行结果
+ */
 static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_GimbalMode_t mode) {
   if (g == NULL) return -1;
   if (mode == g->mode) return GIMBAL_OK;
@@ -25,7 +34,7 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_GimbalMode_t mode) {
     LowPassFilter2p_Reset(g->filter_out + i, 0.0f);
   }
 
-  AHRS_ResetEulr(&(g->setpoint.eulr));
+  AHRS_ResetEulr(&(g->setpoint.eulr)); /* 切换模式后重置设定值 */
 
   return 0;
 }
@@ -33,10 +42,11 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_GimbalMode_t mode) {
 /* Exported functions ------------------------------------------------------- */
 
 /*!
- * \brief 通过CAN设备更新云台反馈信息
+ * \brief 初始化云台
  *
- * \param gimbal_feedback 云台反馈信息
- * \param can CAN设备
+ * \param g 包含云台数据的结构体
+ * \param param 包含云台参数的结构体指针
+ * \param target_freq 任务预期的运行频率
  *
  * \return 函数运行结果
  */
@@ -44,10 +54,10 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
                    float target_freq) {
   if (g == NULL) return -1;
 
-  g->param = param;
+  g->param = param;            /* 初始化参数 */
+  g->mode = GIMBAL_MODE_RELAX; /* 设置默认模式 */
 
-  g->mode = GIMBAL_MODE_RELAX;
-
+  /* 初始化云台电机控制PID和LPF */
   PID_Init(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), KPID_MODE_NO_D, target_freq,
            &(g->param->pid[GIMBAL_PID_YAW_ANGLE_IDX]));
   PID_Init(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), KPID_MODE_CALC_D_FB,
@@ -71,11 +81,10 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
 }
 
 /*!
- * \brief 初始化云台
+ * \brief 通过CAN设备更新云台反馈信息
  *
- * \param g 包含云台数据的结构体
- * \param param 包含云台参数的结构体指针
- * \param target_freq 任务预期的运行频率
+ * \param gimbal_feedback 云台反馈信息
+ * \param can CAN设备
  *
  * \return 函数运行结果
  */

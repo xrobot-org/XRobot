@@ -101,16 +101,6 @@ typedef struct {
 /* Exported functions prototypes -------------------------------------------- */
 
 /*!
- * \brief 通过CAN设备更新云台反馈信息
- *
- * \param gimbal_feedback 云台反馈信息
- * \param can CAN设备
- *
- * \return 函数运行结果
- */
-int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback, const CAN_t *can);
-
-/*!
  * \brief 初始化云台
  *
  * \param g 包含云台数据的结构体
@@ -121,6 +111,16 @@ int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback, const CAN_t *can);
  */
 int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
                    float target_freq);
+
+/*!
+ * \brief 通过CAN设备更新云台反馈信息
+ *
+ * \param gimbal_feedback 云台反馈信息
+ * \param can CAN设备
+ *
+ * \return 函数运行结果
+ */
+int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback, const CAN_t *can);
 
 /*!
  * \brief 运行云台控制逻辑
