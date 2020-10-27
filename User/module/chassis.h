@@ -35,7 +35,7 @@ typedef enum {
   CHASSIS_TYPE_DRONE,      /* 底盘为无人机 */
 } Chassis_Type_t;
 
-/* 底盘参数的结构体，包含所有初始化用的参数，通常是const，存好几组*/
+/* 底盘参数的结构体，包含所有初始化用的参数，通常是const，存好几组 */
 typedef struct {
   Chassis_Type_t type; /* 底盘类型，底盘的机械设计和轮子选型 */
   KPID_Params_t motor_pid_param;  /* 轮子控制PID的参数 */
