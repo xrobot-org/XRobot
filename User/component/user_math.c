@@ -38,9 +38,9 @@ inline float CircleError(float sp, float fb, float range) {
   if (range > 0.0f) {
     float half_range = range / 2.0f;
     if (error > half_range) {
-      error -= half_range;
-      return -error;
-    }
+			error -= range;
+    }else if(error < -half_range)
+			error += range;
   }
   return error;
 }
