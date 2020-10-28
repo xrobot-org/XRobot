@@ -127,7 +127,7 @@ static const Config_RobotParam_t param_infantry = {
       .d_cutoff_freq = -1.0f,
     },
     .trig_pid_param = {
-      .k = 0.001f,
+      .k = 0.025f,
       .p = 1.0f,
       .i = 0.5f,
       .d = 0.5f,
@@ -146,7 +146,7 @@ static const Config_RobotParam_t param_infantry = {
         .trig = -1.0f,
       },
     },
-    .bullet_speed_scaler = 1.0f,
+    .bullet_speed_scaler = 10.0f,
     .bullet_speed_bias = 1.0f,
     .num_trig_tooth = 8.0f,
   }, /* shoot */
