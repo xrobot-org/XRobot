@@ -146,7 +146,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec) {
   /* 根据模式设置射频和初速 */
   if (s->mode == SHOOT_MODE_SAFE) {
     s_cmd->bullet_speed = 0.0f;
-    s_cmd->shoot_freq= 0.0f;
+    s_cmd->shoot_freq_hz = 0.0f;
   }
 
   /* 通过初速计算电机转速 */
