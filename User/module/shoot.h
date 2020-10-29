@@ -93,7 +93,7 @@ typedef struct {
   } filter;                      /* 过滤器 */
 
   int8_t heat_limiter; /* 枪管热度占位变量 */
-
+  float trig_angle; /* 拨弹转盘角度 */
   float out[SHOOT_ACTR_NUM]; /* 输出数组，通过Shoot_Acuator_e里的值访问 */
 
 } Shoot_t;

@@ -114,6 +114,8 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
  * \return 函数运行结果
  */
 int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
+	float motor_trig_angle_back, motor_angle_delta;
+	
   if (s == NULL) return -1;
 
   if (can == NULL) return -1;
@@ -122,10 +124,22 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
     s->feedback.fric_rpm[i] =
         can->shoot_motor_feedback[CAN_MOTOR_SHOOT_FRIC1 + i].rotor_speed;
   }
-
+	
+	//更新拨弹电机
+ 	motor_trig_angle_back = s->feedback.trig_angle;
   s->feedback.trig_angle =
       can->shoot_motor_feedback[CAN_MOTOR_SHOOT_TRIG].rotor_angle;
-
+	motor_angle_delta = s->feedback.trig_angle - motor_trig_angle_back;
+	motor_angle_delta = -((int)(motor_angle_delta * 100)) / 100.0;
+	if(motor_angle_delta < -0.01)
+		motor_angle_delta += M_2PI;
+	if(motor_angle_delta > M_PI)
+		motor_angle_delta -= M_2PI;
+	s->trig_angle += motor_angle_delta / 36.0;
+	while(s->trig_angle < 0)
+		s->trig_angle += M_2PI;
+	while(s->trig_angle > M_2PI)
+		s->trig_angle -= M_2PI;	
   return 0;
 }
 
@@ -139,27 +153,33 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
  * \return 函数运行结果
  */
 int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec) {
+  static uint32_t period_ms_back = 0;	
+
   if (s == NULL) return -1;
 
   Shoot_SetMode(s, s_cmd->mode);
 
-  /* 根据模式设置射频和初速 */
   if (s->mode == SHOOT_MODE_SAFE) {
     s_cmd->bullet_speed = 0.0f;
     s_cmd->shoot_freq_hz = 0.0f;
   }
 
-  /* 通过初速计算电机转速 */
   s->setpoint.fric_rpm[0] =
       s->param->bullet_speed_scaler * s_cmd->bullet_speed +
       s->param->bullet_speed_bias;
   s->setpoint.fric_rpm[1] = -s->setpoint.fric_rpm[0];
-
-  /* 通过射频电机位置控制 */
-  const uint32_t period_ms = 1000u / (uint32_t)s_cmd->shoot_freq_hz;
-  if (period_ms > 0) {
-    if (!osTimerIsRunning(s->trig_timer_id))
-      osTimerStart(s->trig_timer_id, period_ms);
+	
+  if (s_cmd->shoot_freq_hz > 1.f) {
+		uint32_t period_ms = 1000u / (uint32_t)s_cmd->shoot_freq_hz;
+		
+		if(period_ms_back != period_ms || !osTimerIsRunning(s->trig_timer_id)){
+			period_ms_back = period_ms;
+			if (osTimerIsRunning(s->trig_timer_id)){
+				osTimerStop(s->trig_timer_id);
+			}
+			osTimerStart(s->trig_timer_id, period_ms);
+		}
+    
   } else {
     if (osTimerIsRunning(s->trig_timer_id)) osTimerStop(s->trig_timer_id);
   }
@@ -177,13 +197,12 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec) {
     case SHOOT_MODE_STDBY:
     case SHOOT_MODE_FIRE:
       /* Filter feedback. */
-      s->feedback.trig_angle =
-          LowPassFilter2p_Apply(&(s->filter.in.trig), s->feedback.trig_angle);
-
+      s->trig_angle =
+          LowPassFilter2p_Apply(&(s->filter.in.trig), s->trig_angle);
+		
       s->out[SHOOT_ACTR_TRIG_IDX] =
           PID_Calc(&(s->pid.trig), s->setpoint.trig_angle,
-                   s->feedback.trig_angle, 0.0f, dt_sec);
-
+                   s->trig_angle, 0.0f, dt_sec);
       s->out[SHOOT_ACTR_TRIG_IDX] = LowPassFilter2p_Apply(
           &(s->filter.out.trig), s->out[SHOOT_ACTR_TRIG_IDX]);
 

@@ -74,6 +74,7 @@ void Task_CtrlShoot(void *argument) {
       Shoot_UpdateFeedback(&shoot, can);
       Shoot_Control(&shoot, &shoot_cmd, (float)(now - wakeup) / 1000.0f);
       wakeup = now;
+      shoot.out[SHOOT_ACTR_TRIG_IDX] = -shoot.out[SHOOT_ACTR_TRIG_IDX];
       CAN_Motor_ControlShoot(shoot.out[SHOOT_ACTR_FRIC1_IDX],
                              shoot.out[SHOOT_ACTR_FRIC2_IDX],
                              shoot.out[SHOOT_ACTR_TRIG_IDX]);

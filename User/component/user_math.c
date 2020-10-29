@@ -52,6 +52,7 @@ inline float CircleError(float sp, float fb, float range) {
   float error = sp - fb;
   if (range > 0.0f) {
     float half_range = range / 2.0f;
+
     if (error > half_range)
       error -= range;
     else if (error < -half_range)
