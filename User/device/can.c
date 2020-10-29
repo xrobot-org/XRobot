@@ -30,16 +30,16 @@
 #define CAN_M3508_M2006_CTRL_ID_EXTAND (0x1ff)
 #define CAN_M3508_M2006_ID_SETTING_ID (0x700)
 
-#define CAN_GM6020_MAX_ABS_VOLT (30000)
-#define CAN_M3508_MAX_ABS_VOLT (16384)
-#define CAN_M2006_MAX_ABS_VOLT (10000)
+#define CAN_GM6020_MAX_ABS_VOLT (30000) /* 电机最大控制电压绝对值 */
+#define CAN_M3508_MAX_ABS_VOLT (16384) /* 电机最大控制电压绝对值 */
+#define CAN_M2006_MAX_ABS_VOLT (10000) /* 电机最大控制电压绝对值 */
 
 #define CAN_MOTOR_MAX_NUM (9)
 
 #define CAN_MOTOR_TX_BUF_SIZE (8)
 #define CAN_MOTOR_RX_BUF_SIZE (8)
 
-#define CAN_MOTOR_MAX_ENCODER (8191)
+#define CAN_MOTOR_ENC_RES (8192) /* 电机编码器分辨率 */
 #define CAN_MOTOR_RX_FIFO CAN_RX_FIFO0
 
 /* Super capacitor */
@@ -105,8 +105,7 @@ static void CAN_Motor_Decode(CAN_MotorFeedback_t *feedback,
                              const uint8_t *raw) {
   uint16_t raw_angle = (uint16_t)((raw[0] << 8) | raw[1]);
 
-  feedback->rotor_angle =
-      raw_angle / (float)CAN_MOTOR_MAX_ENCODER * M_2PI;
+  feedback->rotor_angle = raw_angle / (float)CAN_MOTOR_ENC_RES * M_2PI;
   feedback->rotor_speed = (int16_t)((raw[2] << 8) | raw[3]);
   feedback->torque_current = (int16_t)((raw[4] << 8) | raw[5]);
   feedback->temp = raw[6];
@@ -364,7 +363,7 @@ int8_t CAN_Motor_QuickIdSetMode(void) {
 
 int8_t CAN_CapControl(float power_limit) {
   (void)power_limit;
-  
+
   tx_header.StdId = CAN_M3508_M2006_ID_SETTING_ID;
   tx_header.IDE = CAN_ID_STD;
   tx_header.RTR = CAN_RTR_DATA;
