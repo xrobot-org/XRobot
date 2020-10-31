@@ -67,9 +67,10 @@ typedef struct {
   osTimerId_t trig_timer_id; /* 控制拨弹电机的软件定时器 */
 
   struct {
-    float fric_rpm[2]; /* 摩擦轮电机转速，单位：RPM */
-    float trig_angle;  /* 拨弹电机角度，单位：弧度 */
-  } feedback;          /* 反馈信息 */
+    float fric_rpm[2];      /* 摩擦轮电机转速，单位：RPM */
+    float trig_motor_angle; /* 拨弹电机角度，单位：弧度 */
+    float trig_angle;       /* 拨弹转盘角度，单位：弧度 */
+  } feedback;               /* 反馈信息 */
 
   struct {
     float fric_rpm[2]; /* 摩擦轮电机转速，单位：RPM */
@@ -93,7 +94,7 @@ typedef struct {
   } filter;                      /* 过滤器 */
 
   int8_t heat_limiter; /* 枪管热度占位变量 */
-  float trig_angle; /* 拨弹转盘角度 */
+
   float out[SHOOT_ACTR_NUM]; /* 输出数组，通过Shoot_Acuator_e里的值访问 */
 
 } Shoot_t;

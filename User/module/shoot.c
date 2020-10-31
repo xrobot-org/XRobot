@@ -20,7 +20,8 @@
  */
 static void TrigTimerCallback(void *arg) {
   Shoot_t *s = (Shoot_t *)arg;
-  CircleAdd(&(s->setpoint.trig_angle), M_2PI / s->param->num_trig_tooth, M_2PI);
+  CircleAdd(&(s->setpoint.trig_angle), -M_2PI / s->param->num_trig_tooth,
+            M_2PI);
 }
 
 /*!
@@ -95,7 +96,7 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
                          param->low_pass_cutoff_freq.out.fric);
   }
 
-  PID_Init(&(s->pid.trig), KPID_MODE_NO_D, target_freq,
+  PID_Init(&(s->pid.trig), KPID_MODE_CALC_D_FB, target_freq,
            &(param->trig_pid_param));
 
   LowPassFilter2p_Init(&(s->filter.in.trig), target_freq,
@@ -114,32 +115,27 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
  * \return 函数运行结果
  */
 int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
-	float motor_trig_angle_back, motor_angle_delta;
-	
   if (s == NULL) return -1;
-
   if (can == NULL) return -1;
 
   for (uint8_t i = 0; i < 2; i++) {
     s->feedback.fric_rpm[i] =
         can->shoot_motor_feedback[CAN_MOTOR_SHOOT_FRIC1 + i].rotor_speed;
   }
-	
-	//更新拨弹电机
- 	motor_trig_angle_back = s->feedback.trig_angle;
-  s->feedback.trig_angle =
+
+  //更新拨弹电机
+  float last_motor_trig_angle, motor_angle_delta;
+  last_motor_trig_angle = s->feedback.trig_motor_angle;
+  s->feedback.trig_motor_angle =
       can->shoot_motor_feedback[CAN_MOTOR_SHOOT_TRIG].rotor_angle;
-	motor_angle_delta = s->feedback.trig_angle - motor_trig_angle_back;
-	motor_angle_delta = -((int)(motor_angle_delta * 100)) / 100.0;
-	if(motor_angle_delta < -0.01)
-		motor_angle_delta += M_2PI;
-	if(motor_angle_delta > M_PI)
-		motor_angle_delta -= M_2PI;
-	s->trig_angle += motor_angle_delta / 36.0;
-	while(s->trig_angle < 0)
-		s->trig_angle += M_2PI;
-	while(s->trig_angle > M_2PI)
-		s->trig_angle -= M_2PI;	
+  motor_angle_delta = s->feedback.trig_motor_angle - last_motor_trig_angle;
+  if (motor_angle_delta > M_PI)
+    motor_angle_delta -= M_2PI;
+  else if (motor_angle_delta < -M_PI)
+    motor_angle_delta += M_2PI;
+  s->feedback.trig_angle += motor_angle_delta / 36.0;
+  if (s->feedback.trig_angle < 0) s->feedback.trig_angle += M_2PI;
+  if (s->feedback.trig_angle > M_2PI) s->feedback.trig_angle -= M_2PI;
   return 0;
 }
 
@@ -153,7 +149,7 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
  * \return 函数运行结果
  */
 int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec) {
-  static uint32_t period_ms_back = 0;	
+  static uint32_t last_period_ms = 0;
 
   if (s == NULL) return -1;
 
@@ -168,18 +164,18 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec) {
       s->param->bullet_speed_scaler * s_cmd->bullet_speed +
       s->param->bullet_speed_bias;
   s->setpoint.fric_rpm[1] = -s->setpoint.fric_rpm[0];
-	
-  if (s_cmd->shoot_freq_hz > 1.f) {
-		uint32_t period_ms = 1000u / (uint32_t)s_cmd->shoot_freq_hz;
-		
-		if(period_ms_back != period_ms || !osTimerIsRunning(s->trig_timer_id)){
-			period_ms_back = period_ms;
-			if (osTimerIsRunning(s->trig_timer_id)){
-				osTimerStop(s->trig_timer_id);
-			}
-			osTimerStart(s->trig_timer_id, period_ms);
-		}
-    
+
+  if (s_cmd->shoot_freq_hz > 1.0f && s->mode != SHOOT_MODE_RELAX) {
+    uint32_t period_ms = 1000u / (uint32_t)s_cmd->shoot_freq_hz;
+
+    if (last_period_ms != period_ms || !osTimerIsRunning(s->trig_timer_id)) {
+      last_period_ms = period_ms;
+      if (osTimerIsRunning(s->trig_timer_id)) {
+        osTimerStop(s->trig_timer_id);
+      }
+      osTimerStart(s->trig_timer_id, period_ms);
+    }
+
   } else {
     if (osTimerIsRunning(s->trig_timer_id)) osTimerStop(s->trig_timer_id);
   }
@@ -197,12 +193,12 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec) {
     case SHOOT_MODE_STDBY:
     case SHOOT_MODE_FIRE:
       /* Filter feedback. */
-      s->trig_angle =
-          LowPassFilter2p_Apply(&(s->filter.in.trig), s->trig_angle);
-		
+      s->feedback.trig_angle =
+          LowPassFilter2p_Apply(&(s->filter.in.trig), s->feedback.trig_angle);
+
       s->out[SHOOT_ACTR_TRIG_IDX] =
           PID_Calc(&(s->pid.trig), s->setpoint.trig_angle,
-                   s->trig_angle, 0.0f, dt_sec);
+                   s->feedback.trig_angle, 0.0f, dt_sec);
       s->out[SHOOT_ACTR_TRIG_IDX] = LowPassFilter2p_Apply(
           &(s->filter.out.trig), s->out[SHOOT_ACTR_TRIG_IDX]);
 

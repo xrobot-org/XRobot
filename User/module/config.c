@@ -127,10 +127,10 @@ static const Config_RobotParam_t param_infantry = {
       .d_cutoff_freq = -1.0f,
     },
     .trig_pid_param = {
-      .k = 0.025f,
+      .k = 0.19f,
       .p = 1.0f,
-      .i = 0.5f,
-      .d = 0.5f,
+      .i = 0.0f,
+      .d = 0.11f,
       .i_limit = 0.5f,
       .out_limit = 0.5f,
       .d_cutoff_freq = -1.0f,
