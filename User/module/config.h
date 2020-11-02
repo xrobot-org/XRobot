@@ -20,7 +20,7 @@ extern "C" {
 /* 对应赛事规则的机器人型号 */
 typedef enum {
   ROBOT_MODEL_INFANTRY = 0, /* 步兵机器人 */
-  ROBOT_MODEL_HERO,         /* 步兵机器人 */
+  ROBOT_MODEL_HERO,         /* 英雄机器人 */
   ROBOT_MODEL_ENGINEER,     /* 工程机器人 */
   ROBOT_MODEL_DRONE,        /* 空中机器人 */
   ROBOT_MODEL_SENTRY,       /* 哨兵机器人 */
