@@ -228,7 +228,6 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output);
 int8_t CAN_Motor_StoreMsg(CAN_t *can, CAN_MotorRawRx_t *can_motor_rx);
 bool CAN_Motor_CheckFlag(CAN_t *can, uint32_t flag);
 int8_t CAN_Motor_ClearFlag(CAN_t *can, uint32_t flag);
-int8_t CAN_Motor_QuickIdSetMode(void);
 
 void CAN_ResetChassisOut(CAN_ChassisOutput_t *chassis_out);
 void CAN_ResetGimbalOut(CAN_GimbalOutput_t *gimbal_out);

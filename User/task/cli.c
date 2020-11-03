@@ -281,30 +281,6 @@ static BaseType_t Command_Error(char *out_buffer, size_t len,
   }
 }
 
-static BaseType_t Command_MotorIDQuitckSet(char *out_buffer, size_t len,
-                                           const char *command_string) {
-  if (out_buffer == NULL) return pdFALSE;
-  (void)command_string;
-  len -= 1;
-
-  static FiniteStateMachine_t fsm;
-  switch (fsm.stage) {
-    case 0:
-      snprintf(out_buffer, len, "\r\nEnter ID quick set mode.");
-      fsm.stage++;
-      return pdPASS;
-    case 1:
-      CAN_Motor_QuickIdSetMode();
-      snprintf(out_buffer, len, "\r\nDone.");
-      fsm.stage++;
-      return pdPASS;
-    default:
-      snprintf(out_buffer, len, "\r\n");
-      fsm.stage = 0;
-      return pdFALSE;
-  }
-}
-
 static BaseType_t Command_ClearConfig(char *out_buffer, size_t len,
                                       const char *command_string) {
   if (out_buffer == NULL) return pdFALSE;
@@ -530,12 +506,6 @@ static const CLI_Command_Definition_t command_table[] = {
         "error",
         "\r\nerror:\r\n Get robot error status.\r\n\r\n",
         Command_Error,
-        0,
-    },
-    {
-        "motor-id-set",
-        "\r\nmotor-id-set:\r\n Enter motor ID quick set mode.\r\n\r\n",
-        Command_MotorIDQuitckSet,
         0,
     },
     {
