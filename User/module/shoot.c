@@ -1,6 +1,6 @@
 /*
-  射击模组
-*/
+ * 射击模组
+ */
 
 /* Includes ----------------------------------------------------------------- */
 #include "shoot.h"
@@ -119,15 +119,13 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
   if (can == NULL) return -1;
 
   for (uint8_t i = 0; i < 2; i++) {
-    s->feedback.fric_rpm[i] =
-        can->shoot_motor_feedback[CAN_MOTOR_SHOOT_FRIC1 + i].rotor_speed;
+    s->feedback.fric_rpm[i] = can->shoot_motor.as_array[i].rotor_speed;
   }
 
   //更新拨弹电机
   float last_motor_trig_angle, motor_angle_delta;
   last_motor_trig_angle = s->feedback.trig_motor_angle;
-  s->feedback.trig_motor_angle =
-      can->shoot_motor_feedback[CAN_MOTOR_SHOOT_TRIG].rotor_angle;
+  s->feedback.trig_motor_angle = can->shoot_motor.named.trig.rotor_angle;
   motor_angle_delta = s->feedback.trig_motor_angle - last_motor_trig_angle;
   if (motor_angle_delta > M_PI)
     motor_angle_delta -= M_2PI;
@@ -217,4 +215,16 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec) {
       break;
   }
   return 0;
+}
+
+/*!
+ * \brief 复制射击输出值
+ *
+ * \param s 包含射击数据的结构体
+ * \param out CAN设备射击输出结构体
+ */
+void Shoot_DumpOutput(Shoot_t *s, CAN_ShootOutput_t *out) {
+  for (uint8_t i = 0; i < SHOOT_ACTR_NUM; i++) {
+    out->as_array[i] = s->out[i];
+  }
 }

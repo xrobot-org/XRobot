@@ -49,8 +49,6 @@ void Task_Command(void *argument) {
   task_runtime.msgq.cmd.shoot =
       osMessageQueueNew(3u, sizeof(CMD_ShootCmd_t), NULL);
 
-  osDelay(TASK_INIT_DELAY_COMMAND); /* 延时一段时间再开启任务 */
-
   DR16_Init(&dr16); /* 初始化接收机 */
   CMD_Init(&cmd, &(task_runtime.config_pilot->param.cmd)); /* 初始话指令处理 */
 

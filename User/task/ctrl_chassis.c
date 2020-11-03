@@ -15,15 +15,16 @@
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
+static CAN_t can;
 
 #ifdef DEBUG
-CAN_t can;
 CMD_ChassisCmd_t chassis_cmd;
 Chassis_t chassis;
+CAN_ChassisOutput_t chassis_out;
 #else
-static CAN_t can;
 static CMD_ChassisCmd_t chassis_cmd;
 static Chassis_t chassis;
+static CAN_ChassisOutput_t chassis_out;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -40,18 +41,13 @@ void Task_CtrlChassis(void *argument) {
   /* 计算任务运行到指定频率，需要延时的时间 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_CHASSIS;
 
-  osDelay(TASK_INIT_DELAY_CTRL_CHASSIS); /* 延时一段时间再开启任务 */
-
-  /* 初始化CAN总线上的设备 */
-  osThreadId_t recv_motor_allert[3] = {osThreadGetId(),
-                                       task_runtime.thread.ctrl_gimbal,
-                                       task_runtime.thread.ctrl_shoot};
-
-  CAN_Init(&can, NULL, recv_motor_allert, 3, task_runtime.thread.referee);
-
   /* 初始化底盘 */
   Chassis_Init(&chassis, &(task_runtime.robot_param->chassis),
                (float)TASK_FREQ_CTRL_CHASSIS);
+
+  /* 延时一段时间再开启任务 */
+  osMessageQueueGet(task_runtime.msgq.motor.feedback.chassis,
+                    &can.chassis_motor, NULL, osWaitForever);
 
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   uint32_t wakeup = HAL_GetTick(); /* 计算任务运行间隔的计时 */
@@ -63,11 +59,12 @@ void Task_CtrlChassis(void *argument) {
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 
     /* 等待接收CAN总线新数据 */
-    const uint32_t flag = SIGNAL_CAN_MOTOR_RECV;
-    if (osThreadFlagsWait(flag, osFlagsWaitAll, delay_tick) != flag) {
+    if (osMessageQueueGet(task_runtime.msgq.motor.feedback.chassis,
+                          &can.chassis_motor, NULL, delay_tick) != osOK) {
       /* 如果没有接收到新数据，则将输出置零，不进行控制 */
-      CAN_Motor_ControlChassis(0.0f, 0.0f, 0.0f, 0.0f);
-
+      CAN_ResetChassisOut(&chassis_out);
+      osMessageQueuePut(task_runtime.msgq.motor.output.chassis, &chassis_out, 0,
+                        0);
     } else {
       /* 继续读取控制指令 */
       osMessageQueueGet(task_runtime.msgq.cmd.chassis, &chassis_cmd, NULL, 0);
@@ -76,10 +73,10 @@ void Task_CtrlChassis(void *argument) {
       const uint32_t now = HAL_GetTick();
       Chassis_UpdateFeedback(&chassis, &can);
       Chassis_Control(&chassis, &chassis_cmd, (float)(now - wakeup) / 1000.0f);
+      Chassis_DumpOutput(&chassis, &chassis_out);
+      osMessageQueuePut(task_runtime.msgq.motor.output.chassis, &chassis_out, 0,
+                        0);
       wakeup = now;
-      CAN_Motor_ControlChassis(chassis.out[0], chassis.out[1], chassis.out[2],
-                               chassis.out[3]);
-
       osKernelUnlock();
 
       osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */

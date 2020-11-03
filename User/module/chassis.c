@@ -172,11 +172,10 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (can == NULL) return CHASSIS_ERR_NULL;
 
-  c->feedback.gimbal_yaw_angle =
-      can->gimbal_motor_feedback[CAN_MOTOR_GIMBAL_YAW].rotor_angle;
+  c->feedback.gimbal_yaw_angle = can->gimbal_motor.named.yaw.rotor_angle;
 
   for (uint8_t i = 0; i < c->num_wheel; i++) {
-    c->feedback.motor_rpm[i] = can->chassis_motor_feedback[i].rotor_speed;
+    c->feedback.motor_rpm[i] = can->chassis_motor.as_array[i].rotor_speed;
   }
 
   return CHASSIS_OK;
@@ -271,4 +270,16 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec) {
     c->out[i] = LowPassFilter2p_Apply(c->filter.out + i, c->out[i]);
   }
   return CHASSIS_OK;
+}
+
+/*!
+ * \brief 复制底盘输出值
+ *
+ * \param s 包含底盘数据的结构体
+ * \param out CAN设备底盘输出结构体
+ */
+void Chassis_DumpOutput(Chassis_t *c, CAN_ChassisOutput_t *out) {
+  for (uint8_t i = 0; i < c->num_wheel; i++) {
+    out->as_array[i] = c->out[i];
+  }
 }

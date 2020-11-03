@@ -13,20 +13,16 @@ extern "C" {
 
 /* Exported constants ------------------------------------------------------- */
 /* 所有任务都要define一个“任务运行频率”和“初始化延时” */
-#define TASK_FREQ_CTRL_CHASSIS (1000u)
-#define TASK_FREQ_CTRL_GIMBAL (1000u)
-#define TASK_FREQ_CTRL_SHOOT (1000u)
+#define TASK_FREQ_CTRL_CHASSIS (500u)
+#define TASK_FREQ_CTRL_GIMBAL (500u)
+#define TASK_FREQ_CTRL_SHOOT (500u)
 #define TASK_FREQ_INFO (4u)
 #define TASK_FREQ_MONITOR (2u)
+#define TASK_FREQ_MOTOR (500u)
 #define TASK_FREQ_REFEREE (2u)
 
-#define TASK_INIT_DELAY_COMMAND (15u)
-#define TASK_INIT_DELAY_CTRL_CHASSIS (100)
-#define TASK_INIT_DELAY_CTRL_GIMBAL (200)
-#define TASK_INIT_DELAY_CTRL_SHOOT (300)
 #define TASK_INIT_DELAY_INFO (500u)
 #define TASK_INIT_DELAY_MONITOR (10)
-#define TASK_INIT_DELAY_POSESTI (0u)
 #define TASK_INIT_DELAY_REFEREE (400u)
 
 /* Exported defines --------------------------------------------------------- */
@@ -41,6 +37,7 @@ typedef struct {
     osThreadId_t ctrl_shoot;
     osThreadId_t info;
     osThreadId_t monitor;
+    osThreadId_t motor;
     osThreadId_t atti_esti;
     osThreadId_t referee;
   } thread; /* 各任务，也可以收拾线程 */
@@ -50,18 +47,29 @@ typedef struct {
       osMessageQueueId_t accl;     /* IMU读取 */
       osMessageQueueId_t gyro;     /* IMU读取 */
       osMessageQueueId_t eulr_imu; /* 姿态解算得到 */
-    } gimbal;
+    } gimbal;                      /* 云台相关数据 */
 
     struct {
       osMessageQueueId_t chassis;
       osMessageQueueId_t gimbal;
       osMessageQueueId_t shoot;
     } cmd; /* 控制指令 */
-  } msgq;
 
-  struct {
-    osMutexId_t atti_ready;
-  } mutex;
+    struct {
+      struct {
+        osMessageQueueId_t chassis;
+        osMessageQueueId_t gimbal;
+        osMessageQueueId_t shoot;
+      } output;
+
+      struct {
+        osMessageQueueId_t chassis;
+        osMessageQueueId_t gimbal;
+        osMessageQueueId_t shoot;
+      } feedback;
+    } motor; /* motor任务放入、读取，电机的输入输出 */
+
+  } msgq;
 
   struct {
     float battery;
@@ -81,6 +89,7 @@ typedef struct {
     UBaseType_t ctrl_shoot;
     UBaseType_t info;
     UBaseType_t monitor;
+    UBaseType_t motor;
     UBaseType_t atti_esti;
     UBaseType_t referee;
   } stack_water_mark; /* stack使用 */
@@ -93,6 +102,7 @@ typedef struct {
     float ctrl_shoot;
     float info;
     float monitor;
+    float motor;
     float atti_esti;
     float referee;
   } freq; /* 任务运行频率 */
@@ -105,11 +115,11 @@ typedef struct {
     float ctrl_shoot;
     float info;
     float monitor;
+    float motor;
     float atti_esti;
     float referee;
   } last_up_time; /* 任务最近运行时间 */
 #endif
-
 } Task_Runtime_t;
 
 extern Task_Runtime_t task_runtime;
@@ -123,6 +133,7 @@ extern const osThreadAttr_t attr_ctrl_gimbal;
 extern const osThreadAttr_t attr_ctrl_shoot;
 extern const osThreadAttr_t attr_info;
 extern const osThreadAttr_t attr_monitor;
+extern const osThreadAttr_t attr_motor;
 extern const osThreadAttr_t attr_atti_esti;
 extern const osThreadAttr_t attr_referee;
 
@@ -136,6 +147,7 @@ void Task_CtrlGimbal(void *argument);
 void Task_CtrlShoot(void *argument);
 void Task_Info(void *argument);
 void Task_Monitor(void *argument);
+void Task_Motor(void *argument);
 void Task_AttiEsti(void *argument);
 void Task_Referee(void *argument);
 

@@ -434,6 +434,39 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
   }
 }
 
+static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
+                                      const char *command_string) {
+  if (out_buffer == NULL) return pdFALSE;
+  (void)command_string;
+  len -= 1;
+
+  Config_t cfg;
+
+  static FiniteStateMachine_t fsm;
+  switch (fsm.stage) {
+    case 0:
+      snprintf(out_buffer, len, "\r\nStart setting mechanical zero point.\r\n");
+      fsm.stage++;
+      return pdPASS;
+    case 1:
+      Config_Get(&cfg);
+#if 0
+      cfg.mech_zero.yaw = can->gimbal_motor_feedback[CAN_MOTOR_GIMBAL_YAW].rotor_angle;
+      cfg.mech_zero.pit = can->gimbal_motor_feedback[CAN_MOTOR_GIMBAL_PIT].rotor_angle;
+#endif
+      Config_Set(&cfg);
+      snprintf(out_buffer, len, "\r\nDone.");
+
+      fsm.stage++;
+      return pdPASS;
+
+    default:
+      snprintf(out_buffer, len, "\r\n");
+      fsm.stage = 0;
+      return pdFALSE;
+  }
+}
+
 /*
 static BaseType_t Command_XXX(char *out_buffer, size_t len,
                                            const char *command_string) {
@@ -445,7 +478,7 @@ static BaseType_t Command_XXX(char *out_buffer, size_t len,
   switch (fsm.stage) {
     case 0:
 
-      snprintf(out_buffer, len, "\r\nXXX.");
+      snprintf(out_buffer, len, "\r\nXXX.\r\n");
 
 
       fsm.stage++;
@@ -515,6 +548,12 @@ static const CLI_Command_Definition_t command_table[] = {
         "cali-gyro",
         "\r\ncali-gyro:\r\n Calibrate gyroscope. Remove zero offset.\r\n\r\n",
         Command_CaliGyro,
+        0,
+    },
+    {
+        "set-mech-zero",
+        "\r\nset-mech-zero:\r\n Set mechanical zero point for gimbal.\r\n\r\n",
+        Command_SetMechZero,
         0,
     },
 };

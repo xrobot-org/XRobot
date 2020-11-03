@@ -74,7 +74,7 @@ typedef struct {
     AHRS_Eulr_t imu;     /* 由IMU计算的欧拉角 */
     AHRS_Eulr_t encoder; /* 由编码器计算的欧拉角 */
   } eulr;                /* 欧拉角 */
-} Gimbal_Feedback;
+} Gimbal_Feedback_t;
 
 /*
  * 运行的主结构体，所有这个文件里的函数都在操作这个结构体。
@@ -120,7 +120,8 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
  *
  * \return 函数运行结果
  */
-int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback, const CAN_t *can);
+int8_t Gimbal_CANtoFeedback(Gimbal_Feedback_t *gimbal_feedback,
+                            const CAN_t *can);
 
 /*!
  * \brief 运行云台控制逻辑
@@ -132,8 +133,16 @@ int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback, const CAN_t *can);
  *
  * \return 函数运行结果
  */
-int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb, CMD_GimbalCmd_t *g_cmd,
-                      float dt_sec);
+int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback_t *fb,
+                      CMD_GimbalCmd_t *g_cmd, float dt_sec);
+
+/*!
+ * \brief 复制云台输出值
+ *
+ * \param s 包含云台数据的结构体
+ * \param out CAN设备云台输出结构体
+ */
+void Gimbal_DumpOutput(Gimbal_t *g, CAN_GimbalOutput_t *out);
 
 #ifdef __cplusplus
 }

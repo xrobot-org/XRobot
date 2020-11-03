@@ -133,6 +133,14 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can);
  */
 int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec);
 
+/*!
+ * \brief 复制射击输出值
+ *
+ * \param s 包含射击数据的结构体
+ * \param out CAN设备射击输出结构体
+ */
+void Shoot_DumpOutput(Shoot_t *s, CAN_ShootOutput_t *out);
+
 #ifdef __cplusplus
 }
 #endif

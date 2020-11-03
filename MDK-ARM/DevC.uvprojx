@@ -1068,6 +1068,11 @@
               <FilePath>..\User\task\monitor.c</FilePath>
             </File>
             <File>
+              <FileName>motor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\motor.c</FilePath>
+            </File>
+            <File>
               <FileName>referee.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\referee.c</FilePath>
@@ -2696,6 +2701,11 @@
               <FileName>monitor.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\monitor.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\motor.c</FilePath>
             </File>
             <File>
               <FileName>referee.c</FileName>

@@ -44,6 +44,7 @@ void Task_Init(void *argument) {
       osThreadNew(Task_CtrlShoot, NULL, &attr_ctrl_shoot);
   task_runtime.thread.info = osThreadNew(Task_Info, NULL, &attr_info);
   task_runtime.thread.monitor = osThreadNew(Task_Monitor, NULL, &attr_monitor);
+  task_runtime.thread.motor = osThreadNew(Task_Motor, NULL, &attr_motor);
   task_runtime.thread.referee = osThreadNew(Task_Referee, NULL, &attr_referee);
   osKernelUnlock();
 

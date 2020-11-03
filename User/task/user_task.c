@@ -63,6 +63,12 @@ const osThreadAttr_t attr_monitor = {
     .stack_size = 128 * 4,
 };
 
+const osThreadAttr_t attr_motor = {
+    .name = "motor",
+    .priority = (osPriority_t)osPriorityRealtime,
+    .stack_size = 128 * 4,
+};
+
 const osThreadAttr_t attr_referee = {
     .name = "referee",
     .priority = (osPriority_t)osPriorityNormal,

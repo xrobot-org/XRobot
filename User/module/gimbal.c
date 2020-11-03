@@ -88,15 +88,13 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
  *
  * \return 函数运行结果
  */
-int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback,
+int8_t Gimbal_CANtoFeedback(Gimbal_Feedback_t *gimbal_feedback,
                             const CAN_t *can) {
   if (gimbal_feedback == NULL) return -1;
   if (can == NULL) return -1;
 
-  gimbal_feedback->eulr.encoder.yaw =
-      can->gimbal_motor_feedback[CAN_MOTOR_GIMBAL_YAW].rotor_angle;
-  gimbal_feedback->eulr.encoder.pit =
-      can->gimbal_motor_feedback[CAN_MOTOR_GIMBAL_PIT].rotor_angle;
+  gimbal_feedback->eulr.encoder.yaw = can->gimbal_motor.named.yaw.rotor_angle;
+  gimbal_feedback->eulr.encoder.pit = can->gimbal_motor.named.pit.rotor_angle;
 
   return 0;
 }
@@ -111,8 +109,8 @@ int8_t Gimbal_CANtoFeedback(Gimbal_Feedback *gimbal_feedback,
  *
  * \return 函数运行结果
  */
-int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb, CMD_GimbalCmd_t *g_cmd,
-                      float dt_sec) {
+int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback_t *fb,
+                      CMD_GimbalCmd_t *g_cmd, float dt_sec) {
   if (g == NULL) return -1;
   if (g_cmd == NULL) return -1;
 
@@ -125,9 +123,9 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb, CMD_GimbalCmd_t *g_cmd,
 
   /* 处理控制命令，限制setpoint范围 */
   CircleAdd(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw * dt_sec, M_2PI);
-  CircleAdd(&(g->setpoint.eulr.pit), g_cmd->delta_eulr.pit * dt_sec, M_2PI);
-
-  g->setpoint.eulr.pit = AbsClip(g->setpoint.eulr.pit, M_PI / 2.0f);
+  /* 软件限位 TODO：通过flash设置 */
+  if (g->setpoint.eulr.pit > 0.69) g->setpoint.eulr.pit = 0.69;
+  if (g->setpoint.eulr.pit < -0.46) g->setpoint.eulr.pit = -0.46;
 
   AHRS_ResetEulr(&(g_cmd->delta_eulr));
 
@@ -174,4 +172,15 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback *fb, CMD_GimbalCmd_t *g_cmd,
     g->out[i] = LowPassFilter2p_Apply(g->filter_out + i, g->out[i]);
 
   return 0;
+}
+
+/*!
+ * \brief 复制云台输出值
+ *
+ * \param s 包含云台数据的结构体
+ * \param out CAN设备云台输出结构体
+ */
+void Gimbal_DumpOutput(Gimbal_t *g, CAN_GimbalOutput_t *out) {
+  out->named.yaw = g->out[GIMBAL_ACTR_YAW_IDX];
+  out->named.pit = g->out[GIMBAL_ACTR_PIT_IDX];
 }
