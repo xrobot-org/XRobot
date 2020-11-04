@@ -13,12 +13,12 @@ extern "C" {
 
 /* Exported constants ------------------------------------------------------- */
 /* 所有任务都要define一个“任务运行频率”和“初始化延时” */
-#define TASK_FREQ_CTRL_CHASSIS (500u)
-#define TASK_FREQ_CTRL_GIMBAL (500u)
-#define TASK_FREQ_CTRL_SHOOT (500u)
+#define TASK_FREQ_CTRL_CHASSIS (1000u)
+#define TASK_FREQ_CTRL_GIMBAL (1000u)
+#define TASK_FREQ_CTRL_SHOOT (1000u)
 #define TASK_FREQ_INFO (4u)
 #define TASK_FREQ_MONITOR (2u)
-#define TASK_FREQ_MOTOR (500u)
+#define TASK_FREQ_MOTOR (1000u)
 #define TASK_FREQ_REFEREE (2u)
 
 #define TASK_INIT_DELAY_INFO (500u)

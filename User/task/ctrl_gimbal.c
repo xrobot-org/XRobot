@@ -39,7 +39,6 @@ static CAN_GimbalOutput_t gimbal_out;
  * \param argument 未使用
  */
 void Task_CtrlGimbal(void *argument) {
-  uint8_t ret_msgq_atti = 0;
   (void)argument; /* 未使用argument，消除警告 */
 
   /* 计算任务运行到指定频率，需要延时的时间 */
@@ -72,20 +71,11 @@ void Task_CtrlGimbal(void *argument) {
 
     } else {
       /* 继续读取控制指令、姿态、IMU数据 */
-      if (osMessageQueueGet(task_runtime.msgq.gimbal.eulr_imu,
-                            &(gimbal_feedback.eulr.imu), NULL, 0) == osOK)
-        ret_msgq_atti |= 1;
-      if (osMessageQueueGet(task_runtime.msgq.gimbal.gyro,
-                            &(gimbal_feedback.gyro), NULL, 0) == osOK)
-        ret_msgq_atti |= 1 << 1;
-      if (osMessageQueueGet(task_runtime.msgq.cmd.gimbal, &gimbal_cmd, NULL,
-                            0) == osOK)
-        ret_msgq_atti |= 1 << 2;
-
-      if (gimbal.mode == GIMBAL_MODE_RELATIVE) {
-        if ((ret_msgq_atti & 0x07) != 0x07) continue;
-      }
-      ret_msgq_atti = 0x00;
+      osMessageQueueGet(task_runtime.msgq.gimbal.eulr_imu,
+                        &(gimbal_feedback.eulr.imu), NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &(gimbal_feedback.gyro),
+                        NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.cmd.gimbal, &gimbal_cmd, NULL, 0);
 
       osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
       const uint32_t now = HAL_GetTick();

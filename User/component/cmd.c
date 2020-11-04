@@ -17,7 +17,7 @@ int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
   return 0;
 }
 
-int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd) {
+int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   if (rc == NULL) return -1;
 
   if (cmd == NULL) return -1;
@@ -33,8 +33,10 @@ int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd) {
 
   /* PC键位映射和逻辑. */
   if (cmd->pc_ctrl) {
-    cmd->gimbal.delta_eulr.yaw = (float)rc->mouse.x * cmd->param->sens_mouse;
-    cmd->gimbal.delta_eulr.pit = (float)rc->mouse.y * cmd->param->sens_mouse;
+    cmd->gimbal.delta_eulr.yaw =
+        (float)rc->mouse.x * dt_sec * cmd->param->sens_mouse;
+    cmd->gimbal.delta_eulr.pit =
+        (float)rc->mouse.y * dt_sec * cmd->param->sens_mouse;
 
     if (rc->mouse.l_click) {
       if (rc->mouse.r_click) {
@@ -114,8 +116,8 @@ int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd) {
       }
       cmd->chassis.ctrl_vec.vx = rc->ch_l_x;
       cmd->chassis.ctrl_vec.vy = rc->ch_l_y;
-      cmd->gimbal.delta_eulr.yaw = rc->ch_r_x * cmd->param->sens_rc;
-      cmd->gimbal.delta_eulr.pit = rc->ch_r_y * cmd->param->sens_rc;
+      cmd->gimbal.delta_eulr.yaw = rc->ch_r_x * dt_sec * cmd->param->sens_rc;
+      cmd->gimbal.delta_eulr.pit = rc->ch_r_y * dt_sec * cmd->param->sens_rc;
     }
   }
   return 0;

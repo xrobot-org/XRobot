@@ -51,7 +51,7 @@ void Task_Command(void *argument) {
 
   DR16_Init(&dr16); /* 初始化接收机 */
   CMD_Init(&cmd, &(task_runtime.config_pilot->param.cmd)); /* 初始话指令处理 */
-
+  uint32_t wakeup = HAL_GetTick();
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
@@ -67,12 +67,17 @@ void Task_Command(void *argument) {
       /* 接收失败，则将指令置零 */
       memset(&rc, 0, sizeof(CMD_RC_t));
     }
-
-    CMD_Parse(&rc, &cmd); /* 将接收机数据解析为指令数据 */
+    osKernelLock();
+    const uint32_t now = HAL_GetTick();
+    /* 将接收机数据解析为指令数据 */
+    CMD_Parse(&rc, &cmd, (float)(now - wakeup) / 1000.0f);
 
     /* 将需要与其他任务分享的数据放到消息队列中 */
     osMessageQueuePut(task_runtime.msgq.cmd.chassis, &(cmd.chassis), 0, 0);
     osMessageQueuePut(task_runtime.msgq.cmd.gimbal, &(cmd.gimbal), 0, 0);
     osMessageQueuePut(task_runtime.msgq.cmd.shoot, &(cmd.shoot), 0, 0);
+
+    wakeup = now;
+    osKernelUnlock();
   }
 }

@@ -109,7 +109,7 @@ typedef struct {
 } CMD_RC_t;
 
 int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param);
-int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd);
+int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec);
 
 #ifdef __cplusplus
 }

@@ -122,9 +122,9 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback_t *fb,
   }
 
   /* 处理控制命令，限制setpoint范围 */
-  CircleAdd(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw * dt_sec, M_2PI);
-  g->setpoint.eulr.pit += g_cmd->delta_eulr.pit * dt_sec;
-  
+  CircleAdd(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw, M_2PI);
+  g->setpoint.eulr.pit += g_cmd->delta_eulr.pit;
+
   /* 软件限位 TODO：通过flash设置 */
   if (g->setpoint.eulr.pit > 0.69) g->setpoint.eulr.pit = 0.69;
   if (g->setpoint.eulr.pit < -0.46) g->setpoint.eulr.pit = -0.46;
