@@ -60,7 +60,7 @@ void Task_CtrlChassis(void *argument) {
 
     /* 等待接收CAN总线新数据 */
     if (osMessageQueueGet(task_runtime.msgq.motor.feedback.chassis,
-                          &can.chassis_motor, NULL, delay_tick) != osOK) {
+                          &can, NULL, delay_tick) != osOK) {
       /* 如果没有接收到新数据，则将输出置零，不进行控制 */
       CAN_ResetChassisOut(&chassis_out);
       osMessageQueuePut(task_runtime.msgq.motor.output.chassis, &chassis_out, 0,

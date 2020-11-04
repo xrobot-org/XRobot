@@ -32,13 +32,13 @@ void Task_Motor(void *argument) {
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_MOTOR;
 
   task_runtime.msgq.motor.feedback.chassis =
-      osMessageQueueNew(6u, sizeof(CAN_ChassisMotor_t), NULL);
+      osMessageQueueNew(6u, sizeof(CAN_t), NULL);
 
   task_runtime.msgq.motor.feedback.gimbal =
-      osMessageQueueNew(6u, sizeof(CAN_GimbalMotor_t), NULL);
+      osMessageQueueNew(6u, sizeof(CAN_t), NULL);
 
   task_runtime.msgq.motor.feedback.shoot =
-      osMessageQueueNew(6u, sizeof(CAN_ShootMotor_t), NULL);
+      osMessageQueueNew(6u, sizeof(CAN_t), NULL);
 
   task_runtime.msgq.motor.output.chassis =
       osMessageQueueNew(6u, sizeof(CAN_ChassisOutput_t), NULL);
@@ -67,21 +67,21 @@ void Task_Motor(void *argument) {
       if (CAN_Motor_CheckFlag(&can, MOTOR_REC_CHASSIS_FINISHED)) {
         osMessageQueueReset(task_runtime.msgq.motor.feedback.chassis);
         osMessageQueuePut(task_runtime.msgq.motor.feedback.chassis,
-                          &(can.chassis_motor), 0, 0);
+                          &can, 0, 0);
         CAN_Motor_ClearFlag(&can, MOTOR_REC_CHASSIS_FINISHED);
       }
 
       if (CAN_Motor_CheckFlag(&can, MOTOR_REC_GIMBAL_FINISHED)) {
         osMessageQueueReset(task_runtime.msgq.motor.feedback.gimbal);
         osMessageQueuePut(task_runtime.msgq.motor.feedback.gimbal,
-                          &(can.gimbal_motor), 0, 0);
+                          &can, 0, 0);
         CAN_Motor_ClearFlag(&can, MOTOR_REC_GIMBAL_FINISHED);
       }
 
       if (CAN_Motor_CheckFlag(&can, MOTOR_REC_SHOOT_FINISHED)) {
         osMessageQueueReset(task_runtime.msgq.motor.feedback.shoot);
         osMessageQueuePut(task_runtime.msgq.motor.feedback.shoot,
-                          &(can.shoot_motor), 0, 0);
+                          &can, 0, 0);
         CAN_Motor_ClearFlag(&can, MOTOR_REC_SHOOT_FINISHED);
       }
 

@@ -96,10 +96,10 @@ static const Config_RobotParam_t param_infantry = {
         .range = M_2PI,
       },{
         /* GIMBAL_PID_REL_PIT_IDX, */
-        .k = 0.1f,
+        .k = 8.0f,
         .p = 1.0f,
         .i = 0.01f,
-        .d = 0.001f,
+        .d = 20.0f,
         .i_limit = 1.0f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
@@ -111,8 +111,8 @@ static const Config_RobotParam_t param_infantry = {
       .gyro = 1000.0f,
     },
     .encoder_center = {
-      .yaw = 3.0f,
-      .pit = 3.0f,
+      .yaw = 6.0f,
+      .pit = 6.0f,
     },
   }, /* gimbal */
 
@@ -146,7 +146,7 @@ static const Config_RobotParam_t param_infantry = {
         .trig = -1.0f,
       },
     },
-    .bullet_speed_scaler = 10.0f,
+    .bullet_speed_scaler = -50.0f,
     .bullet_speed_bias = 1.0f,
     .num_trig_tooth = 8.0f,
   }, /* shoot */

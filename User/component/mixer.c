@@ -4,6 +4,7 @@
 
 #include "mixer.h"
 
+#include "math.h"
 int8_t Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode) {
   if (mixer == NULL) return -1;
 
@@ -18,10 +19,10 @@ int8_t Mixer_Apply(Mixer_t *mixer, float vx, float vy, float wz, float *out,
   switch (mixer->mode) {
     case MIXER_MECANUM:
       if (len == 4) {
-        out[0] = -vx - vy + wz;
-        out[1] = -vx + vy + wz;
-        out[2] = vx + vy + wz;
-        out[3] = vx - vy + wz;
+        out[0] = vx - vy + wz;
+        out[1] = vx + vy + wz;
+        out[2] = -vx + vy + wz;
+        out[3] = -vx - vy + wz;
       } else {
         goto error;
       }
@@ -48,6 +49,15 @@ int8_t Mixer_Apply(Mixer_t *mixer, float vx, float vy, float wz, float *out,
       goto error;
   }
 
+  float max = 0.f;
+  for (int8_t i = 0; i < len; i++) {
+    if (fabsf(out[i]) > max) max = out[i];
+  }
+  if (fabsf(max) > 1.f) {
+    for (int8_t i = 0; i < len; i++) {
+      out[i] /= fabsf(max);
+    }
+  }
   for (int8_t i = 0; i < len; i++) {
     out[i] *= scale;
   }

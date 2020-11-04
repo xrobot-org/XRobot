@@ -173,7 +173,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   if (can == NULL) return CHASSIS_ERR_NULL;
 
   c->feedback.gimbal_yaw_angle = can->gimbal_motor.named.yaw.rotor_angle;
-
+	
   for (uint8_t i = 0; i < c->num_wheel; i++) {
     c->feedback.motor_rpm[i] = can->chassis_motor.as_array[i].rotor_speed;
   }
@@ -213,12 +213,12 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec) {
     case CHASSIS_MODE_RELAX:
     case CHASSIS_MODE_FOLLOW_GIMBAL:
     case CHASSIS_MODE_ROTOR: {
-      const float cos_beta = cosf(c->feedback.gimbal_yaw_angle);
-      const float sin_beta = sinf(c->feedback.gimbal_yaw_angle);
+      const float cos_beta = cosf(c->feedback.gimbal_yaw_angle - 3.4f);
+      const float sin_beta = sinf(c->feedback.gimbal_yaw_angle - 3.4f);
       c->move_vec.vx =
           cos_beta * c_cmd->ctrl_vec.vx - sin_beta * c_cmd->ctrl_vec.vy;
       c->move_vec.vy =
-          sin_beta * c_cmd->ctrl_vec.vx - cos_beta * c_cmd->ctrl_vec.vy;
+          sin_beta * c_cmd->ctrl_vec.vx + cos_beta * c_cmd->ctrl_vec.vy;
     }
   }
 
@@ -232,7 +232,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec) {
 
     case CHASSIS_MODE_OPEN:
     case CHASSIS_MODE_FOLLOW_GIMBAL:
-      c->move_vec.wz = PID_Calc(&(c->pid.follow), 0,
+      c->move_vec.wz = PID_Calc(&(c->pid.follow), -3.4,
                                 c->feedback.gimbal_yaw_angle, 0.0f, dt_sec);
       break;
     case CHASSIS_MODE_ROTOR:

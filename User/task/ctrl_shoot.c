@@ -61,7 +61,7 @@ void Task_CtrlShoot(void *argument) {
 
     /* 等待接收CAN总线新数据 */
     if (osMessageQueueGet(task_runtime.msgq.motor.feedback.shoot,
-                          &(can.shoot_motor), NULL, delay_tick) != osOK) {
+                          &can, NULL, delay_tick) != osOK) {
       /* 如果没有接收到新数据，则将输出置零，不进行控制 */
       CAN_ResetShootOut(&shoot_out);
       osMessageQueuePut(task_runtime.msgq.motor.output.shoot, &shoot_out, 0, 0);
