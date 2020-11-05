@@ -233,8 +233,8 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec) {
 
     case CHASSIS_MODE_OPEN:
     case CHASSIS_MODE_FOLLOW_GIMBAL:
-      c->move_vec.wz = PID_Calc(&(c->pid.follow), -3.4,
-                                c->feedback.gimbal_yaw_angle, 0.0f, dt_sec);
+      c->move_vec.wz = PID_Calc(&(c->pid.follow), 0,
+                                c->feedback.gimbal_yaw_angle - c->mech_zero->yaw, 0.0f, dt_sec);
       break;
     case CHASSIS_MODE_ROTOR:
       c->move_vec.wz = 0.5f;
