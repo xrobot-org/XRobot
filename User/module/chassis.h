@@ -54,6 +54,7 @@ typedef struct {
  */
 typedef struct {
   const Chassis_Params_t *param; /* 底盘的参数，用Chassis_Init设定 */
+  AHRS_Eulr_t *mech_zero;
 
   /* 模块通用 */
   CMD_ChassisMode_t mode; /* 底盘模式 */
@@ -99,7 +100,7 @@ typedef struct {
  * \return 函数运行结果
  */
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
-                    float target_freq);
+                    AHRS_Eulr_t *mech_zero, float target_freq);
 
 /*!
  * \brief 更新底盘的反馈信息

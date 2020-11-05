@@ -333,12 +333,18 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       fsm.stage++;
       return pdPASS;
     case 2:
+      osThreadSuspend(task_runtime.thread.ctrl_gimbal);
+
       if (osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &gyro, NULL, 5) !=
           osOK) {
         snprintf(out_buffer, len, "Can not get gyro data.\r\n");
         fsm.stage = 7;
+        osThreadResume(task_runtime.thread.ctrl_gimbal);
+
         return pdPASS;
       }
+      osThreadResume(task_runtime.thread.ctrl_gimbal);
+
       if (BMI088_GyroStable(&gyro)) {
         snprintf(out_buffer, len,
                  "Controller is stable. Start calibation.\r\n");
@@ -416,6 +422,7 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
   (void)command_string;
   len -= 1;
 
+  CAN_t can;
   Config_t cfg;
 
   static FiniteStateMachine_t fsm;
@@ -426,16 +433,29 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
       return pdPASS;
     case 1:
       Config_Get(&cfg);
-#if 0
-      cfg.mech_zero.yaw = can->gimbal_motor_feedback[CAN_MOTOR_GIMBAL_YAW].rotor_angle;
-      cfg.mech_zero.pit = can->gimbal_motor_feedback[CAN_MOTOR_GIMBAL_PIT].rotor_angle;
-#endif
+
+      osThreadSuspend(task_runtime.thread.ctrl_gimbal);
+      if (osMessageQueueGet(task_runtime.msgq.motor.feedback.gimbal, &can, NULL,
+                            5) != osOK) {
+        snprintf(out_buffer, len, "Can not get gimbal data.\r\n");
+        fsm.stage = 2;
+        osThreadResume(task_runtime.thread.ctrl_gimbal);
+        return pdPASS;
+      }
+      osThreadResume(task_runtime.thread.ctrl_gimbal);
+      cfg.mech_zero.yaw = can.gimbal_motor.named.yaw.rotor_angle;
+      cfg.mech_zero.pit = can.gimbal_motor.named.pit.rotor_angle;
+
       Config_Set(&cfg);
-      snprintf(out_buffer, len, "\r\nDone.");
+      snprintf(out_buffer, len, "yaw:%f, pitch:%f, rol:%f\r\nDone.",
+               cfg.mech_zero.yaw, cfg.mech_zero.pit, cfg.mech_zero.rol);
 
-      fsm.stage++;
+      fsm.stage = 3;
       return pdPASS;
-
+    case 2:
+      snprintf(out_buffer, len, "Calibation failed.\r\n");
+      fsm.stage = 3;
+      return pdPASS;
     default:
       snprintf(out_buffer, len, "\r\n");
       fsm.stage = 0;

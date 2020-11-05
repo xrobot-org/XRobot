@@ -71,11 +71,12 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_ChassisMode_t mode) {
  * \return 函数运行结果
  */
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
-                    float target_freq) {
+                    AHRS_Eulr_t *mech_zero, float target_freq) {
   if (c == NULL) return CHASSIS_ERR_NULL;
 
   c->param = param;             /* 初始化参数 */
   c->mode = CHASSIS_MODE_RELAX; /* 设置默认模式 */
+  c->mech_zero = mech_zero;
 
   /* 根据参数（param）中的底盘型号初始化Mixer */
   Mixer_Mode_t mixer_mode;
@@ -173,7 +174,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   if (can == NULL) return CHASSIS_ERR_NULL;
 
   c->feedback.gimbal_yaw_angle = can->gimbal_motor.named.yaw.rotor_angle;
-	
+
   for (uint8_t i = 0; i < c->num_wheel; i++) {
     c->feedback.motor_rpm[i] = can->chassis_motor.as_array[i].rotor_speed;
   }
@@ -193,9 +194,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
 int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (c_cmd == NULL) return CHASSIS_ERR_NULL;
-
   Chassis_SetMode(c, c_cmd->mode);
-
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
   /* 先计算vx、vy. */
   switch (c->mode) {
@@ -213,8 +212,10 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec) {
     case CHASSIS_MODE_RELAX:
     case CHASSIS_MODE_FOLLOW_GIMBAL:
     case CHASSIS_MODE_ROTOR: {
-      const float cos_beta = cosf(c->feedback.gimbal_yaw_angle - 3.4f);
-      const float sin_beta = sinf(c->feedback.gimbal_yaw_angle - 3.4f);
+      const float cos_beta =
+          cosf(c->feedback.gimbal_yaw_angle - c->mech_zero->yaw);
+      const float sin_beta =
+          sinf(c->feedback.gimbal_yaw_angle - c->mech_zero->yaw);
       c->move_vec.vx =
           cos_beta * c_cmd->ctrl_vec.vx - sin_beta * c_cmd->ctrl_vec.vy;
       c->move_vec.vy =

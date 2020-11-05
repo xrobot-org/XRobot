@@ -43,6 +43,7 @@ void Task_CtrlChassis(void *argument) {
 
   /* 初始化底盘 */
   Chassis_Init(&chassis, &(task_runtime.robot_param->chassis),
+               &task_runtime.robot_cfg.mech_zero,
                (float)TASK_FREQ_CTRL_CHASSIS);
 
   /* 延时一段时间再开启任务 */
@@ -59,8 +60,8 @@ void Task_CtrlChassis(void *argument) {
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 
     /* 等待接收CAN总线新数据 */
-    if (osMessageQueueGet(task_runtime.msgq.motor.feedback.chassis,
-                          &can, NULL, delay_tick) != osOK) {
+    if (osMessageQueueGet(task_runtime.msgq.motor.feedback.chassis, &can, NULL,
+                          delay_tick) != osOK) {
       /* 如果没有接收到新数据，则将输出置零，不进行控制 */
       CAN_ResetChassisOut(&chassis_out);
       osMessageQueuePut(task_runtime.msgq.motor.output.chassis, &chassis_out, 0,
