@@ -54,10 +54,10 @@ static const Config_RobotParam_t param_infantry = {
                 {
                     {
                         /* GIMBAL_PID_YAW_OMEGA_IDX */
-                        .k = 0.3f,
+                        .k = 0.0865f,
                         .p = 1.0f,
-                        .i = 0.1f,
-                        .d = 0.0f,
+                        .i = 6.9364f,
+                        .d = 0.019653f,
                         .i_limit = 1.0f,
                         .out_limit = 1.0f,
                         .d_cutoff_freq = -1.0f,
@@ -65,7 +65,7 @@ static const Config_RobotParam_t param_infantry = {
                     },
                     {
                         /* GIMBAL_PID_YAW_ANGLE_IDX */
-                        .k = 2.8f,
+                        .k = 8.f,
                         .p = 1.0f,
                         .i = 0.0f,
                         .d = 0.0f,
@@ -190,7 +190,7 @@ static const Config_Pilot_t user_qs = {
             .cmd =
                 {
                     .sens_mouse = 0.5f,
-                    .sens_rc = 1.0f,
+                    .sens_rc = 2.0f,
                 },
         },
 };
