@@ -64,6 +64,10 @@ typedef struct {
     float yaw;
     float pit;
   } encoder_center; /* 云台编码器中间位置 */
+  struct {
+    bool yaw;
+    bool pit;
+  } reverse; /* 设置默认运动方向 */
 } Gimbal_Params_t;
 
 /* 云台反馈数据的结构体，包含反馈控制用的反馈数据 */

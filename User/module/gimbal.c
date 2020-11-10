@@ -116,6 +116,10 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback_t *fb,
 
   Gimbal_SetMode(g, g_cmd->mode);
 
+  /* 判断云台方向 */
+  if (g->param->reverse.pit) g_cmd->delta_eulr.pit = -(g_cmd->delta_eulr.pit);
+  if (g->param->reverse.yaw) g_cmd->delta_eulr.yaw = -(g_cmd->delta_eulr.yaw);
+
   /* 设置初始yaw目标值 */
   if (g->setpoint.eulr.yaw == 0.0f) {
     g->setpoint.eulr.yaw = fb->eulr.imu.yaw;

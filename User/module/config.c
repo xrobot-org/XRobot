@@ -129,6 +129,11 @@ static const Config_RobotParam_t param_infantry = {
                     .yaw = 6.0f,
                     .pit = 6.0f,
                 },
+            .reverse =
+                {
+                  .yaw = true,
+                  .pit = false,
+                },
         }, /* gimbal */
 
     .shoot =
