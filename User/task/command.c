@@ -50,7 +50,7 @@ void Task_Command(void *argument) {
       osMessageQueueNew(3u, sizeof(CMD_ShootCmd_t), NULL);
 
   DR16_Init(&dr16); /* 初始化接收机 */
-  CMD_Init(&cmd, &(task_runtime.config_pilot->param.cmd)); /* 初始话指令处理 */
+  CMD_Init(&cmd, &(task_runtime.config_pilot->param.cmd)); /* 初始化指令处理 */
   uint32_t wakeup = HAL_GetTick();
   while (1) {
 #ifdef DEBUG
