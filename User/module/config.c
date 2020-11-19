@@ -31,7 +31,7 @@ static const Config_RobotParam_t param_infantry = {
                 },
             .follow_pid_param =
                 {
-                    .k = 2.0f,
+                    .k = 0.0f,
                     .p = 1.0f,
                     .i = 0.0f,
                     .d = 0.0f,
@@ -54,10 +54,10 @@ static const Config_RobotParam_t param_infantry = {
                 {
                     {
                         /* GIMBAL_PID_YAW_OMEGA_IDX */
-                        .k = 0.0865f,
+                        .k = 0.245326675239841f,
                         .p = 1.0f,
-                        .i = 6.9364f,
-                        .d = 0.019653f,
+                        .i = 28.274136896f,
+                        .d = 0.007071387562335f,
                         .i_limit = 1.0f,
                         .out_limit = 1.0f,
                         .d_cutoff_freq = -1.0f,
@@ -65,7 +65,7 @@ static const Config_RobotParam_t param_infantry = {
                     },
                     {
                         /* GIMBAL_PID_YAW_ANGLE_IDX */
-                        .k = 8.f,
+                        .k = 9.58196376868962f,
                         .p = 1.0f,
                         .i = 0.0f,
                         .d = 0.0f,
