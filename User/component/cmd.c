@@ -90,7 +90,7 @@ int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       }
       switch (rc->sw_r) {
         case CMD_SW_UP:
-          cmd->gimbal.mode = GIMBAL_MODE_FIX;
+          cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
           cmd->shoot.mode = SHOOT_MODE_SAFE;
           cmd->shoot.shoot_freq_hz = 0.0f;
           cmd->shoot.bullet_speed = 0.0f;
