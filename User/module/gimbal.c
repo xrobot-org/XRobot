@@ -51,11 +51,13 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_GimbalMode_t mode) {
  * \return 函数运行结果
  */
 int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
-                   float target_freq) {
+                   Gimbal_Limit_t *limit, float target_freq) {
   if (g == NULL) return -1;
 
-  g->param = param;            /* 初始化参数 */
-  g->mode = GIMBAL_MODE_RELAX; /* 设置默认模式 */
+  g->param = param;                 /* 初始化参数 */
+  g->mode = GIMBAL_MODE_RELAX;      /* 设置默认模式 */
+  g->gimbal_limit.max = limit->max; /* 设置软件限位 */
+  g->gimbal_limit.min = limit->min;
 
   /* 初始化云台电机控制PID和LPF */
   PID_Init(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), KPID_MODE_NO_D, target_freq,
@@ -129,9 +131,11 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback_t *fb,
   CircleAdd(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw, M_2PI);
   g->setpoint.eulr.pit += g_cmd->delta_eulr.pit;
 
-  /* 软件限位 TODO：通过flash设置 */
-  if (g->setpoint.eulr.pit > 0.69) g->setpoint.eulr.pit = 0.69;
-  if (g->setpoint.eulr.pit < -0.46) g->setpoint.eulr.pit = -0.46;
+  /* 软件限位 */
+  if (g->setpoint.eulr.pit > g->gimbal_limit.max)
+    g->setpoint.eulr.pit = g->gimbal_limit.max;
+  if (g->setpoint.eulr.pit < g->gimbal_limit.min)
+    g->setpoint.eulr.pit = g->gimbal_limit.min;
 
   AHRS_ResetEulr(&(g_cmd->delta_eulr));
 

@@ -70,6 +70,11 @@ typedef struct {
   } reverse; /* 设置默认运动方向 */
 } Gimbal_Params_t;
 
+typedef struct {
+  float max;
+  float min;
+} Gimbal_Limit_t; /* 软件限位 */
+
 /* 云台反馈数据的结构体，包含反馈控制用的反馈数据 */
 typedef struct {
   AHRS_Gyro_t gyro; /* IMU的陀螺仪数据 */
@@ -96,6 +101,8 @@ typedef struct {
 
   KPID_t pid[GIMBAL_PID_NUM]; /* PID数组 */
 
+  Gimbal_Limit_t gimbal_limit;
+
   LowPassFilter2p_t filter_out[GIMBAL_ACTR_NUM]; /* 输出滤波器滤波器数组 */
 
   float out[GIMBAL_ACTR_NUM]; /* 输出数组 */
@@ -114,7 +121,7 @@ typedef struct {
  * \return 函数运行结果
  */
 int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
-                   float target_freq);
+                   Gimbal_Limit_t *limit, float target_freq);
 
 /*!
  * \brief 通过CAN设备更新云台反馈信息

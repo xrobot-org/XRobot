@@ -9,6 +9,7 @@
 /* Includes ----------------------------------------------------------------- */
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "FreeRTOS.h"
 #include "bsp\can.h"
@@ -463,6 +464,71 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
   }
 }
 
+static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
+                                       const char *command_string) {
+  if (out_buffer == NULL) return pdFALSE;
+  (void)command_string;
+  len -= 1;
+  const char *param;
+  BaseType_t param_len;
+  Gimbal_Feedback_t gimbal_feedback;
+  Config_t cfg;
+  param = FreeRTOS_CLIGetParameter(command_string, 1, &param_len);
+  static FiniteStateMachine_t fsm;
+  switch (fsm.stage) {
+    case 0:
+      if (param == NULL ||
+          (strcmp(param, "max") != 0 && strcmp(param, "min") != 0)) {
+        fsm.stage = 4;
+        return pdPASS;
+      }
+      Config_Get(&cfg);
+      snprintf(out_buffer, len, "(old)max:%f, min:%f\r\n", cfg.gimbal_limit.max,
+               cfg.gimbal_limit.min);
+      fsm.stage = 1;
+      return pdPASS;
+    case 1:
+      osThreadSuspend(task_runtime.thread.ctrl_gimbal);
+
+      if (osMessageQueueGet(task_runtime.msgq.gimbal.eulr_imu,
+                            &(gimbal_feedback.eulr.imu), NULL, 10) != osOK) {
+        osThreadResume(task_runtime.thread.ctrl_gimbal);
+        fsm.stage = 3;
+        return pdPASS;
+      }
+      Config_Get(&cfg);
+      osThreadResume(task_runtime.thread.ctrl_gimbal);
+      if (strcmp(param, "max") == 0)
+        cfg.gimbal_limit.max = gimbal_feedback.eulr.imu.pit;
+      else
+        cfg.gimbal_limit.min = gimbal_feedback.eulr.imu.pit;
+      Config_Set(&cfg);
+      Config_Get(&cfg);
+      snprintf(out_buffer, len, "(new)max:%f, min:%f, \r\nDone.",
+               cfg.gimbal_limit.max, cfg.gimbal_limit.min);
+      fsm.stage = 2;
+      return pdPASS;
+    case 2:
+      snprintf(out_buffer, len,
+               "\r\nRestart needed for setting to take effect.");
+      fsm.stage = 5;
+      return pdPASS;
+    case 3:
+      snprintf(out_buffer, len,
+               "Calibation failed.\r\nCan not get gimbal data.\r\n");
+      fsm.stage = 5;
+      return pdPASS;
+    case 4:
+      snprintf(out_buffer, len, "Unknow options.\r\nPlease check help.");
+      fsm.stage = 5;
+      return pdPASS;
+    default:
+      snprintf(out_buffer, len, "\r\n");
+      fsm.stage = 0;
+      return pdFALSE;
+  }
+}
+
 /*
 static BaseType_t Command_XXX(char *out_buffer, size_t len,
                                            const char *command_string) {
@@ -545,6 +611,13 @@ static const CLI_Command_Definition_t command_table[] = {
         "\r\nset-mech-zero:\r\n Set mechanical zero point for gimbal.\r\n\r\n",
         Command_SetMechZero,
         0,
+    },
+    {
+        "set-gimbal-limit",
+        "\r\nset-gimbal-limit-max:\r\n Set limit for gimbal. Expext:max "
+        "min\r\n\r\n",
+        Command_SetGimbalLim,
+        1,
     },
 };
 
