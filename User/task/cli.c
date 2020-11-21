@@ -614,7 +614,7 @@ static const CLI_Command_Definition_t command_table[] = {
     },
     {
         "set-gimbal-limit",
-        "\r\nset-gimbal-limit-max:\r\n Set limit for gimbal. Expext:max "
+        "\r\nset-gimbal-limit:\r\n Set limit for gimbal. Expext:max "
         "min\r\n\r\n",
         Command_SetGimbalLim,
         1,
