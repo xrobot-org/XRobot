@@ -39,7 +39,10 @@
 #define CAN_MOTOR_TX_BUF_SIZE (8)
 #define CAN_MOTOR_RX_BUF_SIZE (8)
 
-#define CAN_MOTOR_ENC_RES (8192) /* 电机编码器分辨率 */
+#define CAN_MOTOR_ENC_RES (8192)    /* 电机编码器分辨率 */
+#define CAN_MOTOR_ENC_CUR (16384)   /* 电机转矩电流分辨率 */
+#define CAN_MOTOR_MAX_CUR_3508 (20) /* 3508电机最大电流 */
+
 #define CAN_MOTOR_RX_FIFO CAN_RX_FIFO0
 
 /* Super capacitor */
@@ -66,10 +69,12 @@ static bool inited = false;
 /* Private function  -------------------------------------------------------- */
 static void CAN_Motor_Parse(CAN_MotorFeedback_t *feedback, const uint8_t *raw) {
   uint16_t raw_angle = (uint16_t)((raw[0] << 8) | raw[1]);
-
+  // todo
+  uint16_t raw_current = (int16_t)((raw[4] << 8) | raw[5]);
   feedback->rotor_angle = raw_angle / (float)CAN_MOTOR_ENC_RES * M_2PI;
   feedback->rotor_speed = (int16_t)((raw[2] << 8) | raw[3]);
-  feedback->torque_current = (int16_t)((raw[4] << 8) | raw[5]);
+  feedback->torque_current =
+      raw_current * CAN_MOTOR_MAX_CUR_3508 / (float)CAN_MOTOR_ENC_CUR;
   feedback->temp = raw[6];
 }
 
@@ -179,9 +184,9 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output) {
       motor_raw_tx1.motor_tx_data[6] = (uint8_t)((motor4 >> 8) & 0xFF);
       motor_raw_tx1.motor_tx_data[7] = (uint8_t)(motor4 & 0xFF);
 
-      HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(BSP_CAN_1),
-                           &motor_raw_tx1.tx_header, motor_raw_tx1.motor_tx_data,
-                           (uint32_t *)CAN_TX_MAILBOX0);
+      HAL_CAN_AddTxMessage(
+          BSP_CAN_GetHandle(BSP_CAN_1), &motor_raw_tx1.tx_header,
+          motor_raw_tx1.motor_tx_data, (uint32_t *)CAN_TX_MAILBOX0);
       break;
 
     case CAN_MOTOR_GROUT_GIMBAL1:
@@ -205,9 +210,9 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output) {
       motor_raw_tx1.motor_tx_data[6] = 0;
       motor_raw_tx1.motor_tx_data[7] = 0;
 
-      HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(BSP_CAN_1),
-                           &motor_raw_tx1.tx_header, motor_raw_tx1.motor_tx_data,
-                           (uint32_t *)CAN_TX_MAILBOX1);
+      HAL_CAN_AddTxMessage(
+          BSP_CAN_GetHandle(BSP_CAN_1), &motor_raw_tx1.tx_header,
+          motor_raw_tx1.motor_tx_data, (uint32_t *)CAN_TX_MAILBOX1);
       break;
 
     case CAN_MOTOR_GROUT_SHOOT1:
@@ -233,9 +238,9 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output) {
       motor_raw_tx2.motor_tx_data[6] = 0;
       motor_raw_tx2.motor_tx_data[7] = 0;
 
-      HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(BSP_CAN_2),
-                           &motor_raw_tx2.tx_header, motor_raw_tx2.motor_tx_data,
-                           (uint32_t *)CAN_TX_MAILBOX2);
+      HAL_CAN_AddTxMessage(
+          BSP_CAN_GetHandle(BSP_CAN_2), &motor_raw_tx2.tx_header,
+          motor_raw_tx2.motor_tx_data, (uint32_t *)CAN_TX_MAILBOX2);
       break;
 
     default:

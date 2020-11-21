@@ -116,6 +116,10 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
       BSP_Malloc((size_t)c->num_wheel * sizeof(*c->feedback.motor_rpm));
   if (c->feedback.motor_rpm == NULL) goto error;
 
+  c->feedback.motor_current =
+      BSP_Malloc((size_t)c->num_wheel * sizeof(*c->feedback.motor_current));
+  if (c->feedback.motor_current == NULL) goto error;
+
   c->setpoint.motor_rpm =
       BSP_Malloc((size_t)c->num_wheel * sizeof(*c->setpoint.motor_rpm));
   if (c->setpoint.motor_rpm == NULL) goto error;
@@ -177,6 +181,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
 
   for (uint8_t i = 0; i < c->num_wheel; i++) {
     c->feedback.motor_rpm[i] = can->chassis_motor.as_array[i].rotor_speed;
+    c->feedback.motor_current[i] = can->chassis_motor.as_array[i].torque_current;
   }
 
   return CHASSIS_OK;

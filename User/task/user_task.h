@@ -73,6 +73,7 @@ typedef struct {
 
   struct {
     float battery;
+		float vbat;
     float cpu_temp;
   } status; /* 机器人状态 */
 
