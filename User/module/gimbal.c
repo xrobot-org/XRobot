@@ -13,7 +13,7 @@
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
 
-/*!
+/**
  * \brief 设置云台模式
  *
  * \param c 包含云台数据的结构体
@@ -41,7 +41,7 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_GimbalMode_t mode) {
 
 /* Exported functions ------------------------------------------------------- */
 
-/*!
+/**
  * \brief 初始化云台
  *
  * \param g 包含云台数据的结构体
@@ -82,7 +82,7 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
   return 0;
 }
 
-/*!
+/**
  * \brief 通过CAN设备更新云台反馈信息
  *
  * \param gimbal_feedback 云台反馈信息
@@ -101,7 +101,7 @@ int8_t Gimbal_CANtoFeedback(Gimbal_Feedback_t *gimbal_feedback,
   return 0;
 }
 
-/*!
+/**
  * \brief 运行云台控制逻辑
  *
  * \param g 包含云台数据的结构体
@@ -184,7 +184,7 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback_t *fb,
   return 0;
 }
 
-/*!
+/**
  * \brief 复制云台输出值
  *
  * \param s 包含云台数据的结构体

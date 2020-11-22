@@ -101,7 +101,7 @@ typedef struct {
 
 /* Exported functions prototypes -------------------------------------------- */
 
-/*!
+/**
  * \brief 初始化射击
  *
  * \param s 包含射击数据的结构体
@@ -112,7 +112,7 @@ typedef struct {
  */
 int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq);
 
-/*!
+/**
  * \brief 更新射击的反馈信息
  *
  * \param s 包含射击数据的结构体
@@ -122,7 +122,7 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq);
  */
 int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can);
 
-/*!
+/**
  * \brief 运行射击控制逻辑
  *
  * \param s 包含射击数据的结构体
@@ -133,7 +133,7 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can);
  */
 int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec);
 
-/*!
+/**
  * \brief 复制射击输出值
  *
  * \param s 包含射击数据的结构体

@@ -31,7 +31,7 @@ static CAN_ChassisOutput_t chassis_out;
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 
-/*!
+/**
  * \brief 控制底盘
  *
  * \param argument 未使用

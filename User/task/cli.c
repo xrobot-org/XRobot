@@ -624,7 +624,7 @@ static const CLI_Command_Definition_t command_table[] = {
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 
-/*!
+/**
  * \brief 命令行交互界面
  *
  * \param argument 未使用

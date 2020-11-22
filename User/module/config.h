@@ -69,21 +69,21 @@ typedef struct {
   Gimbal_Limit_t gimbal_limit; /* 软件限位 */
 } Config_t;
 
-/*!
+/**
  * \brief 从Flash读取配置信息
  *
  * \param cfg 配置信息
  */
 void Config_Get(Config_t *cfg);
 
-/*!
+/**
  * \brief 将配置信息写入Flash
  *
  * \param cfg 配置信息
  */
 void Config_Set(Config_t *cfg);
 
-/*!
+/**
  * \brief 获取机器人参数
  *
  * \param model 机器人型号
@@ -92,7 +92,7 @@ void Config_Set(Config_t *cfg);
  */
 const Config_RobotParam_t *Config_GetRobotParam(Config_RobotModel_t model);
 
-/*!
+/**
  * \brief 获取操作手配置
  *
  * \param pilot 操作手
@@ -101,7 +101,7 @@ const Config_RobotParam_t *Config_GetRobotParam(Config_RobotModel_t model);
  */
 const Config_Pilot_t *Config_GetPilotCfg(Config_PilotName_t pilot);
 
-/*!
+/**
  * \brief 通过字符串获得机器人型号
  *
  * \param name 名字字符串
@@ -110,7 +110,7 @@ const Config_Pilot_t *Config_GetPilotCfg(Config_PilotName_t pilot);
  */
 Config_RobotModel_t Config_GetModelByName(const char *name);
 
-/*!
+/**
  * \brief 通过字符串获得操作手
  *
  * \param name 名字字符串
@@ -119,7 +119,7 @@ Config_RobotModel_t Config_GetModelByName(const char *name);
  */
 Config_PilotName_t Config_GetPilotByName(const char *name);
 
-/*!
+/**
  * \brief 获得机器人型号对应名字字符串
  *
  * \param model 机器人型号
@@ -128,7 +128,7 @@ Config_PilotName_t Config_GetPilotByName(const char *name);
  */
 const char *Config_GetNameByModel(Config_RobotModel_t model);
 
-/*!
+/**
  * \brief 获得操作手对应名字字符串
  *
  * \param pilot 操作手

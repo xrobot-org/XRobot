@@ -37,14 +37,14 @@ float AbsClip(float in, float limit);
 
 float Sign(float in);
 
-/*!
+/**
  * \brief 将运动向量置零
  * 
  * \param mv 被操作的值
  */
 void ResetMoveVector(MoveVector_t *mv);
 
-/*!
+/**
  * \brief 计算循环值的误差，用于没有负数值，并在一定范围内变化的值
  * 例如编码器：相差1.5PI其实等于相差-0.5PI
  * 
@@ -56,7 +56,7 @@ void ResetMoveVector(MoveVector_t *mv);
  */
 float CircleError(float sp, float fb, float range);
 
-/*!
+/**
  * \brief 循环加法，用于没有负数值，并在一定范围内变化的值
  * 例如编码器，在0-2PI内变化，1.5PI + 1.5PI = 1PI
  *

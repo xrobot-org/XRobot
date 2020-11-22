@@ -91,7 +91,7 @@ typedef struct {
 
 /* Exported functions prototypes -------------------------------------------- */
 
-/*!
+/**
  * \brief 初始化底盘
  *
  * \param c 包含底盘数据的结构体
@@ -103,7 +103,7 @@ typedef struct {
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
                     AHRS_Eulr_t *mech_zero, float target_freq);
 
-/*!
+/**
  * \brief 更新底盘的反馈信息
  *
  * \param c 包含底盘数据的结构体
@@ -113,7 +113,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
  */
 int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can);
 
-/*!
+/**
  * \brief 运行底盘控制逻辑
  *
  * \param c 包含底盘数据的结构体
@@ -124,7 +124,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can);
  */
 int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec);
 
-/*!
+/**
  * \brief 复制底盘输出值
  *
  * \param s 包含底盘数据的结构体

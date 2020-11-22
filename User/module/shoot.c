@@ -11,7 +11,7 @@
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
 
-/*!
+/**
  * \brief 控制扳机的回调函数
  *
  * \param arg 参数，这里输入Shoot_t
@@ -24,7 +24,7 @@ static void TrigTimerCallback(void *arg) {
             M_2PI);
 }
 
-/*!
+/**
  * \brief 设置射击模式
  *
  * \param c 包含射击数据的结构体
@@ -68,7 +68,7 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_ShootMode_t mode) {
 
 /* Exported functions ------------------------------------------------------- */
 
-/*!
+/**
  * \brief 初始化射击
  *
  * \param s 包含射击数据的结构体
@@ -106,7 +106,7 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
   return 0;
 }
 
-/*!
+/**
  * \brief 更新射击的反馈信息
  *
  * \param s 包含射击数据的结构体
@@ -137,7 +137,7 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
   return 0;
 }
 
-/*!
+/**
  * \brief 运行射击控制逻辑
  *
  * \param s 包含射击数据的结构体
@@ -217,7 +217,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec) {
   return 0;
 }
 
-/*!
+/**
  * \brief 复制射击输出值
  *
  * \param s 包含射击数据的结构体

@@ -33,7 +33,7 @@ static CAN_GimbalOutput_t gimbal_out;
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 
-/*!
+/**
  * \brief 控制云台
  *
  * \param argument 未使用

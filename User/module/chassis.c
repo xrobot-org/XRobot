@@ -15,7 +15,7 @@
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
 
-/*!
+/**
  * \brief 设置底盘模式
  *
  * \param c 包含底盘数据的结构体
@@ -61,7 +61,7 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_ChassisMode_t mode) {
 
 /* Exported functions ------------------------------------------------------- */
 
-/*!
+/**
  * \brief 初始化底盘
  *
  * \param c 包含底盘数据的结构体
@@ -165,7 +165,7 @@ error:
   return CHASSIS_ERR_NULL;
 }
 
-/*!
+/**
  * \brief 更新底盘的反馈信息
  *
  * \param c 包含底盘数据的结构体
@@ -187,7 +187,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   return CHASSIS_OK;
 }
 
-/*!
+/**
  * \brief 运行底盘控制逻辑
  *
  * \param c 包含底盘数据的结构体
@@ -278,7 +278,7 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec) {
   return CHASSIS_OK;
 }
 
-/*!
+/**
  * \brief 复制底盘输出值
  *
  * \param s 包含底盘数据的结构体

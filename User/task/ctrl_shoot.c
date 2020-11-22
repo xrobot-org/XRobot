@@ -30,7 +30,7 @@ static CAN_ShootOutput_t shoot_out;
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 
-/*!
+/**
  * \brief 控制射击
  *
  * \param argument 未使用

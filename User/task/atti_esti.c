@@ -54,7 +54,7 @@ static const KPID_Params_t imu_temp_ctrl_pid_param = {
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 
-/*!
+/**
  * \brief 姿态解算
  *
  * \param argument 未使用

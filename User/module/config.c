@@ -195,7 +195,7 @@ static const Config_Pilot_t user_qs = {
         },
 };
 
-/*!
+/**
  * \brief 从Flash读取配置信息
  *
  * \param cfg 配置信息
@@ -204,7 +204,7 @@ void Config_Get(Config_t *cfg) {
   BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(Config_t));
 }
 
-/*!
+/**
  * \brief 将配置信息写入Flash
  *
  * \param cfg 配置信息
@@ -216,7 +216,7 @@ void Config_Set(Config_t *cfg) {
   osKernelUnlock();
 }
 
-/*!
+/**
  * \brief 获取机器人参数
  *
  * \param model 机器人型号
@@ -242,7 +242,7 @@ const Config_RobotParam_t *Config_GetRobotParam(Config_RobotModel_t model) {
   return &param_infantry;
 }
 
-/*!
+/**
  * \brief 获取操作手配置
  *
  * \param pilot 操作手
@@ -277,7 +277,7 @@ static const struct {
     {ROBOT_PILOT_NUM, NULL},
 };
 
-/*!
+/**
  * \brief 通过字符串获得机器人型号
  *
  * \param name 名字字符串
@@ -293,7 +293,7 @@ Config_RobotModel_t Config_GetModelByName(const char *name) {
   return ROBOT_MODEL_NUM; /* No match. */
 }
 
-/*!
+/**
  * \brief 通过字符串获得操作手
  *
  * \param name 名字字符串
@@ -309,7 +309,7 @@ Config_PilotName_t Config_GetPilotByName(const char *name) {
   return ROBOT_PILOT_NUM; /* No match. */
 }
 
-/*!
+/**
  * \brief 获得机器人型号对应字符串
  *
  * \param model 机器人型号
@@ -325,7 +325,7 @@ const char *Config_GetNameByModel(Config_RobotModel_t model) {
   return "Unknown"; /* No match. */
 }
 
-/*!
+/**
  * \brief 获得操作手对应字符串
  *
  * \param pilot 操作手
