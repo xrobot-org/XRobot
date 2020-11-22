@@ -17,7 +17,7 @@
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 static CAN_t can;
-float power_max = 40.f; /* 最大输出功率 */
+float power_lim = 40.f; /* 最大输出功率 */
 #ifdef DEBUG
 CMD_ChassisCmd_t chassis_cmd;
 Chassis_t chassis;
@@ -74,11 +74,9 @@ void Task_CtrlChassis(void *argument) {
       osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
       const uint32_t now = HAL_GetTick();
       Chassis_UpdateFeedback(&chassis, &can);
-      Chassis_Control(&chassis, &chassis_cmd, (float)(now - wakeup) / 1000.0f);
-
-      PowerLimit_Apply(power_max, task_runtime.status.vbat,
-                       chassis.out, /* 底盘功率限制 */
-                       chassis.feedback.motor_current, chassis.num_wheel);
+      Chassis_Control(&chassis, &chassis_cmd, power_lim,
+                      task_runtime.status.vbat,
+                      (float)(now - wakeup) / 1000.0f);
       Chassis_DumpOutput(&chassis, &chassis_out);
       osMessageQueuePut(task_runtime.msgq.motor.output.chassis, &chassis_out, 0,
                         0);

@@ -196,7 +196,8 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
  *
  * \return 函数运行结果
  */
-int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec) {
+int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float power_lim,
+                       float vbat, float dt_sec) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (c_cmd == NULL) return CHASSIS_ERR_NULL;
   Chassis_SetMode(c, c_cmd->mode);
@@ -274,6 +275,8 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec) {
     }
     /* 输出滤波. */
     c->out[i] = LowPassFilter2p_Apply(c->filter.out + i, c->out[i]);
+    PowerLimit_Apply(power_lim, vbat, c->out, /* 底盘功率限制 */
+                     c->feedback.motor_current, c->num_wheel);
   }
   return CHASSIS_OK;
 }

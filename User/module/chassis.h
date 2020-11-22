@@ -64,7 +64,7 @@ typedef struct {
   Mixer_t mixer;    /* 混合器，移动向量->电机目标值 */
 
   MoveVector_t move_vec; /* 底盘实际的运动向量 */
-  
+
   struct {
     float gimbal_yaw_angle; /* 云台Yaw轴编码器角度 */
     float *motor_rpm;       /* 电机转速的动态数组，单位：RPM */
@@ -122,8 +122,8 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can);
  *
  * \return 函数运行结果
  */
-int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float dt_sec);
-
+int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float power_lim,
+                       float vbat, float dt_sec);
 /**
  * \brief 复制底盘输出值
  *
