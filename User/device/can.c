@@ -34,14 +34,17 @@
 #define CAN_M3508_MAX_ABS_VOLT (16384)  /* 电机最大控制电压绝对值 */
 #define CAN_M2006_MAX_ABS_VOLT (10000)  /* 电机最大控制电压绝对值 */
 
+#define CAN_GM6020_MAX_ABS_CUR (1) /* 电机最大电流绝对值 */
+#define CAN_M3508_MAX_ABS_CUR (20) /* 电机最大电流绝对值 */
+#define CAN_M2006_MAX_ABS_CUR (10) /* 电机最大电流绝对值 */
+
 #define CAN_MOTOR_MAX_NUM (9)
 
 #define CAN_MOTOR_TX_BUF_SIZE (8)
 #define CAN_MOTOR_RX_BUF_SIZE (8)
 
-#define CAN_MOTOR_ENC_RES (8192)    /* 电机编码器分辨率 */
-#define CAN_MOTOR_ENC_CUR (16384)   /* 电机转矩电流分辨率 */
-#define CAN_MOTOR_MAX_CUR_3508 (20) /* 3508电机最大电流 */
+#define CAN_MOTOR_ENC_RES (8192)  /* 电机编码器分辨率 */
+#define CAN_MOTOR_CUR_RES (16384) /* 电机转矩电流分辨率 */
 
 #define CAN_MOTOR_RX_FIFO CAN_RX_FIFO0
 
@@ -74,7 +77,7 @@ static void CAN_Motor_Parse(CAN_MotorFeedback_t *feedback, const uint8_t *raw) {
   feedback->rotor_angle = raw_angle / (float)CAN_MOTOR_ENC_RES * M_2PI;
   feedback->rotor_speed = (int16_t)((raw[2] << 8) | raw[3]);
   feedback->torque_current =
-      raw_current * CAN_MOTOR_MAX_CUR_3508 / (float)CAN_MOTOR_ENC_CUR;
+      raw_current * CAN_M3508_MAX_ABS_CUR / (float)CAN_MOTOR_CUR_RES;
   feedback->temp = raw[6];
 }
 
