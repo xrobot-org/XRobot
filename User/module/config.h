@@ -66,6 +66,7 @@ typedef struct {
 
   AHRS_Eulr_t mech_zero; /* 机械零点 */
 
+  Gimbal_Limit_t gimbal_limit; /* 软件限位 */
 } Config_t;
 
 /*!

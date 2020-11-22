@@ -46,6 +46,7 @@ void Task_CtrlGimbal(void *argument) {
 
   /* 初始化云台 */
   Gimbal_Init(&gimbal, &(task_runtime.robot_param->gimbal),
+              &(task_runtime.robot_cfg.gimbal_limit),
               (float)TASK_FREQ_CTRL_GIMBAL);
 
   /* 延时一段时间再开启任务 */

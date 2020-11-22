@@ -39,9 +39,9 @@ void Task_Monitor(void *argument) {
     task_runtime.stack_water_mark.monitor = osThreadGetStackSpace(NULL);
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
-    float battery_volt = BSP_GetBatteryVolt();
-    task_runtime.status.battery = Capacity_GetBatteryRemain(battery_volt);
-
+    task_runtime.status.vbat = BSP_GetBatteryVolt(); /* ADC监测电压 */
+    task_runtime.status.battery =
+        Capacity_GetBatteryRemain(task_runtime.status.vbat);
     /* 电池电量少于20%时闪烁红色LED */
     if (task_runtime.status.battery < 0.2f) {
       BSP_LED_Set(BSP_LED_RED, BSP_LED_TAGGLE, 1);

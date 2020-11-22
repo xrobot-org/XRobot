@@ -64,10 +64,11 @@ typedef struct {
   Mixer_t mixer;    /* 混合器，移动向量->电机目标值 */
 
   MoveVector_t move_vec; /* 底盘实际的运动向量 */
-
+  
   struct {
     float gimbal_yaw_angle; /* 云台Yaw轴编码器角度 */
     float *motor_rpm;       /* 电机转速的动态数组，单位：RPM */
+    float *motor_current;   /* 转矩电流 单位：A */
   } feedback;               /* 反馈信息 */
 
   struct {
