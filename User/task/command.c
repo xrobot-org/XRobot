@@ -41,14 +41,6 @@ static CMD_t cmd;
 void Task_Command(void *argument) {
   (void)argument; /* 未使用argument，消除警告 */
 
-  /* 创建消息队列 */
-  task_runtime.msgq.cmd.chassis =
-      osMessageQueueNew(3u, sizeof(CMD_ChassisCmd_t), NULL);
-  task_runtime.msgq.cmd.gimbal =
-      osMessageQueueNew(3u, sizeof(CMD_GimbalCmd_t), NULL);
-  task_runtime.msgq.cmd.shoot =
-      osMessageQueueNew(3u, sizeof(CMD_ShootCmd_t), NULL);
-
   DR16_Init(&dr16); /* 初始化接收机 */
   CMD_Init(&cmd, &(task_runtime.config_pilot->param.cmd)); /* 初始化指令处理 */
   uint32_t wakeup = HAL_GetTick();

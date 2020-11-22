@@ -46,6 +46,35 @@ void Task_Init(void *argument) {
   task_runtime.thread.monitor = osThreadNew(Task_Monitor, NULL, &attr_monitor);
   task_runtime.thread.motor = osThreadNew(Task_Motor, NULL, &attr_motor);
   task_runtime.thread.referee = osThreadNew(Task_Referee, NULL, &attr_referee);
+
+  /* 创建消息队列 */
+  task_runtime.msgq.motor.feedback.chassis = /* motor */
+      osMessageQueueNew(6u, sizeof(CAN_t), NULL);
+  task_runtime.msgq.motor.feedback.gimbal =
+      osMessageQueueNew(6u, sizeof(CAN_t), NULL);
+  task_runtime.msgq.motor.feedback.shoot =
+      osMessageQueueNew(6u, sizeof(CAN_t), NULL);
+  task_runtime.msgq.motor.output.chassis =
+      osMessageQueueNew(6u, sizeof(CAN_ChassisOutput_t), NULL);
+  task_runtime.msgq.motor.output.gimbal =
+      osMessageQueueNew(6u, sizeof(CAN_GimbalOutput_t), NULL);
+  task_runtime.msgq.motor.output.shoot =
+      osMessageQueueNew(6u, sizeof(CAN_ShootOutput_t), NULL);
+
+  task_runtime.msgq.cmd.chassis = /* command */
+      osMessageQueueNew(3u, sizeof(CMD_ChassisCmd_t), NULL);
+  task_runtime.msgq.cmd.gimbal =
+      osMessageQueueNew(3u, sizeof(CMD_GimbalCmd_t), NULL);
+  task_runtime.msgq.cmd.shoot =
+      osMessageQueueNew(3u, sizeof(CMD_ShootCmd_t), NULL);
+
+  task_runtime.msgq.gimbal.accl = /* atti_esti */
+      osMessageQueueNew(6u, sizeof(AHRS_Accl_t), NULL);
+  task_runtime.msgq.gimbal.eulr_imu =
+      osMessageQueueNew(6u, sizeof(AHRS_Eulr_t), NULL);
+  task_runtime.msgq.gimbal.gyro =
+      osMessageQueueNew(6u, sizeof(AHRS_Gyro_t), NULL);
+
   osKernelUnlock();
 
   osThreadTerminate(osThreadGetId()); /* 结束自身 */

@@ -31,24 +31,6 @@ void Task_Motor(void *argument) {
   (void)argument;
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_MOTOR;
 
-  task_runtime.msgq.motor.feedback.chassis =
-      osMessageQueueNew(6u, sizeof(CAN_t), NULL);
-
-  task_runtime.msgq.motor.feedback.gimbal =
-      osMessageQueueNew(6u, sizeof(CAN_t), NULL);
-
-  task_runtime.msgq.motor.feedback.shoot =
-      osMessageQueueNew(6u, sizeof(CAN_t), NULL);
-
-  task_runtime.msgq.motor.output.chassis =
-      osMessageQueueNew(6u, sizeof(CAN_ChassisOutput_t), NULL);
-
-  task_runtime.msgq.motor.output.gimbal =
-      osMessageQueueNew(6u, sizeof(CAN_GimbalOutput_t), NULL);
-
-  task_runtime.msgq.motor.output.shoot =
-      osMessageQueueNew(6u, sizeof(CAN_ShootOutput_t), NULL);
-
   /* Device Setup */
   CAN_Init(&can);
 

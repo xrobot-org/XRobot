@@ -62,16 +62,6 @@ static const KPID_Params_t imu_temp_ctrl_pid_param = {
 void Task_AttiEsti(void *argument) {
   (void)argument; /* 未使用argument，消除警告 */
 
-  /* 创建消息队列 */
-  task_runtime.msgq.gimbal.accl =
-      osMessageQueueNew(6u, sizeof(AHRS_Accl_t), NULL);
-
-  task_runtime.msgq.gimbal.eulr_imu =
-      osMessageQueueNew(6u, sizeof(AHRS_Eulr_t), NULL);
-
-  task_runtime.msgq.gimbal.gyro =
-      osMessageQueueNew(6u, sizeof(AHRS_Gyro_t), NULL);
-
   /* 初始化设备 */
   BMI088_Init(&bmi088, &task_runtime.robot_cfg.cali.bmi088);
   IST8310_Init(&ist8310, &task_runtime.robot_cfg.cali.ist8310);
