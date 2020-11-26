@@ -5,8 +5,8 @@ extern "C" {
 #endif
 
 /* Includes ----------------------------------------------------------------- */
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "component\ahrs.h"
 #include "device\device.h"

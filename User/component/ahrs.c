@@ -15,6 +15,14 @@
 /* 2 * proportional gain (Kp) */
 static float beta = BETA_IMU;
 
+/**
+ * @brief 不使用磁力计计算姿态
+ *
+ * @param ahrs 姿态解算主结构体
+ * @param accl 加速度计数据
+ * @param gyro 陀螺仪数据
+ * @return int8_t 0对应没有错误
+ */
 static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
                              const AHRS_Gyro_t *gyro) {
   if (ahrs == NULL) return -1;
@@ -106,6 +114,14 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
   return 0;
 }
 
+/**
+ * @brief 初始化姿态解算
+ *
+ * @param ahrs 姿态解算主结构体
+ * @param magn 磁力计数据
+ * @param sample_freq 采样频率
+ * @return int8_t 0对应没有错误
+ */
 int8_t AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq) {
   if (ahrs == NULL) return -1;
 
@@ -153,8 +169,16 @@ int8_t AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq) {
   return 0;
 }
 
-/* Feed the sensor data in NED(North East Down) reference frame. Rotation can be
- * added. */
+/**
+ * @brief 姿态运算更新一次
+ * @note 输入数据必须是NED(North East Down) 参考坐标系
+ *
+ * @param ahrs 姿态解算主结构体
+ * @param accl 加速度计数据
+ * @param gyro 陀螺仪数据
+ * @param magn 磁力计数据
+ * @return int8_t 0对应没有错误
+ */
 int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
                    const AHRS_Gyro_t *gyro, const AHRS_Magn_t *magn) {
   if (ahrs == NULL) return -1;
@@ -312,6 +336,13 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
   return 0;
 }
 
+/**
+ * @brief 通过姿态解算主结构体中的四元数计算欧拉角
+ *
+ * @param eulr 欧拉角
+ * @param ahrs 姿态解算主结构体
+ * @return int8_t 0对应没有错误
+ */
 int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
   if (eulr == NULL) return -1;
   if (ahrs == NULL) return -1;
@@ -342,10 +373,30 @@ int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
   return 0;
 }
 
+/**
+ * \brief 将对应数据置零
+ *
+ * \param eulr 被操作的数据
+ */
 void AHRS_ResetEulr(AHRS_Eulr_t *eulr) { memset(eulr, 0, sizeof(AHRS_Eulr_t)); }
 
+/**
+ * \brief 将对应数据置零
+ *
+ * \param eulr 被操作的数据
+ */
 void AHRS_ResetAccl(AHRS_Accl_t *accl) { memset(accl, 0, sizeof(AHRS_Accl_t)); }
 
+/**
+ * \brief 将对应数据置零
+ *
+ * \param eulr 被操作的数据
+ */
 void AHRS_ResetGyro(AHRS_Gyro_t *gyro) { memset(gyro, 0, sizeof(AHRS_Gyro_t)); }
 
+/**
+ * \brief 将对应数据置零
+ *
+ * \param eulr 被操作的数据
+ */
 void AHRS_ResetMagn(AHRS_Magn_t *magn) { memset(magn, 0, sizeof(AHRS_Magn_t)); }

@@ -181,7 +181,8 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
 
   for (uint8_t i = 0; i < c->num_wheel; i++) {
     c->feedback.motor_rpm[i] = can->chassis_motor.as_array[i].rotor_speed;
-    c->feedback.motor_current[i] = can->chassis_motor.as_array[i].torque_current;
+    c->feedback.motor_current[i] =
+        can->chassis_motor.as_array[i].torque_current;
   }
 
   return CHASSIS_OK;
@@ -239,8 +240,9 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float power_lim,
 
     case CHASSIS_MODE_OPEN:
     case CHASSIS_MODE_FOLLOW_GIMBAL:
-      c->move_vec.wz = PID_Calc(&(c->pid.follow), 0,
-                                c->feedback.gimbal_yaw_angle - c->mech_zero->yaw, 0.0f, dt_sec);
+      c->move_vec.wz = PID_Calc(
+          &(c->pid.follow), 0, c->feedback.gimbal_yaw_angle - c->mech_zero->yaw,
+          0.0f, dt_sec);
       break;
     case CHASSIS_MODE_ROTOR:
       c->move_vec.wz = 0.5f;
@@ -275,8 +277,9 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float power_lim,
     }
     /* 输出滤波. */
     c->out[i] = LowPassFilter2p_Apply(c->filter.out + i, c->out[i]);
-    PowerLimit_Apply(power_lim, vbat, c->out, /* 底盘功率限制 */
-                     c->feedback.motor_current, c->num_wheel);
+    /* 底盘功率限制 */
+    PowerLimit_Apply(power_lim, vbat, c->out, c->feedback.motor_current,
+                     c->num_wheel);
   }
   return CHASSIS_OK;
 }

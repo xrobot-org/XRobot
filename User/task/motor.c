@@ -48,22 +48,19 @@ void Task_Motor(void *argument) {
       //电机凑够，向指定任务发送
       if (CAN_Motor_CheckFlag(&can, MOTOR_REC_CHASSIS_FINISHED)) {
         osMessageQueueReset(task_runtime.msgq.motor.feedback.chassis);
-        osMessageQueuePut(task_runtime.msgq.motor.feedback.chassis,
-                          &can, 0, 0);
+        osMessageQueuePut(task_runtime.msgq.motor.feedback.chassis, &can, 0, 0);
         CAN_Motor_ClearFlag(&can, MOTOR_REC_CHASSIS_FINISHED);
       }
 
       if (CAN_Motor_CheckFlag(&can, MOTOR_REC_GIMBAL_FINISHED)) {
         osMessageQueueReset(task_runtime.msgq.motor.feedback.gimbal);
-        osMessageQueuePut(task_runtime.msgq.motor.feedback.gimbal,
-                          &can, 0, 0);
+        osMessageQueuePut(task_runtime.msgq.motor.feedback.gimbal, &can, 0, 0);
         CAN_Motor_ClearFlag(&can, MOTOR_REC_GIMBAL_FINISHED);
       }
 
       if (CAN_Motor_CheckFlag(&can, MOTOR_REC_SHOOT_FINISHED)) {
         osMessageQueueReset(task_runtime.msgq.motor.feedback.shoot);
-        osMessageQueuePut(task_runtime.msgq.motor.feedback.shoot,
-                          &can, 0, 0);
+        osMessageQueuePut(task_runtime.msgq.motor.feedback.shoot, &can, 0, 0);
         CAN_Motor_ClearFlag(&can, MOTOR_REC_SHOOT_FINISHED);
       }
 

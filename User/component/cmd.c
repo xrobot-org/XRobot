@@ -4,10 +4,25 @@
 
 #include "cmd.h"
 
+/**
+ * @brief 检查按键是否按下
+ * 
+ * @param rc 遥控器数据
+ * @param key 按键名称
+ * @return true 按下
+ * @return false 未按下
+ */
 static bool CMD_KeyPressed(const CMD_RC_t *rc, CMD_KeyValue_t key) {
   return rc->key & (1u << key);
 }
 
+/**
+ * @brief 初始化命令解析
+ * 
+ * @param cmd 主结构体
+ * @param param 参数
+ * @return int8_t 0对应没有错误
+ */
 int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
   if (cmd == NULL) return -1;
 
@@ -17,6 +32,14 @@ int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
   return 0;
 }
 
+/**
+ * @brief 解析命令
+ * 
+ * @param rc 遥控器数据
+ * @param cmd 命令
+ * @param dt_sec 两次解析的间隔
+ * @return int8_t 0对应没有错误
+ */
 int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   if (rc == NULL) return -1;
 

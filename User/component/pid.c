@@ -15,6 +15,15 @@
 
 #define SIGMA 0.000001f
 
+/**
+ * @brief 初始化PID
+ *
+ * @param pid PID结构体
+ * @param mode PID模式
+ * @param sample_freq 采样频率
+ * @param param PID参数
+ * @return int8_t 0对应没有错误
+ */
 int8_t PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
                 const KPID_Params_t *param) {
   if (pid == NULL) return -1;
@@ -41,6 +50,17 @@ int8_t PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
   return 0;
 }
 
+/**
+ * @brief PID计算
+ * TODO：val_dot改为fb_dot
+ *
+ * @param pid PID结构体
+ * @param sp 设定值
+ * @param fb 反馈值
+ * @param val_dot 反馈值微分
+ * @param dt 间隔时间
+ * @return float 计算的输出
+ */
 float PID_Calc(KPID_t *pid, float sp, float fb, float val_dot, float dt) {
   if (!isfinite(sp) || !isfinite(fb) || !isfinite(val_dot) || !isfinite(dt)) {
     return pid->out_last;
@@ -111,6 +131,12 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float val_dot, float dt) {
   return pid->out_last;
 }
 
+/**
+ * @brief 重置微分项
+ *
+ * @param pid PID结构体
+ * @return int8_t 0对应没有错误
+ */
 int8_t PID_ResetIntegral(KPID_t *pid) {
   if (pid == NULL) return -1;
 
@@ -119,6 +145,12 @@ int8_t PID_ResetIntegral(KPID_t *pid) {
   return 0;
 }
 
+/**
+ * @brief 重置PID
+ *
+ * @param pid PID结构体
+ * @return int8_t 0对应没有错误
+ */
 int8_t PID_Reset(KPID_t *pid) {
   if (pid == NULL) return -1;
 

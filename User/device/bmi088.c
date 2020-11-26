@@ -351,11 +351,11 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
   bmi088->gyro.x /= 65.536f;
   bmi088->gyro.y /= 65.536f;
   bmi088->gyro.z /= 65.536f;
-  
+
   bmi088->gyro.x *= M_DEG2RAD_MULT;
   bmi088->gyro.y *= M_DEG2RAD_MULT;
   bmi088->gyro.z *= M_DEG2RAD_MULT;
-  
+
   bmi088->gyro.x -= bmi088->cali->gyro_offset.x;
   bmi088->gyro.y -= bmi088->cali->gyro_offset.y;
   bmi088->gyro.z -= bmi088->cali->gyro_offset.z;

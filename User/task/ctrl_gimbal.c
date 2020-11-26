@@ -63,8 +63,8 @@ void Task_CtrlGimbal(void *argument) {
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 
     /* 等待接收CAN总线新数据 */
-    if (osMessageQueueGet(task_runtime.msgq.motor.feedback.gimbal,
-                          &can, NULL, delay_tick) != osOK) {
+    if (osMessageQueueGet(task_runtime.msgq.motor.feedback.gimbal, &can, NULL,
+                          delay_tick) != osOK) {
       /* 如果没有接收到新数据，则将输出置零，不进行控制 */
       CAN_ResetGimbalOut(&gimbal_out);
       osMessageQueuePut(task_runtime.msgq.motor.output.gimbal, &gimbal_out, 0,

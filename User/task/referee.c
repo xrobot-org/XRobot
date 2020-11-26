@@ -30,7 +30,7 @@ static Referee_t ref;
  */
 void Task_Referee(void *argument) {
   (void)argument; /* 未使用argument，消除警告 */
-  
+
   /* 计算任务运行到指定频率，需要延时的时间 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_REFEREE;
 

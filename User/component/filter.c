@@ -6,6 +6,13 @@
 
 #include "user_math.h"
 
+/**
+ * @brief 初始化滤波器
+ *
+ * @param f 滤波器
+ * @param sample_freq 采样频率
+ * @param cutoff_freq 截止频率
+ */
 void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq,
                           float cutoff_freq) {
   if (f == NULL) return;
@@ -38,6 +45,13 @@ void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq,
   f->a2 = (1.0f - 2.0f * cosf(M_PI / 4.0f) * ohm + ohm * ohm) / c;
 }
 
+/**
+ * @brief 施加一次滤波计算
+ *
+ * @param f 滤波器
+ * @param sample 采样的值
+ * @return float 滤波后的值
+ */
 float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample) {
   if (f == NULL) return 0.0f;
 
@@ -60,6 +74,13 @@ float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample) {
   return output;
 }
 
+/**
+ * @brief 重置滤波器
+ *
+ * @param f 滤波器
+ * @param sample 采样的值
+ * @return float 滤波后的值
+ */
 float LowPassFilter2p_Reset(LowPassFilter2p_t *f, float sample) {
   if (f == NULL) return 0.0f;
 
@@ -77,6 +98,14 @@ float LowPassFilter2p_Reset(LowPassFilter2p_t *f, float sample) {
   return LowPassFilter2p_Apply(f, sample);
 }
 
+/**
+ * @brief 初始化滤波器
+ *
+ * @param f 滤波器
+ * @param sample_freq 采样频率
+ * @param notch_freq 中心频率
+ * @param bandwidth 带宽
+ */
 void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq,
                       float bandwidth) {
   if (f == NULL) return;
@@ -111,6 +140,13 @@ void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq,
   f->a2 = (1.0f - alpha) * a0_inv;
 }
 
+/**
+ * @brief 施加一次滤波计算
+ *
+ * @param f 滤波器
+ * @param sample 采样的值
+ * @return float 滤波后的值
+ */
 inline float NotchFilter_Apply(NotchFilter_t *f, float sample) {
   if (f == NULL) return 0.0f;
 
@@ -126,6 +162,13 @@ inline float NotchFilter_Apply(NotchFilter_t *f, float sample) {
   return output;
 }
 
+/**
+ * @brief 重置滤波器
+ *
+ * @param f 滤波器
+ * @param sample 采样的值
+ * @return float 滤波后的值
+ */
 float NotchFilter_Reset(NotchFilter_t *f, float sample) {
   if (f == NULL) return 0.0f;
 

@@ -25,11 +25,12 @@ extern "C" {
 #define M_2PI 6.28318530717958647692f
 #endif
 
+/* 移动向量 */
 typedef struct {
-  float vx;     /* 前后平移 */
-  float vy;     /* 左右平移 */
-  float wz;     /* 转动 */
-} MoveVector_t; /* 移动向量 */
+  float vx; /* 前后平移 */
+  float vy; /* 左右平移 */
+  float wz; /* 转动 */
+} MoveVector_t;
 
 float InvSqrt(float x);
 
@@ -39,7 +40,7 @@ float Sign(float in);
 
 /**
  * \brief 将运动向量置零
- * 
+ *
  * \param mv 被操作的值
  */
 void ResetMoveVector(MoveVector_t *mv);
@@ -47,7 +48,7 @@ void ResetMoveVector(MoveVector_t *mv);
 /**
  * \brief 计算循环值的误差，用于没有负数值，并在一定范围内变化的值
  * 例如编码器：相差1.5PI其实等于相差-0.5PI
- * 
+ *
  * \param sp 被操作的值
  * \param fb 变化量
  * \param range 被操作的值变化范围，正数时起效
