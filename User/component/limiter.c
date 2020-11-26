@@ -27,21 +27,21 @@ int8_t HeatLimiter_Apply(float heat_limit, float vbat, float dt_sec) {
 int8_t PowerLimit_Apply(float power_limit, float vbat, float *motor_out,
                         float *cur_fb, uint32_t len) {
   if (motor_out == NULL) return -1;
-  float last_total_current = 0.0f;
+  float sum_cur_fb = 0.0f;
 
   for (uint32_t i = 0; i < len; i++)
-    last_total_current += fabsf(cur_fb[i]); /* 检测功率是否超出限制 */
-  if (power_limit > last_total_current * vbat) return -2;
+    sum_cur_fb += fabsf(cur_fb[i]); /* 检测功率是否超出限制 */
+  if (power_limit > (sum_cur_fb * vbat)) return 0;
 
-  float total_current = 0.0f;
+  float sum_motor_out = 0.0f;
   for (uint32_t i = 0; i < len; i++) {
-    total_current += fabsf(motor_out[i]);
+    sum_motor_out += fabsf(motor_out[i]);
   }
 
   if (power_limit > 0.0f) {
-    if ((total_current * vbat) > power_limit) {
+    if ((sum_motor_out * vbat) > power_limit) {
       float current_scale =
-          power_limit / vbat / total_current; /* 保持每个电机输出值比例不变 */
+          power_limit / vbat / sum_motor_out; /* 保持每个电机输出值比例不变 */
       for (uint32_t i = 0; i < len; i++) {
         motor_out[i] *= current_scale;
       }
