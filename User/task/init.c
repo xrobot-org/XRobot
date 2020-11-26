@@ -48,7 +48,8 @@ void Task_Init(void *argument) {
   task_runtime.thread.referee = osThreadNew(Task_Referee, NULL, &attr_referee);
 
   /* 创建消息队列 */
-  task_runtime.msgq.motor.feedback.chassis = /* motor */
+  /* motor */
+  task_runtime.msgq.motor.feedback.chassis =
       osMessageQueueNew(6u, sizeof(CAN_t), NULL);
   task_runtime.msgq.motor.feedback.gimbal =
       osMessageQueueNew(6u, sizeof(CAN_t), NULL);
@@ -61,14 +62,16 @@ void Task_Init(void *argument) {
   task_runtime.msgq.motor.output.shoot =
       osMessageQueueNew(6u, sizeof(CAN_ShootOutput_t), NULL);
 
-  task_runtime.msgq.cmd.chassis = /* command */
+  /* command */
+  task_runtime.msgq.cmd.chassis =
       osMessageQueueNew(3u, sizeof(CMD_ChassisCmd_t), NULL);
   task_runtime.msgq.cmd.gimbal =
       osMessageQueueNew(3u, sizeof(CMD_GimbalCmd_t), NULL);
   task_runtime.msgq.cmd.shoot =
       osMessageQueueNew(3u, sizeof(CMD_ShootCmd_t), NULL);
 
-  task_runtime.msgq.gimbal.accl = /* atti_esti */
+  /* atti_esti */
+  task_runtime.msgq.gimbal.accl =
       osMessageQueueNew(6u, sizeof(AHRS_Accl_t), NULL);
   task_runtime.msgq.gimbal.eulr_imu =
       osMessageQueueNew(6u, sizeof(AHRS_Eulr_t), NULL);
