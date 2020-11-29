@@ -39,13 +39,13 @@ void Task_Motor(void *argument) {
 #ifdef DEBUG
     task_runtime.stack_water_mark.motor = osThreadGetStackSpace(NULL);
 #endif
-    // 接收消息
-    while (osMessageQueueGet(can.msgq_can2motor, &can_motor_rx, 0,
+    /* 接收消息 */
+    while (osMessageQueueGet(can.msgq_raw_motor, &can_motor_rx, 0,
                              delay_tick) == osOK) {
       osKernelLock();
       CAN_Motor_StoreMsg(&can, &can_motor_rx);
 
-      //电机凑够，向指定任务发送
+      /* 电机凑够，向指定任务发送 */
       if (CAN_Motor_CheckFlag(&can, MOTOR_REC_CHASSIS_FINISHED)) {
         osMessageQueueReset(task_runtime.msgq.motor.feedback.chassis);
         osMessageQueuePut(task_runtime.msgq.motor.feedback.chassis, &can, 0, 0);

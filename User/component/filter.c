@@ -23,7 +23,7 @@ void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq,
   f->delay_element_2 = 0.0f;
 
   if (f->cutoff_freq <= 0.0f) {
-    // no filtering
+    /* no filtering */
     f->b0 = 1.0f;
     f->b1 = 0.0f;
     f->b2 = 0.0f;
@@ -55,12 +55,12 @@ void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq,
 float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample) {
   if (f == NULL) return 0.0f;
 
-  // do the filtering
+  /* do the filtering */
   float delay_element_0 =
       sample - f->delay_element_1 * f->a1 - f->delay_element_2 * f->a2;
 
   if (isinf(delay_element_0)) {
-    // don't allow bad values to propagate via the filter
+    /* don't allow bad values to propagate via the filter */
     delay_element_0 = sample;
   }
 
@@ -70,7 +70,7 @@ float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample) {
   f->delay_element_2 = f->delay_element_1;
   f->delay_element_1 = delay_element_0;
 
-  // return the value. Should be no need to check limits
+  /* return the value. Should be no need to check limits */
   return output;
 }
 
@@ -117,7 +117,7 @@ void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq,
   f->delay_element_2 = 0.0f;
 
   if (notch_freq <= 0.0f) {
-    // no filtering
+    /* no filtering */
     f->b0 = 1.0f;
     f->b1 = 0.0f;
     f->b2 = 0.0f;
@@ -150,7 +150,7 @@ void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq,
 inline float NotchFilter_Apply(NotchFilter_t *f, float sample) {
   if (f == NULL) return 0.0f;
 
-  // Direct Form II implementation
+  /* Direct Form II implementation */
   const float delay_element_0 =
       sample - f->delay_element_1 * f->a1 - f->delay_element_2 * f->a2;
   const float output = delay_element_0 * f->b0 + f->delay_element_1 * f->b1 +

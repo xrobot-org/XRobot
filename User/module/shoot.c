@@ -49,20 +49,6 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_ShootMode_t mode) {
   LowPassFilter2p_Reset(&(s->filter.in.trig), 0.0f);
   LowPassFilter2p_Reset(&(s->filter.out.trig), 0.0f);
 
-  // TODO: Check mode switchable.
-  switch (mode) {
-    case SHOOT_MODE_RELAX:
-      break;
-
-    case SHOOT_MODE_SAFE:
-      break;
-
-    case SHOOT_MODE_STDBY:
-      break;
-
-    case SHOOT_MODE_FIRE:
-      break;
-  }
   return 0;
 }
 
@@ -122,11 +108,10 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
     s->feedback.fric_rpm[i] = can->shoot_motor.as_array[i].rotor_speed;
   }
 
-  //更新拨弹电机
-  float last_motor_trig_angle, motor_angle_delta;
-  last_motor_trig_angle = s->feedback.trig_motor_angle;
+  /* 更新拨弹电机 */
+  float last_trig_motor_angle = s->feedback.trig_motor_angle;
   s->feedback.trig_motor_angle = can->shoot_motor.named.trig.rotor_angle;
-  motor_angle_delta = s->feedback.trig_motor_angle - last_motor_trig_angle;
+  float motor_angle_delta = s->feedback.trig_motor_angle - last_trig_motor_angle;
   if (motor_angle_delta > M_PI)
     motor_angle_delta -= M_2PI;
   else if (motor_angle_delta < -M_PI)

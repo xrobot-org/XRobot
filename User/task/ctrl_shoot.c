@@ -41,14 +41,13 @@ void Task_CtrlShoot(void *argument) {
   /* 计算任务运行到指定频率，需要延时的时间 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_SHOOT;
 
-  // osDelay(TASK_INIT_DELAY_CTRL_SHOOT); /* 延时一段时间再开启任务 */
-
   /* 初始化射击 */
   Shoot_Init(&shoot, &(task_runtime.robot_param->shoot),
              (float)TASK_FREQ_CTRL_SHOOT);
 
+  /* 延时一段时间再开启任务 */
   osMessageQueueGet(task_runtime.msgq.motor.feedback.shoot, &can, NULL,
-                    delay_tick);
+                    osWaitForever);
 
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   uint32_t wakeup = HAL_GetTick(); /* 计算任务运行间隔的计时 */

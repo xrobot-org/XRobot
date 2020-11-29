@@ -86,7 +86,7 @@ typedef struct __packed {
 } Referee_DartStatus_t;
 
 typedef struct __packed {
-  uint8_t place_holder;  // TODO
+  uint8_t place_holder;  /* TODO */
 } Referee_ICRAZoneStatus_t;
 
 typedef struct __packed {

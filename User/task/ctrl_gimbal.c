@@ -51,7 +51,7 @@ void Task_CtrlGimbal(void *argument) {
 
   /* 延时一段时间再开启任务 */
   osMessageQueueGet(task_runtime.msgq.motor.feedback.gimbal,
-                    &(can.gimbal_motor), NULL, delay_tick);
+                    &(can.gimbal_motor), NULL, osWaitForever);
 
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   uint32_t wakeup = HAL_GetTick(); /* 计算任务运行间隔的计时 */

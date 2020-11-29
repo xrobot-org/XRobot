@@ -40,7 +40,7 @@
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private variables -------------------------------------------------------- */
-uint8_t ist8310_rxbuf[IST8310_LEN_RX_BUFF];  // TODO: Add static when release
+uint8_t ist8310_rxbuf[IST8310_LEN_RX_BUFF];
 
 static osThreadId_t thread_alert;
 static bool inited = false;

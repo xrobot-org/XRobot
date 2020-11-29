@@ -30,15 +30,15 @@
 #define CAN_M3508_M2006_CTRL_ID_EXTAND (0x1ff)
 #define CAN_M3508_M2006_ID_SETTING_ID (0x700)
 
-#define CAN_GM6020_MAX_ABS_VOLT (30000) /* 电机最大控制电压绝对值 */
-#define CAN_M3508_MAX_ABS_VOLT (16384)  /* 电机最大控制电压绝对值 */
-#define CAN_M2006_MAX_ABS_VOLT (10000)  /* 电机最大控制电压绝对值 */
+/* 电机最大控制输出绝对值 */
+#define CAN_GM6020_MAX_ABS_LSB (30000)
+#define CAN_M3508_MAX_ABS_LSB (16384)
+#define CAN_M2006_MAX_ABS_LSB (10000)
 
-#define CAN_GM6020_MAX_ABS_CUR (1) /* 电机最大电流绝对值 */
-#define CAN_M3508_MAX_ABS_CUR (20) /* 电机最大电流绝对值 */
-#define CAN_M2006_MAX_ABS_CUR (10) /* 电机最大电流绝对值 */
-
-#define CAN_MOTOR_MAX_NUM (9)
+/* 电机最大电流绝对值 */
+#define CAN_GM6020_MAX_ABS_CUR (1)
+#define CAN_M3508_MAX_ABS_CUR (20)
+#define CAN_M2006_MAX_ABS_CUR (10)
 
 #define CAN_MOTOR_TX_BUF_SIZE (8)
 #define CAN_MOTOR_RX_BUF_SIZE (8)
@@ -72,8 +72,8 @@ static bool inited = false;
 /* Private function  -------------------------------------------------------- */
 static void CAN_Motor_Parse(CAN_MotorFeedback_t *feedback, const uint8_t *raw) {
   uint16_t raw_angle = (uint16_t)((raw[0] << 8) | raw[1]);
-  // todo
   uint16_t raw_current = (int16_t)((raw[4] << 8) | raw[5]);
+
   feedback->rotor_angle = raw_angle / (float)CAN_MOTOR_ENC_RES * M_2PI;
   feedback->rotor_speed = (int16_t)((raw[2] << 8) | raw[3]);
   feedback->torque_current =
@@ -91,7 +91,7 @@ static void CAN_CAN1RxFifoMsgPendingCallback(void) {
   HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_1), CAN_MOTOR_RX_FIFO,
                        &motor_raw_rx1.rx_header, motor_raw_rx1.motor_rx_data);
 
-  osMessageQueuePut(gcan->msgq_can2motor, &motor_raw_rx1, 0, 0);
+  osMessageQueuePut(gcan->msgq_raw_motor, &motor_raw_rx1, 0, 0);
 }
 
 static void CAN_CAN2RxFifoMsgPendingCallback(void) {
@@ -100,7 +100,7 @@ static void CAN_CAN2RxFifoMsgPendingCallback(void) {
   if (motor_raw_rx2.rx_header.StdId == CAN_CAP_FB_ID_BASE) {
     /* TODO: 添加cap接收msgq。然后放进去 */
   } else {
-    osMessageQueuePut(gcan->msgq_can2motor, &motor_raw_rx2, 0, 0);
+    osMessageQueuePut(gcan->msgq_raw_motor, &motor_raw_rx2, 0, 0);
   }
 }
 
@@ -110,8 +110,8 @@ int8_t CAN_Init(CAN_t *can) {
   if (inited) return DEVICE_ERR_INITED;
   if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
 
-  // 初始化接收原始CAN消息的队列，要在中断开启前初始化
-  can->msgq_can2motor = osMessageQueueNew(32, sizeof(CAN_MotorRawRx_t), NULL);
+  /* 初始化接收原始CAN消息的队列，要在中断开启前初始化 */
+  can->msgq_raw_motor = osMessageQueueNew(32, sizeof(CAN_MotorRawRx_t), NULL);
 
   CAN_FilterTypeDef can_filter = {0};
 
@@ -165,13 +165,13 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output) {
   switch (group) {
     case CAN_MOTOR_GROUT_CHASSIS:
       motor1 =
-          (int16_t)(output->chassis.named.m1 * (float)CAN_M3508_MAX_ABS_VOLT);
+          (int16_t)(output->chassis.named.m1 * (float)CAN_M3508_MAX_ABS_LSB);
       motor2 =
-          (int16_t)(output->chassis.named.m2 * (float)CAN_M3508_MAX_ABS_VOLT);
+          (int16_t)(output->chassis.named.m2 * (float)CAN_M3508_MAX_ABS_LSB);
       motor3 =
-          (int16_t)(output->chassis.named.m3 * (float)CAN_M3508_MAX_ABS_VOLT);
+          (int16_t)(output->chassis.named.m3 * (float)CAN_M3508_MAX_ABS_LSB);
       motor4 =
-          (int16_t)(output->chassis.named.m4 * (float)CAN_M3508_MAX_ABS_VOLT);
+          (int16_t)(output->chassis.named.m4 * (float)CAN_M3508_MAX_ABS_LSB);
 
       motor_raw_tx1.tx_header.StdId = CAN_M3508_M2006_CTRL_ID_BASE;
       motor_raw_tx1.tx_header.IDE = CAN_ID_STD;
@@ -195,9 +195,9 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output) {
     case CAN_MOTOR_GROUT_GIMBAL1:
     case CAN_MOTOR_GROUT_GIMBAL2:
       yaw_motor =
-          (int16_t)(output->gimbal.named.yaw * (float)CAN_GM6020_MAX_ABS_VOLT);
+          (int16_t)(output->gimbal.named.yaw * (float)CAN_GM6020_MAX_ABS_LSB);
       pit_motor =
-          (int16_t)(output->gimbal.named.pit * (float)CAN_GM6020_MAX_ABS_VOLT);
+          (int16_t)(output->gimbal.named.pit * (float)CAN_GM6020_MAX_ABS_LSB);
 
       motor_raw_tx1.tx_header.StdId = CAN_GM6020_CTRL_ID_EXTAND;
       motor_raw_tx1.tx_header.IDE = CAN_ID_STD;
@@ -221,11 +221,11 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output) {
     case CAN_MOTOR_GROUT_SHOOT1:
     case CAN_MOTOR_GROUT_SHOOT2:
       fric1_motor =
-          (int16_t)(output->shoot.named.fric1 * (float)CAN_M3508_MAX_ABS_VOLT);
+          (int16_t)(output->shoot.named.fric1 * (float)CAN_M3508_MAX_ABS_LSB);
       fric2_motor =
-          (int16_t)(output->shoot.named.fric2 * (float)CAN_M3508_MAX_ABS_VOLT);
+          (int16_t)(output->shoot.named.fric2 * (float)CAN_M3508_MAX_ABS_LSB);
       trig_motor =
-          (int16_t)(output->shoot.named.trig * (float)CAN_M2006_MAX_ABS_VOLT);
+          (int16_t)(output->shoot.named.trig * (float)CAN_M2006_MAX_ABS_LSB);
 
       motor_raw_tx2.tx_header.StdId = CAN_M3508_M2006_CTRL_ID_EXTAND;
       motor_raw_tx2.tx_header.IDE = CAN_ID_STD;

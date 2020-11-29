@@ -206,7 +206,7 @@ static void OLED_WriteSequenceData(uint8_t *data, uint16_t len) {
 	HAL_SPI_Transmit_DMA(&hspi1, data, len);
 	
 #elif defined OLED_USE_I2C
-// TODO
+	/* TODO */
 	uint8_t cmd_data[2];
 	cmd_data[0] = 0x40;
 	cmd_data[1] = data;
@@ -363,9 +363,9 @@ int OLED_DisplayOff(OLED_t *oled) {
 
 void OLED_SetCursor(uint8_t x, uint8_t y)
 {	
-	OLED_WriteByte((0xb0 + y), OLED_WriteCMD);			  //set page address y
-	OLED_WriteByte(((x&0xf0)>>4)|0x10, OLED_WriteCMD);	  //set column high address
-	OLED_WriteByte((x&0x0f), OLED_WriteCMD);				//set column low address
+	OLED_WriteByte((0xb0 + y), OLED_WriteCMD);			  /*set page address y */
+	OLED_WriteByte(((x&0xf0)>>4)|0x10, OLED_WriteCMD);	  /*set column high address */
+	OLED_WriteByte((x&0x0f), OLED_WriteCMD);				/*set column low address */
 }
 
 int OLED_Refresh(OLED_t *oled) {

@@ -12,6 +12,7 @@ extern "C" {
 #include "task.h"
 
 /* Exported constants ------------------------------------------------------- */
+
 /* 所有任务都要define一个“任务运行频率”和“初始化延时” */
 #define TASK_FREQ_CTRL_CHASSIS (1000u)
 #define TASK_FREQ_CTRL_GIMBAL (1000u)
@@ -28,7 +29,9 @@ extern "C" {
 /* Exported defines --------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
+
 typedef struct {
+  /* 各任务，也可以叫做线程 */
   struct {
     osThreadId_t cli;
     osThreadId_t command;
@@ -40,21 +43,24 @@ typedef struct {
     osThreadId_t motor;
     osThreadId_t atti_esti;
     osThreadId_t referee;
-  } thread; /* 各任务，也可以收拾线程 */
+  } thread;
 
   struct {
+    /* 云台相关 */
     struct {
       osMessageQueueId_t accl;     /* IMU读取 */
       osMessageQueueId_t gyro;     /* IMU读取 */
       osMessageQueueId_t eulr_imu; /* 姿态解算得到 */
-    } gimbal;                      /* 云台相关数据 */
+    } gimbal;
 
+    /* 控制指令 */
     struct {
       osMessageQueueId_t chassis;
       osMessageQueueId_t gimbal;
       osMessageQueueId_t shoot;
-    } cmd; /* 控制指令 */
+    } cmd;
 
+    /* motor任务放入、读取，电机的输入输出 */
     struct {
       struct {
         osMessageQueueId_t chassis;
@@ -67,15 +73,16 @@ typedef struct {
         osMessageQueueId_t gimbal;
         osMessageQueueId_t shoot;
       } feedback;
-    } motor; /* motor任务放入、读取，电机的输入输出 */
+    } motor;
 
   } msgq;
 
+  /* 机器人状态 */
   struct {
     float battery;
     float vbat;
     float cpu_temp;
-  } status; /* 机器人状态 */
+  } status;
 
   Config_t robot_cfg;                     /* 机器人配置 */
   const Config_RobotParam_t *robot_param; /* 机器人参数 */

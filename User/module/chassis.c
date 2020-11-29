@@ -36,26 +36,6 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_ChassisMode_t mode) {
     LowPassFilter2p_Reset(c->filter.out + i, 0.0f);
   }
 
-  // TODO: Check mode switchable.
-  switch (mode) {
-    case CHASSIS_MODE_RELAX:
-      break;
-
-    case CHASSIS_MODE_BREAK:
-      break;
-
-    case CHASSIS_MODE_FOLLOW_GIMBAL:
-      break;
-
-    case CHASSIS_MODE_ROTOR:
-      break;
-
-    case CHASSIS_MODE_INDENPENDENT:
-      break;
-
-    case CHASSIS_MODE_OPEN:
-      break;
-  }
   return CHASSIS_OK;
 }
 
@@ -107,7 +87,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
       break;
 
     case CHASSIS_TYPE_DRONE:
-      // onboard sdk.
+      /* onboard sdk. */
       return CHASSIS_ERR_TYPE;
   }
 

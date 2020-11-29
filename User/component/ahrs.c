@@ -45,22 +45,22 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
   float _2q0, _2q1, _2q2, _2q3, _4q0, _4q1, _4q2, _8q1, _8q2, q0q0, q1q1, q2q2,
       q3q3;
 
-  // Rate of change of quaternion from gyroscope
+  /* Rate of change of quaternion from gyroscope */
   q_dot1 = 0.5f * (-ahrs->q1 * gx - ahrs->q2 * gy - ahrs->q3 * gz);
   q_dot2 = 0.5f * (ahrs->q0 * gx + ahrs->q2 * gz - ahrs->q3 * gy);
   q_dot3 = 0.5f * (ahrs->q0 * gy - ahrs->q1 * gz + ahrs->q3 * gx);
   q_dot4 = 0.5f * (ahrs->q0 * gz + ahrs->q1 * gy - ahrs->q2 * gx);
 
-  // Compute feedback only if accelerometer measurement valid (avoids NaN in
-  // accelerometer normalisation)
+  /* Compute feedback only if accelerometer measurement valid (avoids NaN in
+   * accelerometer normalisation) */
   if (!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
-    // Normalise accelerometer measurement
+    /* Normalise accelerometer measurement */
     recip_norm = InvSqrt(ax * ax + ay * ay + az * az);
     ax *= recip_norm;
     ay *= recip_norm;
     az *= recip_norm;
 
-    // Auxiliary variables to avoid repeated arithmetic
+    /* Auxiliary variables to avoid repeated arithmetic */
     _2q0 = 2.0f * ahrs->q0;
     _2q1 = 2.0f * ahrs->q1;
     _2q2 = 2.0f * ahrs->q2;
@@ -75,7 +75,7 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
     q2q2 = ahrs->q2 * ahrs->q2;
     q3q3 = ahrs->q3 * ahrs->q3;
 
-    // Gradient decent algorithm corrective step
+    /* Gradient decent algorithm corrective step */
     s0 = _4q0 * q2q2 + _2q2 * ax + _4q0 * q1q1 - _2q1 * ay;
     s1 = _4q1 * q3q3 - _2q3 * ax + 4.0f * q0q0 * ahrs->q1 - _2q0 * ay - _4q1 +
          _8q1 * q1q1 + _8q1 * q2q2 + _4q1 * az;
@@ -83,27 +83,29 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
          _8q2 * q1q1 + _8q2 * q2q2 + _4q2 * az;
     s3 =
         4.0f * q1q1 * ahrs->q3 - _2q1 * ax + 4.0f * q2q2 * ahrs->q3 - _2q2 * ay;
-    recip_norm = InvSqrt(s0 * s0 + s1 * s1 + s2 * s2 +
-                         s3 * s3);  // normalise step magnitude
+
+    /* normalise step magnitude */
+    recip_norm = InvSqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3);
+
     s0 *= recip_norm;
     s1 *= recip_norm;
     s2 *= recip_norm;
     s3 *= recip_norm;
 
-    // Apply feedback step
+    /* Apply feedback step */
     q_dot1 -= beta * s0;
     q_dot2 -= beta * s1;
     q_dot3 -= beta * s2;
     q_dot4 -= beta * s3;
   }
 
-  // Integrate rate of change of quaternion to yield quaternion
+  /* Integrate rate of change of quaternion to yield quaternion */
   ahrs->q0 += q_dot1 * ahrs->inv_sample_freq;
   ahrs->q1 += q_dot2 * ahrs->inv_sample_freq;
   ahrs->q2 += q_dot3 * ahrs->inv_sample_freq;
   ahrs->q3 += q_dot4 * ahrs->inv_sample_freq;
 
-  // Normalise quaternion
+  /* Normalise quaternion */
   recip_norm = InvSqrt(ahrs->q0 * ahrs->q0 + ahrs->q1 * ahrs->q1 +
                        ahrs->q2 * ahrs->q2 + ahrs->q3 * ahrs->q3);
   ahrs->q0 *= recip_norm;
@@ -201,8 +203,8 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
   float my = magn->y;
   float mz = magn->z;
 
-  // Use IMU algorithm if magnetometer measurement invalid (avoids NaN in
-  // magnetometer normalisation)
+  /* Use IMU algorithm if magnetometer measurement invalid (avoids NaN in */
+  /* magnetometer normalisation) */
   if ((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f)) {
     return AHRS_UpdateIMU(ahrs, accl, gyro);
   }
@@ -215,28 +217,27 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
   float gy = gyro->y;
   float gz = gyro->z;
 
-  // Rate of change of quaternion from gyroscope
+  /* Rate of change of quaternion from gyroscope */
   q_dot1 = 0.5f * (-ahrs->q1 * gx - ahrs->q2 * gy - ahrs->q3 * gz);
   q_dot2 = 0.5f * (ahrs->q0 * gx + ahrs->q2 * gz - ahrs->q3 * gy);
   q_dot3 = 0.5f * (ahrs->q0 * gy - ahrs->q1 * gz + ahrs->q3 * gx);
   q_dot4 = 0.5f * (ahrs->q0 * gz + ahrs->q1 * gy - ahrs->q2 * gx);
 
-  // Compute feedback only if accelerometer measurement valid (avoids NaN in
-  // accelerometer normalisation)
+  /* Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisation) */
   if (!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
-    // Normalise accelerometer measurement
+    /* Normalise accelerometer measurement */
     recip_norm = InvSqrt(ax * ax + ay * ay + az * az);
     ax *= recip_norm;
     ay *= recip_norm;
     az *= recip_norm;
 
-    // Normalise magnetometer measurement
+    /* Normalise magnetometer measurement */
     recip_norm = InvSqrt(mx * mx + my * my + mz * mz);
     mx *= recip_norm;
     my *= recip_norm;
     mz *= recip_norm;
 
-    // Auxiliary variables to avoid repeated arithmetic
+    /* Auxiliary variables to avoid repeated arithmetic */
     _2q0mx = 2.0f * ahrs->q0 * mx;
     _2q0my = 2.0f * ahrs->q0 * my;
     _2q0mz = 2.0f * ahrs->q0 * mz;
@@ -258,7 +259,7 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
     q2q3 = ahrs->q2 * ahrs->q3;
     q3q3 = ahrs->q3 * ahrs->q3;
 
-    // Reference direction of Earth's magnetic field
+    /* Reference direction of Earth's magnetic field */
     hx = mx * q0q0 - _2q0my * ahrs->q3 + _2q0mz * ahrs->q2 + mx * q1q1 +
          _2q1 * my * ahrs->q2 + _2q1 * mz * ahrs->q3 - mx * q2q2 - mx * q3q3;
     hy = _2q0mx * ahrs->q3 + my * q0q0 - _2q0mz * ahrs->q1 + _2q1mx * ahrs->q2 -
@@ -270,7 +271,7 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
     _4bx = 2.0f * _2bx;
     _4bz = 2.0f * _2bz;
 
-    // Gradient decent algorithm corrective step
+    /* Gradient decent algorithm corrective step */
     s0 = -_2q2 * (2.0f * q1q3 - _2q0q2 - ax) +
          _2q1 * (2.0f * q0q1 + _2q2q3 - ay) -
          _2bz * ahrs->q2 *
@@ -305,27 +306,28 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
              (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my) +
          _2bx * ahrs->q1 *
              (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
+    /* normalise step magnitude */
     recip_norm = InvSqrt(s0 * s0 + s1 * s1 + s2 * s2 +
-                         s3 * s3);  // normalise step magnitude
+                         s3 * s3);  
     s0 *= recip_norm;
     s1 *= recip_norm;
     s2 *= recip_norm;
     s3 *= recip_norm;
 
-    // Apply feedback step
+    /* Apply feedback step */
     q_dot1 -= beta * s0;
     q_dot2 -= beta * s1;
     q_dot3 -= beta * s2;
     q_dot4 -= beta * s3;
   }
 
-  // Integrate rate of change of quaternion to yield quaternion
+  /* Integrate rate of change of quaternion to yield quaternion */
   ahrs->q0 += q_dot1 * ahrs->inv_sample_freq;
   ahrs->q1 += q_dot2 * ahrs->inv_sample_freq;
   ahrs->q2 += q_dot3 * ahrs->inv_sample_freq;
   ahrs->q3 += q_dot4 * ahrs->inv_sample_freq;
 
-  // Normalise quaternion
+  /* Normalise quaternion */
   recip_norm = InvSqrt(ahrs->q0 * ahrs->q0 + ahrs->q1 * ahrs->q1 +
                        ahrs->q2 * ahrs->q2 + ahrs->q3 * ahrs->q3);
   ahrs->q0 *= recip_norm;

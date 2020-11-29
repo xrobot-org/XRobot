@@ -218,7 +218,7 @@ typedef struct {
   CAN_ShootMotor_t shoot_motor;
 
   CAN_CapFeedback_t cap_feedback;
-  osMessageQueueId_t msgq_can2motor;
+  osMessageQueueId_t msgq_raw_motor;
 } CAN_t;
 
 /* Exported functions prototypes -------------------------------------------- */
