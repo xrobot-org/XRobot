@@ -45,6 +45,7 @@ typedef struct {
     osThreadId_t referee;
   } thread;
 
+  /* 消息队列 */
   struct {
     /* 云台相关 */
     struct {
