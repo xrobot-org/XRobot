@@ -85,11 +85,11 @@
 
 ### 其他参考文献
 
-- 软件架构参考了[PX4 Architectural Overview](https://dev.px4.io/master/en/concept/architecture.html)
+- 软件架构参考[PX4 Architectural Overview](https://dev.px4.io/master/en/concept/architecture.html)
 
-- 云台控制可以参考[PX4 Controller Diagrams](https://dev.px4.io/master/en/flight_stack/controller_diagrams.html)
+- 云台控制参考[PX4 Controller Diagrams](https://dev.px4.io/master/en/flight_stack/controller_diagrams.html)
 
-- 底盘Mixer和CAN的Control Group参考了[PX4 Mixing and Actuators](https://dev.px4.io/master/en/concept/mixing.html)
+- 底盘Mixer和CAN的Control Group参考[PX4 Mixing and Actuators](https://dev.px4.io/master/en/concept/mixing.html)
 
 ## TODO
 
