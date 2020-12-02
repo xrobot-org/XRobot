@@ -74,3 +74,15 @@ const osThreadAttr_t attr_referee = {
     .priority = osPriorityNormal,
     .stack_size = 128 * 4,
 };
+
+const osThreadAttr_t attr_ai = {
+    .name = "ai",
+    .priority = osPriorityNormal,
+    .stack_size = 128 * 4,
+};
+
+const osThreadAttr_t attr_rc = {
+    .name = "rc",
+    .priority = osPriorityNormal,
+    .stack_size = 128 * 4,
+};

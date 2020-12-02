@@ -46,6 +46,8 @@ void Task_Init(void *argument) {
   task_runtime.thread.monitor = osThreadNew(Task_Monitor, NULL, &attr_monitor);
   task_runtime.thread.motor = osThreadNew(Task_Motor, NULL, &attr_motor);
   task_runtime.thread.referee = osThreadNew(Task_Referee, NULL, &attr_referee);
+  task_runtime.thread.ai = osThreadNew(Task_Ai, NULL, &attr_ai);
+  task_runtime.thread.rc = osThreadNew(Task_RC, NULL, &attr_rc);
 
   /* 创建消息队列 */
   /* motor */
@@ -71,6 +73,11 @@ void Task_Init(void *argument) {
       osMessageQueueNew(3u, sizeof(CMD_ShootCmd_t), NULL);
 
   /* atti_esti */
+  task_runtime.msgq.raw_cmd.rc_raw =
+      osMessageQueueNew(3u, sizeof(CMD_RC_t), NULL);
+  task_runtime.msgq.raw_cmd.ai_raw =
+      osMessageQueueNew(3u, sizeof(CMD_AI_t), NULL);
+
   task_runtime.msgq.gimbal.accl =
       osMessageQueueNew(6u, sizeof(AHRS_Accl_t), NULL);
   task_runtime.msgq.gimbal.eulr_imu =

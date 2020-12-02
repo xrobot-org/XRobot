@@ -85,7 +85,8 @@ typedef struct {
 } CMD_Params_t;
 
 typedef struct {
-  bool pc_ctrl; /* 是否使用键鼠控制 */
+  bool pc_ctrl;          /* 是否使用键鼠控制 */
+  bool ai_control_right; /* 是否AI控制 */
 
   const CMD_Params_t *param;
 
@@ -117,24 +118,23 @@ typedef struct {
   uint16_t res; /* 保留，未启用 */
 } CMD_RC_t;
 
-/**
- * @brief 初始化命令解析
- * 
- * @param cmd 主结构体
- * @param param 参数
- * @return int8_t 0对应没有错误
- */
-int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param);
+typedef struct {
+  struct {
+    int16_t x;
+    int16_t y;
+    int16_t z;
+    bool l_click; /* 左键 */
+    bool r_click; /* 右键 */
+  } mouse;        /* 鼠标值 */
 
-/**
- * @brief 解析命令
- * 
- * @param rc 遥控器数据
- * @param cmd 命令
- * @param dt_sec 两次解析的间隔
- * @return int8_t 
- */
-int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec);
+  uint16_t key; /* 按键值 */
+} CMD_AI_t;
+
+int8_t CMD_ChechAiControl(CMD_t *cmd);
+
+int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param);
+int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec);
+int8_t CMD_ParseAi(const CMD_AI_t *ai, CMD_t *cmd, float dt_sec);
 
 #ifdef __cplusplus
 }

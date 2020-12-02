@@ -28,6 +28,7 @@ extern "C" {
 #define SIGNAL_IST8310_MAGN_RAW_REDY (1u << 9)
 
 #define SIGNAL_REFEREE_RAW_REDY (1u << 10)
+#define SIGNAL_AI_RAW_REDY (1u << 11)
 
 #ifdef __cplusplus
 }

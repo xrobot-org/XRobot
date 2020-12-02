@@ -13,6 +13,8 @@ static BSP_UART_t UART_Get(UART_HandleTypeDef *huart) {
     return BSP_UART_DR16;
   else if (huart->Instance == USART1)
     return BSP_UART_REF;
+  else if (huart->Instance == USART6)
+    return BSP_UART_AI;
   /*
   else if (huart->Instance == USARTX)
                   return BSP_UART_XXX;
@@ -110,6 +112,8 @@ UART_HandleTypeDef *BSP_UART_GetHandle(BSP_UART_t uart) {
       return &huart3;
     case BSP_UART_REF:
       return &huart1;
+    case BSP_UART_AI:
+      return &huart6;
     /*
     case BSP_UART_XXX:
             return &huartX;

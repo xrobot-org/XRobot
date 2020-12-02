@@ -6,19 +6,23 @@
 
 /**
  * @brief 检查按键是否按下
- * 
+ *
  * @param rc 遥控器数据
  * @param key 按键名称
  * @return true 按下
  * @return false 未按下
  */
-static bool CMD_KeyPressed(const CMD_RC_t *rc, CMD_KeyValue_t key) {
+static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_KeyValue_t key) {
   return rc->key & (1u << key);
+}
+
+static bool CMD_KeyPressedAi(const CMD_AI_t *ai, CMD_KeyValue_t key) {
+  return ai->key & (1u << key);
 }
 
 /**
  * @brief 初始化命令解析
- * 
+ *
  * @param cmd 主结构体
  * @param param 参数
  * @return int8_t 0对应没有错误
@@ -32,26 +36,31 @@ int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
   return 0;
 }
 
+int8_t CMD_ChechAiControl(CMD_t *cmd) {
+  cmd->ai_control_right = false;
+  return 0;
+}
+
 /**
  * @brief 解析命令
- * 
+ *
  * @param rc 遥控器数据
  * @param cmd 命令
  * @param dt_sec 两次解析的间隔
  * @return int8_t 0对应没有错误
  */
-int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
+int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   if (rc == NULL) return -1;
 
   if (cmd == NULL) return -1;
 
   /* 在PC控制和RC控制间切换. */
-  if (CMD_KeyPressed(rc, CMD_KEY_SHIFT) && CMD_KeyPressed(rc, CMD_KEY_CTRL) &&
-      CMD_KeyPressed(rc, CMD_KEY_Q))
+  if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT) &&
+      CMD_KeyPressedRc(rc, CMD_KEY_CTRL) && CMD_KeyPressedRc(rc, CMD_KEY_Q))
     cmd->pc_ctrl = true;
 
-  if (CMD_KeyPressed(rc, CMD_KEY_SHIFT) && CMD_KeyPressed(rc, CMD_KEY_CTRL) &&
-      CMD_KeyPressed(rc, CMD_KEY_E))
+  if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT) &&
+      CMD_KeyPressedRc(rc, CMD_KEY_CTRL) && CMD_KeyPressedRc(rc, CMD_KEY_E))
     cmd->pc_ctrl = false;
 
   /* PC键位映射和逻辑. */
@@ -74,14 +83,15 @@ int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       cmd->shoot.bullet_speed = 0.0f;
     }
 
-    if (CMD_KeyPressed(rc, CMD_KEY_SHIFT) && CMD_KeyPressed(rc, CMD_KEY_CTRL)) {
-      if (CMD_KeyPressed(rc, CMD_KEY_A))
+    if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT) &&
+        CMD_KeyPressedRc(rc, CMD_KEY_CTRL)) {
+      if (CMD_KeyPressedRc(rc, CMD_KEY_A))
         cmd->shoot.mode = SHOOT_MODE_SAFE;
 
-      else if (CMD_KeyPressed(rc, CMD_KEY_S))
+      else if (CMD_KeyPressedRc(rc, CMD_KEY_S))
         cmd->shoot.mode = SHOOT_MODE_STDBY;
 
-      else if (CMD_KeyPressed(rc, CMD_KEY_D))
+      else if (CMD_KeyPressedRc(rc, CMD_KEY_D))
         cmd->shoot.mode = SHOOT_MODE_FIRE;
 
       else
@@ -143,5 +153,54 @@ int8_t CMD_Parse(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       cmd->gimbal.delta_eulr.pit = rc->ch_r_y * dt_sec * cmd->param->sens_rc;
     }
   }
+  return 0;
+}
+
+/**
+ * @brief 解析上位机命令
+ *
+ * @param ai ai数据
+ * @param cmd 命令
+ * @param dt_sec 两次解析的间隔
+ * @return int8_t 0对应没有错误
+ */
+int8_t CMD_ParseAi(const CMD_AI_t *ai, CMD_t *cmd, float dt_sec) {
+  if (ai == NULL) return -1;
+
+  if (cmd == NULL) return -1;
+
+  cmd->gimbal.delta_eulr.yaw =
+      (float)ai->mouse.x * dt_sec * cmd->param->sens_mouse;
+  cmd->gimbal.delta_eulr.pit =
+      (float)ai->mouse.y * dt_sec * cmd->param->sens_mouse;
+
+  if (ai->mouse.l_click) {
+    if (ai->mouse.r_click) {
+      cmd->shoot.shoot_freq_hz = 5u;
+      cmd->shoot.bullet_speed = 20.0f;
+    } else {
+      cmd->shoot.shoot_freq_hz = 10u;
+      cmd->shoot.bullet_speed = 10.0f;
+    }
+  } else {
+    cmd->shoot.shoot_freq_hz = 0u;
+    cmd->shoot.bullet_speed = 0.0f;
+  }
+
+  if (CMD_KeyPressedAi(ai, CMD_KEY_SHIFT) &&
+      CMD_KeyPressedAi(ai, CMD_KEY_CTRL)) {
+    if (CMD_KeyPressedAi(ai, CMD_KEY_A))
+      cmd->shoot.mode = SHOOT_MODE_SAFE;
+
+    else if (CMD_KeyPressedAi(ai, CMD_KEY_S))
+      cmd->shoot.mode = SHOOT_MODE_STDBY;
+
+    else if (CMD_KeyPressedAi(ai, CMD_KEY_D))
+      cmd->shoot.mode = SHOOT_MODE_FIRE;
+
+    else
+      cmd->shoot.mode = SHOOT_MODE_RELAX;
+  }
+
   return 0;
 }

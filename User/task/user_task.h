@@ -17,14 +17,17 @@ extern "C" {
 #define TASK_FREQ_CTRL_CHASSIS (1000u)
 #define TASK_FREQ_CTRL_GIMBAL (1000u)
 #define TASK_FREQ_CTRL_SHOOT (1000u)
+#define TASK_FREQ_CTRL_COMMAND (500u)
 #define TASK_FREQ_INFO (4u)
 #define TASK_FREQ_MONITOR (2u)
 #define TASK_FREQ_MOTOR (1000u)
 #define TASK_FREQ_REFEREE (2u)
+#define TASK_FREQ_AI (250u)
 
 #define TASK_INIT_DELAY_INFO (500u)
 #define TASK_INIT_DELAY_MONITOR (10)
 #define TASK_INIT_DELAY_REFEREE (400u)
+#define TASK_INIT_DELAY_AI (400u)
 
 /* Exported defines --------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
@@ -43,11 +46,12 @@ typedef struct {
     osThreadId_t motor;
     osThreadId_t atti_esti;
     osThreadId_t referee;
+    osThreadId_t ai;
+    osThreadId_t rc;
   } thread;
 
-  /* 消息队列 */
   struct {
-    /* 云台相关 */
+    /* 云台相关数据 */
     struct {
       osMessageQueueId_t accl;     /* IMU读取 */
       osMessageQueueId_t gyro;     /* IMU读取 */
@@ -60,6 +64,12 @@ typedef struct {
       osMessageQueueId_t gimbal;
       osMessageQueueId_t shoot;
     } cmd;
+
+    /* 原始控制指令 */
+    struct {
+      osMessageQueueId_t ai_raw;
+      osMessageQueueId_t rc_raw;
+    } raw_cmd;
 
     /* motor任务放入、读取，电机的输入输出 */
     struct {
@@ -101,6 +111,8 @@ typedef struct {
     UBaseType_t motor;
     UBaseType_t atti_esti;
     UBaseType_t referee;
+    UBaseType_t ai;
+    UBaseType_t rc;
   } stack_water_mark; /* stack使用 */
 
   struct {
@@ -145,6 +157,8 @@ extern const osThreadAttr_t attr_monitor;
 extern const osThreadAttr_t attr_motor;
 extern const osThreadAttr_t attr_atti_esti;
 extern const osThreadAttr_t attr_referee;
+extern const osThreadAttr_t attr_ai;
+extern const osThreadAttr_t attr_rc;
 
 /* Exported functions prototypes -------------------------------------------- */
 void Task_Init(void *argument);
@@ -159,6 +173,8 @@ void Task_Monitor(void *argument);
 void Task_Motor(void *argument);
 void Task_AttiEsti(void *argument);
 void Task_Referee(void *argument);
+void Task_Ai(void *argument);
+void Task_RC(void *argument);
 
 #ifdef __cplusplus
 }
