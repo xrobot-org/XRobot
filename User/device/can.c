@@ -12,6 +12,7 @@
 #include "bsp\can.h"
 #include "bsp\mm.h"
 #include "component\user_math.h"
+#include "device\referee.h"
 
 /* Private define ----------------------------------------------------------- */
 /* Motor */
@@ -52,18 +53,18 @@
 #define CAN_CAP_FB_ID_BASE (0x000)
 #define CAN_CAP_CTRL_ID_BASE (0x000)
 
+#define CAN_CAP_RES (100) /* 电容数据分辨率 */
+
 #define CAN_CAP_RX_FIFO CAN_RX_FIFO1
 
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
 
 /* Private variables -------------------------------------------------------- */
-static CAN_MotorRawRx_t motor_raw_rx1;
-static CAN_MotorRawRx_t motor_raw_rx2;
-static CAN_MotorRawTx_t motor_raw_tx1;
-static CAN_MotorRawTx_t motor_raw_tx2;
-static CAN_CapRawRx_t cap_raw_rx;
-static CAN_CapRawTx_t cap_raw_tx;
+static CAN_RawRx_t raw_rx1;
+static CAN_RawRx_t raw_rx2;
+static CAN_RawTx_t raw_tx1;
+static CAN_RawTx_t raw_tx2;
 
 static osThreadId_t thread_alert;
 static CAN_t *gcan;
@@ -81,26 +82,28 @@ static void CAN_Motor_Parse(CAN_MotorFeedback_t *feedback, const uint8_t *raw) {
   feedback->temp = raw[6];
 }
 
-static void CAN_Cap_Decode(CAN_CapFeedback_t *feedback, const uint8_t *raw) {
-  // TODO
-  (void)feedback;
-  (void)raw;
+void CAN_Cap_Decode(CAN_CapFeedback_t *feedback, const uint8_t *raw) {
+  feedback->input_volt = (float)((raw[1] << 8) | raw[0]) / (float)CAN_CAP_RES;
+  feedback->cap_volt = (float)((raw[3] << 8) | raw[2]) / (float)CAN_CAP_RES;
+  feedback->input_volt = (float)((raw[5] << 8) | raw[4]) / (float)CAN_CAP_RES;
+  feedback->input_volt = (float)((raw[7] << 8) | raw[6]) / (float)CAN_CAP_RES;
 }
 
 static void CAN_CAN1RxFifoMsgPendingCallback(void) {
   HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_1), CAN_MOTOR_RX_FIFO,
-                       &motor_raw_rx1.rx_header, motor_raw_rx1.motor_rx_data);
+                       &raw_rx1.rx_header, raw_rx1.rx_data);
 
-  osMessageQueuePut(gcan->msgq_raw_motor, &motor_raw_rx1, 0, 0);
+  osMessageQueuePut(gcan->msgq_raw_motor, &raw_rx1, 0, 0);
 }
 
 static void CAN_CAN2RxFifoMsgPendingCallback(void) {
   HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_2), CAN_CAP_RX_FIFO,
-                       &motor_raw_rx2.rx_header, motor_raw_rx2.motor_rx_data);
-  if (motor_raw_rx2.rx_header.StdId == CAN_CAP_FB_ID_BASE) {
+                       &raw_rx2.rx_header, raw_rx2.rx_data);
+  if (raw_rx2.rx_header.StdId == CAN_CAP_FB_ID_BASE) {
     /* TODO: 添加cap接收msgq。然后放进去 */
+    osMessageQueuePut(gcan->msgq_raw_cap, &raw_rx2, 0, 0);
   } else {
-    osMessageQueuePut(gcan->msgq_raw_motor, &motor_raw_rx2, 0, 0);
+    osMessageQueuePut(gcan->msgq_raw_motor, &raw_rx2, 0, 0);
   }
 }
 
@@ -111,7 +114,8 @@ int8_t CAN_Init(CAN_t *can) {
   if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
 
   /* 初始化接收原始CAN消息的队列，要在中断开启前初始化 */
-  can->msgq_raw_motor = osMessageQueueNew(32, sizeof(CAN_MotorRawRx_t), NULL);
+  can->msgq_raw_motor = osMessageQueueNew(32, sizeof(CAN_RawRx_t), NULL);
+  can->msgq_raw_cap = osMessageQueueNew(32, sizeof(CAN_RawRx_t), NULL);
 
   CAN_FilterTypeDef can_filter = {0};
 
@@ -173,23 +177,22 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output) {
       motor4 =
           (int16_t)(output->chassis.named.m4 * (float)CAN_M3508_MAX_ABS_LSB);
 
-      motor_raw_tx1.tx_header.StdId = CAN_M3508_M2006_CTRL_ID_BASE;
-      motor_raw_tx1.tx_header.IDE = CAN_ID_STD;
-      motor_raw_tx1.tx_header.RTR = CAN_RTR_DATA;
-      motor_raw_tx1.tx_header.DLC = CAN_MOTOR_TX_BUF_SIZE;
+      raw_tx1.tx_header.StdId = CAN_M3508_M2006_CTRL_ID_BASE;
+      raw_tx1.tx_header.IDE = CAN_ID_STD;
+      raw_tx1.tx_header.RTR = CAN_RTR_DATA;
+      raw_tx1.tx_header.DLC = CAN_MOTOR_TX_BUF_SIZE;
 
-      motor_raw_tx1.motor_tx_data[0] = (uint8_t)((motor1 >> 8) & 0xFF);
-      motor_raw_tx1.motor_tx_data[1] = (uint8_t)(motor1 & 0xFF);
-      motor_raw_tx1.motor_tx_data[2] = (uint8_t)((motor2 >> 8) & 0xFF);
-      motor_raw_tx1.motor_tx_data[3] = (uint8_t)(motor2 & 0xFF);
-      motor_raw_tx1.motor_tx_data[4] = (uint8_t)((motor3 >> 8) & 0xFF);
-      motor_raw_tx1.motor_tx_data[5] = (uint8_t)(motor3 & 0xFF);
-      motor_raw_tx1.motor_tx_data[6] = (uint8_t)((motor4 >> 8) & 0xFF);
-      motor_raw_tx1.motor_tx_data[7] = (uint8_t)(motor4 & 0xFF);
+      raw_tx1.tx_data[0] = (uint8_t)((motor1 >> 8) & 0xFF);
+      raw_tx1.tx_data[1] = (uint8_t)(motor1 & 0xFF);
+      raw_tx1.tx_data[2] = (uint8_t)((motor2 >> 8) & 0xFF);
+      raw_tx1.tx_data[3] = (uint8_t)(motor2 & 0xFF);
+      raw_tx1.tx_data[4] = (uint8_t)((motor3 >> 8) & 0xFF);
+      raw_tx1.tx_data[5] = (uint8_t)(motor3 & 0xFF);
+      raw_tx1.tx_data[6] = (uint8_t)((motor4 >> 8) & 0xFF);
+      raw_tx1.tx_data[7] = (uint8_t)(motor4 & 0xFF);
 
-      HAL_CAN_AddTxMessage(
-          BSP_CAN_GetHandle(BSP_CAN_1), &motor_raw_tx1.tx_header,
-          motor_raw_tx1.motor_tx_data, (uint32_t *)CAN_TX_MAILBOX0);
+      HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(BSP_CAN_1), &raw_tx1.tx_header,
+                           raw_tx1.tx_data, (uint32_t *)CAN_TX_MAILBOX0);
       break;
 
     case CAN_MOTOR_GROUT_GIMBAL1:
@@ -199,23 +202,22 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output) {
       pit_motor =
           (int16_t)(output->gimbal.named.pit * (float)CAN_GM6020_MAX_ABS_LSB);
 
-      motor_raw_tx1.tx_header.StdId = CAN_GM6020_CTRL_ID_EXTAND;
-      motor_raw_tx1.tx_header.IDE = CAN_ID_STD;
-      motor_raw_tx1.tx_header.RTR = CAN_RTR_DATA;
-      motor_raw_tx1.tx_header.DLC = CAN_MOTOR_TX_BUF_SIZE;
+      raw_tx1.tx_header.StdId = CAN_GM6020_CTRL_ID_EXTAND;
+      raw_tx1.tx_header.IDE = CAN_ID_STD;
+      raw_tx1.tx_header.RTR = CAN_RTR_DATA;
+      raw_tx1.tx_header.DLC = CAN_MOTOR_TX_BUF_SIZE;
 
-      motor_raw_tx1.motor_tx_data[0] = (uint8_t)((yaw_motor >> 8) & 0xFF);
-      motor_raw_tx1.motor_tx_data[1] = (uint8_t)(yaw_motor & 0xFF);
-      motor_raw_tx1.motor_tx_data[2] = (uint8_t)((pit_motor >> 8) & 0xFF);
-      motor_raw_tx1.motor_tx_data[3] = (uint8_t)(pit_motor & 0xFF);
-      motor_raw_tx1.motor_tx_data[4] = 0;
-      motor_raw_tx1.motor_tx_data[5] = 0;
-      motor_raw_tx1.motor_tx_data[6] = 0;
-      motor_raw_tx1.motor_tx_data[7] = 0;
+      raw_tx1.tx_data[0] = (uint8_t)((yaw_motor >> 8) & 0xFF);
+      raw_tx1.tx_data[1] = (uint8_t)(yaw_motor & 0xFF);
+      raw_tx1.tx_data[2] = (uint8_t)((pit_motor >> 8) & 0xFF);
+      raw_tx1.tx_data[3] = (uint8_t)(pit_motor & 0xFF);
+      raw_tx1.tx_data[4] = 0;
+      raw_tx1.tx_data[5] = 0;
+      raw_tx1.tx_data[6] = 0;
+      raw_tx1.tx_data[7] = 0;
 
-      HAL_CAN_AddTxMessage(
-          BSP_CAN_GetHandle(BSP_CAN_1), &motor_raw_tx1.tx_header,
-          motor_raw_tx1.motor_tx_data, (uint32_t *)CAN_TX_MAILBOX1);
+      HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(BSP_CAN_1), &raw_tx1.tx_header,
+                           raw_tx1.tx_data, (uint32_t *)CAN_TX_MAILBOX1);
       break;
 
     case CAN_MOTOR_GROUT_SHOOT1:
@@ -227,23 +229,22 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output) {
       trig_motor =
           (int16_t)(output->shoot.named.trig * (float)CAN_M2006_MAX_ABS_LSB);
 
-      motor_raw_tx2.tx_header.StdId = CAN_M3508_M2006_CTRL_ID_EXTAND;
-      motor_raw_tx2.tx_header.IDE = CAN_ID_STD;
-      motor_raw_tx2.tx_header.RTR = CAN_RTR_DATA;
-      motor_raw_tx2.tx_header.DLC = CAN_MOTOR_TX_BUF_SIZE;
+      raw_tx2.tx_header.StdId = CAN_M3508_M2006_CTRL_ID_EXTAND;
+      raw_tx2.tx_header.IDE = CAN_ID_STD;
+      raw_tx2.tx_header.RTR = CAN_RTR_DATA;
+      raw_tx2.tx_header.DLC = CAN_MOTOR_TX_BUF_SIZE;
 
-      motor_raw_tx2.motor_tx_data[0] = (uint8_t)((fric1_motor >> 8) & 0xFF);
-      motor_raw_tx2.motor_tx_data[1] = (uint8_t)(fric1_motor & 0xFF);
-      motor_raw_tx2.motor_tx_data[2] = (uint8_t)((fric2_motor >> 8) & 0xFF);
-      motor_raw_tx2.motor_tx_data[3] = (uint8_t)(fric2_motor & 0xFF);
-      motor_raw_tx2.motor_tx_data[4] = (uint8_t)((trig_motor >> 8) & 0xFF);
-      motor_raw_tx2.motor_tx_data[5] = (uint8_t)(trig_motor & 0xFF);
-      motor_raw_tx2.motor_tx_data[6] = 0;
-      motor_raw_tx2.motor_tx_data[7] = 0;
+      raw_tx2.tx_data[0] = (uint8_t)((fric1_motor >> 8) & 0xFF);
+      raw_tx2.tx_data[1] = (uint8_t)(fric1_motor & 0xFF);
+      raw_tx2.tx_data[2] = (uint8_t)((fric2_motor >> 8) & 0xFF);
+      raw_tx2.tx_data[3] = (uint8_t)(fric2_motor & 0xFF);
+      raw_tx2.tx_data[4] = (uint8_t)((trig_motor >> 8) & 0xFF);
+      raw_tx2.tx_data[5] = (uint8_t)(trig_motor & 0xFF);
+      raw_tx2.tx_data[6] = 0;
+      raw_tx2.tx_data[7] = 0;
 
-      HAL_CAN_AddTxMessage(
-          BSP_CAN_GetHandle(BSP_CAN_2), &motor_raw_tx2.tx_header,
-          motor_raw_tx2.motor_tx_data, (uint32_t *)CAN_TX_MAILBOX2);
+      HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(BSP_CAN_2), &raw_tx2.tx_header,
+                           raw_tx2.tx_data, (uint32_t *)CAN_TX_MAILBOX2);
       break;
 
     default:
@@ -252,7 +253,7 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output) {
   return DEVICE_OK;
 }
 
-int8_t CAN_Motor_StoreMsg(CAN_t *can, CAN_MotorRawRx_t *can_motor_rx) {
+int8_t CAN_Motor_StoreMsg(CAN_t *can, CAN_RawRx_t *can_motor_rx) {
   if (can == NULL) return DEVICE_ERR_NULL;
   if (can_motor_rx == NULL) return DEVICE_ERR_NULL;
 
@@ -264,7 +265,7 @@ int8_t CAN_Motor_StoreMsg(CAN_t *can, CAN_MotorRawRx_t *can_motor_rx) {
     case CAN_M3508_M4_ID:
       index = can_motor_rx->rx_header.StdId - CAN_M3508_M1_ID;
       CAN_Motor_Parse(&(can->chassis_motor.as_array[index]),
-                      can_motor_rx->motor_rx_data);
+                      can_motor_rx->rx_data);
       can->motor_flag |= 1 << index;
       break;
 
@@ -274,7 +275,7 @@ int8_t CAN_Motor_StoreMsg(CAN_t *can, CAN_MotorRawRx_t *can_motor_rx) {
       index = can_motor_rx->rx_header.StdId - CAN_M3508_FRIC1_ID;
       can->motor_flag |= 1 << (index + 6);
       CAN_Motor_Parse(&(can->shoot_motor.as_array[index]),
-                      can_motor_rx->motor_rx_data);
+                      can_motor_rx->rx_data);
       break;
 
     case CAN_GM6020_YAW_ID:
@@ -282,7 +283,7 @@ int8_t CAN_Motor_StoreMsg(CAN_t *can, CAN_MotorRawRx_t *can_motor_rx) {
       index = can_motor_rx->rx_header.StdId - CAN_GM6020_YAW_ID;
       can->motor_flag |= 1 << (index + 4);
       CAN_Motor_Parse(&(can->gimbal_motor.as_array[index]),
-                      can_motor_rx->motor_rx_data);
+                      can_motor_rx->rx_data);
       break;
 
     default:
@@ -317,13 +318,13 @@ void CAN_ResetShootOut(CAN_ShootOutput_t *shoot_out) {
 int8_t CAN_CapControl(float power_limit) {
   (void)power_limit;
 
-  cap_raw_tx.tx_header.StdId = CAN_M3508_M2006_ID_SETTING_ID;
-  cap_raw_tx.tx_header.IDE = CAN_ID_STD;
-  cap_raw_tx.tx_header.RTR = CAN_RTR_DATA;
-  cap_raw_tx.tx_header.DLC = CAN_MOTOR_TX_BUF_SIZE;
+  raw_tx2.tx_header.StdId = CAN_M3508_M2006_ID_SETTING_ID;
+  raw_tx2.tx_header.IDE = CAN_ID_STD;
+  raw_tx2.tx_header.RTR = CAN_RTR_DATA;
+  raw_tx2.tx_header.DLC = CAN_MOTOR_TX_BUF_SIZE;
 
-  HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(BSP_CAN_1), &cap_raw_tx.tx_header,
-                       cap_raw_tx.cap_tx_data, (uint32_t *)CAN_TX_MAILBOX0);
+  HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(BSP_CAN_1), &raw_tx2.tx_header,
+                       raw_tx2.tx_data, (uint32_t *)CAN_TX_MAILBOX0);
   return DEVICE_OK;
 }
 

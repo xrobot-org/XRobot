@@ -26,6 +26,9 @@ typedef struct __packed {
   uint8_t crc8;
 } Referee_Header_t;
 
+//TODO: 还是用msgq好，收不到就是没上线，更简单直观简单
+typedef enum { REF_STATUS_OFFLINE = 0, REF_STATUS_RUNNING } Referee_Status_t;
+
 typedef enum {
   REF_CMD_ID_GAME_STATUS = 0x0001,
   REF_CMD_ID_GAME_RESULT = 0x0002,
@@ -86,7 +89,7 @@ typedef struct __packed {
 } Referee_DartStatus_t;
 
 typedef struct __packed {
-  uint8_t place_holder;  /* TODO */
+  uint8_t place_holder; /* TODO */
 } Referee_ICRAZoneStatus_t;
 
 typedef struct __packed {
@@ -278,6 +281,7 @@ typedef struct __packed {
 typedef struct {
   osThreadId_t thread_alert;
 
+  Referee_Status_t ref_status;
   Referee_GameStatus_t game_status;
   Referee_GameResult_t game_result;
   Referee_GameRobotHP_t game_robot_hp;

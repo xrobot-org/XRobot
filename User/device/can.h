@@ -156,6 +156,15 @@ typedef enum {
   CAN_MOTOR_GROUT_NUM,
 } CAN_MotorGroup_t;
 
+// TODO: 不懂什么意思，计算电容剩余电量的话，用component/capacity
+typedef enum {
+  CAP_STATUS_OFFLINE,
+  CAP_STATUS_CHARGING,
+  CAP_STATUS_RUNNING1,
+  CAP_STATUS_RUNNING2,
+  CAP_STATUS_RUNNING3
+} Cap_Status_t;
+
 typedef union {
   CAN_MotorFeedback_t as_array[4];
   struct {
@@ -184,31 +193,28 @@ typedef union {
 } CAN_ShootMotor_t;
 
 typedef struct {
-  uint16_t cap_volt;
-  int16_t battery_volt;
-  int16_t power_limit;
-  uint8_t temp;
+  float input_volt;
+  float cap_volt;
+  float input_curr;
+  float target_power;
 } CAN_CapFeedback_t;
+// TODO: CAN_Capacitor_t
 
 typedef struct {
   CAN_RxHeaderTypeDef rx_header;
-  uint8_t motor_rx_data[CAN_MOTOR_TX_BUF_SIZE];
-} CAN_MotorRawRx_t;
+  // TODO: 把这段计算放到文件前面多好，用预处理直接计算出来
+  uint8_t rx_data[(CAN_MOTOR_TX_BUF_SIZE > CAN_CAP_TX_BUF_SIZE)
+                      ? CAN_MOTOR_TX_BUF_SIZE
+                      : CAN_CAP_TX_BUF_SIZE];
+} CAN_RawRx_t;
 
 typedef struct {
   CAN_TxHeaderTypeDef tx_header;
-  uint8_t motor_tx_data[CAN_MOTOR_RX_BUF_SIZE];
-} CAN_MotorRawTx_t;
-
-typedef struct {
-  CAN_RxHeaderTypeDef rx_header;
-  uint8_t cap_rx_data[CAN_CAP_TX_BUF_SIZE];
-} CAN_CapRawRx_t;
-
-typedef struct {
-  CAN_TxHeaderTypeDef tx_header;
-  uint8_t cap_tx_data[CAN_CAP_RX_BUF_SIZE];
-} CAN_CapRawTx_t;
+  // TODO: 把这段计算放到文件前面多好，用预处理直接计算出来
+  uint8_t tx_data[(CAN_MOTOR_TX_BUF_SIZE > CAN_CAP_TX_BUF_SIZE)
+                      ? CAN_MOTOR_TX_BUF_SIZE
+                      : CAN_CAP_TX_BUF_SIZE];
+} CAN_RawTx_t;
 
 typedef struct {
   uint32_t motor_flag;
@@ -216,16 +222,19 @@ typedef struct {
   CAN_ChassisMotor_t chassis_motor;
   CAN_GimbalMotor_t gimbal_motor;
   CAN_ShootMotor_t shoot_motor;
-
+  // TODO: CAN_Capacitor_t cap
+  Cap_Status_t cap_status;
   CAN_CapFeedback_t cap_feedback;
   osMessageQueueId_t msgq_raw_motor;
+  osMessageQueueId_t msgq_raw_cap;
 } CAN_t;
 
 /* Exported functions prototypes -------------------------------------------- */
 int8_t CAN_Init(CAN_t *can);
+CAN_t *CAN_GetDevice(void);
 
 int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output);
-int8_t CAN_Motor_StoreMsg(CAN_t *can, CAN_MotorRawRx_t *can_motor_rx);
+int8_t CAN_Motor_StoreMsg(CAN_t *can, CAN_RawRx_t *can_motor_rx);
 bool CAN_Motor_CheckFlag(CAN_t *can, uint32_t flag);
 int8_t CAN_Motor_ClearFlag(CAN_t *can, uint32_t flag);
 
@@ -233,8 +242,11 @@ void CAN_ResetChassisOut(CAN_ChassisOutput_t *chassis_out);
 void CAN_ResetGimbalOut(CAN_GimbalOutput_t *gimbal_out);
 void CAN_ResetShootOut(CAN_ShootOutput_t *shoot_out);
 
+  //TODO: CAN_Cap_Control 加个下划线区分Cap和motor，丑了点但是更清楚
 int8_t CAN_CapControl(float power_limit);
 void CAN_ResetCapOut(CAN_CapOutput_t *cap_out);
+  //TODO: 要是和电机函数功能相似的话可以考虑叫CAN_Cap_StoreMsg
+void CAN_Cap_Decode(CAN_CapFeedback_t *feedback, const uint8_t *raw);
 
 #ifdef __cplusplus
 }

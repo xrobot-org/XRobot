@@ -25,6 +25,9 @@ int8_t HeatLimiter_Apply(float heat_limit, float vbat, float dt_sec);
 int8_t PowerLimit_Apply(float power_limit, float vbat, float *motor_out,
                         float *cur_fb, uint32_t len);
 
+float PowerLimit_CapInput(float chassis_power, float chassis_power_limit,
+                          float chassis_power_buffer);
+
 #ifdef __cplusplus
 }
 #endif

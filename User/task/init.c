@@ -48,6 +48,7 @@ void Task_Init(void *argument) {
   task_runtime.thread.referee = osThreadNew(Task_Referee, NULL, &attr_referee);
   task_runtime.thread.ai = osThreadNew(Task_Ai, NULL, &attr_ai);
   task_runtime.thread.rc = osThreadNew(Task_RC, NULL, &attr_rc);
+  task_runtime.thread.cap = osThreadNew(Task_Cap, NULL, &attr_cap);
 
   /* 创建消息队列 */
   /* motor */

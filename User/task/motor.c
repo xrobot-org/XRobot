@@ -18,7 +18,7 @@
 #ifdef DEBUG
 CAN_t can;
 CAN_Output_t can_out;
-CAN_MotorRawRx_t can_motor_rx;
+CAN_RawRx_t can_motor_rx;
 #else
 static CAN_t can;
 static CAN_Output_t can_out;

@@ -48,6 +48,7 @@ typedef struct {
     osThreadId_t referee;
     osThreadId_t ai;
     osThreadId_t rc;
+    osThreadId_t cap;
   } thread;
 
   struct {
@@ -159,6 +160,7 @@ extern const osThreadAttr_t attr_atti_esti;
 extern const osThreadAttr_t attr_referee;
 extern const osThreadAttr_t attr_ai;
 extern const osThreadAttr_t attr_rc;
+extern const osThreadAttr_t attr_cap;
 
 /* Exported functions prototypes -------------------------------------------- */
 void Task_Init(void *argument);
@@ -175,6 +177,7 @@ void Task_AttiEsti(void *argument);
 void Task_Referee(void *argument);
 void Task_Ai(void *argument);
 void Task_RC(void *argument);
+void Task_Cap(void *argument);
 
 #ifdef __cplusplus
 }

@@ -86,3 +86,9 @@ const osThreadAttr_t attr_rc = {
     .priority = osPriorityNormal,
     .stack_size = 128 * 4,
 };
+
+const osThreadAttr_t attr_cap = {
+    .name = "rc", //TODO: 名字没改
+    .priority = osPriorityNormal,
+    .stack_size = 128 * 4,
+};
