@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : RNG.h
-  * Description        : This file provides code for the configuration
-  *                      of the RNG instances.
+  * @file    rng.h
+  * @brief   This file contains all the function prototypes for
+  *          the rng.c file
   ******************************************************************************
   * @attention
   *
@@ -17,10 +17,11 @@
   ******************************************************************************
   */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __rng_H
-#define __rng_H
+#ifndef __RNG_H__
+#define __RNG_H__
+
 #ifdef __cplusplus
- extern "C" {
+extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
@@ -45,14 +46,7 @@ void MX_RNG_Init(void);
 #ifdef __cplusplus
 }
 #endif
-#endif /*__ rng_H */
 
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
+#endif /* __RNG_H__ */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

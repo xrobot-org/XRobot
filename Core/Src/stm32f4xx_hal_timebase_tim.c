@@ -47,7 +47,7 @@ HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
   uint32_t              pFLatency;
   /*Configure the TIM6 IRQ priority */
   HAL_NVIC_SetPriority(TIM6_DAC_IRQn, TickPriority ,0);
-  uwTickPrio = TickPriority;  /* 在CubeMX修复之前，这行必须留着 */ 
+  uwTickPrio = TickPriority;  /* 在CubeMX修复之前，这行必须留着 */
 
   /* Enable the TIM6 global Interrupt */
   HAL_NVIC_EnableIRQ(TIM6_DAC_IRQn);
@@ -59,9 +59,8 @@ HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
 
   /* Compute TIM6 clock */
   uwTimclock = 2*HAL_RCC_GetPCLK1Freq();
-
   /* Compute the prescaler value to have TIM6 counter clock equal to 1MHz */
-  uwPrescalerValue = (uint32_t) ((uwTimclock / 1000000) - 1);
+  uwPrescalerValue = (uint32_t) ((uwTimclock / 1000000U) - 1U);
 
   /* Initialize TIM6 */
   htim6.Instance = TIM6;
@@ -72,7 +71,7 @@ HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
   + ClockDivision = 0
   + Counter direction = Up
   */
-  htim6.Init.Period = (1000000 / 1000) - 1;
+  htim6.Init.Period = (1000000U / 1000U) - 1U;
   htim6.Init.Prescaler = uwPrescalerValue;
   htim6.Init.ClockDivision = 0;
   htim6.Init.CounterMode = TIM_COUNTERMODE_UP;

@@ -1,8 +1,8 @@
 /**
   ******************************************************************************
-  * File Name          : CRC.c
-  * Description        : This file provides code for the configuration
-  *                      of the CRC instances.
+  * @file    crc.c
+  * @brief   This file provides code for the configuration
+  *          of the CRC instances.
   ******************************************************************************
   * @attention
   *
