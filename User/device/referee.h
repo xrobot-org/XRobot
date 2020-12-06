@@ -26,7 +26,6 @@ typedef struct __packed {
   uint8_t crc8;
 } Referee_Header_t;
 
-//TODO: 还是用msgq好，收不到就是没上线，更简单直观简单
 typedef enum { REF_STATUS_OFFLINE = 0, REF_STATUS_RUNNING } Referee_Status_t;
 
 typedef enum {
@@ -306,6 +305,8 @@ typedef struct {
 } Referee_t;
 
 /* Exported functions prototypes -------------------------------------------- */
+#define REF_SWITCH_STATUS(ref, stat) (ref.ref_status = stat)
+
 int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert);
 Referee_t *Referee_GetDevice(void);
 int8_t Referee_Restart(void);

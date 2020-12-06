@@ -63,8 +63,8 @@ const osThreadAttr_t attr_monitor = {
     .stack_size = 128 * 4,
 };
 
-const osThreadAttr_t attr_motor = {
-    .name = "motor",
+const osThreadAttr_t attr_can = {
+    .name = "can",
     .priority = osPriorityRealtime,
     .stack_size = 128 * 4,
 };
@@ -88,7 +88,7 @@ const osThreadAttr_t attr_rc = {
 };
 
 const osThreadAttr_t attr_cap = {
-    .name = "rc", //TODO: 名字没改
+    .name = "cap",
     .priority = osPriorityNormal,
     .stack_size = 128 * 4,
 };

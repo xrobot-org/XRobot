@@ -8,7 +8,6 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "module\config.h"
 #include "module\gimbal.h"
 #include "task\user_task.h"
 
@@ -50,8 +49,8 @@ void Task_CtrlGimbal(void *argument) {
               (float)TASK_FREQ_CTRL_GIMBAL);
 
   /* 延时一段时间再开启任务 */
-  osMessageQueueGet(task_runtime.msgq.motor.feedback.gimbal,
-                    &(can.gimbal_motor), NULL, osWaitForever);
+  osMessageQueueGet(task_runtime.msgq.can.feedback.gimbal, &can, NULL,
+                    osWaitForever);
 
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   uint32_t wakeup = HAL_GetTick(); /* 计算任务运行间隔的计时 */
@@ -63,12 +62,11 @@ void Task_CtrlGimbal(void *argument) {
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 
     /* 等待接收CAN总线新数据 */
-    if (osMessageQueueGet(task_runtime.msgq.motor.feedback.gimbal, &can, NULL,
+    if (osMessageQueueGet(task_runtime.msgq.can.feedback.gimbal, &can, NULL,
                           delay_tick) != osOK) {
       /* 如果没有接收到新数据，则将输出置零，不进行控制 */
       CAN_ResetGimbalOut(&gimbal_out);
-      osMessageQueuePut(task_runtime.msgq.motor.output.gimbal, &gimbal_out, 0,
-                        0);
+      osMessageQueuePut(task_runtime.msgq.can.output.gimbal, &gimbal_out, 0, 0);
 
     } else {
       /* 继续读取控制指令、姿态、IMU数据 */
@@ -84,8 +82,7 @@ void Task_CtrlGimbal(void *argument) {
       Gimbal_Control(&gimbal, &gimbal_feedback, &gimbal_cmd,
                      (float)(now - wakeup) / 1000.0f);
       Gimbal_DumpOutput(&gimbal, &gimbal_out);
-      osMessageQueuePut(task_runtime.msgq.motor.output.gimbal, &gimbal_out, 0,
-                        0);
+      osMessageQueuePut(task_runtime.msgq.can.output.gimbal, &gimbal_out, 0, 0);
       wakeup = now;
       osKernelUnlock();
 

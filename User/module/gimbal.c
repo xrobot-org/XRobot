@@ -95,8 +95,10 @@ int8_t Gimbal_CANtoFeedback(Gimbal_Feedback_t *gimbal_feedback,
   if (gimbal_feedback == NULL) return -1;
   if (can == NULL) return -1;
 
-  gimbal_feedback->eulr.encoder.yaw = can->gimbal_motor.named.yaw.rotor_angle;
-  gimbal_feedback->eulr.encoder.pit = can->gimbal_motor.named.pit.rotor_angle;
+  gimbal_feedback->eulr.encoder.yaw =
+      can->motor.gimbal_motor.named.yaw.rotor_angle;
+  gimbal_feedback->eulr.encoder.pit =
+      can->motor.gimbal_motor.named.pit.rotor_angle;
 
   return 0;
 }

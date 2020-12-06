@@ -1022,6 +1022,11 @@
               <FileType>1</FileType>
               <FilePath>..\User\module\shoot.c</FilePath>
             </File>
+            <File>
+              <FileName>cap.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\module\cap.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1073,11 +1078,6 @@
               <FilePath>..\User\task\monitor.c</FilePath>
             </File>
             <File>
-              <FileName>motor.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\task\motor.c</FilePath>
-            </File>
-            <File>
               <FileName>referee.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\referee.c</FilePath>
@@ -1101,6 +1101,11 @@
               <FileName>cap.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\cap.c</FilePath>
+            </File>
+            <File>
+              <FileName>can.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\can.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1188,8 +1193,8 @@
         <TargetCommonOption>
           <Device>STM32F407IGHx</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <PackID>Keil.STM32F4xx_DFP.2.15.0</PackID>
-          <PackURL>http://www.keil.com/pack/</PackURL>
+          <PackID>Keil.STM32F4xx_DFP.2.2.0</PackID>
+          <PackURL>http://www.keil.com/pack</PackURL>
           <Cpu>IRAM(0x20000000-0x2001FFFF) IRAM2(0x10000000-0x1000FFFF) IROM(0x8000000-0x80FFFFF)  CLOCK(25000000) FPU2 CPUTYPE("Cortex-M4")</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
@@ -2677,6 +2682,11 @@
               <FileType>1</FileType>
               <FilePath>..\User\module\shoot.c</FilePath>
             </File>
+            <File>
+              <FileName>cap.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\module\cap.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -2728,11 +2738,6 @@
               <FilePath>..\User\task\monitor.c</FilePath>
             </File>
             <File>
-              <FileName>motor.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\task\motor.c</FilePath>
-            </File>
-            <File>
               <FileName>referee.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\referee.c</FilePath>
@@ -2756,6 +2761,11 @@
               <FileName>cap.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\cap.c</FilePath>
+            </File>
+            <File>
+              <FileName>can.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\can.c</FilePath>
             </File>
           </Files>
         </Group>

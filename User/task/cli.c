@@ -436,7 +436,7 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
       Config_Get(&cfg);
 
       osThreadSuspend(task_runtime.thread.ctrl_gimbal);
-      if (osMessageQueueGet(task_runtime.msgq.motor.feedback.gimbal, &can, NULL,
+      if (osMessageQueueGet(task_runtime.msgq.can.feedback.gimbal, &can, NULL,
                             5) != osOK) {
         snprintf(out_buffer, len, "Can not get gimbal data.\r\n");
         fsm.stage = 2;
@@ -444,8 +444,8 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
         return pdPASS;
       }
       osThreadResume(task_runtime.thread.ctrl_gimbal);
-      cfg.mech_zero.yaw = can.gimbal_motor.named.yaw.rotor_angle;
-      cfg.mech_zero.pit = can.gimbal_motor.named.pit.rotor_angle;
+      cfg.mech_zero.yaw = can.motor.gimbal_motor.named.yaw.rotor_angle;
+      cfg.mech_zero.pit = can.motor.gimbal_motor.named.pit.rotor_angle;
 
       Config_Set(&cfg);
       snprintf(out_buffer, len, "yaw:%f, pitch:%f, rol:%f\r\nDone.",

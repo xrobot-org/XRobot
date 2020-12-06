@@ -17,10 +17,11 @@ extern "C" {
 #define TASK_FREQ_CTRL_CHASSIS (1000u)
 #define TASK_FREQ_CTRL_GIMBAL (1000u)
 #define TASK_FREQ_CTRL_SHOOT (1000u)
+#define TASK_FREQ_CTRL_CAP (100u)
 #define TASK_FREQ_CTRL_COMMAND (500u)
 #define TASK_FREQ_INFO (4u)
 #define TASK_FREQ_MONITOR (2u)
-#define TASK_FREQ_MOTOR (1000u)
+#define TASK_FREQ_CAN (1000u)
 #define TASK_FREQ_REFEREE (2u)
 #define TASK_FREQ_AI (250u)
 
@@ -43,7 +44,7 @@ typedef struct {
     osThreadId_t ctrl_shoot;
     osThreadId_t info;
     osThreadId_t monitor;
-    osThreadId_t motor;
+    osThreadId_t can;
     osThreadId_t atti_esti;
     osThreadId_t referee;
     osThreadId_t ai;
@@ -72,20 +73,24 @@ typedef struct {
       osMessageQueueId_t rc_raw;
     } raw_cmd;
 
-    /* motor任务放入、读取，电机的输入输出 */
+    /* can任务放入、读取，电机或电容的输入输出 */
     struct {
       struct {
         osMessageQueueId_t chassis;
         osMessageQueueId_t gimbal;
         osMessageQueueId_t shoot;
+        osMessageQueueId_t cap;
       } output;
 
       struct {
         osMessageQueueId_t chassis;
         osMessageQueueId_t gimbal;
         osMessageQueueId_t shoot;
+        osMessageQueueId_t cap;
       } feedback;
-    } motor;
+    } can;
+
+    osMessageQueueId_t referee;
 
   } msgq;
 
@@ -109,11 +114,12 @@ typedef struct {
     UBaseType_t ctrl_shoot;
     UBaseType_t info;
     UBaseType_t monitor;
-    UBaseType_t motor;
+    UBaseType_t can;
     UBaseType_t atti_esti;
     UBaseType_t referee;
     UBaseType_t ai;
     UBaseType_t rc;
+    UBaseType_t cap;
   } stack_water_mark; /* stack使用 */
 
   struct {
@@ -124,9 +130,12 @@ typedef struct {
     float ctrl_shoot;
     float info;
     float monitor;
-    float motor;
+    float can;
     float atti_esti;
     float referee;
+    float ai;
+    float rc;
+    float cap;
   } freq; /* 任务运行频率 */
 
   struct {
@@ -137,9 +146,12 @@ typedef struct {
     float ctrl_shoot;
     float info;
     float monitor;
-    float motor;
+    float can;
     float atti_esti;
     float referee;
+    float ai;
+    float rc;
+    float cap;
   } last_up_time; /* 任务最近运行时间 */
 #endif
 } Task_Runtime_t;
@@ -155,7 +167,7 @@ extern const osThreadAttr_t attr_ctrl_gimbal;
 extern const osThreadAttr_t attr_ctrl_shoot;
 extern const osThreadAttr_t attr_info;
 extern const osThreadAttr_t attr_monitor;
-extern const osThreadAttr_t attr_motor;
+extern const osThreadAttr_t attr_can;
 extern const osThreadAttr_t attr_atti_esti;
 extern const osThreadAttr_t attr_referee;
 extern const osThreadAttr_t attr_ai;
@@ -172,7 +184,7 @@ void Task_CtrlGimbal(void *argument);
 void Task_CtrlShoot(void *argument);
 void Task_Info(void *argument);
 void Task_Monitor(void *argument);
-void Task_Motor(void *argument);
+void Task_Can(void *argument);
 void Task_AttiEsti(void *argument);
 void Task_Referee(void *argument);
 void Task_Ai(void *argument);

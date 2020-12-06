@@ -157,12 +157,12 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (can == NULL) return CHASSIS_ERR_NULL;
 
-  c->feedback.gimbal_yaw_angle = can->gimbal_motor.named.yaw.rotor_angle;
+  c->feedback.gimbal_yaw_angle = can->motor.gimbal_motor.named.yaw.rotor_angle;
 
   for (uint8_t i = 0; i < c->num_wheel; i++) {
-    c->feedback.motor_rpm[i] = can->chassis_motor.as_array[i].rotor_speed;
+    c->feedback.motor_rpm[i] = can->motor.chassis_motor.as_array[i].rotor_speed;
     c->feedback.motor_current[i] =
-        can->chassis_motor.as_array[i].torque_current;
+        can->motor.chassis_motor.as_array[i].torque_current;
   }
 
   return CHASSIS_OK;

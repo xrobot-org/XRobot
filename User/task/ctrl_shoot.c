@@ -7,7 +7,6 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "module\config.h"
 #include "module\shoot.h"
 #include "task\user_task.h"
 
@@ -46,7 +45,7 @@ void Task_CtrlShoot(void *argument) {
              (float)TASK_FREQ_CTRL_SHOOT);
 
   /* 延时一段时间再开启任务 */
-  osMessageQueueGet(task_runtime.msgq.motor.feedback.shoot, &can, NULL,
+  osMessageQueueGet(task_runtime.msgq.can.feedback.shoot, &can, NULL,
                     osWaitForever);
 
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
@@ -59,11 +58,11 @@ void Task_CtrlShoot(void *argument) {
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 
     /* 等待接收CAN总线新数据 */
-    if (osMessageQueueGet(task_runtime.msgq.motor.feedback.shoot, &can, NULL,
+    if (osMessageQueueGet(task_runtime.msgq.can.feedback.shoot, &can, NULL,
                           delay_tick) != osOK) {
       /* 如果没有接收到新数据，则将输出置零，不进行控制 */
       CAN_ResetShootOut(&shoot_out);
-      osMessageQueuePut(task_runtime.msgq.motor.output.shoot, &shoot_out, 0, 0);
+      osMessageQueuePut(task_runtime.msgq.can.output.shoot, &shoot_out, 0, 0);
     } else {
       /* 继续读取控制指令 */
       osMessageQueueGet(task_runtime.msgq.cmd.shoot, &shoot_cmd, NULL, 0);
@@ -73,7 +72,7 @@ void Task_CtrlShoot(void *argument) {
       Shoot_UpdateFeedback(&shoot, &can);
       Shoot_Control(&shoot, &shoot_cmd, (float)(now - wakeup) / 1000.0f);
       Shoot_DumpOutput(&shoot, &shoot_out);
-      osMessageQueuePut(task_runtime.msgq.motor.output.shoot, &shoot_out, 0, 0);
+      osMessageQueuePut(task_runtime.msgq.can.output.shoot, &shoot_out, 0, 0);
       wakeup = now;
 
       osKernelUnlock();

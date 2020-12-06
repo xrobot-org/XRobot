@@ -7,8 +7,7 @@
 #include <math.h>
 #include <stddef.h>
 
-// TODO: 跟heat没关系吧
-#define HEAT_BUFF_THRESHOLD 20
+#define POWER_BUFF_THRESHOLD 20
 #define CHASSIS_POWER_CHECK_FREQ 10
 #define CHASSIS_POWER_FACTOR_PASS 0.9f
 #define CHASSIS_POWER_FACTOR_NO_PASS 1.5f
@@ -56,21 +55,16 @@ int8_t PowerLimit_Apply(float power_limit, float vbat, float *motor_out,
   return 0;
 }
 
-/* TODO: 感觉名字可以改改
 float PowerLimit_CapInput(float power_in, float power_limit,
                           float power_buffer) {
-*/
-float PowerLimit_CapInput(float chassis_power, float chassis_power_limit,
-                          float chassis_power_buffer) {
   float target_power = 0.0f;
 
-  float heat_buff =
-      chassis_power_buffer - (float)(chassis_power - chassis_power_limit) /
-                                 (float)CHASSIS_POWER_CHECK_FREQ;
-  if (heat_buff < HEAT_BUFF_THRESHOLD) { /* 功率限制 */
-    target_power = chassis_power_limit * CHASSIS_POWER_FACTOR_PASS;
+  float heat_buff = power_buffer - (float)(power_in - power_limit) /
+                                       (float)CHASSIS_POWER_CHECK_FREQ;
+  if (heat_buff < POWER_BUFF_THRESHOLD) { /* 功率限制 */
+    target_power = power_limit * CHASSIS_POWER_FACTOR_PASS;
   } else {
-    target_power = chassis_power_limit * CHASSIS_POWER_FACTOR_NO_PASS;
+    target_power = power_limit * CHASSIS_POWER_FACTOR_NO_PASS;
   }
 
   return target_power;

@@ -48,8 +48,8 @@ void Task_CtrlChassis(void *argument) {
                (float)TASK_FREQ_CTRL_CHASSIS);
 
   /* 延时一段时间再开启任务 */
-  osMessageQueueGet(task_runtime.msgq.motor.feedback.chassis,
-                    &can.chassis_motor, NULL, osWaitForever);
+  osMessageQueueGet(task_runtime.msgq.can.feedback.chassis,
+                    &can.motor.chassis_motor, NULL, osWaitForever);
 
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   uint32_t wakeup = HAL_GetTick(); /* 计算任务运行间隔的计时 */
@@ -61,11 +61,11 @@ void Task_CtrlChassis(void *argument) {
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 
     /* 等待接收CAN总线新数据 */
-    if (osMessageQueueGet(task_runtime.msgq.motor.feedback.chassis, &can, NULL,
+    if (osMessageQueueGet(task_runtime.msgq.can.feedback.chassis, &can, NULL,
                           delay_tick) != osOK) {
       /* 如果没有接收到新数据，则将输出置零，不进行控制 */
       CAN_ResetChassisOut(&chassis_out);
-      osMessageQueuePut(task_runtime.msgq.motor.output.chassis, &chassis_out, 0,
+      osMessageQueuePut(task_runtime.msgq.can.output.chassis, &chassis_out, 0,
                         0);
     } else {
       /* 继续读取控制指令 */
@@ -78,7 +78,7 @@ void Task_CtrlChassis(void *argument) {
                       task_runtime.status.vbat,
                       (float)(now - wakeup) / 1000.0f);
       Chassis_DumpOutput(&chassis, &chassis_out);
-      osMessageQueuePut(task_runtime.msgq.motor.output.chassis, &chassis_out, 0,
+      osMessageQueuePut(task_runtime.msgq.can.output.chassis, &chassis_out, 0,
                         0);
       wakeup = now;
       osKernelUnlock();
