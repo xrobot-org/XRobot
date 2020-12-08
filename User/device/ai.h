@@ -24,32 +24,31 @@ typedef uint16_t Ai_Tail_t;
 
 typedef enum {
   AI_CMD_ID_COMMAND = 0x0001,
-} Ai_CMDID_t;
+} AI_CMDID_t;
 
 typedef struct __packed {
   uint8_t sof;
   uint16_t data_length;
   uint8_t seq;
   uint8_t crc8;
-} Ai_Header_t;
+} AI_Header_t;
 
 typedef struct {
   osThreadId_t thread_alert;
 
-  Ai_CMDID_t cmd_id;
+  AI_CMDID_t cmd_id;
 
   CMD_AI_t command;
 
-} Ai_t;
+} AI_t;
 
 /* Exported functions prototypes -------------------------------------------- */
-int8_t Ai_Init(Ai_t *ai, osThreadId_t thread_alert);
+int8_t AI_Init(AI_t *ai, osThreadId_t thread_alert);
 bool AI_WaitDmaCplt(void);
-Ai_t *Ai_GetDevice(void);
-int8_t Ai_Restart(void);
+int8_t AI_Restart(void);
 
-int8_t Ai_StartReceiving(Ai_t *ai);
-int8_t Ai_Parse(Ai_t *ai);
+int8_t AI_StartReceiving(AI_t *ai);
+int8_t AI_Parse(AI_t *ai);
 
 #ifdef __cplusplus
 }

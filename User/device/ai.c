@@ -22,7 +22,7 @@
 /* Private variables -------------------------------------------------------- */
 static volatile uint32_t drop_message = 0;
 
-static Ai_t *gai;
+static AI_t *gai;
 static uint8_t rxbuf[AI_LEN_RX_BUFF];
 
 static bool inited = false;
@@ -43,7 +43,7 @@ static void Ai_AbortRxCpltCallback(void) {
 }
 
 /* Exported functions ------------------------------------------------------- */
-int8_t Ai_Init(Ai_t *ai, osThreadId_t thread_alert) {
+int8_t AI_Init(AI_t *ai, osThreadId_t thread_alert) {
   if (ai == NULL) return DEVICE_ERR_NULL;
 
   if (inited) return DEVICE_ERR_INITED;
@@ -68,19 +68,13 @@ bool AI_WaitDmaCplt(void) {
   return (osThreadFlagsWait(SIGNAL_AI_RAW_REDY, osFlagsWaitAll, 0) == osOK);
 }
 
-Ai_t *Ai_GetDevice(void) {
-  if (inited) return gai;
-
-  return NULL;
-}
-
 int8_t ai_Restart(void) {
   __HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_DR16));
   __HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_DR16));
   return 0;
 }
 
-int8_t Ai_StartReceiving(Ai_t *ai) {
+int8_t AI_StartReceiving(AI_t *ai) {
   (void)ai;
   if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_AI), rxbuf,
                            AI_LEN_RX_BUFF) == HAL_OK)
@@ -88,24 +82,24 @@ int8_t Ai_StartReceiving(Ai_t *ai) {
   return DEVICE_ERR;
 }
 
-int8_t Ai_Parse(Ai_t *ai) {
+int8_t AI_Parse(AI_t *ai) {
   uint32_t data_length =
       AI_LEN_RX_BUFF -
       __HAL_DMA_GET_COUNTER(BSP_UART_GetHandle(BSP_UART_AI)->hdmarx);
 
   uint8_t index = 0;
 
-  Ai_Header_t *header = (Ai_Header_t *)(rxbuf + index);
-  index += sizeof(Ai_Header_t);
+  AI_Header_t *header = (AI_Header_t *)(rxbuf + index);
+  index += sizeof(AI_Header_t);
   if (index >= data_length) goto error;
 
-  if (CRC8_Verify((uint8_t *)header, sizeof(Ai_Header_t))) goto error;
+  if (CRC8_Verify((uint8_t *)header, sizeof(AI_Header_t))) goto error;
 
   if (header->sof != AI_HEADER_SOF) goto error;
 
-  Ai_CMDID_t *cmd_id = (Ai_CMDID_t *)(rxbuf + index);
+  AI_CMDID_t *cmd_id = (AI_CMDID_t *)(rxbuf + index);
   ai->cmd_id = *cmd_id;
-  index += sizeof(Ai_CMDID_t);
+  index += sizeof(AI_CMDID_t);
   if (index >= data_length) goto error;
 
   void *target = (rxbuf + index);
@@ -127,7 +121,7 @@ int8_t Ai_Parse(Ai_t *ai) {
   index += sizeof(Ai_Tail_t);
   if (index != (data_length - 1)) goto error;
 
-  if (CRC16_Verify((uint8_t *)header, sizeof(Ai_Header_t)))
+  if (CRC16_Verify((uint8_t *)header, sizeof(AI_Header_t)))
     memcpy(target, origin, size);
   else
     goto error;

@@ -231,7 +231,6 @@ typedef struct {
 
 /* Exported functions prototypes -------------------------------------------- */
 int8_t CAN_Init(CAN_t *can);
-CAN_t *CAN_GetDevice(void);
 
 int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output);
 int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx);

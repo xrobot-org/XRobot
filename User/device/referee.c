@@ -62,12 +62,6 @@ int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert) {
   return 0;
 }
 
-Referee_t *Referee_GetDevice(void) {
-  if (inited) return gref;
-
-  return NULL;
-}
-
 int8_t Referee_Restart(void) {
   __HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_DR16));
   __HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_DR16));

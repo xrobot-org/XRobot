@@ -308,7 +308,6 @@ typedef struct {
 #define REF_SWITCH_STATUS(ref, stat) (ref.ref_status = stat)
 
 int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert);
-Referee_t *Referee_GetDevice(void);
 int8_t Referee_Restart(void);
 
 int8_t Referee_StartReceiving(Referee_t *ref);

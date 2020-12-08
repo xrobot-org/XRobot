@@ -13,9 +13,9 @@
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 #ifdef DEBUG
-Ai_t ai;
+AI_t ai;
 #else
-static Ai_t ai;
+static AI_t ai;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -35,7 +35,7 @@ void Task_Ai(void *argument) {
   osDelay(TASK_INIT_DELAY_AI); /* 延时一段时间再开启 */
 
   /* 初始化AI通信 */
-  Ai_Init(&ai, osThreadGetId());
+  AI_Init(&ai, osThreadGetId());
 
   uint32_t tick = osKernelGetTickCount();
   while (1) {
@@ -45,9 +45,9 @@ void Task_Ai(void *argument) {
     /* Task body */
     tick += delay_tick;
 
-    Ai_StartReceiving(&ai);
+    AI_StartReceiving(&ai);
     if (AI_WaitDmaCplt()) {
-      Ai_Parse(&ai);
+      AI_Parse(&ai);
       osMessageQueuePut(task_runtime.msgq.raw_cmd.ai_raw, &(ai.command), 0, 0);
     }
 

@@ -145,13 +145,6 @@ int8_t CAN_Init(CAN_t *can) {
   return DEVICE_OK;
 }
 
-CAN_t *CAN_GetDevice(void) {
-  if (inited) {
-    return gcan;
-  }
-  return NULL;
-}
-
 int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output) {
   if (output == NULL) return DEVICE_ERR_NULL;
 
