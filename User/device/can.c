@@ -36,11 +36,6 @@
 #define CAN_M3508_MAX_ABS_LSB (16384)
 #define CAN_M2006_MAX_ABS_LSB (10000)
 
-/* 电机最大电流绝对值 */
-#define CAN_GM6020_MAX_ABS_CUR (1)
-#define CAN_M3508_MAX_ABS_CUR (20)
-#define CAN_M2006_MAX_ABS_CUR (10)
-
 #define CAN_MOTOR_TX_BUF_SIZE (8)
 #define CAN_MOTOR_RX_BUF_SIZE (8)
 
@@ -50,8 +45,8 @@
 #define CAN_MOTOR_RX_FIFO CAN_RX_FIFO0
 
 /* Super capacitor */
-#define CAN_CAP_FB_ID_BASE (0x000)
-#define CAN_CAP_CTRL_ID_BASE (0x000)
+#define CAN_CAP_FB_ID_BASE (0x211)
+#define CAN_CAP_CTRL_ID_BASE (0x210)
 
 #define CAN_CAP_RES (100) /* 电容数据分辨率 */
 
@@ -72,7 +67,7 @@ static bool inited = false;
 /* Private function  -------------------------------------------------------- */
 static void CAN_Motor_Parse(CAN_MotorFeedback_t *feedback, const uint8_t *raw) {
   uint16_t raw_angle = (uint16_t)((raw[0] << 8) | raw[1]);
-  uint16_t raw_current = (int16_t)((raw[4] << 8) | raw[5]);
+  int16_t raw_current = (int16_t)((raw[4] << 8) | raw[5]);
 
   feedback->rotor_angle = raw_angle / (float)CAN_MOTOR_ENC_RES * M_2PI;
   feedback->rotor_speed = (int16_t)((raw[2] << 8) | raw[3]);
@@ -84,8 +79,8 @@ static void CAN_Motor_Parse(CAN_MotorFeedback_t *feedback, const uint8_t *raw) {
 void CAN_Cap_Decode(CAN_CapFeedback_t *feedback, const uint8_t *raw) {
   feedback->input_volt = (float)((raw[1] << 8) | raw[0]) / (float)CAN_CAP_RES;
   feedback->cap_volt = (float)((raw[3] << 8) | raw[2]) / (float)CAN_CAP_RES;
-  feedback->input_volt = (float)((raw[5] << 8) | raw[4]) / (float)CAN_CAP_RES;
-  feedback->input_volt = (float)((raw[7] << 8) | raw[6]) / (float)CAN_CAP_RES;
+  feedback->input_curr = (float)((raw[5] << 8) | raw[4]) / (float)CAN_CAP_RES;
+  feedback->target_power = (float)((raw[7] << 8) | raw[6]) / (float)CAN_CAP_RES;
 }
 
 static void CAN_CAN1RxFifoMsgPendingCallback(void) {
@@ -311,14 +306,21 @@ void CAN_ResetCapOut(CAN_CapOutput_t *cap_out) {
 int8_t CAN_Cap_Control(CAN_CapOutput_t *output) {
   float power_limit = output->power_limit;
   uint16_t cap = (uint16_t)(power_limit * CAN_CAP_RES);
-  raw_tx2.tx_header.StdId = CAN_M3508_M2006_ID_SETTING_ID;
-  raw_tx2.tx_header.IDE = CAN_ID_STD;
-  raw_tx2.tx_header.RTR = CAN_RTR_DATA;
-  raw_tx2.tx_header.DLC = CAN_MOTOR_TX_BUF_SIZE;
+  raw_tx1.tx_header.StdId = CAN_CAP_CTRL_ID_BASE;
+  raw_tx1.tx_header.IDE = CAN_ID_STD;
+  raw_tx1.tx_header.RTR = CAN_RTR_DATA;
+  raw_tx1.tx_header.DLC = CAN_MOTOR_TX_BUF_SIZE;
 
-  raw_tx2.tx_data[0] = (cap >> 8) & 0xFF;
-  raw_tx2.tx_data[1] = cap & 0xFF;
-  HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(BSP_CAN_1), &raw_tx2.tx_header,
-                       raw_tx2.tx_data, (uint32_t *)CAN_TX_MAILBOX0);
+  raw_tx1.tx_data[0] = (cap >> 8) & 0xFF;
+  raw_tx1.tx_data[1] = cap & 0xFF;
+  HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(BSP_CAN_1), &raw_tx1.tx_header,
+                       raw_tx1.tx_data, (uint32_t *)CAN_TX_MAILBOX0);
   return DEVICE_OK;
+}
+
+void CAN_CAP_HandleOffline(CAN_Capacitor_t *cap, CAN_CapOutput_t *cap_out,
+                           float power_chassis) {
+  cap->cap_status = CAP_STATUS_OFFLINE;
+  cap->target_power = power_chassis;
+  cap_out->power_limit = power_chassis;
 }

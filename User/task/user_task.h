@@ -92,6 +92,8 @@ typedef struct {
 
     osMessageQueueId_t referee;
 
+    osMessageQueueId_t cap_info;
+
   } msgq;
 
   /* 机器人状态 */

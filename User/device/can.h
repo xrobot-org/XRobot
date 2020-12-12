@@ -46,6 +46,11 @@ extern "C" {
 #define CAN_RX_BUF_SIZE_MAX                                              \
   ((CAN_MOTOR_RX_BUF_SIZE > CAN_CAP_RX_BUF_SIZE) ? CAN_MOTOR_RX_BUF_SIZE \
                                                  : CAN_CAP_RX_BUF_SIZE)
+
+/* 电机最大电流绝对值 */
+#define CAN_GM6020_MAX_ABS_CUR (1)
+#define CAN_M3508_MAX_ABS_CUR (20)
+#define CAN_M2006_MAX_ABS_CUR (10)
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
 
@@ -159,10 +164,7 @@ typedef enum {
 
 typedef enum {
   CAP_STATUS_OFFLINE,
-  CAP_STATUS_CHARGING,
-  CAP_STATUS_RUNNING1,
-  CAP_STATUS_RUNNING2,
-  CAP_STATUS_RUNNING3
+  CAP_STATUS_RUNNING,
 } Cap_Status_t;
 
 typedef union {
@@ -198,7 +200,6 @@ typedef struct {
   float input_curr;
   float target_power;
 } CAN_CapFeedback_t;
-// TODO: CAN_Capacitor_t
 
 typedef struct {
   CAN_RxHeaderTypeDef rx_header;
@@ -211,6 +212,8 @@ typedef struct {
 } CAN_RawTx_t;
 
 typedef struct {
+  float percentage;
+  float target_power;
   Cap_Status_t cap_status;
   CAN_CapFeedback_t cap_feedback;
 } CAN_Capacitor_t;
@@ -245,6 +248,8 @@ void CAN_ResetCapOut(CAN_CapOutput_t *cap_out);
 int8_t CAN_Cap_Control(CAN_CapOutput_t *output);
 void CAN_ResetCapOut(CAN_CapOutput_t *cap_out);
 void CAN_Cap_Decode(CAN_CapFeedback_t *feedback, const uint8_t *raw);
+void CAN_CAP_HandleOffline(CAN_Capacitor_t *cap, CAN_CapOutput_t *cap_out,
+                           float power_chassis);
 
 #ifdef __cplusplus
 }

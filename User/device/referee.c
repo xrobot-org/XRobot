@@ -17,6 +17,9 @@
 #define REF_HEADER_SOF (0xA5)
 #define REF_LEN_RX_BUFF (0xFF)
 
+#define CHASSIS_POWER_MAX_WITHOUT_REF 40.0f /* 裁判系统离线底盘最大功率 */
+
+
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
 /* Private variables -------------------------------------------------------- */
@@ -76,7 +79,13 @@ int8_t Referee_StartReceiving(Referee_t *ref) {
   return DEVICE_ERR;
 }
 
+void Referee_HandleOffline(Referee_t *referee) {
+  referee->ref_status = REF_STATUS_OFFLINE;
+  referee->robot_status.chassis_power_limit = CHASSIS_POWER_MAX_WITHOUT_REF;
+}
+
 int8_t Referee_Parse(Referee_t *ref) {
+  REF_SWITCH_STATUS(*ref, REF_STATUS_RUNNING);
   uint32_t data_length =
       REF_LEN_RX_BUFF -
       __HAL_DMA_GET_COUNTER(BSP_UART_GetHandle(BSP_UART_REF)->hdmarx);

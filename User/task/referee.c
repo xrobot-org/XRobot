@@ -50,10 +50,9 @@ void Task_Referee(void *argument) {
     Referee_StartReceiving(&ref);
     if (osThreadFlagsWait(SIGNAL_REFEREE_RAW_REDY, osFlagsWaitAll, 200) !=
         osOK) {
-      REF_SWITCH_STATUS(ref, REF_STATUS_OFFLINE);
+      Referee_HandleOffline(&ref);
     } else {
       Referee_Parse(&ref);
-      REF_SWITCH_STATUS(ref, REF_STATUS_RUNNING);
     }
     osMessageQueueReset(task_runtime.msgq.referee);
     osMessageQueuePut(task_runtime.msgq.referee, &ref, 0, 0);

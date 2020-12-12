@@ -18,6 +18,8 @@ extern "C" {
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
+#define REF_SWITCH_STATUS(ref, stat) ((ref).ref_status = (stat))
+
 /* Exported types ----------------------------------------------------------- */
 typedef struct __packed {
   uint8_t sof;
@@ -305,13 +307,12 @@ typedef struct {
 } Referee_t;
 
 /* Exported functions prototypes -------------------------------------------- */
-#define REF_SWITCH_STATUS(ref, stat) (ref.ref_status = stat)
-
 int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert);
 int8_t Referee_Restart(void);
 
 int8_t Referee_StartReceiving(Referee_t *ref);
 int8_t Referee_Parse(Referee_t *ref);
+void Referee_HandleOffline(Referee_t *referee);
 
 #ifdef __cplusplus
 }
