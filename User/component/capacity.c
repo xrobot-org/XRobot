@@ -32,10 +32,8 @@ float Capacity_GetBatteryRemain(float volt) {
   return percentage;
 }
 
-float Capacity_GetCapacitorRemain(float volt) {
-  float percentage;
-
-  percentage = (volt - 19.5f) / (25.5f - 19.5f);
+float Capacity_GetCapacitorRemain(float vcap, float vbat, float v_cutoff) {
+  float percentage = (vcap - v_cutoff) / (vbat - v_cutoff);
 
   if (percentage < 0.0f)
     percentage = 0.0f;

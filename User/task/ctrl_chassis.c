@@ -22,10 +22,12 @@ float power_lim = 40.f; /* 最大输出功率 */
 CMD_ChassisCmd_t chassis_cmd;
 Chassis_t chassis;
 CAN_ChassisOutput_t chassis_out;
+CAN_Capacitor_t cap;
 #else
 static CMD_ChassisCmd_t chassis_cmd;
 static Chassis_t chassis;
 static CAN_ChassisOutput_t chassis_out;
+static CAN_Capacitor_t cap;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -70,12 +72,11 @@ void Task_CtrlChassis(void *argument) {
     } else {
       /* 继续读取控制指令 */
       osMessageQueueGet(task_runtime.msgq.cmd.chassis, &chassis_cmd, NULL, 0);
-
+      osMessageQueueGet(task_runtime.msgq.cap_info, &cap, NULL, 0);
       osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
       const uint32_t now = HAL_GetTick();
       Chassis_UpdateFeedback(&chassis, &can);
-      Chassis_Control(&chassis, &chassis_cmd, power_lim,
-                      task_runtime.status.vbat,
+      Chassis_Control(&chassis, &chassis_cmd, &cap,
                       (float)(now - wakeup) / 1000.0f);
       Chassis_DumpOutput(&chassis, &chassis_out);
       osMessageQueuePut(task_runtime.msgq.can.output.chassis, &chassis_out, 0,

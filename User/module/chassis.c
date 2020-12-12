@@ -8,9 +8,12 @@
 #include "bsp\mm.h"
 #include "component\limiter.h"
 #include "device\can.h"
+#include "module\cap.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
+#define CAP_PERCENTAGE_WORK 1000.0f
+#define CAP_PERCENTAGE_CHARGE 20.0f /* 不能大于40 */
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
@@ -173,12 +176,15 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
  *
  * \param c 包含底盘数据的结构体
  * \param c_cmd 底盘控制指令
+ * \param cap 电容状态和电压
+ * \param referee 裁判系统信息
+ * \param vbat 电源电压
  * \param dt_sec 两次调用的时间间隔
  *
  * \return 函数运行结果
  */
-int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float power_lim,
-                       float vbat, float dt_sec) {
+int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
+                       const CAN_Capacitor_t *cap, float dt_sec) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (c_cmd == NULL) return CHASSIS_ERR_NULL;
   Chassis_SetMode(c, c_cmd->mode);
@@ -257,10 +263,17 @@ int8_t Chassis_Control(Chassis_t *c, CMD_ChassisCmd_t *c_cmd, float power_lim,
     }
     /* 输出滤波. */
     c->out[i] = LowPassFilter2p_Apply(c->filter.out + i, c->out[i]);
-    /* 底盘功率限制 */
-    PowerLimit_Apply(power_lim, vbat, c->out, c->feedback.motor_current,
-                     c->num_wheel);
   }
+  /* 底盘功率限制 */
+  float power_limit = cap->target_power;
+  if (cap->cap_status == CAP_STATUS_RUNNING) {
+    if (cap->percentage > 0.3f)
+      power_limit += cap->percentage * CAP_PERCENTAGE_WORK;
+    else
+      power_limit -= (1.0f - cap->percentage) * CAP_PERCENTAGE_CHARGE;
+  }
+  PowerLimit_Apply(power_limit, cap->target_power, c->out, c->num_wheel,
+                   CAN_M3508_MAX_ABS_CUR);
   return CHASSIS_OK;
 }
 

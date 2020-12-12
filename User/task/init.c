@@ -98,6 +98,8 @@ void Task_Init(void *argument) {
       osMessageQueueNew(6u, sizeof(AHRS_Gyro_t), NULL);
 
   task_runtime.msgq.referee = osMessageQueueNew(6u, sizeof(Referee_t), NULL);
+  task_runtime.msgq.cap_info =
+      osMessageQueueNew(6u, sizeof(CAN_Capacitor_t), NULL);
 
   osKernelUnlock();
 

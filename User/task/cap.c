@@ -48,17 +48,18 @@ void Task_Cap(void *argument) {
 
     if (osMessageQueueGet(task_runtime.msgq.can.feedback.cap, &can, NULL,
                           delay_tick) != osOK) {
-      CAN_ResetCapOut(&cap_out);
+      CAN_CAP_HandleOffline(&(can.cap), &cap_out,
+                            referee.robot_status.chassis_power_limit);
       osMessageQueuePut(task_runtime.msgq.can.output.cap, &cap_out, 0, 0);
+      osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);
     } else {
+      osMessageQueueGet(task_runtime.msgq.referee, &referee, 0, 0);
       osKernelLock();
       const uint32_t now = HAL_GetTick();
 
-      osMessageQueueGet(task_runtime.msgq.referee, &referee, 0, 0);
-
       Cap_Control(&can.cap, &referee, &cap_out);
       osMessageQueuePut(task_runtime.msgq.can.output.cap, &cap_out, 0, 0);
-
+      osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);
       wakeup = now;
       osKernelUnlock();
 
