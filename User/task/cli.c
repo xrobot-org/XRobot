@@ -156,8 +156,8 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       return pdPASS;
     case 8:
       snprintf(out_buffer, len, robot_config_header,
-               Config_GetNameByModel(task_runtime.robot_cfg.model),
-               Config_GetNameByPilot(task_runtime.robot_cfg.pilot));
+               task_runtime.cfg.robot_param_name,
+               task_runtime.cfg.pilot_cfg_name);
       fsm.stage++;
       return pdPASS;
     default:
@@ -167,8 +167,8 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
   }
 }
 
-static BaseType_t Command_SetModel(char *out_buffer, size_t len,
-                                   const char *command_string) {
+static BaseType_t Command_SetRobotParam(char *out_buffer, size_t len,
+                                        const char *command_string) {
   const char *param;
   BaseType_t param_len;
   Config_t cfg;
@@ -182,29 +182,21 @@ static BaseType_t Command_SetModel(char *out_buffer, size_t len,
   static FiniteStateMachine_t fsm;
   switch (fsm.stage) {
     case 0:
-      snprintf(out_buffer, len, "Set robot model to: ");
-      fsm.stage = 1;
-      return pdPASS;
-    case 1:
       Config_Get(&cfg);
-      if ((cfg.model = Config_GetModelByName(param)) == ROBOT_MODEL_NUM) {
+      if ((cfg.robot_param = Config_GetRobotParam(param)) == NULL) {
+        snprintf(out_buffer, len, "Unknow model.\r\n");
         fsm.stage = 2;
         return pdPASS;
       } else {
-        snprintf(out_buffer, len, "%s", Config_GetNameByModel(cfg.model));
+        snprintf(out_buffer, len, "Set robot model to: %s\r\n", param);
         Config_Set(&cfg);
-        fsm.stage = 3;
+        fsm.stage = 1;
         return pdPASS;
       }
-    case 2:
-      snprintf(out_buffer, len,
-               "Unknow model.\r\nCheck help for avaliable options.");
-      fsm.stage = 4;
-      return pdPASS;
-    case 3:
+    case 1:
       snprintf(out_buffer, len,
                "\r\nRestart needed for setting to take effect.");
-      fsm.stage = 4;
+      fsm.stage = 2;
       return pdPASS;
     default:
       snprintf(out_buffer, len, "\r\n");
@@ -213,77 +205,46 @@ static BaseType_t Command_SetModel(char *out_buffer, size_t len,
   }
 }
 
-static BaseType_t Command_SetPilot(char *out_buffer, size_t len,
-                                   const char *command_string) {
-  const char *param;
-  BaseType_t param_len;
-  Config_t cfg;
-
-  if (out_buffer == NULL) return pdFALSE;
-  len -= 1;
-
-  param = FreeRTOS_CLIGetParameter(command_string, 1, &param_len);
-  if (param == NULL) return pdFALSE;
-
-  static FiniteStateMachine_t fsm;
-  switch (fsm.stage) {
-    case 0:
-      snprintf(out_buffer, len, "Set robot pilot to: ");
-      fsm.stage = 1;
-      return pdPASS;
-    case 1:
-      Config_Get(&cfg);
-      if ((cfg.pilot = Config_GetPilotByName(param)) == ROBOT_PILOT_NUM) {
-        fsm.stage = 2;
-        return pdPASS;
-      } else {
-        snprintf(out_buffer, len, "%s", Config_GetNameByPilot(cfg.pilot));
-        Config_Set(&cfg);
-        fsm.stage = 3;
-        return pdPASS;
-      }
-    case 2:
-      snprintf(out_buffer, len,
-               "Unauthorized pilot.\r\nCheck help for avaliable options.");
-      fsm.stage = 4;
-      return pdPASS;
-    case 3:
-      snprintf(out_buffer, len,
-               "\r\nRestart needed for setting to take effect.");
-      fsm.stage = 4;
-      return pdPASS;
-    default:
-      snprintf(out_buffer, len, "\r\n");
-      fsm.stage = 0;
-      return pdFALSE;
-  }
-}
-
-static BaseType_t Command_Error(char *out_buffer, size_t len,
-                                const char *command_string) {
-  if (out_buffer == NULL) return pdFALSE;
-  (void)command_string;
-  len -= 1;
-
-  static FiniteStateMachine_t fsm;
-  switch (fsm.stage) {
-    case 0:
-      snprintf(out_buffer, len, "\r\nError status.");
-      fsm.stage++;
-      return pdPASS;
-    case 1:
-      // TODO
-      fsm.stage++;
-      return pdPASS;
-    default:
-      snprintf(out_buffer, len, "\r\n");
-      fsm.stage = 0;
-      return pdFALSE;
-  }
-}
-
-static BaseType_t Command_ClearConfig(char *out_buffer, size_t len,
+static BaseType_t Command_SetPilotCfg(char *out_buffer, size_t len,
                                       const char *command_string) {
+  const char *param;
+  BaseType_t param_len;
+  Config_t cfg;
+
+  if (out_buffer == NULL) return pdFALSE;
+  len -= 1;
+
+  param = FreeRTOS_CLIGetParameter(command_string, 1, &param_len);
+  if (param == NULL) return pdFALSE;
+
+  static FiniteStateMachine_t fsm;
+  switch (fsm.stage) {
+    case 0:
+      Config_Get(&cfg);
+      if ((cfg.pilot_cfg = Config_GetPilotCfg(param)) == NULL) {
+        snprintf(out_buffer, len, "Unknow pilot.\r\n");
+        fsm.stage = 2;
+        return pdPASS;
+      } else {
+        snprintf(out_buffer, len, "Set pilot config to: %s\r\n", param);
+        Config_Set(&cfg);
+        fsm.stage = 1;
+        return pdPASS;
+      }
+    case 1:
+      snprintf(out_buffer, len,
+               "\r\nRestart needed for setting to take effect.");
+      fsm.stage = 2;
+      return pdPASS;
+    default:
+      snprintf(out_buffer, len, "\r\n");
+      fsm.stage = 0;
+      return pdFALSE;
+  }
+}
+
+static BaseType_t Command_InitConfig(char *out_buffer, size_t len,
+                                     const char *command_string) {
   if (out_buffer == NULL) return pdFALSE;
   (void)command_string;
   len -= 1;
@@ -293,11 +254,13 @@ static BaseType_t Command_ClearConfig(char *out_buffer, size_t len,
   static FiniteStateMachine_t fsm;
   switch (fsm.stage) {
     case 0:
-      snprintf(out_buffer, len, "\r\nReset Robot ID stored on flash.");
+      snprintf(out_buffer, len, "\r\nSet Robot config to default and qs.");
       fsm.stage++;
       return pdPASS;
     case 1:
       memset(&cfg, 0, sizeof(Config_t));
+      cfg.pilot_cfg = Config_GetPilotCfg("qs");
+      cfg.robot_param = Config_GetRobotParam("default");
       Config_Set(&cfg);
       snprintf(out_buffer, len, "\r\nDone.");
       fsm.stage++;
@@ -330,7 +293,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       fsm.stage++;
       return pdPASS;
     case 1:
-      snprintf(out_buffer, len, "Please make the controller stable.\r\n");
+      snprintf(out_buffer, len, "Please make the MCU stable.\r\n");
       fsm.stage++;
       return pdPASS;
     case 2:
@@ -576,28 +539,21 @@ static const CLI_Command_Definition_t command_table[] = {
         0,
     },
     {
-        "set-model",
-        "\r\nset-model <model>:\r\n Set robot model. Expext:I[nfantry], "
-        "H[ero], E[ngineer], D[rone] and S[entry]\r\n\r\n",
-        Command_SetModel,
+        "set-robot-param",
+        "\r\nset-robot-param <param name>:\r\n Set robot param. \r\n\r\n",
+        Command_SetRobotParam,
         1,
     },
     {
-        "set-pilot",
-        "\r\nset-pilot <pilot>:\r\n Set robot pilot. Expext: qs\r\n\r\n",
-        Command_SetPilot,
+        "set-pilot-cfg",
+        "\r\nset-pilot-cfg <pilot cfg>:\r\n Set pilot cfg. Expext: qs\r\n\r\n",
+        Command_SetPilotCfg,
         1,
     },
     {
-        "error",
-        "\r\nerror:\r\n Get robot error status.\r\n\r\n",
-        Command_Error,
-        0,
-    },
-    {
-        "reset-config",
-        "\r\nreset-config:\r\n Reset Robot config stored on flash.\r\n\r\n",
-        Command_ClearConfig,
+        "init-config",
+        "\r\ninit-config:\r\n Init Robot config stored on flash.\r\n\r\n",
+        Command_InitConfig,
         0,
     },
     {
@@ -619,6 +575,14 @@ static const CLI_Command_Definition_t command_table[] = {
         Command_SetGimbalLim,
         1,
     },
+    /*
+    {
+        "xxx-xxx",
+        "\r\nxxx-xxx:\r\n how to use. ",
+        Command_XXX,
+        1,
+    },
+    */
 };
 
 /* Private function --------------------------------------------------------- */

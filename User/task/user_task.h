@@ -103,9 +103,7 @@ typedef struct {
     float cpu_temp;
   } status;
 
-  Config_t robot_cfg;                     /* 机器人配置 */
-  const Config_RobotParam_t *robot_param; /* 机器人参数 */
-  const Config_Pilot_t *config_pilot;     /* 操作手参数 */
+  Config_t cfg; /* 机器人配置 */
 
 #ifdef DEBUG
   struct {

@@ -44,7 +44,8 @@ void Task_Command(void *argument) {
   /* 计算任务运行到指定频率，需要延时的时间 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_COMMAND;
 
-  CMD_Init(&cmd, &(task_runtime.config_pilot->param.cmd)); /* 初始化指令处理 */
+  /* 初始化指令处理 */
+  CMD_Init(&cmd, &(task_runtime.cfg.pilot_cfg->param.cmd));
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   uint32_t wakeup = HAL_GetTick();
 

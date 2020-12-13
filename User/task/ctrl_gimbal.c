@@ -44,9 +44,8 @@ void Task_CtrlGimbal(void *argument) {
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_GIMBAL;
 
   /* 初始化云台 */
-  Gimbal_Init(&gimbal, &(task_runtime.robot_param->gimbal),
-              &(task_runtime.robot_cfg.gimbal_limit),
-              (float)TASK_FREQ_CTRL_GIMBAL);
+  Gimbal_Init(&gimbal, &(task_runtime.cfg.robot_param->gimbal),
+              &(task_runtime.cfg.gimbal_limit), (float)TASK_FREQ_CTRL_GIMBAL);
 
   /* 延时一段时间再开启任务 */
   osMessageQueueGet(task_runtime.msgq.can.feedback.gimbal, &can, NULL,

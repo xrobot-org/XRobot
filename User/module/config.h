@@ -17,22 +17,6 @@ extern "C" {
 #include "module\gimbal.h"
 #include "module\shoot.h"
 
-/* 对应赛事规则的机器人型号 */
-typedef enum {
-  ROBOT_MODEL_INFANTRY = 0, /* 步兵机器人 */
-  ROBOT_MODEL_HERO,         /* 英雄机器人 */
-  ROBOT_MODEL_ENGINEER,     /* 工程机器人 */
-  ROBOT_MODEL_DRONE,        /* 空中机器人 */
-  ROBOT_MODEL_SENTRY,       /* 哨兵机器人 */
-  ROBOT_MODEL_NUM,          /* 型号数量 */
-} Config_RobotModel_t;
-
-/* 操作员名称 */
-typedef enum {
-  ROBOT_PILOT_QS = 0,
-  ROBOT_PILOT_NUM, /* 操作数量 */
-} Config_PilotName_t;
-
 /* 机器人参数，保存后不会变化 */
 typedef struct {
   Chassis_Params_t chassis; /* 底盘 */
@@ -52,21 +36,24 @@ typedef struct {
     void (*MapShoot)(void);
   } key_map; /* 键位映射 */
 
-} Config_Pilot_t;
+} Config_PilotCfg_t;
 
 /* 机器人配置，保存在Flash上的信息，根据机器人变化 */
 typedef struct {
-  Config_RobotModel_t model;
-  Config_PilotName_t pilot;
+  const char robot_param_name[20];
+  const char pilot_cfg_name[20];
+
+  const Config_RobotParam_t *robot_param;
+  const Config_PilotCfg_t *pilot_cfg;
 
   struct {
     IST8310_Cali_t ist8310;
     BMI088_Cali_t bmi088;
   } cali; /* 校准 */
 
-  AHRS_Eulr_t mech_zero; /* 机械零点 */
-
+  AHRS_Eulr_t mech_zero;       /* 机械零点 */
   Gimbal_Limit_t gimbal_limit; /* 软件限位 */
+
 } Config_t;
 
 /**
@@ -84,58 +71,20 @@ void Config_Get(Config_t *cfg);
 void Config_Set(Config_t *cfg);
 
 /**
- * \brief 获取机器人参数
+ * @brief 通过机器人参数名称获取机器人参数的指针
  *
- * \param model 机器人型号
- *
- * \return 机器人参数
+ * @param robot_param_name 机器人参数名称
+ * @return const Config_RobotParam_t* 机器人参数的指针
  */
-const Config_RobotParam_t *Config_GetRobotParam(Config_RobotModel_t model);
+const Config_RobotParam_t *Config_GetRobotParam(const char *robot_param_name);
 
 /**
- * \brief 获取操作手配置
+ * @brief 通过操作手配置名称获取操作手配置的指针
  *
- * \param pilot 操作手
- *
- * \return 操作手配置
+ * @param pilot_cfg_name 操作手配置名称
+ * @return const Config_PilotCfg_t* 操作手配置的指针
  */
-const Config_Pilot_t *Config_GetPilotCfg(Config_PilotName_t pilot);
-
-/**
- * \brief 通过字符串获得机器人型号
- *
- * \param name 名字字符串
- *
- * \return 机器人模型
- */
-Config_RobotModel_t Config_GetModelByName(const char *name);
-
-/**
- * \brief 通过字符串获得操作手
- *
- * \param name 名字字符串
- *
- * \return 操作手
- */
-Config_PilotName_t Config_GetPilotByName(const char *name);
-
-/**
- * \brief 获得机器人型号对应名字字符串
- *
- * \param model 机器人型号
- *
- * \return 名字字符串
- */
-const char *Config_GetNameByModel(Config_RobotModel_t model);
-
-/**
- * \brief 获得操作手对应名字字符串
- *
- * \param pilot 操作手
- *
- * \return 名字字符串
- */
-const char *Config_GetNameByPilot(Config_PilotName_t pilot);
+const Config_PilotCfg_t *Config_GetPilotCfg(const char *pilot_cfg_name);
 
 #ifdef __cplusplus
 }

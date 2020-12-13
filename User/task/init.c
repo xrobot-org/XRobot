@@ -31,11 +31,7 @@
 void Task_Init(void *argument) {
   (void)argument; /* 未使用argument，消除警告 */
 
-  Config_Get(&task_runtime.robot_cfg); /* 获取机器人配置 */
-
-  /* 获取机器人参数和操作手信息 */
-  task_runtime.robot_param = Config_GetRobotParam(task_runtime.robot_cfg.model);
-  task_runtime.config_pilot = Config_GetPilotCfg(task_runtime.robot_cfg.pilot);
+  Config_Get(&task_runtime.cfg); /* 获取机器人配置 */
 
   osKernelLock();
   /* 创建任务 */
