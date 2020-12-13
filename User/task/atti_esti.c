@@ -63,8 +63,8 @@ void Task_AttiEsti(void *argument) {
   (void)argument; /* 未使用argument，消除警告 */
 
   /* 初始化设备 */
-  BMI088_Init(&bmi088, &task_runtime.robot_cfg.cali.bmi088);
-  IST8310_Init(&ist8310, &task_runtime.robot_cfg.cali.ist8310);
+  BMI088_Init(&bmi088, &(task_runtime.cfg.cali.bmi088));
+  IST8310_Init(&ist8310, &(task_runtime.cfg.cali.ist8310));
 
   /* 读取一次磁力计数据，用以初始化姿态解算算法 */
   IST8310_WaitNew(osWaitForever);

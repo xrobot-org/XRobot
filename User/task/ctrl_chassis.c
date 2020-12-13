@@ -45,9 +45,8 @@ void Task_CtrlChassis(void *argument) {
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_CHASSIS;
 
   /* 初始化底盘 */
-  Chassis_Init(&chassis, &(task_runtime.robot_param->chassis),
-               &task_runtime.robot_cfg.mech_zero,
-               (float)TASK_FREQ_CTRL_CHASSIS);
+  Chassis_Init(&chassis, &(task_runtime.cfg.robot_param->chassis),
+               &task_runtime.cfg.mech_zero, (float)TASK_FREQ_CTRL_CHASSIS);
 
   /* 延时一段时间再开启任务 */
   osMessageQueueGet(task_runtime.msgq.can.feedback.chassis,

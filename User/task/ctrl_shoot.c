@@ -41,7 +41,7 @@ void Task_CtrlShoot(void *argument) {
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_SHOOT;
 
   /* 初始化射击 */
-  Shoot_Init(&shoot, &(task_runtime.robot_param->shoot),
+  Shoot_Init(&shoot, &(task_runtime.cfg.robot_param->shoot),
              (float)TASK_FREQ_CTRL_SHOOT);
 
   /* 延时一段时间再开启任务 */

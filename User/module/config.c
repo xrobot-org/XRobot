@@ -4,6 +4,7 @@
 
 #include "config.h"
 
+#include <limits.h>
 #include <string.h>
 
 #include "bsp/flash.h"
@@ -11,13 +12,14 @@
 #define CONFIG_BASE_ADDRESS (ADDR_FLASH_SECTOR_11)
 
 #ifdef DEBUG
-Config_RobotParam_t param_infantry = {
+Config_RobotParam_t param_default = {
 #else
-static const Config_RobotParam_t param_infantry = {
+static const Config_RobotParam_t param_default = {
 #endif
     .chassis =
         {
             /* 底盘模块参数 */
+            .type = CHASSIS_TYPE_MECANUM,
             .motor_pid_param =
                 {
                     .k = 0.001f,
@@ -177,14 +179,15 @@ static const Config_RobotParam_t param_infantry = {
             .bullet_speed_bias = 1.0f,
             .num_trig_tooth = 8.0f,
         }, /* shoot */
-};         /* param_infantry */
+};         /* param_default */
 
 static const Config_RobotParam_t param_hero;
 static const Config_RobotParam_t param_engineer;
 static const Config_RobotParam_t param_drone;
 static const Config_RobotParam_t param_sentry;
+/* static const Config_RobotParam_t param_xxx; */
 
-static const Config_Pilot_t user_qs = {
+static const Config_PilotCfg_t cfg_qs = {
     .param =
         {
             .cmd =
@@ -195,6 +198,34 @@ static const Config_Pilot_t user_qs = {
         },
 };
 
+/* static const Config_PilotCfg_t cfg_xx; */
+
+/* 机器人参数和对应字符串的映射  */
+static const struct {
+  const char *const name;
+  const Config_RobotParam_t *param;
+} robot_param_map[] = {
+    {"default", &param_default},
+    {"infantry", &param_default},
+    {"hero", &param_hero},
+    {"engineer", &param_engineer},
+    {"drone", &param_drone},
+    {"sentry", &param_sentry},
+    /* {"xxx", &param_xxx}, */
+    {NULL, NULL},
+};
+
+/* 操作手配置和对应字符串的映射 */
+static const struct {
+  const char *const name;
+  const Config_PilotCfg_t *param;
+} pilot_cfg_map[] = {
+    {"qs", &cfg_qs},
+
+    /* {"xx", &cfg_xx}, */
+    {NULL, NULL},
+};
+
 /**
  * \brief 从Flash读取配置信息
  *
@@ -202,6 +233,13 @@ static const Config_Pilot_t user_qs = {
  */
 void Config_Get(Config_t *cfg) {
   BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(Config_t));
+  /* 防止第一次烧写后访问NULL指针 */
+  if (cfg->robot_param == NULL) cfg->robot_param = &param_default;
+  if (cfg->pilot_cfg == NULL) cfg->pilot_cfg = &cfg_qs;
+  /* 防止擦除后全为1 */
+  if ((unsigned int)(cfg->robot_param) == UINT_MAX)
+    cfg->robot_param = &param_default;
+  if ((unsigned int)(cfg->pilot_cfg) == UINT_MAX) cfg->pilot_cfg = &cfg_qs;
 }
 
 /**
@@ -217,126 +255,31 @@ void Config_Set(Config_t *cfg) {
 }
 
 /**
- * \brief 获取机器人参数
+ * @brief 通过机器人参数名称获取机器人参数的指针
  *
- * \param model 机器人型号
- *
- * \return 机器人参数
+ * @param robot_param_name 机器人参数名称
+ * @return const Config_RobotParam_t* 机器人参数的指针
  */
-const Config_RobotParam_t *Config_GetRobotParam(Config_RobotModel_t model) {
-  switch (model) {
-    case ROBOT_MODEL_INFANTRY:
-      return &param_infantry;
-    case ROBOT_MODEL_HERO:
-      return &param_hero;
-    case ROBOT_MODEL_ENGINEER:
-      return &param_engineer;
-    case ROBOT_MODEL_DRONE:
-      return &param_drone;
-    case ROBOT_MODEL_SENTRY:
-      return &param_sentry;
-    case ROBOT_MODEL_NUM:
-      /* Default infantry*/
-      return &param_infantry;
-  }
-  return &param_infantry;
-}
-
-/**
- * \brief 获取操作手配置
- *
- * \param pilot 操作手
- *
- * \return 操作手配置
- */
-const Config_Pilot_t *Config_GetPilotCfg(Config_PilotName_t pilot) {
-  switch (pilot) {
-    case ROBOT_PILOT_QS:
-      return &user_qs;
-    case ROBOT_PILOT_NUM:
-      /* Default user_qs*/
-      return &user_qs;
-  }
-  return &user_qs;
-}
-
-static const struct {
-  Config_RobotModel_t model;
-  const char *name;
-} model_string_map[] = {
-    {ROBOT_MODEL_INFANTRY, "Infantry"}, {ROBOT_MODEL_HERO, "Hero"},
-    {ROBOT_MODEL_ENGINEER, "Engineer"}, {ROBOT_MODEL_DRONE, "Drone"},
-    {ROBOT_MODEL_SENTRY, "Sentry"},     {ROBOT_MODEL_NUM, NULL},
-};
-
-static const struct {
-  Config_PilotName_t pilot;
-  const char *name;
-} pilot_string_map[] = {
-    {ROBOT_PILOT_QS, "qs"},
-    {ROBOT_PILOT_NUM, NULL},
-};
-
-/**
- * \brief 通过字符串获得机器人型号
- *
- * \param name 名字字符串
- *
- * \return 机器人模型
- */
-Config_RobotModel_t Config_GetModelByName(const char *name) {
-  for (int j = 0; model_string_map[j].name != NULL; j++) {
-    if (strstr(model_string_map[j].name, name) != NULL) {
-      return model_string_map[j].model;
+const Config_RobotParam_t *Config_GetRobotParam(const char *robot_param_name) {
+  for (int j = 0; robot_param_map[j].name != NULL; j++) {
+    if (strcmp(robot_param_map[j].name, robot_param_name) == 0) {
+      return robot_param_map[j].param;
     }
   }
-  return ROBOT_MODEL_NUM; /* No match. */
+  return NULL; /* No match. */
 }
 
 /**
- * \brief 通过字符串获得操作手
+ * @brief 通过操作手配置名称获取操作手配置的指针
  *
- * \param name 名字字符串
- *
- * \return 操作手
+ * @param pilot_cfg_name 操作手配置名称
+ * @return const Config_PilotCfg_t* 操作手配置的指针
  */
-Config_PilotName_t Config_GetPilotByName(const char *name) {
-  for (int j = 0; pilot_string_map[j].name != NULL; j++) {
-    if (strcmp(pilot_string_map[j].name, name) == 0) {
-      return pilot_string_map[j].pilot;
+const Config_PilotCfg_t *Config_GetPilotCfg(const char *pilot_cfg_name) {
+  for (int j = 0; pilot_cfg_map[j].name != NULL; j++) {
+    if (strcmp(pilot_cfg_map[j].name, pilot_cfg_name) == 0) {
+      return pilot_cfg_map[j].param;
     }
   }
-  return ROBOT_PILOT_NUM; /* No match. */
-}
-
-/**
- * \brief 获得机器人型号对应字符串
- *
- * \param model 机器人型号
- *
- * \return 字符串
- */
-const char *Config_GetNameByModel(Config_RobotModel_t model) {
-  for (int j = 0; model_string_map[j].name != NULL; j++) {
-    if (model_string_map[j].model == model) {
-      return model_string_map[j].name;
-    }
-  }
-  return "Unknown"; /* No match. */
-}
-
-/**
- * \brief 获得操作手对应字符串
- *
- * \param pilot 操作手
- *
- * \return 字符串
- */
-const char *Config_GetNameByPilot(Config_PilotName_t pilot) {
-  for (int j = 0; pilot_string_map[j].name != NULL; j++) {
-    if (pilot_string_map[j].pilot == pilot) {
-      return pilot_string_map[j].name;
-    }
-  }
-  return "Unknown"; /* No match. */
+  return NULL; /* No match. */
 }

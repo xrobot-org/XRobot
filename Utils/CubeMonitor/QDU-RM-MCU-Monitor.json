@@ -10427,82 +10427,82 @@
             },
             {
                 "address": "0x200032e8",
-                "name": "task_runtime.robot_cfg.cali.bmi088.gyro_offset.x",
+                "name": "task_runtime.cfg.cali.bmi088.gyro_offset.x",
                 "type": 9
             },
             {
                 "address": "0x200032ec",
-                "name": "task_runtime.robot_cfg.cali.bmi088.gyro_offset.y",
+                "name": "task_runtime.cfg.cali.bmi088.gyro_offset.y",
                 "type": 9
             },
             {
                 "address": "0x200032f0",
-                "name": "task_runtime.robot_cfg.cali.bmi088.gyro_offset.z",
+                "name": "task_runtime.cfg.cali.bmi088.gyro_offset.z",
                 "type": 9
             },
             {
                 "address": "0x200032d0",
-                "name": "task_runtime.robot_cfg.cali.ist8310.magn_offset.x",
+                "name": "task_runtime.cfg.cali.ist8310.magn_offset.x",
                 "type": 9
             },
             {
                 "address": "0x200032d4",
-                "name": "task_runtime.robot_cfg.cali.ist8310.magn_offset.y",
+                "name": "task_runtime.cfg.cali.ist8310.magn_offset.y",
                 "type": 9
             },
             {
                 "address": "0x200032d8",
-                "name": "task_runtime.robot_cfg.cali.ist8310.magn_offset.z",
+                "name": "task_runtime.cfg.cali.ist8310.magn_offset.z",
                 "type": 9
             },
             {
                 "address": "0x200032dc",
-                "name": "task_runtime.robot_cfg.cali.ist8310.magn_scale.x",
+                "name": "task_runtime.cfg.cali.ist8310.magn_scale.x",
                 "type": 9
             },
             {
                 "address": "0x200032e0",
-                "name": "task_runtime.robot_cfg.cali.ist8310.magn_scale.y",
+                "name": "task_runtime.cfg.cali.ist8310.magn_scale.y",
                 "type": 9
             },
             {
                 "address": "0x200032e4",
-                "name": "task_runtime.robot_cfg.cali.ist8310.magn_scale.z",
+                "name": "task_runtime.cfg.cali.ist8310.magn_scale.z",
                 "type": 9
             },
             {
                 "address": "0x20003300",
-                "name": "task_runtime.robot_cfg.gimbal_limit.max",
+                "name": "task_runtime.cfg.gimbal_limit.max",
                 "type": 9
             },
             {
                 "address": "0x20003304",
-                "name": "task_runtime.robot_cfg.gimbal_limit.min",
+                "name": "task_runtime.cfg.gimbal_limit.min",
                 "type": 9
             },
             {
                 "address": "0x200032f8",
-                "name": "task_runtime.robot_cfg.mech_zero.pit",
+                "name": "task_runtime.cfg.mech_zero.pit",
                 "type": 9
             },
             {
                 "address": "0x200032fc",
-                "name": "task_runtime.robot_cfg.mech_zero.rol",
+                "name": "task_runtime.cfg.mech_zero.rol",
                 "type": 9
             },
             {
                 "address": "0x200032f4",
-                "name": "task_runtime.robot_cfg.mech_zero.yaw",
+                "name": "task_runtime.cfg.mech_zero.yaw",
                 "type": 9
             },
             {
                 "address": "0x200032cc",
-                "name": "task_runtime.robot_cfg.model",
+                "name": "task_runtime.cfg.model",
                 "type": 2
             },
             {
                 "address": "0x200032cd",
-                "name": "task_runtime.robot_cfg.pilot",
+                "name": "task_runtime.cfg.pilot",
                 "type": 2
             },
             {
