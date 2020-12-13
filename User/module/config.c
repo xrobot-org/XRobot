@@ -179,7 +179,170 @@ static const Config_RobotParam_t param_infantry = {
         }, /* shoot */
 };         /* param_infantry */
 
-static const Config_RobotParam_t param_hero;
+static const Config_RobotParam_t param_hero = {
+    .chassis =
+        {
+            /* 底盘模块参数 */
+            .motor_pid_param =
+                {
+                    .k = 0.0f,
+                    .p = 0.0f,
+                    .i = 0.0f,
+                    .d = 0.0f,
+                    .i_limit = 0.0f,
+                    .out_limit = 0.0f,
+                    .d_cutoff_freq = -1.0f,
+                    .range = -1.0f,
+                },
+            .follow_pid_param =
+                {
+                    .k = 0.0f,
+                    .p = 0.0f,
+                    .i = 0.0f,
+                    .d = 0.0f,
+                    .i_limit = 0.0f,
+                    .out_limit = 0.0f,
+                    .d_cutoff_freq = -1.0f,
+                    .range = -1.0f,
+                },
+            .low_pass_cutoff_freq =
+                {
+                    .in = -1.0f,
+                    .out = -1.0f,
+                },
+        }, /* chassis */
+
+    .gimbal =
+        {
+            /* 云台模块参数 */
+            .pid =
+                {
+                    {
+                        /* GIMBAL_PID_YAW_OMEGA_IDX */
+                        .k = 0.0f,
+                        .p = 0.0f,
+                        .i = 0.0f,
+                        .d = 0.0f,
+                        .i_limit = 0.0f,
+                        .out_limit = 0.0f,
+                        .d_cutoff_freq = -1.0f,
+                        .range = -1.0f,
+                    },
+                    {
+                        /* GIMBAL_PID_YAW_ANGLE_IDX */
+                        .k = 0.0f,
+                        .p = 0.0f,
+                        .i = 0.0f,
+                        .d = 0.0f,
+                        .i_limit = 0.0f,
+                        .out_limit = 0.0f,
+                        .d_cutoff_freq = -1.0f,
+                        .range = -1.0f,
+                    },
+                    {
+                        /* GIMBAL_PID_PIT_OMEGA_IDX */
+                        .k = 0.0f,
+                        .p = 0.0f,
+                        .i = 0.0f,
+                        .d = 0.0f,
+                        .i_limit = 0.0f,
+                        .out_limit = 0.0f,
+                        .d_cutoff_freq = -1.0f,
+                        .range = -1.0f,
+                    },
+                    {
+                        /* GIMBAL_PID_PIT_ANGLE_IDX */
+                        .k = 0.0f,
+                        .p = 0.0f,
+                        .i = 0.0f,
+                        .d = 0.0f,
+                        .i_limit = 0.0f,
+                        .out_limit = 0.0f,
+                        .d_cutoff_freq = -1.0f,
+                        .range = -1.0f,
+                    },
+                    {
+                        /* GIMBAL_PID_REL_YAW_IDX */
+                        .k = 0.0f,
+                        .p = 0.0f,
+                        .i = 0.0f,
+                        .d = 0.0f,
+                        .i_limit = 0.0f,
+                        .out_limit = 0.0f,
+                        .d_cutoff_freq = -1.0f,
+                        .range = -1.0f,
+                    },
+                    {
+                        /* GIMBAL_PID_REL_PIT_IDX, */
+                        .k = 0.0f,
+                        .p = 0.0f,
+                        .i = 0.0f,
+                        .d = 0.0f,
+                        .i_limit = 0.0f,
+                        .out_limit = 0.0f,
+                        .d_cutoff_freq = -1.0f,
+                        .range = -1.0f,
+                    },
+                }, /* pid */
+            .low_pass_cutoff_freq =
+                {
+                    .out = -1.0f,
+                    .gyro = -1.0f,
+                },
+            .encoder_center =
+                {
+                    .yaw = 6.0f,
+                    .pit = 6.0f,
+                },
+            .reverse =
+                {
+                    .yaw = true,
+                    .pit = false,
+                },
+        }, /* gimbal */
+
+    .shoot =
+        {
+            /* 射击模块参数 */
+            .fric_pid_param =
+                {
+                    .k = 0.0f,
+                    .p = 0.0f,
+                    .i = 0.0f,
+                    .d = 0.0f,
+                    .i_limit = 0.0f,
+                    .out_limit = 0.0f,
+                    .d_cutoff_freq = -1.0f,
+                },
+            .trig_pid_param =
+                {
+                    .k = 0.0f,
+                    .p = 0.0f,
+                    .i = 0.0f,
+                    .d = 0.0f,
+                    .i_limit = 0.0f,
+                    .out_limit = 0.0f,
+                    .d_cutoff_freq = -1.0f,
+                    .range = -1.0f,
+                },
+            .low_pass_cutoff_freq =
+                {
+                    .in =
+                        {
+                            .fric = -1.0f,
+                            .trig = -1.0f,
+                        },
+                    .out =
+                        {
+                            .fric = -1.0f,
+                            .trig = -1.0f,
+                        },
+                },
+            .bullet_speed_scaler = 0.0f,
+            .bullet_speed_bias = 0.0f,
+            .num_trig_tooth = 0.0f,
+        }, /* shoot */
+};         /* param_hero */
 static const Config_RobotParam_t param_engineer;
 static const Config_RobotParam_t param_drone;
 static const Config_RobotParam_t param_sentry;
