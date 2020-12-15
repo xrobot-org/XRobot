@@ -4,7 +4,7 @@
 
 #include "config.h"
 
-#include <limits.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "bsp/flash.h"
@@ -400,9 +400,9 @@ void Config_Get(Config_t *cfg) {
   if (cfg->robot_param == NULL) cfg->robot_param = &param_default;
   if (cfg->pilot_cfg == NULL) cfg->pilot_cfg = &cfg_qs;
   /* 防止擦除后全为1 */
-  if ((unsigned int)(cfg->robot_param) == UINT_MAX)
+  if ((uint32_t)(cfg->robot_param) == UINT32_MAX)
     cfg->robot_param = &param_default;
-  if ((unsigned int)(cfg->pilot_cfg) == UINT_MAX) cfg->pilot_cfg = &cfg_qs;
+  if ((uint32_t)(cfg->pilot_cfg) == UINT32_MAX) cfg->pilot_cfg = &cfg_qs;
 }
 
 /**
