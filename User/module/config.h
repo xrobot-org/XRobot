@@ -40,8 +40,8 @@ typedef struct {
 
 /* 机器人配置，保存在Flash上的信息，根据机器人变化 */
 typedef struct {
-  const char robot_param_name[20];
-  const char pilot_cfg_name[20];
+  char robot_param_name[20];
+  char pilot_cfg_name[20];
 
   const Config_RobotParam_t *robot_param;
   const Config_PilotCfg_t *pilot_cfg;

@@ -55,8 +55,8 @@ static BaseType_t Command_Endian(char *out_buffer, size_t len,
   static FiniteStateMachine_t fsm; /* 有限状态机 */
   switch (fsm.stage) {
     case 0:
-      /* 每个状态内只允许有一个print相关函数，以保证安全 */
-      /* 每个print相关函数必须带有长度限制 */
+      /* 每个状态内只允许有一个snprintf相关函数，以保证安全 */
+      /* 每个snprintf相关函数必须带有长度限制 */
       snprintf(out_buffer, len, "a[2] = {0x11, 0x22}\r\n");
       fsm.stage++;   /* 改变状态机运行状态 */
       return pdPASS; /* 需要继续运行下一状态时返回pdPASS */
@@ -189,6 +189,7 @@ static BaseType_t Command_SetRobotParam(char *out_buffer, size_t len,
         return pdPASS;
       } else {
         snprintf(out_buffer, len, "Set robot model to: %s\r\n", param);
+        snprintf(cfg.pilot_cfg_name, 20, "%s", param);
         Config_Set(&cfg);
         fsm.stage = 1;
         return pdPASS;
@@ -227,6 +228,7 @@ static BaseType_t Command_SetPilotCfg(char *out_buffer, size_t len,
         return pdPASS;
       } else {
         snprintf(out_buffer, len, "Set pilot config to: %s\r\n", param);
+        snprintf(cfg.pilot_cfg_name, 20, "%s", param);
         Config_Set(&cfg);
         fsm.stage = 1;
         return pdPASS;
@@ -261,6 +263,8 @@ static BaseType_t Command_InitConfig(char *out_buffer, size_t len,
       memset(&cfg, 0, sizeof(Config_t));
       cfg.pilot_cfg = Config_GetPilotCfg("qs");
       cfg.robot_param = Config_GetRobotParam("default");
+      snprintf(cfg.robot_param_name, 20, "qs");
+      snprintf(cfg.pilot_cfg_name, 20, "default");
       Config_Set(&cfg);
       snprintf(out_buffer, len, "\r\nDone.");
       fsm.stage++;
