@@ -167,113 +167,127 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
   }
 }
 
-static BaseType_t Command_SetRobotParam(char *out_buffer, size_t len,
-                                        const char *command_string) {
-  const char *param;
-  BaseType_t param_len;
-  Config_t cfg;
+static BaseType_t Command_Config(char *out_buffer, size_t len,
+                                 const char *command_string) {
+  static const char *const help_string =
+      "\r\n"
+      "usage: config <command> [<args>]\r\n"
+      "These are commands:\r\n"
+      "  help                     Display this message\r\n"
+      "  init                     Init config after flashing\r\n"
+      "  list <pilot/robot>       List available config\r\n"
+      "  set <pilot/robot> <name> Set config\r\n"
+      "\r\n";
+
+  static const int stage_begin = 0;
+  static const int stage_success = 1;
+  static const int stage_end = 2;
 
   if (out_buffer == NULL) return pdFALSE;
   len -= 1;
 
-  param = FreeRTOS_CLIGetParameter(command_string, 1, &param_len);
-  if (param == NULL) return pdFALSE;
+  BaseType_t command_len, pr_len, name_len;
+  const char *command =
+      FreeRTOS_CLIGetParameter(command_string, 1, &command_len);
+  const char *pr = FreeRTOS_CLIGetParameter(command_string, 2, &pr_len);
+  const char *name = FreeRTOS_CLIGetParameter(command_string, 3, &name_len);
 
+  Config_t cfg;
   static FiniteStateMachine_t fsm;
-  switch (fsm.stage) {
-    case 0:
-      Config_Get(&cfg);
-      if ((cfg.robot_param = Config_GetRobotParam(param)) == NULL) {
-        snprintf(out_buffer, len, "Unknow model.\r\n");
-        fsm.stage = 2;
+  if (strncmp(command, "help", command_len) == 0) {
+    /* config help */
+    snprintf(out_buffer, len, "%s", help_string);
+    fsm.stage = stage_begin;
+    return pdFALSE;
+
+  } else if (strncmp(command, "init", command_len) == 0) {
+    if ((pr != NULL) && (name != NULL)) goto command_error;
+
+    /* config init */
+    switch (fsm.stage) {
+      case stage_begin:
+        snprintf(out_buffer, len, "\r\nSet Robot config to default and qs.");
+        fsm.stage = stage_success;
         return pdPASS;
-      } else {
-        snprintf(out_buffer, len, "Set robot model to: %s\r\n", param);
-        snprintf(cfg.pilot_cfg_name, 20, "%s", param);
+
+      case stage_success:
+        memset(&cfg, 0, sizeof(Config_t));
+        cfg.pilot_cfg = Config_GetPilotCfg("qs");
+        cfg.robot_param = Config_GetRobotParam("default");
+        snprintf(cfg.robot_param_name, 20, "qs");
+        snprintf(cfg.pilot_cfg_name, 20, "default");
         Config_Set(&cfg);
-        fsm.stage = 1;
+        snprintf(out_buffer, len, "\r\nDone.");
+        fsm.stage = stage_end;
         return pdPASS;
+    }
+  } else if (strncmp(command, "list", command_len) == 0) {
+    if ((pr == NULL) && (name != NULL)) goto command_error;
+
+    /* config list */
+    if (strncmp(pr, "pilot", pr_len) == 0) {
+      /* config list robot */
+
+    } else if (strncmp(pr, "robot", pr_len) == 0) {
+      /* config list pilot */
+    }
+  } else if (strncmp(command, "set", command_len) == 0) {
+    if ((pr == NULL) && (name == NULL)) goto command_error;
+
+    /* config set */
+    if (strncmp(pr, "robot", pr_len) == 0) {
+      /* config set robot */
+      if (fsm.stage == stage_begin) {
+        Config_Get(&cfg);
+        if ((cfg.robot_param = Config_GetRobotParam(name)) == NULL) {
+          snprintf(out_buffer, len, "\r\nFailed: Unknow model.");
+          fsm.stage = stage_end;
+          return pdPASS;
+
+        } else {
+          snprintf(out_buffer, len, "\r\nSucceed.");
+          Config_Set(&cfg);
+          fsm.stage = stage_success;
+          return pdPASS;
+        }
       }
-    case 1:
+    } else if (strncmp(pr, "pilot", pr_len) == 0) {
+      /* config set pilot */
+      if (fsm.stage == 0) {
+        Config_Get(&cfg);
+        if ((cfg.pilot_cfg = Config_GetPilotCfg(name)) == NULL) {
+          snprintf(out_buffer, len, "\r\nFailed: Unknow pilot.");
+          fsm.stage = stage_end;
+          return pdPASS;
+        } else {
+          snprintf(out_buffer, len, "\r\nSucceed.");
+          Config_Set(&cfg);
+          fsm.stage = stage_success;
+          return pdPASS;
+        }
+      }
+    } else {
+      goto command_error;
+    }
+    if (fsm.stage == stage_success) {
       snprintf(out_buffer, len,
                "\r\nRestart needed for setting to take effect.");
-      fsm.stage = 2;
+      fsm.stage = stage_end;
       return pdPASS;
-    default:
-      snprintf(out_buffer, len, "\r\n");
-      fsm.stage = 0;
-      return pdFALSE;
+    }
+  } /* config set */
+
+  if (fsm.stage == stage_end) {
+    snprintf(out_buffer, len, "\r\n\r\n");
+    fsm.stage = stage_begin;
+    return pdFALSE;
   }
-}
 
-static BaseType_t Command_SetPilotCfg(char *out_buffer, size_t len,
-                                      const char *command_string) {
-  const char *param;
-  BaseType_t param_len;
-  Config_t cfg;
-
-  if (out_buffer == NULL) return pdFALSE;
-  len -= 1;
-
-  param = FreeRTOS_CLIGetParameter(command_string, 1, &param_len);
-  if (param == NULL) return pdFALSE;
-
-  static FiniteStateMachine_t fsm;
-  switch (fsm.stage) {
-    case 0:
-      Config_Get(&cfg);
-      if ((cfg.pilot_cfg = Config_GetPilotCfg(param)) == NULL) {
-        snprintf(out_buffer, len, "Unknow pilot.\r\n");
-        fsm.stage = 2;
-        return pdPASS;
-      } else {
-        snprintf(out_buffer, len, "Set pilot config to: %s\r\n", param);
-        snprintf(cfg.pilot_cfg_name, 20, "%s", param);
-        Config_Set(&cfg);
-        fsm.stage = 1;
-        return pdPASS;
-      }
-    case 1:
-      snprintf(out_buffer, len,
-               "\r\nRestart needed for setting to take effect.");
-      fsm.stage = 2;
-      return pdPASS;
-    default:
-      snprintf(out_buffer, len, "\r\n");
-      fsm.stage = 0;
-      return pdFALSE;
-  }
-}
-
-static BaseType_t Command_InitConfig(char *out_buffer, size_t len,
-                                     const char *command_string) {
-  if (out_buffer == NULL) return pdFALSE;
-  (void)command_string;
-  len -= 1;
-
-  Config_t cfg;
-
-  static FiniteStateMachine_t fsm;
-  switch (fsm.stage) {
-    case 0:
-      snprintf(out_buffer, len, "\r\nSet Robot config to default and qs.");
-      fsm.stage++;
-      return pdPASS;
-    case 1:
-      memset(&cfg, 0, sizeof(Config_t));
-      cfg.pilot_cfg = Config_GetPilotCfg("qs");
-      cfg.robot_param = Config_GetRobotParam("default");
-      snprintf(cfg.robot_param_name, 20, "qs");
-      snprintf(cfg.pilot_cfg_name, 20, "default");
-      Config_Set(&cfg);
-      snprintf(out_buffer, len, "\r\nDone.");
-      fsm.stage++;
-      return pdPASS;
-    default:
-      snprintf(out_buffer, len, "\r\n");
-      fsm.stage = 0;
-      return pdFALSE;
-  }
+command_error:
+  snprintf(out_buffer, len,
+           "\r\nconfig: invalid command. See 'config help'.\r\n");
+  fsm.stage = stage_begin;
+  return pdFALSE;
 }
 
 static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
@@ -543,22 +557,10 @@ static const CLI_Command_Definition_t command_table[] = {
         0,
     },
     {
-        "set-robot-param",
-        "\r\nset-robot-param <param name>:\r\n Set robot param. \r\n\r\n",
-        Command_SetRobotParam,
-        1,
-    },
-    {
-        "set-pilot-cfg",
-        "\r\nset-pilot-cfg <pilot cfg>:\r\n Set pilot cfg. Expext: qs\r\n\r\n",
-        Command_SetPilotCfg,
-        1,
-    },
-    {
-        "init-config",
-        "\r\ninit-config:\r\n Init Robot config stored on flash.\r\n\r\n",
-        Command_InitConfig,
-        0,
+        "config",
+        "\r\nconfig:\r\n See 'config help'. \r\n\r\n",
+        Command_Config,
+        -1,
     },
     {
         "cali-gyro",
