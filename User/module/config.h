@@ -1,5 +1,6 @@
 /*
  * 配置相关
+ * 读写在FALSH上的信息
  */
 
 #pragma once
