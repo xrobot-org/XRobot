@@ -88,26 +88,33 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
                                 const char *command_string) {
   static const char *const task_list_header =
       "\r\n"
-      "Task list\r\n"
-      "Task          State  Priority  Stack	#\r\n"
-      "************************************************\r\n";
+      "-------------------Task list--------------------\r\n"
+      "Task          State  Priority  Stack\t#\r\n"
+      "------------------------------------------------\r\n";
 
   static const char *const run_time_header =
       "\r\n"
-      "Run time stats\r\n"
-      "Task            Abs Time      % Time\r\n"
-      "****************************************\r\n";
+      "-----------------Run time stats-----------------\r\n"
+      "Task            Abs Time        Time\r\n"
+      "------------------------------------------------\r\n";
 
   static const char *const heap_header =
       "\r\n"
-      "Heap stats\r\n"
-      "total(B)	free(B)	used(B)\r\n"
-      "*******************************\r\n";
+      "-------------------Heap stats-------------------\r\n"
+      "total(B)\tfree(B)\tused(B)\r\n"
+      "------------------------------------------------\r\n";
 
-  static const char *const robot_config_header =
+  static const char *const hardware_header =
       "\r\n"
-      " Robot Model: %s\tRobot Pilot: %s \r\n"
-      "\r\n";
+      "-----------------Hardware stats-----------------\r\n"
+      "CPU temp(C)\tBettary(V)\r\n"
+      "------------------------------------------------\r\n";
+
+  static const char *const config_header =
+      "\r\n"
+      "------------------Config stats------------------\r\n"
+      "Robot param\tPilot config\r\n"
+      "------------------------------------------------\r\n";
 
   if (out_buffer == NULL) return pdFALSE;
   (void)command_string;
@@ -145,17 +152,20 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       fsm.stage++;
       return pdPASS;
     case 6:
-      snprintf(out_buffer, len, "\r\nBettary: %.2f %%\r\n",
-               task_runtime.status.battery);
+      strncpy(out_buffer, hardware_header, len);
       fsm.stage++;
       return pdPASS;
     case 7:
-      snprintf(out_buffer, len, "\r\nCPU temp: %0.2f C\r\n",
-               task_runtime.status.cpu_temp);
+      snprintf(out_buffer, len, "%f\t%f\r\n", task_runtime.status.cpu_temp,
+               task_runtime.status.battery);
       fsm.stage++;
       return pdPASS;
     case 8:
-      snprintf(out_buffer, len, robot_config_header,
+      strncpy(out_buffer, config_header, len);
+      fsm.stage++;
+      return pdPASS;
+    case 9:
+      snprintf(out_buffer, len, "%s\t\t%s\r\n",
                task_runtime.cfg.robot_param_name,
                task_runtime.cfg.pilot_cfg_name);
       fsm.stage++;
