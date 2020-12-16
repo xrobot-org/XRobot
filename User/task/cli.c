@@ -169,6 +169,7 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
 
 static BaseType_t Command_Config(char *out_buffer, size_t len,
                                  const char *command_string) {
+  /* 帮助信息，const保证不占用内存空间 */
   static const char *const help_string =
       "\r\n"
       "usage: config <command> [<args>]\r\n"
@@ -179,6 +180,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
       "  set <pilot/robot> <name> Set config\r\n"
       "\r\n";
 
+  /* 用常量表示状态机每个阶段，比数字更清楚 */
   static const int stage_begin = 0;
   static const int stage_success = 1;
   static const int stage_end = 2;
@@ -186,6 +188,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
   if (out_buffer == NULL) return pdFALSE;
   len -= 1;
 
+  /* 获取每一段参数的开始地址和长度 */
   BaseType_t command_len, pr_len, name_len;
   const char *command =
       FreeRTOS_CLIGetParameter(command_string, 1, &command_len);
@@ -214,8 +217,8 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
         memset(&cfg, 0, sizeof(Config_t));
         cfg.pilot_cfg = Config_GetPilotCfg("qs");
         cfg.robot_param = Config_GetRobotParam("default");
-        snprintf(cfg.robot_param_name, 20, "qs");
-        snprintf(cfg.pilot_cfg_name, 20, "default");
+        snprintf(cfg.robot_param_name, 20, "default");
+        snprintf(cfg.pilot_cfg_name, 20, "qs");
         Config_Set(&cfg);
         snprintf(out_buffer, len, "\r\nDone.");
         fsm.stage = stage_end;
@@ -227,9 +230,10 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
     /* config list */
     if (strncmp(pr, "pilot", pr_len) == 0) {
       /* config list robot */
-
+      /* TODO */
     } else if (strncmp(pr, "robot", pr_len) == 0) {
       /* config list pilot */
+      /* TODO */
     }
   } else if (strncmp(command, "set", command_len) == 0) {
     if ((pr == NULL) && (name == NULL)) goto command_error;
@@ -246,6 +250,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
 
         } else {
           snprintf(out_buffer, len, "\r\nSucceed.");
+          snprintf(cfg.robot_param_name, 20, "%s", name);
           Config_Set(&cfg);
           fsm.stage = stage_success;
           return pdPASS;
@@ -261,6 +266,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
           return pdPASS;
         } else {
           snprintf(out_buffer, len, "\r\nSucceed.");
+          snprintf(cfg.pilot_cfg_name, 20, "%s", name);
           Config_Set(&cfg);
           fsm.stage = stage_success;
           return pdPASS;
