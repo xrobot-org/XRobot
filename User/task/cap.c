@@ -35,9 +35,6 @@ void Task_Cap(void *argument) {
 
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_CAP;
 
-  osMessageQueueGet(task_runtime.msgq.can.feedback.cap, &can, NULL,
-                    osWaitForever);
-
   uint32_t tick = osKernelGetTickCount();
   uint32_t wakeup = HAL_GetTick();
   while (1) {
@@ -46,6 +43,7 @@ void Task_Cap(void *argument) {
 #endif
     tick += delay_tick;
 
+    osMessageQueueGet(task_runtime.msgq.referee, &referee, 0, 0);
     if (osMessageQueueGet(task_runtime.msgq.can.feedback.cap, &can, NULL,
                           delay_tick) != osOK) {
       CAN_CAP_HandleOffline(&(can.cap), &cap_out,
@@ -53,7 +51,6 @@ void Task_Cap(void *argument) {
       osMessageQueuePut(task_runtime.msgq.can.output.cap, &cap_out, 0, 0);
       osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);
     } else {
-      osMessageQueueGet(task_runtime.msgq.referee, &referee, 0, 0);
       osKernelLock();
       const uint32_t now = HAL_GetTick();
 

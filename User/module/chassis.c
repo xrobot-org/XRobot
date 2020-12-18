@@ -184,7 +184,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
  * \return 函数运行结果
  */
 int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
-                       const CAN_Capacitor_t *cap, float dt_sec) {
+                       const CAN_Capacitor_t *cap, float vbat, float dt_sec) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (c_cmd == NULL) return CHASSIS_ERR_NULL;
   Chassis_SetMode(c, c_cmd->mode);
@@ -271,9 +271,11 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
       power_limit += cap->percentage * CAP_PERCENTAGE_WORK;
     else
       power_limit -= (1.0f - cap->percentage) * CAP_PERCENTAGE_CHARGE;
-  }
-  PowerLimit_Apply(power_limit, cap->target_power, c->out, c->num_wheel,
-                   CAN_M3508_MAX_ABS_CUR);
+    PowerLimit_Apply(power_limit, cap->cap_feedback.input_volt, c->out,
+                     c->num_wheel, CAN_M3508_MAX_ABS_CUR);
+  } else
+    PowerLimit_Apply(power_limit, vbat, c->out, c->num_wheel,
+                     CAN_M3508_MAX_ABS_CUR);
   return CHASSIS_OK;
 }
 

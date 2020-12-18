@@ -125,7 +125,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can);
  * \return 函数运行结果
  */
 int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
-                       const CAN_Capacitor_t *cap, float dt_sec);
+                       const CAN_Capacitor_t *cap, float vbat, float dt_sec);
 
 /**
  * \brief 复制底盘输出值
