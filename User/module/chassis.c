@@ -184,7 +184,8 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
  * \return 函数运行结果
  */
 int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
-                       const CAN_Capacitor_t *cap, float vbat, float dt_sec) {
+                       const CAN_Capacitor_t *cap, float vbat, float dt_sec,
+                       const bool reverse_yaw) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (c_cmd == NULL) return CHASSIS_ERR_NULL;
   Chassis_SetMode(c, c_cmd->mode);
@@ -205,10 +206,16 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
     case CHASSIS_MODE_RELAX:
     case CHASSIS_MODE_FOLLOW_GIMBAL:
     case CHASSIS_MODE_ROTOR: {
-      const float cos_beta =
-          cosf(c->feedback.gimbal_yaw_angle - c->mech_zero->yaw);
-      const float sin_beta =
-          sinf(c->feedback.gimbal_yaw_angle - c->mech_zero->yaw);
+      float cos_beta;
+      float sin_beta;
+
+      if (reverse_yaw) {
+        cos_beta = cosf(c->feedback.gimbal_yaw_angle - c->mech_zero->yaw);
+        sin_beta = sinf(c->feedback.gimbal_yaw_angle - c->mech_zero->yaw);
+      } else {
+        cos_beta = cosf(-(c->feedback.gimbal_yaw_angle - c->mech_zero->yaw));
+        sin_beta = sinf(-(c->feedback.gimbal_yaw_angle - c->mech_zero->yaw));
+      }
       c->move_vec.vx =
           cos_beta * c_cmd->ctrl_vec.vx - sin_beta * c_cmd->ctrl_vec.vy;
       c->move_vec.vy =

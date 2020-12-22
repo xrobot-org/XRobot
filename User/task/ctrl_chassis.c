@@ -76,7 +76,8 @@ void Task_CtrlChassis(void *argument) {
       const uint32_t now = HAL_GetTick();
       Chassis_UpdateFeedback(&chassis, &can);
       Chassis_Control(&chassis, &chassis_cmd, &cap, task_runtime.status.vbat,
-                      (float)(now - wakeup) / 1000.0f);
+                      (float)(now - wakeup) / 1000.0f,
+                      task_runtime.cfg.robot_param->gimbal.reverse.yaw);
       Chassis_DumpOutput(&chassis, &chassis_out);
       osMessageQueuePut(task_runtime.msgq.can.output.chassis, &chassis_out, 0,
                         0);
