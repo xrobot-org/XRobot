@@ -57,6 +57,18 @@ typedef struct {
 
 } Config_t;
 
+/* 机器人参数和对应字符串的映射  */
+typedef struct {
+  const char *const name;
+  const Config_RobotParam_t *param;
+} Config_RobotParamMap_t;
+
+/* 操作手配置和对应字符串的映射 */
+typedef struct {
+  const char *const name;
+  const Config_PilotCfg_t *param;
+} Config_PilotCfgMap_t;
+
 /**
  * \brief 从Flash读取配置信息
  *
@@ -86,7 +98,8 @@ const Config_RobotParam_t *Config_GetRobotParam(const char *robot_param_name);
  * @return const Config_PilotCfg_t* 操作手配置的指针
  */
 const Config_PilotCfg_t *Config_GetPilotCfg(const char *pilot_cfg_name);
-
+const Config_PilotCfgMap_t *Config_GetPilotName(void);
+const Config_RobotParamMap_t *Config_GetRobotName(void);
 #ifdef __cplusplus
 }
 #endif
