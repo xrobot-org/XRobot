@@ -214,7 +214,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
     return pdFALSE;
 
   } else if (strncmp(command, "init", command_len) == 0) {
-    if ((pr != NULL) && (name != NULL)) goto command_error;
+    if ((pr != NULL) || (name != NULL)) goto command_error;
 
     /* config init */
     switch (fsm.stage) {
@@ -235,25 +235,62 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
         return pdPASS;
     }
   } else if (strncmp(command, "list", command_len) == 0) {
-    if ((pr == NULL) && (name != NULL)) goto command_error;
+    if ((pr == NULL) || (name != NULL)) goto command_error;
 
     /* config list */
+    static int i = 0;
+
     if (strncmp(pr, "pilot", pr_len) == 0) {
-      /* config list robot */
-      /* TODO */
-    } else if (strncmp(pr, "robot", pr_len) == 0) {
       /* config list pilot */
-      /* TODO */
+      const Config_PilotCfgMap_t *pilot = Config_GetPilotName();
+      switch (fsm.stage) {
+        case stage_begin:
+          snprintf(out_buffer, len, "\r\nAvailable pilot cfg:");
+          fsm.stage = stage_success;
+          return pdPASS;
+        case stage_success:
+          if (pilot[i].name != NULL) {
+            snprintf(out_buffer, len, "\r\n  %s", pilot[i].name);
+            i++;
+            fsm.stage = stage_success;
+          } else {
+            i = 0;
+            fsm.stage = stage_end;
+          }
+          return pdPASS;
+      }
+    } else if (strncmp(pr, "robot", pr_len) == 0) {
+      /* config list robot */
+      const Config_RobotParamMap_t *robot = Config_GetRobotName();
+      switch (fsm.stage) {
+        case stage_begin:
+          snprintf(out_buffer, len, "\r\nAvailable robot params:");
+          fsm.stage = stage_success;
+          return pdPASS;
+        case stage_success:
+          if (robot[i].name != NULL) {
+            snprintf(out_buffer, len, "\r\n  %s", robot[i].name);
+            i++;
+            fsm.stage = stage_success;
+          } else {
+            i = 0;
+            fsm.stage = stage_end;
+          }
+          return pdPASS;
+      }
+    } else {
+      goto command_error;
     }
+
   } else if (strncmp(command, "set", command_len) == 0) {
-    if ((pr == NULL) && (name == NULL)) goto command_error;
+    if ((pr == NULL) || (name == NULL)) goto command_error;
 
     /* config set */
     if (strncmp(pr, "robot", pr_len) == 0) {
       /* config set robot */
       if (fsm.stage == stage_begin) {
         Config_Get(&cfg);
-        if ((cfg.robot_param = Config_GetRobotParam(name)) == NULL) {
+        if (Config_GetRobotParam(name) == NULL) {
           snprintf(out_buffer, len, "\r\nFailed: Unknow model.");
           fsm.stage = stage_end;
           return pdPASS;
@@ -270,7 +307,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
       /* config set pilot */
       if (fsm.stage == 0) {
         Config_Get(&cfg);
-        if ((cfg.pilot_cfg = Config_GetPilotCfg(name)) == NULL) {
+        if (Config_GetPilotCfg(name) == NULL) {
           snprintf(out_buffer, len, "\r\nFailed: Unknow pilot.");
           fsm.stage = stage_end;
           return pdPASS;

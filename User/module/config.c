@@ -363,11 +363,7 @@ static const Config_PilotCfg_t cfg_qs = {
 
 /* static const Config_PilotCfg_t cfg_xx; */
 
-/* 机器人参数和对应字符串的映射  */
-static const struct {
-  const char *const name;
-  const Config_RobotParam_t *param;
-} robot_param_map[] = {
+static const Config_RobotParamMap_t robot_param_map[] = {
     {"default", &param_default},
     {"infantry", &param_default},
     {"hero", &param_hero},
@@ -378,11 +374,7 @@ static const struct {
     {NULL, NULL},
 };
 
-/* 操作手配置和对应字符串的映射 */
-static const struct {
-  const char *const name;
-  const Config_PilotCfg_t *param;
-} pilot_cfg_map[] = {
+static const Config_PilotCfgMap_t pilot_cfg_map[] = {
     {"qs", &cfg_qs},
 
     /* {"xx", &cfg_xx}, */
@@ -396,6 +388,8 @@ static const struct {
  */
 void Config_Get(Config_t *cfg) {
   BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(Config_t));
+  cfg->pilot_cfg = Config_GetPilotCfg(cfg->pilot_cfg_name);
+  cfg->robot_param = Config_GetRobotParam(cfg->robot_param_name);
   /* 防止第一次烧写后访问NULL指针 */
   if (cfg->robot_param == NULL) cfg->robot_param = &param_default;
   if (cfg->pilot_cfg == NULL) cfg->pilot_cfg = &cfg_qs;
@@ -447,4 +441,10 @@ const Config_PilotCfg_t *Config_GetPilotCfg(const char *pilot_cfg_name) {
     }
   }
   return NULL; /* No match. */
+}
+
+const Config_PilotCfgMap_t *Config_GetPilotName(void) { return pilot_cfg_map; }
+
+const Config_RobotParamMap_t *Config_GetRobotName(void) {
+  return robot_param_map;
 }
