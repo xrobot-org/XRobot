@@ -121,11 +121,12 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can);
  * \param cap 电容状态和电压
  * \param vbat 电源电压
  * \param dt_sec 两次调用的时间间隔
- *
+ * \param reverse_yaw yaw轴电机反装
  * \return 函数运行结果
  */
 int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
-                       const CAN_Capacitor_t *cap, float vbat, float dt_sec);
+                       const CAN_Capacitor_t *cap, float vbat, float dt_sec,
+                       const bool reverse_yaw);
 
 /**
  * \brief 复制底盘输出值
