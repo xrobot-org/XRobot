@@ -22,7 +22,7 @@ CAN_RawRx_t can_rx;
 #else
 static CAN_t can;
 static CAN_Output_t can_out;
-static CAN_MotorRawRx_t can_rx;
+static CAN_RawRx_t can_rx;
 #endif
 
 /* Private function --------------------------------------------------------- */

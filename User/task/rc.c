@@ -18,7 +18,6 @@ CMD_RC_t rc;
 #else
 static DR16_t dr16;
 static CMD_RC_t rc;
-static CMD_t cmd;
 #endif
 
 /* Private function --------------------------------------------------------- */
