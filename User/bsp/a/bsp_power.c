@@ -9,7 +9,7 @@
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
-int Power_On(BSP_Power_Port_t port) {
+uint8_t Power_On(BSP_Power_Port_t port) {
   switch (port) {
     case POWER_PORT1:
       HAL_GPIO_WritePin(POWER1_CTRL_GPIO_Port, POWER1_CTRL_Pin, GPIO_PIN_RESET);
@@ -30,7 +30,7 @@ int Power_On(BSP_Power_Port_t port) {
   return 0;
 }
 
-int Power_Off(BSP_Power_Port_t port) {
+uint8_t Power_Off(BSP_Power_Port_t port) {
   switch (port) {
     case POWER_PORT1:
       HAL_GPIO_WritePin(POWER1_CTRL_GPIO_Port, POWER1_CTRL_Pin, GPIO_PIN_SET);

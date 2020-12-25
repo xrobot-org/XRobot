@@ -99,7 +99,7 @@ void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 /* Exported functions ------------------------------------------------------- */
-int BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type,
+int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type,
                               void (*callback)(void)) {
   if (callback == NULL) return -1;
 
@@ -169,7 +169,7 @@ int BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type,
   return 0;
 }
 
-int BSP_UART_Transmit(BSP_UART_t uart, uint8_t *data, uint16_t len) {
+int8_t BSP_UART_Transmit(BSP_UART_t uart, uint8_t *data, uint16_t len) {
   if (data == NULL) return -1;
 
   switch (uart) {
@@ -182,7 +182,7 @@ int BSP_UART_Transmit(BSP_UART_t uart, uint8_t *data, uint16_t len) {
   }
   return 0;
 }
-int BSP_UART_Receive(BSP_UART_t uart, uint8_t *data, uint16_t len) {
+int8_t BSP_UART_Receive(BSP_UART_t uart, uint8_t *data, uint16_t len) {
   if (data == NULL) return -1;
 
   switch (uart) {

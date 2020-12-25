@@ -16,7 +16,7 @@ uint8_t usb_rx_buf[512];
 
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
-int BSP_USB_Printf(const char *fmt, ...) {
+uint8_t BSP_USB_Printf(const char *fmt, ...) {
   static va_list ap;
   uint16_t len = 0;
 

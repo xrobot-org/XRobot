@@ -238,7 +238,7 @@ int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx) {
   if (can == NULL) return DEVICE_ERR_NULL;
   if (can_rx == NULL) return DEVICE_ERR_NULL;
 
-  int index;
+  uint32_t index;
   switch (can_rx->rx_header.StdId) {
     case CAN_M3508_M1_ID:
     case CAN_M3508_M2_ID:

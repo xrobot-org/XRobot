@@ -18,9 +18,9 @@ typedef enum {
 } Joystick_Status_t;
 
 /* Exported functions prototypes -------------------------------------------- */
-int Joystick_Update(Joystick_Status_t *val);
-int Joystick_WaitInput(void);
-int Joystick_WaitNoInput(void);
+uint8_t Joystick_Update(Joystick_Status_t *val);
+uint8_t Joystick_WaitInput(void);
+uint8_t Joystick_WaitNoInput(void);
 
 #ifdef __cplusplus
 }

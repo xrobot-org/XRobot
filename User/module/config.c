@@ -411,7 +411,7 @@ void Config_Set(Config_t *cfg) {
  */
 const Config_RobotParam_t *Config_GetRobotParam(const char *robot_param_name) {
   if (robot_param_name == NULL) return NULL;
-  for (int j = 0; robot_param_map[j].name != NULL; j++) {
+  for (size_t j = 0; robot_param_map[j].name != NULL; j++) {
     if (strcmp(robot_param_map[j].name, robot_param_name) == 0) {
       return robot_param_map[j].param;
     }
@@ -427,7 +427,7 @@ const Config_RobotParam_t *Config_GetRobotParam(const char *robot_param_name) {
  */
 const Config_PilotCfg_t *Config_GetPilotCfg(const char *pilot_cfg_name) {
   if (pilot_cfg_name == NULL) return NULL;
-  for (int j = 0; pilot_cfg_map[j].name != NULL; j++) {
+  for (size_t j = 0; pilot_cfg_map[j].name != NULL; j++) {
     if (strcmp(pilot_cfg_map[j].name, pilot_cfg_name) == 0) {
       return pilot_cfg_map[j].param;
     }
