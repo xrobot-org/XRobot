@@ -50,7 +50,7 @@ void Task_CtrlChassis(void *argument) {
 
   /* 延时一段时间再开启任务 */
   osMessageQueueGet(task_runtime.msgq.can.feedback.chassis,
-                    &can.motor.chassis_motor, NULL, osWaitForever);
+                    &can.motor.chassis, NULL, osWaitForever);
 
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   uint32_t wakeup = HAL_GetTick(); /* 计算任务运行间隔的计时 */

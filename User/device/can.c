@@ -245,7 +245,7 @@ int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx) {
     case CAN_M3508_M3_ID:
     case CAN_M3508_M4_ID:
       index = can_rx->rx_header.StdId - CAN_M3508_M1_ID;
-      CAN_Motor_Parse(&(can->motor.chassis_motor.as_array[index]),
+      CAN_Motor_Parse(&(can->motor.chassis.as_array[index]),
                       can_rx->rx_data);
       can->recive_flag |= 1 << index;
       break;
@@ -255,7 +255,7 @@ int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx) {
     case CAN_M2006_TRIG_ID:
       index = can_rx->rx_header.StdId - CAN_M3508_FRIC1_ID;
       can->recive_flag |= 1 << (index + 6);
-      CAN_Motor_Parse(&(can->motor.shoot_motor.as_array[index]),
+      CAN_Motor_Parse(&(can->motor.shoot.as_array[index]),
                       can_rx->rx_data);
       break;
 
@@ -263,7 +263,7 @@ int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx) {
     case CAN_GM6020_PIT_ID:
       index = can_rx->rx_header.StdId - CAN_GM6020_YAW_ID;
       can->recive_flag |= 1 << (index + 4);
-      CAN_Motor_Parse(&(can->motor.gimbal_motor.as_array[index]),
+      CAN_Motor_Parse(&(can->motor.gimbal.as_array[index]),
                       can_rx->rx_data);
       break;
     case CAN_CAP_FB_ID_BASE:
