@@ -113,7 +113,7 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
   s->feedback.trig_motor_angle = can->motor.shoot.named.trig.rotor_angle;
   float motor_angle_delta =
       CircleError(s->feedback.trig_motor_angle, last_trig_motor_angle, M_2PI);
-  CircleAdd(&(s->feedback.trig_angle), motor_angle_delta / 36.0, M_2PI);
+  CircleAdd(&(s->feedback.trig_angle), motor_angle_delta / 36.0f, M_2PI);
   return 0;
 }
 
