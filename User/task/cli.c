@@ -478,8 +478,8 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
         return pdPASS;
       }
       osThreadResume(task_runtime.thread.ctrl_gimbal);
-      cfg.mech_zero.yaw = can.motor.gimbal_motor.named.yaw.rotor_angle;
-      cfg.mech_zero.pit = can.motor.gimbal_motor.named.pit.rotor_angle;
+      cfg.mech_zero.yaw = can.motor.gimbal.named.yaw.rotor_angle;
+      cfg.mech_zero.pit = can.motor.gimbal.named.pit.rotor_angle;
 
       Config_Set(&cfg);
       snprintf(out_buffer, len, "yaw:%f, pitch:%f, rol:%f\r\nDone.",

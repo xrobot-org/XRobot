@@ -105,12 +105,12 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
   if (can == NULL) return -1;
 
   for (uint8_t i = 0; i < 2; i++) {
-    s->feedback.fric_rpm[i] = can->motor.shoot_motor.as_array[i].rotor_speed;
+    s->feedback.fric_rpm[i] = can->motor.shoot.as_array[i].rotor_speed;
   }
 
   /* 更新拨弹电机 */
   float last_trig_motor_angle = s->feedback.trig_motor_angle;
-  s->feedback.trig_motor_angle = can->motor.shoot_motor.named.trig.rotor_angle;
+  s->feedback.trig_motor_angle = can->motor.shoot.named.trig.rotor_angle;
   float motor_angle_delta =
       s->feedback.trig_motor_angle - last_trig_motor_angle;
   if (motor_angle_delta > M_PI)

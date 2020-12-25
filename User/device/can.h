@@ -219,9 +219,9 @@ typedef struct {
 } CAN_Capacitor_t;
 
 typedef struct {
-  CAN_ChassisMotor_t chassis_motor;
-  CAN_GimbalMotor_t gimbal_motor;
-  CAN_ShootMotor_t shoot_motor;
+  CAN_ChassisMotor_t chassis;
+  CAN_GimbalMotor_t gimbal;
+  CAN_ShootMotor_t shoot;
 } CAN_Motor_t;
 
 typedef struct {
