@@ -52,7 +52,7 @@ typedef struct {
     float gyro;           /* 陀螺仪数据 */
   } low_pass_cutoff_freq; /* 低通滤波器截止频率 */
 
-  float gimbal_limit_radian_pitch; /* 云台能pitch轴能运动的弧度 */
+  float pitch_travel_rad; /* 云台pitch轴行程弧度 */
 
   /* TODO: 能使用命令行修改 */
   struct {

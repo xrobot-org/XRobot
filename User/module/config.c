@@ -123,7 +123,7 @@ static const Config_RobotParam_t param_default = {
       },
     }, /* pid */
 
-		.gimbal_limit_radian_pitch = 1.0f,
+		.pitch_travel_rad = 1.0f,
     
     .low_pass_cutoff_freq = {
       .out = -1.0f,
