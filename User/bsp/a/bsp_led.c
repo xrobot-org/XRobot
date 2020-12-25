@@ -10,7 +10,7 @@
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 
-int BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, int16_t duty_cycle) {
+uint8_t BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, int16_t duty_cycle) {
   GPIO_TypeDef *gpiox;
   uint16_t gpio_pin;
 

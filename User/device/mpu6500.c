@@ -184,7 +184,7 @@ static void MPU_Read(uint8_t reg, uint8_t *data, uint8_t len) {
 }
 
 /* Exported functions ------------------------------------------------------- */
-int IMU_Init(IMU_t *imu) {
+int8_t IMU_Init(IMU_t *imu) {
   if (imu == NULL) return -1;
 
   if (inited) return -1;
@@ -223,7 +223,7 @@ IMU_t *IMU_GetDevice(void) {
   return NULL;
 }
 
-int IMU_StartReceiving(IMU_t *imu) {
+uint8_t IMU_StartReceiving(IMU_t *imu) {
   MPU_Read(MPU6500_ACCEL_XOUT_H, (uint8_t *)&(imu->raw), 20);
   return 0;
 }
@@ -236,7 +236,7 @@ int IMU_StartReceiving(IMU_t *imu) {
  *		 y
  *	 UP is z
  */
-int IMU_Parse(IMU_t *imu) {
+int8_t IMU_Parse(IMU_t *imu) {
   if (imu == NULL) return -1;
 
   uint8_t raw[20];

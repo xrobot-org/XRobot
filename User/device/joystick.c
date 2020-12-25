@@ -18,7 +18,7 @@
 static uint32_t adc_raw;
 static Joystick_Status_t js;
 
-int Joystick_Update(Joystick_Status_t *val) {
+int8_t Joystick_Update(Joystick_Status_t *val) {
   if (val == NULL) return -1;
 
   HAL_ADC_Start(&hadc1);
@@ -44,7 +44,7 @@ int Joystick_Update(Joystick_Status_t *val) {
   return 0;
 }
 
-int Joystick_WaitInput(void) {
+uint8_t Joystick_WaitInput(void) {
   do {
     BSP_Delay(20);
     Joystick_Update(&js);
@@ -52,7 +52,7 @@ int Joystick_WaitInput(void) {
   return 0;
 }
 
-int Joystick_WaitNoInput(void) {
+uint8_t Joystick_WaitNoInput(void) {
   do {
     BSP_Delay(20);
     Joystick_Update(&js);

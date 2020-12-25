@@ -10,7 +10,7 @@
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
-int BSP_PWM_Start(BSP_PWM_Channel_t ch) {
+uint8_t BSP_PWM_Start(BSP_PWM_Channel_t ch) {
   switch (ch) {
     case BSP_PWM_IMU_HEAT:
       HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
@@ -19,7 +19,7 @@ int BSP_PWM_Start(BSP_PWM_Channel_t ch) {
   return 0;
 }
 
-int BSP_PWM_Set(BSP_PWM_Channel_t ch, float duty_cycle) {
+int8_t BSP_PWM_Set(BSP_PWM_Channel_t ch, float duty_cycle) {
   if (duty_cycle > 1.0f) return -1;
 
   uint16_t pulse = duty_cycle * PWM_RESOLUTION;
@@ -34,4 +34,4 @@ int BSP_PWM_Set(BSP_PWM_Channel_t ch, float duty_cycle) {
   return 0;
 }
 
-int BSP_PWM_Stop(BSP_PWM_Channel_t ch);
+uint8_t BSP_PWM_Stop(BSP_PWM_Channel_t ch);

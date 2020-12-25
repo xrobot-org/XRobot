@@ -215,7 +215,7 @@ static void OLED_WriteSequenceData(uint8_t *data, uint16_t len) {
 }
 
 /* Exported functions ------------------------------------------------------- */
-int OLED_Init(OLED_t *oled) {
+int8_t OLED_Init(OLED_t *oled) {
 	if (oled == NULL)
 		return -1;
 
@@ -280,7 +280,7 @@ OLED_t *OLED_GetDevice(void) {
 	return NULL;
 }
 
-int OLED_PrintRam(OLED_t *oled, const char* str) {
+int8_t OLED_PrintRam(OLED_t *oled, const char* str) {
 	if (str == NULL)
 		return -1;
 	
@@ -315,7 +315,7 @@ int OLED_PrintRam(OLED_t *oled, const char* str) {
 	return 0;
 }
 
-int OLED_RewindRam(OLED_t *oled) {
+uint8_t OLED_RewindRam(OLED_t *oled) {
 	oled->modified = true;
 
 	OLED_SetAllRam(oled, OLED_PEN_CLEAR);
@@ -325,7 +325,7 @@ int OLED_RewindRam(OLED_t *oled) {
 	return 0;
 }
 
-int OLED_SetAllRam(OLED_t *oled, OLED_Pen_t pen) {
+uint8_t OLED_SetAllRam(OLED_t *oled, OLED_Pen_t pen) {
 	switch(pen) {
 		case OLED_PEN_WRITE:
 			memset(oled->gram, -1, sizeof(oled->gram));
@@ -346,14 +346,14 @@ int OLED_SetAllRam(OLED_t *oled, OLED_Pen_t pen) {
 	return 0;
 }
 
-int OLED_DisplayOn(OLED_t *oled) {
+uint8_t OLED_DisplayOn(OLED_t *oled) {
 	OLED_WriteByte(0x8d, OLED_WriteCMD);
 	OLED_WriteByte(0x14, OLED_WriteCMD);
 	OLED_WriteByte(0xaf, OLED_WriteCMD);
 	return 0;
 }
 
-int OLED_DisplayOff(OLED_t *oled) {
+uint8_t OLED_DisplayOff(OLED_t *oled) {
 	OLED_WriteByte(0x8d, OLED_WriteCMD);
 	OLED_WriteByte(0x10, OLED_WriteCMD);
 	OLED_WriteByte(0xae, OLED_WriteCMD);
@@ -368,7 +368,7 @@ void OLED_SetCursor(uint8_t x, uint8_t y)
 	OLED_WriteByte((x&0x0f), OLED_WriteCMD);				/*set column low address */
 }
 
-int OLED_Refresh(OLED_t *oled) {
+uint8_t OLED_Refresh(OLED_t *oled) {
 	for (uint8_t i = 0; i < 8; i++) {
 		OLED_SetCursor(0, i);
 		for (uint8_t n = 0; n < 8; n++) {

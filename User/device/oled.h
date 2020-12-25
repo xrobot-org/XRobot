@@ -29,16 +29,16 @@ typedef struct {
 } OLED_t;
 
 /* Exported functions prototypes -------------------------------------------- */
-int OLED_Init(OLED_t *oled);
+uint8_t OLED_Init(OLED_t *oled);
 OLED_t *OLED_GetDevice(void);
 
-int OLED_PrintRam(OLED_t *oled, const char *str);
-int OLED_RewindRam(OLED_t *oled);
-int OLED_SetAllRam(OLED_t *oled, OLED_Pen_t pen);
+uint8_t OLED_PrintRam(OLED_t *oled, const char *str);
+uint8_t OLED_RewindRam(OLED_t *oled);
+uint8_t OLED_SetAllRam(OLED_t *oled, OLED_Pen_t pen);
 
-int OLED_DisplayOn(OLED_t *oled);
-int OLED_DisplayOff(OLED_t *oled);
-int OLED_Refresh(OLED_t *oled);
+uint8_t OLED_DisplayOn(OLED_t *oled);
+uint8_t OLED_DisplayOff(OLED_t *oled);
+uint8_t OLED_Refresh(OLED_t *oled);
 
 #ifdef __cplusplus
 }

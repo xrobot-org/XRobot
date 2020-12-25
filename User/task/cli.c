@@ -10,6 +10,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "FreeRTOS.h"
 #include "bsp\can.h"
@@ -20,7 +21,7 @@
 
 /* Private typedef ---------------------------------------------------------- */
 typedef struct {
-  int stage;
+  uint8_t stage;
 } FiniteStateMachine_t;
 
 /* Private define ----------------------------------------------------------- */
@@ -191,9 +192,9 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
       "\r\n";
 
   /* 用常量表示状态机每个阶段，比数字更清楚 */
-  static const int stage_begin = 0;
-  static const int stage_success = 1;
-  static const int stage_end = 2;
+  static const uint8_t stage_begin = 0;
+  static const uint8_t stage_success = 1;
+  static const uint8_t stage_end = 2;
 
   if (out_buffer == NULL) return pdFALSE;
   len -= 1;
@@ -238,7 +239,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
     if ((pr == NULL) || (name != NULL)) goto command_error;
 
     /* config list */
-    static int i = 0;
+    static uint8_t i = 0;
 
     if (strncmp(pr, "pilot", pr_len) == 0) {
       /* config list pilot */
@@ -648,8 +649,8 @@ void Task_CLI(void *argument) {
   BaseType_t processing = 0;                    /* 命令行解析控制 */
 
   /* 注册所有命令 */
-  int num_commands = sizeof(command_table) / sizeof(CLI_Command_Definition_t);
-  for (int j = 0; j < num_commands; j++) {
+  const size_t num_commands = sizeof(command_table) / sizeof(CLI_Command_Definition_t);
+  for (size_t j = 0; j < num_commands; j++) {
     FreeRTOS_CLIRegisterCommand(command_table + j);
   }
 
