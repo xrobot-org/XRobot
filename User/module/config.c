@@ -99,28 +99,6 @@ static const Config_RobotParam_t param_default = {
         .d_cutoff_freq = -1.0f,
         .range = M_2PI,
       },
-      {
-        /* GIMBAL_PID_REL_YAW_IDX */
-        .k = 0.1f,
-        .p = 1.0f,
-        .i = 0.01f,
-        .d = 0.001f,
-        .i_limit = 1.0f,
-        .out_limit = 1.0f,
-        .d_cutoff_freq = -1.0f,
-        .range = M_2PI,
-      },
-      {
-        /* GIMBAL_PID_REL_PIT_IDX, */
-        .k = 8.0f,
-        .p = 1.0f,
-        .i = 0.01f,
-        .d = 20.0f,
-        .i_limit = 1.0f,
-        .out_limit = 1.0f,
-        .d_cutoff_freq = -1.0f,
-        .range = M_2PI,
-      },
     }, /* pid */
 
 		.pitch_travel_rad = 1.0f,
@@ -128,11 +106,6 @@ static const Config_RobotParam_t param_default = {
     .low_pass_cutoff_freq = {
       .out = -1.0f,
       .gyro = 1000.0f,
-    },
-
-    .encoder_center = {
-      .yaw = 6.0f,
-      .pit = 6.0f,
     },
 
     .reverse = {
@@ -260,38 +233,11 @@ static const Config_RobotParam_t param_hero = {
         .d_cutoff_freq = -1.0f,
         .range = M_2PI,
       },
-      {
-        /* GIMBAL_PID_REL_YAW_IDX */
-        .k = 0.1f,
-        .p = 1.0f,
-        .i = 0.01f,
-        .d = 0.001f,
-        .i_limit = 1.0f,
-        .out_limit = 1.0f,
-        .d_cutoff_freq = -1.0f,
-        .range = M_2PI,
-      },
-      {
-        /* GIMBAL_PID_REL_PIT_IDX, */
-        .k = 8.0f,
-        .p = 1.0f,
-        .i = 0.01f,
-        .d = 20.0f,
-        .i_limit = 1.0f,
-        .out_limit = 1.0f,
-        .d_cutoff_freq = -1.0f,
-        .range = M_2PI,
-      },
     }, /* pid */
 
     .low_pass_cutoff_freq = {
       .out = -1.0f,
       .gyro = 1000.0f,
-    },
-
-    .encoder_center = {
-      .yaw = 6.0f,
-      .pit = 6.0f,
     },
 
     .reverse = {
