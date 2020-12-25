@@ -50,14 +50,14 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_GimbalMode_t mode) {
  *
  * \return 函数运行结果
  */
-int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
-                   Gimbal_Limit_t *limit, float target_freq) {
+int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
+                   float target_freq) {
   if (g == NULL) return -1;
 
-  g->param = param;                 /* 初始化参数 */
-  g->mode = GIMBAL_MODE_RELAX;      /* 设置默认模式 */
-  g->gimbal_limit.max = limit->max; /* 设置软件限位 */
-  g->gimbal_limit.min = limit->min;
+  g->param = param;                /* 初始化参数 */
+  g->mode = GIMBAL_MODE_RELAX;     /* 设置默认模式 */
+  g->gimbal_limit.max = limit_max; /* 设置软件限位 */
+  g->gimbal_limit.min = limit_max - g->param->gimbal_limit_radian_pitch;
 
   /* 初始化云台电机控制PID和LPF */
   PID_Init(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), KPID_MODE_NO_D, target_freq,
@@ -95,10 +95,8 @@ int8_t Gimbal_CANtoFeedback(Gimbal_Feedback_t *gimbal_feedback,
   if (gimbal_feedback == NULL) return -1;
   if (can == NULL) return -1;
 
-  gimbal_feedback->eulr.encoder.yaw =
-      can->motor.gimbal.named.yaw.rotor_angle;
-  gimbal_feedback->eulr.encoder.pit =
-      can->motor.gimbal.named.pit.rotor_angle;
+  gimbal_feedback->eulr.encoder.yaw = can->motor.gimbal.named.yaw.rotor_angle;
+  gimbal_feedback->eulr.encoder.pit = can->motor.gimbal.named.pit.rotor_angle;
 
   return 0;
 }
@@ -131,13 +129,21 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback_t *fb,
 
   /* 处理控制命令，限制setpoint范围 */
   CircleAdd(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw, M_2PI);
-  g->setpoint.eulr.pit += g_cmd->delta_eulr.pit;
 
-  /* 软件限位 */
-  if (g->setpoint.eulr.pit > g->gimbal_limit.max)
-    g->setpoint.eulr.pit = g->gimbal_limit.max;
-  if (g->setpoint.eulr.pit < g->gimbal_limit.min)
-    g->setpoint.eulr.pit = g->gimbal_limit.min;
+  /* pitch轴软件限位 */
+  float delta_max = CircleError(
+      g->gimbal_limit.max,
+      (fb->eulr.encoder.pit + g->setpoint.eulr.pit - fb->eulr.imu.pit), M_2PI);
+  float delta_min = CircleError(
+      g->gimbal_limit.min,
+      (fb->eulr.encoder.pit + g->setpoint.eulr.pit - fb->eulr.imu.pit), M_2PI);
+  if (g->param->reverse.pit) {
+    delta_max = -delta_max;
+    delta_min = -delta_min;
+  }
+  if (g_cmd->delta_eulr.pit > delta_max) g_cmd->delta_eulr.pit = delta_max;
+  if (g_cmd->delta_eulr.pit < delta_min) g_cmd->delta_eulr.pit = delta_min;
+  g->setpoint.eulr.pit += g_cmd->delta_eulr.pit;
 
   AHRS_ResetEulr(&(g_cmd->delta_eulr));
 

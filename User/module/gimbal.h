@@ -52,12 +52,7 @@ typedef struct {
     float gyro;           /* 陀螺仪数据 */
   } low_pass_cutoff_freq; /* 低通滤波器截止频率 */
 
-  struct {
-    struct {
-      float high; /* 限位高点 */
-      float low;  /* 限位低点 */
-    } pitch;      /* Pitch轴限位 */
-  } limit;        /* 软件限位 */
+  float gimbal_limit_radian_pitch; /* 云台能pitch轴能运动的弧度 */
 
   /* TODO: 能使用命令行修改 */
   struct {
@@ -120,8 +115,8 @@ typedef struct {
  *
  * \return 函数运行结果
  */
-int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param,
-                   Gimbal_Limit_t *limit, float target_freq);
+int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit,
+                   float target_freq);
 
 /**
  * \brief 通过CAN设备更新云台反馈信息
