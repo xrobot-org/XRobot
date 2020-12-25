@@ -49,8 +49,8 @@ void Task_CtrlChassis(void *argument) {
                &task_runtime.cfg.mech_zero, (float)TASK_FREQ_CTRL_CHASSIS);
 
   /* 延时一段时间再开启任务 */
-  osMessageQueueGet(task_runtime.msgq.can.feedback.chassis,
-                    &can.motor.chassis, NULL, osWaitForever);
+  osMessageQueueGet(task_runtime.msgq.can.feedback.chassis, &can.motor.chassis,
+                    NULL, osWaitForever);
 
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   uint32_t wakeup = HAL_GetTick(); /* 计算任务运行间隔的计时 */
@@ -76,8 +76,7 @@ void Task_CtrlChassis(void *argument) {
       const uint32_t now = HAL_GetTick();
       Chassis_UpdateFeedback(&chassis, &can);
       Chassis_Control(&chassis, &chassis_cmd, &cap, task_runtime.status.vbat,
-                      (float)(now - wakeup) / 1000.0f,
-                      task_runtime.cfg.robot_param->gimbal.reverse.yaw);
+                      (float)(now - wakeup) / 1000.0f);
       Chassis_DumpOutput(&chassis, &chassis_out);
       osMessageQueuePut(task_runtime.msgq.can.output.chassis, &chassis_out, 0,
                         0);

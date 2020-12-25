@@ -46,6 +46,10 @@ typedef struct {
     float out;            /* 输出 */
   } low_pass_cutoff_freq; /* 低通滤波器截止频率 */
 
+  struct {
+    bool yaw;
+  } reverse; /* 电机反装 */
+
 } Chassis_Params_t;
 
 /*
@@ -125,8 +129,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can);
  * \return 函数运行结果
  */
 int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
-                       const CAN_Capacitor_t *cap, float vbat, float dt_sec,
-                       const bool reverse_yaw);
+                       const CAN_Capacitor_t *cap, float vbat, float dt_sec);
 
 /**
  * \brief 复制底盘输出值

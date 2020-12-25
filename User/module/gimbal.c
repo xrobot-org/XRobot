@@ -85,18 +85,24 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
 /**
  * \brief 通过CAN设备更新云台反馈信息
  *
- * \param gimbal_feedback 云台反馈信息
+ * \param gimbal 云台
  * \param can CAN设备
  *
  * \return 函数运行结果
  */
-int8_t Gimbal_CANtoFeedback(Gimbal_Feedback_t *gimbal_feedback,
-                            const CAN_t *can) {
-  if (gimbal_feedback == NULL) return -1;
+int8_t Gimbal_UpdateFeedback(Gimbal_t *gimbal, const CAN_t *can) {
+  if (gimbal == NULL) return -1;
   if (can == NULL) return -1;
 
-  gimbal_feedback->eulr.encoder.yaw = can->motor.gimbal.named.yaw.rotor_angle;
-  gimbal_feedback->eulr.encoder.pit = can->motor.gimbal.named.pit.rotor_angle;
+  gimbal->feedback.eulr.encoder.yaw = can->motor.gimbal.named.yaw.rotor_angle;
+  gimbal->feedback.eulr.encoder.pit = can->motor.gimbal.named.pit.rotor_angle;
+
+  if (gimbal->param->reverse.yaw)
+    gimbal->feedback.eulr.encoder.yaw =
+        -gimbal->feedback.eulr.encoder.yaw + M_2PI;
+  if (gimbal->param->reverse.pit)
+    gimbal->feedback.eulr.encoder.pit =
+        -gimbal->feedback.eulr.encoder.pit + M_2PI;
 
   return 0;
 }
@@ -111,36 +117,35 @@ int8_t Gimbal_CANtoFeedback(Gimbal_Feedback_t *gimbal_feedback,
  *
  * \return 函数运行结果
  */
-int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback_t *fb,
-                      CMD_GimbalCmd_t *g_cmd, float dt_sec) {
+int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, float dt_sec) {
   if (g == NULL) return -1;
   if (g_cmd == NULL) return -1;
 
   Gimbal_SetMode(g, g_cmd->mode);
 
-  /* 判断云台方向 */
-  if (g->param->reverse.pit) g_cmd->delta_eulr.pit = -(g_cmd->delta_eulr.pit);
-  if (g->param->reverse.yaw) g_cmd->delta_eulr.yaw = -(g_cmd->delta_eulr.yaw);
+  /* yaw坐标正方向与遥控器操作逻辑相反 */
+  g_cmd->delta_eulr.pit = (g_cmd->delta_eulr.pit);
+  g_cmd->delta_eulr.yaw = -(g_cmd->delta_eulr.yaw);
 
   /* 设置初始yaw目标值 */
   if (g->setpoint.eulr.yaw == 0.0f) {
-    g->setpoint.eulr.yaw = fb->eulr.imu.yaw;
+    g->setpoint.eulr.yaw = g->feedback.eulr.imu.yaw;
   }
 
   /* 处理控制命令，限制setpoint范围 */
   CircleAdd(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw, M_2PI);
 
   /* pitch轴软件限位 */
-  float delta_max = CircleError(
-      g->gimbal_limit.max,
-      (fb->eulr.encoder.pit + g->setpoint.eulr.pit - fb->eulr.imu.pit), M_2PI);
-  float delta_min = CircleError(
-      g->gimbal_limit.min,
-      (fb->eulr.encoder.pit + g->setpoint.eulr.pit - fb->eulr.imu.pit), M_2PI);
-  if (g->param->reverse.pit) {
-    delta_max = -delta_max;
-    delta_min = -delta_min;
-  }
+  float delta_max =
+      CircleError(g->gimbal_limit.max,
+                  (g->feedback.eulr.encoder.pit + g->setpoint.eulr.pit -
+                   g->feedback.eulr.imu.pit),
+                  M_2PI);
+  float delta_min =
+      CircleError(g->gimbal_limit.min,
+                  (g->feedback.eulr.encoder.pit + g->setpoint.eulr.pit -
+                   g->feedback.eulr.imu.pit),
+                  M_2PI);
   if (g_cmd->delta_eulr.pit > delta_max) g_cmd->delta_eulr.pit = delta_max;
   if (g_cmd->delta_eulr.pit < delta_min) g_cmd->delta_eulr.pit = delta_min;
   g->setpoint.eulr.pit += g_cmd->delta_eulr.pit;
@@ -157,17 +162,17 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback_t *fb,
     case GIMBAL_MODE_ABSOLUTE:
       yaw_omega_set_point =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), g->setpoint.eulr.yaw,
-                   fb->eulr.imu.yaw, 0.0f, dt_sec);
+                   g->feedback.eulr.imu.yaw, 0.0f, dt_sec);
       g->out[GIMBAL_ACTR_YAW_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), yaw_omega_set_point,
-                   fb->gyro.z, 0.f, dt_sec);
+                   g->feedback.gyro.z, 0.f, dt_sec);
 
       pit_omega_set_point =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_ANGLE_IDX]), g->setpoint.eulr.pit,
-                   fb->eulr.imu.pit, 0.0f, dt_sec);
+                   g->feedback.eulr.imu.pit, 0.0f, dt_sec);
       g->out[GIMBAL_ACTR_PIT_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), pit_omega_set_point,
-                   fb->gyro.x, 0.f, dt_sec);
+                   g->feedback.gyro.x, 0.f, dt_sec);
       break;
 
     case GIMBAL_MODE_FIX:
@@ -178,10 +183,10 @@ int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback_t *fb,
     case GIMBAL_MODE_RELATIVE:
       g->out[GIMBAL_ACTR_YAW_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_REL_YAW_IDX]), g->setpoint.eulr.yaw,
-                   fb->eulr.encoder.yaw, fb->gyro.z, dt_sec);
+                   g->feedback.eulr.encoder.yaw, g->feedback.gyro.z, dt_sec);
       g->out[GIMBAL_ACTR_PIT_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_REL_PIT_IDX]), g->setpoint.eulr.pit,
-                   fb->eulr.encoder.pit, fb->gyro.x, dt_sec);
+                   g->feedback.eulr.encoder.pit, g->feedback.gyro.x, dt_sec);
       break;
   }
 

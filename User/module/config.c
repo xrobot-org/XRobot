@@ -46,6 +46,11 @@ static const Config_RobotParam_t param_default = {
       .in = -1.0f,
       .out = -1.0f,
     },
+		
+		.reverse = {
+			.yaw = false,
+		},
+		
   }, /* chassis */
 
   .gimbal = { /* 云台模块参数 */
@@ -131,7 +136,7 @@ static const Config_RobotParam_t param_default = {
     },
 
     .reverse = {
-      .yaw = true,
+      .yaw = false,
       .pit = false,
     },
   }, /* gimbal */
@@ -203,6 +208,10 @@ static const Config_RobotParam_t param_hero = {
       .in = -1.0f,
       .out = -1.0f,
     },
+		
+		.reverse = {
+			.yaw = true,
+		},
   }, /* chassis */
 
   .gimbal = { /* 云台模块参数 */
@@ -287,7 +296,7 @@ static const Config_RobotParam_t param_hero = {
 
     .reverse = {
       .yaw = true,
-      .pit = false,
+      .pit = true,
     },
   }, /* gimbal */
 
