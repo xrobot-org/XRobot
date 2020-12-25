@@ -102,6 +102,8 @@ typedef struct {
 
   float out[GIMBAL_ACTR_NUM]; /* 输出数组 */
 
+  Gimbal_Feedback_t feedback; /* 反馈 */
+
 } Gimbal_t;
 
 /* Exported functions prototypes -------------------------------------------- */
@@ -121,13 +123,12 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit,
 /**
  * \brief 通过CAN设备更新云台反馈信息
  *
- * \param gimbal_feedback 云台反馈信息
+ * \param gimbal 云台
  * \param can CAN设备
  *
  * \return 函数运行结果
  */
-int8_t Gimbal_CANtoFeedback(Gimbal_Feedback_t *gimbal_feedback,
-                            const CAN_t *can);
+int8_t Gimbal_UpdateFeedback(Gimbal_t *gimbal, const CAN_t *can);
 
 /**
  * \brief 运行云台控制逻辑
@@ -139,8 +140,7 @@ int8_t Gimbal_CANtoFeedback(Gimbal_Feedback_t *gimbal_feedback,
  *
  * \return 函数运行结果
  */
-int8_t Gimbal_Control(Gimbal_t *g, Gimbal_Feedback_t *fb,
-                      CMD_GimbalCmd_t *g_cmd, float dt_sec);
+int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, float dt_sec);
 
 /**
  * \brief 复制云台输出值

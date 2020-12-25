@@ -19,7 +19,6 @@ static CAN_t can;
 
 #ifdef DEBUG
 CMD_GimbalCmd_t gimbal_cmd;
-Gimbal_Feedback_t gimbal_feedback;
 Gimbal_t gimbal;
 CAN_GimbalOutput_t gimbal_out;
 #else
@@ -70,16 +69,15 @@ void Task_CtrlGimbal(void *argument) {
     } else {
       /* 继续读取控制指令、姿态、IMU数据 */
       osMessageQueueGet(task_runtime.msgq.gimbal.eulr_imu,
-                        &(gimbal_feedback.eulr.imu), NULL, 0);
-      osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &(gimbal_feedback.gyro),
+                        &(gimbal.feedback.eulr.imu), NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &(gimbal.feedback.gyro),
                         NULL, 0);
       osMessageQueueGet(task_runtime.msgq.cmd.gimbal, &gimbal_cmd, NULL, 0);
 
       osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
       const uint32_t now = HAL_GetTick();
-      Gimbal_CANtoFeedback(&gimbal_feedback, &can);
-      Gimbal_Control(&gimbal, &gimbal_feedback, &gimbal_cmd,
-                     (float)(now - wakeup) / 1000.0f);
+      Gimbal_UpdateFeedback(&gimbal, &can);
+      Gimbal_Control(&gimbal, &gimbal_cmd, (float)(now - wakeup) / 1000.0f);
       Gimbal_DumpOutput(&gimbal, &gimbal_out);
       osMessageQueuePut(task_runtime.msgq.can.output.gimbal, &gimbal_out, 0, 0);
       wakeup = now;

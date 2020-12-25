@@ -60,6 +60,9 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
   c->param = param;             /* 初始化参数 */
   c->mode = CHASSIS_MODE_RELAX; /* 设置默认模式 */
   c->mech_zero = mech_zero;
+  if (param->reverse.yaw) {
+    c->mech_zero->yaw = -(c->mech_zero->yaw) + M_2PI;
+  }
 
   /* 根据参数（param）中的底盘型号初始化Mixer */
   Mixer_Mode_t mixer_mode;
@@ -161,6 +164,9 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   if (can == NULL) return CHASSIS_ERR_NULL;
 
   c->feedback.gimbal_yaw_angle = can->motor.gimbal.named.yaw.rotor_angle;
+  if (c->param->reverse.yaw) {
+    c->feedback.gimbal_yaw_angle = -c->feedback.gimbal_yaw_angle + M_2PI;
+  }
 
   for (uint8_t i = 0; i < c->num_wheel; i++) {
     c->feedback.motor_rpm[i] = can->motor.chassis.as_array[i].rotor_speed;
@@ -184,8 +190,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
  * \return 函数运行结果
  */
 int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
-                       const CAN_Capacitor_t *cap, float vbat, float dt_sec,
-                       const bool reverse_yaw) {
+                       const CAN_Capacitor_t *cap, float vbat, float dt_sec) {
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (c_cmd == NULL) return CHASSIS_ERR_NULL;
   Chassis_SetMode(c, c_cmd->mode);
@@ -206,16 +211,9 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
     case CHASSIS_MODE_RELAX:
     case CHASSIS_MODE_FOLLOW_GIMBAL:
     case CHASSIS_MODE_ROTOR: {
-      float cos_beta;
-      float sin_beta;
-
-      if (reverse_yaw) {
-        cos_beta = cosf(c->feedback.gimbal_yaw_angle - c->mech_zero->yaw);
-        sin_beta = sinf(c->feedback.gimbal_yaw_angle - c->mech_zero->yaw);
-      } else {
-        cos_beta = cosf(-(c->feedback.gimbal_yaw_angle - c->mech_zero->yaw));
-        sin_beta = sinf(-(c->feedback.gimbal_yaw_angle - c->mech_zero->yaw));
-      }
+      float beta = c->feedback.gimbal_yaw_angle - c->mech_zero->yaw;
+      float cos_beta = cosf(beta);
+      float sin_beta = sinf(beta);
       c->move_vec.vx =
           cos_beta * c_cmd->ctrl_vec.vx - sin_beta * c_cmd->ctrl_vec.vy;
       c->move_vec.vy =
