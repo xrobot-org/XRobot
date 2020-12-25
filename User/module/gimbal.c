@@ -70,11 +70,6 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
   PID_Init(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), KPID_MODE_CALC_D_FB,
            target_freq, &(g->param->pid[GIMBAL_PID_PIT_OMEGA_IDX]));
 
-  PID_Init(&(g->pid[GIMBAL_PID_REL_YAW_IDX]), KPID_MODE_NO_D, target_freq,
-           &(g->param->pid[GIMBAL_PID_REL_YAW_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_REL_PIT_IDX]), KPID_MODE_NO_D, target_freq,
-           &(g->param->pid[GIMBAL_PID_REL_PIT_IDX]));
-
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
     LowPassFilter2p_Init(g->filter_out + i, target_freq,
                          g->param->low_pass_cutoff_freq.out);
@@ -175,18 +170,8 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, float dt_sec) {
                    g->feedback.gyro.x, 0.f, dt_sec);
       break;
 
-    case GIMBAL_MODE_FIX:
-      g->setpoint.eulr.yaw = g->param->encoder_center.yaw;
-      g->setpoint.eulr.pit = g->param->encoder_center.pit;
-      /* 这里不要加break */
-
     case GIMBAL_MODE_RELATIVE:
-      g->out[GIMBAL_ACTR_YAW_IDX] =
-          PID_Calc(&(g->pid[GIMBAL_PID_REL_YAW_IDX]), g->setpoint.eulr.yaw,
-                   g->feedback.eulr.encoder.yaw, g->feedback.gyro.z, dt_sec);
-      g->out[GIMBAL_ACTR_PIT_IDX] =
-          PID_Calc(&(g->pid[GIMBAL_PID_REL_PIT_IDX]), g->setpoint.eulr.pit,
-                   g->feedback.eulr.encoder.pit, g->feedback.gyro.x, dt_sec);
+      for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) g->out[i] = 0.0f;
       break;
   }
 

@@ -28,7 +28,6 @@ typedef enum {
   GIMBAL_MODE_RELAX, /* 放松模式，电机不输出。一般情况云台初始化之后的模式 */
   GIMBAL_MODE_ABSOLUTE, /* 绝对坐标系控制，控制在空间内的绝对姿态 */
   GIMBAL_MODE_RELATIVE, /* 相对坐标系控制，控制相对于底盘的姿态 */
-  GIMBAL_MODE_FIX, /* 固定模式。将云台固定于相对于底盘的正前方位置 */
 } CMD_GimbalMode_t;
 
 /* 射击运行模式 */
