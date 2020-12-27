@@ -1486,6 +1486,11 @@
           <GroupName>User/module</GroupName>
           <Files>
             <File>
+              <FileName>cap.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\module\cap.c</FilePath>
+            </File>
+            <File>
               <FileName>chassis.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\module\chassis.c</FilePath>
@@ -1505,20 +1510,30 @@
               <FileType>1</FileType>
               <FilePath>..\User\module\shoot.c</FilePath>
             </File>
-            <File>
-              <FileName>cap.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\module\cap.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>User/task</GroupName>
           <Files>
             <File>
+              <FileName>ai.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\ai.c</FilePath>
+            </File>
+            <File>
               <FileName>atti_esti.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\atti_esti.c</FilePath>
+            </File>
+            <File>
+              <FileName>can.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\can.c</FilePath>
+            </File>
+            <File>
+              <FileName>cap.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\cap.c</FilePath>
             </File>
             <File>
               <FileName>cli.c</FileName>
@@ -1561,6 +1576,11 @@
               <FilePath>..\User\task\monitor.c</FilePath>
             </File>
             <File>
+              <FileName>rc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\rc.c</FilePath>
+            </File>
+            <File>
               <FileName>referee.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\referee.c</FilePath>
@@ -1569,26 +1589,6 @@
               <FileName>user_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\user_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>ai.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\task\ai.c</FilePath>
-            </File>
-            <File>
-              <FileName>rc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\task\rc.c</FilePath>
-            </File>
-            <File>
-              <FileName>cap.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\task\cap.c</FilePath>
-            </File>
-            <File>
-              <FileName>can.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\task\can.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -3146,6 +3146,11 @@
           <GroupName>User/module</GroupName>
           <Files>
             <File>
+              <FileName>cap.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\module\cap.c</FilePath>
+            </File>
+            <File>
               <FileName>chassis.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\module\chassis.c</FilePath>
@@ -3165,20 +3170,30 @@
               <FileType>1</FileType>
               <FilePath>..\User\module\shoot.c</FilePath>
             </File>
-            <File>
-              <FileName>cap.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\module\cap.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>User/task</GroupName>
           <Files>
             <File>
+              <FileName>ai.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\ai.c</FilePath>
+            </File>
+            <File>
               <FileName>atti_esti.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\atti_esti.c</FilePath>
+            </File>
+            <File>
+              <FileName>can.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\can.c</FilePath>
+            </File>
+            <File>
+              <FileName>cap.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\cap.c</FilePath>
             </File>
             <File>
               <FileName>cli.c</FileName>
@@ -3221,6 +3236,11 @@
               <FilePath>..\User\task\monitor.c</FilePath>
             </File>
             <File>
+              <FileName>rc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\rc.c</FilePath>
+            </File>
+            <File>
               <FileName>referee.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\referee.c</FilePath>
@@ -3229,26 +3249,6 @@
               <FileName>user_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\user_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>ai.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\task\ai.c</FilePath>
-            </File>
-            <File>
-              <FileName>rc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\task\rc.c</FilePath>
-            </File>
-            <File>
-              <FileName>cap.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\task\cap.c</FilePath>
-            </File>
-            <File>
-              <FileName>can.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\task\can.c</FilePath>
             </File>
           </Files>
         </Group>
