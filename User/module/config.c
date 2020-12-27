@@ -381,8 +381,8 @@ const Config_PilotCfg_t *Config_GetPilotCfg(const char *pilot_cfg_name) {
   return NULL; /* No match. */
 }
 
-const Config_PilotCfgMap_t *Config_GetPilotName(void) { return pilot_cfg_map; }
+const Config_PilotCfgMap_t *Config_GetPilotNameMap(void) { return pilot_cfg_map; }
 
-const Config_RobotParamMap_t *Config_GetRobotName(void) {
+const Config_RobotParamMap_t *Config_GetRobotNameMap(void) {
   return robot_param_map;
 }

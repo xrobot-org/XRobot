@@ -243,7 +243,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
 
     if (strncmp(pr, "pilot", pr_len) == 0) {
       /* config list pilot */
-      const Config_PilotCfgMap_t *pilot = Config_GetPilotName();
+      const Config_PilotCfgMap_t *pilot = Config_GetPilotNameMap();
       switch (fsm.stage) {
         case stage_begin:
           snprintf(out_buffer, len, "\r\nAvailable pilot cfg:");
@@ -262,7 +262,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
       }
     } else if (strncmp(pr, "robot", pr_len) == 0) {
       /* config list robot */
-      const Config_RobotParamMap_t *robot = Config_GetRobotName();
+      const Config_RobotParamMap_t *robot = Config_GetRobotNameMap();
       switch (fsm.stage) {
         case stage_begin:
           snprintf(out_buffer, len, "\r\nAvailable robot params:");

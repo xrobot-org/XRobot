@@ -98,8 +98,8 @@ const Config_RobotParam_t *Config_GetRobotParam(const char *robot_param_name);
  * @return const Config_PilotCfg_t* 操作手配置的指针
  */
 const Config_PilotCfg_t *Config_GetPilotCfg(const char *pilot_cfg_name);
-const Config_PilotCfgMap_t *Config_GetPilotName(void);
-const Config_RobotParamMap_t *Config_GetRobotName(void);
+const Config_PilotCfgMap_t *Config_GetPilotNameMap(void);
+const Config_RobotParamMap_t *Config_GetRobotNameMap(void);
 #ifdef __cplusplus
 }
 #endif
