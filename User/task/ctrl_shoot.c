@@ -57,27 +57,20 @@ void Task_CtrlShoot(void *argument) {
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 
-    /* 等待接收CAN总线新数据 */
-    if (osMessageQueueGet(task_runtime.msgq.can.feedback.shoot, &can, NULL,
-                          delay_tick) != osOK) {
-      /* 如果没有接收到新数据，则将输出置零，不进行控制 */
-      CAN_ResetShootOut(&shoot_out);
-      osMessageQueuePut(task_runtime.msgq.can.output.shoot, &shoot_out, 0, 0);
-    } else {
-      /* 继续读取控制指令 */
-      osMessageQueueGet(task_runtime.msgq.cmd.shoot, &shoot_cmd, NULL, 0);
+    /* 读取CAN总线电机指令、控制指令*/
+    osMessageQueueGet(task_runtime.msgq.can.feedback.shoot, &can, NULL, 0);
+    osMessageQueueGet(task_runtime.msgq.cmd.shoot, &shoot_cmd, NULL, 0);
 
-      osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
-      const uint32_t now = HAL_GetTick();
-      Shoot_UpdateFeedback(&shoot, &can);
-      Shoot_Control(&shoot, &shoot_cmd, (float)(now - wakeup) / 1000.0f);
-      Shoot_DumpOutput(&shoot, &shoot_out);
-      osMessageQueuePut(task_runtime.msgq.can.output.shoot, &shoot_out, 0, 0);
-      wakeup = now;
+    osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
+    const uint32_t now = HAL_GetTick();
+    Shoot_UpdateFeedback(&shoot, &can);
+    Shoot_Control(&shoot, &shoot_cmd, (float)(now - wakeup) / 1000.0f);
+    Shoot_DumpOutput(&shoot, &shoot_out);
+    osMessageQueuePut(task_runtime.msgq.can.output.shoot, &shoot_out, 0, 0);
+    wakeup = now;
 
-      osKernelUnlock();
+    osKernelUnlock();
 
-      osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
-    }
+    osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }
 }
