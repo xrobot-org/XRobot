@@ -47,7 +47,6 @@ void Task_Command(void *argument) {
   /* 初始化指令处理 */
   CMD_Init(&cmd, &(task_runtime.cfg.pilot_cfg->param.cmd));
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
-  uint32_t wakeup = HAL_GetTick();
 
   /* 用于计算遥控器数据频率 */
   while (1) {
@@ -56,8 +55,6 @@ void Task_Command(void *argument) {
     task_runtime.stack_water_mark.command = osThreadGetStackSpace(NULL);
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
-
-    const uint32_t now = HAL_GetTick();
 
     osMessageQueueGet(task_runtime.msgq.raw_cmd.rc_raw, &rc_raw, 0, 0);
     osMessageQueueGet(task_runtime.msgq.raw_cmd.ai_raw, &ai_raw, 0, 0);
@@ -78,7 +75,6 @@ void Task_Command(void *argument) {
     osMessageQueuePut(task_runtime.msgq.cmd.gimbal, &(cmd.gimbal), 0, 0);
     osMessageQueuePut(task_runtime.msgq.cmd.shoot, &(cmd.shoot), 0, 0);
 
-    wakeup = now;
     osKernelUnlock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
 
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */

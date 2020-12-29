@@ -36,7 +36,6 @@ void Task_Cap(void *argument) {
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_CAP;
 
   uint32_t tick = osKernelGetTickCount();
-  uint32_t wakeup = HAL_GetTick();
   while (1) {
 #ifdef DEBUG
     task_runtime.stack_water_mark.cap = osThreadGetStackSpace(NULL);
@@ -52,12 +51,10 @@ void Task_Cap(void *argument) {
       osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);
     } else {
       osKernelLock();
-      const uint32_t now = HAL_GetTick();
 
       Cap_Control(&can.cap, &referee, &cap_out);
       osMessageQueuePut(task_runtime.msgq.can.output.cap, &cap_out, 0, 0);
       osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);
-      wakeup = now;
       osKernelUnlock();
 
       osDelayUntil(tick);
