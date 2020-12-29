@@ -66,11 +66,10 @@ void Task_CtrlShoot(void *argument) {
     Shoot_UpdateFeedback(&shoot, &can);
     Shoot_Control(&shoot, &shoot_cmd, (float)(now - wakeup) / 1000.0f);
     Shoot_DumpOutput(&shoot, &shoot_out);
-    osMessageQueuePut(task_runtime.msgq.can.output.shoot, &shoot_out, 0, 0);
     wakeup = now;
-
     osKernelUnlock();
 
+    osMessageQueuePut(task_runtime.msgq.can.output.shoot, &shoot_out, 0, 0);
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }
 }

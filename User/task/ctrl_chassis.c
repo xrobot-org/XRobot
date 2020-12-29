@@ -71,10 +71,10 @@ void Task_CtrlChassis(void *argument) {
     Chassis_Control(&chassis, &chassis_cmd, &cap, task_runtime.status.vbat,
                     (float)(now - wakeup) / 1000.0f);
     Chassis_DumpOutput(&chassis, &chassis_out);
-    osMessageQueuePut(task_runtime.msgq.can.output.chassis, &chassis_out, 0, 0);
     wakeup = now;
     osKernelUnlock();
 
+    osMessageQueuePut(task_runtime.msgq.can.output.chassis, &chassis_out, 0, 0);
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }
 }
