@@ -71,10 +71,10 @@ void Task_CtrlGimbal(void *argument) {
     Gimbal_UpdateFeedback(&gimbal, &can);
     Gimbal_Control(&gimbal, &gimbal_cmd, (float)(now - wakeup) / 1000.0f);
     Gimbal_DumpOutput(&gimbal, &gimbal_out);
-    osMessageQueuePut(task_runtime.msgq.can.output.gimbal, &gimbal_out, 0, 0);
     wakeup = now;
     osKernelUnlock();
 
+    osMessageQueuePut(task_runtime.msgq.can.output.gimbal, &gimbal_out, 0, 0);
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }
 }
