@@ -11,8 +11,14 @@ Task_Runtime_t task_runtime;
 /* 各个任务的参数 */
 const osThreadAttr_t attr_init = {
     .name = "init",
-    .priority = osPriorityLow,
+    .priority = osPriorityRealtime,
     .stack_size = 256 * 4,
+};
+
+const osThreadAttr_t attr_ai = {
+    .name = "ai",
+    .priority = osPriorityRealtime,
+    .stack_size = 128 * 4,
 };
 
 const osThreadAttr_t attr_atti_esti = {
@@ -21,9 +27,21 @@ const osThreadAttr_t attr_atti_esti = {
     .stack_size = 256 * 4,
 };
 
+const osThreadAttr_t attr_can = {
+    .name = "can",
+    .priority = osPriorityRealtime,
+    .stack_size = 128 * 4,
+};
+
+const osThreadAttr_t attr_cap = {
+    .name = "cap",
+    .priority = osPriorityHigh,
+    .stack_size = 128 * 4,
+};
+
 const osThreadAttr_t attr_cli = {
     .name = "cli",
-    .priority = osPriorityLow,
+    .priority = osPriorityNormal,
     .stack_size = 256 * 4,
 };
 
@@ -53,42 +71,24 @@ const osThreadAttr_t attr_ctrl_shoot = {
 
 const osThreadAttr_t attr_info = {
     .name = "info",
-    .priority = osPriorityBelowNormal,
+    .priority = osPriorityLow,
     .stack_size = 128 * 4,
 };
 
 const osThreadAttr_t attr_monitor = {
     .name = "monitor",
-    .priority = osPriorityNormal,
+    .priority = osPriorityBelowNormal,
     .stack_size = 128 * 4,
 };
 
-const osThreadAttr_t attr_can = {
-    .name = "can",
+const osThreadAttr_t attr_rc = {
+    .name = "rc",
     .priority = osPriorityRealtime,
     .stack_size = 128 * 4,
 };
 
 const osThreadAttr_t attr_referee = {
     .name = "referee",
-    .priority = osPriorityNormal,
-    .stack_size = 128 * 4,
-};
-
-const osThreadAttr_t attr_ai = {
-    .name = "ai",
-    .priority = osPriorityNormal,
-    .stack_size = 128 * 4,
-};
-
-const osThreadAttr_t attr_rc = {
-    .name = "rc",
-    .priority = osPriorityNormal,
-    .stack_size = 128 * 4,
-};
-
-const osThreadAttr_t attr_cap = {
-    .name = "cap",
-    .priority = osPriorityNormal,
+    .priority = osPriorityHigh,
     .stack_size = 128 * 4,
 };
