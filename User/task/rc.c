@@ -46,8 +46,8 @@ void Task_RC(void *argument) {
       /* 转换 */
       DR16_ParseRC(&dr16, &rc);
     } else {
-      /* 未收到清0 */
-      memset(&rc, 0, sizeof(CMD_RC_t));
+      /* 处理遥控器离线 */
+      DR16_HandleOffline(&dr16, &rc);
     }
     osKernelLock();
     const uint32_t now = HAL_GetTick();

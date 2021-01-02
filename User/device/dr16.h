@@ -41,6 +41,7 @@ int8_t DR16_Restart(void);
 int8_t DR16_StartDmaRecv(DR16_t *dr16);
 bool DR16_WaitDmaCplt(uint32_t timeout);
 int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc);
+int8_t DR16_HandleOffline(const DR16_t *dr16, CMD_RC_t *rc);
 
 #ifdef __cplusplus
 }

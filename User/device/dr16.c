@@ -116,3 +116,12 @@ int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc) {
   rc->ch_res = ((float)dr16->data.res - DR16_CH_VALUE_MID) / full_range;
   return DEVICE_OK;
 }
+
+int8_t DR16_HandleOffline(const DR16_t *dr16, CMD_RC_t *rc) {
+  if (dr16 == NULL) return DEVICE_ERR_NULL;
+  if (rc == NULL) return DEVICE_ERR_NULL;
+
+  (void)dr16;
+  memset(rc, 0, sizeof(CMD_RC_t));
+  return 0;
+}
