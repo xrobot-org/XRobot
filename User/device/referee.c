@@ -46,7 +46,6 @@ static void Referee_AbortRxCpltCallback(void) {
 /* Exported functions ------------------------------------------------------- */
 int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert) {
   if (ref == NULL) return DEVICE_ERR_NULL;
-
   if (inited) return DEVICE_ERR_INITED;
 
   ref->thread_alert = thread_alert;
