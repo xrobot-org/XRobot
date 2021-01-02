@@ -56,9 +56,7 @@ static bool DR16_DataCorrupted(const DR16_t *dr16) {
 /* Exported functions ------------------------------------------------------- */
 int8_t DR16_Init(DR16_t *dr16) {
   if (dr16 == NULL) return DEVICE_ERR_NULL;
-
   if (inited) return DEVICE_ERR_INITED;
-
   if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
 
   BSP_UART_RegisterCallback(BSP_UART_DR16, BSP_UART_RX_CPLT_CB,

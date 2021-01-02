@@ -45,7 +45,6 @@ static void Ai_AbortRxCpltCallback(void) {
 /* Exported functions ------------------------------------------------------- */
 int8_t AI_Init(AI_t *ai, osThreadId_t thread_alert) {
   if (ai == NULL) return DEVICE_ERR_NULL;
-
   if (inited) return DEVICE_ERR_INITED;
 
   ai->thread_alert = thread_alert;

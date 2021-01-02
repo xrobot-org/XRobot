@@ -51,7 +51,6 @@ int8_t CMD_ChechAiControl(CMD_t *cmd) {
  */
 int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   if (rc == NULL) return -1;
-
   if (cmd == NULL) return -1;
 
   /* 在PC控制和RC控制间切换. */
@@ -166,7 +165,6 @@ int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
  */
 int8_t CMD_ParseAi(const CMD_AI_t *ai, CMD_t *cmd, float dt_sec) {
   if (ai == NULL) return -1;
-
   if (cmd == NULL) return -1;
 
   cmd->gimbal.delta_eulr.yaw =
