@@ -64,7 +64,7 @@ void Task_Command(void *argument) {
     /* 控制权交换 */
     CMD_ChechAiControl(&cmd);
     /* 将接收机数据解析为指令数据 */
-    if (cmd.ai_control_right) {
+    if (cmd.ai_ctrl) {
       CMD_ParseAi(&ai_raw, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
     } else {
       CMD_ParseRc(&rc_raw, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);

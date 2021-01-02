@@ -37,7 +37,7 @@ int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
 }
 
 int8_t CMD_ChechAiControl(CMD_t *cmd) {
-  cmd->ai_control_right = false;
+  cmd->ai_ctrl = false;
   return 0;
 }
 
