@@ -85,7 +85,7 @@ typedef struct {
 
 typedef struct {
   bool pc_ctrl;          /* 是否使用键鼠控制 */
-  bool ai_control_right; /* 是否AI控制 */
+  bool ai_ctrl; /* 是否AI控制 */
 
   const CMD_Params_t *param;
 
