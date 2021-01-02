@@ -42,8 +42,8 @@ void Task_Can(void *argument) {
     /* 接收消息 */
     while (osMessageQueueGet(can.msgq_raw, &can_rx, 0, delay_tick) == osOK) {
       osKernelLock();
-
       CAN_StoreMsg(&can, &can_rx);
+      osKernelUnlock();
 
       /* 电机凑够，向指定任务发送 */
       if (CAN_CheckFlag(&can, CAN_REC_CHASSIS_FINISHED)) {
@@ -70,7 +70,6 @@ void Task_Can(void *argument) {
         CAN_ClearFlag(&can, CAN_REC_SHOOT_FINISHED);
       }
 
-      osKernelUnlock();
 
       if (osMessageQueueGet(task_runtime.msgq.can.output.chassis,
                             &(can_out.chassis), 0, 0) == osOK) {

@@ -70,12 +70,12 @@ void Task_Command(void *argument) {
       CMD_ParseRc(&rc_raw, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
     }
 
+    osKernelUnlock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
+
     /* 将需要与其他任务分享的数据放到消息队列中 */
     osMessageQueuePut(task_runtime.msgq.cmd.chassis, &(cmd.chassis), 0, 0);
     osMessageQueuePut(task_runtime.msgq.cmd.gimbal, &(cmd.gimbal), 0, 0);
     osMessageQueuePut(task_runtime.msgq.cmd.shoot, &(cmd.shoot), 0, 0);
-
-    osKernelUnlock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
 
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }
