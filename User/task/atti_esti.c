@@ -112,13 +112,13 @@ void Task_AttiEsti(void *argument) {
     BMI088_ParseAccl(&bmi088);
     BMI088_ParseGyro(&bmi088);
     IST8310_Parse(&ist8310);
-    osKernelUnlock();
 
     /* 根据设备接收到的数据进行姿态解析 */
     AHRS_Update(&gimbal_ahrs, &bmi088.accl, &bmi088.gyro, &ist8310.magn);
 
     /* 根据解析出来的四元数计算欧拉角 */
     AHRS_GetEulr(&eulr_to_send, &gimbal_ahrs);
+    osKernelUnlock();
 
     /* 将需要与其他任务分享的数据放到消息队列中 */
     osMessageQueuePut(task_runtime.msgq.gimbal.accl, &bmi088.accl, 0, 0);

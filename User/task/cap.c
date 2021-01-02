@@ -51,11 +51,10 @@ void Task_Cap(void *argument) {
       osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);
     } else {
       osKernelLock();
-
       Cap_Control(&can.cap, &referee, &cap_out);
+      osKernelUnlock();
       osMessageQueuePut(task_runtime.msgq.can.output.cap, &cap_out, 0, 0);
       osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);
-      osKernelUnlock();
 
       osDelayUntil(tick);
     }

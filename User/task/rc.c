@@ -33,7 +33,6 @@ void Task_RC(void *argument) {
 
   DR16_Init(&dr16); /* 初始化dr16 */
 
-  uint32_t wakeup = HAL_GetTick();
   while (1) {
 #ifdef DEBUG
     /*  */
@@ -49,12 +48,6 @@ void Task_RC(void *argument) {
       /* 处理遥控器离线 */
       DR16_HandleOffline(&dr16, &rc);
     }
-    osKernelLock();
-    const uint32_t now = HAL_GetTick();
-
     osMessageQueuePut(task_runtime.msgq.raw_cmd.rc_raw, &rc, 0, 0);
-
-    wakeup = now;
-    osKernelUnlock();
   }
 }
