@@ -71,16 +71,54 @@ typedef enum {
   CMD_KEY_S,
   CMD_KEY_A,
   CMD_KEY_D,
-  CMD_KEY_Q,
-  CMD_KEY_E,
   CMD_KEY_SHIFT,
   CMD_KEY_CTRL,
+  CMD_KEY_Q,
+  CMD_KEY_E,
+  CMD_KEY_R,
+  CMD_KEY_F,
+  CMD_KEY_G,
+  CMD_KEY_Z,
+  CMD_KEY_X,
+  CMD_KEY_C,
+  CMD_KEY_V,
+  CMD_KEY_B,
+  CMD_L_CLICK,
+  CMD_R_CLICK,
+  CMD_KEY_NUM,
 } CMD_KeyValue_t;
+
+/* 行为值序列 */
+typedef enum {
+  CMD_BEHAVIOR_FORE = 0,
+  CMD_BEHAVIOR_BACK,
+  CMD_BEHAVIOR_LEFT,
+  CMD_BEHAVIOR_RIGHT,
+  CMD_BEHAVIOR_ACCELERATE,
+  CMD_BEHAVIOR_DECELEBRATE,
+  CMD_BEHAVIOR_FIRE,
+  CMD_BEHAVIOR_BUFF,
+  CMD_BEHAVIOR_AUTOSHOOT,
+  CMD_BEHAVIOR_SWITCH,
+  CMD_BEHAVIOR_NUM,
+} CMD_Behavior_t;
+
+typedef struct {
+  uint16_t Key_Mapping[CMD_BEHAVIOR_NUM]; /* 储存按键映射对应行为 */
+} CMD_KeyMap_Params_t;
+
+typedef struct {
+  float sens_move;    /* 移动灵敏度 */
+  float acc_multiple; /* 加速灵敏度 */
+  float dec_multiple; /* 减速灵敏度 */
+} CMD_MOVE_Params_t;
 
 /* 命令参数 */
 typedef struct {
-  float sens_mouse; /* 鼠标灵敏度 */
-  float sens_rc;    /* 遥控器摇杆灵敏度 */
+  float sens_mouse;        /* 鼠标灵敏度 */
+  float sens_rc;           /* 遥控器摇杆灵敏度 */
+  CMD_KeyMap_Params_t map; /* 按键映射行为命令 */
+  CMD_MOVE_Params_t move;  /* 位移灵敏度参数 */
 } CMD_Params_t;
 
 typedef struct {

@@ -295,6 +295,23 @@ static const Config_PilotCfg_t cfg_qs = {
       .sens_mouse = 0.5f,
       .sens_rc = 2.0f,
     },
+    .map = {
+      .Key_Mapping[CMD_BEHAVIOR_FORE] = CMD_KEY_W,
+      .Key_Mapping[CMD_BEHAVIOR_BACK]=CMD_KEY_S,
+      .Key_Mapping[CMD_BEHAVIOR_LEFT]=CMD_KEY_D,
+      .Key_Mapping[CMD_BEHAVIOR_RIGHT]=CMD_BEHAVIOR_RIGHT,
+      .Key_Mapping[CMD_BEHAVIOR_ACCELERATE]=CMD_KEY_SHIFT,
+      .Key_Mapping[CMD_BEHAVIOR_DECELEBRATE]=CMD_KEY_CTRL,
+      .Key_Mapping[CMD_BEHAVIOR_FIRE]=CMD_KEY_Q,
+      .Key_Mapping[CMD_BEHAVIOR_BUFF]=CMD_KEY_E,
+      .Key_Mapping[CMD_BEHAVIOR_AUTOSHOOT]=CMD_KEY_R,
+      .Key_Mapping[CMD_BEHAVIOR_SWITCH]=CMD_KEY_F,
+    },
+    .move = {
+      .sens_move = 0.0f,
+      .acc_multiple = 1.5f,
+	    .dec_multiple = 1.5f,		
+    },       
   },
 };
 

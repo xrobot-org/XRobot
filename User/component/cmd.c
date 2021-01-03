@@ -37,6 +37,63 @@ int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
 }
 
 /**
+ * @brief 按键转换为对应行为
+ *
+ * @param cmd 主结构体
+ * @param behavior 行为
+ * @return Key_Mapping[behavior] 按键映射的行为
+ */
+static uint16_t CMD_BehaviorToKey(const CMD_t *cmd, CMD_Behavior_t behavior) {
+  return cmd->param->map.Key_Mapping[behavior];
+}
+
+/**
+ * @brief 解析行为命令
+ *
+ * @param rc 遥控器数据
+ * @param cmd 主结构体
+ */
+static void BehaviorParse(const CMD_RC_t *rc, CMD_t *cmd) {
+  cmd->chassis.ctrl_vec.vx = 0;
+  cmd->chassis.ctrl_vec.vy = 0;
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FORE))) {
+    cmd->chassis.ctrl_vec.vx += cmd->param->move.sens_move;
+  }
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BACK))) {
+    cmd->chassis.ctrl_vec.vx -= cmd->param->move.sens_move;
+  }
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_LEFT))) {
+    cmd->chassis.ctrl_vec.vy += cmd->param->move.sens_move;
+  }
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_RIGHT))) {
+    cmd->chassis.ctrl_vec.vy -= cmd->param->move.sens_move;
+  }
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ACCELERATE))) {
+    cmd->chassis.ctrl_vec.vx *= cmd->param->move.acc_multiple;
+    cmd->chassis.ctrl_vec.vy *= cmd->param->move.acc_multiple;
+  }
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_DECELEBRATE))) {
+    cmd->chassis.ctrl_vec.vx *= cmd->param->move.dec_multiple;
+    cmd->chassis.ctrl_vec.vy *= cmd->param->move.dec_multiple;
+  }
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FIRE))) {
+    cmd->shoot.mode = SHOOT_MODE_FIRE;
+    cmd->shoot.shoot_freq_hz = 10u;
+    cmd->shoot.bullet_speed = 10.0f;
+  } else {
+    cmd->shoot.mode = SHOOT_MODE_STDBY;
+    cmd->shoot.shoot_freq_hz = 0u;
+    cmd->shoot.bullet_speed = 2.0f;
+  }
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BUFF))) {
+  }
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_AUTOSHOOT))) {
+  }
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_SWITCH))) {
+  }
+}
+
+/**
  * @brief 解析命令
  *
  * @param rc 遥控器数据
@@ -59,38 +116,11 @@ int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
 
   /* PC键位映射和逻辑. */
   if (cmd->pc_ctrl) {
+    BehaviorParse(rc, cmd);
     cmd->gimbal.delta_eulr.yaw =
         (float)rc->mouse.x * dt_sec * cmd->param->sens_mouse;
     cmd->gimbal.delta_eulr.pit =
         (float)rc->mouse.y * dt_sec * cmd->param->sens_mouse;
-
-    if (rc->mouse.l_click) {
-      if (rc->mouse.r_click) {
-        cmd->shoot.shoot_freq_hz = 5u;
-        cmd->shoot.bullet_speed = 20.0f;
-      } else {
-        cmd->shoot.shoot_freq_hz = 10u;
-        cmd->shoot.bullet_speed = 10.0f;
-      }
-    } else {
-      cmd->shoot.shoot_freq_hz = 0u;
-      cmd->shoot.bullet_speed = 0.0f;
-    }
-
-    if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT) &&
-        CMD_KeyPressedRc(rc, CMD_KEY_CTRL)) {
-      if (CMD_KeyPressedRc(rc, CMD_KEY_A))
-        cmd->shoot.mode = SHOOT_MODE_SAFE;
-
-      else if (CMD_KeyPressedRc(rc, CMD_KEY_S))
-        cmd->shoot.mode = SHOOT_MODE_STDBY;
-
-      else if (CMD_KeyPressedRc(rc, CMD_KEY_D))
-        cmd->shoot.mode = SHOOT_MODE_FIRE;
-
-      else
-        cmd->shoot.mode = SHOOT_MODE_RELAX;
-    }
   } else {
     /* RC键位映射和逻辑. */
     if ((rc->sw_l == CMD_SW_ERR) || (rc->sw_r == CMD_SW_ERR)) {
