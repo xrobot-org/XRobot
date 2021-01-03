@@ -14,8 +14,10 @@
 /* Private variables -------------------------------------------------------- */
 #ifdef DEBUG
 AI_t ai;
+CMD_Host_t cmd_host;
 #else
 static AI_t ai;
+CMD_Host_t cmd_host;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -32,8 +34,6 @@ void Task_Ai(void *argument) {
   /* 计算任务运行到指定频率，需要延时的时间 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_AI;
 
-  osDelay(TASK_INIT_DELAY_AI); /* 延时一段时间再开启 */
-
   /* 初始化AI通信 */
   AI_Init(&ai, osThreadGetId());
 
@@ -46,10 +46,14 @@ void Task_Ai(void *argument) {
     tick += delay_tick;
 
     AI_StartReceiving(&ai);
+
     if (AI_WaitDmaCplt()) {
-      AI_Parse(&ai);
-      osMessageQueuePut(task_runtime.msgq.raw_cmd.ai_raw, &(ai.command), 0, 0);
+      AI_ParseHost(&ai, &cmd_host);
+    } else {
+      AI_HandleOffline(&ai, &cmd_host);
     }
+
+    osMessageQueuePut(task_runtime.msgq.cmd.raw.host, &(cmd_host), 0, 0);
 
     osDelayUntil(tick);
   }

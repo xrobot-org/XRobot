@@ -84,8 +84,8 @@ typedef struct {
 } CMD_Params_t;
 
 typedef struct {
-  bool pc_ctrl;          /* 是否使用键鼠控制 */
-  bool ai_ctrl; /* 是否AI控制 */
+  bool pc_ctrl;        /* 是否使用键鼠控制 */
+  bool host_overwrite; /* 是否Host控制 */
 
   const CMD_Params_t *param;
 
@@ -127,13 +127,13 @@ typedef struct {
   } mouse;        /* 鼠标值 */
 
   uint16_t key; /* 按键值 */
-} CMD_AI_t;
+} CMD_Host_t;
 
-int8_t CMD_ChechAiControl(CMD_t *cmd);
+#define CMD_CHECK_HOST_OVERWRITE(__CMD__) ((__CMD__)->host_overwrite)
 
 int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param);
 int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec);
-int8_t CMD_ParseAi(const CMD_AI_t *ai, CMD_t *cmd, float dt_sec);
+int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec);
 
 #ifdef __cplusplus
 }

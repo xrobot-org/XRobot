@@ -14,10 +14,10 @@
 /* Private variables -------------------------------------------------------- */
 #ifdef DEBUG
 DR16_t dr16;
-CMD_RC_t rc;
+CMD_RC_t cmd_rc;
 #else
 static DR16_t dr16;
-static CMD_RC_t rc;
+static CMD_RC_t cmd_rc;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -43,11 +43,11 @@ void Task_RC(void *argument) {
 
     if (DR16_WaitDmaCplt(20)) {
       /* 转换 */
-      DR16_ParseRC(&dr16, &rc);
+      DR16_ParseRC(&dr16, &cmd_rc);
     } else {
       /* 处理遥控器离线 */
-      DR16_HandleOffline(&dr16, &rc);
+      DR16_HandleOffline(&dr16, &cmd_rc);
     }
-    osMessageQueuePut(task_runtime.msgq.raw_cmd.rc_raw, &rc, 0, 0);
+    osMessageQueuePut(task_runtime.msgq.cmd.raw.rc, &cmd_rc, 0, 0);
   }
 }

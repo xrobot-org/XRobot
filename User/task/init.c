@@ -81,10 +81,9 @@ void Task_Init(void *argument) {
       osMessageQueueNew(3u, sizeof(CMD_ShootCmd_t), NULL);
 
   /* atti_esti */
-  task_runtime.msgq.raw_cmd.rc_raw =
-      osMessageQueueNew(3u, sizeof(CMD_RC_t), NULL);
-  task_runtime.msgq.raw_cmd.ai_raw =
-      osMessageQueueNew(3u, sizeof(CMD_AI_t), NULL);
+  task_runtime.msgq.cmd.raw.rc = osMessageQueueNew(3u, sizeof(CMD_RC_t), NULL);
+  task_runtime.msgq.cmd.raw.host =
+      osMessageQueueNew(3u, sizeof(CMD_Host_t), NULL);
 
   task_runtime.msgq.gimbal.accl =
       osMessageQueueNew(6u, sizeof(AHRS_Accl_t), NULL);

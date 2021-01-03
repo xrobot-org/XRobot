@@ -16,8 +16,8 @@ static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_KeyValue_t key) {
   return rc->key & (1u << key);
 }
 
-static bool CMD_KeyPressedAi(const CMD_AI_t *ai, CMD_KeyValue_t key) {
-  return ai->key & (1u << key);
+static bool CMD_KeyPressedHost(const CMD_Host_t *host, CMD_KeyValue_t key) {
+  return host->key & (1u << key);
 }
 
 /**
@@ -33,11 +33,6 @@ int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
   cmd->pc_ctrl = false;
   cmd->param = param;
 
-  return 0;
-}
-
-int8_t CMD_ChechAiControl(CMD_t *cmd) {
-  cmd->ai_ctrl = false;
   return 0;
 }
 
@@ -158,22 +153,22 @@ int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
 /**
  * @brief 解析上位机命令
  *
- * @param ai ai数据
+ * @param host host数据
  * @param cmd 命令
  * @param dt_sec 两次解析的间隔
  * @return int8_t 0对应没有错误
  */
-int8_t CMD_ParseAi(const CMD_AI_t *ai, CMD_t *cmd, float dt_sec) {
-  if (ai == NULL) return -1;
+int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
+  if (host == NULL) return -1;
   if (cmd == NULL) return -1;
 
   cmd->gimbal.delta_eulr.yaw =
-      (float)ai->mouse.x * dt_sec * cmd->param->sens_mouse;
+      (float)host->mouse.x * dt_sec * cmd->param->sens_mouse;
   cmd->gimbal.delta_eulr.pit =
-      (float)ai->mouse.y * dt_sec * cmd->param->sens_mouse;
+      (float)host->mouse.y * dt_sec * cmd->param->sens_mouse;
 
-  if (ai->mouse.l_click) {
-    if (ai->mouse.r_click) {
+  if (host->mouse.l_click) {
+    if (host->mouse.r_click) {
       cmd->shoot.shoot_freq_hz = 5u;
       cmd->shoot.bullet_speed = 20.0f;
     } else {
@@ -185,15 +180,15 @@ int8_t CMD_ParseAi(const CMD_AI_t *ai, CMD_t *cmd, float dt_sec) {
     cmd->shoot.bullet_speed = 0.0f;
   }
 
-  if (CMD_KeyPressedAi(ai, CMD_KEY_SHIFT) &&
-      CMD_KeyPressedAi(ai, CMD_KEY_CTRL)) {
-    if (CMD_KeyPressedAi(ai, CMD_KEY_A))
+  if (CMD_KeyPressedHost(host, CMD_KEY_SHIFT) &&
+      CMD_KeyPressedHost(host, CMD_KEY_CTRL)) {
+    if (CMD_KeyPressedHost(host, CMD_KEY_A))
       cmd->shoot.mode = SHOOT_MODE_SAFE;
 
-    else if (CMD_KeyPressedAi(ai, CMD_KEY_S))
+    else if (CMD_KeyPressedHost(host, CMD_KEY_S))
       cmd->shoot.mode = SHOOT_MODE_STDBY;
 
-    else if (CMD_KeyPressedAi(ai, CMD_KEY_D))
+    else if (CMD_KeyPressedHost(host, CMD_KEY_D))
       cmd->shoot.mode = SHOOT_MODE_FIRE;
 
     else

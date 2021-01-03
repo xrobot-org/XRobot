@@ -29,7 +29,6 @@ static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
 
-//???????
 static void Ai_RxCpltCallback(void) {
   osThreadFlagsSet(gai->thread_alert, SIGNAL_AI_RAW_REDY);
 }
@@ -63,10 +62,6 @@ int8_t AI_Init(AI_t *ai, osThreadId_t thread_alert) {
   return 0;
 }
 
-bool AI_WaitDmaCplt(void) {
-  return (osThreadFlagsWait(SIGNAL_AI_RAW_REDY, osFlagsWaitAll, 0) == osOK);
-}
-
 int8_t ai_Restart(void) {
   __HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_DR16));
   __HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_DR16));
@@ -81,7 +76,13 @@ int8_t AI_StartReceiving(AI_t *ai) {
   return DEVICE_ERR;
 }
 
-int8_t AI_Parse(AI_t *ai) {
+bool AI_WaitDmaCplt(void) {
+  return (osThreadFlagsWait(SIGNAL_AI_RAW_REDY, osFlagsWaitAll, 0) == osOK);
+}
+
+int8_t AI_ParseHost(AI_t *ai, CMD_Host_t *cmd_host) {
+  (void)cmd_host;
+  // TODO: 从头重写
   uint32_t data_length =
       AI_LEN_RX_BUFF -
       __HAL_DMA_GET_COUNTER(BSP_UART_GetHandle(BSP_UART_AI)->hdmarx);
@@ -108,7 +109,7 @@ int8_t AI_Parse(AI_t *ai) {
   switch (*cmd_id) {
     case AI_CMD_ID_COMMAND:
       origin = &(ai->command);
-      size = sizeof(CMD_AI_t);
+      size = sizeof(CMD_Host_t);
       break;
 
     default:
@@ -130,4 +131,13 @@ int8_t AI_Parse(AI_t *ai) {
 error:
   drop_message++;
   return DEVICE_ERR;
+}
+
+int8_t AI_HandleOffline(AI_t *ai, CMD_Host_t *cmd_host) {
+  if (ai == NULL) return DEVICE_ERR_NULL;
+  if (cmd_host == NULL) return DEVICE_ERR_NULL;
+
+  (void)ai;
+  memset(cmd_host, 0, sizeof(CMD_Host_t));
+  return 0;
 }

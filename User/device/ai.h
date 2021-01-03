@@ -38,17 +38,18 @@ typedef struct {
 
   AI_CMDID_t cmd_id;
 
-  CMD_AI_t command;
+  CMD_Host_t command;
 
 } AI_t;
 
 /* Exported functions prototypes -------------------------------------------- */
 int8_t AI_Init(AI_t *ai, osThreadId_t thread_alert);
-bool AI_WaitDmaCplt(void);
 int8_t AI_Restart(void);
 
 int8_t AI_StartReceiving(AI_t *ai);
-int8_t AI_Parse(AI_t *ai);
+bool AI_WaitDmaCplt(void);
+int8_t AI_ParseHost(AI_t *ai, CMD_Host_t *cmd_host);
+int8_t AI_HandleOffline(AI_t *ai, CMD_Host_t *cmd_host);
 
 #ifdef __cplusplus
 }
