@@ -53,28 +53,26 @@ static uint16_t CMD_BehaviorToKey(const CMD_t *cmd, CMD_Behavior_t behavior) {
  * @param rc 遥控器数据
  * @param cmd 主结构体
  */
-static void BehaviorParse(const CMD_RC_t *rc, CMD_t *cmd) {
-  cmd->chassis.ctrl_vec.vx = 0;
-  cmd->chassis.ctrl_vec.vy = 0;
+static void CMD_BehaviorParse(const CMD_RC_t *rc, CMD_t *cmd) {
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FORE))) {
-    cmd->chassis.ctrl_vec.vx += cmd->param->move.sens_move;
+    cmd->chassis.ctrl_vec.vx = cmd->param->move.move_sense;
   }
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BACK))) {
-    cmd->chassis.ctrl_vec.vx -= cmd->param->move.sens_move;
+    cmd->chassis.ctrl_vec.vx = -cmd->param->move.move_sense;
   }
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_LEFT))) {
-    cmd->chassis.ctrl_vec.vy += cmd->param->move.sens_move;
+    cmd->chassis.ctrl_vec.vy = cmd->param->move.move_sense;
   }
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_RIGHT))) {
-    cmd->chassis.ctrl_vec.vy -= cmd->param->move.sens_move;
+    cmd->chassis.ctrl_vec.vy = -cmd->param->move.move_sense;
   }
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ACCELERATE))) {
-    cmd->chassis.ctrl_vec.vx *= cmd->param->move.acc_multiple;
-    cmd->chassis.ctrl_vec.vy *= cmd->param->move.acc_multiple;
+    cmd->chassis.ctrl_vec.vx *= cmd->param->move.move_fast_sense;
+    cmd->chassis.ctrl_vec.vy *= cmd->param->move.move_fast_sense;
   }
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_DECELEBRATE))) {
-    cmd->chassis.ctrl_vec.vx *= cmd->param->move.dec_multiple;
-    cmd->chassis.ctrl_vec.vy *= cmd->param->move.dec_multiple;
+    cmd->chassis.ctrl_vec.vx *= cmd->param->move.move_slow_sense;
+    cmd->chassis.ctrl_vec.vy *= cmd->param->move.move_slow_sense;
   }
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FIRE))) {
     cmd->shoot.mode = SHOOT_MODE_FIRE;
@@ -116,7 +114,7 @@ int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
 
   /* PC键位映射和逻辑. */
   if (cmd->pc_ctrl) {
-    BehaviorParse(rc, cmd);
+    CMD_BehaviorParse(rc, cmd);
     cmd->gimbal.delta_eulr.yaw =
         (float)rc->mouse.x * dt_sec * cmd->param->sens_mouse;
     cmd->gimbal.delta_eulr.pit =

@@ -108,9 +108,9 @@ typedef struct {
 } CMD_KeyMap_Params_t;
 
 typedef struct {
-  float sens_move;    /* 移动灵敏度 */
-  float acc_multiple; /* 加速灵敏度 */
-  float dec_multiple; /* 减速灵敏度 */
+  float move_sense;    /* 移动灵敏度 */
+  float move_fast_sense; /* 加速灵敏度 */
+  float move_slow_sense; /* 减速灵敏度 */
 } CMD_MOVE_Params_t;
 
 /* 命令参数 */

@@ -297,20 +297,20 @@ static const Config_PilotCfg_t cfg_qs = {
     },
     .map = {
       .Key_Mapping[CMD_BEHAVIOR_FORE] = CMD_KEY_W,
-      .Key_Mapping[CMD_BEHAVIOR_BACK]=CMD_KEY_S,
-      .Key_Mapping[CMD_BEHAVIOR_LEFT]=CMD_KEY_D,
-      .Key_Mapping[CMD_BEHAVIOR_RIGHT]=CMD_BEHAVIOR_RIGHT,
-      .Key_Mapping[CMD_BEHAVIOR_ACCELERATE]=CMD_KEY_SHIFT,
-      .Key_Mapping[CMD_BEHAVIOR_DECELEBRATE]=CMD_KEY_CTRL,
-      .Key_Mapping[CMD_BEHAVIOR_FIRE]=CMD_KEY_Q,
-      .Key_Mapping[CMD_BEHAVIOR_BUFF]=CMD_KEY_E,
-      .Key_Mapping[CMD_BEHAVIOR_AUTOSHOOT]=CMD_KEY_R,
-      .Key_Mapping[CMD_BEHAVIOR_SWITCH]=CMD_KEY_F,
+      .Key_Mapping[CMD_BEHAVIOR_BACK] = CMD_KEY_S,
+      .Key_Mapping[CMD_BEHAVIOR_LEFT] = CMD_KEY_D,
+      .Key_Mapping[CMD_BEHAVIOR_RIGHT] = CMD_BEHAVIOR_RIGHT,
+      .Key_Mapping[CMD_BEHAVIOR_ACCELERATE] = CMD_KEY_SHIFT,
+      .Key_Mapping[CMD_BEHAVIOR_DECELEBRATE] = CMD_KEY_CTRL,
+      .Key_Mapping[CMD_BEHAVIOR_FIRE] = CMD_KEY_Q,
+      .Key_Mapping[CMD_BEHAVIOR_BUFF] = CMD_KEY_E,
+      .Key_Mapping[CMD_BEHAVIOR_AUTOSHOOT] = CMD_KEY_R,
+      .Key_Mapping[CMD_BEHAVIOR_SWITCH] = CMD_KEY_F,
     },
     .move = {
-      .sens_move = 0.0f,
-      .acc_multiple = 1.5f,
-	    .dec_multiple = 1.5f,		
+      .move_sense = 0.8f,
+      .move_fast_sense = 1.2f,
+	    .move_slow_sense = 0.8f,		
     },       
   },
 };
@@ -398,7 +398,9 @@ const Config_PilotCfg_t *Config_GetPilotCfg(const char *pilot_cfg_name) {
   return NULL; /* No match. */
 }
 
-const Config_PilotCfgMap_t *Config_GetPilotNameMap(void) { return pilot_cfg_map; }
+const Config_PilotCfgMap_t *Config_GetPilotNameMap(void) {
+  return pilot_cfg_map;
+}
 
 const Config_RobotParamMap_t *Config_GetRobotNameMap(void) {
   return robot_param_map;
