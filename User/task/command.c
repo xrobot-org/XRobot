@@ -21,12 +21,12 @@
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 #ifdef DEBUG
-CMD_RC_t rc_raw;
-CMD_AI_t ai_raw;
+CMD_RC_t rc;
+CMD_Host_t host;
 CMD_t cmd;
 #else
-static CMD_RC_t rc_raw;
-static CMD_AI_t ai_raw;
+static CMD_RC_t rc;
+static CMD_Host_t host;
 static CMD_t cmd;
 #endif
 
@@ -56,19 +56,17 @@ void Task_Command(void *argument) {
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 
-    osMessageQueueGet(task_runtime.msgq.raw_cmd.rc_raw, &rc_raw, 0, 0);
-    osMessageQueueGet(task_runtime.msgq.raw_cmd.ai_raw, &ai_raw, 0, 0);
+    osMessageQueueGet(task_runtime.msgq.cmd.raw.rc, &rc, 0, 0);
+    osMessageQueueGet(task_runtime.msgq.cmd.raw.host, &host, 0, 0);
 
     osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
 
-    /* 控制权交换 */
-    CMD_ChechAiControl(&cmd);
     /* 将接收机数据解析为指令数据 */
-    if (cmd.ai_ctrl) {
-      CMD_ParseAi(&ai_raw, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
-    } else {
-      CMD_ParseRc(&rc_raw, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
-    }
+    CMD_ParseRc(&rc, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
+
+    /* 判断是否需要让上位机覆写指令 */
+    if (CMD_CHECK_HOST_OVERWRITE(&cmd))
+      CMD_ParseHost(&host, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
 
     osKernelUnlock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
 

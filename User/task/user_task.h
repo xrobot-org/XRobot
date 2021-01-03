@@ -62,16 +62,15 @@ typedef struct {
 
     /* 控制指令 */
     struct {
+      struct {
+        osMessageQueueId_t host;
+        osMessageQueueId_t rc;
+      } raw;
+
       osMessageQueueId_t chassis;
       osMessageQueueId_t gimbal;
       osMessageQueueId_t shoot;
     } cmd;
-
-    /* 原始控制指令 */
-    struct {
-      osMessageQueueId_t ai_raw;
-      osMessageQueueId_t rc_raw;
-    } raw_cmd;
 
     /* can任务放入、读取，电机或电容的输入输出 */
     struct {
