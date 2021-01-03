@@ -28,8 +28,10 @@ typedef struct {
 /* 操作员配置 */
 typedef struct {
   struct {
-    CMD_Params_t cmd; /* 遥控命令 */
-  } param;            /* 参数 */
+    CMD_Params_t cmd;        /* 遥控命令 */
+    CMD_KeyMap_Params_t map; /* 按键行为映射 */
+    CMD_MOVE_Params_t move;  /* 位移参数 */
+  } param;                   /* 参数 */
 
   struct {
     void (*MapChassis)(void);
