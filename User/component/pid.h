@@ -17,9 +17,9 @@ extern "C" {
 /* PID模式 */
 typedef enum {
   KPID_MODE_NO_D = 0, /* 不使用微分项，PI控制器 */
-  KPID_MODE_CALC_D_ERR, /* 根据误差的值计算离散微分，忽略PID_Calc中的val_dot */
-  KPID_MODE_CALC_D_FB, /* 根据反馈的值计算离散微分，忽略PID_Calc中的val_dot */
-  KPID_MODE_SET_D /* 直接提供微分值，PID_Calc中的val_dot将被使用，(Gyros) */
+  KPID_MODE_CALC_D_ERR, /* 根据误差的值计算离散微分，忽略PID_Calc中的fb_dot */
+  KPID_MODE_CALC_D_FB, /* 根据反馈的值计算离散微分，忽略PID_Calc中的fb_dot */
+  KPID_MODE_SET_D /* 直接提供微分值，PID_Calc中的fb_dot将被使用，(Gyros) */
 } KPID_Mode_t;
 
 /* PID参数 */
@@ -66,16 +66,15 @@ int8_t PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
 
 /**
  * @brief PID计算
- * TODO：val_dot改为fb_dot
  *
  * @param pid PID结构体
  * @param sp 设定值
  * @param fb 反馈值
- * @param val_dot 反馈值微分
+ * @param fb_dot 反馈值微分
  * @param dt 间隔时间
  * @return float 计算的输出
  */
-float PID_Calc(KPID_t *pid, float sp, float fb, float val_dot, float dt);
+float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt);
 
 /**
  * @brief 重置微分项

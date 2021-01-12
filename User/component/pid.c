@@ -52,17 +52,16 @@ int8_t PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
 
 /**
  * @brief PID计算
- * TODO：val_dot改为fb_dot
  *
  * @param pid PID结构体
  * @param sp 设定值
  * @param fb 反馈值
- * @param val_dot 反馈值微分
+ * @param fb_dot 反馈值微分
  * @param dt 间隔时间
  * @return float 计算的输出
  */
-float PID_Calc(KPID_t *pid, float sp, float fb, float val_dot, float dt) {
-  if (!isfinite(sp) || !isfinite(fb) || !isfinite(val_dot) || !isfinite(dt)) {
+float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt) {
+  if (!isfinite(sp) || !isfinite(fb) || !isfinite(fb_dot) || !isfinite(dt)) {
     return pid->out_last;
   }
 
@@ -89,7 +88,7 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float val_dot, float dt) {
       break;
 
     case KPID_MODE_SET_D:
-      d = -val_dot;
+      d = -fb_dot;
       break;
 
     case KPID_MODE_NO_D:
