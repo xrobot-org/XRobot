@@ -17,6 +17,8 @@ Config_RobotParam_t param_default = {
 #else
 static const Config_RobotParam_t param_default = {
 #endif
+  .model = ROBOT_MODEL_INFANTRY,
+
   .chassis = { /* 底盘模块参数 */
     .type = CHASSIS_TYPE_MECANUM,
 
@@ -152,6 +154,8 @@ static const Config_RobotParam_t param_default = {
 }; /* param_default */
 
 static const Config_RobotParam_t param_hero = {
+  .model = ROBOT_MODEL_HERO,
+
   .chassis = { /* 底盘模块参数 */
     .type = CHASSIS_TYPE_MECANUM,
 
