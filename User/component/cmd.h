@@ -13,6 +13,15 @@ extern "C" {
 
 #include "ahrs.h"
 
+typedef enum {
+  ROBOT_MODEL_INFANTRY = 0, /* 步兵机器人 */
+  ROBOT_MODEL_HERO,         /* 步兵机器人 */
+  ROBOT_MODEL_ENGINEER,     /* 工程机器人 */
+  ROBOT_MODEL_DRONE,        /* 空中机器人 */
+  ROBOT_MODEL_SENTRY,       /* 哨兵机器人 */
+  ROBOT_MODEL_NUM,          /* 型号数量 */
+} CMD_RobotModel_t;         /* 机器人型号 */
+
 /* 底盘运行模式 */
 typedef enum {
   CHASSIS_MODE_RELAX, /* 放松模式，电机不输出。一般情况底盘初始化之后的模式 */
@@ -108,7 +117,7 @@ typedef struct {
 } CMD_KeyMap_Params_t;
 
 typedef struct {
-  float move_sense;    /* 移动灵敏度 */
+  float move_sense;      /* 移动灵敏度 */
   float move_fast_sense; /* 加速灵敏度 */
   float move_slow_sense; /* 减速灵敏度 */
 } CMD_MOVE_Params_t;
