@@ -107,8 +107,7 @@ typedef enum {
   CMD_BEHAVIOR_DECELEBRATE,
   CMD_BEHAVIOR_FIRE,
   CMD_BEHAVIOR_BUFF,
-  CMD_BEHAVIOR_AUTOSHOOT,
-  CMD_BEHAVIOR_SWITCH,
+  CMD_BEHAVIOR_AUTOAIM,
   CMD_BEHAVIOR_NUM,
 } CMD_Behavior_t;
 
@@ -130,9 +129,18 @@ typedef struct {
   CMD_MOVE_Params_t move;  /* 位移灵敏度参数 */
 } CMD_Params_t;
 
+typedef enum {
+  AI_STATUS_STOP,
+  AI_STATUS_AUTOAIM,
+  AI_STATUS_HITSWITCH,
+  AI_STATUS_AUTOMATIC
+} CMD_AI_Status_t;
+
 typedef struct {
   bool pc_ctrl;        /* 是否使用键鼠控制 */
   bool host_overwrite; /* 是否Host控制 */
+
+  CMD_AI_Status_t ai_status; /* AI状态 */
 
   const CMD_Params_t *param;
 
@@ -165,15 +173,11 @@ typedef struct {
 } CMD_RC_t;
 
 typedef struct {
-  struct {
-    int16_t x;
-    int16_t y;
-    int16_t z;
-    bool l_click; /* 左键 */
-    bool r_click; /* 右键 */
-  } mouse;        /* 鼠标值 */
+  AHRS_Eulr_t gimbal_delta; /* 欧拉角的变化量 */
 
-  uint16_t key; /* 按键值 */
+  float chassis_speed_setpoint;
+
+  bool fire;
 } CMD_Host_t;
 
 #define CMD_CHECK_HOST_OVERWRITE(__CMD__) ((__CMD__)->host_overwrite)

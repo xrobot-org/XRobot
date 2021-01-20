@@ -22,7 +22,6 @@ extern "C" {
 #define TASK_FREQ_INFO (4u)
 #define TASK_FREQ_MONITOR (2u)
 #define TASK_FREQ_CAN (1000u)
-#define TASK_FREQ_REFEREE (2u)
 #define TASK_FREQ_AI (250u)
 
 #define TASK_INIT_DELAY_INFO (500u)
@@ -70,6 +69,7 @@ typedef struct {
       osMessageQueueId_t chassis;
       osMessageQueueId_t gimbal;
       osMessageQueueId_t shoot;
+      osMessageQueueId_t ai;
     } cmd;
 
     /* can任务放入、读取，电机或电容的输入输出 */
@@ -88,6 +88,11 @@ typedef struct {
         osMessageQueueId_t cap;
       } feedback;
     } can;
+
+    struct {
+      osMessageQueueId_t quat;    /* 姿态解算得到 */
+      osMessageQueueId_t referee; /* 裁判系统信息 */
+    } ai;
 
     osMessageQueueId_t referee;
 

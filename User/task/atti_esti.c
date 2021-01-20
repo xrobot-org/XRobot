@@ -123,6 +123,8 @@ void Task_AttiEsti(void *argument) {
     /* 将需要与其他任务分享的数据放到消息队列中 */
     osMessageQueuePut(task_runtime.msgq.gimbal.accl, &bmi088.accl, 0, 0);
     osMessageQueuePut(task_runtime.msgq.gimbal.eulr_imu, &eulr_to_send, 0, 0);
+    osMessageQueuePut(task_runtime.msgq.ai.quat, &(gimbal_ahrs.quat),
+                      0, 0);
     osMessageQueuePut(task_runtime.msgq.gimbal.gyro, &bmi088.gyro, 0, 0);
 
     /* PID控制IMU温度，PWM输出 */

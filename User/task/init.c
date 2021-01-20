@@ -79,6 +79,8 @@ void Task_Init(void *argument) {
       osMessageQueueNew(3u, sizeof(CMD_GimbalCmd_t), NULL);
   task_runtime.msgq.cmd.shoot =
       osMessageQueueNew(3u, sizeof(CMD_ShootCmd_t), NULL);
+  task_runtime.msgq.cmd.ai =
+      osMessageQueueNew(6u, sizeof(CMD_AI_Status_t), NULL);
 
   /* atti_esti */
   task_runtime.msgq.cmd.raw.rc = osMessageQueueNew(3u, sizeof(CMD_RC_t), NULL);
@@ -95,6 +97,11 @@ void Task_Init(void *argument) {
   task_runtime.msgq.referee = osMessageQueueNew(6u, sizeof(Referee_t), NULL);
   task_runtime.msgq.cap_info =
       osMessageQueueNew(6u, sizeof(CAN_Capacitor_t), NULL);
+
+  /* AI */
+  task_runtime.msgq.ai.quat =
+      osMessageQueueNew(6u, sizeof(AHRS_Quaternion_t), NULL);
+  task_runtime.msgq.ai.referee = osMessageQueueNew(6u, sizeof(Referee_t), NULL);
 
   osKernelUnlock();
 
