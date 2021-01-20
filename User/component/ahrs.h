@@ -39,13 +39,18 @@ typedef struct {
   float z;
 } AHRS_Magn_t;
 
-/* 姿态解算算法主结构体 */
+/* 四元数 */
 typedef struct {
-  /* 四元数 */
   float q0;
   float q1;
   float q2;
   float q3;
+} AHRS_Quaternion_t;
+
+/* 姿态解算算法主结构体 */
+typedef struct {
+  /* 四元数 */
+  AHRS_Quaternion_t quat;
 
   float inv_sample_freq; /* 采样频率的的倒数 */
 } AHRS_t;

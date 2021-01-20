@@ -31,32 +31,26 @@ static Referee_t ref;
 void Task_Referee(void *argument) {
   (void)argument; /* 未使用argument，消除警告 */
 
-  /* 计算任务运行到指定频率，需要延时的时间 */
-  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_REFEREE;
-
   osDelay(TASK_INIT_DELAY_REFEREE); /* 延时一段时间再开启任务 */
 
   /* 初始化裁判系统 */
   Referee_Init(&ref, osThreadGetId());
 
-  uint32_t tick = osKernelGetTickCount();
   while (1) {
 #ifdef DEBUG
     task_runtime.stack_water_mark.referee = osThreadGetStackSpace(NULL);
 #endif
     /* Task body */
-    tick += delay_tick;
-
     Referee_StartReceiving(&ref);
     if (osThreadFlagsWait(SIGNAL_REFEREE_RAW_REDY, osFlagsWaitAll, 200) !=
-        osOK) {
+        SIGNAL_REFEREE_RAW_REDY) {
       Referee_HandleOffline(&ref);
     } else {
       Referee_Parse(&ref);
     }
     osMessageQueueReset(task_runtime.msgq.referee);
-    osMessageQueuePut(task_runtime.msgq.referee, &ref, 0, 0);
-
-    osDelayUntil(tick);
+    osMessageQueueReset(task_runtime.msgq.ai.referee);
+    osMessageQueuePut(task_runtime.msgq.referee, &(ref), 0, 0);
+    osMessageQueuePut(task_runtime.msgq.ai.referee, &(ref), 0, 0);
   }
 }

@@ -98,8 +98,7 @@ void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart) {
 /* Exported functions ------------------------------------------------------- */
 void BSP_UART_IRQHandler(UART_HandleTypeDef *huart) {
   if (__HAL_UART_GET_FLAG(huart, UART_FLAG_IDLE)) {
-    __HAL_UART_CLEAR_FLAG(huart, UART_FLAG_IDLE);
-
+    __HAL_UART_CLEAR_IDLEFLAG(huart);
     if (UART_Callback[UART_Get(huart)][BSP_UART_IDLE_LINE_CB]) {
       UART_Callback[UART_Get(huart)][BSP_UART_IDLE_LINE_CB]();
     }

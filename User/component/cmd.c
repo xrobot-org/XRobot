@@ -16,10 +16,6 @@ static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_KeyValue_t key) {
   return rc->key & (1u << key);
 }
 
-static bool CMD_KeyPressedHost(const CMD_Host_t *host, CMD_KeyValue_t key) {
-  return host->key & (1u << key);
-}
-
 /**
  * @brief 初始化命令解析
  *
@@ -84,11 +80,30 @@ static void CMD_BehaviorParse(const CMD_RC_t *rc, CMD_t *cmd) {
     cmd->shoot.bullet_speed = 2.0f;
   }
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BUFF))) {
+    if (cmd->ai_status == AI_STATUS_HITSWITCH) {
+      // TODO: 提醒操作员结束打BUFF
+      cmd->host_overwrite = false;
+      cmd->ai_status = AI_STATUS_STOP;
+    } else if (cmd->ai_status == AI_STATUS_AUTOAIM) {
+      // TODO: 提醒操作员
+    } else {
+      cmd->ai_status = AI_STATUS_HITSWITCH;
+      cmd->host_overwrite = true;
+    }
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_AUTOSHOOT))) {
-  }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_SWITCH))) {
-  }
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_AUTOAIM))) {
+    if (cmd->ai_status == AI_STATUS_AUTOAIM) {
+      cmd->host_overwrite = false;
+      cmd->ai_status = AI_STATUS_STOP;
+      // TODO: 提醒操作手停止自瞄
+    } else {
+      cmd->ai_status = AI_STATUS_AUTOAIM;
+      cmd->host_overwrite = true;
+      // TODO: 提醒操作员
+    }
+  } else
+    cmd->host_overwrite = false;
+  // TODO: 修复逻辑
 }
 
 /**
@@ -187,40 +202,19 @@ int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
  * @return int8_t 0对应没有错误
  */
 int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
+  (void)dt_sec;
   if (host == NULL) return -1;
   if (cmd == NULL) return -1;
 
-  cmd->gimbal.delta_eulr.yaw =
-      (float)host->mouse.x * dt_sec * cmd->param->sens_mouse;
-  cmd->gimbal.delta_eulr.pit =
-      (float)host->mouse.y * dt_sec * cmd->param->sens_mouse;
+  cmd->gimbal.delta_eulr.yaw = host->gimbal_delta.yaw;
+  cmd->gimbal.delta_eulr.pit = host->gimbal_delta.pit;
 
-  if (host->mouse.l_click) {
-    if (host->mouse.r_click) {
-      cmd->shoot.shoot_freq_hz = 5u;
-      cmd->shoot.bullet_speed = 20.0f;
-    } else {
-      cmd->shoot.shoot_freq_hz = 10u;
-      cmd->shoot.bullet_speed = 10.0f;
-    }
+  if (host->fire) {
+    cmd->shoot.shoot_freq_hz = 10u;
+    cmd->shoot.bullet_speed = 10.0f;
   } else {
     cmd->shoot.shoot_freq_hz = 0u;
     cmd->shoot.bullet_speed = 0.0f;
-  }
-
-  if (CMD_KeyPressedHost(host, CMD_KEY_SHIFT) &&
-      CMD_KeyPressedHost(host, CMD_KEY_CTRL)) {
-    if (CMD_KeyPressedHost(host, CMD_KEY_A))
-      cmd->shoot.mode = SHOOT_MODE_SAFE;
-
-    else if (CMD_KeyPressedHost(host, CMD_KEY_S))
-      cmd->shoot.mode = SHOOT_MODE_STDBY;
-
-    else if (CMD_KeyPressedHost(host, CMD_KEY_D))
-      cmd->shoot.mode = SHOOT_MODE_FIRE;
-
-    else
-      cmd->shoot.mode = SHOOT_MODE_RELAX;
   }
 
   return 0;

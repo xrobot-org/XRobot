@@ -308,8 +308,7 @@ static const Config_PilotCfg_t cfg_qs = {
       .Key_Mapping[CMD_BEHAVIOR_DECELEBRATE] = CMD_KEY_CTRL,
       .Key_Mapping[CMD_BEHAVIOR_FIRE] = CMD_KEY_Q,
       .Key_Mapping[CMD_BEHAVIOR_BUFF] = CMD_KEY_E,
-      .Key_Mapping[CMD_BEHAVIOR_AUTOSHOOT] = CMD_KEY_R,
-      .Key_Mapping[CMD_BEHAVIOR_SWITCH] = CMD_KEY_F,
+      .Key_Mapping[CMD_BEHAVIOR_AUTOAIM] = CMD_KEY_R,
     },
     .move = {
       .move_sense = 0.8f,

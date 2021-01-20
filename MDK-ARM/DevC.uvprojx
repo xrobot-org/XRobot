@@ -16,8 +16,8 @@
         <TargetCommonOption>
           <Device>STM32F407IGHx</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <PackID>Keil.STM32F4xx_DFP.2.15.0</PackID>
-          <PackURL>http://www.keil.com/pack/</PackURL>
+          <PackID>Keil.STM32F4xx_DFP.2.12.0</PackID>
+          <PackURL>http://www.keil.com/pack</PackURL>
           <Cpu>IRAM(0x20000000-0x2001FFFF) IRAM2(0x10000000-0x1000FFFF) IROM(0x8000000-0x80FFFFF)  CLOCK(25000000) FPU2 CPUTYPE("Cortex-M4")</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
@@ -1999,7 +1999,7 @@
               <MiscControls>-Wall -Wextra</MiscControls>
               <Define>USE_HAL_DRIVER,DEV_BOARD_C,STM32F407xx,DEBUG</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../USB_DEVICE/App;../USB_DEVICE/Target;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;..\Drivers\CMSIS\DSP\Include;..\User</IncludePath>
+              <IncludePath>../Core/Inc;../USB_DEVICE/App;../USB_DEVICE/Target;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;..\Drivers\CMSIS\DSP\Include;..\User;..\Middlewares\Third_Party\Protocol</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -3382,11 +3382,6 @@
     <Layers>
       <Layer>
         <LayName>DevC</LayName>
-        <LayDesc></LayDesc>
-        <LayUrl></LayUrl>
-        <LayKeys></LayKeys>
-        <LayCat></LayCat>
-        <LayLic></LayLic>
         <LayTarg>0</LayTarg>
         <LayPrjMark>1</LayPrjMark>
       </Layer>

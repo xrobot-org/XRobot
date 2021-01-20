@@ -14,118 +14,61 @@
 #include "component\user_math.h"
 
 /* Private define ----------------------------------------------------------- */
-#define AI_HEADER_SOF (0xA5)
-#define AI_LEN_RX_BUFF (0xFF)
-
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
 /* Private variables -------------------------------------------------------- */
 static volatile uint32_t drop_message = 0;
 
-static AI_t *gai;
-static uint8_t rxbuf[AI_LEN_RX_BUFF];
+static osThreadId_t thread_alert;
 
 static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
 
 static void Ai_RxCpltCallback(void) {
-  osThreadFlagsSet(gai->thread_alert, SIGNAL_AI_RAW_REDY);
-}
-
-static void Ai_IdleLineCallback(void) {
-  HAL_UART_AbortReceive_IT(BSP_UART_GetHandle(BSP_UART_AI));
-}
-
-static void Ai_AbortRxCpltCallback(void) {
-  osThreadFlagsSet(gai->thread_alert, SIGNAL_AI_RAW_REDY);
+  osThreadFlagsSet(thread_alert, SIGNAL_AI_RAW_REDY);
 }
 
 /* Exported functions ------------------------------------------------------- */
-int8_t AI_Init(AI_t *ai, osThreadId_t thread_alert) {
+int8_t AI_Init(AI_t *ai) {
   if (ai == NULL) return DEVICE_ERR_NULL;
   if (inited) return DEVICE_ERR_INITED;
-
-  ai->thread_alert = thread_alert;
+	if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
 
   BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_RX_CPLT_CB,
                             Ai_RxCpltCallback);
-  BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_ABORT_RX_CPLT_CB,
-                            Ai_AbortRxCpltCallback);
-  BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_IDLE_LINE_CB,
-                            Ai_IdleLineCallback);
-
-  __HAL_UART_ENABLE_IT(BSP_UART_GetHandle(BSP_UART_AI), UART_IT_IDLE);
-
-  gai = ai;
   inited = true;
   return 0;
 }
 
-int8_t ai_Restart(void) {
-  __HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_DR16));
-  __HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_DR16));
-  return 0;
+int8_t AI_Restart(void) {
+  __HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_AI));
+  __HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_AI));
+  return DEVICE_OK;
 }
 
 int8_t AI_StartReceiving(AI_t *ai) {
-  (void)ai;
-  if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_AI), rxbuf,
-                           AI_LEN_RX_BUFF) == HAL_OK)
+  if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_AI),
+                           (uint8_t *)&(ai->form_host),
+                           sizeof(Protocol_AI_t)) == HAL_OK)
     return DEVICE_OK;
   return DEVICE_ERR;
 }
 
 bool AI_WaitDmaCplt(void) {
-  return (osThreadFlagsWait(SIGNAL_AI_RAW_REDY, osFlagsWaitAll, 0) == osOK);
+  return (osThreadFlagsWait(SIGNAL_AI_RAW_REDY, osFlagsWaitAll, 0) ==
+          SIGNAL_AI_RAW_REDY);
 }
 
 int8_t AI_ParseHost(AI_t *ai, CMD_Host_t *cmd_host) {
   (void)cmd_host;
-  // TODO: 从头重写
-  uint32_t data_length =
-      AI_LEN_RX_BUFF -
-      __HAL_DMA_GET_COUNTER(BSP_UART_GetHandle(BSP_UART_AI)->hdmarx);
-
-  uint8_t index = 0;
-
-  AI_Header_t *header = (AI_Header_t *)(rxbuf + index);
-  index += sizeof(AI_Header_t);
-  if (index >= data_length) goto error;
-
-  if (CRC8_Verify((uint8_t *)header, sizeof(AI_Header_t))) goto error;
-
-  if (header->sof != AI_HEADER_SOF) goto error;
-
-  AI_CMDID_t *cmd_id = (AI_CMDID_t *)(rxbuf + index);
-  ai->cmd_id = *cmd_id;
-  index += sizeof(AI_CMDID_t);
-  if (index >= data_length) goto error;
-
-  void *target = (rxbuf + index);
-  void *origin;
-  size_t size;
-
-  switch (*cmd_id) {
-    case AI_CMD_ID_COMMAND:
-      origin = &(ai->command);
-      size = sizeof(CMD_Host_t);
-      break;
-
-    default:
-      return DEVICE_ERR;
-  }
-  index += size;
-  if (index >= data_length) goto error;
-
-  index += sizeof(Ai_Tail_t);
-  if (index != (data_length - 1)) goto error;
-
-  if (CRC16_Verify((uint8_t *)header, sizeof(AI_Header_t)))
-    memcpy(target, origin, size);
-  else
+  if (!CRC16_Verify((const uint8_t *)&(ai->form_host), sizeof(Protocol_AI_t)))
     goto error;
-
+  cmd_host->gimbal_delta.pit = ai->form_host.gimbal_delta.pit;
+  cmd_host->gimbal_delta.yaw = ai->form_host.gimbal_delta.yaw;
+  cmd_host->gimbal_delta.rol = ai->form_host.gimbal_delta.rol;
+  cmd_host->fire = (ai->form_host.notice & AI_NOTICE_FIRE);
+  cmd_host->chassis_speed_setpoint = ai->form_host.chassis_speed_setpoint;
   return DEVICE_OK;
 
 error:
@@ -137,7 +80,55 @@ int8_t AI_HandleOffline(AI_t *ai, CMD_Host_t *cmd_host) {
   if (ai == NULL) return DEVICE_ERR_NULL;
   if (cmd_host == NULL) return DEVICE_ERR_NULL;
 
-  (void)ai;
+  memset(&(ai->form_host), 0, sizeof(Protocol_AI_t));
   memset(cmd_host, 0, sizeof(CMD_Host_t));
   return 0;
+}
+
+int8_t AI_PackMCU(AI_t *ai, const AHRS_Quaternion_t *quat) {
+  ai->to_host.mcu.id = AI_ID_MCU;
+  ai->to_host.mcu.data.quat.q0 = quat->q0;
+  ai->to_host.mcu.data.quat.q1 = quat->q1;
+  ai->to_host.mcu.data.quat.q2 = quat->q2;
+  ai->to_host.mcu.data.quat.q3 = quat->q3;
+
+  ai->to_host.mcu.data.notice = 0;
+  if (ai->status == AI_STATUS_AUTOAIM)
+    ai->to_host.mcu.data.notice |= AI_NOTICE_AOTUAIM;
+  else if (ai->status == AI_STATUS_HITSWITCH)
+    ai->to_host.mcu.data.notice |= AI_NOTICE_HITSWITCH;
+  else if (ai->status == AI_STATUS_AUTOMATIC)
+    ai->to_host.mcu.data.notice |= AI_NOTICE_AUTOMATIC;
+
+  ai->to_host.mcu.data.crc16 =
+      CRC16_Calc((const uint8_t *)&(ai->to_host.mcu.data),
+                 sizeof(Protocol_Data_MCU_t) - sizeof(uint16_t), CRC16_INIT);
+  return DEVICE_OK;
+}
+
+int8_t AI_PackRef(AI_t *ai, const Referee_t *ref) {
+  (void)ref;
+  ai->to_host.ref.id = AI_ID_REF;
+  ai->to_host.ref.data.crc16 = CRC16_Calc(
+      (const uint8_t *)&(ai->to_host.ref.data),
+      sizeof(Protocol_Data_Referee_t) - sizeof(uint16_t), CRC16_INIT);
+  return DEVICE_OK;
+}
+
+int8_t AI_StartSend(AI_t *ai, bool ref_update) {
+  if (ref_update) {
+    if (HAL_UART_Transmit_DMA(
+            BSP_UART_GetHandle(BSP_UART_AI), (uint8_t *)&(ai->to_host),
+            sizeof(Protocol_MCU_t) + sizeof(Protocol_Referee_t)) == HAL_OK)
+      return DEVICE_OK;
+    else
+      return DEVICE_ERR;
+  } else {
+    if (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_AI),
+                              (uint8_t *)&(ai->to_host.mcu),
+                              sizeof(Protocol_MCU_t)) == HAL_OK)
+      return DEVICE_OK;
+    else
+      return DEVICE_ERR;
+  }
 }

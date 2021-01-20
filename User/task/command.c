@@ -66,11 +66,14 @@ void Task_Command(void *argument) {
 
     /* 判断是否需要让上位机覆写指令 */
     if (CMD_CHECK_HOST_OVERWRITE(&cmd))
+
       CMD_ParseHost(&host, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
 
     osKernelUnlock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
 
     /* 将需要与其他任务分享的数据放到消息队列中 */
+    osMessageQueueReset(task_runtime.msgq.cmd.ai);
+    osMessageQueuePut(task_runtime.msgq.cmd.ai, &(cmd.ai_status), 0, 0);
     osMessageQueuePut(task_runtime.msgq.cmd.chassis, &(cmd.chassis), 0, 0);
     osMessageQueuePut(task_runtime.msgq.cmd.gimbal, &(cmd.gimbal), 0, 0);
     osMessageQueuePut(task_runtime.msgq.cmd.shoot, &(cmd.shoot), 0, 0);

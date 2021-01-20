@@ -15,9 +15,13 @@
 #ifdef DEBUG
 AI_t ai;
 CMD_Host_t cmd_host;
+AHRS_Quaternion_t quat;
+Referee_t ref_ai;
 #else
 static AI_t ai;
-CMD_Host_t cmd_host;
+static CMD_Host_t cmd_host;
+static AHRS_Quaternion_t quat;
+static Referee_t ref_ai;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -35,7 +39,7 @@ void Task_Ai(void *argument) {
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_AI;
 
   /* 初始化AI通信 */
-  AI_Init(&ai, osThreadGetId());
+  AI_Init(&ai);
 
   uint32_t tick = osKernelGetTickCount();
   while (1) {
@@ -46,14 +50,21 @@ void Task_Ai(void *argument) {
     tick += delay_tick;
 
     AI_StartReceiving(&ai);
-
     if (AI_WaitDmaCplt()) {
       AI_ParseHost(&ai, &cmd_host);
     } else {
       AI_HandleOffline(&ai, &cmd_host);
     }
-
     osMessageQueuePut(task_runtime.msgq.cmd.raw.host, &(cmd_host), 0, 0);
+
+    osMessageQueueGet(task_runtime.msgq.ai.quat, &(quat), NULL, 0);
+    osMessageQueueGet(task_runtime.msgq.cmd.ai, &(ai.status), NULL, 0);
+    bool ref_update = (osMessageQueueGet(task_runtime.msgq.ai.referee,
+                                         &(ref_ai), NULL, 0) == osOK);
+    AI_PackMCU(&ai, &quat);
+    if (ref_update) AI_PackRef(&ai, &(ref_ai));
+
+    AI_StartSend(&(ai), ref_update);
 
     osDelayUntil(tick);
   }

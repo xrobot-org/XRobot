@@ -46,10 +46,14 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
       q3q3;
 
   /* Rate of change of quaternion from gyroscope */
-  q_dot1 = 0.5f * (-ahrs->q1 * gx - ahrs->q2 * gy - ahrs->q3 * gz);
-  q_dot2 = 0.5f * (ahrs->q0 * gx + ahrs->q2 * gz - ahrs->q3 * gy);
-  q_dot3 = 0.5f * (ahrs->q0 * gy - ahrs->q1 * gz + ahrs->q3 * gx);
-  q_dot4 = 0.5f * (ahrs->q0 * gz + ahrs->q1 * gy - ahrs->q2 * gx);
+  q_dot1 = 0.5f * (-ahrs->quat.q1 * gx - ahrs->quat.q2 * gy -
+                   ahrs->quat.q3 * gz);
+  q_dot2 = 0.5f * (ahrs->quat.q0 * gx + ahrs->quat.q2 * gz -
+                   ahrs->quat.q3 * gy);
+  q_dot3 = 0.5f * (ahrs->quat.q0 * gy - ahrs->quat.q1 * gz +
+                   ahrs->quat.q3 * gx);
+  q_dot4 = 0.5f * (ahrs->quat.q0 * gz + ahrs->quat.q1 * gy -
+                   ahrs->quat.q2 * gx);
 
   /* Compute feedback only if accelerometer measurement valid (avoids NaN in
    * accelerometer normalisation) */
@@ -61,28 +65,28 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
     az *= recip_norm;
 
     /* Auxiliary variables to avoid repeated arithmetic */
-    _2q0 = 2.0f * ahrs->q0;
-    _2q1 = 2.0f * ahrs->q1;
-    _2q2 = 2.0f * ahrs->q2;
-    _2q3 = 2.0f * ahrs->q3;
-    _4q0 = 4.0f * ahrs->q0;
-    _4q1 = 4.0f * ahrs->q1;
-    _4q2 = 4.0f * ahrs->q2;
-    _8q1 = 8.0f * ahrs->q1;
-    _8q2 = 8.0f * ahrs->q2;
-    q0q0 = ahrs->q0 * ahrs->q0;
-    q1q1 = ahrs->q1 * ahrs->q1;
-    q2q2 = ahrs->q2 * ahrs->q2;
-    q3q3 = ahrs->q3 * ahrs->q3;
+    _2q0 = 2.0f * ahrs->quat.q0;
+    _2q1 = 2.0f * ahrs->quat.q1;
+    _2q2 = 2.0f * ahrs->quat.q2;
+    _2q3 = 2.0f * ahrs->quat.q3;
+    _4q0 = 4.0f * ahrs->quat.q0;
+    _4q1 = 4.0f * ahrs->quat.q1;
+    _4q2 = 4.0f * ahrs->quat.q2;
+    _8q1 = 8.0f * ahrs->quat.q1;
+    _8q2 = 8.0f * ahrs->quat.q2;
+    q0q0 = ahrs->quat.q0 * ahrs->quat.q0;
+    q1q1 = ahrs->quat.q1 * ahrs->quat.q1;
+    q2q2 = ahrs->quat.q2 * ahrs->quat.q2;
+    q3q3 = ahrs->quat.q3 * ahrs->quat.q3;
 
     /* Gradient decent algorithm corrective step */
     s0 = _4q0 * q2q2 + _2q2 * ax + _4q0 * q1q1 - _2q1 * ay;
-    s1 = _4q1 * q3q3 - _2q3 * ax + 4.0f * q0q0 * ahrs->q1 - _2q0 * ay - _4q1 +
-         _8q1 * q1q1 + _8q1 * q2q2 + _4q1 * az;
-    s2 = 4.0f * q0q0 * ahrs->q2 + _2q0 * ax + _4q2 * q3q3 - _2q3 * ay - _4q2 +
-         _8q2 * q1q1 + _8q2 * q2q2 + _4q2 * az;
-    s3 =
-        4.0f * q1q1 * ahrs->q3 - _2q1 * ax + 4.0f * q2q2 * ahrs->q3 - _2q2 * ay;
+    s1 = _4q1 * q3q3 - _2q3 * ax + 4.0f * q0q0 * ahrs->quat.q1 -
+         _2q0 * ay - _4q1 + _8q1 * q1q1 + _8q1 * q2q2 + _4q1 * az;
+    s2 = 4.0f * q0q0 * ahrs->quat.q2 + _2q0 * ax + _4q2 * q3q3 -
+         _2q3 * ay - _4q2 + _8q2 * q1q1 + _8q2 * q2q2 + _4q2 * az;
+    s3 = 4.0f * q1q1 * ahrs->quat.q3 - _2q1 * ax +
+         4.0f * q2q2 * ahrs->quat.q3 - _2q2 * ay;
 
     /* normalise step magnitude */
     recip_norm = InvSqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3);
@@ -100,18 +104,20 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
   }
 
   /* Integrate rate of change of quaternion to yield quaternion */
-  ahrs->q0 += q_dot1 * ahrs->inv_sample_freq;
-  ahrs->q1 += q_dot2 * ahrs->inv_sample_freq;
-  ahrs->q2 += q_dot3 * ahrs->inv_sample_freq;
-  ahrs->q3 += q_dot4 * ahrs->inv_sample_freq;
+  ahrs->quat.q0 += q_dot1 * ahrs->inv_sample_freq;
+  ahrs->quat.q1 += q_dot2 * ahrs->inv_sample_freq;
+  ahrs->quat.q2 += q_dot3 * ahrs->inv_sample_freq;
+  ahrs->quat.q3 += q_dot4 * ahrs->inv_sample_freq;
 
   /* Normalise quaternion */
-  recip_norm = InvSqrt(ahrs->q0 * ahrs->q0 + ahrs->q1 * ahrs->q1 +
-                       ahrs->q2 * ahrs->q2 + ahrs->q3 * ahrs->q3);
-  ahrs->q0 *= recip_norm;
-  ahrs->q1 *= recip_norm;
-  ahrs->q2 *= recip_norm;
-  ahrs->q3 *= recip_norm;
+  recip_norm = InvSqrt(ahrs->quat.q0 * ahrs->quat.q0 +
+                       ahrs->quat.q1 * ahrs->quat.q1 +
+                       ahrs->quat.q2 * ahrs->quat.q2 +
+                       ahrs->quat.q3 * ahrs->quat.q3);
+  ahrs->quat.q0 *= recip_norm;
+  ahrs->quat.q1 *= recip_norm;
+  ahrs->quat.q2 *= recip_norm;
+  ahrs->quat.q3 *= recip_norm;
 
   return 0;
 }
@@ -129,43 +135,43 @@ int8_t AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq) {
 
   ahrs->inv_sample_freq = 1.0f / sample_freq;
 
-  ahrs->q0 = 1.0f;
-  ahrs->q1 = 0.0f;
-  ahrs->q2 = 0.0f;
-  ahrs->q3 = 0.0f;
+  ahrs->quat.q0 = 1.0f;
+  ahrs->quat.q1 = 0.0f;
+  ahrs->quat.q2 = 0.0f;
+  ahrs->quat.q3 = 0.0f;
 
   if (magn) {
     float yaw = -atan2(magn->y, magn->x);
 
     if ((magn->x == 0.0f) && (magn->y == 0.0f) && (magn->z == 0.0f)) {
-      ahrs->q0 = 0.800884545f;
-      ahrs->q1 = 0.00862364192f;
-      ahrs->q2 = -0.00283267116f;
-      ahrs->q3 = 0.598749936f;
+      ahrs->quat.q0 = 0.800884545f;
+      ahrs->quat.q1 = 0.00862364192f;
+      ahrs->quat.q2 = -0.00283267116f;
+      ahrs->quat.q3 = 0.598749936f;
 
     } else if ((yaw < (M_PI / 2.0f)) || (yaw > 0.0f)) {
-      ahrs->q0 = 0.997458339f;
-      ahrs->q1 = 0.000336312107f;
-      ahrs->q2 = -0.0057230792f;
-      ahrs->q3 = 0.0740156546;
+      ahrs->quat.q0 = 0.997458339f;
+      ahrs->quat.q1 = 0.000336312107f;
+      ahrs->quat.q2 = -0.0057230792f;
+      ahrs->quat.q3 = 0.0740156546;
 
     } else if ((yaw < M_PI) || (yaw > (M_PI / 2.0f))) {
-      ahrs->q0 = 0.800884545f;
-      ahrs->q1 = 0.00862364192f;
-      ahrs->q2 = -0.00283267116f;
-      ahrs->q3 = 0.598749936f;
+      ahrs->quat.q0 = 0.800884545f;
+      ahrs->quat.q1 = 0.00862364192f;
+      ahrs->quat.q2 = -0.00283267116f;
+      ahrs->quat.q3 = 0.598749936f;
 
     } else if ((yaw < 90.0f) || (yaw > M_PI)) {
-      ahrs->q0 = 0.800884545f;
-      ahrs->q1 = 0.00862364192f;
-      ahrs->q2 = -0.00283267116f;
-      ahrs->q3 = 0.598749936f;
+      ahrs->quat.q0 = 0.800884545f;
+      ahrs->quat.q1 = 0.00862364192f;
+      ahrs->quat.q2 = -0.00283267116f;
+      ahrs->quat.q3 = 0.598749936f;
 
     } else if ((yaw < 90.0f) || (yaw > 0.0f)) {
-      ahrs->q0 = 0.800884545f;
-      ahrs->q1 = 0.00862364192f;
-      ahrs->q2 = -0.00283267116f;
-      ahrs->q3 = 0.598749936f;
+      ahrs->quat.q0 = 0.800884545f;
+      ahrs->quat.q1 = 0.00862364192f;
+      ahrs->quat.q2 = -0.00283267116f;
+      ahrs->quat.q3 = 0.598749936f;
     }
   }
   return 0;
@@ -218,12 +224,17 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
   float gz = gyro->z;
 
   /* Rate of change of quaternion from gyroscope */
-  q_dot1 = 0.5f * (-ahrs->q1 * gx - ahrs->q2 * gy - ahrs->q3 * gz);
-  q_dot2 = 0.5f * (ahrs->q0 * gx + ahrs->q2 * gz - ahrs->q3 * gy);
-  q_dot3 = 0.5f * (ahrs->q0 * gy - ahrs->q1 * gz + ahrs->q3 * gx);
-  q_dot4 = 0.5f * (ahrs->q0 * gz + ahrs->q1 * gy - ahrs->q2 * gx);
+  q_dot1 = 0.5f * (-ahrs->quat.q1 * gx - ahrs->quat.q2 * gy -
+                   ahrs->quat.q3 * gz);
+  q_dot2 = 0.5f * (ahrs->quat.q0 * gx + ahrs->quat.q2 * gz -
+                   ahrs->quat.q3 * gy);
+  q_dot3 = 0.5f * (ahrs->quat.q0 * gy - ahrs->quat.q1 * gz +
+                   ahrs->quat.q3 * gx);
+  q_dot4 = 0.5f * (ahrs->quat.q0 * gz + ahrs->quat.q1 * gy -
+                   ahrs->quat.q2 * gx);
 
-  /* Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisation) */
+  /* Compute feedback only if accelerometer measurement valid (avoids NaN in
+   * accelerometer normalisation) */
   if (!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
     /* Normalise accelerometer measurement */
     recip_norm = InvSqrt(ax * ax + ay * ay + az * az);
@@ -238,77 +249,79 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
     mz *= recip_norm;
 
     /* Auxiliary variables to avoid repeated arithmetic */
-    _2q0mx = 2.0f * ahrs->q0 * mx;
-    _2q0my = 2.0f * ahrs->q0 * my;
-    _2q0mz = 2.0f * ahrs->q0 * mz;
-    _2q1mx = 2.0f * ahrs->q1 * mx;
-    _2q0 = 2.0f * ahrs->q0;
-    _2q1 = 2.0f * ahrs->q1;
-    _2q2 = 2.0f * ahrs->q2;
-    _2q3 = 2.0f * ahrs->q3;
-    _2q0q2 = 2.0f * ahrs->q0 * ahrs->q2;
-    _2q2q3 = 2.0f * ahrs->q2 * ahrs->q3;
-    q0q0 = ahrs->q0 * ahrs->q0;
-    q0q1 = ahrs->q0 * ahrs->q1;
-    q0q2 = ahrs->q0 * ahrs->q2;
-    q0q3 = ahrs->q0 * ahrs->q3;
-    q1q1 = ahrs->q1 * ahrs->q1;
-    q1q2 = ahrs->q1 * ahrs->q2;
-    q1q3 = ahrs->q1 * ahrs->q3;
-    q2q2 = ahrs->q2 * ahrs->q2;
-    q2q3 = ahrs->q2 * ahrs->q3;
-    q3q3 = ahrs->q3 * ahrs->q3;
+    _2q0mx = 2.0f * ahrs->quat.q0 * mx;
+    _2q0my = 2.0f * ahrs->quat.q0 * my;
+    _2q0mz = 2.0f * ahrs->quat.q0 * mz;
+    _2q1mx = 2.0f * ahrs->quat.q1 * mx;
+    _2q0 = 2.0f * ahrs->quat.q0;
+    _2q1 = 2.0f * ahrs->quat.q1;
+    _2q2 = 2.0f * ahrs->quat.q2;
+    _2q3 = 2.0f * ahrs->quat.q3;
+    _2q0q2 = 2.0f * ahrs->quat.q0 * ahrs->quat.q2;
+    _2q2q3 = 2.0f * ahrs->quat.q2 * ahrs->quat.q3;
+    q0q0 = ahrs->quat.q0 * ahrs->quat.q0;
+    q0q1 = ahrs->quat.q0 * ahrs->quat.q1;
+    q0q2 = ahrs->quat.q0 * ahrs->quat.q2;
+    q0q3 = ahrs->quat.q0 * ahrs->quat.q3;
+    q1q1 = ahrs->quat.q1 * ahrs->quat.q1;
+    q1q2 = ahrs->quat.q1 * ahrs->quat.q2;
+    q1q3 = ahrs->quat.q1 * ahrs->quat.q3;
+    q2q2 = ahrs->quat.q2 * ahrs->quat.q2;
+    q2q3 = ahrs->quat.q2 * ahrs->quat.q3;
+    q3q3 = ahrs->quat.q3 * ahrs->quat.q3;
 
     /* Reference direction of Earth's magnetic field */
-    hx = mx * q0q0 - _2q0my * ahrs->q3 + _2q0mz * ahrs->q2 + mx * q1q1 +
-         _2q1 * my * ahrs->q2 + _2q1 * mz * ahrs->q3 - mx * q2q2 - mx * q3q3;
-    hy = _2q0mx * ahrs->q3 + my * q0q0 - _2q0mz * ahrs->q1 + _2q1mx * ahrs->q2 -
-         my * q1q1 + my * q2q2 + _2q2 * mz * ahrs->q3 - my * q3q3;
+    hx = mx * q0q0 - _2q0my * ahrs->quat.q3 +
+         _2q0mz * ahrs->quat.q2 + mx * q1q1 +
+         _2q1 * my * ahrs->quat.q2 + _2q1 * mz * ahrs->quat.q3 -
+         mx * q2q2 - mx * q3q3;
+    hy = _2q0mx * ahrs->quat.q3 + my * q0q0 -
+         _2q0mz * ahrs->quat.q1 + _2q1mx * ahrs->quat.q2 -
+         my * q1q1 + my * q2q2 + _2q2 * mz * ahrs->quat.q3 - my * q3q3;
     _2bx = sqrtf(hx * hx + hy * hy);
-    _2bz = -_2q0mx * ahrs->q2 + _2q0my * ahrs->q1 + mz * q0q0 +
-           _2q1mx * ahrs->q3 - mz * q1q1 + _2q2 * my * ahrs->q3 - mz * q2q2 +
-           mz * q3q3;
+    _2bz = -_2q0mx * ahrs->quat.q2 + _2q0my * ahrs->quat.q1 +
+           mz * q0q0 + _2q1mx * ahrs->quat.q3 - mz * q1q1 +
+           _2q2 * my * ahrs->quat.q3 - mz * q2q2 + mz * q3q3;
     _4bx = 2.0f * _2bx;
     _4bz = 2.0f * _2bz;
 
     /* Gradient decent algorithm corrective step */
     s0 = -_2q2 * (2.0f * q1q3 - _2q0q2 - ax) +
          _2q1 * (2.0f * q0q1 + _2q2q3 - ay) -
-         _2bz * ahrs->q2 *
+         _2bz * ahrs->quat.q2 *
              (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - mx) +
-         (-_2bx * ahrs->q3 + _2bz * ahrs->q1) *
+         (-_2bx * ahrs->quat.q3 + _2bz * ahrs->quat.q1) *
              (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my) +
-         _2bx * ahrs->q2 *
+         _2bx * ahrs->quat.q2 *
              (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
     s1 = _2q3 * (2.0f * q1q3 - _2q0q2 - ax) +
          _2q0 * (2.0f * q0q1 + _2q2q3 - ay) -
-         4.0f * ahrs->q1 * (1 - 2.0f * q1q1 - 2.0f * q2q2 - az) +
-         _2bz * ahrs->q3 *
+         4.0f * ahrs->quat.q1 * (1 - 2.0f * q1q1 - 2.0f * q2q2 - az) +
+         _2bz * ahrs->quat.q3 *
              (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - mx) +
-         (_2bx * ahrs->q2 + _2bz * ahrs->q0) *
+         (_2bx * ahrs->quat.q2 + _2bz * ahrs->quat.q0) *
              (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my) +
-         (_2bx * ahrs->q3 - _4bz * ahrs->q1) *
+         (_2bx * ahrs->quat.q3 - _4bz * ahrs->quat.q1) *
              (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
     s2 = -_2q0 * (2.0f * q1q3 - _2q0q2 - ax) +
          _2q3 * (2.0f * q0q1 + _2q2q3 - ay) -
-         4.0f * ahrs->q2 * (1 - 2.0f * q1q1 - 2.0f * q2q2 - az) +
-         (-_4bx * ahrs->q2 - _2bz * ahrs->q0) *
+         4.0f * ahrs->quat.q2 * (1 - 2.0f * q1q1 - 2.0f * q2q2 - az) +
+         (-_4bx * ahrs->quat.q2 - _2bz * ahrs->quat.q0) *
              (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - mx) +
-         (_2bx * ahrs->q1 + _2bz * ahrs->q3) *
+         (_2bx * ahrs->quat.q1 + _2bz * ahrs->quat.q3) *
              (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my) +
-         (_2bx * ahrs->q0 - _4bz * ahrs->q2) *
+         (_2bx * ahrs->quat.q0 - _4bz * ahrs->quat.q2) *
              (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
     s3 = _2q1 * (2.0f * q1q3 - _2q0q2 - ax) +
          _2q2 * (2.0f * q0q1 + _2q2q3 - ay) +
-         (-_4bx * ahrs->q3 + _2bz * ahrs->q1) *
+         (-_4bx * ahrs->quat.q3 + _2bz * ahrs->quat.q1) *
              (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - mx) +
-         (-_2bx * ahrs->q0 + _2bz * ahrs->q2) *
+         (-_2bx * ahrs->quat.q0 + _2bz * ahrs->quat.q2) *
              (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my) +
-         _2bx * ahrs->q1 *
+         _2bx * ahrs->quat.q1 *
              (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
     /* normalise step magnitude */
-    recip_norm = InvSqrt(s0 * s0 + s1 * s1 + s2 * s2 +
-                         s3 * s3);  
+    recip_norm = InvSqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3);
     s0 *= recip_norm;
     s1 *= recip_norm;
     s2 *= recip_norm;
@@ -322,18 +335,20 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
   }
 
   /* Integrate rate of change of quaternion to yield quaternion */
-  ahrs->q0 += q_dot1 * ahrs->inv_sample_freq;
-  ahrs->q1 += q_dot2 * ahrs->inv_sample_freq;
-  ahrs->q2 += q_dot3 * ahrs->inv_sample_freq;
-  ahrs->q3 += q_dot4 * ahrs->inv_sample_freq;
+  ahrs->quat.q0 += q_dot1 * ahrs->inv_sample_freq;
+  ahrs->quat.q1 += q_dot2 * ahrs->inv_sample_freq;
+  ahrs->quat.q2 += q_dot3 * ahrs->inv_sample_freq;
+  ahrs->quat.q3 += q_dot4 * ahrs->inv_sample_freq;
 
   /* Normalise quaternion */
-  recip_norm = InvSqrt(ahrs->q0 * ahrs->q0 + ahrs->q1 * ahrs->q1 +
-                       ahrs->q2 * ahrs->q2 + ahrs->q3 * ahrs->q3);
-  ahrs->q0 *= recip_norm;
-  ahrs->q1 *= recip_norm;
-  ahrs->q2 *= recip_norm;
-  ahrs->q3 *= recip_norm;
+  recip_norm = InvSqrt(ahrs->quat.q0 * ahrs->quat.q0 +
+                       ahrs->quat.q1 * ahrs->quat.q1 +
+                       ahrs->quat.q2 * ahrs->quat.q2 +
+                       ahrs->quat.q3 * ahrs->quat.q3);
+  ahrs->quat.q0 *= recip_norm;
+  ahrs->quat.q1 *= recip_norm;
+  ahrs->quat.q2 *= recip_norm;
+  ahrs->quat.q3 *= recip_norm;
 
   return 0;
 }
@@ -349,21 +364,26 @@ int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
   if (eulr == NULL) return -1;
   if (ahrs == NULL) return -1;
 
-  const float sinr_cosp = 2.0f * (ahrs->q0 * ahrs->q1 + ahrs->q2 * ahrs->q3);
+  const float sinr_cosp = 2.0f * (ahrs->quat.q0 * ahrs->quat.q1 +
+                                  ahrs->quat.q2 * ahrs->quat.q3);
   const float cosr_cosp =
-      1.0f - 2.0f * (ahrs->q1 * ahrs->q1 + ahrs->q2 * ahrs->q2);
+      1.0f - 2.0f * (ahrs->quat.q1 * ahrs->quat.q1 +
+                     ahrs->quat.q2 * ahrs->quat.q2);
   eulr->pit = atan2f(sinr_cosp, cosr_cosp);
 
-  const float sinp = 2.0f * (ahrs->q0 * ahrs->q2 - ahrs->q3 * ahrs->q1);
+  const float sinp = 2.0f * (ahrs->quat.q0 * ahrs->quat.q2 -
+                             ahrs->quat.q3 * ahrs->quat.q1);
 
   if (fabsf(sinp) >= 1.0f)
     eulr->rol = copysignf(M_PI / 2.0f, sinp);
   else
     eulr->rol = asinf(sinp);
 
-  const float siny_cosp = 2.0f * (ahrs->q0 * ahrs->q3 + ahrs->q1 * ahrs->q2);
+  const float siny_cosp = 2.0f * (ahrs->quat.q0 * ahrs->quat.q3 +
+                                  ahrs->quat.q1 * ahrs->quat.q2);
   const float cosy_cosp =
-      1.0f - 2.0f * (ahrs->q2 * ahrs->q2 + ahrs->q3 * ahrs->q3);
+      1.0f - 2.0f * (ahrs->quat.q2 * ahrs->quat.q2 +
+                     ahrs->quat.q3 * ahrs->quat.q3);
   eulr->yaw = atan2f(siny_cosp, cosy_cosp);
 
 #if 0

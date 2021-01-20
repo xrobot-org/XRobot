@@ -44,5 +44,7 @@ bool CRC16_Verify(const uint8_t *buf, size_t len) {
   if (len < 2) return false;
 
   uint16_t expected = CRC16_Calc(buf, len - sizeof(uint16_t), CRC16_INIT);
-  return expected == ((const uint16_t *)buf)[len / sizeof(uint16_t) - 1];
+  return expected ==
+         ((const uint16_t *)((const uint8_t *)buf +
+                             (len % 2)))[len / sizeof(uint16_t) - 1];
 }

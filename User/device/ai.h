@@ -13,44 +13,41 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "component\ahrs.h"
 #include "component\cmd.h"
 #include "component\user_math.h"
 #include "device\device.h"
+#include "device\referee.h"
+#include "protocol.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
-typedef uint16_t Ai_Tail_t;
-
-typedef enum {
-  AI_CMD_ID_COMMAND = 0x0001,
-} AI_CMDID_t;
 
 typedef struct __packed {
-  uint8_t sof;
-  uint16_t data_length;
-  uint8_t seq;
-  uint8_t crc8;
-} AI_Header_t;
-
-typedef struct {
   osThreadId_t thread_alert;
 
-  AI_CMDID_t cmd_id;
+  Protocol_AI_t form_host;
 
-  CMD_Host_t command;
+  struct {
+    Protocol_Referee_t ref;
+    Protocol_MCU_t mcu;
+  } to_host;
 
+  CMD_AI_Status_t status;
 } AI_t;
 
 /* Exported functions prototypes -------------------------------------------- */
-int8_t AI_Init(AI_t *ai, osThreadId_t thread_alert);
+int8_t AI_Init(AI_t *ai);
 int8_t AI_Restart(void);
 
 int8_t AI_StartReceiving(AI_t *ai);
 bool AI_WaitDmaCplt(void);
 int8_t AI_ParseHost(AI_t *ai, CMD_Host_t *cmd_host);
 int8_t AI_HandleOffline(AI_t *ai, CMD_Host_t *cmd_host);
-
+int8_t AI_PackMCU(AI_t *ai, const AHRS_Quaternion_t *quat);
+int8_t AI_PackRef(AI_t *ai, const Referee_t *ref);
+int8_t AI_StartSend(AI_t *ai, bool option);
 #ifdef __cplusplus
 }
 #endif
