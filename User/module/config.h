@@ -20,6 +20,7 @@ extern "C" {
 
 /* 机器人参数，保存后不会变化 */
 typedef struct {
+  CMD_RobotModel_t model;   /* 型号 */
   Chassis_Params_t chassis; /* 底盘 */
   Gimbal_Params_t gimbal;   /* 云台 */
   Shoot_Params_t shoot;     /* 射击 */
