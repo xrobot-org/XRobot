@@ -273,9 +273,9 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
   float power_limit = cap->target_power;
   if (cap->cap_status == CAP_STATUS_RUNNING) {
     if (cap->percentage > 0.3f)
-      power_limit += cap->percentage * CAP_PERCENTAGE_WORK;
+      power_limit += (cap->percentage - 0.3f) * CAP_PERCENTAGE_WORK;
     else
-      power_limit -= (1.0f - cap->percentage) * CAP_PERCENTAGE_CHARGE;
+      power_limit -= (0.3f - cap->percentage) * CAP_PERCENTAGE_CHARGE;
     PowerLimit_Apply(power_limit, cap->cap_feedback.input_volt, c->out,
                      c->num_wheel, CAN_M3508_MAX_ABS_CUR);
   } else
