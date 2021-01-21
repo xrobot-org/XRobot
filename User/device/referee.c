@@ -95,7 +95,7 @@ int8_t Referee_Parse(Referee_t *ref) {
   index += sizeof(Referee_Header_t);
   if (index >= data_length) goto error;
 
-  if (CRC8_Verify((uint8_t *)header, sizeof(Referee_Header_t))) goto error;
+  if (!CRC8_Verify((uint8_t *)header, sizeof(Referee_Header_t))) goto error;
 
   if (header->sof != REF_HEADER_SOF) goto error;
 
