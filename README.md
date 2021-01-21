@@ -27,20 +27,26 @@
 
 ## 使用说明
 
-- 针对不同板子需要到不同的CubeMX工程文件DevA.ioc、DevC.ioc）。
+* 环境安装
+  * [MDK-ARM](https://www.keil.com/)
+  * [STM32CubeMX](https://www.st.com/zh/development-tools/stm32cubemx.html)
 
+* 克隆本库 `git clone https://gitee.com/qsheeeeen/qdu-rm-ai --recursive`
+
+  * 因为本软件中与视觉通信部分用的是与视觉共同维护的一个库，因此要加上--recursive 或在克隆完成时执行
+
+    `git submodule init && git submodule update `
+
+- 针对不同板子需要到不同的CubeMX工程文件（DevA.ioc、DevC.ioc）。
 - 利用CubeMX生成对应的外设初始化代码和Keil工程文件。
 
-  - 所以每次生成代码后，请利用Git丢弃Middlewares文件夹中的所有改变。原因如下。
+  - 每次生成代码后，请利用Git丢弃Middlewares文件夹中的所有改变。原因如下。
 
     1. 使用了AC6，与CubeMX默认不匹配，会影响到FreeRTOS的移植。
-
     2. 使用了比CubeMX更新的FreeRTOS版本，降版本会导致部分代码无法编译。
-
   - 因为已经生成过Keil工程文件，所以只会覆盖以前生成的代码，而不会影响手写的代码。
-
+  - 每次生成代码后，请在HAL_InitTick函数中添加uwTickPrio = TickPriority;
 - 打开MDK-ARM中的DevC.uvprojx（或DevA.uvprojx）即可进行编辑、烧写或调试。
-
 - Keil工程中有两个Target，其中Debug用来调试，不包含编译器优化等；DevC/DevA用来编译输出最终固件。
 
 ## 文件目录结构及文件用途说明
@@ -54,6 +60,7 @@
 | Middlewares | 中间件。部分CubeMX生成，部分手动添加 |
 | USB_DEVICE | CubeMX生成。USB相关文件 |
 | User | 手动编写的代码 |
+| Utils | 使用到的其他工具，如CubeMonitor, Matlab |
 
 | User内 | 内容 |
 | ---- | ----  |
