@@ -12,7 +12,6 @@ extern "C" {
 #include <cmsis_os2.h>
 #include <stdbool.h>
 
-#include "component\UI.h"
 #include "component\user_math.h"
 #include "device\device.h"
 
