@@ -7,7 +7,6 @@
 
 #include "bsp\delay.h"
 #include "bsp\uart.h"
-#include "component\UI.h"
 #include "component\crc16.h"
 #include "component\crc8.h"
 #include "component\user_math.h"

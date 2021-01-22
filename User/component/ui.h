@@ -33,26 +33,26 @@ typedef struct __packed {
   uint16_t radius : 10;
   uint16_t x_end : 11;
   uint16_t y_end : 11;
-} UI_InterStudent_UIEle_t;
+} UI_Ele_t;
 
 typedef struct __packed {
-  UI_InterStudent_UIEle_t grapic_t;
+  UI_Ele_t grapic_t;
 } UI_Drawgrapic_1_t;
 
 typedef struct __packed {
-  UI_InterStudent_UIEle_t grapic_t[2];
+  UI_Ele_t grapic_t[2];
 } UI_Drawgrapic_2_t;
 
 typedef struct __packed {
-  UI_InterStudent_UIEle_t grapic_t[5];
+  UI_Ele_t grapic_t[5];
 } UI_Drawgrapic_5_t;
 
 typedef struct __packed {
-  UI_InterStudent_UIEle_t grapic_t[7];
+  UI_Ele_t grapic_t[7];
 } UI_Drawgrapic_7_t;
 
 typedef struct __packed {
-  UI_InterStudent_UIEle_t grapic_t;
+  UI_Ele_t grapic_t;
   uint8_t character[30];
 } UI_Drawcharacter_t;
 
@@ -70,10 +70,9 @@ typedef struct __packed {
  * @param x_end 终点x坐标
  * @param y_end 终点y坐标
  */
-void UI_DrawLine(UI_InterStudent_UIEle_t *grapic_line, const char *name,
-                 uint8_t type_op, uint8_t layer, uint8_t color, uint16_t width,
-                 uint16_t x_start, uint16_t y_start, uint16_t x_end,
-                 uint16_t y_end);
+void UI_DrawLine(UI_Ele_t *grapic_line, const char *name, uint8_t type_op,
+                 uint8_t layer, uint8_t color, uint16_t width, uint16_t x_start,
+                 uint16_t y_start, uint16_t x_end, uint16_t y_end);
 
 /**
  * @brief UI_绘制矩形
@@ -89,10 +88,10 @@ void UI_DrawLine(UI_InterStudent_UIEle_t *grapic_line, const char *name,
  * @param x_end 对角顶点x坐标
  * @param y_end 对角顶点y坐标
  */
-void UI_DrawRectangle(UI_InterStudent_UIEle_t *grapic_rectangle,
-                      const char *name, uint8_t type_op, uint8_t layer,
-                      uint8_t color, uint16_t width, uint16_t x_start,
-                      uint16_t y_start, uint16_t x_end, uint16_t y_end);
+void UI_DrawRectangle(UI_Ele_t *grapic_rectangle, const char *name,
+                      uint8_t type_op, uint8_t layer, uint8_t color,
+                      uint16_t width, uint16_t x_start, uint16_t y_start,
+                      uint16_t x_end, uint16_t y_end);
 
 /**
  * @brief UI_绘制正圆
@@ -107,8 +106,8 @@ void UI_DrawRectangle(UI_InterStudent_UIEle_t *grapic_rectangle,
  * @param y_center 圆心y坐标
  * @param radius 半径
  */
-void UI_DrawCycle(UI_InterStudent_UIEle_t *grapic_cycle, const char *name,
-                  uint8_t type_op, uint8_t layer, uint8_t color, uint16_t width,
+void UI_DrawCycle(UI_Ele_t *grapic_cycle, const char *name, uint8_t type_op,
+                  uint8_t layer, uint8_t color, uint16_t width,
                   uint16_t x_center, uint16_t y_center, uint16_t radius);
 
 /**
@@ -125,8 +124,8 @@ void UI_DrawCycle(UI_InterStudent_UIEle_t *grapic_cycle, const char *name,
  * @param x_semiaxis x半轴长度
  * @param y_semiaxis y半轴长度
  */
-void UI_DrawOval(UI_InterStudent_UIEle_t *grapic_oval, const char *name,
-                 uint8_t type_op, uint8_t layer, uint8_t color, uint16_t width,
+void UI_DrawOval(UI_Ele_t *grapic_oval, const char *name, uint8_t type_op,
+                 uint8_t layer, uint8_t color, uint16_t width,
                  uint16_t x_center, uint16_t y_center, uint16_t x_semiaxis,
                  uint16_t y_semiaxis);
 
@@ -146,11 +145,10 @@ void UI_DrawOval(UI_InterStudent_UIEle_t *grapic_oval, const char *name,
  * @param x_semiaxis x半轴长度
  * @param y_semiaxis y半轴长度
  */
-void UI_DrawArc(UI_InterStudent_UIEle_t *grapic_arc, const char *name,
-                uint8_t type_op, uint8_t layer, uint8_t color,
-                uint16_t angle_start, uint16_t angle_end, uint16_t width,
-                uint16_t x_center, uint16_t y_center, uint16_t x_semiaxis,
-                uint16_t y_semiaxis);
+void UI_DrawArc(UI_Ele_t *grapic_arc, const char *name, uint8_t type_op,
+                uint8_t layer, uint8_t color, uint16_t angle_start,
+                uint16_t angle_end, uint16_t width, uint16_t x_center,
+                uint16_t y_center, uint16_t x_semiaxis, uint16_t y_semiaxis);
 
 /**
  * @brief UI_绘制浮点数
@@ -169,7 +167,7 @@ void UI_DrawArc(UI_InterStudent_UIEle_t *grapic_arc, const char *name,
  * @param float_middle 32位浮点数
  * @param float_low 32位浮点数
  */
-void UI_DrawFloating(UI_InterStudent_UIEle_t *grapic_floating, const char *name,
+void UI_DrawFloating(UI_Ele_t *grapic_floating, const char *name,
                      uint8_t type_op, uint8_t layer, uint8_t color,
                      uint16_t font_size, uint16_t digits, uint16_t width,
                      uint16_t x_start, uint16_t y_start, uint16_t float_high,
@@ -191,11 +189,11 @@ void UI_DrawFloating(UI_InterStudent_UIEle_t *grapic_floating, const char *name,
  * @param int32_t_middle 32位整型数
  * @param int32_t_low 32位整型数
  */
-void UI_DrawInteger(UI_InterStudent_UIEle_t *grapic_integer, const char *name,
-                    uint8_t type_op, uint8_t layer, uint8_t color,
-                    uint16_t font_size, uint16_t width, uint16_t x_start,
-                    uint16_t y_start, uint16_t int32_t_high,
-                    uint16_t int32_t_middle, uint16_t int32_t_low);
+void UI_DrawInteger(UI_Ele_t *grapic_integer, const char *name, uint8_t type_op,
+                    uint8_t layer, uint8_t color, uint16_t font_size,
+                    uint16_t width, uint16_t x_start, uint16_t y_start,
+                    uint16_t int32_t_high, uint16_t int32_t_middle,
+                    uint16_t int32_t_low);
 
 /**
  * @brief UI_绘制字符
