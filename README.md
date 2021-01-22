@@ -31,7 +31,7 @@
   * [MDK-ARM](https://www.keil.com/)
   * [STM32CubeMX](https://www.st.com/zh/development-tools/stm32cubemx.html)
 
-* 克隆本库 `git clone https://gitee.com/qsheeeeen/qdu-rm-ai --recursive`
+* 克隆本库 `git clone https://gitee.com/qsheeeeen/qdu-rm-mcu.git --recursive`
 
   * 因为本软件中与视觉通信部分用的是与视觉共同维护的一个库，因此要加上--recursive 或在克隆完成时执行
 
