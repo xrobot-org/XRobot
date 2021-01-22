@@ -11,8 +11,8 @@ extern "C" {
 /* Includes ----------------------------------------------------------------- */
 #include <cmsis_os2.h>
 #include <stdbool.h>
-#include <stdint.h>
 
+#include "component\UI.h"
 #include "component\user_math.h"
 #include "device\device.h"
 
@@ -256,29 +256,6 @@ typedef struct __packed {
 typedef struct __packed {
   uint8_t place_holder;
 } Referee_InterStudent_Custom_t;
-
-/* op: 0: no op; 1: del layer; 2: del all */
-typedef struct __packed {
-  uint8_t op;
-  uint8_t num_layer;
-} Referee_InterStudent_UIDel_t;
-
-typedef struct __packed {
-  uint8_t name[3];
-  uint8_t type_op : 3;
-  uint8_t type_ele : 3;
-  uint8_t layer : 4;
-  uint8_t color : 4;
-  uint16_t angle_start : 9;
-  uint16_t angle_end : 9;
-  uint16_t width : 10;
-  uint16_t x_start : 11;
-  uint16_t y_start : 11;
-  uint16_t radius : 10;
-  uint16_t x_end : 11;
-  uint16_t y_end : 11;
-} Referee_InterStudent_UIEle_t;
-
 typedef struct {
   osThreadId_t thread_alert;
 
@@ -303,7 +280,6 @@ typedef struct {
   Referee_RFID_t rfid;
   Referee_DartClient_t dart_client;
   Referee_InterStudent_Custom_t custom;
-
 } Referee_t;
 
 /* Exported functions prototypes -------------------------------------------- */
