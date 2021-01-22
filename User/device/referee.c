@@ -5,6 +5,8 @@
 /* Includes ----------------------------------------------------------------- */
 #include "referee.h"
 
+#include <string.h>
+
 #include "bsp\delay.h"
 #include "bsp\uart.h"
 #include "component\crc16.h"
