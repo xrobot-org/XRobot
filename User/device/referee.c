@@ -5,10 +5,9 @@
 /* Includes ----------------------------------------------------------------- */
 #include "referee.h"
 
-#include <string.h>
-
 #include "bsp\delay.h"
 #include "bsp\uart.h"
+#include "component\UI.h"
 #include "component\crc16.h"
 #include "component\crc8.h"
 #include "component\user_math.h"
@@ -18,7 +17,6 @@
 #define REF_LEN_RX_BUFF (0xFF)
 
 #define CHASSIS_POWER_MAX_WITHOUT_REF 40.0f /* 裁判系统离线底盘最大功率 */
-
 
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
