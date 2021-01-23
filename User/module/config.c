@@ -150,6 +150,7 @@ static const Config_RobotParam_t param_default = {
     .bullet_speed_scaler = -50.0f,
     .bullet_speed_bias = 1.0f,
     .num_trig_tooth = 8.0f,
+    .fric_radius_m = 0.03f,
   }, /* shoot */
 }; /* param_default */
 
@@ -284,6 +285,7 @@ static const Config_RobotParam_t param_hero = {
     .bullet_speed_scaler = -50.0f,
     .bullet_speed_bias = 1.0f,
     .num_trig_tooth = 8.0f,
+    .fric_radius_m = 0.03f,
   }, /* shoot */
 }; /* param_hero */      
 

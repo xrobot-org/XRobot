@@ -34,6 +34,25 @@ int8_t PowerLimit_Apply(float power_limit, float vbat, float *motor_out,
  */
 float PowerLimit_CapInput(float power_in, float power_limit,
                           float power_buffer);
+/**
+ * @brief 射击频率控制
+ *
+ * @param heat_percent 当前热量与热量上限的比值
+ * @param stable_freq_hz 使机器人射击但热量不变化的射击频率
+ * @param shoot_freq_hz cmd.c预设的频率
+ * @return 经过热量计算后的射击频率
+ */
+float HeatLimit_ShootFreq(float heat_percent, float stable_freq_hz,
+                          float shoot_freq_hz);
+
+/**
+ * @brief 射击速度控制
+ *
+ * @param rpm_limit 裁判系统获取的子弹射速上限转换成的rpm值
+ * @param fric_rpm 摩擦轮转速
+ * @return 限制后的射击速度
+ */
+float ShootLimit_FricRpm(uint8_t rpm_limit, float fric_rpm);
 
 #ifdef __cplusplus
 }

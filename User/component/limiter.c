@@ -70,3 +70,46 @@ float PowerLimit_CapInput(float power_in, float power_limit,
 
   return target_power;
 }
+
+/**
+ * @brief 射击频率控制
+ *
+ * @param heat_percent 当前热量与热量上限的比值
+ * @param stable_freq_hz 使机器人射击但热量不变化的射击频率
+ * @param shoot_freq_hz cmd.c预设的频率
+ * @return 经过热量计算后的射击频率
+ */
+float HeatLimit_ShootFreq(float heat_percent, float stable_freq_hz,
+                          float shoot_freq_hz) {
+  if (heat_percent <= 0.5) {
+    if (shoot_freq_hz > stable_freq_hz * 1.5)
+      return stable_freq_hz * 1.5;
+    else
+      return shoot_freq_hz;
+  } else if (heat_percent <= 0.8) {
+    if (shoot_freq_hz > stable_freq_hz * 1.1)
+      return stable_freq_hz * 1.1;
+    else
+      return shoot_freq_hz;
+  } else if (heat_percent <= 0.9) {
+    if (shoot_freq_hz > stable_freq_hz * 0.8)
+      return stable_freq_hz * 0.8;
+    else
+      return shoot_freq_hz;
+  } else
+    return 0;
+}
+
+/**
+ * @brief 射击速度控制
+ *
+ * @param rpm_limit 裁判系统获取的子弹射速上限转换成的rpm值
+ * @param fric_rpm 摩擦轮转速
+ * @return 限制后的摩擦轮转速
+ */
+float ShootLimit_FricRpm(uint8_t rpm_limit, float fric_rpm) {
+  if (fric_rpm > rpm_limit)
+    return rpm_limit;
+  else
+    return fric_rpm;
+}

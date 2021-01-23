@@ -5,6 +5,7 @@
 /* Includes ----------------------------------------------------------------- */
 #include "shoot.h"
 
+#include "component\limiter.h"
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
@@ -126,7 +127,8 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
  *
  * \return 函数运行结果
  */
-int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec) {
+int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_t *s_ref,
+                     float dt_sec) {
   static uint32_t last_period_ms = 0;
 
   if (s == NULL) return -1;
@@ -142,6 +144,36 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec) {
       s->param->bullet_speed_scaler * s_cmd->bullet_speed +
       s->param->bullet_speed_bias;
   s->setpoint.fric_rpm[1] = -s->setpoint.fric_rpm[0];
+
+  //当裁判系统在线时启用热量控制与射速控制
+  if (s_ref->ref_status == REF_STATUS_RUNNING && s->mode != SHOOT_MODE_SAFE) {
+    float heat_percent;    //当前热量与热量上限的比值
+    float stable_freq_hz;  //使机器人射击但热量不变化的射击频率
+
+    float fric_radius_m = s->param->fric_radius_m;  //摩擦轮半径
+    float bullet_rpm_limit;                         //计算出的rpm上限
+    uint8_t bullet_speed_limit;  //裁判系统取得的射速上限
+
+    if (s_ref->robot_status.robot_id == 1 ||
+        s_ref->robot_status.robot_id == 101) {
+      heat_percent = s_ref->power_heat.shoot_42_heat /
+                     s_ref->robot_status.shoot_42_heat_limit;
+      stable_freq_hz = s_ref->robot_status.shoot_42_cooling_rate /
+                       100.0f;  //每发射一颗42mm弹丸增加100热量
+      bullet_speed_limit = s_ref->robot_status.shoot_42_speed_limit;
+    } else {
+      heat_percent = s_ref->power_heat.shoot_17_heat /
+                     s_ref->robot_status.shoot_17_heat_limit;
+      stable_freq_hz = s_ref->robot_status.shoot_17_cooling_rate /
+                       10.0f;  //每发射一颗17mm弹丸增加10热量
+      bullet_speed_limit = s_ref->robot_status.shoot_17_speed_limit;
+    }
+    bullet_rpm_limit = CalculateRpm(bullet_speed_limit, fric_radius_m);
+    s_cmd->shoot_freq_hz =
+        HeatLimit_ShootFreq(heat_percent, stable_freq_hz, s_cmd->shoot_freq_hz);
+    s->setpoint.fric_rpm[1] =
+        ShootLimit_FricRpm(bullet_rpm_limit, s->setpoint.fric_rpm[1]);
+  }
 
   if (s_cmd->shoot_freq_hz > 1.0f && s->mode != SHOOT_MODE_RELAX) {
     uint32_t period_ms = 1000u / (uint32_t)s_cmd->shoot_freq_hz;

@@ -15,7 +15,7 @@ extern "C" {
 #include "component\filter.h"
 #include "component\pid.h"
 #include "device\can.h"
-
+#include "device\referee.h"
 /* Exported constants ------------------------------------------------------- */
 #define SHOOT_OK (0)        /* 运行正常 */
 #define SHOOT_ERR (-1)      /* 运行时发现了其他错误 */
@@ -53,6 +53,7 @@ typedef struct {
   float bullet_speed_scaler; /* 子弹初速和电机转速之间的映射参数 */
   float bullet_speed_bias; /* 子弹初速和电机转速之间的映射参数 */
   float num_trig_tooth;    /* 拨弹盘中一圈能存储几颗弹丸 */
+  float fric_radius_m;     /*摩擦轮半径，单位：米*/
 } Shoot_Params_t;
 
 /*
@@ -131,7 +132,8 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can);
  *
  * \return 函数运行结果
  */
-int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, float dt_sec);
+int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_t *s_ref,
+                     float dt_sec);
 
 /**
  * \brief 复制射击输出值
