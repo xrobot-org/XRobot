@@ -81,11 +81,10 @@ inline void CircleAdd(float *origin, float delta, float range) {
 }
 
 /**
- * \brief 由裁判系统射击初速度限制换算成对应的最大摩擦轮转速rpm
- * \param shoot_speed 裁判系统射击初速度限制
+ * \brief 由摩擦轮线速度换算成对应的转速rpm
+ * 
+ * \param shoot_speed 摩擦轮线速度
  * \param fric_radius_m 摩擦轮半径
- * \param coefficient 误差系数
- *
  * \return 摩擦轮转速
  */
 inline float CalculateRpm(uint8_t shoot_speed, float fric_radius_m) {

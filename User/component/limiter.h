@@ -40,7 +40,7 @@ float PowerLimit_CapInput(float power_in, float power_limit,
  * @param heat_percent 当前热量与热量上限的比值
  * @param stable_freq_hz 使机器人射击但热量不变化的射击频率
  * @param shoot_freq_hz cmd.c预设的频率
- * @return 经过热量计算后的射击频率
+ * @return 经过热量限制后的射击频率
  */
 float HeatLimit_ShootFreq(float heat_percent, float stable_freq_hz,
                           float shoot_freq_hz);
