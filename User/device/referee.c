@@ -89,114 +89,120 @@ int8_t Referee_Parse(Referee_t *ref) {
       __HAL_DMA_GET_COUNTER(BSP_UART_GetHandle(BSP_UART_REF)->hdmarx);
 
   uint8_t index = 0;
+  uint8_t packet_shift;
+  uint8_t packet_length;
 
-  Referee_Header_t *header = (Referee_Header_t *)(rxbuf + index);
-  index += sizeof(Referee_Header_t);
-  if (index >= data_length) goto error;
+  while (index < data_length && rxbuf[index] == REF_HEADER_SOF) {
+    packet_shift = index;
+    Referee_Header_t *header = (Referee_Header_t *)(rxbuf + index);
+    index += sizeof(Referee_Header_t);
+    if (index - packet_shift >= data_length) goto error;
 
-  if (!CRC8_Verify((uint8_t *)header, sizeof(Referee_Header_t))) goto error;
+    if (!CRC8_Verify((uint8_t *)header, sizeof(Referee_Header_t))) goto error;
 
-  if (header->sof != REF_HEADER_SOF) goto error;
+    if (header->sof != REF_HEADER_SOF) goto error;
 
-  Referee_CMDID_t *cmd_id = (Referee_CMDID_t *)(rxbuf + index);
-  index += sizeof(Referee_CMDID_t);
-  if (index >= data_length) goto error;
+    Referee_CMDID_t *cmd_id = (Referee_CMDID_t *)(rxbuf + index);
+    index += sizeof(Referee_CMDID_t);
+    if (index - packet_shift >= data_length) goto error;
 
-  void *target = (rxbuf + index);
-  void *origin;
-  size_t size;
+    void *target = (rxbuf + index);
+    void *origin;
+    size_t size;
 
-  switch (*cmd_id) {
-    case REF_CMD_ID_GAME_STATUS:
-      origin = &(ref->game_status);
-      size = sizeof(Referee_GameStatus_t);
-      break;
-    case REF_CMD_ID_GAME_RESULT:
-      origin = &(ref->game_result);
-      size = sizeof(Referee_GameResult_t);
-      break;
-    case REF_CMD_ID_GAME_ROBOT_HP:
-      origin = &(ref->game_robot_hp);
-      size = sizeof(Referee_GameRobotHP_t);
-      break;
-    case REF_CMD_ID_DART_STATUS:
-      origin = &(ref->dart_status);
-      size = sizeof(Referee_DartStatus_t);
-      break;
-    case REF_CMD_ID_ICRA_ZONE_STATUS:
-      origin = &(ref->icra_zone);
-      size = sizeof(Referee_ICRAZoneStatus_t);
-      break;
-    case REF_CMD_ID_FIELD_EVENTS:
-      origin = &(ref->field_event);
-      size = sizeof(Referee_FieldEvents_t);
-      break;
-    case REF_CMD_ID_SUPPLY_ACTION:
-      origin = &(ref->supply_action);
-      size = sizeof(Referee_SupplyAction_t);
-      break;
-    case REF_CMD_ID_WARNING:
-      origin = &(ref->warning);
-      size = sizeof(Referee_Warning_t);
-      break;
-    case REF_CMD_ID_DART_COUNTDOWN:
-      origin = &(ref->dart_countdown);
-      size = sizeof(Referee_DartCountdown_t);
-      break;
-    case REF_CMD_ID_ROBOT_STATUS:
-      origin = &(ref->robot_status);
-      size = sizeof(Referee_RobotStatus_t);
-      break;
-    case REF_CMD_ID_POWER_HEAT_DATA:
-      origin = &(ref->power_heat);
-      size = sizeof(Referee_PowerHeat_t);
-      break;
-    case REF_CMD_ID_ROBOT_POS:
-      origin = &(ref->robot_pos);
-      size = sizeof(Referee_RobotPos_t);
-      break;
-    case REF_CMD_ID_ROBOT_BUFF:
-      origin = &(ref->robot_buff);
-      size = sizeof(Referee_RobotBuff_t);
-      break;
-    case REF_CMD_ID_DRONE_ENERGY:
-      origin = &(ref->drone_energy);
-      size = sizeof(Referee_DroneEnergy_t);
-      break;
-    case REF_CMD_ID_ROBOT_DMG:
-      origin = &(ref->robot_danage);
-      size = sizeof(Referee_RobotDamage_t);
-      break;
-    case REF_CMD_ID_SHOOT_DATA:
-      origin = &(ref->shoot_data);
-      size = sizeof(Referee_ShootData_t);
-      break;
-    case REF_CMD_ID_BULLET_REMAINING:
-      origin = &(ref->bullet_remain);
-      size = sizeof(Referee_BulletRemain_t);
-      break;
-    case REF_CMD_ID_RFID:
-      origin = &(ref->rfid);
-      size = sizeof(Referee_RFID_t);
-      break;
-    case REF_CMD_ID_DART_CLIENT:
-      origin = &(ref->dart_client);
-      size = sizeof(Referee_DartClient_t);
-      break;
-    default:
-      return DEVICE_ERR;
+    switch (*cmd_id) {
+      case REF_CMD_ID_GAME_STATUS:
+        origin = &(ref->game_status);
+        size = sizeof(Referee_GameStatus_t);
+        break;
+      case REF_CMD_ID_GAME_RESULT:
+        origin = &(ref->game_result);
+        size = sizeof(Referee_GameResult_t);
+        break;
+      case REF_CMD_ID_GAME_ROBOT_HP:
+        origin = &(ref->game_robot_hp);
+        size = sizeof(Referee_GameRobotHP_t);
+        break;
+      case REF_CMD_ID_DART_STATUS:
+        origin = &(ref->dart_status);
+        size = sizeof(Referee_DartStatus_t);
+        break;
+      case REF_CMD_ID_ICRA_ZONE_STATUS:
+        origin = &(ref->icra_zone);
+        size = sizeof(Referee_ICRAZoneStatus_t);
+        break;
+      case REF_CMD_ID_FIELD_EVENTS:
+        origin = &(ref->field_event);
+        size = sizeof(Referee_FieldEvents_t);
+        break;
+      case REF_CMD_ID_SUPPLY_ACTION:
+        origin = &(ref->supply_action);
+        size = sizeof(Referee_SupplyAction_t);
+        break;
+      case REF_CMD_ID_WARNING:
+        origin = &(ref->warning);
+        size = sizeof(Referee_Warning_t);
+        break;
+      case REF_CMD_ID_DART_COUNTDOWN:
+        origin = &(ref->dart_countdown);
+        size = sizeof(Referee_DartCountdown_t);
+        break;
+      case REF_CMD_ID_ROBOT_STATUS:
+        origin = &(ref->robot_status);
+        size = sizeof(Referee_RobotStatus_t);
+        break;
+      case REF_CMD_ID_POWER_HEAT_DATA:
+        origin = &(ref->power_heat);
+        size = sizeof(Referee_PowerHeat_t);
+        break;
+      case REF_CMD_ID_ROBOT_POS:
+        origin = &(ref->robot_pos);
+        size = sizeof(Referee_RobotPos_t);
+        break;
+      case REF_CMD_ID_ROBOT_BUFF:
+        origin = &(ref->robot_buff);
+        size = sizeof(Referee_RobotBuff_t);
+        break;
+      case REF_CMD_ID_DRONE_ENERGY:
+        origin = &(ref->drone_energy);
+        size = sizeof(Referee_DroneEnergy_t);
+        break;
+      case REF_CMD_ID_ROBOT_DMG:
+        origin = &(ref->robot_danage);
+        size = sizeof(Referee_RobotDamage_t);
+        break;
+      case REF_CMD_ID_SHOOT_DATA:
+        origin = &(ref->shoot_data);
+        size = sizeof(Referee_ShootData_t);
+        break;
+      case REF_CMD_ID_BULLET_REMAINING:
+        origin = &(ref->bullet_remain);
+        size = sizeof(Referee_BulletRemain_t);
+        break;
+      case REF_CMD_ID_RFID:
+        origin = &(ref->rfid);
+        size = sizeof(Referee_RFID_t);
+        break;
+      case REF_CMD_ID_DART_CLIENT:
+        origin = &(ref->dart_client);
+        size = sizeof(Referee_DartClient_t);
+        break;
+      default:
+        return DEVICE_ERR;
+    }
+    packet_length = sizeof(Referee_Header_t) + sizeof(Referee_CMDID_t) + size +
+                    sizeof(Referee_Tail_t);
+    index += size;
+    if (index - packet_shift >= data_length) goto error;
+
+    index += sizeof(Referee_Tail_t);
+    if (index - packet_shift != packet_length) goto error;
+
+    if (CRC16_Verify((uint8_t *)(rxbuf + packet_shift), packet_length))
+      memcpy(origin, target, size);
+    else
+      goto error;
   }
-  index += size;
-  if (index >= data_length) goto error;
-
-  index += sizeof(Referee_Tail_t);
-  if (index != (data_length - 1)) goto error;
-
-  if (CRC16_Verify((uint8_t *)header, sizeof(Referee_Header_t)))
-    memcpy(target, origin, size);
-  else
-    goto error;
-
   return DEVICE_OK;
 
 error:

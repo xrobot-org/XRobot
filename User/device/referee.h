@@ -124,9 +124,9 @@ typedef struct __packed {
   uint16_t shoot_17_heat_limit;
   uint16_t shoot_42_cooling_rate;
   uint16_t shoot_42_heat_limit;
-  uint16_t shoot_17_speed_limit;
-  uint16_t shoot_42_speed_limit;
-  uint16_t chassis_power_limit;
+  uint8_t shoot_17_speed_limit;
+  uint8_t shoot_42_speed_limit;
+  uint8_t chassis_power_limit;
   uint8_t power_gimbal_output : 1;
   uint8_t power_chassis_output : 1;
   uint8_t power_shoot_output : 1;
