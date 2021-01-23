@@ -172,7 +172,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_t *s_ref,
     s_cmd->shoot_freq_hz =
         HeatLimit_ShootFreq(heat_percent, stable_freq_hz, s_cmd->shoot_freq_hz);
     s->setpoint.fric_rpm[1] =
-        ShootLimit_FricRpm(bullet_rpm_limit, s->setpoint.fric_rpm[1]);
+        AbsClip(s->setpoint.fric_rpm[1], bullet_rpm_limit);
   }
 
   if (s_cmd->shoot_freq_hz > 1.0f && s->mode != SHOOT_MODE_RELAX) {

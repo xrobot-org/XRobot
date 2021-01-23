@@ -12,13 +12,6 @@
 #define CHASSIS_POWER_FACTOR_PASS 0.9f
 #define CHASSIS_POWER_FACTOR_NO_PASS 1.5f
 
-int8_t HeatLimiter_Apply(float heat_limit, float vbat, float dt_sec) {
-  (void)heat_limit;
-  (void)vbat;
-  (void)dt_sec;
-  return 0;
-}
-
 /**
  * @brief 底盘功率限制
  *
@@ -98,18 +91,4 @@ float HeatLimit_ShootFreq(float heat_percent, float stable_freq_hz,
       return shoot_freq_hz;
   } else
     return 0;
-}
-
-/**
- * @brief 射击速度控制
- *
- * @param rpm_limit 裁判系统获取的子弹射速上限转换成的rpm值
- * @param fric_rpm 摩擦轮转速
- * @return 限制后的摩擦轮转速
- */
-float ShootLimit_FricRpm(uint8_t rpm_limit, float fric_rpm) {
-  if (fric_rpm > rpm_limit)
-    return rpm_limit;
-  else
-    return fric_rpm;
 }
