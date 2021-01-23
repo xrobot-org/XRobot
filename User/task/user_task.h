@@ -86,6 +86,7 @@ typedef struct {
         osMessageQueueId_t gimbal;
         osMessageQueueId_t shoot;
         osMessageQueueId_t cap;
+        osMessageQueueId_t tof;
       } feedback;
     } can;
 
