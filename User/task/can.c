@@ -69,7 +69,11 @@ void Task_Can(void *argument) {
         osMessageQueuePut(task_runtime.msgq.can.feedback.cap, &can, 0, 0);
         CAN_ClearFlag(&can, CAN_REC_SHOOT_FINISHED);
       }
-
+      if (CAN_CheckFlag(&can, CAN_REC_TOF_FINISHED)) {
+        osMessageQueueReset(task_runtime.msgq.can.feedback.tof);
+        osMessageQueuePut(task_runtime.msgq.can.feedback.tof, &can, 0, 0);
+        CAN_ClearFlag(&can, CAN_REC_TOF_FINISHED);
+      }
 
       if (osMessageQueueGet(task_runtime.msgq.can.output.chassis,
                             &(can_out.chassis), 0, 0) == osOK) {

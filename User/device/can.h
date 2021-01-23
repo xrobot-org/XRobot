@@ -23,6 +23,7 @@ extern "C" {
 #define CAN_MOTOR_SHOOT_FRIC2_RECV (1 << 7)
 #define CAN_MOTOR_SHOOT_TRIG_RECV (1 << 8)
 #define CAN_MOTOR_CAP_RECV (1 << 9)
+#define CAN_TOF_RECV (1 << 10)
 
 #define CAN_REC_CHASSIS_FINISHED                         \
   (CAN_MOTOR_CHASSIS_1_RECV | CAN_MOTOR_CHASSIS_2_RECV | \
@@ -33,6 +34,7 @@ extern "C" {
   (CAN_MOTOR_SHOOT_FRIC1_RECV | CAN_MOTOR_SHOOT_FRIC2_RECV | \
    CAN_MOTOR_SHOOT_TRIG_RECV)
 #define CAN_REC_CAP_FINISHED CAN_MOTOR_CAP_RECV
+#define CAN_REC_TOF_FINISHED CAN_TOF_RECV
 
 #define CAN_MOTOR_TX_BUF_SIZE (8)
 #define CAN_MOTOR_RX_BUF_SIZE (8)
@@ -225,10 +227,17 @@ typedef struct {
 } CAN_Motor_t;
 
 typedef struct {
+  float dist;
+  uint8_t status;
+  uint16_t signal_strength;
+} CAN_Tof_t;
+
+typedef struct {
   uint32_t recive_flag;
 
   CAN_Motor_t motor;
   CAN_Capacitor_t cap;
+  CAN_Tof_t tof;
   osMessageQueueId_t msgq_raw;
 } CAN_t;
 
@@ -250,6 +259,8 @@ void CAN_ResetCapOut(CAN_CapOutput_t *cap_out);
 void CAN_Cap_Decode(CAN_CapFeedback_t *feedback, const uint8_t *raw);
 void CAN_CAP_HandleOffline(CAN_Capacitor_t *cap, CAN_CapOutput_t *cap_out,
                            float power_chassis);
+
+void CAN_Tof_Decode(CAN_Tof_t *tof, const uint8_t *raw);
 
 #ifdef __cplusplus
 }

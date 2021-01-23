@@ -44,6 +44,7 @@
 
 #define CAN_MOTOR_RX_FIFO CAN_RX_FIFO0
 
+
 /* Super capacitor */
 #define CAN_CAP_FB_ID_BASE (0x211)
 #define CAN_CAP_CTRL_ID_BASE (0x210)
@@ -51,6 +52,9 @@
 #define CAN_CAP_RES (100) /* 电容数据分辨率 */
 
 #define CAN_CAP_RX_FIFO CAN_RX_FIFO1
+
+/* TOF */
+#define CAN_TOF_ID_BASE (0x280)
 
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
@@ -65,7 +69,8 @@ static CAN_t *gcan;
 static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
-static void CAN_Motor_Decode(CAN_MotorFeedback_t *feedback, const uint8_t *raw) {
+static void CAN_Motor_Decode(CAN_MotorFeedback_t *feedback,
+                             const uint8_t *raw) {
   uint16_t raw_angle = (uint16_t)((raw[0] << 8) | raw[1]);
   int16_t raw_current = (int16_t)((raw[4] << 8) | raw[5]);
 
@@ -81,6 +86,12 @@ void CAN_Cap_Decode(CAN_CapFeedback_t *feedback, const uint8_t *raw) {
   feedback->cap_volt = (float)((raw[3] << 8) | raw[2]) / (float)CAN_CAP_RES;
   feedback->input_curr = (float)((raw[5] << 8) | raw[4]) / (float)CAN_CAP_RES;
   feedback->target_power = (float)((raw[7] << 8) | raw[6]) / (float)CAN_CAP_RES;
+}
+
+void CAN_Tof_Decode(CAN_Tof_t *tof, const uint8_t *raw) {
+  tof->dist = (float)((raw[2] << 16) | (raw[1] << 8) | raw[0]) / 1000.0f;
+  tof->status = raw[3];
+  tof->signal_strength = (raw[5] << 8) | raw[4];
 }
 
 static void CAN_CAN1RxFifoMsgPendingCallback(void) {
@@ -245,8 +256,7 @@ int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx) {
     case CAN_M3508_M3_ID:
     case CAN_M3508_M4_ID:
       index = can_rx->rx_header.StdId - CAN_M3508_M1_ID;
-      CAN_Motor_Decode(&(can->motor.chassis.as_array[index]),
-                      can_rx->rx_data);
+      CAN_Motor_Decode(&(can->motor.chassis.as_array[index]), can_rx->rx_data);
       can->recive_flag |= 1 << index;
       break;
 
@@ -255,20 +265,22 @@ int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx) {
     case CAN_M2006_TRIG_ID:
       index = can_rx->rx_header.StdId - CAN_M3508_FRIC1_ID;
       can->recive_flag |= 1 << (index + 6);
-      CAN_Motor_Decode(&(can->motor.shoot.as_array[index]),
-                      can_rx->rx_data);
+      CAN_Motor_Decode(&(can->motor.shoot.as_array[index]), can_rx->rx_data);
       break;
 
     case CAN_GM6020_YAW_ID:
     case CAN_GM6020_PIT_ID:
       index = can_rx->rx_header.StdId - CAN_GM6020_YAW_ID;
       can->recive_flag |= 1 << (index + 4);
-      CAN_Motor_Decode(&(can->motor.gimbal.as_array[index]),
-                      can_rx->rx_data);
+      CAN_Motor_Decode(&(can->motor.gimbal.as_array[index]), can_rx->rx_data);
       break;
     case CAN_CAP_FB_ID_BASE:
       can->recive_flag |= 1 << 9;
       CAN_Cap_Decode(&(can->cap.cap_feedback), can_rx->rx_data);
+      break;
+    case CAN_TOF_ID_BASE:
+      can->recive_flag |= 1 << 10;
+      CAN_Tof_Decode(&(can->tof), can_rx->rx_data);
       break;
     default:
       break;
