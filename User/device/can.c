@@ -44,7 +44,6 @@
 
 #define CAN_MOTOR_RX_FIFO CAN_RX_FIFO0
 
-
 /* Super capacitor */
 #define CAN_CAP_FB_ID_BASE (0x211)
 #define CAN_CAP_CTRL_ID_BASE (0x210)
