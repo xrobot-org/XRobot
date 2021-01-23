@@ -67,6 +67,15 @@ float CircleError(float sp, float fb, float range);
  */
 void CircleAdd(float *origin, float delta, float range);
 
+/**
+ * \brief 由转速rpm换算成对应的发射初速度
+ * \param fric_rpm 被操作的值
+ * \param fric_radius_mm 摩擦轮半径
+ * \param coefficient 误差系数
+ *
+ * \return 摩擦轮转速
+ */
+float CalculateRpm(uint8_t shoot_speed, float fric_radius_m);
 #ifdef __cplusplus
 }
 #endif
