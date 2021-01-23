@@ -44,16 +44,3 @@ float PowerLimit_CapInput(float power_in, float power_limit,
  */
 float HeatLimit_ShootFreq(float heat_percent, float stable_freq_hz,
                           float shoot_freq_hz);
-
-/**
- * @brief 射击速度控制
- *
- * @param rpm_limit 裁判系统获取的子弹射速上限转换成的rpm值
- * @param fric_rpm 摩擦轮转速
- * @return 限制后的射击速度
- */
-float ShootLimit_FricRpm(uint8_t rpm_limit, float fric_rpm);
-
-#ifdef __cplusplus
-}
-#endif
