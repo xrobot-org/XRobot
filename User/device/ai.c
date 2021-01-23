@@ -64,11 +64,11 @@ int8_t AI_ParseHost(AI_t *ai, CMD_Host_t *cmd_host) {
   (void)cmd_host;
   if (!CRC16_Verify((const uint8_t *)&(ai->form_host), sizeof(Protocol_AI_t)))
     goto error;
-  cmd_host->gimbal_delta.pit = ai->form_host.gimbal_delta.pit;
-  cmd_host->gimbal_delta.yaw = ai->form_host.gimbal_delta.yaw;
-  cmd_host->gimbal_delta.rol = ai->form_host.gimbal_delta.rol;
-  cmd_host->fire = (ai->form_host.notice & AI_NOTICE_FIRE);
-  cmd_host->chassis_speed_setpoint = ai->form_host.chassis_speed_setpoint;
+  cmd_host->gimbal_delta.pit = ai->form_host.data.gimbal_delta.pit;
+  cmd_host->gimbal_delta.yaw = ai->form_host.data.gimbal_delta.yaw;
+  cmd_host->gimbal_delta.rol = ai->form_host.data.gimbal_delta.rol;
+  cmd_host->fire = (ai->form_host.data.notice & AI_NOTICE_FIRE);
+  cmd_host->chassis_speed_setpoint = ai->form_host.data.chassis_speed_setpoint;
   return DEVICE_OK;
 
 error:
@@ -100,7 +100,7 @@ int8_t AI_PackMCU(AI_t *ai, const AHRS_Quaternion_t *quat) {
   else if (ai->status == AI_STATUS_AUTOMATIC)
     ai->to_host.mcu.data.notice |= AI_NOTICE_AUTOMATIC;
 
-  ai->to_host.mcu.data.crc16 =
+  ai->to_host.mcu.crc16 =
       CRC16_Calc((const uint8_t *)&(ai->to_host.mcu.data),
                  sizeof(Protocol_Data_MCU_t) - sizeof(uint16_t), CRC16_INIT);
   return DEVICE_OK;
@@ -109,7 +109,7 @@ int8_t AI_PackMCU(AI_t *ai, const AHRS_Quaternion_t *quat) {
 int8_t AI_PackRef(AI_t *ai, const Referee_t *ref) {
   (void)ref;
   ai->to_host.ref.id = AI_ID_REF;
-  ai->to_host.ref.data.crc16 = CRC16_Calc(
+  ai->to_host.ref.crc16 = CRC16_Calc(
       (const uint8_t *)&(ai->to_host.ref.data),
       sizeof(Protocol_Data_Referee_t) - sizeof(uint16_t), CRC16_INIT);
   return DEVICE_OK;
