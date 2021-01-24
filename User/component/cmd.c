@@ -12,8 +12,19 @@
  * @return true 按下
  * @return false 未按下
  */
-static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_KeyValue_t key) {
-  return rc->key & (1u << key);
+static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_KeyValue_t key,
+                             bool stateful) {
+  if (key == CMD_L_CLICK) {
+    return rc->mouse.l_click;
+  }
+  if (key == CMD_R_CLICK) {
+    return rc->mouse.r_click;
+  }
+  bool current_key_stat = rc->key & (1u << key);
+  if (stateful)
+    return current_key_stat && !(rc->key_last & (1u << key));
+  else
+    return current_key_stat;
 }
 
 /**
@@ -50,27 +61,30 @@ static uint16_t CMD_BehaviorToKey(const CMD_t *cmd, CMD_Behavior_t behavior) {
  * @param cmd 主结构体
  */
 static void CMD_BehaviorParse(const CMD_RC_t *rc, CMD_t *cmd) {
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FORE))) {
-    cmd->chassis.ctrl_vec.vx = cmd->param->move.move_sense;
+  cmd->chassis.ctrl_vec.vx = cmd->chassis.ctrl_vec.vy = 0.0f;
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FORE), false)) {
+    cmd->chassis.ctrl_vec.vy += cmd->param->move.move_sense;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BACK))) {
-    cmd->chassis.ctrl_vec.vx = -cmd->param->move.move_sense;
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BACK), false)) {
+    cmd->chassis.ctrl_vec.vy -= cmd->param->move.move_sense;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_LEFT))) {
-    cmd->chassis.ctrl_vec.vy = cmd->param->move.move_sense;
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_LEFT), false)) {
+    cmd->chassis.ctrl_vec.vx += cmd->param->move.move_sense;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_RIGHT))) {
-    cmd->chassis.ctrl_vec.vy = -cmd->param->move.move_sense;
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_RIGHT), false)) {
+    cmd->chassis.ctrl_vec.vx -= cmd->param->move.move_sense;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ACCELERATE))) {
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ACCELERATE),
+                       false)) {
     cmd->chassis.ctrl_vec.vx *= cmd->param->move.move_fast_sense;
     cmd->chassis.ctrl_vec.vy *= cmd->param->move.move_fast_sense;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_DECELEBRATE))) {
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_DECELEBRATE),
+                       false)) {
     cmd->chassis.ctrl_vec.vx *= cmd->param->move.move_slow_sense;
     cmd->chassis.ctrl_vec.vy *= cmd->param->move.move_slow_sense;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FIRE))) {
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FIRE), false)) {
     cmd->shoot.mode = SHOOT_MODE_FIRE;
     cmd->shoot.shoot_freq_hz = 10u;
     cmd->shoot.bullet_speed = 10.0f;
@@ -79,7 +93,7 @@ static void CMD_BehaviorParse(const CMD_RC_t *rc, CMD_t *cmd) {
     cmd->shoot.shoot_freq_hz = 0u;
     cmd->shoot.bullet_speed = 2.0f;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BUFF))) {
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BUFF), true)) {
     if (cmd->ai_status == AI_STATUS_HITSWITCH) {
       // TODO: 提醒操作员结束打BUFF
       cmd->host_overwrite = false;
@@ -91,7 +105,8 @@ static void CMD_BehaviorParse(const CMD_RC_t *rc, CMD_t *cmd) {
       cmd->host_overwrite = true;
     }
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_AUTOAIM))) {
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_AUTOAIM),
+                       true)) {
     if (cmd->ai_status == AI_STATUS_AUTOAIM) {
       cmd->host_overwrite = false;
       cmd->ai_status = AI_STATUS_STOP;
@@ -114,17 +129,19 @@ static void CMD_BehaviorParse(const CMD_RC_t *rc, CMD_t *cmd) {
  * @param dt_sec 两次解析的间隔
  * @return int8_t 0对应没有错误
  */
-int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
+int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   if (rc == NULL) return -1;
   if (cmd == NULL) return -1;
 
   /* 在PC控制和RC控制间切换. */
-  if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT) &&
-      CMD_KeyPressedRc(rc, CMD_KEY_CTRL) && CMD_KeyPressedRc(rc, CMD_KEY_Q))
+  if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT, false) &&
+      CMD_KeyPressedRc(rc, CMD_KEY_CTRL, false) &&
+      CMD_KeyPressedRc(rc, CMD_KEY_Q, false))
     cmd->pc_ctrl = true;
 
-  if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT) &&
-      CMD_KeyPressedRc(rc, CMD_KEY_CTRL) && CMD_KeyPressedRc(rc, CMD_KEY_E))
+  if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT, false) &&
+      CMD_KeyPressedRc(rc, CMD_KEY_CTRL, false) &&
+      CMD_KeyPressedRc(rc, CMD_KEY_E, false))
     cmd->pc_ctrl = false;
 
   /* PC键位映射和逻辑. */
@@ -190,6 +207,7 @@ int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       cmd->gimbal.delta_eulr.pit = rc->ch_r_y * dt_sec * cmd->param->sens_rc;
     }
   }
+  rc->key_last = rc->key;
   return 0;
 }
 
