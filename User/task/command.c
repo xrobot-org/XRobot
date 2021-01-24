@@ -45,7 +45,7 @@ void Task_Command(void *argument) {
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_COMMAND;
 
   /* 初始化指令处理 */
-  CMD_Init(&cmd, &(task_runtime.cfg.pilot_cfg->param.cmd));
+  CMD_Init(&cmd, &(task_runtime.cfg.pilot_cfg->param));
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
 
   /* 用于计算遥控器数据频率 */

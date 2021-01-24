@@ -168,7 +168,9 @@ typedef struct {
     bool r_click; /* 右键 */
   } mouse;        /* 鼠标值 */
 
-  uint16_t key; /* 按键值 */
+  uint16_t key;      /* 按键值 */
+  uint16_t key_last; /* 上次的按键值 */
+
   uint16_t res; /* 保留，未启用 */
 } CMD_RC_t;
 
@@ -183,7 +185,7 @@ typedef struct {
 #define CMD_CHECK_HOST_OVERWRITE(__CMD__) ((__CMD__)->host_overwrite)
 
 int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param);
-int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec);
+int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec);
 int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec);
 
 #ifdef __cplusplus
