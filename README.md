@@ -27,13 +27,13 @@
 
 ## 使用说明
 
-* 环境安装
-  * [MDK-ARM](https://www.keil.com/)
-  * [STM32CubeMX](https://www.st.com/zh/development-tools/stm32cubemx.html)
+- 环境安装
+  - [MDK-ARM](https://www.keil.com/) （必备）
+  - [STM32CubeMX](https://www.st.com/zh/development-tools/stm32cubemx.html) （可选）
 
-* 克隆本库 `git clone https://gitee.com/qsheeeeen/qdu-rm-mcu.git --recursive`
+- 克隆本库 `git clone --recursive https://gitee.com/qsheeeeen/qdu-rm-mcu.git`
 
-  * 因为本软件中与视觉通信部分用的是与视觉共同维护的一个库，因此要加上--recursive 或在克隆完成时执行
+  - 因为本软件中与视觉通信部分用的是与视觉共同维护的一个库，因此要加上`--recursive`，或在克隆完成后执行
 
     `git submodule init && git submodule update `
 
