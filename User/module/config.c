@@ -294,7 +294,6 @@ static const Config_RobotParam_t param_drone;
 static const Config_RobotParam_t param_sentry;
 /* static const Config_RobotParam_t param_xxx; */
 
-
 static const Config_PilotCfg_t cfg_qs = {
   .param = {
 		.sens_mouse = 0.5f,

@@ -4,6 +4,20 @@
 
 #include "ui.h"
 
+/**
+ * @brief UI_绘制直线段
+ *
+ * @param grapic_line 结构体
+ * @param name 图形名首地址
+ * @param type_op 操作类型
+ * @param layer 图层数
+ * @param color 颜色
+ * @param width 线条宽度
+ * @param x_start 起点x坐标
+ * @param y_start 起点y坐标
+ * @param x_end 终点x坐标
+ * @param y_end 终点y坐标
+ */
 void UI_DrawLine(UI_Ele_t *grapic_line, const char *name, uint8_t type_op,
                  uint8_t layer, uint8_t color, uint16_t width, uint16_t x_start,
                  uint16_t y_start, uint16_t x_end, uint16_t y_end) {
@@ -19,6 +33,20 @@ void UI_DrawLine(UI_Ele_t *grapic_line, const char *name, uint8_t type_op,
   grapic_line->y_end = y_end;
 }
 
+/**
+ * @brief UI_绘制矩形
+ *
+ * @param grapic_rectangle 结构体
+ * @param name 图形名首地址
+ * @param type_op 操作类型
+ * @param layer 图层数
+ * @param color 颜色
+ * @param width 线条宽度
+ * @param x_start 起点x坐标
+ * @param y_start 起点y坐标
+ * @param x_end 对角顶点x坐标
+ * @param y_end 对角顶点y坐标
+ */
 void UI_DrawRectangle(UI_Ele_t *grapic_rectangle, const char *name,
                       uint8_t type_op, uint8_t layer, uint8_t color,
                       uint16_t width, uint16_t x_start, uint16_t y_start,
@@ -35,6 +63,19 @@ void UI_DrawRectangle(UI_Ele_t *grapic_rectangle, const char *name,
   grapic_rectangle->y_end = y_end;
 }
 
+/**
+ * @brief UI_绘制正圆
+ *
+ * @param grapic_cycle 结构体
+ * @param name 图形名首地址
+ * @param type_op 操作类型
+ * @param layer 图层数
+ * @param color 颜色
+ * @param width 线条宽度
+ * @param x_center 圆心x坐标
+ * @param y_center 圆心y坐标
+ * @param radius 半径
+ */
 void UI_DrawCycle(UI_Ele_t *grapic_cycle, const char *name, uint8_t type_op,
                   uint8_t layer, uint8_t color, uint16_t width,
                   uint16_t x_center, uint16_t y_center, uint16_t radius) {
@@ -49,6 +90,20 @@ void UI_DrawCycle(UI_Ele_t *grapic_cycle, const char *name, uint8_t type_op,
   grapic_cycle->radius = radius;
 }
 
+/**
+ * @brief UI_绘制椭圆
+ *
+ * @param grapic_oval 结构体
+ * @param name 图形名首地址
+ * @param type_op 操作类型
+ * @param layer 图层数
+ * @param color 颜色
+ * @param width 线条宽度
+ * @param x_center 圆心x坐标
+ * @param y_center 圆心y坐标
+ * @param x_semiaxis x半轴长度
+ * @param y_semiaxis y半轴长度
+ */
 void UI_DrawOval(UI_Ele_t *grapic_oval, const char *name, uint8_t type_op,
                  uint8_t layer, uint8_t color, uint16_t width,
                  uint16_t x_center, uint16_t y_center, uint16_t x_semiaxis,
@@ -65,6 +120,22 @@ void UI_DrawOval(UI_Ele_t *grapic_oval, const char *name, uint8_t type_op,
   grapic_oval->y_end = y_semiaxis;
 }
 
+/**
+ * @brief UI_绘制圆弧
+ *
+ * @param grapic_arc 结构体
+ * @param name 图形名首地址
+ * @param type_op 操作类型
+ * @param layer 图层数
+ * @param color 颜色
+ * @param angle_start 起始角度
+ * @param angle_end 终止角度
+ * @param width 线条宽度
+ * @param x_center 圆心x坐标
+ * @param y_center 圆心y坐标
+ * @param x_semiaxis x半轴长度
+ * @param y_semiaxis y半轴长度
+ */
 void UI_DrawArc(UI_Ele_t *grapic_arc, const char *name, uint8_t type_op,
                 uint8_t layer, uint8_t color, uint16_t angle_start,
                 uint16_t angle_end, uint16_t width, uint16_t x_center,
@@ -83,6 +154,23 @@ void UI_DrawArc(UI_Ele_t *grapic_arc, const char *name, uint8_t type_op,
   grapic_arc->y_end = y_semiaxis;
 }
 
+/**
+ * @brief UI_绘制浮点数
+ *
+ * @param grapic_float 结构体
+ * @param name 图形名首地址
+ * @param type_op 操作类型
+ * @param layer 图层数
+ * @param color 颜色
+ * @param font_size 字体大小
+ * @param digits 小数点后有效位数
+ * @param width 线条宽度
+ * @param x_start 起点x坐标
+ * @param y_start 起点y坐标
+ * @param float_high 32位浮点数
+ * @param float_middle 32位浮点数
+ * @param float_low 32位浮点数
+ */
 void UI_DrawFloating(UI_Ele_t *grapic_floating, const char *name,
                      uint8_t type_op, uint8_t layer, uint8_t color,
                      uint16_t font_size, uint16_t digits, uint16_t width,
@@ -103,6 +191,22 @@ void UI_DrawFloating(UI_Ele_t *grapic_floating, const char *name,
   grapic_floating->y_end = float_low;
 }
 
+/**
+ * @brief UI_绘制整型数
+ *
+ * @param grapic_integer 结构体
+ * @param name 图形名首地址
+ * @param type_op 操作类型
+ * @param layer 图层数
+ * @param color 颜色
+ * @param font_size 字体大小
+ * @param width 线条宽度
+ * @param x_start 起点x坐标
+ * @param y_start 起点y坐标
+ * @param int32_t_high 32位整型数
+ * @param int32_t_middle 32位整型数
+ * @param int32_t_low 32位整型数
+ */
 void UI_DrawInteger(UI_Ele_t *grapic_integer, const char *name, uint8_t type_op,
                     uint8_t layer, uint8_t color, uint16_t font_size,
                     uint16_t width, uint16_t x_start, uint16_t y_start,
@@ -122,6 +226,21 @@ void UI_DrawInteger(UI_Ele_t *grapic_integer, const char *name, uint8_t type_op,
   grapic_integer->y_end = int32_t_low;
 }
 
+/**
+ * @brief UI_绘制字符
+ *
+ * @param grapic_character 结构体
+ * @param name 图形名首地址
+ * @param type_op 操作类型
+ * @param layer 图层数
+ * @param color 颜色
+ * @param font_size 字体大小
+ * @param length 字符长度
+ * @param width 线条宽度
+ * @param x_start 起点x坐标
+ * @param y_start 起点y坐标
+ * @param character 字符串首地址
+ */
 void UI_DrawCharacter(UI_Drawcharacter_t *grapic_character, const char *name,
                       uint8_t type_op, uint8_t layer, uint8_t color,
                       uint16_t font_size, uint16_t length, uint16_t width,

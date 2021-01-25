@@ -12,12 +12,15 @@ extern "C" {
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
+
+/* LED灯状态，设置用 */
 typedef enum {
   BSP_LED_ON,
   BSP_LED_OFF,
   BSP_LED_TAGGLE,
-} BSP_LED_Status_t; /* LED灯状态，设置用 */
+} BSP_LED_Status_t;
 
+/* LED通道 */
 typedef enum {
 #ifdef DEV_BOARD_A
   BSP_LED1,
@@ -33,7 +36,7 @@ typedef enum {
 #endif
   BSP_LED_RED,
   BSP_LED_GRN,
-} BSP_LED_Channel_t; /* LED通道 */
+} BSP_LED_Channel_t;
 
 /* Exported functions prototypes -------------------------------------------- */
 

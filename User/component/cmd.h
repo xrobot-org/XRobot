@@ -13,6 +13,7 @@ extern "C" {
 
 #include "ahrs.h"
 
+/* 机器人型号 */
 typedef enum {
   ROBOT_MODEL_INFANTRY = 0, /* 步兵机器人 */
   ROBOT_MODEL_HERO,         /* 步兵机器人 */
@@ -20,7 +21,7 @@ typedef enum {
   ROBOT_MODEL_DRONE,        /* 空中机器人 */
   ROBOT_MODEL_SENTRY,       /* 哨兵机器人 */
   ROBOT_MODEL_NUM,          /* 型号数量 */
-} CMD_RobotModel_t;         /* 机器人型号 */
+} CMD_RobotModel_t;
 
 /* 底盘运行模式 */
 typedef enum {
@@ -182,10 +183,38 @@ typedef struct {
   bool fire;
 } CMD_Host_t;
 
+/**
+ * @brief 检查是否启用上位机控制指令覆盖
+ * 
+ */
 #define CMD_CHECK_HOST_OVERWRITE(__CMD__) ((__CMD__)->host_overwrite)
 
+/**
+ * @brief 解析行为命令
+ *
+ * @param rc 遥控器数据
+ * @param cmd 主结构体
+ */
 int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param);
+
+/**
+ * @brief 解析命令
+ *
+ * @param rc 遥控器数据
+ * @param cmd 命令
+ * @param dt_sec 两次解析的间隔
+ * @return int8_t 0对应没有错误
+ */
 int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec);
+
+/**
+ * @brief 解析上位机命令
+ *
+ * @param host host数据
+ * @param cmd 命令
+ * @param dt_sec 两次解析的间隔
+ * @return int8_t 0对应没有错误
+ */
 int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec);
 
 #ifdef __cplusplus

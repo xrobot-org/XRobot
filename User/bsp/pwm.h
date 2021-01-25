@@ -12,9 +12,11 @@ extern "C" {
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
+
+/* PWM通道 */
 typedef enum {
   BSP_PWM_IMU_HEAT,
-} BSP_PWM_Channel_t; /* PWM通道 */
+} BSP_PWM_Channel_t;
 
 /* Exported functions prototypes -------------------------------------------- */
 int8_t BSP_PWM_Start(BSP_PWM_Channel_t ch);
