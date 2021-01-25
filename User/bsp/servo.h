@@ -12,6 +12,8 @@ extern "C" {
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
+
+/* 舵机通道 */
 typedef enum {
   BSP_SERVO_A = 0,
   BSP_SERVO_B,
@@ -32,7 +34,7 @@ typedef enum {
   BSP_SERVO_Z,
 #endif
   BSP_SERVO_NUM,
-} BSP_Servo_Channel_t;  /* 舵机通道 */
+} BSP_Servo_Channel_t;
 
 /* Exported functions prototypes -------------------------------------------- */
 int8_t BSP_Servo_Init(BSP_Servo_Channel_t ch, float max_angle);
