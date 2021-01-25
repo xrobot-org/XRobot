@@ -29,13 +29,6 @@ typedef struct {
 /* 操作员配置 */
 typedef struct {
   CMD_Params_t param; /* 参数 */
-
-  struct {
-    void (*MapChassis)(void);
-    void (*MapGimbal)(void);
-    void (*MapShoot)(void);
-  } key_map; /* 键位映射 */
-
 } Config_PilotCfg_t;
 
 /* 机器人配置，保存在Flash上的信息，根据机器人变化 */

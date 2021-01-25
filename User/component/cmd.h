@@ -119,14 +119,14 @@ typedef struct {
   float move_sense;      /* 移动灵敏度 */
   float move_fast_sense; /* 加速灵敏度 */
   float move_slow_sense; /* 减速灵敏度 */
-} CMD_MOVE_Params_t;
+} CMD_Move_Params_t;
 
 /* 命令参数 */
 typedef struct {
   float sens_mouse;        /* 鼠标灵敏度 */
   float sens_rc;           /* 遥控器摇杆灵敏度 */
   CMD_KeyMap_Params_t map; /* 按键映射行为命令 */
-  CMD_MOVE_Params_t move;  /* 位移灵敏度参数 */
+  CMD_Move_Params_t move;  /* 位移灵敏度参数 */
 } CMD_Params_t;
 
 typedef enum {
