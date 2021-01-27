@@ -62,6 +62,12 @@ int8_t Mixer_Apply(Mixer_t *mixer, MoveVector_t *move_vec, float *out,
       } else {
         goto error;
       }
+    case MIXER_SINGLE:
+      if (len == 1) {
+        out[0] = move_vec->vx;
+      } else {
+        goto error;
+      }
     case MIXER_OMNICROSS:
     case MIXER_OMNIPLUS:
       goto error;
