@@ -92,6 +92,11 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
       mixer_mode = MIXER_OMNIPLUS;
       break;
 
+    case CHASSIS_TYPE_SINGLE:
+      c->num_wheel = 1;
+      mixer_mode = MIXER_SINGLE;
+      break;
+
     case CHASSIS_TYPE_DRONE:
       /* onboard sdk. */
       return CHASSIS_ERR_TYPE;
@@ -244,7 +249,7 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
               9000.0f);
 
   /* 根据轮子转速目标值，利用PID计算电机输出值 */
-  for (uint8_t i = 0; i < 4; i++) {
+  for (uint8_t i = 0; i < c->num_wheel; i++) {
     /* 输入滤波. */
     c->feedback.motor_rpm[i] =
         LowPassFilter2p_Apply(c->filter.in + i, c->feedback.motor_rpm[i]);
