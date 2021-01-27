@@ -171,18 +171,20 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_t *s_ref,
     bullet_rpm_limit = CalculateRpm(bullet_speed_limit, fric_radius_m);
     s_cmd->shoot_freq_hz =
         HeatLimit_ShootFreq(heat_percent, stable_freq_hz, s_cmd->shoot_freq_hz);
-    s->setpoint.fric_rpm[1] =
-        AbsClip(s->setpoint.fric_rpm[1], bullet_rpm_limit);
+    s->setpoint.fric_rpm[0] =
+        AbsClip(s->setpoint.fric_rpm[0], bullet_rpm_limit);
+    s->setpoint.fric_rpm[1] = -s->setpoint.fric_rpm[0];
   }
 
-  if (s_cmd->shoot_freq_hz > 1.0f && s->mode != SHOOT_MODE_RELAX) {
-    uint32_t period_ms = 1000u / (uint32_t)s_cmd->shoot_freq_hz;
+  if (s->mode != SHOOT_MODE_RELAX) {
+    uint32_t period_ms = (uint32_t)(1000.0f / s_cmd->shoot_freq_hz);
 
     if (last_period_ms != period_ms || !osTimerIsRunning(s->trig_timer_id)) {
       last_period_ms = period_ms;
       if (osTimerIsRunning(s->trig_timer_id)) {
         osTimerStop(s->trig_timer_id);
       }
+      TrigTimerCallback(s);
       osTimerStart(s->trig_timer_id, period_ms);
     }
 
