@@ -87,11 +87,11 @@ static void CMD_BehaviorParse(const CMD_RC_t *rc, CMD_t *cmd) {
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FIRE), false)) {
     cmd->shoot.mode = SHOOT_MODE_FIRE;
     cmd->shoot.shoot_freq_hz = 10u;
-    cmd->shoot.bullet_speed = 10.0f;
+    cmd->shoot.bullet_speed = 100.0f;
   } else {
     cmd->shoot.mode = SHOOT_MODE_STDBY;
     cmd->shoot.shoot_freq_hz = 0u;
-    cmd->shoot.bullet_speed = 2.0f;
+    cmd->shoot.bullet_speed = 20.0f;
   }
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BUFF), true)) {
     if (cmd->ai_status == AI_STATUS_HITSWITCH) {
