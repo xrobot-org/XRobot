@@ -194,10 +194,8 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_t *s_ref,
 
   switch (s->mode) {
     case SHOOT_MODE_RELAX:
-      s->out[0] = 0.0f;
-
-      for (uint8_t i = 0; i < 2; i++) {
-        s->out[i + 1] = 0.0f;
+      for (uint8_t i = 0; i < SHOOT_ACTR_NUM; i++) {
+        s->out[i] = 0.0f;
       }
       break;
 
