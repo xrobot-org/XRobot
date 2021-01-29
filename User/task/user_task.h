@@ -23,6 +23,7 @@ extern "C" {
 #define TASK_FREQ_MONITOR (2u)
 #define TASK_FREQ_CAN (1000u)
 #define TASK_FREQ_AI (250u)
+#define TASK_FREQ_REFEREE (1000u)
 
 #define TASK_INIT_DELAY_INFO (500u)
 #define TASK_INIT_DELAY_MONITOR (10)
@@ -70,6 +71,7 @@ typedef struct {
       osMessageQueueId_t gimbal;
       osMessageQueueId_t shoot;
       osMessageQueueId_t ai;
+      osMessageQueueId_t referee;
     } cmd;
 
     /* can任务放入、读取，电机或电容的输入输出 */

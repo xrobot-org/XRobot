@@ -81,6 +81,7 @@ void Task_Init(void *argument) {
       osMessageQueueNew(3u, sizeof(CMD_ShootCmd_t), NULL);
   task_runtime.msgq.cmd.ai =
       osMessageQueueNew(6u, sizeof(CMD_AI_Status_t), NULL);
+  task_runtime.msgq.cmd.referee = osMessageQueueNew(6u, sizeof(CMD_UI_t), NULL);
 
   /* atti_esti */
   task_runtime.msgq.cmd.raw.rc = osMessageQueueNew(3u, sizeof(CMD_RC_t), NULL);

@@ -13,6 +13,8 @@ extern "C" {
 
 #include "ahrs.h"
 
+#define CMD_REFEREE_MAX_NUM (3)
+
 /* 机器人型号 */
 typedef enum {
   ROBOT_MODEL_INFANTRY = 0, /* 步兵机器人 */
@@ -137,6 +139,19 @@ typedef enum {
   AI_STATUS_AUTOMATIC
 } CMD_AI_Status_t;
 
+typedef enum {
+  CMD_UI_NOTHING,
+  CMD_UI_AUTO_AIM_START,
+  CMD_UI_AUTO_AIM_STOP,
+  CMD_UI_HIT_SWITCH_START,
+  CMD_UI_HIT_SWITCH_STOP
+} CMD_UI_t;
+
+typedef struct {
+  CMD_UI_t cmd[CMD_REFEREE_MAX_NUM];
+  uint8_t counter;
+} CMD_RefereeCmd_t;
+
 typedef struct {
   bool pc_ctrl;        /* 是否使用键鼠控制 */
   bool host_overwrite; /* 是否Host控制 */
@@ -148,6 +163,7 @@ typedef struct {
   CMD_ChassisCmd_t chassis;
   CMD_GimbalCmd_t gimbal;
   CMD_ShootCmd_t shoot;
+  CMD_RefereeCmd_t referee;
 } CMD_t;
 
 typedef struct {
@@ -185,7 +201,7 @@ typedef struct {
 
 /**
  * @brief 检查是否启用上位机控制指令覆盖
- * 
+ *
  */
 #define CMD_CHECK_HOST_OVERWRITE(__CMD__) ((__CMD__)->host_overwrite)
 
@@ -217,6 +233,14 @@ int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec);
  */
 int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec);
 
+/**
+ * @brief 添加向Referee发送的命令
+ *
+ * @param ref 命令队列
+ * @param cmd 要添加的命令
+ * @return int8_t 0对应没有错误
+ */
+int8_t CMD_RefereeAdd(CMD_RefereeCmd_t *ref, CMD_UI_t cmd);
 #ifdef __cplusplus
 }
 #endif

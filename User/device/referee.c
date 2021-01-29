@@ -19,6 +19,9 @@
 
 #define CHASSIS_POWER_MAX_WITHOUT_REF 40.0f /* 裁判系统离线底盘最大功率 */
 
+#define REF_UI_MAX_GRAPIC_NUM (7)
+#define REF_UI_MAX_STRING_NUM (3)
+
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
 /* Private variables -------------------------------------------------------- */
@@ -208,4 +211,252 @@ int8_t Referee_Parse(Referee_t *ref) {
 error:
   drop_message++;
   return DEVICE_ERR;
+}
+
+int8_t Referee_StartSend(uint8_t *data, uint32_t len) {
+  if (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_REF), data,
+                            (size_t)len) == HAL_OK) {
+    return DEVICE_OK;
+  } else
+    return DEVICE_ERR;
+}
+
+int8_t Referee_MoveData(void *data, void *tmp, uint32_t len) {
+  if (len <= 0 || data == NULL || tmp == NULL) return DEVICE_ERR;
+  memcpy(tmp, (const void *)data, (size_t)len);
+  memset(data, 0, (size_t)len);
+  return DEVICE_OK;
+}
+
+int8_t Referee_SetHeader(Referee_Interactive_Header_t *header,
+                         Referee_StudentCMDID_t cmd_id, uint8_t sender_id) {
+  header->data_cmd_id = cmd_id;
+  if (sender_id <= REF_BOT_RED_RADER) switch (sender_id) {
+      case REF_BOT_RED_HERO:
+        header->sender_ID = REF_BOT_RED_HERO;
+        header->receiver_ID = REF_CL_RED_HERO;
+        break;
+      case REF_BOT_RED_ENGINEER:
+        header->sender_ID = REF_BOT_RED_ENGINEER;
+        header->receiver_ID = REF_CL_RED_ENGINEER;
+        break;
+      case REF_BOT_RED_INFANTRY_1:
+        header->sender_ID = REF_BOT_RED_INFANTRY_1;
+        header->receiver_ID = REF_CL_RED_INFANTRY_1;
+        break;
+      case REF_BOT_RED_INFANTRY_2:
+        header->sender_ID = REF_BOT_RED_INFANTRY_2;
+        header->receiver_ID = REF_CL_RED_INFANTRY_2;
+        break;
+      case REF_BOT_RED_INFANTRY_3:
+        header->sender_ID = REF_BOT_RED_INFANTRY_3;
+        header->receiver_ID = REF_CL_RED_INFANTRY_3;
+        break;
+      case REF_BOT_RED_DRONE:
+        header->sender_ID = REF_BOT_RED_DRONE;
+        header->receiver_ID = REF_CL_RED_DRONE;
+        break;
+      case REF_BOT_RED_SENTRY:
+        header->sender_ID = REF_BOT_RED_SENTRY;
+        break;
+      case REF_BOT_RED_RADER:
+        header->sender_ID = REF_BOT_RED_RADER;
+        break;
+      default:
+        return -1;
+    }
+  else
+    switch (sender_id) {
+      case REF_BOT_BLU_HERO:
+        header->sender_ID = REF_BOT_BLU_HERO;
+        header->receiver_ID = REF_CL_BLU_HERO;
+        break;
+      case REF_BOT_BLU_ENGINEER:
+        header->sender_ID = REF_BOT_BLU_ENGINEER;
+        header->receiver_ID = REF_CL_BLU_ENGINEER;
+        break;
+      case REF_BOT_BLU_INFANTRY_1:
+        header->sender_ID = REF_BOT_BLU_INFANTRY_1;
+        header->receiver_ID = REF_CL_BLU_INFANTRY_1;
+        break;
+      case REF_BOT_BLU_INFANTRY_2:
+        header->sender_ID = REF_BOT_BLU_INFANTRY_2;
+        header->receiver_ID = REF_CL_BLU_INFANTRY_2;
+        break;
+      case REF_BOT_BLU_INFANTRY_3:
+        header->sender_ID = REF_BOT_BLU_INFANTRY_3;
+        header->receiver_ID = REF_CL_BLU_INFANTRY_3;
+        break;
+      case REF_BOT_BLU_DRONE:
+        header->sender_ID = REF_BOT_BLU_DRONE;
+        header->receiver_ID = REF_CL_BLU_DRONE;
+        break;
+      case REF_BOT_BLU_SENTRY:
+        header->sender_ID = REF_BOT_BLU_SENTRY;
+        break;
+      case REF_BOT_BLU_RADER:
+        header->sender_ID = REF_BOT_BLU_RADER;
+        break;
+      default:
+        return -1;
+    }
+  return 0;
+}
+
+int8_t Referee_PackUI(Referee_UI_t *ui, Referee_t *ref) {
+  static uint8_t send_data[sizeof(Referee_UI_Drawgrapic_7_t)] = {0};
+  uint16_t size;
+  if (ui->grapic_counter != 0) {
+    switch (ui->grapic_counter) {
+      case 1:
+        size = sizeof(Referee_UI_Drawgrapic_1_t);
+        Referee_UI_Drawgrapic_1_t *address_1 =
+            (Referee_UI_Drawgrapic_1_t *)send_data;
+        address_1->header.sof = REF_HEADER_SOF;
+        address_1->header.data_length =
+            sizeof(UI_Drawgrapic_1_t) + sizeof(Referee_Interactive_Header_t);
+        address_1->header.crc8 =
+            CRC8_Calc((const uint8_t *)&(address_1->header),
+                      sizeof(Referee_Header_t) - sizeof(uint8_t), CRC8_INIT);
+        address_1->cmd_id = REF_CMD_ID_INTER_STUDENT;
+        Referee_SetHeader(&(address_1->IA_header), REF_STDNT_CMD_ID_UI_DRAW1,
+                          ref->robot_status.robot_id);
+        Referee_MoveData(&(ui->grapic), &(address_1->data.grapic),
+                         sizeof(UI_Drawgrapic_1_t));
+        address_1->crc16 = CRC16_Calc(
+            (const uint8_t *)address_1,
+            sizeof(Referee_UI_Drawgrapic_1_t) - sizeof(uint16_t), CRC16_INIT);
+        break;
+      case 2:
+        size = sizeof(Referee_UI_Drawgrapic_2_t);
+        Referee_UI_Drawgrapic_2_t *address_2 =
+            (Referee_UI_Drawgrapic_2_t *)send_data;
+        address_2->header.sof = REF_HEADER_SOF;
+        address_2->header.data_length =
+            sizeof(UI_Drawgrapic_2_t) + sizeof(Referee_Interactive_Header_t);
+        address_2->header.crc8 =
+            CRC8_Calc((const uint8_t *)&(address_2->header),
+                      sizeof(Referee_Header_t) - sizeof(uint8_t), CRC8_INIT);
+        address_2->cmd_id = REF_CMD_ID_INTER_STUDENT;
+        Referee_SetHeader(&(address_2->IA_header), REF_STDNT_CMD_ID_UI_DRAW2,
+                          ref->robot_status.robot_id);
+        Referee_MoveData(&(ui->grapic), &(address_2->data.grapic),
+                         sizeof(UI_Drawgrapic_2_t));
+        address_2->crc16 = CRC16_Calc(
+            (const uint8_t *)address_2,
+            sizeof(Referee_UI_Drawgrapic_2_t) - sizeof(uint16_t), CRC16_INIT);
+        break;
+      case 3:
+      case 4:
+      case 5:
+        size = sizeof(Referee_UI_Drawgrapic_5_t);
+        Referee_UI_Drawgrapic_5_t *address_5 =
+            (Referee_UI_Drawgrapic_5_t *)send_data;
+        address_5->header.sof = REF_HEADER_SOF;
+        address_5->header.data_length =
+            sizeof(UI_Drawgrapic_5_t) + sizeof(Referee_Interactive_Header_t);
+        address_5->header.crc8 =
+            CRC8_Calc((const uint8_t *)&(address_5->header),
+                      sizeof(Referee_Header_t) - sizeof(uint8_t), CRC8_INIT);
+        address_5->cmd_id = REF_CMD_ID_INTER_STUDENT;
+        Referee_SetHeader(&(address_5->IA_header), REF_STDNT_CMD_ID_UI_DRAW5,
+                          ref->robot_status.robot_id);
+        Referee_MoveData(&(ui->grapic), &(address_5->data.grapic),
+                         sizeof(UI_Drawgrapic_5_t));
+        address_5->crc16 = CRC16_Calc(
+            (const uint8_t *)address_5,
+            sizeof(Referee_UI_Drawgrapic_5_t) - sizeof(uint16_t), CRC16_INIT);
+        break;
+      case 6:
+      case 7:
+        size = sizeof(Referee_UI_Drawgrapic_7_t);
+        Referee_UI_Drawgrapic_7_t *address_7 =
+            (Referee_UI_Drawgrapic_7_t *)send_data;
+        address_7->header.sof = REF_HEADER_SOF;
+        address_7->header.data_length =
+            sizeof(UI_Drawgrapic_7_t) + sizeof(Referee_Interactive_Header_t);
+        address_7->header.crc8 =
+            CRC8_Calc((const uint8_t *)&(address_7->header),
+                      sizeof(Referee_Header_t) - sizeof(uint8_t), CRC8_INIT);
+        address_7->cmd_id = REF_CMD_ID_INTER_STUDENT;
+        Referee_SetHeader(&(address_7->IA_header), REF_STDNT_CMD_ID_UI_DRAW7,
+                          ref->robot_status.robot_id);
+        Referee_MoveData(&(ui->grapic), &(address_7->data.grapic),
+                         sizeof(UI_Drawgrapic_7_t));
+        address_7->crc16 = CRC16_Calc(
+            (const uint8_t *)address_7,
+            sizeof(Referee_UI_Drawgrapic_7_t) - sizeof(uint16_t), CRC16_INIT);
+        break;
+      default:
+        return DEVICE_ERR;
+    }
+    if (Referee_StartSend(send_data, size) == HAL_OK) {
+      ui->grapic_counter = 0;
+      return DEVICE_OK;
+    } else
+      return DEVICE_ERR;
+  } else {
+    if (ui->character_counter != 0) {
+      if (ui->character_counter < 0 ||
+          ui->character_counter > REF_UI_MAX_STRING_NUM)
+        return DEVICE_ERR;
+      Referee_UI_Drawcharacter_t *address =
+          (Referee_UI_Drawcharacter_t *)send_data;
+      address->header.sof = REF_HEADER_SOF;
+      address->header.data_length =
+          sizeof(UI_Drawcharacter_t) + sizeof(Referee_Interactive_Header_t);
+      address->header.crc8 =
+          CRC8_Calc((const uint8_t *)&(address->header),
+                    sizeof(Referee_Header_t) - sizeof(uint8_t), CRC8_INIT);
+      address->cmd_id = REF_CMD_ID_INTER_STUDENT;
+      Referee_SetHeader(&(address->IA_header), REF_STDNT_CMD_ID_UI_STR,
+                        ref->robot_status.robot_id);
+      Referee_MoveData(&(ui->character_data[--ui->character_counter]),
+                       &(address->data.grapic), sizeof(UI_Drawcharacter_t));
+      address->crc16 = CRC16_Calc(
+          (const uint8_t *)address,
+          sizeof(Referee_UI_Drawcharacter_t) - sizeof(uint16_t), CRC16_INIT);
+      size = sizeof(Referee_UI_Drawcharacter_t);
+
+      Referee_StartSend(send_data, size);
+      return DEVICE_OK;
+    } else
+      return DEVICE_ERR_NULL;
+  }
+}
+
+UI_Ele_t *Referee_GetGrapicAdd(Referee_UI_t *ref_ui) {
+  if (ref_ui->grapic_counter >= REF_UI_MAX_GRAPIC_NUM ||
+      ref_ui->grapic_counter < 0)
+    return NULL;
+  else
+    return &(ref_ui->grapic[ref_ui->grapic_counter++]);
+}
+
+UI_Drawcharacter_t *Referee_GetCharacterAdd(Referee_UI_t *ref_ui) {
+  if (ref_ui->character_counter >= REF_UI_MAX_STRING_NUM ||
+      ref_ui->character_counter < 0)
+    return NULL;
+  else
+    return &(ref_ui->character_data[ref_ui->character_counter++]);
+}
+
+uint8_t Referee_PraseCmd(Referee_UI_t *ref_ui, CMD_UI_t cmd) {
+  switch (cmd) {
+    /* Demo */
+    case CMD_UI_NOTHING:
+      /* 字符 */
+      UI_DrawCharacter(Referee_GetCharacterAdd(ref_ui), "0",
+                       UI_GRAPIC_OPERATION_ADD, UI_GRAPIC_LAYER_AUTOAIM,
+                       RED_BLUE, UI_DEFAULT_WIDTH, 100, 100, 200, 200, "Demo");
+      /* 图像 */
+      UI_DrawCycle(Referee_GetGrapicAdd(ref_ui), "1", UI_GRAPIC_OPERATION_ADD,
+                   UI_GRAPIC_LAYER_AUTOAIM, RED_BLUE, UI_DEFAULT_WIDTH, 100,
+                   100, 10);
+      break;
+
+    default:
+      return -1;
+  }
+  return 0;
 }

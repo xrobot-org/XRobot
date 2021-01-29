@@ -12,6 +12,8 @@ extern "C" {
 #include <cmsis_os2.h>
 #include <stdbool.h>
 
+#include "component\cmd.h"
+#include "component\ui.h"
 #include "component\user_math.h"
 #include "device\device.h"
 
@@ -203,20 +205,22 @@ typedef struct __packed {
 typedef uint16_t Referee_Tail_t;
 
 typedef enum {
-  REF_BOT_RED_HERO = 0x0001,
-  REF_BOT_RED_ENGINEER = 0x0002,
-  REF_BOT_RED_INFANTRY_1 = 0x0003,
-  REF_BOT_RED_INFANTRY_2 = 0x0004,
-  REF_BOT_RED_INFANTRY_3 = 0x0005,
-  REF_BOT_RED_DRONE = 0x0006,
-  REF_BOT_RED_SENTRY = 0x0007,
-  REF_BOT_BLU_HERO = 0x000B,
-  REF_BOT_BLU_ENGINEER = 0x000C,
-  REF_BOT_BLU_INFANTRY_1 = 0x000D,
-  REF_BOT_BLU_INFANTRY_2 = 0x000E,
-  REF_BOT_BLU_INFANTRY_3 = 0x000F,
-  REF_BOT_BLU_DRONE = 0x0010,
-  REF_BOT_BLU_SENTRY = 0x0011,
+  REF_BOT_RED_HERO = 1,
+  REF_BOT_RED_ENGINEER = 2,
+  REF_BOT_RED_INFANTRY_1 = 3,
+  REF_BOT_RED_INFANTRY_2 = 4,
+  REF_BOT_RED_INFANTRY_3 = 5,
+  REF_BOT_RED_DRONE = 6,
+  REF_BOT_RED_SENTRY = 7,
+  REF_BOT_RED_RADER = 9,
+  REF_BOT_BLU_HERO = 101,
+  REF_BOT_BLU_ENGINEER = 102,
+  REF_BOT_BLU_INFANTRY_1 = 103,
+  REF_BOT_BLU_INFANTRY_2 = 104,
+  REF_BOT_BLU_INFANTRY_3 = 105,
+  REF_BOT_BLU_DRONE = 106,
+  REF_BOT_BLU_SENTRY = 107,
+  REF_BOT_BLU_RADER = 109,
 } Referee_RobotID_t;
 
 typedef enum {
@@ -281,6 +285,59 @@ typedef struct {
   Referee_InterStudent_Custom_t custom;
 } Referee_t;
 
+typedef struct __packed {
+  UI_Ele_t grapic[7];
+  UI_Drawcharacter_t character_data[3];
+  uint8_t grapic_counter;
+  uint8_t character_counter;
+} Referee_UI_t;
+
+typedef struct __packed {
+  uint16_t data_cmd_id;
+  uint16_t sender_ID;
+  uint16_t receiver_ID;
+} Referee_Interactive_Header_t;
+
+typedef struct __packed {
+  Referee_Header_t header;
+  uint16_t cmd_id;
+  Referee_Interactive_Header_t IA_header;
+  UI_Drawgrapic_1_t data;
+  uint16_t crc16;
+} Referee_UI_Drawgrapic_1_t;
+
+typedef struct __packed {
+  Referee_Header_t header;
+  uint16_t cmd_id;
+  Referee_Interactive_Header_t IA_header;
+  UI_Drawgrapic_2_t data;
+  uint16_t crc16;
+} Referee_UI_Drawgrapic_2_t;
+
+typedef struct __packed {
+  Referee_Header_t header;
+  uint16_t cmd_id;
+  Referee_Interactive_Header_t IA_header;
+  UI_Drawgrapic_5_t data;
+  uint16_t crc16;
+} Referee_UI_Drawgrapic_5_t;
+
+typedef struct __packed {
+  Referee_Header_t header;
+  uint16_t cmd_id;
+  Referee_Interactive_Header_t IA_header;
+  UI_Drawgrapic_7_t data;
+  uint16_t crc16;
+} Referee_UI_Drawgrapic_7_t;
+
+typedef struct __packed {
+  Referee_Header_t header;
+  uint16_t cmd_id;
+  Referee_Interactive_Header_t IA_header;
+  UI_Drawcharacter_t data;
+  uint16_t crc16;
+} Referee_UI_Drawcharacter_t;
+
 /* Exported functions prototypes -------------------------------------------- */
 int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert);
 int8_t Referee_Restart(void);
@@ -288,7 +345,14 @@ int8_t Referee_Restart(void);
 int8_t Referee_StartReceiving(Referee_t *ref);
 int8_t Referee_Parse(Referee_t *ref);
 void Referee_HandleOffline(Referee_t *referee);
-
+int8_t Referee_SetHeader(Referee_Interactive_Header_t *header,
+                         Referee_StudentCMDID_t cmd_id, uint8_t sender_id);
+int8_t Referee_StartSend(uint8_t *data, uint32_t len);
+int8_t Referee_MoveData(void *data, void *tmp, uint32_t len);
+int8_t Referee_PackUI(Referee_UI_t *ui, Referee_t *ref);
+UI_Ele_t *Referee_GetGrapicAdd(Referee_UI_t *ref_ui);
+UI_Drawcharacter_t *Referee_GetCharacterAdd(Referee_UI_t *ref_ui);
+uint8_t Referee_PraseCmd(Referee_UI_t *ref_ui, CMD_UI_t cmd);
 #ifdef __cplusplus
 }
 #endif
