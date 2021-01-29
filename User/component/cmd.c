@@ -95,12 +95,13 @@ static void CMD_BehaviorParse(const CMD_RC_t *rc, CMD_t *cmd) {
   }
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BUFF), true)) {
     if (cmd->ai_status == AI_STATUS_HITSWITCH) {
-      // TODO: 提醒操作员结束打BUFF
+      CMD_RefereeAdd(&(cmd->referee), CMD_UI_HIT_SWITCH_STOP);
       cmd->host_overwrite = false;
       cmd->ai_status = AI_STATUS_STOP;
     } else if (cmd->ai_status == AI_STATUS_AUTOAIM) {
       // TODO: 提醒操作员
     } else {
+      CMD_RefereeAdd(&(cmd->referee), CMD_UI_HIT_SWITCH_START);
       cmd->ai_status = AI_STATUS_HITSWITCH;
       cmd->host_overwrite = true;
     }
@@ -110,11 +111,11 @@ static void CMD_BehaviorParse(const CMD_RC_t *rc, CMD_t *cmd) {
     if (cmd->ai_status == AI_STATUS_AUTOAIM) {
       cmd->host_overwrite = false;
       cmd->ai_status = AI_STATUS_STOP;
-      // TODO: 提醒操作手停止自瞄
+      CMD_RefereeAdd(&(cmd->referee), CMD_UI_AUTO_AIM_STOP);
     } else {
       cmd->ai_status = AI_STATUS_AUTOAIM;
       cmd->host_overwrite = true;
-      // TODO: 提醒操作员
+      CMD_RefereeAdd(&(cmd->referee), CMD_UI_AUTO_AIM_START);
     }
   } else
     cmd->host_overwrite = false;
@@ -235,5 +236,18 @@ int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
     cmd->shoot.bullet_speed = 0.0f;
   }
 
+  return 0;
+}
+
+/**
+ * @brief 添加向Referee发送的命令
+ *
+ * @param ref 命令队列
+ * @param cmd 要添加的命令
+ * @return int8_t 0对应没有错误
+ */
+int8_t CMD_RefereeAdd(CMD_RefereeCmd_t *ref, CMD_UI_t cmd) {
+  if (ref->counter >= CMD_REFEREE_MAX_NUM || ref->counter < 0) return -1;
+  ref->cmd[ref->counter++] = cmd;
   return 0;
 }

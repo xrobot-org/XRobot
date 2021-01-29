@@ -1,8 +1,9 @@
 /*
   UI相关命令
 */
+#include "component\ui.h"
 
-#include "ui.h"
+#include <stdio.h>
 
 /**
  * @brief UI_绘制直线段
@@ -17,11 +18,14 @@
  * @param y_start 起点y坐标
  * @param x_end 终点x坐标
  * @param y_end 终点y坐标
+ * @return int8_t
  */
-void UI_DrawLine(UI_Ele_t *grapic_line, const char *name, uint8_t type_op,
-                 uint8_t layer, uint8_t color, uint16_t width, uint16_t x_start,
-                 uint16_t y_start, uint16_t x_end, uint16_t y_end) {
-  snprintf(grapic_line->name, 2, "%s", name);
+int8_t UI_DrawLine(UI_Ele_t *grapic_line, const char *name, uint8_t type_op,
+                   uint8_t layer, uint8_t color, uint16_t width,
+                   uint16_t x_start, uint16_t y_start, uint16_t x_end,
+                   uint16_t y_end) {
+  if (grapic_line == NULL) return -1;
+  snprintf((char *)grapic_line->name, 2, "%s", name);
   grapic_line->layer = layer;
   grapic_line->type_op = type_op;
   grapic_line->type_ele = 0;
@@ -31,6 +35,7 @@ void UI_DrawLine(UI_Ele_t *grapic_line, const char *name, uint8_t type_op,
   grapic_line->y_start = y_start;
   grapic_line->x_end = x_end;
   grapic_line->y_end = y_end;
+  return 0;
 }
 
 /**
@@ -46,12 +51,14 @@ void UI_DrawLine(UI_Ele_t *grapic_line, const char *name, uint8_t type_op,
  * @param y_start 起点y坐标
  * @param x_end 对角顶点x坐标
  * @param y_end 对角顶点y坐标
+ * @return int8_t
  */
-void UI_DrawRectangle(UI_Ele_t *grapic_rectangle, const char *name,
-                      uint8_t type_op, uint8_t layer, uint8_t color,
-                      uint16_t width, uint16_t x_start, uint16_t y_start,
-                      uint16_t x_end, uint16_t y_end) {
-  snprintf(grapic_rectangle->name, 2, "%s", name);
+int8_t UI_DrawRectangle(UI_Ele_t *grapic_rectangle, const char *name,
+                        uint8_t type_op, uint8_t layer, uint8_t color,
+                        uint16_t width, uint16_t x_start, uint16_t y_start,
+                        uint16_t x_end, uint16_t y_end) {
+  if (grapic_rectangle == NULL) return -1;
+  snprintf((char *)grapic_rectangle->name, 2, "%s", name);
   grapic_rectangle->type_op = type_op;
   grapic_rectangle->type_ele = 1;
   grapic_rectangle->layer = layer;
@@ -61,6 +68,7 @@ void UI_DrawRectangle(UI_Ele_t *grapic_rectangle, const char *name,
   grapic_rectangle->y_start = y_start;
   grapic_rectangle->x_end = x_end;
   grapic_rectangle->y_end = y_end;
+  return 0;
 }
 
 /**
@@ -75,11 +83,13 @@ void UI_DrawRectangle(UI_Ele_t *grapic_rectangle, const char *name,
  * @param x_center 圆心x坐标
  * @param y_center 圆心y坐标
  * @param radius 半径
+ * @return int8_t
  */
-void UI_DrawCycle(UI_Ele_t *grapic_cycle, const char *name, uint8_t type_op,
-                  uint8_t layer, uint8_t color, uint16_t width,
-                  uint16_t x_center, uint16_t y_center, uint16_t radius) {
-  snprintf(grapic_cycle->name, 2, "%s", name);
+int8_t UI_DrawCycle(UI_Ele_t *grapic_cycle, const char *name, uint8_t type_op,
+                    uint8_t layer, uint8_t color, uint16_t width,
+                    uint16_t x_center, uint16_t y_center, uint16_t radius) {
+  if (grapic_cycle == NULL) return -1;
+  snprintf((char *)grapic_cycle->name, 2, "%s", name);
   grapic_cycle->type_op = type_op;
   grapic_cycle->layer = layer;
   grapic_cycle->type_ele = 2;
@@ -88,6 +98,7 @@ void UI_DrawCycle(UI_Ele_t *grapic_cycle, const char *name, uint8_t type_op,
   grapic_cycle->x_start = x_center;
   grapic_cycle->y_start = y_center;
   grapic_cycle->radius = radius;
+  return 0;
 }
 
 /**
@@ -103,12 +114,14 @@ void UI_DrawCycle(UI_Ele_t *grapic_cycle, const char *name, uint8_t type_op,
  * @param y_center 圆心y坐标
  * @param x_semiaxis x半轴长度
  * @param y_semiaxis y半轴长度
+ * @return int8_t
  */
-void UI_DrawOval(UI_Ele_t *grapic_oval, const char *name, uint8_t type_op,
-                 uint8_t layer, uint8_t color, uint16_t width,
-                 uint16_t x_center, uint16_t y_center, uint16_t x_semiaxis,
-                 uint16_t y_semiaxis) {
-  snprintf(grapic_oval->name, 2, "%s", name);
+int8_t UI_DrawOval(UI_Ele_t *grapic_oval, const char *name, uint8_t type_op,
+                   uint8_t layer, uint8_t color, uint16_t width,
+                   uint16_t x_center, uint16_t y_center, uint16_t x_semiaxis,
+                   uint16_t y_semiaxis) {
+  if (grapic_oval == NULL) return -1;
+  snprintf((char *)grapic_oval->name, 2, "%s", name);
   grapic_oval->type_op = type_op;
   grapic_oval->type_ele = 3;
   grapic_oval->layer = layer;
@@ -118,6 +131,7 @@ void UI_DrawOval(UI_Ele_t *grapic_oval, const char *name, uint8_t type_op,
   grapic_oval->y_start = y_center;
   grapic_oval->x_end = x_semiaxis;
   grapic_oval->y_end = y_semiaxis;
+  return 0;
 }
 
 /**
@@ -135,12 +149,14 @@ void UI_DrawOval(UI_Ele_t *grapic_oval, const char *name, uint8_t type_op,
  * @param y_center 圆心y坐标
  * @param x_semiaxis x半轴长度
  * @param y_semiaxis y半轴长度
+ * @return int8_t
  */
-void UI_DrawArc(UI_Ele_t *grapic_arc, const char *name, uint8_t type_op,
-                uint8_t layer, uint8_t color, uint16_t angle_start,
-                uint16_t angle_end, uint16_t width, uint16_t x_center,
-                uint16_t y_center, uint16_t x_semiaxis, uint16_t y_semiaxis) {
-  snprintf(grapic_arc->name, 2, "%s", name);
+int8_t UI_DrawArc(UI_Ele_t *grapic_arc, const char *name, uint8_t type_op,
+                  uint8_t layer, uint8_t color, uint16_t angle_start,
+                  uint16_t angle_end, uint16_t width, uint16_t x_center,
+                  uint16_t y_center, uint16_t x_semiaxis, uint16_t y_semiaxis) {
+  if (grapic_arc == NULL) return -1;
+  snprintf((char *)grapic_arc->name, 2, "%s", name);
   grapic_arc->type_op = type_op;
   grapic_arc->type_ele = 4;
   grapic_arc->layer = layer;
@@ -152,6 +168,7 @@ void UI_DrawArc(UI_Ele_t *grapic_arc, const char *name, uint8_t type_op,
   grapic_arc->y_start = y_center;
   grapic_arc->x_end = x_semiaxis;
   grapic_arc->y_end = y_semiaxis;
+  return 0;
 }
 
 /**
@@ -170,13 +187,15 @@ void UI_DrawArc(UI_Ele_t *grapic_arc, const char *name, uint8_t type_op,
  * @param float_high 32位浮点数
  * @param float_middle 32位浮点数
  * @param float_low 32位浮点数
+ * @return int8_t
  */
-void UI_DrawFloating(UI_Ele_t *grapic_floating, const char *name,
-                     uint8_t type_op, uint8_t layer, uint8_t color,
-                     uint16_t font_size, uint16_t digits, uint16_t width,
-                     uint16_t x_start, uint16_t y_start, uint16_t float_high,
-                     uint16_t float_middle, uint16_t float_low) {
-  snprintf(grapic_floating->name, 2, "%s", name);
+int8_t UI_DrawFloating(UI_Ele_t *grapic_floating, const char *name,
+                       uint8_t type_op, uint8_t layer, uint8_t color,
+                       uint16_t font_size, uint16_t digits, uint16_t width,
+                       uint16_t x_start, uint16_t y_start, uint16_t float_high,
+                       uint16_t float_middle, uint16_t float_low) {
+  if (grapic_floating == NULL) return -1;
+  snprintf((char *)grapic_floating->name, 2, "%s", name);
   grapic_floating->type_op = type_op;
   grapic_floating->type_ele = 5;
   grapic_floating->layer = layer;
@@ -189,6 +208,7 @@ void UI_DrawFloating(UI_Ele_t *grapic_floating, const char *name,
   grapic_floating->radius = float_high;
   grapic_floating->x_end = float_middle;
   grapic_floating->y_end = float_low;
+  return 0;
 }
 
 /**
@@ -206,13 +226,15 @@ void UI_DrawFloating(UI_Ele_t *grapic_floating, const char *name,
  * @param int32_t_high 32位整型数
  * @param int32_t_middle 32位整型数
  * @param int32_t_low 32位整型数
+ * @return int8_t
  */
-void UI_DrawInteger(UI_Ele_t *grapic_integer, const char *name, uint8_t type_op,
-                    uint8_t layer, uint8_t color, uint16_t font_size,
-                    uint16_t width, uint16_t x_start, uint16_t y_start,
-                    uint16_t int32_t_high, uint16_t int32_t_middle,
-                    uint16_t int32_t_low) {
-  snprintf(grapic_integer->name, 2, "%s", name);
+int8_t UI_DrawInteger(UI_Ele_t *grapic_integer, const char *name,
+                      uint8_t type_op, uint8_t layer, uint8_t color,
+                      uint16_t font_size, uint16_t width, uint16_t x_start,
+                      uint16_t y_start, uint16_t int32_t_high,
+                      uint16_t int32_t_middle, uint16_t int32_t_low) {
+  if (grapic_integer == NULL) return -1;
+  snprintf((char *)grapic_integer->name, 2, "%s", name);
   grapic_integer->type_op = type_op;
   grapic_integer->type_ele = 6;
   grapic_integer->layer = layer;
@@ -224,6 +246,7 @@ void UI_DrawInteger(UI_Ele_t *grapic_integer, const char *name, uint8_t type_op,
   grapic_integer->radius = int32_t_high;
   grapic_integer->x_end = int32_t_middle;
   grapic_integer->y_end = int32_t_low;
+  return 0;
 }
 
 /**
@@ -240,21 +263,24 @@ void UI_DrawInteger(UI_Ele_t *grapic_integer, const char *name, uint8_t type_op,
  * @param x_start 起点x坐标
  * @param y_start 起点y坐标
  * @param character 字符串首地址
+ * @return int8_t
  */
-void UI_DrawCharacter(UI_Drawcharacter_t *grapic_character, const char *name,
-                      uint8_t type_op, uint8_t layer, uint8_t color,
-                      uint16_t font_size, uint16_t length, uint16_t width,
-                      uint16_t x_start, uint16_t y_start,
-                      const char *character) {
-  snprintf(grapic_character->grapic_t.name, 2, "%s", name);
-  grapic_character->grapic_t.type_op = type_op;
-  grapic_character->grapic_t.type_ele = 7;
-  grapic_character->grapic_t.layer = layer;
-  grapic_character->grapic_t.color = color;
-  grapic_character->grapic_t.angle_start = font_size;
-  grapic_character->grapic_t.angle_end = length;
-  grapic_character->grapic_t.width = width;
-  grapic_character->grapic_t.x_start = x_start;
-  grapic_character->grapic_t.y_start = y_start;
-  snprintf(grapic_character->character, 29, "%s", character);
+int8_t UI_DrawCharacter(UI_Drawcharacter_t *grapic_character, const char *name,
+                        uint8_t type_op, uint8_t layer, uint8_t color,
+                        uint16_t font_size, uint16_t length, uint16_t width,
+                        uint16_t x_start, uint16_t y_start,
+                        const char *character) {
+  if (grapic_character == NULL) return -1;
+  snprintf((char *)grapic_character->grapic.name, 2, "%s", name);
+  grapic_character->grapic.type_op = type_op;
+  grapic_character->grapic.type_ele = 7;
+  grapic_character->grapic.layer = layer;
+  grapic_character->grapic.color = color;
+  grapic_character->grapic.angle_start = font_size;
+  grapic_character->grapic.angle_end = length;
+  grapic_character->grapic.width = width;
+  grapic_character->grapic.x_start = x_start;
+  grapic_character->grapic.y_start = y_start;
+  snprintf((char *)grapic_character->character, 29, "%s", character);
+  return 0;
 }

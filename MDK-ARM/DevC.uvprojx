@@ -1445,6 +1445,11 @@
               <FileType>1</FileType>
               <FilePath>..\User\component\FreeRTOS_CLI.c</FilePath>
             </File>
+            <File>
+              <FileName>ui.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\component\ui.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -3104,6 +3109,11 @@
               <FileName>FreeRTOS_CLI.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\component\FreeRTOS_CLI.c</FilePath>
+            </File>
+            <File>
+              <FileName>ui.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\component\ui.c</FilePath>
             </File>
           </Files>
         </Group>

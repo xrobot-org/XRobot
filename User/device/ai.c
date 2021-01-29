@@ -33,7 +33,7 @@ static void Ai_RxCpltCallback(void) {
 int8_t AI_Init(AI_t *ai) {
   if (ai == NULL) return DEVICE_ERR_NULL;
   if (inited) return DEVICE_ERR_INITED;
-	if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
+  if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
 
   BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_RX_CPLT_CB,
                             Ai_RxCpltCallback);
@@ -101,17 +101,17 @@ int8_t AI_PackMCU(AI_t *ai, const AHRS_Quaternion_t *quat) {
     ai->to_host.mcu.data.notice |= AI_NOTICE_AUTOMATIC;
 
   ai->to_host.mcu.crc16 =
-      CRC16_Calc((const uint8_t *)&(ai->to_host.mcu.data),
-                 sizeof(Protocol_Data_MCU_t) - sizeof(uint16_t), CRC16_INIT);
+      CRC16_Calc((const uint8_t *)&(ai->to_host.mcu),
+                 sizeof(Protocol_MCU_t) - sizeof(uint16_t), CRC16_INIT);
   return DEVICE_OK;
 }
 
 int8_t AI_PackRef(AI_t *ai, const Referee_t *ref) {
   (void)ref;
   ai->to_host.ref.id = AI_ID_REF;
-  ai->to_host.ref.crc16 = CRC16_Calc(
-      (const uint8_t *)&(ai->to_host.ref.data),
-      sizeof(Protocol_Data_Referee_t) - sizeof(uint16_t), CRC16_INIT);
+  ai->to_host.ref.crc16 =
+      CRC16_Calc((const uint8_t *)&(ai->to_host.ref),
+                 sizeof(Protocol_Referee_t) - sizeof(uint16_t), CRC16_INIT);
   return DEVICE_OK;
 }
 

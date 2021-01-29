@@ -56,18 +56,17 @@ void Task_Command(void *argument) {
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 
-    osMessageQueueGet(task_runtime.msgq.cmd.raw.rc, &rc, 0, 0);
-    osMessageQueueGet(task_runtime.msgq.cmd.raw.host, &host, 0, 0);
-
     osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
 
     /* 将接收机数据解析为指令数据 */
-    CMD_ParseRc(&rc, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
+    if (osMessageQueueGet(task_runtime.msgq.cmd.raw.rc, &rc, 0, 0) == osOK)
+      CMD_ParseRc(&rc, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
 
     /* 判断是否需要让上位机覆写指令 */
     if (CMD_CHECK_HOST_OVERWRITE(&cmd))
-
-      CMD_ParseHost(&host, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
+      if (osMessageQueueGet(task_runtime.msgq.cmd.raw.host, &host, 0, 0) ==
+          osOK)
+        CMD_ParseHost(&host, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
 
     osKernelUnlock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
 
@@ -77,7 +76,11 @@ void Task_Command(void *argument) {
     osMessageQueuePut(task_runtime.msgq.cmd.chassis, &(cmd.chassis), 0, 0);
     osMessageQueuePut(task_runtime.msgq.cmd.gimbal, &(cmd.gimbal), 0, 0);
     osMessageQueuePut(task_runtime.msgq.cmd.shoot, &(cmd.shoot), 0, 0);
-
+    while (cmd.referee.counter > 0) {
+      osMessageQueuePut(task_runtime.msgq.cmd.referee,
+                        &(cmd.referee.cmd[--cmd.referee.counter]), 0, 0);
+      cmd.referee.cmd[cmd.referee.counter] = CMD_UI_NOTHING;
+    }
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }
 }
