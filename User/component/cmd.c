@@ -145,8 +145,12 @@ int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       CMD_KeyPressedRc(rc, CMD_KEY_E, false))
     cmd->pc_ctrl = false;
 
-  /* PC键位映射和逻辑. */
-  if (cmd->pc_ctrl) {
+  if ((rc->sw_l == CMD_SW_ERR) || (rc->sw_r == CMD_SW_ERR)) {
+    cmd->chassis.mode = CHASSIS_MODE_RELAX;
+    cmd->gimbal.mode = GIMBAL_MODE_RELAX;
+    cmd->shoot.mode = SHOOT_MODE_RELAX;
+  } else if (cmd->pc_ctrl) {
+    /* PC键位映射和逻辑. */
     CMD_BehaviorParse(rc, cmd);
     cmd->gimbal.delta_eulr.yaw =
         (float)rc->mouse.x * dt_sec * cmd->param->sens_mouse;
@@ -154,59 +158,53 @@ int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
         (float)rc->mouse.y * dt_sec * cmd->param->sens_mouse;
   } else {
     /* RC键位映射和逻辑. */
-    if ((rc->sw_l == CMD_SW_ERR) || (rc->sw_r == CMD_SW_ERR)) {
-      cmd->chassis.mode = CHASSIS_MODE_RELAX;
-      cmd->gimbal.mode = GIMBAL_MODE_RELAX;
-      cmd->shoot.mode = SHOOT_MODE_RELAX;
-    } else {
-      switch (rc->sw_l) {
-        case CMD_SW_UP:
-          cmd->chassis.mode = CHASSIS_MODE_BREAK;
-          break;
+    switch (rc->sw_l) {
+      case CMD_SW_UP:
+        cmd->chassis.mode = CHASSIS_MODE_BREAK;
+        break;
 
-        case CMD_SW_MID:
-          cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
-          break;
+      case CMD_SW_MID:
+        cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
+        break;
 
-        case CMD_SW_DOWN:
-          cmd->chassis.mode = CHASSIS_MODE_ROTOR;
-          break;
+      case CMD_SW_DOWN:
+        cmd->chassis.mode = CHASSIS_MODE_ROTOR;
+        break;
 
-        case CMD_SW_ERR:
-          cmd->chassis.mode = CHASSIS_MODE_RELAX;
-          break;
-      }
-      switch (rc->sw_r) {
-        case CMD_SW_UP:
-          cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-          cmd->shoot.mode = SHOOT_MODE_SAFE;
-          cmd->shoot.shoot_freq_hz = 0.0f;
-          cmd->shoot.bullet_speed = 0.0f;
-          break;
-
-        case CMD_SW_MID:
-          cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-          cmd->shoot.mode = SHOOT_MODE_STDBY;
-          cmd->shoot.shoot_freq_hz = 0.0f;
-          cmd->shoot.bullet_speed = 10.0f;
-          break;
-
-        case CMD_SW_DOWN:
-          cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-          cmd->shoot.mode = SHOOT_MODE_FIRE;
-          cmd->shoot.shoot_freq_hz = 10u;
-          cmd->shoot.bullet_speed = 10.0f;
-          break;
-
-        case CMD_SW_ERR:
-          cmd->gimbal.mode = GIMBAL_MODE_RELAX;
-          cmd->shoot.mode = SHOOT_MODE_RELAX;
-      }
-      cmd->chassis.ctrl_vec.vx = rc->ch_l_x;
-      cmd->chassis.ctrl_vec.vy = rc->ch_l_y;
-      cmd->gimbal.delta_eulr.yaw = rc->ch_r_x * dt_sec * cmd->param->sens_rc;
-      cmd->gimbal.delta_eulr.pit = rc->ch_r_y * dt_sec * cmd->param->sens_rc;
+      case CMD_SW_ERR:
+        cmd->chassis.mode = CHASSIS_MODE_RELAX;
+        break;
     }
+    switch (rc->sw_r) {
+      case CMD_SW_UP:
+        cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
+        cmd->shoot.mode = SHOOT_MODE_SAFE;
+        cmd->shoot.shoot_freq_hz = 0.0f;
+        cmd->shoot.bullet_speed = 0.0f;
+        break;
+
+      case CMD_SW_MID:
+        cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
+        cmd->shoot.mode = SHOOT_MODE_STDBY;
+        cmd->shoot.shoot_freq_hz = 0.0f;
+        cmd->shoot.bullet_speed = 10.0f;
+        break;
+
+      case CMD_SW_DOWN:
+        cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
+        cmd->shoot.mode = SHOOT_MODE_FIRE;
+        cmd->shoot.shoot_freq_hz = 10u;
+        cmd->shoot.bullet_speed = 10.0f;
+        break;
+
+      case CMD_SW_ERR:
+        cmd->gimbal.mode = GIMBAL_MODE_RELAX;
+        cmd->shoot.mode = SHOOT_MODE_RELAX;
+    }
+    cmd->chassis.ctrl_vec.vx = rc->ch_l_x;
+    cmd->chassis.ctrl_vec.vy = rc->ch_l_y;
+    cmd->gimbal.delta_eulr.yaw = rc->ch_r_x * dt_sec * cmd->param->sens_rc;
+    cmd->gimbal.delta_eulr.pit = rc->ch_r_y * dt_sec * cmd->param->sens_rc;
   }
   rc->key_last = rc->key;
   return 0;
