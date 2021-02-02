@@ -67,8 +67,7 @@ static const Config_RobotParam_t param_default = {
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
         .range = -1.0f,
-      },
-      {
+      }, {
         /* GIMBAL_PID_YAW_ANGLE_IDX */
         .k = 9.58196376868962f,
         .p = 1.0f,
@@ -78,8 +77,7 @@ static const Config_RobotParam_t param_default = {
         .out_limit = 1000.0f,
         .d_cutoff_freq = -1.0f,
         .range = M_2PI,
-      },
-      {
+      }, {
         /* GIMBAL_PID_PIT_OMEGA_IDX */
         .k = 0.15f,
         .p = 1.0f,
@@ -89,8 +87,7 @@ static const Config_RobotParam_t param_default = {
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
         .range = -1.0f,
-      },
-      {
+      }, {
         /* GIMBAL_PID_PIT_ANGLE_IDX */
         .k = 7.0f,
         .p = 1.0f,
@@ -204,8 +201,7 @@ static const Config_RobotParam_t param_hero = {
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
         .range = -1.0f,
-      },
-      {
+      }, {
         /* GIMBAL_PID_YAW_ANGLE_IDX */
         .k = 9.58196376868962f,
         .p = 1.0f,
@@ -215,8 +211,7 @@ static const Config_RobotParam_t param_hero = {
         .out_limit = 1000.0f,
         .d_cutoff_freq = -1.0f,
         .range = M_2PI,
-      },
-      {
+      }, {
         /* GIMBAL_PID_PIT_OMEGA_IDX */
         .k = 0.15f,
         .p = 1.0f,
@@ -226,8 +221,7 @@ static const Config_RobotParam_t param_hero = {
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
         .range = -1.0f,
-      },
-      {
+      }, {
         /* GIMBAL_PID_PIT_ANGLE_IDX */
         .k = 7.0f,
         .p = 1.0f,
@@ -284,7 +278,7 @@ static const Config_RobotParam_t param_hero = {
     },
     .bullet_speed_scaler = -50.0f,
     .bullet_speed_bias = 1.0f,
-    .num_trig_tooth = 8.0f,
+    .num_trig_tooth = 6.0f,
     .fric_radius_m = 0.03f,
   }, /* shoot */
 }; /* param_hero */      
@@ -307,7 +301,7 @@ static const Config_PilotCfg_t cfg_qs = {
       .Key_Mapping[CMD_BEHAVIOR_DECELEBRATE] = CMD_KEY_CTRL,
       .Key_Mapping[CMD_BEHAVIOR_FIRE] = CMD_L_CLICK,
       .Key_Mapping[CMD_BEHAVIOR_BUFF] = CMD_KEY_E,
-      .Key_Mapping[CMD_BEHAVIOR_AUTOAIM] = CMD_KEY_R,
+      .Key_Mapping[CMD_BEHAVIOR_AUTOAIM] = CMD_R_CLICK,
     },
     .move = {
       .move_sense = 0.8f,
