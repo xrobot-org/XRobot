@@ -19,6 +19,8 @@
 
 ![命令行界面（CLI）](./Image/命令行界面.png "命令行界面（CLI）")
 
+利用命令行可以辅助调试程序、校准开发板、初始化机器人、读取不同参数配置。
+
 ## 依赖&环境
 
 - Windows平台下用CubeMX生成项目，然后用Keil uvesrion进行编辑、烧写和调试。
@@ -38,29 +40,35 @@
     `git submodule init && git submodule update `
 
 - 针对不同板子需要到不同的CubeMX工程文件（DevA.ioc、DevC.ioc）。
-- 利用CubeMX生成对应的外设初始化代码和Keil工程文件。
+
+- （可选）利用CubeMX生成对应的外设初始化代码和Keil工程文件。
 
   - 每次生成代码后，请利用Git丢弃Middlewares文件夹中的所有改变。原因如下。
 
     1. 使用了AC6，与CubeMX默认不匹配，会影响到FreeRTOS的移植。
     2. 使用了比CubeMX更新的FreeRTOS版本，降版本会导致部分代码无法编译。
+
   - 因为已经生成过Keil工程文件，所以只会覆盖以前生成的代码，而不会影响手写的代码。
+
   - 每次生成代码后，请在HAL_InitTick函数中添加uwTickPrio = TickPriority;
+
 - 打开MDK-ARM中的DevC.uvprojx（或DevA.uvprojx）即可进行编辑、烧写或调试。
+
 - Keil工程中有两个Target，其中Debug用来调试，不包含编译器优化等；DevC/DevA用来编译输出最终固件。
 
-## 文件目录结构及文件用途说明
+## 文件目录结构&文件用途说明
 
-| 文件夹 | 内容 |
-| ---- | ----  |
-| Core | CubeMX生成。包含核心代码，外设初始化，系统初始化等 |
-| Drivers | CubeMX生成。包含CMSIS相关库和STM32 HAL |
-| Image | 图片 |
-| MDK-ARM | CubeMX生成。Keil uversion 项目相关文件 |
-| Middlewares | 中间件。部分CubeMX生成，部分手动添加 |
-| USB_DEVICE | CubeMX生成。USB相关文件 |
-| User | 手动编写的代码 |
-| Utils | 使用到的其他工具，如CubeMonitor, Matlab |
+| 文件夹 | 来源 | 内容 |
+| ---- | ---- | ----  |
+| Core | CubeMX | 包含核心代码，外设初始化，系统初始化等 |
+| Doc | 开发者 | 文档 |
+| Drivers | CubeMX | CMSIS相关库、STM32 HAL |
+| Image | 开发者 | 图片 |
+| MDK-ARM | CubeMX | Keil uversion 项目相关文件 |
+| Middlewares | 开发者 / CubeMX | 中间件 |
+| USB_DEVICE | CubeMX | USB相关文件 |
+| User |  开发者 | 手动编写的代码 |
+| Utils |  开发者 | 使用到的工具，如CubeMonitor, Matlab |
 
 | User内 | 内容 |
 | ---- | ----  |
