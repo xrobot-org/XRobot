@@ -1,6 +1,5 @@
 /* --------------------------------------------------------------------------
- * Portions Copyright © 2019 STMicroelectronics International N.V. All rights reserved.
- * Copyright (c) 2013-2019 Arm Limited. All rights reserved.
+ * Copyright (c) 2013-2020 Arm Limited. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,12 +23,17 @@
 #include <string.h>
 
 #include "cmsis_os2.h"                  // ::CMSIS:RTOS2
-#include "cmsis_compiler.h"
+#include "cmsis_compiler.h"             // Compiler agnostic definitions
+#include "os_tick.h"
 
 #include "FreeRTOS.h"                   // ARM.FreeRTOS::RTOS:Core
 #include "task.h"                       // ARM.FreeRTOS::RTOS:Core
 #include "event_groups.h"               // ARM.FreeRTOS::RTOS:Event Groups
 #include "semphr.h"                     // ARM.FreeRTOS::RTOS:Core
+#include "timers.h"                     // ARM.FreeRTOS::RTOS:Timers
+
+#include "freertos_mpool.h"             // osMemoryPool definitions
+#include "freertos_os2.h"               // Configuration check and setup
 
 /*---------------------------------------------------------------------------*/
 #ifndef __ARM_ARCH_6M__
@@ -73,8 +77,6 @@
 #define IS_IRQ_MODE()             (__get_IPSR() != 0U)
 #endif
 
-#define IS_IRQ()                  (IS_IRQ_MODE() || (IS_IRQ_MASKED() && (KernelState == osKernelRunning)))
-
 /* Limits */
 #define MAX_BITS_TASK_NOTIFY      31U
 #define MAX_BITS_EVENT_GROUPS     24U
@@ -108,7 +110,7 @@ static osKernelState_t KernelState = osKernelInactive;
   definition configHEAP_5_REGIONS as parameter. Overriding configHEAP_5_REGIONS
   is possible by defining it globally or in FreeRTOSConfig.h.
 */
-#if defined(USE_FREERTOS_HEAP_5)
+#if defined(USE_FreeRTOS_HEAP_5)
 #if (configAPPLICATION_ALLOCATED_HEAP == 0)
   /*
     FreeRTOS heap is not defined by the application.
@@ -138,7 +140,7 @@ static osKernelState_t KernelState = osKernelInactive;
   */
   #define HEAP_5_REGION_SETUP   0
 #endif /* configAPPLICATION_ALLOCATED_HEAP */
-#endif /* USE_FREERTOS_HEAP_5 */
+#endif /* USE_FreeRTOS_HEAP_5 */
 
 #if defined(SysTick)
 #undef SysTick_Handler
@@ -170,27 +172,71 @@ __STATIC_INLINE void SVC_Setup (void) {
   /* Service Call interrupt might be configured before kernel start     */
   /* and when its priority is lower or equal to BASEPRI, svc intruction */
   /* causes a Hard Fault.                                               */
-
- /* 
-  * the call below has introduced a regression compared to revious release
-  * The issue was logged under:https://github.com/ARM-software/CMSIS-FreeRTOS/issues/35
-  * until it is correctly fixed, the code below is commented
-  */
-/*    NVIC_SetPriority (SVCall_IRQn, 0U); */
+  NVIC_SetPriority (SVCall_IRQn, 0U);
 #endif
 }
 
-/*---------------------------------------------------------------------------*/
+/*
+  Function macro used to retrieve semaphore count from ISR
+*/
+#ifndef uxSemaphoreGetCountFromISR
+#define uxSemaphoreGetCountFromISR( xSemaphore ) uxQueueMessagesWaitingFromISR( ( QueueHandle_t ) ( xSemaphore ) )
+#endif
 
+/*
+  Determine if CPU executes from interrupt context or if interrupts are masked.
+*/
+__STATIC_INLINE uint32_t IRQ_Context (void) {
+  uint32_t irq;
+  BaseType_t state;
+
+  irq = 0U;
+
+  if (IS_IRQ_MODE()) {
+    /* Called from interrupt context */
+    irq = 1U;
+  }
+  else {
+    /* Get FreeRTOS scheduler state */
+    state = xTaskGetSchedulerState();
+
+    if (state != taskSCHEDULER_NOT_STARTED) {
+      /* Scheduler was started */
+      if (IS_IRQ_MASKED()) {
+        /* Interrupts are masked */
+        irq = 1U;
+      }
+    }
+  }
+
+  /* Return context, 0: thread context, 1: IRQ context */
+  return (irq);
+}
+
+
+/* ==== Kernel Management Functions ==== */
+
+/*
+  Initialize the RTOS Kernel.
+*/
 osStatus_t osKernelInitialize (void) {
   osStatus_t stat;
+  BaseType_t state;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else {
-    if (KernelState == osKernelInactive) {
-      #if defined(USE_FREERTOS_HEAP_5) && (HEAP_5_REGION_SETUP == 1)
+    state = xTaskGetSchedulerState();
+
+    /* Initialize if scheduler not started and not initialized before */
+    if ((state == taskSCHEDULER_NOT_STARTED) && (KernelState == osKernelInactive)) {
+      #if defined(USE_TRACE_EVENT_RECORDER)
+        /* Initialize the trace macro debugging output channel */
+        EvrFreeRTOSSetup(0U);
+      #endif
+      #if defined(USE_FreeRTOS_HEAP_5) && (HEAP_5_REGION_SETUP == 1)
+        /* Initialize the memory regions when using heap_5 variant */
         vPortDefineHeapRegions (configHEAP_5_REGIONS);
       #endif
       KernelState = osKernelReady;
@@ -200,9 +246,13 @@ osStatus_t osKernelInitialize (void) {
     }
   }
 
+  /* Return execution status */
   return (stat);
 }
 
+/*
+  Get RTOS Kernel Information.
+*/
 osStatus_t osKernelGetInfo (osVersion_t *version, char *id_buf, uint32_t id_size) {
 
   if (version != NULL) {
@@ -212,15 +262,21 @@ osStatus_t osKernelGetInfo (osVersion_t *version, char *id_buf, uint32_t id_size
   }
 
   if ((id_buf != NULL) && (id_size != 0U)) {
+    /* Buffer for retrieving identification string is provided */
     if (id_size > sizeof(KERNEL_ID)) {
       id_size = sizeof(KERNEL_ID);
     }
+    /* Copy kernel identification string into provided buffer */
     memcpy(id_buf, KERNEL_ID, id_size);
   }
 
+  /* Return execution status */
   return (osOK);
 }
 
+/*
+  Get the current RTOS Kernel state.
+*/
 osKernelState_t osKernelGetState (void) {
   osKernelState_t state;
 
@@ -236,27 +292,37 @@ osKernelState_t osKernelGetState (void) {
     case taskSCHEDULER_NOT_STARTED:
     default:
       if (KernelState == osKernelReady) {
+        /* Ready, osKernelInitialize was already called */
         state = osKernelReady;
       } else {
+        /* Not initialized */
         state = osKernelInactive;
       }
       break;
   }
 
+  /* Return current state */
   return (state);
 }
 
+/*
+  Start the RTOS Kernel scheduler.
+*/
 osStatus_t osKernelStart (void) {
   osStatus_t stat;
+  BaseType_t state;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else {
-    if (KernelState == osKernelReady) {
+    state = xTaskGetSchedulerState();
+
+    /* Start scheduler if initialized and not started before */
+    if ((state == taskSCHEDULER_NOT_STARTED) && (KernelState == osKernelReady)) {
       /* Ensure SVC priority is at the reset value */
       SVC_Setup();
-      /* Change state to enable IRQ masking check */
+      /* Change state to ensure correct API flow */
       KernelState = osKernelRunning;
       /* Start the kernel scheduler */
       vTaskStartScheduler();
@@ -266,13 +332,17 @@ osStatus_t osKernelStart (void) {
     }
   }
 
+  /* Return execution status */
   return (stat);
 }
 
+/*
+  Lock the RTOS Kernel scheduler.
+*/
 int32_t osKernelLock (void) {
   int32_t lock;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     lock = (int32_t)osErrorISR;
   }
   else {
@@ -293,13 +363,17 @@ int32_t osKernelLock (void) {
     }
   }
 
+  /* Return previous lock state */
   return (lock);
 }
 
+/*
+  Unlock the RTOS Kernel scheduler.
+*/
 int32_t osKernelUnlock (void) {
   int32_t lock;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     lock = (int32_t)osErrorISR;
   }
   else {
@@ -325,12 +399,16 @@ int32_t osKernelUnlock (void) {
     }
   }
 
+  /* Return previous lock state */
   return (lock);
 }
 
+/*
+  Restore the RTOS Kernel scheduler lock state.
+*/
 int32_t osKernelRestoreLock (int32_t lock) {
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     lock = (int32_t)osErrorISR;
   }
   else {
@@ -361,25 +439,37 @@ int32_t osKernelRestoreLock (int32_t lock) {
     }
   }
 
+  /* Return new lock state */
   return (lock);
 }
 
+/*
+  Get the RTOS kernel tick count.
+*/
 uint32_t osKernelGetTickCount (void) {
   TickType_t ticks;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     ticks = xTaskGetTickCountFromISR();
   } else {
     ticks = xTaskGetTickCount();
   }
 
+  /* Return kernel tick count */
   return (ticks);
 }
 
+/*
+  Get the RTOS kernel tick frequency.
+*/
 uint32_t osKernelGetTickFreq (void) {
+  /* Return frequency in hertz */
   return (configTICK_RATE_HZ);
 }
 
+/*
+  Get the RTOS kernel system timer count.
+*/
 uint32_t osKernelGetSysTimerCount (void) {
   uint32_t irqmask = IS_IRQ_MASKED();
   TickType_t ticks;
@@ -388,21 +478,42 @@ uint32_t osKernelGetSysTimerCount (void) {
   __disable_irq();
 
   ticks = xTaskGetTickCount();
+  val   = OS_Tick_GetCount();
 
-  val = ticks * ( configCPU_CLOCK_HZ / configTICK_RATE_HZ );
+  /* Update tick count and timer value when timer overflows */
+  if (OS_Tick_GetOverflow() != 0U) {
+    val = OS_Tick_GetCount();
+    ticks++;
+  }
+  val += ticks * OS_Tick_GetInterval();
+
   if (irqmask == 0U) {
     __enable_irq();
   }
 
+  /* Return system timer count */
   return (val);
 }
 
+/*
+  Get the RTOS kernel system timer frequency.
+*/
 uint32_t osKernelGetSysTimerFreq (void) {
+  /* Return frequency in hertz */
   return (configCPU_CLOCK_HZ);
 }
 
-/*---------------------------------------------------------------------------*/
 
+/* ==== Thread Management Functions ==== */
+
+/*
+  Create a thread and add it to Active Threads.
+
+  Limitations:
+  - The memory for control block and stack must be provided in the osThreadAttr_t
+    structure in order to allocate object statically.
+  - Attribute osThreadJoinable is not supported, NULL is returned if used.
+*/
 osThreadId_t osThreadNew (osThreadFunc_t func, void *argument, const osThreadAttr_t *attr) {
   const char *name;
   uint32_t stack;
@@ -412,7 +523,7 @@ osThreadId_t osThreadNew (osThreadFunc_t func, void *argument, const osThreadAtt
 
   hTask = NULL;
 
-  if (!IS_IRQ() && (func != NULL)) {
+  if ((IRQ_Context() == 0U) && (func != NULL)) {
     stack = configMINIMAL_STACK_SIZE;
     prio  = (UBaseType_t)osPriorityNormal;
 
@@ -428,6 +539,7 @@ osThreadId_t osThreadNew (osThreadFunc_t func, void *argument, const osThreadAtt
       }
 
       if ((prio < osPriorityIdle) || (prio > osPriorityISR) || ((attr->attr_bits & osThreadJoinable) == osThreadJoinable)) {
+        /* Invalid priority or unsupported osThreadJoinable attribute used */
         return (NULL);
       }
 
@@ -439,10 +551,12 @@ osThreadId_t osThreadNew (osThreadFunc_t func, void *argument, const osThreadAtt
 
       if ((attr->cb_mem    != NULL) && (attr->cb_size    >= sizeof(StaticTask_t)) &&
           (attr->stack_mem != NULL) && (attr->stack_size >  0U)) {
+        /* The memory for control block and stack is provided, use static object */
         mem = 1;
       }
       else {
         if ((attr->cb_mem == NULL) && (attr->cb_size == 0U) && (attr->stack_mem == NULL)) {
+          /* Control block and stack memory will be allocated from the dynamic pool */
           mem = 0;
         }
       }
@@ -452,47 +566,63 @@ osThreadId_t osThreadNew (osThreadFunc_t func, void *argument, const osThreadAtt
     }
 
     if (mem == 1) {
-      hTask = xTaskCreateStatic ((TaskFunction_t)func, name, stack, argument, prio, (StackType_t  *)attr->stack_mem,
-                                                                                    (StaticTask_t *)attr->cb_mem);
+      #if (configSUPPORT_STATIC_ALLOCATION == 1)
+        hTask = xTaskCreateStatic ((TaskFunction_t)func, name, stack, argument, prio, (StackType_t  *)attr->stack_mem,
+                                                                                      (StaticTask_t *)attr->cb_mem);
+      #endif
     }
     else {
       if (mem == 0) {
-        if (xTaskCreate ((TaskFunction_t)func, name, (uint16_t)stack, argument, prio, &hTask) != pdPASS) {
-          hTask = NULL;
-        }
+        #if (configSUPPORT_DYNAMIC_ALLOCATION == 1)
+          if (xTaskCreate ((TaskFunction_t)func, name, (uint16_t)stack, argument, prio, &hTask) != pdPASS) {
+            hTask = NULL;
+          }
+        #endif
       }
     }
   }
 
+  /* Return thread ID */
   return ((osThreadId_t)hTask);
 }
 
+/*
+  Get name of a thread.
+*/
 const char *osThreadGetName (osThreadId_t thread_id) {
   TaskHandle_t hTask = (TaskHandle_t)thread_id;
   const char *name;
 
-  if (IS_IRQ() || (hTask == NULL)) {
+  if ((IRQ_Context() != 0U) || (hTask == NULL)) {
     name = NULL;
   } else {
     name = pcTaskGetName (hTask);
   }
 
+  /* Return name as null-terminated string */
   return (name);
 }
 
+/*
+  Return the thread ID of the current running thread.
+*/
 osThreadId_t osThreadGetId (void) {
   osThreadId_t id;
 
   id = (osThreadId_t)xTaskGetCurrentTaskHandle();
 
+  /* Return thread ID */
   return (id);
 }
 
+/*
+  Get current thread state of a thread.
+*/
 osThreadState_t osThreadGetState (osThreadId_t thread_id) {
   TaskHandle_t hTask = (TaskHandle_t)thread_id;
   osThreadState_t state;
 
-  if (IS_IRQ() || (hTask == NULL)) {
+  if ((IRQ_Context() != 0U) || (hTask == NULL)) {
     state = osThreadError;
   }
   else {
@@ -507,27 +637,35 @@ osThreadState_t osThreadGetState (osThreadId_t thread_id) {
     }
   }
 
+  /* Return current thread state */
   return (state);
 }
 
+/*
+  Get available stack space of a thread based on stack watermark recording during execution.
+*/
 uint32_t osThreadGetStackSpace (osThreadId_t thread_id) {
   TaskHandle_t hTask = (TaskHandle_t)thread_id;
   uint32_t sz;
 
-  if (IS_IRQ() || (hTask == NULL)) {
+  if ((IRQ_Context() != 0U) || (hTask == NULL)) {
     sz = 0U;
   } else {
-    sz = (uint32_t)uxTaskGetStackHighWaterMark (hTask);
+    sz = (uint32_t)(uxTaskGetStackHighWaterMark(hTask) * sizeof(StackType_t));
   }
 
+  /* Return remaining stack space in bytes */
   return (sz);
 }
 
+/*
+  Change priority of a thread.
+*/
 osStatus_t osThreadSetPriority (osThreadId_t thread_id, osPriority_t priority) {
   TaskHandle_t hTask = (TaskHandle_t)thread_id;
   osStatus_t stat;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else if ((hTask == NULL) || (priority < osPriorityIdle) || (priority > osPriorityISR)) {
@@ -538,40 +676,53 @@ osStatus_t osThreadSetPriority (osThreadId_t thread_id, osPriority_t priority) {
     vTaskPrioritySet (hTask, (UBaseType_t)priority);
   }
 
+  /* Return execution status */
   return (stat);
 }
 
+/*
+  Get current priority of a thread.
+*/
 osPriority_t osThreadGetPriority (osThreadId_t thread_id) {
   TaskHandle_t hTask = (TaskHandle_t)thread_id;
   osPriority_t prio;
 
-  if (IS_IRQ() || (hTask == NULL)) {
+  if ((IRQ_Context() != 0U) || (hTask == NULL)) {
     prio = osPriorityError;
   } else {
-    prio = (osPriority_t)uxTaskPriorityGet (hTask);
+    prio = (osPriority_t)((int32_t)uxTaskPriorityGet (hTask));
   }
 
+  /* Return current thread priority */
   return (prio);
 }
 
+/*
+  Pass control to next thread that is in state READY.
+*/
 osStatus_t osThreadYield (void) {
   osStatus_t stat;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   } else {
     stat = osOK;
     taskYIELD();
   }
 
+  /* Return execution status */
   return (stat);
 }
 
+#if (configUSE_OS2_THREAD_SUSPEND_RESUME == 1)
+/*
+  Suspend execution of a thread.
+*/
 osStatus_t osThreadSuspend (osThreadId_t thread_id) {
   TaskHandle_t hTask = (TaskHandle_t)thread_id;
   osStatus_t stat;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else if (hTask == NULL) {
@@ -582,14 +733,18 @@ osStatus_t osThreadSuspend (osThreadId_t thread_id) {
     vTaskSuspend (hTask);
   }
 
+  /* Return execution status */
   return (stat);
 }
 
+/*
+  Resume execution of a thread.
+*/
 osStatus_t osThreadResume (osThreadId_t thread_id) {
   TaskHandle_t hTask = (TaskHandle_t)thread_id;
   osStatus_t stat;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else if (hTask == NULL) {
@@ -600,9 +755,14 @@ osStatus_t osThreadResume (osThreadId_t thread_id) {
     vTaskResume (hTask);
   }
 
+  /* Return execution status */
   return (stat);
 }
+#endif /* (configUSE_OS2_THREAD_SUSPEND_RESUME == 1) */
 
+/*
+  Terminate execution of current running thread.
+*/
 __NO_RETURN void osThreadExit (void) {
 #ifndef USE_FreeRTOS_HEAP_1
   vTaskDelete (NULL);
@@ -610,13 +770,16 @@ __NO_RETURN void osThreadExit (void) {
   for (;;);
 }
 
+/*
+  Terminate execution of a thread.
+*/
 osStatus_t osThreadTerminate (osThreadId_t thread_id) {
   TaskHandle_t hTask = (TaskHandle_t)thread_id;
   osStatus_t stat;
 #ifndef USE_FreeRTOS_HEAP_1
   eTaskState tstate;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else if (hTask == NULL) {
@@ -636,36 +799,48 @@ osStatus_t osThreadTerminate (osThreadId_t thread_id) {
   stat = osError;
 #endif
 
+  /* Return execution status */
   return (stat);
 }
 
+/*
+  Get number of active threads.
+*/
 uint32_t osThreadGetCount (void) {
   uint32_t count;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     count = 0U;
   } else {
     count = uxTaskGetNumberOfTasks();
   }
 
+  /* Return number of active threads */
   return (count);
 }
 
+#if (configUSE_OS2_THREAD_ENUMERATE == 1)
+/*
+  Enumerate active threads.
+*/
 uint32_t osThreadEnumerate (osThreadId_t *thread_array, uint32_t array_items) {
   uint32_t i, count;
   TaskStatus_t *task;
 
-  if (IS_IRQ() || (thread_array == NULL) || (array_items == 0U)) {
+  if ((IRQ_Context() != 0U) || (thread_array == NULL) || (array_items == 0U)) {
     count = 0U;
   } else {
     vTaskSuspendAll();
 
+    /* Allocate memory on heap to temporarily store TaskStatus_t information */
     count = uxTaskGetNumberOfTasks();
     task  = pvPortMalloc (count * sizeof(TaskStatus_t));
 
     if (task != NULL) {
+      /* Retrieve task status information */
       count = uxTaskGetSystemState (task, count, NULL);
 
+      /* Copy handles from task status array into provided thread array */
       for (i = 0U; (i < count) && (i < array_items); i++) {
         thread_array[i] = (osThreadId_t)task[i].xHandle;
       }
@@ -676,9 +851,18 @@ uint32_t osThreadEnumerate (osThreadId_t *thread_array, uint32_t array_items) {
     vPortFree (task);
   }
 
+  /* Return number of enumerated threads */
   return (count);
 }
+#endif /* (configUSE_OS2_THREAD_ENUMERATE == 1) */
 
+
+/* ==== Thread Flags Functions ==== */
+
+#if (configUSE_OS2_THREAD_FLAGS == 1)
+/*
+  Set the specified Thread Flags of a thread.
+*/
 uint32_t osThreadFlagsSet (osThreadId_t thread_id, uint32_t flags) {
   TaskHandle_t hTask = (TaskHandle_t)thread_id;
   uint32_t rflags;
@@ -690,7 +874,7 @@ uint32_t osThreadFlagsSet (osThreadId_t thread_id, uint32_t flags) {
   else {
     rflags = (uint32_t)osError;
 
-    if (IS_IRQ()) {
+    if (IRQ_Context() != 0U) {
       yield = pdFALSE;
 
       (void)xTaskNotifyFromISR (hTask, flags, eSetBits, &yield);
@@ -707,11 +891,14 @@ uint32_t osThreadFlagsSet (osThreadId_t thread_id, uint32_t flags) {
   return (rflags);
 }
 
+/*
+  Clear the specified Thread Flags of current running thread.
+*/
 uint32_t osThreadFlagsClear (uint32_t flags) {
   TaskHandle_t hTask;
   uint32_t rflags, cflags;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     rflags = (uint32_t)osErrorISR;
   }
   else if ((flags & THREAD_FLAGS_INVALID_BITS) != 0U) {
@@ -737,11 +924,14 @@ uint32_t osThreadFlagsClear (uint32_t flags) {
   return (rflags);
 }
 
+/*
+  Get the current Thread Flags of current running thread.
+*/
 uint32_t osThreadFlagsGet (void) {
   TaskHandle_t hTask;
   uint32_t rflags;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     rflags = (uint32_t)osErrorISR;
   }
   else {
@@ -752,16 +942,20 @@ uint32_t osThreadFlagsGet (void) {
     }
   }
 
+  /* Return current flags */
   return (rflags);
 }
 
+/*
+  Wait for one or more Thread Flags of the current running thread to become signaled.
+*/
 uint32_t osThreadFlagsWait (uint32_t flags, uint32_t options, uint32_t timeout) {
   uint32_t rflags, nval;
   uint32_t clear;
   TickType_t t0, td, tout;
   BaseType_t rval;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     rflags = (uint32_t)osErrorISR;
   }
   else if ((flags & THREAD_FLAGS_INVALID_BITS) != 0U) {
@@ -829,11 +1023,18 @@ uint32_t osThreadFlagsWait (uint32_t flags, uint32_t options, uint32_t timeout) 
   /* Return flags before clearing */
   return (rflags);
 }
+#endif /* (configUSE_OS2_THREAD_FLAGS == 1) */
 
+
+/* ==== Generic Wait Functions ==== */
+
+/*
+  Wait for Timeout (Time Delay).
+*/
 osStatus_t osDelay (uint32_t ticks) {
   osStatus_t stat;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else {
@@ -844,14 +1045,18 @@ osStatus_t osDelay (uint32_t ticks) {
     }
   }
 
+  /* Return execution status */
   return (stat);
 }
 
+/*
+  Wait until specified time.
+*/
 osStatus_t osDelayUntil (uint32_t ticks) {
   TickType_t tcnt, delay;
   osStatus_t stat;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else {
@@ -872,10 +1077,14 @@ osStatus_t osDelayUntil (uint32_t ticks) {
     }
   }
 
+  /* Return execution status */
   return (stat);
 }
 
-/*---------------------------------------------------------------------------*/
+
+/* ==== Timer Management Functions ==== */
+
+#if (configUSE_OS2_TIMER == 1)
 
 static void TimerCallback (TimerHandle_t hTimer) {
   TimerCallback_t *callb;
@@ -887,6 +1096,9 @@ static void TimerCallback (TimerHandle_t hTimer) {
   }
 }
 
+/*
+  Create and Initialize a timer.
+*/
 osTimerId_t osTimerNew (osTimerFunc_t func, osTimerType_t type, void *argument, const osTimerAttr_t *attr) {
   const char *name;
   TimerHandle_t hTimer;
@@ -896,7 +1108,7 @@ osTimerId_t osTimerNew (osTimerFunc_t func, osTimerType_t type, void *argument, 
 
   hTimer = NULL;
 
-  if (!IS_IRQ() && (func != NULL)) {
+  if ((IRQ_Context() == 0U) && (func != NULL)) {
     /* Allocate memory to store callback function and argument */
     callb = pvPortMalloc (sizeof(TimerCallback_t));
 
@@ -919,10 +1131,12 @@ osTimerId_t osTimerNew (osTimerFunc_t func, osTimerType_t type, void *argument, 
         }
 
         if ((attr->cb_mem != NULL) && (attr->cb_size >= sizeof(StaticTimer_t))) {
+          /* The memory for control block is provided, use static object */
           mem = 1;
         }
         else {
           if ((attr->cb_mem == NULL) && (attr->cb_size == 0U)) {
+            /* Control block will be allocated from the dynamic pool */
             mem = 0;
           }
         }
@@ -930,39 +1144,59 @@ osTimerId_t osTimerNew (osTimerFunc_t func, osTimerType_t type, void *argument, 
       else {
         mem = 0;
       }
-
+      /*
+        TimerCallback function is always provided as a callback and is used to call application
+        specified function with its argument both stored in structure callb.
+      */
       if (mem == 1) {
-        hTimer = xTimerCreateStatic (name, 1, reload, callb, TimerCallback, (StaticTimer_t *)attr->cb_mem);
+        #if (configSUPPORT_STATIC_ALLOCATION == 1)
+          hTimer = xTimerCreateStatic (name, 1, reload, callb, TimerCallback, (StaticTimer_t *)attr->cb_mem);
+        #endif
       }
       else {
         if (mem == 0) {
-          hTimer = xTimerCreate (name, 1, reload, callb, TimerCallback);
+          #if (configSUPPORT_DYNAMIC_ALLOCATION == 1)
+            hTimer = xTimerCreate (name, 1, reload, callb, TimerCallback);
+          #endif
         }
+      }
+
+      if ((hTimer == NULL) && (callb != NULL)) {
+        /* Failed to create a timer, release allocated resources */
+        vPortFree (callb);
       }
     }
   }
 
+  /* Return timer ID */
   return ((osTimerId_t)hTimer);
 }
 
+/*
+  Get name of a timer.
+*/
 const char *osTimerGetName (osTimerId_t timer_id) {
   TimerHandle_t hTimer = (TimerHandle_t)timer_id;
   const char *p;
 
-  if (IS_IRQ() || (hTimer == NULL)) {
+  if ((IRQ_Context() != 0U) || (hTimer == NULL)) {
     p = NULL;
   } else {
     p = pcTimerGetName (hTimer);
   }
 
+  /* Return name as null-terminated string */
   return (p);
 }
 
+/*
+  Start or restart a timer.
+*/
 osStatus_t osTimerStart (osTimerId_t timer_id, uint32_t ticks) {
   TimerHandle_t hTimer = (TimerHandle_t)timer_id;
   osStatus_t stat;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else if (hTimer == NULL) {
@@ -976,14 +1210,18 @@ osStatus_t osTimerStart (osTimerId_t timer_id, uint32_t ticks) {
     }
   }
 
+  /* Return execution status */
   return (stat);
 }
 
+/*
+  Stop a timer.
+*/
 osStatus_t osTimerStop (osTimerId_t timer_id) {
   TimerHandle_t hTimer = (TimerHandle_t)timer_id;
   osStatus_t stat;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else if (hTimer == NULL) {
@@ -1002,29 +1240,37 @@ osStatus_t osTimerStop (osTimerId_t timer_id) {
     }
   }
 
+  /* Return execution status */
   return (stat);
 }
 
+/*
+  Check if a timer is running.
+*/
 uint32_t osTimerIsRunning (osTimerId_t timer_id) {
   TimerHandle_t hTimer = (TimerHandle_t)timer_id;
   uint32_t running;
 
-  if (IS_IRQ() || (hTimer == NULL)) {
+  if ((IRQ_Context() != 0U) || (hTimer == NULL)) {
     running = 0U;
   } else {
     running = (uint32_t)xTimerIsTimerActive (hTimer);
   }
 
+  /* Return 0: not running, 1: running */
   return (running);
 }
 
+/*
+  Delete a timer.
+*/
 osStatus_t osTimerDelete (osTimerId_t timer_id) {
   TimerHandle_t hTimer = (TimerHandle_t)timer_id;
   osStatus_t stat;
 #ifndef USE_FreeRTOS_HEAP_1
   TimerCallback_t *callb;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else if (hTimer == NULL) {
@@ -1044,26 +1290,37 @@ osStatus_t osTimerDelete (osTimerId_t timer_id) {
   stat = osError;
 #endif
 
+  /* Return execution status */
   return (stat);
 }
+#endif /* (configUSE_OS2_TIMER == 1) */
 
-/*---------------------------------------------------------------------------*/
 
+/* ==== Event Flags Management Functions ==== */
+
+/*
+  Create and Initialize an Event Flags object.
+
+  Limitations:
+  - Event flags are limited to 24 bits.
+*/
 osEventFlagsId_t osEventFlagsNew (const osEventFlagsAttr_t *attr) {
   EventGroupHandle_t hEventGroup;
   int32_t mem;
 
   hEventGroup = NULL;
 
-  if (!IS_IRQ()) {
+  if (IRQ_Context() == 0U) {
     mem = -1;
 
     if (attr != NULL) {
       if ((attr->cb_mem != NULL) && (attr->cb_size >= sizeof(StaticEventGroup_t))) {
+        /* The memory for control block is provided, use static object */
         mem = 1;
       }
       else {
         if ((attr->cb_mem == NULL) && (attr->cb_size == 0U)) {
+          /* Control block will be allocated from the dynamic pool */
           mem = 0;
         }
       }
@@ -1073,18 +1330,29 @@ osEventFlagsId_t osEventFlagsNew (const osEventFlagsAttr_t *attr) {
     }
 
     if (mem == 1) {
+      #if (configSUPPORT_STATIC_ALLOCATION == 1)
       hEventGroup = xEventGroupCreateStatic (attr->cb_mem);
+      #endif
     }
     else {
       if (mem == 0) {
-        hEventGroup = xEventGroupCreate();
+        #if (configSUPPORT_DYNAMIC_ALLOCATION == 1)
+          hEventGroup = xEventGroupCreate();
+        #endif
       }
     }
   }
 
+  /* Return event flags ID */
   return ((osEventFlagsId_t)hEventGroup);
 }
 
+/*
+  Set the specified Event Flags.
+
+  Limitations:
+  - Event flags are limited to 24 bits.
+*/
 uint32_t osEventFlagsSet (osEventFlagsId_t ef_id, uint32_t flags) {
   EventGroupHandle_t hEventGroup = (EventGroupHandle_t)ef_id;
   uint32_t rflags;
@@ -1093,7 +1361,12 @@ uint32_t osEventFlagsSet (osEventFlagsId_t ef_id, uint32_t flags) {
   if ((hEventGroup == NULL) || ((flags & EVENT_FLAGS_INVALID_BITS) != 0U)) {
     rflags = (uint32_t)osErrorParameter;
   }
-  else if (IS_IRQ()) {
+  else if (IRQ_Context() != 0U) {
+  #if (configUSE_OS2_EVENTFLAGS_FROM_ISR == 0)
+    (void)yield;
+    /* Enable timers and xTimerPendFunctionCall function to support osEventFlagsSet from ISR */
+    rflags = (uint32_t)osErrorResource;
+  #else
     yield = pdFALSE;
 
     if (xEventGroupSetBitsFromISR (hEventGroup, (EventBits_t)flags, &yield) == pdFAIL) {
@@ -1102,14 +1375,22 @@ uint32_t osEventFlagsSet (osEventFlagsId_t ef_id, uint32_t flags) {
       rflags = flags;
       portYIELD_FROM_ISR (yield);
     }
+  #endif
   }
   else {
     rflags = xEventGroupSetBits (hEventGroup, (EventBits_t)flags);
   }
 
+  /* Return event flags after setting */
   return (rflags);
 }
 
+/*
+  Clear the specified Event Flags.
+
+  Limitations:
+  - Event flags are limited to 24 bits.
+*/
 uint32_t osEventFlagsClear (osEventFlagsId_t ef_id, uint32_t flags) {
   EventGroupHandle_t hEventGroup = (EventGroupHandle_t)ef_id;
   uint32_t rflags;
@@ -1117,20 +1398,38 @@ uint32_t osEventFlagsClear (osEventFlagsId_t ef_id, uint32_t flags) {
   if ((hEventGroup == NULL) || ((flags & EVENT_FLAGS_INVALID_BITS) != 0U)) {
     rflags = (uint32_t)osErrorParameter;
   }
-  else if (IS_IRQ()) {
+  else if (IRQ_Context() != 0U) {
+  #if (configUSE_OS2_EVENTFLAGS_FROM_ISR == 0)
+    /* Enable timers and xTimerPendFunctionCall function to support osEventFlagsSet from ISR */
+    rflags = (uint32_t)osErrorResource;
+  #else
     rflags = xEventGroupGetBitsFromISR (hEventGroup);
 
     if (xEventGroupClearBitsFromISR (hEventGroup, (EventBits_t)flags) == pdFAIL) {
       rflags = (uint32_t)osErrorResource;
     }
+    else {
+      /* xEventGroupClearBitsFromISR only registers clear operation in the timer command queue. */
+      /* Yield is required here otherwise clear operation might not execute in the right order. */
+      /* See https://github.com/FreeRTOS/FreeRTOS-Kernel/issues/93 for more info.               */
+      portYIELD_FROM_ISR (pdTRUE);
+    }
+  #endif
   }
   else {
     rflags = xEventGroupClearBits (hEventGroup, (EventBits_t)flags);
   }
 
+  /* Return event flags before clearing */
   return (rflags);
 }
 
+/*
+  Get the current Event Flags.
+
+  Limitations:
+  - Event flags are limited to 24 bits.
+*/
 uint32_t osEventFlagsGet (osEventFlagsId_t ef_id) {
   EventGroupHandle_t hEventGroup = (EventGroupHandle_t)ef_id;
   uint32_t rflags;
@@ -1138,16 +1437,24 @@ uint32_t osEventFlagsGet (osEventFlagsId_t ef_id) {
   if (ef_id == NULL) {
     rflags = 0U;
   }
-  else if (IS_IRQ()) {
+  else if (IRQ_Context() != 0U) {
     rflags = xEventGroupGetBitsFromISR (hEventGroup);
   }
   else {
     rflags = xEventGroupGetBits (hEventGroup);
   }
 
+  /* Return current event flags */
   return (rflags);
 }
 
+/*
+  Wait for one or more Event Flags to become signaled.
+
+  Limitations:
+  - Event flags are limited to 24 bits.
+  - osEventFlagsWait cannot be called from an ISR.
+*/
 uint32_t osEventFlagsWait (osEventFlagsId_t ef_id, uint32_t flags, uint32_t options, uint32_t timeout) {
   EventGroupHandle_t hEventGroup = (EventGroupHandle_t)ef_id;
   BaseType_t wait_all;
@@ -1157,7 +1464,7 @@ uint32_t osEventFlagsWait (osEventFlagsId_t ef_id, uint32_t flags, uint32_t opti
   if ((hEventGroup == NULL) || ((flags & EVENT_FLAGS_INVALID_BITS) != 0U)) {
     rflags = (uint32_t)osErrorParameter;
   }
-  else if (IS_IRQ()) {
+  else if (IRQ_Context() != 0U) {
     rflags = (uint32_t)osErrorISR;
   }
   else {
@@ -1176,7 +1483,7 @@ uint32_t osEventFlagsWait (osEventFlagsId_t ef_id, uint32_t flags, uint32_t opti
     rflags = xEventGroupWaitBits (hEventGroup, (EventBits_t)flags, exit_clr, wait_all, (TickType_t)timeout);
 
     if (options & osFlagsWaitAll) {
-      if (flags != rflags) {
+      if ((flags & rflags) != flags) {
         if (timeout > 0U) {
           rflags = (uint32_t)osErrorTimeout;
         } else {
@@ -1195,15 +1502,19 @@ uint32_t osEventFlagsWait (osEventFlagsId_t ef_id, uint32_t flags, uint32_t opti
     }
   }
 
+  /* Return event flags before clearing */
   return (rflags);
 }
 
+/*
+  Delete an Event Flags object.
+*/
 osStatus_t osEventFlagsDelete (osEventFlagsId_t ef_id) {
   EventGroupHandle_t hEventGroup = (EventGroupHandle_t)ef_id;
   osStatus_t stat;
 
 #ifndef USE_FreeRTOS_HEAP_1
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else if (hEventGroup == NULL) {
@@ -1217,11 +1528,21 @@ osStatus_t osEventFlagsDelete (osEventFlagsId_t ef_id) {
   stat = osError;
 #endif
 
+  /* Return execution status */
   return (stat);
 }
 
-/*---------------------------------------------------------------------------*/
 
+/* ==== Mutex Management Functions ==== */
+
+#if (configUSE_OS2_MUTEX == 1)
+/*
+  Create and Initialize a Mutex object.
+
+  Limitations:
+  - Priority inherit protocol is used by default, osMutexPrioInherit attribute is ignored.
+  - Robust mutex is not supported, NULL is returned if used.
+*/
 osMutexId_t osMutexNew (const osMutexAttr_t *attr) {
   SemaphoreHandle_t hMutex;
   uint32_t type;
@@ -1233,7 +1554,7 @@ osMutexId_t osMutexNew (const osMutexAttr_t *attr) {
 
   hMutex = NULL;
 
-  if (!IS_IRQ()) {
+  if (IRQ_Context() == 0U) {
     if (attr != NULL) {
       type = attr->attr_bits;
     } else {
@@ -1251,10 +1572,12 @@ osMutexId_t osMutexNew (const osMutexAttr_t *attr) {
 
       if (attr != NULL) {
         if ((attr->cb_mem != NULL) && (attr->cb_size >= sizeof(StaticSemaphore_t))) {
+          /* The memory for control block is provided, use static object */
           mem = 1;
         }
         else {
           if ((attr->cb_mem == NULL) && (attr->cb_size == 0U)) {
+            /* Control block will be allocated from the dynamic pool */
             mem = 0;
           }
         }
@@ -1264,20 +1587,28 @@ osMutexId_t osMutexNew (const osMutexAttr_t *attr) {
       }
 
       if (mem == 1) {
-        if (rmtx != 0U) {
-          hMutex = xSemaphoreCreateRecursiveMutexStatic (attr->cb_mem);
-        }
-        else {
-          hMutex = xSemaphoreCreateMutexStatic (attr->cb_mem);
-        }
+        #if (configSUPPORT_STATIC_ALLOCATION == 1)
+          if (rmtx != 0U) {
+            #if (configUSE_RECURSIVE_MUTEXES == 1)
+            hMutex = xSemaphoreCreateRecursiveMutexStatic (attr->cb_mem);
+            #endif
+          }
+          else {
+            hMutex = xSemaphoreCreateMutexStatic (attr->cb_mem);
+          }
+        #endif
       }
       else {
         if (mem == 0) {
-          if (rmtx != 0U) {
-            hMutex = xSemaphoreCreateRecursiveMutex ();
-          } else {
-            hMutex = xSemaphoreCreateMutex ();
-          }
+          #if (configSUPPORT_DYNAMIC_ALLOCATION == 1)
+            if (rmtx != 0U) {
+              #if (configUSE_RECURSIVE_MUTEXES == 1)
+              hMutex = xSemaphoreCreateRecursiveMutex ();
+              #endif
+            } else {
+              hMutex = xSemaphoreCreateMutex ();
+            }
+          #endif
         }
       }
 
@@ -1293,14 +1624,19 @@ osMutexId_t osMutexNew (const osMutexAttr_t *attr) {
       #endif
 
       if ((hMutex != NULL) && (rmtx != 0U)) {
+        /* Set LSB as 'recursive mutex flag' */
         hMutex = (SemaphoreHandle_t)((uint32_t)hMutex | 1U);
       }
     }
   }
 
+  /* Return mutex ID */
   return ((osMutexId_t)hMutex);
 }
 
+/*
+  Acquire a Mutex or timeout if it is locked.
+*/
 osStatus_t osMutexAcquire (osMutexId_t mutex_id, uint32_t timeout) {
   SemaphoreHandle_t hMutex;
   osStatus_t stat;
@@ -1308,11 +1644,12 @@ osStatus_t osMutexAcquire (osMutexId_t mutex_id, uint32_t timeout) {
 
   hMutex = (SemaphoreHandle_t)((uint32_t)mutex_id & ~1U);
 
+  /* Extract recursive mutex flag */
   rmtx = (uint32_t)mutex_id & 1U;
 
   stat = osOK;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else if (hMutex == NULL) {
@@ -1320,6 +1657,7 @@ osStatus_t osMutexAcquire (osMutexId_t mutex_id, uint32_t timeout) {
   }
   else {
     if (rmtx != 0U) {
+      #if (configUSE_RECURSIVE_MUTEXES == 1)
       if (xSemaphoreTakeRecursive (hMutex, timeout) != pdPASS) {
         if (timeout != 0U) {
           stat = osErrorTimeout;
@@ -1327,6 +1665,7 @@ osStatus_t osMutexAcquire (osMutexId_t mutex_id, uint32_t timeout) {
           stat = osErrorResource;
         }
       }
+      #endif
     }
     else {
       if (xSemaphoreTake (hMutex, timeout) != pdPASS) {
@@ -1339,9 +1678,13 @@ osStatus_t osMutexAcquire (osMutexId_t mutex_id, uint32_t timeout) {
     }
   }
 
+  /* Return execution status */
   return (stat);
 }
 
+/*
+  Release a Mutex that was acquired by osMutexAcquire.
+*/
 osStatus_t osMutexRelease (osMutexId_t mutex_id) {
   SemaphoreHandle_t hMutex;
   osStatus_t stat;
@@ -1349,11 +1692,12 @@ osStatus_t osMutexRelease (osMutexId_t mutex_id) {
 
   hMutex = (SemaphoreHandle_t)((uint32_t)mutex_id & ~1U);
 
+  /* Extract recursive mutex flag */
   rmtx = (uint32_t)mutex_id & 1U;
 
   stat = osOK;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else if (hMutex == NULL) {
@@ -1361,9 +1705,11 @@ osStatus_t osMutexRelease (osMutexId_t mutex_id) {
   }
   else {
     if (rmtx != 0U) {
+      #if (configUSE_RECURSIVE_MUTEXES == 1)
       if (xSemaphoreGiveRecursive (hMutex) != pdPASS) {
         stat = osErrorResource;
       }
+      #endif
     }
     else {
       if (xSemaphoreGive (hMutex) != pdPASS) {
@@ -1372,24 +1718,32 @@ osStatus_t osMutexRelease (osMutexId_t mutex_id) {
     }
   }
 
+  /* Return execution status */
   return (stat);
 }
 
+/*
+  Get Thread which owns a Mutex object.
+*/
 osThreadId_t osMutexGetOwner (osMutexId_t mutex_id) {
   SemaphoreHandle_t hMutex;
   osThreadId_t owner;
 
   hMutex = (SemaphoreHandle_t)((uint32_t)mutex_id & ~1U);
 
-  if (IS_IRQ() || (hMutex == NULL)) {
+  if ((IRQ_Context() != 0U) || (hMutex == NULL)) {
     owner = NULL;
   } else {
     owner = (osThreadId_t)xSemaphoreGetMutexHolder (hMutex);
   }
 
+  /* Return owner thread ID */
   return (owner);
 }
 
+/*
+  Delete a Mutex object.
+*/
 osStatus_t osMutexDelete (osMutexId_t mutex_id) {
   osStatus_t stat;
 #ifndef USE_FreeRTOS_HEAP_1
@@ -1397,7 +1751,7 @@ osStatus_t osMutexDelete (osMutexId_t mutex_id) {
 
   hMutex = (SemaphoreHandle_t)((uint32_t)mutex_id & ~1U);
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else if (hMutex == NULL) {
@@ -1414,11 +1768,17 @@ osStatus_t osMutexDelete (osMutexId_t mutex_id) {
   stat = osError;
 #endif
 
+  /* Return execution status */
   return (stat);
 }
+#endif /* (configUSE_OS2_MUTEX == 1) */
 
-/*---------------------------------------------------------------------------*/
 
+/* ==== Semaphore Management Functions ==== */
+
+/*
+  Create and Initialize a Semaphore object.
+*/
 osSemaphoreId_t osSemaphoreNew (uint32_t max_count, uint32_t initial_count, const osSemaphoreAttr_t *attr) {
   SemaphoreHandle_t hSemaphore;
   int32_t mem;
@@ -1428,15 +1788,17 @@ osSemaphoreId_t osSemaphoreNew (uint32_t max_count, uint32_t initial_count, cons
 
   hSemaphore = NULL;
 
-  if (!IS_IRQ() && (max_count > 0U) && (initial_count <= max_count)) {
+  if ((IRQ_Context() == 0U) && (max_count > 0U) && (initial_count <= max_count)) {
     mem = -1;
 
     if (attr != NULL) {
       if ((attr->cb_mem != NULL) && (attr->cb_size >= sizeof(StaticSemaphore_t))) {
+        /* The memory for control block is provided, use static object */
         mem = 1;
       }
       else {
         if ((attr->cb_mem == NULL) && (attr->cb_size == 0U)) {
+          /* Control block will be allocated from the dynamic pool */
           mem = 0;
         }
       }
@@ -1448,10 +1810,14 @@ osSemaphoreId_t osSemaphoreNew (uint32_t max_count, uint32_t initial_count, cons
     if (mem != -1) {
       if (max_count == 1U) {
         if (mem == 1) {
-          hSemaphore = xSemaphoreCreateBinaryStatic ((StaticSemaphore_t *)attr->cb_mem);
+          #if (configSUPPORT_STATIC_ALLOCATION == 1)
+            hSemaphore = xSemaphoreCreateBinaryStatic ((StaticSemaphore_t *)attr->cb_mem);
+          #endif
         }
         else {
-          hSemaphore = xSemaphoreCreateBinary();
+          #if (configSUPPORT_DYNAMIC_ALLOCATION == 1)
+            hSemaphore = xSemaphoreCreateBinary();
+          #endif
         }
 
         if ((hSemaphore != NULL) && (initial_count != 0U)) {
@@ -1463,10 +1829,14 @@ osSemaphoreId_t osSemaphoreNew (uint32_t max_count, uint32_t initial_count, cons
       }
       else {
         if (mem == 1) {
-          hSemaphore = xSemaphoreCreateCountingStatic (max_count, initial_count, (StaticSemaphore_t *)attr->cb_mem);
+          #if (configSUPPORT_STATIC_ALLOCATION == 1)
+            hSemaphore = xSemaphoreCreateCountingStatic (max_count, initial_count, (StaticSemaphore_t *)attr->cb_mem);
+          #endif
         }
         else {
-          hSemaphore = xSemaphoreCreateCounting (max_count, initial_count);
+          #if (configSUPPORT_DYNAMIC_ALLOCATION == 1)
+            hSemaphore = xSemaphoreCreateCounting (max_count, initial_count);
+          #endif
         }
       }
       
@@ -1483,9 +1853,13 @@ osSemaphoreId_t osSemaphoreNew (uint32_t max_count, uint32_t initial_count, cons
     }
   }
 
+  /* Return semaphore ID */
   return ((osSemaphoreId_t)hSemaphore);
 }
 
+/*
+  Acquire a Semaphore token or timeout if no tokens are available.
+*/
 osStatus_t osSemaphoreAcquire (osSemaphoreId_t semaphore_id, uint32_t timeout) {
   SemaphoreHandle_t hSemaphore = (SemaphoreHandle_t)semaphore_id;
   osStatus_t stat;
@@ -1496,7 +1870,7 @@ osStatus_t osSemaphoreAcquire (osSemaphoreId_t semaphore_id, uint32_t timeout) {
   if (hSemaphore == NULL) {
     stat = osErrorParameter;
   }
-  else if (IS_IRQ()) {
+  else if (IRQ_Context() != 0U) {
     if (timeout != 0U) {
       stat = osErrorParameter;
     }
@@ -1520,9 +1894,13 @@ osStatus_t osSemaphoreAcquire (osSemaphoreId_t semaphore_id, uint32_t timeout) {
     }
   }
 
+  /* Return execution status */
   return (stat);
 }
 
+/*
+  Release a Semaphore token up to the initial maximum count.
+*/
 osStatus_t osSemaphoreRelease (osSemaphoreId_t semaphore_id) {
   SemaphoreHandle_t hSemaphore = (SemaphoreHandle_t)semaphore_id;
   osStatus_t stat;
@@ -1533,7 +1911,7 @@ osStatus_t osSemaphoreRelease (osSemaphoreId_t semaphore_id) {
   if (hSemaphore == NULL) {
     stat = osErrorParameter;
   }
-  else if (IS_IRQ()) {
+  else if (IRQ_Context() != 0U) {
     yield = pdFALSE;
 
     if (xSemaphoreGiveFromISR (hSemaphore, &yield) != pdTRUE) {
@@ -1548,9 +1926,13 @@ osStatus_t osSemaphoreRelease (osSemaphoreId_t semaphore_id) {
     }
   }
 
+  /* Return execution status */
   return (stat);
 }
 
+/*
+  Get current Semaphore token count.
+*/
 uint32_t osSemaphoreGetCount (osSemaphoreId_t semaphore_id) {
   SemaphoreHandle_t hSemaphore = (SemaphoreHandle_t)semaphore_id;
   uint32_t count;
@@ -1558,21 +1940,25 @@ uint32_t osSemaphoreGetCount (osSemaphoreId_t semaphore_id) {
   if (hSemaphore == NULL) {
     count = 0U;
   }
-  else if (IS_IRQ()) {
+  else if (IRQ_Context() != 0U) {
     count = uxQueueMessagesWaitingFromISR (hSemaphore);
   } else {
     count = (uint32_t)uxSemaphoreGetCount (hSemaphore);
   }
 
+  /* Return number of tokens */
   return (count);
 }
 
+/*
+  Delete a Semaphore object.
+*/
 osStatus_t osSemaphoreDelete (osSemaphoreId_t semaphore_id) {
   SemaphoreHandle_t hSemaphore = (SemaphoreHandle_t)semaphore_id;
   osStatus_t stat;
 
 #ifndef USE_FreeRTOS_HEAP_1
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else if (hSemaphore == NULL) {
@@ -1590,11 +1976,20 @@ osStatus_t osSemaphoreDelete (osSemaphoreId_t semaphore_id) {
   stat = osError;
 #endif
 
+  /* Return execution status */
   return (stat);
 }
 
-/*---------------------------------------------------------------------------*/
 
+/* ==== Message Queue Management Functions ==== */
+
+/*
+  Create and Initialize a Message Queue object.
+
+  Limitations:
+  - The memory for control block and and message data must be provided in the
+    osThreadAttr_t structure in order to allocate object statically.
+*/
 osMessageQueueId_t osMessageQueueNew (uint32_t msg_count, uint32_t msg_size, const osMessageQueueAttr_t *attr) {
   QueueHandle_t hQueue;
   int32_t mem;
@@ -1604,17 +1999,19 @@ osMessageQueueId_t osMessageQueueNew (uint32_t msg_count, uint32_t msg_size, con
 
   hQueue = NULL;
 
-  if (!IS_IRQ() && (msg_count > 0U) && (msg_size > 0U)) {
+  if ((IRQ_Context() == 0U) && (msg_count > 0U) && (msg_size > 0U)) {
     mem = -1;
 
     if (attr != NULL) {
       if ((attr->cb_mem != NULL) && (attr->cb_size >= sizeof(StaticQueue_t)) &&
           (attr->mq_mem != NULL) && (attr->mq_size >= (msg_count * msg_size))) {
+        /* The memory for control block and message data is provided, use static object */
         mem = 1;
       }
       else {
         if ((attr->cb_mem == NULL) && (attr->cb_size == 0U) &&
             (attr->mq_mem == NULL) && (attr->mq_size == 0U)) {
+          /* Control block will be allocated from the dynamic pool */
           mem = 0;
         }
       }
@@ -1624,11 +2021,15 @@ osMessageQueueId_t osMessageQueueNew (uint32_t msg_count, uint32_t msg_size, con
     }
 
     if (mem == 1) {
-      hQueue = xQueueCreateStatic (msg_count, msg_size, attr->mq_mem, attr->cb_mem);
+      #if (configSUPPORT_STATIC_ALLOCATION == 1)
+        hQueue = xQueueCreateStatic (msg_count, msg_size, attr->mq_mem, attr->cb_mem);
+      #endif
     }
     else {
       if (mem == 0) {
-        hQueue = xQueueCreate (msg_count, msg_size);
+        #if (configSUPPORT_DYNAMIC_ALLOCATION == 1)
+          hQueue = xQueueCreate (msg_count, msg_size);
+        #endif
       }
     }
 
@@ -1645,9 +2046,16 @@ osMessageQueueId_t osMessageQueueNew (uint32_t msg_count, uint32_t msg_size, con
 
   }
 
+  /* Return message queue ID */
   return ((osMessageQueueId_t)hQueue);
 }
 
+/*
+  Put a Message into a Queue or timeout if Queue is full.
+
+  Limitations:
+  - Message priority is ignored
+*/
 osStatus_t osMessageQueuePut (osMessageQueueId_t mq_id, const void *msg_ptr, uint8_t msg_prio, uint32_t timeout) {
   QueueHandle_t hQueue = (QueueHandle_t)mq_id;
   osStatus_t stat;
@@ -1657,7 +2065,7 @@ osStatus_t osMessageQueuePut (osMessageQueueId_t mq_id, const void *msg_ptr, uin
 
   stat = osOK;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     if ((hQueue == NULL) || (msg_ptr == NULL) || (timeout != 0U)) {
       stat = osErrorParameter;
     }
@@ -1686,9 +2094,16 @@ osStatus_t osMessageQueuePut (osMessageQueueId_t mq_id, const void *msg_ptr, uin
     }
   }
 
+  /* Return execution status */
   return (stat);
 }
 
+/*
+  Get a Message from a Queue or timeout if Queue is empty.
+
+  Limitations:
+  - Message priority is ignored
+*/
 osStatus_t osMessageQueueGet (osMessageQueueId_t mq_id, void *msg_ptr, uint8_t *msg_prio, uint32_t timeout) {
   QueueHandle_t hQueue = (QueueHandle_t)mq_id;
   osStatus_t stat;
@@ -1698,7 +2113,7 @@ osStatus_t osMessageQueueGet (osMessageQueueId_t mq_id, void *msg_ptr, uint8_t *
 
   stat = osOK;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     if ((hQueue == NULL) || (msg_ptr == NULL) || (timeout != 0U)) {
       stat = osErrorParameter;
     }
@@ -1727,9 +2142,13 @@ osStatus_t osMessageQueueGet (osMessageQueueId_t mq_id, void *msg_ptr, uint8_t *
     }
   }
 
+  /* Return execution status */
   return (stat);
 }
 
+/*
+  Get maximum number of messages in a Message Queue.
+*/
 uint32_t osMessageQueueGetCapacity (osMessageQueueId_t mq_id) {
   StaticQueue_t *mq = (StaticQueue_t *)mq_id;
   uint32_t capacity;
@@ -1741,9 +2160,13 @@ uint32_t osMessageQueueGetCapacity (osMessageQueueId_t mq_id) {
     capacity = mq->uxDummy4[1];
   }
 
+  /* Return maximum number of messages */
   return (capacity);
 }
 
+/*
+  Get maximum message size in a Message Queue.
+*/
 uint32_t osMessageQueueGetMsgSize (osMessageQueueId_t mq_id) {
   StaticQueue_t *mq = (StaticQueue_t *)mq_id;
   uint32_t size;
@@ -1755,9 +2178,13 @@ uint32_t osMessageQueueGetMsgSize (osMessageQueueId_t mq_id) {
     size = mq->uxDummy4[2];
   }
 
+  /* Return maximum message size */
   return (size);
 }
 
+/*
+  Get number of queued messages in a Message Queue.
+*/
 uint32_t osMessageQueueGetCount (osMessageQueueId_t mq_id) {
   QueueHandle_t hQueue = (QueueHandle_t)mq_id;
   UBaseType_t count;
@@ -1765,16 +2192,20 @@ uint32_t osMessageQueueGetCount (osMessageQueueId_t mq_id) {
   if (hQueue == NULL) {
     count = 0U;
   }
-  else if (IS_IRQ()) {
+  else if (IRQ_Context() != 0U) {
     count = uxQueueMessagesWaitingFromISR (hQueue);
   }
   else {
     count = uxQueueMessagesWaiting (hQueue);
   }
 
+  /* Return number of queued messages */
   return ((uint32_t)count);
 }
 
+/*
+  Get number of available slots for messages in a Message Queue.
+*/
 uint32_t osMessageQueueGetSpace (osMessageQueueId_t mq_id) {
   StaticQueue_t *mq = (StaticQueue_t *)mq_id;
   uint32_t space;
@@ -1783,7 +2214,7 @@ uint32_t osMessageQueueGetSpace (osMessageQueueId_t mq_id) {
   if (mq == NULL) {
     space = 0U;
   }
-  else if (IS_IRQ()) {
+  else if (IRQ_Context() != 0U) {
     isrm = taskENTER_CRITICAL_FROM_ISR();
 
     /* space = pxQueue->uxLength - pxQueue->uxMessagesWaiting; */
@@ -1795,14 +2226,18 @@ uint32_t osMessageQueueGetSpace (osMessageQueueId_t mq_id) {
     space = (uint32_t)uxQueueSpacesAvailable ((QueueHandle_t)mq);
   }
 
+  /* Return number of available slots */
   return (space);
 }
 
+/*
+  Reset a Message Queue to initial empty state.
+*/
 osStatus_t osMessageQueueReset (osMessageQueueId_t mq_id) {
   QueueHandle_t hQueue = (QueueHandle_t)mq_id;
   osStatus_t stat;
 
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else if (hQueue == NULL) {
@@ -1813,15 +2248,19 @@ osStatus_t osMessageQueueReset (osMessageQueueId_t mq_id) {
     (void)xQueueReset (hQueue);
   }
 
+  /* Return execution status */
   return (stat);
 }
 
+/*
+  Delete a Message Queue object.
+*/
 osStatus_t osMessageQueueDelete (osMessageQueueId_t mq_id) {
   QueueHandle_t hQueue = (QueueHandle_t)mq_id;
   osStatus_t stat;
 
 #ifndef USE_FreeRTOS_HEAP_1
-  if (IS_IRQ()) {
+  if (IRQ_Context() != 0U) {
     stat = osErrorISR;
   }
   else if (hQueue == NULL) {
@@ -1839,17 +2278,506 @@ osStatus_t osMessageQueueDelete (osMessageQueueId_t mq_id) {
   stat = osError;
 #endif
 
+  /* Return execution status */
   return (stat);
 }
 
+
+/* ==== Memory Pool Management Functions ==== */
+
+#ifdef FREERTOS_MPOOL_H_
+/* Static memory pool functions */
+static void  FreeBlock   (MemPool_t *mp, void *block);
+static void *AllocBlock  (MemPool_t *mp);
+static void *CreateBlock (MemPool_t *mp);
+
+/*
+  Create and Initialize a Memory Pool object.
+*/
+osMemoryPoolId_t osMemoryPoolNew (uint32_t block_count, uint32_t block_size, const osMemoryPoolAttr_t *attr) {
+  MemPool_t *mp;
+  const char *name;
+  int32_t mem_cb, mem_mp;
+  uint32_t sz;
+
+  if (IRQ_Context() != 0U) {
+    mp = NULL;
+  }
+  else if ((block_count == 0U) || (block_size == 0U)) {
+    mp = NULL;
+  }
+  else {
+    mp = NULL;
+    sz = MEMPOOL_ARR_SIZE (block_count, block_size);
+
+    name = NULL;
+    mem_cb = -1;
+    mem_mp = -1;
+
+    if (attr != NULL) {
+      if (attr->name != NULL) {
+        name = attr->name;
+      }
+
+      if ((attr->cb_mem != NULL) && (attr->cb_size >= sizeof(MemPool_t))) {
+        /* Static control block is provided */
+        mem_cb = 1;
+      }
+      else if ((attr->cb_mem == NULL) && (attr->cb_size == 0U)) {
+        /* Allocate control block memory on heap */
+        mem_cb = 0;
+      }
+
+      if ((attr->mp_mem == NULL) && (attr->mp_size == 0U)) {
+        /* Allocate memory array on heap */
+          mem_mp = 0;
+      }
+      else {
+        if (attr->mp_mem != NULL) {
+          /* Check if array is 4-byte aligned */
+          if (((uint32_t)attr->mp_mem & 3U) == 0U) {
+            /* Check if array big enough */
+            if (attr->mp_size >= sz) {
+              /* Static memory pool array is provided */
+              mem_mp = 1;
+            }
+          }
+        }
+      }
+    }
+    else {
+      /* Attributes not provided, allocate memory on heap */
+      mem_cb = 0;
+      mem_mp = 0;
+    }
+
+    if (mem_cb == 0) {
+      mp = pvPortMalloc (sizeof(MemPool_t));
+    } else {
+      mp = attr->cb_mem;
+    }
+
+    if (mp != NULL) {
+      /* Create a semaphore (max count == initial count == block_count) */
+      #if (configSUPPORT_STATIC_ALLOCATION == 1)
+        mp->sem = xSemaphoreCreateCountingStatic (block_count, block_count, &mp->mem_sem);
+      #elif (configSUPPORT_DYNAMIC_ALLOCATION == 1)
+        mp->sem = xSemaphoreCreateCounting (block_count, block_count);
+      #else
+        mp->sem = NULL;
+      #endif
+
+      if (mp->sem != NULL) {
+        /* Setup memory array */
+        if (mem_mp == 0) {
+          mp->mem_arr = pvPortMalloc (sz);
+        } else {
+          mp->mem_arr = attr->mp_mem;
+        }
+      }
+    }
+
+    if ((mp != NULL) && (mp->mem_arr != NULL)) {
+      /* Memory pool can be created */
+      mp->head    = NULL;
+      mp->mem_sz  = sz;
+      mp->name    = name;
+      mp->bl_sz   = block_size;
+      mp->bl_cnt  = block_count;
+      mp->n       = 0U;
+
+      /* Set heap allocated memory flags */
+      mp->status = MPOOL_STATUS;
+
+      if (mem_cb == 0) {
+        /* Control block on heap */
+        mp->status |= 1U;
+      }
+      if (mem_mp == 0) {
+        /* Memory array on heap */
+        mp->status |= 2U;
+      }
+    }
+    else {
+      /* Memory pool cannot be created, release allocated resources */
+      if ((mem_cb == 0) && (mp != NULL)) {
+        /* Free control block memory */
+        vPortFree (mp);
+      }
+      mp = NULL;
+    }
+  }
+
+  /* Return memory pool ID */
+  return (mp);
+}
+
+/*
+  Get name of a Memory Pool object.
+*/
+const char *osMemoryPoolGetName (osMemoryPoolId_t mp_id) {
+  MemPool_t *mp = (osMemoryPoolId_t)mp_id;
+  const char *p;
+
+  if (IRQ_Context() != 0U) {
+    p = NULL;
+  }
+  else if (mp_id == NULL) {
+    p = NULL;
+  }
+  else {
+    p = mp->name;
+  }
+
+  /* Return name as null-terminated string */
+  return (p);
+}
+
+/*
+  Allocate a memory block from a Memory Pool.
+*/
+void *osMemoryPoolAlloc (osMemoryPoolId_t mp_id, uint32_t timeout) {
+  MemPool_t *mp;
+  void *block;
+  uint32_t isrm;
+
+  if (mp_id == NULL) {
+    /* Invalid input parameters */
+    block = NULL;
+  }
+  else {
+    block = NULL;
+
+    mp = (MemPool_t *)mp_id;
+
+    if ((mp->status & MPOOL_STATUS) == MPOOL_STATUS) {
+      if (IRQ_Context() != 0U) {
+        if (timeout == 0U) {
+          if (xSemaphoreTakeFromISR (mp->sem, NULL) == pdTRUE) {
+            if ((mp->status & MPOOL_STATUS) == MPOOL_STATUS) {
+              isrm  = taskENTER_CRITICAL_FROM_ISR();
+
+              /* Get a block from the free-list */
+              block = AllocBlock(mp);
+
+              if (block == NULL) {
+                /* List of free blocks is empty, 'create' new block */
+                block = CreateBlock(mp);
+              }
+
+              taskEXIT_CRITICAL_FROM_ISR(isrm);
+            }
+          }
+        }
+      }
+      else {
+        if (xSemaphoreTake (mp->sem, (TickType_t)timeout) == pdTRUE) {
+          if ((mp->status & MPOOL_STATUS) == MPOOL_STATUS) {
+            taskENTER_CRITICAL();
+
+            /* Get a block from the free-list */
+            block = AllocBlock(mp);
+
+            if (block == NULL) {
+              /* List of free blocks is empty, 'create' new block */
+              block = CreateBlock(mp);
+            }
+
+            taskEXIT_CRITICAL();
+          }
+        }
+      }
+    }
+  }
+
+  /* Return memory block address */
+  return (block);
+}
+
+/*
+  Return an allocated memory block back to a Memory Pool.
+*/
+osStatus_t osMemoryPoolFree (osMemoryPoolId_t mp_id, void *block) {
+  MemPool_t *mp;
+  osStatus_t stat;
+  uint32_t isrm;
+  BaseType_t yield;
+
+  if ((mp_id == NULL) || (block == NULL)) {
+    /* Invalid input parameters */
+    stat = osErrorParameter;
+  }
+  else {
+    mp = (MemPool_t *)mp_id;
+
+    if ((mp->status & MPOOL_STATUS) != MPOOL_STATUS) {
+      /* Invalid object status */
+      stat = osErrorResource;
+    }
+    else if ((block < (void *)&mp->mem_arr[0]) || (block > (void*)&mp->mem_arr[mp->mem_sz-1])) {
+      /* Block pointer outside of memory array area */
+      stat = osErrorParameter;
+    }
+    else {
+      stat = osOK;
+
+      if (IRQ_Context() != 0U) {
+        if (uxSemaphoreGetCountFromISR (mp->sem) == mp->bl_cnt) {
+          stat = osErrorResource;
+        }
+        else {
+          isrm = taskENTER_CRITICAL_FROM_ISR();
+
+          /* Add block to the list of free blocks */
+          FreeBlock(mp, block);
+
+          taskEXIT_CRITICAL_FROM_ISR(isrm);
+
+          yield = pdFALSE;
+          xSemaphoreGiveFromISR (mp->sem, &yield);
+          portYIELD_FROM_ISR (yield);
+        }
+      }
+      else {
+        if (uxSemaphoreGetCount (mp->sem) == mp->bl_cnt) {
+          stat = osErrorResource;
+        }
+        else {
+          taskENTER_CRITICAL();
+
+          /* Add block to the list of free blocks */
+          FreeBlock(mp, block);
+
+          taskEXIT_CRITICAL();
+
+          xSemaphoreGive (mp->sem);
+        }
+      }
+    }
+  }
+
+  /* Return execution status */
+  return (stat);
+}
+
+/*
+  Get maximum number of memory blocks in a Memory Pool.
+*/
+uint32_t osMemoryPoolGetCapacity (osMemoryPoolId_t mp_id) {
+  MemPool_t *mp;
+  uint32_t  n;
+
+  if (mp_id == NULL) {
+    /* Invalid input parameters */
+    n = 0U;
+  }
+  else {
+    mp = (MemPool_t *)mp_id;
+
+    if ((mp->status & MPOOL_STATUS) != MPOOL_STATUS) {
+      /* Invalid object status */
+      n = 0U;
+    }
+    else {
+      n = mp->bl_cnt;
+    }
+  }
+
+  /* Return maximum number of memory blocks */
+  return (n);
+}
+
+/*
+  Get memory block size in a Memory Pool.
+*/
+uint32_t osMemoryPoolGetBlockSize (osMemoryPoolId_t mp_id) {
+  MemPool_t *mp;
+  uint32_t  sz;
+
+  if (mp_id == NULL) {
+    /* Invalid input parameters */
+    sz = 0U;
+  }
+  else {
+    mp = (MemPool_t *)mp_id;
+
+    if ((mp->status & MPOOL_STATUS) != MPOOL_STATUS) {
+      /* Invalid object status */
+      sz = 0U;
+    }
+    else {
+      sz = mp->bl_sz;
+    }
+  }
+
+  /* Return memory block size in bytes */
+  return (sz);
+}
+
+/*
+  Get number of memory blocks used in a Memory Pool.
+*/
+uint32_t osMemoryPoolGetCount (osMemoryPoolId_t mp_id) {
+  MemPool_t *mp;
+  uint32_t  n;
+
+  if (mp_id == NULL) {
+    /* Invalid input parameters */
+    n = 0U;
+  }
+  else {
+    mp = (MemPool_t *)mp_id;
+
+    if ((mp->status & MPOOL_STATUS) != MPOOL_STATUS) {
+      /* Invalid object status */
+      n = 0U;
+    }
+    else {
+      if (IRQ_Context() != 0U) {
+        n = uxSemaphoreGetCountFromISR (mp->sem);
+      } else {
+        n = uxSemaphoreGetCount        (mp->sem);
+      }
+
+      n = mp->bl_cnt - n;
+    }
+  }
+
+  /* Return number of memory blocks used */
+  return (n);
+}
+
+/*
+  Get number of memory blocks available in a Memory Pool.
+*/
+uint32_t osMemoryPoolGetSpace (osMemoryPoolId_t mp_id) {
+  MemPool_t *mp;
+  uint32_t  n;
+
+  if (mp_id == NULL) {
+    /* Invalid input parameters */
+    n = 0U;
+  }
+  else {
+    mp = (MemPool_t *)mp_id;
+
+    if ((mp->status & MPOOL_STATUS) != MPOOL_STATUS) {
+      /* Invalid object status */
+      n = 0U;
+    }
+    else {
+      if (IRQ_Context() != 0U) {
+        n = uxSemaphoreGetCountFromISR (mp->sem);
+      } else {
+        n = uxSemaphoreGetCount        (mp->sem);
+      }
+    }
+  }
+
+  /* Return number of memory blocks available */
+  return (n);
+}
+
+/*
+  Delete a Memory Pool object.
+*/
+osStatus_t osMemoryPoolDelete (osMemoryPoolId_t mp_id) {
+  MemPool_t *mp;
+  osStatus_t stat;
+
+  if (mp_id == NULL) {
+    /* Invalid input parameters */
+    stat = osErrorParameter;
+  }
+  else if (IRQ_Context() != 0U) {
+    stat = osErrorISR;
+  }
+  else {
+    mp = (MemPool_t *)mp_id;
+
+    taskENTER_CRITICAL();
+
+    /* Invalidate control block status */
+    mp->status  = mp->status & 3U;
+
+    /* Wake-up tasks waiting for pool semaphore */
+    while (xSemaphoreGive (mp->sem) == pdTRUE);
+
+    mp->head    = NULL;
+    mp->bl_sz   = 0U;
+    mp->bl_cnt  = 0U;
+
+    if ((mp->status & 2U) != 0U) {
+      /* Memory pool array allocated on heap */
+      vPortFree (mp->mem_arr);
+    }
+    if ((mp->status & 1U) != 0U) {
+      /* Memory pool control block allocated on heap */
+      vPortFree (mp);
+    }
+
+    taskEXIT_CRITICAL();
+
+    stat = osOK;
+  }
+
+  /* Return execution status */
+  return (stat);
+}
+
+/*
+  Create new block given according to the current block index.
+*/
+static void *CreateBlock (MemPool_t *mp) {
+  MemPoolBlock_t *p = NULL;
+
+  if (mp->n < mp->bl_cnt) {
+    /* Unallocated blocks exist, set pointer to new block */
+    p = (void *)(mp->mem_arr + (mp->bl_sz * mp->n));
+
+    /* Increment block index */
+    mp->n += 1U;
+  }
+
+  return (p);
+}
+
+/*
+  Allocate a block by reading the list of free blocks.
+*/
+static void *AllocBlock (MemPool_t *mp) {
+  MemPoolBlock_t *p = NULL;
+
+  if (mp->head != NULL) {
+    /* List of free block exists, get head block */
+    p = mp->head;
+
+    /* Head block is now next on the list */
+    mp->head = p->next;
+  }
+
+  return (p);
+}
+
+/*
+  Free block by putting it to the list of free blocks.
+*/
+static void FreeBlock (MemPool_t *mp, void *block) {
+  MemPoolBlock_t *p = block;
+
+  /* Store current head into block memory space */
+  p->next = mp->head;
+
+  /* Store current block as new head */
+  mp->head = p;
+}
+#endif /* FREERTOS_MPOOL_H_ */
 /*---------------------------------------------------------------------------*/
 
 /* Callback function prototypes */
 extern void vApplicationIdleHook (void);
-extern void vApplicationTickHook (void);
 extern void vApplicationMallocFailedHook (void);
 extern void vApplicationDaemonTaskStartupHook (void);
-extern void vApplicationStackOverflowHook (TaskHandle_t xTask, signed char *pcTaskName);
 
 /**
   Dummy implementation of the callback function vApplicationIdleHook().
@@ -1869,7 +2797,10 @@ __WEAK void vApplicationIdleHook (void){}
   Dummy implementation of the callback function vApplicationMallocFailedHook().
 */
 #if (configUSE_MALLOC_FAILED_HOOK == 1)
-__WEAK void vApplicationMallocFailedHook (void){}
+__WEAK void vApplicationMallocFailedHook (void) {
+  /* Assert when malloc failed hook is enabled but no application defined function exists */
+  configASSERT(0);
+}
 #endif
 
 /**
@@ -1883,31 +2814,26 @@ __WEAK void vApplicationDaemonTaskStartupHook (void){}
   Dummy implementation of the callback function vApplicationStackOverflowHook().
 */
 #if (configCHECK_FOR_STACK_OVERFLOW > 0)
-__WEAK void vApplicationStackOverflowHook (TaskHandle_t xTask, signed char *pcTaskName) {
+__WEAK void vApplicationStackOverflowHook (TaskHandle_t xTask, char *pcTaskName) {
   (void)xTask;
   (void)pcTaskName;
+
+  /* Assert when stack overflow is enabled but no application defined function exists */
+  configASSERT(0);
 }
 #endif
 
 /*---------------------------------------------------------------------------*/
-
-/* External Idle and Timer task static memory allocation functions */
-extern void vApplicationGetIdleTaskMemory  (StaticTask_t **ppxIdleTaskTCBBuffer,  StackType_t **ppxIdleTaskStackBuffer,  uint32_t *pulIdleTaskStackSize);
-extern void vApplicationGetTimerTaskMemory (StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize);
-
-/* Idle task control block and stack */
-static StaticTask_t Idle_TCB;
-static StackType_t  Idle_Stack[configMINIMAL_STACK_SIZE];
-
-/* Timer task control block and stack */
-static StaticTask_t Timer_TCB;
-static StackType_t  Timer_Stack[configTIMER_TASK_STACK_DEPTH];
-
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
 /*
   vApplicationGetIdleTaskMemory gets called when configSUPPORT_STATIC_ALLOCATION
   equals to 1 and is required for static memory allocation support.
 */
-void vApplicationGetIdleTaskMemory (StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize) {
+__WEAK void vApplicationGetIdleTaskMemory (StaticTask_t **ppxIdleTaskTCBBuffer, StackType_t **ppxIdleTaskStackBuffer, uint32_t *pulIdleTaskStackSize) {
+  /* Idle task control block and stack */
+  static StaticTask_t Idle_TCB;
+  static StackType_t  Idle_Stack[configMINIMAL_STACK_SIZE];
+
   *ppxIdleTaskTCBBuffer   = &Idle_TCB;
   *ppxIdleTaskStackBuffer = &Idle_Stack[0];
   *pulIdleTaskStackSize   = (uint32_t)configMINIMAL_STACK_SIZE;
@@ -1917,8 +2843,13 @@ void vApplicationGetIdleTaskMemory (StaticTask_t **ppxIdleTaskTCBBuffer, StackTy
   vApplicationGetTimerTaskMemory gets called when configSUPPORT_STATIC_ALLOCATION
   equals to 1 and is required for static memory allocation support.
 */
-void vApplicationGetTimerTaskMemory (StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize) {
+__WEAK void vApplicationGetTimerTaskMemory (StaticTask_t **ppxTimerTaskTCBBuffer, StackType_t **ppxTimerTaskStackBuffer, uint32_t *pulTimerTaskStackSize) {
+  /* Timer task control block and stack */
+  static StaticTask_t Timer_TCB;
+  static StackType_t  Timer_Stack[configTIMER_TASK_STACK_DEPTH];
+
   *ppxTimerTaskTCBBuffer   = &Timer_TCB;
   *ppxTimerTaskStackBuffer = &Timer_Stack[0];
   *pulTimerTaskStackSize   = (uint32_t)configTIMER_TASK_STACK_DEPTH;
 }
+#endif

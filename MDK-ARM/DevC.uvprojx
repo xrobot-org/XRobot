@@ -1186,6 +1186,11 @@
               <FileType>1</FileType>
               <FilePath>../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/port.c</FilePath>
             </File>
+            <File>
+              <FileName>os_systick.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS_V2\os_systick.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -2850,6 +2855,11 @@
               <FileName>port.c</FileName>
               <FileType>1</FileType>
               <FilePath>../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F/port.c</FilePath>
+            </File>
+            <File>
+              <FileName>os_systick.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS_V2\os_systick.c</FilePath>
             </File>
           </Files>
         </Group>
