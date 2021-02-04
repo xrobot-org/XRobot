@@ -26,15 +26,29 @@
 
 需要修改的文件夹有`bsp`。
 
-在bsp中与`a`、`c`并列添加一个文件夹，例如`b`（代指RM开发板B型）。参考`bsp`中头文件，在`b`中添加对应的源代码文件。在头文件中不能实现的功能，需要加宏定义来根据不同的开发板来编译。例如[led.h](https://github.com/qsheeeeen/qdu-robomaster-mcu/blob/2020/User/bsp/led.h)中针对不同板子定义了不同的LED功能。
+1. 在bsp中与`a`、`c`并列添加一个文件夹。例如`b`（代指RM开发板B型）。
+1. 参考`bsp`中头文件，在`b`中添加对应的源代码文件。
+    * 在头文件中不能实现的功能，需要加宏定义来根据不同的开发板来编译。例如[led.h](https://github.com/qsheeeeen/qdu-robomaster-mcu/blob/2020/User/bsp/led.h)中针对不同板子定义了不同的LED功能。
 
 ## 添加新的组件
 
 需要修改的文件夹有`component`。
 
+步骤：
+
+1. 在`component`新建一对文件`xx.c`和`xx.h`。
+
 ## 添加新的设备（传感器、执行器等）
 
-需要修改的文件夹有`device`。Device里的设备只能在thread里使用，因为数据的读取需要用到任务同步机制。
+需要修改的文件夹有`device`。
+
+步骤：
+
+1. 在`device`新建一对文件`xx.c`和`xx.h`。
+
+注意事项：
+
+* Device里的设备只能在thread里使用，因为数据的读取需要用到任务同步机制。
 
 ## 添加新的机构
 
@@ -46,7 +60,15 @@
 
 需要修改的文件夹有`task`。
 
-添加任务最好的办法是参考其他任务。但是有许多规定需要注意。其中，任务之间传递数据需要用到message queue等。
+1. 在`task`新建文件`xx.c`。
+1. 在`task\user_task.h`中添加任务函数的声明`Task_Xxxx`。
+1. 在`task\user_task.h`中添加任务属性的声明`attr_xxx`。
+1. 在`task\user_task.c`中添加任务属性的定义`attr_xxx`。
+
+注意事项：
+
+* `osKernelLock`和`osKernelUnlock`中间不能导致任务切换的函数，例如`osMessageQueuePut`。
+* 如果任务不需要运行多个实例，则尽量将任务变量放置到任务函数外。
 
 ---
 
