@@ -400,25 +400,25 @@ int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
  *
  * \param eulr 被操作的数据
  */
-void AHRS_ResetEulr(AHRS_Eulr_t *eulr) { memset(eulr, 0, sizeof(AHRS_Eulr_t)); }
+void AHRS_ResetEulr(AHRS_Eulr_t *eulr) { memset(eulr, 0, sizeof(*eulr)); }
 
 /**
  * \brief 将对应数据置零
  *
  * \param eulr 被操作的数据
  */
-void AHRS_ResetAccl(AHRS_Accl_t *accl) { memset(accl, 0, sizeof(AHRS_Accl_t)); }
+void AHRS_ResetAccl(AHRS_Accl_t *accl) { memset(accl, 0, sizeof(*accl)); }
 
 /**
  * \brief 将对应数据置零
  *
  * \param eulr 被操作的数据
  */
-void AHRS_ResetGyro(AHRS_Gyro_t *gyro) { memset(gyro, 0, sizeof(AHRS_Gyro_t)); }
+void AHRS_ResetGyro(AHRS_Gyro_t *gyro) { memset(gyro, 0, sizeof(*gyro)); }
 
 /**
  * \brief 将对应数据置零
  *
  * \param eulr 被操作的数据
  */
-void AHRS_ResetMagn(AHRS_Magn_t *magn) { memset(magn, 0, sizeof(AHRS_Magn_t)); }
+void AHRS_ResetMagn(AHRS_Magn_t *magn) { memset(magn, 0, sizeof(*magn)); }

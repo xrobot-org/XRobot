@@ -75,7 +75,7 @@ int8_t DR16_Restart(void) {
 int8_t DR16_StartDmaRecv(DR16_t *dr16) {
   if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_DR16),
                            (uint8_t *)&(dr16->data),
-                           sizeof(DR16_Data_t)) == HAL_OK)
+                           sizeof(dr16->data)) == HAL_OK)
     return DEVICE_OK;
   return DEVICE_ERR;
 }
@@ -122,6 +122,6 @@ int8_t DR16_HandleOffline(const DR16_t *dr16, CMD_RC_t *rc) {
   if (rc == NULL) return DEVICE_ERR_NULL;
 
   (void)dr16;
-  memset(rc, 0, sizeof(CMD_RC_t));
+  memset(rc, 0, sizeof(*rc));
   return 0;
 }

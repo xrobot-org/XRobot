@@ -134,9 +134,9 @@ int8_t IST8310_Parse(IST8310_t *ist8310) {
 #if 1
   /* Magn -> T */
   int16_t raw_x, raw_y, raw_z;
-  memcpy(&raw_x, ist8310_rxbuf + 0, sizeof(int16_t));
-  memcpy(&raw_y, ist8310_rxbuf + 2, sizeof(int16_t));
-  memcpy(&raw_z, ist8310_rxbuf + 4, sizeof(int16_t));
+  memcpy(&raw_x, ist8310_rxbuf + 0, sizeof(raw_x));
+  memcpy(&raw_y, ist8310_rxbuf + 2, sizeof(raw_y));
+  memcpy(&raw_z, ist8310_rxbuf + 4, sizeof(raw_z));
 
   ist8310->magn.x = (float)raw_x;
   ist8310->magn.y = (float)raw_y;

@@ -338,7 +338,7 @@ static const Config_PilotCfgMap_t pilot_cfg_map[] = {
  * \param cfg 配置信息
  */
 void Config_Get(Config_t *cfg) {
-  BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(Config_t));
+  BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(*cfg));
   cfg->pilot_cfg = Config_GetPilotCfg(cfg->pilot_cfg_name);
   cfg->robot_param = Config_GetRobotParam(cfg->robot_param_name);
   /* 防止第一次烧写后访问NULL指针 */
@@ -358,7 +358,7 @@ void Config_Get(Config_t *cfg) {
 void Config_Set(Config_t *cfg) {
   osKernelLock();
   BSP_Flash_EraseSector(11);
-  BSP_Flash_WriteBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(Config_t));
+  BSP_Flash_WriteBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(*cfg));
   osKernelUnlock();
 }
 
