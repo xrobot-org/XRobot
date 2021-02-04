@@ -10,20 +10,17 @@ extern "C" {
 
 #include <stdint.h>
 
-int8_t HeatLimiter_Apply(float heat_limit, float vbat, float dt_sec);
-
 /**
- * @brief 底盘功率限制
+ * @brief 限制底盘功率不超过power_limit
  *
- * @param power_limit 功率阈值
- * @param vbat 电池电压
- * @param motor_out 电机输出值数组
- * @param len 数组长度
- * @param current_max 电机最大电流
+ * @param power_limit 最大功率
+ * @param motor_out 电机输出值
+ * @param speed 电机转速
+ * @param len 电机数量
  * @return int8_t 0对应没有错误
  */
-int8_t PowerLimit_Apply(float power_limit, float vbat, float *motor_out,
-                        uint32_t len, uint16_t current_max);
+int8_t PowerLimit_ChassicOutput(float power_limit, float *motor_out,
+                                float *speed, uint32_t len);
 /**
  * @brief 电容输入功率计算
  *
@@ -34,6 +31,15 @@ int8_t PowerLimit_Apply(float power_limit, float vbat, float *motor_out,
  */
 float PowerLimit_CapInput(float power_in, float power_limit,
                           float power_buffer);
+/**
+ * @brief 底盘功率计算
+ *
+ * @param power_limit 裁判系统功率限制值
+ * @param power_buffer 缓冲能量
+ * @return float 底盘输出最大值
+ */
+float PowerLimit_TargetPower(float power_limit, float power_buffer);
+
 /**
  * @brief 射击频率控制
  *

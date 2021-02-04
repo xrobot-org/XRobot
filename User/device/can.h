@@ -165,9 +165,9 @@ typedef enum {
 } CAN_MotorGroup_t;
 
 typedef enum {
-  CAP_STATUS_OFFLINE,
-  CAP_STATUS_RUNNING,
-} Cap_Status_t;
+  CAN_CAP_STATUS_OFFLINE,
+  CAN_CAP_STATUS_RUNNING,
+} CAN_CapStatus_t;
 
 typedef union {
   CAN_MotorFeedback_t as_array[4];
@@ -215,8 +215,7 @@ typedef struct {
 
 typedef struct {
   float percentage;
-  float target_power;
-  Cap_Status_t cap_status;
+  CAN_CapStatus_t cap_status;
   CAN_CapFeedback_t cap_feedback;
 } CAN_Capacitor_t;
 

@@ -30,8 +30,7 @@ void Cap_Control(CAN_Capacitor_t *cap, const Referee_t *referee,
                             referee->robot_status.chassis_power_limit,
                             referee->power_heat.chassis_pwr_buff);
   }
-  cap->target_power = referee->robot_status.chassis_power_limit;
-  cap->cap_status = CAP_STATUS_RUNNING;
+  cap->cap_status = CAN_CAP_STATUS_RUNNING;
   cap->percentage = Capacity_GetCapacitorRemain(cap->cap_feedback.cap_volt,
                                                 cap->cap_feedback.input_volt,
                                                 CAP_CUTOFF_VOLT);

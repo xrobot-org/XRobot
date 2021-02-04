@@ -17,8 +17,6 @@
 #define REF_HEADER_SOF (0xA5)
 #define REF_LEN_RX_BUFF (0xFF)
 
-#define CHASSIS_POWER_MAX_WITHOUT_REF 40.0f /* 裁判系统离线底盘最大功率 */
-
 #define REF_UI_MAX_GRAPIC_NUM (7)
 #define REF_UI_MAX_STRING_NUM (3)
 
@@ -82,7 +80,6 @@ int8_t Referee_StartReceiving(Referee_t *ref) {
 
 void Referee_HandleOffline(Referee_t *referee) {
   referee->ref_status = REF_STATUS_OFFLINE;
-  referee->robot_status.chassis_power_limit = CHASSIS_POWER_MAX_WITHOUT_REF;
 }
 
 int8_t Referee_Parse(Referee_t *ref) {

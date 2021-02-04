@@ -61,10 +61,14 @@ void Task_Referee(void *argument) {
       Referee_Parse(&ref);
       last_online_tick = osKernelGetTickCount();
     }
-    osMessageQueueReset(task_runtime.msgq.referee);
-    osMessageQueueReset(task_runtime.msgq.ai.referee);
-    osMessageQueuePut(task_runtime.msgq.referee, &(ref), 0, 0);
-    osMessageQueuePut(task_runtime.msgq.ai.referee, &(ref), 0, 0);
+    osMessageQueueReset(task_runtime.msgq.referee.cap);
+    osMessageQueueReset(task_runtime.msgq.referee.ai);
+    osMessageQueueReset(task_runtime.msgq.referee.chassis);
+    osMessageQueueReset(task_runtime.msgq.referee.shoot);
+    osMessageQueuePut(task_runtime.msgq.referee.cap, &(ref), 0, 0);
+    osMessageQueuePut(task_runtime.msgq.referee.ai, &(ref), 0, 0);
+    osMessageQueuePut(task_runtime.msgq.referee.chassis, &(ref), 0, 0);
+    osMessageQueuePut(task_runtime.msgq.referee.shoot, &(ref), 0, 0);
 
     while (osMessageQueueGet(task_runtime.msgq.cmd.referee, &ref_cmd, NULL,
                              0) == osOK)
