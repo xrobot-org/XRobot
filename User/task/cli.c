@@ -225,7 +225,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
         return pdPASS;
 
       case stage_success:
-        memset(&cfg, 0, sizeof(Config_t));
+        memset(&cfg, 0, sizeof(cfg));
         cfg.pilot_cfg = Config_GetPilotCfg("qs");
         cfg.robot_param = Config_GetRobotParam("default");
         snprintf(cfg.robot_param_name, 20, "default");

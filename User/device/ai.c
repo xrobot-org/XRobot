@@ -50,7 +50,7 @@ int8_t AI_Restart(void) {
 int8_t AI_StartReceiving(AI_t *ai) {
   if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_AI),
                            (uint8_t *)&(ai->form_host),
-                           sizeof(Protocol_AI_t)) == HAL_OK)
+                           sizeof(ai->form_host)) == HAL_OK)
     return DEVICE_OK;
   return DEVICE_ERR;
 }
@@ -62,7 +62,7 @@ bool AI_WaitDmaCplt(void) {
 
 int8_t AI_ParseHost(AI_t *ai, CMD_Host_t *cmd_host) {
   (void)cmd_host;
-  if (!CRC16_Verify((const uint8_t *)&(ai->form_host), sizeof(Protocol_AI_t)))
+  if (!CRC16_Verify((const uint8_t *)&(ai->form_host), sizeof(ai->form_host)))
     goto error;
   cmd_host->gimbal_delta.pit = ai->form_host.data.gimbal_delta.pit;
   cmd_host->gimbal_delta.yaw = ai->form_host.data.gimbal_delta.yaw;
@@ -80,8 +80,8 @@ int8_t AI_HandleOffline(AI_t *ai, CMD_Host_t *cmd_host) {
   if (ai == NULL) return DEVICE_ERR_NULL;
   if (cmd_host == NULL) return DEVICE_ERR_NULL;
 
-  memset(&(ai->form_host), 0, sizeof(Protocol_AI_t));
-  memset(cmd_host, 0, sizeof(CMD_Host_t));
+  memset(&(ai->form_host), 0, sizeof(ai->form_host));
+  memset(cmd_host, 0, sizeof(*cmd_host));
   return 0;
 }
 

@@ -95,15 +95,15 @@ int8_t Referee_Parse(Referee_t *ref) {
   while (index < data_length && rxbuf[index] == REF_HEADER_SOF) {
     packet_shift = index;
     Referee_Header_t *header = (Referee_Header_t *)(rxbuf + index);
-    index += sizeof(Referee_Header_t);
+    index += sizeof(*header);
     if (index - packet_shift >= data_length) goto error;
 
-    if (!CRC8_Verify((uint8_t *)header, sizeof(Referee_Header_t))) goto error;
+    if (!CRC8_Verify((uint8_t *)header, sizeof(*header))) goto error;
 
     if (header->sof != REF_HEADER_SOF) goto error;
 
     Referee_CMDID_t *cmd_id = (Referee_CMDID_t *)(rxbuf + index);
-    index += sizeof(Referee_CMDID_t);
+    index += sizeof(*cmd_id);
     if (index - packet_shift >= data_length) goto error;
 
     void *target = (rxbuf + index);
@@ -113,79 +113,79 @@ int8_t Referee_Parse(Referee_t *ref) {
     switch (*cmd_id) {
       case REF_CMD_ID_GAME_STATUS:
         origin = &(ref->game_status);
-        size = sizeof(Referee_GameStatus_t);
+        size = sizeof(ref->game_status);
         break;
       case REF_CMD_ID_GAME_RESULT:
         origin = &(ref->game_result);
-        size = sizeof(Referee_GameResult_t);
+        size = sizeof(ref->game_result);
         break;
       case REF_CMD_ID_GAME_ROBOT_HP:
         origin = &(ref->game_robot_hp);
-        size = sizeof(Referee_GameRobotHP_t);
+        size = sizeof(ref->game_robot_hp);
         break;
       case REF_CMD_ID_DART_STATUS:
         origin = &(ref->dart_status);
-        size = sizeof(Referee_DartStatus_t);
+        size = sizeof(ref->dart_status);
         break;
       case REF_CMD_ID_ICRA_ZONE_STATUS:
         origin = &(ref->icra_zone);
-        size = sizeof(Referee_ICRAZoneStatus_t);
+        size = sizeof(ref->icra_zone);
         break;
       case REF_CMD_ID_FIELD_EVENTS:
         origin = &(ref->field_event);
-        size = sizeof(Referee_FieldEvents_t);
+        size = sizeof(ref->field_event);
         break;
       case REF_CMD_ID_SUPPLY_ACTION:
         origin = &(ref->supply_action);
-        size = sizeof(Referee_SupplyAction_t);
+        size = sizeof(ref->supply_action);
         break;
       case REF_CMD_ID_WARNING:
         origin = &(ref->warning);
-        size = sizeof(Referee_Warning_t);
+        size = sizeof(ref->warning);
         break;
       case REF_CMD_ID_DART_COUNTDOWN:
         origin = &(ref->dart_countdown);
-        size = sizeof(Referee_DartCountdown_t);
+        size = sizeof(ref->dart_countdown);
         break;
       case REF_CMD_ID_ROBOT_STATUS:
         origin = &(ref->robot_status);
-        size = sizeof(Referee_RobotStatus_t);
+        size = sizeof(ref->robot_status);
         break;
       case REF_CMD_ID_POWER_HEAT_DATA:
         origin = &(ref->power_heat);
-        size = sizeof(Referee_PowerHeat_t);
+        size = sizeof(ref->power_heat);
         break;
       case REF_CMD_ID_ROBOT_POS:
         origin = &(ref->robot_pos);
-        size = sizeof(Referee_RobotPos_t);
+        size = sizeof(ref->robot_pos);
         break;
       case REF_CMD_ID_ROBOT_BUFF:
         origin = &(ref->robot_buff);
-        size = sizeof(Referee_RobotBuff_t);
+        size = sizeof(ref->robot_buff);
         break;
       case REF_CMD_ID_DRONE_ENERGY:
         origin = &(ref->drone_energy);
-        size = sizeof(Referee_DroneEnergy_t);
+        size = sizeof(ref->drone_energy);
         break;
       case REF_CMD_ID_ROBOT_DMG:
         origin = &(ref->robot_danage);
-        size = sizeof(Referee_RobotDamage_t);
+        size = sizeof(ref->robot_danage);
         break;
       case REF_CMD_ID_SHOOT_DATA:
         origin = &(ref->shoot_data);
-        size = sizeof(Referee_ShootData_t);
+        size = sizeof(ref->shoot_data);
         break;
       case REF_CMD_ID_BULLET_REMAINING:
         origin = &(ref->bullet_remain);
-        size = sizeof(Referee_BulletRemain_t);
+        size = sizeof(ref->bullet_remain);
         break;
       case REF_CMD_ID_RFID:
         origin = &(ref->rfid);
-        size = sizeof(Referee_RFID_t);
+        size = sizeof(ref->rfid);
         break;
       case REF_CMD_ID_DART_CLIENT:
         origin = &(ref->dart_client);
-        size = sizeof(Referee_DartClient_t);
+        size = sizeof(ref->dart_client);
         break;
       default:
         return DEVICE_ERR;

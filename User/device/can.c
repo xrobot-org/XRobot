@@ -299,19 +299,19 @@ int8_t CAN_ClearFlag(CAN_t *can, uint32_t flag) {
 }
 
 void CAN_ResetChassisOut(CAN_ChassisOutput_t *chassis_out) {
-  memset(chassis_out, 0, sizeof(CAN_ChassisOutput_t));
+  memset(chassis_out, 0, sizeof(*chassis_out));
 }
 
 void CAN_ResetGimbalOut(CAN_GimbalOutput_t *gimbal_out) {
-  memset(gimbal_out, 0, sizeof(CAN_GimbalOutput_t));
+  memset(gimbal_out, 0, sizeof(*gimbal_out));
 }
 
 void CAN_ResetShootOut(CAN_ShootOutput_t *shoot_out) {
-  memset(shoot_out, 0, sizeof(CAN_ShootOutput_t));
+  memset(shoot_out, 0, sizeof(*shoot_out));
 }
 
 void CAN_ResetCapOut(CAN_CapOutput_t *cap_out) {
-  memset(cap_out, 0, sizeof(CAN_CapOutput_t));
+  memset(cap_out, 0, sizeof(*cap_out));
 }
 
 int8_t CAN_Cap_Control(CAN_CapOutput_t *output) {

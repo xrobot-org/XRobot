@@ -287,9 +287,9 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
 
 #if 1
   int16_t raw_x, raw_y, raw_z;
-  memcpy(&raw_x, bmi088_rxbuf + 1, sizeof(int16_t));
-  memcpy(&raw_y, bmi088_rxbuf + 3, sizeof(int16_t));
-  memcpy(&raw_z, bmi088_rxbuf + 5, sizeof(int16_t));
+  memcpy(&raw_x, bmi088_rxbuf + 1, sizeof(raw_x));
+  memcpy(&raw_y, bmi088_rxbuf + 3, sizeof(raw_y));
+  memcpy(&raw_z, bmi088_rxbuf + 5, sizeof(raw_z));
 
   bmi088->accl.x = (float)raw_x;
   bmi088->accl.y = (float)raw_y;
@@ -327,9 +327,9 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 #if 1
   /* Gyroscope imu_raw -> degrees/sec -> radians/sec */
   int16_t raw_x, raw_y, raw_z;
-  memcpy(&raw_x, bmi088_rxbuf + 7, sizeof(int16_t));
-  memcpy(&raw_y, bmi088_rxbuf + 9, sizeof(int16_t));
-  memcpy(&raw_z, bmi088_rxbuf + 11, sizeof(int16_t));
+  memcpy(&raw_x, bmi088_rxbuf + 7, sizeof(raw_x));
+  memcpy(&raw_y, bmi088_rxbuf + 9, sizeof(raw_y));
+  memcpy(&raw_z, bmi088_rxbuf + 11, sizeof(raw_z));
 
   bmi088->gyro.x = (float)raw_x;
   bmi088->gyro.y = (float)raw_y;

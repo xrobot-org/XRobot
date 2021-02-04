@@ -35,7 +35,7 @@ inline float Sign(float in) { return (in > 0) ? 1.0f : 0.0f; }
  * \param mv 被操作的值
  */
 inline void ResetMoveVector(MoveVector_t *mv) {
-  memset(mv, 0, sizeof(MoveVector_t));
+  memset(mv, 0, sizeof(*mv));
 }
 
 /**
