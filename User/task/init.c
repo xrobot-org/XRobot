@@ -56,21 +56,21 @@ void Task_Init(void *argument) {
   /* 创建消息队列 */
   /* motor */
   task_runtime.msgq.can.feedback.chassis =
-      osMessageQueueNew(6u, sizeof(CAN_t), NULL);
+      osMessageQueueNew(2u, sizeof(CAN_t), NULL);
   task_runtime.msgq.can.feedback.gimbal =
-      osMessageQueueNew(6u, sizeof(CAN_t), NULL);
+      osMessageQueueNew(2u, sizeof(CAN_t), NULL);
   task_runtime.msgq.can.feedback.shoot =
-      osMessageQueueNew(6u, sizeof(CAN_t), NULL);
+      osMessageQueueNew(2u, sizeof(CAN_t), NULL);
   task_runtime.msgq.can.feedback.cap =
-      osMessageQueueNew(6u, sizeof(CAN_t), NULL);
+      osMessageQueueNew(2u, sizeof(CAN_t), NULL);
   task_runtime.msgq.can.output.chassis =
-      osMessageQueueNew(6u, sizeof(CAN_ChassisOutput_t), NULL);
+      osMessageQueueNew(2u, sizeof(CAN_ChassisOutput_t), NULL);
   task_runtime.msgq.can.output.gimbal =
-      osMessageQueueNew(6u, sizeof(CAN_GimbalOutput_t), NULL);
+      osMessageQueueNew(2u, sizeof(CAN_GimbalOutput_t), NULL);
   task_runtime.msgq.can.output.shoot =
-      osMessageQueueNew(6u, sizeof(CAN_ShootOutput_t), NULL);
+      osMessageQueueNew(2u, sizeof(CAN_ShootOutput_t), NULL);
   task_runtime.msgq.can.output.cap =
-      osMessageQueueNew(6u, sizeof(CAN_CapOutput_t), NULL);
+      osMessageQueueNew(2u, sizeof(CAN_CapOutput_t), NULL);
 
   /* command */
   task_runtime.msgq.cmd.chassis =
@@ -80,7 +80,7 @@ void Task_Init(void *argument) {
   task_runtime.msgq.cmd.shoot =
       osMessageQueueNew(3u, sizeof(CMD_ShootCmd_t), NULL);
   task_runtime.msgq.cmd.ai =
-      osMessageQueueNew(6u, sizeof(CMD_AI_Status_t), NULL);
+      osMessageQueueNew(3u, sizeof(CMD_AI_Status_t), NULL);
   task_runtime.msgq.cmd.referee = osMessageQueueNew(6u, sizeof(CMD_UI_t), NULL);
 
   /* atti_esti */
@@ -89,21 +89,28 @@ void Task_Init(void *argument) {
       osMessageQueueNew(3u, sizeof(CMD_Host_t), NULL);
 
   task_runtime.msgq.gimbal.accl =
-      osMessageQueueNew(6u, sizeof(AHRS_Accl_t), NULL);
+      osMessageQueueNew(2u, sizeof(AHRS_Accl_t), NULL);
   task_runtime.msgq.gimbal.eulr_imu =
-      osMessageQueueNew(6u, sizeof(AHRS_Eulr_t), NULL);
+      osMessageQueueNew(2u, sizeof(AHRS_Eulr_t), NULL);
   task_runtime.msgq.gimbal.gyro =
-      osMessageQueueNew(6u, sizeof(AHRS_Gyro_t), NULL);
+      osMessageQueueNew(2u, sizeof(AHRS_Gyro_t), NULL);
 
-  task_runtime.msgq.referee = osMessageQueueNew(6u, sizeof(Referee_t), NULL);
   task_runtime.msgq.cap_info =
-      osMessageQueueNew(6u, sizeof(CAN_Capacitor_t), NULL);
+      osMessageQueueNew(2u, sizeof(CAN_Capacitor_t), NULL);
 
   /* AI */
   task_runtime.msgq.ai.quat =
-      osMessageQueueNew(6u, sizeof(AHRS_Quaternion_t), NULL);
-  task_runtime.msgq.ai.referee = osMessageQueueNew(6u, sizeof(Referee_t), NULL);
+      osMessageQueueNew(2u, sizeof(AHRS_Quaternion_t), NULL);
 
+  /* 裁判系统 */
+  task_runtime.msgq.referee.ai = osMessageQueueNew(2u, sizeof(Referee_t), NULL);
+
+  task_runtime.msgq.referee.chassis =
+      osMessageQueueNew(2u, sizeof(Referee_t), NULL);
+  task_runtime.msgq.referee.cap =
+      osMessageQueueNew(2u, sizeof(Referee_t), NULL);
+  task_runtime.msgq.referee.shoot =
+      osMessageQueueNew(2u, sizeof(Referee_t), NULL);
   osKernelUnlock();
 
   osThreadTerminate(osThreadGetId()); /* 结束自身 */

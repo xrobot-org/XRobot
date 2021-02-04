@@ -93,11 +93,16 @@ typedef struct {
     } can;
 
     struct {
-      osMessageQueueId_t quat;    /* 姿态解算得到 */
-      osMessageQueueId_t referee; /* 裁判系统信息 */
+      osMessageQueueId_t quat; /* 姿态解算得到 */
     } ai;
 
-    osMessageQueueId_t referee;
+    /* 裁判系统发送的 */
+    struct {
+      osMessageQueueId_t cap;
+      osMessageQueueId_t chassis;
+      osMessageQueueId_t ai;
+      osMessageQueueId_t shoot;
+    } referee;
 
     osMessageQueueId_t cap_info;
 

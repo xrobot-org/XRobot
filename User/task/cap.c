@@ -42,7 +42,7 @@ void Task_Cap(void *argument) {
 #endif
     tick += delay_tick;
 
-    osMessageQueueGet(task_runtime.msgq.referee, &referee, 0, 0);
+    osMessageQueueGet(task_runtime.msgq.referee.cap, &referee, 0, 0);
     if (osMessageQueueGet(task_runtime.msgq.can.feedback.cap, &can, NULL,
                           delay_tick) != osOK) {
       CAN_CAP_HandleOffline(&(can.cap), &cap_out,

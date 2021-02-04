@@ -60,7 +60,7 @@ void Task_Ai(void *argument) {
 
     osMessageQueueGet(task_runtime.msgq.ai.quat, &(quat), NULL, 0);
     osMessageQueueGet(task_runtime.msgq.cmd.ai, &(ai.status), NULL, 0);
-    bool ref_update = (osMessageQueueGet(task_runtime.msgq.ai.referee,
+    bool ref_update = (osMessageQueueGet(task_runtime.msgq.referee.ai,
                                          &(ref_ai), NULL, 0) == osOK);
     AI_PackMCU(&ai, &quat);
     if (ref_update) AI_PackRef(&ai, &(ref_ai));

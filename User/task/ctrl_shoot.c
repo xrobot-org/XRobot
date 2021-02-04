@@ -62,7 +62,7 @@ void Task_CtrlShoot(void *argument) {
     /* 读取CAN总线电机指令、控制指令*/
     osMessageQueueGet(task_runtime.msgq.can.feedback.shoot, &can, NULL, 0);
     osMessageQueueGet(task_runtime.msgq.cmd.shoot, &shoot_cmd, NULL, 0);
-    osMessageQueueGet(task_runtime.msgq.referee, &shoot_ref, NULL, 0);
+    osMessageQueueGet(task_runtime.msgq.referee.shoot, &shoot_ref, NULL, 0);
     osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     const uint32_t now = HAL_GetTick();
     Shoot_UpdateFeedback(&shoot, &can);

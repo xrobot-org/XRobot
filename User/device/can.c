@@ -331,7 +331,6 @@ int8_t CAN_Cap_Control(CAN_CapOutput_t *output) {
 
 void CAN_CAP_HandleOffline(CAN_Capacitor_t *cap, CAN_CapOutput_t *cap_out,
                            float power_chassis) {
-  cap->cap_status = CAP_STATUS_OFFLINE;
-  cap->target_power = power_chassis;
+  cap->cap_status = CAN_CAP_STATUS_OFFLINE;
   cap_out->power_limit = power_chassis;
 }
