@@ -17,6 +17,8 @@
 
 #define CHASSIS_POWER_MAX_WITHOUT_REF 40.0f /* 裁判系统离线底盘最大功率 */
 #define CHASSIS_MAX_CAP_POWER 100.0f;
+#define CHASSIS_ROTOR_VEC_WZ 0.5f                /* 小陀螺旋转位移 */
+#define CHASSIS_ROTOR_ROTATE_ANGLE (M_PI / 2.0f) /* 小陀螺旋转弧度 */
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
@@ -240,8 +242,36 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
           &(c->pid.follow), 0, c->feedback.gimbal_yaw_angle - c->mech_zero->yaw,
           0.0f, dt_sec);
       break;
-    case CHASSIS_MODE_ROTOR:
-      c->move_vec.wz = 0.5f;
+    case CHASSIS_MODE_ROTOR: {
+      float beta = c->feedback.gimbal_yaw_angle - c->mech_zero->yaw;
+      switch (c_cmd->mode_rotor) {
+        case ROTOR_MODE_NONE:
+          break;
+        case ROTOR_MODE_CW:
+          c->move_vec.wz = CHASSIS_ROTOR_VEC_WZ;
+          break;
+        case ROTOR_MODE_CCW:
+          c->move_vec.wz = -CHASSIS_ROTOR_VEC_WZ;
+          break;
+        case ROTOR_MODE_NUM:
+        case ROTOR_MODE_BOTH: {
+          /* 小陀螺在指定的弧度范围内转动 */
+          if (beta >= c->beta_last) {
+            if (beta <= CHASSIS_ROTOR_ROTATE_ANGLE)
+              c->move_vec.wz = CHASSIS_ROTOR_VEC_WZ;
+            else
+              c->move_vec.wz = -CHASSIS_ROTOR_VEC_WZ;
+          } else {
+            if (beta >= -CHASSIS_ROTOR_ROTATE_ANGLE)
+              c->move_vec.wz = -CHASSIS_ROTOR_VEC_WZ;
+            else
+              c->move_vec.wz = CHASSIS_ROTOR_VEC_WZ;
+          }
+          c->beta_last = beta;
+          break;
+        }
+      }
+    }
   }
 
   /* move_vec -> motor_rpm_set. 通过运动向量计算轮子转速目标值 */

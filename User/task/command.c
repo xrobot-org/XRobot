@@ -63,7 +63,7 @@ void Task_Command(void *argument) {
       CMD_ParseRc(&rc, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
 
     /* 判断是否需要让上位机覆写指令 */
-    if (CMD_CHECK_HOST_OVERWRITE(&cmd))
+    if (CMD_CheckHostOverwrite(&cmd))
       if (osMessageQueueGet(task_runtime.msgq.cmd.raw.host, &host, 0, 0) ==
           osOK)
         CMD_ParseHost(&host, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);

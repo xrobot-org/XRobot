@@ -93,6 +93,8 @@ typedef struct {
 
   float *out; /* 电机最终的输出值的动态数组 */
 
+  float beta_last; /* 上一次Yaw轴转过的实际弧度 */
+
 } Chassis_t;
 
 /* Exported functions prototypes -------------------------------------------- */

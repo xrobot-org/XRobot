@@ -50,10 +50,20 @@ typedef enum {
   SHOOT_MODE_FIRE, /* 开火模式，摩擦轮开启。拨弹电机开启 */
 } CMD_ShootMode_t;
 
+/* 小陀螺转动模式 */
+typedef enum {
+  ROTOR_MODE_NONE, /* 静止 */
+  ROTOR_MODE_CW,   /* 顺时针转动 */
+  ROTOR_MODE_CCW,  /* 逆时针转动 */
+  ROTOR_MODE_BOTH, /* 顺时针、逆时针转动 */
+  ROTOR_MODE_NUM
+} CMD_RotorMode_t;
+
 /* 底盘控制命令 */
 typedef struct {
-  CMD_ChassisMode_t mode; /* 底盘运行模式 */
-  MoveVector_t ctrl_vec;  /* 底盘控制向量 */
+  CMD_ChassisMode_t mode;     /* 底盘运行模式 */
+  CMD_RotorMode_t mode_rotor; /* 小陀螺转动模式 */
+  MoveVector_t ctrl_vec;      /* 底盘控制向量 */
 } CMD_ChassisCmd_t;
 
 /* 云台控制命令 */
@@ -111,6 +121,7 @@ typedef enum {
   CMD_BEHAVIOR_FIRE,
   CMD_BEHAVIOR_BUFF,
   CMD_BEHAVIOR_AUTOAIM,
+  CMD_BEHAVIOR_ROTOR,
   CMD_BEHAVIOR_NUM,
 } CMD_Behavior_t;
 
@@ -202,8 +213,11 @@ typedef struct {
 /**
  * @brief 检查是否启用上位机控制指令覆盖
  *
+ * @param cmd 主结构体
+ * @return true 启用
+ * @return false 不启用
  */
-#define CMD_CHECK_HOST_OVERWRITE(__CMD__) ((__CMD__)->host_overwrite)
+bool CMD_CheckHostOverwrite(CMD_t *cmd);
 
 /**
  * @brief 解析行为命令
