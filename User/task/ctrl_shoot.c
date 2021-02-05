@@ -39,7 +39,7 @@ static CAN_ShootOutput_t shoot_out;
 void Task_CtrlShoot(void *argument) {
   (void)argument; /* 未使用argument，消除警告 */
 
-  /* 计算任务运行到指定频率，需要延时的时间 */
+  /* 计算任务运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_SHOOT;
 
   /* 初始化射击 */
