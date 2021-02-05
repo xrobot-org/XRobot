@@ -26,7 +26,7 @@
 void Task_Info(void *argument) {
   (void)argument; /* 未使用argument，消除警告 */
 
-  /* 计算任务运行到指定频率，需要延时的时间 */
+  /* 计算任务运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_INFO;
 
   osDelay(TASK_INIT_DELAY_INFO); /* 延时一段时间再开启任务 */

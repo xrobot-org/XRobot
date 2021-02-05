@@ -43,7 +43,7 @@ static Referee_t ref_chassis;
 void Task_CtrlChassis(void *argument) {
   (void)argument; /* 未使用argument，消除警告 */
 
-  /* 计算任务运行到指定频率，需要延时的时间 */
+  /* 计算任务运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_CHASSIS;
 
   /* 初始化底盘 */
