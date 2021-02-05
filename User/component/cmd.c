@@ -28,6 +28,26 @@ static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_KeyValue_t key,
 }
 
 /**
+ * @brief 行为转换为对应按键
+ *
+ * @param cmd 主结构体
+ * @param behavior 行为
+ * @return uint16_t 行为对应的按键
+ */
+static inline uint16_t CMD_BehaviorToKey(CMD_t *cmd, CMD_Behavior_t behavior) {
+  return cmd->param->map.Key_Mapping[behavior];
+}
+
+/**
+ * @brief 检查是否启用上位机控制指令覆盖
+ *
+ * @param cmd 主结构体
+ * @return true 启用
+ * @return false 不启用
+ */
+inline bool CMD_CheckHostOverwrite(CMD_t *cmd) { return cmd->host_overwrite; }
+
+/**
  * @brief 初始化命令解析
  *
  * @param cmd 主结构体
@@ -36,6 +56,7 @@ static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_KeyValue_t key,
  */
 int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
   if (cmd == NULL) return -1;
+  if (param == NULL) return -1;
 
   cmd->pc_ctrl = false;
   cmd->param = param;
@@ -44,23 +65,28 @@ int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
 }
 
 /**
- * @brief 按键转换为对应行为
+ * @brief rc失控时机器人恢复放松模式
  *
  * @param cmd 主结构体
- * @param behavior 行为
- * @return Key_Mapping[behavior] 按键映射的行为
  */
-static uint16_t CMD_BehaviorToKey(const CMD_t *cmd, CMD_Behavior_t behavior) {
-  return cmd->param->map.Key_Mapping[behavior];
+static void CMD_RcLostLogic(CMD_t *cmd) {
+  cmd->chassis.mode = CHASSIS_MODE_RELAX;
+  cmd->gimbal.mode = GIMBAL_MODE_RELAX;
+  cmd->shoot.mode = SHOOT_MODE_RELAX;
 }
 
 /**
- * @brief 解析行为命令
+ * @brief 解析pc行为逻辑
  *
  * @param rc 遥控器数据
  * @param cmd 主结构体
+ * @param dt_sec 两次解析的间隔
  */
-static void CMD_BehaviorParse(const CMD_RC_t *rc, CMD_t *cmd) {
+static void CMD_PcLogic(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
+  cmd->gimbal.delta_eulr.yaw =
+      (float)rc->mouse.x * dt_sec * cmd->param->sens_mouse;
+  cmd->gimbal.delta_eulr.pit =
+      (float)rc->mouse.y * dt_sec * cmd->param->sens_mouse;
   cmd->chassis.ctrl_vec.vx = cmd->chassis.ctrl_vec.vy = 0.0f;
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FORE), false)) {
     cmd->chassis.ctrl_vec.vy += cmd->param->move.move_sense;
@@ -93,6 +119,15 @@ static void CMD_BehaviorParse(const CMD_RC_t *rc, CMD_t *cmd) {
     cmd->shoot.shoot_freq_hz = 0u;
     cmd->shoot.bullet_speed = 20.0f;
   }
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ROTOR), true)) {
+    cmd->chassis.mode_rotor++;
+    cmd->chassis.mode_rotor %= ROTOR_MODE_NUM;
+    if (cmd->chassis.mode_rotor == ROTOR_MODE_NONE) {
+      cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
+    } else {
+      cmd->chassis.mode = CHASSIS_MODE_ROTOR;
+    }
+  }
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BUFF), true)) {
     if (cmd->ai_status == AI_STATUS_HITSWITCH) {
       CMD_RefereeAdd(&(cmd->referee), CMD_UI_HIT_SWITCH_STOP);
@@ -117,97 +152,69 @@ static void CMD_BehaviorParse(const CMD_RC_t *rc, CMD_t *cmd) {
       cmd->host_overwrite = true;
       CMD_RefereeAdd(&(cmd->referee), CMD_UI_AUTO_AIM_START);
     }
-  } else
+  } else {
     cmd->host_overwrite = false;
-  // TODO: 修复逻辑
+    // TODO: 修复逻辑
+  }
+  rc->key_last = rc->key;
 }
 
 /**
- * @brief 解析命令
+ * @brief 解析rc行为逻辑
  *
  * @param rc 遥控器数据
- * @param cmd 命令
+ * @param cmd 主结构体
  * @param dt_sec 两次解析的间隔
- * @return int8_t 0对应没有错误
  */
-int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
-  if (rc == NULL) return -1;
-  if (cmd == NULL) return -1;
+static void CMD_RcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
+  switch (rc->sw_l) {
+    case CMD_SW_UP:
+      cmd->chassis.mode = CHASSIS_MODE_BREAK;
+      break;
 
-  /* 在PC控制和RC控制间切换. */
-  if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT, false) &&
-      CMD_KeyPressedRc(rc, CMD_KEY_CTRL, false) &&
-      CMD_KeyPressedRc(rc, CMD_KEY_Q, false))
-    cmd->pc_ctrl = true;
+    case CMD_SW_MID:
+      cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
+      break;
 
-  if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT, false) &&
-      CMD_KeyPressedRc(rc, CMD_KEY_CTRL, false) &&
-      CMD_KeyPressedRc(rc, CMD_KEY_E, false))
-    cmd->pc_ctrl = false;
+    case CMD_SW_DOWN:
+      cmd->chassis.mode = CHASSIS_MODE_ROTOR;
+      cmd->chassis.mode_rotor = ROTOR_MODE_CW;
+      break;
 
-  if ((rc->sw_l == CMD_SW_ERR) || (rc->sw_r == CMD_SW_ERR)) {
-    cmd->chassis.mode = CHASSIS_MODE_RELAX;
-    cmd->gimbal.mode = GIMBAL_MODE_RELAX;
-    cmd->shoot.mode = SHOOT_MODE_RELAX;
-  } else if (cmd->pc_ctrl) {
-    /* PC键位映射和逻辑. */
-    CMD_BehaviorParse(rc, cmd);
-    cmd->gimbal.delta_eulr.yaw =
-        (float)rc->mouse.x * dt_sec * cmd->param->sens_mouse;
-    cmd->gimbal.delta_eulr.pit =
-        (float)rc->mouse.y * dt_sec * cmd->param->sens_mouse;
-  } else {
-    /* RC键位映射和逻辑. */
-    switch (rc->sw_l) {
-      case CMD_SW_UP:
-        cmd->chassis.mode = CHASSIS_MODE_BREAK;
-        break;
-
-      case CMD_SW_MID:
-        cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
-        break;
-
-      case CMD_SW_DOWN:
-        cmd->chassis.mode = CHASSIS_MODE_ROTOR;
-        break;
-
-      case CMD_SW_ERR:
-        cmd->chassis.mode = CHASSIS_MODE_RELAX;
-        break;
-    }
-    switch (rc->sw_r) {
-      case CMD_SW_UP:
-        cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-        cmd->shoot.mode = SHOOT_MODE_SAFE;
-        cmd->shoot.shoot_freq_hz = 0.0f;
-        cmd->shoot.bullet_speed = 0.0f;
-        break;
-
-      case CMD_SW_MID:
-        cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-        cmd->shoot.mode = SHOOT_MODE_STDBY;
-        cmd->shoot.shoot_freq_hz = 0.0f;
-        cmd->shoot.bullet_speed = 10.0f;
-        break;
-
-      case CMD_SW_DOWN:
-        cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-        cmd->shoot.mode = SHOOT_MODE_FIRE;
-        cmd->shoot.shoot_freq_hz = 10u;
-        cmd->shoot.bullet_speed = 10.0f;
-        break;
-
-      case CMD_SW_ERR:
-        cmd->gimbal.mode = GIMBAL_MODE_RELAX;
-        cmd->shoot.mode = SHOOT_MODE_RELAX;
-    }
-    cmd->chassis.ctrl_vec.vx = rc->ch_l_x;
-    cmd->chassis.ctrl_vec.vy = rc->ch_l_y;
-    cmd->gimbal.delta_eulr.yaw = rc->ch_r_x * dt_sec * cmd->param->sens_rc;
-    cmd->gimbal.delta_eulr.pit = rc->ch_r_y * dt_sec * cmd->param->sens_rc;
+    case CMD_SW_ERR:
+      cmd->chassis.mode = CHASSIS_MODE_RELAX;
+      break;
   }
-  rc->key_last = rc->key;
-  return 0;
+  switch (rc->sw_r) {
+    case CMD_SW_UP:
+      cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
+      cmd->shoot.mode = SHOOT_MODE_SAFE;
+      cmd->shoot.shoot_freq_hz = 0.0f;
+      cmd->shoot.bullet_speed = 0.0f;
+      break;
+
+    case CMD_SW_MID:
+      cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
+      cmd->shoot.mode = SHOOT_MODE_STDBY;
+      cmd->shoot.shoot_freq_hz = 0.0f;
+      cmd->shoot.bullet_speed = 10.0f;
+      break;
+
+    case CMD_SW_DOWN:
+      cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
+      cmd->shoot.mode = SHOOT_MODE_FIRE;
+      cmd->shoot.shoot_freq_hz = 10u;
+      cmd->shoot.bullet_speed = 10.0f;
+      break;
+
+    case CMD_SW_ERR:
+      cmd->gimbal.mode = GIMBAL_MODE_RELAX;
+      cmd->shoot.mode = SHOOT_MODE_RELAX;
+  }
+  cmd->chassis.ctrl_vec.vx = rc->ch_l_x;
+  cmd->chassis.ctrl_vec.vy = rc->ch_l_y;
+  cmd->gimbal.delta_eulr.yaw = rc->ch_r_x * dt_sec * cmd->param->sens_rc;
+  cmd->gimbal.delta_eulr.pit = rc->ch_r_y * dt_sec * cmd->param->sens_rc;
 }
 
 /**
@@ -233,7 +240,41 @@ int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
     cmd->shoot.shoot_freq_hz = 0u;
     cmd->shoot.bullet_speed = 0.0f;
   }
+  return 0;
+}
 
+/**
+ * @brief 解析命令
+ *
+ * @param rc 遥控器数据
+ * @param cmd 命令
+ * @param dt_sec 两次解析的间隔
+ * @return int8_t 0对应没有错误
+ */
+int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
+  if (rc == NULL) return -1;
+  if (cmd == NULL) return -1;
+
+  /* 在PC控制和RC控制间切换 */
+  if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT, false) &&
+      CMD_KeyPressedRc(rc, CMD_KEY_CTRL, false) &&
+      CMD_KeyPressedRc(rc, CMD_KEY_Q, false))
+    cmd->pc_ctrl = true;
+
+  if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT, false) &&
+      CMD_KeyPressedRc(rc, CMD_KEY_CTRL, false) &&
+      CMD_KeyPressedRc(rc, CMD_KEY_E, false))
+    cmd->pc_ctrl = false;
+
+  if ((rc->sw_l == CMD_SW_ERR) || (rc->sw_r == CMD_SW_ERR)) {
+    CMD_RcLostLogic(cmd);
+  } else {
+    if (cmd->pc_ctrl) {
+      CMD_PcLogic(rc, cmd, dt_sec);
+    } else {
+      CMD_RcLogic(rc, cmd, dt_sec);
+    }
+  }
   return 0;
 }
 
