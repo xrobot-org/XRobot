@@ -54,6 +54,8 @@ typedef struct {
   float bullet_speed_bias; /* 子弹初速和电机转速之间的映射参数 */
   float num_trig_tooth;    /* 拨弹盘中一圈能存储几颗弹丸 */
   float fric_radius_m;     /*摩擦轮半径，单位：米*/
+  float cover_open_duty;   /*弹舱盖打开时舵机PWM占空比*/
+  float cover_close_duty;  /*弹舱盖关闭时舵机PWM占空比*/
 } Shoot_Params_t;
 
 /*

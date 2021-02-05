@@ -77,6 +77,7 @@ typedef struct {
   CMD_ShootMode_t mode; /* 射击运行模式 */
   float bullet_speed;   /* 子弹初速 */
   float shoot_freq_hz;  /* 射击频率 */
+  bool cover_open;      /* 弹舱盖开关 */
 } CMD_ShootCmd_t;
 
 /* 拨杆位置 */
@@ -121,6 +122,7 @@ typedef enum {
   CMD_BEHAVIOR_FIRE,
   CMD_BEHAVIOR_BUFF,
   CMD_BEHAVIOR_AUTOAIM,
+  CMD_BEHAVIOR_OPENCOVER,
   CMD_BEHAVIOR_ROTOR,
   CMD_BEHAVIOR_NUM,
 } CMD_Behavior_t;
