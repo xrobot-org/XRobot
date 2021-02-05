@@ -5,6 +5,7 @@
 /* Includes ----------------------------------------------------------------- */
 #include "shoot.h"
 
+#include "bsp/pwm.h"
 #include "component\limiter.h"
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
@@ -90,6 +91,9 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
                        param->low_pass_cutoff_freq.in.trig);
   LowPassFilter2p_Init(&(s->filter.out.trig), target_freq,
                        param->low_pass_cutoff_freq.out.trig);
+
+  BSP_PWM_Start(BSP_PWM_SHOOT_SERVO);
+  BSP_PWM_Set(BSP_PWM_SHOOT_SERVO, param->cover_close_duty);
   return 0;
 }
 
@@ -197,6 +201,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_t *s_ref,
       for (uint8_t i = 0; i < SHOOT_ACTR_NUM; i++) {
         s->out[i] = 0.0f;
       }
+      BSP_PWM_Stop(BSP_PWM_SHOOT_SERVO);
       break;
 
     case SHOOT_MODE_SAFE:
@@ -223,6 +228,11 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_t *s_ref,
 
         s->out[SHOOT_ACTR_FRIC1_IDX + i] = LowPassFilter2p_Apply(
             &(s->filter.out.fric[i]), s->out[SHOOT_ACTR_FRIC1_IDX + i]);
+      }
+      if (s_cmd->cover_open) {
+        BSP_PWM_Set(BSP_PWM_SHOOT_SERVO, s->param->cover_open_duty);
+      } else {
+        BSP_PWM_Set(BSP_PWM_SHOOT_SERVO, s->param->cover_close_duty);
       }
       break;
   }

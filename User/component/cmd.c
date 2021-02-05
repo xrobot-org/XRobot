@@ -128,6 +128,10 @@ static void CMD_PcLogic(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       cmd->chassis.mode = CHASSIS_MODE_ROTOR;
     }
   }
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_OPENCOVER),
+                       true)) {
+    cmd->shoot.cover_open = !cmd->shoot.cover_open;
+  }
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BUFF), true)) {
     if (cmd->ai_status == AI_STATUS_HITSWITCH) {
       CMD_RefereeAdd(&(cmd->referee), CMD_UI_HIT_SWITCH_STOP);

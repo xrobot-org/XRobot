@@ -148,6 +148,8 @@ static const Config_RobotParam_t param_default = {
     .bullet_speed_bias = 1.0f,
     .num_trig_tooth = 8.0f,
     .fric_radius_m = 0.03f,
+    .cover_open_duty = 0.125f,
+    .cover_close_duty = 0.075f,
   }, /* shoot */
 }; /* param_default */
 
@@ -302,6 +304,7 @@ static const Config_PilotCfg_t cfg_qs = {
       .Key_Mapping[CMD_BEHAVIOR_FIRE] = CMD_L_CLICK,
       .Key_Mapping[CMD_BEHAVIOR_BUFF] = CMD_KEY_E,
       .Key_Mapping[CMD_BEHAVIOR_AUTOAIM] = CMD_R_CLICK,
+      .Key_Mapping[CMD_BEHAVIOR_OPENCOVER] =  CMD_KEY_F,
     },
     .move = {
       .move_sense = 0.8f,
