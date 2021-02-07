@@ -18,10 +18,18 @@
 Referee_t ref;
 Referee_UI_t ui;
 CMD_UI_t ref_cmd;
+Referee_ForCap_t for_cap;
+Referee_ForAI_t for_ai;
+Referee_ForChassis_t for_chassis;
+Referee_ForShoot_t for_shoot;
 #else
 static Referee_t ref;
 static Referee_UI_t ui;
 static CMD_UI_t ref_cmd;
+static Referee_ForCap_t for_cap;
+static Referee_ForAI_t for_ai;
+static Referee_ForChassis_t for_chassis;
+static Referee_ForShoot_t for_shoot;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -61,14 +69,18 @@ void Task_Referee(void *argument) {
       Referee_Parse(&ref);
       last_online_tick = osKernelGetTickCount();
     }
+    Referee_PackCap(&(for_cap), (const Referee_t *)&ref);
+    Referee_PackAI(&(for_ai), (const Referee_t *)&ref);
+    Referee_PackShoot(&(for_shoot), (const Referee_t *)&ref);
+    Referee_PackChassis(&(for_chassis), (const Referee_t *)&ref);
     osMessageQueueReset(task_runtime.msgq.referee.cap);
     osMessageQueueReset(task_runtime.msgq.referee.ai);
     osMessageQueueReset(task_runtime.msgq.referee.chassis);
     osMessageQueueReset(task_runtime.msgq.referee.shoot);
-    osMessageQueuePut(task_runtime.msgq.referee.cap, &(ref), 0, 0);
-    osMessageQueuePut(task_runtime.msgq.referee.ai, &(ref), 0, 0);
-    osMessageQueuePut(task_runtime.msgq.referee.chassis, &(ref), 0, 0);
-    osMessageQueuePut(task_runtime.msgq.referee.shoot, &(ref), 0, 0);
+    osMessageQueuePut(task_runtime.msgq.referee.cap, &(for_cap), 0, 0);
+    osMessageQueuePut(task_runtime.msgq.referee.ai, &(for_ai), 0, 0);
+    osMessageQueuePut(task_runtime.msgq.referee.chassis, &(for_shoot), 0, 0);
+    osMessageQueuePut(task_runtime.msgq.referee.shoot, &(for_chassis), 0, 0);
 
     while (osMessageQueueGet(task_runtime.msgq.cmd.referee, &ref_cmd, NULL,
                              0) == osOK)

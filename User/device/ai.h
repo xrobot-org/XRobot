@@ -46,7 +46,7 @@ bool AI_WaitDmaCplt(void);
 int8_t AI_ParseHost(AI_t *ai, CMD_Host_t *cmd_host);
 int8_t AI_HandleOffline(AI_t *ai, CMD_Host_t *cmd_host);
 int8_t AI_PackMCU(AI_t *ai, const AHRS_Quaternion_t *quat);
-int8_t AI_PackRef(AI_t *ai, const Referee_t *ref);
+int8_t AI_PackRef(AI_t *ai, const Referee_ForAI_t *ref);
 int8_t AI_StartSend(AI_t *ai, bool option);
 #ifdef __cplusplus
 }

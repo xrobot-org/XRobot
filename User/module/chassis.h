@@ -142,7 +142,7 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
  * @return 函数运行结果
  */
 int8_t Chassis_PowerLimit(Chassis_t *c, const CAN_Capacitor_t *cap,
-                          const Referee_t *ref);
+                          const Referee_ForChassis_t *ref);
 
 /**
  * \brief 复制底盘输出值

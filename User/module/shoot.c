@@ -131,7 +131,7 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
  *
  * \return 函数运行结果
  */
-int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_t *s_ref,
+int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_ForShoot_t *s_ref,
                      float dt_sec) {
   static uint32_t last_period_ms = 0;
 

@@ -16,10 +16,10 @@ static CAN_t can;
 
 #ifdef DEBUG
 CAN_CapOutput_t cap_out;
-Referee_t referee;
+Referee_ForCap_t referee_cap;
 #else
 static CAN_CapOutput_t cap_out;
-static Referee_t referee;
+static Referee_ForCap_t referee_cap;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -42,16 +42,16 @@ void Task_Cap(void *argument) {
 #endif
     tick += delay_tick;
 
-    osMessageQueueGet(task_runtime.msgq.referee.cap, &referee, 0, 0);
+    osMessageQueueGet(task_runtime.msgq.referee.cap, &referee_cap, 0, 0);
     if (osMessageQueueGet(task_runtime.msgq.can.feedback.cap, &can, NULL,
                           delay_tick) != osOK) {
       CAN_CAP_HandleOffline(&(can.cap), &cap_out,
-                            referee.robot_status.chassis_power_limit);
+                            referee_cap.chassis_power_limit);
       osMessageQueuePut(task_runtime.msgq.can.output.cap, &cap_out, 0, 0);
       osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);
     } else {
       osKernelLock();
-      Cap_Control(&can.cap, &referee, &cap_out);
+      Cap_Control(&can.cap, &referee_cap, &cap_out);
       osKernelUnlock();
       osMessageQueuePut(task_runtime.msgq.can.output.cap, &cap_out, 0, 0);
       osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);

@@ -17,7 +17,7 @@ extern "C" {
 /* Exported types ----------------------------------------------------------- */
 /* Exported functions prototypes -------------------------------------------- */
 
-void Cap_Control(CAN_Capacitor_t *cap, const Referee_t *referee,
+void Cap_Control(CAN_Capacitor_t *cap, const Referee_ForCap_t *referee,
                  CAN_CapOutput_t *cap_out);
 #ifdef __cplusplus
 }
