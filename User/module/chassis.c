@@ -317,7 +317,7 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
  * @return 函数运行结果
  */
 int8_t Chassis_PowerLimit(Chassis_t *c, const CAN_Capacitor_t *cap,
-                          const Referee_t *ref) {
+                          const Referee_ForChassis_t *ref) {
   float power_limit = 0.0f;
   if (ref->ref_status != REF_STATUS_RUNNING) {
     /* 裁判系统离线，将功率限制为固定值 */
@@ -327,18 +327,18 @@ int8_t Chassis_PowerLimit(Chassis_t *c, const CAN_Capacitor_t *cap,
         cap->percentage > CAP_PERCENTAGE_CHARGE) {
       /* 电容在线且电量足够，使用电容 */
       if (cap->percentage > CAP_PERCENTAGE_WORK) {
-        /* 电容接近充满时不再限制功率，否则按照电容能量百分比计算输出功率 */
+        /* 电容接近充满时不再限制功率 */
         power_limit = -1.0f;
       } else {
-        power_limit = ref->robot_status.chassis_power_limit +
+        /* 按照电容能量百分比计算输出功率 */
+        power_limit = ref->chassis_power_limit +
                       (cap->percentage - CAP_PERCENTAGE_CHARGE) /
                           (CAP_PERCENTAGE_WORK - CAP_PERCENTAGE_CHARGE) *
                           CHASSIS_MAX_CAP_POWER;
       }
     } else {
-      power_limit =
-          PowerLimit_TargetPower(ref->robot_status.chassis_power_limit,
-                                 ref->power_heat.chassis_pwr_buff);
+      power_limit = PowerLimit_TargetPower(ref->chassis_power_limit,
+                                           ref->chassis_pwr_buff);
     }
   }
   /* 应用功率限制 */

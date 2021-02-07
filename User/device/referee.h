@@ -338,6 +338,29 @@ typedef struct __packed {
   uint16_t crc16;
 } Referee_UI_Drawcharacter_t;
 
+typedef struct {
+  Referee_Status_t ref_status;
+  float chassis_watt;
+  float chassis_power_limit;
+  float chassis_pwr_buff;
+} Referee_ForCap_t;
+
+typedef struct {
+  Referee_Status_t ref_status;
+} Referee_ForAI_t;
+
+typedef struct {
+  Referee_Status_t ref_status;
+  float chassis_power_limit;
+  float chassis_pwr_buff;
+} Referee_ForChassis_t;
+
+typedef struct {
+  Referee_Status_t ref_status;
+  Referee_PowerHeat_t power_heat;
+  Referee_RobotStatus_t robot_status;
+} Referee_ForShoot_t;
+
 /* Exported functions prototypes -------------------------------------------- */
 int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert);
 int8_t Referee_Restart(void);
@@ -353,6 +376,10 @@ int8_t Referee_PackUI(Referee_UI_t *ui, Referee_t *ref);
 UI_Ele_t *Referee_GetGrapicAdd(Referee_UI_t *ref_ui);
 UI_Drawcharacter_t *Referee_GetCharacterAdd(Referee_UI_t *ref_ui);
 uint8_t Referee_PraseCmd(Referee_UI_t *ref_ui, CMD_UI_t cmd);
+uint8_t Referee_PackCap(Referee_ForCap_t *cap, const Referee_t *ref);
+uint8_t Referee_PackShoot(Referee_ForShoot_t *ai, const Referee_t *ref);
+uint8_t Referee_PackChassis(Referee_ForChassis_t *chassis, const Referee_t *ref);
+uint8_t Referee_PackAI(Referee_ForAI_t *shoot, const Referee_t *ref);
 #ifdef __cplusplus
 }
 #endif

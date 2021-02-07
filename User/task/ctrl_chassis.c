@@ -23,13 +23,13 @@ CMD_ChassisCmd_t chassis_cmd;
 Chassis_t chassis;
 CAN_ChassisOutput_t chassis_out;
 CAN_Capacitor_t cap;
-Referee_t ref_chassis;
+Referee_ForChassis_t referee_chassis;
 #else
 static CMD_ChassisCmd_t chassis_cmd;
 static Chassis_t chassis;
 static CAN_ChassisOutput_t chassis_out;
 static CAN_Capacitor_t cap;
-static Referee_t ref_chassis;
+static Referee_ForChassis_t referee_chassis;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -64,7 +64,8 @@ void Task_CtrlChassis(void *argument) {
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 
     /* 读取CAN总线电机指令、控制指令、电容反馈*/
-    osMessageQueueGet(task_runtime.msgq.referee.chassis, &ref_chassis, NULL, 0);
+    osMessageQueueGet(task_runtime.msgq.referee.chassis, &referee_chassis, NULL,
+                      0);
     osMessageQueueGet(task_runtime.msgq.can.feedback.chassis, &can, NULL, 0);
     osMessageQueueGet(task_runtime.msgq.cmd.chassis, &chassis_cmd, NULL, 0);
     osMessageQueueGet(task_runtime.msgq.cap_info, &cap, NULL, 0);
@@ -72,7 +73,7 @@ void Task_CtrlChassis(void *argument) {
     const uint32_t now = HAL_GetTick();
     Chassis_UpdateFeedback(&chassis, &can);
     Chassis_Control(&chassis, &chassis_cmd, (float)(now - wakeup) / 1000.0f);
-    Chassis_PowerLimit(&chassis, &cap, &ref_chassis);
+    Chassis_PowerLimit(&chassis, &cap, &referee_chassis);
     Chassis_DumpOutput(&chassis, &chassis_out);
     wakeup = now;
     osKernelUnlock();

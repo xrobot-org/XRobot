@@ -457,3 +457,32 @@ uint8_t Referee_PraseCmd(Referee_UI_t *ref_ui, CMD_UI_t cmd) {
   }
   return 0;
 }
+
+uint8_t Referee_PackCap(Referee_ForCap_t *cap, const Referee_t *ref) {
+  cap->chassis_power_limit = ref->robot_status.chassis_power_limit;
+  cap->chassis_pwr_buff = ref->power_heat.chassis_pwr_buff;
+  cap->chassis_watt = ref->power_heat.chassis_watt;
+  cap->ref_status = ref->ref_status;
+  return 0;
+}
+
+uint8_t Referee_PackAI(Referee_ForAI_t *ai, const Referee_t *ref) {
+  ai->ref_status = ref->ref_status;
+  return 0;
+}
+
+uint8_t Referee_PackChassis(Referee_ForChassis_t *chassis, const Referee_t *ref) {
+  chassis->chassis_power_limit = ref->robot_status.chassis_power_limit;
+  chassis->chassis_pwr_buff = ref->power_heat.chassis_pwr_buff;
+  chassis->ref_status = ref->ref_status;
+  return 0;
+}
+
+uint8_t Referee_PackShoot(Referee_ForShoot_t *shoot, const Referee_t *ref) {
+  memcpy((void *)&(shoot->power_heat), (const void *)&(ref->power_heat),
+         sizeof(ref->power_heat));
+  memcpy((void *)&shoot->robot_status, (const void *)&ref->robot_status,
+         sizeof(ref->robot_status));
+  shoot->ref_status = ref->ref_status;
+  return 0;
+}

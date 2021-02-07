@@ -103,14 +103,14 @@ void Task_Init(void *argument) {
       osMessageQueueNew(2u, sizeof(AHRS_Quaternion_t), NULL);
 
   /* 裁判系统 */
-  task_runtime.msgq.referee.ai = osMessageQueueNew(2u, sizeof(Referee_t), NULL);
-
+  task_runtime.msgq.referee.ai =
+      osMessageQueueNew(2u, sizeof(Referee_ForAI_t), NULL);
   task_runtime.msgq.referee.chassis =
-      osMessageQueueNew(2u, sizeof(Referee_t), NULL);
+      osMessageQueueNew(2u, sizeof(Referee_ForChassis_t), NULL);
   task_runtime.msgq.referee.cap =
-      osMessageQueueNew(2u, sizeof(Referee_t), NULL);
+      osMessageQueueNew(2u, sizeof(Referee_ForCap_t), NULL);
   task_runtime.msgq.referee.shoot =
-      osMessageQueueNew(2u, sizeof(Referee_t), NULL);
+      osMessageQueueNew(2u, sizeof(Referee_ForShoot_t), NULL);
   osKernelUnlock();
 
   osThreadTerminate(osThreadGetId()); /* 结束自身 */

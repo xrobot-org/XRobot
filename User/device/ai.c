@@ -102,16 +102,16 @@ int8_t AI_PackMCU(AI_t *ai, const AHRS_Quaternion_t *quat) {
 
   ai->to_host.mcu.crc16 =
       CRC16_Calc((const uint8_t *)&(ai->to_host.mcu),
-                 sizeof(Protocol_MCU_t) - sizeof(uint16_t), CRC16_INIT);
+                 sizeof(ai->to_host.mcu) - sizeof(uint16_t), CRC16_INIT);
   return DEVICE_OK;
 }
 
-int8_t AI_PackRef(AI_t *ai, const Referee_t *ref) {
+int8_t AI_PackRef(AI_t *ai, const Referee_ForAI_t *ref) {
   (void)ref;
   ai->to_host.ref.id = AI_ID_REF;
   ai->to_host.ref.crc16 =
       CRC16_Calc((const uint8_t *)&(ai->to_host.ref),
-                 sizeof(Protocol_Referee_t) - sizeof(uint16_t), CRC16_INIT);
+                 sizeof(ai->to_host.ref) - sizeof(uint16_t), CRC16_INIT);
   return DEVICE_OK;
 }
 
@@ -119,14 +119,14 @@ int8_t AI_StartSend(AI_t *ai, bool ref_update) {
   if (ref_update) {
     if (HAL_UART_Transmit_DMA(
             BSP_UART_GetHandle(BSP_UART_AI), (uint8_t *)&(ai->to_host),
-            sizeof(Protocol_MCU_t) + sizeof(Protocol_Referee_t)) == HAL_OK)
+            sizeof(ai->to_host.ref) + sizeof(ai->to_host.mcu)) == HAL_OK)
       return DEVICE_OK;
     else
       return DEVICE_ERR;
   } else {
     if (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_AI),
                               (uint8_t *)&(ai->to_host.mcu),
-                              sizeof(Protocol_MCU_t)) == HAL_OK)
+                              sizeof(ai->to_host.mcu)) == HAL_OK)
       return DEVICE_OK;
     else
       return DEVICE_ERR;
