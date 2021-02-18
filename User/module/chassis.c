@@ -12,12 +12,12 @@
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
-#define CAP_PERCENTAGE_WORK 80.0f
-#define CAP_PERCENTAGE_CHARGE 30.0f
+#define CAP_PERCENTAGE_WORK 80.0f /* 底盘不再限制功率的电容电量 */
+#define CAP_PERCENTAGE_CHARGE 30.0f /* 电容开始工作的电容电量 */
 
 #define CHASSIS_POWER_MAX_WITHOUT_REF 40.0f /* 裁判系统离线底盘最大功率 */
-#define CHASSIS_MAX_CAP_POWER 100.0f;
-#define CHASSIS_ROTOR_VEC_WZ 0.5f                /* 小陀螺旋转位移 */
+#define CHASSIS_MAX_CAP_POWER 100.0f; /* 电容能够提供的最大功率 */
+#define CHASSIS_ROTOR_VEC_WZ 0.5f     /* 小陀螺旋转位移 */
 #define CHASSIS_ROTOR_ROTATE_ANGLE (M_PI / 2.0f) /* 小陀螺旋转弧度 */
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
@@ -32,8 +32,8 @@
  * \return 函数运行结果
  */
 static int8_t Chassis_SetMode(Chassis_t *c, CMD_ChassisMode_t mode) {
-  if (c == NULL) return CHASSIS_ERR_NULL;
-  if (mode == c->mode) return CHASSIS_OK;
+  if (c == NULL) return CHASSIS_ERR_NULL; /* 主结构体不能为空 */
+  if (mode == c->mode) return CHASSIS_OK; /* 模式未改变直接返回 */
 
   c->mode = mode;
 
@@ -63,8 +63,9 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
   if (c == NULL) return CHASSIS_ERR_NULL;
 
   c->param = param;             /* 初始化参数 */
-  c->mode = CHASSIS_MODE_RELAX; /* 设置默认模式 */
-  c->mech_zero = mech_zero;
+  c->mode = CHASSIS_MODE_RELAX; /* 设置上电后底盘默认模式 */
+  c->mech_zero = mech_zero;     /* 设置底盘机械零点 */
+  /* 如果电机反装重新计算机械零点 */
   if (param->reverse.yaw) {
     c->mech_zero->yaw = -(c->mech_zero->yaw) + M_2PI;
   }
@@ -110,6 +111,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
   /* 根据底盘型号动态分配控制时使用的变量 */
   c->feedback.motor_rpm =
       BSP_Malloc((size_t)c->num_wheel * sizeof(*c->feedback.motor_rpm));
+  /* 变量未分配，返回错误 */
   if (c->feedback.motor_rpm == NULL) goto error;
 
   c->feedback.motor_current =
@@ -170,14 +172,18 @@ error:
  * \return 函数运行结果
  */
 int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
+  /* 底盘数据和CAN结构体不能为空 */
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (can == NULL) return CHASSIS_ERR_NULL;
 
-  c->feedback.gimbal_yaw_angle = can->motor.gimbal.named.yaw.rotor_angle;
-  if (c->param->reverse.yaw) {
-    c->feedback.gimbal_yaw_angle = -c->feedback.gimbal_yaw_angle + M_2PI;
-  }
+  /* 如果电机反装重新计算正确的反馈值 */
+  if (c->param->reverse.yaw)
+    c->feedback.gimbal_yaw_angle =
+        -can->motor.gimbal.named.yaw.rotor_angle + M_2PI;
+  else
+    c->feedback.gimbal_yaw_angle = can->motor.gimbal.named.yaw.rotor_angle;
 
+  /* 将CAN中的反馈数据写入到feedback中 */
   for (uint8_t i = 0; i < c->num_wheel; i++) {
     c->feedback.motor_rpm[i] = can->motor.chassis.as_array[i].rotor_speed;
     c->feedback.motor_current[i] =
@@ -198,25 +204,27 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
  */
 int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
                        float dt_sec) {
+  /* 底盘数据和控制指令结构体不能为空 */
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (c_cmd == NULL) return CHASSIS_ERR_NULL;
+  /* 根据遥控器命令更改底盘模式 */
   Chassis_SetMode(c, c_cmd->mode);
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
   /* 先计算vx、vy. */
   switch (c->mode) {
-    case CHASSIS_MODE_BREAK:
+    case CHASSIS_MODE_BREAK: /* 刹车模式电机停止 */
       c->move_vec.vx = 0.0f;
       c->move_vec.vy = 0.0f;
       break;
 
-    case CHASSIS_MODE_INDENPENDENT:
+    case CHASSIS_MODE_INDENPENDENT: /* 独立模式控制向量与运动向量相等 */
       c->move_vec.vx = c_cmd->ctrl_vec.vx;
       c->move_vec.vy = c_cmd->ctrl_vec.vx;
       break;
 
     case CHASSIS_MODE_OPEN:
     case CHASSIS_MODE_RELAX:
-    case CHASSIS_MODE_FOLLOW_GIMBAL:
+    case CHASSIS_MODE_FOLLOW_GIMBAL: /* 按照云台方向换算运动向量 */
     case CHASSIS_MODE_ROTOR: {
       float beta = c->feedback.gimbal_yaw_angle - c->mech_zero->yaw;
       float cos_beta = cosf(beta);
@@ -232,18 +240,19 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
   switch (c->mode) {
     case CHASSIS_MODE_RELAX:
     case CHASSIS_MODE_BREAK:
-    case CHASSIS_MODE_INDENPENDENT:
+    case CHASSIS_MODE_INDENPENDENT: /* 独立模式wz为0 */
       c->move_vec.wz = 0.0f;
       break;
 
     case CHASSIS_MODE_OPEN:
-    case CHASSIS_MODE_FOLLOW_GIMBAL:
+    case CHASSIS_MODE_FOLLOW_GIMBAL: /* 跟随模式通过PID控制使车头跟随云台 */
       c->move_vec.wz = PID_Calc(
           &(c->pid.follow), 0, c->feedback.gimbal_yaw_angle - c->mech_zero->yaw,
           0.0f, dt_sec);
       break;
-    case CHASSIS_MODE_ROTOR: {
+    case CHASSIS_MODE_ROTOR: { /* 小陀螺模式使底盘以一定速度旋转 */
       float beta = c->feedback.gimbal_yaw_angle - c->mech_zero->yaw;
+      /* 根据转动模式计算wz */
       switch (c_cmd->mode_rotor) {
         case ROTOR_MODE_NONE:
           break;
@@ -284,20 +293,21 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
     c->feedback.motor_rpm[i] =
         LowPassFilter2p_Apply(c->filter.in + i, c->feedback.motor_rpm[i]);
 
+    /* 根据底盘模式计算输出值 */
     switch (c->mode) {
       case CHASSIS_MODE_BREAK:
       case CHASSIS_MODE_FOLLOW_GIMBAL:
       case CHASSIS_MODE_ROTOR:
-      case CHASSIS_MODE_INDENPENDENT:
+      case CHASSIS_MODE_INDENPENDENT: /* 独立模式,受PID控制 */
         c->out[i] = PID_Calc(c->pid.motor + i, c->setpoint.motor_rpm[i],
                              c->feedback.motor_rpm[i], 0.0f, dt_sec);
         break;
 
-      case CHASSIS_MODE_OPEN:
+      case CHASSIS_MODE_OPEN: /* 开环模式,不受PID控制 */
         c->out[i] = c->setpoint.motor_rpm[i] / 9000.0f;
         break;
 
-      case CHASSIS_MODE_RELAX:
+      case CHASSIS_MODE_RELAX: /* 放松模式,不输出 */
         c->out[i] = 0;
         break;
     }
@@ -337,6 +347,7 @@ int8_t Chassis_PowerLimit(Chassis_t *c, const CAN_Capacitor_t *cap,
                           CHASSIS_MAX_CAP_POWER;
       }
     } else {
+      /* 电容不在工作，根据缓冲能量计算输出功率限制 */
       power_limit = PowerLimit_TargetPower(ref->chassis_power_limit,
                                            ref->chassis_pwr_buff);
     }

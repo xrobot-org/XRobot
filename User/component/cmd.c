@@ -291,6 +291,7 @@ int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
  */
 int8_t CMD_RefereeAdd(CMD_RefereeCmd_t *ref, CMD_UI_t cmd) {
   if (ref->counter >= CMD_REFEREE_MAX_NUM || ref->counter < 0) return -1;
-  ref->cmd[ref->counter++] = cmd;
+  ref->cmd[ref->counter] = cmd;
+  ref->counter++;
   return 0;
 }
