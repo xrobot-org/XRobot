@@ -17,7 +17,6 @@
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 static CAN_t can;
-float power_lim = 40.f; /* 最大输出功率 */
 #ifdef DEBUG
 CMD_ChassisCmd_t chassis_cmd;
 Chassis_t chassis;
@@ -63,7 +62,7 @@ void Task_CtrlChassis(void *argument) {
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 
-    /* 读取CAN总线电机指令、控制指令、电容反馈*/
+    /* 读取CAN总线电机指令、控制指令、电容反馈、裁判系统 */
     osMessageQueueGet(task_runtime.msgq.referee.chassis, &referee_chassis, NULL,
                       0);
     osMessageQueueGet(task_runtime.msgq.can.feedback.chassis, &can, NULL, 0);
@@ -71,13 +70,14 @@ void Task_CtrlChassis(void *argument) {
     osMessageQueueGet(task_runtime.msgq.cap_info, &cap, NULL, 0);
     osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     const uint32_t now = HAL_GetTick();
-    Chassis_UpdateFeedback(&chassis, &can);
+    Chassis_UpdateFeedback(&chassis, &can); /* 更新反馈值 */
+    /* 根据遥控器命令计算底盘输出 */
     Chassis_Control(&chassis, &chassis_cmd, (float)(now - wakeup) / 1000.0f);
-    Chassis_PowerLimit(&chassis, &cap, &referee_chassis);
+    Chassis_PowerLimit(&chassis, &cap, &referee_chassis); /* 限制输出功率 */
     Chassis_DumpOutput(&chassis, &chassis_out);
     wakeup = now;
     osKernelUnlock();
-
+    /* 将电机输出值发送到CAN */
     osMessageQueuePut(task_runtime.msgq.can.output.chassis, &chassis_out, 0, 0);
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }

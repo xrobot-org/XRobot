@@ -32,7 +32,7 @@ int8_t PowerLimit_ChassicOutput(float power_limit, float *motor_out,
 float PowerLimit_CapInput(float power_in, float power_limit,
                           float power_buffer);
 /**
- * @brief 底盘功率计算
+ * @brief 使用缓冲能量计算底盘最大功率
  *
  * @param power_limit 裁判系统功率限制值
  * @param power_buffer 缓冲能量
