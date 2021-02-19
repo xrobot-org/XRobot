@@ -76,6 +76,7 @@ void Task_Command(void *argument) {
     osMessageQueuePut(task_runtime.msgq.cmd.chassis, &(cmd.chassis), 0, 0);
     osMessageQueuePut(task_runtime.msgq.cmd.gimbal, &(cmd.gimbal), 0, 0);
     osMessageQueuePut(task_runtime.msgq.cmd.shoot, &(cmd.shoot), 0, 0);
+    /* 存在裁判系统发送命令时，将相应的画图命令放入消息队列中 */
     while (cmd.referee.counter > 0) {
       osMessageQueuePut(task_runtime.msgq.cmd.referee,
                         &(cmd.referee.cmd[--cmd.referee.counter]), 0, 0);
