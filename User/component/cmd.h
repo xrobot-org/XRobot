@@ -13,7 +13,7 @@ extern "C" {
 
 #include "ahrs.h"
 
-#define CMD_REFEREE_MAX_NUM (3)
+#define CMD_REFEREE_MAX_NUM (3) /* 发送命令限定的最大数量 */
 
 /* 机器人型号 */
 typedef enum {
@@ -113,24 +113,26 @@ typedef enum {
 
 /* 行为值序列 */
 typedef enum {
-  CMD_BEHAVIOR_FORE = 0,
-  CMD_BEHAVIOR_BACK,
-  CMD_BEHAVIOR_LEFT,
-  CMD_BEHAVIOR_RIGHT,
-  CMD_BEHAVIOR_ACCELERATE,
-  CMD_BEHAVIOR_DECELEBRATE,
-  CMD_BEHAVIOR_FIRE,
-  CMD_BEHAVIOR_BUFF,
-  CMD_BEHAVIOR_AUTOAIM,
-  CMD_BEHAVIOR_OPENCOVER,
-  CMD_BEHAVIOR_ROTOR,
+  CMD_BEHAVIOR_FORE = 0,    /* 向前 */
+  CMD_BEHAVIOR_BACK,        /* 向后 */
+  CMD_BEHAVIOR_LEFT,        /* 向左 */
+  CMD_BEHAVIOR_RIGHT,       /* 向右 */
+  CMD_BEHAVIOR_ACCELERATE,  /* 加速 */
+  CMD_BEHAVIOR_DECELEBRATE, /* 减速 */
+  CMD_BEHAVIOR_FIRE,        /* 开火 */
+  CMD_BEHAVIOR_BUFF,        /* 打符模式 */
+  CMD_BEHAVIOR_AUTOAIM,     /* 自瞄模式 */
+  CMD_BEHAVIOR_OPENCOVER,   /* 弹舱盖开关 */
+  CMD_BEHAVIOR_ROTOR,       /* 小陀螺模式 */
   CMD_BEHAVIOR_NUM,
 } CMD_Behavior_t;
 
+/* 行为映射的对应按键数组 */
 typedef struct {
-  uint16_t Key_Mapping[CMD_BEHAVIOR_NUM]; /* 储存按键映射对应行为 */
+  uint16_t Key_Mapping[CMD_BEHAVIOR_NUM];
 } CMD_KeyMap_Params_t;
 
+/* 位移灵敏度参数 */
 typedef struct {
   float move_sense;      /* 移动灵敏度 */
   float move_fast_sense; /* 加速灵敏度 */
@@ -145,24 +147,27 @@ typedef struct {
   CMD_Move_Params_t move;  /* 位移灵敏度参数 */
 } CMD_Params_t;
 
+/* AI行为状态 */
 typedef enum {
-  AI_STATUS_STOP,
-  AI_STATUS_AUTOAIM,
-  AI_STATUS_HITSWITCH,
-  AI_STATUS_AUTOMATIC
+  AI_STATUS_STOP,      /* 停止状态 */
+  AI_STATUS_AUTOAIM,   /* 自瞄状态 */
+  AI_STATUS_HITSWITCH, /* 打符状态 */
+  AI_STATUS_AUTOMATIC  /* 自动状态 */
 } CMD_AI_Status_t;
 
+/* UI所用行为状态 */
 typedef enum {
-  CMD_UI_NOTHING,
-  CMD_UI_AUTO_AIM_START,
-  CMD_UI_AUTO_AIM_STOP,
-  CMD_UI_HIT_SWITCH_START,
-  CMD_UI_HIT_SWITCH_STOP
+  CMD_UI_NOTHING,          /* 当前无状态 */
+  CMD_UI_AUTO_AIM_START,   /* 自瞄状态开启 */
+  CMD_UI_AUTO_AIM_STOP,    /* 自瞄状态关闭 */
+  CMD_UI_HIT_SWITCH_START, /* 打符状态开启 */
+  CMD_UI_HIT_SWITCH_STOP   /* 打符状态关闭 */
 } CMD_UI_t;
 
+/*裁判系统发送的命令*/
 typedef struct {
-  CMD_UI_t cmd[CMD_REFEREE_MAX_NUM];
-  uint8_t counter;
+  CMD_UI_t cmd[CMD_REFEREE_MAX_NUM]; /* 命令数组 */
+  uint8_t counter;                   /* 命令计数 */
 } CMD_RefereeCmd_t;
 
 typedef struct {
@@ -171,12 +176,12 @@ typedef struct {
 
   CMD_AI_Status_t ai_status; /* AI状态 */
 
-  const CMD_Params_t *param;
+  const CMD_Params_t *param; /* 命令参数 */
 
-  CMD_ChassisCmd_t chassis;
-  CMD_GimbalCmd_t gimbal;
-  CMD_ShootCmd_t shoot;
-  CMD_RefereeCmd_t referee;
+  CMD_ChassisCmd_t chassis; /* 底盘控制命令 */
+  CMD_GimbalCmd_t gimbal;   /* 云台控制命令 */
+  CMD_ShootCmd_t shoot;     /* 射击控制命令 */
+  CMD_RefereeCmd_t referee; /* 裁判系统发送命令 */
 } CMD_t;
 
 typedef struct {
@@ -207,9 +212,9 @@ typedef struct {
 typedef struct {
   AHRS_Eulr_t gimbal_delta; /* 欧拉角的变化量 */
 
-  float chassis_speed_setpoint;
+  float chassis_speed_setpoint; /* 设置速度值 */
 
-  bool fire;
+  bool fire; /* 开火状态 */
 } CMD_Host_t;
 
 /**
