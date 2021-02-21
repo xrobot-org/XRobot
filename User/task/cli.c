@@ -8,9 +8,9 @@
 
 /* Includes ----------------------------------------------------------------- */
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
 
 #include "FreeRTOS.h"
 #include "bsp\can.h"
@@ -121,6 +121,7 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
   (void)command_string;
   len -= 1;
 
+  /* 堆区信息的相关内容 */
   HeapStats_t heap_stats;
 
   static FiniteStateMachine_t fsm;
@@ -130,6 +131,7 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       fsm.stage++;
       return pdPASS;
     case 1:
+      /* 获取任务的列表 */
       vTaskList(out_buffer);
       fsm.stage++;
       return pdPASS;
@@ -138,6 +140,7 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       fsm.stage++;
       return pdPASS;
     case 3:
+      /* 获得任务的运行时间 */
       vTaskGetRunTimeStats(out_buffer);
       fsm.stage++;
       return pdPASS;
@@ -146,6 +149,7 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       fsm.stage++;
       return pdPASS;
     case 5:
+      /* 获得堆区的可用空间 */
       vPortGetHeapStats(&heap_stats);
       snprintf(out_buffer, len, "%d\t\t%d\t%d\r\n", configTOTAL_HEAP_SIZE,
                heap_stats.xAvailableHeapSpaceInBytes,
@@ -157,6 +161,7 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       fsm.stage++;
       return pdPASS;
     case 7:
+      /* 获取当前CPU温度和电量 */
       snprintf(out_buffer, len, "%f\t%f\r\n", task_runtime.status.cpu_temp,
                task_runtime.status.battery);
       fsm.stage++;
@@ -166,6 +171,7 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       fsm.stage++;
       return pdPASS;
     case 9:
+      /* 获取机器人和操作手名称 */
       snprintf(out_buffer, len, "%s\t\t%s\r\n",
                task_runtime.cfg.robot_param_name,
                task_runtime.cfg.pilot_cfg_name);
@@ -207,6 +213,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
   const char *name = FreeRTOS_CLIGetParameter(command_string, 3, &name_len);
 
   Config_t cfg;
+
   static FiniteStateMachine_t fsm;
   if (strncmp(command, "help", command_len) == 0) {
     /* config help */
@@ -225,6 +232,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
         return pdPASS;
 
       case stage_success:
+        /* 初始化获取的操作手配置、机器人参数 */
         memset(&cfg, 0, sizeof(cfg));
         cfg.pilot_cfg = Config_GetPilotCfg("qs");
         cfg.robot_param = Config_GetRobotParam("default");
@@ -350,6 +358,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
   (void)command_string;
   len -= 1;
 
+  /* 陀螺仪校准相关内容 */
   Config_t cfg;
   AHRS_Gyro_t gyro;
   uint16_t count = 0;
@@ -369,6 +378,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       fsm.stage++;
       return pdPASS;
     case 2:
+      /* 无陀螺仪数据和校准重试超时时，校准失败 */
       osThreadSuspend(task_runtime.thread.ctrl_gimbal);
 
       if (osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &gyro, NULL, 5) !=
@@ -397,6 +407,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
         return pdPASS;
       }
     case 3:
+      /* 记录1000组数据，求出平均值作为陀螺仪的3轴零偏 */
       snprintf(out_buffer, len, "Calibation in progress.\r\n");
       Config_Get(&cfg);
       cfg.cali.bmi088.gyro_offset.x = 0.0f;
@@ -468,6 +479,7 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
       fsm.stage++;
       return pdPASS;
     case 1:
+      /* 获取到云台数据，用can上的新的云台机械零点的位置替代旧的位置 */
       Config_Get(&cfg);
 
       osThreadSuspend(task_runtime.thread.ctrl_gimbal);
@@ -501,11 +513,13 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
 
 static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
                                        const char *command_string) {
-  CAN_t can;
   if (out_buffer == NULL) return pdFALSE;
   (void)command_string;
   len -= 1;
+
+  CAN_t can;
   Config_t cfg;
+
   static FiniteStateMachine_t fsm;
   switch (fsm.stage) {
     case 0:
@@ -514,6 +528,7 @@ static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
       fsm.stage = 1;
       return pdPASS;
     case 1:
+      /* 获取云台数据，获取新的限位角并替代旧的限位角 */
       osThreadSuspend(task_runtime.thread.ctrl_gimbal);
 
       if (osMessageQueueGet(task_runtime.msgq.can.feedback.gimbal, &can, NULL,
@@ -525,9 +540,11 @@ static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
       Config_Get(&cfg);
       osThreadResume(task_runtime.thread.ctrl_gimbal);
       cfg.gimbal_limit = can.motor.gimbal.named.pit.rotor_angle;
+
       Config_Set(&cfg);
       Config_Get(&cfg);
       snprintf(out_buffer, len, "(new)limit:%f\r\nDone.", cfg.gimbal_limit);
+
       fsm.stage = 2;
       return pdPASS;
     case 2:
@@ -649,7 +666,8 @@ void Task_CLI(void *argument) {
   BaseType_t processing = 0;                    /* 命令行解析控制 */
 
   /* 注册所有命令 */
-  const size_t num_commands = sizeof(command_table) / sizeof(CLI_Command_Definition_t);
+  const size_t num_commands =
+      sizeof(command_table) / sizeof(CLI_Command_Definition_t);
   for (size_t j = 0; j < num_commands; j++) {
     FreeRTOS_CLIRegisterCommand(command_table + j);
   }
