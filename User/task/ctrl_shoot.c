@@ -19,12 +19,12 @@ static CAN_t can;
 #ifdef DEBUG
 CMD_ShootCmd_t shoot_cmd;
 Shoot_t shoot;
-Referee_ForShoot_t referee_shoot;  //从裁判系统读取的信息，目前用来热量控制
+Referee_ForShoot_t referee_shoot;
 CAN_ShootOutput_t shoot_out;
 #else
 static CMD_ShootCmd_t shoot_cmd;
 static Shoot_t shoot;
-static Referee_ForShoot_t referee_shoot;  //从裁判系统读取的信息，目前用来热量控制
+static Referee_ForShoot_t referee_shoot;
 static CAN_ShootOutput_t shoot_out;
 #endif
 
@@ -59,15 +59,17 @@ void Task_CtrlShoot(void *argument) {
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 
-    /* 读取CAN总线电机指令、控制指令*/
+    /* 读取CAN总线电机指令、控制指令以及裁判系统信息 */
     osMessageQueueGet(task_runtime.msgq.can.feedback.shoot, &can, NULL, 0);
     osMessageQueueGet(task_runtime.msgq.cmd.shoot, &shoot_cmd, NULL, 0);
     osMessageQueueGet(task_runtime.msgq.referee.shoot, &referee_shoot, NULL, 0);
     osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     const uint32_t now = HAL_GetTick();
     Shoot_UpdateFeedback(&shoot, &can);
+    /* 根据指令控制射击 */
     Shoot_Control(&shoot, &shoot_cmd, &referee_shoot,
                   (float)(now - wakeup) / 1000.0f);
+    /* 复制射击输出值 */
     Shoot_DumpOutput(&shoot, &shoot_out);
     wakeup = now;
     osKernelUnlock();

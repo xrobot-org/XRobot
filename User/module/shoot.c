@@ -22,6 +22,7 @@
  */
 static void TrigTimerCallback(void *arg) {
   Shoot_t *s = (Shoot_t *)arg;
+  /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗子弹的弧度变化 */
   CircleAdd(&(s->setpoint.trig_angle), -M_2PI / s->param->num_trig_tooth,
             M_2PI);
 }
@@ -74,6 +75,7 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
   s->trig_timer_id = osTimerNew(TrigTimerCallback, osTimerPeriodic, s, NULL);
 
   for (uint8_t i = 0; i < 2; i++) {
+    /* PI控制器初始化PID */
     PID_Init(s->pid.fric + i, KPID_MODE_NO_D, target_freq,
              &(param->fric_pid_param));
 
@@ -137,13 +139,15 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_ForShoot_t *s_re
 
   if (s == NULL) return -1;
 
-  Shoot_SetMode(s, s_cmd->mode);
+  Shoot_SetMode(s, s_cmd->mode); /* 设置射击模式 */
 
+  /* 如果是SAFE模式，将预设射击速度与频率置零，以阻止射击 */
   if (s->mode == SHOOT_MODE_SAFE) {
     s_cmd->bullet_speed = 0.0f;
     s_cmd->shoot_freq_hz = 0.0f;
   }
 
+  /* 计算摩擦轮转速的目标值 */
   s->setpoint.fric_rpm[0] =
       s->param->bullet_speed_scaler * s_cmd->bullet_speed +
       s->param->bullet_speed_bias;
@@ -158,6 +162,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_ForShoot_t *s_re
     float bullet_rpm_limit;                        /* 计算出的rpm上限 */
     uint8_t bullet_speed_limit; /* 裁判系统取得的射速上限 */
 
+    /* 先判断机器人类型 */
     if (s_ref->robot_status.robot_id == 1 ||
         s_ref->robot_status.robot_id == 101) {
       heat_percent = s_ref->power_heat.shoot_42_heat /
@@ -172,7 +177,11 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_ForShoot_t *s_re
       stable_freq_hz = s_ref->robot_status.shoot_17_cooling_rate / 10.0f;
       bullet_speed_limit = s_ref->robot_status.shoot_17_speed_limit;
     }
+
+    /* 根据规则计算出摩擦轮转速上限 */
     bullet_rpm_limit = CalculateRpm(bullet_speed_limit, fric_radius_m);
+
+    /* 根据规则限制射击频率 */
     s_cmd->shoot_freq_hz =
         HeatLimit_ShootFreq(heat_percent, stable_freq_hz, s_cmd->shoot_freq_hz);
     s->setpoint.fric_rpm[0] =
@@ -181,8 +190,9 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_ForShoot_t *s_re
   }
 
   if (s->mode != SHOOT_MODE_RELAX) {
+    /* 计算射击周期 */
     uint32_t period_ms = (uint32_t)(1000.0f / s_cmd->shoot_freq_hz);
-
+    /* 若周期与上次不同或计时器停止则更新射击周期，并重置计时器 */
     if (last_period_ms != period_ms || !osTimerIsRunning(s->trig_timer_id)) {
       last_period_ms = period_ms;
       if (osTimerIsRunning(s->trig_timer_id)) {
@@ -229,6 +239,8 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_ForShoot_t *s_re
         s->out[SHOOT_ACTR_FRIC1_IDX + i] = LowPassFilter2p_Apply(
             &(s->filter.out.fric[i]), s->out[SHOOT_ACTR_FRIC1_IDX + i]);
       }
+
+      /* 根据弹仓盖开关状态更新弹舱盖打开时舵机PWM占空比 */
       if (s_cmd->cover_open) {
         BSP_PWM_Set(BSP_PWM_SHOOT_SERVO, s->param->cover_open_duty);
       } else {
