@@ -20,6 +20,7 @@ extern "C" {
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
 #define REF_SWITCH_STATUS(ref, stat) ((ref).ref_status = (stat))
+#define CHASSIS_POWER_MAX_WITHOUT_REF 40.0f /* 裁判系统离线底盘最大功率 */
 
 /* Exported types ----------------------------------------------------------- */
 typedef struct __packed {
@@ -378,7 +379,8 @@ UI_Drawcharacter_t *Referee_GetCharacterAdd(Referee_UI_t *ref_ui);
 uint8_t Referee_PraseCmd(Referee_UI_t *ref_ui, CMD_UI_t cmd);
 uint8_t Referee_PackCap(Referee_ForCap_t *cap, const Referee_t *ref);
 uint8_t Referee_PackShoot(Referee_ForShoot_t *ai, const Referee_t *ref);
-uint8_t Referee_PackChassis(Referee_ForChassis_t *chassis, const Referee_t *ref);
+uint8_t Referee_PackChassis(Referee_ForChassis_t *chassis,
+                            const Referee_t *ref);
 uint8_t Referee_PackAI(Referee_ForAI_t *shoot, const Referee_t *ref);
 #ifdef __cplusplus
 }
