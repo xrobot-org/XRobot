@@ -26,37 +26,45 @@ static Referee_ForCap_t referee_cap;
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief Capacity controller
+ * \brief 控制电容
  *
- * \param argument unused
+ * \param argument 未使用
  */
 void Task_Cap(void *argument) {
-  (void)argument;
+  (void)argument; /* 未使用argument，消除警告 */
 
+  /* 计算任务运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_CAP;
 
-  uint32_t tick = osKernelGetTickCount();
+  uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   while (1) {
 #ifdef DEBUG
+    /* 记录任务所使用的的栈空间 */
     task_runtime.stack_water_mark.cap = osThreadGetStackSpace(NULL);
 #endif
-    tick += delay_tick;
+    tick += delay_tick; /* 计算下一个唤醒时刻 */
 
+    /* 读取裁判系统信息 */
     osMessageQueueGet(task_runtime.msgq.referee.cap, &referee_cap, 0, 0);
+
+    /* 接收不到电容反馈值，使电容离线 */
     if (osMessageQueueGet(task_runtime.msgq.can.feedback.cap, &can, NULL,
                           delay_tick) != osOK) {
       CAN_CAP_HandleOffline(&(can.cap), &cap_out,
-                            referee_cap.chassis_power_limit);
+                            CHASSIS_POWER_MAX_WITHOUT_REF);
       osMessageQueuePut(task_runtime.msgq.can.output.cap, &cap_out, 0, 0);
       osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);
     } else {
-      osKernelLock();
+      osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
+      /* 根据裁判系统数据计算输出功率 */
       Cap_Control(&can.cap, &referee_cap, &cap_out);
       osKernelUnlock();
+      /* 将电容输出值发送到CAN */
       osMessageQueuePut(task_runtime.msgq.can.output.cap, &cap_out, 0, 0);
+      /* 将电容状态发送到Chassis */
       osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);
 
-      osDelayUntil(tick);
+      osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
     }
   }
 }

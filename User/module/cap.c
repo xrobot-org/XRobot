@@ -18,6 +18,13 @@
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
 
+/**
+ * @brief 运行电容控制逻辑
+ *
+ * @param cap 电容数据结构体
+ * @param referee 裁判系统数据
+ * @param cap_out 电容输出结构体
+ */
 void Cap_Control(CAN_Capacitor_t *cap, const Referee_ForCap_t *referee,
                  CAN_CapOutput_t *cap_out) {
   if (referee->ref_status != REF_STATUS_RUNNING) {
@@ -29,6 +36,7 @@ void Cap_Control(CAN_Capacitor_t *cap, const Referee_ForCap_t *referee,
         PowerLimit_CapInput(referee->chassis_watt, referee->chassis_power_limit,
                             referee->chassis_pwr_buff);
   }
+  /* 更新电容状态和百分比 */
   cap->cap_status = CAN_CAP_STATUS_RUNNING;
   cap->percentage = Capacity_GetCapacitorRemain(cap->cap_feedback.cap_volt,
                                                 cap->cap_feedback.input_volt,
