@@ -53,9 +53,9 @@ typedef struct {
   float bullet_speed_scaler; /* 子弹初速和电机转速之间的映射参数 */
   float bullet_speed_bias; /* 子弹初速和电机转速之间的映射参数 */
   float num_trig_tooth;    /* 拨弹盘中一圈能存储几颗弹丸 */
-  float fric_radius_m;     /*摩擦轮半径，单位：米*/
-  float cover_open_duty;   /*弹舱盖打开时舵机PWM占空比*/
-  float cover_close_duty;  /*弹舱盖关闭时舵机PWM占空比*/
+  float fric_radius_m;     /* 摩擦轮半径，单位：米 */
+  float cover_open_duty;   /* 弹舱盖打开时舵机PWM占空比 */
+  float cover_close_duty;  /* 弹舱盖关闭时舵机PWM占空比 */
 } Shoot_Params_t;
 
 /*
@@ -130,6 +130,7 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can);
  *
  * \param s 包含射击数据的结构体
  * \param s_cmd 射击控制指令
+ * \param s_ref 裁判系统数据
  * \param dt_sec 两次调用的时间间隔
  *
  * \return 函数运行结果
