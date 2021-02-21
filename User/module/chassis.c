@@ -15,7 +15,6 @@
 #define CAP_PERCENTAGE_WORK 80.0f /* 底盘不再限制功率的电容电量 */
 #define CAP_PERCENTAGE_CHARGE 30.0f /* 电容开始工作的电容电量 */
 
-#define CHASSIS_POWER_MAX_WITHOUT_REF 40.0f /* 裁判系统离线底盘最大功率 */
 #define CHASSIS_MAX_CAP_POWER 100.0f; /* 电容能够提供的最大功率 */
 #define CHASSIS_ROTOR_VEC_WZ 0.5f     /* 小陀螺旋转位移 */
 #define CHASSIS_ROTOR_ROTATE_ANGLE (M_PI / 2.0f) /* 小陀螺旋转弧度 */
