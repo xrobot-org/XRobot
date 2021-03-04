@@ -25,13 +25,23 @@ extern "C" {
 /* Exported types ----------------------------------------------------------- */
 
 typedef struct __packed {
+  uint8_t id;
+  Protocol_UpPackageReferee_t package;
+} AI_UpPackageReferee_t;
+
+typedef struct __packed {
+  uint8_t id;
+  Protocol_UpPackageMCU_t package;
+} AI_UpPackageMCU_t;
+
+typedef struct __packed {
   osThreadId_t thread_alert;
 
-  Protocol_AI_t form_host;
+  Protocol_DownPackage_t form_host;
 
   struct {
-    Protocol_Referee_t ref;
-    Protocol_MCU_t mcu;
+    AI_UpPackageReferee_t ref;
+    AI_UpPackageMCU_t mcu;
   } to_host;
 
   CMD_AI_Status_t status;
