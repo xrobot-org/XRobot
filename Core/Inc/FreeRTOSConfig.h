@@ -161,10 +161,9 @@ standard names. */
 #define vPortSVCHandler    SVC_Handler
 #define xPortPendSVHandler PendSV_Handler
 
-/* IMPORTANT: This define is commented when used with STM32Cube firmware, when the timebase source is SysTick,
-              to prevent overwriting SysTick_Handler defined within STM32Cube HAL */
+/* IMPORTANT: After 10.3.1 update, Systick_Handler comes from NVIC (if SYS timebase = systick), otherwise from cmsis_os2.c */
 
-// #define xPortSysTickHandler SysTick_Handler
+#define USE_CUSTOM_SYSTICK_HANDLER_IMPLEMENTATION 0
 
 /* USER CODE BEGIN 2 */
 /* Definitions needed when configGENERATE_RUN_TIME_STATS is on */

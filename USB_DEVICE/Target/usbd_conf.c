@@ -25,6 +25,8 @@
 #include "usbd_def.h"
 #include "usbd_core.h"
 
+#include "usbd_cdc.h"
+
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
@@ -598,6 +600,27 @@ USBD_StatusTypeDef USBD_LL_PrepareReceive(USBD_HandleTypeDef *pdev, uint8_t ep_a
 uint32_t USBD_LL_GetRxDataSize(USBD_HandleTypeDef *pdev, uint8_t ep_addr)
 {
   return HAL_PCD_EP_GetRxCount((PCD_HandleTypeDef*) pdev->pData, ep_addr);
+}
+
+/**
+  * @brief  Static single allocation.
+  * @param  size: Size of allocated memory
+  * @retval None
+  */
+void *USBD_static_malloc(uint32_t size)
+{
+  static uint32_t mem[(sizeof(USBD_CDC_HandleTypeDef)/4)+1];/* On 32-bit boundary */
+  return mem;
+}
+
+/**
+  * @brief  Dummy memory free
+  * @param  p: Pointer to allocated  memory address
+  * @retval None
+  */
+void USBD_static_free(void *p)
+{
+
 }
 
 /**
