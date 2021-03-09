@@ -82,6 +82,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
   c->param = param;             /* 初始化参数 */
   c->mode = CHASSIS_MODE_RELAX; /* 设置上电后底盘默认模式 */
   c->mech_zero = mech_zero;     /* 设置底盘机械零点 */
+
   /* 如果电机反装重新计算机械零点 */
   if (param->reverse.yaw) {
     c->mech_zero->yaw = -(c->mech_zero->yaw) + M_2PI;
@@ -128,8 +129,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
   /* 根据底盘型号动态分配控制时使用的变量 */
   c->feedback.motor_rpm =
       BSP_Malloc((size_t)c->num_wheel * sizeof(*c->feedback.motor_rpm));
-  /* 变量未分配，返回错误 */
-  if (c->feedback.motor_rpm == NULL) goto error;
+  if (c->feedback.motor_rpm == NULL) goto error; /* 变量未分配，返回错误 */
 
   c->feedback.motor_current =
       BSP_Malloc((size_t)c->num_wheel * sizeof(*c->feedback.motor_current));
@@ -194,11 +194,12 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   if (can == NULL) return CHASSIS_ERR_NULL;
 
   /* 如果电机反装重新计算正确的反馈值 */
-  if (c->param->reverse.yaw)
+  if (c->param->reverse.yaw) {
     c->feedback.gimbal_yaw_angle =
         -can->motor.gimbal.named.yaw.rotor_angle + M_2PI;
-  else
+  } else {
     c->feedback.gimbal_yaw_angle = can->motor.gimbal.named.yaw.rotor_angle;
+  }
 
   /* 将CAN中的反馈数据写入到feedback中 */
   for (uint8_t i = 0; i < c->num_wheel; i++) {
