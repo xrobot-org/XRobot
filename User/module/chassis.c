@@ -12,14 +12,26 @@
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
-#define CAP_PERCENTAGE_WORK 0.8f   /* 底盘不再限制功率的电容电量 */
-#define CAP_PERCENTAGE_CHARGE 0.3f /* 电容开始工作的电容电量 */
+#define _CAP_PERCENTAGE_WORK 80   /* 底盘不再限制功率的电容电量 */
+#define _CAP_PERCENTAGE_CHARGE 30 /* 电容开始工作的电容电量 */
 
-#define CHASSIS_MAX_CAP_POWER 100.0f; /* 电容能够提供的最大功率 */
-#define CHASSIS_ROTOR_VEC_WZ 0.5f     /* 小陀螺旋转位移 */
+#define CHASSIS_MAX_CAP_POWER 100 /* 电容能够提供的最大功率 */
+#define CHASSIS_ROTOR_VEC_WZ 0.5f /* 小陀螺旋转位移 */
 #define CHASSIS_ROTOR_ROTATE_ANGLE (M_PI / 2.0f) /* 小陀螺旋转弧度 */
 /* Private macro ------------------------------------------------------------ */
+/* 保证电容电量宏定义在正确范围内 */
+#if _CAP_PERCENTAGE_WORK > 100 || _CAP_PERCENTAGE_WORK < 0 || \
+    _CAP_PERCENTAGE_CHARGE > 100 || _CAP_PERCENTAGE_CHARGE < 0
+#error "Cap percentage must be between 0 and 100."
+#endif
+/* 保证电容功率宏定义在正确范围内 */
+#if CHASSIS_MAX_CAP_POWER > 200 || CHASSIS_MAX_CAP_POWER < 60
+#error "The capacitance power should be in the correct range."
+#endif
 /* Private variables -------------------------------------------------------- */
+static const float CAP_PERCENTAGE_WORK = (float)_CAP_PERCENTAGE_WORK / 100.0f;
+static const float CAP_PERCENTAGE_CHARGE =
+    (float)_CAP_PERCENTAGE_CHARGE / 100.0f;
 /* Private function  -------------------------------------------------------- */
 
 /**
@@ -343,7 +355,7 @@ int8_t Chassis_PowerLimit(Chassis_t *c, const CAN_Capacitor_t *cap,
         power_limit = ref->chassis_power_limit +
                       (cap->percentage - CAP_PERCENTAGE_CHARGE) /
                           (CAP_PERCENTAGE_WORK - CAP_PERCENTAGE_CHARGE) *
-                          CHASSIS_MAX_CAP_POWER;
+                          (float)CHASSIS_MAX_CAP_POWER;
       }
     } else {
       /* 电容不在工作，根据缓冲能量计算输出功率限制 */
