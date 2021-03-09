@@ -18,20 +18,26 @@
 #define CHASSIS_MAX_CAP_POWER 100 /* 电容能够提供的最大功率 */
 #define CHASSIS_ROTOR_VEC_WZ 0.5f /* 小陀螺旋转位移 */
 #define CHASSIS_ROTOR_ROTATE_ANGLE (M_PI / 2.0f) /* 小陀螺旋转弧度 */
+
 /* Private macro ------------------------------------------------------------ */
+
 /* 保证电容电量宏定义在正确范围内 */
-#if _CAP_PERCENTAGE_WORK > 100 || _CAP_PERCENTAGE_WORK < 0 || \
-    _CAP_PERCENTAGE_CHARGE > 100 || _CAP_PERCENTAGE_CHARGE < 0
-#error "Cap percentage must be between 0 and 100."
+#if ((_CAP_PERCENTAGE_WORK < 0) || (_CAP_PERCENTAGE_WORK > 100) || \
+     (_CAP_PERCENTAGE_CHARGE < 0) || (_CAP_PERCENTAGE_CHARGE > 100))
+#error "Cap percentage should be in the range from 0 to 100."
 #endif
+
 /* 保证电容功率宏定义在正确范围内 */
-#if CHASSIS_MAX_CAP_POWER > 200 || CHASSIS_MAX_CAP_POWER < 60
-#error "The capacitance power should be in the correct range."
+#if ((CHASSIS_MAX_CAP_POWER < 60) || (CHASSIS_MAX_CAP_POWER > 200))
+#error "The capacitor power should be in in the range from 60 to 200."
 #endif
+
 /* Private variables -------------------------------------------------------- */
+
 static const float CAP_PERCENTAGE_WORK = (float)_CAP_PERCENTAGE_WORK / 100.0f;
 static const float CAP_PERCENTAGE_CHARGE =
     (float)_CAP_PERCENTAGE_CHARGE / 100.0f;
+
 /* Private function  -------------------------------------------------------- */
 
 /**
