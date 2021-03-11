@@ -133,8 +133,8 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
  *
  * \return 函数运行结果
  */
-int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_ForShoot_t *s_ref,
-                     float dt_sec) {
+int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
+                     Referee_ForShoot_t *s_ref, float dt_sec) {
   static uint32_t last_period_ms = 0;
 
   if (s == NULL) return -1;
@@ -171,11 +171,11 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_ForShoot_t *s_re
       stable_freq_hz = s_ref->robot_status.shoot_42_cooling_rate / 100.0f;
       bullet_speed_limit = s_ref->robot_status.shoot_42_speed_limit;
     } else {
-      heat_percent = s_ref->power_heat.shoot_17_heat /
-                     s_ref->robot_status.shoot_17_heat_limit;
+      heat_percent = s_ref->power_heat.shoot_id1_17_heat /
+                     s_ref->robot_status.shoot_id1_17_heat_limit;
       /* 每发射一颗17mm弹丸增加10热量 */
-      stable_freq_hz = s_ref->robot_status.shoot_17_cooling_rate / 10.0f;
-      bullet_speed_limit = s_ref->robot_status.shoot_17_speed_limit;
+      stable_freq_hz = s_ref->robot_status.shoot_id1_17_cooling_rate / 10.0f;
+      bullet_speed_limit = s_ref->robot_status.shoot_id1_17_speed_limit;
     }
 
     /* 根据规则计算出摩擦轮转速上限 */

@@ -139,6 +139,9 @@ int8_t Referee_Parse(Referee_t *ref) {
         origin = &(ref->supply_action);
         size = sizeof(ref->supply_action);
         break;
+      case REF_CMD_ID_REQUEST_SUPPLY:
+        origin = &(ref->request_supply);
+        size = sizeof(ref->request_supply);
       case REF_CMD_ID_WARNING:
         origin = &(ref->warning);
         size = sizeof(ref->warning);
@@ -187,6 +190,15 @@ int8_t Referee_Parse(Referee_t *ref) {
         origin = &(ref->dart_client);
         size = sizeof(ref->dart_client);
         break;
+      case REF_CMD_ID_INTER_STUDENT_CUSTOM:
+        origin = &(ref->custom);
+        size = sizeof(ref->custom);
+      case REF_CMD_ID_CLIENT_MAP:
+        origin = &(ref->client_map);
+        size = sizeof(ref->client_map);
+      case REF_CMD_ID_KEYBOARD_MOUSE:
+        origin = &(ref->keyboard_mouse);
+        size = sizeof(ref->keyboard_mouse);
       default:
         return DEVICE_ERR;
     }
@@ -471,7 +483,8 @@ uint8_t Referee_PackAI(Referee_ForAI_t *ai, const Referee_t *ref) {
   return 0;
 }
 
-uint8_t Referee_PackChassis(Referee_ForChassis_t *chassis, const Referee_t *ref) {
+uint8_t Referee_PackChassis(Referee_ForChassis_t *chassis,
+                            const Referee_t *ref) {
   chassis->chassis_power_limit = ref->robot_status.chassis_power_limit;
   chassis->chassis_pwr_buff = ref->power_heat.chassis_pwr_buff;
   chassis->ref_status = ref->ref_status;
