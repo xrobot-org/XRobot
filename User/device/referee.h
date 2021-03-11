@@ -40,6 +40,7 @@ typedef enum {
   REF_CMD_ID_ICRA_ZONE_STATUS = 0x0005,
   REF_CMD_ID_FIELD_EVENTS = 0x0101,
   REF_CMD_ID_SUPPLY_ACTION = 0x0102,
+  REF_CMD_ID_REQUEST_SUPPLY = 0x0103,
   REF_CMD_ID_WARNING = 0x0104,
   REF_CMD_ID_DART_COUNTDOWN = 0x0105,
   REF_CMD_ID_ROBOT_STATUS = 0x0201,
@@ -53,12 +54,16 @@ typedef enum {
   REF_CMD_ID_RFID = 0x0209,
   REF_CMD_ID_DART_CLIENT = 0x020A,
   REF_CMD_ID_INTER_STUDENT = 0x0301,
+  REF_CMD_ID_INTER_STUDENT_CUSTOM = 0x0302,
+  REF_CMD_ID_CLIENT_MAP = 0x0303,
+  REF_CMD_ID_KEYBOARD_MOUSE = 0x0304,
 } Referee_CMDID_t;
 
 typedef struct __packed {
   uint8_t game_type : 4;
   uint8_t game_progress : 4;
   uint16_t stage_remain_time;
+  uint64_t sync_time_stamp;
 } Referee_GameStatus_t;
 
 typedef struct __packed {
@@ -92,7 +97,22 @@ typedef struct __packed {
 } Referee_DartStatus_t;
 
 typedef struct __packed {
-  uint8_t place_holder; /* TODO */
+  uint8_t f1_status : 1;
+  uint8_t f1_buff_status : 3;
+  uint8_t f2_status : 1;
+  uint8_t f2_buff_status : 3;
+  uint8_t f3_status : 1;
+  uint8_t f3_buff_status : 3;
+  uint8_t f4_status : 1;
+  uint8_t f4_buff_status : 3;
+  uint8_t f5_status : 1;
+  uint8_t f5_buff_status : 3;
+  uint8_t f6_status : 1;
+  uint8_t f6_buff_status : 3;
+  uint16_t red1_bullet_remain;
+  uint16_t red2_bullet_remain;
+  uint16_t blue1_bullet_remain;
+  uint16_t blue2_bullet_remain;
 } Referee_ICRAZoneStatus_t;
 
 typedef struct __packed {
@@ -110,6 +130,10 @@ typedef struct __packed {
 } Referee_SupplyAction_t;
 
 typedef struct __packed {
+  uint8_t place_holder; /* TODO */
+} Referee_RequestSupply_t;
+
+typedef struct __packed {
   uint8_t level;
   uint8_t robot_id;
 } Referee_Warning_t;
@@ -123,13 +147,16 @@ typedef struct __packed {
   uint8_t robot_level;
   uint16_t remain_hp;
   uint16_t max_hp;
-  uint16_t shoot_17_cooling_rate;
-  uint16_t shoot_17_heat_limit;
+  uint16_t shoot_id1_17_cooling_rate;
+  uint16_t shoot_id1_17_heat_limit;
+  uint16_t shoot_id1_17_speed_limit;
+  uint16_t shoot_id2_17_cooling_rate;
+  uint16_t shoot_id2_17_heat_limit;
+  uint16_t shoot_id2_17_speed_limit;
   uint16_t shoot_42_cooling_rate;
   uint16_t shoot_42_heat_limit;
-  uint8_t shoot_17_speed_limit;
-  uint8_t shoot_42_speed_limit;
-  uint8_t chassis_power_limit;
+  uint16_t shoot_42_speed_limit;
+  uint16_t chassis_power_limit;
   uint8_t power_gimbal_output : 1;
   uint8_t power_chassis_output : 1;
   uint8_t power_shoot_output : 1;
@@ -140,9 +167,9 @@ typedef struct __packed {
   uint16_t chassis_amp;
   float chassis_watt;
   uint16_t chassis_pwr_buff;
-  uint16_t shoot_17_heat;
+  uint16_t shoot_id1_17_heat;
+  uint16_t shoot_id2_17_heat;
   uint16_t shoot_42_heat;
-  uint16_t shoot_17_opt_heat;
 } Referee_PowerHeat_t;
 
 typedef struct __packed {
@@ -161,7 +188,6 @@ typedef struct __packed {
 } Referee_RobotBuff_t;
 
 typedef struct __packed {
-  uint16_t energy_point;
   uint8_t attack_countdown;
 } Referee_DroneEnergy_t;
 
@@ -172,12 +198,15 @@ typedef struct __packed {
 
 typedef struct __packed {
   uint8_t bullet_type;
+  uint8_t shooter_id;
   uint8_t bullet_freq;
   float bullet_speed;
 } Referee_ShootData_t;
 
 typedef struct __packed {
-  uint16_t bullet_remain;
+  uint16_t bullet_17_remain;
+  uint16_t bullet_42_remain;
+  uint16_t coin_remain;
 } Referee_BulletRemain_t;
 
 typedef struct __packed {
@@ -202,6 +231,24 @@ typedef struct __packed {
   uint16_t last_dart_launch_time;
   uint16_t operator_cmd_launch_time;
 } Referee_DartClient_t;
+
+typedef struct __packed {
+  float position_x;
+  float position_y;
+  float position_z;
+  uint8_t commd_keyboard;
+  uint16_t robot_id;
+} Referee_ClientMap_t;
+
+typedef struct __packed {
+  int16_t mouse_x;
+  int16_t mouse_y;
+  int16_t mouse_wheel;
+  int8_t button_l;
+  int8_t button_r;
+  uint16_t keyboard_value;
+  uint16_t res;
+} Referee_KeyboardMouse_t;
 
 typedef uint16_t Referee_Tail_t;
 
@@ -260,6 +307,7 @@ typedef struct __packed {
 typedef struct __packed {
   uint8_t place_holder;
 } Referee_InterStudent_Custom_t;
+
 typedef struct {
   osThreadId_t thread_alert;
 
@@ -271,6 +319,7 @@ typedef struct {
   Referee_ICRAZoneStatus_t icra_zone;
   Referee_FieldEvents_t field_event;
   Referee_SupplyAction_t supply_action;
+  Referee_RequestSupply_t request_supply;
   Referee_Warning_t warning;
   Referee_DartCountdown_t dart_countdown;
   Referee_RobotStatus_t robot_status;
@@ -284,6 +333,8 @@ typedef struct {
   Referee_RFID_t rfid;
   Referee_DartClient_t dart_client;
   Referee_InterStudent_Custom_t custom;
+  Referee_ClientMap_t client_map;
+  Referee_KeyboardMouse_t keyboard_mouse;
 } Referee_t;
 
 typedef struct __packed {
