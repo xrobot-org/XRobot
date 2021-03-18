@@ -160,7 +160,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
 
     float fric_radius_m = s->param->fric_radius_m; /* 摩擦轮半径 */
     float bullet_rpm_limit;                        /* 计算出的rpm上限 */
-    uint8_t bullet_speed_limit; /* 裁判系统取得的射速上限 */
+    uint16_t bullet_speed_limit; /* 裁判系统取得的射速上限 */
 
     /* 先判断机器人类型 */
     if (s_ref->robot_status.robot_id == 1 ||

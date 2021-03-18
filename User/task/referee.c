@@ -79,8 +79,8 @@ void Task_Referee(void *argument) {
     osMessageQueueReset(task_runtime.msgq.referee.shoot);
     osMessageQueuePut(task_runtime.msgq.referee.cap, &(for_cap), 0, 0);
     osMessageQueuePut(task_runtime.msgq.referee.ai, &(for_ai), 0, 0);
-    osMessageQueuePut(task_runtime.msgq.referee.chassis, &(for_shoot), 0, 0);
-    osMessageQueuePut(task_runtime.msgq.referee.shoot, &(for_chassis), 0, 0);
+    osMessageQueuePut(task_runtime.msgq.referee.chassis, &(for_chassis), 0, 0);
+    osMessageQueuePut(task_runtime.msgq.referee.shoot, &(for_shoot), 0, 0);
 
     while (osMessageQueueGet(task_runtime.msgq.cmd.referee, &ref_cmd, NULL,
                              0) == osOK)
