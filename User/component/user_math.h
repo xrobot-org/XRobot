@@ -74,7 +74,7 @@ void CircleAdd(float *origin, float delta, float range);
  * \param fric_radius_m 摩擦轮半径
  * \return 摩擦轮转速
  */
-float CalculateRpm(uint8_t shoot_speed, float fric_radius_m);
+float CalculateRpm(uint16_t shoot_speed, float fric_radius_m);
 #ifdef __cplusplus
 }
 #endif
