@@ -97,18 +97,18 @@ int8_t AI_PackMCU(AI_t *ai, const AHRS_Quaternion_t *quat) {
   else if (ai->status == AI_STATUS_AUTOMATIC)
     ai->to_host.mcu.package.data.notice |= AI_NOTICE_AUTOMATIC;
 
-  ai->to_host.mcu.package.crc16 =
-      CRC16_Calc((const uint8_t *)&(ai->to_host.mcu),
-                 sizeof(ai->to_host.mcu) - sizeof(uint16_t), CRC16_INIT);
+  ai->to_host.mcu.package.crc16 = CRC16_Calc(
+      (const uint8_t *)&(ai->to_host.mcu.package),
+      sizeof(ai->to_host.mcu.package) - sizeof(uint16_t), CRC16_INIT);
   return DEVICE_OK;
 }
 
 int8_t AI_PackRef(AI_t *ai, const Referee_ForAI_t *ref) {
   (void)ref;
   ai->to_host.ref.id = AI_ID_REF;
-  ai->to_host.ref.package.crc16 =
-      CRC16_Calc((const uint8_t *)&(ai->to_host.ref),
-                 sizeof(ai->to_host.ref) - sizeof(uint16_t), CRC16_INIT);
+  ai->to_host.ref.package.crc16 = CRC16_Calc(
+      (const uint8_t *)&(ai->to_host.ref.package),
+      sizeof(ai->to_host.ref.package) - sizeof(uint16_t), CRC16_INIT);
   return DEVICE_OK;
 }
 
