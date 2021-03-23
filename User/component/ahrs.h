@@ -93,27 +93,6 @@ int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs);
  */
 void AHRS_ResetEulr(AHRS_Eulr_t *eulr);
 
-/**
- * @brief 将对应数据置零
- *
- * @param accl 被操作的数据
- */
-void AHRS_ResetAccl(AHRS_Accl_t *accl);
-
-/**
- * @brief 将对应数据置零
- *
- * @param gyro 被操作的数据
- */
-void AHRS_ResetGyro(AHRS_Gyro_t *gyro);
-
-/**
- * @brief 将对应数据置零
- *
- * @param magn 被操作的数据
- */
-void AHRS_ResetMagn(AHRS_Magn_t *magn);
-
 #ifdef __cplusplus
 }
 #endif
