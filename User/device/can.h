@@ -248,11 +248,6 @@ int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx);
 bool CAN_CheckFlag(CAN_t *can, uint32_t flag);
 int8_t CAN_ClearFlag(CAN_t *can, uint32_t flag);
 
-void CAN_ResetChassisOut(CAN_ChassisOutput_t *chassis_out);
-void CAN_ResetGimbalOut(CAN_GimbalOutput_t *gimbal_out);
-void CAN_ResetShootOut(CAN_ShootOutput_t *shoot_out);
-void CAN_ResetCapOut(CAN_CapOutput_t *cap_out);
-
 int8_t CAN_Cap_Control(CAN_CapOutput_t *output);
 void CAN_ResetCapOut(CAN_CapOutput_t *cap_out);
 void CAN_Cap_Decode(CAN_CapFeedback_t *feedback, const uint8_t *raw);
