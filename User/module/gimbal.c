@@ -192,3 +192,15 @@ void Gimbal_DumpOutput(Gimbal_t *g, CAN_GimbalOutput_t *out) {
   out->named.yaw = g->out[GIMBAL_ACTR_YAW_IDX];
   out->named.pit = g->out[GIMBAL_ACTR_PIT_IDX];
 }
+
+/**
+ * \brief 清空输出值
+ *
+ * \param output 要清空的结构体
+ */
+void Gimbal_ResetOutput(CAN_GimbalOutput_t *output) {
+  int i = 0;
+  for (i = 0; i < 3; i++) {
+    output->as_array[i] = 0.0f;
+  }
+}

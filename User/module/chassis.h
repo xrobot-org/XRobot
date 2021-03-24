@@ -152,6 +152,13 @@ int8_t Chassis_PowerLimit(Chassis_t *c, const CAN_Capacitor_t *cap,
  */
 void Chassis_DumpOutput(Chassis_t *c, CAN_ChassisOutput_t *out);
 
+/**
+ * \brief 清空Chassis输出数据
+ *
+ * \param out CAN设备底盘输出结构体
+ */
+void Chassis_ResetOutput(CAN_ChassisOutput_t *out);
+
 #ifdef __cplusplus
 }
 #endif

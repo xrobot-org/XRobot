@@ -237,7 +237,6 @@ typedef struct {
   CAN_Motor_t motor;
   CAN_Capacitor_t cap;
   CAN_Tof_t tof;
-  osMessageQueueId_t msgq_raw;
 } CAN_t;
 
 /* Exported functions prototypes -------------------------------------------- */

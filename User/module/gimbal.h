@@ -31,7 +31,7 @@ enum Gimbal_PID_e {
   GIMBAL_PID_YAW_ANGLE_IDX,     /* Yaw轴控制的角度环PID的索引值 */
   GIMBAL_PID_PIT_OMEGA_IDX, /* Pitch轴控制的角速度环PID的索引值 */
   GIMBAL_PID_PIT_ANGLE_IDX, /* Pitch轴控制的角度环PID的索引值 */
-  GIMBAL_PID_NUM,         /* 总共的PID数量 */
+  GIMBAL_PID_NUM,           /* 总共的PID数量 */
 };
 
 /* 用enum组合所有输出，GIMBAL_ACTR_NUM长度的数组都可以用这个枚举访问 */
@@ -144,6 +144,12 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, float dt_sec);
  */
 void Gimbal_DumpOutput(Gimbal_t *g, CAN_GimbalOutput_t *out);
 
+/**
+ * \brief 清空输出值
+ *
+ * \param output 要清空的结构体
+ */
+void Gimbal_ResetOutput(CAN_GimbalOutput_t *output);
 #ifdef __cplusplus
 }
 #endif

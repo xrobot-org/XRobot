@@ -97,13 +97,13 @@ static void CAN_CAN1RxFifoMsgPendingCallback(void) {
   HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_1), CAN_MOTOR_RX_FIFO,
                        &raw_rx1.rx_header, raw_rx1.rx_data);
 
-  osMessageQueuePut(gcan->msgq_raw, &raw_rx1, 0, 0);
+  CAN_StoreMsg(gcan, &raw_rx1);
 }
 
 static void CAN_CAN2RxFifoMsgPendingCallback(void) {
   HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_2), CAN_CAP_RX_FIFO,
                        &raw_rx2.rx_header, raw_rx2.rx_data);
-  osMessageQueuePut(gcan->msgq_raw, &raw_rx2, 0, 0);
+  CAN_StoreMsg(gcan, &raw_rx2);
 }
 
 /* Exported functions ------------------------------------------------------- */
@@ -111,9 +111,6 @@ int8_t CAN_Init(CAN_t *can) {
   if (can == NULL) return DEVICE_ERR_NULL;
   if (inited) return DEVICE_ERR_INITED;
   if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
-
-  /* 初始化接收原始CAN消息的队列，要在中断开启前初始化 */
-  can->msgq_raw = osMessageQueueNew(32, sizeof(CAN_RawRx_t), NULL);
 
   CAN_FilterTypeDef can_filter = {0};
 
