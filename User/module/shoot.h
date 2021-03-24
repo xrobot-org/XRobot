@@ -135,8 +135,8 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can);
  *
  * \return 函数运行结果
  */
-int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_ForShoot_t *s_ref,
-                     float dt_sec);
+int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
+                     Referee_ForShoot_t *s_ref, float dt_sec);
 
 /**
  * \brief 复制射击输出值
@@ -145,6 +145,13 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd, Referee_ForShoot_t *s_re
  * \param out CAN设备射击输出结构体
  */
 void Shoot_DumpOutput(Shoot_t *s, CAN_ShootOutput_t *out);
+
+/**
+ * \brief 清空输出值
+ *
+ * \param output 要清空的结构体
+ */
+void Shoot_ResetOutput(CAN_ShootOutput_t *output);
 
 #ifdef __cplusplus
 }

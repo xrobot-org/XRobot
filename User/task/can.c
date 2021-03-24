@@ -34,66 +34,73 @@ void Task_Can(void *argument) {
   /* Device Setup */
   CAN_Init(&can);
 
+  uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   /* Task Setup */
   while (1) {
 #ifdef DEBUG
     task_runtime.stack_water_mark.can = osThreadGetStackSpace(NULL);
 #endif
-    /* 接收消息 */
-    while (osMessageQueueGet(can.msgq_raw, &can_rx, 0, delay_tick) == osOK) {
-      osKernelLock();
-      CAN_StoreMsg(&can, &can_rx);
-      osKernelUnlock();
-
-      /* 电机凑够，向指定任务发送 */
-      if (CAN_CheckFlag(&can, CAN_REC_CHASSIS_FINISHED)) {
-        osMessageQueueReset(task_runtime.msgq.can.feedback.chassis);
-        osMessageQueuePut(task_runtime.msgq.can.feedback.chassis, &can, 0, 0);
-        CAN_ClearFlag(&can, CAN_REC_CHASSIS_FINISHED);
-      }
-
-      if (CAN_CheckFlag(&can, CAN_REC_GIMBAL_FINISHED)) {
-        osMessageQueueReset(task_runtime.msgq.can.feedback.gimbal);
-        osMessageQueuePut(task_runtime.msgq.can.feedback.gimbal, &can, 0, 0);
-        CAN_ClearFlag(&can, CAN_REC_GIMBAL_FINISHED);
-      }
-
-      if (CAN_CheckFlag(&can, CAN_REC_SHOOT_FINISHED)) {
-        osMessageQueueReset(task_runtime.msgq.can.feedback.shoot);
-        osMessageQueuePut(task_runtime.msgq.can.feedback.shoot, &can, 0, 0);
-        CAN_ClearFlag(&can, CAN_REC_SHOOT_FINISHED);
-      }
-
-      if (CAN_CheckFlag(&can, CAN_REC_CAP_FINISHED)) {
-        osMessageQueueReset(task_runtime.msgq.can.feedback.cap);
-        osMessageQueuePut(task_runtime.msgq.can.feedback.cap, &can, 0, 0);
-        CAN_ClearFlag(&can, CAN_REC_CAP_FINISHED);
-      }
-      if (CAN_CheckFlag(&can, CAN_REC_TOF_FINISHED)) {
-        osMessageQueueReset(task_runtime.msgq.can.feedback.tof);
-        osMessageQueuePut(task_runtime.msgq.can.feedback.tof, &can, 0, 0);
-        CAN_ClearFlag(&can, CAN_REC_TOF_FINISHED);
-      }
-
-      if (osMessageQueueGet(task_runtime.msgq.can.output.chassis,
-                            &(can_out.chassis), 0, 0) == osOK) {
-        CAN_Motor_Control(CAN_MOTOR_GROUT_CHASSIS, &can_out);
-      }
-
-      if (osMessageQueueGet(task_runtime.msgq.can.output.gimbal,
-                            &(can_out.gimbal), 0, 0) == osOK) {
-        CAN_Motor_Control(CAN_MOTOR_GROUT_GIMBAL1, &can_out);
-      }
-
-      if (osMessageQueueGet(task_runtime.msgq.can.output.shoot,
-                            &(can_out.shoot), 0, 0) == osOK) {
-        CAN_Motor_Control(CAN_MOTOR_GROUT_SHOOT1, &can_out);
-      }
-
-      if (osMessageQueueGet(task_runtime.msgq.can.output.cap, &(can_out.cap), 0,
-                            0) == osOK) {
-        CAN_Cap_Control(&(can_out.cap));
-      }
+    tick += delay_tick; /* 计算下一个唤醒时刻 */
+    /* 电机凑够，向指定任务发送 */
+    if (CAN_CheckFlag(&can, CAN_REC_CHASSIS_FINISHED)) {
+      osMessageQueueReset(task_runtime.msgq.can.feedback.chassis);
+      osMessageQueuePut(task_runtime.msgq.can.feedback.chassis, &can, 0, 0);
+      CAN_ClearFlag(&can, CAN_REC_CHASSIS_FINISHED);
+    } else {
+      // Error Handle
     }
+
+    if (CAN_CheckFlag(&can, CAN_REC_GIMBAL_FINISHED)) {
+      osMessageQueueReset(task_runtime.msgq.can.feedback.gimbal);
+      osMessageQueuePut(task_runtime.msgq.can.feedback.gimbal, &can, 0, 0);
+      CAN_ClearFlag(&can, CAN_REC_GIMBAL_FINISHED);
+    } else {
+      // Error Handle
+    }
+
+    if (CAN_CheckFlag(&can, CAN_REC_SHOOT_FINISHED)) {
+      osMessageQueueReset(task_runtime.msgq.can.feedback.shoot);
+      osMessageQueuePut(task_runtime.msgq.can.feedback.shoot, &can, 0, 0);
+      CAN_ClearFlag(&can, CAN_REC_SHOOT_FINISHED);
+    } else {
+      // Error Handle
+    }
+
+    if (CAN_CheckFlag(&can, CAN_REC_CAP_FINISHED)) {
+      osMessageQueueReset(task_runtime.msgq.can.feedback.cap);
+      osMessageQueuePut(task_runtime.msgq.can.feedback.cap, &can, 0, 0);
+      CAN_ClearFlag(&can, CAN_REC_CAP_FINISHED);
+    } else {
+      // Error Handle
+    }
+
+    if (CAN_CheckFlag(&can, CAN_REC_TOF_FINISHED)) {
+      osMessageQueueReset(task_runtime.msgq.can.feedback.tof);
+      osMessageQueuePut(task_runtime.msgq.can.feedback.tof, &can, 0, 0);
+      CAN_ClearFlag(&can, CAN_REC_TOF_FINISHED);
+    } else {
+      // Error Handle
+    }
+
+    if (osMessageQueueGet(task_runtime.msgq.can.output.chassis,
+                          &(can_out.chassis), 0, 0) == osOK) {
+      CAN_Motor_Control(CAN_MOTOR_GROUT_CHASSIS, &can_out);
+    }
+
+    if (osMessageQueueGet(task_runtime.msgq.can.output.gimbal,
+                          &(can_out.gimbal), 0, 0) == osOK) {
+      CAN_Motor_Control(CAN_MOTOR_GROUT_GIMBAL1, &can_out);
+    }
+
+    if (osMessageQueueGet(task_runtime.msgq.can.output.shoot, &(can_out.shoot),
+                          0, 0) == osOK) {
+      CAN_Motor_Control(CAN_MOTOR_GROUT_SHOOT1, &can_out);
+    }
+
+    if (osMessageQueueGet(task_runtime.msgq.can.output.cap, &(can_out.cap), 0,
+                          0) == osOK) {
+      CAN_Cap_Control(&(can_out.cap));
+    }
+    osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }
 }

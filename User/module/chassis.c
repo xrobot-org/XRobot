@@ -388,3 +388,14 @@ void Chassis_DumpOutput(Chassis_t *c, CAN_ChassisOutput_t *out) {
     out->as_array[i] = c->out[i];
   }
 }
+
+/**
+ * \brief 清空Chassis输出数据
+ *
+ * \param out CAN设备底盘输出结构体
+ */
+void Chassis_ResetOutput(CAN_ChassisOutput_t *out) {
+  for (uint8_t i = 0; i < 4; i++) {
+    out->as_array[i] = 0.0f;
+  }
+}
