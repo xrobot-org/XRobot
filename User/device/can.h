@@ -77,6 +77,26 @@ typedef enum {
   CAN_GM6020_PIT_ID = 0x20A, /* 6 */
 } CAN_MotorId_t;
 
+typedef enum {
+  CAN1_OCP = 0,
+  CAN2_OCP,
+} CAN_Occupy_t;
+
+typedef struct {
+  struct {
+    uint8_t can;
+  } chassis;
+  struct {
+    uint8_t can;
+  } gimbal;
+  struct {
+    uint8_t can;
+  } shoot;
+  struct {
+    uint8_t can;
+  } cap;
+} CAN_Params_t;
+
 /* 电机反馈信息 */
 typedef struct {
   float rotor_angle;
@@ -237,17 +257,19 @@ typedef struct {
   CAN_Motor_t motor;
   CAN_Capacitor_t cap;
   CAN_Tof_t tof;
+  const CAN_Params_t *param;
 } CAN_t;
 
 /* Exported functions prototypes -------------------------------------------- */
-int8_t CAN_Init(CAN_t *can);
+int8_t CAN_Init(CAN_t *can, const CAN_Params_t *param);
 
-int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output);
+int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output,
+                         CAN_t *can);
 int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx);
 bool CAN_CheckFlag(CAN_t *can, uint32_t flag);
 int8_t CAN_ClearFlag(CAN_t *can, uint32_t flag);
 
-int8_t CAN_Cap_Control(CAN_CapOutput_t *output);
+int8_t CAN_Cap_Control(CAN_CapOutput_t *output, CAN_t *can);
 void CAN_ResetCapOut(CAN_CapOutput_t *cap_out);
 void CAN_Cap_Decode(CAN_CapFeedback_t *feedback, const uint8_t *raw);
 void CAN_CAP_HandleOffline(CAN_Capacitor_t *cap, CAN_CapOutput_t *cap_out,

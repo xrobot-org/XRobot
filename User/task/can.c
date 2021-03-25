@@ -32,7 +32,7 @@ void Task_Can(void *argument) {
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CAN;
 
   /* Device Setup */
-  CAN_Init(&can);
+  CAN_Init(&can, &task_runtime.cfg.robot_param->can);
 
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   /* Task Setup */
@@ -84,22 +84,22 @@ void Task_Can(void *argument) {
 
     if (osMessageQueueGet(task_runtime.msgq.can.output.chassis,
                           &(can_out.chassis), 0, 0) == osOK) {
-      CAN_Motor_Control(CAN_MOTOR_GROUT_CHASSIS, &can_out);
+      CAN_Motor_Control(CAN_MOTOR_GROUT_CHASSIS, &can_out, &can);
     }
 
     if (osMessageQueueGet(task_runtime.msgq.can.output.gimbal,
                           &(can_out.gimbal), 0, 0) == osOK) {
-      CAN_Motor_Control(CAN_MOTOR_GROUT_GIMBAL1, &can_out);
+      CAN_Motor_Control(CAN_MOTOR_GROUT_GIMBAL1, &can_out, &can);
     }
 
     if (osMessageQueueGet(task_runtime.msgq.can.output.shoot, &(can_out.shoot),
                           0, 0) == osOK) {
-      CAN_Motor_Control(CAN_MOTOR_GROUT_SHOOT1, &can_out);
+      CAN_Motor_Control(CAN_MOTOR_GROUT_SHOOT1, &can_out, &can);
     }
 
     if (osMessageQueueGet(task_runtime.msgq.can.output.cap, &(can_out.cap), 0,
                           0) == osOK) {
-      CAN_Cap_Control(&(can_out.cap));
+      CAN_Cap_Control(&(can_out.cap), &can);
     }
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }
