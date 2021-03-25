@@ -151,6 +151,20 @@ static const Config_RobotParam_t param_default = {
     .cover_open_duty = 0.125f,
     .cover_close_duty = 0.075f,
   }, /* shoot */
+  .can={
+    .chassis = {
+      .can = CAN1_OCP,
+    },
+    .gimbal = {
+      .can = CAN1_OCP,
+    },
+    .shoot = {
+      .can = CAN2_OCP,
+    },       
+    .cap = {
+      .can = CAN1_OCP,
+    },   
+  }, /* can */
 }; /* param_default */
 
 static const Config_RobotParam_t param_hero = {
