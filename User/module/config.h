@@ -13,6 +13,7 @@ extern "C" {
 
 #include "component\cmd.h"
 #include "device\bmi088.h"
+#include "device\can.h"
 #include "device\ist8310.h"
 #include "module\chassis.h"
 #include "module\gimbal.h"
@@ -24,6 +25,7 @@ typedef struct {
   Chassis_Params_t chassis; /* 底盘 */
   Gimbal_Params_t gimbal;   /* 云台 */
   Shoot_Params_t shoot;     /* 射击 */
+  CAN_Params_t can;         /* 电机CAN配置 */
 } Config_RobotParam_t;
 
 /* 操作员配置 */
