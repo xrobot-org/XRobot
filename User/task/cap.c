@@ -52,7 +52,7 @@ void Task_Cap(void *argument) {
     /* 一定时间长度内接收不到电容反馈值，使电容离线 */
     if (osMessageQueueGet(task_runtime.msgq.can.feedback.cap, &can, NULL,
                           delay_tick) != osOK) {
-      if (osKernelGetTickCount() - last_online_tick > 500) {
+      if (osKernelGetTickCount() - last_online_tick > 1000) {
         CAN_CAP_HandleOffline(&(can.cap), &cap_out,
                               CHASSIS_POWER_MAX_WITHOUT_REF);
         osMessageQueuePut(task_runtime.msgq.can.output.cap, &cap_out, 0, 0);
