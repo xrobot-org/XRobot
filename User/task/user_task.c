@@ -89,6 +89,6 @@ const osThreadAttr_t attr_rc = {
 
 const osThreadAttr_t attr_referee = {
     .name = "referee",
-    .priority = osPriorityHigh,
+    .priority = osPriorityRealtime,
     .stack_size = 128 * 4,
 };

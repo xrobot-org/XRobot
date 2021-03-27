@@ -58,10 +58,9 @@ void Task_Referee(void *argument) {
     task_runtime.stack_water_mark.referee = osThreadGetStackSpace(NULL);
 #endif
     /* Task body */
-    tick += delay_tick;
 
     Referee_StartReceiving(&ref);
-    if (osThreadFlagsWait(SIGNAL_REFEREE_RAW_REDY, osFlagsWaitAll, 0) !=
+    if (osThreadFlagsWait(SIGNAL_REFEREE_RAW_REDY, osFlagsWaitAll, 10) !=
         SIGNAL_REFEREE_RAW_REDY) {
       if (osKernelGetTickCount() - last_online_tick > 500)
         Referee_HandleOffline(&ref);
@@ -73,21 +72,23 @@ void Task_Referee(void *argument) {
     Referee_PackAI(&(for_ai), (const Referee_t *)&ref);
     Referee_PackShoot(&(for_shoot), (const Referee_t *)&ref);
     Referee_PackChassis(&(for_chassis), (const Referee_t *)&ref);
-    osMessageQueueReset(task_runtime.msgq.referee.cap);
-    osMessageQueueReset(task_runtime.msgq.referee.ai);
-    osMessageQueueReset(task_runtime.msgq.referee.chassis);
-    osMessageQueueReset(task_runtime.msgq.referee.shoot);
-    osMessageQueuePut(task_runtime.msgq.referee.cap, &(for_cap), 0, 0);
-    osMessageQueuePut(task_runtime.msgq.referee.ai, &(for_ai), 0, 0);
-    osMessageQueuePut(task_runtime.msgq.referee.chassis, &(for_chassis), 0, 0);
-    osMessageQueuePut(task_runtime.msgq.referee.shoot, &(for_shoot), 0, 0);
+    if (osKernelGetTickCount() > delay_tick) {
+      tick += delay_tick;
+      osMessageQueueReset(task_runtime.msgq.referee.cap);
+      osMessageQueueReset(task_runtime.msgq.referee.ai);
+      osMessageQueueReset(task_runtime.msgq.referee.chassis);
+      osMessageQueueReset(task_runtime.msgq.referee.shoot);
+      osMessageQueuePut(task_runtime.msgq.referee.cap, &(for_cap), 0, 0);
+      osMessageQueuePut(task_runtime.msgq.referee.ai, &(for_ai), 0, 0);
+      osMessageQueuePut(task_runtime.msgq.referee.chassis, &(for_chassis), 0,
+                        0);
+      osMessageQueuePut(task_runtime.msgq.referee.shoot, &(for_shoot), 0, 0);
+    }
 
     while (osMessageQueueGet(task_runtime.msgq.cmd.referee, &ref_cmd, NULL,
                              0) == osOK)
       Referee_PraseCmd(&ui, ref_cmd);
     if (ui.character_counter != 0 || ui.grapic_counter != 0)
       Referee_PackUI(&ui, &ref);
-
-    osDelayUntil(tick);
   }
 }
