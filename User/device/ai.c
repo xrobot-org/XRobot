@@ -64,11 +64,13 @@ int8_t AI_ParseHost(AI_t *ai, CMD_Host_t *cmd_host) {
   (void)cmd_host;
   if (!CRC16_Verify((const uint8_t *)&(ai->form_host), sizeof(ai->form_host)))
     goto error;
-  cmd_host->gimbal_delta.pit = ai->form_host.data.gimbal_delta.pit;
-  cmd_host->gimbal_delta.yaw = ai->form_host.data.gimbal_delta.yaw;
-  cmd_host->gimbal_delta.rol = ai->form_host.data.gimbal_delta.rol;
+  cmd_host->gimbal_delta.pit = ai->form_host.data.gimbal.pit;
+  cmd_host->gimbal_delta.yaw = ai->form_host.data.gimbal.yaw;
+  cmd_host->gimbal_delta.rol = ai->form_host.data.gimbal.rol;
   cmd_host->fire = (ai->form_host.data.notice & AI_NOTICE_FIRE);
-  cmd_host->chassis_speed_setpoint = ai->form_host.data.chassis_speed_setpoint;
+  cmd_host->chassis_move_vec.vx = ai->form_host.data.chassis_move_vec.vx;
+  cmd_host->chassis_move_vec.vy = ai->form_host.data.chassis_move_vec.vy;
+  cmd_host->chassis_move_vec.wz = ai->form_host.data.chassis_move_vec.wz;
   return DEVICE_OK;
 
 error:

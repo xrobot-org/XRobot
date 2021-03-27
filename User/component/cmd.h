@@ -212,7 +212,11 @@ typedef struct {
 typedef struct {
   AHRS_Eulr_t gimbal_delta; /* 欧拉角的变化量 */
 
-  float chassis_speed_setpoint; /* 设置速度值 */
+  struct {
+    float vx;         /* x轴移动速度 */
+    float vy;         /* y轴移动速度 */
+    float wz;         /* z轴转动速度 */
+  } chassis_move_vec; /* 底盘移动向量 */
 
   bool fire; /* 开火状态 */
 } CMD_Host_t;
