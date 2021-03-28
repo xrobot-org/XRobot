@@ -57,7 +57,8 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
   g->param = param;                /* 初始化参数 */
   g->mode = GIMBAL_MODE_RELAX;     /* 设置默认模式 */
   g->gimbal_limit.max = limit_max; /* 设置软件限位 */
-  g->gimbal_limit.min = limit_max - g->param->pitch_travel_rad;
+  g->gimbal_limit.min = g->gimbal_limit.max;
+  CircleAdd(&(g->gimbal_limit.min), -g->param->pitch_travel_rad, M_2PI); 
 
   /* 初始化云台电机控制PID和LPF */
   PID_Init(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), KPID_MODE_NO_D, target_freq,
