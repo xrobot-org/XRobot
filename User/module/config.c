@@ -100,7 +100,7 @@ static const Config_RobotParam_t param_default = {
       },
     }, /* pid */
 
-		.pitch_travel_rad = 1.0f,
+		.pitch_travel_rad = 1.158155117179586476925286766559f,
     
     .low_pass_cutoff_freq = {
       .out = -1.0f,
