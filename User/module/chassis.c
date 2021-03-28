@@ -195,10 +195,10 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
 
   /* 如果电机反装重新计算正确的反馈值 */
   if (c->param->reverse.yaw) {
-    c->feedback.gimbal_yaw_angle =
+    c->feedback.gimbal_yaw_encoder =
         -can->motor.gimbal.named.yaw.rotor_angle + M_2PI;
   } else {
-    c->feedback.gimbal_yaw_angle = can->motor.gimbal.named.yaw.rotor_angle;
+    c->feedback.gimbal_yaw_encoder = can->motor.gimbal.named.yaw.rotor_angle;
   }
 
   /* 将CAN中的反馈数据写入到feedback中 */
@@ -244,7 +244,7 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
     case CHASSIS_MODE_RELAX:
     case CHASSIS_MODE_FOLLOW_GIMBAL: /* 按照云台方向换算运动向量 */
     case CHASSIS_MODE_ROTOR: {
-      float beta = c->feedback.gimbal_yaw_angle - c->mech_zero->yaw;
+      float beta = c->feedback.gimbal_yaw_encoder - c->mech_zero->yaw;
       float cos_beta = cosf(beta);
       float sin_beta = sinf(beta);
       c->move_vec.vx =
@@ -265,11 +265,11 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
     case CHASSIS_MODE_OPEN:
     case CHASSIS_MODE_FOLLOW_GIMBAL: /* 跟随模式通过PID控制使车头跟随云台 */
       c->move_vec.wz = PID_Calc(
-          &(c->pid.follow), 0, c->feedback.gimbal_yaw_angle - c->mech_zero->yaw,
+          &(c->pid.follow), 0, c->feedback.gimbal_yaw_encoder - c->mech_zero->yaw,
           0.0f, dt_sec);
       break;
     case CHASSIS_MODE_ROTOR: { /* 小陀螺模式使底盘以一定速度旋转 */
-      float beta = c->feedback.gimbal_yaw_angle - c->mech_zero->yaw;
+      float beta = c->feedback.gimbal_yaw_encoder - c->mech_zero->yaw;
       /* 根据转动模式计算wz */
       switch (c_cmd->mode_rotor) {
         case ROTOR_MODE_NONE:
