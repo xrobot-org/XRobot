@@ -41,10 +41,7 @@ static Referee_ForShoot_t for_shoot;
  * \param argument 未使用
  */
 void Task_Referee(void *argument) {
-  (void)argument; /* 未使用argument，消除警告 */
-
-  uint32_t last_online_tick = osKernelGetTickCount();
-
+  (void)argument;                   /* 未使用argument，消除警告 */
   osDelay(TASK_INIT_DELAY_REFEREE); /* 延时一段时间再开启任务 */
 
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_REFEREE;
@@ -53,6 +50,7 @@ void Task_Referee(void *argument) {
   Referee_Init(&ref, osThreadGetId());
 
   uint32_t tick = osKernelGetTickCount();
+  uint32_t last_online_tick = 0;
   while (1) {
 #ifdef DEBUG
     task_runtime.stack_water_mark.referee = osThreadGetStackSpace(NULL);
