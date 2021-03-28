@@ -41,30 +41,14 @@ void Task_Can(void *argument) {
     task_runtime.stack_water_mark.can = osThreadGetStackSpace(NULL);
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
-    /* 电机凑够，向指定任务发送 */
-    if (CAN_CheckFlag(&can, CAN_REC_CHASSIS_FINISHED)) {
-      osMessageQueueReset(task_runtime.msgq.can.feedback.chassis);
-      osMessageQueuePut(task_runtime.msgq.can.feedback.chassis, &can, 0, 0);
-      CAN_ClearFlag(&can, CAN_REC_CHASSIS_FINISHED);
-    } else {
-      // Error Handle
-    }
+    osMessageQueueReset(task_runtime.msgq.can.feedback.chassis);
+    osMessageQueuePut(task_runtime.msgq.can.feedback.chassis, &can, 0, 0);
 
-    if (CAN_CheckFlag(&can, CAN_REC_GIMBAL_FINISHED)) {
-      osMessageQueueReset(task_runtime.msgq.can.feedback.gimbal);
-      osMessageQueuePut(task_runtime.msgq.can.feedback.gimbal, &can, 0, 0);
-      CAN_ClearFlag(&can, CAN_REC_GIMBAL_FINISHED);
-    } else {
-      // Error Handle
-    }
+    osMessageQueueReset(task_runtime.msgq.can.feedback.gimbal);
+    osMessageQueuePut(task_runtime.msgq.can.feedback.gimbal, &can, 0, 0);
 
-    if (CAN_CheckFlag(&can, CAN_REC_SHOOT_FINISHED)) {
-      osMessageQueueReset(task_runtime.msgq.can.feedback.shoot);
-      osMessageQueuePut(task_runtime.msgq.can.feedback.shoot, &can, 0, 0);
-      CAN_ClearFlag(&can, CAN_REC_SHOOT_FINISHED);
-    } else {
-      // Error Handle
-    }
+    osMessageQueueReset(task_runtime.msgq.can.feedback.shoot);
+    osMessageQueuePut(task_runtime.msgq.can.feedback.shoot, &can, 0, 0);
 
     if (CAN_CheckFlag(&can, CAN_REC_CAP_FINISHED)) {
       osMessageQueueReset(task_runtime.msgq.can.feedback.cap);
