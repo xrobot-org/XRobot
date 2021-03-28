@@ -92,7 +92,7 @@ static void CMD_PcLogic(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   cmd->gimbal.delta_eulr.yaw =
       (float)rc->mouse.x * dt_sec * cmd->param->sens_mouse;
   cmd->gimbal.delta_eulr.pit =
-      (float)rc->mouse.y * dt_sec * cmd->param->sens_mouse;
+      (float)(-rc->mouse.y) * dt_sec * cmd->param->sens_mouse;
   cmd->chassis.ctrl_vec.vx = cmd->chassis.ctrl_vec.vy = 0.0f;
   /* 按键行为映射相关逻辑 */
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FORE), false)) {
@@ -102,10 +102,10 @@ static void CMD_PcLogic(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
     cmd->chassis.ctrl_vec.vy -= cmd->param->move.move_sense;
   }
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_LEFT), false)) {
-    cmd->chassis.ctrl_vec.vx += cmd->param->move.move_sense;
+    cmd->chassis.ctrl_vec.vx -= cmd->param->move.move_sense;
   }
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_RIGHT), false)) {
-    cmd->chassis.ctrl_vec.vx -= cmd->param->move.move_sense;
+    cmd->chassis.ctrl_vec.vx += cmd->param->move.move_sense;
   }
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ACCELERATE),
                        false)) {
