@@ -214,7 +214,7 @@ int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali) {
   BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_CONF, 0xAA);
 
   /* 0x00: +-3G. 0x01: +-6G. 0x02: +-12G. 0x03: +-24G. */
-  BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_RANGE, 0x00);
+  BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_RANGE, 0x01);
 
   /* INT1 as output. Push-pull. Active low. Output. */
   BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_INT1_IO_CONF, 0x08);
@@ -228,7 +228,7 @@ int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali) {
 
   /* Gyro init. */
   /* 0x00: +-2000. 0x01: +-1000. 0x02: +-500. 0x03: +-250. 0x04: +-125. */
-  BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_RANGE, 0x02);
+  BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_RANGE, 0x01);
 
   /* Filter bw: 47Hz. */
   /* ODR: 0x02: 1000Hz. 0x03: 400Hz. 0x06: 200Hz. 0x07: 100Hz. */
@@ -307,9 +307,9 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
 #endif
 
   /* 3G: 10920. 6G: 5460. 12G: 2730. 24G: 1365. */
-  bmi088->accl.x /= 10920.0f;
-  bmi088->accl.y /= 10920.0f;
-  bmi088->accl.z /= 10920.0f;
+  bmi088->accl.x /= 5460.0f;
+  bmi088->accl.y /= 5460.0f;
+  bmi088->accl.z /= 5460.0f;
 
   int16_t raw_temp =
       (uint16_t)((bmi088_rxbuf[17] << 3) | (bmi088_rxbuf[18] >> 5));
@@ -348,9 +348,9 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 
   /* FS125: 262.144. FS250: 131.072. FS500: 65.536. FS1000: 32.768.
    * FS2000: 16.384.*/
-  bmi088->gyro.x /= 65.536f;
-  bmi088->gyro.y /= 65.536f;
-  bmi088->gyro.z /= 65.536f;
+  bmi088->gyro.x /= 32.768f;
+  bmi088->gyro.y /= 32.768f;
+  bmi088->gyro.z /= 32.768f;
 
   bmi088->gyro.x *= M_DEG2RAD_MULT;
   bmi088->gyro.y *= M_DEG2RAD_MULT;
