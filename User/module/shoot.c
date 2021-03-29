@@ -134,10 +134,13 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
  * \return 函数运行结果
  */
 int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
-                     Referee_ForShoot_t *s_ref, float dt_sec) {
+                     Referee_ForShoot_t *s_ref, uint32_t now) {
   static uint32_t last_period_ms = 0;
 
   if (s == NULL) return -1;
+
+  s->dt = (float)(now - s->lask_wakeup) / 1000.0f;
+  s->lask_wakeup = now;
 
   Shoot_SetMode(s, s_cmd->mode); /* 设置射击模式 */
 
@@ -223,7 +226,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
 
       s->out[SHOOT_ACTR_TRIG_IDX] =
           PID_Calc(&(s->pid.trig), s->setpoint.trig_angle,
-                   s->feedback.trig_angle, 0.0f, dt_sec);
+                   s->feedback.trig_angle, 0.0f, s->dt);
       s->out[SHOOT_ACTR_TRIG_IDX] = LowPassFilter2p_Apply(
           &(s->filter.out.trig), s->out[SHOOT_ACTR_TRIG_IDX]);
 
@@ -234,7 +237,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
 
         s->out[SHOOT_ACTR_FRIC1_IDX + i] =
             PID_Calc(&(s->pid.fric[i]), s->setpoint.fric_rpm[i],
-                     s->feedback.fric_rpm[i], 0.0f, dt_sec);
+                     s->feedback.fric_rpm[i], 0.0f, s->dt);
 
         s->out[SHOOT_ACTR_FRIC1_IDX + i] = LowPassFilter2p_Apply(
             &(s->filter.out.fric[i]), s->out[SHOOT_ACTR_FRIC1_IDX + i]);

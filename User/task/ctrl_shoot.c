@@ -46,8 +46,6 @@ void Task_CtrlShoot(void *argument) {
   /* 延时一段时间再开启任务 */
   osMessageQueueGet(task_runtime.msgq.can.feedback.shoot, &can, NULL,
                     osWaitForever);
-
-  uint32_t wakeup = HAL_GetTick(); /* 计算任务运行间隔的计时 */
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
@@ -63,14 +61,11 @@ void Task_CtrlShoot(void *argument) {
       osMessageQueueGet(task_runtime.msgq.referee.shoot, &referee_shoot, NULL,
                         0);
       osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
-      const uint32_t now = HAL_GetTick();
       Shoot_UpdateFeedback(&shoot, &can);
       /* 根据指令控制射击 */
-      Shoot_Control(&shoot, &shoot_cmd, &referee_shoot,
-                    (float)(now - wakeup) / 1000.0f);
+      Shoot_Control(&shoot, &shoot_cmd, &referee_shoot, HAL_GetTick());
       /* 复制射击输出值 */
       Shoot_DumpOutput(&shoot, &shoot_out);
-      wakeup = now;
       osKernelUnlock();
     }
     osMessageQueuePut(task_runtime.msgq.can.output.shoot, &shoot_out, 0, 0);
