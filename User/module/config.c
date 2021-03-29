@@ -34,7 +34,7 @@ static const Config_RobotParam_t param_default = {
     },
 
     .follow_pid_param = {
-      .k = 2.0f,
+      .k = 0.5f,
       .p = 1.0f,
       .i = 0.0f,
       .d = 0.0f,
@@ -59,42 +59,42 @@ static const Config_RobotParam_t param_default = {
     .pid = {
       {
         /* GIMBAL_PID_YAW_OMEGA_IDX */
-        .k = 0.225326675239841f,
-        .p = 1.99995375f,
-        .i = 30.72000008f,
-        .d = 0.00589999976f,
-        .i_limit = 1.0f,
+        .k = 0.2f,
+        .p = 1.0f,
+        .i = 0.0f,
+        .d = 0.0f,
+        .i_limit = 0.8f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
         .range = -1.0f,
       }, {
         /* GIMBAL_PID_YAW_ANGLE_IDX */
-        .k = 9.58196376868962f,
+        .k = 3.0f,
         .p = 1.0f,
         .i = 0.0f,
         .d = 0.0f,
         .i_limit = 0.0f,
-        .out_limit = 1000.0f,
+        .out_limit = 10.0f,
         .d_cutoff_freq = -1.0f,
         .range = M_2PI,
       }, {
         /* GIMBAL_PID_PIT_OMEGA_IDX */
-        .k = 0.12f,
+        .k = 0.2f,
         .p = 1.0f,
-        .i = 0.119999997f,
-        .d = 0.00499999989f,
-        .i_limit = 1.0f,
+        .i = 0.0f,
+        .d = 0.0f,
+        .i_limit = 0.8f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
         .range = -1.0f,
       }, {
         /* GIMBAL_PID_PIT_ANGLE_IDX */
-        .k = 7.0f,
+        .k = 3.0f,
         .p = 1.0f,
         .i = 0.0f,
         .d = 0.0f,
         .i_limit = 0.0f,
-        .out_limit = 1000.0f,
+        .out_limit = 10.0f,
         .d_cutoff_freq = -1.0f,
         .range = M_2PI,
       },
@@ -151,7 +151,8 @@ static const Config_RobotParam_t param_default = {
     .cover_open_duty = 0.125f,
     .cover_close_duty = 0.075f,
   }, /* shoot */
-  .can={
+
+  .can = {
     .chassis = {
       .can = CAN1_OCP,
     },
@@ -185,7 +186,7 @@ static const Config_RobotParam_t param_hero = {
     },
 
     .follow_pid_param = {
-      .k = 0.0f,
+      .k = 0.5f,
       .p = 1.0f,
       .i = 0.0f,
       .d = 0.0f,
@@ -250,6 +251,8 @@ static const Config_RobotParam_t param_hero = {
       },
     }, /* pid */
 
+		.pitch_travel_rad = 1.158155117179586476925286766559f,
+    
     .low_pass_cutoff_freq = {
       .out = -1.0f,
       .gyro = 1000.0f,
@@ -296,12 +299,26 @@ static const Config_RobotParam_t param_hero = {
     .bullet_speed_bias = 1.0f,
     .num_trig_tooth = 6.0f,
     .fric_radius_m = 0.03f,
+    .cover_open_duty = 0.125f,
+    .cover_close_duty = 0.075f,
   }, /* shoot */
+
+  .can = {
+    .chassis = {
+      .can = CAN1_OCP,
+    },
+    .gimbal = {
+      .can = CAN1_OCP,
+    },
+    .shoot = {
+      .can = CAN2_OCP,
+    },       
+    .cap = {
+      .can = CAN1_OCP,
+    },   
+  }, /* can */
 }; /* param_hero */      
 
-static const Config_RobotParam_t param_engineer;
-static const Config_RobotParam_t param_drone;
-static const Config_RobotParam_t param_sentry;
 /* static const Config_RobotParam_t param_xxx; */
 
 static const Config_PilotCfg_t cfg_qs = {
@@ -336,9 +353,9 @@ static const Config_RobotParamMap_t robot_param_map[] = {
     {"default", &param_default},
     {"infantry", &param_default},
     {"hero", &param_hero},
-    {"engineer", &param_engineer},
-    {"drone", &param_drone},
-    {"sentry", &param_sentry},
+    // {"engineer", &param_engineer},
+    // {"drone", &param_drone},
+    // {"sentry", &param_sentry},
     /* {"xxx", &param_xxx}, */
     {NULL, NULL},
 };
