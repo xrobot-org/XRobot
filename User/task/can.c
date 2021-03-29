@@ -38,7 +38,7 @@ void Task_Can(void *argument) {
   /* Task Setup */
   while (1) {
 #ifdef DEBUG
-    task_runtime.stack_water_mark.can = osThreadGetStackSpace(NULL);
+    task_runtime.stack_water_mark.can = osThreadGetStackSpace(osThreadGetId());
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
     osMessageQueueReset(task_runtime.msgq.can.feedback.chassis);

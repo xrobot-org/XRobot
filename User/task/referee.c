@@ -53,7 +53,7 @@ void Task_Referee(void *argument) {
   uint32_t last_online_tick = 0;
   while (1) {
 #ifdef DEBUG
-    task_runtime.stack_water_mark.referee = osThreadGetStackSpace(NULL);
+    task_runtime.stack_water_mark.referee = osThreadGetStackSpace(osThreadGetId());
 #endif
     /* Task body */
 

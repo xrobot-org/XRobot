@@ -697,7 +697,7 @@ void Task_CLI(void *argument) {
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
-    task_runtime.stack_water_mark.cli = osThreadGetStackSpace(NULL);
+    task_runtime.stack_water_mark.cli = osThreadGetStackSpace(osThreadGetId());
 #endif
     /* 等待输入. */
     BSP_USB_ReadyReceive(osThreadGetId());
