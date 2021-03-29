@@ -46,7 +46,6 @@ void Task_CtrlGimbal(void *argument) {
   osMessageQueueGet(task_runtime.msgq.can.feedback.gimbal, &can, NULL,
                     osWaitForever);
 
-  uint32_t wakeup = HAL_GetTick(); /* 计算任务运行间隔的计时 */
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
@@ -66,11 +65,9 @@ void Task_CtrlGimbal(void *argument) {
       osMessageQueueGet(task_runtime.msgq.cmd.gimbal, &gimbal_cmd, NULL, 0);
 
       osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
-      const uint32_t now = HAL_GetTick();
       Gimbal_UpdateFeedback(&gimbal, &can);
-      Gimbal_Control(&gimbal, &gimbal_cmd, (float)(now - wakeup) / 1000.0f);
+      Gimbal_Control(&gimbal, &gimbal_cmd, HAL_GetTick());
       Gimbal_DumpOutput(&gimbal, &gimbal_out);
-      wakeup = now;
     }
 
     osKernelUnlock();
