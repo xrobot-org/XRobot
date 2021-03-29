@@ -24,7 +24,6 @@
 static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_GimbalMode_t mode) {
   if (g == NULL) return -1;
   if (mode == g->mode) return GIMBAL_OK;
-  g->mode = mode;
 
   /* 切换模式后重置PID和滤波器 */
   for (uint8_t i = 0; i < GIMBAL_PID_NUM; i++) {
@@ -34,8 +33,13 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_GimbalMode_t mode) {
     LowPassFilter2p_Reset(g->filter_out + i, 0.0f);
   }
 
-  AHRS_ResetEulr(&(g->setpoint.eulr)); /* 切换模式后重置设定值 */
+  if ((g->mode == GIMBAL_MODE_RELAX) && (mode == GIMBAL_MODE_ABSOLUTE)) {
+    g->setpoint.eulr.yaw = g->feedback.eulr.imu.yaw;
+  } else {
+    AHRS_ResetEulr(&(g->setpoint.eulr)); /* 切换模式后重置设定值 */
+  }
 
+  g->mode = mode;
   return 0;
 }
 
@@ -115,20 +119,18 @@ int8_t Gimbal_UpdateFeedback(Gimbal_t *gimbal, const CAN_t *can) {
  *
  * \return 函数运行结果
  */
-int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, float dt_sec) {
+int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
   if (g == NULL) return -1;
   if (g_cmd == NULL) return -1;
+
+  g->dt = (float)(now - g->lask_wakeup) / 1000.0f;
+  g->lask_wakeup = now;
 
   Gimbal_SetMode(g, g_cmd->mode);
 
   /* yaw坐标正方向与遥控器操作逻辑相反 */
   g_cmd->delta_eulr.pit = (g_cmd->delta_eulr.pit);
   g_cmd->delta_eulr.yaw = -(g_cmd->delta_eulr.yaw);
-
-  /* 设置初始yaw目标值 */
-  if (g->setpoint.eulr.yaw == 0.0f) {
-    g->setpoint.eulr.yaw = g->feedback.eulr.imu.yaw;
-  }
 
   /* 处理控制命令，限制setpoint范围 */
   CircleAdd(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw, M_2PI);
@@ -160,17 +162,17 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, float dt_sec) {
     case GIMBAL_MODE_ABSOLUTE:
       yaw_omega_set_point =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), g->setpoint.eulr.yaw,
-                   g->feedback.eulr.imu.yaw, 0.0f, dt_sec);
+                   g->feedback.eulr.imu.yaw, 0.0f, g->dt);
       g->out[GIMBAL_ACTR_YAW_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), yaw_omega_set_point,
-                   g->feedback.gyro.z, 0.f, dt_sec);
+                   g->feedback.gyro.z, 0.f, g->dt);
 
       pit_omega_set_point =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_ANGLE_IDX]), g->setpoint.eulr.pit,
-                   g->feedback.eulr.imu.pit, 0.0f, dt_sec);
+                   g->feedback.eulr.imu.pit, 0.0f, g->dt);
       g->out[GIMBAL_ACTR_PIT_IDX] =
           PID_Calc(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), pit_omega_set_point,
-                   g->feedback.gyro.x, 0.f, dt_sec);
+                   g->feedback.gyro.x, 0.f, g->dt);
       break;
 
     case GIMBAL_MODE_RELATIVE:

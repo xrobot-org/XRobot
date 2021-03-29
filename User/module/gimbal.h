@@ -79,6 +79,9 @@ typedef struct {
  * 包含了初始化参数，中间变量，输出变量。
  */
 typedef struct {
+  uint32_t lask_wakeup;
+  float dt;
+
   const Gimbal_Params_t *param; /* 云台的参数，用Gimbal_Init设定 */
 
   /* 模块通用 */
@@ -134,7 +137,7 @@ int8_t Gimbal_UpdateFeedback(Gimbal_t *gimbal, const CAN_t *can);
  *
  * \return 函数运行结果
  */
-int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, float dt_sec);
+int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now);
 
 /**
  * \brief 复制云台输出值
