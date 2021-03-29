@@ -63,6 +63,9 @@ typedef struct {
  * 包含了初始化参数，中间变量，输出变量。
  */
 typedef struct {
+  uint32_t lask_wakeup;
+  float dt;
+
   const Shoot_Params_t *param; /* 射击的参数，用Shoot_Init设定 */
 
   /* 模块通用 */
@@ -136,7 +139,7 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can);
  * \return 函数运行结果
  */
 int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
-                     Referee_ForShoot_t *s_ref, float dt_sec);
+                     Referee_ForShoot_t *s_ref, uint32_t now);
 
 /**
  * \brief 复制射击输出值

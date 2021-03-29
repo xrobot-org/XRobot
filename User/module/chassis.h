@@ -59,6 +59,9 @@ typedef struct {
  * 包含了初始化参数，中间变量，输出变量
  */
 typedef struct {
+  uint32_t lask_wakeup;
+  float dt;
+
   const Chassis_Params_t *param; /* 底盘的参数，用Chassis_Init设定 */
   AHRS_Eulr_t *mech_zero;
 
@@ -131,7 +134,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can);
  * \return 函数运行结果
  */
 int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
-                       float dt_sec);
+                       uint32_t now);
 
 /**
  * @brief 底盘功率限制

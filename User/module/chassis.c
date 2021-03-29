@@ -221,10 +221,14 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
  * \return 函数运行结果
  */
 int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
-                       float dt_sec) {
+                       uint32_t now) {
   /* 底盘数据和控制指令结构体不能为空 */
   if (c == NULL) return CHASSIS_ERR_NULL;
   if (c_cmd == NULL) return CHASSIS_ERR_NULL;
+
+  c->dt = (float)(now - c->lask_wakeup) / 1000.0f;
+  c->lask_wakeup = now;
+
   /* 根据遥控器命令更改底盘模式 */
   Chassis_SetMode(c, c_cmd->mode);
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
@@ -265,8 +269,8 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
     case CHASSIS_MODE_OPEN:
     case CHASSIS_MODE_FOLLOW_GIMBAL: /* 跟随模式通过PID控制使车头跟随云台 */
       c->move_vec.wz = PID_Calc(
-          &(c->pid.follow), 0, c->feedback.gimbal_yaw_encoder - c->mech_zero->yaw,
-          0.0f, dt_sec);
+          &(c->pid.follow), 0,
+          c->feedback.gimbal_yaw_encoder - c->mech_zero->yaw, 0.0f, c->dt);
       break;
     case CHASSIS_MODE_ROTOR: { /* 小陀螺模式使底盘以一定速度旋转 */
       float beta = c->feedback.gimbal_yaw_encoder - c->mech_zero->yaw;
@@ -318,7 +322,7 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
       case CHASSIS_MODE_ROTOR:
       case CHASSIS_MODE_INDENPENDENT: /* 独立模式,受PID控制 */
         c->out[i] = PID_Calc(c->pid.motor + i, c->setpoint.motor_rpm[i],
-                             c->feedback.motor_rpm[i], 0.0f, dt_sec);
+                             c->feedback.motor_rpm[i], 0.0f, c->dt);
         break;
 
       case CHASSIS_MODE_OPEN: /* 开环模式,不受PID控制 */

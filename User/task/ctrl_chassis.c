@@ -49,8 +49,6 @@ void Task_CtrlChassis(void *argument) {
   /* 延时一段时间再开启任务 */
   osMessageQueueGet(task_runtime.msgq.can.feedback.chassis, &can.motor.chassis,
                     NULL, osWaitForever);
-
-  uint32_t wakeup = HAL_GetTick(); /* 计算任务运行间隔的计时 */
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
@@ -68,13 +66,11 @@ void Task_CtrlChassis(void *argument) {
       osMessageQueueGet(task_runtime.msgq.cmd.chassis, &chassis_cmd, NULL, 0);
       osMessageQueueGet(task_runtime.msgq.cap_info, &cap, NULL, 0);
       osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
-      const uint32_t now = HAL_GetTick();
       Chassis_UpdateFeedback(&chassis, &can); /* 更新反馈值 */
       /* 根据遥控器命令计算底盘输出 */
-      Chassis_Control(&chassis, &chassis_cmd, (float)(now - wakeup) / 1000.0f);
+      Chassis_Control(&chassis, &chassis_cmd, HAL_GetTick());
       Chassis_PowerLimit(&chassis, &cap, &referee_chassis); /* 限制输出功率 */
       Chassis_DumpOutput(&chassis, &chassis_out);
-      wakeup = now;
       osKernelUnlock();
     }
     /* 将电机输出值发送到CAN */
