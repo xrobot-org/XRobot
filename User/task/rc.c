@@ -36,7 +36,7 @@ void Task_RC(void *argument) {
   while (1) {
 #ifdef DEBUG
     /*  */
-    task_runtime.stack_water_mark.command = osThreadGetStackSpace(NULL);
+    task_runtime.stack_water_mark.command = osThreadGetStackSpace(osThreadGetId());
 #endif
     /* 开启DMA */
     DR16_StartDmaRecv(&dr16);

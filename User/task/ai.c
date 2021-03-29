@@ -44,7 +44,7 @@ void Task_Ai(void *argument) {
   uint32_t tick = osKernelGetTickCount();
   while (1) {
 #ifdef DEBUG
-    task_runtime.stack_water_mark.ai = osThreadGetStackSpace(NULL);
+    task_runtime.stack_water_mark.ai = osThreadGetStackSpace(osThreadGetId());
 #endif
     /* Task body */
     tick += delay_tick;
