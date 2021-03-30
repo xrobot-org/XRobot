@@ -148,6 +148,7 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
   if (g_cmd->delta_eulr.pit < delta_min) g_cmd->delta_eulr.pit = delta_min;
   g->setpoint.eulr.pit += g_cmd->delta_eulr.pit;
 
+  /* 重置输入指令，防止重复处理 */
   AHRS_ResetEulr(&(g_cmd->delta_eulr));
 
   /* 控制相关逻辑 */
@@ -181,6 +182,12 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
   /* 输出滤波 */
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++)
     g->out[i] = LowPassFilter2p_Apply(g->filter_out + i, g->out[i]);
+
+  /* 处理电机反装 */
+  if (g->param->reverse.yaw)
+    g->out[GIMBAL_ACTR_YAW_IDX] = -g->out[GIMBAL_ACTR_YAW_IDX];
+  if (g->param->reverse.pit)
+    g->out[GIMBAL_ACTR_PIT_IDX] = -g->out[GIMBAL_ACTR_PIT_IDX];
 
   return 0;
 }
