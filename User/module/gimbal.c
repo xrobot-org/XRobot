@@ -134,18 +134,17 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
   CircleAdd(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw, M_2PI);
 
   /* pitch轴软件限位 */
-  float delta_max =
+  const float delta_max =
       CircleError(g->gimbal_limit.max,
                   (g->feedback.eulr.encoder.pit + g->setpoint.eulr.pit -
                    g->feedback.eulr.imu.pit),
                   M_2PI);
-  float delta_min =
+  const float delta_min =
       CircleError(g->gimbal_limit.min,
                   (g->feedback.eulr.encoder.pit + g->setpoint.eulr.pit -
                    g->feedback.eulr.imu.pit),
                   M_2PI);
-  if (g_cmd->delta_eulr.pit > delta_max) g_cmd->delta_eulr.pit = delta_max;
-  if (g_cmd->delta_eulr.pit < delta_min) g_cmd->delta_eulr.pit = delta_min;
+  Clip(&(g_cmd->delta_eulr.pit), delta_min, delta_max);
   g->setpoint.eulr.pit += g_cmd->delta_eulr.pit;
 
   /* 重置输入指令，防止重复处理 */
