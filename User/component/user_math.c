@@ -34,9 +34,7 @@ inline float Sign(float in) { return (in > 0) ? 1.0f : 0.0f; }
  *
  * \param mv 被操作的值
  */
-inline void ResetMoveVector(MoveVector_t *mv) {
-  memset(mv, 0, sizeof(*mv));
-}
+inline void ResetMoveVector(MoveVector_t *mv) { memset(mv, 0, sizeof(*mv)); }
 
 /**
  * \brief 计算循环值的误差，用于没有负数值，并在一定范围内变化的值
@@ -78,6 +76,15 @@ inline void CircleAdd(float *origin, float delta, float range) {
       out += range;
   }
   *origin = out;
+}
+
+/**
+ * @brief 循环值取反
+ * 
+ * @param origin 被操作的值
+ */
+inline void CircleReverse(float *origin) {
+  *origin = -(*origin) + M_2PI;
 }
 
 /**
