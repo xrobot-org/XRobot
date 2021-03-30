@@ -52,7 +52,8 @@ void Task_Command(void *argument) {
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
-    task_runtime.stack_water_mark.command = osThreadGetStackSpace(osThreadGetId());
+    task_runtime.stack_water_mark.command =
+        osThreadGetStackSpace(osThreadGetId());
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 

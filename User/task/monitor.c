@@ -36,7 +36,8 @@ void Task_Monitor(void *argument) {
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
-    task_runtime.stack_water_mark.monitor = osThreadGetStackSpace(osThreadGetId());
+    task_runtime.stack_water_mark.monitor =
+        osThreadGetStackSpace(osThreadGetId());
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
     task_runtime.status.vbat = BSP_GetBatteryVolt(); /* ADC监测电压 */
