@@ -182,7 +182,7 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output,
 
       HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can->param->chassis.can),
                            &raw_tx.tx_header, raw_tx.tx_data,
-                           (uint32_t *)CAN_TX_MAILBOX0);
+                           &(can->mailbox.chassis));
       break;
     case CAN_MOTOR_GROUT_GIMBAL1:
     case CAN_MOTOR_GROUT_GIMBAL2:
@@ -206,7 +206,7 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output,
 
       HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can->param->gimbal.can),
                            &raw_tx.tx_header, raw_tx.tx_data,
-                           (uint32_t *)CAN_TX_MAILBOX1);
+                           &(can->mailbox.gimbal));
       break;
 
     case CAN_MOTOR_GROUT_SHOOT1:
@@ -234,7 +234,7 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output,
 
       HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can->param->shoot.can),
                            &raw_tx.tx_header, raw_tx.tx_data,
-                           (uint32_t *)CAN_TX_MAILBOX2);
+                           &(can->mailbox.shoot));
       break;
 
     default:
