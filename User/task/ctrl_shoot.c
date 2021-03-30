@@ -49,7 +49,8 @@ void Task_CtrlShoot(void *argument) {
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
-    task_runtime.stack_water_mark.ctrl_shoot = osThreadGetStackSpace(osThreadGetId());
+    task_runtime.stack_water_mark.ctrl_shoot =
+        osThreadGetStackSpace(osThreadGetId());
 #endif
     if (osMessageQueueGet(task_runtime.msgq.can.feedback.shoot, &can, NULL,
                           10) != osOK) {

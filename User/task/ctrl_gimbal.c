@@ -49,7 +49,8 @@ void Task_CtrlGimbal(void *argument) {
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
-    task_runtime.stack_water_mark.ctrl_gimbal = osThreadGetStackSpace(osThreadGetId());
+    task_runtime.stack_water_mark.ctrl_gimbal =
+        osThreadGetStackSpace(osThreadGetId());
 #endif
     /* 读取CAN电机反馈数据 */
     if (osMessageQueueGet(task_runtime.msgq.can.feedback.gimbal, &can, NULL,
