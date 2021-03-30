@@ -43,22 +43,17 @@ void Task_Monitor(void *argument) {
     task_runtime.status.vbat = BSP_GetBatteryVolt(); /* ADC监测电压 */
     task_runtime.status.battery =
         Capacity_GetBatteryRemain(task_runtime.status.vbat);
+    task_runtime.status.cpu_temp = BSP_GetTemperature();
+        
+    bool low_bat = task_runtime.status.battery < 0.2f;
+    bool high_cpu_temp =  task_runtime.status.cpu_temp > 35.0f;
+    
     /* 电池电量少于20%时闪烁红色LED */
-    if (task_runtime.status.battery < 0.2f) {
+    if (low_bat || high_cpu_temp) {
       BSP_LED_Set(BSP_LED_RED, BSP_LED_TAGGLE, 1);
     } else {
       BSP_LED_Set(BSP_LED_RED, BSP_LED_OFF, 1);
     }
-
-    task_runtime.status.cpu_temp = BSP_GetTemperature();
-
-    /* CPU温度高于35℃时时闪烁蓝色LED */
-    if (task_runtime.status.cpu_temp > 35.0f) {
-      BSP_LED_Set(BSP_LED_BLU, BSP_LED_ON, 1);
-    } else {
-      BSP_LED_Set(BSP_LED_BLU, BSP_LED_OFF, 1);
-    }
-
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }
 }
