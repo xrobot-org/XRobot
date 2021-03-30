@@ -62,8 +62,8 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
   g->mode = GIMBAL_MODE_RELAX; /* 设置默认模式 */
 
   /* 设置软件限位 */
-  g->gimbal_limit.max = limit_max;
-  g->gimbal_limit.min = g->gimbal_limit.max;
+  if (g->param->reverse.pit) CircleReverse(&limit_max);
+  g->gimbal_limit.min = g->gimbal_limit.max = limit_max;
   CircleAdd(&(g->gimbal_limit.min), -g->param->pitch_travel_rad, M_2PI);
 
   /* 初始化云台电机控制PID和LPF */
@@ -100,11 +100,9 @@ int8_t Gimbal_UpdateFeedback(Gimbal_t *gimbal, const CAN_t *can) {
   gimbal->feedback.eulr.encoder.pit = can->motor.gimbal.named.pit.rotor_angle;
 
   if (gimbal->param->reverse.yaw)
-    gimbal->feedback.eulr.encoder.yaw =
-        -gimbal->feedback.eulr.encoder.yaw + M_2PI;
+    CircleReverse(&(gimbal->feedback.eulr.encoder.yaw));
   if (gimbal->param->reverse.pit)
-    gimbal->feedback.eulr.encoder.pit =
-        -gimbal->feedback.eulr.encoder.pit + M_2PI;
+    CircleReverse(&(gimbal->feedback.eulr.encoder.pit));
 
   return 0;
 }
