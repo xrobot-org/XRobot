@@ -36,7 +36,7 @@ float InvSqrt(float x);
 
 float AbsClip(float in, float limit);
 
-float Clip(float *origin, float min, float max);
+void Clip(float *origin, float min, float max);
 
 float Sign(float in);
 
