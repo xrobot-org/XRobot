@@ -27,6 +27,11 @@ inline float AbsClip(float in, float limit) {
   return (in < -limit) ? -limit : ((in > limit) ? limit : in);
 }
 
+inline float Clip(float *origin, float min, float max) {
+  if (*origin > max) *origin = max;
+  if (*origin < min) *origin = min;
+}
+
 inline float Sign(float in) { return (in > 0) ? 1.0f : 0.0f; }
 
 /**
@@ -80,12 +85,10 @@ inline void CircleAdd(float *origin, float delta, float range) {
 
 /**
  * @brief 循环值取反
- * 
+ *
  * @param origin 被操作的值
  */
-inline void CircleReverse(float *origin) {
-  *origin = -(*origin) + M_2PI;
-}
+inline void CircleReverse(float *origin) { *origin = -(*origin) + M_2PI; }
 
 /**
  * \brief 由摩擦轮线速度换算成对应的转速rpm
