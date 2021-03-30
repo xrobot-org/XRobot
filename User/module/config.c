@@ -210,48 +210,48 @@ static const Config_RobotParam_t param_hero = {
     .pid = {
       {
         /* GIMBAL_PID_YAW_OMEGA_IDX */
-        .k = 0.245326675239841f,
+        .k = 0.2f,
         .p = 1.0f,
-        .i = 28.274136896f,
-        .d = 0.007071387562335f,
+        .i = 0.0f,
+        .d = 0.0f,
         .i_limit = 1.0f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
         .range = -1.0f,
       }, {
         /* GIMBAL_PID_YAW_ANGLE_IDX */
-        .k = 9.58196376868962f,
+        .k = 3.0f,
         .p = 1.0f,
         .i = 0.0f,
         .d = 0.0f,
         .i_limit = 0.0f,
-        .out_limit = 1000.0f,
+        .out_limit = 10.0f,
         .d_cutoff_freq = -1.0f,
         .range = M_2PI,
       }, {
         /* GIMBAL_PID_PIT_OMEGA_IDX */
-        .k = 0.15f,
+        .k = 0.2f,
         .p = 1.0f,
-        .i = 0.05f,
-        .d = 0.003f,
+        .i = 0.0f,
+        .d = 0.0f,
         .i_limit = 1.0f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
         .range = -1.0f,
       }, {
         /* GIMBAL_PID_PIT_ANGLE_IDX */
-        .k = 7.0f,
+        .k = 3.0f,
         .p = 1.0f,
         .i = 0.0f,
         .d = 0.0f,
         .i_limit = 0.0f,
-        .out_limit = 1000.0f,
+        .out_limit = 10.0f,
         .d_cutoff_freq = -1.0f,
         .range = M_2PI,
       },
     }, /* pid */
 
-		.pitch_travel_rad = 1.158155117179586476925286766559f,
+		.pitch_travel_rad = 1.07685447f,
     
     .low_pass_cutoff_freq = {
       .out = -1.0f,
