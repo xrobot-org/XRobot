@@ -44,9 +44,7 @@ int8_t PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
   LowPassFilter2p_Init(&(pid->dfilter), sample_freq, pid->param->d_cutoff_freq);
 
   pid->mode = mode;
-  pid->i = 0.0f;
-  pid->last.err = 0.0f;
-  pid->out_last = 0.0f;
+  PID_Reset(pid);
   return 0;
 }
 
@@ -62,7 +60,7 @@ int8_t PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
  */
 float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt) {
   if (!isfinite(sp) || !isfinite(fb) || !isfinite(fb_dot) || !isfinite(dt)) {
-    return pid->out_last;
+    return pid->last.out;
   }
 
   /* 计算误差值 */
@@ -77,14 +75,12 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt) {
   switch (pid->mode) {
     case KPID_MODE_CALC_D_ERR:
       d = (err - pid->last.err) / fmaxf(dt, pid->dt_min);
-      pid->last.err = err;
       break;
 
-    /* 通过fb计算D，避免了由于sp变化导致err突变的问题 */
-    /* 当sp不变时，err的微分等于负的fb的微分 */
     case KPID_MODE_CALC_D_FB:
+      /* 通过fb计算D，避免了由于sp变化导致err突变的问题 */
+      /* 当sp不变时，err的微分等于负的fb的微分 */
       d = -(fb_scaled - pid->last.fb) / fmaxf(dt, pid->dt_min);
-      pid->last.fb = fb_scaled;
       break;
 
     case KPID_MODE_SET_D:
@@ -95,6 +91,8 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt) {
       d = 0.0f;
       break;
   }
+  pid->last.err = err;
+  pid->last.fb = fb_scaled;
 
   if (!isfinite(d)) d = 0.0f;
 
@@ -124,10 +122,9 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt) {
     if (pid->param->out_limit > SIGMA) {
       output = AbsClip(output, pid->param->out_limit);
     }
-    pid->out_last = output;
+    pid->last.out = output;
   }
-
-  return pid->out_last;
+  return pid->last.out;
 }
 
 /**
@@ -155,7 +152,8 @@ int8_t PID_Reset(KPID_t *pid) {
 
   pid->i = 0.0f;
   pid->last.err = 0.0f;
-  pid->out_last = 0.0f;
+  pid->last.fb = 0.0f;
+  pid->last.out = 0.0f;
   LowPassFilter2p_Reset(&(pid->dfilter), 0.0f);
 
   return 0;

@@ -42,13 +42,12 @@ typedef struct {
   float dt_min; /* 最小PID_Calc调用间隔 */
   float i;      /* 积分 */
 
-  union {
+  struct {
     float err; /* 上次误差 */
-    float fb;  /* 反馈值 */
+    float fb;  /* 上次反馈值 */
+    float out; /* 上次输出 */
   } last;
-  float err_last;
 
-  float out_last;            /* 上次输出 */
   LowPassFilter2p_t dfilter; /* D项低通滤波器 */
 } KPID_t;
 
