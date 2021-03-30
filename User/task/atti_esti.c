@@ -64,13 +64,13 @@ void Task_AttiEsti(void *argument) {
 
   /* 初始化设备 */
   BMI088_Init(&bmi088, &(task_runtime.cfg.cali.bmi088));
-  IST8310_Init(&ist8310, &(task_runtime.cfg.cali.ist8310));
+  // IST8310_Init(&ist8310, &(task_runtime.cfg.cali.ist8310));
 
   /* 读取一次磁力计数据，用以初始化姿态解算算法 */
-  IST8310_WaitNew(osWaitForever);
-  IST8310_StartDmaRecv();
-  IST8310_WaitDmaCplt();
-  IST8310_Parse(&ist8310);
+  // IST8310_WaitNew(osWaitForever);
+  // IST8310_StartDmaRecv();
+  // IST8310_WaitDmaCplt();
+  // IST8310_Parse(&ist8310);
 
   /* 初始化姿态解算算法 */
   AHRS_Init(&gimbal_ahrs, &ist8310.magn, BMI088_GetUpdateFreq(&bmi088));
@@ -103,16 +103,16 @@ void Task_AttiEsti(void *argument) {
     /* 磁力计的数据接收频率远小于IMU，
      * 这里使用非阻塞操作，保证姿态解算实时性
      */
-    IST8310_WaitNew(0);
-    IST8310_StartDmaRecv();
-    IST8310_WaitDmaCplt();
+    // IST8310_WaitNew(0);
+    // IST8310_StartDmaRecv();
+    // IST8310_WaitDmaCplt();
 
     /* 锁住RTOS内核防止数据解析过程中断，造成错误 */
     osKernelLock();
     /* 接收完所有数据后，把数据从原始字节加工成方便计算的数据 */
     BMI088_ParseAccl(&bmi088);
     BMI088_ParseGyro(&bmi088);
-    IST8310_Parse(&ist8310);
+    // IST8310_Parse(&ist8310);
 
     /* 根据设备接收到的数据进行姿态解析 */
     AHRS_Update(&gimbal_ahrs, &bmi088.accl, &bmi088.gyro, &ist8310.magn);
