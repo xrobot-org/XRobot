@@ -167,7 +167,7 @@ typedef struct {
   float power_limit;
 } CAN_CapOutput_t;
 
-typedef union {
+typedef struct {
   CAN_ChassisOutput_t chassis;
   CAN_GimbalOutput_t gimbal;
   CAN_ShootOutput_t shoot;
@@ -258,6 +258,11 @@ typedef struct {
   CAN_Capacitor_t cap;
   CAN_Tof_t tof;
   const CAN_Params_t *param;
+  struct {
+    uint32_t chassis;
+    uint32_t gimbal;
+    uint32_t shoot;
+  } mailbox;
 } CAN_t;
 
 /* Exported functions prototypes -------------------------------------------- */
