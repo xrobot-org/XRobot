@@ -634,7 +634,7 @@ static const CLI_Command_Definition_t command_table[] = {
     },
     {
         "set-gimbal-limit",
-        "\r\nset-gimbal-limit: Move the gimbal to the peak and execute this "
+        "\r\nset-gimbal-limit:\r\n Move the gimbal to the peak and execute this "
         "command to calibrate the limit of gimbal.\r\n\r\n",
         Command_SetGimbalLim,
         0,
