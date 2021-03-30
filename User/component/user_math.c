@@ -27,7 +27,7 @@ inline float AbsClip(float in, float limit) {
   return (in < -limit) ? -limit : ((in > limit) ? limit : in);
 }
 
-inline float Clip(float *origin, float min, float max) {
+inline void Clip(float *origin, float min, float max) {
   if (*origin > max) *origin = max;
   if (*origin < min) *origin = min;
 }
