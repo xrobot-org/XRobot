@@ -84,9 +84,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
   c->mech_zero = mech_zero;     /* 设置底盘机械零点 */
 
   /* 如果电机反装重新计算机械零点 */
-  if (param->reverse.yaw) {
-    c->mech_zero->yaw = -(c->mech_zero->yaw) + M_2PI;
-  }
+  if (param->reverse.yaw) CircleReverse(&(c->mech_zero->yaw));
 
   /* 根据参数（param）中的底盘型号初始化Mixer */
   Mixer_Mode_t mixer_mode;
@@ -268,9 +266,8 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
 
     case CHASSIS_MODE_OPEN:
     case CHASSIS_MODE_FOLLOW_GIMBAL: /* 跟随模式通过PID控制使车头跟随云台 */
-      c->move_vec.wz = PID_Calc(
-          &(c->pid.follow), 0,
-          c->feedback.gimbal_yaw_encoder - c->mech_zero->yaw, 0.0f, c->dt);
+      c->move_vec.wz = PID_Calc(&(c->pid.follow), c->mech_zero->yaw,
+                                c->feedback.gimbal_yaw_encoder, 0.0f, c->dt);
       break;
     case CHASSIS_MODE_ROTOR: { /* 小陀螺模式使底盘以一定速度旋转 */
       float beta = c->feedback.gimbal_yaw_encoder - c->mech_zero->yaw;
