@@ -33,10 +33,9 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_GimbalMode_t mode) {
     LowPassFilter2p_Reset(g->filter_out + i, 0.0f);
   }
 
+  AHRS_ResetEulr(&(g->setpoint.eulr)); /* 切换模式后重置设定值 */
   if ((g->mode == GIMBAL_MODE_RELAX) && (mode == GIMBAL_MODE_ABSOLUTE)) {
     g->setpoint.eulr.yaw = g->feedback.eulr.imu.yaw;
-  } else {
-    AHRS_ResetEulr(&(g->setpoint.eulr)); /* 切换模式后重置设定值 */
   }
 
   g->mode = mode;
@@ -63,8 +62,8 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
 
   /* 设置软件限位 */
   if (g->param->reverse.pit) CircleReverse(&limit_max);
-  g->gimbal_limit.min = g->gimbal_limit.max = limit_max;
-  CircleAdd(&(g->gimbal_limit.min), -g->param->pitch_travel_rad, M_2PI);
+  g->limit.min = g->limit.max = limit_max;
+  CircleAdd(&(g->limit.min), -g->param->pitch_travel_rad, M_2PI);
 
   /* 初始化云台电机控制PID和LPF */
   PID_Init(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), KPID_MODE_NO_D, target_freq,
@@ -127,20 +126,20 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
   Gimbal_SetMode(g, g_cmd->mode);
 
   /* yaw坐标正方向与遥控器操作逻辑相反 */
-  g_cmd->delta_eulr.pit = (g_cmd->delta_eulr.pit);
-  g_cmd->delta_eulr.yaw = -(g_cmd->delta_eulr.yaw);
+  g_cmd->delta_eulr.pit = g_cmd->delta_eulr.pit;
+  g_cmd->delta_eulr.yaw = -g_cmd->delta_eulr.yaw;
 
-  /* 处理控制命令，限制setpoint范围 */
+  /* 处理yaw控制命令 */
   CircleAdd(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw, M_2PI);
 
-  /* pitch轴软件限位 */
+  /* 处理pitch控制命令，软件限位 */
   const float delta_max =
-      CircleError(g->gimbal_limit.max,
+      CircleError(g->limit.max,
                   (g->feedback.eulr.encoder.pit + g->setpoint.eulr.pit -
                    g->feedback.eulr.imu.pit),
                   M_2PI);
   const float delta_min =
-      CircleError(g->gimbal_limit.min,
+      CircleError(g->limit.min,
                   (g->feedback.eulr.encoder.pit + g->setpoint.eulr.pit -
                    g->feedback.eulr.imu.pit),
                   M_2PI);
@@ -188,6 +187,13 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
   if (g->param->reverse.pit)
     g->out[GIMBAL_ACTR_PIT_IDX] = -g->out[GIMBAL_ACTR_PIT_IDX];
 
+  if (g->out[GIMBAL_ACTR_YAW_IDX] < 0.f) {
+    __NOP();
+  }
+
+  if (g->out[GIMBAL_ACTR_PIT_IDX] > 0.5f) {
+    __NOP();
+  }
   return 0;
 }
 
