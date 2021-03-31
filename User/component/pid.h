@@ -17,8 +17,7 @@ extern "C" {
 /* PID模式 */
 typedef enum {
   KPID_MODE_NO_D = 0, /* 不使用微分项，PI控制器 */
-  KPID_MODE_CALC_D_ERR, /* 根据误差的值计算离散微分，忽略PID_Calc中的fb_dot */
-  KPID_MODE_CALC_D_FB, /* 根据反馈的值计算离散微分，忽略PID_Calc中的fb_dot */
+  KPID_MODE_CALC_D, /* 根据反馈的值计算离散微分，忽略PID_Calc中的fb_dot */
   KPID_MODE_SET_D /* 直接提供微分值，PID_Calc中的fb_dot将被使用，(Gyros) */
 } KPID_Mode_t;
 
@@ -43,9 +42,9 @@ typedef struct {
   float i;      /* 积分 */
 
   struct {
-    float err; /* 上次误差 */
-    float fb;  /* 上次反馈值 */
-    float out; /* 上次输出 */
+    float err;  /* 上次误差 */
+    float k_fb; /* 上次反馈值 */
+    float out;  /* 上次输出 */
   } last;
 
   LowPassFilter2p_t dfilter; /* D项低通滤波器 */
