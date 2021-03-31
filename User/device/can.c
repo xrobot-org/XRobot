@@ -312,7 +312,7 @@ int8_t CAN_Cap_Control(CAN_CapOutput_t *output, CAN_t *can) {
 
   HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can->param->cap.can),
                        &raw_tx.tx_header, raw_tx.tx_data,
-                       (uint32_t *)CAN_TX_MAILBOX0);
+                       &(can->mailbox.cap));
   return DEVICE_OK;
 }
 
