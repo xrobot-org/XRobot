@@ -305,7 +305,7 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
 
   /* move_vec -> motor_rpm_set. 通过运动向量计算轮子转速目标值 */
   Mixer_Apply(&(c->mixer), &(c->move_vec), c->setpoint.motor_rpm, c->num_wheel,
-              9000.0f);
+              7000.0f);
 
   /* 根据轮子转速目标值，利用PID计算电机输出值 */
   for (uint8_t i = 0; i < c->num_wheel; i++) {
