@@ -222,6 +222,7 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
 	while(1) {
+    __NOP();
 	}
   /* USER CODE END Error_Handler_Debug */
 }
@@ -241,6 +242,7 @@ void assert_failed(uint8_t *file, uint32_t line)
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
 	
 	while(1) {
+    __NOP();
 	}
   /* USER CODE END 6 */
 }
