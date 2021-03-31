@@ -93,7 +93,7 @@ typedef struct {
 
   KPID_t pid[GIMBAL_PID_NUM]; /* PID数组 */
 
-  Gimbal_Limit_t gimbal_limit;
+  Gimbal_Limit_t limit;
 
   LowPassFilter2p_t filter_out[GIMBAL_ACTR_NUM]; /* 输出滤波器滤波器数组 */
 
