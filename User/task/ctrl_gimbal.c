@@ -38,6 +38,7 @@ static CAN_GimbalOutput_t gimbal_out;
 void Task_CtrlGimbal(void *argument) {
   (void)argument; /* 未使用argument，消除警告 */
 
+  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_GIMBAL;
   /* 初始化云台 */
   Gimbal_Init(&gimbal, &(task_runtime.cfg.robot_param->gimbal),
               task_runtime.cfg.gimbal_limit, (float)TASK_FREQ_CTRL_GIMBAL);
@@ -45,33 +46,31 @@ void Task_CtrlGimbal(void *argument) {
   /* 延时一段时间再开启任务 */
   osMessageQueueGet(task_runtime.msgq.can.feedback.gimbal, &can, NULL,
                     osWaitForever);
-
+  uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
     task_runtime.stack_water_mark.ctrl_gimbal =
         osThreadGetStackSpace(osThreadGetId());
 #endif
-    /* 读取CAN电机反馈数据 */
-    if (osMessageQueueGet(task_runtime.msgq.can.feedback.gimbal, &can, NULL,
-                          10) != osOK) {
-      // Error Handle
-      Gimbal_ResetOutput(&gimbal_out);
-    } else {
-      /* 读取控制指令、姿态、IMU数据 */
-      osMessageQueueGet(task_runtime.msgq.gimbal.eulr_imu,
-                        &(gimbal.feedback.eulr.imu), NULL, 0);
-      osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &(gimbal.feedback.gyro),
-                        NULL, 0);
-      osMessageQueueGet(task_runtime.msgq.cmd.gimbal, &gimbal_cmd, NULL, 0);
+    tick += delay_tick; /* 计算下一个唤醒时刻 */
 
-      osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
-      Gimbal_UpdateFeedback(&gimbal, &can);
-      Gimbal_Control(&gimbal, &gimbal_cmd, HAL_GetTick());
-      Gimbal_DumpOutput(&gimbal, &gimbal_out);
-    }
+    osMessageQueueGet(task_runtime.msgq.can.feedback.gimbal, &can, NULL, 0);
+    /* 读取控制指令、姿态、IMU数据 */
+    osMessageQueueGet(task_runtime.msgq.gimbal.eulr_imu,
+                      &(gimbal.feedback.eulr.imu), NULL, 0);
+    osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &(gimbal.feedback.gyro),
+                      NULL, 0);
+    osMessageQueueGet(task_runtime.msgq.cmd.gimbal, &gimbal_cmd, NULL, 0);
+
+    osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
+    Gimbal_UpdateFeedback(&gimbal, &can);
+    Gimbal_Control(&gimbal, &gimbal_cmd, tick);
+    Gimbal_DumpOutput(&gimbal, &gimbal_out);
 
     osKernelUnlock();
+    osMessageQueueReset(task_runtime.msgq.can.output.gimbal);
     osMessageQueuePut(task_runtime.msgq.can.output.gimbal, &gimbal_out, 0, 0);
+    osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }
 }

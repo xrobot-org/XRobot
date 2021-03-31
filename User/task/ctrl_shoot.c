@@ -39,6 +39,7 @@ static CAN_ShootOutput_t shoot_out;
 void Task_CtrlShoot(void *argument) {
   (void)argument; /* 未使用argument，消除警告 */
 
+  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_SHOOT;
   /* 初始化射击 */
   Shoot_Init(&shoot, &(task_runtime.cfg.robot_param->shoot),
              (float)TASK_FREQ_CTRL_SHOOT);
@@ -46,14 +47,16 @@ void Task_CtrlShoot(void *argument) {
   /* 延时一段时间再开启任务 */
   osMessageQueueGet(task_runtime.msgq.can.feedback.shoot, &can, NULL,
                     osWaitForever);
+  uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
     task_runtime.stack_water_mark.ctrl_shoot =
         osThreadGetStackSpace(osThreadGetId());
 #endif
+    tick += delay_tick; /* 计算下一个唤醒时刻 */
     if (osMessageQueueGet(task_runtime.msgq.can.feedback.shoot, &can, NULL,
-                          10) != osOK) {
+                          0) != osOK) {
       // Error handler
       Shoot_ResetOutput(&shoot_out);
     } else {
@@ -70,5 +73,6 @@ void Task_CtrlShoot(void *argument) {
       osKernelUnlock();
     }
     osMessageQueuePut(task_runtime.msgq.can.output.shoot, &shoot_out, 0, 0);
+    osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }
 }
