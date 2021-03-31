@@ -53,7 +53,6 @@ void Task_CtrlGimbal(void *argument) {
     task_runtime.stack_water_mark.ctrl_gimbal =
         osThreadGetStackSpace(osThreadGetId());
 #endif
-    tick += delay_tick; /* 计算下一个唤醒时刻 */
 
     osMessageQueueGet(task_runtime.msgq.can.feedback.gimbal, &can, NULL, 0);
     /* 读取控制指令、姿态、IMU数据 */
@@ -71,6 +70,8 @@ void Task_CtrlGimbal(void *argument) {
     osKernelUnlock();
     osMessageQueueReset(task_runtime.msgq.can.output.gimbal);
     osMessageQueuePut(task_runtime.msgq.can.output.gimbal, &gimbal_out, 0, 0);
+
+    tick += delay_tick; /* 计算下一个唤醒时刻 */
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }
 }
