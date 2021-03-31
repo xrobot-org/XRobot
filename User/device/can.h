@@ -262,6 +262,7 @@ typedef struct {
     uint32_t chassis;
     uint32_t gimbal;
     uint32_t shoot;
+    uint32_t cap;
   } mailbox;
 } CAN_t;
 
