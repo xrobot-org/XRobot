@@ -41,46 +41,6 @@ static inline uint16_t CMD_BehaviorToKey(CMD_t *cmd, CMD_Behavior_t behavior) {
 }
 
 /**
- * @brief 检查是否启用上位机控制指令覆盖
- *
- * @param cmd 主结构体
- * @return true 启用
- * @return false 不启用
- */
-inline bool CMD_CheckHostOverwrite(CMD_t *cmd) { return cmd->host_overwrite; }
-
-/**
- * @brief 初始化命令解析
- *
- * @param cmd 主结构体
- * @param param 参数
- * @return int8_t 0对应没有错误
- */
-int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
-  /* 指针检测 */
-  if (cmd == NULL) return -1;
-  if (param == NULL) return -1;
-
-  /* 设置机器人的命令参数，初始化控制方式为rc控制 */
-  cmd->pc_ctrl = false;
-  cmd->param = param;
-
-  return 0;
-}
-
-/**
- * @brief rc失控时机器人恢复放松模式
- *
- * @param cmd 主结构体
- */
-static void CMD_RcLostLogic(CMD_t *cmd) {
-  /* 机器人底盘、云台、射击运行模式恢复至放松模式 */
-  cmd->chassis.mode = CHASSIS_MODE_RELAX;
-  cmd->gimbal.mode = GIMBAL_MODE_RELAX;
-  cmd->shoot.mode = SHOOT_MODE_RELAX;
-}
-
-/**
  * @brief 解析pc行为逻辑
  *
  * @param rc 遥控器数据
@@ -241,33 +201,32 @@ static void CMD_RcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
 }
 
 /**
- * @brief 解析上位机命令
+ * @brief 初始化命令解析
  *
- * @param host host数据
- * @param cmd 命令
- * @param dt_sec 两次解析的间隔
+ * @param cmd 主结构体
+ * @param param 参数
  * @return int8_t 0对应没有错误
  */
-int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
-  (void)dt_sec; /* 未使用dt_sec，消除警告 */
+int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
   /* 指针检测 */
-  if (host == NULL) return -1;
   if (cmd == NULL) return -1;
+  if (param == NULL) return -1;
 
-  /* 云台欧拉角设置为host相应的变化的欧拉角 */
-  cmd->gimbal.delta_eulr.yaw = host->gimbal_delta.yaw;
-  cmd->gimbal.delta_eulr.pit = host->gimbal_delta.pit;
+  /* 设置机器人的命令参数，初始化控制方式为rc控制 */
+  cmd->pc_ctrl = false;
+  cmd->param = param;
 
-  /* host射击命令，设置不同的射击频率和子弹初速度 */
-  if (host->fire) {
-    cmd->shoot.shoot_freq_hz = 10u;
-    cmd->shoot.bullet_speed = 10.0f;
-  } else {
-    cmd->shoot.shoot_freq_hz = 0u;
-    cmd->shoot.bullet_speed = 0.0f;
-  }
   return 0;
 }
+
+/**
+ * @brief 检查是否启用上位机控制指令覆盖
+ *
+ * @param cmd 主结构体
+ * @return true 启用
+ * @return false 不启用
+ */
+inline bool CMD_CheckHostOverwrite(CMD_t *cmd) { return cmd->host_overwrite; }
 
 /**
  * @brief 解析命令
@@ -294,14 +253,39 @@ int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
     cmd->pc_ctrl = false;
 
   /* 当rc丢控时，恢复机器人至默认状态 */
-  if ((rc->sw_l == CMD_SW_ERR) || (rc->sw_r == CMD_SW_ERR)) {
-    CMD_RcLostLogic(cmd);
+  if (cmd->pc_ctrl) {
+    CMD_PcLogic(rc, cmd, dt_sec);
   } else {
-    if (cmd->pc_ctrl) {
-      CMD_PcLogic(rc, cmd, dt_sec);
-    } else {
-      CMD_RcLogic(rc, cmd, dt_sec);
-    }
+    CMD_RcLogic(rc, cmd, dt_sec);
+  }
+  return 0;
+}
+
+/**
+ * @brief 解析上位机命令
+ *
+ * @param host host数据
+ * @param cmd 命令
+ * @param dt_sec 两次解析的间隔
+ * @return int8_t 0对应没有错误
+ */
+int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
+  (void)dt_sec; /* 未使用dt_sec，消除警告 */
+  /* 指针检测 */
+  if (host == NULL) return -1;
+  if (cmd == NULL) return -1;
+
+  /* 云台欧拉角设置为host相应的变化的欧拉角 */
+  cmd->gimbal.delta_eulr.yaw = host->gimbal_delta.yaw;
+  cmd->gimbal.delta_eulr.pit = host->gimbal_delta.pit;
+
+  /* host射击命令，设置不同的射击频率和子弹初速度 */
+  if (host->fire) {
+    cmd->shoot.shoot_freq_hz = 10u;
+    cmd->shoot.bullet_speed = 10.0f;
+  } else {
+    cmd->shoot.shoot_freq_hz = 0u;
+    cmd->shoot.bullet_speed = 0.0f;
   }
   return 0;
 }
