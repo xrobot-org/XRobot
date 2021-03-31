@@ -73,13 +73,14 @@ int8_t Mixer_Apply(Mixer_t *mixer, MoveVector_t *move_vec, float *out,
       goto error;
   }
 
-  float max = 0.f;
+  float abs_max = 0.f;
   for (int8_t i = 0; i < len; i++) {
-    if (fabsf(out[i]) > max) max = out[i];
+    const float abs_val = fabsf(out[i]);
+    abs_max = (abs_val > abs_max) ? abs_val : abs_max;
   }
-  if (fabsf(max) > 1.f) {
+  if (abs_max > 1.f) {
     for (int8_t i = 0; i < len; i++) {
-      out[i] /= fabsf(max);
+      out[i] /= abs_max;
     }
   }
   for (int8_t i = 0; i < len; i++) {
