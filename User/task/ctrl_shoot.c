@@ -54,7 +54,6 @@ void Task_CtrlShoot(void *argument) {
     task_runtime.stack_water_mark.ctrl_shoot =
         osThreadGetStackSpace(osThreadGetId());
 #endif
-    tick += delay_tick; /* 计算下一个唤醒时刻 */
     if (osMessageQueueGet(task_runtime.msgq.can.feedback.shoot, &can, NULL,
                           0) != osOK) {
       // Error handler
@@ -73,6 +72,8 @@ void Task_CtrlShoot(void *argument) {
       osKernelUnlock();
     }
     osMessageQueuePut(task_runtime.msgq.can.output.shoot, &shoot_out, 0, 0);
+
+    tick += delay_tick; /* 计算下一个唤醒时刻 */
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }
 }
