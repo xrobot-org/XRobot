@@ -229,8 +229,9 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
 
   /* 根据遥控器命令更改底盘模式 */
   Chassis_SetMode(c, c_cmd->mode);
+
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
-  /* 先计算vx、vy. */
+  /* 计算vx、vy */
   switch (c->mode) {
     case CHASSIS_MODE_BREAK: /* 刹车模式电机停止 */
       c->move_vec.vx = 0.0f;
@@ -256,7 +257,7 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
     }
   }
 
-  /* 计算wz. */
+  /* 计算wz */
   switch (c->mode) {
     case CHASSIS_MODE_RELAX:
     case CHASSIS_MODE_BREAK:
