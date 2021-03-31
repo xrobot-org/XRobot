@@ -18,11 +18,9 @@
 #ifdef DEBUG
 CAN_t can;
 CAN_Output_t can_out;
-CAN_RawRx_t can_rx;
 #else
 static CAN_t can;
 static CAN_Output_t can_out;
-static CAN_RawRx_t can_rx;
 #endif
 
 /* Private function --------------------------------------------------------- */
