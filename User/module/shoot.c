@@ -86,7 +86,7 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
                          param->low_pass_cutoff_freq.out.fric);
   }
 
-  PID_Init(&(s->pid.trig), KPID_MODE_CALC_D_FB, target_freq,
+  PID_Init(&(s->pid.trig), KPID_MODE_CALC_D, target_freq,
            &(param->trig_pid_param));
 
   LowPassFilter2p_Init(&(s->filter.in.trig), target_freq,

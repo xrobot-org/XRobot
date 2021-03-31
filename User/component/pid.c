@@ -64,27 +64,25 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt) {
   }
 
   /* 计算误差值 */
-  float err = CircleError(sp, fb, pid->param->range);
-  err *= pid->param->k;
+  const float err = CircleError(sp, fb, pid->param->range);
 
-  float fb_scaled = pid->param->k * fb;
-  fb_scaled = LowPassFilter2p_Apply(&(pid->dfilter), fb_scaled);
+  /* 计算P项 */
+  const float k_err = err * pid->param->k;
 
-  /* 现在的误差微分 */
+  /* 计算D项 */
+  const float k_fb = pid->param->k * fb;
+  const float filtered_k_fb = LowPassFilter2p_Apply(&(pid->dfilter), k_fb);
+
   float d;
   switch (pid->mode) {
-    case KPID_MODE_CALC_D_ERR:
-      d = (err - pid->last.err) / fmaxf(dt, pid->dt_min);
-      break;
-
-    case KPID_MODE_CALC_D_FB:
+    case KPID_MODE_CALC_D:
       /* 通过fb计算D，避免了由于sp变化导致err突变的问题 */
       /* 当sp不变时，err的微分等于负的fb的微分 */
-      d = -(fb_scaled - pid->last.fb) / fmaxf(dt, pid->dt_min);
+      d = (filtered_k_fb - pid->last.k_fb) / fmaxf(dt, pid->dt_min);
       break;
 
     case KPID_MODE_SET_D:
-      d = -fb_dot;
+      d = fb_dot;
       break;
 
     case KPID_MODE_NO_D:
@@ -92,31 +90,31 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt) {
       break;
   }
   pid->last.err = err;
-  pid->last.fb = fb_scaled;
+  pid->last.k_fb = filtered_k_fb;
 
   if (!isfinite(d)) d = 0.0f;
 
-  /* 计算P和D输出 */
-  float output = (err * pid->param->p) + (d * pid->param->d);
+  /* 计算PD输出 */
+  float output = (k_err * pid->param->p) - (d * pid->param->d);
 
+  /* 计算I项 */
+  const float i = pid->i + (k_err * dt);
+  const float i_out = i * pid->param->i;
+  
   if (pid->param->i > SIGMA) {
-    /* 计算误差的积分 */
-    float i = pid->i + (err * dt);
-
     /* 检查是否饱和 */
     if (isfinite(i)) {
-      if ((pid->param->out_limit < SIGMA ||
-           (fabsf(output + (i * pid->param->i)) <= pid->param->out_limit)) &&
-          fabsf(i) <= pid->param->i_limit) {
+      if ((fabsf(output + i_out) <= pid->param->out_limit) &&
+          (fabsf(i) <= pid->param->i_limit)) {
         /* 未饱和，使用新积分 */
         pid->i = i;
       }
     }
-
-    /* 给输出添加积分项 */
-    output += pid->i * pid->param->i;
   }
-
+  
+  /* 计算PID输出 */
+  output += i_out;
+ 
   /* 限制输出 */
   if (isfinite(output)) {
     if (pid->param->out_limit > SIGMA) {
@@ -152,7 +150,7 @@ int8_t PID_Reset(KPID_t *pid) {
 
   pid->i = 0.0f;
   pid->last.err = 0.0f;
-  pid->last.fb = 0.0f;
+  pid->last.k_fb = 0.0f;
   pid->last.out = 0.0f;
   LowPassFilter2p_Reset(&(pid->dfilter), 0.0f);
 
