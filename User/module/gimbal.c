@@ -34,8 +34,12 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_GimbalMode_t mode) {
   }
 
   AHRS_ResetEulr(&(g->setpoint.eulr)); /* 切换模式后重置设定值 */
-  if ((g->mode == GIMBAL_MODE_RELAX) && (mode == GIMBAL_MODE_ABSOLUTE)) {
-    g->setpoint.eulr.yaw = g->feedback.eulr.imu.yaw;
+  if (g->mode == GIMBAL_MODE_RELAX) {
+    if (mode == GIMBAL_MODE_ABSOLUTE) {
+      g->setpoint.eulr.yaw = g->feedback.eulr.imu.yaw;
+    } else if (mode == GIMBAL_MODE_RELATIVE) {
+      g->setpoint.eulr.yaw = g->feedback.eulr.encoder.yaw;
+    }
   }
 
   g->mode = mode;
@@ -68,13 +72,13 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
   /* 初始化云台电机控制PID和LPF */
   PID_Init(&(g->pid[GIMBAL_PID_YAW_ANGLE_IDX]), KPID_MODE_NO_D, target_freq,
            &(g->param->pid[GIMBAL_PID_YAW_ANGLE_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), KPID_MODE_CALC_D,
-           target_freq, &(g->param->pid[GIMBAL_PID_YAW_OMEGA_IDX]));
+  PID_Init(&(g->pid[GIMBAL_PID_YAW_OMEGA_IDX]), KPID_MODE_CALC_D, target_freq,
+           &(g->param->pid[GIMBAL_PID_YAW_OMEGA_IDX]));
 
   PID_Init(&(g->pid[GIMBAL_PID_PIT_ANGLE_IDX]), KPID_MODE_NO_D, target_freq,
            &(g->param->pid[GIMBAL_PID_PIT_ANGLE_IDX]));
-  PID_Init(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), KPID_MODE_CALC_D,
-           target_freq, &(g->param->pid[GIMBAL_PID_PIT_OMEGA_IDX]));
+  PID_Init(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), KPID_MODE_CALC_D, target_freq,
+           &(g->param->pid[GIMBAL_PID_PIT_OMEGA_IDX]));
 
   for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
     LowPassFilter2p_Init(g->filter_out + i, target_freq,
