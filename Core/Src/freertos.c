@@ -90,6 +90,13 @@ unsigned long getRunTimeCounterValue(void)
 {
 	return high_freq_timer_ticks;
 }
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if (htim->Instance == TIM7) {
+		high_freq_timer_ticks++;
+	}
+}
 /* USER CODE END 1 */
 
 /* USER CODE BEGIN 4 */
