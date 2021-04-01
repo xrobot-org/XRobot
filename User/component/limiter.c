@@ -90,27 +90,15 @@ float PowerLimit_TargetPower(float power_limit, float power_buffer) {
  * @brief 射击频率控制
  *
  * @param heat_percent 当前热量与热量上限的比值
- * @param stable_freq_hz 使机器人射击但热量不变化的射击频率
- * @param shoot_freq_hz cmd.c预设的频率
+ * @param stable_freq 使机器人射击但热量不变化的射击频率
+ * @param shoot_freq cmd.c预设的频率
  * @return 经过热量限制后的射击频率
  */
-float HeatLimit_ShootFreq(float heat_percent, float stable_freq_hz,
-                          float shoot_freq_hz) {
-  if (heat_percent <= 0.5) {
-    if (shoot_freq_hz > stable_freq_hz * 1.5)
-      return stable_freq_hz * 1.5;
-    else
-      return shoot_freq_hz;
-  } else if (heat_percent <= 0.8) {
-    if (shoot_freq_hz > stable_freq_hz * 1.1)
-      return stable_freq_hz * 1.1;
-    else
-      return shoot_freq_hz;
-  } else if (heat_percent <= 0.9) {
-    if (shoot_freq_hz > stable_freq_hz * 0.8)
-      return stable_freq_hz * 0.8;
-    else
-      return shoot_freq_hz;
-  } else
-    return 0;
+float HeatLimit_ShootFreq(float heat_percent, float stable_freq,
+                          float shoot_freq) {
+  if (heat_percent <= 0.9) {
+    return shoot_freq;
+  } else {
+    return stable_freq;
+  }
 }
