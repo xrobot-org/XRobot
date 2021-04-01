@@ -96,6 +96,7 @@ JLinkLog.txt
 *.sct
 *.uvguix.*
 *.scvd
+*.log
 
 # CubeMX
 .mxproject
