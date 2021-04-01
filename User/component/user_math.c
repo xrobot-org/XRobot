@@ -91,12 +91,12 @@ inline void CircleAdd(float *origin, float delta, float range) {
 inline void CircleReverse(float *origin) { *origin = -(*origin) + M_2PI; }
 
 /**
- * \brief 由摩擦轮线速度换算成对应的转速rpm
+ * \brief 根据目标弹丸速度计算摩擦轮转速
  *
- * \param shoot_speed 摩擦轮线速度
- * \param fric_radius_m 摩擦轮半径
+ * \param bullet_speed 弹丸速度
+ * \param fric_radius 摩擦轮半径
  * \return 摩擦轮转速
  */
-inline float CalculateRpm(uint16_t shoot_speed, float fric_radius_m) {
-  return 60.0f * (float)shoot_speed / (M_2PI * fric_radius_m);
+inline float CalculateRpm(float bullet_speed, float fric_radius) {
+  return 60.0f * (float)bullet_speed / (M_2PI * fric_radius);
 }
