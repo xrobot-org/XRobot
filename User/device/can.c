@@ -180,7 +180,7 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output,
       raw_tx.tx_data[6] = (uint8_t)((motor4 >> 8) & 0xFF);
       raw_tx.tx_data[7] = (uint8_t)(motor4 & 0xFF);
 
-      HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can->param->chassis.can),
+      HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can->param->chassis),
                            &raw_tx.tx_header, raw_tx.tx_data,
                            &(can->mailbox.chassis));
       break;
@@ -204,7 +204,7 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output,
       raw_tx.tx_data[6] = 0;
       raw_tx.tx_data[7] = 0;
 
-      HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can->param->gimbal.can),
+      HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can->param->gimbal),
                            &raw_tx.tx_header, raw_tx.tx_data,
                            &(can->mailbox.gimbal));
       break;
@@ -232,7 +232,7 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output,
       raw_tx.tx_data[6] = 0;
       raw_tx.tx_data[7] = 0;
 
-      HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can->param->shoot.can),
+      HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can->param->shoot),
                            &raw_tx.tx_header, raw_tx.tx_data,
                            &(can->mailbox.shoot));
       break;
@@ -310,9 +310,8 @@ int8_t CAN_Cap_Control(CAN_CapOutput_t *output, CAN_t *can) {
   raw_tx.tx_data[0] = (cap >> 8) & 0xFF;
   raw_tx.tx_data[1] = cap & 0xFF;
 
-  HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can->param->cap.can),
-                       &raw_tx.tx_header, raw_tx.tx_data,
-                       &(can->mailbox.cap));
+  HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can->param->cap), &raw_tx.tx_header,
+                       raw_tx.tx_data, &(can->mailbox.cap));
   return DEVICE_OK;
 }
 

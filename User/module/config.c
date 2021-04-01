@@ -153,19 +153,11 @@ static const Config_RobotParam_t param_default = {
   }, /* shoot */
 
   .can = {
-    .chassis = {
-      .can = CAN1_OCP,
-    },
-    .gimbal = {
-      .can = CAN1_OCP,
-    },
-    .shoot = {
-      .can = CAN2_OCP,
-    },       
-    .cap = {
-      .can = CAN1_OCP,
-    },   
-  }, /* can */
+    .chassis = BSP_CAN_1,
+    .gimbal = BSP_CAN_1,
+    .shoot = BSP_CAN_2,      
+    .cap = BSP_CAN_1,
+    }, /* can */
 }; /* param_default */
 
 static const Config_RobotParam_t param_hero = {
@@ -304,19 +296,11 @@ static const Config_RobotParam_t param_hero = {
   }, /* shoot */
 
   .can = {
-    .chassis = {
-      .can = CAN1_OCP,
-    },
-    .gimbal = {
-      .can = CAN1_OCP,
-    },
-    .shoot = {
-      .can = CAN2_OCP,
-    },       
-    .cap = {
-      .can = CAN1_OCP,
-    },   
-  }, /* can */
+    .chassis = BSP_CAN_1,
+    .gimbal = BSP_CAN_2,
+    .shoot = BSP_CAN_2,      
+    .cap = BSP_CAN_1,
+    }, /* can */
 }; /* param_hero */      
 
 /* static const Config_RobotParam_t param_xxx; */
