@@ -28,33 +28,7 @@
 
 #include "FreeRTOS.h"                   // ARM.FreeRTOS::RTOS:Core
 
-#if defined(_RTE_)
-#include "RTE_Components.h"             // Component selection
 #include CMSIS_device_header
-
-/* Configuration and component setup check */
-#if defined(RTE_Compiler_EventRecorder)
-  #if !defined(EVR_FREERTOS_DISABLE)
-    #define USE_TRACE_EVENT_RECORDER
-    /*
-      FreeRTOS provides functions and hooks to support execution tracing. This
-      functionality is only enabled if configUSE_TRACE_FACILITY == 1.
-      Set #define configUSE_TRACE_FACILITY 1 in FreeRTOSConfig.h to enable trace events.
-    */
-    #if (configUSE_TRACE_FACILITY == 0)
-      #error "Definition configUSE_TRACE_FACILITY must equal 1 to enable FreeRTOS trace events."
-    #endif
-  #endif
-#endif
-
-#if defined(RTE_RTOS_FreeRTOS_HEAP_1)
-  #define USE_FreeRTOS_HEAP_1
-#endif
-
-#if defined(RTE_RTOS_FreeRTOS_HEAP_5)
-  #define USE_FreeRTOS_HEAP_5
-#endif
-#endif /* _RTE_ */
 
 /*
   CMSIS-RTOS2 FreeRTOS image size optimization definitions.
