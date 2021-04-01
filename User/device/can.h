@@ -8,6 +8,7 @@ extern "C" {
 #include <cmsis_os2.h>
 #include <stdbool.h>
 
+#include "bsp\can.h"
 #include "component\ahrs.h"
 #include "component\user_math.h"
 #include "device\device.h"
@@ -77,24 +78,11 @@ typedef enum {
   CAN_GM6020_PIT_ID = 0x20A, /* 6 */
 } CAN_MotorId_t;
 
-typedef enum {
-  CAN1_OCP = 0,
-  CAN2_OCP,
-} CAN_Occupy_t;
-
 typedef struct {
-  struct {
-    uint8_t can;
-  } chassis;
-  struct {
-    uint8_t can;
-  } gimbal;
-  struct {
-    uint8_t can;
-  } shoot;
-  struct {
-    uint8_t can;
-  } cap;
+  BSP_CAN_t chassis;
+  BSP_CAN_t gimbal;
+  BSP_CAN_t shoot;
+  BSP_CAN_t cap;
 } CAN_Params_t;
 
 /* 电机反馈信息 */
