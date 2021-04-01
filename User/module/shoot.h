@@ -33,6 +33,12 @@ enum Shoot_Acuator_e {
   SHOOT_ACTR_NUM,           /* 总共的动作器数量 */
 };
 
+/* 发射机构型号 */
+typedef enum {
+  SHOOT_MODEL_17MM = 0, /* 17mm发射机构 */
+  SHOOT_MODEL_42MM,     /* 42mm发射机构 */
+} Shoot_Model_t;
+
 /* 射击参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
   KPID_Params_t fric_pid_param; /* 摩擦轮电机控制PID的参数 */
@@ -50,12 +56,13 @@ typedef struct {
     } out;                /* 输出 */
   } low_pass_cutoff_freq; /* 低通滤波器截止频率 */
 
-  float bullet_speed_scaler; /* 子弹初速和电机转速之间的映射参数 */
-  float bullet_speed_bias; /* 子弹初速和电机转速之间的映射参数 */
-  float num_trig_tooth;    /* 拨弹盘中一圈能存储几颗弹丸 */
-  float fric_radius_m;     /* 摩擦轮半径，单位：米 */
-  float cover_open_duty;   /* 弹舱盖打开时舵机PWM占空比 */
-  float cover_close_duty;  /* 弹舱盖关闭时舵机PWM占空比 */
+  float num_trig_tooth;   /* 拨弹盘中一圈能存储几颗弹丸 */
+  float fric_radius;      /* 摩擦轮半径，单位：米 */
+  float cover_open_duty;  /* 弹舱盖打开时舵机PWM占空比 */
+  float cover_close_duty; /* 弹舱盖关闭时舵机PWM占空比 */
+  Shoot_Model_t model;    /* 发射机构型号 */
+  float bullet_speed;     /* 子弹初速度 */
+  float shoot_freq;       /* 射击频率 */
 } Shoot_Params_t;
 
 /*
@@ -64,13 +71,15 @@ typedef struct {
  */
 typedef struct {
   uint32_t lask_wakeup;
+  uint32_t last_shoot;      /* 上次射击时间 单位：ms */
+  uint32_t next_shoot;      /* 下次射击时间 单位：ms */
+  uint32_t num_shot_bullet; /* 已经发射的弹丸 */
   float dt;
 
   const Shoot_Params_t *param; /* 射击的参数，用Shoot_Init设定 */
 
   /* 模块通用 */
-  CMD_ShootMode_t mode;      /* 射击模式 */
-  osTimerId_t trig_timer_id; /* 控制拨弹电机的软件定时器 */
+  CMD_ShootMode_t mode; /* 射击模式 */
 
   struct {
     float fric_rpm[2];      /* 摩擦轮电机转速，单位：RPM */
@@ -98,8 +107,6 @@ typedef struct {
       LowPassFilter2p_t trig;    /* 过滤拨弹电机 */
     } out;                       /* 输出值滤波器 */
   } filter;                      /* 过滤器 */
-
-  int8_t heat_limiter; /* 枪管热度占位变量 */
 
   float out[SHOOT_ACTR_NUM]; /* 输出数组，通过Shoot_Acuator_e里的值访问 */
 

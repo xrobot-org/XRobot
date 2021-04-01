@@ -80,13 +80,14 @@ static void CMD_PcLogic(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FIRE), false)) {
     /* 切换至开火模式，设置相应的射击频率和子弹初速度 */
     cmd->shoot.mode = SHOOT_MODE_FIRE;
-    cmd->shoot.shoot_freq_hz = 10u;
-    cmd->shoot.bullet_speed = 100.0f;
   } else {
     /* 切换至准备模式，停止射击 */
     cmd->shoot.mode = SHOOT_MODE_STDBY;
-    cmd->shoot.shoot_freq_hz = 0u;
-    cmd->shoot.bullet_speed = 20.0f;
+  }
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ROTOR), true)) {
+    /* 每按一次依次切换开火下一个模式 */
+    cmd->shoot.fire++;
+    cmd->shoot.fire %= FIRE_MODE_NUM;
   }
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ROTOR), true)) {
     /* 每按一次依次切换小陀螺下一个模式 */
@@ -171,22 +172,16 @@ static void CMD_RcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
     case CMD_SW_UP:
       cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
       cmd->shoot.mode = SHOOT_MODE_SAFE;
-      cmd->shoot.shoot_freq_hz = 0.0f;
-      cmd->shoot.bullet_speed = 0.0f;
       break;
 
     case CMD_SW_MID:
       cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
       cmd->shoot.mode = SHOOT_MODE_STDBY;
-      cmd->shoot.shoot_freq_hz = 0.0f;
-      cmd->shoot.bullet_speed = 10.0f;
       break;
 
     case CMD_SW_DOWN:
       cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
       cmd->shoot.mode = SHOOT_MODE_FIRE;
-      cmd->shoot.shoot_freq_hz = 10u;
-      cmd->shoot.bullet_speed = 10.0f;
       break;
 
     case CMD_SW_ERR:
@@ -281,11 +276,9 @@ int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
 
   /* host射击命令，设置不同的射击频率和子弹初速度 */
   if (host->fire) {
-    cmd->shoot.shoot_freq_hz = 10u;
-    cmd->shoot.bullet_speed = 10.0f;
+    cmd->shoot.mode = SHOOT_MODE_FIRE;
   } else {
-    cmd->shoot.shoot_freq_hz = 0u;
-    cmd->shoot.bullet_speed = 0.0f;
+    cmd->shoot.mode = SHOOT_MODE_SAFE;
   }
   return 0;
 }

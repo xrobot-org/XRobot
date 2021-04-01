@@ -44,11 +44,18 @@ typedef enum {
 
 /* 射击运行模式 */
 typedef enum {
-  SHOOT_MODE_RELAX, /* 放松模式，电机不输出。一般情况射击初始化之后的模式 */
-  SHOOT_MODE_SAFE, /* 保险模式，电机闭环控制保持静止。保证安全状态 */
+  SHOOT_MODE_RELAX, /* 放松模式，电机不输出 */
+  SHOOT_MODE_SAFE,  /* 保险模式，电机闭环控制保持静止 */
   SHOOT_MODE_STDBY, /* 准备模式，摩擦轮开启。拨弹电机闭环控制保持静止 */
   SHOOT_MODE_FIRE, /* 开火模式，摩擦轮开启。拨弹电机开启 */
 } CMD_ShootMode_t;
+
+typedef enum {
+  FIRE_MODE_SINGLE, /* 单发开火模式，摩擦轮开启。拨弹电机开启 */
+  FIRE_MODE_BURST, /* N连发开火模式，摩擦轮开启。拨弹电机开启 */
+  FIRE_MODE_CONT, /* 持续开火模式，摩擦轮开启。拨弹电机开启 */
+  FIRE_MODE_NUM,
+} CMD_FireMode_t;
 
 /* 小陀螺转动模式 */
 typedef enum {
@@ -75,8 +82,7 @@ typedef struct {
 /* 射击控制命令 */
 typedef struct {
   CMD_ShootMode_t mode; /* 射击运行模式 */
-  float bullet_speed;   /* 子弹初速 */
-  float shoot_freq_hz;  /* 射击频率 */
+  CMD_FireMode_t fire;  /* 开火模式 */
   bool cover_open;      /* 弹舱盖开关 */
 } CMD_ShootCmd_t;
 
@@ -120,6 +126,7 @@ typedef enum {
   CMD_BEHAVIOR_ACCELERATE,  /* 加速 */
   CMD_BEHAVIOR_DECELEBRATE, /* 减速 */
   CMD_BEHAVIOR_FIRE,        /* 开火 */
+  CMD_BEHAVIOR_FIRE_MODE,   /* 切换开火模式 */
   CMD_BEHAVIOR_BUFF,        /* 打符模式 */
   CMD_BEHAVIOR_AUTOAIM,     /* 自瞄模式 */
   CMD_BEHAVIOR_OPENCOVER,   /* 弹舱盖开关 */
