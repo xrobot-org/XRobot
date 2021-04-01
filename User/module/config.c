@@ -144,12 +144,13 @@ static const Config_RobotParam_t param_default = {
         .trig = -1.0f,
       },
     },
-    .bullet_speed_scaler = -50.0f,
-    .bullet_speed_bias = 1.0f,
     .num_trig_tooth = 8.0f,
-    .fric_radius_m = 0.03f,
+    .fric_radius = 0.03f,
     .cover_open_duty = 0.125f,
     .cover_close_duty = 0.075f,
+    .model = SHOOT_MODEL_17MM,
+    .bullet_speed = 30.f,
+    .shoot_freq = 10.0f,
   }, /* shoot */
 
   .can = {
@@ -167,9 +168,9 @@ static const Config_RobotParam_t param_hero = {
     .type = CHASSIS_TYPE_MECANUM,
 
     .motor_pid_param = {
-      .k = 0.001f,
+      .k = 0.0011f,
       .p = 1.0f,
-      .i = 0.0f,
+      .i = 0.001f,
       .d = 0.0f,
       .i_limit = 1.0f,
       .out_limit = 1.0f,
@@ -178,7 +179,7 @@ static const Config_RobotParam_t param_hero = {
     },
 
     .follow_pid_param = {
-      .k = 0.5f,
+      .k = 0.3f,
       .p = 1.0f,
       .i = 0.0f,
       .d = 0.0f,
@@ -268,7 +269,7 @@ static const Config_RobotParam_t param_hero = {
       .d_cutoff_freq = -1.0f,
     },
     .trig_pid_param = {
-      .k = 4.0f,
+      .k = 2.0f,
       .p = 1.0f,
       .i = 0.0f,
       .d = 0.037f,
@@ -287,12 +288,13 @@ static const Config_RobotParam_t param_hero = {
         .trig = -1.0f,
       },
     },
-    .bullet_speed_scaler = -50.0f,
-    .bullet_speed_bias = 1.0f,
     .num_trig_tooth = 6.0f,
-    .fric_radius_m = 0.03f,
+    .fric_radius = 0.03f,
     .cover_open_duty = 0.125f,
     .cover_close_duty = 0.075f,
+    .model = SHOOT_MODEL_42MM,
+    .bullet_speed = 16.0f,
+    .shoot_freq = 2.0f,
   }, /* shoot */
 
   .can = {
@@ -317,6 +319,7 @@ static const Config_PilotCfg_t cfg_qs = {
       .Key_Mapping[CMD_BEHAVIOR_ACCELERATE] = CMD_KEY_SHIFT,
       .Key_Mapping[CMD_BEHAVIOR_DECELEBRATE] = CMD_KEY_CTRL,
       .Key_Mapping[CMD_BEHAVIOR_FIRE] = CMD_L_CLICK,
+      .Key_Mapping[CMD_BEHAVIOR_FIRE_MODE] = CMD_R_CLICK,
       .Key_Mapping[CMD_BEHAVIOR_BUFF] = CMD_KEY_E,
       .Key_Mapping[CMD_BEHAVIOR_AUTOAIM] = CMD_R_CLICK,
       .Key_Mapping[CMD_BEHAVIOR_OPENCOVER] =  CMD_KEY_F,
