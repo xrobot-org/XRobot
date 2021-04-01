@@ -21,7 +21,7 @@ extern "C" {
 #define TASK_FREQ_CTRL_COMMAND (500u)
 #define TASK_FREQ_INFO (4u)
 #define TASK_FREQ_MONITOR (2u)
-#define TASK_FREQ_CAN (100u)
+#define TASK_FREQ_CAN (1000u)
 #define TASK_FREQ_AI (250u)
 #define TASK_FREQ_REFEREE (1000u)
 
