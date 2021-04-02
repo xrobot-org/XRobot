@@ -203,17 +203,17 @@ static const Config_RobotParam_t param_hero = {
     .pid = {
       {
         /* GIMBAL_PID_YAW_OMEGA_IDX */
-        .k = 0.2f,
+        .k = 0.45f,
         .p = 1.0f,
-        .i = 0.0f,
-        .d = 0.0f,
+        .i = 6.0f,
+        .d = 0.0008f,
         .i_limit = 1.0f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
         .range = -1.0f,
       }, {
         /* GIMBAL_PID_YAW_ANGLE_IDX */
-        .k = 3.0f,
+        .k = 20.0f,
         .p = 1.0f,
         .i = 0.0f,
         .d = 0.0f,
@@ -223,7 +223,7 @@ static const Config_RobotParam_t param_hero = {
         .range = M_2PI,
       }, {
         /* GIMBAL_PID_PIT_OMEGA_IDX */
-        .k = 0.2f,
+        .k = 0.25f,
         .p = 1.0f,
         .i = 0.0f,
         .d = 0.0f,
@@ -233,7 +233,7 @@ static const Config_RobotParam_t param_hero = {
         .range = -1.0f,
       }, {
         /* GIMBAL_PID_PIT_ANGLE_IDX */
-        .k = 3.0f,
+        .k = 12.0f,
         .p = 1.0f,
         .i = 0.0f,
         .d = 0.0f,
@@ -269,7 +269,7 @@ static const Config_RobotParam_t param_hero = {
       .d_cutoff_freq = -1.0f,
     },
     .trig_pid_param = {
-      .k = 2.0f,
+      .k = 20.0f,
       .p = 1.0f,
       .i = 0.0f,
       .d = 0.037f,
@@ -310,7 +310,7 @@ static const Config_RobotParam_t param_hero = {
 static const Config_PilotCfg_t cfg_qs = {
   .param = {
 		.sens_mouse = 0.5f,
-		.sens_rc = 2.0f,
+		.sens_rc = 6.0f,
     .map = {
       .Key_Mapping[CMD_BEHAVIOR_FORE] = CMD_KEY_W,
       .Key_Mapping[CMD_BEHAVIOR_BACK] = CMD_KEY_S,
