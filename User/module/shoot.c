@@ -184,6 +184,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
       break;
   }
 
+  if (s_cmd->reverse_trig) shoot_freq = 4.0f;
   s->num_shot_bullet = 0;
 
   /* 计算摩擦轮转速的目标值 */
@@ -197,8 +198,12 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
 
   if ((now - s->last_shoot) >= period_ms) {
     /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗子弹的弧度变化 */
-    CircleAdd(&(s->setpoint.trig_angle), -M_2PI / s->param->num_trig_tooth,
-              M_2PI);
+    if (s_cmd->reverse_trig) /* 反转拨弹 */
+      CircleAdd(&(s->setpoint.trig_angle), M_2PI / s->param->num_trig_tooth,
+                M_2PI);
+    else
+      CircleAdd(&(s->setpoint.trig_angle), -M_2PI / s->param->num_trig_tooth,
+                M_2PI);
     s->last_shoot = now;
   }
 
