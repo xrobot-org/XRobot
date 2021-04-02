@@ -84,6 +84,7 @@ typedef struct {
   CMD_ShootMode_t mode; /* 射击运行模式 */
   CMD_FireMode_t fire;  /* 开火模式 */
   bool cover_open;      /* 弹舱盖开关 */
+  bool reverse_bourn;   /* 拨弹电机状态 */
 } CMD_ShootCmd_t;
 
 /* 拨杆位置 */
@@ -131,6 +132,7 @@ typedef enum {
   CMD_BEHAVIOR_AUTOAIM,     /* 自瞄模式 */
   CMD_BEHAVIOR_OPENCOVER,   /* 弹舱盖开关 */
   CMD_BEHAVIOR_ROTOR,       /* 小陀螺模式 */
+  CMD_BEHAVIOR_REVBOURN,    /* 反转拨弹 */
   CMD_BEHAVIOR_NUM,
 } CMD_Behavior_t;
 
