@@ -247,11 +247,12 @@ int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       CMD_KeyPressedRc(rc, CMD_KEY_E, false))
     cmd->pc_ctrl = false;
 
-  /* 当rc丢控时，恢复机器人至默认状态 */
+  /* 默认使用遥控器控制 */
+  CMD_RcLogic(rc, cmd, dt_sec);
+
   if (cmd->pc_ctrl) {
+    /* 启用PC控制，覆盖之前指令 */
     CMD_PcLogic(rc, cmd, dt_sec);
-  } else {
-    CMD_RcLogic(rc, cmd, dt_sec);
   }
   return 0;
 }
