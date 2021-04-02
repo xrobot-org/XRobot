@@ -196,6 +196,18 @@ static void CMD_RcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
 }
 
 /**
+ * @brief rc失控时机器人恢复放松模式
+ *
+ * @param cmd 主结构体
+ */
+static void CMD_RcLostLogic(CMD_t *cmd) {
+  /* 机器人底盘、云台、射击运行模式恢复至放松模式 */
+  cmd->chassis.mode = CHASSIS_MODE_RELAX;
+  cmd->gimbal.mode = GIMBAL_MODE_RELAX;
+  cmd->shoot.mode = SHOOT_MODE_RELAX;
+}
+
+/**
  * @brief 初始化命令解析
  *
  * @param cmd 主结构体
@@ -246,13 +258,15 @@ int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       CMD_KeyPressedRc(rc, CMD_KEY_CTRL, false) &&
       CMD_KeyPressedRc(rc, CMD_KEY_E, false))
     cmd->pc_ctrl = false;
-
-  /* 默认使用遥控器控制 */
-  CMD_RcLogic(rc, cmd, dt_sec);
-
-  if (cmd->pc_ctrl) {
-    /* 启用PC控制，覆盖之前指令 */
-    CMD_PcLogic(rc, cmd, dt_sec);
+  /*c当rc丢控时，恢复机器人至默认状态 */
+  if ((rc->sw_l == CMD_SW_ERR) || (rc->sw_r == CMD_SW_ERR)) {
+    CMD_RcLostLogic(cmd);
+  } else {
+    if (cmd->pc_ctrl) {
+      CMD_PcLogic(rc, cmd, dt_sec);
+    } else {
+      CMD_RcLogic(rc, cmd, dt_sec);
+    }
   }
   return 0;
 }
