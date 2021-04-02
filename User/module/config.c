@@ -155,7 +155,7 @@ static const Config_RobotParam_t param_default = {
 
   .can = {
     .chassis = BSP_CAN_1,
-    .gimbal = BSP_CAN_1,
+    .gimbal = BSP_CAN_2,
     .shoot = BSP_CAN_2,      
     .cap = BSP_CAN_1,
     }, /* can */
