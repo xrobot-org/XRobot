@@ -323,6 +323,7 @@ static const Config_PilotCfg_t cfg_qs = {
       .Key_Mapping[CMD_BEHAVIOR_BUFF] = CMD_KEY_E,
       .Key_Mapping[CMD_BEHAVIOR_AUTOAIM] = CMD_R_CLICK,
       .Key_Mapping[CMD_BEHAVIOR_OPENCOVER] =  CMD_KEY_F,
+      .Key_Mapping[CMD_BEHAVIOR_REVTRIG] = CMD_KEY_R,
     },
     .move = {
       .move_sense = 0.8f,

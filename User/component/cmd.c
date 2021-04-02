@@ -54,6 +54,8 @@ static void CMD_PcLogic(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   cmd->gimbal.delta_eulr.pit =
       (float)(-rc->mouse.y) * dt_sec * cmd->param->sens_mouse;
   cmd->chassis.ctrl_vec.vx = cmd->chassis.ctrl_vec.vy = 0.0f;
+  cmd->shoot.reverse_trig = false;
+
   /* 按键行为映射相关逻辑 */
   if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FORE), false)) {
     cmd->chassis.ctrl_vec.vy += cmd->param->move.move_sense;
@@ -136,6 +138,12 @@ static void CMD_PcLogic(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
     cmd->host_overwrite = false;
     // TODO: 修复逻辑
   }
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_REVTRIG),
+                       true)) {
+    /* 按下拨弹反转 */
+    cmd->shoot.reverse_trig = true;
+  }
+
   /* 保存当前按下的键位状态 */
   rc->key_last = rc->key;
 }
