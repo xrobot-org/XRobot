@@ -71,6 +71,7 @@ void Task_CtrlShoot(void *argument) {
       Shoot_DumpOutput(&shoot, &shoot_out);
       osKernelUnlock();
     }
+    osMessageQueueReset(task_runtime.msgq.can.output.shoot);
     osMessageQueuePut(task_runtime.msgq.can.output.shoot, &shoot_out, 0, 0);
 
     tick += delay_tick; /* 计算下一个唤醒时刻 */

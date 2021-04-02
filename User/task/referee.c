@@ -74,13 +74,13 @@ void Task_Referee(void *argument) {
     if (osKernelGetTickCount() > delay_tick) {
       tick += delay_tick;
       osMessageQueueReset(task_runtime.msgq.referee.cap);
-      osMessageQueueReset(task_runtime.msgq.referee.ai);
-      osMessageQueueReset(task_runtime.msgq.referee.chassis);
-      osMessageQueueReset(task_runtime.msgq.referee.shoot);
       osMessageQueuePut(task_runtime.msgq.referee.cap, &(for_cap), 0, 0);
+      osMessageQueueReset(task_runtime.msgq.referee.ai);
       osMessageQueuePut(task_runtime.msgq.referee.ai, &(for_ai), 0, 0);
+      osMessageQueueReset(task_runtime.msgq.referee.chassis);
       osMessageQueuePut(task_runtime.msgq.referee.chassis, &(for_chassis), 0,
                         0);
+      osMessageQueueReset(task_runtime.msgq.referee.shoot);
       osMessageQueuePut(task_runtime.msgq.referee.shoot, &(for_shoot), 0, 0);
     }
 
