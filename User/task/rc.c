@@ -48,6 +48,7 @@ void Task_RC(void *argument) {
       /* 处理遥控器离线 */
       DR16_HandleOffline(&dr16, &cmd_rc);
     }
+    osMessageQueueReset(task_runtime.msgq.cmd.raw.rc);
     osMessageQueuePut(task_runtime.msgq.cmd.raw.rc, &cmd_rc, 0, 0);
   }
 }
