@@ -157,6 +157,7 @@ int8_t Referee_Parse(Referee_t *ref) {
       case REF_CMD_ID_POWER_HEAT_DATA:
         origin = &(ref->power_heat);
         size = sizeof(ref->power_heat);
+        ref->power_heat_updated = true;
         break;
       case REF_CMD_ID_ROBOT_POS:
         origin = &(ref->robot_pos);
@@ -491,11 +492,17 @@ uint8_t Referee_PackChassis(Referee_ForChassis_t *chassis,
   return 0;
 }
 
-uint8_t Referee_PackShoot(Referee_ForShoot_t *shoot, const Referee_t *ref) {
+uint8_t Referee_PackShoot(Referee_ForShoot_t *shoot, Referee_t *ref) {
   memcpy((void *)&(shoot->power_heat), (const void *)&(ref->power_heat),
          sizeof(ref->power_heat));
   memcpy((void *)&shoot->robot_status, (const void *)&ref->robot_status,
          sizeof(ref->robot_status));
   shoot->ref_status = ref->ref_status;
+  if (ref->power_heat_updated) {
+    shoot->power_heat_updated = true;
+    ref->power_heat_updated = false;
+  } else {
+    shoot->power_heat_updated = false;
+  }
   return 0;
 }

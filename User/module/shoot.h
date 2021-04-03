@@ -74,6 +74,7 @@ typedef struct {
   uint32_t last_shoot;      /* 上次射击时间 单位：ms */
   uint32_t next_shoot;      /* 下次射击时间 单位：ms */
   uint32_t num_shot_bullet; /* 已经发射的弹丸 */
+  float last_setpoint_trig_angle;
   float dt;
 
   const Shoot_Params_t *param; /* 射击的参数，用Shoot_Init设定 */
@@ -109,7 +110,10 @@ typedef struct {
   } filter;                      /* 过滤器 */
 
   float out[SHOOT_ACTR_NUM]; /* 输出数组，通过Shoot_Acuator_e里的值访问 */
-
+  CMD_FireMode_t last_fire;
+  bool single_shoot_finished;
+  uint32_t available_shot; /* 热量范围内还可以发射的数量 */
+  float shoot_freq;
 } Shoot_t;
 
 /* Exported functions prototypes -------------------------------------------- */
