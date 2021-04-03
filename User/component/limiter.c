@@ -96,7 +96,7 @@ float PowerLimit_TargetPower(float power_limit, float power_buffer) {
  */
 float HeatLimit_ShootFreq(float heat_percent, float stable_freq,
                           float shoot_freq) {
-  if (heat_percent <= 0.9) {
+  if (heat_percent <= 0.6) {
     return shoot_freq;
   } else {
     return stable_freq;

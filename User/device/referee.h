@@ -311,6 +311,7 @@ typedef struct __packed {
 typedef struct {
   osThreadId_t thread_alert;
 
+  bool power_heat_updated;
   Referee_Status_t ref_status;
   Referee_GameStatus_t game_status;
   Referee_GameResult_t game_result;
@@ -411,6 +412,7 @@ typedef struct {
   Referee_Status_t ref_status;
   Referee_PowerHeat_t power_heat;
   Referee_RobotStatus_t robot_status;
+  bool power_heat_updated;
 } Referee_ForShoot_t;
 
 /* Exported functions prototypes -------------------------------------------- */
@@ -429,7 +431,7 @@ UI_Ele_t *Referee_GetGrapicAdd(Referee_UI_t *ref_ui);
 UI_Drawcharacter_t *Referee_GetCharacterAdd(Referee_UI_t *ref_ui);
 uint8_t Referee_PraseCmd(Referee_UI_t *ref_ui, CMD_UI_t cmd);
 uint8_t Referee_PackCap(Referee_ForCap_t *cap, const Referee_t *ref);
-uint8_t Referee_PackShoot(Referee_ForShoot_t *ai, const Referee_t *ref);
+uint8_t Referee_PackShoot(Referee_ForShoot_t *ai, Referee_t *ref);
 uint8_t Referee_PackChassis(Referee_ForChassis_t *chassis,
                             const Referee_t *ref);
 uint8_t Referee_PackAI(Referee_ForAI_t *shoot, const Referee_t *ref);

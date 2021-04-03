@@ -86,7 +86,8 @@ static void CMD_PcLogic(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
     /* 切换至准备模式，停止射击 */
     cmd->shoot.mode = SHOOT_MODE_STDBY;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ROTOR), true)) {
+  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FIRE_MODE),
+                       true)) {
     /* 每按一次依次切换开火下一个模式 */
     cmd->shoot.fire++;
     cmd->shoot.fire %= FIRE_MODE_NUM;

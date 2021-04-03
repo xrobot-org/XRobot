@@ -69,7 +69,7 @@ void Task_Referee(void *argument) {
     }
     Referee_PackCap(&(for_cap), (const Referee_t *)&ref);
     Referee_PackAI(&(for_ai), (const Referee_t *)&ref);
-    Referee_PackShoot(&(for_shoot), (const Referee_t *)&ref);
+    Referee_PackShoot(&(for_shoot), (Referee_t *)&ref);
     Referee_PackChassis(&(for_chassis), (const Referee_t *)&ref);
     if (osKernelGetTickCount() > delay_tick) {
       tick += delay_tick;
