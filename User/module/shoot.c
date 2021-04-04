@@ -41,7 +41,12 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_ShootMode_t mode) {
   LowPassFilter2p_Reset(&(s->filter.in.trig), 0.0f);
   LowPassFilter2p_Reset(&(s->filter.out.trig), 0.0f);
 
-  s->setpoint.trig_angle = s->feedback.trig_angle;
+  while (fabsf(CircleError(s->setpoint.trig_angle, s->feedback.trig_angle,
+                           M_2PI)) >= M_2PI / s->param->num_trig_tooth / 2.0f) {
+    CircleAdd(&(s->setpoint.trig_angle), M_2PI / s->param->num_trig_tooth,
+              M_2PI);
+  }
+
   s->mode = mode;
   return 0;
 }
@@ -242,6 +247,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
                 M_2PI);
     s->last_shoot = now;
   }
+
   s->last_fire = s_cmd->fire;
   switch (s->mode) {
     case SHOOT_MODE_RELAX:
