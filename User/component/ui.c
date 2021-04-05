@@ -284,3 +284,18 @@ int8_t UI_DrawCharacter(UI_Drawcharacter_t *grapic_character, const char *name,
   snprintf((char *)grapic_character->character, 29, "%s", character);
   return 0;
 }
+
+/**
+ * @brief UI_删除图层
+ *
+ * @param del 结构体
+ * @param opt 操作
+ * @param layer 图层
+ * @return int8_t
+ */
+int8_t UI_DelLayer(UI_Del_t *del, uint8_t opt, uint8_t layer) {
+  if (del == NULL) return -1;
+  del->del_operation = opt;
+  del->layer = layer;
+  return 0;
+}

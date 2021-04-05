@@ -340,8 +340,10 @@ typedef struct {
 typedef struct __packed {
   UI_Ele_t grapic[7];
   UI_Drawcharacter_t character_data[3];
+  UI_Del_t del[3];
   uint8_t grapic_counter;
   uint8_t character_counter;
+  uint8_t del_counter;
 } Referee_UI_t;
 
 typedef struct __packed {
@@ -389,6 +391,14 @@ typedef struct __packed {
   UI_Drawcharacter_t data;
   uint16_t crc16;
 } Referee_UI_Drawcharacter_t;
+
+typedef struct __packed {
+  Referee_Header_t header;
+  uint16_t cmd_id;
+  Referee_Interactive_Header_t IA_header;
+  UI_Del_t data;
+  uint16_t crc16;
+} Referee_UI_Del_t;
 
 typedef struct {
   Referee_Status_t ref_status;
