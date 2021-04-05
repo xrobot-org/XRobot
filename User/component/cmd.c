@@ -94,8 +94,8 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FIRE_MODE),
                        true)) {
     /* 每按一次依次切换开火下一个模式 */
-    cmd->shoot.fire++;
-    cmd->shoot.fire %= FIRE_MODE_NUM;
+    cmd->shoot.fire_mode++;
+    cmd->shoot.fire_mode %= FIRE_MODE_NUM;
   }
   if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ROTOR),
                        true)) {
