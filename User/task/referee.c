@@ -82,12 +82,12 @@ void Task_Referee(void *argument) {
                         0);
       osMessageQueueReset(task_runtime.msgq.referee.shoot);
       osMessageQueuePut(task_runtime.msgq.referee.shoot, &(for_shoot), 0, 0);
+      while (osMessageQueueGet(task_runtime.msgq.cmd.referee, &ref_cmd, NULL,
+                               0) == osOK)
+        Referee_PraseCmd(&ui, ref_cmd);
+      if (ui.character_counter != 0 || ui.grapic_counter != 0 ||
+          ui.del_counter != 0)
+        Referee_PackUI(&ui, &ref);
     }
-
-    while (osMessageQueueGet(task_runtime.msgq.cmd.referee, &ref_cmd, NULL,
-                             0) == osOK)
-      Referee_PraseCmd(&ui, ref_cmd);
-    if (ui.character_counter != 0 || ui.grapic_counter != 0)
-      Referee_PackUI(&ui, &ref);
   }
 }

@@ -80,6 +80,11 @@ typedef struct __packed {
   uint8_t character[30];
 } UI_Drawcharacter_t;
 
+typedef struct __packed {
+  uint8_t del_operation;
+  uint8_t layer;
+} UI_Del_t;
+
 /**
  * @brief UI_绘制直线段
  *
@@ -248,6 +253,16 @@ int8_t UI_DrawCharacter(UI_Drawcharacter_t *grapic_character, const char *name,
                         uint16_t font_size, uint16_t length, uint16_t width,
                         uint16_t x_start, uint16_t y_start,
                         const char *character);
+
+/**
+ * @brief UI_删除图层
+ *
+ * @param del 结构体
+ * @param opt 操作
+ * @param layer 图层
+ * @return int8_t
+ */
+int8_t UI_DelLayer(UI_Del_t *del, uint8_t opt, uint8_t layer);
 
 #ifdef __cplusplus
 }
