@@ -141,7 +141,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
   float heat, heat_limit, speed_limit, cooling_rate;
   uint16_t heat_increase;
 
-  if (s_cmd->fire == FIRE_MODE_BURST && s->last_fire_mode != FIRE_MODE_BURST)
+  if (s_cmd->fire_mode == FIRE_MODE_BURST && s->last_fire_mode != FIRE_MODE_BURST)
     s->shootHeat_ready = true;
   /* 当裁判系统在线时启用热量控制与射速控制 */
   if (s_ref->ref_status == REF_STATUS_RUNNING) {
@@ -181,7 +181,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
     bullet_speed = s->param->bullet_speed;
   }
 
-  switch (s_cmd->fire) {
+  switch (s_cmd->fire_mode) {
     case FIRE_MODE_SINGLE:  //点射
       if (!s->single_shoot_finished) {
         shoot_freq = 100.0f;
@@ -262,7 +262,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
     s->last_shoot = now;
   }
 
-  s->last_fire_mode = s_cmd->fire;
+  s->last_fire_mode = s_cmd->fire_mode;
   s->last_mode = s->mode;
   switch (s->mode) {
     case SHOOT_MODE_RELAX:

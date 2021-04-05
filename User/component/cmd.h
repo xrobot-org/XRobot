@@ -81,7 +81,7 @@ typedef struct {
 /* 射击控制命令 */
 typedef struct {
   CMD_ShootMode_t mode; /* 射击运行模式 */
-  CMD_FireMode_t fire;  /* 开火模式 */
+  CMD_FireMode_t fire_mode;  /* 开火模式 */
   bool cover_open;      /* 弹舱盖开关 */
   bool reverse_trig;    /* 拨弹电机状态 */
 } CMD_ShootCmd_t;
