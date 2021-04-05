@@ -252,6 +252,7 @@ typedef struct {
     uint32_t shoot;
     uint32_t cap;
   } mailbox;
+  osMessageQueueId_t msgq_raw;
 } CAN_t;
 
 /* Exported functions prototypes -------------------------------------------- */

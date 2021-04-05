@@ -95,14 +95,13 @@ void CAN_Tof_Decode(CAN_Tof_t *tof, const uint8_t *raw) {
 static void CAN_CAN1RxFifoMsgPendingCallback(void) {
   HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_1), CAN_MOTOR_RX_FIFO,
                        &raw_rx1.rx_header, raw_rx1.rx_data);
-
-  CAN_StoreMsg(gcan, &raw_rx1);
+  osMessageQueuePut(gcan->msgq_raw, &raw_rx1, 0, 0);
 }
 
 static void CAN_CAN2RxFifoMsgPendingCallback(void) {
   HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_2), CAN_CAP_RX_FIFO,
                        &raw_rx2.rx_header, raw_rx2.rx_data);
-  CAN_StoreMsg(gcan, &raw_rx2);
+  osMessageQueuePut(gcan->msgq_raw, &raw_rx2, 0, 0);
 }
 
 /* Exported functions ------------------------------------------------------- */
@@ -110,6 +109,8 @@ int8_t CAN_Init(CAN_t *can, const CAN_Params_t *param) {
   if (can == NULL) return DEVICE_ERR_NULL;
   if (inited) return DEVICE_ERR_INITED;
   if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
+
+  can->msgq_raw = osMessageQueueNew(32, sizeof(CAN_RawRx_t), NULL);
 
   can->param = param;
 

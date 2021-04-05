@@ -18,9 +18,11 @@
 #ifdef DEBUG
 CAN_t can;
 CAN_Output_t can_out;
+CAN_RawRx_t can_rx;
 #else
 static CAN_t can;
 static CAN_Output_t can_out;
+static CAN_RawRx_t can_rx;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -39,6 +41,9 @@ void Task_Can(void *argument) {
     task_runtime.stack_water_mark.can = osThreadGetStackSpace(osThreadGetId());
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
+    while (osMessageQueueGet(can.msgq_raw, &can_rx, 0, 0) == osOK) {
+      CAN_StoreMsg(&can, &can_rx);
+    }
     osMessageQueueReset(task_runtime.msgq.can.feedback.chassis);
     osMessageQueuePut(task_runtime.msgq.can.feedback.chassis, &can, 0, 0);
 
