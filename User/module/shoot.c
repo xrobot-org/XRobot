@@ -234,7 +234,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
     case SHOOT_MODE_SAFE:
       bullet_speed = 0.0f;
       s->single_shoot_finished = false;
-    case SHOOT_MODE_STDBY:
+    case SHOOT_MODE_LOADED:
       shoot_freq = 0.0f;
       s->single_shoot_finished = false;
       break;
@@ -273,7 +273,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
       break;
 
     case SHOOT_MODE_SAFE:
-    case SHOOT_MODE_STDBY:
+    case SHOOT_MODE_LOADED:
     case SHOOT_MODE_FIRE:
       /* Filter feedback. */
       s->feedback.trig_angle =

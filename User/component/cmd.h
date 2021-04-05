@@ -45,10 +45,10 @@ typedef enum {
 
 /* 射击运行模式 */
 typedef enum {
-  SHOOT_MODE_RELAX, /* 放松模式，电机不输出 */
-  SHOOT_MODE_SAFE,  /* 保险模式，电机闭环控制保持静止 */
-  SHOOT_MODE_STDBY, /* 准备模式，摩擦轮开启。拨弹电机闭环控制保持静止 */
-  SHOOT_MODE_FIRE, /* 开火模式，摩擦轮开启。拨弹电机开启 */
+  SHOOT_MODE_RELAX,  /* 放松模式，电机不输出 */
+  SHOOT_MODE_SAFE,   /* 保险模式，电机闭环控制保持静止 */
+  SHOOT_MODE_LOADED, /* 上膛模式，摩擦轮开启。随时准备开火 */
+  SHOOT_MODE_FIRE,   /* 开火模式，摩擦轮开启。拨弹电机开启 */
 } CMD_ShootMode_t;
 
 typedef enum {
