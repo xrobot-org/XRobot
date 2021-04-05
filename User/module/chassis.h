@@ -80,6 +80,8 @@ typedef struct {
     float *motor_current;     /* 转矩电流 单位：A */
   } feedback;                 /* 反馈信息 */
 
+  float wz_multi; /* 小陀螺模式旋转方向 */
+
   struct {
     float *motor_rpm; /* 电机转速的动态数组，单位：RPM */
   } setpoint;         /* PID计算的目标值 */
@@ -95,10 +97,6 @@ typedef struct {
   } filter;                 /* 滤波器 */
 
   float *out; /* 电机最终的输出值的动态数组 */
-
-  float beta_last;                 /* 上一次Yaw轴转过的实际弧度 */
-  CMD_RotorMode_t mode_rotor_last; /* 小陀螺上次模式 */
-  bool rotor_rot_cw;               /* 小陀螺是否是正转 */
 } Chassis_t;
 
 /* Exported functions prototypes -------------------------------------------- */
