@@ -13,7 +13,7 @@
  * @return true 按下
  * @return false 未按下
  */
-static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_KeyValue_t key,
+static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_t *cmd, CMD_KeyValue_t key,
                              bool stateful) {
   /* 按下按键为鼠标左、右键 */
   if (key == CMD_L_CLICK) {
@@ -24,7 +24,7 @@ static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_KeyValue_t key,
   }
   bool current_key_stat = rc->key & (1u << key);
   if (stateful) /* 状态切换键值与上一次按键值比较，确保状态切换一次 */
-    return current_key_stat && !(rc->key_last & (1u << key));
+    return current_key_stat && !(cmd->key_last & (1u << key));
   else
     return current_key_stat;
 }
@@ -47,7 +47,7 @@ static inline uint16_t CMD_BehaviorToKey(CMD_t *cmd, CMD_Behavior_t behavior) {
  * @param cmd 主结构体
  * @param dt_sec 两次解析的间隔
  */
-static void CMD_PcLogic(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
+static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   /* 云台设置为鼠标控制欧拉角的变化，底盘的控制向量设置为零 */
   cmd->gimbal.delta_eulr.yaw =
       (float)rc->mouse.x * dt_sec * cmd->param->sens_mouse;
@@ -57,57 +57,65 @@ static void CMD_PcLogic(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   cmd->shoot.reverse_trig = false;
 
   /* 按键行为映射相关逻辑 */
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FORE), false)) {
+  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FORE),
+                       false)) {
     cmd->chassis.ctrl_vec.vy += cmd->param->move.move_sense;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BACK), false)) {
+  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BACK),
+                       false)) {
     cmd->chassis.ctrl_vec.vy -= cmd->param->move.move_sense;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_LEFT), false)) {
+  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_LEFT),
+                       false)) {
     cmd->chassis.ctrl_vec.vx -= cmd->param->move.move_sense;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_RIGHT), false)) {
+  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_RIGHT),
+                       false)) {
     cmd->chassis.ctrl_vec.vx += cmd->param->move.move_sense;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ACCELERATE),
+  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ACCELERATE),
                        false)) {
     cmd->chassis.ctrl_vec.vx *= cmd->param->move.move_fast_sense;
     cmd->chassis.ctrl_vec.vy *= cmd->param->move.move_fast_sense;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_DECELEBRATE),
-                       false)) {
+  if (CMD_KeyPressedRc(
+          rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_DECELEBRATE), false)) {
     cmd->chassis.ctrl_vec.vx *= cmd->param->move.move_slow_sense;
     cmd->chassis.ctrl_vec.vy *= cmd->param->move.move_slow_sense;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FIRE), false)) {
+  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FIRE),
+                       false)) {
     /* 切换至开火模式，设置相应的射击频率和子弹初速度 */
     cmd->shoot.mode = SHOOT_MODE_FIRE;
   } else {
     /* 切换至准备模式，停止射击 */
     cmd->shoot.mode = SHOOT_MODE_STDBY;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FIRE_MODE),
+  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FIRE_MODE),
                        true)) {
     /* 每按一次依次切换开火下一个模式 */
     cmd->shoot.fire++;
     cmd->shoot.fire %= FIRE_MODE_NUM;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ROTOR), true)) {
-    /* 每按一次依次切换小陀螺下一个模式 */
-    cmd->chassis.mode_rotor++;
-    cmd->chassis.mode_rotor %= ROTOR_MODE_NUM;
-    if (cmd->chassis.mode_rotor == ROTOR_MODE_NONE) {
+  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ROTOR),
+                       true)) {
+    /* 每按一次切换小陀螺模式 */
+    if (cmd->chassis.mode == CHASSIS_MODE_ROTOR) {
+
       cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
+      cmd->chassis.mode_rotor = ROTOR_MODE_CW;
     } else {
       cmd->chassis.mode = CHASSIS_MODE_ROTOR;
+      cmd->chassis.mode_rotor = ROTOR_MODE_RAND;
     }
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_OPENCOVER),
+  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_OPENCOVER),
                        true)) {
     /* 每按一次开、关弹舱盖 */
     cmd->shoot.cover_open = !cmd->shoot.cover_open;
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BUFF), true)) {
+  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BUFF),
+                       true)) {
     if (cmd->ai_status == AI_STATUS_HITSWITCH) {
       /* 停止ai的打符模式，停用host控制 */
       CMD_RefereeAdd(&(cmd->referee), CMD_UI_HIT_SWITCH_STOP);
@@ -122,7 +130,7 @@ static void CMD_PcLogic(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       cmd->host_overwrite = true;
     }
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_AUTOAIM),
+  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_AUTOAIM),
                        true)) {
     if (cmd->ai_status == AI_STATUS_AUTOAIM) {
       /* 停止ai的自瞄模式，停用host控制 */
@@ -139,14 +147,21 @@ static void CMD_PcLogic(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
     cmd->host_overwrite = false;
     // TODO: 修复逻辑
   }
-  if (CMD_KeyPressedRc(rc, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_REVTRIG),
+  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_REVTRIG),
                        true)) {
     /* 按下拨弹反转 */
     cmd->shoot.reverse_trig = true;
   }
-
+  if (CMD_KeyPressedRc(
+          rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FOLLOWGIMBAL35), true)) {
+    if (cmd->chassis.mode == CHASSIS_MODE_FOLLOW_GIMBAL_35) {
+      cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
+    } else {
+      cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL_35;
+    }
+  }
   /* 保存当前按下的键位状态 */
-  rc->key_last = rc->key;
+  cmd->key_last = rc->key;
 }
 
 /**
@@ -164,7 +179,7 @@ static void CMD_RcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       break;
 
     case CMD_SW_MID:
-      cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
+      cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL_35;
       break;
 
     case CMD_SW_DOWN:
@@ -258,14 +273,14 @@ int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   if (cmd == NULL) return -1;
 
   /* 在pc控制和rc控制间切换 */
-  if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT, false) &&
-      CMD_KeyPressedRc(rc, CMD_KEY_CTRL, false) &&
-      CMD_KeyPressedRc(rc, CMD_KEY_Q, false))
+  if (CMD_KeyPressedRc(rc, cmd, CMD_KEY_SHIFT, false) &&
+      CMD_KeyPressedRc(rc, cmd, CMD_KEY_CTRL, false) &&
+      CMD_KeyPressedRc(rc, cmd, CMD_KEY_Q, false))
     cmd->pc_ctrl = true;
 
-  if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT, false) &&
-      CMD_KeyPressedRc(rc, CMD_KEY_CTRL, false) &&
-      CMD_KeyPressedRc(rc, CMD_KEY_E, false))
+  if (CMD_KeyPressedRc(rc, cmd, CMD_KEY_SHIFT, false) &&
+      CMD_KeyPressedRc(rc, cmd, CMD_KEY_CTRL, false) &&
+      CMD_KeyPressedRc(rc, cmd, CMD_KEY_E, false))
     cmd->pc_ctrl = false;
   /*c当rc丢控时，恢复机器人至默认状态 */
   if ((rc->sw_l == CMD_SW_ERR) || (rc->sw_r == CMD_SW_ERR)) {
