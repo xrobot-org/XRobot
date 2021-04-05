@@ -89,7 +89,7 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
     cmd->shoot.mode = SHOOT_MODE_FIRE;
   } else {
     /* 切换至准备模式，停止射击 */
-    cmd->shoot.mode = SHOOT_MODE_STDBY;
+    cmd->shoot.mode = SHOOT_MODE_LOADED;
   }
   if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FIRE_MODE),
                        true)) {
@@ -101,7 +101,6 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
                        true)) {
     /* 每按一次切换小陀螺模式 */
     if (cmd->chassis.mode == CHASSIS_MODE_ROTOR) {
-
       cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
       cmd->chassis.mode_rotor = ROTOR_MODE_CW;
     } else {
@@ -200,7 +199,7 @@ static void CMD_RcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
 
     case CMD_SW_MID:
       cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-      cmd->shoot.mode = SHOOT_MODE_STDBY;
+      cmd->shoot.mode = SHOOT_MODE_LOADED;
       break;
 
     case CMD_SW_DOWN:
