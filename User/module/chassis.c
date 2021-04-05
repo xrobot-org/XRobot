@@ -5,7 +5,10 @@
 /* Includes ----------------------------------------------------------------- */
 #include "chassis.h"
 
+#include <stdlib.h>
+
 #include "bsp\mm.h"
+#include "cmsis_os2.h"
 #include "component\limiter.h"
 #include "device\can.h"
 #include "module\cap.h"
@@ -16,9 +19,11 @@
 #define _CAP_PERCENTAGE_CHARGE 30 /* 电容开始工作的电容电量 */
 
 #define CHASSIS_MAX_CAP_POWER 100 /* 电容能够提供的最大功率 */
-#define CHASSIS_ROTOR_VEC_WZ 0.5f /* 小陀螺旋转位移 */
-#define CHASSIS_ROTOR_ROTATE_ANGLE (M_PI / 2.0f) /* 小陀螺旋转弧度 */
 
+#define CHASSIS_ROTOR_WZ_MIN 0.4f          /* 小陀螺旋转位移下界 */
+#define CHASSIS_ROTOR_WZ_MAX 0.6f          /* 小陀螺旋转位移上界 */
+#define M_7OVER72PI (M_2PI * 7.0f / 72.0f) /* 三十五度对应弧度值 */
+#define CHASSIS_ROTOR_OMEGA 0.0015f        /* 小陀螺转动频率 */
 /* Private macro ------------------------------------------------------------ */
 
 /* 保证电容电量宏定义在正确范围内 */
@@ -39,6 +44,31 @@ static const float CAP_PERCENTAGE_CHARGE =
     (float)_CAP_PERCENTAGE_CHARGE / 100.0f;
 
 /* Private function  -------------------------------------------------------- */
+/**
+ * @brief 设置小陀螺模式
+ *
+ * @param c 包含底盘数据的结构体
+ * @param mode_rotor 要设置的小陀螺模式
+ */
+static void Chassis_SetRotorMode(Chassis_t *c, CMD_RotorMode_t mode_rotor) {
+  if (c->mode == CHASSIS_MODE_ROTOR && c->mode_rotor_last != mode_rotor) {
+    switch (mode_rotor) {
+      case ROTOR_MODE_CW:
+        c->rotor_rot_cw = true;
+        break;
+      case ROTOR_MODE_CCW:
+        c->rotor_rot_cw = false;
+        break;
+      case ROTOR_MODE_RAND:
+        if (rand() % 2)
+          c->rotor_rot_cw = false;
+        else
+          c->rotor_rot_cw = true;
+        break;
+    }
+  }
+  c->mode_rotor_last = mode_rotor;
+}
 
 /**
  * \brief 设置底盘模式
@@ -48,12 +78,13 @@ static const float CAP_PERCENTAGE_CHARGE =
  *
  * \return 函数运行结果
  */
-static int8_t Chassis_SetMode(Chassis_t *c, CMD_ChassisMode_t mode) {
+static int8_t Chassis_SetMode(Chassis_t *c, CMD_ChassisMode_t mode,
+                              CMD_RotorMode_t mode_rotor) {
   if (c == NULL) return CHASSIS_ERR_NULL; /* 主结构体不能为空 */
   if (mode == c->mode) return CHASSIS_OK; /* 模式未改变直接返回 */
 
   c->mode = mode;
-
+  Chassis_SetRotorMode(c, mode_rotor);
   /* 切换模式后重置PID和滤波器 */
   for (uint8_t i = 0; i < c->num_wheel; i++) {
     PID_Reset(c->pid.motor + i);
@@ -62,6 +93,26 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_ChassisMode_t mode) {
   }
 
   return CHASSIS_OK;
+}
+/**
+ * @brief 产生小陀螺wz随机速度
+ *
+ * @param wz_min wz产生最小速度
+ * @param wz_max wz产生最大速度
+ * @param now ctrl_chassis的tick数
+ * @return float
+ */
+static float Chassis_RandVecwz(Chassis_t *c, const float wz_min,
+                               const float wz_max, uint32_t now) {
+  /* wz在min和max之间，上限0.6f */
+  float wz_vary = fabs(0.2f * sinf(CHASSIS_ROTOR_OMEGA * (float)now)) + wz_min;
+  float wz;
+  if (c->rotor_rot_cw)
+    wz = wz_vary > 0.6f ? wz_max : wz_vary;
+  else
+    wz = -(wz_vary > 0.6f ? wz_max : wz_vary);
+
+  return wz;
 }
 
 /* Exported functions ------------------------------------------------------- */
@@ -228,7 +279,7 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
   c->lask_wakeup = now;
 
   /* 根据遥控器命令更改底盘模式 */
-  Chassis_SetMode(c, c_cmd->mode);
+  Chassis_SetMode(c, c_cmd->mode, c_cmd->mode_rotor);
 
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
   /* 计算vx、vy */
@@ -246,6 +297,7 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
     case CHASSIS_MODE_OPEN:
     case CHASSIS_MODE_RELAX:
     case CHASSIS_MODE_FOLLOW_GIMBAL: /* 按照云台方向换算运动向量 */
+    case CHASSIS_MODE_FOLLOW_GIMBAL_35:
     case CHASSIS_MODE_ROTOR: {
       float beta = c->feedback.gimbal_yaw_encoder - c->mech_zero->yaw;
       float cos_beta = cosf(beta);
@@ -270,35 +322,26 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
       c->move_vec.wz = PID_Calc(&(c->pid.follow), c->mech_zero->yaw,
                                 c->feedback.gimbal_yaw_encoder, 0.0f, c->dt);
       break;
+    case CHASSIS_MODE_FOLLOW_GIMBAL_35:
+      c->move_vec.wz =
+          PID_Calc(&(c->pid.follow), c->mech_zero->yaw + M_7OVER72PI,
+                   c->feedback.gimbal_yaw_encoder, 0.0f, c->dt);
+      break;
     case CHASSIS_MODE_ROTOR: { /* 小陀螺模式使底盘以一定速度旋转 */
-      float beta = c->feedback.gimbal_yaw_encoder - c->mech_zero->yaw;
       /* 根据转动模式计算wz */
       switch (c_cmd->mode_rotor) {
-        case ROTOR_MODE_NONE:
-          break;
         case ROTOR_MODE_CW:
-          c->move_vec.wz = CHASSIS_ROTOR_VEC_WZ;
+          c->move_vec.wz = Chassis_RandVecwz(c, CHASSIS_ROTOR_WZ_MIN,
+                                             CHASSIS_ROTOR_WZ_MAX, now);
           break;
         case ROTOR_MODE_CCW:
-          c->move_vec.wz = -CHASSIS_ROTOR_VEC_WZ;
+          c->move_vec.wz = Chassis_RandVecwz(c, CHASSIS_ROTOR_WZ_MIN,
+                                             CHASSIS_ROTOR_WZ_MAX, now);
           break;
-        case ROTOR_MODE_NUM:
-        case ROTOR_MODE_BOTH: {
-          /* 小陀螺在指定的弧度范围内转动 */
-          if (beta >= c->beta_last) {
-            if (beta <= CHASSIS_ROTOR_ROTATE_ANGLE)
-              c->move_vec.wz = CHASSIS_ROTOR_VEC_WZ;
-            else
-              c->move_vec.wz = -CHASSIS_ROTOR_VEC_WZ;
-          } else {
-            if (beta >= -CHASSIS_ROTOR_ROTATE_ANGLE)
-              c->move_vec.wz = -CHASSIS_ROTOR_VEC_WZ;
-            else
-              c->move_vec.wz = CHASSIS_ROTOR_VEC_WZ;
-          }
-          c->beta_last = beta;
+        case ROTOR_MODE_RAND:
+          c->move_vec.wz = Chassis_RandVecwz(c, CHASSIS_ROTOR_WZ_MIN,
+                                             CHASSIS_ROTOR_WZ_MAX, now);
           break;
-        }
       }
     }
   }
@@ -317,6 +360,7 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
     switch (c->mode) {
       case CHASSIS_MODE_BREAK:
       case CHASSIS_MODE_FOLLOW_GIMBAL:
+      case CHASSIS_MODE_FOLLOW_GIMBAL_35:
       case CHASSIS_MODE_ROTOR:
       case CHASSIS_MODE_INDENPENDENT: /* 独立模式,受PID控制 */
         c->out[i] = PID_Calc(c->pid.motor + i, c->setpoint.motor_rpm[i],

@@ -96,8 +96,9 @@ typedef struct {
 
   float *out; /* 电机最终的输出值的动态数组 */
 
-  float beta_last; /* 上一次Yaw轴转过的实际弧度 */
-
+  float beta_last;                 /* 上一次Yaw轴转过的实际弧度 */
+  CMD_RotorMode_t mode_rotor_last; /* 小陀螺上次模式 */
+  bool rotor_rot_cw;               /* 小陀螺是否是正转 */
 } Chassis_t;
 
 /* Exported functions prototypes -------------------------------------------- */

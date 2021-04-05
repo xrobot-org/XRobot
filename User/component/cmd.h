@@ -30,6 +30,7 @@ typedef enum {
   CHASSIS_MODE_RELAX, /* 放松模式，电机不输出。一般情况底盘初始化之后的模式 */
   CHASSIS_MODE_BREAK, /* 刹车模式，电机闭环控制保持静止。用于机器人停止状态 */
   CHASSIS_MODE_FOLLOW_GIMBAL, /* 通过闭环控制使车头方向跟随云台 */
+  CHASSIS_MODE_FOLLOW_GIMBAL_35, /* 通过闭环控制使车头方向35度跟随云台 */
   CHASSIS_MODE_ROTOR, /* 小陀螺模式，通过闭环控制使底盘不停旋转 */
   CHASSIS_MODE_INDENPENDENT, /* 独立模式。底盘运行不受云台影响 */
   CHASSIS_MODE_OPEN, /* 开环模式。底盘运行不受PID控制，直接输出到电机 */
@@ -59,11 +60,9 @@ typedef enum {
 
 /* 小陀螺转动模式 */
 typedef enum {
-  ROTOR_MODE_NONE, /* 静止 */
   ROTOR_MODE_CW,   /* 顺时针转动 */
   ROTOR_MODE_CCW,  /* 逆时针转动 */
-  ROTOR_MODE_BOTH, /* 顺时针、逆时针转动 */
-  ROTOR_MODE_NUM
+  ROTOR_MODE_RAND, /* 随机转动 */
 } CMD_RotorMode_t;
 
 /* 底盘控制命令 */
@@ -120,19 +119,20 @@ typedef enum {
 
 /* 行为值序列 */
 typedef enum {
-  CMD_BEHAVIOR_FORE = 0,    /* 向前 */
-  CMD_BEHAVIOR_BACK,        /* 向后 */
-  CMD_BEHAVIOR_LEFT,        /* 向左 */
-  CMD_BEHAVIOR_RIGHT,       /* 向右 */
-  CMD_BEHAVIOR_ACCELERATE,  /* 加速 */
-  CMD_BEHAVIOR_DECELEBRATE, /* 减速 */
-  CMD_BEHAVIOR_FIRE,        /* 开火 */
-  CMD_BEHAVIOR_FIRE_MODE,   /* 切换开火模式 */
-  CMD_BEHAVIOR_BUFF,        /* 打符模式 */
-  CMD_BEHAVIOR_AUTOAIM,     /* 自瞄模式 */
-  CMD_BEHAVIOR_OPENCOVER,   /* 弹舱盖开关 */
-  CMD_BEHAVIOR_ROTOR,       /* 小陀螺模式 */
-  CMD_BEHAVIOR_REVTRIG,     /* 反转拨弹 */
+  CMD_BEHAVIOR_FORE = 0,       /* 向前 */
+  CMD_BEHAVIOR_BACK,           /* 向后 */
+  CMD_BEHAVIOR_LEFT,           /* 向左 */
+  CMD_BEHAVIOR_RIGHT,          /* 向右 */
+  CMD_BEHAVIOR_ACCELERATE,     /* 加速 */
+  CMD_BEHAVIOR_DECELEBRATE,    /* 减速 */
+  CMD_BEHAVIOR_FIRE,           /* 开火 */
+  CMD_BEHAVIOR_FIRE_MODE,      /* 切换开火模式 */
+  CMD_BEHAVIOR_BUFF,           /* 打符模式 */
+  CMD_BEHAVIOR_AUTOAIM,        /* 自瞄模式 */
+  CMD_BEHAVIOR_OPENCOVER,      /* 弹舱盖开关 */
+  CMD_BEHAVIOR_ROTOR,          /* 小陀螺模式 */
+  CMD_BEHAVIOR_REVTRIG,        /* 反转拨弹 */
+  CMD_BEHAVIOR_FOLLOWGIMBAL35, /* 跟随云台呈35度 */
   CMD_BEHAVIOR_NUM,
 } CMD_Behavior_t;
 
@@ -182,6 +182,7 @@ typedef struct {
 typedef struct {
   bool pc_ctrl;        /* 是否使用键鼠控制 */
   bool host_overwrite; /* 是否Host控制 */
+  uint16_t key_last;   /* 上次按键键值 */
 
   CMD_AI_Status_t ai_status; /* AI状态 */
 
@@ -212,8 +213,7 @@ typedef struct {
     bool r_click; /* 右键 */
   } mouse;        /* 鼠标值 */
 
-  uint16_t key;      /* 按键值 */
-  uint16_t key_last; /* 上次的按键值 */
+  uint16_t key; /* 按键值 */
 
   uint16_t res; /* 保留，未启用 */
 } CMD_RC_t;
