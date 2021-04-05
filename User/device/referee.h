@@ -311,7 +311,6 @@ typedef struct __packed {
 typedef struct {
   osThreadId_t thread_alert;
 
-  bool power_heat_updated;
   Referee_Status_t ref_status;
   Referee_GameStatus_t game_status;
   Referee_GameResult_t game_result;
@@ -412,7 +411,6 @@ typedef struct {
   Referee_Status_t ref_status;
   Referee_PowerHeat_t power_heat;
   Referee_RobotStatus_t robot_status;
-  bool power_heat_updated;
 } Referee_ForShoot_t;
 
 /* Exported functions prototypes -------------------------------------------- */

@@ -46,7 +46,7 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_ShootMode_t mode) {
     CircleAdd(&(s->setpoint.trig_angle), M_2PI / s->param->num_trig_tooth,
               M_2PI);
   }
-
+  s->shootHeat_ready = true;
   s->mode = mode;
   return 0;
 }
@@ -140,6 +140,9 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
   float bullet_speed; /* 弹丸初速 */
   float heat, heat_limit, speed_limit, cooling_rate;
   uint16_t heat_increase;
+
+  if (s_cmd->fire == FIRE_MODE_BURST && s->last_fire_mode != FIRE_MODE_BURST)
+    s->shootHeat_ready = true;
   /* 当裁判系统在线时启用热量控制与射速控制 */
   if (s_ref->ref_status == REF_STATUS_RUNNING) {
     if (s_ref->robot_status.robot_id == 1 ||
@@ -148,19 +151,28 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
       heat_limit = s_ref->robot_status.shoot_42_heat_limit;
       speed_limit = s_ref->robot_status.shoot_42_speed_limit;
       cooling_rate = s_ref->robot_status.shoot_42_cooling_rate;
-      if (s_ref->power_heat_updated) {
+      if (s_ref->power_heat.shoot_42_heat != s->last_shootHeat) {
+        s->shootHeat_ready = true;
+      }
+      if (s->shootHeat_ready) {
         s->available_shot =
             (uint32_t)floorf((heat_limit - heat) / HEAT_INCREASE_42MM);
+        s->last_shootHeat = s_ref->power_heat.shoot_42_heat;
+        s->shootHeat_ready = false;
       }
-
     } else { /* 其他 */
       heat = s_ref->power_heat.shoot_id1_17_heat;
       heat_limit = s_ref->robot_status.shoot_id1_17_heat_limit;
       speed_limit = s_ref->robot_status.shoot_id1_17_speed_limit;
       cooling_rate = s_ref->robot_status.shoot_id1_17_cooling_rate;
-      if (s_ref->power_heat_updated) {
+      if (s_ref->power_heat.shoot_id1_17_heat != s->last_shootHeat) {
+        s->shootHeat_ready = true;
+      }
+      if (s->shootHeat_ready) {
         s->available_shot =
             (uint32_t)floorf((heat_limit - heat) / HEAT_INCREASE_17MM);
+        s->last_shootHeat = s_ref->power_heat.shoot_id1_17_heat;
+        s->shootHeat_ready = false;
       }
     }
     bullet_speed = speed_limit;
@@ -180,14 +192,16 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
       break;
     case FIRE_MODE_BURST:  //爆发
       if (s->available_shot > 0) {
-        if (s->last_fire != FIRE_MODE_BURST) {
+        if (s->last_fire_mode != FIRE_MODE_BURST ||
+            s->last_mode != SHOOT_MODE_FIRE) {
+          shoot_freq = 20.f;
+          s->available_shot -= 1;
           s->last_setpoint_trig_angle = s->setpoint.trig_angle;
-        }
-        if ((fabsf(CircleError(s->feedback.trig_angle, s->setpoint.trig_angle,
-                               M_2PI)) <
-             0.1 * M_2PI / s->param->num_trig_tooth) &&
-            (s->last_setpoint_trig_angle != s->setpoint.trig_angle)) {
-          shoot_freq = 500.f;
+        } else if ((fabsf(CircleError(s->feedback.trig_angle,
+                                      s->setpoint.trig_angle, M_2PI)) <
+                    0.3 * M_2PI / s->param->num_trig_tooth) &&
+                   (s->last_setpoint_trig_angle != s->setpoint.trig_angle)) {
+          shoot_freq = 20.f;
           s->available_shot -= 1;
           s->last_setpoint_trig_angle = s->setpoint.trig_angle;
         } else {
@@ -248,7 +262,8 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
     s->last_shoot = now;
   }
 
-  s->last_fire = s_cmd->fire;
+  s->last_fire_mode = s_cmd->fire;
+  s->last_mode = s->mode;
   switch (s->mode) {
     case SHOOT_MODE_RELAX:
       for (uint8_t i = 0; i < SHOOT_ACTR_NUM; i++) {
