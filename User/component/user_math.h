@@ -25,6 +25,20 @@ extern "C" {
 #define M_2PI 6.28318530717958647692f
 #endif
 
+#define max(a, b)           \
+  ({                        \
+    __typeof__(a) _a = (a); \
+    __typeof__(b) _b = (b); \
+    _a > _b ? _a : _b;      \
+  })
+
+#define min(a, b)           \
+  ({                        \
+    __typeof__(a) _a = (a); \
+    __typeof__(b) _b = (b); \
+    _a < _b ? _a : _b;      \
+  })
+
 /* 移动向量 */
 typedef struct {
   float vx; /* 前后平移 */
