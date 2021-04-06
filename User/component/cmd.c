@@ -37,7 +37,7 @@ static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_t *cmd, CMD_KeyValue_t key,
  * @return uint16_t 行为对应的按键
  */
 static inline uint16_t CMD_BehaviorToKey(CMD_t *cmd, CMD_Behavior_t behavior) {
-  return cmd->param->map.Key_Mapping[behavior];
+  return cmd->param->map.key_map[behavior];
 }
 
 /**
