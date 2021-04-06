@@ -46,8 +46,56 @@ static int8_t Shoot_SetMode(Shoot_t *s, CMD_ShootMode_t mode) {
     CircleAdd(&(s->setpoint.trig_angle), M_2PI / s->param->num_trig_tooth,
               M_2PI);
   }
-  s->shootHeat_ready = true;
+
+  if (mode == SHOOT_MODE_LOADED) s->fire_ctrl.single_done = true;
+
   s->mode = mode;
+  return 0;
+}
+
+/**
+ * @brief
+ *
+ * @param s
+ * @param s_ref
+ * @return int8_t
+ */
+static int8_t Shoot_HeatLimit(Shoot_t *s, Referee_ForShoot_t *s_ref) {
+  Shoot_HeatCtrl_t *hc = &(s->heat_ctrl);
+  /* 当裁判系统在线时启用热量控制与射速控制 */
+  if (s_ref->ref_status == REF_STATUS_RUNNING) {
+    /* 根据机器人型号获得对应数据 */
+    if (s->param->model == SHOOT_MODEL_42MM) {
+      hc->heat = s_ref->power_heat.shoot_42_heat;
+      hc->heat_limit = s_ref->robot_status.shoot_42_heat_limit;
+      hc->speed_limit = s_ref->robot_status.shoot_42_speed_limit;
+      hc->cooling_rate = s_ref->robot_status.shoot_42_cooling_rate;
+      hc->heat_increase = HEAT_INCREASE_42MM;
+    } else if (s->param->model == SHOOT_MODEL_17MM) {
+      hc->heat = s_ref->power_heat.shoot_id1_17_heat;
+      hc->heat_limit = s_ref->robot_status.shoot_id1_17_heat_limit;
+      hc->speed_limit = s_ref->robot_status.shoot_id1_17_speed_limit;
+      hc->cooling_rate = s_ref->robot_status.shoot_id1_17_cooling_rate;
+      hc->heat_increase = HEAT_INCREASE_17MM;
+    }
+    /* 检测热量更新后,计算可发射弹丸 */
+    if ((hc->heat != hc->last_heat) || (hc->heat == 0)) {
+      hc->available_shot =
+          (uint32_t)floorf((hc->heat_limit - hc->heat) / hc->heat_increase);
+      hc->last_heat = hc->heat;
+    }
+    /* 计算已发射弹丸 */
+    if (s_ref->shoot_data.bullet_speed != hc->last_bullet_speed) {
+      hc->shooted++;
+      hc->last_bullet_speed = s_ref->shoot_data.bullet_speed;
+    }
+    s->fire_ctrl.bullet_speed = hc->speed_limit;
+  } else {
+    /* 裁判系统离线，不启用热量控制 */
+    hc->shooted = 0;
+    hc->available_shot = 10;
+    s->fire_ctrl.bullet_speed = s->param->bullet_speed;
+  }
   return 0;
 }
 
@@ -119,13 +167,13 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
 }
 
 /**
- * \brief 运行射击控制逻辑
+ * @brief 运行射击控制逻辑
  *
- * \param s 包含射击数据的结构体
- * \param s_cmd 射击控制指令
- * \param dt_sec 两次调用的时间间隔
- *
- * \return 函数运行结果
+ * @param s 包含射击数据的结构体
+ * @param s_cmd 射击控制指令
+ * @param s_ref 射击使用的裁判系统数据
+ * @param now 现在时刻
+ * @return int8_t
  */
 int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
                      Referee_ForShoot_t *s_ref, uint32_t now) {
@@ -135,123 +183,62 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
   s->lask_wakeup = now;
 
   Shoot_SetMode(s, s_cmd->mode); /* 设置射击模式 */
+  Shoot_HeatLimit(s, s_ref);     /* 热量控制 */
 
-  float shoot_freq;   /* 射击频率 */
-  float bullet_speed; /* 弹丸初速 */
-  float heat, heat_limit, speed_limit, cooling_rate;
-  uint16_t heat_increase;
-
-  if (s_cmd->fire_mode == FIRE_MODE_BURST && s->last_fire_mode != FIRE_MODE_BURST)
-    s->shootHeat_ready = true;
-  /* 当裁判系统在线时启用热量控制与射速控制 */
-  if (s_ref->ref_status == REF_STATUS_RUNNING) {
-    if (s_ref->robot_status.robot_id == 1 ||
-        s_ref->robot_status.robot_id == 101) { /* 英雄 */
-      heat = s_ref->power_heat.shoot_42_heat;
-      heat_limit = s_ref->robot_status.shoot_42_heat_limit;
-      speed_limit = s_ref->robot_status.shoot_42_speed_limit;
-      cooling_rate = s_ref->robot_status.shoot_42_cooling_rate;
-      if (s_ref->power_heat.shoot_42_heat != s->last_shootHeat) {
-        s->shootHeat_ready = true;
-      }
-      if (s->shootHeat_ready) {
-        s->available_shot =
-            (uint32_t)floorf((heat_limit - heat) / HEAT_INCREASE_42MM);
-        s->last_shootHeat = s_ref->power_heat.shoot_42_heat;
-        s->shootHeat_ready = false;
-      }
-    } else { /* 其他 */
-      heat = s_ref->power_heat.shoot_id1_17_heat;
-      heat_limit = s_ref->robot_status.shoot_id1_17_heat_limit;
-      speed_limit = s_ref->robot_status.shoot_id1_17_speed_limit;
-      cooling_rate = s_ref->robot_status.shoot_id1_17_cooling_rate;
-      if (s_ref->power_heat.shoot_id1_17_heat != s->last_shootHeat) {
-        s->shootHeat_ready = true;
-      }
-      if (s->shootHeat_ready) {
-        s->available_shot =
-            (uint32_t)floorf((heat_limit - heat) / HEAT_INCREASE_17MM);
-        s->last_shootHeat = s_ref->power_heat.shoot_id1_17_heat;
-        s->shootHeat_ready = false;
-      }
-    }
-    bullet_speed = speed_limit;
-  } else {
-    shoot_freq = s->param->shoot_freq;
-    bullet_speed = s->param->bullet_speed;
-  }
-
-  switch (s_cmd->fire_mode) {
-    case FIRE_MODE_SINGLE:  //点射
-      if (!s->single_shoot_finished) {
-        shoot_freq = 100.0f;
-        s->single_shoot_finished = true;
-      } else {
-        shoot_freq = 0.0f;
-      }
-      break;
-    case FIRE_MODE_BURST:  //爆发
-      if (s->available_shot > 0) {
-        if (s->last_fire_mode != FIRE_MODE_BURST ||
-            s->last_mode != SHOOT_MODE_FIRE) {
-          shoot_freq = 20.f;
-          s->available_shot -= 1;
-          s->last_setpoint_trig_angle = s->setpoint.trig_angle;
-        } else if ((fabsf(CircleError(s->feedback.trig_angle,
-                                      s->setpoint.trig_angle, M_2PI)) <
-                    0.3 * M_2PI / s->param->num_trig_tooth) &&
-                   (s->last_setpoint_trig_angle != s->setpoint.trig_angle)) {
-          shoot_freq = 20.f;
-          s->available_shot -= 1;
-          s->last_setpoint_trig_angle = s->setpoint.trig_angle;
+  /* 根据模式计算发射行为 */
+  if (s->heat_ctrl.shooted < s->heat_ctrl.available_shot) {
+    switch (s_cmd->fire_mode) {
+      case FIRE_MODE_SINGLE: /* 点射开火模式 */
+        if (s->fire_ctrl.single_done && s_cmd->fire) {
+          s->fire_ctrl.single_done = false;
+          s->fire_ctrl.period_ms = s->param->min_shoot_delay;
         } else {
-          shoot_freq = 0.0f;
+          s->fire_ctrl.period_ms = UINT32_MAX;
         }
-      } else {
-        shoot_freq = 0.0f;
+        break;
+      case FIRE_MODE_BURST: /* 连发开火模式 */
+        if (s_cmd->fire && !s->fire_ctrl.to_burst) {
+          uint32_t shot = s->heat_ctrl.available_shot - s->heat_ctrl.shooted;
+          s->fire_ctrl.to_burst = min(5, shot);
+        }
+        if (s->fire_ctrl.to_burst > 0) {
+          s_cmd->fire = true;
+          s->fire_ctrl.period_ms = s->param->min_shoot_delay;
+        }
+        break;
+      case FIRE_MODE_CONT: { /* 持续开火模式 */
+        float shoot_freq = HeatLimit_ShootFreq(
+            s->heat_ctrl.heat, s->heat_ctrl.heat_limit,
+            s->heat_ctrl.cooling_rate, s->heat_ctrl.heat_increase,
+            1000.f / s->param->min_shoot_delay);
+        s->fire_ctrl.period_ms = (uint32_t)(1000.f / shoot_freq);
+        break;
       }
-      break;
-    case FIRE_MODE_CONT:  //持续开火模式
-      if (s_ref->robot_status.robot_id == 1 ||
-          s_ref->robot_status.robot_id == 101) {
-        heat_increase = HEAT_INCREASE_42MM;
-      } else {
-        heat_increase = HEAT_INCREASE_17MM;
-      }
-      shoot_freq =
-          HeatLimit_ShootFreq(heat / heat_limit, cooling_rate / heat_increase,
-                              2.0f * cooling_rate / heat_increase);
-      break;
-    case FIRE_MODE_NUM:
-      break;
+      case FIRE_MODE_NUM:
+        break;
+    }
+  } else {
+    s->fire_ctrl.period_ms = UINT32_MAX;  // s->fire_ctrl.to_burst=0;
   }
-
-  s->num_shot_bullet = 0;
 
   /* 根据模式选择是否使用计算出来的值 */
   switch (s->mode) {
     case SHOOT_MODE_RELAX:
     case SHOOT_MODE_SAFE:
-      bullet_speed = 0.0f;
-      s->single_shoot_finished = false;
+      s->fire_ctrl.bullet_speed = 0.0f;
+      s->fire_ctrl.period_ms = UINT32_MAX;
     case SHOOT_MODE_LOADED:
-      shoot_freq = 0.0f;
-      s->single_shoot_finished = false;
-      break;
-    case SHOOT_MODE_FIRE:
       break;
   }
 
   /* 计算摩擦轮转速的目标值 */
   s->setpoint.fric_rpm[1] =
-      CalculateRpm(bullet_speed * 0.9f, s->param->fric_radius);
+      CalculateRpm(s->fire_ctrl.bullet_speed * 0.9f, s->param->fric_radius);
   s->setpoint.fric_rpm[0] = -s->setpoint.fric_rpm[1];
 
   /* 计算拨弹电机位置的目标值 */
-  uint32_t period_ms =
-      (shoot_freq == 0.0f) ? UINT32_MAX : (uint32_t)(1000.0f / shoot_freq);
-
-  if ((now - s->last_shoot) >= period_ms) {
+  if (((now - s->fire_ctrl.last_shoot) >= s->fire_ctrl.period_ms) &&
+      (s_cmd->fire)) {
     /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗子弹的弧度变化 */
     if (s_cmd->reverse_trig) /* 反转拨弹 */
       CircleAdd(&(s->setpoint.trig_angle), M_2PI / s->param->num_trig_tooth,
@@ -259,11 +246,20 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
     else
       CircleAdd(&(s->setpoint.trig_angle), -M_2PI / s->param->num_trig_tooth,
                 M_2PI);
-    s->last_shoot = now;
+    s->fire_ctrl.last_shoot = now;
   }
 
-  s->last_fire_mode = s_cmd->fire_mode;
-  s->last_mode = s->mode;
+  /* 计算是否已经击发弹丸 */
+  if ((s->feedback.trig_angle - s->setpoint.trig_angle) <
+      (M_2PI / s->param->num_trig_tooth / 10.f)) {
+    if (s->fire_ctrl.target_trig_angle != s->setpoint.trig_angle) {
+      s->fire_ctrl.target_trig_angle = s->setpoint.trig_angle;
+      s->fire_ctrl.single_done = true;
+      if (s->heat_ctrl.shooted) s->heat_ctrl.shooted--;
+      if (s->fire_ctrl.to_burst) s->fire_ctrl.to_burst--;
+    }
+  }
+
   switch (s->mode) {
     case SHOOT_MODE_RELAX:
       for (uint8_t i = 0; i < SHOOT_ACTR_NUM; i++) {
@@ -274,8 +270,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
 
     case SHOOT_MODE_SAFE:
     case SHOOT_MODE_LOADED:
-    case SHOOT_MODE_FIRE:
-      /* Filter feedback. */
+      /* 控制拨弹电机 */
       s->feedback.trig_angle =
           LowPassFilter2p_Apply(&(s->filter.in.trig), s->feedback.trig_angle);
 
@@ -286,7 +281,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
           &(s->filter.out.trig), s->out[SHOOT_ACTR_TRIG_IDX]);
 
       for (uint8_t i = 0; i < 2; i++) {
-        /* Filter feedback. */
+        /* 控制摩擦轮 */
         s->feedback.fric_rpm[i] = LowPassFilter2p_Apply(
             &(s->filter.in.fric[i]), s->feedback.fric_rpm[i]);
 

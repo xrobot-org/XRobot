@@ -62,8 +62,31 @@ typedef struct {
   float cover_close_duty; /* 弹舱盖关闭时舵机PWM占空比 */
   Shoot_Model_t model;    /* 发射机构型号 */
   float bullet_speed;     /* 子弹初速度 */
-  float shoot_freq;       /* 射击频率 */
+  uint32_t min_shoot_delay; /* 通过设置最小射击间隔来设置最大射频 */
 } Shoot_Params_t;
+
+typedef struct {
+  float heat;          /* 现在热量水平 */
+  float last_heat;     /* 之前的热量水平 */
+  float heat_limit;    /* 热量上限 */
+  float speed_limit;   /* 弹丸初速是上限 */
+  float cooling_rate;  /* 冷却速率 */
+  float heat_increase; /* 每发热量增加值 */
+
+  bool heat_updated;       /* 热量已经更新 */
+  float last_bullet_speed; /* 之前的子弹速度 */
+  uint32_t available_shot; /* 热量范围内还可以发射的数量 */
+  uint32_t shooted;        /* 已经发射的弹丸 */
+} Shoot_HeatCtrl_t;
+
+typedef struct {
+  uint32_t last_shoot; /* 上次射击时间 单位：ms */
+  float target_trig_angle;
+  bool single_done;
+  uint32_t to_burst;   /* 计划发射的弹丸 */
+  float bullet_speed; /* 子弹初速度 */
+  uint32_t period_ms; /* 子弹击发延迟 */
+} Shoot_FireCtrl_t;
 
 /*
  * 运行的主结构体，所有这个文件里的函数都在操作这个结构体。
@@ -105,17 +128,11 @@ typedef struct {
     } out;                       /* 输出值滤波器 */
   } filter;                      /* 过滤器 */
 
+  Shoot_HeatCtrl_t heat_ctrl;
+  Shoot_FireCtrl_t fire_ctrl;
+
   float out[SHOOT_ACTR_NUM]; /* 输出数组，通过Shoot_Acuator_e里的值访问 */
-  CMD_FireMode_t last_fire_mode;
-  bool single_shoot_finished;
-  uint32_t available_shot; /* 热量范围内还可以发射的数量 */
-  float last_shootHeat;
-  bool shootHeat_ready;
-  CMD_ShootMode_t last_mode;
-  uint32_t last_shoot;      /* 上次射击时间 单位：ms */
-  uint32_t next_shoot;      /* 下次射击时间 单位：ms */
-  uint32_t num_shot_bullet; /* 已经发射的弹丸 */
-  float last_setpoint_trig_angle;
+
 } Shoot_t;
 
 /* Exported functions prototypes -------------------------------------------- */

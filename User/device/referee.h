@@ -421,6 +421,7 @@ typedef struct {
   Referee_Status_t ref_status;
   Referee_PowerHeat_t power_heat;
   Referee_RobotStatus_t robot_status;
+  Referee_ShootData_t shoot_data;
 } Referee_ForShoot_t;
 
 /* Exported functions prototypes -------------------------------------------- */
