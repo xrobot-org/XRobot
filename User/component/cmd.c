@@ -4,30 +4,7 @@
 
 #include "cmd.h"
 
-/**
- * @brief 检查按键是否按下
- *
- * @param rc 遥控器数据
- * @param key 按键名称
- * @param stateful 是否为状态切换按键
- * @return true 按下
- * @return false 未按下
- */
-static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_t *cmd, CMD_KeyValue_t key,
-                             bool stateful) {
-  /* 按下按键为鼠标左、右键 */
-  if (key == CMD_L_CLICK) {
-    return rc->mouse.l_click;
-  }
-  if (key == CMD_R_CLICK) {
-    return rc->mouse.r_click;
-  }
-  bool current_key_stat = rc->key & (1u << key);
-  if (stateful) /* 状态切换键值与上一次按键值比较，确保状态切换一次 */
-    return current_key_stat && !(cmd->key_last & (1u << key));
-  else
-    return current_key_stat;
-}
+#include <string.h>
 
 /**
  * @brief 行为转换为对应按键
@@ -38,7 +15,61 @@ static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_t *cmd, CMD_KeyValue_t key,
  */
 static inline CMD_KeyValue_t CMD_BehaviorToKey(CMD_t *cmd,
                                                CMD_Behavior_t behavior) {
-  return cmd->param->map.key_map[behavior];
+  return cmd->param->map.key_map[behavior].key;
+}
+
+static inline CMD_ActiveType_t CMD_BehaviorToActive(CMD_t *cmd,
+                                                    CMD_Behavior_t behavior) {
+  return cmd->param->map.key_map[behavior].active;
+}
+
+/**
+ * @brief 检查按键是否按下
+ *
+ * @param rc 遥控器数据
+ * @param key 按键名称
+ * @param stateful 是否为状态切换按键
+ * @return true 按下
+ * @return false 未按下
+ */
+static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_KeyValue_t key) {
+  /* 按下按键为鼠标左、右键 */
+  if (key == CMD_L_CLICK) {
+    return rc->mouse.l_click;
+  }
+  if (key == CMD_R_CLICK) {
+    return rc->mouse.r_click;
+  }
+  return rc->key & (1u << key);
+}
+
+static bool CMD_BehaviorOccurredRc(const CMD_RC_t *rc, CMD_t *cmd,
+                                   CMD_Behavior_t behavior) {
+  CMD_KeyValue_t key = CMD_BehaviorToKey(cmd, behavior);
+  CMD_ActiveType_t active = CMD_BehaviorToActive(cmd, behavior);
+
+  bool now_key_pressed, last_key_pressed;
+
+  /* 按下按键为鼠标左、右键 */
+  if (key == CMD_L_CLICK) {
+    now_key_pressed = rc->mouse.l_click;
+    last_key_pressed = cmd->mouse_last.l_click;
+  } else if (key == CMD_R_CLICK) {
+    now_key_pressed = rc->mouse.r_click;
+    last_key_pressed = cmd->mouse_last.r_click;
+  } else {
+    now_key_pressed = rc->key & (1u << key);
+    last_key_pressed = cmd->key_last & (1u << key);
+  }
+
+  switch (active) {
+    case CMD_ACTIVE_PRESSING:
+      return now_key_pressed && !last_key_pressed;
+    case CMD_ACTIVE_RASING:
+      return !now_key_pressed && last_key_pressed;
+    case CMD_ACTIVE_PRESSED:
+      return now_key_pressed;
+  }
 }
 
 /**
@@ -58,48 +89,39 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   cmd->shoot.reverse_trig = false;
 
   /* 按键行为映射相关逻辑 */
-  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FORE),
-                       false)) {
+  if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_FORE)) {
     cmd->chassis.ctrl_vec.vy += cmd->param->move.move_sense;
   }
-  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BACK),
-                       false)) {
+  if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_BACK)) {
     cmd->chassis.ctrl_vec.vy -= cmd->param->move.move_sense;
   }
-  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_LEFT),
-                       false)) {
+  if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_LEFT)) {
     cmd->chassis.ctrl_vec.vx -= cmd->param->move.move_sense;
   }
-  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_RIGHT),
-                       false)) {
+  if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_RIGHT)) {
     cmd->chassis.ctrl_vec.vx += cmd->param->move.move_sense;
   }
-  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ACCELERATE),
-                       false)) {
+  if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_ACCELERATE)) {
     cmd->chassis.ctrl_vec.vx *= cmd->param->move.move_fast_sense;
     cmd->chassis.ctrl_vec.vy *= cmd->param->move.move_fast_sense;
   }
-  if (CMD_KeyPressedRc(
-          rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_DECELEBRATE), false)) {
+  if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_DECELEBRATE)) {
     cmd->chassis.ctrl_vec.vx *= cmd->param->move.move_slow_sense;
     cmd->chassis.ctrl_vec.vy *= cmd->param->move.move_slow_sense;
   }
-  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FIRE),
-                       false)) {
+  if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_FIRE)) {
     /* 切换至开火模式，设置相应的射击频率和子弹初速度 */
     cmd->shoot.mode = SHOOT_MODE_FIRE;
   } else {
     /* 切换至准备模式，停止射击 */
     cmd->shoot.mode = SHOOT_MODE_LOADED;
   }
-  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FIRE_MODE),
-                       true)) {
+  if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_FIRE_MODE)) {
     /* 每按一次依次切换开火下一个模式 */
     cmd->shoot.fire_mode++;
     cmd->shoot.fire_mode %= FIRE_MODE_NUM;
   }
-  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_ROTOR),
-                       true)) {
+  if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_ROTOR)) {
     /* 每按一次切换小陀螺模式 */
     if (cmd->chassis.mode == CHASSIS_MODE_ROTOR) {
       cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
@@ -109,13 +131,11 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       cmd->chassis.mode_rotor = ROTOR_MODE_RAND;
     }
   }
-  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_OPENCOVER),
-                       true)) {
+  if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_OPENCOVER)) {
     /* 每按一次开、关弹舱盖 */
     cmd->shoot.cover_open = !cmd->shoot.cover_open;
   }
-  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_BUFF),
-                       true)) {
+  if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_BUFF)) {
     if (cmd->ai_status == AI_STATUS_HITSWITCH) {
       /* 停止ai的打符模式，停用host控制 */
       CMD_RefereeAdd(&(cmd->referee), CMD_UI_HIT_SWITCH_STOP);
@@ -130,8 +150,7 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       cmd->host_overwrite = true;
     }
   }
-  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_AUTOAIM),
-                       true)) {
+  if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_AUTOAIM)) {
     if (cmd->ai_status == AI_STATUS_AUTOAIM) {
       /* 停止ai的自瞄模式，停用host控制 */
       cmd->host_overwrite = false;
@@ -147,13 +166,11 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
     cmd->host_overwrite = false;
     // TODO: 修复逻辑
   }
-  if (CMD_KeyPressedRc(rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_REVTRIG),
-                       true)) {
+  if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_REVTRIG)) {
     /* 按下拨弹反转 */
     cmd->shoot.reverse_trig = true;
   }
-  if (CMD_KeyPressedRc(
-          rc, cmd, CMD_BehaviorToKey(cmd, CMD_BEHAVIOR_FOLLOWGIMBAL35), true)) {
+  if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_FOLLOWGIMBAL35)) {
     if (cmd->chassis.mode == CHASSIS_MODE_FOLLOW_GIMBAL_35) {
       cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
     } else {
@@ -162,6 +179,7 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   }
   /* 保存当前按下的键位状态 */
   cmd->key_last = rc->key;
+  memcpy(&(cmd->mouse_last),&(rc->mouse), sizeof(cmd->mouse_last));
 }
 
 /**
@@ -273,14 +291,12 @@ int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   if (cmd == NULL) return -1;
 
   /* 在pc控制和rc控制间切换 */
-  if (CMD_KeyPressedRc(rc, cmd, CMD_KEY_SHIFT, false) &&
-      CMD_KeyPressedRc(rc, cmd, CMD_KEY_CTRL, false) &&
-      CMD_KeyPressedRc(rc, cmd, CMD_KEY_Q, false))
+  if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT) &&
+      CMD_KeyPressedRc(rc, CMD_KEY_CTRL) && CMD_KeyPressedRc(rc, CMD_KEY_Q))
     cmd->pc_ctrl = true;
 
-  if (CMD_KeyPressedRc(rc, cmd, CMD_KEY_SHIFT, false) &&
-      CMD_KeyPressedRc(rc, cmd, CMD_KEY_CTRL, false) &&
-      CMD_KeyPressedRc(rc, cmd, CMD_KEY_E, false))
+  if (CMD_KeyPressedRc(rc, CMD_KEY_SHIFT) &&
+      CMD_KeyPressedRc(rc, CMD_KEY_CTRL) && CMD_KeyPressedRc(rc, CMD_KEY_E))
     cmd->pc_ctrl = false;
   /*c当rc丢控时，恢复机器人至默认状态 */
   if ((rc->sw_l == CMD_SW_ERR) || (rc->sw_r == CMD_SW_ERR)) {
