@@ -80,10 +80,10 @@ typedef struct {
 
 /* 射击控制命令 */
 typedef struct {
-  CMD_ShootMode_t mode; /* 射击运行模式 */
-  CMD_FireMode_t fire_mode;  /* 开火模式 */
-  bool cover_open;      /* 弹舱盖开关 */
-  bool reverse_trig;    /* 拨弹电机状态 */
+  CMD_ShootMode_t mode;     /* 射击运行模式 */
+  CMD_FireMode_t fire_mode; /* 开火模式 */
+  bool cover_open;          /* 弹舱盖开关 */
+  bool reverse_trig;        /* 拨弹电机状态 */
 } CMD_ShootCmd_t;
 
 /* 拨杆位置 */
@@ -136,9 +136,20 @@ typedef enum {
   CMD_BEHAVIOR_NUM,
 } CMD_Behavior_t;
 
+typedef enum {
+  CMD_ACTIVE_PRESSING, /* 按下时触发 */
+  CMD_ACTIVE_RASING,   /* 抬起时触发 */
+  CMD_ACTIVE_PRESSED,  /* 按住时触发 */
+} CMD_ActiveType_t;
+
+typedef struct {
+  CMD_ActiveType_t active;
+  CMD_KeyValue_t key;
+} CMD_KeyMapItem_t;
+
 /* 行为映射的对应按键数组 */
 typedef struct {
-  CMD_KeyValue_t key_map[CMD_BEHAVIOR_NUM];
+  CMD_KeyMapItem_t key_map[CMD_BEHAVIOR_NUM];
 } CMD_KeyMap_Params_t;
 
 /* 位移灵敏度参数 */
@@ -183,6 +194,14 @@ typedef struct {
   bool pc_ctrl;        /* 是否使用键鼠控制 */
   bool host_overwrite; /* 是否Host控制 */
   uint16_t key_last;   /* 上次按键键值 */
+
+  struct {
+    int16_t x;
+    int16_t y;
+    int16_t z;
+    bool l_click; /* 左键 */
+    bool r_click; /* 右键 */
+  } mouse_last;   /* 鼠标值 */
 
   CMD_AI_Status_t ai_status; /* AI状态 */
 
