@@ -138,7 +138,7 @@ typedef enum {
 
 /* 行为映射的对应按键数组 */
 typedef struct {
-  uint16_t Key_Mapping[CMD_BEHAVIOR_NUM];
+  uint16_t key_map[CMD_BEHAVIOR_NUM];
 } CMD_KeyMap_Params_t;
 
 /* 位移灵敏度参数 */
