@@ -48,13 +48,12 @@ typedef enum {
   SHOOT_MODE_RELAX,  /* 放松模式，电机不输出 */
   SHOOT_MODE_SAFE,   /* 保险模式，电机闭环控制保持静止 */
   SHOOT_MODE_LOADED, /* 上膛模式，摩擦轮开启。随时准备开火 */
-  SHOOT_MODE_FIRE,   /* 开火模式，摩擦轮开启。拨弹电机开启 */
 } CMD_ShootMode_t;
 
 typedef enum {
-  FIRE_MODE_SINGLE, /* 单发开火模式，摩擦轮开启。拨弹电机开启 */
-  FIRE_MODE_BURST, /* N连发开火模式，摩擦轮开启。拨弹电机开启 */
-  FIRE_MODE_CONT, /* 持续开火模式，摩擦轮开启。拨弹电机开启 */
+  FIRE_MODE_SINGLE, /* 单发开火模式  */
+  FIRE_MODE_BURST,  /* N连发开火模式 */
+  FIRE_MODE_CONT,   /* 持续开火模式 */
   FIRE_MODE_NUM,
 } CMD_FireMode_t;
 
@@ -82,6 +81,7 @@ typedef struct {
 typedef struct {
   CMD_ShootMode_t mode;     /* 射击运行模式 */
   CMD_FireMode_t fire_mode; /* 开火模式 */
+  bool fire;                /*开火*/
   bool cover_open;          /* 弹舱盖开关 */
   bool reverse_trig;        /* 拨弹电机状态 */
 } CMD_ShootCmd_t;

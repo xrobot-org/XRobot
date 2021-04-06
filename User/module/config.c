@@ -150,7 +150,7 @@ static const Config_RobotParam_t param_default = {
     .cover_close_duty = 0.075f,
     .model = SHOOT_MODEL_17MM,
     .bullet_speed = 30.f,
-    .shoot_freq = 10.0f,
+    .min_shoot_delay = (uint32_t)(1000.0f / 15.0f),
   }, /* shoot */
 
   .can = {
@@ -294,7 +294,7 @@ static const Config_RobotParam_t param_hero = {
     .cover_close_duty = 0.075f,
     .model = SHOOT_MODEL_42MM,
     .bullet_speed = 16.0f,
-    .shoot_freq = 2.0f,
+    .min_shoot_delay = (uint32_t)(1000.0f / 10.0f),
   }, /* shoot */
 
   .can = {
@@ -318,7 +318,7 @@ static const Config_PilotCfg_t cfg_qs = {
       .key_map[CMD_BEHAVIOR_RIGHT] = {CMD_ACTIVE_PRESSED, CMD_KEY_D},
       .key_map[CMD_BEHAVIOR_ACCELERATE] = {CMD_ACTIVE_PRESSED, CMD_KEY_SHIFT},
       .key_map[CMD_BEHAVIOR_DECELEBRATE] = {CMD_ACTIVE_PRESSED, CMD_KEY_CTRL},
-      .key_map[CMD_BEHAVIOR_FIRE] = {CMD_ACTIVE_PRESSING, CMD_L_CLICK},
+      .key_map[CMD_BEHAVIOR_FIRE] = {CMD_ACTIVE_PRESSED, CMD_L_CLICK},
       .key_map[CMD_BEHAVIOR_FIRE_MODE] = {CMD_ACTIVE_PRESSING, CMD_R_CLICK},
       .key_map[CMD_BEHAVIOR_FOLLOWGIMBAL35] = {CMD_ACTIVE_PRESSING, CMD_KEY_E},
       .key_map[CMD_BEHAVIOR_OPENCOVER] =  {CMD_ACTIVE_PRESSING, CMD_KEY_F},

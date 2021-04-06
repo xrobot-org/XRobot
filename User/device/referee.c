@@ -527,10 +527,10 @@ uint8_t Referee_PackChassis(Referee_ForChassis_t *chassis,
 }
 
 uint8_t Referee_PackShoot(Referee_ForShoot_t *shoot, Referee_t *ref) {
-  memcpy((void *)&(shoot->power_heat), (const void *)&(ref->power_heat),
-         sizeof(ref->power_heat));
-  memcpy((void *)&shoot->robot_status, (const void *)&ref->robot_status,
-         sizeof(ref->robot_status));
+  memcpy(&(shoot->power_heat), &(ref->power_heat), sizeof(shoot->power_heat));
+  memcpy(&(shoot->robot_status), &(ref->robot_status),
+         sizeof(shoot->robot_status));
+  memcpy(&(shoot->shoot_data), &(ref->shoot_data), sizeof(shoot->shoot_data));
   shoot->ref_status = ref->ref_status;
   return 0;
 }

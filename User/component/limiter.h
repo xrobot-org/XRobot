@@ -43,10 +43,12 @@ float PowerLimit_TargetPower(float power_limit, float power_buffer);
 /**
  * @brief 射击频率控制
  *
- * @param heat_percent 当前热量与热量上限的比值
- * @param stable_freq 使机器人射击但热量不变化的射击频率
- * @param shoot_freq cmd.c预设的频率
- * @return 经过热量限制后的射击频率
+ * @param heat 当前热量
+ * @param heat_limit 热量上限
+ * @param cooling_rate 冷却速率
+ * @param heat_increase 冷却增加
+ * @param shoot_freq 经过热量限制后的射击频率
+ * @return float 射击频率
  */
-float HeatLimit_ShootFreq(float heat_percent, float stable_freq,
-                          float shoot_freq);
+float HeatLimit_ShootFreq(float heat, float heat_limit, float cooling_rate,
+                          float heat_increase, float shoot_freq);

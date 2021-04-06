@@ -80,6 +80,8 @@ static bool CMD_BehaviorOccurredRc(const CMD_RC_t *rc, CMD_t *cmd,
  * @param dt_sec 两次解析的间隔
  */
 static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
+  cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
+
   /* 云台设置为鼠标控制欧拉角的变化，底盘的控制向量设置为零 */
   cmd->gimbal.delta_eulr.yaw =
       (float)rc->mouse.x * dt_sec * cmd->param->sens_mouse;
@@ -111,10 +113,12 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_FIRE)) {
     /* 切换至开火模式，设置相应的射击频率和子弹初速度 */
-    cmd->shoot.mode = SHOOT_MODE_FIRE;
+    cmd->shoot.mode = SHOOT_MODE_LOADED;
+    cmd->shoot.fire = true;
   } else {
     /* 切换至准备模式，停止射击 */
     cmd->shoot.mode = SHOOT_MODE_LOADED;
+    cmd->shoot.fire = false;
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_FIRE_MODE)) {
     /* 每按一次依次切换开火下一个模式 */
@@ -179,7 +183,7 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   }
   /* 保存当前按下的键位状态 */
   cmd->key_last = rc->key;
-  memcpy(&(cmd->mouse_last),&(rc->mouse), sizeof(cmd->mouse_last));
+  memcpy(&(cmd->mouse_last), &(rc->mouse), sizeof(cmd->mouse_last));
 }
 
 /**
@@ -218,12 +222,15 @@ static void CMD_RcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
 
     case CMD_SW_MID:
       cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
+      cmd->shoot.fire = false;
       cmd->shoot.mode = SHOOT_MODE_LOADED;
       break;
 
     case CMD_SW_DOWN:
       cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-      cmd->shoot.mode = SHOOT_MODE_FIRE;
+      cmd->shoot.mode = SHOOT_MODE_LOADED;
+      cmd->shoot.fire_mode = FIRE_MODE_CONT;
+      cmd->shoot.fire = true;
       break;
 
     case CMD_SW_ERR:
@@ -331,7 +338,8 @@ int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
 
   /* host射击命令，设置不同的射击频率和子弹初速度 */
   if (host->fire) {
-    cmd->shoot.mode = SHOOT_MODE_FIRE;
+    cmd->shoot.mode = SHOOT_MODE_LOADED;
+    cmd->shoot.fire = true;
   } else {
     cmd->shoot.mode = SHOOT_MODE_SAFE;
   }
