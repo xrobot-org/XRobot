@@ -239,7 +239,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
   /* 计算拨弹电机位置的目标值 */
   if (((now - s->fire_ctrl.last_shoot) >= s->fire_ctrl.period_ms) &&
       (s_cmd->fire)) {
-    /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗子弹的弧度变化 */
+    /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗弹丸的弧度变化 */
     if (s_cmd->reverse_trig) /* 反转拨弹 */
       CircleAdd(&(s->setpoint.trig_angle), M_2PI / s->param->num_trig_tooth,
                 M_2PI);
