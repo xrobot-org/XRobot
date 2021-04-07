@@ -112,7 +112,7 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
     cmd->chassis.ctrl_vec.vy *= cmd->param->move.move_slow_sense;
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_FIRE)) {
-    /* 切换至开火模式，设置相应的射击频率和子弹初速度 */
+    /* 切换至开火模式，设置相应的射击频率和弹丸初速度 */
     cmd->shoot.mode = SHOOT_MODE_LOADED;
     cmd->shoot.fire = true;
   } else {
@@ -336,7 +336,7 @@ int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
   cmd->gimbal.delta_eulr.yaw = host->gimbal_delta.yaw;
   cmd->gimbal.delta_eulr.pit = host->gimbal_delta.pit;
 
-  /* host射击命令，设置不同的射击频率和子弹初速度 */
+  /* host射击命令，设置不同的射击频率和弹丸初速度 */
   if (host->fire) {
     cmd->shoot.mode = SHOOT_MODE_LOADED;
     cmd->shoot.fire = true;
