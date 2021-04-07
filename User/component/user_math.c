@@ -91,12 +91,24 @@ inline void CircleAdd(float *origin, float delta, float range) {
 inline void CircleReverse(float *origin) { *origin = -(*origin) + M_2PI; }
 
 /**
- * \brief 根据目标弹丸速度计算摩擦轮转速
+ * @brief 根据目标弹丸速度计算摩擦轮转速
  *
- * \param bullet_speed 弹丸速度
- * \param fric_radius 摩擦轮半径
- * \return 摩擦轮转速
+ * @param bullet_speed 弹丸速度
+ * @param fric_radius 摩擦轮半径
+ * @param is17mm 是否为17mm
+ * @return 摩擦轮转速
  */
-inline float CalculateRpm(float bullet_speed, float fric_radius) {
+inline float CalculateRpm(float bullet_speed, float fric_radius, bool is17mm) {
+  if (bullet_speed == 0.0f) return 0.f;
+  if (is17mm) {
+    if (bullet_speed == 15.0f) return 4800.f;
+    if (bullet_speed == 18.0f) return 5250.f;
+    if (bullet_speed == 30.0f) return 7400.f;
+  } else {
+    if (bullet_speed == 10.0f) return 4150.f;
+    if (bullet_speed == 16.0f) return 5800.f;
+  }
+
+  /* 不为裁判系统设定值时,计算转速 */
   return 60.0f * (float)bullet_speed / (M_2PI * fric_radius);
 }
