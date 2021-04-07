@@ -43,18 +43,20 @@ typedef enum {
 typedef struct {
   KPID_Params_t fric_pid_param; /* 摩擦轮电机控制PID的参数 */
   KPID_Params_t trig_pid_param; /* 扳机电机控制PID的参数 */
-
+  /* 低通滤波器截止频率 */
   struct {
+    /* 输入 */
     struct {
       float fric; /* 摩擦轮电机 */
       float trig; /* 扳机电机 */
-    } in;         /* 输入 */
+    } in;
 
+    /* 输出 */
     struct {
-      float fric;         /* 摩擦轮电机 */
-      float trig;         /* 扳机电机 */
-    } out;                /* 输出 */
-  } low_pass_cutoff_freq; /* 低通滤波器截止频率 */
+      float fric; /* 摩擦轮电机 */
+      float trig; /* 扳机电机 */
+    } out;
+  } low_pass_cutoff_freq;
 
   float num_trig_tooth;   /* 拨弹盘中一圈能存储几颗弹丸 */
   float fric_radius;      /* 摩擦轮半径，单位：米 */
@@ -101,32 +103,39 @@ typedef struct {
   /* 模块通用 */
   CMD_ShootMode_t mode; /* 射击模式 */
 
+  /* 反馈信息 */
   struct {
     float fric_rpm[2];      /* 摩擦轮电机转速，单位：RPM */
     float trig_motor_angle; /* 拨弹电机角度，单位：弧度 */
     float trig_angle;       /* 拨弹转盘角度，单位：弧度 */
-  } feedback;               /* 反馈信息 */
+  } feedback;
 
+  /* PID计算的目标值 */
   struct {
     float fric_rpm[2]; /* 摩擦轮电机转速，单位：RPM */
     float trig_angle;  /* 拨弹电机角度，单位：弧度 */
-  } setpoint;          /* PID计算的目标值 */
+  } setpoint;
 
+  /* 反馈控制用的PID */
   struct {
     KPID_t fric[2]; /* 控制摩擦轮 */
     KPID_t trig;    /* 控制拨弹电机 */
-  } pid;            /* 反馈控制用的PID */
+  } pid;
 
+  /* 过滤器 */
   struct {
+    /* 反馈值滤波器 */
     struct {
       LowPassFilter2p_t fric[2]; /* 过滤摩擦轮 */
       LowPassFilter2p_t trig;    /* 过滤拨弹电机 */
-    } in;                        /* 反馈值滤波器 */
+    } in;
+
+    /* 输出值滤波器 */
     struct {
       LowPassFilter2p_t fric[2]; /* 过滤摩擦轮 */
       LowPassFilter2p_t trig;    /* 过滤拨弹电机 */
-    } out;                       /* 输出值滤波器 */
-  } filter;                      /* 过滤器 */
+    } out;
+  } filter;
 
   Shoot_HeatCtrl_t heat_ctrl;
   Shoot_FireCtrl_t fire_ctrl;

@@ -45,33 +45,37 @@ enum Gimbal_Acuator_e {
 typedef struct {
   const KPID_Params_t pid[GIMBAL_PID_NUM]; /* 云台电机控制PID的参数 */
 
+  /* 低通滤波器截止频率 */
   struct {
-    float out;            /* 电机输出 */
-    float gyro;           /* 陀螺仪数据 */
-  } low_pass_cutoff_freq; /* 低通滤波器截止频率 */
+    float out;  /* 电机输出 */
+    float gyro; /* 陀螺仪数据 */
+  } low_pass_cutoff_freq;
 
   float pitch_travel_rad; /* 云台pitch轴行程弧度 */
 
+  /* 设置默认运动方向 */
   struct {
     bool yaw;
     bool pit;
-  } reverse; /* 设置默认运动方向 */
+  } reverse;
 
 } Gimbal_Params_t;
 
+/* 软件限位 */
 typedef struct {
   float max;
   float min;
-} Gimbal_Limit_t; /* 软件限位 */
+} Gimbal_Limit_t;
 
 /* 云台反馈数据的结构体，包含反馈控制用的反馈数据 */
 typedef struct {
   AHRS_Gyro_t gyro; /* IMU的陀螺仪数据 */
 
+  /* 欧拉角 */
   struct {
     AHRS_Eulr_t imu;     /* 由IMU计算的欧拉角 */
     AHRS_Eulr_t encoder; /* 由编码器计算的欧拉角 */
-  } eulr;                /* 欧拉角 */
+  } eulr;
 } Gimbal_Feedback_t;
 
 /*
@@ -87,9 +91,10 @@ typedef struct {
   /* 模块通用 */
   CMD_GimbalMode_t mode; /* 云台模式 */
 
+  /* PID计算的目标值 */
   struct {
     AHRS_Eulr_t eulr; /* 表示云台姿态的欧拉角 */
-  } setpoint;         /* PID计算的目标值 */
+  } setpoint;
 
   KPID_t pid[GIMBAL_PID_NUM]; /* PID数组 */
 
