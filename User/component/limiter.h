@@ -51,4 +51,4 @@ float PowerLimit_TargetPower(float power_limit, float power_buffer);
  * @return float 射击频率
  */
 float HeatLimit_ShootFreq(float heat, float heat_limit, float cooling_rate,
-                          float heat_increase, float shoot_freq);
+                          float heat_increase);
