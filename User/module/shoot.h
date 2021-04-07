@@ -75,19 +75,18 @@ typedef struct {
   float cooling_rate;  /* 冷却速率 */
   float heat_increase; /* 每发热量增加值 */
 
-  bool heat_updated;       /* 热量已经更新 */
   float last_bullet_speed; /* 之前的弹丸速度 */
   uint32_t available_shot; /* 热量范围内还可以发射的数量 */
-  uint32_t shooted;        /* 已经发射的弹丸 */
 } Shoot_HeatCtrl_t;
 
 typedef struct {
   uint32_t last_shoot; /* 上次射击时间 单位：ms */
-  float target_trig_angle;
-  bool single_done;
-  uint32_t to_burst;  /* 计划发射的弹丸 */
-  float bullet_speed; /* 弹丸初速度 */
-  uint32_t period_ms; /* 弹丸击发延迟 */
+  bool last_fire;      /* 上次开火状态 */
+  bool first_fire;     /* 第一次收到开火指令 */
+  uint32_t shooted;    /* 已经发射的弹丸 */
+  uint32_t to_shoot;   /* 计划发射的弹丸 */
+  float bullet_speed;  /* 弹丸初速度 */
+  uint32_t period_ms;  /* 弹丸击发延迟 */
 } Shoot_FireCtrl_t;
 
 /*
