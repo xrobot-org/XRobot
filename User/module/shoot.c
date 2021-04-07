@@ -184,7 +184,6 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
 
   Shoot_SetMode(s, s_cmd->mode); /* 设置射击模式 */
   Shoot_HeatLimit(s, s_ref);     /* 热量控制 */
-
   /* 根据开火模式计算发射行为 */
   int32_t max_burst;
   switch (s_cmd->fire_mode) {
@@ -241,7 +240,8 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
 
   /* 计算摩擦轮转速的目标值 */
   s->setpoint.fric_rpm[1] =
-      CalculateRpm(s->fire_ctrl.bullet_speed * 0.9f, s->param->fric_radius);
+      CalculateRpm(s->fire_ctrl.bullet_speed, s->param->fric_radius,
+                   (s->param->model == SHOOT_MODEL_17MM));
   s->setpoint.fric_rpm[0] = -s->setpoint.fric_rpm[1];
 
   /* 计算拨弹电机位置的目标值 */

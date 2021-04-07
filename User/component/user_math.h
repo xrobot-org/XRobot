@@ -13,6 +13,7 @@ extern "C" {
 
 #include <float.h>
 #include <math.h>
+#include <stdbool.h>
 
 #define M_DEG2RAD_MULT (0.01745329251f)
 #define M_RAD2DEG_MULT (57.2957795131f)
@@ -91,13 +92,14 @@ void CircleAdd(float *origin, float delta, float range);
 void CircleReverse(float *origin);
 
 /**
- * \brief 根据目标弹丸速度计算摩擦轮转速
+ * @brief 根据目标弹丸速度计算摩擦轮转速
  *
- * \param bullet_speed 弹丸速度
- * \param fric_radius 摩擦轮半径
- * \return 摩擦轮转速
+ * @param bullet_speed 弹丸速度
+ * @param fric_radius 摩擦轮半径
+ * @param is17mm 是否为17mm
+ * @return 摩擦轮转速
  */
-float CalculateRpm(float bullet_speed, float fric_radius);
+float CalculateRpm(float bullet_speed, float fric_radius, bool is17mm);
 
 #ifdef __cplusplus
 }
