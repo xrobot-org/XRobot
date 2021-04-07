@@ -295,8 +295,10 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
 
       /* 根据弹仓盖开关状态更新弹舱盖打开时舵机PWM占空比 */
       if (s_cmd->cover_open) {
+        BSP_PWM_Start(BSP_PWM_SHOOT_SERVO);
         BSP_PWM_Set(BSP_PWM_SHOOT_SERVO, s->param->cover_open_duty);
       } else {
+        BSP_PWM_Start(BSP_PWM_SHOOT_SERVO);
         BSP_PWM_Set(BSP_PWM_SHOOT_SERVO, s->param->cover_close_duty);
       }
       break;
