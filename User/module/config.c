@@ -151,7 +151,7 @@ static const Config_RobotParam_t param_default = {
     .cover_close_duty = 0.075f,
     .model = SHOOT_MODEL_17MM,
     .bullet_speed = 30.f,
-    .min_shoot_delay = (uint32_t)(1000.0f / 15.0f),
+    .min_shoot_delay = (uint32_t)(1000.0f / 10.0f),
   }, /* shoot */
 
   .can = {
