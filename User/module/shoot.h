@@ -59,6 +59,7 @@ typedef struct {
   } low_pass_cutoff_freq;
 
   float num_trig_tooth;   /* 拨弹盘中一圈能存储几颗弹丸 */
+  float trig_gear_ratio;  /* 拨弹电机减速比 3508:19, 2006:36 */
   float fric_radius;      /* 摩擦轮半径，单位：米 */
   float cover_open_duty;  /* 弹舱盖打开时舵机PWM占空比 */
   float cover_close_duty; /* 弹舱盖关闭时舵机PWM占空比 */
