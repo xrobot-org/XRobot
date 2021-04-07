@@ -43,14 +43,16 @@ typedef struct {
   KPID_Params_t motor_pid_param;  /* 轮子控制PID的参数 */
   KPID_Params_t follow_pid_param; /* 跟随云台PID的参数 */
 
+  /* 低通滤波器截止频率 */
   struct {
-    float in;             /* 输入 */
-    float out;            /* 输出 */
-  } low_pass_cutoff_freq; /* 低通滤波器截止频率 */
+    float in;  /* 输入 */
+    float out; /* 输出 */
+  } low_pass_cutoff_freq;
 
+  /* 电机反装 应该和云台设置相同*/
   struct {
     bool yaw;
-  } reverse; /* 电机反装 */
+  } reverse;
 
 } Chassis_Params_t;
 
@@ -74,27 +76,31 @@ typedef struct {
 
   MoveVector_t move_vec; /* 底盘实际的运动向量 */
 
+  /* 反馈信息 */
   struct {
     float gimbal_yaw_encoder; /* 云台Yaw轴编码器角度 */
     float *motor_rpm;         /* 电机转速的动态数组，单位：RPM */
     float *motor_current;     /* 转矩电流 单位：A */
-  } feedback;                 /* 反馈信息 */
+  } feedback;
 
   float wz_multi; /* 小陀螺模式旋转方向 */
 
+  /* PID计算的目标值 */
   struct {
     float *motor_rpm; /* 电机转速的动态数组，单位：RPM */
-  } setpoint;         /* PID计算的目标值 */
+  } setpoint;
 
+  /* 反馈控制用的PID */
   struct {
     KPID_t *motor; /* 控制轮子电机用的PID的动态数组 */
     KPID_t follow; /* 跟随云台用的PID */
-  } pid;           /* 反馈控制用的PID */
+  } pid;
 
+  /* 滤波器 */
   struct {
     LowPassFilter2p_t *in;  /* 反馈值滤波器 */
     LowPassFilter2p_t *out; /* 输出值滤波器 */
-  } filter;                 /* 滤波器 */
+  } filter;
 
   float *out; /* 电机最终的输出值的动态数组 */
 } Chassis_t;
