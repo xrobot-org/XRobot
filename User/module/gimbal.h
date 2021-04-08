@@ -15,6 +15,7 @@ extern "C" {
 #include "component\pid.h"
 #include "device\bmi088.h"
 #include "device\can.h"
+#include "device\referee.h"
 
 /* Exported constants ------------------------------------------------------- */
 #define GIMBAL_OK (0)        /* 运行正常 */
@@ -158,6 +159,14 @@ void Gimbal_DumpOutput(Gimbal_t *g, CAN_GimbalOutput_t *out);
  * \param output 要清空的结构体
  */
 void Gimbal_ResetOutput(CAN_GimbalOutput_t *output);
+
+/**
+ * @brief 导出云台UI数据
+ *
+ * @param g 云台结构体
+ * @param ui UI结构体
+ */
+void Gimbal_DumpUI(const Gimbal_t *g, Referee_GimbalUI_t *ui);
 #ifdef __cplusplus
 }
 #endif

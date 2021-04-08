@@ -331,7 +331,11 @@ static const Config_PilotCfg_t cfg_qs = {
       .move_sense = 0.8f,
       .move_fast_sense = 1.2f,
       .move_slow_sense = 0.8f,		
-    },       
+    },
+    .screen = {
+      .height = 1080,
+      .width = 1920,
+    },
   },
 };
 

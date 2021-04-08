@@ -21,11 +21,13 @@ CMD_ShootCmd_t shoot_cmd;
 Shoot_t shoot;
 Referee_ForShoot_t referee_shoot;
 CAN_ShootOutput_t shoot_out;
+Referee_ShootUI_t shoot_ui;
 #else
 static CMD_ShootCmd_t shoot_cmd;
 static Shoot_t shoot;
 static Referee_ForShoot_t referee_shoot;
 static CAN_ShootOutput_t shoot_out;
+static Referee_ShootUI_t shoot_ui;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -73,6 +75,10 @@ void Task_CtrlShoot(void *argument) {
     }
     osMessageQueueReset(task_runtime.msgq.can.output.shoot);
     osMessageQueuePut(task_runtime.msgq.can.output.shoot, &shoot_out, 0, 0);
+
+    Shoot_DumpUI(&shoot, &shoot_ui);
+    osMessageQueueReset(task_runtime.msgq.ui.shoot);
+    osMessageQueuePut(task_runtime.msgq.ui.shoot, &shoot_ui, 0, 0);
 
     tick += delay_tick; /* 计算下一个唤醒时刻 */
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */

@@ -106,6 +106,14 @@ typedef struct {
 
     osMessageQueueId_t cap_info;
 
+    struct {
+      osMessageQueueId_t chassis;
+      osMessageQueueId_t gimbal;
+      osMessageQueueId_t shoot;
+      osMessageQueueId_t cap;
+      osMessageQueueId_t cmd;
+    } ui;
+
   } msgq;
 
   /* 机器人状态 */

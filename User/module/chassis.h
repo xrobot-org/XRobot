@@ -167,6 +167,14 @@ void Chassis_DumpOutput(Chassis_t *c, CAN_ChassisOutput_t *out);
  */
 void Chassis_ResetOutput(CAN_ChassisOutput_t *out);
 
+/**
+ * @brief 导出底盘数据
+ *
+ * @param chassis 底盘数据结构体
+ * @param ui UI数据结构体
+ */
+void Chassis_DumpUI(const Chassis_t *c, Referee_ChassisUI_t *ui);
+
 #ifdef __cplusplus
 }
 #endif

@@ -15,12 +15,17 @@ extern "C" {
 #include "component\cmd.h"
 #include "component\ui.h"
 #include "component\user_math.h"
+#include "device\can.h"
 #include "device\device.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
 #define REF_SWITCH_STATUS(ref, stat) ((ref).ref_status = (stat))
 #define CHASSIS_POWER_MAX_WITHOUT_REF 40.0f /* 裁判系统离线底盘最大功率 */
+
+#define REF_UI_MAX_GRAPIC_NUM (7)
+#define REF_UI_MAX_STRING_NUM (7)
+#define REF_UI_MAX_DEL_NUM (3)
 
 /* Exported types ----------------------------------------------------------- */
 typedef struct __packed {
@@ -309,8 +314,6 @@ typedef struct __packed {
 } Referee_InterStudent_Custom_t;
 
 typedef struct {
-  osThreadId_t thread_alert;
-
   Referee_Status_t ref_status;
   Referee_GameStatus_t game_status;
   Referee_GameResult_t game_result;
@@ -335,15 +338,47 @@ typedef struct {
   Referee_InterStudent_Custom_t custom;
   Referee_ClientMap_t client_map;
   Referee_KeyboardMouse_t keyboard_mouse;
+
+  osTimerId_t ui_fast_timer_id;
+  osTimerId_t ui_slow_timer_id;
 } Referee_t;
 
+typedef struct {
+  CMD_ChassisMode_t mode;
+  float angle;
+} Referee_ChassisUI_t;
+
+typedef struct {
+  float percentage;
+  CAN_CapStatus_t status;
+} Referee_CapUI_t;
+
+typedef struct {
+  CMD_GimbalMode_t mode;
+} Referee_GimbalUI_t;
+
+typedef struct {
+  CMD_ShootMode_t mode;
+  CMD_FireMode_t fire;
+} Referee_ShootUI_t;
+
 typedef struct __packed {
-  UI_Ele_t grapic[7];
-  UI_Drawcharacter_t character_data[3];
-  UI_Del_t del[3];
+  /* UI缓冲数据 */
+  UI_Ele_t grapic[REF_UI_MAX_GRAPIC_NUM];
+  UI_Drawcharacter_t character_data[REF_UI_MAX_STRING_NUM];
+  UI_Del_t del[REF_UI_MAX_DEL_NUM];
+  /* 待发送数量 */
   uint8_t grapic_counter;
   uint8_t character_counter;
   uint8_t del_counter;
+  /* UI所需信息 */
+  Referee_CapUI_t cap_ui;
+  Referee_ChassisUI_t chassis_ui;
+  Referee_ShootUI_t shoot_ui;
+  Referee_GimbalUI_t gimbal_ui;
+  bool cmd_pc;
+  /* 屏幕分辨率 */
+  const CMD_Screen_t *screen;
 } Referee_UI_t;
 
 typedef struct __packed {
@@ -425,7 +460,8 @@ typedef struct {
 } Referee_ForShoot_t;
 
 /* Exported functions prototypes -------------------------------------------- */
-int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert);
+int8_t Referee_Init(Referee_t *ref, Referee_UI_t *ui,
+                    const CMD_Screen_t *screen);
 int8_t Referee_Restart(void);
 
 int8_t Referee_StartReceiving(Referee_t *ref);
@@ -444,6 +480,7 @@ uint8_t Referee_PackShoot(Referee_ForShoot_t *ai, Referee_t *ref);
 uint8_t Referee_PackChassis(Referee_ForChassis_t *chassis,
                             const Referee_t *ref);
 uint8_t Referee_PackAI(Referee_ForAI_t *shoot, const Referee_t *ref);
+uint8_t Referee_UIRefresh(Referee_UI_t *ui);
 #ifdef __cplusplus
 }
 #endif

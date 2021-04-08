@@ -26,6 +26,15 @@ extern "C" {
  */
 void Cap_Control(CAN_Capacitor_t *cap, const Referee_ForCap_t *referee,
                  CAN_CapOutput_t *cap_out);
+
+/**
+ * @brief 导出电容数据
+ *
+ * @param cap 电容数据
+ * @param ui 结构体
+ */
+void Cap_DumpUI(const CAN_Capacitor_t *cap, Referee_CapUI_t *ui);
+
 #ifdef __cplusplus
 }
 #endif

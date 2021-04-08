@@ -23,12 +23,14 @@ Chassis_t chassis;
 CAN_ChassisOutput_t chassis_out;
 CAN_Capacitor_t cap;
 Referee_ForChassis_t referee_chassis;
+Referee_ChassisUI_t chassis_ui;
 #else
 static CMD_ChassisCmd_t chassis_cmd;
 static Chassis_t chassis;
 static CAN_ChassisOutput_t chassis_out;
 static CAN_Capacitor_t cap;
 static Referee_ForChassis_t referee_chassis;
+static Referee_ChassisUI_t chassis_ui;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -74,6 +76,10 @@ void Task_CtrlChassis(void *argument) {
     /* 将电机输出值发送到CAN */
     osMessageQueueReset(task_runtime.msgq.can.output.chassis);
     osMessageQueuePut(task_runtime.msgq.can.output.chassis, &chassis_out, 0, 0);
+    /* 将底盘数据发送给UI */
+    Chassis_DumpUI(&chassis, &chassis_ui);
+    osMessageQueueReset(task_runtime.msgq.ui.chassis);
+    osMessageQueuePut(task_runtime.msgq.ui.chassis, &chassis_ui, 0, 0);
 
     tick += delay_tick; /* 计算下一个唤醒时刻 */
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
