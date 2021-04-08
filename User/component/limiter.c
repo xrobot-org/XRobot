@@ -97,9 +97,11 @@ float PowerLimit_TargetPower(float power_limit, float power_buffer) {
  * @return float 射击频率
  */
 float HeatLimit_ShootFreq(float heat, float heat_limit, float cooling_rate,
-                          float heat_increase) {
+                          float heat_increase, bool is_big) {
   float heat_percent = heat / heat_limit;
   float stable_freq = cooling_rate / heat_increase;
-
-  return (heat_percent > 0.7f) ? stable_freq : 3.0f * stable_freq;
+  if (is_big)
+    return stable_freq;
+  else
+    return (heat_percent > 0.7f) ? stable_freq : 3.0f * stable_freq;
 }

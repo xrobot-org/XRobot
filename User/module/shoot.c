@@ -220,7 +220,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
     case FIRE_MODE_CONT: { /* 持续开火模式 */
       float shoot_freq = HeatLimit_ShootFreq(
           s->heat_ctrl.heat, s->heat_ctrl.heat_limit, s->heat_ctrl.cooling_rate,
-          s->heat_ctrl.heat_increase);
+          s->heat_ctrl.heat_increase, s->param->model == SHOOT_MODEL_42MM);
       s->fire_ctrl.period_ms =
           (shoot_freq == 0.0f) ? UINT32_MAX : (uint32_t)(1000.f / shoot_freq);
       break;
