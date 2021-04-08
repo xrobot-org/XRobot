@@ -744,6 +744,10 @@ uint8_t Referee_UIRefresh(Referee_UI_t *ui) {
 
       default:
         fsm = 0;
+        if (ui->del_counter >= REF_UI_MAX_DEL_NUM ||
+            ui->character_counter > REF_UI_MAX_STRING_NUM ||
+            ui->grapic_counter > REF_UI_MAX_GRAPIC_NUM)
+          osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_SEND_REDY);
     }
   }
 
