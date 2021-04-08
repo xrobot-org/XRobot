@@ -411,5 +411,5 @@ void Chassis_ResetOutput(CAN_ChassisOutput_t *out) {
  */
 void Chassis_DumpUI(const Chassis_t *c, Referee_ChassisUI_t *ui) {
   ui->mode = c->mode;
-  ui->angle = c->mech_zero->yaw - c->feedback.gimbal_yaw_encoder;
+  ui->angle = c->feedback.gimbal_yaw_encoder - c->mech_zero->yaw;
 }
