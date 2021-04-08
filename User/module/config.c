@@ -180,7 +180,7 @@ static const Config_RobotParam_t param_hero = {
     },
 
     .follow_pid_param = {
-      .k = 0.3f,
+      .k = 0.5f,
       .p = 1.0f,
       .i = 0.0f,
       .d = 0.0f,
@@ -263,8 +263,8 @@ static const Config_RobotParam_t param_hero = {
     .fric_pid_param = {
       .k = 0.001f,
       .p = 1.0f,
-      .i = 0.5f,
-      .d = 0.5f,
+      .i = 0.2f,
+      .d = 0.01f,
       .i_limit = 0.5f,
       .out_limit = 0.5f,
       .d_cutoff_freq = -1.0f,
