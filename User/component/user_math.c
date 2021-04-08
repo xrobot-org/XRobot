@@ -101,9 +101,9 @@ inline void CircleReverse(float *origin) { *origin = -(*origin) + M_2PI; }
 inline float CalculateRpm(float bullet_speed, float fric_radius, bool is17mm) {
   if (bullet_speed == 0.0f) return 0.f;
   if (is17mm) {
-    if (bullet_speed == 15.0f) return 4800.f;
-    if (bullet_speed == 18.0f) return 5250.f;
-    if (bullet_speed == 30.0f) return 7400.f;
+    if (bullet_speed == 15.0f) return 4670.f;
+    if (bullet_speed == 18.0f) return 5200.f;
+    if (bullet_speed == 30.0f) return 7350.f;
   } else {
     if (bullet_speed == 10.0f) return 4150.f;
     if (bullet_speed == 16.0f) return 5800.f;
