@@ -17,9 +17,13 @@
 #define REF_HEADER_SOF (0xA5)
 #define REF_LEN_RX_BUFF (0xFF)
 
-#define REF_UI_MAX_GRAPIC_NUM (7)
-#define REF_UI_MAX_STRING_NUM (3)
-#define REF_UI_MAX_DEL_NUM (3)
+#define REF_UI_FAST_REFRESH_FREQ (50)
+#define REF_UI_SLOW_REFRESH_FREQ (0.2f)
+
+#define REF_UI_BOX_UP_OFFSET (4)
+#define REF_UI_BOX_BOT_OFFSET (-14)
+
+#define REF_UI_RIGHT_START_POS (0.85f)
 
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
@@ -28,12 +32,12 @@ static volatile uint32_t drop_message = 0;
 
 static uint8_t rxbuf[REF_LEN_RX_BUFF];
 
-static Referee_t *gref;
+static osThreadId_t thread_alert;
 static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
 static void Referee_RxCpltCallback(void) {
-  osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY);
+  osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_RAW_REDY);
 }
 
 static void Referee_IdleLineCallback(void) {
@@ -41,15 +45,32 @@ static void Referee_IdleLineCallback(void) {
 }
 
 static void Referee_AbortRxCpltCallback(void) {
-  osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY);
+  osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_RAW_REDY);
+}
+
+static void Referee_TxCpltCallback(void) {
+  osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_SEND_REDY);
+}
+
+static void RefereeFastRefreshTimerCallback(void *arg) {
+  (void)arg;
+  osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_FAST_REFRESH_UI);
+}
+
+static void RefereeSlowRefreshTimerCallback(void *arg) {
+  (void)arg;
+  osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_SLOW_REFRESH_UI);
 }
 
 /* Exported functions ------------------------------------------------------- */
-int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert) {
+int8_t Referee_Init(Referee_t *ref, Referee_UI_t *ui,
+                    const CMD_Screen_t *screen) {
   if (ref == NULL) return DEVICE_ERR_NULL;
   if (inited) return DEVICE_ERR_INITED;
 
-  ref->thread_alert = thread_alert;
+  if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
+
+  ui->screen = screen;
 
   BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_RX_CPLT_CB,
                             Referee_RxCpltCallback);
@@ -57,17 +78,32 @@ int8_t Referee_Init(Referee_t *ref, osThreadId_t thread_alert) {
                             Referee_AbortRxCpltCallback);
   BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_IDLE_LINE_CB,
                             Referee_IdleLineCallback);
+  BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_TX_CPLT_CB,
+                            Referee_TxCpltCallback);
+
+  uint32_t fast_period_ms = (uint32_t)(1000.0f / REF_UI_FAST_REFRESH_FREQ);
+  uint32_t slow_period_ms = (uint32_t)(1000.0f / REF_UI_SLOW_REFRESH_FREQ);
+
+  ref->ui_fast_timer_id =
+      osTimerNew(RefereeFastRefreshTimerCallback, osTimerPeriodic, NULL, NULL);
+
+  ref->ui_slow_timer_id =
+      osTimerNew(RefereeSlowRefreshTimerCallback, osTimerPeriodic, NULL, NULL);
+
+  osTimerStart(ref->ui_fast_timer_id, fast_period_ms);
+  osTimerStart(ref->ui_slow_timer_id, slow_period_ms);
 
   __HAL_UART_ENABLE_IT(BSP_UART_GetHandle(BSP_UART_REF), UART_IT_IDLE);
 
-  gref = ref;
+  osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_SEND_REDY);
+
   inited = true;
   return 0;
 }
 
 int8_t Referee_Restart(void) {
-  __HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_DR16));
-  __HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_DR16));
+  __HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_REF));
+  __HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_REF));
   return 0;
 }
 
@@ -226,6 +262,7 @@ error:
 int8_t Referee_StartSend(uint8_t *data, uint32_t len) {
   if (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_REF), data,
                             (size_t)len) == HAL_OK) {
+    osThreadFlagsClear(SIGNAL_REFEREE_SEND_REDY);
     return DEVICE_OK;
   } else
     return DEVICE_ERR;
@@ -314,9 +351,36 @@ int8_t Referee_SetHeader(Referee_Interactive_Header_t *header,
 }
 
 int8_t Referee_PackUI(Referee_UI_t *ui, Referee_t *ref) {
+  if (!(osThreadFlagsGet() & SIGNAL_REFEREE_SEND_REDY)) return 0;
+  if (ui->character_counter == 0 && ui->grapic_counter == 0 &&
+      ui->del_counter == 0)
+    return 0;
+
   static uint8_t send_data[sizeof(Referee_UI_Drawgrapic_7_t)] = {0};
   uint16_t size;
-  if (ui->grapic_counter != 0) {
+  if (ui->del_counter != 0) {
+    if (ui->del_counter < 0 || ui->del_counter > REF_UI_MAX_STRING_NUM)
+      return DEVICE_ERR;
+    Referee_UI_Del_t *address = (Referee_UI_Del_t *)send_data;
+    address->header.sof = REF_HEADER_SOF;
+    address->header.data_length =
+        sizeof(UI_Del_t) + sizeof(Referee_Interactive_Header_t);
+    address->header.crc8 =
+        CRC8_Calc((const uint8_t *)&(address->header),
+                  sizeof(Referee_Header_t) - sizeof(uint8_t), CRC8_INIT);
+    address->cmd_id = REF_CMD_ID_INTER_STUDENT;
+    Referee_SetHeader(&(address->IA_header), REF_STDNT_CMD_ID_UI_DEL,
+                      ref->robot_status.robot_id);
+    Referee_MoveData(&(ui->del[--ui->del_counter]), &(address->data),
+                     sizeof(UI_Del_t));
+    address->crc16 =
+        CRC16_Calc((const uint8_t *)address,
+                   sizeof(Referee_UI_Del_t) - sizeof(uint16_t), CRC16_INIT);
+    size = sizeof(Referee_UI_Del_t);
+
+    Referee_StartSend(send_data, size);
+    return DEVICE_OK;
+  } else if (ui->grapic_counter != 0) {
     switch (ui->grapic_counter) {
       case 1:
         size = sizeof(Referee_UI_Drawgrapic_1_t);
@@ -403,8 +467,7 @@ int8_t Referee_PackUI(Referee_UI_t *ui, Referee_t *ref) {
     if (Referee_StartSend(send_data, size) == HAL_OK) {
       ui->grapic_counter = 0;
       return DEVICE_OK;
-    } else
-      return DEVICE_ERR;
+    }
   } else if (ui->character_counter != 0) {
     if (ui->character_counter < 0 ||
         ui->character_counter > REF_UI_MAX_STRING_NUM)
@@ -429,30 +492,8 @@ int8_t Referee_PackUI(Referee_UI_t *ui, Referee_t *ref) {
 
     Referee_StartSend(send_data, size);
     return DEVICE_OK;
-  } else if (ui->del_counter != 0) {
-    if (ui->del_counter < 0 || ui->del_counter > REF_UI_MAX_STRING_NUM)
-      return DEVICE_ERR;
-    Referee_UI_Del_t *address = (Referee_UI_Del_t *)send_data;
-    address->header.sof = REF_HEADER_SOF;
-    address->header.data_length =
-        sizeof(UI_Del_t) + sizeof(Referee_Interactive_Header_t);
-    address->header.crc8 =
-        CRC8_Calc((const uint8_t *)&(address->header),
-                  sizeof(Referee_Header_t) - sizeof(uint8_t), CRC8_INIT);
-    address->cmd_id = REF_CMD_ID_INTER_STUDENT;
-    Referee_SetHeader(&(address->IA_header), REF_STDNT_CMD_ID_UI_DEL,
-                      ref->robot_status.robot_id);
-    Referee_MoveData(&(ui->del[--ui->del_counter]), &(address->data),
-                     sizeof(UI_Del_t));
-    address->crc16 =
-        CRC16_Calc((const uint8_t *)address,
-                   sizeof(Referee_UI_Del_t) - sizeof(uint16_t), CRC16_INIT);
-    size = sizeof(Referee_UI_Del_t);
-
-    Referee_StartSend(send_data, size);
-    return DEVICE_OK;
-  } else
-    return DEVICE_ERR_NULL;
+  }
+  return DEVICE_ERR_NULL;
 }
 
 UI_Ele_t *Referee_GetGrapicAdd(Referee_UI_t *ref_ui) {
@@ -498,6 +539,16 @@ uint8_t Referee_PraseCmd(Referee_UI_t *ref_ui, CMD_UI_t cmd) {
       UI_DelLayer(Referee_GetDelAdd(ref_ui), UI_DEL_OPERATION_DEL,
                   UI_GRAPIC_LAYER_AUTOAIM);
       break;
+    case CMD_UI_AUTO_AIM_START:
+      UI_DrawCharacter(Referee_GetCharacterAdd(ref_ui), "1",
+                       UI_GRAPIC_OPERATION_ADD, UI_GRAPIC_LAYER_AUTOAIM,
+                       RED_BLUE, UI_DEFAULT_WIDTH * 10, 50, UI_DEFAULT_WIDTH,
+                       ref_ui->screen->width * 0.8,
+                       ref_ui->screen->height * 0.5, "AUTO");
+      break;
+    case CMD_UI_AUTO_AIM_STOP:
+      UI_DelLayer(Referee_GetDelAdd(ref_ui), UI_DEL_OPERATION_DEL,
+                  UI_GRAPIC_LAYER_AUTOAIM);
 
     default:
       return -1;
@@ -532,5 +583,208 @@ uint8_t Referee_PackShoot(Referee_ForShoot_t *shoot, Referee_t *ref) {
          sizeof(shoot->robot_status));
   memcpy(&(shoot->shoot_data), &(ref->shoot_data), sizeof(shoot->shoot_data));
   shoot->ref_status = ref->ref_status;
+  return 0;
+}
+
+uint8_t Referee_UIRefresh(Referee_UI_t *ui) {
+  static uint8_t fsm = 0;
+  if (osThreadFlagsGet() & SIGNAL_REFEREE_FAST_REFRESH_UI) {
+    osThreadFlagsClear(SIGNAL_REFEREE_FAST_REFRESH_UI);
+    switch (fsm) {
+      case 0: {
+        fsm++;
+        UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
+                    UI_GRAPIC_LAYER_CHASSIS);
+        UI_DrawLine(Referee_GetGrapicAdd(ui), "6", UI_GRAPIC_OPERATION_ADD,
+                    UI_GRAPIC_LAYER_CHASSIS, GREEN, UI_DEFAULT_WIDTH * 12,
+                    ui->screen->width * 0.4, ui->screen->height * 0.2,
+                    ui->screen->width * 0.4 + sin(ui->chassis_ui.angle) * 46,
+                    ui->screen->height * 0.2 + cos(ui->chassis_ui.angle) * 46);
+        float start_pos_h = 0.0f;
+        switch (ui->chassis_ui.mode) {
+          case CHASSIS_MODE_FOLLOW_GIMBAL:
+            start_pos_h = 0.68f;
+            break;
+          case CHASSIS_MODE_FOLLOW_GIMBAL_35:
+            start_pos_h = 0.66f;
+            break;
+          case CHASSIS_MODE_ROTOR:
+            start_pos_h = 0.64f;
+            break;
+          default:
+            break;
+        }
+        if (start_pos_h != 0.0f)
+          UI_DrawRectangle(
+              Referee_GetGrapicAdd(ui), "8", UI_GRAPIC_OPERATION_ADD,
+              UI_GRAPIC_LAYER_CHASSIS, GREEN, UI_DEFAULT_WIDTH,
+              ui->screen->width * REF_UI_RIGHT_START_POS - 6,
+              ui->screen->height * start_pos_h + REF_UI_BOX_UP_OFFSET,
+              ui->screen->width * REF_UI_RIGHT_START_POS + 44,
+              ui->screen->height * start_pos_h + REF_UI_BOX_BOT_OFFSET);
+        break;
+      }
+      case 1:
+        fsm++;
+        UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
+                    UI_GRAPIC_LAYER_CAP);
+        switch (ui->cap_ui.status) {
+          case CAN_CAP_STATUS_OFFLINE:
+            UI_DrawArc(Referee_GetGrapicAdd(ui), "9", UI_GRAPIC_OPERATION_ADD,
+                       UI_GRAPIC_LAYER_CAP, YELLOW, 0, 360,
+                       UI_DEFAULT_WIDTH * 5, ui->screen->width * 0.6,
+                       ui->screen->height * 0.2, 50, 50);
+            break;
+            break;
+          case CAN_CAP_STATUS_RUNNING:
+            UI_DrawArc(Referee_GetGrapicAdd(ui), "9", UI_GRAPIC_OPERATION_ADD,
+                       UI_GRAPIC_LAYER_CAP, GREEN, 0,
+                       ui->cap_ui.percentage * 360, UI_DEFAULT_WIDTH * 5,
+                       ui->screen->width * 0.6, ui->screen->height * 0.2, 50,
+                       50);
+            break;
+        }
+        break;
+      case 2: {
+        fsm++;
+        UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
+                    UI_GRAPIC_LAYER_GIMBAL);
+        float start_pos_h = 0.0f;
+        switch (ui->gimbal_ui.mode) {
+          case GIMBAL_MODE_RELAX:
+            start_pos_h = 0.68f;
+            break;
+          case GIMBAL_MODE_RELATIVE:
+            start_pos_h = 0.66f;
+            break;
+          case GIMBAL_MODE_ABSOLUTE:
+            start_pos_h = 0.64f;
+            break;
+          default:
+            break;
+        }
+        UI_DrawRectangle(
+            Referee_GetGrapicAdd(ui), "a", UI_GRAPIC_OPERATION_ADD,
+            UI_GRAPIC_LAYER_GIMBAL, GREEN, UI_DEFAULT_WIDTH,
+            ui->screen->width * REF_UI_RIGHT_START_POS + 54,
+            ui->screen->height * start_pos_h + REF_UI_BOX_UP_OFFSET,
+            ui->screen->width * REF_UI_RIGHT_START_POS + 102,
+            ui->screen->height * start_pos_h + REF_UI_BOX_BOT_OFFSET);
+        break;
+      }
+      case 3: {
+        fsm++;
+        UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
+                    UI_GRAPIC_LAYER_SHOOT);
+        float start_pos_h = 0.0f;
+        switch (ui->shoot_ui.mode) {
+          case SHOOT_MODE_RELAX:
+            start_pos_h = 0.68f;
+            break;
+          case SHOOT_MODE_SAFE:
+            start_pos_h = 0.66f;
+            break;
+          case SHOOT_MODE_LOADED:
+            start_pos_h = 0.64f;
+            break;
+          default:
+            break;
+        }
+        UI_DrawRectangle(
+            Referee_GetGrapicAdd(ui), "b", UI_GRAPIC_OPERATION_ADD,
+            UI_GRAPIC_LAYER_SHOOT, GREEN, UI_DEFAULT_WIDTH,
+            ui->screen->width * REF_UI_RIGHT_START_POS + 114,
+            ui->screen->height * start_pos_h + REF_UI_BOX_UP_OFFSET,
+            ui->screen->width * REF_UI_RIGHT_START_POS + 162,
+            ui->screen->height * start_pos_h + REF_UI_BOX_BOT_OFFSET);
+
+        switch (ui->shoot_ui.fire) {
+          case FIRE_MODE_SINGLE:
+            start_pos_h = 0.68f;
+            break;
+          case FIRE_MODE_BURST:
+            start_pos_h = 0.66f;
+            break;
+          case FIRE_MODE_CONT:
+            start_pos_h = 0.64f;
+          default:
+            break;
+        }
+        UI_DrawRectangle(
+            Referee_GetGrapicAdd(ui), "f", UI_GRAPIC_OPERATION_ADD,
+            UI_GRAPIC_LAYER_SHOOT, GREEN, UI_DEFAULT_WIDTH,
+            ui->screen->width * REF_UI_RIGHT_START_POS + 174,
+            ui->screen->height * start_pos_h + REF_UI_BOX_UP_OFFSET,
+            ui->screen->width * REF_UI_RIGHT_START_POS + 222,
+            ui->screen->height * start_pos_h + REF_UI_BOX_BOT_OFFSET);
+        break;
+      }
+      case 4:
+        fsm++;
+        UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
+                    UI_GRAPIC_LAYER_CMD);
+        if (ui->cmd_pc) {
+          UI_DrawRectangle(Referee_GetGrapicAdd(ui), "c",
+                           UI_GRAPIC_OPERATION_ADD, UI_GRAPIC_LAYER_CMD, GREEN,
+                           UI_DEFAULT_WIDTH,
+                           ui->screen->width * REF_UI_RIGHT_START_POS + 96,
+                           ui->screen->height * 0.4 + REF_UI_BOX_UP_OFFSET,
+                           ui->screen->width * REF_UI_RIGHT_START_POS + 120,
+                           ui->screen->height * 0.4 + REF_UI_BOX_BOT_OFFSET);
+        } else {
+          UI_DrawRectangle(Referee_GetGrapicAdd(ui), "c",
+                           UI_GRAPIC_OPERATION_ADD, UI_GRAPIC_LAYER_CMD, GREEN,
+                           UI_DEFAULT_WIDTH,
+                           ui->screen->width * REF_UI_RIGHT_START_POS + 56,
+                           ui->screen->height * 0.4 + REF_UI_BOX_UP_OFFSET,
+                           ui->screen->width * REF_UI_RIGHT_START_POS + 80,
+                           ui->screen->height * 0.4 + REF_UI_BOX_BOT_OFFSET);
+        }
+        break;
+
+      default:
+        fsm = 0;
+    }
+  }
+
+  if (osThreadFlagsGet() & SIGNAL_REFEREE_SLOW_REFRESH_UI) {
+    osThreadFlagsClear(SIGNAL_REFEREE_SLOW_REFRESH_UI);
+    UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
+                UI_GRAPIC_LAYER_CONST);
+    UI_DrawCharacter(Referee_GetCharacterAdd(ui), "1", UI_GRAPIC_OPERATION_ADD,
+                     UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
+                     UI_CHAR_DEFAULT_WIDTH,
+                     ui->screen->width * REF_UI_RIGHT_START_POS,
+                     ui->screen->height * 0.7, "CHAS  GMBL  SHOT  FIRE");
+    UI_DrawCharacter(Referee_GetCharacterAdd(ui), "2", UI_GRAPIC_OPERATION_ADD,
+                     UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
+                     UI_CHAR_DEFAULT_WIDTH,
+                     ui->screen->width * REF_UI_RIGHT_START_POS,
+                     ui->screen->height * 0.68, "FLLW  RELX  RELX  SNGL");
+    UI_DrawCharacter(Referee_GetCharacterAdd(ui), "3", UI_GRAPIC_OPERATION_ADD,
+                     UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
+                     UI_CHAR_DEFAULT_WIDTH,
+                     ui->screen->width * REF_UI_RIGHT_START_POS,
+                     ui->screen->height * 0.66, "FL35  ABSL  SAFE  BRST");
+    UI_DrawCharacter(Referee_GetCharacterAdd(ui), "4", UI_GRAPIC_OPERATION_ADD,
+                     UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
+                     UI_CHAR_DEFAULT_WIDTH,
+                     ui->screen->width * REF_UI_RIGHT_START_POS,
+                     ui->screen->height * 0.64, "ROTR  RLTV  LOAD  CONT");
+    UI_DrawLine(Referee_GetGrapicAdd(ui), "5", UI_GRAPIC_OPERATION_ADD,
+                UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 3,
+                ui->screen->width * 0.4, ui->screen->height * 0.2,
+                ui->screen->width * 0.4, ui->screen->height * 0.2 + 50);
+    UI_DrawCharacter(Referee_GetCharacterAdd(ui), "d", UI_GRAPIC_OPERATION_ADD,
+                     UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
+                     UI_CHAR_DEFAULT_WIDTH,
+                     ui->screen->width * REF_UI_RIGHT_START_POS,
+                     ui->screen->height * 0.4, "CTRL  RC  PC");
+    UI_DrawCharacter(Referee_GetCharacterAdd(ui), "e", UI_GRAPIC_OPERATION_ADD,
+                     UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 20, 80,
+                     UI_CHAR_DEFAULT_WIDTH * 2, ui->screen->width * 0.6 - 26,
+                     ui->screen->height * 0.2 + 10, "CAP");
+  }
+
   return 0;
 }

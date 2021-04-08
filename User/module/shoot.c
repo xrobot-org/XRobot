@@ -185,6 +185,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
   Shoot_SetMode(s, s_cmd->mode); /* 设置射击模式 */
   Shoot_HeatLimit(s, s_ref);     /* 热量控制 */
   /* 根据开火模式计算发射行为 */
+  s->fire_ctrl.fire_mode = s_cmd->fire_mode;
   int32_t max_burst;
   switch (s_cmd->fire_mode) {
     case FIRE_MODE_SINGLE: /* 点射开火模式 */
@@ -196,6 +197,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
     default:
       break;
   }
+
   switch (s_cmd->fire_mode) {
     case FIRE_MODE_SINGLE:  /* 点射开火模式 */
     case FIRE_MODE_BURST: { /* 连发开火模式 */
@@ -328,4 +330,15 @@ void Shoot_ResetOutput(CAN_ShootOutput_t *output) {
   for (i = 0; i < 3; i++) {
     output->as_array[i] = 0.0f;
   }
+}
+
+/**
+ * @brief 导出射击UI数据
+ *
+ * @param s 射击结构体
+ * @param ui UI结构体
+ */
+void Shoot_DumpUI(Shoot_t *s, Referee_ShootUI_t *ui) {
+  ui->mode = s->mode;
+  ui->fire = s->fire_ctrl.fire_mode;
 }

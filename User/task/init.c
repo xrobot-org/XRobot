@@ -9,8 +9,10 @@
 #include "bsp\usb.h"
 #include "component\cmd.h"
 #include "device\bmi088.h"
+#include "device\can.h"
 #include "device\ist8310.h"
 #include "device\referee.h"
+#include "module\cap.h"
 #include "module\chassis.h"
 #include "module\gimbal.h"
 #include "module\shoot.h"
@@ -111,7 +113,18 @@ void Task_Init(void *argument) {
       osMessageQueueNew(2u, sizeof(Referee_ForCap_t), NULL);
   task_runtime.msgq.referee.shoot =
       osMessageQueueNew(2u, sizeof(Referee_ForShoot_t), NULL);
-  osKernelUnlock();
 
+  /* UI */
+  task_runtime.msgq.ui.chassis =
+      osMessageQueueNew(2u, sizeof(Referee_ChassisUI_t), NULL);
+  task_runtime.msgq.ui.cap =
+      osMessageQueueNew(2u, sizeof(Referee_CapUI_t), NULL);
+  task_runtime.msgq.ui.gimbal =
+      osMessageQueueNew(2u, sizeof(Referee_GimbalUI_t), NULL);
+  task_runtime.msgq.ui.shoot =
+      osMessageQueueNew(2u, sizeof(Referee_ShootUI_t), NULL);
+  task_runtime.msgq.ui.cmd = osMessageQueueNew(2u, sizeof(bool), NULL);
+
+  osKernelUnlock();
   osThreadTerminate(osThreadGetId()); /* 结束自身 */
 }

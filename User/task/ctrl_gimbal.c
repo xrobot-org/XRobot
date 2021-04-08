@@ -21,10 +21,12 @@ static CAN_t can;
 CMD_GimbalCmd_t gimbal_cmd;
 Gimbal_t gimbal;
 CAN_GimbalOutput_t gimbal_out;
+Referee_GimbalUI_t gimbal_ui;
 #else
 static CMD_GimbalCmd_t gimbal_cmd;
 static Gimbal_t gimbal;
 static CAN_GimbalOutput_t gimbal_out;
+static Referee_GimbalUI_t gimbal_ui;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -70,6 +72,10 @@ void Task_CtrlGimbal(void *argument) {
     osKernelUnlock();
     osMessageQueueReset(task_runtime.msgq.can.output.gimbal);
     osMessageQueuePut(task_runtime.msgq.can.output.gimbal, &gimbal_out, 0, 0);
+
+    Gimbal_DumpUI(&gimbal, &gimbal_ui);
+    osMessageQueueReset(task_runtime.msgq.ui.gimbal);
+    osMessageQueuePut(task_runtime.msgq.ui.gimbal, &gimbal_ui, 0, 0);
 
     tick += delay_tick; /* 计算下一个唤醒时刻 */
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */

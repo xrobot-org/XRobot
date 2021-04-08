@@ -223,3 +223,13 @@ void Gimbal_ResetOutput(CAN_GimbalOutput_t *output) {
     output->as_array[i] = 0.0f;
   }
 }
+
+/**
+ * @brief 导出云台UI数据
+ *
+ * @param g 云台结构体
+ * @param ui UI结构体
+ */
+void Gimbal_DumpUI(const Gimbal_t *g, Referee_GimbalUI_t *ui) {
+  ui->mode = g->mode;
+}

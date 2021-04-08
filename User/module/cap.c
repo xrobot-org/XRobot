@@ -42,3 +42,14 @@ void Cap_Control(CAN_Capacitor_t *cap, const Referee_ForCap_t *referee,
                                                 cap->cap_feedback.input_volt,
                                                 CAP_CUTOFF_VOLT);
 }
+
+/**
+ * @brief 导出电容数据
+ *
+ * @param cap 电容数据
+ * @param ui 结构体
+ */
+void Cap_DumpUI(const CAN_Capacitor_t *cap, Referee_CapUI_t *ui) {
+  ui->percentage = cap->percentage;
+  ui->status = cap->cap_status;
+}

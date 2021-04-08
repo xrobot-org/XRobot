@@ -17,9 +17,11 @@ static CAN_t can;
 #ifdef DEBUG
 CAN_CapOutput_t cap_out;
 Referee_ForCap_t referee_cap;
+Referee_CapUI_t cap_ui;
 #else
 static CAN_CapOutput_t cap_out;
 static Referee_ForCap_t referee_cap;
+static Referee_CapUI_t cap_ui;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -60,6 +62,11 @@ void Task_Cap(void *argument) {
         osMessageQueuePut(task_runtime.msgq.can.output.cap, &cap_out, 0, 0);
         osMessageQueueReset(task_runtime.msgq.cap_info);
         osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);
+
+        Cap_DumpUI(&(can.cap), &cap_ui);
+
+        osMessageQueueReset(task_runtime.msgq.ui.cap);
+        osMessageQueuePut(task_runtime.msgq.ui.cap, &cap_ui, 0, 0);
       }
     } else {
       last_online_tick = osKernelGetTickCount();
@@ -74,6 +81,11 @@ void Task_Cap(void *argument) {
       /* 将电容状态发送到Chassis */
       osMessageQueueReset(task_runtime.msgq.cap_info);
       osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);
+
+      Cap_DumpUI(&(can.cap), &cap_ui);
+
+      osMessageQueueReset(task_runtime.msgq.ui.cap);
+      osMessageQueuePut(task_runtime.msgq.ui.cap, &cap_ui, 0, 0);
 
       osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
     }

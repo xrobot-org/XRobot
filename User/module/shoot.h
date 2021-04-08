@@ -88,6 +88,7 @@ typedef struct {
   uint32_t to_shoot;   /* 计划发射的弹丸 */
   float bullet_speed;  /* 弹丸初速度 */
   uint32_t period_ms;  /* 弹丸击发延迟 */
+  CMD_FireMode_t fire_mode;
 } Shoot_FireCtrl_t;
 
 /*
@@ -194,6 +195,14 @@ void Shoot_DumpOutput(Shoot_t *s, CAN_ShootOutput_t *out);
  * \param output 要清空的结构体
  */
 void Shoot_ResetOutput(CAN_ShootOutput_t *output);
+
+/**
+ * @brief 导出射击UI数据
+ *
+ * @param s 射击结构体
+ * @param ui UI结构体
+ */
+void Shoot_DumpUI(Shoot_t *s, Referee_ShootUI_t *ui);
 
 #ifdef __cplusplus
 }

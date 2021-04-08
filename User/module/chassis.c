@@ -402,3 +402,14 @@ void Chassis_ResetOutput(CAN_ChassisOutput_t *out) {
     out->as_array[i] = 0.0f;
   }
 }
+
+/**
+ * @brief 导出底盘数据
+ *
+ * @param chassis 底盘数据结构体
+ * @param ui UI数据结构体
+ */
+void Chassis_DumpUI(const Chassis_t *c, Referee_ChassisUI_t *ui) {
+  ui->mode = c->mode;
+  ui->angle = c->mech_zero->yaw - c->feedback.gimbal_yaw_encoder;
+}
