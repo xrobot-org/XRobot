@@ -335,6 +335,32 @@ static const Config_PilotCfg_t cfg_qs = {
   },
 };
 
+static const Config_PilotCfg_t cfg_zyma = {
+  .param = {
+		.sens_mouse = 0.5f,
+		.sens_rc = 6.0f,
+    .map = {
+      .key_map[CMD_BEHAVIOR_FORE] = {CMD_ACTIVE_PRESSED, CMD_KEY_W},
+      .key_map[CMD_BEHAVIOR_BACK] = {CMD_ACTIVE_PRESSED, CMD_KEY_S},
+      .key_map[CMD_BEHAVIOR_LEFT] = {CMD_ACTIVE_PRESSED, CMD_KEY_A},
+      .key_map[CMD_BEHAVIOR_RIGHT] = {CMD_ACTIVE_PRESSED, CMD_KEY_D},
+      .key_map[CMD_BEHAVIOR_ACCELERATE] = {CMD_ACTIVE_PRESSED, CMD_KEY_SHIFT},
+      .key_map[CMD_BEHAVIOR_DECELEBRATE] = {CMD_ACTIVE_PRESSED, CMD_KEY_CTRL},
+      .key_map[CMD_BEHAVIOR_FIRE] = {CMD_ACTIVE_PRESSED, CMD_L_CLICK},
+      .key_map[CMD_BEHAVIOR_FIRE_MODE] = {CMD_ACTIVE_PRESSING, CMD_R_CLICK},
+      .key_map[CMD_BEHAVIOR_FOLLOWGIMBAL35] = {CMD_ACTIVE_PRESSING, CMD_KEY_E},
+      .key_map[CMD_BEHAVIOR_OPENCOVER] =  {CMD_ACTIVE_PRESSING, CMD_KEY_F},
+      .key_map[CMD_BEHAVIOR_REVTRIG] = {CMD_ACTIVE_PRESSING, CMD_KEY_R},
+      .key_map[CMD_BEHAVIOR_ROTOR] = {CMD_ACTIVE_PRESSING, CMD_KEY_G},
+    },
+    .move = {
+      .move_sense = 0.8f,
+      .move_fast_sense = 1.2f,
+      .move_slow_sense = 0.8f,		
+    },       
+  },
+};
+
 /* static const Config_PilotCfg_t cfg_xx; */
 
 /* clang-format on */
@@ -352,6 +378,7 @@ static const Config_RobotParamMap_t robot_param_map[] = {
 
 static const Config_PilotCfgMap_t pilot_cfg_map[] = {
     {"qs", &cfg_qs},
+    {"zyma", &cfg_zyma},
     /* {"xx", &cfg_xx}, */
     {NULL, NULL},
 };
