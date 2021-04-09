@@ -59,10 +59,10 @@ static const Config_RobotParam_t param_default = {
     .pid = {
       {
         /* GIMBAL_PID_YAW_OMEGA_IDX */
-        .k = 0.3f,
-        .p = 1.0f,
-        .i = 0.8f,
-        .d = 0.0f,
+        .k = 0.387f,
+        .p = 1.29f,
+        .i = 4.65f,
+        .d = 0.00232558f,
         .i_limit = 0.8f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
@@ -79,10 +79,10 @@ static const Config_RobotParam_t param_default = {
         .range = M_2PI,
       }, {
         /* GIMBAL_PID_PIT_OMEGA_IDX */
-        .k = 0.2f,
+        .k = 0.32f,
         .p = 1.0f,
-        .i = 0.5f,
-        .d = 0.0f,
+        .i = 0.15f,
+        .d = 0.004f,
         .i_limit = 0.8f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
