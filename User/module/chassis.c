@@ -20,8 +20,8 @@
 
 #define CHASSIS_MAX_CAP_POWER 100 /* 电容能够提供的最大功率 */
 
-#define CHASSIS_ROTOR_WZ_MIN 0.5f          /* 小陀螺旋转位移下界 */
-#define CHASSIS_ROTOR_WZ_MAX 0.7f          /* 小陀螺旋转位移上界 */
+#define CHASSIS_ROTOR_WZ_MIN 0.6f          /* 小陀螺旋转位移下界 */
+#define CHASSIS_ROTOR_WZ_MAX 0.8f          /* 小陀螺旋转位移上界 */
 #define M_7OVER72PI (M_2PI * 7.0f / 72.0f) /* 三十五度对应弧度值 */
 #define CHASSIS_ROTOR_OMEGA 0.0015f        /* 小陀螺转动频率 */
 /* Private macro ------------------------------------------------------------ */
@@ -82,7 +82,7 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_ChassisMode_t mode,
 static float Chassis_CalcWz(const float min, const float max, uint32_t now) {
   /* wz在min和max之间，上限0.6f */
   float wz_vary = fabs(0.2f * sinf(CHASSIS_ROTOR_OMEGA * (float)now)) + min;
-  return wz_vary > 0.6f ? max : wz_vary;
+  return wz_vary > 0.8f ? max : wz_vary;
 }
 
 /* Exported functions ------------------------------------------------------- */
