@@ -126,14 +126,9 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
     cmd->shoot.fire_mode %= FIRE_MODE_NUM;
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_ROTOR)) {
-    /* 每按一次切换小陀螺模式 */
-    if (cmd->chassis.mode == CHASSIS_MODE_ROTOR) {
-      cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
-      cmd->chassis.mode_rotor = ROTOR_MODE_CW;
-    } else {
-      cmd->chassis.mode = CHASSIS_MODE_ROTOR;
-      cmd->chassis.mode_rotor = ROTOR_MODE_RAND;
-    }
+    /* 切换到小陀螺模式 */
+    cmd->chassis.mode = CHASSIS_MODE_ROTOR;
+    cmd->chassis.mode_rotor = ROTOR_MODE_RAND;
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_OPENCOVER)) {
     /* 每按一次开、关弹舱盖 */
@@ -175,11 +170,7 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
     cmd->shoot.reverse_trig = true;
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_FOLLOWGIMBAL35)) {
-    if (cmd->chassis.mode == CHASSIS_MODE_FOLLOW_GIMBAL_35) {
-      cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
-    } else {
-      cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL_35;
-    }
+    cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
   }
   /* 保存当前按下的键位状态 */
   cmd->key_last = rc->key;
@@ -201,7 +192,7 @@ static void CMD_RcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       break;
 
     case CMD_SW_MID:
-      cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL_35;
+      cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
       break;
 
     case CMD_SW_DOWN:
