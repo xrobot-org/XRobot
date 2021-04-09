@@ -48,10 +48,6 @@ static void Referee_AbortRxCpltCallback(void) {
   osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_RAW_REDY);
 }
 
-static void Referee_TxCpltCallback(void) {
-  osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_SEND_REDY);
-}
-
 static void RefereeFastRefreshTimerCallback(void *arg) {
   (void)arg;
   osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_FAST_REFRESH_UI);
@@ -78,8 +74,6 @@ int8_t Referee_Init(Referee_t *ref, Referee_UI_t *ui,
                             Referee_AbortRxCpltCallback);
   BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_IDLE_LINE_CB,
                             Referee_IdleLineCallback);
-  BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_TX_CPLT_CB,
-                            Referee_TxCpltCallback);
 
   uint32_t fast_period_ms = (uint32_t)(1000.0f / REF_UI_FAST_REFRESH_FREQ);
   uint32_t slow_period_ms = (uint32_t)(1000.0f / REF_UI_SLOW_REFRESH_FREQ);
@@ -94,8 +88,6 @@ int8_t Referee_Init(Referee_t *ref, Referee_UI_t *ui,
   osTimerStart(ref->ui_slow_timer_id, slow_period_ms);
 
   __HAL_UART_ENABLE_IT(BSP_UART_GetHandle(BSP_UART_REF), UART_IT_IDLE);
-
-  osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_SEND_REDY);
 
   inited = true;
   return 0;
@@ -113,6 +105,10 @@ int8_t Referee_StartReceiving(Referee_t *ref) {
                            REF_LEN_RX_BUFF) == HAL_OK)
     return DEVICE_OK;
   return DEVICE_ERR;
+}
+
+bool Referee_CheckTXReady() {
+  return BSP_UART_GetHandle(BSP_UART_REF)->gState == HAL_UART_STATE_READY;
 }
 
 void Referee_HandleOffline(Referee_t *referee) {
@@ -262,7 +258,6 @@ error:
 int8_t Referee_StartSend(uint8_t *data, uint32_t len) {
   if (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_REF), data,
                             (size_t)len) == HAL_OK) {
-    osThreadFlagsClear(SIGNAL_REFEREE_SEND_REDY);
     return DEVICE_OK;
   } else
     return DEVICE_ERR;
@@ -351,7 +346,7 @@ int8_t Referee_SetHeader(Referee_Interactive_Header_t *header,
 }
 
 int8_t Referee_PackUI(Referee_UI_t *ui, Referee_t *ref) {
-  if (!(osThreadFlagsGet() & SIGNAL_REFEREE_SEND_REDY)) return 0;
+  if (!Referee_CheckTXReady()) return 0;
   if (ui->character_counter == 0 && ui->grapic_counter == 0 &&
       ui->del_counter == 0)
     return 0;
@@ -747,7 +742,7 @@ uint8_t Referee_UIRefresh(Referee_UI_t *ui) {
         if (ui->del_counter >= REF_UI_MAX_DEL_NUM ||
             ui->character_counter > REF_UI_MAX_STRING_NUM ||
             ui->grapic_counter > REF_UI_MAX_GRAPIC_NUM)
-          osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_SEND_REDY);
+          BSP_UART_GetHandle(BSP_UART_REF)->gState = HAL_UART_STATE_READY;
     }
   }
 
