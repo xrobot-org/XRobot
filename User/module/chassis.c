@@ -20,8 +20,8 @@
 
 #define CHASSIS_MAX_CAP_POWER 100 /* 电容能够提供的最大功率 */
 
-#define CHASSIS_ROTOR_WZ_MIN 0.4f          /* 小陀螺旋转位移下界 */
-#define CHASSIS_ROTOR_WZ_MAX 0.6f          /* 小陀螺旋转位移上界 */
+#define CHASSIS_ROTOR_WZ_MIN 0.5f          /* 小陀螺旋转位移下界 */
+#define CHASSIS_ROTOR_WZ_MAX 0.7f          /* 小陀螺旋转位移上界 */
 #define M_7OVER72PI (M_2PI * 7.0f / 72.0f) /* 三十五度对应弧度值 */
 #define CHASSIS_ROTOR_OMEGA 0.0015f        /* 小陀螺转动频率 */
 /* Private macro ------------------------------------------------------------ */
