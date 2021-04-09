@@ -311,7 +311,7 @@ static const Config_RobotParam_t param_hero = {
 
 static const Config_PilotCfg_t cfg_qs = {
   .param = {
-		.sens_mouse = 0.5f,
+		.sens_mouse = 0.06f,
 		.sens_rc = 6.0f,
     .map = {
       .key_map[CMD_BEHAVIOR_FORE] = {CMD_ACTIVE_PRESSED, CMD_KEY_W},
@@ -341,7 +341,7 @@ static const Config_PilotCfg_t cfg_qs = {
 
 static const Config_PilotCfg_t cfg_zyma = {
   .param = {
-		.sens_mouse = 0.5f,
+		.sens_mouse = 0.06f,
 		.sens_rc = 6.0f,
     .map = {
       .key_map[CMD_BEHAVIOR_FORE] = {CMD_ACTIVE_PRESSED, CMD_KEY_W},
