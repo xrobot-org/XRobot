@@ -15,7 +15,7 @@
 #ifdef DEBUG
 Config_RobotParam_t param_default = {
 #else
-static Config_RobotParam_t param_default = {
+static const Config_RobotParam_t param_default = {
 #endif
   .model = ROBOT_MODEL_INFANTRY,
 
