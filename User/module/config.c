@@ -15,7 +15,7 @@
 #ifdef DEBUG
 Config_RobotParam_t param_default = {
 #else
-static const Config_RobotParam_t param_default = {
+static Config_RobotParam_t param_default = {
 #endif
   .model = ROBOT_MODEL_INFANTRY,
 
@@ -59,10 +59,10 @@ static const Config_RobotParam_t param_default = {
     .pid = {
       {
         /* GIMBAL_PID_YAW_OMEGA_IDX */
-        .k = 0.387f,
-        .p = 1.29f,
-        .i = 4.65f,
-        .d = 0.00232558f,
+        .k = 0.24f,
+        .p = 1.f,
+        .i = 3.f,
+        .d = 0.f,
         .i_limit = 0.8f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
@@ -79,10 +79,10 @@ static const Config_RobotParam_t param_default = {
         .range = M_2PI,
       }, {
         /* GIMBAL_PID_PIT_OMEGA_IDX */
-        .k = 0.32f,
+        .k = 0.2f,
         .p = 1.0f,
-        .i = 0.15f,
-        .d = 0.004f,
+        .i = 0.f,
+        .d = 0.f,
         .i_limit = 0.8f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
