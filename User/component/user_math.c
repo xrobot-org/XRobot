@@ -105,7 +105,7 @@ inline float CalculateRpm(float bullet_speed, float fric_radius, bool is17mm) {
     if (bullet_speed == 18.0f) return 5200.f;
     if (bullet_speed == 30.0f) return 7350.f;
   } else {
-    if (bullet_speed == 10.0f) return 4150.f;
+    if (bullet_speed == 10.0f) return 4450.f;
     if (bullet_speed == 16.0f) return 5800.f;
   }
 
