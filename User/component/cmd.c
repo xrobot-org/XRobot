@@ -229,10 +229,10 @@ static void CMD_RcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       cmd->shoot.mode = SHOOT_MODE_RELAX;
   }
   /* 将操纵杆的对应值转换为底盘的控制向量和云台变化的欧拉角 */
-  cmd->chassis.ctrl_vec.vx = rc->ch_l_x;
-  cmd->chassis.ctrl_vec.vy = rc->ch_l_y;
-  cmd->gimbal.delta_eulr.yaw = rc->ch_r_x * dt_sec * cmd->param->sens_stick;
-  cmd->gimbal.delta_eulr.pit = rc->ch_r_y * dt_sec * cmd->param->sens_stick;
+  cmd->chassis.ctrl_vec.vx = rc->ch.l.x;
+  cmd->chassis.ctrl_vec.vy = rc->ch.l.y;
+  cmd->gimbal.delta_eulr.yaw = rc->ch.r.x * dt_sec * cmd->param->sens_stick;
+  cmd->gimbal.delta_eulr.pit = rc->ch.r.y * dt_sec * cmd->param->sens_stick;
 }
 
 /**

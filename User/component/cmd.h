@@ -107,7 +107,7 @@ typedef enum {
   CMD_KEY_NUM,
 } CMD_KeyValue_t;
 
-/* 行为值序列 */
+/* 所有的机器人行为 */
 typedef enum {
   CMD_BEHAVIOR_FORE = 0,       /* 向前 */
   CMD_BEHAVIOR_BACK,           /* 向后 */
@@ -126,6 +126,7 @@ typedef enum {
   CMD_BEHAVIOR_NUM,
 } CMD_Behavior_t;
 
+/* 行为触发方式 */
 typedef enum {
   CMD_ACTIVE_PRESSING, /* 按下时触发 */
   CMD_ACTIVE_RASING,   /* 抬起时触发 */
@@ -140,7 +141,7 @@ typedef struct {
 /* 行为映射的对应按键数组 */
 typedef struct {
   CMD_KeyMapItem_t key_map[CMD_BEHAVIOR_NUM];
-} CMD_KeyMap_Params_t;
+} CMD_KeyMapParams_t;
 
 /* 位移灵敏度参数 */
 typedef struct {
@@ -156,11 +157,11 @@ typedef struct {
 
 /* 命令参数 */
 typedef struct {
-  float sens_mouse;        /* 鼠标灵敏度 */
-  float sens_stick;        /* 遥控器摇杆灵敏度 */
-  CMD_KeyMap_Params_t map; /* 按键映射行为命令 */
-  CMD_MoveParams_t move;   /* 位移灵敏度参数 */
-  CMD_Screen_t screen;     /* 屏幕分辨率参数 */
+  float sens_mouse;       /* 鼠标灵敏度 */
+  float sens_stick;       /* 遥控器摇杆灵敏度 */
+  CMD_KeyMapParams_t map; /* 按键映射行为命令 */
+  CMD_MoveParams_t move;  /* 位移灵敏度参数 */
+  CMD_Screen_t screen;    /* 屏幕分辨率参数 */
 } CMD_Params_t;
 
 /* AI行为状态 */
@@ -216,10 +217,16 @@ typedef struct {
 } CMD_t;
 
 typedef struct {
-  float ch_l_x; /* 遥控器左侧摇杆横轴值，上为正 */
-  float ch_l_y; /* 遥控器左侧摇杆纵轴值，右为正 */
-  float ch_r_x; /* 遥控器右侧摇杆横轴值，上为正 */
-  float ch_r_y; /* 遥控器右侧摇杆纵轴值，右为正 */
+  struct {
+    struct {
+      float x; /* 遥控器左侧摇杆横轴值，上为正 */
+      float y; /* 遥控器左侧摇杆纵轴值，右为正 */
+    } l;
+    struct {
+      float x; /* 遥控器右侧摇杆横轴值，上为正 */
+      float y; /* 遥控器右侧摇杆纵轴值，右为正 */
+    } r;
+  } ch;
 
   float ch_res; /* 第五通道值 */
 
