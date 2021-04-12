@@ -6,14 +6,11 @@
 #include "shoot.h"
 
 #include "bsp/pwm.h"
-#include "component\limiter.h"
-#include "component\user_math.h"
+#include "component/game.h"
+#include "component/limiter.h"
+#include "component/user_math.h"
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
-
-#define HEAT_INCREASE_42MM (100.f) /* 每发射一颗42mm弹丸增加100热量 */
-#define HEAT_INCREASE_17MM (10.f)  /* 每发射一颗17mm弹丸增加10热量 */
-
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
@@ -70,13 +67,13 @@ static int8_t Shoot_HeatLimit(Shoot_t *s, Referee_ForShoot_t *s_ref) {
       hc->heat_limit = s_ref->robot_status.shoot_42_heat_limit;
       hc->speed_limit = s_ref->robot_status.shoot_42_speed_limit;
       hc->cooling_rate = s_ref->robot_status.shoot_42_cooling_rate;
-      hc->heat_increase = HEAT_INCREASE_42MM;
+      hc->heat_increase = GAME_HEAT_INCREASE_42MM;
     } else if (s->param->model == SHOOT_MODEL_17MM) {
       hc->heat = s_ref->power_heat.shoot_id1_17_heat;
       hc->heat_limit = s_ref->robot_status.shoot_id1_17_heat_limit;
       hc->speed_limit = s_ref->robot_status.shoot_id1_17_speed_limit;
       hc->cooling_rate = s_ref->robot_status.shoot_id1_17_cooling_rate;
-      hc->heat_increase = HEAT_INCREASE_17MM;
+      hc->heat_increase = GAME_HEAT_INCREASE_17MM;
     }
     /* 检测热量更新后,计算可发射弹丸 */
     if ((hc->heat != hc->last_heat) || (hc->heat == 0)) {
