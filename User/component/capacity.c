@@ -9,22 +9,22 @@
 /**
  * @brief 通过电压计算电池剩余电量
  *
- * @param volt 电压值
+ * @param vbat 电池电压值
  * @return float 剩余电量比例
  */
-float Capacity_GetBatteryRemain(float volt) {
+float Capacity_GetBatteryRemain(float vbat) {
   float percentage;
-  float volt_2 = volt * volt;
-  float volt_3 = volt_2 * volt;
+  float volt_2 = vbat * vbat;
+  float volt_3 = volt_2 * vbat;
 
-  if (volt < 19.5f)
+  if (vbat < 19.5f)
     percentage = 0.0f;
 
-  else if (volt < 21.9f)
-    percentage = 0.005664f * volt_3 - 0.3386f * volt_2 + 6.765f * volt - 45.17f;
+  else if (vbat < 21.9f)
+    percentage = 0.005664f * volt_3 - 0.3386f * volt_2 + 6.765f * vbat - 45.17f;
 
-  else if (volt < 25.5f)
-    percentage = 0.02269f * volt_3 - 1.654f * volt_2 + 40.34f * volt - 328.4f;
+  else if (vbat < 25.5f)
+    percentage = 0.02269f * volt_3 - 1.654f * volt_2 + 40.34f * vbat - 328.4f;
 
   else
     percentage = 1.0f;
