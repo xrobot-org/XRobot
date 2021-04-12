@@ -102,8 +102,8 @@ typedef enum {
   CMD_KEY_C,
   CMD_KEY_V,
   CMD_KEY_B,
-  CMD_L_CLICK,
-  CMD_R_CLICK,
+  CMD_KEY_L_CLICK,
+  CMD_KEY_R_CLICK,
   CMD_KEY_NUM,
 } CMD_KeyValue_t;
 

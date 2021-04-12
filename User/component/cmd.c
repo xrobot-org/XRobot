@@ -34,10 +34,10 @@ static inline CMD_ActiveType_t CMD_BehaviorToActive(CMD_t *cmd,
  */
 static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_KeyValue_t key) {
   /* 按下按键为鼠标左、右键 */
-  if (key == CMD_L_CLICK) {
+  if (key == CMD_KEY_L_CLICK) {
     return rc->mouse.click.l;
   }
-  if (key == CMD_R_CLICK) {
+  if (key == CMD_KEY_R_CLICK) {
     return rc->mouse.click.r;
   }
   return rc->key & (1u << key);
@@ -51,10 +51,10 @@ static bool CMD_BehaviorOccurredRc(const CMD_RC_t *rc, CMD_t *cmd,
   bool now_key_pressed, last_key_pressed;
 
   /* 按下按键为鼠标左、右键 */
-  if (key == CMD_L_CLICK) {
+  if (key == CMD_KEY_L_CLICK) {
     now_key_pressed = rc->mouse.click.l;
     last_key_pressed = cmd->mouse_last.click.l;
-  } else if (key == CMD_R_CLICK) {
+  } else if (key == CMD_KEY_R_CLICK) {
     now_key_pressed = rc->mouse.click.r;
     last_key_pressed = cmd->mouse_last.click.r;
   } else {
