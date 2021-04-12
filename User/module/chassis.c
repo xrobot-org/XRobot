@@ -59,7 +59,7 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_ChassisMode_t mode,
 
   if (mode == CHASSIS_MODE_ROTOR && c->mode != CHASSIS_MODE_ROTOR) {
     srand(now);
-    c->wz_multi = (rand() % 2) ? -1 : 1;
+    c->wz_mult = (rand() % 2) ? -1 : 1;
   }
   /* 切换模式后重置PID和滤波器 */
   for (uint8_t i = 0; i < c->num_wheel; i++) {
@@ -298,8 +298,8 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
                    c->feedback.gimbal_yaw_encoder, 0.0f, c->dt);
       break;
     case CHASSIS_MODE_ROTOR: { /* 小陀螺模式使底盘以一定速度旋转 */
-      c->move_vec.wz = c->wz_multi * Chassis_CalcWz(CHASSIS_ROTOR_WZ_MIN,
-                                                    CHASSIS_ROTOR_WZ_MAX, now);
+      c->move_vec.wz = c->wz_mult * Chassis_CalcWz(CHASSIS_ROTOR_WZ_MIN,
+                                                   CHASSIS_ROTOR_WZ_MAX, now);
     }
   }
 

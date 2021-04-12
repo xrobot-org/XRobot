@@ -27,11 +27,11 @@ int8_t Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode) {
  * @param move_vec 运动向量
  * @param out 输出数组
  * @param len 输出数组长短
- * @param scale 输出放大因子
+ * @param scale_factor 输出放大因子
  * @return int8_t 0对应没有错误
  */
 int8_t Mixer_Apply(Mixer_t *mixer, MoveVector_t *move_vec, float *out,
-                   int8_t len, float scale) {
+                   int8_t len, float scale_factor) {
   if (mixer == NULL) return -1;
 
   switch (mixer->mode) {
@@ -84,7 +84,7 @@ int8_t Mixer_Apply(Mixer_t *mixer, MoveVector_t *move_vec, float *out,
     }
   }
   for (int8_t i = 0; i < len; i++) {
-    out[i] *= scale;
+    out[i] *= scale_factor;
   }
   return 0;
 

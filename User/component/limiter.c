@@ -9,8 +9,8 @@
 
 #define POWER_BUFF_THRESHOLD 20
 #define CHASSIS_POWER_CHECK_FREQ 10
-#define CHASSIS_POWER_FACTOR_PASS 0.9f
-#define CHASSIS_POWER_FACTOR_NO_PASS 1.5f
+#define CHASSIS_POWER_PASS_MULT 0.9f
+#define CHASSIS_POWER_NO_PASS__MULT 1.5f
 
 #define CHASSIS_MOTOR_CIRCUMFERENCE 0.12f
 
@@ -61,9 +61,9 @@ float PowerLimit_CapInput(float power_in, float power_limit,
   float heat_buff = power_buffer - (float)(power_in - power_limit) /
                                        (float)CHASSIS_POWER_CHECK_FREQ;
   if (heat_buff < POWER_BUFF_THRESHOLD) { /* 功率限制 */
-    target_power = power_limit * CHASSIS_POWER_FACTOR_PASS;
+    target_power = power_limit * CHASSIS_POWER_PASS_MULT;
   } else {
-    target_power = power_limit * CHASSIS_POWER_FACTOR_NO_PASS;
+    target_power = power_limit * CHASSIS_POWER_NO_PASS__MULT;
   }
 
   return target_power;

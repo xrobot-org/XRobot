@@ -83,7 +83,7 @@ typedef struct {
     float *motor_current;     /* 转矩电流 单位：A */
   } feedback;
 
-  float wz_multi; /* 小陀螺模式旋转方向 */
+  float wz_mult; /* 小陀螺模式旋转方向乘数 */
 
   /* PID计算的目标值 */
   struct {
