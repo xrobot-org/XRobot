@@ -11,17 +11,18 @@ extern "C" {
 
 #include <stdint.h>
 
-#include "component\cmd.h"
-#include "device\bmi088.h"
-#include "device\can.h"
-#include "device\ist8310.h"
-#include "module\chassis.h"
-#include "module\gimbal.h"
-#include "module\shoot.h"
+#include "component/cmd.h"
+#include "component/game.h"
+#include "device/bmi088.h"
+#include "device/can.h"
+#include "device/ist8310.h"
+#include "module/chassis.h"
+#include "module/gimbal.h"
+#include "module/shoot.h"
 
 /* 机器人参数，保存后不会变化 */
 typedef struct {
-  CMD_RobotModel_t model;   /* 型号 */
+  Game_RobotModel_t model;  /* 型号 */
   Chassis_Params_t chassis; /* 底盘 */
   Gimbal_Params_t gimbal;   /* 云台 */
   Shoot_Params_t shoot;     /* 射击 */

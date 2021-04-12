@@ -35,10 +35,10 @@ static inline CMD_ActiveType_t CMD_BehaviorToActive(CMD_t *cmd,
 static bool CMD_KeyPressedRc(const CMD_RC_t *rc, CMD_KeyValue_t key) {
   /* 按下按键为鼠标左、右键 */
   if (key == CMD_L_CLICK) {
-    return rc->mouse.l_click;
+    return rc->mouse.click.l;
   }
   if (key == CMD_R_CLICK) {
-    return rc->mouse.r_click;
+    return rc->mouse.click.r;
   }
   return rc->key & (1u << key);
 }
@@ -52,11 +52,11 @@ static bool CMD_BehaviorOccurredRc(const CMD_RC_t *rc, CMD_t *cmd,
 
   /* 按下按键为鼠标左、右键 */
   if (key == CMD_L_CLICK) {
-    now_key_pressed = rc->mouse.l_click;
-    last_key_pressed = cmd->mouse_last.l_click;
+    now_key_pressed = rc->mouse.click.l;
+    last_key_pressed = cmd->mouse_last.click.l;
   } else if (key == CMD_R_CLICK) {
-    now_key_pressed = rc->mouse.r_click;
-    last_key_pressed = cmd->mouse_last.r_click;
+    now_key_pressed = rc->mouse.click.r;
+    last_key_pressed = cmd->mouse_last.click.r;
   } else {
     now_key_pressed = rc->key & (1u << key);
     last_key_pressed = cmd->key_last & (1u << key);
@@ -92,16 +92,16 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
 
   /* 按键行为映射相关逻辑 */
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_FORE)) {
-    cmd->chassis.ctrl_vec.vy += cmd->param->move.move_sense;
+    cmd->chassis.ctrl_vec.vy += cmd->param->move.move_norm_sense;
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_BACK)) {
-    cmd->chassis.ctrl_vec.vy -= cmd->param->move.move_sense;
+    cmd->chassis.ctrl_vec.vy -= cmd->param->move.move_norm_sense;
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_LEFT)) {
-    cmd->chassis.ctrl_vec.vx -= cmd->param->move.move_sense;
+    cmd->chassis.ctrl_vec.vx -= cmd->param->move.move_norm_sense;
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_RIGHT)) {
-    cmd->chassis.ctrl_vec.vx += cmd->param->move.move_sense;
+    cmd->chassis.ctrl_vec.vx += cmd->param->move.move_norm_sense;
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_ACCELERATE)) {
     cmd->chassis.ctrl_vec.vx *= cmd->param->move.move_fast_sense;
@@ -231,8 +231,8 @@ static void CMD_RcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   /* 将操纵杆的对应值转换为底盘的控制向量和云台变化的欧拉角 */
   cmd->chassis.ctrl_vec.vx = rc->ch_l_x;
   cmd->chassis.ctrl_vec.vy = rc->ch_l_y;
-  cmd->gimbal.delta_eulr.yaw = rc->ch_r_x * dt_sec * cmd->param->sens_rc;
-  cmd->gimbal.delta_eulr.pit = rc->ch_r_y * dt_sec * cmd->param->sens_rc;
+  cmd->gimbal.delta_eulr.yaw = rc->ch_r_x * dt_sec * cmd->param->sens_stick;
+  cmd->gimbal.delta_eulr.pit = rc->ch_r_y * dt_sec * cmd->param->sens_stick;
 }
 
 /**

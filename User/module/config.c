@@ -312,7 +312,7 @@ static const Config_RobotParam_t param_hero = {
 static const Config_PilotCfg_t cfg_qs = {
   .param = {
 		.sens_mouse = 0.06f,
-		.sens_rc = 6.0f,
+		.sens_stick = 6.0f,
     .map = {
       .key_map[CMD_BEHAVIOR_FORE] = {CMD_ACTIVE_PRESSED, CMD_KEY_W},
       .key_map[CMD_BEHAVIOR_BACK] = {CMD_ACTIVE_PRESSED, CMD_KEY_S},
@@ -328,7 +328,7 @@ static const Config_PilotCfg_t cfg_qs = {
       .key_map[CMD_BEHAVIOR_ROTOR] = {CMD_ACTIVE_PRESSING, CMD_KEY_G},
     },
     .move = {
-      .move_sense = 0.8f,
+      .move_norm_sense = 0.8f,
       .move_fast_sense = 1.2f,
       .move_slow_sense = 0.8f,		
     },
@@ -342,7 +342,7 @@ static const Config_PilotCfg_t cfg_qs = {
 static const Config_PilotCfg_t cfg_zyma = {
   .param = {
 		.sens_mouse = 0.06f,
-		.sens_rc = 6.0f,
+		.sens_stick = 6.0f,
     .map = {
       .key_map[CMD_BEHAVIOR_FORE] = {CMD_ACTIVE_PRESSED, CMD_KEY_W},
       .key_map[CMD_BEHAVIOR_BACK] = {CMD_ACTIVE_PRESSED, CMD_KEY_S},
@@ -358,7 +358,7 @@ static const Config_PilotCfg_t cfg_zyma = {
       .key_map[CMD_BEHAVIOR_ROTOR] = {CMD_ACTIVE_PRESSING, CMD_KEY_G},
     },
     .move = {
-      .move_sense = 0.8f,
+      .move_norm_sense = 0.8f,
       .move_fast_sense = 1.2f,
       .move_slow_sense = 0.8f,		
     },       

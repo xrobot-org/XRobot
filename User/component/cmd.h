@@ -15,16 +15,6 @@ extern "C" {
 
 #define CMD_REFEREE_MAX_NUM (3) /* 发送命令限定的最大数量 */
 
-/* 机器人型号 */
-typedef enum {
-  ROBOT_MODEL_INFANTRY = 0, /* 步兵机器人 */
-  ROBOT_MODEL_HERO,         /* 步兵机器人 */
-  ROBOT_MODEL_ENGINEER,     /* 工程机器人 */
-  ROBOT_MODEL_DRONE,        /* 空中机器人 */
-  ROBOT_MODEL_SENTRY,       /* 哨兵机器人 */
-  ROBOT_MODEL_NUM,          /* 型号数量 */
-} CMD_RobotModel_t;
-
 /* 底盘运行模式 */
 typedef enum {
   CHASSIS_MODE_RELAX, /* 放松模式，电机不输出。一般情况底盘初始化之后的模式 */
@@ -154,10 +144,10 @@ typedef struct {
 
 /* 位移灵敏度参数 */
 typedef struct {
-  float move_sense;      /* 移动灵敏度 */
+  float move_norm_sense; /* 移动灵敏度 */
   float move_fast_sense; /* 加速灵敏度 */
   float move_slow_sense; /* 减速灵敏度 */
-} CMD_Move_Params_t;
+} CMD_MoveParams_t;
 
 typedef struct {
   uint16_t width;
@@ -167,9 +157,9 @@ typedef struct {
 /* 命令参数 */
 typedef struct {
   float sens_mouse;        /* 鼠标灵敏度 */
-  float sens_rc;           /* 遥控器摇杆灵敏度 */
+  float sens_stick;        /* 遥控器摇杆灵敏度 */
   CMD_KeyMap_Params_t map; /* 按键映射行为命令 */
-  CMD_Move_Params_t move;  /* 位移灵敏度参数 */
+  CMD_MoveParams_t move;   /* 位移灵敏度参数 */
   CMD_Screen_t screen;     /* 屏幕分辨率参数 */
 } CMD_Params_t;
 
@@ -197,17 +187,23 @@ typedef struct {
 } CMD_RefereeCmd_t;
 
 typedef struct {
+  int16_t x;
+  int16_t y;
+  int16_t z;
+
+  /* 键位 */
+  struct {
+    bool l; /* 左键 */
+    bool r; /* 右键 */
+  } click;
+} CMD_Mouse_t; /* 鼠标值 */
+
+typedef struct {
   bool pc_ctrl;        /* 是否使用键鼠控制 */
   bool host_overwrite; /* 是否Host控制 */
   uint16_t key_last;   /* 上次按键键值 */
 
-  struct {
-    int16_t x;
-    int16_t y;
-    int16_t z;
-    bool l_click; /* 左键 */
-    bool r_click; /* 右键 */
-  } mouse_last;   /* 鼠标值 */
+  CMD_Mouse_t mouse_last; /* 鼠标值 */
 
   CMD_AI_Status_t ai_status; /* AI状态 */
 
@@ -230,13 +226,7 @@ typedef struct {
   CMD_SwitchPos_t sw_r; /* 右侧拨杆位置 */
   CMD_SwitchPos_t sw_l; /* 左侧拨杆位置 */
 
-  struct {
-    int16_t x;
-    int16_t y;
-    int16_t z;
-    bool l_click; /* 左键 */
-    bool r_click; /* 右键 */
-  } mouse;        /* 鼠标值 */
+  CMD_Mouse_t mouse; /* 鼠标值 */
 
   uint16_t key; /* 按键值 */
 
