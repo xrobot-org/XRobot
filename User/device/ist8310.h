@@ -9,8 +9,8 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "component\ahrs.h"
-#include "device\device.h"
+#include "component/ahrs.h"
+#include "device/device.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */

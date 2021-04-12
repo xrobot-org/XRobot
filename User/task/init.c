@@ -5,18 +5,18 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "bsp\flash.h"
-#include "bsp\usb.h"
-#include "component\cmd.h"
-#include "device\bmi088.h"
-#include "device\can.h"
-#include "device\ist8310.h"
-#include "device\referee.h"
-#include "module\cap.h"
-#include "module\chassis.h"
-#include "module\gimbal.h"
-#include "module\shoot.h"
-#include "task\user_task.h"
+#include "bsp/flash.h"
+#include "bsp/usb.h"
+#include "component/cmd.h"
+#include "device/bmi088.h"
+#include "device/can.h"
+#include "device/ist8310.h"
+#include "device/referee.h"
+#include "module/cap.h"
+#include "module/chassis.h"
+#include "module/gimbal.h"
+#include "module/shoot.h"
+#include "task/user_task.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

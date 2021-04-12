@@ -1,5 +1,5 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp\delay.h"
+#include "bsp/delay.h"
 
 #include <cmsis_os2.h>
 #include <main.h>

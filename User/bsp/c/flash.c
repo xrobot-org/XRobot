@@ -1,5 +1,5 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp\flash.h"
+#include "bsp/flash.h"
 
 #include <main.h>
 #include <string.h>

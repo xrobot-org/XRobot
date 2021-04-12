@@ -9,8 +9,8 @@ extern "C" {
 #endif
 
 /* Includes ----------------------------------------------------------------- */
-#include "device\can.h"
-#include "device\referee.h"
+#include "device/can.h"
+#include "device/referee.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */

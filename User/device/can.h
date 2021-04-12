@@ -8,10 +8,10 @@ extern "C" {
 #include <cmsis_os2.h>
 #include <stdbool.h>
 
-#include "bsp\can.h"
-#include "component\ahrs.h"
-#include "component\user_math.h"
-#include "device\device.h"
+#include "bsp/can.h"
+#include "component/ahrs.h"
+#include "component/user_math.h"
+#include "device/device.h"
 
 /* Exported constants ------------------------------------------------------- */
 #define CAN_MOTOR_CHASSIS_1_RECV (1 << 0)

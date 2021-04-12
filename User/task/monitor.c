@@ -5,12 +5,12 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "bsp\adc.h"
-#include "bsp\buzzer.h"
-#include "bsp\led.h"
-#include "bsp\usb.h"
+#include "bsp/adc.h"
+#include "bsp/buzzer.h"
+#include "bsp/led.h"
+#include "bsp/usb.h"
 #include "component/capacity.h"
-#include "task\user_task.h"
+#include "task/user_task.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

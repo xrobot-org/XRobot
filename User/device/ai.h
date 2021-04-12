@@ -13,11 +13,11 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "component\ahrs.h"
-#include "component\cmd.h"
-#include "component\user_math.h"
-#include "device\device.h"
-#include "device\referee.h"
+#include "component/ahrs.h"
+#include "component/cmd.h"
+#include "component/user_math.h"
+#include "device/device.h"
+#include "device/referee.h"
 #include "protocol.h"
 
 /* Exported constants ------------------------------------------------------- */
