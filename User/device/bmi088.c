@@ -11,10 +11,10 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "bsp\delay.h"
-#include "bsp\gpio.h"
-#include "bsp\spi.h"
-#include "component\user_math.h"
+#include "bsp/delay.h"
+#include "bsp/gpio.h"
+#include "bsp/spi.h"
+#include "component/user_math.h"
 
 /* Private define ----------------------------------------------------------- */
 #define BMI088_REG_ACCL_CHIP_ID (0x00)

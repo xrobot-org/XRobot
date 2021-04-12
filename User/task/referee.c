@@ -5,10 +5,10 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "device\referee.h"
+#include "device/referee.h"
 
-#include "bsp\usb.h"
-#include "task\user_task.h"
+#include "bsp/usb.h"
+#include "task/user_task.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

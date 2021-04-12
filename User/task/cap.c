@@ -2,10 +2,10 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
-#include "module\cap.h"
+#include "module/cap.h"
 
-#include "device\referee.h"
-#include "task\user_task.h"
+#include "device/referee.h"
+#include "task/user_task.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

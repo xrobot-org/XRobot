@@ -1,5 +1,5 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp\buzzer.h"
+#include "bsp/buzzer.h"
 
 #include <main.h>
 #include <tim.h>

@@ -8,7 +8,7 @@
 
 #include <string.h>
 
-#include "bsp\uart.h"
+#include "bsp/uart.h"
 
 /* Private define ----------------------------------------------------------- */
 #define DR16_CH_VALUE_MIN (364u)
@@ -108,8 +108,8 @@ int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc) {
   rc->mouse.y = dr16->data.y;
   rc->mouse.z = dr16->data.z;
 
-  rc->mouse.l_click = dr16->data.press_l;
-  rc->mouse.r_click = dr16->data.press_r;
+  rc->mouse.click.l = dr16->data.press_l;
+  rc->mouse.click.r = dr16->data.press_r;
 
   rc->key = dr16->data.key;
 

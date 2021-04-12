@@ -9,13 +9,13 @@ extern "C" {
 #endif
 
 /* Includes ----------------------------------------------------------------- */
-#include "component\ahrs.h"
-#include "component\cmd.h"
-#include "component\filter.h"
-#include "component\pid.h"
-#include "device\bmi088.h"
-#include "device\can.h"
-#include "device\referee.h"
+#include "component/ahrs.h"
+#include "component/cmd.h"
+#include "component/filter.h"
+#include "component/pid.h"
+#include "device/bmi088.h"
+#include "device/can.h"
+#include "device/referee.h"
 
 /* Exported constants ------------------------------------------------------- */
 #define GIMBAL_OK (0)        /* 运行正常 */

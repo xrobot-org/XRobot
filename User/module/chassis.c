@@ -7,11 +7,11 @@
 
 #include <stdlib.h>
 
-#include "bsp\mm.h"
+#include "bsp/mm.h"
 #include "cmsis_os2.h"
-#include "component\limiter.h"
-#include "device\can.h"
-#include "module\cap.h"
+#include "component/limiter.h"
+#include "device/can.h"
+#include "module/cap.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

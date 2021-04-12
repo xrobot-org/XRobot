@@ -13,11 +13,11 @@
 #include <string.h>
 
 #include "FreeRTOS.h"
-#include "bsp\can.h"
-#include "bsp\usb.h"
-#include "component\FreeRTOS_CLI.h"
+#include "bsp/can.h"
+#include "bsp/usb.h"
+#include "component/FreeRTOS_CLI.h"
 #include "task.h"
-#include "task\user_task.h"
+#include "task/user_task.h"
 
 /* Private typedef ---------------------------------------------------------- */
 typedef struct {

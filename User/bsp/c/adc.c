@@ -1,5 +1,5 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp\adc.h"
+#include "bsp/adc.h"
 
 #include <adc.h>
 

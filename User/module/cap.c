@@ -5,10 +5,10 @@
 /* Includes ----------------------------------------------------------------- */
 #include "cap.h"
 
-#include "component\capacity.h"
-#include "component\limiter.h"
-#include "device\can.h"
-#include "device\referee.h"
+#include "component/capacity.h"
+#include "component/limiter.h"
+#include "device/can.h"
+#include "device/referee.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

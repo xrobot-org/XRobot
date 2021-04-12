@@ -1,9 +1,9 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp\fric.h"
+#include "bsp/fric.h"
 
 #include <tim.h>
 
-#include "bsp\delay.h"
+#include "bsp/delay.h"
 
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */

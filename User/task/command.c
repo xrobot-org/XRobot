@@ -13,8 +13,8 @@
 /* Includes ----------------------------------------------------------------- */
 #include <string.h>
 
-#include "device\dr16.h"
-#include "task\user_task.h"
+#include "device/dr16.h"
+#include "task/user_task.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

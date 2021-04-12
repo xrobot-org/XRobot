@@ -1,5 +1,5 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp\pwm.h"
+#include "bsp/pwm.h"
 
 #include <main.h>
 #include <tim.h>

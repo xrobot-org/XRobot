@@ -8,8 +8,8 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "module\gimbal.h"
-#include "task\user_task.h"
+#include "module/gimbal.h"
+#include "task/user_task.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

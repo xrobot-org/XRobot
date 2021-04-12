@@ -3,10 +3,10 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "device\ai.h"
+#include "device/ai.h"
 
-#include "bsp\usb.h"
-#include "task\user_task.h"
+#include "bsp/usb.h"
+#include "task/user_task.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

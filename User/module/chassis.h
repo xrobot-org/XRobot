@@ -9,12 +9,12 @@ extern "C" {
 #endif
 
 /* Includes ----------------------------------------------------------------- */
-#include "component\cmd.h"
-#include "component\filter.h"
-#include "component\mixer.h"
-#include "component\pid.h"
-#include "device\can.h"
-#include "device\referee.h"
+#include "component/cmd.h"
+#include "component/filter.h"
+#include "component/mixer.h"
+#include "component/pid.h"
+#include "device/can.h"
+#include "device/referee.h"
 
 /* Exported constants ------------------------------------------------------- */
 #define CHASSIS_OK (0)        /* 运行正常 */

@@ -12,11 +12,11 @@ extern "C" {
 #include <cmsis_os2.h>
 #include <stdbool.h>
 
-#include "component\cmd.h"
-#include "component\ui.h"
-#include "component\user_math.h"
-#include "device\can.h"
-#include "device\device.h"
+#include "component/cmd.h"
+#include "component/ui.h"
+#include "component/user_math.h"
+#include "device/can.h"
+#include "device/device.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */

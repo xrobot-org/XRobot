@@ -1,5 +1,5 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp\gpio.h"
+#include "bsp/gpio.h"
 
 #include <gpio.h>
 #include <main.h>

@@ -11,11 +11,11 @@ extern "C" {
 /* Includes ----------------------------------------------------------------- */
 #include <cmsis_os2.h>
 
-#include "component\cmd.h"
-#include "component\filter.h"
-#include "component\pid.h"
-#include "device\can.h"
-#include "device\referee.h"
+#include "component/cmd.h"
+#include "component/filter.h"
+#include "component/pid.h"
+#include "device/can.h"
+#include "device/referee.h"
 /* Exported constants ------------------------------------------------------- */
 #define SHOOT_OK (0)        /* 运行正常 */
 #define SHOOT_ERR (-1)      /* 运行时发现了其他错误 */

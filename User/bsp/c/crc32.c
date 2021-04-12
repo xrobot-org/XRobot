@@ -1,5 +1,5 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp\crc32.h"
+#include "bsp/crc32.h"
 
 #include <crc.h>
 

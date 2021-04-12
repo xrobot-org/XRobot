@@ -8,7 +8,7 @@ extern "C" {
 #include <cmsis_os2.h>
 
 #include "FreeRTOS.h"
-#include "module\config.h"
+#include "module/config.h"
 #include "task.h"
 
 /* Exported constants ------------------------------------------------------- */
