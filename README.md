@@ -1,8 +1,8 @@
 # 青岛大学 RoboMaster 嵌入式 代码开源
 
-***UNFINISHED***
+***Developing***
 
-稳健开发测试中。
+***稳健开发测试中***
 
 ## 软件功能介绍
 
@@ -41,7 +41,7 @@
 
   - 因为本软件中与视觉通信部分用的是与视觉共同维护的一个库，因此要加上`--recursive`，或在克隆完成后执行
 
-    `git submodule init && git submodule update `
+    `git submodule init && git submodule update`
 
 - 针对不同板子需要到不同的CubeMX工程文件（DevA.ioc、DevC.ioc）。
 
@@ -76,25 +76,21 @@
 
 | User内 | 内容 |
 | ---- | ----  |
-| bsp | 文件夹内包含开发板信息，基于STM32 HAL对板载的外设进行控制|
-| component | 包含各种组件，自成一体，相互依赖，但不依赖于其他文件夹|
-| device | 独立于开发板的设备，依赖于HAL和bsp|
-| module | 对机器人各模块的抽象，各模块一起组成机器人|
+| bsp | 文件夹内包含开发板信息，基于STM32 HAL对板载的外设进行控制，方便适配各种开发板 |
+| component | 包含各种组件，自成一体，相互依赖，但不依赖于其他文件夹 |
+| device | 独立于开发板的设备，依赖于HAL和bsp |
+| module | 对机器人各模块的抽象，各模块一起组成机器人 |
 | task | 独立的任务，module的运行容器，也包含通信、姿态解算等 |
 
 ## 系统介绍
 
-### 硬件系统框图
-
-| ![步兵嵌入式硬件框图](./Image/步兵嵌入式硬件框图.png?raw=true "步兵嵌入式硬件框图") |
+| ![硬件系统框图（全官方设备）](./Image/步兵嵌入式硬件框图.png?raw=true "硬件系统框图（全官方设备）") |
 |:--:|
-| *步兵嵌入式硬件框图* |
+| *硬件系统框图（全官方设备）* |
 
-### 软件流程图
-
-| ![步兵嵌入式硬件框图](./Image/嵌入式程序流程图.png?raw=true "步兵嵌入式硬件框图") |
+| ![软件流程图](./Image/嵌入式程序流程图.png?raw=true "软件流程图") |
 |:--:|
-| *步兵嵌入式硬件框图* |
+| *软件流程图* |
 
 | ![嵌入式程序结构图](./Image/嵌入式程序结构图.png?raw=true "嵌入式程序结构图") |
 |:--:|
@@ -116,18 +112,12 @@
 
 - 底盘Mixer和CAN的Control Group参考[PX4 Mixing and Actuators](https://dev.px4.io/master/en/concept/mixing.html)
 
+- PID请参考[pid.c](User\component\pid.c)
+
 ## TODO
 
-- 添加 logging.
-- 给BSP想个更好的名字，备选"mcu"。
-- 给BSP USB print加保护，允许不同进程的使用。
-  - 给所有BSP加保护
-  - device.c里面加上一个Device_Init()，在里面初始化所有mutex
-- CAN设备代码优化。消息解析发送方向。
-  - CAN设备动态初始化，保存好几组配置。
+- 解决`-O3`引起的BUG
 
 ## Roadmap
 
-1. 在步兵上完成所有功能。
-
-1. 移植到所有机器人上。
+1. 完善与上位机通信，与视觉组配合完成自瞄、打击能量机关和哨兵全自主运行
