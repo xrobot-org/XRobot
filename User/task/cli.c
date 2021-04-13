@@ -36,10 +36,12 @@ static const char *const CLI_WELCOME_MESSAGE =
     " |   __ \\.-----.|  |--.-----.|   |   |.---.-.-----.|  |_.-----.----.\r\n"
     " |      <|  _  ||  _  |  _  ||       ||  _  |__ --||   _|  -__|   _|\r\n"
     " |___|__||_____||_____|_____||__|_|__||___._|_____||____|_____|__|  \r\n"
-    "           Q I N G D A O  U N I V E R S I T Y    2 0 2 0            \r\n"
+    "     Q I N G D A O  U N I V E R S I T Y  |  Qu Shen  |  v1.0.0      \r\n"
     " -------------------------------------------------------------------\r\n"
     " FreeRTOS CLI. Type 'help' to view a list of registered commands.   \r\n"
     "\r\n";
+
+static const char *const CLI_START = "qdu-rm>";
 
 /* Command示例 */
 static BaseType_t Command_Endian(char *out_buffer, size_t len,
@@ -609,8 +611,8 @@ static const CLI_Command_Definition_t command_table[] = {
     },
     {
         "stats",
-        "\r\nstats:\r\n Displays a table showing the state of "
-        "FreeRTOS\r\n\r\n",
+        "\r\nstats:\r\n Displays several tables showing the state of "
+        "RTOS, system & robot.\r\n\r\n",
         Command_Stats,
         0,
     },
@@ -622,20 +624,21 @@ static const CLI_Command_Definition_t command_table[] = {
     },
     {
         "cali-gyro",
-        "\r\ncali-gyro:\r\n Calibrate gyroscope. Remove zero offset.\r\n\r\n",
+        "\r\ncali-gyro:\r\n Calibrates gyroscope to remove zero-offset. Power "
+        "off all motors before calibrating!\r\n\r\n",
         Command_CaliGyro,
         0,
     },
     {
         "set-mech-zero",
-        "\r\nset-mech-zero:\r\n Set mechanical zero point for gimbal.\r\n\r\n",
+        "\r\nset-mech-zero:\r\n Sets mechanical zero point for gimbal.\r\n\r\n",
         Command_SetMechZero,
         0,
     },
     {
         "set-gimbal-limit",
-        "\r\nset-gimbal-limit:\r\n Move the gimbal to the peak and execute this "
-        "command to calibrate the limit of gimbal.\r\n\r\n",
+        "\r\nset-gimbal-limit:\r\n Move the gimbal to the peak and execute "
+        "this command to calibrate the limit of gimbal.\r\n\r\n",
         Command_SetGimbalLim,
         0,
     },
@@ -693,7 +696,7 @@ void Task_CLI(void *argument) {
   BSP_USB_Printf(CLI_WELCOME_MESSAGE);
 
   /* 开始运行命令行界面 */
-  BSP_USB_Printf("rm>");
+  BSP_USB_Printf(CLI_START);
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
@@ -731,7 +734,7 @@ void Task_CLI(void *argument) {
           index = 0; /* 重置索引，准备接收下一段命令 */
           memset(input, 0x00, strlen(input)); /* 清空输入缓存 */
         }
-        BSP_USB_Printf("rm>");
+        BSP_USB_Printf(CLI_START);
       } else if (rx_char == '\b' || rx_char == 0x7Fu) {
         /* 如果输入的是退格键则清空一位输入缓存，同时进行界限保护 */
         if (index > 0) {
