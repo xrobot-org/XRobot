@@ -65,7 +65,7 @@ typedef struct {
   float cover_close_duty; /* 弹舱盖关闭时舵机PWM占空比 */
   Shoot_Model_t model;    /* 发射机构型号 */
   float bullet_speed;     /* 弹丸初速度 */
-  uint32_t min_shoot_delay; /* 通过设置最小射击间隔来设置最大射频 */
+  uint32_t min_shoot_delay; /* 通过设置最小发射间隔来设置最大射频 */
 } Shoot_Params_t;
 
 typedef struct {
