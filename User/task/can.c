@@ -1,8 +1,15 @@
-/*
-  CAN总线数据处理
-
-  处理CAN总线收到的电机电容数据。
-*/
+/**
+ * @file can.c
+ * @author Qu Shen (503578404@qq.com)
+ * @brief CAN总线数据处理
+ * @version 1.0.0
+ * @date 2021-04-14
+ *
+ * @copyright Copyright (c) 2021
+ *
+ * 处理CAN总线收到的电机电容数据
+ *
+ */
 
 /* Includes ----------------------------------------------------------------- */
 #include "device/can.h"

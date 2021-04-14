@@ -1,10 +1,15 @@
-/*
-  命令行交互界面（Command Line Interface）任务
-
-  实现命令行。
-
-  从USB虚拟串口读取数据，结果也打印到USB虚拟串口。
-*/
+/**
+ * @file cli.c
+ * @author Qu Shen (503578404@qq.com)
+ * @brief 运行命令行交互界面(Command Line Interface)
+ * @version 1.0.0
+ * @date 2021-04-14
+ *
+ * @copyright Copyright (c) 2021
+ *
+ * 在USB虚拟串口上实现CLI
+ *
+ */
 
 /* Includes ----------------------------------------------------------------- */
 #include <stdbool.h>
@@ -19,7 +24,8 @@
 #include "task.h"
 #include "task/user_task.h"
 
-/* Private typedef ---------------------------------------------------------- */
+/* Private typedef
+   ---------------------------------------------------------- */
 typedef struct {
   uint8_t stage;
 } FiniteStateMachine_t;
