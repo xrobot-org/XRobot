@@ -1,5 +1,5 @@
 /*
- * 射击模组
+ * 发射器模组
  */
 
 /* Includes ----------------------------------------------------------------- */
@@ -16,9 +16,9 @@
 /* Private function  -------------------------------------------------------- */
 
 /**
- * \brief 设置射击模式
+ * \brief 设置发射器模式
  *
- * \param c 包含射击数据的结构体
+ * \param c 包含发射器数据的结构体
  * \param mode 要设置的模式
  *
  * \return 函数运行结果
@@ -97,10 +97,10 @@ static int8_t Shoot_HeatLimit(Shoot_t *s, Referee_ForShoot_t *s_ref) {
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief 初始化射击
+ * \brief 初始化发射器
  *
- * \param s 包含射击数据的结构体
- * \param param 包含射击参数的结构体指针
+ * \param s 包含发射器数据的结构体
+ * \param param 包含发射器参数的结构体指针
  * \param target_freq 任务预期的运行频率
  *
  * \return 函数运行结果
@@ -137,9 +137,9 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq) {
 }
 
 /**
- * \brief 更新射击的反馈信息
+ * \brief 更新发射器的反馈信息
  *
- * \param s 包含射击数据的结构体
+ * \param s 包含发射器数据的结构体
  * \param can CAN设备结构体
  *
  * \return 函数运行结果
@@ -164,11 +164,11 @@ int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can) {
 }
 
 /**
- * @brief 运行射击控制逻辑
+ * @brief 运行发射器控制逻辑
  *
- * @param s 包含射击数据的结构体
- * @param s_cmd 射击控制指令
- * @param s_ref 射击使用的裁判系统数据
+ * @param s 包含发射器数据的结构体
+ * @param s_cmd 发射器控制指令
+ * @param s_ref 发射器使用的裁判系统数据
  * @param now 现在时刻
  * @return int8_t
  */
@@ -179,7 +179,7 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
   s->dt = (float)(now - s->lask_wakeup) / 1000.0f;
   s->lask_wakeup = now;
 
-  Shoot_SetMode(s, s_cmd->mode); /* 设置射击模式 */
+  Shoot_SetMode(s, s_cmd->mode); /* 设置发射器模式 */
   Shoot_HeatLimit(s, s_ref);     /* 热量控制 */
   /* 根据开火模式计算发射行为 */
   s->fire_ctrl.fire_mode = s_cmd->fire_mode;
@@ -306,10 +306,10 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
 }
 
 /**
- * \brief 复制射击输出值
+ * \brief 复制发射器输出值
  *
- * \param s 包含射击数据的结构体
- * \param out CAN设备射击输出结构体
+ * \param s 包含发射器数据的结构体
+ * \param out CAN设备发射器输出结构体
  */
 void Shoot_DumpOutput(Shoot_t *s, CAN_ShootOutput_t *out) {
   for (uint8_t i = 0; i < SHOOT_ACTR_NUM; i++) {
@@ -330,9 +330,9 @@ void Shoot_ResetOutput(CAN_ShootOutput_t *output) {
 }
 
 /**
- * @brief 导出射击UI数据
+ * @brief 导出发射器UI数据
  *
- * @param s 射击结构体
+ * @param s 发射器结构体
  * @param ui UI结构体
  */
 void Shoot_DumpUI(Shoot_t *s, Referee_ShootUI_t *ui) {

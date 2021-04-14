@@ -1,7 +1,7 @@
 /*
-  射击控制任务
+  发射器控制任务
 
-  控制射击行为。
+  控制发射器行为。
 
   从CAN总线接收底盘电机反馈，根据接收到的控制命令，控制电机输出。
 */
@@ -34,7 +34,7 @@ static Referee_ShootUI_t shoot_ui;
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief 控制射击
+ * \brief 控制发射器
  *
  * \param argument 未使用
  */
@@ -42,7 +42,7 @@ void Task_CtrlShoot(void *argument) {
   (void)argument; /* 未使用argument，消除警告 */
 
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_SHOOT;
-  /* 初始化射击 */
+  /* 初始化发射器 */
   Shoot_Init(&shoot, &(task_runtime.cfg.robot_param->shoot),
              (float)TASK_FREQ_CTRL_SHOOT);
 
@@ -67,9 +67,9 @@ void Task_CtrlShoot(void *argument) {
                         0);
       osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
       Shoot_UpdateFeedback(&shoot, &can);
-      /* 根据指令控制射击 */
+      /* 根据指令控制发射器 */
       Shoot_Control(&shoot, &shoot_cmd, &referee_shoot, HAL_GetTick());
-      /* 复制射击输出值 */
+      /* 复制发射器输出值 */
       Shoot_DumpOutput(&shoot, &shoot_out);
       osKernelUnlock();
     }

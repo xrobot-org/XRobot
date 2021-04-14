@@ -1,5 +1,5 @@
 /*
- * 射击模组
+ * 发射器模组
  */
 
 #pragma once
@@ -39,7 +39,7 @@ typedef enum {
   SHOOT_MODEL_42MM,     /* 42mm发射机构 */
 } Shoot_Model_t;
 
-/* 射击参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
+/* 发射器参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
   KPID_Params_t fric_pid_param; /* 摩擦轮电机控制PID的参数 */
   KPID_Params_t trig_pid_param; /* 扳机电机控制PID的参数 */
@@ -81,7 +81,7 @@ typedef struct {
 } Shoot_HeatCtrl_t;
 
 typedef struct {
-  uint32_t last_shoot; /* 上次射击时间 单位：ms */
+  uint32_t last_shoot; /* 上次发射器时间 单位：ms */
   bool last_fire;      /* 上次开火状态 */
   bool first_fire;     /* 第一次收到开火指令 */
   uint32_t shooted;    /* 已经发射的弹丸 */
@@ -99,10 +99,10 @@ typedef struct {
   uint32_t lask_wakeup;
   float dt;
 
-  const Shoot_Params_t *param; /* 射击的参数，用Shoot_Init设定 */
+  const Shoot_Params_t *param; /* 发射器的参数，用Shoot_Init设定 */
 
   /* 模块通用 */
-  CMD_ShootMode_t mode; /* 射击模式 */
+  CMD_ShootMode_t mode; /* 发射器模式 */
 
   /* 反馈信息 */
   struct {
@@ -148,10 +148,10 @@ typedef struct {
 /* Exported functions prototypes -------------------------------------------- */
 
 /**
- * \brief 初始化射击
+ * \brief 初始化发射器
  *
- * \param s 包含射击数据的结构体
- * \param param 包含射击参数的结构体指针
+ * \param s 包含发射器数据的结构体
+ * \param param 包含发射器参数的结构体指针
  * \param target_freq 任务预期的运行频率
  *
  * \return 函数运行结果
@@ -159,9 +159,9 @@ typedef struct {
 int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq);
 
 /**
- * \brief 更新射击的反馈信息
+ * \brief 更新发射器的反馈信息
  *
- * \param s 包含射击数据的结构体
+ * \param s 包含发射器数据的结构体
  * \param can CAN设备结构体
  *
  * \return 函数运行结果
@@ -169,10 +169,10 @@ int8_t Shoot_Init(Shoot_t *s, const Shoot_Params_t *param, float target_freq);
 int8_t Shoot_UpdateFeedback(Shoot_t *s, const CAN_t *can);
 
 /**
- * \brief 运行射击控制逻辑
+ * \brief 运行发射器控制逻辑
  *
- * \param s 包含射击数据的结构体
- * \param s_cmd 射击控制指令
+ * \param s 包含发射器数据的结构体
+ * \param s_cmd 发射器控制指令
  * \param s_ref 裁判系统数据
  * \param dt_sec 两次调用的时间间隔
  *
@@ -182,10 +182,10 @@ int8_t Shoot_Control(Shoot_t *s, CMD_ShootCmd_t *s_cmd,
                      Referee_ForShoot_t *s_ref, uint32_t now);
 
 /**
- * \brief 复制射击输出值
+ * \brief 复制发射器输出值
  *
- * \param s 包含射击数据的结构体
- * \param out CAN设备射击输出结构体
+ * \param s 包含发射器数据的结构体
+ * \param out CAN设备发射器输出结构体
  */
 void Shoot_DumpOutput(Shoot_t *s, CAN_ShootOutput_t *out);
 
@@ -197,9 +197,9 @@ void Shoot_DumpOutput(Shoot_t *s, CAN_ShootOutput_t *out);
 void Shoot_ResetOutput(CAN_ShootOutput_t *output);
 
 /**
- * @brief 导出射击UI数据
+ * @brief 导出发射器UI数据
  *
- * @param s 射击结构体
+ * @param s 发射器结构体
  * @param ui UI结构体
  */
 void Shoot_DumpUI(Shoot_t *s, Referee_ShootUI_t *ui);
