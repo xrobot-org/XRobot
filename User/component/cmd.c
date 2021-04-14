@@ -241,7 +241,7 @@ static void CMD_RcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
  * @param cmd 主结构体
  */
 static void CMD_RcLostLogic(CMD_t *cmd) {
-  /* 机器人底盘、云台、射击运行模式恢复至放松模式 */
+  /* 机器人底盘、云台、发射器运行模式恢复至放松模式 */
   cmd->chassis.mode = CHASSIS_MODE_RELAX;
   cmd->gimbal.mode = GIMBAL_MODE_RELAX;
   cmd->shoot.mode = SHOOT_MODE_RELAX;

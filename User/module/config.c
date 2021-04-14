@@ -113,7 +113,7 @@ static const Config_RobotParam_t param_default = {
     },
   }, /* gimbal */
 
-  .shoot = { /* 射击模块参数 */
+  .shoot = { /* 发射器模块参数 */
             
     .fric_pid_param = {
       .k = 0.001f,
@@ -258,7 +258,7 @@ static const Config_RobotParam_t param_hero = {
     },
   }, /* gimbal */
 
-  .shoot = { /* 射击模块参数 */
+  .shoot = { /* 发射器模块参数 */
             
     .fric_pid_param = {
       .k = 0.001f,

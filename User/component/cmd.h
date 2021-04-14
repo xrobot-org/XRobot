@@ -33,7 +33,7 @@ typedef enum {
   GIMBAL_MODE_RELATIVE, /* 相对坐标系控制，控制相对于底盘的姿态 */
 } CMD_GimbalMode_t;
 
-/* 射击运行模式 */
+/* 发射器运行模式 */
 typedef enum {
   SHOOT_MODE_RELAX,  /* 放松模式，电机不输出 */
   SHOOT_MODE_SAFE,   /* 保险模式，电机闭环控制保持静止 */
@@ -67,9 +67,9 @@ typedef struct {
   AHRS_Eulr_t delta_eulr; /* 欧拉角变化角度 */
 } CMD_GimbalCmd_t;
 
-/* 射击控制命令 */
+/* 发射器控制命令 */
 typedef struct {
-  CMD_ShootMode_t mode;     /* 射击运行模式 */
+  CMD_ShootMode_t mode;     /* 发射器运行模式 */
   CMD_FireMode_t fire_mode; /* 开火模式 */
   bool fire;                /*开火*/
   bool cover_open;          /* 弹舱盖开关 */
@@ -212,7 +212,7 @@ typedef struct {
 
   CMD_ChassisCmd_t chassis; /* 底盘控制命令 */
   CMD_GimbalCmd_t gimbal;   /* 云台控制命令 */
-  CMD_ShootCmd_t shoot;     /* 射击控制命令 */
+  CMD_ShootCmd_t shoot;     /* 发射器控制命令 */
   CMD_RefereeCmd_t referee; /* 裁判系统发送命令 */
 } CMD_t;
 
