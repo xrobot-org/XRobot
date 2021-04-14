@@ -35,10 +35,10 @@ typedef enum {
 
 /* 发射器运行模式 */
 typedef enum {
-  SHOOT_MODE_RELAX,  /* 放松模式，电机不输出 */
-  SHOOT_MODE_SAFE,   /* 保险模式，电机闭环控制保持静止 */
-  SHOOT_MODE_LOADED, /* 上膛模式，摩擦轮开启。随时准备开火 */
-} CMD_ShootMode_t;
+  LAUNCHER_MODE_RELAX,  /* 放松模式，电机不输出 */
+  LAUNCHER_MODE_SAFE,   /* 保险模式，电机闭环控制保持静止 */
+  LAUNCHER_MODE_LOADED, /* 上膛模式，摩擦轮开启。随时准备开火 */
+} CMD_LauncherMode_t;
 
 typedef enum {
   FIRE_MODE_SINGLE, /* 单发开火模式  */
@@ -69,12 +69,12 @@ typedef struct {
 
 /* 发射器控制命令 */
 typedef struct {
-  CMD_ShootMode_t mode;     /* 发射器运行模式 */
+  CMD_LauncherMode_t mode;  /* 发射器运行模式 */
   CMD_FireMode_t fire_mode; /* 开火模式 */
   bool fire;                /*开火*/
   bool cover_open;          /* 弹舱盖开关 */
   bool reverse_trig;        /* 拨弹电机状态 */
-} CMD_ShootCmd_t;
+} CMD_LauncherCmd_t;
 
 /* 拨杆位置 */
 typedef enum {
@@ -210,10 +210,10 @@ typedef struct {
 
   const CMD_Params_t *param; /* 命令参数 */
 
-  CMD_ChassisCmd_t chassis; /* 底盘控制命令 */
-  CMD_GimbalCmd_t gimbal;   /* 云台控制命令 */
-  CMD_ShootCmd_t shoot;     /* 发射器控制命令 */
-  CMD_RefereeCmd_t referee; /* 裁判系统发送命令 */
+  CMD_ChassisCmd_t chassis;   /* 底盘控制命令 */
+  CMD_GimbalCmd_t gimbal;     /* 云台控制命令 */
+  CMD_LauncherCmd_t launcher; /* 发射器控制命令 */
+  CMD_RefereeCmd_t referee;   /* 裁判系统发送命令 */
 } CMD_t;
 
 typedef struct {

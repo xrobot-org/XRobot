@@ -21,7 +21,7 @@ CMD_UI_t ref_cmd;
 Referee_ForCap_t for_cap;
 Referee_ForAI_t for_ai;
 Referee_ForChassis_t for_chassis;
-Referee_ForShoot_t for_shoot;
+Referee_ForLauncher_t for_launcher;
 #else
 static Referee_t ref;
 static Referee_UI_t ui;
@@ -29,7 +29,7 @@ static CMD_UI_t ref_cmd;
 static Referee_ForCap_t for_cap;
 static Referee_ForAI_t for_ai;
 static Referee_ForChassis_t for_chassis;
-static Referee_ForShoot_t for_shoot;
+static Referee_ForLauncher_t for_launcher;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -69,7 +69,7 @@ void Task_Referee(void *argument) {
     }
     Referee_PackCap(&for_cap, &ref);
     Referee_PackAI(&for_ai, &ref);
-    Referee_PackShoot(&for_shoot, &ref);
+    Referee_PackLauncher(&for_launcher, &ref);
     Referee_PackChassis(&for_chassis, &ref);
     if (osKernelGetTickCount() > delay_tick) {
       tick += delay_tick;
@@ -79,14 +79,16 @@ void Task_Referee(void *argument) {
       osMessageQueuePut(task_runtime.msgq.referee.ai, &for_ai, 0, 0);
       osMessageQueueReset(task_runtime.msgq.referee.chassis);
       osMessageQueuePut(task_runtime.msgq.referee.chassis, &for_chassis, 0, 0);
-      osMessageQueueReset(task_runtime.msgq.referee.shoot);
-      osMessageQueuePut(task_runtime.msgq.referee.shoot, &for_shoot, 0, 0);
+      osMessageQueueReset(task_runtime.msgq.referee.launcher);
+      osMessageQueuePut(task_runtime.msgq.referee.launcher, &for_launcher, 0,
+                        0);
 
       osMessageQueueGet(task_runtime.msgq.ui.cap, &(ui.cap_ui), NULL, 0);
       osMessageQueueGet(task_runtime.msgq.ui.chassis, &(ui.chassis_ui), NULL,
                         0);
       osMessageQueueGet(task_runtime.msgq.ui.gimbal, &(ui.gimbal_ui), NULL, 0);
-      osMessageQueueGet(task_runtime.msgq.ui.shoot, &(ui.shoot_ui), NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.ui.launcher, &(ui.launcher_ui), NULL,
+                        0);
       osMessageQueueGet(task_runtime.msgq.ui.cmd, &(ui.cmd_pc), NULL, 0);
 
       Referee_UIRefresh(&ui);

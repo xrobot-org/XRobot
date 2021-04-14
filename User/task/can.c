@@ -57,8 +57,8 @@ void Task_Can(void *argument) {
     osMessageQueueReset(task_runtime.msgq.can.feedback.gimbal);
     osMessageQueuePut(task_runtime.msgq.can.feedback.gimbal, &can, 0, 0);
 
-    osMessageQueueReset(task_runtime.msgq.can.feedback.shoot);
-    osMessageQueuePut(task_runtime.msgq.can.feedback.shoot, &can, 0, 0);
+    osMessageQueueReset(task_runtime.msgq.can.feedback.launcher);
+    osMessageQueuePut(task_runtime.msgq.can.feedback.launcher, &can, 0, 0);
 
     if (CAN_CheckFlag(&can, CAN_REC_CAP_FINISHED)) {
       osMessageQueueReset(task_runtime.msgq.can.feedback.cap);
@@ -86,9 +86,9 @@ void Task_Can(void *argument) {
       CAN_Motor_Control(CAN_MOTOR_GROUT_GIMBAL1, &can_out, &can);
     }
 
-    if (osMessageQueueGet(task_runtime.msgq.can.output.shoot, &(can_out.shoot),
-                          0, 0) == osOK) {
-      CAN_Motor_Control(CAN_MOTOR_GROUT_SHOOT1, &can_out, &can);
+    if (osMessageQueueGet(task_runtime.msgq.can.output.launcher,
+                          &(can_out.launcher), 0, 0) == osOK) {
+      CAN_Motor_Control(CAN_MOTOR_GROUT_LAUNCHER1, &can_out, &can);
     }
 
     if (osMessageQueueGet(task_runtime.msgq.can.output.cap, &(can_out.cap), 0,

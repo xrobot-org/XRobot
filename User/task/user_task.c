@@ -63,8 +63,8 @@ const osThreadAttr_t attr_ctrl_gimbal = {
     .stack_size = 256 * 4,
 };
 
-const osThreadAttr_t attr_ctrl_shoot = {
-    .name = "ctrl_shoot",
+const osThreadAttr_t attr_ctrl_launcher = {
+    .name = "ctrl_launcher",
     .priority = osPriorityAboveNormal,
     .stack_size = 256 * 4,
 };

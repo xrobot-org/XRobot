@@ -18,15 +18,15 @@ extern "C" {
 #include "device/ist8310.h"
 #include "module/chassis.h"
 #include "module/gimbal.h"
-#include "module/shoot.h"
+#include "module/launcher.h"
 
 /* 机器人参数，保存后不会变化 */
 typedef struct {
-  Game_RobotModel_t model;  /* 型号 */
-  Chassis_Params_t chassis; /* 底盘 */
-  Gimbal_Params_t gimbal;   /* 云台 */
-  Shoot_Params_t shoot;     /* 发射器 */
-  CAN_Params_t can;         /* 电机CAN配置 */
+  Game_RobotModel_t model;    /* 型号 */
+  Chassis_Params_t chassis;   /* 底盘 */
+  Gimbal_Params_t gimbal;     /* 云台 */
+  Launcher_Params_t launcher; /* 发射器 */
+  CAN_Params_t can;           /* 电机CAN配置 */
 } Config_RobotParam_t;
 
 /* 操作员配置 */

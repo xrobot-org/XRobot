@@ -7,7 +7,7 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "module\shoot.h"
+#include "module\launcher.h"
 #include "task/user_task.h"
 
 /* Private typedef ---------------------------------------------------------- */
@@ -17,17 +17,17 @@
 static CAN_t can;
 
 #ifdef DEBUG
-CMD_ShootCmd_t shoot_cmd;
-Shoot_t shoot;
-Referee_ForShoot_t referee_shoot;
-CAN_ShootOutput_t shoot_out;
-Referee_ShootUI_t shoot_ui;
+CMD_LauncherCmd_t launcher_cmd;
+Launcher_t launcher;
+Referee_ForLauncher_t referee_launcher;
+CAN_LauncherOutput_t launcher_out;
+Referee_LauncherUI_t launcher_ui;
 #else
-static CMD_ShootCmd_t shoot_cmd;
-static Shoot_t shoot;
-static Referee_ForShoot_t referee_shoot;
-static CAN_ShootOutput_t shoot_out;
-static Referee_ShootUI_t shoot_ui;
+static CMD_LauncherCmd_t launcher_cmd;
+static Launcher_t launcher;
+static Referee_ForLauncher_t referee_launcher;
+static CAN_LauncherOutput_t launcher_out;
+static Referee_LauncherUI_t launcher_ui;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -38,47 +38,49 @@ static Referee_ShootUI_t shoot_ui;
  *
  * \param argument 未使用
  */
-void Task_CtrlShoot(void *argument) {
+void Task_CtrlLauncher(void *argument) {
   (void)argument; /* 未使用argument，消除警告 */
 
-  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_SHOOT;
+  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_LAUNCHER;
   /* 初始化发射器 */
-  Shoot_Init(&shoot, &(task_runtime.cfg.robot_param->shoot),
-             (float)TASK_FREQ_CTRL_SHOOT);
+  Launcher_Init(&launcher, &(task_runtime.cfg.robot_param->launcher),
+                (float)TASK_FREQ_CTRL_LAUNCHER);
 
   /* 延时一段时间再开启任务 */
-  osMessageQueueGet(task_runtime.msgq.can.feedback.shoot, &can, NULL,
+  osMessageQueueGet(task_runtime.msgq.can.feedback.launcher, &can, NULL,
                     osWaitForever);
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
-    task_runtime.stack_water_mark.ctrl_shoot =
+    task_runtime.stack_water_mark.ctrl_launcher =
         osThreadGetStackSpace(osThreadGetId());
 #endif
-    if (osMessageQueueGet(task_runtime.msgq.can.feedback.shoot, &can, NULL,
+    if (osMessageQueueGet(task_runtime.msgq.can.feedback.launcher, &can, NULL,
                           0) != osOK) {
       // Error handler
-      Shoot_ResetOutput(&shoot_out);
+      Launcher_ResetOutput(&launcher_out);
     } else {
       /* 读取控制指令以及裁判系统信息 */
-      osMessageQueueGet(task_runtime.msgq.cmd.shoot, &shoot_cmd, NULL, 0);
-      osMessageQueueGet(task_runtime.msgq.referee.shoot, &referee_shoot, NULL,
-                        0);
+      osMessageQueueGet(task_runtime.msgq.cmd.launcher, &launcher_cmd, NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.referee.launcher, &referee_launcher,
+                        NULL, 0);
       osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
-      Shoot_UpdateFeedback(&shoot, &can);
+      Launcher_UpdateFeedback(&launcher, &can);
       /* 根据指令控制发射器 */
-      Shoot_Control(&shoot, &shoot_cmd, &referee_shoot, HAL_GetTick());
+      Launcher_Control(&launcher, &launcher_cmd, &referee_launcher,
+                       HAL_GetTick());
       /* 复制发射器输出值 */
-      Shoot_DumpOutput(&shoot, &shoot_out);
+      Launcher_DumpOutput(&launcher, &launcher_out);
       osKernelUnlock();
     }
-    osMessageQueueReset(task_runtime.msgq.can.output.shoot);
-    osMessageQueuePut(task_runtime.msgq.can.output.shoot, &shoot_out, 0, 0);
+    osMessageQueueReset(task_runtime.msgq.can.output.launcher);
+    osMessageQueuePut(task_runtime.msgq.can.output.launcher, &launcher_out, 0,
+                      0);
 
-    Shoot_DumpUI(&shoot, &shoot_ui);
-    osMessageQueueReset(task_runtime.msgq.ui.shoot);
-    osMessageQueuePut(task_runtime.msgq.ui.shoot, &shoot_ui, 0, 0);
+    Launcher_DumpUI(&launcher, &launcher_ui);
+    osMessageQueueReset(task_runtime.msgq.ui.launcher);
+    osMessageQueuePut(task_runtime.msgq.ui.launcher, &launcher_ui, 0, 0);
 
     tick += delay_tick; /* 计算下一个唤醒时刻 */
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */

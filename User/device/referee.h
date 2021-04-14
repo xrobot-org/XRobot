@@ -54,7 +54,7 @@ typedef enum {
   REF_CMD_ID_ROBOT_BUFF = 0x0204,
   REF_CMD_ID_DRONE_ENERGY = 0x0205,
   REF_CMD_ID_ROBOT_DMG = 0x0206,
-  REF_CMD_ID_SHOOT_DATA = 0x0207,
+  REF_CMD_ID_LAUNCHER_DATA = 0x0207,
   REF_CMD_ID_BULLET_REMAINING = 0x0208,
   REF_CMD_ID_RFID = 0x0209,
   REF_CMD_ID_DART_CLIENT = 0x020A,
@@ -152,19 +152,19 @@ typedef struct __packed {
   uint8_t robot_level;
   uint16_t remain_hp;
   uint16_t max_hp;
-  uint16_t shoot_id1_17_cooling_rate;
-  uint16_t shoot_id1_17_heat_limit;
-  uint16_t shoot_id1_17_speed_limit;
-  uint16_t shoot_id2_17_cooling_rate;
-  uint16_t shoot_id2_17_heat_limit;
-  uint16_t shoot_id2_17_speed_limit;
-  uint16_t shoot_42_cooling_rate;
-  uint16_t shoot_42_heat_limit;
-  uint16_t shoot_42_speed_limit;
+  uint16_t launcher_id1_17_cooling_rate;
+  uint16_t launcher_id1_17_heat_limit;
+  uint16_t launcher_id1_17_speed_limit;
+  uint16_t launcher_id2_17_cooling_rate;
+  uint16_t launcher_id2_17_heat_limit;
+  uint16_t launcher_id2_17_speed_limit;
+  uint16_t launcher_42_cooling_rate;
+  uint16_t launcher_42_heat_limit;
+  uint16_t launcher_42_speed_limit;
   uint16_t chassis_power_limit;
   uint8_t power_gimbal_output : 1;
   uint8_t power_chassis_output : 1;
-  uint8_t power_shoot_output : 1;
+  uint8_t power_launcher_output : 1;
 } Referee_RobotStatus_t;
 
 typedef struct __packed {
@@ -172,9 +172,9 @@ typedef struct __packed {
   uint16_t chassis_amp;
   float chassis_watt;
   uint16_t chassis_pwr_buff;
-  uint16_t shoot_id1_17_heat;
-  uint16_t shoot_id2_17_heat;
-  uint16_t shoot_42_heat;
+  uint16_t launcher_id1_17_heat;
+  uint16_t launcher_id2_17_heat;
+  uint16_t launcher_42_heat;
 } Referee_PowerHeat_t;
 
 typedef struct __packed {
@@ -203,10 +203,10 @@ typedef struct __packed {
 
 typedef struct __packed {
   uint8_t bullet_type;
-  uint8_t shooter_id;
+  uint8_t launcherer_id;
   uint8_t bullet_freq;
   float bullet_speed;
-} Referee_ShootData_t;
+} Referee_LauncherData_t;
 
 typedef struct __packed {
   uint16_t bullet_17_remain;
@@ -331,7 +331,7 @@ typedef struct {
   Referee_RobotBuff_t robot_buff;
   Referee_DroneEnergy_t drone_energy;
   Referee_RobotDamage_t robot_danage;
-  Referee_ShootData_t shoot_data;
+  Referee_LauncherData_t launcher_data;
   Referee_BulletRemain_t bullet_remain;
   Referee_RFID_t rfid;
   Referee_DartClient_t dart_client;
@@ -358,9 +358,9 @@ typedef struct {
 } Referee_GimbalUI_t;
 
 typedef struct {
-  CMD_ShootMode_t mode;
+  CMD_LauncherMode_t mode;
   CMD_FireMode_t fire;
-} Referee_ShootUI_t;
+} Referee_LauncherUI_t;
 
 typedef struct __packed {
   /* UI缓冲数据 */
@@ -374,7 +374,7 @@ typedef struct __packed {
   /* UI所需信息 */
   Referee_CapUI_t cap_ui;
   Referee_ChassisUI_t chassis_ui;
-  Referee_ShootUI_t shoot_ui;
+  Referee_LauncherUI_t launcher_ui;
   Referee_GimbalUI_t gimbal_ui;
   bool cmd_pc;
   /* 屏幕分辨率 */
@@ -456,8 +456,8 @@ typedef struct {
   Referee_Status_t ref_status;
   Referee_PowerHeat_t power_heat;
   Referee_RobotStatus_t robot_status;
-  Referee_ShootData_t shoot_data;
-} Referee_ForShoot_t;
+  Referee_LauncherData_t launcher_data;
+} Referee_ForLauncher_t;
 
 /* Exported functions prototypes -------------------------------------------- */
 int8_t Referee_Init(Referee_t *ref, Referee_UI_t *ui,
@@ -476,10 +476,10 @@ UI_Ele_t *Referee_GetGrapicAdd(Referee_UI_t *ref_ui);
 UI_Drawcharacter_t *Referee_GetCharacterAdd(Referee_UI_t *ref_ui);
 uint8_t Referee_PraseCmd(Referee_UI_t *ref_ui, CMD_UI_t cmd);
 uint8_t Referee_PackCap(Referee_ForCap_t *cap, const Referee_t *ref);
-uint8_t Referee_PackShoot(Referee_ForShoot_t *ai, Referee_t *ref);
+uint8_t Referee_PackLauncher(Referee_ForLauncher_t *ai, Referee_t *ref);
 uint8_t Referee_PackChassis(Referee_ForChassis_t *chassis,
                             const Referee_t *ref);
-uint8_t Referee_PackAI(Referee_ForAI_t *shoot, const Referee_t *ref);
+uint8_t Referee_PackAI(Referee_ForAI_t *launcher, const Referee_t *ref);
 uint8_t Referee_UIRefresh(Referee_UI_t *ui);
 #ifdef __cplusplus
 }

@@ -86,8 +86,8 @@ void Task_Command(void *argument) {
     osMessageQueueReset(task_runtime.msgq.cmd.gimbal);
     osMessageQueuePut(task_runtime.msgq.cmd.gimbal, &(cmd.gimbal), 0, 0);
 
-    osMessageQueueReset(task_runtime.msgq.cmd.shoot);
-    osMessageQueuePut(task_runtime.msgq.cmd.shoot, &(cmd.shoot), 0, 0);
+    osMessageQueueReset(task_runtime.msgq.cmd.launcher);
+    osMessageQueuePut(task_runtime.msgq.cmd.launcher, &(cmd.launcher), 0, 0);
 
     osMessageQueueReset(task_runtime.msgq.ui.cmd);
     osMessageQueuePut(task_runtime.msgq.ui.cmd, &cmd.pc_ctrl, 0, 0);

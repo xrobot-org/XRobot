@@ -16,7 +16,7 @@ extern "C" {
 /* PWM通道 */
 typedef enum {
   BSP_PWM_IMU_HEAT,
-  BSP_PWM_SHOOT_SERVO,
+  BSP_PWM_LAUNCHER_SERVO,
 } BSP_PWM_Channel_t;
 
 /* Exported functions prototypes -------------------------------------------- */

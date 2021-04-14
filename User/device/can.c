@@ -210,14 +210,14 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output,
                            &(can->mailbox.gimbal));
       break;
 
-    case CAN_MOTOR_GROUT_SHOOT1:
-    case CAN_MOTOR_GROUT_SHOOT2:
-      fric1_motor =
-          (int16_t)(output->shoot.named.fric1 * (float)CAN_M3508_MAX_ABS_LSB);
-      fric2_motor =
-          (int16_t)(output->shoot.named.fric2 * (float)CAN_M3508_MAX_ABS_LSB);
+    case CAN_MOTOR_GROUT_LAUNCHER1:
+    case CAN_MOTOR_GROUT_LAUNCHER2:
+      fric1_motor = (int16_t)(output->launcher.named.fric1 *
+                              (float)CAN_M3508_MAX_ABS_LSB);
+      fric2_motor = (int16_t)(output->launcher.named.fric2 *
+                              (float)CAN_M3508_MAX_ABS_LSB);
       trig_motor =
-          (int16_t)(output->shoot.named.trig * (float)CAN_M2006_MAX_ABS_LSB);
+          (int16_t)(output->launcher.named.trig * (float)CAN_M2006_MAX_ABS_LSB);
 
       raw_tx.tx_header.StdId = CAN_M3508_M2006_CTRL_ID_EXTAND;
       raw_tx.tx_header.IDE = CAN_ID_STD;
@@ -233,9 +233,9 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output,
       raw_tx.tx_data[6] = 0;
       raw_tx.tx_data[7] = 0;
 
-      HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can->param->shoot),
+      HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can->param->launcher),
                            &raw_tx.tx_header, raw_tx.tx_data,
-                           &(can->mailbox.shoot));
+                           &(can->mailbox.launcher));
       break;
 
     default:
@@ -264,7 +264,7 @@ int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx) {
     case CAN_M2006_TRIG_ID:
       index = can_rx->rx_header.StdId - CAN_M3508_FRIC1_ID;
       can->recive_flag |= 1 << (index + 6);
-      CAN_Motor_Decode(&(can->motor.shoot.as_array[index]), can_rx->rx_data);
+      CAN_Motor_Decode(&(can->motor.launcher.as_array[index]), can_rx->rx_data);
       break;
 
     case CAN_GM6020_YAW_ID:
