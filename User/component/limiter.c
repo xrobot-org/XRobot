@@ -87,17 +87,18 @@ float PowerLimit_TargetPower(float power_limit, float power_buffer) {
 }
 
 /**
+ *
  * @brief 发射频率控制
  *
  * @param heat 当前热量
  * @param heat_limit 热量上限
  * @param cooling_rate 冷却速率
  * @param heat_increase 冷却增加
- * @param shoot_freq 经过热量限制后的发射频率
+ * @param is_big 经过热量限制后的发射频率
  * @return float 发射频率
  */
-float HeatLimit_ShootFreq(float heat, float heat_limit, float cooling_rate,
-                          float heat_increase, bool is_big) {
+float HeatLimit_LauncherFreq(float heat, float heat_limit, float cooling_rate,
+                             float heat_increase, bool is_big) {
   float heat_percent = heat / heat_limit;
   float stable_freq = cooling_rate / heat_increase;
   if (is_big)

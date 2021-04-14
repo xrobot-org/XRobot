@@ -16,7 +16,7 @@ extern "C" {
 /* 所有任务都要define一个“任务运行频率”和“初始化延时” */
 #define TASK_FREQ_CTRL_CHASSIS (500u)
 #define TASK_FREQ_CTRL_GIMBAL (500u)
-#define TASK_FREQ_CTRL_SHOOT (500)
+#define TASK_FREQ_CTRL_LAUNCHER (500)
 #define TASK_FREQ_CTRL_CAP (100u)
 #define TASK_FREQ_CTRL_COMMAND (500u)
 #define TASK_FREQ_INFO (4u)
@@ -41,7 +41,7 @@ typedef struct {
     osThreadId_t command;
     osThreadId_t ctrl_chassis;
     osThreadId_t ctrl_gimbal;
-    osThreadId_t ctrl_shoot;
+    osThreadId_t ctrl_launcher;
     osThreadId_t info;
     osThreadId_t monitor;
     osThreadId_t can;
@@ -69,7 +69,7 @@ typedef struct {
 
       osMessageQueueId_t chassis;
       osMessageQueueId_t gimbal;
-      osMessageQueueId_t shoot;
+      osMessageQueueId_t launcher;
       osMessageQueueId_t ai;
       osMessageQueueId_t referee;
     } cmd;
@@ -79,14 +79,14 @@ typedef struct {
       struct {
         osMessageQueueId_t chassis;
         osMessageQueueId_t gimbal;
-        osMessageQueueId_t shoot;
+        osMessageQueueId_t launcher;
         osMessageQueueId_t cap;
       } output;
 
       struct {
         osMessageQueueId_t chassis;
         osMessageQueueId_t gimbal;
-        osMessageQueueId_t shoot;
+        osMessageQueueId_t launcher;
         osMessageQueueId_t cap;
         osMessageQueueId_t tof;
       } feedback;
@@ -101,7 +101,7 @@ typedef struct {
       osMessageQueueId_t cap;
       osMessageQueueId_t chassis;
       osMessageQueueId_t ai;
-      osMessageQueueId_t shoot;
+      osMessageQueueId_t launcher;
     } referee;
 
     osMessageQueueId_t cap_info;
@@ -109,7 +109,7 @@ typedef struct {
     struct {
       osMessageQueueId_t chassis;
       osMessageQueueId_t gimbal;
-      osMessageQueueId_t shoot;
+      osMessageQueueId_t launcher;
       osMessageQueueId_t cap;
       osMessageQueueId_t cmd;
     } ui;
@@ -131,7 +131,7 @@ typedef struct {
     UBaseType_t command;
     UBaseType_t ctrl_chassis;
     UBaseType_t ctrl_gimbal;
-    UBaseType_t ctrl_shoot;
+    UBaseType_t ctrl_launcher;
     UBaseType_t info;
     UBaseType_t monitor;
     UBaseType_t can;
@@ -147,7 +147,7 @@ typedef struct {
     float command;
     float ctrl_chassis;
     float ctrl_gimbal;
-    float ctrl_shoot;
+    float ctrl_launcher;
     float info;
     float monitor;
     float can;
@@ -163,7 +163,7 @@ typedef struct {
     float command;
     float ctrl_chassis;
     float ctrl_gimbal;
-    float ctrl_shoot;
+    float ctrl_launcher;
     float info;
     float monitor;
     float can;
@@ -184,7 +184,7 @@ extern const osThreadAttr_t attr_cli;
 extern const osThreadAttr_t attr_command;
 extern const osThreadAttr_t attr_ctrl_chassis;
 extern const osThreadAttr_t attr_ctrl_gimbal;
-extern const osThreadAttr_t attr_ctrl_shoot;
+extern const osThreadAttr_t attr_ctrl_launcher;
 extern const osThreadAttr_t attr_info;
 extern const osThreadAttr_t attr_monitor;
 extern const osThreadAttr_t attr_can;
@@ -201,7 +201,7 @@ void Task_CLI(void *argument);
 void Task_Command(void *argument);
 void Task_CtrlChassis(void *argument);
 void Task_CtrlGimbal(void *argument);
-void Task_CtrlShoot(void *argument);
+void Task_CtrlLauncher(void *argument);
 void Task_Info(void *argument);
 void Task_Monitor(void *argument);
 void Task_Can(void *argument);

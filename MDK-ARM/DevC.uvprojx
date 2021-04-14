@@ -1557,9 +1557,9 @@
               <FilePath>..\User\module\gimbal.c</FilePath>
             </File>
             <File>
-              <FileName>shoot.c</FileName>
+              <FileName>launcher.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\module\shoot.c</FilePath>
+              <FilePath>..\User\module\launcher.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1607,9 +1607,9 @@
               <FilePath>..\User\task\ctrl_gimbal.c</FilePath>
             </File>
             <File>
-              <FileName>ctrl_shoot.c</FileName>
+              <FileName>ctrl_launcher.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\ctrl_shoot.c</FilePath>
+              <FilePath>..\User\task\ctrl_launcher.c</FilePath>
             </File>
             <File>
               <FileName>info.c</FileName>
@@ -3217,9 +3217,9 @@
               <FilePath>..\User\module\gimbal.c</FilePath>
             </File>
             <File>
-              <FileName>shoot.c</FileName>
+              <FileName>launcher.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\module\shoot.c</FilePath>
+              <FilePath>..\User\module\launcher.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -3267,9 +3267,9 @@
               <FilePath>..\User\task\ctrl_gimbal.c</FilePath>
             </File>
             <File>
-              <FileName>ctrl_shoot.c</FileName>
+              <FileName>ctrl_launcher.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\ctrl_shoot.c</FilePath>
+              <FilePath>..\User\task\ctrl_launcher.c</FilePath>
             </File>
             <File>
               <FileName>info.c</FileName>

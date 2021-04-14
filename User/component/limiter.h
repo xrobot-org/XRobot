@@ -48,8 +48,8 @@ float PowerLimit_TargetPower(float power_limit, float power_buffer);
  * @param heat_limit 热量上限
  * @param cooling_rate 冷却速率
  * @param heat_increase 冷却增加
- * @param shoot_freq 经过热量限制后的发射频率
+ * @param is_big 是否为大弹丸
  * @return float 发射频率
  */
-float HeatLimit_ShootFreq(float heat, float heat_limit, float cooling_rate,
-                          float heat_increase, bool is_big);
+float HeatLimit_LauncherFreq(float heat, float heat_limit, float cooling_rate,
+                             float heat_increase, bool is_big);

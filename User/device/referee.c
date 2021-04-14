@@ -207,9 +207,9 @@ int8_t Referee_Parse(Referee_t *ref) {
         origin = &(ref->robot_danage);
         size = sizeof(ref->robot_danage);
         break;
-      case REF_CMD_ID_SHOOT_DATA:
-        origin = &(ref->shoot_data);
-        size = sizeof(ref->shoot_data);
+      case REF_CMD_ID_LAUNCHER_DATA:
+        origin = &(ref->launcher_data);
+        size = sizeof(ref->launcher_data);
         break;
       case REF_CMD_ID_BULLET_REMAINING:
         origin = &(ref->bullet_remain);
@@ -572,12 +572,14 @@ uint8_t Referee_PackChassis(Referee_ForChassis_t *chassis,
   return 0;
 }
 
-uint8_t Referee_PackShoot(Referee_ForShoot_t *shoot, Referee_t *ref) {
-  memcpy(&(shoot->power_heat), &(ref->power_heat), sizeof(shoot->power_heat));
-  memcpy(&(shoot->robot_status), &(ref->robot_status),
-         sizeof(shoot->robot_status));
-  memcpy(&(shoot->shoot_data), &(ref->shoot_data), sizeof(shoot->shoot_data));
-  shoot->ref_status = ref->ref_status;
+uint8_t Referee_PackLauncher(Referee_ForLauncher_t *launcher, Referee_t *ref) {
+  memcpy(&(launcher->power_heat), &(ref->power_heat),
+         sizeof(launcher->power_heat));
+  memcpy(&(launcher->robot_status), &(ref->robot_status),
+         sizeof(launcher->robot_status));
+  memcpy(&(launcher->launcher_data), &(ref->launcher_data),
+         sizeof(launcher->launcher_data));
+  launcher->ref_status = ref->ref_status;
   return 0;
 }
 
@@ -670,16 +672,16 @@ uint8_t Referee_UIRefresh(Referee_UI_t *ui) {
       case 3: {
         fsm++;
         UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
-                    UI_GRAPIC_LAYER_SHOOT);
+                    UI_GRAPIC_LAYER_LAUNCHER);
         float start_pos_h = 0.0f;
-        switch (ui->shoot_ui.mode) {
-          case SHOOT_MODE_RELAX:
+        switch (ui->launcher_ui.mode) {
+          case LAUNCHER_MODE_RELAX:
             start_pos_h = 0.68f;
             break;
-          case SHOOT_MODE_SAFE:
+          case LAUNCHER_MODE_SAFE:
             start_pos_h = 0.66f;
             break;
-          case SHOOT_MODE_LOADED:
+          case LAUNCHER_MODE_LOADED:
             start_pos_h = 0.64f;
             break;
           default:
@@ -687,13 +689,13 @@ uint8_t Referee_UIRefresh(Referee_UI_t *ui) {
         }
         UI_DrawRectangle(
             Referee_GetGrapicAdd(ui), "b", UI_GRAPIC_OPERATION_ADD,
-            UI_GRAPIC_LAYER_SHOOT, GREEN, UI_DEFAULT_WIDTH,
+            UI_GRAPIC_LAYER_LAUNCHER, GREEN, UI_DEFAULT_WIDTH,
             ui->screen->width * REF_UI_RIGHT_START_POS + 114,
             ui->screen->height * start_pos_h + REF_UI_BOX_UP_OFFSET,
             ui->screen->width * REF_UI_RIGHT_START_POS + 162,
             ui->screen->height * start_pos_h + REF_UI_BOX_BOT_OFFSET);
 
-        switch (ui->shoot_ui.fire) {
+        switch (ui->launcher_ui.fire) {
           case FIRE_MODE_SINGLE:
             start_pos_h = 0.68f;
             break;
@@ -707,7 +709,7 @@ uint8_t Referee_UIRefresh(Referee_UI_t *ui) {
         }
         UI_DrawRectangle(
             Referee_GetGrapicAdd(ui), "f", UI_GRAPIC_OPERATION_ADD,
-            UI_GRAPIC_LAYER_SHOOT, GREEN, UI_DEFAULT_WIDTH,
+            UI_GRAPIC_LAYER_LAUNCHER, GREEN, UI_DEFAULT_WIDTH,
             ui->screen->width * REF_UI_RIGHT_START_POS + 174,
             ui->screen->height * start_pos_h + REF_UI_BOX_UP_OFFSET,
             ui->screen->width * REF_UI_RIGHT_START_POS + 222,

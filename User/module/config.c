@@ -113,7 +113,7 @@ static const Config_RobotParam_t param_default = {
     },
   }, /* gimbal */
 
-  .shoot = { /* 发射器模块参数 */
+  .launcher = { /* 发射器模块参数 */
             
     .fric_pid_param = {
       .k = 0.001f,
@@ -149,15 +149,15 @@ static const Config_RobotParam_t param_default = {
     .fric_radius = 0.03f,
     .cover_open_duty = 0.125f,
     .cover_close_duty = 0.075f,
-    .model = SHOOT_MODEL_17MM,
+    .model = LAUNCHER_MODEL_17MM,
     .bullet_speed = 30.f,
-    .min_shoot_delay = (uint32_t)(1000.0f / 10.0f),
-  }, /* shoot */
+    .min_launch_delay = (uint32_t)(1000.0f / 10.0f),
+  }, /* launcher */
 
   .can = {
     .chassis = BSP_CAN_1,
     .gimbal = BSP_CAN_2,
-    .shoot = BSP_CAN_2,      
+    .launcher = BSP_CAN_2,      
     .cap = BSP_CAN_1,
     }, /* can */
 }; /* param_default */
@@ -258,7 +258,7 @@ static const Config_RobotParam_t param_hero = {
     },
   }, /* gimbal */
 
-  .shoot = { /* 发射器模块参数 */
+  .launcher = { /* 发射器模块参数 */
             
     .fric_pid_param = {
       .k = 0.001f,
@@ -294,15 +294,15 @@ static const Config_RobotParam_t param_hero = {
     .fric_radius = 0.03f,
     .cover_open_duty = 0.125f,
     .cover_close_duty = 0.075f,
-    .model = SHOOT_MODEL_42MM,
+    .model = LAUNCHER_MODEL_42MM,
     .bullet_speed = 16.0f,
-    .min_shoot_delay = (uint32_t)(1000.0f / 10.0f),
-  }, /* shoot */
+    .min_launch_delay = (uint32_t)(1000.0f / 10.0f),
+  }, /* launcher */
 
   .can = {
     .chassis = BSP_CAN_1,
     .gimbal = BSP_CAN_2,
-    .shoot = BSP_CAN_2,      
+    .launcher = BSP_CAN_2,      
     .cap = BSP_CAN_1,
     }, /* can */
 }; /* param_hero */      

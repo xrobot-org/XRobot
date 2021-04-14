@@ -20,9 +20,9 @@ extern "C" {
 #define CAN_MOTOR_CHASSIS_4_RECV (1 << 3)
 #define CAN_MOTOR_GIMBAL_YAW_RECV (1 << 4)
 #define CAN_MOTOR_GIMBAL_PIT_RECV (1 << 5)
-#define CAN_MOTOR_SHOOT_FRIC1_RECV (1 << 6)
-#define CAN_MOTOR_SHOOT_FRIC2_RECV (1 << 7)
-#define CAN_MOTOR_SHOOT_TRIG_RECV (1 << 8)
+#define CAN_MOTOR_LAUNCHER_FRIC1_RECV (1 << 6)
+#define CAN_MOTOR_LAUNCHER_FRIC2_RECV (1 << 7)
+#define CAN_MOTOR_LAUNCHER_TRIG_RECV (1 << 8)
 #define CAN_MOTOR_CAP_RECV (1 << 9)
 #define CAN_TOF_RECV (1 << 10)
 
@@ -31,9 +31,9 @@ extern "C" {
    CAN_MOTOR_CHASSIS_3_RECV | CAN_MOTOR_CHASSIS_4_RECV)
 #define CAN_REC_GIMBAL_FINISHED \
   (CAN_MOTOR_GIMBAL_YAW_RECV | CAN_MOTOR_GIMBAL_PIT_RECV)
-#define CAN_REC_SHOOT_FINISHED                               \
-  (CAN_MOTOR_SHOOT_FRIC1_RECV | CAN_MOTOR_SHOOT_FRIC2_RECV | \
-   CAN_MOTOR_SHOOT_TRIG_RECV)
+#define CAN_REC_LAUNCHER_FINISHED                                  \
+  (CAN_MOTOR_LAUNCHER_FRIC1_RECV | CAN_MOTOR_LAUNCHER_FRIC2_RECV | \
+   CAN_MOTOR_LAUNCHER_TRIG_RECV)
 #define CAN_REC_CAP_FINISHED CAN_MOTOR_CAP_RECV
 #define CAN_REC_TOF_FINISHED CAN_TOF_RECV
 
@@ -81,7 +81,7 @@ typedef enum {
 typedef struct {
   BSP_CAN_t chassis;
   BSP_CAN_t gimbal;
-  BSP_CAN_t shoot;
+  BSP_CAN_t launcher;
   BSP_CAN_t cap;
 } CAN_Params_t;
 
@@ -107,11 +107,11 @@ enum CAN_MotorGimbal_e {
   CAN_MOTOR_GIMBAL_NUM,
 };
 
-enum CAN_MotorShoot_e {
-  CAN_MOTOR_SHOOT_FRIC1 = 0,
-  CAN_MOTOR_SHOOT_FRIC2,
-  CAN_MOTOR_SHOOT_TRIG,
-  CAN_MOTORSHOOT_NUM,
+enum CAN_MotorLauncher_e {
+  CAN_MOTOR_LAUNCHER_FRIC1 = 0,
+  CAN_MOTOR_LAUNCHER_FRIC2,
+  CAN_MOTOR_LAUNCHER_TRIG,
+  CAN_MOTORLAUNCHER_NUM,
 };
 
 typedef struct {
@@ -123,8 +123,8 @@ typedef struct {
   CAN_MotorGroupInit_t chassis;
   CAN_MotorGroupInit_t gimbal1;
   CAN_MotorGroupInit_t gimbal2;
-  CAN_MotorGroupInit_t shoot1;
-  CAN_MotorGroupInit_t shoot2;
+  CAN_MotorGroupInit_t launcher1;
+  CAN_MotorGroupInit_t launcher2;
 } CAN_MotorInit_t;
 
 typedef union {
@@ -149,7 +149,7 @@ typedef union {
     float fric2;
     float trig;
   } named;
-} CAN_ShootOutput_t;
+} CAN_LauncherOutput_t;
 
 typedef struct {
   float power_limit;
@@ -158,7 +158,7 @@ typedef struct {
 typedef struct {
   CAN_ChassisOutput_t chassis;
   CAN_GimbalOutput_t gimbal;
-  CAN_ShootOutput_t shoot;
+  CAN_LauncherOutput_t launcher;
   CAN_CapOutput_t cap;
 } CAN_Output_t;
 
@@ -166,8 +166,8 @@ typedef enum {
   CAN_MOTOR_GROUT_CHASSIS = 0,
   CAN_MOTOR_GROUT_GIMBAL1,
   CAN_MOTOR_GROUT_GIMBAL2,
-  CAN_MOTOR_GROUT_SHOOT1,
-  CAN_MOTOR_GROUT_SHOOT2,
+  CAN_MOTOR_GROUT_LAUNCHER1,
+  CAN_MOTOR_GROUT_LAUNCHER2,
   CAN_MOTOR_GROUT_CAP,
   CAN_MOTOR_GROUT_NUM,
 } CAN_MotorGroup_t;
@@ -202,7 +202,7 @@ typedef union {
     CAN_MotorFeedback_t fric2;
     CAN_MotorFeedback_t trig;
   } named;
-} CAN_ShootMotor_t;
+} CAN_LauncherMotor_t;
 
 typedef struct {
   float input_volt;
@@ -230,7 +230,7 @@ typedef struct {
 typedef struct {
   CAN_ChassisMotor_t chassis;
   CAN_GimbalMotor_t gimbal;
-  CAN_ShootMotor_t shoot;
+  CAN_LauncherMotor_t launcher;
 } CAN_Motor_t;
 
 typedef struct {
@@ -249,7 +249,7 @@ typedef struct {
   struct {
     uint32_t chassis;
     uint32_t gimbal;
-    uint32_t shoot;
+    uint32_t launcher;
     uint32_t cap;
   } mailbox;
   osMessageQueueId_t msgq_raw;

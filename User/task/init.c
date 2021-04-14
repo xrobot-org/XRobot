@@ -15,7 +15,7 @@
 #include "module/cap.h"
 #include "module/chassis.h"
 #include "module/gimbal.h"
-#include "module/shoot.h"
+#include "module/launcher.h"
 #include "task/user_task.h"
 
 /* Private typedef ---------------------------------------------------------- */
@@ -45,8 +45,8 @@ void Task_Init(void *argument) {
       osThreadNew(Task_CtrlChassis, NULL, &attr_ctrl_chassis);
   task_runtime.thread.ctrl_gimbal =
       osThreadNew(Task_CtrlGimbal, NULL, &attr_ctrl_gimbal);
-  task_runtime.thread.ctrl_shoot =
-      osThreadNew(Task_CtrlShoot, NULL, &attr_ctrl_shoot);
+  task_runtime.thread.ctrl_launcher =
+      osThreadNew(Task_CtrlLauncher, NULL, &attr_ctrl_launcher);
   task_runtime.thread.info = osThreadNew(Task_Info, NULL, &attr_info);
   task_runtime.thread.monitor = osThreadNew(Task_Monitor, NULL, &attr_monitor);
   task_runtime.thread.can = osThreadNew(Task_Can, NULL, &attr_can);
@@ -61,7 +61,7 @@ void Task_Init(void *argument) {
       osMessageQueueNew(2u, sizeof(CAN_t), NULL);
   task_runtime.msgq.can.feedback.gimbal =
       osMessageQueueNew(2u, sizeof(CAN_t), NULL);
-  task_runtime.msgq.can.feedback.shoot =
+  task_runtime.msgq.can.feedback.launcher =
       osMessageQueueNew(2u, sizeof(CAN_t), NULL);
   task_runtime.msgq.can.feedback.cap =
       osMessageQueueNew(2u, sizeof(CAN_t), NULL);
@@ -69,8 +69,8 @@ void Task_Init(void *argument) {
       osMessageQueueNew(2u, sizeof(CAN_ChassisOutput_t), NULL);
   task_runtime.msgq.can.output.gimbal =
       osMessageQueueNew(2u, sizeof(CAN_GimbalOutput_t), NULL);
-  task_runtime.msgq.can.output.shoot =
-      osMessageQueueNew(2u, sizeof(CAN_ShootOutput_t), NULL);
+  task_runtime.msgq.can.output.launcher =
+      osMessageQueueNew(2u, sizeof(CAN_LauncherOutput_t), NULL);
   task_runtime.msgq.can.output.cap =
       osMessageQueueNew(2u, sizeof(CAN_CapOutput_t), NULL);
 
@@ -79,8 +79,8 @@ void Task_Init(void *argument) {
       osMessageQueueNew(3u, sizeof(CMD_ChassisCmd_t), NULL);
   task_runtime.msgq.cmd.gimbal =
       osMessageQueueNew(3u, sizeof(CMD_GimbalCmd_t), NULL);
-  task_runtime.msgq.cmd.shoot =
-      osMessageQueueNew(3u, sizeof(CMD_ShootCmd_t), NULL);
+  task_runtime.msgq.cmd.launcher =
+      osMessageQueueNew(3u, sizeof(CMD_LauncherCmd_t), NULL);
   task_runtime.msgq.cmd.ai =
       osMessageQueueNew(3u, sizeof(CMD_AI_Status_t), NULL);
   task_runtime.msgq.cmd.referee = osMessageQueueNew(6u, sizeof(CMD_UI_t), NULL);
@@ -111,8 +111,8 @@ void Task_Init(void *argument) {
       osMessageQueueNew(2u, sizeof(Referee_ForChassis_t), NULL);
   task_runtime.msgq.referee.cap =
       osMessageQueueNew(2u, sizeof(Referee_ForCap_t), NULL);
-  task_runtime.msgq.referee.shoot =
-      osMessageQueueNew(2u, sizeof(Referee_ForShoot_t), NULL);
+  task_runtime.msgq.referee.launcher =
+      osMessageQueueNew(2u, sizeof(Referee_ForLauncher_t), NULL);
 
   /* UI */
   task_runtime.msgq.ui.chassis =
@@ -121,8 +121,8 @@ void Task_Init(void *argument) {
       osMessageQueueNew(2u, sizeof(Referee_CapUI_t), NULL);
   task_runtime.msgq.ui.gimbal =
       osMessageQueueNew(2u, sizeof(Referee_GimbalUI_t), NULL);
-  task_runtime.msgq.ui.shoot =
-      osMessageQueueNew(2u, sizeof(Referee_ShootUI_t), NULL);
+  task_runtime.msgq.ui.launcher =
+      osMessageQueueNew(2u, sizeof(Referee_LauncherUI_t), NULL);
   task_runtime.msgq.ui.cmd = osMessageQueueNew(2u, sizeof(bool), NULL);
 
   osKernelUnlock();

@@ -15,7 +15,7 @@ int8_t BSP_PWM_Start(BSP_PWM_Channel_t ch) {
     case BSP_PWM_IMU_HEAT:
       HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
       break;
-    case BSP_PWM_SHOOT_SERVO:
+    case BSP_PWM_LAUNCHER_SERVO:
       HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
       break;
   }
@@ -33,7 +33,7 @@ int8_t BSP_PWM_Set(BSP_PWM_Channel_t ch, float duty_cycle) {
     case BSP_PWM_IMU_HEAT:
       pulse = (uint16_t)(duty_cycle * (float)__HAL_TIM_GET_AUTORELOAD(&htim10));
       break;
-    case BSP_PWM_SHOOT_SERVO:
+    case BSP_PWM_LAUNCHER_SERVO:
       pulse = (uint16_t)(duty_cycle * (float)__HAL_TIM_GET_AUTORELOAD(&htim1));
       break;
   }
@@ -43,7 +43,7 @@ int8_t BSP_PWM_Set(BSP_PWM_Channel_t ch, float duty_cycle) {
       case BSP_PWM_IMU_HEAT:
         __HAL_TIM_SET_COMPARE(&htim10, TIM_CHANNEL_1, pulse);
         break;
-      case BSP_PWM_SHOOT_SERVO:
+      case BSP_PWM_LAUNCHER_SERVO:
         __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, pulse);
         break;
     }
@@ -58,7 +58,7 @@ int8_t BSP_PWM_Stop(BSP_PWM_Channel_t ch) {
     case BSP_PWM_IMU_HEAT:
       HAL_TIM_PWM_Stop(&htim10, TIM_CHANNEL_1);
       break;
-    case BSP_PWM_SHOOT_SERVO:
+    case BSP_PWM_LAUNCHER_SERVO:
       HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
       break;
   }

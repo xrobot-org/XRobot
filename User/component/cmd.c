@@ -88,7 +88,7 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   cmd->gimbal.delta_eulr.pit =
       (float)(-rc->mouse.y) * dt_sec * cmd->param->sens_mouse;
   cmd->chassis.ctrl_vec.vx = cmd->chassis.ctrl_vec.vy = 0.0f;
-  cmd->shoot.reverse_trig = false;
+  cmd->launcher.reverse_trig = false;
 
   /* 按键行为映射相关逻辑 */
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_FORE)) {
@@ -113,17 +113,17 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_FIRE)) {
     /* 切换至开火模式，设置相应的发射频率和弹丸初速度 */
-    cmd->shoot.mode = SHOOT_MODE_LOADED;
-    cmd->shoot.fire = true;
+    cmd->launcher.mode = LAUNCHER_MODE_LOADED;
+    cmd->launcher.fire = true;
   } else {
     /* 切换至准备模式，停止发射 */
-    cmd->shoot.mode = SHOOT_MODE_LOADED;
-    cmd->shoot.fire = false;
+    cmd->launcher.mode = LAUNCHER_MODE_LOADED;
+    cmd->launcher.fire = false;
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_FIRE_MODE)) {
     /* 每按一次依次切换开火下一个模式 */
-    cmd->shoot.fire_mode++;
-    cmd->shoot.fire_mode %= FIRE_MODE_NUM;
+    cmd->launcher.fire_mode++;
+    cmd->launcher.fire_mode %= FIRE_MODE_NUM;
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_ROTOR)) {
     /* 切换到小陀螺模式 */
@@ -132,7 +132,7 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_OPENCOVER)) {
     /* 每按一次开、关弹舱盖 */
-    cmd->shoot.cover_open = !cmd->shoot.cover_open;
+    cmd->launcher.cover_open = !cmd->launcher.cover_open;
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_BUFF)) {
     if (cmd->ai_status == AI_STATUS_HITSWITCH) {
@@ -167,7 +167,7 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_REVTRIG)) {
     /* 按下拨弹反转 */
-    cmd->shoot.reverse_trig = true;
+    cmd->launcher.reverse_trig = true;
   }
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_FOLLOWGIMBAL35)) {
     cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
@@ -208,25 +208,25 @@ static void CMD_RcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       /* 右拨杆相应行为选择和解析 */
     case CMD_SW_UP:
       cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-      cmd->shoot.mode = SHOOT_MODE_SAFE;
+      cmd->launcher.mode = LAUNCHER_MODE_SAFE;
       break;
 
     case CMD_SW_MID:
       cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-      cmd->shoot.fire = false;
-      cmd->shoot.mode = SHOOT_MODE_LOADED;
+      cmd->launcher.fire = false;
+      cmd->launcher.mode = LAUNCHER_MODE_LOADED;
       break;
 
     case CMD_SW_DOWN:
       cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-      cmd->shoot.mode = SHOOT_MODE_LOADED;
-      cmd->shoot.fire_mode = FIRE_MODE_CONT;
-      cmd->shoot.fire = true;
+      cmd->launcher.mode = LAUNCHER_MODE_LOADED;
+      cmd->launcher.fire_mode = FIRE_MODE_CONT;
+      cmd->launcher.fire = true;
       break;
 
     case CMD_SW_ERR:
       cmd->gimbal.mode = GIMBAL_MODE_RELAX;
-      cmd->shoot.mode = SHOOT_MODE_RELAX;
+      cmd->launcher.mode = LAUNCHER_MODE_RELAX;
   }
   /* 将操纵杆的对应值转换为底盘的控制向量和云台变化的欧拉角 */
   cmd->chassis.ctrl_vec.vx = rc->ch.l.x;
@@ -244,7 +244,7 @@ static void CMD_RcLostLogic(CMD_t *cmd) {
   /* 机器人底盘、云台、发射器运行模式恢复至放松模式 */
   cmd->chassis.mode = CHASSIS_MODE_RELAX;
   cmd->gimbal.mode = GIMBAL_MODE_RELAX;
-  cmd->shoot.mode = SHOOT_MODE_RELAX;
+  cmd->launcher.mode = LAUNCHER_MODE_RELAX;
 }
 
 /**
@@ -329,10 +329,10 @@ int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
 
   /* host发射命令，设置不同的发射频率和弹丸初速度 */
   if (host->fire) {
-    cmd->shoot.mode = SHOOT_MODE_LOADED;
-    cmd->shoot.fire = true;
+    cmd->launcher.mode = LAUNCHER_MODE_LOADED;
+    cmd->launcher.fire = true;
   } else {
-    cmd->shoot.mode = SHOOT_MODE_SAFE;
+    cmd->launcher.mode = LAUNCHER_MODE_SAFE;
   }
   return 0;
 }
