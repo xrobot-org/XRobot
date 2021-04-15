@@ -17,8 +17,8 @@
 #define REF_HEADER_SOF (0xA5)
 #define REF_LEN_RX_BUFF (0xFF)
 
-#define REF_UI_FAST_REFRESH_FREQ (50)
-#define REF_UI_SLOW_REFRESH_FREQ (0.2f)
+#define REF_UI_FAST_REFRESH_FREQ (50)   /* 静态元素刷新频率 */
+#define REF_UI_SLOW_REFRESH_FREQ (0.2f) /* 动态元素刷新频率 */
 
 #define REF_UI_BOX_UP_OFFSET (4)
 #define REF_UI_BOX_BOT_OFFSET (-14)
@@ -265,8 +265,8 @@ int8_t Referee_StartSend(uint8_t *data, uint32_t len) {
 
 int8_t Referee_MoveData(void *data, void *tmp, uint32_t len) {
   if (len <= 0 || data == NULL || tmp == NULL) return DEVICE_ERR;
-  memcpy(tmp, (const void *)data, (size_t)len);
-  memset(data, 0, (size_t)len);
+  memcpy(tmp, data, len);
+  memset(data, 0, len);
   return DEVICE_OK;
 }
 
@@ -346,16 +346,19 @@ int8_t Referee_SetHeader(Referee_Interactive_Header_t *header,
 }
 
 int8_t Referee_PackUI(Referee_UI_t *ui, Referee_t *ref) {
+  /* 串口忙碌，不发送数据 */
   if (!Referee_CheckTXReady()) return 0;
+  /* 无要发送的数据 */
   if (ui->character_counter == 0 && ui->grapic_counter == 0 &&
       ui->del_counter == 0)
     return 0;
 
   static uint8_t send_data[sizeof(Referee_UI_Drawgrapic_7_t)] = {0};
   uint16_t size;
-  if (ui->del_counter != 0) {
+  if (ui->del_counter != 0) { /* 删除图层 */
     if (ui->del_counter < 0 || ui->del_counter > REF_UI_MAX_STRING_NUM)
       return DEVICE_ERR;
+    /* 根据通信协议修改包数据 */
     Referee_UI_Del_t *address = (Referee_UI_Del_t *)send_data;
     address->header.sof = REF_HEADER_SOF;
     address->header.data_length =
@@ -366,16 +369,18 @@ int8_t Referee_PackUI(Referee_UI_t *ui, Referee_t *ref) {
     address->cmd_id = REF_CMD_ID_INTER_STUDENT;
     Referee_SetHeader(&(address->IA_header), REF_STDNT_CMD_ID_UI_DEL,
                       ref->robot_status.robot_id);
+    /* 转移图形数据 */
     Referee_MoveData(&(ui->del[--ui->del_counter]), &(address->data),
                      sizeof(UI_Del_t));
+    /* 校验 */
     address->crc16 =
         CRC16_Calc((const uint8_t *)address,
                    sizeof(Referee_UI_Del_t) - sizeof(uint16_t), CRC16_INIT);
     size = sizeof(Referee_UI_Del_t);
-
+    /* 开始发送 */
     Referee_StartSend(send_data, size);
     return DEVICE_OK;
-  } else if (ui->grapic_counter != 0) {
+  } else if (ui->grapic_counter != 0) { /* 绘制图形 */
     switch (ui->grapic_counter) {
       case 1:
         size = sizeof(Referee_UI_Drawgrapic_1_t);
@@ -463,7 +468,7 @@ int8_t Referee_PackUI(Referee_UI_t *ui, Referee_t *ref) {
       ui->grapic_counter = 0;
       return DEVICE_OK;
     }
-  } else if (ui->character_counter != 0) {
+  } else if (ui->character_counter != 0) { /* 绘制字符 */
     if (ui->character_counter < 0 ||
         ui->character_counter > REF_UI_MAX_STRING_NUM)
       return DEVICE_ERR;
@@ -585,8 +590,10 @@ uint8_t Referee_PackLauncher(Referee_ForLauncher_t *launcher, Referee_t *ref) {
 
 uint8_t Referee_UIRefresh(Referee_UI_t *ui) {
   static uint8_t fsm = 0;
+  /* UI动态元素刷新 */
   if (osThreadFlagsGet() & SIGNAL_REFEREE_FAST_REFRESH_UI) {
     osThreadFlagsClear(SIGNAL_REFEREE_FAST_REFRESH_UI);
+    /* 使用状态机算法，每次更新一个图层 */
     switch (fsm) {
       case 0: {
         fsm++;
@@ -741,6 +748,7 @@ uint8_t Referee_UIRefresh(Referee_UI_t *ui) {
 
       default:
         fsm = 0;
+        /* 如果缓冲区堵塞，重置串口状态 */
         if (ui->del_counter >= REF_UI_MAX_DEL_NUM ||
             ui->character_counter > REF_UI_MAX_STRING_NUM ||
             ui->grapic_counter > REF_UI_MAX_GRAPIC_NUM)
@@ -748,6 +756,7 @@ uint8_t Referee_UIRefresh(Referee_UI_t *ui) {
     }
   }
 
+  /* UI静态元素刷新 */
   if (osThreadFlagsGet() & SIGNAL_REFEREE_SLOW_REFRESH_UI) {
     osThreadFlagsClear(SIGNAL_REFEREE_SLOW_REFRESH_UI);
     UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
