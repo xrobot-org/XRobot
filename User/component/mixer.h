@@ -53,7 +53,7 @@ int8_t Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode);
  * @return int8_t 0对应没有错误
  */
 int8_t Mixer_Apply(Mixer_t *mixer, MoveVector_t *move_vec, float *out,
-                   int8_t len, float scale_factor);
+                   size_t len, float scale_factor);
 
 #ifdef __cplusplus
 }

@@ -62,7 +62,7 @@ static int8_t Chassis_SetMode(Chassis_t *c, CMD_ChassisMode_t mode,
     c->wz_mult = (rand() % 2) ? -1 : 1;
   }
   /* 切换模式后重置PID和滤波器 */
-  for (uint8_t i = 0; i < c->num_wheel; i++) {
+  for (size_t i = 0; i < c->num_wheel; i++) {
     PID_Reset(c->pid.motor + i);
     LowPassFilter2p_Reset(c->filter.in + i, 0.0f);
     LowPassFilter2p_Reset(c->filter.out + i, 0.0f);
@@ -171,7 +171,7 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
   if (c->filter.out == NULL) goto error;
 
   /* 初始化轮子电机控制PID和LPF */
-  for (uint8_t i = 0; i < c->num_wheel; i++) {
+  for (size_t i = 0; i < c->num_wheel; i++) {
     PID_Init(c->pid.motor + i, KPID_MODE_NO_D, target_freq,
              &(c->param->motor_pid_param));
 
@@ -221,7 +221,7 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   }
 
   /* 将CAN中的反馈数据写入到feedback中 */
-  for (uint8_t i = 0; i < c->num_wheel; i++) {
+  for (size_t i = 0; i < c->num_wheel; i++) {
     c->feedback.motor_rpm[i] = can->motor.chassis.as_array[i].rotor_speed;
     c->feedback.motor_current[i] =
         can->motor.chassis.as_array[i].torque_current;
@@ -308,7 +308,7 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
               7000.0f);
 
   /* 根据轮子转速目标值，利用PID计算电机输出值 */
-  for (uint8_t i = 0; i < c->num_wheel; i++) {
+  for (size_t i = 0; i < c->num_wheel; i++) {
     /* 输入滤波. */
     c->feedback.motor_rpm[i] =
         LowPassFilter2p_Apply(c->filter.in + i, c->feedback.motor_rpm[i]);
@@ -387,7 +387,7 @@ int8_t Chassis_PowerLimit(Chassis_t *c, const CAN_Capacitor_t *cap,
  * \param out CAN设备底盘输出结构体
  */
 void Chassis_DumpOutput(Chassis_t *c, CAN_ChassisOutput_t *out) {
-  for (uint8_t i = 0; i < c->num_wheel; i++) {
+  for (size_t i = 0; i < c->num_wheel; i++) {
     out->as_array[i] = c->out[i];
   }
 }
@@ -398,7 +398,7 @@ void Chassis_DumpOutput(Chassis_t *c, CAN_ChassisOutput_t *out) {
  * \param out CAN设备底盘输出结构体
  */
 void Chassis_ResetOutput(CAN_ChassisOutput_t *out) {
-  for (uint8_t i = 0; i < 4; i++) {
+  for (size_t i = 0; i < 4; i++) {
     out->as_array[i] = 0.0f;
   }
 }

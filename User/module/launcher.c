@@ -3,11 +3,12 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
+#include "launcher.h"
+
 #include "bsp/pwm.h"
 #include "component/game.h"
 #include "component/limiter.h"
 #include "component/user_math.h"
-#include "launcher.h"
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
@@ -28,7 +29,7 @@ static int8_t Launcher_SetMode(Launcher_t *s, CMD_LauncherMode_t mode) {
   if (mode == s->mode) return LAUNCHER_OK;
 
   /* 切换模式后重置PID和滤波器 */
-  for (uint8_t i = 0; i < 2; i++) {
+  for (size_t i = 0; i < 2; i++) {
     PID_Reset(s->pid.fric + i);
     LowPassFilter2p_Reset(s->filter.in.fric + i, 0.0f);
     LowPassFilter2p_Reset(s->filter.out.fric + i, 0.0f);
@@ -111,7 +112,7 @@ int8_t Launcher_Init(Launcher_t *s, const Launcher_Params_t *param,
   s->param = param;              /* 初始化参数 */
   s->mode = LAUNCHER_MODE_RELAX; /* 设置默认模式 */
 
-  for (uint8_t i = 0; i < 2; i++) {
+  for (size_t i = 0; i < 2; i++) {
     /* PI控制器初始化PID */
     PID_Init(s->pid.fric + i, KPID_MODE_NO_D, target_freq,
              &(param->fric_pid_param));
@@ -148,7 +149,7 @@ int8_t Launcher_UpdateFeedback(Launcher_t *s, const CAN_t *can) {
   if (s == NULL) return -1;
   if (can == NULL) return -1;
 
-  for (uint8_t i = 0; i < 2; i++) {
+  for (size_t i = 0; i < 2; i++) {
     s->feedback.fric_rpm[i] = can->motor.launcher.as_array[i].rotor_speed;
   }
 
@@ -220,9 +221,8 @@ int8_t Launcher_Control(Launcher_t *s, CMD_LauncherCmd_t *s_cmd,
       float launch_freq = HeatLimit_LauncherFreq(
           s->heat_ctrl.heat, s->heat_ctrl.heat_limit, s->heat_ctrl.cooling_rate,
           s->heat_ctrl.heat_increase, s->param->model == LAUNCHER_MODEL_42MM);
-      s->fire_ctrl.period_ms = (launch_freq == 0.0f)
-                                   ? UINT32_MAX
-                                   : (uint32_t)(1000.f / launch_freq);
+      s->fire_ctrl.period_ms =
+          (launch_freq == 0.0f) ? UINT32_MAX : (uint32_t)(1000.f / launch_freq);
       break;
     }
     default:
@@ -262,7 +262,7 @@ int8_t Launcher_Control(Launcher_t *s, CMD_LauncherCmd_t *s_cmd,
 
   switch (s->mode) {
     case LAUNCHER_MODE_RELAX:
-      for (uint8_t i = 0; i < LAUNCHER_ACTR_NUM; i++) {
+      for (size_t i = 0; i < LAUNCHER_ACTR_NUM; i++) {
         s->out[i] = 0.0f;
       }
       BSP_PWM_Stop(BSP_PWM_LAUNCHER_SERVO);
@@ -280,7 +280,7 @@ int8_t Launcher_Control(Launcher_t *s, CMD_LauncherCmd_t *s_cmd,
       s->out[LAUNCHER_ACTR_TRIG_IDX] = LowPassFilter2p_Apply(
           &(s->filter.out.trig), s->out[LAUNCHER_ACTR_TRIG_IDX]);
 
-      for (uint8_t i = 0; i < 2; i++) {
+      for (size_t i = 0; i < 2; i++) {
         /* 控制摩擦轮 */
         s->feedback.fric_rpm[i] = LowPassFilter2p_Apply(
             &(s->filter.in.fric[i]), s->feedback.fric_rpm[i]);
@@ -313,7 +313,7 @@ int8_t Launcher_Control(Launcher_t *s, CMD_LauncherCmd_t *s_cmd,
  * \param out CAN设备发射器输出结构体
  */
 void Launcher_DumpOutput(Launcher_t *s, CAN_LauncherOutput_t *out) {
-  for (uint8_t i = 0; i < LAUNCHER_ACTR_NUM; i++) {
+  for (size_t i = 0; i < LAUNCHER_ACTR_NUM; i++) {
     out->as_array[i] = s->out[i];
   }
 }

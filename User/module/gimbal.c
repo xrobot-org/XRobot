@@ -26,10 +26,10 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_GimbalMode_t mode) {
   if (mode == g->mode) return GIMBAL_OK;
 
   /* 切换模式后重置PID和滤波器 */
-  for (uint8_t i = 0; i < GIMBAL_PID_NUM; i++) {
+  for (size_t i = 0; i < GIMBAL_PID_NUM; i++) {
     PID_Reset(g->pid + i);
   }
-  for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
+  for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
     LowPassFilter2p_Reset(g->filter_out + i, 0.0f);
   }
 
@@ -80,7 +80,7 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
   PID_Init(&(g->pid[GIMBAL_PID_PIT_OMEGA_IDX]), KPID_MODE_CALC_D, target_freq,
            &(g->param->pid[GIMBAL_PID_PIT_OMEGA_IDX]));
 
-  for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
+  for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
     LowPassFilter2p_Init(g->filter_out + i, target_freq,
                          g->param->low_pass_cutoff_freq.out);
   }
@@ -157,7 +157,7 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
   float yaw_omega_set_point, pit_omega_set_point;
   switch (g->mode) {
     case GIMBAL_MODE_RELAX:
-      for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) g->out[i] = 0.0f;
+      for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) g->out[i] = 0.0f;
       break;
 
     case GIMBAL_MODE_ABSOLUTE:
@@ -177,12 +177,12 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
       break;
 
     case GIMBAL_MODE_RELATIVE:
-      for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++) g->out[i] = 0.0f;
+      for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) g->out[i] = 0.0f;
       break;
   }
 
   /* 输出滤波 */
-  for (uint8_t i = 0; i < GIMBAL_ACTR_NUM; i++)
+  for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++)
     g->out[i] = LowPassFilter2p_Apply(g->filter_out + i, g->out[i]);
 
   /* 处理电机反装 */
