@@ -1,5 +1,12 @@
-/*
- * 底盘模组
+/**
+ * @file chassis.c
+ * @author Qu Shen (503578404@qq.com)
+ * @brief 底盘模组
+ * @version 1.0.0
+ * @date 2021-04-15
+ *
+ * @copyright Copyright (c) 2021
+ *
  */
 
 /* Includes ----------------------------------------------------------------- */
@@ -37,7 +44,8 @@
 #error "The capacitor power should be in in the range from 60 to 200."
 #endif
 
-/* Private variables -------------------------------------------------------- */
+/* Private variables
+   -------------------------------------------------------- */
 
 static const float CAP_PERCENTAGE_WORK = (float)_CAP_PERCENTAGE_WORK / 100.0f;
 static const float CAP_PERCENTAGE_CHARGE =

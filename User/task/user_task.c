@@ -1,6 +1,16 @@
-/*
-  保存任务属性，生成任务时使用。
-*/
+/**
+ * @file user_task.c
+ * @author Qu Shen (503578404@qq.com)
+ * @brief
+ * @version 1.0.0
+ * @date 2021-04-15
+ *
+ * @copyright Copyright (c) 2021
+ *
+ * 保存任务属性：堆栈大小、优先级等
+ * 生成任务时使用。
+ *
+ */
 
 /* Includes ----------------------------------------------------------------- */
 #include "task/user_task.h"

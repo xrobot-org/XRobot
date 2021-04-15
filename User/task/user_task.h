@@ -1,3 +1,14 @@
+/**
+ * @file user_task.h
+ * @author Qu Shen (503578404@qq.com)
+ * @brief
+ * @version 1.0.0
+ * @date 2021-04-15
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
+
 #pragma once
 
 #ifdef __cplusplus
@@ -126,6 +137,8 @@ typedef struct {
   Config_t cfg; /* 机器人配置 */
 
 #ifdef DEBUG
+
+  /* stack使用 */
   struct {
     UBaseType_t cli;
     UBaseType_t command;
@@ -140,8 +153,9 @@ typedef struct {
     UBaseType_t ai;
     UBaseType_t rc;
     UBaseType_t cap;
-  } stack_water_mark; /* stack使用 */
+  } stack_water_mark;
 
+  /* 任务运行频率 */
   struct {
     float cli;
     float command;
@@ -156,8 +170,9 @@ typedef struct {
     float ai;
     float rc;
     float cap;
-  } freq; /* 任务运行频率 */
+  } freq;
 
+  /* 任务最近运行时间 */
   struct {
     float cli;
     float command;
@@ -172,7 +187,7 @@ typedef struct {
     float ai;
     float rc;
     float cap;
-  } last_up_time; /* 任务最近运行时间 */
+  } last_up_time;
 #endif
 } Task_Runtime_t;
 

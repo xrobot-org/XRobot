@@ -1,4 +1,12 @@
-/*
+/**
+ * @file cap.c
+ * @author Qu Shen (503578404@qq.com)
+ * @brief 超级电容控制任务
+ * @version 1.0.0
+ * @date 2021-04-15
+ *
+ * @copyright Copyright (c) 2021
+ *
  */
 
 /* Includes ----------------------------------------------------------------- */
