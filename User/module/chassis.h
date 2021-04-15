@@ -71,7 +71,7 @@ typedef struct {
   CMD_ChassisMode_t mode; /* 底盘模式 */
 
   /* 底盘设计 */
-  int8_t num_wheel; /* 底盘轮子数量 */
+  size_t num_wheel; /* 底盘轮子数量 */
   Mixer_t mixer;    /* 混合器，移动向量->电机目标值 */
 
   MoveVector_t move_vec; /* 底盘实际的运动向量 */

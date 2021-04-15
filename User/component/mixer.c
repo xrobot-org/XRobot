@@ -31,7 +31,7 @@ int8_t Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode) {
  * @return int8_t 0对应没有错误
  */
 int8_t Mixer_Apply(Mixer_t *mixer, MoveVector_t *move_vec, float *out,
-                   int8_t len, float scale_factor) {
+                   size_t len, float scale_factor) {
   if (mixer == NULL) return -1;
 
   switch (mixer->mode) {
@@ -74,21 +74,21 @@ int8_t Mixer_Apply(Mixer_t *mixer, MoveVector_t *move_vec, float *out,
   }
 
   float abs_max = 0.f;
-  for (int8_t i = 0; i < len; i++) {
+  for (size_t i = 0; i < len; i++) {
     const float abs_val = fabsf(out[i]);
     abs_max = (abs_val > abs_max) ? abs_val : abs_max;
   }
   if (abs_max > 1.f) {
-    for (int8_t i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
       out[i] /= abs_max;
     }
   }
-  for (int8_t i = 0; i < len; i++) {
+  for (size_t i = 0; i < len; i++) {
     out[i] *= scale_factor;
   }
   return 0;
 
 error:
-  for (uint8_t i = 0; i < len; i++) out[i] = 0;
+  for (size_t i = 0; i < len; i++) out[i] = 0;
   return -1;
 }
