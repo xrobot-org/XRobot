@@ -1,5 +1,12 @@
-/*
- * 电容模组
+/**
+ * @file cap.c
+ * @author cndabai
+ * @brief 电容模组
+ * @version 1.0.0
+ * @date 2021-04-15
+ *
+ * @copyright Copyright (c) 2021
+ *
  */
 
 /* Includes ----------------------------------------------------------------- */

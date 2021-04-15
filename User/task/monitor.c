@@ -1,8 +1,15 @@
-/*
-  监控任务。
-
-  监控系统运行情况，记录错误。
-*/
+/**
+ * @file monitor.c
+ * @author Qu Shen (503578404@qq.com)
+ * @brief 监控任务
+ * @version 1.0.0
+ * @date 2021-04-15
+ *
+ * @copyright Copyright (c) 2021
+ *
+ * 监控系统运行情况，记录错误。
+ *
+ */
 
 /* Includes ----------------------------------------------------------------- */
 #include "bsp/adc.h"
@@ -44,10 +51,10 @@ void Task_Monitor(void *argument) {
     task_runtime.status.battery =
         Capacity_GetBatteryRemain(task_runtime.status.vbat);
     task_runtime.status.cpu_temp = BSP_GetTemperature();
-        
+
     bool low_bat = task_runtime.status.battery < 0.2f;
-    bool high_cpu_temp =  task_runtime.status.cpu_temp > 35.0f;
-    
+    bool high_cpu_temp = task_runtime.status.cpu_temp > 35.0f;
+
     /* 电池电量少于20%时闪烁红色LED */
     if (low_bat || high_cpu_temp) {
       BSP_LED_Set(BSP_LED_RED, BSP_LED_TAGGLE, 1);

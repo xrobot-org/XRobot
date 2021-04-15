@@ -1,8 +1,15 @@
-/*
-  消息任务
-
-  控制对外的指示装置，例如LED、OLED显示器等。
-*/
+/**
+ * @file info.c
+ * @author Qu Shen (503578404@qq.com)
+ * @brief 指示任务
+ * @version 1.0.0
+ * @date 2021-04-15
+ *
+ * @copyright Copyright (c) 2021
+ *
+ * 控制指示装置，例如LED、OLED显示器等。
+ *
+ */
 
 /* Includes ----------------------------------------------------------------- */
 #include "bsp/led.h"
