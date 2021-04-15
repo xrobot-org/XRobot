@@ -191,13 +191,6 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
   if (g->param->reverse.pit)
     g->out[GIMBAL_ACTR_PIT_IDX] = -g->out[GIMBAL_ACTR_PIT_IDX];
 
-  if (g->out[GIMBAL_ACTR_YAW_IDX] < 0.f) {
-    __NOP();
-  }
-
-  if (g->out[GIMBAL_ACTR_PIT_IDX] > 0.5f) {
-    __NOP();
-  }
   return 0;
 }
 
