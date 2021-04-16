@@ -261,7 +261,7 @@ int8_t CAN_Init(CAN_t *can, const CAN_Params_t *param);
 int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output,
                          CAN_t *can);
 int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx);
-bool CAN_CheckFlag(CAN_t *can, uint32_t flag);
+bool CAN_CheckFlag(CAN_t *can, uint32_t flag, bool clear_on_hit);
 int8_t CAN_ClearFlag(CAN_t *can, uint32_t flag);
 
 int8_t CAN_Cap_Control(CAN_CapOutput_t *output, CAN_t *can);

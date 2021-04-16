@@ -42,18 +42,17 @@
 #define CAN_MOTOR_ENC_RES (8192)  /* 电机编码器分辨率 */
 #define CAN_MOTOR_CUR_RES (16384) /* 电机转矩电流分辨率 */
 
-#define CAN_MOTOR_RX_FIFO CAN_RX_FIFO0
-
 /* Super capacitor */
 #define CAN_CAP_FB_ID_BASE (0x211)
 #define CAN_CAP_CTRL_ID_BASE (0x210)
 
 #define CAN_CAP_RES (100) /* 电容数据分辨率 */
 
-#define CAN_CAP_RX_FIFO CAN_RX_FIFO1
-
 /* TOF */
 #define CAN_TOF_ID_BASE (0x280)
+
+#define CAN1_RX_FIFO CAN_RX_FIFO0
+#define CAN2_RX_FIFO CAN_RX_FIFO1
 
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
@@ -93,13 +92,13 @@ void CAN_Tof_Decode(CAN_Tof_t *tof, const uint8_t *raw) {
 }
 
 static void CAN_CAN1RxFifoMsgPendingCallback(void) {
-  HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_1), CAN_MOTOR_RX_FIFO,
+  HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_1), CAN1_RX_FIFO,
                        &raw_rx1.rx_header, raw_rx1.rx_data);
   osMessageQueuePut(gcan->msgq_raw, &raw_rx1, 0, 0);
 }
 
 static void CAN_CAN2RxFifoMsgPendingCallback(void) {
-  HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_2), CAN_CAP_RX_FIFO,
+  HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_2), CAN2_RX_FIFO,
                        &raw_rx2.rx_header, raw_rx2.rx_data);
   osMessageQueuePut(gcan->msgq_raw, &raw_rx2, 0, 0);
 }
@@ -125,7 +124,7 @@ int8_t CAN_Init(CAN_t *can, const CAN_Params_t *param) {
   can_filter.FilterMaskIdLow = 0;
   can_filter.FilterActivation = ENABLE;
   can_filter.SlaveStartFilterBank = 14;
-  can_filter.FilterFIFOAssignment = CAN_MOTOR_RX_FIFO;
+  can_filter.FilterFIFOAssignment = CAN1_RX_FIFO;
 
   HAL_CAN_ConfigFilter(BSP_CAN_GetHandle(BSP_CAN_1), &can_filter);
   HAL_CAN_Start(BSP_CAN_GetHandle(BSP_CAN_1));
@@ -135,7 +134,7 @@ int8_t CAN_Init(CAN_t *can, const CAN_Params_t *param) {
                                CAN_IT_RX_FIFO0_MSG_PENDING);
 
   can_filter.FilterBank = 14;
-  can_filter.FilterFIFOAssignment = CAN_CAP_RX_FIFO;
+  can_filter.FilterFIFOAssignment = CAN2_RX_FIFO;
 
   HAL_CAN_ConfigFilter(BSP_CAN_GetHandle(BSP_CAN_2), &can_filter);
   HAL_CAN_Start(BSP_CAN_GetHandle(BSP_CAN_2));
@@ -255,7 +254,7 @@ int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx) {
     case CAN_M3508_M3_ID:
     case CAN_M3508_M4_ID:
       index = can_rx->rx_header.StdId - CAN_M3508_M1_ID;
-      CAN_Motor_Decode(&(can->motor.chassis.as_array[index]), can_rx->rx_data);
+      CAN_Motor_Decode(can->motor.chassis.as_array + index, can_rx->rx_data);
       can->recive_flag |= 1 << index;
       break;
 
@@ -263,23 +262,23 @@ int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx) {
     case CAN_M3508_FRIC2_ID:
     case CAN_M2006_TRIG_ID:
       index = can_rx->rx_header.StdId - CAN_M3508_FRIC1_ID;
+      CAN_Motor_Decode(can->motor.launcher.as_array + index, can_rx->rx_data);
       can->recive_flag |= 1 << (index + 6);
-      CAN_Motor_Decode(&(can->motor.launcher.as_array[index]), can_rx->rx_data);
       break;
 
     case CAN_GM6020_YAW_ID:
     case CAN_GM6020_PIT_ID:
       index = can_rx->rx_header.StdId - CAN_GM6020_YAW_ID;
+      CAN_Motor_Decode(can->motor.gimbal.as_array + index, can_rx->rx_data);
       can->recive_flag |= 1 << (index + 4);
-      CAN_Motor_Decode(&(can->motor.gimbal.as_array[index]), can_rx->rx_data);
       break;
     case CAN_CAP_FB_ID_BASE:
-      can->recive_flag |= 1 << 9;
       CAN_Cap_Decode(&(can->cap.cap_feedback), can_rx->rx_data);
+      can->recive_flag |= 1 << 9;
       break;
     case CAN_TOF_ID_BASE:
-      can->recive_flag |= 1 << 10;
       CAN_Tof_Decode(&(can->tof), can_rx->rx_data);
+      can->recive_flag |= 1 << 10;
       break;
     default:
       break;
@@ -287,9 +286,11 @@ int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx) {
   return DEVICE_OK;
 }
 
-bool CAN_CheckFlag(CAN_t *can, uint32_t flag) {
+bool CAN_CheckFlag(CAN_t *can, uint32_t flag, bool clear_on_hit) {
   if (can == NULL) return false;
-  return (can->recive_flag & flag) == flag;
+  bool pass = (can->recive_flag & flag) == flag;
+  if (clear_on_hit && pass) CAN_ClearFlag(can, flag);
+  return pass;
 }
 
 int8_t CAN_ClearFlag(CAN_t *can, uint32_t flag) {
