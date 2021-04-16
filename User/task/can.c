@@ -62,18 +62,16 @@ void Task_Can(void *argument) {
     osMessageQueueReset(task_runtime.msgq.can.feedback.launcher);
     osMessageQueuePut(task_runtime.msgq.can.feedback.launcher, &can, 0, 0);
 
-    if (CAN_CheckFlag(&can, CAN_REC_CAP_FINISHED)) {
+    if (CAN_CheckFlag(&can, CAN_REC_CAP_FINISHED, true)) {
       osMessageQueueReset(task_runtime.msgq.can.feedback.cap);
       osMessageQueuePut(task_runtime.msgq.can.feedback.cap, &can, 0, 0);
-      CAN_ClearFlag(&can, CAN_REC_CAP_FINISHED);
     } else {
       // Error Handle
     }
 
-    if (CAN_CheckFlag(&can, CAN_REC_TOF_FINISHED)) {
+    if (CAN_CheckFlag(&can, CAN_REC_TOF_FINISHED, true)) {
       osMessageQueueReset(task_runtime.msgq.can.feedback.tof);
       osMessageQueuePut(task_runtime.msgq.can.feedback.tof, &can, 0, 0);
-      CAN_ClearFlag(&can, CAN_REC_TOF_FINISHED);
     } else {
       // Error Handle
     }
