@@ -37,7 +37,7 @@ void Task_Monitor(void *argument) {
   /* 计算任务运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_MONITOR;
 
-  osDelay(TASK_INIT_DELAY_REFEREE); /* 延时一段时间再开启任务 */
+  osDelay(TASK_INIT_DELAY_MONITOR); /* 延时一段时间再开启任务 */
 
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   while (1) {
