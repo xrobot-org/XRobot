@@ -14,6 +14,7 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
+
 #include <string.h>
 
 #include "device/dr16.h"
@@ -23,6 +24,7 @@
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
+
 #ifdef DEBUG
 DR16_t dr16;
 CMD_RC_t cmd_rc;
@@ -52,13 +54,15 @@ void Task_RC(void *argument) {
     /* 开启DMA */
     DR16_StartDmaRecv(&dr16);
 
+    /* 等待DMA完成 */
     if (DR16_WaitDmaCplt(20)) {
-      /* 转换 */
+      /* 预计时间内收到后进行解析 */
       DR16_ParseRC(&dr16, &cmd_rc);
     } else {
       /* 处理遥控器离线 */
       DR16_HandleOffline(&dr16, &cmd_rc);
     }
+    /* 发送给command任务，进行处理 */
     osMessageQueueReset(task_runtime.msgq.cmd.raw.rc);
     osMessageQueuePut(task_runtime.msgq.cmd.raw.rc, &cmd_rc, 0, 0);
   }
