@@ -45,11 +45,8 @@ char BSP_USB_ReadChar(void) { return usb_rx_buf[0]; }
 
 int8_t BSP_USB_Printf(const char *fmt, ...) {
   va_list ap;
-  uint16_t len = 0;
-
   va_start(ap, fmt);
-  len =
-      (uint16_t)vsnprintf((char *)usb_tx_buf, BSP_USB_MAX_TX_LEN - 1, fmt, ap);
+  int len = vsnprintf((char *)usb_tx_buf, BSP_USB_MAX_TX_LEN - 1, fmt, ap);
   va_end(ap);
 
   if (len > 0) {
