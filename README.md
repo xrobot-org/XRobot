@@ -45,7 +45,7 @@
 
 - （可选）针对不同板子需要到不同的CubeMX工程文件（DevA.ioc、DevC.ioc）。
 
-  - 利用CubeMX生成对应的外设初始化代码和Keil工程文件。忽略CAN总线相关错误。
+  - 利用CubeMX生成对应的外设初始化代码和Keil工程文件。
 
   - 每次生成代码后，请利用Git丢弃Middlewares文件夹中的所有改变。原因如下。
 
