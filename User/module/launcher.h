@@ -88,7 +88,7 @@ typedef struct {
   uint32_t to_launch;   /* 计划发射的弹丸 */
   float bullet_speed;   /* 弹丸初速度 */
   uint32_t period_ms;   /* 弹丸击发延迟 */
-  CMD_FireMode_t fire_mode;
+  Game_FireMode_t fire_mode;
 } Launcher_FireCtrl_t;
 
 /*
@@ -102,7 +102,7 @@ typedef struct {
   const Launcher_Params_t *param; /* 发射器的参数，用Launcher_Init设定 */
 
   /* 模块通用 */
-  CMD_LauncherMode_t mode; /* 发射器模式 */
+  Game_LauncherMode_t mode; /* 发射器模式 */
 
   /* 反馈信息 */
   struct {

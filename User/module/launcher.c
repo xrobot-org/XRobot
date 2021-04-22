@@ -23,7 +23,7 @@
  *
  * \return 函数运行结果
  */
-static int8_t Launcher_SetMode(Launcher_t *s, CMD_LauncherMode_t mode) {
+static int8_t Launcher_SetMode(Launcher_t *s, Game_LauncherMode_t mode) {
   if (s == NULL) return -1;
 
   if (mode == s->mode) return LAUNCHER_OK;

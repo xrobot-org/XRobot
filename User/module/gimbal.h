@@ -90,7 +90,7 @@ typedef struct {
   const Gimbal_Params_t *param; /* 云台的参数，用Gimbal_Init设定 */
 
   /* 模块通用 */
-  CMD_GimbalMode_t mode; /* 云台模式 */
+  Game_GimbalMode_t mode; /* 云台模式 */
 
   /* PID计算的目标值 */
   struct {

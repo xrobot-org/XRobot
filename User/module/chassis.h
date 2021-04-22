@@ -75,7 +75,7 @@ typedef struct {
   AHRS_Eulr_t *mech_zero;
 
   /* 模块通用 */
-  CMD_ChassisMode_t mode; /* 底盘模式 */
+  Game_ChassisMode_t mode; /* 底盘模式 */
 
   /* 底盘设计 */
   size_t num_wheel; /* 底盘轮子数量 */

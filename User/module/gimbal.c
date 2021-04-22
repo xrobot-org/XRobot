@@ -21,7 +21,7 @@
  *
  * \return 函数运行结果
  */
-static int8_t Gimbal_SetMode(Gimbal_t *g, CMD_GimbalMode_t mode) {
+static int8_t Gimbal_SetMode(Gimbal_t *g, Game_GimbalMode_t mode) {
   if (g == NULL) return -1;
   if (mode == g->mode) return GIMBAL_OK;
 
