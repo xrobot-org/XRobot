@@ -358,7 +358,7 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
 int8_t Chassis_PowerLimit(Chassis_t *c, const CAN_Capacitor_t *cap,
                           const Referee_ForChassis_t *ref) {
   float power_limit = 0.0f;
-  if (ref->ref_status != REF_STATUS_RUNNING) {
+  if (ref->status != REF_STATUS_RUNNING) {
     /* 裁判系统离线，将功率限制为固定值 */
     power_limit = CHASSIS_POWER_MAX_WITHOUT_REF;
   } else {

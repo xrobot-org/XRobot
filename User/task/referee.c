@@ -78,10 +78,10 @@ void Task_Referee(void *argument) {
       if (osKernelGetTickCount() > tick) {
         tick += delay_tick;
         /* 打包裁判系统数据 */
-        Referee_PackCap(&for_cap, &ref);
-        Referee_PackAI(&for_ai, &ref);
-        Referee_PackLauncher(&for_launcher, &ref);
-        Referee_PackChassis(&for_chassis, &ref);
+        Referee_PackForCap(&for_cap, &ref);
+        Referee_PackForAI(&for_ai, &ref);
+        Referee_PackForLauncher(&for_launcher, &ref);
+        Referee_PackForChassis(&for_chassis, &ref);
 
         /* 发送数据到其他进程 */
         osMessageQueueReset(task_runtime.msgq.referee.cap);
@@ -107,7 +107,7 @@ void Task_Referee(void *argument) {
         osMessageQueueGet(task_runtime.msgq.ui.ai, &(ui.ai_ui), NULL, 0);
 
         /* 刷新UI数据 */
-        Referee_UIRefresh(&ui);
+        Referee_RefreshUI(&ui);
         Referee_PackUI(&ui, &ref);
       }
     }

@@ -60,7 +60,7 @@ static int8_t Launcher_SetMode(Launcher_t *s, Game_LauncherMode_t mode) {
 static int8_t Launcher_HeatLimit(Launcher_t *s, Referee_ForLauncher_t *s_ref) {
   Launcher_HeatCtrl_t *hc = &(s->heat_ctrl);
   /* 当裁判系统在线时启用热量控制与射速控制 */
-  if (s_ref->ref_status == REF_STATUS_RUNNING) {
+  if (s_ref->status == REF_STATUS_RUNNING) {
     /* 根据机器人型号获得对应数据 */
     if (s->param->model == LAUNCHER_MODEL_42MM) {
       hc->heat = s_ref->power_heat.launcher_42_heat;

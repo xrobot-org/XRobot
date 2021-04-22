@@ -20,7 +20,6 @@ extern "C" {
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
-#define REF_SWITCH_STATUS(ref, stat) ((ref).ref_status = (stat))
 #define CHASSIS_POWER_MAX_WITHOUT_REF 40.0f /* 裁判系统离线底盘最大功率 */
 
 #define REF_UI_MAX_GRAPIC_NUM (7)
@@ -314,7 +313,7 @@ typedef struct __packed {
 } Referee_InterStudent_Custom_t;
 
 typedef struct {
-  Referee_Status_t ref_status;
+  Referee_Status_t status;
   Referee_GameStatus_t game_status;
   Referee_GameResult_t game_result;
   Referee_GameRobotHP_t game_robot_hp;
@@ -441,24 +440,24 @@ typedef struct __packed {
 } Referee_UI_Del_t;
 
 typedef struct {
-  Referee_Status_t ref_status;
+  Referee_Status_t status;
   float chassis_watt;
   float chassis_power_limit;
   float chassis_pwr_buff;
 } Referee_ForCap_t;
 
 typedef struct {
-  Referee_Status_t ref_status;
+  Referee_Status_t status;
 } Referee_ForAI_t;
 
 typedef struct {
-  Referee_Status_t ref_status;
+  Referee_Status_t status;
   float chassis_power_limit;
   float chassis_pwr_buff;
 } Referee_ForChassis_t;
 
 typedef struct {
-  Referee_Status_t ref_status;
+  Referee_Status_t status;
   Referee_PowerHeat_t power_heat;
   Referee_RobotStatus_t robot_status;
   Referee_LauncherData_t launcher_data;
@@ -468,23 +467,20 @@ typedef struct {
 int8_t Referee_Init(Referee_t *ref, Referee_UI_t *ui,
                     const CMD_Screen_t *screen);
 int8_t Referee_Restart(void);
+void Referee_HandleOffline(Referee_t *referee);
 
 int8_t Referee_StartReceiving(Referee_t *ref);
 int8_t Referee_Parse(Referee_t *ref);
-void Referee_HandleOffline(Referee_t *referee);
-int8_t Referee_SetHeader(Referee_Interactive_Header_t *header,
-                         Referee_StudentCMDID_t cmd_id, uint8_t sender_id);
+
 int8_t Referee_StartSend(uint8_t *data, uint32_t len);
-int8_t Referee_MoveData(void *data, void *tmp, uint32_t len);
 int8_t Referee_PackUI(Referee_UI_t *ui, Referee_t *ref);
-UI_Ele_t *Referee_GetGrapicAdd(Referee_UI_t *ref_ui);
-UI_Drawcharacter_t *Referee_GetCharacterAdd(Referee_UI_t *ref_ui);
-uint8_t Referee_PackCap(Referee_ForCap_t *cap, const Referee_t *ref);
-uint8_t Referee_PackLauncher(Referee_ForLauncher_t *ai, Referee_t *ref);
-uint8_t Referee_PackChassis(Referee_ForChassis_t *chassis,
-                            const Referee_t *ref);
-uint8_t Referee_PackAI(Referee_ForAI_t *launcher, const Referee_t *ref);
-uint8_t Referee_UIRefresh(Referee_UI_t *ui);
+uint8_t Referee_RefreshUI(Referee_UI_t *ui);
+
+uint8_t Referee_PackForChassis(Referee_ForChassis_t *c_ref,
+                               const Referee_t *ref);
+uint8_t Referee_PackForLauncher(Referee_ForLauncher_t *l_ref, Referee_t *ref);
+uint8_t Referee_PackForCap(Referee_ForCap_t *cap_ref, const Referee_t *ref);
+uint8_t Referee_PackForAI(Referee_ForAI_t *ai_ref, const Referee_t *ref);
 #ifdef __cplusplus
 }
 #endif
