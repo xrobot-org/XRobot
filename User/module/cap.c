@@ -34,7 +34,7 @@
  */
 void Cap_Control(CAN_Capacitor_t *cap, const Referee_ForCap_t *referee,
                  CAN_CapOutput_t *cap_out) {
-  if (referee->ref_status != REF_STATUS_RUNNING) {
+  if (referee->status != REF_STATUS_RUNNING) {
     /* 当裁判系统离线时，依然使用裁判系统进程传来的数据 */
     cap_out->power_limit = referee->chassis_power_limit;
   } else {
