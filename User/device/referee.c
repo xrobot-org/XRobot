@@ -25,6 +25,11 @@
 
 #define REF_UI_RIGHT_START_POS (0.85f)
 
+#define REF_UI_MODE_HEAD_POS (0.7f)
+#define REF_UI_MODE_OPT1_POS (0.68f)
+#define REF_UI_MODE_OPT2_POS (0.66f)
+#define REF_UI_MODE_OPT3_POS (0.64f)
+
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
 /* Private variables -------------------------------------------------------- */
@@ -570,13 +575,13 @@ uint8_t Referee_UIRefresh(Referee_UI_t *ui) {
         float start_pos_h = 0.0f;
         switch (ui->chassis_ui.mode) {
           case CHASSIS_MODE_FOLLOW_GIMBAL:
-            start_pos_h = 0.68f;
+            start_pos_h = REF_UI_MODE_OPT1_POS;
             break;
           case CHASSIS_MODE_FOLLOW_GIMBAL_35:
-            start_pos_h = 0.66f;
+            start_pos_h = REF_UI_MODE_OPT2_POS;
             break;
           case CHASSIS_MODE_ROTOR:
-            start_pos_h = 0.64f;
+            start_pos_h = REF_UI_MODE_OPT3_POS;
             break;
           default:
             break;
@@ -619,13 +624,13 @@ uint8_t Referee_UIRefresh(Referee_UI_t *ui) {
         float start_pos_h = 0.0f;
         switch (ui->gimbal_ui.mode) {
           case GIMBAL_MODE_RELAX:
-            start_pos_h = 0.68f;
-            break;
-          case GIMBAL_MODE_RELATIVE:
-            start_pos_h = 0.66f;
+            start_pos_h = REF_UI_MODE_OPT1_POS;
             break;
           case GIMBAL_MODE_ABSOLUTE:
-            start_pos_h = 0.64f;
+            start_pos_h = REF_UI_MODE_OPT2_POS;
+            break;
+          case GIMBAL_MODE_RELATIVE:
+            start_pos_h = REF_UI_MODE_OPT3_POS;
             break;
           default:
             break;
@@ -646,13 +651,13 @@ uint8_t Referee_UIRefresh(Referee_UI_t *ui) {
         float start_pos_h = 0.0f;
         switch (ui->launcher_ui.mode) {
           case LAUNCHER_MODE_RELAX:
-            start_pos_h = 0.68f;
+            start_pos_h = REF_UI_MODE_OPT1_POS;
             break;
           case LAUNCHER_MODE_SAFE:
-            start_pos_h = 0.66f;
+            start_pos_h = REF_UI_MODE_OPT2_POS;
             break;
           case LAUNCHER_MODE_LOADED:
-            start_pos_h = 0.64f;
+            start_pos_h = REF_UI_MODE_OPT3_POS;
             break;
           default:
             break;
@@ -667,13 +672,13 @@ uint8_t Referee_UIRefresh(Referee_UI_t *ui) {
 
         switch (ui->launcher_ui.fire) {
           case FIRE_MODE_SINGLE:
-            start_pos_h = 0.68f;
+            start_pos_h = REF_UI_MODE_OPT1_POS;
             break;
           case FIRE_MODE_BURST:
-            start_pos_h = 0.66f;
+            start_pos_h = REF_UI_MODE_OPT2_POS;
             break;
           case FIRE_MODE_CONT:
-            start_pos_h = 0.64f;
+            start_pos_h = REF_UI_MODE_OPT3_POS;
           default:
             break;
         }
@@ -724,26 +729,26 @@ uint8_t Referee_UIRefresh(Referee_UI_t *ui) {
     osThreadFlagsClear(SIGNAL_REFEREE_SLOW_REFRESH_UI);
     UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
                 UI_GRAPIC_LAYER_CONST);
-    UI_DrawCharacter(Referee_GetCharacterAdd(ui), "1", UI_GRAPIC_OPERATION_ADD,
-                     UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
-                     UI_CHAR_DEFAULT_WIDTH,
-                     ui->screen->width * REF_UI_RIGHT_START_POS,
-                     ui->screen->height * 0.7, "CHAS  GMBL  SHOT  FIRE");
-    UI_DrawCharacter(Referee_GetCharacterAdd(ui), "2", UI_GRAPIC_OPERATION_ADD,
-                     UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
-                     UI_CHAR_DEFAULT_WIDTH,
-                     ui->screen->width * REF_UI_RIGHT_START_POS,
-                     ui->screen->height * 0.68, "FLLW  RELX  RELX  SNGL");
-    UI_DrawCharacter(Referee_GetCharacterAdd(ui), "3", UI_GRAPIC_OPERATION_ADD,
-                     UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
-                     UI_CHAR_DEFAULT_WIDTH,
-                     ui->screen->width * REF_UI_RIGHT_START_POS,
-                     ui->screen->height * 0.66, "FL35  ABSL  SAFE  BRST");
-    UI_DrawCharacter(Referee_GetCharacterAdd(ui), "4", UI_GRAPIC_OPERATION_ADD,
-                     UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
-                     UI_CHAR_DEFAULT_WIDTH,
-                     ui->screen->width * REF_UI_RIGHT_START_POS,
-                     ui->screen->height * 0.64, "ROTR  RLTV  LOAD  CONT");
+    UI_DrawCharacter(
+        Referee_GetCharacterAdd(ui), "1", UI_GRAPIC_OPERATION_ADD,
+        UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
+        UI_CHAR_DEFAULT_WIDTH, ui->screen->width * REF_UI_RIGHT_START_POS,
+        ui->screen->height * REF_UI_MODE_HEAD_POS, "CHAS  GMBL  SHOT  FIRE");
+    UI_DrawCharacter(
+        Referee_GetCharacterAdd(ui), "2", UI_GRAPIC_OPERATION_ADD,
+        UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
+        UI_CHAR_DEFAULT_WIDTH, ui->screen->width * REF_UI_RIGHT_START_POS,
+        ui->screen->height * REF_UI_MODE_OPT1_POS, "FLLW  RELX  RELX  SNGL");
+    UI_DrawCharacter(
+        Referee_GetCharacterAdd(ui), "3", UI_GRAPIC_OPERATION_ADD,
+        UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
+        UI_CHAR_DEFAULT_WIDTH, ui->screen->width * REF_UI_RIGHT_START_POS,
+        ui->screen->height * REF_UI_MODE_OPT2_POS, "FL35  ABSL  SAFE  BRST");
+    UI_DrawCharacter(
+        Referee_GetCharacterAdd(ui), "4", UI_GRAPIC_OPERATION_ADD,
+        UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
+        UI_CHAR_DEFAULT_WIDTH, ui->screen->width * REF_UI_RIGHT_START_POS,
+        ui->screen->height * REF_UI_MODE_OPT3_POS, "ROTR  RLTV  LOAD  CONT");
     UI_DrawLine(Referee_GetGrapicAdd(ui), "5", UI_GRAPIC_OPERATION_ADD,
                 UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 3,
                 ui->screen->width * 0.4, ui->screen->height * 0.2,
