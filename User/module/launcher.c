@@ -18,61 +18,61 @@
 /**
  * \brief 设置发射器模式
  *
- * \param c 包含发射器数据的结构体
+ * \param l 包含发射器数据的结构体
  * \param mode 要设置的模式
  *
  * \return 函数运行结果
  */
-static int8_t Launcher_SetMode(Launcher_t *s, Game_LauncherMode_t mode) {
-  if (s == NULL) return -1;
+static int8_t Launcher_SetMode(Launcher_t *l, Game_LauncherMode_t mode) {
+  if (l == NULL) return -1;
 
-  if (mode == s->mode) return LAUNCHER_OK;
+  if (mode == l->mode) return LAUNCHER_OK;
 
   /* 切换模式后重置PID和滤波器 */
   for (size_t i = 0; i < 2; i++) {
-    PID_Reset(s->pid.fric + i);
-    LowPassFilter2p_Reset(s->filter.in.fric + i, 0.0f);
-    LowPassFilter2p_Reset(s->filter.out.fric + i, 0.0f);
+    PID_Reset(l->pid.fric + i);
+    LowPassFilter2p_Reset(l->filter.in.fric + i, 0.0f);
+    LowPassFilter2p_Reset(l->filter.out.fric + i, 0.0f);
   }
-  PID_Reset(&(s->pid.trig));
-  LowPassFilter2p_Reset(&(s->filter.in.trig), 0.0f);
-  LowPassFilter2p_Reset(&(s->filter.out.trig), 0.0f);
+  PID_Reset(&(l->pid.trig));
+  LowPassFilter2p_Reset(&(l->filter.in.trig), 0.0f);
+  LowPassFilter2p_Reset(&(l->filter.out.trig), 0.0f);
 
-  while (fabsf(CircleError(s->setpoint.trig_angle, s->feedback.trig_angle,
-                           M_2PI)) >= M_2PI / s->param->num_trig_tooth / 2.0f) {
-    CircleAdd(&(s->setpoint.trig_angle), M_2PI / s->param->num_trig_tooth,
+  while (fabsf(CircleError(l->setpoint.trig_angle, l->feedback.trig_angle,
+                           M_2PI)) >= M_2PI / l->param->num_trig_tooth / 2.0f) {
+    CircleAdd(&(l->setpoint.trig_angle), M_2PI / l->param->num_trig_tooth,
               M_2PI);
   }
 
-  if (mode == LAUNCHER_MODE_LOADED) s->fire_ctrl.to_launch = 0;
+  if (mode == LAUNCHER_MODE_LOADED) l->fire_ctrl.to_launch = 0;
 
-  s->mode = mode;
+  l->mode = mode;
   return 0;
 }
 
 /**
  * @brief
  *
- * @param s
- * @param s_ref
+ * @param l
+ * @param l_ref
  * @return int8_t
  */
-static int8_t Launcher_HeatLimit(Launcher_t *s, Referee_ForLauncher_t *s_ref) {
-  Launcher_HeatCtrl_t *hc = &(s->heat_ctrl);
+static int8_t Launcher_HeatLimit(Launcher_t *l, Referee_ForLauncher_t *l_ref) {
+  Launcher_HeatCtrl_t *hc = &(l->heat_ctrl);
   /* 当裁判系统在线时启用热量控制与射速控制 */
-  if (s_ref->status == REF_STATUS_RUNNING) {
+  if (l_ref->status == REF_STATUS_RUNNING) {
     /* 根据机器人型号获得对应数据 */
-    if (s->param->model == LAUNCHER_MODEL_42MM) {
-      hc->heat = s_ref->power_heat.launcher_42_heat;
-      hc->heat_limit = s_ref->robot_status.launcher_42_heat_limit;
-      hc->speed_limit = s_ref->robot_status.launcher_42_speed_limit;
-      hc->cooling_rate = s_ref->robot_status.launcher_42_cooling_rate;
+    if (l->param->model == LAUNCHER_MODEL_42MM) {
+      hc->heat = l_ref->power_heat.launcher_42_heat;
+      hc->heat_limit = l_ref->robot_status.launcher_42_heat_limit;
+      hc->speed_limit = l_ref->robot_status.launcher_42_speed_limit;
+      hc->cooling_rate = l_ref->robot_status.launcher_42_cooling_rate;
       hc->heat_increase = GAME_HEAT_INCREASE_42MM;
-    } else if (s->param->model == LAUNCHER_MODEL_17MM) {
-      hc->heat = s_ref->power_heat.launcher_id1_17_heat;
-      hc->heat_limit = s_ref->robot_status.launcher_id1_17_heat_limit;
-      hc->speed_limit = s_ref->robot_status.launcher_id1_17_speed_limit;
-      hc->cooling_rate = s_ref->robot_status.launcher_id1_17_cooling_rate;
+    } else if (l->param->model == LAUNCHER_MODEL_17MM) {
+      hc->heat = l_ref->power_heat.launcher_id1_17_heat;
+      hc->heat_limit = l_ref->robot_status.launcher_id1_17_heat_limit;
+      hc->speed_limit = l_ref->robot_status.launcher_id1_17_speed_limit;
+      hc->cooling_rate = l_ref->robot_status.launcher_id1_17_cooling_rate;
       hc->heat_increase = GAME_HEAT_INCREASE_17MM;
     }
     /* 检测热量更新后,计算可发射弹丸 */
@@ -82,14 +82,14 @@ static int8_t Launcher_HeatLimit(Launcher_t *s, Referee_ForLauncher_t *s_ref) {
       hc->last_heat = hc->heat;
     }
     /* 计算已发射弹丸 */
-    if (s_ref->launcher_data.bullet_speed != hc->last_bullet_speed) {
-      hc->last_bullet_speed = s_ref->launcher_data.bullet_speed;
+    if (l_ref->launcher_data.bullet_speed != hc->last_bullet_speed) {
+      hc->last_bullet_speed = l_ref->launcher_data.bullet_speed;
     }
-    s->fire_ctrl.bullet_speed = hc->speed_limit;
+    l->fire_ctrl.bullet_speed = hc->speed_limit;
   } else {
     /* 裁判系统离线，不启用热量控制 */
     hc->available_shot = 10;
-    s->fire_ctrl.bullet_speed = s->param->bullet_speed;
+    l->fire_ctrl.bullet_speed = l->param->bullet_speed;
   }
   return 0;
 }
@@ -99,37 +99,37 @@ static int8_t Launcher_HeatLimit(Launcher_t *s, Referee_ForLauncher_t *s_ref) {
 /**
  * \brief 初始化发射器
  *
- * \param s 包含发射器数据的结构体
+ * \param l 包含发射器数据的结构体
  * \param param 包含发射器参数的结构体指针
  * \param target_freq 任务预期的运行频率
  *
  * \return 函数运行结果
  */
-int8_t Launcher_Init(Launcher_t *s, const Launcher_Params_t *param,
+int8_t Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
                      float target_freq) {
-  if (s == NULL) return -1;
+  if (l == NULL) return -1;
 
-  s->param = param;              /* 初始化参数 */
-  s->mode = LAUNCHER_MODE_RELAX; /* 设置默认模式 */
+  l->param = param;              /* 初始化参数 */
+  l->mode = LAUNCHER_MODE_RELAX; /* 设置默认模式 */
 
   for (size_t i = 0; i < 2; i++) {
     /* PI控制器初始化PID */
-    PID_Init(s->pid.fric + i, KPID_MODE_NO_D, target_freq,
+    PID_Init(l->pid.fric + i, KPID_MODE_NO_D, target_freq,
              &(param->fric_pid_param));
 
-    LowPassFilter2p_Init(s->filter.in.fric + i, target_freq,
+    LowPassFilter2p_Init(l->filter.in.fric + i, target_freq,
                          param->low_pass_cutoff_freq.in.fric);
 
-    LowPassFilter2p_Init(s->filter.out.fric + i, target_freq,
+    LowPassFilter2p_Init(l->filter.out.fric + i, target_freq,
                          param->low_pass_cutoff_freq.out.fric);
   }
 
-  PID_Init(&(s->pid.trig), KPID_MODE_CALC_D, target_freq,
+  PID_Init(&(l->pid.trig), KPID_MODE_CALC_D, target_freq,
            &(param->trig_pid_param));
 
-  LowPassFilter2p_Init(&(s->filter.in.trig), target_freq,
+  LowPassFilter2p_Init(&(l->filter.in.trig), target_freq,
                        param->low_pass_cutoff_freq.in.trig);
-  LowPassFilter2p_Init(&(s->filter.out.trig), target_freq,
+  LowPassFilter2p_Init(&(l->filter.out.trig), target_freq,
                        param->low_pass_cutoff_freq.out.trig);
 
   BSP_PWM_Start(BSP_PWM_LAUNCHER_SERVO);
@@ -140,26 +140,26 @@ int8_t Launcher_Init(Launcher_t *s, const Launcher_Params_t *param,
 /**
  * \brief 更新发射器的反馈信息
  *
- * \param s 包含发射器数据的结构体
+ * \param l 包含发射器数据的结构体
  * \param can CAN设备结构体
  *
  * \return 函数运行结果
  */
-int8_t Launcher_UpdateFeedback(Launcher_t *s, const CAN_t *can) {
-  if (s == NULL) return -1;
+int8_t Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can) {
+  if (l == NULL) return -1;
   if (can == NULL) return -1;
 
   for (size_t i = 0; i < 2; i++) {
-    s->feedback.fric_rpm[i] = can->motor.launcher.as_array[i].rotor_speed;
+    l->feedback.fric_rpm[i] = can->motor.launcher.as_array[i].rotor_speed;
   }
 
   /* 更新拨弹电机 */
-  float last_trig_motor_angle = s->feedback.trig_motor_angle;
-  s->feedback.trig_motor_angle = can->motor.launcher.named.trig.rotor_angle;
+  float last_trig_motor_angle = l->feedback.trig_motor_angle;
+  l->feedback.trig_motor_angle = can->motor.launcher.named.trig.rotor_angle;
   float motor_angle_delta =
-      CircleError(s->feedback.trig_motor_angle, last_trig_motor_angle, M_2PI);
-  CircleAdd(&(s->feedback.trig_angle),
-            motor_angle_delta / s->param->trig_gear_ratio, M_2PI);
+      CircleError(l->feedback.trig_motor_angle, last_trig_motor_angle, M_2PI);
+  CircleAdd(&(l->feedback.trig_angle),
+            motor_angle_delta / l->param->trig_gear_ratio, M_2PI);
 
   return 0;
 }
@@ -167,25 +167,25 @@ int8_t Launcher_UpdateFeedback(Launcher_t *s, const CAN_t *can) {
 /**
  * @brief 运行发射器控制逻辑
  *
- * @param s 包含发射器数据的结构体
- * @param s_cmd 发射器控制指令
- * @param s_ref 发射器使用的裁判系统数据
+ * @param l 包含发射器数据的结构体
+ * @param l_cmd 发射器控制指令
+ * @param l_ref 发射器使用的裁判系统数据
  * @param now 现在时刻
  * @return int8_t
  */
-int8_t Launcher_Control(Launcher_t *s, CMD_LauncherCmd_t *s_cmd,
-                        Referee_ForLauncher_t *s_ref, uint32_t now) {
-  if (s == NULL) return -1;
+int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
+                        Referee_ForLauncher_t *l_ref, uint32_t now) {
+  if (l == NULL) return -1;
 
-  s->dt = (float)(now - s->lask_wakeup) / 1000.0f;
-  s->lask_wakeup = now;
+  l->dt = (float)(now - l->lask_wakeup) / 1000.0f;
+  l->lask_wakeup = now;
 
-  Launcher_SetMode(s, s_cmd->mode); /* 设置发射器模式 */
-  Launcher_HeatLimit(s, s_ref);     /* 热量控制 */
+  Launcher_SetMode(l, l_cmd->mode); /* 设置发射器模式 */
+  Launcher_HeatLimit(l, l_ref);     /* 热量控制 */
   /* 根据开火模式计算发射行为 */
-  s->fire_ctrl.fire_mode = s_cmd->fire_mode;
+  l->fire_ctrl.fire_mode = l_cmd->fire_mode;
   int32_t max_burst;
-  switch (s_cmd->fire_mode) {
+  switch (l_cmd->fire_mode) {
     case FIRE_MODE_SINGLE: /* 点射开火模式 */
       max_burst = 1;
       break;
@@ -196,32 +196,32 @@ int8_t Launcher_Control(Launcher_t *s, CMD_LauncherCmd_t *s_cmd,
       break;
   }
 
-  switch (s_cmd->fire_mode) {
+  switch (l_cmd->fire_mode) {
     case FIRE_MODE_SINGLE:  /* 点射开火模式 */
     case FIRE_MODE_BURST: { /* 连发开火模式 */
-      s->fire_ctrl.first_fire = s_cmd->fire && !s->fire_ctrl.last_fire;
-      s->fire_ctrl.last_fire = s_cmd->fire;
-      s_cmd->fire = s->fire_ctrl.first_fire;
-      int32_t max_shot = s->heat_ctrl.available_shot - s->fire_ctrl.launched;
-      if (s_cmd->fire && !s->fire_ctrl.to_launch) {
-        s->fire_ctrl.to_launch = min(max_burst, max_shot);
+      l->fire_ctrl.first_fire = l_cmd->fire && !l->fire_ctrl.last_fire;
+      l->fire_ctrl.last_fire = l_cmd->fire;
+      l_cmd->fire = l->fire_ctrl.first_fire;
+      int32_t max_shot = l->heat_ctrl.available_shot - l->fire_ctrl.launched;
+      if (l_cmd->fire && !l->fire_ctrl.to_launch) {
+        l->fire_ctrl.to_launch = min(max_burst, max_shot);
       }
-      if (s->fire_ctrl.launched >= s->fire_ctrl.to_launch) {
-        s_cmd->fire = false;
-        s->fire_ctrl.period_ms = UINT32_MAX;
-        s->fire_ctrl.launched = 0;
-        s->fire_ctrl.to_launch = 0;
+      if (l->fire_ctrl.launched >= l->fire_ctrl.to_launch) {
+        l_cmd->fire = false;
+        l->fire_ctrl.period_ms = UINT32_MAX;
+        l->fire_ctrl.launched = 0;
+        l->fire_ctrl.to_launch = 0;
       } else {
-        s_cmd->fire = true;
-        s->fire_ctrl.period_ms = s->param->min_launch_delay;
+        l_cmd->fire = true;
+        l->fire_ctrl.period_ms = l->param->min_launch_delay;
       }
       break;
     }
     case FIRE_MODE_CONT: { /* 持续开火模式 */
       float launch_freq = HeatLimit_LauncherFreq(
-          s->heat_ctrl.heat, s->heat_ctrl.heat_limit, s->heat_ctrl.cooling_rate,
-          s->heat_ctrl.heat_increase, s->param->model == LAUNCHER_MODEL_42MM);
-      s->fire_ctrl.period_ms =
+          l->heat_ctrl.heat, l->heat_ctrl.heat_limit, l->heat_ctrl.cooling_rate,
+          l->heat_ctrl.heat_increase, l->param->model == LAUNCHER_MODEL_42MM);
+      l->fire_ctrl.period_ms =
           (launch_freq == 0.0f) ? UINT32_MAX : (uint32_t)(1000.f / launch_freq);
       break;
     }
@@ -230,40 +230,40 @@ int8_t Launcher_Control(Launcher_t *s, CMD_LauncherCmd_t *s_cmd,
   }
 
   /* 根据模式选择是否使用计算出来的值 */
-  switch (s->mode) {
+  switch (l->mode) {
     case LAUNCHER_MODE_RELAX:
     case LAUNCHER_MODE_SAFE:
-      s->fire_ctrl.bullet_speed = 0.0f;
-      s->fire_ctrl.period_ms = UINT32_MAX;
+      l->fire_ctrl.bullet_speed = 0.0f;
+      l->fire_ctrl.period_ms = UINT32_MAX;
     case LAUNCHER_MODE_LOADED:
       break;
   }
 
   /* 计算摩擦轮转速的目标值 */
-  s->setpoint.fric_rpm[1] =
-      CalculateRpm(s->fire_ctrl.bullet_speed, s->param->fric_radius,
-                   (s->param->model == LAUNCHER_MODEL_17MM));
-  s->setpoint.fric_rpm[0] = -s->setpoint.fric_rpm[1];
+  l->setpoint.fric_rpm[1] =
+      CalculateRpm(l->fire_ctrl.bullet_speed, l->param->fric_radius,
+                   (l->param->model == LAUNCHER_MODEL_17MM));
+  l->setpoint.fric_rpm[0] = -l->setpoint.fric_rpm[1];
 
   /* 计算拨弹电机位置的目标值 */
-  if (((now - s->fire_ctrl.last_launch) >= s->fire_ctrl.period_ms) &&
-      (s_cmd->fire)) {
+  if (((now - l->fire_ctrl.last_launch) >= l->fire_ctrl.period_ms) &&
+      (l_cmd->fire)) {
     /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗弹丸的弧度变化 */
-    if (s_cmd->reverse_trig) { /* 反转拨弹 */
-      CircleAdd(&(s->setpoint.trig_angle), M_2PI / s->param->num_trig_tooth,
+    if (l_cmd->reverse_trig) { /* 反转拨弹 */
+      CircleAdd(&(l->setpoint.trig_angle), M_2PI / l->param->num_trig_tooth,
                 M_2PI);
     } else {
-      CircleAdd(&(s->setpoint.trig_angle), -M_2PI / s->param->num_trig_tooth,
+      CircleAdd(&(l->setpoint.trig_angle), -M_2PI / l->param->num_trig_tooth,
                 M_2PI);
-      s->fire_ctrl.launched++;
-      s->fire_ctrl.last_launch = now;
+      l->fire_ctrl.launched++;
+      l->fire_ctrl.last_launch = now;
     }
   }
 
-  switch (s->mode) {
+  switch (l->mode) {
     case LAUNCHER_MODE_RELAX:
       for (size_t i = 0; i < LAUNCHER_ACTR_NUM; i++) {
-        s->out[i] = 0.0f;
+        l->out[i] = 0.0f;
       }
       BSP_PWM_Stop(BSP_PWM_LAUNCHER_SERVO);
       break;
@@ -271,35 +271,35 @@ int8_t Launcher_Control(Launcher_t *s, CMD_LauncherCmd_t *s_cmd,
     case LAUNCHER_MODE_SAFE:
     case LAUNCHER_MODE_LOADED:
       /* 控制拨弹电机 */
-      s->feedback.trig_angle =
-          LowPassFilter2p_Apply(&(s->filter.in.trig), s->feedback.trig_angle);
+      l->feedback.trig_angle =
+          LowPassFilter2p_Apply(&(l->filter.in.trig), l->feedback.trig_angle);
 
-      s->out[LAUNCHER_ACTR_TRIG_IDX] =
-          PID_Calc(&(s->pid.trig), s->setpoint.trig_angle,
-                   s->feedback.trig_angle, 0.0f, s->dt);
-      s->out[LAUNCHER_ACTR_TRIG_IDX] = LowPassFilter2p_Apply(
-          &(s->filter.out.trig), s->out[LAUNCHER_ACTR_TRIG_IDX]);
+      l->out[LAUNCHER_ACTR_TRIG_IDX] =
+          PID_Calc(&(l->pid.trig), l->setpoint.trig_angle,
+                   l->feedback.trig_angle, 0.0f, l->dt);
+      l->out[LAUNCHER_ACTR_TRIG_IDX] = LowPassFilter2p_Apply(
+          &(l->filter.out.trig), l->out[LAUNCHER_ACTR_TRIG_IDX]);
 
       for (size_t i = 0; i < 2; i++) {
         /* 控制摩擦轮 */
-        s->feedback.fric_rpm[i] = LowPassFilter2p_Apply(
-            &(s->filter.in.fric[i]), s->feedback.fric_rpm[i]);
+        l->feedback.fric_rpm[i] = LowPassFilter2p_Apply(
+            &(l->filter.in.fric[i]), l->feedback.fric_rpm[i]);
 
-        s->out[LAUNCHER_ACTR_FRIC1_IDX + i] =
-            PID_Calc(&(s->pid.fric[i]), s->setpoint.fric_rpm[i],
-                     s->feedback.fric_rpm[i], 0.0f, s->dt);
+        l->out[LAUNCHER_ACTR_FRIC1_IDX + i] =
+            PID_Calc(&(l->pid.fric[i]), l->setpoint.fric_rpm[i],
+                     l->feedback.fric_rpm[i], 0.0f, l->dt);
 
-        s->out[LAUNCHER_ACTR_FRIC1_IDX + i] = LowPassFilter2p_Apply(
-            &(s->filter.out.fric[i]), s->out[LAUNCHER_ACTR_FRIC1_IDX + i]);
+        l->out[LAUNCHER_ACTR_FRIC1_IDX + i] = LowPassFilter2p_Apply(
+            &(l->filter.out.fric[i]), l->out[LAUNCHER_ACTR_FRIC1_IDX + i]);
       }
 
       /* 根据弹仓盖开关状态更新弹舱盖打开时舵机PWM占空比 */
-      if (s_cmd->cover_open) {
+      if (l_cmd->cover_open) {
         BSP_PWM_Start(BSP_PWM_LAUNCHER_SERVO);
-        BSP_PWM_Set(BSP_PWM_LAUNCHER_SERVO, s->param->cover_open_duty);
+        BSP_PWM_Set(BSP_PWM_LAUNCHER_SERVO, l->param->cover_open_duty);
       } else {
         BSP_PWM_Start(BSP_PWM_LAUNCHER_SERVO);
-        BSP_PWM_Set(BSP_PWM_LAUNCHER_SERVO, s->param->cover_close_duty);
+        BSP_PWM_Set(BSP_PWM_LAUNCHER_SERVO, l->param->cover_close_duty);
       }
       break;
   }
@@ -309,12 +309,12 @@ int8_t Launcher_Control(Launcher_t *s, CMD_LauncherCmd_t *s_cmd,
 /**
  * \brief 复制发射器输出值
  *
- * \param s 包含发射器数据的结构体
+ * \param l 包含发射器数据的结构体
  * \param out CAN设备发射器输出结构体
  */
-void Launcher_DumpOutput(Launcher_t *s, CAN_LauncherOutput_t *out) {
+void Launcher_DumpOutput(Launcher_t *l, CAN_LauncherOutput_t *out) {
   for (size_t i = 0; i < LAUNCHER_ACTR_NUM; i++) {
-    out->as_array[i] = s->out[i];
+    out->as_array[i] = l->out[i];
   }
 }
 
@@ -333,10 +333,10 @@ void Launcher_ResetOutput(CAN_LauncherOutput_t *output) {
 /**
  * @brief 导出发射器UI数据
  *
- * @param s 发射器结构体
+ * @param l 发射器结构体
  * @param ui UI结构体
  */
-void Launcher_DumpUI(Launcher_t *s, Referee_LauncherUI_t *ui) {
-  ui->mode = s->mode;
-  ui->fire = s->fire_ctrl.fire_mode;
+void Launcher_DumpUI(Launcher_t *l, Referee_LauncherUI_t *ui) {
+  ui->mode = l->mode;
+  ui->fire = l->fire_ctrl.fire_mode;
 }

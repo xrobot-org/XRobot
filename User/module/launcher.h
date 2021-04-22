@@ -150,45 +150,45 @@ typedef struct {
 /**
  * \brief 初始化发射器
  *
- * \param s 包含发射器数据的结构体
+ * \param l 包含发射器数据的结构体
  * \param param 包含发射器参数的结构体指针
  * \param target_freq 任务预期的运行频率
  *
  * \return 函数运行结果
  */
-int8_t Launcher_Init(Launcher_t *s, const Launcher_Params_t *param,
+int8_t Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
                      float target_freq);
 
 /**
  * \brief 更新发射器的反馈信息
  *
- * \param s 包含发射器数据的结构体
+ * \param l 包含发射器数据的结构体
  * \param can CAN设备结构体
  *
  * \return 函数运行结果
  */
-int8_t Launcher_UpdateFeedback(Launcher_t *s, const CAN_t *can);
+int8_t Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can);
 
 /**
  * \brief 运行发射器控制逻辑
  *
- * \param s 包含发射器数据的结构体
- * \param s_cmd 发射器控制指令
- * \param s_ref 裁判系统数据
+ * \param l 包含发射器数据的结构体
+ * \param l_cmd 发射器控制指令
+ * \param l_ref 裁判系统数据
  * \param dt_sec 两次调用的时间间隔
  *
  * \return 函数运行结果
  */
-int8_t Launcher_Control(Launcher_t *s, CMD_LauncherCmd_t *s_cmd,
-                        Referee_ForLauncher_t *s_ref, uint32_t now);
+int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
+                        Referee_ForLauncher_t *l_ref, uint32_t now);
 
 /**
  * \brief 复制发射器输出值
  *
- * \param s 包含发射器数据的结构体
+ * \param l 包含发射器数据的结构体
  * \param out CAN设备发射器输出结构体
  */
-void Launcher_DumpOutput(Launcher_t *s, CAN_LauncherOutput_t *out);
+void Launcher_DumpOutput(Launcher_t *l, CAN_LauncherOutput_t *out);
 
 /**
  * \brief 清空输出值
@@ -200,10 +200,10 @@ void Launcher_ResetOutput(CAN_LauncherOutput_t *output);
 /**
  * @brief 导出发射器UI数据
  *
- * @param s 发射器结构体
+ * @param l 发射器结构体
  * @param ui UI结构体
  */
-void Launcher_DumpUI(Launcher_t *s, Referee_LauncherUI_t *ui);
+void Launcher_DumpUI(Launcher_t *l, Referee_LauncherUI_t *ui);
 
 #ifdef __cplusplus
 }
