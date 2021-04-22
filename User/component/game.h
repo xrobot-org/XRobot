@@ -55,7 +55,7 @@ typedef enum {
 
 typedef enum {
   FIRE_MODE_SINGLE, /* 单发开火模式  */
-  FIRE_MODE_BURST,  /* N连发开火模式 */
+  FIRE_MODE_BURST,  /* N爆发开火模式 */
   FIRE_MODE_CONT,   /* 持续开火模式 */
   FIRE_MODE_NUM,
 } Game_FireMode_t;

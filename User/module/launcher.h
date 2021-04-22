@@ -76,18 +76,17 @@ typedef struct {
   float cooling_rate;  /* 冷却速率 */
   float heat_increase; /* 每发热量增加值 */
 
-  float last_bullet_speed; /* 之前的弹丸速度 */
   uint32_t available_shot; /* 热量范围内还可以发射的数量 */
 } Launcher_HeatCtrl_t;
 
 typedef struct {
-  uint32_t last_launch; /* 上次发射器时间 单位：ms */
-  bool last_fire;       /* 上次开火状态 */
-  bool first_fire;      /* 第一次收到开火指令 */
-  uint32_t launched;    /* 已经发射的弹丸 */
-  uint32_t to_launch;   /* 计划发射的弹丸 */
-  float bullet_speed;   /* 弹丸初速度 */
-  uint32_t period_ms;   /* 弹丸击发延迟 */
+  uint32_t last_launch;    /* 上次发射器时间 单位：ms */
+  bool last_fire;          /* 上次开火状态 */
+  bool first_pressed_fire; /* 第一次收到开火指令 */
+  uint32_t launched;       /* 已经发射的弹丸 */
+  uint32_t to_launch;      /* 计划发射的弹丸 */
+  uint32_t launch_delay;   /* 弹丸击发延迟 */
+  float bullet_speed;      /* 弹丸初速度 */
   Game_FireMode_t fire_mode;
 } Launcher_FireCtrl_t;
 
