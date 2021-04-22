@@ -81,10 +81,6 @@ static int8_t Launcher_HeatLimit(Launcher_t *l, Referee_ForLauncher_t *l_ref) {
           (uint32_t)floorf((hc->heat_limit - hc->heat) / hc->heat_increase);
       hc->last_heat = hc->heat;
     }
-    /* 计算已发射弹丸 */
-    if (l_ref->launcher_data.bullet_speed != hc->last_bullet_speed) {
-      hc->last_bullet_speed = l_ref->launcher_data.bullet_speed;
-    }
     l->fire_ctrl.bullet_speed = hc->speed_limit;
   } else {
     /* 裁判系统离线，不启用热量控制 */
@@ -154,12 +150,12 @@ int8_t Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can) {
   }
 
   /* 更新拨弹电机 */
-  float last_trig_motor_angle = l->feedback.trig_motor_angle;
+  const float last_trig_motor_angle = l->feedback.trig_motor_angle;
   l->feedback.trig_motor_angle = can->motor.launcher.named.trig.rotor_angle;
-  float motor_angle_delta =
+  const float delta_motor_angle =
       CircleError(l->feedback.trig_motor_angle, last_trig_motor_angle, M_2PI);
   CircleAdd(&(l->feedback.trig_angle),
-            motor_angle_delta / l->param->trig_gear_ratio, M_2PI);
+            delta_motor_angle / l->param->trig_gear_ratio, M_2PI);
 
   return 0;
 }
@@ -182,6 +178,7 @@ int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
 
   Launcher_SetMode(l, l_cmd->mode); /* 设置发射器模式 */
   Launcher_HeatLimit(l, l_ref);     /* 热量控制 */
+
   /* 根据开火模式计算发射行为 */
   l->fire_ctrl.fire_mode = l_cmd->fire_mode;
   int32_t max_burst;
@@ -189,7 +186,7 @@ int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
     case FIRE_MODE_SINGLE: /* 点射开火模式 */
       max_burst = 1;
       break;
-    case FIRE_MODE_BURST: /* 连发开火模式 */
+    case FIRE_MODE_BURST: /* 爆发开火模式 */
       max_burst = 5;
       break;
     default:
@@ -198,22 +195,29 @@ int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
 
   switch (l_cmd->fire_mode) {
     case FIRE_MODE_SINGLE:  /* 点射开火模式 */
-    case FIRE_MODE_BURST: { /* 连发开火模式 */
-      l->fire_ctrl.first_fire = l_cmd->fire && !l->fire_ctrl.last_fire;
+    case FIRE_MODE_BURST: { /* 爆发开火模式 */
+
+      /* 计算是否是第一次按下开火键 */
+      l->fire_ctrl.first_pressed_fire = l_cmd->fire && !l->fire_ctrl.last_fire;
       l->fire_ctrl.last_fire = l_cmd->fire;
-      l_cmd->fire = l->fire_ctrl.first_fire;
-      int32_t max_shot = l->heat_ctrl.available_shot - l->fire_ctrl.launched;
+
+      /* 替换开火指令，忽略一直按下按键 */
+      l_cmd->fire = l->fire_ctrl.first_pressed_fire;
       if (l_cmd->fire && !l->fire_ctrl.to_launch) {
+        const uint32_t max_shot =
+            l->heat_ctrl.available_shot - l->fire_ctrl.launched;
         l->fire_ctrl.to_launch = min(max_burst, max_shot);
       }
+
+      /* 一下逻辑保证触发后一定会打完预设的弹丸，完成爆发 */
       if (l->fire_ctrl.launched >= l->fire_ctrl.to_launch) {
         l_cmd->fire = false;
-        l->fire_ctrl.period_ms = UINT32_MAX;
+        l->fire_ctrl.launch_delay = UINT32_MAX;
         l->fire_ctrl.launched = 0;
         l->fire_ctrl.to_launch = 0;
       } else {
         l_cmd->fire = true;
-        l->fire_ctrl.period_ms = l->param->min_launch_delay;
+        l->fire_ctrl.launch_delay = l->param->min_launch_delay;
       }
       break;
     }
@@ -221,7 +225,7 @@ int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
       float launch_freq = HeatLimit_LauncherFreq(
           l->heat_ctrl.heat, l->heat_ctrl.heat_limit, l->heat_ctrl.cooling_rate,
           l->heat_ctrl.heat_increase, l->param->model == LAUNCHER_MODEL_42MM);
-      l->fire_ctrl.period_ms =
+      l->fire_ctrl.launch_delay =
           (launch_freq == 0.0f) ? UINT32_MAX : (uint32_t)(1000.f / launch_freq);
       break;
     }
@@ -234,7 +238,7 @@ int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
     case LAUNCHER_MODE_RELAX:
     case LAUNCHER_MODE_SAFE:
       l->fire_ctrl.bullet_speed = 0.0f;
-      l->fire_ctrl.period_ms = UINT32_MAX;
+      l->fire_ctrl.launch_delay = UINT32_MAX;
     case LAUNCHER_MODE_LOADED:
       break;
   }
@@ -246,15 +250,16 @@ int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
   l->setpoint.fric_rpm[0] = -l->setpoint.fric_rpm[1];
 
   /* 计算拨弹电机位置的目标值 */
-  if (((now - l->fire_ctrl.last_launch) >= l->fire_ctrl.period_ms) &&
+  if (((now - l->fire_ctrl.last_launch) >= l->fire_ctrl.launch_delay) &&
       (l_cmd->fire)) {
     /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗弹丸的弧度变化 */
-    if (l_cmd->reverse_trig) { /* 反转拨弹 */
+    if (l_cmd->reverse_trig) { /* 反转拨盘，用来解决卡顿*/
       CircleAdd(&(l->setpoint.trig_angle), M_2PI / l->param->num_trig_tooth,
                 M_2PI);
     } else {
       CircleAdd(&(l->setpoint.trig_angle), -M_2PI / l->param->num_trig_tooth,
                 M_2PI);
+      /* 计算已发射弹丸 */
       l->fire_ctrl.launched++;
       l->fire_ctrl.last_launch = now;
     }
@@ -324,10 +329,7 @@ void Launcher_DumpOutput(Launcher_t *l, CAN_LauncherOutput_t *out) {
  * \param output 要清空的结构体
  */
 void Launcher_ResetOutput(CAN_LauncherOutput_t *output) {
-  int i = 0;
-  for (i = 0; i < 3; i++) {
-    output->as_array[i] = 0.0f;
-  }
+  memset(output, 0, sizeof(*output));
 }
 
 /**
