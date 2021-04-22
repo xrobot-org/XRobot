@@ -344,7 +344,7 @@ typedef struct {
 } Referee_t;
 
 typedef struct {
-  CMD_ChassisMode_t mode;
+  Game_ChassisMode_t mode;
   float angle;
 } Referee_ChassisUI_t;
 
@@ -354,12 +354,12 @@ typedef struct {
 } Referee_CapUI_t;
 
 typedef struct {
-  CMD_GimbalMode_t mode;
+  Game_GimbalMode_t mode;
 } Referee_GimbalUI_t;
 
 typedef struct {
-  CMD_LauncherMode_t mode;
-  CMD_FireMode_t fire;
+  Game_LauncherMode_t mode;
+  Game_FireMode_t fire;
 } Referee_LauncherUI_t;
 
 typedef struct {

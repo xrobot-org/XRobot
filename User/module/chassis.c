@@ -60,7 +60,7 @@ static const float CAP_PERCENTAGE_CHARGE =
  *
  * \return 函数运行结果
  */
-static int8_t Chassis_SetMode(Chassis_t *c, CMD_ChassisMode_t mode,
+static int8_t Chassis_SetMode(Chassis_t *c, Game_ChassisMode_t mode,
                               uint32_t now) {
   if (c == NULL) return CHASSIS_ERR_NULL; /* 主结构体不能为空 */
   if (mode == c->mode) return CHASSIS_OK; /* 模式未改变直接返回 */
