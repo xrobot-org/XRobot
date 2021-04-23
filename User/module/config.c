@@ -150,8 +150,8 @@ static const Config_RobotParam_t param_default = {
     .cover_open_duty = 0.125f,
     .cover_close_duty = 0.075f,
     .model = LAUNCHER_MODEL_17MM,
-    .bullet_speed = 30.f,
-    .min_launch_delay = (uint32_t)(1000.0f / 10.0f),
+    .default_bullet_speed = 30.f,
+    .min_launch_delay = (uint32_t)(1000.0f / 20.0f),
   }, /* launcher */
 
   .can = {
@@ -295,8 +295,8 @@ static const Config_RobotParam_t param_hero = {
     .cover_open_duty = 0.125f,
     .cover_close_duty = 0.075f,
     .model = LAUNCHER_MODEL_42MM,
-    .bullet_speed = 16.0f,
-    .min_launch_delay = (uint32_t)(1000.0f / 10.0f),
+    .default_bullet_speed = 16.0f,
+    .min_launch_delay = (uint32_t)(1000.0f / 20.0f),
   }, /* launcher */
 
   .can = {
