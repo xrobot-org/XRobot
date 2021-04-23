@@ -85,7 +85,7 @@ static int8_t Launcher_HeatLimit(Launcher_t *l, Referee_ForLauncher_t *l_ref) {
   } else {
     /* 裁判系统离线，不启用热量控制 */
     hc->available_shot = 10;
-    l->fire_ctrl.bullet_speed = l->param->bullet_speed;
+    l->fire_ctrl.bullet_speed = l->param->default_bullet_speed;
   }
   return 0;
 }
