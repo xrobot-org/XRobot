@@ -11,7 +11,7 @@
  * 或者从上位机中接收数据。
  * 根据条件计算最终命令CMD_t。把计算好的CMD_t细分后放到对应的消息队列中。
  * 超时未收到则认为是丢控等特殊情况，把CMD_RC_t中的内容置零，
- * 在后续的CMD_Parse中会根据此内容发现错误，保证机器人不失控。
+ * 在后续的CMD_ParseRc中会根据此内容发现错误，保证机器人不失控。
  *
  */
 
@@ -90,7 +90,7 @@ void Task_Command(void *argument) {
     osMessageQueuePut(task_runtime.msgq.cmd.launcher, &(cmd.launcher), 0, 0);
 
     osMessageQueueReset(task_runtime.msgq.ui.cmd);
-    osMessageQueuePut(task_runtime.msgq.ui.cmd, &cmd.pc_ctrl, 0, 0);
+    osMessageQueuePut(task_runtime.msgq.ui.cmd, &cmd.ctrl_method, 0, 0);
 
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }

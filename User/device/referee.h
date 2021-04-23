@@ -380,7 +380,7 @@ typedef struct __packed {
   Referee_LauncherUI_t launcher_ui;
   Referee_GimbalUI_t gimbal_ui;
   Referee_AIUI_t ai_ui;
-  bool cmd_pc;
+  CMD_CtrlMethod_t ctrl_method;
   /* 屏幕分辨率 */
   const CMD_Screen_t *screen;
 } Referee_UI_t;
