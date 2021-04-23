@@ -194,33 +194,29 @@ int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
   }
 
   switch (l_cmd->fire_mode) {
-    case FIRE_MODE_SINGLE:  /* 点射开火模式 */
-    case FIRE_MODE_BURST: { /* 爆发开火模式 */
+    case FIRE_MODE_SINGLE: /* 点射开火模式 */
+    case FIRE_MODE_BURST:  /* 爆发开火模式 */
 
       /* 计算是否是第一次按下开火键 */
       l->fire_ctrl.first_pressed_fire = l_cmd->fire && !l->fire_ctrl.last_fire;
       l->fire_ctrl.last_fire = l_cmd->fire;
 
-      /* 替换开火指令，忽略一直按下按键 */
-      l_cmd->fire = l->fire_ctrl.first_pressed_fire;
-      if (l_cmd->fire && !l->fire_ctrl.to_launch) {
-        const uint32_t max_shot =
-            l->heat_ctrl.available_shot - l->fire_ctrl.launched;
-        l->fire_ctrl.to_launch = MIN(max_burst, max_shot);
+      /* 设置要发射多少弹丸 */
+      if (l->fire_ctrl.first_pressed_fire && !l->fire_ctrl.to_launch) {
+        l->fire_ctrl.to_launch = MIN(
+            max_burst, (l->heat_ctrl.available_shot - l->fire_ctrl.launched));
       }
 
-      /* 一下逻辑保证触发后一定会打完预设的弹丸，完成爆发 */
+      /* 以下逻辑保证触发后一定会打完预设的弹丸，完成爆发 */
       if (l->fire_ctrl.launched >= l->fire_ctrl.to_launch) {
-        l_cmd->fire = false;
         l->fire_ctrl.launch_delay = UINT32_MAX;
         l->fire_ctrl.launched = 0;
         l->fire_ctrl.to_launch = 0;
       } else {
-        l_cmd->fire = true;
         l->fire_ctrl.launch_delay = l->param->min_launch_delay;
       }
       break;
-    }
+
     case FIRE_MODE_CONT: { /* 持续开火模式 */
       float launch_freq = HeatLimit_LauncherFreq(
           l->heat_ctrl.heat, l->heat_ctrl.heat_limit, l->heat_ctrl.cooling_rate,
@@ -250,8 +246,7 @@ int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
   l->setpoint.fric_rpm[0] = -l->setpoint.fric_rpm[1];
 
   /* 计算拨弹电机位置的目标值 */
-  if (((now - l->fire_ctrl.last_launch) >= l->fire_ctrl.launch_delay) &&
-      (l_cmd->fire)) {
+  if ((now - l->fire_ctrl.last_launch) >= l->fire_ctrl.launch_delay) {
     /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗弹丸的弧度变化 */
     if (l_cmd->reverse_trig) { /* 反转拨盘，用来解决卡顿*/
       CircleAdd(&(l->setpoint.trig_angle), M_2PI / l->param->num_trig_tooth,
