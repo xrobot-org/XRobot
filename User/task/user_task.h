@@ -36,11 +36,6 @@ extern "C" {
 #define TASK_FREQ_AI (250u)
 #define TASK_FREQ_REFEREE (1000u)
 
-#define TASK_INIT_DELAY_INFO (500u)
-#define TASK_INIT_DELAY_MONITOR (10)
-#define TASK_INIT_DELAY_REFEREE (400u)
-#define TASK_INIT_DELAY_AI (400u)
-
 /* Exported defines --------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
