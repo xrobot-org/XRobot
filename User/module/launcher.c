@@ -206,7 +206,7 @@ int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
       if (l_cmd->fire && !l->fire_ctrl.to_launch) {
         const uint32_t max_shot =
             l->heat_ctrl.available_shot - l->fire_ctrl.launched;
-        l->fire_ctrl.to_launch = min(max_burst, max_shot);
+        l->fire_ctrl.to_launch = MIN(max_burst, max_shot);
       }
 
       /* 一下逻辑保证触发后一定会打完预设的弹丸，完成爆发 */

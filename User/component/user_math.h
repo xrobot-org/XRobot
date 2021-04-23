@@ -26,14 +26,14 @@ extern "C" {
 #define M_2PI 6.28318530717958647692f
 #endif
 
-#define max(a, b)           \
+#define MAX(a, b)           \
   ({                        \
     __typeof__(a) _a = (a); \
     __typeof__(b) _b = (b); \
     _a > _b ? _a : _b;      \
   })
 
-#define min(a, b)           \
+#define MIN(a, b)           \
   ({                        \
     __typeof__(a) _a = (a); \
     __typeof__(b) _b = (b); \
@@ -49,9 +49,9 @@ typedef struct {
 
 float InvSqrt(float x);
 
-float AbsClip(float in, float limit);
+float AbsClamp(float x, float limit);
 
-void Clip(float *origin, float min, float max);
+void Clamp(float *origin, float lo, float hi);
 
 float Sign(float in);
 

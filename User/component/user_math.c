@@ -23,13 +23,12 @@ inline float InvSqrt(float x) {
 #endif
 }
 
-inline float AbsClip(float in, float limit) {
-  return (in < -limit) ? -limit : ((in > limit) ? limit : in);
+inline float AbsClamp(float x, float limit) {
+  return MIN(limit, MAX(x, -limit));
 }
 
-inline void Clip(float *origin, float min, float max) {
-  if (*origin > max) *origin = max;
-  if (*origin < min) *origin = min;
+inline void Clamp(float *origin, float lo, float hi) {
+  *origin = MIN(hi, MAX(*origin, lo));
 }
 
 inline float Sign(float in) { return (in > 0) ? 1.0f : 0.0f; }
