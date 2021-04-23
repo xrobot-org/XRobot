@@ -100,7 +100,7 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt) {
   /* 计算I项 */
   const float i = pid->i + (k_err * dt);
   const float i_out = i * pid->param->i;
-  
+
   if (pid->param->i > SIGMA) {
     /* 检查是否饱和 */
     if (isfinite(i)) {
@@ -111,14 +111,14 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt) {
       }
     }
   }
-  
+
   /* 计算PID输出 */
   output += i_out;
- 
+
   /* 限制输出 */
   if (isfinite(output)) {
     if (pid->param->out_limit > SIGMA) {
-      output = AbsClip(output, pid->param->out_limit);
+      output = AbsClamp(output, pid->param->out_limit);
     }
     pid->last.out = output;
   }

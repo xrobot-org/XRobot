@@ -147,7 +147,7 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
                   (g->feedback.eulr.encoder.pit + g->setpoint.eulr.pit -
                    g->feedback.eulr.imu.pit),
                   M_2PI);
-  Clip(&(g_cmd->delta_eulr.pit), delta_min, delta_max);
+  Clamp(&(g_cmd->delta_eulr.pit), delta_min, delta_max);
   g->setpoint.eulr.pit += g_cmd->delta_eulr.pit;
 
   /* 重置输入指令，防止重复处理 */
