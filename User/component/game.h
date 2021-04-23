@@ -1,6 +1,13 @@
-/*
-  游戏规则相关
-*/
+/**
+ * @file game.h
+ * @author Qu Shen
+ * @brief 游戏规则相关
+ * @version 1.0.0
+ * @date 2021-04-23
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
 
 #pragma once
 
