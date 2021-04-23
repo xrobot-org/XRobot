@@ -669,22 +669,26 @@ uint8_t Referee_RefreshUI(Referee_UI_t *ui) {
         fsm++;
         UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
                     UI_GRAPIC_LAYER_CMD);
-        if (ui->cmd_pc) {
-          UI_DrawRectangle(Referee_GetGrapicAdd(ui), "c",
-                           UI_GRAPIC_OPERATION_ADD, UI_GRAPIC_LAYER_CMD, GREEN,
-                           UI_DEFAULT_WIDTH,
-                           ui->screen->width * REF_UI_RIGHT_START_POS + 96,
-                           ui->screen->height * 0.4 + REF_UI_BOX_UP_OFFSET,
-                           ui->screen->width * REF_UI_RIGHT_START_POS + 120,
-                           ui->screen->height * 0.4 + REF_UI_BOX_BOT_OFFSET);
-        } else {
-          UI_DrawRectangle(Referee_GetGrapicAdd(ui), "c",
-                           UI_GRAPIC_OPERATION_ADD, UI_GRAPIC_LAYER_CMD, GREEN,
-                           UI_DEFAULT_WIDTH,
-                           ui->screen->width * REF_UI_RIGHT_START_POS + 56,
-                           ui->screen->height * 0.4 + REF_UI_BOX_UP_OFFSET,
-                           ui->screen->width * REF_UI_RIGHT_START_POS + 80,
-                           ui->screen->height * 0.4 + REF_UI_BOX_BOT_OFFSET);
+
+        switch (ui->ctrl_method) {
+          case CMD_METHOD_MOUSE_KEYBOARD:
+            UI_DrawRectangle(Referee_GetGrapicAdd(ui), "c",
+                             UI_GRAPIC_OPERATION_ADD, UI_GRAPIC_LAYER_CMD,
+                             GREEN, UI_DEFAULT_WIDTH,
+                             ui->screen->width * REF_UI_RIGHT_START_POS + 96,
+                             ui->screen->height * 0.4 + REF_UI_BOX_UP_OFFSET,
+                             ui->screen->width * REF_UI_RIGHT_START_POS + 120,
+                             ui->screen->height * 0.4 + REF_UI_BOX_BOT_OFFSET);
+            break;
+          case CMD_METHOD_JOYSTICK_SWITCH:
+            UI_DrawRectangle(Referee_GetGrapicAdd(ui), "c",
+                             UI_GRAPIC_OPERATION_ADD, UI_GRAPIC_LAYER_CMD,
+                             GREEN, UI_DEFAULT_WIDTH,
+                             ui->screen->width * REF_UI_RIGHT_START_POS + 56,
+                             ui->screen->height * 0.4 + REF_UI_BOX_UP_OFFSET,
+                             ui->screen->width * REF_UI_RIGHT_START_POS + 80,
+                             ui->screen->height * 0.4 + REF_UI_BOX_BOT_OFFSET);
+            break;
         }
         break;
 
@@ -731,7 +735,7 @@ uint8_t Referee_RefreshUI(Referee_UI_t *ui) {
                      UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
                      UI_CHAR_DEFAULT_WIDTH,
                      ui->screen->width * REF_UI_RIGHT_START_POS,
-                     ui->screen->height * 0.4, "CTRL  RC  PC");
+                     ui->screen->height * 0.4, "CTRL  JS  KM");
     UI_DrawCharacter(Referee_GetCharacterAdd(ui), "e", UI_GRAPIC_OPERATION_ADD,
                      UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 20, 80,
                      UI_CHAR_DEFAULT_WIDTH * 2, ui->screen->width * 0.6 - 26,

@@ -130,7 +130,7 @@ void Task_Init(void *argument) {
       osMessageQueueNew(2u, sizeof(Referee_GimbalUI_t), NULL);
   task_runtime.msgq.ui.launcher =
       osMessageQueueNew(2u, sizeof(Referee_LauncherUI_t), NULL);
-  task_runtime.msgq.ui.cmd = osMessageQueueNew(2u, sizeof(bool), NULL);
+  task_runtime.msgq.ui.cmd = osMessageQueueNew(2u, sizeof(CMD_CtrlMethod_t), NULL);
   task_runtime.msgq.ui.ai = osMessageQueueNew(2u, sizeof(Referee_AIUI_t), NULL);
 
   osKernelUnlock();

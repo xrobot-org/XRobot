@@ -1,6 +1,25 @@
-/*
-  控制命令
-*/
+/**
+ * @file cmd.h
+ * @author Qu Shen
+ * @brief
+ * @version 1.0.0
+ * @date 2021-04-23
+ *
+ * @copyright Copyright (c) 2021
+ *
+ * 控制来源(CtrlSource)有两个: 遥控(RC) & 上位机(Host)
+ *
+ * 遥控又分为两个控制方式(CtrlMethod):
+ *     摇杆开关控制(Joystick) & 键盘鼠标控制(Mouse keyboard)
+ *
+ * RC -> Joystick Switch logic -> CMD
+ *              or
+ * RC -> Mouse keyboard logic -> CMD
+ *
+ * 上位机控制不区分控制方式
+ * Host -> ParseHsot -> CMD
+ *
+ */
 
 #pragma once
 
@@ -155,11 +174,23 @@ typedef struct {
   } click;
 } CMD_Mouse_t; /* 鼠标值 */
 
-typedef struct {
-  bool pc_ctrl;        /* 是否使用键鼠控制 */
-  bool host_overwrite; /* 是否Host控制 */
-  uint16_t key_last;   /* 上次按键键值 */
+/* 控制指令来源 */
+typedef enum {
+  CMD_SOURCE_RC,   /* 指令来源于遥控链路 */
+  CMD_SOURCE_HOST, /* 指令来源于上位机 */
+} CMD_CtrlSource_t;
 
+/* 控制方式 */
+typedef enum {
+  CMD_METHOD_JOYSTICK_SWITCH, /* 使用摇杆开关控制 */
+  CMD_METHOD_MOUSE_KEYBOARD,  /* 使用键鼠控制 */
+} CMD_CtrlMethod_t;
+
+typedef struct {
+  CMD_CtrlSource_t ctrl_source; /* 指令来源 */
+  CMD_CtrlMethod_t ctrl_method; /* 控制方式 */
+
+  uint16_t key_last;      /* 上次按键键值 */
   CMD_Mouse_t mouse_last; /* 鼠标值 */
 
   CMD_AI_Status_t ai_status; /* AI状态 */
@@ -232,7 +263,7 @@ bool CMD_CheckHostOverwrite(CMD_t *cmd);
  * @param dt_sec 两次解析的间隔
  * @return int8_t 0对应没有错误
  */
-int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec);
+int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec);
 
 /**
  * @brief 解析上位机命令
