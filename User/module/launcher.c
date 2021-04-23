@@ -181,7 +181,7 @@ int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
 
   /* 根据开火模式计算发射行为 */
   l->fire_ctrl.fire_mode = l_cmd->fire_mode;
-  int32_t max_burst;
+  uint32_t max_burst;
   switch (l_cmd->fire_mode) {
     case FIRE_MODE_SINGLE: /* 点射开火模式 */
       max_burst = 1;
