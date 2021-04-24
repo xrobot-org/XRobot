@@ -1582,9 +1582,9 @@
               <FilePath>..\User\task\can.c</FilePath>
             </File>
             <File>
-              <FileName>cap.c</FileName>
+              <FileName>ctrl_cap.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\cap.c</FilePath>
+              <FilePath>..\User\task\ctrl_cap.c</FilePath>
             </File>
             <File>
               <FileName>cli.c</FileName>
@@ -3242,9 +3242,9 @@
               <FilePath>..\User\task\can.c</FilePath>
             </File>
             <File>
-              <FileName>cap.c</FileName>
+              <FileName>ctrl_cap.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\cap.c</FilePath>
+              <FilePath>..\User\task\ctrl_cap.c</FilePath>
             </File>
             <File>
               <FileName>cli.c</FileName>
