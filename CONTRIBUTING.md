@@ -28,7 +28,7 @@
 
 1. 在bsp中与`a`、`c`并列添加一个文件夹。例如`b`（代指RM开发板B型）。
 1. 参考`bsp`中头文件，在`b`中添加对应的源代码文件。
-    * 在头文件中不能实现的功能，需要加宏定义来根据不同的开发板来编译。例如[led.h](https://github.com/qsheeeeen/qdu-robomaster-mcu/blob/2020/User/bsp/led.h)中针对不同板子定义了不同的LED功能。
+    * 在头文件中不能实现的功能，需要加宏定义来根据不同的开发板来编译。例如[led.h](./User/bsp/led.h)中针对不同板子定义了不同的LED功能。
 
 ## 添加新的组件
 
@@ -67,7 +67,7 @@
 
 注意事项：
 
-* `osKernelLock`和`osKernelUnlock`中间不能导致任务切换的函数，例如`osMessageQueuePut`。
+* `osKernelLock`和`osKernelUnlock`中间不能you可能导致任务切换的函数，例如`osMessageQueuePut`。
 * 如果任务不需要运行多个实例，则尽量将任务变量放置到任务函数外。
 
 ---
