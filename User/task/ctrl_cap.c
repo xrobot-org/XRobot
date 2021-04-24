@@ -1,5 +1,5 @@
 /**
- * @file cap.c
+ * @file ctrl_cap.c
  * @author Qu Shen (503578404@qq.com)
  * @brief 超级电容控制任务
  * @version 1.0.0
