@@ -1582,11 +1582,6 @@
               <FilePath>..\User\task\can.c</FilePath>
             </File>
             <File>
-              <FileName>ctrl_cap.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\task\ctrl_cap.c</FilePath>
-            </File>
-            <File>
               <FileName>cli.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\cli.c</FilePath>
@@ -1595,6 +1590,11 @@
               <FileName>command.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\command.c</FilePath>
+            </File>
+            <File>
+              <FileName>ctrl_cap.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\ctrl_cap.c</FilePath>
             </File>
             <File>
               <FileName>ctrl_chassis.c</FileName>
@@ -3242,11 +3242,6 @@
               <FilePath>..\User\task\can.c</FilePath>
             </File>
             <File>
-              <FileName>ctrl_cap.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\task\ctrl_cap.c</FilePath>
-            </File>
-            <File>
               <FileName>cli.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\cli.c</FilePath>
@@ -3255,6 +3250,11 @@
               <FileName>command.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\task\command.c</FilePath>
+            </File>
+            <File>
+              <FileName>ctrl_cap.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\task\ctrl_cap.c</FilePath>
             </File>
             <File>
               <FileName>ctrl_chassis.c</FileName>
