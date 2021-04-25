@@ -267,8 +267,6 @@ int8_t CAN_ClearFlag(CAN_t *can, uint32_t flag);
 int8_t CAN_Cap_Control(CAN_CapOutput_t *output, CAN_t *can);
 void CAN_ResetCapOut(CAN_CapOutput_t *cap_out);
 void CAN_Cap_Decode(CAN_CapFeedback_t *feedback, const uint8_t *raw);
-void CAN_CAP_HandleOffline(CAN_Capacitor_t *cap, CAN_CapOutput_t *cap_out,
-                           float power_chassis);
 
 void CAN_Tof_Decode(CAN_Tof_t *tof, const uint8_t *raw);
 

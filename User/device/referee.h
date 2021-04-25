@@ -20,7 +20,6 @@ extern "C" {
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
-#define CHASSIS_POWER_MAX_WITHOUT_REF 40.0f /* 裁判系统离线底盘最大功率 */
 
 #define REF_UI_MAX_GRAPIC_NUM (7)
 #define REF_UI_MAX_STRING_NUM (7)

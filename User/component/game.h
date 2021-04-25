@@ -18,6 +18,8 @@ extern "C" {
 #define GAME_HEAT_INCREASE_42MM (100.f) /* 每发射一颗42mm弹丸增加100热量 */
 #define GAME_HEAT_INCREASE_17MM (10.f) /* 每发射一颗17mm弹丸增加10热量 */
 
+#define GAME_CHASSIS_MAX_POWER_WO_REF 40.0f /* 裁判系统离线时底盘最大功率 */
+
 /* 机器人型号 */
 typedef enum {
   ROBOT_MODEL_INFANTRY = 0, /* 步兵机器人 */

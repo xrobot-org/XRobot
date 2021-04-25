@@ -360,7 +360,7 @@ int8_t Chassis_PowerLimit(Chassis_t *c, const CAN_Capacitor_t *cap,
   float power_limit = 0.0f;
   if (ref->status != REF_STATUS_RUNNING) {
     /* 裁判系统离线，将功率限制为固定值 */
-    power_limit = CHASSIS_POWER_MAX_WITHOUT_REF;
+    power_limit = GAME_CHASSIS_MAX_POWER_WO_REF;
   } else {
     if (cap->cap_status == CAN_CAP_STATUS_RUNNING &&
         cap->percentage > CAP_PERCENTAGE_CHARGE) {

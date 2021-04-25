@@ -315,9 +315,3 @@ int8_t CAN_Cap_Control(CAN_CapOutput_t *output, CAN_t *can) {
                        raw_tx.tx_data, &(can->mailbox.cap));
   return DEVICE_OK;
 }
-
-void CAN_CAP_HandleOffline(CAN_Capacitor_t *cap, CAN_CapOutput_t *cap_out,
-                           float power_chassis) {
-  cap->cap_status = CAN_CAP_STATUS_OFFLINE;
-  cap_out->power_limit = power_chassis;
-}

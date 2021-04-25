@@ -35,6 +35,16 @@ void Cap_Control(CAN_Capacitor_t *cap, const Referee_ForCap_t *referee,
                  CAN_CapOutput_t *cap_out);
 
 /**
+ * @brief 电容模块离线时的控制逻辑
+ *
+ * @param cap 电容数据结构体
+ * @param cap_out 电容输出结构体
+ * @param power_chassis 底盘功率
+ */
+void Cap_HandleOffline(CAN_Capacitor_t *cap, CAN_CapOutput_t *cap_out,
+                       float power_chassis);
+
+/**
  * @brief 导出电容数据
  *
  * @param cap 电容数据
