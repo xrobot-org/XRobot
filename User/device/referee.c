@@ -180,7 +180,7 @@ static UI_Del_t *Referee_GetDelAdd(Referee_UI_t *ref_ui) {
 
 /* Exported functions ------------------------------------------------------- */
 int8_t Referee_Init(Referee_t *ref, Referee_UI_t *ui,
-                    const CMD_Screen_t *screen) {
+                    const UI_Screen_t *screen) {
   if (ref == NULL) return DEVICE_ERR_NULL;
   if (inited) return DEVICE_ERR_INITED;
 

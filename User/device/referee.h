@@ -381,7 +381,7 @@ typedef struct __packed {
   Referee_AIUI_t ai_ui;
   CMD_CtrlMethod_t ctrl_method;
   /* 屏幕分辨率 */
-  const CMD_Screen_t *screen;
+  const UI_Screen_t *screen;
 } Referee_UI_t;
 
 typedef struct __packed {
@@ -464,7 +464,7 @@ typedef struct {
 
 /* Exported functions prototypes -------------------------------------------- */
 int8_t Referee_Init(Referee_t *ref, Referee_UI_t *ui,
-                    const CMD_Screen_t *screen);
+                    const UI_Screen_t *screen);
 int8_t Referee_Restart(void);
 void Referee_HandleOffline(Referee_t *referee);
 

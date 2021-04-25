@@ -32,6 +32,7 @@ typedef struct {
 /* 操作员配置 */
 typedef struct {
   CMD_Params_t param; /* 参数 */
+  UI_Screen_t screen; /* 屏幕分辨率参数 */
 } Config_PilotCfg_t;
 
 /* 机器人配置，保存在Flash上的信息，根据机器人变化 */

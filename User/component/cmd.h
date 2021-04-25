@@ -131,18 +131,12 @@ typedef struct {
   float move_slow_sense; /* 减速灵敏度 */
 } CMD_MoveParams_t;
 
-typedef struct {
-  uint16_t width;
-  uint16_t height;
-} CMD_Screen_t;
-
 /* 命令参数 */
 typedef struct {
   float sens_mouse;       /* 鼠标灵敏度 */
   float sens_stick;       /* 遥控器摇杆灵敏度 */
   CMD_KeyMapParams_t map; /* 按键映射行为命令 */
   CMD_MoveParams_t move;  /* 位移灵敏度参数 */
-  CMD_Screen_t screen;    /* 屏幕分辨率参数 */
 } CMD_Params_t;
 
 /* AI行为状态 */
