@@ -77,18 +77,21 @@ void Task_CtrlChassis(void *argument) {
                       0);
     osMessageQueueGet(task_runtime.msgq.cmd.chassis, &chassis_cmd, NULL, 0);
     osMessageQueueGet(task_runtime.msgq.cap_info, &cap, NULL, 0);
+
     osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     Chassis_UpdateFeedback(&chassis, &can); /* 更新反馈值 */
     /* 根据遥控器命令计算底盘输出 */
     Chassis_Control(&chassis, &chassis_cmd, tick);
     Chassis_PowerLimit(&chassis, &cap, &referee_chassis); /* 限制输出功率 */
     Chassis_DumpOutput(&chassis, &chassis_out);
+    Chassis_DumpUI(&chassis, &chassis_ui);
     osKernelUnlock();
+
     /* 将电机输出值发送到CAN */
     osMessageQueueReset(task_runtime.msgq.can.output.chassis);
     osMessageQueuePut(task_runtime.msgq.can.output.chassis, &chassis_out, 0, 0);
+
     /* 将底盘数据发送给UI */
-    Chassis_DumpUI(&chassis, &chassis_ui);
     osMessageQueueReset(task_runtime.msgq.ui.chassis);
     osMessageQueuePut(task_runtime.msgq.ui.chassis, &chassis_ui, 0, 0);
 

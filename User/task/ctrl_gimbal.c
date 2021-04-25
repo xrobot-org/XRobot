@@ -74,12 +74,12 @@ void Task_CtrlGimbal(void *argument) {
     Gimbal_UpdateFeedback(&gimbal, &can);
     Gimbal_Control(&gimbal, &gimbal_cmd, tick);
     Gimbal_DumpOutput(&gimbal, &gimbal_out);
-
+    Gimbal_DumpUI(&gimbal, &gimbal_ui);
     osKernelUnlock();
+
     osMessageQueueReset(task_runtime.msgq.can.output.gimbal);
     osMessageQueuePut(task_runtime.msgq.can.output.gimbal, &gimbal_out, 0, 0);
 
-    Gimbal_DumpUI(&gimbal, &gimbal_ui);
     osMessageQueueReset(task_runtime.msgq.ui.gimbal);
     osMessageQueuePut(task_runtime.msgq.ui.gimbal, &gimbal_ui, 0, 0);
 

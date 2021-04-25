@@ -63,29 +63,23 @@ void Task_CtrlLauncher(void *argument) {
     task_runtime.stack_water_mark.ctrl_launcher =
         osThreadGetStackSpace(osThreadGetId());
 #endif
-    if (osMessageQueueGet(task_runtime.msgq.can.feedback.launcher, &can, NULL,
-                          0) != osOK) {
-      // Error handler
-      Launcher_ResetOutput(&launcher_out);
-    } else {
-      /* 读取控制指令以及裁判系统信息 */
-      osMessageQueueGet(task_runtime.msgq.cmd.launcher, &launcher_cmd, NULL, 0);
-      osMessageQueueGet(task_runtime.msgq.referee.launcher, &referee_launcher,
-                        NULL, 0);
-      osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
-      Launcher_UpdateFeedback(&launcher, &can);
-      /* 根据指令控制发射器 */
-      Launcher_Control(&launcher, &launcher_cmd, &referee_launcher,
-                       HAL_GetTick());
-      /* 复制发射器输出值 */
-      Launcher_DumpOutput(&launcher, &launcher_out);
-      osKernelUnlock();
-    }
+    osMessageQueueGet(task_runtime.msgq.can.feedback.launcher, &can, NULL, 0);
+    /* 读取控制指令以及裁判系统信息 */
+    osMessageQueueGet(task_runtime.msgq.cmd.launcher, &launcher_cmd, NULL, 0);
+    osMessageQueueGet(task_runtime.msgq.referee.launcher, &referee_launcher,
+                      NULL, 0);
+
+    osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
+    Launcher_UpdateFeedback(&launcher, &can);
+    Launcher_Control(&launcher, &launcher_cmd, &referee_launcher, tick);
+    Launcher_DumpOutput(&launcher, &launcher_out);
+    Launcher_DumpUI(&launcher, &launcher_ui);
+    osKernelUnlock();
+
     osMessageQueueReset(task_runtime.msgq.can.output.launcher);
     osMessageQueuePut(task_runtime.msgq.can.output.launcher, &launcher_out, 0,
                       0);
 
-    Launcher_DumpUI(&launcher, &launcher_ui);
     osMessageQueueReset(task_runtime.msgq.ui.launcher);
     osMessageQueuePut(task_runtime.msgq.ui.launcher, &launcher_ui, 0, 0);
 
