@@ -9,6 +9,7 @@
  *
  * 接收来自裁判系统的数据
  * 解析后根据需求组合成新包发给各个模块
+ * 无论裁判系统是否在线，都要按时发送给各个模块
  *
  */
 
@@ -65,50 +66,46 @@ void Task_Referee(void *argument) {
 #endif
     /* 开始接收裁判系统数据 */
     Referee_StartReceiving(&ref);
-    /* 判断裁判系统数据是否接收完成 */
-    if (Referee_WaitRecvCplt(100)) {
-      /* 长时间未接收到数据，裁判系统离线 */
-      Referee_HandleOffline(&ref);
+
+    if (Referee_WaitRecvCplt(100)) { /* 判断裁判系统数据是否接收完成 */
+      Referee_HandleOffline(&ref); /* 长时间未接收到数据，裁判系统离线 */
     } else {
-      /* 解析裁判系统数据 */
-      Referee_Parse(&ref);
+      Referee_Parse(&ref); /* 解析裁判系统数据 */
+    }
 
-      /* 定时发送UI数据 */
-      if (osKernelGetTickCount() > tick) {
-        tick += delay_tick;
-        /* 打包裁判系统数据 */
-        Referee_PackForCap(&for_cap, &ref);
-        Referee_PackForAI(&for_ai, &ref);
-        Referee_PackForLauncher(&for_launcher, &ref);
-        Referee_PackForChassis(&for_chassis, &ref);
+    /* 定时发送UI数据 */
+    if (osKernelGetTickCount() > tick) {
+      tick += delay_tick;
+      /* 打包裁判系统数据 */
+      Referee_PackForCap(&for_cap, &ref);
+      Referee_PackForAI(&for_ai, &ref);
+      Referee_PackForLauncher(&for_launcher, &ref);
+      Referee_PackForChassis(&for_chassis, &ref);
 
-        /* 发送数据到其他进程 */
-        osMessageQueueReset(task_runtime.msgq.referee.cap);
-        osMessageQueuePut(task_runtime.msgq.referee.cap, &for_cap, 0, 0);
-        osMessageQueueReset(task_runtime.msgq.referee.ai);
-        osMessageQueuePut(task_runtime.msgq.referee.ai, &for_ai, 0, 0);
-        osMessageQueueReset(task_runtime.msgq.referee.chassis);
-        osMessageQueuePut(task_runtime.msgq.referee.chassis, &for_chassis, 0,
-                          0);
-        osMessageQueueReset(task_runtime.msgq.referee.launcher);
-        osMessageQueuePut(task_runtime.msgq.referee.launcher, &for_launcher, 0,
-                          0);
+      /* 发送数据到其他进程 */
+      osMessageQueueReset(task_runtime.msgq.referee.cap);
+      osMessageQueuePut(task_runtime.msgq.referee.cap, &for_cap, 0, 0);
+      osMessageQueueReset(task_runtime.msgq.referee.ai);
+      osMessageQueuePut(task_runtime.msgq.referee.ai, &for_ai, 0, 0);
+      osMessageQueueReset(task_runtime.msgq.referee.chassis);
+      osMessageQueuePut(task_runtime.msgq.referee.chassis, &for_chassis, 0, 0);
+      osMessageQueueReset(task_runtime.msgq.referee.launcher);
+      osMessageQueuePut(task_runtime.msgq.referee.launcher, &for_launcher, 0,
+                        0);
 
-        /* 获取其他进程数据 */
-        osMessageQueueGet(task_runtime.msgq.ui.cap, &(ui.cap_ui), NULL, 0);
-        osMessageQueueGet(task_runtime.msgq.ui.chassis, &(ui.chassis_ui), NULL,
-                          0);
-        osMessageQueueGet(task_runtime.msgq.ui.gimbal, &(ui.gimbal_ui), NULL,
-                          0);
-        osMessageQueueGet(task_runtime.msgq.ui.launcher, &(ui.launcher_ui),
-                          NULL, 0);
-        osMessageQueueGet(task_runtime.msgq.ui.cmd, &(ui.ctrl_method), NULL, 0);
-        osMessageQueueGet(task_runtime.msgq.ui.ai, &(ui.ai_ui), NULL, 0);
+      /* 获取其他进程数据 */
+      osMessageQueueGet(task_runtime.msgq.ui.cap, &(ui.cap_ui), NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.ui.chassis, &(ui.chassis_ui), NULL,
+                        0);
+      osMessageQueueGet(task_runtime.msgq.ui.gimbal, &(ui.gimbal_ui), NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.ui.launcher, &(ui.launcher_ui), NULL,
+                        0);
+      osMessageQueueGet(task_runtime.msgq.ui.cmd, &(ui.ctrl_method), NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.ui.ai, &(ui.ai_ui), NULL, 0);
 
-        /* 刷新UI数据 */
-        Referee_RefreshUI(&ui);
-        Referee_PackUI(&ui, &ref);
-      }
+      /* 刷新UI数据 */
+      Referee_RefreshUI(&ui);
+      Referee_PackUI(&ui, &ref);
     }
   }
 }
