@@ -66,8 +66,7 @@ void Task_Referee(void *argument) {
     /* 开始接收裁判系统数据 */
     Referee_StartReceiving(&ref);
     /* 判断裁判系统数据是否接收完成 */
-    if (osThreadFlagsWait(SIGNAL_REFEREE_RAW_REDY, osFlagsWaitAll, 100) !=
-        SIGNAL_REFEREE_RAW_REDY) {
+    if (Referee_WaitRecvCplt(100)) {
       /* 长时间未接收到数据，裁判系统离线 */
       Referee_HandleOffline(&ref);
     } else {

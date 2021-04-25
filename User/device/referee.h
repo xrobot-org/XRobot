@@ -469,6 +469,7 @@ int8_t Referee_Restart(void);
 void Referee_HandleOffline(Referee_t *referee);
 
 int8_t Referee_StartReceiving(Referee_t *ref);
+bool Referee_WaitRecvCplt(uint32_t timeout);
 int8_t Referee_Parse(Referee_t *ref);
 
 int8_t Referee_StartSend(uint8_t *data, uint32_t len);

@@ -231,6 +231,11 @@ int8_t Referee_StartReceiving(Referee_t *ref) {
   return DEVICE_ERR;
 }
 
+bool Referee_WaitRecvCplt(uint32_t timeout) {
+  return (osThreadFlagsWait(SIGNAL_REFEREE_RAW_REDY, osFlagsWaitAll, timeout) ==
+          SIGNAL_REFEREE_RAW_REDY);
+}
+
 int8_t Referee_Parse(Referee_t *ref) {
   REF_SET_STATUS(*ref, REF_STATUS_RUNNING);
   uint32_t data_length =
