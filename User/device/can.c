@@ -57,8 +57,7 @@
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
 /* Private variables -------------------------------------------------------- */
-static CAN_RawRx_t raw_rx1;
-static CAN_RawRx_t raw_rx2;
+static CAN_RawRx_t raw_rx1, raw_rx2;
 static CAN_RawTx_t raw_tx;
 
 static osThreadId_t thread_alert;
