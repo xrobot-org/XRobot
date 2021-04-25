@@ -92,6 +92,11 @@ typedef struct __packed {
   uint8_t layer;
 } UI_Del_t;
 
+typedef struct {
+  uint16_t width;
+  uint16_t height;
+} UI_Screen_t;
+
 /**
  * @brief UI_绘制直线段
  *

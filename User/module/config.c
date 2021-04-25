@@ -332,10 +332,10 @@ static const Config_PilotCfg_t cfg_qs = {
       .move_fast_sense = 1.2f,
       .move_slow_sense = 0.8f,		
     },
-    .screen = {
-      .height = 1080,
-      .width = 1920,
-    },
+  },
+  .screen = {
+    .height = 1080,
+    .width = 1920,
   },
 };
 
@@ -362,6 +362,10 @@ static const Config_PilotCfg_t cfg_zyma = {
       .move_fast_sense = 1.2f,
       .move_slow_sense = 0.8f,		
     },       
+  },
+  .screen = {
+    .height = 1080,
+    .width = 1920,
   },
 };
 

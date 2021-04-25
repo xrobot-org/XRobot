@@ -56,7 +56,7 @@ void Task_Referee(void *argument) {
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_REFEREE;
 
   /* 初始化裁判系统 */
-  Referee_Init(&ref, &ui, &(task_runtime.cfg.pilot_cfg->param.screen));
+  Referee_Init(&ref, &ui, &(task_runtime.cfg.pilot_cfg->screen));
 
   uint32_t tick = osKernelGetTickCount();
   while (1) {
