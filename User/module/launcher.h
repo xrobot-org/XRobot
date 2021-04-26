@@ -64,6 +64,7 @@ typedef struct {
   uint32_t min_launch_delay;  /* 最小发射间隔(1s/最大射频) */
 } Launcher_Params_t;
 
+/* 热量控制 */
 typedef struct {
   float heat;          /* 现在热量水平 */
   float last_heat;     /* 之前的热量水平 */
@@ -75,6 +76,7 @@ typedef struct {
   uint32_t available_shot; /* 热量范围内还可以发射的数量 */
 } Launcher_HeatCtrl_t;
 
+/* 开火控制 */
 typedef struct {
   uint32_t last_launch;    /* 上次发射器时间 单位：ms */
   bool last_fire;          /* 上次开火状态 */
@@ -165,14 +167,14 @@ int8_t Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
 int8_t Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can);
 
 /**
- * \brief 运行发射器控制逻辑
+ * @brief 运行发射器控制逻辑
+ * @warning 鼠标点击过快（100ms内多次点击）会导致热量控制被忽略
  *
- * \param l 包含发射器数据的结构体
- * \param l_cmd 发射器控制指令
- * \param l_ref 裁判系统数据
- * \param dt_sec 两次调用的时间间隔
- *
- * \return 函数运行结果
+ * @param l 包含发射器数据的结构体
+ * @param l_cmd 发射器控制指令
+ * @param l_ref 发射器使用的裁判系统数据
+ * @param now 现在时刻
+ * @return int8_t
  */
 int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
                         Referee_ForLauncher_t *l_ref, uint32_t now);

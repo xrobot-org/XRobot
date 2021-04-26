@@ -38,6 +38,7 @@ static int8_t Launcher_SetMode(Launcher_t *l, Game_LauncherMode_t mode) {
   LowPassFilter2p_Reset(&(l->filter.in.trig), 0.0f);
   LowPassFilter2p_Reset(&(l->filter.out.trig), 0.0f);
 
+  /* 保证模式变换时拨弹盘不丢失起始位置 */
   while (fabsf(CircleError(l->setpoint.trig_angle, l->feedback.trig_angle,
                            M_2PI)) >= M_2PI / l->param->num_trig_tooth / 2.0f) {
     CircleAdd(&(l->setpoint.trig_angle), M_2PI / l->param->num_trig_tooth,
@@ -51,11 +52,11 @@ static int8_t Launcher_SetMode(Launcher_t *l, Game_LauncherMode_t mode) {
 }
 
 /**
- * @brief
+ * @brief 发射器热量控制
  *
- * @param l
- * @param l_ref
- * @return int8_t
+ * @param l 包含发射器数据的结构体
+ * @param l_ref 发射器所需裁判系统数据
+ * @return int8_t 函数运行结果
  */
 static int8_t Launcher_HeatLimit(Launcher_t *l, Referee_ForLauncher_t *l_ref) {
   Launcher_HeatCtrl_t *hc = &(l->heat_ctrl);
@@ -162,6 +163,7 @@ int8_t Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can) {
 
 /**
  * @brief 运行发射器控制逻辑
+ * @warning 鼠标点击过快（100ms内多次点击）会导致热量控制被忽略
  *
  * @param l 包含发射器数据的结构体
  * @param l_cmd 发射器控制指令
