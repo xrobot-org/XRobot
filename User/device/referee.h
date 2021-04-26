@@ -288,7 +288,7 @@ typedef enum {
 } Referee_StudentCMDID_t;
 
 typedef struct __packed {
-  Referee_StudentCMDID_t data_cmd_id;
+  Referee_StudentCMDID_t cmd_id;
   uint16_t id_sender;
   uint16_t id_receiver;
 } Referee_InterStudentHeader_t;
