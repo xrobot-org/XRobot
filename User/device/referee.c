@@ -103,69 +103,11 @@ static int8_t Referee_SetUiHeader(Referee_InterStudentHeader_t *header,
                                   const Referee_StudentCMDID_t cmd_id,
                                   Referee_RobotID_t robot_id) {
   header->data_cmd_id = cmd_id;
-  switch (robot_id) {
-    case REF_BOT_RED_HERO:
-      header->id_sender = REF_BOT_RED_HERO;
-      header->id_receiver = REF_CL_RED_HERO;
-      break;
-    case REF_BOT_RED_ENGINEER:
-      header->id_sender = REF_BOT_RED_ENGINEER;
-      header->id_receiver = REF_CL_RED_ENGINEER;
-      break;
-    case REF_BOT_RED_INFANTRY_1:
-      header->id_sender = REF_BOT_RED_INFANTRY_1;
-      header->id_receiver = REF_CL_RED_INFANTRY_1;
-      break;
-    case REF_BOT_RED_INFANTRY_2:
-      header->id_sender = REF_BOT_RED_INFANTRY_2;
-      header->id_receiver = REF_CL_RED_INFANTRY_2;
-      break;
-    case REF_BOT_RED_INFANTRY_3:
-      header->id_sender = REF_BOT_RED_INFANTRY_3;
-      header->id_receiver = REF_CL_RED_INFANTRY_3;
-      break;
-    case REF_BOT_RED_DRONE:
-      header->id_sender = REF_BOT_RED_DRONE;
-      header->id_receiver = REF_CL_RED_DRONE;
-      break;
-    case REF_BOT_RED_SENTRY:
-      header->id_sender = REF_BOT_RED_SENTRY;
-      break;
-    case REF_BOT_RED_RADER:
-      header->id_sender = REF_BOT_RED_RADER;
-      break;
-    case REF_BOT_BLU_HERO:
-      header->id_sender = REF_BOT_BLU_HERO;
-      header->id_receiver = REF_CL_BLU_HERO;
-      break;
-    case REF_BOT_BLU_ENGINEER:
-      header->id_sender = REF_BOT_BLU_ENGINEER;
-      header->id_receiver = REF_CL_BLU_ENGINEER;
-      break;
-    case REF_BOT_BLU_INFANTRY_1:
-      header->id_sender = REF_BOT_BLU_INFANTRY_1;
-      header->id_receiver = REF_CL_BLU_INFANTRY_1;
-      break;
-    case REF_BOT_BLU_INFANTRY_2:
-      header->id_sender = REF_BOT_BLU_INFANTRY_2;
-      header->id_receiver = REF_CL_BLU_INFANTRY_2;
-      break;
-    case REF_BOT_BLU_INFANTRY_3:
-      header->id_sender = REF_BOT_BLU_INFANTRY_3;
-      header->id_receiver = REF_CL_BLU_INFANTRY_3;
-      break;
-    case REF_BOT_BLU_DRONE:
-      header->id_sender = REF_BOT_BLU_DRONE;
-      header->id_receiver = REF_CL_BLU_DRONE;
-      break;
-    case REF_BOT_BLU_SENTRY:
-      header->id_sender = REF_BOT_BLU_SENTRY;
-      break;
-    case REF_BOT_BLU_RADER:
-      header->id_sender = REF_BOT_BLU_RADER;
-      break;
-    default:
-      return -1;
+  header->id_sender = robot_id;
+  if (robot_id > 100) {
+    header->id_receiver = robot_id - 100 + 0x0160;
+  } else {
+    header->id_receiver = robot_id + 0x0100;
   }
   return 0;
 }
