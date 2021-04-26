@@ -293,10 +293,6 @@ typedef struct __packed {
   uint16_t id_receiver;
 } Referee_InterStudentHeader_t;
 
-typedef struct __packed {
-  uint8_t place_holder;
-} Referee_InterStudent_Custom_t;
-
 typedef struct {
   Game_ChassisMode_t mode;
   float angle;
