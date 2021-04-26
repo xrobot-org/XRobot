@@ -20,12 +20,8 @@ extern "C" {
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
-
-#define REF_UI_MAX_GRAPIC_NUM (7)
-#define REF_UI_MAX_STRING_NUM (7)
-#define REF_UI_MAX_DEL_NUM (3)
-
 /* Exported types ----------------------------------------------------------- */
+
 typedef struct __packed {
   uint8_t sof;
   uint16_t data_length;
@@ -43,7 +39,6 @@ typedef enum {
   REF_CMD_ID_ICRA_ZONE_STATUS = 0x0005,
   REF_CMD_ID_FIELD_EVENTS = 0x0101,
   REF_CMD_ID_SUPPLY_ACTION = 0x0102,
-  REF_CMD_ID_REQUEST_SUPPLY = 0x0103,
   REF_CMD_ID_WARNING = 0x0104,
   REF_CMD_ID_DART_COUNTDOWN = 0x0105,
   REF_CMD_ID_ROBOT_STATUS = 0x0201,
@@ -131,10 +126,6 @@ typedef struct __packed {
   uint8_t supply_step;
   uint8_t supply_sum;
 } Referee_SupplyAction_t;
-
-typedef struct __packed {
-  uint8_t place_holder; /* TODO */
-} Referee_RequestSupply_t;
 
 typedef struct __packed {
   uint8_t level;
@@ -304,42 +295,11 @@ typedef struct __packed {
   Referee_StudentCMDID_t data_cmd_id;
   uint16_t id_sender;
   uint16_t id_receiver;
-  uint8_t *data;
-} Referee_InterStudent_t;
+} Referee_InterStudentHeader_t;
 
 typedef struct __packed {
   uint8_t place_holder;
 } Referee_InterStudent_Custom_t;
-
-typedef struct {
-  Referee_Status_t status;
-  Referee_GameStatus_t game_status;
-  Referee_GameResult_t game_result;
-  Referee_GameRobotHP_t game_robot_hp;
-  Referee_DartStatus_t dart_status;
-  Referee_ICRAZoneStatus_t icra_zone;
-  Referee_FieldEvents_t field_event;
-  Referee_SupplyAction_t supply_action;
-  Referee_RequestSupply_t request_supply;
-  Referee_Warning_t warning;
-  Referee_DartCountdown_t dart_countdown;
-  Referee_RobotStatus_t robot_status;
-  Referee_PowerHeat_t power_heat;
-  Referee_RobotPos_t robot_pos;
-  Referee_RobotBuff_t robot_buff;
-  Referee_DroneEnergy_t drone_energy;
-  Referee_RobotDamage_t robot_danage;
-  Referee_LauncherData_t launcher_data;
-  Referee_BulletRemain_t bullet_remain;
-  Referee_RFID_t rfid;
-  Referee_DartClient_t dart_client;
-  Referee_InterStudent_Custom_t custom;
-  Referee_ClientMap_t client_map;
-  Referee_KeyboardMouse_t keyboard_mouse;
-
-  osTimerId_t ui_fast_timer_id;
-  osTimerId_t ui_slow_timer_id;
-} Referee_t;
 
 typedef struct {
   Game_ChassisMode_t mode;
@@ -364,15 +324,32 @@ typedef struct {
   CMD_AI_Status_t status;
 } Referee_AIUI_t;
 
-typedef struct __packed {
-  /* UI缓冲数据 */
-  UI_Ele_t grapic[REF_UI_MAX_GRAPIC_NUM];
-  UI_Drawcharacter_t character_data[REF_UI_MAX_STRING_NUM];
-  UI_Del_t del[REF_UI_MAX_DEL_NUM];
-  /* 待发送数量 */
-  uint8_t grapic_counter;
-  uint8_t character_counter;
-  uint8_t del_counter;
+typedef struct {
+  Referee_Status_t status;
+  Referee_GameStatus_t game_status;
+  Referee_GameResult_t game_result;
+  Referee_GameRobotHP_t game_robot_hp;
+  Referee_DartStatus_t dart_status;
+  Referee_ICRAZoneStatus_t icra_zone;
+  Referee_FieldEvents_t field_event;
+  Referee_SupplyAction_t supply_action;
+  Referee_Warning_t warning;
+  Referee_DartCountdown_t dart_countdown;
+  Referee_RobotStatus_t robot_status;
+  Referee_PowerHeat_t power_heat;
+  Referee_RobotPos_t robot_pos;
+  Referee_RobotBuff_t robot_buff;
+  Referee_DroneEnergy_t drone_energy;
+  Referee_RobotDamage_t robot_danage;
+  Referee_LauncherData_t launcher_data;
+  Referee_BulletRemain_t bullet_remain;
+  Referee_RFID_t rfid;
+  Referee_DartClient_t dart_client;
+  Referee_InterStudent_Custom_t custom;
+  Referee_ClientMap_t client_map;
+  Referee_KeyboardMouse_t keyboard_mouse;
+
+  UI_t ui;
   /* UI所需信息 */
   Referee_CapUI_t cap_ui;
   Referee_ChassisUI_t chassis_ui;
@@ -380,63 +357,17 @@ typedef struct __packed {
   Referee_GimbalUI_t gimbal_ui;
   Referee_AIUI_t ai_ui;
   CMD_CtrlMethod_t ctrl_method;
-  /* 屏幕分辨率 */
-  const UI_Screen_t *screen;
-} Referee_UI_t;
 
-typedef struct __packed {
-  uint16_t data_cmd_id;
-  uint16_t sender_ID;
-  uint16_t receiver_ID;
-} Referee_Interactive_Header_t;
+  struct {
+    uint8_t *data;
+    size_t size;
+  } packet;
 
-typedef struct __packed {
-  Referee_Header_t header;
-  uint16_t cmd_id;
-  Referee_Interactive_Header_t IA_header;
-  UI_Drawgrapic_1_t data;
-  uint16_t crc16;
-} Referee_UI_Drawgrapic_1_t;
+  osThreadId_t thread_alert;
 
-typedef struct __packed {
-  Referee_Header_t header;
-  uint16_t cmd_id;
-  Referee_Interactive_Header_t IA_header;
-  UI_Drawgrapic_2_t data;
-  uint16_t crc16;
-} Referee_UI_Drawgrapic_2_t;
-
-typedef struct __packed {
-  Referee_Header_t header;
-  uint16_t cmd_id;
-  Referee_Interactive_Header_t IA_header;
-  UI_Drawgrapic_5_t data;
-  uint16_t crc16;
-} Referee_UI_Drawgrapic_5_t;
-
-typedef struct __packed {
-  Referee_Header_t header;
-  uint16_t cmd_id;
-  Referee_Interactive_Header_t IA_header;
-  UI_Drawgrapic_7_t data;
-  uint16_t crc16;
-} Referee_UI_Drawgrapic_7_t;
-
-typedef struct __packed {
-  Referee_Header_t header;
-  uint16_t cmd_id;
-  Referee_Interactive_Header_t IA_header;
-  UI_Drawcharacter_t data;
-  uint16_t crc16;
-} Referee_UI_Drawcharacter_t;
-
-typedef struct __packed {
-  Referee_Header_t header;
-  uint16_t cmd_id;
-  Referee_Interactive_Header_t IA_header;
-  UI_Del_t data;
-  uint16_t crc16;
-} Referee_UI_Del_t;
+  osTimerId_t ui_fast_timer_id;
+  osTimerId_t ui_slow_timer_id;
+} Referee_t;
 
 typedef struct {
   Referee_Status_t status;
@@ -463,8 +394,8 @@ typedef struct {
 } Referee_ForLauncher_t;
 
 /* Exported functions prototypes -------------------------------------------- */
-int8_t Referee_Init(Referee_t *ref, Referee_UI_t *ui,
-                    const UI_Screen_t *screen);
+
+int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen);
 int8_t Referee_Restart(void);
 void Referee_HandleOffline(Referee_t *referee);
 
@@ -472,15 +403,17 @@ int8_t Referee_StartReceiving(Referee_t *ref);
 bool Referee_WaitRecvCplt(uint32_t timeout);
 int8_t Referee_Parse(Referee_t *ref);
 
-int8_t Referee_StartSend(uint8_t *data, uint32_t len);
-int8_t Referee_PackUI(Referee_UI_t *ui, Referee_t *ref);
-uint8_t Referee_RefreshUI(Referee_UI_t *ui);
+uint8_t Referee_RefreshUI(Referee_t *ref);
+int8_t Referee_PackUiPacket(Referee_t *ref);
+int8_t Referee_StartTransmit(const Referee_t *ref);
+bool Referee_WaitTransCplt(uint32_t timeout);
 
 uint8_t Referee_PackForChassis(Referee_ForChassis_t *c_ref,
                                const Referee_t *ref);
 uint8_t Referee_PackForLauncher(Referee_ForLauncher_t *l_ref, Referee_t *ref);
 uint8_t Referee_PackForCap(Referee_ForCap_t *cap_ref, const Referee_t *ref);
 uint8_t Referee_PackForAI(Referee_ForAI_t *ai_ref, const Referee_t *ref);
+
 #ifdef __cplusplus
 }
 #endif
