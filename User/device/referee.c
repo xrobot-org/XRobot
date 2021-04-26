@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "bsp/delay.h"
+#include "bsp/mm.h"
 #include "bsp/uart.h"
 #include "component/crc16.h"
 #include "component/crc8.h"
@@ -23,31 +24,39 @@
 #define REF_UI_BOX_UP_OFFSET (4)
 #define REF_UI_BOX_BOT_OFFSET (-14)
 
-#define REF_UI_RIGHT_START_POS (0.85f)
+#define REF_UI_RIGHT_START_W (0.85f)
 
-#define REF_UI_MODE_HEAD_POS (0.7f)
-#define REF_UI_MODE_OPT1_POS (0.68f)
-#define REF_UI_MODE_OPT2_POS (0.66f)
-#define REF_UI_MODE_OPT3_POS (0.64f)
+#define REF_UI_MODE_LINE1_H (0.7f)
+#define REF_UI_MODE_LINE2_H (0.68f)
+#define REF_UI_MODE_LINE3_H (0.66f)
+#define REF_UI_MODE_LINE4_H (0.64f)
 
 /* Private macro ------------------------------------------------------------ */
 
 #define REF_SET_STATUS(ref, stat) ((ref).status = (stat))
 
 /* Private typedef ---------------------------------------------------------- */
+
+typedef struct __packed {
+  Referee_Header_t header;
+  uint16_t cmd_id;
+  Referee_InterStudentHeader_t student_header;
+} Referee_UiPacketHead_t;
+
 /* Private variables -------------------------------------------------------- */
 
 static volatile uint32_t drop_message = 0;
 
 static uint8_t rxbuf[REF_LEN_RX_BUFF];
 
-static osThreadId_t thread_alert;
+static Referee_t *gref;
+
 static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
 
 static void Referee_RxCpltCallback(void) {
-  osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_RAW_REDY);
+  osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY);
 }
 
 static void Referee_IdleLineCallback(void) {
@@ -55,17 +64,22 @@ static void Referee_IdleLineCallback(void) {
 }
 
 static void Referee_AbortRxCpltCallback(void) {
-  osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_RAW_REDY);
+  osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY);
+}
+
+static void Referee_TxCpltCallback(void) {
+  BSP_Free(gref->packet.data);
+  osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_PACKET_SENT);
 }
 
 static void RefereeFastRefreshTimerCallback(void *arg) {
   (void)arg;
-  osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_FAST_REFRESH_UI);
+  osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_FAST_REFRESH_UI);
 }
 
 static void RefereeSlowRefreshTimerCallback(void *arg) {
   (void)arg;
-  osThreadFlagsSet(thread_alert, SIGNAL_REFEREE_SLOW_REFRESH_UI);
+  osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_SLOW_REFRESH_UI);
 }
 
 static int8_t Referee_MoveData(void *data, void *tmp, uint32_t len) {
@@ -75,118 +89,97 @@ static int8_t Referee_MoveData(void *data, void *tmp, uint32_t len) {
   return DEVICE_OK;
 }
 
-static UI_Ele_t *Referee_GetGrapicAdd(Referee_UI_t *ref_ui) {
-  if (ref_ui->grapic_counter >= REF_UI_MAX_GRAPIC_NUM ||
-      ref_ui->grapic_counter < 0)
-    return NULL;
-  else
-    return &(ref_ui->grapic[ref_ui->grapic_counter++]);
+static int8_t Referee_SetPacketHeader(Referee_Header_t *header,
+                                      uint16_t data_length) {
+  header->sof = REF_HEADER_SOF;
+  header->data_length = data_length;
+  header->crc8 =
+      CRC8_Calc((const uint8_t *)&header,
+                sizeof(Referee_Header_t) - sizeof(uint8_t), CRC8_INIT);
+  return DEVICE_OK;
 }
 
-static int8_t Referee_SetHeader(Referee_Interactive_Header_t *header,
-                                Referee_StudentCMDID_t cmd_id,
-                                uint8_t sender_id) {
+static int8_t Referee_SetUiHeader(Referee_InterStudentHeader_t *header,
+                                  const Referee_StudentCMDID_t cmd_id,
+                                  Referee_RobotID_t robot_id) {
   header->data_cmd_id = cmd_id;
-  if (sender_id <= REF_BOT_RED_RADER) switch (sender_id) {
-      case REF_BOT_RED_HERO:
-        header->sender_ID = REF_BOT_RED_HERO;
-        header->receiver_ID = REF_CL_RED_HERO;
-        break;
-      case REF_BOT_RED_ENGINEER:
-        header->sender_ID = REF_BOT_RED_ENGINEER;
-        header->receiver_ID = REF_CL_RED_ENGINEER;
-        break;
-      case REF_BOT_RED_INFANTRY_1:
-        header->sender_ID = REF_BOT_RED_INFANTRY_1;
-        header->receiver_ID = REF_CL_RED_INFANTRY_1;
-        break;
-      case REF_BOT_RED_INFANTRY_2:
-        header->sender_ID = REF_BOT_RED_INFANTRY_2;
-        header->receiver_ID = REF_CL_RED_INFANTRY_2;
-        break;
-      case REF_BOT_RED_INFANTRY_3:
-        header->sender_ID = REF_BOT_RED_INFANTRY_3;
-        header->receiver_ID = REF_CL_RED_INFANTRY_3;
-        break;
-      case REF_BOT_RED_DRONE:
-        header->sender_ID = REF_BOT_RED_DRONE;
-        header->receiver_ID = REF_CL_RED_DRONE;
-        break;
-      case REF_BOT_RED_SENTRY:
-        header->sender_ID = REF_BOT_RED_SENTRY;
-        break;
-      case REF_BOT_RED_RADER:
-        header->sender_ID = REF_BOT_RED_RADER;
-        break;
-      default:
-        return -1;
-    }
-  else
-    switch (sender_id) {
-      case REF_BOT_BLU_HERO:
-        header->sender_ID = REF_BOT_BLU_HERO;
-        header->receiver_ID = REF_CL_BLU_HERO;
-        break;
-      case REF_BOT_BLU_ENGINEER:
-        header->sender_ID = REF_BOT_BLU_ENGINEER;
-        header->receiver_ID = REF_CL_BLU_ENGINEER;
-        break;
-      case REF_BOT_BLU_INFANTRY_1:
-        header->sender_ID = REF_BOT_BLU_INFANTRY_1;
-        header->receiver_ID = REF_CL_BLU_INFANTRY_1;
-        break;
-      case REF_BOT_BLU_INFANTRY_2:
-        header->sender_ID = REF_BOT_BLU_INFANTRY_2;
-        header->receiver_ID = REF_CL_BLU_INFANTRY_2;
-        break;
-      case REF_BOT_BLU_INFANTRY_3:
-        header->sender_ID = REF_BOT_BLU_INFANTRY_3;
-        header->receiver_ID = REF_CL_BLU_INFANTRY_3;
-        break;
-      case REF_BOT_BLU_DRONE:
-        header->sender_ID = REF_BOT_BLU_DRONE;
-        header->receiver_ID = REF_CL_BLU_DRONE;
-        break;
-      case REF_BOT_BLU_SENTRY:
-        header->sender_ID = REF_BOT_BLU_SENTRY;
-        break;
-      case REF_BOT_BLU_RADER:
-        header->sender_ID = REF_BOT_BLU_RADER;
-        break;
-      default:
-        return -1;
-    }
+  switch (robot_id) {
+    case REF_BOT_RED_HERO:
+      header->id_sender = REF_BOT_RED_HERO;
+      header->id_receiver = REF_CL_RED_HERO;
+      break;
+    case REF_BOT_RED_ENGINEER:
+      header->id_sender = REF_BOT_RED_ENGINEER;
+      header->id_receiver = REF_CL_RED_ENGINEER;
+      break;
+    case REF_BOT_RED_INFANTRY_1:
+      header->id_sender = REF_BOT_RED_INFANTRY_1;
+      header->id_receiver = REF_CL_RED_INFANTRY_1;
+      break;
+    case REF_BOT_RED_INFANTRY_2:
+      header->id_sender = REF_BOT_RED_INFANTRY_2;
+      header->id_receiver = REF_CL_RED_INFANTRY_2;
+      break;
+    case REF_BOT_RED_INFANTRY_3:
+      header->id_sender = REF_BOT_RED_INFANTRY_3;
+      header->id_receiver = REF_CL_RED_INFANTRY_3;
+      break;
+    case REF_BOT_RED_DRONE:
+      header->id_sender = REF_BOT_RED_DRONE;
+      header->id_receiver = REF_CL_RED_DRONE;
+      break;
+    case REF_BOT_RED_SENTRY:
+      header->id_sender = REF_BOT_RED_SENTRY;
+      break;
+    case REF_BOT_RED_RADER:
+      header->id_sender = REF_BOT_RED_RADER;
+      break;
+    case REF_BOT_BLU_HERO:
+      header->id_sender = REF_BOT_BLU_HERO;
+      header->id_receiver = REF_CL_BLU_HERO;
+      break;
+    case REF_BOT_BLU_ENGINEER:
+      header->id_sender = REF_BOT_BLU_ENGINEER;
+      header->id_receiver = REF_CL_BLU_ENGINEER;
+      break;
+    case REF_BOT_BLU_INFANTRY_1:
+      header->id_sender = REF_BOT_BLU_INFANTRY_1;
+      header->id_receiver = REF_CL_BLU_INFANTRY_1;
+      break;
+    case REF_BOT_BLU_INFANTRY_2:
+      header->id_sender = REF_BOT_BLU_INFANTRY_2;
+      header->id_receiver = REF_CL_BLU_INFANTRY_2;
+      break;
+    case REF_BOT_BLU_INFANTRY_3:
+      header->id_sender = REF_BOT_BLU_INFANTRY_3;
+      header->id_receiver = REF_CL_BLU_INFANTRY_3;
+      break;
+    case REF_BOT_BLU_DRONE:
+      header->id_sender = REF_BOT_BLU_DRONE;
+      header->id_receiver = REF_CL_BLU_DRONE;
+      break;
+    case REF_BOT_BLU_SENTRY:
+      header->id_sender = REF_BOT_BLU_SENTRY;
+      break;
+    case REF_BOT_BLU_RADER:
+      header->id_sender = REF_BOT_BLU_RADER;
+      break;
+    default:
+      return -1;
+  }
   return 0;
 }
 
-UI_Drawcharacter_t *Referee_GetCharacterAdd(Referee_UI_t *ref_ui) {
-  if (ref_ui->character_counter >= REF_UI_MAX_STRING_NUM ||
-      ref_ui->character_counter < 0)
-    return NULL;
-  else
-    return &(ref_ui->character_data[ref_ui->character_counter++]);
-}
-
-static bool Referee_CheckTXReady() {
-  return BSP_UART_GetHandle(BSP_UART_REF)->gState == HAL_UART_STATE_READY;
-}
-
-static UI_Del_t *Referee_GetDelAdd(Referee_UI_t *ref_ui) {
-  if (ref_ui->del_counter >= REF_UI_MAX_DEL_NUM || ref_ui->del_counter < 0)
-    return NULL;
-  else
-    return &(ref_ui->del[ref_ui->del_counter++]);
-}
-
 /* Exported functions ------------------------------------------------------- */
-int8_t Referee_Init(Referee_t *ref, Referee_UI_t *ui,
-                    const UI_Screen_t *screen) {
+
+int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen) {
   if (ref == NULL) return DEVICE_ERR_NULL;
   if (inited) return DEVICE_ERR_INITED;
 
-  if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
+  if ((gref->thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
+  gref = ref;
 
-  ui->screen = screen;
+  ref->ui.screen = screen;
 
   BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_RX_CPLT_CB,
                             Referee_RxCpltCallback);
@@ -194,6 +187,8 @@ int8_t Referee_Init(Referee_t *ref, Referee_UI_t *ui,
                             Referee_AbortRxCpltCallback);
   BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_IDLE_LINE_CB,
                             Referee_IdleLineCallback);
+  BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_TX_CPLT_CB,
+                            Referee_TxCpltCallback);
 
   uint32_t fast_period_ms = (uint32_t)(1000.0f / REF_UI_FAST_REFRESH_FREQ);
   uint32_t slow_period_ms = (uint32_t)(1000.0f / REF_UI_SLOW_REFRESH_FREQ);
@@ -293,9 +288,6 @@ int8_t Referee_Parse(Referee_t *ref) {
         origin = &(ref->supply_action);
         size = sizeof(ref->supply_action);
         break;
-      case REF_CMD_ID_REQUEST_SUPPLY:
-        origin = &(ref->request_supply);
-        size = sizeof(ref->request_supply);
       case REF_CMD_ID_WARNING:
         origin = &(ref->warning);
         size = sizeof(ref->warning);
@@ -376,378 +368,320 @@ error:
   return DEVICE_ERR;
 }
 
-int8_t Referee_StartSend(uint8_t *data, uint32_t len) {
-  if (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_REF), data,
-                            (size_t)len) == HAL_OK) {
-    return DEVICE_OK;
-  } else
-    return DEVICE_ERR;
-}
+uint8_t Referee_RefreshUI(Referee_t *ref) {
+  UI_Ele_t ele;
+  UI_String_t string;
 
-int8_t Referee_PackUI(Referee_UI_t *ui, Referee_t *ref) {
-  /* 串口忙碌，不发送数据 */
-  if (!Referee_CheckTXReady()) return 0;
-  /* 无要发送的数据 */
-  if (ui->character_counter == 0 && ui->grapic_counter == 0 &&
-      ui->del_counter == 0)
-    return 0;
+  const float kW = ref->ui.screen->width;
+  const float kH = ref->ui.screen->height;
 
-  static uint8_t send_data[sizeof(Referee_UI_Drawgrapic_7_t)] = {0};
-  uint16_t size;
-  if (ui->del_counter != 0) { /* 删除图层 */
-    if (ui->del_counter < 0 || ui->del_counter > REF_UI_MAX_STRING_NUM)
-      return DEVICE_ERR;
-    /* 根据通信协议修改包数据 */
-    Referee_UI_Del_t *packet = (Referee_UI_Del_t *)send_data;
-    packet->header.sof = REF_HEADER_SOF;
-    packet->header.data_length =
-        sizeof(UI_Del_t) + sizeof(Referee_Interactive_Header_t);
-    packet->header.crc8 =
-        CRC8_Calc((const uint8_t *)&(packet->header),
-                  sizeof(Referee_Header_t) - sizeof(uint8_t), CRC8_INIT);
-    packet->cmd_id = REF_CMD_ID_INTER_STUDENT;
-    Referee_SetHeader(&(packet->IA_header), REF_STDNT_CMD_ID_UI_DEL,
-                      ref->robot_status.robot_id);
-    /* 转移图形数据 */
-    Referee_MoveData(&(ui->del[--ui->del_counter]), &(packet->data),
-                     sizeof(UI_Del_t));
-    /* 校验 */
-    packet->crc16 =
-        CRC16_Calc((const uint8_t *)packet,
-                   sizeof(Referee_UI_Del_t) - sizeof(uint16_t), CRC16_INIT);
-    size = sizeof(Referee_UI_Del_t);
-    /* 开始发送 */
-    Referee_StartSend(send_data, size);
-    return DEVICE_OK;
-  } else if (ui->grapic_counter != 0) { /* 绘制图形 */
-    switch (ui->grapic_counter) {
-      case 1:
-        size = sizeof(Referee_UI_Drawgrapic_1_t);
-        Referee_UI_Drawgrapic_1_t *packet_1 =
-            (Referee_UI_Drawgrapic_1_t *)send_data;
-        packet_1->header.sof = REF_HEADER_SOF;
-        packet_1->header.data_length =
-            sizeof(UI_Drawgrapic_1_t) + sizeof(Referee_Interactive_Header_t);
-        packet_1->header.crc8 =
-            CRC8_Calc((const uint8_t *)&(packet_1->header),
-                      sizeof(Referee_Header_t) - sizeof(uint8_t), CRC8_INIT);
-        packet_1->cmd_id = REF_CMD_ID_INTER_STUDENT;
-        Referee_SetHeader(&(packet_1->IA_header), REF_STDNT_CMD_ID_UI_DRAW1,
-                          ref->robot_status.robot_id);
-        Referee_MoveData(&(ui->grapic), &(packet_1->data.grapic),
-                         sizeof(UI_Drawgrapic_1_t));
-        packet_1->crc16 = CRC16_Calc(
-            (const uint8_t *)packet_1,
-            sizeof(Referee_UI_Drawgrapic_1_t) - sizeof(uint16_t), CRC16_INIT);
-        break;
-      case 2:
-        size = sizeof(Referee_UI_Drawgrapic_2_t);
-        Referee_UI_Drawgrapic_2_t *packet_2 =
-            (Referee_UI_Drawgrapic_2_t *)send_data;
-        packet_2->header.sof = REF_HEADER_SOF;
-        packet_2->header.data_length =
-            sizeof(UI_Drawgrapic_2_t) + sizeof(Referee_Interactive_Header_t);
-        packet_2->header.crc8 =
-            CRC8_Calc((const uint8_t *)&(packet_2->header),
-                      sizeof(Referee_Header_t) - sizeof(uint8_t), CRC8_INIT);
-        packet_2->cmd_id = REF_CMD_ID_INTER_STUDENT;
-        Referee_SetHeader(&(packet_2->IA_header), REF_STDNT_CMD_ID_UI_DRAW2,
-                          ref->robot_status.robot_id);
-        Referee_MoveData(&(ui->grapic), &(packet_2->data.grapic),
-                         sizeof(UI_Drawgrapic_2_t));
-        packet_2->crc16 = CRC16_Calc(
-            (const uint8_t *)packet_2,
-            sizeof(Referee_UI_Drawgrapic_2_t) - sizeof(uint16_t), CRC16_INIT);
-        break;
-      case 3:
-      case 4:
-      case 5:
-        size = sizeof(Referee_UI_Drawgrapic_5_t);
-        Referee_UI_Drawgrapic_5_t *packet_5 =
-            (Referee_UI_Drawgrapic_5_t *)send_data;
-        packet_5->header.sof = REF_HEADER_SOF;
-        packet_5->header.data_length =
-            sizeof(UI_Drawgrapic_5_t) + sizeof(Referee_Interactive_Header_t);
-        packet_5->header.crc8 =
-            CRC8_Calc((const uint8_t *)&(packet_5->header),
-                      sizeof(Referee_Header_t) - sizeof(uint8_t), CRC8_INIT);
-        packet_5->cmd_id = REF_CMD_ID_INTER_STUDENT;
-        Referee_SetHeader(&(packet_5->IA_header), REF_STDNT_CMD_ID_UI_DRAW5,
-                          ref->robot_status.robot_id);
-        Referee_MoveData(&(ui->grapic), &(packet_5->data.grapic),
-                         sizeof(UI_Drawgrapic_5_t));
-        packet_5->crc16 = CRC16_Calc(
-            (const uint8_t *)packet_5,
-            sizeof(Referee_UI_Drawgrapic_5_t) - sizeof(uint16_t), CRC16_INIT);
-        break;
-      case 6:
-      case 7:
-        size = sizeof(Referee_UI_Drawgrapic_7_t);
-        Referee_UI_Drawgrapic_7_t *packet_7 =
-            (Referee_UI_Drawgrapic_7_t *)send_data;
-        packet_7->header.sof = REF_HEADER_SOF;
-        packet_7->header.data_length =
-            sizeof(UI_Drawgrapic_7_t) + sizeof(Referee_Interactive_Header_t);
-        packet_7->header.crc8 =
-            CRC8_Calc((const uint8_t *)&(packet_7->header),
-                      sizeof(Referee_Header_t) - sizeof(uint8_t), CRC8_INIT);
-        packet_7->cmd_id = REF_CMD_ID_INTER_STUDENT;
-        Referee_SetHeader(&(packet_7->IA_header), REF_STDNT_CMD_ID_UI_DRAW7,
-                          ref->robot_status.robot_id);
-        Referee_MoveData(&(ui->grapic), &(packet_7->data.grapic),
-                         sizeof(UI_Drawgrapic_7_t));
-        packet_7->crc16 = CRC16_Calc(
-            (const uint8_t *)packet_7,
-            sizeof(Referee_UI_Drawgrapic_7_t) - sizeof(uint16_t), CRC16_INIT);
-        break;
-      default:
-        return DEVICE_ERR;
-    }
-    if (Referee_StartSend(send_data, size) == HAL_OK) {
-      ui->grapic_counter = 0;
-      return DEVICE_OK;
-    }
-  } else if (ui->character_counter != 0) { /* 绘制字符 */
-    if (ui->character_counter < 0 ||
-        ui->character_counter > REF_UI_MAX_STRING_NUM)
-      return DEVICE_ERR;
-    Referee_UI_Drawcharacter_t *packet =
-        (Referee_UI_Drawcharacter_t *)send_data;
-    packet->header.sof = REF_HEADER_SOF;
-    packet->header.data_length =
-        sizeof(UI_Drawcharacter_t) + sizeof(Referee_Interactive_Header_t);
-    packet->header.crc8 =
-        CRC8_Calc((const uint8_t *)&(packet->header),
-                  sizeof(Referee_Header_t) - sizeof(uint8_t), CRC8_INIT);
-    packet->cmd_id = REF_CMD_ID_INTER_STUDENT;
-    Referee_SetHeader(&(packet->IA_header), REF_STDNT_CMD_ID_UI_STR,
-                      ref->robot_status.robot_id);
-    Referee_MoveData(&(ui->character_data[--ui->character_counter]),
-                     &(packet->data.grapic), sizeof(UI_Drawcharacter_t));
-    packet->crc16 = CRC16_Calc(
-        (const uint8_t *)packet,
-        sizeof(Referee_UI_Drawcharacter_t) - sizeof(uint16_t), CRC16_INIT);
-    size = sizeof(Referee_UI_Drawcharacter_t);
+  float box_pos_h = 0.0f;
 
-    Referee_StartSend(send_data, size);
-    return DEVICE_OK;
-  }
-  return DEVICE_ERR_NULL;
-}
-
-uint8_t Referee_RefreshUI(Referee_UI_t *ui) {
-  static uint8_t fsm = 0;
   /* UI动态元素刷新 */
   if (osThreadFlagsGet() & SIGNAL_REFEREE_FAST_REFRESH_UI) {
     osThreadFlagsClear(SIGNAL_REFEREE_FAST_REFRESH_UI);
     /* 使用状态机算法，每次更新一个图层 */
-    switch (fsm) {
+    switch (ref->ui.refresh_fsm) {
       case 0: {
-        fsm++;
-        UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
-                    UI_GRAPIC_LAYER_CHASSIS);
-        UI_DrawLine(Referee_GetGrapicAdd(ui), "6", UI_GRAPIC_OPERATION_ADD,
-                    UI_GRAPIC_LAYER_CHASSIS, GREEN, UI_DEFAULT_WIDTH * 12,
-                    ui->screen->width * 0.4, ui->screen->height * 0.2,
-                    ui->screen->width * 0.4 + sin(ui->chassis_ui.angle) * 46,
-                    ui->screen->height * 0.2 + cos(ui->chassis_ui.angle) * 46);
-        float start_pos_h = 0.0f;
-        switch (ui->chassis_ui.mode) {
+        ref->ui.refresh_fsm++;
+
+        /* 更新云台底盘相对方位 */
+        const float kLEN = 46;
+        UI_DrawLine(&ele, "6", UI_GRAPIC_OPERATION_REWRITE,
+                    UI_GRAPIC_LAYER_CHASSIS, UI_GREEN, UI_DEFAULT_WIDTH * 12,
+                    kW * 0.4, kH * 0.2,
+                    kW * 0.4 + sin(ref->chassis_ui.angle) * kLEN,
+                    kH * 0.2 + cos(ref->chassis_ui.angle) * kLEN);
+
+        UI_StashGraphic(&(ref->ui), &ele);
+
+        /* 更新底盘模式选择框 */
+        switch (ref->chassis_ui.mode) {
           case CHASSIS_MODE_FOLLOW_GIMBAL:
-            start_pos_h = REF_UI_MODE_OPT1_POS;
+            box_pos_h = REF_UI_MODE_LINE2_H;
             break;
           case CHASSIS_MODE_FOLLOW_GIMBAL_35:
-            start_pos_h = REF_UI_MODE_OPT2_POS;
+            box_pos_h = REF_UI_MODE_LINE3_H;
             break;
           case CHASSIS_MODE_ROTOR:
-            start_pos_h = REF_UI_MODE_OPT3_POS;
+            box_pos_h = REF_UI_MODE_LINE4_H;
             break;
           default:
+            box_pos_h = 0.0f;
             break;
         }
-        if (start_pos_h != 0.0f)
-          UI_DrawRectangle(
-              Referee_GetGrapicAdd(ui), "8", UI_GRAPIC_OPERATION_ADD,
-              UI_GRAPIC_LAYER_CHASSIS, GREEN, UI_DEFAULT_WIDTH,
-              ui->screen->width * REF_UI_RIGHT_START_POS - 6,
-              ui->screen->height * start_pos_h + REF_UI_BOX_UP_OFFSET,
-              ui->screen->width * REF_UI_RIGHT_START_POS + 44,
-              ui->screen->height * start_pos_h + REF_UI_BOX_BOT_OFFSET);
+        if (box_pos_h != 0.0f) {
+          UI_DrawRectangle(&ele, "8", UI_GRAPIC_OPERATION_REWRITE,
+                           UI_GRAPIC_LAYER_CHASSIS, UI_GREEN, UI_DEFAULT_WIDTH,
+                           kW * REF_UI_RIGHT_START_W - 6,
+                           kH * box_pos_h + REF_UI_BOX_UP_OFFSET,
+                           kW * REF_UI_RIGHT_START_W + 44,
+                           kH * box_pos_h + REF_UI_BOX_BOT_OFFSET);
+
+          UI_StashGraphic(&(ref->ui), &ele);
+        }
         break;
       }
       case 1:
-        fsm++;
-        UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
-                    UI_GRAPIC_LAYER_CAP);
-        switch (ui->cap_ui.status) {
+        ref->ui.refresh_fsm++;
+        /* 更新电容状态 */
+        switch (ref->cap_ui.status) {
           case CAN_CAP_STATUS_OFFLINE:
-            UI_DrawArc(Referee_GetGrapicAdd(ui), "9", UI_GRAPIC_OPERATION_ADD,
-                       UI_GRAPIC_LAYER_CAP, YELLOW, 0, 360,
-                       UI_DEFAULT_WIDTH * 5, ui->screen->width * 0.6,
-                       ui->screen->height * 0.2, 50, 50);
-            break;
-            break;
-          case CAN_CAP_STATUS_RUNNING:
-            UI_DrawArc(Referee_GetGrapicAdd(ui), "9", UI_GRAPIC_OPERATION_ADD,
-                       UI_GRAPIC_LAYER_CAP, GREEN, 0,
-                       ui->cap_ui.percentage * 360, UI_DEFAULT_WIDTH * 5,
-                       ui->screen->width * 0.6, ui->screen->height * 0.2, 50,
-                       50);
-            break;
-        }
-        break;
-      case 2: {
-        fsm++;
-        UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
-                    UI_GRAPIC_LAYER_GIMBAL);
-        float start_pos_h = 0.0f;
-        switch (ui->gimbal_ui.mode) {
-          case GIMBAL_MODE_RELAX:
-            start_pos_h = REF_UI_MODE_OPT1_POS;
-            break;
-          case GIMBAL_MODE_ABSOLUTE:
-            start_pos_h = REF_UI_MODE_OPT2_POS;
-            break;
-          case GIMBAL_MODE_RELATIVE:
-            start_pos_h = REF_UI_MODE_OPT3_POS;
+            UI_DrawArc(&ele, "9", UI_GRAPIC_OPERATION_REWRITE,
+                       UI_GRAPIC_LAYER_CAP, UI_YELLOW, 0, 360,
+                       UI_DEFAULT_WIDTH * 5, kW * 0.6, kH * 0.2, 50, 50);
             break;
           default:
+            UI_DrawArc(&ele, "9", UI_GRAPIC_OPERATION_REWRITE,
+                       UI_GRAPIC_LAYER_CAP, UI_GREEN, 0,
+                       ref->cap_ui.percentage * 360, UI_DEFAULT_WIDTH * 5,
+                       kW * 0.6, kH * 0.2, 50, 50);
             break;
         }
-        UI_DrawRectangle(
-            Referee_GetGrapicAdd(ui), "a", UI_GRAPIC_OPERATION_ADD,
-            UI_GRAPIC_LAYER_GIMBAL, GREEN, UI_DEFAULT_WIDTH,
-            ui->screen->width * REF_UI_RIGHT_START_POS + 54,
-            ui->screen->height * start_pos_h + REF_UI_BOX_UP_OFFSET,
-            ui->screen->width * REF_UI_RIGHT_START_POS + 102,
-            ui->screen->height * start_pos_h + REF_UI_BOX_BOT_OFFSET);
+        UI_StashGraphic(&(ref->ui), &ele);
+        break;
+      case 2: {
+        ref->ui.refresh_fsm++;
+
+        /* 更新云台模式选择框 */
+        switch (ref->gimbal_ui.mode) {
+          case GIMBAL_MODE_RELAX:
+            box_pos_h = REF_UI_MODE_LINE2_H;
+            break;
+          case GIMBAL_MODE_ABSOLUTE:
+            box_pos_h = REF_UI_MODE_LINE3_H;
+            break;
+          case GIMBAL_MODE_RELATIVE:
+            box_pos_h = REF_UI_MODE_LINE4_H;
+            break;
+          default:
+            box_pos_h = 0.0f;
+            break;
+        }
+        UI_DrawRectangle(&ele, "a", UI_GRAPIC_OPERATION_REWRITE,
+                         UI_GRAPIC_LAYER_GIMBAL, UI_GREEN, UI_DEFAULT_WIDTH,
+                         kW * REF_UI_RIGHT_START_W + 54,
+                         kH * box_pos_h + REF_UI_BOX_UP_OFFSET,
+                         kW * REF_UI_RIGHT_START_W + 102,
+                         kH * box_pos_h + REF_UI_BOX_BOT_OFFSET);
+        UI_StashGraphic(&(ref->ui), &ele);
         break;
       }
       case 3: {
-        fsm++;
-        UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
-                    UI_GRAPIC_LAYER_LAUNCHER);
-        float start_pos_h = 0.0f;
-        switch (ui->launcher_ui.mode) {
+        ref->ui.refresh_fsm++;
+
+        /* 更新发谁器模式选择框 */
+        switch (ref->launcher_ui.mode) {
           case LAUNCHER_MODE_RELAX:
-            start_pos_h = REF_UI_MODE_OPT1_POS;
+            box_pos_h = REF_UI_MODE_LINE2_H;
             break;
           case LAUNCHER_MODE_SAFE:
-            start_pos_h = REF_UI_MODE_OPT2_POS;
+            box_pos_h = REF_UI_MODE_LINE3_H;
             break;
           case LAUNCHER_MODE_LOADED:
-            start_pos_h = REF_UI_MODE_OPT3_POS;
+            box_pos_h = REF_UI_MODE_LINE4_H;
             break;
           default:
+            box_pos_h = 0.0f;
             break;
         }
-        UI_DrawRectangle(
-            Referee_GetGrapicAdd(ui), "b", UI_GRAPIC_OPERATION_ADD,
-            UI_GRAPIC_LAYER_LAUNCHER, GREEN, UI_DEFAULT_WIDTH,
-            ui->screen->width * REF_UI_RIGHT_START_POS + 114,
-            ui->screen->height * start_pos_h + REF_UI_BOX_UP_OFFSET,
-            ui->screen->width * REF_UI_RIGHT_START_POS + 162,
-            ui->screen->height * start_pos_h + REF_UI_BOX_BOT_OFFSET);
+        UI_DrawRectangle(&ele, "b", UI_GRAPIC_OPERATION_REWRITE,
+                         UI_GRAPIC_LAYER_LAUNCHER, UI_GREEN, UI_DEFAULT_WIDTH,
+                         kW * REF_UI_RIGHT_START_W + 114,
+                         kH * box_pos_h + REF_UI_BOX_UP_OFFSET,
+                         kW * REF_UI_RIGHT_START_W + 162,
+                         kH * box_pos_h + REF_UI_BOX_BOT_OFFSET);
+        UI_StashGraphic(&(ref->ui), &ele);
 
-        switch (ui->launcher_ui.fire) {
+        /* 更新开火模式选择框 */
+        switch (ref->launcher_ui.fire) {
           case FIRE_MODE_SINGLE:
-            start_pos_h = REF_UI_MODE_OPT1_POS;
+            box_pos_h = REF_UI_MODE_LINE2_H;
             break;
           case FIRE_MODE_BURST:
-            start_pos_h = REF_UI_MODE_OPT2_POS;
+            box_pos_h = REF_UI_MODE_LINE3_H;
             break;
           case FIRE_MODE_CONT:
-            start_pos_h = REF_UI_MODE_OPT3_POS;
+            box_pos_h = REF_UI_MODE_LINE4_H;
           default:
             break;
         }
-        UI_DrawRectangle(
-            Referee_GetGrapicAdd(ui), "f", UI_GRAPIC_OPERATION_ADD,
-            UI_GRAPIC_LAYER_LAUNCHER, GREEN, UI_DEFAULT_WIDTH,
-            ui->screen->width * REF_UI_RIGHT_START_POS + 174,
-            ui->screen->height * start_pos_h + REF_UI_BOX_UP_OFFSET,
-            ui->screen->width * REF_UI_RIGHT_START_POS + 222,
-            ui->screen->height * start_pos_h + REF_UI_BOX_BOT_OFFSET);
+        UI_DrawRectangle(&ele, "f", UI_GRAPIC_OPERATION_REWRITE,
+                         UI_GRAPIC_LAYER_LAUNCHER, UI_GREEN, UI_DEFAULT_WIDTH,
+                         kW * REF_UI_RIGHT_START_W + 174,
+                         kH * box_pos_h + REF_UI_BOX_UP_OFFSET,
+                         kW * REF_UI_RIGHT_START_W + 222,
+                         kH * box_pos_h + REF_UI_BOX_BOT_OFFSET);
+        UI_StashGraphic(&(ref->ui), &ele);
         break;
       }
       case 4:
-        fsm++;
-        UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
-                    UI_GRAPIC_LAYER_CMD);
+        ref->ui.refresh_fsm++;
 
-        switch (ui->ctrl_method) {
+        switch (ref->ctrl_method) {
           case CMD_METHOD_MOUSE_KEYBOARD:
-            UI_DrawRectangle(Referee_GetGrapicAdd(ui), "c",
-                             UI_GRAPIC_OPERATION_ADD, UI_GRAPIC_LAYER_CMD,
-                             GREEN, UI_DEFAULT_WIDTH,
-                             ui->screen->width * REF_UI_RIGHT_START_POS + 96,
-                             ui->screen->height * 0.4 + REF_UI_BOX_UP_OFFSET,
-                             ui->screen->width * REF_UI_RIGHT_START_POS + 120,
-                             ui->screen->height * 0.4 + REF_UI_BOX_BOT_OFFSET);
+            UI_DrawRectangle(&ele, "c", UI_GRAPIC_OPERATION_REWRITE,
+                             UI_GRAPIC_LAYER_CMD, UI_GREEN, UI_DEFAULT_WIDTH,
+                             kW * REF_UI_RIGHT_START_W + 96,
+                             kH * 0.4 + REF_UI_BOX_UP_OFFSET,
+                             kW * REF_UI_RIGHT_START_W + 120,
+                             kH * 0.4 + REF_UI_BOX_BOT_OFFSET);
             break;
           case CMD_METHOD_JOYSTICK_SWITCH:
-            UI_DrawRectangle(Referee_GetGrapicAdd(ui), "c",
-                             UI_GRAPIC_OPERATION_ADD, UI_GRAPIC_LAYER_CMD,
-                             GREEN, UI_DEFAULT_WIDTH,
-                             ui->screen->width * REF_UI_RIGHT_START_POS + 56,
-                             ui->screen->height * 0.4 + REF_UI_BOX_UP_OFFSET,
-                             ui->screen->width * REF_UI_RIGHT_START_POS + 80,
-                             ui->screen->height * 0.4 + REF_UI_BOX_BOT_OFFSET);
+            UI_DrawRectangle(
+                &ele, "c", UI_GRAPIC_OPERATION_REWRITE, UI_GRAPIC_LAYER_CMD,
+                UI_GREEN, UI_DEFAULT_WIDTH, kW * REF_UI_RIGHT_START_W + 56,
+                kH * 0.4 + REF_UI_BOX_UP_OFFSET, kW * REF_UI_RIGHT_START_W + 80,
+                kH * 0.4 + REF_UI_BOX_BOT_OFFSET);
             break;
         }
+        UI_StashGraphic(&(ref->ui), &ele);
         break;
 
       default:
-        fsm = 0;
-        /* 如果缓冲区堵塞，重置串口状态 */
-        if (ui->del_counter >= REF_UI_MAX_DEL_NUM ||
-            ui->character_counter > REF_UI_MAX_STRING_NUM ||
-            ui->grapic_counter > REF_UI_MAX_GRAPIC_NUM)
-          BSP_UART_GetHandle(BSP_UART_REF)->gState = HAL_UART_STATE_READY;
+        ref->ui.refresh_fsm = 0;
     }
   }
 
   /* UI静态元素刷新 */
   if (osThreadFlagsGet() & SIGNAL_REFEREE_SLOW_REFRESH_UI) {
     osThreadFlagsClear(SIGNAL_REFEREE_SLOW_REFRESH_UI);
-    UI_DelLayer(Referee_GetDelAdd(ui), UI_DEL_OPERATION_DEL,
-                UI_GRAPIC_LAYER_CONST);
-    UI_DrawCharacter(
-        Referee_GetCharacterAdd(ui), "1", UI_GRAPIC_OPERATION_ADD,
-        UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
-        UI_CHAR_DEFAULT_WIDTH, ui->screen->width * REF_UI_RIGHT_START_POS,
-        ui->screen->height * REF_UI_MODE_HEAD_POS, "CHAS  GMBL  SHOT  FIRE");
-    UI_DrawCharacter(
-        Referee_GetCharacterAdd(ui), "2", UI_GRAPIC_OPERATION_ADD,
-        UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
-        UI_CHAR_DEFAULT_WIDTH, ui->screen->width * REF_UI_RIGHT_START_POS,
-        ui->screen->height * REF_UI_MODE_OPT1_POS, "FLLW  RELX  RELX  SNGL");
-    UI_DrawCharacter(
-        Referee_GetCharacterAdd(ui), "3", UI_GRAPIC_OPERATION_ADD,
-        UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
-        UI_CHAR_DEFAULT_WIDTH, ui->screen->width * REF_UI_RIGHT_START_POS,
-        ui->screen->height * REF_UI_MODE_OPT2_POS, "FL35  ABSL  SAFE  BRST");
-    UI_DrawCharacter(
-        Referee_GetCharacterAdd(ui), "4", UI_GRAPIC_OPERATION_ADD,
-        UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
-        UI_CHAR_DEFAULT_WIDTH, ui->screen->width * REF_UI_RIGHT_START_POS,
-        ui->screen->height * REF_UI_MODE_OPT3_POS, "ROTR  RLTV  LOAD  CONT");
-    UI_DrawLine(Referee_GetGrapicAdd(ui), "5", UI_GRAPIC_OPERATION_ADD,
-                UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 3,
-                ui->screen->width * 0.4, ui->screen->height * 0.2,
-                ui->screen->width * 0.4, ui->screen->height * 0.2 + 50);
-    UI_DrawCharacter(Referee_GetCharacterAdd(ui), "d", UI_GRAPIC_OPERATION_ADD,
-                     UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 10, 80,
-                     UI_CHAR_DEFAULT_WIDTH,
-                     ui->screen->width * REF_UI_RIGHT_START_POS,
-                     ui->screen->height * 0.4, "CTRL  JS  KM");
-    UI_DrawCharacter(Referee_GetCharacterAdd(ui), "e", UI_GRAPIC_OPERATION_ADD,
-                     UI_GRAPIC_LAYER_CONST, GREEN, UI_DEFAULT_WIDTH * 20, 80,
-                     UI_CHAR_DEFAULT_WIDTH * 2, ui->screen->width * 0.6 - 26,
-                     ui->screen->height * 0.2 + 10, "CAP");
+    UI_DrawString(&string, "1", UI_GRAPIC_OPERATION_REWRITE,
+                  UI_GRAPIC_LAYER_CONST, UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
+                  UI_CHAR_DEFAULT_WIDTH, kW * REF_UI_RIGHT_START_W,
+                  kH * REF_UI_MODE_LINE1_H, "CHAS  FLLW  FL35  ROTR");
+    UI_StashString(&(ref->ui), &string);
+
+    UI_DrawString(&string, "2", UI_GRAPIC_OPERATION_REWRITE,
+                  UI_GRAPIC_LAYER_CONST, UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
+                  UI_CHAR_DEFAULT_WIDTH, kW * REF_UI_RIGHT_START_W,
+                  kH * REF_UI_MODE_LINE2_H, "GMBL  RELX  ABSL  RLTV");
+    UI_StashString(&(ref->ui), &string);
+
+    UI_DrawString(&string, "3", UI_GRAPIC_OPERATION_REWRITE,
+                  UI_GRAPIC_LAYER_CONST, UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
+                  UI_CHAR_DEFAULT_WIDTH, kW * REF_UI_RIGHT_START_W,
+                  kH * REF_UI_MODE_LINE3_H, "SHOT  RELX  SAFE  LOAD");
+    UI_StashString(&(ref->ui), &string);
+
+    UI_DrawString(&string, "4", UI_GRAPIC_OPERATION_REWRITE,
+                  UI_GRAPIC_LAYER_CONST, UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
+                  UI_CHAR_DEFAULT_WIDTH, kW * REF_UI_RIGHT_START_W,
+                  kH * REF_UI_MODE_LINE4_H, "FIRE  SNGL  BRST  CONT");
+    UI_StashString(&(ref->ui), &string);
+
+    UI_DrawLine(&ele, "5", UI_GRAPIC_OPERATION_REWRITE, UI_GRAPIC_LAYER_CONST,
+                UI_GREEN, UI_DEFAULT_WIDTH * 3, kW * 0.4, kH * 0.2, kW * 0.4,
+                kH * 0.2 + 50);
+    UI_StashGraphic(&(ref->ui), &ele);
+
+    UI_DrawString(&string, "d", UI_GRAPIC_OPERATION_REWRITE,
+                  UI_GRAPIC_LAYER_CONST, UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
+                  UI_CHAR_DEFAULT_WIDTH, kW * REF_UI_RIGHT_START_W, kH * 0.4,
+                  "CTRL  JS  KM");
+    UI_StashString(&(ref->ui), &string);
+
+    UI_DrawString(&string, "e", UI_GRAPIC_OPERATION_REWRITE,
+                  UI_GRAPIC_LAYER_CONST, UI_GREEN, UI_DEFAULT_WIDTH * 20, 80,
+                  UI_CHAR_DEFAULT_WIDTH * 2, kW * 0.6 - 26, kH * 0.2 + 10,
+                  "CAP");
+    UI_StashString(&(ref->ui), &string);
   }
 
   return 0;
+}
+
+/**
+ * @brief 组装UI包
+ *
+ * @param ui UI数据
+ * @param ref 裁判系统数据
+ * @return int8_t 0代表成功
+ */
+int8_t Referee_PackUiPacket(Referee_t *ref) {
+  UI_Ele_t *ele = NULL;
+  UI_String_t string;
+  UI_Del_t del;
+
+  Referee_StudentCMDID_t ui_cmd_id;
+  static const size_t kSIZE_DATA_HEADER = sizeof(Referee_InterStudentHeader_t);
+  size_t size_data_content;
+  static const size_t kSIZE_PACKET_CRC = sizeof(uint16_t);
+  void *origin = NULL;
+
+  if (!UI_PopDel(&del, &(ref->ui))) {
+    origin = &del;
+    size_data_content = sizeof(UI_Del_t);
+    ui_cmd_id = REF_STDNT_CMD_ID_UI_DEL;
+  } else if (ref->ui.stack.size.graphic) { /* 绘制图形 */
+    if (ref->ui.stack.size.graphic <= 1) {
+      size_data_content = sizeof(UI_Ele_t) * 1;
+      ui_cmd_id = REF_STDNT_CMD_ID_UI_DRAW1;
+
+    } else if (ref->ui.stack.size.graphic <= 2) {
+      size_data_content = sizeof(UI_Ele_t) * 2;
+      ui_cmd_id = REF_STDNT_CMD_ID_UI_DRAW2;
+
+    } else if (ref->ui.stack.size.graphic <= 5) {
+      size_data_content = sizeof(UI_Ele_t) * 5;
+      ui_cmd_id = REF_STDNT_CMD_ID_UI_DRAW5;
+
+    } else if (ref->ui.stack.size.graphic <= 7) {
+      size_data_content = sizeof(UI_Ele_t) * 7;
+      ui_cmd_id = REF_STDNT_CMD_ID_UI_DRAW7;
+
+    } else {
+      return DEVICE_ERR;
+    }
+    ele = BSP_Malloc(size_data_content);
+    UI_Ele_t *cursor = ele;
+    while (!UI_PopGraphic(cursor, &(ref->ui))) {
+      cursor++;
+    }
+    origin = ele;
+  } else if (!UI_PopString(&string, &(ref->ui))) { /* 绘制字符 */
+    origin = &string;
+    size_data_content = sizeof(UI_String_t);
+    ui_cmd_id = REF_STDNT_CMD_ID_UI_STR;
+  } else {
+    return DEVICE_ERR;
+  }
+
+  ref->packet.size =
+      sizeof(Referee_UiPacketHead_t) + size_data_content + kSIZE_PACKET_CRC;
+
+  ref->packet.data = BSP_Malloc(ref->packet.size);
+
+  Referee_UiPacketHead_t *packet_head =
+      (Referee_UiPacketHead_t *)(ref->packet.data);
+
+  Referee_SetPacketHeader(&(packet_head->header),
+                          kSIZE_DATA_HEADER + size_data_content);
+  packet_head->cmd_id = REF_CMD_ID_INTER_STUDENT;
+  Referee_SetUiHeader(&(packet_head->student_header), ui_cmd_id,
+                      ref->robot_status.robot_id);
+  Referee_MoveData(origin, ref->packet.data + sizeof(Referee_UiPacketHead_t),
+                   size_data_content);
+  BSP_Free(ele);
+  uint16_t *crc = (uint16_t *)ref->packet.data +
+                  sizeof(Referee_UiPacketHead_t) + size_data_content;
+  *crc = CRC16_Calc((const uint8_t *)ref->packet.data,
+                    ref->packet.size - kSIZE_PACKET_CRC, CRC16_INIT);
+
+  return DEVICE_OK;
+}
+
+int8_t Referee_StartTransmit(const Referee_t *ref) {
+  if (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_REF), ref->packet.data,
+                            ref->packet.size) == HAL_OK) {
+    return DEVICE_OK;
+  }
+  return DEVICE_ERR;
+}
+
+bool Referee_WaitTransCplt(uint32_t timeout) {
+  return (osThreadFlagsWait(SIGNAL_REFEREE_PACKET_SENT, osFlagsWaitAll,
+                            timeout) == SIGNAL_REFEREE_PACKET_SENT);
 }
 
 uint8_t Referee_PackForChassis(Referee_ForChassis_t *c_ref,
