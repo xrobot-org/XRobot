@@ -4,10 +4,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 #include <string.h>
 
@@ -285,7 +281,3 @@ int8_t UI_PopString(UI_String_t *string, UI_t *ui);
 int8_t UI_StashDel(UI_t *ui, const UI_Del_t *del);
 int8_t UI_PopDel(UI_Del_t *del, UI_t *ui);
 void UI_EmptyStash(UI_t *ui);
-
-#ifdef __cplusplus
-}
-#endif

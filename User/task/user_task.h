@@ -11,10 +11,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ----------------------------------------------------------------- */
 #include <cmsis_os2.h>
 
@@ -220,7 +216,3 @@ void Task_Referee(void *argument);
 void Task_Ai(void *argument);
 void Task_RC(void *argument);
 void Task_Cap(void *argument);
-
-#ifdef __cplusplus
-}
-#endif

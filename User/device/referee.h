@@ -4,10 +4,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ----------------------------------------------------------------- */
 #include <cmsis_os2.h>
 #include <stdbool.h>
@@ -413,7 +409,3 @@ uint8_t Referee_PackForChassis(Referee_ForChassis_t *c_ref,
 uint8_t Referee_PackForLauncher(Referee_ForLauncher_t *l_ref, Referee_t *ref);
 uint8_t Referee_PackForCap(Referee_ForCap_t *cap_ref, const Referee_t *ref);
 uint8_t Referee_PackForAI(Referee_ForAI_t *ai_ref, const Referee_t *ref);
-
-#ifdef __cplusplus
-}
-#endif

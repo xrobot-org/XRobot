@@ -11,10 +11,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define GAME_HEAT_INCREASE_42MM (100.f) /* 每发射一颗42mm弹丸增加100热量 */
 #define GAME_HEAT_INCREASE_17MM (10.f) /* 每发射一颗17mm弹丸增加10热量 */
 
@@ -68,7 +64,3 @@ typedef enum {
   FIRE_MODE_CONT,   /* 持续开火模式 */
   FIRE_MODE_NUM,
 } Game_FireMode_t;
-
-#ifdef __cplusplus
-}
-#endif

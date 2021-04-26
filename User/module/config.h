@@ -5,10 +5,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 
 #include "component/cmd.h"
@@ -96,6 +92,3 @@ const Config_RobotParam_t *Config_GetRobotParam(const char *robot_param_name);
 const Config_PilotCfg_t *Config_GetPilotCfg(const char *pilot_cfg_name);
 const Config_PilotCfgMap_t *Config_GetPilotNameMap(void);
 const Config_RobotParamMap_t *Config_GetRobotNameMap(void);
-#ifdef __cplusplus
-}
-#endif

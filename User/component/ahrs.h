@@ -5,10 +5,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "user_math.h"
 
 /* 欧拉角（Euler angle） */
@@ -92,7 +88,3 @@ int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs);
  * \param eulr 被操作的数据
  */
 void AHRS_ResetEulr(AHRS_Eulr_t *eulr);
-
-#ifdef __cplusplus
-}
-#endif

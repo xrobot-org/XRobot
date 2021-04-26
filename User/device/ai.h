@@ -4,10 +4,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ----------------------------------------------------------------- */
 #include <cmsis_os2.h>
 #include <stdbool.h>
@@ -61,6 +57,3 @@ int8_t AI_PackMCU(AI_t *ai, const AHRS_Quaternion_t *quat);
 int8_t AI_PackRef(AI_t *ai, const Referee_ForAI_t *ref);
 int8_t AI_StartSend(AI_t *ai, bool option);
 int8_t AI_DumpUI(AI_t *ai);
-#ifdef __cplusplus
-}
-#endif

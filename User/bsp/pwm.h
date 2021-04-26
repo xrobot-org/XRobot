@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ----------------------------------------------------------------- */
 #include <stdint.h>
 
@@ -23,7 +19,3 @@ typedef enum {
 int8_t BSP_PWM_Start(BSP_PWM_Channel_t ch);
 int8_t BSP_PWM_Set(BSP_PWM_Channel_t ch, float duty_cycle);
 int8_t BSP_PWM_Stop(BSP_PWM_Channel_t ch);
-
-#ifdef __cplusplus
-}
-#endif

@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ----------------------------------------------------------------- */
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
@@ -21,7 +17,3 @@ typedef enum {
 uint8_t Joystick_Update(Joystick_Status_t *val);
 uint8_t Joystick_WaitInput(void);
 uint8_t Joystick_WaitNoInput(void);
-
-#ifdef __cplusplus
-}
-#endif
