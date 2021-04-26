@@ -102,7 +102,7 @@ static int8_t Referee_SetPacketHeader(Referee_Header_t *header,
 static int8_t Referee_SetUiHeader(Referee_InterStudentHeader_t *header,
                                   const Referee_StudentCMDID_t cmd_id,
                                   Referee_RobotID_t robot_id) {
-  header->data_cmd_id = cmd_id;
+  header->cmd_id = cmd_id;
   header->id_sender = robot_id;
   if (robot_id > 100) {
     header->id_receiver = robot_id - 100 + 0x0160;
