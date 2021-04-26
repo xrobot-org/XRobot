@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ----------------------------------------------------------------- */
 #include <stdbool.h>
 #include <stdint.h>
@@ -39,7 +35,3 @@ uint8_t OLED_SetAllRam(OLED_t *oled, OLED_Pen_t pen);
 uint8_t OLED_DisplayOn(OLED_t *oled);
 uint8_t OLED_DisplayOff(OLED_t *oled);
 uint8_t OLED_Refresh(OLED_t *oled);
-
-#ifdef __cplusplus
-}
-#endif

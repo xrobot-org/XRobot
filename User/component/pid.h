@@ -5,10 +5,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 
 #include "filter.h"
@@ -89,7 +85,3 @@ int8_t PID_ResetIntegral(KPID_t *pid);
  * @return int8_t 0对应没有错误
  */
 int8_t PID_Reset(KPID_t *pid);
-
-#ifdef __cplusplus
-}
-#endif

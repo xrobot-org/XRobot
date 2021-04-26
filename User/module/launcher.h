@@ -4,10 +4,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ----------------------------------------------------------------- */
 #include <cmsis_os2.h>
 
@@ -203,7 +199,3 @@ void Launcher_ResetOutput(CAN_LauncherOutput_t *output);
  * @param ui UI结构体
  */
 void Launcher_DumpUI(Launcher_t *l, Referee_LauncherUI_t *ui);
-
-#ifdef __cplusplus
-}
-#endif

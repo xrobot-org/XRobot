@@ -6,10 +6,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "user_math.h"
 
 /**
@@ -29,7 +25,3 @@ float Capacity_GetBatteryRemain(float volt);
  * @return float 电容剩余电量比例
  */
 float Capacity_GetCapacitorRemain(float vcap, float vbat, float v_cutoff);
-
-#ifdef __cplusplus
-}
-#endif

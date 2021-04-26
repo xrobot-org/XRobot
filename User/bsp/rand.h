@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ----------------------------------------------------------------- */
 #include <stdint.h>
 
@@ -15,7 +11,3 @@ extern "C" {
 /* Exported functions prototypes -------------------------------------------- */
 uint32_t BSP_GetRandomNum(void);
 int32_t BSP_GetRandomRangle(int32_t min, int32_t max);
-
-#ifdef __cplusplus
-}
-#endif

@@ -11,10 +11,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ----------------------------------------------------------------- */
 #include "component/cmd.h"
 #include "component/filter.h"
@@ -181,7 +177,3 @@ void Chassis_ResetOutput(CAN_ChassisOutput_t *out);
  * @param ui UI数据结构体
  */
 void Chassis_DumpUI(const Chassis_t *c, Referee_ChassisUI_t *ui);
-
-#ifdef __cplusplus
-}
-#endif

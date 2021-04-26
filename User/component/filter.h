@@ -4,10 +4,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "user_math.h"
 
 /* 二阶低通滤波器 */
@@ -98,7 +94,3 @@ float NotchFilter_Apply(NotchFilter_t *f, float sample);
  * @return float 滤波后的值
  */
 float NotchFilter_Reset(NotchFilter_t *f, float sample);
-
-#ifdef __cplusplus
-}
-#endif

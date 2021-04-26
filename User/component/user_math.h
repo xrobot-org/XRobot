@@ -4,10 +4,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "stm32f4xx.h"
 #define ARM_MATH_CM4
 
@@ -100,7 +96,3 @@ void CircleReverse(float *origin);
  * @return 摩擦轮转速
  */
 float CalculateRpm(float bullet_speed, float fric_radius, bool is17mm);
-
-#ifdef __cplusplus
-}
-#endif

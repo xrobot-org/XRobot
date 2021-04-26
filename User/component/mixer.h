@@ -4,10 +4,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "user_math.h"
 
 /** 四轮布局 */
@@ -54,7 +50,3 @@ int8_t Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode);
  */
 int8_t Mixer_Apply(Mixer_t *mixer, MoveVector_t *move_vec, float *out,
                    size_t len, float scale_factor);
-
-#ifdef __cplusplus
-}
-#endif

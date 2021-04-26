@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ----------------------------------------------------------------- */
 #include <usart.h>
 
@@ -44,7 +40,3 @@ typedef enum {
 UART_HandleTypeDef *BSP_UART_GetHandle(BSP_UART_t uart);
 int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type,
                                  void (*callback)(void));
-
-#ifdef __cplusplus
-}
-#endif

@@ -11,10 +11,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ----------------------------------------------------------------- */
 #include "device/can.h"
 #include "device/referee.h"
@@ -51,7 +47,3 @@ void Cap_HandleOffline(CAN_Capacitor_t *cap, CAN_CapOutput_t *cap_out,
  * @param ui 结构体
  */
 void Cap_DumpUI(const CAN_Capacitor_t *cap, Referee_CapUI_t *ui);
-
-#ifdef __cplusplus
-}
-#endif

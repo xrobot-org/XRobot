@@ -4,10 +4,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ----------------------------------------------------------------- */
 #include "component/ahrs.h"
 #include "component/cmd.h"
@@ -167,6 +163,3 @@ void Gimbal_ResetOutput(CAN_GimbalOutput_t *output);
  * @param ui UI结构体
  */
 void Gimbal_DumpUI(const Gimbal_t *g, Referee_GimbalUI_t *ui);
-#ifdef __cplusplus
-}
-#endif

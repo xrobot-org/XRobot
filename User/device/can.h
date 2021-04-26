@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ----------------------------------------------------------------- */
 #include <cmsis_os2.h>
 #include <stdbool.h>
@@ -269,7 +265,3 @@ void CAN_ResetCapOut(CAN_CapOutput_t *cap_out);
 void CAN_Cap_Decode(CAN_CapFeedback_t *feedback, const uint8_t *raw);
 
 void CAN_Tof_Decode(CAN_Tof_t *tof, const uint8_t *raw);
-
-#ifdef __cplusplus
-}
-#endif

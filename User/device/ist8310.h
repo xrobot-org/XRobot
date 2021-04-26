@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ----------------------------------------------------------------- */
 #include <cmsis_os2.h>
 #include <stdbool.h>
@@ -42,7 +38,3 @@ bool IST8310_WaitNew(uint32_t timeout);
 int8_t IST8310_StartDmaRecv();
 uint32_t IST8310_WaitDmaCplt();
 int8_t IST8310_Parse(IST8310_t *ist8310);
-
-#ifdef __cplusplus
-}
-#endif
