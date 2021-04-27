@@ -278,9 +278,6 @@ int8_t Referee_Parse(Referee_t *ref) {
         origin = &(ref->dart_client);
         size = sizeof(ref->dart_client);
         break;
-      case REF_CMD_ID_INTER_STUDENT_CUSTOM:
-        origin = &(ref->custom);
-        size = sizeof(ref->custom);
       case REF_CMD_ID_CLIENT_MAP:
         origin = &(ref->client_map);
         size = sizeof(ref->client_map);
@@ -329,9 +326,8 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
 
         /* 更新云台底盘相对方位 */
         const float kLEN = 46;
-        UI_DrawLine(&ele, "6", UI_GRAPIC_OPERATION_REWRITE,
-                    UI_GRAPIC_LAYER_CHASSIS, UI_GREEN, UI_DEFAULT_WIDTH * 12,
-                    kW * 0.4, kH * 0.2,
+        UI_DrawLine(&ele, "6", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CHASSIS,
+                    UI_GREEN, UI_DEFAULT_WIDTH * 12, kW * 0.4, kH * 0.2,
                     kW * 0.4 + sin(ref->chassis_ui.angle) * kLEN,
                     kH * 0.2 + cos(ref->chassis_ui.angle) * kLEN);
 
@@ -353,8 +349,8 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
             break;
         }
         if (box_pos_h != 0.0f) {
-          UI_DrawRectangle(&ele, "8", UI_GRAPIC_OPERATION_REWRITE,
-                           UI_GRAPIC_LAYER_CHASSIS, UI_GREEN, UI_DEFAULT_WIDTH,
+          UI_DrawRectangle(&ele, "8", UI_GRAPHIC_OP_REWRITE,
+                           UI_GRAPHIC_LAYER_CHASSIS, UI_GREEN, UI_DEFAULT_WIDTH,
                            kW * REF_UI_RIGHT_START_W - 6,
                            kH * box_pos_h + REF_UI_BOX_UP_OFFSET,
                            kW * REF_UI_RIGHT_START_W + 44,
@@ -369,15 +365,14 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
         /* 更新电容状态 */
         switch (ref->cap_ui.status) {
           case CAN_CAP_STATUS_OFFLINE:
-            UI_DrawArc(&ele, "9", UI_GRAPIC_OPERATION_REWRITE,
-                       UI_GRAPIC_LAYER_CAP, UI_YELLOW, 0, 360,
-                       UI_DEFAULT_WIDTH * 5, kW * 0.6, kH * 0.2, 50, 50);
+            UI_DrawArc(&ele, "9", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CAP,
+                       UI_YELLOW, 0, 360, UI_DEFAULT_WIDTH * 5, kW * 0.6,
+                       kH * 0.2, 50, 50);
             break;
           default:
-            UI_DrawArc(&ele, "9", UI_GRAPIC_OPERATION_REWRITE,
-                       UI_GRAPIC_LAYER_CAP, UI_GREEN, 0,
-                       ref->cap_ui.percentage * 360, UI_DEFAULT_WIDTH * 5,
-                       kW * 0.6, kH * 0.2, 50, 50);
+            UI_DrawArc(&ele, "9", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CAP,
+                       UI_GREEN, 0, ref->cap_ui.percentage * 360,
+                       UI_DEFAULT_WIDTH * 5, kW * 0.6, kH * 0.2, 50, 50);
             break;
         }
         UI_StashGraphic(&(ref->ui), &ele);
@@ -400,8 +395,8 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
             box_pos_h = 0.0f;
             break;
         }
-        UI_DrawRectangle(&ele, "a", UI_GRAPIC_OPERATION_REWRITE,
-                         UI_GRAPIC_LAYER_GIMBAL, UI_GREEN, UI_DEFAULT_WIDTH,
+        UI_DrawRectangle(&ele, "a", UI_GRAPHIC_OP_REWRITE,
+                         UI_GRAPHIC_LAYER_GIMBAL, UI_GREEN, UI_DEFAULT_WIDTH,
                          kW * REF_UI_RIGHT_START_W + 54,
                          kH * box_pos_h + REF_UI_BOX_UP_OFFSET,
                          kW * REF_UI_RIGHT_START_W + 102,
@@ -427,8 +422,8 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
             box_pos_h = 0.0f;
             break;
         }
-        UI_DrawRectangle(&ele, "b", UI_GRAPIC_OPERATION_REWRITE,
-                         UI_GRAPIC_LAYER_LAUNCHER, UI_GREEN, UI_DEFAULT_WIDTH,
+        UI_DrawRectangle(&ele, "b", UI_GRAPHIC_OP_REWRITE,
+                         UI_GRAPHIC_LAYER_LAUNCHER, UI_GREEN, UI_DEFAULT_WIDTH,
                          kW * REF_UI_RIGHT_START_W + 114,
                          kH * box_pos_h + REF_UI_BOX_UP_OFFSET,
                          kW * REF_UI_RIGHT_START_W + 162,
@@ -448,8 +443,8 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
           default:
             break;
         }
-        UI_DrawRectangle(&ele, "f", UI_GRAPIC_OPERATION_REWRITE,
-                         UI_GRAPIC_LAYER_LAUNCHER, UI_GREEN, UI_DEFAULT_WIDTH,
+        UI_DrawRectangle(&ele, "f", UI_GRAPHIC_OP_REWRITE,
+                         UI_GRAPHIC_LAYER_LAUNCHER, UI_GREEN, UI_DEFAULT_WIDTH,
                          kW * REF_UI_RIGHT_START_W + 174,
                          kH * box_pos_h + REF_UI_BOX_UP_OFFSET,
                          kW * REF_UI_RIGHT_START_W + 222,
@@ -462,8 +457,8 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
 
         switch (ref->ctrl_method) {
           case CMD_METHOD_MOUSE_KEYBOARD:
-            UI_DrawRectangle(&ele, "c", UI_GRAPIC_OPERATION_REWRITE,
-                             UI_GRAPIC_LAYER_CMD, UI_GREEN, UI_DEFAULT_WIDTH,
+            UI_DrawRectangle(&ele, "c", UI_GRAPHIC_OP_REWRITE,
+                             UI_GRAPHIC_LAYER_CMD, UI_GREEN, UI_DEFAULT_WIDTH,
                              kW * REF_UI_RIGHT_START_W + 96,
                              kH * 0.4 + REF_UI_BOX_UP_OFFSET,
                              kW * REF_UI_RIGHT_START_W + 120,
@@ -471,7 +466,7 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
             break;
           case CMD_METHOD_JOYSTICK_SWITCH:
             UI_DrawRectangle(
-                &ele, "c", UI_GRAPIC_OPERATION_REWRITE, UI_GRAPIC_LAYER_CMD,
+                &ele, "c", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CMD,
                 UI_GREEN, UI_DEFAULT_WIDTH, kW * REF_UI_RIGHT_START_W + 56,
                 kH * 0.4 + REF_UI_BOX_UP_OFFSET, kW * REF_UI_RIGHT_START_W + 80,
                 kH * 0.4 + REF_UI_BOX_BOT_OFFSET);
@@ -488,43 +483,42 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
   /* UI静态元素刷新 */
   if (osThreadFlagsGet() & SIGNAL_REFEREE_SLOW_REFRESH_UI) {
     osThreadFlagsClear(SIGNAL_REFEREE_SLOW_REFRESH_UI);
-    UI_DrawString(&string, "1", UI_GRAPIC_OPERATION_REWRITE,
-                  UI_GRAPIC_LAYER_CONST, UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
-                  UI_CHAR_DEFAULT_WIDTH, kW * REF_UI_RIGHT_START_W,
-                  kH * REF_UI_MODE_LINE1_H, "CHAS  FLLW  FL35  ROTR");
+    UI_DrawString(&string, "1", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CONST,
+                  UI_GREEN, UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
+                  kW * REF_UI_RIGHT_START_W, kH * REF_UI_MODE_LINE1_H,
+                  "CHAS  FLLW  FL35  ROTR");
     UI_StashString(&(ref->ui), &string);
 
-    UI_DrawString(&string, "2", UI_GRAPIC_OPERATION_REWRITE,
-                  UI_GRAPIC_LAYER_CONST, UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
-                  UI_CHAR_DEFAULT_WIDTH, kW * REF_UI_RIGHT_START_W,
-                  kH * REF_UI_MODE_LINE2_H, "GMBL  RELX  ABSL  RLTV");
+    UI_DrawString(&string, "2", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CONST,
+                  UI_GREEN, UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
+                  kW * REF_UI_RIGHT_START_W, kH * REF_UI_MODE_LINE2_H,
+                  "GMBL  RELX  ABSL  RLTV");
     UI_StashString(&(ref->ui), &string);
 
-    UI_DrawString(&string, "3", UI_GRAPIC_OPERATION_REWRITE,
-                  UI_GRAPIC_LAYER_CONST, UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
-                  UI_CHAR_DEFAULT_WIDTH, kW * REF_UI_RIGHT_START_W,
-                  kH * REF_UI_MODE_LINE3_H, "SHOT  RELX  SAFE  LOAD");
+    UI_DrawString(&string, "3", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CONST,
+                  UI_GREEN, UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
+                  kW * REF_UI_RIGHT_START_W, kH * REF_UI_MODE_LINE3_H,
+                  "SHOT  RELX  SAFE  LOAD");
     UI_StashString(&(ref->ui), &string);
 
-    UI_DrawString(&string, "4", UI_GRAPIC_OPERATION_REWRITE,
-                  UI_GRAPIC_LAYER_CONST, UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
-                  UI_CHAR_DEFAULT_WIDTH, kW * REF_UI_RIGHT_START_W,
-                  kH * REF_UI_MODE_LINE4_H, "FIRE  SNGL  BRST  CONT");
+    UI_DrawString(&string, "4", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CONST,
+                  UI_GREEN, UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
+                  kW * REF_UI_RIGHT_START_W, kH * REF_UI_MODE_LINE4_H,
+                  "FIRE  SNGL  BRST  CONT");
     UI_StashString(&(ref->ui), &string);
 
-    UI_DrawLine(&ele, "5", UI_GRAPIC_OPERATION_REWRITE, UI_GRAPIC_LAYER_CONST,
+    UI_DrawLine(&ele, "5", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CONST,
                 UI_GREEN, UI_DEFAULT_WIDTH * 3, kW * 0.4, kH * 0.2, kW * 0.4,
                 kH * 0.2 + 50);
     UI_StashGraphic(&(ref->ui), &ele);
 
-    UI_DrawString(&string, "d", UI_GRAPIC_OPERATION_REWRITE,
-                  UI_GRAPIC_LAYER_CONST, UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
-                  UI_CHAR_DEFAULT_WIDTH, kW * REF_UI_RIGHT_START_W, kH * 0.4,
-                  "CTRL  JS  KM");
+    UI_DrawString(&string, "d", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CONST,
+                  UI_GREEN, UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
+                  kW * REF_UI_RIGHT_START_W, kH * 0.4, "CTRL  JS  KM");
     UI_StashString(&(ref->ui), &string);
 
-    UI_DrawString(&string, "e", UI_GRAPIC_OPERATION_REWRITE,
-                  UI_GRAPIC_LAYER_CONST, UI_GREEN, UI_DEFAULT_WIDTH * 20, 80,
+    UI_DrawString(&string, "e", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CONST,
+                  UI_GREEN, UI_DEFAULT_WIDTH * 20, 80,
                   UI_CHAR_DEFAULT_WIDTH * 2, kW * 0.6 - 26, kH * 0.2 + 10,
                   "CAP");
     UI_StashString(&(ref->ui), &string);

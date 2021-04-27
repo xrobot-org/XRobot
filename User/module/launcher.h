@@ -185,7 +185,7 @@ int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
  * \param l 包含发射器数据的结构体
  * \param out CAN设备发射器输出结构体
  */
-void Launcher_DumpOutput(Launcher_t *l, CAN_LauncherOutput_t *out);
+void Launcher_PackOutput(Launcher_t *l, CAN_LauncherOutput_t *out);
 
 /**
  * \brief 清空输出值
@@ -200,4 +200,4 @@ void Launcher_ResetOutput(CAN_LauncherOutput_t *output);
  * @param l 发射器结构体
  * @param ui UI结构体
  */
-void Launcher_DumpUI(Launcher_t *l, Referee_LauncherUI_t *ui);
+void Launcher_PackUi(Launcher_t *l, Referee_LauncherUI_t *ui);

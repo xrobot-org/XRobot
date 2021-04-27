@@ -394,7 +394,7 @@ int8_t Chassis_PowerLimit(Chassis_t *c, const CAN_Capacitor_t *cap,
  * \param s 包含底盘数据的结构体
  * \param out CAN设备底盘输出结构体
  */
-void Chassis_DumpOutput(Chassis_t *c, CAN_ChassisOutput_t *out) {
+void Chassis_PackOutput(Chassis_t *c, CAN_ChassisOutput_t *out) {
   for (size_t i = 0; i < c->num_wheel; i++) {
     out->as_array[i] = c->out[i];
   }
@@ -417,7 +417,7 @@ void Chassis_ResetOutput(CAN_ChassisOutput_t *out) {
  * @param chassis 底盘数据结构体
  * @param ui UI数据结构体
  */
-void Chassis_DumpUI(const Chassis_t *c, Referee_ChassisUI_t *ui) {
+void Chassis_PackUi(const Chassis_t *c, Referee_ChassisUI_t *ui) {
   ui->mode = c->mode;
   ui->angle = c->feedback.gimbal_yaw_encoder - c->mech_zero->yaw;
 }

@@ -73,8 +73,8 @@ void Task_CtrlGimbal(void *argument) {
     osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     Gimbal_UpdateFeedback(&gimbal, &can);
     Gimbal_Control(&gimbal, &gimbal_cmd, tick);
-    Gimbal_DumpOutput(&gimbal, &gimbal_out);
-    Gimbal_DumpUI(&gimbal, &gimbal_ui);
+    Gimbal_PackOutput(&gimbal, &gimbal_out);
+    Gimbal_PackUi(&gimbal, &gimbal_ui);
     osKernelUnlock();
 
     osMessageQueueReset(task_runtime.msgq.can.output.gimbal);

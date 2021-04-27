@@ -83,8 +83,8 @@ void Task_CtrlChassis(void *argument) {
     /* 根据遥控器命令计算底盘输出 */
     Chassis_Control(&chassis, &chassis_cmd, tick);
     Chassis_PowerLimit(&chassis, &cap, &referee_chassis); /* 限制输出功率 */
-    Chassis_DumpOutput(&chassis, &chassis_out);
-    Chassis_DumpUI(&chassis, &chassis_ui);
+    Chassis_PackOutput(&chassis, &chassis_out);
+    Chassis_PackUi(&chassis, &chassis_ui);
     osKernelUnlock();
 
     /* 将电机输出值发送到CAN */

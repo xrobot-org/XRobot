@@ -87,7 +87,7 @@ int8_t AI_HandleOffline(AI_t *ai, CMD_Host_t *cmd_host) {
   return 0;
 }
 
-int8_t AI_PackMCU(AI_t *ai, const AHRS_Quaternion_t *quat) {
+int8_t AI_PackMcu(AI_t *ai, const AHRS_Quaternion_t *quat) {
   ai->to_host.mcu.id = AI_ID_MCU;
   memcpy((void *)&(ai->to_host.mcu.package.data.quat), (const void *)quat,
          sizeof(*quat));
@@ -114,7 +114,7 @@ int8_t AI_PackRef(AI_t *ai, const Referee_ForAI_t *ref) {
   return DEVICE_OK;
 }
 
-int8_t AI_StartSend(AI_t *ai, bool ref_update) {
+int8_t AI_StartTrans(AI_t *ai, bool ref_update) {
   if (ref_update) {
     if (HAL_UART_Transmit_DMA(
             BSP_UART_GetHandle(BSP_UART_AI), (uint8_t *)&(ai->to_host),
@@ -132,7 +132,7 @@ int8_t AI_StartSend(AI_t *ai, bool ref_update) {
   }
 }
 
-int8_t AI_DumpUI(AI_t *ai) {
+int8_t AI_PackUi(AI_t *ai) {
   ai->ui.status = ai->status;
   return 0;
 }

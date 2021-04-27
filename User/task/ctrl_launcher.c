@@ -72,8 +72,8 @@ void Task_CtrlLauncher(void *argument) {
     osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     Launcher_UpdateFeedback(&launcher, &can);
     Launcher_Control(&launcher, &launcher_cmd, &referee_launcher, tick);
-    Launcher_DumpOutput(&launcher, &launcher_out);
-    Launcher_DumpUI(&launcher, &launcher_ui);
+    Launcher_PackOutput(&launcher, &launcher_out);
+    Launcher_PackUi(&launcher, &launcher_ui);
     osKernelUnlock();
 
     osMessageQueueReset(task_runtime.msgq.can.output.launcher);
