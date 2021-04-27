@@ -74,7 +74,7 @@ void Task_Cap(void *argument) {
     osMessageQueueReset(task_runtime.msgq.cap_info);
     osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);
 
-    Cap_DumpUI(&(can.cap), &cap_ui);
+    Cap_PackUi(&(can.cap), &cap_ui);
 
     osMessageQueueReset(task_runtime.msgq.ui.cap);
     osMessageQueuePut(task_runtime.msgq.ui.cap, &cap_ui, 0, 0);

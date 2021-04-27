@@ -337,7 +337,6 @@ typedef struct {
   Referee_BulletRemain_t bullet_remain;
   Referee_RFID_t rfid;
   Referee_DartClient_t dart_client;
-  Referee_InterStudent_Custom_t custom;
   Referee_ClientMap_t client_map;
   Referee_KeyboardMouse_t keyboard_mouse;
 

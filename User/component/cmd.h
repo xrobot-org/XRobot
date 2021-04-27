@@ -105,9 +105,9 @@ typedef enum {
 
 /* 行为触发方式 */
 typedef enum {
-  CMD_ACTIVE_PRESSING, /* 按下时触发 */
-  CMD_ACTIVE_RASING,   /* 抬起时触发 */
-  CMD_ACTIVE_PRESSED,  /* 按住时触发 */
+  CMD_ACTIVE_PRESSING,  /* 按下时触发 */
+  CMD_ACTIVE_RELEASING, /* 抬起时触发 */
+  CMD_ACTIVE_PRESSED,   /* 按住时触发 */
 } CMD_ActiveType_t;
 
 typedef struct {
@@ -115,24 +115,19 @@ typedef struct {
   CMD_KeyValue_t key;
 } CMD_KeyMapItem_t;
 
-/* 行为映射的对应按键数组 */
-typedef struct {
-  CMD_KeyMapItem_t key_map[CMD_BEHAVIOR_NUM];
-} CMD_KeyMapParams_t;
-
 /* 位移灵敏度参数 */
 typedef struct {
-  float move_norm_sense; /* 移动灵敏度 */
-  float move_fast_sense; /* 加速灵敏度 */
-  float move_slow_sense; /* 减速灵敏度 */
+  float sense_norm; /* 移动灵敏度 */
+  float sense_fast; /* 加速灵敏度 */
+  float sense_slow; /* 减速灵敏度 */
 } CMD_MoveParams_t;
 
 /* 命令参数 */
 typedef struct {
-  float sens_mouse;       /* 鼠标灵敏度 */
-  float sens_stick;       /* 遥控器摇杆灵敏度 */
-  CMD_KeyMapParams_t map; /* 按键映射行为命令 */
-  CMD_MoveParams_t move;  /* 位移灵敏度参数 */
+  float sens_mouse;                           /* 鼠标灵敏度 */
+  float sens_stick;                           /* 遥控器摇杆灵敏度 */
+  CMD_KeyMapItem_t key_map[CMD_BEHAVIOR_NUM]; /* 按键映射行为命令 */
+  CMD_MoveParams_t move;                      /* 位移灵敏度参数 */
 } CMD_Params_t;
 
 /* AI行为状态 */

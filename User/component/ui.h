@@ -9,32 +9,23 @@
 
 #include "component\user_math.h"
 
-#define UI_DEL_OPERATION_NOTHING (0)
-#define UI_DEL_OPERATION_DEL (1)
-#define UI_DEL_OPERATION_DEL_ALL (2)
-
-#define UI_GRAPIC_OPERATION_NOTHING (0)
-#define UI_GRAPIC_OPERATION_ADD (1)
-#define UI_GRAPIC_OPERATION_REWRITE (2)
-#define UI_GRAPIC_OPERATION_DEL (3)
-
-#define UI_GRAPIC_LAYER_CONST (0)
-#define UI_GRAPIC_LAYER_AUTOAIM (1)
-#define UI_GRAPIC_LAYER_CHASSIS (2)
-#define UI_GRAPIC_LAYER_CAP (3)
-#define UI_GRAPIC_LAYER_GIMBAL (4)
-#define UI_GRAPIC_LAYER_LAUNCHER (5)
-#define UI_GRAPIC_LAYER_CMD (6)
+#define UI_GRAPHIC_LAYER_CONST (0)
+#define UI_GRAPHIC_LAYER_AUTOAIM (1)
+#define UI_GRAPHIC_LAYER_CHASSIS (2)
+#define UI_GRAPHIC_LAYER_CAP (3)
+#define UI_GRAPHIC_LAYER_GIMBAL (4)
+#define UI_GRAPHIC_LAYER_LAUNCHER (5)
+#define UI_GRAPHIC_LAYER_CMD (6)
 
 #define UI_DEFAULT_WIDTH (0x01)
 #define UI_CHAR_DEFAULT_WIDTH (0x02)
 
-#define UI_MAX_GRAPIC_NUM (7)
+#define UI_MAX_GRAPHIC_NUM (7)
 #define UI_MAX_STRING_NUM (7)
 #define UI_MAX_DEL_NUM (3)
 
 typedef enum {
-  UI_RED_BLUE,
+  UI_RED_BLUE = 0,
   UI_YELLOW,
   UI_GREEN,
   UI_ORANGE,
@@ -45,9 +36,22 @@ typedef enum {
   UI_WHITE
 } UI_Color_t;
 
+typedef enum {
+  UI_DEL_OP_NOTHING = 0,
+  UI_DEL_OP_DEL = 1,
+  UI_DEL_OP_DEL_ALL = 2,
+} UI_DelOp_t;
+
+typedef enum {
+  UI_GRAPHIC_OP_NOTHING = 0,
+  UI_GRAPHIC_OP_ADD = 1,
+  UI_GRAPHIC_OP_REWRITE = 2,
+  UI_GRAPHIC_OP_DEL = 3,
+} UI_GraphicOp_t;
+
 typedef struct __packed {
   uint8_t name[3];
-  uint8_t type_op : 3;
+  uint8_t op : 3;
   uint8_t type_ele : 3;
   uint8_t layer : 4;
   uint8_t color : 4;
@@ -67,7 +71,7 @@ typedef struct __packed {
 } UI_String_t;
 
 typedef struct __packed {
-  uint8_t del_operation;
+  uint8_t op;
   uint8_t layer;
 } UI_Del_t;
 
@@ -83,7 +87,7 @@ typedef struct {
   uint8_t refresh_fsm;
   struct {
     struct {
-      UI_Ele_t graphic[UI_MAX_GRAPIC_NUM];
+      UI_Ele_t graphic[UI_MAX_GRAPHIC_NUM];
       UI_String_t string[UI_MAX_STRING_NUM];
       UI_Del_t del[UI_MAX_DEL_NUM];
     } data;
@@ -101,7 +105,7 @@ typedef struct {
  *
  * @param ele 结构体
  * @param name 图形名首地址
- * @param type_op 操作类型
+ * @param op 操作类型
  * @param layer 图层数
  * @param color 颜色
  * @param width 线条宽度
@@ -111,8 +115,8 @@ typedef struct {
  * @param y_end 终点y坐标
  * @return int8_t
  */
-int8_t UI_DrawLine(UI_Ele_t *ele, const char *name, uint8_t type_op,
-                   uint8_t layer, uint8_t color, uint16_t width,
+int8_t UI_DrawLine(UI_Ele_t *ele, const char *name, UI_GraphicOp_t op,
+                   uint8_t layer, UI_Color_t color, uint16_t width,
                    uint16_t x_start, uint16_t y_start, uint16_t x_end,
                    uint16_t y_end);
 
@@ -121,7 +125,7 @@ int8_t UI_DrawLine(UI_Ele_t *ele, const char *name, uint8_t type_op,
  *
  * @param ele 结构体
  * @param name 图形名首地址
- * @param type_op 操作类型
+ * @param op 操作类型
  * @param layer 图层数
  * @param color 颜色
  * @param width 线条宽度
@@ -131,8 +135,8 @@ int8_t UI_DrawLine(UI_Ele_t *ele, const char *name, uint8_t type_op,
  * @param y_end 对角顶点y坐标
  * @return int8_t
  */
-int8_t UI_DrawRectangle(UI_Ele_t *ele, const char *name, uint8_t type_op,
-                        uint8_t layer, uint8_t color, uint16_t width,
+int8_t UI_DrawRectangle(UI_Ele_t *ele, const char *name, UI_GraphicOp_t op,
+                        uint8_t layer, UI_Color_t color, uint16_t width,
                         uint16_t x_start, uint16_t y_start, uint16_t x_end,
                         uint16_t y_end);
 
@@ -141,7 +145,7 @@ int8_t UI_DrawRectangle(UI_Ele_t *ele, const char *name, uint8_t type_op,
  *
  * @param ele 结构体
  * @param name 图形名首地址
- * @param type_op 操作类型
+ * @param op 操作类型
  * @param layer 图层数
  * @param color 颜色
  * @param width 线条宽度
@@ -150,8 +154,8 @@ int8_t UI_DrawRectangle(UI_Ele_t *ele, const char *name, uint8_t type_op,
  * @param radius 半径
  * @return int8_t
  */
-int8_t UI_DrawCycle(UI_Ele_t *ele, const char *name, uint8_t type_op,
-                    uint8_t layer, uint8_t color, uint16_t width,
+int8_t UI_DrawCycle(UI_Ele_t *ele, const char *name, UI_GraphicOp_t op,
+                    uint8_t layer, UI_Color_t color, uint16_t width,
                     uint16_t x_center, uint16_t y_center, uint16_t radius);
 
 /**
@@ -159,7 +163,7 @@ int8_t UI_DrawCycle(UI_Ele_t *ele, const char *name, uint8_t type_op,
  *
  * @param ele 结构体
  * @param name 图形名首地址
- * @param type_op 操作类型
+ * @param op 操作类型
  * @param layer 图层数
  * @param color 颜色
  * @param width 线条宽度
@@ -169,8 +173,8 @@ int8_t UI_DrawCycle(UI_Ele_t *ele, const char *name, uint8_t type_op,
  * @param y_semiaxis y半轴长度
  * @return int8_t
  */
-int8_t UI_DrawOval(UI_Ele_t *ele, const char *name, uint8_t type_op,
-                   uint8_t layer, uint8_t color, uint16_t width,
+int8_t UI_DrawOval(UI_Ele_t *ele, const char *name, UI_GraphicOp_t op,
+                   uint8_t layer, UI_Color_t color, uint16_t width,
                    uint16_t x_center, uint16_t y_center, uint16_t x_semiaxis,
                    uint16_t y_semiaxis);
 
@@ -179,7 +183,7 @@ int8_t UI_DrawOval(UI_Ele_t *ele, const char *name, uint8_t type_op,
  *
  * @param ele 结构体
  * @param name 图形名首地址
- * @param type_op 操作类型
+ * @param op 操作类型
  * @param layer 图层数
  * @param color 颜色
  * @param angle_start 起始角度
@@ -191,8 +195,8 @@ int8_t UI_DrawOval(UI_Ele_t *ele, const char *name, uint8_t type_op,
  * @param y_semiaxis y半轴长度
  * @return int8_t
  */
-int8_t UI_DrawArc(UI_Ele_t *ele, const char *name, uint8_t type_op,
-                  uint8_t layer, uint8_t color, uint16_t angle_start,
+int8_t UI_DrawArc(UI_Ele_t *ele, const char *name, UI_GraphicOp_t op,
+                  uint8_t layer, UI_Color_t color, uint16_t angle_start,
                   uint16_t angle_end, uint16_t width, uint16_t x_center,
                   uint16_t y_center, uint16_t x_semiaxis, uint16_t y_semiaxis);
 
@@ -201,7 +205,7 @@ int8_t UI_DrawArc(UI_Ele_t *ele, const char *name, uint8_t type_op,
  *
  * @param ele 结构体
  * @param name 图形名首地址
- * @param type_op 操作类型
+ * @param op 操作类型
  * @param layer 图层数
  * @param color 颜色
  * @param font_size 字体大小
@@ -214,8 +218,8 @@ int8_t UI_DrawArc(UI_Ele_t *ele, const char *name, uint8_t type_op,
  * @param float_low 32位浮点数
  * @return int8_t
  */
-int8_t UI_DrawFloating(UI_Ele_t *ele, const char *name, uint8_t type_op,
-                       uint8_t layer, uint8_t color, uint16_t font_size,
+int8_t UI_DrawFloating(UI_Ele_t *ele, const char *name, UI_GraphicOp_t op,
+                       uint8_t layer, UI_Color_t color, uint16_t font_size,
                        uint16_t digits, uint16_t width, uint16_t x_start,
                        uint16_t y_start, uint16_t float_high,
                        uint16_t float_middle, uint16_t float_low);
@@ -225,7 +229,7 @@ int8_t UI_DrawFloating(UI_Ele_t *ele, const char *name, uint8_t type_op,
  *
  * @param ele 结构体
  * @param name 图形名首地址
- * @param type_op 操作类型
+ * @param op 操作类型
  * @param layer 图层数
  * @param color 颜色
  * @param font_size 字体大小
@@ -237,8 +241,8 @@ int8_t UI_DrawFloating(UI_Ele_t *ele, const char *name, uint8_t type_op,
  * @param int32_t_low 32位整型数
  * @return int8_t
  */
-int8_t UI_DrawInteger(UI_Ele_t *ele, const char *name, uint8_t type_op,
-                      uint8_t layer, uint8_t color, uint16_t font_size,
+int8_t UI_DrawInteger(UI_Ele_t *ele, const char *name, UI_GraphicOp_t op,
+                      uint8_t layer, UI_Color_t color, uint16_t font_size,
                       uint16_t width, uint16_t x_start, uint16_t y_start,
                       uint16_t int32_t_high, uint16_t int32_t_middle,
                       uint16_t int32_t_low);
@@ -248,7 +252,7 @@ int8_t UI_DrawInteger(UI_Ele_t *ele, const char *name, uint8_t type_op,
  *
  * @param ele 结构体
  * @param name 图形名首地址
- * @param type_op 操作类型
+ * @param op 操作类型
  * @param layer 图层数
  * @param color 颜色
  * @param font_size 字体大小
@@ -259,8 +263,8 @@ int8_t UI_DrawInteger(UI_Ele_t *ele, const char *name, uint8_t type_op,
  * @param str 字符串首地址
  * @return int8_t
  */
-int8_t UI_DrawString(UI_String_t *ele, const char *name, uint8_t type_op,
-                     uint8_t layer, uint8_t color, uint16_t font_size,
+int8_t UI_DrawString(UI_String_t *ele, const char *name, UI_GraphicOp_t op,
+                     uint8_t layer, UI_Color_t color, uint16_t font_size,
                      uint16_t length, uint16_t width, uint16_t x_start,
                      uint16_t y_start, const char *str);
 
@@ -268,11 +272,11 @@ int8_t UI_DrawString(UI_String_t *ele, const char *name, uint8_t type_op,
  * @brief UI_删除图层
  *
  * @param del 结构体
- * @param opt 操作
+ * @param op 操作
  * @param layer 图层
  * @return int8_t
  */
-int8_t UI_DelLayer(UI_Del_t *del, uint8_t opt, uint8_t layer);
+int8_t UI_DelLayer(UI_Del_t *del, UI_DelOp_t op, uint8_t layer);
 
 int8_t UI_StashGraphic(UI_t *ui, const UI_Ele_t *ele);
 int8_t UI_PopGraphic(UI_Ele_t *ele, UI_t *ui);

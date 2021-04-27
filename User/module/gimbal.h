@@ -147,7 +147,7 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now);
  * \param s 包含云台数据的结构体
  * \param out CAN设备云台输出结构体
  */
-void Gimbal_DumpOutput(Gimbal_t *g, CAN_GimbalOutput_t *out);
+void Gimbal_PackOutput(Gimbal_t *g, CAN_GimbalOutput_t *out);
 
 /**
  * \brief 清空输出值
@@ -162,4 +162,4 @@ void Gimbal_ResetOutput(CAN_GimbalOutput_t *output);
  * @param g 云台结构体
  * @param ui UI结构体
  */
-void Gimbal_DumpUI(const Gimbal_t *g, Referee_GimbalUI_t *ui);
+void Gimbal_PackUi(const Gimbal_t *g, Referee_GimbalUI_t *ui);

@@ -34,7 +34,7 @@
  */
 static inline CMD_KeyValue_t CMD_BehaviorToKey(const CMD_t *cmd,
                                                CMD_Behavior_t behavior) {
-  return cmd->param->map.key_map[behavior].key;
+  return cmd->param->key_map[behavior].key;
 }
 
 /**
@@ -46,7 +46,7 @@ static inline CMD_KeyValue_t CMD_BehaviorToKey(const CMD_t *cmd,
  */
 static inline CMD_ActiveType_t CMD_BehaviorToActive(const CMD_t *cmd,
                                                     CMD_Behavior_t behavior) {
-  return cmd->param->map.key_map[behavior].active;
+  return cmd->param->key_map[behavior].active;
 }
 
 /**
@@ -107,7 +107,7 @@ static bool CMD_BehaviorOccurred(const CMD_RC_t *rc, const CMD_t *cmd,
   switch (active) {
     case CMD_ACTIVE_PRESSING:
       return now_key_pressed && !last_key_pressed;
-    case CMD_ACTIVE_RASING:
+    case CMD_ACTIVE_RELEASING:
       return !now_key_pressed && last_key_pressed;
     case CMD_ACTIVE_PRESSED:
       return now_key_pressed;
@@ -137,24 +137,24 @@ static void CMD_MouseKeyboardLogic(const CMD_RC_t *rc, CMD_t *cmd,
 
   /* 按键行为映射相关逻辑 */
   if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_FORE)) {
-    cmd->chassis.ctrl_vec.vy += cmd->param->move.move_norm_sense;
+    cmd->chassis.ctrl_vec.vy += cmd->param->move.sense_norm;
   }
   if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_BACK)) {
-    cmd->chassis.ctrl_vec.vy -= cmd->param->move.move_norm_sense;
+    cmd->chassis.ctrl_vec.vy -= cmd->param->move.sense_norm;
   }
   if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_LEFT)) {
-    cmd->chassis.ctrl_vec.vx -= cmd->param->move.move_norm_sense;
+    cmd->chassis.ctrl_vec.vx -= cmd->param->move.sense_norm;
   }
   if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_RIGHT)) {
-    cmd->chassis.ctrl_vec.vx += cmd->param->move.move_norm_sense;
+    cmd->chassis.ctrl_vec.vx += cmd->param->move.sense_norm;
   }
   if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_ACCELERATE)) {
-    cmd->chassis.ctrl_vec.vx *= cmd->param->move.move_fast_sense;
-    cmd->chassis.ctrl_vec.vy *= cmd->param->move.move_fast_sense;
+    cmd->chassis.ctrl_vec.vx *= cmd->param->move.sense_fast;
+    cmd->chassis.ctrl_vec.vy *= cmd->param->move.sense_fast;
   }
   if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_DECELEBRATE)) {
-    cmd->chassis.ctrl_vec.vx *= cmd->param->move.move_slow_sense;
-    cmd->chassis.ctrl_vec.vy *= cmd->param->move.move_slow_sense;
+    cmd->chassis.ctrl_vec.vx *= cmd->param->move.sense_slow;
+    cmd->chassis.ctrl_vec.vy *= cmd->param->move.sense_slow;
   }
   if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_FIRE)) {
     /* 切换至开火模式，设置相应的发射频率和弹丸初速度 */
