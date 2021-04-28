@@ -4,6 +4,8 @@
 #include <gpio.h>
 #include <main.h>
 
+#include "component/user_math.h"
+
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
@@ -23,7 +25,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
 /* Exported functions ------------------------------------------------------- */
 int8_t BSP_GPIO_RegisterCallback(uint16_t pin, void (*callback)(void)) {
-  if (callback == NULL) return BSP_ERR_NULL;
+  ASSERT(callback);
 
   for (uint8_t i = 0; i < 16; i++) {
     if (pin & (1 << i)) {

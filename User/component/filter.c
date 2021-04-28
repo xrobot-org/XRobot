@@ -15,7 +15,7 @@
  */
 void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq,
                           float cutoff_freq) {
-  if (f == NULL) return;
+  ASSERT(f);
 
   f->cutoff_freq = cutoff_freq;
 
@@ -53,7 +53,7 @@ void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq,
  * @return float 滤波后的值
  */
 float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample) {
-  if (f == NULL) return 0.0f;
+  ASSERT(f);
 
   /* do the filtering */
   float delay_element_0 =
@@ -82,7 +82,7 @@ float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample) {
  * @return float 滤波后的值
  */
 float LowPassFilter2p_Reset(LowPassFilter2p_t *f, float sample) {
-  if (f == NULL) return 0.0f;
+  ASSERT(f);
 
   const float dval = sample / (f->b0 + f->b1 + f->b2);
 
@@ -108,7 +108,7 @@ float LowPassFilter2p_Reset(LowPassFilter2p_t *f, float sample) {
  */
 void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq,
                       float bandwidth) {
-  if (f == NULL) return;
+  ASSERT(f);
 
   f->notch_freq = notch_freq;
   f->bandwidth = bandwidth;
@@ -148,7 +148,7 @@ void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq,
  * @return float 滤波后的值
  */
 inline float NotchFilter_Apply(NotchFilter_t *f, float sample) {
-  if (f == NULL) return 0.0f;
+  ASSERT(f);
 
   /* Direct Form II implementation */
   const float delay_element_0 =
@@ -170,7 +170,7 @@ inline float NotchFilter_Apply(NotchFilter_t *f, float sample) {
  * @return float 滤波后的值
  */
 float NotchFilter_Reset(NotchFilter_t *f, float sample) {
-  if (f == NULL) return 0.0f;
+  ASSERT(f);
 
   float dval = sample;
 

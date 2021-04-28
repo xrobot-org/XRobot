@@ -31,9 +31,9 @@ static void Ai_RxCpltCallback(void) {
 
 /* Exported functions ------------------------------------------------------- */
 int8_t AI_Init(AI_t *ai) {
-  if (ai == NULL) return DEVICE_ERR_NULL;
+  ASSERT(ai);
   if (inited) return DEVICE_ERR_INITED;
-  if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
+  VERIFY((thread_alert = osThreadGetId()) != NULL);
 
   BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_RX_CPLT_CB,
                             Ai_RxCpltCallback);
@@ -79,8 +79,8 @@ error:
 }
 
 int8_t AI_HandleOffline(AI_t *ai, CMD_Host_t *cmd_host) {
-  if (ai == NULL) return DEVICE_ERR_NULL;
-  if (cmd_host == NULL) return DEVICE_ERR_NULL;
+  ASSERT(ai);
+  ASSERT(cmd_host);
 
   memset(&(ai->form_host), 0, sizeof(ai->form_host));
   memset(cmd_host, 0, sizeof(*cmd_host));

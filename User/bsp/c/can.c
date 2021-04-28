@@ -1,6 +1,8 @@
 /* Includes ----------------------------------------------------------------- */
 #include "bsp/can.h"
 
+#include "component/user_math.h"
+
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
@@ -135,7 +137,7 @@ CAN_HandleTypeDef *BSP_CAN_GetHandle(BSP_CAN_t can) {
 
 int8_t BSP_CAN_RegisterCallback(BSP_CAN_t can, BSP_CAN_Callback_t type,
                                 void (*callback)(void)) {
-  if (callback == NULL) return BSP_ERR_NULL;
+  ASSERT(callback);
   CAN_Callback[can][type] = callback;
   return BSP_OK;
 }

@@ -35,7 +35,7 @@ int8_t UI_DrawLine(UI_Ele_t *ele, const char *name, UI_GraphicOp_t op,
                    uint8_t layer, UI_Color_t color, uint16_t width,
                    uint16_t x_start, uint16_t y_start, uint16_t x_end,
                    uint16_t y_end) {
-  if (ele == NULL) return -1;
+  ASSERT(ele);
   snprintf((char *)ele->name, 2, "%s", name);
   ele->layer = layer;
   ele->op = op;
@@ -68,7 +68,7 @@ int8_t UI_DrawRectangle(UI_Ele_t *ele, const char *name, UI_GraphicOp_t op,
                         uint8_t layer, UI_Color_t color, uint16_t width,
                         uint16_t x_start, uint16_t y_start, uint16_t x_end,
                         uint16_t y_end) {
-  if (ele == NULL) return -1;
+  ASSERT(ele);
   snprintf((char *)ele->name, 2, "%s", name);
   ele->op = op;
   ele->type_ele = UI_ELE_RECT;
@@ -99,7 +99,7 @@ int8_t UI_DrawRectangle(UI_Ele_t *ele, const char *name, UI_GraphicOp_t op,
 int8_t UI_DrawCycle(UI_Ele_t *ele, const char *name, UI_GraphicOp_t op,
                     uint8_t layer, UI_Color_t color, uint16_t width,
                     uint16_t x_center, uint16_t y_center, uint16_t radius) {
-  if (ele == NULL) return -1;
+  ASSERT(ele);
   snprintf((char *)ele->name, 2, "%s", name);
   ele->op = op;
   ele->layer = layer;
@@ -131,7 +131,7 @@ int8_t UI_DrawOval(UI_Ele_t *ele, const char *name, UI_GraphicOp_t op,
                    uint8_t layer, UI_Color_t color, uint16_t width,
                    uint16_t x_center, uint16_t y_center, uint16_t x_semiaxis,
                    uint16_t y_semiaxis) {
-  if (ele == NULL) return -1;
+  ASSERT(ele);
   snprintf((char *)ele->name, 2, "%s", name);
   ele->op = op;
   ele->type_ele = UI_ELE_OVAL;
@@ -166,7 +166,7 @@ int8_t UI_DrawArc(UI_Ele_t *ele, const char *name, UI_GraphicOp_t op,
                   uint8_t layer, UI_Color_t color, uint16_t angle_start,
                   uint16_t angle_end, uint16_t width, uint16_t x_center,
                   uint16_t y_center, uint16_t x_semiaxis, uint16_t y_semiaxis) {
-  if (ele == NULL) return -1;
+  ASSERT(ele);
   snprintf((char *)ele->name, 2, "%s", name);
   ele->op = op;
   ele->type_ele = UI_ELE_ARC;
@@ -205,7 +205,7 @@ int8_t UI_DrawFloating(UI_Ele_t *ele, const char *name, UI_GraphicOp_t op,
                        uint16_t digits, uint16_t width, uint16_t x_start,
                        uint16_t y_start, uint16_t float_high,
                        uint16_t float_middle, uint16_t float_low) {
-  if (ele == NULL) return -1;
+  ASSERT(ele);
   snprintf((char *)ele->name, 2, "%s", name);
   ele->op = op;
   ele->type_ele = UI_ELE_FLOAT;
@@ -244,7 +244,7 @@ int8_t UI_DrawInteger(UI_Ele_t *ele, const char *name, UI_GraphicOp_t op,
                       uint16_t width, uint16_t x_start, uint16_t y_start,
                       uint16_t int32_t_high, uint16_t int32_t_middle,
                       uint16_t int32_t_low) {
-  if (ele == NULL) return -1;
+  ASSERT(ele);
   snprintf((char *)ele->name, 2, "%s", name);
   ele->op = op;
   ele->type_ele = UI_ELE_INT;
@@ -280,7 +280,7 @@ int8_t UI_DrawString(UI_String_t *ele, const char *name, UI_GraphicOp_t op,
                      uint8_t layer, UI_Color_t color, uint16_t font_size,
                      uint16_t length, uint16_t width, uint16_t x_start,
                      uint16_t y_start, const char *str) {
-  if (ele == NULL) return -1;
+  ASSERT(ele);
   snprintf((char *)ele->graphic.name, 2, "%s", name);
   ele->graphic.op = op;
   ele->graphic.type_ele = UI_ELE_STR;
@@ -304,7 +304,7 @@ int8_t UI_DrawString(UI_String_t *ele, const char *name, UI_GraphicOp_t op,
  * @return int8_t
  */
 int8_t UI_DelLayer(UI_Del_t *del, UI_DelOp_t op, uint8_t layer) {
-  if (del == NULL) return -1;
+  ASSERT(del);
   del->op = op;
   del->layer = layer;
   return 0;

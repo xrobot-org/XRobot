@@ -7,6 +7,8 @@
 #include <math.h>
 #include <stddef.h>
 
+#include "user_math.h"
+
 #define POWER_BUFF_THRESHOLD 20
 #define CHASSIS_POWER_CHECK_FREQ 10
 #define CHASSIS_POWER_PASS_MULT 0.9f
@@ -26,7 +28,9 @@
 int8_t PowerLimit_ChassicOutput(float power_limit, float *motor_out,
                                 float *speed, uint32_t len) {
   /* power_limit小于0时不进行限制 */
-  if (motor_out == NULL || speed == NULL || power_limit < 0) return -1;
+  ASSERT(motor_out);
+  ASSERT(speed);
+  ASSERT(power_limit > 0.0f);
 
   float sum_motor_out = 0.0f;
   for (uint32_t i = 0; i < len; i++) {
@@ -55,6 +59,10 @@ int8_t PowerLimit_ChassicOutput(float power_limit, float *motor_out,
  */
 float PowerLimit_CapInput(float power_in, float power_limit,
                           float power_buffer) {
+  ASSERT(power_in > 0.0f);
+  ASSERT(power_limit > 0.0f);
+  ASSERT(power_buffer > 0.0f);
+
   float target_power = 0.0f;
 
   /* 计算下一个检测周期的剩余缓冲能量 */

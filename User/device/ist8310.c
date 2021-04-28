@@ -59,7 +59,7 @@ static uint8_t IST8310_ReadSingle(uint8_t reg) {
 }
 
 static void IST8310_Read(uint8_t reg, uint8_t *data, uint8_t len) {
-  if (data == NULL) return;
+  ASSERT(data);
 
   HAL_I2C_Mem_Read_DMA(BSP_I2C_GetHandle(BSP_I2C_COMP), IST8310_IIC_ADDRESS,
                        reg, I2C_MEMADD_SIZE_8BIT, data, len);
@@ -75,10 +75,10 @@ static void IST8310_IntCallback(void) {
 
 /* Exported functions ------------------------------------------------------- */
 int8_t IST8310_Init(IST8310_t *ist8310, const IST8310_Cali_t *cali) {
-  if (ist8310 == NULL) return DEVICE_ERR_NULL;
-  if (cali == NULL) return DEVICE_ERR_NULL;
+  ASSERT(ist8310);
+  ASSERT(cali);
   if (inited) return DEVICE_ERR_INITED;
-  if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
+  VERIFY((thread_alert = osThreadGetId()) != NULL);
 
   ist8310->cali = cali;
 
@@ -129,7 +129,7 @@ uint32_t IST8310_WaitDmaCplt() {
 }
 
 int8_t IST8310_Parse(IST8310_t *ist8310) {
-  if (ist8310 == NULL) return DEVICE_ERR_NULL;
+  ASSERT(ist8310);
 
 #if 1
   /* Magn -> T */

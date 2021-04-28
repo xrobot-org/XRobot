@@ -24,7 +24,7 @@
  * \return 函数运行结果
  */
 static int8_t Launcher_SetMode(Launcher_t *l, Game_LauncherMode_t mode) {
-  if (l == NULL) return -1;
+  ASSERT(l);
 
   if (mode == l->mode) return LAUNCHER_OK;
 
@@ -59,6 +59,8 @@ static int8_t Launcher_SetMode(Launcher_t *l, Game_LauncherMode_t mode) {
  * @return int8_t 函数运行结果
  */
 static int8_t Launcher_HeatLimit(Launcher_t *l, Referee_ForLauncher_t *l_ref) {
+  ASSERT(l);
+  ASSERT(l_ref);
   Launcher_HeatCtrl_t *hc = &(l->heat_ctrl);
   /* 当裁判系统在线时启用热量控制与射速控制 */
   if (l_ref->status == REF_STATUS_RUNNING) {
@@ -104,7 +106,8 @@ static int8_t Launcher_HeatLimit(Launcher_t *l, Referee_ForLauncher_t *l_ref) {
  */
 int8_t Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
                      float target_freq) {
-  if (l == NULL) return -1;
+  ASSERT(l);
+  ASSERT(param);
 
   l->param = param;              /* 初始化参数 */
   l->mode = LAUNCHER_MODE_RELAX; /* 设置默认模式 */
@@ -143,8 +146,8 @@ int8_t Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
  * \return 函数运行结果
  */
 int8_t Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can) {
-  if (l == NULL) return -1;
-  if (can == NULL) return -1;
+  ASSERT(l);
+  ASSERT(can);
 
   for (size_t i = 0; i < 2; i++) {
     l->feedback.fric_rpm[i] = can->motor.launcher.as_array[i].rotor_speed;
@@ -173,7 +176,9 @@ int8_t Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can) {
  */
 int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
                         Referee_ForLauncher_t *l_ref, uint32_t now) {
-  if (l == NULL) return -1;
+  ASSERT(l);
+  ASSERT(l_cmd);
+  ASSERT(l_ref);
 
   l->dt = (float)(now - l->lask_wakeup) / 1000.0f;
   l->lask_wakeup = now;
@@ -315,6 +320,8 @@ int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
  * \param out CAN设备发射器输出结构体
  */
 void Launcher_PackOutput(Launcher_t *l, CAN_LauncherOutput_t *out) {
+  ASSERT(l);
+  ASSERT(out);
   for (size_t i = 0; i < LAUNCHER_ACTR_NUM; i++) {
     out->as_array[i] = l->out[i];
   }
@@ -326,6 +333,7 @@ void Launcher_PackOutput(Launcher_t *l, CAN_LauncherOutput_t *out) {
  * \param output 要清空的结构体
  */
 void Launcher_ResetOutput(CAN_LauncherOutput_t *output) {
+  ASSERT(output);
   memset(output, 0, sizeof(*output));
 }
 
@@ -336,6 +344,8 @@ void Launcher_ResetOutput(CAN_LauncherOutput_t *output) {
  * @param ui UI结构体
  */
 void Launcher_PackUi(Launcher_t *l, Referee_LauncherUI_t *ui) {
+  ASSERT(l);
+  ASSERT(ui);
   ui->mode = l->mode;
   ui->fire = l->fire_ctrl.fire_mode;
 }

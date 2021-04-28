@@ -104,9 +104,9 @@ static void CAN_CAN2RxFifoMsgPendingCallback(void) {
 
 /* Exported functions ------------------------------------------------------- */
 int8_t CAN_Init(CAN_t *can, const CAN_Params_t *param) {
-  if (can == NULL) return DEVICE_ERR_NULL;
+  ASSERT(can);
   if (inited) return DEVICE_ERR_INITED;
-  if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
+  VERIFY((thread_alert = osThreadGetId()) != NULL);
 
   can->msgq_raw = osMessageQueueNew(32, sizeof(CAN_RawRx_t), NULL);
 
@@ -149,7 +149,8 @@ int8_t CAN_Init(CAN_t *can, const CAN_Params_t *param) {
 
 int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output,
                          CAN_t *can) {
-  if (output == NULL) return DEVICE_ERR_NULL;
+  ASSERT(output);
+  ASSERT(can);
 
   int16_t motor1, motor2, motor3, motor4;
   int16_t yaw_motor, pit_motor;
@@ -243,8 +244,8 @@ int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output,
 }
 
 int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx) {
-  if (can == NULL) return DEVICE_ERR_NULL;
-  if (can_rx == NULL) return DEVICE_ERR_NULL;
+  ASSERT(can);
+  ASSERT(can_rx);
 
   uint32_t index;
   switch (can_rx->rx_header.StdId) {
@@ -286,14 +287,14 @@ int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx) {
 }
 
 bool CAN_CheckFlag(CAN_t *can, uint32_t flag, bool clear_on_hit) {
-  if (can == NULL) return false;
+  ASSERT(can);
   bool pass = (can->recive_flag & flag) == flag;
   if (clear_on_hit && pass) CAN_ClearFlag(can, flag);
   return pass;
 }
 
 int8_t CAN_ClearFlag(CAN_t *can, uint32_t flag) {
-  if (can == NULL) return DEVICE_ERR_NULL;
+  ASSERT(can);
   can->recive_flag &= ~flag;
   return DEVICE_OK;
 }

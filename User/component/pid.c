@@ -26,7 +26,7 @@
  */
 int8_t PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
                 const KPID_Params_t *param) {
-  if (pid == NULL) return -1;
+  ASSERT(pid);
 
   if (!isfinite(param->p)) return -1;
   if (!isfinite(param->i)) return -1;
@@ -132,7 +132,7 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt) {
  * @return int8_t 0对应没有错误
  */
 int8_t PID_ResetIntegral(KPID_t *pid) {
-  if (pid == NULL) return -1;
+  ASSERT(pid);
 
   pid->i = 0.0f;
 
@@ -146,7 +146,7 @@ int8_t PID_ResetIntegral(KPID_t *pid) {
  * @return int8_t 0对应没有错误
  */
 int8_t PID_Reset(KPID_t *pid) {
-  if (pid == NULL) return -1;
+  ASSERT(pid);
 
   pid->i = 0.0f;
   pid->last.err = 0.0f;

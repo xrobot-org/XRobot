@@ -143,7 +143,7 @@ static uint8_t BMI_ReadSingle(BMI_Device_t dv, uint8_t reg) {
 }
 
 static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
-  if (data == NULL) return;
+  ASSERT(data);
 
   switch (dv) {
     case BMI_ACCL:
@@ -180,10 +180,10 @@ static void BMI088_GyroIntCallback(void) {
 
 /* Exported functions ------------------------------------------------------- */
 int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali) {
-  if (bmi088 == NULL) return DEVICE_ERR_NULL;
-  if (cali == NULL) return DEVICE_ERR_NULL;
+  ASSERT(bmi088);
+  ASSERT(cali);
   if (inited) return DEVICE_ERR_INITED;
-  if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
+  VERIFY((thread_alert = osThreadGetId()) != NULL);
 
   bmi088->cali = cali;
 
@@ -283,7 +283,7 @@ uint32_t BMI088_GyroWaitDmaCplt() {
 }
 
 int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
-  if (bmi088 == NULL) return DEVICE_ERR_NULL;
+  ASSERT(bmi088);
 
 #if 1
   int16_t raw_x, raw_y, raw_z;
@@ -322,7 +322,7 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
 }
 
 int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
-  if (bmi088 == NULL) return DEVICE_ERR_NULL;
+  ASSERT(bmi088);
 
 #if 1
   /* Gyroscope imu_raw -> degrees/sec -> radians/sec */

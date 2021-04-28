@@ -175,7 +175,7 @@ static uint8_t MPU_ReadSingle(uint8_t reg) {
 }
 
 static void MPU_Read(uint8_t reg, uint8_t *data, uint8_t len) {
-  if (data == NULL) return;
+  ASSERT(data);
 
   buffer[0] = (reg | 0x80);
 
@@ -185,7 +185,7 @@ static void MPU_Read(uint8_t reg, uint8_t *data, uint8_t len) {
 
 /* Exported functions ------------------------------------------------------- */
 int8_t IMU_Init(IMU_t *imu) {
-  if (imu == NULL) return -1;
+  ASSERT(imu);
 
   if (inited) return -1;
 
@@ -237,7 +237,7 @@ uint8_t IMU_StartReceiving(IMU_t *imu) {
  *	 UP is z
  */
 int8_t IMU_Parse(IMU_t *imu) {
-  if (imu == NULL) return -1;
+  ASSERT(imu);
 
   uint8_t raw[20];
 

@@ -14,7 +14,7 @@
  * @return int8_t 0对应没有错误
  */
 int8_t Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode) {
-  if (mixer == NULL) return -1;
+  ASSERT(mixer);
 
   mixer->mode = mode;
   return 0;
@@ -32,7 +32,7 @@ int8_t Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode) {
  */
 int8_t Mixer_Apply(Mixer_t *mixer, MoveVector_t *move_vec, float *out,
                    size_t len, float scale_factor) {
-  if (mixer == NULL) return -1;
+  ASSERT(mixer);
 
   switch (mixer->mode) {
     case MIXER_MECANUM:

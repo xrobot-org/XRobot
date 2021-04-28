@@ -1,6 +1,8 @@
 /* Includes ----------------------------------------------------------------- */
 #include "bsp/spi.h"
 
+#include "component/user_math.h"
+
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
@@ -104,7 +106,7 @@ SPI_HandleTypeDef *BSP_SPI_GetHandle(BSP_SPI_t spi) {
 
 int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type,
                                 void (*callback)(void)) {
-  if (callback == NULL) return BSP_ERR_NULL;
+  ASSERT(callback);
   SPI_Callback[spi][type] = callback;
   return BSP_OK;
 }

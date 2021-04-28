@@ -122,12 +122,12 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit,
 /**
  * \brief 通过CAN设备更新云台反馈信息
  *
- * \param gimbal 云台
+ * \param g 云台
  * \param can CAN设备
  *
  * \return 函数运行结果
  */
-int8_t Gimbal_UpdateFeedback(Gimbal_t *gimbal, const CAN_t *can);
+int8_t Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_t *can);
 
 /**
  * \brief 运行云台控制逻辑
