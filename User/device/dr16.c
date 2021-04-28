@@ -28,7 +28,7 @@ static void DR16_RxCpltCallback(void) {
 }
 
 static bool DR16_DataCorrupted(const DR16_t *dr16) {
-  if (dr16 == NULL) return DEVICE_ERR_NULL;
+  ASSERT(dr16);
 
   if ((dr16->data.ch_r_x < DR16_CH_VALUE_MIN) ||
       (dr16->data.ch_r_x > DR16_CH_VALUE_MAX))
@@ -55,9 +55,9 @@ static bool DR16_DataCorrupted(const DR16_t *dr16) {
 
 /* Exported functions ------------------------------------------------------- */
 int8_t DR16_Init(DR16_t *dr16) {
-  if (dr16 == NULL) return DEVICE_ERR_NULL;
+  ASSERT(dr16);
   if (inited) return DEVICE_ERR_INITED;
-  if ((thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;
+  VERIFY((thread_alert = osThreadGetId()) != NULL);
 
   BSP_UART_RegisterCallback(BSP_UART_DR16, BSP_UART_RX_CPLT_CB,
                             DR16_RxCpltCallback);
@@ -73,6 +73,7 @@ int8_t DR16_Restart(void) {
 }
 
 int8_t DR16_StartDmaRecv(DR16_t *dr16) {
+  ASSERT(dr16);
   if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_DR16),
                            (uint8_t *)&(dr16->data),
                            sizeof(dr16->data)) == HAL_OK)
@@ -86,7 +87,8 @@ bool DR16_WaitDmaCplt(uint32_t timeout) {
 }
 
 int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc) {
-  if (dr16 == NULL) return DEVICE_ERR_NULL;
+  ASSERT(dr16);
+  ASSERT(rc);
 
   if (DR16_DataCorrupted(dr16)) {
     return DEVICE_ERR;
@@ -118,8 +120,8 @@ int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc) {
 }
 
 int8_t DR16_HandleOffline(const DR16_t *dr16, CMD_RC_t *rc) {
-  if (dr16 == NULL) return DEVICE_ERR_NULL;
-  if (rc == NULL) return DEVICE_ERR_NULL;
+  ASSERT(dr16);
+  ASSERT(rc);
 
   UNUSED(dr16);
   memset(rc, 0, sizeof(*rc));

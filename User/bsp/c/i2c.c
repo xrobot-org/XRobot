@@ -1,6 +1,8 @@
 /* Includes ----------------------------------------------------------------- */
 #include "bsp/i2c.h"
 
+#include "component/user_math.h"
+
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
@@ -106,7 +108,7 @@ I2C_HandleTypeDef *BSP_I2C_GetHandle(BSP_I2C_t i2c) {
 
 int8_t BSP_I2C_RegisterCallback(BSP_I2C_t i2c, BSP_I2C_Callback_t type,
                                 void (*callback)(void)) {
-  if (callback == NULL) return BSP_ERR_NULL;
+  ASSERT(callback);
   I2C_Callback[i2c][type] = callback;
   return BSP_OK;
 }

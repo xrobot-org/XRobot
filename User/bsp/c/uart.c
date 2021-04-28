@@ -1,6 +1,8 @@
 /* Includes ----------------------------------------------------------------- */
 #include "bsp/uart.h"
 
+#include "component/user_math.h"
+
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
@@ -124,7 +126,7 @@ UART_HandleTypeDef *BSP_UART_GetHandle(BSP_UART_t uart) {
 
 int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type,
                                  void (*callback)(void)) {
-  if (callback == NULL) return BSP_ERR_NULL;
+  ASSERT(callback);
   UART_Callback[uart][type] = callback;
   return BSP_OK;
 }

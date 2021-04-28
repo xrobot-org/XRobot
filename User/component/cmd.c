@@ -302,8 +302,8 @@ static void CMD_RcLostLogic(CMD_t *cmd) {
  */
 int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
   /* 指针检测 */
-  if (cmd == NULL) return -1;
-  if (param == NULL) return -1;
+  ASSERT(cmd);
+  ASSERT(param);
 
   /* 设置机器人的命令参数，初始化控制方式为摇杆控制 */
   cmd->ctrl_method = CMD_METHOD_JOYSTICK_SWITCH;
@@ -333,8 +333,8 @@ inline bool CMD_CheckHostOverwrite(CMD_t *cmd) {
  */
 int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   /* 指针检测 */
-  if (rc == NULL) return -1;
-  if (cmd == NULL) return -1;
+  ASSERT(rc);
+  ASSERT(cmd);
 
   /* 在键盘鼠标和摇杆开关控制间切换 */
   if (CMD_KeyPressed(rc, CMD_KEY_SHIFT) && CMD_KeyPressed(rc, CMD_KEY_CTRL) &&
@@ -378,8 +378,8 @@ int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
 int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
   UNUSED(dt_sec); /* 未使用dt_sec，消除警告 */
   /* 指针检测 */
-  if (host == NULL) return -1;
-  if (cmd == NULL) return -1;
+  ASSERT(host);
+  ASSERT(cmd);
 
   /* 云台欧拉角设置为host相应的变化的欧拉角 */
   cmd->gimbal.delta_eulr.yaw = host->gimbal_delta.yaw;

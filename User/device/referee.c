@@ -83,7 +83,8 @@ static void RefereeSlowRefreshTimerCallback(void *arg) {
 }
 
 static int8_t Referee_MoveData(void *data, void *tmp, uint32_t len) {
-  if (len <= 0 || data == NULL || tmp == NULL) return DEVICE_ERR;
+  ASSERT(data);
+  ASSERT(tmp);
   memcpy(tmp, data, len);
   memset(data, 0, len);
   return DEVICE_OK;
@@ -115,7 +116,7 @@ static int8_t Referee_SetUiHeader(Referee_InterStudentHeader_t *header,
 /* Exported functions ------------------------------------------------------- */
 
 int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen) {
-  if (ref == NULL) return DEVICE_ERR_NULL;
+  ASSERT(ref);
   if (inited) return DEVICE_ERR_INITED;
 
   if ((gref->thread_alert = osThreadGetId()) == NULL) return DEVICE_ERR_NULL;

@@ -1,8 +1,8 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp_spi.h"
-
-#include "main.h"
 #include "spi.h"
+
+#include "bsp_spi.h"
+#include "main.h"
 
 /* Private define ----------------------------------------------------------- */
 #define OLED_SPI SPI1
@@ -149,8 +149,8 @@ void HAL_SPI_AbortCpltCallback(SPI_HandleTypeDef *hspi) {
 
 /* Exported functions ------------------------------------------------------- */
 int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type,
-                             void (*callback)(void)) {
-  if (callback == NULL) return -1;
+                                void (*callback)(void)) {
+  ASSERT(callback);
 
   switch (spi) {
     case BSP_SPI_IMU:
@@ -246,7 +246,7 @@ int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type,
 }
 
 int8_t BSP_SPI_Transmit(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
-  if (data == NULL) return -1;
+  ASSERT(data);
 
   switch (spi) {
     case BSP_SPI_IMU:
@@ -270,7 +270,7 @@ int8_t BSP_SPI_Transmit(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
 }
 
 int8_t BSP_SPI_Receive(BSP_SPI_t spi, uint8_t *data, uint16_t len) {
-  if (data == NULL) return -1;
+  ASSERT(data);
 
   switch (spi) {
     case BSP_SPI_IMU:

@@ -424,7 +424,7 @@ void Config_Set(Config_t *cfg) {
  * @return const Config_RobotParam_t* 机器人参数的指针
  */
 const Config_RobotParam_t *Config_GetRobotParam(const char *robot_param_name) {
-  if (robot_param_name == NULL) return NULL;
+  ASSERT(robot_param_name);
   for (size_t j = 0; robot_param_map[j].name != NULL; j++) {
     if (strcmp(robot_param_map[j].name, robot_param_name) == 0) {
       return robot_param_map[j].param;
@@ -440,7 +440,7 @@ const Config_RobotParam_t *Config_GetRobotParam(const char *robot_param_name) {
  * @return const Config_PilotCfg_t* 操作手配置的指针
  */
 const Config_PilotCfg_t *Config_GetPilotCfg(const char *pilot_cfg_name) {
-  if (pilot_cfg_name == NULL) return NULL;
+  ASSERT(pilot_cfg_name);
   for (size_t j = 0; pilot_cfg_map[j].name != NULL; j++) {
     if (strcmp(pilot_cfg_map[j].name, pilot_cfg_name) == 0) {
       return pilot_cfg_map[j].param;

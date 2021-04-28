@@ -62,7 +62,7 @@ static const float CAP_PERCENTAGE_CHARGE =
  */
 static int8_t Chassis_SetMode(Chassis_t *c, Game_ChassisMode_t mode,
                               uint32_t now) {
-  if (c == NULL) return CHASSIS_ERR_NULL; /* 主结构体不能为空 */
+  ASSERT(c);                              /* 主结构体不能为空 */
   if (mode == c->mode) return CHASSIS_OK; /* 模式未改变直接返回 */
 
   if (mode == CHASSIS_MODE_ROTOR && c->mode != CHASSIS_MODE_ROTOR) {
@@ -106,7 +106,7 @@ static float Chassis_CalcWz(const float min, const float max, uint32_t now) {
  */
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
                     AHRS_Eulr_t *mech_zero, float target_freq) {
-  if (c == NULL) return CHASSIS_ERR_NULL;
+  ASSERT(c);
 
   c->param = param;             /* 初始化参数 */
   c->mode = CHASSIS_MODE_RELAX; /* 设置上电后底盘默认模式 */
@@ -156,27 +156,27 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
   /* 根据底盘型号动态分配控制时使用的变量 */
   c->feedback.motor_rpm =
       BSP_Malloc((size_t)c->num_wheel * sizeof(*c->feedback.motor_rpm));
-  if (c->feedback.motor_rpm == NULL) goto error; /* 变量未分配，返回错误 */
+  ASSERT(c->feedback.motor_rpm);
 
   c->feedback.motor_current =
       BSP_Malloc((size_t)c->num_wheel * sizeof(*c->feedback.motor_current));
-  if (c->feedback.motor_current == NULL) goto error;
+  ASSERT(c->feedback.motor_current);
 
   c->setpoint.motor_rpm =
       BSP_Malloc((size_t)c->num_wheel * sizeof(*c->setpoint.motor_rpm));
-  if (c->setpoint.motor_rpm == NULL) goto error;
+  ASSERT(c->setpoint.motor_rpm);
 
   c->pid.motor = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->pid.motor));
-  if (c->pid.motor == NULL) goto error;
+  ASSERT(c->pid.motor);
 
   c->out = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->out));
-  if (c->out == NULL) goto error;
+  ASSERT(c->out);
 
   c->filter.in = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->filter.in));
-  if (c->filter.in == NULL) goto error;
+  ASSERT(c->filter.in);
 
   c->filter.out = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->filter.out));
-  if (c->filter.out == NULL) goto error;
+  ASSERT(c->filter.out);
 
   /* 初始化轮子电机控制PID和LPF */
   for (size_t i = 0; i < c->num_wheel; i++) {
@@ -195,16 +195,6 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
 
   Mixer_Init(&(c->mixer), mixer_mode); /* 初始化混合器 */
   return CHASSIS_OK;
-
-error:
-  /* 动态内存分配错误时，释放已经分配的内存，返回错误值 */
-  BSP_Free(c->feedback.motor_rpm);
-  BSP_Free(c->setpoint.motor_rpm);
-  BSP_Free(c->pid.motor);
-  BSP_Free(c->out);
-  BSP_Free(c->filter.in);
-  BSP_Free(c->filter.out);
-  return CHASSIS_ERR_NULL;
 }
 
 /**
@@ -217,8 +207,8 @@ error:
  */
 int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   /* 底盘数据和CAN结构体不能为空 */
-  if (c == NULL) return CHASSIS_ERR_NULL;
-  if (can == NULL) return CHASSIS_ERR_NULL;
+  ASSERT(c);
+  ASSERT(can);
 
   /* 如果电机反装重新计算正确的反馈值 */
   if (c->param->reverse.yaw) {
@@ -250,8 +240,8 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
 int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
                        uint32_t now) {
   /* 底盘数据和控制指令结构体不能为空 */
-  if (c == NULL) return CHASSIS_ERR_NULL;
-  if (c_cmd == NULL) return CHASSIS_ERR_NULL;
+  ASSERT(c);
+  ASSERT(c_cmd);
 
   c->dt = (float)(now - c->lask_wakeup) / 1000.0f;
   c->lask_wakeup = now;
@@ -357,6 +347,10 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
  */
 int8_t Chassis_PowerLimit(Chassis_t *c, const CAN_Capacitor_t *cap,
                           const Referee_ForChassis_t *ref) {
+  ASSERT(c);
+  ASSERT(cap);
+  ASSERT(ref);
+
   float power_limit = 0.0f;
   if (ref->status != REF_STATUS_RUNNING) {
     /* 裁判系统离线，将功率限制为固定值 */
@@ -395,6 +389,8 @@ int8_t Chassis_PowerLimit(Chassis_t *c, const CAN_Capacitor_t *cap,
  * \param out CAN设备底盘输出结构体
  */
 void Chassis_PackOutput(Chassis_t *c, CAN_ChassisOutput_t *out) {
+  ASSERT(c);
+  ASSERT(out);
   for (size_t i = 0; i < c->num_wheel; i++) {
     out->as_array[i] = c->out[i];
   }
@@ -406,6 +402,7 @@ void Chassis_PackOutput(Chassis_t *c, CAN_ChassisOutput_t *out) {
  * \param out CAN设备底盘输出结构体
  */
 void Chassis_ResetOutput(CAN_ChassisOutput_t *out) {
+  ASSERT(out);
   for (size_t i = 0; i < 4; i++) {
     out->as_array[i] = 0.0f;
   }
@@ -418,6 +415,8 @@ void Chassis_ResetOutput(CAN_ChassisOutput_t *out) {
  * @param ui UI数据结构体
  */
 void Chassis_PackUi(const Chassis_t *c, Referee_ChassisUI_t *ui) {
+  ASSERT(c);
+  ASSERT(ui);
   ui->mode = c->mode;
   ui->angle = c->feedback.gimbal_yaw_encoder - c->mech_zero->yaw;
 }

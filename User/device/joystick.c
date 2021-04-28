@@ -19,7 +19,7 @@ static uint32_t adc_raw;
 static Joystick_Status_t js;
 
 int8_t Joystick_Update(Joystick_Status_t *val) {
-  if (val == NULL) return -1;
+  ASSERT(val);
 
   HAL_ADC_Start(&hadc1);
 

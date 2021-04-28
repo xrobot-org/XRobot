@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "bsp/delay.h"
+#include "component/user_math.h"
 #include "usbd_cdc_if.h"
 
 /* Private define ----------------------------------------------------------- */
@@ -34,7 +35,7 @@ static int8_t BSP_USB_Transmit(uint8_t *buffer, uint16_t len) {
 
 /* Exported functions ------------------------------------------------------- */
 int8_t BSP_USB_ReadyReceive(osThreadId_t alert) {
-  if (alert == NULL) return BSP_ERR_NULL;
+  ASSERT(alert);
 
   gbsp_usb_alert = alert;
   CDC_ReadyReceive();

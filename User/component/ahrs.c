@@ -25,9 +25,9 @@ static float beta = BETA_IMU;
  */
 static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
                              const AHRS_Gyro_t *gyro) {
-  if (ahrs == NULL) return -1;
-  if (accl == NULL) return -1;
-  if (gyro == NULL) return -1;
+  ASSERT(ahrs);
+  ASSERT(accl);
+  ASSERT(gyro);
 
   beta = BETA_IMU;
 
@@ -46,14 +46,14 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
       q3q3;
 
   /* Rate of change of quaternion from gyroscope */
-  q_dot1 = 0.5f * (-ahrs->quat.q1 * gx - ahrs->quat.q2 * gy -
-                   ahrs->quat.q3 * gz);
-  q_dot2 = 0.5f * (ahrs->quat.q0 * gx + ahrs->quat.q2 * gz -
-                   ahrs->quat.q3 * gy);
-  q_dot3 = 0.5f * (ahrs->quat.q0 * gy - ahrs->quat.q1 * gz +
-                   ahrs->quat.q3 * gx);
-  q_dot4 = 0.5f * (ahrs->quat.q0 * gz + ahrs->quat.q1 * gy -
-                   ahrs->quat.q2 * gx);
+  q_dot1 =
+      0.5f * (-ahrs->quat.q1 * gx - ahrs->quat.q2 * gy - ahrs->quat.q3 * gz);
+  q_dot2 =
+      0.5f * (ahrs->quat.q0 * gx + ahrs->quat.q2 * gz - ahrs->quat.q3 * gy);
+  q_dot3 =
+      0.5f * (ahrs->quat.q0 * gy - ahrs->quat.q1 * gz + ahrs->quat.q3 * gx);
+  q_dot4 =
+      0.5f * (ahrs->quat.q0 * gz + ahrs->quat.q1 * gy - ahrs->quat.q2 * gx);
 
   /* Compute feedback only if accelerometer measurement valid (avoids NaN in
    * accelerometer normalisation) */
@@ -81,12 +81,12 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
 
     /* Gradient decent algorithm corrective step */
     s0 = _4q0 * q2q2 + _2q2 * ax + _4q0 * q1q1 - _2q1 * ay;
-    s1 = _4q1 * q3q3 - _2q3 * ax + 4.0f * q0q0 * ahrs->quat.q1 -
-         _2q0 * ay - _4q1 + _8q1 * q1q1 + _8q1 * q2q2 + _4q1 * az;
-    s2 = 4.0f * q0q0 * ahrs->quat.q2 + _2q0 * ax + _4q2 * q3q3 -
-         _2q3 * ay - _4q2 + _8q2 * q1q1 + _8q2 * q2q2 + _4q2 * az;
-    s3 = 4.0f * q1q1 * ahrs->quat.q3 - _2q1 * ax +
-         4.0f * q2q2 * ahrs->quat.q3 - _2q2 * ay;
+    s1 = _4q1 * q3q3 - _2q3 * ax + 4.0f * q0q0 * ahrs->quat.q1 - _2q0 * ay -
+         _4q1 + _8q1 * q1q1 + _8q1 * q2q2 + _4q1 * az;
+    s2 = 4.0f * q0q0 * ahrs->quat.q2 + _2q0 * ax + _4q2 * q3q3 - _2q3 * ay -
+         _4q2 + _8q2 * q1q1 + _8q2 * q2q2 + _4q2 * az;
+    s3 = 4.0f * q1q1 * ahrs->quat.q3 - _2q1 * ax + 4.0f * q2q2 * ahrs->quat.q3 -
+         _2q2 * ay;
 
     /* normalise step magnitude */
     recip_norm = InvSqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3);
@@ -110,10 +110,9 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
   ahrs->quat.q3 += q_dot4 * ahrs->inv_sample_freq;
 
   /* Normalise quaternion */
-  recip_norm = InvSqrt(ahrs->quat.q0 * ahrs->quat.q0 +
-                       ahrs->quat.q1 * ahrs->quat.q1 +
-                       ahrs->quat.q2 * ahrs->quat.q2 +
-                       ahrs->quat.q3 * ahrs->quat.q3);
+  recip_norm =
+      InvSqrt(ahrs->quat.q0 * ahrs->quat.q0 + ahrs->quat.q1 * ahrs->quat.q1 +
+              ahrs->quat.q2 * ahrs->quat.q2 + ahrs->quat.q3 * ahrs->quat.q3);
   ahrs->quat.q0 *= recip_norm;
   ahrs->quat.q1 *= recip_norm;
   ahrs->quat.q2 *= recip_norm;
@@ -131,7 +130,7 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
  * @return int8_t 0对应没有错误
  */
 int8_t AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq) {
-  if (ahrs == NULL) return -1;
+  ASSERT(ahrs);
 
   ahrs->inv_sample_freq = 1.0f / sample_freq;
 
@@ -189,9 +188,9 @@ int8_t AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq) {
  */
 int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
                    const AHRS_Gyro_t *gyro, const AHRS_Magn_t *magn) {
-  if (ahrs == NULL) return -1;
-  if (accl == NULL) return -1;
-  if (gyro == NULL) return -1;
+  ASSERT(ahrs);
+  ASSERT(accl);
+  ASSERT(gyro);
 
   beta = BETA_AHRS;
 
@@ -224,14 +223,14 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
   float gz = gyro->z;
 
   /* Rate of change of quaternion from gyroscope */
-  q_dot1 = 0.5f * (-ahrs->quat.q1 * gx - ahrs->quat.q2 * gy -
-                   ahrs->quat.q3 * gz);
-  q_dot2 = 0.5f * (ahrs->quat.q0 * gx + ahrs->quat.q2 * gz -
-                   ahrs->quat.q3 * gy);
-  q_dot3 = 0.5f * (ahrs->quat.q0 * gy - ahrs->quat.q1 * gz +
-                   ahrs->quat.q3 * gx);
-  q_dot4 = 0.5f * (ahrs->quat.q0 * gz + ahrs->quat.q1 * gy -
-                   ahrs->quat.q2 * gx);
+  q_dot1 =
+      0.5f * (-ahrs->quat.q1 * gx - ahrs->quat.q2 * gy - ahrs->quat.q3 * gz);
+  q_dot2 =
+      0.5f * (ahrs->quat.q0 * gx + ahrs->quat.q2 * gz - ahrs->quat.q3 * gy);
+  q_dot3 =
+      0.5f * (ahrs->quat.q0 * gy - ahrs->quat.q1 * gz + ahrs->quat.q3 * gx);
+  q_dot4 =
+      0.5f * (ahrs->quat.q0 * gz + ahrs->quat.q1 * gy - ahrs->quat.q2 * gx);
 
   /* Compute feedback only if accelerometer measurement valid (avoids NaN in
    * accelerometer normalisation) */
@@ -271,17 +270,16 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
     q3q3 = ahrs->quat.q3 * ahrs->quat.q3;
 
     /* Reference direction of Earth's magnetic field */
-    hx = mx * q0q0 - _2q0my * ahrs->quat.q3 +
-         _2q0mz * ahrs->quat.q2 + mx * q1q1 +
-         _2q1 * my * ahrs->quat.q2 + _2q1 * mz * ahrs->quat.q3 -
+    hx = mx * q0q0 - _2q0my * ahrs->quat.q3 + _2q0mz * ahrs->quat.q2 +
+         mx * q1q1 + _2q1 * my * ahrs->quat.q2 + _2q1 * mz * ahrs->quat.q3 -
          mx * q2q2 - mx * q3q3;
-    hy = _2q0mx * ahrs->quat.q3 + my * q0q0 -
-         _2q0mz * ahrs->quat.q1 + _2q1mx * ahrs->quat.q2 -
-         my * q1q1 + my * q2q2 + _2q2 * mz * ahrs->quat.q3 - my * q3q3;
+    hy = _2q0mx * ahrs->quat.q3 + my * q0q0 - _2q0mz * ahrs->quat.q1 +
+         _2q1mx * ahrs->quat.q2 - my * q1q1 + my * q2q2 +
+         _2q2 * mz * ahrs->quat.q3 - my * q3q3;
     _2bx = sqrtf(hx * hx + hy * hy);
-    _2bz = -_2q0mx * ahrs->quat.q2 + _2q0my * ahrs->quat.q1 +
-           mz * q0q0 + _2q1mx * ahrs->quat.q3 - mz * q1q1 +
-           _2q2 * my * ahrs->quat.q3 - mz * q2q2 + mz * q3q3;
+    _2bz = -_2q0mx * ahrs->quat.q2 + _2q0my * ahrs->quat.q1 + mz * q0q0 +
+           _2q1mx * ahrs->quat.q3 - mz * q1q1 + _2q2 * my * ahrs->quat.q3 -
+           mz * q2q2 + mz * q3q3;
     _4bx = 2.0f * _2bx;
     _4bz = 2.0f * _2bz;
 
@@ -341,10 +339,9 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
   ahrs->quat.q3 += q_dot4 * ahrs->inv_sample_freq;
 
   /* Normalise quaternion */
-  recip_norm = InvSqrt(ahrs->quat.q0 * ahrs->quat.q0 +
-                       ahrs->quat.q1 * ahrs->quat.q1 +
-                       ahrs->quat.q2 * ahrs->quat.q2 +
-                       ahrs->quat.q3 * ahrs->quat.q3);
+  recip_norm =
+      InvSqrt(ahrs->quat.q0 * ahrs->quat.q0 + ahrs->quat.q1 * ahrs->quat.q1 +
+              ahrs->quat.q2 * ahrs->quat.q2 + ahrs->quat.q3 * ahrs->quat.q3);
   ahrs->quat.q0 *= recip_norm;
   ahrs->quat.q1 *= recip_norm;
   ahrs->quat.q2 *= recip_norm;
@@ -361,29 +358,27 @@ int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
  * @return int8_t 0对应没有错误
  */
 int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
-  if (eulr == NULL) return -1;
-  if (ahrs == NULL) return -1;
+  ASSERT(eulr);
+  ASSERT(ahrs);
 
-  const float sinr_cosp = 2.0f * (ahrs->quat.q0 * ahrs->quat.q1 +
-                                  ahrs->quat.q2 * ahrs->quat.q3);
-  const float cosr_cosp =
-      1.0f - 2.0f * (ahrs->quat.q1 * ahrs->quat.q1 +
-                     ahrs->quat.q2 * ahrs->quat.q2);
+  const float sinr_cosp =
+      2.0f * (ahrs->quat.q0 * ahrs->quat.q1 + ahrs->quat.q2 * ahrs->quat.q3);
+  const float cosr_cosp = 1.0f - 2.0f * (ahrs->quat.q1 * ahrs->quat.q1 +
+                                         ahrs->quat.q2 * ahrs->quat.q2);
   eulr->pit = atan2f(sinr_cosp, cosr_cosp);
 
-  const float sinp = 2.0f * (ahrs->quat.q0 * ahrs->quat.q2 -
-                             ahrs->quat.q3 * ahrs->quat.q1);
+  const float sinp =
+      2.0f * (ahrs->quat.q0 * ahrs->quat.q2 - ahrs->quat.q3 * ahrs->quat.q1);
 
   if (fabsf(sinp) >= 1.0f)
     eulr->rol = copysignf(M_PI / 2.0f, sinp);
   else
     eulr->rol = asinf(sinp);
 
-  const float siny_cosp = 2.0f * (ahrs->quat.q0 * ahrs->quat.q3 +
-                                  ahrs->quat.q1 * ahrs->quat.q2);
-  const float cosy_cosp =
-      1.0f - 2.0f * (ahrs->quat.q2 * ahrs->quat.q2 +
-                     ahrs->quat.q3 * ahrs->quat.q3);
+  const float siny_cosp =
+      2.0f * (ahrs->quat.q0 * ahrs->quat.q3 + ahrs->quat.q1 * ahrs->quat.q2);
+  const float cosy_cosp = 1.0f - 2.0f * (ahrs->quat.q2 * ahrs->quat.q2 +
+                                         ahrs->quat.q3 * ahrs->quat.q3);
   eulr->yaw = atan2f(siny_cosp, cosy_cosp);
 
 #if 0

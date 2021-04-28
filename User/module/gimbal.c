@@ -22,7 +22,7 @@
  * \return 函数运行结果
  */
 static int8_t Gimbal_SetMode(Gimbal_t *g, Game_GimbalMode_t mode) {
-  if (g == NULL) return -1;
+  ASSERT(g);
   if (mode == g->mode) return GIMBAL_OK;
 
   /* 切换模式后重置PID和滤波器 */
@@ -59,7 +59,8 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, Game_GimbalMode_t mode) {
  */
 int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
                    float target_freq) {
-  if (g == NULL) return -1;
+  ASSERT(g);
+  ASSERT(param);
 
   g->param = param;            /* 初始化参数 */
   g->mode = GIMBAL_MODE_RELAX; /* 设置默认模式 */
@@ -90,22 +91,20 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
 /**
  * \brief 通过CAN设备更新云台反馈信息
  *
- * \param gimbal 云台
+ * \param g 云台
  * \param can CAN设备
  *
  * \return 函数运行结果
  */
-int8_t Gimbal_UpdateFeedback(Gimbal_t *gimbal, const CAN_t *can) {
-  if (gimbal == NULL) return -1;
-  if (can == NULL) return -1;
+int8_t Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_t *can) {
+  ASSERT(g);
+  ASSERT(can);
 
-  gimbal->feedback.eulr.encoder.yaw = can->motor.gimbal.named.yaw.rotor_angle;
-  gimbal->feedback.eulr.encoder.pit = can->motor.gimbal.named.pit.rotor_angle;
+  g->feedback.eulr.encoder.yaw = can->motor.gimbal.named.yaw.rotor_angle;
+  g->feedback.eulr.encoder.pit = can->motor.gimbal.named.pit.rotor_angle;
 
-  if (gimbal->param->reverse.yaw)
-    CircleReverse(&(gimbal->feedback.eulr.encoder.yaw));
-  if (gimbal->param->reverse.pit)
-    CircleReverse(&(gimbal->feedback.eulr.encoder.pit));
+  if (g->param->reverse.yaw) CircleReverse(&(g->feedback.eulr.encoder.yaw));
+  if (g->param->reverse.pit) CircleReverse(&(g->feedback.eulr.encoder.pit));
 
   return 0;
 }
@@ -121,8 +120,8 @@ int8_t Gimbal_UpdateFeedback(Gimbal_t *gimbal, const CAN_t *can) {
  * \return 函数运行结果
  */
 int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
-  if (g == NULL) return -1;
-  if (g_cmd == NULL) return -1;
+  ASSERT(g);
+  ASSERT(g_cmd);
 
   g->dt = (float)(now - g->lask_wakeup) / 1000.0f;
   g->lask_wakeup = now;
@@ -201,6 +200,8 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
  * \param out CAN设备云台输出结构体
  */
 void Gimbal_PackOutput(Gimbal_t *g, CAN_GimbalOutput_t *out) {
+  ASSERT(g);
+  ASSERT(out);
   out->named.yaw = g->out[GIMBAL_ACTR_YAW_IDX];
   out->named.pit = g->out[GIMBAL_ACTR_PIT_IDX];
 }
@@ -211,6 +212,7 @@ void Gimbal_PackOutput(Gimbal_t *g, CAN_GimbalOutput_t *out) {
  * \param output 要清空的结构体
  */
 void Gimbal_ResetOutput(CAN_GimbalOutput_t *output) {
+  ASSERT(output);
   memset(output, 0, sizeof(*output));
 }
 
@@ -221,5 +223,7 @@ void Gimbal_ResetOutput(CAN_GimbalOutput_t *output) {
  * @param ui UI结构体
  */
 void Gimbal_PackUi(const Gimbal_t *g, Referee_GimbalUI_t *ui) {
+  ASSERT(g);
+  ASSERT(ui);
   ui->mode = g->mode;
 }
