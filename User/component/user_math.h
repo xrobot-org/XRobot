@@ -36,6 +36,32 @@
     _a < _b ? _a : _b;      \
   })
 
+#ifdef DEBUG
+#define ASSERT(expr)                    \
+  do {                                  \
+    if (!(expr)) {                      \
+      VerifyFailed(__FILE__, __LINE__); \
+    }                                   \
+  } while (0)
+#else
+#define ASSERT(expr) ((void)(0))
+#endif
+
+#ifdef DEBUG
+#define VERIFY(expr)                    \
+  do {                                  \
+    if (!(expr)) {                      \
+      VerifyFailed(__FILE__, __LINE__); \
+    }                                   \
+  } while (0)
+#else
+#define VERIFY(expr) ((void)(expr))
+#endif
+
+#ifndef UNUSED
+#define UNUSED(X) (void)X
+#endif
+
 /* 移动向量 */
 typedef struct {
   float vx; /* 前后平移 */
@@ -96,3 +122,11 @@ void CircleReverse(float *origin);
  * @return 摩擦轮转速
  */
 float CalculateRpm(float bullet_speed, float fric_radius, bool is17mm);
+
+/**
+ * @brief 断言失败处理
+ *
+ * @param file 文件名
+ * @param line 行号
+ */
+void VerifyFailed(const char *file, uint32_t line);

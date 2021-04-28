@@ -111,3 +111,17 @@ inline float CalculateRpm(float bullet_speed, float fric_radius, bool is17mm) {
   /* 不为裁判系统设定值时,计算转速 */
   return 60.0f * (float)bullet_speed / (M_2PI * fric_radius);
 }
+
+/**
+ * @brief 断言失败处理
+ *
+ * @param file 文件名
+ * @param line 行号
+ */
+void VerifyFailed(const char *file, uint32_t line) {
+  (void)file;
+  (void)line;
+  while (1) {
+    __NOP();
+  }
+}
