@@ -227,14 +227,14 @@ typedef struct {
  * @brief 解析行为命令
  *
  * @param rc 遥控器数据
- * @param cmd 主结构体
+ * @param cmd 控制指令数据
  */
 int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param);
 
 /**
  * @brief 检查是否启用上位机控制指令覆盖
  *
- * @param cmd 主结构体
+ * @param cmd 控制指令数据
  * @return true 启用
  * @return false 不启用
  */

@@ -28,7 +28,7 @@
 /**
  * @brief 找到行为对应的按键值
  *
- * @param cmd 主结构体
+ * @param cmd 控制指令数据
  * @param behavior 行为
  * @return CMD_KeyValue_t 按键值
  */
@@ -40,7 +40,7 @@ static inline CMD_KeyValue_t CMD_BehaviorToKey(const CMD_t *cmd,
 /**
  * @brief 找到行为对应的出发类型
  *
- * @param cmd 主结构体
+ * @param cmd 控制指令数据
  * @param behavior 行为
  * @return CMD_ActiveType_t 触发类型
  */
@@ -76,7 +76,7 @@ static bool CMD_KeyPressed(const CMD_RC_t *rc, CMD_KeyValue_t key) {
  * @brief 检查行为触发条件是否满足
  *
  * @param rc 遥控器数据
- * @param cmd 主结构体
+ * @param cmd 控制指令数据
  * @param behavior 行为
  * @return true 满足
  * @return false 不满足
@@ -120,7 +120,7 @@ static bool CMD_BehaviorOccurred(const CMD_RC_t *rc, const CMD_t *cmd,
  * @brief 解析键盘鼠标控制逻辑
  *
  * @param rc 遥控器数据
- * @param cmd 主结构体
+ * @param cmd 控制指令数据
  * @param dt_sec 两次解析的间隔
  */
 static void CMD_MouseKeyboardLogic(const CMD_RC_t *rc, CMD_t *cmd,
@@ -219,13 +219,14 @@ static void CMD_MouseKeyboardLogic(const CMD_RC_t *rc, CMD_t *cmd,
 }
 
 /**
- * @brief 解析rc行为逻辑
+ * @brief 解析摇杆开关控制逻辑
  *
  * @param rc 遥控器数据
- * @param cmd 主结构体
+ * @param cmd 控制指令数据
  * @param dt_sec 两次解析的间隔
  */
-static void CMD_JoystickLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
+static void CMD_JoystickSwitchLogic(const CMD_RC_t *rc, CMD_t *cmd,
+                                    float dt_sec) {
   switch (rc->sw_l) {
       /* 左拨杆相应行为选择和解析 */
     case CMD_SW_UP:
@@ -283,7 +284,7 @@ static bool CMD_CheckRcLost(const CMD_RC_t *rc) {
 /**
  * @brief rc失控时机器人恢复放松模式
  *
- * @param cmd 主结构体
+ * @param cmd 控制指令数据
  */
 static void CMD_RcLostLogic(CMD_t *cmd) {
   /* 机器人底盘、云台、发射器运行模式恢复至放松模式 */
@@ -295,7 +296,7 @@ static void CMD_RcLostLogic(CMD_t *cmd) {
 /**
  * @brief 初始化命令解析
  *
- * @param cmd 主结构体
+ * @param cmd 控制指令数据
  * @param param 参数
  * @return int8_t 0对应没有错误
  */
@@ -314,7 +315,7 @@ int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
 /**
  * @brief 检查是否启用上位机控制指令覆盖
  *
- * @param cmd 主结构体
+ * @param cmd 控制指令数据
  * @return true 启用
  * @return false 不启用
  */
@@ -335,17 +336,23 @@ int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   if (rc == NULL) return -1;
   if (cmd == NULL) return -1;
 
-  /* 在pc控制和摇杆控制间切换 */
+  /* 在键盘鼠标和摇杆开关控制间切换 */
   if (CMD_KeyPressed(rc, CMD_KEY_SHIFT) && CMD_KeyPressed(rc, CMD_KEY_CTRL) &&
-      CMD_KeyPressed(rc, CMD_KEY_Q))
-    cmd->ctrl_method = true;
+      CMD_KeyPressed(rc, CMD_KEY_Q)) {
+    cmd->ctrl_method = CMD_METHOD_MOUSE_KEYBOARD;
+  }
 
   if (CMD_KeyPressed(rc, CMD_KEY_SHIFT) && CMD_KeyPressed(rc, CMD_KEY_CTRL) &&
-      CMD_KeyPressed(rc, CMD_KEY_E))
-    cmd->ctrl_method = false;
+      CMD_KeyPressed(rc, CMD_KEY_E)) {
+    cmd->ctrl_method = CMD_METHOD_JOYSTICK_SWITCH;
+  }
 
   /* 当遥控链路丢失时，恢复机器人至默认状态 */
   if (CMD_CheckRcLost(rc)) {
+    /* 遥控链路应该拥有最高控制权，
+     * 任何时候关闭遥控器，都必须保证机器人进入放松状态
+     * 进而保证任何失控可以通过关闭遥控器来解决
+     */
     CMD_RcLostLogic(cmd);
   } else {
     switch (cmd->ctrl_method) {
@@ -353,7 +360,7 @@ int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
         CMD_MouseKeyboardLogic(rc, cmd, dt_sec);
         break;
       default:
-        CMD_JoystickLogic(rc, cmd, dt_sec);
+        CMD_JoystickSwitchLogic(rc, cmd, dt_sec);
         break;
     }
   }
