@@ -180,7 +180,7 @@ static void CMD_MouseKeyboardLogic(const CMD_RC_t *rc, CMD_t *cmd,
     cmd->launcher.cover_open = !cmd->launcher.cover_open;
   }
   if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_BUFF)) {
-    if (cmd->ai_status == AI_STATUS_HITSWITCH) {
+    if (cmd->ai_status == AI_STATUS_HITBUFF) {
       /* 停止ai的打符模式，停用host控制 */
       cmd->ctrl_source = CMD_SOURCE_RC;
       cmd->ai_status = AI_STATUS_STOP;
@@ -188,7 +188,7 @@ static void CMD_MouseKeyboardLogic(const CMD_RC_t *rc, CMD_t *cmd,
       /* 自瞄模式中切换失败提醒 */
     } else {
       /* ai切换至打符模式，启用host控制 */
-      cmd->ai_status = AI_STATUS_HITSWITCH;
+      cmd->ai_status = AI_STATUS_HITBUFF;
       cmd->ctrl_source = CMD_SOURCE_HOST;
     }
   }
@@ -327,7 +327,7 @@ inline bool CMD_CheckHostOverwrite(CMD_t *cmd) {
  * @brief 解析命令
  *
  * @param rc 遥控器数据
- * @param cmd 命令
+ * @param cmd 控制指令数据
  * @param dt_sec 两次解析的间隔
  * @return int8_t 0对应没有错误
  */
@@ -371,7 +371,7 @@ int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
  * @brief 解析上位机命令
  *
  * @param host host数据
- * @param cmd 命令
+ * @param cmd 控制指令数据
  * @param dt_sec 两次解析的间隔
  * @return int8_t 0对应没有错误
  */
@@ -393,4 +393,15 @@ int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
     cmd->launcher.mode = LAUNCHER_MODE_SAFE;
   }
   return 0;
+}
+
+/**
+ * @brief 导出控制指令UI数据
+ *
+ * @param cmd_ui 控制指令UI数据
+ * @param cmd 控制指令数据
+ */
+void CMD_PackUi(CMD_UI_t *cmd_ui, const CMD_t *cmd) {
+  cmd_ui->ctrl_method = cmd->ctrl_method;
+  cmd_ui->ctrl_source = cmd->ctrl_source;
 }
