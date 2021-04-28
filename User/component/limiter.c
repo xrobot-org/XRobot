@@ -33,7 +33,7 @@ int8_t PowerLimit_ChassicOutput(float power_limit, float *motor_out,
   ASSERT(power_limit > 0.0f);
 
   float sum_motor_out = 0.0f;
-  for (uint32_t i = 0; i < len; i++) {
+  for (size_t i = 0; i < len; i++) {
     /* 总功率计算 P=F(由转矩电流表示)*V(由转速表示) */
     sum_motor_out +=
         fabsf(motor_out[i]) * fabsf(speed[i]) * CHASSIS_MOTOR_CIRCUMFERENCE;
@@ -41,7 +41,7 @@ int8_t PowerLimit_ChassicOutput(float power_limit, float *motor_out,
 
   /* 保持每个电机输出值缩小时比例不变 */
   if (sum_motor_out > power_limit) {
-    for (uint32_t i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
       motor_out[i] *= power_limit / sum_motor_out;
     }
   }
