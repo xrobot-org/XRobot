@@ -119,8 +119,8 @@ inline float CalculateRpm(float bullet_speed, float fric_radius, bool is17mm) {
  * @param line 行号
  */
 void VerifyFailed(const char *file, uint32_t line) {
-  (void)file;
-  (void)line;
+  UNUSED(file);
+  UNUSED(line);
   while (1) {
     __NOP();
   }

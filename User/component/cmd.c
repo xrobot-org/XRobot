@@ -376,7 +376,7 @@ int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
  * @return int8_t 0对应没有错误
  */
 int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
-  (void)dt_sec; /* 未使用dt_sec，消除警告 */
+  UNUSED(dt_sec); /* 未使用dt_sec，消除警告 */
   /* 指针检测 */
   if (host == NULL) return -1;
   if (cmd == NULL) return -1;

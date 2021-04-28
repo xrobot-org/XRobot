@@ -44,7 +44,7 @@ static Referee_GimbalUI_t gimbal_ui;
  * \param argument 未使用
  */
 void Task_CtrlGimbal(void *argument) {
-  (void)argument; /* 未使用argument，消除警告 */
+  UNUSED(argument); /* 未使用argument，消除警告 */
 
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_GIMBAL;
   /* 初始化云台 */

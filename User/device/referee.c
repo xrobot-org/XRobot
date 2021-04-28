@@ -73,12 +73,12 @@ static void Referee_TxCpltCallback(void) {
 }
 
 static void RefereeFastRefreshTimerCallback(void *arg) {
-  (void)arg;
+  UNUSED(arg);
   osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_FAST_REFRESH_UI);
 }
 
 static void RefereeSlowRefreshTimerCallback(void *arg) {
-  (void)arg;
+  UNUSED(arg);
   osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_SLOW_REFRESH_UI);
 }
 
@@ -161,7 +161,7 @@ void Referee_HandleOffline(Referee_t *referee) {
 }
 
 int8_t Referee_StartReceiving(Referee_t *ref) {
-  (void)ref;
+  UNUSED(ref);
   if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_REF), rxbuf,
                            REF_LEN_RX_BUFF) == HAL_OK)
     return DEVICE_OK;

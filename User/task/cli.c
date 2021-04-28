@@ -53,8 +53,8 @@ static const char *const CLI_START = "qdu-rm>";
 static BaseType_t Command_Endian(char *out_buffer, size_t len,
                                  const char *command_string) {
   if (out_buffer == NULL) return pdFALSE;
-  (void)command_string; /* 没用到command_string，消除警告 */
-  len -= 1;             /* 字符串后面有\0 */
+  UNUSED(command_string); /* 没用到command_string，消除警告 */
+  len -= 1;               /* 字符串后面有\0 */
 
   /* 任务本身相关的内容 */
   uint8_t list[2] = {0x11, 0x22};
@@ -126,7 +126,7 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       "------------------------------------------------\r\n";
 
   if (out_buffer == NULL) return pdFALSE;
-  (void)command_string;
+  UNUSED(command_string);
   len -= 1;
 
   /* 堆区信息的相关内容 */
@@ -363,7 +363,7 @@ command_error:
 static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
                                    const char *command_string) {
   if (out_buffer == NULL) return pdFALSE;
-  (void)command_string;
+  UNUSED(command_string);
   len -= 1;
 
   /* 陀螺仪校准相关内容 */
@@ -474,7 +474,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
 static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
                                       const char *command_string) {
   if (out_buffer == NULL) return pdFALSE;
-  (void)command_string;
+  UNUSED(command_string);
   len -= 1;
 
   CAN_t can;
@@ -522,7 +522,7 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
 static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
                                        const char *command_string) {
   if (out_buffer == NULL) return pdFALSE;
-  (void)command_string;
+  UNUSED(command_string);
   len -= 1;
 
   CAN_t can;
@@ -580,7 +580,7 @@ static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
 static BaseType_t Command_XXX(char *out_buffer, size_t len,
                                            const char *command_string) {
   if (out_buffer == NULL) return pdFALSE;
-  (void)command_string;
+  UNUSED(command_string);
   len -= 1;
 
   static FiniteStateMachine_t fsm;
@@ -667,7 +667,7 @@ static const CLI_Command_Definition_t command_table[] = {
  * \param argument 未使用
  */
 void Task_CLI(void *argument) {
-  (void)argument;                      /* 未使用argument，消除警告 */
+  UNUSED(argument);                    /* 未使用argument，消除警告 */
   static char input[MAX_INPUT_LENGTH]; /* 输入字符串缓存 */
   char *output = FreeRTOS_CLIGetOutputBuffer(); /* 输出字符串缓存 */
   char rx_char;                                 /* 接收到的字符 */
