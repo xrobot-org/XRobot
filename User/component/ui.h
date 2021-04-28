@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "component\user_math.h"
+#include "component\utils.h"
 
 #define UI_GRAPHIC_LAYER_CONST (0)
 #define UI_GRAPHIC_LAYER_AUTOAIM (1)

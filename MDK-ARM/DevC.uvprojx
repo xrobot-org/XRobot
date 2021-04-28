@@ -1482,9 +1482,9 @@
               <FilePath>..\User\component\pid.c</FilePath>
             </File>
             <File>
-              <FileName>user_math.c</FileName>
+              <FileName>utils.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\component\user_math.c</FilePath>
+              <FilePath>..\User\component\utils.c</FilePath>
             </File>
             <File>
               <FileName>FreeRTOS_CLI.c</FileName>
@@ -3142,9 +3142,9 @@
               <FilePath>..\User\component\pid.c</FilePath>
             </File>
             <File>
-              <FileName>user_math.c</FileName>
+              <FileName>utils.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\component\user_math.c</FilePath>
+              <FilePath>..\User\component\utils.c</FilePath>
             </File>
             <File>
               <FileName>FreeRTOS_CLI.c</FileName>

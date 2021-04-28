@@ -12,7 +12,7 @@
 #include "bsp/uart.h"
 #include "component/crc16.h"
 #include "component/crc8.h"
-#include "component/user_math.h"
+#include "component/utils.h"
 
 /* Private define ----------------------------------------------------------- */
 #define REF_HEADER_SOF (0xA5)

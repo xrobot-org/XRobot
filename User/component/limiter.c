@@ -7,7 +7,7 @@
 #include <math.h>
 #include <stddef.h>
 
-#include "user_math.h"
+#include "utils.h"
 
 #define POWER_BUFF_THRESHOLD 20
 #define CHASSIS_POWER_CHECK_FREQ 10
