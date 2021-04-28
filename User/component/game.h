@@ -58,9 +58,18 @@ typedef enum {
   LAUNCHER_MODE_LOADED, /* 上膛模式，摩擦轮开启。随时准备开火 */
 } Game_LauncherMode_t;
 
+/* 开火模式 */
 typedef enum {
   FIRE_MODE_SINGLE, /* 单发开火模式  */
   FIRE_MODE_BURST,  /* N爆发开火模式 */
   FIRE_MODE_CONT,   /* 持续开火模式 */
   FIRE_MODE_NUM,
 } Game_FireMode_t;
+
+/* AI行为状态 */
+typedef enum {
+  AI_STATUS_STOP,    /* 停止状态 */
+  AI_STATUS_AUTOAIM, /* 自瞄状态 */
+  AI_STATUS_HITBUFF, /* 打符状态 */
+  AI_STATUS_FULLAUTO /* 自动状态 */
+} Game_AI_Status_t;

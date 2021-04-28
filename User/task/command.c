@@ -29,10 +29,12 @@
 CMD_RC_t rc;
 CMD_Host_t host;
 CMD_t cmd;
+CMD_UI_t cmd_ui;
 #else
 static CMD_RC_t rc;
 static CMD_Host_t host;
 static CMD_t cmd;
+static CMD_UI_t cmd_ui;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -69,10 +71,14 @@ void Task_Command(void *argument) {
       CMD_ParseRc(&rc, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
 
     /* 判断是否需要让上位机覆写指令 */
-    if (CMD_CheckHostOverwrite(&cmd))
+    if (CMD_CheckHostOverwrite(&cmd)) {
       if (osMessageQueueGet(task_runtime.msgq.cmd.raw.host, &host, 0, 0) ==
-          osOK)
+          osOK) {
         CMD_ParseHost(&host, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
+      }
+    }
+
+    CMD_PackUi(&cmd_ui, &cmd);
 
     osKernelUnlock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
 
@@ -90,7 +96,7 @@ void Task_Command(void *argument) {
     osMessageQueuePut(task_runtime.msgq.cmd.launcher, &(cmd.launcher), 0, 0);
 
     osMessageQueueReset(task_runtime.msgq.ui.cmd);
-    osMessageQueuePut(task_runtime.msgq.ui.cmd, &cmd.ctrl_method, 0, 0);
+    osMessageQueuePut(task_runtime.msgq.ui.cmd, &cmd_ui, 0, 0);
 
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }

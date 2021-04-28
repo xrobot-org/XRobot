@@ -455,7 +455,7 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
       case 4:
         ref->ui.refresh_fsm++;
 
-        switch (ref->ctrl_method) {
+        switch (ref->cmd_ui.ctrl_method) {
           case CMD_METHOD_MOUSE_KEYBOARD:
             UI_DrawRectangle(&ele, "c", UI_GRAPHIC_OP_REWRITE,
                              UI_GRAPHIC_LAYER_CMD, UI_GREEN, UI_DEFAULT_WIDTH,

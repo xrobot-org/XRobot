@@ -313,10 +313,6 @@ typedef struct {
 } Referee_LauncherUI_t;
 
 typedef struct {
-  CMD_AI_Status_t status;
-} Referee_AIUI_t;
-
-typedef struct {
   Referee_Status_t status;
   Referee_GameStatus_t game_status;
   Referee_GameResult_t game_result;
@@ -346,8 +342,7 @@ typedef struct {
   Referee_ChassisUI_t chassis_ui;
   Referee_LauncherUI_t launcher_ui;
   Referee_GimbalUI_t gimbal_ui;
-  Referee_AIUI_t ai_ui;
-  CMD_CtrlMethod_t ctrl_method;
+  CMD_UI_t cmd_ui;
 
   struct {
     uint8_t *data;

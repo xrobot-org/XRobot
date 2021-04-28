@@ -94,9 +94,9 @@ int8_t AI_PackMcu(AI_t *ai, const AHRS_Quaternion_t *quat) {
   ai->to_host.mcu.package.data.notice = 0;
   if (ai->status == AI_STATUS_AUTOAIM)
     ai->to_host.mcu.package.data.notice |= AI_NOTICE_AOTUAIM;
-  else if (ai->status == AI_STATUS_HITSWITCH)
+  else if (ai->status == AI_STATUS_HITBUFF)
     ai->to_host.mcu.package.data.notice |= AI_NOTICE_HITSWITCH;
-  else if (ai->status == AI_STATUS_AUTOMATIC)
+  else if (ai->status == AI_STATUS_FULLAUTO)
     ai->to_host.mcu.package.data.notice |= AI_NOTICE_AUTOMATIC;
 
   ai->to_host.mcu.package.crc16 = CRC16_Calc(
@@ -132,7 +132,4 @@ int8_t AI_StartTrans(AI_t *ai, bool ref_update) {
   }
 }
 
-int8_t AI_PackUi(AI_t *ai) {
-  ai->ui.status = ai->status;
-  return 0;
-}
+void AI_PackUi(AI_UI_t *ui, const AI_t *ai) { ui->status = ai->status; }

@@ -27,14 +27,12 @@
 
 #ifdef DEBUG
 Referee_t ref;
-CMD_UI_t ref_cmd;
 Referee_ForCap_t for_cap;
 Referee_ForAI_t for_ai;
 Referee_ForChassis_t for_chassis;
 Referee_ForLauncher_t for_launcher;
 #else
 static Referee_t ref;
-static CMD_UI_t ref_cmd;
 static Referee_ForCap_t for_cap;
 static Referee_ForAI_t for_ai;
 static Referee_ForChassis_t for_chassis;
@@ -97,8 +95,10 @@ void Task_Referee(void *argument) {
       osMessageQueueGet(task_runtime.msgq.ui.gimbal, &(ref.gimbal_ui), NULL, 0);
       osMessageQueueGet(task_runtime.msgq.ui.launcher, &(ref.launcher_ui), NULL,
                         0);
-      osMessageQueueGet(task_runtime.msgq.ui.cmd, &(ref.ctrl_method), NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.ui.cmd, &(ref.cmd_ui), NULL, 0);
+#if 0
       osMessageQueueGet(task_runtime.msgq.ui.ai, &(ref.ai_ui), NULL, 0);
+#endif
 
       /* 刷新UI数据 */
       Referee_RefreshUI(&ref);

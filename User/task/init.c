@@ -16,6 +16,7 @@
 #include "bsp/flash.h"
 #include "bsp/usb.h"
 #include "component/cmd.h"
+#include "device/ai.h"
 #include "device/bmi088.h"
 #include "device/can.h"
 #include "device/ist8310.h"
@@ -90,7 +91,7 @@ void Task_Init(void *argument) {
   task_runtime.msgq.cmd.launcher =
       osMessageQueueNew(3u, sizeof(CMD_LauncherCmd_t), NULL);
   task_runtime.msgq.cmd.ai =
-      osMessageQueueNew(3u, sizeof(CMD_AI_Status_t), NULL);
+      osMessageQueueNew(3u, sizeof(Game_AI_Status_t), NULL);
 
   /* atti_esti */
   task_runtime.msgq.cmd.raw.rc = osMessageQueueNew(3u, sizeof(CMD_RC_t), NULL);
@@ -130,8 +131,8 @@ void Task_Init(void *argument) {
       osMessageQueueNew(2u, sizeof(Referee_GimbalUI_t), NULL);
   task_runtime.msgq.ui.launcher =
       osMessageQueueNew(2u, sizeof(Referee_LauncherUI_t), NULL);
-  task_runtime.msgq.ui.cmd = osMessageQueueNew(2u, sizeof(CMD_CtrlMethod_t), NULL);
-  task_runtime.msgq.ui.ai = osMessageQueueNew(2u, sizeof(Referee_AIUI_t), NULL);
+  task_runtime.msgq.ui.cmd = osMessageQueueNew(2u, sizeof(CMD_UI_t), NULL);
+  task_runtime.msgq.ui.ai = osMessageQueueNew(2u, sizeof(AI_UI_t), NULL);
 
   osKernelUnlock();
   osThreadTerminate(osThreadGetId()); /* 结束自身 */

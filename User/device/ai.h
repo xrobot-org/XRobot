@@ -40,10 +40,12 @@ typedef struct __packed {
     AI_UpPackageMCU_t mcu;
   } to_host;
 
-  CMD_AI_Status_t status;
-
-  Referee_AIUI_t ui;
+  Game_AI_Status_t status;
 } AI_t;
+
+typedef struct {
+  Game_AI_Status_t status;
+} AI_UI_t;
 
 /* Exported functions prototypes -------------------------------------------- */
 int8_t AI_Init(AI_t *ai);
@@ -56,4 +58,4 @@ int8_t AI_HandleOffline(AI_t *ai, CMD_Host_t *cmd_host);
 int8_t AI_PackMcu(AI_t *ai, const AHRS_Quaternion_t *quat);
 int8_t AI_PackRef(AI_t *ai, const Referee_ForAI_t *ref);
 int8_t AI_StartTrans(AI_t *ai, bool option);
-int8_t AI_PackUi(AI_t *ai);
+void AI_PackUi(AI_UI_t *ui, const AI_t *ai);

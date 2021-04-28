@@ -14,11 +14,13 @@
 /* Private variables -------------------------------------------------------- */
 #ifdef DEBUG
 AI_t ai;
+AI_UI_t ai_ui;
 CMD_Host_t cmd_host;
 AHRS_Quaternion_t quat;
 Referee_ForAI_t referee_ai;
 #else
 static AI_t ai;
+static AI_UI_t ai_ui;
 static CMD_Host_t cmd_host;
 static AHRS_Quaternion_t quat;
 static Referee_ForAI_t referee_ai;
@@ -65,11 +67,11 @@ void Task_Ai(void *argument) {
     AI_PackMcu(&ai, &quat);
     if (ref_update) AI_PackRef(&ai, &(referee_ai));
 
-    AI_StartTrans(&(ai), ref_update);
+    AI_StartTrans(&ai, ref_update);
 
-    AI_PackUi(&ai);
+    AI_PackUi(&ai_ui, &ai);
     osMessageQueueReset(task_runtime.msgq.ui.ai);
-    osMessageQueuePut(task_runtime.msgq.ui.ai, &(ai.ui), 0, 0);
+    osMessageQueuePut(task_runtime.msgq.ui.ai, &ai_ui, 0, 0);
 
     osDelayUntil(tick);
   }
