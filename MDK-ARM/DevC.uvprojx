@@ -1587,9 +1587,9 @@
               <FilePath>..\User\task\cli.c</FilePath>
             </File>
             <File>
-              <FileName>command.c</FileName>
+              <FileName>cmd.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\command.c</FilePath>
+              <FilePath>..\User\task\cmd.c</FilePath>
             </File>
             <File>
               <FileName>ctrl_cap.c</FileName>
@@ -3247,9 +3247,9 @@
               <FilePath>..\User\task\cli.c</FilePath>
             </File>
             <File>
-              <FileName>command.c</FileName>
+              <FileName>cmd.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\task\command.c</FilePath>
+              <FilePath>..\User\task\cmd.c</FilePath>
             </File>
             <File>
               <FileName>ctrl_cap.c</FileName>
