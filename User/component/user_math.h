@@ -55,7 +55,7 @@
     }                                   \
   } while (0)
 #else
-#define VERIFY(expr) ((void)(expr))
+#define VERIFY(expr) (expr)
 #endif
 
 #ifndef UNUSED
