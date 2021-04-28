@@ -61,7 +61,7 @@ bool AI_WaitDmaCplt(void) {
 }
 
 int8_t AI_ParseHost(AI_t *ai, CMD_Host_t *cmd_host) {
-  (void)cmd_host;
+  UNUSED(cmd_host);
   if (!CRC16_Verify((const uint8_t *)&(ai->form_host), sizeof(ai->form_host)))
     goto error;
   cmd_host->gimbal_delta.pit = ai->form_host.data.gimbal.pit;
@@ -106,7 +106,7 @@ int8_t AI_PackMcu(AI_t *ai, const AHRS_Quaternion_t *quat) {
 }
 
 int8_t AI_PackRef(AI_t *ai, const Referee_ForAI_t *ref) {
-  (void)ref;
+  UNUSED(ref);
   ai->to_host.ref.id = AI_ID_REF;
   ai->to_host.ref.package.crc16 = CRC16_Calc(
       (const uint8_t *)&(ai->to_host.ref.package),

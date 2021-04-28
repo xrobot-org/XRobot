@@ -121,7 +121,7 @@ int8_t DR16_HandleOffline(const DR16_t *dr16, CMD_RC_t *rc) {
   if (dr16 == NULL) return DEVICE_ERR_NULL;
   if (rc == NULL) return DEVICE_ERR_NULL;
 
-  (void)dr16;
+  UNUSED(dr16);
   memset(rc, 0, sizeof(*rc));
   return 0;
 }

@@ -53,7 +53,7 @@ static Referee_ChassisUI_t chassis_ui;
  * \param argument 未使用
  */
 void Task_CtrlChassis(void *argument) {
-  (void)argument; /* 未使用argument，消除警告 */
+  UNUSED(argument); /* 未使用argument，消除警告 */
 
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_CHASSIS;
   /* 初始化底盘 */

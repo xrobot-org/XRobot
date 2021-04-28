@@ -40,7 +40,7 @@
  * \param argument 未使用
  */
 void Task_Init(void *argument) {
-  (void)argument; /* 未使用argument，消除警告 */
+  UNUSED(argument); /* 未使用argument，消除警告 */
 
   Config_Get(&task_runtime.cfg); /* 获取机器人配置 */
 

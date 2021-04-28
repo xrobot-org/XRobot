@@ -48,7 +48,7 @@ static Referee_ForLauncher_t for_launcher;
  * \param argument 未使用
  */
 void Task_Referee(void *argument) {
-  (void)argument; /* 未使用argument，消除警告 */
+  UNUSED(argument); /* 未使用argument，消除警告 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_REFEREE;
 
   /* 初始化裁判系统 */

@@ -35,7 +35,7 @@ static Referee_ForAI_t referee_ai;
  * \param argument 未使用
  */
 void Task_Ai(void *argument) {
-  (void)argument; /* 未使用argument，消除警告 */
+  UNUSED(argument); /* 未使用argument，消除警告 */
 
   /* 计算任务运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_AI;
