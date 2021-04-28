@@ -11,7 +11,7 @@
 
 #include "component/ahrs.h"
 #include "component/cmd.h"
-#include "component/user_math.h"
+#include "component/utils.h"
 #include "device/device.h"
 #include "device/referee.h"
 #include "protocol.h"

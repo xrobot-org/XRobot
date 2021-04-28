@@ -15,7 +15,7 @@
 #include "bsp_spi.h"
 
 /* Include Component相关的头文件 */
-#include "user_math.h"
+#include "utils.h"
 
 /* Private define ----------------------------------------------------------- */
 #define MPU6500_SELF_TEST_XG (0x00)

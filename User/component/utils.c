@@ -2,9 +2,9 @@
   自定义的数学运算。
 */
 
-#include <string.h>
-
 #include "utils.h"
+
+#include <string.h>
 
 inline float InvSqrt(float x) {
 #if 0

@@ -6,7 +6,7 @@
 
 #include "bsp/can.h"
 #include "component/ahrs.h"
-#include "component/user_math.h"
+#include "component/utils.h"
 #include "device/device.h"
 
 /* Exported constants ------------------------------------------------------- */
