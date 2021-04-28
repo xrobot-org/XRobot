@@ -81,16 +81,16 @@ typedef enum {
 } BMI_Device_t;
 
 /* Private variables -------------------------------------------------------- */
-static uint8_t buffer[2];
-static uint8_t bmi088_rxbuf[BMI088_LEN_RX_BUFF];
+static uint8_t tx_rx_buf[2];
+static uint8_t dma_buf[BMI088_LEN_RX_BUFF];
 
 static osThreadId_t thread_alert;
 static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
 static void BMI_WriteSingle(BMI_Device_t dv, uint8_t reg, uint8_t data) {
-  buffer[0] = (reg & 0x7f);
-  buffer[1] = data;
+  tx_rx_buf[0] = (reg & 0x7f);
+  tx_rx_buf[1] = data;
 
   BSP_Delay(1);
   switch (dv) {
@@ -103,7 +103,7 @@ static void BMI_WriteSingle(BMI_Device_t dv, uint8_t reg, uint8_t data) {
       break;
   }
 
-  HAL_SPI_Transmit(BSP_SPI_GetHandle(BSP_SPI_IMU), buffer, 2u, 20u);
+  HAL_SPI_Transmit(BSP_SPI_GetHandle(BSP_SPI_IMU), tx_rx_buf, 2u, 20u);
 
   switch (dv) {
     case BMI_ACCL:
@@ -127,18 +127,18 @@ static uint8_t BMI_ReadSingle(BMI_Device_t dv, uint8_t reg) {
       BMI088_GYRO_NSS_RESET();
       break;
   }
-  buffer[0] = (uint8_t)(reg | 0x80);
-  HAL_SPI_Transmit(BSP_SPI_GetHandle(BSP_SPI_IMU), buffer, 1u, 20u);
-  HAL_SPI_Receive(BSP_SPI_GetHandle(BSP_SPI_IMU), buffer, 2u, 20u);
+  tx_rx_buf[0] = (uint8_t)(reg | 0x80);
+  HAL_SPI_Transmit(BSP_SPI_GetHandle(BSP_SPI_IMU), tx_rx_buf, 1u, 20u);
+  HAL_SPI_Receive(BSP_SPI_GetHandle(BSP_SPI_IMU), tx_rx_buf, 2u, 20u);
 
   switch (dv) {
     case BMI_ACCL:
       BMI088_ACCL_NSS_SET();
-      return buffer[1];
+      return tx_rx_buf[1];
 
     case BMI_GYRO:
       BMI088_GYRO_NSS_SET();
-      return buffer[0];
+      return tx_rx_buf[0];
   }
 }
 
@@ -154,8 +154,8 @@ static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
       BMI088_GYRO_NSS_RESET();
       break;
   }
-  buffer[0] = (uint8_t)(reg | 0x80);
-  HAL_SPI_Transmit(BSP_SPI_GetHandle(BSP_SPI_IMU), buffer, 1u, 20u);
+  tx_rx_buf[0] = (uint8_t)(reg | 0x80);
+  HAL_SPI_Transmit(BSP_SPI_GetHandle(BSP_SPI_IMU), tx_rx_buf, 1u, 20u);
   HAL_SPI_Receive_DMA(BSP_SPI_GetHandle(BSP_SPI_IMU), data, len);
 }
 
@@ -263,7 +263,7 @@ uint32_t BMI088_WaitNew() {
 }
 
 int8_t BMI088_AcclStartDmaRecv() {
-  BMI_Read(BMI_ACCL, BMI088_REG_ACCL_X_LSB, bmi088_rxbuf, BMI088_LEN_RX_BUFF);
+  BMI_Read(BMI_ACCL, BMI088_REG_ACCL_X_LSB, dma_buf, BMI088_LEN_RX_BUFF);
   return DEVICE_OK;
 }
 
@@ -273,7 +273,7 @@ uint32_t BMI088_AcclWaitDmaCplt() {
 }
 
 int8_t BMI088_GyroStartDmaRecv() {
-  BMI_Read(BMI_GYRO, BMI088_REG_GYRO_X_LSB, bmi088_rxbuf + 7, 6u);
+  BMI_Read(BMI_GYRO, BMI088_REG_GYRO_X_LSB, dma_buf + 7, 6u);
   return DEVICE_OK;
 }
 
@@ -287,18 +287,18 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
 
 #if 1
   int16_t raw_x, raw_y, raw_z;
-  memcpy(&raw_x, bmi088_rxbuf + 1, sizeof(raw_x));
-  memcpy(&raw_y, bmi088_rxbuf + 3, sizeof(raw_y));
-  memcpy(&raw_z, bmi088_rxbuf + 5, sizeof(raw_z));
+  memcpy(&raw_x, dma_buf + 1, sizeof(raw_x));
+  memcpy(&raw_y, dma_buf + 3, sizeof(raw_y));
+  memcpy(&raw_z, dma_buf + 5, sizeof(raw_z));
 
   bmi088->accl.x = (float)raw_x;
   bmi088->accl.y = (float)raw_y;
   bmi088->accl.z = (float)raw_z;
 
 #else
-  const int16_t *praw_x = (int16_t *)(bmi088_rxbuf + 1);
-  const int16_t *praw_y = (int16_t *)(bmi088_rxbuf + 3);
-  const int16_t *praw_z = (int16_t *)(bmi088_rxbuf + 5);
+  const int16_t *praw_x = (int16_t *)(dma_buf + 1);
+  const int16_t *praw_y = (int16_t *)(dma_buf + 3);
+  const int16_t *praw_z = (int16_t *)(dma_buf + 5);
 
   bmi088->accl.x = (float)*praw_x;
   bmi088->accl.y = (float)*praw_y;
@@ -311,8 +311,7 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
   bmi088->accl.y /= 5460.0f;
   bmi088->accl.z /= 5460.0f;
 
-  int16_t raw_temp =
-      (uint16_t)((bmi088_rxbuf[17] << 3) | (bmi088_rxbuf[18] >> 5));
+  int16_t raw_temp = (uint16_t)((dma_buf[17] << 3) | (dma_buf[18] >> 5));
 
   if (raw_temp > 1023) raw_temp -= 2048;
 
@@ -327,9 +326,9 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 #if 1
   /* Gyroscope imu_raw -> degrees/sec -> radians/sec */
   int16_t raw_x, raw_y, raw_z;
-  memcpy(&raw_x, bmi088_rxbuf + 7, sizeof(raw_x));
-  memcpy(&raw_y, bmi088_rxbuf + 9, sizeof(raw_y));
-  memcpy(&raw_z, bmi088_rxbuf + 11, sizeof(raw_z));
+  memcpy(&raw_x, dma_buf + 7, sizeof(raw_x));
+  memcpy(&raw_y, dma_buf + 9, sizeof(raw_y));
+  memcpy(&raw_z, dma_buf + 11, sizeof(raw_z));
 
   bmi088->gyro.x = (float)raw_x;
   bmi088->gyro.y = (float)raw_y;
@@ -337,9 +336,9 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 
 #else
   /* Gyroscope imu_raw -> degrees/sec -> radians/sec */
-  const int16_t *raw_x = (int16_t *)(bmi088_rxbuf + 7);
-  const int16_t *raw_y = (int16_t *)(bmi088_rxbuf + 9);
-  const int16_t *raw_z = (int16_t *)(bmi088_rxbuf + 11);
+  const int16_t *raw_x = (int16_t *)(dma_buf + 7);
+  const int16_t *raw_y = (int16_t *)(dma_buf + 9);
+  const int16_t *raw_z = (int16_t *)(dma_buf + 11);
 
   bmi088->gyro.x = (float)*raw_x;
   bmi088->gyro.y = (float)*raw_y;
