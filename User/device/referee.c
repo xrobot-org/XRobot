@@ -330,7 +330,7 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
         UI_DrawLine(&ele, "6", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CHASSIS,
                     UI_GREEN, UI_DEFAULT_WIDTH * 12,
                     kW * 0.4f + sinf(-ref->chassis_ui.angle) * kLEN + 10.0f,
-                    kH * 0.2f + cosf(-ref->chassis_ui.angle) * kLEN + 10.0f);,
+                    kH * 0.2f + cosf(-ref->chassis_ui.angle) * kLEN + 10.0f,
                     kW * 0.4f + sinf(ref->chassis_ui.angle) * kLEN,
                     kH * 0.2f + cosf(ref->chassis_ui.angle) * kLEN);
 
