@@ -89,7 +89,7 @@ int8_t AI_HandleOffline(AI_t *ai, CMD_Host_t *cmd_host) {
 
 int8_t AI_PackMcu(AI_t *ai, const AHRS_Quaternion_t *quat) {
   ai->to_host.mcu.id = AI_ID_MCU;
-  memcpy((void *)&(ai->to_host.mcu.package.data.quat), (const void *)quat,
+  memcpy(&(ai->to_host.mcu.package.data.quat), (const void *)quat,
          sizeof(*quat));
   ai->to_host.mcu.package.data.notice = 0;
   if (ai->status == AI_STATUS_AUTOAIM)
