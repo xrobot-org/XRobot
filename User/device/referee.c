@@ -110,10 +110,6 @@ static int8_t Referee_SetUiHeader(Referee_InterStudentHeader_t *header,
   return 0;
 }
 
-static void Referee_SetStatus(Referee_t *ref, Referee_Status_t stat) {
-  ref->status = stat;
-}
-
 /* Exported functions ------------------------------------------------------- */
 
 int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen) {
@@ -158,9 +154,7 @@ int8_t Referee_Restart(void) {
   return 0;
 }
 
-void Referee_HandleOffline(Referee_t *referee) {
-  referee->status = REF_STATUS_OFFLINE;
-}
+void Referee_HandleOffline(Referee_t *ref) { ref->status = REF_STATUS_OFFLINE; }
 
 int8_t Referee_StartReceiving(Referee_t *ref) {
   UNUSED(ref);
@@ -176,7 +170,7 @@ bool Referee_WaitRecvCplt(uint32_t timeout) {
 }
 
 int8_t Referee_Parse(Referee_t *ref) {
-  Referee_SetStatus(ref, REF_STATUS_RUNNING);
+  ref->status = REF_STATUS_RUNNING;
   uint32_t data_length =
       REF_LEN_RX_BUFF -
       __HAL_DMA_GET_COUNTER(BSP_UART_GetHandle(BSP_UART_REF)->hdmarx);
