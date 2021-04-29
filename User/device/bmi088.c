@@ -359,7 +359,7 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
   bmi088->gyro.y -= bmi088->cali->gyro_offset.y;
   bmi088->gyro.z -= bmi088->cali->gyro_offset.z;
 
-  return DEVICE_ERR_NULL;
+  return DEVICE_OK;
 }
 
 float BMI088_GetUpdateFreq(BMI088_t *bmi088) {
