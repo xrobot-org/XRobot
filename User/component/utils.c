@@ -74,10 +74,8 @@ inline float CircleError(float sp, float fb, float range) {
 inline void CircleAdd(float *origin, float delta, float range) {
   float out = *origin + delta;
   if (range > 0.0f) {
-    if (out >= range)
-      out -= range;
-    else if (out < 0.0f)
-      out += range;
+    while (out >= range) out -= range;
+    while (out < 0.0f) out += range;
   }
   *origin = out;
 }
