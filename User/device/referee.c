@@ -79,14 +79,6 @@ static void RefereeSlowRefreshTimerCallback(void *arg) {
   osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_SLOW_REFRESH_UI);
 }
 
-static int8_t Referee_MoveData(void *data, void *tmp, uint32_t len) {
-  ASSERT(data);
-  ASSERT(tmp);
-  memcpy(tmp, data, len);
-  memset(data, 0, len);
-  return DEVICE_OK;
-}
-
 static int8_t Referee_SetPacketHeader(Referee_Header_t *header,
                                       uint16_t data_length) {
   header->sof = REF_HEADER_SOF;
@@ -193,92 +185,92 @@ int8_t Referee_Parse(Referee_t *ref) {
     index += sizeof(*cmd_id);
     if (index - packet_shift >= data_length) goto error;
 
-    void *target = (rxbuf + index);
-    void *origin;
+    void *source = (rxbuf + index);
+    void *destination;
     size_t size;
 
     switch (*cmd_id) {
       case REF_CMD_ID_GAME_STATUS:
-        origin = &(ref->game_status);
+        destination = &(ref->game_status);
         size = sizeof(ref->game_status);
         break;
       case REF_CMD_ID_GAME_RESULT:
-        origin = &(ref->game_result);
+        destination = &(ref->game_result);
         size = sizeof(ref->game_result);
         break;
       case REF_CMD_ID_GAME_ROBOT_HP:
-        origin = &(ref->game_robot_hp);
+        destination = &(ref->game_robot_hp);
         size = sizeof(ref->game_robot_hp);
         break;
       case REF_CMD_ID_DART_STATUS:
-        origin = &(ref->dart_status);
+        destination = &(ref->dart_status);
         size = sizeof(ref->dart_status);
         break;
       case REF_CMD_ID_ICRA_ZONE_STATUS:
-        origin = &(ref->icra_zone);
+        destination = &(ref->icra_zone);
         size = sizeof(ref->icra_zone);
         break;
       case REF_CMD_ID_FIELD_EVENTS:
-        origin = &(ref->field_event);
+        destination = &(ref->field_event);
         size = sizeof(ref->field_event);
         break;
       case REF_CMD_ID_SUPPLY_ACTION:
-        origin = &(ref->supply_action);
+        destination = &(ref->supply_action);
         size = sizeof(ref->supply_action);
         break;
       case REF_CMD_ID_WARNING:
-        origin = &(ref->warning);
+        destination = &(ref->warning);
         size = sizeof(ref->warning);
         break;
       case REF_CMD_ID_DART_COUNTDOWN:
-        origin = &(ref->dart_countdown);
+        destination = &(ref->dart_countdown);
         size = sizeof(ref->dart_countdown);
         break;
       case REF_CMD_ID_ROBOT_STATUS:
-        origin = &(ref->robot_status);
+        destination = &(ref->robot_status);
         size = sizeof(ref->robot_status);
         break;
       case REF_CMD_ID_POWER_HEAT_DATA:
-        origin = &(ref->power_heat);
+        destination = &(ref->power_heat);
         size = sizeof(ref->power_heat);
         break;
       case REF_CMD_ID_ROBOT_POS:
-        origin = &(ref->robot_pos);
+        destination = &(ref->robot_pos);
         size = sizeof(ref->robot_pos);
         break;
       case REF_CMD_ID_ROBOT_BUFF:
-        origin = &(ref->robot_buff);
+        destination = &(ref->robot_buff);
         size = sizeof(ref->robot_buff);
         break;
       case REF_CMD_ID_DRONE_ENERGY:
-        origin = &(ref->drone_energy);
+        destination = &(ref->drone_energy);
         size = sizeof(ref->drone_energy);
         break;
       case REF_CMD_ID_ROBOT_DMG:
-        origin = &(ref->robot_danage);
+        destination = &(ref->robot_danage);
         size = sizeof(ref->robot_danage);
         break;
       case REF_CMD_ID_LAUNCHER_DATA:
-        origin = &(ref->launcher_data);
+        destination = &(ref->launcher_data);
         size = sizeof(ref->launcher_data);
         break;
       case REF_CMD_ID_BULLET_REMAINING:
-        origin = &(ref->bullet_remain);
+        destination = &(ref->bullet_remain);
         size = sizeof(ref->bullet_remain);
         break;
       case REF_CMD_ID_RFID:
-        origin = &(ref->rfid);
+        destination = &(ref->rfid);
         size = sizeof(ref->rfid);
         break;
       case REF_CMD_ID_DART_CLIENT:
-        origin = &(ref->dart_client);
+        destination = &(ref->dart_client);
         size = sizeof(ref->dart_client);
         break;
       case REF_CMD_ID_CLIENT_MAP:
-        origin = &(ref->client_map);
+        destination = &(ref->client_map);
         size = sizeof(ref->client_map);
       case REF_CMD_ID_KEYBOARD_MOUSE:
-        origin = &(ref->keyboard_mouse);
+        destination = &(ref->keyboard_mouse);
         size = sizeof(ref->keyboard_mouse);
       default:
         return DEVICE_ERR;
@@ -292,7 +284,7 @@ int8_t Referee_Parse(Referee_t *ref) {
     if (index - packet_shift != packet_length) goto error;
 
     if (CRC16_Verify((uint8_t *)(rxbuf + packet_shift), packet_length))
-      memcpy(origin, target, size);
+      memcpy(destination, source, size);
     else
       goto error;
   }
@@ -542,10 +534,10 @@ int8_t Referee_PackUiPacket(Referee_t *ref) {
   static const size_t kSIZE_DATA_HEADER = sizeof(Referee_InterStudentHeader_t);
   size_t size_data_content;
   static const size_t kSIZE_PACKET_CRC = sizeof(uint16_t);
-  void *origin = NULL;
+  void *source = NULL;
 
   if (!UI_PopDel(&del, &(ref->ui))) {
-    origin = &del;
+    source = &del;
     size_data_content = sizeof(UI_Del_t);
     ui_cmd_id = REF_STDNT_CMD_ID_UI_DEL;
   } else if (ref->ui.stack.size.graphic) { /* 绘制图形 */
@@ -573,9 +565,9 @@ int8_t Referee_PackUiPacket(Referee_t *ref) {
     while (!UI_PopGraphic(cursor, &(ref->ui))) {
       cursor++;
     }
-    origin = ele;
+    source = ele;
   } else if (!UI_PopString(&string, &(ref->ui))) { /* 绘制字符 */
-    origin = &string;
+    source = &string;
     size_data_content = sizeof(UI_String_t);
     ui_cmd_id = REF_STDNT_CMD_ID_UI_STR;
   } else {
@@ -595,11 +587,12 @@ int8_t Referee_PackUiPacket(Referee_t *ref) {
   packet_head->cmd_id = REF_CMD_ID_INTER_STUDENT;
   Referee_SetUiHeader(&(packet_head->student_header), ui_cmd_id,
                       ref->robot_status.robot_id);
-  Referee_MoveData(origin, ref->packet.data + sizeof(Referee_UiPacketHead_t),
-                   size_data_content);
+  memcpy(ref->packet.data + sizeof(Referee_UiPacketHead_t), source,
+         size_data_content);
+
   BSP_Free(ele);
-  uint16_t *crc = (uint16_t *)ref->packet.data +
-                  sizeof(Referee_UiPacketHead_t) + size_data_content;
+  uint16_t *crc =
+      (uint16_t *)(ref->packet.data + ref->packet.size - kSIZE_PACKET_CRC);
   *crc = CRC16_Calc((const uint8_t *)ref->packet.data,
                     ref->packet.size - kSIZE_PACKET_CRC, CRC16_INIT);
 
