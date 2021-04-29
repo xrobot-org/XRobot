@@ -121,7 +121,7 @@ void CircleReverse(float *origin);
  * @param is17mm 是否为17mm
  * @return 摩擦轮转速
  */
-float CalculateRpm(float bullet_speed, float fric_radius, bool is17mm);
+float BulletSpeedToFricRpm(float bullet_speed, float fric_radius, bool is17mm);
 
 /**
  * @brief 断言失败处理

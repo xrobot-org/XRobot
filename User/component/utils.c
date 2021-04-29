@@ -95,7 +95,8 @@ inline void CircleReverse(float *origin) { *origin = -(*origin) + M_2PI; }
  * @param is17mm 是否为17mm
  * @return 摩擦轮转速
  */
-inline float CalculateRpm(float bullet_speed, float fric_radius, bool is17mm) {
+inline float BulletSpeedToFricRpm(float bullet_speed, float fric_radius,
+                                  bool is17mm) {
   if (bullet_speed == 0.0f) return 0.f;
   if (is17mm) {
     if (bullet_speed == 15.0f) return 4670.f;
