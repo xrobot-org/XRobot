@@ -248,8 +248,8 @@ int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
 
   /* 计算摩擦轮转速的目标值 */
   l->setpoint.fric_rpm[1] =
-      CalculateRpm(l->fire_ctrl.bullet_speed, l->param->fric_radius,
-                   (l->param->model == LAUNCHER_MODEL_17MM));
+      BulletSpeedToFricRpm(l->fire_ctrl.bullet_speed, l->param->fric_radius,
+                           (l->param->model == LAUNCHER_MODEL_17MM));
   l->setpoint.fric_rpm[0] = -l->setpoint.fric_rpm[1];
 
   /* 计算拨弹电机位置的目标值 */
