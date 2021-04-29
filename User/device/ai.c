@@ -118,17 +118,19 @@ int8_t AI_StartTrans(AI_t *ai, bool ref_update) {
   if (ref_update) {
     if (HAL_UART_Transmit_DMA(
             BSP_UART_GetHandle(BSP_UART_AI), (uint8_t *)&(ai->to_host),
-            sizeof(ai->to_host.ref) + sizeof(ai->to_host.mcu)) == HAL_OK)
+            sizeof(ai->to_host.ref) + sizeof(ai->to_host.mcu)) == HAL_OK) {
       return DEVICE_OK;
-    else
+    } else {
       return DEVICE_ERR;
+    }
   } else {
     if (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_AI),
                               (uint8_t *)&(ai->to_host.mcu),
-                              sizeof(ai->to_host.mcu)) == HAL_OK)
+                              sizeof(ai->to_host.mcu)) == HAL_OK) {
       return DEVICE_OK;
-    else
+    } else {
       return DEVICE_ERR;
+    }
   }
 }
 
