@@ -383,7 +383,7 @@ typedef struct {
 
 int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen);
 int8_t Referee_Restart(void);
-void Referee_HandleOffline(Referee_t *referee);
+void Referee_HandleOffline(Referee_t *ref);
 
 int8_t Referee_StartReceiving(Referee_t *ref);
 bool Referee_WaitRecvCplt(uint32_t timeout);
