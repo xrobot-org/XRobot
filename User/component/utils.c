@@ -6,6 +6,12 @@
 
 #include <string.h>
 
+/**
+ * @brief 计算平方根倒数
+ *
+ * @param x 输入
+ * @return float 计算结果
+ */
 inline float InvSqrt(float x) {
 #if 0
   /* Fast inverse square-root */
@@ -23,15 +29,42 @@ inline float InvSqrt(float x) {
 #endif
 }
 
+/**
+ * @brief 将值限制在-limit和limit之间。
+ *
+ * @param x 输入
+ * @param limit 上下界的绝对值
+ * @return float 操作后的值
+ */
 inline float AbsClamp(float x, float limit) {
   return MIN(limit, MAX(x, -limit));
 }
 
+/**
+ * @brief 将值限制在下限和上限之间。
+ *
+ * @param origin 被操作的值
+ * @param lo 下限
+ * @param hi 上限
+ */
 inline void Clamp(float *origin, float lo, float hi) {
+  ASSERT(origin);
+  ASSERT(hi > lo);
   *origin = MIN(hi, MAX(*origin, lo));
 }
 
-inline float Sign(float in) { return (in > 0) ? 1.0f : 0.0f; }
+/**
+ * @brief 符号函数
+ *
+ * @param in 输入
+ * @return float 运算结果
+ */
+inline float Sign(float x) {
+  if (x == 0.0f)
+    return x;
+  else
+    return (x > 0) ? 1.0f : 0.0f;
+}
 
 /**
  * \brief 将运动向量置零
