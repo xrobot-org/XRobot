@@ -22,6 +22,10 @@
 #define M_2PI 6.28318530717958647692f
 #endif
 
+/**
+ * @brief 返回两个值中的最大值
+ *
+ */
 #define MAX(a, b)           \
   ({                        \
     __typeof__(a) _a = (a); \
@@ -29,6 +33,10 @@
     _a > _b ? _a : _b;      \
   })
 
+/**
+ * @brief 返回两个值中的最小值
+ *
+ */
 #define MIN(a, b)           \
   ({                        \
     __typeof__(a) _a = (a); \
@@ -37,6 +45,11 @@
   })
 
 #ifdef DEBUG
+
+/**
+ * @brief 如果表达式的值为假则运行处理函数
+ *
+ */
 #define ASSERT(expr)                    \
   do {                                  \
     if (!(expr)) {                      \
@@ -44,10 +57,20 @@
     }                                   \
   } while (0)
 #else
+
+/**
+ * @brief 未定DEBUG，表达式不会运行，断言被忽略
+ *
+ */
 #define ASSERT(expr) ((void)(0))
 #endif
 
 #ifdef DEBUG
+
+/**
+ * @brief 如果表达式的值为假则运行处理函数
+ *
+ */
 #define VERIFY(expr)                    \
   do {                                  \
     if (!(expr)) {                      \
@@ -55,11 +78,21 @@
     }                                   \
   } while (0)
 #else
+
+/**
+ * @brief 表达式会运行，忽略表达式结果
+ *
+ */
 #define VERIFY(expr) (expr)
 #endif
 
 #ifndef UNUSED
-#define UNUSED(X) (void)X
+
+/**
+ * @brief 标记未使用的参数，防止编译器警告
+ *
+ */
+#define UNUSED(X) ((void)X)
 #endif
 
 /* 移动向量 */
@@ -69,13 +102,39 @@ typedef struct {
   float wz; /* 转动 */
 } MoveVector_t;
 
+/**
+ * @brief 计算平方根倒数
+ *
+ * @param x 输入
+ * @return float 计算结果
+ */
 float InvSqrt(float x);
 
+/**
+ * @brief 将值限制在-limit和limit之间。
+ *
+ * @param x 输入
+ * @param limit 上下界的绝对值
+ * @return float 操作后的值
+ */
 float AbsClamp(float x, float limit);
 
+/**
+ * @brief 将值限制在下限和上限之间。
+ *
+ * @param origin 被操作的值
+ * @param lo 下限
+ * @param hi 上限
+ */
 void Clamp(float *origin, float lo, float hi);
 
-float Sign(float in);
+/**
+ * @brief 符号函数
+ *
+ * @param in 输入
+ * @return float 运算结果
+ */
+float Sign(float x);
 
 /**
  * \brief 将运动向量置零
