@@ -47,7 +47,7 @@ float Capacity_GetBatteryRemain(float vbat) {
  * @return float 电容剩余电量比例
  */
 float Capacity_GetCapacitorRemain(float vcap, float vbat, float v_cutoff) {
-  /* 公式中的除以二在这可以省略 */
+  /* 根据公式E=1/2CU^2，省略常数项 */
   const float c_max = vbat * vbat;
   const float c_cap = vcap * vcap;
   const float c_min = v_cutoff * v_cutoff;
