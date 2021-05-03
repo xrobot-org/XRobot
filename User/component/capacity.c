@@ -47,13 +47,11 @@ float Capacity_GetBatteryRemain(float vbat) {
  * @return float 电容剩余电量比例
  */
 float Capacity_GetCapacitorRemain(float vcap, float vbat, float v_cutoff) {
-  float percentage = (vcap - v_cutoff) / (vbat - v_cutoff);
-
-  if (percentage < 0.0f)
-    percentage = 0.0f;
-
-  else if (percentage > 1.0f)
-    percentage = 1.0f;
-
+  /* 公式中的除以二在这可以省略 */
+  const float c_max = vbat * vbat;
+  const float c_cap = vcap * vcap;
+  const float c_min = v_cutoff * v_cutoff;
+  float percentage = (c_cap - c_min) / (c_max - c_min);
+  Clamp(&percentage, 0.0f, 1.0f);
   return percentage;
 }
