@@ -13,29 +13,76 @@
  * @return float 剩余电量比例
  */
 float Capacity_GetBatteryRemain(float vbat) {
-  float percentage;
-  float volt_2 = vbat * vbat;
-  float volt_3 = volt_2 * vbat;
-
-  if (vbat < 19.5f)
-    percentage = 0.0f;
-
-  else if (vbat < 21.9f)
-    percentage = 0.005664f * volt_3 - 0.3386f * volt_2 + 6.765f * vbat - 45.17f;
-
-  else if (vbat < 25.5f)
-    percentage = 0.02269f * volt_3 - 1.654f * volt_2 + 40.34f * vbat - 328.4f;
-
-  else
-    percentage = 1.0f;
-
-  if (percentage < 0.0f)
-    percentage = 0.0f;
-
-  else if (percentage > 1.0f)
-    percentage = 1.0f;
-
-  return percentage;
+  const float kTB47S_CELL = 6.0f;
+  if (vbat > (4.2f * kTB47S_CELL)) {
+    return 1.0f;
+  } else {
+    float hi, lo, base, step;
+    if (vbat > (4.06f * kTB47S_CELL)) {
+      hi = 4.2f;
+      lo = 4.06f;
+      base = 0.9f;
+      step = 0.1f;
+    } else if (vbat > (4.0f * kTB47S_CELL)) {
+      hi = 4.06f;
+      lo = 4.0f;
+      base = 0.8f;
+      step = 0.1f;
+    } else if (vbat > (3.93f * kTB47S_CELL)) {
+      hi = 4.0f;
+      lo = 3.93f;
+      base = 0.7f;
+      step = 0.1f;
+    } else if (vbat > (3.87f * kTB47S_CELL)) {
+      hi = 3.93f;
+      lo = 3.87f;
+      base = 0.6f;
+      step = 0.1f;
+    } else if (vbat > (3.82f * kTB47S_CELL)) {
+      hi = 3.87f;
+      lo = 3.82f;
+      base = 0.5f;
+      step = 0.1f;
+    } else if (vbat > (3.79f * kTB47S_CELL)) {
+      hi = 3.82f;
+      lo = 3.79f;
+      base = 0.4f;
+      step = 0.1f;
+    } else if (vbat > (3.77f * kTB47S_CELL)) {
+      hi = 3.79f;
+      lo = 3.77f;
+      base = 0.3f;
+      step = 0.1f;
+    } else if (vbat > (3.73f * kTB47S_CELL)) {
+      hi = 3.77f;
+      lo = 3.73f;
+      base = 0.2f;
+      step = 0.1f;
+    } else if (vbat > (3.7f * kTB47S_CELL)) {
+      hi = 3.73f;
+      lo = 3.7f;
+      base = 0.15f;
+      step = 0.05f;
+    } else if (vbat > (3.68f * kTB47S_CELL)) {
+      hi = 3.7f;
+      lo = 3.68f;
+      base = 0.1f;
+      step = 0.05f;
+    } else if (vbat > (3.5f * kTB47S_CELL)) {
+      hi = 3.68f;
+      lo = 3.5f;
+      base = 0.05f;
+      step = 0.05f;
+    } else if (vbat > (2.5f * kTB47S_CELL)) {
+      hi = 3.5f;
+      lo = 2.5f;
+      base = 0.0f;
+      step = 0.05f;
+    } else {
+      return 0.0f;
+    }
+    return base + step / (hi - lo) * (vbat / kTB47S_CELL - lo);
+  }
 }
 
 /**
