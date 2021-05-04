@@ -273,7 +273,7 @@ int8_t CAN_StoreMsg(CAN_t *can, CAN_RawRx_t *can_rx) {
       can->recive_flag |= 1 << (index + 4);
       break;
     case CAN_CAP_FB_ID_BASE:
-      CAN_Cap_Decode(&(can->cap.cap_feedback), can_rx->rx_data);
+      CAN_Cap_Decode(&(can->cap), can_rx->rx_data);
       can->recive_flag |= 1 << 9;
       break;
     case CAN_TOF_ID_BASE:

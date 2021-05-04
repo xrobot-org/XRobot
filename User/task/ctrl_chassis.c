@@ -19,27 +19,24 @@
 #include "module/config.h"
 #include "task/user_task.h"
 
-/* Private typedef
-   ---------------------------------------------------------- */
-/* Private define
-   ----------------------------------------------------------- */
-/* Private macro
-   ------------------------------------------------------------ */
-/* Private variables
-   -------------------------------------------------------- */
+/* Private typedef ---------------------------------------------------------- */
+/* Private define ----------------------------------------------------------- */
+/* Private macro ------------------------------------------------------------ */
+/* Private variables -------------------------------------------------------- */
+
 static CAN_t can;
+static Cap_t cap;
+
 #ifdef DEBUG
 CMD_ChassisCmd_t chassis_cmd;
 Chassis_t chassis;
 CAN_ChassisOutput_t chassis_out;
-CAN_Capacitor_t cap;
 Referee_ForChassis_t referee_chassis;
 Referee_ChassisUI_t chassis_ui;
 #else
 static CMD_ChassisCmd_t chassis_cmd;
 static Chassis_t chassis;
 static CAN_ChassisOutput_t chassis_out;
-static CAN_Capacitor_t cap;
 static Referee_ForChassis_t referee_chassis;
 static Referee_ChassisUI_t chassis_ui;
 #endif

@@ -105,8 +105,7 @@ void Task_Init(void *argument) {
   task_runtime.msgq.gimbal.gyro =
       osMessageQueueNew(2u, sizeof(AHRS_Gyro_t), NULL);
 
-  task_runtime.msgq.cap_info =
-      osMessageQueueNew(2u, sizeof(CAN_Capacitor_t), NULL);
+  task_runtime.msgq.cap_info = osMessageQueueNew(2u, sizeof(Cap_t), NULL);
 
   /* AI */
   task_runtime.msgq.ai.quat =

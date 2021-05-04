@@ -20,6 +20,7 @@
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 static CAN_t can;
+static Cap_t cap;
 
 #ifdef DEBUG
 CAN_CapOutput_t cap_out;
@@ -59,12 +60,13 @@ void Task_Cap(void *argument) {
     /* 一定时间长度内接收不到电容反馈值，使电容离线 */
     if (osMessageQueueGet(task_runtime.msgq.can.feedback.cap, &can, NULL,
                           500) != osOK) {
-      Cap_HandleOffline(&(can.cap), &cap_out, GAME_CHASSIS_MAX_POWER_WO_REF);
+      Cap_HandleOffline(&cap, &cap_out, GAME_CHASSIS_MAX_POWER_WO_REF);
       tick += 500; /* 重新计算下一次唤醒时间 */
     } else {
       osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
       /* 根据裁判系统数据计算输出功率 */
-      Cap_Control(&(can.cap), &referee_cap, &cap_out);
+      Cap_Update(&cap, &(can.cap));
+      Cap_Control(&referee_cap, &cap_out);
       osKernelUnlock();
     }
     /* 将电容输出值发送到CAN */
@@ -74,7 +76,7 @@ void Task_Cap(void *argument) {
     osMessageQueueReset(task_runtime.msgq.cap_info);
     osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);
 
-    Cap_PackUi(&(can.cap), &cap_ui);
+    Cap_PackUi(&cap, &cap_ui);
 
     osMessageQueueReset(task_runtime.msgq.ui.cap);
     osMessageQueuePut(task_runtime.msgq.ui.cap, &cap_ui, 0, 0);

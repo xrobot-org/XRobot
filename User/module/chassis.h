@@ -18,6 +18,7 @@
 #include "component/pid.h"
 #include "device/can.h"
 #include "device/referee.h"
+#include "module/cap.h"
 
 /* Exported constants ------------------------------------------------------- */
 #define CHASSIS_OK (0)        /* 运行正常 */
@@ -152,7 +153,7 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
  * @param ref 裁判系统数据
  * @return 函数运行结果
  */
-int8_t Chassis_PowerLimit(Chassis_t *c, const CAN_Capacitor_t *cap,
+int8_t Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
                           const Referee_ForChassis_t *ref);
 
 /**
