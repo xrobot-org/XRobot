@@ -19,11 +19,19 @@
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
-#define CAP_CUTOFF_VOLT 12.0f
+
+#define CAP_CUTOFF_VOLT 12.0f /* 电容截止电压，要高于电调最低工作电压 */
 
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
+
+void Cap_Update(Cap_t *cap, const CAN_CapFeedback_t *cap_fb) {
+  /* 更新电容状态和百分比 */
+  cap->cap_status = CAN_CAP_STATUS_RUNNING;
+  cap->percentage = Capacity_GetCapacitorRemain(
+      cap_fb->cap_volt, cap_fb->input_volt, CAP_CUTOFF_VOLT);
+}
 
 /**
  * @brief 运行电容控制逻辑
@@ -32,7 +40,7 @@
  * @param referee 裁判系统数据
  * @param cap_out 电容输出结构体
  */
-void Cap_Control(CAN_Capacitor_t *cap, const Referee_ForCap_t *referee,
+void Cap_Control(const Referee_ForCap_t *referee,
                  CAN_CapOutput_t *cap_out) {
   if (referee->status != REF_STATUS_RUNNING) {
     /* 当裁判系统离线时，依然使用裁判系统进程传来的数据 */
@@ -43,11 +51,6 @@ void Cap_Control(CAN_Capacitor_t *cap, const Referee_ForCap_t *referee,
         PowerLimit_CapInput(referee->chassis_watt, referee->chassis_power_limit,
                             referee->chassis_pwr_buff);
   }
-  /* 更新电容状态和百分比 */
-  cap->cap_status = CAN_CAP_STATUS_RUNNING;
-  cap->percentage = Capacity_GetCapacitorRemain(cap->cap_feedback.cap_volt,
-                                                cap->cap_feedback.input_volt,
-                                                CAP_CUTOFF_VOLT);
 }
 
 /**
@@ -57,7 +60,7 @@ void Cap_Control(CAN_Capacitor_t *cap, const Referee_ForCap_t *referee,
  * @param cap_out 电容输出结构体
  * @param power_chassis 底盘功率
  */
-void Cap_HandleOffline(CAN_Capacitor_t *cap, CAN_CapOutput_t *cap_out,
+void Cap_HandleOffline(Cap_t *cap, CAN_CapOutput_t *cap_out,
                        float power_chassis) {
   cap->cap_status = CAN_CAP_STATUS_OFFLINE;
   cap_out->power_limit = power_chassis;
@@ -69,7 +72,7 @@ void Cap_HandleOffline(CAN_Capacitor_t *cap, CAN_CapOutput_t *cap_out,
  * @param cap 电容数据
  * @param ui 结构体
  */
-void Cap_PackUi(const CAN_Capacitor_t *cap, Referee_CapUI_t *ui) {
+void Cap_PackUi(const Cap_t *cap, Referee_CapUI_t *ui) {
   ui->percentage = cap->percentage;
   ui->status = cap->cap_status;
 }

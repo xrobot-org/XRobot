@@ -47,8 +47,8 @@
 /* Private variables
    -------------------------------------------------------- */
 
-static const float CAP_PERCENTAGE_WORK = (float)_CAP_PERCENTAGE_WORK / 100.0f;
-static const float CAP_PERCENTAGE_CHARGE =
+static const float kCAP_PERCENTAGE_WORK = (float)_CAP_PERCENTAGE_WORK / 100.0f;
+static const float kCAP_PERCENTAGE_CHARGE =
     (float)_CAP_PERCENTAGE_CHARGE / 100.0f;
 
 /* Private function  -------------------------------------------------------- */
@@ -345,7 +345,7 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
  * @param ref 裁判系统数据
  * @return 函数运行结果
  */
-int8_t Chassis_PowerLimit(Chassis_t *c, const CAN_Capacitor_t *cap,
+int8_t Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
                           const Referee_ForChassis_t *ref) {
   ASSERT(c);
   ASSERT(cap);
@@ -357,16 +357,16 @@ int8_t Chassis_PowerLimit(Chassis_t *c, const CAN_Capacitor_t *cap,
     power_limit = GAME_CHASSIS_MAX_POWER_WO_REF;
   } else {
     if (cap->cap_status == CAN_CAP_STATUS_RUNNING &&
-        cap->percentage > CAP_PERCENTAGE_CHARGE) {
+        cap->percentage > kCAP_PERCENTAGE_CHARGE) {
       /* 电容在线且电量足够，使用电容 */
-      if (cap->percentage > CAP_PERCENTAGE_WORK) {
+      if (cap->percentage > kCAP_PERCENTAGE_WORK) {
         /* 电容接近充满时不再限制功率 */
         power_limit = -1.0f;
       } else {
         /* 按照电容能量百分比计算输出功率 */
         power_limit = ref->chassis_power_limit +
-                      (cap->percentage - CAP_PERCENTAGE_CHARGE) /
-                          (CAP_PERCENTAGE_WORK - CAP_PERCENTAGE_CHARGE) *
+                      (cap->percentage - kCAP_PERCENTAGE_CHARGE) /
+                          (kCAP_PERCENTAGE_WORK - kCAP_PERCENTAGE_CHARGE) *
                           (float)CHASSIS_MAX_CAP_POWER;
       }
     } else {

@@ -218,12 +218,6 @@ typedef struct {
 } CAN_RawTx_t;
 
 typedef struct {
-  float percentage;
-  CAN_CapStatus_t cap_status;
-  CAN_CapFeedback_t cap_feedback;
-} CAN_Capacitor_t;
-
-typedef struct {
   CAN_ChassisMotor_t chassis;
   CAN_GimbalMotor_t gimbal;
   CAN_LauncherMotor_t launcher;
@@ -239,7 +233,7 @@ typedef struct {
   uint32_t recive_flag;
 
   CAN_Motor_t motor;
-  CAN_Capacitor_t cap;
+  CAN_CapFeedback_t cap;
   CAN_Tof_t tof;
   const CAN_Params_t *param;
   struct {
