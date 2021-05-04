@@ -1,5 +1,12 @@
-/*
- * 发射器模组
+/**
+ * @file launcher.h
+ * @author Qu Shen (503578404@qq.com)
+ * @brief 小弹丸发射器模块
+ * @version 1.0.0
+ * @date 2021-05-04
+ *
+ * @copyright Copyright (c) 2021
+ *
  */
 
 #pragma once
@@ -12,7 +19,9 @@
 #include "component/pid.h"
 #include "device/can.h"
 #include "device/referee.h"
+
 /* Exported constants ------------------------------------------------------- */
+
 #define LAUNCHER_OK (0)        /* 运行正常 */
 #define LAUNCHER_ERR (-1)      /* 运行时发现了其他错误 */
 #define LAUNCHER_ERR_NULL (-2) /* 运行时发现NULL指针 */
