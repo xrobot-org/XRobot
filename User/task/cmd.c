@@ -66,12 +66,12 @@ void Task_Cmd(void *argument) {
     osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
 
     /* 将接收机数据解析为指令数据 */
-    if (osMessageQueueGet(task_runtime.msgq.cmd.raw.rc, &rc, 0, 0) == osOK)
+    if (osMessageQueueGet(task_runtime.msgq.cmd.src.rc, &rc, 0, 0) == osOK)
       CMD_ParseRc(&rc, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
 
     /* 判断是否需要让上位机覆写指令 */
     if (CMD_CheckHostOverwrite(&cmd)) {
-      if (osMessageQueueGet(task_runtime.msgq.cmd.raw.host, &host, 0, 0) ==
+      if (osMessageQueueGet(task_runtime.msgq.cmd.src.host, &host, 0, 0) ==
           osOK) {
         CMD_ParseHost(&host, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
       }

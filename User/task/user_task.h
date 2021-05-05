@@ -64,10 +64,11 @@ typedef struct {
 
     /* 控制指令 */
     struct {
+      /* 控制指令来源 */
       struct {
         osMessageQueueId_t host;
         osMessageQueueId_t rc;
-      } raw;
+      } src;
 
       osMessageQueueId_t chassis;
       osMessageQueueId_t gimbal;
