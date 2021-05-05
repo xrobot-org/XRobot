@@ -86,7 +86,7 @@ float Capacity_GetBatteryRemain(float vbat) {
 }
 
 /**
- * @brief
+ * @brief 通过电压计算容剩余电量
  *
  * @param vcap 电容电压
  * @param vbat 电池电压
