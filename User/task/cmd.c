@@ -63,8 +63,6 @@ void Task_Cmd(void *argument) {
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 
-    osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
-
     /* 将接收机数据解析为指令数据 */
     if (osMessageQueueGet(task_runtime.msgq.cmd.src.rc, &rc, 0, 0) == osOK)
       CMD_ParseRc(&rc, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
@@ -76,10 +74,7 @@ void Task_Cmd(void *argument) {
         CMD_ParseHost(&host, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
       }
     }
-
     CMD_PackUi(&cmd_ui, &cmd);
-
-    osKernelUnlock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
 
     /* 将需要与其他任务分享的数据放到消息队列中 */
     osMessageQueueReset(task_runtime.msgq.cmd.ai);
