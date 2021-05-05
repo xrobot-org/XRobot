@@ -50,7 +50,7 @@ void Task_Cap(void *argument) {
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
-    task_runtime.stack_water_mark.cap = osThreadGetStackSpace(osThreadGetId());
+    task_runtime.stack_water_mark.ctrl_cap = osThreadGetStackSpace(osThreadGetId());
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 

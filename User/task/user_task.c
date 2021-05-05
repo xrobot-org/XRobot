@@ -48,12 +48,6 @@ const osThreadAttr_t attr_can = {
     .stack_size = 128 * 4,
 };
 
-const osThreadAttr_t attr_cap = {
-    .name = "cap",
-    .priority = osPriorityHigh,
-    .stack_size = 128 * 4,
-};
-
 const osThreadAttr_t attr_cli = {
     .name = "cli",
     .priority = osPriorityNormal,
@@ -63,6 +57,12 @@ const osThreadAttr_t attr_cli = {
 const osThreadAttr_t attr_cmd = {
     .name = "cmd",
     .priority = osPriorityHigh,
+    .stack_size = 128 * 4,
+};
+
+const osThreadAttr_t attr_ctrl_cap = {
+    .name = "ctrl_cap",
+    .priority = osPriorityAboveNormal,
     .stack_size = 128 * 4,
 };
 
