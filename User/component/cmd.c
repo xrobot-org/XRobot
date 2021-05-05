@@ -10,7 +10,7 @@
  * 控制来源(CtrlSource)有两个: 遥控(RC) & 上位机(Host)
  *
  * 遥控又分为两个控制方式(CtrlMethod):
- *     摇杆开关控制(Joystick) & 键盘鼠标控制(Mouse keyboard)
+ *     摇杆拨杆控制(Joystick & Switch) & 键盘鼠标控制(Mouse & Keyboard)
  *
  * RC -> Joystick Switch logic -> CMD
  *              or
@@ -219,7 +219,7 @@ static void CMD_MouseKeyboardLogic(const CMD_RC_t *rc, CMD_t *cmd,
 }
 
 /**
- * @brief 解析摇杆开关控制逻辑
+ * @brief 解析摇杆拨杆控制逻辑
  *
  * @param rc 遥控器数据
  * @param cmd 控制指令数据
@@ -336,7 +336,7 @@ int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   ASSERT(rc);
   ASSERT(cmd);
 
-  /* 在键盘鼠标和摇杆开关控制间切换 */
+  /* 在键盘鼠标和摇杆拨杆控制间切换 */
   if (CMD_KeyPressed(rc, CMD_KEY_SHIFT) && CMD_KeyPressed(rc, CMD_KEY_CTRL) &&
       CMD_KeyPressed(rc, CMD_KEY_Q)) {
     cmd->ctrl_method = CMD_METHOD_MOUSE_KEYBOARD;
