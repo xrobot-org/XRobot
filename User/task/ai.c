@@ -57,8 +57,8 @@ void Task_Ai(void *argument) {
     } else {
       AI_HandleOffline(&ai, &cmd_host);
     }
-    osMessageQueueReset(task_runtime.msgq.cmd.raw.host);
-    osMessageQueuePut(task_runtime.msgq.cmd.raw.host, &(cmd_host), 0, 0);
+    osMessageQueueReset(task_runtime.msgq.cmd.src.host);
+    osMessageQueuePut(task_runtime.msgq.cmd.src.host, &(cmd_host), 0, 0);
 
     osMessageQueueGet(task_runtime.msgq.ai.quat, &(quat), NULL, 0);
     osMessageQueueGet(task_runtime.msgq.cmd.ai, &(ai.status), NULL, 0);

@@ -94,8 +94,8 @@ void Task_Init(void *argument) {
       osMessageQueueNew(3u, sizeof(Game_AI_Status_t), NULL);
 
   /* atti_esti */
-  task_runtime.msgq.cmd.raw.rc = osMessageQueueNew(3u, sizeof(CMD_RC_t), NULL);
-  task_runtime.msgq.cmd.raw.host =
+  task_runtime.msgq.cmd.src.rc = osMessageQueueNew(3u, sizeof(CMD_RC_t), NULL);
+  task_runtime.msgq.cmd.src.host =
       osMessageQueueNew(3u, sizeof(CMD_Host_t), NULL);
 
   task_runtime.msgq.gimbal.accl =
