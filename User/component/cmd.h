@@ -10,7 +10,7 @@
  * 控制来源(CtrlSource)有两个: 遥控(RC) & 上位机(Host)
  *
  * 遥控又分为两个控制方式(CtrlMethod):
- *     摇杆开关控制(Joystick) & 键盘鼠标控制(Mouse keyboard)
+ *     摇杆拨杆控制(Joystick & Switch) & 键盘鼠标控制(Mouse & Keyboard)
  *
  * RC -> Joystick Switch logic -> CMD
  *              or
@@ -150,7 +150,7 @@ typedef enum {
 
 /* 控制方式 */
 typedef enum {
-  CMD_METHOD_JOYSTICK_SWITCH, /* 使用摇杆开关控制 */
+  CMD_METHOD_JOYSTICK_SWITCH, /* 使用摇杆拨杆控制 */
   CMD_METHOD_MOUSE_KEYBOARD,  /* 使用键鼠控制 */
 } CMD_CtrlMethod_t;
 
