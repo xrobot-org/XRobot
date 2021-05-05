@@ -49,7 +49,7 @@ void Task_Init(void *argument) {
   task_runtime.thread.atti_esti =
       osThreadNew(Task_AttiEsti, NULL, &attr_atti_esti);
   task_runtime.thread.cli = osThreadNew(Task_CLI, NULL, &attr_cli);
-  task_runtime.thread.command = osThreadNew(Task_Command, NULL, &attr_command);
+  task_runtime.thread.cmd = osThreadNew(Task_Cmd, NULL, &attr_cmd);
   task_runtime.thread.ctrl_chassis =
       osThreadNew(Task_CtrlChassis, NULL, &attr_ctrl_chassis);
   task_runtime.thread.ctrl_gimbal =
@@ -83,7 +83,7 @@ void Task_Init(void *argument) {
   task_runtime.msgq.can.output.cap =
       osMessageQueueNew(2u, sizeof(CAN_CapOutput_t), NULL);
 
-  /* command */
+  /* cmd */
   task_runtime.msgq.cmd.chassis =
       osMessageQueueNew(3u, sizeof(CMD_ChassisCmd_t), NULL);
   task_runtime.msgq.cmd.gimbal =

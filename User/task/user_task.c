@@ -60,8 +60,8 @@ const osThreadAttr_t attr_cli = {
     .stack_size = 256 * 4,
 };
 
-const osThreadAttr_t attr_command = {
-    .name = "command",
+const osThreadAttr_t attr_cmd = {
+    .name = "cmd",
     .priority = osPriorityHigh,
     .stack_size = 128 * 4,
 };

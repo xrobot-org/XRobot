@@ -40,7 +40,7 @@ typedef struct {
   /* 各任务，也可以叫做线程 */
   struct {
     osThreadId_t cli;
-    osThreadId_t command;
+    osThreadId_t cmd;
     osThreadId_t ctrl_chassis;
     osThreadId_t ctrl_gimbal;
     osThreadId_t ctrl_launcher;
@@ -132,7 +132,7 @@ typedef struct {
   /* stack使用 */
   struct {
     UBaseType_t cli;
-    UBaseType_t command;
+    UBaseType_t cmd;
     UBaseType_t ctrl_chassis;
     UBaseType_t ctrl_gimbal;
     UBaseType_t ctrl_launcher;
@@ -149,7 +149,7 @@ typedef struct {
   /* 任务运行频率 */
   struct {
     float cli;
-    float command;
+    float cmd;
     float ctrl_chassis;
     float ctrl_gimbal;
     float ctrl_launcher;
@@ -166,7 +166,7 @@ typedef struct {
   /* 任务最近运行时间 */
   struct {
     float cli;
-    float command;
+    float cmd;
     float ctrl_chassis;
     float ctrl_gimbal;
     float ctrl_launcher;
@@ -187,7 +187,7 @@ extern Task_Runtime_t task_runtime;
 extern const osThreadAttr_t attr_init;
 
 extern const osThreadAttr_t attr_cli;
-extern const osThreadAttr_t attr_command;
+extern const osThreadAttr_t attr_cmd;
 extern const osThreadAttr_t attr_ctrl_chassis;
 extern const osThreadAttr_t attr_ctrl_gimbal;
 extern const osThreadAttr_t attr_ctrl_launcher;
@@ -204,7 +204,7 @@ extern const osThreadAttr_t attr_cap;
 void Task_Init(void *argument);
 
 void Task_CLI(void *argument);
-void Task_Command(void *argument);
+void Task_Cmd(void *argument);
 void Task_CtrlChassis(void *argument);
 void Task_CtrlGimbal(void *argument);
 void Task_CtrlLauncher(void *argument);

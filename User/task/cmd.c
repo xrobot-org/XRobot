@@ -45,7 +45,7 @@ static CMD_UI_t cmd_ui;
  *
  * \param argument 未使用
  */
-void Task_Command(void *argument) {
+void Task_Cmd(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */
 
   /* 计算任务运行到指定频率需要等待的tick数 */
@@ -59,8 +59,7 @@ void Task_Command(void *argument) {
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
-    task_runtime.stack_water_mark.command =
-        osThreadGetStackSpace(osThreadGetId());
+    task_runtime.stack_water_mark.cmd = osThreadGetStackSpace(osThreadGetId());
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 
