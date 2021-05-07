@@ -26,6 +26,11 @@
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
 
+bool Cap_RefIsReady(const Referee_ForCap_t *referee) {
+  return (referee->chassis_power_limit > 0.0f) &&
+         (referee->chassis_pwr_buff > 0.0f) && (referee->chassis_watt > 0.0f);
+}
+
 void Cap_Update(Cap_t *cap, const CAN_CapFeedback_t *cap_fb) {
   /* 更新电容状态和百分比 */
   cap->cap_status = CAN_CAP_STATUS_RUNNING;
@@ -41,7 +46,7 @@ void Cap_Update(Cap_t *cap, const CAN_CapFeedback_t *cap_fb) {
  * @param cap_out 电容输出结构体
  */
 void Cap_Control(const Referee_ForCap_t *referee, CAN_CapOutput_t *cap_out) {
-  if (referee->status != REF_STATUS_RUNNING) {
+  if (referee->status != REF_STATUS_RUNNING || !Cap_RefIsReady(referee)) {
     /* 当裁判系统离线时，依然使用裁判系统进程传来的数据 */
     cap_out->power_limit = referee->chassis_power_limit;
   } else {
