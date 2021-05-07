@@ -123,13 +123,12 @@ void Task_Init(void *argument) {
 
   /* UI */
   task_runtime.msgq.ui.chassis =
-      osMessageQueueNew(2u, sizeof(Referee_ChassisUI_t), NULL);
-  task_runtime.msgq.ui.cap =
-      osMessageQueueNew(2u, sizeof(Referee_CapUI_t), NULL);
+      osMessageQueueNew(2u, sizeof(UI_ChassisUI_t), NULL);
+  task_runtime.msgq.ui.cap = osMessageQueueNew(2u, sizeof(UI_CapUI_t), NULL);
   task_runtime.msgq.ui.gimbal =
-      osMessageQueueNew(2u, sizeof(Referee_GimbalUI_t), NULL);
+      osMessageQueueNew(2u, sizeof(UI_GimbalUI_t), NULL);
   task_runtime.msgq.ui.launcher =
-      osMessageQueueNew(2u, sizeof(Referee_LauncherUI_t), NULL);
+      osMessageQueueNew(2u, sizeof(UI_LauncherUI_t), NULL);
   task_runtime.msgq.ui.cmd = osMessageQueueNew(2u, sizeof(CMD_UI_t), NULL);
   task_runtime.msgq.ui.ai = osMessageQueueNew(2u, sizeof(AI_UI_t), NULL);
 

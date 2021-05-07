@@ -59,4 +59,4 @@ void Cap_HandleOffline(Cap_t *cap, CAN_CapOutput_t *cap_out,
  * @param cap 电容数据
  * @param ui 结构体
  */
-void Cap_PackUi(const Cap_t *cap, Referee_CapUI_t *ui);
+void Cap_PackUi(const Cap_t *cap, UI_CapUI_t *ui);

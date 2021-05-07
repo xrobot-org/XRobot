@@ -28,13 +28,13 @@ CMD_LauncherCmd_t launcher_cmd;
 Launcher_t launcher;
 Referee_ForLauncher_t referee_launcher;
 CAN_LauncherOutput_t launcher_out;
-Referee_LauncherUI_t launcher_ui;
+UI_LauncherUI_t launcher_ui;
 #else
 static CMD_LauncherCmd_t launcher_cmd;
 static Launcher_t launcher;
 static Referee_ForLauncher_t referee_launcher;
 static CAN_LauncherOutput_t launcher_out;
-static Referee_LauncherUI_t launcher_ui;
+static UI_LauncherUI_t launcher_ui;
 #endif
 
 /* Private function --------------------------------------------------------- */

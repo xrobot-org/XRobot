@@ -25,11 +25,11 @@ static Cap_t cap;
 #ifdef DEBUG
 CAN_CapOutput_t cap_out;
 Referee_ForCap_t referee_cap;
-Referee_CapUI_t cap_ui;
+UI_CapUI_t cap_ui;
 #else
 static CAN_CapOutput_t cap_out;
 static Referee_ForCap_t referee_cap;
-static Referee_CapUI_t cap_ui;
+static UI_CapUI_t cap_ui;
 #endif
 
 /* Private function --------------------------------------------------------- */
@@ -50,7 +50,8 @@ void Task_Cap(void *argument) {
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
-    task_runtime.stack_water_mark.ctrl_cap = osThreadGetStackSpace(osThreadGetId());
+    task_runtime.stack_water_mark.ctrl_cap =
+        osThreadGetStackSpace(osThreadGetId());
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 

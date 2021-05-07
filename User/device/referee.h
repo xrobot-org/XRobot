@@ -294,25 +294,6 @@ typedef struct __packed {
 } Referee_InterStudentHeader_t;
 
 typedef struct {
-  Game_ChassisMode_t mode;
-  float angle;
-} Referee_ChassisUI_t;
-
-typedef struct {
-  float percentage;
-  CAN_CapStatus_t status;
-} Referee_CapUI_t;
-
-typedef struct {
-  Game_GimbalMode_t mode;
-} Referee_GimbalUI_t;
-
-typedef struct {
-  Game_LauncherMode_t mode;
-  Game_FireMode_t fire;
-} Referee_LauncherUI_t;
-
-typedef struct {
   Referee_Status_t status;
   Referee_GameStatus_t game_status;
   Referee_GameResult_t game_result;
@@ -338,10 +319,10 @@ typedef struct {
 
   UI_t ui;
   /* UI所需信息 */
-  Referee_CapUI_t cap_ui;
-  Referee_ChassisUI_t chassis_ui;
-  Referee_LauncherUI_t launcher_ui;
-  Referee_GimbalUI_t gimbal_ui;
+  UI_CapUI_t cap_ui;
+  UI_ChassisUI_t chassis_ui;
+  UI_LauncherUI_t launcher_ui;
+  UI_GimbalUI_t gimbal_ui;
   CMD_UI_t cmd_ui;
 
   struct {

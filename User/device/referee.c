@@ -354,17 +354,14 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
       case 1:
         ref->ui.refresh_fsm++;
         /* 更新电容状态 */
-        switch (ref->cap_ui.status) {
-          case CAN_CAP_STATUS_OFFLINE:
-            UI_DrawArc(&ele, "9", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CAP,
-                       UI_YELLOW, 0, 360, UI_DEFAULT_WIDTH * 5, kW * 0.6,
-                       kH * 0.2, 50, 50);
-            break;
-          default:
-            UI_DrawArc(&ele, "9", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CAP,
-                       UI_GREEN, 0, ref->cap_ui.percentage * 360,
-                       UI_DEFAULT_WIDTH * 5, kW * 0.6, kH * 0.2, 50, 50);
-            break;
+        if (ref->cap_ui.online) {
+          UI_DrawArc(&ele, "9", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CAP,
+                     UI_GREEN, 0, ref->cap_ui.percentage * 360,
+                     UI_DEFAULT_WIDTH * 5, kW * 0.6, kH * 0.2, 50, 50);
+        } else {
+          UI_DrawArc(&ele, "9", UI_GRAPHIC_OP_REWRITE, UI_GRAPHIC_LAYER_CAP,
+                     UI_YELLOW, 0, 360, UI_DEFAULT_WIDTH * 5, kW * 0.6,
+                     kH * 0.2, 50, 50);
         }
         UI_StashGraphic(&(ref->ui), &ele);
         break;
