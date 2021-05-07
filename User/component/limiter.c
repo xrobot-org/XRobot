@@ -27,10 +27,11 @@
  */
 int8_t PowerLimit_ChassicOutput(float power_limit, float *motor_out,
                                 float *speed, uint32_t len) {
-  /* power_limit小于0时不进行限制 */
   ASSERT(motor_out);
   ASSERT(speed);
-  ASSERT(power_limit > 0.0f);
+
+  /* power_limit小于0时不进行限制 */
+  if (power_limit < 0.0f) return 0;
 
   float sum_motor_out = 0.0f;
   for (size_t i = 0; i < len; i++) {
