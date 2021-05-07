@@ -172,6 +172,7 @@ void Task_Init(void *argument);
 
 void Task_CLI(void *argument);
 void Task_Cmd(void *argument);
+void Task_CtrlCap(void *argument);
 void Task_CtrlChassis(void *argument);
 void Task_CtrlGimbal(void *argument);
 void Task_CtrlLauncher(void *argument);
@@ -182,4 +183,3 @@ void Task_AttiEsti(void *argument);
 void Task_Referee(void *argument);
 void Task_Ai(void *argument);
 void Task_RC(void *argument);
-void Task_Cap(void *argument);

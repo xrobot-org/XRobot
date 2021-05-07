@@ -40,7 +40,7 @@ static UI_CapUI_t cap_ui;
  *
  * \param argument 未使用
  */
-void Task_Cap(void *argument) {
+void Task_CtrlCap(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */
 
   /* 计算任务运行到指定频率需要等待的tick数 */
