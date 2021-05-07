@@ -93,9 +93,9 @@ int8_t AI_PackMcu(AI_t *ai, const AHRS_Quaternion_t *quat) {
          sizeof(*quat));
   ai->to_host.mcu.package.data.notice = 0;
   if (ai->status == AI_STATUS_AUTOAIM)
-    ai->to_host.mcu.package.data.notice |= AI_NOTICE_AOTUAIM;
+    ai->to_host.mcu.package.data.notice |= AI_NOTICE_AUTOAIM;
   else if (ai->status == AI_STATUS_HITBUFF)
-    ai->to_host.mcu.package.data.notice |= AI_NOTICE_HITSWITCH;
+    ai->to_host.mcu.package.data.notice |= AI_NOTICE_HITBUFF;
   else if (ai->status == AI_STATUS_FULLAUTO)
     ai->to_host.mcu.package.data.notice |= AI_NOTICE_AUTOMATIC;
 
