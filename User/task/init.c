@@ -50,7 +50,8 @@ void Task_Init(void *argument) {
       osThreadNew(Task_AttiEsti, NULL, &attr_atti_esti);
   task_runtime.thread.cli = osThreadNew(Task_CLI, NULL, &attr_cli);
   task_runtime.thread.cmd = osThreadNew(Task_Cmd, NULL, &attr_cmd);
-  task_runtime.thread.ctrl_cap = osThreadNew(Task_Cap, NULL, &attr_ctrl_cap);
+  task_runtime.thread.ctrl_cap =
+      osThreadNew(Task_CtrlCap, NULL, &attr_ctrl_cap);
   task_runtime.thread.ctrl_chassis =
       osThreadNew(Task_CtrlChassis, NULL, &attr_ctrl_chassis);
   task_runtime.thread.ctrl_gimbal =
