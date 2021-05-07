@@ -126,6 +126,7 @@ typedef struct {
 typedef struct {
   float sens_mouse;                           /* 鼠标灵敏度 */
   float sens_stick;                           /* 遥控器摇杆灵敏度 */
+  float sens_ai;                              /* AI控制灵敏度 */
   CMD_KeyMapItem_t key_map[CMD_BEHAVIOR_NUM]; /* 按键映射行为命令 */
   CMD_MoveParams_t move;                      /* 位移灵敏度参数 */
 } CMD_Params_t;

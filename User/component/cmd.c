@@ -382,15 +382,19 @@ int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
   ASSERT(cmd);
 
   /* 云台欧拉角设置为host相应的变化的欧拉角 */
-  cmd->gimbal.delta_eulr.yaw = host->gimbal_delta.yaw;
-  cmd->gimbal.delta_eulr.pit = host->gimbal_delta.pit;
+  cmd->gimbal.delta_eulr.yaw =
+      host->gimbal_delta.yaw * dt_sec * cmd->param->sens_mouse;
+  cmd->gimbal.delta_eulr.pit =
+      host->gimbal_delta.pit * dt_sec * cmd->param->sens_mouse;
 
   /* host发射命令，设置不同的发射频率和弹丸初速度 */
-  if (host->fire) {
-    cmd->launcher.mode = LAUNCHER_MODE_LOADED;
-    cmd->launcher.fire = true;
-  } else {
-    cmd->launcher.mode = LAUNCHER_MODE_SAFE;
+  if (cmd->ai_status == AI_STATUS_HITBUFF) {
+    if (host->fire) {
+      cmd->launcher.mode = LAUNCHER_MODE_LOADED;
+      cmd->launcher.fire = true;
+    } else {
+      cmd->launcher.mode = LAUNCHER_MODE_SAFE;
+    }
   }
   return 0;
 }
