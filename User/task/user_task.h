@@ -170,6 +170,9 @@ extern const osThreadAttr_t attr_rc;
 /* Exported functions prototypes -------------------------------------------- */
 void Task_Init(void *argument);
 
+void Task_Ai(void *argument);
+void Task_AttiEsti(void *argument);
+void Task_Can(void *argument);
 void Task_CLI(void *argument);
 void Task_Cmd(void *argument);
 void Task_CtrlCap(void *argument);
@@ -178,8 +181,5 @@ void Task_CtrlGimbal(void *argument);
 void Task_CtrlLauncher(void *argument);
 void Task_Info(void *argument);
 void Task_Monitor(void *argument);
-void Task_Can(void *argument);
-void Task_AttiEsti(void *argument);
-void Task_Referee(void *argument);
-void Task_Ai(void *argument);
 void Task_RC(void *argument);
+void Task_Referee(void *argument);
