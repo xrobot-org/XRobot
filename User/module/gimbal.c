@@ -222,7 +222,7 @@ void Gimbal_ResetOutput(CAN_GimbalOutput_t *output) {
  * @param g 云台结构体
  * @param ui UI结构体
  */
-void Gimbal_PackUi(const Gimbal_t *g, Referee_GimbalUI_t *ui) {
+void Gimbal_PackUi(const Gimbal_t *g, UI_GimbalUI_t *ui) {
   ASSERT(g);
   ASSERT(ui);
   ui->mode = g->mode;

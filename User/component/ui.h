@@ -7,7 +7,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "component\utils.h"
+#include "component/utils.h"
+#include "component/game.h"
 
 #define UI_GRAPHIC_LAYER_CONST (0)
 #define UI_GRAPHIC_LAYER_AUTOAIM (1)
@@ -99,6 +100,25 @@ typedef struct {
     } size;
   } stack;
 } UI_t;
+
+typedef struct {
+  Game_ChassisMode_t mode;
+  float angle;
+} UI_ChassisUI_t;
+
+typedef struct {
+  float percentage;
+  bool online;
+} UI_CapUI_t;
+
+typedef struct {
+  Game_GimbalMode_t mode;
+} UI_GimbalUI_t;
+
+typedef struct {
+  Game_LauncherMode_t mode;
+  Game_FireMode_t fire;
+} UI_LauncherUI_t;
 
 /**
  * @brief UI_绘制直线段

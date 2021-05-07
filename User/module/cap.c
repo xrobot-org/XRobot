@@ -40,8 +40,7 @@ void Cap_Update(Cap_t *cap, const CAN_CapFeedback_t *cap_fb) {
  * @param referee 裁判系统数据
  * @param cap_out 电容输出结构体
  */
-void Cap_Control(const Referee_ForCap_t *referee,
-                 CAN_CapOutput_t *cap_out) {
+void Cap_Control(const Referee_ForCap_t *referee, CAN_CapOutput_t *cap_out) {
   if (referee->status != REF_STATUS_RUNNING) {
     /* 当裁判系统离线时，依然使用裁判系统进程传来的数据 */
     cap_out->power_limit = referee->chassis_power_limit;
@@ -72,7 +71,7 @@ void Cap_HandleOffline(Cap_t *cap, CAN_CapOutput_t *cap_out,
  * @param cap 电容数据
  * @param ui 结构体
  */
-void Cap_PackUi(const Cap_t *cap, Referee_CapUI_t *ui) {
+void Cap_PackUi(const Cap_t *cap, UI_CapUI_t *ui) {
   ui->percentage = cap->percentage;
-  ui->status = cap->cap_status;
+  ui->online = (cap->cap_status == CAN_CAP_STATUS_RUNNING);
 }

@@ -32,13 +32,13 @@ CMD_ChassisCmd_t chassis_cmd;
 Chassis_t chassis;
 CAN_ChassisOutput_t chassis_out;
 Referee_ForChassis_t referee_chassis;
-Referee_ChassisUI_t chassis_ui;
+UI_ChassisUI_t chassis_ui;
 #else
 static CMD_ChassisCmd_t chassis_cmd;
 static Chassis_t chassis;
 static CAN_ChassisOutput_t chassis_out;
 static Referee_ForChassis_t referee_chassis;
-static Referee_ChassisUI_t chassis_ui;
+static UI_ChassisUI_t chassis_ui;
 #endif
 
 /* Private function --------------------------------------------------------- */

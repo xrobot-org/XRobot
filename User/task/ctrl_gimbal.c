@@ -27,12 +27,12 @@ static CAN_t can;
 CMD_GimbalCmd_t gimbal_cmd;
 Gimbal_t gimbal;
 CAN_GimbalOutput_t gimbal_out;
-Referee_GimbalUI_t gimbal_ui;
+UI_GimbalUI_t gimbal_ui;
 #else
 static CMD_GimbalCmd_t gimbal_cmd;
 static Gimbal_t gimbal;
 static CAN_GimbalOutput_t gimbal_out;
-static Referee_GimbalUI_t gimbal_ui;
+static UI_GimbalUI_t gimbal_ui;
 #endif
 
 /* Private function --------------------------------------------------------- */

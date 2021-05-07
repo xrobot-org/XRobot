@@ -414,7 +414,7 @@ void Chassis_ResetOutput(CAN_ChassisOutput_t *out) {
  * @param chassis 底盘数据结构体
  * @param ui UI数据结构体
  */
-void Chassis_PackUi(const Chassis_t *c, Referee_ChassisUI_t *ui) {
+void Chassis_PackUi(const Chassis_t *c, UI_ChassisUI_t *ui) {
   ASSERT(c);
   ASSERT(ui);
   ui->mode = c->mode;

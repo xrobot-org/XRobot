@@ -350,7 +350,7 @@ void Launcher_ResetOutput(CAN_LauncherOutput_t *output) {
  * @param l 发射器结构体
  * @param ui UI结构体
  */
-void Launcher_PackUi(Launcher_t *l, Referee_LauncherUI_t *ui) {
+void Launcher_PackUi(Launcher_t *l, UI_LauncherUI_t *ui) {
   ASSERT(l);
   ASSERT(ui);
   ui->mode = l->mode;
