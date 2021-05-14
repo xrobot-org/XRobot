@@ -125,6 +125,10 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       "Robot param\tPilot config\r\n"
       "------------------------------------------------\r\n";
 
+  static const char *const firmware_header =
+      "\r\n"
+      "------------------Firmware stats------------------\r\n";
+
   if (out_buffer == NULL) return pdFALSE;
   UNUSED(command_string);
   len -= 1;
@@ -183,6 +187,15 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       snprintf(out_buffer, len, "%s\t\t%s\r\n",
                task_runtime.cfg.robot_param_name,
                task_runtime.cfg.pilot_cfg_name);
+      fsm.stage++;
+      return pdPASS;
+    case 10:
+      strncpy(out_buffer, firmware_header, len);
+      fsm.stage++;
+      return pdPASS;
+    case 11:
+      /* 固件相关 */
+      snprintf(out_buffer, len, "Build time: %s %s\r\n", __DATE__, __TIME__);
       fsm.stage++;
       return pdPASS;
     default:
