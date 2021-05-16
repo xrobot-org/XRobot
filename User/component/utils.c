@@ -141,7 +141,7 @@ inline float BulletSpeedToFricRpm(float bullet_speed, float fric_radius,
   }
 
   /* 不为裁判系统设定值时,计算转速 */
-  return 60.0f * (float)bullet_speed / (M_2PI * fric_radius);
+  return 60.0f * bullet_speed / (M_2PI * fric_radius);
 }
 
 /**
