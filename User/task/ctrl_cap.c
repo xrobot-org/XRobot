@@ -75,7 +75,7 @@ void Task_CtrlCap(void *argument) {
     osMessageQueuePut(task_runtime.msgq.can.output.cap, &cap_out, 0, 0);
     /* 将电容状态发送到Chassis */
     osMessageQueueReset(task_runtime.msgq.cap_info);
-    osMessageQueuePut(task_runtime.msgq.cap_info, &(can.cap), 0, 0);
+    osMessageQueuePut(task_runtime.msgq.cap_info, &(cap), 0, 0);
 
     Cap_PackUi(&cap, &cap_ui);
 
