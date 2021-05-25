@@ -68,8 +68,8 @@ void Task_AttiEsti(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */
 
   /* 初始化设备 */
-  BMI088_Init(&bmi088, &(task_runtime.cfg.cali.bmi088));
-  // IST8310_Init(&ist8310, &(task_runtime.cfg.cali.ist8310));
+  BMI088_Init(&bmi088, &(runtime.cfg.cali.bmi088));
+  // IST8310_Init(&ist8310, &(runtime.cfg.cali.ist8310));
 
   /* 读取一次磁力计数据，用以初始化姿态解算算法 */
   // IST8310_WaitNew(osWaitForever);
@@ -90,8 +90,7 @@ void Task_AttiEsti(void *argument) {
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
-    task_runtime.stack_water_mark.atti_esti =
-        osThreadGetStackSpace(osThreadGetId());
+    runtime.stack_water_mark.atti_esti = osThreadGetStackSpace(osThreadGetId());
 #endif
     /* 等待IMU新数据 */
     BMI088_WaitNew();
@@ -127,14 +126,14 @@ void Task_AttiEsti(void *argument) {
     osKernelUnlock();
 
     /* 将需要与其他任务分享的数据放到消息队列中 */
-    osMessageQueueReset(task_runtime.msgq.gimbal.accl);
-    osMessageQueuePut(task_runtime.msgq.gimbal.accl, &bmi088.accl, 0, 0);
-    osMessageQueueReset(task_runtime.msgq.gimbal.eulr_imu);
-    osMessageQueuePut(task_runtime.msgq.gimbal.eulr_imu, &eulr_to_send, 0, 0);
-    osMessageQueueReset(task_runtime.msgq.ai.quat);
-    osMessageQueuePut(task_runtime.msgq.ai.quat, &(gimbal_ahrs.quat), 0, 0);
-    osMessageQueueReset(task_runtime.msgq.gimbal.gyro);
-    osMessageQueuePut(task_runtime.msgq.gimbal.gyro, &bmi088.gyro, 0, 0);
+    osMessageQueueReset(runtime.msgq.gimbal.accl);
+    osMessageQueuePut(runtime.msgq.gimbal.accl, &bmi088.accl, 0, 0);
+    osMessageQueueReset(runtime.msgq.gimbal.eulr_imu);
+    osMessageQueuePut(runtime.msgq.gimbal.eulr_imu, &eulr_to_send, 0, 0);
+    osMessageQueueReset(runtime.msgq.ai.quat);
+    osMessageQueuePut(runtime.msgq.ai.quat, &(gimbal_ahrs.quat), 0, 0);
+    osMessageQueueReset(runtime.msgq.gimbal.gyro);
+    osMessageQueuePut(runtime.msgq.gimbal.gyro, &bmi088.gyro, 0, 0);
 
     /* PID控制IMU温度，PWM输出 */
     BSP_PWM_Set(BSP_PWM_IMU_HEAT,

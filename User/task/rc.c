@@ -49,7 +49,7 @@ void Task_RC(void *argument) {
   while (1) {
 #ifdef DEBUG
     /*  */
-    task_runtime.stack_water_mark.rc = osThreadGetStackSpace(osThreadGetId());
+    runtime.stack_water_mark.rc = osThreadGetStackSpace(osThreadGetId());
 #endif
     /* 开启DMA */
     DR16_StartDmaRecv(&dr16);
@@ -63,7 +63,7 @@ void Task_RC(void *argument) {
       DR16_HandleOffline(&dr16, &cmd_rc);
     }
     /* 发送给cmd任务，进行处理 */
-    osMessageQueueReset(task_runtime.msgq.cmd.src.rc);
-    osMessageQueuePut(task_runtime.msgq.cmd.src.rc, &cmd_rc, 0, 0);
+    osMessageQueueReset(runtime.msgq.cmd.src.rc);
+    osMessageQueuePut(runtime.msgq.cmd.src.rc, &cmd_rc, 0, 0);
   }
 }

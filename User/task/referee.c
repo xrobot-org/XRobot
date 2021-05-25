@@ -52,13 +52,12 @@ void Task_Referee(void *argument) {
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_REFEREE;
 
   /* 初始化裁判系统 */
-  Referee_Init(&ref, &(task_runtime.cfg.pilot_cfg->screen));
+  Referee_Init(&ref, &(runtime.cfg.pilot_cfg->screen));
 
   uint32_t tick = osKernelGetTickCount();
   while (1) {
 #ifdef DEBUG
-    task_runtime.stack_water_mark.referee =
-        osThreadGetStackSpace(osThreadGetId());
+    runtime.stack_water_mark.referee = osThreadGetStackSpace(osThreadGetId());
 #endif
     Referee_StartReceiving(&ref); /* 开始接收裁判系统数据 */
 
@@ -78,26 +77,23 @@ void Task_Referee(void *argument) {
       Referee_PackForChassis(&for_chassis, &ref);
 
       /* 发送裁判系统数据到其他进程 */
-      osMessageQueueReset(task_runtime.msgq.referee.cap);
-      osMessageQueuePut(task_runtime.msgq.referee.cap, &for_cap, 0, 0);
-      osMessageQueueReset(task_runtime.msgq.referee.ai);
-      osMessageQueuePut(task_runtime.msgq.referee.ai, &for_ai, 0, 0);
-      osMessageQueueReset(task_runtime.msgq.referee.chassis);
-      osMessageQueuePut(task_runtime.msgq.referee.chassis, &for_chassis, 0, 0);
-      osMessageQueueReset(task_runtime.msgq.referee.launcher);
-      osMessageQueuePut(task_runtime.msgq.referee.launcher, &for_launcher, 0,
-                        0);
+      osMessageQueueReset(runtime.msgq.referee.cap);
+      osMessageQueuePut(runtime.msgq.referee.cap, &for_cap, 0, 0);
+      osMessageQueueReset(runtime.msgq.referee.ai);
+      osMessageQueuePut(runtime.msgq.referee.ai, &for_ai, 0, 0);
+      osMessageQueueReset(runtime.msgq.referee.chassis);
+      osMessageQueuePut(runtime.msgq.referee.chassis, &for_chassis, 0, 0);
+      osMessageQueueReset(runtime.msgq.referee.launcher);
+      osMessageQueuePut(runtime.msgq.referee.launcher, &for_launcher, 0, 0);
 
       /* 获取其他进程数据用于绘制UI */
-      osMessageQueueGet(task_runtime.msgq.ui.cap, &(ref.cap_ui), NULL, 0);
-      osMessageQueueGet(task_runtime.msgq.ui.chassis, &(ref.chassis_ui), NULL,
-                        0);
-      osMessageQueueGet(task_runtime.msgq.ui.gimbal, &(ref.gimbal_ui), NULL, 0);
-      osMessageQueueGet(task_runtime.msgq.ui.launcher, &(ref.launcher_ui), NULL,
-                        0);
-      osMessageQueueGet(task_runtime.msgq.ui.cmd, &(ref.cmd_ui), NULL, 0);
+      osMessageQueueGet(runtime.msgq.ui.cap, &(ref.cap_ui), NULL, 0);
+      osMessageQueueGet(runtime.msgq.ui.chassis, &(ref.chassis_ui), NULL, 0);
+      osMessageQueueGet(runtime.msgq.ui.gimbal, &(ref.gimbal_ui), NULL, 0);
+      osMessageQueueGet(runtime.msgq.ui.launcher, &(ref.launcher_ui), NULL, 0);
+      osMessageQueueGet(runtime.msgq.ui.cmd, &(ref.cmd_ui), NULL, 0);
 #if 0
-      osMessageQueueGet(task_runtime.msgq.ui.ai, &(ref.ai_ui), NULL, 0);
+      osMessageQueueGet(runtime.msgq.ui.ai, &(ref.ai_ui), NULL, 0);
 #endif
 
       /* 刷新UI数据 */

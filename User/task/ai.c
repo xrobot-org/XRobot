@@ -46,7 +46,7 @@ void Task_Ai(void *argument) {
   uint32_t tick = osKernelGetTickCount();
   while (1) {
 #ifdef DEBUG
-    task_runtime.stack_water_mark.ai = osThreadGetStackSpace(osThreadGetId());
+    runtime.stack_water_mark.ai = osThreadGetStackSpace(osThreadGetId());
 #endif
     /* Task body */
     tick += delay_tick;
@@ -57,21 +57,21 @@ void Task_Ai(void *argument) {
     } else {
       AI_HandleOffline(&ai, &cmd_host);
     }
-    osMessageQueueReset(task_runtime.msgq.cmd.src.host);
-    osMessageQueuePut(task_runtime.msgq.cmd.src.host, &(cmd_host), 0, 0);
+    osMessageQueueReset(runtime.msgq.cmd.src.host);
+    osMessageQueuePut(runtime.msgq.cmd.src.host, &(cmd_host), 0, 0);
 
-    osMessageQueueGet(task_runtime.msgq.ai.quat, &(quat), NULL, 0);
-    osMessageQueueGet(task_runtime.msgq.cmd.ai, &(ai.status), NULL, 0);
-    bool ref_update = (osMessageQueueGet(task_runtime.msgq.referee.ai,
-                                         &(referee_ai), NULL, 0) == osOK);
+    osMessageQueueGet(runtime.msgq.ai.quat, &(quat), NULL, 0);
+    osMessageQueueGet(runtime.msgq.cmd.ai, &(ai.status), NULL, 0);
+    bool ref_update = (osMessageQueueGet(runtime.msgq.referee.ai, &(referee_ai),
+                                         NULL, 0) == osOK);
     AI_PackMcu(&ai, &quat);
     if (ref_update) AI_PackRef(&ai, &(referee_ai));
 
     AI_StartTrans(&ai, ref_update);
 
     AI_PackUi(&ai_ui, &ai);
-    osMessageQueueReset(task_runtime.msgq.ui.ai);
-    osMessageQueuePut(task_runtime.msgq.ui.ai, &ai_ui, 0, 0);
+    osMessageQueueReset(runtime.msgq.ui.ai);
+    osMessageQueuePut(runtime.msgq.ui.ai, &ai_ui, 0, 0);
 
     osDelayUntil(tick);
   }
