@@ -49,7 +49,7 @@ void Task_Monitor(void *argument) {
     runtime.status.cpu_temp = BSP_GetTemperature();
 
     bool low_bat = runtime.status.battery < 0.2f;
-    bool high_cpu_temp = runtime.status.cpu_temp > 35.0f;
+    bool high_cpu_temp = runtime.status.cpu_temp > 50.0f;
 
     /* 电池电量少于20%时闪烁红色LED */
     if (low_bat || high_cpu_temp) {
