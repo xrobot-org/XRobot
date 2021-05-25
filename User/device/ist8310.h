@@ -12,21 +12,12 @@
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
 typedef struct {
-  struct {
-    float x;
-    float y;
-    float z;
-  } magn_offset; /* 磁力计偏置 */
-
-  struct {
-    float x;
-    float y;
-    float z;
-  } magn_scale;   /* 磁力计缩放 */
-} IST8310_Cali_t; /* IST8310校准数据 */
+  Vector3_t magn_offset; /* 磁力计偏置 */
+  Vector3_t magn_scale;  /* 磁力计缩放 */
+} IST8310_Cali_t;        /* IST8310校准数据 */
 
 typedef struct {
-  AHRS_Magn_t magn;
+  Vector3_t magn;
   const IST8310_Cali_t *cali;
 } IST8310_t;
 

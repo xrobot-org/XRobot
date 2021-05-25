@@ -11,16 +11,12 @@
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
 typedef struct {
-  struct {
-    float x;
-    float y;
-    float z;
-  } gyro_offset; /* 陀螺仪偏置 */
-} BMI088_Cali_t; /* BMI088校准数据 */
+  Vector3_t gyro_offset; /* 陀螺仪偏置 */
+} BMI088_Cali_t;         /* BMI088校准数据 */
 
 typedef struct {
-  AHRS_Accl_t accl;
-  AHRS_Gyro_t gyro;
+  Vector3_t accl;
+  Vector3_t gyro;
 
   float temp; /* 温度 */
 
@@ -31,7 +27,7 @@ typedef struct {
 int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali);
 int8_t BMI088_Restart(void);
 
-bool BMI088_GyroStable(AHRS_Gyro_t *gyro);
+bool BMI088_GyroStable(Vector3_t *gyro);
 
 /* Sensor use right-handed coordinate system. */
 /*

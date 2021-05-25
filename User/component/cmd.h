@@ -173,14 +173,8 @@ typedef struct {
 
 typedef struct {
   struct {
-    struct {
-      float x; /* 遥控器左侧摇杆横轴值，上为正 */
-      float y; /* 遥控器左侧摇杆纵轴值，右为正 */
-    } l;
-    struct {
-      float x; /* 遥控器右侧摇杆横轴值，上为正 */
-      float y; /* 遥控器右侧摇杆纵轴值，右为正 */
-    } r;
+    Vector2_t l; /* 遥控器左侧摇杆横轴值(x)，上为正；纵轴值(y)，右为正 */
+    Vector2_t r; /* 遥控器右侧摇杆横轴值(x)，上为正；纵轴值(y)，右为正 */
   } ch;
 
   float ch_res; /* 第五通道值 */

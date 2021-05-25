@@ -23,8 +23,8 @@ static float beta = BETA_IMU;
  * @param gyro 陀螺仪数据
  * @return int8_t 0对应没有错误
  */
-static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
-                             const AHRS_Gyro_t *gyro) {
+static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const Vector3_t *accl,
+                             const Vector3_t *gyro) {
   ASSERT(ahrs);
   ASSERT(accl);
   ASSERT(gyro);
@@ -129,7 +129,7 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const AHRS_Accl_t *accl,
  * @param sample_freq 采样频率
  * @return int8_t 0对应没有错误
  */
-int8_t AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq) {
+int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn, float sample_freq) {
   ASSERT(ahrs);
 
   ahrs->inv_sample_freq = 1.0f / sample_freq;
@@ -186,8 +186,8 @@ int8_t AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq) {
  * @param magn 磁力计数据
  * @return int8_t 0对应没有错误
  */
-int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
-                   const AHRS_Gyro_t *gyro, const AHRS_Magn_t *magn) {
+int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
+                   const Vector3_t *magn) {
   ASSERT(ahrs);
   ASSERT(accl);
   ASSERT(gyro);

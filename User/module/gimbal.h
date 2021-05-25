@@ -66,7 +66,7 @@ typedef struct {
 
 /* 云台反馈数据的结构体，包含反馈控制用的反馈数据 */
 typedef struct {
-  AHRS_Gyro_t gyro; /* IMU的陀螺仪数据 */
+  Vector3_t gyro; /* IMU的陀螺仪数据 */
 
   /* 欧拉角 */
   struct {
