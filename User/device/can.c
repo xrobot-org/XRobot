@@ -108,6 +108,10 @@ int8_t CAN_Init(CAN_t *can, const CAN_Params_t *param) {
   if (inited) return DEVICE_ERR_INITED;
   VERIFY((thread_alert = osThreadGetId()) != NULL);
 
+  /* gcan、thread_alert等需要在中断回调函数中使用的指针 */
+  /* 需要在开启中断和注册回调函数之前初始化 */
+  gcan = can;
+
   can->msgq_raw = osMessageQueueNew(32, sizeof(CAN_RawRx_t), NULL);
 
   can->param = param;
@@ -142,7 +146,6 @@ int8_t CAN_Init(CAN_t *can, const CAN_Params_t *param) {
   HAL_CAN_ActivateNotification(BSP_CAN_GetHandle(BSP_CAN_2),
                                CAN_IT_RX_FIFO1_MSG_PENDING);
 
-  gcan = can;
   inited = true;
   return DEVICE_OK;
 }
