@@ -45,9 +45,9 @@ static UI_ChassisUI_t chassis_ui;
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief 控制底盘
+ * @brief 控制底盘
  *
- * \param argument 未使用
+ * @param argument 未使用
  */
 void Task_CtrlChassis(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */

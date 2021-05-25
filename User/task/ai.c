@@ -30,9 +30,9 @@ static Referee_ForAI_t referee_ai;
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief AI通信
+ * @brief AI通信
  *
- * \param argument 未使用
+ * @param argument 未使用
  */
 void Task_Ai(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */

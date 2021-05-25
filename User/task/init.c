@@ -35,9 +35,9 @@
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief 初始化
+ * @brief 初始化
  *
- * \param argument 未使用
+ * @param argument 未使用
  */
 void Task_Init(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */

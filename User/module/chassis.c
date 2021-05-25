@@ -53,12 +53,12 @@ static const float kCAP_PERCENTAGE_CHARGE =
 
 /* Private function  -------------------------------------------------------- */
 /**
- * \brief 设置底盘模式
+ * @brief 设置底盘模式
  *
- * \param c 包含底盘数据的结构体
- * \param mode 要设置的模式
+ * @param c 包含底盘数据的结构体
+ * @param mode 要设置的模式
  *
- * \return 函数运行结果
+ * @return 函数运行结果
  */
 static int8_t Chassis_SetMode(Chassis_t *c, Game_ChassisMode_t mode,
                               uint32_t now) {
@@ -96,13 +96,13 @@ static float Chassis_CalcWz(const float min, const float max, uint32_t now) {
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief 初始化底盘
+ * @brief 初始化底盘
  *
- * \param c 包含底盘数据的结构体
- * \param param 包含底盘参数的结构体指针
- * \param target_freq 任务预期的运行频率
+ * @param c 包含底盘数据的结构体
+ * @param param 包含底盘参数的结构体指针
+ * @param target_freq 任务预期的运行频率
  *
- * \return 函数运行结果
+ * @return 函数运行结果
  */
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
                     AHRS_Eulr_t *mech_zero, float target_freq) {
@@ -198,12 +198,12 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
 }
 
 /**
- * \brief 更新底盘的反馈信息
+ * @brief 更新底盘的反馈信息
  *
- * \param c 包含底盘数据的结构体
- * \param can CAN设备结构体
+ * @param c 包含底盘数据的结构体
+ * @param can CAN设备结构体
  *
- * \return 函数运行结果
+ * @return 函数运行结果
  */
 int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   /* 底盘数据和CAN结构体不能为空 */
@@ -229,13 +229,13 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
 }
 
 /**
- * \brief 运行底盘控制逻辑
+ * @brief 运行底盘控制逻辑
  *
- * \param c 包含底盘数据的结构体
- * \param c_cmd 底盘控制指令
- * \param dt_sec 两次调用的时间间隔
+ * @param c 包含底盘数据的结构体
+ * @param c_cmd 底盘控制指令
+ * @param dt_sec 两次调用的时间间隔
  *
- * \return 函数运行结果
+ * @return 函数运行结果
  */
 int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
                        uint32_t now) {
@@ -383,10 +383,10 @@ int8_t Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
 }
 
 /**
- * \brief 复制底盘输出值
+ * @brief 复制底盘输出值
  *
- * \param s 包含底盘数据的结构体
- * \param out CAN设备底盘输出结构体
+ * @param s 包含底盘数据的结构体
+ * @param out CAN设备底盘输出结构体
  */
 void Chassis_PackOutput(Chassis_t *c, CAN_ChassisOutput_t *out) {
   ASSERT(c);
@@ -397,9 +397,9 @@ void Chassis_PackOutput(Chassis_t *c, CAN_ChassisOutput_t *out) {
 }
 
 /**
- * \brief 清空Chassis输出数据
+ * @brief 清空Chassis输出数据
  *
- * \param out CAN设备底盘输出结构体
+ * @param out CAN设备底盘输出结构体
  */
 void Chassis_ResetOutput(CAN_ChassisOutput_t *out) {
   ASSERT(out);

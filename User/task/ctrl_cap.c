@@ -36,9 +36,9 @@ static UI_CapUI_t cap_ui;
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief 控制电容
+ * @brief 控制电容
  *
- * \param argument 未使用
+ * @param argument 未使用
  */
 void Task_CtrlCap(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */

@@ -60,9 +60,9 @@ static const KPID_Params_t imu_temp_ctrl_pid_param = {
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief 姿态解算
+ * @brief 姿态解算
  *
- * \param argument 未使用
+ * @param argument 未使用
  */
 void Task_AttiEsti(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */

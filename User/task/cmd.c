@@ -41,9 +41,9 @@ static CMD_UI_t cmd_ui;
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief 控制指令接收
+ * @brief 控制指令接收
  *
- * \param argument 未使用
+ * @param argument 未使用
  */
 void Task_Cmd(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */

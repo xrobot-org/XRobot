@@ -39,9 +39,9 @@ static UI_GimbalUI_t gimbal_ui;
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief 控制云台
+ * @brief 控制云台
  *
- * \param argument 未使用
+ * @param argument 未使用
  */
 void Task_CtrlGimbal(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */
