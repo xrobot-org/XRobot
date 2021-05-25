@@ -55,6 +55,7 @@ static bool DR16_DataCorrupted(const DR16_t *dr16) {
 
 /* Exported functions ------------------------------------------------------- */
 int8_t DR16_Init(DR16_t *dr16) {
+	UNUSED(dr16);
   ASSERT(dr16);
   if (inited) return DEVICE_ERR_INITED;
   VERIFY((thread_alert = osThreadGetId()) != NULL);
