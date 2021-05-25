@@ -51,7 +51,7 @@ int8_t BSP_USB_Printf(const char *fmt, ...) {
   va_end(ap);
 
   if (len > 0) {
-    BSP_USB_Transmit(usb_tx_buf, len);
+    BSP_USB_Transmit(usb_tx_buf, (uint16_t)(len));
     return BSP_OK;
   } else {
     return BSP_ERR_NULL;

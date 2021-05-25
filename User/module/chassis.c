@@ -89,7 +89,7 @@ static int8_t Chassis_SetMode(Chassis_t *c, Game_ChassisMode_t mode,
  */
 static float Chassis_CalcWz(const float min, const float max, uint32_t now) {
   /* wz在min和max之间，上限0.6f */
-  float wz_vary = fabs(0.2f * sinf(CHASSIS_ROTOR_OMEGA * (float)now)) + min;
+  float wz_vary = fabsf(0.2f * sinf(CHASSIS_ROTOR_OMEGA * (float)now)) + min;
   return wz_vary > 0.8f ? max : wz_vary;
 }
 

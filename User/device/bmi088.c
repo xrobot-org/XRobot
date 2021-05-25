@@ -311,7 +311,7 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
   bmi088->accl.y /= 5460.0f;
   bmi088->accl.z /= 5460.0f;
 
-  int16_t raw_temp = (uint16_t)((dma_buf[17] << 3) | (dma_buf[18] >> 5));
+  int16_t raw_temp = (int16_t)((dma_buf[17] << 3) | (dma_buf[18] >> 5));
 
   if (raw_temp > 1023) raw_temp -= 2048;
 

@@ -140,7 +140,7 @@ int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn, float sample_freq) {
   ahrs->quat.q3 = 0.0f;
 
   if (magn) {
-    float yaw = -atan2(magn->y, magn->x);
+    float yaw = -atan2f(magn->y, magn->x);
 
     if ((magn->x == 0.0f) && (magn->y == 0.0f) && (magn->z == 0.0f)) {
       ahrs->quat.q0 = 0.800884545f;
@@ -152,7 +152,7 @@ int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn, float sample_freq) {
       ahrs->quat.q0 = 0.997458339f;
       ahrs->quat.q1 = 0.000336312107f;
       ahrs->quat.q2 = -0.0057230792f;
-      ahrs->quat.q3 = 0.0740156546;
+      ahrs->quat.q3 = 0.0740156546f;
 
     } else if ((yaw < M_PI) || (yaw > (M_PI / 2.0f))) {
       ahrs->quat.q0 = 0.800884545f;
