@@ -235,13 +235,13 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
   Config_t cfg;
 
   static FiniteStateMachine_t fsm;
-  if (strncmp(command, "help", command_len) == 0) {
+  if (strncmp(command, "help", (size_t)command_len) == 0) {
     /* config help */
     snprintf(out_buffer, len, "%s", help_string);
     fsm.stage = stage_begin;
     return pdFALSE;
 
-  } else if (strncmp(command, "init", command_len) == 0) {
+  } else if (strncmp(command, "init", (size_t)command_len) == 0) {
     if ((pr != NULL) || (name != NULL)) goto command_error;
 
     /* config init */
@@ -263,13 +263,13 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
         fsm.stage = stage_end;
         return pdPASS;
     }
-  } else if (strncmp(command, "list", command_len) == 0) {
+  } else if (strncmp(command, "list", (size_t)command_len) == 0) {
     if ((pr == NULL) || (name != NULL)) goto command_error;
 
     /* config list */
     static uint8_t i = 0;
 
-    if (strncmp(pr, "pilot", pr_len) == 0) {
+    if (strncmp(pr, "pilot", (size_t)pr_len) == 0) {
       /* config list pilot */
       const Config_PilotCfgMap_t *pilot = Config_GetPilotNameMap();
       switch (fsm.stage) {
@@ -288,7 +288,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
           }
           return pdPASS;
       }
-    } else if (strncmp(pr, "robot", pr_len) == 0) {
+    } else if (strncmp(pr, "robot", (size_t)pr_len) == 0) {
       /* config list robot */
       const Config_RobotParamMap_t *robot = Config_GetRobotNameMap();
       switch (fsm.stage) {
@@ -311,11 +311,11 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
       goto command_error;
     }
 
-  } else if (strncmp(command, "set", command_len) == 0) {
+  } else if (strncmp(command, "set", (size_t)command_len) == 0) {
     if ((pr == NULL) || (name == NULL)) goto command_error;
 
     /* config set */
-    if (strncmp(pr, "robot", pr_len) == 0) {
+    if (strncmp(pr, "robot", (size_t)pr_len) == 0) {
       /* config set robot */
       if (fsm.stage == stage_begin) {
         Config_Get(&cfg);
@@ -332,7 +332,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
           return pdPASS;
         }
       }
-    } else if (strncmp(pr, "pilot", pr_len) == 0) {
+    } else if (strncmp(pr, "pilot", (size_t)pr_len) == 0) {
       /* config set pilot */
       if (fsm.stage == 0) {
         Config_Get(&cfg);

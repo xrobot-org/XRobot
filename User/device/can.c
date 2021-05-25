@@ -87,7 +87,7 @@ void CAN_Cap_Decode(CAN_CapFeedback_t *feedback, const uint8_t *raw) {
 void CAN_Tof_Decode(CAN_Tof_t *tof, const uint8_t *raw) {
   tof->dist = (float)((raw[2] << 16) | (raw[1] << 8) | raw[0]) / 1000.0f;
   tof->status = raw[3];
-  tof->signal_strength = (raw[5] << 8) | raw[4];
+  tof->signal_strength = (uint16_t)((raw[5] << 8) | raw[4]);
 }
 
 static void CAN_CAN1RxFifoMsgPendingCallback(void) {
