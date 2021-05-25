@@ -100,11 +100,11 @@ void Task_Init(void *argument) {
       osMessageQueueNew(3u, sizeof(CMD_Host_t), NULL);
 
   task_runtime.msgq.gimbal.accl =
-      osMessageQueueNew(2u, sizeof(AHRS_Accl_t), NULL);
+      osMessageQueueNew(2u, sizeof(Vector3_t), NULL);
   task_runtime.msgq.gimbal.eulr_imu =
       osMessageQueueNew(2u, sizeof(AHRS_Eulr_t), NULL);
   task_runtime.msgq.gimbal.gyro =
-      osMessageQueueNew(2u, sizeof(AHRS_Gyro_t), NULL);
+      osMessageQueueNew(2u, sizeof(Vector3_t), NULL);
 
   task_runtime.msgq.cap_info = osMessageQueueNew(2u, sizeof(Cap_t), NULL);
 

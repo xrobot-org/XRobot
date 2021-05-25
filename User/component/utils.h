@@ -102,6 +102,19 @@ typedef struct {
   float wz; /* 转动 */
 } MoveVector_t;
 
+/* 二元素向量 */
+typedef struct {
+  float x;
+  float y;
+} Vector2_t;
+
+/* 三元素向量 */
+typedef struct {
+  float x;
+  float y;
+  float z;
+} Vector3_t;
+
 /**
  * @brief 计算平方根倒数
  *

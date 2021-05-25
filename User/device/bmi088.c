@@ -252,7 +252,7 @@ int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali) {
   return DEVICE_OK;
 }
 
-bool BMI088_GyroStable(AHRS_Gyro_t *gyro) {
+bool BMI088_GyroStable(Vector3_t *gyro) {
   return ((gyro->x < 0.03f) && (gyro->y < 0.03f) && (gyro->z < 0.03f));
 }
 

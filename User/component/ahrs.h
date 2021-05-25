@@ -14,27 +14,6 @@ typedef struct {
   float rol; /* 翻滚角（Roll angle） */
 } AHRS_Eulr_t;
 
-/* 加速度计 Accelerometer */
-typedef struct {
-  float x;
-  float y;
-  float z;
-} AHRS_Accl_t;
-
-/* 陀螺仪 Gyroscope */
-typedef struct {
-  float x;
-  float y;
-  float z;
-} AHRS_Gyro_t;
-
-/* 磁力计 Magnetometer */
-typedef struct {
-  float x;
-  float y;
-  float z;
-} AHRS_Magn_t;
-
 /* 四元数 */
 typedef struct {
   float q0;
@@ -59,7 +38,7 @@ typedef struct {
  * @param sample_freq 采样频率
  * @return int8_t 0对应没有错误
  */
-int8_t AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq);
+int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn, float sample_freq);
 
 /**
  * @brief 姿态运算更新一次
@@ -70,8 +49,8 @@ int8_t AHRS_Init(AHRS_t *ahrs, const AHRS_Magn_t *magn, float sample_freq);
  * @param magn 磁力计数据
  * @return int8_t 0对应没有错误
  */
-int8_t AHRS_Update(AHRS_t *ahrs, const AHRS_Accl_t *accl,
-                   const AHRS_Gyro_t *gyro, const AHRS_Magn_t *magn);
+int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
+                   const Vector3_t *magn);
 
 /**
  * @brief 通过姿态解算主结构体中的四元数计算欧拉角

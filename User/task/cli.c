@@ -381,7 +381,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
 
   /* 陀螺仪校准相关内容 */
   Config_t cfg;
-  AHRS_Gyro_t gyro;
+  Vector3_t gyro;
   uint16_t count = 0;
   static float x = 0.0f;
   static float y = 0.0f;
