@@ -31,6 +31,7 @@ static void Ai_RxCpltCallback(void) {
 
 /* Exported functions ------------------------------------------------------- */
 int8_t AI_Init(AI_t *ai) {
+	UNUSED(ai);
   ASSERT(ai);
   if (inited) return DEVICE_ERR_INITED;
   VERIFY((thread_alert = osThreadGetId()) != NULL);

@@ -83,7 +83,7 @@
  * @brief 表达式会运行，忽略表达式结果
  *
  */
-#define VERIFY(expr) (expr)
+#define VERIFY(expr) ((void)(expr))
 #endif
 
 #ifndef UNUSED
