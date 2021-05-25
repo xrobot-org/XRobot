@@ -54,26 +54,25 @@ void Task_CtrlChassis(void *argument) {
 
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_CHASSIS;
   /* 初始化底盘 */
-  Chassis_Init(&chassis, &(task_runtime.cfg.robot_param->chassis),
-               &task_runtime.cfg.mech_zero, (float)TASK_FREQ_CTRL_CHASSIS);
+  Chassis_Init(&chassis, &(runtime.cfg.robot_param->chassis),
+               &runtime.cfg.mech_zero, (float)TASK_FREQ_CTRL_CHASSIS);
 
   /* 延时一段时间再开启任务 */
-  osMessageQueueGet(task_runtime.msgq.can.feedback.chassis, &can, NULL,
+  osMessageQueueGet(runtime.msgq.can.feedback.chassis, &can, NULL,
                     osWaitForever);
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
-    task_runtime.stack_water_mark.ctrl_chassis =
+    runtime.stack_water_mark.ctrl_chassis =
         osThreadGetStackSpace(osThreadGetId());
 #endif
 
-    osMessageQueueGet(task_runtime.msgq.can.feedback.chassis, &can, NULL, 0);
+    osMessageQueueGet(runtime.msgq.can.feedback.chassis, &can, NULL, 0);
     /* 读取控制指令、电容反馈、裁判系统 */
-    osMessageQueueGet(task_runtime.msgq.referee.chassis, &referee_chassis, NULL,
-                      0);
-    osMessageQueueGet(task_runtime.msgq.cmd.chassis, &chassis_cmd, NULL, 0);
-    osMessageQueueGet(task_runtime.msgq.cap_info, &cap, NULL, 0);
+    osMessageQueueGet(runtime.msgq.referee.chassis, &referee_chassis, NULL, 0);
+    osMessageQueueGet(runtime.msgq.cmd.chassis, &chassis_cmd, NULL, 0);
+    osMessageQueueGet(runtime.msgq.cap_info, &cap, NULL, 0);
 
     osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     Chassis_UpdateFeedback(&chassis, &can); /* 更新反馈值 */
@@ -85,12 +84,12 @@ void Task_CtrlChassis(void *argument) {
     osKernelUnlock();
 
     /* 将电机输出值发送到CAN */
-    osMessageQueueReset(task_runtime.msgq.can.output.chassis);
-    osMessageQueuePut(task_runtime.msgq.can.output.chassis, &chassis_out, 0, 0);
+    osMessageQueueReset(runtime.msgq.can.output.chassis);
+    osMessageQueuePut(runtime.msgq.can.output.chassis, &chassis_out, 0, 0);
 
     /* 将底盘数据发送给UI */
-    osMessageQueueReset(task_runtime.msgq.ui.chassis);
-    osMessageQueuePut(task_runtime.msgq.ui.chassis, &chassis_ui, 0, 0);
+    osMessageQueueReset(runtime.msgq.ui.chassis);
+    osMessageQueuePut(runtime.msgq.ui.chassis, &chassis_ui, 0, 0);
 
     tick += delay_tick; /* 计算下一个唤醒时刻 */
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */

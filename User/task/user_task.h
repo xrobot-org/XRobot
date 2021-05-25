@@ -147,9 +147,9 @@ typedef struct {
     UBaseType_t rc;
   } stack_water_mark;
 #endif
-} Task_Runtime_t;
+} Runtime_t;
 
-extern Task_Runtime_t task_runtime;
+extern Runtime_t runtime;
 
 extern const osThreadAttr_t attr_init;
 

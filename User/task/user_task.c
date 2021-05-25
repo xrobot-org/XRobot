@@ -21,7 +21,7 @@
 #include "task/user_task.h"
 
 /* 机器人运行时的数据 */
-Task_Runtime_t task_runtime;
+Runtime_t runtime;
 
 /* 各个任务的参数 */
 const osThreadAttr_t attr_init = {

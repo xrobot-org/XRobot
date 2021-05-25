@@ -42,96 +42,85 @@
 void Task_Init(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */
 
-  Config_Get(&task_runtime.cfg); /* 获取机器人配置 */
+  Config_Get(&runtime.cfg); /* 获取机器人配置 */
 
   osKernelLock();
   /* 创建任务 */
-  task_runtime.thread.atti_esti =
-      osThreadNew(Task_AttiEsti, NULL, &attr_atti_esti);
-  task_runtime.thread.cli = osThreadNew(Task_CLI, NULL, &attr_cli);
-  task_runtime.thread.cmd = osThreadNew(Task_Cmd, NULL, &attr_cmd);
-  task_runtime.thread.ctrl_cap =
-      osThreadNew(Task_CtrlCap, NULL, &attr_ctrl_cap);
-  task_runtime.thread.ctrl_chassis =
+  runtime.thread.atti_esti = osThreadNew(Task_AttiEsti, NULL, &attr_atti_esti);
+  runtime.thread.cli = osThreadNew(Task_CLI, NULL, &attr_cli);
+  runtime.thread.cmd = osThreadNew(Task_Cmd, NULL, &attr_cmd);
+  runtime.thread.ctrl_cap = osThreadNew(Task_CtrlCap, NULL, &attr_ctrl_cap);
+  runtime.thread.ctrl_chassis =
       osThreadNew(Task_CtrlChassis, NULL, &attr_ctrl_chassis);
-  task_runtime.thread.ctrl_gimbal =
+  runtime.thread.ctrl_gimbal =
       osThreadNew(Task_CtrlGimbal, NULL, &attr_ctrl_gimbal);
-  task_runtime.thread.ctrl_launcher =
+  runtime.thread.ctrl_launcher =
       osThreadNew(Task_CtrlLauncher, NULL, &attr_ctrl_launcher);
-  task_runtime.thread.info = osThreadNew(Task_Info, NULL, &attr_info);
-  task_runtime.thread.monitor = osThreadNew(Task_Monitor, NULL, &attr_monitor);
-  task_runtime.thread.can = osThreadNew(Task_Can, NULL, &attr_can);
-  task_runtime.thread.referee = osThreadNew(Task_Referee, NULL, &attr_referee);
-  task_runtime.thread.ai = osThreadNew(Task_Ai, NULL, &attr_ai);
-  task_runtime.thread.rc = osThreadNew(Task_RC, NULL, &attr_rc);
+  runtime.thread.info = osThreadNew(Task_Info, NULL, &attr_info);
+  runtime.thread.monitor = osThreadNew(Task_Monitor, NULL, &attr_monitor);
+  runtime.thread.can = osThreadNew(Task_Can, NULL, &attr_can);
+  runtime.thread.referee = osThreadNew(Task_Referee, NULL, &attr_referee);
+  runtime.thread.ai = osThreadNew(Task_Ai, NULL, &attr_ai);
+  runtime.thread.rc = osThreadNew(Task_RC, NULL, &attr_rc);
 
   /* 创建消息队列 */
   /* motor */
-  task_runtime.msgq.can.feedback.chassis =
+  runtime.msgq.can.feedback.chassis =
       osMessageQueueNew(2u, sizeof(CAN_t), NULL);
-  task_runtime.msgq.can.feedback.gimbal =
+  runtime.msgq.can.feedback.gimbal = osMessageQueueNew(2u, sizeof(CAN_t), NULL);
+  runtime.msgq.can.feedback.launcher =
       osMessageQueueNew(2u, sizeof(CAN_t), NULL);
-  task_runtime.msgq.can.feedback.launcher =
-      osMessageQueueNew(2u, sizeof(CAN_t), NULL);
-  task_runtime.msgq.can.feedback.cap =
-      osMessageQueueNew(2u, sizeof(CAN_t), NULL);
-  task_runtime.msgq.can.output.chassis =
+  runtime.msgq.can.feedback.cap = osMessageQueueNew(2u, sizeof(CAN_t), NULL);
+  runtime.msgq.can.output.chassis =
       osMessageQueueNew(2u, sizeof(CAN_ChassisOutput_t), NULL);
-  task_runtime.msgq.can.output.gimbal =
+  runtime.msgq.can.output.gimbal =
       osMessageQueueNew(2u, sizeof(CAN_GimbalOutput_t), NULL);
-  task_runtime.msgq.can.output.launcher =
+  runtime.msgq.can.output.launcher =
       osMessageQueueNew(2u, sizeof(CAN_LauncherOutput_t), NULL);
-  task_runtime.msgq.can.output.cap =
+  runtime.msgq.can.output.cap =
       osMessageQueueNew(2u, sizeof(CAN_CapOutput_t), NULL);
 
   /* cmd */
-  task_runtime.msgq.cmd.chassis =
+  runtime.msgq.cmd.chassis =
       osMessageQueueNew(3u, sizeof(CMD_ChassisCmd_t), NULL);
-  task_runtime.msgq.cmd.gimbal =
+  runtime.msgq.cmd.gimbal =
       osMessageQueueNew(3u, sizeof(CMD_GimbalCmd_t), NULL);
-  task_runtime.msgq.cmd.launcher =
+  runtime.msgq.cmd.launcher =
       osMessageQueueNew(3u, sizeof(CMD_LauncherCmd_t), NULL);
-  task_runtime.msgq.cmd.ai =
-      osMessageQueueNew(3u, sizeof(Game_AI_Status_t), NULL);
+  runtime.msgq.cmd.ai = osMessageQueueNew(3u, sizeof(Game_AI_Status_t), NULL);
 
   /* atti_esti */
-  task_runtime.msgq.cmd.src.rc = osMessageQueueNew(3u, sizeof(CMD_RC_t), NULL);
-  task_runtime.msgq.cmd.src.host =
-      osMessageQueueNew(3u, sizeof(CMD_Host_t), NULL);
+  runtime.msgq.cmd.src.rc = osMessageQueueNew(3u, sizeof(CMD_RC_t), NULL);
+  runtime.msgq.cmd.src.host = osMessageQueueNew(3u, sizeof(CMD_Host_t), NULL);
 
-  task_runtime.msgq.gimbal.accl =
-      osMessageQueueNew(2u, sizeof(Vector3_t), NULL);
-  task_runtime.msgq.gimbal.eulr_imu =
+  runtime.msgq.gimbal.accl = osMessageQueueNew(2u, sizeof(Vector3_t), NULL);
+  runtime.msgq.gimbal.eulr_imu =
       osMessageQueueNew(2u, sizeof(AHRS_Eulr_t), NULL);
-  task_runtime.msgq.gimbal.gyro =
-      osMessageQueueNew(2u, sizeof(Vector3_t), NULL);
+  runtime.msgq.gimbal.gyro = osMessageQueueNew(2u, sizeof(Vector3_t), NULL);
 
-  task_runtime.msgq.cap_info = osMessageQueueNew(2u, sizeof(Cap_t), NULL);
+  runtime.msgq.cap_info = osMessageQueueNew(2u, sizeof(Cap_t), NULL);
 
   /* AI */
-  task_runtime.msgq.ai.quat =
-      osMessageQueueNew(2u, sizeof(AHRS_Quaternion_t), NULL);
+  runtime.msgq.ai.quat = osMessageQueueNew(2u, sizeof(AHRS_Quaternion_t), NULL);
 
   /* 裁判系统 */
-  task_runtime.msgq.referee.ai =
+  runtime.msgq.referee.ai =
       osMessageQueueNew(2u, sizeof(Referee_ForAI_t), NULL);
-  task_runtime.msgq.referee.chassis =
+  runtime.msgq.referee.chassis =
       osMessageQueueNew(2u, sizeof(Referee_ForChassis_t), NULL);
-  task_runtime.msgq.referee.cap =
+  runtime.msgq.referee.cap =
       osMessageQueueNew(2u, sizeof(Referee_ForCap_t), NULL);
-  task_runtime.msgq.referee.launcher =
+  runtime.msgq.referee.launcher =
       osMessageQueueNew(2u, sizeof(Referee_ForLauncher_t), NULL);
 
   /* UI */
-  task_runtime.msgq.ui.chassis =
-      osMessageQueueNew(2u, sizeof(UI_ChassisUI_t), NULL);
-  task_runtime.msgq.ui.cap = osMessageQueueNew(2u, sizeof(UI_CapUI_t), NULL);
-  task_runtime.msgq.ui.gimbal =
-      osMessageQueueNew(2u, sizeof(UI_GimbalUI_t), NULL);
-  task_runtime.msgq.ui.launcher =
+  runtime.msgq.ui.chassis = osMessageQueueNew(2u, sizeof(UI_ChassisUI_t), NULL);
+  runtime.msgq.ui.cap = osMessageQueueNew(2u, sizeof(UI_CapUI_t), NULL);
+  runtime.msgq.ui.gimbal = osMessageQueueNew(2u, sizeof(UI_GimbalUI_t), NULL);
+  runtime.msgq.ui.launcher =
       osMessageQueueNew(2u, sizeof(UI_LauncherUI_t), NULL);
-  task_runtime.msgq.ui.cmd = osMessageQueueNew(2u, sizeof(CMD_UI_t), NULL);
-  task_runtime.msgq.ui.ai = osMessageQueueNew(2u, sizeof(AI_UI_t), NULL);
+  runtime.msgq.ui.cmd = osMessageQueueNew(2u, sizeof(CMD_UI_t), NULL);
+  runtime.msgq.ui.ai = osMessageQueueNew(2u, sizeof(AI_UI_t), NULL);
 
   osKernelUnlock();
   osThreadTerminate(osThreadGetId()); /* 结束自身 */

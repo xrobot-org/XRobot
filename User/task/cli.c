@@ -174,8 +174,8 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       return pdPASS;
     case 7:
       /* 获取当前CPU温度和电量 */
-      snprintf(out_buffer, len, "%f\t%f\r\n", task_runtime.status.cpu_temp,
-               task_runtime.status.battery);
+      snprintf(out_buffer, len, "%f\t%f\r\n", runtime.status.cpu_temp,
+               runtime.status.battery);
       fsm.stage++;
       return pdPASS;
     case 8:
@@ -184,9 +184,8 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       return pdPASS;
     case 9:
       /* 获取机器人和操作手名称 */
-      snprintf(out_buffer, len, "%s\t\t%s\r\n",
-               task_runtime.cfg.robot_param_name,
-               task_runtime.cfg.pilot_cfg_name);
+      snprintf(out_buffer, len, "%s\t\t%s\r\n", runtime.cfg.robot_param_name,
+               runtime.cfg.pilot_cfg_name);
       fsm.stage++;
       return pdPASS;
     case 10:
@@ -400,17 +399,16 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       return pdPASS;
     case 2:
       /* 无陀螺仪数据和校准重试超时时，校准失败 */
-      osThreadSuspend(task_runtime.thread.ctrl_gimbal);
+      osThreadSuspend(runtime.thread.ctrl_gimbal);
 
-      if (osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &gyro, NULL, 5) !=
-          osOK) {
+      if (osMessageQueueGet(runtime.msgq.gimbal.gyro, &gyro, NULL, 5) != osOK) {
         snprintf(out_buffer, len, "Can not get gyro data.\r\n");
         fsm.stage = 7;
-        osThreadResume(task_runtime.thread.ctrl_gimbal);
+        osThreadResume(runtime.thread.ctrl_gimbal);
 
         return pdPASS;
       }
-      osThreadResume(task_runtime.thread.ctrl_gimbal);
+      osThreadResume(runtime.thread.ctrl_gimbal);
 
       if (BMI088_GyroStable(&gyro)) {
         snprintf(out_buffer, len,
@@ -436,7 +434,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       cfg.cali.bmi088.gyro_offset.z = 0.0f;
       Config_Set(&cfg);
       while (count < 1000) {
-        bool data_new = (osMessageQueueGet(task_runtime.msgq.gimbal.gyro, &gyro,
+        bool data_new = (osMessageQueueGet(runtime.msgq.gimbal.gyro, &gyro,
                                            NULL, 5) == osOK);
         bool data_good = BMI088_GyroStable(&gyro);
         if (data_new && data_good) {
@@ -503,15 +501,15 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
       /* 获取到云台数据，用can上的新的云台机械零点的位置替代旧的位置 */
       Config_Get(&cfg);
 
-      osThreadSuspend(task_runtime.thread.ctrl_gimbal);
-      if (osMessageQueueGet(task_runtime.msgq.can.feedback.gimbal, &can, NULL,
-                            5) != osOK) {
+      osThreadSuspend(runtime.thread.ctrl_gimbal);
+      if (osMessageQueueGet(runtime.msgq.can.feedback.gimbal, &can, NULL, 5) !=
+          osOK) {
         snprintf(out_buffer, len, "Can not get gimbal data.\r\n");
         fsm.stage = 2;
-        osThreadResume(task_runtime.thread.ctrl_gimbal);
+        osThreadResume(runtime.thread.ctrl_gimbal);
         return pdPASS;
       }
-      osThreadResume(task_runtime.thread.ctrl_gimbal);
+      osThreadResume(runtime.thread.ctrl_gimbal);
       cfg.mech_zero.yaw = can.motor.gimbal.named.yaw.rotor_angle;
       cfg.mech_zero.pit = can.motor.gimbal.named.pit.rotor_angle;
 
@@ -550,16 +548,16 @@ static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
       return pdPASS;
     case 1:
       /* 获取云台数据，获取新的限位角并替代旧的限位角 */
-      osThreadSuspend(task_runtime.thread.ctrl_gimbal);
+      osThreadSuspend(runtime.thread.ctrl_gimbal);
 
-      if (osMessageQueueGet(task_runtime.msgq.can.feedback.gimbal, &can, NULL,
-                            10) != osOK) {
-        osThreadResume(task_runtime.thread.ctrl_gimbal);
+      if (osMessageQueueGet(runtime.msgq.can.feedback.gimbal, &can, NULL, 10) !=
+          osOK) {
+        osThreadResume(runtime.thread.ctrl_gimbal);
         fsm.stage = 3;
         return pdPASS;
       }
       Config_Get(&cfg);
-      osThreadResume(task_runtime.thread.ctrl_gimbal);
+      osThreadResume(runtime.thread.ctrl_gimbal);
       cfg.gimbal_limit = can.motor.gimbal.named.pit.rotor_angle;
 
       Config_Set(&cfg);
@@ -719,7 +717,7 @@ void Task_CLI(void *argument) {
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
-    task_runtime.stack_water_mark.cli = osThreadGetStackSpace(osThreadGetId());
+    runtime.stack_water_mark.cli = osThreadGetStackSpace(osThreadGetId());
 #endif
     /* 等待输入. */
     BSP_USB_ReadyReceive(osThreadGetId());

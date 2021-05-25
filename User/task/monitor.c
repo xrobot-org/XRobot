@@ -41,17 +41,15 @@ void Task_Monitor(void *argument) {
   while (1) {
 #ifdef DEBUG
     /* 记录任务所使用的的栈空间 */
-    task_runtime.stack_water_mark.monitor =
-        osThreadGetStackSpace(osThreadGetId());
+    runtime.stack_water_mark.monitor = osThreadGetStackSpace(osThreadGetId());
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */
-    task_runtime.status.vbat = BSP_GetBatteryVolt(); /* ADC监测电压 */
-    task_runtime.status.battery =
-        Capacity_GetBatteryRemain(task_runtime.status.vbat);
-    task_runtime.status.cpu_temp = BSP_GetTemperature();
+    runtime.status.vbat = BSP_GetBatteryVolt(); /* ADC监测电压 */
+    runtime.status.battery = Capacity_GetBatteryRemain(runtime.status.vbat);
+    runtime.status.cpu_temp = BSP_GetTemperature();
 
-    bool low_bat = task_runtime.status.battery < 0.2f;
-    bool high_cpu_temp = task_runtime.status.cpu_temp > 35.0f;
+    bool low_bat = runtime.status.battery < 0.2f;
+    bool high_cpu_temp = runtime.status.cpu_temp > 35.0f;
 
     /* 电池电量少于20%时闪烁红色LED */
     if (low_bat || high_cpu_temp) {
