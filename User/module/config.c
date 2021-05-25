@@ -390,9 +390,9 @@ static const Config_PilotCfgMap_t pilot_cfg_map[] = {
 };
 
 /**
- * \brief 从Flash读取配置信息
+ * @brief 从Flash读取配置信息
  *
- * \param cfg 配置信息
+ * @param cfg 配置信息
  */
 void Config_Get(Config_t *cfg) {
   BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(*cfg));
@@ -408,9 +408,9 @@ void Config_Get(Config_t *cfg) {
 }
 
 /**
- * \brief 将配置信息写入Flash
+ * @brief 将配置信息写入Flash
  *
- * \param cfg 配置信息
+ * @param cfg 配置信息
  */
 void Config_Set(Config_t *cfg) {
   osKernelLock();

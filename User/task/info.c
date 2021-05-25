@@ -26,9 +26,9 @@
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief 信息
+ * @brief 信息
  *
- * \param argument 未使用
+ * @param argument 未使用
  */
 void Task_Info(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */

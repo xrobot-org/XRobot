@@ -37,9 +37,9 @@ static CMD_RC_t cmd_rc;
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief dr16接收机
+ * @brief dr16接收机
  *
- * \param argument 未使用
+ * @param argument 未使用
  */
 void Task_RC(void *argument) {
   UNUSED(argument); /* 未使用，消除警告 */

@@ -14,12 +14,12 @@
 /* Private function  -------------------------------------------------------- */
 
 /**
- * \brief 设置云台模式
+ * @brief 设置云台模式
  *
- * \param c 包含云台数据的结构体
- * \param mode 要设置的模式
+ * @param c 包含云台数据的结构体
+ * @param mode 要设置的模式
  *
- * \return 函数运行结果
+ * @return 函数运行结果
  */
 static int8_t Gimbal_SetMode(Gimbal_t *g, Game_GimbalMode_t mode) {
   ASSERT(g);
@@ -49,13 +49,13 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, Game_GimbalMode_t mode) {
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief 初始化云台
+ * @brief 初始化云台
  *
- * \param g 包含云台数据的结构体
- * \param param 包含云台参数的结构体指针
- * \param target_freq 任务预期的运行频率
+ * @param g 包含云台数据的结构体
+ * @param param 包含云台参数的结构体指针
+ * @param target_freq 任务预期的运行频率
  *
- * \return 函数运行结果
+ * @return 函数运行结果
  */
 int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
                    float target_freq) {
@@ -89,12 +89,12 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
 }
 
 /**
- * \brief 通过CAN设备更新云台反馈信息
+ * @brief 通过CAN设备更新云台反馈信息
  *
- * \param g 云台
- * \param can CAN设备
+ * @param g 云台
+ * @param can CAN设备
  *
- * \return 函数运行结果
+ * @return 函数运行结果
  */
 int8_t Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_t *can) {
   ASSERT(g);
@@ -110,14 +110,14 @@ int8_t Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_t *can) {
 }
 
 /**
- * \brief 运行云台控制逻辑
+ * @brief 运行云台控制逻辑
  *
- * \param g 包含云台数据的结构体
- * \param fb 云台反馈信息
- * \param g_cmd 云台控制指令
- * \param dt_sec 两次调用的时间间隔
+ * @param g 包含云台数据的结构体
+ * @param fb 云台反馈信息
+ * @param g_cmd 云台控制指令
+ * @param dt_sec 两次调用的时间间隔
  *
- * \return 函数运行结果
+ * @return 函数运行结果
  */
 int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
   ASSERT(g);
@@ -194,10 +194,10 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
 }
 
 /**
- * \brief 复制云台输出值
+ * @brief 复制云台输出值
  *
- * \param s 包含云台数据的结构体
- * \param out CAN设备云台输出结构体
+ * @param s 包含云台数据的结构体
+ * @param out CAN设备云台输出结构体
  */
 void Gimbal_PackOutput(Gimbal_t *g, CAN_GimbalOutput_t *out) {
   ASSERT(g);
@@ -207,9 +207,9 @@ void Gimbal_PackOutput(Gimbal_t *g, CAN_GimbalOutput_t *out) {
 }
 
 /**
- * \brief 清空输出值
+ * @brief 清空输出值
  *
- * \param output 要清空的结构体
+ * @param output 要清空的结构体
  */
 void Gimbal_ResetOutput(CAN_GimbalOutput_t *output) {
   ASSERT(output);

@@ -41,9 +41,9 @@ static UI_LauncherUI_t launcher_ui;
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief 控制发射器
+ * @brief 控制发射器
  *
- * \param argument 未使用
+ * @param argument 未使用
  */
 void Task_CtrlLauncher(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */

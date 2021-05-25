@@ -62,8 +62,8 @@ int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
 int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs);
 
 /**
- * \brief 将对应数据置零
+ * @brief 将对应数据置零
  *
- * \param eulr 被操作的数据
+ * @param eulr 被操作的数据
  */
 void AHRS_ResetEulr(AHRS_Eulr_t *eulr);

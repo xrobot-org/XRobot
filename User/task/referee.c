@@ -43,9 +43,9 @@ static Referee_ForLauncher_t for_launcher;
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief 裁判系统
+ * @brief 裁判系统
  *
- * \param argument 未使用
+ * @param argument 未使用
  */
 void Task_Referee(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */

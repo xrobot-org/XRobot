@@ -675,9 +675,9 @@ static const CLI_Command_Definition_t command_table[] = {
 /* Exported functions ------------------------------------------------------- */
 
 /**
- * \brief 命令行交互界面
+ * @brief 命令行交互界面
  *
- * \param argument 未使用
+ * @param argument 未使用
  */
 void Task_CLI(void *argument) {
   UNUSED(argument);                    /* 未使用argument，消除警告 */
