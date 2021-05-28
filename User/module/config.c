@@ -328,7 +328,7 @@ static const Config_PilotCfg_t cfg_qs = {
     .key_map[CMD_BEHAVIOR_ROTOR] = {CMD_ACTIVE_PRESSING, CMD_KEY_G},
     .move = {
       .sense_norm = 0.8f,
-      .sense_fast = 1.2f,
+      .sense_fast = 1.25f,
       .sense_slow = 0.8f,		
     },
   },
@@ -357,7 +357,7 @@ static const Config_PilotCfg_t cfg_zyma = {
     .key_map[CMD_BEHAVIOR_ROTOR] = {CMD_ACTIVE_PRESSING, CMD_KEY_G},
     .move = {
       .sense_norm = 0.8f,
-      .sense_fast = 1.2f,
+      .sense_fast = 1.25f,
       .sense_slow = 0.8f,		
     },       
   },
