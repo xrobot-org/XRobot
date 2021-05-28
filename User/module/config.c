@@ -405,6 +405,10 @@ void Config_Get(Config_t *cfg) {
   if ((uint32_t)(cfg->robot_param) == UINT32_MAX)
     cfg->robot_param = &param_default;
   if ((uint32_t)(cfg->pilot_cfg) == UINT32_MAX) cfg->pilot_cfg = &cfg_qs;
+
+  /* 确保配置有效，无内在冲突 */
+  ASSERT(cfg->robot_param->chassis.reverse.yaw ==
+         cfg->robot_param->gimbal.reverse.yaw);
 }
 
 /**
