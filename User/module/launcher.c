@@ -157,12 +157,12 @@ int8_t Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can) {
   ASSERT(can);
 
   for (size_t i = 0; i < 2; i++) {
-    l->feedback.fric_rpm[i] = can->motor.launcher.as_array[i].rotor_speed;
+    l->feedback.fric_rpm[i] = can->motor.launcher.as_array[i].rotational_speed;
   }
 
   /* 更新拨弹电机 */
   const float last_trig_motor_angle = l->feedback.trig_motor_angle;
-  l->feedback.trig_motor_angle = can->motor.launcher.named.trig.rotor_angle;
+  l->feedback.trig_motor_angle = can->motor.launcher.named.trig.rotor_abs_angle;
   const float delta_motor_angle =
       CircleError(l->feedback.trig_motor_angle, last_trig_motor_angle, M_2PI);
   CircleAdd(&(l->feedback.trig_angle),

@@ -510,12 +510,13 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
         return pdPASS;
       }
       osThreadResume(runtime.thread.ctrl_gimbal);
-      cfg.mech_zero.yaw = can.motor.gimbal.named.yaw.rotor_angle;
-      cfg.mech_zero.pit = can.motor.gimbal.named.pit.rotor_angle;
+      cfg.gimbal_mech_zero.yaw = can.motor.gimbal.named.yaw.rotor_abs_angle;
+      cfg.gimbal_mech_zero.pit = can.motor.gimbal.named.pit.rotor_abs_angle;
 
       Config_Set(&cfg);
       snprintf(out_buffer, len, "yaw:%f, pitch:%f, rol:%f\r\nDone.",
-               cfg.mech_zero.yaw, cfg.mech_zero.pit, cfg.mech_zero.rol);
+               cfg.gimbal_mech_zero.yaw, cfg.gimbal_mech_zero.pit,
+               cfg.gimbal_mech_zero.rol);
 
       fsm.stage = 3;
       return pdPASS;
@@ -558,7 +559,7 @@ static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
       }
       Config_Get(&cfg);
       osThreadResume(runtime.thread.ctrl_gimbal);
-      cfg.gimbal_limit = can.motor.gimbal.named.pit.rotor_angle;
+      cfg.gimbal_limit = can.motor.gimbal.named.pit.rotor_abs_angle;
 
       Config_Set(&cfg);
       Config_Get(&cfg);

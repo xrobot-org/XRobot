@@ -22,34 +22,36 @@
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
-#define _CAP_PERCENTAGE_WORK 80   /* 底盘不再限制功率的电容电量 */
-#define _CAP_PERCENTAGE_CHARGE 30 /* 电容开始工作的电容电量 */
+#define _CAP_PERCENTAGE_NO_LIM 80 /* 底盘不再限制功率的电容电量 */
+#define _CAP_PERCENTAGE_WORK 30   /* 电容开始工作的电容电量 */
 
-#define CHASSIS_MAX_CAP_POWER 100 /* 电容能够提供的最大功率 */
+#define MAX_CAP_LOAD 100 /* 电容能够提供的最大功率 */
 
-#define CHASSIS_ROTOR_WZ_MIN 0.6f          /* 小陀螺旋转位移下界 */
-#define CHASSIS_ROTOR_WZ_MAX 0.8f          /* 小陀螺旋转位移上界 */
-#define M_7OVER72PI (M_2PI * 7.0f / 72.0f) /* 三十五度对应弧度值 */
-#define CHASSIS_ROTOR_OMEGA 0.0015f        /* 小陀螺转动频率 */
+#define ROTOR_WZ_MIN 0.6f   /* 小陀螺旋转位移下界 */
+#define ROTOR_WZ_MAX 0.8f   /* 小陀螺旋转位移上界 */
+#define ROTOR_OMEGA 0.0015f /* 小陀螺转动频率 */
+
+#define MOTOR_MAX_ROTATIONAL_SPEED 7000.0f /* 电机的最大转速 */
+
 /* Private macro ------------------------------------------------------------ */
 
 /* 保证电容电量宏定义在正确范围内 */
-#if ((_CAP_PERCENTAGE_WORK < 0) || (_CAP_PERCENTAGE_WORK > 100) || \
-     (_CAP_PERCENTAGE_CHARGE < 0) || (_CAP_PERCENTAGE_CHARGE > 100))
+#if ((_CAP_PERCENTAGE_NO_LIM < 0) || (_CAP_PERCENTAGE_NO_LIM > 100) || \
+     (_CAP_PERCENTAGE_WORK < 0) || (_CAP_PERCENTAGE_WORK > 100))
 #error "Cap percentage should be in the range from 0 to 100."
 #endif
 
 /* 保证电容功率宏定义在正确范围内 */
-#if ((CHASSIS_MAX_CAP_POWER < 60) || (CHASSIS_MAX_CAP_POWER > 200))
+#if ((MAX_CAP_LOAD < 60) || (MAX_CAP_LOAD > 200))
 #error "The capacitor power should be in in the range from 60 to 200."
 #endif
 
 /* Private variables
    -------------------------------------------------------- */
 
+static const float kCAP_PERCENTAGE_NO_LIM =
+    (float)_CAP_PERCENTAGE_NO_LIM / 100.0f;
 static const float kCAP_PERCENTAGE_WORK = (float)_CAP_PERCENTAGE_WORK / 100.0f;
-static const float kCAP_PERCENTAGE_CHARGE =
-    (float)_CAP_PERCENTAGE_CHARGE / 100.0f;
 
 /* Private function  -------------------------------------------------------- */
 /**
@@ -67,7 +69,7 @@ static int8_t Chassis_SetMode(Chassis_t *c, Game_ChassisMode_t mode,
 
   if (mode == CHASSIS_MODE_ROTOR && c->mode != CHASSIS_MODE_ROTOR) {
     srand(now);
-    c->wz_mult = (rand() % 2) ? -1 : 1;
+    c->wz_dir_mult = (rand() % 2) ? -1 : 1;
   }
   /* 切换模式后重置PID和滤波器 */
   for (size_t i = 0; i < c->num_wheel; i++) {
@@ -80,17 +82,17 @@ static int8_t Chassis_SetMode(Chassis_t *c, Game_ChassisMode_t mode,
   return CHASSIS_OK;
 }
 /**
- * @brief 产生小陀螺wz随机速度
+ * @brief 计算小陀螺wz速度
  *
- * @param min wz产生最小速度
- * @param max wz产生最大速度
+ * @param lo wz最小速度
+ * @param hi wz最大速度
  * @param now ctrl_chassis的tick数
  * @return float
  */
-static float Chassis_CalcWz(const float min, const float max, uint32_t now) {
-  /* wz在min和max之间，上限0.6f */
-  float wz_vary = fabsf(0.2f * sinf(CHASSIS_ROTOR_OMEGA * (float)now)) + min;
-  return wz_vary > 0.8f ? max : wz_vary;
+static float Chassis_CalcWz(const float lo, const float hi, uint32_t now) {
+  float wz_vary = fabsf(0.2f * sinf(ROTOR_OMEGA * (float)now)) + lo;
+  Clamp(&wz_vary, lo, hi);
+  return wz_vary;
 }
 
 /* Exported functions ------------------------------------------------------- */
@@ -105,15 +107,15 @@ static float Chassis_CalcWz(const float min, const float max, uint32_t now) {
  * @return 函数运行结果
  */
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
-                    AHRS_Eulr_t *mech_zero, float target_freq) {
+                    AHRS_Eulr_t *gimbal_mech_zero, float target_freq) {
   ASSERT(c);
 
   c->param = param;             /* 初始化参数 */
   c->mode = CHASSIS_MODE_RELAX; /* 设置上电后底盘默认模式 */
-  c->mech_zero = mech_zero;     /* 设置底盘机械零点 */
+  c->gimbal_mech_zero = gimbal_mech_zero; /* 设置底盘机械零点 */
 
   /* 如果电机反装重新计算机械零点 */
-  if (param->reverse.yaw) CircleReverse(&(c->mech_zero->yaw));
+  if (param->reverse.yaw) CircleReverse(&(c->gimbal_mech_zero->yaw));
 
   /* 根据参数（param）中的底盘型号初始化Mixer */
   Mixer_Mode_t mixer_mode;
@@ -154,28 +156,24 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
   }
 
   /* 根据底盘型号动态分配控制时使用的变量 */
-  c->feedback.motor_rpm =
-      BSP_Malloc((size_t)c->num_wheel * sizeof(*c->feedback.motor_rpm));
-  ASSERT(c->feedback.motor_rpm);
+  c->feedback.motor_rotational_speed =
+      BSP_Malloc(c->num_wheel * sizeof(*c->feedback.motor_rotational_speed));
+  ASSERT(c->feedback.motor_rotational_speed);
 
-  c->feedback.motor_current =
-      BSP_Malloc((size_t)c->num_wheel * sizeof(*c->feedback.motor_current));
-  ASSERT(c->feedback.motor_current);
+  c->setpoint.motor_rotational_speed =
+      BSP_Malloc(c->num_wheel * sizeof(*c->setpoint.motor_rotational_speed));
+  ASSERT(c->setpoint.motor_rotational_speed);
 
-  c->setpoint.motor_rpm =
-      BSP_Malloc((size_t)c->num_wheel * sizeof(*c->setpoint.motor_rpm));
-  ASSERT(c->setpoint.motor_rpm);
-
-  c->pid.motor = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->pid.motor));
+  c->pid.motor = BSP_Malloc(c->num_wheel * sizeof(*c->pid.motor));
   ASSERT(c->pid.motor);
 
-  c->out = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->out));
+  c->out = BSP_Malloc(c->num_wheel * sizeof(*c->out));
   ASSERT(c->out);
 
-  c->filter.in = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->filter.in));
+  c->filter.in = BSP_Malloc(c->num_wheel * sizeof(*c->filter.in));
   ASSERT(c->filter.in);
 
-  c->filter.out = BSP_Malloc((size_t)c->num_wheel * sizeof(*c->filter.out));
+  c->filter.out = BSP_Malloc(c->num_wheel * sizeof(*c->filter.out));
   ASSERT(c->filter.out);
 
   /* 初始化轮子电机控制PID和LPF */
@@ -210,19 +208,16 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   ASSERT(c);
   ASSERT(can);
 
-  /* 如果电机反装重新计算正确的反馈值 */
-  if (c->param->reverse.yaw) {
-    c->feedback.gimbal_yaw_encoder =
-        -can->motor.gimbal.named.yaw.rotor_angle + M_2PI;
-  } else {
-    c->feedback.gimbal_yaw_encoder = can->motor.gimbal.named.yaw.rotor_angle;
-  }
+  /* 如果yaw云台电机反装重新计算正确的反馈值 */
+  c->feedback.gimbal_yaw_encoder_angle =
+      can->motor.gimbal.named.yaw.rotor_abs_angle;
+  if (c->param->reverse.yaw)
+    CircleReverse(&(c->feedback.gimbal_yaw_encoder_angle));
 
   /* 将CAN中的反馈数据写入到feedback中 */
   for (size_t i = 0; i < c->num_wheel; i++) {
-    c->feedback.motor_rpm[i] = can->motor.chassis.as_array[i].rotor_speed;
-    c->feedback.motor_current[i] =
-        can->motor.chassis.as_array[i].torque_current;
+    c->feedback.motor_rotational_speed[i] =
+        can->motor.chassis.as_array[i].rotational_speed;
   }
 
   return CHASSIS_OK;
@@ -267,7 +262,8 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
     case CHASSIS_MODE_FOLLOW_GIMBAL: /* 按照云台方向换算运动向量 */
     case CHASSIS_MODE_FOLLOW_GIMBAL_35:
     case CHASSIS_MODE_ROTOR: {
-      float beta = c->feedback.gimbal_yaw_encoder - c->mech_zero->yaw;
+      float beta =
+          c->feedback.gimbal_yaw_encoder_angle - c->gimbal_mech_zero->yaw;
       float cos_beta = cosf(beta);
       float sin_beta = sinf(beta);
       c->move_vec.vx =
@@ -287,29 +283,30 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
 
     case CHASSIS_MODE_OPEN:
     case CHASSIS_MODE_FOLLOW_GIMBAL: /* 跟随模式通过PID控制使车头跟随云台 */
-      c->move_vec.wz = PID_Calc(&(c->pid.follow), c->mech_zero->yaw,
-                                c->feedback.gimbal_yaw_encoder, 0.0f, c->dt);
+      c->move_vec.wz =
+          PID_Calc(&(c->pid.follow), c->gimbal_mech_zero->yaw,
+                   c->feedback.gimbal_yaw_encoder_angle, 0.0f, c->dt);
       break;
     case CHASSIS_MODE_FOLLOW_GIMBAL_35:
-      c->move_vec.wz =
-          PID_Calc(&(c->pid.follow), c->mech_zero->yaw + M_7OVER72PI,
-                   c->feedback.gimbal_yaw_encoder, 0.0f, c->dt);
+      c->move_vec.wz = PID_Calc(
+          &(c->pid.follow), c->gimbal_mech_zero->yaw + (35.0f * M_DEG2RAD_MULT),
+          c->feedback.gimbal_yaw_encoder_angle, 0.0f, c->dt);
       break;
     case CHASSIS_MODE_ROTOR: { /* 小陀螺模式使底盘以一定速度旋转 */
-      c->move_vec.wz = c->wz_mult * Chassis_CalcWz(CHASSIS_ROTOR_WZ_MIN,
-                                                   CHASSIS_ROTOR_WZ_MAX, now);
+      c->move_vec.wz =
+          c->wz_dir_mult * Chassis_CalcWz(ROTOR_WZ_MIN, ROTOR_WZ_MAX, now);
     }
   }
 
   /* move_vec -> motor_rpm_set. 通过运动向量计算轮子转速目标值 */
-  Mixer_Apply(&(c->mixer), &(c->move_vec), c->setpoint.motor_rpm, c->num_wheel,
-              7000.0f);
+  Mixer_Apply(&(c->mixer), &(c->move_vec), c->setpoint.motor_rotational_speed,
+              c->num_wheel, MOTOR_MAX_ROTATIONAL_SPEED);
 
   /* 根据轮子转速目标值，利用PID计算电机输出值 */
   for (size_t i = 0; i < c->num_wheel; i++) {
     /* 输入滤波. */
-    c->feedback.motor_rpm[i] =
-        LowPassFilter2p_Apply(c->filter.in + i, c->feedback.motor_rpm[i]);
+    c->feedback.motor_rotational_speed[i] = LowPassFilter2p_Apply(
+        c->filter.in + i, c->feedback.motor_rotational_speed[i]);
 
     /* 根据底盘模式计算输出值 */
     switch (c->mode) {
@@ -318,12 +315,14 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
       case CHASSIS_MODE_FOLLOW_GIMBAL_35:
       case CHASSIS_MODE_ROTOR:
       case CHASSIS_MODE_INDENPENDENT: /* 独立模式,受PID控制 */
-        c->out[i] = PID_Calc(c->pid.motor + i, c->setpoint.motor_rpm[i],
-                             c->feedback.motor_rpm[i], 0.0f, c->dt);
+        c->out[i] =
+            PID_Calc(c->pid.motor + i, c->setpoint.motor_rotational_speed[i],
+                     c->feedback.motor_rotational_speed[i], 0.0f, c->dt);
         break;
 
       case CHASSIS_MODE_OPEN: /* 开环模式,不受PID控制 */
-        c->out[i] = c->setpoint.motor_rpm[i] / 9000.0f;
+        c->out[i] =
+            c->setpoint.motor_rotational_speed[i] / MOTOR_MAX_ROTATIONAL_SPEED;
         break;
 
       case CHASSIS_MODE_RELAX: /* 放松模式,不输出 */
@@ -357,17 +356,17 @@ int8_t Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
     power_limit = GAME_CHASSIS_MAX_POWER_WO_REF;
   } else {
     if (cap->cap_status == CAN_CAP_STATUS_RUNNING &&
-        cap->percentage > kCAP_PERCENTAGE_CHARGE) {
+        cap->percentage > kCAP_PERCENTAGE_WORK) {
       /* 电容在线且电量足够，使用电容 */
-      if (cap->percentage > kCAP_PERCENTAGE_WORK) {
+      if (cap->percentage > kCAP_PERCENTAGE_NO_LIM) {
         /* 电容接近充满时不再限制功率 */
         power_limit = -1.0f;
       } else {
         /* 按照电容能量百分比计算输出功率 */
         power_limit = ref->chassis_power_limit +
-                      (cap->percentage - kCAP_PERCENTAGE_CHARGE) /
-                          (kCAP_PERCENTAGE_WORK - kCAP_PERCENTAGE_CHARGE) *
-                          (float)CHASSIS_MAX_CAP_POWER;
+                      (cap->percentage - kCAP_PERCENTAGE_WORK) /
+                          (kCAP_PERCENTAGE_NO_LIM - kCAP_PERCENTAGE_WORK) *
+                          (float)MAX_CAP_LOAD;
       }
     } else {
       /* 电容不在工作，根据缓冲能量计算输出功率限制 */
@@ -376,8 +375,8 @@ int8_t Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
     }
   }
   /* 应用功率限制 */
-  PowerLimit_ChassicOutput(power_limit, c->out, c->feedback.motor_rpm,
-                           c->num_wheel);
+  PowerLimit_ChassicOutput(power_limit, c->out,
+                           c->feedback.motor_rotational_speed, c->num_wheel);
 
   return CHASSIS_OK;
 }
@@ -418,5 +417,5 @@ void Chassis_PackUi(const Chassis_t *c, UI_ChassisUI_t *ui) {
   ASSERT(c);
   ASSERT(ui);
   ui->mode = c->mode;
-  ui->angle = c->feedback.gimbal_yaw_encoder - c->mech_zero->yaw;
+  ui->angle = c->feedback.gimbal_yaw_encoder_angle - c->gimbal_mech_zero->yaw;
 }

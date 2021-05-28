@@ -69,7 +69,7 @@ typedef struct {
   float dt;
 
   const Chassis_Params_t *param; /* 底盘的参数，用Chassis_Init设定 */
-  AHRS_Eulr_t *mech_zero;
+  AHRS_Eulr_t *gimbal_mech_zero; /* 云台机械零点 */
 
   /* 模块通用 */
   Game_ChassisMode_t mode; /* 底盘模式 */
@@ -82,16 +82,15 @@ typedef struct {
 
   /* 反馈信息 */
   struct {
-    float gimbal_yaw_encoder; /* 云台Yaw轴编码器角度 */
-    float *motor_rpm;         /* 电机转速的动态数组，单位：RPM */
-    float *motor_current;     /* 转矩电流 单位：A */
+    float gimbal_yaw_encoder_angle; /* 云台Yaw轴编码器角度 */
+    float *motor_rotational_speed; /* 电机转速的动态数组，单位：RPM */
   } feedback;
 
-  float wz_mult; /* 小陀螺模式旋转方向乘数 */
+  float wz_dir_mult; /* 小陀螺模式旋转方向乘数 */
 
   /* PID计算的目标值 */
   struct {
-    float *motor_rpm; /* 电机转速的动态数组，单位：RPM */
+    float *motor_rotational_speed; /* 电机转速的动态数组，单位：RPM */
   } setpoint;
 
   /* 反馈控制用的PID */
@@ -121,7 +120,7 @@ typedef struct {
  * @return 函数运行结果
  */
 int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
-                    AHRS_Eulr_t *mech_zero, float target_freq);
+                    AHRS_Eulr_t *gimbal_mech_zero, float target_freq);
 
 /**
  * @brief 更新底盘的反馈信息

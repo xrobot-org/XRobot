@@ -100,8 +100,8 @@ int8_t Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_t *can) {
   ASSERT(g);
   ASSERT(can);
 
-  g->feedback.eulr.encoder.yaw = can->motor.gimbal.named.yaw.rotor_angle;
-  g->feedback.eulr.encoder.pit = can->motor.gimbal.named.pit.rotor_angle;
+  g->feedback.eulr.encoder.yaw = can->motor.gimbal.named.yaw.rotor_abs_angle;
+  g->feedback.eulr.encoder.pit = can->motor.gimbal.named.pit.rotor_abs_angle;
 
   if (g->param->reverse.yaw) CircleReverse(&(g->feedback.eulr.encoder.yaw));
   if (g->param->reverse.pit) CircleReverse(&(g->feedback.eulr.encoder.pit));
