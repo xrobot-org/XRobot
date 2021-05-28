@@ -44,8 +44,8 @@ typedef struct {
     BMI088_Cali_t bmi088;
   } cali; /* 校准 */
 
-  AHRS_Eulr_t mech_zero; /* 机械零点 */
-  float gimbal_limit;    /* 云台pitch轴软件限位最高点 */
+  AHRS_Eulr_t gimbal_mech_zero; /* 机械零点 */
+  float gimbal_limit;           /* 云台pitch轴软件限位最高点 */
 
 } Config_t;
 

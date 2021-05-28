@@ -70,8 +70,8 @@ static void CAN_Motor_Decode(CAN_MotorFeedback_t *feedback,
   uint16_t raw_angle = (uint16_t)((raw[0] << 8) | raw[1]);
   int16_t raw_current = (int16_t)((raw[4] << 8) | raw[5]);
 
-  feedback->rotor_angle = raw_angle / (float)CAN_MOTOR_ENC_RES * M_2PI;
-  feedback->rotor_speed = (int16_t)((raw[2] << 8) | raw[3]);
+  feedback->rotor_abs_angle = raw_angle / (float)CAN_MOTOR_ENC_RES * M_2PI;
+  feedback->rotational_speed = (int16_t)((raw[2] << 8) | raw[3]);
   feedback->torque_current =
       raw_current * CAN_M3508_MAX_ABS_CUR / (float)CAN_MOTOR_CUR_RES;
   feedback->temp = raw[6];
