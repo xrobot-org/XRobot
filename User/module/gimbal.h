@@ -14,11 +14,6 @@
 #include "device/referee.h"
 
 /* Exported constants ------------------------------------------------------- */
-#define GIMBAL_OK (0)        /* 运行正常 */
-#define GIMBAL_ERR (-1)      /* 运行时发现了其他错误 */
-#define GIMBAL_ERR_NULL (-2) /* 运行时发现NULL指针 */
-#define GIMBAL_ERR_MODE (-3) /* 运行时配置了错误的CMD_GimbalMode_t */
-
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
 
@@ -113,21 +108,17 @@ typedef struct {
  * @param g 包含云台数据的结构体
  * @param param 包含云台参数的结构体指针
  * @param target_freq 任务预期的运行频率
- *
- * @return 函数运行结果
  */
-int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit,
-                   float target_freq);
+void Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit,
+                 float target_freq);
 
 /**
  * @brief 通过CAN设备更新云台反馈信息
  *
  * @param g 云台
  * @param can CAN设备
- *
- * @return 函数运行结果
  */
-int8_t Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_t *can);
+void Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_t *can);
 
 /**
  * @brief 运行云台控制逻辑
@@ -136,10 +127,8 @@ int8_t Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_t *can);
  * @param fb 云台反馈信息
  * @param g_cmd 云台控制指令
  * @param dt_sec 两次调用的时间间隔
- *
- * @return 函数运行结果
  */
-int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now);
+void Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now);
 
 /**
  * @brief 复制云台输出值

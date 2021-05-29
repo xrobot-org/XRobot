@@ -27,13 +27,11 @@
  *
  * @param l 包含发射器数据的结构体
  * @param mode 要设置的模式
- *
- * @return 函数运行结果
  */
-static int8_t Launcher_SetMode(Launcher_t *l, Game_LauncherMode_t mode) {
+static void Launcher_SetMode(Launcher_t *l, Game_LauncherMode_t mode) {
   ASSERT(l);
 
-  if (mode == l->mode) return LAUNCHER_OK;
+  if (mode == l->mode) return;
 
   /* 切换模式后重置PID和滤波器 */
   for (size_t i = 0; i < 2; i++) {
@@ -55,7 +53,6 @@ static int8_t Launcher_SetMode(Launcher_t *l, Game_LauncherMode_t mode) {
   if (mode == LAUNCHER_MODE_LOADED) l->fire_ctrl.to_launch = 0;
 
   l->mode = mode;
-  return 0;
 }
 
 /**
@@ -63,9 +60,8 @@ static int8_t Launcher_SetMode(Launcher_t *l, Game_LauncherMode_t mode) {
  *
  * @param l 包含发射器数据的结构体
  * @param l_ref 发射器所需裁判系统数据
- * @return int8_t 函数运行结果
  */
-static int8_t Launcher_HeatLimit(Launcher_t *l, Referee_ForLauncher_t *l_ref) {
+static void Launcher_HeatLimit(Launcher_t *l, Referee_ForLauncher_t *l_ref) {
   ASSERT(l);
   ASSERT(l_ref);
   Launcher_HeatCtrl_t *hc = &(l->heat_ctrl);
@@ -97,7 +93,6 @@ static int8_t Launcher_HeatLimit(Launcher_t *l, Referee_ForLauncher_t *l_ref) {
     hc->available_shot = 10;
     l->fire_ctrl.bullet_speed = l->param->default_bullet_speed;
   }
-  return 0;
 }
 
 /* Exported functions ------------------------------------------------------- */
@@ -108,10 +103,8 @@ static int8_t Launcher_HeatLimit(Launcher_t *l, Referee_ForLauncher_t *l_ref) {
  * @param l 包含发射器数据的结构体
  * @param param 包含发射器参数的结构体指针
  * @param target_freq 任务预期的运行频率
- *
- * @return 函数运行结果
  */
-int8_t Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
+void Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
                      float target_freq) {
   ASSERT(l);
   ASSERT(param);
@@ -141,7 +134,6 @@ int8_t Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
 
   BSP_PWM_Start(BSP_PWM_LAUNCHER_SERVO);
   BSP_PWM_Set(BSP_PWM_LAUNCHER_SERVO, param->cover_close_duty);
-  return 0;
 }
 
 /**
@@ -149,10 +141,8 @@ int8_t Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
  *
  * @param l 包含发射器数据的结构体
  * @param can CAN设备结构体
- *
- * @return 函数运行结果
  */
-int8_t Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can) {
+void Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can) {
   ASSERT(l);
   ASSERT(can);
 
@@ -167,8 +157,6 @@ int8_t Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can) {
       CircleError(l->feedback.trig_motor_angle, last_trig_motor_angle, M_2PI);
   CircleAdd(&(l->feedback.trig_angle),
             delta_motor_angle / l->param->trig_gear_ratio, M_2PI);
-
-  return 0;
 }
 
 /**
@@ -179,10 +167,9 @@ int8_t Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can) {
  * @param l_cmd 发射器控制指令
  * @param l_ref 发射器使用的裁判系统数据
  * @param now 现在时刻
- * @return int8_t
  */
-int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
-                        Referee_ForLauncher_t *l_ref, uint32_t now) {
+void Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
+                      Referee_ForLauncher_t *l_ref, uint32_t now) {
   ASSERT(l);
   ASSERT(l_cmd);
   ASSERT(l_ref);
@@ -317,7 +304,6 @@ int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
       }
       break;
   }
-  return 0;
 }
 
 /**

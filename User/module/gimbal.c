@@ -18,12 +18,10 @@
  *
  * @param c 包含云台数据的结构体
  * @param mode 要设置的模式
- *
- * @return 函数运行结果
  */
-static int8_t Gimbal_SetMode(Gimbal_t *g, Game_GimbalMode_t mode) {
+static void Gimbal_SetMode(Gimbal_t *g, Game_GimbalMode_t mode) {
   ASSERT(g);
-  if (mode == g->mode) return GIMBAL_OK;
+  if (mode == g->mode) return;
 
   /* 切换模式后重置PID和滤波器 */
   for (size_t i = 0; i < GIMBAL_PID_NUM; i++) {
@@ -43,7 +41,6 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, Game_GimbalMode_t mode) {
   }
 
   g->mode = mode;
-  return 0;
 }
 
 /* Exported functions ------------------------------------------------------- */
@@ -54,11 +51,9 @@ static int8_t Gimbal_SetMode(Gimbal_t *g, Game_GimbalMode_t mode) {
  * @param g 包含云台数据的结构体
  * @param param 包含云台参数的结构体指针
  * @param target_freq 任务预期的运行频率
- *
- * @return 函数运行结果
  */
-int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
-                   float target_freq) {
+void Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
+                 float target_freq) {
   ASSERT(g);
   ASSERT(param);
 
@@ -85,7 +80,6 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
     LowPassFilter2p_Init(g->filter_out + i, target_freq,
                          g->param->low_pass_cutoff_freq.out);
   }
-  return 0;
 }
 
 /**
@@ -93,10 +87,8 @@ int8_t Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
  *
  * @param g 云台
  * @param can CAN设备
- *
- * @return 函数运行结果
  */
-int8_t Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_t *can) {
+void Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_t *can) {
   ASSERT(g);
   ASSERT(can);
 
@@ -105,8 +97,6 @@ int8_t Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_t *can) {
 
   if (g->param->reverse.yaw) CircleReverse(&(g->feedback.eulr.encoder.yaw));
   if (g->param->reverse.pit) CircleReverse(&(g->feedback.eulr.encoder.pit));
-
-  return 0;
 }
 
 /**
@@ -116,10 +106,8 @@ int8_t Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_t *can) {
  * @param fb 云台反馈信息
  * @param g_cmd 云台控制指令
  * @param dt_sec 两次调用的时间间隔
- *
- * @return 函数运行结果
  */
-int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
+void Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
   ASSERT(g);
   ASSERT(g_cmd);
 
@@ -189,8 +177,6 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
     g->out[GIMBAL_ACTR_YAW_IDX] = -g->out[GIMBAL_ACTR_YAW_IDX];
   if (g->param->reverse.pit)
     g->out[GIMBAL_ACTR_PIT_IDX] = -g->out[GIMBAL_ACTR_PIT_IDX];
-
-  return 0;
 }
 
 /**
