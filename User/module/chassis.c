@@ -59,13 +59,11 @@ static const float kCAP_PERCENTAGE_WORK = (float)_CAP_PERCENTAGE_WORK / 100.0f;
  *
  * @param c 包含底盘数据的结构体
  * @param mode 要设置的模式
- *
- * @return 函数运行结果
  */
-static int8_t Chassis_SetMode(Chassis_t *c, Game_ChassisMode_t mode,
-                              uint32_t now) {
+static void Chassis_SetMode(Chassis_t *c, Game_ChassisMode_t mode,
+                            uint32_t now) {
   ASSERT(c);                              /* 主结构体不能为空 */
-  if (mode == c->mode) return CHASSIS_OK; /* 模式未改变直接返回 */
+  if (mode == c->mode) return; /* 模式未改变直接返回 */
 
   if (mode == CHASSIS_MODE_ROTOR && c->mode != CHASSIS_MODE_ROTOR) {
     srand(now);
@@ -78,8 +76,6 @@ static int8_t Chassis_SetMode(Chassis_t *c, Game_ChassisMode_t mode,
     LowPassFilter2p_Reset(c->filter.out + i, 0.0f);
   }
   c->mode = mode;
-
-  return CHASSIS_OK;
 }
 /**
  * @brief 计算小陀螺wz速度
@@ -87,7 +83,7 @@ static int8_t Chassis_SetMode(Chassis_t *c, Game_ChassisMode_t mode,
  * @param lo wz最小速度
  * @param hi wz最大速度
  * @param now ctrl_chassis的tick数
- * @return float
+ * @return float wz
  */
 static float Chassis_CalcWz(const float lo, const float hi, uint32_t now) {
   float wz_vary = fabsf(0.2f * sinf(ROTOR_OMEGA * (float)now)) + lo;
@@ -103,11 +99,9 @@ static float Chassis_CalcWz(const float lo, const float hi, uint32_t now) {
  * @param c 包含底盘数据的结构体
  * @param param 包含底盘参数的结构体指针
  * @param target_freq 任务预期的运行频率
- *
- * @return 函数运行结果
  */
-int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
-                    AHRS_Eulr_t *gimbal_mech_zero, float target_freq) {
+void Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
+                  AHRS_Eulr_t *gimbal_mech_zero, float target_freq) {
   ASSERT(c);
 
   c->param = param;             /* 初始化参数 */
@@ -152,7 +146,8 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
 
     case CHASSIS_TYPE_DRONE:
       /* onboard sdk. */
-      return CHASSIS_ERR_TYPE;
+      ASSERT(0);
+      break;
   }
 
   /* 根据底盘型号动态分配控制时使用的变量 */
@@ -192,7 +187,6 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
            &(c->param->follow_pid_param));
 
   Mixer_Init(&(c->mixer), mixer_mode); /* 初始化混合器 */
-  return CHASSIS_OK;
 }
 
 /**
@@ -200,10 +194,8 @@ int8_t Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
  *
  * @param c 包含底盘数据的结构体
  * @param can CAN设备结构体
- *
- * @return 函数运行结果
  */
-int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
+void Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
   /* 底盘数据和CAN结构体不能为空 */
   ASSERT(c);
   ASSERT(can);
@@ -219,8 +211,6 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
     c->feedback.motor_rotational_speed[i] =
         can->motor.chassis.as_array[i].rotational_speed;
   }
-
-  return CHASSIS_OK;
 }
 
 /**
@@ -229,11 +219,9 @@ int8_t Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
  * @param c 包含底盘数据的结构体
  * @param c_cmd 底盘控制指令
  * @param dt_sec 两次调用的时间间隔
- *
- * @return 函数运行结果
  */
-int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
-                       uint32_t now) {
+void Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
+                     uint32_t now) {
   /* 底盘数据和控制指令结构体不能为空 */
   ASSERT(c);
   ASSERT(c_cmd);
@@ -332,8 +320,6 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
     /* 输出滤波. */
     c->out[i] = LowPassFilter2p_Apply(c->filter.out + i, c->out[i]);
   }
-
-  return CHASSIS_OK;
 }
 
 /**
@@ -342,10 +328,9 @@ int8_t Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
  * @param c 底盘数据
  * @param cap 电容数据
  * @param ref 裁判系统数据
- * @return 函数运行结果
  */
-int8_t Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
-                          const Referee_ForChassis_t *ref) {
+void Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
+                        const Referee_ForChassis_t *ref) {
   ASSERT(c);
   ASSERT(cap);
   ASSERT(ref);
@@ -377,8 +362,6 @@ int8_t Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
   /* 应用功率限制 */
   PowerLimit_ChassicOutput(power_limit, c->out,
                            c->feedback.motor_rotational_speed, c->num_wheel);
-
-  return CHASSIS_OK;
 }
 
 /**

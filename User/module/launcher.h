@@ -21,12 +21,6 @@
 #include "device/referee.h"
 
 /* Exported constants ------------------------------------------------------- */
-
-#define LAUNCHER_OK (0)        /* 运行正常 */
-#define LAUNCHER_ERR (-1)      /* 运行时发现了其他错误 */
-#define LAUNCHER_ERR_NULL (-2) /* 运行时发现NULL指针 */
-#define LAUNCHER_ERR_MODE (-3) /* 运行时配置了错误的CMD_LauncherMode_t */
-
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
 
@@ -159,21 +153,17 @@ typedef struct {
  * @param l 包含发射器数据的结构体
  * @param param 包含发射器参数的结构体指针
  * @param target_freq 任务预期的运行频率
- *
- * @return 函数运行结果
  */
-int8_t Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
-                     float target_freq);
+void Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
+                   float target_freq);
 
 /**
  * @brief 更新发射器的反馈信息
  *
  * @param l 包含发射器数据的结构体
  * @param can CAN设备结构体
- *
- * @return 函数运行结果
  */
-int8_t Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can);
+void Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can);
 
 /**
  * @brief 运行发射器控制逻辑
@@ -183,10 +173,9 @@ int8_t Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can);
  * @param l_cmd 发射器控制指令
  * @param l_ref 发射器使用的裁判系统数据
  * @param now 现在时刻
- * @return int8_t
  */
-int8_t Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
-                        Referee_ForLauncher_t *l_ref, uint32_t now);
+void Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
+                      Referee_ForLauncher_t *l_ref, uint32_t now);
 
 /**
  * @brief 复制发射器输出值
