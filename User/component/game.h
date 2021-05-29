@@ -11,19 +11,21 @@
 
 #pragma once
 
-#define GAME_HEAT_INCREASE_42MM (100.f) /* 每发射一颗42mm弹丸增加100热量 */
-#define GAME_HEAT_INCREASE_17MM (10.f) /* 每发射一颗17mm弹丸增加10热量 */
+#define GAME_HEAT_INCREASE_42MM (100.0f) /* 每发射一颗42mm弹丸增加100热量 */
+#define GAME_HEAT_INCREASE_17MM (10.0f) /* 每发射一颗17mm弹丸增加10热量 */
 
 #define GAME_CHASSIS_MAX_POWER_WO_REF 40.0f /* 裁判系统离线时底盘最大功率 */
 
 /* 机器人型号 */
 typedef enum {
-  ROBOT_MODEL_INFANTRY = 0, /* 步兵机器人 */
-  ROBOT_MODEL_HERO,         /* 步兵机器人 */
-  ROBOT_MODEL_ENGINEER,     /* 工程机器人 */
-  ROBOT_MODEL_DRONE,        /* 空中机器人 */
-  ROBOT_MODEL_SENTRY,       /* 哨兵机器人 */
-  ROBOT_MODEL_NUM,          /* 型号数量 */
+  ROBOT_MODEL_INFANTRY = 0,  /* 步兵机器人 */
+  ROBOT_MODEL_HERO,          /* 步兵机器人 */
+  ROBOT_MODEL_ENGINEER,      /* 工程机器人 */
+  ROBOT_MODEL_DRONE,         /* 空中机器人 */
+  ROBOT_MODEL_SENTRY,        /* 哨兵机器人 */
+  ROBOT_MODEL_DART,          /* 飞镖 */
+  ROBOT_MODEL_DART_LANUCHER, /* 飞镖发射架 */
+  ROBOT_MODEL_NUM,           /* 型号数量 */
 } Game_RobotModel_t;
 
 /* 底盘运行模式 */
