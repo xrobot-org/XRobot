@@ -196,7 +196,7 @@ int8_t Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
 /**
  * @brief 复制云台输出值
  *
- * @param s 包含云台数据的结构体
+ * @param g 包含云台数据的结构体
  * @param out CAN设备云台输出结构体
  */
 void Gimbal_PackOutput(Gimbal_t *g, CAN_GimbalOutput_t *out) {
