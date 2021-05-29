@@ -16,7 +16,7 @@
 /**
  * @brief 设置云台模式
  *
- * @param c 包含云台数据的结构体
+ * @param g 包含云台数据的结构体
  * @param mode 要设置的模式
  */
 static void Gimbal_SetMode(Gimbal_t *g, Game_GimbalMode_t mode) {
