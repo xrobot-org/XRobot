@@ -144,7 +144,7 @@ void Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
 /**
  * @brief 复制底盘输出值
  *
- * @param s 包含底盘数据的结构体
+ * @param c 包含底盘数据的结构体
  * @param out CAN设备底盘输出结构体
  */
 void Chassis_PackOutput(Chassis_t *c, CAN_ChassisOutput_t *out);

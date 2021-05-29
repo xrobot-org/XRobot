@@ -62,7 +62,7 @@ static const float kCAP_PERCENTAGE_WORK = (float)_CAP_PERCENTAGE_WORK / 100.0f;
  */
 static void Chassis_SetMode(Chassis_t *c, Game_ChassisMode_t mode,
                             uint32_t now) {
-  ASSERT(c);                              /* 主结构体不能为空 */
+  ASSERT(c);                   /* 主结构体不能为空 */
   if (mode == c->mode) return; /* 模式未改变直接返回 */
 
   if (mode == CHASSIS_MODE_ROTOR && c->mode != CHASSIS_MODE_ROTOR) {
@@ -367,7 +367,7 @@ void Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
 /**
  * @brief 复制底盘输出值
  *
- * @param s 包含底盘数据的结构体
+ * @param c 包含底盘数据的结构体
  * @param out CAN设备底盘输出结构体
  */
 void Chassis_PackOutput(Chassis_t *c, CAN_ChassisOutput_t *out) {
