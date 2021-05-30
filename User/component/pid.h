@@ -53,10 +53,9 @@ typedef struct {
  * @param mode PID模式
  * @param sample_freq 采样频率
  * @param param PID参数
- * @return int8_t 0对应没有错误
  */
-int8_t PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
-                const KPID_Params_t *param);
+void PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
+              const KPID_Params_t *param);
 
 /**
  * @brief PID计算
@@ -74,14 +73,12 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt);
  * @brief 重置微分项
  *
  * @param pid PID结构体
- * @return int8_t 0对应没有错误
  */
-int8_t PID_ResetIntegral(KPID_t *pid);
+void PID_ResetIntegral(KPID_t *pid);
 
 /**
  * @brief 重置PID
  *
  * @param pid PID结构体
- * @return int8_t 0对应没有错误
  */
-int8_t PID_Reset(KPID_t *pid);
+void PID_Reset(KPID_t *pid);
