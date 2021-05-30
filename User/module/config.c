@@ -48,11 +48,11 @@ static const Config_RobotParam_t param_default = {
       .in = -1.0f,
       .out = -1.0f,
     },
-		
-		.reverse = {
-			.yaw = false,
-		},
-		
+    
+    .reverse = {
+      .yaw = false,
+    },
+    
   }, /* chassis */
 
   .gimbal = { /* 云台模块参数 */
@@ -99,8 +99,8 @@ static const Config_RobotParam_t param_default = {
         .range = M_2PI,
       },
     }, /* pid */
-		
-		.ff = {
+    
+    .ff = {
       {
         /* GIMBAL_CTRL_YAW_OMEGA_IDX */
         .gain = 0.0f,
@@ -116,7 +116,7 @@ static const Config_RobotParam_t param_default = {
       },
     }, /* ff */
 
-		.pitch_travel_rad = 1.158155117179586476925286766559f,
+    .pitch_travel_rad = 1.158155117179586476925286766559f,
     
     .low_pass_cutoff_freq = {
       .out = -1.0f,
@@ -210,10 +210,10 @@ static const Config_RobotParam_t param_hero = {
       .in = -1.0f,
       .out = -1.0f,
     },
-		
-		.reverse = {
-			.yaw = true,
-		},
+    
+    .reverse = {
+      .yaw = true,
+    },
   }, /* chassis */
 
   .gimbal = { /* 云台模块参数 */
@@ -260,8 +260,8 @@ static const Config_RobotParam_t param_hero = {
         .range = M_2PI,
       },
     }, /* pid */
-		
-		.ff = {
+    
+    .ff = {
       {
         /* GIMBAL_CTRL_YAW_OMEGA_IDX */
         .gain = 0.0f,
@@ -277,7 +277,7 @@ static const Config_RobotParam_t param_hero = {
       },
     }, /* ff */
 
-		.pitch_travel_rad = 1.07685447f,
+    .pitch_travel_rad = 1.07685447f,
     
     .low_pass_cutoff_freq = {
       .out = -1.0f,
@@ -343,9 +343,9 @@ static const Config_RobotParam_t param_hero = {
 
 static const Config_PilotCfg_t cfg_qs = {
   .param = {
-		.sens_mouse = 0.06f,
-		.sens_stick = 6.0f,
-		.sens_ai = 20.0f,
+    .sens_mouse = 0.06f,
+    .sens_stick = 6.0f,
+    .sens_ai = 20.0f,
     .key_map[CMD_BEHAVIOR_FORE] = {CMD_ACTIVE_PRESSED, CMD_KEY_W},
     .key_map[CMD_BEHAVIOR_BACK] = {CMD_ACTIVE_PRESSED, CMD_KEY_S},
     .key_map[CMD_BEHAVIOR_LEFT] = {CMD_ACTIVE_PRESSED, CMD_KEY_A},
@@ -361,7 +361,7 @@ static const Config_PilotCfg_t cfg_qs = {
     .move = {
       .sense_norm = 0.8f,
       .sense_fast = 1.25f,
-      .sense_slow = 0.8f,		
+      .sense_slow = 0.8f,
     },
   },
   .screen = {
@@ -372,9 +372,9 @@ static const Config_PilotCfg_t cfg_qs = {
 
 static const Config_PilotCfg_t cfg_zyma = {
   .param = {
-		.sens_mouse = 0.06f,
-		.sens_stick = 6.0f,
-		.sens_ai = 20.0f,
+    .sens_mouse = 0.06f,
+    .sens_stick = 6.0f,
+    .sens_ai = 20.0f,
     .key_map[CMD_BEHAVIOR_FORE] = {CMD_ACTIVE_PRESSED, CMD_KEY_W},
     .key_map[CMD_BEHAVIOR_BACK] = {CMD_ACTIVE_PRESSED, CMD_KEY_S},
     .key_map[CMD_BEHAVIOR_LEFT] = {CMD_ACTIVE_PRESSED, CMD_KEY_A},
@@ -390,7 +390,7 @@ static const Config_PilotCfg_t cfg_zyma = {
     .move = {
       .sense_norm = 0.8f,
       .sense_fast = 1.25f,
-      .sense_slow = 0.8f,		
+      .sense_slow = 0.8f,
     },       
   },
   .screen = {
