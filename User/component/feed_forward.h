@@ -1,7 +1,13 @@
-/*
-  Modified from
-  https://github.com/PX4/Firmware/blob/master/src/lib/ff/ff.h
-*/
+/**
+ * @file feed_forward.h
+ * @author Qu Shen (503578404@qq.com)
+ * @brief 前馈控制
+ * @version 0.1
+ * @date 2021-05-30
+ *
+ * @copyright Copyright (c) 2021
+ *
+ */
 
 #pragma once
 
