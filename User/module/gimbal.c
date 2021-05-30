@@ -70,7 +70,7 @@ void Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
   PID_Init(g->pid + GIMBAL_CTRL_YAW_ANGLE_IDX, KPID_MODE_NO_D, target_freq,
            g->param->pid + GIMBAL_CTRL_YAW_ANGLE_IDX);
   PID_Init(g->pid + GIMBAL_CTRL_YAW_OMEGA_IDX, KPID_MODE_CALC_D, target_freq,
-           g->param->pid + GIMBAL_CTRL_YAW_OMEGA_ID);
+           g->param->pid + GIMBAL_CTRL_YAW_OMEGA_IDX);
 
   PID_Init(g->pid + GIMBAL_CTRL_PIT_ANGLE_IDX, KPID_MODE_NO_D, target_freq,
            g->param->pid + GIMBAL_CTRL_PIT_ANGLE_IDX);
