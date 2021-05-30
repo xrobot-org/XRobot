@@ -22,30 +22,26 @@
  * @param mode PID模式
  * @param sample_freq 采样频率
  * @param param PID参数
- * @return int8_t 0对应没有错误
  */
-int8_t PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
-                const KPID_Params_t *param) {
+void PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
+              const KPID_Params_t *param) {
   ASSERT(pid);
 
-  if (!isfinite(param->p)) return -1;
-  if (!isfinite(param->i)) return -1;
-  if (!isfinite(param->d)) return -1;
-  if (!isfinite(param->i_limit)) return -1;
-  if (!isfinite(param->out_limit)) return -1;
+  ASSERT(isfinite(param->p));
+  ASSERT(isfinite(param->i));
+  ASSERT(isfinite(param->d));
+  ASSERT(isfinite(param->i_limit));
+  ASSERT(isfinite(param->out_limit));
   pid->param = param;
 
   float dt_min = 1.0f / sample_freq;
-  if (isfinite(dt_min))
-    pid->dt_min = dt_min;
-  else
-    return -1;
+  ASSERT(isfinite(dt_min));
+  pid->dt_min = dt_min;
 
   LowPassFilter2p_Init(&(pid->dfilter), sample_freq, pid->param->d_cutoff_freq);
 
   pid->mode = mode;
   PID_Reset(pid);
-  return 0;
 }
 
 /**
@@ -129,23 +125,19 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt) {
  * @brief 重置微分项
  *
  * @param pid PID结构体
- * @return int8_t 0对应没有错误
  */
-int8_t PID_ResetIntegral(KPID_t *pid) {
+void PID_ResetIntegral(KPID_t *pid) {
   ASSERT(pid);
 
   pid->i = 0.0f;
-
-  return 0;
 }
 
 /**
  * @brief 重置PID
  *
  * @param pid PID结构体
- * @return int8_t 0对应没有错误
  */
-int8_t PID_Reset(KPID_t *pid) {
+void PID_Reset(KPID_t *pid) {
   ASSERT(pid);
 
   pid->i = 0.0f;
@@ -153,6 +145,4 @@ int8_t PID_Reset(KPID_t *pid) {
   pid->last.k_fb = 0.0f;
   pid->last.out = 0.0f;
   LowPassFilter2p_Reset(&(pid->dfilter), 0.0f);
-
-  return 0;
 }
