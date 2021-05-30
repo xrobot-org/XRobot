@@ -44,10 +44,13 @@ void FeedForward_Init(FeedForward_t *ff, float sample_freq,
 float FeedForward_Calc(FeedForward_t *ff, float sp, float dt) {
   ASSERT(ff);
 
+  if (!isfinite(sp) || !isfinite(dt)) {
+    return ff->last.out;
+  }
   const float delta_sp = sp - ff->last.sp;
   const float out = delta_sp / dt * ff->param->gain;
   ff->last.sp = sp;
-
+  ff->last.out = out;
   return out;
 }
 
@@ -60,4 +63,5 @@ void FeedForward_Reset(FeedForward_t *ff) {
   ASSERT(ff);
 
   ff->last.sp = 0.0f;
+  ff->last.out = 0.0f;
 }
