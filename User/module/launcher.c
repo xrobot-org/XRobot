@@ -105,7 +105,7 @@ static void Launcher_HeatLimit(Launcher_t *l, Referee_ForLauncher_t *l_ref) {
  * @param target_freq 任务预期的运行频率
  */
 void Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
-                     float target_freq) {
+                   float target_freq) {
   ASSERT(l);
   ASSERT(param);
 
@@ -284,14 +284,14 @@ void Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
       for (size_t i = 0; i < 2; i++) {
         /* 控制摩擦轮 */
         l->feedback.fric_rpm[i] = LowPassFilter2p_Apply(
-            &(l->filter.in.fric[i]), l->feedback.fric_rpm[i]);
+            l->filter.in.fric + i, l->feedback.fric_rpm[i]);
 
         l->out[LAUNCHER_ACTR_FRIC1_IDX + i] =
-            PID_Calc(&(l->pid.fric[i]), l->setpoint.fric_rpm[i],
+            PID_Calc(l->pid.fric + i, l->setpoint.fric_rpm[i],
                      l->feedback.fric_rpm[i], 0.0f, l->dt);
 
         l->out[LAUNCHER_ACTR_FRIC1_IDX + i] = LowPassFilter2p_Apply(
-            &(l->filter.out.fric[i]), l->out[LAUNCHER_ACTR_FRIC1_IDX + i]);
+            l->filter.out.fric + i, l->out[LAUNCHER_ACTR_FRIC1_IDX + i]);
       }
 
       /* 根据弹仓盖开关状态更新弹舱盖打开时舵机PWM占空比 */
