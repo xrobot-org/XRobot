@@ -11,8 +11,6 @@
 
 #include "feed_forward.h"
 
-#define SIGMA 0.000001f
-
 /**
  * @brief 初始化FeedForward
  *
