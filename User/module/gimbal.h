@@ -7,6 +7,7 @@
 /* Includes ----------------------------------------------------------------- */
 #include "component/ahrs.h"
 #include "component/cmd.h"
+#include "component/feed_forward.h"
 #include "component/filter.h"
 #include "component/pid.h"
 #include "device/bmi088.h"
@@ -17,25 +18,26 @@
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
 
-/* 用enum组合所有PID，GIMBAL_PID_NUM长度的数组都可以用这个枚举访问 */
+/* GIMBAL_CTRL_NUM长度的数组都可以用这个枚举访问 */
 enum Gimbal_PID_e {
-  GIMBAL_PID_YAW_OMEGA_IDX = 0, /* Yaw轴控制的角速度环PID的索引值 */
-  GIMBAL_PID_YAW_ANGLE_IDX,     /* Yaw轴控制的角度环PID的索引值 */
-  GIMBAL_PID_PIT_OMEGA_IDX, /* Pitch轴控制的角速度环PID的索引值 */
-  GIMBAL_PID_PIT_ANGLE_IDX, /* Pitch轴控制的角度环PID的索引值 */
-  GIMBAL_PID_NUM,           /* 总共的PID数量 */
+  GIMBAL_CTRL_YAW_OMEGA_IDX = 0, /* Yaw轴控制的角速度环控制器的索引值 */
+  GIMBAL_CTRL_YAW_ANGLE_IDX, /* Yaw轴控制的角度环控制器的索引值 */
+  GIMBAL_CTRL_PIT_OMEGA_IDX, /* Pitch轴控制的角速度环控制器的索引值 */
+  GIMBAL_CTRL_PIT_ANGLE_IDX, /* Pitch轴控制的角度环控制器的索引值 */
+  GIMBAL_CTRL_NUM,           /* 总共的控制器数量 */
 };
 
-/* 用enum组合所有输出，GIMBAL_ACTR_NUM长度的数组都可以用这个枚举访问 */
+/* GIMBAL_ACTR_NUM长度的数组都可以用这个枚举访问 */
 enum Gimbal_Acuator_e {
-  GIMBAL_ACTR_YAW_IDX = 0, /* Yaw轴控制相关的索引值 */
-  GIMBAL_ACTR_PIT_IDX,     /* Pitch轴控制相关的索引值 */
+  GIMBAL_ACTR_YAW_IDX = 0, /* Yaw轴动作器的索引值 */
+  GIMBAL_ACTR_PIT_IDX,     /* Pitch动作器索引值 */
   GIMBAL_ACTR_NUM,         /* 总共的动作器数量 */
 };
 
 /* 云台参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
-  const KPID_Params_t pid[GIMBAL_PID_NUM]; /* 云台电机控制PID的参数 */
+  const KPID_Params_t pid[GIMBAL_CTRL_NUM]; /* 云台电机控制PID的参数 */
+  const FeedForward_Params_t ff[GIMBAL_CTRL_NUM]; /* 云台电机前馈控制的参数 */
 
   /* 低通滤波器截止频率 */
   struct {
@@ -88,7 +90,8 @@ typedef struct {
     AHRS_Eulr_t eulr; /* 表示云台姿态的欧拉角 */
   } setpoint;
 
-  KPID_t pid[GIMBAL_PID_NUM]; /* PID数组 */
+  KPID_t pid[GIMBAL_CTRL_NUM];       /* PID数组 */
+  FeedForward_t ff[GIMBAL_CTRL_NUM]; /* FeedForward数组 */
 
   Gimbal_Limit_t limit;
 
