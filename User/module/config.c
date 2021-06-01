@@ -99,22 +99,6 @@ static const Config_RobotParam_t param_default = {
         .range = M_2PI,
       },
     }, /* pid */
-    
-    .ff = {
-      {
-        /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-        .gain = 0.0f,
-      }, {
-        /* GIMBAL_CTRL_YAW_ANGLE_IDX */
-        .gain = 0.0f,
-      }, {
-        /* GIMBAL_CTRL_PIT_OMEGA_IDX */
-        .gain = 0.0f,
-      }, {
-        /* GIMBAL_CTRL_PIT_ANGLE_IDX */
-        .gain = 0.0f,
-      },
-    }, /* ff */
 
     .pitch_travel_rad = 1.158155117179586476925286766559f,
     
@@ -260,22 +244,6 @@ static const Config_RobotParam_t param_hero = {
         .range = M_2PI,
       },
     }, /* pid */
-    
-    .ff = {
-      {
-        /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-        .gain = 0.0f,
-      }, {
-        /* GIMBAL_CTRL_YAW_ANGLE_IDX */
-        .gain = 0.0f,
-      }, {
-        /* GIMBAL_CTRL_PIT_OMEGA_IDX */
-        .gain = 0.0f,
-      }, {
-        /* GIMBAL_CTRL_PIT_ANGLE_IDX */
-        .gain = 0.0f,
-      },
-    }, /* ff */
 
     .pitch_travel_rad = 1.07685447f,
     
