@@ -26,7 +26,6 @@ static void Gimbal_SetMode(Gimbal_t *g, Game_GimbalMode_t mode) {
   /* 切换模式后重置PID和滤波器 */
   for (size_t i = 0; i < GIMBAL_CTRL_NUM; i++) {
     PID_Reset(g->pid + i);
-    FeedForward_Reset(g->ff + i);
   }
   for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
     LowPassFilter2p_Reset(g->filter_out + i, 0.0f);
@@ -76,10 +75,6 @@ void Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
            g->param->pid + GIMBAL_CTRL_PIT_ANGLE_IDX);
   PID_Init(g->pid + GIMBAL_CTRL_PIT_OMEGA_IDX, KPID_MODE_CALC_D, target_freq,
            g->param->pid + GIMBAL_CTRL_PIT_OMEGA_IDX);
-
-  for (size_t i = 0; i < GIMBAL_CTRL_NUM; i++) {
-    FeedForward_Init(g->ff + i, target_freq, g->param->ff + i);
-  }
 
   for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
     LowPassFilter2p_Init(g->filter_out + i, target_freq,
@@ -158,36 +153,20 @@ void Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
           PID_Calc(g->pid + GIMBAL_CTRL_YAW_ANGLE_IDX, g->setpoint.eulr.yaw,
                    g->feedback.eulr.imu.yaw, 0.0f, g->dt);
 
-      /* Yaw轴角度 前馈控制 */
-      yaw_omega_set_point += FeedForward_Calc(g->ff + GIMBAL_CTRL_YAW_ANGLE_IDX,
-                                              g->setpoint.eulr.yaw, g->dt);
-
       /* Yaw轴角速度 反馈控制 */
       g->out[GIMBAL_ACTR_YAW_IDX] =
           PID_Calc(g->pid + GIMBAL_CTRL_YAW_OMEGA_IDX, yaw_omega_set_point,
                    g->feedback.gyro.z, 0.f, g->dt);
-
-      /* Yaw轴角速度 前馈控制 */
-      g->out[GIMBAL_ACTR_YAW_IDX] += FeedForward_Calc(
-          g->ff + GIMBAL_CTRL_YAW_OMEGA_IDX, yaw_omega_set_point, g->dt);
 
       /* Pitch轴角度 反馈控制 */
       pit_omega_set_point =
           PID_Calc(g->pid + GIMBAL_CTRL_PIT_ANGLE_IDX, g->setpoint.eulr.pit,
                    g->feedback.eulr.imu.pit, 0.0f, g->dt);
 
-      /* Pitch轴角度 前馈控制 */
-      pit_omega_set_point += FeedForward_Calc(g->ff + GIMBAL_CTRL_PIT_ANGLE_IDX,
-                                              g->setpoint.eulr.pit, g->dt);
-
       /* Pitch轴角速度 反馈控制 */
       g->out[GIMBAL_ACTR_PIT_IDX] =
           PID_Calc(g->pid + GIMBAL_CTRL_PIT_OMEGA_IDX, pit_omega_set_point,
                    g->feedback.gyro.x, 0.f, g->dt);
-
-      /* Pitch轴角速度 前馈控制 */
-      g->out[GIMBAL_ACTR_PIT_IDX] += FeedForward_Calc(
-          g->ff + GIMBAL_CTRL_PIT_OMEGA_IDX, pit_omega_set_point, g->dt);
       break;
 
     case GIMBAL_MODE_RELATIVE:

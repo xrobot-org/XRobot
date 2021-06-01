@@ -1462,11 +1462,6 @@
               <FilePath>..\User\component\error_detect.c</FilePath>
             </File>
             <File>
-              <FileName>feed_forward.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\component\feed_forward.c</FilePath>
-            </File>
-            <File>
               <FileName>filter.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\component\filter.c</FilePath>
@@ -3125,11 +3120,6 @@
               <FileName>error_detect.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\component\error_detect.c</FilePath>
-            </File>
-            <File>
-              <FileName>feed_forward.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\component\feed_forward.c</FilePath>
             </File>
             <File>
               <FileName>filter.c</FileName>

@@ -7,7 +7,6 @@
 /* Includes ----------------------------------------------------------------- */
 #include "component/ahrs.h"
 #include "component/cmd.h"
-#include "component/feed_forward.h"
 #include "component/filter.h"
 #include "component/pid.h"
 #include "device/bmi088.h"
@@ -37,7 +36,6 @@ enum Gimbal_Acuator_e {
 /* 云台参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
   const KPID_Params_t pid[GIMBAL_CTRL_NUM]; /* 云台电机控制PID的参数 */
-  const FeedForward_Params_t ff[GIMBAL_CTRL_NUM]; /* 云台电机前馈控制的参数 */
 
   /* 低通滤波器截止频率 */
   struct {
@@ -90,8 +88,7 @@ typedef struct {
     AHRS_Eulr_t eulr; /* 表示云台姿态的欧拉角 */
   } setpoint;
 
-  KPID_t pid[GIMBAL_CTRL_NUM];       /* PID数组 */
-  FeedForward_t ff[GIMBAL_CTRL_NUM]; /* FeedForward数组 */
+  KPID_t pid[GIMBAL_CTRL_NUM]; /* PID数组 */
 
   Gimbal_Limit_t limit;
 
