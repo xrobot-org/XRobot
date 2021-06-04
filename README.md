@@ -4,6 +4,9 @@
 
 ***稳健开发测试中***
 
+[Gitee](https://gitee.com/qsheeeeen/qdu-rm-mcu)
+[Github](https://github.com/qsheeeeen/qdu-rm-mcu)
+
 ## 软件功能介绍
 
 本开源软件为青岛大学未来战队机器人的嵌入式控制代码。参考了官方开源和其他战队代码，结合对其他嵌入式项目的理解（如PX4），从零编写而成。中心思想：
