@@ -24,6 +24,7 @@
 #include "can.h"
 #include "cmsis_os.h"
 #include "crc.h"
+#include "dcmi.h"
 #include "dma.h"
 #include "gpio.h"
 #include "i2c.h"
@@ -120,6 +121,7 @@ int main(void) {
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
   MX_TIM7_Init();
+  MX_DCMI_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
