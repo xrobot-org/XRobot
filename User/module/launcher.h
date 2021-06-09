@@ -28,7 +28,7 @@
 enum Launcher_Acuator_e {
   LAUNCHER_ACTR_FRIC1_IDX = 0, /* 1号摩擦轮相关的索引值 */
   LAUNCHER_ACTR_FRIC2_IDX,     /* 2号摩擦轮相关的索引值 */
-  LAUNCHER_ACTR_TRIG_IDX,      /* 扳机电机相关的索引值 */
+  LAUNCHER_ACTR_TRIG_IDX,      /* 拨弹电机相关的索引值 */
   LAUNCHER_ACTR_NUM,           /* 总共的动作器数量 */
 };
 
@@ -41,19 +41,19 @@ typedef enum {
 /* 发射器参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
   KPID_Params_t fric_pid_param; /* 摩擦轮电机控制PID的参数 */
-  KPID_Params_t trig_pid_param; /* 扳机电机控制PID的参数 */
+  KPID_Params_t trig_pid_param; /* 拨弹电机控制PID的参数 */
   /* 低通滤波器截止频率 */
   struct {
     /* 输入 */
     struct {
       float fric; /* 摩擦轮电机 */
-      float trig; /* 扳机电机 */
+      float trig; /* 拨弹电机 */
     } in;
 
     /* 输出 */
     struct {
       float fric; /* 摩擦轮电机 */
-      float trig; /* 扳机电机 */
+      float trig; /* 拨弹电机 */
     } out;
   } low_pass_cutoff_freq;
 
