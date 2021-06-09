@@ -22,6 +22,10 @@
 #define M_2PI 6.28318530717958647692f
 #endif
 
+#ifndef M_1G
+#define M_1G 9.80665ff
+#endif
+
 /**
  * @brief 返回两个值中的最大值
  *
