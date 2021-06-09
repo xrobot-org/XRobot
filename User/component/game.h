@@ -75,3 +75,10 @@ typedef enum {
   AI_STATUS_HITBUFF, /* 打符状态 */
   AI_STATUS_FULLAUTO /* 自动状态 */
 } Game_AI_Status_t;
+
+/* 飞镖发射器运行模式 */
+typedef enum {
+  DART_LAUNCHER_MODE_RELAX, /* 放松模式，电机不输出 */
+  DART_LAUNCHER_MODE_SAFE,  /* 保险模式，电机闭环控制保持静止 */
+  DART_LAUNCHER_MODE_LOADED, /* 上膛模式，摩擦轮开启。随时准备开火 */
+} Game_DartLauncherMode_t;
