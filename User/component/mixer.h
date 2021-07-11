@@ -17,12 +17,16 @@
 
 /* 混合器模式 */
 typedef enum {
+  /* 底面用 */
   MIXER_MECANUM,   /* 麦克纳姆轮 */
   MIXER_PARLFIX4,  /* 平行四驱动轮 */
   MIXER_PARLFIX2,  /* 平行对侧两驱动轮 */
   MIXER_OMNICROSS, /* 叉形全向轮 */
   MIXER_OMNIPLUS,  /* 十字全向轮 */
   MIXER_SINGLE,    /* 单个摩擦轮 */
+
+  /* 空中用 */
+  MIXER_CANARD, /* 飞镖鸭翼 */
 } Mixer_Mode_t;
 
 typedef struct {
