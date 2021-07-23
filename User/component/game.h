@@ -70,11 +70,11 @@ typedef enum {
 
 /* AI行为状态 */
 typedef enum {
-  AI_STATUS_STOP,    /* 停止状态 */
-  AI_STATUS_AUTOAIM, /* 自瞄状态 */
-  AI_STATUS_HITBUFF, /* 打符状态 */
-  AI_STATUS_FULLAUTO /* 自动状态 */
-} Game_AI_Status_t;
+  AI_MODE_STOP,    /* 停止模式 */
+  AI_MODE_AUTOAIM, /* 自瞄模式 */
+  AI_MODE_HITBUFF, /* 打符模式 */
+  AI_MODE_FULLAUTO /* 自动模式 */
+} Game_AI_Mode_t;
 
 /* 飞镖发射器运行模式 */
 typedef enum {

@@ -77,7 +77,7 @@ void Task_Cmd(void *argument) {
 
     /* 将需要与其他任务分享的数据放到消息队列中 */
     osMessageQueueReset(runtime.msgq.cmd.ai);
-    osMessageQueuePut(runtime.msgq.cmd.ai, &(cmd.ai_status), 0, 0);
+    osMessageQueuePut(runtime.msgq.cmd.ai, &(cmd.ai_mode), 0, 0);
 
     osMessageQueueReset(runtime.msgq.cmd.chassis);
     osMessageQueuePut(runtime.msgq.cmd.chassis, &(cmd.chassis), 0, 0);

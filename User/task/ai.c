@@ -16,13 +16,13 @@
 AI_t ai;
 AI_UI_t ai_ui;
 CMD_Host_t cmd_host;
-AHRS_Quaternion_t quat;
+AHRS_Quaternion_t ai_quat;
 Referee_ForAI_t referee_ai;
 #else
 static AI_t ai;
 static AI_UI_t ai_ui;
 static CMD_Host_t cmd_host;
-static AHRS_Quaternion_t quat;
+static AHRS_Quaternion_t ai_quat;
 static Referee_ForAI_t referee_ai;
 #endif
 
@@ -44,6 +44,9 @@ void Task_Ai(void *argument) {
   AI_Init(&ai);
 
   uint32_t tick = osKernelGetTickCount();
+
+  uint32_t last_online_tick = tick;
+
   while (1) {
 #ifdef DEBUG
     runtime.stack_water_mark.ai = osThreadGetStackSpace(osThreadGetId());
@@ -51,20 +54,26 @@ void Task_Ai(void *argument) {
     /* Task body */
     tick += delay_tick;
 
-    AI_StartReceiving(&ai);
-    if (AI_WaitDmaCplt()) {
-      AI_ParseHost(&ai, &cmd_host);
-    } else {
-      AI_HandleOffline(&ai, &cmd_host);
-    }
-    osMessageQueueReset(runtime.msgq.cmd.src.host);
-    osMessageQueuePut(runtime.msgq.cmd.src.host, &(cmd_host), 0, 0);
-
-    osMessageQueueGet(runtime.msgq.ai.quat, &(quat), NULL, 0);
-    osMessageQueueGet(runtime.msgq.cmd.ai, &(ai.status), NULL, 0);
+    osMessageQueueGet(runtime.msgq.ai.quat, &(ai_quat), NULL, 0);
+    osMessageQueueGet(runtime.msgq.cmd.ai, &(ai.mode), NULL, 0);
     bool ref_update = (osMessageQueueGet(runtime.msgq.referee.ai, &(referee_ai),
                                          NULL, 0) == osOK);
-    AI_PackMcu(&ai, &quat);
+
+    AI_StartReceiving(&ai);
+    if (AI_WaitDmaCplt()) {
+      AI_ParseHost(&ai);
+      last_online_tick = tick;
+    } else {
+      if (tick - last_online_tick > 300) AI_HandleOffline(&ai);
+    }
+
+    if (ai.mode != AI_MODE_STOP && ai.ai_online) {
+      AI_PackCmd(&ai, &cmd_host);
+      osMessageQueueReset(runtime.msgq.cmd.src.host);
+      osMessageQueuePut(runtime.msgq.cmd.src.host, &(cmd_host), 0, 0);
+    }
+
+    AI_PackMcu(&ai, &ai_quat);
     if (ref_update) AI_PackRef(&ai, &(referee_ai));
 
     AI_StartTrans(&ai, ref_update);

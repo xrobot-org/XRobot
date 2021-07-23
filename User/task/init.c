@@ -87,7 +87,7 @@ void Task_Init(void *argument) {
       osMessageQueueNew(3u, sizeof(CMD_GimbalCmd_t), NULL);
   runtime.msgq.cmd.launcher =
       osMessageQueueNew(3u, sizeof(CMD_LauncherCmd_t), NULL);
-  runtime.msgq.cmd.ai = osMessageQueueNew(3u, sizeof(Game_AI_Status_t), NULL);
+  runtime.msgq.cmd.ai = osMessageQueueNew(3u, sizeof(Game_AI_Mode_t), NULL);
 
   /* atti_esti */
   runtime.msgq.cmd.src.rc = osMessageQueueNew(3u, sizeof(CMD_RC_t), NULL);
