@@ -180,31 +180,28 @@ static void CMD_MouseKeyboardLogic(const CMD_RC_t *rc, CMD_t *cmd,
     cmd->launcher.cover_open = !cmd->launcher.cover_open;
   }
   if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_BUFF)) {
-    if (cmd->ai_status == AI_STATUS_HITBUFF) {
+    if (cmd->ai_mode == AI_MODE_HITBUFF) {
       /* 停止ai的打符模式，停用host控制 */
       cmd->ctrl_source = CMD_SOURCE_RC;
-      cmd->ai_status = AI_STATUS_STOP;
-    } else if (cmd->ai_status == AI_STATUS_AUTOAIM) {
+      cmd->ai_mode = AI_MODE_STOP;
+    } else if (cmd->ai_mode == AI_MODE_AUTOAIM) {
       /* 自瞄模式中切换失败提醒 */
     } else {
       /* ai切换至打符模式，启用host控制 */
-      cmd->ai_status = AI_STATUS_HITBUFF;
+      cmd->ai_mode = AI_MODE_HITBUFF;
       cmd->ctrl_source = CMD_SOURCE_HOST;
     }
   }
   if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_AUTOAIM)) {
-    if (cmd->ai_status == AI_STATUS_AUTOAIM) {
+    if (cmd->ai_mode == AI_MODE_AUTOAIM) {
       /* 停止ai的自瞄模式，停用host控制 */
       cmd->ctrl_source = CMD_SOURCE_RC;
-      cmd->ai_status = AI_STATUS_STOP;
+      cmd->ai_mode = AI_MODE_STOP;
     } else {
       /* ai切换至自瞄模式，启用host控制 */
-      cmd->ai_status = AI_STATUS_AUTOAIM;
+      cmd->ai_mode = AI_MODE_AUTOAIM;
       cmd->ctrl_source = CMD_SOURCE_HOST;
     }
-  } else {
-    cmd->ctrl_source = CMD_SOURCE_RC;
-    // TODO: 修复逻辑
   }
   if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_REVTRIG)) {
     /* 按下拨弹反转 */
@@ -383,12 +380,12 @@ int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
 
   /* 云台欧拉角设置为host相应的变化的欧拉角 */
   cmd->gimbal.delta_eulr.yaw =
-      host->gimbal_delta.yaw * dt_sec * cmd->param->sens_mouse;
+      host->gimbal_delta.yaw * dt_sec * cmd->param->sens_ai;
   cmd->gimbal.delta_eulr.pit =
-      host->gimbal_delta.pit * dt_sec * cmd->param->sens_mouse;
+      host->gimbal_delta.pit * dt_sec * cmd->param->sens_ai;
 
   /* host发射命令，设置不同的发射频率和弹丸初速度 */
-  if (cmd->ai_status == AI_STATUS_HITBUFF) {
+  if (cmd->ai_mode == AI_MODE_HITBUFF) {
     if (host->fire) {
       cmd->launcher.mode = LAUNCHER_MODE_LOADED;
       cmd->launcher.fire = true;

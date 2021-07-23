@@ -126,6 +126,7 @@ typedef struct {
 typedef struct {
   float sens_mouse;                           /* 鼠标灵敏度 */
   float sens_stick;                           /* 遥控器摇杆灵敏度 */
+  float sens_ai;                              /* AI灵敏度 */
   CMD_KeyMapItem_t key_map[CMD_BEHAVIOR_NUM]; /* 按键映射行为命令 */
   CMD_MoveParams_t move;                      /* 位移灵敏度参数 */
 } CMD_Params_t;
@@ -161,7 +162,7 @@ typedef struct {
   uint16_t key_last;      /* 上次按键键值 */
   CMD_Mouse_t mouse_last; /* 鼠标值 */
 
-  Game_AI_Status_t ai_status; /* AI状态 */
+  Game_AI_Mode_t ai_mode; /* AI模式 */
 
   const CMD_Params_t *param; /* 命令参数 */
 
