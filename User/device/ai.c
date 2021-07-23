@@ -72,15 +72,13 @@ bool AI_WaitDmaCplt(void) {
   return (osThreadFlagsWait(SIGNAL_AI_RAW_REDY, osFlagsWaitAll, 0) ==
           SIGNAL_AI_RAW_REDY);
 }
-int counter;
+
 int8_t AI_ParseHost(AI_t *ai) {
   if (!CRC16_Verify((const uint8_t *)&(rxbuf), sizeof(ai->form_host)))
     goto error;
   ai->ai_online = true;
   memcpy(&(ai->form_host), rxbuf, sizeof(ai->form_host));
   memset(rxbuf, 0, AI_LEN_RX_BUFF);
-  counter++;
-
   return DEVICE_OK;
 
 error:

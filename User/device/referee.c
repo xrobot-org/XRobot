@@ -399,14 +399,16 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
             box_pos_right = 0.0f;
             break;
         }
-        UI_DrawRectangle(
-            &ele, "a", graphic_op, UI_GRAPHIC_LAYER_GIMBAL, UI_GREEN,
-            UI_DEFAULT_WIDTH,
-            (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_left),
-            (uint16_t)(kH * REF_UI_MODE_LINE2_H + REF_UI_BOX_UP_OFFSET),
-            (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_right),
-            (uint16_t)(kH * REF_UI_MODE_LINE2_H + REF_UI_BOX_BOT_OFFSET));
-        UI_StashGraphic(&(ref->ui), &ele);
+        if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
+          UI_DrawRectangle(
+              &ele, "a", graphic_op, UI_GRAPHIC_LAYER_GIMBAL, UI_GREEN,
+              UI_DEFAULT_WIDTH,
+              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_left),
+              (uint16_t)(kH * REF_UI_MODE_LINE2_H + REF_UI_BOX_UP_OFFSET),
+              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_right),
+              (uint16_t)(kH * REF_UI_MODE_LINE2_H + REF_UI_BOX_BOT_OFFSET));
+          UI_StashGraphic(&(ref->ui), &ele);
+        }
         break;
       }
       case 3: {
@@ -431,14 +433,16 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
             box_pos_right = 0.0f;
             break;
         }
-        UI_DrawRectangle(
-            &ele, "b", graphic_op, UI_GRAPHIC_LAYER_LAUNCHER, UI_GREEN,
-            UI_DEFAULT_WIDTH,
-            (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_left),
-            (uint16_t)(kH * REF_UI_MODE_LINE3_H + REF_UI_BOX_UP_OFFSET),
-            (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_right),
-            (uint16_t)(kH * REF_UI_MODE_LINE3_H + REF_UI_BOX_BOT_OFFSET));
-        UI_StashGraphic(&(ref->ui), &ele);
+        if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
+          UI_DrawRectangle(
+              &ele, "b", graphic_op, UI_GRAPHIC_LAYER_LAUNCHER, UI_GREEN,
+              UI_DEFAULT_WIDTH,
+              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_left),
+              (uint16_t)(kH * REF_UI_MODE_LINE3_H + REF_UI_BOX_UP_OFFSET),
+              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_right),
+              (uint16_t)(kH * REF_UI_MODE_LINE3_H + REF_UI_BOX_BOT_OFFSET));
+          UI_StashGraphic(&(ref->ui), &ele);
+        }
 
         /* 更新开火模式选择框 */
         switch (ref->launcher_ui.fire) {
@@ -459,14 +463,16 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
             box_pos_right = 0.0f;
             break;
         }
-        UI_DrawRectangle(
-            &ele, "f", graphic_op, UI_GRAPHIC_LAYER_LAUNCHER, UI_GREEN,
-            UI_DEFAULT_WIDTH,
-            (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_left),
-            (uint16_t)(kH * REF_UI_MODE_LINE4_H + REF_UI_BOX_UP_OFFSET),
-            (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_right),
-            (uint16_t)(kH * REF_UI_MODE_LINE4_H + REF_UI_BOX_BOT_OFFSET));
-        UI_StashGraphic(&(ref->ui), &ele);
+        if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
+          UI_DrawRectangle(
+              &ele, "f", graphic_op, UI_GRAPHIC_LAYER_LAUNCHER, UI_GREEN,
+              UI_DEFAULT_WIDTH,
+              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_left),
+              (uint16_t)(kH * REF_UI_MODE_LINE4_H + REF_UI_BOX_UP_OFFSET),
+              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_right),
+              (uint16_t)(kH * REF_UI_MODE_LINE4_H + REF_UI_BOX_BOT_OFFSET));
+          UI_StashGraphic(&(ref->ui), &ele);
+        }
         break;
       }
       case 4:
