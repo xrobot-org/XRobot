@@ -101,8 +101,8 @@ void Task_Referee(void *argument) {
 
       if (Referee_WaitTransCplt(0)) {
         Referee_PackUiPacket(&ref);
-        Referee_StartTransmit(&ref);
       }
+      Referee_StartTransmit(&ref);
     }
   }
 }

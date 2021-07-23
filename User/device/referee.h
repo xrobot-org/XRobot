@@ -327,6 +327,7 @@ typedef struct {
 
   struct {
     uint8_t *data;
+    uint8_t *last_data;
     size_t size;
   } packet;
 
@@ -345,6 +346,7 @@ typedef struct {
 
 typedef struct {
   Referee_Status_t status;
+  uint8_t team;
 } Referee_ForAI_t;
 
 typedef struct {
@@ -372,7 +374,7 @@ int8_t Referee_Parse(Referee_t *ref);
 
 uint8_t Referee_RefreshUI(Referee_t *ref);
 int8_t Referee_PackUiPacket(Referee_t *ref);
-int8_t Referee_StartTransmit(const Referee_t *ref);
+int8_t Referee_StartTransmit(Referee_t *ref);
 bool Referee_WaitTransCplt(uint32_t timeout);
 
 uint8_t Referee_PackForChassis(Referee_ForChassis_t *c_ref,

@@ -291,7 +291,8 @@ int8_t UI_DrawString(UI_String_t *ele, const char *name, UI_GraphicOp_t op,
   ele->graphic.width = width;
   ele->graphic.x_start = x_start;
   ele->graphic.y_start = y_start;
-  snprintf((char *)ele->str, 29, "%s", str);
+  memset(ele->str, 0x00, sizeof(ele->str));
+  snprintf((char *)ele->str, strlen(str) + 1, "%s", str);
   return 0;
 }
 
@@ -323,7 +324,7 @@ int8_t UI_StashGraphic(UI_t *ui, const UI_Ele_t *ele) {
 
 int8_t UI_PopGraphic(UI_Ele_t *ele, UI_t *ui) {
   if (ui->stack.size.graphic) {
-    memcpy(ele, ui->stack.data.graphic + ui->stack.size.graphic,
+    memcpy(ele, ui->stack.data.graphic + ui->stack.size.graphic - 1,
            sizeof(UI_Ele_t));
     ui->stack.size.graphic--;
     return 0;
@@ -345,7 +346,7 @@ int8_t UI_StashString(UI_t *ui, const UI_String_t *string) {
 
 int8_t UI_PopString(UI_String_t *string, UI_t *ui) {
   if (ui->stack.size.string) {
-    memcpy(string, ui->stack.data.string + ui->stack.size.string,
+    memcpy(string, ui->stack.data.string + ui->stack.size.string - 1,
            sizeof(UI_String_t));
     ui->stack.size.string--;
     return 0;
@@ -365,8 +366,8 @@ int8_t UI_StashDel(UI_t *ui, const UI_Del_t *del) {
 }
 
 int8_t UI_PopDel(UI_Del_t *del, UI_t *ui) {
-  if (ui->stack.size.del < UI_MAX_DEL_NUM) {
-    memcpy(del, ui->stack.data.del + ui->stack.size.del, sizeof(UI_Del_t));
+  if (ui->stack.size.del) {
+    memcpy(del, ui->stack.data.del + ui->stack.size.del - 1, sizeof(UI_Del_t));
     ui->stack.size.del--;
     return 0;
   } else {
