@@ -129,7 +129,7 @@ int8_t AI_PackMcu(AI_t *ai, const AHRS_Quaternion_t *quat) {
 int8_t AI_PackRef(AI_t *ai, const Referee_ForAI_t *ref) {
   UNUSED(ref);
   ai->to_host.ref.id = AI_ID_REF;
-  if (ref->team == REF_TEAM_BLUE)
+  if (ref->team == AI_TEAM_BLUE)
     ai->to_host.ref.package.data.team = AI_TEAM_BLUE;
   else
     ai->to_host.ref.package.data.team = AI_TEAM_RED;
