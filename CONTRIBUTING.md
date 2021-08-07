@@ -67,7 +67,7 @@
 
 注意事项：
 
-* `osKernelLock`和`osKernelUnlock`中间不能you可能导致任务切换的函数，例如`osMessageQueuePut`。
+* `osKernelLock`和`osKernelUnlock`中间不能有可能导致任务切换的函数，例如`osMessageQueuePut`。
 * 如果任务不需要运行多个实例，则尽量将任务变量放置到任务函数外。
 
 ---
