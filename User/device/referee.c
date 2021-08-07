@@ -52,8 +52,6 @@ typedef struct __packed {
 
 /* Private variables -------------------------------------------------------- */
 
-static volatile uint32_t drop_message = 0;
-
 static uint8_t rxbuf[REF_LEN_RX_BUFF];
 
 static Referee_t *gref;
@@ -156,8 +154,9 @@ void Referee_HandleOffline(Referee_t *ref) { ref->status = REF_STATUS_OFFLINE; }
 int8_t Referee_StartReceiving(Referee_t *ref) {
   UNUSED(ref);
   if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_REF), rxbuf,
-                           REF_LEN_RX_BUFF) == HAL_OK)
+                           REF_LEN_RX_BUFF) == HAL_OK) {
     return DEVICE_OK;
+  }
   return DEVICE_ERR;
 }
 
@@ -172,25 +171,28 @@ int8_t Referee_Parse(Referee_t *ref) {
       REF_LEN_RX_BUFF -
       __HAL_DMA_GET_COUNTER(BSP_UART_GetHandle(BSP_UART_REF)->hdmarx);
 
-  uint8_t index = 0;
-  uint8_t packet_shift;
-  uint8_t packet_length;
+  const uint8_t *index = rxbuf; /* const 保护原始rxbuf不被修改 */
+  const uint8_t *const rxbuf_end = rxbuf + data_length;
 
-  while (index < data_length && rxbuf[index] == REF_HEADER_SOF) {
-    packet_shift = index;
-    Referee_Header_t *header = (Referee_Header_t *)(rxbuf + index);
+  while (index < rxbuf_end) {
+    /* 1.处理帧头 */
+    /* 1.1遍历所有找到SOF */
+    while (*index != REF_HEADER_SOF) {
+      index++;
+    }
+    /* 1.2将剩余数据当做帧头部 */
+    Referee_Header_t *header = (Referee_Header_t *)index;
+		
+    /* 1.3验证完整性 */
+    if (!CRC8_Verify((uint8_t *)header, sizeof(*header))) continue;
     index += sizeof(*header);
-    if (index - packet_shift >= data_length) goto error;
 
-    if (!CRC8_Verify((uint8_t *)header, sizeof(*header))) goto error;
-
-    if (header->sof != REF_HEADER_SOF) goto error;
-
-    Referee_CMDID_t *cmd_id = (Referee_CMDID_t *)(rxbuf + index);
+    /* 2.处理CMD ID */
+    /* 2.1将剩余数据当做CMD ID处理 */
+    Referee_CMDID_t *cmd_id = (Referee_CMDID_t *)index;
     index += sizeof(*cmd_id);
-    if (index - packet_shift >= data_length) goto error;
 
-    void *source = (rxbuf + index);
+		/* 3.处理数据段 */
     void *destination;
     size_t size;
 
@@ -280,25 +282,16 @@ int8_t Referee_Parse(Referee_t *ref) {
       default:
         return DEVICE_ERR;
     }
-    packet_length =
-        (uint8_t)(sizeof(Referee_Header_t) + sizeof(Referee_CMDID_t) + size +
-                  sizeof(Referee_Tail_t));
     index += size;
-    if (index - packet_shift >= data_length) goto error;
 
+    /* 4.处理帧尾 */
     index += sizeof(Referee_Tail_t);
-    if (index - packet_shift != packet_length) goto error;
 
-    if (CRC16_Verify((uint8_t *)(rxbuf + packet_shift), packet_length))
-      memcpy(destination, source, size);
-    else
-      goto error;
+		/* 验证无误则接受数据 */
+    if (CRC16_Verify((uint8_t*)header, (uint8_t)(index - (uint8_t*)header)))
+      memcpy(destination, index, size);
   }
   return DEVICE_OK;
-
-error:
-  drop_message++;
-  return DEVICE_ERR;
 }
 
 uint8_t Referee_RefreshUI(Referee_t *ref) {
