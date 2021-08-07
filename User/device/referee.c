@@ -177,12 +177,12 @@ int8_t Referee_Parse(Referee_t *ref) {
   while (index < rxbuf_end) {
     /* 1.处理帧头 */
     /* 1.1遍历所有找到SOF */
-    while (*index != REF_HEADER_SOF) {
+    while ((*index != REF_HEADER_SOF) && (index < rxbuf_end)) {
       index++;
     }
     /* 1.2将剩余数据当做帧头部 */
     Referee_Header_t *header = (Referee_Header_t *)index;
-		
+
     /* 1.3验证完整性 */
     if (!CRC8_Verify((uint8_t *)header, sizeof(*header))) continue;
     index += sizeof(*header);
@@ -192,7 +192,7 @@ int8_t Referee_Parse(Referee_t *ref) {
     Referee_CMDID_t *cmd_id = (Referee_CMDID_t *)index;
     index += sizeof(*cmd_id);
 
-		/* 3.处理数据段 */
+    /* 3.处理数据段 */
     void *destination;
     size_t size;
 
@@ -287,8 +287,8 @@ int8_t Referee_Parse(Referee_t *ref) {
     /* 4.处理帧尾 */
     index += sizeof(Referee_Tail_t);
 
-		/* 验证无误则接受数据 */
-    if (CRC16_Verify((uint8_t*)header, (uint8_t)(index - (uint8_t*)header)))
+    /* 验证无误则接受数据 */
+    if (CRC16_Verify((uint8_t *)header, (uint8_t)(index - (uint8_t *)header)))
       memcpy(destination, index, size);
   }
   return DEVICE_OK;
