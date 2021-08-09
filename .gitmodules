@@ -1,3 +1,15 @@
-[submodule "Middlewares/Third_Party/Protocol"]
-	path = Middlewares/Third_Party/Protocol
+[submodule "protocol"]
+	path = third_party/protocol
 	url = https://gitee.com/qsheeeeen/qdu-rm-protocol
+[submodule "stm32_cmsis"]
+	path = third_party/stm32_cmsis
+	url = https://github.com/STMicroelectronics/cmsis_device_f4.git
+[submodule "stm32_hal"]
+	path = third_party/stm32_hal
+	url = https://github.com/STMicroelectronics/stm32f4xx_hal_driver.git
+[submodule "stm32_usb"]
+	path = third_party/stm32_usb
+	url = https://github.com/STMicroelectronics/stm32_mw_usb_device.git
+[submodule "freertos"]
+	path = third_party/freertos
+	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
