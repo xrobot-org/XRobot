@@ -14,5 +14,5 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 add_dependencies(${PROJECT_NAME} 
     device
-    vision
+    rtos
 )

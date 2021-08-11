@@ -154,6 +154,5 @@ void VerifyFailed(const char *file, uint32_t line) {
   UNUSED(file);
   UNUSED(line);
   while (1) {
-    __NOP();
-  }
+  };
 }

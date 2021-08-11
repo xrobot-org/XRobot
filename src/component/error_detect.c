@@ -7,8 +7,6 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "bsp/mm.h"
-
 static ErrorDetect_t ged;
 static bool inited = false;
 

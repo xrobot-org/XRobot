@@ -4,6 +4,10 @@ endif()
 
 cmake_minimum_required(VERSION 3.5)
 
+#---------------------------------------------------------------------------------------
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+include(device_stm32f4)
+
 # 版本第一位与赛季年份对应，同时与branch对应
 # 第二位代表功能变化
 # 第三位代表bug修复
@@ -13,14 +17,13 @@ project(qdu_rm_mcu
     LANGUAGES C ASM
 )
 
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-#---------------------------------------------------------------------------------------
-
-include(cmake/toochain)
-include(cmake/device_stm32f4)
 
 #---------------------------------------------------------------------------------------
 # Linker script
@@ -65,7 +68,7 @@ else()
     message(STATUS "Linker flags (Release): ${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS_RELEASE}")
     message(STATUS "Linker flags (Debug): ${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS_DEBUG}")
 endif()
-message("Linker script: ${LINKER_SCRIPT}")
+message(STATUS "Linker script: ${LINKER_SCRIPT}")
 
 #---------------------------------------------------------------------------------------
 # Building Options
@@ -88,7 +91,4 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
 #---------------------------------------------------------------------------------------
 # Test
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)
-
-#---------------------------------------------------------------------------------------
-message(STATUS "-------------------------------- END ---------------------------------")
+# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/test)

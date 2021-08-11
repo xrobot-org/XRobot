@@ -84,6 +84,10 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt) {
     case KPID_MODE_NO_D:
       d = 0.0f;
       break;
+
+    default:
+      d = 0.0f;
+      break;
   }
   pid->last.err = err;
   pid->last.k_fb = filtered_k_fb;

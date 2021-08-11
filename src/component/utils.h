@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include "stm32f4xx.h"
-#define ARM_MATH_CM4
-
 #include <float.h>
 #include <math.h>
 #include <stdbool.h>
+#include <stdint.h>
+
+//#include "stm32f4xx.h"
 
 #define M_DEG2RAD_MULT (0.01745329251f)
 #define M_RAD2DEG_MULT (57.2957795131f)
