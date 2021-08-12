@@ -24,7 +24,7 @@ file(GLOB protocol_SOURCES
     "${CMAKE_CURRENT_LIST_DIR}/protocol/*.c"
 )
 
-add_library(protocol STATIC ${${PROJECT_PROTOCOL}_SOURCES})
+add_library(protocol STATIC ${protocol_SOURCES})
 
 target_include_directories(protocol PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/protocol
