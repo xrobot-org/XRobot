@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "bsp/bsp.h"
+#include "bsp.h"
 
 /* Exported constants ------------------------------------------------------- */
 #define BSP_USB_MAX_RX_LEN 128  /* USB接收数据缓冲区长度 */

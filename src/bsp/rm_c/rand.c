@@ -1,5 +1,5 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp/rand.h"
+#include "rand.h"
 
 #include "rng.h"
 

@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "bsp/flash.h"
+#include "flash.h"
 
 #define CONFIG_BASE_ADDRESS (ADDR_FLASH_SECTOR_11)
 

@@ -4,7 +4,7 @@
 #include <cmsis_os2.h>
 #include <stdbool.h>
 
-#include "bsp/can.h"
+#include "can.h"
 #include "component/ahrs.h"
 #include "component/utils.h"
 #include "device/device.h"

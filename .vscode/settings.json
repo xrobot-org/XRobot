@@ -1,0 +1,10 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+    "cmake.configureSettings": {
+        // Specifies the path to the CMAKE toolchain file.
+        "CMAKE_TOOLCHAIN_FILE": "cmake/arm-none-eabi.cmake",
+    },
+    "cmake.preferredGenerators": [
+        "Ninja"
+    ],
+}

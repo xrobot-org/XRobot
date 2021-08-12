@@ -1,5 +1,5 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp/can.h"
+#include "can.h"
 
 #include "component/utils.h"
 

@@ -1,5 +1,5 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp/laser.h"
+#include "laser.h"
 
 #include <tim.h>
 

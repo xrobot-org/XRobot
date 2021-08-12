@@ -15,14 +15,14 @@
 /* Includes ----------------------------------------------------------------- */
 #include <string.h>
 
-#include "bsp/mm.h"
-#include "bsp/pwm.h"
-#include "bsp/usb.h"
 #include "component/ahrs.h"
 #include "component/pid.h"
 #include "device/bmi088.h"
 #include "device/ist8310.h"
+#include "mm.h"
+#include "pwm.h"
 #include "task/user_task.h"
+#include "usb.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

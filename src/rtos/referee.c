@@ -17,8 +17,8 @@
 
 #include "device/referee.h"
 
-#include "bsp/usb.h"
 #include "task/user_task.h"
+#include "usb.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
