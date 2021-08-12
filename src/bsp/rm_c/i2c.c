@@ -1,5 +1,5 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp/i2c.h"
+#include "i2c.h"
 
 #include "component/utils.h"
 

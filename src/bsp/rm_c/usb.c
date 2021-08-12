@@ -1,13 +1,13 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp/usb.h"
+#include "usb.h"
 
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "bsp/delay.h"
 #include "component/utils.h"
+#include "delay.h"
 #include "usbd_cdc_if.h"
 
 /* Private define ----------------------------------------------------------- */

@@ -9,10 +9,10 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "bsp/can.h"
-#include "bsp/mm.h"
+#include "can.h"
 #include "component/utils.h"
 #include "device/referee.h"
+#include "mm.h"
 
 /* Private define ----------------------------------------------------------- */
 /* Motor id */

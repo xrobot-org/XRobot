@@ -12,10 +12,10 @@
 /* Includes ----------------------------------------------------------------- */
 #include "dart_launcher.h"
 
-#include "bsp/pwm.h"
 #include "component/game.h"
 #include "component/limiter.h"
 #include "component/utils.h"
+#include "pwm.h"
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */

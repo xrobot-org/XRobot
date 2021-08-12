@@ -1,5 +1,5 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp/spi.h"
+#include "spi.h"
 
 #include "component/utils.h"
 

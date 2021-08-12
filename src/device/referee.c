@@ -7,13 +7,13 @@
 
 #include <string.h>
 
-#include "bsp/delay.h"
-#include "bsp/mm.h"
-#include "bsp/uart.h"
 #include "component/crc16.h"
 #include "component/crc8.h"
 #include "component/utils.h"
+#include "delay.h"
+#include "mm.h"
 #include "protocol.h"
+#include "uart.h"
 
 /* Private define ----------------------------------------------------------- */
 #define REF_HEADER_SOF (0xA5)

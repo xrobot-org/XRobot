@@ -13,19 +13,19 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
-#include "bsp/flash.h"
-#include "bsp/usb.h"
 #include "component/cmd.h"
 #include "device/ai.h"
 #include "device/bmi088.h"
 #include "device/can.h"
 #include "device/ist8310.h"
 #include "device/referee.h"
+#include "flash.h"
 #include "module/cap.h"
 #include "module/chassis.h"
 #include "module/gimbal.h"
 #include "module/launcher.h"
 #include "task/user_task.h"
+#include "usb.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

@@ -12,12 +12,12 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
-#include "bsp/adc.h"
-#include "bsp/buzzer.h"
-#include "bsp/led.h"
-#include "bsp/usb.h"
+#include "adc.h"
+#include "buzzer.h"
 #include "component/capacity.h"
+#include "led.h"
 #include "task/user_task.h"
+#include "usb.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

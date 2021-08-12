@@ -4,7 +4,7 @@
  */
 #include <main.h>
 
-#include "bsp/bsp.h"
+#include "bsp.h"
 
 /* Exported constants --------------------------------------------------------
  */

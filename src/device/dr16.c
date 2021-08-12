@@ -8,7 +8,7 @@
 
 #include <string.h>
 
-#include "bsp/uart.h"
+#include "uart.h"
 
 /* Private define ----------------------------------------------------------- */
 #define DR16_CH_VALUE_MIN (364u)
@@ -55,7 +55,7 @@ static bool DR16_DataCorrupted(const DR16_t *dr16) {
 
 /* Exported functions ------------------------------------------------------- */
 int8_t DR16_Init(DR16_t *dr16) {
-	UNUSED(dr16);
+  UNUSED(dr16);
   ASSERT(dr16);
   if (inited) return DEVICE_ERR_INITED;
   VERIFY((thread_alert = osThreadGetId()) != NULL);

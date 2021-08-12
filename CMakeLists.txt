@@ -4,9 +4,6 @@ endif()
 
 cmake_minimum_required(VERSION 3.5)
 
-#---------------------------------------------------------------------------------------
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-include(device_stm32f4)
 
 # 版本第一位与赛季年份对应，同时与branch对应
 # 第二位代表功能变化
@@ -17,6 +14,14 @@ project(qdu_rm_mcu
     LANGUAGES C ASM
 )
 
+#---------------------------------------------------------------------------------------
+# Linker script
+
+set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/ld/STM32F407IGHx_FLASH.ld)
+
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+include(device_stm32f4)
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
@@ -24,11 +29,6 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-
-#---------------------------------------------------------------------------------------
-# Linker script
-
-set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/ld/STM32F407IGHx_FLASH.ld)
 
 #---------------------------------------------------------------------------------------
 message(STATUS "------------------------- Host Platform ------------------------------")
@@ -87,6 +87,7 @@ endif ()
 # Source
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party)
 
 #---------------------------------------------------------------------------------------
 # Test

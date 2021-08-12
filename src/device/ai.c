@@ -7,11 +7,11 @@
 
 #include <string.h>
 
-#include "bsp/delay.h"
-#include "bsp/uart.h"
 #include "component/crc16.h"
 #include "component/crc8.h"
 #include "component/utils.h"
+#include "delay.h"
+#include "uart.h"
 
 /* Private define ----------------------------------------------------------- */
 #define AI_HOST_MAX_CONTROL_VALUE (1.0f)

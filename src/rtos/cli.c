@@ -18,11 +18,11 @@
 #include <string.h>
 
 #include "FreeRTOS.h"
-#include "bsp/can.h"
-#include "bsp/usb.h"
+#include "can.h"
 #include "component/FreeRTOS_CLI.h"
 #include "task.h"
 #include "task/user_task.h"
+#include "usb.h"
 
 /* Private typedef
    ---------------------------------------------------------- */

@@ -10,9 +10,9 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "bsp/delay.h"
-#include "bsp/gpio.h"
-#include "bsp/i2c.h"
+#include "delay.h"
+#include "gpio.h"
+#include "i2c.h"
 
 /* Private define ----------------------------------------------------------- */
 #define IST8310_WAI (0x00)
