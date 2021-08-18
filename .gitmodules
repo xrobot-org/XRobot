@@ -13,3 +13,6 @@
 [submodule "freertos"]
 	path = third_party/freertos
 	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
+[submodule "arm_cmsis"]
+	path = third_party/arm_cmsis
+	url = https://github.com/ARM-software/CMSIS_5.git
