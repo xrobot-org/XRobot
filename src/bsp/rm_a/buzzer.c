@@ -1,7 +1,6 @@
 /* Includes ----------------------------------------------------------------- */
 #include "bsp_buzzer.h"
-
-#include "main.h"
+#include "hal.h"
 #include "tim.h"
 
 /* Private define ----------------------------------------------------------- */
@@ -10,7 +9,9 @@
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
-uint8_t BSP_Buzzer_Start(void) { return HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_4); }
+uint8_t BSP_Buzzer_Start(void) {
+  return HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_4);
+}
 
 uint8_t BSP_Buzzer_Set(float freq, float duty_cycle) {
   uint16_t pulse = freq * PWM_RESOLUTION;
@@ -20,4 +21,6 @@ uint8_t BSP_Buzzer_Set(float freq, float duty_cycle) {
   __HAL_TIM_PRESCALER(&htim12, pulse);
   return 0;
 }
-uint8_t BSP_Buzzer_Stop(void) { return HAL_TIM_PWM_Stop(&htim12, TIM_CHANNEL_4); }
+uint8_t BSP_Buzzer_Stop(void) {
+  return HAL_TIM_PWM_Stop(&htim12, TIM_CHANNEL_4);
+}

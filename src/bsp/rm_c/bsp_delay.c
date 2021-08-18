@@ -1,7 +1,8 @@
 /* Includes ----------------------------------------------------------------- */
 #include "bsp_delay.h"
-#include "cmsis_os.h"
-#include "hal.h"
+
+#include "cmsis_os2.h"
+#include "stm32f4xx_hal.h"
 
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
@@ -9,11 +10,25 @@
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
-uint8_t BSP_Delay(uint32_t ms) {
-  if (osKernelRunning()) {
-    osDelay(ms);
-  } else {
-    HAL_Delay(ms);
+int8_t BSP_Delay(uint32_t ms) {
+  uint32_t tick_period = 1000u / osKernelGetTickFreq();
+  uint32_t ticks = ms / tick_period;
+
+  switch (osKernelGetState()) {
+    case osKernelError:
+    case osKernelReserved:
+    case osKernelLocked:
+    case osKernelSuspended:
+      return BSP_ERR;
+
+    case osKernelRunning:
+      osDelay(ticks ? ticks : 1);
+      break;
+
+    case osKernelInactive:
+    case osKernelReady:
+      HAL_Delay(ms);
+      break;
   }
-  return 0;
+  return BSP_OK;
 }
