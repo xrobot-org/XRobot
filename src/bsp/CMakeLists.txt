@@ -8,13 +8,20 @@ file(GLOB ${PROJECT_NAME}_SOURCES
 add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES})
 
 target_link_libraries(${PROJECT_NAME}
+    hal
     component
+    rtos
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
+target_include_directories(${PROJECT_NAME}
+    PRIVATE $<TARGET_PROPERTY:hal,INTERFACE_INCLUDE_DIRECTORIES>
+    PRIVATE $<TARGET_PROPERTY:component,INTERFACE_INCLUDE_DIRECTORIES>
+    PRIVATE $<TARGET_PROPERTY:rtos,INTERFACE_INCLUDE_DIRECTORIES>
+    PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 add_dependencies(${PROJECT_NAME} 
+    hal
     component
+    rtos
 )

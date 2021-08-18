@@ -1,7 +1,7 @@
 /* Includes ----------------------------------------------------------------- */
-#include "bsp_delay.h"
-#include "cmsis_os.h"
-#include "hal.h"
+#include "bsp_mm.h"
+
+#include "FreeRTOS.h"
 
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
@@ -9,11 +9,9 @@
 /* Private variables -------------------------------------------------------- */
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
-uint8_t BSP_Delay(uint32_t ms) {
-  if (osKernelRunning()) {
-    osDelay(ms);
-  } else {
-    HAL_Delay(ms);
-  }
-  return 0;
+inline void *BSP_Malloc(size_t size) { return pvPortMalloc(size); }
+
+inline void BSP_Free(void *pv) {
+  vPortFree(pv);
+  pv = NULL;
 }

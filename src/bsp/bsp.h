@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stm32f4xx_hal.h"
+
 #define BSP_OK (0)
 #define BSP_ERR (-1)
 #define BSP_ERR_NULL (-2)

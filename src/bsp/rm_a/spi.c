@@ -2,7 +2,7 @@
 #include "spi.h"
 
 #include "bsp_spi.h"
-#include "main.h"
+#include "hal.h"
 
 /* Private define ----------------------------------------------------------- */
 #define OLED_SPI SPI1
