@@ -16,7 +16,7 @@ void BSP_Flash_EraseSector(uint32_t sector) {
   FLASH_EraseInitTypeDef flash_erase;
   uint32_t sector_error;
 
-#ifdef DEV_BOARD_C
+#ifdef BOARD_RM_C
   if (sector > 0 && sector < 12) {
 #elif
   if (sector > 0 && sector < 24) {

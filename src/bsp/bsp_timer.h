@@ -1,7 +1,10 @@
 #pragma once
 
 /* Includes ----------------------------------------------------------------- */
+#include <stdint.h>
+
 #include "bsp.h"
+#include "hal_tim.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
@@ -32,6 +35,6 @@ typedef enum {
 } BSP_Timer_Callback_t;
 
 /* Exported functions prototypes -------------------------------------------- */
-SPI_HandleTypeDef *BSP_Timer_GetHandle(BSP_Timer_t timer);
+TIM_HandleTypeDef *BSP_Timer_GetHandle(BSP_Timer_t timer);
 int8_t BSP_Timer_RegisterCallback(BSP_Timer_t timer, BSP_Timer_Callback_t type,
                                   void (*callback)(void));

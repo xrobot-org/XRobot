@@ -6,9 +6,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "delay.h"
+#include "bsp_delay.h"
+#include "comp_utils.h"
 #include "usbd_cdc_if.h"
-#include "utils.h"
 
 /* Private define -----------------s------------------------------------------
  */

@@ -27,7 +27,7 @@ typedef enum {
   BSP_LED6,
   BSP_LED7,
   BSP_LED8,
-#elif defined DEV_BOARD_C
+#elif defined BOARD_RM_C
   BSP_LED_BLU,
 #endif
   BSP_LED_RED,
