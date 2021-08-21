@@ -6,9 +6,10 @@ file(GLOB ${PROJECT_NAME}_SOURCES
     "${THIRD_PARTY_DIR}/stm32_hal/Src/*.c" 
 )
 
+list(FILTER ${PROJECT_NAME}_SOURCES EXCLUDE REGEX ".*template.c$")
+
 add_library(${PROJECT_NAME} STATIC 
     ${${PROJECT_NAME}_SOURCES}
-    ${STM32_HAL_SOURCES}
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -18,7 +19,7 @@ target_link_libraries(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME} 
     PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}
-    PRIVATE ${THIRD_PARTY_DIR}/stm32_hal/Inc
+    PUBLIC ${THIRD_PARTY_DIR}/stm32_hal/Inc
     PRIVATE $<TARGET_PROPERTY:stm32_cmsis,INTERFACE_INCLUDE_DIRECTORIES>
     PRIVATE $<TARGET_PROPERTY:rtos,INTERFACE_INCLUDE_DIRECTORIES>
 )
