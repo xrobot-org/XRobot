@@ -2,12 +2,12 @@
   限制器
 */
 
-#include "limiter.h"
+#include "comp_limiter.h"
 
 #include <math.h>
 #include <stddef.h>
 
-#include "utils.h"
+#include "comp_utils.h"
 
 #define POWER_BUFF_THRESHOLD 20
 #define CHASSIS_POWER_CHECK_FREQ 10

@@ -2,7 +2,7 @@
   混合器
 */
 
-#include "mixer.h"
+#include "comp_mixer.h"
 
 /**
  * @brief 初始化混合器

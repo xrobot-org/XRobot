@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "filter.h"
-#include "utils.h"
+#include "comp_filter.h"
+#include "comp_utils.h"
 
 /* PID模式 */
 typedef enum {

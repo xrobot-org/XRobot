@@ -1,7 +1,7 @@
 /*
   UI相关命令
 */
-#include "ui.h"
+#include "comp_ui.h"
 
 #include <stdio.h>
 

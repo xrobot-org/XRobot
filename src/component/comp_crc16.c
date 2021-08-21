@@ -1,4 +1,4 @@
-#include "crc16.h"
+#include "comp_crc16.h"
 
 static const uint16_t crc16_tab[256] = {
     0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf, 0x8c48,

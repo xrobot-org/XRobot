@@ -21,7 +21,7 @@
  *
  */
 
-#include "cmd.h"
+#include "comp_cmd.h"
 
 #include <string.h>
 

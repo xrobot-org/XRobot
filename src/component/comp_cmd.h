@@ -26,8 +26,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "ahrs.h"
-#include "game.h"
+#include "comp_ahrs.h"
+#include "comp_game.h"
 
 #define CMD_REFEREE_MAX_NUM (3) /* 发送命令限定的最大数量 */
 

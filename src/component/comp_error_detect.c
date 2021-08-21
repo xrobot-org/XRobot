@@ -2,7 +2,7 @@
   错误检测。
 */
 
-#include "error_detect.h"
+#include "comp_error_detect.h"
 
 #include <stddef.h>
 #include <string.h>

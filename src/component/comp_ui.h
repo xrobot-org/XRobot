@@ -7,8 +7,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "game.h"
-#include "utils.h"
+#include "comp_game.h"
+#include "comp_utils.h"
 
 #define UI_GRAPHIC_LAYER_CONST (0)
 #define UI_GRAPHIC_LAYER_AUTOAIM (1)
