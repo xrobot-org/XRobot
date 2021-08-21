@@ -1,12 +1,12 @@
 #pragma once
 
 /* Includes ----------------------------------------------------------------- */
-#include <cmsis_os2.h>
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "component/ahrs.h"
-#include "device/device.h"
+#include "cmsis_os2.h"
+#include "comp_ahrs.h"
+#include "dev.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */

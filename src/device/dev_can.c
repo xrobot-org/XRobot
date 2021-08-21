@@ -4,15 +4,14 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "can.h"
+#include "dev_can.h"
 
 #include <stdbool.h>
 #include <string.h>
 
-#include "can.h"
-#include "component/utils.h"
-#include "device/referee.h"
-#include "mm.h"
+#include "bsp_mm.h"
+#include "comp_utils.h"
+#include "dev_referee.h"
 
 /* Private define ----------------------------------------------------------- */
 /* Motor id */

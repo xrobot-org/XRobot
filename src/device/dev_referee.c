@@ -3,17 +3,16 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "referee.h"
+#include "dev_referee.h"
 
 #include <string.h>
 
-#include "component/crc16.h"
-#include "component/crc8.h"
-#include "component/utils.h"
-#include "delay.h"
-#include "mm.h"
+#include "bsp_delay.h"
+#include "bsp_uart.h"
+#include "comp_crc16.h"
+#include "comp_crc8.h"
+#include "comp_utils.h"
 #include "protocol.h"
-#include "uart.h"
 
 /* Private define ----------------------------------------------------------- */
 #define REF_HEADER_SOF (0xA5)

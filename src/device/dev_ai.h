@@ -5,15 +5,15 @@
 #pragma once
 
 /* Includes ----------------------------------------------------------------- */
-#include <cmsis_os2.h>
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "component/ahrs.h"
-#include "component/cmd.h"
-#include "component/utils.h"
-#include "device/device.h"
-#include "device/referee.h"
+#include "cmsis_os2.h"
+#include "comp_ahrs.h"
+#include "comp_cmd.h"
+#include "comp_utils.h"
+#include "dev.h"
+#include "dev_referee.h"
 #include "protocol.h"
 
 /* Exported constants ------------------------------------------------------- */

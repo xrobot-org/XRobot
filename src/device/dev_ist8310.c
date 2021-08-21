@@ -4,15 +4,14 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "ist8310.h"
+#include "dev_ist8310.h"
 
-#include <gpio.h>
 #include <stdbool.h>
 #include <string.h>
 
-#include "delay.h"
-#include "gpio.h"
-#include "i2c.h"
+#include "bsp_delay.h"
+#include "bsp_gpio.h"
+#include "bsp_i2c.h"
 
 /* Private define ----------------------------------------------------------- */
 #define IST8310_WAI (0x00)

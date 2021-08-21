@@ -4,11 +4,11 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "dr16.h"
+#include "dev_dr16.h"
 
 #include <string.h>
 
-#include "uart.h"
+#include "bsp_uart.h"
 
 /* Private define ----------------------------------------------------------- */
 #define DR16_CH_VALUE_MIN (364u)
