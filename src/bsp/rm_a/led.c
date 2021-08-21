@@ -1,7 +1,6 @@
 /* Includes ----------------------------------------------------------------- */
+#include "bsp_gpio.h"
 #include "bsp_led.h"
-
-#include "gpio.h"
 
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
@@ -10,7 +9,8 @@
 /* Private function  -------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 
-uint8_t BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, int16_t duty_cycle) {
+uint8_t BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s,
+                    int16_t duty_cycle) {
   GPIO_TypeDef *gpiox;
   uint16_t gpio_pin;
 

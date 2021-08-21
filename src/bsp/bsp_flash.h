@@ -1,8 +1,10 @@
 #pragma once
 
 /* Includes ---------------------------------------------------------------- */
-#include "bsp.h"
+#include <stddef.h>
+#include <stdint.h>
 
+#include "bsp.h"
 /* Exported constants ------------------------------------------------------ */
 /* Base address of the Flash sectors */
 #define ADDR_FLASH_SECTOR_0 ((uint32_t)0x08000000)
@@ -30,7 +32,7 @@
 #define ADDR_FLASH_SECTOR_11 ((uint32_t)0x080E0000)
 /* Base address of Sector 11, 128 Kbytes */
 
-#ifdef DEV_BOARD_C
+#ifdef BOARD_RM_C
 #define ADDR_FLASH_END ((uint32_t)0x08100000) /* End address for flash */
 #else
 #define ADDR_FLASH_SECTOR_12 ((uint32_t)0x08100000)
