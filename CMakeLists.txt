@@ -4,7 +4,6 @@ endif()
 
 cmake_minimum_required(VERSION 3.5)
 
-
 # 版本第一位与赛季年份对应，同时与branch对应
 # 第二位代表功能变化
 # 第三位代表bug修复
@@ -15,20 +14,23 @@ project(qdu_rm_mcu
 )
 
 #---------------------------------------------------------------------------------------
-# Linker script
-
-set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/ld/STM32F407IGHx_FLASH.ld)
-
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-include(device_stm32f4)
-
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+#---------------------------------------------------------------------------------------
+# Device config 
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+include(device_stm32f4)
+
+#---------------------------------------------------------------------------------------
+# Device config 
+include(board_rm_c)
+
+#---------------------------------------------------------------------------------------
+# Default build for release 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif()
-
 
 #---------------------------------------------------------------------------------------
 message(STATUS "------------------------- Host Platform ------------------------------")
@@ -61,13 +63,10 @@ message(STATUS "C standard: ${CMAKE_C_STANDARD}")
 message(STATUS "C Compiler: ${CMAKE_C_COMPILER}")
 message(STATUS "C flags (Debug): ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG}")
 message(STATUS "C flags (Release): ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE}")
-if(WIN32)
-    message(STATUS "Linker flags (Release): ${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS_RELEASE}")
-    message(STATUS "Linker flags (Debug): ${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS_DEBUG}")
-else()
-    message(STATUS "Linker flags (Release): ${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS_RELEASE}")
-    message(STATUS "Linker flags (Debug): ${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS_DEBUG}")
-endif()
+message(STATUS "ASM flags (Debug): ${CMAKE_ASM_FLAGS} ${CMAKE_ASM_FLAGS_DEBUG}")
+message(STATUS "ASM flags (Release): ${CMAKE_ASM_FLAGS} ${CMAKE_ASM_FLAGS_RELEASE}")
+message(STATUS "Linker flags (Release): ${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS_RELEASE}")
+message(STATUS "Linker flags (Debug): ${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS_DEBUG}")
 message(STATUS "Linker script: ${LINKER_SCRIPT}")
 
 #---------------------------------------------------------------------------------------
