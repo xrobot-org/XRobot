@@ -716,7 +716,7 @@ void Task_CLI(void *argument) {
   /* 开始运行命令行界面 */
   BSP_USB_Printf(CLI_START);
   while (1) {
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
     /* 记录任务所使用的的栈空间 */
     runtime.stack_water_mark.cli = osThreadGetStackSpace(osThreadGetId());
 #endif

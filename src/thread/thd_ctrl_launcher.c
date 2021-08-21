@@ -23,7 +23,7 @@
 /* Private variables -------------------------------------------------------- */
 static CAN_t can;
 
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
 CMD_LauncherCmd_t launcher_cmd;
 Launcher_t launcher;
 Referee_ForLauncher_t referee_launcher;
@@ -58,7 +58,7 @@ void Task_CtrlLauncher(void *argument) {
                     osWaitForever);
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   while (1) {
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
     /* 记录任务所使用的的栈空间 */
     runtime.stack_water_mark.ctrl_launcher =
         osThreadGetStackSpace(osThreadGetId());

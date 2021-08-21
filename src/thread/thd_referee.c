@@ -24,7 +24,7 @@
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
 Referee_t ref;
 Referee_ForCap_t for_cap;
 Referee_ForAI_t for_ai;
@@ -55,7 +55,7 @@ void Task_Referee(void *argument) {
 
   uint32_t tick = osKernelGetTickCount();
   while (1) {
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
     runtime.stack_water_mark.referee = osThreadGetStackSpace(osThreadGetId());
 #endif
     Referee_StartReceiving(&ref); /* 开始接收裁判系统数据 */

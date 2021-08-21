@@ -127,7 +127,7 @@ typedef struct {
 
   Config_t cfg; /* 机器人配置 */
 
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
 
   /* stack使用 */
   struct {

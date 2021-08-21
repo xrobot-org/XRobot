@@ -23,7 +23,7 @@
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
 CAN_t can;
 CAN_Output_t can_out;
 CAN_RawRx_t can_rx;
@@ -45,7 +45,7 @@ void Task_Can(void *argument) {
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   /* Task Setup */
   while (1) {
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
     runtime.stack_water_mark.can = osThreadGetStackSpace(osThreadGetId());
 #endif
     tick += delay_tick; /* 计算下一个唤醒时刻 */

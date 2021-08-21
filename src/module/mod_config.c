@@ -12,7 +12,7 @@
 #define CONFIG_BASE_ADDRESS (ADDR_FLASH_SECTOR_11)
 
 /* clang-format off */
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
 Config_RobotParam_t param_default = {
 #else
 static const Config_RobotParam_t param_default = {

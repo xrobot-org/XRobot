@@ -48,7 +48,7 @@
     _a < _b ? _a : _b;      \
   })
 
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
 
 /**
  * @brief 如果表达式的值为假则运行处理函数
@@ -69,7 +69,7 @@
 #define ASSERT(expr) ((void)(0))
 #endif
 
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
 
 /**
  * @brief 如果表达式的值为假则运行处理函数

@@ -39,7 +39,7 @@ void Task_Monitor(void *argument) {
 
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   while (1) {
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
     /* 记录任务所使用的的栈空间 */
     runtime.stack_water_mark.monitor = osThreadGetStackSpace(osThreadGetId());
 #endif

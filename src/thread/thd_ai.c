@@ -5,13 +5,12 @@
 /* Includes ----------------------------------------------------------------- */
 #include "dev_ai.h"
 #include "thd.h"
-#include "usb.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
 AI_t ai;
 AI_UI_t ai_ui;
 CMD_Host_t cmd_host;
@@ -47,7 +46,7 @@ void Task_Ai(void *argument) {
   uint32_t last_online_tick = tick;
 
   while (1) {
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
     runtime.stack_water_mark.ai = osThreadGetStackSpace(osThreadGetId());
 #endif
     /* Task body */

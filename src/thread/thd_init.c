@@ -13,19 +13,18 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
+#include "bsp_flash.h"
 #include "comp_cmd.h"
 #include "dev_ai.h"
 #include "dev_bmi088.h"
 #include "dev_can.h"
 #include "dev_ist8310.h"
 #include "dev_referee.h"
-#include "flash.h"
 #include "mod_cap.h"
 #include "mod_chassis.h"
 #include "mod_gimbal.h"
 #include "mod_launcher.h"
 #include "thd.h"
-#include "usb.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

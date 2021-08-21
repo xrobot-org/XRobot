@@ -23,7 +23,7 @@
 /* Private variables -------------------------------------------------------- */
 static CAN_t can;
 
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
 CMD_GimbalCmd_t gimbal_cmd;
 Gimbal_t gimbal;
 CAN_GimbalOutput_t gimbal_out;
@@ -56,7 +56,7 @@ void Task_CtrlGimbal(void *argument) {
                     osWaitForever);
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   while (1) {
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
     /* 记录任务所使用的的栈空间 */
     runtime.stack_water_mark.ctrl_gimbal =
         osThreadGetStackSpace(osThreadGetId());

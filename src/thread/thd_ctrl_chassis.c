@@ -27,7 +27,7 @@
 static CAN_t can;
 static Cap_t cap;
 
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
 CMD_ChassisCmd_t chassis_cmd;
 Chassis_t chassis;
 CAN_ChassisOutput_t chassis_out;
@@ -62,7 +62,7 @@ void Task_CtrlChassis(void *argument) {
                     osWaitForever);
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   while (1) {
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
     /* 记录任务所使用的的栈空间 */
     runtime.stack_water_mark.ctrl_chassis =
         osThreadGetStackSpace(osThreadGetId());

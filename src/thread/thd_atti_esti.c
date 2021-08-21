@@ -28,7 +28,7 @@
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
 BMI088_t bmi088;
 IST8310_t ist8310;
 
@@ -87,7 +87,7 @@ void Task_AttiEsti(void *argument) {
   BSP_PWM_Start(BSP_PWM_IMU_HEAT);
 
   while (1) {
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
     /* 记录任务所使用的的栈空间 */
     runtime.stack_water_mark.atti_esti = osThreadGetStackSpace(osThreadGetId());
 #endif

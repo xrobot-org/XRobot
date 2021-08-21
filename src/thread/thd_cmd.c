@@ -25,7 +25,7 @@
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
 CMD_RC_t rc;
 CMD_Host_t host;
 CMD_t cmd;
@@ -57,7 +57,7 @@ void Task_Cmd(void *argument) {
 
   /* 用于计算遥控器数据频率 */
   while (1) {
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
     /* 记录任务所使用的的栈空间 */
     runtime.stack_water_mark.cmd = osThreadGetStackSpace(osThreadGetId());
 #endif
