@@ -10,12 +10,12 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
-#include "launcher.h"
+#include "mod_launcher.h"
 
-#include "component/game.h"
-#include "component/limiter.h"
-#include "component/utils.h"
-#include "pwm.h"
+#include "bsp_pwm.h"
+#include "comp_game.h"
+#include "comp_limiter.h"
+#include "comp_utils.h"
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */

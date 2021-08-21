@@ -12,13 +12,12 @@
 #pragma once
 
 /* Includes ----------------------------------------------------------------- */
-#include <cmsis_os2.h>
-
-#include "component/cmd.h"
-#include "component/filter.h"
-#include "component/pid.h"
-#include "device/can.h"
-#include "device/referee.h"
+#include "cmsis_os2.h"
+#include "comp_cmd.h"
+#include "comp_filter.h"
+#include "comp_pid.h"
+#include "dev_can.h"
+#include "dev_referee.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
@@ -158,7 +157,7 @@ void DartLauncher_UpdateFeedback(DartLauncher_t *dl, const CAN_t *can);
  * @param l_ref 飞镖发射器使用的裁判系统数据
  * @param now 现在时刻
  */
-void DartLauncher_Control(DartLauncher_t *dl, Referee_ForDartLauncher_t *dl_ref,
+void DartLauncher_Control(DartLauncher_t *dl, Referee_ForLauncher_t *dl_ref,
                           uint32_t now);
 
 /**
@@ -167,11 +166,11 @@ void DartLauncher_Control(DartLauncher_t *dl, Referee_ForDartLauncher_t *dl_ref,
  * @param dl 包含飞镖发射器数据的结构体
  * @param out CAN设备飞镖发射器输出结构体
  */
-void DartLauncher_PackOutput(DartLauncher_t *dl, CAN_DartLauncherOutput_t *out);
+void DartLauncher_PackOutput(DartLauncher_t *dl, CAN_LauncherOutput_t *out);
 
 /**
  * @brief 清空输出值
  *
  * @param output 要清空的结构体
  */
-void DartLauncher_ResetOutput(CAN_DartLauncherOutput_t *output);
+void DartLauncher_ResetOutput(CAN_LauncherOutput_t *output);

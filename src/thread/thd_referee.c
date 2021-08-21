@@ -15,10 +15,9 @@
 
 /* Includes ----------------------------------------------------------------- */
 
-#include "device/referee.h"
-
-#include "task/user_task.h"
-#include "usb.h"
+#include "bsp_usb.h"
+#include "dev_referee.h"
+#include "thd.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

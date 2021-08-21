@@ -12,13 +12,12 @@
 #pragma once
 
 /* Includes ----------------------------------------------------------------- */
-#include <cmsis_os2.h>
-
-#include "component/cmd.h"
-#include "component/filter.h"
-#include "component/pid.h"
-#include "device/can.h"
-#include "device/referee.h"
+#include "cmsis_os2.h"
+#include "comp_cmd.h"
+#include "comp_filter.h"
+#include "comp_pid.h"
+#include "dev_can.h"
+#include "dev_referee.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */

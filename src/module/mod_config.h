@@ -7,14 +7,14 @@
 
 #include <stdint.h>
 
-#include "component/cmd.h"
-#include "component/game.h"
-#include "device/bmi088.h"
-#include "device/can.h"
-#include "device/ist8310.h"
-#include "module/chassis.h"
-#include "module/gimbal.h"
-#include "module/launcher.h"
+#include "comp_cmd.h"
+#include "comp_game.h"
+#include "dev_bmi088.h"
+#include "dev_can.h"
+#include "dev_ist8310.h"
+#include "mod_chassis.h"
+#include "mod_gimbal.h"
+#include "mod_launcher.h"
 
 /* 机器人参数，保存后不会变化 */
 typedef struct {

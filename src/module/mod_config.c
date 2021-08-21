@@ -2,12 +2,12 @@
  * 配置相关
  */
 
-#include "config.h"
+#include "mod_config.h"
 
 #include <stdint.h>
 #include <string.h>
 
-#include "flash.h"
+#include "bsp_flash.h"
 
 #define CONFIG_BASE_ADDRESS (ADDR_FLASH_SECTOR_11)
 

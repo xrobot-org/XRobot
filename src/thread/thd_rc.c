@@ -17,8 +17,8 @@
 
 #include <string.h>
 
-#include "device/dr16.h"
-#include "task/user_task.h"
+#include "dev_dr16.h"
+#include "thd.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
