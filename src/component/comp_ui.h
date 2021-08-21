@@ -52,10 +52,10 @@ typedef enum {
 
 typedef struct __packed {
   uint8_t name[3];
-  uint8_t op : 3;
-  uint8_t type_ele : 3;
-  uint8_t layer : 4;
-  uint8_t color : 4;
+  uint16_t op : 3;
+  uint16_t type_ele : 3;
+  uint16_t layer : 4;
+  uint16_t color : 4;
   uint16_t angle_start : 9;
   uint16_t angle_end : 9;
   uint16_t width : 10;
