@@ -18,3 +18,6 @@ add_dependencies(${PROJECT_NAME}
     hal
     rtos
 )
+
+include(utils_gcc)
+print_section_sizes(app)
