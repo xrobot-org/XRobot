@@ -14,8 +14,8 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
-#include "module\launcher.h"
-#include "task/user_task.h"
+#include "mod_launcher.h"
+#include "thd.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

@@ -10,12 +10,12 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
-#include "cap.h"
+#include "mod_cap.h"
 
-#include "component/capacity.h"
-#include "component/limiter.h"
-#include "device/can.h"
-#include "device/referee.h"
+#include "comp_capacity.h"
+#include "comp_limiter.h"
+#include "dev_can.h"
+#include "dev_referee.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

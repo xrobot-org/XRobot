@@ -14,7 +14,7 @@
 /* Includes ----------------------------------------------------------------- */
 #include "FreeRTOS.h"
 #include "cmsis_os2.h"
-#include "module/config.h"
+#include "mod_config.h"
 #include "task.h"
 
 /* Exported constants ------------------------------------------------------- */

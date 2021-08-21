@@ -14,10 +14,10 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
-#include "component/limiter.h"
-#include "module/chassis.h"
-#include "module/config.h"
-#include "task/user_task.h"
+#include "comp_limiter.h"
+#include "mod_chassis.h"
+#include "mod_config.h"
+#include "thd.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

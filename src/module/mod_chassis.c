@@ -10,15 +10,15 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
-#include "chassis.h"
+#include "mod_chassis.h"
 
 #include <stdlib.h>
 
+#include "bsp_mm.h"
 #include "cmsis_os2.h"
-#include "component/limiter.h"
-#include "device/can.h"
-#include "mm.h"
-#include "module/cap.h"
+#include "comp_limiter.h"
+#include "dev_can.h"
+#include "mod_cap.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

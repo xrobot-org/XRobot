@@ -14,10 +14,9 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
-#include "device/can.h"
-
-#include "device/referee.h"
-#include "task/user_task.h"
+#include "dev_can.h"
+#include "dev_referee.h"
+#include "thd.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

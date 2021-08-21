@@ -3,9 +3,8 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "device/ai.h"
-
-#include "task/user_task.h"
+#include "dev_ai.h"
+#include "thd.h"
 #include "usb.h"
 
 /* Private typedef ---------------------------------------------------------- */

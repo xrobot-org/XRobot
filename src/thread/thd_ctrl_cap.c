@@ -10,9 +10,9 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
-#include "device/referee.h"
-#include "module/cap.h"
-#include "task/user_task.h"
+#include "dev_referee.h"
+#include "mod_cap.h"
+#include "thd.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

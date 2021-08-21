@@ -12,11 +12,10 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
-#include "component/capacity.h"
-#include "led.h"
-#include "task/user_task.h"
-#include "usb.h"
-#include "utils.h"
+#include "bsp_led.h"
+#include "comp_capacity.h"
+#include "comp_utils.h"
+#include "thd.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

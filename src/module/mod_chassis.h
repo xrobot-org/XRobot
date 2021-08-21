@@ -12,13 +12,13 @@
 #pragma once
 
 /* Includes ----------------------------------------------------------------- */
-#include "component/cmd.h"
-#include "component/filter.h"
-#include "component/mixer.h"
-#include "component/pid.h"
-#include "device/can.h"
-#include "device/referee.h"
-#include "module/cap.h"
+#include "comp_cmd.h"
+#include "comp_filter.h"
+#include "comp_mixer.h"
+#include "comp_pid.h"
+#include "dev_can.h"
+#include "dev_referee.h"
+#include "mod_cap.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */

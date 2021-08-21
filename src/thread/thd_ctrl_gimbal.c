@@ -14,8 +14,8 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
-#include "module/gimbal.h"
-#include "task/user_task.h"
+#include "mod_gimbal.h"
+#include "thd.h"
 
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */

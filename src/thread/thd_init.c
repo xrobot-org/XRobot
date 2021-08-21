@@ -13,18 +13,18 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
-#include "component/cmd.h"
-#include "device/ai.h"
-#include "device/bmi088.h"
-#include "device/can.h"
-#include "device/ist8310.h"
-#include "device/referee.h"
+#include "comp_cmd.h"
+#include "dev_ai.h"
+#include "dev_bmi088.h"
+#include "dev_can.h"
+#include "dev_ist8310.h"
+#include "dev_referee.h"
 #include "flash.h"
-#include "module/cap.h"
-#include "module/chassis.h"
-#include "module/gimbal.h"
-#include "module/launcher.h"
-#include "task/user_task.h"
+#include "mod_cap.h"
+#include "mod_chassis.h"
+#include "mod_gimbal.h"
+#include "mod_launcher.h"
+#include "thd.h"
 #include "usb.h"
 
 /* Private typedef ---------------------------------------------------------- */

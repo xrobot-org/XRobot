@@ -12,8 +12,8 @@
 #pragma once
 
 /* Includes ----------------------------------------------------------------- */
-#include "device/can.h"
-#include "device/referee.h"
+#include "dev_can.h"
+#include "dev_referee.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */

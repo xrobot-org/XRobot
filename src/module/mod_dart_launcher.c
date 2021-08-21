@@ -10,12 +10,12 @@
  */
 
 /* Includes ----------------------------------------------------------------- */
-#include "dart_launcher.h"
+#include "mod_dart_launcher.h"
 
-#include "component/game.h"
-#include "component/limiter.h"
-#include "component/utils.h"
-#include "pwm.h"
+#include "bsp_pwm.h"
+#include "comp_game.h"
+#include "comp_limiter.h"
+#include "comp_utils.h"
 /* Private typedef ---------------------------------------------------------- */
 /* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
@@ -67,36 +67,8 @@ void DartLauncher_Init(DartLauncher_t *dl, const DartLauncher_Params_t *param,
   ASSERT(dl);
   ASSERT(param);
 
-  dl->param = param;              /* 初始化参数 */
-  dl->mode = LAUNCHER_MODE_RELAX; /* 设置默认模式 */
-
-  for (size_t i = 0; i < DART_LAUNCHER_FRIC_NUM; i++) {
-    /* PI控制器初始化PID */
-    PID_Init(dl->pid.fric + i, KPID_MODE_NO_D, target_freq,
-             &(param->fric_pid_param));
-
-    LowPassFilter2p_Init(dl->filter.in.fric + i, target_freq,
-                         param->low_pass_cutoff_freq.in.fric);
-
-    LowPassFilter2p_Init(dl->filter.out.fric + i, target_freq,
-                         param->low_pass_cutoff_freq.out.fric);
-  }
-  for (size_t i = 0; i < DART_LAUNCHER_FLY_NUM; i++) {
-    PID_Init(dl->pid.fly + i, KPID_MODE_CALC_D, target_freq,
-             &(param->trig_pid_param));
-
-    LowPassFilter2p_Init(dl->filter.in.fly + i, target_freq,
-                         param->low_pass_cutoff_freq.in.fly);
-    LowPassFilter2p_Init(dl->filter.out.fly + i, target_freq,
-                         param->low_pass_cutoff_freq.out.fly);
-  }
-  PID_Init(&(dl->pid.feed), KPID_MODE_CALC_D, target_freq,
-           &(param->trig_pid_param));
-
-  LowPassFilter2p_Init(&(dl->filter.in.feed), target_freq,
-                       param->low_pass_cutoff_freq.in.feed);
-  LowPassFilter2p_Init(&(dl->filter.out.feed), target_freq,
-                       param->low_pass_cutoff_freq.out.feed);
+  /* Not implemented */
+  ASSERT(0);
 }
 
 /**
@@ -121,7 +93,7 @@ void DartLauncher_UpdateFeedback(DartLauncher_t *dl, const CAN_t *can) {
  * @param l_ref 飞镖发射器使用的裁判系统数据
  * @param now 现在时刻
  */
-void DartLauncher_Control(DartLauncher_t *dl, Referee_ForDartLauncher_t *dl_ref,
+void DartLauncher_Control(DartLauncher_t *dl, Referee_ForLauncher_t *dl_ref,
                           uint32_t now) {
   ASSERT(dl);
   ASSERT(dl_ref);
@@ -191,8 +163,7 @@ void DartLauncher_Control(DartLauncher_t *dl, Referee_ForDartLauncher_t *dl_ref,
  * @param dl 包含飞镖发射器数据的结构体
  * @param out CAN设备飞镖发射器输出结构体
  */
-void DartLauncher_PackOutput(DartLauncher_t *dl,
-                             CAN_DartLauncherOutput_t *out) {
+void DartLauncher_PackOutput(DartLauncher_t *dl, CAN_LauncherOutput_t *out) {
   ASSERT(dl);
   ASSERT(out);
 
@@ -205,7 +176,7 @@ void DartLauncher_PackOutput(DartLauncher_t *dl,
  *
  * @param output 要清空的结构体
  */
-void DartLauncher_ResetOutput(CAN_DartLauncherOutput_t *output) {
+void DartLauncher_ResetOutput(CAN_LauncherOutput_t *output) {
   ASSERT(output);
   memset(output, 0, sizeof(*output));
 }
