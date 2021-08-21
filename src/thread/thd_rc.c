@@ -25,7 +25,7 @@
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
 
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
 DR16_t dr16;
 CMD_RC_t cmd_rc;
 #else
@@ -47,7 +47,7 @@ void Task_RC(void *argument) {
   DR16_Init(&dr16); /* 初始化dr16 */
 
   while (1) {
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
     /*  */
     runtime.stack_water_mark.rc = osThreadGetStackSpace(osThreadGetId());
 #endif

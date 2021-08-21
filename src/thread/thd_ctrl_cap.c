@@ -22,7 +22,7 @@
 static CAN_t can;
 static Cap_t cap;
 
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
 CAN_CapOutput_t cap_out;
 Referee_ForCap_t referee_cap;
 UI_CapUI_t cap_ui;
@@ -48,7 +48,7 @@ void Task_CtrlCap(void *argument) {
 
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   while (1) {
-#ifdef DEBUG
+#ifdef MCU_DEBUG_BUILD
     /* 记录任务所使用的的栈空间 */
     runtime.stack_water_mark.ctrl_cap = osThreadGetStackSpace(osThreadGetId());
 #endif
