@@ -4,17 +4,16 @@
 */
 
 /* Includes ----------------------------------------------------------------- */
-#include "bmi088.h"
+#include "dev_bmi088.h"
 
-#include <cmsis_os2.h>
-#include <gpio.h>
 #include <stdbool.h>
 #include <string.h>
 
-#include "component/utils.h"
-#include "delay.h"
-#include "gpio.h"
-#include "spi.h"
+#include "bsp_delay.h"
+#include "bsp_gpio.h"
+#include "bsp_spi.h"
+#include "cmsis_os2.h"
+#include "comp_utils.h"
 
 /* Private define ----------------------------------------------------------- */
 #define BMI088_REG_ACCL_CHIP_ID (0x00)

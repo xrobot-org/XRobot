@@ -1,11 +1,10 @@
 #pragma once
 
 /* Includes ----------------------------------------------------------------- */
-#include <cmsis_os2.h>
-
-#include "component/cmd.h"
-#include "component/utils.h"
-#include "device/device.h"
+#include "cmsis_os2.h"
+#include "comp_cmd.h"
+#include "comp_utils.h"
+#include "dev.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */

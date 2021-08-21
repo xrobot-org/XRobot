@@ -1,13 +1,13 @@
 #pragma once
 
 /* Includes ----------------------------------------------------------------- */
-#include <cmsis_os2.h>
 #include <stdbool.h>
 
-#include "can.h"
-#include "component/ahrs.h"
-#include "component/utils.h"
-#include "device/device.h"
+#include "bsp_can.h"
+#include "cmsis_os2.h"
+#include "comp_ahrs.h"
+#include "comp_utils.h"
+#include "dev.h"
 
 /* Exported constants ------------------------------------------------------- */
 #define CAN_MOTOR_CHASSIS_1_RECV (1 << 0)

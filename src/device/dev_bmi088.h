@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "component/ahrs.h"
-#include "device/device.h"
+#include "comp_ahrs.h"
+#include "dev.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
