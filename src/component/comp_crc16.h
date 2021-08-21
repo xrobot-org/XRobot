@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 
-#include "utils.h"
+#include "comp_utils.h"
 
 #define CRC16_INIT 0XFFFF
 

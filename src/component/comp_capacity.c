@@ -4,7 +4,7 @@
   通过电压值计算剩余电量。
 */
 
-#include "capacity.h"
+#include "comp_capacity.h"
 
 /**
  * @brief 通过电压计算电池剩余电量

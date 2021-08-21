@@ -11,7 +11,7 @@
    http://brettbeauregard.com/blog/2011/04/improving-the-beginner%E2%80%99s-pid-derivative-kick/
 */
 
-#include "pid.h"
+#include "comp_pid.h"
 
 #define SIGMA 0.000001f
 

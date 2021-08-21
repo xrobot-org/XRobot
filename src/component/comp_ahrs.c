@@ -3,11 +3,11 @@
   MadgwickAHRS
 */
 
-#include "ahrs.h"
+#include "comp_ahrs.h"
 
 #include <string.h>
 
-#include "utils.h"
+#include "comp_utils.h"
 
 #define BETA_IMU (0.033f)
 #define BETA_AHRS (0.041f)

@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "utils.h"
+#include "comp_utils.h"
 
 /**
  * @brief 通过电压计算电池剩余电量

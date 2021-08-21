@@ -2,7 +2,7 @@
   自定义的数学运算。
 */
 
-#include "utils.h"
+#include "comp_utils.h"
 
 #include <string.h>
 
