@@ -299,9 +299,9 @@ int8_t UI_DrawString(UI_String_t *ele, const char *name, UI_GraphicOp_t op,
 int8_t UI_DelLayer(UI_Del_t *del, UI_DelOp_t op, uint8_t layer);
 
 int8_t UI_StashGraphic(UI_t *ui, const UI_Ele_t *ele);
-int8_t UI_PopGraphic(UI_Ele_t *ele, UI_t *ui);
+int8_t UI_PopGraphic(UI_t *ui, UI_Ele_t *ele);
 int8_t UI_StashString(UI_t *ui, const UI_String_t *string);
-int8_t UI_PopString(UI_String_t *string, UI_t *ui);
+int8_t UI_PopString(UI_t *ui, UI_String_t *string);
 int8_t UI_StashDel(UI_t *ui, const UI_Del_t *del);
-int8_t UI_PopDel(UI_Del_t *del, UI_t *ui);
+int8_t UI_PopDel(UI_t *ui, UI_Del_t *del);
 void UI_EmptyStash(UI_t *ui);
