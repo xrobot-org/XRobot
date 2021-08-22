@@ -49,7 +49,7 @@ static UI_ChassisUI_t chassis_ui;
  *
  * @param argument 未使用
  */
-void Task_CtrlChassis(void *argument) {
+void Thread_CtrlChassis(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */
 
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_CHASSIS;

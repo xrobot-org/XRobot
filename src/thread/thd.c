@@ -32,19 +32,19 @@
 #include "mod_gimbal.h"
 #include "mod_launcher.h"
 
-void Task_Ai(void *argument);
-void Task_AttiEsti(void *argument);
-void Task_Can(void *argument);
-void Task_CLI(void *argument);
-void Task_Cmd(void *argument);
-void Task_CtrlCap(void *argument);
-void Task_CtrlChassis(void *argument);
-void Task_CtrlGimbal(void *argument);
-void Task_CtrlLauncher(void *argument);
-void Task_Info(void *argument);
-void Task_Monitor(void *argument);
-void Task_RC(void *argument);
-void Task_Referee(void *argument);
+void Thread_AI(void *argument);
+void Thread_AttiEsti(void *argument);
+void Thread_CAN(void *argument);
+void Thread_CLI(void *argument);
+void Thread_CMD(void *argument);
+void Thread_CtrlCap(void *argument);
+void Thread_CtrlChassis(void *argument);
+void Thread_CtrlGimbal(void *argument);
+void Thread_CtrlLauncher(void *argument);
+void Thread_Info(void *argument);
+void Thread_Monitor(void *argument);
+void Thread_RC(void *argument);
+void Thread_Referee(void *argument);
 
 /* 机器人运行时的数据 */
 Runtime_t runtime;
@@ -54,28 +54,29 @@ Runtime_t runtime;
  *
  * @param argument 未使用
  */
-void Task_Init(void) {
+void Thread_Init(void) {
   Config_Get(&runtime.cfg); /* 获取机器人配置 */
 
   osKernelLock();
   /* 创建任务, 优先级随数字增大而增大 */
-  xTaskCreate(Task_AttiEsti, "AttiEsti", 256, NULL, 5,
+  xTaskCreate(Thread_AttiEsti, "AttiEsti", 256, NULL, 5,
               &runtime.thread.atti_esti);
-  xTaskCreate(Task_CLI, "CLI", 256, NULL, 3, &runtime.thread.cli);
-  xTaskCreate(Task_Cmd, "Cmd", 128, NULL, 4, &runtime.thread.cmd);
-  xTaskCreate(Task_CtrlCap, "CtrlCap", 128, NULL, 3, &runtime.thread.ctrl_cap);
-  xTaskCreate(Task_CtrlChassis, "CtrlChassis", 256, NULL, 3,
+  xTaskCreate(Thread_CLI, "CLI", 256, NULL, 3, &runtime.thread.cli);
+  xTaskCreate(Thread_CMD, "Cmd", 128, NULL, 4, &runtime.thread.cmd);
+  xTaskCreate(Thread_CtrlCap, "CtrlCap", 128, NULL, 3,
+              &runtime.thread.ctrl_cap);
+  xTaskCreate(Thread_CtrlChassis, "CtrlChassis", 256, NULL, 3,
               &runtime.thread.ctrl_chassis);
-  xTaskCreate(Task_CtrlGimbal, "CtrlGimbal", 256, NULL, 3,
+  xTaskCreate(Thread_CtrlGimbal, "CtrlGimbal", 256, NULL, 3,
               &runtime.thread.ctrl_gimbal);
-  xTaskCreate(Task_CtrlLauncher, "CtrlLauncher", 256, NULL, 3,
+  xTaskCreate(Thread_CtrlLauncher, "CtrlLauncher", 256, NULL, 3,
               &runtime.thread.ctrl_launcher);
-  xTaskCreate(Task_Info, "Info", 128, NULL, 2, &runtime.thread.info);
-  xTaskCreate(Task_Monitor, "Monitor", 128, NULL, 2, &runtime.thread.monitor);
-  xTaskCreate(Task_Can, "Can", 128, NULL, 5, &runtime.thread.can);
-  xTaskCreate(Task_Referee, "Referee", 512, NULL, 5, &runtime.thread.referee);
-  xTaskCreate(Task_Ai, "Ai", 128, NULL, 5, &runtime.thread.ai);
-  xTaskCreate(Task_RC, "RC", 128, NULL, 5, &runtime.thread.rc);
+  xTaskCreate(Thread_Info, "Info", 128, NULL, 2, &runtime.thread.info);
+  xTaskCreate(Thread_Monitor, "Monitor", 128, NULL, 2, &runtime.thread.monitor);
+  xTaskCreate(Thread_CAN, "Can", 128, NULL, 5, &runtime.thread.can);
+  xTaskCreate(Thread_Referee, "Referee", 512, NULL, 5, &runtime.thread.referee);
+  xTaskCreate(Thread_AI, "Ai", 128, NULL, 5, &runtime.thread.ai);
+  xTaskCreate(Thread_RC, "RC", 128, NULL, 5, &runtime.thread.rc);
 
   /* 创建消息队列 */
   /* motor */

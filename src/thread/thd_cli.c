@@ -676,7 +676,7 @@ static const CLI_Command_Definition_t command_table[] = {
  *
  * @param argument 未使用
  */
-void Task_CLI(void *argument) {
+void Thread_CLI(void *argument) {
   UNUSED(argument);                    /* 未使用argument，消除警告 */
   static char input[MAX_INPUT_LENGTH]; /* 输入字符串缓存 */
   char *output = FreeRTOS_CLIGetOutputBuffer(); /* 输出字符串缓存 */

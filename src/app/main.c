@@ -28,7 +28,7 @@ int main(void) {
   HAL_InitPeripherals();
 
   /* Init task */
-  Task_init();
+  Thread_init();
 
   /* Start scheduler */
   vTaskStartScheduler();

@@ -43,7 +43,7 @@ static UI_GimbalUI_t gimbal_ui;
  *
  * @param argument 未使用
  */
-void Task_CtrlGimbal(void *argument) {
+void Thread_CtrlGimbal(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */
 
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_GIMBAL;
