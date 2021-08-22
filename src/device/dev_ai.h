@@ -8,13 +8,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "cmsis_os2.h"
+#include "FreeRTOS.h"
 #include "comp_ahrs.h"
 #include "comp_cmd.h"
 #include "comp_utils.h"
 #include "dev.h"
 #include "dev_referee.h"
 #include "protocol.h"
+#include "timers.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
@@ -31,7 +32,7 @@ typedef struct __packed {
 } AI_UpPackageMCU_t;
 
 typedef struct __packed {
-  osThreadId_t thread_alert;
+  TaskHandle_t thread_alert;
 
   Protocol_DownPackage_t form_host;
 

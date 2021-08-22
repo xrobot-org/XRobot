@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "cmsis_os2.h"
 #include "comp_ahrs.h"
 #include "dev.h"
 

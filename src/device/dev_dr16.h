@@ -1,7 +1,6 @@
 #pragma once
 
 /* Includes ----------------------------------------------------------------- */
-#include "cmsis_os2.h"
 #include "comp_cmd.h"
 #include "comp_utils.h"
 #include "dev.h"
