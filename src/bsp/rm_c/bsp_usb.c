@@ -16,7 +16,7 @@
 /* Private typedef ---------------------------------------------------------- */
 /* Private variables -------------------------------------------------------- */
 /* Must set to NULL explicitly. */
-osThreadId_t gbsp_usb_alert = NULL;
+TaskHandle_t gbsp_usb_alert = NULL;
 uint8_t usb_rx_buf[BSP_USB_MAX_RX_LEN];
 uint8_t usb_tx_buf[BSP_USB_MAX_TX_LEN];
 
@@ -35,7 +35,7 @@ static int8_t BSP_USB_Transmit(uint8_t *buffer, uint16_t len) {
 }
 
 /* Exported functions ------------------------------------------------------- */
-int8_t BSP_USB_ReadyReceive(osThreadId_t alert) {
+int8_t BSP_USB_ReadyReceive(TaskHandle_t alert) {
   ASSERT(alert);
 
   gbsp_usb_alert = alert;
