@@ -1,5 +1,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "hal.h"
+#include "thd.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
@@ -26,7 +27,8 @@ int main(void) {
   /* Initialize all configured peripherals */
   HAL_InitPeripherals();
 
-  /* Init scheduler */
+  /* Init task */
+  Task_init();
 
   /* Start scheduler */
   vTaskStartScheduler();
