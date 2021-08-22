@@ -84,8 +84,8 @@ void Task_Referee(void *argument) {
       /* 获取其他进程数据用于绘制UI */
       xQueueReceive(runtime.msgq.ui.cap, &(ref.cap_ui), 0);
       xQueueReceive(runtime.msgq.ui.chassis, &(ref.chassis_ui), 0);
-      xQueueReceive(runtime.msgq.ui.gimbal, &(ref.gimbal_ui), NULL, 0);
-      xQueueReceive(runtime.msgq.ui.launcher, &(ref.launcher_ui), );
+      xQueueReceive(runtime.msgq.ui.gimbal, &(ref.gimbal_ui), 0);
+      xQueueReceive(runtime.msgq.ui.launcher, &(ref.launcher_ui), 0);
       xQueueReceive(runtime.msgq.ui.cmd, &(ref.cmd_ui), 0);
 #if 0
       xQueueReceive(runtime.msgq.ui.ai, &(ref.ai_ui), 0);
