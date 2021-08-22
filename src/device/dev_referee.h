@@ -7,12 +7,13 @@
 /* Includes ----------------------------------------------------------------- */
 #include <stdbool.h>
 
-#include "cmsis_os2.h"
+#include "FreeRTOS.h"
 #include "comp_cmd.h"
 #include "comp_ui.h"
 #include "comp_utils.h"
 #include "dev.h"
 #include "dev_can.h"
+#include "timers.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
@@ -331,10 +332,10 @@ typedef struct {
     size_t size;
   } packet;
 
-  osThreadId_t thread_alert;
+  TaskHandle_t thread_alert;
 
-  osTimerId_t ui_fast_timer_id;
-  osTimerId_t ui_slow_timer_id;
+  TimerHandle_t ui_fast_timer_id;
+  TimerHandle_t ui_slow_timer_id;
 } Referee_t;
 
 typedef struct {

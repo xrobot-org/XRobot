@@ -3,11 +3,12 @@
 /* Includes ----------------------------------------------------------------- */
 #include <stdbool.h>
 
+#include "FreeRTOS.h"
 #include "bsp_can.h"
-#include "cmsis_os2.h"
 #include "comp_ahrs.h"
 #include "comp_utils.h"
 #include "dev.h"
+#include "queue.h"
 
 /* Exported constants ------------------------------------------------------- */
 #define CAN_MOTOR_CHASSIS_1_RECV (1 << 0)
@@ -242,7 +243,7 @@ typedef struct {
     uint32_t launcher;
     uint32_t cap;
   } mailbox;
-  osMessageQueueId_t msgq_raw;
+  QueueHandle_t msgq_raw;
 } CAN_t;
 
 /* Exported functions prototypes -------------------------------------------- */
