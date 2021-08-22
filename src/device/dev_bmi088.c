@@ -9,11 +9,12 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "FreeRTOS.h"
 #include "bsp_delay.h"
 #include "bsp_gpio.h"
 #include "bsp_spi.h"
-#include "cmsis_os2.h"
 #include "comp_utils.h"
+#include "task.h"
 
 /* Private define ----------------------------------------------------------- */
 #define BMI088_REG_ACCL_CHIP_ID (0x00)
@@ -83,7 +84,7 @@ typedef enum {
 static uint8_t tx_rx_buf[2];
 static uint8_t dma_buf[BMI088_LEN_RX_BUFF];
 
-static osThreadId_t thread_alert;
+static TaskHandle_t thread_alert;
 static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
@@ -256,9 +257,8 @@ bool BMI088_GyroStable(Vector3_t *gyro) {
 }
 
 uint32_t BMI088_WaitNew() {
-  return osThreadFlagsWait(
-      SIGNAL_BMI088_ACCL_NEW_DATA | SIGNAL_BMI088_GYRO_NEW_DATA, osFlagsWaitAll,
-      osWaitForever);
+  return xTaskNotifyWait(
+      0, 0, SIGNAL_BMI088_ACCL_NEW_DATA | SIGNAL_BMI088_GYRO_NEW_DATA, 0xFF);
 }
 
 int8_t BMI088_AcclStartDmaRecv() {
@@ -267,8 +267,7 @@ int8_t BMI088_AcclStartDmaRecv() {
 }
 
 uint32_t BMI088_AcclWaitDmaCplt() {
-  return osThreadFlagsWait(SIGNAL_BMI088_ACCL_RAW_REDY, osFlagsWaitAll,
-                           osWaitForever);
+  return xTaskNotifyWait(0, 0, SIGNAL_BMI088_ACCL_RAW_REDY, 0xFF);
 }
 
 int8_t BMI088_GyroStartDmaRecv() {
@@ -277,8 +276,7 @@ int8_t BMI088_GyroStartDmaRecv() {
 }
 
 uint32_t BMI088_GyroWaitDmaCplt() {
-  return osThreadFlagsWait(SIGNAL_BMI088_GYRO_RAW_REDY, osFlagsWaitAll,
-                           osWaitForever);
+  return xTaskNotifyWait(0, 0, SIGNAL_BMI088_GYRO_RAW_REDY, 0xFF);
 }
 
 int8_t BMI088_ParseAccl(BMI088_t *bmi088) {

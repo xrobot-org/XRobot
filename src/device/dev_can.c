@@ -59,7 +59,7 @@
 static CAN_RawRx_t raw_rx1, raw_rx2;
 static CAN_RawTx_t raw_tx;
 
-static osThreadId_t thread_alert;
+static TaskHandle_t thread_alert;
 static CAN_t *gcan;
 static bool inited = false;
 
