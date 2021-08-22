@@ -573,7 +573,7 @@ int8_t Referee_PackUiPacket(Referee_t *ref) {
   static const size_t kSIZE_PACKET_CRC = sizeof(uint16_t);
   void *source = NULL;
 
-  if (!UI_PopDel(&del, &(ref->ui))) {
+  if (!UI_PopDel(&(ref->ui), &del)) {
     source = &del;
     size_data_content = sizeof(UI_Del_t);
     ui_cmd_id = REF_STDNT_CMD_ID_UI_DEL;
@@ -599,11 +599,11 @@ int8_t Referee_PackUiPacket(Referee_t *ref) {
     }
     ele = BSP_Malloc(size_data_content);
     UI_Ele_t *cursor = ele;
-    while (!UI_PopGraphic(cursor, &(ref->ui))) {
+    while (!UI_PopGraphic(&(ref->ui), cursor)) {
       cursor++;
     }
     source = ele;
-  } else if (!UI_PopString(&string, &(ref->ui))) { /* 绘制字符 */
+  } else if (!UI_PopString(&(ref->ui), &string)) { /* 绘制字符 */
     source = &string;
     size_data_content = sizeof(UI_String_t);
     ui_cmd_id = REF_STDNT_CMD_ID_UI_STR;
