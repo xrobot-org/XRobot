@@ -13,7 +13,7 @@ add_library(${PROJECT_NAME} STATIC
 )
 
 target_include_directories(${PROJECT_NAME}
-    PUBLIC  ${THIRD_PARTY_DIR}/freertos/portable/GCC/ARM_CM4F
-    PUBLIC  ${THIRD_PARTY_DIR}/freertos/include
     PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}
+    PUBLIC  ${THIRD_PARTY_DIR}/freertos/include
+    PUBLIC  ${THIRD_PARTY_DIR}/freertos/portable/GCC/ARM_CM4F
 )
