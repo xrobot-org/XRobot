@@ -128,10 +128,12 @@ int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen) {
   uint32_t slow_period_ms = (uint32_t)(1000.0f / REF_UI_SLOW_REFRESH_FREQ);
 
   ref->ui_fast_timer_id =
-      osTimerNew(RefereeFastRefreshTimerCallback, osTimerPeriodic, NULL, NULL);
+      xTimerCreate("fast_refresh", pdMS_TO_TICKS(REF_UI_FAST_REFRESH_FREQ),
+                   pdTRUE, NULL, RefereeFastRefreshTimerCallback);
 
   ref->ui_slow_timer_id =
-      osTimerNew(RefereeSlowRefreshTimerCallback, osTimerPeriodic, NULL, NULL);
+      xTimerCreate("slow_refresh", pdMS_TO_TICKS(REF_UI_SLOW_REFRESH_FREQ),
+                   pdTRUE, NULL, RefereeSlowRefreshTimerCallback);
 
   osTimerStart(ref->ui_fast_timer_id, fast_period_ms);
   osTimerStart(ref->ui_slow_timer_id, slow_period_ms);
@@ -160,8 +162,7 @@ int8_t Referee_StartReceiving(Referee_t *ref) {
 }
 
 bool Referee_WaitRecvCplt(uint32_t timeout) {
-  return (osThreadFlagsWait(SIGNAL_REFEREE_RAW_REDY, osFlagsWaitAll, timeout) ==
-          SIGNAL_REFEREE_RAW_REDY);
+  return xTaskNotifyWait(0, 0, SIGNAL_REFEREE_RAW_REDY, pdMS_TO_TICKS(timeout));
 }
 
 int8_t Referee_Parse(Referee_t *ref) {
@@ -653,8 +654,8 @@ int8_t Referee_StartTransmit(Referee_t *ref) {
 }
 
 bool Referee_WaitTransCplt(uint32_t timeout) {
-  return (osThreadFlagsWait(SIGNAL_REFEREE_PACKET_SENT, osFlagsWaitAll,
-                            timeout) == SIGNAL_REFEREE_PACKET_SENT);
+  return xTaskNotifyWait(0, 0, SIGNAL_REFEREE_PACKET_SENT,
+                         pdMS_TO_TICKS(timeout));
 }
 
 uint8_t Referee_PackForChassis(Referee_ForChassis_t *c_ref,

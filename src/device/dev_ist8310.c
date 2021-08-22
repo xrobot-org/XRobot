@@ -9,9 +9,11 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "FreeRTOS.h"
 #include "bsp_delay.h"
 #include "bsp_gpio.h"
 #include "bsp_i2c.h"
+#include "task.h"
 
 /* Private define ----------------------------------------------------------- */
 #define IST8310_WAI (0x00)
@@ -41,7 +43,7 @@
 /* Private variables -------------------------------------------------------- */
 uint8_t ist8310_rxbuf[IST8310_LEN_RX_BUFF];
 
-static osThreadId_t thread_alert;
+static TaskHandle_t thread_alert;
 static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
@@ -113,8 +115,8 @@ int8_t IST8310_Init(IST8310_t *ist8310, const IST8310_Cali_t *cali) {
 }
 
 bool IST8310_WaitNew(uint32_t timeout) {
-  return (osThreadFlagsWait(SIGNAL_IST8310_MAGN_NEW_DATA, osFlagsWaitAll,
-                            timeout) == SIGNAL_IST8310_MAGN_NEW_DATA);
+  return xTaskNotifyWait(0, 0, SIGNAL_IST8310_MAGN_NEW_DATA,
+                         pdMS_TO_TICK(timeout));
 }
 
 int8_t IST8310_StartDmaRecv() {
@@ -123,8 +125,7 @@ int8_t IST8310_StartDmaRecv() {
 }
 
 uint32_t IST8310_WaitDmaCplt() {
-  return osThreadFlagsWait(SIGNAL_IST8310_MAGN_RAW_REDY, osFlagsWaitAll,
-                           osWaitForever);
+  return xTaskNotifyWait(0, 0, SIGNAL_IST8310_MAGN_RAW_REDY, 0);
 }
 
 int8_t IST8310_Parse(IST8310_t *ist8310) {

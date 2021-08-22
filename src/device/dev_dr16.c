@@ -8,7 +8,9 @@
 
 #include <string.h>
 
+#include "FreeRTOS.h"
 #include "bsp_uart.h"
+#include "task.h"
 
 /* Private define ----------------------------------------------------------- */
 #define DR16_CH_VALUE_MIN (364u)
@@ -19,7 +21,7 @@
 /* Private typedef ---------------------------------------------------------- */
 /* Private variables -------------------------------------------------------- */
 
-static osThreadId_t thread_alert;
+static TaskHandle_t thread_alert;
 static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
@@ -83,8 +85,7 @@ int8_t DR16_StartDmaRecv(DR16_t *dr16) {
 }
 
 bool DR16_WaitDmaCplt(uint32_t timeout) {
-  return (osThreadFlagsWait(SIGNAL_DR16_RAW_REDY, osFlagsWaitAll, timeout) ==
-          SIGNAL_DR16_RAW_REDY);
+  return xTaskNotifyWait(0, 0, SIGNAL_DR16_RAW_REDY, pdMS_TO_TICKS(timeout));
 }
 
 int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc) {

@@ -25,7 +25,7 @@ static volatile uint32_t drop_message = 0;
 
 static uint8_t rxbuf[AI_LEN_RX_BUFF];
 
-static osThreadId_t thread_alert;
+static TaskHandle_t thread_alert;
 
 static bool inited = false;
 
@@ -69,7 +69,7 @@ int8_t AI_StartReceiving(AI_t *ai) {
 }
 
 bool AI_WaitDmaCplt(void) {
-  return (osThreadFlagsWait(SIGNAL_AI_RAW_REDY, osFlagsWaitAll, 0) ==
+  return (xTaskNotifyWait(0, 0, SIGNAL_AI_RAW_REDY, 0xFF) ==
           SIGNAL_AI_RAW_REDY);
 }
 

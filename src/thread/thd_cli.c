@@ -698,7 +698,7 @@ void Task_CLI(void *argument) {
   while (1) {
     /* 等待接收到新的字符 */
     BSP_USB_ReadyReceive(osThreadGetId());
-    osThreadFlagsWait(SIGNAL_BSP_USB_BUF_RECV, osFlagsWaitAll, osWaitForever);
+    xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFF);
 
     /* 读取接收到的新字符 */
     rx_char = BSP_USB_ReadChar();
@@ -722,7 +722,7 @@ void Task_CLI(void *argument) {
 #endif
     /* 等待输入. */
     BSP_USB_ReadyReceive(osThreadGetId());
-    osThreadFlagsWait(SIGNAL_BSP_USB_BUF_RECV, osFlagsWaitAll, osWaitForever);
+    xTaskNotifyWait(SIGNAL_BSP_USB_BUF_RECV, osFlagsWaitAll, osWaitForever);
 
     /* 读取接收到的新字符 */
     rx_char = BSP_USB_ReadChar();
