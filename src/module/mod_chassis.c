@@ -14,8 +14,8 @@
 
 #include <stdlib.h>
 
+#include "FreeRTOS.h"
 #include "bsp_mm.h"
-#include "cmsis_os2.h"
 #include "comp_limiter.h"
 #include "dev_can.h"
 #include "mod_cap.h"

@@ -12,7 +12,7 @@
 #pragma once
 
 /* Includes ----------------------------------------------------------------- */
-#include "cmsis_os2.h"
+#include "FreeRTOS.h"
 #include "comp_cmd.h"
 #include "comp_filter.h"
 #include "comp_pid.h"
