@@ -60,22 +60,38 @@ endif()
 message(STATUS "---------------------- Compiler Linker option ------------------------")
 
 message(STATUS "C standard: ${CMAKE_C_STANDARD}")
-message(STATUS "C Compiler: ${CMAKE_C_COMPILER}")
-message(STATUS "C flags (Debug): ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG}")
-message(STATUS "C flags (Release): ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE}")
-message(STATUS "ASM flags (Debug): ${CMAKE_ASM_FLAGS} ${CMAKE_ASM_FLAGS_DEBUG}")
-message(STATUS "ASM flags (Release): ${CMAKE_ASM_FLAGS} ${CMAKE_ASM_FLAGS_RELEASE}")
-message(STATUS "Linker flags (Release): ${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS_RELEASE}")
-message(STATUS "Linker flags (Debug): ${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS_DEBUG}")
+message(STATUS "")
+message(STATUS "C Compiler:     ${CMAKE_C_COMPILER}")
+message(STATUS "ASM Compiler:   ${CMAKE_ASM_COMPILER}")
+message(STATUS "Linker:         ${CMAKE_LINKER}")
+message(STATUS "")
+message(STATUS "C flags (General):  ${CMAKE_C_FLAGS}")
+message(STATUS "C flags (Debug):    ${CMAKE_C_FLAGS_DEBUG}")
+message(STATUS "C flags (Release):  ${CMAKE_C_FLAGS_RELEASE}")
+message(STATUS "")
+message(STATUS "ASM flags (General):    ${CMAKE_ASM_FLAGS}")
+message(STATUS "ASM flags (Debug):      ${CMAKE_ASM_FLAGS_DEBUG}")
+message(STATUS "ASM flags (Release):    ${CMAKE_ASM_FLAGS_RELEASE}")
+message(STATUS "")
+message(STATUS "Linker flags (General): ${CMAKE_EXE_LINKER_FLAGS}")
+message(STATUS "Linker flags (Debug):   ${CMAKE_EXE_LINKER_FLAGS_DEBUG}")
+message(STATUS "Linker flags (Release): ${CMAKE_EXE_LINKER_FLAGS_RELEASE}")
+message(STATUS "")
 message(STATUS "Linker script: ${LINKER_SCRIPT}")
 
 #---------------------------------------------------------------------------------------
 # Building Options
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_compile_definitions(DEBUG)
+    add_compile_definitions(
+        MCU_DEBUG_BUILD
+        USE_FULL_ASSERT
+    )
 elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-    add_compile_definitions(DEBUG)
+    add_compile_definitions(
+        MCU_DEBUG_BUILD
+        USE_FULL_ASSERT
+    )
 elseif(CMAKE_BUILD_TYPE STREQUAL "Realase")
     add_compile_definitions()
 elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
