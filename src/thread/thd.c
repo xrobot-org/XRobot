@@ -54,9 +54,7 @@ Runtime_t runtime;
  *
  * @param argument 未使用
  */
-void Task_Init(void *argument) {
-  UNUSED(argument); /* 未使用argument，消除警告 */
-
+void Task_Init(void) {
   Config_Get(&runtime.cfg); /* 获取机器人配置 */
 
   osKernelLock();

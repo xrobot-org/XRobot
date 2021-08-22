@@ -150,4 +150,4 @@ typedef struct {
 extern Runtime_t runtime;
 
 /* Exported functions prototypes -------------------------------------------- */
-void Task_Init(void *argument);
+void Task_Init(void);
