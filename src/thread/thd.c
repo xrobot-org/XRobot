@@ -62,7 +62,7 @@ void Thread_Init(void) {
   xTaskCreate(Thread_AttiEsti, "AttiEsti", 256, NULL, 5,
               &runtime.thread.atti_esti);
   xTaskCreate(Thread_CLI, "CLI", 256, NULL, 3, &runtime.thread.cli);
-  xTaskCreate(Thread_CMD, "Cmd", 128, NULL, 4, &runtime.thread.cmd);
+  xTaskCreate(Thread_CMD, "CMD", 128, NULL, 4, &runtime.thread.cmd);
   xTaskCreate(Thread_CtrlCap, "CtrlCap", 128, NULL, 3,
               &runtime.thread.ctrl_cap);
   xTaskCreate(Thread_CtrlChassis, "CtrlChassis", 256, NULL, 3,
@@ -73,9 +73,9 @@ void Thread_Init(void) {
               &runtime.thread.ctrl_launcher);
   xTaskCreate(Thread_Info, "Info", 128, NULL, 2, &runtime.thread.info);
   xTaskCreate(Thread_Monitor, "Monitor", 128, NULL, 2, &runtime.thread.monitor);
-  xTaskCreate(Thread_CAN, "Can", 128, NULL, 5, &runtime.thread.can);
+  xTaskCreate(Thread_CAN, "CAN", 128, NULL, 5, &runtime.thread.can);
   xTaskCreate(Thread_Referee, "Referee", 512, NULL, 5, &runtime.thread.referee);
-  xTaskCreate(Thread_AI, "Ai", 128, NULL, 5, &runtime.thread.ai);
+  xTaskCreate(Thread_AI, "AI", 128, NULL, 5, &runtime.thread.ai);
   xTaskCreate(Thread_RC, "RC", 128, NULL, 5, &runtime.thread.rc);
 
   /* 创建消息队列 */
