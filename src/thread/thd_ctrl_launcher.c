@@ -54,8 +54,7 @@ void Task_CtrlLauncher(void *argument) {
                 (float)TASK_FREQ_CTRL_LAUNCHER);
 
   /* 延时一段时间再开启任务 */
-  osMessageQueueGet(runtime.msgq.can.feedback.launcher, &can, NULL,
-                    osWaitForever);
+  xQueueReceive(runtime.msgq.can.feedback.launcher, &can, portMAX_DELAY);
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   while (1) {
 #ifdef MCU_DEBUG_BUILD
@@ -63,11 +62,10 @@ void Task_CtrlLauncher(void *argument) {
     runtime.stack_water_mark.ctrl_launcher =
         osThreadGetStackSpace(osThreadGetId());
 #endif
-    osMessageQueueGet(runtime.msgq.can.feedback.launcher, &can, NULL, 0);
+    xQueueReceive(runtime.msgq.can.feedback.launcher, &can, 0);
     /* 读取控制指令以及裁判系统信息 */
-    osMessageQueueGet(runtime.msgq.cmd.launcher, &launcher_cmd, NULL, 0);
-    osMessageQueueGet(runtime.msgq.referee.launcher, &referee_launcher, NULL,
-                      0);
+    xQueueReceive(runtime.msgq.cmd.launcher, &launcher_cmd, 0);
+    xQueueReceive(runtime.msgq.referee.launcher, &referee_launcher, 0);
 
     osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     Launcher_UpdateFeedback(&launcher, &can);
@@ -76,11 +74,8 @@ void Task_CtrlLauncher(void *argument) {
     Launcher_PackUi(&launcher, &launcher_ui);
     osKernelUnlock();
 
-    osMessageQueueReset(runtime.msgq.can.output.launcher);
-    osMessageQueuePut(runtime.msgq.can.output.launcher, &launcher_out, 0, 0);
-
-    osMessageQueueReset(runtime.msgq.ui.launcher);
-    osMessageQueuePut(runtime.msgq.ui.launcher, &launcher_ui, 0, 0);
+    xQueueOverwrite(runtime.msgq.can.output.launcher, &launcher_out);
+    xQueueOverwrite(runtime.msgq.ui.launcher, &launcher_ui);
 
     tick += delay_tick; /* 计算下一个唤醒时刻 */
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */

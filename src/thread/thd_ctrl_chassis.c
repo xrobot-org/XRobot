@@ -58,8 +58,8 @@ void Task_CtrlChassis(void *argument) {
                &runtime.cfg.gimbal_mech_zero, (float)TASK_FREQ_CTRL_CHASSIS);
 
   /* 延时一段时间再开启任务 */
-  osMessageQueueGet(runtime.msgq.can.feedback.chassis, &can, NULL,
-                    osWaitForever);
+  xQueueReceive(runtime.msgq.can.feedback.chassis, &can, portMAX_DELAY);
+
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   while (1) {
 #ifdef MCU_DEBUG_BUILD
@@ -68,11 +68,11 @@ void Task_CtrlChassis(void *argument) {
         osThreadGetStackSpace(osThreadGetId());
 #endif
 
-    osMessageQueueGet(runtime.msgq.can.feedback.chassis, &can, NULL, 0);
+    xQueueReceive(runtime.msgq.can.feedback.chassis, &can, 0);
     /* 读取控制指令、电容反馈、裁判系统 */
-    osMessageQueueGet(runtime.msgq.referee.chassis, &referee_chassis, NULL, 0);
-    osMessageQueueGet(runtime.msgq.cmd.chassis, &chassis_cmd, NULL, 0);
-    osMessageQueueGet(runtime.msgq.cap_info, &cap, NULL, 0);
+    xQueueReceive(runtime.msgq.referee.chassis, &referee_chassis, 0);
+    xQueueReceive(runtime.msgq.cmd.chassis, &chassis_cmd, 0);
+    xQueueReceive(runtime.msgq.cap_info, &cap, 0);
 
     osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     Chassis_UpdateFeedback(&chassis, &can); /* 更新反馈值 */
@@ -84,12 +84,10 @@ void Task_CtrlChassis(void *argument) {
     osKernelUnlock();
 
     /* 将电机输出值发送到CAN */
-    osMessageQueueReset(runtime.msgq.can.output.chassis);
-    osMessageQueuePut(runtime.msgq.can.output.chassis, &chassis_out, 0, 0);
+    xQueueOverwrite(runtime.msgq.can.output.chassis, &chassis_out);
 
     /* 将底盘数据发送给UI */
-    osMessageQueueReset(runtime.msgq.ui.chassis);
-    osMessageQueuePut(runtime.msgq.ui.chassis, &chassis_ui, 0, 0);
+    xQueueOverwrite(runtime.msgq.ui.chassis, &chassis_ui);
 
     tick += delay_tick; /* 计算下一个唤醒时刻 */
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */

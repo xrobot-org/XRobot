@@ -92,13 +92,13 @@ void CAN_Tof_Decode(CAN_Tof_t *tof, const uint8_t *raw) {
 static void CAN_CAN1RxFifoMsgPendingCallback(void) {
   HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_1), CAN1_RX_FIFO,
                        &raw_rx1.rx_header, raw_rx1.rx_data);
-  osMessageQueuePut(gcan->msgq_raw, &raw_rx1, 0, 0);
+  xQueueSendToBack(gcan->msgq_raw, &raw_rx1, 0);
 }
 
 static void CAN_CAN2RxFifoMsgPendingCallback(void) {
   HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_2), CAN2_RX_FIFO,
                        &raw_rx2.rx_header, raw_rx2.rx_data);
-  osMessageQueuePut(gcan->msgq_raw, &raw_rx2, 0, 0);
+  xQueueSendToBack(gcan->msgq_raw, &raw_rx2, 0);
 }
 
 /* Exported functions ------------------------------------------------------- */
@@ -111,7 +111,7 @@ int8_t CAN_Init(CAN_t *can, const CAN_Params_t *param) {
   /* 需要在开启中断和注册回调函数之前初始化 */
   gcan = can;
 
-  can->msgq_raw = osMessageQueueNew(32, sizeof(CAN_RawRx_t), NULL);
+  can->msgq_raw = xQueueCreate(32, sizeof(CAN_RawRx_t));
 
   can->param = param;
 

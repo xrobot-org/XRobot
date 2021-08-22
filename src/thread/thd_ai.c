@@ -52,10 +52,10 @@ void Task_Ai(void *argument) {
     /* Task body */
     tick += delay_tick;
 
-    osMessageQueueGet(runtime.msgq.ai.quat, &(ai_quat), NULL, 0);
-    osMessageQueueGet(runtime.msgq.cmd.ai, &(ai.mode), NULL, 0);
-    bool ref_update = (osMessageQueueGet(runtime.msgq.referee.ai, &(referee_ai),
-                                         NULL, 0) == osOK);
+    xQueueReceive(runtime.msgq.ai.quat, &(ai_quat), 0);
+    xQueueReceive(runtime.msgq.cmd.ai, &(ai.mode), 0);
+    bool ref_update =
+        (xQueueReceive(runtime.msgq.referee.ai, &(referee_ai), 0) == pdPASS);
 
     AI_StartReceiving(&ai);
     if (AI_WaitDmaCplt()) {
@@ -67,8 +67,7 @@ void Task_Ai(void *argument) {
 
     if (ai.mode != AI_MODE_STOP && ai.ai_online) {
       AI_PackCmd(&ai, &cmd_host);
-      osMessageQueueReset(runtime.msgq.cmd.src.host);
-      osMessageQueuePut(runtime.msgq.cmd.src.host, &(cmd_host), 0, 0);
+      xQueueOverwrite(runtime.msgq.cmd.src.host, &(cmd_host));
     }
 
     AI_PackMcu(&ai, &ai_quat);
@@ -77,9 +76,7 @@ void Task_Ai(void *argument) {
     AI_StartTrans(&ai, ref_update);
 
     AI_PackUi(&ai_ui, &ai);
-    osMessageQueueReset(runtime.msgq.ui.ai);
-    osMessageQueuePut(runtime.msgq.ui.ai, &ai_ui, 0, 0);
-
+    xQueueOverwrite(runtime.msgq.ui.ai, &(cmd_host));
     osDelayUntil(tick);
   }
 }
