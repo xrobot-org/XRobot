@@ -58,7 +58,7 @@ void Task_CtrlCap(void *argument) {
     xQueueReceive(runtime.msgq.referee.cap, &referee_cap, 0);
 
     /* 一定时间长度内接收不到电容反馈值，使电容离线 */
-    if (xQueueReceive(runtime.msgq.can.feedback.cap, &can, 0) != pdPASS) {
+    if (xQueueReceive(runtime.msgq.can.feedback.cap, &can, 500) != pdPASS) {
       Cap_HandleOffline(&cap, &cap_out, GAME_CHASSIS_MAX_POWER_WO_REF);
       tick += 500; /* 重新计算下一次唤醒时间 */
     } else {
