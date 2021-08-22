@@ -10,10 +10,10 @@ add_library(${PROJECT_NAME} STATIC
 )
 
 target_link_libraries(${PROJECT_NAME}
-    component
-    device
-    module
-    rtos
+    PRIVATE component
+    PRIVATE device
+    PRIVATE module
+    PRIVATE rtos
 )
 
 target_include_directories(${PROJECT_NAME}

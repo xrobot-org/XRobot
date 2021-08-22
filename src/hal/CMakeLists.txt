@@ -13,14 +13,14 @@ add_library(${PROJECT_NAME} STATIC
 )
 
 target_link_libraries(${PROJECT_NAME}
-    stm32_cmsis
-    rtos
+    PRIVATE stm32_cmsis
+    PRIVATE rtos
 )
 
 target_include_directories(${PROJECT_NAME} 
     PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}
     PUBLIC ${THIRD_PARTY_DIR}/stm32_hal/Inc
-    PRIVATE $<TARGET_PROPERTY:stm32_cmsis,INTERFACE_INCLUDE_DIRECTORIES>
+    PUBLIC $<TARGET_PROPERTY:stm32_cmsis,INTERFACE_INCLUDE_DIRECTORIES>
     PRIVATE $<TARGET_PROPERTY:rtos,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
