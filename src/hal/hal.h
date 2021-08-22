@@ -44,4 +44,7 @@
 #define GYRO_CS_Pin GPIO_PIN_0
 #define GYRO_CS_GPIO_Port GPIOB
 
+void SystemClock_Config(void);
+void HAL_InitPeripherals(void);
+
 void Error_Handler(void);
