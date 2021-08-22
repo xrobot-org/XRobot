@@ -45,7 +45,7 @@ static UI_LauncherUI_t launcher_ui;
  *
  * @param argument 未使用
  */
-void Task_CtrlLauncher(void *argument) {
+void Thread_CtrlLauncher(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */
 
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_LAUNCHER;

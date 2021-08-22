@@ -41,7 +41,7 @@ static CMD_RC_t cmd_rc;
  *
  * @param argument 未使用
  */
-void Task_RC(void *argument) {
+void Thread_RC(void *argument) {
   UNUSED(argument); /* 未使用，消除警告 */
 
   DR16_Init(&dr16); /* 初始化dr16 */
@@ -64,5 +64,5 @@ void Task_RC(void *argument) {
     }
     /* 发送给cmd任务，进行处理 */
     xQueueOverwrite(runtime.msgq.cmd.src.rc, &cmd_rc);
-    }
+  }
 }

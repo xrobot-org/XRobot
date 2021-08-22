@@ -35,7 +35,7 @@ static CAN_RawRx_t can_rx;
 
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
-void Task_Can(void *argument) {
+void Thread_CAN(void *argument) {
   UNUSED(argument);
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CAN;
 
