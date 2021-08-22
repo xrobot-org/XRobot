@@ -76,23 +76,19 @@ void Task_Referee(void *argument) {
       Referee_PackForChassis(&for_chassis, &ref);
 
       /* 发送裁判系统数据到其他进程 */
-      osMessageQueueReset(runtime.msgq.referee.cap);
-      osMessageQueuePut(runtime.msgq.referee.cap, &for_cap, 0, 0);
-      osMessageQueueReset(runtime.msgq.referee.ai);
-      osMessageQueuePut(runtime.msgq.referee.ai, &for_ai, 0, 0);
-      osMessageQueueReset(runtime.msgq.referee.chassis);
-      osMessageQueuePut(runtime.msgq.referee.chassis, &for_chassis, 0, 0);
-      osMessageQueueReset(runtime.msgq.referee.launcher);
-      osMessageQueuePut(runtime.msgq.referee.launcher, &for_launcher, 0, 0);
+      xQueueOverwrite(runtime.msgq.referee.cap, &for_cap);
+      xQueueOverwrite(runtime.msgq.referee.ai, &for_ai);
+      xQueueOverwrite(runtime.msgq.referee.chassis, &for_chassis);
+      xQueueOverwrite(runtime.msgq.referee.launcher, &for_launcher);
 
       /* 获取其他进程数据用于绘制UI */
-      osMessageQueueGet(runtime.msgq.ui.cap, &(ref.cap_ui), NULL, 0);
-      osMessageQueueGet(runtime.msgq.ui.chassis, &(ref.chassis_ui), NULL, 0);
-      osMessageQueueGet(runtime.msgq.ui.gimbal, &(ref.gimbal_ui), NULL, 0);
-      osMessageQueueGet(runtime.msgq.ui.launcher, &(ref.launcher_ui), NULL, 0);
-      osMessageQueueGet(runtime.msgq.ui.cmd, &(ref.cmd_ui), NULL, 0);
+      xQueueReceive(runtime.msgq.ui.cap, &(ref.cap_ui), 0);
+      xQueueReceive(runtime.msgq.ui.chassis, &(ref.chassis_ui), 0);
+      xQueueReceive(runtime.msgq.ui.gimbal, &(ref.gimbal_ui), NULL, 0);
+      xQueueReceive(runtime.msgq.ui.launcher, &(ref.launcher_ui), );
+      xQueueReceive(runtime.msgq.ui.cmd, &(ref.cmd_ui), 0);
 #if 0
-      osMessageQueueGet(runtime.msgq.ui.ai, &(ref.ai_ui), NULL, 0);
+      xQueueReceive(runtime.msgq.ui.ai, &(ref.ai_ui), 0);
 #endif
 
       /* 刷新UI数据 */

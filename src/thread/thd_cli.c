@@ -399,16 +399,16 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       return pdPASS;
     case 2:
       /* 无陀螺仪数据和校准重试超时时，校准失败 */
-      osThreadSuspend(runtime.thread.ctrl_gimbal);
+      vTaskSuspend(runtime.thread.ctrl_gimbal);
 
-      if (osMessageQueueGet(runtime.msgq.gimbal.gyro, &gyro, NULL, 5) != osOK) {
+      if (xQueueReceive(runtime.msgq.gimbal.gyro, &gyro, 5) != pdPASS) {
         snprintf(out_buffer, len, "Can not get gyro data.\r\n");
         fsm.stage = 7;
-        osThreadResume(runtime.thread.ctrl_gimbal);
+        vTaskResume(runtime.thread.ctrl_gimbal);
 
         return pdPASS;
       }
-      osThreadResume(runtime.thread.ctrl_gimbal);
+      vTaskResume(runtime.thread.ctrl_gimbal);
 
       if (BMI088_GyroStable(&gyro)) {
         snprintf(out_buffer, len,
@@ -434,8 +434,8 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       cfg.cali.bmi088.gyro_offset.z = 0.0f;
       Config_Set(&cfg);
       while (count < 1000) {
-        bool data_new = (osMessageQueueGet(runtime.msgq.gimbal.gyro, &gyro,
-                                           NULL, 5) == osOK);
+        bool data_new =
+            (xQueueReceive(runtime.msgq.gimbal.gyro, &gyro, 5) == pdPASS);
         bool data_good = BMI088_GyroStable(&gyro);
         if (data_new && data_good) {
           x += gyro.x;
@@ -501,15 +501,14 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
       /* 获取到云台数据，用can上的新的云台机械零点的位置替代旧的位置 */
       Config_Get(&cfg);
 
-      osThreadSuspend(runtime.thread.ctrl_gimbal);
-      if (osMessageQueueGet(runtime.msgq.can.feedback.gimbal, &can, NULL, 5) !=
-          osOK) {
+      vTaskSuspend(runtime.thread.ctrl_gimbal);
+      if (xQueueReceive(runtime.msgq.can.feedback.gimbal, &can, 5) != pdPASS) {
         snprintf(out_buffer, len, "Can not get gimbal data.\r\n");
         fsm.stage = 2;
-        osThreadResume(runtime.thread.ctrl_gimbal);
+        vTaskResume(runtime.thread.ctrl_gimbal);
         return pdPASS;
       }
-      osThreadResume(runtime.thread.ctrl_gimbal);
+      vTaskResume(runtime.thread.ctrl_gimbal);
       cfg.gimbal_mech_zero.yaw = can.motor.gimbal.named.yaw.rotor_abs_angle;
       cfg.gimbal_mech_zero.pit = can.motor.gimbal.named.pit.rotor_abs_angle;
 
@@ -549,16 +548,15 @@ static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
       return pdPASS;
     case 1:
       /* 获取云台数据，获取新的限位角并替代旧的限位角 */
-      osThreadSuspend(runtime.thread.ctrl_gimbal);
+      vTaskSuspend(runtime.thread.ctrl_gimbal);
 
-      if (osMessageQueueGet(runtime.msgq.can.feedback.gimbal, &can, NULL, 10) !=
-          osOK) {
-        osThreadResume(runtime.thread.ctrl_gimbal);
+      if (xQueueReceive(runtime.msgq.can.feedback.gimbal, &can, 10) != pdPASS) {
+        vTaskResume(runtime.thread.ctrl_gimbal);
         fsm.stage = 3;
         return pdPASS;
       }
       Config_Get(&cfg);
-      osThreadResume(runtime.thread.ctrl_gimbal);
+      vTaskResume(runtime.thread.ctrl_gimbal);
       cfg.gimbal_limit = can.motor.gimbal.named.pit.rotor_abs_angle;
 
       Config_Set(&cfg);

@@ -125,14 +125,10 @@ void Task_AttiEsti(void *argument) {
     osKernelUnlock();
 
     /* 将需要与其他任务分享的数据放到消息队列中 */
-    osMessageQueueReset(runtime.msgq.gimbal.accl);
-    osMessageQueuePut(runtime.msgq.gimbal.accl, &bmi088.accl, 0, 0);
-    osMessageQueueReset(runtime.msgq.gimbal.eulr_imu);
-    osMessageQueuePut(runtime.msgq.gimbal.eulr_imu, &eulr_to_send, 0, 0);
-    osMessageQueueReset(runtime.msgq.ai.quat);
-    osMessageQueuePut(runtime.msgq.ai.quat, &(gimbal_ahrs.quat), 0, 0);
-    osMessageQueueReset(runtime.msgq.gimbal.gyro);
-    osMessageQueuePut(runtime.msgq.gimbal.gyro, &bmi088.gyro, 0, 0);
+    xQueueOverwrite(runtime.msgq.gimbal.accl, &bmi088.accl);
+    xQueueOverwrite(runtime.msgq.gimbal.eulr_imu, &eulr_to_send);
+    xQueueOverwrite(runtime.msgq.ai.quat, &(gimbal_ahrs.quat));
+    xQueueOverwrite(runtime.msgq.gimbal.gyro, &bmi088.gyro);
 
     /* PID控制IMU温度，PWM输出 */
     BSP_PWM_Set(BSP_PWM_IMU_HEAT,

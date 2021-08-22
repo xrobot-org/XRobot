@@ -52,8 +52,7 @@ void Task_CtrlGimbal(void *argument) {
               runtime.cfg.gimbal_limit, (float)TASK_FREQ_CTRL_GIMBAL);
 
   /* 延时一段时间再开启任务 */
-  osMessageQueueGet(runtime.msgq.can.feedback.gimbal, &can, NULL,
-                    osWaitForever);
+  xQueueReceive(runtime.msgq.can.feedback.gimbal, &can, portMAX_DELAY);
   uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
   while (1) {
 #ifdef MCU_DEBUG_BUILD
@@ -62,13 +61,12 @@ void Task_CtrlGimbal(void *argument) {
         osThreadGetStackSpace(osThreadGetId());
 #endif
 
-    osMessageQueueGet(runtime.msgq.can.feedback.gimbal, &can, NULL, 0);
+    xQueueReceive(runtime.msgq.can.feedback.gimbal, &can, 0);
+
     /* 读取控制指令、姿态、IMU数据 */
-    osMessageQueueGet(runtime.msgq.gimbal.eulr_imu, &(gimbal.feedback.eulr.imu),
-                      NULL, 0);
-    osMessageQueueGet(runtime.msgq.gimbal.gyro, &(gimbal.feedback.gyro), NULL,
-                      0);
-    osMessageQueueGet(runtime.msgq.cmd.gimbal, &gimbal_cmd, NULL, 0);
+    xQueueReceive(runtime.msgq.gimbal.eulr_imu, &(gimbal.feedback.eulr.imu), 0);
+    xQueueReceive(runtime.msgq.gimbal.gyro, &(gimbal.feedback.gyro), 0);
+    xQueueReceive(runtime.msgq.cmd.gimbal, &gimbal_cmd, 0);
 
     osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     Gimbal_UpdateFeedback(&gimbal, &can);
@@ -77,11 +75,8 @@ void Task_CtrlGimbal(void *argument) {
     Gimbal_PackUi(&gimbal, &gimbal_ui);
     osKernelUnlock();
 
-    osMessageQueueReset(runtime.msgq.can.output.gimbal);
-    osMessageQueuePut(runtime.msgq.can.output.gimbal, &gimbal_out, 0, 0);
-
-    osMessageQueueReset(runtime.msgq.ui.gimbal);
-    osMessageQueuePut(runtime.msgq.ui.gimbal, &gimbal_ui, 0, 0);
+    xQueueOverwrite(runtime.msgq.can.output.gimbal, &gimbal_out);
+    xQueueOverwrite(runtime.msgq.ui.gimbal, &gimbal_ui);
 
     tick += delay_tick; /* 计算下一个唤醒时刻 */
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */

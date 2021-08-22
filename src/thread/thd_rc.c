@@ -63,7 +63,6 @@ void Task_RC(void *argument) {
       DR16_HandleOffline(&dr16, &cmd_rc);
     }
     /* 发送给cmd任务，进行处理 */
-    osMessageQueueReset(runtime.msgq.cmd.src.rc);
-    osMessageQueuePut(runtime.msgq.cmd.src.rc, &cmd_rc, 0, 0);
-  }
+    xQueueOverwrite(runtime.msgq.cmd.src.rc, &cmd_rc);
+    }
 }

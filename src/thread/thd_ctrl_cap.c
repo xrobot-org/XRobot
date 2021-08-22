@@ -55,11 +55,10 @@ void Task_CtrlCap(void *argument) {
     tick += delay_tick; /* 计算下一个唤醒时刻 */
 
     /* 读取裁判系统信息 */
-    osMessageQueueGet(runtime.msgq.referee.cap, &referee_cap, 0, 0);
+    xQueueReceive(runtime.msgq.referee.cap, &referee_cap, 0);
 
     /* 一定时间长度内接收不到电容反馈值，使电容离线 */
-    if (osMessageQueueGet(runtime.msgq.can.feedback.cap, &can, NULL, 500) !=
-        osOK) {
+    if (xQueueReceive(runtime.msgq.can.feedback.cap, &can, 0) != pdPASS) {
       Cap_HandleOffline(&cap, &cap_out, GAME_CHASSIS_MAX_POWER_WO_REF);
       tick += 500; /* 重新计算下一次唤醒时间 */
     } else {
@@ -70,16 +69,12 @@ void Task_CtrlCap(void *argument) {
       osKernelUnlock();
     }
     /* 将电容输出值发送到CAN */
-    osMessageQueueReset(runtime.msgq.can.output.cap);
-    osMessageQueuePut(runtime.msgq.can.output.cap, &cap_out, 0, 0);
+    xQueueOverwrite(runtime.msgq.can.output.cap, &cap_out);
     /* 将电容状态发送到Chassis */
-    osMessageQueueReset(runtime.msgq.cap_info);
-    osMessageQueuePut(runtime.msgq.cap_info, &(cap), 0, 0);
+    xQueueOverwrite(runtime.msgq.cap_info, &(cap));
 
     Cap_PackUi(&cap, &cap_ui);
-
-    osMessageQueueReset(runtime.msgq.ui.cap);
-    osMessageQueuePut(runtime.msgq.ui.cap, &cap_ui, 0, 0);
+    xQueueOverwrite(runtime.msgq.ui.cap, &cap_ui);
 
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }
