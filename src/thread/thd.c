@@ -49,91 +49,6 @@ void Task_Referee(void *argument);
 /* 机器人运行时的数据 */
 Runtime_t runtime;
 
-/* 各个任务的参数 */
-const osThreadAttr_t attr_init = {
-    .name = "init",
-    .priority = osPriorityRealtime,
-    .stack_size = 256 * 4,
-};
-
-const osThreadAttr_t attr_ai = {
-    .name = "ai",
-    .priority = osPriorityRealtime,
-    .stack_size = 128 * 4,
-};
-
-const osThreadAttr_t attr_atti_esti = {
-    .name = "atti_esti",
-    .priority = osPriorityRealtime,
-    .stack_size = 256 * 4,
-};
-
-const osThreadAttr_t attr_can = {
-    .name = "can",
-    .priority = osPriorityRealtime,
-    .stack_size = 128 * 4,
-};
-
-const osThreadAttr_t attr_cli = {
-    .name = "cli",
-    .priority = osPriorityNormal,
-    .stack_size = 256 * 4,
-};
-
-const osThreadAttr_t attr_cmd = {
-    .name = "cmd",
-    .priority = osPriorityHigh,
-    .stack_size = 128 * 4,
-};
-
-const osThreadAttr_t attr_ctrl_cap = {
-    .name = "ctrl_cap",
-    .priority = osPriorityAboveNormal,
-    .stack_size = 128 * 4,
-};
-
-const osThreadAttr_t attr_ctrl_chassis = {
-    .name = "ctrl_chassis",
-    .priority = osPriorityAboveNormal,
-    .stack_size = 256 * 4,
-};
-
-const osThreadAttr_t attr_ctrl_gimbal = {
-    .name = "ctrl_gimbal",
-    .priority = osPriorityAboveNormal,
-    .stack_size = 256 * 4,
-};
-
-const osThreadAttr_t attr_ctrl_launcher = {
-    .name = "ctrl_launcher",
-    .priority = osPriorityAboveNormal,
-    .stack_size = 256 * 4,
-};
-
-const osThreadAttr_t attr_info = {
-    .name = "info",
-    .priority = osPriorityLow,
-    .stack_size = 128 * 4,
-};
-
-const osThreadAttr_t attr_monitor = {
-    .name = "monitor",
-    .priority = osPriorityBelowNormal,
-    .stack_size = 128 * 4,
-};
-
-const osThreadAttr_t attr_rc = {
-    .name = "rc",
-    .priority = osPriorityRealtime,
-    .stack_size = 128 * 4,
-};
-
-const osThreadAttr_t attr_referee = {
-    .name = "referee",
-    .priority = osPriorityRealtime,
-    .stack_size = 512 * 4,
-};
-
 /**
  * @brief 初始化
  *
@@ -145,24 +60,24 @@ void Task_Init(void *argument) {
   Config_Get(&runtime.cfg); /* 获取机器人配置 */
 
   osKernelLock();
-  /* 创建任务 */
-  xTaskCreate(Task_AttiEsti, "AttiEsti", 128, NULL, 0,
+  /* 创建任务, 优先级随数字增大而增大 */
+  xTaskCreate(Task_AttiEsti, "AttiEsti", 256, NULL, 5,
               &runtime.thread.atti_esti);
-  xTaskCreate(Task_CLI, "CLI", 128, NULL, 0, &runtime.thread.cli);
-  xTaskCreate(Task_Cmd, "AttiEsti", 128, NULL, 0, &runtime.thread.cmd);
-  xTaskCreate(Task_CtrlCap, "CtrlCap", 128, NULL, 0, &runtime.thread.ctrl_cap);
-  xTaskCreate(Task_CtrlChassis, "CtrlChassis", 128, NULL, 0,
+  xTaskCreate(Task_CLI, "CLI", 256, NULL, 3, &runtime.thread.cli);
+  xTaskCreate(Task_Cmd, "Cmd", 128, NULL, 4, &runtime.thread.cmd);
+  xTaskCreate(Task_CtrlCap, "CtrlCap", 128, NULL, 3, &runtime.thread.ctrl_cap);
+  xTaskCreate(Task_CtrlChassis, "CtrlChassis", 256, NULL, 3,
               &runtime.thread.ctrl_chassis);
-  xTaskCreate(Task_CtrlGimbal, "CtrlGimbal", 128, NULL, 0,
+  xTaskCreate(Task_CtrlGimbal, "CtrlGimbal", 256, NULL, 3,
               &runtime.thread.ctrl_gimbal);
-  xTaskCreate(Task_CtrlLauncher, "CtrlLauncher", 128, NULL, 0,
+  xTaskCreate(Task_CtrlLauncher, "CtrlLauncher", 256, NULL, 3,
               &runtime.thread.ctrl_launcher);
-  xTaskCreate(Task_Info, "Info", 128, NULL, 0, &runtime.thread.info);
-  xTaskCreate(Task_Monitor, "Monitor", 128, NULL, 0, &runtime.thread.monitor);
-  xTaskCreate(Task_Can, "Can", 128, NULL, 0, &runtime.thread.can);
-  xTaskCreate(Task_Referee, "Referee", 128, NULL, 0, &runtime.thread.referee);
-  xTaskCreate(Task_Ai, "Ai", 128, NULL, 0, &runtime.thread.ai);
-  xTaskCreate(Task_RC, "RC", 128, NULL, 0, &runtime.thread.rc);
+  xTaskCreate(Task_Info, "Info", 128, NULL, 2, &runtime.thread.info);
+  xTaskCreate(Task_Monitor, "Monitor", 128, NULL, 2, &runtime.thread.monitor);
+  xTaskCreate(Task_Can, "Can", 128, NULL, 5, &runtime.thread.can);
+  xTaskCreate(Task_Referee, "Referee", 512, NULL, 5, &runtime.thread.referee);
+  xTaskCreate(Task_Ai, "Ai", 128, NULL, 5, &runtime.thread.ai);
+  xTaskCreate(Task_RC, "RC", 128, NULL, 5, &runtime.thread.rc);
 
   /* 创建消息队列 */
   /* motor */
