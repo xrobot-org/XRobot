@@ -46,27 +46,21 @@ void Thread_CtrlCap(void *argument) {
   /* 计算任务运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_CAP;
 
-  uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
-  while (1) {
-#ifdef MCU_DEBUG_BUILD
-    /* 记录任务所使用的的栈空间 */
-    runtime.stack_water_mark.ctrl_cap = osThreadGetStackSpace(osThreadGetId());
-#endif
-    tick += delay_tick; /* 计算下一个唤醒时刻 */
+  uint32_t previous_wake_time = xTaskGetTickCount();
 
+  while (1) {
     /* 读取裁判系统信息 */
     xQueueReceive(runtime.msgq.referee.cap, &referee_cap, 0);
 
     /* 一定时间长度内接收不到电容反馈值，使电容离线 */
     if (xQueueReceive(runtime.msgq.can.feedback.cap, &can, 500) != pdPASS) {
       Cap_HandleOffline(&cap, &cap_out, GAME_CHASSIS_MAX_POWER_WO_REF);
-      tick += 500; /* 重新计算下一次唤醒时间 */
     } else {
-      osKernelLock(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
+      vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
       /* 根据裁判系统数据计算输出功率 */
       Cap_Update(&cap, &(can.cap));
       Cap_Control(&referee_cap, &cap_out);
-      osKernelUnlock();
+      xTaskResumeAll();
     }
     /* 将电容输出值发送到CAN */
     xQueueOverwrite(runtime.msgq.can.output.cap, &cap_out);
@@ -76,6 +70,7 @@ void Thread_CtrlCap(void *argument) {
     Cap_PackUi(&cap, &cap_ui);
     xQueueOverwrite(runtime.msgq.ui.cap, &cap_ui);
 
-    osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
+    /* 运行结束，等待下一次唤醒 */
+    xTaskDelayUntil(&previous_wake_time, delay_tick);
   }
 }

@@ -35,16 +35,12 @@ void Thread_Info(void *argument) {
   /* 计算任务运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_INFO;
 
-  uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
-  while (1) {
-#ifdef MCU_DEBUG_BUILD
-    /* 记录任务所使用的的栈空间 */
-    runtime.stack_water_mark.info = osThreadGetStackSpace(osThreadGetId());
-#endif
-    tick += delay_tick; /* 计算下一个唤醒时刻 */
+  uint32_t previous_wake_time = xTaskGetTickCount();
 
+  while (1) {
     BSP_LED_Set(BSP_LED_GRN, BSP_LED_TAGGLE, 1); /* 闪烁LED */
 
-    osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
+    /* 运行结束，等待下一次唤醒 */
+    xTaskDelayUntil(&previous_wake_time, delay_tick);
   }
 }

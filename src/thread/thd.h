@@ -128,22 +128,6 @@ typedef struct {
 
 #ifdef MCU_DEBUG_BUILD
 
-  /* stack使用 */
-  struct {
-    UBaseType_t cli;
-    UBaseType_t cmd;
-    UBaseType_t ctrl_cap;
-    UBaseType_t ctrl_chassis;
-    UBaseType_t ctrl_gimbal;
-    UBaseType_t ctrl_launcher;
-    UBaseType_t info;
-    UBaseType_t monitor;
-    UBaseType_t can;
-    UBaseType_t atti_esti;
-    UBaseType_t referee;
-    UBaseType_t ai;
-    UBaseType_t rc;
-  } stack_water_mark;
 #endif
 } Runtime_t;
 

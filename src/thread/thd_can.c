@@ -42,13 +42,10 @@ void Thread_CAN(void *argument) {
   /* Device Setup */
   CAN_Init(&can, &runtime.cfg.robot_param->can);
 
-  uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
+  uint32_t previous_wake_time = xTaskGetTickCount();
+
   /* Task Setup */
   while (1) {
-#ifdef MCU_DEBUG_BUILD
-    runtime.stack_water_mark.can = osThreadGetStackSpace(osThreadGetId());
-#endif
-    tick += delay_tick; /* 计算下一个唤醒时刻 */
     while (xQueueReceive(can.msgq_raw, &can_rx, 0) == pdPASS) {
       CAN_StoreMsg(&can, &can_rx);
     }
@@ -89,6 +86,7 @@ void Thread_CAN(void *argument) {
         pdPASS) {
       CAN_Cap_Control(&(can_out.cap), &can);
     }
-    osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
+    /* 运行结束，等待下一次唤醒 */
+    xTaskDelayUntil(previous_wake_time, delay_tick);
   }
 }

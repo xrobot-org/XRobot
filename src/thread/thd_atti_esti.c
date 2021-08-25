@@ -87,10 +87,6 @@ void Thread_AttiEsti(void *argument) {
   BSP_PWM_Start(BSP_PWM_IMU_HEAT);
 
   while (1) {
-#ifdef MCU_DEBUG_BUILD
-    /* 记录任务所使用的的栈空间 */
-    runtime.stack_water_mark.atti_esti = osThreadGetStackSpace(osThreadGetId());
-#endif
     /* 等待IMU新数据 */
     BMI088_WaitNew();
 
@@ -111,7 +107,7 @@ void Thread_AttiEsti(void *argument) {
     // IST8310_WaitDmaCplt();
 
     /* 锁住RTOS内核防止数据解析过程中断，造成错误 */
-    osKernelLock();
+    vTaskSuspendAll();
     /* 接收完所有数据后，把数据从原始字节加工成方便计算的数据 */
     BMI088_ParseAccl(&bmi088);
     BMI088_ParseGyro(&bmi088);
@@ -122,7 +118,7 @@ void Thread_AttiEsti(void *argument) {
 
     /* 根据解析出来的四元数计算欧拉角 */
     AHRS_GetEulr(&eulr_to_send, &gimbal_ahrs);
-    osKernelUnlock();
+    xTaskResumeAll();
 
     /* 将需要与其他任务分享的数据放到消息队列中 */
     xQueueOverwrite(runtime.msgq.gimbal.accl, &bmi088.accl);

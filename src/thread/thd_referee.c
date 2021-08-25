@@ -53,11 +53,8 @@ void Thread_Referee(void *argument) {
   /* 初始化裁判系统 */
   Referee_Init(&ref, &(runtime.cfg.pilot_cfg->screen));
 
-  uint32_t tick = osKernelGetTickCount();
+  uint32_t tick = xTaskGetTickCount();
   while (1) {
-#ifdef MCU_DEBUG_BUILD
-    runtime.stack_water_mark.referee = osThreadGetStackSpace(osThreadGetId());
-#endif
     Referee_StartReceiving(&ref); /* 开始接收裁判系统数据 */
 
     if (Referee_WaitRecvCplt(100)) { /* 判断裁判系统数据是否接收完成 */
@@ -67,7 +64,7 @@ void Thread_Referee(void *argument) {
     }
 
     /* 定时接收发送数据 */
-    if (osKernelGetTickCount() > tick) {
+    if (xTaskGetTickCount() > tick) {
       tick += delay_tick;
       /* 打包裁判系统数据 */
       Referee_PackForCap(&for_cap, &ref);
