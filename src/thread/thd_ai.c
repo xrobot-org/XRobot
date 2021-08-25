@@ -41,28 +41,21 @@ void Thread_AI(void *argument) {
   /* 初始化AI通信 */
   AI_Init(&ai);
 
-  uint32_t tick = osKernelGetTickCount();
-
-  uint32_t last_online_tick = tick;
+  uint32_t previous_wake_time = xTaskGetTickCount();
+  uint32_t missed_delay = 0;
 
   while (1) {
-#ifdef MCU_DEBUG_BUILD
-    runtime.stack_water_mark.ai = osThreadGetStackSpace(osThreadGetId());
-#endif
-    /* Task body */
-    tick += delay_tick;
-
     xQueueReceive(runtime.msgq.ai.quat, &(ai_quat), 0);
     xQueueReceive(runtime.msgq.cmd.ai, &(ai.mode), 0);
     bool ref_update =
         (xQueueReceive(runtime.msgq.referee.ai, &(referee_ai), 0) == pdPASS);
 
     AI_StartReceiving(&ai);
+    // TODO: wait里面必须加timeout
     if (AI_WaitDmaCplt()) {
       AI_ParseHost(&ai);
-      last_online_tick = tick;
     } else {
-      if (tick - last_online_tick > 300) AI_HandleOffline(&ai);
+      if (missed_delay > 300) AI_HandleOffline(&ai);
     }
 
     if (ai.mode != AI_MODE_STOP && ai.ai_online) {
@@ -77,6 +70,6 @@ void Thread_AI(void *argument) {
 
     AI_PackUi(&ai_ui, &ai);
     xQueueOverwrite(runtime.msgq.ui.ai, &(cmd_host));
-    osDelayUntil(tick);
+    missed_delay += xTaskDelayUntil(&previous_wake_time, delay_tick);
   }
 }

@@ -47,10 +47,6 @@ void Thread_RC(void *argument) {
   DR16_Init(&dr16); /* 初始化dr16 */
 
   while (1) {
-#ifdef MCU_DEBUG_BUILD
-    /*  */
-    runtime.stack_water_mark.rc = osThreadGetStackSpace(osThreadGetId());
-#endif
     /* 开启DMA */
     DR16_StartDmaRecv(&dr16);
 

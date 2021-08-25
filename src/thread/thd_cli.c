@@ -714,10 +714,6 @@ void Thread_CLI(void *argument) {
   /* 开始运行命令行界面 */
   BSP_USB_Printf(CLI_START);
   while (1) {
-#ifdef MCU_DEBUG_BUILD
-    /* 记录任务所使用的的栈空间 */
-    runtime.stack_water_mark.cli = osThreadGetStackSpace(osThreadGetId());
-#endif
     /* 等待输入. */
     BSP_USB_ReadyReceive(osThreadGetId());
     xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFF);

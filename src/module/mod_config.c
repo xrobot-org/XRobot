@@ -417,10 +417,10 @@ void Config_Get(Config_t *cfg) {
  * @param cfg 配置信息
  */
 void Config_Set(Config_t *cfg) {
-  osKernelLock();
+  vTaskSuspendAll();
   BSP_Flash_EraseSector(11);
   BSP_Flash_WriteBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(*cfg));
-  osKernelUnlock();
+  xTaskResumeAll();
 }
 
 /**

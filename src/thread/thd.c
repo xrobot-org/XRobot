@@ -57,7 +57,7 @@ Runtime_t runtime;
 void Thread_Init(void) {
   Config_Get(&runtime.cfg); /* 获取机器人配置 */
 
-  osKernelLock();
+  vTaskSuspendAll();
   /* 创建任务, 优先级随数字增大而增大 */
   xTaskCreate(Thread_AttiEsti, "AttiEsti", 256, NULL, 5,
               &runtime.thread.atti_esti);
@@ -125,6 +125,6 @@ void Thread_Init(void) {
   runtime.msgq.ui.cmd = xQueueCreate(1u, sizeof(CMD_UI_t));
   runtime.msgq.ui.ai = xQueueCreate(1u, sizeof(AI_UI_t));
 
-  osKernelUnlock();
-  osThreadTerminate(osThreadGetId()); /* 结束自身 */
+  xTaskResumeAll();
+  vTaskDelete(NULL); /* 结束自身 */
 }

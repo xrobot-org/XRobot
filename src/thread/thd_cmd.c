@@ -53,16 +53,10 @@ void Thread_CMD(void *argument) {
 
   /* 初始化指令处理 */
   CMD_Init(&cmd, &(runtime.cfg.pilot_cfg->param));
-  uint32_t tick = osKernelGetTickCount(); /* 控制任务运行频率的计时 */
 
-  /* 用于计算遥控器数据频率 */
+  uint32_t previous_wake_time = xTaskGetTickCount();
+
   while (1) {
-#ifdef MCU_DEBUG_BUILD
-    /* 记录任务所使用的的栈空间 */
-    runtime.stack_water_mark.cmd = osThreadGetStackSpace(osThreadGetId());
-#endif
-    tick += delay_tick; /* 计算下一个唤醒时刻 */
-
     /* 将接收机数据解析为指令数据 */
     if (xQueueReceive(runtime.msgq.cmd.src.rc, &rc, 0) == pdPASS)
       CMD_ParseRc(&rc, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
@@ -86,6 +80,7 @@ void Thread_CMD(void *argument) {
 
     xQueueOverwrite(runtime.msgq.ui.cmd, &cmd_ui);
 
-    osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
+    /* 运行结束，等待下一次唤醒 */
+    xTaskDelayUntil(&previous_wake_time, delay_tick);
   }
 }
