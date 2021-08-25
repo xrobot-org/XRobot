@@ -24,3 +24,4 @@ add_dependencies(${PROJECT_NAME}
 
 include(utils_gcc)
 print_section_sizes(app)
+create_bin_output(app)
