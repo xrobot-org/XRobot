@@ -44,7 +44,7 @@ void Thread_CtrlCap(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */
 
   /* 计算任务运行到指定频率需要等待的tick数 */
-  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_CAP;
+  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_CAP);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 

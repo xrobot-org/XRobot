@@ -37,7 +37,7 @@ static CAN_RawRx_t can_rx;
 /* Exported functions ------------------------------------------------------- */
 void Thread_CAN(void *argument) {
   UNUSED(argument);
-  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CAN;
+  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CAN);
 
   /* Device Setup */
   CAN_Init(&can, &runtime.cfg.robot_param->can);

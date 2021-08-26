@@ -48,7 +48,7 @@ static UI_LauncherUI_t launcher_ui;
 void Thread_CtrlLauncher(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */
 
-  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_LAUNCHER;
+  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_LAUNCHER);
   /* 初始化发射器 */
   Launcher_Init(&launcher, &(runtime.cfg.robot_param->launcher),
                 (float)TASK_FREQ_CTRL_LAUNCHER);

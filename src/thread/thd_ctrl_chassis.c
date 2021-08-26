@@ -52,7 +52,7 @@ static UI_ChassisUI_t chassis_ui;
 void Thread_CtrlChassis(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */
 
-  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_CHASSIS;
+  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_CHASSIS);
   /* 初始化底盘 */
   Chassis_Init(&chassis, &(runtime.cfg.robot_param->chassis),
                &runtime.cfg.gimbal_mech_zero, (float)TASK_FREQ_CTRL_CHASSIS);

@@ -75,14 +75,14 @@ static void Referee_AbortRxCpltCallback(void) {
 
 static void RefereeFastRefreshTimerCallback(void *arg) {
   UNUSED(arg);
-  xTaskNotifyFrom(gref->thread_alert, SIGNAL_REFEREE_FAST_REFRESH_UI,
-                  eSetValueWithOverwrite, pdTRUE);
+  xTaskNotify(gref->thread_alert, SIGNAL_REFEREE_FAST_REFRESH_UI,
+              eSetValueWithOverwrite);
 }
 
 static void RefereeSlowRefreshTimerCallback(void *arg) {
   UNUSED(arg);
-  xTaskNotifyFrom(gref->thread_alert, SIGNAL_REFEREE_SLOW_REFRESH_UI,
-                  eSetValueWithOverwrite, pdTRUE);
+  xTaskNotify(gref->thread_alert, SIGNAL_REFEREE_SLOW_REFRESH_UI,
+              eSetValueWithOverwrite);
 }
 
 static int8_t Referee_SetPacketHeader(Referee_Header_t *header,
@@ -117,7 +117,7 @@ int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen) {
 
   gref = ref;
 
-  VERIFY((gref->thread_alert = osThreadGetId()) != NULL);
+  VERIFY((gref->thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
 
   ref->ui.screen = screen;
 
@@ -127,10 +127,6 @@ int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen) {
                             Referee_AbortRxCpltCallback);
   BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_IDLE_LINE_CB,
                             Referee_IdleLineCallback);
-  // TODO 用api获得tick freq
-  uint32_t fast_period_ms = (uint32_t)(1000.0f / REF_UI_FAST_REFRESH_FREQ);
-  uint32_t slow_period_ms = (uint32_t)(1000.0f / REF_UI_SLOW_REFRESH_FREQ);
-
   ref->ui_fast_timer_id =
       xTimerCreate("fast_refresh", pdMS_TO_TICKS(REF_UI_FAST_REFRESH_FREQ),
                    pdTRUE, NULL, RefereeFastRefreshTimerCallback);
@@ -139,8 +135,10 @@ int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen) {
       xTimerCreate("slow_refresh", pdMS_TO_TICKS(REF_UI_SLOW_REFRESH_FREQ),
                    pdTRUE, NULL, RefereeSlowRefreshTimerCallback);
 
-  osTimerStart(ref->ui_fast_timer_id, fast_period_ms);
-  osTimerStart(ref->ui_slow_timer_id, slow_period_ms);
+  xTimerStart(ref->ui_fast_timer_id,
+              pdMS_TO_TICKS(1000 / REF_UI_FAST_REFRESH_FREQ));
+  xTimerStart(ref->ui_slow_timer_id,
+              pdMS_TO_TICKS(1000 / REF_UI_SLOW_REFRESH_FREQ));
 
   __HAL_UART_ENABLE_IT(BSP_UART_GetHandle(BSP_UART_REF), UART_IT_IDLE);
 
@@ -310,8 +308,9 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
   static UI_GraphicOp_t graphic_op = UI_GRAPHIC_OP_ADD;
 
   /* UI动态元素刷新 */
-  if (osThreadFlagsGet() & SIGNAL_REFEREE_FAST_REFRESH_UI) {
-    osThreadFlagsClear(SIGNAL_REFEREE_FAST_REFRESH_UI);
+  uint32_t flag;
+  xTaskNotifyWait(0, 0, flag, 0);
+  if (flag & SIGNAL_REFEREE_FAST_REFRESH_UI) {
     /* 使用状态机算法，每次更新一个图层 */
     switch (ref->ui.refresh_fsm) {
       case 0: {
@@ -505,7 +504,7 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
   }
 
   /* UI静态元素刷新 */
-  if (osThreadFlagsGet() & SIGNAL_REFEREE_SLOW_REFRESH_UI) {
+  if (flag & SIGNAL_REFEREE_SLOW_REFRESH_UI) {
     graphic_op = UI_GRAPHIC_OP_ADD;
     ref->ui.refresh_fsm = 1;
 
@@ -556,6 +555,8 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
                   "CAP");
     UI_StashString(&(ref->ui), &string);
   }
+
+  xTaskNotifyStateClear(xTaskGetCurrentTaskHandle());
 
   return 0;
 }

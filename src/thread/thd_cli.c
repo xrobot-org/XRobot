@@ -695,7 +695,7 @@ void Thread_CLI(void *argument) {
   BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
   while (1) {
     /* 等待接收到新的字符 */
-    BSP_USB_ReadyReceive(osThreadGetId());
+    BSP_USB_ReadyReceive(xTaskGetCurrentTaskHandle());
     xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFF);
 
     /* 读取接收到的新字符 */
@@ -715,7 +715,7 @@ void Thread_CLI(void *argument) {
   BSP_USB_Printf(CLI_START);
   while (1) {
     /* 等待输入. */
-    BSP_USB_ReadyReceive(osThreadGetId());
+    BSP_USB_ReadyReceive(xTaskGetCurrentTaskHandle());
     xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFF);
 
     /* 读取接收到的新字符 */
