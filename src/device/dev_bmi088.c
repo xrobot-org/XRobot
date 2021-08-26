@@ -187,7 +187,7 @@ int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali) {
   ASSERT(bmi088);
   ASSERT(cali);
   if (inited) return DEVICE_ERR_INITED;
-  VERIFY((thread_alert = osThreadGetId()) != NULL);
+  VERIFY((thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
 
   bmi088->cali = cali;
 

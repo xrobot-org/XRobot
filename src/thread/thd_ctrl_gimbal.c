@@ -46,7 +46,7 @@ static UI_GimbalUI_t gimbal_ui;
 void Thread_CtrlGimbal(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */
 
-  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_GIMBAL;
+  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_GIMBAL);
   /* 初始化云台 */
   Gimbal_Init(&gimbal, &(runtime.cfg.robot_param->gimbal),
               runtime.cfg.gimbal_limit, (float)TASK_FREQ_CTRL_GIMBAL);

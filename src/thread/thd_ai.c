@@ -36,7 +36,7 @@ void Thread_AI(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */
 
   /* 计算任务运行到指定频率需要等待的tick数 */
-  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_AI;
+  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_AI);
 
   /* 初始化AI通信 */
   AI_Init(&ai);

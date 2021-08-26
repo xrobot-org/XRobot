@@ -49,7 +49,7 @@ void Thread_CMD(void *argument) {
   UNUSED(argument); /* 未使用argument，消除警告 */
 
   /* 计算任务运行到指定频率需要等待的tick数 */
-  const uint32_t delay_tick = osKernelGetTickFreq() / TASK_FREQ_CTRL_COMMAND;
+  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_COMMAND);
 
   /* 初始化指令处理 */
   CMD_Init(&cmd, &(runtime.cfg.pilot_cfg->param));

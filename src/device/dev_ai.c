@@ -47,7 +47,7 @@ int8_t AI_Init(AI_t *ai) {
   UNUSED(ai);
   ASSERT(ai);
   if (inited) return DEVICE_ERR_INITED;
-  VERIFY((thread_alert = osThreadGetId()) != NULL);
+  VERIFY((thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
 
   BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_RX_CPLT_CB,
                             Ai_RxCpltCallback);

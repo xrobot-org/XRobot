@@ -105,7 +105,7 @@ static void CAN_CAN2RxFifoMsgPendingCallback(void) {
 int8_t CAN_Init(CAN_t *can, const CAN_Params_t *param) {
   ASSERT(can);
   if (inited) return DEVICE_ERR_INITED;
-  VERIFY((thread_alert = osThreadGetId()) != NULL);
+  VERIFY((thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
 
   /* gcan、thread_alert等需要在中断回调函数中使用的指针 */
   /* 需要在开启中断和注册回调函数之前初始化 */

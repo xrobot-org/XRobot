@@ -81,7 +81,7 @@ int8_t IST8310_Init(IST8310_t *ist8310, const IST8310_Cali_t *cali) {
   ASSERT(ist8310);
   ASSERT(cali);
   if (inited) return DEVICE_ERR_INITED;
-  VERIFY((thread_alert = osThreadGetId()) != NULL);
+  VERIFY((thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
 
   ist8310->cali = cali;
 
