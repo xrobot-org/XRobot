@@ -31,12 +31,15 @@ static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
 
+// TODO: 这里idle line用法不对，参考referee
 static void Ai_RxCpltCallback(void) {
-  osThreadFlagsSet(thread_alert, SIGNAL_AI_RAW_REDY);
+  xTaskNotifyFromISR(thread_alert, SIGNAL_AI_RAW_REDY, eSetValueWithOverwrite,
+                     pdTRUE);
 }
 
 static void Ai_IdleLineCallback(void) {
-  osThreadFlagsSet(thread_alert, SIGNAL_AI_RAW_REDY);
+  xTaskNotifyFromISR(thread_alert, SIGNAL_AI_RAW_REDY, eSetValueWithOverwrite,
+                     pdTRUE);
 }
 
 /* Exported functions ------------------------------------------------------- */

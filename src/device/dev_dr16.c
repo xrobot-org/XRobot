@@ -26,7 +26,8 @@ static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
 static void DR16_RxCpltCallback(void) {
-  osThreadFlagsSet(thread_alert, SIGNAL_DR16_RAW_REDY);
+  xTaskNotifyFromISR(thread_alert, SIGNAL_DR16_RAW_REDY, eSetValueWithOverwrite,
+                     pdTRUE);
 }
 
 static bool DR16_DataCorrupted(const DR16_t *dr16) {
