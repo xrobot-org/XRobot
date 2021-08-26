@@ -67,11 +67,13 @@ static void IST8310_Read(uint8_t reg, uint8_t *data, uint8_t len) {
 }
 
 static void IST8310_MemRxCpltCallback(void) {
-  osThreadFlagsSet(thread_alert, SIGNAL_IST8310_MAGN_RAW_REDY);
+  xTaskNotifyFromISR(thread_alert, SIGNAL_IST8310_MAGN_RAW_REDY,
+                     eSetValueWithOverwrite, pdTRUE);
 }
 
 static void IST8310_IntCallback(void) {
-  osThreadFlagsSet(thread_alert, SIGNAL_IST8310_MAGN_NEW_DATA);
+  xTaskNotifyFromISR(thread_alert, SIGNAL_IST8310_MAGN_NEW_DATA,
+                     eSetValueWithOverwrite, pdTRUE);
 }
 
 /* Exported functions ------------------------------------------------------- */

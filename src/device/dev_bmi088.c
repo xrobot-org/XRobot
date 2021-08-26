@@ -162,20 +162,24 @@ static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
 static void BMI088_RxCpltCallback(void) {
   if (HAL_GPIO_ReadPin(ACCL_CS_GPIO_Port, ACCL_CS_Pin) == GPIO_PIN_RESET) {
     BMI088_ACCL_NSS_SET();
-    osThreadFlagsSet(thread_alert, SIGNAL_BMI088_ACCL_RAW_REDY);
+    xTaskNotifyFromISR(thread_alert, SIGNAL_BMI088_ACCL_RAW_REDY,
+                       eSetValueWithOverwrite, pdTRUE);
   }
   if (HAL_GPIO_ReadPin(GYRO_CS_GPIO_Port, GYRO_CS_Pin) == GPIO_PIN_RESET) {
     BMI088_GYRO_NSS_SET();
-    osThreadFlagsSet(thread_alert, SIGNAL_BMI088_GYRO_RAW_REDY);
+    xTaskNotifyFromISR(thread_alert, SIGNAL_BMI088_GYRO_RAW_REDY,
+                       eSetValueWithOverwrite, pdTRUE);
   }
 }
 
 static void BMI088_AcclIntCallback(void) {
-  osThreadFlagsSet(thread_alert, SIGNAL_BMI088_ACCL_NEW_DATA);
+  xTaskNotifyFromISR(thread_alert, SIGNAL_BMI088_ACCL_NEW_DATA,
+                     eSetValueWithOverwrite, pdTRUE);
 }
 
 static void BMI088_GyroIntCallback(void) {
-  osThreadFlagsSet(thread_alert, SIGNAL_BMI088_GYRO_NEW_DATA);
+  xTaskNotifyFromISR(thread_alert, SIGNAL_BMI088_GYRO_NEW_DATA,
+                     eSetValueWithOverwrite, pdTRUE);
 }
 
 /* Exported functions ------------------------------------------------------- */

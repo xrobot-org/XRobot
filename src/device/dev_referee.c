@@ -60,7 +60,8 @@ static bool inited = false;
 /* Private function  -------------------------------------------------------- */
 
 static void Referee_RxCpltCallback(void) {
-  osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY);
+  xTaskNotifyFromISR(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY,
+                     eSetValueWithOverwrite, pdTRUE);
 }
 
 static void Referee_IdleLineCallback(void) {
@@ -68,17 +69,20 @@ static void Referee_IdleLineCallback(void) {
 }
 
 static void Referee_AbortRxCpltCallback(void) {
-  osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY);
+  xTaskNotifyFromISR(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY,
+                     eSetValueWithOverwrite, pdTRUE);
 }
 
 static void RefereeFastRefreshTimerCallback(void *arg) {
   UNUSED(arg);
-  osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_FAST_REFRESH_UI);
+  xTaskNotifyFrom(gref->thread_alert, SIGNAL_REFEREE_FAST_REFRESH_UI,
+                  eSetValueWithOverwrite, pdTRUE);
 }
 
 static void RefereeSlowRefreshTimerCallback(void *arg) {
   UNUSED(arg);
-  osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_SLOW_REFRESH_UI);
+  xTaskNotifyFrom(gref->thread_alert, SIGNAL_REFEREE_SLOW_REFRESH_UI,
+                  eSetValueWithOverwrite, pdTRUE);
 }
 
 static int8_t Referee_SetPacketHeader(Referee_Header_t *header,
@@ -123,7 +127,7 @@ int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen) {
                             Referee_AbortRxCpltCallback);
   BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_IDLE_LINE_CB,
                             Referee_IdleLineCallback);
-
+  // TODO 用api获得tick freq
   uint32_t fast_period_ms = (uint32_t)(1000.0f / REF_UI_FAST_REFRESH_FREQ);
   uint32_t slow_period_ms = (uint32_t)(1000.0f / REF_UI_SLOW_REFRESH_FREQ);
 
@@ -639,7 +643,8 @@ int8_t Referee_PackUiPacket(Referee_t *ref) {
 
 int8_t Referee_StartTransmit(Referee_t *ref) {
   if (ref->packet.data == NULL) {
-    osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_PACKET_SENT);
+    xTaskNotify(gref->thread_alert, SIGNAL_REFEREE_PACKET_SENT,
+                eSetValueWithOverwrite);
     return DEVICE_ERR_NULL;
   }
   if (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_REF), ref->packet.data,
@@ -647,7 +652,8 @@ int8_t Referee_StartTransmit(Referee_t *ref) {
     BSP_Free(ref->packet.last_data);
     ref->packet.last_data = ref->packet.data;
     ref->packet.data = NULL;
-    osThreadFlagsSet(gref->thread_alert, SIGNAL_REFEREE_PACKET_SENT);
+    xTaskNotify(gref->thread_alert, SIGNAL_REFEREE_PACKET_SENT,
+                eSetValueWithOverwrite);
     return DEVICE_OK;
   }
   return DEVICE_ERR;
