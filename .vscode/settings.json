@@ -3,6 +3,7 @@
     "cmake.configureSettings": {
         // Specifies the path to the CMAKE toolchain file.
         "CMAKE_TOOLCHAIN_FILE": "cmake/arm-none-eabi.cmake",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
     },
     "cmake.preferredGenerators": [
         "Ninja"
