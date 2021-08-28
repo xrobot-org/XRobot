@@ -58,7 +58,6 @@ static bool DR16_DataCorrupted(const DR16_t *dr16) {
 
 /* Exported functions ------------------------------------------------------- */
 int8_t DR16_Init(DR16_t *dr16) {
-  UNUSED(dr16);
   ASSERT(dr16);
   if (inited) return DEVICE_ERR_INITED;
   VERIFY((thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
@@ -126,7 +125,7 @@ int8_t DR16_HandleOffline(const DR16_t *dr16, CMD_RC_t *rc) {
   ASSERT(dr16);
   ASSERT(rc);
 
-  UNUSED(dr16);
+  RM_UNUSED(dr16);
   memset(rc, 0, sizeof(*rc));
   return 0;
 }

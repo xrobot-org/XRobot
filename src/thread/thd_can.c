@@ -36,7 +36,7 @@ static CAN_RawRx_t can_rx;
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
 void Thread_CAN(void *argument) {
-  UNUSED(argument);
+  RM_UNUSED(argument);
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CAN);
 
   /* Device Setup */

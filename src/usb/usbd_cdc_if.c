@@ -187,8 +187,8 @@ static int8_t CDC_Control(uint8_t cmd, uint8_t *pbuf, uint16_t length) {
  * USBD_FAIL
  */
 static int8_t CDC_Receive(uint8_t *Buf, uint32_t *Len) {
-  UNUSED(Buf);
-  UNUSED(Len);
+  RM_UNUSED(Buf);
+  RM_UNUSED(Len);
 
   return (0);
 }
@@ -207,9 +207,9 @@ static int8_t CDC_Receive(uint8_t *Buf, uint32_t *Len) {
  * USBD_FAIL
  */
 static int8_t CDC_TransmitCplt(uint8_t *Buf, uint32_t *Len, uint8_t epnum) {
-  UNUSED(Buf);
-  UNUSED(Len);
-  UNUSED(epnum);
+  RM_UNUSED(Buf);
+  RM_UNUSED(Len);
+  RM_UNUSED(epnum);
 
   return (0);
 }

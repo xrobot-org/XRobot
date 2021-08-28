@@ -364,6 +364,6 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 }
 
 float BMI088_GetUpdateFreq(BMI088_t *bmi088) {
-  UNUSED(bmi088);
+  RM_UNUSED(bmi088);
   return 400.0f;
 }

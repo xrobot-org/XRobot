@@ -74,13 +74,13 @@ static void Referee_AbortRxCpltCallback(void) {
 }
 
 static void RefereeFastRefreshTimerCallback(void *arg) {
-  UNUSED(arg);
+  RM_UNUSED(arg);
   xTaskNotify(gref->thread_alert, SIGNAL_REFEREE_FAST_REFRESH_UI,
               eSetValueWithOverwrite);
 }
 
 static void RefereeSlowRefreshTimerCallback(void *arg) {
-  UNUSED(arg);
+  RM_UNUSED(arg);
   xTaskNotify(gref->thread_alert, SIGNAL_REFEREE_SLOW_REFRESH_UI,
               eSetValueWithOverwrite);
 }
@@ -155,7 +155,7 @@ int8_t Referee_Restart(void) {
 void Referee_HandleOffline(Referee_t *ref) { ref->status = REF_STATUS_OFFLINE; }
 
 int8_t Referee_StartReceiving(Referee_t *ref) {
-  UNUSED(ref);
+  RM_UNUSED(ref);
   if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_REF), rxbuf,
                            REF_LEN_RX_BUFF) == HAL_OK) {
     return DEVICE_OK;

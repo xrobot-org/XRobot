@@ -64,7 +64,7 @@ static const KPID_Params_t imu_temp_ctrl_pid_param = {
  * @param argument 未使用
  */
 void Thread_AttiEsti(void *argument) {
-  UNUSED(argument); /* 未使用argument，消除警告 */
+  RM_UNUSED(argument); /* 未使用argument，消除警告 */
 
   /* 初始化设备 */
   BMI088_Init(&bmi088, &(runtime.cfg.cali.bmi088));
