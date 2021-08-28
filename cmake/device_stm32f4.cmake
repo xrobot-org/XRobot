@@ -1,22 +1,16 @@
-# Architecture option
-set(CPU "-mcpu=cortex-m4")  
-set(FPU "-mfpu=fpv4-sp-d16")
-set(FLOAT_ABI "-mfloat-abi=hard")
-
-set(MCU_FLAGS "${CPU} -mthumb ${FPU} ${FLOAT_ABI}")
+set(MCU_FLAGS "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard")
 
 # TODO: Remove "-w" & Add "-Wall -Wextra"
-set(GENERAL_FLAGS "-w -fno-builtin -ffunction-sections -fdata-sections -mabi=aapcs")
+set(GENERAL_FLAGS "-w --specs=nano.specs --specs=nosys.specs -fno-builtin -ffunction-sections -fdata-sections")
 
-set(CMAKE_C_FLAGS "${MCU_FLAGS} ${GENERAL_FLAGS}")
-set(CMAKE_ASM_FLAGS "${MCU_FLAGS} ${GENERAL_FLAGS} -x assembler-with-cpp")
+set(CMAKE_C_FLAGS "${MCU_FLAGS} ${GENERAL_FLAGS} -fshort-enums -ffast-math -fdiagnostics-color=auto")
+set(CMAKE_ASM_FLAGS "${MCU_FLAGS} -g -x assembler-with-cpp")
 
 # Linker script
 set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/ld/STM32F407IGHx_FLASH.ld)
 
 # Linker Flag
-set(LINK_LIB "-lc -lm -lnosys")
-set(CMAKE_EXE_LINKER_FLAGS "${MCU_FLAGS} ${GENERAL_FLAGS} --specs=nosys.specs --specs=nano.specs -mabi=aapcs -T ${LINKER_SCRIPT} ${LINK_LIB} -Wl,-Map=${CMAKE_PROJECT_NAME}.map,--cref,--gc-sections")
+set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,--cref,--gc-sections,--print-memory-usage,-Map=${CMAKE_PROJECT_NAME}.map")
 
 # 处理器相关宏定义
 add_compile_definitions(
