@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(app)
+project(firmware)
 
 add_executable(${PROJECT_NAME} main.c)
 
@@ -23,5 +23,5 @@ add_dependencies(${PROJECT_NAME}
 )
 
 include(utils_gcc)
-print_section_sizes(app)
-create_bin_output(app)
+print_section_sizes(firmware)
+create_bin_output(firmware)
