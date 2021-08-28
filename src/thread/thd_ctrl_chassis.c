@@ -50,7 +50,7 @@ static UI_ChassisUI_t chassis_ui;
  * @param argument 未使用
  */
 void Thread_CtrlChassis(void *argument) {
-  UNUSED(argument); /* 未使用argument，消除警告 */
+  RM_UNUSED(argument); /* 未使用argument，消除警告 */
 
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_CHASSIS);
   /* 初始化底盘 */

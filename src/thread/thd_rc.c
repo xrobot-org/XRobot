@@ -42,7 +42,7 @@ static CMD_RC_t cmd_rc;
  * @param argument 未使用
  */
 void Thread_RC(void *argument) {
-  UNUSED(argument); /* 未使用，消除警告 */
+  RM_UNUSED(argument); /* 未使用，消除警告 */
 
   DR16_Init(&dr16); /* 初始化dr16 */
 

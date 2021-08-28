@@ -44,7 +44,6 @@ static void Ai_IdleLineCallback(void) {
 
 /* Exported functions ------------------------------------------------------- */
 int8_t AI_Init(AI_t *ai) {
-  UNUSED(ai);
   ASSERT(ai);
   if (inited) return DEVICE_ERR_INITED;
   VERIFY((thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
@@ -64,7 +63,7 @@ int8_t AI_Restart(void) {
 }
 
 int8_t AI_StartReceiving(AI_t *ai) {
-  UNUSED(ai);
+  RM_UNUSED(ai);
   if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_AI), rxbuf,
                            AI_LEN_RX_BUFF) == HAL_OK)
     return DEVICE_OK;
@@ -128,7 +127,7 @@ int8_t AI_PackMcu(AI_t *ai, const AHRS_Quaternion_t *quat) {
 }
 
 int8_t AI_PackRef(AI_t *ai, const Referee_ForAI_t *ref) {
-  UNUSED(ref);
+  RM_UNUSED(ref);
   ai->to_host.ref.id = AI_ID_REF;
   if (ref->team == AI_TEAM_BLUE)
     ai->to_host.ref.package.data.team = AI_TEAM_BLUE;

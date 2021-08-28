@@ -151,8 +151,8 @@ inline float BulletSpeedToFricRpm(float bullet_speed, float fric_radius,
  * @param line 行号
  */
 void VerifyFailed(const char *file, uint32_t line) {
-  UNUSED(file);
-  UNUSED(line);
+  RM_UNUSED(file);
+  RM_UNUSED(line);
   while (1) {
   };
 }

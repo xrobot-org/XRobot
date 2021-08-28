@@ -47,7 +47,7 @@ static Referee_ForLauncher_t for_launcher;
  * @param argument 未使用
  */
 void Thread_Referee(void *argument) {
-  UNUSED(argument); /* 未使用argument，消除警告 */
+  RM_UNUSED(argument); /* 未使用argument，消除警告 */
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_REFEREE);
 
   /* 初始化裁判系统 */

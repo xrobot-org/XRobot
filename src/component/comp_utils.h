@@ -90,13 +90,13 @@
 #define VERIFY(expr) ((void)(expr))
 #endif
 
-#ifndef UNUSED
+#ifndef RM_UNUSED
 
 /**
  * @brief 标记未使用的参数，防止编译器警告
  *
  */
-#define UNUSED(X) ((void)X)
+#define RM_UNUSED(X) ((void)X)
 #endif
 
 /* 移动向量 */
