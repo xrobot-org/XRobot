@@ -9,7 +9,7 @@
  *
  * 从消息队列中得到CAN总线收到的原始数据
  * 解析后分组存放
- * 根据需要发给对应的任务
+ * 根据需要发给对应的线程
  *
  */
 
@@ -44,7 +44,7 @@ void Thread_CAN(void *argument) {
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 
-  /* Task Setup */
+  /* Thread Setup */
   while (1) {
     while (xQueueReceive(can.msgq_raw, &can_rx, 0) == pdPASS) {
       CAN_StoreMsg(&can, &can_rx);

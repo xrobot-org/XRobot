@@ -107,7 +107,7 @@ typedef struct {
  *
  * @param g 包含云台数据的结构体
  * @param param 包含云台参数的结构体指针
- * @param target_freq 任务预期的运行频率
+ * @param target_freq 线程预期的运行频率
  */
 void Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit,
                  float target_freq);

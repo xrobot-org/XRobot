@@ -18,7 +18,7 @@
 
 /* Exported constants ------------------------------------------------------- */
 
-/* 所有任务都要define一个“任务运行频率”和“初始化延时” */
+/* 所有线程都要define一个“线程运行频率”和“初始化延时” */
 #define TASK_FREQ_CTRL_CHASSIS (500u)
 #define TASK_FREQ_CTRL_GIMBAL (500u)
 #define TASK_FREQ_CTRL_LAUNCHER (500u)
@@ -35,7 +35,7 @@
 /* Exported types ----------------------------------------------------------- */
 
 typedef struct {
-  /* 各任务，也可以叫做线程 */
+  /* 各线程，也可以叫做线程 */
   struct {
     TaskHandle_t cli;
     TaskHandle_t cmd;
@@ -74,7 +74,7 @@ typedef struct {
       QueueHandle_t ai;
     } cmd;
 
-    /* can任务放入、读取，电机或电容的输入输出 */
+    /* can线程放入、读取，电机或电容的输入输出 */
     struct {
       struct {
         QueueHandle_t chassis;

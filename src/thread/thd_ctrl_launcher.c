@@ -1,7 +1,7 @@
 /**
  * @file ctrl_launcher.c
  * @author Qu Shen (503578404@qq.com)
- * @brief 发射器控制任务
+ * @brief 发射器控制线程
  * @version 1.0.0
  * @date 2021-04-15
  *
@@ -53,7 +53,7 @@ void Thread_CtrlLauncher(void *argument) {
   Launcher_Init(&launcher, &(runtime.cfg.robot_param->launcher),
                 (float)TASK_FREQ_CTRL_LAUNCHER);
 
-  /* 延时一段时间再开启任务 */
+  /* 延时一段时间再开启线程 */
   xQueueReceive(runtime.msgq.can.feedback.launcher, &can, portMAX_DELAY);
 
   uint32_t previous_wake_time = xTaskGetTickCount();

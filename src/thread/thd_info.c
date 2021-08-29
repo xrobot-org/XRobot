@@ -1,7 +1,7 @@
 /**
  * @file info.c
  * @author Qu Shen (503578404@qq.com)
- * @brief 指示任务
+ * @brief 指示线程
  * @version 1.0.0
  * @date 2021-04-15
  *
@@ -32,7 +32,7 @@
 void Thread_Info(void *argument) {
   RM_UNUSED(argument); /* 未使用argument，消除警告 */
 
-  /* 计算任务运行到指定频率需要等待的tick数 */
+  /* 计算线程运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_INFO);
 
   uint32_t previous_wake_time = xTaskGetTickCount();

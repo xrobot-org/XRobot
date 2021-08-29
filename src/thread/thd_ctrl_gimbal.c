@@ -1,7 +1,7 @@
 /**
  * @file ctrl_gimbal.c
  * @author Qu Shen (503578404@qq.com)
- * @brief 云台控制任务
+ * @brief 云台控制线程
  * @version 1.0.0
  * @date 2021-04-15
  *
@@ -51,7 +51,7 @@ void Thread_CtrlGimbal(void *argument) {
   Gimbal_Init(&gimbal, &(runtime.cfg.robot_param->gimbal),
               runtime.cfg.gimbal_limit, (float)TASK_FREQ_CTRL_GIMBAL);
 
-  /* 延时一段时间再开启任务 */
+  /* 延时一段时间再开启线程 */
   xQueueReceive(runtime.msgq.can.feedback.gimbal, &can, portMAX_DELAY);
 
   uint32_t previous_wake_time = xTaskGetTickCount();

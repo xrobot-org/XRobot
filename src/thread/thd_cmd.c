@@ -48,7 +48,7 @@ static CMD_UI_t cmd_ui;
 void Thread_CMD(void *argument) {
   RM_UNUSED(argument); /* 未使用argument，消除警告 */
 
-  /* 计算任务运行到指定频率需要等待的tick数 */
+  /* 计算线程运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_COMMAND);
 
   /* 初始化指令处理 */
@@ -69,7 +69,7 @@ void Thread_CMD(void *argument) {
     }
     CMD_PackUi(&cmd_ui, &cmd);
 
-    /* 将需要与其他任务分享的数据放到消息队列中 */
+    /* 将需要与其他线程分享的数据放到消息队列中 */
     xQueueOverwrite(runtime.msgq.cmd.ai, &(cmd.ai_mode));
 
     xQueueOverwrite(runtime.msgq.cmd.chassis, &(cmd.chassis));
