@@ -123,4 +123,4 @@ TODO
 
 - 底盘Mixer和CAN的Control Group参考[PX4 Mixing and Actuators](https://dev.px4.io/master/en/concept/mixing.html)
 
-- PID请参考[pid.c](User/component/pid.c)
+- PID请参考[pid.c](src/component/comp_pid.c)
