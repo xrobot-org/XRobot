@@ -6,9 +6,6 @@ set(GENERAL_FLAGS "-w --specs=nano.specs --specs=nosys.specs -fno-builtin -ffunc
 set(CMAKE_C_FLAGS "${MCU_FLAGS} ${GENERAL_FLAGS} -fshort-enums -ffast-math -fdiagnostics-color=auto")
 set(CMAKE_ASM_FLAGS "${MCU_FLAGS} -g -x assembler-with-cpp")
 
-# Linker script
-set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/ld/STM32F407IGHx_FLASH.ld)
-
 # Linker Flag
 set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,--cref,--gc-sections,--print-memory-usage,-Map=${CMAKE_PROJECT_NAME}.map")
 
