@@ -79,7 +79,7 @@ TODO
 | ld | 开发者 | 链接脚本 |
 | src | 开发者 | 源代码 |
 | third_party | 开发者 | 第三方仓库 |
-| Utils |  开发者 | 使用到的工具，如CubeMonitor, Matlab |
+| utils |  开发者 | 使用到的工具，如CubeMonitor, Matlab |
 
 | src | 内容 |
 | ---- | ----  |
