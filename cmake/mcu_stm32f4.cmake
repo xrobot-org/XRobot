@@ -12,5 +12,4 @@ set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,--cref,--gc-sections,--print-
 # 处理器相关宏定义
 add_compile_definitions(
     ARM_MATH_CM4
-    STM32F407xx
 )

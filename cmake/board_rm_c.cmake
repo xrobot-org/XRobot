@@ -12,4 +12,5 @@ include(mcu_stm32f4)
 # Board definitions 
 add_compile_definitions(
     BOARD_RM_C
+    STM32F407xx
 )
