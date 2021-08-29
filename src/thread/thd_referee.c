@@ -1,7 +1,7 @@
 /**
  * @file referee.c
  * @author Qu Shen (503578404@qq.com)
- * @brief 裁判系统接收发送任务
+ * @brief 裁判系统接收发送线程
  * @version 1.0.0
  * @date 2021-04-15
  *

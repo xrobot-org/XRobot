@@ -151,7 +151,7 @@ typedef struct {
  *
  * @param l 包含发射器数据的结构体
  * @param param 包含发射器参数的结构体指针
- * @param target_freq 任务预期的运行频率
+ * @param target_freq 线程预期的运行频率
  */
 void Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
                    float target_freq);

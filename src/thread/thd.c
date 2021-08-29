@@ -7,12 +7,12 @@
  *
  * @copyright Copyright (c) 2021
  *
- * 保存任务属性：堆栈大小、优先级等
- * 生成任务时使用。
+ * 保存线程属性：堆栈大小、优先级等
+ * 生成线程时使用。
  *
- * @note 所有直接处理物理设备的任务（CAN、DR16等）优先级应该最高
+ * @note 所有直接处理物理设备的线程（CAN、DR16等）优先级应该最高
  * 设备之间有心计可以不一样，但是需要极其小心
- * 运行模块（module）任务的优先级应该低于物理设备任务优先级
+ * 运行模块（module）线程的优先级应该低于物理设备线程优先级
  * 其他辅助运行的非核心功能应该更低
  *
  */
@@ -58,7 +58,7 @@ void Thread_Init(void) {
   Config_Get(&runtime.cfg); /* 获取机器人配置 */
 
   vTaskSuspendAll();
-  /* 创建任务, 优先级随数字增大而增大 */
+  /* 创建线程, 优先级随数字增大而增大 */
   xTaskCreate(Thread_AttiEsti, "AttiEsti", 256, NULL, 5,
               &runtime.thread.atti_esti);
   xTaskCreate(Thread_CLI, "CLI", 256, NULL, 3, &runtime.thread.cli);

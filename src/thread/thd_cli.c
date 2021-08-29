@@ -56,7 +56,7 @@ static BaseType_t Command_Endian(char *out_buffer, size_t len,
   RM_UNUSED(command_string); /* 没用到command_string，消除警告 */
   len -= 1;                  /* 字符串后面有\0 */
 
-  /* 任务本身相关的内容 */
+  /* 线程本身相关的内容 */
   uint8_t list[2] = {0x11, 0x22};
   uint16_t force_convert = ((uint16_t *)list)[0];
   uint16_t assembled = (uint16_t)(list[0] | (list[1] << 8));
@@ -143,7 +143,7 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       fsm.stage++;
       return pdPASS;
     case 1:
-      /* 获取任务的列表 */
+      /* 获取线程的列表 */
       vTaskList(out_buffer);
       fsm.stage++;
       return pdPASS;
@@ -152,7 +152,7 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       fsm.stage++;
       return pdPASS;
     case 3:
-      /* 获得任务的运行时间 */
+      /* 获得线程的运行时间 */
       vTaskGetRunTimeStats(out_buffer);
       fsm.stage++;
       return pdPASS;

@@ -1,14 +1,14 @@
 /**
  * @file atti_esti.c
  * @author Qu Shen (503578404@qq.com)
- * @brief 姿态解算任务
+ * @brief 姿态解算线程
  * @version 1.0.0
  * @date 2021-04-14
  *
  * @copyright Copyright (c) 2021
  *
  * 控制IMU加热到指定温度防止温漂，收集IMU数据给AHRS算法。
- * 收集BMI088的数据，解算后得到四元数，转换为欧拉角之后放到消息队列中，等待其他任务取用。
+ * 收集BMI088的数据，解算后得到四元数，转换为欧拉角之后放到消息队列中，等待其他线程取用。
  *
  */
 
@@ -120,7 +120,7 @@ void Thread_AttiEsti(void *argument) {
     AHRS_GetEulr(&eulr_to_send, &gimbal_ahrs);
     xTaskResumeAll();
 
-    /* 将需要与其他任务分享的数据放到消息队列中 */
+    /* 将需要与其他线程分享的数据放到消息队列中 */
     xQueueOverwrite(runtime.msgq.gimbal.accl, &bmi088.accl);
     xQueueOverwrite(runtime.msgq.gimbal.eulr_imu, &eulr_to_send);
     xQueueOverwrite(runtime.msgq.ai.quat, &(gimbal_ahrs.quat));

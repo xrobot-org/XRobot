@@ -1,7 +1,7 @@
 /**
  * @file ctrl_cap.c
  * @author Qu Shen (503578404@qq.com)
- * @brief 超级电容控制任务
+ * @brief 超级电容控制线程
  * @version 1.0.0
  * @date 2021-04-15
  *
@@ -43,7 +43,7 @@ static UI_CapUI_t cap_ui;
 void Thread_CtrlCap(void *argument) {
   RM_UNUSED(argument); /* 未使用argument，消除警告 */
 
-  /* 计算任务运行到指定频率需要等待的tick数 */
+  /* 计算线程运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_CAP);
 
   uint32_t previous_wake_time = xTaskGetTickCount();

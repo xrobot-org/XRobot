@@ -1,7 +1,7 @@
 /**
  * @file ctrl_chassis.c
  * @author Qu Shen (503578404@qq.com)
- * @brief 底盘控制任务
+ * @brief 底盘控制线程
  * @version 1.0.0
  * @date 2021-04-14
  *
@@ -57,7 +57,7 @@ void Thread_CtrlChassis(void *argument) {
   Chassis_Init(&chassis, &(runtime.cfg.robot_param->chassis),
                &runtime.cfg.gimbal_mech_zero, (float)TASK_FREQ_CTRL_CHASSIS);
 
-  /* 延时一段时间再开启任务 */
+  /* 延时一段时间再开启线程 */
   xQueueReceive(runtime.msgq.can.feedback.chassis, &can, portMAX_DELAY);
 
   uint32_t previous_wake_time = xTaskGetTickCount();

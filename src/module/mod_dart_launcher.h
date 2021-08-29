@@ -135,7 +135,7 @@ typedef struct {
  *
  * @param dl 包含飞镖发射器数据的结构体
  * @param param 包含飞镖发射器参数的结构体指针
- * @param target_freq 任务预期的运行频率
+ * @param target_freq 线程预期的运行频率
  */
 void DartLauncher_Init(DartLauncher_t *dl, const DartLauncher_Params_t *param,
                        float target_freq);

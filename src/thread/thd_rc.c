@@ -1,7 +1,7 @@
 /**
  * @file rc.c
  * @author Qu Shen (503578404@qq.com)
- * @brief DR16接收机通信任务
+ * @brief DR16接收机通信线程
  * @version 1.0.0
  * @date 2021-04-15
  *
@@ -9,7 +9,7 @@
  *
  * 接收来自DR16的数据
  * 解析为通用的控制数据
- * 放入消息队列供其他任务使用
+ * 放入消息队列供其他线程使用
  *
  */
 
@@ -58,7 +58,7 @@ void Thread_RC(void *argument) {
       /* 处理遥控器离线 */
       DR16_HandleOffline(&dr16, &cmd_rc);
     }
-    /* 发送给cmd任务，进行处理 */
+    /* 发送给cmd线程，进行处理 */
     xQueueOverwrite(runtime.msgq.cmd.src.rc, &cmd_rc);
   }
 }
