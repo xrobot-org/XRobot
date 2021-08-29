@@ -181,12 +181,6 @@ typedef enum {
   CMD_UI_HIT_SWITCH_STOP   /* 打符状态关闭 */
 } CMD_UI_t;
 
-/*裁判系统发送的命令*/
-typedef struct {
-  CMD_UI_t cmd[CMD_REFEREE_MAX_NUM]; /* 命令数组 */
-  uint8_t counter;                   /* 命令计数 */
-} CMD_RefereeCmd_t;
-
 typedef struct {
   int16_t x;
   int16_t y;
@@ -213,7 +207,6 @@ typedef struct {
   CMD_ChassisCmd_t chassis;   /* 底盘控制命令 */
   CMD_GimbalCmd_t gimbal;     /* 云台控制命令 */
   CMD_LauncherCmd_t launcher; /* 发射器控制命令 */
-  CMD_RefereeCmd_t referee;   /* 裁判系统发送命令 */
 } CMD_t;
 
 typedef struct {
@@ -288,15 +281,6 @@ int8_t CMD_ParseRc(CMD_RC_t *rc, CMD_t *cmd, float dt_sec);
  * @return int8_t 0对应没有错误
  */
 int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec);
-
-/**
- * @brief 添加向Referee发送的命令
- *
- * @param ref 命令队列
- * @param cmd 要添加的命令
- * @return int8_t 0对应没有错误
- */
-int8_t CMD_RefereeAdd(CMD_RefereeCmd_t *ref, CMD_UI_t cmd);
 
 #ifdef __cplusplus
 }

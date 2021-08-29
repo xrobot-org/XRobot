@@ -519,43 +519,6 @@ UI_Del_t *Referee_GetDelAdd(Referee_UI_t *ref_ui) {
     return &(ref_ui->del[ref_ui->del_counter++]);
 }
 
-uint8_t Referee_PraseCmd(Referee_UI_t *ref_ui, CMD_UI_t cmd) {
-  switch (cmd) {
-    /* Demo */
-    case CMD_UI_NOTHING:
-      /* 字符 */
-      UI_DrawCharacter(Referee_GetCharacterAdd(ref_ui), "0",
-                       UI_GRAPIC_OPERATION_ADD, UI_GRAPIC_LAYER_AUTOAIM,
-                       RED_BLUE, UI_DEFAULT_WIDTH, 100, 100, 200, 200, "Demo");
-      /* 直线 */
-      UI_DrawLine(Referee_GetGrapicAdd(ref_ui), "2", UI_GRAPIC_OPERATION_ADD,
-                  UI_GRAPIC_LAYER_AUTOAIM, RED_BLUE, UI_DEFAULT_WIDTH, 960, 540,
-                  960, 240);
-      /* 圆形 */
-      UI_DrawCycle(Referee_GetGrapicAdd(ref_ui), "1", UI_GRAPIC_OPERATION_ADD,
-                   UI_GRAPIC_LAYER_AUTOAIM, RED_BLUE, UI_DEFAULT_WIDTH, 900,
-                   500, 10);
-      /* 删除 */
-      UI_DelLayer(Referee_GetDelAdd(ref_ui), UI_DEL_OPERATION_DEL,
-                  UI_GRAPIC_LAYER_AUTOAIM);
-      break;
-    case CMD_UI_AUTO_AIM_START:
-      UI_DrawCharacter(Referee_GetCharacterAdd(ref_ui), "1",
-                       UI_GRAPIC_OPERATION_ADD, UI_GRAPIC_LAYER_AUTOAIM,
-                       RED_BLUE, UI_DEFAULT_WIDTH * 10, 50, UI_DEFAULT_WIDTH,
-                       ref_ui->screen->width * 0.8,
-                       ref_ui->screen->height * 0.5, "AUTO");
-      break;
-    case CMD_UI_AUTO_AIM_STOP:
-      UI_DelLayer(Referee_GetDelAdd(ref_ui), UI_DEL_OPERATION_DEL,
-                  UI_GRAPIC_LAYER_AUTOAIM);
-
-    default:
-      return -1;
-  }
-  return 0;
-}
-
 uint8_t Referee_PackCap(Referee_ForCap_t *cap, const Referee_t *ref) {
   cap->chassis_power_limit = ref->robot_status.chassis_power_limit;
   cap->chassis_pwr_buff = ref->power_heat.chassis_pwr_buff;

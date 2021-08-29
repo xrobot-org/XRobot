@@ -67,6 +67,10 @@ void Task_Ai(void *argument) {
 
     AI_StartSend(&(ai), ref_update);
 
+    AI_DumpUI(&ai);
+    osMessageQueueReset(task_runtime.msgq.ui.ai);
+    osMessageQueuePut(task_runtime.msgq.ui.ai, &(ai.ui), 0, 0);
+
     osDelayUntil(tick);
   }
 }

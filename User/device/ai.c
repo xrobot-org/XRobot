@@ -131,3 +131,8 @@ int8_t AI_StartSend(AI_t *ai, bool ref_update) {
       return DEVICE_ERR;
   }
 }
+
+int8_t AI_DumpUI(AI_t *ai) {
+  ai->ui.status = ai->status;
+  return 0;
+}
