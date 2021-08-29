@@ -60,8 +60,8 @@
   1. `cd build && ninja`
 
 - VS Code 操作
+![命令行界面（CLI）](./image/VSCode编译固件.png?raw=true "命令行界面（CLI）")
   1. 选择构建类型
-  1. 选择构建目标
   1. 编译
 
 ### 调试
