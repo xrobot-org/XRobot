@@ -45,6 +45,8 @@ typedef struct __packed {
   } to_host;
 
   CMD_AI_Status_t status;
+
+  Referee_AIUI_t ui;
 } AI_t;
 
 /* Exported functions prototypes -------------------------------------------- */
@@ -58,6 +60,7 @@ int8_t AI_HandleOffline(AI_t *ai, CMD_Host_t *cmd_host);
 int8_t AI_PackMCU(AI_t *ai, const AHRS_Quaternion_t *quat);
 int8_t AI_PackRef(AI_t *ai, const Referee_ForAI_t *ref);
 int8_t AI_StartSend(AI_t *ai, bool option);
+int8_t AI_DumpUI(AI_t *ai);
 #ifdef __cplusplus
 }
 #endif

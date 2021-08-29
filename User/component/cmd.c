@@ -137,14 +137,12 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
   if (CMD_BehaviorOccurredRc(rc, cmd, CMD_BEHAVIOR_BUFF)) {
     if (cmd->ai_status == AI_STATUS_HITSWITCH) {
       /* 停止ai的打符模式，停用host控制 */
-      CMD_RefereeAdd(&(cmd->referee), CMD_UI_HIT_SWITCH_STOP);
       cmd->host_overwrite = false;
       cmd->ai_status = AI_STATUS_STOP;
     } else if (cmd->ai_status == AI_STATUS_AUTOAIM) {
       /* 自瞄模式中切换失败提醒 */
     } else {
       /* ai切换至打符模式，启用host控制 */
-      CMD_RefereeAdd(&(cmd->referee), CMD_UI_HIT_SWITCH_START);
       cmd->ai_status = AI_STATUS_HITSWITCH;
       cmd->host_overwrite = true;
     }
@@ -154,12 +152,10 @@ static void CMD_PcLogic(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
       /* 停止ai的自瞄模式，停用host控制 */
       cmd->host_overwrite = false;
       cmd->ai_status = AI_STATUS_STOP;
-      CMD_RefereeAdd(&(cmd->referee), CMD_UI_AUTO_AIM_STOP);
     } else {
       /* ai切换至自瞄模式，启用host控制 */
       cmd->ai_status = AI_STATUS_AUTOAIM;
       cmd->host_overwrite = true;
-      CMD_RefereeAdd(&(cmd->referee), CMD_UI_AUTO_AIM_START);
     }
   } else {
     cmd->host_overwrite = false;
@@ -334,24 +330,5 @@ int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
   } else {
     cmd->launcher.mode = LAUNCHER_MODE_SAFE;
   }
-  return 0;
-}
-
-/**
- * @brief 添加向Referee发送的命令
- *
- * @param ref 命令队列
- * @param cmd 要添加的命令
- * @return int8_t 0对应没有错误
- */
-int8_t CMD_RefereeAdd(CMD_RefereeCmd_t *ref, CMD_UI_t cmd) {
-  /* 指针检测 */
-  if (ref == NULL) return -1;
-  /* 越界检测 */
-  if (ref->counter >= CMD_REFEREE_MAX_NUM || ref->counter < 0) return -1;
-
-  /* 添加机器人当前行为状态到画图的命令队列中 */
-  ref->cmd[ref->counter] = cmd;
-  ref->counter++;
   return 0;
 }

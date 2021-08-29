@@ -92,12 +92,6 @@ void Task_Command(void *argument) {
     osMessageQueueReset(task_runtime.msgq.ui.cmd);
     osMessageQueuePut(task_runtime.msgq.ui.cmd, &cmd.pc_ctrl, 0, 0);
 
-    /* 存在裁判系统发送命令时，将相应的画图命令放入消息队列中 */
-    while (cmd.referee.counter > 0) {
-      osMessageQueuePut(task_runtime.msgq.cmd.referee,
-                        &(cmd.referee.cmd[--cmd.referee.counter]), 0, 0);
-      cmd.referee.cmd[cmd.referee.counter] = CMD_UI_NOTHING;
-    }
     osDelayUntil(tick); /* 运行结束，等待下一次唤醒 */
   }
 }

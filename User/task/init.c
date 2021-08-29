@@ -91,7 +91,6 @@ void Task_Init(void *argument) {
       osMessageQueueNew(3u, sizeof(CMD_LauncherCmd_t), NULL);
   task_runtime.msgq.cmd.ai =
       osMessageQueueNew(3u, sizeof(CMD_AI_Status_t), NULL);
-  task_runtime.msgq.cmd.referee = osMessageQueueNew(6u, sizeof(CMD_UI_t), NULL);
 
   /* atti_esti */
   task_runtime.msgq.cmd.raw.rc = osMessageQueueNew(3u, sizeof(CMD_RC_t), NULL);
@@ -132,6 +131,7 @@ void Task_Init(void *argument) {
   task_runtime.msgq.ui.launcher =
       osMessageQueueNew(2u, sizeof(Referee_LauncherUI_t), NULL);
   task_runtime.msgq.ui.cmd = osMessageQueueNew(2u, sizeof(bool), NULL);
+  task_runtime.msgq.ui.ai = osMessageQueueNew(2u, sizeof(Referee_AIUI_t), NULL);
 
   osKernelUnlock();
   osThreadTerminate(osThreadGetId()); /* 结束自身 */

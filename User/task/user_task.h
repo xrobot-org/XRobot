@@ -82,7 +82,6 @@ typedef struct {
       osMessageQueueId_t gimbal;
       osMessageQueueId_t launcher;
       osMessageQueueId_t ai;
-      osMessageQueueId_t referee;
     } cmd;
 
     /* can任务放入、读取，电机或电容的输入输出 */
@@ -123,6 +122,7 @@ typedef struct {
       osMessageQueueId_t launcher;
       osMessageQueueId_t cap;
       osMessageQueueId_t cmd;
+      osMessageQueueId_t ai;
     } ui;
 
   } msgq;

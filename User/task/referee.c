@@ -103,15 +103,10 @@ void Task_Referee(void *argument) {
       osMessageQueueGet(task_runtime.msgq.ui.launcher, &(ui.launcher_ui), NULL,
                         0);
       osMessageQueueGet(task_runtime.msgq.ui.cmd, &(ui.cmd_pc), NULL, 0);
+      osMessageQueueGet(task_runtime.msgq.ui.ai, &(ui.ai_ui), NULL, 0);
       /* 刷新UI数据 */
       Referee_UIRefresh(&ui);
 
-      while (osMessageQueueGet(task_runtime.msgq.cmd.referee, &ref_cmd, NULL,
-                               0) == osOK) {
-        Referee_PraseCmd(&ui, ref_cmd);
-      }
-
-      /* 打包并发送UI数据 */
       Referee_PackUI(&ui, &ref);
     }
   }

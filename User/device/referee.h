@@ -362,6 +362,10 @@ typedef struct {
   CMD_FireMode_t fire;
 } Referee_LauncherUI_t;
 
+typedef struct {
+  CMD_AI_Status_t status;
+} Referee_AIUI_t;
+
 typedef struct __packed {
   /* UI缓冲数据 */
   UI_Ele_t grapic[REF_UI_MAX_GRAPIC_NUM];
@@ -376,6 +380,7 @@ typedef struct __packed {
   Referee_ChassisUI_t chassis_ui;
   Referee_LauncherUI_t launcher_ui;
   Referee_GimbalUI_t gimbal_ui;
+  Referee_AIUI_t ai_ui;
   bool cmd_pc;
   /* 屏幕分辨率 */
   const CMD_Screen_t *screen;
@@ -474,7 +479,6 @@ int8_t Referee_MoveData(void *data, void *tmp, uint32_t len);
 int8_t Referee_PackUI(Referee_UI_t *ui, Referee_t *ref);
 UI_Ele_t *Referee_GetGrapicAdd(Referee_UI_t *ref_ui);
 UI_Drawcharacter_t *Referee_GetCharacterAdd(Referee_UI_t *ref_ui);
-uint8_t Referee_PraseCmd(Referee_UI_t *ref_ui, CMD_UI_t cmd);
 uint8_t Referee_PackCap(Referee_ForCap_t *cap, const Referee_t *ref);
 uint8_t Referee_PackLauncher(Referee_ForLauncher_t *ai, Referee_t *ref);
 uint8_t Referee_PackChassis(Referee_ForChassis_t *chassis,
