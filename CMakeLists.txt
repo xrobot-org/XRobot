@@ -18,13 +18,31 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 #---------------------------------------------------------------------------------------
-# Device config 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-include(device_stm32f4)
 
-#---------------------------------------------------------------------------------------
-# Device config 
-include(board_rm_c)
+message(STATUS "------------------------- Target platform ----------------------------")
+
+# Allow switching of target platform
+set(BOARD_LIST RM_A RM_B RM_C)
+set(BOARD RM_C CACHE STRING "Default target platform is RM_C")
+set_property(CACHE BOARD PROPERTY STRINGS ${BOARD_LIST})
+
+if(BOARD STREQUAL RM_A)
+    include(board_rm_a)
+
+elseif(BOARD STREQUAL RM_B)
+    message(FATAL_ERROR "RM_B are not supported yet.")
+    # TODO
+
+elseif(BOARD STREQUAL RM_C)
+    include(board_rm_c)
+
+else()
+    message(FATAL_ERROR "${BOARD} are not supported.")
+    
+endif()
+
+message(STATUS "Target platform: ${BOARD}")
 
 #---------------------------------------------------------------------------------------
 # Default build for release 
