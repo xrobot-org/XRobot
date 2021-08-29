@@ -11,5 +11,4 @@ add_library(stm32_cmsis STATIC
 target_include_directories(stm32_cmsis PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/stm32_cmsis/Include
     ${CMAKE_CURRENT_LIST_DIR}/arm_cmsis/CMSIS/Core/Include
-    ${CMAKE_CURRENT_LIST_DIR}/arm_cmsis/CMSIS/RTOS2/Include
 )
