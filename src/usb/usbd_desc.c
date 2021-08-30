@@ -1,23 +1,23 @@
+/* USER CODE BEGIN Header */
 /**
  ******************************************************************************
- * @file    usbd_desc.c
- * @author  MCD Application Team
- * @brief   This file provides the USBD descriptors and string formatting
- *method. This should be copied to the user folder, renamed and
- *customized following user needs.
+ * @file           : App/usbd_desc.c
+ * @version        : v1.0_Cube
+ * @brief          : This file implements the USB device descriptors.
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2015 STMicroelectronics.
+ * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
  * All rights reserved.</center></h2>
  *
  * This software component is licensed by ST under Ultimate Liberty license
  * SLA0044, the "License"; You may not use this file except in compliance with
  * the License. You may obtain a copy of the License at:
- *                      www.st.com/SLA0044
+ *                             www.st.com/SLA0044
  *
  ******************************************************************************
  */
+/* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_desc.h"
@@ -25,10 +25,18 @@
 #include "usbd_conf.h"
 #include "usbd_core.h"
 
+/* USER CODE BEGIN INCLUDE */
+
+/* USER CODE END INCLUDE */
+
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
+
+/* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+
+/* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
  * @{
@@ -42,6 +50,14 @@
  * USBD_DESC_Private_TypesDefinitions
  * @brief Private types.
  * @{
+ */
+
+/* USER CODE BEGIN PRIVATE_TYPES */
+
+/* USER CODE END PRIVATE_TYPES */
+
+/**
+ * @}
  */
 
 /** @defgroup USBD_DESC_Private_Defines USBD_DESC_Private_Defines
@@ -59,9 +75,29 @@
 
 #define USB_SIZ_BOS_DESC 0x0C
 
+/* USER CODE BEGIN PRIVATE_DEFINES */
+
+/* USER CODE END PRIVATE_DEFINES */
+
+/**
+ * @}
+ */
+
+/* USER CODE BEGIN 0 */
+
+/* USER CODE END 0 */
+
 /** @defgroup USBD_DESC_Private_Macros USBD_DESC_Private_Macros
  * @brief Private macros.
  * @{
+ */
+
+/* USER CODE BEGIN PRIVATE_MACRO */
+
+/* USER CODE END PRIVATE_MACRO */
+
+/**
+ * @}
  */
 
 /** @defgroup USBD_DESC_Private_FunctionPrototypes
@@ -72,6 +108,10 @@
 
 static void Get_SerialNum(void);
 static void IntToUnicode(uint32_t value, uint8_t *pbuf, uint8_t len);
+
+/**
+ * @}
+ */
 
 /** @defgroup USBD_DESC_Private_FunctionPrototypes
  * USBD_DESC_Private_FunctionPrototypes
@@ -208,7 +248,7 @@ __ALIGN_BEGIN uint8_t USBD_StringSerial[USB_SIZ_STRING_SERIAL] __ALIGN_END = {
  * @retval Pointer to descriptor buffer
  */
 uint8_t *USBD_FS_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
-  RM_UNUSED(speed);
+  UNUSED(speed);
   *length = sizeof(USBD_FS_DeviceDesc);
   return USBD_FS_DeviceDesc;
 }
@@ -221,7 +261,7 @@ uint8_t *USBD_FS_DeviceDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
  */
 uint8_t *USBD_FS_LangIDStrDescriptor(USBD_SpeedTypeDef speed,
                                      uint16_t *length) {
-  RM_UNUSED(speed);
+  UNUSED(speed);
   *length = sizeof(USBD_LangIDDesc);
   return USBD_LangIDDesc;
 }
@@ -250,7 +290,7 @@ uint8_t *USBD_FS_ProductStrDescriptor(USBD_SpeedTypeDef speed,
  */
 uint8_t *USBD_FS_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed,
                                            uint16_t *length) {
-  RM_UNUSED(speed);
+  UNUSED(speed);
   USBD_GetString((uint8_t *)USBD_MANUFACTURER_STRING, USBD_StrDesc, length);
   return USBD_StrDesc;
 }
@@ -263,7 +303,7 @@ uint8_t *USBD_FS_ManufacturerStrDescriptor(USBD_SpeedTypeDef speed,
  */
 uint8_t *USBD_FS_SerialStrDescriptor(USBD_SpeedTypeDef speed,
                                      uint16_t *length) {
-  RM_UNUSED(speed);
+  UNUSED(speed);
   *length = USB_SIZ_STRING_SERIAL;
 
   /* Update the serial number string descriptor with the data from the unique
@@ -317,7 +357,7 @@ uint8_t *USBD_FS_InterfaceStrDescriptor(USBD_SpeedTypeDef speed,
  * @retval Pointer to descriptor buffer
  */
 uint8_t *USBD_FS_USR_BOSDescriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
-  RM_UNUSED(speed);
+  UNUSED(speed);
   *length = sizeof(USBD_FS_BOSDesc);
   return (uint8_t *)USBD_FS_BOSDesc;
 }
@@ -365,5 +405,16 @@ static void IntToUnicode(uint32_t value, uint8_t *pbuf, uint8_t len) {
     pbuf[2 * idx + 1] = 0;
   }
 }
+/**
+ * @}
+ */
+
+/**
+ * @}
+ */
+
+/**
+ * @}
+ */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
