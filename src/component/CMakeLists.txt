@@ -7,7 +7,9 @@ file(GLOB ${PROJECT_NAME}_SOURCES
 
 add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES})
 
-# target_link_libraries(${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE m
+)
 
 target_include_directories(${PROJECT_NAME} 
     PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}
