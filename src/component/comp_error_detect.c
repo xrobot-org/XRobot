@@ -7,59 +7,64 @@
 #include <stddef.h>
 #include <string.h>
 
-static ErrorDetect_t ged;
-static bool inited = false;
+#define MAX_ERROR_DETECTOR (10)
+#define MAX_NAME_LEN (20)
 
-int8_t ErrorDetect_Init(void) {
-  if (inited) return -1;
+typedef struct {
+  char name[MAX_NAME_LEN];
+  uint8_t priority;
+  uint32_t patient_lost;
+  uint32_t patient_work;
 
-  memset(&ged, 0x00, sizeof(ged));
+  bool enable;
+  uint32_t showup_last;
+  uint32_t cycle_time;
+  uint32_t duration_lost;
+  uint32_t duration_work;
+  uint32_t found_lost;
+  bool lost;
 
-  for (uint8_t i = 0; i < ERROR_DETECT_UNIT_NUM; i++) {
-    ged.error[i].enable = true;
-    ged.error[i].priority = i;
-    ged.error[i].patient_lost = 500;
-    ged.error[i].patient_work = 500;
+} ErrorDetect_t;
+
+ErrorDetect_t list[MAX_ERROR_DETECTOR];
+
+bool ErrorDetect_Init(ErrorDetect_Handle_t handle, const char *name,
+                      uint8_t priority, uint32_t patient_lost,
+                      uint32_t patient_work) {
+  for (size_t i = 0; i < MAX_ERROR_DETECTOR; i++) {
+    if (list[i].name == NULL) {
+      strncpy(name, list[i].name, MAX_NAME_LEN - 1);
+      list[i].name[MAX_NAME_LEN] = '\0';
+      list[i].priority = priority;
+      list[i].patient_lost = patient_lost;
+      list[i].patient_work = patient_work;
+      return true;
+    }
   }
-  return 0;
+  return false;
 }
 
-void ErrorDetect_Processing(uint32_t sys_time) {
-  for (uint8_t i = 0; i < ERROR_DETECT_UNIT_NUM; i++) {
-    if (!ged.error[i].enable) continue;
+void ErrorDetect_Update(ErrorDetect_Handle_t handle, uint32_t sys_time) {
+  list[handle].cycle_time = sys_time - list[handle].showup_last;
+  list[handle].showup_last = sys_time;
+  list[handle].duration_lost = 0;
+  list[handle].duration_work += list[handle].cycle_time;
+}
 
-    if (sys_time - ged.error[i].showup > ged.error[i].patient_lost) {
-      ged.error[i].is_lost = true;
-      ged.error[i].found_lost = sys_time;
-    } else if (sys_time - ged.error[i].showup > ged.error[i].patient_lost) {
-    } else {
-      ged.error[i].cycle_time = ged.error[i].showup - ged.error[i].showup_last;
+void ErrorDetect_Check(uint32_t sys_time) {
+  for (size_t i = 0; i < MAX_ERROR_DETECTOR; i++) {
+    if (list[i].name != NULL) {
+      if (sys_time - list[i].showup_last > list[i].patient_lost) {
+        list[i].lost = true;
+        list[i].found_lost = sys_time;
+        list[i].duration_work = 0;
+      }
     }
   }
 }
 
-bool ErrorDetect_ErrorExist(ErrorDetect_Unit_t unit) {
-  if (unit == ERROR_DETECT_UNIT_NO_DEV) {
-    for (uint8_t i = ERROR_DETECT_UNIT_NUM; i > 0; i--) {
-      if (ged.error[i].error_exist) return true;
-    }
-    return false;
-  } else {
-    return ged.error[unit].error_exist;
-  }
-}
-
-ErrorDetect_Unit_t ErrorDetect_GetErrorUnit(void) {
-  for (uint8_t i = ERROR_DETECT_UNIT_NUM; i > 0; i--) {
-    if (ged.error[i].error_exist) return i;
-  }
-  return ERROR_DETECT_UNIT_NO_DEV;
-}
-
-const ErrorDetect_Error_t *ErrorDetect_GetDetail(ErrorDetect_Unit_t unit) {
-  return &ged.error[unit];
-}
-
-void ErrorDetect_Update(ErrorDetect_Unit_t unit, uint32_t time_current) {
-  ged.error[unit].showup = time_current;
+void ErrorDetect_Detail(char *detail_string, size_t len) {
+  static const char *const header = "\r\n";
+  strncpy(header, detail_string, len - 1);
+  detail_string[len] = '\0';
 }
