@@ -42,7 +42,7 @@
 
 - 在Windows中安装[Visual Studio Code](https://code.visualstudio.com/)
   - 安装必备插件`C/C++` `CMake`
-- 在WSL2中安装依赖`sudo apt install cmake arm-none-eabi-gcc ninja`
+- 在WSL2中安装依赖`sudo apt install cmake gcc-arm-none-eabi ninja-build`
 
 ### 获取源代码
 
