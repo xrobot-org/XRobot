@@ -53,33 +53,29 @@
 ENTRY(Reset_Handler)
 
 /* Highest address of the user mode stack */
-_estack = 0x20020000;    /* end of RAM */
+_estack = 0x20020000; /* end of RAM */
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0x1000;      /* required amount of heap  */
+_Min_Heap_Size = 0x1000; /* required amount of heap  */
 _Min_Stack_Size = 0x1000; /* required amount of stack */
 
-/* Specify the memory areas */
-MEMORY
-{
-RAM (xrw)      : ORIGIN = 0x20000000, LENGTH = 128K
-CCMRAM (xrw)      : ORIGIN = 0x10000000, LENGTH = 64K
-FLASH (rx)      : ORIGIN = 0x8000000, LENGTH = 1024K
+/* list of our memory sections */
+MEMORY {
+  RAM (xrw)     : ORIGIN = 0x20000000, LENGTH = 128K
+  CCMRAM (xrw)  : ORIGIN = 0x10000000, LENGTH = 64K
+  FLASH (rx)    : ORIGIN = 0x8000000, LENGTH = 1024K
 }
 
-/* Define output sections */
-SECTIONS
-{
-  /* The startup code goes first into FLASH */
-  .isr_vector :
-  {
+/* how we’re organizing memory sections defined in each module */
+SECTIONS {
+  /* The startup code */
+  .isr_vector : {
     . = ALIGN(4);
     KEEP(*(.isr_vector)) /* Startup code */
     . = ALIGN(4);
-  } >FLASH
+  } > FLASH /* goes first into FLASH */
 
-  /* The program code and other data goes into FLASH */
-  .text :
-  {
+  /* The program code */
+  .text : {
     . = ALIGN(4);
     *(.text)           /* .text sections (code) */
     *(.text*)          /* .text* sections (code) */
@@ -92,44 +88,45 @@ SECTIONS
 
     . = ALIGN(4);
     _etext = .;        /* define a global symbols at end of code */
-  } >FLASH
+  } > FLASH /*  goes into FLASH */
 
   /* Constant data goes into FLASH */
-  .rodata :
-  {
+  .rodata : {
     . = ALIGN(4);
     *(.rodata)         /* .rodata sections (constants, strings, etc.) */
     *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
     . = ALIGN(4);
-  } >FLASH
+  } > FLASH
 
-  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
+  .ARM.extab : {
+    *(.ARM.extab* .gnu.linkonce.armextab.*) 
+  } > FLASH
+
   .ARM : {
     __exidx_start = .;
     *(.ARM.exidx*)
     __exidx_end = .;
-  } >FLASH
+  } > FLASH
 
-  .preinit_array     :
-  {
+  .preinit_array : {
     PROVIDE_HIDDEN (__preinit_array_start = .);
     KEEP (*(.preinit_array*))
     PROVIDE_HIDDEN (__preinit_array_end = .);
-  } >FLASH
-  .init_array :
-  {
+  } > FLASH
+
+  .init_array : {
     PROVIDE_HIDDEN (__init_array_start = .);
     KEEP (*(SORT(.init_array.*)))
     KEEP (*(.init_array*))
     PROVIDE_HIDDEN (__init_array_end = .);
-  } >FLASH
-  .fini_array :
-  {
+  } > FLASH
+
+  .fini_array : {
     PROVIDE_HIDDEN (__fini_array_start = .);
     KEEP (*(SORT(.fini_array.*)))
     KEEP (*(.fini_array*))
     PROVIDE_HIDDEN (__fini_array_end = .);
-  } >FLASH
+  } > FLASH
 
   /* used by the startup to initialize data */
   _sidata = LOADADDR(.data);
@@ -144,7 +141,7 @@ SECTIONS
 
     . = ALIGN(4);
     _edata = .;        /* define a global symbol at data end */
-  } >RAM AT> FLASH
+  } > RAM AT > FLASH
 
   _siccmram = LOADADDR(.ccmram);
 
@@ -163,7 +160,7 @@ SECTIONS
     
     . = ALIGN(4);
     _eccmram = .;       /* create a global symbol at ccmram end */
-  } >CCMRAM AT> FLASH
+  } > CCMRAM AT > FLASH
 
   
   /* Uninitialized data section */
@@ -180,7 +177,7 @@ SECTIONS
     . = ALIGN(4);
     _ebss = .;         /* define a global symbol at bss end */
     __bss_end__ = _ebss;
-  } >RAM
+  } > RAM
 
   /* User_heap_stack section, used to check that there is enough RAM left */
   ._user_heap_stack :
@@ -191,7 +188,7 @@ SECTIONS
     . = . + _Min_Heap_Size;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
-  } >RAM
+  } > RAM
 
   
 
