@@ -99,6 +99,16 @@
 #define RM_UNUSED(X) ((void)X)
 #endif
 
+/**
+ * @brief 获取结构体或者联合成员的容器
+ *
+ */
+#define CONTAINER_OF(ptr, type, member)                \
+  ({                                                   \
+    const typeof(((type *)0)->member) *__mptr = (ptr); \
+    (type *)((char *)__mptr - offsetof(type, member)); \
+  })
+
 /* 移动向量 */
 typedef struct {
   float vx; /* 前后平移 */
