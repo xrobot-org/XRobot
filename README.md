@@ -88,6 +88,7 @@ TODO
 | device | 独立于开发板的设备，依赖于HAL和bsp |
 | firmware | 固件入口 |
 | hal | 硬件抽象层 |
+| middleware | 中间件，基于RTOS为thread提供功能 |
 | module | 对机器人各模块的抽象，各模块一起组成机器人 |
 | rtos | 实时操作系统 |
 | thread | 独立的线程，module的运行容器，也包含通信、姿态解算等 |
