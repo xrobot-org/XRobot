@@ -43,26 +43,27 @@ static UI_GimbalUI_t gimbal_ui;
  *
  * @param argument 未使用
  */
-void Thread_CtrlGimbal(void *argument) {
-  RM_UNUSED(argument); /* 未使用argument，消除警告 */
+void Thread_CtrlGimbal(void* argument) {
+  Runtime_t* runtime = argument;
 
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_GIMBAL);
   /* 初始化云台 */
-  Gimbal_Init(&gimbal, &(runtime.cfg.robot_param->gimbal),
-              runtime.cfg.gimbal_limit, (float)TASK_FREQ_CTRL_GIMBAL);
+  Gimbal_Init(&gimbal, &(runtime->cfg.robot_param->gimbal),
+              runtime->cfg.gimbal_limit, (float)TASK_FREQ_CTRL_GIMBAL);
 
   /* 延时一段时间再开启线程 */
-  xQueueReceive(runtime.msgq.can.feedback.gimbal, &can, portMAX_DELAY);
+  xQueueReceive(runtime->msgq.can.feedback.gimbal, &can, portMAX_DELAY);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 
   while (1) {
-    xQueueReceive(runtime.msgq.can.feedback.gimbal, &can, 0);
+    xQueueReceive(runtime->msgq.can.feedback.gimbal, &can, 0);
 
     /* 读取控制指令、姿态、IMU数据 */
-    xQueueReceive(runtime.msgq.gimbal.eulr_imu, &(gimbal.feedback.eulr.imu), 0);
-    xQueueReceive(runtime.msgq.gimbal.gyro, &(gimbal.feedback.gyro), 0);
-    xQueueReceive(runtime.msgq.cmd.gimbal, &gimbal_cmd, 0);
+    xQueueReceive(runtime->msgq.gimbal.eulr_imu, &(gimbal.feedback.eulr.imu),
+                  0);
+    xQueueReceive(runtime->msgq.gimbal.gyro, &(gimbal.feedback.gyro), 0);
+    xQueueReceive(runtime->msgq.cmd.gimbal, &gimbal_cmd, 0);
 
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     Gimbal_UpdateFeedback(&gimbal, &can);
@@ -71,8 +72,8 @@ void Thread_CtrlGimbal(void *argument) {
     Gimbal_PackUi(&gimbal, &gimbal_ui);
     xTaskResumeAll();
 
-    xQueueOverwrite(runtime.msgq.can.output.gimbal, &gimbal_out);
-    xQueueOverwrite(runtime.msgq.ui.gimbal, &gimbal_ui);
+    xQueueOverwrite(runtime->msgq.can.output.gimbal, &gimbal_out);
+    xQueueOverwrite(runtime->msgq.ui.gimbal, &gimbal_ui);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, delay_tick);

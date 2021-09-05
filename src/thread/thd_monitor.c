@@ -31,8 +31,8 @@
  *
  * @param argument 未使用
  */
-void Thread_Monitor(void *argument) {
-  RM_UNUSED(argument); /* 未使用argument，消除警告 */
+void Thread_Monitor(void* argument) {
+  Runtime_t* runtime = argument;
 
   /* 计算线程运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_MONITOR);
@@ -40,12 +40,12 @@ void Thread_Monitor(void *argument) {
   uint32_t previous_wake_time = xTaskGetTickCount();
 
   while (1) {
-    runtime.status.vbat = BSP_GetBatteryVolt(); /* ADC监测电压 */
-    runtime.status.battery = Capacity_GetBatteryRemain(runtime.status.vbat);
-    runtime.status.cpu_temp = BSP_GetTemperature();
+    runtime->status.vbat = BSP_GetBatteryVolt(); /* ADC监测电压 */
+    runtime->status.battery = Capacity_GetBatteryRemain(runtime->status.vbat);
+    runtime->status.cpu_temp = BSP_GetTemperature();
 
-    bool low_bat = runtime.status.battery < 0.5f;
-    bool high_cpu_temp = runtime.status.cpu_temp > 50.0f;
+    bool low_bat = runtime->status.battery < 0.5f;
+    bool high_cpu_temp = runtime->status.cpu_temp > 50.0f;
 
     /* 电池电量少于20%时闪烁红色LED */
     if (low_bat || high_cpu_temp) {

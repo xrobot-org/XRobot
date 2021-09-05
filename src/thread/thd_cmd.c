@@ -45,40 +45,40 @@ static CMD_UI_t cmd_ui;
  *
  * @param argument 未使用
  */
-void Thread_CMD(void *argument) {
-  RM_UNUSED(argument); /* 未使用argument，消除警告 */
+void Thread_CMD(void* argument) {
+  Runtime_t* runtime = argument;
 
   /* 计算线程运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_COMMAND);
 
   /* 初始化指令处理 */
-  CMD_Init(&cmd, &(runtime.cfg.pilot_cfg->param));
+  CMD_Init(&cmd, &(runtime->cfg.pilot_cfg->param));
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 
   while (1) {
     /* 将接收机数据解析为指令数据 */
-    if (xQueueReceive(runtime.msgq.cmd.src.rc, &rc, 0) == pdPASS)
+    if (xQueueReceive(runtime->msgq.cmd.src.rc, &rc, 0) == pdPASS)
       CMD_ParseRc(&rc, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
 
     /* 判断是否需要让上位机覆写指令 */
     if (CMD_CheckHostOverwrite(&cmd)) {
-      if (xQueueReceive(runtime.msgq.cmd.src.host, &host, 0) == pdPASS) {
+      if (xQueueReceive(runtime->msgq.cmd.src.host, &host, 0) == pdPASS) {
         CMD_ParseHost(&host, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
       }
     }
     CMD_PackUi(&cmd_ui, &cmd);
 
     /* 将需要与其他线程分享的数据放到消息队列中 */
-    xQueueOverwrite(runtime.msgq.cmd.ai, &(cmd.ai_mode));
+    xQueueOverwrite(runtime->msgq.cmd.ai, &(cmd.ai_mode));
 
-    xQueueOverwrite(runtime.msgq.cmd.chassis, &(cmd.chassis));
+    xQueueOverwrite(runtime->msgq.cmd.chassis, &(cmd.chassis));
 
-    xQueueOverwrite(runtime.msgq.cmd.gimbal, &(cmd.gimbal));
+    xQueueOverwrite(runtime->msgq.cmd.gimbal, &(cmd.gimbal));
 
-    xQueueOverwrite(runtime.msgq.cmd.launcher, &(cmd.launcher));
+    xQueueOverwrite(runtime->msgq.cmd.launcher, &(cmd.launcher));
 
-    xQueueOverwrite(runtime.msgq.ui.cmd, &cmd_ui);
+    xQueueOverwrite(runtime->msgq.ui.cmd, &cmd_ui);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, delay_tick);

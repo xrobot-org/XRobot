@@ -32,8 +32,8 @@ static Referee_ForAI_t referee_ai;
  *
  * @param argument 未使用
  */
-void Thread_AI(void *argument) {
-  RM_UNUSED(argument); /* 未使用argument，消除警告 */
+void Thread_AI(void* argument) {
+  Runtime_t* runtime = argument;
 
   /* 计算任务运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_AI);
@@ -45,10 +45,10 @@ void Thread_AI(void *argument) {
   uint32_t missed_delay = 0;
 
   while (1) {
-    xQueueReceive(runtime.msgq.ai.quat, &(ai_quat), 0);
-    xQueueReceive(runtime.msgq.cmd.ai, &(ai.mode), 0);
+    xQueueReceive(runtime->msgq.ai.quat, &(ai_quat), 0);
+    xQueueReceive(runtime->msgq.cmd.ai, &(ai.mode), 0);
     bool ref_update =
-        (xQueueReceive(runtime.msgq.referee.ai, &(referee_ai), 0) == pdPASS);
+        (xQueueReceive(runtime->msgq.referee.ai, &(referee_ai), 0) == pdPASS);
 
     AI_StartReceiving(&ai);
     // TODO: wait里面必须加timeout
@@ -60,7 +60,7 @@ void Thread_AI(void *argument) {
 
     if (ai.mode != AI_MODE_STOP && ai.ai_online) {
       AI_PackCmd(&ai, &cmd_host);
-      xQueueOverwrite(runtime.msgq.cmd.src.host, &(cmd_host));
+      xQueueOverwrite(runtime->msgq.cmd.src.host, &(cmd_host));
     }
 
     AI_PackMcu(&ai, &ai_quat);
@@ -69,7 +69,7 @@ void Thread_AI(void *argument) {
     AI_StartTrans(&ai, ref_update);
 
     AI_PackUi(&ai_ui, &ai);
-    xQueueOverwrite(runtime.msgq.ui.ai, &(cmd_host));
+    xQueueOverwrite(runtime->msgq.ui.ai, &(cmd_host));
     missed_delay += xTaskDelayUntil(&previous_wake_time, delay_tick);
   }
 }

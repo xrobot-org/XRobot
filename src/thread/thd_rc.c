@@ -41,8 +41,8 @@ static CMD_RC_t cmd_rc;
  *
  * @param argument 未使用
  */
-void Thread_RC(void *argument) {
-  RM_UNUSED(argument); /* 未使用，消除警告 */
+void Thread_RC(void* argument) {
+  Runtime_t* runtime = argument;
 
   DR16_Init(&dr16); /* 初始化dr16 */
 
@@ -59,6 +59,6 @@ void Thread_RC(void *argument) {
       DR16_HandleOffline(&dr16, &cmd_rc);
     }
     /* 发送给cmd线程，进行处理 */
-    xQueueOverwrite(runtime.msgq.cmd.src.rc, &cmd_rc);
+    xQueueOverwrite(runtime->msgq.cmd.src.rc, &cmd_rc);
   }
 }

@@ -45,24 +45,24 @@ static UI_LauncherUI_t launcher_ui;
  *
  * @param argument 未使用
  */
-void Thread_CtrlLauncher(void *argument) {
-  RM_UNUSED(argument); /* 未使用argument，消除警告 */
+void Thread_CtrlLauncher(void* argument) {
+  Runtime_t* runtime = argument;
 
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_LAUNCHER);
   /* 初始化发射器 */
-  Launcher_Init(&launcher, &(runtime.cfg.robot_param->launcher),
+  Launcher_Init(&launcher, &(runtime->cfg.robot_param->launcher),
                 (float)TASK_FREQ_CTRL_LAUNCHER);
 
   /* 延时一段时间再开启线程 */
-  xQueueReceive(runtime.msgq.can.feedback.launcher, &can, portMAX_DELAY);
+  xQueueReceive(runtime->msgq.can.feedback.launcher, &can, portMAX_DELAY);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 
   while (1) {
-    xQueueReceive(runtime.msgq.can.feedback.launcher, &can, 0);
+    xQueueReceive(runtime->msgq.can.feedback.launcher, &can, 0);
     /* 读取控制指令以及裁判系统信息 */
-    xQueueReceive(runtime.msgq.cmd.launcher, &launcher_cmd, 0);
-    xQueueReceive(runtime.msgq.referee.launcher, &referee_launcher, 0);
+    xQueueReceive(runtime->msgq.cmd.launcher, &launcher_cmd, 0);
+    xQueueReceive(runtime->msgq.referee.launcher, &referee_launcher, 0);
 
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     Launcher_UpdateFeedback(&launcher, &can);
@@ -72,8 +72,8 @@ void Thread_CtrlLauncher(void *argument) {
     Launcher_PackUi(&launcher, &launcher_ui);
     xTaskResumeAll();
 
-    xQueueOverwrite(runtime.msgq.can.output.launcher, &launcher_out);
-    xQueueOverwrite(runtime.msgq.ui.launcher, &launcher_ui);
+    xQueueOverwrite(runtime->msgq.can.output.launcher, &launcher_out);
+    xQueueOverwrite(runtime->msgq.ui.launcher, &launcher_ui);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, delay_tick);

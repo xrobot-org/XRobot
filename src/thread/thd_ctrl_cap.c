@@ -40,8 +40,8 @@ static UI_CapUI_t cap_ui;
  *
  * @param argument 未使用
  */
-void Thread_CtrlCap(void *argument) {
-  RM_UNUSED(argument); /* 未使用argument，消除警告 */
+void Thread_CtrlCap(void* argument) {
+  Runtime_t* runtime = argument;
 
   /* 计算线程运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_CAP);
@@ -50,10 +50,10 @@ void Thread_CtrlCap(void *argument) {
 
   while (1) {
     /* 读取裁判系统信息 */
-    xQueueReceive(runtime.msgq.referee.cap, &referee_cap, 0);
+    xQueueReceive(runtime->msgq.referee.cap, &referee_cap, 0);
 
     /* 一定时间长度内接收不到电容反馈值，使电容离线 */
-    if (xQueueReceive(runtime.msgq.can.feedback.cap, &can, 500) != pdPASS) {
+    if (xQueueReceive(runtime->msgq.can.feedback.cap, &can, 500) != pdPASS) {
       Cap_HandleOffline(&cap, &cap_out, GAME_CHASSIS_MAX_POWER_WO_REF);
     } else {
       vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
@@ -63,12 +63,12 @@ void Thread_CtrlCap(void *argument) {
       xTaskResumeAll();
     }
     /* 将电容输出值发送到CAN */
-    xQueueOverwrite(runtime.msgq.can.output.cap, &cap_out);
+    xQueueOverwrite(runtime->msgq.can.output.cap, &cap_out);
     /* 将电容状态发送到Chassis */
-    xQueueOverwrite(runtime.msgq.cap_info, &(cap));
+    xQueueOverwrite(runtime->msgq.cap_info, &(cap));
 
     Cap_PackUi(&cap, &cap_ui);
-    xQueueOverwrite(runtime.msgq.ui.cap, &cap_ui);
+    xQueueOverwrite(runtime->msgq.ui.cap, &cap_ui);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, delay_tick);

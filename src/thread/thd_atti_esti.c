@@ -63,12 +63,12 @@ static const KPID_Params_t imu_temp_ctrl_pid_param = {
  *
  * @param argument 未使用
  */
-void Thread_AttiEsti(void *argument) {
-  RM_UNUSED(argument); /* 未使用argument，消除警告 */
+void Thread_AttiEsti(void* argument) {
+  Runtime_t* runtime = argument;
 
   /* 初始化设备 */
-  BMI088_Init(&bmi088, &(runtime.cfg.cali.bmi088));
-  // IST8310_Init(&ist8310, &(runtime.cfg.cali.ist8310));
+  BMI088_Init(&bmi088, &(runtime->cfg.cali.bmi088));
+  // IST8310_Init(&ist8310, &(runtime->cfg.cali.ist8310));
 
   /* 读取一次磁力计数据，用以初始化姿态解算算法 */
   // IST8310_WaitNew(osWaitForever);
@@ -121,10 +121,10 @@ void Thread_AttiEsti(void *argument) {
     xTaskResumeAll();
 
     /* 将需要与其他线程分享的数据放到消息队列中 */
-    xQueueOverwrite(runtime.msgq.gimbal.accl, &bmi088.accl);
-    xQueueOverwrite(runtime.msgq.gimbal.eulr_imu, &eulr_to_send);
-    xQueueOverwrite(runtime.msgq.ai.quat, &(gimbal_ahrs.quat));
-    xQueueOverwrite(runtime.msgq.gimbal.gyro, &bmi088.gyro);
+    xQueueOverwrite(runtime->msgq.gimbal.accl, &bmi088.accl);
+    xQueueOverwrite(runtime->msgq.gimbal.eulr_imu, &eulr_to_send);
+    xQueueOverwrite(runtime->msgq.ai.quat, &(gimbal_ahrs.quat));
+    xQueueOverwrite(runtime->msgq.gimbal.gyro, &bmi088.gyro);
 
     /* PID控制IMU温度，PWM输出 */
     BSP_PWM_Set(BSP_PWM_IMU_HEAT,

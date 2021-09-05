@@ -59,24 +59,26 @@ void Thread_Init(void) {
 
   vTaskSuspendAll();
   /* 创建线程, 优先级随数字增大而增大 */
-  xTaskCreate(Thread_AttiEsti, "AttiEsti", 256, NULL, 5,
+  xTaskCreate(Thread_AttiEsti, "AttiEsti", 256, &runtime, 5,
               &runtime.thread.atti_esti);
-  xTaskCreate(Thread_CLI, "CLI", 256, NULL, 3, &runtime.thread.cli);
-  xTaskCreate(Thread_CMD, "CMD", 128, NULL, 4, &runtime.thread.cmd);
-  xTaskCreate(Thread_CtrlCap, "CtrlCap", 128, NULL, 3,
+  xTaskCreate(Thread_CLI, "CLI", 256, &runtime, 3, &runtime.thread.cli);
+  xTaskCreate(Thread_CMD, "CMD", 128, &runtime, 4, &runtime.thread.cmd);
+  xTaskCreate(Thread_CtrlCap, "CtrlCap", 128, &runtime, 3,
               &runtime.thread.ctrl_cap);
-  xTaskCreate(Thread_CtrlChassis, "CtrlChassis", 256, NULL, 3,
+  xTaskCreate(Thread_CtrlChassis, "CtrlChassis", 256, &runtime, 3,
               &runtime.thread.ctrl_chassis);
-  xTaskCreate(Thread_CtrlGimbal, "CtrlGimbal", 256, NULL, 3,
+  xTaskCreate(Thread_CtrlGimbal, "CtrlGimbal", 256, &runtime, 3,
               &runtime.thread.ctrl_gimbal);
-  xTaskCreate(Thread_CtrlLauncher, "CtrlLauncher", 256, NULL, 3,
+  xTaskCreate(Thread_CtrlLauncher, "CtrlLauncher", 256, &runtime, 3,
               &runtime.thread.ctrl_launcher);
-  xTaskCreate(Thread_Info, "Info", 128, NULL, 2, &runtime.thread.info);
-  xTaskCreate(Thread_Monitor, "Monitor", 128, NULL, 2, &runtime.thread.monitor);
-  xTaskCreate(Thread_CAN, "CAN", 128, NULL, 5, &runtime.thread.can);
-  xTaskCreate(Thread_Referee, "Referee", 512, NULL, 5, &runtime.thread.referee);
-  xTaskCreate(Thread_AI, "AI", 128, NULL, 5, &runtime.thread.ai);
-  xTaskCreate(Thread_RC, "RC", 128, NULL, 5, &runtime.thread.rc);
+  xTaskCreate(Thread_Info, "Info", 128, &runtime, 2, &runtime.thread.info);
+  xTaskCreate(Thread_Monitor, "Monitor", 128, &runtime, 2,
+              &runtime.thread.monitor);
+  xTaskCreate(Thread_CAN, "CAN", 128, &runtime, 5, &runtime.thread.can);
+  xTaskCreate(Thread_Referee, "Referee", 512, &runtime, 5,
+              &runtime.thread.referee);
+  xTaskCreate(Thread_AI, "AI", 128, &runtime, 5, &runtime.thread.ai);
+  xTaskCreate(Thread_RC, "RC", 128, &runtime, 5, &runtime.thread.rc);
 
   /* 创建消息队列 */
   /* motor */

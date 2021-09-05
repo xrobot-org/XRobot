@@ -35,12 +35,12 @@ static CAN_RawRx_t can_rx;
 
 /* Private function --------------------------------------------------------- */
 /* Exported functions ------------------------------------------------------- */
-void Thread_CAN(void *argument) {
-  RM_UNUSED(argument);
+void Thread_CAN(void* argument) {
+  Runtime_t* runtime = argument;
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CAN);
 
   /* Device Setup */
-  CAN_Init(&can, &runtime.cfg.robot_param->can);
+  CAN_Init(&can, &runtime->cfg.robot_param->can);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 
@@ -49,40 +49,40 @@ void Thread_CAN(void *argument) {
     while (xQueueReceive(can.msgq_raw, &can_rx, 0) == pdPASS) {
       CAN_StoreMsg(&can, &can_rx);
     }
-    xQueueOverwrite(runtime.msgq.can.feedback.chassis, &can);
+    xQueueOverwrite(runtime->msgq.can.feedback.chassis, &can);
 
-    xQueueOverwrite(runtime.msgq.can.feedback.gimbal, &can);
+    xQueueOverwrite(runtime->msgq.can.feedback.gimbal, &can);
 
-    xQueueOverwrite(runtime.msgq.can.feedback.launcher, &can);
+    xQueueOverwrite(runtime->msgq.can.feedback.launcher, &can);
 
     if (CAN_CheckFlag(&can, CAN_REC_CAP_FINISHED, true)) {
-      xQueueOverwrite(runtime.msgq.can.feedback.cap, &can);
+      xQueueOverwrite(runtime->msgq.can.feedback.cap, &can);
     } else {
       // Error Handle
     }
 
     if (CAN_CheckFlag(&can, CAN_REC_TOF_FINISHED, true)) {
-      xQueueOverwrite(runtime.msgq.can.feedback.tof, &can);
+      xQueueOverwrite(runtime->msgq.can.feedback.tof, &can);
     } else {
       // Error Handle
     }
 
-    if (xQueueReceive(runtime.msgq.can.output.chassis, &(can_out.chassis), 0) ==
-        pdPASS) {
+    if (xQueueReceive(runtime->msgq.can.output.chassis, &(can_out.chassis),
+                      0) == pdPASS) {
       CAN_Motor_Control(CAN_MOTOR_GROUT_CHASSIS, &can_out, &can);
     }
 
-    if (xQueueReceive(runtime.msgq.can.output.gimbal, &(can_out.gimbal), 0) ==
+    if (xQueueReceive(runtime->msgq.can.output.gimbal, &(can_out.gimbal), 0) ==
         pdPASS) {
       CAN_Motor_Control(CAN_MOTOR_GROUT_GIMBAL1, &can_out, &can);
     }
 
-    if (xQueueReceive(runtime.msgq.can.output.launcher, &(can_out.launcher),
+    if (xQueueReceive(runtime->msgq.can.output.launcher, &(can_out.launcher),
                       0) == pdPASS) {
       CAN_Motor_Control(CAN_MOTOR_GROUT_LAUNCHER1, &can_out, &can);
     }
 
-    if (xQueueReceive(runtime.msgq.can.output.cap, &(can_out.cap), 0) ==
+    if (xQueueReceive(runtime->msgq.can.output.cap, &(can_out.cap), 0) ==
         pdPASS) {
       CAN_Cap_Control(&(can_out.cap), &can);
     }
