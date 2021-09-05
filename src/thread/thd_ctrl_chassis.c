@@ -49,25 +49,25 @@ static UI_ChassisUI_t chassis_ui;
  *
  * @param argument 未使用
  */
-void Thread_CtrlChassis(void *argument) {
-  RM_UNUSED(argument); /* 未使用argument，消除警告 */
+void Thread_CtrlChassis(void* argument) {
+  Runtime_t* runtime = argument;
 
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_CHASSIS);
   /* 初始化底盘 */
-  Chassis_Init(&chassis, &(runtime.cfg.robot_param->chassis),
-               &runtime.cfg.gimbal_mech_zero, (float)TASK_FREQ_CTRL_CHASSIS);
+  Chassis_Init(&chassis, &(runtime->cfg.robot_param->chassis),
+               &runtime->cfg.gimbal_mech_zero, (float)TASK_FREQ_CTRL_CHASSIS);
 
   /* 延时一段时间再开启线程 */
-  xQueueReceive(runtime.msgq.can.feedback.chassis, &can, portMAX_DELAY);
+  xQueueReceive(runtime->msgq.can.feedback.chassis, &can, portMAX_DELAY);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 
   while (1) {
-    xQueueReceive(runtime.msgq.can.feedback.chassis, &can, 0);
+    xQueueReceive(runtime->msgq.can.feedback.chassis, &can, 0);
     /* 读取控制指令、电容反馈、裁判系统 */
-    xQueueReceive(runtime.msgq.referee.chassis, &referee_chassis, 0);
-    xQueueReceive(runtime.msgq.cmd.chassis, &chassis_cmd, 0);
-    xQueueReceive(runtime.msgq.cap_info, &cap, 0);
+    xQueueReceive(runtime->msgq.referee.chassis, &referee_chassis, 0);
+    xQueueReceive(runtime->msgq.cmd.chassis, &chassis_cmd, 0);
+    xQueueReceive(runtime->msgq.cap_info, &cap, 0);
 
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     Chassis_UpdateFeedback(&chassis, &can); /* 更新反馈值 */
@@ -79,10 +79,10 @@ void Thread_CtrlChassis(void *argument) {
     xTaskResumeAll();
 
     /* 将电机输出值发送到CAN */
-    xQueueOverwrite(runtime.msgq.can.output.chassis, &chassis_out);
+    xQueueOverwrite(runtime->msgq.can.output.chassis, &chassis_out);
 
     /* 将底盘数据发送给UI */
-    xQueueOverwrite(runtime.msgq.ui.chassis, &chassis_ui);
+    xQueueOverwrite(runtime->msgq.ui.chassis, &chassis_ui);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, delay_tick);

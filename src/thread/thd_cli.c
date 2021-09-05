@@ -35,6 +35,8 @@ typedef struct {
 
 /* Private macro ------------------------------------------------------------ */
 /* Private variables -------------------------------------------------------- */
+// TODO 临时方法
+extern Runtime_t runtime;
 
 static const char *const CLI_WELCOME_MESSAGE =
     "\r\n"
@@ -677,8 +679,7 @@ static const CLI_Command_Definition_t command_table[] = {
  * @param argument 未使用
  */
 void Thread_CLI(void *argument) {
-  RM_UNUSED(argument);                 /* 未使用argument，消除警告 */
-  static char input[MAX_INPUT_LENGTH]; /* 输入字符串缓存 */
+  static char input[MAX_INPUT_LENGTH];          /* 输入字符串缓存 */
   char *output = FreeRTOS_CLIGetOutputBuffer(); /* 输出字符串缓存 */
   char rx_char;                                 /* 接收到的字符 */
   uint16_t index = 0;                           /* 字符串索引值 */

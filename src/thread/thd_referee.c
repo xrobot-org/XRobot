@@ -46,12 +46,12 @@ static Referee_ForLauncher_t for_launcher;
  *
  * @param argument 未使用
  */
-void Thread_Referee(void *argument) {
-  RM_UNUSED(argument); /* 未使用argument，消除警告 */
+void Thread_Referee(void* argument) {
+  Runtime_t* runtime = argument;
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_REFEREE);
 
   /* 初始化裁判系统 */
-  Referee_Init(&ref, &(runtime.cfg.pilot_cfg->screen));
+  Referee_Init(&ref, &(runtime->cfg.pilot_cfg->screen));
 
   uint32_t tick = xTaskGetTickCount();
   while (1) {
@@ -73,19 +73,19 @@ void Thread_Referee(void *argument) {
       Referee_PackForChassis(&for_chassis, &ref);
 
       /* 发送裁判系统数据到其他进程 */
-      xQueueOverwrite(runtime.msgq.referee.cap, &for_cap);
-      xQueueOverwrite(runtime.msgq.referee.ai, &for_ai);
-      xQueueOverwrite(runtime.msgq.referee.chassis, &for_chassis);
-      xQueueOverwrite(runtime.msgq.referee.launcher, &for_launcher);
+      xQueueOverwrite(runtime->msgq.referee.cap, &for_cap);
+      xQueueOverwrite(runtime->msgq.referee.ai, &for_ai);
+      xQueueOverwrite(runtime->msgq.referee.chassis, &for_chassis);
+      xQueueOverwrite(runtime->msgq.referee.launcher, &for_launcher);
 
       /* 获取其他进程数据用于绘制UI */
-      xQueueReceive(runtime.msgq.ui.cap, &(ref.cap_ui), 0);
-      xQueueReceive(runtime.msgq.ui.chassis, &(ref.chassis_ui), 0);
-      xQueueReceive(runtime.msgq.ui.gimbal, &(ref.gimbal_ui), 0);
-      xQueueReceive(runtime.msgq.ui.launcher, &(ref.launcher_ui), 0);
-      xQueueReceive(runtime.msgq.ui.cmd, &(ref.cmd_ui), 0);
+      xQueueReceive(runtime->msgq.ui.cap, &(ref.cap_ui), 0);
+      xQueueReceive(runtime->msgq.ui.chassis, &(ref.chassis_ui), 0);
+      xQueueReceive(runtime->msgq.ui.gimbal, &(ref.gimbal_ui), 0);
+      xQueueReceive(runtime->msgq.ui.launcher, &(ref.launcher_ui), 0);
+      xQueueReceive(runtime->msgq.ui.cmd, &(ref.cmd_ui), 0);
 #if 0
-      xQueueReceive(runtime.msgq.ui.ai, &(ref.ai_ui), 0);
+      xQueueReceive(runtime->msgq.ui.ai, &(ref.ai_ui), 0);
 #endif
 
       /* 刷新UI数据 */

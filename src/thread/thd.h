@@ -131,7 +131,5 @@ typedef struct {
 #endif
 } Runtime_t;
 
-extern Runtime_t runtime;
-
 /* Exported functions prototypes -------------------------------------------- */
 void Thread_Init(void);
