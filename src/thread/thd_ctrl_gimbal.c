@@ -7,36 +7,29 @@
  *
  * @copyright Copyright (c) 2021
  *
- * 通过消息队列收集云台控制需要的电机反馈、欧拉角、角速度，
- * 运行gimbal模组
- * 通过消息队列发送云台控制输出的数据
- *
  */
 
-/* Includes ----------------------------------------------------------------- */
+#include "mid_msg_distrib.h"
 #include "mod_gimbal.h"
 #include "thd.h"
 
-/* Private typedef ---------------------------------------------------------- */
-/* Private define ----------------------------------------------------------- */
-/* Private macro ------------------------------------------------------------ */
-/* Private variables -------------------------------------------------------- */
-static CAN_t can;
-
 #ifdef MCU_DEBUG_BUILD
-CMD_GimbalCmd_t gimbal_cmd;
+
 Gimbal_t gimbal;
+CMD_GimbalCmd_t gimbal_cmd;
+CAN_GimbalMotor_t gimbal_motor;
 CAN_GimbalOutput_t gimbal_out;
 UI_GimbalUI_t gimbal_ui;
+
 #else
-static CMD_GimbalCmd_t gimbal_cmd;
+
 static Gimbal_t gimbal;
+static CMD_GimbalCmd_t gimbal_cmd;
+static CAN_GimbalMotor_t gimbal_motor;
 static CAN_GimbalOutput_t gimbal_out;
 static UI_GimbalUI_t gimbal_ui;
-#endif
 
-/* Private function --------------------------------------------------------- */
-/* Exported functions ------------------------------------------------------- */
+#endif
 
 /**
  * @brief 控制云台
@@ -45,35 +38,42 @@ static UI_GimbalUI_t gimbal_ui;
  */
 void Thread_CtrlGimbal(void* argument) {
   Runtime_t* runtime = argument;
-
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_GIMBAL);
+
+  MsgDistrib_Publisher_t* out_pub =
+      MsgDistrib_CreateTopic("gimbal_out", sizeof(CAN_GimbalOutput_t));
+  MsgDistrib_Publisher_t* ui_pub =
+      MsgDistrib_CreateTopic("gimbal_ui", sizeof(UI_GimbalUI_t));
+
+  MsgDistrib_Subscriber_t* eulr_sub =
+      MsgDistrib_CreateTopic("gimbal_eulr", true);
+  MsgDistrib_Subscriber_t* gyro_sub = MsgDistrib_Subscribe("gimbal_gyro", true);
+  MsgDistrib_Subscriber_t* motor_sub =
+      MsgDistrib_Subscribe("gimbal_motor_fb", true);
+  MsgDistrib_Subscriber_t* cmd_sub = MsgDistrib_Subscribe("cmd_gimbal", true);
+
   /* 初始化云台 */
   Gimbal_Init(&gimbal, &(runtime->cfg.robot_param->gimbal),
               runtime->cfg.gimbal_limit, (float)TASK_FREQ_CTRL_GIMBAL);
 
-  /* 延时一段时间再开启线程 */
-  xQueueReceive(runtime->msgq.can.feedback.gimbal, &can, portMAX_DELAY);
-
   uint32_t previous_wake_time = xTaskGetTickCount();
 
   while (1) {
-    xQueueReceive(runtime->msgq.can.feedback.gimbal, &can, 0);
-
-    /* 读取控制指令、姿态、IMU数据 */
-    xQueueReceive(runtime->msgq.gimbal.eulr_imu, &(gimbal.feedback.eulr.imu),
-                  0);
-    xQueueReceive(runtime->msgq.gimbal.gyro, &(gimbal.feedback.gyro), 0);
-    xQueueReceive(runtime->msgq.cmd.gimbal, &gimbal_cmd, 0);
+    /* 读取控制指令、姿态、IMU、电机反馈 */
+    MsgDistrib_Poll(motor_sub, &gimbal_motor, 0);
+    MsgDistrib_Poll(eulr_sub, &(gimbal.feedback.eulr.imu), 0);
+    MsgDistrib_Poll(gyro_sub, &(gimbal.feedback.gyro), 0);
+    MsgDistrib_Poll(cmd_sub, &gimbal_cmd, 0);
 
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
-    Gimbal_UpdateFeedback(&gimbal, &can);
+    Gimbal_UpdateFeedback(&gimbal, &gimbal_motor);
     Gimbal_Control(&gimbal, &gimbal_cmd, xTaskGetTickCount());
     Gimbal_PackOutput(&gimbal, &gimbal_out);
     Gimbal_PackUi(&gimbal, &gimbal_ui);
     xTaskResumeAll();
 
-    xQueueOverwrite(runtime->msgq.can.output.gimbal, &gimbal_out);
-    xQueueOverwrite(runtime->msgq.ui.gimbal, &gimbal_ui);
+    MsgDistrib_Publish(out_pub, &gimbal_out);
+    MsgDistrib_Publish(ui_pub, &gimbal_ui);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, delay_tick);

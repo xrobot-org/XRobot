@@ -17,7 +17,6 @@
  *
  */
 
-/* Includes ----------------------------------------------------------------- */
 #include "thd.h"
 
 #include "bsp_flash.h"
@@ -79,53 +78,6 @@ void Thread_Init(void) {
               &runtime.thread.referee);
   xTaskCreate(Thread_AI, "AI", 128, &runtime, 5, &runtime.thread.ai);
   xTaskCreate(Thread_RC, "RC", 128, &runtime, 5, &runtime.thread.rc);
-
-  /* 创建消息队列 */
-  /* motor */
-  runtime.msgq.can.feedback.chassis = xQueueCreate(1u, sizeof(CAN_t));
-  runtime.msgq.can.feedback.gimbal = xQueueCreate(1u, sizeof(CAN_t));
-  runtime.msgq.can.feedback.launcher = xQueueCreate(1u, sizeof(CAN_t));
-  runtime.msgq.can.feedback.cap = xQueueCreate(1u, sizeof(CAN_t));
-  runtime.msgq.can.output.chassis =
-      xQueueCreate(1u, sizeof(CAN_ChassisOutput_t));
-  runtime.msgq.can.output.gimbal = xQueueCreate(1u, sizeof(CAN_GimbalOutput_t));
-  runtime.msgq.can.output.launcher =
-      xQueueCreate(1u, sizeof(CAN_LauncherOutput_t));
-  runtime.msgq.can.output.cap = xQueueCreate(1u, sizeof(CAN_CapOutput_t));
-
-  /* cmd */
-  runtime.msgq.cmd.chassis = xQueueCreate(1u, sizeof(CMD_ChassisCmd_t));
-  runtime.msgq.cmd.gimbal = xQueueCreate(1u, sizeof(CMD_GimbalCmd_t));
-  runtime.msgq.cmd.launcher = xQueueCreate(1u, sizeof(CMD_LauncherCmd_t));
-  runtime.msgq.cmd.ai = xQueueCreate(1u, sizeof(Game_AI_Mode_t));
-
-  /* atti_esti */
-  runtime.msgq.cmd.src.rc = xQueueCreate(1u, sizeof(CMD_RC_t));
-  runtime.msgq.cmd.src.host = xQueueCreate(1u, sizeof(CMD_Host_t));
-
-  runtime.msgq.gimbal.accl = xQueueCreate(1u, sizeof(Vector3_t));
-  runtime.msgq.gimbal.eulr_imu = xQueueCreate(1u, sizeof(AHRS_Eulr_t));
-  runtime.msgq.gimbal.gyro = xQueueCreate(1u, sizeof(Vector3_t));
-
-  runtime.msgq.cap_info = xQueueCreate(1u, sizeof(Cap_t));
-
-  /* AI */
-  runtime.msgq.ai.quat = xQueueCreate(1u, sizeof(AHRS_Quaternion_t));
-
-  /* 裁判系统 */
-  runtime.msgq.referee.ai = xQueueCreate(1u, sizeof(Referee_ForAI_t));
-  runtime.msgq.referee.chassis = xQueueCreate(1u, sizeof(Referee_ForChassis_t));
-  runtime.msgq.referee.cap = xQueueCreate(1u, sizeof(Referee_ForCap_t));
-  runtime.msgq.referee.launcher =
-      xQueueCreate(1u, sizeof(Referee_ForLauncher_t));
-
-  /* UI */
-  runtime.msgq.ui.chassis = xQueueCreate(1u, sizeof(UI_ChassisUI_t));
-  runtime.msgq.ui.cap = xQueueCreate(1u, sizeof(UI_CapUI_t));
-  runtime.msgq.ui.gimbal = xQueueCreate(1u, sizeof(UI_GimbalUI_t));
-  runtime.msgq.ui.launcher = xQueueCreate(1u, sizeof(UI_LauncherUI_t));
-  runtime.msgq.ui.cmd = xQueueCreate(1u, sizeof(CMD_UI_t));
-  runtime.msgq.ui.ai = xQueueCreate(1u, sizeof(AI_UI_t));
 
   xTaskResumeAll();
   vTaskDelete(NULL); /* 结束自身 */

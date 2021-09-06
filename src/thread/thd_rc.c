@@ -8,33 +8,27 @@
  * @copyright Copyright (c) 2021
  *
  * 接收来自DR16的数据
- * 解析为通用的控制数据
- * 放入消息队列供其他线程使用
+ * 解析为通用的控制数据后发布
  *
  */
-
-/* Includes ----------------------------------------------------------------- */
 
 #include <string.h>
 
 #include "dev_dr16.h"
+#include "mid_msg_distrib.h"
 #include "thd.h"
 
-/* Private typedef ---------------------------------------------------------- */
-/* Private define ----------------------------------------------------------- */
-/* Private macro ------------------------------------------------------------ */
-/* Private variables -------------------------------------------------------- */
-
 #ifdef MCU_DEBUG_BUILD
+
 DR16_t dr16;
 CMD_RC_t cmd_rc;
+
 #else
+
 static DR16_t dr16;
 static CMD_RC_t cmd_rc;
-#endif
 
-/* Private function --------------------------------------------------------- */
-/* Exported functions ------------------------------------------------------- */
+#endif
 
 /**
  * @brief dr16接收机
@@ -44,6 +38,9 @@ static CMD_RC_t cmd_rc;
 void Thread_RC(void* argument) {
   Runtime_t* runtime = argument;
 
+  MsgDistrib_Publisher_t* rc_pub =
+      MsgDistrib_CreateTopic("rc_cmd", sizeof(CMD_RC_t));
+
   DR16_Init(&dr16); /* 初始化dr16 */
 
   while (1) {
@@ -52,13 +49,13 @@ void Thread_RC(void* argument) {
 
     /* 等待DMA完成 */
     if (DR16_WaitDmaCplt(20)) {
-      /* 预计时间内收到后进行解析 */
+      /* 进行解析 */
       DR16_ParseRC(&dr16, &cmd_rc);
     } else {
       /* 处理遥控器离线 */
       DR16_HandleOffline(&dr16, &cmd_rc);
     }
-    /* 发送给cmd线程，进行处理 */
-    xQueueOverwrite(runtime->msgq.cmd.src.rc, &cmd_rc);
+
+    MsgDistrib_Publish(rc_pub, &cmd_rc);
   }
 }
