@@ -109,6 +109,12 @@
     (type *)((char *)__mptr - offsetof(type, member)); \
   })
 
+/**
+ * @brief 获取数组长度
+ *
+ */
+#define ARRAY_LEN(array) (sizeof((array)) / sizeof(*(array)))
+
 /* 移动向量 */
 typedef struct {
   float vx; /* 前后平移 */
