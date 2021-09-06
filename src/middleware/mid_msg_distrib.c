@@ -154,11 +154,10 @@ MsgDistrib_Subscriber_t *MsgDistrib_Subscribe(const char *topic_name,
       MsgDistrib_Topic_t *topic = md.topic_list + i;
       if (strncmp(topic->name, topic_name, MAX_NAME_LEN) == 0) {
         for (size_t j = 0; j < MAX_SUBS_TO_ONE_TPIC; j++) {
-          if (topic->subs[j].data_queue == NULL) {
-            topic->subs[j].data_queue = xQueueCreate(1, topic->data_size);
+          if (topic->subs[j].bin_sem == NULL) {
             topic->subs[j].bin_sem = xSemaphoreCreateBinary();
+            return &(topic->pub);
           }
-          return &(topic->pub);
         }
         return NULL;
       }
@@ -180,17 +179,17 @@ bool MsgDistrib_Poll(MsgDistrib_Subscriber_t *subscriber, void *data,
                      uint32_t timeout) {
   ASSERT(subscriber);
   ASSERT(data);
+  MsgDistrib_Topic_t *topic =
+      CONTAINER_OF(subscriber, MsgDistrib_Topic_t, subs);
+
   BaseType_t ret;
   if (timeout) {
     ret = xSemaphoreTake(subscriber->bin_sem, pdMS_TO_TICKS(timeout));
   }
   if ((ret == pdTRUE) || (!timeout)) {
-    ret = xQueuePeek(subscriber->data_queue, data, 0);
-    if (ret == pdTRUE) return true;
+    memcpy(data, topic->data_buf, topic->data_size);
+    return ret == pdTRUE;
   }
-
-  MsgDistrib_Topic_t *topic =
-      CONTAINER_OF(subscriber, MsgDistrib_Topic_t, subs);
   topic->monitor.unexpected++;
   return false;
 }
@@ -218,11 +217,8 @@ void MsgDistrib_Distribute(void) {
 
       /* 分发给订阅者 */
       for (size_t j = 0; j < MAX_SUBS_TO_ONE_TPIC; j++) {
-        if (topic->subs[j].data_queue != NULL) {
-          vTaskSuspendAll();
-          xQueueOverwrite(topic->subs[j].data_queue, topic->data_buf);
+        if (topic->subs[j].bin_sem != NULL) {
           xSemaphoreGive(topic->subs[j].bin_sem);
-          vTaskResumeAll();
         }
       }
 

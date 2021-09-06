@@ -27,7 +27,6 @@ typedef struct {
 /* 订阅者 */
 typedef struct {
   SemaphoreHandle_t bin_sem;
-  QueueHandle_t data_queue;
 } MsgDistrib_Subscriber_t;
 
 /**
@@ -93,4 +92,5 @@ bool MsgDistrib_Poll(MsgDistrib_Subscriber_t *subscriber, void *data,
  *
  */
 void MsgDistrib_Distribute(void);
+
 void MsgDistrib_Detail(char *detail_string, size_t len);
