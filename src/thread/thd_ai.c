@@ -2,30 +2,27 @@
   AI上位机通信任务
 */
 
-/* Includes ----------------------------------------------------------------- */
 #include "dev_ai.h"
+#include "mid_msg_distrib.h"
 #include "thd.h"
 
-/* Private typedef ---------------------------------------------------------- */
-/* Private define ----------------------------------------------------------- */
-/* Private macro ------------------------------------------------------------ */
-/* Private variables -------------------------------------------------------- */
 #ifdef MCU_DEBUG_BUILD
+
 AI_t ai;
 AI_UI_t ai_ui;
 CMD_Host_t cmd_host;
 AHRS_Quaternion_t ai_quat;
 Referee_ForAI_t referee_ai;
+
 #else
+
 static AI_t ai;
 static AI_UI_t ai_ui;
 static CMD_Host_t cmd_host;
 static AHRS_Quaternion_t ai_quat;
 static Referee_ForAI_t referee_ai;
-#endif
 
-/* Private function --------------------------------------------------------- */
-/* Exported functions ------------------------------------------------------- */
+#endif
 
 /**
  * @brief AI通信
@@ -34,9 +31,18 @@ static Referee_ForAI_t referee_ai;
  */
 void Thread_AI(void* argument) {
   Runtime_t* runtime = argument;
-
-  /* 计算任务运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_AI);
+
+  MsgDistrib_Publisher_t* cmd_host_pub =
+      MsgDistrib_CreateTopic("cmd_host", sizeof(CMD_LauncherCmd_t));
+  MsgDistrib_Publisher_t* ui_ai_pub =
+      MsgDistrib_CreateTopic("ui_ai", sizeof(CMD_UI_t));
+
+  MsgDistrib_Subscriber_t* quat_sub =
+      MsgDistrib_CreateTopic("gimbal_quat", true);
+  MsgDistrib_Subscriber_t* cmd_ai_sub = MsgDistrib_Subscribe("cmd_ai", true);
+  MsgDistrib_Subscriber_t* referee_ai_sub =
+      MsgDistrib_Subscribe("referee_ai", true);
 
   /* 初始化AI通信 */
   AI_Init(&ai);
@@ -45,10 +51,11 @@ void Thread_AI(void* argument) {
   uint32_t missed_delay = 0;
 
   while (1) {
-    xQueueReceive(runtime->msgq.ai.quat, &(ai_quat), 0);
-    xQueueReceive(runtime->msgq.cmd.ai, &(ai.mode), 0);
+    MsgDistrib_Poll(quat_sub, &ai_quat, 0);
+    MsgDistrib_Poll(cmd_ai_sub, &(ai.mode), 0);
+
     bool ref_update =
-        (xQueueReceive(runtime->msgq.referee.ai, &(referee_ai), 0) == pdPASS);
+        (MsgDistrib_Poll(referee_ai_sub, &(referee_ai), 0) == pdPASS);
 
     AI_StartReceiving(&ai);
     // TODO: wait里面必须加timeout
@@ -60,7 +67,7 @@ void Thread_AI(void* argument) {
 
     if (ai.mode != AI_MODE_STOP && ai.ai_online) {
       AI_PackCmd(&ai, &cmd_host);
-      xQueueOverwrite(runtime->msgq.cmd.src.host, &(cmd_host));
+      MsgDistrib_Publish(cmd_host_pub, &cmd_host);
     }
 
     AI_PackMcu(&ai, &ai_quat);
@@ -69,7 +76,7 @@ void Thread_AI(void* argument) {
     AI_StartTrans(&ai, ref_update);
 
     AI_PackUi(&ai_ui, &ai);
-    xQueueOverwrite(runtime->msgq.ui.ai, &(cmd_host));
+    MsgDistrib_Publish(ui_ai_pub, &cmd_host);
     missed_delay += xTaskDelayUntil(&previous_wake_time, delay_tick);
   }
 }

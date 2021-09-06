@@ -7,38 +7,31 @@
  *
  * @copyright Copyright (c) 2021
  *
- * 通过消息队列收集发射器控制需要电机反馈
- * 运行launcher模组
- * 通过消息队列发送发射器控制输出的数据
- *
  */
 
-/* Includes ----------------------------------------------------------------- */
+#include "mid_msg_distrib.h"
 #include "mod_launcher.h"
 #include "thd.h"
 
-/* Private typedef ---------------------------------------------------------- */
-/* Private define ----------------------------------------------------------- */
-/* Private macro ------------------------------------------------------------ */
-/* Private variables -------------------------------------------------------- */
-static CAN_t can;
-
 #ifdef MCU_DEBUG_BUILD
-CMD_LauncherCmd_t launcher_cmd;
+
 Launcher_t launcher;
+CMD_LauncherCmd_t launcher_cmd;
+CAN_LauncherMotor_t launcher_motor;
 Referee_ForLauncher_t referee_launcher;
 CAN_LauncherOutput_t launcher_out;
 UI_LauncherUI_t launcher_ui;
+
 #else
-static CMD_LauncherCmd_t launcher_cmd;
+
 static Launcher_t launcher;
+static CMD_LauncherCmd_t launcher_cmd;
+static CAN_LauncherMotor_t launcher_motor;
 static Referee_ForLauncher_t referee_launcher;
 static CAN_LauncherOutput_t launcher_out;
 static UI_LauncherUI_t launcher_ui;
-#endif
 
-/* Private function --------------------------------------------------------- */
-/* Exported functions ------------------------------------------------------- */
+#endif
 
 /**
  * @brief 控制发射器
@@ -47,33 +40,41 @@ static UI_LauncherUI_t launcher_ui;
  */
 void Thread_CtrlLauncher(void* argument) {
   Runtime_t* runtime = argument;
-
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_LAUNCHER);
+
+  MsgDistrib_Publisher_t* out_pub =
+      MsgDistrib_CreateTopic("launcher_out", sizeof(CAN_GimbalOutput_t));
+  MsgDistrib_Publisher_t* ui_pub =
+      MsgDistrib_CreateTopic("launcher_ui", sizeof(UI_GimbalUI_t));
+
+  MsgDistrib_Subscriber_t* motor_sub =
+      MsgDistrib_Subscribe("launcher_motor_fb", true);
+  MsgDistrib_Subscriber_t* ref_sub =
+      MsgDistrib_CreateTopic("launcher_eulr", true);
+  MsgDistrib_Subscriber_t* cmd_sub = MsgDistrib_Subscribe("cmd_launcher", true);
+
   /* 初始化发射器 */
   Launcher_Init(&launcher, &(runtime->cfg.robot_param->launcher),
                 (float)TASK_FREQ_CTRL_LAUNCHER);
 
-  /* 延时一段时间再开启线程 */
-  xQueueReceive(runtime->msgq.can.feedback.launcher, &can, portMAX_DELAY);
-
   uint32_t previous_wake_time = xTaskGetTickCount();
 
   while (1) {
-    xQueueReceive(runtime->msgq.can.feedback.launcher, &can, 0);
-    /* 读取控制指令以及裁判系统信息 */
-    xQueueReceive(runtime->msgq.cmd.launcher, &launcher_cmd, 0);
-    xQueueReceive(runtime->msgq.referee.launcher, &referee_launcher, 0);
+    /* 读取控制指令、姿态、IMU、裁判系统、电机反馈 */
+    MsgDistrib_Poll(motor_sub, &launcher_motor, 0);
+    MsgDistrib_Poll(ref_sub, &referee_launcher, 0);
+    MsgDistrib_Poll(cmd_sub, &launcher_cmd, 0);
 
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
-    Launcher_UpdateFeedback(&launcher, &can);
+    Launcher_UpdateFeedback(&launcher, &launcher_motor);
     Launcher_Control(&launcher, &launcher_cmd, &referee_launcher,
                      xTaskGetTickCount());
     Launcher_PackOutput(&launcher, &launcher_out);
     Launcher_PackUi(&launcher, &launcher_ui);
     xTaskResumeAll();
 
-    xQueueOverwrite(runtime->msgq.can.output.launcher, &launcher_out);
-    xQueueOverwrite(runtime->msgq.ui.launcher, &launcher_ui);
+    MsgDistrib_Publish(out_pub, &launcher_out);
+    MsgDistrib_Publish(ui_pub, &launcher_ui);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, delay_tick);

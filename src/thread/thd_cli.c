@@ -11,7 +11,6 @@
  *
  */
 
-/* Includes ----------------------------------------------------------------- */
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -21,22 +20,21 @@
 #include "FreeRTOS_CLI.h"
 #include "bsp_usb.h"
 #include "dev_can.h"
+#include "mid_msg_distrib.h"
 #include "task.h"
 #include "thd.h"
 
-/* Private typedef
-   ---------------------------------------------------------- */
 typedef struct {
   uint8_t stage;
 } FiniteStateMachine_t;
 
-/* Private define ----------------------------------------------------------- */
 #define MAX_INPUT_LENGTH 64
 
-/* Private macro ------------------------------------------------------------ */
-/* Private variables -------------------------------------------------------- */
-// TODO 临时方法
+// TODO: 更好的传递方式
 extern Runtime_t runtime;
+
+MsgDistrib_Subscriber_t *gyro_sub;
+MsgDistrib_Subscriber_t *gimbal_motor_sub;
 
 static const char *const CLI_WELCOME_MESSAGE =
     "\r\n"
@@ -400,18 +398,6 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       fsm.stage++;
       return pdPASS;
     case 2:
-      /* 无陀螺仪数据和校准重试超时时，校准失败 */
-      vTaskSuspend(runtime.thread.ctrl_gimbal);
-
-      if (xQueueReceive(runtime.msgq.gimbal.gyro, &gyro, 5) != pdPASS) {
-        snprintf(out_buffer, len, "Can not get gyro data.\r\n");
-        fsm.stage = 7;
-        vTaskResume(runtime.thread.ctrl_gimbal);
-
-        return pdPASS;
-      }
-      vTaskResume(runtime.thread.ctrl_gimbal);
-
       if (BMI088_GyroStable(&gyro)) {
         snprintf(out_buffer, len,
                  "Controller is stable. Start calibation.\r\n");
@@ -436,8 +422,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       cfg.cali.bmi088.gyro_offset.z = 0.0f;
       Config_Set(&cfg);
       while (count < 1000) {
-        bool data_new =
-            (xQueueReceive(runtime.msgq.gimbal.gyro, &gyro, 5) == pdPASS);
+        bool data_new = MsgDistrib_Poll(gyro_sub, &gyro, 5);
         bool data_good = BMI088_GyroStable(&gyro);
         if (data_new && data_good) {
           x += gyro.x;
@@ -490,7 +475,7 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
   RM_UNUSED(command_string);
   len -= 1;
 
-  CAN_t can;
+  CAN_GimbalMotor_t gimbal_motor;
   Config_t cfg;
 
   static FiniteStateMachine_t fsm;
@@ -503,16 +488,13 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
       /* 获取到云台数据，用can上的新的云台机械零点的位置替代旧的位置 */
       Config_Get(&cfg);
 
-      vTaskSuspend(runtime.thread.ctrl_gimbal);
-      if (xQueueReceive(runtime.msgq.can.feedback.gimbal, &can, 5) != pdPASS) {
+      if (MsgDistrib_Poll(gimbal_motor_sub, &gimbal_motor, 5)) {
         snprintf(out_buffer, len, "Can not get gimbal data.\r\n");
         fsm.stage = 2;
-        vTaskResume(runtime.thread.ctrl_gimbal);
         return pdPASS;
       }
-      vTaskResume(runtime.thread.ctrl_gimbal);
-      cfg.gimbal_mech_zero.yaw = can.motor.gimbal.named.yaw.rotor_abs_angle;
-      cfg.gimbal_mech_zero.pit = can.motor.gimbal.named.pit.rotor_abs_angle;
+      cfg.gimbal_mech_zero.yaw = gimbal_motor.named.yaw.rotor_abs_angle;
+      cfg.gimbal_mech_zero.pit = gimbal_motor.named.pit.rotor_abs_angle;
 
       Config_Set(&cfg);
       snprintf(out_buffer, len, "yaw:%f, pitch:%f, rol:%f\r\nDone.",
@@ -538,7 +520,7 @@ static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
   RM_UNUSED(command_string);
   len -= 1;
 
-  CAN_t can;
+  CAN_GimbalMotor_t gimbal_motor;
   Config_t cfg;
 
   static FiniteStateMachine_t fsm;
@@ -550,16 +532,12 @@ static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
       return pdPASS;
     case 1:
       /* 获取云台数据，获取新的限位角并替代旧的限位角 */
-      vTaskSuspend(runtime.thread.ctrl_gimbal);
-
-      if (xQueueReceive(runtime.msgq.can.feedback.gimbal, &can, 10) != pdPASS) {
-        vTaskResume(runtime.thread.ctrl_gimbal);
+      if (MsgDistrib_Poll(gimbal_motor_sub, &gimbal_motor, 5)) {
         fsm.stage = 3;
         return pdPASS;
       }
       Config_Get(&cfg);
-      vTaskResume(runtime.thread.ctrl_gimbal);
-      cfg.gimbal_limit = can.motor.gimbal.named.pit.rotor_abs_angle;
+      cfg.gimbal_limit = gimbal_motor.named.pit.rotor_abs_angle;
 
       Config_Set(&cfg);
       Config_Get(&cfg);
@@ -670,9 +648,6 @@ static const CLI_Command_Definition_t command_table[] = {
     */
 };
 
-/* Private function --------------------------------------------------------- */
-/* Exported functions ------------------------------------------------------- */
-
 /**
  * @brief 命令行交互界面
  *
@@ -684,6 +659,9 @@ void Thread_CLI(void *argument) {
   char rx_char;                                 /* 接收到的字符 */
   uint16_t index = 0;                           /* 字符串索引值 */
   BaseType_t processing = 0;                    /* 命令行解析控制 */
+
+  gyro_sub = MsgDistrib_Subscribe("gimbal_gyro", true);
+  gimbal_motor_sub = MsgDistrib_Subscribe("gimbal_motor_fb", true);
 
   /* 注册所有命令 */
   const size_t num_commands =

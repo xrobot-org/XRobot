@@ -13,33 +13,28 @@
  *
  */
 
-/* Includes ----------------------------------------------------------------- */
-
 #include "bsp_usb.h"
 #include "dev_referee.h"
+#include "mid_msg_distrib.h"
 #include "thd.h"
 
-/* Private typedef ---------------------------------------------------------- */
-/* Private define ----------------------------------------------------------- */
-/* Private macro ------------------------------------------------------------ */
-/* Private variables -------------------------------------------------------- */
-
 #ifdef MCU_DEBUG_BUILD
+
 Referee_t ref;
 Referee_ForCap_t for_cap;
 Referee_ForAI_t for_ai;
 Referee_ForChassis_t for_chassis;
 Referee_ForLauncher_t for_launcher;
+
 #else
+
 static Referee_t ref;
 static Referee_ForCap_t for_cap;
 static Referee_ForAI_t for_ai;
 static Referee_ForChassis_t for_chassis;
 static Referee_ForLauncher_t for_launcher;
-#endif
 
-/* Private function --------------------------------------------------------- */
-/* Exported functions ------------------------------------------------------- */
+#endif
 
 /**
  * @brief 裁判系统
@@ -49,6 +44,24 @@ static Referee_ForLauncher_t for_launcher;
 void Thread_Referee(void* argument) {
   Runtime_t* runtime = argument;
   const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_REFEREE);
+
+  MsgDistrib_Publisher_t* referee_cap_pub =
+      MsgDistrib_CreateTopic("referee_cap", sizeof(CAN_ChassisMotor_t));
+  MsgDistrib_Publisher_t* referee_ai_pub =
+      MsgDistrib_CreateTopic("referee_ai", sizeof(CAN_GimbalMotor_t));
+  MsgDistrib_Publisher_t* referee_chassis_pub =
+      MsgDistrib_CreateTopic("referee_chassis", sizeof(CAN_LauncherMotor_t));
+  MsgDistrib_Publisher_t* referee_launcher_pub =
+      MsgDistrib_CreateTopic("referee_launcher", sizeof(CAN_CapFeedback_t));
+
+  MsgDistrib_Subscriber_t* ui_cap_sub = MsgDistrib_CreateTopic("ui_cap", true);
+  MsgDistrib_Subscriber_t* ui_chassis_sub =
+      MsgDistrib_Subscribe("chassis_ui", true);
+  MsgDistrib_Subscriber_t* ui_gimbal_sub =
+      MsgDistrib_Subscribe("gimbal_ui", true);
+  MsgDistrib_Subscriber_t* ui_launcher_sub =
+      MsgDistrib_Subscribe("launcher_ui", true);
+  MsgDistrib_Subscriber_t* cap_out_sub = MsgDistrib_Subscribe("cap_ui", true);
 
   /* 初始化裁判系统 */
   Referee_Init(&ref, &(runtime->cfg.pilot_cfg->screen));
@@ -73,17 +86,17 @@ void Thread_Referee(void* argument) {
       Referee_PackForChassis(&for_chassis, &ref);
 
       /* 发送裁判系统数据到其他进程 */
-      xQueueOverwrite(runtime->msgq.referee.cap, &for_cap);
-      xQueueOverwrite(runtime->msgq.referee.ai, &for_ai);
-      xQueueOverwrite(runtime->msgq.referee.chassis, &for_chassis);
-      xQueueOverwrite(runtime->msgq.referee.launcher, &for_launcher);
+      MsgDistrib_Publish(referee_cap_pub, &for_cap);
+      MsgDistrib_Publish(referee_ai_pub, &for_ai);
+      MsgDistrib_Publish(referee_chassis_pub, &for_chassis);
+      MsgDistrib_Publish(referee_launcher_pub, &for_launcher);
 
       /* 获取其他进程数据用于绘制UI */
-      xQueueReceive(runtime->msgq.ui.cap, &(ref.cap_ui), 0);
-      xQueueReceive(runtime->msgq.ui.chassis, &(ref.chassis_ui), 0);
-      xQueueReceive(runtime->msgq.ui.gimbal, &(ref.gimbal_ui), 0);
-      xQueueReceive(runtime->msgq.ui.launcher, &(ref.launcher_ui), 0);
-      xQueueReceive(runtime->msgq.ui.cmd, &(ref.cmd_ui), 0);
+      MsgDistrib_Poll(ui_cap_sub, &(ref.cap_ui), 0);
+      MsgDistrib_Poll(ui_chassis_sub, &(ref.chassis_ui), 0);
+      MsgDistrib_Poll(ui_gimbal_sub, &(ref.gimbal_ui), 0);
+      MsgDistrib_Poll(ui_launcher_sub, &(ref.launcher_ui), 0);
+      MsgDistrib_Poll(ui_launcher_sub, &(ref.cmd_ui), 0);
 #if 0
       xQueueReceive(runtime->msgq.ui.ai, &(ref.ai_ui), 0);
 #endif

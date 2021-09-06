@@ -11,14 +11,12 @@
 
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include "FreeRTOS.h"
 #include "mod_config.h"
 #include "task.h"
 
-/* Exported constants ------------------------------------------------------- */
-
 /* 所有线程都要define一个“线程运行频率”和“初始化延时” */
+#define TASK_FREQ_ATTI_ESTI (500u)
 #define TASK_FREQ_CTRL_CHASSIS (500u)
 #define TASK_FREQ_CTRL_GIMBAL (500u)
 #define TASK_FREQ_CTRL_LAUNCHER (500u)
@@ -29,11 +27,6 @@
 #define TASK_FREQ_CAN (1000u)
 #define TASK_FREQ_AI (500u)
 #define TASK_FREQ_REFEREE (1000u)
-
-/* Exported defines --------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
-
 typedef struct {
   /* 各线程，也可以叫做线程 */
   struct {
@@ -51,71 +44,6 @@ typedef struct {
     TaskHandle_t ai;
     TaskHandle_t rc;
   } thread;
-
-  struct {
-    /* 云台相关数据 */
-    struct {
-      QueueHandle_t accl;     /* IMU读取 */
-      QueueHandle_t gyro;     /* IMU读取 */
-      QueueHandle_t eulr_imu; /* 姿态解算得到 */
-    } gimbal;
-
-    /* 控制指令 */
-    struct {
-      /* 控制指令来源 */
-      struct {
-        QueueHandle_t host;
-        QueueHandle_t rc;
-      } src;
-
-      QueueHandle_t chassis;
-      QueueHandle_t gimbal;
-      QueueHandle_t launcher;
-      QueueHandle_t ai;
-    } cmd;
-
-    /* can线程放入、读取，电机或电容的输入输出 */
-    struct {
-      struct {
-        QueueHandle_t chassis;
-        QueueHandle_t gimbal;
-        QueueHandle_t launcher;
-        QueueHandle_t cap;
-      } output;
-
-      struct {
-        QueueHandle_t chassis;
-        QueueHandle_t gimbal;
-        QueueHandle_t launcher;
-        QueueHandle_t cap;
-        QueueHandle_t tof;
-      } feedback;
-    } can;
-
-    struct {
-      QueueHandle_t quat; /* 姿态解算得到 */
-    } ai;
-
-    /* 裁判系统发送的 */
-    struct {
-      QueueHandle_t cap;
-      QueueHandle_t chassis;
-      QueueHandle_t ai;
-      QueueHandle_t launcher;
-    } referee;
-
-    QueueHandle_t cap_info;
-
-    struct {
-      QueueHandle_t chassis;
-      QueueHandle_t gimbal;
-      QueueHandle_t launcher;
-      QueueHandle_t cap;
-      QueueHandle_t cmd;
-      QueueHandle_t ai;
-    } ui;
-
-  } msgq;
 
   /* 机器人状态 */
   struct {
