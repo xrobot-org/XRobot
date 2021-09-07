@@ -20,7 +20,7 @@
  *
  * @param argument 未使用
  */
-void Thread_AttiEsti(void* argument) {
+void Thread_USB(void* argument) {
   Runtime_t* runtime = argument;
 
   while (1) {
