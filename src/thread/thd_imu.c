@@ -45,7 +45,7 @@ static const KPID_Params_t imu_temp_ctrl_pid_param = {
  *
  * @param argument runtime
  */
-void Thread_AttiEsti(void* argument) {
+void Thread_IMU(void* argument) {
   Runtime_t* runtime = argument;
 
   MsgDistrib_Publisher_t* accl_pub =

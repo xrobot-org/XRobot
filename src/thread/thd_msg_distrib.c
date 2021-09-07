@@ -25,7 +25,7 @@
  *
  * @param argument 未使用
  */
-void Thread_AttiEsti(void *argument) {
+void Thread_MsgDistrib(void *argument) {
   RM_UNUSED(argument); /* 未使用argument，消除警告 */
 
   /* 初始化消息分发 */
