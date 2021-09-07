@@ -664,9 +664,7 @@ void Thread_CLI(void *argument) {
   gimbal_motor_sub = MsgDistrib_Subscribe("gimbal_motor_fb", true);
 
   /* 注册所有命令 */
-  const size_t num_commands =
-      sizeof(command_table) / sizeof(CLI_Command_Definition_t);
-  for (size_t j = 0; j < num_commands; j++) {
+  for (size_t j = 0; j < ARRAY_LEN(command_table); j++) {
     FreeRTOS_CLIRegisterCommand(command_table + j);
   }
 
