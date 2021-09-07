@@ -11,9 +11,27 @@
 
 #pragma once
 
-#include "FreeRTOS.h"
 #include "mod_config.h"
-#include "task.h"
+
+typedef enum {
+  THREAD_AI,
+  THREAD_ATTI_ESTI,
+  THREAD_CAN,
+  THREAD_CLI,
+  THREAD_CMD,
+  THREAD_CTRL_CAP,
+  THREAD_CTRL_CHASSIS,
+  THREAD_CTRL_GIMBAL,
+  THREAD_CTRL_LAUNCHER,
+  THREAD_IMU,
+  THREAD_INFO,
+  THREAD_MONITOR,
+  THREAD_MSG_DISTRIB,
+  THREAD_RC,
+  THREAD_REFEREE,
+  THREAD_USB,
+  THREAD_NUM,
+} Thread_Name_t;
 
 /* 所有线程都要define一个“线程运行频率”和“初始化延时” */
 #define TASK_FREQ_ATTI_ESTI (500u)
@@ -27,23 +45,9 @@
 #define TASK_FREQ_CAN (1000u)
 #define TASK_FREQ_AI (500u)
 #define TASK_FREQ_REFEREE (1000u)
+
 typedef struct {
-  /* 各线程，也可以叫做线程 */
-  struct {
-    TaskHandle_t cli;
-    TaskHandle_t cmd;
-    TaskHandle_t ctrl_cap;
-    TaskHandle_t ctrl_chassis;
-    TaskHandle_t ctrl_gimbal;
-    TaskHandle_t ctrl_launcher;
-    TaskHandle_t info;
-    TaskHandle_t monitor;
-    TaskHandle_t can;
-    TaskHandle_t atti_esti;
-    TaskHandle_t referee;
-    TaskHandle_t ai;
-    TaskHandle_t rc;
-  } thread;
+  TaskHandle_t thread[THREAD_NUM];
 
   /* 机器人状态 */
   struct {
@@ -59,5 +63,4 @@ typedef struct {
 #endif
 } Runtime_t;
 
-/* Exported functions prototypes -------------------------------------------- */
 void Thread_Init(void);
