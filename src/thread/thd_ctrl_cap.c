@@ -31,14 +31,11 @@ static UI_CapUI_t cap_ui;
 
 #endif
 
-/**
- * @brief 控制电容
- *
- * @param argument 未使用
- */
-void Thread_CtrlCap(void* argument) {
+#define THD_PERIOD_MS (10)
+
+void Thd_CtrlCap(void* argument) {
   Runtime_t* runtime = argument;
-  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_CAP);
+  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* out_pub =
       MsgDistrib_CreateTopic("cap_out", sizeof(CAN_ChassisOutput_t));

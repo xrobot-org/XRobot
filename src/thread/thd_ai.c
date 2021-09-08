@@ -24,14 +24,11 @@ static Referee_ForAI_t referee_ai;
 
 #endif
 
-/**
- * @brief AI通信
- *
- * @param argument 未使用
- */
-void Thread_AI(void* argument) {
+#define THD_PERIOD_MS (2)
+
+void Thd_AI(void* argument) {
   Runtime_t* runtime = argument;
-  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_AI);
+  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* cmd_host_pub =
       MsgDistrib_CreateTopic("cmd_host", sizeof(CMD_LauncherCmd_t));

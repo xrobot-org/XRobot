@@ -16,16 +16,13 @@
 #include "comp_utils.h"
 #include "thd.h"
 
-/**
- * @brief 信息
- *
- * @param argument 未使用
- */
-void Thread_Info(void *argument) {
+#define THD_PERIOD_MS (250)
+
+void Thd_Info(void *argument) {
   RM_UNUSED(argument); /* 未使用argument，消除警告 */
 
   /* 计算线程运行到指定频率需要等待的tick数 */
-  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_INFO);
+  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 

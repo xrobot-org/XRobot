@@ -18,16 +18,13 @@
 #include "comp_capacity.h"
 #include "thd.h"
 
-/**
- * @brief 监控
- *
- * @param argument 未使用
- */
-void Thread_Monitor(void* argument) {
+#define THD_PERIOD_MS (100)
+
+void Thd_Monitor(void* argument) {
   Runtime_t* runtime = argument;
 
   /* 计算线程运行到指定频率需要等待的tick数 */
-  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_MONITOR);
+  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 
