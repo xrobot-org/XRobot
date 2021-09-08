@@ -12,24 +12,20 @@
 #define BETA_IMU (0.033f)
 #define BETA_AHRS (0.041f)
 
-/* 2 * proportional gain (Kp) */
-static float beta = BETA_IMU;
-
 /**
  * @brief 不使用磁力计计算姿态
  *
  * @param ahrs 姿态解算主结构体
  * @param accl 加速度计数据
  * @param gyro 陀螺仪数据
+ * @param now 现在时刻
  * @return int8_t 0对应没有错误
  */
 static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const Vector3_t *accl,
-                             const Vector3_t *gyro) {
+                             const Vector3_t *gyro, float now) {
   ASSERT(ahrs);
   ASSERT(accl);
   ASSERT(gyro);
-
-  beta = BETA_IMU;
 
   float ax = accl->x;
   float ay = accl->y;
@@ -38,6 +34,9 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const Vector3_t *accl,
   float gx = gyro->x;
   float gy = gyro->y;
   float gz = gyro->z;
+
+  ahrs->dt = now - ahrs->last_update;
+  ahrs->last_update = now;
 
   float recip_norm;
   float s0, s1, s2, s3;
@@ -97,17 +96,17 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const Vector3_t *accl,
     s3 *= recip_norm;
 
     /* Apply feedback step */
-    q_dot1 -= beta * s0;
-    q_dot2 -= beta * s1;
-    q_dot3 -= beta * s2;
-    q_dot4 -= beta * s3;
+    q_dot1 -= BETA_IMU * s0;
+    q_dot2 -= BETA_IMU * s1;
+    q_dot3 -= BETA_IMU * s2;
+    q_dot4 -= BETA_IMU * s3;
   }
 
   /* Integrate rate of change of quaternion to yield quaternion */
-  ahrs->quat.q0 += q_dot1 * ahrs->inv_sample_freq;
-  ahrs->quat.q1 += q_dot2 * ahrs->inv_sample_freq;
-  ahrs->quat.q2 += q_dot3 * ahrs->inv_sample_freq;
-  ahrs->quat.q3 += q_dot4 * ahrs->inv_sample_freq;
+  ahrs->quat.q0 += q_dot1 * ahrs->dt;
+  ahrs->quat.q1 += q_dot2 * ahrs->dt;
+  ahrs->quat.q2 += q_dot3 * ahrs->dt;
+  ahrs->quat.q3 += q_dot4 * ahrs->dt;
 
   /* Normalise quaternion */
   recip_norm =
@@ -126,18 +125,18 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const Vector3_t *accl,
  *
  * @param ahrs 姿态解算主结构体
  * @param magn 磁力计数据
- * @param sample_freq 采样频率
+ * @param now 现在时刻
  * @return int8_t 0对应没有错误
  */
-int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn, float sample_freq) {
+int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn, float now) {
   ASSERT(ahrs);
-
-  ahrs->inv_sample_freq = 1.0f / sample_freq;
 
   ahrs->quat.q0 = 1.0f;
   ahrs->quat.q1 = 0.0f;
   ahrs->quat.q2 = 0.0f;
   ahrs->quat.q3 = 0.0f;
+
+  ahrs->last_update = now;
 
   if (magn) {
     float yaw = -atan2f(magn->y, magn->x);
@@ -184,15 +183,17 @@ int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn, float sample_freq) {
  * @param accl 加速度计数据
  * @param gyro 陀螺仪数据
  * @param magn 磁力计数据
+ * @param now 现在时刻
  * @return int8_t 0对应没有错误
  */
 int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
-                   const Vector3_t *magn) {
+                   const Vector3_t *magn, float now) {
   ASSERT(ahrs);
   ASSERT(accl);
   ASSERT(gyro);
 
-  beta = BETA_AHRS;
+  ahrs->dt = now - ahrs->last_update;
+  ahrs->last_update = now;
 
   float recip_norm;
   float s0, s1, s2, s3;
@@ -202,7 +203,7 @@ int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
       _2q2, _2q3, _2q0q2, _2q2q3, q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3,
       q2q2, q2q3, q3q3;
 
-  if (magn == NULL) return AHRS_UpdateIMU(ahrs, accl, gyro);
+  if (magn == NULL) return AHRS_UpdateIMU(ahrs, accl, gyro, now);
 
   float mx = magn->x;
   float my = magn->y;
@@ -211,7 +212,7 @@ int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
   /* Use IMU algorithm if magnetometer measurement invalid (avoids NaN in */
   /* magnetometer normalisation) */
   if ((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f)) {
-    return AHRS_UpdateIMU(ahrs, accl, gyro);
+    return AHRS_UpdateIMU(ahrs, accl, gyro, now);
   }
 
   float ax = accl->x;
@@ -326,17 +327,17 @@ int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
     s3 *= recip_norm;
 
     /* Apply feedback step */
-    q_dot1 -= beta * s0;
-    q_dot2 -= beta * s1;
-    q_dot3 -= beta * s2;
-    q_dot4 -= beta * s3;
+    q_dot1 -= BETA_AHRS * s0;
+    q_dot2 -= BETA_AHRS * s1;
+    q_dot3 -= BETA_AHRS * s2;
+    q_dot4 -= BETA_AHRS * s3;
   }
 
   /* Integrate rate of change of quaternion to yield quaternion */
-  ahrs->quat.q0 += q_dot1 * ahrs->inv_sample_freq;
-  ahrs->quat.q1 += q_dot2 * ahrs->inv_sample_freq;
-  ahrs->quat.q2 += q_dot3 * ahrs->inv_sample_freq;
-  ahrs->quat.q3 += q_dot4 * ahrs->inv_sample_freq;
+  ahrs->quat.q0 += q_dot1 * ahrs->dt;
+  ahrs->quat.q1 += q_dot2 * ahrs->dt;
+  ahrs->quat.q2 += q_dot3 * ahrs->dt;
+  ahrs->quat.q3 += q_dot4 * ahrs->dt;
 
   /* Normalise quaternion */
   recip_norm =
