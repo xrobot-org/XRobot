@@ -27,7 +27,8 @@ typedef struct {
   /* 四元数 */
   AHRS_Quaternion_t quat;
 
-  float inv_sample_freq; /* 采样频率的的倒数 */
+  float last_update;
+  float dt;
 } AHRS_t;
 
 /**
@@ -35,10 +36,10 @@ typedef struct {
  *
  * @param ahrs 姿态解算主结构体
  * @param magn 磁力计数据
- * @param sample_freq 采样频率
+ * @param now 现在时刻
  * @return int8_t 0对应没有错误
  */
-int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn, float sample_freq);
+int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn, float now);
 
 /**
  * @brief 姿态运算更新一次
@@ -47,10 +48,11 @@ int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn, float sample_freq);
  * @param accl 加速度计数据
  * @param gyro 陀螺仪数据
  * @param magn 磁力计数据
+ * @param now 现在时刻
  * @return int8_t 0对应没有错误
  */
 int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
-                   const Vector3_t *magn);
+                   const Vector3_t *magn, float now);
 
 /**
  * @brief 通过姿态解算主结构体中的四元数计算欧拉角
