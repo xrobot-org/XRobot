@@ -30,12 +30,9 @@ static CMD_RC_t cmd_rc;
 
 #endif
 
-/**
- * @brief dr16接收机
- *
- * @param argument 未使用
- */
-void Thread_RC(void* argument) {
+#define THD_PERIOD_MS (2)
+
+void Thd_RC(void* argument) {
   Runtime_t* runtime = argument;
 
   MsgDistrib_Publisher_t* rc_pub =

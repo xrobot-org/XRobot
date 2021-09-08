@@ -28,13 +28,11 @@ static AHRS_t gimbal_ahrs;
 
 #endif
 
-/**
- * @brief 姿态解算
- *
- * @param argument 未使用
- */
-void Thread_AttiEsti(void* argument) {
+#define THD_PERIOD_MS (500)
+
+void Thd_AttiEsti(void* argument) {
   RM_UNUSED(argument);
+  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* gimbal_eulr_pub =
       MsgDistrib_CreateTopic("gimbal_eulr", sizeof(AHRS_Eulr_t));
@@ -43,8 +41,10 @@ void Thread_AttiEsti(void* argument) {
   MsgDistrib_Subscriber_t* gyro_sub = MsgDistrib_Subscribe("gimbal_gyro", true);
 
   /* 初始化姿态解算算法 */
-  AHRS_Init(&gimbal_ahrs, NULL, TASK_FREQ_ATTI_ESTI);
+  float now = (float)xTaskGetTickCount() / configTICK_RATE_HZ;
+  AHRS_Init(&gimbal_ahrs, NULL, now);
 
+  uint32_t previous_wake_time = xTaskGetTickCount();
   while (1) {
     MsgDistrib_Poll(accl_sub, &accl, 0);
     MsgDistrib_Poll(gyro_sub, &gyro, 0);
@@ -53,7 +53,8 @@ void Thread_AttiEsti(void* argument) {
     vTaskSuspendAll();
 
     /* 根据设备接收到的数据进行姿态解析 */
-    AHRS_Update(&gimbal_ahrs, &accl, &gyro, NULL);
+    now = (float)xTaskGetTickCount() / configTICK_RATE_HZ;
+    AHRS_Update(&gimbal_ahrs, &accl, &gyro, NULL, now);
 
     /* 根据解析出来的四元数计算欧拉角 */
     AHRS_GetEulr(&gimbal_eulr, &gimbal_ahrs);

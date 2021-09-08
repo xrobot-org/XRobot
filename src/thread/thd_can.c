@@ -31,9 +31,11 @@ static CAN_RawRx_t can_rx;
 
 #endif
 
-void Thread_CAN(void* argument) {
+#define THD_PERIOD_MS (2)
+
+void Thd_CAN(void* argument) {
   Runtime_t* runtime = argument;
-  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CAN);
+  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* chassis_fb_pub =
       MsgDistrib_CreateTopic("chassis_motor_fb", sizeof(CAN_ChassisMotor_t));

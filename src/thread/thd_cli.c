@@ -30,11 +30,10 @@ typedef struct {
 
 #define MAX_INPUT_LENGTH 64
 
-// TODO: 更好的传递方式
-extern Runtime_t runtime;
+static Runtime_t *runtime;
 
-MsgDistrib_Subscriber_t *gyro_sub;
-MsgDistrib_Subscriber_t *gimbal_motor_sub;
+static MsgDistrib_Subscriber_t *gyro_sub;
+static MsgDistrib_Subscriber_t *gimbal_motor_sub;
 
 static const char *const CLI_WELCOME_MESSAGE =
     "\r\n"
@@ -174,8 +173,8 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       return pdPASS;
     case 7:
       /* 获取当前CPU温度和电量 */
-      snprintf(out_buffer, len, "%f\t%f\r\n", runtime.status.cpu_temp,
-               runtime.status.battery);
+      snprintf(out_buffer, len, "%f\t%f\r\n", runtime->status.cpu_temp,
+               runtime->status.battery);
       fsm.stage++;
       return pdPASS;
     case 8:
@@ -184,8 +183,8 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
       return pdPASS;
     case 9:
       /* 获取机器人和操作手名称 */
-      snprintf(out_buffer, len, "%s\t\t%s\r\n", runtime.cfg.robot_param_name,
-               runtime.cfg.pilot_cfg_name);
+      snprintf(out_buffer, len, "%s\t\t%s\r\n", runtime->cfg.robot_param_name,
+               runtime->cfg.pilot_cfg_name);
       fsm.stage++;
       return pdPASS;
     case 10:
@@ -653,7 +652,8 @@ static const CLI_Command_Definition_t command_table[] = {
  *
  * @param argument 未使用
  */
-void Thread_CLI(void *argument) {
+void Thd_CLI(void *argument) {
+  runtime = argument;
   static char input[MAX_INPUT_LENGTH];          /* 输入字符串缓存 */
   char *output = FreeRTOS_CLIGetOutputBuffer(); /* 输出字符串缓存 */
   char rx_char;                                 /* 接收到的字符 */

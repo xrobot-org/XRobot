@@ -31,14 +31,11 @@ static CMD_t cmd;
 static CMD_UI_t cmd_ui;
 #endif
 
-/**
- * @brief 控制指令接收
- *
- * @param argument 未使用
- */
-void Thread_CMD(void* argument) {
+#define THD_PERIOD_MS (2)
+
+void Thd_CMD(void* argument) {
   Runtime_t* runtime = argument;
-  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_COMMAND);
+  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* cmd_ai_pub =
       MsgDistrib_CreateTopic("cmd_ai", sizeof(Game_AI_Mode_t));
@@ -64,11 +61,11 @@ void Thread_CMD(void* argument) {
     MsgDistrib_Poll(rc_sub, &rc, 0);  // TODO: 可以阻塞
     MsgDistrib_Poll(host_sub, &host, 0);
 
-    CMD_ParseRc(&rc, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
+    CMD_ParseRc(&rc, &cmd, (float)THD_PERIOD_MS / 1000.0f);
 
     /* 判断是否需要让上位机覆写指令 */
     if (CMD_CheckHostOverwrite(&cmd)) {
-      CMD_ParseHost(&host, &cmd, 1.0f / (float)TASK_FREQ_CTRL_COMMAND);
+      CMD_ParseHost(&host, &cmd, (float)THD_PERIOD_MS / 1000.0f);
     }
     CMD_PackUi(&cmd_ui, &cmd);
 

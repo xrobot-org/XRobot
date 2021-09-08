@@ -15,12 +15,9 @@
 #include "mid_msg_distrib.h"
 #include "thd.h"
 
-/**
- * @brief USB输入输出管理
- *
- * @param argument 未使用
- */
-void Thread_USB(void* argument) {
+#define THD_PERIOD_MS (2)
+
+void Thd_USB(void* argument) {
   Runtime_t* runtime = argument;
 
   while (1) {

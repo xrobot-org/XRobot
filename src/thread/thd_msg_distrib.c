@@ -20,12 +20,9 @@
 #include "mid_msg_distrib.h"
 #include "thd.h"
 
-/**
- * @brief 消息分发线程
- *
- * @param argument 未使用
- */
-void Thread_MsgDistrib(void *argument) {
+#define THD_PERIOD_MS (2)
+
+void Thd_MsgDistrib(void *argument) {
   RM_UNUSED(argument); /* 未使用argument，消除警告 */
 
   /* 初始化消息分发 */

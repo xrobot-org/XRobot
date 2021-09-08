@@ -31,14 +31,11 @@ static UI_GimbalUI_t gimbal_ui;
 
 #endif
 
-/**
- * @brief 控制云台
- *
- * @param argument 未使用
- */
-void Thread_CtrlGimbal(void* argument) {
+#define THD_PERIOD_MS (2)
+
+void Thd_CtrlGimbal(void* argument) {
   Runtime_t* runtime = argument;
-  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_GIMBAL);
+  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* out_pub =
       MsgDistrib_CreateTopic("gimbal_out", sizeof(CAN_GimbalOutput_t));
@@ -54,7 +51,7 @@ void Thread_CtrlGimbal(void* argument) {
 
   /* 初始化云台 */
   Gimbal_Init(&gimbal, &(runtime->cfg.robot_param->gimbal),
-              runtime->cfg.gimbal_limit, (float)TASK_FREQ_CTRL_GIMBAL);
+              runtime->cfg.gimbal_limit, 1000.0f / (float)THD_PERIOD_MS);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 

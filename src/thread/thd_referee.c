@@ -36,14 +36,11 @@ static Referee_ForLauncher_t for_launcher;
 
 #endif
 
-/**
- * @brief 裁判系统
- *
- * @param argument 未使用
- */
-void Thread_Referee(void* argument) {
+#define THD_PERIOD_MS (1)
+
+void Thd_Referee(void* argument) {
   Runtime_t* runtime = argument;
-  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_REFEREE);
+  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* referee_cap_pub =
       MsgDistrib_CreateTopic("referee_cap", sizeof(CAN_ChassisMotor_t));

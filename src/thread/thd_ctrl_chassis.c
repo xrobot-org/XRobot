@@ -38,14 +38,11 @@ static UI_ChassisUI_t chassis_ui;
 
 #endif
 
-/**
- * @brief 控制底盘
- *
- * @param argument 未使用
- */
-void Thread_CtrlChassis(void* argument) {
+#define THD_PERIOD_MS (2)
+
+void Thd_CtrlChassis(void* argument) {
   Runtime_t* runtime = argument;
-  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_CHASSIS);
+  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* out_pub =
       MsgDistrib_CreateTopic("chassis_out", sizeof(CAN_ChassisOutput_t));
@@ -63,7 +60,8 @@ void Thread_CtrlChassis(void* argument) {
 
   /* 初始化底盘 */
   Chassis_Init(&chassis, &(runtime->cfg.robot_param->chassis),
-               &(runtime->cfg.gimbal_mech_zero), (float)TASK_FREQ_CTRL_CHASSIS);
+               &(runtime->cfg.gimbal_mech_zero),
+               1000.0f / (float)THD_PERIOD_MS);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 

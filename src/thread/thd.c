@@ -23,22 +23,22 @@
 #include "comp_utils.h"
 #include "task.h"
 
-extern void Thread_AI(void *argument);
-extern void Thread_AttiEsti(void *argument);
-extern void Thread_CAN(void *argument);
-extern void Thread_CLI(void *argument);
-extern void Thread_CMD(void *argument);
-extern void Thread_CtrlCap(void *argument);
-extern void Thread_CtrlChassis(void *argument);
-extern void Thread_CtrlGimbal(void *argument);
-extern void Thread_CtrlLauncher(void *argument);
-extern void Thread_IMU(void *argument);
-extern void Thread_Info(void *argument);
-extern void Thread_Monitor(void *argument);
-extern void Thread_MsgDistrib(void *argument);
-extern void Thread_RC(void *argument);
-extern void Thread_Referee(void *argument);
-extern void Thread_USB(void *argument);
+extern void Thd_AI(void *argument);
+extern void Thd_AttiEsti(void *argument);
+extern void Thd_CAN(void *argument);
+extern void Thd_CLI(void *argument);
+extern void Thd_CMD(void *argument);
+extern void Thd_CtrlCap(void *argument);
+extern void Thd_CtrlChassis(void *argument);
+extern void Thd_CtrlGimbal(void *argument);
+extern void Thd_CtrlLauncher(void *argument);
+extern void Thd_IMU(void *argument);
+extern void Thd_Info(void *argument);
+extern void Thd_Monitor(void *argument);
+extern void Thd_MsgDistrib(void *argument);
+extern void Thd_RC(void *argument);
+extern void Thd_Referee(void *argument);
+extern void Thd_USB(void *argument);
 
 /* 机器人运行时的数据 */
 Runtime_t runtime;
@@ -48,26 +48,26 @@ typedef struct {
   const char *name;
   configSTACK_DEPTH_TYPE stack_depth;
   UBaseType_t priority;
-  Thread_Name_t handle_name;
-} Thread_t;
+  Thd_Name_t handle_name;
+} Thd_t;
 
-static const Thread_t thread_list[] = {
-    {Thread_AI, "AI", 128, 5, THREAD_AI},
-    {Thread_AttiEsti, "AttiEsti", 256, 5, THREAD_ATTI_ESTI},
-    {Thread_CAN, "CAN", 128, 5, THREAD_CAN},
-    {Thread_CLI, "CLI", 256, 3, THREAD_CLI},
-    {Thread_CMD, "CMD", 128, 4, THREAD_CMD},
-    {Thread_CtrlCap, "CtrlCap", 128, 3, THREAD_CTRL_CAP},
-    {Thread_CtrlChassis, "CtrlChassis", 256, 3, THREAD_CTRL_CHASSIS},
-    {Thread_CtrlGimbal, "CtrlGimbal", 256, 3, THREAD_CTRL_GIMBAL},
-    {Thread_CtrlLauncher, "CtrlLauncher", 256, 3, THREAD_CTRL_LAUNCHER},
-    {Thread_IMU, "IMU", 256, 3, THREAD_IMU},
-    {Thread_Info, "Info", 128, 2, THREAD_INFO},
-    {Thread_Monitor, "Monitor", 128, 2, THREAD_MONITOR},
-    {Thread_MsgDistrib, "MsgDistrib", 128, 2, THREAD_MSG_DISTRIB},
-    {Thread_RC, "RC", 128, 5, THREAD_RC},
-    {Thread_Referee, "Referee", 512, 5, THREAD_REFEREE},
-    {Thread_USB, "USB", 128, 5, THREAD_USB},
+static const Thd_t thd_list[] = {
+    {Thd_AI, "AI", 128, 5, THD_AI},
+    {Thd_AttiEsti, "AttiEsti", 256, 5, THD_ATTI_ESTI},
+    {Thd_CAN, "CAN", 128, 5, THD_CAN},
+    {Thd_CLI, "CLI", 256, 3, THD_CLI},
+    {Thd_CMD, "CMD", 128, 4, THD_CMD},
+    {Thd_CtrlCap, "CtrlCap", 128, 3, THD_CTRL_CAP},
+    {Thd_CtrlChassis, "CtrlChassis", 256, 3, THD_CTRL_CHASSIS},
+    {Thd_CtrlGimbal, "CtrlGimbal", 256, 3, THD_CTRL_GIMBAL},
+    {Thd_CtrlLauncher, "CtrlLauncher", 256, 3, THD_CTRL_LAUNCHER},
+    {Thd_IMU, "IMU", 256, 3, THD_IMU},
+    {Thd_Info, "Info", 128, 2, THD_INFO},
+    {Thd_Monitor, "Monitor", 128, 2, THD_MONITOR},
+    {Thd_MsgDistrib, "MsgDistrib", 128, 2, THD_MSG_DISTRIB},
+    {Thd_RC, "RC", 128, 5, THD_RC},
+    {Thd_Referee, "Referee", 512, 5, THD_REFEREE},
+    {Thd_USB, "USB", 128, 5, THD_USB},
 };
 
 /**
@@ -75,15 +75,15 @@ static const Thread_t thread_list[] = {
  *
  * @param argument 未使用
  */
-void Thread_Init(void) {
+void Thd_Init(void) {
   Config_Get(&runtime.cfg); /* 获取机器人配置 */
 
   vTaskSuspendAll();
   /* 创建线程 */
-  for (size_t j = 0; j < ARRAY_LEN(thread_list); j++) {
-    Thread_t *thread = thread_list + j;
-    xTaskCreate(thread->thrad_fn, thread->name, thread->stack_depth, &runtime,
-                thread->priority, &runtime.thread[thread->handle_name]);
+  for (size_t j = 0; j < ARRAY_LEN(thd_list); j++) {
+    Thd_t *thd = thd_list + j;
+    xTaskCreate(thd->thrad_fn, thd->name, thd->stack_depth, &runtime,
+                thd->priority, &runtime.thd[thd->handle_name]);
   }
   xTaskResumeAll();
 }

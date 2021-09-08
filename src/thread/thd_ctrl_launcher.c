@@ -33,14 +33,11 @@ static UI_LauncherUI_t launcher_ui;
 
 #endif
 
-/**
- * @brief 控制发射器
- *
- * @param argument 未使用
- */
-void Thread_CtrlLauncher(void* argument) {
+#define THD_PERIOD_MS (2)
+
+void Thd_CtrlLauncher(void* argument) {
   Runtime_t* runtime = argument;
-  const uint32_t delay_tick = pdMS_TO_TICKS(1000 / TASK_FREQ_CTRL_LAUNCHER);
+  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* out_pub =
       MsgDistrib_CreateTopic("launcher_out", sizeof(CAN_GimbalOutput_t));
@@ -55,7 +52,7 @@ void Thread_CtrlLauncher(void* argument) {
 
   /* 初始化发射器 */
   Launcher_Init(&launcher, &(runtime->cfg.robot_param->launcher),
-                (float)TASK_FREQ_CTRL_LAUNCHER);
+                1000.0f / (float)THD_PERIOD_MS);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 
