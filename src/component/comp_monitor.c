@@ -14,46 +14,29 @@
 #include <string.h>
 
 #define MAX_MONITOR_DETECTOR (10)
-#define MAX_NAME_LEN (20)
-
-typedef struct {
-  char name[MAX_NAME_LEN];
-  uint8_t priority;
-  uint32_t patient_lost;
-  uint32_t patient_work;
-
-  bool enable;
-  uint32_t showup_last;
-  uint32_t cycle_time;
-  uint32_t duration_lost;
-  uint32_t duration_work;
-  uint32_t found_lost;
-  bool lost;
-
-} Monitor_t;
 
 Monitor_t detect_list[MAX_MONITOR_DETECTOR];
 
-bool Monitor_Init(Monitor_Handle_t handle, const char *name, uint8_t priority,
-                  uint32_t patient_lost, uint32_t patient_work) {
+Monitor_t *Monitor_Create(const char *name, uint8_t priority,
+                          uint32_t patient_lost, uint32_t patient_work) {
   for (size_t i = 0; i < MAX_MONITOR_DETECTOR; i++) {
     if (detect_list[i].name == NULL) {
-      strncpy(name, detect_list[i].name, MAX_NAME_LEN - 1);
-      detect_list[i].name[MAX_NAME_LEN] = '\0';
+      strncpy(detect_list[i].name, name, MAX_MONITOR_NAME_LEN - 1);
+      detect_list[i].name[MAX_MONITOR_NAME_LEN] = '\0';
       detect_list[i].priority = priority;
       detect_list[i].patient_lost = patient_lost;
       detect_list[i].patient_work = patient_work;
-      return true;
+      return detect_list + i;
     }
   }
-  return false;
+  return NULL;
 }
 
-void Monitor_Report(Monitor_Handle_t handle, uint32_t sys_time) {
-  detect_list[handle].cycle_time = sys_time - detect_list[handle].showup_last;
-  detect_list[handle].showup_last = sys_time;
-  detect_list[handle].duration_lost = 0;
-  detect_list[handle].duration_work += detect_list[handle].cycle_time;
+void Monitor_Report(Monitor_t *monitor, uint32_t sys_time) {
+  monitor->cycle_time = sys_time - monitor->showup_last;
+  monitor->showup_last = sys_time;
+  monitor->duration_lost = 0;
+  monitor->duration_work += monitor->cycle_time;
 }
 
 void Monitor_Examine(uint32_t sys_time) {
@@ -70,6 +53,6 @@ void Monitor_Examine(uint32_t sys_time) {
 
 void Monitor_GetDetailTable(char *detail_string, size_t len) {
   static const char *const header = "\r\n";
-  strncpy(header, detail_string, len - 1);
+  strncpy(detail_string, header, len - 1);
   detail_string[len] = '\0';
 }
