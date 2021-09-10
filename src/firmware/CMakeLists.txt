@@ -22,7 +22,7 @@ add_dependencies(${PROJECT_NAME}
     thread
 )
 
-include(utils_gcc)
+include(utils_arm_none_eabi)
 
 print_section_sizes(${PROJECT_NAME})
 
