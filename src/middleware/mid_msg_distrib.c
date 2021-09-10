@@ -83,7 +83,7 @@ MsgDistrib_Publisher_t *MsgDistrib_CreateTopic(const char *topic_name,
     for (size_t i = 0; i < MAX_TOPIC; i++) {
       MsgDistrib_Topic_t *topic = md.topic_list + i;
       if (topic->name == NULL) {
-        strncpy(topic_name, topic->name, MAX_NAME_LEN - 1);
+        strncpy(topic->name, topic_name, MAX_NAME_LEN - 1);
         topic->name[MAX_NAME_LEN] = '\0';
         topic->data_size = data_size;
         topic->data_buf = pvPortMalloc(data_size);
@@ -149,21 +149,23 @@ bool MsgDistrib_PublishFromISR(MsgDistrib_Publisher_t *publisher,
 MsgDistrib_Subscriber_t *MsgDistrib_Subscribe(const char *topic_name,
                                               bool wait_topic) {
   ASSERT(topic_name);
-  while (wait_topic) {
+  do {
     for (size_t i = 0; i < MAX_TOPIC; i++) {
       MsgDistrib_Topic_t *topic = md.topic_list + i;
       if (strncmp(topic->name, topic_name, MAX_NAME_LEN) == 0) {
         for (size_t j = 0; j < MAX_SUBS_TO_ONE_TPIC; j++) {
           if (topic->subs[j].bin_sem == NULL) {
             topic->subs[j].bin_sem = xSemaphoreCreateBinary();
-            return &(topic->pub);
+            topic->subs[j].topic = topic;
+            return topic->subs + j;
           }
         }
         return NULL;
       }
     }
     vTaskDelay(pdMS_TO_TICKS(1));
-  }
+  } while (wait_topic);
+  return NULL;
 }
 
 /**
@@ -179,10 +181,9 @@ bool MsgDistrib_Poll(MsgDistrib_Subscriber_t *subscriber, void *data,
                      uint32_t timeout) {
   ASSERT(subscriber);
   ASSERT(data);
-  MsgDistrib_Topic_t *topic =
-      CONTAINER_OF(subscriber, MsgDistrib_Topic_t, subs);
+  MsgDistrib_Topic_t *topic = subscriber->topic;
 
-  BaseType_t ret;
+  BaseType_t ret = pdFALSE;
   if (timeout) {
     ret = xSemaphoreTake(subscriber->bin_sem, pdMS_TO_TICKS(timeout));
   }
@@ -235,6 +236,6 @@ void MsgDistrib_Distribute(void) {
 
 void MsgDistrib_Detail(char *detail_string, size_t len) {
   static const char *const header = "\r\n";
-  strncpy(header, detail_string, len - 1);
+  strncpy(detail_string, header, len - 1);
   detail_string[len] = '\0';
 }
