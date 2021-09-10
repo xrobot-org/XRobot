@@ -1,7 +1,7 @@
 /**
- * @file fifo.h
+ * @file cbuf.h
  * @author Qu Shen
- * @brief 先进先出缓存
+ * @brief 循环缓冲区
  * @version 0.1
  * @date 2021-09-05
  *
@@ -19,13 +19,12 @@
 typedef struct {
   uint32_t in;
   uint32_t out;
-  uint32_t mask;
   uint32_t size;
   size_t ele_size;
   void *data;
-} FIFO_t;
+} CycleBuf_t;
 
-bool FIFO_Alloc(FIFO_t *fifo, uint32_t size, size_t ele_size);
-bool FIFO_Free(FIFO_t *fifo);
-size_t FIFO_In(FIFO_t *fifo, const void *buf, size_t len);
-size_t FIFO_Out(FIFO_t *fifo, void *buf, size_t len);
+bool CycleBuf_Alloc(CycleBuf_t *cbuf, uint32_t size, size_t ele_size);
+bool CycleBuf_Free(CycleBuf_t *cbuf);
+size_t CycleBuf_In(CycleBuf_t *cbuf, const void *buf, size_t len);
+size_t CycleBuf_Out(CycleBuf_t *cbuf, void *buf, size_t len);
