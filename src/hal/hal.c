@@ -1,5 +1,17 @@
 #include "hal.h"
 
+#include "hal_adc.h"
+#include "hal_can.h"
+#include "hal_crc.h"
+#include "hal_dcmi.h"
+#include "hal_dma.h"
+#include "hal_gpio.h"
+#include "hal_i2c.h"
+#include "hal_rng.h"
+#include "hal_spi.h"
+#include "hal_sys.h"
+#include "hal_tim.h"
+#include "hal_usart.h"
 #include "stm32_assert.h"
 #include "stm32f4xx_hal_conf.h"
 
