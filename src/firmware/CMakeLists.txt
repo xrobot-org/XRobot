@@ -23,5 +23,8 @@ add_dependencies(${PROJECT_NAME}
 )
 
 include(utils_gcc)
+
 print_section_sizes(${PROJECT_NAME})
+
+create_hex_output(${PROJECT_NAME})
 create_bin_output(${PROJECT_NAME})
