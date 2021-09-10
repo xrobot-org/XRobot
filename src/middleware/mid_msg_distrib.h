@@ -27,6 +27,7 @@ typedef struct {
 /* 订阅者 */
 typedef struct {
   SemaphoreHandle_t bin_sem;
+  void *topic;
 } MsgDistrib_Subscriber_t;
 
 /**
