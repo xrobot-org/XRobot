@@ -14,15 +14,11 @@
 #include <stddef.h>
 #include <string.h>
 
+#include "FreeRTOS.h"
 #include "comp_utils.h"
 
-static CycleBuf_Unused(CycleBuf_t *cbuf) {
-  ASSERT(cbuf);
-  return (cbuf->size) - (cbuf->in - cbuf->out);
-}
-
-static CycleBuf_CopyIn(CycleBuf_t *cbuf, const void *src, uint32_t len,
-                       uint32_t off) {
+static void CycleBuf_CopyIn(CycleBuf_t *cbuf, const void *src, uint32_t len,
+                            uint32_t off) {
   ASSERT(cbuf);
   ASSERT(src);
 
@@ -41,8 +37,8 @@ static CycleBuf_CopyIn(CycleBuf_t *cbuf, const void *src, uint32_t len,
   memcmp(cbuf->data, src + l, len - l);
 }
 
-static CycleBuf_CopyOut(CycleBuf_t *cbuf, void *dst, uint32_t len,
-                        uint32_t off) {
+static void CycleBuf_CopyOut(CycleBuf_t *cbuf, void *dst, uint32_t len,
+                             uint32_t off) {
   ASSERT(cbuf);
   ASSERT(dst);
 
@@ -80,12 +76,14 @@ bool CycleBuf_Alloc(CycleBuf_t *cbuf, uint32_t size, size_t ele_size) {
 }
 
 bool CycleBuf_Free(CycleBuf_t *cbuf) {
+  if (cbuf == NULL) return false;
   vPortFree(cbuf->data);
   cbuf->in = 0;
   cbuf->out = 0;
   cbuf->ele_size = 0;
   cbuf->data = NULL;
   cbuf->size = 0;
+  return true;
 }
 
 size_t CycleBuf_In(CycleBuf_t *cbuf, const void *buf, size_t len) {
