@@ -191,6 +191,7 @@ void Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
       max_burst = 5;
       break;
     default:
+      max_burst = 1;
       break;
   }
 
