@@ -151,7 +151,7 @@ USBD_CDC_ItfTypeDef USBD_Interface_fops_FS = {CDC_Init_FS, CDC_DeInit_FS,
 static int8_t CDC_Init_FS(void) {
   /* USER CODE BEGIN 3 */
   /* Set Application Buffers */
-  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, usb_rx_buf);
+  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
   return (USBD_OK);
   /* USER CODE END 3 */
 }
@@ -257,7 +257,7 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t *pbuf, uint16_t length) {
  */
 static int8_t CDC_Receive_FS(uint8_t *Buf, uint32_t *Len) {
   /* USER CODE BEGIN 6 */
-  osThreadFlagsSet(gbsp_usb_alert, SIGNAL_BSP_USB_BUF_RECV);
+  // osThreadFlagsSet(gbsp_usb_alert, SIGNAL_BSP_USB_BUF_RECV);
 
   return (USBD_OK);
   /* USER CODE END 6 */
