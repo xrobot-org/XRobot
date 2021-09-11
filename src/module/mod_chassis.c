@@ -112,7 +112,7 @@ void Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
   if (param->reverse.yaw) CircleReverse(&(c->gimbal_mech_zero->yaw));
 
   /* 根据参数（param）中的底盘型号初始化Mixer */
-  Mixer_Mode_t mixer_mode;
+  Mixer_Mode_t mixer_mode = MIXER_SINGLE;
   switch (c->param->type) {
     case CHASSIS_TYPE_MECANUM:
       c->num_wheel = 4;
@@ -148,6 +148,9 @@ void Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
       /* onboard sdk. */
       ASSERT(0);
       break;
+
+    default:
+      ASSERT(0);
   }
 
   /* 根据底盘型号动态分配控制时使用的变量 */

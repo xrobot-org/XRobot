@@ -66,7 +66,9 @@ void DartLauncher_Init(DartLauncher_t *dl, const DartLauncher_Params_t *param,
                        float target_freq) {
   ASSERT(dl);
   ASSERT(param);
+  ASSERT(target_freq);
 
+  DartLauncher_SetMode(dl, DART_LAUNCHER_MODE_RELAX);
   /* Not implemented */
   ASSERT(0);
 }
@@ -97,64 +99,7 @@ void DartLauncher_Control(DartLauncher_t *dl, Referee_ForLauncher_t *dl_ref,
                           uint32_t now) {
   ASSERT(dl);
   ASSERT(dl_ref);
-
-  dl->dt = (float)(now - dl->lask_wakeup) / 1000.0f;
-  dl->lask_wakeup = now;
-
-  /* Not implemented */
-  ASSERT(0);
-
-  switch (dl->mode) {
-    case LAUNCHER_MODE_RELAX:
-      for (size_t i = 0; i < DART_LAUNCHER_FRIC_NUM; i++) {
-        dl->out.fric[i] = 0;
-      }
-      for (size_t i = 0; i < DART_LAUNCHER_FLY_NUM; i++) {
-        dl->out.fly[i] = 0;
-      }
-      dl->out.feed = 0;
-      break;
-
-    case LAUNCHER_MODE_SAFE:
-      for (size_t i = 0; i < DART_LAUNCHER_FRIC_NUM; i++) {
-        dl->setpoint.fric_rpm[i] = 0;
-      }
-      for (size_t i = 0; i < DART_LAUNCHER_FLY_NUM; i++) {
-        dl->setpoint.fly_rpm[i] = 0;
-      }
-    case LAUNCHER_MODE_LOADED:
-      for (size_t i = 0; i < DART_LAUNCHER_FRIC_NUM; i++) {
-        /* 控制摩擦轮 */
-        dl->feedback.fric_rpm[i] = LowPassFilter2p_Apply(
-            dl->filter.in.fric + i, dl->feedback.fric_rpm[i]);
-
-        dl->out.fric[i] = PID_Calc(dl->pid.fric + i, dl->setpoint.fric_rpm[i],
-                                   dl->feedback.fric_rpm[i], 0.0f, dl->dt);
-
-        dl->out.fric[i] =
-            LowPassFilter2p_Apply(dl->filter.out.fric + i, dl->out.fric[i]);
-      }
-
-      for (size_t i = 0; i < DART_LAUNCHER_FLY_NUM; i++) {
-        dl->feedback.fly_rpm[i] = LowPassFilter2p_Apply(
-            dl->filter.in.fly + i, dl->feedback.fly_rpm[i]);
-
-        dl->out.fly[i] = PID_Calc(dl->pid.fly + i, dl->setpoint.fly_rpm[i],
-                                  dl->feedback.fly_rpm[i], 0.0f, dl->dt);
-
-        dl->out.fly[i] =
-            LowPassFilter2p_Apply(dl->filter.out.fly + i, dl->out.fly[i]);
-      }
-      dl->feedback.feed_pos =
-          LowPassFilter2p_Apply(&(dl->filter.in.feed), dl->feedback.feed_pos);
-
-      dl->out.feed = PID_Calc(&(dl->pid.feed), dl->setpoint.feed_pos,
-                              dl->feedback.feed_pos, 0.0f, dl->dt);
-
-      dl->out.feed =
-          LowPassFilter2p_Apply(&(dl->filter.out.feed), dl->out.feed);
-      break;
-  }
+  ASSERT(now);
 }
 
 /**
