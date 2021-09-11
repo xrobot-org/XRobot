@@ -33,13 +33,17 @@ static bool inited = false;
 
 // TODO: 这里idle line用法不对，参考referee
 static void Ai_RxCpltCallback(void) {
+  BaseType_t switch_required;
   xTaskNotifyFromISR(thread_alert, SIGNAL_AI_RAW_REDY, eSetValueWithOverwrite,
-                     pdTRUE);
+                     &switch_required);
+  portYIELD_FROM_ISR(switch_required);
 }
 
 static void Ai_IdleLineCallback(void) {
+  BaseType_t switch_required;
   xTaskNotifyFromISR(thread_alert, SIGNAL_AI_RAW_REDY, eSetValueWithOverwrite,
-                     pdTRUE);
+                     &switch_required);
+  portYIELD_FROM_ISR(switch_required);
 }
 
 /* Exported functions ------------------------------------------------------- */

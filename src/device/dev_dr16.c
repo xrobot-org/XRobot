@@ -26,8 +26,10 @@ static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
 static void DR16_RxCpltCallback(void) {
+  BaseType_t switch_required;
   xTaskNotifyFromISR(thread_alert, SIGNAL_DR16_RAW_REDY, eSetValueWithOverwrite,
-                     pdTRUE);
+                     &switch_required);
+  portYIELD_FROM_ISR(switch_required);
 }
 
 static bool DR16_DataCorrupted(const DR16_t *dr16) {

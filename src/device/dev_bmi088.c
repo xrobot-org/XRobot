@@ -174,13 +174,17 @@ static void BMI088_RxCpltCallback(void) {
 }
 
 static void BMI088_AcclIntCallback(void) {
+  BaseType_t switch_required;
   xTaskNotifyFromISR(thread_alert, SIGNAL_BMI088_ACCL_NEW_DATA,
-                     eSetValueWithOverwrite, pdTRUE);
+                     eSetValueWithOverwrite, &switch_required);
+  portYIELD_FROM_ISR(switch_required);
 }
 
 static void BMI088_GyroIntCallback(void) {
+  BaseType_t switch_required;
   xTaskNotifyFromISR(thread_alert, SIGNAL_BMI088_GYRO_NEW_DATA,
-                     eSetValueWithOverwrite, pdTRUE);
+                     eSetValueWithOverwrite, &switch_required);
+  portYIELD_FROM_ISR(switch_required);
 }
 
 /* Exported functions ------------------------------------------------------- */

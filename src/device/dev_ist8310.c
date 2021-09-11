@@ -67,16 +67,21 @@ static void IST8310_Read(uint8_t reg, uint8_t *data, uint8_t len) {
 }
 
 static void IST8310_MemRxCpltCallback(void) {
+  BaseType_t switch_required;
   xTaskNotifyFromISR(thread_alert, SIGNAL_IST8310_MAGN_RAW_REDY,
-                     eSetValueWithOverwrite, pdTRUE);
+                     eSetValueWithOverwrite, &switch_required);
+  portYIELD_FROM_ISR(switch_required);
 }
 
 static void IST8310_IntCallback(void) {
+  BaseType_t switch_required;
   xTaskNotifyFromISR(thread_alert, SIGNAL_IST8310_MAGN_NEW_DATA,
-                     eSetValueWithOverwrite, pdTRUE);
+                     eSetValueWithOverwrite, &switch_required);
+  portYIELD_FROM_ISR(switch_required);
 }
 
-/* Exported functions ------------------------------------------------------- */
+/* Exported functions -------------------------------------------------------
+ */
 int8_t IST8310_Init(IST8310_t *ist8310, const IST8310_Cali_t *cali) {
   ASSERT(ist8310);
   ASSERT(cali);
@@ -117,7 +122,7 @@ int8_t IST8310_Init(IST8310_t *ist8310, const IST8310_Cali_t *cali) {
 }
 
 bool IST8310_WaitNew(uint32_t timeout) {
-  return xTaskNotifyWait(0, 0, SIGNAL_IST8310_MAGN_NEW_DATA,
+  return xTaskNotifyWait(0, 0, (uint32_t *)SIGNAL_IST8310_MAGN_NEW_DATA,
                          pdMS_TO_TICKS(timeout));
 }
 
@@ -127,7 +132,7 @@ int8_t IST8310_StartDmaRecv() {
 }
 
 uint32_t IST8310_WaitDmaCplt() {
-  return xTaskNotifyWait(0, 0, SIGNAL_IST8310_MAGN_RAW_REDY, 0);
+  return xTaskNotifyWait(0, 0, (uint32_t *)SIGNAL_IST8310_MAGN_RAW_REDY, 0);
 }
 
 int8_t IST8310_Parse(IST8310_t *ist8310) {
