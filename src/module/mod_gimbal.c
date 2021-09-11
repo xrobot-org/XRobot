@@ -86,12 +86,12 @@ void Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
  * @param g 云台
  * @param can CAN设备
  */
-void Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_t *can) {
+void Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_GimbalMotor_t *gimbal_motor) {
   ASSERT(g);
-  ASSERT(can);
+  ASSERT(gimbal_motor);
 
-  g->feedback.eulr.encoder.yaw = can->motor.gimbal.named.yaw.rotor_abs_angle;
-  g->feedback.eulr.encoder.pit = can->motor.gimbal.named.pit.rotor_abs_angle;
+  g->feedback.eulr.encoder.yaw = gimbal_motor->named.yaw.rotor_abs_angle;
+  g->feedback.eulr.encoder.pit = gimbal_motor->named.pit.rotor_abs_angle;
 
   if (g->param->reverse.yaw) CircleReverse(&(g->feedback.eulr.encoder.yaw));
   if (g->param->reverse.pit) CircleReverse(&(g->feedback.eulr.encoder.pit));

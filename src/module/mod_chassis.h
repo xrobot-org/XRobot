@@ -120,7 +120,9 @@ void Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
  * @param c 包含底盘数据的结构体
  * @param can CAN设备结构体
  */
-void Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can);
+void Chassis_UpdateFeedback(Chassis_t *c,
+                            const CAN_ChassisMotor_t *chassis_motor,
+                            const CAN_GimbalMotor_t *gimbal_motor);
 
 /**
  * @brief 运行底盘控制逻辑

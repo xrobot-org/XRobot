@@ -74,7 +74,8 @@ void Thd_CtrlChassis(void* arg) {
     MsgDistrib_Poll(cap_sub, &cap, 0);
 
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
-    Chassis_UpdateFeedback(&chassis, &chassis_motor); /* 更新反馈值 */
+    /* 更新反馈值 */
+    Chassis_UpdateFeedback(&chassis, &chassis_motor, &gimbal_motor);
     Chassis_Control(&chassis, &chassis_cmd, xTaskGetTickCount());
     Chassis_PowerLimit(&chassis, &cap, &chassis_ref); /* 限制输出功率 */
     Chassis_PackOutput(&chassis, &chassis_out);

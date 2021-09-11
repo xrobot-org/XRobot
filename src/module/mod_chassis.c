@@ -198,21 +198,24 @@ void Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
  * @param c 包含底盘数据的结构体
  * @param can CAN设备结构体
  */
-void Chassis_UpdateFeedback(Chassis_t *c, const CAN_t *can) {
+void Chassis_UpdateFeedback(Chassis_t *c,
+                            const CAN_ChassisMotor_t *chassis_motor,
+                            const CAN_GimbalMotor_t *gimbal_motor) {
   /* 底盘数据和CAN结构体不能为空 */
   ASSERT(c);
-  ASSERT(can);
+  ASSERT(chassis_motor);
+  ASSERT(gimbal_motor);
 
   /* 如果yaw云台电机反装重新计算正确的反馈值 */
   c->feedback.gimbal_yaw_encoder_angle =
-      can->motor.gimbal.named.yaw.rotor_abs_angle;
+      gimbal_motor->named.yaw.rotor_abs_angle;
   if (c->param->reverse.yaw)
     CircleReverse(&(c->feedback.gimbal_yaw_encoder_angle));
 
   /* 将CAN中的反馈数据写入到feedback中 */
   for (size_t i = 0; i < c->num_wheel; i++) {
     c->feedback.motor_rotational_speed[i] =
-        can->motor.chassis.as_array[i].rotational_speed;
+        chassis_motor->as_array[i].rotational_speed;
   }
 }
 
