@@ -42,8 +42,7 @@ void Thd_CtrlGimbal(void* argument) {
   MsgDistrib_Publisher_t* ui_pub =
       MsgDistrib_CreateTopic("gimbal_ui", sizeof(UI_GimbalUI_t));
 
-  MsgDistrib_Subscriber_t* eulr_sub =
-      MsgDistrib_CreateTopic("gimbal_eulr", true);
+  MsgDistrib_Subscriber_t* eulr_sub = MsgDistrib_Subscribe("gimbal_eulr", true);
   MsgDistrib_Subscriber_t* gyro_sub = MsgDistrib_Subscribe("gimbal_gyro", true);
   MsgDistrib_Subscriber_t* motor_sub =
       MsgDistrib_Subscribe("gimbal_motor_fb", true);
