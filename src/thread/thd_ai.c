@@ -26,8 +26,8 @@ static Referee_ForAI_t referee_ai;
 
 #define THD_PERIOD_MS (2)
 
-void Thd_AI(void* argument) {
-  RM_UNUSED(argument);
+void Thd_AI(void* arg) {
+  RM_UNUSED(arg);
   const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* cmd_host_pub =

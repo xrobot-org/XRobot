@@ -35,8 +35,8 @@ static UI_LauncherUI_t launcher_ui;
 
 #define THD_PERIOD_MS (2)
 
-void Thd_CtrlLauncher(void* argument) {
-  Runtime_t* runtime = argument;
+void Thd_CtrlLauncher(void* arg) {
+  Runtime_t* runtime = arg;
   const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* out_pub =

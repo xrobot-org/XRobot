@@ -647,13 +647,8 @@ static const CLI_Command_Definition_t command_table[] = {
     */
 };
 
-/**
- * @brief 命令行交互界面
- *
- * @param argument 未使用
- */
-void Thd_CLI(void *argument) {
-  runtime = argument;
+void Thd_CLI(void *arg) {
+  runtime = arg;
   static char input[MAX_INPUT_LENGTH];          /* 输入字符串缓存 */
   char *output = FreeRTOS_CLIGetOutputBuffer(); /* 输出字符串缓存 */
   char rx_char;                                 /* 接收到的字符 */

@@ -33,8 +33,8 @@ static UI_CapUI_t cap_ui;
 
 #define THD_PERIOD_MS (10)
 
-void Thd_CtrlCap(void* argument) {
-  RM_UNUSED(argument);
+void Thd_CtrlCap(void* arg) {
+  RM_UNUSED(arg);
   const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* out_pub =

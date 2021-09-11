@@ -17,8 +17,8 @@
 
 #define THD_PERIOD_MS (2)
 
-void Thd_USB(void* argument) {
-  Runtime_t* runtime = argument;
+void Thd_USB(void* arg) {
+  Runtime_t* runtime = arg;
   RM_UNUSED(runtime);
 
   while (1) {
