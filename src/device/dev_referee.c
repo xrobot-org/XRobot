@@ -106,7 +106,7 @@ static int8_t Referee_SetUiHeader(Referee_InterStudentHeader_t *header,
   } else {
     header->id_receiver = robot_id + 0x0100;
   }
-  return 0;
+  return DEVICE_OK;
 }
 
 /* Exported functions ------------------------------------------------------- */
@@ -143,13 +143,13 @@ int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen) {
   __HAL_UART_ENABLE_IT(BSP_UART_GetHandle(BSP_UART_REF), UART_IT_IDLE);
 
   inited = true;
-  return 0;
+  return DEVICE_OK;
 }
 
 int8_t Referee_Restart(void) {
   __HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_REF));
   __HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_REF));
-  return 0;
+  return DEVICE_OK;
 }
 
 void Referee_HandleOffline(Referee_t *ref) { ref->status = REF_STATUS_OFFLINE; }
@@ -560,7 +560,7 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
 
   xTaskNotifyStateClear(xTaskGetCurrentTaskHandle());
 
-  return 0;
+  return DEVICE_OK;
 }
 
 /**
@@ -672,7 +672,7 @@ uint8_t Referee_PackForChassis(Referee_ForChassis_t *c_ref,
   c_ref->chassis_power_limit = ref->robot_status.chassis_power_limit;
   c_ref->chassis_pwr_buff = ref->power_heat.chassis_pwr_buff;
   c_ref->status = ref->status;
-  return 0;
+  return DEVICE_OK;
 }
 
 uint8_t Referee_PackForLauncher(Referee_ForLauncher_t *l_ref, Referee_t *ref) {
@@ -682,7 +682,7 @@ uint8_t Referee_PackForLauncher(Referee_ForLauncher_t *l_ref, Referee_t *ref) {
   memcpy(&(l_ref->launcher_data), &(ref->launcher_data),
          sizeof(l_ref->launcher_data));
   l_ref->status = ref->status;
-  return 0;
+  return DEVICE_OK;
 }
 
 uint8_t Referee_PackForCap(Referee_ForCap_t *cap_ref, const Referee_t *ref) {
@@ -690,7 +690,7 @@ uint8_t Referee_PackForCap(Referee_ForCap_t *cap_ref, const Referee_t *ref) {
   cap_ref->chassis_pwr_buff = ref->power_heat.chassis_pwr_buff;
   cap_ref->chassis_watt = ref->power_heat.chassis_watt;
   cap_ref->status = ref->status;
-  return 0;
+  return DEVICE_OK;
 }
 
 uint8_t Referee_PackForAI(Referee_ForAI_t *ai_ref, const Referee_t *ref) {
@@ -700,5 +700,5 @@ uint8_t Referee_PackForAI(Referee_ForAI_t *ai_ref, const Referee_t *ref) {
     ai_ref->team = AI_TEAM_BLUE;
 
   ai_ref->status = ref->status;
-  return 0;
+  return DEVICE_OK;
 }

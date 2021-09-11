@@ -118,7 +118,7 @@ int8_t IST8310_Init(IST8310_t *ist8310, const IST8310_Cali_t *cali) {
 
 bool IST8310_WaitNew(uint32_t timeout) {
   return xTaskNotifyWait(0, 0, SIGNAL_IST8310_MAGN_NEW_DATA,
-                         pdMS_TO_TICK(timeout));
+                         pdMS_TO_TICKS(timeout));
 }
 
 int8_t IST8310_StartDmaRecv() {

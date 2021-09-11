@@ -53,7 +53,7 @@ int8_t AI_Init(AI_t *ai) {
   BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_IDLE_LINE_CB,
                             Ai_IdleLineCallback);
   inited = true;
-  return 0;
+  return DEVICE_OK;
 }
 
 int8_t AI_Restart(void) {
@@ -105,7 +105,7 @@ void AI_PackCmd(AI_t *ai, CMD_Host_t *cmd_host) {
 
 int8_t AI_HandleOffline(AI_t *ai) {
   ai->ai_online = false;
-  return 0;
+  return DEVICE_OK;
 }
 
 int8_t AI_PackMcu(AI_t *ai, const AHRS_Quaternion_t *quat) {
