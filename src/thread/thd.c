@@ -44,7 +44,7 @@ extern void Thd_USB(void *argument);
 Runtime_t runtime;
 
 typedef struct {
-  TaskFunction_t thrad_fn;
+  TaskFunction_t fn;
   const char *name;
   configSTACK_DEPTH_TYPE stack_depth;
   UBaseType_t priority;
@@ -70,20 +70,15 @@ static const Thd_t thd_list[] = {
     {Thd_USB, "USB", 128, 5, THD_USB},
 };
 
-/**
- * @brief 初始化
- *
- * @param argument 未使用
- */
 void Thd_Init(void) {
   Config_Get(&runtime.cfg); /* 获取机器人配置 */
 
   vTaskSuspendAll();
   /* 创建线程 */
   for (size_t j = 0; j < ARRAY_LEN(thd_list); j++) {
-    Thd_t *thd = thd_list + j;
-    xTaskCreate(thd->thrad_fn, thd->name, thd->stack_depth, &runtime,
-                thd->priority, &runtime.thd[thd->handle_name]);
+    const Thd_t *thd = thd_list + j;
+    xTaskCreate(thd->fn, thd->name, thd->stack_depth, &runtime, thd->priority,
+                runtime.thd + thd->handle_name);
   }
   xTaskResumeAll();
 }
