@@ -86,28 +86,37 @@ MsgDistrib_Publisher_t *MsgDistrib_CreateTopic(const char *topic_name,
   }
 
   MsgDistrib_Publisher_t *puber = NULL;
+  MsgDistrib_Topic_t *topic;
 
-  BaseType_t rtn = xSemaphoreTakeRecursive(md.topic_mutex, portMAX_DELAY);
-  if (rtn == pdPASS) {
-    if (md.topic_created < MAX_TOPIC) {
-      MsgDistrib_Topic_t *topic = md.topic_list + md.topic_created;
-      memset(topic->name, 0, sizeof(topic->name));
-      strncpy(topic->name, topic_name, MAX_NAME_LEN - 1);
-      topic->data_size = data_size;
-      topic->data_buf = pvPortMalloc(data_size);
-
-      topic->puber.data_queue = xQueueCreate(1, data_size);
-      xQueueAddToSet(topic->puber.data_queue, md.topic_queue_set);
-
-      topic->monitor.created_tick = xTaskGetTickCount();
-
-      md.topic_created++;
-      puber = &(topic->puber);
-    } else {
-      puber = NULL;
+  xSemaphoreTakeRecursive(md.topic_mutex, portMAX_DELAY);
+  if (md.topic_created < MAX_TOPIC) {
+    for (size_t i = 0; i < md.topic_created; i++) {
+      topic = md.topic_list + i;
+      if (strncmp(topic->name, topic_name, MAX_NAME_LEN) == 0) {
+        /* 检查是否有重名topic */
+        puber = NULL;
+        goto end;
+      }
     }
-    xSemaphoreGiveRecursive(md.topic_mutex);
+    topic = md.topic_list + md.topic_created;
+    memset(topic->name, 0, sizeof(topic->name));
+    strncpy(topic->name, topic_name, MAX_NAME_LEN - 1);
+    topic->data_size = data_size;
+    topic->data_buf = pvPortMalloc(data_size);
+
+    topic->puber.data_queue = xQueueCreate(1, data_size);
+    xQueueAddToSet(topic->puber.data_queue, md.topic_queue_set);
+
+    topic->monitor.created_tick = xTaskGetTickCount();
+
+    md.topic_created++;
+    puber = &(topic->puber);
+  } else {
+    puber = NULL;
   }
+
+end:
+  xSemaphoreGiveRecursive(md.topic_mutex);
   return puber;
 }
 
