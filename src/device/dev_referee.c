@@ -278,9 +278,11 @@ int8_t Referee_Parse(Referee_t *ref) {
       case REF_CMD_ID_CLIENT_MAP:
         destination = &(ref->client_map);
         size = sizeof(ref->client_map);
+        break;
       case REF_CMD_ID_KEYBOARD_MOUSE:
         destination = &(ref->keyboard_mouse);
         size = sizeof(ref->keyboard_mouse);
+        break;
       default:
         return DEVICE_ERR;
     }
