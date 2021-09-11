@@ -60,8 +60,10 @@ static bool inited = false;
 /* Private function  -------------------------------------------------------- */
 
 static void Referee_RxCpltCallback(void) {
+  BaseType_t switch_required;
   xTaskNotifyFromISR(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY,
-                     eSetValueWithOverwrite, pdTRUE);
+                     eSetValueWithOverwrite, &switch_required);
+  portYIELD_FROM_ISR(switch_required);
 }
 
 static void Referee_IdleLineCallback(void) {
@@ -69,8 +71,10 @@ static void Referee_IdleLineCallback(void) {
 }
 
 static void Referee_AbortRxCpltCallback(void) {
+  BaseType_t switch_required;
   xTaskNotifyFromISR(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY,
-                     eSetValueWithOverwrite, pdTRUE);
+                     eSetValueWithOverwrite, &switch_required);
+  portYIELD_FROM_ISR(switch_required);
 }
 
 static void RefereeFastRefreshTimerCallback(void *arg) {
