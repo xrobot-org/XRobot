@@ -140,6 +140,7 @@ static uint8_t BMI_ReadSingle(BMI_Device_t dv, uint8_t reg) {
       BMI088_GYRO_NSS_SET();
       return tx_rx_buf[0];
   }
+  return DEVICE_OK;
 }
 
 static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
