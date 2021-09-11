@@ -118,7 +118,7 @@ void Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit,
  * @param g 云台
  * @param can CAN设备
  */
-void Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_t *can);
+void Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_GimbalMotor_t *gimbal_motor);
 
 /**
  * @brief 运行云台控制逻辑

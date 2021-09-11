@@ -142,17 +142,18 @@ void Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
  * @param l 包含发射器数据的结构体
  * @param can CAN设备结构体
  */
-void Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can) {
+void Launcher_UpdateFeedback(Launcher_t *l,
+                             const CAN_LauncherMotor_t *launcher_motor) {
   ASSERT(l);
-  ASSERT(can);
+  ASSERT(launcher_motor);
 
   for (size_t i = 0; i < 2; i++) {
-    l->feedback.fric_rpm[i] = can->motor.launcher.as_array[i].rotational_speed;
+    l->feedback.fric_rpm[i] = launcher_motor->as_array[i].rotational_speed;
   }
 
   /* 更新拨弹电机 */
   const float last_trig_motor_angle = l->feedback.trig_motor_angle;
-  l->feedback.trig_motor_angle = can->motor.launcher.named.trig.rotor_abs_angle;
+  l->feedback.trig_motor_angle = launcher_motor->named.trig.rotor_abs_angle;
   const float delta_motor_angle =
       CircleError(l->feedback.trig_motor_angle, last_trig_motor_angle, M_2PI);
   CircleAdd(&(l->feedback.trig_angle),

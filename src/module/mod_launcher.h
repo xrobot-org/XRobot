@@ -162,7 +162,8 @@ void Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
  * @param l 包含发射器数据的结构体
  * @param can CAN设备结构体
  */
-void Launcher_UpdateFeedback(Launcher_t *l, const CAN_t *can);
+void Launcher_UpdateFeedback(Launcher_t *l,
+                             const CAN_LauncherMotor_t *launcher_motor);
 
 /**
  * @brief 运行发射器控制逻辑
