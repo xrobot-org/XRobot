@@ -1,4 +1,4 @@
-set(MCU_FLAGS "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard")
+set(MCU_FLAGS "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb")
 
 # TODO: Remove "-w" & Add "-Wall -Wextra"
 set(GENERAL_FLAGS "-w --specs=nano.specs --specs=nosys.specs -fno-builtin -ffunction-sections -fdata-sections")
