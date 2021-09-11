@@ -62,5 +62,8 @@ void Thd_AttiEsti(void* argument) {
 
     /* 发布数据 */
     MsgDistrib_Publish(gimbal_eulr_pub, &gimbal_eulr);
+
+    /* 运行结束，等待下一次唤醒 */
+    xTaskDelayUntil(&previous_wake_time, delay_tick);
   }
 }

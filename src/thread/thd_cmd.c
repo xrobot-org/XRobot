@@ -48,7 +48,7 @@ void Thd_CMD(void* argument) {
   MsgDistrib_Publisher_t* ui_cmd_pub =
       MsgDistrib_CreateTopic("ui_cmd", sizeof(CMD_UI_t));
 
-  MsgDistrib_Subscriber_t* rc_sub = MsgDistrib_CreateTopic("rc_cmd", true);
+  MsgDistrib_Subscriber_t* rc_sub = MsgDistrib_Subscribe("rc_cmd", true);
   MsgDistrib_Subscriber_t* host_sub = MsgDistrib_Subscribe("rc_host", true);
 
   /* 初始化指令处理 */

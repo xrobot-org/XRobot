@@ -19,6 +19,7 @@
 
 void Thd_USB(void* argument) {
   Runtime_t* runtime = argument;
+  RM_UNUSED(runtime);
 
   while (1) {
     ;

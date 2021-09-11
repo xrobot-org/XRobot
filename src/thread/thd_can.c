@@ -49,7 +49,7 @@ void Thd_CAN(void* argument) {
       MsgDistrib_CreateTopic("tof_fb", sizeof(CAN_Tof_t));
 
   MsgDistrib_Subscriber_t* chassis_out_sub =
-      MsgDistrib_CreateTopic("chassis_out", true);
+      MsgDistrib_Subscribe("chassis_out", true);
   MsgDistrib_Subscriber_t* gimbal_out_sub =
       MsgDistrib_Subscribe("gimbal_out", true);
   MsgDistrib_Subscriber_t* launcher_out_sub =
@@ -94,6 +94,6 @@ void Thd_CAN(void* argument) {
     }
 
     /* 运行结束，等待下一次唤醒 */
-    xTaskDelayUntil(previous_wake_time, delay_tick);
+    xTaskDelayUntil(&previous_wake_time, delay_tick);
   }
 }

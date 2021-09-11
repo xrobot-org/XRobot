@@ -50,7 +50,7 @@ void Thd_CtrlChassis(void* argument) {
       MsgDistrib_CreateTopic("chassis_ui", sizeof(UI_ChassisUI_t));
 
   MsgDistrib_Subscriber_t* ref_sub =
-      MsgDistrib_CreateTopic("referee_chassis", true);
+      MsgDistrib_Subscribe("referee_chassis", true);
   MsgDistrib_Subscriber_t* cap_sub = MsgDistrib_Subscribe("chassis_gyro", true);
   MsgDistrib_Subscriber_t* chassis_motor_sub =
       MsgDistrib_Subscribe("chassis_motor_fb", true);

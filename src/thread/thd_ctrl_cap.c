@@ -34,7 +34,7 @@ static UI_CapUI_t cap_ui;
 #define THD_PERIOD_MS (10)
 
 void Thd_CtrlCap(void* argument) {
-  Runtime_t* runtime = argument;
+  RM_UNUSED(argument);
   const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* out_pub =
@@ -45,8 +45,7 @@ void Thd_CtrlCap(void* argument) {
       MsgDistrib_CreateTopic("cap_info", sizeof(Cap_t));
 
   MsgDistrib_Subscriber_t* fb_sub = MsgDistrib_Subscribe("cap_fb", true);
-  MsgDistrib_Subscriber_t* ref_sub =
-      MsgDistrib_CreateTopic("referee_cap", true);
+  MsgDistrib_Subscriber_t* ref_sub = MsgDistrib_Subscribe("referee_cap", true);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 

@@ -27,7 +27,7 @@ static Referee_ForAI_t referee_ai;
 #define THD_PERIOD_MS (2)
 
 void Thd_AI(void* argument) {
-  Runtime_t* runtime = argument;
+  RM_UNUSED(argument);
   const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* cmd_host_pub =
@@ -35,8 +35,7 @@ void Thd_AI(void* argument) {
   MsgDistrib_Publisher_t* ui_ai_pub =
       MsgDistrib_CreateTopic("ui_ai", sizeof(CMD_UI_t));
 
-  MsgDistrib_Subscriber_t* quat_sub =
-      MsgDistrib_CreateTopic("gimbal_quat", true);
+  MsgDistrib_Subscriber_t* quat_sub = MsgDistrib_Subscribe("gimbal_quat", true);
   MsgDistrib_Subscriber_t* cmd_ai_sub = MsgDistrib_Subscribe("cmd_ai", true);
   MsgDistrib_Subscriber_t* referee_ai_sub =
       MsgDistrib_Subscribe("referee_ai", true);

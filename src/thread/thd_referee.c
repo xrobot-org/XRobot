@@ -51,14 +51,13 @@ void Thd_Referee(void* argument) {
   MsgDistrib_Publisher_t* referee_launcher_pub =
       MsgDistrib_CreateTopic("referee_launcher", sizeof(CAN_CapFeedback_t));
 
-  MsgDistrib_Subscriber_t* ui_cap_sub = MsgDistrib_CreateTopic("ui_cap", true);
+  MsgDistrib_Subscriber_t* ui_cap_sub = MsgDistrib_Subscribe("ui_cap", true);
   MsgDistrib_Subscriber_t* ui_chassis_sub =
       MsgDistrib_Subscribe("chassis_ui", true);
   MsgDistrib_Subscriber_t* ui_gimbal_sub =
       MsgDistrib_Subscribe("gimbal_ui", true);
   MsgDistrib_Subscriber_t* ui_launcher_sub =
       MsgDistrib_Subscribe("launcher_ui", true);
-  MsgDistrib_Subscriber_t* cap_out_sub = MsgDistrib_Subscribe("cap_ui", true);
 
   /* 初始化裁判系统 */
   Referee_Init(&ref, &(runtime->cfg.pilot_cfg->screen));

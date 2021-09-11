@@ -33,7 +33,7 @@ static CMD_RC_t cmd_rc;
 #define THD_PERIOD_MS (2)
 
 void Thd_RC(void* argument) {
-  Runtime_t* runtime = argument;
+  RM_UNUSED(argument);
 
   MsgDistrib_Publisher_t* rc_pub =
       MsgDistrib_CreateTopic("rc_cmd", sizeof(CMD_RC_t));
