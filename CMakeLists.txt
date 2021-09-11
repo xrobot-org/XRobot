@@ -120,7 +120,6 @@ endif ()
 # Third Party
 
 set(THIRD_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/third_party)
 
 #---------------------------------------------------------------------------------------
 # SOURCE

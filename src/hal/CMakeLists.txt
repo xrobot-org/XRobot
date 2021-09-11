@@ -10,21 +10,22 @@ list(FILTER ${PROJECT_NAME}_SOURCES EXCLUDE REGEX ".*template.c$")
 
 add_library(${PROJECT_NAME} STATIC 
     ${${PROJECT_NAME}_SOURCES}
+    ${THIRD_PARTY_DIR}/stm32_cmsis/Source/Templates/system_stm32f4xx.c
+    ${THIRD_PARTY_DIR}/stm32_cmsis/Source/Templates/gcc/startup_stm32f407xx.s
 )
 
 target_link_libraries(${PROJECT_NAME}
-    PRIVATE stm32_cmsis
     PRIVATE rtos
 )
 
 target_include_directories(${PROJECT_NAME} 
     PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}
     PUBLIC  ${THIRD_PARTY_DIR}/stm32_hal/Inc
-    PUBLIC  $<TARGET_PROPERTY:stm32_cmsis,INTERFACE_INCLUDE_DIRECTORIES>
+    PUBLIC  ${THIRD_PARTY_DIR}/stm32_cmsis/Include
+    PUBLIC ${THIRD_PARTY_DIR}/arm_cmsis/CMSIS/Core/Include
     PRIVATE $<TARGET_PROPERTY:rtos,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 add_dependencies(${PROJECT_NAME} 
-    stm32_cmsis
     rtos
 )
