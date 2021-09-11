@@ -48,7 +48,8 @@ typedef struct {
 static struct {
   QueueSetHandle_t topic_queue_set;
   MsgDistrib_Topic_t topic_list[MAX_TOPIC];
-  SemaphoreHandle_t topic_sem;
+  SemaphoreHandle_t topic_mutex;
+  size_t topic_created;
 } md;
 
 /**
@@ -60,7 +61,8 @@ static struct {
 bool MsgDistrib_Init(void) {
   if (md.topic_queue_set == NULL) {
     md.topic_queue_set = xQueueCreateSet(MAX_SUBS_TO_ONE_TPIC);
-    md.topic_sem = xSemaphoreCreateCounting(MAX_SUBS_TO_ONE_TPIC, 0);
+    md.topic_mutex = xSemaphoreCreateRecursiveMutex();
+    md.topic_created = 0;
     return true;
   }
   return false;
@@ -76,29 +78,33 @@ bool MsgDistrib_Init(void) {
 MsgDistrib_Publisher_t *MsgDistrib_CreateTopic(const char *topic_name,
                                                size_t data_size) {
   ASSERT(topic_name);
-  while (md.topic_sem == NULL) {
+  while (md.topic_mutex == NULL) {
     vTaskDelay(pdMS_TO_TICKS(1));
   }
-  if (xSemaphoreTake(md.topic_sem, portMAX_DELAY)) {
-    for (size_t i = 0; i < MAX_TOPIC; i++) {
-      MsgDistrib_Topic_t *topic = md.topic_list + i;
-      if (topic->name == NULL) {
-        strncpy(topic->name, topic_name, MAX_NAME_LEN - 1);
-        topic->name[MAX_NAME_LEN] = '\0';
-        topic->data_size = data_size;
-        topic->data_buf = pvPortMalloc(data_size);
 
-        topic->pub.data_queue = xQueueCreate(1, data_size);
-        xQueueAddToSet(topic->pub.data_queue, md.topic_queue_set);
+  MsgDistrib_Publisher_t *pub = NULL;
+  BaseType_t rtn = xSemaphoreTakeRecursive(md.topic_mutex, portMAX_DELAY);
+  if (rtn == pdPASS) {
+    if (md.topic_created < MAX_TOPIC) {
+      MsgDistrib_Topic_t *topic = md.topic_list + md.topic_created;
+      memset(topic->name, 0, sizeof(topic->name));
+      strncpy(topic->name, topic_name, MAX_NAME_LEN - 1);
+      topic->data_size = data_size;
+      topic->data_buf = pvPortMalloc(data_size);
 
-        topic->monitor.online_tick = xTaskGetTickCount();
+      topic->pub.data_queue = xQueueCreate(1, data_size);
+      xQueueAddToSet(topic->pub.data_queue, md.topic_queue_set);
 
-        return &(topic->pub);
-      }
+      topic->monitor.online_tick = xTaskGetTickCount();
+
+      md.topic_created++;
+      pub = &(topic->pub);
+    } else {
+      pub = NULL;
     }
-    xSemaphoreGive(md.topic_sem);
+    xSemaphoreGiveRecursive(md.topic_mutex);
   }
-  return NULL;
+  return pub;
 }
 
 /**
