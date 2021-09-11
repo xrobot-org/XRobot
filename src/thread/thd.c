@@ -21,24 +21,25 @@
 
 #include "FreeRTOS.h"
 #include "comp_utils.h"
+#include "mod_config.h"
 #include "task.h"
 
-extern void Thd_AI(void *argument);
-extern void Thd_AttiEsti(void *argument);
-extern void Thd_CAN(void *argument);
-extern void Thd_CLI(void *argument);
-extern void Thd_CMD(void *argument);
-extern void Thd_CtrlCap(void *argument);
-extern void Thd_CtrlChassis(void *argument);
-extern void Thd_CtrlGimbal(void *argument);
-extern void Thd_CtrlLauncher(void *argument);
-extern void Thd_IMU(void *argument);
-extern void Thd_Info(void *argument);
-extern void Thd_Monitor(void *argument);
-extern void Thd_MsgDistrib(void *argument);
-extern void Thd_RC(void *argument);
-extern void Thd_Referee(void *argument);
-extern void Thd_USB(void *argument);
+extern void Thd_AI(void *arg);
+extern void Thd_AttiEsti(void *arg);
+extern void Thd_CAN(void *arg);
+extern void Thd_CLI(void *arg);
+extern void Thd_CMD(void *arg);
+extern void Thd_CtrlCap(void *arg);
+extern void Thd_CtrlChassis(void *arg);
+extern void Thd_CtrlGimbal(void *arg);
+extern void Thd_CtrlLauncher(void *arg);
+extern void Thd_IMU(void *arg);
+extern void Thd_Info(void *arg);
+extern void Thd_Monitor(void *arg);
+extern void Thd_MsgDistrib(void *arg);
+extern void Thd_RC(void *arg);
+extern void Thd_Referee(void *arg);
+extern void Thd_USB(void *arg);
 
 /* 机器人运行时的数据 */
 Runtime_t runtime;

@@ -38,8 +38,8 @@ static Referee_ForLauncher_t for_launcher;
 
 #define THD_PERIOD_MS (1)
 
-void Thd_Referee(void* argument) {
-  Runtime_t* runtime = argument;
+void Thd_Referee(void* arg) {
+  Runtime_t* runtime = arg;
   const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* referee_cap_pub =

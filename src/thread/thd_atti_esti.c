@@ -30,8 +30,8 @@ static AHRS_t gimbal_ahrs;
 
 #define THD_PERIOD_MS (500)
 
-void Thd_AttiEsti(void* argument) {
-  RM_UNUSED(argument);
+void Thd_AttiEsti(void* arg) {
+  RM_UNUSED(arg);
   const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* gimbal_eulr_pub =

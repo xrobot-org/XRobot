@@ -33,8 +33,8 @@ static CMD_UI_t cmd_ui;
 
 #define THD_PERIOD_MS (2)
 
-void Thd_CMD(void* argument) {
-  Runtime_t* runtime = argument;
+void Thd_CMD(void* arg) {
+  Runtime_t* runtime = arg;
   const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* cmd_ai_pub =

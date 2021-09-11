@@ -18,8 +18,8 @@
 
 #define THD_PERIOD_MS (250)
 
-void Thd_Info(void *argument) {
-  RM_UNUSED(argument); /* 未使用argument，消除警告 */
+void Thd_Info(void *arg) {
+  RM_UNUSED(arg); /* 未使用arg，消除警告 */
 
   /* 计算线程运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);

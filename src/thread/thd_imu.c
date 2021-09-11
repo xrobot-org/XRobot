@@ -40,8 +40,8 @@ static const KPID_Params_t imu_temp_ctrl_pid_param = {
     .out_limit = 1.0f,
 };
 
-void Thd_IMU(void* argument) {
-  Runtime_t* runtime = argument;
+void Thd_IMU(void* arg) {
+  Runtime_t* runtime = arg;
 
   MsgDistrib_Publisher_t* accl_pub =
       MsgDistrib_CreateTopic("gimbal_accl", sizeof(Vector3_t));

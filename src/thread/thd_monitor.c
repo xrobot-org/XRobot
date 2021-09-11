@@ -20,8 +20,8 @@
 
 #define THD_PERIOD_MS (100)
 
-void Thd_Monitor(void* argument) {
-  Runtime_t* runtime = argument;
+void Thd_Monitor(void* arg) {
+  Runtime_t* runtime = arg;
 
   /* 计算线程运行到指定频率需要等待的tick数 */
   const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
