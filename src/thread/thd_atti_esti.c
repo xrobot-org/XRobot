@@ -28,7 +28,7 @@ static AHRS_t gimbal_ahrs;
 
 #endif
 
-#define THD_PERIOD_MS (500)
+#define THD_PERIOD_MS (2)
 
 void Thd_AttiEsti(void* arg) {
   RM_UNUSED(arg);

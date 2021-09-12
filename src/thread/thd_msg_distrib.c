@@ -20,8 +20,6 @@
 #include "mid_msg_distrib.h"
 #include "thd.h"
 
-#define THD_PERIOD_MS (2)
-
 void Thd_MsgDistrib(void *arg) {
   RM_UNUSED(arg); /* 未使用arg，消除警告 */
 
