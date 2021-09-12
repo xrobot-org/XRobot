@@ -14,7 +14,7 @@ function(create_hex_output TARGET)
     add_custom_target(
         ${TARGET}.hex ALL
         DEPENDS ${TARGET} 
-        COMMAND ${CMAKE_OBJCOPY} -O ihex ${TARGET} ${TARGET}.hex)
+        COMMAND ${CMAKE_OBJCOPY} --output-target ihex ${TARGET} ${TARGET}.hex)
 endfunction()
 
 #---------------------------------------------------------------------------------------
@@ -23,6 +23,6 @@ function(create_bin_output TARGET)
     add_custom_target(
         ${TARGET}.bin ALL
         DEPENDS ${TARGET} 
-        COMMAND ${CMAKE_OBJCOPY} -O binary -S ${TARGET} ${TARGET}.bin)
+        COMMAND ${CMAKE_OBJCOPY} --output-target binary --strip-all ${TARGET} ${TARGET}.bin)
 endfunction()
 
