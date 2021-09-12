@@ -60,16 +60,17 @@ void Thd_IMU(void* arg) {
 
   while (1) {
     /* 等待IMU新数据 */
-    BMI088_WaitNew();
-
-    /* 开始数据接收DMA，加速度计和陀螺仪共用同一个SPI接口，
-     * 一次只能开启一个DMA
-     */
-    BMI088_AcclStartDmaRecv();
-    BMI088_AcclWaitDmaCplt();
-
-    BMI088_GyroStartDmaRecv();
-    BMI088_GyroWaitDmaCplt();
+    if (BMI088_AcclWaitNew(&bmi088, 1u)) {
+      /* 开始数据接收DMA，加速度计和陀螺仪共用同一个SPI接口，
+       * 一次只能开启一个DMA
+       */
+      BMI088_AcclStartDmaRecv();
+      BMI088_AcclWaitDmaCplt(&bmi088);
+    }
+    if (BMI088_GyroWaitNew(&bmi088, 1u)) {
+      BMI088_GyroStartDmaRecv();
+      BMI088_GyroWaitDmaCplt(&bmi088);
+    }
 
     /* 锁住RTOS内核防止数据解析过程中断，造成错误 */
     vTaskSuspendAll();

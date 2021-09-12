@@ -4,8 +4,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "FreeRTOS.h"
 #include "comp_ahrs.h"
 #include "dev.h"
+#include "semphr.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */
@@ -15,6 +17,11 @@ typedef struct {
 } BMI088_Cali_t;         /* BMI088校准数据 */
 
 typedef struct {
+  SemaphoreHandle_t gyro_new_sem;
+  SemaphoreHandle_t accl_new_sem;
+  SemaphoreHandle_t gyro_raw_sem;
+  SemaphoreHandle_t accl_raw_sem;
+
   Vector3_t accl;
   Vector3_t gyro;
 
@@ -36,7 +43,8 @@ bool BMI088_GyroStable(Vector3_t *gyro);
                 UP is z
         All implementation should follow this rule.
  */
-uint32_t BMI088_WaitNew();
+bool BMI088_AcclWaitNew(BMI088_t *bmi088, uint32_t timeout);
+bool BMI088_GyroWaitNew(BMI088_t *bmi088, uint32_t timeout);
 
 /*
   BMI088的Accl和Gyro共用同一个DMA通道，所以一次只能读一个传感器。
@@ -44,9 +52,9 @@ uint32_t BMI088_WaitNew();
   出现 BMI088_GyroStartDmaRecv()。
 */
 int8_t BMI088_AcclStartDmaRecv();
-uint32_t BMI088_AcclWaitDmaCplt();
+int8_t BMI088_AcclWaitDmaCplt(BMI088_t *bmi088);
 int8_t BMI088_GyroStartDmaRecv();
-uint32_t BMI088_GyroWaitDmaCplt();
+int8_t BMI088_GyroWaitDmaCplt(BMI088_t *bmi088);
 int8_t BMI088_ParseAccl(BMI088_t *bmi088);
 int8_t BMI088_ParseGyro(BMI088_t *bmi088);
 float BMI088_GetUpdateFreq(BMI088_t *bmi088);

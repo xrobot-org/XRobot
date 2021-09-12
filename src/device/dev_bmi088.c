@@ -9,12 +9,10 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "FreeRTOS.h"
 #include "bsp_delay.h"
 #include "bsp_gpio.h"
 #include "bsp_spi.h"
 #include "comp_utils.h"
-#include "task.h"
 
 /* Private define ----------------------------------------------------------- */
 #define BMI088_REG_ACCL_CHIP_ID (0x00)
@@ -84,7 +82,6 @@ typedef enum {
 static uint8_t tx_rx_buf[2];
 static uint8_t dma_buf[BMI088_LEN_RX_BUFF];
 
-static TaskHandle_t thread_alert;
 static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
@@ -160,30 +157,31 @@ static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
   HAL_SPI_Receive_DMA(BSP_SPI_GetHandle(BSP_SPI_IMU), data, len);
 }
 
-static void BMI088_RxCpltCallback(void) {
+static void BMI088_RxCpltCallback(void *arg) {
+  BMI088_t *bmi088 = arg;
+  BaseType_t switch_required;
   if (HAL_GPIO_ReadPin(ACCL_CS_GPIO_Port, ACCL_CS_Pin) == GPIO_PIN_RESET) {
     BMI088_ACCL_NSS_SET();
-    xTaskNotifyFromISR(thread_alert, SIGNAL_BMI088_ACCL_RAW_REDY,
-                       eSetValueWithOverwrite, pdTRUE);
+    xSemaphoreGiveFromISR(bmi088->accl_raw_sem, &switch_required);
   }
   if (HAL_GPIO_ReadPin(GYRO_CS_GPIO_Port, GYRO_CS_Pin) == GPIO_PIN_RESET) {
     BMI088_GYRO_NSS_SET();
-    xTaskNotifyFromISR(thread_alert, SIGNAL_BMI088_GYRO_RAW_REDY,
-                       eSetValueWithOverwrite, pdTRUE);
+    xSemaphoreGiveFromISR(bmi088->gyro_raw_sem, &switch_required);
   }
-}
-
-static void BMI088_AcclIntCallback(void) {
-  BaseType_t switch_required;
-  xTaskNotifyFromISR(thread_alert, SIGNAL_BMI088_ACCL_NEW_DATA,
-                     eSetValueWithOverwrite, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
-static void BMI088_GyroIntCallback(void) {
+static void BMI088_AcclIntCallback(void *arg) {
+  BMI088_t *bmi088 = arg;
   BaseType_t switch_required;
-  xTaskNotifyFromISR(thread_alert, SIGNAL_BMI088_GYRO_NEW_DATA,
-                     eSetValueWithOverwrite, &switch_required);
+  xSemaphoreGiveFromISR(bmi088->accl_new_sem, &switch_required);
+  portYIELD_FROM_ISR(switch_required);
+}
+
+static void BMI088_GyroIntCallback(void *arg) {
+  BMI088_t *bmi088 = arg;
+  BaseType_t switch_required;
+  xSemaphoreGiveFromISR(bmi088->gyro_new_sem, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
@@ -191,8 +189,14 @@ static void BMI088_GyroIntCallback(void) {
 int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali) {
   ASSERT(bmi088);
   ASSERT(cali);
+
   if (inited) return DEVICE_ERR_INITED;
-  VERIFY((thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
+  inited = true;
+
+  bmi088->gyro_new_sem = xSemaphoreCreateBinary();
+  bmi088->accl_new_sem = xSemaphoreCreateBinary();
+  bmi088->gyro_raw_sem = xSemaphoreCreateBinary();
+  bmi088->accl_raw_sem = xSemaphoreCreateBinary();
 
   bmi088->cali = cali;
 
@@ -254,8 +258,6 @@ int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali) {
 
   BSP_Delay(10);
 
-  inited = true;
-
   BSP_GPIO_EnableIRQ(ACCL_INT_Pin);
   BSP_GPIO_EnableIRQ(GYRO_INT_Pin);
   return DEVICE_OK;
@@ -265,9 +267,12 @@ bool BMI088_GyroStable(Vector3_t *gyro) {
   return ((gyro->x < 0.03f) && (gyro->y < 0.03f) && (gyro->z < 0.03f));
 }
 
-uint32_t BMI088_WaitNew() {
-  return xTaskNotifyWait(
-      0, 0, SIGNAL_BMI088_ACCL_NEW_DATA | SIGNAL_BMI088_GYRO_NEW_DATA, 0xFF);
+bool BMI088_AcclWaitNew(BMI088_t *bmi088, uint32_t timeout) {
+  return xSemaphoreTake(bmi088->accl_new_sem, pdMS_TO_TICKS(timeout)) == pdTRUE;
+}
+
+bool BMI088_GyroWaitNew(BMI088_t *bmi088, uint32_t timeout) {
+  return xSemaphoreTake(bmi088->gyro_new_sem, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 
 int8_t BMI088_AcclStartDmaRecv() {
@@ -275,8 +280,9 @@ int8_t BMI088_AcclStartDmaRecv() {
   return DEVICE_OK;
 }
 
-uint32_t BMI088_AcclWaitDmaCplt() {
-  return xTaskNotifyWait(0, 0, SIGNAL_BMI088_ACCL_RAW_REDY, 0xFF);
+int8_t BMI088_AcclWaitDmaCplt(BMI088_t *bmi088) {
+  xSemaphoreTake(bmi088->accl_raw_sem, portMAX_DELAY);
+  return DEVICE_OK;
 }
 
 int8_t BMI088_GyroStartDmaRecv() {
@@ -284,8 +290,9 @@ int8_t BMI088_GyroStartDmaRecv() {
   return DEVICE_OK;
 }
 
-uint32_t BMI088_GyroWaitDmaCplt() {
-  return xTaskNotifyWait(0, 0, SIGNAL_BMI088_GYRO_RAW_REDY, 0xFF);
+int8_t BMI088_GyroWaitDmaCplt(BMI088_t *bmi088) {
+  xSemaphoreTake(bmi088->gyro_raw_sem, portMAX_DELAY);
+  return DEVICE_OK;
 }
 
 int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
