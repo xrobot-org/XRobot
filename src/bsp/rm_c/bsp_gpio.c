@@ -1,37 +1,34 @@
-/* Includes ----------------------------------------------------------------- */
 #include "bsp_gpio.h"
 
 #include "comp_utils.h"
 #include "hal.h"
 
-/* Private define ----------------------------------------------------------- */
-/* Private macro ------------------------------------------------------------ */
-/* Private typedef ---------------------------------------------------------- */
-/* Private variables -------------------------------------------------------- */
-static void (*GPIO_Callback[16])(void);
+static BSP_Callback_t callback_list[16];
 
-/* Private function  -------------------------------------------------------- */
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   for (uint8_t i = 0; i < 16; i++) {
     if (GPIO_Pin & (1 << i)) {
-      if (GPIO_Callback[i]) {
-        GPIO_Callback[i]();
+      BSP_Callback_t cb = callback_list[i];
+
+      if (cb.Fn) {
+        cb.Fn(cb.arg);
       }
     }
   }
 }
 
-/* Exported functions ------------------------------------------------------- */
-int8_t BSP_GPIO_RegisterCallback(uint16_t pin, void (*callback)(void)) {
+int8_t BSP_GPIO_RegisterCallback(uint16_t pin, void (*callback)(void *),
+                                 void *callback_arg) {
   ASSERT(callback);
 
   for (uint8_t i = 0; i < 16; i++) {
     if (pin & (1 << i)) {
-      GPIO_Callback[i] = callback;
-      break;
+      callback_list[i].Fn = callback;
+      callback_list[i].arg = callback_arg;
+      return BSP_OK;
     }
   }
-  return BSP_OK;
+  return BSP_ERR;
 }
 
 int8_t BSP_GPIO_EnableIRQ(uint16_t pin) {

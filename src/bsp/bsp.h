@@ -1,5 +1,10 @@
 #pragma once
 
+typedef struct {
+  void (*Fn)(void *);
+  void *arg;
+} BSP_Callback_t;
+
 #define BSP_OK (0)
 #define BSP_ERR (-1)
 #define BSP_ERR_NULL (-2)

@@ -217,9 +217,9 @@ int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali) {
   BSP_GPIO_DisableIRQ(GYRO_INT_Pin);
 
   BSP_SPI_RegisterCallback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB,
-                           BMI088_RxCpltCallback);
-  BSP_GPIO_RegisterCallback(ACCL_INT_Pin, BMI088_AcclIntCallback);
-  BSP_GPIO_RegisterCallback(GYRO_INT_Pin, BMI088_GyroIntCallback);
+                           BMI088_RxCpltCallback, bmi088);
+  BSP_GPIO_RegisterCallback(ACCL_INT_Pin, BMI088_AcclIntCallback, bmi088);
+  BSP_GPIO_RegisterCallback(GYRO_INT_Pin, BMI088_GyroIntCallback, bmi088);
 
   /* Accl init. */
   /* Filter setting: Normal. */
