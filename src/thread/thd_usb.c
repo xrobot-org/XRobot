@@ -22,6 +22,6 @@ void Thd_USB(void* arg) {
   RM_UNUSED(runtime);
 
   while (1) {
-    ;
+    vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }
