@@ -102,7 +102,7 @@ int8_t IST8310_Init(IST8310_t *ist8310, const IST8310_Cali_t *cali) {
 
   BSP_I2C_RegisterCallback(BSP_I2C_COMP, HAL_I2C_MEM_RX_CPLT_CB,
                            IST8310_MemRxCpltCallback);
-  BSP_GPIO_RegisterCallback(CMPS_INT_Pin, IST8310_IntCallback);
+  BSP_GPIO_RegisterCallback(CMPS_INT_Pin, IST8310_IntCallback, ist8310);
 
   /* Init. */
   /* 0x00: Stand-By mode. 0x01: Single measurement mode. */

@@ -6,10 +6,6 @@
 #include "bsp.h"
 #include "hal_spi.h"
 
-/* Exported constants ------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
-
 /* 要添加使用SPI的新设备，需要先在此添加对应的枚举值 */
 
 /* SPI实体枚举，与设备对应 */
@@ -34,7 +30,6 @@ typedef enum {
   BSP_SPI_CB_NUM,
 } BSP_SPI_Callback_t;
 
-/* Exported functions prototypes -------------------------------------------- */
 SPI_HandleTypeDef *BSP_SPI_GetHandle(BSP_SPI_t spi);
 int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type,
-                                void (*callback)(void));
+                                void (*callback)(void *), void *callback_arg);
