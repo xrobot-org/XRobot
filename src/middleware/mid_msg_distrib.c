@@ -50,7 +50,7 @@ static struct {
 bool MsgDistrib_Init(void) {
   /* 只能初始化一次 */
   if (md.topic_queue_set == NULL) {
-    md.topic_queue_set = xQueueCreateSet(MAX_SUBS_TO_ONE_TPIC);
+    md.topic_queue_set = xQueueCreateSet(MAX_TOPIC);
     md.topic_mutex = xSemaphoreCreateRecursiveMutex();
     md.topic_created = 0;
     return true;
