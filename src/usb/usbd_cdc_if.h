@@ -7,7 +7,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+ * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
  * All rights reserved.</center></h2>
  *
  * This software component is licensed by ST under Ultimate Liberty license
@@ -31,6 +31,7 @@ extern "C" {
 #include "usbd_cdc.h"
 
 /* USER CODE BEGIN INCLUDE */
+
 /* USER CODE END INCLUDE */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -47,9 +48,11 @@ extern "C" {
  * @brief Defines.
  * @{
  */
+/* Define size for the receive and transmit buffer over CDC */
+#define APP_RX_DATA_SIZE 2048
+#define APP_TX_DATA_SIZE 8
 /* USER CODE BEGIN EXPORTED_DEFINES */
-//#define APP_RX_DATA_SIZE 2048
-//#define APP_TX_DATA_SIZE 2048
+
 /* USER CODE END EXPORTED_DEFINES */
 
 /**
@@ -91,8 +94,6 @@ extern "C" {
 extern USBD_CDC_ItfTypeDef USBD_Interface_fops_FS;
 
 /* USER CODE BEGIN EXPORTED_VARIABLES */
-// extern uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
-// extern uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 
 /* USER CODE END EXPORTED_VARIABLES */
 
@@ -109,7 +110,6 @@ extern USBD_CDC_ItfTypeDef USBD_Interface_fops_FS;
 uint8_t CDC_Transmit_FS(uint8_t* Buf, uint16_t Len);
 
 /* USER CODE BEGIN EXPORTED_FUNCTIONS */
-uint8_t CDC_ReadyReceive(void);
 
 /* USER CODE END EXPORTED_FUNCTIONS */
 

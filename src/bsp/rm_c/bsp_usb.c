@@ -39,7 +39,7 @@ int8_t BSP_USB_ReadyReceive(TaskHandle_t alert) {
   ASSERT(alert);
 
   gbsp_usb_alert = alert;
-  CDC_ReadyReceive();
+  // CDC_ReadyReceive();
   return BSP_OK;
 }
 

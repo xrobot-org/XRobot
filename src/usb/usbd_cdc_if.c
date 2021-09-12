@@ -7,7 +7,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+ * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
  * All rights reserved.</center></h2>
  *
  * This software component is licensed by ST under Ultimate Liberty license
@@ -23,6 +23,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
+
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,8 +64,6 @@
  */
 
 /* USER CODE BEGIN PRIVATE_DEFINES */
-/* Define size for the receive and transmit buffer over CDC */
-/* It's up to user to redefine and/or remove those define */
 /* USER CODE END PRIVATE_DEFINES */
 
 /**
@@ -77,8 +76,7 @@
  */
 
 /* USER CODE BEGIN PRIVATE_MACRO */
-#define APP_RX_DATA_SIZE 2
-#define APP_TX_DATA_SIZE 2
+
 /* USER CODE END PRIVATE_MACRO */
 
 /**
@@ -98,6 +96,7 @@ uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
 uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
+
 /* USER CODE END PRIVATE_VARIABLES */
 
 /**
@@ -151,6 +150,7 @@ USBD_CDC_ItfTypeDef USBD_Interface_fops_FS = {CDC_Init_FS, CDC_DeInit_FS,
 static int8_t CDC_Init_FS(void) {
   /* USER CODE BEGIN 3 */
   /* Set Application Buffers */
+  USBD_CDC_SetTxBuffer(&hUsbDeviceFS, UserTxBufferFS, 0);
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, UserRxBufferFS);
   return (USBD_OK);
   /* USER CODE END 3 */
@@ -257,8 +257,8 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t *pbuf, uint16_t length) {
  */
 static int8_t CDC_Receive_FS(uint8_t *Buf, uint32_t *Len) {
   /* USER CODE BEGIN 6 */
-  // osThreadFlagsSet(gbsp_usb_alert, SIGNAL_BSP_USB_BUF_RECV);
-
+  USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
+  USBD_CDC_ReceivePacket(&hUsbDeviceFS);
   return (USBD_OK);
   /* USER CODE END 6 */
 }
@@ -290,7 +290,7 @@ uint8_t CDC_Transmit_FS(uint8_t *Buf, uint16_t Len) {
 
 /**
  * @brief  CDC_TransmitCplt_FS
- *         Data transmited callback
+ *         Data transmitted callback
  *
  *         @note
  *         This function is IN transfer complete callback used to inform user
@@ -312,10 +312,7 @@ static int8_t CDC_TransmitCplt_FS(uint8_t *Buf, uint32_t *Len, uint8_t epnum) {
 }
 
 /* USER CODE BEGIN PRIVATE_FUNCTIONS_IMPLEMENTATION */
-uint8_t CDC_ReadyReceive(void) {
-  USBD_CDC_ReceivePacket(&hUsbDeviceFS);
-  return USBD_OK;
-}
+
 /* USER CODE END PRIVATE_FUNCTIONS_IMPLEMENTATION */
 
 /**
