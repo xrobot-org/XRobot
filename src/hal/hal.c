@@ -2,8 +2,6 @@
 
 #include "hal_adc.h"
 #include "hal_can.h"
-#include "hal_crc.h"
-#include "hal_dcmi.h"
 #include "hal_dma.h"
 #include "hal_gpio.h"
 #include "hal_i2c.h"
@@ -68,7 +66,6 @@ void HAL_InitPeripherals(void) {
   MX_TIM5_Init();
   MX_USART3_UART_Init();
   MX_TIM8_Init();
-  MX_CRC_Init();
   MX_RNG_Init();
   MX_I2C2_Init();
   MX_I2C3_Init();
@@ -79,7 +76,6 @@ void HAL_InitPeripherals(void) {
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
   MX_TIM7_Init();
-  MX_DCMI_Init();
 }
 
 /**

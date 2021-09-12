@@ -6,7 +6,7 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
+ * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
  * All rights reserved.</center></h2>
  *
  * This software component is licensed by ST under Ultimate Liberty license
@@ -22,23 +22,46 @@
 #include "stm32f4xx_it.h"
 
 #include "FreeRTOS.h"
-#include "task.h"
-
-/* Private includes ----------------------------------------------------------*/
 #include "hal.h"
-#include "hal_usart.h"
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
-/* Private function prototypes -----------------------------------------------*/
-/* Private user code ---------------------------------------------------------*/
-/* External variables --------------------------------------------------------*/
+#include "task.h"
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+/* USER CODE END Includes */
 
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN TD */
+
+/* USER CODE END TD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
+/* USER CODE BEGIN PV */
+
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+/* USER CODE BEGIN PFP */
+
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
+
+/* USER CODE END 0 */
+
+/* External variables --------------------------------------------------------*/
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
-extern DMA_HandleTypeDef hdma_dcmi;
 extern DMA_HandleTypeDef hdma_i2c2_tx;
 extern DMA_HandleTypeDef hdma_i2c3_rx;
 extern DMA_HandleTypeDef hdma_spi1_rx;
@@ -98,7 +121,8 @@ void NMI_Handler(void) {
 
   /* USER CODE END NonMaskableInt_IRQn 0 */
   /* USER CODE BEGIN NonMaskableInt_IRQn 1 */
-
+  while (1) {
+  }
   /* USER CODE END NonMaskableInt_IRQn 1 */
 }
 
@@ -126,7 +150,6 @@ void MemManage_Handler(void) {
   /* USER CODE END MemoryManagement_IRQn 0 */
   while (1) {
     /* USER CODE BEGIN W1_MemoryManagement_IRQn 0 */
-    __NOP();
     /* USER CODE END W1_MemoryManagement_IRQn 0 */
   }
 }
@@ -322,7 +345,7 @@ void USART1_IRQHandler(void) {
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
-  BSP_UART_IRQHandler(&huart1);
+
   /* USER CODE END USART1_IRQn 1 */
 }
 
@@ -363,19 +386,6 @@ void DMA2_Stream0_IRQHandler(void) {
   /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
 
   /* USER CODE END DMA2_Stream0_IRQn 1 */
-}
-
-/**
- * @brief This function handles DMA2 stream1 global interrupt.
- */
-void DMA2_Stream1_IRQHandler(void) {
-  /* USER CODE BEGIN DMA2_Stream1_IRQn 0 */
-
-  /* USER CODE END DMA2_Stream1_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_dcmi);
-  /* USER CODE BEGIN DMA2_Stream1_IRQn 1 */
-
-  /* USER CODE END DMA2_Stream1_IRQn 1 */
 }
 
 /**
@@ -491,7 +501,7 @@ void USART6_IRQHandler(void) {
   /* USER CODE END USART6_IRQn 0 */
   HAL_UART_IRQHandler(&huart6);
   /* USER CODE BEGIN USART6_IRQn 1 */
-  BSP_UART_IRQHandler(&huart6);
+
   /* USER CODE END USART6_IRQn 1 */
 }
 
