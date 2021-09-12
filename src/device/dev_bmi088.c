@@ -162,11 +162,11 @@ static void BMI088_RxCpltCallback(void *arg) {
   BaseType_t switch_required;
   if (HAL_GPIO_ReadPin(ACCL_CS_GPIO_Port, ACCL_CS_Pin) == GPIO_PIN_RESET) {
     BMI088_ACCL_NSS_SET();
-    xSemaphoreGiveFromISR(bmi088->accl_raw_sem, &switch_required);
+    xSemaphoreGiveFromISR(bmi088->sem.accl_raw, &switch_required);
   }
   if (HAL_GPIO_ReadPin(GYRO_CS_GPIO_Port, GYRO_CS_Pin) == GPIO_PIN_RESET) {
     BMI088_GYRO_NSS_SET();
-    xSemaphoreGiveFromISR(bmi088->gyro_raw_sem, &switch_required);
+    xSemaphoreGiveFromISR(bmi088->sem.gyro_raw, &switch_required);
   }
   portYIELD_FROM_ISR(switch_required);
 }
@@ -174,14 +174,14 @@ static void BMI088_RxCpltCallback(void *arg) {
 static void BMI088_AcclIntCallback(void *arg) {
   BMI088_t *bmi088 = arg;
   BaseType_t switch_required;
-  xSemaphoreGiveFromISR(bmi088->accl_new_sem, &switch_required);
+  xSemaphoreGiveFromISR(bmi088->sem.accl_new, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
 static void BMI088_GyroIntCallback(void *arg) {
   BMI088_t *bmi088 = arg;
   BaseType_t switch_required;
-  xSemaphoreGiveFromISR(bmi088->gyro_new_sem, &switch_required);
+  xSemaphoreGiveFromISR(bmi088->sem.gyro_new, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
@@ -193,10 +193,10 @@ int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali) {
   if (inited) return DEVICE_ERR_INITED;
   inited = true;
 
-  bmi088->gyro_new_sem = xSemaphoreCreateBinary();
-  bmi088->accl_new_sem = xSemaphoreCreateBinary();
-  bmi088->gyro_raw_sem = xSemaphoreCreateBinary();
-  bmi088->accl_raw_sem = xSemaphoreCreateBinary();
+  bmi088->sem.gyro_new = xSemaphoreCreateBinary();
+  bmi088->sem.accl_new = xSemaphoreCreateBinary();
+  bmi088->sem.gyro_raw = xSemaphoreCreateBinary();
+  bmi088->sem.accl_raw = xSemaphoreCreateBinary();
 
   bmi088->cali = cali;
 
@@ -268,11 +268,11 @@ bool BMI088_GyroStable(Vector3_t *gyro) {
 }
 
 bool BMI088_AcclWaitNew(BMI088_t *bmi088, uint32_t timeout) {
-  return xSemaphoreTake(bmi088->accl_new_sem, pdMS_TO_TICKS(timeout)) == pdTRUE;
+  return xSemaphoreTake(bmi088->sem.accl_new, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 
 bool BMI088_GyroWaitNew(BMI088_t *bmi088, uint32_t timeout) {
-  return xSemaphoreTake(bmi088->gyro_new_sem, pdMS_TO_TICKS(timeout)) == pdTRUE;
+  return xSemaphoreTake(bmi088->sem.gyro_new, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 
 int8_t BMI088_AcclStartDmaRecv() {
@@ -281,7 +281,7 @@ int8_t BMI088_AcclStartDmaRecv() {
 }
 
 int8_t BMI088_AcclWaitDmaCplt(BMI088_t *bmi088) {
-  xSemaphoreTake(bmi088->accl_raw_sem, portMAX_DELAY);
+  xSemaphoreTake(bmi088->sem.accl_raw, portMAX_DELAY);
   return DEVICE_OK;
 }
 
@@ -291,7 +291,7 @@ int8_t BMI088_GyroStartDmaRecv() {
 }
 
 int8_t BMI088_GyroWaitDmaCplt(BMI088_t *bmi088) {
-  xSemaphoreTake(bmi088->gyro_raw_sem, portMAX_DELAY);
+  xSemaphoreTake(bmi088->sem.gyro_raw, portMAX_DELAY);
   return DEVICE_OK;
 }
 

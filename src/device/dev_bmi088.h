@@ -17,10 +17,12 @@ typedef struct {
 } BMI088_Cali_t;         /* BMI088校准数据 */
 
 typedef struct {
-  SemaphoreHandle_t gyro_new_sem;
-  SemaphoreHandle_t accl_new_sem;
-  SemaphoreHandle_t gyro_raw_sem;
-  SemaphoreHandle_t accl_raw_sem;
+  struct {
+    SemaphoreHandle_t gyro_new;
+    SemaphoreHandle_t accl_new;
+    SemaphoreHandle_t gyro_raw;
+    SemaphoreHandle_t accl_raw;
+  } sem;
 
   Vector3_t accl;
   Vector3_t gyro;
