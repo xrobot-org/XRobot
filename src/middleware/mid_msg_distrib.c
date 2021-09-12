@@ -1,14 +1,3 @@
-/**
- * @file mid_msg_distrib.h
- * @author Qu Shen
- * @brief 消息分发中间件
- * @version 0.1
- * @date 2021-09-04
- *
- * @copyright Copyright (c) 2021
- *
- */
-
 #include "mid_msg_distrib.h"
 
 #include <stddef.h>
@@ -190,7 +179,7 @@ MsgDistrib_Subscriber_t *MsgDistrib_Subscribe(const char *topic_name,
 }
 
 /**
- * @brief 从话题去的消息
+ * @brief 从话题取得数据
  *
  * @param subscriber 订阅者
  * @param data 数据
@@ -217,7 +206,7 @@ bool MsgDistrib_Poll(MsgDistrib_Subscriber_t *subscriber, void *data,
 }
 
 /**
- * @brief 分法消息
+ * @brief 分发消息
  *
  */
 void MsgDistrib_Distribute(void) {
