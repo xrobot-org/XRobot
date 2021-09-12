@@ -17,6 +17,10 @@
 #include "FreeRTOS.h"
 #include "comp_utils.h"
 
+static CycleBuf_Unused(CycleBuf_t *cbuf) {
+  return (cbuf->size) - (cbuf->in - cbuf->out);
+}
+
 static void CycleBuf_CopyIn(CycleBuf_t *cbuf, const void *src, uint32_t len,
                             uint32_t off) {
   ASSERT(cbuf);
@@ -90,7 +94,8 @@ size_t CycleBuf_In(CycleBuf_t *cbuf, const void *buf, size_t len) {
   if (len > cbuf->size) len = cbuf->size;
   CycleBuf_CopyIn(cbuf, buf, len, cbuf->in);
   cbuf->in += len;
-  cbuf->out += len;
+  uint32_t l = CycleBuf_Unused(cbuf);
+  if (len > l) cbuf->out += len - l;
   return len;
 }
 
