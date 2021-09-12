@@ -25,7 +25,7 @@ int8_t BSP_PWM_Set(BSP_PWM_Channel_t ch, float duty_cycle) {
   if (duty_cycle > 1.0f) return BSP_ERR;
   if (duty_cycle < 0.0f) duty_cycle = 0.f;
 
-  uint16_t pulse;
+  uint16_t pulse = 0;
 
   /* 通过PWM通道对应定时器重载值和给定占空比，计算PWM周期值 */
   switch (ch) {

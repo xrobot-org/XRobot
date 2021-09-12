@@ -33,6 +33,8 @@ int8_t BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, float duty_cycle) {
       __HAL_TIM_SET_COMPARE(&htim5, TIM_CHANNEL_1, pulse);
       tim_ch = TIM_CHANNEL_1;
       break;
+    default:
+      tim_ch = TIM_CHANNEL_1;
   }
 
   switch (s) {
