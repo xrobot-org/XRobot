@@ -27,7 +27,7 @@ static void CycleBuf_CopyIn(CycleBuf_t *cbuf, const void *src, uint32_t len,
   uint32_t l = MIN(len, size - off);
 
   memcpy(cbuf->data + off, src, l);
-  memcmp(cbuf->data, src + l, len - l);
+  memcpy(cbuf->data, src + l, len - l);
 }
 
 static void CycleBuf_CopyOut(CycleBuf_t *cbuf, void *dst, uint32_t len,
@@ -47,7 +47,7 @@ static void CycleBuf_CopyOut(CycleBuf_t *cbuf, void *dst, uint32_t len,
   uint32_t l = MIN(len, size - off);
 
   memcpy(dst, cbuf->data + off, l);
-  memcmp(dst + l, cbuf->data, len - l);
+  memcpy(dst + l, cbuf->data, len - l);
 }
 
 bool CycleBuf_Alloc(CycleBuf_t *cbuf, uint32_t size, size_t ele_size) {
