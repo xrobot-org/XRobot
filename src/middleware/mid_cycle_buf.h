@@ -1,14 +1,3 @@
-/**
- * @file cbuf.h
- * @author Qu Shen
- * @brief 循环缓冲区
- * @version 0.1
- * @date 2021-09-05
- *
- * @copyright Copyright (c) 2021
- *
- */
-
 #pragma once
 
 #include <stdbool.h>

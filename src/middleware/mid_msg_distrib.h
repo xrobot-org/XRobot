@@ -1,14 +1,3 @@
-/**
- * @file mid_msg_distrib.h
- * @author Qu Shen
- * @brief 消息分发中间件
- * @version 0.1
- * @date 2021-09-04
- *
- * @copyright Copyright (c) 2021
- *
- */
-
 #pragma once
 
 #include <stdbool.h>
@@ -73,12 +62,12 @@ bool MsgDistrib_PublishFromISR(MsgDistrib_Publisher_t *publisher,
  *
  * @param topic_name 话题名称
  * @param wait_topic 等待话题创建
- * @return MsgDistrib_Subscriber_t*
+ * @return MsgDistrib_Subscriber_t* 订阅者
  */
 MsgDistrib_Subscriber_t *MsgDistrib_Subscribe(const char *topic_name,
                                               bool wait_topic);
 /**
- * @brief 从话题去的消息
+ * @brief 从话题取得数据
  *
  * @param subscriber 订阅者
  * @param data 数据
@@ -89,7 +78,7 @@ MsgDistrib_Subscriber_t *MsgDistrib_Subscribe(const char *topic_name,
 bool MsgDistrib_Poll(MsgDistrib_Subscriber_t *subscriber, void *data,
                      uint32_t timeout);
 /**
- * @brief 分法消息
+ * @brief 分发消息
  *
  */
 void MsgDistrib_Distribute(void);
