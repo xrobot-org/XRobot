@@ -51,7 +51,7 @@ bool MsgDistrib_Init(void) {
   /* 只能初始化一次 */
   if (md.topic_queue_set == NULL) {
     md.topic_queue_set = xQueueCreateSet(MAX_TOPIC);
-    md.topic_mutex = xSemaphoreCreateRecursiveMutex();
+    md.topic_mutex = xSemaphoreCreateMutex();
     md.topic_created = 0;
     return true;
   }
@@ -77,7 +77,7 @@ MsgDistrib_Publisher_t *MsgDistrib_CreateTopic(const char *topic_name,
   MsgDistrib_Publisher_t *puber = NULL;
   MsgDistrib_Topic_t *topic;
 
-  xSemaphoreTakeRecursive(md.topic_mutex, portMAX_DELAY);
+  xSemaphoreTake(md.topic_mutex, portMAX_DELAY);
   if (md.topic_created < MAX_TOPIC) {
     for (size_t i = 0; i < md.topic_created; i++) {
       topic = md.topic_list + i;
@@ -105,7 +105,7 @@ MsgDistrib_Publisher_t *MsgDistrib_CreateTopic(const char *topic_name,
   }
 
 end:
-  xSemaphoreGiveRecursive(md.topic_mutex);
+  xSemaphoreGive(md.topic_mutex);
   return puber;
 }
 
