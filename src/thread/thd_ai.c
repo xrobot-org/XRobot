@@ -44,35 +44,37 @@ void Thd_AI(void* arg) {
   AI_Init(&ai);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
-  uint32_t missed_delay = 0;
 
   while (1) {
-    MsgDistrib_Poll(quat_sub, &ai_quat, 0);
-    MsgDistrib_Poll(cmd_ai_sub, &(ai.mode), 0);
-
-    bool ref_update =
-        (MsgDistrib_Poll(referee_ai_sub, &(referee_ai), 0) == pdPASS);
-
+    /* 接收指令 */
     AI_StartReceiving(&ai);
-    // TODO: wait里面必须加timeout
-    if (AI_WaitDmaCplt()) {
+
+    if (AI_WaitRecvCplt(&ai, THD_PERIOD_MS)) {
       AI_ParseHost(&ai);
     } else {
-      if (missed_delay > 300) AI_HandleOffline(&ai);
+      AI_HandleOffline(&ai);
     }
 
-    if (ai.mode != AI_MODE_STOP && ai.ai_online) {
-      AI_PackCmd(&ai, &cmd_host);
-      MsgDistrib_Publish(cmd_host_pub, &cmd_host);
+    AI_PackCMD(&ai, &cmd_host);
+    MsgDistrib_Publish(cmd_host_pub, &cmd_host);
+
+    /* 发送数据 */
+    MsgDistrib_Poll(cmd_ai_sub, &(ai.mode), 0);
+    MsgDistrib_Poll(quat_sub, &ai_quat, 0);
+    AI_PackMcuForHost(&ai, &ai_quat);
+
+    if (MsgDistrib_Poll(referee_ai_sub, &(referee_ai), 0)) {
+      AI_PackRefForHost(&ai, &(referee_ai));
     }
 
-    AI_PackMcu(&ai, &ai_quat);
-    if (ref_update) AI_PackRef(&ai, &(referee_ai));
+    if (AI_WaitTransCplt(&ai, 0)) {
+      AI_StartTrans(&ai);
+    }
 
-    AI_StartTrans(&ai, ref_update);
-
-    AI_PackUi(&ai_ui, &ai);
+    /* 更新UI */
+    AI_PackUI(&ai_ui, &ai);
     MsgDistrib_Publish(ui_ai_pub, &cmd_host);
-    missed_delay += xTaskDelayUntil(&previous_wake_time, delay_tick);
+
+    xTaskDelayUntil(&previous_wake_time, delay_tick);
   }
 }
