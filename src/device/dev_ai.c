@@ -1,8 +1,3 @@
-/*
-  AI
-*/
-
-/* Includes ----------------------------------------------------------------- */
 #include "dev_ai.h"
 
 #include <string.h>
@@ -13,50 +8,39 @@
 #include "comp_crc8.h"
 #include "comp_utils.h"
 
-/* Private define ----------------------------------------------------------- */
-#define AI_HOST_MAX_CONTROL_VALUE (1.0f)
-
+#define AI_CMD_LIMIT (1.0f)
 #define AI_LEN_RX_BUFF (sizeof(Protocol_DownPackage_t))
-
-/* Private macro ------------------------------------------------------------ */
-/* Private typedef ---------------------------------------------------------- */
-/* Private variables -------------------------------------------------------- */
-static volatile uint32_t drop_message = 0;
 
 static uint8_t rxbuf[AI_LEN_RX_BUFF];
 
-static TaskHandle_t thread_alert;
-
 static bool inited = false;
 
-/* Private function  -------------------------------------------------------- */
-
-// TODO: 这里idle line用法不对，参考referee
-static void Ai_RxCpltCallback(void) {
+static void Ai_RxCpltCallback(void *arg) {
+  AI_t *ai = arg;
   BaseType_t switch_required;
-  xTaskNotifyFromISR(thread_alert, SIGNAL_AI_RAW_REDY, eSetValueWithOverwrite,
-                     &switch_required);
+  xSemaphoreGiveFromISR(ai->sem.recv, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
-static void Ai_IdleLineCallback(void) {
+static void Ai_TxCpltCallback(void *arg) {
+  AI_t *ai = arg;
   BaseType_t switch_required;
-  xTaskNotifyFromISR(thread_alert, SIGNAL_AI_RAW_REDY, eSetValueWithOverwrite,
-                     &switch_required);
+  xSemaphoreGiveFromISR(ai->sem.trans, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
-/* Exported functions ------------------------------------------------------- */
 int8_t AI_Init(AI_t *ai) {
   ASSERT(ai);
   if (inited) return DEVICE_ERR_INITED;
-  VERIFY((thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
+  inited = true;
+
+  ai->sem.recv = xSemaphoreCreateBinary();
+  ai->sem.trans = xSemaphoreCreateBinary();
 
   BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_RX_CPLT_CB,
                             Ai_RxCpltCallback);
-  BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_IDLE_LINE_CB,
-                            Ai_IdleLineCallback);
-  inited = true;
+  BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_TX_CPLT_CB,
+                            Ai_TxCpltCallback);
   return DEVICE_OK;
 }
 
@@ -66,45 +50,42 @@ int8_t AI_Restart(void) {
   return DEVICE_OK;
 }
 
-int8_t AI_StartReceiving(AI_t *ai) {
+bool AI_StartReceiving(AI_t *ai) {
   RM_UNUSED(ai);
-  if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_AI), rxbuf,
-                           AI_LEN_RX_BUFF) == HAL_OK)
-    return DEVICE_OK;
-  return DEVICE_ERR;
+  return HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_AI), rxbuf,
+                              AI_LEN_RX_BUFF) == HAL_OK;
 }
 
-bool AI_WaitDmaCplt(void) {
-  return (xTaskNotifyWait(0, 0, SIGNAL_AI_RAW_REDY, 0xFF) ==
-          SIGNAL_AI_RAW_REDY);
+bool AI_WaitRecvCplt(AI_t *ai, uint32_t timeout) {
+  return xSemaphoreTake(ai->sem.recv, pdMS_TO_TICKS(timeout)) == pdTRUE;
+}
+
+bool AI_StartTrans(AI_t *ai) {
+  size_t len = sizeof(ai->to_host.mcu);
+  void *src;
+  if (ai->ref_updated) {
+    len += sizeof(ai->to_host.ref);
+    src = &(ai->to_host);
+  } else {
+    src = &(ai->to_host.mcu);
+  }
+  ai->ref_updated = false;
+  return (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_AI), src, len) ==
+          HAL_OK);
+}
+
+bool AI_WaitTransCplt(AI_t *ai, uint32_t timeout) {
+  return xSemaphoreTake(ai->sem.trans, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 
 int8_t AI_ParseHost(AI_t *ai) {
-  if (!CRC16_Verify((const uint8_t *)&(rxbuf), sizeof(ai->form_host)))
-    goto error;
-  ai->ai_online = true;
-  memcpy(&(ai->form_host), rxbuf, sizeof(ai->form_host));
-  memset(rxbuf, 0, AI_LEN_RX_BUFF);
-  return DEVICE_OK;
-
-error:
-  drop_message++;
+  if (!CRC16_Verify((const uint8_t *)&(rxbuf), sizeof(ai->form_host))) {
+    ai->ai_online = true;
+    memcpy(&(ai->form_host), rxbuf, sizeof(ai->form_host));
+    memset(rxbuf, 0, AI_LEN_RX_BUFF);
+    return DEVICE_OK;
+  }
   return DEVICE_ERR;
-}
-
-void AI_PackCmd(AI_t *ai, CMD_Host_t *cmd_host) {
-  cmd_host->gimbal_delta.yaw = -ai->form_host.data.gimbal.yaw;
-  cmd_host->gimbal_delta.pit = -ai->form_host.data.gimbal.pit;
-
-  Clamp(&(cmd_host->gimbal_delta.yaw), -AI_HOST_MAX_CONTROL_VALUE,
-        AI_HOST_MAX_CONTROL_VALUE);
-  Clamp(&(cmd_host->gimbal_delta.pit), -AI_HOST_MAX_CONTROL_VALUE,
-        AI_HOST_MAX_CONTROL_VALUE);
-
-  cmd_host->fire = (ai->form_host.data.notice & AI_NOTICE_FIRE);
-  cmd_host->chassis_move_vec.vx = ai->form_host.data.chassis_move_vec.vx;
-  cmd_host->chassis_move_vec.vy = ai->form_host.data.chassis_move_vec.vy;
-  cmd_host->chassis_move_vec.wz = ai->form_host.data.chassis_move_vec.wz;
 }
 
 int8_t AI_HandleOffline(AI_t *ai) {
@@ -112,7 +93,7 @@ int8_t AI_HandleOffline(AI_t *ai) {
   return DEVICE_OK;
 }
 
-int8_t AI_PackMcu(AI_t *ai, const AHRS_Quaternion_t *quat) {
+int8_t AI_PackMcuForHost(AI_t *ai, const AHRS_Quaternion_t *quat) {
   ai->to_host.mcu.id = AI_ID_MCU;
   memcpy(&(ai->to_host.mcu.package.data.quat), (const void *)quat,
          sizeof(*quat));
@@ -130,37 +111,26 @@ int8_t AI_PackMcu(AI_t *ai, const AHRS_Quaternion_t *quat) {
   return DEVICE_OK;
 }
 
-int8_t AI_PackRef(AI_t *ai, const Referee_ForAI_t *ref) {
+int8_t AI_PackRefForHost(AI_t *ai, const Referee_ForAI_t *ref) {
   RM_UNUSED(ref);
   ai->to_host.ref.id = AI_ID_REF;
-  if (ref->team == AI_TEAM_BLUE)
-    ai->to_host.ref.package.data.team = AI_TEAM_BLUE;
-  else
-    ai->to_host.ref.package.data.team = AI_TEAM_RED;
+  ai->to_host.ref.package.data.team = ref->team;
   ai->to_host.ref.package.crc16 = CRC16_Calc(
       (const uint8_t *)&(ai->to_host.ref.package),
       sizeof(ai->to_host.ref.package) - sizeof(uint16_t), CRC16_INIT);
+
+  ai->ref_updated = false;
   return DEVICE_OK;
 }
 
-int8_t AI_StartTrans(AI_t *ai, bool ref_update) {
-  if (ref_update) {
-    if (HAL_UART_Transmit_DMA(
-            BSP_UART_GetHandle(BSP_UART_AI), (uint8_t *)&(ai->to_host),
-            sizeof(ai->to_host.ref) + sizeof(ai->to_host.mcu)) == HAL_OK) {
-      return DEVICE_OK;
-    } else {
-      return DEVICE_ERR;
-    }
-  } else {
-    if (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_AI),
-                              (uint8_t *)&(ai->to_host.mcu),
-                              sizeof(ai->to_host.mcu)) == HAL_OK) {
-      return DEVICE_OK;
-    } else {
-      return DEVICE_ERR;
-    }
-  }
-}
+void AI_PackUI(AI_UI_t *ui, const AI_t *ai) { ui->mode = ai->mode; }
 
-void AI_PackUi(AI_UI_t *ui, const AI_t *ai) { ui->mode = ai->mode; }
+void AI_PackCMD(AI_t *ai, CMD_Host_t *cmd_host) {
+  cmd_host->gimbal_delta.yaw = -ai->form_host.data.gimbal.yaw;
+  cmd_host->gimbal_delta.pit = -ai->form_host.data.gimbal.pit;
+
+  cmd_host->fire = (ai->form_host.data.notice & AI_NOTICE_FIRE);
+  cmd_host->chassis_move_vec.vx = ai->form_host.data.chassis_move_vec.vx;
+  cmd_host->chassis_move_vec.vy = ai->form_host.data.chassis_move_vec.vy;
+  cmd_host->chassis_move_vec.wz = ai->form_host.data.chassis_move_vec.wz;
+}
