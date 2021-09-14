@@ -43,13 +43,13 @@ void Thd_Referee(void* arg) {
   const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* referee_cap_pub =
-      MsgDistrib_CreateTopic("referee_cap", sizeof(CAN_ChassisMotor_t));
+      MsgDistrib_CreateTopic("referee_cap", sizeof(Referee_ForCap_t));
   MsgDistrib_Publisher_t* referee_ai_pub =
-      MsgDistrib_CreateTopic("referee_ai", sizeof(CAN_GimbalMotor_t));
+      MsgDistrib_CreateTopic("referee_ai", sizeof(Referee_ForAI_t));
   MsgDistrib_Publisher_t* referee_chassis_pub =
-      MsgDistrib_CreateTopic("referee_chassis", sizeof(CAN_LauncherMotor_t));
+      MsgDistrib_CreateTopic("referee_chassis", sizeof(Referee_ForChassis_t));
   MsgDistrib_Publisher_t* referee_launcher_pub =
-      MsgDistrib_CreateTopic("referee_launcher", sizeof(CAN_CapFeedback_t));
+      MsgDistrib_CreateTopic("referee_launcher", sizeof(Referee_ForLauncher_t));
 
   MsgDistrib_Subscriber_t* ui_cap_sub = MsgDistrib_Subscribe("ui_cap", true);
   MsgDistrib_Subscriber_t* ui_chassis_sub =
