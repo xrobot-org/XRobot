@@ -39,6 +39,8 @@ void Thd_AttiEsti(void* arg) {
 
   MsgDistrib_Subscriber_t* accl_sub = MsgDistrib_Subscribe("gimbal_accl", true);
   MsgDistrib_Subscriber_t* gyro_sub = MsgDistrib_Subscribe("gimbal_gyro", true);
+  MsgDistrib_Publisher_t* gimbal_quat_pub =
+      MsgDistrib_CreateTopic("gimbal_quat", sizeof(AHRS_Quaternion_t));
 
   /* 初始化姿态解算算法 */
   float now = (float)xTaskGetTickCount() / configTICK_RATE_HZ;
@@ -62,6 +64,7 @@ void Thd_AttiEsti(void* arg) {
 
     /* 发布数据 */
     MsgDistrib_Publish(gimbal_eulr_pub, &gimbal_eulr);
+    MsgDistrib_Publish(gimbal_quat_pub, &(gimbal_ahrs.quat));
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, delay_tick);
