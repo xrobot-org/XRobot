@@ -37,10 +37,13 @@ int8_t AI_Init(AI_t *ai) {
   ai->sem.recv = xSemaphoreCreateBinary();
   ai->sem.trans = xSemaphoreCreateBinary();
 
-  BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_RX_CPLT_CB,
-                            Ai_RxCpltCallback);
-  BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_TX_CPLT_CB,
-                            Ai_TxCpltCallback);
+  xSemaphoreGive(ai->sem.trans);
+
+  BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_RX_CPLT_CB, Ai_RxCpltCallback,
+                            ai);
+  BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_TX_CPLT_CB, Ai_TxCpltCallback,
+                            ai);
+
   return DEVICE_OK;
 }
 
