@@ -6,7 +6,7 @@
 #include "FreeRTOS.h"
 #include "comp_utils.h"
 
-static CycleBuf_Unused(CycleBuf_t *cbuf) {
+static uint32_t CycleBuf_Unused(CycleBuf_t *cbuf) {
   return (cbuf->size) - (cbuf->in - cbuf->out);
 }
 
