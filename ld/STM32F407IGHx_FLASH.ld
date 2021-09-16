@@ -157,10 +157,10 @@ SECTIONS {
     _sccmram = .;       /* create a global symbol at ccmram start */
     *(.ccmram)
     *(.ccmram*)
-    
+    *librtos.a:*(.bss .bss*)
     . = ALIGN(4);
     _eccmram = .;       /* create a global symbol at ccmram end */
-  } > CCMRAM AT > FLASH
+  } > CCMRAM
 
   
   /* Uninitialized data section */
