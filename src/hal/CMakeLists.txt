@@ -14,18 +14,10 @@ add_library(${PROJECT_NAME} OBJECT
     ${THIRD_PARTY_DIR}/stm32_cmsis/Source/Templates/gcc/startup_stm32f407xx.s
 )
 
-target_link_libraries(${PROJECT_NAME}
-    PRIVATE rtos
-)
-
 target_include_directories(${PROJECT_NAME} 
     PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}
     PUBLIC  ${THIRD_PARTY_DIR}/stm32_hal/Inc
     PUBLIC  ${THIRD_PARTY_DIR}/stm32_cmsis/Include
     PUBLIC ${THIRD_PARTY_DIR}/arm_cmsis/CMSIS/Core/Include
     PRIVATE $<TARGET_PROPERTY:rtos,INTERFACE_INCLUDE_DIRECTORIES>
-)
-
-add_dependencies(${PROJECT_NAME} 
-    rtos
 )
