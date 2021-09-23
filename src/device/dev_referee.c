@@ -126,11 +126,11 @@ int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen) {
   ref->ui.screen = screen;
 
   BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_RX_CPLT_CB,
-                            Referee_RxCpltCallback);
+                            Referee_RxCpltCallback, NULL);
   BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_ABORT_RX_CPLT_CB,
-                            Referee_AbortRxCpltCallback);
+                            Referee_AbortRxCpltCallback, NULL);
   BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_IDLE_LINE_CB,
-                            Referee_IdleLineCallback);
+                            Referee_IdleLineCallback, NULL);
   ref->ui_fast_timer_id =
       xTimerCreate("fast_refresh", pdMS_TO_TICKS(REF_UI_FAST_REFRESH_FREQ),
                    pdTRUE, NULL, RefereeFastRefreshTimerCallback);

@@ -65,7 +65,7 @@ int8_t DR16_Init(DR16_t *dr16) {
   VERIFY((thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
 
   BSP_UART_RegisterCallback(BSP_UART_DR16, BSP_UART_RX_CPLT_CB,
-                            DR16_RxCpltCallback);
+                            DR16_RxCpltCallback, NULL);
 
   inited = true;
   return DEVICE_OK;
