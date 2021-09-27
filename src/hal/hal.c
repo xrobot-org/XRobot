@@ -76,6 +76,7 @@ void HAL_InitPeripherals(void) {
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
   MX_TIM7_Init();
+  MX_USB_DEVICE_Init();
 }
 
 /**

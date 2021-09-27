@@ -647,6 +647,15 @@ static const CLI_Command_Definition_t command_table[] = {
     */
 };
 
+void CLI_USB_RX_Callback(void *arg) {
+  UNUSED(arg);
+
+  BaseType_t switch_required;
+  xTaskNotifyFromISR(runtime->thd[THD_CLI], SIGNAL_BSP_USB_BUF_RECV,
+                     eSetValueWithOverwrite, &switch_required);
+  portYIELD_FROM_ISR(switch_required);
+}
+
 void Thd_CLI(void *arg) {
   runtime = arg;
   static char input[MAX_INPUT_LENGTH];          /* 输入字符串缓存 */
@@ -658,6 +667,8 @@ void Thd_CLI(void *arg) {
   gyro_sub = MsgDistrib_Subscribe("gimbal_gyro", true);
   gimbal_motor_sub = MsgDistrib_Subscribe("gimbal_motor_fb", true);
 
+  CDC_RegisterCallback(CLI_USB_RX_Callback);
+
   /* 注册所有命令 */
   for (size_t j = 0; j < ARRAY_LEN(command_table); j++) {
     FreeRTOS_CLIRegisterCommand(command_table + j);
@@ -667,8 +678,8 @@ void Thd_CLI(void *arg) {
   BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
   while (1) {
     /* 等待接收到新的字符 */
-    BSP_USB_ReadyReceive(xTaskGetCurrentTaskHandle());
-    xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFF);
+    BSP_USB_StartReceive();
+    xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFFFFFFFF);
 
     /* 读取接收到的新字符 */
     rx_char = BSP_USB_ReadChar();
@@ -687,8 +698,8 @@ void Thd_CLI(void *arg) {
   BSP_USB_Printf(CLI_START);
   while (1) {
     /* 等待输入. */
-    BSP_USB_ReadyReceive(xTaskGetCurrentTaskHandle());
-    xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFF);
+    BSP_USB_StartReceive();
+    xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFFFFFFFF);
 
     /* 读取接收到的新字符 */
     rx_char = BSP_USB_ReadChar();

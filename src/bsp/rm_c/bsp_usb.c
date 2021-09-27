@@ -10,15 +10,13 @@
 #include "comp_utils.h"
 #include "usbd_cdc_if.h"
 
-/* Private define -----------------s------------------------------------------
- */
+/* Private define ----------------------------------------------------------- */
 /* Private macro ------------------------------------------------------------ */
 /* Private typedef ---------------------------------------------------------- */
 /* Private variables -------------------------------------------------------- */
-/* Must set to NULL explicitly. */
-TaskHandle_t gbsp_usb_alert = NULL;
-uint8_t usb_rx_buf[BSP_USB_MAX_RX_LEN];
-uint8_t usb_tx_buf[BSP_USB_MAX_TX_LEN];
+
+extern uint8_t UserRxBufferFS[APP_RX_DATA_SIZE];
+extern uint8_t UserTxBufferFS[APP_TX_DATA_SIZE];
 
 /* Private function  -------------------------------------------------------- */
 static int8_t BSP_USB_Transmit(uint8_t *buffer, uint16_t len) {
@@ -35,24 +33,21 @@ static int8_t BSP_USB_Transmit(uint8_t *buffer, uint16_t len) {
 }
 
 /* Exported functions ------------------------------------------------------- */
-int8_t BSP_USB_ReadyReceive(TaskHandle_t alert) {
-  ASSERT(alert);
-
-  gbsp_usb_alert = alert;
-  // CDC_ReadyReceive();
+int8_t BSP_USB_StartReceive(void) {
+  CDC_StartReceive();
   return BSP_OK;
 }
 
-char BSP_USB_ReadChar(void) { return usb_rx_buf[0]; }
+char BSP_USB_ReadChar(void) { return UserRxBufferFS[0]; }
 
 int8_t BSP_USB_Printf(const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
-  int len = vsnprintf((char *)usb_tx_buf, BSP_USB_MAX_TX_LEN - 1, fmt, ap);
+  int len = vsnprintf((char *)UserTxBufferFS, APP_TX_DATA_SIZE - 1, fmt, ap);
   va_end(ap);
 
   if (len > 0) {
-    BSP_USB_Transmit(usb_tx_buf, (uint16_t)(len));
+    BSP_USB_Transmit(UserTxBufferFS, (uint16_t)(len));
     return BSP_OK;
   } else {
     return BSP_ERR_NULL;

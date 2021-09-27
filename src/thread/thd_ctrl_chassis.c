@@ -31,7 +31,8 @@ UI_ChassisUI_t chassis_ui;
 
 static Chassis_t chassis;
 static CMD_ChassisCmd_t chassis_cmd;
-CAN_ChassisMotor_t chassis_motor;
+static CAN_ChassisMotor_t chassis_motor;
+static CAN_GimbalMotor_t gimbal_motor;
 static Referee_ForChassis_t chassis_ref;
 static CAN_ChassisOutput_t chassis_out;
 static UI_ChassisUI_t chassis_ui;
