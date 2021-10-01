@@ -31,7 +31,7 @@ void Thd_AI(void* arg) {
   const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   MsgDistrib_Publisher_t* cmd_host_pub =
-      MsgDistrib_CreateTopic("cmd_host", sizeof(CMD_LauncherCmd_t));
+      MsgDistrib_CreateTopic("host_cmd", sizeof(CMD_LauncherCmd_t));
   MsgDistrib_Publisher_t* ui_ai_pub =
       MsgDistrib_CreateTopic("ui_ai", sizeof(CMD_UI_t));
 

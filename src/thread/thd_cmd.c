@@ -49,7 +49,7 @@ void Thd_CMD(void* arg) {
       MsgDistrib_CreateTopic("ui_cmd", sizeof(CMD_UI_t));
 
   MsgDistrib_Subscriber_t* rc_sub = MsgDistrib_Subscribe("rc_cmd", true);
-  MsgDistrib_Subscriber_t* host_sub = MsgDistrib_Subscribe("rc_host", true);
+  MsgDistrib_Subscriber_t* host_sub = MsgDistrib_Subscribe("host_cmd", true);
 
   /* 初始化指令处理 */
   CMD_Init(&cmd, &(runtime->cfg.pilot_cfg->param));
