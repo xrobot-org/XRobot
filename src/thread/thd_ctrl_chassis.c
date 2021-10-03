@@ -52,7 +52,7 @@ void Thd_CtrlChassis(void* arg) {
 
   MsgDistrib_Subscriber_t* ref_sub =
       MsgDistrib_Subscribe("referee_chassis", true);
-  MsgDistrib_Subscriber_t* cap_sub = MsgDistrib_Subscribe("chassis_gyro", true);
+  MsgDistrib_Subscriber_t* cap_sub = MsgDistrib_Subscribe("cap_info", true);
   MsgDistrib_Subscriber_t* chassis_motor_sub =
       MsgDistrib_Subscribe("chassis_motor_fb", true);
   MsgDistrib_Subscriber_t* gimbal_motor_sub =

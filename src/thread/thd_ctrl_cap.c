@@ -40,7 +40,7 @@ void Thd_CtrlCap(void* arg) {
   MsgDistrib_Publisher_t* out_pub =
       MsgDistrib_CreateTopic("cap_out", sizeof(CAN_ChassisOutput_t));
   MsgDistrib_Publisher_t* ui_pub =
-      MsgDistrib_CreateTopic("cap_ui", sizeof(UI_ChassisUI_t));
+      MsgDistrib_CreateTopic("ui_cap", sizeof(UI_ChassisUI_t));
   MsgDistrib_Publisher_t* info_pub =
       MsgDistrib_CreateTopic("cap_info", sizeof(Cap_t));
 

@@ -47,7 +47,7 @@ void Thd_CtrlLauncher(void* arg) {
   MsgDistrib_Subscriber_t* motor_sub =
       MsgDistrib_Subscribe("launcher_motor_fb", true);
   MsgDistrib_Subscriber_t* ref_sub =
-      MsgDistrib_Subscribe("launcher_eulr", true);
+      MsgDistrib_Subscribe("referee_launcher", true);
   MsgDistrib_Subscriber_t* cmd_sub = MsgDistrib_Subscribe("cmd_launcher", true);
 
   /* 初始化发射器 */
