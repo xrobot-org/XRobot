@@ -18,8 +18,9 @@
 #define REF_HEADER_SOF (0xA5)
 #define REF_LEN_RX_BUFF (0xFF)
 
-#define REF_UI_FAST_REFRESH_FREQ (50)   /* 静态元素刷新频率 */
-#define REF_UI_SLOW_REFRESH_FREQ (0.2f) /* 动态元素刷新频率 */
+// TODO:FREQ支持小数
+#define REF_UI_FAST_REFRESH_FREQ (50) /* 静态元素刷新频率 */
+#define REF_UI_SLOW_REFRESH_FREQ (1)  /* 动态元素刷新频率 */
 
 #define REF_UI_BOX_UP_OFFSET (4)
 #define REF_UI_BOX_BOT_OFFSET (-14)
