@@ -25,6 +25,12 @@ unsigned long getRunTimeCounterValue(void) {
   return runtime_ststus_timer_ticks;
 }
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+  if (htim->Instance == TIM7) {
+    runtime_ststus_timer_ticks++;
+  }
+}
+
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
   /* Run time stack overflow checking is performed if
   configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
