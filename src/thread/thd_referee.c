@@ -66,7 +66,8 @@ void Thd_Referee(void* arg) {
   while (1) {
     Referee_StartReceiving(&ref); /* 开始接收裁判系统数据 */
 
-    if (Referee_WaitRecvCplt(100)) { /* 判断裁判系统数据是否接收完成 */
+    /* 判断裁判系统数据是否接收完成 */
+    if (Referee_WaitRecvCplt(100) != pdTRUE) {
       Referee_HandleOffline(&ref); /* 长时间未接收到数据，裁判系统离线 */
     } else {
       Referee_Parse(&ref); /* 解析裁判系统数据 */
