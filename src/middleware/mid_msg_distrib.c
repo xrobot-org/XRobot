@@ -92,6 +92,7 @@ MsgDistrib_Publisher_t *MsgDistrib_CreateTopic(const char *topic_name,
     strncpy(topic->name, topic_name, MAX_NAME_LEN - 1);
     topic->data_size = data_size;
     topic->data_buf = pvPortMalloc(data_size);
+    memset(topic->data_buf, 0, data_size);
 
     topic->puber.data_queue = xQueueCreate(1, data_size);
     xQueueAddToSet(topic->puber.data_queue, md.topic_queue_set);
