@@ -60,7 +60,8 @@
 #define BMI088_CHIP_ID_ACCL (0x1E)
 #define BMI088_CHIP_ID_GYRO (0x0F)
 
-#define BMI088_LEN_RX_BUFF (19)
+// TODO : ACCEL和GRYO双缓冲区
+#define BMI088_LEN_RX_BUFF (30)
 /* Private macro ------------------------------------------------------------ */
 #define BMI088_ACCL_NSS_SET() \
   HAL_GPIO_WritePin(ACCL_CS_GPIO_Port, ACCL_CS_Pin, GPIO_PIN_SET)
@@ -286,7 +287,7 @@ int8_t BMI088_AcclWaitDmaCplt(BMI088_t *bmi088) {
 }
 
 int8_t BMI088_GyroStartDmaRecv() {
-  BMI_Read(BMI_GYRO, BMI088_REG_GYRO_X_LSB, dma_buf + 7, 6u);
+  BMI_Read(BMI_GYRO, BMI088_REG_GYRO_X_LSB, dma_buf + 19, 6u);
   return DEVICE_OK;
 }
 
@@ -339,9 +340,9 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 #if 1
   /* Gyroscope imu_raw -> degrees/sec -> radians/sec */
   int16_t raw_x, raw_y, raw_z;
-  memcpy(&raw_x, dma_buf + 7, sizeof(raw_x));
-  memcpy(&raw_y, dma_buf + 9, sizeof(raw_y));
-  memcpy(&raw_z, dma_buf + 11, sizeof(raw_z));
+  memcpy(&raw_x, dma_buf + 19, sizeof(raw_x));
+  memcpy(&raw_y, dma_buf + 21, sizeof(raw_y));
+  memcpy(&raw_z, dma_buf + 23, sizeof(raw_z));
 
   bmi088->gyro.x = (float)raw_x;
   bmi088->gyro.y = (float)raw_y;
