@@ -423,6 +423,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       while (count < 1000) {
         bool data_new = MsgDistrib_Poll(gyro_sub, &gyro, 5);
         bool data_good = BMI088_GyroStable(&gyro);
+        // TODO:可重新校准多次
         if (data_new && data_good) {
           x += gyro.x;
           y += gyro.y;
@@ -487,7 +488,7 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
       /* 获取到云台数据，用can上的新的云台机械零点的位置替代旧的位置 */
       Config_Get(&cfg);
 
-      if (MsgDistrib_Poll(gimbal_motor_sub, &gimbal_motor, 5)) {
+      if (!MsgDistrib_Poll(gimbal_motor_sub, &gimbal_motor, 5)) {
         snprintf(out_buffer, len, "Can not get gimbal data.\r\n");
         fsm.stage = 2;
         return pdPASS;
@@ -531,7 +532,7 @@ static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
       return pdPASS;
     case 1:
       /* 获取云台数据，获取新的限位角并替代旧的限位角 */
-      if (MsgDistrib_Poll(gimbal_motor_sub, &gimbal_motor, 5)) {
+      if (!MsgDistrib_Poll(gimbal_motor_sub, &gimbal_motor, 5)) {
         fsm.stage = 3;
         return pdPASS;
       }
