@@ -67,7 +67,7 @@ void Thd_Referee(void* arg) {
     Referee_StartReceiving(&ref); /* 开始接收裁判系统数据 */
 
     /* 判断裁判系统数据是否接收完成 */
-    if (Referee_WaitRecvCplt(100) != pdTRUE) {
+    if (Referee_WaitRecvCplt(&ref, 100) != pdTRUE) {
       Referee_HandleOffline(&ref); /* 长时间未接收到数据，裁判系统离线 */
     } else {
       Referee_Parse(&ref); /* 解析裁判系统数据 */
@@ -101,10 +101,10 @@ void Thd_Referee(void* arg) {
       /* 刷新UI数据 */
       Referee_RefreshUI(&ref);
 
-      if (Referee_WaitTransCplt(0)) {
+      if (Referee_WaitTransCplt(&ref, 0)) {
         Referee_PackUiPacket(&ref);
+        Referee_StartTransmit(&ref);
       }
-      Referee_StartTransmit(&ref);
     }
   }
 }

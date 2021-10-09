@@ -60,34 +60,44 @@ static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
 
-static void Referee_RxCpltCallback(void) {
+static void Referee_RxCpltCallback(void *arg) {
+  Referee_t *ref = arg;
   BaseType_t switch_required;
-  xTaskNotifyFromISR(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY,
-                     eSetValueWithOverwrite, &switch_required);
+  xSemaphoreGiveFromISR(ref->sem.raw_ready, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
-static void Referee_IdleLineCallback(void) {
+static void Referee_TxCpltCallback(void *arg) {
+  Referee_t *ref = arg;
+  BaseType_t switch_required;
+  xSemaphoreGiveFromISR(ref->sem.packet_sent, &switch_required);
+  portYIELD_FROM_ISR(switch_required);
+}
+
+static void Referee_IdleLineCallback(void *arg) {
+  RM_UNUSED(arg);
   HAL_UART_AbortReceive_IT(BSP_UART_GetHandle(BSP_UART_REF));
 }
 
-static void Referee_AbortRxCpltCallback(void) {
+static void Referee_AbortRxCpltCallback(void *arg) {
+  Referee_t *ref = arg;
   BaseType_t switch_required;
-  xTaskNotifyFromISR(gref->thread_alert, SIGNAL_REFEREE_RAW_REDY,
-                     eSetValueWithOverwrite, &switch_required);
+  xSemaphoreGiveFromISR(ref->sem.raw_ready, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
 static void RefereeFastRefreshTimerCallback(void *arg) {
   RM_UNUSED(arg);
-  xTaskNotify(gref->thread_alert, SIGNAL_REFEREE_FAST_REFRESH_UI,
-              eSetValueWithOverwrite);
+  BaseType_t switch_required;
+  xSemaphoreGiveFromISR(gref->sem.ui_fast_refresh, &switch_required);
+  portYIELD_FROM_ISR(switch_required);
 }
 
 static void RefereeSlowRefreshTimerCallback(void *arg) {
   RM_UNUSED(arg);
-  xTaskNotify(gref->thread_alert, SIGNAL_REFEREE_SLOW_REFRESH_UI,
-              eSetValueWithOverwrite);
+  BaseType_t switch_required;
+  xSemaphoreGiveFromISR(gref->sem.ui_slow_refresh, &switch_required);
+  portYIELD_FROM_ISR(switch_required);
 }
 
 static int8_t Referee_SetPacketHeader(Referee_Header_t *header,
@@ -126,12 +136,21 @@ int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen) {
 
   ref->ui.screen = screen;
 
+  ref->sem.packet_sent = xSemaphoreCreateBinary();
+  ref->sem.raw_ready = xSemaphoreCreateBinary();
+  ref->sem.ui_fast_refresh = xSemaphoreCreateBinary();
+  ref->sem.ui_slow_refresh = xSemaphoreCreateBinary();
+
+  xSemaphoreGive(ref->sem.packet_sent);
+
   BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_RX_CPLT_CB,
-                            Referee_RxCpltCallback, NULL);
+                            Referee_RxCpltCallback, ref);
   BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_ABORT_RX_CPLT_CB,
-                            Referee_AbortRxCpltCallback, NULL);
+                            Referee_AbortRxCpltCallback, ref);
   BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_IDLE_LINE_CB,
-                            Referee_IdleLineCallback, NULL);
+                            Referee_IdleLineCallback, ref);
+  BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_TX_CPLT_CB,
+                            Referee_TxCpltCallback, ref);
   ref->ui_fast_timer_id =
       xTimerCreate("fast_refresh", pdMS_TO_TICKS(REF_UI_FAST_REFRESH_FREQ),
                    pdTRUE, NULL, RefereeFastRefreshTimerCallback);
@@ -168,8 +187,8 @@ int8_t Referee_StartReceiving(Referee_t *ref) {
   return DEVICE_ERR;
 }
 
-bool Referee_WaitRecvCplt(uint32_t timeout) {
-  return xTaskNotifyWait(0, 0, SIGNAL_REFEREE_RAW_REDY, pdMS_TO_TICKS(timeout));
+bool Referee_WaitRecvCplt(Referee_t *ref, uint32_t timeout) {
+  return xSemaphoreTake(ref->sem.raw_ready, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 
 int8_t Referee_Parse(Referee_t *ref) {
@@ -315,9 +334,7 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
   static UI_GraphicOp_t graphic_op = UI_GRAPHIC_OP_ADD;
 
   /* UI动态元素刷新 */
-  uint32_t flag;
-  xTaskNotifyWait(0, 0, flag, 0);
-  if (flag & SIGNAL_REFEREE_FAST_REFRESH_UI) {
+  if (xSemaphoreTake(ref->sem.ui_fast_refresh, 0)) {
     /* 使用状态机算法，每次更新一个图层 */
     switch (ref->ui.refresh_fsm) {
       case 0: {
@@ -511,11 +528,10 @@ uint8_t Referee_RefreshUI(Referee_t *ref) {
   }
 
   /* UI静态元素刷新 */
-  if (flag & SIGNAL_REFEREE_SLOW_REFRESH_UI) {
+  if (xSemaphoreTake(ref->sem.ui_slow_refresh, 0)) {
     graphic_op = UI_GRAPHIC_OP_ADD;
     ref->ui.refresh_fsm = 1;
 
-    osThreadFlagsClear(SIGNAL_REFEREE_SLOW_REFRESH_UI);
     UI_DrawString(&string, "1", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
                   UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
                   (uint16_t)(kW * REF_UI_RIGHT_START_W),
@@ -651,8 +667,7 @@ int8_t Referee_PackUiPacket(Referee_t *ref) {
 
 int8_t Referee_StartTransmit(Referee_t *ref) {
   if (ref->packet.data == NULL) {
-    xTaskNotify(gref->thread_alert, SIGNAL_REFEREE_PACKET_SENT,
-                eSetValueWithOverwrite);
+    xSemaphoreGive(ref->sem.packet_sent);
     return DEVICE_ERR_NULL;
   }
   if (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_REF), ref->packet.data,
@@ -660,16 +675,13 @@ int8_t Referee_StartTransmit(Referee_t *ref) {
     BSP_Free(ref->packet.last_data);
     ref->packet.last_data = ref->packet.data;
     ref->packet.data = NULL;
-    xTaskNotify(gref->thread_alert, SIGNAL_REFEREE_PACKET_SENT,
-                eSetValueWithOverwrite);
     return DEVICE_OK;
   }
   return DEVICE_ERR;
 }
 
-bool Referee_WaitTransCplt(uint32_t timeout) {
-  return xTaskNotifyWait(0, 0, SIGNAL_REFEREE_PACKET_SENT,
-                         pdMS_TO_TICKS(timeout));
+bool Referee_WaitTransCplt(Referee_t *ref, uint32_t timeout) {
+  return xSemaphoreTake(ref->sem.packet_sent, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 
 uint8_t Referee_PackForChassis(Referee_ForChassis_t *c_ref,

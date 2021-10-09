@@ -13,6 +13,7 @@
 #include "comp_utils.h"
 #include "dev.h"
 #include "dev_can.h"
+#include "semphr.h"
 #include "timers.h"
 
 /* Exported constants ------------------------------------------------------- */
@@ -332,6 +333,13 @@ typedef struct {
     size_t size;
   } packet;
 
+  struct {
+    SemaphoreHandle_t ui_fast_refresh;
+    SemaphoreHandle_t ui_slow_refresh;
+    SemaphoreHandle_t packet_sent;
+    SemaphoreHandle_t raw_ready;
+  } sem;
+
   TaskHandle_t thread_alert;
 
   TimerHandle_t ui_fast_timer_id;
@@ -370,13 +378,13 @@ int8_t Referee_Restart(void);
 void Referee_HandleOffline(Referee_t *ref);
 
 int8_t Referee_StartReceiving(Referee_t *ref);
-bool Referee_WaitRecvCplt(uint32_t timeout);
+bool Referee_WaitRecvCplt(Referee_t *ref, uint32_t timeout);
 int8_t Referee_Parse(Referee_t *ref);
 
 uint8_t Referee_RefreshUI(Referee_t *ref);
 int8_t Referee_PackUiPacket(Referee_t *ref);
 int8_t Referee_StartTransmit(Referee_t *ref);
-bool Referee_WaitTransCplt(uint32_t timeout);
+bool Referee_WaitTransCplt(Referee_t *ref, uint32_t timeout);
 
 uint8_t Referee_PackForChassis(Referee_ForChassis_t *c_ref,
                                const Referee_t *ref);
