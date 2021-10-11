@@ -18,11 +18,11 @@
 
 #define THD_PERIOD_MS (250)
 
+/* 计算线程运行到指定频率需要等待的tick数 */
+#define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
+
 void Thd_Info(void *arg) {
   RM_UNUSED(arg); /* 未使用arg，消除警告 */
-
-  /* 计算线程运行到指定频率需要等待的tick数 */
-  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 
@@ -30,6 +30,6 @@ void Thd_Info(void *arg) {
     BSP_LED_Set(BSP_LED_GRN, BSP_LED_TAGGLE, 1); /* 闪烁LED */
 
     /* 运行结束，等待下一次唤醒 */
-    xTaskDelayUntil(&previous_wake_time, delay_tick);
+    xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }

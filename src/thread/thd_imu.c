@@ -19,18 +19,6 @@
 #include "mid_msg_distrib.h"
 #include "thd.h"
 
-#ifdef MCU_DEBUG_BUILD
-
-BMI088_t bmi088;
-KPID_t imu_temp_ctrl_pid;
-
-#else
-
-static BMI088_t bmi088;
-static KPID_t imu_temp_ctrl_pid;
-
-#endif
-
 static const KPID_Params_t imu_temp_ctrl_pid_param = {
     .k = 0.15f,
     .p = 1.0f,
@@ -43,10 +31,13 @@ static const KPID_Params_t imu_temp_ctrl_pid_param = {
 void Thd_IMU(void* arg) {
   Runtime_t* runtime = arg;
 
-  MsgDistrib_Publisher_t* accl_pub =
-      MsgDistrib_CreateTopic("gimbal_accl", sizeof(Vector3_t));
-  MsgDistrib_Publisher_t* gyro_pub =
-      MsgDistrib_CreateTopic("gimbal_gyro", sizeof(Vector3_t));
+  BMI088_t bmi088;
+  KPID_t imu_temp_ctrl_pid;
+
+  MsgDist_Publisher_t* accl_pub =
+      MsgDist_CreateTopic("gimbal_accl", sizeof(Vector3_t));
+  MsgDist_Publisher_t* gyro_pub =
+      MsgDist_CreateTopic("gimbal_gyro", sizeof(Vector3_t));
 
   /* 初始化设备 */
   BMI088_Init(&bmi088, &(runtime->cfg.cali.bmi088));
@@ -82,8 +73,8 @@ void Thd_IMU(void* arg) {
     // TODO: 添加滤波
 
     /* 发布消息 */
-    MsgDistrib_Publish(accl_pub, &bmi088.accl);
-    MsgDistrib_Publish(gyro_pub, &bmi088.gyro);
+    MsgDist_Publish(accl_pub, &bmi088.accl);
+    MsgDist_Publish(gyro_pub, &bmi088.gyro);
 
     /* PID控制IMU温度，PWM输出 */
     BSP_PWM_Set(BSP_PWM_IMU_HEAT,
