@@ -16,7 +16,7 @@
 - 实时性强，CPU利用率低
 - 一个项目适配不同型号的机器人和不同的操作手。
 - 利用Cmake & GCC实现跨平台开发
-- 使用VSCode和OpenOCD减少对收费软件的依赖
+- 不依赖特定操作系统和IDE
 
 实现了可以通过命令行，切换所适配的机器人和操作手。代码完成后只需要烧写一次，减少维护的工作量，减少出错的可能性。用到的系统和软件全部免费。
 
@@ -65,6 +65,20 @@
   1. 编译
 
 ### 调试
+
+#### Ozone
+
+1. Ubuntu native
+    1. 安装Jlink驱动
+    1. 安装Ozone linux版
+    1. 正常调试
+
+1. Windows 11 WSL with WSLg
+    1. Windows Host中安装Jlink驱动
+    1. WSL中安装Ozone linux版
+    1. WSL中使用Ozone调试，通过网络连接Jlink
+
+#### OpenOCD
 
 TODO
 
