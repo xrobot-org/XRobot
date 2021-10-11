@@ -10,6 +10,7 @@
 #include "hal_sys.h"
 #include "hal_tim.h"
 #include "hal_usart.h"
+#include "hal_usb_otg.h"
 #include "stm32_assert.h"
 #include "stm32f4xx_hal_conf.h"
 
@@ -76,6 +77,7 @@ void HAL_InitPeripherals(void) {
   MX_USART1_UART_Init();
   MX_USART6_UART_Init();
   MX_TIM7_Init();
+  MX_USB_OTG_FS_PCD_Init();
 }
 
 /**
