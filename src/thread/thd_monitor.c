@@ -19,12 +19,10 @@
 #include "thd.h"
 
 #define THD_PERIOD_MS (100)
+#define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
 void Thd_Monitor(void* arg) {
   Runtime_t* runtime = arg;
-
-  /* 计算线程运行到指定频率需要等待的tick数 */
-  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 
@@ -44,6 +42,6 @@ void Thd_Monitor(void* arg) {
     }
 
     /* 运行结束，等待下一次唤醒 */
-    xTaskDelayUntil(&previous_wake_time, delay_tick);
+    xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }

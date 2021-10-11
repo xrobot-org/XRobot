@@ -36,7 +36,7 @@ extern void Thd_CtrlLauncher(void *arg);
 extern void Thd_IMU(void *arg);
 extern void Thd_Info(void *arg);
 extern void Thd_Monitor(void *arg);
-extern void Thd_MsgDistrib(void *arg);
+extern void Thd_MsgDist(void *arg);
 extern void Thd_RC(void *arg);
 extern void Thd_Referee(void *arg);
 extern void Thd_USB(void *arg);
@@ -65,7 +65,7 @@ static const Thd_t thd_list[] = {
     {Thd_IMU, "IMU", 256, 5, THD_IMU},
     {Thd_Info, "Info", 128, 2, THD_INFO},
     {Thd_Monitor, "Monitor", 128, 2, THD_MONITOR},
-    {Thd_MsgDistrib, "MsgDistrib", 128, 5, THD_MSG_DISTRIB},
+    {Thd_MsgDist, "MsgDist", 128, 5, THD_MSG_DISTRIB},
     {Thd_RC, "RC", 128, 5, THD_RC},
     {Thd_Referee, "Referee", 512, 5, THD_REFEREE},
     {Thd_USB, "USB", 128, 5, THD_USB},

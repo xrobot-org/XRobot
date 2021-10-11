@@ -20,14 +20,14 @@
 #include "mid_msg_distrib.h"
 #include "thd.h"
 
-void Thd_MsgDistrib(void *arg) {
+void Thd_MsgDist(void *arg) {
   RM_UNUSED(arg); /* 未使用arg，消除警告 */
 
   /* 初始化消息分发 */
-  MsgDistrib_Init();
+  MsgDist_Init();
 
   while (1) {
     /* 消息分发 */
-    MsgDistrib_Distribute();
+    MsgDist_Distute();
   }
 }

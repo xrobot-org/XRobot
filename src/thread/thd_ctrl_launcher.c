@@ -13,42 +13,28 @@
 #include "mod_launcher.h"
 #include "thd.h"
 
-#ifdef MCU_DEBUG_BUILD
-
-Launcher_t launcher;
-CMD_LauncherCmd_t launcher_cmd;
-CAN_LauncherMotor_t launcher_motor;
-Referee_ForLauncher_t referee_launcher;
-CAN_LauncherOutput_t launcher_out;
-UI_LauncherUI_t launcher_ui;
-
-#else
-
-static Launcher_t launcher;
-static CMD_LauncherCmd_t launcher_cmd;
-static CAN_LauncherMotor_t launcher_motor;
-static Referee_ForLauncher_t referee_launcher;
-static CAN_LauncherOutput_t launcher_out;
-static UI_LauncherUI_t launcher_ui;
-
-#endif
-
 #define THD_PERIOD_MS (2)
+#define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
 void Thd_CtrlLauncher(void* arg) {
   Runtime_t* runtime = arg;
-  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
-  MsgDistrib_Publisher_t* out_pub =
-      MsgDistrib_CreateTopic("launcher_out", sizeof(CAN_GimbalOutput_t));
-  MsgDistrib_Publisher_t* ui_pub =
-      MsgDistrib_CreateTopic("launcher_ui", sizeof(UI_GimbalUI_t));
+  Launcher_t launcher;
+  CMD_LauncherCmd_t launcher_cmd;
+  CAN_LauncherMotor_t launcher_motor;
+  Referee_ForLauncher_t referee_launcher;
+  CAN_LauncherOutput_t launcher_out;
+  UI_LauncherUI_t launcher_ui;
 
-  MsgDistrib_Subscriber_t* motor_sub =
-      MsgDistrib_Subscribe("launcher_motor_fb", true);
-  MsgDistrib_Subscriber_t* ref_sub =
-      MsgDistrib_Subscribe("launcher_eulr", true);
-  MsgDistrib_Subscriber_t* cmd_sub = MsgDistrib_Subscribe("cmd_launcher", true);
+  MsgDist_Publisher_t* out_pub =
+      MsgDist_CreateTopic("launcher_out", sizeof(CAN_GimbalOutput_t));
+  MsgDist_Publisher_t* ui_pub =
+      MsgDist_CreateTopic("launcher_ui", sizeof(UI_GimbalUI_t));
+
+  MsgDist_Subscriber_t* motor_sub =
+      MsgDist_Subscribe("launcher_motor_fb", true);
+  MsgDist_Subscriber_t* ref_sub = MsgDist_Subscribe("launcher_eulr", true);
+  MsgDist_Subscriber_t* cmd_sub = MsgDist_Subscribe("cmd_launcher", true);
 
   /* 初始化发射器 */
   Launcher_Init(&launcher, &(runtime->cfg.robot_param->launcher),
@@ -58,9 +44,9 @@ void Thd_CtrlLauncher(void* arg) {
 
   while (1) {
     /* 读取控制指令、姿态、IMU、裁判系统、电机反馈 */
-    MsgDistrib_Poll(motor_sub, &launcher_motor, 0);
-    MsgDistrib_Poll(ref_sub, &referee_launcher, 0);
-    MsgDistrib_Poll(cmd_sub, &launcher_cmd, 0);
+    MsgDist_Poll(motor_sub, &launcher_motor, 0);
+    MsgDist_Poll(ref_sub, &referee_launcher, 0);
+    MsgDist_Poll(cmd_sub, &launcher_cmd, 0);
 
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     Launcher_UpdateFeedback(&launcher, &launcher_motor);
@@ -70,10 +56,10 @@ void Thd_CtrlLauncher(void* arg) {
     Launcher_PackUi(&launcher, &launcher_ui);
     xTaskResumeAll();
 
-    MsgDistrib_Publish(out_pub, &launcher_out);
-    MsgDistrib_Publish(ui_pub, &launcher_ui);
+    MsgDist_Publish(out_pub, &launcher_out);
+    MsgDist_Publish(ui_pub, &launcher_ui);
 
     /* 运行结束，等待下一次唤醒 */
-    xTaskDelayUntil(&previous_wake_time, delay_tick);
+    xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
