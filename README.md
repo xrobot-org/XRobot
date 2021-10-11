@@ -36,13 +36,15 @@
 
 ### 系统
 
-- Windows Subsystem for Linux 2 Ubuntu [安装说明](https://docs.microsoft.com/zh-cn/windows/wsl/install-win10)
+- Windows Subsystem for Linux (WSL) 2 Ubuntu [安装说明](https://docs.microsoft.com/zh-cn/windows/wsl/install-win10)
+
+- Ubuntu native [详细信息](https://ubuntu.com)
 
 ### 配置环境
 
-- 在Windows中安装[Visual Studio Code](https://code.visualstudio.com/)
+- [Visual Studio Code](https://code.visualstudio.com/)
   - 安装必备插件`C/C++` `CMake`
-- 在WSL2中安装依赖`sudo apt install cmake gcc-arm-none-eabi ninja-build`
+- 安装构建工具`sudo apt install cmake gcc-arm-none-eabi ninja-build`
 
 ### 获取源代码
 
@@ -64,19 +66,19 @@
   1. 选择构建类型
   1. 编译
 
-### 调试
+### 调试 & 烧写
 
 #### Ozone
 
-1. Ubuntu native
-    1. 安装Jlink驱动
-    1. 安装Ozone linux版
-    1. 正常调试
+- Ubuntu native
+  1. 安装Jlink驱动
+  1. 安装Ozone Linux版
+  1. 正常调试
 
-1. Windows 11 WSL with WSLg
-    1. Windows Host中安装Jlink驱动
-    1. WSL中安装Ozone linux版
-    1. WSL中使用Ozone调试，通过网络连接Jlink
+- Windows 11 WSL with WSLg
+  1. Windows Host中安装Jlink驱动
+  1. WSL中安装Ozone Linux版
+  1. WSL中使用Ozone调试，通过网络连接Jlink
 
 #### OpenOCD
 
