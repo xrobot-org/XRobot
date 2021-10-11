@@ -13,3 +13,6 @@
 [submodule "arm_cmsis"]
 	path = third_party/arm_cmsis
 	url = https://github.com/ARM-software/CMSIS_5.git
+[submodule "tinyusb"]
+	path = third_party/tinyusb
+	url = https://github.com/hathach/tinyusb.git
