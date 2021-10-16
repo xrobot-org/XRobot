@@ -16,7 +16,7 @@
 #include "bsp_pwm.h"
 #include "comp_pid.h"
 #include "dev_bmi088.h"
-#include "mid_msg_distrib.h"
+#include "mid_msg_dist.h"
 #include "thd.h"
 
 static const KPID_Params_t imu_temp_ctrl_pid_param = {

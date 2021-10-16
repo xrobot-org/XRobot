@@ -13,7 +13,7 @@
 #include <string.h>
 
 #include "comp_ahrs.h"
-#include "mid_msg_distrib.h"
+#include "mid_msg_dist.h"
 #include "thd.h"
 
 #define THD_PERIOD_MS (2)

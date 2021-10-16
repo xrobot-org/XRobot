@@ -9,7 +9,7 @@
  *
  */
 
-#include "mid_msg_distrib.h"
+#include "mid_msg_dist.h"
 #include "mod_gimbal.h"
 #include "thd.h"
 

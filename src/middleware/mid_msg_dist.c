@@ -1,4 +1,4 @@
-#include "mid_msg_distrib.h"
+#include "mid_msg_dist.h"
 
 #include <stddef.h>
 #include <string.h>
