@@ -15,7 +15,7 @@
 
 #include "bsp_usb.h"
 #include "dev_referee.h"
-#include "mid_msg_distrib.h"
+#include "mid_msg_dist.h"
 #include "thd.h"
 
 #define THD_PERIOD_MS (1)

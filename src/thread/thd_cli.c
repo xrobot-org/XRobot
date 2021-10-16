@@ -20,7 +20,7 @@
 #include "FreeRTOS_CLI.h"
 #include "bsp_usb.h"
 #include "dev_can.h"
-#include "mid_msg_distrib.h"
+#include "mid_msg_dist.h"
 #include "task.h"
 #include "thd.h"
 

@@ -17,7 +17,7 @@
 #include "comp_pid.h"
 #include "dev_bmi088.h"
 #include "dev_ist8310.h"
-#include "mid_msg_distrib.h"
+#include "mid_msg_dist.h"
 #include "thd.h"
 
 void Thd_MsgDist(void *arg) {

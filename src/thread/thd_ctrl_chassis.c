@@ -10,7 +10,7 @@
  */
 
 #include "comp_limiter.h"
-#include "mid_msg_distrib.h"
+#include "mid_msg_dist.h"
 #include "mod_chassis.h"
 #include "mod_config.h"
 #include "thd.h"

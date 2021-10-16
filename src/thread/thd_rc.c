@@ -15,7 +15,7 @@
 #include <string.h>
 
 #include "dev_dr16.h"
-#include "mid_msg_distrib.h"
+#include "mid_msg_dist.h"
 #include "thd.h"
 
 void Thd_RC(void* arg) {
