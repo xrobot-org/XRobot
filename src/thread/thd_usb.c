@@ -11,9 +11,8 @@
 
 #include <string.h>
 
-#include "bsp_usb.h"
-#include "mid_msg_dist.h"
 #include "thd.h"
+#include "tusb.h"
 
 #define THD_PERIOD_MS (2)
 
@@ -21,7 +20,14 @@ void Thd_USB(void* arg) {
   Runtime_t* runtime = arg;
   RM_UNUSED(runtime);
 
+  // This should be called after scheduler/kernel is started.
+  // Otherwise it could cause kernel issue since USB IRQ handler does use RTOS
+  // queue API.
+  tusb_init();
+
+  // RTOS forever loop
   while (1) {
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    // tinyusb device task
+    tud_task();
   }
 }
