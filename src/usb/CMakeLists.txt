@@ -15,7 +15,7 @@ file(GLOB ${PROJECT_NAME}_SOURCES
     "${THIRD_PARTY_DIR}/tinyusb/src/class/net/net_device.c"
     "${THIRD_PARTY_DIR}/tinyusb/src/class/usbtmc/usbtmc_device.c"
     "${THIRD_PARTY_DIR}/tinyusb/src/class/vendor/vendor_device.c"
-    "${THIRD_PARTY_DIR}/tinyusb/src/portable/espressif/esp32sx/dcd_esp32sx.c"
+    "${THIRD_PARTY_DIR}/tinyusb/src/portable/st/stm32_fsdev/dcd_stm32_fsdev.c"
 )
 
 list(FILTER ${PROJECT_NAME}_SOURCES EXCLUDE REGEX ".*template.c$")
@@ -23,19 +23,13 @@ list(FILTER ${PROJECT_NAME}_SOURCES EXCLUDE REGEX ".*template.c$")
 add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES})
 
 target_link_libraries(${PROJECT_NAME}
-    PRIVATE hal
     PRIVATE rtos
 )
 
 target_include_directories(${PROJECT_NAME}
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
     PUBLIC ${THIRD_PARTY_DIR}/tinyusb/src
-    PUBLIC $<TARGET_PROPERTY:hal,INTERFACE_INCLUDE_DIRECTORIES>
     PUBLIC $<TARGET_PROPERTY:rtos,INTERFACE_INCLUDE_DIRECTORIES>
-)
-
-target_compile_definitions(${PROJECT_NAME}
-    PRIVATE CFG_TUSB_MCU=OPT_MCU_STM32F4
 )
 
 add_dependencies(${PROJECT_NAME}
