@@ -15,7 +15,7 @@ file(GLOB ${PROJECT_NAME}_SOURCES
     "${THIRD_PARTY_DIR}/tinyusb/src/class/net/net_device.c"
     "${THIRD_PARTY_DIR}/tinyusb/src/class/usbtmc/usbtmc_device.c"
     "${THIRD_PARTY_DIR}/tinyusb/src/class/vendor/vendor_device.c"
-    "${THIRD_PARTY_DIR}/tinyusb/src/portable/st/stm32_fsdev/dcd_stm32_fsdev.c"
+    "${THIRD_PARTY_DIR}/tinyusb/src/portable/st/synopsys/dcd_synopsys.c"
 )
 
 list(FILTER ${PROJECT_NAME}_SOURCES EXCLUDE REGEX ".*template.c$")
@@ -30,6 +30,7 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
     PUBLIC ${THIRD_PARTY_DIR}/tinyusb/src
     PUBLIC $<TARGET_PROPERTY:rtos,INTERFACE_INCLUDE_DIRECTORIES>
+    PUBLIC $<TARGET_PROPERTY:hal,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 add_dependencies(${PROJECT_NAME}
