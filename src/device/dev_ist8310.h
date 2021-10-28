@@ -1,15 +1,11 @@
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include <stdbool.h>
 #include <stdint.h>
 
 #include "comp_ahrs.h"
 #include "dev.h"
 
-/* Exported constants ------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
 typedef struct {
   Vector3_t magn_offset; /* 磁力计偏置 */
   Vector3_t magn_scale;  /* 磁力计缩放 */
@@ -20,7 +16,6 @@ typedef struct {
   const IST8310_Cali_t *cali;
 } IST8310_t;
 
-/* Exported functions prototypes -------------------------------------------- */
 int8_t IST8310_Init(IST8310_t *ist8310, const IST8310_Cali_t *cali);
 int8_t IST8310_Restart(void);
 

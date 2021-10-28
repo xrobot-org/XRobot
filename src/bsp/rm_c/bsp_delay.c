@@ -1,16 +1,9 @@
-/* Includes ----------------------------------------------------------------- */
 #include "bsp_delay.h"
 
 #include "FreeRTOS.h"
 #include "stm32f4xx_hal.h"
 #include "task.h"
 
-/* Private define ----------------------------------------------------------- */
-/* Private macro ------------------------------------------------------------ */
-/* Private typedef ---------------------------------------------------------- */
-/* Private variables -------------------------------------------------------- */
-/* Private function  -------------------------------------------------------- */
-/* Exported functions ------------------------------------------------------- */
 int8_t BSP_Delay(uint32_t ms) {
   switch (xTaskGetSchedulerState()) {
     case taskSCHEDULER_NOT_STARTED:

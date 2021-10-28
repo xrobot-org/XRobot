@@ -3,7 +3,6 @@
 
 */
 
-/* Includes ----------------------------------------------------------------- */
 #include "dev_dr16.h"
 
 #include <string.h>
@@ -12,19 +11,13 @@
 #include "bsp_uart.h"
 #include "task.h"
 
-/* Private define ----------------------------------------------------------- */
 #define DR16_CH_VALUE_MIN (364u)
 #define DR16_CH_VALUE_MID (1024u)
 #define DR16_CH_VALUE_MAX (1684u)
 
-/* Private macro ------------------------------------------------------------ */
-/* Private typedef ---------------------------------------------------------- */
-/* Private variables -------------------------------------------------------- */
-
 static TaskHandle_t thread_alert;
 static bool inited = false;
 
-/* Private function  -------------------------------------------------------- */
 static void DR16_RxCpltCallback(void) {
   BaseType_t switch_required;
   xTaskNotifyFromISR(thread_alert, SIGNAL_DR16_RAW_REDY, eSetValueWithOverwrite,
@@ -58,7 +51,6 @@ static bool DR16_DataCorrupted(const DR16_t *dr16) {
   return false;
 }
 
-/* Exported functions ------------------------------------------------------- */
 int8_t DR16_Init(DR16_t *dr16) {
   ASSERT(dr16);
   if (inited) return DEVICE_ERR_INITED;

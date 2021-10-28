@@ -9,7 +9,6 @@
  *
  */
 
-/* Includes ----------------------------------------------------------------- */
 #include "mod_cap.h"
 
 #include "comp_capacity.h"
@@ -17,14 +16,7 @@
 #include "dev_can.h"
 #include "dev_referee.h"
 
-/* Private typedef ---------------------------------------------------------- */
-/* Private define ----------------------------------------------------------- */
-
 #define CAP_CUTOFF_VOLT 12.0f /* 电容截止电压，要高于电调最低工作电压 */
-
-/* Private macro ------------------------------------------------------------ */
-/* Private variables -------------------------------------------------------- */
-/* Private function  -------------------------------------------------------- */
 
 bool Cap_RefDataValid(const Referee_ForCap_t *referee) {
   return (referee->chassis_power_limit > 0.0f) &&

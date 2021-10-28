@@ -2,7 +2,6 @@
   裁判系统抽象。
 */
 
-/* Includes ----------------------------------------------------------------- */
 #include "dev_referee.h"
 
 #include <string.h>
@@ -14,7 +13,6 @@
 #include "comp_utils.h"
 #include "protocol.h"
 
-/* Private define ----------------------------------------------------------- */
 #define REF_HEADER_SOF (0xA5)
 #define REF_LEN_RX_BUFF (0xFF)
 
@@ -40,24 +38,17 @@
 #define REF_UI_MODE_OFFSET_4_LEFT (174)
 #define REF_UI_MODE_OFFSET_4_RIGHT (222)
 
-/* Private macro ------------------------------------------------------------ */
-/* Private typedef ---------------------------------------------------------- */
-
 typedef struct __packed {
   Referee_Header_t header;
   uint16_t cmd_id;
   Referee_InterStudentHeader_t student_header;
 } Referee_UiPacketHead_t;
 
-/* Private variables -------------------------------------------------------- */
-
 static uint8_t rxbuf[REF_LEN_RX_BUFF];
 
 static Referee_t *gref;
 
 static bool inited = false;
-
-/* Private function  -------------------------------------------------------- */
 
 static void Referee_RxCpltCallback(void) {
   BaseType_t switch_required;
@@ -112,8 +103,6 @@ static int8_t Referee_SetUiHeader(Referee_InterStudentHeader_t *header,
   }
   return DEVICE_OK;
 }
-
-/* Exported functions ------------------------------------------------------- */
 
 int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen) {
   ASSERT(ref);

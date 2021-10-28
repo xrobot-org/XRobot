@@ -1,15 +1,9 @@
-/* Includes ----------------------------------------------------------------- */
 #include "bsp_uart.h"
 
 #include "comp_utils.h"
 
-/* Private define ----------------------------------------------------------- */
-/* Private macro ------------------------------------------------------------ */
-/* Private typedef ---------------------------------------------------------- */
-/* Private variables -------------------------------------------------------- */
 static void (*UART_Callback[BSP_UART_NUM][BSP_UART_CB_NUM])(void);
 
-/* Private function  -------------------------------------------------------- */
 static BSP_UART_t UART_Get(UART_HandleTypeDef *huart) {
   if (huart->Instance == USART3)
     return BSP_UART_DR16;
@@ -97,7 +91,6 @@ void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart) {
   }
 }
 
-/* Exported functions ------------------------------------------------------- */
 void BSP_UART_IRQHandler(UART_HandleTypeDef *huart) {
   if (__HAL_UART_GET_FLAG(huart, UART_FLAG_IDLE)) {
     __HAL_UART_CLEAR_IDLEFLAG(huart);

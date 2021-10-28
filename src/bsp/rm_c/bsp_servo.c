@@ -1,16 +1,9 @@
-/* Includes ----------------------------------------------------------------- */
 #include "bsp_servo.h"
 
 #include "hal_tim.h"
 
-/* Private define ----------------------------------------------------------- */
-/* Private macro ------------------------------------------------------------ */
-/* Private typedef ---------------------------------------------------------- */
-/* Private variables -------------------------------------------------------- */
 static float range[BSP_SERVO_NUM];
 
-/* Private function  -------------------------------------------------------- */
-/* Exported functions ------------------------------------------------------- */
 int8_t BSP_Servo_Init(BSP_Servo_Channel_t ch, float max_angle) {
   range[ch] = max_angle;
 

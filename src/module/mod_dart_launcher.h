@@ -11,17 +11,12 @@
 
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include "FreeRTOS.h"
 #include "comp_cmd.h"
 #include "comp_filter.h"
 #include "comp_pid.h"
 #include "dev_can.h"
 #include "dev_referee.h"
-
-/* Exported constants ------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
 
 /* 用enum组合所有PID，方便访问，配合数组使用 */
 enum DartLauncher_Friction_e {
@@ -127,8 +122,6 @@ typedef struct {
   } out;
 
 } DartLauncher_t;
-
-/* Exported functions prototypes -------------------------------------------- */
 
 /**
  * @brief 初始化飞镖发射器

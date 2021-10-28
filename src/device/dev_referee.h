@@ -4,7 +4,6 @@
 
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include <stdbool.h>
 
 #include "FreeRTOS.h"
@@ -14,10 +13,6 @@
 #include "dev.h"
 #include "dev_can.h"
 #include "timers.h"
-
-/* Exported constants ------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
 
 typedef struct __packed {
   uint8_t sof;
@@ -362,8 +357,6 @@ typedef struct {
   Referee_RobotStatus_t robot_status;
   Referee_LauncherData_t launcher_data;
 } Referee_ForLauncher_t;
-
-/* Exported functions prototypes -------------------------------------------- */
 
 int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen);
 int8_t Referee_Restart(void);
