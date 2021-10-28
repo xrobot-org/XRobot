@@ -5,7 +5,7 @@ file(GLOB ${PROJECT_NAME}_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
 )
 
-add_library(${PROJECT_NAME} STATIC 
+add_library(${PROJECT_NAME} STATIC
     ${${PROJECT_NAME}_SOURCES}
 )
 
@@ -28,7 +28,7 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE $<TARGET_PROPERTY:device,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
-add_dependencies(${PROJECT_NAME} 
+add_dependencies(${PROJECT_NAME}
     component
     device
     middleware

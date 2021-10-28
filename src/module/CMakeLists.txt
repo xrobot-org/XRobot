@@ -18,7 +18,7 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC  $<TARGET_PROPERTY:device,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
-add_dependencies(${PROJECT_NAME} 
+add_dependencies(${PROJECT_NAME}
     component
     device
 )

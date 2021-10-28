@@ -7,7 +7,7 @@ file(GLOB ${PROJECT_NAME}_SOURCES
     "${THIRD_PARTY_DIR}/freertos/portable/MemMang/heap_4.c"
 )
 
-add_library(${PROJECT_NAME} STATIC 
+add_library(${PROJECT_NAME} STATIC
     ${${PROJECT_NAME}_SOURCES}
     ${THIRD_PARTY_DIR}/freertos/portable/GCC/ARM_CM4F/port.c
 )
@@ -23,6 +23,6 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE $<TARGET_PROPERTY:hal,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
-add_dependencies(${PROJECT_NAME} 
-    hal   
+add_dependencies(${PROJECT_NAME}
+    hal
 )
