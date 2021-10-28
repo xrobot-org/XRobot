@@ -8,7 +8,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "bsp_mm.h"
 #include "comp_utils.h"
 #include "dev_referee.h"
 
