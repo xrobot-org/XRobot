@@ -22,7 +22,7 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE $<TARGET_PROPERTY:usb,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
-add_dependencies(${PROJECT_NAME} 
+add_dependencies(${PROJECT_NAME}
     hal
     component
     rtos
