@@ -14,7 +14,6 @@
 #include <stdlib.h>
 
 #include "FreeRTOS.h"
-#include "bsp_mm.h"
 #include "comp_limiter.h"
 #include "dev_can.h"
 #include "mod_cap.h"
@@ -144,23 +143,23 @@ void Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
 
   /* 根据底盘型号动态分配控制时使用的变量 */
   c->feedback.motor_rotational_speed =
-      BSP_Malloc(c->num_wheel * sizeof(*c->feedback.motor_rotational_speed));
+      pvPortMalloc(c->num_wheel * sizeof(*c->feedback.motor_rotational_speed));
   ASSERT(c->feedback.motor_rotational_speed);
 
   c->setpoint.motor_rotational_speed =
-      BSP_Malloc(c->num_wheel * sizeof(*c->setpoint.motor_rotational_speed));
+      pvPortMalloc(c->num_wheel * sizeof(*c->setpoint.motor_rotational_speed));
   ASSERT(c->setpoint.motor_rotational_speed);
 
-  c->pid.motor = BSP_Malloc(c->num_wheel * sizeof(*c->pid.motor));
+  c->pid.motor = pvPortMalloc(c->num_wheel * sizeof(*c->pid.motor));
   ASSERT(c->pid.motor);
 
-  c->out = BSP_Malloc(c->num_wheel * sizeof(*c->out));
+  c->out = pvPortMalloc(c->num_wheel * sizeof(*c->out));
   ASSERT(c->out);
 
-  c->filter.in = BSP_Malloc(c->num_wheel * sizeof(*c->filter.in));
+  c->filter.in = pvPortMalloc(c->num_wheel * sizeof(*c->filter.in));
   ASSERT(c->filter.in);
 
-  c->filter.out = BSP_Malloc(c->num_wheel * sizeof(*c->filter.out));
+  c->filter.out = pvPortMalloc(c->num_wheel * sizeof(*c->filter.out));
   ASSERT(c->filter.out);
 
   /* 初始化轮子电机控制PID和LPF */

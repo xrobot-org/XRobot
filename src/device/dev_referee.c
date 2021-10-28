@@ -598,7 +598,7 @@ int8_t Referee_PackUiPacket(Referee_t *ref) {
     } else {
       return DEVICE_ERR;
     }
-    ele = BSP_Malloc(size_data_content);
+    ele = pvPortMalloc(size_data_content);
     UI_Ele_t *cursor = ele;
     while (!UI_PopGraphic(&(ref->ui), cursor)) {
       cursor++;
@@ -615,7 +615,7 @@ int8_t Referee_PackUiPacket(Referee_t *ref) {
   ref->packet.size =
       sizeof(Referee_UiPacketHead_t) + size_data_content + kSIZE_PACKET_CRC;
 
-  ref->packet.data = BSP_Malloc(ref->packet.size);
+  ref->packet.data = pvPortMalloc(ref->packet.size);
 
   Referee_UiPacketHead_t *packet_head =
       (Referee_UiPacketHead_t *)(ref->packet.data);
@@ -628,7 +628,7 @@ int8_t Referee_PackUiPacket(Referee_t *ref) {
   memcpy(ref->packet.data + sizeof(Referee_UiPacketHead_t), source,
          size_data_content);
 
-  BSP_Free(ele);
+  vPortFree(ele);
   uint16_t *crc =
       (uint16_t *)(ref->packet.data + ref->packet.size - kSIZE_PACKET_CRC);
   *crc = CRC16_Calc((const uint8_t *)ref->packet.data,
@@ -645,7 +645,7 @@ int8_t Referee_StartTransmit(Referee_t *ref) {
   }
   if (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_REF), ref->packet.data,
                             (uint16_t)ref->packet.size) == HAL_OK) {
-    BSP_Free(ref->packet.last_data);
+    vPortFree(ref->packet.last_data);
     ref->packet.last_data = ref->packet.data;
     ref->packet.data = NULL;
     xTaskNotify(gref->thread_alert, SIGNAL_REFEREE_PACKET_SENT,
