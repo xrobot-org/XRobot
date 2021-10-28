@@ -8,4 +8,9 @@
     "cmake.preferredGenerators": [
         "Ninja"
     ],
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    "files.trimFinalNewlines": true,
+    "editor.trimAutoWhitespace": true,
+    "files.autoSave": "onFocusChange",
 }
