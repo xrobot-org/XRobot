@@ -1,21 +1,12 @@
-/* Includes ------------------------------------------------------------------*/
 #include "hal.h"
 #include "thd.h"
-
-/* Private includes ----------------------------------------------------------*/
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
-/* Private function prototypes -----------------------------------------------*/
-/* Private user code ---------------------------------------------------------*/
 
 /**
  * @brief  The application entry point.
  * @retval int
  */
 int main(void) {
-  /* MCU Configuration--------------------------------------------------------*/
+  /* MCU Configuration */
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick.
    */
