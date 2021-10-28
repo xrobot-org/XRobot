@@ -1,11 +1,11 @@
-#include "bsp_adc.h"
+#include "dev_adc.h"
 
 #include "hal_adc.h"
 
 static volatile float volt_vrefint_proportion =
     8.0586080586080586080586080586081e-4f;
 
-float BSP_GetTemperature(void) {
+float Temperature_GetCPU(void) {
   ADC_ChannelConfTypeDef sConfig;
 
   sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
@@ -22,7 +22,7 @@ float BSP_GetTemperature(void) {
   return (temp - 0.76f) * 400.0f + 25.0f;
 }
 
-float BSP_GetBatteryVolt(void) {
+float Volt_GetBattery(void) {
   ADC_ChannelConfTypeDef sConfig;
 
   sConfig.Channel = ADC_CHANNEL_8;
@@ -40,4 +40,4 @@ float BSP_GetBatteryVolt(void) {
 
   return volt;
 }
-uint8_t BSP_GetHardwareVersion(void) { return 1u; }
+uint8_t GetHardwareVersion(void) { return 1u; }

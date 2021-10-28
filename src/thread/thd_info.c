@@ -11,9 +11,9 @@
  *
  */
 
-#include "bsp_led.h"
 #include "comp_capacity.h"
 #include "comp_utils.h"
+#include "dev_led.h"
 #include "thd.h"
 
 #define THD_PERIOD_MS (250)
@@ -27,7 +27,7 @@ void Thd_Info(void *arg) {
   uint32_t previous_wake_time = xTaskGetTickCount();
 
   while (1) {
-    BSP_LED_Set(BSP_LED_GRN, BSP_LED_TAGGLE, 1); /* 闪烁LED */
+    LED_Set(LED_GRN, LED_TAGGLE, 1); /* 闪烁LED */
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
