@@ -9,18 +9,12 @@
  *
  */
 
-/* Includes ----------------------------------------------------------------- */
 #include "mod_dart_launcher.h"
 
 #include "bsp_pwm.h"
 #include "comp_game.h"
 #include "comp_limiter.h"
 #include "comp_utils.h"
-/* Private typedef ---------------------------------------------------------- */
-/* Private define ----------------------------------------------------------- */
-/* Private macro ------------------------------------------------------------ */
-/* Private variables -------------------------------------------------------- */
-/* Private function  -------------------------------------------------------- */
 
 /**
  * @brief 设置飞镖发射器模式
@@ -51,9 +45,6 @@ static void DartLauncher_SetMode(DartLauncher_t *dl,
 
   dl->mode = mode;
 }
-
-/* Exported functions -------------------------------------------------------
- */
 
 /**
  * @brief 初始化飞镖发射器

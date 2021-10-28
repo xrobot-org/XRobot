@@ -1,6 +1,5 @@
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -9,9 +8,6 @@
 #include "dev.h"
 #include "semphr.h"
 
-/* Exported constants ------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
 typedef struct {
   Vector3_t gyro_offset; /* 陀螺仪偏置 */
 } BMI088_Cali_t;         /* BMI088校准数据 */
@@ -32,7 +28,6 @@ typedef struct {
   const BMI088_Cali_t *cali;
 } BMI088_t;
 
-/* Exported functions prototypes -------------------------------------------- */
 int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali);
 int8_t BMI088_Restart(void);
 

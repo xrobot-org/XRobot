@@ -3,7 +3,6 @@
   将所有CAN总线上挂载的设抽象成一设进行配和控制
 */
 
-/* Includes ----------------------------------------------------------------- */
 #include "dev_can.h"
 
 #include <stdbool.h>
@@ -13,7 +12,6 @@
 #include "comp_utils.h"
 #include "dev_referee.h"
 
-/* Private define ----------------------------------------------------------- */
 /* Motor id */
 /* id		feedback id		control id */
 /* 1-4		0x205 to 0x208  0x1ff */
@@ -53,9 +51,6 @@
 #define CAN1_RX_FIFO CAN_RX_FIFO0
 #define CAN2_RX_FIFO CAN_RX_FIFO1
 
-/* Private macro ------------------------------------------------------------ */
-/* Private typedef ---------------------------------------------------------- */
-/* Private variables -------------------------------------------------------- */
 static CAN_RawRx_t raw_rx1, raw_rx2;
 static CAN_RawTx_t raw_tx;
 
@@ -63,7 +58,6 @@ static TaskHandle_t thread_alert;
 static CAN_t *gcan;
 static bool inited = false;
 
-/* Private function  -------------------------------------------------------- */
 static void CAN_Motor_Decode(CAN_MotorFeedback_t *feedback,
                              const uint8_t *raw) {
   uint16_t raw_angle = (uint16_t)((raw[0] << 8) | raw[1]);
@@ -101,7 +95,6 @@ static void CAN_CAN2RxFifoMsgPendingCallback(void) {
   xQueueSendToBack(gcan->msgq_raw, &raw_rx2, 0);
 }
 
-/* Exported functions ------------------------------------------------------- */
 int8_t CAN_Init(CAN_t *can, const CAN_Params_t *param) {
   ASSERT(can);
   if (inited) return DEVICE_ERR_INITED;

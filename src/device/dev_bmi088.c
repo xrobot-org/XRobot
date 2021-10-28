@@ -3,7 +3,6 @@
 
 */
 
-/* Includes ----------------------------------------------------------------- */
 #include "dev_bmi088.h"
 
 #include <stdbool.h>
@@ -14,7 +13,6 @@
 #include "bsp_spi.h"
 #include "comp_utils.h"
 
-/* Private define ----------------------------------------------------------- */
 #define BMI088_REG_ACCL_CHIP_ID (0x00)
 #define BMI088_REG_ACCL_ERR (0x02)
 #define BMI088_REG_ACCL_STATUS (0x03)
@@ -61,7 +59,7 @@
 #define BMI088_CHIP_ID_GYRO (0x0F)
 
 #define BMI088_LEN_RX_BUFF (19)
-/* Private macro ------------------------------------------------------------ */
+
 #define BMI088_ACCL_NSS_SET() \
   HAL_GPIO_WritePin(ACCL_CS_GPIO_Port, ACCL_CS_Pin, GPIO_PIN_SET)
 #define BMI088_ACCL_NSS_RESET() \
@@ -72,19 +70,16 @@
 #define BMI088_GYRO_NSS_RESET() \
   HAL_GPIO_WritePin(GYRO_CS_GPIO_Port, GYRO_CS_Pin, GPIO_PIN_RESET)
 
-/* Private typedef ---------------------------------------------------------- */
 typedef enum {
   BMI_ACCL,
   BMI_GYRO,
 } BMI_Device_t;
 
-/* Private variables -------------------------------------------------------- */
 static uint8_t tx_rx_buf[2];
 static uint8_t dma_buf[BMI088_LEN_RX_BUFF];
 
 static bool inited = false;
 
-/* Private function  -------------------------------------------------------- */
 static void BMI_WriteSingle(BMI_Device_t dv, uint8_t reg, uint8_t data) {
   tx_rx_buf[0] = (reg & 0x7f);
   tx_rx_buf[1] = data;
@@ -185,7 +180,6 @@ static void BMI088_GyroIntCallback(void *arg) {
   portYIELD_FROM_ISR(switch_required);
 }
 
-/* Exported functions ------------------------------------------------------- */
 int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali) {
   ASSERT(bmi088);
   ASSERT(cali);

@@ -1,14 +1,9 @@
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include <stdint.h>
 
 #include "bsp.h"
 #include "hal_usart.h"
-
-/* Exported constants ------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
 
 /* 要添加使用UART的新设备，需要先在此添加对应的枚举值 */
 
@@ -37,7 +32,6 @@ typedef enum {
   BSP_UART_CB_NUM,
 } BSP_UART_Callback_t;
 
-/* Exported functions prototypes -------------------------------------------- */
 UART_HandleTypeDef *BSP_UART_GetHandle(BSP_UART_t uart);
 int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type,
                                  void (*callback)(void));

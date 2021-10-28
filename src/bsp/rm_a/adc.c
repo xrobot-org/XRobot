@@ -1,14 +1,7 @@
-/* Includes ----------------------------------------------------------------- */
-#include "bsp_adc.h"
-
 #include "adc.h"
 
-/* Private define ----------------------------------------------------------- */
-/* Private macro ------------------------------------------------------------ */
-/* Private typedef ---------------------------------------------------------- */
-/* Private variables -------------------------------------------------------- */
-/* Private function  -------------------------------------------------------- */
-/* Exported functions ------------------------------------------------------- */
+#include "bsp_adc.h"
+
 float BSP_GetTemprater(void) { return 0.0f; }
 float BSP_GetBatteryVolt(void) { return 0.0f; }
 uint8_t BSP_GetHardwareVersion(void) { return 1u; }

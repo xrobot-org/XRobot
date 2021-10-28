@@ -1,14 +1,9 @@
-/* Includes ----------------------------------------------------------------- */
 #include "bsp_i2c.h"
 
 #include "comp_utils.h"
-/* Private define ----------------------------------------------------------- */
-/* Private macro ------------------------------------------------------------ */
-/* Private typedef ---------------------------------------------------------- */
-/* Private variables -------------------------------------------------------- */
+
 static void (*I2C_Callback[BSP_I2C_NUM][BSP_I2C_CB_NUM])(void);
 
-/* Private function  -------------------------------------------------------- */
 static BSP_I2C_t I2C_Get(I2C_HandleTypeDef *hi2c) {
   if (hi2c->Instance == I2C3) return BSP_I2C_COMP;
   /*
@@ -91,7 +86,6 @@ void HAL_I2C_AbortCpltCallback(I2C_HandleTypeDef *hi2c) {
   }
 }
 
-/* Exported functions ------------------------------------------------------- */
 I2C_HandleTypeDef *BSP_I2C_GetHandle(BSP_I2C_t i2c) {
   switch (i2c) {
     case BSP_I2C_COMP:

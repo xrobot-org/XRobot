@@ -1,4 +1,3 @@
-/* Includes ----------------------------------------------------------------- */
 #include "bsp_usb.h"
 
 #include <stdarg.h>
@@ -8,17 +7,12 @@
 
 #include "bsp_delay.h"
 #include "comp_utils.h"
-/* Private define -----------------s------------------------------------------
- */
-/* Private macro ------------------------------------------------------------ */
-/* Private typedef ---------------------------------------------------------- */
-/* Private variables -------------------------------------------------------- */
+
 /* Must set to NULL explicitly. */
 TaskHandle_t gbsp_usb_alert = NULL;
 uint8_t usb_rx_buf[BSP_USB_MAX_RX_LEN];
 uint8_t usb_tx_buf[BSP_USB_MAX_TX_LEN];
 
-/* Private function  -------------------------------------------------------- */
 static int8_t BSP_USB_Transmit(uint8_t *buffer, uint16_t len) {
   uint8_t retry = 0;
   do {
@@ -32,7 +26,6 @@ static int8_t BSP_USB_Transmit(uint8_t *buffer, uint16_t len) {
   return BSP_OK;
 }
 
-/* Exported functions ------------------------------------------------------- */
 int8_t BSP_USB_ReadyReceive(TaskHandle_t alert) {
   ASSERT(alert);
 

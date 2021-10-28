@@ -11,17 +11,12 @@
 
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include "FreeRTOS.h"
 #include "comp_cmd.h"
 #include "comp_filter.h"
 #include "comp_pid.h"
 #include "dev_can.h"
 #include "dev_referee.h"
-
-/* Exported constants ------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
 
 /* 用enum组合所有PID，方便访问，配合数组使用 */
 enum Launcher_Acuator_e {
@@ -143,8 +138,6 @@ typedef struct {
   float out[LAUNCHER_ACTR_NUM]; /* 输出数组，通过Launcher_Acuator_e里的值访问 */
 
 } Launcher_t;
-
-/* Exported functions prototypes -------------------------------------------- */
 
 /**
  * @brief 初始化发射器

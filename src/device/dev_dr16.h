@@ -1,13 +1,9 @@
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include "comp_cmd.h"
 #include "comp_utils.h"
 #include "dev.h"
 
-/* Exported constants ------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
 typedef struct __packed {
   uint16_t ch_r_x : 11;
   uint16_t ch_r_y : 11;
@@ -28,7 +24,6 @@ typedef struct {
   DR16_Data_t data;
 } DR16_t;
 
-/* Exported functions prototypes -------------------------------------------- */
 int8_t DR16_Init(DR16_t *dr16);
 int8_t DR16_Restart(void);
 

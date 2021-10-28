@@ -1,14 +1,9 @@
-/* Includes ----------------------------------------------------------------- */
 #include "bsp_uart.h"
 #include "usart.h"
 
-/* Private define ----------------------------------------------------------- */
 #define DR16_UART USART1
 /* #define XXX_UART USARTX */
 
-/* Private macro ------------------------------------------------------------ */
-/* Private typedef ---------------------------------------------------------- */
-/* Private variables -------------------------------------------------------- */
 static struct {
   struct {
     void (*TxHalfCpltCallback)(void); /* UART Tx Half Complete Callback */
@@ -25,7 +20,6 @@ static struct {
   /* Add other uart device here. */
 } bsp_uart_callback;
 
-/* Private function  -------------------------------------------------------- */
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
   if (huart->Instance == DR16_UART) {
     if (bsp_uart_callback.dr16.TxCpltCallback != NULL) {
@@ -97,7 +91,6 @@ void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart) {
   */
 }
 
-/* Exported functions ------------------------------------------------------- */
 int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type,
                                  void (*callback)(void)) {
   ASSERT(callback);

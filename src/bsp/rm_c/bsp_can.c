@@ -1,15 +1,9 @@
-/* Includes ----------------------------------------------------------------- */
 #include "bsp_can.h"
 
 #include "comp_utils.h"
 
-/* Private define ----------------------------------------------------------- */
-/* Private macro ------------------------------------------------------------ */
-/* Private typedef ---------------------------------------------------------- */
-/* Private variables -------------------------------------------------------- */
 static void (*CAN_Callback[BSP_CAN_NUM][BSP_CAN_CB_NUM])(void);
 
-/* Private function  -------------------------------------------------------- */
 static BSP_CAN_t CAN_Get(CAN_HandleTypeDef *hcan) {
   if (hcan->Instance == CAN2)
     return BSP_CAN_2;
@@ -123,7 +117,6 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
   }
 }
 
-/* Exported functions ------------------------------------------------------- */
 CAN_HandleTypeDef *BSP_CAN_GetHandle(BSP_CAN_t can) {
   switch (can) {
     case BSP_CAN_2:

@@ -1,13 +1,8 @@
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include <stdint.h>
 
 #include "bsp.h"
-
-/* Exported constants ------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
 
 /* 舵机通道 */
 typedef enum {
@@ -32,7 +27,6 @@ typedef enum {
   BSP_SERVO_NUM,
 } BSP_Servo_Channel_t;
 
-/* Exported functions prototypes -------------------------------------------- */
 int8_t BSP_Servo_Init(BSP_Servo_Channel_t ch, float max_angle);
 int8_t BSP_Servo_Start(BSP_Servo_Channel_t ch);
 int8_t BSP_Servo_Set(BSP_Servo_Channel_t ch, uint8_t angle);

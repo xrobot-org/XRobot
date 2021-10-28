@@ -11,20 +11,13 @@
 
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include "dev_can.h"
 #include "dev_referee.h"
-
-/* Exported constants ------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
 
 typedef struct {
   float percentage;
   CAN_CapStatus_t cap_status;
 } Cap_t;
-
-/* Exported functions prototypes -------------------------------------------- */
 
 /**
  * @brief 更新电容数据

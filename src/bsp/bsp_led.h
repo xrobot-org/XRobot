@@ -1,13 +1,8 @@
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include <stdint.h>
 
 #include "bsp.h"
-
-/* Exported constants ------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
 
 /* LED灯状态，设置用 */
 typedef enum {
@@ -33,8 +28,6 @@ typedef enum {
   BSP_LED_RED,
   BSP_LED_GRN,
 } BSP_LED_Channel_t;
-
-/* Exported functions prototypes -------------------------------------------- */
 
 /* 用于A板时，会无视duty_cycle的值。使用B板时，duty_cycle才有效*/
 int8_t BSP_LED_Set(BSP_LED_Channel_t ch, BSP_LED_Status_t s, float duty_cycle);

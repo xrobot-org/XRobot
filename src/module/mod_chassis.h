@@ -11,7 +11,6 @@
 
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include "comp_cmd.h"
 #include "comp_filter.h"
 #include "comp_mixer.h"
@@ -19,10 +18,6 @@
 #include "dev_can.h"
 #include "dev_referee.h"
 #include "mod_cap.h"
-
-/* Exported constants ------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
 
 /* 底盘类型（底盘的物理设计） */
 typedef enum {
@@ -101,8 +96,6 @@ typedef struct {
 
   float *out; /* 电机最终的输出值的动态数组 */
 } Chassis_t;
-
-/* Exported functions prototypes -------------------------------------------- */
 
 /**
  * @brief 初始化底盘

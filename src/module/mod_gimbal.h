@@ -4,7 +4,6 @@
 
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include "comp_ahrs.h"
 #include "comp_cmd.h"
 #include "comp_filter.h"
@@ -12,10 +11,6 @@
 #include "dev_bmi088.h"
 #include "dev_can.h"
 #include "dev_referee.h"
-
-/* Exported constants ------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
 
 /* GIMBAL_CTRL_NUM长度的数组都可以用这个枚举访问 */
 enum Gimbal_PID_e {
@@ -99,8 +94,6 @@ typedef struct {
   Gimbal_Feedback_t feedback; /* 反馈 */
 
 } Gimbal_t;
-
-/* Exported functions prototypes -------------------------------------------- */
 
 /**
  * @brief 初始化云台

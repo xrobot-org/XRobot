@@ -1,6 +1,5 @@
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include <stdbool.h>
 
 #include "FreeRTOS.h"
@@ -10,7 +9,6 @@
 #include "dev.h"
 #include "queue.h"
 
-/* Exported constants ------------------------------------------------------- */
 #define CAN_MOTOR_CHASSIS_1_RECV (1 << 0)
 #define CAN_MOTOR_CHASSIS_2_RECV (1 << 1)
 #define CAN_MOTOR_CHASSIS_3_RECV (1 << 2)
@@ -51,8 +49,6 @@
 #define CAN_GM6020_MAX_ABS_CUR (1)
 #define CAN_M3508_MAX_ABS_CUR (20)
 #define CAN_M2006_MAX_ABS_CUR (10)
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
 
 /* 电机型号 */
 typedef enum {
@@ -246,7 +242,6 @@ typedef struct {
   QueueHandle_t msgq_raw;
 } CAN_t;
 
-/* Exported functions prototypes -------------------------------------------- */
 int8_t CAN_Init(CAN_t *can, const CAN_Params_t *param);
 
 int8_t CAN_Motor_Control(CAN_MotorGroup_t group, CAN_Output_t *output,

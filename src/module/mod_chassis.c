@@ -9,7 +9,6 @@
  *
  */
 
-/* Includes ----------------------------------------------------------------- */
 #include "mod_chassis.h"
 
 #include <stdlib.h>
@@ -20,8 +19,6 @@
 #include "dev_can.h"
 #include "mod_cap.h"
 
-/* Private typedef ---------------------------------------------------------- */
-/* Private define ----------------------------------------------------------- */
 #define _CAP_PERCENTAGE_NO_LIM 80 /* 底盘不再限制功率的电容电量 */
 #define _CAP_PERCENTAGE_WORK 30   /* 电容开始工作的电容电量 */
 
@@ -32,8 +29,6 @@
 #define ROTOR_OMEGA 0.0015f /* 小陀螺转动频率 */
 
 #define MOTOR_MAX_ROTATIONAL_SPEED 7000.0f /* 电机的最大转速 */
-
-/* Private macro ------------------------------------------------------------ */
 
 /* 保证电容电量宏定义在正确范围内 */
 #if ((_CAP_PERCENTAGE_NO_LIM < 0) || (_CAP_PERCENTAGE_NO_LIM > 100) || \
@@ -46,14 +41,10 @@
 #error "The capacitor power should be in in the range from 60 to 200."
 #endif
 
-/* Private variables
-   -------------------------------------------------------- */
-
 static const float kCAP_PERCENTAGE_NO_LIM =
     (float)_CAP_PERCENTAGE_NO_LIM / 100.0f;
 static const float kCAP_PERCENTAGE_WORK = (float)_CAP_PERCENTAGE_WORK / 100.0f;
 
-/* Private function  -------------------------------------------------------- */
 /**
  * @brief 设置底盘模式
  *
@@ -90,8 +81,6 @@ static float Chassis_CalcWz(const float lo, const float hi, uint32_t now) {
   Clamp(&wz_vary, lo, hi);
   return wz_vary;
 }
-
-/* Exported functions ------------------------------------------------------- */
 
 /**
  * @brief 初始化底盘
