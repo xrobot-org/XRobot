@@ -135,6 +135,19 @@ typedef struct {
   float z;
 } Vector3_t;
 
+typedef enum {
+  RM_OK = 0,
+  ERR_FAIL,    /* General */
+  ERR_PARAM,   /* Invalid parameter */
+  ERR_NOPERM,  /* Operation not permitted */
+  ERR_2BIG,    /* Argument list too long */
+  ERR_NOMEM,   /* Out of memory */
+  ERR_NOACCES, /* Permission denied */
+  ERR_FAULT,   /* Bad address */
+  ERR_NULL,    /* NULL pointer */
+  ERR_NODEV,   /* No such device */
+} Err_t;
+
 /**
  * @brief 计算平方根倒数
  *
