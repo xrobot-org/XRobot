@@ -58,7 +58,8 @@
 #define BMI088_CHIP_ID_ACCL (0x1E)
 #define BMI088_CHIP_ID_GYRO (0x0F)
 
-#define BMI088_LEN_RX_BUFF (19)
+#define BMI088_ACCL_RX_BUFF_LEN (19)
+#define BMI088_GYRO_RX_BUFF_LEN (6)
 
 #define BMI088_ACCL_NSS_SET() \
   HAL_GPIO_WritePin(ACCL_CS_GPIO_Port, ACCL_CS_Pin, GPIO_PIN_SET)
@@ -76,7 +77,7 @@ typedef enum {
 } BMI_Device_t;
 
 static uint8_t tx_rx_buf[2];
-static uint8_t dma_buf[BMI088_LEN_RX_BUFF];
+static uint8_t dma_buf[BMI088_ACCL_RX_BUFF_LEN + BMI088_GYRO_RX_BUFF_LEN];
 
 static bool inited = false;
 
@@ -270,7 +271,7 @@ bool BMI088_GyroWaitNew(BMI088_t *bmi088, uint32_t timeout) {
 }
 
 int8_t BMI088_AcclStartDmaRecv() {
-  BMI_Read(BMI_ACCL, BMI088_REG_ACCL_X_LSB, dma_buf, BMI088_LEN_RX_BUFF);
+  BMI_Read(BMI_ACCL, BMI088_REG_ACCL_X_LSB, dma_buf, BMI088_ACCL_RX_BUFF_LEN);
   return DEVICE_OK;
 }
 
@@ -280,7 +281,8 @@ int8_t BMI088_AcclWaitDmaCplt(BMI088_t *bmi088) {
 }
 
 int8_t BMI088_GyroStartDmaRecv() {
-  BMI_Read(BMI_GYRO, BMI088_REG_GYRO_X_LSB, dma_buf + 7, 6u);
+  BMI_Read(BMI_GYRO, BMI088_REG_GYRO_X_LSB, dma_buf + BMI088_ACCL_RX_BUFF_LEN,
+           BMI088_GYRO_RX_BUFF_LEN);
   return DEVICE_OK;
 }
 
@@ -333,9 +335,9 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 #if 1
   /* Gyroscope imu_raw -> degrees/sec -> radians/sec */
   int16_t raw_x, raw_y, raw_z;
-  memcpy(&raw_x, dma_buf + 7, sizeof(raw_x));
-  memcpy(&raw_y, dma_buf + 9, sizeof(raw_y));
-  memcpy(&raw_z, dma_buf + 11, sizeof(raw_z));
+  memcpy(&raw_x, dma_buf + BMI088_ACCL_RX_BUFF_LEN, sizeof(raw_x));
+  memcpy(&raw_y, dma_buf + BMI088_ACCL_RX_BUFF_LEN + 2, sizeof(raw_y));
+  memcpy(&raw_z, dma_buf + BMI088_ACCL_RX_BUFF_LEN + 4, sizeof(raw_z));
 
   bmi088->gyro.x = (float)raw_x;
   bmi088->gyro.y = (float)raw_y;
@@ -343,9 +345,9 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 
 #else
   /* Gyroscope imu_raw -> degrees/sec -> radians/sec */
-  const int16_t *raw_x = (int16_t *)(dma_buf + 7);
-  const int16_t *raw_y = (int16_t *)(dma_buf + 9);
-  const int16_t *raw_z = (int16_t *)(dma_buf + 11);
+  const int16_t *raw_x = (int16_t *)(dma_buf + BMI088_ACCL_RX_BUFF_LEN);
+  const int16_t *raw_y = (int16_t *)(dma_buf + BMI088_ACCL_RX_BUFF_LEN + 2);
+  const int16_t *raw_z = (int16_t *)(dma_buf + BMI088_ACCL_RX_BUFF_LEN + 4);
 
   bmi088->gyro.x = (float)*raw_x;
   bmi088->gyro.y = (float)*raw_y;
