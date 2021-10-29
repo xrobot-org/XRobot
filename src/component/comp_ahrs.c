@@ -27,6 +27,9 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const Vector3_t *accl,
   ASSERT(accl);
   ASSERT(gyro);
 
+  ahrs->dt = now - ahrs->last_update;
+  ahrs->last_update = now;
+
   float ax = accl->x;
   float ay = accl->y;
   float az = accl->z;
@@ -34,9 +37,6 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const Vector3_t *accl,
   float gx = gyro->x;
   float gy = gyro->y;
   float gz = gyro->z;
-
-  ahrs->dt = now - ahrs->last_update;
-  ahrs->last_update = now;
 
   float recip_norm;
   float s0, s1, s2, s3;
@@ -192,8 +192,7 @@ int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
   ASSERT(accl);
   ASSERT(gyro);
 
-  ahrs->dt = now - ahrs->last_update;
-  ahrs->last_update = now;
+  if (magn == NULL) return AHRS_UpdateIMU(ahrs, accl, gyro, now);
 
   float recip_norm;
   float s0, s1, s2, s3;
@@ -202,8 +201,6 @@ int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
   float _2q0mx, _2q0my, _2q0mz, _2q1mx, _2bx, _2bz, _4bx, _4bz, _2q0, _2q1,
       _2q2, _2q3, _2q0q2, _2q2q3, q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3,
       q2q2, q2q3, q3q3;
-
-  if (magn == NULL) return AHRS_UpdateIMU(ahrs, accl, gyro, now);
 
   float mx = magn->x;
   float my = magn->y;
@@ -214,6 +211,9 @@ int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
   if ((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f)) {
     return AHRS_UpdateIMU(ahrs, accl, gyro, now);
   }
+
+  ahrs->dt = now - ahrs->last_update;
+  ahrs->last_update = now;
 
   float ax = accl->x;
   float ay = accl->y;
