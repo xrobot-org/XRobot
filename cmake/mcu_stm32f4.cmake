@@ -7,6 +7,8 @@ set(CMAKE_C_FLAGS "${MCU_FLAGS} ${GENERAL_FLAGS} -fshort-enums -ffast-math -fdia
 set(CMAKE_ASM_FLAGS "${MCU_FLAGS} -x assembler-with-cpp")
 
 # Linker Flag
+set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/ld/${BOARD_DIR}.ld)
+
 set(CMAKE_EXE_LINKER_FLAGS "-T${LINKER_SCRIPT} -Wl,--cref,--gc-sections,--print-memory-usage,-Map=${CMAKE_PROJECT_NAME}.map")
 
 # 处理器相关宏定义
