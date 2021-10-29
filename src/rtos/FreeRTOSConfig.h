@@ -73,7 +73,7 @@ extern unsigned long getRunTimeCounterValue(void);
 #define configUSE_TICK_HOOK 0
 #define configCPU_CLOCK_HZ (SystemCoreClock)
 #define configTICK_RATE_HZ (1000)
-#define configMAX_PRIORITIES (56)
+#define configMAX_PRIORITIES (5)
 #define configMINIMAL_STACK_SIZE (128)
 #define configTOTAL_HEAP_SIZE (0xF000)
 #define configAPPLICATION_ALLOCATED_HEAP 1
