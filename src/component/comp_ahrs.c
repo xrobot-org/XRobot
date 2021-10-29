@@ -125,18 +125,15 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const Vector3_t *accl,
  *
  * @param ahrs 姿态解算主结构体
  * @param magn 磁力计数据
- * @param now 现在时刻
  * @return int8_t 0对应没有错误
  */
-int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn, float now) {
+int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn) {
   ASSERT(ahrs);
 
   ahrs->quat.q0 = 1.0f;
   ahrs->quat.q1 = 0.0f;
   ahrs->quat.q2 = 0.0f;
   ahrs->quat.q3 = 0.0f;
-
-  ahrs->last_update = now;
 
   if (magn) {
     float yaw = -atan2f(magn->y, magn->x);
