@@ -48,11 +48,11 @@ static const Config_RobotParam_t param_default = {
       .in = -1.0f,
       .out = -1.0f,
     },
-    
+
     .reverse = {
       .yaw = false,
     },
-    
+
   }, /* chassis */
 
   .gimbal = { /* 云台模块参数 */
@@ -101,7 +101,7 @@ static const Config_RobotParam_t param_default = {
     }, /* pid */
 
     .pitch_travel_rad = 1.158155117179586476925286766559f,
-    
+
     .low_pass_cutoff_freq = {
       .out = -1.0f,
       .gyro = 1000.0f,
@@ -114,7 +114,7 @@ static const Config_RobotParam_t param_default = {
   }, /* gimbal */
 
   .launcher = { /* 发射器模块参数 */
-            
+
     .fric_pid_param = {
       .k = 0.001f,
       .p = 1.0f,
@@ -157,7 +157,7 @@ static const Config_RobotParam_t param_default = {
   .can = {
     .chassis = BSP_CAN_1,
     .gimbal = BSP_CAN_2,
-    .launcher = BSP_CAN_2,      
+    .launcher = BSP_CAN_2,
     .cap = BSP_CAN_1,
     }, /* can */
 }; /* param_default */
@@ -194,7 +194,7 @@ static const Config_RobotParam_t param_hero = {
       .in = -1.0f,
       .out = -1.0f,
     },
-    
+
     .reverse = {
       .yaw = true,
     },
@@ -246,7 +246,7 @@ static const Config_RobotParam_t param_hero = {
     }, /* pid */
 
     .pitch_travel_rad = 1.07685447f,
-    
+
     .low_pass_cutoff_freq = {
       .out = -1.0f,
       .gyro = 1000.0f,
@@ -259,7 +259,7 @@ static const Config_RobotParam_t param_hero = {
   }, /* gimbal */
 
   .launcher = { /* 发射器模块参数 */
-            
+
     .fric_pid_param = {
       .k = 0.001f,
       .p = 1.0f,
@@ -302,10 +302,10 @@ static const Config_RobotParam_t param_hero = {
   .can = {
     .chassis = BSP_CAN_1,
     .gimbal = BSP_CAN_2,
-    .launcher = BSP_CAN_2,      
+    .launcher = BSP_CAN_2,
     .cap = BSP_CAN_1,
     }, /* can */
-}; /* param_hero */      
+}; /* param_hero */
 
 /* static const Config_RobotParam_t param_xxx; */
 
@@ -359,7 +359,7 @@ static const Config_PilotCfg_t cfg_zyma = {
       .sense_norm = 0.8f,
       .sense_fast = 1.25f,
       .sense_slow = 0.8f,
-    },       
+    },
   },
   .screen = {
     .height = 1080,
@@ -396,15 +396,26 @@ static const Config_PilotCfgMap_t pilot_cfg_map[] = {
  */
 void Config_Get(Config_t *cfg) {
   BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(*cfg));
+
   cfg->pilot_cfg = Config_GetPilotCfg(cfg->pilot_cfg_name);
   cfg->robot_param = Config_GetRobotParam(cfg->robot_param_name);
+
   /* 防止第一次烧写后访问NULL指针 */
   if (cfg->robot_param == NULL) cfg->robot_param = &param_default;
   if (cfg->pilot_cfg == NULL) cfg->pilot_cfg = &cfg_qs;
-  /* 防止擦除后全为1 */
-  if ((uint32_t)(cfg->robot_param) == UINT32_MAX)
-    cfg->robot_param = &param_default;
-  if ((uint32_t)(cfg->pilot_cfg) == UINT32_MAX) cfg->pilot_cfg = &cfg_qs;
+
+  /* 防止第一次烧写后出现nan */
+  if (isnanf(cfg->cali.bmi088.gyro_offset.x)) {
+    memset(&(cfg->cali), 0, sizeof(cfg->cali));
+  }
+
+  if (isnanf(cfg->gimbal_mech_zero.pit)) {
+    memset(&(cfg->gimbal_mech_zero), 0, sizeof(cfg->gimbal_mech_zero));
+  }
+
+  if (isnanf(cfg->gimbal_limit)) {
+    cfg->gimbal_limit = 1.0f;
+  }
 
   /* 确保配置有效，无内在冲突 */
   ASSERT(cfg->robot_param->chassis.reverse.yaw ==
