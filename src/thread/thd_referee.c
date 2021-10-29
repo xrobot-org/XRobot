@@ -31,13 +31,13 @@ void Thd_Referee(void* arg) {
   Referee_ForLauncher_t for_launcher;
 
   MsgDist_Publisher_t* referee_cap_pub =
-      MsgDist_CreateTopic("referee_cap", sizeof(CAN_ChassisMotor_t));
+      MsgDist_CreateTopic("referee_cap", sizeof(Referee_ForCap_t));
   MsgDist_Publisher_t* referee_ai_pub =
-      MsgDist_CreateTopic("referee_ai", sizeof(CAN_GimbalMotor_t));
+      MsgDist_CreateTopic("referee_ai", sizeof(Referee_ForAI_t));
   MsgDist_Publisher_t* referee_chassis_pub =
-      MsgDist_CreateTopic("referee_chassis", sizeof(CAN_LauncherMotor_t));
+      MsgDist_CreateTopic("referee_chassis", sizeof(Referee_ForChassis_t));
   MsgDist_Publisher_t* referee_launcher_pub =
-      MsgDist_CreateTopic("referee_launcher", sizeof(CAN_CapFeedback_t));
+      MsgDist_CreateTopic("referee_launcher", sizeof(Referee_ForLauncher_t));
 
   MsgDist_Subscriber_t* ui_cap_sub = MsgDist_Subscribe("ui_cap", true);
   MsgDist_Subscriber_t* ui_chassis_sub = MsgDist_Subscribe("chassis_ui", true);
