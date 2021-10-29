@@ -53,22 +53,22 @@ typedef struct {
 } Thd_t;
 
 static const Thd_t thd_list[] = {
-    {Thd_AI, "AI", 128, 5, THD_AI},
-    {Thd_AttiEsti, "AttiEsti", 256, 4, THD_ATTI_ESTI},
-    {Thd_CAN, "CAN", 128, 5, THD_CAN},
-    {Thd_CLI, "CLI", 256, 2, THD_CLI},
-    {Thd_CMD, "CMD", 128, 4, THD_CMD},
-    {Thd_CtrlCap, "CtrlCap", 128, 3, THD_CTRL_CAP},
-    {Thd_CtrlChassis, "CtrlChassis", 256, 3, THD_CTRL_CHASSIS},
-    {Thd_CtrlGimbal, "CtrlGimbal", 256, 3, THD_CTRL_GIMBAL},
-    {Thd_CtrlLauncher, "CtrlLauncher", 256, 3, THD_CTRL_LAUNCHER},
-    {Thd_IMU, "IMU", 256, 5, THD_IMU},
-    {Thd_Info, "Info", 128, 2, THD_INFO},
-    {Thd_Monitor, "Monitor", 128, 2, THD_MONITOR},
-    {Thd_MsgDist, "MsgDist", 128, 5, THD_MSG_DISTRIB},
-    {Thd_RC, "RC", 128, 5, THD_RC},
-    {Thd_Referee, "Referee", 512, 5, THD_REFEREE},
-    {Thd_USB, "USB", 128, 5, THD_USB},
+    {Thd_AI, "AI", 128, 4, THD_AI},
+    {Thd_AttiEsti, "AttiEsti", 256, 3, THD_ATTI_ESTI},
+    {Thd_CAN, "CAN", 128, 4, THD_CAN},
+    {Thd_CLI, "CLI", 256, 1, THD_CLI},
+    {Thd_CMD, "CMD", 128, 3, THD_CMD},
+    {Thd_CtrlCap, "CtrlCap", 128, 2, THD_CTRL_CAP},
+    {Thd_CtrlChassis, "CtrlChassis", 256, 2, THD_CTRL_CHASSIS},
+    {Thd_CtrlGimbal, "CtrlGimbal", 256, 2, THD_CTRL_GIMBAL},
+    {Thd_CtrlLauncher, "CtrlLauncher", 256, 2, THD_CTRL_LAUNCHER},
+    {Thd_IMU, "IMU", 256, 4, THD_IMU},
+    {Thd_Info, "Info", 128, 1, THD_INFO},
+    {Thd_Monitor, "Monitor", 128, 1, THD_MONITOR},
+    {Thd_MsgDist, "MsgDist", 128, 4, THD_MSG_DISTRIB},
+    {Thd_RC, "RC", 128, 4, THD_RC},
+    {Thd_Referee, "Referee", 512, 4, THD_REFEREE},
+    {Thd_USB, "USB", 128, 4, THD_USB},
 };
 
 void Thd_Init(void) {
