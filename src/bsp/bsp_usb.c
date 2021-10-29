@@ -15,14 +15,14 @@ uint8_t usb_tx_buf[BSP_USB_MAX_TX_LEN];
 
 static int8_t BSP_USB_Transmit(uint8_t *buffer, uint16_t len) {
   uint8_t retry = 0;
-  do {
-    // if (CDC_Transmit_FS(buffer, len) != USBD_OK) {
-    //   retry++;
-    //   BSP_Delay(10);
-    // } else {
-    //   break;
-    // }
-  } while (retry < 3);
+  // do {
+  //   if (CDC_Transmit_FS(buffer, len) != USBD_OK) {
+  //     retry++;
+  //     BSP_Delay(10);
+  //   } else {
+  //     break;
+  //   }
+  // } while (retry < 3);
   return BSP_OK;
 }
 
