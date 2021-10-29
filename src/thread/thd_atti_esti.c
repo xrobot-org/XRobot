@@ -33,9 +33,9 @@ void Thd_AttiEsti(void* arg) {
   MsgDist_Subscriber_t* gyro_sub = MsgDist_Subscribe("gimbal_gyro", true);
 
   /* 初始化姿态解算算法 */
-  float now = (float)xTaskGetTickCount() / configTICK_RATE_HZ;
-  AHRS_Init(&gimbal_ahrs, NULL, now);
+  AHRS_Init(&gimbal_ahrs, NULL);
 
+  float now;
   uint32_t previous_wake_time = xTaskGetTickCount();
   while (1) {
     MsgDist_Poll(accl_sub, &accl, 0);
