@@ -3,6 +3,9 @@
 #include "hal_tim.h"
 #include "task.h"
 
+/* FreeRTOS Heap */
+uint8_t ucHeap[configTOTAL_HEAP_SIZE] __attribute__((section(".ccmram")));
+
 /* TIM7 are used to generater high freq tick for debug. */
 volatile unsigned long runtime_ststus_timer_ticks;
 
