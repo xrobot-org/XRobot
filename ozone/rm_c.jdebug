@@ -32,7 +32,7 @@ void OnProjectLoad(void) {
   // User settings
   //
   Project.SetOSPlugin("FreeRTOSPlugin");
-  File.Open("$(ProjectDir)/../build/src/firmware/firmware.elf");
+  File.Open("$(ProjectDir)/../build/src/qdu_rm_mcu.elf");
 }
 
 /*********************************************************************
