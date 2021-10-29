@@ -76,6 +76,7 @@ extern unsigned long getRunTimeCounterValue(void);
 #define configMAX_PRIORITIES (56)
 #define configMINIMAL_STACK_SIZE (128)
 #define configTOTAL_HEAP_SIZE (0xF000)
+#define configAPPLICATION_ALLOCATED_HEAP 1
 #define configMAX_TASK_NAME_LEN (16)
 #define configGENERATE_RUN_TIME_STATS 1
 #define configUSE_TRACE_FACILITY 1
