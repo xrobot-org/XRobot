@@ -146,6 +146,7 @@ typedef enum {
   ERR_FAULT,   /* Bad address */
   ERR_NULL,    /* NULL pointer */
   ERR_NODEV,   /* No such device */
+  ERR_TIMEOUT, /* Waited to long */
 } Err_t;
 
 /**
