@@ -15,10 +15,10 @@
 #include "comp_capacity.h"
 #include "dev_adc.h"
 #include "dev_buzzer.h"
-#include "dev_led.h"
+#include "dev_rgb.h"
 #include "thd.h"
 
-#define THD_PERIOD_MS (100)
+#define THD_PERIOD_MS (200)
 #define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
 void Thd_Monitor(void* arg) {
@@ -31,14 +31,17 @@ void Thd_Monitor(void* arg) {
     runtime->status.battery = Capacity_GetBatteryRemain(runtime->status.vbat);
     runtime->status.cpu_temp = Temperature_GetCPU();
 
-    bool low_bat = runtime->status.battery < 0.5f;
-    bool high_cpu_temp = runtime->status.cpu_temp > 50.0f;
+    uint8_t status = 0;
+    status += (uint8_t)(runtime->status.battery < 0.5f);
+    status += (uint8_t)(runtime->status.cpu_temp > 50.0f);
 
-    /* 电池电量少于20%时闪烁红色LED */
-    if (low_bat || high_cpu_temp) {
-      LED_Set(LED_RED, LED_TAGGLE, 1);
+    /* 根据检测到的状态闪烁不同的颜色 */
+    if (status > 1) {
+      RGB_SetColor(COLOR_HEX_RED, LED_TAGGLE);
+    } else if (status > 0) {
+      RGB_SetColor(COLOR_HEX_YELLOW, LED_TAGGLE);
     } else {
-      LED_Set(LED_RED, LED_OFF, 1);
+      RGB_SetColor(COLOR_HEX_GREEN, LED_TAGGLE);
     }
 
     /* 运行结束，等待下一次唤醒 */
