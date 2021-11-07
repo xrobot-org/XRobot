@@ -25,7 +25,7 @@ void OnProjectLoad(void) {
   Project.SetDevice("STM32F407IG");
   Project.SetHostIF("USB", "");
   Project.SetTargetIF("SWD");
-  Project.SetTIFSpeed("8 MHz");
+  Project.SetTIFSpeed("Automatic");
   Project.AddSvdFile("$(InstallDir)/Config/CPU/Cortex-M4F.svd");
   Project.AddSvdFile("$(InstallDir)/Config/Peripherals/STM32F407IG.svd");
   //
