@@ -1,13 +1,7 @@
 #include "hal.h"
 #include "thd.h"
 
-/**
- * @brief  The application entry point.
- * @retval int
- */
 int main(void) {
-  /* MCU Configuration */
-
   /* Reset of all peripherals, Initializes the Flash interface and the Systick.
    */
   HAL_Init();
