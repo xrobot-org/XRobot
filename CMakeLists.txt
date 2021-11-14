@@ -17,6 +17,18 @@ project(qdu_rm_mcu
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# General Compiler Options
+
+# Options for DEBUG build
+set(CMAKE_C_FLAGS_DEBUG "-Og -g3 -ggdb3")
+set(CMAKE_ASM_FLAGS_DEBUG "-g3 -ggdb3")
+set(CMAKE_EXE_LINKER_FLAGS_DEBUG "")
+
+# Options for RELEASE build
+set(CMAKE_C_FLAGS_RELEASE "-Os")
+set(CMAKE_ASM_FLAGS_RELEASE "")
+set(CMAKE_EXE_LINKER_FLAGS_RELEASE "")
+
 #---------------------------------------------------------------------------------------
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
