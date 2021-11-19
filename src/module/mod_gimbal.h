@@ -9,7 +9,7 @@
 #include "comp_filter.h"
 #include "comp_pid.h"
 #include "dev_bmi088.h"
-#include "dev_can.h"
+#include "dev_motor.h"
 #include "dev_referee.h"
 
 /* GIMBAL_CTRL_NUM长度的数组都可以用这个枚举访问 */
@@ -111,7 +111,8 @@ void Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit,
  * @param g 云台
  * @param can CAN设备
  */
-void Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_GimbalMotor_t *gimbal_motor);
+void Gimbal_UpdateFeedback(Gimbal_t *g,
+                           const Motor_FeedbackGroup_t *gimbal_motor);
 
 /**
  * @brief 运行云台控制逻辑
@@ -129,14 +130,7 @@ void Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now);
  * @param g 包含云台数据的结构体
  * @param out CAN设备云台输出结构体
  */
-void Gimbal_PackOutput(Gimbal_t *g, CAN_GimbalOutput_t *out);
-
-/**
- * @brief 清空输出值
- *
- * @param output 要清空的结构体
- */
-void Gimbal_ResetOutput(CAN_GimbalOutput_t *output);
+void Gimbal_PackOutput(Gimbal_t *g, Motor_Control_t *out);
 
 /**
  * @brief 导出云台UI数据

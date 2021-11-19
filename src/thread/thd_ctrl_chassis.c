@@ -21,17 +21,23 @@
 void Thd_CtrlChassis(void* arg) {
   Runtime_t* runtime = arg;
 
-  Cap_t cap;
   Chassis_t chassis;
+
+  Cap_Feedback_t cap;
+  Motor_FeedbackGroup_t chassis_motor;
+  Motor_FeedbackGroup_t gimbal_motor;
+
   CMD_ChassisCmd_t chassis_cmd;
-  CAN_ChassisMotor_t chassis_motor;
-  CAN_GimbalMotor_t gimbal_motor;
-  Referee_ForChassis_t chassis_ref;
-  CAN_ChassisOutput_t chassis_out;
+  Referee_ForChassis_t ref_chassis;
+
+  Motor_Control_t motor_ctrl;
+  Cap_Control_t cap_ctrl;
   UI_ChassisUI_t chassis_ui;
 
-  MsgDist_Publisher_t* out_pub =
-      MsgDist_CreateTopic("chassis_out", sizeof(CAN_ChassisOutput_t));
+  MsgDist_Publisher_t* motor_pub =
+      MsgDist_CreateTopic("motor_ctrl", sizeof(Motor_Control_t));
+  MsgDist_Publisher_t* cap_pub =
+      MsgDist_CreateTopic("cap_ctrl", sizeof(Cap_Control_t));
   MsgDist_Publisher_t* ui_pub =
       MsgDist_CreateTopic("chassis_ui", sizeof(UI_ChassisUI_t));
 
@@ -54,7 +60,7 @@ void Thd_CtrlChassis(void* arg) {
     /* 读取控制指令、电容、裁判系统、电机反馈 */
     MsgDist_Poll(chassis_motor_sub, &chassis_motor, 0);
     MsgDist_Poll(gimbal_motor_sub, &gimbal_motor, 0);
-    MsgDist_Poll(ref_sub, &chassis_ref, 0);
+    MsgDist_Poll(ref_sub, &ref_chassis, 0);
     MsgDist_Poll(cmd_sub, &chassis_cmd, 0);
     MsgDist_Poll(cap_sub, &cap, 0);
 
@@ -62,12 +68,13 @@ void Thd_CtrlChassis(void* arg) {
     /* 更新反馈值 */
     Chassis_UpdateFeedback(&chassis, &chassis_motor, &gimbal_motor);
     Chassis_Control(&chassis, &chassis_cmd, xTaskGetTickCount());
-    Chassis_PowerLimit(&chassis, &cap, &chassis_ref); /* 限制输出功率 */
-    Chassis_PackOutput(&chassis, &chassis_out);
+    Chassis_PowerLimit(&chassis, &cap, &ref_chassis); /* 限制输出功率 */
+    Chassis_PackOutput(&chassis, &motor_ctrl, &cap_ctrl);
     Chassis_PackUi(&chassis, &chassis_ui);
     xTaskResumeAll();
 
-    MsgDist_Publish(out_pub, &chassis_out);
+    MsgDist_Publish(motor_pub, &motor_ctrl);
+    MsgDist_Publish(cap_pub, &cap_ctrl);
     MsgDist_Publish(ui_pub, &chassis_ui);
 
     /* 运行结束，等待下一次唤醒 */

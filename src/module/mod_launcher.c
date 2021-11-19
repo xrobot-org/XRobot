@@ -135,7 +135,7 @@ void Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
  * @param can CAN设备结构体
  */
 void Launcher_UpdateFeedback(Launcher_t *l,
-                             const CAN_LauncherMotor_t *launcher_motor) {
+                             const Motor_FeedbackGroup_t *launcher_motor) {
   ASSERT(l);
   ASSERT(launcher_motor);
 
@@ -145,7 +145,8 @@ void Launcher_UpdateFeedback(Launcher_t *l,
 
   /* 更新拨弹电机 */
   const float last_trig_motor_angle = l->feedback.trig_motor_angle;
-  l->feedback.trig_motor_angle = launcher_motor->named.trig.rotor_abs_angle;
+  l->feedback.trig_motor_angle =
+      launcher_motor->as_launcher.trig.rotor_abs_angle;
   const float delta_motor_angle =
       CircleError(l->feedback.trig_motor_angle, last_trig_motor_angle, M_2PI);
   CircleAdd(&(l->feedback.trig_angle),
@@ -306,22 +307,12 @@ void Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
  * @param l 包含发射器数据的结构体
  * @param out CAN设备发射器输出结构体
  */
-void Launcher_PackOutput(Launcher_t *l, CAN_LauncherOutput_t *out) {
+void Launcher_PackOutput(Launcher_t *l, Motor_Control_t *out) {
   ASSERT(l);
   ASSERT(out);
   for (size_t i = 0; i < LAUNCHER_ACTR_NUM; i++) {
     out->as_array[i] = l->out[i];
   }
-}
-
-/**
- * @brief 清空输出值
- *
- * @param output 要清空的结构体
- */
-void Launcher_ResetOutput(CAN_LauncherOutput_t *output) {
-  ASSERT(output);
-  memset(output, 0, sizeof(*output));
 }
 
 /**

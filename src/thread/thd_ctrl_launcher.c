@@ -21,13 +21,13 @@ void Thd_CtrlLauncher(void* arg) {
 
   Launcher_t launcher;
   CMD_LauncherCmd_t launcher_cmd;
-  CAN_LauncherMotor_t launcher_motor;
+  Motor_FeedbackGroup_t launcher_motor_fb;
   Referee_ForLauncher_t referee_launcher;
-  CAN_LauncherOutput_t launcher_out;
+  Motor_Control_t launcher_out;
   UI_LauncherUI_t launcher_ui;
 
   MsgDist_Publisher_t* out_pub =
-      MsgDist_CreateTopic("launcher_out", sizeof(CAN_GimbalOutput_t));
+      MsgDist_CreateTopic("launcher_out", sizeof(Motor_Control_t));
   MsgDist_Publisher_t* ui_pub =
       MsgDist_CreateTopic("launcher_ui", sizeof(UI_GimbalUI_t));
 
@@ -44,12 +44,12 @@ void Thd_CtrlLauncher(void* arg) {
 
   while (1) {
     /* 读取控制指令、姿态、IMU、裁判系统、电机反馈 */
-    MsgDist_Poll(motor_sub, &launcher_motor, 0);
+    MsgDist_Poll(motor_sub, &launcher_motor_fb, 0);
     MsgDist_Poll(ref_sub, &referee_launcher, 0);
     MsgDist_Poll(cmd_sub, &launcher_cmd, 0);
 
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
-    Launcher_UpdateFeedback(&launcher, &launcher_motor);
+    Launcher_UpdateFeedback(&launcher, &launcher_motor_fb);
     Launcher_Control(&launcher, &launcher_cmd, &referee_launcher,
                      xTaskGetTickCount());
     Launcher_PackOutput(&launcher, &launcher_out);

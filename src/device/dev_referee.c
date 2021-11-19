@@ -664,25 +664,19 @@ uint8_t Referee_PackForChassis(Referee_ForChassis_t *c_ref,
                                const Referee_t *ref) {
   c_ref->chassis_power_limit = ref->robot_status.chassis_power_limit;
   c_ref->chassis_pwr_buff = ref->power_heat.chassis_pwr_buff;
+  c_ref->chassis_watt = ref->power_heat.chassis_watt;
   c_ref->status = ref->status;
   return DEVICE_OK;
 }
 
-uint8_t Referee_PackForLauncher(Referee_ForLauncher_t *l_ref, Referee_t *ref) {
+uint8_t Referee_PackForLauncher(Referee_ForLauncher_t *l_ref,
+                                const Referee_t *ref) {
   memcpy(&(l_ref->power_heat), &(ref->power_heat), sizeof(l_ref->power_heat));
   memcpy(&(l_ref->robot_status), &(ref->robot_status),
          sizeof(l_ref->robot_status));
   memcpy(&(l_ref->launcher_data), &(ref->launcher_data),
          sizeof(l_ref->launcher_data));
   l_ref->status = ref->status;
-  return DEVICE_OK;
-}
-
-uint8_t Referee_PackForCap(Referee_ForCap_t *cap_ref, const Referee_t *ref) {
-  cap_ref->chassis_power_limit = ref->robot_status.chassis_power_limit;
-  cap_ref->chassis_pwr_buff = ref->power_heat.chassis_pwr_buff;
-  cap_ref->chassis_watt = ref->power_heat.chassis_watt;
-  cap_ref->status = ref->status;
   return DEVICE_OK;
 }
 

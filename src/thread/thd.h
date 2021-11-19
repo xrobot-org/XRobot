@@ -26,9 +26,11 @@ typedef enum {
   THD_IMU,
   THD_INFO,
   THD_MONITOR,
+  THD_MOTOR,
   THD_MSG_DISTRIB,
   THD_RC,
   THD_REFEREE,
+  THD_TOF,
   THD_USB,
   THD_NUM,
 } Thd_Name_t;

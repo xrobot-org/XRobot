@@ -19,7 +19,6 @@
 #include "FreeRTOS.h"
 #include "FreeRTOS_CLI.h"
 #include "bsp_usb.h"
-#include "dev_can.h"
 #include "mid_msg_dist.h"
 #include "task.h"
 #include "thd.h"
@@ -474,7 +473,7 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
   RM_UNUSED(command_string);
   len -= 1;
 
-  CAN_GimbalMotor_t gimbal_motor;
+  Motor_FeedbackGroup_t motor_fb;
   Config_t cfg;
 
   static FiniteStateMachine_t fsm;
@@ -487,13 +486,13 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
       /* 获取到云台数据，用can上的新的云台机械零点的位置替代旧的位置 */
       Config_Get(&cfg);
 
-      if (MsgDist_Poll(gimbal_motor_sub, &gimbal_motor, 5)) {
+      if (MsgDist_Poll(gimbal_motor_sub, &motor_fb, 5)) {
         snprintf(out_buffer, len, "Can not get gimbal data.\r\n");
         fsm.stage = 2;
         return pdPASS;
       }
-      cfg.gimbal_mech_zero.yaw = gimbal_motor.named.yaw.rotor_abs_angle;
-      cfg.gimbal_mech_zero.pit = gimbal_motor.named.pit.rotor_abs_angle;
+      cfg.gimbal_mech_zero.yaw = motor_fb.as_gimbal.yaw.rotor_abs_angle;
+      cfg.gimbal_mech_zero.pit = motor_fb.as_gimbal.pit.rotor_abs_angle;
 
       Config_Set(&cfg);
       snprintf(out_buffer, len, "yaw:%f, pitch:%f, rol:%f\r\nDone.",
@@ -519,7 +518,7 @@ static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
   RM_UNUSED(command_string);
   len -= 1;
 
-  CAN_GimbalMotor_t gimbal_motor;
+  Motor_FeedbackGroup_t motor_fb;
   Config_t cfg;
 
   static FiniteStateMachine_t fsm;
@@ -531,12 +530,12 @@ static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
       return pdPASS;
     case 1:
       /* 获取云台数据，获取新的限位角并替代旧的限位角 */
-      if (MsgDist_Poll(gimbal_motor_sub, &gimbal_motor, 5)) {
+      if (MsgDist_Poll(gimbal_motor_sub, &motor_fb, 5)) {
         fsm.stage = 3;
         return pdPASS;
       }
       Config_Get(&cfg);
-      cfg.gimbal_limit = gimbal_motor.named.pit.rotor_abs_angle;
+      cfg.gimbal_limit = motor_fb.as_gimbal.pit.rotor_abs_angle;
 
       Config_Set(&cfg);
       Config_Get(&cfg);
@@ -668,7 +667,7 @@ void Thd_CLI(void *arg) {
   while (1) {
     /* 等待接收到新的字符 */
     BSP_USB_ReadyReceive(xTaskGetCurrentTaskHandle());
-    xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFF);
+    // xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFF);
 
     /* 读取接收到的新字符 */
     rx_char = BSP_USB_ReadChar();
@@ -688,7 +687,7 @@ void Thd_CLI(void *arg) {
   while (1) {
     /* 等待输入. */
     BSP_USB_ReadyReceive(xTaskGetCurrentTaskHandle());
-    xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFF);
+    // xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFF);
 
     /* 读取接收到的新字符 */
     rx_char = BSP_USB_ReadChar();
