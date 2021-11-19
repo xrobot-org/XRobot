@@ -21,12 +21,12 @@ void Thd_CtrlGimbal(void* arg) {
 
   Gimbal_t gimbal;
   CMD_GimbalCmd_t gimbal_cmd;
-  CAN_GimbalMotor_t gimbal_motor;
-  CAN_GimbalOutput_t gimbal_out;
+  Motor_FeedbackGroup_t gimbal_motor;
+  Motor_Control_t gimbal_out;
   UI_GimbalUI_t gimbal_ui;
 
   MsgDist_Publisher_t* out_pub =
-      MsgDist_CreateTopic("gimbal_out", sizeof(CAN_GimbalOutput_t));
+      MsgDist_CreateTopic("gimbal_out", sizeof(Motor_Control_t));
   MsgDist_Publisher_t* ui_pub =
       MsgDist_CreateTopic("gimbal_ui", sizeof(UI_GimbalUI_t));
 

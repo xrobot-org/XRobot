@@ -25,13 +25,10 @@ void Thd_Referee(void* arg) {
   Runtime_t* runtime = arg;
 
   Referee_t ref;
-  Referee_ForCap_t for_cap;
   Referee_ForAI_t for_ai;
   Referee_ForChassis_t for_chassis;
   Referee_ForLauncher_t for_launcher;
 
-  MsgDist_Publisher_t* referee_cap_pub =
-      MsgDist_CreateTopic("referee_cap", sizeof(Referee_ForCap_t));
   MsgDist_Publisher_t* referee_ai_pub =
       MsgDist_CreateTopic("referee_ai", sizeof(Referee_ForAI_t));
   MsgDist_Publisher_t* referee_chassis_pub =
@@ -62,13 +59,11 @@ void Thd_Referee(void* arg) {
     if (xTaskGetTickCount() > tick) {
       tick += THD_DELAY_TICK;
       /* 打包裁判系统数据 */
-      Referee_PackForCap(&for_cap, &ref);
       Referee_PackForAI(&for_ai, &ref);
       Referee_PackForLauncher(&for_launcher, &ref);
       Referee_PackForChassis(&for_chassis, &ref);
 
       /* 发送裁判系统数据到其他进程 */
-      MsgDist_Publish(referee_cap_pub, &for_cap);
       MsgDist_Publish(referee_ai_pub, &for_ai);
       MsgDist_Publish(referee_chassis_pub, &for_chassis);
       MsgDist_Publish(referee_launcher_pub, &for_launcher);

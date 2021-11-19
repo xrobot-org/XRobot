@@ -77,12 +77,13 @@ void Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
  * @param g 云台
  * @param can CAN设备
  */
-void Gimbal_UpdateFeedback(Gimbal_t *g, const CAN_GimbalMotor_t *gimbal_motor) {
+void Gimbal_UpdateFeedback(Gimbal_t *g,
+                           const Motor_FeedbackGroup_t *gimbal_motor) {
   ASSERT(g);
   ASSERT(gimbal_motor);
 
-  g->feedback.eulr.encoder.yaw = gimbal_motor->named.yaw.rotor_abs_angle;
-  g->feedback.eulr.encoder.pit = gimbal_motor->named.pit.rotor_abs_angle;
+  g->feedback.eulr.encoder.yaw = gimbal_motor->as_gimbal.yaw.rotor_abs_angle;
+  g->feedback.eulr.encoder.pit = gimbal_motor->as_gimbal.pit.rotor_abs_angle;
 
   if (g->param->reverse.yaw) CircleReverse(&(g->feedback.eulr.encoder.yaw));
   if (g->param->reverse.pit) CircleReverse(&(g->feedback.eulr.encoder.pit));
@@ -186,21 +187,11 @@ void Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
  * @param g 包含云台数据的结构体
  * @param out CAN设备云台输出结构体
  */
-void Gimbal_PackOutput(Gimbal_t *g, CAN_GimbalOutput_t *out) {
+void Gimbal_PackOutput(Gimbal_t *g, Motor_Control_t *out) {
   ASSERT(g);
   ASSERT(out);
-  out->named.yaw = g->out[GIMBAL_ACTR_YAW_IDX];
-  out->named.pit = g->out[GIMBAL_ACTR_PIT_IDX];
-}
-
-/**
- * @brief 清空输出值
- *
- * @param output 要清空的结构体
- */
-void Gimbal_ResetOutput(CAN_GimbalOutput_t *output) {
-  ASSERT(output);
-  memset(output, 0, sizeof(*output));
+  out->as_gimbal.yaw = g->out[GIMBAL_ACTR_YAW_IDX];
+  out->as_gimbal.pit = g->out[GIMBAL_ACTR_PIT_IDX];
 }
 
 /**

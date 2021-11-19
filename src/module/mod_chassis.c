@@ -15,8 +15,7 @@
 
 #include "FreeRTOS.h"
 #include "comp_limiter.h"
-#include "dev_can.h"
-#include "mod_cap.h"
+#include "dev_cap.h"
 
 #define _CAP_PERCENTAGE_NO_LIM 80 /* 底盘不再限制功率的电容电量 */
 #define _CAP_PERCENTAGE_WORK 30   /* 电容开始工作的电容电量 */
@@ -43,6 +42,11 @@
 static const float kCAP_PERCENTAGE_NO_LIM =
     (float)_CAP_PERCENTAGE_NO_LIM / 100.0f;
 static const float kCAP_PERCENTAGE_WORK = (float)_CAP_PERCENTAGE_WORK / 100.0f;
+
+bool Motor_RefDataValid(const Referee_ForChassis_t *ref) {
+  return (ref->chassis_power_limit > 0.0f) && (ref->chassis_pwr_buff > 0.0f) &&
+         (ref->chassis_watt > 0.0f);
+}
 
 /**
  * @brief 设置底盘模式
@@ -153,9 +157,6 @@ void Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
   c->pid.motor = pvPortMalloc(c->num_wheel * sizeof(*c->pid.motor));
   ASSERT(c->pid.motor);
 
-  c->out = pvPortMalloc(c->num_wheel * sizeof(*c->out));
-  ASSERT(c->out);
-
   c->filter.in = pvPortMalloc(c->num_wheel * sizeof(*c->filter.in));
   ASSERT(c->filter.in);
 
@@ -187,8 +188,8 @@ void Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
  * @param can CAN设备结构体
  */
 void Chassis_UpdateFeedback(Chassis_t *c,
-                            const CAN_ChassisMotor_t *chassis_motor,
-                            const CAN_GimbalMotor_t *gimbal_motor) {
+                            const Motor_FeedbackGroup_t *chassis_motor,
+                            const Motor_FeedbackGroup_t *gimbal_motor) {
   /* 底盘数据和CAN结构体不能为空 */
   ASSERT(c);
   ASSERT(chassis_motor);
@@ -196,7 +197,7 @@ void Chassis_UpdateFeedback(Chassis_t *c,
 
   /* 如果yaw云台电机反装重新计算正确的反馈值 */
   c->feedback.gimbal_yaw_encoder_angle =
-      gimbal_motor->named.yaw.rotor_abs_angle;
+      gimbal_motor->as_gimbal.yaw.rotor_abs_angle;
   if (c->param->reverse.yaw)
     CircleReverse(&(c->feedback.gimbal_yaw_encoder_angle));
 
@@ -297,22 +298,23 @@ void Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
       case CHASSIS_MODE_FOLLOW_GIMBAL_35:
       case CHASSIS_MODE_ROTOR:
       case CHASSIS_MODE_INDENPENDENT: /* 独立模式,受PID控制 */
-        c->out[i] =
+        c->out.motor.as_array[i] =
             PID_Calc(c->pid.motor + i, c->setpoint.motor_rotational_speed[i],
                      c->feedback.motor_rotational_speed[i], 0.0f, c->dt);
         break;
 
       case CHASSIS_MODE_OPEN: /* 开环模式,不受PID控制 */
-        c->out[i] =
+        c->out.motor.as_array[i] =
             c->setpoint.motor_rotational_speed[i] / MOTOR_MAX_ROTATIONAL_SPEED;
         break;
 
       case CHASSIS_MODE_RELAX: /* 放松模式,不输出 */
-        c->out[i] = 0;
+        c->out.motor.as_array[i] = 0;
         break;
     }
     /* 输出滤波. */
-    c->out[i] = LowPassFilter2p_Apply(c->filter.out + i, c->out[i]);
+    c->out.motor.as_array[i] =
+        LowPassFilter2p_Apply(c->filter.out + i, c->out.motor.as_array[i]);
   }
 }
 
@@ -323,7 +325,7 @@ void Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd,
  * @param cap 电容数据
  * @param ref 裁判系统数据
  */
-void Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
+void Chassis_PowerLimit(Chassis_t *c, const Cap_Feedback_t *cap,
                         const Referee_ForChassis_t *ref) {
   ASSERT(c);
   ASSERT(cap);
@@ -334,8 +336,7 @@ void Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
     /* 裁判系统离线，将功率限制为固定值 */
     power_limit = GAME_CHASSIS_MAX_POWER_WO_REF;
   } else {
-    if (cap->cap_status == CAN_CAP_STATUS_RUNNING &&
-        cap->percentage > kCAP_PERCENTAGE_WORK) {
+    if (cap->percentage > kCAP_PERCENTAGE_WORK) {
       /* 电容在线且电量足够，使用电容 */
       if (cap->percentage > kCAP_PERCENTAGE_NO_LIM) {
         /* 电容接近充满时不再限制功率 */
@@ -354,8 +355,17 @@ void Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
     }
   }
   /* 应用功率限制 */
-  PowerLimit_ChassicOutput(power_limit, c->out,
+  PowerLimit_ChassicOutput(power_limit, c->out.motor.as_array,
                            c->feedback.motor_rotational_speed, c->num_wheel);
+
+  if (!Motor_RefDataValid(ref)) {
+    /* 当裁判系统离线时，依然使用裁判系统进程传来的数据 */
+    c->out.cap.power_limit = ref->chassis_power_limit;
+  } else {
+    /* 当裁判系统在线时，使用算法控制裁判系统输出（即电容输入） */
+    c->out.cap.power_limit = PowerLimit_CapInput(
+        ref->chassis_watt, ref->chassis_power_limit, ref->chassis_pwr_buff);
+  }
 }
 
 /**
@@ -364,24 +374,13 @@ void Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
  * @param c 包含底盘数据的结构体
  * @param out CAN设备底盘输出结构体
  */
-void Chassis_PackOutput(Chassis_t *c, CAN_ChassisOutput_t *out) {
+void Chassis_PackOutput(const Chassis_t *c, Motor_Control_t *motor,
+                        Cap_Control_t *cap) {
   ASSERT(c);
-  ASSERT(out);
-  for (size_t i = 0; i < c->num_wheel; i++) {
-    out->as_array[i] = c->out[i];
-  }
-}
-
-/**
- * @brief 清空Chassis输出数据
- *
- * @param out CAN设备底盘输出结构体
- */
-void Chassis_ResetOutput(CAN_ChassisOutput_t *out) {
-  ASSERT(out);
-  for (size_t i = 0; i < 4; i++) {
-    out->as_array[i] = 0.0f;
-  }
+  ASSERT(motor);
+  ASSERT(cap);
+  memcpy(motor, &(c->out.motor), sizeof(*motor));
+  memcpy(cap, &(c->out.cap), sizeof(*cap));
 }
 
 /**

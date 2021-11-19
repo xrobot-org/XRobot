@@ -15,7 +15,7 @@
 #include "comp_cmd.h"
 #include "comp_filter.h"
 #include "comp_pid.h"
-#include "dev_can.h"
+#include "dev_motor.h"
 #include "dev_referee.h"
 
 /* 用enum组合所有PID，方便访问，配合数组使用 */
@@ -156,7 +156,7 @@ void Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
  * @param can CAN设备结构体
  */
 void Launcher_UpdateFeedback(Launcher_t *l,
-                             const CAN_LauncherMotor_t *launcher_motor);
+                             const Motor_FeedbackGroup_t *launcher_motor);
 
 /**
  * @brief 运行发射器控制逻辑
@@ -176,14 +176,7 @@ void Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
  * @param l 包含发射器数据的结构体
  * @param out CAN设备发射器输出结构体
  */
-void Launcher_PackOutput(Launcher_t *l, CAN_LauncherOutput_t *out);
-
-/**
- * @brief 清空输出值
- *
- * @param output 要清空的结构体
- */
-void Launcher_ResetOutput(CAN_LauncherOutput_t *output);
+void Launcher_PackOutput(Launcher_t *l, Motor_Control_t *out);
 
 /**
  * @brief 导出发射器UI数据

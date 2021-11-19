@@ -11,7 +11,6 @@
 #include "comp_ui.h"
 #include "comp_utils.h"
 #include "dev.h"
-#include "dev_can.h"
 #include "timers.h"
 
 typedef struct __packed {
@@ -335,13 +334,6 @@ typedef struct {
 
 typedef struct {
   Referee_Status_t status;
-  float chassis_watt;
-  float chassis_power_limit;
-  float chassis_pwr_buff;
-} Referee_ForCap_t;
-
-typedef struct {
-  Referee_Status_t status;
   uint8_t team;
 } Referee_ForAI_t;
 
@@ -349,6 +341,7 @@ typedef struct {
   Referee_Status_t status;
   float chassis_power_limit;
   float chassis_pwr_buff;
+  float chassis_watt;
 } Referee_ForChassis_t;
 
 typedef struct {
@@ -373,6 +366,6 @@ bool Referee_WaitTransCplt(uint32_t timeout);
 
 uint8_t Referee_PackForChassis(Referee_ForChassis_t *c_ref,
                                const Referee_t *ref);
-uint8_t Referee_PackForLauncher(Referee_ForLauncher_t *l_ref, Referee_t *ref);
-uint8_t Referee_PackForCap(Referee_ForCap_t *cap_ref, const Referee_t *ref);
+uint8_t Referee_PackForLauncher(Referee_ForLauncher_t *l_ref,
+                                const Referee_t *ref);
 uint8_t Referee_PackForAI(Referee_ForAI_t *ai_ref, const Referee_t *ref);

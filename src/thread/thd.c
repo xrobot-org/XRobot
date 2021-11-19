@@ -26,19 +26,20 @@
 
 extern void Thd_AI(void *arg);
 extern void Thd_AttiEsti(void *arg);
-extern void Thd_CAN(void *arg);
+extern void Thd_Cap(void *arg);
 extern void Thd_CLI(void *arg);
 extern void Thd_CMD(void *arg);
-extern void Thd_CtrlCap(void *arg);
 extern void Thd_CtrlChassis(void *arg);
 extern void Thd_CtrlGimbal(void *arg);
 extern void Thd_CtrlLauncher(void *arg);
 extern void Thd_IMU(void *arg);
 extern void Thd_Info(void *arg);
 extern void Thd_Monitor(void *arg);
+extern void Thd_Motor(void *arg);
 extern void Thd_MsgDist(void *arg);
 extern void Thd_RC(void *arg);
 extern void Thd_Referee(void *arg);
+extern void Thd_TOF(void *arg);
 extern void Thd_USB(void *arg);
 
 /* 机器人运行时的数据 */
@@ -55,19 +56,20 @@ typedef struct {
 static const Thd_t thd_list[] = {
     {Thd_AI, "AI", 128, 4, THD_AI},
     {Thd_AttiEsti, "AttiEsti", 256, 3, THD_ATTI_ESTI},
-    {Thd_CAN, "CAN", 128, 4, THD_CAN},
+    {Thd_Cap, "Cap", 128, 2, THD_CTRL_CAP},
     {Thd_CLI, "CLI", 256, 1, THD_CLI},
     {Thd_CMD, "CMD", 128, 3, THD_CMD},
-    {Thd_CtrlCap, "CtrlCap", 128, 2, THD_CTRL_CAP},
     {Thd_CtrlChassis, "CtrlChassis", 256, 2, THD_CTRL_CHASSIS},
     {Thd_CtrlGimbal, "CtrlGimbal", 256, 2, THD_CTRL_GIMBAL},
     {Thd_CtrlLauncher, "CtrlLauncher", 256, 2, THD_CTRL_LAUNCHER},
     {Thd_IMU, "IMU", 256, 4, THD_IMU},
     {Thd_Info, "Info", 128, 1, THD_INFO},
     {Thd_Monitor, "Monitor", 128, 1, THD_MONITOR},
+    {Thd_Motor, "Motor", 128, 1, THD_MOTOR},
     {Thd_MsgDist, "MsgDist", 128, 4, THD_MSG_DISTRIB},
     {Thd_RC, "RC", 128, 4, THD_RC},
     {Thd_Referee, "Referee", 512, 4, THD_REFEREE},
+    {Thd_TOF, "TOF", 512, 4, THD_TOF},
     {Thd_USB, "USB", 128, 4, THD_USB},
 };
 

@@ -15,9 +15,9 @@
 #include "comp_filter.h"
 #include "comp_mixer.h"
 #include "comp_pid.h"
-#include "dev_can.h"
+#include "dev_cap.h"
+#include "dev_motor.h"
 #include "dev_referee.h"
-#include "mod_cap.h"
 
 /* 底盘类型（底盘的物理设计） */
 typedef enum {
@@ -94,7 +94,11 @@ typedef struct {
     LowPassFilter2p_t *out; /* 输出值滤波器 */
   } filter;
 
-  float *out; /* 电机最终的输出值的动态数组 */
+  /* 电机最终的输出值的动态数组 */
+  struct {
+    Motor_Control_t motor;
+    Cap_Control_t cap;
+  } out;
 } Chassis_t;
 
 /**
@@ -114,8 +118,8 @@ void Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
  * @param can CAN设备结构体
  */
 void Chassis_UpdateFeedback(Chassis_t *c,
-                            const CAN_ChassisMotor_t *chassis_motor,
-                            const CAN_GimbalMotor_t *gimbal_motor);
+                            const Motor_FeedbackGroup_t *chassis_motor,
+                            const Motor_FeedbackGroup_t *gimbal_motor);
 
 /**
  * @brief 运行底盘控制逻辑
@@ -133,7 +137,7 @@ void Chassis_Control(Chassis_t *c, const CMD_ChassisCmd_t *c_cmd, uint32_t now);
  * @param cap 电容数据
  * @param ref 裁判系统数据
  */
-void Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
+void Chassis_PowerLimit(Chassis_t *c, const Cap_Feedback_t *cap,
                         const Referee_ForChassis_t *ref);
 
 /**
@@ -142,14 +146,8 @@ void Chassis_PowerLimit(Chassis_t *c, const Cap_t *cap,
  * @param c 包含底盘数据的结构体
  * @param out CAN设备底盘输出结构体
  */
-void Chassis_PackOutput(Chassis_t *c, CAN_ChassisOutput_t *out);
-
-/**
- * @brief 清空Chassis输出数据
- *
- * @param out CAN设备底盘输出结构体
- */
-void Chassis_ResetOutput(CAN_ChassisOutput_t *out);
+void Chassis_PackOutput(const Chassis_t *c, Motor_Control_t *motor,
+                        Cap_Control_t *cap);
 
 /**
  * @brief 导出底盘数据

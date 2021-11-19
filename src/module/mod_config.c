@@ -154,12 +154,26 @@ static const Config_RobotParam_t param_default = {
     .min_launch_delay = (uint32_t)(1000.0f / 20.0f),
   }, /* launcher */
 
-  .can = {
-    .chassis = BSP_CAN_1,
-    .gimbal = BSP_CAN_2,
-    .launcher = BSP_CAN_2,
-    .cap = BSP_CAN_1,
-    }, /* can */
+  .motor = {
+    [MOTOR_GROUT_ID_CHASSIS] = {
+      .id_feedback = 0x201,
+      .id_control = M3508_M2006_CTRL_ID_BASE,
+      .model = {MOTOR_M3508, MOTOR_M3508, MOTOR_M3508, MOTOR_M3508},
+      .num = 4,
+    },
+    [MOTOR_GROUT_ID_GIMBAL1] = {
+      .id_feedback = 0x205,
+      .id_control = GM6020_CTRL_ID_EXTAND,
+      .model = {MOTOR_M3508, MOTOR_M3508, MOTOR_M2006, MOTOR_NONE},
+      .num = 2,
+    },
+    [MOTOR_GROUT_ID_LAUNCHER1] = {
+      .id_feedback = 0x209,
+      .id_control = M3508_M2006_CTRL_ID_EXTAND,
+      .model = {MOTOR_GM6020, MOTOR_GM6020, MOTOR_NONE, MOTOR_NONE},
+      .num = 3,
+    },
+  },
 }; /* param_default */
 
 static const Config_RobotParam_t param_hero = {
@@ -269,6 +283,7 @@ static const Config_RobotParam_t param_hero = {
       .out_limit = 0.5f,
       .d_cutoff_freq = -1.0f,
     },
+
     .trig_pid_param = {
       .k = 10.0f,
       .p = 1.0f,
@@ -279,6 +294,7 @@ static const Config_RobotParam_t param_hero = {
       .d_cutoff_freq = -1.0f,
       .range = M_2PI,
     },
+
     .low_pass_cutoff_freq = {
       .in = {
         .fric = -1.0f,
@@ -289,6 +305,7 @@ static const Config_RobotParam_t param_hero = {
         .trig = -1.0f,
       },
     },
+
     .num_trig_tooth = 6.0f,
     .trig_gear_ratio = 3591.0f / 187.0f,
     .fric_radius = 0.03f,
@@ -299,12 +316,26 @@ static const Config_RobotParam_t param_hero = {
     .min_launch_delay = (uint32_t)(1000.0f / 20.0f),
   }, /* launcher */
 
-  .can = {
-    .chassis = BSP_CAN_1,
-    .gimbal = BSP_CAN_2,
-    .launcher = BSP_CAN_2,
-    .cap = BSP_CAN_1,
-    }, /* can */
+  .motor = {
+    [MOTOR_GROUT_ID_CHASSIS] = {
+      .id_feedback = 0x201,
+      .id_control = M3508_M2006_CTRL_ID_BASE,
+      .model = {MOTOR_M3508, MOTOR_M3508, MOTOR_M3508, MOTOR_M3508},
+      .num = 4,
+    },
+    [MOTOR_GROUT_ID_GIMBAL1] = {
+      .id_feedback = 0x205,
+      .id_control = GM6020_CTRL_ID_EXTAND,
+      .model = {MOTOR_M3508, MOTOR_M3508, MOTOR_M2006, MOTOR_NONE},
+      .num = 2,
+    },
+    [MOTOR_GROUT_ID_LAUNCHER1] = {
+      .id_feedback = 0x209,
+      .id_control = M3508_M2006_CTRL_ID_EXTAND,
+      .model = {MOTOR_GM6020, MOTOR_GM6020, MOTOR_NONE, MOTOR_NONE},
+      .num = 3,
+    },
+  },
 }; /* param_hero */
 
 /* static const Config_RobotParam_t param_xxx; */
