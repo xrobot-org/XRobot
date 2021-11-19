@@ -3,8 +3,8 @@
 #include <stdbool.h>
 
 #include "FreeRTOS.h"
+#include "comp_type.h"
 #include "comp_ui.h"
-#include "comp_utils.h"
 #include "queue.h"
 
 typedef struct {
