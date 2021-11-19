@@ -33,3 +33,4 @@ void Thd_Info(void *arg) {
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
+THREAD_DECLEAR(Thd_Info, 128, 1);

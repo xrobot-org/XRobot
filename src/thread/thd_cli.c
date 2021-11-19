@@ -729,3 +729,4 @@ void Thd_CLI(void *arg) {
     }
   }
 }
+THREAD_DECLEAR(Thd_CLI, 256, 1);

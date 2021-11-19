@@ -45,43 +45,25 @@ extern void Thd_USB(void *arg);
 /* 机器人运行时的数据 */
 Runtime_t runtime;
 
-typedef struct {
-  TaskFunction_t fn;
-  const char *name;
-  configSTACK_DEPTH_TYPE stack_depth;
-  UBaseType_t priority;
-  Thd_Name_t handle_name;
-} Thd_t;
+extern const Thd_t *__thread_start;
+extern const Thd_t *__thread_end;
 
-static const Thd_t thd_list[] = {
-    {Thd_AI, "AI", 128, 4, THD_AI},
-    {Thd_AttiEsti, "AttiEsti", 256, 3, THD_ATTI_ESTI},
-    {Thd_Cap, "Cap", 128, 2, THD_CTRL_CAP},
-    {Thd_CLI, "CLI", 256, 1, THD_CLI},
-    {Thd_CMD, "CMD", 128, 3, THD_CMD},
-    {Thd_CtrlChassis, "CtrlChassis", 256, 2, THD_CTRL_CHASSIS},
-    {Thd_CtrlGimbal, "CtrlGimbal", 256, 2, THD_CTRL_GIMBAL},
-    {Thd_CtrlLauncher, "CtrlLauncher", 256, 2, THD_CTRL_LAUNCHER},
-    {Thd_IMU, "IMU", 256, 4, THD_IMU},
-    {Thd_Info, "Info", 128, 1, THD_INFO},
-    {Thd_Monitor, "Monitor", 128, 1, THD_MONITOR},
-    {Thd_Motor, "Motor", 128, 1, THD_MOTOR},
-    {Thd_MsgDist, "MsgDist", 128, 4, THD_MSG_DISTRIB},
-    {Thd_RC, "RC", 128, 4, THD_RC},
-    {Thd_Referee, "Referee", 512, 4, THD_REFEREE},
-    {Thd_TOF, "TOF", 512, 4, THD_TOF},
-    {Thd_USB, "USB", 128, 4, THD_USB},
-};
+static TaskHandle_t *thd_list;
 
 void Thd_Init(void) {
   Config_Get(&runtime.cfg); /* 获取机器人配置 */
 
   vTaskSuspendAll();
+  const size_t num_thread = (__thread_end - __thread_start) / sizeof(Thd_t);
+  thd_list = pvPortMalloc(num_thread * sizeof(TaskHandle_t));
+
   /* 创建线程 */
-  for (size_t j = 0; j < ARRAY_LEN(thd_list); j++) {
-    const Thd_t *thd = thd_list + j;
-    xTaskCreate(thd->fn, thd->name, thd->stack_depth, &runtime, thd->priority,
-                runtime.thd + thd->handle_name);
+  for (size_t j = 0; j < num_thread; j++) {
+    const Thd_t *thd = __thread_start + j;
+    if (thd) {
+      xTaskCreate(thd->fn, thd->name, thd->stack_depth, &runtime, thd->priority,
+                  thd_list + j);
+    }
   }
   xTaskResumeAll();
 }

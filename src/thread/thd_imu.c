@@ -81,3 +81,4 @@ void Thd_IMU(void* arg) {
                 PID_Calc(&imu_temp_ctrl_pid, 40.0f, bmi088.temp, 0.0f, 0.0f));
   }
 }
+THREAD_DECLEAR(Thd_IMU, 256, 4);

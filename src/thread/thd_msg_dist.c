@@ -31,3 +31,4 @@ void Thd_MsgDist(void *arg) {
     MsgDist_Distute();
   }
 }
+THREAD_DECLEAR(Thd_MsgDist, 128, 4);
