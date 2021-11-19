@@ -63,6 +63,8 @@ void Thd_Init(void) {
     if (thd) {
       xTaskCreate(thd->fn, thd->name, thd->stack_depth, &runtime, thd->priority,
                   thd_list + j);
+    } else {
+      break;
     }
   }
   xTaskResumeAll();
