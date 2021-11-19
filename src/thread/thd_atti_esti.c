@@ -23,11 +23,11 @@ void Thd_AttiEsti(void* arg) {
   RM_UNUSED(arg);
 
   AHRS_t gimbal_ahrs;
-  AHRS_Eulr_t gimbal_eulr;
+  Eulr_t gimbal_eulr;
   Vector3_t accl, gyro;
 
   MsgDist_Publisher_t* gimbal_eulr_pub =
-      MsgDist_CreateTopic("gimbal_eulr", sizeof(AHRS_Eulr_t));
+      MsgDist_CreateTopic("gimbal_eulr", sizeof(Eulr_t));
 
   MsgDist_Subscriber_t* accl_sub = MsgDist_Subscribe("gimbal_accl", true);
   MsgDist_Subscriber_t* gyro_sub = MsgDist_Subscribe("gimbal_gyro", true);

@@ -93,7 +93,7 @@ static float Chassis_CalcWz(const float lo, const float hi, uint32_t now) {
  * @param target_freq 任务预期的运行频率
  */
 void Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
-                  AHRS_Eulr_t *gimbal_mech_zero, float target_freq) {
+                  Eulr_t *gimbal_mech_zero, float target_freq) {
   ASSERT(c);
 
   c->param = param;             /* 初始化参数 */

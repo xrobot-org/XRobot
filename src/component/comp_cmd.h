@@ -41,7 +41,7 @@ typedef struct {
 /* 云台控制命令 */
 typedef struct {
   Game_GimbalMode_t mode; /* 云台运行模式 */
-  AHRS_Eulr_t delta_eulr; /* 欧拉角变化角度 */
+  Eulr_t delta_eulr;      /* 欧拉角变化角度 */
 } CMD_GimbalCmd_t;
 
 /* 发射器控制命令 */
@@ -189,7 +189,7 @@ typedef struct {
 } CMD_RC_t;
 
 typedef struct {
-  AHRS_Eulr_t gimbal_delta; /* 欧拉角的变化量 */
+  Eulr_t gimbal_delta; /* 欧拉角的变化量 */
 
   struct {
     float vx;         /* x轴移动速度 */

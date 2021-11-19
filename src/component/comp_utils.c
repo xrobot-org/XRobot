@@ -67,13 +67,6 @@ inline float Sign(float x) {
 }
 
 /**
- * @brief 将运动向量置零
- *
- * @param mv 被操作的值
- */
-inline void ResetMoveVector(MoveVector_t *mv) { memset(mv, 0, sizeof(*mv)); }
-
-/**
  * @brief 计算循环值的误差，用于没有负数值，并在一定范围内变化的值
  * 例如编码器：相差1.5PI其实等于相差-0.5PI
  *

@@ -60,8 +60,8 @@ typedef struct {
 
   /* 欧拉角 */
   struct {
-    AHRS_Eulr_t imu;     /* 由IMU计算的欧拉角 */
-    AHRS_Eulr_t encoder; /* 由编码器计算的欧拉角 */
+    Eulr_t imu;     /* 由IMU计算的欧拉角 */
+    Eulr_t encoder; /* 由编码器计算的欧拉角 */
   } eulr;
 } Gimbal_Feedback_t;
 
@@ -80,7 +80,7 @@ typedef struct {
 
   /* PID计算的目标值 */
   struct {
-    AHRS_Eulr_t eulr; /* 表示云台姿态的欧拉角 */
+    Eulr_t eulr; /* 表示云台姿态的欧拉角 */
   } setpoint;
 
   KPID_t pid[GIMBAL_CTRL_NUM]; /* PID数组 */

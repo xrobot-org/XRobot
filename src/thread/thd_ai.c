@@ -15,7 +15,7 @@ void Thd_AI(void* arg) {
   AI_t ai;
   AI_UI_t ai_ui;
   CMD_Host_t cmd_host;
-  AHRS_Quaternion_t ai_quat;
+  Quaternion_t ai_quat;
   Referee_ForAI_t referee_ai;
 
   MsgDist_Publisher_t* cmd_host_pub =

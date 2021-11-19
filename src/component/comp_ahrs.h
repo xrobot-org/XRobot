@@ -5,27 +5,13 @@
 
 #pragma once
 
+#include "comp_type.h"
 #include "comp_utils.h"
-
-/* 欧拉角（Euler angle） */
-typedef struct {
-  float yaw; /* 偏航角（Yaw angle） */
-  float pit; /* 俯仰角（Pitch angle） */
-  float rol; /* 翻滚角（Roll angle） */
-} AHRS_Eulr_t;
-
-/* 四元数 */
-typedef struct {
-  float q0;
-  float q1;
-  float q2;
-  float q3;
-} AHRS_Quaternion_t;
 
 /* 姿态解算算法主结构体 */
 typedef struct {
   /* 四元数 */
-  AHRS_Quaternion_t quat;
+  Quaternion_t quat;
 
   float last_update;
   float dt;
@@ -60,11 +46,11 @@ int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
  * @param ahrs 姿态解算主结构体
  * @return int8_t 0对应没有错误
  */
-int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs);
+int8_t AHRS_GetEulr(Eulr_t *eulr, const AHRS_t *ahrs);
 
 /**
  * @brief 将对应数据置零
  *
  * @param eulr 被操作的数据
  */
-void AHRS_ResetEulr(AHRS_Eulr_t *eulr);
+void AHRS_ResetEulr(Eulr_t *eulr);

@@ -58,7 +58,7 @@ typedef struct {
   float dt;
 
   const Chassis_Params_t *param; /* 底盘的参数，用Chassis_Init设定 */
-  AHRS_Eulr_t *gimbal_mech_zero; /* 云台机械零点 */
+  Eulr_t *gimbal_mech_zero;      /* 云台机械零点 */
 
   /* 模块通用 */
   Game_ChassisMode_t mode; /* 底盘模式 */
@@ -109,7 +109,7 @@ typedef struct {
  * @param target_freq 任务预期的运行频率
  */
 void Chassis_Init(Chassis_t *c, const Chassis_Params_t *param,
-                  AHRS_Eulr_t *gimbal_mech_zero, float target_freq);
+                  Eulr_t *gimbal_mech_zero, float target_freq);
 
 /**
  * @brief 更新底盘的反馈信息
