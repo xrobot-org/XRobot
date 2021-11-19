@@ -44,3 +44,4 @@ void Thd_RC(void* arg) {
     MsgDist_Publish(rc_pub, &cmd_rc);
   }
 }
+THREAD_DECLEAR(Thd_RC, 128, 4);

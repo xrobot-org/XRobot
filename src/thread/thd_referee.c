@@ -88,3 +88,4 @@ void Thd_Referee(void* arg) {
     }
   }
 }
+THREAD_DECLEAR(Thd_Referee, 512, 4);

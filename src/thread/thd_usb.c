@@ -31,3 +31,4 @@ void Thd_USB(void* arg) {
     tud_task();
   }
 }
+THREAD_DECLEAR(Thd_USB, 128, 4);

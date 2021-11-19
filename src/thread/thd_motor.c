@@ -69,3 +69,4 @@ void Thd_Motor(void* arg) {
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
+THREAD_DECLEAR(Thd_Motor, 128, 1);

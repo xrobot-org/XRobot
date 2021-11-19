@@ -59,3 +59,4 @@ void Thd_AttiEsti(void* arg) {
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
+THREAD_DECLEAR(Thd_AttiEsti, 256, 3);

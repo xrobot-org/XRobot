@@ -81,3 +81,4 @@ void Thd_CtrlChassis(void* arg) {
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
+THREAD_DECLEAR(Thd_CtrlChassis, 256, 2);
