@@ -355,7 +355,7 @@ int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
  * @param ahrs 姿态解算主结构体
  * @return int8_t 0对应没有错误
  */
-int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
+int8_t AHRS_GetEulr(Eulr_t *eulr, const AHRS_t *ahrs) {
   ASSERT(eulr);
   ASSERT(ahrs);
 
@@ -393,4 +393,4 @@ int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs) {
  *
  * @param eulr 被操作的数据
  */
-void AHRS_ResetEulr(AHRS_Eulr_t *eulr) { memset(eulr, 0, sizeof(*eulr)); }
+void AHRS_ResetEulr(Eulr_t *eulr) { memset(eulr, 0, sizeof(*eulr)); }

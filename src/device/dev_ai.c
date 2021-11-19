@@ -93,7 +93,7 @@ int8_t AI_HandleOffline(AI_t *ai) {
   return DEVICE_OK;
 }
 
-int8_t AI_PackMcuForHost(AI_t *ai, const AHRS_Quaternion_t *quat) {
+int8_t AI_PackMcuForHost(AI_t *ai, const Quaternion_t *quat) {
   ai->to_host.mcu.id = AI_ID_MCU;
   memcpy(&(ai->to_host.mcu.package.data.quat), (const void *)quat,
          sizeof(*quat));

@@ -55,7 +55,7 @@ bool AI_StartTrans(AI_t *ai);
 bool AI_WaitTransCplt(AI_t *ai, uint32_t timeout);
 int8_t AI_ParseHost(AI_t *ai);
 int8_t AI_HandleOffline(AI_t *ai);
-int8_t AI_PackMcuForHost(AI_t *ai, const AHRS_Quaternion_t *quat);
+int8_t AI_PackMcuForHost(AI_t *ai, const Quaternion_t *quat);
 int8_t AI_PackRefForHost(AI_t *ai, const Referee_ForAI_t *ref);
 void AI_PackUI(AI_UI_t *ui, const AI_t *ai);
 void AI_PackCMD(AI_t *ai, CMD_Host_t *cmd_host);

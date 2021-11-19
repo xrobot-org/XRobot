@@ -49,7 +49,7 @@ typedef union {
     float m4;
   } as_chassis;
 
-  AHRS_Eulr_t as_gimbal;
+  Eulr_t as_gimbal;
 
   struct {
     float fric_left;
