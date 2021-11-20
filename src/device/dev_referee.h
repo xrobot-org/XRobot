@@ -18,9 +18,12 @@ typedef struct __packed {
   uint16_t data_length;
   uint8_t seq;
   uint8_t crc8;
-} Referee_Header_t;
+} referee_header_t;
 
-typedef enum { REF_STATUS_OFFLINE = 0, REF_STATUS_RUNNING } Referee_Status_t;
+typedef enum {
+  REF_STATUS_OFFLINE = 0,
+  REF_STATUS_RUNNING,
+} referee_status_t;
 
 typedef enum {
   REF_CMD_ID_GAME_STATUS = 0x0001,
@@ -46,18 +49,18 @@ typedef enum {
   REF_CMD_ID_INTER_STUDENT_CUSTOM = 0x0302,
   REF_CMD_ID_CLIENT_MAP = 0x0303,
   REF_CMD_ID_KEYBOARD_MOUSE = 0x0304,
-} Referee_CMDID_t;
+} referee_cmd_id_t;
 
 typedef struct __packed {
   uint8_t game_type : 4;
   uint8_t game_progress : 4;
   uint16_t stage_remain_time;
   uint64_t sync_time_stamp;
-} Referee_GameStatus_t;
+} referee_game_status_t;
 
 typedef struct __packed {
   uint8_t winner;
-} Referee_GameResult_t;
+} referee_game_result_t;
 
 typedef struct __packed {
   uint16_t red_1;
@@ -78,12 +81,12 @@ typedef struct __packed {
   uint16_t blue_7;
   uint16_t blue_outpose;
   uint16_t blue_base;
-} Referee_GameRobotHP_t;
+} referee_game_robot_hp_t;
 
 typedef struct __packed {
   uint8_t dart_belong;
   uint16_t stage_remain_time;
-} Referee_DartStatus_t;
+} referee_dart_status_t;
 
 typedef struct __packed {
   uint8_t f1_status : 1;
@@ -102,30 +105,30 @@ typedef struct __packed {
   uint16_t red2_bullet_remain;
   uint16_t blue1_bullet_remain;
   uint16_t blue2_bullet_remain;
-} Referee_ICRAZoneStatus_t;
+} referee_icra_zone_status_t;
 
 typedef struct __packed {
   uint8_t copter_pad : 2;
   uint8_t energy_mech : 2;
   uint8_t virtual_shield : 1;
   uint32_t res : 27;
-} Referee_FieldEvents_t;
+} referee_field_events_t;
 
 typedef struct __packed {
   uint8_t supply_id;
   uint8_t robot_id;
   uint8_t supply_step;
   uint8_t supply_sum;
-} Referee_SupplyAction_t;
+} referee_supply_action_t;
 
 typedef struct __packed {
   uint8_t level;
   uint8_t robot_id;
-} Referee_Warning_t;
+} referee_warning_t;
 
 typedef struct __packed {
   uint8_t countdown;
-} Referee_DartCountdown_t;
+} referee_dart_countdown_t;
 
 typedef struct __packed {
   uint8_t robot_id;
@@ -145,7 +148,7 @@ typedef struct __packed {
   uint8_t power_gimbal_output : 1;
   uint8_t power_chassis_output : 1;
   uint8_t power_launcher_output : 1;
-} Referee_RobotStatus_t;
+} referee_robot_status_t;
 
 typedef struct __packed {
   uint16_t chassis_volt;
@@ -155,14 +158,14 @@ typedef struct __packed {
   uint16_t launcher_id1_17_heat;
   uint16_t launcher_id2_17_heat;
   uint16_t launcher_42_heat;
-} Referee_PowerHeat_t;
+} referee_power_heat_t;
 
 typedef struct __packed {
   float x;
   float y;
   float z;
   float yaw;
-} Referee_RobotPos_t;
+} referee_robot_pos_t;
 
 typedef struct __packed {
   uint8_t healing : 1;
@@ -170,29 +173,29 @@ typedef struct __packed {
   uint8_t defense_buff : 1;
   uint8_t attack_buff : 1;
   uint8_t res : 4;
-} Referee_RobotBuff_t;
+} referee_robot_buff_t;
 
 typedef struct __packed {
   uint8_t attack_countdown;
-} Referee_DroneEnergy_t;
+} referee_drone_energy_t;
 
 typedef struct __packed {
   uint8_t armor_id : 4;
   uint8_t damage_type : 4;
-} Referee_RobotDamage_t;
+} referee_robot_damage_t;
 
 typedef struct __packed {
   uint8_t bullet_type;
   uint8_t launcherer_id;
   uint8_t bullet_freq;
   float bullet_speed;
-} Referee_LauncherData_t;
+} referee_launcher_data_t;
 
 typedef struct __packed {
   uint16_t bullet_17_remain;
   uint16_t bullet_42_remain;
   uint16_t coin_remain;
-} Referee_BulletRemain_t;
+} referee_bullet_remain_t;
 
 typedef struct __packed {
   uint8_t base : 1;
@@ -203,7 +206,7 @@ typedef struct __packed {
   uint8_t resource : 1;
   uint8_t healing_card : 1;
   uint32_t res : 24;
-} Referee_RFID_t;
+} referee_rfid_t;
 
 typedef struct __packed {
   uint8_t opening;
@@ -215,7 +218,7 @@ typedef struct __packed {
   uint8_t dart4_speed;
   uint16_t last_dart_launch_time;
   uint16_t operator_cmd_launch_time;
-} Referee_DartClient_t;
+} referee_dart_client_t;
 
 typedef struct __packed {
   float position_x;
@@ -223,7 +226,7 @@ typedef struct __packed {
   float position_z;
   uint8_t commd_keyboard;
   uint16_t robot_id;
-} Referee_ClientMap_t;
+} referee_client_map_t;
 
 typedef struct __packed {
   int16_t mouse_x;
@@ -233,9 +236,9 @@ typedef struct __packed {
   int8_t button_r;
   uint16_t keyboard_value;
   uint16_t res;
-} Referee_KeyboardMouse_t;
+} referee_keyboard_mouse_t;
 
-typedef uint16_t Referee_Tail_t;
+typedef uint16_t referee_tail_t;
 
 typedef enum {
   REF_BOT_RED_HERO = 1,
@@ -254,7 +257,7 @@ typedef enum {
   REF_BOT_BLU_DRONE = 106,
   REF_BOT_BLU_SENTRY = 107,
   REF_BOT_BLU_RADER = 109,
-} Referee_RobotID_t;
+} referee_robot_id_t;
 
 typedef enum {
   REF_CL_RED_HERO = 0x0101,
@@ -269,7 +272,7 @@ typedef enum {
   REF_CL_BLU_INFANTRY_2 = 0x0168,
   REF_CL_BLU_INFANTRY_3 = 0x0169,
   REF_CL_BLU_DRONE = 0x016A,
-} Referee_ClientID_t;
+} referee_client_id_t;
 
 typedef enum {
   REF_STDNT_CMD_ID_UI_DEL = 0x0100,
@@ -280,45 +283,45 @@ typedef enum {
   REF_STDNT_CMD_ID_UI_STR = 0x0110,
 
   REF_STDNT_CMD_ID_CUSTOM = 0x0200,
-} Referee_StudentCMDID_t;
+} referee_student_cmd_id_t;
 
 typedef struct __packed {
-  Referee_StudentCMDID_t cmd_id;
+  referee_student_cmd_id_t cmd_id;
   uint16_t id_sender;
   uint16_t id_receiver;
-} Referee_InterStudentHeader_t;
+} referee_inter_student_header_t;
 
 typedef struct {
-  Referee_Status_t status;
-  Referee_GameStatus_t game_status;
-  Referee_GameResult_t game_result;
-  Referee_GameRobotHP_t game_robot_hp;
-  Referee_DartStatus_t dart_status;
-  Referee_ICRAZoneStatus_t icra_zone;
-  Referee_FieldEvents_t field_event;
-  Referee_SupplyAction_t supply_action;
-  Referee_Warning_t warning;
-  Referee_DartCountdown_t dart_countdown;
-  Referee_RobotStatus_t robot_status;
-  Referee_PowerHeat_t power_heat;
-  Referee_RobotPos_t robot_pos;
-  Referee_RobotBuff_t robot_buff;
-  Referee_DroneEnergy_t drone_energy;
-  Referee_RobotDamage_t robot_danage;
-  Referee_LauncherData_t launcher_data;
-  Referee_BulletRemain_t bullet_remain;
-  Referee_RFID_t rfid;
-  Referee_DartClient_t dart_client;
-  Referee_ClientMap_t client_map;
-  Referee_KeyboardMouse_t keyboard_mouse;
+  referee_status_t status;
+  referee_game_status_t game_status;
+  referee_game_result_t game_result;
+  referee_game_robot_hp_t game_robot_hp;
+  referee_dart_status_t dart_status;
+  referee_icra_zone_status_t icra_zone;
+  referee_field_events_t field_event;
+  referee_supply_action_t supply_action;
+  referee_warning_t warning;
+  referee_dart_countdown_t dart_countdown;
+  referee_robot_status_t robot_status;
+  referee_power_heat_t power_heat;
+  referee_robot_pos_t robot_pos;
+  referee_robot_buff_t robot_buff;
+  referee_drone_energy_t drone_energy;
+  referee_robot_damage_t robot_danage;
+  referee_launcher_data_t launcher_data;
+  referee_bullet_remain_t bullet_remain;
+  referee_rfid_t rfid;
+  referee_dart_client_t dart_client;
+  referee_client_map_t client_map;
+  referee_keyboard_mouse_t keyboard_mouse;
 
-  UI_t ui;
+  ui_t ui;
   /* UI所需信息 */
-  UI_CapUI_t cap_ui;
-  UI_ChassisUI_t chassis_ui;
-  UI_LauncherUI_t launcher_ui;
-  UI_GimbalUI_t gimbal_ui;
-  CMD_UI_t cmd_ui;
+  ui_cap_t cap_ui;
+  ui_chassis_t chassis_ui;
+  ui_launcher_t launcher_ui;
+  ui_gimbal_t gimbal_ui;
+  cmd_ui_t cmd_ui;
 
   struct {
     uint8_t *data;
@@ -330,42 +333,42 @@ typedef struct {
 
   TimerHandle_t ui_fast_timer_id;
   TimerHandle_t ui_slow_timer_id;
-} Referee_t;
+} referee_t;
 
 typedef struct {
-  Referee_Status_t status;
+  referee_status_t status;
   uint8_t team;
-} Referee_ForAI_t;
+} referee_for_ai_t;
 
 typedef struct {
-  Referee_Status_t status;
+  referee_status_t status;
   float chassis_power_limit;
   float chassis_pwr_buff;
   float chassis_watt;
-} Referee_ForChassis_t;
+} referee_for_chassis_t;
 
 typedef struct {
-  Referee_Status_t status;
-  Referee_PowerHeat_t power_heat;
-  Referee_RobotStatus_t robot_status;
-  Referee_LauncherData_t launcher_data;
-} Referee_ForLauncher_t;
+  referee_status_t status;
+  referee_power_heat_t power_heat;
+  referee_robot_status_t robot_status;
+  referee_launcher_data_t launcher_data;
+} referee_for_launcher_t;
 
-int8_t Referee_Init(Referee_t *ref, const UI_Screen_t *screen);
-int8_t Referee_Restart(void);
-void Referee_HandleOffline(Referee_t *ref);
+int8_t referee_init(referee_t *ref, const ui_screen_t *screen);
+int8_t referee_restart(void);
+void referee_handle_offline(referee_t *ref);
 
-int8_t Referee_StartReceiving(Referee_t *ref);
-bool Referee_WaitRecvCplt(uint32_t timeout);
-int8_t Referee_Parse(Referee_t *ref);
+int8_t referee_start_receiving(referee_t *ref);
+bool referee_wait_recv_cplt(uint32_t timeout);
+int8_t referee_parse(referee_t *ref);
 
-uint8_t Referee_RefreshUI(Referee_t *ref);
-int8_t Referee_PackUiPacket(Referee_t *ref);
-int8_t Referee_StartTransmit(Referee_t *ref);
-bool Referee_WaitTransCplt(uint32_t timeout);
+uint8_t referee_refresh_ui(referee_t *ref);
+int8_t referee_pack_ui_packet(referee_t *ref);
+int8_t referee_start_transmit(referee_t *ref);
+bool referee_wait_trans_cplt(uint32_t timeout);
 
-uint8_t Referee_PackForChassis(Referee_ForChassis_t *c_ref,
-                               const Referee_t *ref);
-uint8_t Referee_PackForLauncher(Referee_ForLauncher_t *l_ref,
-                                const Referee_t *ref);
-uint8_t Referee_PackForAI(Referee_ForAI_t *ai_ref, const Referee_t *ref);
+uint8_t referee_pack_for_chassis(referee_for_chassis_t *c_ref,
+                                 const referee_t *ref);
+uint8_t referee_pack_for_launcher(referee_for_launcher_t *l_ref,
+                                  const referee_t *ref);
+uint8_t referee_pack_for_ai(referee_for_ai_t *ai_ref, const referee_t *ref);

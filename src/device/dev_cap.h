@@ -13,21 +13,21 @@ typedef struct {
   float input_curr;
   float target_power;
   float percentage;
-} Cap_Feedback_t;
+} cap_feedback_t;
 
 typedef struct {
   float power_limit;
-} Cap_Control_t;
+} cap_control_t;
 
 typedef struct {
   QueueHandle_t msgq_control;
   QueueHandle_t msgq_feedback;
 
-  Cap_Feedback_t feedback;
-} Cap_t;
+  cap_feedback_t feedback;
+} cap_t;
 
-Err_t Cap_Init(Cap_t *cap);
-Err_t Cap_Update(Cap_t *cap, uint32_t timeout);
-Err_t Cap_Control(Cap_t *cap, Cap_Control_t *output);
-Err_t Cap_HandleOffline(Cap_t *cap);
-Err_t Cap_PackUI(const Cap_t *cap, UI_CapUI_t *ui);
+err_t cap_init(cap_t *cap);
+err_t cap_update(cap_t *cap, uint32_t timeout);
+err_t cap_control(cap_t *cap, cap_control_t *output);
+err_t cap_handle_offline(cap_t *cap);
+err_t cap_pack_ui(const cap_t *cap, ui_cap_t *ui);

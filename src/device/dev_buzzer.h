@@ -2,6 +2,6 @@
 
 #include <stdint.h>
 
-int8_t Buzzer_Start(void);
-int8_t Buzzer_Set(float freq, float duty_cycle);
-int8_t Buzzer_Stop(void);
+int8_t buzzer_start(void);
+int8_t buzzer_set(float freq, float duty_cycle);
+int8_t buzzer_stop(void);

@@ -21,71 +21,70 @@
 #define THD_PERIOD_MS (1)
 #define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
-void Thd_Referee(void* arg) {
-  Runtime_t* runtime = arg;
+void thd_referee(void* arg) {
+  runtime_t* runtime = arg;
 
-  Referee_t ref;
-  Referee_ForAI_t for_ai;
-  Referee_ForChassis_t for_chassis;
-  Referee_ForLauncher_t for_launcher;
+  referee_t ref;
+  referee_for_ai_t for_ai;
+  referee_for_chassis_t for_chassis;
+  referee_for_launcher_t for_launcher;
 
-  MsgDist_Publisher_t* referee_ai_pub =
-      MsgDist_CreateTopic("referee_ai", sizeof(Referee_ForAI_t));
-  MsgDist_Publisher_t* referee_chassis_pub =
-      MsgDist_CreateTopic("referee_chassis", sizeof(Referee_ForChassis_t));
-  MsgDist_Publisher_t* referee_launcher_pub =
-      MsgDist_CreateTopic("referee_launcher", sizeof(Referee_ForLauncher_t));
+  publisher_t* referee_ai_pub =
+      msg_dist_create_topic("referee_ai", sizeof(referee_for_ai_t));
+  publisher_t* referee_chassis_pub =
+      msg_dist_create_topic("referee_chassis", sizeof(referee_for_chassis_t));
+  publisher_t* referee_launcher_pub =
+      msg_dist_create_topic("referee_launcher", sizeof(referee_for_launcher_t));
 
-  MsgDist_Subscriber_t* ui_cap_sub = MsgDist_Subscribe("ui_cap", true);
-  MsgDist_Subscriber_t* ui_chassis_sub = MsgDist_Subscribe("chassis_ui", true);
-  MsgDist_Subscriber_t* ui_gimbal_sub = MsgDist_Subscribe("gimbal_ui", true);
-  MsgDist_Subscriber_t* ui_launcher_sub =
-      MsgDist_Subscribe("launcher_ui", true);
+  subscriber_t* ui_cap_sub = msg_dist_subscribe("ui_cap", true);
+  subscriber_t* ui_chassis_sub = msg_dist_subscribe("chassis_ui", true);
+  subscriber_t* ui_gimbal_sub = msg_dist_subscribe("gimbal_ui", true);
+  subscriber_t* ui_launcher_sub = msg_dist_subscribe("launcher_ui", true);
 
   /* 初始化裁判系统 */
-  Referee_Init(&ref, &(runtime->cfg.pilot_cfg->screen));
+  referee_init(&ref, &(runtime->cfg.pilot_cfg->screen));
 
   uint32_t tick = xTaskGetTickCount();
   while (1) {
-    Referee_StartReceiving(&ref); /* 开始接收裁判系统数据 */
+    referee_start_receiving(&ref); /* 开始接收裁判系统数据 */
 
-    if (Referee_WaitRecvCplt(100)) { /* 判断裁判系统数据是否接收完成 */
-      Referee_HandleOffline(&ref); /* 长时间未接收到数据，裁判系统离线 */
+    if (referee_wait_recv_cplt(100)) { /* 判断裁判系统数据是否接收完成 */
+      referee_handle_offline(&ref); /* 长时间未接收到数据，裁判系统离线 */
     } else {
-      Referee_Parse(&ref); /* 解析裁判系统数据 */
+      referee_parse(&ref); /* 解析裁判系统数据 */
     }
 
     /* 定时接收发送数据 */
     if (xTaskGetTickCount() > tick) {
       tick += THD_DELAY_TICK;
       /* 打包裁判系统数据 */
-      Referee_PackForAI(&for_ai, &ref);
-      Referee_PackForLauncher(&for_launcher, &ref);
-      Referee_PackForChassis(&for_chassis, &ref);
+      referee_pack_for_ai(&for_ai, &ref);
+      referee_pack_for_launcher(&for_launcher, &ref);
+      referee_pack_for_chassis(&for_chassis, &ref);
 
       /* 发送裁判系统数据到其他进程 */
-      MsgDist_Publish(referee_ai_pub, &for_ai);
-      MsgDist_Publish(referee_chassis_pub, &for_chassis);
-      MsgDist_Publish(referee_launcher_pub, &for_launcher);
+      msg_dist_publish(referee_ai_pub, &for_ai);
+      msg_dist_publish(referee_chassis_pub, &for_chassis);
+      msg_dist_publish(referee_launcher_pub, &for_launcher);
 
       /* 获取其他进程数据用于绘制UI */
-      MsgDist_Poll(ui_cap_sub, &(ref.cap_ui), 0);
-      MsgDist_Poll(ui_chassis_sub, &(ref.chassis_ui), 0);
-      MsgDist_Poll(ui_gimbal_sub, &(ref.gimbal_ui), 0);
-      MsgDist_Poll(ui_launcher_sub, &(ref.launcher_ui), 0);
-      MsgDist_Poll(ui_launcher_sub, &(ref.cmd_ui), 0);
+      msg_dist_poll(ui_cap_sub, &(ref.cap_ui), 0);
+      msg_dist_poll(ui_chassis_sub, &(ref.chassis_ui), 0);
+      msg_dist_poll(ui_gimbal_sub, &(ref.gimbal_ui), 0);
+      msg_dist_poll(ui_launcher_sub, &(ref.launcher_ui), 0);
+      msg_dist_poll(ui_launcher_sub, &(ref.cmd_ui), 0);
 #if 0
       xQueueReceive(runtime->msgq.ui.ai, &(ref.ai_ui), 0);
 #endif
 
       /* 刷新UI数据 */
-      Referee_RefreshUI(&ref);
+      referee_refresh_ui(&ref);
 
-      if (Referee_WaitTransCplt(0)) {
-        Referee_PackUiPacket(&ref);
+      if (referee_wait_trans_cplt(0)) {
+        referee_pack_ui_packet(&ref);
       }
-      Referee_StartTransmit(&ref);
+      referee_start_transmit(&ref);
     }
   }
 }
-THREAD_DECLEAR(Thd_Referee, 512, 4);
+THREAD_DECLEAR(thd_referee, 512, 4);

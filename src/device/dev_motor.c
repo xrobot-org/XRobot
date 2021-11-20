@@ -33,7 +33,7 @@ static bool inited = false;
 //   GM6020_YAW_ID = 0x209, /* 5 */
 //   GM6020_PIT_ID = 0x20A, /* 6 */
 
-static float Motor_ModelToLSB(Motor_Model_t model) {
+static float Motor_ModelToLSB(motor_model_t model) {
   switch (model) {
     case MOTOR_M2006:
       return (float)M2006_MAX_ABS_LSB;
@@ -49,7 +49,7 @@ static float Motor_ModelToLSB(Motor_Model_t model) {
   }
 }
 
-static Err_t Motor_Decode(Motor_Feedback_t *fb, const uint8_t *raw) {
+static err_t Motor_Decode(motor_feedback_t *fb, const uint8_t *raw) {
   ASSERT(fb);
   ASSERT(raw);
 
@@ -63,7 +63,7 @@ static Err_t Motor_Decode(Motor_Feedback_t *fb, const uint8_t *raw) {
   return RM_OK;
 }
 
-Err_t Motor_Init(Motor_t *motor, const Motor_Group_t *group_cfg) {
+err_t motor_init(motor_t *motor, const motor_group_t *group_cfg) {
   ASSERT(motor);
   ASSERT(group_cfg);
 
@@ -76,7 +76,7 @@ Err_t Motor_Init(Motor_t *motor, const Motor_Group_t *group_cfg) {
   return DEVICE_OK;
 }
 
-Err_t Motor_Update(Motor_t *motor, uint32_t timeout) {
+err_t motor_update(motor_t *motor, uint32_t timeout) {
   BSP_CAN_RxItem_t pack;
   while (pdPASS ==
          xQueueReceive(motor->msgq_rx, &pack, pdMS_TO_TICKS(timeout))) {
@@ -94,8 +94,8 @@ Err_t Motor_Update(Motor_t *motor, uint32_t timeout) {
   return RM_OK;
 }
 
-Err_t Motor_Control(Motor_t *motor, Motor_GroupID_t group,
-                    Motor_Control_t *output) {
+err_t motor_control(motor_t *motor, motor_group_id_t group,
+                    motor_control_t *output) {
   ASSERT(output);
   ASSERT(motor);
 

@@ -13,7 +13,7 @@ int main(void) {
   HAL_InitPeripherals();
 
   /* Init task */
-  Thd_Init();
+  thd_init();
 
   /* Start scheduler */
   vTaskStartScheduler();

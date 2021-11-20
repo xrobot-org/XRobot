@@ -16,27 +16,26 @@
 #define THD_PERIOD_MS (2)
 #define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
-void Thd_TOF(void* arg) {
+void thd_tof(void* arg) {
   RM_UNUSED(arg);
 
-  TOF_t tof;
+  tof_t tof;
 
-  MsgDist_Publisher_t* tof_fb_pub =
-      MsgDist_CreateTopic("tof_fb", sizeof(TOF_t));
+  publisher_t* tof_fb_pub = msg_dist_create_topic("tof_fb", sizeof(tof_t));
 
-  TOF_Init(&tof);
+  tof_init(&tof);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 
   while (1) {
-    if (TOF_Update(&tof, THD_PERIOD_MS)) {
-      TOF_HandleOffline(&tof);
+    if (tof_update(&tof, THD_PERIOD_MS)) {
+      tof_handle_offline(&tof);
     }
 
-    MsgDist_Publish(tof_fb_pub, &tof);
+    msg_dist_publish(tof_fb_pub, &tof);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
-THREAD_DECLEAR(Thd_TOF, 512, 4);
+THREAD_DECLEAR(thd_tof, 512, 4);

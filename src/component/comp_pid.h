@@ -13,7 +13,7 @@ typedef enum {
   KPID_MODE_NO_D = 0, /* 不使用微分项，PI控制器 */
   KPID_MODE_CALC_D, /* 根据反馈的值计算离散微分，忽略PID_Calc中的fb_dot */
   KPID_MODE_SET_D /* 直接提供微分值，PID_Calc中的fb_dot将被使用，(Gyros) */
-} KPID_Mode_t;
+} kpid_mode_t;
 
 /* PID参数 */
 typedef struct {
@@ -25,12 +25,12 @@ typedef struct {
   float out_limit;     /* 输出绝对值限制 */
   float d_cutoff_freq; /* D项低通截止频率 */
   float range;         /* 计算循环误差时使用，大于0时启用 */
-} KPID_Params_t;
+} kpid_params_t;
 
 /* PID主结构体 */
 typedef struct {
-  KPID_Mode_t mode;
-  const KPID_Params_t *param;
+  kpid_mode_t mode;
+  const kpid_params_t *param;
 
   float dt_min; /* 最小PID_Calc调用间隔 */
   float i;      /* 积分 */
@@ -41,8 +41,8 @@ typedef struct {
     float out;  /* 上次输出 */
   } last;
 
-  LowPassFilter2p_t dfilter; /* D项低通滤波器 */
-} KPID_t;
+  low_pass_filter_2p_t dfilter; /* D项低通滤波器 */
+} kpid_t;
 
 /**
  * @brief 初始化PID
@@ -52,8 +52,8 @@ typedef struct {
  * @param sample_freq 采样频率
  * @param param PID参数
  */
-void PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
-              const KPID_Params_t *param);
+void kpid_init(kpid_t *pid, kpid_mode_t mode, float sample_freq,
+               const kpid_params_t *param);
 
 /**
  * @brief PID计算
@@ -65,18 +65,18 @@ void PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
  * @param dt 间隔时间
  * @return float 计算的输出
  */
-float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt);
+float kpid_calc(kpid_t *pid, float sp, float fb, float fb_dot, float dt);
 
 /**
  * @brief 重置微分项
  *
  * @param pid PID结构体
  */
-void PID_ResetIntegral(KPID_t *pid);
+void kpid_reset_i(kpid_t *pid);
 
 /**
  * @brief 重置PID
  *
  * @param pid PID结构体
  */
-void PID_Reset(KPID_t *pid);
+void kpid_reset(kpid_t *pid);

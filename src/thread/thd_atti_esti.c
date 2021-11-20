@@ -19,44 +19,44 @@
 #define THD_PERIOD_MS (2)
 #define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
-void Thd_AttiEsti(void* arg) {
+void thd_atti_esti(void* arg) {
   RM_UNUSED(arg);
 
-  AHRS_t gimbal_ahrs;
-  Eulr_t gimbal_eulr;
-  Vector3_t accl, gyro;
+  ahrs_t gimbal_ahrs;
+  eulr_t gimbal_eulr;
+  vector3_t accl, gyro;
 
-  MsgDist_Publisher_t* gimbal_eulr_pub =
-      MsgDist_CreateTopic("gimbal_eulr", sizeof(Eulr_t));
+  publisher_t* gimbal_eulr_pub =
+      msg_dist_create_topic("gimbal_eulr", sizeof(eulr_t));
 
-  MsgDist_Subscriber_t* accl_sub = MsgDist_Subscribe("gimbal_accl", true);
-  MsgDist_Subscriber_t* gyro_sub = MsgDist_Subscribe("gimbal_gyro", true);
+  subscriber_t* accl_sub = msg_dist_subscribe("gimbal_accl", true);
+  subscriber_t* gyro_sub = msg_dist_subscribe("gimbal_gyro", true);
 
   /* 初始化姿态解算算法 */
-  AHRS_Init(&gimbal_ahrs, NULL);
+  ahrs_init(&gimbal_ahrs, NULL);
 
   float now;
   uint32_t previous_wake_time = xTaskGetTickCount();
   while (1) {
-    MsgDist_Poll(accl_sub, &accl, 0);
-    MsgDist_Poll(gyro_sub, &gyro, 0);
+    msg_dist_poll(accl_sub, &accl, 0);
+    msg_dist_poll(gyro_sub, &gyro, 0);
 
     /* 锁住RTOS内核防止数据解析过程中断，造成错误 */
     vTaskSuspendAll();
 
     /* 根据设备接收到的数据进行姿态解析 */
     now = (float)xTaskGetTickCount() / configTICK_RATE_HZ;
-    AHRS_Update(&gimbal_ahrs, &accl, &gyro, NULL, now);
+    ahrs_update(&gimbal_ahrs, &accl, &gyro, NULL, now);
 
     /* 根据解析出来的四元数计算欧拉角 */
-    AHRS_GetEulr(&gimbal_eulr, &gimbal_ahrs);
+    ahrs_get_eulr(&gimbal_eulr, &gimbal_ahrs);
     xTaskResumeAll();
 
     /* 发布数据 */
-    MsgDist_Publish(gimbal_eulr_pub, &gimbal_eulr);
+    msg_dist_publish(gimbal_eulr_pub, &gimbal_eulr);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
-THREAD_DECLEAR(Thd_AttiEsti, 256, 3);
+THREAD_DECLEAR(thd_atti_esti, 256, 3);

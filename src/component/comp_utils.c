@@ -12,7 +12,7 @@
  * @param x 输入
  * @return float 计算结果
  */
-inline float InvSqrt(float x) {
+inline float inv_sqrtf(float x) {
 #if 0
   /* Fast inverse square-root */
   /* See: http://en.wikipedia.org/wiki/Fast_inverse_square_root */
@@ -36,7 +36,7 @@ inline float InvSqrt(float x) {
  * @param limit 上下界的绝对值
  * @return float 操作后的值
  */
-inline float AbsClamp(float x, float limit) {
+inline float abs_clampf(float x, float limit) {
   return MIN(limit, MAX(x, -limit));
 }
 
@@ -47,7 +47,7 @@ inline float AbsClamp(float x, float limit) {
  * @param lo 下限
  * @param hi 上限
  */
-inline void Clamp(float *origin, float lo, float hi) {
+inline void clampf(float *origin, float lo, float hi) {
   ASSERT(origin);
   ASSERT(hi > lo);
   *origin = MIN(hi, MAX(*origin, lo));
@@ -59,7 +59,7 @@ inline void Clamp(float *origin, float lo, float hi) {
  * @param in 输入
  * @return float 运算结果
  */
-inline float Sign(float x) {
+inline float signf(float x) {
   if (x == 0.0f)
     return x;
   else
@@ -76,7 +76,7 @@ inline float Sign(float x) {
  *
  * @return 函数运行结果
  */
-inline float CircleError(float sp, float fb, float range) {
+inline float circle_error(float sp, float fb, float range) {
   float error = sp - fb;
   if (range > 0.0f) {
     float half_range = range / 2.0f;
@@ -97,7 +97,7 @@ inline float CircleError(float sp, float fb, float range) {
  * @param delta 变化量
  * @param range 被操作的值变化范围，正数时起效
  */
-inline void CircleAdd(float *origin, float delta, float range) {
+inline void circle_add(float *origin, float delta, float range) {
   float out = *origin + delta;
   if (range > 0.0f) {
     while (out >= range) out -= range;
@@ -111,7 +111,7 @@ inline void CircleAdd(float *origin, float delta, float range) {
  *
  * @param origin 被操作的值
  */
-inline void CircleReverse(float *origin) { *origin = -(*origin) + M_2PI; }
+inline void circle_reverse(float *origin) { *origin = -(*origin) + M_2PI; }
 
 /**
  * @brief 根据目标弹丸速度计算摩擦轮转速
@@ -121,8 +121,8 @@ inline void CircleReverse(float *origin) { *origin = -(*origin) + M_2PI; }
  * @param is17mm 是否为17mm
  * @return 摩擦轮转速
  */
-inline float BulletSpeedToFricRpm(float bullet_speed, float fric_radius,
-                                  bool is17mm) {
+inline float bullet_speed_to_fric_rpm(float bullet_speed, float fric_radius,
+                                      bool is17mm) {
   if (bullet_speed == 0.0f) return 0.f;
   if (is17mm) {
     if (bullet_speed == 15.0f) return 4670.f;
@@ -137,13 +137,17 @@ inline float BulletSpeedToFricRpm(float bullet_speed, float fric_radius,
   return 60.0f * bullet_speed / (M_2PI * fric_radius);
 }
 
+bool gyro_is_stable(vector3_t *gyro) {
+  return ((gyro->x < 0.03f) && (gyro->y < 0.03f) && (gyro->z < 0.03f));
+}
+
 /**
  * @brief 断言失败处理
  *
  * @param file 文件名
  * @param line 行号
  */
-void VerifyFailed(const char *file, uint32_t line) {
+void verify_failed(const char *file, uint32_t line) {
   RM_UNUSED(file);
   RM_UNUSED(line);
   while (1) {

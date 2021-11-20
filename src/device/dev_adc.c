@@ -5,7 +5,7 @@
 static volatile float volt_vrefint_proportion =
     8.0586080586080586080586080586081e-4f;
 
-float Temperature_GetCPU(void) {
+float adc_get_cpu_temp(void) {
   ADC_ChannelConfTypeDef sConfig;
 
   sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
@@ -22,7 +22,7 @@ float Temperature_GetCPU(void) {
   return (temp - 0.76f) * 400.0f + 25.0f;
 }
 
-float Volt_GetBattery(void) {
+float adc_get_batt_volt(void) {
   ADC_ChannelConfTypeDef sConfig;
 
   sConfig.Channel = ADC_CHANNEL_8;
@@ -40,4 +40,4 @@ float Volt_GetBattery(void) {
 
   return volt;
 }
-uint8_t GetHardwareVersion(void) { return 1u; }
+uint8_t adc_get_hardware_version(void) { return 1u; }

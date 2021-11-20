@@ -11,9 +11,9 @@ typedef struct {
   uint32_t size;
   size_t ele_size;
   void *data;
-} CycleBuf_t;
+} cycle_buf_t;
 
-bool CycleBuf_Alloc(CycleBuf_t *cbuf, uint32_t size, size_t ele_size);
-bool CycleBuf_Free(CycleBuf_t *cbuf);
-size_t CycleBuf_In(CycleBuf_t *cbuf, const void *buf, size_t len);
-size_t CycleBuf_Out(CycleBuf_t *cbuf, void *buf, size_t len);
+bool cycle_buf_alloc(cycle_buf_t *cbuf, uint32_t size, size_t ele_size);
+bool cycle_buf_free(cycle_buf_t *cbuf);
+size_t cycle_buf_in(cycle_buf_t *cbuf, const void *buf, size_t len);
+size_t cycle_buf_out(cycle_buf_t *cbuf, void *buf, size_t len);

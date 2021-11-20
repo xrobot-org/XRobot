@@ -14,7 +14,7 @@
  * @param vbat 电池电压值
  * @return float 剩余电量比例
  */
-float Capacity_GetBatteryRemain(float volt);
+float capacity_get_battery_remain(float volt);
 
 /**
  * @brief 通过电压计算容剩余电量
@@ -24,4 +24,4 @@ float Capacity_GetBatteryRemain(float volt);
  * @param v_cutoff 截止电压
  * @return float 电容剩余电量比例
  */
-float Capacity_GetCapacitorRemain(float vcap, float vbat, float v_cutoff);
+float capacity_get_capacitor_remain(float vcap, float vbat, float v_cutoff);

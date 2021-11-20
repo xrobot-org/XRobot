@@ -18,16 +18,16 @@ typedef struct __packed {
   uint8_t press_r;
   uint16_t key;
   uint16_t res;
-} DR16_Data_t;
+} dr16_data_t;
 
 typedef struct {
-  DR16_Data_t data;
-} DR16_t;
+  dr16_data_t data;
+} dr16_t;
 
-int8_t DR16_Init(DR16_t *dr16);
-int8_t DR16_Restart(void);
+int8_t dr16_init(dr16_t *dr16);
+int8_t dr16_restart(void);
 
-int8_t DR16_StartDmaRecv(DR16_t *dr16);
-bool DR16_WaitDmaCplt(uint32_t timeout);
-int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc);
-int8_t DR16_HandleOffline(const DR16_t *dr16, CMD_RC_t *rc);
+int8_t dr16_start_dma_recv(dr16_t *dr16);
+bool dr16_wait_dma_cplt(uint32_t timeout);
+int8_t dr16_parse_rc(const dr16_t *dr16, cmd_rc_t *rc);
+int8_t dr16_handle_offline(const dr16_t *dr16, cmd_rc_t *rc);

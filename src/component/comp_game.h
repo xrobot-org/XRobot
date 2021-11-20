@@ -26,7 +26,7 @@ typedef enum {
   ROBOT_MODEL_DART,          /* 飞镖 */
   ROBOT_MODEL_DART_LANUCHER, /* 飞镖发射架 */
   ROBOT_MODEL_NUM,           /* 型号数量 */
-} Game_RobotModel_t;
+} robot_model_t;
 
 /* 底盘运行模式 */
 typedef enum {
@@ -37,28 +37,28 @@ typedef enum {
   CHASSIS_MODE_ROTOR, /* 小陀螺模式，通过闭环控制使底盘不停旋转 */
   CHASSIS_MODE_INDENPENDENT, /* 独立模式。底盘运行不受云台影响 */
   CHASSIS_MODE_OPEN, /* 开环模式。底盘运行不受PID控制，直接输出到电机 */
-} Game_ChassisMode_t;
+} chassis_mode_t;
 
 /* 小陀螺转动模式 */
 typedef enum {
   ROTOR_MODE_CW,   /* 顺时针转动 */
   ROTOR_MODE_CCW,  /* 逆时针转动 */
   ROTOR_MODE_RAND, /* 随机转动 */
-} Game_ChassisRotorMode_t;
+} chassis_rotor_mode_t;
 
 /* 云台运行模式 */
 typedef enum {
   GIMBAL_MODE_RELAX, /* 放松模式，电机不输出。一般情况云台初始化之后的模式 */
   GIMBAL_MODE_ABSOLUTE, /* 绝对坐标系控制，控制在空间内的绝对姿态 */
   GIMBAL_MODE_RELATIVE, /* 相对坐标系控制，控制相对于底盘的姿态 */
-} Game_GimbalMode_t;
+} gimbal_mode_t;
 
 /* 发射器运行模式 */
 typedef enum {
   LAUNCHER_MODE_RELAX,  /* 放松模式，电机不输出 */
   LAUNCHER_MODE_SAFE,   /* 保险模式，电机闭环控制保持静止 */
   LAUNCHER_MODE_LOADED, /* 上膛模式，摩擦轮开启。随时准备开火 */
-} Game_LauncherMode_t;
+} launcher_mode_t;
 
 /* 开火模式 */
 typedef enum {
@@ -66,7 +66,7 @@ typedef enum {
   FIRE_MODE_BURST,  /* N爆发开火模式 */
   FIRE_MODE_CONT,   /* 持续开火模式 */
   FIRE_MODE_NUM,
-} Game_FireMode_t;
+} fire_mode_t;
 
 /* AI行为状态 */
 typedef enum {
@@ -74,11 +74,11 @@ typedef enum {
   AI_MODE_AUTOAIM, /* 自瞄模式 */
   AI_MODE_HITBUFF, /* 打符模式 */
   AI_MODE_FULLAUTO /* 自动模式 */
-} Game_AI_Mode_t;
+} ai_mode_t;
 
 /* 飞镖发射器运行模式 */
 typedef enum {
   DART_LAUNCHER_MODE_RELAX, /* 放松模式，电机不输出 */
   DART_LAUNCHER_MODE_SAFE,  /* 保险模式，电机闭环控制保持静止 */
   DART_LAUNCHER_MODE_LOADED, /* 上膛模式，摩擦轮开启。随时准备开火 */
-} Game_DartLauncherMode_t;
+} dart_launcher_mode_t;

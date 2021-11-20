@@ -22,54 +22,52 @@
 #define THD_PERIOD_MS (2)
 #define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
-void Thd_CMD(void* arg) {
-  Runtime_t* runtime = arg;
+void thd_cmd(void* arg) {
+  runtime_t* runtime = arg;
 
-  CMD_RC_t rc;
-  CMD_Host_t host;
-  CMD_t cmd;
-  CMD_UI_t cmd_ui;
+  cmd_rc_t rc;
+  cmd_host_t host;
+  cmd_t cmd;
+  cmd_ui_t cmd_ui;
 
-  MsgDist_Publisher_t* cmd_ai_pub =
-      MsgDist_CreateTopic("cmd_ai", sizeof(Game_AI_Mode_t));
-  MsgDist_Publisher_t* cmd_chassis_pub =
-      MsgDist_CreateTopic("cmd_chassis", sizeof(CMD_ChassisCmd_t));
-  MsgDist_Publisher_t* cmd_gimbal_pub =
-      MsgDist_CreateTopic("cmd_gimbal", sizeof(CMD_GimbalCmd_t));
-  MsgDist_Publisher_t* cmd_launcher_pub =
-      MsgDist_CreateTopic("cmd_launcher", sizeof(CMD_LauncherCmd_t));
-  MsgDist_Publisher_t* ui_cmd_pub =
-      MsgDist_CreateTopic("ui_cmd", sizeof(CMD_UI_t));
+  publisher_t* cmd_ai_pub = msg_dist_create_topic("cmd_ai", sizeof(ai_mode_t));
+  publisher_t* cmd_chassis_pub =
+      msg_dist_create_topic("cmd_chassis", sizeof(cmd_chassis_t));
+  publisher_t* cmd_gimbal_pub =
+      msg_dist_create_topic("cmd_gimbal", sizeof(cmd_gimbal_t));
+  publisher_t* cmd_launcher_pub =
+      msg_dist_create_topic("cmd_launcher", sizeof(cmd_launcher_t));
+  publisher_t* ui_cmd_pub = msg_dist_create_topic("ui_cmd", sizeof(cmd_ui_t));
 
-  MsgDist_Subscriber_t* rc_sub = MsgDist_Subscribe("rc_cmd", true);
-  MsgDist_Subscriber_t* host_sub = MsgDist_Subscribe("rc_host", true);
+  subscriber_t* rc_sub = msg_dist_subscribe("rc_cmd", true);
+  subscriber_t* host_sub = msg_dist_subscribe("rc_host", true);
 
   /* 初始化指令处理 */
-  CMD_Init(&cmd, &(runtime->cfg.pilot_cfg->param));
+  cmd_init(&cmd, &(runtime->cfg.pilot_cfg->param));
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 
   while (1) {
     /* 将接收机数据解析为指令数据 */
-    MsgDist_Poll(rc_sub, &rc, 0);  // TODO: 可以阻塞
-    MsgDist_Poll(host_sub, &host, 0);
+    msg_dist_poll(rc_sub, &rc, 0);  // TODO: 可以阻塞
+    msg_dist_poll(host_sub, &host, 0);
 
-    CMD_ParseRc(&rc, &cmd, (float)THD_PERIOD_MS / 1000.0f);
+    cmd_parse_rc(&rc, &cmd, (float)THD_PERIOD_MS / 1000.0f);
 
     /* 判断是否需要让上位机覆写指令 */
-    if (CMD_CheckHostOverwrite(&cmd)) {
-      CMD_ParseHost(&host, &cmd, (float)THD_PERIOD_MS / 1000.0f);
+    if (cmd_check_host_overwrite(&cmd)) {
+      cmd_parse_host(&host, &cmd, (float)THD_PERIOD_MS / 1000.0f);
     }
-    CMD_PackUi(&cmd_ui, &cmd);
+    cmd_pack_ui(&cmd_ui, &cmd);
 
-    MsgDist_Publish(cmd_ai_pub, &(cmd.ai_mode));
-    MsgDist_Publish(cmd_chassis_pub, &(cmd.chassis));
-    MsgDist_Publish(cmd_gimbal_pub, &(cmd.gimbal));
-    MsgDist_Publish(cmd_launcher_pub, &(cmd.launcher));
-    MsgDist_Publish(ui_cmd_pub, &cmd_ui);
+    msg_dist_publish(cmd_ai_pub, &(cmd.ai_mode));
+    msg_dist_publish(cmd_chassis_pub, &(cmd.chassis));
+    msg_dist_publish(cmd_gimbal_pub, &(cmd.gimbal));
+    msg_dist_publish(cmd_launcher_pub, &(cmd.launcher));
+    msg_dist_publish(ui_cmd_pub, &cmd_ui);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
-THREAD_DECLEAR(Thd_CMD, 128, 3);
+THREAD_DECLEAR(thd_cmd, 128, 3);

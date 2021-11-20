@@ -7,19 +7,19 @@
 #include "dev.h"
 
 typedef struct {
-  Vector3_t magn_offset; /* 磁力计偏置 */
-  Vector3_t magn_scale;  /* 磁力计缩放 */
-} IST8310_Cali_t;        /* IST8310校准数据 */
+  vector3_t magn_offset; /* 磁力计偏置 */
+  vector3_t magn_scale;  /* 磁力计缩放 */
+} ist8310_cali_t;        /* IST8310校准数据 */
 
 typedef struct {
-  Vector3_t magn;
-  const IST8310_Cali_t *cali;
-} IST8310_t;
+  vector3_t magn;
+  const ist8310_cali_t *cali;
+} ist8310_t;
 
-int8_t IST8310_Init(IST8310_t *ist8310, const IST8310_Cali_t *cali);
-int8_t IST8310_Restart(void);
+int8_t ist8310_init(ist8310_t *ist8310, const ist8310_cali_t *cali);
+int8_t ist8310_restart(void);
 
-bool IST8310_WaitNew(uint32_t timeout);
-int8_t IST8310_StartDmaRecv();
-uint32_t IST8310_WaitDmaCplt();
-int8_t IST8310_Parse(IST8310_t *ist8310);
+bool ist8310_wait_new(uint32_t timeout);
+int8_t ist8310_start_dma_recv();
+uint32_t ist8310_wait_dma_cplt();
+int8_t ist8310_parse(ist8310_t *ist8310);

@@ -13,9 +13,9 @@
 
 /* clang-format off */
 #ifdef MCU_DEBUG_BUILD
-Config_RobotParam_t param_default = {
+config_robot_param_t param_default = {
 #else
-static const Config_RobotParam_t param_default = {
+static const config_robot_param_t param_default = {
 #endif
   .model = ROBOT_MODEL_INFANTRY,
 
@@ -176,7 +176,7 @@ static const Config_RobotParam_t param_default = {
   },
 }; /* param_default */
 
-static const Config_RobotParam_t param_hero = {
+static const config_robot_param_t param_hero = {
   .model = ROBOT_MODEL_HERO,
 
   .chassis = { /* 底盘模块参数 */
@@ -338,9 +338,9 @@ static const Config_RobotParam_t param_hero = {
   },
 }; /* param_hero */
 
-/* static const Config_RobotParam_t param_xxx; */
+/* static const config_robot_param_t param_xxx; */
 
-static const Config_PilotCfg_t cfg_qs = {
+static const config_pilot_cfg_t cfg_qs = {
   .param = {
     .sens_mouse = 0.06f,
     .sens_stick = 6.0f,
@@ -369,7 +369,7 @@ static const Config_PilotCfg_t cfg_qs = {
   },
 };
 
-static const Config_PilotCfg_t cfg_zyma = {
+static const config_pilot_cfg_t cfg_zyma = {
   .param = {
     .sens_mouse = 0.06f,
     .sens_stick = 6.0f,
@@ -398,11 +398,11 @@ static const Config_PilotCfg_t cfg_zyma = {
   },
 };
 
-/* static const Config_PilotCfg_t cfg_xx; */
+/* static const config_pilot_cfg_t cfg_xx; */
 
 /* clang-format on */
 
-static const Config_RobotParamMap_t robot_param_map[] = {
+static const config_robot_param_map_t robot_param_map[] = {
     {"default", &param_default},
     {"infantry", &param_default},
     {"hero", &param_hero},
@@ -413,7 +413,7 @@ static const Config_RobotParamMap_t robot_param_map[] = {
     {NULL, NULL},
 };
 
-static const Config_PilotCfgMap_t pilot_cfg_map[] = {
+static const config_pilot_cfg_map_t pilot_cfg_map[] = {
     {"qs", &cfg_qs},
     {"zyma", &cfg_zyma},
     /* {"xx", &cfg_xx}, */
@@ -425,11 +425,11 @@ static const Config_PilotCfgMap_t pilot_cfg_map[] = {
  *
  * @param cfg 配置信息
  */
-void Config_Get(Config_t *cfg) {
+void config_get(config_t *cfg) {
   BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(*cfg));
 
-  cfg->pilot_cfg = Config_GetPilotCfg(cfg->pilot_cfg_name);
-  cfg->robot_param = Config_GetRobotParam(cfg->robot_param_name);
+  cfg->pilot_cfg = config_get_pilot_cfg(cfg->pilot_cfg_name);
+  cfg->robot_param = config_get_robot_param(cfg->robot_param_name);
 
   /* 防止第一次烧写后访问NULL指针 */
   if (cfg->robot_param == NULL) cfg->robot_param = &param_default;
@@ -458,7 +458,7 @@ void Config_Get(Config_t *cfg) {
  *
  * @param cfg 配置信息
  */
-void Config_Set(Config_t *cfg) {
+void config_set(config_t *cfg) {
   vTaskSuspendAll();
   BSP_Flash_EraseSector(11);
   BSP_Flash_WriteBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(*cfg));
@@ -469,9 +469,10 @@ void Config_Set(Config_t *cfg) {
  * @brief 通过机器人参数名称获取机器人参数的指针
  *
  * @param robot_param_name 机器人参数名称
- * @return const Config_RobotParam_t* 机器人参数的指针
+ * @return const config_robot_param_t* 机器人参数的指针
  */
-const Config_RobotParam_t *Config_GetRobotParam(const char *robot_param_name) {
+const config_robot_param_t *config_get_robot_param(
+    const char *robot_param_name) {
   ASSERT(robot_param_name);
   for (size_t j = 0; robot_param_map[j].name != NULL; j++) {
     if (strcmp(robot_param_map[j].name, robot_param_name) == 0) {
@@ -485,9 +486,9 @@ const Config_RobotParam_t *Config_GetRobotParam(const char *robot_param_name) {
  * @brief 通过操作手配置名称获取操作手配置的指针
  *
  * @param pilot_cfg_name 操作手配置名称
- * @return const Config_PilotCfg_t* 操作手配置的指针
+ * @return const config_pilot_cfg_t* 操作手配置的指针
  */
-const Config_PilotCfg_t *Config_GetPilotCfg(const char *pilot_cfg_name) {
+const config_pilot_cfg_t *config_get_pilot_cfg(const char *pilot_cfg_name) {
   ASSERT(pilot_cfg_name);
   for (size_t j = 0; pilot_cfg_map[j].name != NULL; j++) {
     if (strcmp(pilot_cfg_map[j].name, pilot_cfg_name) == 0) {
@@ -497,10 +498,10 @@ const Config_PilotCfg_t *Config_GetPilotCfg(const char *pilot_cfg_name) {
   return NULL; /* No match. */
 }
 
-const Config_PilotCfgMap_t *Config_GetPilotNameMap(void) {
+const config_pilot_cfg_map_t *config_get_pilot_name_map(void) {
   return pilot_cfg_map;
 }
 
-const Config_RobotParamMap_t *Config_GetRobotNameMap(void) {
+const config_robot_param_map_t *config_get_robot_name_map(void) {
   return robot_param_map;
 }

@@ -13,8 +13,8 @@
  * @param sample_freq 采样频率
  * @param cutoff_freq 截止频率
  */
-void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq,
-                          float cutoff_freq) {
+void low_pass_filter_2p_init(low_pass_filter_2p_t *f, float sample_freq,
+                             float cutoff_freq) {
   ASSERT(f);
 
   f->cutoff_freq = cutoff_freq;
@@ -52,7 +52,7 @@ void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq,
  * @param sample 采样的值
  * @return float 滤波后的值
  */
-float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample) {
+float low_pass_filter_2p_apply(low_pass_filter_2p_t *f, float sample) {
   ASSERT(f);
 
   /* do the filtering */
@@ -81,7 +81,7 @@ float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample) {
  * @param sample 采样的值
  * @return float 滤波后的值
  */
-float LowPassFilter2p_Reset(LowPassFilter2p_t *f, float sample) {
+float low_pass_filter_2p_reset(low_pass_filter_2p_t *f, float sample) {
   ASSERT(f);
 
   const float dval = sample / (f->b0 + f->b1 + f->b2);
@@ -95,7 +95,7 @@ float LowPassFilter2p_Reset(LowPassFilter2p_t *f, float sample) {
     f->delay_element_2 = sample;
   }
 
-  return LowPassFilter2p_Apply(f, sample);
+  return low_pass_filter_2p_apply(f, sample);
 }
 
 /**
@@ -106,8 +106,8 @@ float LowPassFilter2p_Reset(LowPassFilter2p_t *f, float sample) {
  * @param notch_freq 中心频率
  * @param bandwidth 带宽
  */
-void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq,
-                      float bandwidth) {
+void notch_filter_init(notch_filter_t *f, float sample_freq, float notch_freq,
+                       float bandwidth) {
   ASSERT(f);
 
   f->notch_freq = notch_freq;
@@ -147,7 +147,7 @@ void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq,
  * @param sample 采样的值
  * @return float 滤波后的值
  */
-inline float NotchFilter_Apply(NotchFilter_t *f, float sample) {
+inline float notch_filter_apply(notch_filter_t *f, float sample) {
   ASSERT(f);
 
   /* Direct Form II implementation */
@@ -169,7 +169,7 @@ inline float NotchFilter_Apply(NotchFilter_t *f, float sample) {
  * @param sample 采样的值
  * @return float 滤波后的值
  */
-float NotchFilter_Reset(NotchFilter_t *f, float sample) {
+float notch_filter_reset(notch_filter_t *f, float sample) {
   ASSERT(f);
 
   float dval = sample;
@@ -181,5 +181,5 @@ float NotchFilter_Reset(NotchFilter_t *f, float sample) {
   f->delay_element_1 = dval;
   f->delay_element_2 = dval;
 
-  return NotchFilter_Apply(f, sample);
+  return notch_filter_apply(f, sample);
 }

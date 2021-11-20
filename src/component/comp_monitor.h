@@ -31,11 +31,11 @@ typedef struct {
   uint32_t found_lost;
   bool lost;
 
-} Monitor_t;
+} monitor_t;
 
-Monitor_t *Monitor_Create(const char *name, uint8_t priority,
+monitor_t *monitor_create(const char *name, uint8_t priority,
                           uint32_t patient_lost, uint32_t patient_work);
 
-void Monitor_Report(Monitor_t *monitor, uint32_t sys_time);
-void Monitor_Examine(uint32_t sys_time);
-void Monitor_GetDetailTable(char *detail_string, size_t len);
+void monitor_report(monitor_t *monitor, uint32_t sys_time);
+void monitor_examine(uint32_t sys_time);
+void monitor_get_detail(char *detail_string, size_t len);
