@@ -7,7 +7,7 @@ typedef enum {
   LED_ON,
   LED_OFF,
   LED_TAGGLE,
-} LED_Status_t;
+} led_status_t;
 
 /* LED通道 */
 typedef enum {
@@ -25,7 +25,7 @@ typedef enum {
 #endif
   LED_RED,
   LED_GRN,
-} LED_Channel_t;
+} led_channel_t;
 
 /* 用于A板时，会无视duty_cycle的值。使用B板时，duty_cycle才有效*/
-int8_t LED_Set(LED_Channel_t ch, LED_Status_t s, float duty_cycle);
+int8_t led_set(led_channel_t ch, led_status_t s, float duty_cycle);

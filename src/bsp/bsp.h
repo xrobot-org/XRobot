@@ -1,7 +1,7 @@
 #pragma once
 
 typedef struct {
-  void (*Fn)(void *);
+  void (*fn)(void *);
   void *arg;
 } BSP_Callback_t;
 
@@ -11,4 +11,4 @@ typedef struct {
 #define BSP_ERR_INITED (-3)
 #define BSP_ERR_NO_DEV (-4)
 
-#define SIGNAL_BSP_USB_BUF_RECV (1u << 0)
+void BSP_Init(void);

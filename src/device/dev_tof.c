@@ -11,13 +11,13 @@
 
 #define TOF_RES (1000) /* TOF数据分辨率 */
 
-void TOF_Decode(TOF_Feedback_t *fb, const uint8_t *raw) {
+void TOF_Decode(tof_feedback_t *fb, const uint8_t *raw) {
   fb->dist = (float)((raw[2] << 16) | (raw[1] << 8) | raw[0]) / (float)TOF_RES;
   fb->status = raw[3];
   fb->signal_strength = (uint16_t)((raw[5] << 8) | raw[4]);
 }
 
-Err_t TOF_Init(TOF_t *tof) {
+err_t tof_init(tof_t *tof) {
   tof->msgq_feedback = xQueueCreate(1, sizeof(BSP_CAN_RxItem_t));
 
   if (tof->msgq_feedback)
@@ -26,7 +26,7 @@ Err_t TOF_Init(TOF_t *tof) {
     return ERR_FAIL;
 }
 
-Err_t TOF_Update(TOF_t *tof, uint32_t timeout) {
+err_t tof_update(tof_t *tof, uint32_t timeout) {
   ASSERT(tof);
   BSP_CAN_RxItem_t pack;
   while (pdPASS ==
@@ -38,7 +38,7 @@ Err_t TOF_Update(TOF_t *tof, uint32_t timeout) {
   return RM_OK;
 }
 
-Err_t TOF_HandleOffline(TOF_t *tof) {
+err_t tof_handle_offline(tof_t *tof) {
   ASSERT(tof);
   tof->feedback.dist = 0;
   tof->feedback.signal_strength = 0;

@@ -31,19 +31,19 @@ static const uint16_t crc16_tab[256] = {
     0xc514, 0xb1ab, 0xa022, 0x92b9, 0x8330, 0x7bc7, 0x6a4e, 0x58d5, 0x495c,
     0x3de3, 0x2c6a, 0x1ef1, 0x0f78};
 
-static inline uint16_t CRC16_Byte(uint16_t crc, const uint8_t data) {
+static inline uint16_t crc16_byte(uint16_t crc, const uint8_t data) {
   return (crc >> 8) ^ crc16_tab[(crc ^ data) & 0xff];
 }
 
-uint16_t CRC16_Calc(const uint8_t *buf, size_t len, uint16_t crc) {
-  while (len--) crc = CRC16_Byte(crc, *buf++);
+uint16_t crc16_calc(const uint8_t *buf, size_t len, uint16_t crc) {
+  while (len--) crc = crc16_byte(crc, *buf++);
   return crc;
 }
 
-bool CRC16_Verify(const uint8_t *buf, size_t len) {
+bool crc16_verify(const uint8_t *buf, size_t len) {
   if (len < 2) return false;
 
-  uint16_t expected = CRC16_Calc(buf, len - sizeof(uint16_t), CRC16_INIT);
+  uint16_t expected = crc16_calc(buf, len - sizeof(uint16_t), CRC16_INIT);
   return expected ==
          ((const uint16_t *)((const uint8_t *)buf +
                              (len % 2)))[len / sizeof(uint16_t) - 1];

@@ -75,7 +75,7 @@ static void IST8310_IntCallback(void) {
   portYIELD_FROM_ISR(switch_required);
 }
 
-int8_t IST8310_Init(IST8310_t *ist8310, const IST8310_Cali_t *cali) {
+int8_t ist8310_init(ist8310_t *ist8310, const ist8310_cali_t *cali) {
   ASSERT(ist8310);
   ASSERT(cali);
   if (inited) return DEVICE_ERR_INITED;
@@ -114,21 +114,21 @@ int8_t IST8310_Init(IST8310_t *ist8310, const IST8310_Cali_t *cali) {
   return DEVICE_OK;
 }
 
-bool IST8310_WaitNew(uint32_t timeout) {
+bool ist8310_wait_new(uint32_t timeout) {
   return xTaskNotifyWait(0, 0, (uint32_t *)SIGNAL_IST8310_MAGN_NEW_DATA,
                          pdMS_TO_TICKS(timeout));
 }
 
-int8_t IST8310_StartDmaRecv() {
+int8_t ist8310_start_dma_recv() {
   IST8310_Read(IST8310_DATAXL, ist8310_rxbuf, IST8310_LEN_RX_BUFF);
   return DEVICE_OK;
 }
 
-uint32_t IST8310_WaitDmaCplt() {
+uint32_t ist8310_wait_dma_cplt() {
   return xTaskNotifyWait(0, 0, (uint32_t *)SIGNAL_IST8310_MAGN_RAW_REDY, 0);
 }
 
-int8_t IST8310_Parse(IST8310_t *ist8310) {
+int8_t ist8310_parse(ist8310_t *ist8310) {
   ASSERT(ist8310);
 
 #if 1

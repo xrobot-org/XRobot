@@ -20,15 +20,15 @@
 #include "mid_msg_dist.h"
 #include "thd.h"
 
-void Thd_MsgDist(void *arg) {
+void thd_msg_dist(void *arg) {
   RM_UNUSED(arg); /* 未使用arg，消除警告 */
 
   /* 初始化消息分发 */
-  MsgDist_Init();
+  msg_dist_init();
 
   while (1) {
     /* 消息分发 */
-    MsgDist_Distute();
+    msg_dist_distribute();
   }
 }
-THREAD_DECLEAR(Thd_MsgDist, 128, 4);
+THREAD_DECLEAR(thd_msg_dist, 128, 4);

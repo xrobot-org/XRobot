@@ -23,9 +23,9 @@ typedef enum {
   SERVO_Z,
 #endif
   SERVO_NUM,
-} Servo_Channel_t;
+} servo_channel_t;
 
-int8_t Servo_Init(Servo_Channel_t ch, float max_angle);
-int8_t Servo_Start(Servo_Channel_t ch);
-int8_t Servo_Set(Servo_Channel_t ch, uint8_t angle);
-int8_t Servo_Stop(Servo_Channel_t ch);
+int8_t servo_init(servo_channel_t ch, float max_angle);
+int8_t servo_start(servo_channel_t ch);
+int8_t servo_set(servo_channel_t ch, uint8_t angle);
+int8_t servo_stop(servo_channel_t ch);

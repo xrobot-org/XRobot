@@ -16,8 +16,8 @@
 
 #define THD_PERIOD_MS (2)
 
-void Thd_USB(void* arg) {
-  Runtime_t* runtime = arg;
+void thd_usb(void* arg) {
+  runtime_t* runtime = arg;
   RM_UNUSED(runtime);
 
   // This should be called after scheduler/kernel is started.
@@ -31,4 +31,4 @@ void Thd_USB(void* arg) {
     tud_task();
   }
 }
-THREAD_DECLEAR(Thd_USB, 128, 4);
+THREAD_DECLEAR(thd_usb, 128, 4);

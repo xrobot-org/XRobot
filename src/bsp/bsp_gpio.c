@@ -10,8 +10,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     if (GPIO_Pin & (1 << i)) {
       BSP_Callback_t cb = callback_list[i];
 
-      if (cb.Fn) {
-        cb.Fn(cb.arg);
+      if (cb.fn) {
+        cb.fn(cb.arg);
       }
     }
   }
@@ -23,7 +23,7 @@ int8_t BSP_GPIO_RegisterCallback(uint16_t pin, void (*callback)(void *),
 
   for (uint8_t i = 0; i < 16; i++) {
     if (pin & (1 << i)) {
-      callback_list[i].Fn = callback;
+      callback_list[i].fn = callback;
       callback_list[i].arg = callback_arg;
       return BSP_OK;
     }

@@ -4,6 +4,8 @@
 
 #include "comp_mixer.h"
 
+#include "comp_utils.h"
+
 /**
  * @brief 初始化混合器
  *
@@ -11,7 +13,7 @@
  * @param mode 混合器模式
  * @return int8_t 0对应没有错误
  */
-int8_t Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode) {
+int8_t mixer_init(mixer_t *mixer, mixer_mode_t mode) {
   ASSERT(mixer);
 
   mixer->mode = mode;
@@ -28,7 +30,7 @@ int8_t Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode) {
  * @param scale_factor 输出放大因子
  * @return int8_t 0对应没有错误
  */
-int8_t Mixer_Apply(Mixer_t *mixer, MoveVector_t *move_vec, float *out,
+int8_t mixer_apply(mixer_t *mixer, move_vector_t *move_vec, float *out,
                    size_t len, float scale_factor) {
   ASSERT(mixer);
   ASSERT(move_vec);

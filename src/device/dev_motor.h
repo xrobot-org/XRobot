@@ -30,14 +30,14 @@ typedef enum {
   MOTOR_M2006,
   MOTOR_M3508,
   MOTOR_GM6020,
-} Motor_Model_t;
+} motor_model_t;
 
 typedef struct {
   uint32_t id_feedback;
   uint32_t id_control;
-  Motor_Model_t model[4];
+  motor_model_t model[4];
   uint8_t num;
-} Motor_Group_t;
+} motor_group_t;
 
 typedef union {
   float as_array[4];
@@ -49,14 +49,14 @@ typedef union {
     float m4;
   } as_chassis;
 
-  Eulr_t as_gimbal;
+  eulr_t as_gimbal;
 
   struct {
     float fric_left;
     float fric_right;
     float trig;
   } as_launcher;
-} Motor_Control_t;
+} motor_control_t;
 
 /* 电机反馈信息 */
 typedef struct {
@@ -64,30 +64,30 @@ typedef struct {
   float rotational_speed; /* 转速 单位：rpm */
   float torque_current;   /* 转矩电流 单位：A*/
   float temp;             /* 电机温度 单位：℃*/
-} Motor_Feedback_t;
+} motor_feedback_t;
 
 typedef union {
-  Motor_Feedback_t as_array[4];
+  motor_feedback_t as_array[4];
 
   struct {
-    Motor_Feedback_t m1;
-    Motor_Feedback_t m2;
-    Motor_Feedback_t m3;
-    Motor_Feedback_t m4;
+    motor_feedback_t m1;
+    motor_feedback_t m2;
+    motor_feedback_t m3;
+    motor_feedback_t m4;
   } as_chassis;
 
   struct {
-    Motor_Feedback_t yaw;
-    Motor_Feedback_t pit;
-    Motor_Feedback_t rol;
+    motor_feedback_t yaw;
+    motor_feedback_t pit;
+    motor_feedback_t rol;
   } as_gimbal;
 
   struct {
-    Motor_Feedback_t fric_left;
-    Motor_Feedback_t fric_right;
-    Motor_Feedback_t trig;
+    motor_feedback_t fric_left;
+    motor_feedback_t fric_right;
+    motor_feedback_t trig;
   } as_launcher;
-} Motor_FeedbackGroup_t;
+} motor_feedback_group_t;
 
 typedef enum {
   MOTOR_GROUT_ID_CHASSIS = 0,
@@ -96,18 +96,18 @@ typedef enum {
   MOTOR_GROUT_ID_LAUNCHER1,
   MOTOR_GROUT_ID_LAUNCHER2,
   MOTOR_GROUT_ID_NUM,
-} Motor_GroupID_t;
+} motor_group_id_t;
 
 typedef struct {
-  Motor_FeedbackGroup_t feedback[MOTOR_GROUT_ID_NUM];
+  motor_feedback_group_t feedback[MOTOR_GROUT_ID_NUM];
   QueueHandle_t msgq_tx;
   QueueHandle_t msgq_rx;
 
-  const Motor_Group_t *group_cfg;
-} Motor_t;
+  const motor_group_t *group_cfg;
+} motor_t;
 
-Err_t Motor_Init(Motor_t *motor, const Motor_Group_t *group_cfg);
-Err_t Motor_Update(Motor_t *motor, uint32_t timeout);
-Err_t Motor_Control(Motor_t *motor, Motor_GroupID_t group,
-                    Motor_Control_t *output);
-Err_t Motor_HandleOffline(Motor_t *motor);
+err_t motor_init(motor_t *motor, const motor_group_t *group_cfg);
+err_t motor_update(motor_t *motor, uint32_t timeout);
+err_t motor_control(motor_t *motor, motor_group_id_t group,
+                    motor_control_t *output);
+err_t motor_handle_offline(motor_t *motor);

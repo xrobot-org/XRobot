@@ -6,12 +6,12 @@
 #include "FreeRTOS.h"
 #include "comp_utils.h"
 
-static uint32_t CycleBuf_Unused(CycleBuf_t *cbuf) {
+static uint32_t cycle_buf_unused(cycle_buf_t *cbuf) {
   return (cbuf->size) - (cbuf->in - cbuf->out);
 }
 
-static void CycleBuf_CopyIn(CycleBuf_t *cbuf, const void *src, uint32_t len,
-                            uint32_t off) {
+static void cycle_buf_copy_in(cycle_buf_t *cbuf, const void *src, uint32_t len,
+                              uint32_t off) {
   ASSERT(cbuf);
   ASSERT(src);
 
@@ -30,8 +30,8 @@ static void CycleBuf_CopyIn(CycleBuf_t *cbuf, const void *src, uint32_t len,
   memcpy(cbuf->data, src + l, len - l);
 }
 
-static void CycleBuf_CopyOut(CycleBuf_t *cbuf, void *dst, uint32_t len,
-                             uint32_t off) {
+static void cycle_buf_copy_out(cycle_buf_t *cbuf, void *dst, uint32_t len,
+                               uint32_t off) {
   ASSERT(cbuf);
   ASSERT(dst);
 
@@ -50,7 +50,7 @@ static void CycleBuf_CopyOut(CycleBuf_t *cbuf, void *dst, uint32_t len,
   memcpy(dst + l, cbuf->data, len - l);
 }
 
-bool CycleBuf_Alloc(CycleBuf_t *cbuf, uint32_t size, size_t ele_size) {
+bool cycle_buf_alloc(cycle_buf_t *cbuf, uint32_t size, size_t ele_size) {
   ASSERT(cbuf);
   ASSERT(size);
 
@@ -68,7 +68,7 @@ bool CycleBuf_Alloc(CycleBuf_t *cbuf, uint32_t size, size_t ele_size) {
   return true;
 }
 
-bool CycleBuf_Free(CycleBuf_t *cbuf) {
+bool cycle_buf_free(cycle_buf_t *cbuf) {
   if (cbuf == NULL) return false;
   vPortFree(cbuf->data);
   cbuf->in = 0;
@@ -79,19 +79,19 @@ bool CycleBuf_Free(CycleBuf_t *cbuf) {
   return true;
 }
 
-size_t CycleBuf_In(CycleBuf_t *cbuf, const void *buf, size_t len) {
+size_t cycle_buf_in(cycle_buf_t *cbuf, const void *buf, size_t len) {
   if (len > cbuf->size) len = cbuf->size;
-  CycleBuf_CopyIn(cbuf, buf, len, cbuf->in);
+  cycle_buf_copy_in(cbuf, buf, len, cbuf->in);
   cbuf->in += len;
-  uint32_t l = CycleBuf_Unused(cbuf);
+  uint32_t l = cycle_buf_unused(cbuf);
   if (len > l) cbuf->out += len - l;
   return len;
 }
 
-size_t CycleBuf_Out(CycleBuf_t *cbuf, void *buf, size_t len) {
+size_t cycle_buf_out(cycle_buf_t *cbuf, void *buf, size_t len) {
   uint32_t l = cbuf->in - cbuf->out;
   if (len > l) len = l;
-  CycleBuf_CopyOut(cbuf, buf, len, cbuf->out);
+  cycle_buf_copy_out(cbuf, buf, len, cbuf->out);
   cbuf->out += len;
   return len;
 }

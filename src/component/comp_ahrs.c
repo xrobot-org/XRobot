@@ -21,8 +21,8 @@
  * @param now 现在时刻
  * @return int8_t 0对应没有错误
  */
-static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const Vector3_t *accl,
-                             const Vector3_t *gyro, float now) {
+static int8_t ahrs_update_imu(ahrs_t *ahrs, const vector3_t *accl,
+                              const vector3_t *gyro, float now) {
   ASSERT(ahrs);
   ASSERT(accl);
   ASSERT(gyro);
@@ -58,7 +58,7 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const Vector3_t *accl,
    * accelerometer normalisation) */
   if (!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
     /* Normalise accelerometer measurement */
-    recip_norm = InvSqrt(ax * ax + ay * ay + az * az);
+    recip_norm = inv_sqrtf(ax * ax + ay * ay + az * az);
     ax *= recip_norm;
     ay *= recip_norm;
     az *= recip_norm;
@@ -88,7 +88,7 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const Vector3_t *accl,
          _2q2 * ay;
 
     /* normalise step magnitude */
-    recip_norm = InvSqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3);
+    recip_norm = inv_sqrtf(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3);
 
     s0 *= recip_norm;
     s1 *= recip_norm;
@@ -110,8 +110,8 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const Vector3_t *accl,
 
   /* Normalise quaternion */
   recip_norm =
-      InvSqrt(ahrs->quat.q0 * ahrs->quat.q0 + ahrs->quat.q1 * ahrs->quat.q1 +
-              ahrs->quat.q2 * ahrs->quat.q2 + ahrs->quat.q3 * ahrs->quat.q3);
+      inv_sqrtf(ahrs->quat.q0 * ahrs->quat.q0 + ahrs->quat.q1 * ahrs->quat.q1 +
+                ahrs->quat.q2 * ahrs->quat.q2 + ahrs->quat.q3 * ahrs->quat.q3);
   ahrs->quat.q0 *= recip_norm;
   ahrs->quat.q1 *= recip_norm;
   ahrs->quat.q2 *= recip_norm;
@@ -127,7 +127,7 @@ static int8_t AHRS_UpdateIMU(AHRS_t *ahrs, const Vector3_t *accl,
  * @param magn 磁力计数据
  * @return int8_t 0对应没有错误
  */
-int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn) {
+int8_t ahrs_init(ahrs_t *ahrs, const vector3_t *magn) {
   ASSERT(ahrs);
 
   ahrs->quat.q0 = 1.0f;
@@ -183,13 +183,13 @@ int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn) {
  * @param now 现在时刻
  * @return int8_t 0对应没有错误
  */
-int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
-                   const Vector3_t *magn, float now) {
+int8_t ahrs_update(ahrs_t *ahrs, const vector3_t *accl, const vector3_t *gyro,
+                   const vector3_t *magn, float now) {
   ASSERT(ahrs);
   ASSERT(accl);
   ASSERT(gyro);
 
-  if (magn == NULL) return AHRS_UpdateIMU(ahrs, accl, gyro, now);
+  if (magn == NULL) return ahrs_update_imu(ahrs, accl, gyro, now);
 
   float recip_norm;
   float s0, s1, s2, s3;
@@ -206,7 +206,7 @@ int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
   /* Use IMU algorithm if magnetometer measurement invalid (avoids NaN in */
   /* magnetometer normalisation) */
   if ((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f)) {
-    return AHRS_UpdateIMU(ahrs, accl, gyro, now);
+    return ahrs_update_imu(ahrs, accl, gyro, now);
   }
 
   ahrs->dt = now - ahrs->last_update;
@@ -234,13 +234,13 @@ int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
    * accelerometer normalisation) */
   if (!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
     /* Normalise accelerometer measurement */
-    recip_norm = InvSqrt(ax * ax + ay * ay + az * az);
+    recip_norm = inv_sqrtf(ax * ax + ay * ay + az * az);
     ax *= recip_norm;
     ay *= recip_norm;
     az *= recip_norm;
 
     /* Normalise magnetometer measurement */
-    recip_norm = InvSqrt(mx * mx + my * my + mz * mz);
+    recip_norm = inv_sqrtf(mx * mx + my * my + mz * mz);
     mx *= recip_norm;
     my *= recip_norm;
     mz *= recip_norm;
@@ -317,7 +317,7 @@ int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
          _2bx * ahrs->quat.q1 *
              (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
     /* normalise step magnitude */
-    recip_norm = InvSqrt(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3);
+    recip_norm = inv_sqrtf(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3);
     s0 *= recip_norm;
     s1 *= recip_norm;
     s2 *= recip_norm;
@@ -338,8 +338,8 @@ int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
 
   /* Normalise quaternion */
   recip_norm =
-      InvSqrt(ahrs->quat.q0 * ahrs->quat.q0 + ahrs->quat.q1 * ahrs->quat.q1 +
-              ahrs->quat.q2 * ahrs->quat.q2 + ahrs->quat.q3 * ahrs->quat.q3);
+      inv_sqrtf(ahrs->quat.q0 * ahrs->quat.q0 + ahrs->quat.q1 * ahrs->quat.q1 +
+                ahrs->quat.q2 * ahrs->quat.q2 + ahrs->quat.q3 * ahrs->quat.q3);
   ahrs->quat.q0 *= recip_norm;
   ahrs->quat.q1 *= recip_norm;
   ahrs->quat.q2 *= recip_norm;
@@ -355,7 +355,7 @@ int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
  * @param ahrs 姿态解算主结构体
  * @return int8_t 0对应没有错误
  */
-int8_t AHRS_GetEulr(Eulr_t *eulr, const AHRS_t *ahrs) {
+int8_t ahrs_get_eulr(eulr_t *eulr, const ahrs_t *ahrs) {
   ASSERT(eulr);
   ASSERT(ahrs);
 
@@ -393,4 +393,4 @@ int8_t AHRS_GetEulr(Eulr_t *eulr, const AHRS_t *ahrs) {
  *
  * @param eulr 被操作的数据
  */
-void AHRS_ResetEulr(Eulr_t *eulr) { memset(eulr, 0, sizeof(*eulr)); }
+void ahrs_reset_eulr(eulr_t *eulr) { memset(eulr, 0, sizeof(*eulr)); }

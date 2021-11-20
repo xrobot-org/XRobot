@@ -24,42 +24,24 @@
 #include "mod_config.h"
 #include "task.h"
 
-extern void Thd_AI(void *arg);
-extern void Thd_AttiEsti(void *arg);
-extern void Thd_Cap(void *arg);
-extern void Thd_CLI(void *arg);
-extern void Thd_CMD(void *arg);
-extern void Thd_CtrlChassis(void *arg);
-extern void Thd_CtrlGimbal(void *arg);
-extern void Thd_CtrlLauncher(void *arg);
-extern void Thd_IMU(void *arg);
-extern void Thd_Info(void *arg);
-extern void Thd_Monitor(void *arg);
-extern void Thd_Motor(void *arg);
-extern void Thd_MsgDist(void *arg);
-extern void Thd_RC(void *arg);
-extern void Thd_Referee(void *arg);
-extern void Thd_TOF(void *arg);
-extern void Thd_USB(void *arg);
-
 /* 机器人运行时的数据 */
-Runtime_t runtime;
+runtime_t runtime;
 
-extern const Thd_t *__thread_start;
-extern const Thd_t *__thread_end;
+extern const thd_t *__thread_start;
+extern const thd_t *__thread_end;
 
 static TaskHandle_t *thd_list;
 
-void Thd_Init(void) {
-  Config_Get(&runtime.cfg); /* 获取机器人配置 */
+void thd_init(void) {
+  config_get(&runtime.cfg); /* 获取机器人配置 */
 
   vTaskSuspendAll();
-  const size_t num_thread = (__thread_end - __thread_start) / sizeof(Thd_t);
+  const size_t num_thread = (__thread_end - __thread_start) / sizeof(thd_t);
   thd_list = pvPortMalloc(num_thread * sizeof(TaskHandle_t));
 
   /* 创建线程 */
   for (size_t j = 0; j < num_thread; j++) {
-    const Thd_t *thd = __thread_start + j;
+    const thd_t *thd = __thread_start + j;
     if (thd) {
       xTaskCreate(thd->fn, thd->name, thd->stack_depth, &runtime, thd->priority,
                   thd_list + j);

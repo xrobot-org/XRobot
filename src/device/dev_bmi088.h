@@ -9,8 +9,8 @@
 #include "semphr.h"
 
 typedef struct {
-  Vector3_t gyro_offset; /* 陀螺仪偏置 */
-} BMI088_Cali_t;         /* BMI088校准数据 */
+  vector3_t gyro_offset; /* 陀螺仪偏置 */
+} bmi088_cali_t;         /* BMI088校准数据 */
 
 typedef struct {
   struct {
@@ -20,18 +20,16 @@ typedef struct {
     SemaphoreHandle_t accl_raw;
   } sem;
 
-  Vector3_t accl;
-  Vector3_t gyro;
+  vector3_t accl;
+  vector3_t gyro;
 
   float temp; /* 温度 */
 
-  const BMI088_Cali_t *cali;
-} BMI088_t;
+  const bmi088_cali_t *cali;
+} bmi088_t;
 
-int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali);
-int8_t BMI088_Restart(void);
-
-bool BMI088_GyroStable(Vector3_t *gyro);
+int8_t bmi088_init(bmi088_t *bmi088, const bmi088_cali_t *cali);
+int8_t bmi088_restart(void);
 
 /* Sensor use right-handed coordinate system. */
 /*
@@ -40,18 +38,18 @@ bool BMI088_GyroStable(Vector3_t *gyro);
                 UP is z
         All implementation should follow this rule.
  */
-bool BMI088_AcclWaitNew(BMI088_t *bmi088, uint32_t timeout);
-bool BMI088_GyroWaitNew(BMI088_t *bmi088, uint32_t timeout);
+bool bmi088_accl_wait_new(bmi088_t *bmi088, uint32_t timeout);
+bool bmi088_gyro_wait_new(bmi088_t *bmi088, uint32_t timeout);
 
 /*
   BMI088的Accl和Gyro共用同一个DMA通道，所以一次只能读一个传感器。
-  即BMI088_AcclStartDmaRecv() 和 BMI088_AcclWaitDmaCplt() 中间不能
-  出现 BMI088_GyroStartDmaRecv()。
+  即BMI088_AcclStartDmaRecv() 和 bmi088_accl_wait_dma_cplt() 中间不能
+  出现 bmi088_gyro_start_dma_recv()。
 */
-int8_t BMI088_AcclStartDmaRecv();
-int8_t BMI088_AcclWaitDmaCplt(BMI088_t *bmi088);
-int8_t BMI088_GyroStartDmaRecv();
-int8_t BMI088_GyroWaitDmaCplt(BMI088_t *bmi088);
-int8_t BMI088_ParseAccl(BMI088_t *bmi088);
-int8_t BMI088_ParseGyro(BMI088_t *bmi088);
-float BMI088_GetUpdateFreq(BMI088_t *bmi088);
+int8_t bmi088_accl_start_dma_recv();
+int8_t bmi088_accl_wait_dma_cplt(bmi088_t *bmi088);
+int8_t bmi088_gyro_start_dma_recv();
+int8_t bmi088_gyro_wait_dma_cplt(bmi088_t *bmi088);
+int8_t bmi088_parse_accl(bmi088_t *bmi088);
+int8_t bmi088_parse_gyro(bmi088_t *bmi088);
+float bmi088_get_update_freq(bmi088_t *bmi088);

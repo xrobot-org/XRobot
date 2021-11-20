@@ -4,13 +4,13 @@
 
 static float range[SERVO_NUM];
 
-int8_t Servo_Init(Servo_Channel_t ch, float max_angle) {
+int8_t servo_init(servo_channel_t ch, float max_angle) {
   range[ch] = max_angle;
 
   return 0;
 }
 
-int8_t Servo_Start(Servo_Channel_t ch) {
+int8_t servo_start(servo_channel_t ch) {
   switch (ch) {
     case SERVO_A:
       HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
@@ -45,7 +45,7 @@ int8_t Servo_Start(Servo_Channel_t ch) {
   return 0;
 }
 
-int8_t Servo_Set(Servo_Channel_t ch, uint8_t angle) {
+int8_t servo_set(servo_channel_t ch, uint8_t angle) {
   if (angle > 1.0f) return -1;
 
   uint16_t pulse = angle * UINT16_MAX;
@@ -84,7 +84,7 @@ int8_t Servo_Set(Servo_Channel_t ch, uint8_t angle) {
   return 0;
 }
 
-int8_t Servo_Stop(Servo_Channel_t ch) {
+int8_t servo_stop(servo_channel_t ch) {
   switch (ch) {
     case SERVO_A:
       HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);

@@ -16,8 +16,8 @@
  * @param len 电机数量
  * @return int8_t 0对应没有错误
  */
-int8_t PowerLimit_ChassicOutput(float power_limit, float *motor_out,
-                                float *speed, uint32_t len);
+int8_t limit_chassic_output_power(float power_limit, float *motor_out,
+                                  float *speed, uint32_t len);
 /**
  * @brief 电容输入功率计算
  *
@@ -26,8 +26,8 @@ int8_t PowerLimit_ChassicOutput(float power_limit, float *motor_out,
  * @param power_buffer 缓冲能量
  * @return float 裁判系统输出最大值
  */
-float PowerLimit_CapInput(float power_in, float power_limit,
-                          float power_buffer);
+float limit_cap_input_power(float power_in, float power_limit,
+                            float power_buffer);
 /**
  * @brief 使用缓冲能量计算底盘最大功率
  *
@@ -35,7 +35,7 @@ float PowerLimit_CapInput(float power_in, float power_limit,
  * @param power_buffer 缓冲能量
  * @return float 底盘输出最大值
  */
-float PowerLimit_TargetPower(float power_limit, float power_buffer);
+float limit_calc_chassic_output_power(float power_limit, float power_buffer);
 
 /**
  * @brief 发射频率控制
@@ -47,5 +47,5 @@ float PowerLimit_TargetPower(float power_limit, float power_buffer);
  * @param is_big 是否为大弹丸
  * @return float 发射频率
  */
-float HeatLimit_LauncherFreq(float heat, float heat_limit, float cooling_rate,
-                             float heat_increase, bool is_big);
+float limit_launcher_freq(float heat, float heat_limit, float cooling_rate,
+                          float heat_increase, bool is_big);

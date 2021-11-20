@@ -9,7 +9,7 @@ typedef struct {
   float yaw; /* 偏航角（Yaw angle） */
   float pit; /* 俯仰角（Pitch angle） */
   float rol; /* 翻滚角（Roll angle） */
-} Eulr_t;
+} eulr_t;
 
 /* 四元数 */
 typedef struct {
@@ -17,27 +17,27 @@ typedef struct {
   float q1;
   float q2;
   float q3;
-} Quaternion_t;
+} quaternion_t;
 
 /* 移动向量 */
 typedef struct {
   float vx; /* 前后平移 */
   float vy; /* 左右平移 */
   float wz; /* 转动 */
-} MoveVector_t;
+} move_vector_t;
 
 /* 二元素向量 */
 typedef struct {
   float x;
   float y;
-} Vector2_t;
+} vector2_t;
 
 /* 三元素向量 */
 typedef struct {
   float x;
   float y;
   float z;
-} Vector3_t;
+} vector3_t;
 
 typedef enum {
   RM_OK = 0,
@@ -51,7 +51,7 @@ typedef enum {
   ERR_NULL,    /* NULL pointer */
   ERR_NODEV,   /* No such device */
   ERR_TIMEOUT, /* Waited to long */
-} Err_t;
+} err_t;
 
 typedef enum {
   COLOR_HEX_WHITE = 0XFFFFFF,
@@ -70,4 +70,4 @@ typedef enum {
   COLOR_HEX_NAVY = 0X000080,
   COLOR_HEX_FUCHSIA = 0XFF00FF,
   COLOR_HEX_PURPLE = 0X800080,
-} ColorHex_t;
+} color_hex_t;

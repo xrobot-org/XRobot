@@ -15,9 +15,9 @@
 
 #define MAX_MONITOR_DETECTOR (10)
 
-Monitor_t detect_list[MAX_MONITOR_DETECTOR];
+monitor_t detect_list[MAX_MONITOR_DETECTOR];
 
-Monitor_t *Monitor_Create(const char *name, uint8_t priority,
+monitor_t *monitor_create(const char *name, uint8_t priority,
                           uint32_t patient_lost, uint32_t patient_work) {
   for (size_t i = 0; i < MAX_MONITOR_DETECTOR; i++) {
     if (detect_list[i].name == NULL) {
@@ -32,14 +32,14 @@ Monitor_t *Monitor_Create(const char *name, uint8_t priority,
   return NULL;
 }
 
-void Monitor_Report(Monitor_t *monitor, uint32_t sys_time) {
+void monitor_report(monitor_t *monitor, uint32_t sys_time) {
   monitor->cycle_time = sys_time - monitor->showup_last;
   monitor->showup_last = sys_time;
   monitor->duration_lost = 0;
   monitor->duration_work += monitor->cycle_time;
 }
 
-void Monitor_Examine(uint32_t sys_time) {
+void monitor_examine(uint32_t sys_time) {
   for (size_t i = 0; i < MAX_MONITOR_DETECTOR; i++) {
     if (detect_list[i].name != NULL) {
       if (sys_time - detect_list[i].showup_last > detect_list[i].patient_lost) {
@@ -51,7 +51,7 @@ void Monitor_Examine(uint32_t sys_time) {
   }
 }
 
-void Monitor_GetDetailTable(char *detail_string, size_t len) {
+void monitor_get_detail(char *detail_string, size_t len) {
   static const char *const header = "\r\n";
   strncpy(detail_string, header, len - 1);
   detail_string[len] = '\0';

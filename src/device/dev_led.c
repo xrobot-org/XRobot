@@ -5,7 +5,7 @@
 
 static uint32_t led_stats;
 
-int8_t LED_Set(LED_Channel_t ch, LED_Status_t s, float duty_cycle) {
+int8_t led_set(led_channel_t ch, led_status_t s, float duty_cycle) {
   ASSERT(duty_cycle <= 1.0f);
 
   uint32_t tim_ch;

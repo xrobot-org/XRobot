@@ -23,8 +23,8 @@ static void BSP_SPI_Callback(BSP_SPI_Callback_t cb_type,
   if (bsp_spi != BSP_SPI_ERR) {
     BSP_Callback_t cb = callback_list[bsp_spi][cb_type];
 
-    if (cb.Fn) {
-      cb.Fn(cb.arg);
+    if (cb.fn) {
+      cb.fn(cb.arg);
     }
   }
 }
@@ -77,7 +77,7 @@ int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type,
   ASSERT(callback);
   ASSERT(type != BSP_SPI_CB_NUM);
 
-  callback_list[spi][type].Fn = callback;
+  callback_list[spi][type].fn = callback;
   callback_list[spi][type].arg = callback_arg;
   return BSP_OK;
 }

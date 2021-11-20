@@ -10,19 +10,19 @@
  * @param g 包含云台数据的结构体
  * @param mode 要设置的模式
  */
-static void Gimbal_SetMode(Gimbal_t *g, Game_GimbalMode_t mode) {
+static void Gimbal_SetMode(gimbal_t *g, gimbal_mode_t mode) {
   ASSERT(g);
   if (mode == g->mode) return;
 
   /* 切换模式后重置PID和滤波器 */
   for (size_t i = 0; i < GIMBAL_CTRL_NUM; i++) {
-    PID_Reset(g->pid + i);
+    kpid_reset(g->pid + i);
   }
   for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
-    LowPassFilter2p_Reset(g->filter_out + i, 0.0f);
+    low_pass_filter_2p_reset(g->filter_out + i, 0.0f);
   }
 
-  AHRS_ResetEulr(&(g->setpoint.eulr)); /* 切换模式后重置设定值 */
+  ahrs_reset_eulr(&(g->setpoint.eulr)); /* 切换模式后重置设定值 */
   if (g->mode == GIMBAL_MODE_RELAX) {
     if (mode == GIMBAL_MODE_ABSOLUTE) {
       g->setpoint.eulr.yaw = g->feedback.eulr.imu.yaw;
@@ -41,7 +41,7 @@ static void Gimbal_SetMode(Gimbal_t *g, Game_GimbalMode_t mode) {
  * @param param 包含云台参数的结构体指针
  * @param target_freq 线程预期的运行频率
  */
-void Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
+void gimbal_init(gimbal_t *g, const gimbal_params_t *param, float limit_max,
                  float target_freq) {
   ASSERT(g);
   ASSERT(param);
@@ -50,24 +50,24 @@ void Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
   g->mode = GIMBAL_MODE_RELAX; /* 设置默认模式 */
 
   /* 设置软件限位 */
-  if (g->param->reverse.pit) CircleReverse(&limit_max);
+  if (g->param->reverse.pit) circle_reverse(&limit_max);
   g->limit.min = g->limit.max = limit_max;
-  CircleAdd(&(g->limit.min), -g->param->pitch_travel_rad, M_2PI);
+  circle_add(&(g->limit.min), -g->param->pitch_travel_rad, M_2PI);
 
   /* 初始化云台电机控制PID和LPF */
-  PID_Init(g->pid + GIMBAL_CTRL_YAW_ANGLE_IDX, KPID_MODE_NO_D, target_freq,
-           g->param->pid + GIMBAL_CTRL_YAW_ANGLE_IDX);
-  PID_Init(g->pid + GIMBAL_CTRL_YAW_OMEGA_IDX, KPID_MODE_CALC_D, target_freq,
-           g->param->pid + GIMBAL_CTRL_YAW_OMEGA_IDX);
+  kpid_init(g->pid + GIMBAL_CTRL_YAW_ANGLE_IDX, KPID_MODE_NO_D, target_freq,
+            g->param->pid + GIMBAL_CTRL_YAW_ANGLE_IDX);
+  kpid_init(g->pid + GIMBAL_CTRL_YAW_OMEGA_IDX, KPID_MODE_CALC_D, target_freq,
+            g->param->pid + GIMBAL_CTRL_YAW_OMEGA_IDX);
 
-  PID_Init(g->pid + GIMBAL_CTRL_PIT_ANGLE_IDX, KPID_MODE_NO_D, target_freq,
-           g->param->pid + GIMBAL_CTRL_PIT_ANGLE_IDX);
-  PID_Init(g->pid + GIMBAL_CTRL_PIT_OMEGA_IDX, KPID_MODE_CALC_D, target_freq,
-           g->param->pid + GIMBAL_CTRL_PIT_OMEGA_IDX);
+  kpid_init(g->pid + GIMBAL_CTRL_PIT_ANGLE_IDX, KPID_MODE_NO_D, target_freq,
+            g->param->pid + GIMBAL_CTRL_PIT_ANGLE_IDX);
+  kpid_init(g->pid + GIMBAL_CTRL_PIT_OMEGA_IDX, KPID_MODE_CALC_D, target_freq,
+            g->param->pid + GIMBAL_CTRL_PIT_OMEGA_IDX);
 
   for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
-    LowPassFilter2p_Init(g->filter_out + i, target_freq,
-                         g->param->low_pass_cutoff_freq.out);
+    low_pass_filter_2p_init(g->filter_out + i, target_freq,
+                            g->param->low_pass_cutoff_freq.out);
   }
 }
 
@@ -77,16 +77,16 @@ void Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit_max,
  * @param g 云台
  * @param can CAN设备
  */
-void Gimbal_UpdateFeedback(Gimbal_t *g,
-                           const Motor_FeedbackGroup_t *gimbal_motor) {
+void gimbal_ppdate_feedback(gimbal_t *g,
+                            const motor_feedback_group_t *gimbal_motor) {
   ASSERT(g);
   ASSERT(gimbal_motor);
 
   g->feedback.eulr.encoder.yaw = gimbal_motor->as_gimbal.yaw.rotor_abs_angle;
   g->feedback.eulr.encoder.pit = gimbal_motor->as_gimbal.pit.rotor_abs_angle;
 
-  if (g->param->reverse.yaw) CircleReverse(&(g->feedback.eulr.encoder.yaw));
-  if (g->param->reverse.pit) CircleReverse(&(g->feedback.eulr.encoder.pit));
+  if (g->param->reverse.yaw) circle_reverse(&(g->feedback.eulr.encoder.yaw));
+  if (g->param->reverse.pit) circle_reverse(&(g->feedback.eulr.encoder.pit));
 }
 
 /**
@@ -97,7 +97,7 @@ void Gimbal_UpdateFeedback(Gimbal_t *g,
  * @param g_cmd 云台控制指令
  * @param dt_sec 两次调用的时间间隔
  */
-void Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
+void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
   ASSERT(g);
   ASSERT(g_cmd);
 
@@ -111,24 +111,24 @@ void Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
   g_cmd->delta_eulr.yaw = -g_cmd->delta_eulr.yaw;
 
   /* 处理yaw控制命令 */
-  CircleAdd(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw, M_2PI);
+  circle_add(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw, M_2PI);
 
   /* 处理pitch控制命令，软件限位 */
   const float delta_max =
-      CircleError(g->limit.max,
-                  (g->feedback.eulr.encoder.pit + g->setpoint.eulr.pit -
-                   g->feedback.eulr.imu.pit),
-                  M_2PI);
+      circle_error(g->limit.max,
+                   (g->feedback.eulr.encoder.pit + g->setpoint.eulr.pit -
+                    g->feedback.eulr.imu.pit),
+                   M_2PI);
   const float delta_min =
-      CircleError(g->limit.min,
-                  (g->feedback.eulr.encoder.pit + g->setpoint.eulr.pit -
-                   g->feedback.eulr.imu.pit),
-                  M_2PI);
-  Clamp(&(g_cmd->delta_eulr.pit), delta_min, delta_max);
+      circle_error(g->limit.min,
+                   (g->feedback.eulr.encoder.pit + g->setpoint.eulr.pit -
+                    g->feedback.eulr.imu.pit),
+                   M_2PI);
+  clampf(&(g_cmd->delta_eulr.pit), delta_min, delta_max);
   g->setpoint.eulr.pit += g_cmd->delta_eulr.pit;
 
   /* 重置输入指令，防止重复处理 */
-  AHRS_ResetEulr(&(g_cmd->delta_eulr));
+  ahrs_reset_eulr(&(g_cmd->delta_eulr));
 
   /* 控制相关逻辑 */
   float yaw_omega_set_point, pit_omega_set_point;
@@ -146,23 +146,23 @@ void Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
 
       /* Yaw轴角度 反馈控制 */
       yaw_omega_set_point =
-          PID_Calc(g->pid + GIMBAL_CTRL_YAW_ANGLE_IDX, g->setpoint.eulr.yaw,
-                   g->feedback.eulr.imu.yaw, 0.0f, g->dt);
+          kpid_calc(g->pid + GIMBAL_CTRL_YAW_ANGLE_IDX, g->setpoint.eulr.yaw,
+                    g->feedback.eulr.imu.yaw, 0.0f, g->dt);
 
       /* Yaw轴角速度 反馈控制 */
       g->out[GIMBAL_ACTR_YAW_IDX] =
-          PID_Calc(g->pid + GIMBAL_CTRL_YAW_OMEGA_IDX, yaw_omega_set_point,
-                   g->feedback.gyro.z, 0.f, g->dt);
+          kpid_calc(g->pid + GIMBAL_CTRL_YAW_OMEGA_IDX, yaw_omega_set_point,
+                    g->feedback.gyro.z, 0.f, g->dt);
 
       /* Pitch轴角度 反馈控制 */
       pit_omega_set_point =
-          PID_Calc(g->pid + GIMBAL_CTRL_PIT_ANGLE_IDX, g->setpoint.eulr.pit,
-                   g->feedback.eulr.imu.pit, 0.0f, g->dt);
+          kpid_calc(g->pid + GIMBAL_CTRL_PIT_ANGLE_IDX, g->setpoint.eulr.pit,
+                    g->feedback.eulr.imu.pit, 0.0f, g->dt);
 
       /* Pitch轴角速度 反馈控制 */
       g->out[GIMBAL_ACTR_PIT_IDX] =
-          PID_Calc(g->pid + GIMBAL_CTRL_PIT_OMEGA_IDX, pit_omega_set_point,
-                   g->feedback.gyro.x, 0.f, g->dt);
+          kpid_calc(g->pid + GIMBAL_CTRL_PIT_OMEGA_IDX, pit_omega_set_point,
+                    g->feedback.gyro.x, 0.f, g->dt);
       break;
 
     case GIMBAL_MODE_RELATIVE:
@@ -172,7 +172,7 @@ void Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
 
   /* 输出滤波 */
   for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++)
-    g->out[i] = LowPassFilter2p_Apply(g->filter_out + i, g->out[i]);
+    g->out[i] = low_pass_filter_2p_apply(g->filter_out + i, g->out[i]);
 
   /* 处理电机反装 */
   if (g->param->reverse.yaw)
@@ -187,7 +187,7 @@ void Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now) {
  * @param g 包含云台数据的结构体
  * @param out CAN设备云台输出结构体
  */
-void Gimbal_PackOutput(Gimbal_t *g, Motor_Control_t *out) {
+void gimbal_pack_output(gimbal_t *g, motor_control_t *out) {
   ASSERT(g);
   ASSERT(out);
   out->as_gimbal.yaw = g->out[GIMBAL_ACTR_YAW_IDX];
@@ -200,7 +200,7 @@ void Gimbal_PackOutput(Gimbal_t *g, Motor_Control_t *out) {
  * @param g 云台结构体
  * @param ui UI结构体
  */
-void Gimbal_PackUi(const Gimbal_t *g, UI_GimbalUI_t *ui) {
+void gimbal_pack_ui(const gimbal_t *g, ui_gimbal_t *ui) {
   ASSERT(g);
   ASSERT(ui);
   ui->mode = g->mode;

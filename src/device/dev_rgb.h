@@ -5,4 +5,4 @@
 #include "comp_type.h"
 #include "dev_led.h"
 
-Err_t RGB_SetColor(ColorHex_t color, LED_Status_t s);
+err_t rgb_set_color(color_hex_t color, led_status_t s);

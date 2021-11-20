@@ -25,7 +25,7 @@ static void DR16_RxCpltCallback(void) {
   portYIELD_FROM_ISR(switch_required);
 }
 
-static bool DR16_DataCorrupted(const DR16_t *dr16) {
+static bool DR16_DataCorrupted(const dr16_t *dr16) {
   ASSERT(dr16);
 
   if ((dr16->data.ch_r_x < DR16_CH_VALUE_MIN) ||
@@ -51,7 +51,7 @@ static bool DR16_DataCorrupted(const DR16_t *dr16) {
   return false;
 }
 
-int8_t DR16_Init(DR16_t *dr16) {
+int8_t dr16_init(dr16_t *dr16) {
   ASSERT(dr16);
   if (inited) return DEVICE_ERR_INITED;
   VERIFY((thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
@@ -63,13 +63,13 @@ int8_t DR16_Init(DR16_t *dr16) {
   return DEVICE_OK;
 }
 
-int8_t DR16_Restart(void) {
+int8_t dr16_restart(void) {
   __HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_DR16));
   __HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_DR16));
   return DEVICE_OK;
 }
 
-int8_t DR16_StartDmaRecv(DR16_t *dr16) {
+int8_t dr16_start_dma_recv(dr16_t *dr16) {
   ASSERT(dr16);
   if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_DR16),
                            (uint8_t *)&(dr16->data),
@@ -78,11 +78,11 @@ int8_t DR16_StartDmaRecv(DR16_t *dr16) {
   return DEVICE_ERR;
 }
 
-bool DR16_WaitDmaCplt(uint32_t timeout) {
+bool dr16_wait_dma_cplt(uint32_t timeout) {
   return xTaskNotifyWait(0, 0, SIGNAL_DR16_RAW_REDY, pdMS_TO_TICKS(timeout));
 }
 
-int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc) {
+int8_t dr16_parse_rc(const dr16_t *dr16, cmd_rc_t *rc) {
   ASSERT(dr16);
   ASSERT(rc);
 
@@ -99,8 +99,8 @@ int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc) {
   rc->ch.l.x = 2 * ((float)dr16->data.ch_l_x - DR16_CH_VALUE_MID) / full_range;
   rc->ch.l.y = 2 * ((float)dr16->data.ch_l_y - DR16_CH_VALUE_MID) / full_range;
 
-  rc->sw_l = (CMD_SwitchPos_t)dr16->data.sw_l;
-  rc->sw_r = (CMD_SwitchPos_t)dr16->data.sw_r;
+  rc->sw_l = (cmd_switch_pos_t)dr16->data.sw_l;
+  rc->sw_r = (cmd_switch_pos_t)dr16->data.sw_r;
 
   rc->mouse.x = dr16->data.x;
   rc->mouse.y = dr16->data.y;
@@ -115,7 +115,7 @@ int8_t DR16_ParseRC(const DR16_t *dr16, CMD_RC_t *rc) {
   return DEVICE_OK;
 }
 
-int8_t DR16_HandleOffline(const DR16_t *dr16, CMD_RC_t *rc) {
+int8_t dr16_handle_offline(const dr16_t *dr16, cmd_rc_t *rc) {
   ASSERT(dr16);
   ASSERT(rc);
 

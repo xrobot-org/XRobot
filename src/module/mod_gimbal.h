@@ -13,7 +13,7 @@
 #include "dev_referee.h"
 
 /* GIMBAL_CTRL_NUM长度的数组都可以用这个枚举访问 */
-enum Gimbal_PID_e {
+enum gimbal_pid_e {
   GIMBAL_CTRL_YAW_OMEGA_IDX = 0, /* Yaw轴控制的角速度环控制器的索引值 */
   GIMBAL_CTRL_YAW_ANGLE_IDX, /* Yaw轴控制的角度环控制器的索引值 */
   GIMBAL_CTRL_PIT_OMEGA_IDX, /* Pitch轴控制的角速度环控制器的索引值 */
@@ -22,7 +22,7 @@ enum Gimbal_PID_e {
 };
 
 /* GIMBAL_ACTR_NUM长度的数组都可以用这个枚举访问 */
-enum Gimbal_Acuator_e {
+enum gimbal_acuator_e {
   GIMBAL_ACTR_YAW_IDX = 0, /* Yaw轴动作器的索引值 */
   GIMBAL_ACTR_PIT_IDX,     /* Pitch动作器索引值 */
   GIMBAL_ACTR_NUM,         /* 总共的动作器数量 */
@@ -30,7 +30,7 @@ enum Gimbal_Acuator_e {
 
 /* 云台参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
-  const KPID_Params_t pid[GIMBAL_CTRL_NUM]; /* 云台电机控制PID的参数 */
+  const kpid_params_t pid[GIMBAL_CTRL_NUM]; /* 云台电机控制PID的参数 */
 
   /* 低通滤波器截止频率 */
   struct {
@@ -46,24 +46,24 @@ typedef struct {
     bool pit;
   } reverse;
 
-} Gimbal_Params_t;
+} gimbal_params_t;
 
 /* 软件限位 */
 typedef struct {
   float max;
   float min;
-} Gimbal_Limit_t;
+} gimbal_limit_t;
 
 /* 云台反馈数据的结构体，包含反馈控制用的反馈数据 */
 typedef struct {
-  Vector3_t gyro; /* IMU的陀螺仪数据 */
+  vector3_t gyro; /* IMU的陀螺仪数据 */
 
   /* 欧拉角 */
   struct {
-    Eulr_t imu;     /* 由IMU计算的欧拉角 */
-    Eulr_t encoder; /* 由编码器计算的欧拉角 */
+    eulr_t imu;     /* 由IMU计算的欧拉角 */
+    eulr_t encoder; /* 由编码器计算的欧拉角 */
   } eulr;
-} Gimbal_Feedback_t;
+} gimbal_feedback_t;
 
 /*
  * 运行的主结构体，所有这个文件里的函数都在操作这个结构体。
@@ -73,27 +73,27 @@ typedef struct {
   uint32_t lask_wakeup;
   float dt;
 
-  const Gimbal_Params_t *param; /* 云台的参数，用Gimbal_Init设定 */
+  const gimbal_params_t *param; /* 云台的参数，用Gimbal_Init设定 */
 
   /* 模块通用 */
-  Game_GimbalMode_t mode; /* 云台模式 */
+  gimbal_mode_t mode; /* 云台模式 */
 
   /* PID计算的目标值 */
   struct {
-    Eulr_t eulr; /* 表示云台姿态的欧拉角 */
+    eulr_t eulr; /* 表示云台姿态的欧拉角 */
   } setpoint;
 
-  KPID_t pid[GIMBAL_CTRL_NUM]; /* PID数组 */
+  kpid_t pid[GIMBAL_CTRL_NUM]; /* PID数组 */
 
-  Gimbal_Limit_t limit;
+  gimbal_limit_t limit;
 
-  LowPassFilter2p_t filter_out[GIMBAL_ACTR_NUM]; /* 输出滤波器滤波器数组 */
+  low_pass_filter_2p_t filter_out[GIMBAL_ACTR_NUM]; /* 输出滤波器滤波器数组 */
 
   float out[GIMBAL_ACTR_NUM]; /* 输出数组 */
 
-  Gimbal_Feedback_t feedback; /* 反馈 */
+  gimbal_feedback_t feedback; /* 反馈 */
 
-} Gimbal_t;
+} gimbal_t;
 
 /**
  * @brief 初始化云台
@@ -102,7 +102,7 @@ typedef struct {
  * @param param 包含云台参数的结构体指针
  * @param target_freq 线程预期的运行频率
  */
-void Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit,
+void gimbal_init(gimbal_t *g, const gimbal_params_t *param, float limit,
                  float target_freq);
 
 /**
@@ -111,8 +111,8 @@ void Gimbal_Init(Gimbal_t *g, const Gimbal_Params_t *param, float limit,
  * @param g 云台
  * @param can CAN设备
  */
-void Gimbal_UpdateFeedback(Gimbal_t *g,
-                           const Motor_FeedbackGroup_t *gimbal_motor);
+void gimbal_ppdate_feedback(gimbal_t *g,
+                            const motor_feedback_group_t *gimbal_motor);
 
 /**
  * @brief 运行云台控制逻辑
@@ -122,7 +122,7 @@ void Gimbal_UpdateFeedback(Gimbal_t *g,
  * @param g_cmd 云台控制指令
  * @param dt_sec 两次调用的时间间隔
  */
-void Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now);
+void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now);
 
 /**
  * @brief 复制云台输出值
@@ -130,7 +130,7 @@ void Gimbal_Control(Gimbal_t *g, CMD_GimbalCmd_t *g_cmd, uint32_t now);
  * @param g 包含云台数据的结构体
  * @param out CAN设备云台输出结构体
  */
-void Gimbal_PackOutput(Gimbal_t *g, Motor_Control_t *out);
+void gimbal_pack_output(gimbal_t *g, motor_control_t *out);
 
 /**
  * @brief 导出云台UI数据
@@ -138,4 +138,4 @@ void Gimbal_PackOutput(Gimbal_t *g, Motor_Control_t *out);
  * @param g 云台结构体
  * @param ui UI结构体
  */
-void Gimbal_PackUi(const Gimbal_t *g, UI_GimbalUI_t *ui);
+void gimbal_pack_ui(const gimbal_t *g, ui_gimbal_t *ui);

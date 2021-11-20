@@ -2,6 +2,6 @@
 
 #include <stdint.h>
 
-float Temperature_GetCPU(void);
-float Volt_GetBattery(void);
-uint8_t GetHardwareVersion(void);
+float adc_get_cpu_temp(void);
+float adc_get_batt_volt(void);
+uint8_t adc_get_hardware_version(void);
