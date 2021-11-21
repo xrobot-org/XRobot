@@ -704,6 +704,6 @@ uint8_t referee_pack_for_ai(referee_for_ai_t *ai_ref, const referee_t *ref) {
   else
     ai_ref->team = AI_TEAM_BLUE;
 
-  ai_ref->status = ref->status;
+     ai_ref->status = ref->status;
   return DEVICE_OK;
 }
