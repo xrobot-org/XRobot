@@ -16,7 +16,7 @@
 - 实时性强，CPU利用率低
 - 一个项目适配不同型号的机器人和不同的操作手。
 - 利用Cmake & GCC实现跨平台开发
-- 使用VSCode和OpenOCD减少对收费软件的依赖
+- 不依赖特定操作系统和IDE
 
 实现了可以通过命令行，切换所适配的机器人和操作手。代码完成后只需要烧写一次，减少维护的工作量，减少出错的可能性。用到的系统和软件全部免费。
 
@@ -36,13 +36,15 @@
 
 ### 系统
 
-- Windows Subsystem for Linux 2 Ubuntu [安装说明](https://docs.microsoft.com/zh-cn/windows/wsl/install-win10)
+- Windows Subsystem for Linux (WSL) 2 Ubuntu [安装说明](https://docs.microsoft.com/zh-cn/windows/wsl/install-win10)
+
+- Ubuntu native [详细信息](https://ubuntu.com)
 
 ### 配置环境
 
-- 在Windows中安装[Visual Studio Code](https://code.visualstudio.com/)
+- [Visual Studio Code](https://code.visualstudio.com/)
   - 安装必备插件`C/C++` `CMake`
-- 在WSL2中安装依赖`sudo apt install cmake gcc-arm-none-eabi ninja-build`
+- 安装构建工具`sudo apt install cmake gcc-arm-none-eabi ninja-build`
 
 ### 获取源代码
 
@@ -64,7 +66,21 @@
   1. 选择构建类型
   1. 编译
 
-### 调试
+### 调试 & 烧写
+
+#### Ozone
+
+- Ubuntu native
+  1. 安装Jlink驱动
+  1. 安装Ozone Linux版
+  1. 正常调试
+
+- Windows 11 WSL with WSLg
+  1. Windows Host中安装Jlink驱动
+  1. WSL中安装Ozone Linux版
+  1. WSL中使用Ozone调试，通过网络连接Jlink
+
+#### OpenOCD
 
 TODO
 
@@ -128,4 +144,6 @@ TODO
 
 ### TODO
 
-1. 利用好CCM RAM[参考文档](https://www.st.com/resource/en/application_note/an4296-use-stm32f4stm32g4-ccm-sram-with-iar-embedded-workbench-keil-mdkarm-stmicroelectronics-stm32cubeide-and-other-gnubased-toolchains-stmicroelectronics.pdf)
+- [x] 利用好CCM RAM[参考文档](https://www.st.com/resource/en/application_note/an4296-use-stm32f4stm32g4-ccm-sram-with-iar-embedded-workbench-keil-mdkarm-stmicroelectronics-stm32cubeide-and-other-gnubased-toolchains-stmicroelectronics.pdf)
+- [ ] 使用[TinyUSB](https://github.com/hathach/tinyusb)
+- [ ] 实现固件运行在开发板，机器人运行在Gazebo的Hardware in the Loop(HITL)仿真

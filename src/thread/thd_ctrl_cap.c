@@ -9,52 +9,40 @@
  *
  */
 
-#include "mid_msg_distrib.h"
+#include "mid_msg_dist.h"
 #include "mod_cap.h"
 #include "thd.h"
 
-static Cap_t cap;
-
-#ifdef MCU_DEBUG_BUILD
-
-CAN_CapFeedback_t can_fb;
-CAN_CapOutput_t cap_out;
-Referee_ForCap_t referee_cap;
-UI_CapUI_t cap_ui;
-
-#else
-
-static CAN_CapFeedback_t can_fb;
-static CAN_CapOutput_t cap_out;
-static Referee_ForCap_t referee_cap;
-static UI_CapUI_t cap_ui;
-
-#endif
-
 #define THD_PERIOD_MS (10)
+#define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
 void Thd_CtrlCap(void* arg) {
   RM_UNUSED(arg);
-  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
-  MsgDistrib_Publisher_t* out_pub =
-      MsgDistrib_CreateTopic("cap_out", sizeof(CAN_ChassisOutput_t));
-  MsgDistrib_Publisher_t* ui_pub =
-      MsgDistrib_CreateTopic("ui_cap", sizeof(UI_ChassisUI_t));
-  MsgDistrib_Publisher_t* info_pub =
-      MsgDistrib_CreateTopic("cap_info", sizeof(Cap_t));
+  Cap_t cap;
+  CAN_CapFeedback_t can_fb;
+  CAN_CapOutput_t cap_out;
+  Referee_ForCap_t referee_cap;
+  UI_CapUI_t cap_ui;
 
-  MsgDistrib_Subscriber_t* fb_sub = MsgDistrib_Subscribe("cap_fb", true);
-  MsgDistrib_Subscriber_t* ref_sub = MsgDistrib_Subscribe("referee_cap", true);
+  MsgDist_Publisher_t* out_pub =
+      MsgDist_CreateTopic("cap_out", sizeof(CAN_ChassisOutput_t));
+  MsgDist_Publisher_t* ui_pub =
+      MsgDist_CreateTopic("ui_cap", sizeof(UI_ChassisUI_t));
+  MsgDist_Publisher_t* info_pub =
+      MsgDist_CreateTopic("cap_info", sizeof(Cap_t));
+
+  MsgDist_Subscriber_t* fb_sub = MsgDist_Subscribe("cap_fb", true);
+  MsgDist_Subscriber_t* ref_sub = MsgDist_Subscribe("referee_cap", true);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 
   while (1) {
     /* 读取裁判系统信息 */
-    MsgDistrib_Poll(ref_sub, &referee_cap, 0);
+    MsgDist_Poll(ref_sub, &referee_cap, 0);
 
     /* 一定时间长度内接收不到电容反馈值，使电容离线 */
-    if (MsgDistrib_Poll(fb_sub, &can_fb, 500) != pdPASS) {
+    if (MsgDist_Poll(fb_sub, &can_fb, 500) != pdPASS) {
       Cap_HandleOffline(&cap, &cap_out, GAME_CHASSIS_MAX_POWER_WO_REF);
     } else {
       vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
@@ -64,11 +52,11 @@ void Thd_CtrlCap(void* arg) {
       xTaskResumeAll();
     }
 
-    MsgDistrib_Publish(out_pub, &cap_out);
-    MsgDistrib_Publish(ui_pub, &cap_ui);
-    MsgDistrib_Publish(info_pub, &cap);
+    MsgDist_Publish(out_pub, &cap_out);
+    MsgDist_Publish(ui_pub, &cap_ui);
+    MsgDist_Publish(info_pub, &cap);
 
     /* 运行结束，等待下一次唤醒 */
-    xTaskDelayUntil(&previous_wake_time, delay_tick);
+    xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }

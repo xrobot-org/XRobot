@@ -15,28 +15,16 @@
 #include <string.h>
 
 #include "dev_dr16.h"
-#include "mid_msg_distrib.h"
+#include "mid_msg_dist.h"
 #include "thd.h"
-
-#ifdef MCU_DEBUG_BUILD
-
-DR16_t dr16;
-CMD_RC_t cmd_rc;
-
-#else
-
-static DR16_t dr16;
-static CMD_RC_t cmd_rc;
-
-#endif
-
-#define THD_PERIOD_MS (2)
 
 void Thd_RC(void* arg) {
   RM_UNUSED(arg);
 
-  MsgDistrib_Publisher_t* rc_pub =
-      MsgDistrib_CreateTopic("rc_cmd", sizeof(CMD_RC_t));
+  DR16_t dr16;
+  CMD_RC_t cmd_rc;
+
+  MsgDist_Publisher_t* rc_pub = MsgDist_CreateTopic("rc_cmd", sizeof(CMD_RC_t));
 
   DR16_Init(&dr16); /* 初始化dr16 */
 
@@ -53,6 +41,6 @@ void Thd_RC(void* arg) {
       DR16_HandleOffline(&dr16, &cmd_rc);
     }
 
-    MsgDistrib_Publish(rc_pub, &cmd_rc);
+    MsgDist_Publish(rc_pub, &cmd_rc);
   }
 }

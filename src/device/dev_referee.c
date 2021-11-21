@@ -666,6 +666,7 @@ int8_t Referee_PackUiPacket(Referee_t *ref) {
 }
 
 int8_t Referee_StartTransmit(Referee_t *ref) {
+  return 0;
   if (ref->packet.data == NULL) {
     xSemaphoreGive(ref->sem.packet_sent);
     return DEVICE_ERR_NULL;

@@ -11,13 +11,13 @@
 /* 发布者 */
 typedef struct {
   QueueHandle_t data_queue;
-} MsgDistrib_Publisher_t;
+} MsgDist_Publisher_t;
 
 /* 订阅者 */
 typedef struct {
   SemaphoreHandle_t bin_sem;
   void *topic;
-} MsgDistrib_Subscriber_t;
+} MsgDist_Subscriber_t;
 
 /**
  * @brief 初始化中间件
@@ -25,17 +25,17 @@ typedef struct {
  * @return true 成功
  * @return false 失败
  */
-bool MsgDistrib_Init(void);
+bool MsgDist_Init(void);
 
 /**
  * @brief 创建话题
  *
  * @param topic_name 话题名称
  * @param data_size 数据大小
- * @return MsgDistrib_Publisher_t* 发布者
+ * @return MsgDist_Publisher_t* 发布者
  */
-MsgDistrib_Publisher_t *MsgDistrib_CreateTopic(const char *topic_name,
-                                               size_t data_size);
+MsgDist_Publisher_t *MsgDist_CreateTopic(const char *topic_name,
+                                         size_t data_size);
 /**
  * @brief 往话题发布数据
  *
@@ -44,7 +44,7 @@ MsgDistrib_Publisher_t *MsgDistrib_CreateTopic(const char *topic_name,
  * @return true 成功
  * @return false 失败
  */
-bool MsgDistrib_Publish(MsgDistrib_Publisher_t *publisher, void *data);
+bool MsgDist_Publish(MsgDist_Publisher_t *publisher, void *data);
 /**
  * @brief 往话题发布数据
  *
@@ -54,18 +54,18 @@ bool MsgDistrib_Publish(MsgDistrib_Publisher_t *publisher, void *data);
  * @return true 成功
  * @return false 失败
  */
-bool MsgDistrib_PublishFromISR(MsgDistrib_Publisher_t *publisher,
-                               const void *data, bool *need_contex_switch);
+bool MsgDist_PublishFromISR(MsgDist_Publisher_t *publisher, const void *data,
+                            bool *need_contex_switch);
 
 /**
  * @brief 订阅到话题
  *
  * @param topic_name 话题名称
  * @param wait_topic 等待话题创建
- * @return MsgDistrib_Subscriber_t* 订阅者
+ * @return MsgDist_Subscriber_t* 订阅者
  */
-MsgDistrib_Subscriber_t *MsgDistrib_Subscribe(const char *topic_name,
-                                              bool wait_topic);
+MsgDist_Subscriber_t *MsgDist_Subscribe(const char *topic_name,
+                                        bool wait_topic);
 /**
  * @brief 从话题取得数据
  *
@@ -75,12 +75,12 @@ MsgDistrib_Subscriber_t *MsgDistrib_Subscribe(const char *topic_name,
  * @return true 成功
  * @return false 失败
  */
-bool MsgDistrib_Poll(MsgDistrib_Subscriber_t *subscriber, void *data,
-                     uint32_t timeout);
+bool MsgDist_Poll(MsgDist_Subscriber_t *subscriber, void *data,
+                  uint32_t timeout);
 /**
  * @brief 分发消息
  *
  */
-void MsgDistrib_Distribute(void);
+void MsgDist_Distute(void);
 
-void MsgDistrib_Detail(char *detail_string, size_t len);
+void MsgDist_Detail(char *detail_string, size_t len);

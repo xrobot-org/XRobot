@@ -15,49 +15,35 @@
 
 #include "bsp_usb.h"
 #include "dev_referee.h"
-#include "mid_msg_distrib.h"
+#include "mid_msg_dist.h"
 #include "thd.h"
 
-#ifdef MCU_DEBUG_BUILD
-
-Referee_t ref;
-Referee_ForCap_t for_cap;
-Referee_ForAI_t for_ai;
-Referee_ForChassis_t for_chassis;
-Referee_ForLauncher_t for_launcher;
-
-#else
-
-static Referee_t ref;
-static Referee_ForCap_t for_cap;
-static Referee_ForAI_t for_ai;
-static Referee_ForChassis_t for_chassis;
-static Referee_ForLauncher_t for_launcher;
-
-#endif
-
 #define THD_PERIOD_MS (1)
+#define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
 void Thd_Referee(void* arg) {
   Runtime_t* runtime = arg;
-  const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
-  MsgDistrib_Publisher_t* referee_cap_pub =
-      MsgDistrib_CreateTopic("referee_cap", sizeof(Referee_ForCap_t));
-  MsgDistrib_Publisher_t* referee_ai_pub =
-      MsgDistrib_CreateTopic("referee_ai", sizeof(Referee_ForAI_t));
-  MsgDistrib_Publisher_t* referee_chassis_pub =
-      MsgDistrib_CreateTopic("referee_chassis", sizeof(Referee_ForChassis_t));
-  MsgDistrib_Publisher_t* referee_launcher_pub =
-      MsgDistrib_CreateTopic("referee_launcher", sizeof(Referee_ForLauncher_t));
+  Referee_t ref;
+  Referee_ForCap_t for_cap;
+  Referee_ForAI_t for_ai;
+  Referee_ForChassis_t for_chassis;
+  Referee_ForLauncher_t for_launcher;
 
-  MsgDistrib_Subscriber_t* ui_cap_sub = MsgDistrib_Subscribe("ui_cap", true);
-  MsgDistrib_Subscriber_t* ui_chassis_sub =
-      MsgDistrib_Subscribe("chassis_ui", true);
-  MsgDistrib_Subscriber_t* ui_gimbal_sub =
-      MsgDistrib_Subscribe("gimbal_ui", true);
-  MsgDistrib_Subscriber_t* ui_launcher_sub =
-      MsgDistrib_Subscribe("launcher_ui", true);
+  MsgDist_Publisher_t* referee_cap_pub =
+      MsgDist_CreateTopic("referee_cap", sizeof(CAN_ChassisMotor_t));
+  MsgDist_Publisher_t* referee_ai_pub =
+      MsgDist_CreateTopic("referee_ai", sizeof(CAN_GimbalMotor_t));
+  MsgDist_Publisher_t* referee_chassis_pub =
+      MsgDist_CreateTopic("referee_chassis", sizeof(CAN_LauncherMotor_t));
+  MsgDist_Publisher_t* referee_launcher_pub =
+      MsgDist_CreateTopic("referee_launcher", sizeof(CAN_CapFeedback_t));
+
+  MsgDist_Subscriber_t* ui_cap_sub = MsgDist_Subscribe("ui_cap", true);
+  MsgDist_Subscriber_t* ui_chassis_sub = MsgDist_Subscribe("chassis_ui", true);
+  MsgDist_Subscriber_t* ui_gimbal_sub = MsgDist_Subscribe("gimbal_ui", true);
+  MsgDist_Subscriber_t* ui_launcher_sub =
+      MsgDist_Subscribe("launcher_ui", true);
 
   /* 初始化裁判系统 */
   Referee_Init(&ref, &(runtime->cfg.pilot_cfg->screen));
@@ -75,7 +61,7 @@ void Thd_Referee(void* arg) {
 
     /* 定时接收发送数据 */
     if (xTaskGetTickCount() > tick) {
-      tick += delay_tick;
+      tick += THD_DELAY_TICK;
       /* 打包裁判系统数据 */
       Referee_PackForCap(&for_cap, &ref);
       Referee_PackForAI(&for_ai, &ref);
@@ -83,17 +69,17 @@ void Thd_Referee(void* arg) {
       Referee_PackForChassis(&for_chassis, &ref);
 
       /* 发送裁判系统数据到其他进程 */
-      MsgDistrib_Publish(referee_cap_pub, &for_cap);
-      MsgDistrib_Publish(referee_ai_pub, &for_ai);
-      MsgDistrib_Publish(referee_chassis_pub, &for_chassis);
-      MsgDistrib_Publish(referee_launcher_pub, &for_launcher);
+      MsgDist_Publish(referee_cap_pub, &for_cap);
+      MsgDist_Publish(referee_ai_pub, &for_ai);
+      MsgDist_Publish(referee_chassis_pub, &for_chassis);
+      MsgDist_Publish(referee_launcher_pub, &for_launcher);
 
       /* 获取其他进程数据用于绘制UI */
-      MsgDistrib_Poll(ui_cap_sub, &(ref.cap_ui), 0);
-      MsgDistrib_Poll(ui_chassis_sub, &(ref.chassis_ui), 0);
-      MsgDistrib_Poll(ui_gimbal_sub, &(ref.gimbal_ui), 0);
-      MsgDistrib_Poll(ui_launcher_sub, &(ref.launcher_ui), 0);
-      MsgDistrib_Poll(ui_launcher_sub, &(ref.cmd_ui), 0);
+      MsgDist_Poll(ui_cap_sub, &(ref.cap_ui), 0);
+      MsgDist_Poll(ui_chassis_sub, &(ref.chassis_ui), 0);
+      MsgDist_Poll(ui_gimbal_sub, &(ref.gimbal_ui), 0);
+      MsgDist_Poll(ui_launcher_sub, &(ref.launcher_ui), 0);
+      MsgDist_Poll(ui_launcher_sub, &(ref.cmd_ui), 0);
 #if 0
       xQueueReceive(runtime->msgq.ui.ai, &(ref.ai_ui), 0);
 #endif

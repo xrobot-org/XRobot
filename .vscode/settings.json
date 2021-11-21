@@ -8,4 +8,7 @@
     "cmake.preferredGenerators": [
         "Ninja"
     ],
+    "files.associations": {
+        "board.h": "c"
+    },
 }

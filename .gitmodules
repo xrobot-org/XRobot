@@ -7,12 +7,12 @@
 [submodule "stm32_hal"]
 	path = third_party/stm32_hal
 	url = https://github.com/STMicroelectronics/stm32f4xx_hal_driver.git
-[submodule "stm32_usb"]
-	path = third_party/stm32_usb
-	url = https://github.com/STMicroelectronics/stm32_mw_usb_device.git
 [submodule "freertos"]
 	path = third_party/freertos
 	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
 [submodule "arm_cmsis"]
 	path = third_party/arm_cmsis
 	url = https://github.com/ARM-software/CMSIS_5.git
+[submodule "tinyusb"]
+	path = third_party/tinyusb
+	url = https://github.com/hathach/tinyusb.git

@@ -14,47 +14,38 @@
 
 #include "dev_can.h"
 #include "dev_referee.h"
-#include "mid_msg_distrib.h"
+#include "mid_msg_dist.h"
 #include "thd.h"
 
-#ifdef MCU_DEBUG_BUILD
-
-CAN_t can;
-CAN_Output_t can_out;
-CAN_RawRx_t can_rx;
-
-#else
-
-static CAN_t can;
-static CAN_Output_t can_out;
-static CAN_RawRx_t can_rx;
-
-#endif
-
 #define THD_PERIOD_MS (2)
+#define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
 void Thd_CAN(void* arg) {
   Runtime_t* runtime = arg;
+
+  CAN_t can;
+  CAN_Output_t can_out;
+  CAN_RawRx_t can_rx;
+
   const uint32_t delay_tick = pdMS_TO_TICKS(THD_PERIOD_MS);
 
-  MsgDistrib_Publisher_t* chassis_fb_pub =
-      MsgDistrib_CreateTopic("chassis_motor_fb", sizeof(CAN_ChassisMotor_t));
-  MsgDistrib_Publisher_t* gimbal_fb_pub =
-      MsgDistrib_CreateTopic("gimbal_motor_fb", sizeof(CAN_GimbalMotor_t));
-  MsgDistrib_Publisher_t* launcher_fb_pub =
-      MsgDistrib_CreateTopic("launcher_motor_fb", sizeof(CAN_LauncherMotor_t));
-  MsgDistrib_Publisher_t* cap_fb_pub =
-      MsgDistrib_CreateTopic("cap_fb", sizeof(CAN_CapFeedback_t));
-  MsgDistrib_Publisher_t* tof_fb_pub =
-      MsgDistrib_CreateTopic("tof_fb", sizeof(CAN_Tof_t));
+  MsgDist_Publisher_t* chassis_fb_pub =
+      MsgDist_CreateTopic("chassis_motor_fb", sizeof(CAN_ChassisMotor_t));
+  MsgDist_Publisher_t* gimbal_fb_pub =
+      MsgDist_CreateTopic("gimbal_motor_fb", sizeof(CAN_GimbalMotor_t));
+  MsgDist_Publisher_t* launcher_fb_pub =
+      MsgDist_CreateTopic("launcher_motor_fb", sizeof(CAN_LauncherMotor_t));
+  MsgDist_Publisher_t* cap_fb_pub =
+      MsgDist_CreateTopic("cap_fb", sizeof(CAN_CapFeedback_t));
+  MsgDist_Publisher_t* tof_fb_pub =
+      MsgDist_CreateTopic("tof_fb", sizeof(CAN_Tof_t));
 
-  MsgDistrib_Subscriber_t* chassis_out_sub =
-      MsgDistrib_Subscribe("chassis_out", true);
-  MsgDistrib_Subscriber_t* gimbal_out_sub =
-      MsgDistrib_Subscribe("gimbal_out", true);
-  MsgDistrib_Subscriber_t* launcher_out_sub =
-      MsgDistrib_Subscribe("launcher_out", true);
-  MsgDistrib_Subscriber_t* cap_out_sub = MsgDistrib_Subscribe("cap_out", true);
+  MsgDist_Subscriber_t* chassis_out_sub =
+      MsgDist_Subscribe("chassis_out", true);
+  MsgDist_Subscriber_t* gimbal_out_sub = MsgDist_Subscribe("gimbal_out", true);
+  MsgDist_Subscriber_t* launcher_out_sub =
+      MsgDist_Subscribe("launcher_out", true);
+  MsgDist_Subscriber_t* cap_out_sub = MsgDist_Subscribe("cap_out", true);
 
   CAN_Init(&can, &runtime->cfg.robot_param->can);
 
@@ -65,31 +56,31 @@ void Thd_CAN(void* arg) {
       CAN_StoreMsg(&can, &can_rx);
     }
 
-    MsgDistrib_Publish(chassis_fb_pub, &(can.motor.chassis));
-    MsgDistrib_Publish(gimbal_fb_pub, &(can.motor.gimbal));
-    MsgDistrib_Publish(launcher_fb_pub, &(can.motor.launcher));
+    MsgDist_Publish(chassis_fb_pub, &(can.motor.chassis));
+    MsgDist_Publish(gimbal_fb_pub, &(can.motor.gimbal));
+    MsgDist_Publish(launcher_fb_pub, &(can.motor.launcher));
 
     if (CAN_CheckFlag(&can, CAN_REC_CAP_FINISHED, true)) {
-      MsgDistrib_Publish(cap_fb_pub, &(can.cap));
+      MsgDist_Publish(cap_fb_pub, &(can.cap));
     }
 
     if (CAN_CheckFlag(&can, CAN_REC_TOF_FINISHED, true)) {
-      MsgDistrib_Publish(tof_fb_pub, &(can.cap));
+      MsgDist_Publish(tof_fb_pub, &(can.tof));
     }
 
-    if (MsgDistrib_Poll(chassis_out_sub, &(can_out.chassis), 0)) {
+    if (MsgDist_Poll(chassis_out_sub, &(can_out.chassis), 0)) {
       CAN_Motor_Control(CAN_MOTOR_GROUT_CHASSIS, &can_out, &can);
     }
 
-    if (MsgDistrib_Poll(gimbal_out_sub, &(can_out.gimbal), 0)) {
+    if (MsgDist_Poll(gimbal_out_sub, &(can_out.gimbal), 0)) {
       CAN_Motor_Control(CAN_MOTOR_GROUT_GIMBAL1, &can_out, &can);
     }
 
-    if (MsgDistrib_Poll(launcher_out_sub, &(can_out.launcher), 0)) {
+    if (MsgDist_Poll(launcher_out_sub, &(can_out.launcher), 0)) {
       CAN_Motor_Control(CAN_MOTOR_GROUT_LAUNCHER1, &can_out, &can);
     }
 
-    if (MsgDistrib_Poll(cap_out_sub, &(can_out.cap), 0)) {
+    if (MsgDist_Poll(cap_out_sub, &(can_out.cap), 0)) {
       CAN_Cap_Control(&(can_out.cap), &can);
     }
 

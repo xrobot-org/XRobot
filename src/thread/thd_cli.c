@@ -20,7 +20,7 @@
 #include "FreeRTOS_CLI.h"
 #include "bsp_usb.h"
 #include "dev_can.h"
-#include "mid_msg_distrib.h"
+#include "mid_msg_dist.h"
 #include "task.h"
 #include "thd.h"
 
@@ -32,8 +32,8 @@ typedef struct {
 
 static Runtime_t *runtime;
 
-static MsgDistrib_Subscriber_t *gyro_sub;
-static MsgDistrib_Subscriber_t *gimbal_motor_sub;
+static MsgDist_Subscriber_t *gyro_sub;
+static MsgDist_Subscriber_t *gimbal_motor_sub;
 
 static const char *const CLI_WELCOME_MESSAGE =
     "\r\n"
@@ -421,7 +421,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       cfg.cali.bmi088.gyro_offset.z = 0.0f;
       Config_Set(&cfg);
       while (count < 1000) {
-        bool data_new = MsgDistrib_Poll(gyro_sub, &gyro, 5);
+        bool data_new = MsgDist_Poll(gyro_sub, &gyro, 5);
         bool data_good = BMI088_GyroStable(&gyro);
         // TODO:可重新校准多次
         if (data_new && data_good) {
@@ -488,7 +488,7 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
       /* 获取到云台数据，用can上的新的云台机械零点的位置替代旧的位置 */
       Config_Get(&cfg);
 
-      if (!MsgDistrib_Poll(gimbal_motor_sub, &gimbal_motor, 5)) {
+      if (!MsgDist_Poll(gimbal_motor_sub, &gimbal_motor, 5)) {
         snprintf(out_buffer, len, "Can not get gimbal data.\r\n");
         fsm.stage = 2;
         return pdPASS;
@@ -532,7 +532,7 @@ static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
       return pdPASS;
     case 1:
       /* 获取云台数据，获取新的限位角并替代旧的限位角 */
-      if (!MsgDistrib_Poll(gimbal_motor_sub, &gimbal_motor, 5)) {
+      if (!MsgDist_Poll(gimbal_motor_sub, &gimbal_motor, 5)) {
         fsm.stage = 3;
         return pdPASS;
       }
@@ -665,10 +665,10 @@ void Thd_CLI(void *arg) {
   uint16_t index = 0;                           /* 字符串索引值 */
   BaseType_t processing = 0;                    /* 命令行解析控制 */
 
-  gyro_sub = MsgDistrib_Subscribe("gimbal_gyro", true);
-  gimbal_motor_sub = MsgDistrib_Subscribe("gimbal_motor_fb", true);
+  gyro_sub = MsgDist_Subscribe("gimbal_gyro", true);
+  gimbal_motor_sub = MsgDist_Subscribe("gimbal_motor_fb", true);
 
-  CDC_RegisterCallback(CLI_USB_RX_Callback);
+  // CDC_RegisterCallback(CLI_USB_RX_Callback);
 
   /* 注册所有命令 */
   for (size_t j = 0; j < ARRAY_LEN(command_table); j++) {
@@ -678,6 +678,10 @@ void Thd_CLI(void *arg) {
   /* 通过回车键唤醒命令行界面 */
   BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
   while (1) {
+    if (tud_cdc_n_connected()) {
+      __NOP();
+    } else
+      continue;
     /* 等待接收到新的字符 */
     BSP_USB_StartReceive();
     xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFFFFFFFF);

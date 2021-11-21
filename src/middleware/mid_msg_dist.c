@@ -1,4 +1,4 @@
-#include "mid_msg_distrib.h"
+#include "mid_msg_dist.h"
 
 #include <stddef.h>
 #include <string.h>
@@ -20,23 +20,23 @@ typedef struct {
   uint32_t num_suber;
   uint32_t created_tick;
   uint32_t unexpected;
-} MsgDistrib_TopicMonitor_t;
+} MsgDist_TopicMonitor_t;
 
 /* 话题 */
 typedef struct {
   char name[MAX_NAME_LEN];
   void *data_buf;
   size_t data_size;
-  MsgDistrib_Publisher_t puber;
-  MsgDistrib_Subscriber_t subers[MAX_SUBS_TO_ONE_TPIC];
+  MsgDist_Publisher_t puber;
+  MsgDist_Subscriber_t subers[MAX_SUBS_TO_ONE_TPIC];
 
-  MsgDistrib_TopicMonitor_t monitor;
-} MsgDistrib_Topic_t;
+  MsgDist_TopicMonitor_t monitor;
+} MsgDist_Topic_t;
 
 /* 消息分发 */
 static struct {
   QueueSetHandle_t topic_queue_set;
-  MsgDistrib_Topic_t topic_list[MAX_TOPIC];
+  MsgDist_Topic_t topic_list[MAX_TOPIC];
   SemaphoreHandle_t topic_mutex;
   size_t topic_created;
 } md;
@@ -47,7 +47,7 @@ static struct {
  * @return true 成功
  * @return false 失败
  */
-bool MsgDistrib_Init(void) {
+bool MsgDist_Init(void) {
   /* 只能初始化一次 */
   if (md.topic_queue_set == NULL) {
     md.topic_queue_set = xQueueCreateSet(MAX_TOPIC);
@@ -63,10 +63,10 @@ bool MsgDistrib_Init(void) {
  *
  * @param topic_name 话题名称
  * @param data_size 数据大小
- * @return MsgDistrib_Publisher_t* 发布者
+ * @return MsgDist_Publisher_t* 发布者
  */
-MsgDistrib_Publisher_t *MsgDistrib_CreateTopic(const char *topic_name,
-                                               size_t data_size) {
+MsgDist_Publisher_t *MsgDist_CreateTopic(const char *topic_name,
+                                         size_t data_size) {
   ASSERT(topic_name);
 
   /* 等待组件初始化 */
@@ -74,8 +74,8 @@ MsgDistrib_Publisher_t *MsgDistrib_CreateTopic(const char *topic_name,
     vTaskDelay(pdMS_TO_TICKS(1));
   }
 
-  MsgDistrib_Publisher_t *puber = NULL;
-  MsgDistrib_Topic_t *topic;
+  MsgDist_Publisher_t *puber = NULL;
+  MsgDist_Topic_t *topic;
 
   xSemaphoreTake(md.topic_mutex, portMAX_DELAY);
   if (md.topic_created < MAX_TOPIC) {
@@ -118,12 +118,11 @@ end:
  * @return true 成功
  * @return false 失败
  */
-bool MsgDistrib_Publish(MsgDistrib_Publisher_t *publisher, void *data) {
+bool MsgDist_Publish(MsgDist_Publisher_t *publisher, void *data) {
   ASSERT(publisher);
   ASSERT(data);
 
-  MsgDistrib_Topic_t *topic =
-      CONTAINER_OF(publisher, MsgDistrib_Topic_t, puber);
+  MsgDist_Topic_t *topic = CONTAINER_OF(publisher, MsgDist_Topic_t, puber);
 
   topic->monitor.num_pub++;
   return (xQueueOverwrite(publisher->data_queue, data) == pdPASS);
@@ -138,8 +137,8 @@ bool MsgDistrib_Publish(MsgDistrib_Publisher_t *publisher, void *data) {
  * @return true 成功
  * @return false 失败
  */
-bool MsgDistrib_PublishFromISR(MsgDistrib_Publisher_t *publisher,
-                               const void *data, bool *need_contex_switch) {
+bool MsgDist_PublishFromISR(MsgDist_Publisher_t *publisher, const void *data,
+                            bool *need_contex_switch) {
   ASSERT(publisher);
   ASSERT(data);
   BaseType_t need_switch;
@@ -154,14 +153,14 @@ bool MsgDistrib_PublishFromISR(MsgDistrib_Publisher_t *publisher,
  *
  * @param topic_name 话题名称
  * @param wait_topic 等待话题创建
- * @return MsgDistrib_Subscriber_t*
+ * @return MsgDist_Subscriber_t*
  */
-MsgDistrib_Subscriber_t *MsgDistrib_Subscribe(const char *topic_name,
-                                              bool wait_topic) {
+MsgDist_Subscriber_t *MsgDist_Subscribe(const char *topic_name,
+                                        bool wait_topic) {
   ASSERT(topic_name);
   do {
     for (size_t i = 0; i < MAX_TOPIC; i++) {
-      MsgDistrib_Topic_t *topic = md.topic_list + i;
+      MsgDist_Topic_t *topic = md.topic_list + i;
       if (strncmp(topic->name, topic_name, MAX_NAME_LEN) == 0) {
         for (size_t j = 0; j < MAX_SUBS_TO_ONE_TPIC; j++) {
           if (topic->subers[j].bin_sem == NULL) {
@@ -188,11 +187,11 @@ MsgDistrib_Subscriber_t *MsgDistrib_Subscribe(const char *topic_name,
  * @return true 成功
  * @return false 失败
  */
-bool MsgDistrib_Poll(MsgDistrib_Subscriber_t *subscriber, void *data,
-                     uint32_t timeout) {
+bool MsgDist_Poll(MsgDist_Subscriber_t *subscriber, void *data,
+                  uint32_t timeout) {
   ASSERT(subscriber);
   ASSERT(data);
-  MsgDistrib_Topic_t *topic = subscriber->topic;
+  MsgDist_Topic_t *topic = subscriber->topic;
 
   BaseType_t ret = pdFALSE;
   if (timeout) {
@@ -213,17 +212,17 @@ bool MsgDistrib_Poll(MsgDistrib_Subscriber_t *subscriber, void *data,
  * @brief 分发消息
  *
  */
-void MsgDistrib_Distribute(void) {
+void MsgDist_Distute(void) {
   /* 阻塞在所有话题的发布者 */
   QueueSetMemberHandle_t actived =
       xQueueSelectFromSet(md.topic_queue_set, portMAX_DELAY);
 
   for (size_t i = 0; i < MAX_TOPIC; i++) {
-    MsgDistrib_Topic_t *topic = md.topic_list + i;
+    MsgDist_Topic_t *topic = md.topic_list + i;
 
     /* 确认话题发布者 */
     if (topic->puber.data_queue == actived) {
-      MsgDistrib_TopicMonitor_t *monitor = &(topic->monitor);
+      MsgDist_TopicMonitor_t *monitor = &(topic->monitor);
       BaseType_t ret;
 
       /* 接收发布者的数据 */
@@ -250,7 +249,7 @@ void MsgDistrib_Distribute(void) {
 
 // TODO: Move to CLI
 #include <stdio.h>
-void MsgDistrib_Detail(char *detail_string, size_t len) {
+void MsgDist_Detail(char *detail_string, size_t len) {
   snprintf(detail_string, len - 1, "num topics: %d", md.topic_created);
 
   static const char *const topic_header =
