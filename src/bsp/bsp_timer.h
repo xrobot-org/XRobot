@@ -1,14 +1,9 @@
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include <stdint.h>
 
 #include "bsp.h"
 #include "hal_tim.h"
-
-/* Exported constants ------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
 
 /* 要添加使用SPI的新设备，需要先在此添加对应的枚举值 */
 
@@ -34,7 +29,6 @@ typedef enum {
   BSP_TIMER_CB_NUM,
 } BSP_Timer_Callback_t;
 
-/* Exported functions prototypes -------------------------------------------- */
 TIM_HandleTypeDef *BSP_Timer_GetHandle(BSP_Timer_t timer);
 int8_t BSP_Timer_RegisterCallback(BSP_Timer_t timer, BSP_Timer_Callback_t type,
                                   void (*callback)(void));

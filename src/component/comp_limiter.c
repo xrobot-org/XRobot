@@ -25,8 +25,8 @@
  * @param len 电机数量
  * @return int8_t 0对应没有错误
  */
-int8_t PowerLimit_ChassicOutput(float power_limit, float *motor_out,
-                                float *speed, uint32_t len) {
+int8_t limit_chassic_output_power(float power_limit, float *motor_out,
+                                  float *speed, uint32_t len) {
   ASSERT(motor_out);
   ASSERT(speed);
 
@@ -58,8 +58,8 @@ int8_t PowerLimit_ChassicOutput(float power_limit, float *motor_out,
  * @param power_buffer 缓冲能量
  * @return float 裁判系统输出最大值
  */
-float PowerLimit_CapInput(float power_in, float power_limit,
-                          float power_buffer) {
+float limit_cap_input_power(float power_in, float power_limit,
+                            float power_buffer) {
   ASSERT(power_in > 0.0f);
   ASSERT(power_limit > 0.0f);
   ASSERT(power_buffer > 0.0f);
@@ -85,7 +85,7 @@ float PowerLimit_CapInput(float power_in, float power_limit,
  * @param power_buffer 缓冲能量
  * @return float 底盘输出最大值
  */
-float PowerLimit_TargetPower(float power_limit, float power_buffer) {
+float limit_calc_chassic_output_power(float power_limit, float power_buffer) {
   float target_power = 0.0f;
 
   /* 根据剩余缓冲能量计算输出功率 */
@@ -106,8 +106,8 @@ float PowerLimit_TargetPower(float power_limit, float power_buffer) {
  * @param is_big 经过热量限制后的发射频率
  * @return float 发射频率
  */
-float HeatLimit_LauncherFreq(float heat, float heat_limit, float cooling_rate,
-                             float heat_increase, bool is_big) {
+float limit_launcher_freq(float heat, float heat_limit, float cooling_rate,
+                          float heat_increase, bool is_big) {
   float heat_percent = heat / heat_limit;
   float stable_freq = cooling_rate / heat_increase;
   if (is_big)

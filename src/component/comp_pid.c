@@ -23,8 +23,8 @@
  * @param sample_freq 采样频率
  * @param param PID参数
  */
-void PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
-              const KPID_Params_t *param) {
+void kpid_init(kpid_t *pid, kpid_mode_t mode, float sample_freq,
+               const kpid_params_t *param) {
   ASSERT(pid);
 
   ASSERT(isfinite(param->p));
@@ -38,10 +38,11 @@ void PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
   ASSERT(isfinite(dt_min));
   pid->dt_min = dt_min;
 
-  LowPassFilter2p_Init(&(pid->dfilter), sample_freq, pid->param->d_cutoff_freq);
+  low_pass_filter_2p_init(&(pid->dfilter), sample_freq,
+                          pid->param->d_cutoff_freq);
 
   pid->mode = mode;
-  PID_Reset(pid);
+  kpid_reset(pid);
 }
 
 /**
@@ -54,20 +55,20 @@ void PID_Init(KPID_t *pid, KPID_Mode_t mode, float sample_freq,
  * @param dt 间隔时间
  * @return float 计算的输出
  */
-float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt) {
+float kpid_calc(kpid_t *pid, float sp, float fb, float fb_dot, float dt) {
   if (!isfinite(sp) || !isfinite(fb) || !isfinite(fb_dot) || !isfinite(dt)) {
     return pid->last.out;
   }
 
   /* 计算误差值 */
-  const float err = CircleError(sp, fb, pid->param->range);
+  const float err = circle_error(sp, fb, pid->param->range);
 
   /* 计算P项 */
   const float k_err = err * pid->param->k;
 
   /* 计算D项 */
   const float k_fb = pid->param->k * fb;
-  const float filtered_k_fb = LowPassFilter2p_Apply(&(pid->dfilter), k_fb);
+  const float filtered_k_fb = low_pass_filter_2p_apply(&(pid->dfilter), k_fb);
 
   float d;
   switch (pid->mode) {
@@ -118,7 +119,7 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt) {
   /* 限制输出 */
   if (isfinite(output)) {
     if (pid->param->out_limit > SIGMA) {
-      output = AbsClamp(output, pid->param->out_limit);
+      output = abs_clampf(output, pid->param->out_limit);
     }
     pid->last.out = output;
   }
@@ -130,7 +131,7 @@ float PID_Calc(KPID_t *pid, float sp, float fb, float fb_dot, float dt) {
  *
  * @param pid PID结构体
  */
-void PID_ResetIntegral(KPID_t *pid) {
+void kpid_reset_i(kpid_t *pid) {
   ASSERT(pid);
 
   pid->i = 0.0f;
@@ -141,12 +142,12 @@ void PID_ResetIntegral(KPID_t *pid) {
  *
  * @param pid PID结构体
  */
-void PID_Reset(KPID_t *pid) {
+void kpid_reset(kpid_t *pid) {
   ASSERT(pid);
 
   pid->i = 0.0f;
   pid->last.err = 0.0f;
   pid->last.k_fb = 0.0f;
   pid->last.out = 0.0f;
-  LowPassFilter2p_Reset(&(pid->dfilter), 0.0f);
+  low_pass_filter_2p_reset(&(pid->dfilter), 0.0f);
 }

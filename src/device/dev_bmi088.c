@@ -3,7 +3,6 @@
 
 */
 
-/* Includes ----------------------------------------------------------------- */
 #include "dev_bmi088.h"
 
 #include <stdbool.h>
@@ -14,7 +13,6 @@
 #include "bsp_spi.h"
 #include "comp_utils.h"
 
-/* Private define ----------------------------------------------------------- */
 #define BMI088_REG_ACCL_CHIP_ID (0x00)
 #define BMI088_REG_ACCL_ERR (0x02)
 #define BMI088_REG_ACCL_STATUS (0x03)
@@ -60,9 +58,9 @@
 #define BMI088_CHIP_ID_ACCL (0x1E)
 #define BMI088_CHIP_ID_GYRO (0x0F)
 
-// TODO : ACCEL和GRYO双缓冲区
-#define BMI088_LEN_RX_BUFF (30)
-/* Private macro ------------------------------------------------------------ */
+#define BMI088_ACCL_RX_BUFF_LEN (19)
+#define BMI088_GYRO_RX_BUFF_LEN (6)
+
 #define BMI088_ACCL_NSS_SET() \
   HAL_GPIO_WritePin(ACCL_CS_GPIO_Port, ACCL_CS_Pin, GPIO_PIN_SET)
 #define BMI088_ACCL_NSS_RESET() \
@@ -73,19 +71,16 @@
 #define BMI088_GYRO_NSS_RESET() \
   HAL_GPIO_WritePin(GYRO_CS_GPIO_Port, GYRO_CS_Pin, GPIO_PIN_RESET)
 
-/* Private typedef ---------------------------------------------------------- */
 typedef enum {
   BMI_ACCL,
   BMI_GYRO,
 } BMI_Device_t;
 
-/* Private variables -------------------------------------------------------- */
 static uint8_t tx_rx_buf[2];
-static uint8_t dma_buf[BMI088_LEN_RX_BUFF];
+static uint8_t dma_buf[BMI088_ACCL_RX_BUFF_LEN + BMI088_GYRO_RX_BUFF_LEN];
 
 static bool inited = false;
 
-/* Private function  -------------------------------------------------------- */
 static void BMI_WriteSingle(BMI_Device_t dv, uint8_t reg, uint8_t data) {
   tx_rx_buf[0] = (reg & 0x7f);
   tx_rx_buf[1] = data;
@@ -159,7 +154,7 @@ static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
 }
 
 static void BMI088_RxCpltCallback(void *arg) {
-  BMI088_t *bmi088 = arg;
+  bmi088_t *bmi088 = arg;
   BaseType_t switch_required;
   if (HAL_GPIO_ReadPin(ACCL_CS_GPIO_Port, ACCL_CS_Pin) == GPIO_PIN_RESET) {
     BMI088_ACCL_NSS_SET();
@@ -173,21 +168,20 @@ static void BMI088_RxCpltCallback(void *arg) {
 }
 
 static void BMI088_AcclIntCallback(void *arg) {
-  BMI088_t *bmi088 = arg;
+  bmi088_t *bmi088 = arg;
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(bmi088->sem.accl_new, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
 static void BMI088_GyroIntCallback(void *arg) {
-  BMI088_t *bmi088 = arg;
+  bmi088_t *bmi088 = arg;
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(bmi088->sem.gyro_new, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
-/* Exported functions ------------------------------------------------------- */
-int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali) {
+int8_t bmi088_init(bmi088_t *bmi088, const bmi088_cali_t *cali) {
   ASSERT(bmi088);
   ASSERT(cali);
 
@@ -264,39 +258,36 @@ int8_t BMI088_Init(BMI088_t *bmi088, const BMI088_Cali_t *cali) {
   return DEVICE_OK;
 }
 
-bool BMI088_GyroStable(Vector3_t *gyro) {
-  return ((gyro->x < 0.03f) && (gyro->y < 0.03f) && (gyro->z < 0.03f));
-}
-
-bool BMI088_AcclWaitNew(BMI088_t *bmi088, uint32_t timeout) {
+bool bmi088_accl_wait_new(bmi088_t *bmi088, uint32_t timeout) {
   return xSemaphoreTake(bmi088->sem.accl_new, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 
-bool BMI088_GyroWaitNew(BMI088_t *bmi088, uint32_t timeout) {
+bool bmi088_gyro_wait_new(bmi088_t *bmi088, uint32_t timeout) {
   return xSemaphoreTake(bmi088->sem.gyro_new, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 
-int8_t BMI088_AcclStartDmaRecv() {
-  BMI_Read(BMI_ACCL, BMI088_REG_ACCL_X_LSB, dma_buf, BMI088_LEN_RX_BUFF);
+int8_t bmi088_accl_start_dma_recv() {
+  BMI_Read(BMI_ACCL, BMI088_REG_ACCL_X_LSB, dma_buf, BMI088_ACCL_RX_BUFF_LEN);
   return DEVICE_OK;
 }
 
-int8_t BMI088_AcclWaitDmaCplt(BMI088_t *bmi088) {
+int8_t bmi088_accl_wait_dma_cplt(bmi088_t *bmi088) {
   xSemaphoreTake(bmi088->sem.accl_raw, portMAX_DELAY);
   return DEVICE_OK;
 }
 
-int8_t BMI088_GyroStartDmaRecv() {
-  BMI_Read(BMI_GYRO, BMI088_REG_GYRO_X_LSB, dma_buf + 19, 6u);
+int8_t bmi088_gyro_start_dma_recv() {
+  BMI_Read(BMI_GYRO, BMI088_REG_GYRO_X_LSB, dma_buf + BMI088_ACCL_RX_BUFF_LEN,
+           BMI088_GYRO_RX_BUFF_LEN);
   return DEVICE_OK;
 }
 
-int8_t BMI088_GyroWaitDmaCplt(BMI088_t *bmi088) {
+int8_t bmi088_gyro_wait_dma_cplt(bmi088_t *bmi088) {
   xSemaphoreTake(bmi088->sem.gyro_raw, portMAX_DELAY);
   return DEVICE_OK;
 }
 
-int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
+int8_t bmi088_parse_accl(bmi088_t *bmi088) {
   ASSERT(bmi088);
 
 #if 1
@@ -334,15 +325,15 @@ int8_t BMI088_ParseAccl(BMI088_t *bmi088) {
   return DEVICE_OK;
 }
 
-int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
+int8_t bmi088_parse_gyro(bmi088_t *bmi088) {
   ASSERT(bmi088);
 
 #if 1
   /* Gyroscope imu_raw -> degrees/sec -> radians/sec */
   int16_t raw_x, raw_y, raw_z;
-  memcpy(&raw_x, dma_buf + 19, sizeof(raw_x));
-  memcpy(&raw_y, dma_buf + 21, sizeof(raw_y));
-  memcpy(&raw_z, dma_buf + 23, sizeof(raw_z));
+  memcpy(&raw_x, dma_buf + BMI088_ACCL_RX_BUFF_LEN, sizeof(raw_x));
+  memcpy(&raw_y, dma_buf + BMI088_ACCL_RX_BUFF_LEN + 2, sizeof(raw_y));
+  memcpy(&raw_z, dma_buf + BMI088_ACCL_RX_BUFF_LEN + 4, sizeof(raw_z));
 
   bmi088->gyro.x = (float)raw_x;
   bmi088->gyro.y = (float)raw_y;
@@ -350,9 +341,9 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
 
 #else
   /* Gyroscope imu_raw -> degrees/sec -> radians/sec */
-  const int16_t *raw_x = (int16_t *)(dma_buf + 7);
-  const int16_t *raw_y = (int16_t *)(dma_buf + 9);
-  const int16_t *raw_z = (int16_t *)(dma_buf + 11);
+  const int16_t *raw_x = (int16_t *)(dma_buf + BMI088_ACCL_RX_BUFF_LEN);
+  const int16_t *raw_y = (int16_t *)(dma_buf + BMI088_ACCL_RX_BUFF_LEN + 2);
+  const int16_t *raw_z = (int16_t *)(dma_buf + BMI088_ACCL_RX_BUFF_LEN + 4);
 
   bmi088->gyro.x = (float)*raw_x;
   bmi088->gyro.y = (float)*raw_y;
@@ -376,7 +367,7 @@ int8_t BMI088_ParseGyro(BMI088_t *bmi088) {
   return DEVICE_OK;
 }
 
-float BMI088_GetUpdateFreq(BMI088_t *bmi088) {
+float bmi088_get_update_freq(bmi088_t *bmi088) {
   RM_UNUSED(bmi088);
   return 400.0f;
 }

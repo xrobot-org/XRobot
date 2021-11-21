@@ -17,6 +17,18 @@ project(qdu_rm_mcu
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
+# General Compiler Options
+
+# Options for DEBUG build
+set(CMAKE_C_FLAGS_DEBUG "-Og -g3 -ggdb3")
+set(CMAKE_ASM_FLAGS_DEBUG "-g3 -ggdb3")
+set(CMAKE_EXE_LINKER_FLAGS_DEBUG "")
+
+# Options for RELEASE build
+set(CMAKE_C_FLAGS_RELEASE "-Os")
+set(CMAKE_ASM_FLAGS_RELEASE "")
+set(CMAKE_EXE_LINKER_FLAGS_RELEASE "")
+
 #---------------------------------------------------------------------------------------
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
@@ -39,13 +51,13 @@ elseif(BOARD STREQUAL RM_C)
 
 else()
     message(FATAL_ERROR "${BOARD} are not supported.")
-    
+
 endif()
 
 message(STATUS "Target platform: ${BOARD}")
 
 #---------------------------------------------------------------------------------------
-# Default build for release 
+# Default build for release
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
 endif()
@@ -56,7 +68,7 @@ message(STATUS "------------------------- Host Platform ------------------------
 string(TIMESTAMP CONFIG_TIMESTAMP "" UTC)
 message(STATUS "Timestamp: ${CONFIG_TIMESTAMP}")
 message(STATUS "Host: ${CMAKE_HOST_SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_VERSION} ${CMAKE_HOST_SYSTEM_PROCESSOR}")
-if(CMAKE_CROSSCOMPILING) # set to true by CMake if the CMAKE_SYSTEM_NAME has been set manually 
+if(CMAKE_CROSSCOMPILING) # set to true by CMake if the CMAKE_SYSTEM_NAME has been set manually
     message(STATUS "Target: ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_VERSION} ${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 message(STATUS "CMake: ${CMAKE_VERSION}")
@@ -66,7 +78,7 @@ message(STATUS "CMake build tool: ${CMAKE_BUILD_TOOL}")
 if(MSVC)
     message(STATUS "MSVC: ${MSVC_VERSION}")
 endif()
-    
+
 if(CMAKE_GENERATOR MATCHES Xcode)
     message(STATUS "Xcode: ${XCODE_VERSION}")
 endif()

@@ -8,7 +8,9 @@
     "cmake.preferredGenerators": [
         "Ninja"
     ],
-    "files.associations": {
-        "board.h": "c"
-    },
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    "files.trimFinalNewlines": true,
+    "editor.trimAutoWhitespace": true,
+    "files.autoSave": "onFocusChange",
 }

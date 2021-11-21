@@ -4,7 +4,10 @@
 
 #pragma once
 
-#include "comp_utils.h"
+#include <stddef.h>
+#include <stdint.h>
+
+#include "comp_type.h"
 
 /** 四轮布局 */
 /* 前 */
@@ -27,11 +30,11 @@ typedef enum {
 
   /* 空中用 */
   MIXER_CANARD, /* 飞镖鸭翼 */
-} Mixer_Mode_t;
+} mixer_mode_t;
 
 typedef struct {
-  Mixer_Mode_t mode;
-} Mixer_t; /* 混合器主结构体 */
+  mixer_mode_t mode;
+} mixer_t; /* 混合器主结构体 */
 
 /**
  * @brief 初始化混合器
@@ -40,7 +43,7 @@ typedef struct {
  * @param mode 混合器模式
  * @return int8_t 0对应没有错误
  */
-int8_t Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode);
+int8_t mixer_init(mixer_t *mixer, mixer_mode_t mode);
 
 /**
  * @brief 计算输出
@@ -52,5 +55,5 @@ int8_t Mixer_Init(Mixer_t *mixer, Mixer_Mode_t mode);
  * @param scale_factor 输出放大因子
  * @return int8_t 0对应没有错误
  */
-int8_t Mixer_Apply(Mixer_t *mixer, MoveVector_t *move_vec, float *out,
+int8_t mixer_apply(mixer_t *mixer, move_vector_t *move_vec, float *out,
                    size_t len, float scale_factor);

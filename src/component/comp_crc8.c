@@ -29,16 +29,16 @@ static const uint8_t crc8_tab[256] = {
     0xd7, 0x89, 0x6b, 0x35,
 };
 
-uint8_t CRC8_Calc(const uint8_t *buf, size_t len, uint8_t crc) {
+uint8_t crc8_calc(const uint8_t *buf, size_t len, uint8_t crc) {
   /* loop over the buffer data */
   while (len-- > 0) crc = crc8_tab[(crc ^ *buf++) & 0xff];
 
   return crc;
 }
 
-bool CRC8_Verify(const uint8_t *buf, size_t len) {
+bool crc8_verify(const uint8_t *buf, size_t len) {
   if (len < 2) return false;
 
-  uint8_t expected = CRC8_Calc(buf, len - sizeof(uint8_t), CRC8_INIT);
+  uint8_t expected = crc8_calc(buf, len - sizeof(uint8_t), CRC8_INIT);
   return expected == buf[len - sizeof(uint8_t)];
 }

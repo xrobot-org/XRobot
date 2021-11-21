@@ -32,6 +32,7 @@ target_include_directories(${PROJECT_NAME}
     PUBLIC  ${THIRD_PARTY_DIR}/stm32_cmsis/Include
     PUBLIC ${THIRD_PARTY_DIR}/arm_cmsis/CMSIS/Core/Include
     PUBLIC $<TARGET_PROPERTY:rtos,INTERFACE_INCLUDE_DIRECTORIES>
+    PUBLIC $<TARGET_PROPERTY:hal,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 add_dependencies(${PROJECT_NAME}

@@ -1,14 +1,9 @@
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include <stdint.h>
 
 #include "bsp.h"
 #include "hal_i2c.h"
-
-/* Exported constants ------------------------------------------------------- */
-/* Exported macro ----------------------------------------------------------- */
-/* Exported types ----------------------------------------------------------- */
 
 /* 要添加使用I2C的新设备，需要先在此添加对应的枚举值 */
 
@@ -34,7 +29,6 @@ typedef enum {
   BSP_I2C_CB_NUM,
 } BSP_I2C_Callback_t;
 
-/* Exported functions prototypes -------------------------------------------- */
 I2C_HandleTypeDef *BSP_I2C_GetHandle(BSP_I2C_t i2c);
 int8_t BSP_I2C_RegisterCallback(BSP_I2C_t i2c, BSP_I2C_Callback_t type,
                                 void (*callback)(void));

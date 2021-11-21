@@ -18,29 +18,30 @@
 #include "mid_msg_dist.h"
 #include "thd.h"
 
-void Thd_RC(void* arg) {
+void thd_rc(void* arg) {
   RM_UNUSED(arg);
 
-  DR16_t dr16;
-  CMD_RC_t cmd_rc;
+  dr16_t dr16;
+  cmd_rc_t cmd_rc;
 
-  MsgDist_Publisher_t* rc_pub = MsgDist_CreateTopic("rc_cmd", sizeof(CMD_RC_t));
+  publisher_t* rc_pub = msg_dist_create_topic("rc_cmd", sizeof(cmd_rc_t));
 
-  DR16_Init(&dr16); /* 初始化dr16 */
+  dr16_init(&dr16); /* 初始化dr16 */
 
   while (1) {
     /* 开启DMA */
-    DR16_StartDmaRecv(&dr16);
+    dr16_start_dma_recv(&dr16);
 
     /* 等待DMA完成 */
-    if (DR16_WaitDmaCplt(20)) {
+    if (dr16_wait_dma_cplt(20)) {
       /* 进行解析 */
-      DR16_ParseRC(&dr16, &cmd_rc);
+      dr16_parse_rc(&dr16, &cmd_rc);
     } else {
       /* 处理遥控器离线 */
-      DR16_HandleOffline(&dr16, &cmd_rc);
+      dr16_handle_offline(&dr16, &cmd_rc);
     }
 
-    MsgDist_Publish(rc_pub, &cmd_rc);
+    msg_dist_publish(rc_pub, &cmd_rc);
   }
 }
+THREAD_DECLEAR(thd_rc, 128, 4);

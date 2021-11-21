@@ -3,7 +3,6 @@
 
 */
 
-/* Includes ----------------------------------------------------------------- */
 #include "dev_ist8310.h"
 
 #include <stdbool.h>
@@ -15,7 +14,6 @@
 #include "bsp_i2c.h"
 #include "task.h"
 
-/* Private define ----------------------------------------------------------- */
 #define IST8310_WAI (0x00)
 #define IST8310_STAT1 (0x02)
 #define IST8310_DATAXL (0x03)
@@ -33,20 +31,17 @@
 #define IST8310_IIC_ADDRESS (0x0E << 1)
 
 #define IST8310_LEN_RX_BUFF (6)
-/* Private macro ------------------------------------------------------------ */
+
 #define IST8310_SET() \
   HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_SET)
 #define IST8310_RESET() \
   HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_RESET)
 
-/* Private typedef ---------------------------------------------------------- */
-/* Private variables -------------------------------------------------------- */
 uint8_t ist8310_rxbuf[IST8310_LEN_RX_BUFF];
 
 static TaskHandle_t thread_alert;
 static bool inited = false;
 
-/* Private function  -------------------------------------------------------- */
 static void IST8310_WriteSingle(uint8_t reg, uint8_t data) {
   HAL_I2C_Mem_Write(BSP_I2C_GetHandle(BSP_I2C_COMP), IST8310_IIC_ADDRESS, reg,
                     I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
@@ -80,9 +75,7 @@ static void IST8310_IntCallback(void) {
   portYIELD_FROM_ISR(switch_required);
 }
 
-/* Exported functions -------------------------------------------------------
- */
-int8_t IST8310_Init(IST8310_t *ist8310, const IST8310_Cali_t *cali) {
+int8_t ist8310_init(ist8310_t *ist8310, const ist8310_cali_t *cali) {
   ASSERT(ist8310);
   ASSERT(cali);
   if (inited) return DEVICE_ERR_INITED;
@@ -121,21 +114,21 @@ int8_t IST8310_Init(IST8310_t *ist8310, const IST8310_Cali_t *cali) {
   return DEVICE_OK;
 }
 
-bool IST8310_WaitNew(uint32_t timeout) {
+bool ist8310_wait_new(uint32_t timeout) {
   return xTaskNotifyWait(0, 0, (uint32_t *)SIGNAL_IST8310_MAGN_NEW_DATA,
                          pdMS_TO_TICKS(timeout));
 }
 
-int8_t IST8310_StartDmaRecv() {
+int8_t ist8310_start_dma_recv() {
   IST8310_Read(IST8310_DATAXL, ist8310_rxbuf, IST8310_LEN_RX_BUFF);
   return DEVICE_OK;
 }
 
-uint32_t IST8310_WaitDmaCplt() {
+uint32_t ist8310_wait_dma_cplt() {
   return xTaskNotifyWait(0, 0, (uint32_t *)SIGNAL_IST8310_MAGN_RAW_REDY, 0);
 }
 
-int8_t IST8310_Parse(IST8310_t *ist8310) {
+int8_t ist8310_parse(ist8310_t *ist8310) {
   ASSERT(ist8310);
 
 #if 1

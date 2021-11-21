@@ -9,18 +9,12 @@
  *
  */
 
-/* Includes ----------------------------------------------------------------- */
 #include "mod_launcher.h"
 
 #include "bsp_pwm.h"
 #include "comp_game.h"
 #include "comp_limiter.h"
 #include "comp_utils.h"
-/* Private typedef ---------------------------------------------------------- */
-/* Private define ----------------------------------------------------------- */
-/* Private macro ------------------------------------------------------------ */
-/* Private variables -------------------------------------------------------- */
-/* Private function  -------------------------------------------------------- */
 
 /**
  * @brief 设置发射器模式
@@ -28,26 +22,27 @@
  * @param l 包含发射器数据的结构体
  * @param mode 要设置的模式
  */
-static void Launcher_SetMode(Launcher_t *l, Game_LauncherMode_t mode) {
+static void Launcher_SetMode(launcher_t *l, launcher_mode_t mode) {
   ASSERT(l);
 
   if (mode == l->mode) return;
 
   /* 切换模式后重置PID和滤波器 */
   for (size_t i = 0; i < 2; i++) {
-    PID_Reset(l->pid.fric + i);
-    LowPassFilter2p_Reset(l->filter.in.fric + i, 0.0f);
-    LowPassFilter2p_Reset(l->filter.out.fric + i, 0.0f);
+    kpid_reset(l->pid.fric + i);
+    low_pass_filter_2p_reset(l->filter.in.fric + i, 0.0f);
+    low_pass_filter_2p_reset(l->filter.out.fric + i, 0.0f);
   }
-  PID_Reset(&(l->pid.trig));
-  LowPassFilter2p_Reset(&(l->filter.in.trig), 0.0f);
-  LowPassFilter2p_Reset(&(l->filter.out.trig), 0.0f);
+  kpid_reset(&(l->pid.trig));
+  low_pass_filter_2p_reset(&(l->filter.in.trig), 0.0f);
+  low_pass_filter_2p_reset(&(l->filter.out.trig), 0.0f);
 
   /* 保证模式变换时拨弹盘不丢失起始位置 */
-  while (fabsf(CircleError(l->setpoint.trig_angle, l->feedback.trig_angle,
-                           M_2PI)) >= M_2PI / l->param->num_trig_tooth / 2.0f) {
-    CircleAdd(&(l->setpoint.trig_angle), M_2PI / l->param->num_trig_tooth,
-              M_2PI);
+  while (fabsf(circle_error(l->setpoint.trig_angle, l->feedback.trig_angle,
+                            M_2PI)) >=
+         M_2PI / l->param->num_trig_tooth / 2.0f) {
+    circle_add(&(l->setpoint.trig_angle), M_2PI / l->param->num_trig_tooth,
+               M_2PI);
   }
 
   if (mode == LAUNCHER_MODE_LOADED) l->fire_ctrl.to_launch = 0;
@@ -61,10 +56,10 @@ static void Launcher_SetMode(Launcher_t *l, Game_LauncherMode_t mode) {
  * @param l 包含发射器数据的结构体
  * @param l_ref 发射器所需裁判系统数据
  */
-static void Launcher_HeatLimit(Launcher_t *l, Referee_ForLauncher_t *l_ref) {
+static void Launcher_HeatLimit(launcher_t *l, referee_for_launcher_t *l_ref) {
   ASSERT(l);
   ASSERT(l_ref);
-  Launcher_HeatCtrl_t *hc = &(l->heat_ctrl);
+  launcher_heat_ctrl_t *hc = &(l->heat_ctrl);
   /* 当裁判系统在线时启用热量控制与射速控制 */
   if (l_ref->status == REF_STATUS_RUNNING) {
     /* 根据机器人型号获得对应数据 */
@@ -95,8 +90,6 @@ static void Launcher_HeatLimit(Launcher_t *l, Referee_ForLauncher_t *l_ref) {
   }
 }
 
-/* Exported functions ------------------------------------------------------- */
-
 /**
  * @brief 初始化发射器
  *
@@ -104,7 +97,7 @@ static void Launcher_HeatLimit(Launcher_t *l, Referee_ForLauncher_t *l_ref) {
  * @param param 包含发射器参数的结构体指针
  * @param target_freq 线程预期的运行频率
  */
-void Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
+void launcher_init(launcher_t *l, const launcher_params_t *param,
                    float target_freq) {
   ASSERT(l);
   ASSERT(param);
@@ -114,23 +107,23 @@ void Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
 
   for (size_t i = 0; i < 2; i++) {
     /* PI控制器初始化PID */
-    PID_Init(l->pid.fric + i, KPID_MODE_NO_D, target_freq,
-             &(param->fric_pid_param));
+    kpid_init(l->pid.fric + i, KPID_MODE_NO_D, target_freq,
+              &(param->fric_pid_param));
 
-    LowPassFilter2p_Init(l->filter.in.fric + i, target_freq,
-                         param->low_pass_cutoff_freq.in.fric);
+    low_pass_filter_2p_init(l->filter.in.fric + i, target_freq,
+                            param->low_pass_cutoff_freq.in.fric);
 
-    LowPassFilter2p_Init(l->filter.out.fric + i, target_freq,
-                         param->low_pass_cutoff_freq.out.fric);
+    low_pass_filter_2p_init(l->filter.out.fric + i, target_freq,
+                            param->low_pass_cutoff_freq.out.fric);
   }
 
-  PID_Init(&(l->pid.trig), KPID_MODE_CALC_D, target_freq,
-           &(param->trig_pid_param));
+  kpid_init(&(l->pid.trig), KPID_MODE_CALC_D, target_freq,
+            &(param->trig_pid_param));
 
-  LowPassFilter2p_Init(&(l->filter.in.trig), target_freq,
-                       param->low_pass_cutoff_freq.in.trig);
-  LowPassFilter2p_Init(&(l->filter.out.trig), target_freq,
-                       param->low_pass_cutoff_freq.out.trig);
+  low_pass_filter_2p_init(&(l->filter.in.trig), target_freq,
+                          param->low_pass_cutoff_freq.in.trig);
+  low_pass_filter_2p_init(&(l->filter.out.trig), target_freq,
+                          param->low_pass_cutoff_freq.out.trig);
 
   BSP_PWM_Start(BSP_PWM_LAUNCHER_SERVO);
   BSP_PWM_Set(BSP_PWM_LAUNCHER_SERVO, param->cover_close_duty);
@@ -142,8 +135,8 @@ void Launcher_Init(Launcher_t *l, const Launcher_Params_t *param,
  * @param l 包含发射器数据的结构体
  * @param can CAN设备结构体
  */
-void Launcher_UpdateFeedback(Launcher_t *l,
-                             const CAN_LauncherMotor_t *launcher_motor) {
+void launcher_update_feedback(launcher_t *l,
+                              const motor_feedback_group_t *launcher_motor) {
   ASSERT(l);
   ASSERT(launcher_motor);
 
@@ -153,11 +146,12 @@ void Launcher_UpdateFeedback(Launcher_t *l,
 
   /* 更新拨弹电机 */
   const float last_trig_motor_angle = l->feedback.trig_motor_angle;
-  l->feedback.trig_motor_angle = launcher_motor->named.trig.rotor_abs_angle;
+  l->feedback.trig_motor_angle =
+      launcher_motor->as_launcher.trig.rotor_abs_angle;
   const float delta_motor_angle =
-      CircleError(l->feedback.trig_motor_angle, last_trig_motor_angle, M_2PI);
-  CircleAdd(&(l->feedback.trig_angle),
-            delta_motor_angle / l->param->trig_gear_ratio, M_2PI);
+      circle_error(l->feedback.trig_motor_angle, last_trig_motor_angle, M_2PI);
+  circle_add(&(l->feedback.trig_angle),
+             delta_motor_angle / l->param->trig_gear_ratio, M_2PI);
 }
 
 /**
@@ -169,8 +163,8 @@ void Launcher_UpdateFeedback(Launcher_t *l,
  * @param l_ref 发射器使用的裁判系统数据
  * @param now 现在时刻
  */
-void Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
-                      Referee_ForLauncher_t *l_ref, uint32_t now) {
+void launcher_control(launcher_t *l, cmd_launcher_t *l_cmd,
+                      referee_for_launcher_t *l_ref, uint32_t now) {
   ASSERT(l);
   ASSERT(l_cmd);
   ASSERT(l_ref);
@@ -221,7 +215,7 @@ void Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
       break;
 
     case FIRE_MODE_CONT: { /* 持续开火模式 */
-      float launch_freq = HeatLimit_LauncherFreq(
+      float launch_freq = limit_launcher_freq(
           l->heat_ctrl.heat, l->heat_ctrl.heat_limit, l->heat_ctrl.cooling_rate,
           l->heat_ctrl.heat_increase, l->param->model == LAUNCHER_MODEL_42MM);
       l->fire_ctrl.launch_delay =
@@ -244,19 +238,19 @@ void Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
 
   /* 计算摩擦轮转速的目标值 */
   l->setpoint.fric_rpm[1] =
-      BulletSpeedToFricRpm(l->fire_ctrl.bullet_speed, l->param->fric_radius,
-                           (l->param->model == LAUNCHER_MODEL_17MM));
+      bullet_speed_to_fric_rpm(l->fire_ctrl.bullet_speed, l->param->fric_radius,
+                               (l->param->model == LAUNCHER_MODEL_17MM));
   l->setpoint.fric_rpm[0] = -l->setpoint.fric_rpm[1];
 
   /* 计算拨弹电机位置的目标值 */
   if ((now - l->fire_ctrl.last_launch) >= l->fire_ctrl.launch_delay) {
     /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗弹丸的弧度变化 */
     if (l_cmd->reverse_trig) { /* 反转拨盘，用来解决卡顿*/
-      CircleAdd(&(l->setpoint.trig_angle), M_2PI / l->param->num_trig_tooth,
-                M_2PI);
+      circle_add(&(l->setpoint.trig_angle), M_2PI / l->param->num_trig_tooth,
+                 M_2PI);
     } else {
-      CircleAdd(&(l->setpoint.trig_angle), -M_2PI / l->param->num_trig_tooth,
-                M_2PI);
+      circle_add(&(l->setpoint.trig_angle), -M_2PI / l->param->num_trig_tooth,
+                 M_2PI);
       /* 计算已发射弹丸 */
       l->fire_ctrl.launched++;
       l->fire_ctrl.last_launch = now;
@@ -274,25 +268,25 @@ void Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
     case LAUNCHER_MODE_SAFE:
     case LAUNCHER_MODE_LOADED:
       /* 控制拨弹电机 */
-      l->feedback.trig_angle =
-          LowPassFilter2p_Apply(&(l->filter.in.trig), l->feedback.trig_angle);
+      l->feedback.trig_angle = low_pass_filter_2p_apply(&(l->filter.in.trig),
+                                                        l->feedback.trig_angle);
 
       l->out[LAUNCHER_ACTR_TRIG_IDX] =
-          PID_Calc(&(l->pid.trig), l->setpoint.trig_angle,
-                   l->feedback.trig_angle, 0.0f, l->dt);
-      l->out[LAUNCHER_ACTR_TRIG_IDX] = LowPassFilter2p_Apply(
+          kpid_calc(&(l->pid.trig), l->setpoint.trig_angle,
+                    l->feedback.trig_angle, 0.0f, l->dt);
+      l->out[LAUNCHER_ACTR_TRIG_IDX] = low_pass_filter_2p_apply(
           &(l->filter.out.trig), l->out[LAUNCHER_ACTR_TRIG_IDX]);
 
       for (size_t i = 0; i < 2; i++) {
         /* 控制摩擦轮 */
-        l->feedback.fric_rpm[i] = LowPassFilter2p_Apply(
+        l->feedback.fric_rpm[i] = low_pass_filter_2p_apply(
             l->filter.in.fric + i, l->feedback.fric_rpm[i]);
 
         l->out[LAUNCHER_ACTR_FRIC1_IDX + i] =
-            PID_Calc(l->pid.fric + i, l->setpoint.fric_rpm[i],
-                     l->feedback.fric_rpm[i], 0.0f, l->dt);
+            kpid_calc(l->pid.fric + i, l->setpoint.fric_rpm[i],
+                      l->feedback.fric_rpm[i], 0.0f, l->dt);
 
-        l->out[LAUNCHER_ACTR_FRIC1_IDX + i] = LowPassFilter2p_Apply(
+        l->out[LAUNCHER_ACTR_FRIC1_IDX + i] = low_pass_filter_2p_apply(
             l->filter.out.fric + i, l->out[LAUNCHER_ACTR_FRIC1_IDX + i]);
       }
 
@@ -314,7 +308,7 @@ void Launcher_Control(Launcher_t *l, CMD_LauncherCmd_t *l_cmd,
  * @param l 包含发射器数据的结构体
  * @param out CAN设备发射器输出结构体
  */
-void Launcher_PackOutput(Launcher_t *l, CAN_LauncherOutput_t *out) {
+void launcher_pack_output(launcher_t *l, motor_control_t *out) {
   ASSERT(l);
   ASSERT(out);
   for (size_t i = 0; i < LAUNCHER_ACTR_NUM; i++) {
@@ -323,22 +317,12 @@ void Launcher_PackOutput(Launcher_t *l, CAN_LauncherOutput_t *out) {
 }
 
 /**
- * @brief 清空输出值
- *
- * @param output 要清空的结构体
- */
-void Launcher_ResetOutput(CAN_LauncherOutput_t *output) {
-  ASSERT(output);
-  memset(output, 0, sizeof(*output));
-}
-
-/**
  * @brief 导出发射器UI数据
  *
  * @param l 发射器结构体
  * @param ui UI结构体
  */
-void Launcher_PackUi(Launcher_t *l, UI_LauncherUI_t *ui) {
+void launcher_pack_ui(launcher_t *l, ui_launcher_t *ui) {
   ASSERT(l);
   ASSERT(ui);
   ui->mode = l->mode;

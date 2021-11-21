@@ -75,10 +75,14 @@
   1. 安装Ozone Linux版
   1. 正常调试
 
-- Windows 11 WSL with WSLg
+- Windows WSL with WSLg
   1. Windows Host中安装Jlink驱动
   1. WSL中安装Ozone Linux版
   1. WSL中使用Ozone调试，通过网络连接Jlink
+
+- Windows WSL without WSLg
+  1. Windows Host中安装Jlink驱动和Ozone
+  1. Windows Host中使用Ozone调试，通过USB连接Jlink，在ozone project中修改路径
 
 #### OpenOCD
 

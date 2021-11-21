@@ -9,59 +9,59 @@
 #define THD_PERIOD_MS (2)
 #define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
-void Thd_AI(void* arg) {
+void thd_ai(void* arg) {
   RM_UNUSED(arg);
 
-  AI_t ai;
-  AI_UI_t ai_ui;
-  CMD_Host_t cmd_host;
-  AHRS_Quaternion_t ai_quat;
-  Referee_ForAI_t referee_ai;
+  ai_t ai;
+  ai_ui_t ai_ui;
+  cmd_host_t cmd_host;
+  quaternion_t ai_quat;
+  referee_for_ai_t referee_ai;
 
-  MsgDist_Publisher_t* cmd_host_pub =
-      MsgDist_CreateTopic("cmd_host", sizeof(CMD_LauncherCmd_t));
-  MsgDist_Publisher_t* ui_ai_pub =
-      MsgDist_CreateTopic("ui_ai", sizeof(CMD_UI_t));
+  publisher_t* cmd_host_pub =
+      msg_dist_create_topic("cmd_host", sizeof(cmd_launcher_t));
+  publisher_t* ui_ai_pub = msg_dist_create_topic("ui_ai", sizeof(cmd_ui_t));
 
-  MsgDist_Subscriber_t* quat_sub = MsgDist_Subscribe("gimbal_quat", true);
-  MsgDist_Subscriber_t* cmd_ai_sub = MsgDist_Subscribe("cmd_ai", true);
-  MsgDist_Subscriber_t* referee_ai_sub = MsgDist_Subscribe("referee_ai", true);
+  subscriber_t* quat_sub = msg_dist_subscribe("gimbal_quat", true);
+  subscriber_t* cmd_ai_sub = msg_dist_subscribe("cmd_ai", true);
+  subscriber_t* referee_ai_sub = msg_dist_subscribe("referee_ai", true);
 
   /* 初始化AI通信 */
-  AI_Init(&ai);
+  ai_init(&ai);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 
   while (1) {
     /* 接收指令 */
-    AI_StartReceiving(&ai);
+    ai_start_receiving(&ai);
 
-    if (AI_WaitRecvCplt(&ai, THD_PERIOD_MS)) {
-      AI_ParseHost(&ai);
+    if (ai_wait_recv_cplt(&ai, THD_PERIOD_MS)) {
+      ai_parse_host(&ai);
     } else {
-      AI_HandleOffline(&ai);
+      ai_handle_offline(&ai);
     }
 
-    AI_PackCMD(&ai, &cmd_host);
-    MsgDist_Publish(cmd_host_pub, &cmd_host);
+    ai_pack_cmd(&ai, &cmd_host);
+    msg_dist_publish(cmd_host_pub, &cmd_host);
 
     /* 发送数据 */
-    MsgDist_Poll(cmd_ai_sub, &(ai.mode), 0);
-    MsgDist_Poll(quat_sub, &ai_quat, 0);
-    AI_PackMcuForHost(&ai, &ai_quat);
+    msg_dist_poll(cmd_ai_sub, &(ai.mode), 0);
+    msg_dist_poll(quat_sub, &ai_quat, 0);
+    ai_pack_mcu_for_host(&ai, &ai_quat);
 
-    if (MsgDist_Poll(referee_ai_sub, &(referee_ai), 0)) {
-      AI_PackRefForHost(&ai, &(referee_ai));
+    if (msg_dist_poll(referee_ai_sub, &(referee_ai), 0)) {
+      ai_pack_ref_for_host(&ai, &(referee_ai));
     }
 
-    if (AI_WaitTransCplt(&ai, 0)) {
-      AI_StartTrans(&ai);
+    if (ai_wait_trans_cplt(&ai, 0)) {
+      ai_start_trans(&ai);
     }
 
     /* 更新UI */
-    AI_PackUI(&ai_ui, &ai);
-    MsgDist_Publish(ui_ai_pub, &cmd_host);
+    ai_pack_ui(&ai_ui, &ai);
+    msg_dist_publish(ui_ai_pub, &cmd_host);
 
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
+THREAD_DECLEAR(thd_ai, 128, 4);

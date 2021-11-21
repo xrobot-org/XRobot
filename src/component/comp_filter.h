@@ -20,7 +20,7 @@ typedef struct {
   float delay_element_1;
   float delay_element_2;
 
-} LowPassFilter2p_t;
+} low_pass_filter_2p_t;
 
 /* 带阻滤波器 */
 typedef struct {
@@ -36,7 +36,7 @@ typedef struct {
   float delay_element_1;
   float delay_element_2;
 
-} NotchFilter_t;
+} notch_filter_t;
 
 /**
  * @brief 初始化滤波器
@@ -45,8 +45,8 @@ typedef struct {
  * @param sample_freq 采样频率
  * @param cutoff_freq 截止频率
  */
-void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq,
-                          float cutoff_freq);
+void low_pass_filter_2p_init(low_pass_filter_2p_t *f, float sample_freq,
+                             float cutoff_freq);
 
 /**
  * @brief 施加一次滤波计算
@@ -55,7 +55,7 @@ void LowPassFilter2p_Init(LowPassFilter2p_t *f, float sample_freq,
  * @param sample 采样的值
  * @return float 滤波后的值
  */
-float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample);
+float low_pass_filter_2p_apply(low_pass_filter_2p_t *f, float sample);
 
 /**
  * @brief 重置滤波器
@@ -64,7 +64,7 @@ float LowPassFilter2p_Apply(LowPassFilter2p_t *f, float sample);
  * @param sample 采样的值
  * @return float 滤波后的值
  */
-float LowPassFilter2p_Reset(LowPassFilter2p_t *f, float sample);
+float low_pass_filter_2p_reset(low_pass_filter_2p_t *f, float sample);
 
 /**
  * @brief 初始化滤波器
@@ -74,8 +74,8 @@ float LowPassFilter2p_Reset(LowPassFilter2p_t *f, float sample);
  * @param notch_freq 中心频率
  * @param bandwidth 带宽
  */
-void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq,
-                      float bandwidth);
+void notch_filter_init(notch_filter_t *f, float sample_freq, float notch_freq,
+                       float bandwidth);
 
 /**
  * @brief 施加一次滤波计算
@@ -84,7 +84,7 @@ void NotchFilter_Init(NotchFilter_t *f, float sample_freq, float notch_freq,
  * @param sample 采样的值
  * @return float 滤波后的值
  */
-float NotchFilter_Apply(NotchFilter_t *f, float sample);
+float notch_filter_apply(notch_filter_t *f, float sample);
 
 /**
  * @brief 重置滤波器
@@ -93,4 +93,4 @@ float NotchFilter_Apply(NotchFilter_t *f, float sample);
  * @param sample 采样的值
  * @return float 滤波后的值
  */
-float NotchFilter_Reset(NotchFilter_t *f, float sample);
+float notch_filter_reset(notch_filter_t *f, float sample);

@@ -19,7 +19,6 @@
 #include "FreeRTOS.h"
 #include "FreeRTOS_CLI.h"
 #include "bsp_usb.h"
-#include "dev_can.h"
 #include "mid_msg_dist.h"
 #include "task.h"
 #include "thd.h"
@@ -30,10 +29,10 @@ typedef struct {
 
 #define MAX_INPUT_LENGTH 64
 
-static Runtime_t *runtime;
+static runtime_t *runtime;
 
-static MsgDist_Subscriber_t *gyro_sub;
-static MsgDist_Subscriber_t *gimbal_motor_sub;
+static subscriber_t *gyro_sub;
+static subscriber_t *gimbal_motor_sub;
 
 static const char *const CLI_WELCOME_MESSAGE =
     "\r\n"
@@ -231,7 +230,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
   const char *pr = FreeRTOS_CLIGetParameter(command_string, 2, &pr_len);
   const char *name = FreeRTOS_CLIGetParameter(command_string, 3, &name_len);
 
-  Config_t cfg;
+  config_t cfg;
 
   static FiniteStateMachine_t fsm;
   if (strncmp(command, "help", (size_t)command_len) == 0) {
@@ -253,11 +252,11 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
       case stage_success:
         /* 初始化获取的操作手配置、机器人参数 */
         memset(&cfg, 0, sizeof(cfg));
-        cfg.pilot_cfg = Config_GetPilotCfg("qs");
-        cfg.robot_param = Config_GetRobotParam("default");
+        cfg.pilot_cfg = config_get_pilot_cfg("qs");
+        cfg.robot_param = config_get_robot_param("default");
         snprintf(cfg.robot_param_name, 20, "default");
         snprintf(cfg.pilot_cfg_name, 20, "qs");
-        Config_Set(&cfg);
+        config_set(&cfg);
         snprintf(out_buffer, len, "\r\nDone.");
         fsm.stage = stage_end;
         return pdPASS;
@@ -270,7 +269,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
 
     if (strncmp(pr, "pilot", (size_t)pr_len) == 0) {
       /* config list pilot */
-      const Config_PilotCfgMap_t *pilot = Config_GetPilotNameMap();
+      const config_pilot_cfg_map_t *pilot = config_get_pilot_name_map();
       switch (fsm.stage) {
         case stage_begin:
           snprintf(out_buffer, len, "\r\nAvailable pilot cfg:");
@@ -289,7 +288,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
       }
     } else if (strncmp(pr, "robot", (size_t)pr_len) == 0) {
       /* config list robot */
-      const Config_RobotParamMap_t *robot = Config_GetRobotNameMap();
+      const config_robot_param_map_t *robot = config_get_robot_name_map();
       switch (fsm.stage) {
         case stage_begin:
           snprintf(out_buffer, len, "\r\nAvailable robot params:");
@@ -317,8 +316,8 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
     if (strncmp(pr, "robot", (size_t)pr_len) == 0) {
       /* config set robot */
       if (fsm.stage == stage_begin) {
-        Config_Get(&cfg);
-        if (Config_GetRobotParam(name) == NULL) {
+        config_get(&cfg);
+        if (config_get_robot_param(name) == NULL) {
           snprintf(out_buffer, len, "\r\nFailed: Unknow model.");
           fsm.stage = stage_end;
           return pdPASS;
@@ -326,7 +325,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
         } else {
           snprintf(out_buffer, len, "\r\nSucceed.");
           snprintf(cfg.robot_param_name, 20, "%s", name);
-          Config_Set(&cfg);
+          config_set(&cfg);
           fsm.stage = stage_success;
           return pdPASS;
         }
@@ -334,15 +333,15 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
     } else if (strncmp(pr, "pilot", (size_t)pr_len) == 0) {
       /* config set pilot */
       if (fsm.stage == 0) {
-        Config_Get(&cfg);
-        if (Config_GetPilotCfg(name) == NULL) {
+        config_get(&cfg);
+        if (config_get_pilot_cfg(name) == NULL) {
           snprintf(out_buffer, len, "\r\nFailed: Unknow pilot.");
           fsm.stage = stage_end;
           return pdPASS;
         } else {
           snprintf(out_buffer, len, "\r\nSucceed.");
           snprintf(cfg.pilot_cfg_name, 20, "%s", name);
-          Config_Set(&cfg);
+          config_set(&cfg);
           fsm.stage = stage_success;
           return pdPASS;
         }
@@ -378,8 +377,8 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
   len -= 1;
 
   /* 陀螺仪校准相关内容 */
-  Config_t cfg;
-  Vector3_t gyro;
+  config_t cfg;
+  vector3_t gyro;
   uint16_t count = 0;
   static float x = 0.0f;
   static float y = 0.0f;
@@ -397,7 +396,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
       fsm.stage++;
       return pdPASS;
     case 2:
-      if (BMI088_GyroStable(&gyro)) {
+      if (gyro_is_stable(&gyro)) {
         snprintf(out_buffer, len,
                  "Controller is stable. Start calibation.\r\n");
         fsm.stage++;
@@ -415,15 +414,14 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
     case 3:
       /* 记录1000组数据，求出平均值作为陀螺仪的3轴零偏 */
       snprintf(out_buffer, len, "Calibation in progress.\r\n");
-      Config_Get(&cfg);
+      config_get(&cfg);
       cfg.cali.bmi088.gyro_offset.x = 0.0f;
       cfg.cali.bmi088.gyro_offset.y = 0.0f;
       cfg.cali.bmi088.gyro_offset.z = 0.0f;
-      Config_Set(&cfg);
+      config_set(&cfg);
       while (count < 1000) {
-        bool data_new = MsgDist_Poll(gyro_sub, &gyro, 5);
-        bool data_good = BMI088_GyroStable(&gyro);
-        // TODO:可重新校准多次
+        bool data_new = msg_dist_poll(gyro_sub, &gyro, 5);
+        bool data_good = gyro_is_stable(&gyro);
         if (data_new && data_good) {
           x += gyro.x;
           y += gyro.y;
@@ -439,11 +437,11 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
     case 4:
       snprintf(out_buffer, len,
                "Calibation finished. Write result to flash.\r\n");
-      Config_Get(&cfg);
+      config_get(&cfg);
       cfg.cali.bmi088.gyro_offset.x = x;
       cfg.cali.bmi088.gyro_offset.y = y;
       cfg.cali.bmi088.gyro_offset.z = z;
-      Config_Set(&cfg);
+      config_set(&cfg);
       fsm.stage++;
       return pdPASS;
     case 5:
@@ -475,8 +473,8 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
   RM_UNUSED(command_string);
   len -= 1;
 
-  CAN_GimbalMotor_t gimbal_motor;
-  Config_t cfg;
+  motor_feedback_group_t motor_fb;
+  config_t cfg;
 
   static FiniteStateMachine_t fsm;
   switch (fsm.stage) {
@@ -486,17 +484,17 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
       return pdPASS;
     case 1:
       /* 获取到云台数据，用can上的新的云台机械零点的位置替代旧的位置 */
-      Config_Get(&cfg);
+      config_get(&cfg);
 
-      if (!MsgDist_Poll(gimbal_motor_sub, &gimbal_motor, 5)) {
+      if (!msg_dist_poll(gimbal_motor_sub, &motor_fb, 5)) {
         snprintf(out_buffer, len, "Can not get gimbal data.\r\n");
         fsm.stage = 2;
         return pdPASS;
       }
-      cfg.gimbal_mech_zero.yaw = gimbal_motor.named.yaw.rotor_abs_angle;
-      cfg.gimbal_mech_zero.pit = gimbal_motor.named.pit.rotor_abs_angle;
+      cfg.gimbal_mech_zero.yaw = motor_fb.as_gimbal.yaw.rotor_abs_angle;
+      cfg.gimbal_mech_zero.pit = motor_fb.as_gimbal.pit.rotor_abs_angle;
 
-      Config_Set(&cfg);
+      config_set(&cfg);
       snprintf(out_buffer, len, "yaw:%f, pitch:%f, rol:%f\r\nDone.",
                cfg.gimbal_mech_zero.yaw, cfg.gimbal_mech_zero.pit,
                cfg.gimbal_mech_zero.rol);
@@ -520,27 +518,27 @@ static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
   RM_UNUSED(command_string);
   len -= 1;
 
-  CAN_GimbalMotor_t gimbal_motor;
-  Config_t cfg;
+  motor_feedback_group_t motor_fb;
+  config_t cfg;
 
   static FiniteStateMachine_t fsm;
   switch (fsm.stage) {
     case 0:
-      Config_Get(&cfg);
+      config_get(&cfg);
       snprintf(out_buffer, len, "(old)limit:%f\r\n", cfg.gimbal_limit);
       fsm.stage = 1;
       return pdPASS;
     case 1:
       /* 获取云台数据，获取新的限位角并替代旧的限位角 */
-      if (!MsgDist_Poll(gimbal_motor_sub, &gimbal_motor, 5)) {
+      if (!msg_dist_poll(gimbal_motor_sub, &motor_fb, 5)) {
         fsm.stage = 3;
         return pdPASS;
       }
-      Config_Get(&cfg);
-      cfg.gimbal_limit = gimbal_motor.named.pit.rotor_abs_angle;
+      config_get(&cfg);
+      cfg.gimbal_limit = motor_fb.as_gimbal.pit.rotor_abs_angle;
 
-      Config_Set(&cfg);
-      Config_Get(&cfg);
+      config_set(&cfg);
+      config_get(&cfg);
       snprintf(out_buffer, len, "(new)limit:%f\r\nDone.", cfg.gimbal_limit);
 
       fsm.stage = 2;
@@ -657,7 +655,7 @@ void CLI_USB_RX_Callback(void *arg) {
   portYIELD_FROM_ISR(switch_required);
 }
 
-void Thd_CLI(void *arg) {
+void thd_cli(void *arg) {
   runtime = arg;
   static char input[MAX_INPUT_LENGTH];          /* 输入字符串缓存 */
   char *output = FreeRTOS_CLIGetOutputBuffer(); /* 输出字符串缓存 */
@@ -665,8 +663,8 @@ void Thd_CLI(void *arg) {
   uint16_t index = 0;                           /* 字符串索引值 */
   BaseType_t processing = 0;                    /* 命令行解析控制 */
 
-  gyro_sub = MsgDist_Subscribe("gimbal_gyro", true);
-  gimbal_motor_sub = MsgDist_Subscribe("gimbal_motor_fb", true);
+  gyro_sub = msg_dist_subscribe("gimbal_gyro", true);
+  gimbal_motor_sub = msg_dist_subscribe("gimbal_motor_fb", true);
 
   // CDC_RegisterCallback(CLI_USB_RX_Callback);
 
@@ -746,3 +744,4 @@ void Thd_CLI(void *arg) {
     }
   }
 }
+THREAD_DECLEAR(thd_cli, 256, 1);

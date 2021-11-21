@@ -1,6 +1,5 @@
 #pragma once
 
-/* Includes ----------------------------------------------------------------- */
 #include <stdint.h>
 
 #include "bsp.h"

@@ -5,41 +5,26 @@
 
 #pragma once
 
+#include "comp_type.h"
 #include "comp_utils.h"
-
-/* 欧拉角（Euler angle） */
-typedef struct {
-  float yaw; /* 偏航角（Yaw angle） */
-  float pit; /* 俯仰角（Pitch angle） */
-  float rol; /* 翻滚角（Roll angle） */
-} AHRS_Eulr_t;
-
-/* 四元数 */
-typedef struct {
-  float q0;
-  float q1;
-  float q2;
-  float q3;
-} AHRS_Quaternion_t;
 
 /* 姿态解算算法主结构体 */
 typedef struct {
   /* 四元数 */
-  AHRS_Quaternion_t quat;
+  quaternion_t quat;
 
   float last_update;
   float dt;
-} AHRS_t;
+} ahrs_t;
 
 /**
  * @brief 初始化姿态解算
  *
  * @param ahrs 姿态解算主结构体
  * @param magn 磁力计数据
- * @param now 现在时刻
  * @return int8_t 0对应没有错误
  */
-int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn, float now);
+int8_t ahrs_init(ahrs_t *ahrs, const vector3_t *magn);
 
 /**
  * @brief 姿态运算更新一次
@@ -51,8 +36,8 @@ int8_t AHRS_Init(AHRS_t *ahrs, const Vector3_t *magn, float now);
  * @param now 现在时刻
  * @return int8_t 0对应没有错误
  */
-int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
-                   const Vector3_t *magn, float now);
+int8_t ahrs_update(ahrs_t *ahrs, const vector3_t *accl, const vector3_t *gyro,
+                   const vector3_t *magn, float now);
 
 /**
  * @brief 通过姿态解算主结构体中的四元数计算欧拉角
@@ -61,11 +46,11 @@ int8_t AHRS_Update(AHRS_t *ahrs, const Vector3_t *accl, const Vector3_t *gyro,
  * @param ahrs 姿态解算主结构体
  * @return int8_t 0对应没有错误
  */
-int8_t AHRS_GetEulr(AHRS_Eulr_t *eulr, const AHRS_t *ahrs);
+int8_t ahrs_get_eulr(eulr_t *eulr, const ahrs_t *ahrs);
 
 /**
  * @brief 将对应数据置零
  *
  * @param eulr 被操作的数据
  */
-void AHRS_ResetEulr(AHRS_Eulr_t *eulr);
+void ahrs_reset_eulr(eulr_t *eulr);

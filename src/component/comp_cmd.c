@@ -30,10 +30,10 @@
  *
  * @param cmd 控制指令数据
  * @param behavior 行为
- * @return CMD_KeyValue_t 按键值
+ * @return cmd_key_t 按键值
  */
-static inline CMD_KeyValue_t CMD_BehaviorToKey(const CMD_t *cmd,
-                                               CMD_Behavior_t behavior) {
+static inline cmd_key_t cmd_behavior_to_key(const cmd_t *cmd,
+                                            cmd_behavior_t behavior) {
   return cmd->param->key_map[behavior].key;
 }
 
@@ -42,10 +42,10 @@ static inline CMD_KeyValue_t CMD_BehaviorToKey(const CMD_t *cmd,
  *
  * @param cmd 控制指令数据
  * @param behavior 行为
- * @return CMD_ActiveType_t 触发类型
+ * @return cmd_activation_t 触发类型
  */
-static inline CMD_ActiveType_t CMD_BehaviorToActive(const CMD_t *cmd,
-                                                    CMD_Behavior_t behavior) {
+static inline cmd_activation_t cmd_behavior_to_activation(
+    const cmd_t *cmd, cmd_behavior_t behavior) {
   return cmd->param->key_map[behavior].active;
 }
 
@@ -58,7 +58,7 @@ static inline CMD_ActiveType_t CMD_BehaviorToActive(const CMD_t *cmd,
  * @return true 按下
  * @return false 未按下
  */
-static bool CMD_KeyPressed(const CMD_RC_t *rc, CMD_KeyValue_t key) {
+static bool cmd_key_pressed(const cmd_rc_t *rc, cmd_key_t key) {
   /* 鼠标左右键需要单独判断 */
   switch (key) {
     case CMD_KEY_L_CLICK:
@@ -81,10 +81,10 @@ static bool CMD_KeyPressed(const CMD_RC_t *rc, CMD_KeyValue_t key) {
  * @return true 满足
  * @return false 不满足
  */
-static bool CMD_BehaviorOccurred(const CMD_RC_t *rc, const CMD_t *cmd,
-                                 CMD_Behavior_t behavior) {
-  CMD_KeyValue_t key = CMD_BehaviorToKey(cmd, behavior);
-  CMD_ActiveType_t active = CMD_BehaviorToActive(cmd, behavior);
+static bool cmd_behavior_occurred(const cmd_rc_t *rc, const cmd_t *cmd,
+                                  cmd_behavior_t behavior) {
+  cmd_key_t key = cmd_behavior_to_key(cmd, behavior);
+  cmd_activation_t active = cmd_behavior_to_activation(cmd, behavior);
 
   bool now_key_pressed, last_key_pressed;
   /* 鼠标左右键需要单独判断 */
@@ -123,8 +123,8 @@ static bool CMD_BehaviorOccurred(const CMD_RC_t *rc, const CMD_t *cmd,
  * @param cmd 控制指令数据
  * @param dt_sec 两次解析的间隔
  */
-static void CMD_MouseKeyboardLogic(const CMD_RC_t *rc, CMD_t *cmd,
-                                   float dt_sec) {
+static void cmd_mouse_keyboard_logic(const cmd_rc_t *rc, cmd_t *cmd,
+                                     float dt_sec) {
   cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
 
   /* 云台设置为鼠标控制欧拉角的变化，底盘的控制向量设置为零 */
@@ -136,27 +136,27 @@ static void CMD_MouseKeyboardLogic(const CMD_RC_t *rc, CMD_t *cmd,
   cmd->launcher.reverse_trig = false;
 
   /* 按键行为映射相关逻辑 */
-  if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_FORE)) {
+  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_FORE)) {
     cmd->chassis.ctrl_vec.vy += cmd->param->move.sense_norm;
   }
-  if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_BACK)) {
+  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_BACK)) {
     cmd->chassis.ctrl_vec.vy -= cmd->param->move.sense_norm;
   }
-  if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_LEFT)) {
+  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_LEFT)) {
     cmd->chassis.ctrl_vec.vx -= cmd->param->move.sense_norm;
   }
-  if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_RIGHT)) {
+  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_RIGHT)) {
     cmd->chassis.ctrl_vec.vx += cmd->param->move.sense_norm;
   }
-  if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_ACCELERATE)) {
+  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_ACCELERATE)) {
     cmd->chassis.ctrl_vec.vx *= cmd->param->move.sense_fast;
     cmd->chassis.ctrl_vec.vy *= cmd->param->move.sense_fast;
   }
-  if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_DECELEBRATE)) {
+  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_DECELEBRATE)) {
     cmd->chassis.ctrl_vec.vx *= cmd->param->move.sense_slow;
     cmd->chassis.ctrl_vec.vy *= cmd->param->move.sense_slow;
   }
-  if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_FIRE)) {
+  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_FIRE)) {
     /* 切换至开火模式，设置相应的发射频率和弹丸初速度 */
     cmd->launcher.mode = LAUNCHER_MODE_LOADED;
     cmd->launcher.fire = true;
@@ -165,21 +165,21 @@ static void CMD_MouseKeyboardLogic(const CMD_RC_t *rc, CMD_t *cmd,
     cmd->launcher.mode = LAUNCHER_MODE_LOADED;
     cmd->launcher.fire = false;
   }
-  if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_FIRE_MODE)) {
+  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_FIRE_MODE)) {
     /* 每按一次依次切换开火下一个模式 */
     cmd->launcher.fire_mode++;
     cmd->launcher.fire_mode %= FIRE_MODE_NUM;
   }
-  if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_ROTOR)) {
+  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_ROTOR)) {
     /* 切换到小陀螺模式 */
     cmd->chassis.mode = CHASSIS_MODE_ROTOR;
     cmd->chassis.mode_rotor = ROTOR_MODE_RAND;
   }
-  if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_OPENCOVER)) {
+  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_OPENCOVER)) {
     /* 每按一次开、关弹舱盖 */
     cmd->launcher.cover_open = !cmd->launcher.cover_open;
   }
-  if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_BUFF)) {
+  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_BUFF)) {
     if (cmd->ai_mode == AI_MODE_HITBUFF) {
       /* 停止ai的打符模式，停用host控制 */
       cmd->ctrl_source = CMD_SOURCE_RC;
@@ -192,7 +192,7 @@ static void CMD_MouseKeyboardLogic(const CMD_RC_t *rc, CMD_t *cmd,
       cmd->ctrl_source = CMD_SOURCE_HOST;
     }
   }
-  if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_AUTOAIM)) {
+  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_AUTOAIM)) {
     if (cmd->ai_mode == AI_MODE_AUTOAIM) {
       /* 停止ai的自瞄模式，停用host控制 */
       cmd->ctrl_source = CMD_SOURCE_RC;
@@ -203,11 +203,11 @@ static void CMD_MouseKeyboardLogic(const CMD_RC_t *rc, CMD_t *cmd,
       cmd->ctrl_source = CMD_SOURCE_HOST;
     }
   }
-  if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_REVTRIG)) {
+  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_REVTRIG)) {
     /* 按下拨弹反转 */
     cmd->launcher.reverse_trig = true;
   }
-  if (CMD_BehaviorOccurred(rc, cmd, CMD_BEHAVIOR_FOLLOWGIMBAL35)) {
+  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_FOLLOWGIMBAL35)) {
     cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
   }
   /* 保存当前按下的键位状态 */
@@ -222,8 +222,8 @@ static void CMD_MouseKeyboardLogic(const CMD_RC_t *rc, CMD_t *cmd,
  * @param cmd 控制指令数据
  * @param dt_sec 两次解析的间隔
  */
-static void CMD_JoystickSwitchLogic(const CMD_RC_t *rc, CMD_t *cmd,
-                                    float dt_sec) {
+static void cmd_joystick_switch_logic(const cmd_rc_t *rc, cmd_t *cmd,
+                                      float dt_sec) {
   switch (rc->sw_l) {
       /* 左拨杆相应行为选择和解析 */
     case CMD_SW_UP:
@@ -274,7 +274,7 @@ static void CMD_JoystickSwitchLogic(const CMD_RC_t *rc, CMD_t *cmd,
   cmd->gimbal.delta_eulr.pit = rc->ch.r.y * dt_sec * cmd->param->sens_stick;
 }
 
-static bool CMD_CheckRcLost(const CMD_RC_t *rc) {
+static bool cmd_rc_losted(const cmd_rc_t *rc) {
   return (rc->sw_l == CMD_SW_ERR) || (rc->sw_r == CMD_SW_ERR);
 }
 
@@ -283,7 +283,7 @@ static bool CMD_CheckRcLost(const CMD_RC_t *rc) {
  *
  * @param cmd 控制指令数据
  */
-static void CMD_RcLostLogic(CMD_t *cmd) {
+static void cmd_rc_lost_logic(cmd_t *cmd) {
   /* 机器人底盘、云台、发射器运行模式恢复至放松模式 */
   cmd->chassis.mode = CHASSIS_MODE_RELAX;
   cmd->gimbal.mode = GIMBAL_MODE_RELAX;
@@ -297,7 +297,7 @@ static void CMD_RcLostLogic(CMD_t *cmd) {
  * @param param 参数
  * @return int8_t 0对应没有错误
  */
-int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
+int8_t cmd_init(cmd_t *cmd, const cmd_params_t *param) {
   /* 指针检测 */
   ASSERT(cmd);
   ASSERT(param);
@@ -316,7 +316,7 @@ int8_t CMD_Init(CMD_t *cmd, const CMD_Params_t *param) {
  * @return true 启用
  * @return false 不启用
  */
-inline bool CMD_CheckHostOverwrite(CMD_t *cmd) {
+inline bool cmd_check_host_overwrite(cmd_t *cmd) {
   return cmd->ctrl_source == CMD_SOURCE_HOST;
 }
 
@@ -328,36 +328,36 @@ inline bool CMD_CheckHostOverwrite(CMD_t *cmd) {
  * @param dt_sec 两次解析的间隔
  * @return int8_t 0对应没有错误
  */
-int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
+int8_t cmd_parse_rc(const cmd_rc_t *rc, cmd_t *cmd, float dt_sec) {
   /* 指针检测 */
   ASSERT(rc);
   ASSERT(cmd);
 
   /* 在键盘鼠标和摇杆拨杆控制间切换 */
-  if (CMD_KeyPressed(rc, CMD_KEY_SHIFT) && CMD_KeyPressed(rc, CMD_KEY_CTRL) &&
-      CMD_KeyPressed(rc, CMD_KEY_Q)) {
+  if (cmd_key_pressed(rc, CMD_KEY_SHIFT) && cmd_key_pressed(rc, CMD_KEY_CTRL) &&
+      cmd_key_pressed(rc, CMD_KEY_Q)) {
     cmd->ctrl_method = CMD_METHOD_MOUSE_KEYBOARD;
   }
 
-  if (CMD_KeyPressed(rc, CMD_KEY_SHIFT) && CMD_KeyPressed(rc, CMD_KEY_CTRL) &&
-      CMD_KeyPressed(rc, CMD_KEY_E)) {
+  if (cmd_key_pressed(rc, CMD_KEY_SHIFT) && cmd_key_pressed(rc, CMD_KEY_CTRL) &&
+      cmd_key_pressed(rc, CMD_KEY_E)) {
     cmd->ctrl_method = CMD_METHOD_JOYSTICK_SWITCH;
   }
 
   /* 当遥控链路丢失时，恢复机器人至默认状态 */
-  if (CMD_CheckRcLost(rc)) {
+  if (cmd_rc_losted(rc)) {
     /* 遥控链路应该拥有最高控制权，
      * 任何时候关闭遥控器，都必须保证机器人进入放松状态
      * 进而保证任何失控可以通过关闭遥控器来解决
      */
-    CMD_RcLostLogic(cmd);
+    cmd_rc_lost_logic(cmd);
   } else {
     switch (cmd->ctrl_method) {
       case CMD_METHOD_MOUSE_KEYBOARD:
-        CMD_MouseKeyboardLogic(rc, cmd, dt_sec);
+        cmd_mouse_keyboard_logic(rc, cmd, dt_sec);
         break;
       default:
-        CMD_JoystickSwitchLogic(rc, cmd, dt_sec);
+        cmd_joystick_switch_logic(rc, cmd, dt_sec);
         break;
     }
   }
@@ -372,7 +372,7 @@ int8_t CMD_ParseRc(const CMD_RC_t *rc, CMD_t *cmd, float dt_sec) {
  * @param dt_sec 两次解析的间隔
  * @return int8_t 0对应没有错误
  */
-int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
+int8_t cmd_parse_host(const cmd_host_t *host, cmd_t *cmd, float dt_sec) {
   RM_UNUSED(dt_sec); /* 未使用dt_sec，消除警告 */
   /* 指针检测 */
   ASSERT(host);
@@ -400,7 +400,7 @@ int8_t CMD_ParseHost(const CMD_Host_t *host, CMD_t *cmd, float dt_sec) {
  * @param cmd_ui 控制指令UI数据
  * @param cmd 控制指令数据
  */
-void CMD_PackUi(CMD_UI_t *cmd_ui, const CMD_t *cmd) {
+void cmd_pack_ui(cmd_ui_t *cmd_ui, const cmd_t *cmd) {
   cmd_ui->ctrl_method = cmd->ctrl_method;
   cmd_ui->ctrl_source = cmd->ctrl_source;
 }

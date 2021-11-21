@@ -11,13 +11,13 @@
 /* 发布者 */
 typedef struct {
   QueueHandle_t data_queue;
-} MsgDist_Publisher_t;
+} publisher_t;
 
 /* 订阅者 */
 typedef struct {
   SemaphoreHandle_t bin_sem;
   void *topic;
-} MsgDist_Subscriber_t;
+} subscriber_t;
 
 /**
  * @brief 初始化中间件
@@ -25,17 +25,16 @@ typedef struct {
  * @return true 成功
  * @return false 失败
  */
-bool MsgDist_Init(void);
+bool msg_dist_init(void);
 
 /**
  * @brief 创建话题
  *
  * @param topic_name 话题名称
  * @param data_size 数据大小
- * @return MsgDist_Publisher_t* 发布者
+ * @return publisher_t* 发布者
  */
-MsgDist_Publisher_t *MsgDist_CreateTopic(const char *topic_name,
-                                         size_t data_size);
+publisher_t *msg_dist_create_topic(const char *topic_name, size_t data_size);
 /**
  * @brief 往话题发布数据
  *
@@ -44,7 +43,7 @@ MsgDist_Publisher_t *MsgDist_CreateTopic(const char *topic_name,
  * @return true 成功
  * @return false 失败
  */
-bool MsgDist_Publish(MsgDist_Publisher_t *publisher, void *data);
+bool msg_dist_publish(publisher_t *publisher, void *data);
 /**
  * @brief 往话题发布数据
  *
@@ -54,18 +53,17 @@ bool MsgDist_Publish(MsgDist_Publisher_t *publisher, void *data);
  * @return true 成功
  * @return false 失败
  */
-bool MsgDist_PublishFromISR(MsgDist_Publisher_t *publisher, const void *data,
-                            bool *need_contex_switch);
+bool msg_dist_publish_from_isr(publisher_t *publisher, const void *data,
+                               bool *need_contex_switch);
 
 /**
  * @brief 订阅到话题
  *
  * @param topic_name 话题名称
  * @param wait_topic 等待话题创建
- * @return MsgDist_Subscriber_t* 订阅者
+ * @return subscriber_t* 订阅者
  */
-MsgDist_Subscriber_t *MsgDist_Subscribe(const char *topic_name,
-                                        bool wait_topic);
+subscriber_t *msg_dist_subscribe(const char *topic_name, bool wait_topic);
 /**
  * @brief 从话题取得数据
  *
@@ -75,12 +73,11 @@ MsgDist_Subscriber_t *MsgDist_Subscribe(const char *topic_name,
  * @return true 成功
  * @return false 失败
  */
-bool MsgDist_Poll(MsgDist_Subscriber_t *subscriber, void *data,
-                  uint32_t timeout);
+bool msg_dist_poll(subscriber_t *subscriber, void *data, uint32_t timeout);
 /**
  * @brief 分发消息
  *
  */
-void MsgDist_Distute(void);
+void msg_dist_distribute(void);
 
-void MsgDist_Detail(char *detail_string, size_t len);
+void msg_dist_detail(char *detail_string, size_t len);
