@@ -4,7 +4,7 @@
 
 typedef struct {
   const char* fname;
-  err_t (*dn)(const void* param);
+  err_t (*fn)(const void* param);
   const void* param;
 } init_t;
 
@@ -14,7 +14,7 @@ void init(void);
   const init_t __comp_init_##fn                        \
       __attribute__((section(".init_fn." #stage))) = { \
           .name = #fn,                                 \
-          .dn = fn,                                    \
+          .fn = fn,                                    \
           .param = param,                              \
   }
 

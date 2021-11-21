@@ -12,7 +12,7 @@ void init(void) {
   for (size_t j = 0; j < num_init; j++) {
     const init_t *init = __thread_start + j;
     if (init) {
-      err_t err = init->dn(init->param);
+      err_t err = init->fn(init->param);
       if (err) {
         (void)err;
         // TODO: Log error message;
