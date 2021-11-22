@@ -2,7 +2,7 @@
 function(print_section_sizes TARGET)
     # Build Events command
     add_custom_command(
-        TARGET ${TARGET} POST_BUILD 
+        TARGET ${TARGET} POST_BUILD
         COMMAND ${CMAKE_SIZE} ${TARGET})
 endfunction()
 
@@ -10,7 +10,7 @@ endfunction()
 function(create_hex_output TARGET)
     add_custom_target(
         ${TARGET}.hex ALL
-        DEPENDS ${TARGET} 
+        DEPENDS ${TARGET}
         COMMAND ${CMAKE_OBJCOPY} --output-target ihex ${TARGET} ${TARGET}.hex)
 endfunction()
 
@@ -18,7 +18,6 @@ endfunction()
 function(create_bin_output TARGET)
     add_custom_target(
         ${TARGET}.bin ALL
-        DEPENDS ${TARGET} 
+        DEPENDS ${TARGET}
         COMMAND ${CMAKE_OBJCOPY} --output-target binary --strip-all ${TARGET} ${TARGET}.bin)
 endfunction()
-
