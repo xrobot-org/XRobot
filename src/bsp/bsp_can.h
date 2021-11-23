@@ -2,33 +2,30 @@
 
 #include <stdint.h>
 
-#include "bsp.h"
-#include "hal_can.h"
+#include "FreeRTOS.h"
+#include "queue.h"
+
+#define CAN_DATA_SIZE (8)
 
 typedef enum {
-  BSP_CAN_1,
-  BSP_CAN_2,
-  BSP_CAN_NUM,
-  BSP_CAN_ERR,
-} BSP_CAN_t;
+  CAN_PERIPH_1,
+  CAN_PERIPH_2,
+} can_periph_t;
 
-typedef enum {
-  HAL_CAN_TX_MAILBOX0_CPLT_CB,
-  HAL_CAN_TX_MAILBOX1_CPLT_CB,
-  HAL_CAN_TX_MAILBOX2_CPLT_CB,
-  HAL_CAN_TX_MAILBOX0_ABORT_CB,
-  HAL_CAN_TX_MAILBOX1_ABORT_CB,
-  HAL_CAN_TX_MAILBOX2_ABORT_CB,
-  HAL_CAN_RX_FIFO0_MSG_PENDING_CB,
-  HAL_CAN_RX_FIFO0_FULL_CB,
-  HAL_CAN_RX_FIFO1_MSG_PENDING_CB,
-  HAL_CAN_RX_FIFO1_FULL_CB,
-  HAL_CAN_SLEEP_CB,
-  HAL_CAN_WAKEUP_FROM_RX_MSG_CB,
-  HAL_CAN_ERROR_CB,
-  BSP_CAN_CB_NUM
-} BSP_CAN_Callback_t;
+typedef struct {
+  uint32_t can_id;
+  uint8_t data[CAN_DATA_SIZE];
+} can_tx_item_t;
 
-CAN_HandleTypeDef *BSP_CAN_GetHandle(BSP_CAN_t can);
-int8_t BSP_CAN_RegisterCallback(BSP_CAN_t can, BSP_CAN_Callback_t type,
-                                void (*callback)(void *), void *callback_arg);
+typedef struct {
+  uint32_t index;
+  uint8_t data[CAN_DATA_SIZE];
+} can_rx_item_t;
+
+typedef struct {
+  can_periph_t periph;
+  uint32_t can_id;
+  uint32_t len;
+} can_rx_group_t;
+
+QueueHandle_t can_register_rx_group(const can_rx_group_t *group);

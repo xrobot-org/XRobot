@@ -70,18 +70,18 @@ err_t motor_init(motor_t *motor, const motor_group_t *group_cfg) {
   if (inited) return DEVICE_ERR_INITED;
   motor->group_cfg = group_cfg;
 
-  BSP_CAN_RegisterRxGroup();
+  // can_register_rx_group();
 
   inited = true;
   return DEVICE_OK;
 }
 
 err_t motor_update(motor_t *motor, uint32_t timeout) {
-  BSP_CAN_RxItem_t pack;
+  can_rx_item_t pack;
   while (pdPASS ==
          xQueueReceive(motor->msgq_rx, &pack, pdMS_TO_TICKS(timeout))) {
     for (size_t i = 0; i < MOTOR_GROUT_ID_NUM; i++) {
-      size_t index = pack.id - motor->group_cfg[i].id_feedback;
+      size_t index = pack.index - motor->group_cfg[i].id_feedback;
       if ((index < motor->group_cfg[i].num) &&
           (MOTOR_NONE != motor->group_cfg[i].model[index])) {
         Motor_Decode(&(motor->feedback[i].as_array[index]), pack.data);
@@ -99,7 +99,7 @@ err_t motor_control(motor_t *motor, motor_group_id_t group,
   ASSERT(output);
   ASSERT(motor);
 
-  BSP_CAN_RxItem_t pack = {0};
+  can_tx_item_t pack = {0};
   int16_t data;
 
   for (size_t i = 0; i < ARRAY_LEN(output->as_array); i++) {
@@ -109,7 +109,7 @@ err_t motor_control(motor_t *motor, motor_group_id_t group,
     pack.data[2 * i] = (uint8_t)((data >> 8) & 0xFF);
     pack.data[2 * i + 1] = (uint8_t)(data & 0xFF);
   }
-  pack.id = motor->group_cfg[group].id_control;
+  pack.can_id = motor->group_cfg[group].id_control;
 
   xQueueSendToBack(motor->msgq_tx, &pack, 0);
   return RM_OK;
