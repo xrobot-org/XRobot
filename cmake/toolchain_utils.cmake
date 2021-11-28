@@ -10,14 +10,14 @@ endfunction()
 function(create_hex_output TARGET)
     add_custom_target(
         ${TARGET}.hex ALL
-        DEPENDS ${TARGET}
-        COMMAND ${CMAKE_OBJCOPY} --output-target ihex ${TARGET} ${TARGET}.hex)
+        DEPENDS ${TARGET}.elf
+        COMMAND ${CMAKE_OBJCOPY} --output-target ihex ${TARGET}.elf ${TARGET}.hex)
 endfunction()
 
 # Creates output in binary format
 function(create_bin_output TARGET)
     add_custom_target(
         ${TARGET}.bin ALL
-        DEPENDS ${TARGET}
-        COMMAND ${CMAKE_OBJCOPY} --output-target binary --strip-all ${TARGET} ${TARGET}.bin)
+        DEPENDS ${TARGET}.elf
+        COMMAND ${CMAKE_OBJCOPY} --output-target binary --strip-all ${TARGET}.elf ${TARGET}.bin)
 endfunction()

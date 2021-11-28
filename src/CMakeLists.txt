@@ -31,9 +31,9 @@ add_dependencies(${PROJECT_NAME}.elf
     thread
 )
 
-include(utils_arm_none_eabi)
+include(toolchain_utils)
 
 print_section_sizes(${PROJECT_NAME}.elf)
 
-create_hex_output(${PROJECT_NAME}.elf)
-create_bin_output(${PROJECT_NAME}.elf)
+create_hex_output(${PROJECT_NAME})
+create_bin_output(${PROJECT_NAME})
