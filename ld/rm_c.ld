@@ -98,6 +98,17 @@ SECTIONS {
     . = ALIGN(4);
   } > FLASH
 
+  /* Thread info for initialization  */
+  .thread :
+  {
+    . = ALIGN(4);
+    __thread_start = .;       /* create a global symbol at thread start */
+    *(.thread_init)
+    *(.thread_init*)
+    . = ALIGN(4);
+    __thread_end = .;       /* create a global symbol at thread end */
+  } > FLASH
+
   .ARM.extab : {
     *(.ARM.extab* .gnu.linkonce.armextab.*)
   } > FLASH

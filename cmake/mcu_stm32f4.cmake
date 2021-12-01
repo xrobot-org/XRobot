@@ -1,3 +1,7 @@
+# Target definition
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_PROCESSOR cortex-m4)
+
 set(MCU_FLAGS "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb")
 
 set(GENERAL_FLAGS "-Wall -Wextra -Wstack-usage=1024 --specs=nano.specs --specs=nosys.specs -u _printf_float -fno-builtin -ffunction-sections -fdata-sections")
