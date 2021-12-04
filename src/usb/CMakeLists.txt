@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 project(usb)
 
 file(GLOB ${PROJECT_NAME}_SOURCES
@@ -20,7 +20,11 @@ file(GLOB ${PROJECT_NAME}_SOURCES
 
 list(FILTER ${PROJECT_NAME}_SOURCES EXCLUDE REGEX ".*template.c$")
 
-add_library(${PROJECT_NAME} STATIC ${${PROJECT_NAME}_SOURCES})
+add_library(${PROJECT_NAME} STATIC)
+
+target_sources(${PROJECT_NAME}
+    PRIVATE ${${PROJECT_NAME}_SOURCES}
+)
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE rtos

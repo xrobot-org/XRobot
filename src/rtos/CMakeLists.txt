@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 project(rtos)
 
 file(GLOB ${PROJECT_NAME}_SOURCES
@@ -7,9 +7,11 @@ file(GLOB ${PROJECT_NAME}_SOURCES
     "${THIRD_PARTY_DIR}/freertos/portable/MemMang/heap_4.c"
 )
 
-add_library(${PROJECT_NAME} STATIC
-    ${${PROJECT_NAME}_SOURCES}
-    ${THIRD_PARTY_DIR}/freertos/portable/GCC/ARM_CM4F/port.c
+add_library(${PROJECT_NAME} STATIC)
+
+target_sources(${PROJECT_NAME}
+    PRIVATE ${${PROJECT_NAME}_SOURCES}
+    PRIVATE ${THIRD_PARTY_DIR}/freertos/portable/GCC/ARM_CM4F/port.c
 )
 
 target_link_libraries(${PROJECT_NAME}
