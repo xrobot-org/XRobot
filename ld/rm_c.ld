@@ -102,11 +102,11 @@ SECTIONS {
   .thread :
   {
     . = ALIGN(4);
-    __thread_start = .;       /* create a global symbol at thread start */
-    *(.thread_init)
-    *(.thread_init*)
+    _sthread = .;       /* create a global symbol at thread start */
+    *(.thread)
+    *(.thread*)
     . = ALIGN(4);
-    __thread_end = .;       /* create a global symbol at thread end */
+    _ethread = .;       /* create a global symbol at thread end */
   } > FLASH
 
   .ARM.extab : {

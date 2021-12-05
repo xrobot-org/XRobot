@@ -5,7 +5,7 @@ file(GLOB ${PROJECT_NAME}_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
 )
 
-add_library(${PROJECT_NAME} STATIC)
+add_library(${PROJECT_NAME} OBJECT)
 
 target_sources(${PROJECT_NAME}
     PRIVATE ${${PROJECT_NAME}_SOURCES}
