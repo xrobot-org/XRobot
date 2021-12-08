@@ -54,14 +54,14 @@ static bool inited = false;
 /* Private function  -------------------------------------------------------- */
 
 static void Referee_RxCpltCallback(void *arg) {
-  Referee_t *ref = arg;
+  referee_t *ref = arg;
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(ref->sem.raw_ready, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
 static void Referee_TxCpltCallback(void *arg) {
-  Referee_t *ref = arg;
+  referee_t *ref = arg;
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(ref->sem.packet_sent, &switch_required);
   portYIELD_FROM_ISR(switch_required);
@@ -73,7 +73,7 @@ static void Referee_IdleLineCallback(void *arg) {
 }
 
 static void Referee_AbortRxCpltCallback(void *arg) {
-  Referee_t *ref = arg;
+  referee_t *ref = arg;
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(ref->sem.raw_ready, &switch_required);
   portYIELD_FROM_ISR(switch_required);
@@ -180,7 +180,7 @@ int8_t referee_start_receiving(referee_t *ref) {
   return DEVICE_ERR;
 }
 
-bool referee_wait_recv_cplt(Referee_t *ref, uint32_t timeout) {
+bool referee_wait_recv_cplt(referee_t *ref, uint32_t timeout) {
   return xSemaphoreTake(ref->sem.raw_ready, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 
@@ -526,31 +526,31 @@ uint8_t referee_refresh_ui(referee_t *ref) {
     ref->ui.refresh_fsm = 1;
 
     ui_draw_string(&string, "1", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
-                  UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
-                  (uint16_t)(kW * REF_UI_RIGHT_START_W),
-                  (uint16_t)(kH * REF_UI_MODE_LINE1_H),
-                  "CHAS  FLLW  FL35  ROTR");
+                   UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
+                   (uint16_t)(kW * REF_UI_RIGHT_START_W),
+                   (uint16_t)(kH * REF_UI_MODE_LINE1_H),
+                   "CHAS  FLLW  FL35  ROTR");
     ui_stash_string(&(ref->ui), &string);
 
     ui_draw_string(&string, "2", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
-                  UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
-                  (uint16_t)(kW * REF_UI_RIGHT_START_W),
-                  (uint16_t)(kH * REF_UI_MODE_LINE2_H),
-                  "GMBL  RELX  ABSL  RLTV");
+                   UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
+                   (uint16_t)(kW * REF_UI_RIGHT_START_W),
+                   (uint16_t)(kH * REF_UI_MODE_LINE2_H),
+                   "GMBL  RELX  ABSL  RLTV");
     ui_stash_string(&(ref->ui), &string);
 
     ui_draw_string(&string, "3", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
-                  UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
-                  (uint16_t)(kW * REF_UI_RIGHT_START_W),
-                  (uint16_t)(kH * REF_UI_MODE_LINE3_H),
-                  "SHOT  RELX  SAFE  LOAD");
+                   UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
+                   (uint16_t)(kW * REF_UI_RIGHT_START_W),
+                   (uint16_t)(kH * REF_UI_MODE_LINE3_H),
+                   "SHOT  RELX  SAFE  LOAD");
     ui_stash_string(&(ref->ui), &string);
 
     ui_draw_string(&string, "4", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
-                  UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
-                  (uint16_t)(kW * REF_UI_RIGHT_START_W),
-                  (uint16_t)(kH * REF_UI_MODE_LINE4_H),
-                  "FIRE  SNGL  BRST  CONT");
+                   UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
+                   (uint16_t)(kW * REF_UI_RIGHT_START_W),
+                   (uint16_t)(kH * REF_UI_MODE_LINE4_H),
+                   "FIRE  SNGL  BRST  CONT");
     ui_stash_string(&(ref->ui), &string);
 
     UI_DrawLine(&ele, "5", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
@@ -560,15 +560,15 @@ uint8_t referee_refresh_ui(referee_t *ref) {
     ui_stash_graphic(&(ref->ui), &ele);
 
     ui_draw_string(&string, "d", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
-                  UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
-                  (uint16_t)(kW * REF_UI_RIGHT_START_W), (uint16_t)(kH * 0.4f),
-                  "CTRL  JS  KM");
+                   UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
+                   (uint16_t)(kW * REF_UI_RIGHT_START_W), (uint16_t)(kH * 0.4f),
+                   "CTRL  JS  KM");
     ui_stash_string(&(ref->ui), &string);
 
     ui_draw_string(&string, "e", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
-                  UI_DEFAULT_WIDTH * 20, 80, UI_CHAR_DEFAULT_WIDTH * 2,
-                  (uint16_t)(kW * 0.6f - 26.0f), (uint16_t)(kH * 0.2f + 10.0f),
-                  "CAP");
+                   UI_DEFAULT_WIDTH * 20, 80, UI_CHAR_DEFAULT_WIDTH * 2,
+                   (uint16_t)(kW * 0.6f - 26.0f), (uint16_t)(kH * 0.2f + 10.0f),
+                   "CAP");
     ui_stash_string(&(ref->ui), &string);
   }
 
@@ -674,7 +674,7 @@ int8_t referee_start_transmit(referee_t *ref) {
   return DEVICE_ERR;
 }
 
-bool referee_wait_trans_cplt(Referee_t *ref, uint32_t timeout) {
+bool referee_wait_trans_cplt(referee_t *ref, uint32_t timeout) {
   return xSemaphoreTake(ref->sem.packet_sent, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 
@@ -704,6 +704,6 @@ uint8_t referee_pack_for_ai(referee_for_ai_t *ai_ref, const referee_t *ref) {
   else
     ai_ref->team = AI_TEAM_BLUE;
 
-     ai_ref->status = ref->status;
+  ai_ref->status = ref->status;
   return DEVICE_OK;
 }

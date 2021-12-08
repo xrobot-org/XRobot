@@ -650,8 +650,8 @@ void CLI_USB_RX_Callback(void *arg) {
   UNUSED(arg);
 
   BaseType_t switch_required;
-  xTaskNotifyFromISR(runtime->thd[THD_CLI], SIGNAL_BSP_USB_BUF_RECV,
-                     eSetValueWithOverwrite, &switch_required);
+  //xTaskNotifyFromISR(runtime->thd[THD_CLI], SIGNAL_BSP_USB_BUF_RECV,
+   //                  eSetValueWithOverwrite, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
@@ -682,7 +682,7 @@ void thd_cli(void *arg) {
       continue;
     /* 等待接收到新的字符 */
     BSP_USB_StartReceive();
-    xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFFFFFFFF);
+    // xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFFFFFFFF);
 
     /* 读取接收到的新字符 */
     rx_char = BSP_USB_ReadChar();
@@ -702,7 +702,7 @@ void thd_cli(void *arg) {
   while (1) {
     /* 等待输入. */
     BSP_USB_StartReceive();
-    xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFFFFFFFF);
+    // xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFFFFFFFF);
 
     /* 读取接收到的新字符 */
     rx_char = BSP_USB_ReadChar();

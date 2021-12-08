@@ -40,9 +40,9 @@ int8_t ai_init(ai_t *ai) {
   xSemaphoreGive(ai->sem.trans);
 
   BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_RX_CPLT_CB,
-                            ia_rx_cplt_callback);
+                            ia_rx_cplt_callback, ai);
   BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_TX_CPLT_CB,
-                            ia_tx_cplt_callback);
+                            ia_tx_cplt_callback, ai);
   return DEVICE_OK;
 }
 

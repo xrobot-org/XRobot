@@ -25,8 +25,8 @@ static void BSP_UART_Callback(BSP_UART_Callback_t cb_type,
   if (bsp_uart != BSP_UART_ERR) {
     BSP_Callback_t cb = callback_list[bsp_uart][cb_type];
 
-    if (cb.Fn) {
-      cb.Fn(cb.arg);
+    if (cb.fn) {
+      cb.fn(cb.arg);
     }
   }
 }
@@ -92,7 +92,7 @@ int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type,
   ASSERT(callback);
   ASSERT(type != BSP_UART_CB_NUM);
 
-  callback_list[uart][type].Fn = callback;
+  callback_list[uart][type].fn = callback;
   callback_list[uart][type].arg = callback_arg;
   return BSP_OK;
 }

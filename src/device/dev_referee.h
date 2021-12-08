@@ -11,7 +11,6 @@
 #include "comp_ui.h"
 #include "comp_utils.h"
 #include "dev.h"
-#include "dev_can.h"
 #include "semphr.h"
 #include "timers.h"
 
@@ -368,13 +367,13 @@ int8_t referee_restart(void);
 void referee_handle_offline(referee_t *ref);
 
 int8_t referee_start_receiving(referee_t *ref);
-bool referee_wait_recv_cplt(uint32_t timeout);
+bool referee_wait_recv_cplt(referee_t *ref, uint32_t timeout);
 int8_t referee_parse(referee_t *ref);
 
 uint8_t referee_refresh_ui(referee_t *ref);
 int8_t referee_pack_ui_packet(referee_t *ref);
 int8_t referee_start_transmit(referee_t *ref);
-bool referee_wait_trans_cplt(uint32_t timeout);
+bool referee_wait_trans_cplt(referee_t *ref, uint32_t timeout);
 
 uint8_t referee_pack_for_chassis(referee_for_chassis_t *c_ref,
                                  const referee_t *ref);
