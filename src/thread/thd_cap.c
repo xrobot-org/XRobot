@@ -28,6 +28,8 @@ void thd_cap(void* arg) {
 
   subscriber_t* out_sub = msg_dist_subscribe("cap_out", sizeof(cap_control_t));
 
+  cap_init(&cap);
+
   uint32_t previous_wake_time = xTaskGetTickCount();
 
   while (1) {

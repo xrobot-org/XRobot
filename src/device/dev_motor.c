@@ -70,6 +70,8 @@ err_t motor_init(motor_t *motor, const motor_group_t *group_cfg) {
   if (inited) return DEVICE_ERR_INITED;
   motor->group_cfg = group_cfg;
 
+  motor->msgq_rx = xQueueCreate(1, sizeof(can_rx_item_t));
+  motor->msgq_tx = xQueueCreate(1, sizeof(can_tx_item_t));
   // can_register_rx_group();
 
   inited = true;

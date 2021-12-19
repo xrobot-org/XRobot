@@ -27,7 +27,7 @@ static void cap_decode(cap_feedback_t *fb, const uint8_t *raw) {
 }
 
 err_t cap_init(cap_t *cap) {
-  cap->msgq_control = xQueueCreate(1, sizeof(can_rx_item_t));
+  cap->msgq_control = xQueueCreate(1, sizeof(can_tx_item_t));
   cap->msgq_feedback = xQueueCreate(1, sizeof(can_rx_item_t));
 
   if (cap->msgq_control && cap->msgq_feedback)
