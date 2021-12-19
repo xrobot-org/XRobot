@@ -35,9 +35,9 @@ void thd_ctrl_chassis(void* arg) {
   ui_chassis_t chassis_ui;
 
   publisher_t* motor_pub =
-      msg_dist_create_topic("motor_ctrl", sizeof(motor_control_t));
+      msg_dist_create_topic("chassis_out", sizeof(motor_control_t));
   publisher_t* cap_pub =
-      msg_dist_create_topic("cap_ctrl", sizeof(cap_control_t));
+      msg_dist_create_topic("cap_out", sizeof(cap_control_t));
   publisher_t* ui_pub =
       msg_dist_create_topic("chassis_ui", sizeof(ui_chassis_t));
 

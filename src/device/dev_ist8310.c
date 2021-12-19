@@ -68,7 +68,7 @@ static void IST8310_MemRxCpltCallback(void) {
   portYIELD_FROM_ISR(switch_required);
 }
 
-static void IST8310_IntCallback(void) {
+static void IST8310_IntCallback(void *arg) {
   BaseType_t switch_required;
   xTaskNotifyFromISR(thread_alert, SIGNAL_IST8310_MAGN_NEW_DATA,
                      eSetValueWithOverwrite, &switch_required);

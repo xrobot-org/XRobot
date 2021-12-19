@@ -122,7 +122,7 @@ static can_rx_raw_t raw_rw;
 static can_tx_raw_t raw_tx;
 
 static void can_rx_irq(CAN_HandleTypeDef *hcan) {
-  BaseType_t switch_required;
+  BaseType_t switch_required = pdTRUE;
 
   HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &(raw_rw.header), raw_rw.data);
 
@@ -133,7 +133,7 @@ static void can_rx_irq(CAN_HandleTypeDef *hcan) {
   if (index < rx_group.len) {
     rx_item.index = index;
     memcmp(rx_item.data, raw_rw.data, CAN_DATA_SIZE);
-    xQueueSendToBackFromISR(&msgq, &rx_item, &switch_required);
+    xQueueSendToBackFromISR(msgq, &rx_item, &switch_required);
   }
   portYIELD_FROM_ISR(switch_required);
 }
@@ -143,34 +143,43 @@ void CAN1_RX1_IRQHandler(void) { HAL_CAN_IRQHandler(&hcan1); }
 void CAN2_RX0_IRQHandler(void) { HAL_CAN_IRQHandler(&hcan2); }
 void CAN2_RX1_IRQHandler(void) { HAL_CAN_IRQHandler(&hcan2); }
 
-void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan) {}
+void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan) {
+  UNUSED(hcan);
+}
 
-void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan) {}
+void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan) {
+  UNUSED(hcan);
+}
 
-void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan) {}
+void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan) {
+  UNUSED(hcan);
+}
 
-void HAL_CAN_TxMailbox0AbortCallback(CAN_HandleTypeDef *hcan) {}
+void HAL_CAN_TxMailbox0AbortCallback(CAN_HandleTypeDef *hcan) { UNUSED(hcan); }
 
-void HAL_CAN_TxMailbox1AbortCallback(CAN_HandleTypeDef *hcan) {}
+void HAL_CAN_TxMailbox1AbortCallback(CAN_HandleTypeDef *hcan) { UNUSED(hcan); }
 
-void HAL_CAN_TxMailbox2AbortCallback(CAN_HandleTypeDef *hcan) {}
+void HAL_CAN_TxMailbox2AbortCallback(CAN_HandleTypeDef *hcan) { UNUSED(hcan); }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
   can_rx_irq(hcan);
 }
 
-void HAL_CAN_RxFifo0FullCallback(CAN_HandleTypeDef *hcan) {}
+void HAL_CAN_RxFifo0FullCallback(CAN_HandleTypeDef *hcan) { UNUSED(hcan); }
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) {
   can_rx_irq(hcan);
 }
 
-void HAL_CAN_RxFifo1FullCallback(CAN_HandleTypeDef *hcan) {}
+void HAL_CAN_RxFifo1FullCallback(CAN_HandleTypeDef *hcan) { UNUSED(hcan); }
 
-void HAL_CAN_SleepCallback(CAN_HandleTypeDef *hcan) {}
+void HAL_CAN_SleepCallback(CAN_HandleTypeDef *hcan) { UNUSED(hcan); }
 
-void HAL_CAN_WakeUpFromRxMsgCallback(CAN_HandleTypeDef *hcan) {}
+void HAL_CAN_WakeUpFromRxMsgCallback(CAN_HandleTypeDef *hcan) { UNUSED(hcan); }
 
-void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {}
+void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) { UNUSED(hcan); }
 
-QueueHandle_t can_register_rx_group(const can_rx_group_t *group) { return; }
+QueueHandle_t can_register_rx_group(const can_rx_group_t *group) {
+  UNUSED(group);
+  return NULL;
+}

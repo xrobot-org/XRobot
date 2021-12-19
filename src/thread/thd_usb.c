@@ -29,8 +29,6 @@ void thd_usb(void* arg) {
   while (1) {
     // tinyusb device task
     tud_task();
-
-    cdc_task();
   }
 }
 THREAD_DECLEAR(thd_usb, 128, 4);

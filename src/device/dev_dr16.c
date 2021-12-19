@@ -18,7 +18,8 @@
 static TaskHandle_t thread_alert;
 static bool inited = false;
 
-static void DR16_RxCpltCallback(void) {
+static void DR16_RxCpltCallback(void *arg) {
+  UNUSED(arg);
   BaseType_t switch_required;
   xTaskNotifyFromISR(thread_alert, SIGNAL_DR16_RAW_REDY, eSetValueWithOverwrite,
                      &switch_required);

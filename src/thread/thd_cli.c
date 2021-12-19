@@ -665,10 +665,6 @@ void thd_cli(void *arg) {
   /* 通过回车键唤醒命令行界面 */
   BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
   while (1) {
-    if (tud_cdc_n_connected()) {
-      __NOP();
-    } else
-      continue;
     /* 等待接收到新的字符 */
     BSP_USB_ReadyReceive(xTaskGetCurrentTaskHandle());
     // xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFF);
