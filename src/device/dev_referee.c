@@ -79,14 +79,14 @@ static void Referee_AbortRxCpltCallback(void *arg) {
   portYIELD_FROM_ISR(switch_required);
 }
 
-static void RefereeFastRefreshTimerCallback(void *arg) {
+static void RefereeFastRefreshTimerCallback(TimerHandle_t arg) {
   RM_UNUSED(arg);
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(gref->sem.ui_fast_refresh, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
-static void RefereeSlowRefreshTimerCallback(void *arg) {
+static void RefereeSlowRefreshTimerCallback(TimerHandle_t arg) {
   RM_UNUSED(arg);
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(gref->sem.ui_slow_refresh, &switch_required);
@@ -553,7 +553,7 @@ uint8_t referee_refresh_ui(referee_t *ref) {
                    "FIRE  SNGL  BRST  CONT");
     ui_stash_string(&(ref->ui), &string);
 
-    UI_DrawLine(&ele, "5", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
+    ui_draw_line(&ele, "5", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
                 UI_DEFAULT_WIDTH * 3, (uint16_t)(kW * 0.4f),
                 (uint16_t)(kH * 0.2f), (uint16_t)(kW * 0.4f),
                 (uint16_t)(kH * 0.2f + 50.f));

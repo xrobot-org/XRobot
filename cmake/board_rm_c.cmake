@@ -10,4 +10,6 @@ include(mcu_stm32f4)
 add_compile_definitions(
     BOARD_RM_C
     STM32F407xx
+    HSE_VALUE=12000000
+    HSE_STARTUP_TIMEOUT=100
 )

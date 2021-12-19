@@ -150,4 +150,5 @@ TODO
 
 - [x] 利用好CCM RAM[参考文档](https://www.st.com/resource/en/application_note/an4296-use-stm32f4stm32g4-ccm-sram-with-iar-embedded-workbench-keil-mdkarm-stmicroelectronics-stm32cubeide-and-other-gnubased-toolchains-stmicroelectronics.pdf)
 - [ ] 使用[TinyUSB](https://github.com/hathach/tinyusb)
+- [ ] 使用MPU保护内存地址空间，防止错误访存出现。例如NULL指针读写。
 - [ ] 实现固件运行在开发板，机器人运行在Gazebo的Hardware in the Loop(HITL)仿真

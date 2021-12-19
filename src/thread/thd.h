@@ -9,12 +9,13 @@ typedef struct {
   UBaseType_t priority;
 } thd_t;
 
-#define THREAD_DECLEAR(_fn, _stack_depth, _priority)                         \
-  const thd_t __comp_init_##_fn __attribute__((section(".thread_init"))) = { \
-      .fn = _fn,                                                             \
-      .name = #_fn,                                                          \
-      .stack_depth = _stack_depth,                                           \
-      .priority = _priority,                                                 \
+#define THREAD_DECLEAR(_fn, _stack_depth, _priority) \
+  static const thd_t thd_init_##_fn                  \
+      __attribute__((used, section(".thread"))) = {  \
+          .fn = _fn,                                 \
+          .name = #_fn,                              \
+          .stack_depth = _stack_depth,               \
+          .priority = _priority,                     \
   }
 
 typedef struct {

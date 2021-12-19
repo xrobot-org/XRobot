@@ -646,15 +646,6 @@ static const CLI_Command_Definition_t command_table[] = {
     */
 };
 
-void CLI_USB_RX_Callback(void *arg) {
-  UNUSED(arg);
-
-  BaseType_t switch_required;
-  //xTaskNotifyFromISR(runtime->thd[THD_CLI], SIGNAL_BSP_USB_BUF_RECV,
-   //                  eSetValueWithOverwrite, &switch_required);
-  portYIELD_FROM_ISR(switch_required);
-}
-
 void thd_cli(void *arg) {
   runtime = arg;
   static char input[MAX_INPUT_LENGTH];          /* 输入字符串缓存 */
@@ -665,8 +656,6 @@ void thd_cli(void *arg) {
 
   gyro_sub = msg_dist_subscribe("gimbal_gyro", true);
   gimbal_motor_sub = msg_dist_subscribe("gimbal_motor_fb", true);
-
-  // CDC_RegisterCallback(CLI_USB_RX_Callback);
 
   /* 注册所有命令 */
   for (size_t j = 0; j < ARRAY_LEN(command_table); j++) {
@@ -681,8 +670,8 @@ void thd_cli(void *arg) {
     } else
       continue;
     /* 等待接收到新的字符 */
-    BSP_USB_StartReceive();
-    // xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFFFFFFFF);
+    BSP_USB_ReadyReceive(xTaskGetCurrentTaskHandle());
+    // xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFF);
 
     /* 读取接收到的新字符 */
     rx_char = BSP_USB_ReadChar();
@@ -701,8 +690,8 @@ void thd_cli(void *arg) {
   BSP_USB_Printf(CLI_START);
   while (1) {
     /* 等待输入. */
-    BSP_USB_StartReceive();
-    // xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFFFFFFFF);
+    BSP_USB_ReadyReceive(xTaskGetCurrentTaskHandle());
+    // xTaskNotifyWait(0, 0, SIGNAL_BSP_USB_BUF_RECV, 0xFF);
 
     /* 读取接收到的新字符 */
     rx_char = BSP_USB_ReadChar();

@@ -32,6 +32,7 @@ void OnProjectLoad(void) {
   // User settings
   //
   Project.SetOSPlugin("FreeRTOSPlugin");
+  Project.AddPathSubstitute("/home","//wsl.localhost/Ubuntu/home");
   File.Open("$(ProjectDir)/../build/src/qdu_rm_mcu.elf");
 }
 
@@ -148,7 +149,7 @@ void AfterTargetReset(void) { _SetupTarget(); }
  **********************************************************************
  */
 void BeforeTargetConnect(void) {
-  File.Reload("$(ProjectDir)/../build/src/firmware/firmware.elf");
+  File.Reload("$(ProjectDir)/../build/src/qdu_rm_mcu.elf");
 }
 
 /*********************************************************************

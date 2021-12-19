@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/bsp)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/component)
@@ -10,7 +10,11 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/rtos)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/thread)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/usb)
 
-add_executable(${PROJECT_NAME}.elf main.c)
+add_executable(${PROJECT_NAME}.elf)
+
+target_sources(${PROJECT_NAME}.elf
+    PRIVATE main.c
+)
 
 target_link_libraries(${PROJECT_NAME}.elf
     PRIVATE hal
@@ -31,9 +35,9 @@ add_dependencies(${PROJECT_NAME}.elf
     thread
 )
 
-include(utils_arm_none_eabi)
+include(toolchain_utils)
 
 print_section_sizes(${PROJECT_NAME}.elf)
 
-create_hex_output(${PROJECT_NAME}.elf)
-create_bin_output(${PROJECT_NAME}.elf)
+create_hex_output(${PROJECT_NAME})
+create_bin_output(${PROJECT_NAME})
