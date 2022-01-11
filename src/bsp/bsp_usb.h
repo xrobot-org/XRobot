@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -11,7 +12,7 @@
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
 /* Exported functions prototypes -------------------------------------------- */
-int8_t BSP_USB_StartReceive(void); /* 指示USB库准备好接收数据 */
-char BSP_USB_ReadChar(void);       /* 读取缓存第一个字符 */
-
+bool BSP_USB_Connect(void);                  /* USB已连接 */
+bool BSP_USB_Avail(void);                    /* USB有数据 */
+char BSP_USB_ReadChar();                     /* 获取缓存数据 */
 int8_t BSP_USB_Printf(const char *fmt, ...); /* 打印至虚拟串口 */
