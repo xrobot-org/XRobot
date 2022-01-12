@@ -63,15 +63,15 @@ static void IST8310_Read(uint8_t reg, uint8_t *data, uint8_t len) {
 
 static void IST8310_MemRxCpltCallback(void *arg) {
   BaseType_t switch_required;
-  xTaskNotifyFromISR(thread_alert, SIGNAL_IST8310_MAGN_RAW_REDY,
-                     eSetValueWithOverwrite, &switch_required);
+  ist8310_t *ist8310 = arg;
+  xSemaphoreGiveFromISR(ist8310->sem.recv,&switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
 static void IST8310_IntCallback(void *arg) {
   BaseType_t switch_required;
-  xTaskNotifyFromISR(thread_alert, SIGNAL_IST8310_MAGN_NEW_DATA,
-                     eSetValueWithOverwrite, &switch_required);
+  ist8310_t *ist8310 = arg;
+  xSemaphoreGiveFromISR(ist8310->sem.new,&switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
@@ -114,9 +114,8 @@ int8_t ist8310_init(ist8310_t *ist8310, const ist8310_cali_t *cali) {
   return DEVICE_OK;
 }
 
-bool ist8310_wait_new(uint32_t timeout) {
-  return xTaskNotifyWait(0, 0, (uint32_t *)SIGNAL_IST8310_MAGN_NEW_DATA,
-                         pdMS_TO_TICKS(timeout));
+bool ist8310_wait_new(ist8310_t *ist8310,uint32_t timeout) {
+  return xSemaphoreTake(ist8310->sem.new, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 
 int8_t ist8310_start_dma_recv() {
@@ -124,8 +123,8 @@ int8_t ist8310_start_dma_recv() {
   return DEVICE_OK;
 }
 
-uint32_t ist8310_wait_dma_cplt() {
-  return xTaskNotifyWait(0, 0, (uint32_t *)SIGNAL_IST8310_MAGN_RAW_REDY, 0);
+uint32_t ist8310_wait_dma_cplt(ist8310_t *ist8310) {
+  return xSemaphoreTake(ist8310->sem.recv, pdMS_TO_TICKS(0)) == pdTRUE;
 }
 
 int8_t ist8310_parse(ist8310_t *ist8310) {
