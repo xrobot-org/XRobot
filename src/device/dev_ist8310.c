@@ -61,7 +61,7 @@ static void IST8310_Read(uint8_t reg, uint8_t *data, uint8_t len) {
                        reg, I2C_MEMADD_SIZE_8BIT, data, len);
 }
 
-static void IST8310_MemRxCpltCallback(void) {
+static void IST8310_MemRxCpltCallback(void *arg) {
   BaseType_t switch_required;
   xTaskNotifyFromISR(thread_alert, SIGNAL_IST8310_MAGN_RAW_REDY,
                      eSetValueWithOverwrite, &switch_required);
@@ -94,7 +94,7 @@ int8_t ist8310_init(ist8310_t *ist8310, const ist8310_cali_t *cali) {
   BSP_GPIO_DisableIRQ(CMPS_INT_Pin);
 
   BSP_I2C_RegisterCallback(BSP_I2C_COMP, HAL_I2C_MEM_RX_CPLT_CB,
-                           IST8310_MemRxCpltCallback);
+                           IST8310_MemRxCpltCallback, ist8310);
   BSP_GPIO_RegisterCallback(CMPS_INT_Pin, IST8310_IntCallback, ist8310);
 
   /* Init. */

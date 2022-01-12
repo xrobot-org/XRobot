@@ -31,4 +31,4 @@ typedef enum {
 
 I2C_HandleTypeDef *BSP_I2C_GetHandle(BSP_I2C_t i2c);
 int8_t BSP_I2C_RegisterCallback(BSP_I2C_t i2c, BSP_I2C_Callback_t type,
-                                void (*callback)(void));
+                                void (*callback)(void *),void *callback_arg);

@@ -314,7 +314,8 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
       case CHASSIS_MODE_RELAX: /* 放松模式,不输出 */
         c->out.motor.as_array[i] = 0;
         break;
-      case CHASSIS_MODE_FREE:
+      case CHASSIS_MODE_SCAN:
+        break;
     }
     /* 输出滤波. */
     c->out.motor.as_array[i] =
