@@ -19,7 +19,7 @@ void TOF_Decode(tof_feedback_t *fb, const uint8_t *raw) {
 }
 
 err_t tof_init(tof_t *tof) {
-  tof->msgq_feedback = xQueueCreate(1, sizeof(can_rx_item_t));
+  tof->msgq_feedback = xQueueCreate(1, sizeof(BSP_CAN_RxItem_t));
 
   if (tof->msgq_feedback)
     return RM_OK;
@@ -29,7 +29,7 @@ err_t tof_init(tof_t *tof) {
 
 err_t tof_update(tof_t *tof, uint32_t timeout) {
   ASSERT(tof);
-  can_rx_item_t pack;
+  BSP_CAN_RxItem_t pack;
   while (pdPASS ==
          xQueueReceive(tof->msgq_feedback, &pack, pdMS_TO_TICKS(timeout))) {
     if (pack.index == 0) {

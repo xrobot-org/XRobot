@@ -1,6 +1,7 @@
 #include "hal.h"
 
 #include "hal_adc.h"
+#include "hal_can.h"
 #include "hal_dma.h"
 #include "hal_gpio.h"
 #include "hal_i2c.h"
@@ -58,6 +59,8 @@ void HAL_InitPeripherals(void) {
   MX_DMA_Init();
   MX_ADC1_Init();
   MX_ADC3_Init();
+  MX_CAN1_Init();
+  MX_CAN2_Init();
   MX_I2C1_Init();
   MX_SPI1_Init();
   MX_TIM4_Init();

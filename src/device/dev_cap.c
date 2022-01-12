@@ -27,8 +27,8 @@ static void cap_decode(cap_feedback_t *fb, const uint8_t *raw) {
 }
 
 err_t cap_init(cap_t *cap) {
-  cap->msgq_control = xQueueCreate(1, sizeof(can_tx_item_t));
-  cap->msgq_feedback = xQueueCreate(1, sizeof(can_rx_item_t));
+  cap->msgq_control = xQueueCreate(1, sizeof(BSP_CAN_RxItem_t));
+  cap->msgq_feedback = xQueueCreate(1, sizeof(BSP_CAN_RxItem_t));
 
   if (cap->msgq_control && cap->msgq_feedback)
     return RM_OK;
@@ -38,7 +38,7 @@ err_t cap_init(cap_t *cap) {
 
 err_t cap_update(cap_t *cap, uint32_t timeout) {
   ASSERT(cap);
-  can_rx_item_t pack;
+  BSP_CAN_RxItem_t pack;
   while (pdPASS ==
          xQueueReceive(cap->msgq_feedback, &pack, pdMS_TO_TICKS(timeout))) {
     if (pack.index == 0) {
@@ -54,8 +54,8 @@ err_t cap_control(cap_t *cap, cap_control_t *output) {
 
   uint16_t pwr_lim = (uint16_t)(output->power_limit * CAP_RES);
 
-  can_tx_item_t pack;
-  pack.can_id = CAP_CTRL_ID_BASE;
+  BSP_CAN_RxItem_t pack;
+  pack.id = CAP_CTRL_ID_BASE;
   pack.data[0] = (pwr_lim >> 8) & 0xFF;
   pack.data[1] = pwr_lim & 0xFF;
 

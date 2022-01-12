@@ -15,6 +15,7 @@
 
 #include "FreeRTOS.h"
 #include "comp_limiter.h"
+#include "dev_can.h"
 #include "dev_cap.h"
 
 #define _CAP_PERCENTAGE_NO_LIM 80 /* 底盘不再限制功率的电容电量 */
