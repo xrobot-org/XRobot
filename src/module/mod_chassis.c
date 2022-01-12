@@ -225,8 +225,8 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
   /* 根据遥控器命令更改底盘模式 */
   Chassis_SetMode(c, c_cmd->mode, now);
 
-  if(c->num_wheel == 0 && c->param->reverse.chassis_motor){
-    c->move_vec.vy = - c->move_vec.vy;
+  if (c->num_wheel == 0 && c->param->reverse.chassis_motor) {
+    c->move_vec.vy = -c->move_vec.vy;
   }
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
   /* 计算vx、vy */
@@ -255,6 +255,8 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
       c->move_vec.vy =
           sin_beta * c_cmd->ctrl_vec.vx + cos_beta * c_cmd->ctrl_vec.vy;
     }
+    case CHASSIS_MODE_SCAN:
+      break;
   }
 
   /* 计算wz */
@@ -312,6 +314,7 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
       case CHASSIS_MODE_RELAX: /* 放松模式,不输出 */
         c->out.motor.as_array[i] = 0;
         break;
+      case CHASSIS_MODE_FREE:
     }
     /* 输出滤波. */
     c->out.motor.as_array[i] =

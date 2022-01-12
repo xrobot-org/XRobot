@@ -37,6 +37,7 @@ typedef enum {
   CHASSIS_MODE_ROTOR, /* 小陀螺模式，通过闭环控制使底盘不停旋转 */
   CHASSIS_MODE_INDENPENDENT, /* 独立模式。底盘运行不受云台影响 */
   CHASSIS_MODE_OPEN, /* 开环模式。底盘运行不受PID控制，直接输出到电机 */
+  CHASSIS_MODE_SCAN, /*哨兵未找到目标，底盘处于自由活动模式*/
 } chassis_mode_t;
 
 /* 小陀螺转动模式 */
@@ -51,6 +52,7 @@ typedef enum {
   GIMBAL_MODE_RELAX, /* 放松模式，电机不输出。一般情况云台初始化之后的模式 */
   GIMBAL_MODE_ABSOLUTE, /* 绝对坐标系控制，控制在空间内的绝对姿态 */
   GIMBAL_MODE_RELATIVE, /* 相对坐标系控制，控制相对于底盘的姿态 */
+  GIMBAL_MODE_SCAN, /*哨兵未找到目标，云台处于自由活动状态*/
 } gimbal_mode_t;
 
 /* 发射器运行模式 */
