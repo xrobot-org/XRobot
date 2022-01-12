@@ -10,6 +10,7 @@
  */
 
 #include "comp_limiter.h"
+#include "dev_tof.h"
 #include "mid_msg_dist.h"
 #include "mod_chassis.h"
 #include "mod_config.h"
@@ -29,6 +30,7 @@ void thd_ctrl_chassis(void* arg) {
 
   cmd_chassis_t chassis_cmd;
   referee_for_chassis_t ref_chassis;
+  tof_t tof;
 
   motor_control_t motor_ctrl;
   cap_control_t cap_ctrl;
@@ -47,6 +49,7 @@ void thd_ctrl_chassis(void* arg) {
       msg_dist_subscribe("chassis_motor_fb", true);
   subscriber_t* gimbal_motor_sub = msg_dist_subscribe("gimbal_motor_fb", true);
   subscriber_t* cmd_sub = msg_dist_subscribe("cmd_chassis", true);
+  subscriber_t* tof_sub = msg_dist_subscribe("tof_fb", true);
 
   /* 初始化底盘 */
   chassis_init(&chassis, &(runtime->cfg.robot_param->chassis),
@@ -62,7 +65,7 @@ void thd_ctrl_chassis(void* arg) {
     msg_dist_poll(ref_sub, &ref_chassis, 0);
     msg_dist_poll(cmd_sub, &chassis_cmd, 0);
     msg_dist_poll(cap_sub, &cap, 0);
-
+    msg_dist_poll(tof_sub, &tof, 0);
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     /* 更新反馈值 */
     chassis_update_feedback(&chassis, &chassis_motor, &gimbal_motor);

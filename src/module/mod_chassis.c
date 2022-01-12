@@ -17,6 +17,7 @@
 #include "comp_limiter.h"
 #include "dev_can.h"
 #include "dev_cap.h"
+#include "dev_tof.h"
 
 #define _CAP_PERCENTAGE_NO_LIM 80 /* 底盘不再限制功率的电容电量 */
 #define _CAP_PERCENTAGE_WORK 30   /* 电容开始工作的电容电量 */
@@ -26,6 +27,9 @@
 #define ROTOR_WZ_MIN 0.6f   /* 小陀螺旋转位移下界 */
 #define ROTOR_WZ_MAX 0.8f   /* 小陀螺旋转位移上界 */
 #define ROTOR_OMEGA 0.0015f /* 小陀螺转动频率 */
+
+#define SCAN_VY_LENGTH_MIN 0.6f /* 哨兵返回时距离边界的最小值 */
+#define SCAN_MOVEMENTS 0.1f     /* 哨兵移动速度 */
 
 #define MOTOR_MAX_ROTATIONAL_SPEED 7000.0f /* 电机的最大转速 */
 
@@ -58,6 +62,10 @@ bool Motor_RefDataValid(const referee_for_chassis_t *ref) {
 static void Chassis_SetMode(chassis_t *c, chassis_mode_t mode, uint32_t now) {
   ASSERT(c);                   /* 主结构体不能为空 */
   if (mode == c->mode) return; /* 模式未改变直接返回 */
+
+  if (mode == CHASSIS_MODE_SCAN && c->mode != CHASSIS_MODE_SCAN) {
+    c->vy_dir_mult = (rand() % 2) ? -1 : 1;
+  }
 
   if (mode == CHASSIS_MODE_ROTOR && c->mode != CHASSIS_MODE_ROTOR) {
     srand(now);
@@ -256,7 +264,14 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
       c->move_vec.vy =
           sin_beta * c_cmd->ctrl_vec.vx + cos_beta * c_cmd->ctrl_vec.vy;
     }
-    case CHASSIS_MODE_SCAN:
+    case CHASSIS_MODE_SCAN:                  /*Vy*/
+      if (c->out.tof.feedback[0].signal_strength < /*0,距离左侧的距离*/
+          SCAN_VY_LENGTH_MIN)
+        c->vy_dir_mult = 1;
+      else if (c->out.tof.feedback[1].signal_strength < /*1,距离右侧的距离*/
+               SCAN_VY_LENGTH_MIN)
+        c->vy_dir_mult = -1;
+      c->move_vec.vy = c->vy_dir_mult * SCAN_MOVEMENTS;
       break;
   }
 
@@ -301,6 +316,7 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
       case CHASSIS_MODE_FOLLOW_GIMBAL:
       case CHASSIS_MODE_FOLLOW_GIMBAL_35:
       case CHASSIS_MODE_ROTOR:
+      case CHASSIS_MODE_SCAN:
       case CHASSIS_MODE_INDENPENDENT: /* 独立模式,受PID控制 */
         c->out.motor.as_array[i] =
             kpid_calc(c->pid.motor + i, c->setpoint.motor_rotational_speed[i],
@@ -315,7 +331,6 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
       case CHASSIS_MODE_RELAX: /* 放松模式,不输出 */
         c->out.motor.as_array[i] = 0;
         break;
-      case CHASSIS_MODE_FREE:
     }
     /* 输出滤波. */
     c->out.motor.as_array[i] =
