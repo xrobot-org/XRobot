@@ -168,6 +168,8 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
     case GIMBAL_MODE_RELATIVE:
       for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) g->out[i] = 0.0f;
       break;
+    case GIMBAL_MODE_SCAN:
+      break;
   }
 
   /* 输出滤波 */
