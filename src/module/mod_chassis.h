@@ -45,6 +45,7 @@ typedef struct {
   /* 电机反装 应该和云台设置相同*/
   struct {
     bool yaw;
+    bool chassis_motor;
   } reverse;
 
 } chassis_params_t;

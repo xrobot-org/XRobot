@@ -12,9 +12,15 @@ typedef struct {
   uint16_t signal_strength;
 } tof_feedback_t;
 
+typedef enum {
+  TOF_SENSOR_LEFT,
+  TOF_SENSOR_RIGHT,
+  TOF_SENSOR_NUMBER
+} tof_number_t;
+
 typedef struct {
   QueueHandle_t msgq_feedback;
-  tof_feedback_t feedback;
+  tof_feedback_t feedback[TOF_SENSOR_NUMBER];
 } tof_t;
 
 err_t tof_init(tof_t *tof);
