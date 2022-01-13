@@ -61,6 +61,6 @@
 #define ADDR_FLASH_END ((uint32_t)0x08200000) /* End address for flash */
 #endif
 
-void BSP_Flash_EraseSector(uint32_t sector);
-void BSP_Flash_WriteBytes(uint32_t address, const uint8_t *buf, size_t len);
-void BSP_Flash_ReadBytes(uint32_t address, void *buf, size_t len);
+void bsp_flash_erase_sector(uint32_t sector);
+void bsp_flash_write_bytes(uint32_t address, const uint8_t *buf, size_t len);
+void bsp_flash_read_bytes(uint32_t address, void *buf, size_t len);

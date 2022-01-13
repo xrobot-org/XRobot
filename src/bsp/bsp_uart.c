@@ -2,9 +2,9 @@
 
 #include "comp_utils.h"
 
-static BSP_Callback_t callback_list[BSP_UART_NUM][BSP_UART_CB_NUM];
+static bsp_callback_t callback_list[BSP_UART_NUM][BSP_UART_CB_NUM];
 
-static BSP_UART_t UART_Get(UART_HandleTypeDef *huart) {
+static bsp_uart_t uart_get(UART_HandleTypeDef *huart) {
   if (huart->Instance == USART3)
     return BSP_UART_DR16;
   else if (huart->Instance == USART1)
@@ -19,11 +19,11 @@ static BSP_UART_t UART_Get(UART_HandleTypeDef *huart) {
     return BSP_UART_ERR;
 }
 
-static void BSP_UART_Callback(BSP_UART_Callback_t cb_type,
+static void bsp_uart_callback(bsp_uart_callback_t cb_type,
                               UART_HandleTypeDef *huart) {
-  BSP_UART_t bsp_uart = UART_Get(huart);
+  bsp_uart_t bsp_uart = uart_get(huart);
   if (bsp_uart != BSP_UART_ERR) {
-    BSP_Callback_t cb = callback_list[bsp_uart][cb_type];
+    bsp_callback_t cb = callback_list[bsp_uart][cb_type];
 
     if (cb.fn) {
       cb.fn(cb.arg);
@@ -32,45 +32,45 @@ static void BSP_UART_Callback(BSP_UART_Callback_t cb_type,
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
-  BSP_UART_Callback(BSP_UART_TX_CPLT_CB, huart);
+  bsp_uart_callback(BSP_UART_TX_CPLT_CB, huart);
 }
 
 void HAL_UART_TxHalfCpltCallback(UART_HandleTypeDef *huart) {
-  BSP_UART_Callback(BSP_UART_TX_HALF_CPLT_CB, huart);
+  bsp_uart_callback(BSP_UART_TX_HALF_CPLT_CB, huart);
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-  BSP_UART_Callback(BSP_UART_RX_CPLT_CB, huart);
+  bsp_uart_callback(BSP_UART_RX_CPLT_CB, huart);
 }
 
 void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart) {
-  BSP_UART_Callback(BSP_UART_RX_HALF_CPLT_CB, huart);
+  bsp_uart_callback(BSP_UART_RX_HALF_CPLT_CB, huart);
 }
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
-  BSP_UART_Callback(BSP_UART_ERROR_CB, huart);
+  bsp_uart_callback(BSP_UART_ERROR_CB, huart);
 }
 
 void HAL_UART_AbortCpltCallback(UART_HandleTypeDef *huart) {
-  BSP_UART_Callback(BSP_UART_ABORT_CPLT_CB, huart);
+  bsp_uart_callback(BSP_UART_ABORT_CPLT_CB, huart);
 }
 
 void HAL_UART_AbortTransmitCpltCallback(UART_HandleTypeDef *huart) {
-  BSP_UART_Callback(BSP_UART_ABORT_TX_CPLT_CB, huart);
+  bsp_uart_callback(BSP_UART_ABORT_TX_CPLT_CB, huart);
 }
 
 void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart) {
-  BSP_UART_Callback(BSP_UART_ABORT_RX_CPLT_CB, huart);
+  bsp_uart_callback(BSP_UART_ABORT_RX_CPLT_CB, huart);
 }
 
-void BSP_UART_IRQHandler(UART_HandleTypeDef *huart) {
+void bsp_uart_irq_handler(UART_HandleTypeDef *huart) {
   if (__HAL_UART_GET_FLAG(huart, UART_FLAG_IDLE)) {
     __HAL_UART_CLEAR_IDLEFLAG(huart);
-    BSP_UART_Callback(BSP_UART_IDLE_LINE_CB, huart);
+    bsp_uart_callback(BSP_UART_IDLE_LINE_CB, huart);
   }
 }
 
-UART_HandleTypeDef *BSP_UART_GetHandle(BSP_UART_t uart) {
+UART_HandleTypeDef *bsp_uart_get_handle(bsp_uart_t uart) {
   switch (uart) {
     case BSP_UART_DR16:
       return &huart3;
@@ -87,7 +87,7 @@ UART_HandleTypeDef *BSP_UART_GetHandle(BSP_UART_t uart) {
   }
 }
 
-int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type,
+int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,
                                  void (*callback)(void *), void *callback_arg) {
   ASSERT(callback);
   ASSERT(type != BSP_UART_CB_NUM);

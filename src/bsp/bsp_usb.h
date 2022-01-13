@@ -12,7 +12,7 @@
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
 /* Exported functions prototypes -------------------------------------------- */
-bool BSP_USB_Connect(void);                  /* USB已连接 */
-bool BSP_USB_Avail(void);                    /* USB有数据 */
-char BSP_USB_ReadChar();                     /* 获取缓存数据 */
-int8_t BSP_USB_Printf(const char *fmt, ...); /* 打印至虚拟串口 */
+bool bsp_usb_connect(void);                  /* USB已连接 */
+bool bsp_usb_avail(void);                    /* USB有数据 */
+char bsp_usb_read_char();                     /* 获取缓存数据 */
+int8_t bsp_usb_printf(const char *fmt, ...); /* 打印至虚拟串口 */

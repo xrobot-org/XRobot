@@ -4,4 +4,4 @@
 
 #include "bsp.h"
 
-int8_t BSP_Delay(uint32_t ms);
+int8_t bsp_delay(uint32_t ms);

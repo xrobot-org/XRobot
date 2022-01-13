@@ -15,13 +15,13 @@
 
 uint8_t usb_tx_buf[BSP_USB_MAX_TX_LEN];
 
-static int8_t BSP_USB_Transmit(uint8_t *buffer, uint16_t len) {
+static int8_t bsp_usb_transmit(uint8_t *buffer, uint16_t len) {
   tud_cdc_n_write(BSP_USB_DEFAULT_SERIAL_PORT, buffer, len);
   tud_cdc_n_write_flush(BSP_USB_DEFAULT_SERIAL_PORT);
   return BSP_OK;
 }
 
-char BSP_USB_ReadChar(void) {
+char bsp_usb_read_char(void) {
   char buff;
   uint8_t len = tud_cdc_n_read(BSP_USB_DEFAULT_SERIAL_PORT, &buff, 1);
   if (len == 1)
@@ -30,22 +30,22 @@ char BSP_USB_ReadChar(void) {
     return 0;
 }
 
-bool BSP_USB_Connect(void) {
+bool bsp_usb_connect(void) {
   return tud_cdc_n_connected(BSP_USB_DEFAULT_SERIAL_PORT);
 }
 
-bool BSP_USB_Avail(void) {
+bool bsp_usb_avail(void) {
   return tud_cdc_n_available(BSP_USB_DEFAULT_SERIAL_PORT);
 }
 
-int8_t BSP_USB_Printf(const char *fmt, ...) {
+int8_t bsp_usb_printf(const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   int len = vsnprintf((char *)usb_tx_buf, BSP_USB_MAX_TX_LEN - 1, fmt, ap);
   va_end(ap);
 
   if (len > 0) {
-    BSP_USB_Transmit(usb_tx_buf, (uint16_t)(len));
+    bsp_usb_transmit(usb_tx_buf, (uint16_t)(len));
     return BSP_OK;
   } else {
     return BSP_ERR_NULL;

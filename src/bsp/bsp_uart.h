@@ -15,7 +15,7 @@ typedef enum {
   /* BSP_UART_XXX, */
   BSP_UART_NUM,
   BSP_UART_ERR,
-} BSP_UART_t;
+} bsp_uart_t;
 
 /* UART支持的中断回调函数类型，具体参考HAL中定义 */
 typedef enum {
@@ -30,8 +30,8 @@ typedef enum {
 
   BSP_UART_IDLE_LINE_CB,
   BSP_UART_CB_NUM,
-} BSP_UART_Callback_t;
+} bsp_uart_callback_t;
 
-UART_HandleTypeDef *BSP_UART_GetHandle(BSP_UART_t uart);
-int8_t BSP_UART_RegisterCallback(BSP_UART_t uart, BSP_UART_Callback_t type,
+UART_HandleTypeDef *bsp_uart_get_handle(bsp_uart_t uart);
+int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,
                                  void (*callback)(void *), void *callback_arg);

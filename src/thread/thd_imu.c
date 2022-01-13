@@ -47,7 +47,7 @@ void thd_imu(void* arg) {
             1.0f / bmi088_get_update_freq(&bmi088), &imu_temp_ctrl_pid_param);
 
   /* IMU温度控制PWM输出 */
-  BSP_PWM_Start(BSP_PWM_IMU_HEAT);
+  bsp_pwm_start(BSP_PWM_IMU_HEAT);
 
   while (1) {
     /* 等待IMU新数据 */
@@ -77,7 +77,7 @@ void thd_imu(void* arg) {
     msg_dist_publish(gyro_pub, &bmi088.gyro);
 
     /* PID控制IMU温度，PWM输出 */
-    BSP_PWM_Set(BSP_PWM_IMU_HEAT,
+    bsp_pwm_set(BSP_PWM_IMU_HEAT,
                 kpid_calc(&imu_temp_ctrl_pid, 40.0f, bmi088.temp, 0.0f, 0.0f));
   }
 }

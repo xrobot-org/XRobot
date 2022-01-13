@@ -69,7 +69,7 @@ static void Referee_TxCpltCallback(void *arg) {
 
 static void Referee_IdleLineCallback(void *arg) {
   RM_UNUSED(arg);
-  HAL_UART_AbortReceive_IT(BSP_UART_GetHandle(BSP_UART_REF));
+  HAL_UART_AbortReceive_IT(bsp_uart_get_handle(BSP_UART_REF));
 }
 
 static void Referee_AbortRxCpltCallback(void *arg) {
@@ -134,13 +134,13 @@ int8_t referee_init(referee_t *ref, const ui_screen_t *screen) {
 
   xSemaphoreGive(ref->sem.packet_sent);
 
-  BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_RX_CPLT_CB,
+  bsp_uart_register_callback(BSP_UART_REF, BSP_UART_RX_CPLT_CB,
                             Referee_RxCpltCallback, ref);
-  BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_ABORT_RX_CPLT_CB,
+  bsp_uart_register_callback(BSP_UART_REF, BSP_UART_ABORT_RX_CPLT_CB,
                             Referee_AbortRxCpltCallback, ref);
-  BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_IDLE_LINE_CB,
+  bsp_uart_register_callback(BSP_UART_REF, BSP_UART_IDLE_LINE_CB,
                             Referee_IdleLineCallback, ref);
-  BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_TX_CPLT_CB,
+  bsp_uart_register_callback(BSP_UART_REF, BSP_UART_TX_CPLT_CB,
                             Referee_TxCpltCallback, ref);
   ref->ui_fast_timer_id =
       xTimerCreate("fast_refresh", pdMS_TO_TICKS(REF_UI_FAST_REFRESH_FREQ),
@@ -155,15 +155,15 @@ int8_t referee_init(referee_t *ref, const ui_screen_t *screen) {
   xTimerStart(ref->ui_slow_timer_id,
               pdMS_TO_TICKS(1000 / REF_UI_SLOW_REFRESH_FREQ));
 
-  __HAL_UART_ENABLE_IT(BSP_UART_GetHandle(BSP_UART_REF), UART_IT_IDLE);
+  __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_REF), UART_IT_IDLE);
 
   inited = true;
   return DEVICE_OK;
 }
 
 int8_t referee_restart(void) {
-  __HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_REF));
-  __HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_REF));
+  __HAL_UART_DISABLE(bsp_uart_get_handle(BSP_UART_REF));
+  __HAL_UART_ENABLE(bsp_uart_get_handle(BSP_UART_REF));
   return DEVICE_OK;
 }
 
@@ -173,7 +173,7 @@ void referee_handle_offline(referee_t *ref) {
 
 int8_t referee_start_receiving(referee_t *ref) {
   RM_UNUSED(ref);
-  if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_REF), rxbuf,
+  if (HAL_UART_Receive_DMA(bsp_uart_get_handle(BSP_UART_REF), rxbuf,
                            REF_LEN_RX_BUFF) == HAL_OK) {
     return DEVICE_OK;
   }
@@ -188,7 +188,7 @@ int8_t referee_parse(referee_t *ref) {
   ref->status = REF_STATUS_RUNNING;
   uint32_t data_length =
       REF_LEN_RX_BUFF -
-      __HAL_DMA_GET_COUNTER(BSP_UART_GetHandle(BSP_UART_REF)->hdmarx);
+      __HAL_DMA_GET_COUNTER(bsp_uart_get_handle(BSP_UART_REF)->hdmarx);
 
   const uint8_t *index = rxbuf; /* const 保护原始rxbuf不被修改 */
   const uint8_t *const rxbuf_end = rxbuf + data_length;
@@ -664,7 +664,7 @@ int8_t referee_start_transmit(referee_t *ref) {
     xSemaphoreGive(ref->sem.packet_sent);
     return DEVICE_ERR_NULL;
   }
-  if (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_REF), ref->packet.data,
+  if (HAL_UART_Transmit_DMA(bsp_uart_get_handle(BSP_UART_REF), ref->packet.data,
                             (uint16_t)ref->packet.size) == HAL_OK) {
     vPortFree(ref->packet.last_data);
     ref->packet.last_data = ref->packet.data;

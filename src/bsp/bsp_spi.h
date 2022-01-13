@@ -14,7 +14,7 @@ typedef enum {
   /* BSP_SPI_XXX,*/
   BSP_SPI_NUM,
   BSP_SPI_ERR,
-} BSP_SPI_t;
+} bsp_spi_t;
 
 /* SPI支持的中断回调函数类型，具体参考HAL中定义 */
 typedef enum {
@@ -27,8 +27,8 @@ typedef enum {
   BSP_SPI_ERROR_CB,
   BSP_SPI_ABORT_CPLT_CB,
   BSP_SPI_CB_NUM,
-} BSP_SPI_Callback_t;
+} bsp_spi_callback_t;
 
-SPI_HandleTypeDef *BSP_SPI_GetHandle(BSP_SPI_t spi);
-int8_t BSP_SPI_RegisterCallback(BSP_SPI_t spi, BSP_SPI_Callback_t type,
+SPI_HandleTypeDef *bsp_spi_get_handle(bsp_spi_t spi);
+int8_t bsp_spi_register_callback(bsp_spi_t spi, bsp_spi_callback_t type,
                                 void (*callback)(void *), void *callback_arg);

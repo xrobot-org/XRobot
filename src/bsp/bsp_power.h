@@ -9,6 +9,6 @@ typedef enum {
   POWER_PORT2,
   POWER_PORT3,
   POWER_PORT4,
-} BSP_Power_Port_t;
+} bsp_power_port_t;
 
-int8_t BSP_Power_Set(BSP_Power_Port_t port, bool s);
+int8_t bsp_power_set(bsp_power_port_t port, bool s);

@@ -57,7 +57,7 @@ int8_t dr16_init(dr16_t *dr16) {
   if (inited) return DEVICE_ERR_INITED;
   VERIFY((thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
 
-  BSP_UART_RegisterCallback(BSP_UART_DR16, BSP_UART_RX_CPLT_CB,
+  bsp_uart_register_callback(BSP_UART_DR16, BSP_UART_RX_CPLT_CB,
                             DR16_RxCpltCallback, NULL);
 
   inited = true;
@@ -65,14 +65,14 @@ int8_t dr16_init(dr16_t *dr16) {
 }
 
 int8_t dr16_restart(void) {
-  __HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_DR16));
-  __HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_DR16));
+  __HAL_UART_DISABLE(bsp_uart_get_handle(BSP_UART_DR16));
+  __HAL_UART_ENABLE(bsp_uart_get_handle(BSP_UART_DR16));
   return DEVICE_OK;
 }
 
 int8_t dr16_start_dma_recv(dr16_t *dr16) {
   ASSERT(dr16);
-  if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_DR16),
+  if (HAL_UART_Receive_DMA(bsp_uart_get_handle(BSP_UART_DR16),
                            (uint8_t *)&(dr16->data),
                            sizeof(dr16->data)) == HAL_OK)
     return DEVICE_OK;

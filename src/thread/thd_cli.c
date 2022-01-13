@@ -663,39 +663,39 @@ void thd_cli(void *arg) {
   }
 
   /* 通过回车键唤醒命令行界面 */
-  BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
+  bsp_usb_printf("Please press ENTER to activate this console.\r\n");
   while (1) {
-    if (!BSP_USB_Connect() || !BSP_USB_Avail()) {
+    if (!bsp_usb_connect() || !bsp_usb_avail()) {
       vTaskDelay(1);
       continue;
     }
     /* 读取接收到的新字符 */
-    rx_char = BSP_USB_ReadChar();
+    rx_char = bsp_usb_read_char();
 
     /* 进行判断 */
     if (rx_char == '\n' || rx_char == '\r') {
-      BSP_USB_Printf("%c", rx_char);
+      bsp_usb_printf("%c", rx_char);
       break;
     }
   }
 
   /* 打印欢迎信息 */
-  BSP_USB_Printf(CLI_WELCOME_MESSAGE);
+  bsp_usb_printf(CLI_WELCOME_MESSAGE);
 
   /* 开始运行命令行界面 */
-  BSP_USB_Printf(CLI_START);
+  bsp_usb_printf(CLI_START);
   while (1) {
-    if (!BSP_USB_Avail()) {
+    if (!bsp_usb_avail()) {
       vTaskDelay(1);
       continue;
     }
     /* 读取接收到的新字符 */
-    rx_char = BSP_USB_ReadChar();
+    rx_char = bsp_usb_read_char();
 
     if (rx_char <= 126 && rx_char >= 32) {
       /* 如果字符是可显示字符，则直接显式，并存入输入缓存中 */
       if (index < MAX_INPUT_LENGTH) {
-        BSP_USB_Printf("%c", rx_char);
+        bsp_usb_printf("%c", rx_char);
         input[index] = rx_char;
         index++;
       }
@@ -703,7 +703,7 @@ void thd_cli(void *arg) {
       /* 如果字符是控制字符，则需要进一步判断 */
       if (rx_char == '\n' || rx_char == '\r') {
         /* 如果输入的是回车，则认为命令输入完毕，进行下一步的解析和运行命令 */
-        BSP_USB_Printf("\r\n");
+        bsp_usb_printf("\r\n");
         if (index > 0) {
           /* 只在输入缓存有内容时起效 */
           do {
@@ -711,17 +711,17 @@ void thd_cli(void *arg) {
             processing = FreeRTOS_CLIProcessCommand(
                 input, output, configCOMMAND_INT_MAX_OUTPUT_SIZE);
 
-            BSP_USB_Printf(output);               /* 打印结果 */
+            bsp_usb_printf(output);               /* 打印结果 */
             memset(output, 0x00, strlen(output)); /* 清空输出缓存 */
           } while (processing != pdFALSE); /* 是否需要重复运行命令 */
           index = 0; /* 重置索引，准备接收下一段命令 */
           memset(input, 0x00, strlen(input)); /* 清空输入缓存 */
         }
-        BSP_USB_Printf(CLI_START);
+        bsp_usb_printf(CLI_START);
       } else if (rx_char == '\b' || rx_char == 0x7Fu) {
         /* 如果输入的是退格键则清空一位输入缓存，同时进行界限保护 */
         if (index > 0) {
-          BSP_USB_Printf("%c", rx_char);
+          bsp_usb_printf("%c", rx_char);
           index--;
           input[index] = 0;
         }

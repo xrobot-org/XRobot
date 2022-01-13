@@ -2,7 +2,7 @@
 
 #include "hal_tim.h"
 
-int8_t BSP_PWM_Start(BSP_PWM_Channel_t ch) {
+int8_t bsp_pwm_start(bsp_pwm_channel_t ch) {
   switch (ch) {
     case BSP_PWM_IMU_HEAT:
       HAL_TIM_PWM_Start(&htim10, TIM_CHANNEL_1);
@@ -14,7 +14,7 @@ int8_t BSP_PWM_Start(BSP_PWM_Channel_t ch) {
   return BSP_OK;
 }
 
-int8_t BSP_PWM_Set(BSP_PWM_Channel_t ch, float duty_cycle) {
+int8_t bsp_pwm_set(bsp_pwm_channel_t ch, float duty_cycle) {
   if (duty_cycle > 1.0f) return BSP_ERR;
   if (duty_cycle < 0.0f) duty_cycle = 0.f;
 
@@ -40,12 +40,12 @@ int8_t BSP_PWM_Set(BSP_PWM_Channel_t ch, float duty_cycle) {
         break;
     }
   } else {
-    BSP_PWM_Stop(ch);
+    bsp_pwm_stop(ch);
   }
   return BSP_OK;
 }
 
-int8_t BSP_PWM_Stop(BSP_PWM_Channel_t ch) {
+int8_t bsp_pwm_stop(bsp_pwm_channel_t ch) {
   switch (ch) {
     case BSP_PWM_IMU_HEAT:
       HAL_TIM_PWM_Stop(&htim10, TIM_CHANNEL_1);

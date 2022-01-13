@@ -13,7 +13,7 @@ typedef enum {
   /* BSP_I2C_XXX,*/
   BSP_I2C_NUM,
   BSP_I2C_ERR,
-} BSP_I2C_t;
+} bsp_i2c_t;
 
 /* I2C支持的中断回调函数类型，具体参考HAL中定义 */
 typedef enum {
@@ -27,8 +27,8 @@ typedef enum {
   HAL_I2C_ERROR_CB,
   HAL_I2C_ABORT_CPLT_CB,
   BSP_I2C_CB_NUM,
-} BSP_I2C_Callback_t;
+} bsp_i2c_callback_t;
 
-I2C_HandleTypeDef *BSP_I2C_GetHandle(BSP_I2C_t i2c);
-int8_t BSP_I2C_RegisterCallback(BSP_I2C_t i2c, BSP_I2C_Callback_t type,
+I2C_HandleTypeDef *bsp_i2c_get_handle(bsp_i2c_t i2c);
+int8_t bsp_i2c_register_callback(bsp_i2c_t i2c, bsp_i2c_callback_t type,
                                 void (*callback)(void *),void *callback_arg);

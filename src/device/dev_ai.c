@@ -39,22 +39,22 @@ int8_t ai_init(ai_t *ai) {
 
   xSemaphoreGive(ai->sem.trans);
 
-  BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_RX_CPLT_CB,
+  bsp_uart_register_callback(BSP_UART_AI, BSP_UART_RX_CPLT_CB,
                             ia_rx_cplt_callback, ai);
-  BSP_UART_RegisterCallback(BSP_UART_AI, BSP_UART_TX_CPLT_CB,
+  bsp_uart_register_callback(BSP_UART_AI, BSP_UART_TX_CPLT_CB,
                             ia_tx_cplt_callback, ai);
   return DEVICE_OK;
 }
 
 int8_t ai_restart(void) {
-  __HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_AI));
-  __HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_AI));
+  __HAL_UART_DISABLE(bsp_uart_get_handle(BSP_UART_AI));
+  __HAL_UART_ENABLE(bsp_uart_get_handle(BSP_UART_AI));
   return DEVICE_OK;
 }
 
 bool ai_start_receiving(ai_t *ai) {
   RM_UNUSED(ai);
-  return HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_AI), rxbuf,
+  return HAL_UART_Receive_DMA(bsp_uart_get_handle(BSP_UART_AI), rxbuf,
                               AI_LEN_RX_BUFF) == HAL_OK;
 }
 
@@ -72,7 +72,7 @@ bool ai_start_trans(ai_t *ai) {
     src = &(ai->to_host.mcu);
   }
   ai->ref_updated = false;
-  return (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_AI), src, len) ==
+  return (HAL_UART_Transmit_DMA(bsp_uart_get_handle(BSP_UART_AI), src, len) ==
           HAL_OK);
 }
 

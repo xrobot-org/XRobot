@@ -3,7 +3,7 @@
 typedef struct {
   void (*fn)(void *);
   void *arg;
-} BSP_Callback_t;
+} bsp_callback_t;
 
 #define BSP_OK (0)
 #define BSP_ERR (-1)
@@ -11,4 +11,4 @@ typedef struct {
 #define BSP_ERR_INITED (-3)
 #define BSP_ERR_NO_DEV (-4)
 
-void BSP_Init(void);
+void bsp_init(void);

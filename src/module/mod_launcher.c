@@ -125,8 +125,8 @@ void launcher_init(launcher_t *l, const launcher_params_t *param,
   low_pass_filter_2p_init(&(l->filter.out.trig), target_freq,
                           param->low_pass_cutoff_freq.out.trig);
 
-  BSP_PWM_Start(BSP_PWM_LAUNCHER_SERVO);
-  BSP_PWM_Set(BSP_PWM_LAUNCHER_SERVO, param->cover_close_duty);
+  bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
+  bsp_pwm_set(BSP_PWM_LAUNCHER_SERVO, param->cover_close_duty);
 }
 
 /**
@@ -262,7 +262,7 @@ void launcher_control(launcher_t *l, cmd_launcher_t *l_cmd,
       for (size_t i = 0; i < LAUNCHER_ACTR_NUM; i++) {
         l->out[i] = 0.0f;
       }
-      BSP_PWM_Stop(BSP_PWM_LAUNCHER_SERVO);
+      bsp_pwm_stop(BSP_PWM_LAUNCHER_SERVO);
       break;
 
     case LAUNCHER_MODE_SAFE:
@@ -292,11 +292,11 @@ void launcher_control(launcher_t *l, cmd_launcher_t *l_cmd,
 
       /* 根据弹仓盖开关状态更新弹舱盖打开时舵机PWM占空比 */
       if (l_cmd->cover_open) {
-        BSP_PWM_Start(BSP_PWM_LAUNCHER_SERVO);
-        BSP_PWM_Set(BSP_PWM_LAUNCHER_SERVO, l->param->cover_open_duty);
+        bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
+        bsp_pwm_set(BSP_PWM_LAUNCHER_SERVO, l->param->cover_open_duty);
       } else {
-        BSP_PWM_Start(BSP_PWM_LAUNCHER_SERVO);
-        BSP_PWM_Set(BSP_PWM_LAUNCHER_SERVO, l->param->cover_close_duty);
+        bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
+        bsp_pwm_set(BSP_PWM_LAUNCHER_SERVO, l->param->cover_close_duty);
       }
       break;
   }
