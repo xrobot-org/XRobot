@@ -68,7 +68,7 @@ static void IST8310_MemRxCpltCallback(void *arg) {
   portYIELD_FROM_ISR(switch_required);
 }
 
-static void IST8310_IntCallback(void *arg) {
+static void IST8310_IntCallback(void) {
   BaseType_t switch_required;
   ist8310_t *ist8310 = arg;
   xSemaphoreGiveFromISR(ist8310->sem.new,&switch_required);

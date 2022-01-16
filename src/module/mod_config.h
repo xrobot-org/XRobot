@@ -26,6 +26,8 @@ typedef struct {
   chassis_params_t chassis;   /* 底盘 */
   gimbal_params_t gimbal;     /* 云台 */
   launcher_params_t launcher; /* 发射器 */
+  cap_param_t cap;
+  tof_param_t tof;
 } config_robot_param_t;
 
 /* 操作员配置 */

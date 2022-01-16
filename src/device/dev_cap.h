@@ -3,8 +3,10 @@
 #include <stdbool.h>
 
 #include "FreeRTOS.h"
+#include "bsp_can.h"
 #include "comp_type.h"
 #include "comp_ui.h"
+#include "dev_ca.h"
 #include "queue.h"
 
 typedef struct {
@@ -20,9 +22,17 @@ typedef struct {
 } cap_control_t;
 
 typedef struct {
+  BSP_CAN_t can;
+  cap_control_t pol;
+  uint32_t index;
+  uint32_t num;
+} cap_param_t;
+
+typedef struct {
   QueueHandle_t msgq_control;
   QueueHandle_t msgq_feedback;
-
+  cap_param_t param;
+  uint32_t *mailbox;
   cap_feedback_t feedback;
 } cap_t;
 
