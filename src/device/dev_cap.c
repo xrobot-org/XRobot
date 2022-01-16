@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "bsp_can.h"
 #include "comp_capacity.h"
 #include "comp_utils.h"
 
@@ -26,9 +25,19 @@ static void cap_decode(cap_feedback_t *fb, const uint8_t *raw) {
                                                  CAP_CUTOFF_VOLT);
 }
 
+void cap_rx_callback(uint32_t index, uint8_t *data, void *arg) {
+  cap_t *cap = (cap_t *)arg;
+  if (index == 0) {
+    xQueueSendToBack(cap->msgq_feedback, data, 0);
+  }
+}
+
 err_t cap_init(cap_t *cap) {
   cap->msgq_control = xQueueCreate(1, sizeof(BSP_CAN_RxItem_t));
   cap->msgq_feedback = xQueueCreate(1, sizeof(BSP_CAN_RxItem_t));
+
+  BSP_CAN_RegisterSubscriber(cap->param.can, cap->param.index, cap->param.num,
+                             cap_rx_callback, cap);
 
   if (cap->msgq_control && cap->msgq_feedback)
     return RM_OK;
@@ -38,10 +47,10 @@ err_t cap_init(cap_t *cap) {
 
 err_t cap_update(cap_t *cap, uint32_t timeout) {
   ASSERT(cap);
-  BSP_CAN_RxItem_t pack;
+  CAN_RawTx_t pack;
   while (pdPASS ==
          xQueueReceive(cap->msgq_feedback, &pack, pdMS_TO_TICKS(timeout))) {
-    if (pack.index == 0) {
+    if (pack.header.StdId == 0) {
       cap_decode(&(cap->feedback), pack.data);
     }
   }
@@ -54,18 +63,21 @@ err_t cap_control(cap_t *cap, cap_control_t *output) {
 
   uint16_t pwr_lim = (uint16_t)(output->power_limit * CAP_RES);
 
-  BSP_CAN_RxItem_t pack;
-  pack.id = CAP_CTRL_ID_BASE;
+  CAN_RawTx_t pack;
+  pack.header.StdId = CAP_CTRL_ID_BASE;
   pack.data[0] = (pwr_lim >> 8) & 0xFF;
   pack.data[1] = pwr_lim & 0xFF;
 
-  xQueueSendToBack(cap->msgq_control, &pack, 0);
+  can_trans_packet(cap->param.can, &pack, cap->mailbox);
   return RM_OK;
 }
 
 err_t cap_handle_offline(cap_t *cap) {
   ASSERT(cap);
-  // TODO
+  cap->feedback.cap_volt = 0;
+  cap->feedback.input_curr = 0;
+  cap->feedback.input_volt = 0;
+  cap->feedback.target_power = 0;
   return RM_OK;
 }
 

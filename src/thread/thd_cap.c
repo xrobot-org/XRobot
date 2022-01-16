@@ -19,6 +19,8 @@
 void thd_cap(void* arg) {
   RM_UNUSED(arg);
 
+  can_init();
+
   cap_t cap;
   cap_control_t cap_out;
   ui_cap_t cap_ui;

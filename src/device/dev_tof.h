@@ -3,9 +3,10 @@
 #include <stdbool.h>
 
 #include "FreeRTOS.h"
+#include "bsp_can.h"
 #include "comp_type.h"
+#include "dev_can.h"
 #include "queue.h"
-
 typedef struct {
   float dist;
   uint8_t status;
@@ -19,8 +20,15 @@ typedef enum {
 } tof_number_t;
 
 typedef struct {
-  QueueHandle_t msgq_feedback;
+  BSP_CAN_t can;
+  uint32_t index;
+  uint32_t num;
   tof_feedback_t feedback[TOF_SENSOR_NUMBER];
+} tof_param_t;
+
+typedef struct {
+  QueueHandle_t msgq_feedback;
+  tof_param_t param;
 } tof_t;
 
 err_t tof_init(tof_t *tof);

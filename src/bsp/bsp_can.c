@@ -102,7 +102,8 @@ int8_t BSP_CAN_RegisterCallback(BSP_CAN_t can, BSP_CAN_Callback_t type,
 
 int8_t BSP_CAN_RegisterSubscriber(BSP_CAN_t can, uint32_t index,
                                   uint32_t number,
-                                  void (*cb)(uint32_t, uint8_t *)) {
+                                  void (*cb)(uint32_t, uint8_t *, void *),
+                                  void *callback_arg) {
   ASSERT(cb);
 
   if (can_groups[can].suber_number >= CAN_MAX_SUBER_NUMBER) return BSP_ERR;
@@ -110,6 +111,8 @@ int8_t BSP_CAN_RegisterSubscriber(BSP_CAN_t can, uint32_t index,
   can_groups[can].suber[can_groups[can].suber_number].cb = cb;
   can_groups[can].suber[can_groups[can].suber_number].index = index;
   can_groups[can].suber[can_groups[can].suber_number].number = number;
+  can_groups[can].suber[can_groups[can].suber_number].callback_arg =
+      callback_arg;
   can_groups[can].suber_number++;
 
   return BSP_OK;
@@ -119,7 +122,8 @@ int8_t BSP_CAN_PublishData(BSP_CAN_t can, CAN_RawRx_t *raw) {
   for (int i = 0; i < can_groups[can].suber_number; i++) {
     uint32_t index = raw->header.StdId - can_groups[can].suber[i].index;
     if (index < can_groups[can].suber[i].number) {
-      can_groups[can].suber[i].cb(index, raw->data);
+      can_groups[can].suber[i].cb(index, raw->data,
+                                  can_groups[can].suber[i].callback_arg);
       return BSP_OK;
     }
   }
@@ -127,7 +131,7 @@ int8_t BSP_CAN_PublishData(BSP_CAN_t can, CAN_RawRx_t *raw) {
 }
 
 int8_t can_trans_packet(BSP_CAN_t can, CAN_RawTx_t *raw, uint32_t *mailbox) {
-  if (HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can), &raw->header, &raw->data,
+  if (HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can), &raw->header, raw->data,
                            mailbox) == HAL_OK)
     return BSP_OK;
   else

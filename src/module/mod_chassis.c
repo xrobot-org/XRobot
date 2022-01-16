@@ -316,6 +316,7 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
         c->out.motor.as_array[i] = 0;
         break;
       case CHASSIS_MODE_FREE:
+        break;
     }
     /* 输出滤波. */
     c->out.motor.as_array[i] =
