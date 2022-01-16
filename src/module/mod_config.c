@@ -177,7 +177,7 @@ static const config_robot_param_t param_default = {
 
   .cap = {
     .can = BSP_CAN_1,
-    .index = 0x210,
+    .index = 0x211,
     .num = 1,
     .pol = 0.0f,
   }
@@ -346,7 +346,7 @@ static const config_robot_param_t param_hero = {
 
   .cap = {
     .can = BSP_CAN_1,
-    .index = 0x210,
+    .index = 0x211,
     .num = 1,
     .pol = 0.0f,
   },/* cap */

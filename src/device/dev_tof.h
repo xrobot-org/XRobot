@@ -28,7 +28,7 @@ typedef struct {
 
 typedef struct {
   QueueHandle_t msgq_feedback;
-  tof_param_t param;
+  tof_param_t *param;
 } tof_t;
 
 err_t tof_init(tof_t *tof);

@@ -26,7 +26,7 @@ static void CAN_CAN2RxFifoMsgPendingCallback(void* arg) {
 }
 
 /* Exported functions ------------------------------------------------------- */
-int8_t can_init() {
+int8_t can_init(void) {
   if (inited) return DEVICE_ERR_INITED;
 
   CAN_FilterTypeDef can_filter = {0};

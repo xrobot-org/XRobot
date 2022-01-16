@@ -49,7 +49,6 @@ inline float abs_clampf(float x, float limit) {
  */
 inline void clampf(float *origin, float lo, float hi) {
   ASSERT(origin);
-  ASSERT(hi > lo);
   *origin = MIN(hi, MAX(*origin, lo));
 }
 
