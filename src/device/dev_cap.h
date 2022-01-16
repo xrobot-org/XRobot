@@ -31,12 +31,12 @@ typedef struct {
 typedef struct {
   QueueHandle_t msgq_control;
   QueueHandle_t msgq_feedback;
-  cap_param_t param;
-  uint32_t *mailbox;
+  const cap_param_t *param;
+  uint32_t mailbox;
   cap_feedback_t feedback;
 } cap_t;
 
-err_t cap_init(cap_t *cap);
+err_t cap_init(cap_t *cap, const cap_param_t *param);
 err_t cap_update(cap_t *cap, uint32_t timeout);
 err_t cap_control(cap_t *cap, cap_control_t *output);
 err_t cap_handle_offline(cap_t *cap);

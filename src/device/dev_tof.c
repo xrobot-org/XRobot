@@ -27,8 +27,8 @@ void tof_rx_callback(uint32_t index, uint8_t *data, void *arg) {
 
 err_t tof_init(tof_t *tof) {
   tof->msgq_feedback = xQueueCreate(1, sizeof(CAN_RawTx_t));
-  BSP_CAN_RegisterSubscriber(tof->param.can, tof->param.index, tof->param.num,
-                             tof_rx_callback, tof);
+  BSP_CAN_RegisterSubscriber(tof->param->can, tof->param->index,
+                             tof->param->num, tof_rx_callback, tof);
   if (tof->msgq_feedback)
     return RM_OK;
   else
