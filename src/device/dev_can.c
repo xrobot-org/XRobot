@@ -14,7 +14,7 @@ static void CAN_CAN1RxFifoMsgPendingCallback(void* arg) {
 
   HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_1), CAN_FILTER_FIFO0,
                        &raw_rx1.header, raw_rx1.data);
-  BSP_CAN_PublishData(BSP_CAN_1, &raw_rx1);
+  BSP_CAN_PublishData(BSP_CAN_1, raw_rx1.header.StdId, raw_rx1.data);
 }
 
 static void CAN_CAN2RxFifoMsgPendingCallback(void* arg) {
@@ -22,7 +22,7 @@ static void CAN_CAN2RxFifoMsgPendingCallback(void* arg) {
 
   HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_2), CAN_FILTER_FIFO1,
                        &raw_rx2.header, raw_rx2.data);
-  BSP_CAN_PublishData(BSP_CAN_2, &raw_rx2);
+  BSP_CAN_PublishData(BSP_CAN_2, raw_rx2.header.StdId, raw_rx2.data);
 }
 
 /* Exported functions ------------------------------------------------------- */
