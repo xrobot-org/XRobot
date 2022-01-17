@@ -155,23 +155,26 @@ static const config_robot_param_t param_default = {
   }, /* launcher */
 
   .motor = {
-    [MOTOR_GROUT_ID_CHASSIS] = {
+    [MOTOR_GROUP_ID_CHASSIS] = {
       .id_feedback = 0x201,
       .id_control = M3508_M2006_CTRL_ID_BASE,
       .model = {MOTOR_M3508, MOTOR_M3508, MOTOR_M3508, MOTOR_M3508},
       .num = 4,
+      .can = BSP_CAN_1,
     },
-    [MOTOR_GROUT_ID_GIMBAL] = {
+    [MOTOR_GROUP_ID_GIMBAL] = {
       .id_feedback = 0x205,
       .id_control = GM6020_CTRL_ID_EXTAND,
       .model = {MOTOR_M3508, MOTOR_M3508, MOTOR_M2006, MOTOR_NONE},
       .num = 2,
+      .can = BSP_CAN_2,
     },
-    [MOTOR_GROUT_ID_LAUNCHER] = {
+    [MOTOR_GROUP_ID_LAUNCHER] = {
       .id_feedback = 0x209,
       .id_control = M3508_M2006_CTRL_ID_EXTAND,
       .model = {MOTOR_GM6020, MOTOR_GM6020, MOTOR_NONE, MOTOR_NONE},
       .num = 3,
+      .can = BSP_CAN_2,
     },
   },
 
@@ -329,23 +332,26 @@ static const config_robot_param_t param_hero = {
   }, /* launcher */
 
   .motor = {
-    [MOTOR_GROUT_ID_CHASSIS] = {
+    [MOTOR_GROUP_ID_CHASSIS] = {
       .id_feedback = 0x201,
       .id_control = M3508_M2006_CTRL_ID_BASE,
       .model = {MOTOR_M3508, MOTOR_M3508, MOTOR_M3508, MOTOR_M3508},
       .num = 4,
+      .can = BSP_CAN_1,
     },
-    [MOTOR_GROUT_ID_GIMBAL] = {
+    [MOTOR_GROUP_ID_GIMBAL] = {
       .id_feedback = 0x205,
       .id_control = GM6020_CTRL_ID_EXTAND,
       .model = {MOTOR_M3508, MOTOR_M3508, MOTOR_M2006, MOTOR_NONE},
       .num = 2,
+      .can = BSP_CAN_2,
     },
-    [MOTOR_GROUT_ID_LAUNCHER] = {
+    [MOTOR_GROUP_ID_LAUNCHER] = {
       .id_feedback = 0x209,
       .id_control = M3508_M2006_CTRL_ID_EXTAND,
       .model = {MOTOR_GM6020, MOTOR_GM6020, MOTOR_NONE, MOTOR_NONE},
       .num = 3,
+      .can = BSP_CAN_2,
     },
   },
 
