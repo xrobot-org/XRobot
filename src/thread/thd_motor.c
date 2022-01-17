@@ -30,7 +30,7 @@ void thd_motor(void* arg) {
   publisher_t* gimbal_fb_pub =
       msg_dist_create_topic("gimbal_motor_fb", sizeof(motor_feedback_group_t));
   publisher_t* launcher_fb_pub =
-      msg_dist_create_topic("launcher_motor_fb", sizeof(motor_control_t));
+      msg_dist_create_topic("launcher_motor_fb", sizeof(motor_feedback_group_t));
 
   subscriber_t* chassis_out_sub = msg_dist_subscribe("chassis_out", true);
   subscriber_t* gimbal_out_sub = msg_dist_subscribe("gimbal_out", true);

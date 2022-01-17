@@ -81,7 +81,6 @@ typedef union {
   struct {
     motor_feedback_t yaw;
     motor_feedback_t pit;
-    motor_feedback_t rol;
   } as_gimbal;
 
   struct {

@@ -326,7 +326,6 @@ typedef struct {
 
   struct {
     uint8_t *data;
-    uint8_t *last_data;
     size_t size;
   } packet;
 

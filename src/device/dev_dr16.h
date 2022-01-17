@@ -21,7 +21,7 @@ typedef struct __packed {
 } dr16_data_t;
 
 typedef struct {
-  dr16_data_t data;
+  dr16_data_t *data;
 } dr16_t;
 
 int8_t dr16_init(dr16_t *dr16);

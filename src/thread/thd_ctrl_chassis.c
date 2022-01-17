@@ -42,7 +42,7 @@ void thd_ctrl_chassis(void* arg) {
       msg_dist_create_topic("chassis_ui", sizeof(ui_chassis_t));
 
   subscriber_t* ref_sub = msg_dist_subscribe("referee_chassis", true);
-  subscriber_t* cap_sub = msg_dist_subscribe("chassis_gyro", true);
+  subscriber_t* cap_sub = msg_dist_subscribe("cap_info", true);
   subscriber_t* chassis_motor_sub =
       msg_dist_subscribe("chassis_motor_fb", true);
   subscriber_t* gimbal_motor_sub = msg_dist_subscribe("gimbal_motor_fb", true);

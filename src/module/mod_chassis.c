@@ -225,10 +225,6 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
 
   /* 根据遥控器命令更改底盘模式 */
   Chassis_SetMode(c, c_cmd->mode, now);
-
-  if (c->num_wheel == 0 && c->param->reverse.chassis_motor) {
-    c->move_vec.vy = -c->move_vec.vy;
-  }
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
   /* 计算vx、vy */
   switch (c->mode) {
@@ -239,7 +235,7 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
 
     case CHASSIS_MODE_INDENPENDENT: /* 独立模式控制向量与运动向量相等 */
       c->move_vec.vx = c_cmd->ctrl_vec.vx;
-      c->move_vec.vy = c_cmd->ctrl_vec.vx;
+      c->move_vec.vy = c_cmd->ctrl_vec.vy;
       break;
 
     case CHASSIS_MODE_OPEN:
