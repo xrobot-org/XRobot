@@ -177,10 +177,15 @@ static const config_robot_param_t param_default = {
 
   .cap = {
     .can = BSP_CAN_1,
-    .index = 0x211,
-    .num = 1,
-    .pol = 0.0f,
-  }
+    .index = DEV_CAP_FB_ID_BASE,
+    .num = DEV_CAP_NUMBER,
+  },
+
+  .tof = {
+    .can = BSP_CAN_1,
+    .index = DEV_TOF_ID_BASE,
+    .num = DEV_TOF_SENSOR_NUMBER,
+  },
 }; /* param_default */
 
 static const config_robot_param_t param_hero = {
@@ -346,10 +351,15 @@ static const config_robot_param_t param_hero = {
 
   .cap = {
     .can = BSP_CAN_1,
-    .index = 0x211,
-    .num = 1,
-    .pol = 0.0f,
-  },/* cap */
+    .index = DEV_CAP_FB_ID_BASE,
+    .num = DEV_CAP_NUMBER,
+  },
+
+  .tof = {
+    .can = BSP_CAN_1,
+    .index = DEV_TOF_ID_BASE,
+    .num = DEV_TOF_SENSOR_NUMBER,
+  },
 }; /* param_hero */
 
 /* static const config_robot_param_t param_xxx; */

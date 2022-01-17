@@ -1,5 +1,7 @@
 #include "bsp_can.h"
 
+#include <string.h>
+
 #include "comp_utils.h"
 
 static CAN_Group_t can_groups[BSP_CAN_NUM];
@@ -102,7 +104,7 @@ int8_t BSP_CAN_RegisterCallback(BSP_CAN_t can, BSP_CAN_Callback_t type,
 
 int8_t BSP_CAN_RegisterSubscriber(BSP_CAN_t can, uint32_t index,
                                   uint32_t number,
-                                  void (*cb)(CAN_Raw_t, void *),
+                                  void (*cb)(can_rx_item_t *, void *),
                                   void *callback_arg) {
   ASSERT(cb);
 
@@ -118,12 +120,14 @@ int8_t BSP_CAN_RegisterSubscriber(BSP_CAN_t can, uint32_t index,
   return BSP_OK;
 }
 
-int8_t BSP_CAN_PublishData(BSP_CAN_t can, CAN_RawRx_t *raw) {
+int8_t BSP_CAN_PublishData(BSP_CAN_t can, uint32_t StdId, uint8_t *data) {
   for (int i = 0; i < can_groups[can].suber_number; i++) {
-    uint32_t index = raw->header.StdId - can_groups[can].suber[i].index;
+    uint32_t index = StdId - can_groups[can].suber[i].index;
     if (index < can_groups[can].suber[i].number) {
-      can_groups[can].suber[i].cb(index, raw->data,
-                                  can_groups[can].suber[i].callback_arg);
+      can_rx_item_t rx;
+      rx.index = index;
+      memcpy(rx.data, data, sizeof(rx.data));
+      can_groups[can].suber[i].cb(&rx, can_groups[can].suber[i].callback_arg);
       return BSP_OK;
     }
   }
@@ -132,14 +136,15 @@ int8_t BSP_CAN_PublishData(BSP_CAN_t can, CAN_RawRx_t *raw) {
 
 int8_t can_trans_packet(BSP_CAN_t can, uint32_t StdId, uint8_t *data,
                         uint32_t *mailbox) {
-  CAN_RawTx_t raw;
-  raw.header.StdId = StdId;
-  raw.header.IDE = CAN_ID_STD;
-  raw.header.RTR = CAN_RTR_DATA;
-  raw.header.DLC = 8;
+  CAN_TxHeaderTypeDef header;
+  header.StdId = StdId;
+  header.IDE = CAN_ID_STD;
+  header.RTR = CAN_RTR_DATA;
+  header.TransmitGlobalTime = DISABLE;
+  header.DLC = 8;
 
-  if (HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can), &raw.header, raw->data,
-                           mailbox) == HAL_OK)
+  if (HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can), &header, data, mailbox) ==
+      HAL_OK)
     return BSP_OK;
   else
     return BSP_ERR;

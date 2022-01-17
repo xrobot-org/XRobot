@@ -6,8 +6,15 @@
 #include "bsp_can.h"
 #include "comp_type.h"
 #include "comp_ui.h"
-#include "dev_ca.h"
 #include "queue.h"
+
+#define DEV_CAP_FB_ID_BASE (0x211)
+#define DEV_CAP_CTRL_ID_BASE (0x210)
+
+typedef enum {
+  DEV_CAP,
+  DEV_CAP_NUMBER
+} cap_number_t;
 
 typedef struct {
   float input_volt;
@@ -23,7 +30,6 @@ typedef struct {
 
 typedef struct {
   BSP_CAN_t can;
-  cap_control_t pol;
   uint32_t index;
   uint32_t num;
 } cap_param_t;

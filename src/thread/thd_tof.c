@@ -17,13 +17,13 @@
 #define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
 void thd_tof(void* arg) {
-  RM_UNUSED(arg);
+  runtime_t* runtime = arg;
 
   tof_t tof;
 
   publisher_t* tof_fb_pub = msg_dist_create_topic("tof_fb", sizeof(tof_t));
 
-  tof_init(&tof);
+  tof_init(&tof, &(runtime->cfg.robot_param->tof));
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 

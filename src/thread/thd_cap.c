@@ -9,6 +9,7 @@
  *
  */
 
+#include "dev_can.h"
 #include "dev_cap.h"
 #include "mid_msg_dist.h"
 #include "thd.h"
@@ -27,7 +28,6 @@ void thd_cap(void* arg) {
 
   publisher_t* ui_pub = msg_dist_create_topic("cap_ui", sizeof(ui_cap_t));
   publisher_t* info_pub = msg_dist_create_topic("cap_info", sizeof(cap_t));
-  msg_dist_create_topic("cap_out", sizeof(cap_control_t));
   subscriber_t* out_sub = msg_dist_subscribe("cap_out", sizeof(cap_control_t));
 
   cap_init(&cap, &(runtime->cfg.robot_param->cap));
