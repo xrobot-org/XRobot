@@ -17,7 +17,9 @@
 #define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
 void thd_cap(void* arg) {
-  RM_UNUSED(arg);
+  runtime_t* runtime = arg;
+
+  can_init();
 
   cap_t cap;
   cap_control_t cap_out;
@@ -25,10 +27,10 @@ void thd_cap(void* arg) {
 
   publisher_t* ui_pub = msg_dist_create_topic("cap_ui", sizeof(ui_cap_t));
   publisher_t* info_pub = msg_dist_create_topic("cap_info", sizeof(cap_t));
-
+  msg_dist_create_topic("cap_out", sizeof(cap_control_t));
   subscriber_t* out_sub = msg_dist_subscribe("cap_out", sizeof(cap_control_t));
 
-  cap_init(&cap);
+  cap_init(&cap, &(runtime->cfg.robot_param->cap));
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 

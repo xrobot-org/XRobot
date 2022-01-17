@@ -9,4 +9,4 @@
 #include "dev.h"
 #include "queue.h"
 
-int8_t can_init();
+int8_t can_init(void);

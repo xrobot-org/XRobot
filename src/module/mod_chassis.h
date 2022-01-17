@@ -18,6 +18,7 @@
 #include "dev_cap.h"
 #include "dev_motor.h"
 #include "dev_referee.h"
+#include "dev_tof.h"
 
 /* 底盘类型（底盘的物理设计） */
 typedef enum {
