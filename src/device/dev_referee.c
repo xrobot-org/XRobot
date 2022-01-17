@@ -666,9 +666,6 @@ int8_t referee_start_transmit(referee_t *ref) {
   }
   if (HAL_UART_Transmit_DMA(bsp_uart_get_handle(BSP_UART_REF), ref->packet.data,
                             (uint16_t)ref->packet.size) == HAL_OK) {
-    vPortFree(ref->packet.last_data);
-    ref->packet.last_data = ref->packet.data;
-    ref->packet.data = NULL;
     return DEVICE_OK;
   }
   return DEVICE_ERR;

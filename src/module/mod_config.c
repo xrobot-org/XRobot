@@ -23,7 +23,7 @@ static const config_robot_param_t param_default = {
     .type = CHASSIS_TYPE_MECANUM,
 
     .motor_pid_param = {
-      .k = 0.001f,
+      .k = 0.0001f,
       .p = 1.0f,
       .i = 0.0f,
       .d = 0.0f,
@@ -63,7 +63,7 @@ static const config_robot_param_t param_default = {
         .p = 1.f,
         .i = 3.f,
         .d = 0.f,
-        .i_limit = 0.8f,
+        .i_limit = 0.2f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
         .range = -1.0f,
@@ -162,18 +162,18 @@ static const config_robot_param_t param_default = {
       .num = 4,
       .can = BSP_CAN_1,
     },
-    [MOTOR_GROUP_ID_GIMBAL] = {
+    [MOTOR_GROUP_ID_LAUNCHER] = {
       .id_feedback = 0x205,
-      .id_control = GM6020_CTRL_ID_EXTAND,
+      .id_control = M3508_M2006_CTRL_ID_EXTAND,
       .model = {MOTOR_M3508, MOTOR_M3508, MOTOR_M2006, MOTOR_NONE},
-      .num = 2,
+      .num = 3,
       .can = BSP_CAN_2,
     },
-    [MOTOR_GROUP_ID_LAUNCHER] = {
+    [MOTOR_GROUP_ID_GIMBAL] = {
       .id_feedback = 0x209,
-      .id_control = M3508_M2006_CTRL_ID_EXTAND,
+      .id_control = GM6020_CTRL_ID_EXTAND,
       .model = {MOTOR_GM6020, MOTOR_GM6020, MOTOR_NONE, MOTOR_NONE},
-      .num = 3,
+      .num = 2,
       .can = BSP_CAN_2,
     },
   },
@@ -339,18 +339,18 @@ static const config_robot_param_t param_hero = {
       .num = 4,
       .can = BSP_CAN_1,
     },
-    [MOTOR_GROUP_ID_GIMBAL] = {
+    [MOTOR_GROUP_ID_LAUNCHER] = {
       .id_feedback = 0x205,
-      .id_control = GM6020_CTRL_ID_EXTAND,
+      .id_control = M3508_M2006_CTRL_ID_EXTAND,
       .model = {MOTOR_M3508, MOTOR_M3508, MOTOR_M2006, MOTOR_NONE},
-      .num = 2,
+      .num = 3,
       .can = BSP_CAN_2,
     },
-    [MOTOR_GROUP_ID_LAUNCHER] = {
+    [MOTOR_GROUP_ID_GIMBAL] = {
       .id_feedback = 0x209,
-      .id_control = M3508_M2006_CTRL_ID_EXTAND,
+      .id_control = GM6020_CTRL_ID_EXTAND,
       .model = {MOTOR_GM6020, MOTOR_GM6020, MOTOR_NONE, MOTOR_NONE},
-      .num = 3,
+      .num = 2,
       .can = BSP_CAN_2,
     },
   },

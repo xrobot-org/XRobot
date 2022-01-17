@@ -26,6 +26,7 @@
 #include "task.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+extern void BSP_UART_IRQHandler(UART_HandleTypeDef *huart);
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -82,14 +83,14 @@ void GetRegistersFromStack(uint32_t *pulFaultStackAddress) {
   away as the variables never actually get used.  If the debugger won't show the
   values of the variables, make them global my moving their declaration outside
   of this function. */
-  volatile uint32_t r0;
-  volatile uint32_t r1;
-  volatile uint32_t r2;
-  volatile uint32_t r3;
-  volatile uint32_t r12;
-  volatile uint32_t lr;  /* Link register. */
-  volatile uint32_t pc;  /* Program counter. */
-  volatile uint32_t psr; /* Program status register. */
+  volatile __attribute__((unused)) uint32_t r0;
+  volatile __attribute__((unused)) uint32_t r1;
+  volatile __attribute__((unused)) uint32_t r2;
+  volatile __attribute__((unused)) uint32_t r3;
+  volatile __attribute__((unused)) uint32_t r12;
+  volatile __attribute__((unused)) uint32_t lr;  /* Link register. */
+  volatile __attribute__((unused)) uint32_t pc;  /* Program counter. */
+  volatile __attribute__((unused)) uint32_t psr; /* Program status register. */
 
   r0 = pulFaultStackAddress[0];
   r1 = pulFaultStackAddress[1];

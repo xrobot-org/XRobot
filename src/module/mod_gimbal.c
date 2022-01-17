@@ -77,7 +77,7 @@ void gimbal_init(gimbal_t *g, const gimbal_params_t *param, float limit_max,
  * @param g 云台
  * @param can CAN设备
  */
-void gimbal_ppdate_feedback(gimbal_t *g,
+void gimbal_update_feedback(gimbal_t *g,
                             const motor_feedback_group_t *gimbal_motor) {
   ASSERT(g);
   ASSERT(gimbal_motor);

@@ -36,7 +36,7 @@ void thd_referee(void* arg) {
   publisher_t* referee_launcher_pub =
       msg_dist_create_topic("referee_launcher", sizeof(referee_for_launcher_t));
 
-  subscriber_t* ui_cap_sub = msg_dist_subscribe("ui_cap", true);
+  subscriber_t* ui_cap_sub = msg_dist_subscribe("cap_ui", true);
   subscriber_t* ui_chassis_sub = msg_dist_subscribe("chassis_ui", true);
   subscriber_t* ui_gimbal_sub = msg_dist_subscribe("gimbal_ui", true);
   subscriber_t* ui_launcher_sub = msg_dist_subscribe("launcher_ui", true);

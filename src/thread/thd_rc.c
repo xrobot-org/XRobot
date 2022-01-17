@@ -24,7 +24,7 @@ void thd_rc(void* arg) {
   dr16_t dr16;
   cmd_rc_t cmd_rc;
 
-  publisher_t* rc_pub = msg_dist_create_topic("rc_cmd", sizeof(cmd_rc_t));
+  publisher_t* rc_pub = msg_dist_create_topic("cmd_rc", sizeof(cmd_rc_t));
 
   dr16_init(&dr16); /* 初始化dr16 */
 

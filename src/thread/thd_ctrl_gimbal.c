@@ -48,7 +48,7 @@ void thd_ctrl_gimbal(void* arg) {
     msg_dist_poll(cmd_sub, &gimbal_cmd, 0);
 
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
-    gimbal_ppdate_feedback(&gimbal, &gimbal_motor);
+    gimbal_update_feedback(&gimbal, &gimbal_motor);
     gimbal_control(&gimbal, &gimbal_cmd, xTaskGetTickCount());
     gimbal_pack_output(&gimbal, &gimbal_out);
     gimbal_pack_ui(&gimbal, &gimbal_ui);

@@ -10,8 +10,11 @@
 
 #define AI_CMD_LIMIT (1.0f)
 #define AI_LEN_RX_BUFF (sizeof(Protocol_DownPackage_t))
+#define AI_LEN_TX_BUFF \
+  (sizeof(Protocol_UpPackageMCU_t) + sizeof(Protocol_UpPackageReferee_t))
 
 static uint8_t rxbuf[AI_LEN_RX_BUFF];
+static uint8_t txbuf[AI_LEN_TX_BUFF];
 
 static bool inited = false;
 
@@ -72,7 +75,9 @@ bool ai_start_trans(ai_t *ai) {
     src = &(ai->to_host.mcu);
   }
   ai->ref_updated = false;
-  return (HAL_UART_Transmit_DMA(bsp_uart_get_handle(BSP_UART_AI), src, len) ==
+
+  memcpy(txbuf, src, len);
+  return (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_AI), txbuf, len) ==
           HAL_OK);
 }
 

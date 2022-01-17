@@ -65,7 +65,7 @@ static err_t Motor_Decode(motor_feedback_t *fb, const uint8_t *raw) {
 static void motor_rx_callback(can_rx_item_t *rx, void *arg) {
   ASSERT(rx);
   ASSERT(arg);
-  QueueHandle_t msgq = (QueueHandle_t) arg;
+  QueueHandle_t msgq = (QueueHandle_t)arg;
 
   BaseType_t switch_required;
   xQueueSendToBackFromISR(msgq, rx, &switch_required);
@@ -115,7 +115,7 @@ err_t motor_control(motor_t *motor, motor_group_id_t group,
   can_rx_item_t pack = {0};
   int16_t data;
 
-  for (size_t i = 0; i < ARRAY_LEN(output->as_array); i++) {
+  for (size_t i = 0; i < motor->group_cfg[group].num; i++) {
     float lsb = Motor_ModelToLSB(motor->group_cfg[group].model[i]);
     data = (int16_t)(output->as_array[i] * lsb);
 
@@ -124,8 +124,9 @@ err_t motor_control(motor_t *motor, motor_group_id_t group,
   }
   pack.index = motor->group_cfg[group].id_control;
 
-  can_trans_packet(motor->group_cfg->can, motor->group_cfg->id_control,
-                   pack.data, &motor->mailbox);
+  can_trans_packet(motor->group_cfg[group].can,
+                   motor->group_cfg[group].id_control, pack.data,
+                   &motor->mailbox);
   return RM_OK;
 }
 

@@ -27,7 +27,8 @@ void thd_cap(void* arg) {
   ui_cap_t cap_ui;
 
   publisher_t* ui_pub = msg_dist_create_topic("cap_ui", sizeof(ui_cap_t));
-  publisher_t* info_pub = msg_dist_create_topic("cap_info", sizeof(cap_t));
+  publisher_t* info_pub =
+      msg_dist_create_topic("cap_info", sizeof(cap_feedback_t));
   subscriber_t* out_sub = msg_dist_subscribe("cap_out", sizeof(cap_control_t));
 
   cap_init(&cap, &(runtime->cfg.robot_param->cap));
@@ -42,7 +43,7 @@ void thd_cap(void* arg) {
     }
     cap_pack_ui(&cap, &cap_ui);
     msg_dist_publish(ui_pub, &ui_pub);
-    msg_dist_publish(info_pub, &cap);
+    msg_dist_publish(info_pub, &(cap.feedback));
 
     msg_dist_poll(out_sub, &cap_out, 0);
     cap_control(&cap, &cap_out);
