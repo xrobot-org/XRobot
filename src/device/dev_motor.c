@@ -3,7 +3,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "bsp_can.h"
 #include "comp_utils.h"
 
 /* 电机最大控制输出绝对值 */
@@ -63,6 +62,16 @@ static err_t Motor_Decode(motor_feedback_t *fb, const uint8_t *raw) {
   return RM_OK;
 }
 
+static void motor_rx_callback(can_rx_item_t *rx, void *arg) {
+  ASSERT(rx);
+  ASSERT(arg);
+  QueueHandle_t msgq = (QueueHandle_t) arg;
+
+  BaseType_t switch_required;
+  xQueueSendToBackFromISR(msgq, rx, &switch_required);
+  portYIELD_FROM_ISR(switch_required);
+}
+
 err_t motor_init(motor_t *motor, const motor_group_t *group_cfg) {
   ASSERT(motor);
   ASSERT(group_cfg);
@@ -70,9 +79,13 @@ err_t motor_init(motor_t *motor, const motor_group_t *group_cfg) {
   if (inited) return DEVICE_ERR_INITED;
   motor->group_cfg = group_cfg;
 
-  motor->msgq_rx = xQueueCreate(1, sizeof(can_rx_item_t));
-  motor->msgq_tx = xQueueCreate(1, sizeof(can_tx_item_t));
-  // can_register_rx_group();
+  const motor_group_t *group = motor->group_cfg;
+  for (int i = 0; i < MOTOR_GROUP_ID_NUM; i++) {
+    motor->msgq[i] = xQueueCreate(1, sizeof(can_rx_item_t));
+    BSP_CAN_RegisterSubscriber(group->can, group->id_feedback, group->num,
+                               motor_rx_callback, motor->msgq[i]);
+    group++;
+  }
 
   inited = true;
   return DEVICE_OK;
@@ -80,19 +93,17 @@ err_t motor_init(motor_t *motor, const motor_group_t *group_cfg) {
 
 err_t motor_update(motor_t *motor, uint32_t timeout) {
   can_rx_item_t pack;
-  while (pdPASS ==
-         xQueueReceive(motor->msgq_rx, &pack, pdMS_TO_TICKS(timeout))) {
-    for (size_t i = 0; i < MOTOR_GROUT_ID_NUM; i++) {
-      size_t index = pack.index - motor->group_cfg[i].id_feedback;
-      if ((index < motor->group_cfg[i].num) &&
-          (MOTOR_NONE != motor->group_cfg[i].model[index])) {
-        Motor_Decode(&(motor->feedback[i].as_array[index]), pack.data);
-        break;
-      } else {
-        return ERR_PARAM;
-      }
+
+  for (int i = 0; i < MOTOR_GROUP_ID_NUM; i++) {
+    while (pdPASS ==
+           xQueueReceive(motor->msgq[i], &pack, pdMS_TO_TICKS(timeout))) {
+      if ((pack.index < motor->group_cfg[i].num) &&
+          (MOTOR_NONE != motor->group_cfg[i].model[pack.index]))
+        Motor_Decode(&(motor->feedback[i].as_array[pack.index]), pack.data);
+      break;
     }
   }
+
   return RM_OK;
 }
 
@@ -113,11 +124,13 @@ err_t motor_control(motor_t *motor, motor_group_id_t group,
   }
   pack.index = motor->group_cfg[group].id_control;
 
-  xQueueSendToBack(motor->msgq_tx, &pack, 0);
+  can_trans_packet(motor->group_cfg->can, motor->group_cfg->id_control,
+                   pack.data, &motor->mailbox);
   return RM_OK;
 }
 
 err_t motor_handle_offline(motor_t *motor) {
   RM_UNUSED(motor);
+  memset(motor, 0, sizeof(motor));
   return RM_OK;
 }

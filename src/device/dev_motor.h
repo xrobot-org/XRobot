@@ -38,6 +38,7 @@ typedef struct {
   uint32_t id_control;
   motor_model_t model[4];
   uint8_t num;
+  BSP_CAN_t can;
 } motor_group_t;
 
 typedef union {
@@ -91,17 +92,16 @@ typedef union {
 } motor_feedback_group_t;
 
 typedef enum {
-  MOTOR_GROUT_ID_CHASSIS = 0,
-  MOTOR_GROUT_ID_GIMBAL,
-  MOTOR_GROUT_ID_LAUNCHER,
-  MOTOR_GROUT_ID_NUM,
+  MOTOR_GROUP_ID_CHASSIS = 0,
+  MOTOR_GROUP_ID_GIMBAL,
+  MOTOR_GROUP_ID_LAUNCHER,
+  MOTOR_GROUP_ID_NUM,
 } motor_group_id_t;
 
 typedef struct {
-  motor_feedback_group_t feedback[MOTOR_GROUT_ID_NUM];
-  QueueHandle_t msgq_tx;
-  QueueHandle_t msgq_rx;
-
+  motor_feedback_group_t feedback[MOTOR_GROUP_ID_NUM];
+  QueueHandle_t msgq[MOTOR_GROUP_ID_NUM];
+  uint32_t mailbox;
   const motor_group_t *group_cfg;
 } motor_t;
 

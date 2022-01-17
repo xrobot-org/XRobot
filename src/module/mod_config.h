@@ -21,7 +21,7 @@
 typedef struct {
   robot_model_t model; /* 型号 */
 
-  motor_group_t motor[MOTOR_GROUT_ID_NUM];
+  motor_group_t motor[MOTOR_GROUP_ID_NUM];
 
   chassis_params_t chassis;   /* 底盘 */
   gimbal_params_t gimbal;     /* 云台 */
