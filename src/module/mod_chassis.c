@@ -26,6 +26,7 @@
 
 #define ROTOR_WZ_MIN 0.6f   /* 小陀螺旋转位移下界 */
 #define ROTOR_WZ_MAX 0.8f   /* 小陀螺旋转位移上界 */
+
 #define ROTOR_OMEGA 0.0015f /* 小陀螺转动频率 */
 
 #define SCAN_VY_LENGTH_MIN 0.6f /* 哨兵返回时距离边界的最小值 */
