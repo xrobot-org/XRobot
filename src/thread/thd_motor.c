@@ -27,14 +27,21 @@ void thd_motor(void* arg) {
 
   publisher_t* chassis_fb_pub =
       msg_dist_create_topic("chassis_motor_fb", sizeof(motor_feedback_group_t));
-  publisher_t* gimbal_fb_pub =
-      msg_dist_create_topic("gimbal_motor_fb", sizeof(motor_feedback_group_t));
-  publisher_t* launcher_fb_pub =
-      msg_dist_create_topic("launcher_motor_fb", sizeof(motor_feedback_group_t));
+  publisher_t* gimbal_pit_fb_pub =
+      msg_dist_create_topic("gimbal_pit_motor_fb", sizeof(motor_feedback_group_t));
+  publisher_t* gimbal_yaw_fb_pub =
+      msg_dist_create_topic("gimbal_yaw_motor_fb", sizeof(motor_feedback_group_t));
+  publisher_t* launcher_fric_fb_pub =
+      msg_dist_create_topic("launcher_fric_motor_fb", sizeof(motor_feedback_group_t));
+  publisher_t* launcher_trig_fb_pub =
+      msg_dist_create_topic("launcher_trig_motor_fb", sizeof(motor_feedback_group_t));
 
   subscriber_t* chassis_out_sub = msg_dist_subscribe("chassis_out", true);
-  subscriber_t* gimbal_out_sub = msg_dist_subscribe("gimbal_out", true);
-  subscriber_t* launcher_out_sub = msg_dist_subscribe("launcher_out", true);
+  subscriber_t* gimbal_yaw_out_sub = msg_dist_subscribe("gimbal_yaw_out", true);
+  subscriber_t* gimbal_pit_out_sub = msg_dist_subscribe("gimbal_pit_out", true);
+  subscriber_t* launcher_fric_out_sub = msg_dist_subscribe("launcher_fric_out", true);
+  subscriber_t* launcher_trig_out_sub = msg_dist_subscribe("launcher_trig_out", true);
+
 
   motor_init(&motor, runtime->cfg.robot_param->motor);
 
@@ -48,19 +55,29 @@ void thd_motor(void* arg) {
     }
 
     msg_dist_publish(chassis_fb_pub, motor.feedback + MOTOR_GROUP_ID_CHASSIS);
-    msg_dist_publish(gimbal_fb_pub, motor.feedback + MOTOR_GROUP_ID_GIMBAL);
-    msg_dist_publish(launcher_fb_pub, motor.feedback + MOTOR_GROUP_ID_LAUNCHER);
+    msg_dist_publish(gimbal_yaw_fb_pub, motor.feedback + MOTOR_GROUP_ID_GIMBAL_YAW);
+    msg_dist_publish(gimbal_pit_fb_pub, motor.feedback + MOTOR_GROUP_ID_GIMBAL_PIT);
+    msg_dist_publish(launcher_fric_fb_pub, motor.feedback + MOTOR_GROUP_ID_LAUNCHER_FRIC);
+    msg_dist_publish(launcher_trig_fb_pub, motor.feedback + MOTOR_GROUP_ID_LAUNCHER_TRIG);
 
     if (msg_dist_poll(chassis_out_sub, &motor_out, 0)) {
       motor_control(&motor, MOTOR_GROUP_ID_CHASSIS, &motor_out);
     }
 
-    if (msg_dist_poll(gimbal_out_sub, &motor_out, 0)) {
-      motor_control(&motor, MOTOR_GROUP_ID_GIMBAL, &motor_out);
+    if (msg_dist_poll(gimbal_yaw_out_sub, &motor_out, 0)) {
+      motor_control(&motor, MOTOR_GROUP_ID_GIMBAL_YAW, &motor_out);
     }
 
-    if (msg_dist_poll(launcher_out_sub, &motor_out, 0)) {
-      motor_control(&motor, MOTOR_GROUP_ID_LAUNCHER, &motor_out);
+    if (msg_dist_poll(gimbal_pit_out_sub, &motor_out, 0)) {
+      motor_control(&motor, MOTOR_GROUP_ID_GIMBAL_PIT, &motor_out);
+    }
+
+    if (msg_dist_poll(launcher_fric_out_sub, &motor_out, 0)) {
+      motor_control(&motor, MOTOR_GROUP_ID_LAUNCHER_FRIC, &motor_out);
+    }
+
+    if (msg_dist_poll(launcher_trig_out_sub, &motor_out, 0)) {
+      motor_control(&motor, MOTOR_GROUP_ID_LAUNCHER_TRIG, &motor_out);
     }
 
     /* 运行结束，等待下一次唤醒 */
