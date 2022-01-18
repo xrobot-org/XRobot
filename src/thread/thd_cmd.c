@@ -39,8 +39,8 @@ void thd_cmd(void* arg) {
       msg_dist_create_topic("cmd_launcher", sizeof(cmd_launcher_t));
   publisher_t* ui_cmd_pub = msg_dist_create_topic("ui_cmd", sizeof(cmd_ui_t));
 
-  subscriber_t* rc_sub = msg_dist_subscribe("rc_cmd", true);
-  subscriber_t* host_sub = msg_dist_subscribe("rc_host", true);
+  subscriber_t* rc_sub = msg_dist_subscribe("cmd_rc", true);
+  subscriber_t* host_sub = msg_dist_subscribe("cmd_host", true);
 
   /* 初始化指令处理 */
   cmd_init(&cmd, &(runtime->cfg.pilot_cfg->param));

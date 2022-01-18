@@ -30,7 +30,7 @@ void thd_motor(void* arg) {
   publisher_t* gimbal_fb_pub =
       msg_dist_create_topic("gimbal_motor_fb", sizeof(motor_feedback_group_t));
   publisher_t* launcher_fb_pub =
-      msg_dist_create_topic("launcher_motor_fb", sizeof(motor_control_t));
+      msg_dist_create_topic("launcher_motor_fb", sizeof(motor_feedback_group_t));
 
   subscriber_t* chassis_out_sub = msg_dist_subscribe("chassis_out", true);
   subscriber_t* gimbal_out_sub = msg_dist_subscribe("gimbal_out", true);
@@ -47,21 +47,20 @@ void thd_motor(void* arg) {
       motor_handle_offline(&motor);
     }
 
-    msg_dist_publish(chassis_fb_pub, motor.feedback + MOTOR_GROUT_ID_CHASSIS);
-    msg_dist_publish(gimbal_fb_pub, motor.feedback + MOTOR_GROUT_ID_GIMBAL1);
-    msg_dist_publish(launcher_fb_pub,
-                     motor.feedback + MOTOR_GROUT_ID_LAUNCHER1);
+    msg_dist_publish(chassis_fb_pub, motor.feedback + MOTOR_GROUP_ID_CHASSIS);
+    msg_dist_publish(gimbal_fb_pub, motor.feedback + MOTOR_GROUP_ID_GIMBAL);
+    msg_dist_publish(launcher_fb_pub, motor.feedback + MOTOR_GROUP_ID_LAUNCHER);
 
     if (msg_dist_poll(chassis_out_sub, &motor_out, 0)) {
-      motor_control(&motor, MOTOR_GROUT_ID_CHASSIS, &motor_out);
+      motor_control(&motor, MOTOR_GROUP_ID_CHASSIS, &motor_out);
     }
 
     if (msg_dist_poll(gimbal_out_sub, &motor_out, 0)) {
-      motor_control(&motor, MOTOR_GROUT_ID_GIMBAL1, &motor_out);
+      motor_control(&motor, MOTOR_GROUP_ID_GIMBAL, &motor_out);
     }
 
     if (msg_dist_poll(launcher_out_sub, &motor_out, 0)) {
-      motor_control(&motor, MOTOR_GROUT_ID_LAUNCHER1, &motor_out);
+      motor_control(&motor, MOTOR_GROUP_ID_LAUNCHER, &motor_out);
     }
 
     /* 运行结束，等待下一次唤醒 */

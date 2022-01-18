@@ -44,9 +44,20 @@ typedef struct {
 } CAN_RawTx_t;
 
 typedef struct {
+  uint32_t can_id;
+  uint8_t data[CAN_DATA_SIZE];
+} can_tx_item_t;
+
+typedef struct {
+  uint32_t index;
+  uint8_t data[CAN_DATA_SIZE];
+} can_rx_item_t;
+
+typedef struct {
   uint32_t index;
   uint32_t number;
-  void (*cb)(uint32_t, uint8_t *);
+  void (*cb)(can_rx_item_t *, void *);
+  void *callback_arg;
 } CAN_Suber_t;
 
 typedef struct {
@@ -57,5 +68,10 @@ typedef struct {
 CAN_HandleTypeDef *BSP_CAN_GetHandle(BSP_CAN_t can);
 int8_t BSP_CAN_RegisterCallback(BSP_CAN_t can, BSP_CAN_Callback_t type,
                                 void (*callback)(void *), void *callback_arg);
-int8_t BSP_CAN_PublishData(BSP_CAN_t can, CAN_RawRx_t *raw);
-int8_t can_trans_packet(BSP_CAN_t can, CAN_RawTx_t *raw, uint32_t *mailbox);
+int8_t BSP_CAN_PublishData(BSP_CAN_t can, uint32_t StdId, uint8_t *data);
+int8_t BSP_CAN_RegisterSubscriber(BSP_CAN_t can, uint32_t index,
+                                  uint32_t number,
+                                  void (*cb)(can_rx_item_t *, void *),
+                                  void *callback_arg);
+int8_t can_trans_packet(BSP_CAN_t can, uint32_t StdId, uint8_t *data,
+                        uint32_t *mailbox);
