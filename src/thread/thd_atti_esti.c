@@ -28,7 +28,7 @@ void thd_atti_esti(void* arg) {
 
   publisher_t* gimbal_eulr_pub =
       msg_dist_create_topic("gimbal_eulr", sizeof(eulr_t));
-      publisher_t* gimbal_quat_pub =
+  publisher_t* gimbal_quat_pub =
       msg_dist_create_topic("gimbal_quat", sizeof(quaternion_t));
 
   subscriber_t* accl_sub = msg_dist_subscribe("gimbal_accl", true);
