@@ -20,7 +20,7 @@ typedef struct {
   uint32_t num_suber;
   uint32_t created_tick;
   uint32_t unexpected;
-} MsgDist_TopicMonitor_t;
+} msg_dist_topic_monitor_t;
 
 /* 话题 */
 typedef struct {
@@ -30,13 +30,13 @@ typedef struct {
   publisher_t puber;
   subscriber_t subers[MAX_SUBS_TO_ONE_TPIC];
 
-  MsgDist_TopicMonitor_t monitor;
-} MsgDist_Topic_t;
+  msg_dist_topic_monitor_t monitor;
+} msg_dist_topic_t;
 
 /* 消息分发 */
 static struct {
   QueueSetHandle_t topic_queue_set;
-  MsgDist_Topic_t topic_list[MAX_TOPIC];
+  msg_dist_topic_t topic_list[MAX_TOPIC];
   SemaphoreHandle_t topic_mutex;
   size_t topic_created;
 } md;
@@ -74,7 +74,7 @@ publisher_t *msg_dist_create_topic(const char *topic_name, size_t data_size) {
   }
 
   publisher_t *puber = NULL;
-  MsgDist_Topic_t *topic;
+  msg_dist_topic_t *topic;
 
   xSemaphoreTake(md.topic_mutex, portMAX_DELAY);
   if (md.topic_created < MAX_TOPIC) {
@@ -121,7 +121,7 @@ bool msg_dist_publish(publisher_t *publisher, void *data) {
   ASSERT(publisher);
   ASSERT(data);
 
-  MsgDist_Topic_t *topic = CONTAINER_OF(publisher, MsgDist_Topic_t, puber);
+  msg_dist_topic_t *topic = CONTAINER_OF(publisher, msg_dist_topic_t, puber);
 
   topic->monitor.num_pub++;
   return (xQueueOverwrite(publisher->data_queue, data) == pdPASS);
@@ -158,7 +158,7 @@ subscriber_t *msg_dist_subscribe(const char *topic_name, bool wait_topic) {
   ASSERT(topic_name);
   do {
     for (size_t i = 0; i < MAX_TOPIC; i++) {
-      MsgDist_Topic_t *topic = md.topic_list + i;
+      msg_dist_topic_t *topic = md.topic_list + i;
       if (strncmp(topic->name, topic_name, MAX_NAME_LEN) == 0) {
         for (size_t j = 0; j < MAX_SUBS_TO_ONE_TPIC; j++) {
           if (topic->subers[j].bin_sem == NULL) {
@@ -188,7 +188,7 @@ subscriber_t *msg_dist_subscribe(const char *topic_name, bool wait_topic) {
 bool msg_dist_poll(subscriber_t *subscriber, void *data, uint32_t timeout) {
   ASSERT(subscriber);
   ASSERT(data);
-  MsgDist_Topic_t *topic = subscriber->topic;
+  msg_dist_topic_t *topic = subscriber->topic;
 
   BaseType_t ret = pdFALSE;
   if (timeout) {
@@ -215,11 +215,11 @@ void msg_dist_distribute(void) {
       xQueueSelectFromSet(md.topic_queue_set, portMAX_DELAY);
 
   for (size_t i = 0; i < MAX_TOPIC; i++) {
-    MsgDist_Topic_t *topic = md.topic_list + i;
+    msg_dist_topic_t *topic = md.topic_list + i;
 
     /* 确认话题发布者 */
     if (topic->puber.data_queue == actived) {
-      MsgDist_TopicMonitor_t *monitor = &(topic->monitor);
+      msg_dist_topic_monitor_t *monitor = &(topic->monitor);
       BaseType_t ret;
 
       /* 接收发布者的数据 */

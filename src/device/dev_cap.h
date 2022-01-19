@@ -29,7 +29,7 @@ typedef struct {
 } cap_control_t;
 
 typedef struct {
-  BSP_CAN_t can;
+  bsp_can_t can;
   uint32_t index;
   uint32_t num;
 } cap_param_t;

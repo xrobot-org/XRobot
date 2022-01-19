@@ -40,7 +40,7 @@ err_t cap_init(cap_t *cap, const cap_param_t *param) {
 
   cap->param = param;
 
-  BSP_CAN_RegisterSubscriber(cap->param->can, cap->param->index,
+  bsp_can_register_subscriber(cap->param->can, cap->param->index,
                              cap->param->num, cap_rx_callback, cap);
 
   if (cap->msgq_control && cap->msgq_feedback)

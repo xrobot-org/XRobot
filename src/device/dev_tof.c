@@ -29,7 +29,7 @@ void tof_rx_callback(can_rx_item_t *rx, void *arg) {
 err_t tof_init(tof_t *tof, const tof_param_t *param) {
   tof->param = param;
   tof->msgq_feedback = xQueueCreate(1, sizeof(can_rx_item_t));
-  BSP_CAN_RegisterSubscriber(tof->param->can, tof->param->index,
+  bsp_can_register_subscriber(tof->param->can, tof->param->index,
                              tof->param->num, tof_rx_callback, tof);
   if (tof->msgq_feedback)
     return RM_OK;

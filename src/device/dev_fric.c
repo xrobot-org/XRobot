@@ -5,7 +5,7 @@
 
 int8_t fric_start(void) {
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  BSP_Delay(500);
+  bsp_delay(500);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   return 0;
 }

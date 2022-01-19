@@ -20,7 +20,7 @@ static bool inited = false;
 
 static dr16_data_t dma_buff;
 
-static void DR16_RxCpltCallback(void *arg) {
+static void dr16_rx_cplt_callback(void *arg) {
   UNUSED(arg);
   BaseType_t switch_required;
   xTaskNotifyFromISR(thread_alert, SIGNAL_DR16_RAW_REDY, eSetValueWithOverwrite,
@@ -28,7 +28,7 @@ static void DR16_RxCpltCallback(void *arg) {
   portYIELD_FROM_ISR(switch_required);
 }
 
-static bool DR16_DataCorrupted(const dr16_t *dr16) {
+static bool dr16_data_corrupted(const dr16_t *dr16) {
   ASSERT(dr16);
 
   if ((dr16->data->ch_r_x < DR16_CH_VALUE_MIN) ||
@@ -60,7 +60,7 @@ int8_t dr16_init(dr16_t *dr16) {
   VERIFY((thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
 
   bsp_uart_register_callback(BSP_UART_DR16, BSP_UART_RX_CPLT_CB,
-                            DR16_RxCpltCallback, NULL);
+                            dr16_rx_cplt_callback, NULL);
 
   inited = true;
   return DEVICE_OK;
@@ -74,7 +74,7 @@ int8_t dr16_restart(void) {
 
 int8_t dr16_start_dma_recv(dr16_t *dr16) {
   ASSERT(dr16);
-  if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_DR16),
+  if (HAL_UART_Receive_DMA(bsp_uart_get_handle(BSP_UART_DR16),
                            (uint8_t *)&(dma_buff), sizeof(dma_buff)) == HAL_OK)
     return DEVICE_OK;
   return DEVICE_ERR;
@@ -89,7 +89,7 @@ int8_t dr16_parse_rc(const dr16_t *dr16, cmd_rc_t *rc) {
   ASSERT(dr16);
   ASSERT(rc);
 
-  if (DR16_DataCorrupted(dr16)) {
+  if (dr16_data_corrupted(dr16)) {
     return DEVICE_ERR;
   } else {
     memset(rc, 0, sizeof(*rc));

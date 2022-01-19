@@ -38,7 +38,6 @@ typedef enum {
   CHASSIS_MODE_INDENPENDENT, /* 独立模式。底盘运行不受云台影响 */
   CHASSIS_MODE_OPEN, /* 开环模式。底盘运行不受PID控制，直接输出到电机 */
   CHASSIS_MODE_SCAN, /*哨兵未找到目标，底盘处于自由活动模式*/
-  CHASSIS_MODE_FREE,
 } chassis_mode_t;
 
 /* 小陀螺转动模式 */

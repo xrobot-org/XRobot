@@ -77,7 +77,7 @@ bool ai_start_trans(ai_t *ai) {
   ai->ref_updated = false;
 
   memcpy(txbuf, src, len);
-  return (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_AI), txbuf, len) ==
+  return (HAL_UART_Transmit_DMA(bsp_uart_get_handle(BSP_UART_AI), txbuf, len) ==
           HAL_OK);
 }
 

@@ -5,24 +5,24 @@
 
 #include "comp_utils.h"
 
-static CAN_RawRx_t raw_rx1, raw_rx2;
+static can_rawrx_t raw_rx1, raw_rx2;
 
 static bool inited = false;
 
-static void CAN_CAN1RxFifoMsgPendingCallback(void* arg) {
+static void can_can1_rx_fifo_msg_pending_callback(void* arg) {
   UNUSED(arg);
 
-  HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_1), CAN_FILTER_FIFO0,
+  HAL_CAN_GetRxMessage(bsp_can_get_handle(BSP_CAN_1), CAN_FILTER_FIFO0,
                        &raw_rx1.header, raw_rx1.data);
-  BSP_CAN_PublishData(BSP_CAN_1, raw_rx1.header.StdId, raw_rx1.data);
+  bsp_can_publish_data(BSP_CAN_1, raw_rx1.header.StdId, raw_rx1.data);
 }
 
-static void CAN_CAN2RxFifoMsgPendingCallback(void* arg) {
+static void can_can2_rx_fifo_msg_pending_callback(void* arg) {
   UNUSED(arg);
 
-  HAL_CAN_GetRxMessage(BSP_CAN_GetHandle(BSP_CAN_2), CAN_FILTER_FIFO1,
+  HAL_CAN_GetRxMessage(bsp_can_get_handle(BSP_CAN_2), CAN_FILTER_FIFO1,
                        &raw_rx2.header, raw_rx2.data);
-  BSP_CAN_PublishData(BSP_CAN_2, raw_rx2.header.StdId, raw_rx2.data);
+  bsp_can_publish_data(BSP_CAN_2, raw_rx2.header.StdId, raw_rx2.data);
 }
 
 /* Exported functions ------------------------------------------------------- */
@@ -42,21 +42,21 @@ int8_t can_init(void) {
   can_filter.SlaveStartFilterBank = 14;
   can_filter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
 
-  HAL_CAN_ConfigFilter(BSP_CAN_GetHandle(BSP_CAN_1), &can_filter);
-  HAL_CAN_Start(BSP_CAN_GetHandle(BSP_CAN_1));
-  BSP_CAN_RegisterCallback(BSP_CAN_1, HAL_CAN_RX_FIFO0_MSG_PENDING_CB,
-                           CAN_CAN1RxFifoMsgPendingCallback, NULL);
-  HAL_CAN_ActivateNotification(BSP_CAN_GetHandle(BSP_CAN_1),
+  HAL_CAN_ConfigFilter(bsp_can_get_handle(BSP_CAN_1), &can_filter);
+  HAL_CAN_Start(bsp_can_get_handle(BSP_CAN_1));
+  bsp_can_register_callback(BSP_CAN_1, HAL_CAN_RX_FIFO0_MSG_PENDING_CB,
+                           can_can1_rx_fifo_msg_pending_callback, NULL);
+  HAL_CAN_ActivateNotification(bsp_can_get_handle(BSP_CAN_1),
                                CAN_IT_RX_FIFO0_MSG_PENDING);
 
   can_filter.FilterBank = 14;
   can_filter.FilterFIFOAssignment = CAN_FILTER_FIFO1;
 
-  HAL_CAN_ConfigFilter(BSP_CAN_GetHandle(BSP_CAN_2), &can_filter);
-  HAL_CAN_Start(BSP_CAN_GetHandle(BSP_CAN_2));
-  BSP_CAN_RegisterCallback(BSP_CAN_2, HAL_CAN_RX_FIFO1_MSG_PENDING_CB,
-                           CAN_CAN2RxFifoMsgPendingCallback, NULL);
-  HAL_CAN_ActivateNotification(BSP_CAN_GetHandle(BSP_CAN_2),
+  HAL_CAN_ConfigFilter(bsp_can_get_handle(BSP_CAN_2), &can_filter);
+  HAL_CAN_Start(bsp_can_get_handle(BSP_CAN_2));
+  bsp_can_register_callback(BSP_CAN_2, HAL_CAN_RX_FIFO1_MSG_PENDING_CB,
+                           can_can2_rx_fifo_msg_pending_callback, NULL);
+  HAL_CAN_ActivateNotification(bsp_can_get_handle(BSP_CAN_2),
                                CAN_IT_RX_FIFO1_MSG_PENDING);
 
   inited = true;

@@ -22,7 +22,7 @@
  * @param l 包含发射器数据的结构体
  * @param mode 要设置的模式
  */
-static void Launcher_SetMode(launcher_t *l, launcher_mode_t mode) {
+static void launcher_set_mode(launcher_t *l, launcher_mode_t mode) {
   ASSERT(l);
 
   if (mode == l->mode) return;
@@ -56,7 +56,7 @@ static void Launcher_SetMode(launcher_t *l, launcher_mode_t mode) {
  * @param l 包含发射器数据的结构体
  * @param l_ref 发射器所需裁判系统数据
  */
-static void Launcher_HeatLimit(launcher_t *l, referee_for_launcher_t *l_ref) {
+static void launcher_heat_limit(launcher_t *l, referee_for_launcher_t *l_ref) {
   ASSERT(l);
   ASSERT(l_ref);
   launcher_heat_ctrl_t *hc = &(l->heat_ctrl);
@@ -172,8 +172,8 @@ void launcher_control(launcher_t *l, cmd_launcher_t *l_cmd,
   l->dt = (float)(now - l->lask_wakeup) / 1000.0f;
   l->lask_wakeup = now;
 
-  Launcher_SetMode(l, l_cmd->mode); /* 设置发射器模式 */
-  Launcher_HeatLimit(l, l_ref);     /* 热量控制 */
+  launcher_set_mode(l, l_cmd->mode); /* 设置发射器模式 */
+  launcher_heat_limit(l, l_ref);     /* 热量控制 */
 
   /* 根据开火模式计算发射行为 */
   l->fire_ctrl.fire_mode = l_cmd->fire_mode;

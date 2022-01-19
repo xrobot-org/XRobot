@@ -38,7 +38,7 @@ typedef struct {
   uint32_t id_control;
   motor_model_t model[4];
   uint8_t num;
-  BSP_CAN_t can;
+  bsp_can_t can;
 } motor_group_t;
 
 typedef union {
