@@ -197,7 +197,7 @@ void chassis_update_feedback(chassis_t *c,
 
   /* 如果yaw云台电机反装重新计算正确的反馈值 */
   c->feedback.gimbal_yaw_encoder_angle =
-      gimbal_motor->as_gimbal.yaw.rotor_abs_angle;
+      gimbal_motor->as_gimbal_yaw.yaw.rotor_abs_angle;
   if (c->param->reverse.yaw)
     circle_reverse(&(c->feedback.gimbal_yaw_encoder_angle));
 

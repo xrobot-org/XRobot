@@ -14,6 +14,7 @@
 /* 1-4    0x205 to 0x208  0x1ff */
 /* 5-6    0x209 to 0x20B  0x2ff */
 #define GM6020_FB_ID_BASE (0x205)
+#define GM6020_FB_ID_EXTAND (0x209)
 #define GM6020_CTRL_ID_BASE (0x1ff)
 #define GM6020_CTRL_ID_EXTAND (0x2ff)
 
@@ -21,6 +22,7 @@
 /* 1-4		0x201 to 0x204  0x200 */
 /* 5-6		0x205 to 0x208  0x1ff */
 #define M3508_M2006_FB_ID_BASE (0x201)
+#define M3508_M2006_FB_ID_EXTAND (0x205)
 #define M3508_M2006_CTRL_ID_BASE (0x200)
 #define M3508_M2006_CTRL_ID_EXTAND (0x1ff)
 #define M3508_M2006_ID_SETTING_ID (0x700)
@@ -51,13 +53,22 @@ typedef union {
     float m4;
   } as_chassis;
 
-  eulr_t as_gimbal;
+  struct {
+    float yaw;
+  } as_gimbal_yaw;
+
+  struct {
+    float pit;
+  } as_gimbal_pit;
 
   struct {
     float fric_left;
     float fric_right;
+  } as_launcher_fric;
+
+  struct {
     float trig;
-  } as_launcher;
+  } as_launcher_trig;
 } motor_control_t;
 
 /* 电机反馈信息 */
@@ -80,14 +91,20 @@ typedef union {
 
   struct {
     motor_feedback_t yaw;
+  } as_gimbal_yaw;
+
+  struct {
     motor_feedback_t pit;
-  } as_gimbal;
+  } as_gimbal_pit;
 
   struct {
     motor_feedback_t fric_left;
     motor_feedback_t fric_right;
+  } as_launcher_fric;
+
+  struct {
     motor_feedback_t trig;
-  } as_launcher;
+  } as_launcher_trig;
 } motor_feedback_group_t;
 
 typedef enum {
@@ -108,6 +125,7 @@ typedef struct {
 
 err_t motor_init(motor_t *motor, const motor_group_t *group_cfg);
 err_t motor_update(motor_t *motor, uint32_t timeout);
-err_t motor_control(motor_t *motor, motor_group_id_t group,
-                    motor_control_t *output);
+err_t motor_pack_data(motor_t *motor, motor_group_id_t group,
+                      motor_control_t *output);
+err_t motor_control(motor_t *motor);
 err_t motor_handle_offline(motor_t *motor);

@@ -396,6 +396,197 @@ static const config_robot_param_t param_hero = {
   },
 }; /* param_hero */
 
+config_robot_param_t param_sentry = {
+  .model = ROBOT_MODEL_SENTRY,
+
+  .chassis = { /* 底盘模块参数 */
+    .type = CHASSIS_TYPE_SINGLE,
+
+    .motor_pid_param = {
+      .k = 0.00001f,
+      .p = 1.0f,
+      .i = 0.001f,
+      .d = 0.0f,
+      .i_limit = 1.0f,
+      .out_limit = 1.0f,
+      .d_cutoff_freq = -1.0f,
+      .range = -1.0f,
+    },
+
+    .follow_pid_param = {
+      .k = 0.5f,
+      .p = 1.0f,
+      .i = 0.0f,
+      .d = 0.0f,
+      .i_limit = 1.0f,
+      .out_limit = 1.0f,
+      .d_cutoff_freq = -1.0f,
+      .range = M_2PI,
+    },
+
+    .low_pass_cutoff_freq = {
+      .in = -1.0f,
+      .out = -1.0f,
+    },
+
+    .reverse = {
+      .yaw = true,
+    },
+  }, /* chassis */
+
+  .gimbal = { /* 云台模块参数 */
+    .pid = {
+      {
+        /* GIMBAL_CTRL_YAW_OMEGA_IDX */
+        .k = 0.005f,
+        .p = 1.0f,
+        .i = 0.002f,
+        .d = 0.0f,
+        .i_limit = 1.0f,
+        .out_limit = 1.0f,
+        .d_cutoff_freq = -1.0f,
+        .range = -1.0f,
+      }, {
+        /* GIMBAL_CTRL_YAW_ANGLE_IDX */
+        .k = 20.0f,
+        .p = 1.0f,
+        .i = 0.0f,
+        .d = 0.0f,
+        .i_limit = 0.0f,
+        .out_limit = 10.0f,
+        .d_cutoff_freq = -1.0f,
+        .range = M_2PI,
+      }, {
+        /* GIMBAL_CTRL_PIT_OMEGA_IDX */
+        .k = 0.051f,
+        .p = 1.0f,
+        .i = 0.0f,
+        .d = 0.0f,
+        .i_limit = 1.0f,
+        .out_limit = 1.0f,
+        .d_cutoff_freq = -1.0f,
+        .range = -1.0f,
+      }, {
+        /* GIMBAL_CTRL_PIT_ANGLE_IDX */
+        .k = 20.0f,
+        .p = 1.0f,
+        .i = 0.0f,
+        .d = 0.0f,
+        .i_limit = 0.0f,
+        .out_limit = 10.0f,
+        .d_cutoff_freq = -1.0f,
+        .range = M_2PI,
+      },
+    }, /* pid */
+
+    .pitch_travel_rad = 0.48f,
+
+    .low_pass_cutoff_freq = {
+      .out = -1.0f,
+      .gyro = 1000.0f,
+    },
+
+    .reverse = {
+      .yaw = true,
+      .pit = true,
+    },
+  }, /* gimbal */
+
+  .launcher = { /* 发射器模块参数 */
+
+    .fric_pid_param = {
+      .k = 0.0001f,
+      .p = 1.0f,
+      .i = 0.2f,
+      .d = 0.01f,
+      .i_limit = 0.5f,
+      .out_limit = 0.5f,
+      .d_cutoff_freq = -1.0f,
+    },
+
+    .trig_pid_param = {
+      .k = 0.5f,
+      .p = 1.0f,
+      .i = 0.0f,
+      .d = 0.032f,
+      .i_limit = 1.0f,
+      .out_limit = 1.0f,
+      .d_cutoff_freq = -1.0f,
+      .range = M_2PI,
+    },
+
+    .low_pass_cutoff_freq = {
+      .in = {
+        .fric = -1.0f,
+        .trig = -1.0f,
+      },
+      .out = {
+        .fric = -1.0f,
+        .trig = -1.0f,
+      },
+    },
+
+    .num_trig_tooth = 6.0f,
+    .trig_gear_ratio = 3591.0f / 187.0f,
+    .fric_radius = 0.03f,
+    .cover_open_duty = 0.125f,
+    .cover_close_duty = 0.075f,
+    .model = LAUNCHER_MODEL_17MM,
+    .default_bullet_speed = 16.0f,
+    .min_launch_delay = (uint32_t)(1000.0f / 20.0f),
+  }, /* launcher */
+
+  .motor = {
+    [MOTOR_GROUP_ID_CHASSIS] = {
+      .id_feedback = 0x201,
+      .id_control = M3508_M2006_CTRL_ID_BASE,
+      .model = {MOTOR_M3508, MOTOR_NONE, MOTOR_NONE, MOTOR_NONE},
+      .num = 1,
+      .can = BSP_CAN_1,
+    },
+    [MOTOR_GROUP_ID_LAUNCHER_FRIC] = {
+      .id_feedback = 0x205,
+      .id_control = M3508_M2006_CTRL_ID_EXTAND,
+      .model = {MOTOR_M3508, MOTOR_M3508, MOTOR_NONE, MOTOR_NONE},
+      .num = 2,
+      .can = BSP_CAN_2,
+    },
+    [MOTOR_GROUP_ID_LAUNCHER_TRIG] = {
+      .id_feedback = 0x202,
+      .id_control = M3508_M2006_CTRL_ID_BASE,
+      .model = {MOTOR_M2006, MOTOR_NONE, MOTOR_NONE, MOTOR_NONE},
+      .num = 1,
+      .can = BSP_CAN_1,
+    },
+    [MOTOR_GROUP_ID_GIMBAL_YAW] = {
+      .id_feedback = 0x209,
+      .id_control = GM6020_CTRL_ID_EXTAND,
+      .model = {MOTOR_GM6020, MOTOR_NONE, MOTOR_NONE, MOTOR_NONE},
+      .num = 1,
+      .can = BSP_CAN_1,
+    },
+    [MOTOR_GROUP_ID_GIMBAL_PIT] = {
+      .id_feedback = 0x20A,
+      .id_control = GM6020_CTRL_ID_EXTAND,
+      .model = {MOTOR_GM6020, MOTOR_NONE, MOTOR_NONE, MOTOR_NONE},
+      .num = 1,
+      .can = BSP_CAN_2,
+    },
+  },
+
+  .cap = {
+    .can = BSP_CAN_1,
+    .index = DEV_CAP_FB_ID_BASE,
+    .num = DEV_CAP_NUMBER,
+  },
+
+  .tof = {
+    .can = BSP_CAN_1,
+    .index = DEV_TOF_ID_BASE,
+    .num = DEV_TOF_SENSOR_NUMBER,
+  },
+}; /* param_sentry */
+
 /* static const config_robot_param_t param_xxx; */
 
 static const config_pilot_cfg_t cfg_qs = {
@@ -464,9 +655,9 @@ static const config_robot_param_map_t robot_param_map[] = {
     {"default", &param_default},
     {"infantry", &param_default},
     {"hero", &param_hero},
+    {"sentry", &param_sentry},
     // {"engineer", &param_engineer},
     // {"drone", &param_drone},
-    // {"sentry", &param_sentry},
     /* {"xxx", &param_xxx}, */
     {NULL, NULL},
 };

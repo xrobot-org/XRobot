@@ -28,15 +28,17 @@ void thd_ctrl_launcher(void* arg) {
   motor_control_t launcher_trig_out;
   ui_launcher_t launcher_ui;
 
-  publisher_t* out_pub =
+  publisher_t* out_pub_fric =
       msg_dist_create_topic("launcher_fric_out", sizeof(motor_control_t));
-  publisher_t* out_pub =
+  publisher_t* out_pub_trig =
       msg_dist_create_topic("launcher_trig_out", sizeof(motor_control_t));
   publisher_t* ui_pub =
       msg_dist_create_topic("launcher_ui", sizeof(ui_gimbal_t));
 
-  subscriber_t* motor_fric_sub = msg_dist_subscribe("launcher_fric_motor_fb", true);
-  subscriber_t* motor_trig_sub = msg_dist_subscribe("launcher_trig_motor_fb", true);
+  subscriber_t* motor_fric_sub =
+      msg_dist_subscribe("launcher_fric_motor_fb", true);
+  subscriber_t* motor_trig_sub =
+      msg_dist_subscribe("launcher_trig_motor_fb", true);
   subscriber_t* ref_sub = msg_dist_subscribe("referee_launcher", true);
   subscriber_t* cmd_sub = msg_dist_subscribe("cmd_launcher", true);
 
@@ -54,17 +56,16 @@ void thd_ctrl_launcher(void* arg) {
     msg_dist_poll(cmd_sub, &launcher_cmd, 0);
 
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
-    launcher_update_feedback(&launcher, &launcher_fric_motor_fb);
-    launcher_update_feedback(&launcher, &launcher_trig_motor_fb);
+    launcher_update_feedback(&launcher, &launcher_trig_motor_fb,
+                             &launcher_fric_motor_fb);
     launcher_control(&launcher, &launcher_cmd, &referee_launcher,
                      xTaskGetTickCount());
-    launcher_pack_output(&launcher, &launcher_fric_out);
-    launcher_pack_output(&launcher, &launcher_trig_out);
+    launcher_pack_output(&launcher, &launcher_trig_out, &launcher_fric_out);
     launcher_pack_ui(&launcher, &launcher_ui);
     xTaskResumeAll();
 
-    msg_dist_publish(out_pub, &launcher_fric_out);
-    msg_dist_publish(out_pub, &launcher_trig_out);
+    msg_dist_publish(out_pub_fric, &launcher_fric_out);
+    msg_dist_publish(out_pub_trig, &launcher_trig_out);
     msg_dist_publish(ui_pub, &launcher_ui);
 
     /* 运行结束，等待下一次唤醒 */

@@ -112,7 +112,8 @@ void gimbal_init(gimbal_t *g, const gimbal_params_t *param, float limit,
  * @param can CAN设备
  */
 void gimbal_update_feedback(gimbal_t *g,
-                            const motor_feedback_group_t *gimbal_motor);
+                            const motor_feedback_group_t *gimbal_motor_yaw,
+                            const motor_feedback_group_t *gimbal_motor_pit);
 
 /**
  * @brief 运行云台控制逻辑
@@ -130,7 +131,8 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now);
  * @param g 包含云台数据的结构体
  * @param out CAN设备云台输出结构体
  */
-void gimbal_pack_output(gimbal_t *g, motor_control_t *out);
+void gimbal_pack_output(gimbal_t *g, motor_control_t *pit_out,
+                        motor_control_t *yaw_out);
 
 /**
  * @brief 导出云台UI数据
