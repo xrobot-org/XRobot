@@ -67,11 +67,11 @@ typedef struct {
 
 CAN_HandleTypeDef *bsp_can_get_handle(bsp_can_t can);
 int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
-                                void (*callback)(void *), void *callback_arg);
+                                 void (*callback)(void *), void *callback_arg);
 int8_t bsp_can_publish_data(bsp_can_t can, uint32_t StdId, uint8_t *data);
 int8_t bsp_can_register_subscriber(bsp_can_t can, uint32_t index,
-                                  uint32_t number,
-                                  void (*cb)(can_rx_item_t *, void *),
-                                  void *callback_arg);
+                                   uint32_t number,
+                                   void (*cb)(can_rx_item_t *, void *),
+                                   void *callback_arg);
 int8_t can_trans_packet(bsp_can_t can, uint32_t StdId, uint8_t *data,
                         uint32_t *mailbox);

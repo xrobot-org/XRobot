@@ -64,14 +64,14 @@ static void ist8310_read(uint8_t reg, uint8_t *data, uint8_t len) {
 static void ist8310_mem_rx_cplt_callback(void *arg) {
   BaseType_t switch_required;
   ist8310_t *ist8310 = arg;
-  xSemaphoreGiveFromISR(ist8310->sem.recv,&switch_required);
+  xSemaphoreGiveFromISR(ist8310->sem.recv, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
 static void ist8310_int_callback(void *arg) {
   BaseType_t switch_required;
   ist8310_t *ist8310 = arg;
-  xSemaphoreGiveFromISR(ist8310->sem.new,&switch_required);
+  xSemaphoreGiveFromISR(ist8310->sem.new, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
@@ -94,7 +94,7 @@ int8_t ist8310_init(ist8310_t *ist8310, const ist8310_cali_t *cali) {
   bsp_gpio_disable_irq(CMPS_INT_Pin);
 
   bsp_i2c_register_callback(BSP_I2C_COMP, HAL_I2C_MEM_RX_CPLT_CB,
-                           ist8310_mem_rx_cplt_callback, ist8310);
+                            ist8310_mem_rx_cplt_callback, ist8310);
   bsp_gpio_register_callback(CMPS_INT_Pin, ist8310_int_callback, ist8310);
 
   /* Init. */
@@ -114,7 +114,7 @@ int8_t ist8310_init(ist8310_t *ist8310, const ist8310_cali_t *cali) {
   return DEVICE_OK;
 }
 
-bool ist8310_wait_new(ist8310_t *ist8310,uint32_t timeout) {
+bool ist8310_wait_new(ist8310_t *ist8310, uint32_t timeout) {
   return xSemaphoreTake(ist8310->sem.new, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 

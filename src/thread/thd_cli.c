@@ -32,7 +32,8 @@ typedef struct {
 static runtime_t *runtime;
 
 static subscriber_t *gyro_sub;
-static subscriber_t *gimbal_motor_sub;
+static subscriber_t *gimbal_motor_yaw_sub;
+static subscriber_t *gimbal_motor_pit_sub;
 
 static const char *const CLI_WELCOME_MESSAGE =
     "\r\n"
@@ -486,13 +487,18 @@ static BaseType_t command_set_mech_zero(char *out_buffer, size_t len,
       /* 获取到云台数据，用can上的新的云台机械零点的位置替代旧的位置 */
       config_get(&cfg);
 
-      if (!msg_dist_poll(gimbal_motor_sub, &motor_fb, 5)) {
+      if (!msg_dist_poll(gimbal_motor_yaw_sub, &motor_fb, 5)) {
         snprintf(out_buffer, len, "Can not get gimbal data.\r\n");
         fsm.stage = 2;
         return pdPASS;
       }
-      cfg.gimbal_mech_zero.yaw = motor_fb.as_gimbal.yaw.rotor_abs_angle;
-      cfg.gimbal_mech_zero.pit = motor_fb.as_gimbal.pit.rotor_abs_angle;
+      cfg.gimbal_mech_zero.yaw = motor_fb.as_gimbal_yaw.yaw.rotor_abs_angle;
+      if (!msg_dist_poll(gimbal_motor_pit_sub, &motor_fb, 5)) {
+        snprintf(out_buffer, len, "Can not get gimbal data.\r\n");
+        fsm.stage = 2;
+        return pdPASS;
+      }
+      cfg.gimbal_mech_zero.pit = motor_fb.as_gimbal_pit.pit.rotor_abs_angle;
 
       config_set(&cfg);
       snprintf(out_buffer, len, "yaw:%f, pitch:%f, rol:%f\r\nDone.",
@@ -530,12 +536,12 @@ static BaseType_t command_set_gimbal_lim(char *out_buffer, size_t len,
       return pdPASS;
     case 1:
       /* 获取云台数据，获取新的限位角并替代旧的限位角 */
-      if (!msg_dist_poll(gimbal_motor_sub, &motor_fb, 5)) {
+      if (!msg_dist_poll(gimbal_motor_pit_sub, &motor_fb, 5)) {
         fsm.stage = 3;
         return pdPASS;
       }
       config_get(&cfg);
-      cfg.gimbal_limit = motor_fb.as_gimbal.pit.rotor_abs_angle;
+      cfg.gimbal_limit = motor_fb.as_gimbal_pit.pit.rotor_abs_angle;
 
       config_set(&cfg);
       config_get(&cfg);
@@ -655,7 +661,8 @@ void thd_cli(void *arg) {
   BaseType_t processing = 0;                    /* 命令行解析控制 */
 
   gyro_sub = msg_dist_subscribe("gimbal_gyro", true);
-  gimbal_motor_sub = msg_dist_subscribe("gimbal_motor_fb", true);
+  gimbal_motor_yaw_sub = msg_dist_subscribe("gimbal_yaw_motor_fb", true);
+  gimbal_motor_pit_sub = msg_dist_subscribe("gimbal_pit_motor_fb", true);
 
   /* 注册所有命令 */
   for (size_t j = 0; j < ARRAY_LEN(command_table); j++) {

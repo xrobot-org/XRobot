@@ -45,7 +45,8 @@ void thd_ctrl_chassis(void* arg) {
   subscriber_t* cap_sub = msg_dist_subscribe("cap_info", true);
   subscriber_t* chassis_motor_sub =
       msg_dist_subscribe("chassis_motor_fb", true);
-  subscriber_t* gimbal_motor_sub = msg_dist_subscribe("gimbal_motor_fb", true);
+  subscriber_t* gimbal_motor_sub =
+      msg_dist_subscribe("gimbal_yaw_motor_fb", true);
   subscriber_t* cmd_sub = msg_dist_subscribe("cmd_chassis", true);
 
   /* 初始化底盘 */

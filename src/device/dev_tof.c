@@ -1,9 +1,10 @@
+#include "dev_tof.h"
+
 #include <stdbool.h>
 #include <string.h>
 
 #include "comp_utils.h"
 #include "dev_referee.h"
-#include "dev_tof.h"
 
 #define TOF_RES (1000) /* TOF数据分辨率 */
 
@@ -30,7 +31,7 @@ err_t tof_init(tof_t *tof, const tof_param_t *param) {
   tof->param = param;
   tof->msgq_feedback = xQueueCreate(1, sizeof(can_rx_item_t));
   bsp_can_register_subscriber(tof->param->can, tof->param->index,
-                             tof->param->num, tof_rx_callback, tof);
+                              tof->param->num, tof_rx_callback, tof);
   if (tof->msgq_feedback)
     return RM_OK;
   else

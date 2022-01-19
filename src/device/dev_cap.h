@@ -11,10 +11,7 @@
 #define DEV_CAP_FB_ID_BASE (0x211)
 #define DEV_CAP_CTRL_ID_BASE (0x210)
 
-typedef enum {
-  DEV_CAP,
-  DEV_CAP_NUMBER
-} cap_number_t;
+typedef enum { DEV_CAP, DEV_CAP_NUMBER } cap_number_t;
 
 typedef struct {
   float input_volt;

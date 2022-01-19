@@ -45,7 +45,7 @@ int8_t can_init(void) {
   HAL_CAN_ConfigFilter(bsp_can_get_handle(BSP_CAN_1), &can_filter);
   HAL_CAN_Start(bsp_can_get_handle(BSP_CAN_1));
   bsp_can_register_callback(BSP_CAN_1, HAL_CAN_RX_FIFO0_MSG_PENDING_CB,
-                           can_can1_rx_fifo_msg_pending_callback, NULL);
+                            can_can1_rx_fifo_msg_pending_callback, NULL);
   HAL_CAN_ActivateNotification(bsp_can_get_handle(BSP_CAN_1),
                                CAN_IT_RX_FIFO0_MSG_PENDING);
 
@@ -55,7 +55,7 @@ int8_t can_init(void) {
   HAL_CAN_ConfigFilter(bsp_can_get_handle(BSP_CAN_2), &can_filter);
   HAL_CAN_Start(bsp_can_get_handle(BSP_CAN_2));
   bsp_can_register_callback(BSP_CAN_2, HAL_CAN_RX_FIFO1_MSG_PENDING_CB,
-                           can_can2_rx_fifo_msg_pending_callback, NULL);
+                            can_can2_rx_fifo_msg_pending_callback, NULL);
   HAL_CAN_ActivateNotification(bsp_can_get_handle(BSP_CAN_2),
                                CAN_IT_RX_FIFO1_MSG_PENDING);
 

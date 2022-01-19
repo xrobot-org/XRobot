@@ -59,8 +59,10 @@ int8_t dr16_init(dr16_t *dr16) {
   if (inited) return DEVICE_ERR_INITED;
   VERIFY((thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
 
+  dr16->data = &dma_buff;
+
   bsp_uart_register_callback(BSP_UART_DR16, BSP_UART_RX_CPLT_CB,
-                            dr16_rx_cplt_callback, NULL);
+                             dr16_rx_cplt_callback, NULL);
 
   inited = true;
   return DEVICE_OK;

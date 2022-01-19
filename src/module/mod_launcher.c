@@ -28,14 +28,16 @@ static void launcher_set_mode(launcher_t *l, launcher_mode_t mode) {
   if (mode == l->mode) return;
 
   /* 切换模式后重置PID和滤波器 */
-  for (size_t i = 0; i < 2; i++) {
+  for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
     kpid_reset(l->pid.fric + i);
     low_pass_filter_2p_reset(l->filter.in.fric + i, 0.0f);
     low_pass_filter_2p_reset(l->filter.out.fric + i, 0.0f);
   }
-  kpid_reset(&(l->pid.trig));
-  low_pass_filter_2p_reset(&(l->filter.in.trig), 0.0f);
-  low_pass_filter_2p_reset(&(l->filter.out.trig), 0.0f);
+  for (int i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
+    kpid_reset(l->pid.trig + i);
+    low_pass_filter_2p_reset(l->filter.in.trig + i, 0.0f);
+    low_pass_filter_2p_reset(l->filter.out.trig + i, 0.0f);
+  }
 
   /* 保证模式变换时拨弹盘不丢失起始位置 */
   while (fabsf(circle_error(l->setpoint.trig_angle, l->feedback.trig_angle,
@@ -105,7 +107,7 @@ void launcher_init(launcher_t *l, const launcher_params_t *param,
   l->param = param;              /* 初始化参数 */
   l->mode = LAUNCHER_MODE_RELAX; /* 设置默认模式 */
 
-  for (size_t i = 0; i < 2; i++) {
+  for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
     /* PI控制器初始化PID */
     kpid_init(l->pid.fric + i, KPID_MODE_NO_D, target_freq,
               &(param->fric_pid_param));
@@ -117,13 +119,15 @@ void launcher_init(launcher_t *l, const launcher_params_t *param,
                             param->low_pass_cutoff_freq.out.fric);
   }
 
-  kpid_init(&(l->pid.trig), KPID_MODE_CALC_D, target_freq,
-            &(param->trig_pid_param));
+  for (int i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
+    kpid_init(l->pid.trig + i, KPID_MODE_CALC_D, target_freq,
+              &(param->trig_pid_param));
 
-  low_pass_filter_2p_init(&(l->filter.in.trig), target_freq,
-                          param->low_pass_cutoff_freq.in.trig);
-  low_pass_filter_2p_init(&(l->filter.out.trig), target_freq,
-                          param->low_pass_cutoff_freq.out.trig);
+    low_pass_filter_2p_init(l->filter.in.trig + i, target_freq,
+                            param->low_pass_cutoff_freq.in.trig);
+    low_pass_filter_2p_init(l->filter.out.trig + i, target_freq,
+                            param->low_pass_cutoff_freq.out.trig);
+  }
 
   bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
   bsp_pwm_set(BSP_PWM_LAUNCHER_SERVO, param->cover_close_duty);
@@ -135,19 +139,21 @@ void launcher_init(launcher_t *l, const launcher_params_t *param,
  * @param l 包含发射器数据的结构体
  * @param can CAN设备结构体
  */
-void launcher_update_feedback(launcher_t *l,
-                              const motor_feedback_group_t *launcher_motor) {
+void launcher_update_feedback(
+    launcher_t *l, const motor_feedback_group_t *launcher_motor_trig,
+    const motor_feedback_group_t *launcher_motor_fric) {
   ASSERT(l);
-  ASSERT(launcher_motor);
+  ASSERT(launcher_motor_fric);
+  ASSERT(launcher_motor_trig);
 
   for (size_t i = 0; i < 2; i++) {
-    l->feedback.fric_rpm[i] = launcher_motor->as_array[i].rotational_speed;
+    l->feedback.fric_rpm[i] = launcher_motor_fric->as_array[i].rotational_speed;
   }
 
   /* 更新拨弹电机 */
   const float last_trig_motor_angle = l->feedback.trig_motor_angle;
   l->feedback.trig_motor_angle =
-      launcher_motor->as_launcher.trig.rotor_abs_angle;
+      launcher_motor_trig->as_launcher_trig.trig.rotor_abs_angle;
   const float delta_motor_angle =
       circle_error(l->feedback.trig_motor_angle, last_trig_motor_angle, M_2PI);
   circle_add(&(l->feedback.trig_angle),
@@ -259,35 +265,39 @@ void launcher_control(launcher_t *l, cmd_launcher_t *l_cmd,
 
   switch (l->mode) {
     case LAUNCHER_MODE_RELAX:
-      for (size_t i = 0; i < LAUNCHER_ACTR_NUM; i++) {
-        l->out[i] = 0.0f;
+      for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
+        l->trig_out[i] = 0.0f;
+      }
+      for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
+        l->fric_out[i] = 0.0f;
       }
       bsp_pwm_stop(BSP_PWM_LAUNCHER_SERVO);
       break;
 
     case LAUNCHER_MODE_SAFE:
     case LAUNCHER_MODE_LOADED:
-      /* 控制拨弹电机 */
-      l->feedback.trig_angle = low_pass_filter_2p_apply(&(l->filter.in.trig),
-                                                        l->feedback.trig_angle);
+      for (int i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
+        /* 控制拨弹电机 */
+        l->feedback.trig_angle = low_pass_filter_2p_apply(
+            l->filter.in.trig + i, l->feedback.trig_angle);
 
-      l->out[LAUNCHER_ACTR_TRIG_IDX] =
-          kpid_calc(&(l->pid.trig), l->setpoint.trig_angle,
-                    l->feedback.trig_angle, 0.0f, l->dt);
-      l->out[LAUNCHER_ACTR_TRIG_IDX] = low_pass_filter_2p_apply(
-          &(l->filter.out.trig), l->out[LAUNCHER_ACTR_TRIG_IDX]);
+        l->trig_out[i] = kpid_calc(l->pid.trig + i, l->setpoint.trig_angle,
+                                   l->feedback.trig_angle, 0.0f, l->dt);
+        l->trig_out[LAUNCHER_ACTR_TRIG_IDX] = low_pass_filter_2p_apply(
+            l->filter.out.trig + i, l->trig_out[LAUNCHER_ACTR_TRIG_IDX]);
+      }
 
-      for (size_t i = 0; i < 2; i++) {
+      for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
         /* 控制摩擦轮 */
         l->feedback.fric_rpm[i] = low_pass_filter_2p_apply(
             l->filter.in.fric + i, l->feedback.fric_rpm[i]);
 
-        l->out[LAUNCHER_ACTR_FRIC1_IDX + i] =
+        l->fric_out[LAUNCHER_ACTR_FRIC1_IDX + i] =
             kpid_calc(l->pid.fric + i, l->setpoint.fric_rpm[i],
                       l->feedback.fric_rpm[i], 0.0f, l->dt);
 
-        l->out[LAUNCHER_ACTR_FRIC1_IDX + i] = low_pass_filter_2p_apply(
-            l->filter.out.fric + i, l->out[LAUNCHER_ACTR_FRIC1_IDX + i]);
+        l->fric_out[LAUNCHER_ACTR_FRIC1_IDX + i] = low_pass_filter_2p_apply(
+            l->filter.out.fric + i, l->fric_out[LAUNCHER_ACTR_FRIC1_IDX + i]);
       }
 
       /* 根据弹仓盖开关状态更新弹舱盖打开时舵机PWM占空比 */
@@ -308,11 +318,18 @@ void launcher_control(launcher_t *l, cmd_launcher_t *l_cmd,
  * @param l 包含发射器数据的结构体
  * @param out CAN设备发射器输出结构体
  */
-void launcher_pack_output(launcher_t *l, motor_control_t *out) {
+void launcher_pack_output(launcher_t *l, motor_control_t *trig_out,
+                          motor_control_t *fric_out) {
   ASSERT(l);
-  ASSERT(out);
-  for (size_t i = 0; i < LAUNCHER_ACTR_NUM; i++) {
-    out->as_array[i] = l->out[i];
+  ASSERT(trig_out);
+  ASSERT(fric_out);
+
+  for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
+    fric_out->as_array[i] = l->fric_out[i];
+  }
+
+  for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
+    trig_out->as_array[i] = l->trig_out[i];
   }
 }
 

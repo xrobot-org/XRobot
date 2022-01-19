@@ -93,7 +93,7 @@ CAN_HandleTypeDef *bsp_can_get_handle(bsp_can_t can) {
 }
 
 int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
-                                void (*callback)(void *), void *callback_arg) {
+                                 void (*callback)(void *), void *callback_arg) {
   ASSERT(callback);
   ASSERT(type != BSP_CAN_CB_NUM);
 
@@ -103,9 +103,9 @@ int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
 }
 
 int8_t bsp_can_register_subscriber(bsp_can_t can, uint32_t index,
-                                  uint32_t number,
-                                  void (*cb)(can_rx_item_t *, void *),
-                                  void *callback_arg) {
+                                   uint32_t number,
+                                   void (*cb)(can_rx_item_t *, void *),
+                                   void *callback_arg) {
   ASSERT(cb);
 
   if (can_groups[can].suber_number >= CAN_MAX_SUBER_NUMBER) return BSP_ERR;

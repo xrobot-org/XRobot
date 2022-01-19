@@ -19,11 +19,15 @@
 #include "dev_referee.h"
 
 /* 用enum组合所有PID，方便访问，配合数组使用 */
-enum launcher_acuator_e {
+enum launcher_acuator_fric_e {
   LAUNCHER_ACTR_FRIC1_IDX = 0, /* 1号摩擦轮相关的索引值 */
   LAUNCHER_ACTR_FRIC2_IDX,     /* 2号摩擦轮相关的索引值 */
-  LAUNCHER_ACTR_TRIG_IDX,      /* 拨弹电机相关的索引值 */
-  LAUNCHER_ACTR_NUM,           /* 总共的动作器数量 */
+  LAUNCHER_ACTR_FRIC_NUM,      /* 总共的动作器数量 */
+};
+
+enum launcher_acuator_trig_e {
+  LAUNCHER_ACTR_TRIG_IDX, /* 拨弹电机相关的索引值 */
+  LAUNCHER_ACTR_TRIG_NUM, /* 总共的动作器数量 */
 };
 
 /* 发射机构型号 */
@@ -113,29 +117,32 @@ typedef struct {
 
   /* 反馈控制用的PID */
   struct {
-    kpid_t fric[2]; /* 控制摩擦轮 */
-    kpid_t trig;    /* 控制拨弹电机 */
+    kpid_t fric[LAUNCHER_ACTR_FRIC_NUM]; /* 控制摩擦轮 */
+    kpid_t trig[LAUNCHER_ACTR_TRIG_NUM]; /* 控制拨弹电机 */
   } pid;
 
   /* 过滤器 */
   struct {
     /* 反馈值滤波器 */
     struct {
-      low_pass_filter_2p_t fric[2]; /* 过滤摩擦轮 */
-      low_pass_filter_2p_t trig;    /* 过滤拨弹电机 */
+      low_pass_filter_2p_t fric[LAUNCHER_ACTR_FRIC_NUM]; /* 过滤摩擦轮 */
+      low_pass_filter_2p_t trig[LAUNCHER_ACTR_TRIG_NUM]; /* 过滤拨弹电机 */
     } in;
 
     /* 输出值滤波器 */
     struct {
-      low_pass_filter_2p_t fric[2]; /* 过滤摩擦轮 */
-      low_pass_filter_2p_t trig;    /* 过滤拨弹电机 */
+      low_pass_filter_2p_t fric[LAUNCHER_ACTR_FRIC_NUM]; /* 过滤摩擦轮 */
+      low_pass_filter_2p_t trig[LAUNCHER_ACTR_TRIG_NUM]; /* 过滤拨弹电机 */
     } out;
   } filter;
 
   launcher_heat_ctrl_t heat_ctrl;
   launcher_fire_ctrl_t fire_ctrl;
 
-  float out[LAUNCHER_ACTR_NUM]; /* 输出数组，通过Launcher_Acuator_e里的值访问 */
+  float trig_out
+      [LAUNCHER_ACTR_TRIG_NUM]; /* 输出数组，通过Launcher_Acuator_e里的值访问
+                                 */
+  float fric_out[LAUNCHER_ACTR_FRIC_NUM];
 
 } launcher_t;
 
@@ -155,8 +162,9 @@ void launcher_init(launcher_t *l, const launcher_params_t *param,
  * @param l 包含发射器数据的结构体
  * @param can CAN设备结构体
  */
-void launcher_update_feedback(launcher_t *l,
-                              const motor_feedback_group_t *launcher_motor);
+void launcher_update_feedback(
+    launcher_t *l, const motor_feedback_group_t *launcher_motor_trig,
+    const motor_feedback_group_t *launcher_motor_fric);
 
 /**
  * @brief 运行发射器控制逻辑
@@ -176,7 +184,8 @@ void launcher_control(launcher_t *l, cmd_launcher_t *l_cmd,
  * @param l 包含发射器数据的结构体
  * @param out CAN设备发射器输出结构体
  */
-void launcher_pack_output(launcher_t *l, motor_control_t *out);
+void launcher_pack_output(launcher_t *l, motor_control_t *trig_out,
+                          motor_control_t *fric_out);
 
 /**
  * @brief 导出发射器UI数据

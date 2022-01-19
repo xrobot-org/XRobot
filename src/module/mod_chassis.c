@@ -197,7 +197,7 @@ void chassis_update_feedback(chassis_t *c,
 
   /* 如果yaw云台电机反装重新计算正确的反馈值 */
   c->feedback.gimbal_yaw_encoder_angle =
-      gimbal_motor->as_gimbal.yaw.rotor_abs_angle;
+      gimbal_motor->as_gimbal_yaw.yaw.rotor_abs_angle;
   if (c->param->reverse.yaw)
     circle_reverse(&(c->feedback.gimbal_yaw_encoder_angle));
 
@@ -284,7 +284,6 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
     case CHASSIS_MODE_ROTOR: { /* 小陀螺模式使底盘以一定速度旋转 */
       c->move_vec.wz =
           c->wz_dir_mult * chassis_calc_wz(ROTOR_WZ_MIN, ROTOR_WZ_MAX, now);
-
     }
     case CHASSIS_MODE_SCAN:
       break;
