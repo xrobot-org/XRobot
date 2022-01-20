@@ -25,7 +25,7 @@
 
 typedef struct {
   uint8_t stage;
-} FiniteStateMachine_t;
+} finite_state_machine_t;
 
 #define MAX_INPUT_LENGTH 64
 
@@ -49,7 +49,7 @@ static const char *const CLI_WELCOME_MESSAGE =
 static const char *const CLI_START = "qdu-rm>";
 
 /* Command示例 */
-static BaseType_t Command_Endian(char *out_buffer, size_t len,
+static BaseType_t command_endian(char *out_buffer, size_t len,
                                  const char *command_string) {
   if (out_buffer == NULL) return pdFALSE;
   RM_UNUSED(command_string); /* 没用到command_string，消除警告 */
@@ -60,7 +60,7 @@ static BaseType_t Command_Endian(char *out_buffer, size_t len,
   uint16_t force_convert = ((uint16_t *)list)[0];
   uint16_t assembled = (uint16_t)(list[0] | (list[1] << 8));
 
-  static FiniteStateMachine_t fsm; /* 有限状态机 */
+  static finite_state_machine_t fsm; /* 有限状态机 */
   switch (fsm.stage) {
     case 0:
       /* 每个状态内只允许有一个snprintf相关函数，以保证安全 */
@@ -92,7 +92,7 @@ static BaseType_t Command_Endian(char *out_buffer, size_t len,
   }
 }
 
-static BaseType_t Command_Stats(char *out_buffer, size_t len,
+static BaseType_t command_stats(char *out_buffer, size_t len,
                                 const char *command_string) {
   static const char *const task_list_header =
       "\r\n"
@@ -135,7 +135,7 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
   /* 堆区信息的相关内容 */
   HeapStats_t heap_stats;
 
-  static FiniteStateMachine_t fsm;
+  static finite_state_machine_t fsm;
   switch (fsm.stage) {
     case 0:
       strncpy(out_buffer, task_list_header, len);
@@ -203,7 +203,7 @@ static BaseType_t Command_Stats(char *out_buffer, size_t len,
   }
 }
 
-static BaseType_t Command_Config(char *out_buffer, size_t len,
+static BaseType_t command_config(char *out_buffer, size_t len,
                                  const char *command_string) {
   /* 帮助信息，const保证不占用内存空间 */
   static const char *const help_string =
@@ -233,7 +233,7 @@ static BaseType_t Command_Config(char *out_buffer, size_t len,
 
   config_t cfg;
 
-  static FiniteStateMachine_t fsm;
+  static finite_state_machine_t fsm;
   if (strncmp(command, "help", (size_t)command_len) == 0) {
     /* config help */
     snprintf(out_buffer, len, "%s", help_string);
@@ -371,7 +371,7 @@ command_error:
   return pdFALSE;
 }
 
-static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
+static BaseType_t command_cali_gyro(char *out_buffer, size_t len,
                                    const char *command_string) {
   if (out_buffer == NULL) return pdFALSE;
   RM_UNUSED(command_string);
@@ -386,7 +386,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
   static float z = 0.0f;
   static uint8_t retry = 0;
 
-  static FiniteStateMachine_t fsm;
+  static finite_state_machine_t fsm;
   switch (fsm.stage) {
     case 0:
       snprintf(out_buffer, len, "\r\nStart gyroscope calibration.\r\n");
@@ -468,7 +468,7 @@ static BaseType_t Command_CaliGyro(char *out_buffer, size_t len,
   }
 }
 
-static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
+static BaseType_t command_set_mech_zero(char *out_buffer, size_t len,
                                       const char *command_string) {
   if (out_buffer == NULL) return pdFALSE;
   RM_UNUSED(command_string);
@@ -477,7 +477,7 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
   motor_feedback_group_t motor_fb;
   config_t cfg;
 
-  static FiniteStateMachine_t fsm;
+  static finite_state_machine_t fsm;
   switch (fsm.stage) {
     case 0:
       snprintf(out_buffer, len, "\r\nStart setting mechanical zero point.\r\n");
@@ -518,7 +518,7 @@ static BaseType_t Command_SetMechZero(char *out_buffer, size_t len,
   }
 }
 
-static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
+static BaseType_t command_set_gimbal_lim(char *out_buffer, size_t len,
                                        const char *command_string) {
   if (out_buffer == NULL) return pdFALSE;
   RM_UNUSED(command_string);
@@ -527,7 +527,7 @@ static BaseType_t Command_SetGimbalLim(char *out_buffer, size_t len,
   motor_feedback_group_t motor_fb;
   config_t cfg;
 
-  static FiniteStateMachine_t fsm;
+  static finite_state_machine_t fsm;
   switch (fsm.stage) {
     case 0:
       config_get(&cfg);
@@ -606,40 +606,40 @@ static const CLI_Command_Definition_t command_table[] = {
     {
         "endian",
         "\r\nendian:\r\n Endian experiment.\r\n\r\n",
-        Command_Endian,
+        command_endian,
         0,
     },
     {
         "stats",
         "\r\nstats:\r\n Displays several tables showing the state of "
         "RTOS, system & robot.\r\n\r\n",
-        Command_Stats,
+        command_stats,
         0,
     },
     {
         "config",
         "\r\nconfig:\r\n See 'config help'. \r\n\r\n",
-        Command_Config,
+        command_config,
         -1,
     },
     {
         "cali-gyro",
         "\r\ncali-gyro:\r\n Calibrates gyroscope to remove zero-offset. Power "
         "off all motors before calibrating!\r\n\r\n",
-        Command_CaliGyro,
+        command_cali_gyro,
         0,
     },
     {
         "set-mech-zero",
         "\r\nset-mech-zero:\r\n Sets mechanical zero point for gimbal.\r\n\r\n",
-        Command_SetMechZero,
+        command_set_mech_zero,
         0,
     },
     {
         "set-gimbal-limit",
         "\r\nset-gimbal-limit:\r\n Move the gimbal to the peak and execute "
         "this command to calibrate the limit of gimbal.\r\n\r\n",
-        Command_SetGimbalLim,
+        command_set_gimbal_lim,
         0,
     },
     /*
@@ -670,39 +670,39 @@ void thd_cli(void *arg) {
   }
 
   /* 通过回车键唤醒命令行界面 */
-  BSP_USB_Printf("Please press ENTER to activate this console.\r\n");
+  bsp_usb_printf("Please press ENTER to activate this console.\r\n");
   while (1) {
-    if (!BSP_USB_Connect() || !BSP_USB_Avail()) {
+    if (!bsp_usb_connect() || !bsp_usb_avail()) {
       vTaskDelay(1);
       continue;
     }
     /* 读取接收到的新字符 */
-    rx_char = BSP_USB_ReadChar();
+    rx_char = bsp_usb_read_char();
 
     /* 进行判断 */
     if (rx_char == '\n' || rx_char == '\r') {
-      BSP_USB_Printf("%c", rx_char);
+      bsp_usb_printf("%c", rx_char);
       break;
     }
   }
 
   /* 打印欢迎信息 */
-  BSP_USB_Printf(CLI_WELCOME_MESSAGE);
+  bsp_usb_printf(CLI_WELCOME_MESSAGE);
 
   /* 开始运行命令行界面 */
-  BSP_USB_Printf(CLI_START);
+  bsp_usb_printf(CLI_START);
   while (1) {
-    if (!BSP_USB_Avail()) {
+    if (!bsp_usb_avail()) {
       vTaskDelay(1);
       continue;
     }
     /* 读取接收到的新字符 */
-    rx_char = BSP_USB_ReadChar();
+    rx_char = bsp_usb_read_char();
 
     if (rx_char <= 126 && rx_char >= 32) {
       /* 如果字符是可显示字符，则直接显式，并存入输入缓存中 */
       if (index < MAX_INPUT_LENGTH) {
-        BSP_USB_Printf("%c", rx_char);
+        bsp_usb_printf("%c", rx_char);
         input[index] = rx_char;
         index++;
       }
@@ -710,7 +710,7 @@ void thd_cli(void *arg) {
       /* 如果字符是控制字符，则需要进一步判断 */
       if (rx_char == '\n' || rx_char == '\r') {
         /* 如果输入的是回车，则认为命令输入完毕，进行下一步的解析和运行命令 */
-        BSP_USB_Printf("\r\n");
+        bsp_usb_printf("\r\n");
         if (index > 0) {
           /* 只在输入缓存有内容时起效 */
           do {
@@ -718,17 +718,17 @@ void thd_cli(void *arg) {
             processing = FreeRTOS_CLIProcessCommand(
                 input, output, configCOMMAND_INT_MAX_OUTPUT_SIZE);
 
-            BSP_USB_Printf(output);               /* 打印结果 */
+            bsp_usb_printf(output);               /* 打印结果 */
             memset(output, 0x00, strlen(output)); /* 清空输出缓存 */
           } while (processing != pdFALSE); /* 是否需要重复运行命令 */
           index = 0; /* 重置索引，准备接收下一段命令 */
           memset(input, 0x00, strlen(input)); /* 清空输入缓存 */
         }
-        BSP_USB_Printf(CLI_START);
+        bsp_usb_printf(CLI_START);
       } else if (rx_char == '\b' || rx_char == 0x7Fu) {
         /* 如果输入的是退格键则清空一位输入缓存，同时进行界限保护 */
         if (index > 0) {
-          BSP_USB_Printf("%c", rx_char);
+          bsp_usb_printf("%c", rx_char);
           index--;
           input[index] = 0;
         }

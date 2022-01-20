@@ -81,11 +81,11 @@ static uint8_t dma_buf[BMI088_ACCL_RX_BUFF_LEN + BMI088_GYRO_RX_BUFF_LEN];
 
 static bool inited = false;
 
-static void BMI_WriteSingle(BMI_Device_t dv, uint8_t reg, uint8_t data) {
+static void bmi_write_single(BMI_Device_t dv, uint8_t reg, uint8_t data) {
   tx_rx_buf[0] = (reg & 0x7f);
   tx_rx_buf[1] = data;
 
-  BSP_Delay(1);
+  bsp_delay(1);
   switch (dv) {
     case BMI_ACCL:
       BMI088_ACCL_NSS_RESET();
@@ -96,7 +96,7 @@ static void BMI_WriteSingle(BMI_Device_t dv, uint8_t reg, uint8_t data) {
       break;
   }
 
-  HAL_SPI_Transmit(BSP_SPI_GetHandle(BSP_SPI_IMU), tx_rx_buf, 2u, 20u);
+  HAL_SPI_Transmit(bsp_spi_get_handle(BSP_SPI_IMU), tx_rx_buf, 2u, 20u);
 
   switch (dv) {
     case BMI_ACCL:
@@ -109,8 +109,8 @@ static void BMI_WriteSingle(BMI_Device_t dv, uint8_t reg, uint8_t data) {
   }
 }
 
-static uint8_t BMI_ReadSingle(BMI_Device_t dv, uint8_t reg) {
-  BSP_Delay(1);
+static uint8_t bmi_read_single(BMI_Device_t dv, uint8_t reg) {
+  bsp_delay(1);
   switch (dv) {
     case BMI_ACCL:
       BMI088_ACCL_NSS_RESET();
@@ -121,8 +121,8 @@ static uint8_t BMI_ReadSingle(BMI_Device_t dv, uint8_t reg) {
       break;
   }
   tx_rx_buf[0] = (uint8_t)(reg | 0x80);
-  HAL_SPI_Transmit(BSP_SPI_GetHandle(BSP_SPI_IMU), tx_rx_buf, 1u, 20u);
-  HAL_SPI_Receive(BSP_SPI_GetHandle(BSP_SPI_IMU), tx_rx_buf, 2u, 20u);
+  HAL_SPI_Transmit(bsp_spi_get_handle(BSP_SPI_IMU), tx_rx_buf, 1u, 20u);
+  HAL_SPI_Receive(bsp_spi_get_handle(BSP_SPI_IMU), tx_rx_buf, 2u, 20u);
 
   switch (dv) {
     case BMI_ACCL:
@@ -136,7 +136,7 @@ static uint8_t BMI_ReadSingle(BMI_Device_t dv, uint8_t reg) {
   return DEVICE_OK;
 }
 
-static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
+static void bmi_read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
   ASSERT(data);
 
   switch (dv) {
@@ -149,11 +149,11 @@ static void BMI_Read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
       break;
   }
   tx_rx_buf[0] = (uint8_t)(reg | 0x80);
-  HAL_SPI_Transmit(BSP_SPI_GetHandle(BSP_SPI_IMU), tx_rx_buf, 1u, 20u);
-  HAL_SPI_Receive_DMA(BSP_SPI_GetHandle(BSP_SPI_IMU), data, len);
+  HAL_SPI_Transmit(bsp_spi_get_handle(BSP_SPI_IMU), tx_rx_buf, 1u, 20u);
+  HAL_SPI_Receive_DMA(bsp_spi_get_handle(BSP_SPI_IMU), data, len);
 }
 
-static void BMI088_RxCpltCallback(void *arg) {
+static void bmi088_rx_cplt_callback(void *arg) {
   bmi088_t *bmi088 = arg;
   BaseType_t switch_required;
   if (HAL_GPIO_ReadPin(ACCL_CS_GPIO_Port, ACCL_CS_Pin) == GPIO_PIN_RESET) {
@@ -167,14 +167,14 @@ static void BMI088_RxCpltCallback(void *arg) {
   portYIELD_FROM_ISR(switch_required);
 }
 
-static void BMI088_AcclIntCallback(void *arg) {
+static void bmi088_accl_int_callback(void *arg) {
   bmi088_t *bmi088 = arg;
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(bmi088->sem.accl_new, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
-static void BMI088_GyroIntCallback(void *arg) {
+static void bmi088_gyro_int_callback(void *arg) {
   bmi088_t *bmi088 = arg;
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(bmi088->sem.gyro_new, &switch_required);
@@ -197,66 +197,66 @@ int8_t bmi088_init(bmi088_t *bmi088, const bmi088_cali_t *cali,
   bmi088->cali = cali;
   bmi088->param = param;
 
-  BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_SOFTRESET, 0xB6);
-  BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_SOFTRESET, 0xB6);
-  BSP_Delay(30);
+  bmi_write_single(BMI_ACCL, BMI088_REG_ACCL_SOFTRESET, 0xB6);
+  bmi_write_single(BMI_GYRO, BMI088_REG_GYRO_SOFTRESET, 0xB6);
+  bsp_delay(30);
 
   /* Switch accl to SPI mode. */
-  BMI_ReadSingle(BMI_ACCL, BMI088_CHIP_ID_ACCL);
+  bmi_read_single(BMI_ACCL, BMI088_CHIP_ID_ACCL);
 
-  if (BMI_ReadSingle(BMI_ACCL, BMI088_REG_ACCL_CHIP_ID) != BMI088_CHIP_ID_ACCL)
+  if (bmi_read_single(BMI_ACCL, BMI088_REG_ACCL_CHIP_ID) != BMI088_CHIP_ID_ACCL)
     return DEVICE_ERR_NO_DEV;
 
-  if (BMI_ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID) != BMI088_CHIP_ID_GYRO)
+  if (bmi_read_single(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID) != BMI088_CHIP_ID_GYRO)
     return DEVICE_ERR_NO_DEV;
 
-  BSP_GPIO_DisableIRQ(ACCL_INT_Pin);
-  BSP_GPIO_DisableIRQ(GYRO_INT_Pin);
+  bsp_gpio_disable_irq(ACCL_INT_Pin);
+  bsp_gpio_disable_irq(GYRO_INT_Pin);
 
-  BSP_SPI_RegisterCallback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB,
-                           BMI088_RxCpltCallback, bmi088);
-  BSP_GPIO_RegisterCallback(ACCL_INT_Pin, BMI088_AcclIntCallback, bmi088);
-  BSP_GPIO_RegisterCallback(GYRO_INT_Pin, BMI088_GyroIntCallback, bmi088);
+  bsp_spi_register_callback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB,
+                           bmi088_rx_cplt_callback, bmi088);
+  bsp_gpio_register_callback(ACCL_INT_Pin, bmi088_accl_int_callback, bmi088);
+  bsp_gpio_register_callback(GYRO_INT_Pin, bmi088_gyro_int_callback, bmi088);
 
   /* Accl init. */
   /* Filter setting: Normal. */
   /* ODR: 0xAB: 800Hz. 0xAA: 400Hz. 0xA9: 200Hz. 0xA8: 100Hz. 0xA6: 25Hz. */
-  BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_CONF, 0xAA);
+  bmi_write_single(BMI_ACCL, BMI088_REG_ACCL_CONF, 0xAA);
 
   /* 0x00: +-3G. 0x01: +-6G. 0x02: +-12G. 0x03: +-24G. */
-  BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_RANGE, 0x01);
+  bmi_write_single(BMI_ACCL, BMI088_REG_ACCL_RANGE, 0x01);
 
   /* INT1 as output. Push-pull. Active low. Output. */
-  BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_INT1_IO_CONF, 0x08);
+  bmi_write_single(BMI_ACCL, BMI088_REG_ACCL_INT1_IO_CONF, 0x08);
 
   /* Map data ready interrupt to INT1. */
-  BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_INT1_INT2_MAP_DATA, 0x04);
+  bmi_write_single(BMI_ACCL, BMI088_REG_ACCL_INT1_INT2_MAP_DATA, 0x04);
 
   /* Turn on accl. Now we can read data. */
-  BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_PWR_CTRL, 0x04);
-  BSP_Delay(50);
+  bmi_write_single(BMI_ACCL, BMI088_REG_ACCL_PWR_CTRL, 0x04);
+  bsp_delay(50);
 
   /* Gyro init. */
   /* 0x00: +-2000. 0x01: +-1000. 0x02: +-500. 0x03: +-250. 0x04: +-125. */
-  BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_RANGE, 0x01);
+  bmi_write_single(BMI_GYRO, BMI088_REG_GYRO_RANGE, 0x01);
 
   /* Filter bw: 47Hz. */
   /* ODR: 0x02: 1000Hz. 0x03: 400Hz. 0x06: 200Hz. 0x07: 100Hz. */
-  BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_BANDWIDTH, 0x03);
+  bmi_write_single(BMI_GYRO, BMI088_REG_GYRO_BANDWIDTH, 0x03);
 
   /* INT3 and INT4 as output. Push-pull. Active low. */
-  BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_INT3_INT4_IO_CONF, 0x00);
+  bmi_write_single(BMI_GYRO, BMI088_REG_GYRO_INT3_INT4_IO_CONF, 0x00);
 
   /* Map data ready interrupt to INT3. */
-  BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_INT3_INT4_IO_MAP, 0x01);
+  bmi_write_single(BMI_GYRO, BMI088_REG_GYRO_INT3_INT4_IO_MAP, 0x01);
 
   /* Enable new data interrupt. */
-  BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_INT_CTRL, 0x80);
+  bmi_write_single(BMI_GYRO, BMI088_REG_GYRO_INT_CTRL, 0x80);
 
-  BSP_Delay(10);
+  bsp_delay(10);
 
-  BSP_GPIO_EnableIRQ(ACCL_INT_Pin);
-  BSP_GPIO_EnableIRQ(GYRO_INT_Pin);
+  bsp_gpio_enable_irq(ACCL_INT_Pin);
+  bsp_gpio_enable_irq(GYRO_INT_Pin);
   return DEVICE_OK;
 }
 
@@ -269,7 +269,7 @@ bool bmi088_gyro_wait_new(bmi088_t *bmi088, uint32_t timeout) {
 }
 
 int8_t bmi088_accl_start_dma_recv() {
-  BMI_Read(BMI_ACCL, BMI088_REG_ACCL_X_LSB, dma_buf, BMI088_ACCL_RX_BUFF_LEN);
+  bmi_read(BMI_ACCL, BMI088_REG_ACCL_X_LSB, dma_buf, BMI088_ACCL_RX_BUFF_LEN);
   return DEVICE_OK;
 }
 
@@ -279,7 +279,7 @@ int8_t bmi088_accl_wait_dma_cplt(bmi088_t *bmi088) {
 }
 
 int8_t bmi088_gyro_start_dma_recv() {
-  BMI_Read(BMI_GYRO, BMI088_REG_GYRO_X_LSB, dma_buf + BMI088_ACCL_RX_BUFF_LEN,
+  bmi_read(BMI_GYRO, BMI088_REG_GYRO_X_LSB, dma_buf + BMI088_ACCL_RX_BUFF_LEN,
            BMI088_GYRO_RX_BUFF_LEN);
   return DEVICE_OK;
 }

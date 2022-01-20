@@ -10,7 +10,7 @@
  * @param g 包含云台数据的结构体
  * @param mode 要设置的模式
  */
-static void Gimbal_SetMode(gimbal_t *g, gimbal_mode_t mode) {
+static void gimbal_set_mode(gimbal_t *g, gimbal_mode_t mode) {
   ASSERT(g);
   if (mode == g->mode) return;
 
@@ -108,7 +108,7 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
   g->dt = (float)(now - g->lask_wakeup) / 1000.0f;
   g->lask_wakeup = now;
 
-  Gimbal_SetMode(g, g_cmd->mode);
+  gimbal_set_mode(g, g_cmd->mode);
 
   /* yaw坐标正方向与遥控器操作逻辑相反 */
   g_cmd->delta_eulr.pit = g_cmd->delta_eulr.pit;

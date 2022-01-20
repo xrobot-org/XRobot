@@ -43,7 +43,7 @@ typedef struct __packed {
   referee_header_t header;
   uint16_t cmd_id;
   referee_inter_student_header_t student_header;
-} Referee_UiPacketHead_t;
+} referee_ui_packet_head_t;
 
 static uint8_t rxbuf[REF_LEN_RX_BUFF];
 
@@ -53,47 +53,47 @@ static bool inited = false;
 
 /* Private function  -------------------------------------------------------- */
 
-static void Referee_RxCpltCallback(void *arg) {
+static void referee_rx_cplt_callback(void *arg) {
   referee_t *ref = arg;
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(ref->sem.raw_ready, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
-static void Referee_TxCpltCallback(void *arg) {
+static void referee_tx_cplt_callback(void *arg) {
   referee_t *ref = arg;
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(ref->sem.packet_sent, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
-static void Referee_IdleLineCallback(void *arg) {
+static void referee_idle_line_callback(void *arg) {
   RM_UNUSED(arg);
-  HAL_UART_AbortReceive_IT(BSP_UART_GetHandle(BSP_UART_REF));
+  HAL_UART_AbortReceive_IT(bsp_uart_get_handle(BSP_UART_REF));
 }
 
-static void Referee_AbortRxCpltCallback(void *arg) {
+static void referee_abort_rx_cplt_callback(void *arg) {
   referee_t *ref = arg;
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(ref->sem.raw_ready, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
-static void RefereeFastRefreshTimerCallback(TimerHandle_t arg) {
+static void referee_fast_refresh_timer_callback(TimerHandle_t arg) {
   RM_UNUSED(arg);
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(gref->sem.ui_fast_refresh, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
-static void RefereeSlowRefreshTimerCallback(TimerHandle_t arg) {
+static void referee_slow_refresh_timer_callback(TimerHandle_t arg) {
   RM_UNUSED(arg);
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(gref->sem.ui_slow_refresh, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
-static int8_t Referee_SetPacketHeader(referee_header_t *header,
+static int8_t referee_set_packet_header(referee_header_t *header,
                                       uint16_t data_length) {
   header->sof = REF_HEADER_SOF;
   header->data_length = data_length;
@@ -104,7 +104,7 @@ static int8_t Referee_SetPacketHeader(referee_header_t *header,
   return DEVICE_OK;
 }
 
-static int8_t Referee_SetUiHeader(referee_inter_student_header_t *header,
+static int8_t referee_set_ui_header(referee_inter_student_header_t *header,
                                   const referee_student_cmd_id_t cmd_id,
                                   referee_robot_id_t robot_id) {
   header->cmd_id = cmd_id;
@@ -134,36 +134,36 @@ int8_t referee_init(referee_t *ref, const ui_screen_t *screen) {
 
   xSemaphoreGive(ref->sem.packet_sent);
 
-  BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_RX_CPLT_CB,
-                            Referee_RxCpltCallback, ref);
-  BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_ABORT_RX_CPLT_CB,
-                            Referee_AbortRxCpltCallback, ref);
-  BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_IDLE_LINE_CB,
-                            Referee_IdleLineCallback, ref);
-  BSP_UART_RegisterCallback(BSP_UART_REF, BSP_UART_TX_CPLT_CB,
-                            Referee_TxCpltCallback, ref);
+  bsp_uart_register_callback(BSP_UART_REF, BSP_UART_RX_CPLT_CB,
+                            referee_rx_cplt_callback, ref);
+  bsp_uart_register_callback(BSP_UART_REF, BSP_UART_ABORT_RX_CPLT_CB,
+                            referee_abort_rx_cplt_callback, ref);
+  bsp_uart_register_callback(BSP_UART_REF, BSP_UART_IDLE_LINE_CB,
+                            referee_idle_line_callback, ref);
+  bsp_uart_register_callback(BSP_UART_REF, BSP_UART_TX_CPLT_CB,
+                            referee_tx_cplt_callback, ref);
   ref->ui_fast_timer_id =
       xTimerCreate("fast_refresh", pdMS_TO_TICKS(REF_UI_FAST_REFRESH_FREQ),
-                   pdTRUE, NULL, RefereeFastRefreshTimerCallback);
+                   pdTRUE, NULL, referee_fast_refresh_timer_callback);
 
   ref->ui_slow_timer_id =
       xTimerCreate("slow_refresh", pdMS_TO_TICKS(REF_UI_SLOW_REFRESH_FREQ),
-                   pdTRUE, NULL, RefereeSlowRefreshTimerCallback);
+                   pdTRUE, NULL, referee_slow_refresh_timer_callback);
 
   xTimerStart(ref->ui_fast_timer_id,
               pdMS_TO_TICKS(1000 / REF_UI_FAST_REFRESH_FREQ));
   xTimerStart(ref->ui_slow_timer_id,
               pdMS_TO_TICKS(1000 / REF_UI_SLOW_REFRESH_FREQ));
 
-  __HAL_UART_ENABLE_IT(BSP_UART_GetHandle(BSP_UART_REF), UART_IT_IDLE);
+  __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_REF), UART_IT_IDLE);
 
   inited = true;
   return DEVICE_OK;
 }
 
 int8_t referee_restart(void) {
-  __HAL_UART_DISABLE(BSP_UART_GetHandle(BSP_UART_REF));
-  __HAL_UART_ENABLE(BSP_UART_GetHandle(BSP_UART_REF));
+  __HAL_UART_DISABLE(bsp_uart_get_handle(BSP_UART_REF));
+  __HAL_UART_ENABLE(bsp_uart_get_handle(BSP_UART_REF));
   return DEVICE_OK;
 }
 
@@ -173,7 +173,7 @@ void referee_handle_offline(referee_t *ref) {
 
 int8_t referee_start_receiving(referee_t *ref) {
   RM_UNUSED(ref);
-  if (HAL_UART_Receive_DMA(BSP_UART_GetHandle(BSP_UART_REF), rxbuf,
+  if (HAL_UART_Receive_DMA(bsp_uart_get_handle(BSP_UART_REF), rxbuf,
                            REF_LEN_RX_BUFF) == HAL_OK) {
     return DEVICE_OK;
   }
@@ -188,7 +188,7 @@ int8_t referee_parse(referee_t *ref) {
   ref->status = REF_STATUS_RUNNING;
   uint32_t data_length =
       REF_LEN_RX_BUFF -
-      __HAL_DMA_GET_COUNTER(BSP_UART_GetHandle(BSP_UART_REF)->hdmarx);
+      __HAL_DMA_GET_COUNTER(bsp_uart_get_handle(BSP_UART_REF)->hdmarx);
 
   const uint8_t *index = rxbuf; /* const 保护原始rxbuf不被修改 */
   const uint8_t *const rxbuf_end = rxbuf + data_length;
@@ -590,10 +590,10 @@ int8_t referee_pack_ui_packet(referee_t *ref) {
   ui_del_t del;
 
   referee_student_cmd_id_t ui_cmd_id;
-  static const size_t kSIZE_DATA_HEADER =
+  static const size_t ksize_data_header =
       sizeof(referee_inter_student_header_t);
   size_t size_data_content;
-  static const size_t kSIZE_PACKET_CRC = sizeof(uint16_t);
+  static const size_t ksize_packet_crc = sizeof(uint16_t);
   void *source = NULL;
 
   if (!ui_pop_del(&(ref->ui), &del)) {
@@ -635,26 +635,26 @@ int8_t referee_pack_ui_packet(referee_t *ref) {
   }
 
   ref->packet.size =
-      sizeof(Referee_UiPacketHead_t) + size_data_content + kSIZE_PACKET_CRC;
+      sizeof(referee_ui_packet_head_t) + size_data_content + ksize_packet_crc;
 
   ref->packet.data = pvPortMalloc(ref->packet.size);
 
-  Referee_UiPacketHead_t *packet_head =
-      (Referee_UiPacketHead_t *)(ref->packet.data);
+  referee_ui_packet_head_t *packet_head =
+      (referee_ui_packet_head_t *)(ref->packet.data);
 
-  Referee_SetPacketHeader(&(packet_head->header),
-                          kSIZE_DATA_HEADER + (uint16_t)size_data_content);
+  referee_set_packet_header(&(packet_head->header),
+                          ksize_data_header + (uint16_t)size_data_content);
   packet_head->cmd_id = REF_CMD_ID_INTER_STUDENT;
-  Referee_SetUiHeader(&(packet_head->student_header), ui_cmd_id,
+  referee_set_ui_header(&(packet_head->student_header), ui_cmd_id,
                       ref->robot_status.robot_id);
-  memcpy(ref->packet.data + sizeof(Referee_UiPacketHead_t), source,
+  memcpy(ref->packet.data + sizeof(referee_ui_packet_head_t), source,
          size_data_content);
 
   vPortFree(ele);
   uint16_t *crc =
-      (uint16_t *)(ref->packet.data + ref->packet.size - kSIZE_PACKET_CRC);
+      (uint16_t *)(ref->packet.data + ref->packet.size - ksize_packet_crc);
   *crc = crc16_calc((const uint8_t *)ref->packet.data,
-                    ref->packet.size - kSIZE_PACKET_CRC, CRC16_INIT);
+                    ref->packet.size - ksize_packet_crc, CRC16_INIT);
 
   return DEVICE_OK;
 }
@@ -664,7 +664,7 @@ int8_t referee_start_transmit(referee_t *ref) {
     xSemaphoreGive(ref->sem.packet_sent);
     return DEVICE_ERR_NULL;
   }
-  if (HAL_UART_Transmit_DMA(BSP_UART_GetHandle(BSP_UART_REF), ref->packet.data,
+  if (HAL_UART_Transmit_DMA(bsp_uart_get_handle(BSP_UART_REF), ref->packet.data,
                             (uint16_t)ref->packet.size) == HAL_OK) {
     return DEVICE_OK;
   }

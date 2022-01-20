@@ -4,7 +4,7 @@
 
 #include "hal.h"
 
-void BSP_Flash_EraseSector(uint32_t sector) {
+void bsp_flash_erase_sector(uint32_t sector) {
   FLASH_EraseInitTypeDef flash_erase;
   uint32_t sector_error;
 
@@ -26,7 +26,7 @@ void BSP_Flash_EraseSector(uint32_t sector) {
   }
 }
 
-void BSP_Flash_WriteBytes(uint32_t address, const uint8_t *buf, size_t len) {
+void bsp_flash_write_bytes(uint32_t address, const uint8_t *buf, size_t len) {
   HAL_FLASH_Unlock();
   while (len > 0) {
     while (FLASH_WaitForLastOperation(50) != HAL_OK)
@@ -39,6 +39,6 @@ void BSP_Flash_WriteBytes(uint32_t address, const uint8_t *buf, size_t len) {
   HAL_FLASH_Lock();
 }
 
-void BSP_Flash_ReadBytes(uint32_t address, void *buf, size_t len) {
+void bsp_flash_read_bytes(uint32_t address, void *buf, size_t len) {
   memcpy(buf, (void *)address, len);
 }

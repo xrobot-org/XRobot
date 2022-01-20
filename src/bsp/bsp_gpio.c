@@ -3,12 +3,12 @@
 #include "comp_utils.h"
 #include "hal.h"
 
-static BSP_Callback_t callback_list[16];
+static bsp_callback_t callback_list[16];
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   for (uint8_t i = 0; i < 16; i++) {
     if (GPIO_Pin & (1 << i)) {
-      BSP_Callback_t cb = callback_list[i];
+      bsp_callback_t cb = callback_list[i];
 
       if (cb.fn) {
         cb.fn(cb.arg);
@@ -17,7 +17,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   }
 }
 
-int8_t BSP_GPIO_RegisterCallback(uint16_t pin, void (*callback)(void *),
+int8_t bsp_gpio_register_callback(uint16_t pin, void (*callback)(void *),
                                  void *callback_arg) {
   ASSERT(callback);
 
@@ -31,7 +31,7 @@ int8_t BSP_GPIO_RegisterCallback(uint16_t pin, void (*callback)(void *),
   return BSP_ERR;
 }
 
-int8_t BSP_GPIO_EnableIRQ(uint16_t pin) {
+int8_t bsp_gpio_enable_irq(uint16_t pin) {
   switch (pin) {
     case ACCL_INT_Pin:
       HAL_NVIC_EnableIRQ(ACCL_INT_EXTI_IRQn);
@@ -60,7 +60,7 @@ int8_t BSP_GPIO_EnableIRQ(uint16_t pin) {
   return BSP_OK;
 }
 
-int8_t BSP_GPIO_DisableIRQ(uint16_t pin) {
+int8_t bsp_gpio_disable_irq(uint16_t pin) {
   switch (pin) {
     case ACCL_INT_Pin:
       HAL_NVIC_DisableIRQ(ACCL_INT_EXTI_IRQn);

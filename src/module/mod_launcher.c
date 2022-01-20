@@ -22,7 +22,7 @@
  * @param l 包含发射器数据的结构体
  * @param mode 要设置的模式
  */
-static void Launcher_SetMode(launcher_t *l, launcher_mode_t mode) {
+static void launcher_set_mode(launcher_t *l, launcher_mode_t mode) {
   ASSERT(l);
 
   if (mode == l->mode) return;
@@ -58,7 +58,7 @@ static void Launcher_SetMode(launcher_t *l, launcher_mode_t mode) {
  * @param l 包含发射器数据的结构体
  * @param l_ref 发射器所需裁判系统数据
  */
-static void Launcher_HeatLimit(launcher_t *l, referee_for_launcher_t *l_ref) {
+static void launcher_heat_limit(launcher_t *l, referee_for_launcher_t *l_ref) {
   ASSERT(l);
   ASSERT(l_ref);
   launcher_heat_ctrl_t *hc = &(l->heat_ctrl);
@@ -129,8 +129,8 @@ void launcher_init(launcher_t *l, const launcher_params_t *param,
                             param->low_pass_cutoff_freq.out.trig);
   }
 
-  BSP_PWM_Start(BSP_PWM_LAUNCHER_SERVO);
-  BSP_PWM_Set(BSP_PWM_LAUNCHER_SERVO, param->cover_close_duty);
+  bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
+  bsp_pwm_set(BSP_PWM_LAUNCHER_SERVO, param->cover_close_duty);
 }
 
 /**
@@ -178,8 +178,8 @@ void launcher_control(launcher_t *l, cmd_launcher_t *l_cmd,
   l->dt = (float)(now - l->lask_wakeup) / 1000.0f;
   l->lask_wakeup = now;
 
-  Launcher_SetMode(l, l_cmd->mode); /* 设置发射器模式 */
-  Launcher_HeatLimit(l, l_ref);     /* 热量控制 */
+  launcher_set_mode(l, l_cmd->mode); /* 设置发射器模式 */
+  launcher_heat_limit(l, l_ref);     /* 热量控制 */
 
   /* 根据开火模式计算发射行为 */
   l->fire_ctrl.fire_mode = l_cmd->fire_mode;
@@ -271,7 +271,7 @@ void launcher_control(launcher_t *l, cmd_launcher_t *l_cmd,
       for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
         l->fric_out[i] = 0.0f;
       }
-      BSP_PWM_Stop(BSP_PWM_LAUNCHER_SERVO);
+      bsp_pwm_stop(BSP_PWM_LAUNCHER_SERVO);
       break;
 
     case LAUNCHER_MODE_SAFE:
@@ -302,11 +302,11 @@ void launcher_control(launcher_t *l, cmd_launcher_t *l_cmd,
 
       /* 根据弹仓盖开关状态更新弹舱盖打开时舵机PWM占空比 */
       if (l_cmd->cover_open) {
-        BSP_PWM_Start(BSP_PWM_LAUNCHER_SERVO);
-        BSP_PWM_Set(BSP_PWM_LAUNCHER_SERVO, l->param->cover_open_duty);
+        bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
+        bsp_pwm_set(BSP_PWM_LAUNCHER_SERVO, l->param->cover_open_duty);
       } else {
-        BSP_PWM_Start(BSP_PWM_LAUNCHER_SERVO);
-        BSP_PWM_Set(BSP_PWM_LAUNCHER_SERVO, l->param->cover_close_duty);
+        bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
+        bsp_pwm_set(BSP_PWM_LAUNCHER_SERVO, l->param->cover_close_duty);
       }
       break;
   }

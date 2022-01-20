@@ -4,7 +4,7 @@
 #include "stm32f4xx_hal.h"
 #include "task.h"
 
-int8_t BSP_Delay(uint32_t ms) {
+int8_t bsp_delay(uint32_t ms) {
   switch (xTaskGetSchedulerState()) {
     case taskSCHEDULER_NOT_STARTED:
       HAL_Delay(ms);

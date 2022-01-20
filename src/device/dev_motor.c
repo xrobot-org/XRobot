@@ -1,8 +1,9 @@
+#include "dev_motor.h"
+
 #include <stdbool.h>
 #include <string.h>
 
 #include "comp_utils.h"
-#include "dev_motor.h"
 
 /* 电机最大控制输出绝对值 */
 #define GM6020_MAX_ABS_LSB (30000)
@@ -40,7 +41,7 @@ static bool motor_tx_map[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 //   GM6020_YAW_ID = 0x209, /* 5 */
 //   GM6020_PIT_ID = 0x20A, /* 6 */
 
-static float Motor_ModelToLSB(motor_model_t model) {
+static float motor_model_to_lsb(motor_model_t model) {
   switch (model) {
     case MOTOR_M2006:
       return (float)M2006_MAX_ABS_LSB;
@@ -87,7 +88,7 @@ static uint32_t motor_get_tx_data_offset(motor_model_t model,
   }
 }
 
-static err_t Motor_Decode(motor_feedback_t *fb, const uint8_t *raw) {
+static err_t motor_decode(motor_feedback_t *fb, const uint8_t *raw) {
   ASSERT(fb);
   ASSERT(raw);
 
@@ -121,8 +122,8 @@ err_t motor_init(motor_t *motor, const motor_group_t *group_cfg) {
   const motor_group_t *group = motor->group_cfg;
   for (int i = 0; i < MOTOR_GROUP_ID_NUM; i++) {
     motor->msgq[i] = xQueueCreate(1, sizeof(can_rx_item_t));
-    BSP_CAN_RegisterSubscriber(group->can, group->id_feedback, group->num,
-                               motor_rx_callback, motor->msgq[i]);
+    bsp_can_register_subscriber(group->can, group->id_feedback, group->num,
+                                motor_rx_callback, motor->msgq[i]);
     group++;
   }
 
@@ -138,7 +139,7 @@ err_t motor_update(motor_t *motor, uint32_t timeout) {
            xQueueReceive(motor->msgq[i], &pack, pdMS_TO_TICKS(timeout))) {
       if ((pack.index < motor->group_cfg[i].num) &&
           (MOTOR_NONE != motor->group_cfg[i].model[pack.index]))
-        Motor_Decode(&(motor->feedback[i].as_array[pack.index]), pack.data);
+        motor_decode(&(motor->feedback[i].as_array[pack.index]), pack.data);
       break;
     }
   }
@@ -168,7 +169,7 @@ err_t motor_pack_data(motor_t *motor, motor_group_id_t group,
       motor->group_cfg[group].id_control);
 
   for (size_t i = 0; i < motor->group_cfg[group].num; i++) {
-    float lsb = Motor_ModelToLSB(motor->group_cfg[group].model[i]);
+    float lsb = motor_model_to_lsb(motor->group_cfg[group].model[i]);
 
     if (lsb) {
       motor_data = (int16_t)(output->as_array[i] * lsb);

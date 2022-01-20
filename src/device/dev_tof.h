@@ -22,7 +22,7 @@ typedef enum {
 } tof_number_t;
 
 typedef struct {
-  BSP_CAN_t can;
+  bsp_can_t can;
   uint32_t index;
   uint32_t num;
 } tof_param_t;

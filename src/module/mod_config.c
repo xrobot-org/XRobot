@@ -687,7 +687,7 @@ static const config_pilot_cfg_map_t pilot_cfg_map[] = {
  * @param cfg 配置信息
  */
 void config_get(config_t *cfg) {
-  BSP_Flash_ReadBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(*cfg));
+  bsp_flash_read_bytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(*cfg));
 
   cfg->pilot_cfg = config_get_pilot_cfg(cfg->pilot_cfg_name);
   cfg->robot_param = config_get_robot_param(cfg->robot_param_name);
@@ -721,8 +721,8 @@ void config_get(config_t *cfg) {
  */
 void config_set(config_t *cfg) {
   vTaskSuspendAll();
-  BSP_Flash_EraseSector(11);
-  BSP_Flash_WriteBytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(*cfg));
+  bsp_flash_erase_sector(11);
+  bsp_flash_write_bytes(CONFIG_BASE_ADDRESS, (uint8_t *)cfg, sizeof(*cfg));
   xTaskResumeAll();
 }
 

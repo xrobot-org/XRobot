@@ -13,4 +13,7 @@
     "files.trimFinalNewlines": true,
     "editor.trimAutoWhitespace": true,
     "files.autoSave": "onFocusChange",
+    "files.associations": {
+        "thd.h": "c"
+    },
 }

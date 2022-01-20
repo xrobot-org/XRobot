@@ -44,7 +44,7 @@ static const float kCAP_PERCENTAGE_NO_LIM =
     (float)_CAP_PERCENTAGE_NO_LIM / 100.0f;
 static const float kCAP_PERCENTAGE_WORK = (float)_CAP_PERCENTAGE_WORK / 100.0f;
 
-bool Motor_RefDataValid(const referee_for_chassis_t *ref) {
+bool motor_ref_data_valid(const referee_for_chassis_t *ref) {
   return (ref->chassis_power_limit > 0.0f) && (ref->chassis_pwr_buff > 0.0f) &&
          (ref->chassis_watt > 0.0f);
 }
@@ -55,7 +55,7 @@ bool Motor_RefDataValid(const referee_for_chassis_t *ref) {
  * @param c 包含底盘数据的结构体
  * @param mode 要设置的模式
  */
-static void Chassis_SetMode(chassis_t *c, chassis_mode_t mode, uint32_t now) {
+static void chassis_set_mode(chassis_t *c, chassis_mode_t mode, uint32_t now) {
   ASSERT(c);                   /* 主结构体不能为空 */
   if (mode == c->mode) return; /* 模式未改变直接返回 */
 
@@ -79,7 +79,7 @@ static void Chassis_SetMode(chassis_t *c, chassis_mode_t mode, uint32_t now) {
  * @param now ctrl_chassis的tick数
  * @return float wz
  */
-static float Chassis_CalcWz(const float lo, const float hi, uint32_t now) {
+static float chassis_calc_wz(const float lo, const float hi, uint32_t now) {
   float wz_vary = fabsf(0.2f * sinf(ROTOR_OMEGA * (float)now)) + lo;
   clampf(&wz_vary, lo, hi);
   return wz_vary;
@@ -224,7 +224,7 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
   c->lask_wakeup = now;
 
   /* 根据遥控器命令更改底盘模式 */
-  Chassis_SetMode(c, c_cmd->mode, now);
+  chassis_set_mode(c, c_cmd->mode, now);
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
   /* 计算vx、vy */
   switch (c->mode) {
@@ -256,6 +256,12 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
       break;
   }
 
+  /*哨兵底盘电机反装*/
+  if (c->param->reverse.chassis_motor) {
+    c->move_vec.vy = -c->move_vec.vy;
+    c->move_vec.vx = -c->move_vec.vx;
+  }
+
   /* 计算wz */
   switch (c->mode) {
     case CHASSIS_MODE_RELAX:
@@ -277,8 +283,10 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
       break;
     case CHASSIS_MODE_ROTOR: { /* 小陀螺模式使底盘以一定速度旋转 */
       c->move_vec.wz =
-          c->wz_dir_mult * Chassis_CalcWz(ROTOR_WZ_MIN, ROTOR_WZ_MAX, now);
+          c->wz_dir_mult * chassis_calc_wz(ROTOR_WZ_MIN, ROTOR_WZ_MAX, now);
     }
+    case CHASSIS_MODE_SCAN:
+      break;
   }
 
   /* move_vec -> motor_rpm_set. 通过运动向量计算轮子转速目标值 */
@@ -311,7 +319,7 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
       case CHASSIS_MODE_RELAX: /* 放松模式,不输出 */
         c->out.motor.as_array[i] = 0;
         break;
-      case CHASSIS_MODE_FREE:
+      case CHASSIS_MODE_SCAN:
         break;
     }
     /* 输出滤波. */
@@ -360,7 +368,7 @@ void chassis_power_limit(chassis_t *c, const cap_feedback_t *cap,
   limit_chassic_output_power(power_limit, c->out.motor.as_array,
                              c->feedback.motor_rotational_speed, c->num_wheel);
 
-  if (!Motor_RefDataValid(ref)) {
+  if (!motor_ref_data_valid(ref)) {
     /* 当裁判系统离线时，依然使用裁判系统进程传来的数据 */
     c->out.cap.power_limit = ref->chassis_power_limit;
   } else {

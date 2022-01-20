@@ -4,11 +4,11 @@
 
 #include "comp_utils.h"
 
-static CAN_Group_t can_groups[BSP_CAN_NUM];
+static can_group_t can_groups[BSP_CAN_NUM];
 
-static BSP_Callback_t callback_list[BSP_CAN_NUM][BSP_CAN_CB_NUM];
+static bsp_callback_t callback_list[BSP_CAN_NUM][BSP_CAN_CB_NUM];
 
-static BSP_CAN_t CAN_Get(CAN_HandleTypeDef *hcan) {
+static bsp_can_t can_get(CAN_HandleTypeDef *hcan) {
   if (hcan->Instance == CAN2)
     return BSP_CAN_2;
   else if (hcan->Instance == CAN1)
@@ -17,11 +17,11 @@ static BSP_CAN_t CAN_Get(CAN_HandleTypeDef *hcan) {
     return BSP_CAN_ERR;
 }
 
-static void BSP_CAN_Callback(BSP_CAN_Callback_t cb_type,
+static void bsp_can_callback(bsp_can_callback_t cb_type,
                              CAN_HandleTypeDef *hcan) {
-  BSP_CAN_t bsp_can = CAN_Get(hcan);
+  bsp_can_t bsp_can = can_get(hcan);
   if (bsp_can != BSP_CAN_ERR) {
-    BSP_Callback_t cb = callback_list[bsp_can][cb_type];
+    bsp_callback_t cb = callback_list[bsp_can][cb_type];
 
     if (cb.fn) {
       cb.fn(cb.arg);
@@ -30,58 +30,58 @@ static void BSP_CAN_Callback(BSP_CAN_Callback_t cb_type,
 }
 
 void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan) {
-  BSP_CAN_Callback(HAL_CAN_TX_MAILBOX0_CPLT_CB, hcan);
+  bsp_can_callback(HAL_CAN_TX_MAILBOX0_CPLT_CB, hcan);
 }
 
 void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan) {
-  BSP_CAN_Callback(HAL_CAN_TX_MAILBOX1_CPLT_CB, hcan);
+  bsp_can_callback(HAL_CAN_TX_MAILBOX1_CPLT_CB, hcan);
 }
 
 void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan) {
-  BSP_CAN_Callback(HAL_CAN_TX_MAILBOX2_CPLT_CB, hcan);
+  bsp_can_callback(HAL_CAN_TX_MAILBOX2_CPLT_CB, hcan);
 }
 
 void HAL_CAN_TxMailbox0AbortCallback(CAN_HandleTypeDef *hcan) {
-  BSP_CAN_Callback(HAL_CAN_TX_MAILBOX0_ABORT_CB, hcan);
+  bsp_can_callback(HAL_CAN_TX_MAILBOX0_ABORT_CB, hcan);
 }
 
 void HAL_CAN_TxMailbox1AbortCallback(CAN_HandleTypeDef *hcan) {
-  BSP_CAN_Callback(HAL_CAN_TX_MAILBOX1_ABORT_CB, hcan);
+  bsp_can_callback(HAL_CAN_TX_MAILBOX1_ABORT_CB, hcan);
 }
 
 void HAL_CAN_TxMailbox2AbortCallback(CAN_HandleTypeDef *hcan) {
-  BSP_CAN_Callback(HAL_CAN_TX_MAILBOX2_ABORT_CB, hcan);
+  bsp_can_callback(HAL_CAN_TX_MAILBOX2_ABORT_CB, hcan);
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
-  BSP_CAN_Callback(HAL_CAN_RX_FIFO0_MSG_PENDING_CB, hcan);
+  bsp_can_callback(HAL_CAN_RX_FIFO0_MSG_PENDING_CB, hcan);
 }
 
 void HAL_CAN_RxFifo0FullCallback(CAN_HandleTypeDef *hcan) {
-  BSP_CAN_Callback(HAL_CAN_RX_FIFO0_FULL_CB, hcan);
+  bsp_can_callback(HAL_CAN_RX_FIFO0_FULL_CB, hcan);
 }
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) {
-  BSP_CAN_Callback(HAL_CAN_RX_FIFO1_MSG_PENDING_CB, hcan);
+  bsp_can_callback(HAL_CAN_RX_FIFO1_MSG_PENDING_CB, hcan);
 }
 
 void HAL_CAN_RxFifo1FullCallback(CAN_HandleTypeDef *hcan) {
-  BSP_CAN_Callback(HAL_CAN_RX_FIFO1_FULL_CB, hcan);
+  bsp_can_callback(HAL_CAN_RX_FIFO1_FULL_CB, hcan);
 }
 
 void HAL_CAN_SleepCallback(CAN_HandleTypeDef *hcan) {
-  BSP_CAN_Callback(HAL_CAN_SLEEP_CB, hcan);
+  bsp_can_callback(HAL_CAN_SLEEP_CB, hcan);
 }
 
 void HAL_CAN_WakeUpFromRxMsgCallback(CAN_HandleTypeDef *hcan) {
-  BSP_CAN_Callback(HAL_CAN_WAKEUP_FROM_RX_MSG_CB, hcan);
+  bsp_can_callback(HAL_CAN_WAKEUP_FROM_RX_MSG_CB, hcan);
 }
 
 void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
-  BSP_CAN_Callback(HAL_CAN_ERROR_CB, hcan);
+  bsp_can_callback(HAL_CAN_ERROR_CB, hcan);
 }
 
-CAN_HandleTypeDef *BSP_CAN_GetHandle(BSP_CAN_t can) {
+CAN_HandleTypeDef *bsp_can_get_handle(bsp_can_t can) {
   switch (can) {
     case BSP_CAN_2:
       return &hcan2;
@@ -92,8 +92,8 @@ CAN_HandleTypeDef *BSP_CAN_GetHandle(BSP_CAN_t can) {
   }
 }
 
-int8_t BSP_CAN_RegisterCallback(BSP_CAN_t can, BSP_CAN_Callback_t type,
-                                void (*callback)(void *), void *callback_arg) {
+int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
+                                 void (*callback)(void *), void *callback_arg) {
   ASSERT(callback);
   ASSERT(type != BSP_CAN_CB_NUM);
 
@@ -102,10 +102,10 @@ int8_t BSP_CAN_RegisterCallback(BSP_CAN_t can, BSP_CAN_Callback_t type,
   return BSP_OK;
 }
 
-int8_t BSP_CAN_RegisterSubscriber(BSP_CAN_t can, uint32_t index,
-                                  uint32_t number,
-                                  void (*cb)(can_rx_item_t *, void *),
-                                  void *callback_arg) {
+int8_t bsp_can_register_subscriber(bsp_can_t can, uint32_t index,
+                                   uint32_t number,
+                                   void (*cb)(can_rx_item_t *, void *),
+                                   void *callback_arg) {
   ASSERT(cb);
 
   if (can_groups[can].suber_number >= CAN_MAX_SUBER_NUMBER) return BSP_ERR;
@@ -120,7 +120,7 @@ int8_t BSP_CAN_RegisterSubscriber(BSP_CAN_t can, uint32_t index,
   return BSP_OK;
 }
 
-int8_t BSP_CAN_PublishData(BSP_CAN_t can, uint32_t StdId, uint8_t *data) {
+int8_t bsp_can_publish_data(bsp_can_t can, uint32_t StdId, uint8_t *data) {
   for (int i = 0; i < can_groups[can].suber_number; i++) {
     uint32_t index = StdId - can_groups[can].suber[i].index;
     if (index < can_groups[can].suber[i].number) {
@@ -134,7 +134,7 @@ int8_t BSP_CAN_PublishData(BSP_CAN_t can, uint32_t StdId, uint8_t *data) {
   return BSP_ERR;
 }
 
-int8_t can_trans_packet(BSP_CAN_t can, uint32_t StdId, uint8_t *data,
+int8_t can_trans_packet(bsp_can_t can, uint32_t StdId, uint8_t *data,
                         uint32_t *mailbox) {
   CAN_TxHeaderTypeDef header;
   header.StdId = StdId;
@@ -143,7 +143,7 @@ int8_t can_trans_packet(BSP_CAN_t can, uint32_t StdId, uint8_t *data,
   header.TransmitGlobalTime = DISABLE;
   header.DLC = 8;
 
-  if (HAL_CAN_AddTxMessage(BSP_CAN_GetHandle(can), &header, data, mailbox) ==
+  if (HAL_CAN_AddTxMessage(bsp_can_get_handle(can), &header, data, mailbox) ==
       HAL_OK)
     return BSP_OK;
   else
