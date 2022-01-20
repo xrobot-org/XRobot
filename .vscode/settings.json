@@ -13,7 +13,4 @@
     "files.trimFinalNewlines": true,
     "editor.trimAutoWhitespace": true,
     "files.autoSave": "onFocusChange",
-    "files.associations": {
-        "dev_cap.h": "c"
-    },
 }
