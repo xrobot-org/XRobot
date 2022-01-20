@@ -15,6 +15,7 @@
 
 #define REF_HEADER_SOF (0xA5)
 #define REF_LEN_RX_BUFF (0xFF)
+#define REF_LEN_TX_BUFF (0xFF)
 
 // TODO:FREQ支持小数
 #define REF_UI_FAST_REFRESH_FREQ (50) /* 静态元素刷新频率 */
@@ -46,6 +47,7 @@ typedef struct __packed {
 } referee_ui_packet_head_t;
 
 static uint8_t rxbuf[REF_LEN_RX_BUFF];
+static uint8_t txbuf[REF_LEN_TX_BUFF];
 
 static referee_t *gref;
 
@@ -660,11 +662,10 @@ int8_t referee_pack_ui_packet(referee_t *ref) {
 }
 
 int8_t referee_start_transmit(referee_t *ref) {
-  if (ref->packet.data == NULL) {
-    xSemaphoreGive(ref->sem.packet_sent);
-    return DEVICE_ERR_NULL;
-  }
-  if (HAL_UART_Transmit_DMA(bsp_uart_get_handle(BSP_UART_REF), ref->packet.data,
+  memcpy(txbuf, ref->packet.data, ref->packet.size);
+  vPortFree(ref->packet.data);
+
+  if (HAL_UART_Transmit_DMA(bsp_uart_get_handle(BSP_UART_REF), txbuf,
                             (uint16_t)ref->packet.size) == HAL_OK) {
     return DEVICE_OK;
   }
@@ -705,14 +706,14 @@ uint8_t referee_pack_for_ai(referee_for_ai_t *ai_ref, const referee_t *ref) {
 
   switch (ref->game_status.game_type) {
     case REF_GAME_TYPE_RMUC:
-      ai_ref->game_type == REF_GAME_TYPE_RMUC;
+      ai_ref->game_type = REF_GAME_TYPE_RMUC;
       break;
     case REF_GAME_TYPE_RMUT:
-      ai_ref->game_type == REF_GAME_TYPE_RMUT;
+      ai_ref->game_type = REF_GAME_TYPE_RMUT;
       break;
     case REF_GAME_TYPE_RMUL_3V3:
     case REF_GAME_TYPE_RMUL_1V1:
-      ai_ref->game_type == REF_GAME_TYPE_RMUL_3V3;
+      ai_ref->game_type = REF_GAME_TYPE_RMUL_3V3;
       break;
     default:
       return DEVICE_ERR;
