@@ -78,6 +78,7 @@ typedef struct {
   } feedback;
 
   float wz_dir_mult; /* 小陀螺模式旋转方向乘数 */
+  float vy_dir_mult; /* scan模式移动方向乘数 */
 
   /* PID计算的目标值 */
   struct {
@@ -100,6 +101,7 @@ typedef struct {
   struct {
     motor_control_t motor;
     cap_control_t cap;
+    tof_t tof;
   } out;
 } chassis_t;
 
