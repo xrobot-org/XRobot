@@ -13,6 +13,10 @@ typedef struct {
 } bmi088_cali_t;         /* BMI088校准数据 */
 
 typedef struct {
+  bool inverted;
+} bmi088_param_t;
+
+typedef struct {
   struct {
     SemaphoreHandle_t gyro_new;
     SemaphoreHandle_t accl_new;
@@ -26,9 +30,12 @@ typedef struct {
   float temp; /* 温度 */
 
   const bmi088_cali_t *cali;
+
+  const bmi088_param_t *param;
 } bmi088_t;
 
-int8_t bmi088_init(bmi088_t *bmi088, const bmi088_cali_t *cali);
+int8_t bmi088_init(bmi088_t *bmi088, const bmi088_cali_t *cali,
+                   const bmi088_param_t *param);
 int8_t bmi088_restart(void);
 
 /* Sensor use right-handed coordinate system. */

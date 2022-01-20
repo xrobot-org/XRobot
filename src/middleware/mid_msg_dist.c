@@ -9,7 +9,7 @@
 #include "semphr.h"
 #include "task.h"
 
-#define MAX_NAME_LEN (20)
+#define MAX_NAME_LEN (25)
 #define MAX_TOPIC (40)           /* topic上限数量 */
 #define MAX_SUBS_TO_ONE_TPIC (5) /* 每个topic的subscriber上限 */
 
@@ -157,7 +157,7 @@ bool msg_dist_publish_from_isr(publisher_t *publisher, const void *data,
 subscriber_t *msg_dist_subscribe(const char *topic_name, bool wait_topic) {
   ASSERT(topic_name);
   do {
-    for (size_t i = 0; i < MAX_TOPIC; i++) {
+    for (size_t i = 0; i < md.topic_created; i++) {
       msg_dist_topic_t *topic = md.topic_list + i;
       if (strncmp(topic->name, topic_name, MAX_NAME_LEN) == 0) {
         for (size_t j = 0; j < MAX_SUBS_TO_ONE_TPIC; j++) {
@@ -214,7 +214,7 @@ void msg_dist_distribute(void) {
   QueueSetMemberHandle_t actived =
       xQueueSelectFromSet(md.topic_queue_set, portMAX_DELAY);
 
-  for (size_t i = 0; i < MAX_TOPIC; i++) {
+  for (size_t i = 0; i < md.topic_created; i++) {
     msg_dist_topic_t *topic = md.topic_list + i;
 
     /* 确认话题发布者 */

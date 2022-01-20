@@ -154,6 +154,10 @@ static const config_robot_param_t param_default = {
     .min_launch_delay = (uint32_t)(1000.0f / 20.0f),
   }, /* launcher */
 
+  .imu = {
+    .inverted = false,
+  }, /* imu */
+
   .motor = {
     [MOTOR_GROUP_ID_CHASSIS] = {
       .id_feedback = 0x201,
@@ -181,7 +185,7 @@ static const config_robot_param_t param_default = {
       .id_control = GM6020_CTRL_ID_EXTAND,
       .model = {MOTOR_GM6020, MOTOR_NONE, MOTOR_NONE, MOTOR_NONE},
       .num = 1,
-      .can = BSP_CAN_2,
+      .can = BSP_CAN_1,
     },
     [MOTOR_GROUP_ID_GIMBAL_PIT] = {
       .id_feedback = 0x20A,
@@ -345,6 +349,10 @@ static const config_robot_param_t param_hero = {
     .min_launch_delay = (uint32_t)(1000.0f / 20.0f),
   }, /* launcher */
 
+  .imu = {
+    .inverted = false,
+  }, /* imu */
+
   .motor = {
     [MOTOR_GROUP_ID_CHASSIS] = {
       .id_feedback = 0x201,
@@ -403,7 +411,7 @@ config_robot_param_t param_sentry = {
     .type = CHASSIS_TYPE_SINGLE,
 
     .motor_pid_param = {
-      .k = 0.00001f,
+      .k = 0.0001f,
       .p = 1.0f,
       .i = 0.001f,
       .d = 0.0f,
@@ -430,7 +438,7 @@ config_robot_param_t param_sentry = {
     },
 
     .reverse = {
-      .yaw = true,
+      .yaw = false,
     },
   }, /* chassis */
 
@@ -438,9 +446,9 @@ config_robot_param_t param_sentry = {
     .pid = {
       {
         /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-        .k = 0.005f,
+        .k = 0.1f,
         .p = 1.0f,
-        .i = 0.002f,
+        .i = 0.4f,
         .d = 0.0f,
         .i_limit = 1.0f,
         .out_limit = 1.0f,
@@ -458,9 +466,9 @@ config_robot_param_t param_sentry = {
         .range = M_2PI,
       }, {
         /* GIMBAL_CTRL_PIT_OMEGA_IDX */
-        .k = 0.051f,
+        .k = 0.2f,
         .p = 1.0f,
-        .i = 0.0f,
+        .i = 1.0f,
         .d = 0.0f,
         .i_limit = 1.0f,
         .out_limit = 1.0f,
@@ -479,7 +487,7 @@ config_robot_param_t param_sentry = {
       },
     }, /* pid */
 
-    .pitch_travel_rad = 0.48f,
+    .pitch_travel_rad = 0.43f,
 
     .low_pass_cutoff_freq = {
       .out = -1.0f,
@@ -487,8 +495,8 @@ config_robot_param_t param_sentry = {
     },
 
     .reverse = {
-      .yaw = true,
-      .pit = true,
+      .yaw = false,
+      .pit = false,
     },
   }, /* gimbal */
 
@@ -505,7 +513,7 @@ config_robot_param_t param_sentry = {
     },
 
     .trig_pid_param = {
-      .k = 0.5f,
+      .k = 4.5f,
       .p = 1.0f,
       .i = 0.0f,
       .d = 0.032f,
@@ -526,15 +534,19 @@ config_robot_param_t param_sentry = {
       },
     },
 
-    .num_trig_tooth = 6.0f,
-    .trig_gear_ratio = 3591.0f / 187.0f,
+    .num_trig_tooth = 8.0f,
+    .trig_gear_ratio = 36.0f,
     .fric_radius = 0.03f,
     .cover_open_duty = 0.125f,
     .cover_close_duty = 0.075f,
     .model = LAUNCHER_MODEL_17MM,
-    .default_bullet_speed = 16.0f,
+    .default_bullet_speed = 5.0f,
     .min_launch_delay = (uint32_t)(1000.0f / 20.0f),
   }, /* launcher */
+
+  .imu = {
+    .inverted = true,
+  }, /* imu */
 
   .motor = {
     [MOTOR_GROUP_ID_CHASSIS] = {

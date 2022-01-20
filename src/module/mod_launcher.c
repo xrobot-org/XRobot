@@ -28,12 +28,12 @@ static void launcher_set_mode(launcher_t *l, launcher_mode_t mode) {
   if (mode == l->mode) return;
 
   /* 切换模式后重置PID和滤波器 */
-  for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
+  for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
     kpid_reset(l->pid.fric + i);
     low_pass_filter_2p_reset(l->filter.in.fric + i, 0.0f);
     low_pass_filter_2p_reset(l->filter.out.fric + i, 0.0f);
   }
-  for (int i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
+  for (int i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
     kpid_reset(l->pid.trig + i);
     low_pass_filter_2p_reset(l->filter.in.trig + i, 0.0f);
     low_pass_filter_2p_reset(l->filter.out.trig + i, 0.0f);
