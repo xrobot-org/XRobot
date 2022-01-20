@@ -21,6 +21,8 @@
 typedef struct {
   robot_model_t model; /* 型号 */
 
+  bmi088_param_t imu;
+
   motor_group_t motor[MOTOR_GROUP_ID_NUM];
 
   chassis_params_t chassis;   /* 底盘 */

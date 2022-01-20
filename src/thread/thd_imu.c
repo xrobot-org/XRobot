@@ -40,7 +40,8 @@ void thd_imu(void* arg) {
       msg_dist_create_topic("gimbal_gyro", sizeof(vector3_t));
 
   /* 初始化设备 */
-  bmi088_init(&bmi088, &(runtime->cfg.cali.bmi088));
+  bmi088_init(&bmi088, &(runtime->cfg.cali.bmi088),
+              &(runtime->cfg.robot_param->imu));
 
   /* 初始化IMU温度控制PID，防止温漂 */
   kpid_init(&imu_temp_ctrl_pid, KPID_MODE_NO_D,

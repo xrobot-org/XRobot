@@ -736,4 +736,4 @@ void thd_cli(void *arg) {
     }
   }
 }
-THREAD_DECLEAR(thd_cli, 256, 1);
+THREAD_DECLEAR(thd_cli, 384, 1);

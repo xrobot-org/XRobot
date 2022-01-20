@@ -33,7 +33,7 @@ void thd_ctrl_launcher(void* arg) {
   publisher_t* out_pub_trig =
       msg_dist_create_topic("launcher_trig_out", sizeof(motor_control_t));
   publisher_t* ui_pub =
-      msg_dist_create_topic("launcher_ui", sizeof(ui_gimbal_t));
+      msg_dist_create_topic("launcher_ui", sizeof(ui_launcher_t));
 
   subscriber_t* motor_fric_sub =
       msg_dist_subscribe("launcher_fric_motor_fb", true);
@@ -72,4 +72,4 @@ void thd_ctrl_launcher(void* arg) {
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
-THREAD_DECLEAR(thd_ctrl_launcher, 256, 2);
+THREAD_DECLEAR(thd_ctrl_launcher, 384, 2);

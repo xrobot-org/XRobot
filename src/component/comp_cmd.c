@@ -302,6 +302,8 @@ int8_t cmd_init(cmd_t *cmd, const cmd_params_t *param) {
   ASSERT(cmd);
   ASSERT(param);
 
+  memset(cmd, 0, sizeof(*cmd));
+
   /* 设置机器人的命令参数，初始化控制方式为摇杆控制 */
   cmd->ctrl_method = CMD_METHOD_JOYSTICK_SWITCH;
   cmd->param = param;

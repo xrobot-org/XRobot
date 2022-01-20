@@ -2,7 +2,7 @@ set(CPU_FLAGS "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb")
 
 set(GENERAL_FLAGS "-Wall -Wextra -Wstack-usage=1024 --specs=nano.specs --specs=nosys.specs -u _printf_float -fno-builtin -ffunction-sections -fdata-sections")
 
-set(CMAKE_C_FLAGS "${CPU_FLAGS} ${GENERAL_FLAGS} -fshort-enums -ffast-math -fdiagnostics-color=auto")
+set(CMAKE_C_FLAGS "${CPU_FLAGS} ${GENERAL_FLAGS} -fshort-enums -fdiagnostics-color=auto")
 set(CMAKE_ASM_FLAGS "${CPU_FLAGS} -x assembler-with-cpp")
 
 # Linker Flag

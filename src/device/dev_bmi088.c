@@ -181,7 +181,8 @@ static void BMI088_GyroIntCallback(void *arg) {
   portYIELD_FROM_ISR(switch_required);
 }
 
-int8_t bmi088_init(bmi088_t *bmi088, const bmi088_cali_t *cali) {
+int8_t bmi088_init(bmi088_t *bmi088, const bmi088_cali_t *cali,
+                   const bmi088_param_t *param) {
   ASSERT(bmi088);
   ASSERT(cali);
 
@@ -194,6 +195,7 @@ int8_t bmi088_init(bmi088_t *bmi088, const bmi088_cali_t *cali) {
   bmi088->sem.accl_raw = xSemaphoreCreateBinary();
 
   bmi088->cali = cali;
+  bmi088->param = param;
 
   BMI_WriteSingle(BMI_ACCL, BMI088_REG_ACCL_SOFTRESET, 0xB6);
   BMI_WriteSingle(BMI_GYRO, BMI088_REG_GYRO_SOFTRESET, 0xB6);
@@ -322,6 +324,12 @@ int8_t bmi088_parse_accl(bmi088_t *bmi088) {
 
   bmi088->temp = (float)raw_temp * 0.125f + 23.0f;
 
+  if (bmi088->param->inverted) {
+    bmi088->accl.x = -bmi088->accl.x;
+    bmi088->accl.y = -bmi088->accl.y;
+    bmi088->accl.z = -bmi088->accl.z;
+  }
+
   return DEVICE_OK;
 }
 
@@ -359,6 +367,12 @@ int8_t bmi088_parse_gyro(bmi088_t *bmi088) {
   bmi088->gyro.x *= M_DEG2RAD_MULT;
   bmi088->gyro.y *= M_DEG2RAD_MULT;
   bmi088->gyro.z *= M_DEG2RAD_MULT;
+
+  if (bmi088->param->inverted) {
+    bmi088->gyro.x = -bmi088->gyro.x;
+    bmi088->gyro.y = -bmi088->gyro.y;
+    bmi088->gyro.z = -bmi088->gyro.z;
+  }
 
   bmi088->gyro.x -= bmi088->cali->gyro_offset.x;
   bmi088->gyro.y -= bmi088->cali->gyro_offset.y;
