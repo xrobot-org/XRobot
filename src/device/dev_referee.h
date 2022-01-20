@@ -52,6 +52,14 @@ typedef enum {
   REF_CMD_ID_KEYBOARD_MOUSE = 0x0304,
 } referee_cmd_id_t;
 
+typedef enum{
+  REF_GAME_TYPE_RMUC,
+  REF_GAME_TYPE_RMUT,
+  REF_GAME_TYPE_RMUA,
+  REF_GAME_TYPE_RMUL_3V3,
+  REF_GAME_TYPE_RMUL_1V1,
+} referee_game_type_t;
+
 typedef struct __packed {
   uint8_t game_type : 4;
   uint8_t game_progress : 4;
@@ -343,6 +351,7 @@ typedef struct {
 } referee_t;
 
 typedef struct {
+  uint8_t game_type;
   referee_status_t status;
   uint8_t team;
 } referee_for_ai_t;

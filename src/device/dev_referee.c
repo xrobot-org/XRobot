@@ -94,7 +94,7 @@ static void referee_slow_refresh_timer_callback(TimerHandle_t arg) {
 }
 
 static int8_t referee_set_packet_header(referee_header_t *header,
-                                      uint16_t data_length) {
+                                        uint16_t data_length) {
   header->sof = REF_HEADER_SOF;
   header->data_length = data_length;
   header->seq = 0;
@@ -105,8 +105,8 @@ static int8_t referee_set_packet_header(referee_header_t *header,
 }
 
 static int8_t referee_set_ui_header(referee_inter_student_header_t *header,
-                                  const referee_student_cmd_id_t cmd_id,
-                                  referee_robot_id_t robot_id) {
+                                    const referee_student_cmd_id_t cmd_id,
+                                    referee_robot_id_t robot_id) {
   header->cmd_id = cmd_id;
   header->id_sender = robot_id;
   if (robot_id > 100) {
@@ -135,13 +135,13 @@ int8_t referee_init(referee_t *ref, const ui_screen_t *screen) {
   xSemaphoreGive(ref->sem.packet_sent);
 
   bsp_uart_register_callback(BSP_UART_REF, BSP_UART_RX_CPLT_CB,
-                            referee_rx_cplt_callback, ref);
+                             referee_rx_cplt_callback, ref);
   bsp_uart_register_callback(BSP_UART_REF, BSP_UART_ABORT_RX_CPLT_CB,
-                            referee_abort_rx_cplt_callback, ref);
+                             referee_abort_rx_cplt_callback, ref);
   bsp_uart_register_callback(BSP_UART_REF, BSP_UART_IDLE_LINE_CB,
-                            referee_idle_line_callback, ref);
+                             referee_idle_line_callback, ref);
   bsp_uart_register_callback(BSP_UART_REF, BSP_UART_TX_CPLT_CB,
-                            referee_tx_cplt_callback, ref);
+                             referee_tx_cplt_callback, ref);
   ref->ui_fast_timer_id =
       xTimerCreate("fast_refresh", pdMS_TO_TICKS(REF_UI_FAST_REFRESH_FREQ),
                    pdTRUE, NULL, referee_fast_refresh_timer_callback);
@@ -554,9 +554,9 @@ uint8_t referee_refresh_ui(referee_t *ref) {
     ui_stash_string(&(ref->ui), &string);
 
     ui_draw_line(&ele, "5", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
-                UI_DEFAULT_WIDTH * 3, (uint16_t)(kW * 0.4f),
-                (uint16_t)(kH * 0.2f), (uint16_t)(kW * 0.4f),
-                (uint16_t)(kH * 0.2f + 50.f));
+                 UI_DEFAULT_WIDTH * 3, (uint16_t)(kW * 0.4f),
+                 (uint16_t)(kH * 0.2f), (uint16_t)(kW * 0.4f),
+                 (uint16_t)(kH * 0.2f + 50.f));
     ui_stash_graphic(&(ref->ui), &ele);
 
     ui_draw_string(&string, "d", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
@@ -643,10 +643,10 @@ int8_t referee_pack_ui_packet(referee_t *ref) {
       (referee_ui_packet_head_t *)(ref->packet.data);
 
   referee_set_packet_header(&(packet_head->header),
-                          ksize_data_header + (uint16_t)size_data_content);
+                            ksize_data_header + (uint16_t)size_data_content);
   packet_head->cmd_id = REF_CMD_ID_INTER_STUDENT;
   referee_set_ui_header(&(packet_head->student_header), ui_cmd_id,
-                      ref->robot_status.robot_id);
+                        ref->robot_status.robot_id);
   memcpy(ref->packet.data + sizeof(referee_ui_packet_head_t), source,
          size_data_content);
 
@@ -702,5 +702,20 @@ uint8_t referee_pack_for_ai(referee_for_ai_t *ai_ref, const referee_t *ref) {
     ai_ref->team = AI_TEAM_BLUE;
 
   ai_ref->status = ref->status;
+
+  switch (ref->game_status.game_type) {
+    case REF_GAME_TYPE_RMUC:
+      ai_ref->game_type == REF_GAME_TYPE_RMUC;
+      break;
+    case REF_GAME_TYPE_RMUT:
+      ai_ref->game_type == REF_GAME_TYPE_RMUT;
+      break;
+    case REF_GAME_TYPE_RMUL_3V3:
+    case REF_GAME_TYPE_RMUL_1V1:
+      ai_ref->game_type == REF_GAME_TYPE_RMUL_3V3;
+      break;
+    default:
+      return DEVICE_ERR;
+  }
   return DEVICE_OK;
 }

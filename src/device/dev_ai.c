@@ -122,6 +122,7 @@ int8_t ai_pack_ref_for_host(ai_t *ai, const referee_for_ai_t *ref) {
   RM_UNUSED(ref);
   ai->to_host.ref.id = AI_ID_REF;
   ai->to_host.ref.package.data.team = ref->team;
+  ai->to_host.ref.package.data.race = ref->game_type;
   ai->to_host.ref.package.crc16 = crc16_calc(
       (const uint8_t *)&(ai->to_host.ref.package),
       sizeof(ai->to_host.ref.package) - sizeof(uint16_t), CRC16_INIT);
