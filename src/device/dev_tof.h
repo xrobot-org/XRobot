@@ -7,7 +7,7 @@
 #include "comp_type.h"
 #include "queue.h"
 
-#define DEV_TOF_ID_BASE (0x280)
+#define DEV_TOF_ID_BASE (0x20c)
 
 typedef struct {
   float dist;

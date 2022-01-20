@@ -75,6 +75,7 @@ typedef struct {
   struct {
     float gimbal_yaw_encoder_angle; /* 云台Yaw轴编码器角度 */
     float *motor_rotational_speed; /* 电机转速的动态数组，单位：RPM */
+    tof_t tof;
   } feedback;
 
   float wz_dir_mult; /* 小陀螺模式旋转方向乘数 */
@@ -101,7 +102,6 @@ typedef struct {
   struct {
     motor_control_t motor;
     cap_control_t cap;
-    tof_t tof;
   } out;
 } chassis_t;
 

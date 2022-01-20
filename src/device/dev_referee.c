@@ -662,8 +662,11 @@ int8_t referee_pack_ui_packet(referee_t *ref) {
 }
 
 int8_t referee_start_transmit(referee_t *ref) {
-  memcpy(txbuf, ref->packet.data, ref->packet.size);
-  vPortFree(ref->packet.data);
+  if (ref->packet.data != NULL && ref->packet.size > 0) {
+    memcpy(txbuf, ref->packet.data, ref->packet.size);
+    vPortFree(ref->packet.data);
+    ref->packet.data = NULL;
+  }
 
   if (HAL_UART_Transmit_DMA(bsp_uart_get_handle(BSP_UART_REF), txbuf,
                             (uint16_t)ref->packet.size) == HAL_OK) {

@@ -22,7 +22,7 @@ void tof_rx_callback(can_rx_item_t *rx, void *arg) {
 
   if (rx->index < DEV_TOF_SENSOR_NUMBER) {
     BaseType_t switch_required;
-    xQueueOverwriteFromISR(tof->msgq_feedback, rx->data, &switch_required);
+    xQueueOverwriteFromISR(tof->msgq_feedback, rx, &switch_required);
     portYIELD_FROM_ISR(switch_required);
   }
 }

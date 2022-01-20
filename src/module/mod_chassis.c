@@ -24,13 +24,13 @@
 
 #define MAX_CAP_LOAD 100 /* 电容能够提供的最大功率 */
 
-#define ROTOR_WZ_MIN 0.6f   /* 小陀螺旋转位移下界 */
-#define ROTOR_WZ_MAX 0.8f   /* 小陀螺旋转位移上界 */
+#define ROTOR_WZ_MIN 0.6f /* 小陀螺旋转位移下界 */
+#define ROTOR_WZ_MAX 0.8f /* 小陀螺旋转位移上界 */
 
 #define ROTOR_OMEGA 0.0015f /* 小陀螺转动频率 */
 
-#define SCAN_VY_LENGTH_MIN 0.6f /* 哨兵返回时距离边界的最小值 */
-#define SCAN_MOVEMENTS 0.1f     /* 哨兵移动速度 */
+#define SCAN_VY_LENGTH_MIN 0.3f /* 哨兵返回时距离边界的最小值 */
+#define SCAN_MOVEMENTS 0.6f     /* 哨兵移动速度 */
 
 #define MOTOR_MAX_ROTATIONAL_SPEED 7000.0f /* 电机的最大转速 */
 
@@ -260,12 +260,15 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
           cos_beta * c_cmd->ctrl_vec.vx - sin_beta * c_cmd->ctrl_vec.vy;
       c->move_vec.vy =
           sin_beta * c_cmd->ctrl_vec.vx + cos_beta * c_cmd->ctrl_vec.vy;
+      break;
     }
-    case CHASSIS_MODE_SCAN:                  /*Vy*/
-      if (c->out.tof.feedback[0].signal_strength < /*0,距离左侧的距离*/
+    case CHASSIS_MODE_SCAN: /*Vy*/
+      if (c->feedback.tof.feedback[DEV_TOF_SENSOR_LEFT]
+              .dist < /*0,距离左侧的距离*/
           SCAN_VY_LENGTH_MIN)
         c->vy_dir_mult = 1;
-      else if (c->out.tof.feedback[1].signal_strength < /*1,距离右侧的距离*/
+      else if (c->feedback.tof.feedback[DEV_TOF_SENSOR_RIGHT]
+                   .dist < /*1,距离右侧的距离*/
                SCAN_VY_LENGTH_MIN)
         c->vy_dir_mult = -1;
       c->move_vec.vy = c->vy_dir_mult * SCAN_MOVEMENTS;
@@ -335,8 +338,6 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
 
       case CHASSIS_MODE_RELAX: /* 放松模式,不输出 */
         c->out.motor.as_array[i] = 0;
-        break;
-      case CHASSIS_MODE_SCAN:
         break;
     }
     /* 输出滤波. */
