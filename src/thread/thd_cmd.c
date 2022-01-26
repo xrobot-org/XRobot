@@ -43,7 +43,8 @@ void thd_cmd(void* arg) {
   subscriber_t* host_sub = msg_dist_subscribe("cmd_host", true);
 
   /* 初始化指令处理 */
-  cmd_init(&cmd, &(runtime->cfg.pilot_cfg->param));
+  cmd_init(&cmd, &(runtime->cfg.pilot_cfg->param),
+           &(runtime->cfg.robot_param->default_mode));
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 

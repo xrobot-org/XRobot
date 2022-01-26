@@ -30,6 +30,9 @@ typedef struct {
   launcher_params_t launcher; /* 发射器 */
   cap_param_t cap;
   tof_param_t tof;
+
+  cmd_mode_group_t default_mode;
+
 } config_robot_param_t;
 
 /* 操作员配置 */

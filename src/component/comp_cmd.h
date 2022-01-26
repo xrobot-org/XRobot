@@ -53,6 +53,12 @@ typedef struct {
   bool reverse_trig;     /* 拨弹电机状态 */
 } cmd_launcher_t;
 
+typedef struct {
+  gimbal_mode_t gimbal;
+  chassis_mode_t chassis;
+  launcher_mode_t launcher;
+} cmd_mode_group_t;
+
 /* 拨杆位置 */
 typedef enum {
   CMD_SW_ERR = 0,
@@ -164,6 +170,7 @@ typedef struct {
   ai_mode_t ai_mode; /* AI模式 */
 
   const cmd_params_t *param; /* 命令参数 */
+  const cmd_mode_group_t *def_mode;
 
   cmd_chassis_t chassis;   /* 底盘控制命令 */
   cmd_gimbal_t gimbal;     /* 云台控制命令 */
@@ -212,7 +219,8 @@ typedef struct {
  * @param rc 遥控器数据
  * @param cmd 控制指令数据
  */
-int8_t cmd_init(cmd_t *cmd, const cmd_params_t *param);
+int8_t cmd_init(cmd_t *cmd, const cmd_params_t *param,
+                const cmd_mode_group_t *def_mode);
 
 /**
  * @brief 检查是否启用上位机控制指令覆盖

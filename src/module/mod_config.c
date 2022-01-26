@@ -207,6 +207,12 @@ static const config_robot_param_t param_default = {
     .index = DEV_TOF_ID_BASE,
     .num = DEV_TOF_SENSOR_NUMBER,
   },
+
+  .default_mode = {
+    .chassis = CHASSIS_MODE_FOLLOW_GIMBAL,
+    .gimbal = GIMBAL_MODE_ABSOLUTE,
+    .launcher = LAUNCHER_MODE_LOADED,
+  },
 }; /* param_default */
 
 static const config_robot_param_t param_hero = {
@@ -402,6 +408,12 @@ static const config_robot_param_t param_hero = {
     .index = DEV_TOF_ID_BASE,
     .num = DEV_TOF_SENSOR_NUMBER,
   },
+
+  .default_mode = {
+    .chassis = CHASSIS_MODE_FOLLOW_GIMBAL,
+    .gimbal = GIMBAL_MODE_ABSOLUTE,
+    .launcher = LAUNCHER_MODE_LOADED,
+  },
 }; /* param_hero */
 
 config_robot_param_t param_sentry = {
@@ -596,6 +608,12 @@ config_robot_param_t param_sentry = {
     .can = BSP_CAN_1,
     .index = DEV_TOF_ID_BASE,
     .num = DEV_TOF_SENSOR_NUMBER,
+  },
+
+  .default_mode = {
+    .chassis = CHASSIS_MODE_SCAN,
+    .gimbal = GIMBAL_MODE_SCAN,
+    .launcher = LAUNCHER_MODE_LOADED,
   },
 }; /* param_sentry */
 

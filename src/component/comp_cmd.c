@@ -21,9 +21,9 @@
  *
  */
 
-#include "comp_cmd.h"
-
 #include <string.h>
+
+#include "comp_cmd.h"
 
 /**
  * @brief 找到行为对应的按键值
@@ -235,8 +235,7 @@ static void cmd_joystick_switch_logic(const cmd_rc_t *rc, cmd_t *cmd,
       break;
 
     case CMD_SW_DOWN:
-      cmd->chassis.mode = CHASSIS_MODE_ROTOR;
-      cmd->chassis.mode_rotor = ROTOR_MODE_CW;
+      cmd->chassis.mode = cmd->def_mode->chassis;
       break;
 
     case CMD_SW_ERR:
@@ -248,19 +247,17 @@ static void cmd_joystick_switch_logic(const cmd_rc_t *rc, cmd_t *cmd,
     case CMD_SW_UP:
       cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
       cmd->launcher.mode = LAUNCHER_MODE_SAFE;
+      cmd->launcher.fire = false;
       break;
 
     case CMD_SW_MID:
       cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-      cmd->launcher.fire = false;
       cmd->launcher.mode = LAUNCHER_MODE_LOADED;
       break;
 
     case CMD_SW_DOWN:
-      cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-      cmd->launcher.mode = LAUNCHER_MODE_LOADED;
-      cmd->launcher.fire_mode = FIRE_MODE_CONT;
-      cmd->launcher.fire = true;
+      cmd->gimbal.mode = cmd->def_mode->gimbal;
+      cmd->launcher.mode = cmd->def_mode->launcher;
       break;
 
     case CMD_SW_ERR:
@@ -297,7 +294,8 @@ static void cmd_rc_lost_logic(cmd_t *cmd) {
  * @param param 参数
  * @return int8_t 0对应没有错误
  */
-int8_t cmd_init(cmd_t *cmd, const cmd_params_t *param) {
+int8_t cmd_init(cmd_t *cmd, const cmd_params_t *param,
+                const cmd_mode_group_t *def_mode) {
   /* 指针检测 */
   ASSERT(cmd);
   ASSERT(param);
@@ -307,6 +305,7 @@ int8_t cmd_init(cmd_t *cmd, const cmd_params_t *param) {
   /* 设置机器人的命令参数，初始化控制方式为摇杆控制 */
   cmd->ctrl_method = CMD_METHOD_JOYSTICK_SWITCH;
   cmd->param = param;
+  cmd->def_mode = def_mode;
 
   return 0;
 }
