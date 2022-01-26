@@ -3,16 +3,16 @@
 	url = https://gitee.com/qsheeeeen/qdu-rm-protocol
 [submodule "stm32_cmsis"]
 	path = third_party/stm32_cmsis
-	url = https://github.com/STMicroelectronics/cmsis_device_f4.git
+	url = https://gitee.com/jiu-xiao/cmsis_device_f4.git
 [submodule "stm32_hal"]
 	path = third_party/stm32_hal
-	url = https://github.com/STMicroelectronics/stm32f4xx_hal_driver.git
+	url = https://gitee.com/jiu-xiao/stm32f4xx_hal_driver.git
 [submodule "freertos"]
 	path = third_party/freertos
-	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
+	url = https://gitee.com/jiu-xiao/FreeRTOS-Kernel.git
 [submodule "arm_cmsis"]
 	path = third_party/arm_cmsis
-	url = https://github.com/ARM-software/CMSIS_5.git
+	url = https://gitee.com/jiu-xiao/CMSIS_5.git
 [submodule "tinyusb"]
 	path = third_party/tinyusb
-	url = https://github.com/hathach/tinyusb.git
+	url = https://gitee.com/jiu-xiao/tinyusb.git
