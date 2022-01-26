@@ -214,6 +214,7 @@ int8_t referee_parse(referee_t *ref) {
     index += sizeof(*cmd_id);
 
     /* 3.处理数据段 */
+    const void *source = index;
     void *destination;
     size_t size;
 
@@ -312,7 +313,7 @@ int8_t referee_parse(referee_t *ref) {
 
     /* 验证无误则接受数据 */
     if (crc16_verify((uint8_t *)header, (uint8_t)(index - (uint8_t *)header)))
-      memcpy(destination, index, size);
+      memcpy(destination, source, size);
   }
   return DEVICE_OK;
 }
