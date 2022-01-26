@@ -53,4 +53,4 @@ int8_t ahrs_get_eulr(eulr_t *eulr, const ahrs_t *ahrs);
  *
  * @param eulr 被操作的数据
  */
-void ahrs_reset_eulr(eulr_t *eulr);
+void ahrs_reset_eulr(eulr_t *setpoint, const eulr_t *feedback);

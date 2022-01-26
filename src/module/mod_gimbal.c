@@ -30,7 +30,8 @@ static void gimbal_set_mode(gimbal_t *g, gimbal_mode_t mode) {
     low_pass_filter_2p_reset(g->filter_out + i, 0.0f);
   }
 
-  ahrs_reset_eulr(&(g->setpoint.eulr)); /* 切换模式后重置设定值 */
+  ahrs_reset_eulr(&(g->setpoint.eulr),
+                  &(g->feedback.eulr.imu)); /* 切换模式后重置设定值 */
   if (g->mode == GIMBAL_MODE_RELAX) {
     if (mode == GIMBAL_MODE_ABSOLUTE) {
       g->setpoint.eulr.yaw = g->feedback.eulr.imu.yaw;
@@ -39,7 +40,7 @@ static void gimbal_set_mode(gimbal_t *g, gimbal_mode_t mode) {
     }
   }
 
-  if (g->mode == GIMBAL_MODE_SCAN) {
+  if (mode == GIMBAL_MODE_SCAN) {
     g->scan_pit_direction = (rand() % 2) ? -1 : 1;
     g->scan_yaw_direction = (rand() % 2) ? -1 : 1;
   }
@@ -177,7 +178,7 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
   g->setpoint.eulr.pit += g_cmd->delta_eulr.pit;
 
   /* 重置输入指令，防止重复处理 */
-  ahrs_reset_eulr(&(g_cmd->delta_eulr));
+  ahrs_reset_eulr(&(g_cmd->delta_eulr), &(g->feedback.eulr.imu));
 
   /* 控制相关逻辑 */
   float yaw_omega_set_point, pit_omega_set_point;
