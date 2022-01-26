@@ -205,7 +205,10 @@ int8_t referee_parse(referee_t *ref) {
     referee_header_t *header = (referee_header_t *)index;
 
     /* 1.3验证完整性 */
-    if (!crc8_verify((uint8_t *)header, sizeof(*header))) continue;
+    if (!crc8_verify((uint8_t *)header, sizeof(*header))) {
+      index++;
+      continue;
+    }
     index += sizeof(*header);
 
     /* 2.处理CMD ID */
