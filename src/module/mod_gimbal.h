@@ -93,6 +93,11 @@ typedef struct {
 
   gimbal_feedback_t feedback; /* 反馈 */
 
+  float scan_yaw_direction; /* 扫描模式yaw轴旋转方向 */
+  float scan_pit_direction; /* 扫描模式pit轴旋转方向 */
+
+  eulr_t *mech_zero; /* 机械零点 */
+
 } gimbal_t;
 
 /**
@@ -102,8 +107,8 @@ typedef struct {
  * @param param 包含云台参数的结构体指针
  * @param target_freq 线程预期的运行频率
  */
-void gimbal_init(gimbal_t *g, const gimbal_params_t *param, float limit,
-                 float target_freq);
+void gimbal_init(gimbal_t *g, const gimbal_params_t *param, float limit_max,
+                 eulr_t *mech_zero, float target_freq);
 
 /**
  * @brief 通过CAN设备更新云台反馈信息

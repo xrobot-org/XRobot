@@ -41,7 +41,8 @@ void thd_ctrl_gimbal(void* arg) {
 
   /* 初始化云台 */
   gimbal_init(&gimbal, &(runtime->cfg.robot_param->gimbal),
-              runtime->cfg.gimbal_limit, 1000.0f / (float)THD_PERIOD_MS);
+              runtime->cfg.gimbal_limit, &(runtime->cfg.gimbal_mech_zero),
+              1000.0f / (float)THD_PERIOD_MS);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 

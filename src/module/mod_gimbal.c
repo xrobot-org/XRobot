@@ -4,6 +4,14 @@
 
 #include "mod_gimbal.h"
 
+#include <stdlib.h>
+
+
+#define SCAN_ROTATE_YAW (M_2PI / 4000.0f) /*云台yaw轴每次转动的弧度*/
+#define SCAN_ROTATE_PIT (M_2PI / 2000.0f) /*云台pit轴每次转动的弧度*/
+#define SCAN_ROTATE_BOUNDARY (M_2PI / 130.0f) /*云台转动方向的临界值判断*/
+#define SCAN_YAW_RANGE (M_2PI / 3.0f)
+
 /**
  * @brief 设置云台模式
  *
@@ -31,6 +39,11 @@ static void gimbal_set_mode(gimbal_t *g, gimbal_mode_t mode) {
     }
   }
 
+  if (g->mode == GIMBAL_MODE_SCAN) {
+    g->scan_pit_direction = (rand() % 2) ? -1 : 1;
+    g->scan_yaw_direction = (rand() % 2) ? -1 : 1;
+  }
+
   g->mode = mode;
 }
 
@@ -42,12 +55,13 @@ static void gimbal_set_mode(gimbal_t *g, gimbal_mode_t mode) {
  * @param target_freq 线程预期的运行频率
  */
 void gimbal_init(gimbal_t *g, const gimbal_params_t *param, float limit_max,
-                 float target_freq) {
+                 eulr_t *mech_zero, float target_freq) {
   ASSERT(g);
   ASSERT(param);
 
   g->param = param;            /* 初始化参数 */
   g->mode = GIMBAL_MODE_RELAX; /* 设置默认模式 */
+  g->mech_zero = mech_zero;
 
   /* 设置软件限位 */
   if (g->param->reverse.pit) circle_reverse(&limit_max);
@@ -114,6 +128,37 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
   g_cmd->delta_eulr.pit = g_cmd->delta_eulr.pit;
   g_cmd->delta_eulr.yaw = -g_cmd->delta_eulr.yaw;
 
+  switch (g->mode) {
+    case GIMBAL_MODE_SCAN:
+      /* 判断YAW轴运动方向 */
+      if (circle_error(g->feedback.eulr.encoder.yaw, g->mech_zero->yaw,
+                       M_2PI) >= SCAN_YAW_RANGE) {
+        g->scan_yaw_direction = -1;
+      }
+      if (circle_error(g->mech_zero->yaw, g->feedback.eulr.encoder.yaw,
+                       M_2PI) >= SCAN_YAW_RANGE) {
+        g->scan_yaw_direction = 1;
+      }
+
+      /* 判断PIT轴运动方向 */
+      if (circle_error(g->feedback.eulr.encoder.pit, g->limit.min, M_2PI) <=
+          SCAN_ROTATE_BOUNDARY) {
+        g->scan_pit_direction = 1;
+      }
+      if (circle_error(g->limit.max, g->feedback.eulr.encoder.pit, M_2PI) <=
+          SCAN_ROTATE_BOUNDARY) {
+        g->scan_pit_direction = -1;
+      }
+
+      /* 覆盖控制命令 */
+      g_cmd->delta_eulr.yaw = SCAN_ROTATE_YAW * g->scan_yaw_direction;
+      g_cmd->delta_eulr.pit = SCAN_ROTATE_PIT * g->scan_pit_direction;
+
+      break;
+    default:
+      break;
+  }
+
   /* 处理yaw控制命令 */
   circle_add(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw, M_2PI);
 
@@ -140,7 +185,7 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
     case GIMBAL_MODE_RELAX:
       for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) g->out[i] = 0.0f;
       break;
-
+    case GIMBAL_MODE_SCAN:
     case GIMBAL_MODE_ABSOLUTE:
       /* TODO: 可以试着在Pitch轴这里引入前馈（预测）
        * 通过实验计算得到保持在特定角度需要的电机输出值，补偿连杆损失
@@ -171,8 +216,6 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
 
     case GIMBAL_MODE_RELATIVE:
       for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) g->out[i] = 0.0f;
-      break;
-    case GIMBAL_MODE_SCAN:
       break;
   }
 
