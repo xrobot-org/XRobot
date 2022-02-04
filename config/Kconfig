@@ -1,0 +1,82 @@
+choice
+    prompt "开发板"
+    default BOARD_DEV_C
+
+    config BOARD_DEV_C
+        bool "DEV_C-STM32F407IG"
+
+    config BOARD_NX
+        bool "NX-ARM64"
+
+    config BOARD_CUSTOM
+        bool "CUSTOM"
+endchoice
+
+choice
+    prompt "操作系统"
+    default OS_FREERTOS
+
+    config OS_FREERTOS
+        bool "FreeRTOS" if BOARD_DEV_C
+
+    config OS_Linux
+        bool "Linux" if BOARD_NX
+
+    config OS_CUSTOM
+        bool "CUSTOM"
+endchoice
+
+choice
+    prompt "编译器"
+    default TC_ARM_NONE_EABI
+
+    config TC_ARM_NONE_EABI
+        bool "arm-none-eabi-" if BOARD_DEV_C
+
+    config TC_ARM64_LINUX_GNUEABIHF
+        bool "arm64-linux-gnueabihf" if BOARD_NX
+endchoice
+
+choice
+    prompt "调试等级"
+    default FW_DEBUG
+
+    config FW_DEBUG
+        bool "DEBUG"
+
+    config FW_RELEASE
+        bool "RELEASE"
+endchoice
+
+choice
+    prompt "输出文件"
+    default FW_ELF
+
+    config FW_ELF
+        bool "elf文件" if BOARD_DEV_C
+
+    config FW_EXE
+        bool "二进制可执行文件" if BOARD_NX
+endchoice
+
+choice
+    prompt "兵种"
+    default ID_AUTO
+
+    config ID_AUTO
+        bool "根据Flash/裁判系统信息自动判断"
+
+    config ID_HERO
+        bool "英雄"
+endchoice
+
+choice
+    prompt "比赛类型"
+    default GM_AUTO
+
+    config GM_AUTO
+        bool "根据Flash/裁判系统信息自动判断"
+
+    config GM_RMUC
+        bool "超级对抗赛"
+endchoice
