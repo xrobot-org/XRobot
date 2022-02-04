@@ -1,18 +1,18 @@
 [submodule "protocol"]
-	path = third_party/protocol
+	path = lib/protocol
 	url = https://gitee.com/qsheeeeen/qdu-rm-protocol
 [submodule "stm32_cmsis"]
-	path = third_party/stm32_cmsis
+	path = hw/mcu/st/cmsis_device_f4
 	url = https://gitee.com/jiu-xiao/cmsis_device_f4.git
 [submodule "stm32_hal"]
-	path = third_party/stm32_hal
+	path = hw/mcu/st/stm32f4xx_hal_driver
 	url = https://gitee.com/jiu-xiao/stm32f4xx_hal_driver.git
 [submodule "freertos"]
-	path = third_party/freertos
+	path = lib/freertos
 	url = https://gitee.com/jiu-xiao/FreeRTOS-Kernel.git
 [submodule "arm_cmsis"]
-	path = third_party/arm_cmsis
+	path = hw/mcu/arm/cmsis_5
 	url = https://gitee.com/jiu-xiao/CMSIS_5.git
 [submodule "tinyusb"]
-	path = third_party/tinyusb
+	path = lib/tinyusb
 	url = https://gitee.com/jiu-xiao/tinyusb.git
