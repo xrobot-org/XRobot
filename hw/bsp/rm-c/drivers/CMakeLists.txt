@@ -1,12 +1,4 @@
-add_subdirectory(${BOARD_DIR}/drivers/hal)
-add_subdirectory(${BOARD_DIR}/drivers/rtos)
-add_subdirectory(${BOARD_DIR}/drivers/usb)
-
 project(bsp)
-
-file(GLOB ${PROJECT_NAME}_BOARD_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/drivers/*.c"
-)
 
 file(GLOB ${PROJECT_NAME}_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
@@ -15,7 +7,6 @@ file(GLOB ${PROJECT_NAME}_SOURCES
 add_library(${PROJECT_NAME} STATIC)
 
 target_sources(${PROJECT_NAME}
-    PRIVATE ${${PROJECT_NAME}_BOARD_SOURCES}
     PRIVATE ${${PROJECT_NAME}_SOURCES}
 )
 
@@ -40,3 +31,7 @@ add_dependencies(${PROJECT_NAME}
     rtos
     usb
 )
+
+add_subdirectory(${BOARD_DIR}/drivers/hal)
+add_subdirectory(${BOARD_DIR}/drivers/rtos)
+add_subdirectory(${BOARD_DIR}/drivers/usb)

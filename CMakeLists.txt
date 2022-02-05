@@ -14,7 +14,6 @@ project(qdu_rm_mcu
 )
 #---------------------------------------------------------------------------------------
 # Add config file
-execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/project.py generate ${CMAKE_CURRENT_SOURCE_DIR})
 include(${CMAKE_CURRENT_SOURCE_DIR}/config/config.cmake)
 
 #---------------------------------------------------------------------------------------

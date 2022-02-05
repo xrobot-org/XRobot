@@ -2,3 +2,4 @@ build
 cubemx
 config/.config
 config/config.cmake
+config/.config.old

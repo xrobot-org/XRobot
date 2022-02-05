@@ -30,12 +30,12 @@ def generate_cmake(path):
             break
 
         if line.startswith('#') and line.endswith(' is not set'):
-            print('\t'+line)
+            print('[CONFIG] '+line.strip('# '))
             cmake_file.write(
                 'set('+line.rstrip(' is not set').strip('# ')+' OFF)\n')
 
         if line.endswith('=y'):
-            print('\t'+line)
+            print('[CONFIG] '+line)
             cmake_file.write('set('+line.rstrip('=y')+' ON)\n')
     config_file.close()
     cmake_file.close()
