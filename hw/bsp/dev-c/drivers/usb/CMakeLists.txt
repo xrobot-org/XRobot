@@ -3,19 +3,19 @@ project(usb)
 
 file(GLOB ${PROJECT_NAME}_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/*.c"
-    "${THIRD_PARTY_DIR}/tinyusb/src/tusb.c"
-    "${THIRD_PARTY_DIR}/tinyusb/src/common/tusb_fifo.c"
-    "${THIRD_PARTY_DIR}/tinyusb/src/device/usbd.c"
-    "${THIRD_PARTY_DIR}/tinyusb/src/device/usbd_control.c"
-    "${THIRD_PARTY_DIR}/tinyusb/src/class/cdc/cdc_device.c"
-    "${THIRD_PARTY_DIR}/tinyusb/src/class/dfu/dfu_rt_device.c"
-    "${THIRD_PARTY_DIR}/tinyusb/src/class/hid/hid_device.c"
-    "${THIRD_PARTY_DIR}/tinyusb/src/class/midi/midi_device.c"
-    "${THIRD_PARTY_DIR}/tinyusb/src/class/msc/msc_device.c"
-    "${THIRD_PARTY_DIR}/tinyusb/src/class/net/net_device.c"
-    "${THIRD_PARTY_DIR}/tinyusb/src/class/usbtmc/usbtmc_device.c"
-    "${THIRD_PARTY_DIR}/tinyusb/src/class/vendor/vendor_device.c"
-    "${THIRD_PARTY_DIR}/tinyusb/src/portable/st/synopsys/dcd_synopsys.c"
+    "${LIB_DIR}/tinyusb/src/tusb.c"
+    "${LIB_DIR}/tinyusb/src/common/tusb_fifo.c"
+    "${LIB_DIR}/tinyusb/src/device/usbd.c"
+    "${LIB_DIR}/tinyusb/src/device/usbd_control.c"
+    "${LIB_DIR}/tinyusb/src/class/cdc/cdc_device.c"
+    "${LIB_DIR}/tinyusb/src/class/dfu/dfu_rt_device.c"
+    "${LIB_DIR}/tinyusb/src/class/hid/hid_device.c"
+    "${LIB_DIR}/tinyusb/src/class/midi/midi_device.c"
+    "${LIB_DIR}/tinyusb/src/class/msc/msc_device.c"
+    "${LIB_DIR}/tinyusb/src/class/net/net_device.c"
+    "${LIB_DIR}/tinyusb/src/class/usbtmc/usbtmc_device.c"
+    "${LIB_DIR}/tinyusb/src/class/vendor/vendor_device.c"
+    "${LIB_DIR}/tinyusb/src/portable/st/synopsys/dcd_synopsys.c"
 )
 
 list(FILTER ${PROJECT_NAME}_SOURCES EXCLUDE REGEX ".*template.c$")
@@ -32,7 +32,7 @@ target_link_libraries(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME}
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-    PUBLIC ${THIRD_PARTY_DIR}/tinyusb/src
+    PUBLIC ${LIB_DIR}/tinyusb/src
     PUBLIC $<TARGET_PROPERTY:rtos,INTERFACE_INCLUDE_DIRECTORIES>
     PUBLIC $<TARGET_PROPERTY:hal,INTERFACE_INCLUDE_DIRECTORIES>
 )
