@@ -96,7 +96,7 @@ static void bmi_write_single(BMI_Device_t dv, uint8_t reg, uint8_t data) {
       break;
   }
 
-  HAL_SPI_Transmit(bsp_spi_get_handle(BSP_SPI_IMU), tx_rx_buf, 2u, 20u);
+  bsp_spi_transmit(BSP_SPI_IMU, tx_rx_buf, 2u, true);
 
   switch (dv) {
     case BMI_ACCL:
@@ -121,8 +121,8 @@ static uint8_t bmi_read_single(BMI_Device_t dv, uint8_t reg) {
       break;
   }
   tx_rx_buf[0] = (uint8_t)(reg | 0x80);
-  HAL_SPI_Transmit(bsp_spi_get_handle(BSP_SPI_IMU), tx_rx_buf, 1u, 20u);
-  HAL_SPI_Receive(bsp_spi_get_handle(BSP_SPI_IMU), tx_rx_buf, 2u, 20u);
+  bsp_spi_transmit(BSP_SPI_IMU, tx_rx_buf, 1u, true);
+  bsp_spi_receive(BSP_SPI_IMU, tx_rx_buf, 2u, true);
 
   switch (dv) {
     case BMI_ACCL:
@@ -149,8 +149,8 @@ static void bmi_read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
       break;
   }
   tx_rx_buf[0] = (uint8_t)(reg | 0x80);
-  HAL_SPI_Transmit(bsp_spi_get_handle(BSP_SPI_IMU), tx_rx_buf, 1u, 20u);
-  HAL_SPI_Receive_DMA(bsp_spi_get_handle(BSP_SPI_IMU), data, len);
+  bsp_spi_transmit(BSP_SPI_IMU, tx_rx_buf, 1u, true);
+  bsp_spi_receive(BSP_SPI_IMU, data, len, false);
 }
 
 static void bmi088_rx_cplt_callback(void *arg) {
@@ -214,7 +214,7 @@ int8_t bmi088_init(bmi088_t *bmi088, const bmi088_cali_t *cali,
   bsp_gpio_disable_irq(GYRO_INT_Pin);
 
   bsp_spi_register_callback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB,
-                           bmi088_rx_cplt_callback, bmi088);
+                            bmi088_rx_cplt_callback, bmi088);
   bsp_gpio_register_callback(ACCL_INT_Pin, bmi088_accl_int_callback, bmi088);
   bsp_gpio_register_callback(GYRO_INT_Pin, bmi088_gyro_int_callback, bmi088);
 

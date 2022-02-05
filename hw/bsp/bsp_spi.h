@@ -1,9 +1,10 @@
 #pragma once
 
+#include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #include "bsp.h"
-#include "hal_spi.h"
 
 /* 要添加使用SPI的新设备，需要先在此添加对应的枚举值 */
 
@@ -29,6 +30,7 @@ typedef enum {
   BSP_SPI_CB_NUM,
 } bsp_spi_callback_t;
 
-SPI_HandleTypeDef *bsp_spi_get_handle(bsp_spi_t spi);
 int8_t bsp_spi_register_callback(bsp_spi_t spi, bsp_spi_callback_t type,
-                                void (*callback)(void *), void *callback_arg);
+                                 void (*callback)(void *), void *callback_arg);
+int8_t bsp_spi_transmit(bsp_spi_t spi, uint8_t *data, size_t size, bool block);
+int8_t bsp_spi_receive(bsp_spi_t spi, uint8_t *buff, size_t size, bool block);
