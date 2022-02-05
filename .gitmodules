@@ -11,7 +11,7 @@
 	path = lib/freertos
 	url = https://gitee.com/jiu-xiao/FreeRTOS-Kernel.git
 [submodule "arm_cmsis"]
-	path = hw/mcu/arm/cmsis_5
+	path = lib/cmsis_5
 	url = https://gitee.com/jiu-xiao/CMSIS_5.git
 [submodule "tinyusb"]
 	path = lib/tinyusb

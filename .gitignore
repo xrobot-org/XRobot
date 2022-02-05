@@ -1,2 +1,4 @@
 build
 cubemx
+config/.config
+config/config.cmake
