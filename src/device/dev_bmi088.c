@@ -61,16 +61,11 @@
 #define BMI088_ACCL_RX_BUFF_LEN (19)
 #define BMI088_GYRO_RX_BUFF_LEN (6)
 
-#define BMI088_ACCL_NSS_SET() \
-  HAL_GPIO_WritePin(ACCL_CS_GPIO_Port, ACCL_CS_Pin, GPIO_PIN_SET)
-#define BMI088_ACCL_NSS_RESET() \
-  HAL_GPIO_WritePin(ACCL_CS_GPIO_Port, ACCL_CS_Pin, GPIO_PIN_RESET)
+#define BMI088_ACCL_NSS_SET() bsp_gpio_write_pin(BSP_GPIO_IMU_ACCL_CS, true)
+#define BMI088_ACCL_NSS_RESET() bsp_gpio_write_pin(BSP_GPIO_IMU_ACCL_CS, false)
 
-#define BMI088_GYRO_NSS_SET() \
-  HAL_GPIO_WritePin(GYRO_CS_GPIO_Port, GYRO_CS_Pin, GPIO_PIN_SET)
-#define BMI088_GYRO_NSS_RESET() \
-  HAL_GPIO_WritePin(GYRO_CS_GPIO_Port, GYRO_CS_Pin, GPIO_PIN_RESET)
-
+#define BMI088_GYRO_NSS_SET() bsp_gpio_write_pin(BSP_GPIO_IMU_GYRO_CS, true)
+#define BMI088_GYRO_NSS_RESET() bsp_gpio_write_pin(BSP_GPIO_IMU_GYRO_CS, false)
 typedef enum {
   BMI_ACCL,
   BMI_GYRO,
@@ -156,11 +151,11 @@ static void bmi_read(BMI_Device_t dv, uint8_t reg, uint8_t *data, uint8_t len) {
 static void bmi088_rx_cplt_callback(void *arg) {
   bmi088_t *bmi088 = arg;
   BaseType_t switch_required;
-  if (HAL_GPIO_ReadPin(ACCL_CS_GPIO_Port, ACCL_CS_Pin) == GPIO_PIN_RESET) {
+  if (!bsp_gpio_read_pin(BSP_GPIO_IMU_ACCL_CS)) {
     BMI088_ACCL_NSS_SET();
     xSemaphoreGiveFromISR(bmi088->sem.accl_raw, &switch_required);
   }
-  if (HAL_GPIO_ReadPin(GYRO_CS_GPIO_Port, GYRO_CS_Pin) == GPIO_PIN_RESET) {
+  if (!bsp_gpio_read_pin(BSP_GPIO_IMU_GYRO_CS)) {
     BMI088_GYRO_NSS_SET();
     xSemaphoreGiveFromISR(bmi088->sem.gyro_raw, &switch_required);
   }
@@ -210,13 +205,13 @@ int8_t bmi088_init(bmi088_t *bmi088, const bmi088_cali_t *cali,
   if (bmi_read_single(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID) != BMI088_CHIP_ID_GYRO)
     return DEVICE_ERR_NO_DEV;
 
-  bsp_gpio_disable_irq(ACCL_INT_Pin);
-  bsp_gpio_disable_irq(GYRO_INT_Pin);
+  bsp_gpio_disable_irq(BSP_GPIO_IMU_ACCL_INT);
+  bsp_gpio_disable_irq(BSP_GPIO_IMU_GYRO_INT);
 
   bsp_spi_register_callback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB,
                             bmi088_rx_cplt_callback, bmi088);
-  bsp_gpio_register_callback(ACCL_INT_Pin, bmi088_accl_int_callback, bmi088);
-  bsp_gpio_register_callback(GYRO_INT_Pin, bmi088_gyro_int_callback, bmi088);
+  bsp_gpio_register_callback(BSP_GPIO_IMU_ACCL_INT, bmi088_accl_int_callback, bmi088);
+  bsp_gpio_register_callback(BSP_GPIO_IMU_GYRO_INT, bmi088_gyro_int_callback, bmi088);
 
   /* Accl init. */
   /* Filter setting: Normal. */
@@ -255,8 +250,8 @@ int8_t bmi088_init(bmi088_t *bmi088, const bmi088_cali_t *cali,
 
   bsp_delay(10);
 
-  bsp_gpio_enable_irq(ACCL_INT_Pin);
-  bsp_gpio_enable_irq(GYRO_INT_Pin);
+  bsp_gpio_enable_irq(BSP_GPIO_IMU_ACCL_INT);
+  bsp_gpio_enable_irq(BSP_GPIO_IMU_GYRO_INT);
   return DEVICE_OK;
 }
 

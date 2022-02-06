@@ -32,10 +32,8 @@
 
 #define IST8310_LEN_RX_BUFF (6)
 
-#define IST8310_SET() \
-  HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_SET)
-#define IST8310_RESET() \
-  HAL_GPIO_WritePin(CMPS_RST_GPIO_Port, CMPS_RST_Pin, GPIO_PIN_RESET)
+#define IST8310_SET() bsp_gpio_write_pin(BSP_GPIO_CMPS_RST, true)
+#define IST8310_RESET() bsp_gpio_write_pin(BSP_GPIO_CMPS_RST, false)
 
 uint8_t ist8310_rxbuf[IST8310_LEN_RX_BUFF];
 
