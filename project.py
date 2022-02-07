@@ -8,21 +8,22 @@ def menuconfig():
     os.system('cd config && kconfig-gconf Kconfig')
     print('Menu config done.')
 
+
 def clean_cache():
     os.system('rm -rf ./build/*')
+
 
 def config_cmake():
     os.system('cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=toolchain/toolchain.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_BUILD_TYPE:STRING=Debug -Bbuild -G Ninja')
 
 
 def generate_cmake(path):
+    print('Start generate config.cmake.')
     if os.path.exists(path+'/.config'):
         print('Found config file.')
     else:
         print('No config file found. Start menuconfig.')
-        os.system('pwd')
         os.system('cd '+path+' && kconfig-gconf Kconfig')
-    print('Open config file.')
     config_file = open(path+'/.config', 'r')
     cmake_file = open(path+'/config.cmake', 'w')
 
@@ -45,8 +46,7 @@ def generate_cmake(path):
             cmake_file.write('set('+line.rstrip('=y')+' ON)\n')
     config_file.close()
     cmake_file.close()
-    print('File closed.')
-    print('All done.')
+    print('Generate done.')
 
 
 cmd = sys.argv
@@ -62,12 +62,17 @@ if cmd[1] == 'config':
     config_cmake()
 
 elif cmd[1] == 'help':
-    print('青岛大学电控代码 - 帮助页面')
-    print('#命令    #功能')
-    print('config - 生成新配置')
+    print('青岛大学电控代码\n帮助页面')
+    print('#命令         -    #功能')
+    print('config        -   生成新配置')
+    print('refresh       -   重新生成cmake缓存')
 
 elif cmd[1] == 'generate':
     generate_cmake(cmd[2]+'/config')
+
+elif cmd[1] == 'refresh':
+    clean_cache()
+    config_cmake()
 
 else:
     print('错误的参数')

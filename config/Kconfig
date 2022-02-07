@@ -41,28 +41,6 @@ config TC_CLANG
 	tristate "使用clang作为编译器" if TC_ARM_NONE_EABI
 
 choice
-    prompt "调试等级"
-    default FW_DEBUG
-
-    config FW_DEBUG
-        bool "DEBUG"
-
-    config FW_RELEASE
-        bool "RELEASE"
-endchoice
-
-choice
-    prompt "输出文件"
-    default FW_ELF
-
-    config FW_ELF
-        bool "elf文件" if BOARD_DEV_C
-
-    config FW_EXE
-        bool "二进制可执行文件" if BOARD_NX
-endchoice
-
-choice
     prompt "兵种"
     default ID_AUTO
 
