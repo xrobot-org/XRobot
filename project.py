@@ -8,6 +8,12 @@ def menuconfig():
     os.system('cd config && kconfig-gconf Kconfig')
     print('Menu config done.')
 
+def clean_cache():
+    os.system('rm -rf ./build/*')
+
+def config_cmake():
+    os.system('cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=toolchain/toolchain.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_BUILD_TYPE:STRING=Debug -Bbuild -G Ninja')
+
 
 def generate_cmake(path):
     if os.path.exists(path+'/.config'):
@@ -50,8 +56,10 @@ if cmd_len < 2:
     print('参数错误，请查看help')
 
 if cmd[1] == 'config':
+    clean_cache()
     menuconfig()
     generate_cmake('./config')
+    config_cmake()
 
 elif cmd[1] == 'help':
     print('青岛大学电控代码 - 帮助页面')

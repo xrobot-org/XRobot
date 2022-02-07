@@ -27,7 +27,7 @@ choice
 endchoice
 
 choice
-    prompt "编译器"
+    prompt "工具链"
     default TC_ARM_NONE_EABI
 
     config TC_ARM_NONE_EABI
@@ -36,6 +36,9 @@ choice
     config TC_ARM64_LINUX_GNUEABIHF
         bool "arm64-linux-gnueabihf" if BOARD_NX
 endchoice
+
+config TC_CLANG
+	tristate "使用clang作为编译器" if TC_ARM_NONE_EABI
 
 choice
     prompt "调试等级"
