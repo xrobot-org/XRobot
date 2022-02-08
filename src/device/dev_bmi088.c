@@ -210,8 +210,10 @@ int8_t bmi088_init(bmi088_t *bmi088, const bmi088_cali_t *cali,
 
   bsp_spi_register_callback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB,
                             bmi088_rx_cplt_callback, bmi088);
-  bsp_gpio_register_callback(BSP_GPIO_IMU_ACCL_INT, bmi088_accl_int_callback, bmi088);
-  bsp_gpio_register_callback(BSP_GPIO_IMU_GYRO_INT, bmi088_gyro_int_callback, bmi088);
+  bsp_gpio_register_callback(BSP_GPIO_IMU_ACCL_INT, bmi088_accl_int_callback,
+                             bmi088);
+  bsp_gpio_register_callback(BSP_GPIO_IMU_GYRO_INT, bmi088_gyro_int_callback,
+                             bmi088);
 
   /* Accl init. */
   /* Filter setting: Normal. */
@@ -321,7 +323,6 @@ int8_t bmi088_parse_accl(bmi088_t *bmi088) {
 
   if (bmi088->param->inverted) {
     bmi088->accl.x = -bmi088->accl.x;
-    bmi088->accl.y = -bmi088->accl.y;
     bmi088->accl.z = -bmi088->accl.z;
   }
 
@@ -365,7 +366,6 @@ int8_t bmi088_parse_gyro(bmi088_t *bmi088) {
 
   if (bmi088->param->inverted) {
     bmi088->gyro.x = -bmi088->gyro.x;
-    bmi088->gyro.y = -bmi088->gyro.y;
     bmi088->gyro.z = -bmi088->gyro.z;
   }
 
