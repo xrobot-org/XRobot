@@ -100,7 +100,6 @@ typedef enum {
   CMD_BEHAVIOR_DECELEBRATE,    /* 减速 */
   CMD_BEHAVIOR_FIRE,           /* 开火 */
   CMD_BEHAVIOR_FIRE_MODE,      /* 切换开火模式 */
-  CMD_BEHAVIOR_BUFF,           /* 打符模式 */
   CMD_BEHAVIOR_AUTOAIM,        /* 自瞄模式 */
   CMD_BEHAVIOR_OPENCOVER,      /* 弹舱盖开关 */
   CMD_BEHAVIOR_ROTOR,          /* 小陀螺模式 */
@@ -166,8 +165,6 @@ typedef struct {
 
   uint16_t key_last;      /* 上次按键键值 */
   cmd_mouse_t mouse_last; /* 鼠标值 */
-
-  ai_mode_t ai_mode; /* AI模式 */
 
   const cmd_params_t *param; /* 命令参数 */
   const cmd_mode_group_t *def_mode;

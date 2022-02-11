@@ -30,7 +30,6 @@ void thd_cmd(void* arg) {
   cmd_t cmd;
   cmd_ui_t cmd_ui;
 
-  publisher_t* cmd_ai_pub = msg_dist_create_topic("cmd_ai", sizeof(ai_mode_t));
   publisher_t* cmd_chassis_pub =
       msg_dist_create_topic("cmd_chassis", sizeof(cmd_chassis_t));
   publisher_t* cmd_gimbal_pub =
@@ -61,7 +60,6 @@ void thd_cmd(void* arg) {
     }
     cmd_pack_ui(&cmd_ui, &cmd);
 
-    msg_dist_publish(cmd_ai_pub, &(cmd.ai_mode));
     msg_dist_publish(cmd_chassis_pub, &(cmd.chassis));
     msg_dist_publish(cmd_gimbal_pub, &(cmd.gimbal));
     msg_dist_publish(cmd_launcher_pub, &(cmd.launcher));

@@ -37,14 +37,8 @@ typedef struct {
     ai_up_pckage_mcu_t mcu;
   } to_host;
 
-  ai_mode_t mode;
-
   bool online;
 } ai_t;
-
-typedef struct {
-  ai_mode_t mode;
-} ai_ui_t;
 
 int8_t ai_init(ai_t *ai);
 int8_t ai_restart(void);
@@ -57,5 +51,4 @@ int8_t ai_parse_host(ai_t *ai);
 int8_t ai_handle_offline(ai_t *ai);
 int8_t ai_pack_mcu_for_host(ai_t *ai, const quaternion_t *quat);
 int8_t ai_pack_ref_for_host(ai_t *ai, const referee_for_ai_t *ref);
-void ai_pack_ui(ai_ui_t *ui, const ai_t *ai);
 void ai_pack_cmd(ai_t *ai, cmd_host_t *cmd_host);

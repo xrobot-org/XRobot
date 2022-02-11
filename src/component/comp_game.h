@@ -70,14 +70,6 @@ typedef enum {
   FIRE_MODE_NUM,
 } fire_mode_t;
 
-/* AI行为状态 */
-typedef enum {
-  AI_MODE_STOP,    /* 停止模式 */
-  AI_MODE_AUTOAIM, /* 自瞄模式 */
-  AI_MODE_HITBUFF, /* 打符模式 */
-  AI_MODE_FULLAUTO /* 自动模式 */
-} ai_mode_t;
-
 /* 飞镖发射器运行模式 */
 typedef enum {
   DART_LAUNCHER_MODE_RELAX, /* 放松模式，电机不输出 */

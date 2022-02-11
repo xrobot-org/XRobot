@@ -104,14 +104,6 @@ int8_t ai_pack_mcu_for_host(ai_t *ai, const quaternion_t *quat) {
   ai->to_host.mcu.id = AI_ID_MCU;
   memcpy(&(ai->to_host.mcu.package.data.quat), (const void *)quat,
          sizeof(*quat));
-  ai->to_host.mcu.package.data.notice = 0;
-  if (ai->mode == AI_MODE_AUTOAIM)
-    ai->to_host.mcu.package.data.notice |= AI_NOTICE_AUTOAIM;
-  else if (ai->mode == AI_MODE_HITBUFF)
-    ai->to_host.mcu.package.data.notice |= AI_NOTICE_HITBUFF;
-  else if (ai->mode == AI_MODE_FULLAUTO)
-    ai->to_host.mcu.package.data.notice |= AI_NOTICE_AUTOMATIC;
-
   ai->to_host.mcu.package.crc16 = crc16_calc(
       (const uint8_t *)&(ai->to_host.mcu.package),
       sizeof(ai->to_host.mcu.package) - sizeof(uint16_t), CRC16_INIT);
@@ -130,8 +122,6 @@ int8_t ai_pack_ref_for_host(ai_t *ai, const referee_for_ai_t *ref) {
   ai->ref_updated = false;
   return DEVICE_OK;
 }
-
-void ai_pack_ui(ai_ui_t *ui, const ai_t *ai) { ui->mode = ai->mode; }
 
 void ai_pack_cmd(ai_t *ai, cmd_host_t *cmd_host) {
   cmd_host->gimbal_delta.yaw = -ai->form_host.data.gimbal.yaw;

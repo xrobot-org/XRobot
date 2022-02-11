@@ -196,6 +196,6 @@ err_t motor_control(motor_t *motor) {
 
 err_t motor_handle_offline(motor_t *motor) {
   RM_UNUSED(motor);
-  memset(motor, 0, sizeof(motor));
+  memset(motor, 0, sizeof(*motor));
   return RM_OK;
 }

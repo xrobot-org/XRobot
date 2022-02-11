@@ -13,7 +13,6 @@ void thd_ai(void* arg) {
   RM_UNUSED(arg);
 
   ai_t ai;
-  ai_ui_t ai_ui;
   cmd_host_t cmd_host;
   quaternion_t ai_quat;
   referee_for_ai_t referee_ai;
@@ -45,7 +44,6 @@ void thd_ai(void* arg) {
     msg_dist_publish(cmd_host_pub, &cmd_host);
 
     /* 发送数据 */
-    msg_dist_poll(cmd_ai_sub, &(ai.mode), 0);
     msg_dist_poll(quat_sub, &ai_quat, 0);
     ai_pack_mcu_for_host(&ai, &ai_quat);
 
@@ -58,7 +56,6 @@ void thd_ai(void* arg) {
     }
 
     /* 更新UI */
-    ai_pack_ui(&ai_ui, &ai);
     msg_dist_publish(ui_ai_pub, &cmd_host);
 
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);

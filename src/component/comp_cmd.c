@@ -25,6 +25,7 @@
 
 #include "comp_cmd.h"
 
+
 /**
  * @brief 找到行为对应的按键值
  *
@@ -179,27 +180,12 @@ static void cmd_mouse_keyboard_logic(const cmd_rc_t *rc, cmd_t *cmd,
     /* 每按一次开、关弹舱盖 */
     cmd->launcher.cover_open = !cmd->launcher.cover_open;
   }
-  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_BUFF)) {
-    if (cmd->ai_mode == AI_MODE_HITBUFF) {
-      /* 停止ai的打符模式，停用host控制 */
-      cmd->ctrl_source = CMD_SOURCE_RC;
-      cmd->ai_mode = AI_MODE_STOP;
-    } else if (cmd->ai_mode == AI_MODE_AUTOAIM) {
-      /* 自瞄模式中切换失败提醒 */
-    } else {
-      /* ai切换至打符模式，启用host控制 */
-      cmd->ai_mode = AI_MODE_HITBUFF;
-      cmd->ctrl_source = CMD_SOURCE_HOST;
-    }
-  }
   if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_AUTOAIM)) {
-    if (cmd->ai_mode == AI_MODE_AUTOAIM) {
+    if (cmd->ctrl_source == CMD_SOURCE_HOST) {
       /* 停止ai的自瞄模式，停用host控制 */
       cmd->ctrl_source = CMD_SOURCE_RC;
-      cmd->ai_mode = AI_MODE_STOP;
     } else {
       /* ai切换至自瞄模式，启用host控制 */
-      cmd->ai_mode = AI_MODE_AUTOAIM;
       cmd->ctrl_source = CMD_SOURCE_HOST;
     }
   }
@@ -384,14 +370,6 @@ int8_t cmd_parse_host(const cmd_host_t *host, cmd_t *cmd, float dt_sec) {
   cmd->gimbal.delta_eulr.pit = host->gimbal_delta.pit;
 
   /* host发射命令，设置不同的发射频率和弹丸初速度 */
-  if (cmd->ai_mode == AI_MODE_HITBUFF) {
-    if (host->fire) {
-      cmd->launcher.mode = LAUNCHER_MODE_LOADED;
-      cmd->launcher.fire = true;
-    } else {
-      cmd->launcher.mode = LAUNCHER_MODE_SAFE;
-    }
-  }
   return 0;
 }
 

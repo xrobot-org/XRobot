@@ -704,6 +704,8 @@ uint8_t referee_pack_for_launcher(referee_for_launcher_t *l_ref,
 }
 
 uint8_t referee_pack_for_ai(referee_for_ai_t *ai_ref, const referee_t *ref) {
+  memset(ai_ref, 0, sizeof(*ai_ref));
+
   if (ref->robot_status.robot_id < REF_BOT_BLU_HERO)
     ai_ref->team = AI_TEAM_RED;
   else
@@ -711,19 +713,44 @@ uint8_t referee_pack_for_ai(referee_for_ai_t *ai_ref, const referee_t *ref) {
 
   ai_ref->status = ref->status;
 
+  if (ref->rfid.high_ground == 1) ai_ref->robot_buff |= AI_RFID_SNIP;
+
+  if (ref->rfid.energy_mech == 1) ai_ref->robot_buff |= AI_RFID_BUFF;
+
   switch (ref->game_status.game_type) {
     case REF_GAME_TYPE_RMUC:
-      ai_ref->game_type = REF_GAME_TYPE_RMUC;
+      ai_ref->game_type = AI_RACE_RMUC;
       break;
     case REF_GAME_TYPE_RMUT:
-      ai_ref->game_type = REF_GAME_TYPE_RMUT;
+      ai_ref->game_type = AI_RACE_RMUT;
       break;
     case REF_GAME_TYPE_RMUL_3V3:
+      ai_ref->game_type = AI_RACE_RMUL3;
     case REF_GAME_TYPE_RMUL_1V1:
-      ai_ref->game_type = REF_GAME_TYPE_RMUL_3V3;
+      ai_ref->game_type = AI_RACE_RMUL1;
       break;
     default:
       return DEVICE_ERR;
+  }
+
+  switch (ref->robot_status.robot_id % 100) {
+    case REF_BOT_RED_HERO:
+      ai_ref->robot_id = AI_NOTICE_HERO;
+      break;
+    case REF_BOT_RED_ENGINEER:
+      ai_ref->robot_id = AI_NOTICE_ENGINEER;
+      break;
+    case REF_BOT_RED_DRONE:
+      ai_ref->robot_id = AI_NOTICE_DRONE;
+      break;
+    case REF_BOT_RED_SENTRY:
+      ai_ref->robot_id = AI_NOTICE_SENTRY;
+      break;
+    case REF_BOT_RED_RADER:
+      ai_ref->robot_id = AI_NOTICE_RADAR;
+      break;
+    default:
+      ai_ref->robot_id = AI_NOTICE_INFANTRY;
   }
   return DEVICE_OK;
 }

@@ -354,6 +354,8 @@ typedef struct {
   uint8_t game_type;
   referee_status_t status;
   uint8_t team;
+  uint8_t robot_id;
+  uint8_t robot_buff;
 } referee_for_ai_t;
 
 typedef struct {
