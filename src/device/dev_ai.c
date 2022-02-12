@@ -43,9 +43,9 @@ int8_t ai_init(ai_t *ai) {
   xSemaphoreGive(ai->sem.trans);
 
   bsp_uart_register_callback(BSP_UART_AI, BSP_UART_RX_CPLT_CB,
-                            ia_rx_cplt_callback, ai);
+                             ia_rx_cplt_callback, ai);
   bsp_uart_register_callback(BSP_UART_AI, BSP_UART_TX_CPLT_CB,
-                            ia_tx_cplt_callback, ai);
+                             ia_tx_cplt_callback, ai);
   return DEVICE_OK;
 }
 
@@ -86,7 +86,7 @@ bool ai_wait_trans_cplt(ai_t *ai, uint32_t timeout) {
 }
 
 int8_t ai_parse_host(ai_t *ai) {
-  if (!crc16_verify((const uint8_t *)&(rxbuf), sizeof(ai->form_host))) {
+  if (crc16_verify((const uint8_t *)&(rxbuf), sizeof(ai->form_host))) {
     ai->online = true;
     memcpy(&(ai->form_host), rxbuf, sizeof(ai->form_host));
     memset(rxbuf, 0, AI_LEN_RX_BUFF);
