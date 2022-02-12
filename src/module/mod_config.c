@@ -458,10 +458,10 @@ config_robot_param_t param_sentry = {
     .pid = {
       {
         /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-        .k = 0.1f,
+        .k = 0.15f,
         .p = 1.0f,
-        .i = 0.4f,
-        .d = 0.0f,
+        .i = 0.6f,
+        .d = 0.002f,
         .i_limit = 1.0f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
@@ -478,9 +478,9 @@ config_robot_param_t param_sentry = {
         .range = M_2PI,
       }, {
         /* GIMBAL_CTRL_PIT_OMEGA_IDX */
-        .k = 0.2f,
+        .k = 0.4f,
         .p = 1.0f,
-        .i = 1.0f,
+        .i = 0.8f,
         .d = 0.0f,
         .i_limit = 1.0f,
         .out_limit = 1.0f,
