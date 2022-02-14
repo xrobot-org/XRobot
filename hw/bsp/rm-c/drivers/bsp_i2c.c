@@ -79,3 +79,25 @@ int8_t bsp_i2c_register_callback(bsp_i2c_t i2c, bsp_i2c_callback_t type,
   callback_list[i2c][type].arg = callback_arg;
   return BSP_OK;
 }
+
+int8_t bsp_i2c_mem_read(bsp_i2c_t i2c,uint16_t devaddress,uint16_t memaddress,size_t memaddsize,
+                        uint8_t *data,size_t size,bool block) {
+  if (block) {
+    return HAL_I2C_Mem_Read(bsp_i2c_get_handle(i2c), devaddress, memaddress, memaddsize,
+                            data, size, 10) != HAL_OK;
+  } else {
+    return HAL_I2C_Mem_Read_DMA(bsp_i2c_get_handle(i2c), devaddress, memaddress, memaddsize,
+                            data, size) != HAL_OK;
+  }
+}
+
+int8_t bsp_i2c_mem_write(bsp_i2c_t i2c,uint16_t devaddress,uint16_t memaddress,size_t memaddsize,
+                        uint8_t *data,size_t size,bool block) {
+  if (block) {
+    return HAL_I2C_Mem_Write(bsp_i2c_get_handle(i2c), devaddress, memaddress, memaddsize,
+                            data, size, 10) != HAL_OK;
+  } else {
+    return HAL_I2C_Mem_Write_DMA(bsp_i2c_get_handle(i2c), devaddress, memaddress, memaddsize,
+                            data, size) != HAL_OK;
+  }
+}

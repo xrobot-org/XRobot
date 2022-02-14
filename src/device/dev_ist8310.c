@@ -41,22 +41,22 @@ static TaskHandle_t thread_alert;
 static bool inited = false;
 
 static void ist8310_write_single(uint8_t reg, uint8_t data) {
-  HAL_I2C_Mem_Write(bsp_i2c_get_handle(BSP_I2C_COMP), IST8310_IIC_ADDRESS, reg,
-                    I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
+  bsp_i2c_mem_write(BSP_I2C_COMP, IST8310_IIC_ADDRESS, reg,
+                    I2C_MEMADD_SIZE_8BIT, &data, 1, true);
 }
 
 static uint8_t ist8310_read_single(uint8_t reg) {
   uint8_t buf = 0;
-  HAL_I2C_Mem_Read(bsp_i2c_get_handle(BSP_I2C_COMP), IST8310_IIC_ADDRESS, reg,
-                   I2C_MEMADD_SIZE_8BIT, &buf, 1, 100);
+  bsp_i2c_mem_read(BSP_I2C_COMP, IST8310_IIC_ADDRESS, reg,
+                   I2C_MEMADD_SIZE_8BIT, &buf, 1, true);
   return buf;
 }
 
 static void ist8310_read(uint8_t reg, uint8_t *data, uint8_t len) {
   ASSERT(data);
 
-  HAL_I2C_Mem_Read_DMA(bsp_i2c_get_handle(BSP_I2C_COMP), IST8310_IIC_ADDRESS,
-                       reg, I2C_MEMADD_SIZE_8BIT, data, len);
+  bsp_i2c_mem_read(BSP_I2C_COMP, IST8310_IIC_ADDRESS,
+                  reg, I2C_MEMADD_SIZE_8BIT, data, len, false);
 }
 
 static void ist8310_mem_rx_cplt_callback(void *arg) {
