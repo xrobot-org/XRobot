@@ -32,9 +32,11 @@ typedef enum {
 
 I2C_HandleTypeDef *bsp_i2c_get_handle(bsp_i2c_t i2c);
 int8_t bsp_i2c_register_callback(bsp_i2c_t i2c, bsp_i2c_callback_t type,
-                                void (*callback)(void *),void *callback_arg);
+                                 void (*callback)(void *), void *callback_arg);
 
-int8_t bsp_i2c_mem_read(bsp_i2c_t i2c,uint16_t devaddress,uint16_t memaddress,size_t memaddsize,
-                        uint8_t *data,size_t size,bool block);
-int8_t bsp_i2c_mem_write(bsp_i2c_t i2c,uint16_t devaddress,uint16_t memaddress,size_t memaddsize,
-                        uint8_t *data,size_t size,bool block);
+int8_t bsp_i2c_mem_read(bsp_i2c_t i2c, uint16_t devaddress, uint16_t memaddress,
+                        size_t memaddsize, uint8_t *data, size_t size,
+                        bool block);
+int8_t bsp_i2c_mem_write(bsp_i2c_t i2c, uint16_t devaddress,
+                         uint16_t memaddress, size_t memaddsize, uint8_t *data,
+                         size_t size, bool block);

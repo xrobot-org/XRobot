@@ -4,9 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "FreeRTOS.h"
 #include "bsp.h"
-#include "task.h"
 
 /* Exported constants ------------------------------------------------------- */
 /* Exported macro ----------------------------------------------------------- */

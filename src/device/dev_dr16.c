@@ -76,8 +76,8 @@ int8_t dr16_restart(void) {
 
 int8_t dr16_start_dma_recv(dr16_t *dr16) {
   ASSERT(dr16);
-  if (HAL_UART_Receive_DMA(bsp_uart_get_handle(BSP_UART_DR16),
-                           (uint8_t *)&(dma_buff), sizeof(dma_buff)) == HAL_OK)
+  if (bsp_uart_receive(BSP_UART_DR16,
+                      (uint8_t *)&(dma_buff), sizeof(dma_buff),false) == HAL_OK)
     return DEVICE_OK;
   return DEVICE_ERR;
 }

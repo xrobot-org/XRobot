@@ -57,8 +57,8 @@ int8_t ai_restart(void) {
 
 bool ai_start_receiving(ai_t *ai) {
   RM_UNUSED(ai);
-  return HAL_UART_Receive_DMA(bsp_uart_get_handle(BSP_UART_AI), rxbuf,
-                              AI_LEN_RX_BUFF) == HAL_OK;
+  return bsp_uart_receive(BSP_UART_AI, rxbuf,
+                          AI_LEN_RX_BUFF,false) == HAL_OK;
 }
 
 bool ai_wait_recv_cplt(ai_t *ai, uint32_t timeout) {
@@ -77,7 +77,7 @@ bool ai_start_trans(ai_t *ai) {
   ai->ref_updated = false;
 
   memcpy(txbuf, src, len);
-  return (HAL_UART_Transmit_DMA(bsp_uart_get_handle(BSP_UART_AI), txbuf, len) ==
+  return (bsp_uart_transmit(BSP_UART_AI, txbuf, len,false) ==
           HAL_OK);
 }
 

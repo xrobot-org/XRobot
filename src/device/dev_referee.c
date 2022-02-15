@@ -175,8 +175,8 @@ void referee_handle_offline(referee_t *ref) {
 
 int8_t referee_start_receiving(referee_t *ref) {
   RM_UNUSED(ref);
-  if (HAL_UART_Receive_DMA(bsp_uart_get_handle(BSP_UART_REF), rxbuf,
-                           REF_LEN_RX_BUFF) == HAL_OK) {
+  if (bsp_uart_receive(BSP_UART_REF, rxbuf,
+                      REF_LEN_RX_BUFF,false) == HAL_OK) {
     return DEVICE_OK;
   }
   return DEVICE_ERR;
@@ -672,8 +672,8 @@ int8_t referee_start_transmit(referee_t *ref) {
     ref->packet.data = NULL;
   }
 
-  if (HAL_UART_Transmit_DMA(bsp_uart_get_handle(BSP_UART_REF), txbuf,
-                            (uint16_t)ref->packet.size) == HAL_OK) {
+  if (bsp_uart_transmit(BSP_UART_REF, txbuf,
+                        (uint16_t)ref->packet.size,false) == HAL_OK) {
     return DEVICE_OK;
   }
   return DEVICE_ERR;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "bsp.h"
@@ -34,4 +35,8 @@ typedef enum {
 
 UART_HandleTypeDef *bsp_uart_get_handle(bsp_uart_t uart);
 int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,
-                                 void (*callback)(void *), void *callback_arg);
+                                  void (*callback)(void *), void *callback_arg);
+int8_t bsp_uart_transmit(bsp_uart_t uart, uint8_t *data, size_t size,
+                         bool block);
+int8_t bsp_uart_receive(bsp_uart_t uart, uint8_t *buff, size_t size,
+                        bool block);
