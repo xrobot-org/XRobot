@@ -18,7 +18,7 @@ void thd_ai(void* arg) {
   referee_for_ai_t referee_ai;
 
   publisher_t* cmd_host_pub =
-      msg_dist_create_topic("cmd_host", sizeof(cmd_launcher_t));
+      msg_dist_create_topic("cmd_host", sizeof(cmd_host_t));
   publisher_t* ui_ai_pub = msg_dist_create_topic("ui_ai", sizeof(cmd_ui_t));
 
   subscriber_t* quat_sub = msg_dist_subscribe("gimbal_quat", true);
@@ -39,8 +39,10 @@ void thd_ai(void* arg) {
       ai_handle_offline(&ai);
     }
 
-    ai_pack_cmd(&ai, &cmd_host);
-    msg_dist_publish(cmd_host_pub, &cmd_host);
+    if (ai.online) {
+      ai_pack_cmd(&ai, &cmd_host);
+      msg_dist_publish(cmd_host_pub, &cmd_host);
+    }
 
     /* 发送数据 */
     msg_dist_poll(quat_sub, &ai_quat, 0);

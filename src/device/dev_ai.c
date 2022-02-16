@@ -113,6 +113,8 @@ int8_t ai_pack_mcu_for_host(ai_t *ai, const quaternion_t *quat) {
 int8_t ai_pack_ref_for_host(ai_t *ai, const referee_for_ai_t *ref) {
   RM_UNUSED(ref);
   ai->to_host.ref.id = AI_ID_REF;
+  ai->to_host.ref.package.data.arm = ref->robot_id;
+  ai->to_host.ref.package.data.rfid = ref->robot_buff;
   ai->to_host.ref.package.data.team = ref->team;
   ai->to_host.ref.package.data.race = ref->game_type;
   ai->to_host.ref.package.crc16 = crc16_calc(
@@ -124,8 +126,8 @@ int8_t ai_pack_ref_for_host(ai_t *ai, const referee_for_ai_t *ref) {
 }
 
 void ai_pack_cmd(ai_t *ai, cmd_host_t *cmd_host) {
-  cmd_host->gimbal_delta.yaw = -ai->form_host.data.gimbal.yaw;
-  cmd_host->gimbal_delta.pit = -ai->form_host.data.gimbal.pit;
+  cmd_host->gimbal_delta.yaw = ai->form_host.data.gimbal.yaw;
+  cmd_host->gimbal_delta.pit = ai->form_host.data.gimbal.pit;
 
   cmd_host->fire = (ai->form_host.data.notice & AI_NOTICE_FIRE);
   cmd_host->chassis_move_vec.vx = ai->form_host.data.chassis_move_vec.vx;

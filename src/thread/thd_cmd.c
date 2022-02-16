@@ -50,13 +50,13 @@ void thd_cmd(void* arg) {
   while (1) {
     /* 将接收机数据解析为指令数据 */
     msg_dist_poll(rc_sub, &rc, 0);  // TODO: 可以阻塞
-    msg_dist_poll(host_sub, &host, 0);
 
     cmd_parse_rc(&rc, &cmd, (float)THD_PERIOD_MS / 1000.0f);
 
     /* 判断是否需要让上位机覆写指令 */
     if (cmd_check_host_overwrite(&cmd)) {
-      cmd_parse_host(&host, &cmd, (float)THD_PERIOD_MS / 1000.0f);
+      if (msg_dist_poll(host_sub, &host, 1))
+        cmd_parse_host(&host, &cmd, (float)THD_PERIOD_MS / 1000.0f);
     }
     cmd_pack_ui(&cmd_ui, &cmd);
 
@@ -69,4 +69,4 @@ void thd_cmd(void* arg) {
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
-THREAD_DECLEAR(thd_cmd, 128, 3);
+THREAD_DECLEAR(thd_cmd, 256, 3);

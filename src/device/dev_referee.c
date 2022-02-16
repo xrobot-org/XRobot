@@ -175,8 +175,7 @@ void referee_handle_offline(referee_t *ref) {
 
 int8_t referee_start_receiving(referee_t *ref) {
   RM_UNUSED(ref);
-  if (bsp_uart_receive(BSP_UART_REF, rxbuf,
-                      REF_LEN_RX_BUFF,false) == HAL_OK) {
+  if (bsp_uart_receive(BSP_UART_REF, rxbuf, REF_LEN_RX_BUFF, false) == HAL_OK) {
     return DEVICE_OK;
   }
   return DEVICE_ERR;
@@ -672,8 +671,8 @@ int8_t referee_start_transmit(referee_t *ref) {
     ref->packet.data = NULL;
   }
 
-  if (bsp_uart_transmit(BSP_UART_REF, txbuf,
-                        (uint16_t)ref->packet.size,false) == HAL_OK) {
+  if (bsp_uart_transmit(BSP_UART_REF, txbuf, (uint16_t)ref->packet.size,
+                        false) == HAL_OK) {
     return DEVICE_OK;
   }
   return DEVICE_ERR;
@@ -713,9 +712,14 @@ uint8_t referee_pack_for_ai(referee_for_ai_t *ai_ref, const referee_t *ref) {
 
   ai_ref->status = ref->status;
 
-  if (ref->rfid.high_ground == 1) ai_ref->robot_buff |= AI_RFID_SNIP;
+  if (ref->rfid.high_ground == 1)
+    ai_ref->robot_buff |= AI_RFID_SNIP;
 
-  if (ref->rfid.energy_mech == 1) ai_ref->robot_buff |= AI_RFID_BUFF;
+  else if (ref->rfid.energy_mech == 1)
+    ai_ref->robot_buff |= AI_RFID_BUFF;
+
+  else
+    ai_ref->robot_buff = 0;
 
   switch (ref->game_status.game_type) {
     case REF_GAME_TYPE_RMUC:
@@ -726,6 +730,7 @@ uint8_t referee_pack_for_ai(referee_for_ai_t *ai_ref, const referee_t *ref) {
       break;
     case REF_GAME_TYPE_RMUL_3V3:
       ai_ref->game_type = AI_RACE_RMUL3;
+      break;
     case REF_GAME_TYPE_RMUL_1V1:
       ai_ref->game_type = AI_RACE_RMUL1;
       break;
@@ -735,22 +740,22 @@ uint8_t referee_pack_for_ai(referee_for_ai_t *ai_ref, const referee_t *ref) {
 
   switch (ref->robot_status.robot_id % 100) {
     case REF_BOT_RED_HERO:
-      ai_ref->robot_id = AI_NOTICE_HERO;
+      ai_ref->robot_id = AI_ARM_HERO;
       break;
     case REF_BOT_RED_ENGINEER:
-      ai_ref->robot_id = AI_NOTICE_ENGINEER;
+      ai_ref->robot_id = AI_ARM_ENGINEER;
       break;
     case REF_BOT_RED_DRONE:
-      ai_ref->robot_id = AI_NOTICE_DRONE;
+      ai_ref->robot_id = AI_ARM_DRONE;
       break;
     case REF_BOT_RED_SENTRY:
-      ai_ref->robot_id = AI_NOTICE_SENTRY;
+      ai_ref->robot_id = AI_ARM_SENTRY;
       break;
     case REF_BOT_RED_RADER:
-      ai_ref->robot_id = AI_NOTICE_RADAR;
+      ai_ref->robot_id = AI_ARM_RADAR;
       break;
     default:
-      ai_ref->robot_id = AI_NOTICE_INFANTRY;
+      ai_ref->robot_id = AI_ARM_INFANTRY;
   }
   return DEVICE_OK;
 }
