@@ -30,8 +30,8 @@ static void gimbal_set_mode(gimbal_t *g, gimbal_mode_t mode) {
     low_pass_filter_2p_reset(g->filter_out + i, 0.0f);
   }
 
-  ahrs_reset_eulr(&(g->setpoint.eulr),
-                  &(g->feedback.eulr.imu)); /* 切换模式后重置设定值 */
+  ahrs_set_eulr(&(g->setpoint.eulr),
+                &(g->feedback.eulr.imu)); /* 切换模式后重置设定值 */
   if (g->mode == GIMBAL_MODE_RELAX) {
     if (mode == GIMBAL_MODE_ABSOLUTE) {
       g->setpoint.eulr.yaw = g->feedback.eulr.imu.yaw;
@@ -178,7 +178,7 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
   g->setpoint.eulr.pit += g_cmd->delta_eulr.pit;
 
   /* 重置输入指令，防止重复处理 */
-  ahrs_reset_eulr(&(g_cmd->delta_eulr), &(g->feedback.eulr.imu));
+  ahrs_reset_eulr(&(g_cmd->delta_eulr));
 
   /* 控制相关逻辑 */
   float yaw_omega_set_point, pit_omega_set_point;
@@ -188,12 +188,6 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
       break;
     case GIMBAL_MODE_SCAN:
     case GIMBAL_MODE_ABSOLUTE:
-      /* TODO: 可以试着在Pitch轴这里引入前馈（预测）
-       * 通过实验计算得到保持在特定角度需要的电机输出值，补偿连杆损失
-       * PID中的I专注于补偿摩擦力，数值可以相对较小
-       * Yaw轴也可以引入前馈控制，主要受到载弹量影响，但实现太过复杂，不予考虑
-       */
-
       /* Yaw轴角度 反馈控制 */
       yaw_omega_set_point =
           kpid_calc(g->pid + GIMBAL_CTRL_YAW_ANGLE_IDX, g->setpoint.eulr.yaw,
@@ -213,6 +207,10 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
       g->out[GIMBAL_ACTR_PIT_IDX] =
           kpid_calc(g->pid + GIMBAL_CTRL_PIT_OMEGA_IDX, pit_omega_set_point,
                     g->feedback.gyro.x, 0.f, g->dt);
+
+      /* Pitch前馈控制 */
+      g->out[GIMBAL_ACTR_PIT_IDX] +=
+          ff_get_value(&(g->param->ff), g->feedback.eulr.imu.pit);
       break;
 
     case GIMBAL_MODE_RELATIVE:

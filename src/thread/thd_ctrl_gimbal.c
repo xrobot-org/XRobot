@@ -69,4 +69,4 @@ void thd_ctrl_gimbal(void* arg) {
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
-THREAD_DECLEAR(thd_ctrl_gimbal, 256, 2);
+THREAD_DECLEAR(thd_ctrl_gimbal, 384, 2);

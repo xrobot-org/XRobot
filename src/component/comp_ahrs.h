@@ -49,8 +49,15 @@ int8_t ahrs_update(ahrs_t *ahrs, const vector3_t *accl, const vector3_t *gyro,
 int8_t ahrs_get_eulr(eulr_t *eulr, const ahrs_t *ahrs);
 
 /**
+ * @brief 将对应数据拷贝
+ *
+ * @param eulr 被操作的数据
+ */
+void ahrs_set_eulr(eulr_t *setpoint, const eulr_t *feedback);
+
+/**
  * @brief 将对应数据置零
  *
  * @param eulr 被操作的数据
  */
-void ahrs_reset_eulr(eulr_t *setpoint, const eulr_t *feedback);
+void ahrs_reset_eulr(eulr_t *setpoint);

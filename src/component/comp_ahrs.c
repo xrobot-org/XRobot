@@ -389,10 +389,19 @@ int8_t ahrs_get_eulr(eulr_t *eulr, const ahrs_t *ahrs) {
 }
 
 /**
+ * @brief 将对应数据拷贝
+ *
+ * @param eulr 被操作的数据
+ */
+void ahrs_set_eulr(eulr_t *setpoint, const eulr_t *feedback) {
+  memcpy(setpoint, feedback, sizeof(*setpoint));
+}
+
+/**
  * @brief 将对应数据置零
  *
  * @param eulr 被操作的数据
  */
-void ahrs_reset_eulr(eulr_t *setpoint, const eulr_t *feedback) {
-  memcpy(setpoint, feedback, sizeof(*setpoint));
+void ahrs_reset_eulr(eulr_t *setpoint) {
+  memset(setpoint, 0, sizeof(*setpoint));
 }
