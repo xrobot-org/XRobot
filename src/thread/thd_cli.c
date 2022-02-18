@@ -415,12 +415,7 @@ static BaseType_t command_cali_gyro(char *out_buffer, size_t len,
     case 3:
       /* 记录1000组数据，求出平均值作为陀螺仪的3轴零偏 */
       snprintf(out_buffer, len, "Calibation in progress.\r\n");
-      config_get(&cfg);
-      cfg.cali.bmi088.gyro_offset.x = 0.0f;
-      cfg.cali.bmi088.gyro_offset.y = 0.0f;
-      cfg.cali.bmi088.gyro_offset.z = 0.0f;
-      config_set(&cfg);
-      while (count < 1000) {
+      while (count < 2000) {
         bool data_new = msg_dist_poll(gyro_sub, &gyro, 5);
         bool data_good = gyro_is_stable(&gyro);
         if (data_new && data_good) {
@@ -439,9 +434,9 @@ static BaseType_t command_cali_gyro(char *out_buffer, size_t len,
       snprintf(out_buffer, len,
                "Calibation finished. Write result to flash.\r\n");
       config_get(&cfg);
-      cfg.cali.bmi088.gyro_offset.x = x;
-      cfg.cali.bmi088.gyro_offset.y = y;
-      cfg.cali.bmi088.gyro_offset.z = z;
+      cfg.cali.bmi088.gyro_offset.x += x;
+      cfg.cali.bmi088.gyro_offset.y += y;
+      cfg.cali.bmi088.gyro_offset.z += z;
       config_set(&cfg);
       fsm.stage++;
       return pdPASS;
