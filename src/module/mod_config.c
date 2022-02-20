@@ -58,12 +58,12 @@ static const config_robot_param_t param_default = {
   .gimbal = { /* 云台模块参数 */
     .ff = {
         /* GIMBAL_CTRL_PIT_FEEDFORWARD */
-        .a = 0,
-        .b = 0,
-        .c = 0,
-        .max = 0,
-        .min = 0,
-    }/* ff */,
+        .a =0.0f,
+        .b =0.0f,
+        .c =0.0f,
+        .max =0.0f,
+        .min =0.0f,
+    }, /* ff */
 
     .pid = {
       {
@@ -265,12 +265,12 @@ static const config_robot_param_t param_hero = {
   .gimbal = { /* 云台模块参数 */
     .ff = {
         /* GIMBAL_CTRL_PIT_FEEDFORWARD */
-        .a = 0,
-        .b = 0,
-        .c = 0,
-        .max = 0,
-        .min = 0,
-    }/* ff */,
+        .a = 0.0f,
+        .b =0.0f,
+        .c =0.0f,
+        .max =0.0f,
+        .min =0.0f,
+    }, /* ff */
 
     .pid = {
       {
@@ -475,19 +475,19 @@ config_robot_param_t param_sentry = {
   .gimbal = { /* 云台模块参数 */
     .ff = {
         /* GIMBAL_CTRL_PIT_FEEDFORWARD */
-        .a = -0.2601,
-        .b = 0.2766,
-        .c = 0.4237,
-        .max = 0.35,
-        .min = 0,
-    }/* ff */,
+        .a = -0.2265f,
+        .b = 0.0032f,
+        .c = 0.1051f,
+        .max = 0.13f,
+        .min = -0.1f,
+    }, /* ff */
 
     .pid = {
       {
         /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-        .k = 0.15f,
+        .k = 0.41f,
         .p = 1.0f,
-        .i = 0.6f,
+        .i = 3.0f,
         .d = 0.002f,
         .i_limit = 1.0f,
         .out_limit = 1.0f,
@@ -505,10 +505,10 @@ config_robot_param_t param_sentry = {
         .range = M_2PI,
       }, {
         /* GIMBAL_CTRL_PIT_OMEGA_IDX */
-        .k = 0.25f,
+        .k = 0.12,
         .p = 1.0f,
-        .i = 8.0f,
-        .d = 0.001f,
+        .i = 4.0f,
+        .d = 0.0f,
         .i_limit = 1.0f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
@@ -526,7 +526,7 @@ config_robot_param_t param_sentry = {
       },
     }, /* pid */
 
-    .pitch_travel_rad = 0.43f,
+    .pitch_travel_rad = 1.45f,
 
     .low_pass_cutoff_freq = {
       .out = -1.0f,
