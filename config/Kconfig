@@ -1,3 +1,4 @@
+menu "硬件平台"
 choice
     prompt "开发板"
     default BOARD_DEV_C
@@ -26,6 +27,10 @@ choice
         bool "CUSTOM"
 endchoice
 
+endmenu
+
+menu "编译工具链"
+
 choice
     prompt "工具链"
     default TC_ARM_NONE_EABI
@@ -39,6 +44,10 @@ endchoice
 
 config TC_CLANG
 	tristate "使用clang作为编译器" if TC_ARM_NONE_EABI
+
+endmenu
+
+menu "比赛信息"
 
 choice
     prompt "兵种"
@@ -61,3 +70,106 @@ choice
     config GM_RMUC
         bool "超级对抗赛"
 endchoice
+
+endmenu
+
+menu "调试选项"
+
+menu "裁判系统"
+
+config REF_VIRTUAL
+	tristate "预设参数覆盖裁判系统信息"
+
+config REF_FORCE_ONLINE
+	tristate "强制认为裁判系统在线" if REF_VIRTUAL
+
+config REF_LAUNCH_SPEED
+    int "射速限制" if REF_VIRTUAL
+    range 10 30
+    default 30
+
+config REF_HEAT_LIMIT_17
+    int "17mm枪口热量限制" if REF_VIRTUAL
+    range 0 1000
+    default 1000
+
+config REF_HEAT_LIMIT_42
+    int "42mm枪口热量限制" if REF_VIRTUAL
+    range 0 1000
+    default 1000
+
+config REF_POWER_LIMIT
+    int "底盘功率限制" if REF_VIRTUAL
+    range 0 200
+    default 1000
+
+config REF_POWER_BUFF
+    int "缓冲能量" if REF_VIRTUAL
+    range 0 100
+    default 100
+
+endmenu
+
+menu "机器人"
+
+config CHIS_POWER_UNLIMIT
+	tristate "爆发吧 小宇宙！（不再限制功率）"
+
+endmenu
+
+menu "上位机"
+
+config HOST_CTRL_PRIORITY
+	tristate "优先把控制权交给上位机"
+
+endmenu
+
+menu "遥控器"
+
+choice
+    prompt "左拨杆-下 功能"
+    default LEVER_L_DEFAULT
+
+    config LEVER_L_DEFAULT
+        bool "默认"
+
+    config LEVER_L_ROTATE
+        bool "小陀螺"
+endchoice
+
+choice
+    prompt "右拨杆-下 功能"
+    default LEVER_R_DEFAULT
+
+    config LEVER_R_DEFAULT
+        bool "默认"
+
+    config LEVER_R_FIRE_SINLE
+        bool "单发开火"
+
+    config LEVER_R_FIRE_BURST
+        bool "爆发开火"
+
+    config LEVER_R_FIRE_CONT
+        bool "持续开火"
+endchoice
+
+endmenu
+
+endmenu
+
+menu "机器人参数"
+
+menu "底盘"
+
+endmenu
+
+menu "发射机构"
+
+endmenu
+
+menu "云台"
+
+endmenu
+
+endmenu

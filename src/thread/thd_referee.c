@@ -48,11 +48,16 @@ void thd_referee(void* arg) {
   while (1) {
     referee_start_receiving(&ref); /* 开始接收裁判系统数据 */
 
+#if REF_FORCE_ONLINE
+    referee_wait_recv_cplt(&ref, 100);
+    referee_parse(&ref);
+#else
     if (!referee_wait_recv_cplt(&ref, 100)) { /* 判断裁判系统数据是否接收完成 */
       referee_handle_offline(&ref); /* 长时间未接收到数据，裁判系统离线 */
     } else {
       referee_parse(&ref); /* 解析裁判系统数据 */
     }
+#endif
 
     /* 定时接收发送数据 */
     if (xTaskGetTickCount() > tick) {

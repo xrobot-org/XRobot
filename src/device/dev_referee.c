@@ -317,6 +317,18 @@ int8_t referee_parse(referee_t *ref) {
     if (crc16_verify((uint8_t *)header, (uint8_t)(index - (uint8_t *)header)))
       memcpy(destination, source, size);
   }
+#if REF_VIRTUAL
+#if REF_FORCE_ONLINE
+  ref->status = REF_STATUS_RUNNING;
+#endif
+  ref->power_heat.launcher_id1_17_heat = REF_HEAT_LIMIT_17;
+  ref->power_heat.launcher_42_heat = REF_HEAT_LIMIT_42;
+  ref->robot_status.launcher_id1_17_speed_limit = REF_LAUNCH_SPEED;
+  ref->robot_status.launcher_42_speed_limit = REF_LAUNCH_SPEED;
+  ref->robot_status.chassis_power_limit = REF_POWER_LIMIT;
+  ref->power_heat.chassis_pwr_buff = REF_POWER_BUFF;
+#endif
+
   return DEVICE_OK;
 }
 

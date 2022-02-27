@@ -69,7 +69,9 @@ void thd_ctrl_chassis(void* arg) {
     /* 更新反馈值 */
     chassis_update_feedback(&chassis, &chassis_motor, &gimbal_motor);
     chassis_control(&chassis, &chassis_cmd, xTaskGetTickCount());
+#if !CHIS_POWER_UNLIMIT
     chassis_power_limit(&chassis, &cap, &ref_chassis); /* 限制输出功率 */
+#endif
     chassis_pack_output(&chassis, &motor_ctrl, &cap_ctrl);
     chassis_pack_ui(&chassis, &chassis_ui);
     xTaskResumeAll();

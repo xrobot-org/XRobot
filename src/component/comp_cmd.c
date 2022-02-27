@@ -25,7 +25,6 @@
 
 #include "comp_cmd.h"
 
-
 /**
  * @brief 找到行为对应的按键值
  *
@@ -221,7 +220,11 @@ static void cmd_joystick_switch_logic(const cmd_rc_t *rc, cmd_t *cmd,
       break;
 
     case CMD_SW_DOWN:
+#if LEVER_R_DEFAULT
       cmd->chassis.mode = cmd->def_mode->chassis;
+#elif LEVER_L_ROTATE
+      cmd->chassis.mode = CHASSIS_MODE_ROTOR;
+#endif
       break;
 
     case CMD_SW_ERR:
@@ -239,11 +242,24 @@ static void cmd_joystick_switch_logic(const cmd_rc_t *rc, cmd_t *cmd,
     case CMD_SW_MID:
       cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
       cmd->launcher.mode = LAUNCHER_MODE_LOADED;
+      cmd->launcher.fire = false;
       break;
 
     case CMD_SW_DOWN:
       cmd->gimbal.mode = cmd->def_mode->gimbal;
       cmd->launcher.mode = cmd->def_mode->launcher;
+#if LEVER_R_DEFAULT
+
+#elif LEVER_R_FIRE_SINLE
+      cmd->launcher.fire = true;
+      cmd->launcher.fire_mode = FIRE_MODE_SINGLE;
+#elif LEVER_R_FIRE_BURST
+      cmd->launcher.fire = true;
+      cmd->launcher.fire_mode = FIRE_MODE_BURST;
+#elif LEVER_R_FIRE_CONT
+      cmd->launcher.fire = true;
+      cmd->launcher.fire_mode = FIRE_MODE_CONT;
+#endif
       break;
 
     case CMD_SW_ERR:
@@ -304,7 +320,11 @@ int8_t cmd_init(cmd_t *cmd, const cmd_params_t *param,
  * @return false 不启用
  */
 inline bool cmd_check_host_overwrite(cmd_t *cmd) {
+#if HOST_CTRL_PRIORITY
+  return true;
+#else
   return cmd->ctrl_source == CMD_SOURCE_HOST;
+#endif
 }
 
 /**
