@@ -321,6 +321,7 @@ int8_t cmd_init(cmd_t *cmd, const cmd_params_t *param,
  */
 inline bool cmd_check_host_overwrite(cmd_t *cmd) {
 #if HOST_CTRL_PRIORITY
+  RM_UNUSED(cmd);
   return true;
 #else
   return cmd->ctrl_source == CMD_SOURCE_HOST;

@@ -52,4 +52,8 @@ int8_t bsp_usb_printf(const char *fmt, ...) {
   }
 }
 
+void bsp_usb_init() { tusb_init(); }
+
+void bsp_usb_update() { tud_task(); }
+
 void OTG_FS_IRQHandler(void) { tud_int_handler(BSP_USB_DEFAULT_SERIAL_PORT); }

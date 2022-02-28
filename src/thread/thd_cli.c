@@ -18,7 +18,7 @@
 
 #include "FreeRTOS.h"
 #include "FreeRTOS_CLI.h"
-#include "bsp_usb.h"
+#include "dev_term.h"
 #include "mid_msg_dist.h"
 #include "task.h"
 #include "thd.h"
@@ -372,7 +372,7 @@ command_error:
 }
 
 static BaseType_t command_cali_gyro(char *out_buffer, size_t len,
-                                   const char *command_string) {
+                                    const char *command_string) {
   if (out_buffer == NULL) return pdFALSE;
   RM_UNUSED(command_string);
   len -= 1;
@@ -464,7 +464,7 @@ static BaseType_t command_cali_gyro(char *out_buffer, size_t len,
 }
 
 static BaseType_t command_set_mech_zero(char *out_buffer, size_t len,
-                                      const char *command_string) {
+                                        const char *command_string) {
   if (out_buffer == NULL) return pdFALSE;
   RM_UNUSED(command_string);
   len -= 1;
@@ -514,7 +514,7 @@ static BaseType_t command_set_mech_zero(char *out_buffer, size_t len,
 }
 
 static BaseType_t command_set_gimbal_lim(char *out_buffer, size_t len,
-                                       const char *command_string) {
+                                         const char *command_string) {
   if (out_buffer == NULL) return pdFALSE;
   RM_UNUSED(command_string);
   len -= 1;
@@ -665,19 +665,20 @@ void thd_cli(void *arg) {
   }
 
   /* 通过回车键唤醒命令行界面 */
-  bsp_usb_printf("Please press ENTER to activate this console.\r\n");
+  term_printf("Please press ENTER to activate this console.\r\n");
   while (1) {
-    if (!bsp_usb_connect() || !bsp_usb_avail()) {
-      vTaskDelay(1);
+    if (term_get_ctrl(10) != RM_OK) {
       continue;
     }
     /* 读取接收到的新字符 */
-    rx_char = bsp_usb_read_char();
+    rx_char = term_read_char();
 
     /* 进行判断 */
     if (rx_char == '\n' || rx_char == '\r') {
       bsp_usb_printf("%c", rx_char);
       break;
+    } else {
+      term_give_ctrl();
     }
   }
 
@@ -687,12 +688,12 @@ void thd_cli(void *arg) {
   /* 开始运行命令行界面 */
   bsp_usb_printf(CLI_START);
   while (1) {
-    if (!bsp_usb_avail()) {
+    if (!term_avail()) {
       vTaskDelay(1);
       continue;
     }
     /* 读取接收到的新字符 */
-    rx_char = bsp_usb_read_char();
+    rx_char = term_read_char();
 
     if (rx_char <= 126 && rx_char >= 32) {
       /* 如果字符是可显示字符，则直接显式，并存入输入缓存中 */
