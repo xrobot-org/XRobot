@@ -231,7 +231,7 @@ static const config_robot_param_t param_hero = {
     .type = CHASSIS_TYPE_MECANUM,
 
     .motor_pid_param = {
-      .k = 0.0011f,
+      .k = 0.0003f,
       .p = 1.0f,
       .i = 0.001f,
       .d = 0.0f,
