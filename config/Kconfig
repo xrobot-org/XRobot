@@ -122,6 +122,9 @@ menu "上位机"
 config HOST_CTRL_PRIORITY
 	tristate "优先把控制权交给上位机"
 
+config HOST_USB_DISABLE
+    tristate "让出usb串口,开启命令行"
+
 endmenu
 
 menu "遥控器"

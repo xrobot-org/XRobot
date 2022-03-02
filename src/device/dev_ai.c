@@ -7,6 +7,7 @@
 #include "comp_crc16.h"
 #include "comp_crc8.h"
 #include "comp_utils.h"
+#include "dev_term.h"
 
 #define AI_CMD_LIMIT (1.0f)
 #define AI_LEN_RX_BUFF (sizeof(Protocol_DownPackage_t))
@@ -18,34 +19,13 @@ static uint8_t txbuf[AI_LEN_TX_BUFF];
 
 static bool inited = false;
 
-static void ia_rx_cplt_callback(void *arg) {
-  ai_t *ai = arg;
-  BaseType_t switch_required;
-  xSemaphoreGiveFromISR(ai->sem.recv, &switch_required);
-  portYIELD_FROM_ISR(switch_required);
-}
-
-static void ia_tx_cplt_callback(void *arg) {
-  ai_t *ai = arg;
-  BaseType_t switch_required;
-  xSemaphoreGiveFromISR(ai->sem.trans, &switch_required);
-  portYIELD_FROM_ISR(switch_required);
-}
-
 int8_t ai_init(ai_t *ai) {
   ASSERT(ai);
   if (inited) return DEVICE_ERR_INITED;
   inited = true;
 
-  ai->sem.recv = xSemaphoreCreateBinary();
-  ai->sem.trans = xSemaphoreCreateBinary();
+  term_get_ctrl(0xff);
 
-  xSemaphoreGive(ai->sem.trans);
-
-  bsp_uart_register_callback(BSP_UART_AI, BSP_UART_RX_CPLT_CB,
-                             ia_rx_cplt_callback, ai);
-  bsp_uart_register_callback(BSP_UART_AI, BSP_UART_TX_CPLT_CB,
-                             ia_tx_cplt_callback, ai);
   return DEVICE_OK;
 }
 
@@ -55,14 +35,18 @@ int8_t ai_restart(void) {
   return DEVICE_OK;
 }
 
-bool ai_start_receiving(ai_t *ai) {
+int8_t ai_read_host(ai_t *ai) {
   RM_UNUSED(ai);
-  return bsp_uart_receive(BSP_UART_AI, rxbuf,
-                          AI_LEN_RX_BUFF,false) == HAL_OK;
+
+  if (term_read(rxbuf, sizeof(rxbuf)) == sizeof(rxbuf))
+    return DEVICE_OK;
+  else
+    return DEVICE_ERR;
 }
 
-bool ai_wait_recv_cplt(ai_t *ai, uint32_t timeout) {
-  return xSemaphoreTake(ai->sem.recv, pdMS_TO_TICKS(timeout)) == pdTRUE;
+bool ai_wait_recv_cplt(ai_t *ai) {
+  RM_UNUSED(ai);
+  return term_avail() >= sizeof(rxbuf);
 }
 
 bool ai_start_trans(ai_t *ai) {
@@ -77,12 +61,7 @@ bool ai_start_trans(ai_t *ai) {
   ai->ref_updated = false;
 
   memcpy(txbuf, src, len);
-  return (bsp_uart_transmit(BSP_UART_AI, txbuf, len,false) ==
-          HAL_OK);
-}
-
-bool ai_wait_trans_cplt(ai_t *ai, uint32_t timeout) {
-  return xSemaphoreTake(ai->sem.trans, pdMS_TO_TICKS(timeout)) == pdTRUE;
+  return term_write(txbuf, sizeof(txbuf)) == RM_OK;
 }
 
 int8_t ai_parse_host(ai_t *ai) {

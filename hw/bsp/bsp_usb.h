@@ -10,10 +10,11 @@
 /* Exported macro ----------------------------------------------------------- */
 /* Exported types ----------------------------------------------------------- */
 /* Exported functions prototypes -------------------------------------------- */
-bool bsp_usb_connect(void);                  /* USB已连接 */
-bool bsp_usb_avail(void);                    /* USB有数据 */
-char bsp_usb_read_char();                     /* 获取缓存数据 */
+bool bsp_usb_connect(void);   /* USB已连接 */
+uint32_t bsp_usb_avail(void); /* USB有数据 */
+char bsp_usb_read_char();     /* 获取缓存数据 */
+uint32_t bsp_usb_read(uint8_t *buffer, uint32_t len);
 int8_t bsp_usb_printf(const char *fmt, ...); /* 打印至虚拟串口 */
-int8_t bsp_usb_transmit(uint8_t *buffer, uint16_t len);
+int8_t bsp_usb_transmit(uint8_t *buffer, uint32_t len);
 void bsp_usb_init(void);
 void bsp_usb_update(void);

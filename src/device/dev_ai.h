@@ -23,11 +23,6 @@ typedef struct __packed {
 } ai_up_pckage_mcu_t;
 
 typedef struct {
-  struct {
-    SemaphoreHandle_t recv;
-    SemaphoreHandle_t trans;
-  } sem;
-
   bool ref_updated;
 
   Protocol_DownPackage_t form_host;
@@ -44,9 +39,9 @@ int8_t ai_init(ai_t *ai);
 int8_t ai_restart(void);
 
 bool ai_start_receiving(ai_t *ai);
-bool ai_wait_recv_cplt(ai_t *ai, uint32_t timeout);
+int8_t ai_read_host(ai_t *ai);
+bool ai_wait_recv_cplt(ai_t *ai);
 bool ai_start_trans(ai_t *ai);
-bool ai_wait_trans_cplt(ai_t *ai, uint32_t timeout);
 int8_t ai_parse_host(ai_t *ai);
 int8_t ai_handle_offline(ai_t *ai);
 int8_t ai_pack_mcu_for_host(ai_t *ai, const quaternion_t *quat);

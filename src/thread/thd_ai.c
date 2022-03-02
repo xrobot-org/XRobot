@@ -6,7 +6,7 @@
 #include "mid_msg_dist.h"
 #include "thd.h"
 
-#define THD_PERIOD_MS (1)
+#define THD_PERIOD_MS (2)
 #define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
 void thd_ai(void* arg) {
@@ -24,6 +24,10 @@ void thd_ai(void* arg) {
   subscriber_t* quat_sub = msg_dist_subscribe("gimbal_quat", true);
   subscriber_t* referee_ai_sub = msg_dist_subscribe("referee_ai", true);
 
+#if HOST_USB_DISABLE
+  vTaskSuspend(xTaskGetCurrentTaskHandle());
+#endif
+
   /* 初始化AI通信 */
   ai_init(&ai);
 
@@ -31,10 +35,10 @@ void thd_ai(void* arg) {
 
   while (1) {
     /* 接收指令 */
-    ai_start_receiving(&ai);
-
-    if (ai_wait_recv_cplt(&ai, pdMS_TO_TICKS(200))) {
-      ai_parse_host(&ai);
+    if (ai_wait_recv_cplt(&ai)) {
+      if (!ai_read_host(&ai)) {
+        ai_parse_host(&ai);
+      }
     } else {
       ai_handle_offline(&ai);
     }
@@ -52,9 +56,7 @@ void thd_ai(void* arg) {
       ai_pack_ref_for_host(&ai, &(referee_ai));
     }
 
-    if (ai_wait_trans_cplt(&ai, 0)) {
-      ai_start_trans(&ai);
-    }
+    ai_start_trans(&ai);
 
     /* 更新UI */
     msg_dist_publish(ui_ai_pub, &cmd_host);
