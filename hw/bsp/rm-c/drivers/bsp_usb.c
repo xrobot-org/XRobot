@@ -1,10 +1,9 @@
-#include "bsp_usb.h"
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "bsp_delay.h"
+#include "bsp_usb.h"
 #include "comp_utils.h"
 #include "tusb.h"
 
@@ -15,7 +14,7 @@
 
 uint8_t usb_tx_buf[BSP_USB_MAX_TX_LEN];
 
-static int8_t bsp_usb_transmit(uint8_t *buffer, uint16_t len) {
+int8_t bsp_usb_transmit(uint8_t *buffer, uint16_t len) {
   tud_cdc_n_write(BSP_USB_DEFAULT_SERIAL_PORT, buffer, len);
   tud_cdc_n_write_flush(BSP_USB_DEFAULT_SERIAL_PORT);
   return BSP_OK;
