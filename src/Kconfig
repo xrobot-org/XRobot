@@ -1,0 +1,44 @@
+menu "比赛信息"
+
+choice
+    prompt "兵种"
+    default ID_INFANTRY
+
+    config ID_HERO
+        bool "英雄"
+
+    config ID_INFANTRY
+        bool "步兵"
+
+    config ID_SENTRY
+        bool "哨兵"
+
+    config ID_ENGINEER
+        bool "工程"
+
+    config ID_DART
+        bool "飞镖"
+
+    config ID_RADAR
+        bool "雷达"
+endchoice
+
+choice
+    prompt "比赛类型"
+    default GM_RMUC
+
+    config GM_RMUC
+        bool "超级对抗赛"
+
+    config GM_RMUT
+        bool "高校单项赛"
+
+    config GM_RMUL
+        bool "高校联盟赛"
+endchoice
+
+endmenu
+
+source "../src/device/Kconfig"
+
+source "../src/module/Kconfig"

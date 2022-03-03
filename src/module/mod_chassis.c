@@ -19,11 +19,6 @@
 #include "dev_cap.h"
 #include "dev_tof.h"
 
-#define _CAP_PERCENTAGE_NO_LIM 80 /* 底盘不再限制功率的电容电量 */
-#define _CAP_PERCENTAGE_WORK 30   /* 电容开始工作的电容电量 */
-
-#define MAX_CAP_LOAD 100 /* 电容能够提供的最大功率 */
-
 #define ROTOR_WZ_MIN 0.6f /* 小陀螺旋转位移下界 */
 #define ROTOR_WZ_MAX 0.8f /* 小陀螺旋转位移上界 */
 
@@ -35,19 +30,18 @@
 #define MOTOR_MAX_ROTATIONAL_SPEED 7000.0f /* 电机的最大转速 */
 
 /* 保证电容电量宏定义在正确范围内 */
-#if ((_CAP_PERCENTAGE_NO_LIM < 0) || (_CAP_PERCENTAGE_NO_LIM > 100) || \
-     (_CAP_PERCENTAGE_WORK < 0) || (_CAP_PERCENTAGE_WORK > 100))
+#if ((CAP_PERCENT_NO_LIM < 0) || (CAP_PERCENT_NO_LIM > 100) || \
+     (CAP_PERCENT_WORK < 0) || (CAP_PERCENT_WORK > 100))
 #error "Cap percentage should be in the range from 0 to 100."
 #endif
 
 /* 保证电容功率宏定义在正确范围内 */
-#if ((MAX_CAP_LOAD < 60) || (MAX_CAP_LOAD > 200))
+#if ((CAP_MAX_LOAD < 60) || (CAP_MAX_LOAD > 200))
 #error "The capacitor power should be in in the range from 60 to 200."
 #endif
 
-static const float kCAP_PERCENTAGE_NO_LIM =
-    (float)_CAP_PERCENTAGE_NO_LIM / 100.0f;
-static const float kCAP_PERCENTAGE_WORK = (float)_CAP_PERCENTAGE_WORK / 100.0f;
+static const float kCAP_PERCENTAGE_NO_LIM = (float)CAP_PERCENT_NO_LIM / 100.0f;
+static const float kCAP_PERCENTAGE_WORK = (float)CAP_PERCENT_WORK / 100.0f;
 
 bool motor_ref_data_valid(const referee_for_chassis_t *ref) {
   return (ref->chassis_power_limit > 0.0f) && (ref->chassis_pwr_buff > 0.0f) &&
@@ -359,7 +353,15 @@ void chassis_power_limit(chassis_t *c, const cap_feedback_t *cap,
   ASSERT(cap);
   ASSERT(ref);
 
+#if CHIS_POWER_UNLIMIT || !(ID_HERO || ID_INFANTRY || ID_SENTRY)
+  return;
+#endif
+
   float power_limit = 0.0f;
+#if ID_SENTRY
+  power_limit = limit_calc_chassic_output_power(ref->chassis_power_limit,
+                                                ref->chassis_pwr_buff);
+#else
   if (ref->status != REF_STATUS_RUNNING) {
     /* 裁判系统离线，将功率限制为固定值 */
     power_limit = GAME_CHASSIS_MAX_POWER_WO_REF;
@@ -374,7 +376,7 @@ void chassis_power_limit(chassis_t *c, const cap_feedback_t *cap,
         power_limit = ref->chassis_power_limit +
                       (cap->percentage - kCAP_PERCENTAGE_WORK) /
                           (kCAP_PERCENTAGE_NO_LIM - kCAP_PERCENTAGE_WORK) *
-                          (float)MAX_CAP_LOAD;
+                          (float)CAP_MAX_LOAD;
       }
     } else {
       /* 电容不在工作，根据缓冲能量计算输出功率限制 */
@@ -382,6 +384,7 @@ void chassis_power_limit(chassis_t *c, const cap_feedback_t *cap,
                                                     ref->chassis_pwr_buff);
     }
   }
+#endif
   /* 应用功率限制 */
   limit_chassic_output_power(power_limit, c->out.motor.as_array,
                              c->feedback.motor_rotational_speed, c->num_wheel);

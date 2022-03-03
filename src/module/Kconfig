@@ -1,0 +1,25 @@
+
+menu "机器人参数"
+
+if ID_HERO || ID_INFANTRY
+menu "超级电容"
+
+config CAP_PERCENT_NO_LIM
+    int "底盘不再限制功率的电容电量"
+    range 0 100
+    default 80
+
+config CAP_PERCENT_WORK
+    int "电容开始工作的电容电量"
+    range 0 100
+    default 30
+
+config CAP_MAX_LOAD
+    int "电容能够提供的最大功率"
+    range 0 300
+    default 100
+
+endmenu
+endif
+
+endmenu

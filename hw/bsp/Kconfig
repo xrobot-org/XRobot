@@ -1,0 +1,17 @@
+if BOARD_DEV_C
+source "../hw/bsp/rm-c/Kconfig"
+endif
+
+choice
+    prompt "开发板"
+    default BOARD_DEV_C
+
+    config BOARD_DEV_C
+        bool "DEV_C-STM32F407IG"
+
+    config BOARD_NX
+        bool "NX-ARM64"
+
+    config BOARD_CUSTOM
+        bool "CUSTOM"
+endchoice
