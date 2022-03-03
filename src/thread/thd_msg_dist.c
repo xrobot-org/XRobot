@@ -31,4 +31,4 @@ void thd_msg_dist(void *arg) {
     msg_dist_distribute();
   }
 }
-THREAD_DECLEAR(thd_msg_dist, 128, 4);
+THREAD_DECLEAR(thd_msg_dist, 256, 4);
