@@ -183,8 +183,8 @@ static BaseType_t command_stats(char *out_buffer, size_t len,
       return pdPASS;
     case 9:
       /* 获取机器人和操作手名称 */
-      snprintf(out_buffer, len, "%s\t\t%s\r\n", runtime->cfg.robot_param_name,
-               runtime->cfg.pilot_cfg_name);
+      snprintf(out_buffer, len, "%s\t\t%s\r\n", runtime->cfg.robot_param->name,
+               runtime->cfg.pilot_cfg->name);
       fsm.stage++;
       return pdPASS;
     case 10:
@@ -201,174 +201,6 @@ static BaseType_t command_stats(char *out_buffer, size_t len,
       fsm.stage = 0;
       return pdFALSE;
   }
-}
-
-static BaseType_t command_config(char *out_buffer, size_t len,
-                                 const char *command_string) {
-  /* 帮助信息，const保证不占用内存空间 */
-  static const char *const help_string =
-      "\r\n"
-      "usage: config <command> [<args>]\r\n"
-      "These are commands:\r\n"
-      "  help                     Display this message\r\n"
-      "  init                     Init config after flashing\r\n"
-      "  list <pilot/robot>       List available config\r\n"
-      "  set <pilot/robot> <name> Set config\r\n"
-      "\r\n";
-
-  /* 用常量表示状态机每个阶段，比数字更清楚 */
-  static const uint8_t stage_begin = 0;
-  static const uint8_t stage_success = 1;
-  static const uint8_t stage_end = 2;
-
-  if (out_buffer == NULL) return pdFALSE;
-  len -= 1;
-
-  /* 获取每一段参数的开始地址和长度 */
-  BaseType_t command_len, pr_len, name_len;
-  const char *command =
-      FreeRTOS_CLIGetParameter(command_string, 1, &command_len);
-  const char *pr = FreeRTOS_CLIGetParameter(command_string, 2, &pr_len);
-  const char *name = FreeRTOS_CLIGetParameter(command_string, 3, &name_len);
-
-  config_t cfg;
-
-  static finite_state_machine_t fsm;
-  if (strncmp(command, "help", (size_t)command_len) == 0) {
-    /* config help */
-    snprintf(out_buffer, len, "%s", help_string);
-    fsm.stage = stage_begin;
-    return pdFALSE;
-
-  } else if (strncmp(command, "init", (size_t)command_len) == 0) {
-    if ((pr != NULL) || (name != NULL)) goto command_error;
-
-    /* config init */
-    switch (fsm.stage) {
-      case stage_begin:
-        snprintf(out_buffer, len, "\r\nSet Robot config to default and qs.");
-        fsm.stage = stage_success;
-        return pdPASS;
-
-      case stage_success:
-        /* 初始化获取的操作手配置、机器人参数 */
-        memset(&cfg, 0, sizeof(cfg));
-        cfg.pilot_cfg = config_get_pilot_cfg("qs");
-        cfg.robot_param = config_get_robot_param("default");
-        snprintf(cfg.robot_param_name, 20, "default");
-        snprintf(cfg.pilot_cfg_name, 20, "qs");
-        config_set(&cfg);
-        snprintf(out_buffer, len, "\r\nDone.");
-        fsm.stage = stage_end;
-        return pdPASS;
-    }
-  } else if (strncmp(command, "list", (size_t)command_len) == 0) {
-    if ((pr == NULL) || (name != NULL)) goto command_error;
-
-    /* config list */
-    static uint8_t i = 0;
-
-    if (strncmp(pr, "pilot", (size_t)pr_len) == 0) {
-      /* config list pilot */
-      const config_pilot_cfg_map_t *pilot = config_get_pilot_name_map();
-      switch (fsm.stage) {
-        case stage_begin:
-          snprintf(out_buffer, len, "\r\nAvailable pilot cfg:");
-          fsm.stage = stage_success;
-          return pdPASS;
-        case stage_success:
-          if (pilot[i].name != NULL) {
-            snprintf(out_buffer, len, "\r\n  %s", pilot[i].name);
-            i++;
-            fsm.stage = stage_success;
-          } else {
-            i = 0;
-            fsm.stage = stage_end;
-          }
-          return pdPASS;
-      }
-    } else if (strncmp(pr, "robot", (size_t)pr_len) == 0) {
-      /* config list robot */
-      const config_robot_param_map_t *robot = config_get_robot_name_map();
-      switch (fsm.stage) {
-        case stage_begin:
-          snprintf(out_buffer, len, "\r\nAvailable robot params:");
-          fsm.stage = stage_success;
-          return pdPASS;
-        case stage_success:
-          if (robot[i].name != NULL) {
-            snprintf(out_buffer, len, "\r\n  %s", robot[i].name);
-            i++;
-            fsm.stage = stage_success;
-          } else {
-            i = 0;
-            fsm.stage = stage_end;
-          }
-          return pdPASS;
-      }
-    } else {
-      goto command_error;
-    }
-
-  } else if (strncmp(command, "set", (size_t)command_len) == 0) {
-    if ((pr == NULL) || (name == NULL)) goto command_error;
-
-    /* config set */
-    if (strncmp(pr, "robot", (size_t)pr_len) == 0) {
-      /* config set robot */
-      if (fsm.stage == stage_begin) {
-        config_get(&cfg);
-        if (config_get_robot_param(name) == NULL) {
-          snprintf(out_buffer, len, "\r\nFailed: Unknow model.");
-          fsm.stage = stage_end;
-          return pdPASS;
-
-        } else {
-          snprintf(out_buffer, len, "\r\nSucceed.");
-          snprintf(cfg.robot_param_name, 20, "%s", name);
-          config_set(&cfg);
-          fsm.stage = stage_success;
-          return pdPASS;
-        }
-      }
-    } else if (strncmp(pr, "pilot", (size_t)pr_len) == 0) {
-      /* config set pilot */
-      if (fsm.stage == 0) {
-        config_get(&cfg);
-        if (config_get_pilot_cfg(name) == NULL) {
-          snprintf(out_buffer, len, "\r\nFailed: Unknow pilot.");
-          fsm.stage = stage_end;
-          return pdPASS;
-        } else {
-          snprintf(out_buffer, len, "\r\nSucceed.");
-          snprintf(cfg.pilot_cfg_name, 20, "%s", name);
-          config_set(&cfg);
-          fsm.stage = stage_success;
-          return pdPASS;
-        }
-      }
-    } else {
-      goto command_error;
-    }
-    if (fsm.stage == stage_success) {
-      snprintf(out_buffer, len,
-               "\r\nRestart needed for setting to take effect.");
-      fsm.stage = stage_end;
-      return pdPASS;
-    }
-  } /* config set */
-
-  if (fsm.stage == stage_end) {
-    snprintf(out_buffer, len, "\r\n\r\n");
-    fsm.stage = stage_begin;
-    return pdFALSE;
-  }
-
-command_error:
-  snprintf(out_buffer, len,
-           "\r\nconfig: invalid command. See 'config help'.\r\n");
-  fsm.stage = stage_begin;
-  return pdFALSE;
 }
 
 static BaseType_t command_cali_gyro(char *out_buffer, size_t len,
@@ -610,12 +442,6 @@ static const CLI_Command_Definition_t command_table[] = {
         "RTOS, system & robot.\r\n\r\n",
         command_stats,
         0,
-    },
-    {
-        "config",
-        "\r\nconfig:\r\n See 'config help'. \r\n\r\n",
-        command_config,
-        -1,
     },
     {
         "cali-gyro",

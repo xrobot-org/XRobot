@@ -1,9 +1,23 @@
 
 menu "机器人参数"
 
-if ID_HERO || ID_INFANTRY
-menu "超级电容"
+choice
+    prompt "功率限制"
+    default POWER_LIMIT_WITH_CAP
 
+    config POWER_LIMIT_WITH_CAP
+        bool "有超级电容的功率限制" if ID_HERO || ID_INFANTRY
+
+    config POWER_LIMIT
+        bool "功率限制" if ID_SENTRY
+
+    config POWER_UNLIMIT
+        bool "功率无限制" if ID_ENGINEER || ID_DART || ID_RADAR
+endchoice
+
+if POWER_LIMIT_WITH_CAP
+
+menu "超级电容"
 config CAP_PERCENT_NO_LIM
     int "底盘不再限制功率的电容电量"
     range 0 100
@@ -18,8 +32,8 @@ config CAP_MAX_LOAD
     int "电容能够提供的最大功率"
     range 0 300
     default 100
-
 endmenu
+
 endif
 
 endmenu

@@ -37,6 +37,17 @@ choice
         bool "高校联盟赛"
 endchoice
 
+choice
+    prompt "操作手"
+    default PL_QS
+
+    config PL_QS
+        bool "曲燊"
+
+    config PL_ZYMA
+        bool "马志远"
+endchoice
+
 endmenu
 
 source "../src/device/Kconfig"

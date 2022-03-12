@@ -29,6 +29,7 @@
 
 #define MOTOR_MAX_ROTATIONAL_SPEED 7000.0f /* 电机的最大转速 */
 
+#if POWER_LIMIT_WITH_CAP
 /* 保证电容电量宏定义在正确范围内 */
 #if ((CAP_PERCENT_NO_LIM < 0) || (CAP_PERCENT_NO_LIM > 100) || \
      (CAP_PERCENT_WORK < 0) || (CAP_PERCENT_WORK > 100))
@@ -42,6 +43,8 @@
 
 static const float kCAP_PERCENTAGE_NO_LIM = (float)CAP_PERCENT_NO_LIM / 100.0f;
 static const float kCAP_PERCENTAGE_WORK = (float)CAP_PERCENT_WORK / 100.0f;
+
+#endif
 
 bool motor_ref_data_valid(const referee_for_chassis_t *ref) {
   return (ref->chassis_power_limit > 0.0f) && (ref->chassis_pwr_buff > 0.0f) &&
@@ -353,19 +356,19 @@ void chassis_power_limit(chassis_t *c, const cap_feedback_t *cap,
   ASSERT(cap);
   ASSERT(ref);
 
-#if CHIS_POWER_UNLIMIT || !(ID_HERO || ID_INFANTRY || ID_SENTRY)
+#if POWER_UNLIMIT || DEBUG_POWER_UNLIMIT
   return;
 #endif
 
-  float power_limit = 0.0f;
-#if ID_SENTRY
-  power_limit = limit_calc_chassic_output_power(ref->chassis_power_limit,
-                                                ref->chassis_pwr_buff);
-#else
+  float power_limit = limit_calc_chassic_output_power(ref->chassis_power_limit,
+                                                      ref->chassis_pwr_buff);
+
   if (ref->status != REF_STATUS_RUNNING) {
     /* 裁判系统离线，将功率限制为固定值 */
     power_limit = GAME_CHASSIS_MAX_POWER_WO_REF;
-  } else {
+  }
+#if POWER_LIMIT_WITH_CAP
+  else {
     if (cap->percentage > kCAP_PERCENTAGE_WORK) {
       /* 电容在线且电量足够，使用电容 */
       if (cap->percentage > kCAP_PERCENTAGE_NO_LIM) {

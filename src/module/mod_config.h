@@ -19,7 +19,7 @@
 /* clang-format on */
 /* 机器人参数，保存后不会变化 */
 typedef struct {
-  robot_model_t model; /* 型号 */
+  char name[10];
 
   bmi088_param_t imu;
 
@@ -37,15 +37,13 @@ typedef struct {
 
 /* 操作员配置 */
 typedef struct {
+  char name[10];
   cmd_params_t param; /* 参数 */
   ui_screen_t screen; /* 屏幕分辨率参数 */
 } config_pilot_cfg_t;
 
 /* 机器人配置，保存在Flash上的信息，根据机器人变化 */
 typedef struct {
-  char robot_param_name[20];
-  char pilot_cfg_name[20];
-
   const config_robot_param_t *robot_param;
   const config_pilot_cfg_t *pilot_cfg;
 
