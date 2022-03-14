@@ -7,10 +7,6 @@
 #include <stdlib.h>
 
 
-#define SCAN_ROTATE_YAW (M_2PI / 4000.0f) /*云台yaw轴每次转动的弧度*/
-#define SCAN_ROTATE_PIT (M_2PI / 2000.0f) /*云台pit轴每次转动的弧度*/
-#define SCAN_ROTATE_BOUNDARY (M_2PI / 130.0f) /*云台转动方向的临界值判断*/
-#define SCAN_YAW_RANGE (M_2PI / 3.0f)
 
 /**
  * @brief 设置云台模式
@@ -130,32 +126,35 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
   g_cmd->delta_eulr.yaw = -g_cmd->delta_eulr.yaw;
 
   switch (g->mode) {
-    case GIMBAL_MODE_SCAN:
+    case GIMBAL_MODE_SCAN: {
       /* 判断YAW轴运动方向 */
-      if (circle_error(g->feedback.eulr.encoder.yaw, g->mech_zero->yaw,
-                       M_2PI) >= SCAN_YAW_RANGE) {
-        g->scan_yaw_direction = -1;
-      }
-      if (circle_error(g->mech_zero->yaw, g->feedback.eulr.encoder.yaw,
-                       M_2PI) >= SCAN_YAW_RANGE) {
-        g->scan_yaw_direction = 1;
+      const float yaw_offset = circle_error(g->feedback.eulr.imu.yaw, 0, M_2PI);
+
+      if (fabs(yaw_offset) > ANGLE2RANDIAN(GIM_SCAN_ANGLE_BASE)) {
+        if (yaw_offset > 0)
+          g->scan_yaw_direction = -1;
+        else {
+          g->scan_yaw_direction = 1;
+        }
       }
 
       /* 判断PIT轴运动方向 */
       if (circle_error(g->feedback.eulr.encoder.pit, g->limit.min, M_2PI) <=
-          SCAN_ROTATE_BOUNDARY) {
+          ANGLE2RANDIAN(GIM_SCAN_CRITICAL_ERR)) {
         g->scan_pit_direction = 1;
-      }
-      if (circle_error(g->limit.max, g->feedback.eulr.encoder.pit, M_2PI) <=
-          SCAN_ROTATE_BOUNDARY) {
+      } else if (circle_error(g->limit.max, g->feedback.eulr.encoder.pit,
+                              M_2PI) <= ANGLE2RANDIAN(GIM_SCAN_CRITICAL_ERR)) {
         g->scan_pit_direction = -1;
       }
 
       /* 覆盖控制命令 */
-      g_cmd->delta_eulr.yaw = SCAN_ROTATE_YAW * g->scan_yaw_direction;
-      g_cmd->delta_eulr.pit = SCAN_ROTATE_PIT * g->scan_pit_direction;
+      g_cmd->delta_eulr.yaw =
+          SPEED2DELTA(GIM_SCAN_YAW_SPEED, g->dt) * g->scan_yaw_direction;
+      g_cmd->delta_eulr.pit =
+          SPEED2DELTA(GIM_SCAN_PIT_SPEED, g->dt) * g->scan_pit_direction;
 
       break;
+    }
     default:
       break;
   }

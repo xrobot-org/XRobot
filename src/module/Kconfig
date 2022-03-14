@@ -36,4 +36,32 @@ endmenu
 
 endif
 
+if ID_SENTRY
+
+menu "哨兵扫描参数"
+
+config GIM_SCAN_ANGLE_BASE
+    int "哨兵守家扫描角度"
+    range 0 180
+    default 80
+
+config GIM_SCAN_YAW_SPEED
+    int "哨兵YAW轴扫描速度"
+    range 0 300
+    default 80
+
+config GIM_SCAN_PIT_SPEED
+    int "哨兵PIT轴扫描速度"
+    range 0 300
+    default 80
+
+config GIM_SCAN_CRITICAL_ERR
+    int "哨兵变向临界值"
+    range 0 20
+    default 5
+
+endmenu
+
+endif
+
 endmenu

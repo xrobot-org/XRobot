@@ -27,6 +27,18 @@
 #endif
 
 /**
+ * @brief 角度到弧度转换
+ *
+ */
+#define ANGLE2RANDIAN(_angle) (_angle / 360.0f * M_2PI)
+
+/**
+ * @brief 角速度（度每秒）转单位时间变化量（弧度）
+ *
+ */
+#define SPEED2DELTA(_speed, _dt) (ANGLE2RANDIAN(_speed * _dt))
+
+/**
  * @brief 返回两个值中的最大值
  *
  */

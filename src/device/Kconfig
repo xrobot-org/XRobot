@@ -59,6 +59,8 @@ config HOST_USB_DISABLE
 
 endmenu
 
+endif
+
 menu "遥控器"
 
 choice
@@ -69,7 +71,7 @@ choice
         bool "默认"
 
     config LEVER_L_ROTATE
-        bool "小陀螺"
+        bool "小陀螺" if DEBUG_EN
 endchoice
 
 choice
@@ -80,17 +82,15 @@ choice
         bool "默认"
 
     config LEVER_R_FIRE_SINLE
-        bool "单发开火"
+        bool "单发开火" if DEBUG_EN
 
     config LEVER_R_FIRE_BURST
-        bool "爆发开火"
+        bool "爆发开火" if DEBUG_EN
 
     config LEVER_R_FIRE_CONT
-        bool "持续开火"
+        bool "持续开火" if DEBUG_EN
 endchoice
 
 endmenu
-
-endif
 
 endmenu
