@@ -171,7 +171,7 @@ void chassis_init(chassis_t *c, const chassis_params_t *param,
 
   /* 初始化轮子电机控制PID和LPF */
   for (size_t i = 0; i < c->num_wheel; i++) {
-    kpid_init(c->pid.motor + i, KPID_MODE_NO_D, target_freq,
+    kpid_init(c->pid.motor + i, KPID_MODE_NO_D, KPID_MODE_K_SET, target_freq,
               &(c->param->motor_pid_param));
 
     low_pass_filter_2p_init(c->filter.in + i, target_freq,
@@ -181,7 +181,7 @@ void chassis_init(chassis_t *c, const chassis_params_t *param,
   }
 
   /* 初始化跟随云台的控制PID */
-  kpid_init(&(c->pid.follow), KPID_MODE_NO_D, target_freq,
+  kpid_init(&(c->pid.follow), KPID_MODE_NO_D, KPID_MODE_K_SET, target_freq,
             &(c->param->follow_pid_param));
 
   mixer_init(&(c->mixer), mixer_mode); /* 初始化混合器 */

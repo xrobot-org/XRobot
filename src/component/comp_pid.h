@@ -13,7 +13,12 @@ typedef enum {
   KPID_MODE_NO_D = 0, /* 不使用微分项，PI控制器 */
   KPID_MODE_CALC_D, /* 根据反馈的值计算离散微分，忽略PID_Calc中的fb_dot */
   KPID_MODE_SET_D /* 直接提供微分值，PID_Calc中的fb_dot将被使用，(Gyros) */
-} kpid_mode_t;
+} kpid_i_mode_t;
+
+typedef enum {
+  KPID_MODE_K_DYNAMIC = 0, /* 忽略param的k，可动态更改k的值 */
+  KPID_MODE_K_SET,         /* 使用param的k */
+} kpid_k_mode_t;
 
 /* PID参数 */
 typedef struct {
@@ -29,11 +34,13 @@ typedef struct {
 
 /* PID主结构体 */
 typedef struct {
-  kpid_mode_t mode;
+  kpid_i_mode_t i_mode;
+  kpid_k_mode_t k_mode;
   const kpid_params_t *param;
 
-  float dt_min; /* 最小PID_Calc调用间隔 */
-  float i;      /* 积分 */
+  float dt_min;    /* 最小PID_Calc调用间隔 */
+  float i;         /* 积分 */
+  float dynamic_k; /* 动态模式K */
 
   struct {
     float err;  /* 上次误差 */
@@ -48,12 +55,13 @@ typedef struct {
  * @brief 初始化PID
  *
  * @param pid PID结构体
- * @param mode PID模式
+ * @param i_mode PID i模式
+ * @param k_mode PID k模式
  * @param sample_freq 采样频率
  * @param param PID参数
  */
-void kpid_init(kpid_t *pid, kpid_mode_t mode, float sample_freq,
-               const kpid_params_t *param);
+void kpid_init(kpid_t *pid, kpid_i_mode_t i_mode, kpid_k_mode_t k_mode,
+               float sample_freq, const kpid_params_t *param);
 
 /**
  * @brief PID计算
@@ -66,6 +74,14 @@ void kpid_init(kpid_t *pid, kpid_mode_t mode, float sample_freq,
  * @return float 计算的输出
  */
 float kpid_calc(kpid_t *pid, float sp, float fb, float fb_dot, float dt);
+
+/**
+ * @brief 更改K的值
+ *
+ * @param pid PID结构体
+ * @param new_k 新的K值
+ */
+void kpid_set_k(kpid_t *pid, float new_k);
 
 /**
  * @brief 重置微分项

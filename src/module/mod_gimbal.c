@@ -66,14 +66,16 @@ void gimbal_init(gimbal_t *g, const gimbal_params_t *param, float limit_max,
   circle_add(&(g->limit.min), -g->param->pitch_travel_rad, M_2PI);
 
   /* 初始化云台电机控制PID和LPF */
-  kpid_init(g->pid + GIMBAL_CTRL_YAW_ANGLE_IDX, KPID_MODE_NO_D, target_freq,
-            g->param->pid + GIMBAL_CTRL_YAW_ANGLE_IDX);
-  kpid_init(g->pid + GIMBAL_CTRL_YAW_OMEGA_IDX, KPID_MODE_CALC_D, target_freq,
+  kpid_init(g->pid + GIMBAL_CTRL_YAW_ANGLE_IDX, KPID_MODE_NO_D, KPID_MODE_K_SET,
+            target_freq, g->param->pid + GIMBAL_CTRL_YAW_ANGLE_IDX);
+  kpid_init(g->pid + GIMBAL_CTRL_YAW_OMEGA_IDX, KPID_MODE_CALC_D,
+            KPID_MODE_K_DYNAMIC, target_freq,
             g->param->pid + GIMBAL_CTRL_YAW_OMEGA_IDX);
 
-  kpid_init(g->pid + GIMBAL_CTRL_PIT_ANGLE_IDX, KPID_MODE_NO_D, target_freq,
-            g->param->pid + GIMBAL_CTRL_PIT_ANGLE_IDX);
-  kpid_init(g->pid + GIMBAL_CTRL_PIT_OMEGA_IDX, KPID_MODE_CALC_D, target_freq,
+  kpid_init(g->pid + GIMBAL_CTRL_PIT_ANGLE_IDX, KPID_MODE_NO_D, KPID_MODE_K_SET,
+            target_freq, g->param->pid + GIMBAL_CTRL_PIT_ANGLE_IDX);
+  kpid_init(g->pid + GIMBAL_CTRL_PIT_OMEGA_IDX, KPID_MODE_CALC_D,
+            KPID_MODE_K_SET, target_freq,
             g->param->pid + GIMBAL_CTRL_PIT_OMEGA_IDX);
 
   for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
@@ -187,6 +189,10 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
       break;
     case GIMBAL_MODE_SCAN:
     case GIMBAL_MODE_ABSOLUTE:
+      /* Yaw轴角速度环参数计算 */
+      kpid_set_k(g->pid + GIMBAL_CTRL_YAW_OMEGA_IDX,
+                 cf_get_value(&(g->param->st), g->feedback.eulr.imu.pit));
+
       /* Yaw轴角度 反馈控制 */
       yaw_omega_set_point =
           kpid_calc(g->pid + GIMBAL_CTRL_YAW_ANGLE_IDX, g->setpoint.eulr.yaw,
@@ -209,7 +215,7 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
 
       /* Pitch前馈控制 */
       g->out[GIMBAL_ACTR_PIT_IDX] +=
-          ff_get_value(&(g->param->ff), g->feedback.eulr.imu.pit);
+          cf_get_value(&(g->param->ff), g->feedback.eulr.imu.pit);
       break;
 
     case GIMBAL_MODE_RELATIVE:

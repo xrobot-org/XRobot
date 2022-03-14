@@ -19,12 +19,13 @@
  * @brief 初始化PID
  *
  * @param pid PID结构体
- * @param mode PID模式
+ * @param i_mode PID i模式
+ * @param k_mode PID k模式
  * @param sample_freq 采样频率
  * @param param PID参数
  */
-void kpid_init(kpid_t *pid, kpid_mode_t mode, float sample_freq,
-               const kpid_params_t *param) {
+void kpid_init(kpid_t *pid, kpid_i_mode_t i_mode, kpid_k_mode_t k_mode,
+               float sample_freq, const kpid_params_t *param) {
   ASSERT(pid);
 
   ASSERT(isfinite(param->p));
@@ -41,7 +42,8 @@ void kpid_init(kpid_t *pid, kpid_mode_t mode, float sample_freq,
   low_pass_filter_2p_init(&(pid->dfilter), sample_freq,
                           pid->param->d_cutoff_freq);
 
-  pid->mode = mode;
+  pid->i_mode = i_mode;
+  pid->k_mode = k_mode;
   kpid_reset(pid);
 }
 
@@ -64,14 +66,25 @@ float kpid_calc(kpid_t *pid, float sp, float fb, float fb_dot, float dt) {
   const float err = circle_error(sp, fb, pid->param->range);
 
   /* 计算P项 */
-  const float k_err = err * pid->param->k;
+  float k_err;
+  switch (pid->k_mode) {
+    case KPID_MODE_K_SET:
+      k_err = err * pid->param->k;
+      break;
+    case KPID_MODE_K_DYNAMIC:
+      k_err = err * pid->dynamic_k;
+      break;
+    default:
+      k_err = 0.0f;
+      break;
+  }
 
   /* 计算D项 */
   const float k_fb = pid->param->k * fb;
   const float filtered_k_fb = low_pass_filter_2p_apply(&(pid->dfilter), k_fb);
 
   float d;
-  switch (pid->mode) {
+  switch (pid->i_mode) {
     case KPID_MODE_CALC_D:
       /* 通过fb计算D，避免了由于sp变化导致err突变的问题 */
       /* 当sp不变时，err的微分等于负的fb的微分 */
@@ -124,6 +137,18 @@ float kpid_calc(kpid_t *pid, float sp, float fb, float fb_dot, float dt) {
     pid->last.out = output;
   }
   return pid->last.out;
+}
+
+/**
+ * @brief 更改K的值
+ *
+ * @param pid PID结构体
+ * @param new_k 新的K值
+ */
+void kpid_set_k(kpid_t *pid, float new_k) {
+  if (pid->k_mode == KPID_MODE_K_DYNAMIC) {
+    pid->dynamic_k = new_k;
+  }
 }
 
 /**

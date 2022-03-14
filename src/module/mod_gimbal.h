@@ -5,8 +5,8 @@
 #pragma once
 
 #include "comp_ahrs.h"
+#include "comp_cf.h"
 #include "comp_cmd.h"
-#include "comp_ff.h"
 #include "comp_filter.h"
 #include "comp_pid.h"
 #include "dev_bmi088.h"
@@ -33,7 +33,8 @@ enum gimbal_acuator_e {
 typedef struct {
   const kpid_params_t pid[GIMBAL_CTRL_NUM]; /* 云台电机控制PID的参数 */
 
-  const ff_param_t ff;
+  const cf_param_t ff; /* PITCH前馈 */
+  const cf_param_t st; /* YAW自整定参数 */
 
   /* 低通滤波器截止频率 */
   struct {

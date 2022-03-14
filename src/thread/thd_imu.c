@@ -44,7 +44,7 @@ void thd_imu(void* arg) {
               &(runtime->cfg.robot_param->imu));
 
   /* 初始化IMU温度控制PID，防止温漂 */
-  kpid_init(&imu_temp_ctrl_pid, KPID_MODE_NO_D,
+  kpid_init(&imu_temp_ctrl_pid, KPID_MODE_NO_D, KPID_MODE_K_SET,
             1.0f / bmi088_get_update_freq(&bmi088), &imu_temp_ctrl_pid_param);
 
   /* IMU温度控制PWM输出 */

@@ -109,7 +109,7 @@ void launcher_init(launcher_t *l, const launcher_params_t *param,
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
     /* PI控制器初始化PID */
-    kpid_init(l->pid.fric + i, KPID_MODE_NO_D, target_freq,
+    kpid_init(l->pid.fric + i, KPID_MODE_NO_D, KPID_MODE_K_SET, target_freq,
               &(param->fric_pid_param));
 
     low_pass_filter_2p_init(l->filter.in.fric + i, target_freq,
@@ -120,7 +120,7 @@ void launcher_init(launcher_t *l, const launcher_params_t *param,
   }
 
   for (int i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
-    kpid_init(l->pid.trig + i, KPID_MODE_CALC_D, target_freq,
+    kpid_init(l->pid.trig + i, KPID_MODE_CALC_D, KPID_MODE_K_SET, target_freq,
               &(param->trig_pid_param));
 
     low_pass_filter_2p_init(l->filter.in.trig + i, target_freq,
