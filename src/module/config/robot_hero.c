@@ -55,6 +55,15 @@ const config_robot_param_t param_robot = {
         .min =0.0f,
     }, /* ff */
 
+    .st = {
+        /* GIMBAL_CTRL_YAW_SELF_TUNING */
+        .a = 0.0677f,
+        .b = 0.1653f,
+        .c = 0.3379f,
+        .max = 0.37f,
+        .min = 0.29f,
+    }, /* st */
+
     .pid = {
       {
         /* GIMBAL_CTRL_YAW_OMEGA_IDX */
