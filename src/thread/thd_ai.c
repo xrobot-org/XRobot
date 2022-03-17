@@ -37,18 +37,19 @@ void thd_ai(void* arg) {
     /* 接收指令 */
     if (ai_wait_recv_cplt(&ai)) {
       if (!ai_read_host(&ai)) {
-        ai_parse_host(&ai);
+        ai_parse_host(&ai, xTaskGetTickCount());
       }
     } else {
-      ai_handle_offline(&ai);
+      ai_handle_offline(&ai, xTaskGetTickCount());
     }
 
+    /* AI在线,发布控制命令 */
     if (ai.online) {
       ai_pack_cmd(&ai, &cmd_host);
       msg_dist_publish(cmd_host_pub, &cmd_host);
     }
 
-    /* 发送数据 */
+    /* 发送数据到上位机 */
     msg_dist_poll(quat_sub, &ai_quat, 0);
     ai_pack_mcu_for_host(&ai, &ai_quat);
 

@@ -64,9 +64,10 @@ bool ai_start_trans(ai_t *ai) {
   return term_write(txbuf, sizeof(txbuf)) == RM_OK;
 }
 
-int8_t ai_parse_host(ai_t *ai) {
+int8_t ai_parse_host(ai_t *ai, uint32_t tick) {
   if (crc16_verify((const uint8_t *)&(rxbuf), sizeof(ai->form_host))) {
     ai->online = true;
+    ai->last_online_time = tick;
     memcpy(&(ai->form_host), rxbuf, sizeof(ai->form_host));
     memset(rxbuf, 0, AI_LEN_RX_BUFF);
     return DEVICE_OK;
@@ -74,8 +75,10 @@ int8_t ai_parse_host(ai_t *ai) {
   return DEVICE_ERR;
 }
 
-int8_t ai_handle_offline(ai_t *ai) {
-  ai->online = false;
+int8_t ai_handle_offline(ai_t *ai, uint32_t tick) {
+  if (tick - ai->last_online_time > 10) {
+    ai->online = false;
+  }
   return DEVICE_OK;
 }
 
