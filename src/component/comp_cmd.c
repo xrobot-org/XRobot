@@ -315,14 +315,19 @@ int8_t cmd_init(cmd_t *cmd, const cmd_params_t *param,
 /**
  * @brief 检查是否启用上位机控制指令覆盖
  *
+ * @param rc 遥控链路数据
  * @param cmd 控制指令数据
  * @return true 启用
  * @return false 不启用
  */
-inline bool cmd_check_host_overwrite(cmd_t *cmd) {
+inline bool cmd_check_host_overwrite(const cmd_rc_t *rc, cmd_t *cmd) {
+  ASSERT(rc);
+  ASSERT(cmd);
+
 #if HOST_CTRL_PRIORITY
   RM_UNUSED(cmd);
-  return true;
+  /* 保证丢控时上位机无法控制 */
+  return !cmd_rc_losted(rc);
 #else
   return cmd->ctrl_source == CMD_SOURCE_HOST;
 #endif

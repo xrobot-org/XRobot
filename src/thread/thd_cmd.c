@@ -54,7 +54,7 @@ void thd_cmd(void* arg) {
     cmd_parse_rc(&rc, &cmd, (float)THD_PERIOD_MS / 1000.0f);
 
     /* 判断是否需要让上位机覆写指令 */
-    if (cmd_check_host_overwrite(&cmd)) {
+    if (cmd_check_host_overwrite(&rc, &cmd)) {
       if (msg_dist_poll(host_sub, &host, 1))
         cmd_parse_host(&host, &cmd, (float)THD_PERIOD_MS / 1000.0f);
     }
