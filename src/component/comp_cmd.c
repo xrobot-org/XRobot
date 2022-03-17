@@ -391,6 +391,11 @@ int8_t cmd_parse_host(const cmd_host_t *host, cmd_t *cmd, float dt_sec) {
   ASSERT(host);
   ASSERT(cmd);
 
+/* 哨兵开启云台绝对角度控制 */
+#if ID_SENTRY
+  cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
+#endif
+
   /* 云台欧拉角设置为host相应的变化的欧拉角 */
   cmd->gimbal.delta_eulr.yaw = host->gimbal_delta.yaw;
   cmd->gimbal.delta_eulr.pit = host->gimbal_delta.pit;
