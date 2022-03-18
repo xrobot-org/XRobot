@@ -52,7 +52,7 @@ typedef enum {
   REF_CMD_ID_KEYBOARD_MOUSE = 0x0304,
 } referee_cmd_id_t;
 
-typedef enum{
+typedef enum {
   REF_GAME_TYPE_RMUC,
   REF_GAME_TYPE_RMUT,
   REF_GAME_TYPE_RMUA,
@@ -324,6 +324,14 @@ typedef struct {
   referee_client_map_t client_map;
   referee_keyboard_mouse_t keyboard_mouse;
 
+  struct {
+    SemaphoreHandle_t raw_ready;
+  } sem;
+
+  TaskHandle_t thread_alert;
+} referee_recv_t;
+
+typedef struct {
   ui_t ui;
   /* UI所需信息 */
   ui_cap_t cap_ui;
@@ -341,14 +349,13 @@ typedef struct {
     SemaphoreHandle_t ui_fast_refresh;
     SemaphoreHandle_t ui_slow_refresh;
     SemaphoreHandle_t packet_sent;
-    SemaphoreHandle_t raw_ready;
   } sem;
 
   TaskHandle_t thread_alert;
 
   TimerHandle_t ui_fast_timer_id;
   TimerHandle_t ui_slow_timer_id;
-} referee_t;
+} referee_trans_t;
 
 typedef struct {
   uint8_t game_type;
@@ -372,21 +379,23 @@ typedef struct {
   referee_launcher_data_t launcher_data;
 } referee_for_launcher_t;
 
-int8_t referee_init(referee_t *ref, const ui_screen_t *screen);
+int8_t referee_trans_init(referee_trans_t *ref, const ui_screen_t *screen);
+int8_t referee_recv_init(referee_recv_t *ref);
 int8_t referee_restart(void);
-void referee_handle_offline(referee_t *ref);
+void referee_handle_offline(referee_recv_t *ref);
 
-int8_t referee_start_receiving(referee_t *ref);
-bool referee_wait_recv_cplt(referee_t *ref, uint32_t timeout);
-int8_t referee_parse(referee_t *ref);
+int8_t referee_start_receiving(referee_recv_t *ref);
+bool referee_wait_recv_cplt(referee_recv_t *ref, uint32_t timeout);
+int8_t referee_parse(referee_recv_t *ref);
 
-uint8_t referee_refresh_ui(referee_t *ref);
-int8_t referee_pack_ui_packet(referee_t *ref);
-int8_t referee_start_transmit(referee_t *ref);
-bool referee_wait_trans_cplt(referee_t *ref, uint32_t timeout);
+uint8_t referee_refresh_ui(referee_trans_t *ref);
+int8_t referee_pack_ui_packet(referee_trans_t *ref);
+int8_t referee_start_transmit(referee_trans_t *ref);
+bool referee_wait_trans_cplt(referee_trans_t *ref, uint32_t timeout);
 
 uint8_t referee_pack_for_chassis(referee_for_chassis_t *c_ref,
-                                 const referee_t *ref);
+                                 const referee_recv_t *ref);
 uint8_t referee_pack_for_launcher(referee_for_launcher_t *l_ref,
-                                  const referee_t *ref);
-uint8_t referee_pack_for_ai(referee_for_ai_t *ai_ref, const referee_t *ref);
+                                  const referee_recv_t *ref);
+uint8_t referee_pack_for_ai(referee_for_ai_t *ai_ref,
+                            const referee_recv_t *ref);

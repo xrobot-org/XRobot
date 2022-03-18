@@ -64,4 +64,36 @@ endmenu
 
 endif
 
+choice
+    prompt "UI模式"
+    default UI_MODE_OP
+
+    config UI_MODE_OP
+        bool "操作手模式" if ID_HERO || ID_INFANTRY || ID_ENGINEER
+
+    config UI_MODE_REMOTE
+        bool "远控模式" if ID_SENTRY
+
+    config UI_MODE_NONE
+        bool "无UI" if ID_DART || ID_DART || ID_RADAR
+endchoice
+
+if UI_MODE_OP || UI_MODE_REMOTE
+
+menu "操作手UI"
+
+config UI_DYNAMIC_CYCLE
+    int "动态元素刷新周期"
+    range 1 1000
+    default 50
+
+config UI_STATIC_CYCLE
+    int "静态元素刷新周期"
+    range 100 10000
+    default 1000
+
+endmenu
+
+endif
+
 endmenu

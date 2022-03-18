@@ -17,9 +17,6 @@
 #define REF_LEN_RX_BUFF (0xFF)
 #define REF_LEN_TX_BUFF (0xFF)
 
-// TODO:FREQ支持小数
-#define REF_UI_FAST_REFRESH_FREQ (50) /* 静态元素刷新频率 */
-#define REF_UI_SLOW_REFRESH_FREQ (1)  /* 动态元素刷新频率 */
 
 #define REF_UI_BOX_UP_OFFSET (4)
 #define REF_UI_BOX_BOT_OFFSET (-14)
@@ -49,21 +46,23 @@ typedef struct __packed {
 static uint8_t rxbuf[REF_LEN_RX_BUFF];
 static uint8_t txbuf[REF_LEN_TX_BUFF];
 
-static referee_t *gref;
+static referee_trans_t *gref_trans;
+static referee_recv_t *gref_recv;
 
-static bool inited = false;
+static bool trans_inited = false;
+static bool recv_inited = false;
 
 /* Private function  -------------------------------------------------------- */
 
 static void referee_rx_cplt_callback(void *arg) {
-  referee_t *ref = arg;
+  referee_recv_t *ref = arg;
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(ref->sem.raw_ready, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
 static void referee_tx_cplt_callback(void *arg) {
-  referee_t *ref = arg;
+  referee_trans_t *ref = arg;
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(ref->sem.packet_sent, &switch_required);
   portYIELD_FROM_ISR(switch_required);
@@ -75,7 +74,7 @@ static void referee_idle_line_callback(void *arg) {
 }
 
 static void referee_abort_rx_cplt_callback(void *arg) {
-  referee_t *ref = arg;
+  referee_recv_t *ref = arg;
   BaseType_t switch_required;
   xSemaphoreGiveFromISR(ref->sem.raw_ready, &switch_required);
   portYIELD_FROM_ISR(switch_required);
@@ -84,14 +83,14 @@ static void referee_abort_rx_cplt_callback(void *arg) {
 static void referee_fast_refresh_timer_callback(TimerHandle_t arg) {
   RM_UNUSED(arg);
   BaseType_t switch_required;
-  xSemaphoreGiveFromISR(gref->sem.ui_fast_refresh, &switch_required);
+  xSemaphoreGiveFromISR(gref_trans->sem.ui_fast_refresh, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
 static void referee_slow_refresh_timer_callback(TimerHandle_t arg) {
   RM_UNUSED(arg);
   BaseType_t switch_required;
-  xSemaphoreGiveFromISR(gref->sem.ui_slow_refresh, &switch_required);
+  xSemaphoreGiveFromISR(gref_trans->sem.ui_slow_refresh, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
@@ -119,22 +118,15 @@ static int8_t referee_set_ui_header(referee_inter_student_header_t *header,
   return DEVICE_OK;
 }
 
-int8_t referee_init(referee_t *ref, const ui_screen_t *screen) {
+int8_t referee_recv_init(referee_recv_t *ref) {
   ASSERT(ref);
-  if (inited) return DEVICE_ERR_INITED;
+  if (recv_inited) return DEVICE_ERR_INITED;
 
-  gref = ref;
+  gref_recv = ref;
 
-  VERIFY((gref->thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
+  VERIFY((gref_recv->thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
 
-  ref->ui.screen = screen;
-
-  ref->sem.packet_sent = xSemaphoreCreateBinary();
   ref->sem.raw_ready = xSemaphoreCreateBinary();
-  ref->sem.ui_fast_refresh = xSemaphoreCreateBinary();
-  ref->sem.ui_slow_refresh = xSemaphoreCreateBinary();
-
-  xSemaphoreGive(ref->sem.packet_sent);
 
   bsp_uart_register_callback(BSP_UART_REF, BSP_UART_RX_CPLT_CB,
                              referee_rx_cplt_callback, ref);
@@ -142,24 +134,45 @@ int8_t referee_init(referee_t *ref, const ui_screen_t *screen) {
                              referee_abort_rx_cplt_callback, ref);
   bsp_uart_register_callback(BSP_UART_REF, BSP_UART_IDLE_LINE_CB,
                              referee_idle_line_callback, ref);
-  bsp_uart_register_callback(BSP_UART_REF, BSP_UART_TX_CPLT_CB,
-                             referee_tx_cplt_callback, ref);
-  ref->ui_fast_timer_id =
-      xTimerCreate("fast_refresh", pdMS_TO_TICKS(REF_UI_FAST_REFRESH_FREQ),
-                   pdTRUE, NULL, referee_fast_refresh_timer_callback);
-
-  ref->ui_slow_timer_id =
-      xTimerCreate("slow_refresh", pdMS_TO_TICKS(REF_UI_SLOW_REFRESH_FREQ),
-                   pdTRUE, NULL, referee_slow_refresh_timer_callback);
-
-  xTimerStart(ref->ui_fast_timer_id,
-              pdMS_TO_TICKS(1000 / REF_UI_FAST_REFRESH_FREQ));
-  xTimerStart(ref->ui_slow_timer_id,
-              pdMS_TO_TICKS(1000 / REF_UI_SLOW_REFRESH_FREQ));
 
   __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_REF), UART_IT_IDLE);
 
-  inited = true;
+  recv_inited = true;
+  return DEVICE_OK;
+}
+
+int8_t referee_trans_init(referee_trans_t *ref, const ui_screen_t *screen) {
+  ASSERT(ref);
+  if (trans_inited) return DEVICE_ERR_INITED;
+
+  gref_trans = ref;
+
+  VERIFY((gref_trans->thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
+
+  ref->ui.screen = screen;
+
+  ref->sem.packet_sent = xSemaphoreCreateBinary();
+  ref->sem.ui_fast_refresh = xSemaphoreCreateBinary();
+  ref->sem.ui_slow_refresh = xSemaphoreCreateBinary();
+
+  xSemaphoreGive(ref->sem.packet_sent);
+
+  bsp_uart_register_callback(BSP_UART_REF, BSP_UART_TX_CPLT_CB,
+                             referee_tx_cplt_callback, ref);
+  ref->ui_fast_timer_id =
+      xTimerCreate("fast_refresh", pdMS_TO_TICKS(UI_DYNAMIC_CYCLE), pdTRUE,
+                   NULL, referee_fast_refresh_timer_callback);
+
+  ref->ui_slow_timer_id =
+      xTimerCreate("slow_refresh", pdMS_TO_TICKS(UI_STATIC_CYCLE), pdTRUE, NULL,
+                   referee_slow_refresh_timer_callback);
+
+  xTimerStart(ref->ui_fast_timer_id, pdMS_TO_TICKS(UI_DYNAMIC_CYCLE));
+  xTimerStart(ref->ui_slow_timer_id, pdMS_TO_TICKS(UI_STATIC_CYCLE));
+
+  __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_REF), UART_IT_IDLE);
+
+  trans_inited = true;
   return DEVICE_OK;
 }
 
@@ -169,11 +182,11 @@ int8_t referee_restart(void) {
   return DEVICE_OK;
 }
 
-void referee_handle_offline(referee_t *ref) {
+void referee_handle_offline(referee_recv_t *ref) {
   ref->status = REF_STATUS_OFFLINE;
 }
 
-int8_t referee_start_receiving(referee_t *ref) {
+int8_t referee_start_receiving(referee_recv_t *ref) {
   RM_UNUSED(ref);
   if (bsp_uart_receive(BSP_UART_REF, rxbuf, REF_LEN_RX_BUFF, false) == HAL_OK) {
     return DEVICE_OK;
@@ -181,11 +194,11 @@ int8_t referee_start_receiving(referee_t *ref) {
   return DEVICE_ERR;
 }
 
-bool referee_wait_recv_cplt(referee_t *ref, uint32_t timeout) {
+bool referee_wait_recv_cplt(referee_recv_t *ref, uint32_t timeout) {
   return xSemaphoreTake(ref->sem.raw_ready, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 
-int8_t referee_parse(referee_t *ref) {
+int8_t referee_parse(referee_recv_t *ref) {
   ref->status = REF_STATUS_RUNNING;
   uint32_t data_length =
       REF_LEN_RX_BUFF -
@@ -332,7 +345,10 @@ int8_t referee_parse(referee_t *ref) {
   return DEVICE_OK;
 }
 
-uint8_t referee_refresh_ui(referee_t *ref) {
+uint8_t referee_refresh_ui(referee_trans_t *ref) {
+  ASSERT(ref);
+
+#if UI_MODE_OP
   ui_ele_t ele;
   ui_string_t string;
 
@@ -588,9 +604,15 @@ uint8_t referee_refresh_ui(referee_t *ref) {
                    "CAP");
     ui_stash_string(&(ref->ui), &string);
   }
+#elif UI_MODE_REMOTE
+  if (xSemaphoreTake(ref->sem.ui_fast_refresh, 0)) {
+    // TODO:
+  }
 
-  xTaskNotifyStateClear(xTaskGetCurrentTaskHandle());
-
+  if (xSemaphoreTake(ref->sem.ui_slow_refresh, 0)) {
+    // TODO:
+  }
+#endif
   return DEVICE_OK;
 }
 
@@ -601,7 +623,7 @@ uint8_t referee_refresh_ui(referee_t *ref) {
  * @param ref 裁判系统数据
  * @return int8_t 0代表成功
  */
-int8_t referee_pack_ui_packet(referee_t *ref) {
+int8_t referee_pack_ui_packet(referee_trans_t *ref) {
   ui_ele_t *ele = NULL;
   ui_string_t string;
   ui_del_t del;
@@ -663,7 +685,7 @@ int8_t referee_pack_ui_packet(referee_t *ref) {
                             ksize_data_header + (uint16_t)size_data_content);
   packet_head->cmd_id = REF_CMD_ID_INTER_STUDENT;
   referee_set_ui_header(&(packet_head->student_header), ui_cmd_id,
-                        ref->robot_status.robot_id);
+                        gref_recv->robot_status.robot_id);
   memcpy(ref->packet.data + sizeof(referee_ui_packet_head_t), source,
          size_data_content);
 
@@ -676,7 +698,7 @@ int8_t referee_pack_ui_packet(referee_t *ref) {
   return DEVICE_OK;
 }
 
-int8_t referee_start_transmit(referee_t *ref) {
+int8_t referee_start_transmit(referee_trans_t *ref) {
   if (ref->packet.data != NULL && ref->packet.size > 0) {
     memcpy(txbuf, ref->packet.data, ref->packet.size);
     vPortFree(ref->packet.data);
@@ -690,12 +712,12 @@ int8_t referee_start_transmit(referee_t *ref) {
   return DEVICE_ERR;
 }
 
-bool referee_wait_trans_cplt(referee_t *ref, uint32_t timeout) {
+bool referee_wait_trans_cplt(referee_trans_t *ref, uint32_t timeout) {
   return xSemaphoreTake(ref->sem.packet_sent, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 
 uint8_t referee_pack_for_chassis(referee_for_chassis_t *c_ref,
-                                 const referee_t *ref) {
+                                 const referee_recv_t *ref) {
   c_ref->chassis_power_limit = ref->robot_status.chassis_power_limit;
   c_ref->chassis_pwr_buff = ref->power_heat.chassis_pwr_buff;
   c_ref->chassis_watt = ref->power_heat.chassis_watt;
@@ -704,7 +726,7 @@ uint8_t referee_pack_for_chassis(referee_for_chassis_t *c_ref,
 }
 
 uint8_t referee_pack_for_launcher(referee_for_launcher_t *l_ref,
-                                  const referee_t *ref) {
+                                  const referee_recv_t *ref) {
   memcpy(&(l_ref->power_heat), &(ref->power_heat), sizeof(l_ref->power_heat));
   memcpy(&(l_ref->robot_status), &(ref->robot_status),
          sizeof(l_ref->robot_status));
@@ -714,7 +736,8 @@ uint8_t referee_pack_for_launcher(referee_for_launcher_t *l_ref,
   return DEVICE_OK;
 }
 
-uint8_t referee_pack_for_ai(referee_for_ai_t *ai_ref, const referee_t *ref) {
+uint8_t referee_pack_for_ai(referee_for_ai_t *ai_ref,
+                            const referee_recv_t *ref) {
   memset(ai_ref, 0, sizeof(*ai_ref));
 
   if (ref->robot_status.robot_id < REF_BOT_BLU_HERO)

@@ -24,7 +24,7 @@ config REF_FORCE_ONLINE
 
 config REF_LAUNCH_SPEED
     int "射速限制" if REF_VIRTUAL
-    range 10 30
+    range 5 30
     default 30
 
 config REF_HEAT_LIMIT_17
