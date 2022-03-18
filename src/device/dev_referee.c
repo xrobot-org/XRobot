@@ -17,7 +17,6 @@
 #define REF_LEN_RX_BUFF (0xFF)
 #define REF_LEN_TX_BUFF (0xFF)
 
-
 #define REF_UI_BOX_UP_OFFSET (4)
 #define REF_UI_BOX_BOT_OFFSET (-14)
 
@@ -122,6 +121,8 @@ int8_t referee_recv_init(referee_recv_t *ref) {
   ASSERT(ref);
   if (recv_inited) return DEVICE_ERR_INITED;
 
+  memset(ref, 0, sizeof(*ref));
+
   gref_recv = ref;
 
   VERIFY((gref_recv->thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
@@ -143,7 +144,10 @@ int8_t referee_recv_init(referee_recv_t *ref) {
 
 int8_t referee_trans_init(referee_trans_t *ref, const ui_screen_t *screen) {
   ASSERT(ref);
+
   if (trans_inited) return DEVICE_ERR_INITED;
+
+  memset(ref, 0, sizeof(*ref));
 
   gref_trans = ref;
 

@@ -36,8 +36,6 @@ endmenu
 
 endif
 
-if ID_SENTRY
-
 menu "哨兵扫描参数"
 
 config GIM_SCAN_ANGLE_BASE
@@ -61,8 +59,6 @@ config GIM_SCAN_CRITICAL_ERR
     default 5
 
 endmenu
-
-endif
 
 choice
     prompt "UI模式"
