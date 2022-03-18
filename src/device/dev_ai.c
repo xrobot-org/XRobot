@@ -76,7 +76,8 @@ int8_t ai_parse_host(ai_t *ai, uint32_t tick) {
 }
 
 int8_t ai_handle_offline(ai_t *ai, uint32_t tick) {
-  if (tick - ai->last_online_time > 10) {
+  memset(&ai->form_host, 0, sizeof(ai->form_host));
+  if (tick - ai->last_online_time > 50) {
     ai->online = false;
   }
   return DEVICE_OK;
