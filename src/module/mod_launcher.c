@@ -79,7 +79,8 @@ static void launcher_heat_limit(launcher_t *l, referee_for_launcher_t *l_ref) {
       hc->heat_increase = GAME_HEAT_INCREASE_17MM;
     }
     /* 检测热量更新后,计算可发射弹丸 */
-    if ((hc->heat != hc->last_heat) || (hc->heat == 0)) {
+    if ((hc->heat != hc->last_heat) || hc->available_shot == 0 ||
+        (hc->heat == 0)) {
       hc->available_shot =
           (uint32_t)floorf((hc->heat_limit - hc->heat) / hc->heat_increase);
       hc->last_heat = hc->heat;

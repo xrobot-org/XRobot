@@ -29,13 +29,13 @@ config REF_LAUNCH_SPEED
 
 config REF_HEAT_LIMIT_17
     int "17mm枪口热量限制" if REF_VIRTUAL
-    range 0 1000
-    default 1000
+    range 0 100
+    default 100
 
 config REF_HEAT_LIMIT_42
     int "42mm枪口热量限制" if REF_VIRTUAL
-    range 0 1000
-    default 1000
+    range 0 100
+    default 100
 
 config REF_POWER_LIMIT
     int "底盘功率限制" if REF_VIRTUAL
