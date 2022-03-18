@@ -18,7 +18,7 @@
 #include "mid_msg_dist.h"
 #include "thd.h"
 
-#define THD_PERIOD_MS (10)
+#define THD_PERIOD_MS (2)
 #define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
 void thd_ref_trans(void* arg) {
