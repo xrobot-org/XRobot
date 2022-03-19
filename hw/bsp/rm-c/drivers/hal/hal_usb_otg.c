@@ -1,3 +1,4 @@
+/* USER CODE BEGIN Header */
 /**
  ******************************************************************************
  * @file    usb_otg.c
@@ -6,17 +7,16 @@
  ******************************************************************************
  * @attention
  *
- * <h2><center>&copy; Copyright (c) 2021 STMicroelectronics.
- * All rights reserved.</center></h2>
+ * Copyright (c) 2022 STMicroelectronics.
+ * All rights reserved.
  *
- * This software component is licensed by ST under Ultimate Liberty license
- * SLA0044, the "License"; You may not use this file except in compliance with
- * the License. You may obtain a copy of the License at:
- *                             www.st.com/SLA0044
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
  *
  ******************************************************************************
  */
-
+/* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "hal_usb_otg.h"
 
@@ -50,8 +50,7 @@ void MX_USB_OTG_FS_PCD_Init(void) {
     Error_Handler();
   }
   /* USER CODE BEGIN USB_OTG_FS_Init 2 */
-  HAL_NVIC_SetPriority(OTG_FS_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
+
   /* USER CODE END USB_OTG_FS_Init 2 */
 }
 
@@ -76,6 +75,10 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle) {
 
     /* USB_OTG_FS clock enable */
     __HAL_RCC_USB_OTG_FS_CLK_ENABLE();
+
+    /* USB_OTG_FS interrupt Init */
+    HAL_NVIC_SetPriority(OTG_FS_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
     /* USER CODE BEGIN USB_OTG_FS_MspInit 1 */
 
     /* USER CODE END USB_OTG_FS_MspInit 1 */
@@ -96,6 +99,8 @@ void HAL_PCD_MspDeInit(PCD_HandleTypeDef* pcdHandle) {
     */
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_12 | GPIO_PIN_11);
 
+    /* USB_OTG_FS interrupt Deinit */
+    HAL_NVIC_DisableIRQ(OTG_FS_IRQn);
     /* USER CODE BEGIN USB_OTG_FS_MspDeInit 1 */
 
     /* USER CODE END USB_OTG_FS_MspDeInit 1 */
@@ -105,5 +110,3 @@ void HAL_PCD_MspDeInit(PCD_HandleTypeDef* pcdHandle) {
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
