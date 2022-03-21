@@ -89,7 +89,12 @@ int8_t ai_parse_host(ai_t *ai, uint32_t tick) {
 }
 
 int8_t ai_handle_offline(ai_t *ai, uint32_t tick) {
-  memset(&ai->form_host, 0, sizeof(ai->form_host));
+  /* 短时间离线，控制量置零 */
+  if (tick - ai->last_online_time > 4) {
+    memset(&ai->form_host, 0, sizeof(ai->form_host));
+  }
+
+  /* 长时间离线，移交控制权 */
   if (tick - ai->last_online_time > 50) {
     ai->online = false;
   }
