@@ -97,7 +97,7 @@ enum { ITF_NUM_CDC = 0, ITF_NUM_CDC_DATA, ITF_NUM_TOTAL };
 #else
 #define EPNUM_CDC_NOTIF 0x81
 #define EPNUM_CDC_OUT 0x02
-#define EPNUM_CDC_IN 0x82
+#define EPNUM_CDC_IN 0x83
 
 #endif
 
@@ -152,7 +152,7 @@ char const* string_desc_arr[] = {
     "QDU-RM",                    // 1: Manufacturer
     "MCU",                       // 2: Product
     "123456",                    // 3: Serials, should use chip ID
-    "TinyUSB CDC",               // 4: CDC Interface
+    "Host Serial",               // 4: CDC Interface
 };
 
 static uint16_t _desc_str[32];
