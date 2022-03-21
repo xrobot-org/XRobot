@@ -19,10 +19,23 @@ static uint8_t txbuf[AI_LEN_TX_BUFF];
 
 static bool inited = false;
 
+void ai_rx_cplt_cb(void *arg) {
+  ai_t *ai = (ai_t *)arg;
+  BaseType_t switch_required;
+  if (ai_read_host(ai) == DEVICE_OK) {
+    xSemaphoreGiveFromISR(ai->sem.data_ready, &switch_required);
+  };
+  portYIELD_FROM_ISR(switch_required);
+}
+
 int8_t ai_init(ai_t *ai) {
   ASSERT(ai);
   if (inited) return DEVICE_ERR_INITED;
   inited = true;
+
+  bsp_usb_register_callback(BSP_USB_CDC, BSP_USB_RX_CPLT_CB, ai_rx_cplt_cb, ai);
+
+  ai->sem.data_ready = xSemaphoreCreateBinary();
 
   term_get_ctrl(0xff);
 
@@ -46,7 +59,7 @@ int8_t ai_read_host(ai_t *ai) {
 
 bool ai_wait_recv_cplt(ai_t *ai) {
   RM_UNUSED(ai);
-  return term_avail() >= sizeof(rxbuf);
+  return xSemaphoreTake(ai->sem.data_ready, 0) == pdTRUE;
 }
 
 bool ai_start_trans(ai_t *ai) {

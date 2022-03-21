@@ -32,6 +32,10 @@ typedef struct {
     ai_up_pckage_mcu_t mcu;
   } to_host;
 
+  struct {
+    SemaphoreHandle_t data_ready;
+  } sem;
+
   bool online;
   uint32_t last_online_time;
 } ai_t;
