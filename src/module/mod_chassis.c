@@ -191,11 +191,14 @@ void chassis_init(chassis_t *c, const chassis_params_t *param,
  * @brief 更新底盘的反馈信息
  *
  * @param c 包含底盘数据的结构体
- * @param can CAN设备结构体
+ * @param chassis_motor 底盘电机反馈
+ * @param gimbal_motor 云台电机反馈
+ * @param tof 距离传感器反馈
  */
 void chassis_update_feedback(chassis_t *c,
                              const motor_feedback_group_t *chassis_motor,
-                             const motor_feedback_group_t *gimbal_motor) {
+                             const motor_feedback_group_t *gimbal_motor,
+                             const tof_feedback_t *tof) {
   /* 底盘数据和CAN结构体不能为空 */
   ASSERT(c);
   ASSERT(chassis_motor);
@@ -212,6 +215,9 @@ void chassis_update_feedback(chassis_t *c,
     c->feedback.motor_rotational_speed[i] =
         chassis_motor->as_array[i].rotational_speed;
   }
+
+  /* 更新距离传感器数据 */
+  memcpy(&(c->feedback.tof), tof, sizeof(tof_feedback_t));
 }
 
 /**
@@ -259,13 +265,11 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
           sin_beta * c_cmd->ctrl_vec.vx + cos_beta * c_cmd->ctrl_vec.vy;
       break;
     }
-    case CHASSIS_MODE_SCAN: /*Vy*/
-      if (c->feedback.tof.feedback[DEV_TOF_SENSOR_LEFT]
-              .dist < /*0,距离左侧的距离*/
-          SCAN_VY_LENGTH_MIN)
+    case CHASSIS_MODE_SCAN:
+      /* 根据距离传感器数据变向 */
+      if (c->feedback.tof.data[DEV_TOF_SENSOR_LEFT].dist < SCAN_VY_LENGTH_MIN)
         c->vy_dir_mult = 1;
-      else if (c->feedback.tof.feedback[DEV_TOF_SENSOR_RIGHT]
-                   .dist < /*1,距离右侧的距离*/
+      else if (c->feedback.tof.data[DEV_TOF_SENSOR_RIGHT].dist <
                SCAN_VY_LENGTH_MIN)
         c->vy_dir_mult = -1;
       c->move_vec.vy = c->vy_dir_mult * SCAN_MOVEMENTS;

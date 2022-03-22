@@ -16,7 +16,7 @@
 #include <string.h>
 
 #include "dev_dr16.h"
-#include "mid_msg_dist.h"
+#include "om.h"
 #include "thd.h"
 
 #define THD_PERIOD_MS (2)
@@ -30,16 +30,15 @@ void thd_cmd(void* arg) {
   cmd_t cmd;
   cmd_ui_t cmd_ui;
 
-  publisher_t* cmd_chassis_pub =
-      msg_dist_create_topic("cmd_chassis", sizeof(cmd_chassis_t));
-  publisher_t* cmd_gimbal_pub =
-      msg_dist_create_topic("cmd_gimbal", sizeof(cmd_gimbal_t));
-  publisher_t* cmd_launcher_pub =
-      msg_dist_create_topic("cmd_launcher", sizeof(cmd_launcher_t));
-  publisher_t* ui_cmd_pub = msg_dist_create_topic("ui_cmd", sizeof(cmd_ui_t));
+  om_topic_t* ch_tp = om_config_topic(NULL, "A", "cmd_chassis");
+  om_topic_t* gm_tp = om_config_topic(NULL, "A", "cmd_gimbal");
+  om_topic_t* la_tp = om_config_topic(NULL, "A", "cmd_launcher");
+  om_topic_t* ui_tp = om_config_topic(NULL, "A", "cmd_ui");
+  om_topic_t* rc_tp = om_find_topic("cmd_rc", UINT32_MAX);
+  om_topic_t* host_tp = om_find_topic("cmd_host", UINT32_MAX);
 
-  subscriber_t* rc_sub = msg_dist_subscribe("cmd_rc", true);
-  subscriber_t* host_sub = msg_dist_subscribe("cmd_host", true);
+  om_suber_t* rc_sub = om_subscript(rc_tp, OM_PRASE_VAR(rc), NULL);
+  om_suber_t* host_sub = om_subscript(host_tp, OM_PRASE_VAR(host), NULL);
 
   /* 初始化指令处理 */
   cmd_init(&cmd, &(runtime->cfg.pilot_cfg->param),
@@ -49,21 +48,21 @@ void thd_cmd(void* arg) {
 
   while (1) {
     /* 将接收机数据解析为指令数据 */
-    msg_dist_poll(rc_sub, &rc, 0);  // TODO: 可以阻塞
+    om_suber_dump(rc_sub);  // TODO: 可以阻塞
 
     cmd_parse_rc(&rc, &cmd, (float)THD_PERIOD_MS / 1000.0f);
 
     /* 判断是否需要让上位机覆写指令 */
     if (cmd_check_host_overwrite(&rc, &cmd)) {
-      if (msg_dist_poll(host_sub, &host, 1))
+      if (om_suber_dump(host_sub) == OM_OK)
         cmd_parse_host(&host, &cmd, (float)THD_PERIOD_MS / 1000.0f);
     }
     cmd_pack_ui(&cmd_ui, &cmd);
 
-    msg_dist_publish(cmd_chassis_pub, &(cmd.chassis));
-    msg_dist_publish(cmd_gimbal_pub, &(cmd.gimbal));
-    msg_dist_publish(cmd_launcher_pub, &(cmd.launcher));
-    msg_dist_publish(ui_cmd_pub, &cmd_ui);
+    om_publish(ch_tp, OM_PRASE_VAR(cmd.chassis), true);
+    om_publish(gm_tp, OM_PRASE_VAR(cmd.gimbal), true);
+    om_publish(la_tp, OM_PRASE_VAR(cmd.launcher), true);
+    om_publish(ui_tp, OM_PRASE_VAR(cmd_ui), true);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);

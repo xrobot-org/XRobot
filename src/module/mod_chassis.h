@@ -75,7 +75,7 @@ typedef struct {
   struct {
     float gimbal_yaw_encoder_angle; /* 云台Yaw轴编码器角度 */
     float *motor_rotational_speed; /* 电机转速的动态数组，单位：RPM */
-    tof_t tof;
+    tof_feedback_t tof;
   } feedback;
 
   float wz_dir_mult; /* 小陀螺模式旋转方向乘数 */
@@ -119,11 +119,14 @@ void chassis_init(chassis_t *c, const chassis_params_t *param,
  * @brief 更新底盘的反馈信息
  *
  * @param c 包含底盘数据的结构体
- * @param can CAN设备结构体
+ * @param chassis_motor 底盘电机反馈
+ * @param gimbal_motor 云台电机反馈
+ * @param tof 距离传感器反馈
  */
 void chassis_update_feedback(chassis_t *c,
                              const motor_feedback_group_t *chassis_motor,
-                             const motor_feedback_group_t *gimbal_motor);
+                             const motor_feedback_group_t *gimbal_motor,
+                             const tof_feedback_t *tof);
 
 /**
  * @brief 运行底盘控制逻辑

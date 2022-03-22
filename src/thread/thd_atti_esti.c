@@ -13,7 +13,7 @@
 #include <string.h>
 
 #include "comp_ahrs.h"
-#include "mid_msg_dist.h"
+#include "om.h"
 #include "thd.h"
 
 #define THD_PERIOD_MS (2)
@@ -26,13 +26,13 @@ void thd_atti_esti(void* arg) {
   eulr_t gimbal_eulr;
   vector3_t accl, gyro;
 
-  publisher_t* gimbal_eulr_pub =
-      msg_dist_create_topic("gimbal_eulr", sizeof(eulr_t));
-  publisher_t* gimbal_quat_pub =
-      msg_dist_create_topic("gimbal_quat", sizeof(quaternion_t));
+  om_topic_t* gm_eulr_tp = om_config_topic(NULL, "A", "gimbal_eulr");
+  om_topic_t* gm_quat_tp = om_config_topic(NULL, "A", "gimbal_quat");
+  om_topic_t* accl_tp = om_find_topic("gimbal_accl", UINT32_MAX);
+  om_topic_t* gyro_tp = om_find_topic("gimbal_gyro", UINT32_MAX);
 
-  subscriber_t* accl_sub = msg_dist_subscribe("gimbal_accl", true);
-  subscriber_t* gyro_sub = msg_dist_subscribe("gimbal_gyro", true);
+  om_suber_t* accl_sub = om_subscript(accl_tp, OM_PRASE_VAR(accl), NULL);
+  om_suber_t* gyro_sub = om_subscript(gyro_tp, OM_PRASE_VAR(gyro), NULL);
 
   /* 初始化姿态解算算法 */
   ahrs_init(&gimbal_ahrs, NULL);
@@ -40,8 +40,8 @@ void thd_atti_esti(void* arg) {
   float now;
   uint32_t previous_wake_time = xTaskGetTickCount();
   while (1) {
-    msg_dist_poll(accl_sub, &accl, 0);
-    msg_dist_poll(gyro_sub, &gyro, 0);
+    om_suber_dump(accl_sub);
+    om_suber_dump(gyro_sub);
 
     /* 锁住RTOS内核防止数据解析过程中断，造成错误 */
     vTaskSuspendAll();
@@ -55,8 +55,8 @@ void thd_atti_esti(void* arg) {
     xTaskResumeAll();
 
     /* 发布数据 */
-    msg_dist_publish(gimbal_eulr_pub, &gimbal_eulr);
-    msg_dist_publish(gimbal_quat_pub, &(gimbal_ahrs.quat));
+    om_publish(gm_eulr_tp, OM_PRASE_VAR(gimbal_eulr), true);
+    om_publish(gm_quat_tp, OM_PRASE_VAR(gimbal_ahrs.quat), true);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);

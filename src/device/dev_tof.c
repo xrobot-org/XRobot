@@ -8,10 +8,11 @@
 
 #define TOF_RES (1000) /* TOF数据分辨率 */
 
-void tof_decode(tof_feedback_t *fb, const uint8_t *raw) {
-  fb->dist = (float)((raw[2] << 16) | (raw[1] << 8) | raw[0]) / (float)TOF_RES;
-  fb->status = raw[3];
-  fb->signal_strength = (uint16_t)((raw[5] << 8) | raw[4]);
+void tof_decode(tof_feedback_data_t *fb_data, const uint8_t *raw) {
+  fb_data->dist =
+      (float)((raw[2] << 16) | (raw[1] << 8) | raw[0]) / (float)TOF_RES;
+  fb_data->status = raw[3];
+  fb_data->signal_strength = (uint16_t)((raw[5] << 8) | raw[4]);
 }
 
 void tof_rx_callback(can_rx_item_t *rx, void *arg) {
@@ -43,7 +44,7 @@ err_t tof_update(tof_t *tof, uint32_t timeout) {
   can_rx_item_t pack;
   while (pdPASS ==
          xQueueReceive(tof->msgq_feedback, &pack, pdMS_TO_TICKS(timeout))) {
-    tof_decode(&(tof->feedback[pack.index]), pack.data);
+    tof_decode(&(tof->feedback.data[pack.index]), pack.data);
   }
   return RM_OK;
 }

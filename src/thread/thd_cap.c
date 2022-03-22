@@ -11,7 +11,7 @@
 
 #include "dev_can.h"
 #include "dev_cap.h"
-#include "mid_msg_dist.h"
+#include "om.h"
 #include "thd.h"
 
 #define THD_PERIOD_MS (10)
@@ -26,10 +26,11 @@ void thd_cap(void* arg) {
   cap_control_t cap_out;
   ui_cap_t cap_ui;
 
-  publisher_t* ui_pub = msg_dist_create_topic("cap_ui", sizeof(ui_cap_t));
-  publisher_t* info_pub =
-      msg_dist_create_topic("cap_info", sizeof(cap_feedback_t));
-  subscriber_t* out_sub = msg_dist_subscribe("cap_out", sizeof(cap_control_t));
+  om_topic_t* ui_tp = om_config_topic(NULL, "A", "cap_ui");
+  om_topic_t* info_tp = om_config_topic(NULL, "A", "cap_info");
+  om_topic_t* out_tp = om_find_topic("cap_out", UINT32_MAX);
+
+  om_suber_t* out_sub = om_subscript(out_tp, OM_PRASE_VAR(cap_out), NULL);
 
   cap_init(&cap, &(runtime->cfg.robot_param->cap));
 
@@ -42,10 +43,10 @@ void thd_cap(void* arg) {
       cap_handle_offline(&cap);
     }
     cap_pack_ui(&cap, &cap_ui);
-    msg_dist_publish(ui_pub, &ui_pub);
-    msg_dist_publish(info_pub, &(cap.feedback));
+    om_publish(ui_tp, OM_PRASE_VAR(cap_ui), true);
+    om_publish(info_tp, OM_PRASE_VAR(cap.feedback), true);
 
-    msg_dist_poll(out_sub, &cap_out, 0);
+    om_suber_dump(out_sub);
     cap_control(&cap, &cap_out);
 
     /* 运行结束，等待下一次唤醒 */

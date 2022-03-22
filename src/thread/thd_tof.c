@@ -10,7 +10,7 @@
  */
 
 #include "dev_tof.h"
-#include "mid_msg_dist.h"
+#include "om.h"
 #include "thd.h"
 
 #define THD_PERIOD_MS (2)
@@ -21,7 +21,7 @@ void thd_tof(void* arg) {
 
   tof_t tof;
 
-  publisher_t* tof_fb_pub = msg_dist_create_topic("tof_fb", sizeof(tof_t));
+  om_topic_t* tof_fb_pub = om_config_topic(NULL, "A", "tof_fb");
 
   tof_init(&tof, &(runtime->cfg.robot_param->tof));
 
@@ -32,7 +32,7 @@ void thd_tof(void* arg) {
       tof_handle_offline(&tof);
     }
 
-    msg_dist_publish(tof_fb_pub, &tof);
+    om_publish(tof_fb_pub, OM_PRASE_VAR(tof.feedback), true);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);

@@ -14,7 +14,7 @@
  */
 
 #include "dev_referee.h"
-#include "mid_msg_dist.h"
+#include "om.h"
 #include "thd.h"
 
 #define THD_PERIOD_MS (1)
@@ -28,12 +28,9 @@ void thd_ref_recv(void* arg) {
   referee_for_chassis_t for_chassis;
   referee_for_launcher_t for_launcher;
 
-  publisher_t* referee_ai_pub =
-      msg_dist_create_topic("referee_ai", sizeof(referee_for_ai_t));
-  publisher_t* referee_chassis_pub =
-      msg_dist_create_topic("referee_chassis", sizeof(referee_for_chassis_t));
-  publisher_t* referee_launcher_pub =
-      msg_dist_create_topic("referee_launcher", sizeof(referee_for_launcher_t));
+  om_topic_t* re_ai_pub = om_config_topic(NULL, "A", "referee_ai");
+  om_topic_t* re_chassis_pub = om_config_topic(NULL, "A", "referee_chassis");
+  om_topic_t* ref_launcher_pub = om_config_topic(NULL, "A", "referee_launcher");
 
   /* 初始化裁判系统 */
   referee_recv_init(&ref);
@@ -58,9 +55,9 @@ void thd_ref_recv(void* arg) {
     referee_pack_for_chassis(&for_chassis, &ref);
 
     /* 发送裁判系统数据到其他进程 */
-    msg_dist_publish(referee_ai_pub, &for_ai);
-    msg_dist_publish(referee_chassis_pub, &for_chassis);
-    msg_dist_publish(referee_launcher_pub, &for_launcher);
+    om_publish(re_ai_pub, OM_PRASE_VAR(for_ai), true);
+    om_publish(re_chassis_pub, OM_PRASE_VAR(for_chassis), true);
+    om_publish(ref_launcher_pub, OM_PRASE_VAR(for_launcher), true);
   }
 }
 THREAD_DECLEAR(thd_ref_recv, 512, 4);

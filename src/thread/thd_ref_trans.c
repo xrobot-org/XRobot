@@ -15,7 +15,7 @@
 
 #include "bsp_usb.h"
 #include "dev_referee.h"
-#include "mid_msg_dist.h"
+#include "om.h"
 #include "thd.h"
 
 #define THD_PERIOD_MS (2)
@@ -25,10 +25,22 @@ void thd_ref_trans(void* arg) {
   runtime_t* runtime = arg;
   referee_trans_t ref;
 
-  subscriber_t* ui_cap_sub = msg_dist_subscribe("cap_ui", true);
-  subscriber_t* ui_chassis_sub = msg_dist_subscribe("chassis_ui", true);
-  subscriber_t* ui_gimbal_sub = msg_dist_subscribe("gimbal_ui", true);
-  subscriber_t* ui_launcher_sub = msg_dist_subscribe("launcher_ui", true);
+  om_topic_t* ui_cap_tp = om_find_topic("cap_ui", UINT32_MAX);
+  om_topic_t* ui_ch_tp = om_find_topic("chassis_ui", UINT32_MAX);
+  om_topic_t* ui_gm_tp = om_find_topic("gimbal_ui", UINT32_MAX);
+  om_topic_t* ui_la_tp = om_find_topic("launcher_ui", UINT32_MAX);
+  om_topic_t* ui_cmd_tp = om_find_topic("cmd_ui", UINT32_MAX);
+
+  om_suber_t* ui_cap_sub =
+      om_subscript(ui_cap_tp, OM_PRASE_VAR(ref.cap_ui), NULL);
+  om_suber_t* ui_chassis_sub =
+      om_subscript(ui_ch_tp, OM_PRASE_VAR(ref.chassis_ui), NULL);
+  om_suber_t* ui_gimbal_sub =
+      om_subscript(ui_gm_tp, OM_PRASE_VAR(ref.gimbal_ui), NULL);
+  om_suber_t* ui_launcher_sub =
+      om_subscript(ui_la_tp, OM_PRASE_VAR(ref.gimbal_ui), NULL);
+  om_suber_t* ui_cmd_sub =
+      om_subscript(ui_cmd_tp, OM_PRASE_VAR(ref.cmd_ui), NULL);
 
 #if UI_MODE_NONE
   vTaskSuspend(xTaskGetCurrentTaskHandle());
@@ -39,14 +51,11 @@ void thd_ref_trans(void* arg) {
   uint32_t previous_wake_time = xTaskGetTickCount();
   while (1) {
     /* 获取其他进程数据用于绘制UI */
-    msg_dist_poll(ui_cap_sub, &(ref.cap_ui), 0);
-    msg_dist_poll(ui_chassis_sub, &(ref.chassis_ui), 0);
-    msg_dist_poll(ui_gimbal_sub, &(ref.gimbal_ui), 0);
-    msg_dist_poll(ui_launcher_sub, &(ref.launcher_ui), 0);
-    msg_dist_poll(ui_launcher_sub, &(ref.cmd_ui), 0);
-#if 0
-      xQueueReceive(runtime->msgq.ui.ai, &(ref.ai_ui), 0);
-#endif
+    om_suber_dump(ui_cap_sub);
+    om_suber_dump(ui_chassis_sub);
+    om_suber_dump(ui_gimbal_sub);
+    om_suber_dump(ui_launcher_sub);
+    om_suber_dump(ui_cmd_sub);
 
     /* 刷新UI数据 */
     referee_refresh_ui(&ref);

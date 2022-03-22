@@ -15,7 +15,7 @@
 #include <string.h>
 
 #include "dev_dr16.h"
-#include "mid_msg_dist.h"
+#include "om.h"
 #include "thd.h"
 
 void thd_rc(void* arg) {
@@ -24,7 +24,7 @@ void thd_rc(void* arg) {
   dr16_t dr16;
   cmd_rc_t cmd_rc;
 
-  publisher_t* rc_pub = msg_dist_create_topic("cmd_rc", sizeof(cmd_rc_t));
+  om_topic_t* rc_pub = om_config_topic(NULL, "A", "cmd_rc");
 
   dr16_init(&dr16); /* 初始化dr16 */
 
@@ -41,7 +41,7 @@ void thd_rc(void* arg) {
       dr16_handle_offline(&dr16, &cmd_rc);
     }
 
-    msg_dist_publish(rc_pub, &cmd_rc);
+    om_publish(rc_pub, OM_PRASE_VAR(cmd_rc), true);
   }
 }
 THREAD_DECLEAR(thd_rc, 128, 4);

@@ -3,7 +3,7 @@
 */
 
 #include "dev_ai.h"
-#include "mid_msg_dist.h"
+#include "om.h"
 #include "thd.h"
 
 #define THD_PERIOD_MS (2)
@@ -17,12 +17,12 @@ void thd_ai(void* arg) {
   quaternion_t ai_quat;
   referee_for_ai_t referee_ai;
 
-  publisher_t* cmd_host_pub =
-      msg_dist_create_topic("cmd_host", sizeof(cmd_host_t));
-  publisher_t* ui_ai_pub = msg_dist_create_topic("ui_ai", sizeof(cmd_ui_t));
+  om_topic_t* host_tp = om_config_topic(NULL, "A", "cmd_host");
+  om_topic_t* quat_tp = om_find_topic("gimbal_quat", UINT32_MAX);
+  om_topic_t* ref_tp = om_find_topic("referee_ai", UINT32_MAX);
 
-  subscriber_t* quat_sub = msg_dist_subscribe("gimbal_quat", true);
-  subscriber_t* referee_ai_sub = msg_dist_subscribe("referee_ai", true);
+  om_suber_t* quat_sub = om_subscript(quat_tp, OM_PRASE_VAR(ai_quat), NULL);
+  om_suber_t* ref_sub = om_subscript(ref_tp, OM_PRASE_VAR(referee_ai), NULL);
 
 #if HOST_USB_DISABLE
   vTaskSuspend(xTaskGetCurrentTaskHandle());
@@ -36,9 +36,7 @@ void thd_ai(void* arg) {
   while (1) {
     /* 接收指令 */
     if (ai_wait_recv_cplt(&ai)) {
-      if (!ai_read_host(&ai)) {
-        ai_parse_host(&ai, xTaskGetTickCount());
-      }
+      ai_parse_host(&ai, xTaskGetTickCount());
     } else {
       ai_handle_offline(&ai, xTaskGetTickCount());
     }
@@ -46,21 +44,18 @@ void thd_ai(void* arg) {
     /* AI在线,发布控制命令 */
     if (ai.online) {
       ai_pack_cmd(&ai, &cmd_host);
-      msg_dist_publish(cmd_host_pub, &cmd_host);
+      om_publish(host_tp, OM_PRASE_VAR(cmd_host), true);
     }
 
     /* 发送数据到上位机 */
-    msg_dist_poll(quat_sub, &ai_quat, 0);
+    om_suber_dump(quat_sub);
     ai_pack_mcu_for_host(&ai, &ai_quat);
 
-    if (msg_dist_poll(referee_ai_sub, &(referee_ai), 0)) {
+    if (om_suber_dump(ref_sub) == OM_OK) {
       ai_pack_ref_for_host(&ai, &(referee_ai));
     }
 
     ai_start_trans(&ai);
-
-    /* 更新UI */
-    msg_dist_publish(ui_ai_pub, &cmd_host);
 
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }

@@ -16,7 +16,7 @@
 #include "bsp_pwm.h"
 #include "comp_pid.h"
 #include "dev_bmi088.h"
-#include "mid_msg_dist.h"
+#include "om.h"
 #include "thd.h"
 
 static const kpid_params_t imu_temp_ctrl_pid_param = {
@@ -34,10 +34,8 @@ void thd_imu(void* arg) {
   bmi088_t bmi088;
   kpid_t imu_temp_ctrl_pid;
 
-  publisher_t* accl_pub =
-      msg_dist_create_topic("gimbal_accl", sizeof(vector3_t));
-  publisher_t* gyro_pub =
-      msg_dist_create_topic("gimbal_gyro", sizeof(vector3_t));
+  om_topic_t* accl_pub = om_config_topic(NULL, "A", "gimbal_accl");
+  om_topic_t* gyro_pub = om_config_topic(NULL, "A", "gimbal_gyro");
 
   /* 初始化设备 */
   bmi088_init(&bmi088, &(runtime->cfg.cali.bmi088),
@@ -74,8 +72,8 @@ void thd_imu(void* arg) {
     // TODO: 添加滤波
 
     /* 发布消息 */
-    msg_dist_publish(accl_pub, &bmi088.accl);
-    msg_dist_publish(gyro_pub, &bmi088.gyro);
+    om_publish(accl_pub, OM_PRASE_VAR(bmi088.accl), true);
+    om_publish(gyro_pub, OM_PRASE_VAR(bmi088.gyro), true);
 
     /* PID控制IMU温度，PWM输出 */
     bsp_pwm_set(BSP_PWM_IMU_HEAT,

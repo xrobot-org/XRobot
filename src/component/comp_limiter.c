@@ -112,6 +112,18 @@ float limit_launcher_freq(float heat, float heat_limit, float cooling_rate,
   float stable_freq = cooling_rate / heat_increase;
   if (is_big)
     return stable_freq;
-  else
-    return (heat_percent > 0.7f) ? stable_freq : 3.0f * stable_freq;
+  else {
+    if (heat_percent > 0.9f)
+      return 0.5f;
+    else if (heat_percent > 0.8f)
+      return 1.0f;
+    else if (heat_percent > 0.6f)
+      return 2.0f * stable_freq;
+    else if (heat_percent > 0.2f)
+      return 3.0f * stable_freq;
+    else if (heat_percent > 0.1f)
+      return 4.0f * stable_freq;
+    else
+      return 5.0f;
+  }
 }

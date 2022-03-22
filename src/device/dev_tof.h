@@ -9,17 +9,21 @@
 
 #define DEV_TOF_ID_BASE (0x20c)
 
-typedef struct {
-  float dist;
-  uint8_t status;
-  uint16_t signal_strength;
-} tof_feedback_t;
-
 typedef enum {
   DEV_TOF_SENSOR_LEFT,
   DEV_TOF_SENSOR_RIGHT,
   DEV_TOF_SENSOR_NUMBER
 } tof_number_t;
+
+typedef struct {
+  float dist;
+  uint8_t status;
+  uint16_t signal_strength;
+} tof_feedback_data_t;
+
+typedef struct {
+  tof_feedback_data_t data[DEV_TOF_SENSOR_NUMBER];
+} tof_feedback_t;
 
 typedef struct {
   bsp_can_t can;
@@ -30,7 +34,7 @@ typedef struct {
 typedef struct {
   QueueHandle_t msgq_feedback;
   const tof_param_t *param;
-  tof_feedback_t feedback[DEV_TOF_SENSOR_NUMBER];
+  tof_feedback_t feedback;
 } tof_t;
 
 err_t tof_init(tof_t *tof, const tof_param_t *param);

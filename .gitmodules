@@ -16,3 +16,6 @@
 [submodule "tinyusb"]
 	path = lib/tinyusb
 	url = https://gitee.com/jiu-xiao/tinyusb.git
+[submodule "lib/one-message"]
+	path = lib/one-message
+	url = https://gitee.com/jiu-xiao/one-message.git

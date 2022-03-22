@@ -236,12 +236,14 @@ static void cmd_joystick_switch_logic(const cmd_rc_t *rc, cmd_t *cmd,
     case CMD_SW_UP:
       cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
       cmd->launcher.mode = LAUNCHER_MODE_SAFE;
+      cmd->launcher.fire_mode = FIRE_MODE_SINGLE;
       cmd->launcher.fire = false;
       break;
 
     case CMD_SW_MID:
       cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
       cmd->launcher.mode = LAUNCHER_MODE_LOADED;
+      cmd->launcher.fire_mode = FIRE_MODE_SINGLE;
       cmd->launcher.fire = false;
       break;
 

@@ -22,9 +22,8 @@ static bool inited = false;
 void ai_rx_cplt_cb(void *arg) {
   ai_t *ai = (ai_t *)arg;
   BaseType_t switch_required;
-  if (ai_read_host(ai) == DEVICE_OK) {
-    xSemaphoreGiveFromISR(ai->sem.data_ready, &switch_required);
-  };
+  ai_read_host(ai);
+  xSemaphoreGiveFromISR(ai->sem.data_ready, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 

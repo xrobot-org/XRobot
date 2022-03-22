@@ -9,8 +9,8 @@
  *
  */
 
-#include "mid_msg_dist.h"
 #include "mod_gimbal.h"
+#include "om.h"
 #include "thd.h"
 
 #define THD_PERIOD_MS (2)
@@ -27,17 +27,24 @@ void thd_ctrl_gimbal(void* arg) {
   motor_control_t gimbal_pit_out;
   ui_gimbal_t gimbal_ui;
 
-  publisher_t* out_yaw_pub =
-      msg_dist_create_topic("gimbal_yaw_out", sizeof(motor_control_t));
-  publisher_t* out_pit_pub =
-      msg_dist_create_topic("gimbal_pit_out", sizeof(motor_control_t));
-  publisher_t* ui_pub = msg_dist_create_topic("gimbal_ui", sizeof(ui_gimbal_t));
+  om_topic_t* out_yaw_tp = om_config_topic(NULL, "A", "gimbal_yaw_out");
+  om_topic_t* out_pit_tp = om_config_topic(NULL, "A", "gimbal_pit_out");
+  om_topic_t* ui_tp = om_config_topic(NULL, "A", "gimbal_ui");
+  om_topic_t* eulr_tp = om_find_topic("gimbal_eulr", UINT32_MAX);
+  om_topic_t* gyro_tp = om_find_topic("gimbal_gyro", UINT32_MAX);
+  om_topic_t* mt_yaw_tp = om_find_topic("gimbal_yaw_motor_fb", UINT32_MAX);
+  om_topic_t* mt_pit_tp = om_find_topic("gimbal_pit_motor_fb", UINT32_MAX);
+  om_topic_t* cmd_tp = om_find_topic("cmd_gimbal", UINT32_MAX);
 
-  subscriber_t* eulr_sub = msg_dist_subscribe("gimbal_eulr", true);
-  subscriber_t* gyro_sub = msg_dist_subscribe("gimbal_gyro", true);
-  subscriber_t* motor_yaw_sub = msg_dist_subscribe("gimbal_yaw_motor_fb", true);
-  subscriber_t* motor_pit_sub = msg_dist_subscribe("gimbal_pit_motor_fb", true);
-  subscriber_t* cmd_sub = msg_dist_subscribe("cmd_gimbal", true);
+  om_suber_t* eulr_sub =
+      om_subscript(eulr_tp, OM_PRASE_VAR(gimbal.feedback.eulr.imu), NULL);
+  om_suber_t* gyro_sub =
+      om_subscript(gyro_tp, OM_PRASE_VAR(gimbal.feedback.gyro), NULL);
+  om_suber_t* motor_yaw_sub =
+      om_subscript(mt_yaw_tp, OM_PRASE_VAR(gimbal_yaw_motor), NULL);
+  om_suber_t* motor_pit_sub =
+      om_subscript(mt_pit_tp, OM_PRASE_VAR(gimbal_pit_motor), NULL);
+  om_suber_t* cmd_sub = om_subscript(cmd_tp, OM_PRASE_VAR(gimbal_cmd), NULL);
 
   /* 初始化云台 */
   gimbal_init(&gimbal, &(runtime->cfg.robot_param->gimbal),
@@ -48,11 +55,11 @@ void thd_ctrl_gimbal(void* arg) {
 
   while (1) {
     /* 读取控制指令、姿态、IMU、电机反馈 */
-    msg_dist_poll(motor_yaw_sub, &gimbal_yaw_motor, 0);
-    msg_dist_poll(motor_pit_sub, &gimbal_pit_motor, 0);
-    msg_dist_poll(eulr_sub, &(gimbal.feedback.eulr.imu), 0);
-    msg_dist_poll(gyro_sub, &(gimbal.feedback.gyro), 0);
-    msg_dist_poll(cmd_sub, &gimbal_cmd, 0);
+    om_suber_dump(motor_yaw_sub);
+    om_suber_dump(motor_pit_sub);
+    om_suber_dump(eulr_sub);
+    om_suber_dump(gyro_sub);
+    om_suber_dump(cmd_sub);
 
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     gimbal_update_feedback(&gimbal, &gimbal_yaw_motor, &gimbal_pit_motor);
@@ -61,9 +68,9 @@ void thd_ctrl_gimbal(void* arg) {
     gimbal_pack_ui(&gimbal, &gimbal_ui);
     xTaskResumeAll();
 
-    msg_dist_publish(out_yaw_pub, &gimbal_yaw_out);
-    msg_dist_publish(out_pit_pub, &gimbal_pit_out);
-    msg_dist_publish(ui_pub, &gimbal_ui);
+    om_publish(out_yaw_tp, OM_PRASE_VAR(gimbal_yaw_out), true);
+    om_publish(out_pit_tp, OM_PRASE_VAR(gimbal_pit_out), true);
+    om_publish(ui_tp, OM_PRASE_VAR(gimbal_ui), true);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);

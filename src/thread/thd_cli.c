@@ -19,7 +19,7 @@
 #include "FreeRTOS.h"
 #include "FreeRTOS_CLI.h"
 #include "dev_term.h"
-#include "mid_msg_dist.h"
+#include "om.h"
 #include "task.h"
 #include "thd.h"
 
@@ -31,9 +31,12 @@ typedef struct {
 
 static runtime_t *runtime;
 
-static subscriber_t *gyro_sub;
-static subscriber_t *gimbal_motor_yaw_sub;
-static subscriber_t *gimbal_motor_pit_sub;
+static om_suber_t *gyro_sub;
+static om_suber_t *gimbal_motor_yaw_sub;
+static om_suber_t *gimbal_motor_pit_sub;
+
+static vector3_t gyro;
+static motor_feedback_group_t motor_fb;
 
 static const char *const CLI_WELCOME_MESSAGE =
     "\r\n"
@@ -211,7 +214,6 @@ static BaseType_t command_cali_gyro(char *out_buffer, size_t len,
 
   /* 陀螺仪校准相关内容 */
   config_t cfg;
-  vector3_t gyro;
   uint16_t count = 0;
   static float x = 0.0f;
   static float y = 0.0f;
@@ -248,7 +250,7 @@ static BaseType_t command_cali_gyro(char *out_buffer, size_t len,
       /* 记录1000组数据，求出平均值作为陀螺仪的3轴零偏 */
       snprintf(out_buffer, len, "Calibation in progress.\r\n");
       while (count < 2000) {
-        bool data_new = msg_dist_poll(gyro_sub, &gyro, 5);
+        bool data_new = om_suber_dump(gyro_sub);
         bool data_good = gyro_is_stable(&gyro);
         if (data_new && data_good) {
           x += gyro.x;
@@ -256,6 +258,7 @@ static BaseType_t command_cali_gyro(char *out_buffer, size_t len,
           z += gyro.z;
           count++;
         }
+        vTaskDelay(1);
       }
       x /= (float)count;
       y /= (float)count;
@@ -301,7 +304,6 @@ static BaseType_t command_set_mech_zero(char *out_buffer, size_t len,
   RM_UNUSED(command_string);
   len -= 1;
 
-  motor_feedback_group_t motor_fb;
   config_t cfg;
 
   static finite_state_machine_t fsm;
@@ -314,13 +316,13 @@ static BaseType_t command_set_mech_zero(char *out_buffer, size_t len,
       /* 获取到云台数据，用can上的新的云台机械零点的位置替代旧的位置 */
       config_get(&cfg);
 
-      if (!msg_dist_poll(gimbal_motor_yaw_sub, &motor_fb, 5)) {
+      if (om_suber_dump(gimbal_motor_yaw_sub) == OM_OK) {
         snprintf(out_buffer, len, "Can not get gimbal data.\r\n");
         fsm.stage = 2;
         return pdPASS;
       }
       cfg.gimbal_mech_zero.yaw = motor_fb.as_gimbal_yaw.yaw.rotor_abs_angle;
-      if (!msg_dist_poll(gimbal_motor_pit_sub, &motor_fb, 5)) {
+      if (om_suber_dump(gimbal_motor_pit_sub) == OM_OK) {
         snprintf(out_buffer, len, "Can not get gimbal data.\r\n");
         fsm.stage = 2;
         return pdPASS;
@@ -351,7 +353,6 @@ static BaseType_t command_set_gimbal_lim(char *out_buffer, size_t len,
   RM_UNUSED(command_string);
   len -= 1;
 
-  motor_feedback_group_t motor_fb;
   config_t cfg;
 
   static finite_state_machine_t fsm;
@@ -363,7 +364,7 @@ static BaseType_t command_set_gimbal_lim(char *out_buffer, size_t len,
       return pdPASS;
     case 1:
       /* 获取云台数据，获取新的限位角并替代旧的限位角 */
-      if (!msg_dist_poll(gimbal_motor_pit_sub, &motor_fb, 5)) {
+      if (om_suber_dump(gimbal_motor_pit_sub) == OM_OK) {
         fsm.stage = 3;
         return pdPASS;
       }
@@ -481,10 +482,6 @@ void thd_cli(void *arg) {
   uint16_t index = 0;                           /* 字符串索引值 */
   BaseType_t processing = 0;                    /* 命令行解析控制 */
 
-  gyro_sub = msg_dist_subscribe("gimbal_gyro", true);
-  gimbal_motor_yaw_sub = msg_dist_subscribe("gimbal_yaw_motor_fb", true);
-  gimbal_motor_pit_sub = msg_dist_subscribe("gimbal_pit_motor_fb", true);
-
   /* 注册所有命令 */
   for (size_t j = 0; j < ARRAY_LEN(command_table); j++) {
     FreeRTOS_CLIRegisterCommand(command_table + j);
@@ -506,6 +503,15 @@ void thd_cli(void *arg) {
     /* 连接成功 */
     break;
   }
+
+  /* 初始化所需数据 */
+  om_topic_t *gyro_tp = om_find_topic("gimbal_gyro", UINT32_MAX);
+  om_topic_t *yaw_tp = om_find_topic("gimbal_yaw_motor_fb", UINT32_MAX);
+  om_topic_t *pit_tp = om_find_topic("gimbal_pit_motor_fb", UINT32_MAX);
+
+  gyro_sub = om_subscript(gyro_tp, OM_PRASE_VAR(gyro), NULL);
+  gimbal_motor_yaw_sub = om_subscript(yaw_tp, OM_PRASE_VAR(motor_fb), NULL);
+  gimbal_motor_pit_sub = om_subscript(pit_tp, OM_PRASE_VAR(motor_fb), NULL);
 
   /* 通过回车键唤醒命令行界面 */
   term_printf("Please press ENTER to activate this console.\r\n");

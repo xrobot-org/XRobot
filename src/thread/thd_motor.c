@@ -13,7 +13,7 @@
  */
 
 #include "dev_referee.h"
-#include "mid_msg_dist.h"
+#include "om.h"
 #include "thd.h"
 
 #define THD_PERIOD_MS (2)
@@ -25,24 +25,32 @@ void thd_motor(void* arg) {
   motor_t motor;
   motor_control_t motor_out;
 
-  publisher_t* chassis_fb_pub =
-      msg_dist_create_topic("chassis_motor_fb", sizeof(motor_feedback_group_t));
-  publisher_t* gimbal_pit_fb_pub = msg_dist_create_topic(
-      "gimbal_pit_motor_fb", sizeof(motor_feedback_group_t));
-  publisher_t* gimbal_yaw_fb_pub = msg_dist_create_topic(
-      "gimbal_yaw_motor_fb", sizeof(motor_feedback_group_t));
-  publisher_t* launcher_fric_fb_pub = msg_dist_create_topic(
-      "launcher_fric_motor_fb", sizeof(motor_feedback_group_t));
-  publisher_t* launcher_trig_fb_pub = msg_dist_create_topic(
-      "launcher_trig_motor_fb", sizeof(motor_feedback_group_t));
+  om_topic_t* chassis_fb_tp = om_config_topic(NULL, "A", "chassis_motor_fb",
+                                              sizeof(motor_feedback_group_t));
+  om_topic_t* gimbal_pit_fb_tp =
+      om_config_topic(NULL, "A", "gimbal_pit_motor_fb");
+  om_topic_t* gimbal_yaw_fb_tp =
+      om_config_topic(NULL, "A", "gimbal_yaw_motor_fb");
+  om_topic_t* launcher_fric_fb_tp =
+      om_config_topic(NULL, "A", "launcher_fric_motor_fb");
+  om_topic_t* launcher_trig_fb_tp =
+      om_config_topic(NULL, "A", "launcher_trig_motor_fb");
+  om_topic_t* chassis_out_tp = om_find_topic("chassis_out", UINT32_MAX);
+  om_topic_t* gimbal_yaw_out_tp = om_find_topic("gimbal_yaw_out", UINT32_MAX);
+  om_topic_t* gimbal_pit_out_tp = om_find_topic("gimbal_pit_out", UINT32_MAX);
+  om_topic_t* la_fric_out_tp = om_find_topic("launcher_fric_out", UINT32_MAX);
+  om_topic_t* la_trig_out_tp = om_find_topic("launcher_trig_out", UINT32_MAX);
 
-  subscriber_t* chassis_out_sub = msg_dist_subscribe("chassis_out", true);
-  subscriber_t* gimbal_yaw_out_sub = msg_dist_subscribe("gimbal_yaw_out", true);
-  subscriber_t* gimbal_pit_out_sub = msg_dist_subscribe("gimbal_pit_out", true);
-  subscriber_t* launcher_fric_out_sub =
-      msg_dist_subscribe("launcher_fric_out", true);
-  subscriber_t* launcher_trig_out_sub =
-      msg_dist_subscribe("launcher_trig_out", true);
+  om_suber_t* chassis_out_sub =
+      om_subscript(chassis_out_tp, OM_PRASE_VAR(motor_out), NULL);
+  om_suber_t* gimbal_yaw_out_sub =
+      om_subscript(gimbal_yaw_out_tp, OM_PRASE_VAR(motor_out), NULL);
+  om_suber_t* gimbal_pit_out_sub =
+      om_subscript(gimbal_pit_out_tp, OM_PRASE_VAR(motor_out), NULL);
+  om_suber_t* launcher_fric_out_sub =
+      om_subscript(la_fric_out_tp, OM_PRASE_VAR(motor_out), NULL);
+  om_suber_t* launcher_trig_out_sub =
+      om_subscript(la_trig_out_tp, OM_PRASE_VAR(motor_out), NULL);
 
   motor_init(&motor, runtime->cfg.robot_param->motor);
 
@@ -55,33 +63,36 @@ void thd_motor(void* arg) {
       motor_handle_offline(&motor);
     }
 
-    msg_dist_publish(chassis_fb_pub, motor.feedback + MOTOR_GROUP_ID_CHASSIS);
-    msg_dist_publish(gimbal_yaw_fb_pub,
-                     motor.feedback + MOTOR_GROUP_ID_GIMBAL_YAW);
-    msg_dist_publish(gimbal_pit_fb_pub,
-                     motor.feedback + MOTOR_GROUP_ID_GIMBAL_PIT);
-    msg_dist_publish(launcher_fric_fb_pub,
-                     motor.feedback + MOTOR_GROUP_ID_LAUNCHER_FRIC);
-    msg_dist_publish(launcher_trig_fb_pub,
-                     motor.feedback + MOTOR_GROUP_ID_LAUNCHER_TRIG);
+    om_publish(chassis_fb_tp, motor.feedback + MOTOR_GROUP_ID_CHASSIS,
+               sizeof(*motor.feedback), true);
+    om_publish(gimbal_yaw_fb_tp, motor.feedback + MOTOR_GROUP_ID_GIMBAL_YAW,
+               sizeof(*motor.feedback), true);
+    om_publish(gimbal_pit_fb_tp, motor.feedback + MOTOR_GROUP_ID_GIMBAL_PIT,
+               sizeof(*motor.feedback), true);
+    om_publish(launcher_fric_fb_tp,
+               motor.feedback + MOTOR_GROUP_ID_LAUNCHER_FRIC,
+               sizeof(*motor.feedback), true);
+    om_publish(launcher_trig_fb_tp,
+               motor.feedback + MOTOR_GROUP_ID_LAUNCHER_TRIG,
+               sizeof(*motor.feedback), true);
 
-    if (msg_dist_poll(chassis_out_sub, &motor_out, 0)) {
+    if (om_suber_dump(chassis_out_sub) == OM_OK) {
       motor_pack_data(&motor, MOTOR_GROUP_ID_CHASSIS, &motor_out);
     }
 
-    if (msg_dist_poll(gimbal_yaw_out_sub, &motor_out, 0)) {
+    if (om_suber_dump(gimbal_yaw_out_sub) == OM_OK) {
       motor_pack_data(&motor, MOTOR_GROUP_ID_GIMBAL_YAW, &motor_out);
     }
 
-    if (msg_dist_poll(gimbal_pit_out_sub, &motor_out, 0)) {
+    if (om_suber_dump(gimbal_pit_out_sub) == OM_OK) {
       motor_pack_data(&motor, MOTOR_GROUP_ID_GIMBAL_PIT, &motor_out);
     }
 
-    if (msg_dist_poll(launcher_fric_out_sub, &motor_out, 0)) {
+    if (om_suber_dump(launcher_fric_out_sub) == OM_OK) {
       motor_pack_data(&motor, MOTOR_GROUP_ID_LAUNCHER_FRIC, &motor_out);
     }
 
-    if (msg_dist_poll(launcher_trig_out_sub, &motor_out, 0)) {
+    if (om_suber_dump(launcher_trig_out_sub) == OM_OK) {
       motor_pack_data(&motor, MOTOR_GROUP_ID_LAUNCHER_TRIG, &motor_out);
     }
 
