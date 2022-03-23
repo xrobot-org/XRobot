@@ -18,20 +18,6 @@ project(
 include(${CMAKE_CURRENT_SOURCE_DIR}/config/config.cmake)
 
 # ---------------------------------------------------------------------------------------
-# Library
-set(LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
-
-# ---------------------------------------------------------------------------------------
-# Hardware
-set(HW_DIR ${CMAKE_CURRENT_SOURCE_DIR}/hw)
-include(${HW_DIR}/hw.cmake)
-
-# ---------------------------------------------------------------------------------------
-# Default Options
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-
-# ---------------------------------------------------------------------------------------
 # Building Options
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(CMAKE_C_FLAGS_DEBUG "-Og -g3 -ggdb3")
@@ -58,6 +44,20 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
   add_compile_definitions()
 
 endif()
+
+# ---------------------------------------------------------------------------------------
+# Library
+set(LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+
+# ---------------------------------------------------------------------------------------
+# Hardware
+set(HW_DIR ${CMAKE_CURRENT_SOURCE_DIR}/hw)
+include(${HW_DIR}/hw.cmake)
+
+# ---------------------------------------------------------------------------------------
+# Default Options
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # ---------------------------------------------------------------------------------------
 # Source

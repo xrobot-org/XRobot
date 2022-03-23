@@ -5,6 +5,7 @@
 #include "hal_dma.h"
 #include "hal_gpio.h"
 #include "hal_i2c.h"
+#include "hal_iwdg.h"
 #include "hal_rng.h"
 #include "hal_spi.h"
 #include "hal_sys.h"
@@ -78,6 +79,9 @@ void HAL_InitPeripherals(void) {
   MX_USART6_UART_Init();
   MX_TIM7_Init();
   MX_USB_OTG_FS_PCD_Init();
+#if !MCU_DEBUG_BUILD
+  MX_IWDG_Init();
+#endif
 }
 
 /**

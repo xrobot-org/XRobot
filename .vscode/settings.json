@@ -13,4 +13,8 @@
     "files.trimFinalNewlines": true,
     "editor.trimAutoWhitespace": true,
     "files.autoSave": "onFocusChange",
+    "files.associations": {
+        "*.c": "c",
+        "bsp.h": "c"
+    },
 }

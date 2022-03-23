@@ -12,6 +12,7 @@
  */
 
 #include "bsp_usb.h"
+#include "bsp_wdg.h"
 #include "comp_capacity.h"
 #include "dev_adc.h"
 #include "dev_buzzer.h"
@@ -27,6 +28,10 @@ void thd_monitor(void* arg) {
   uint32_t previous_wake_time = xTaskGetTickCount();
 
   while (1) {
+#if !MCU_DEBUG_BUILD
+    bsp_wdg_refresh();
+#endif
+
     runtime->status.vbat = adc_get_batt_volt(); /* ADC监测电压 */
     runtime->status.battery = capacity_get_battery_remain(runtime->status.vbat);
     runtime->status.cpu_temp = adc_get_cpu_temp();
