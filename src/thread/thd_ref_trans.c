@@ -38,7 +38,7 @@ void thd_ref_trans(void* arg) {
   om_suber_t* ui_gimbal_sub =
       om_subscript(ui_gm_tp, OM_PRASE_VAR(ref.gimbal_ui), NULL);
   om_suber_t* ui_launcher_sub =
-      om_subscript(ui_la_tp, OM_PRASE_VAR(ref.gimbal_ui), NULL);
+      om_subscript(ui_la_tp, OM_PRASE_VAR(ref.launcher_ui), NULL);
   om_suber_t* ui_cmd_sub =
       om_subscript(ui_cmd_tp, OM_PRASE_VAR(ref.cmd_ui), NULL);
 

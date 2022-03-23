@@ -31,8 +31,8 @@ void thd_ctrl_launcher(void* arg) {
   om_topic_t* fric_out_tp = om_config_topic(NULL, "A", "launcher_fric_out");
   om_topic_t* trig_out_tp = om_config_topic(NULL, "A", "launcher_trig_out");
   om_topic_t* ui_tp = om_config_topic(NULL, "A", "launcher_ui");
-  om_topic_t* mt_fric_tp = om_find_topic("fric_motor_fb", UINT32_MAX);
-  om_topic_t* mt_trig_tp = om_find_topic("trig_motor_fb", UINT32_MAX);
+  om_topic_t* mt_fric_tp = om_find_topic("launcher_fric_motor_fb", UINT32_MAX);
+  om_topic_t* mt_trig_tp = om_find_topic("launcher_trig_motor_fb", UINT32_MAX);
   om_topic_t* ref_tp = om_find_topic("referee_launcher", UINT32_MAX);
   om_topic_t* cmd_tp = om_find_topic("cmd_launcher", UINT32_MAX);
 
