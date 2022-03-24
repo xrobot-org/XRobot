@@ -41,7 +41,7 @@ void thd_rc(void* arg) {
       dr16_handle_offline(&dr16, &cmd_rc);
     }
 
-    om_publish(rc_pub, OM_PRASE_VAR(cmd_rc), true);
+    om_publish(rc_pub, OM_PRASE_VAR(cmd_rc), true, false);
   }
 }
 THREAD_DECLEAR(thd_rc, 128, 4);

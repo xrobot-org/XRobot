@@ -61,12 +61,12 @@ void thd_ctrl_chassis(void* arg) {
 
   while (1) {
     /* 读取控制指令、电容、裁判系统、电机反馈 */
-    om_suber_dump(ch_mt_sub);
-    om_suber_dump(gm_mt_sub);
-    om_suber_dump(ref_sub);
-    om_suber_dump(cmd_sub);
-    om_suber_dump(cap_sub);
-    om_suber_dump(tof_sub);
+    om_suber_dump(ch_mt_sub, false);
+    om_suber_dump(gm_mt_sub, false);
+    om_suber_dump(ref_sub, false);
+    om_suber_dump(cmd_sub, false);
+    om_suber_dump(cap_sub, false);
+    om_suber_dump(tof_sub, false);
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     /* 更新反馈值 */
     chassis_update_feedback(&chassis, &ch_mt, &gm_mt, &tof);
@@ -76,9 +76,9 @@ void thd_ctrl_chassis(void* arg) {
     chassis_pack_ui(&chassis, &chassis_ui);
     xTaskResumeAll();
 
-    om_publish(out_tp, OM_PRASE_VAR(motor_ctrl), true);
-    om_publish(cap_tp, OM_PRASE_VAR(cap_ctrl), true);
-    om_publish(ui_tp, OM_PRASE_VAR(chassis_ui), true);
+    om_publish(out_tp, OM_PRASE_VAR(motor_ctrl), true, false);
+    om_publish(cap_tp, OM_PRASE_VAR(cap_ctrl), true, false);
+    om_publish(ui_tp, OM_PRASE_VAR(chassis_ui), true, false);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);

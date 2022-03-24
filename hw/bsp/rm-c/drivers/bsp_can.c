@@ -1,12 +1,43 @@
-#include "bsp_can.h"
-
 #include <string.h>
 
+#include "bsp_can.h"
 #include "comp_utils.h"
 
-static can_group_t can_groups[BSP_CAN_NUM];
+static om_topic_t *can_1_tp, *can_2_tp;
 
 static bsp_callback_t callback_list[BSP_CAN_NUM][BSP_CAN_CB_NUM];
+
+static SemaphoreHandle_t bsp_can_sem[BSP_CAN_NUM];
+
+static bool bsp_can_initd = false;
+
+void bsp_can_wait_init(void) {
+  while (!bsp_can_initd) {
+    vTaskDelay(1);
+  }
+}
+
+CAN_HandleTypeDef *bsp_can_get_handle(bsp_can_t can) {
+  switch (can) {
+    case BSP_CAN_2:
+      return &hcan2;
+    case BSP_CAN_1:
+      return &hcan1;
+    default:
+      return NULL;
+  }
+}
+
+om_topic_t *bsp_can_get_topic(bsp_can_t can) {
+  switch (can) {
+    case BSP_CAN_2:
+      return can_2_tp;
+    case BSP_CAN_1:
+      return can_1_tp;
+    default:
+      return NULL;
+  }
+}
 
 static bsp_can_t can_get(CAN_HandleTypeDef *hcan) {
   if (hcan->Instance == CAN2)
@@ -15,6 +46,46 @@ static bsp_can_t can_get(CAN_HandleTypeDef *hcan) {
     return BSP_CAN_1;
   else
     return BSP_CAN_ERR;
+}
+
+void bsp_can_init(void) {
+  can_1_tp = om_config_topic(NULL, "VA", "can_1_rx");
+  can_2_tp = om_config_topic(NULL, "VA", "can_2_rx");
+
+  for (uint32_t i = 0; i < BSP_CAN_NUM; i++) {
+    bsp_can_sem[i] = xSemaphoreCreateBinary();
+    xSemaphoreGive(bsp_can_sem[i]);
+  }
+
+  CAN_FilterTypeDef can_filter = {0};
+
+  can_filter.FilterBank = 0;
+  can_filter.FilterIdHigh = 0;
+  can_filter.FilterIdLow = 0;
+  can_filter.FilterMode = CAN_FILTERMODE_IDMASK;
+  can_filter.FilterScale = CAN_FILTERSCALE_32BIT;
+  can_filter.FilterMaskIdHigh = 0;
+  can_filter.FilterMaskIdLow = 0;
+  can_filter.FilterActivation = ENABLE;
+  can_filter.SlaveStartFilterBank = 14;
+  can_filter.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+
+  HAL_CAN_ConfigFilter(bsp_can_get_handle(BSP_CAN_1), &can_filter);
+  HAL_CAN_Start(bsp_can_get_handle(BSP_CAN_1));
+
+  HAL_CAN_ActivateNotification(bsp_can_get_handle(BSP_CAN_1),
+                               CAN_IT_RX_FIFO0_MSG_PENDING);
+
+  can_filter.FilterBank = 14;
+  can_filter.FilterFIFOAssignment = CAN_FILTER_FIFO1;
+
+  HAL_CAN_ConfigFilter(bsp_can_get_handle(BSP_CAN_2), &can_filter);
+  HAL_CAN_Start(bsp_can_get_handle(BSP_CAN_2));
+
+  HAL_CAN_ActivateNotification(bsp_can_get_handle(BSP_CAN_2),
+                               CAN_IT_RX_FIFO1_MSG_PENDING);
+
+  bsp_can_initd = true;
 }
 
 static void bsp_can_callback(bsp_can_callback_t cb_type,
@@ -81,17 +152,6 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
   bsp_can_callback(HAL_CAN_ERROR_CB, hcan);
 }
 
-CAN_HandleTypeDef *bsp_can_get_handle(bsp_can_t can) {
-  switch (can) {
-    case BSP_CAN_2:
-      return &hcan2;
-    case BSP_CAN_1:
-      return &hcan1;
-    default:
-      return NULL;
-  }
-}
-
 int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
                                  void (*callback)(void *), void *callback_arg) {
   ASSERT(callback);
@@ -102,40 +162,8 @@ int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
   return BSP_OK;
 }
 
-int8_t bsp_can_register_subscriber(bsp_can_t can, uint32_t index,
-                                   uint32_t number,
-                                   void (*cb)(can_rx_item_t *, void *),
-                                   void *callback_arg) {
-  ASSERT(cb);
-
-  if (can_groups[can].suber_number >= CAN_MAX_SUBER_NUMBER) return BSP_ERR;
-
-  can_groups[can].suber[can_groups[can].suber_number].cb = cb;
-  can_groups[can].suber[can_groups[can].suber_number].index = index;
-  can_groups[can].suber[can_groups[can].suber_number].number = number;
-  can_groups[can].suber[can_groups[can].suber_number].callback_arg =
-      callback_arg;
-  can_groups[can].suber_number++;
-
-  return BSP_OK;
-}
-
-int8_t bsp_can_publish_data(bsp_can_t can, uint32_t StdId, uint8_t *data) {
-  for (int i = 0; i < can_groups[can].suber_number; i++) {
-    uint32_t index = StdId - can_groups[can].suber[i].index;
-    if (index < can_groups[can].suber[i].number) {
-      can_rx_item_t rx;
-      rx.index = index;
-      memcpy(rx.data, data, sizeof(rx.data));
-      can_groups[can].suber[i].cb(&rx, can_groups[can].suber[i].callback_arg);
-      return BSP_OK;
-    }
-  }
-  return BSP_ERR;
-}
-
-int8_t can_trans_packet(bsp_can_t can, uint32_t StdId, uint8_t *data,
-                        uint32_t *mailbox) {
+int8_t bsp_can_trans_packet(bsp_can_t can, uint32_t StdId, uint8_t *data,
+                            uint32_t *mailbox, uint32_t timeout) {
   CAN_TxHeaderTypeDef header;
   header.StdId = StdId;
   header.IDE = CAN_ID_STD;
@@ -143,9 +171,48 @@ int8_t can_trans_packet(bsp_can_t can, uint32_t StdId, uint8_t *data,
   header.TransmitGlobalTime = DISABLE;
   header.DLC = 8;
 
-  if (HAL_CAN_AddTxMessage(bsp_can_get_handle(can), &header, data, mailbox) ==
-      HAL_OK)
+  if (xSemaphoreTake(bsp_can_sem[can], timeout) != pdTRUE) return BSP_ERR;
+
+  HAL_StatusTypeDef res =
+      HAL_CAN_AddTxMessage(bsp_can_get_handle(can), &header, data, mailbox);
+
+  xSemaphoreGive(bsp_can_sem[can]);
+
+  if (res == HAL_OK)
     return BSP_OK;
   else
     return BSP_ERR;
+}
+
+int8_t bsp_can_get_msg(bsp_can_t can, can_rx_item_t *item) {
+  can_raw_rx_t rx;
+  HAL_StatusTypeDef res;
+
+  switch (can) {
+    case BSP_CAN_1:
+      res = HAL_CAN_GetRxMessage(bsp_can_get_handle(BSP_CAN_1),
+                                 CAN_FILTER_FIFO0, &rx.header, rx.data);
+      break;
+    case BSP_CAN_2:
+      res = HAL_CAN_GetRxMessage(bsp_can_get_handle(BSP_CAN_2),
+                                 CAN_FILTER_FIFO1, &rx.header, rx.data);
+      break;
+    default:
+      return BSP_ERR;
+  }
+
+  if (res == HAL_OK) {
+    item->index = rx.header.StdId;
+    memcpy(item->data, rx.data, sizeof(rx.data));
+    return BSP_OK;
+  }
+
+  return BSP_ERR;
+}
+
+int8_t bsp_can_register_subscriber(bsp_can_t can, om_topic_t *sub,
+                                   uint32_t index_id, uint32_t number) {
+  return om_config_filter(bsp_can_get_topic(can), "R", sub,
+                          OM_PRASE_STRUCT(can_rx_item_t, index), index_id,
+                          number) != OM_OK;
 }

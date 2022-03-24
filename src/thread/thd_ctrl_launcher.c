@@ -51,10 +51,10 @@ void thd_ctrl_launcher(void* arg) {
 
   while (1) {
     /* 读取控制指令、姿态、IMU、裁判系统、电机反馈 */
-    om_suber_dump(motor_fric_sub);
-    om_suber_dump(motor_trig_sub);
-    om_suber_dump(ref_sub);
-    om_suber_dump(cmd_sub);
+    om_suber_dump(motor_fric_sub, false);
+    om_suber_dump(motor_trig_sub, false);
+    om_suber_dump(ref_sub, false);
+    om_suber_dump(cmd_sub, false);
 
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     launcher_update_feedback(&launcher, &trig_motor_fb, &fric_motor_fb);
@@ -64,9 +64,9 @@ void thd_ctrl_launcher(void* arg) {
     launcher_pack_ui(&launcher, &launcher_ui);
     xTaskResumeAll();
 
-    om_publish(fric_out_tp, OM_PRASE_VAR(launcher_fric_out), true);
-    om_publish(trig_out_tp, OM_PRASE_VAR(launcher_trig_out), true);
-    om_publish(ui_tp, OM_PRASE_VAR(launcher_ui), true);
+    om_publish(fric_out_tp, OM_PRASE_VAR(launcher_fric_out), true, false);
+    om_publish(trig_out_tp, OM_PRASE_VAR(launcher_trig_out), true, false);
+    om_publish(ui_tp, OM_PRASE_VAR(launcher_ui), true, false);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);

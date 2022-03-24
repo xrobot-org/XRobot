@@ -4,6 +4,7 @@
 
 #include "bsp.h"
 #include "hal_can.h"
+#include "om.h"
 
 #define CAN_DATA_SIZE (8)
 
@@ -36,12 +37,12 @@ typedef enum {
 typedef struct {
   CAN_RxHeaderTypeDef header;
   uint8_t data[CAN_DATA_SIZE];
-} can_rawrx_t;
+} can_raw_rx_t;
 
 typedef struct {
   CAN_TxHeaderTypeDef header;
   uint8_t data[CAN_DATA_SIZE];
-} can_rawtx_t;
+} can_raw_tx_t;
 
 typedef struct {
   uint32_t can_id;
@@ -53,25 +54,13 @@ typedef struct {
   uint8_t data[CAN_DATA_SIZE];
 } can_rx_item_t;
 
-typedef struct {
-  uint32_t index;
-  uint32_t number;
-  void (*cb)(can_rx_item_t *, void *);
-  void *callback_arg;
-} can_suber_t;
-
-typedef struct {
-  can_suber_t suber[CAN_MAX_SUBER_NUMBER];
-  uint8_t suber_number;
-} can_group_t;
-
-CAN_HandleTypeDef *bsp_can_get_handle(bsp_can_t can);
+void bsp_can_init(void);
+void bsp_can_wait_init(void);
+om_topic_t *bsp_can_get_topic(bsp_can_t can);
 int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
                                  void (*callback)(void *), void *callback_arg);
-int8_t bsp_can_publish_data(bsp_can_t can, uint32_t StdId, uint8_t *data);
-int8_t bsp_can_register_subscriber(bsp_can_t can, uint32_t index,
-                                   uint32_t number,
-                                   void (*cb)(can_rx_item_t *, void *),
-                                   void *callback_arg);
-int8_t can_trans_packet(bsp_can_t can, uint32_t StdId, uint8_t *data,
-                        uint32_t *mailbox);
+int8_t bsp_can_trans_packet(bsp_can_t can, uint32_t StdId, uint8_t *data,
+                            uint32_t *mailbox, uint32_t timeout);
+int8_t bsp_can_get_msg(bsp_can_t can, can_rx_item_t *item);
+int8_t bsp_can_register_subscriber(bsp_can_t can, om_topic_t *sub,
+                                   uint32_t index_id, uint32_t number);

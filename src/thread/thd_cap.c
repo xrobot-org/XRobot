@@ -20,8 +20,6 @@
 void thd_cap(void* arg) {
   runtime_t* runtime = arg;
 
-  can_init();
-
   cap_t cap;
   cap_control_t cap_out;
   ui_cap_t cap_ui;
@@ -43,10 +41,10 @@ void thd_cap(void* arg) {
       cap_handle_offline(&cap);
     }
     cap_pack_ui(&cap, &cap_ui);
-    om_publish(ui_tp, OM_PRASE_VAR(cap_ui), true);
-    om_publish(info_tp, OM_PRASE_VAR(cap.feedback), true);
+    om_publish(ui_tp, OM_PRASE_VAR(cap_ui), true, false);
+    om_publish(info_tp, OM_PRASE_VAR(cap.feedback), true, false);
 
-    om_suber_dump(out_sub);
+    om_suber_dump(out_sub, false);
     cap_control(&cap, &cap_out);
 
     /* 运行结束，等待下一次唤醒 */

@@ -38,6 +38,9 @@
   xSemaphoreTake(*arg, 0) == pdTRUE ? OM_OK : OM_ERROR
 #define om_mutex_unlock(arg) xSemaphoreGive(*arg)
 
+#define om_mutex_lock_isr(arg) xSemaphoreTakeFromISR(*arg, NULL)
+#define om_mutex_unlock_isr(arg) xSemaphoreGiveFromISR(*arg, NULL)
+
 /* 将运行时间作为消息发出的时间 */
 #define OM_VIRTUAL_TIME (1)
 

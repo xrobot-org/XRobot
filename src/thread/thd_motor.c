@@ -64,35 +64,35 @@ void thd_motor(void* arg) {
     }
 
     om_publish(chassis_fb_tp, motor.feedback + MOTOR_GROUP_ID_CHASSIS,
-               sizeof(*motor.feedback), true);
+               sizeof(*motor.feedback), true, false);
     om_publish(gimbal_yaw_fb_tp, motor.feedback + MOTOR_GROUP_ID_GIMBAL_YAW,
-               sizeof(*motor.feedback), true);
+               sizeof(*motor.feedback), true, false);
     om_publish(gimbal_pit_fb_tp, motor.feedback + MOTOR_GROUP_ID_GIMBAL_PIT,
-               sizeof(*motor.feedback), true);
+               sizeof(*motor.feedback), true, false);
     om_publish(launcher_fric_fb_tp,
                motor.feedback + MOTOR_GROUP_ID_LAUNCHER_FRIC,
-               sizeof(*motor.feedback), true);
+               sizeof(*motor.feedback), true, false);
     om_publish(launcher_trig_fb_tp,
                motor.feedback + MOTOR_GROUP_ID_LAUNCHER_TRIG,
-               sizeof(*motor.feedback), true);
+               sizeof(*motor.feedback), true, false);
 
-    if (om_suber_dump(chassis_out_sub) == OM_OK) {
+    if (om_suber_dump(chassis_out_sub, false) == OM_OK) {
       motor_pack_data(&motor, MOTOR_GROUP_ID_CHASSIS, &motor_out);
     }
 
-    if (om_suber_dump(gimbal_yaw_out_sub) == OM_OK) {
+    if (om_suber_dump(gimbal_yaw_out_sub, false) == OM_OK) {
       motor_pack_data(&motor, MOTOR_GROUP_ID_GIMBAL_YAW, &motor_out);
     }
 
-    if (om_suber_dump(gimbal_pit_out_sub) == OM_OK) {
+    if (om_suber_dump(gimbal_pit_out_sub, false) == OM_OK) {
       motor_pack_data(&motor, MOTOR_GROUP_ID_GIMBAL_PIT, &motor_out);
     }
 
-    if (om_suber_dump(launcher_fric_out_sub) == OM_OK) {
+    if (om_suber_dump(launcher_fric_out_sub, false) == OM_OK) {
       motor_pack_data(&motor, MOTOR_GROUP_ID_LAUNCHER_FRIC, &motor_out);
     }
 
-    if (om_suber_dump(launcher_trig_out_sub) == OM_OK) {
+    if (om_suber_dump(launcher_trig_out_sub, false) == OM_OK) {
       motor_pack_data(&motor, MOTOR_GROUP_ID_LAUNCHER_TRIG, &motor_out);
     }
 

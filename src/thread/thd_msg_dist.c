@@ -33,7 +33,7 @@ void thd_msg_dist(void *arg) {
 
   while (1) {
     /* 消息同步 */
-    om_sync();
+    om_sync(false);
 
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }

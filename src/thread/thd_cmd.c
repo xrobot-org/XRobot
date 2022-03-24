@@ -48,21 +48,21 @@ void thd_cmd(void* arg) {
 
   while (1) {
     /* 将接收机数据解析为指令数据 */
-    om_suber_dump(rc_sub);  // TODO: 可以阻塞
+    om_suber_dump(rc_sub, false);  // TODO: 可以阻塞
 
     cmd_parse_rc(&rc, &cmd, (float)THD_PERIOD_MS / 1000.0f);
 
     /* 判断是否需要让上位机覆写指令 */
     if (cmd_check_host_overwrite(&rc, &cmd)) {
-      if (om_suber_dump(host_sub) == OM_OK)
+      if (om_suber_dump(host_sub, false) == OM_OK)
         cmd_parse_host(&host, &cmd, (float)THD_PERIOD_MS / 1000.0f);
     }
     cmd_pack_ui(&cmd_ui, &cmd);
 
-    om_publish(ch_tp, OM_PRASE_VAR(cmd.chassis), true);
-    om_publish(gm_tp, OM_PRASE_VAR(cmd.gimbal), true);
-    om_publish(la_tp, OM_PRASE_VAR(cmd.launcher), true);
-    om_publish(ui_tp, OM_PRASE_VAR(cmd_ui), true);
+    om_publish(ch_tp, OM_PRASE_VAR(cmd.chassis), true, false);
+    om_publish(gm_tp, OM_PRASE_VAR(cmd.gimbal), true, false);
+    om_publish(la_tp, OM_PRASE_VAR(cmd.launcher), true, false);
+    om_publish(ui_tp, OM_PRASE_VAR(cmd_ui), true, false);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);

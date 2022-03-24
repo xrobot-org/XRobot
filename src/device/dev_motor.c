@@ -1,6 +1,7 @@
 #include "dev_motor.h"
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "comp_utils.h"
@@ -102,29 +103,43 @@ static err_t motor_decode(motor_feedback_t *fb, const uint8_t *raw) {
   return RM_OK;
 }
 
-static void motor_rx_callback(can_rx_item_t *rx, void *arg) {
-  ASSERT(rx);
+om_status_t motor_rx_callback(om_msg_t *msg, void *arg) {
+  ASSERT(msg);
   ASSERT(arg);
   QueueHandle_t msgq = (QueueHandle_t)arg;
+  can_rx_item_t *rx = (can_rx_item_t *)msg->buff;
 
   BaseType_t switch_required;
   xQueueOverwriteFromISR(msgq, rx, &switch_required);
   portYIELD_FROM_ISR(switch_required);
+
+  return OM_OK;
 }
 
 err_t motor_init(motor_t *motor, const motor_group_t *group_cfg) {
   ASSERT(motor);
   ASSERT(group_cfg);
 
+  bsp_can_wait_init();
+
   if (inited) return DEVICE_ERR_INITED;
   motor->group_cfg = group_cfg;
 
+  char tp_name[OM_LOG_MAX_LEN] = {0};
+  uint8_t tp_num = 0;
+
   const motor_group_t *group = motor->group_cfg;
   for (int i = 0; i < MOTOR_GROUP_ID_NUM; i++) {
+    snprintf(tp_name, OM_LOG_MAX_LEN, "can_motor_%d", tp_num);
     motor->msgq[i] = xQueueCreate(1, sizeof(can_rx_item_t));
-    bsp_can_register_subscriber(group->can, group->id_feedback, group->num,
-                                motor_rx_callback, motor->msgq[i]);
+    om_topic_t *motor_tp = om_config_topic(NULL, "DVA", tp_name,
+                                           motor_rx_callback, motor->msgq[i]);
+
+    bsp_can_register_subscriber(group->can, motor_tp, group->id_feedback,
+                                group->num);
+
     group++;
+    tp_num++;
   }
 
   inited = true;
@@ -137,9 +152,10 @@ err_t motor_update(motor_t *motor, uint32_t timeout) {
   for (int i = 0; i < MOTOR_GROUP_ID_NUM; i++) {
     while (pdPASS ==
            xQueueReceive(motor->msgq[i], &pack, pdMS_TO_TICKS(timeout))) {
-      if ((pack.index < motor->group_cfg[i].num) &&
-          (MOTOR_NONE != motor->group_cfg[i].model[pack.index]))
-        motor_decode(&(motor->feedback[i].as_array[pack.index]), pack.data);
+      uint32_t index = pack.index - motor->group_cfg[i].id_feedback;
+      if ((index < motor->group_cfg[i].num) &&
+          (MOTOR_NONE != motor->group_cfg[i].model[index]))
+        motor_decode(&(motor->feedback[i].as_array[index]), pack.data);
       break;
     }
   }
@@ -184,8 +200,8 @@ err_t motor_control(motor_t *motor) {
   for (uint32_t i = 0; i < BSP_CAN_NUM; i++) {
     for (uint32_t t = 0; t < MOTOR_CTRL_ID_NUMBER; t++) {
       if (motor_tx_map[i][t])
-        can_trans_packet(i, motor_ctrl_id_map[t], motor_tx_buff[i][t],
-                         &motor->mailbox);
+        bsp_can_trans_packet(i, motor_ctrl_id_map[t], motor_tx_buff[i][t],
+                             &motor->mailbox, 1);
     }
   }
 

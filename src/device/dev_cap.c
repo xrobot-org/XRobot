@@ -5,6 +5,7 @@
 
 #include "comp_capacity.h"
 #include "comp_utils.h"
+#include "om.h"
 
 #define CAP_RES (100) /* 电容数据分辨率 */
 
@@ -21,27 +22,33 @@ static void cap_decode(cap_feedback_t *fb, const uint8_t *raw) {
                                                  CAP_CUTOFF_VOLT);
 }
 
-void cap_rx_callback(can_rx_item_t *rx, void *arg) {
-  ASSERT(rx);
-  ASSERT(arg);
+om_status_t cap_rx_callback(om_msg_t *msg, void *arg) {
+  bsp_can_wait_init();
 
   cap_t *cap = (cap_t *)arg;
+  can_rx_item_t *rx = (can_rx_item_t *)msg->buff;
+
+  rx->index -= cap->param->index;
 
   if (rx->index < DEV_CAP_NUMBER) {
     BaseType_t switch_required;
     xQueueOverwriteFromISR(cap->msgq_feedback, rx, &switch_required);
     portYIELD_FROM_ISR(switch_required);
   }
+
+  return OM_OK;
 }
 
 err_t cap_init(cap_t *cap, const cap_param_t *param) {
   cap->msgq_control = xQueueCreate(1, sizeof(can_tx_item_t));
   cap->msgq_feedback = xQueueCreate(1, sizeof(can_rx_item_t));
-
   cap->param = param;
 
-  bsp_can_register_subscriber(cap->param->can, cap->param->index,
-                              cap->param->num, cap_rx_callback, cap);
+  om_topic_t *cap_tp =
+      om_config_topic(NULL, "VDA", "can_cap", cap_rx_callback, cap);
+
+  bsp_can_register_subscriber(cap->param->can, cap_tp, cap->param->index,
+                              cap->param->num);
 
   if (cap->msgq_control && cap->msgq_feedback)
     return RM_OK;
@@ -69,7 +76,8 @@ err_t cap_control(cap_t *cap, cap_control_t *output) {
   data[0] = (pwr_lim >> 8) & 0xFF;
   data[1] = pwr_lim & 0xFF;
 
-  can_trans_packet(cap->param->can, DEV_CAP_CTRL_ID_BASE, data, &cap->mailbox);
+  bsp_can_trans_packet(cap->param->can, DEV_CAP_CTRL_ID_BASE, data,
+                       &cap->mailbox, 1);
   return RM_OK;
 }
 

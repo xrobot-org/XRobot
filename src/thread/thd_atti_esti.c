@@ -40,8 +40,8 @@ void thd_atti_esti(void* arg) {
   float now;
   uint32_t previous_wake_time = xTaskGetTickCount();
   while (1) {
-    om_suber_dump(accl_sub);
-    om_suber_dump(gyro_sub);
+    om_suber_dump(accl_sub, false);
+    om_suber_dump(gyro_sub, false);
 
     /* 锁住RTOS内核防止数据解析过程中断，造成错误 */
     vTaskSuspendAll();
@@ -55,8 +55,8 @@ void thd_atti_esti(void* arg) {
     xTaskResumeAll();
 
     /* 发布数据 */
-    om_publish(gm_eulr_tp, OM_PRASE_VAR(gimbal_eulr), true);
-    om_publish(gm_quat_tp, OM_PRASE_VAR(gimbal_ahrs.quat), true);
+    om_publish(gm_eulr_tp, OM_PRASE_VAR(gimbal_eulr), true, false);
+    om_publish(gm_quat_tp, OM_PRASE_VAR(gimbal_ahrs.quat), true, false);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);

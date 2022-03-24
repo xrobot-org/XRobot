@@ -72,8 +72,8 @@ void thd_imu(void* arg) {
     // TODO: 添加滤波
 
     /* 发布消息 */
-    om_publish(accl_pub, OM_PRASE_VAR(bmi088.accl), true);
-    om_publish(gyro_pub, OM_PRASE_VAR(bmi088.gyro), true);
+    om_publish(accl_pub, OM_PRASE_VAR(bmi088.accl), true, false);
+    om_publish(gyro_pub, OM_PRASE_VAR(bmi088.gyro), true, false);
 
     /* PID控制IMU温度，PWM输出 */
     bsp_pwm_set(BSP_PWM_IMU_HEAT,

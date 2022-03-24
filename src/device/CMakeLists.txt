@@ -12,7 +12,8 @@ target_link_libraries(
   PRIVATE bsp
   PRIVATE component
   PRIVATE hal
-  PRIVATE rtos)
+  PRIVATE rtos
+  PUBLIC OneMessage)
 
 target_include_directories(
   ${PROJECT_NAME}
@@ -21,6 +22,7 @@ target_include_directories(
   PUBLIC $<TARGET_PROPERTY:bsp,INTERFACE_INCLUDE_DIRECTORIES>
   PUBLIC $<TARGET_PROPERTY:rtos,INTERFACE_INCLUDE_DIRECTORIES>
   PUBLIC $<TARGET_PROPERTY:hal,INTERFACE_INCLUDE_DIRECTORIES>
+  PUBLIC $<TARGET_PROPERTY:OneMessage,INTERFACE_INCLUDE_DIRECTORIES>
   PRIVATE $<TARGET_PROPERTY:component,INTERFACE_INCLUDE_DIRECTORIES>)
 
 add_dependencies(${PROJECT_NAME} bsp component hal rtos)

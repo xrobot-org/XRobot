@@ -15,11 +15,14 @@ void tof_decode(tof_feedback_data_t *fb_data, const uint8_t *raw) {
   fb_data->signal_strength = (uint16_t)((raw[5] << 8) | raw[4]);
 }
 
-void tof_rx_callback(can_rx_item_t *rx, void *arg) {
-  ASSERT(rx);
+void tof_rx_callback(om_msg_t *msg, void *arg) {
+  ASSERT(msg);
   ASSERT(arg);
 
+  can_rx_item_t *rx = (can_rx_item_t *)msg->buff;
   tof_t *tof = (tof_t *)arg;
+
+  rx->index -= tof->param->index;
 
   if (rx->index < DEV_TOF_SENSOR_NUMBER) {
     BaseType_t switch_required;
@@ -29,10 +32,16 @@ void tof_rx_callback(can_rx_item_t *rx, void *arg) {
 }
 
 err_t tof_init(tof_t *tof, const tof_param_t *param) {
+  bsp_can_wait_init();
+
   tof->param = param;
   tof->msgq_feedback = xQueueCreate(1, sizeof(can_rx_item_t));
-  bsp_can_register_subscriber(tof->param->can, tof->param->index,
-                              tof->param->num, tof_rx_callback, tof);
+
+  om_topic_t *tp =
+      om_config_topic(NULL, "VDA", "can_tof", tof_rx_callback, tof);
+
+  bsp_can_register_subscriber(tof->param->can, tp, tof->param->index,
+                              tof->param->num);
   if (tof->msgq_feedback)
     return RM_OK;
   else

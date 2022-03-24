@@ -55,11 +55,11 @@ void thd_ctrl_gimbal(void* arg) {
 
   while (1) {
     /* 读取控制指令、姿态、IMU、电机反馈 */
-    om_suber_dump(motor_yaw_sub);
-    om_suber_dump(motor_pit_sub);
-    om_suber_dump(eulr_sub);
-    om_suber_dump(gyro_sub);
-    om_suber_dump(cmd_sub);
+    om_suber_dump(motor_yaw_sub, false);
+    om_suber_dump(motor_pit_sub, false);
+    om_suber_dump(eulr_sub, false);
+    om_suber_dump(gyro_sub, false);
+    om_suber_dump(cmd_sub, false);
 
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     gimbal_update_feedback(&gimbal, &gimbal_yaw_motor, &gimbal_pit_motor);
@@ -68,9 +68,9 @@ void thd_ctrl_gimbal(void* arg) {
     gimbal_pack_ui(&gimbal, &gimbal_ui);
     xTaskResumeAll();
 
-    om_publish(out_yaw_tp, OM_PRASE_VAR(gimbal_yaw_out), true);
-    om_publish(out_pit_tp, OM_PRASE_VAR(gimbal_pit_out), true);
-    om_publish(ui_tp, OM_PRASE_VAR(gimbal_ui), true);
+    om_publish(out_yaw_tp, OM_PRASE_VAR(gimbal_yaw_out), true, false);
+    om_publish(out_pit_tp, OM_PRASE_VAR(gimbal_pit_out), true, false);
+    om_publish(ui_tp, OM_PRASE_VAR(gimbal_ui), true, false);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);

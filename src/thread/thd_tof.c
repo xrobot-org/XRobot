@@ -32,7 +32,7 @@ void thd_tof(void* arg) {
       tof_handle_offline(&tof);
     }
 
-    om_publish(tof_fb_pub, OM_PRASE_VAR(tof.feedback), true);
+    om_publish(tof_fb_pub, OM_PRASE_VAR(tof.feedback), true, false);
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);

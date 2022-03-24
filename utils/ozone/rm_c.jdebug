@@ -31,6 +31,7 @@ void OnProjectLoad(void) {
   //
   // User settings
   //
+  Edit.SysVar (VAR_HSS_SPEED, FREQ_2_KHZ);
   Project.SetOSPlugin("FreeRTOSPlugin");
   Project.AddPathSubstitute("/home","//wsl.localhost/Ubuntu/home");
   File.Open("$(ProjectDir)/../../build/src/qdu_rm_mcu.elf");

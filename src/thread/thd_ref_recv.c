@@ -55,9 +55,9 @@ void thd_ref_recv(void* arg) {
     referee_pack_for_chassis(&for_chassis, &ref);
 
     /* 发送裁判系统数据到其他进程 */
-    om_publish(re_ai_pub, OM_PRASE_VAR(for_ai), true);
-    om_publish(re_chassis_pub, OM_PRASE_VAR(for_chassis), true);
-    om_publish(ref_launcher_pub, OM_PRASE_VAR(for_launcher), true);
+    om_publish(re_ai_pub, OM_PRASE_VAR(for_ai), true, false);
+    om_publish(re_chassis_pub, OM_PRASE_VAR(for_chassis), true, false);
+    om_publish(ref_launcher_pub, OM_PRASE_VAR(for_launcher), true, false);
   }
 }
 THREAD_DECLEAR(thd_ref_recv, 512, 4);
