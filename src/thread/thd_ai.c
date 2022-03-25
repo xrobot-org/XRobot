@@ -21,8 +21,8 @@ void thd_ai(void* arg) {
   om_topic_t* quat_tp = om_find_topic("gimbal_quat", UINT32_MAX);
   om_topic_t* ref_tp = om_find_topic("referee_ai", UINT32_MAX);
 
-  om_suber_t* quat_sub = om_subscript(quat_tp, OM_PRASE_VAR(ai_quat), NULL);
-  om_suber_t* ref_sub = om_subscript(ref_tp, OM_PRASE_VAR(referee_ai), NULL);
+  om_suber_t* quat_sub = om_subscript(quat_tp, OM_PRASE_VAR(ai_quat));
+  om_suber_t* ref_sub = om_subscript(ref_tp, OM_PRASE_VAR(referee_ai));
 
 #if HOST_USB_DISABLE
   vTaskSuspend(xTaskGetCurrentTaskHandle());

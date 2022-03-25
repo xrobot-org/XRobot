@@ -37,11 +37,11 @@ void thd_ctrl_launcher(void* arg) {
   om_topic_t* cmd_tp = om_find_topic("cmd_launcher", UINT32_MAX);
 
   om_suber_t* motor_fric_sub =
-      om_subscript(mt_fric_tp, OM_PRASE_VAR(fric_motor_fb), NULL);
+      om_subscript(mt_fric_tp, OM_PRASE_VAR(fric_motor_fb));
   om_suber_t* motor_trig_sub =
-      om_subscript(mt_trig_tp, OM_PRASE_VAR(trig_motor_fb), NULL);
-  om_suber_t* ref_sub = om_subscript(ref_tp, OM_PRASE_VAR(ref_launcher), NULL);
-  om_suber_t* cmd_sub = om_subscript(cmd_tp, OM_PRASE_VAR(launcher_cmd), NULL);
+      om_subscript(mt_trig_tp, OM_PRASE_VAR(trig_motor_fb));
+  om_suber_t* ref_sub = om_subscript(ref_tp, OM_PRASE_VAR(ref_launcher));
+  om_suber_t* cmd_sub = om_subscript(cmd_tp, OM_PRASE_VAR(launcher_cmd));
 
   /* 初始化发射器 */
   launcher_init(&launcher, &(runtime->cfg.robot_param->launcher),

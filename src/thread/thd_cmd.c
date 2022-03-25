@@ -37,8 +37,8 @@ void thd_cmd(void* arg) {
   om_topic_t* rc_tp = om_find_topic("cmd_rc", UINT32_MAX);
   om_topic_t* host_tp = om_find_topic("cmd_host", UINT32_MAX);
 
-  om_suber_t* rc_sub = om_subscript(rc_tp, OM_PRASE_VAR(rc), NULL);
-  om_suber_t* host_sub = om_subscript(host_tp, OM_PRASE_VAR(host), NULL);
+  om_suber_t* rc_sub = om_subscript(rc_tp, OM_PRASE_VAR(rc));
+  om_suber_t* host_sub = om_subscript(host_tp, OM_PRASE_VAR(host));
 
   /* 初始化指令处理 */
   cmd_init(&cmd, &(runtime->cfg.pilot_cfg->param),

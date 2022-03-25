@@ -42,15 +42,15 @@ void thd_motor(void* arg) {
   om_topic_t* la_trig_out_tp = om_find_topic("launcher_trig_out", UINT32_MAX);
 
   om_suber_t* chassis_out_sub =
-      om_subscript(chassis_out_tp, OM_PRASE_VAR(motor_out), NULL);
+      om_subscript(chassis_out_tp, OM_PRASE_VAR(motor_out));
   om_suber_t* gimbal_yaw_out_sub =
-      om_subscript(gimbal_yaw_out_tp, OM_PRASE_VAR(motor_out), NULL);
+      om_subscript(gimbal_yaw_out_tp, OM_PRASE_VAR(motor_out));
   om_suber_t* gimbal_pit_out_sub =
-      om_subscript(gimbal_pit_out_tp, OM_PRASE_VAR(motor_out), NULL);
+      om_subscript(gimbal_pit_out_tp, OM_PRASE_VAR(motor_out));
   om_suber_t* launcher_fric_out_sub =
-      om_subscript(la_fric_out_tp, OM_PRASE_VAR(motor_out), NULL);
+      om_subscript(la_fric_out_tp, OM_PRASE_VAR(motor_out));
   om_suber_t* launcher_trig_out_sub =
-      om_subscript(la_trig_out_tp, OM_PRASE_VAR(motor_out), NULL);
+      om_subscript(la_trig_out_tp, OM_PRASE_VAR(motor_out));
 
   motor_init(&motor, runtime->cfg.robot_param->motor);
 

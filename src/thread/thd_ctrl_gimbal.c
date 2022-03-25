@@ -37,14 +37,14 @@ void thd_ctrl_gimbal(void* arg) {
   om_topic_t* cmd_tp = om_find_topic("cmd_gimbal", UINT32_MAX);
 
   om_suber_t* eulr_sub =
-      om_subscript(eulr_tp, OM_PRASE_VAR(gimbal.feedback.eulr.imu), NULL);
+      om_subscript(eulr_tp, OM_PRASE_VAR(gimbal.feedback.eulr.imu));
   om_suber_t* gyro_sub =
-      om_subscript(gyro_tp, OM_PRASE_VAR(gimbal.feedback.gyro), NULL);
+      om_subscript(gyro_tp, OM_PRASE_VAR(gimbal.feedback.gyro));
   om_suber_t* motor_yaw_sub =
-      om_subscript(mt_yaw_tp, OM_PRASE_VAR(gimbal_yaw_motor), NULL);
+      om_subscript(mt_yaw_tp, OM_PRASE_VAR(gimbal_yaw_motor));
   om_suber_t* motor_pit_sub =
-      om_subscript(mt_pit_tp, OM_PRASE_VAR(gimbal_pit_motor), NULL);
-  om_suber_t* cmd_sub = om_subscript(cmd_tp, OM_PRASE_VAR(gimbal_cmd), NULL);
+      om_subscript(mt_pit_tp, OM_PRASE_VAR(gimbal_pit_motor));
+  om_suber_t* cmd_sub = om_subscript(cmd_tp, OM_PRASE_VAR(gimbal_cmd));
 
   /* 初始化云台 */
   gimbal_init(&gimbal, &(runtime->cfg.robot_param->gimbal),

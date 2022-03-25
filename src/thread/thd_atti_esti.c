@@ -31,8 +31,8 @@ void thd_atti_esti(void* arg) {
   om_topic_t* accl_tp = om_find_topic("gimbal_accl", UINT32_MAX);
   om_topic_t* gyro_tp = om_find_topic("gimbal_gyro", UINT32_MAX);
 
-  om_suber_t* accl_sub = om_subscript(accl_tp, OM_PRASE_VAR(accl), NULL);
-  om_suber_t* gyro_sub = om_subscript(gyro_tp, OM_PRASE_VAR(gyro), NULL);
+  om_suber_t* accl_sub = om_subscript(accl_tp, OM_PRASE_VAR(accl));
+  om_suber_t* gyro_sub = om_subscript(gyro_tp, OM_PRASE_VAR(gyro));
 
   /* 初始化姿态解算算法 */
   ahrs_init(&gimbal_ahrs, NULL);

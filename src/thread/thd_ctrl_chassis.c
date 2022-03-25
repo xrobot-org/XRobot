@@ -45,12 +45,12 @@ void thd_ctrl_chassis(void* arg) {
   om_topic_t* cmd_tp = om_find_topic("cmd_chassis", UINT32_MAX);
   om_topic_t* tof_tp = om_find_topic("tof_fb", UINT32_MAX);
 
-  om_suber_t* ref_sub = om_subscript(ref_tp, OM_PRASE_VAR(ref_chassis), NULL);
-  om_suber_t* cap_sub = om_subscript(cap_info_tp, OM_PRASE_VAR(cap), NULL);
-  om_suber_t* ch_mt_sub = om_subscript(ch_mt_tp, OM_PRASE_VAR(ch_mt), NULL);
-  om_suber_t* gm_mt_sub = om_subscript(gm_mt_tp, OM_PRASE_VAR(gm_mt), NULL);
-  om_suber_t* cmd_sub = om_subscript(cmd_tp, OM_PRASE_VAR(chassis_cmd), NULL);
-  om_suber_t* tof_sub = om_subscript(tof_tp, OM_PRASE_VAR(tof), NULL);
+  om_suber_t* ref_sub = om_subscript(ref_tp, OM_PRASE_VAR(ref_chassis));
+  om_suber_t* cap_sub = om_subscript(cap_info_tp, OM_PRASE_VAR(cap));
+  om_suber_t* ch_mt_sub = om_subscript(ch_mt_tp, OM_PRASE_VAR(ch_mt));
+  om_suber_t* gm_mt_sub = om_subscript(gm_mt_tp, OM_PRASE_VAR(gm_mt));
+  om_suber_t* cmd_sub = om_subscript(cmd_tp, OM_PRASE_VAR(chassis_cmd));
+  om_suber_t* tof_sub = om_subscript(tof_tp, OM_PRASE_VAR(tof));
 
   /* 初始化底盘 */
   chassis_init(&chassis, &(runtime->cfg.robot_param->chassis),

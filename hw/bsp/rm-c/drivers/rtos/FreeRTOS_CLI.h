@@ -29,7 +29,7 @@
 #define COMMAND_INTERPRETER_H
 
 /* This config should be defined in FreeRTOSConfig.h. But due to the limition of CubeMX I put it here. */
-#define configCOMMAND_INT_MAX_OUTPUT_SIZE  1024
+#define configCOMMAND_INT_MAX_OUTPUT_SIZE  512
 
 /* The prototype to which callback functions used to process command line
 commands must comply.  pcWriteBuffer is a buffer into which the output from

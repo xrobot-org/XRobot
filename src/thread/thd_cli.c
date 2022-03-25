@@ -398,6 +398,75 @@ static BaseType_t command_set_gimbal_lim(char *out_buffer, size_t len,
   }
 }
 
+om_status_t _command_list_topic(om_topic_t *topic, void *arg) {
+  om_topic_t **index = (om_topic_t **)arg;
+
+  static bool next = false;
+
+  if (*index == NULL) {
+    next = false;
+    *index = topic;
+    return OM_ERROR;
+  }
+
+  if (*index == topic && !next) {
+    next = true;
+    return OM_OK;
+  }
+
+  if (next) {
+    next = false;
+    *index = topic;
+    return OM_ERROR;
+  }
+
+  return OM_OK;
+}
+
+static BaseType_t command_list_topic(char *out_buffer, size_t len,
+                                     const char *command_string) {
+  if (out_buffer == NULL) return pdFALSE;
+  RM_UNUSED(command_string);
+  len -= 1;
+
+  static finite_state_machine_t fsm;
+  static om_topic_t *index = NULL;
+  static bool end = false;
+  switch (fsm.stage) {
+    case 0:
+      end = false;
+      index = NULL;
+      snprintf(out_buffer, len, "\r\nNow:%fs.\r\n",
+               (xTaskGetTickCount() / pdMS_TO_TICKS(1)) / 1000.0f);
+      om_msg_for_each(_command_list_topic, &index);
+
+      fsm.stage++;
+      return pdPASS;
+    case 1:
+      if (om_msg_for_each(_command_list_topic, &index) == OM_OK) end = true;
+
+      om_print_topic_message(index, out_buffer, len);
+      fsm.stage++;
+
+      return pdPASS;
+    case 2: {
+      uint32_t time = om_msg_get_last_time(index);
+      snprintf(out_buffer, len, "\tLast msg time:%f\r\n",
+               (time / pdMS_TO_TICKS(1)) / 1000.0f);
+      if (!end)
+        fsm.stage = 1;
+      else
+        fsm.stage++;
+      return pdPASS;
+      break;
+    }
+    default:
+      snprintf(out_buffer, len, "\r\n");
+      fsm.stage = 0;
+      return pdFALSE;
+  }
+}
+
 /*
 static BaseType_t Command_XXX(char *out_buffer, size_t len,
                                            const char *command_string) {
@@ -464,6 +533,12 @@ static const CLI_Command_Definition_t command_table[] = {
         command_set_gimbal_lim,
         0,
     },
+    {
+        "list-topic",
+        "\r\nlist-topic:\r\n Show all topics info in the topic list\r\n\r\n",
+        command_list_topic,
+        0,
+    },
     /*
     {
         "xxx-xxx",
@@ -509,9 +584,9 @@ void thd_cli(void *arg) {
   om_topic_t *yaw_tp = om_find_topic("gimbal_yaw_motor_fb", UINT32_MAX);
   om_topic_t *pit_tp = om_find_topic("gimbal_pit_motor_fb", UINT32_MAX);
 
-  gyro_sub = om_subscript(gyro_tp, OM_PRASE_VAR(gyro), NULL);
-  gimbal_motor_yaw_sub = om_subscript(yaw_tp, OM_PRASE_VAR(motor_fb), NULL);
-  gimbal_motor_pit_sub = om_subscript(pit_tp, OM_PRASE_VAR(motor_fb), NULL);
+  gyro_sub = om_subscript(gyro_tp, OM_PRASE_VAR(gyro));
+  gimbal_motor_yaw_sub = om_subscript(yaw_tp, OM_PRASE_VAR(motor_fb));
+  gimbal_motor_pit_sub = om_subscript(pit_tp, OM_PRASE_VAR(motor_fb));
 
   /* 通过回车键唤醒命令行界面 */
   term_printf("Please press ENTER to activate this console.\r\n");
@@ -519,7 +594,7 @@ void thd_cli(void *arg) {
   while (1) {
     /* 等待新数据 */
     if (!term_avail()) {
-      vTaskDelay(10);
+      vTaskDelay(100);
       continue;
     }
 
@@ -567,7 +642,7 @@ void thd_cli(void *arg) {
             processing = FreeRTOS_CLIProcessCommand(
                 input, output, configCOMMAND_INT_MAX_OUTPUT_SIZE);
 
-            term_printf(output);                  /* 打印结果 */
+            term_printf("%s", output);            /* 打印结果 */
             memset(output, 0x00, strlen(output)); /* 清空输出缓存 */
           } while (processing != pdFALSE); /* 是否需要重复运行命令 */
           index = 0; /* 重置索引，准备接收下一段命令 */

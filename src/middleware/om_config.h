@@ -42,12 +42,12 @@
 #define om_mutex_unlock_isr(arg) xSemaphoreGiveFromISR(*arg, NULL)
 
 /* 将运行时间作为消息发出的时间 */
-#define OM_VIRTUAL_TIME (1)
+#define OM_VIRTUAL_TIME (0)
 
 #if !OM_VIRTUAL_TIME
 #include <time.h>
-#define om_time_t time_t
-#define om_time_get(_time) time(_time)
+#define om_time_t uint32_t
+#define om_time_get(_time) (*_time = xTaskGetTickCount())
 #endif
 
 /* 开启"om_log"话题作为OneMessage的日志输出 */

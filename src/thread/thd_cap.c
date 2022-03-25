@@ -28,7 +28,7 @@ void thd_cap(void* arg) {
   om_topic_t* info_tp = om_config_topic(NULL, "A", "cap_info");
   om_topic_t* out_tp = om_find_topic("cap_out", UINT32_MAX);
 
-  om_suber_t* out_sub = om_subscript(out_tp, OM_PRASE_VAR(cap_out), NULL);
+  om_suber_t* out_sub = om_subscript(out_tp, OM_PRASE_VAR(cap_out));
 
   cap_init(&cap, &(runtime->cfg.robot_param->cap));
 
