@@ -165,14 +165,16 @@ static void bmi088_rx_cplt_callback(void *arg) {
 static void bmi088_accl_int_callback(void *arg) {
   bmi088_t *bmi088 = arg;
   BaseType_t switch_required;
-  xSemaphoreGiveFromISR(bmi088->sem.accl_new, &switch_required);
+  xSemaphoreGiveFromISR(bmi088->sem.accl_new, NULL);
+  xSemaphoreGiveFromISR(bmi088->sem.new, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
 static void bmi088_gyro_int_callback(void *arg) {
   bmi088_t *bmi088 = arg;
   BaseType_t switch_required;
-  xSemaphoreGiveFromISR(bmi088->sem.gyro_new, &switch_required);
+  xSemaphoreGiveFromISR(bmi088->sem.gyro_new, NULL);
+  xSemaphoreGiveFromISR(bmi088->sem.new, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
@@ -184,6 +186,7 @@ int8_t bmi088_init(bmi088_t *bmi088, const bmi088_cali_t *cali,
   if (inited) return DEVICE_ERR_INITED;
   inited = true;
 
+  bmi088->sem.new = xSemaphoreCreateBinary();
   bmi088->sem.gyro_new = xSemaphoreCreateBinary();
   bmi088->sem.accl_new = xSemaphoreCreateBinary();
   bmi088->sem.gyro_raw = xSemaphoreCreateBinary();
@@ -255,6 +258,10 @@ int8_t bmi088_init(bmi088_t *bmi088, const bmi088_cali_t *cali,
   bsp_gpio_enable_irq(BSP_GPIO_IMU_ACCL_INT);
   bsp_gpio_enable_irq(BSP_GPIO_IMU_GYRO_INT);
   return DEVICE_OK;
+}
+
+bool bmi088_wait_new(bmi088_t *bmi088, uint32_t timeout) {
+  return xSemaphoreTake(bmi088->sem.new, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 
 bool bmi088_accl_wait_new(bmi088_t *bmi088, uint32_t timeout) {

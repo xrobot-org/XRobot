@@ -18,6 +18,7 @@ typedef struct {
 
 typedef struct {
   struct {
+    SemaphoreHandle_t new;
     SemaphoreHandle_t gyro_new;
     SemaphoreHandle_t accl_new;
     SemaphoreHandle_t gyro_raw;
@@ -45,6 +46,7 @@ int8_t bmi088_restart(void);
                 UP is z
         All implementation should follow this rule.
  */
+bool bmi088_wait_new(bmi088_t *bmi088, uint32_t timeout);
 bool bmi088_accl_wait_new(bmi088_t *bmi088, uint32_t timeout);
 bool bmi088_gyro_wait_new(bmi088_t *bmi088, uint32_t timeout);
 

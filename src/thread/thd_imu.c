@@ -50,30 +50,26 @@ void thd_imu(void* arg) {
 
   while (1) {
     /* 等待IMU新数据 */
-    if (bmi088_accl_wait_new(&bmi088, 1u)) {
-      /* 开始数据接收DMA，加速度计和陀螺仪共用同一个SPI接口，
-       * 一次只能开启一个DMA
-       */
-      bmi088_accl_start_dma_recv();
-      bmi088_accl_wait_dma_cplt(&bmi088);
-    }
-    if (bmi088_gyro_wait_new(&bmi088, 1u)) {
-      bmi088_gyro_start_dma_recv();
-      bmi088_gyro_wait_dma_cplt(&bmi088);
-    }
+    if (bmi088_wait_new(&bmi088, 20)) {
+      if (bmi088_accl_wait_new(&bmi088, 0)) {
+        /* 开始数据接收DMA，加速度计和陀螺仪共用同一个SPI接口，
+         * 一次只能开启一个DMA
+         */
+        bmi088_accl_start_dma_recv();
+        bmi088_accl_wait_dma_cplt(&bmi088);
+        bmi088_parse_accl(&bmi088);
 
-    /* 锁住RTOS内核防止数据解析过程中断，造成错误 */
-    vTaskSuspendAll();
-    /* 接收完所有数据后，把数据从原始字节加工成方便计算的数据 */
-    bmi088_parse_accl(&bmi088);
-    bmi088_parse_gyro(&bmi088);
-    xTaskResumeAll();
+        om_publish(accl_pub, OM_PRASE_VAR(bmi088.accl), true, false);
+      }
+      if (bmi088_gyro_wait_new(&bmi088, 0)) {
+        bmi088_gyro_start_dma_recv();
+        bmi088_gyro_wait_dma_cplt(&bmi088);
+        bmi088_parse_gyro(&bmi088);
 
+        om_publish(gyro_pub, OM_PRASE_VAR(bmi088.gyro), true, false);
+      }
+    }
     // TODO: 添加滤波
-
-    /* 发布消息 */
-    om_publish(accl_pub, OM_PRASE_VAR(bmi088.accl), true, false);
-    om_publish(gyro_pub, OM_PRASE_VAR(bmi088.gyro), true, false);
 
     /* PID控制IMU温度，PWM输出 */
     bsp_pwm_set(BSP_PWM_IMU_HEAT,
