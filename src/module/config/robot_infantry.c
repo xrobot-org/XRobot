@@ -49,11 +49,11 @@ const config_robot_param_t param_robot = {
   .gimbal = { /* 云台模块参数 */
     .ff = {
         /* GIMBAL_CTRL_PIT_FEEDFORWARD */
-        .a =0.0f,
-        .b =0.0f,
-        .c =0.0f,
-        .max =0.0f,
-        .min =0.0f,
+        .a = 0.0439f,
+        .b = -0.0896f,
+        .c = 0.077f,
+        .max = 0.1f,
+        .min = -0.2f,
     }, /* ff */
 
     .st = {
