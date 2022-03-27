@@ -61,4 +61,4 @@
 #endif
 
 /* 话题名称最大长度 */
-#define OM_TOPIC_MAX_NAME_LEN (20)
+#define OM_TOPIC_MAX_NAME_LEN (25)

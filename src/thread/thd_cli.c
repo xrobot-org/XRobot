@@ -403,21 +403,20 @@ om_status_t _command_list_topic(om_topic_t *topic, void *arg) {
 
   static bool next = false;
 
-  if (*index == NULL) {
-    next = false;
-    *index = topic;
-    return OM_ERROR;
-  }
-
-  if (*index == topic && !next) {
-    next = true;
-    return OM_OK;
-  }
-
   if (next) {
     next = false;
     *index = topic;
     return OM_ERROR;
+  }
+
+  if (*index == NULL) {
+    next = true;
+    return OM_ERROR;
+  }
+
+  if (*index == topic) {
+    next = true;
+    return OM_OK;
   }
 
   return OM_OK;
@@ -451,8 +450,15 @@ static BaseType_t command_list_topic(char *out_buffer, size_t len,
       return pdPASS;
     case 2: {
       uint32_t time = om_msg_get_last_time(index);
-      snprintf(out_buffer, len, "\tLast msg time:%f\r\n",
-               (time / pdMS_TO_TICKS(1)) / 1000.0f);
+      if (time > 0)
+        snprintf(out_buffer, len, "\tLast msg time:%fs\r\n",
+                 (time / pdMS_TO_TICKS(1)) / 1000.0f);
+      else {
+        snprintf(out_buffer, len, "\t%sLast msg time:%fs%s\r\n",
+                 OM_COLOR_FONT[OM_COLOR_FONT_RED],
+                 (time / pdMS_TO_TICKS(1)) / 1000.0f,
+                 OM_COLOR_FORMAT[OM_COLOR_FORMAT_RESET]);
+      }
       if (!end)
         fsm.stage = 1;
       else

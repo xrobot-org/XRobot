@@ -125,7 +125,7 @@ err_t motor_init(motor_t *motor, const motor_group_t *group_cfg) {
   if (inited) return DEVICE_ERR_INITED;
   motor->group_cfg = group_cfg;
 
-  char tp_name[OM_LOG_MAX_LEN] = {0};
+  char tp_name[OM_TOPIC_MAX_NAME_LEN] = {0};
   uint8_t tp_num = 0;
 
   const motor_group_t *group = motor->group_cfg;
