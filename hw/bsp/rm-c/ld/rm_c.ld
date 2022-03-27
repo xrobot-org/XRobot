@@ -104,8 +104,7 @@ SECTIONS {
     . = ALIGN(4);
     _sthread = .;       /* create a global symbol at thread start */
     KEEP(*(.thread))
-    *(.thread)
-    *(.thread*)
+    KEEP(*(.thread*))
     . = ALIGN(4);
     _ethread = .;       /* create a global symbol at thread end */
   } > FLASH
