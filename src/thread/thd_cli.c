@@ -398,26 +398,27 @@ static BaseType_t command_set_gimbal_lim(char *out_buffer, size_t len,
   }
 }
 
-om_status_t _command_list_topic(om_topic_t *topic, void *arg) {
-  om_topic_t **index = (om_topic_t **)arg;
+om_status_t _list_topic(om_topic_t *topic, void *arg) {
+  char *out_buffer = (char *)arg;
 
-  static bool next = false;
+  const uint32_t len = configCOMMAND_INT_MAX_OUTPUT_SIZE;
 
-  if (next) {
-    next = false;
-    *index = topic;
-    return OM_ERROR;
+  om_print_topic_message(topic, out_buffer, len);
+
+  term_printf("%s", out_buffer);
+
+  uint32_t time = om_msg_get_last_time(topic);
+  if (time > 0)
+    snprintf(out_buffer, len, "\tLast msg time:%fs\r\n",
+             (time / pdMS_TO_TICKS(1)) / 1000.0f);
+  else {
+    snprintf(out_buffer, len, "\t%sLast msg time:%fs%s\r\n",
+             OM_COLOR_FONT[OM_COLOR_FONT_RED],
+             (time / pdMS_TO_TICKS(1)) / 1000.0f,
+             OM_COLOR_FORMAT[OM_COLOR_FORMAT_RESET]);
   }
 
-  if (*index == NULL) {
-    next = true;
-    return OM_ERROR;
-  }
-
-  if (*index == topic) {
-    next = true;
-    return OM_OK;
-  }
+  term_printf("%s", out_buffer);
 
   return OM_OK;
 }
@@ -429,43 +430,19 @@ static BaseType_t command_list_topic(char *out_buffer, size_t len,
   len -= 1;
 
   static finite_state_machine_t fsm;
-  static om_topic_t *index = NULL;
-  static bool end = false;
   switch (fsm.stage) {
     case 0:
-      end = false;
-      index = NULL;
-      snprintf(out_buffer, len, "\r\nNow:%fs.\r\n",
+      snprintf(out_buffer, len, "Now:%fs.\r\n",
                (xTaskGetTickCount() / pdMS_TO_TICKS(1)) / 1000.0f);
-      om_msg_for_each(_command_list_topic, &index);
-
       fsm.stage++;
       return pdPASS;
     case 1:
-      if (om_msg_for_each(_command_list_topic, &index) == OM_OK) end = true;
+      om_msg_for_each(_list_topic, out_buffer);
 
-      om_print_topic_message(index, out_buffer, len);
+      snprintf(out_buffer, len, "\r\nList done.\r\n");
+
       fsm.stage++;
-
       return pdPASS;
-    case 2: {
-      uint32_t time = om_msg_get_last_time(index);
-      if (time > 0)
-        snprintf(out_buffer, len, "\tLast msg time:%fs\r\n",
-                 (time / pdMS_TO_TICKS(1)) / 1000.0f);
-      else {
-        snprintf(out_buffer, len, "\t%sLast msg time:%fs%s\r\n",
-                 OM_COLOR_FONT[OM_COLOR_FONT_RED],
-                 (time / pdMS_TO_TICKS(1)) / 1000.0f,
-                 OM_COLOR_FORMAT[OM_COLOR_FORMAT_RESET]);
-      }
-      if (!end)
-        fsm.stage = 1;
-      else
-        fsm.stage++;
-      return pdPASS;
-      break;
-    }
     default:
       snprintf(out_buffer, len, "\r\n");
       fsm.stage = 0;
