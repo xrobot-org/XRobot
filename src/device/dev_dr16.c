@@ -15,16 +15,14 @@
 #define DR16_CH_VALUE_MID (1024u)
 #define DR16_CH_VALUE_MAX (1684u)
 
-static TaskHandle_t thread_alert;
 static bool inited = false;
 
 static dr16_data_t dma_buff;
 
 static void dr16_rx_cplt_callback(void *arg) {
-  UNUSED(arg);
+  dr16_t *dr16 = (dr16_t *)arg;
   BaseType_t switch_required;
-  xTaskNotifyFromISR(thread_alert, SIGNAL_DR16_RAW_REDY, eSetValueWithOverwrite,
-                     &switch_required);
+  xSemaphoreGiveFromISR(dr16->sem.new, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
 
@@ -57,12 +55,13 @@ static bool dr16_data_corrupted(const dr16_t *dr16) {
 int8_t dr16_init(dr16_t *dr16) {
   ASSERT(dr16);
   if (inited) return DEVICE_ERR_INITED;
-  VERIFY((thread_alert = xTaskGetCurrentTaskHandle()) != NULL);
 
   dr16->data = &dma_buff;
 
+  dr16->sem.new = xSemaphoreCreateBinary();
+
   bsp_uart_register_callback(BSP_UART_DR16, BSP_UART_RX_CPLT_CB,
-                             dr16_rx_cplt_callback, NULL);
+                             dr16_rx_cplt_callback, dr16);
 
   inited = true;
   return DEVICE_OK;
@@ -75,16 +74,17 @@ int8_t dr16_restart(void) {
 }
 
 int8_t dr16_start_dma_recv(dr16_t *dr16) {
+  UNUSED(dr16);
+
   ASSERT(dr16);
-  if (bsp_uart_receive(BSP_UART_DR16,
-                      (uint8_t *)&(dma_buff), sizeof(dma_buff),false) == HAL_OK)
+  if (bsp_uart_receive(BSP_UART_DR16, (uint8_t *)&(dma_buff), sizeof(dma_buff),
+                       false) == HAL_OK)
     return DEVICE_OK;
   return DEVICE_ERR;
 }
 
-bool dr16_wait_dma_cplt(uint32_t timeout) {
-  return xTaskNotifyWait(0, 0, (uint32_t *)SIGNAL_DR16_RAW_REDY,
-                         pdMS_TO_TICKS(timeout));
+bool dr16_wait_dma_cplt(dr16_t *dr16, uint32_t timeout) {
+  return xSemaphoreTake(dr16->sem.new, pdMS_TO_TICKS(timeout)) == pdTRUE;
 }
 
 int8_t dr16_parse_rc(const dr16_t *dr16, cmd_rc_t *rc) {

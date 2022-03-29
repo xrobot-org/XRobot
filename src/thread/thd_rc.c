@@ -33,7 +33,7 @@ void thd_rc(void* arg) {
     dr16_start_dma_recv(&dr16);
 
     /* 等待DMA完成 */
-    if (dr16_wait_dma_cplt(20)) {
+    if (dr16_wait_dma_cplt(&dr16, 20)) {
       /* 进行解析 */
       dr16_parse_rc(&dr16, &cmd_rc);
     } else {

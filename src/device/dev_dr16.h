@@ -1,8 +1,10 @@
 #pragma once
 
+#include "FreeRTOS.h"
 #include "comp_cmd.h"
 #include "comp_utils.h"
 #include "dev.h"
+#include "semphr.h"
 
 typedef struct __packed {
   uint16_t ch_r_x : 11;
@@ -22,12 +24,15 @@ typedef struct __packed {
 
 typedef struct {
   dr16_data_t *data;
+  struct {
+    SemaphoreHandle_t new;
+  } sem;
 } dr16_t;
 
 int8_t dr16_init(dr16_t *dr16);
 int8_t dr16_restart(void);
 
 int8_t dr16_start_dma_recv(dr16_t *dr16);
-bool dr16_wait_dma_cplt(uint32_t timeout);
+bool dr16_wait_dma_cplt(dr16_t *dr16, uint32_t timeout);
 int8_t dr16_parse_rc(const dr16_t *dr16, cmd_rc_t *rc);
 int8_t dr16_handle_offline(const dr16_t *dr16, cmd_rc_t *rc);
