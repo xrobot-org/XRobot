@@ -739,6 +739,16 @@ uint8_t referee_pack_for_ai(referee_for_ai_t *ai_ref,
                             const referee_recv_t *ref) {
   memset(ai_ref, 0, sizeof(*ai_ref));
 
+#if ID_HERO
+  ai_ref->ball_speed = ref->robot_status.launcher_42_speed_limit;
+#else
+  ai_ref->ball_speed = ref->robot_status.launcher_id1_17_speed_limit;
+#endif
+
+  ai_ref->max_hp = ref->robot_status.max_hp;
+
+  ai_ref->hp = ref->robot_status.remain_hp;
+
   if (ref->robot_status.robot_id < REF_BOT_BLU_HERO)
     ai_ref->team = AI_TEAM_RED;
   else

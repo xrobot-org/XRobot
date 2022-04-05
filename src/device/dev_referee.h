@@ -363,6 +363,9 @@ typedef struct {
   uint8_t team;
   uint8_t robot_id;
   uint8_t robot_buff;
+  uint32_t ball_speed;
+  uint32_t max_hp;
+  uint32_t hp;
 } referee_for_ai_t;
 
 typedef struct {

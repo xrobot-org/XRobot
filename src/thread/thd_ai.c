@@ -16,13 +16,16 @@ void thd_ai(void* arg) {
   cmd_host_t cmd_host;
   quaternion_t ai_quat;
   referee_for_ai_t referee_ai;
+  eulr_t ai_eulr;
 
   om_topic_t* host_tp = om_config_topic(NULL, "A", "cmd_host");
+  om_topic_t* eulr = om_find_topic("gimbal_eulr", UINT32_MAX);
   om_topic_t* quat_tp = om_find_topic("gimbal_quat", UINT32_MAX);
   om_topic_t* ref_tp = om_find_topic("referee_ai", UINT32_MAX);
 
   om_suber_t* quat_sub = om_subscript(quat_tp, OM_PRASE_VAR(ai_quat));
   om_suber_t* ref_sub = om_subscript(ref_tp, OM_PRASE_VAR(referee_ai));
+  om_suber_t* eulr_sub = om_subscript(eulr, OM_PRASE_VAR(ai_eulr));
 
 #if HOST_USB_DISABLE
   vTaskSuspend(xTaskGetCurrentTaskHandle());
@@ -43,7 +46,8 @@ void thd_ai(void* arg) {
 
     /* AI在线,发布控制命令 */
     if (ai.online) {
-      ai_pack_cmd(&ai, &cmd_host);
+      om_suber_dump(eulr_sub, false);
+      ai_pack_cmd(&ai, &cmd_host, &ai_eulr);
       om_publish(host_tp, OM_PRASE_VAR(cmd_host), true, false);
     }
 

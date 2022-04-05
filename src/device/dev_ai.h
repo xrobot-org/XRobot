@@ -51,4 +51,4 @@ int8_t ai_parse_host(ai_t *ai, uint32_t tick);
 int8_t ai_handle_offline(ai_t *ai, uint32_t tick);
 int8_t ai_pack_mcu_for_host(ai_t *ai, const quaternion_t *quat);
 int8_t ai_pack_ref_for_host(ai_t *ai, const referee_for_ai_t *ref);
-void ai_pack_cmd(ai_t *ai, cmd_host_t *cmd_host);
+void ai_pack_cmd(ai_t *ai, cmd_host_t *cmd_host, eulr_t *eulr);

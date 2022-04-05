@@ -124,9 +124,9 @@ const config_robot_param_t param_robot = {
   .launcher = { /* 发射器模块参数 */
 
     .fric_pid_param = {
-      .k = 0.0001f,
+      .k = 0.00015f,
       .p = 1.0f,
-      .i = 0.2f,
+      .i = 0.4f,
       .d = 0.01f,
       .i_limit = 0.5f,
       .out_limit = 0.5f,

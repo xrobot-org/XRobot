@@ -8,8 +8,10 @@
 #include "comp_crc8.h"
 #include "comp_utils.h"
 #include "dev_term.h"
+#include "om.h"
 
-#define AI_CMD_LIMIT (1.0f)
+#define AI_CMD_LIMIT (0.08f)
+#define AI_CTRL_SENSE (1.0f / 90.0f)
 #define AI_LEN_RX_BUFF (sizeof(Protocol_DownPackage_t))
 #define AI_LEN_TX_BUFF \
   (sizeof(Protocol_UpPackageMCU_t) + sizeof(Protocol_UpPackageReferee_t))
@@ -88,12 +90,7 @@ int8_t ai_parse_host(ai_t *ai, uint32_t tick) {
 }
 
 int8_t ai_handle_offline(ai_t *ai, uint32_t tick) {
-  /* 短时间离线，控制量置零 */
-  if (tick - ai->last_online_time > 4) {
-    memset(&ai->form_host, 0, sizeof(ai->form_host));
-  }
-
-  /* 长时间离线，移交控制权 */
+  /* 离线移交控制权 */
   if (tick - ai->last_online_time > 50) {
     ai->online = false;
   }
@@ -113,6 +110,7 @@ int8_t ai_pack_mcu_for_host(ai_t *ai, const quaternion_t *quat) {
 int8_t ai_pack_ref_for_host(ai_t *ai, const referee_for_ai_t *ref) {
   RM_UNUSED(ref);
   ai->to_host.ref.id = AI_ID_REF;
+  ai->to_host.mcu.package.data.ball_speed = ref->ball_speed;
   ai->to_host.ref.package.data.arm = ref->robot_id;
   ai->to_host.ref.package.data.rfid = ref->robot_buff;
   ai->to_host.ref.package.data.team = ref->team;
@@ -125,9 +123,13 @@ int8_t ai_pack_ref_for_host(ai_t *ai, const referee_for_ai_t *ref) {
   return DEVICE_OK;
 }
 
-void ai_pack_cmd(ai_t *ai, cmd_host_t *cmd_host) {
-  cmd_host->gimbal_delta.yaw = ai->form_host.data.gimbal.yaw;
-  cmd_host->gimbal_delta.pit = ai->form_host.data.gimbal.pit;
+void ai_pack_cmd(ai_t *ai, cmd_host_t *cmd_host, eulr_t *eulr) {
+  cmd_host->gimbal_delta.yaw =
+      (ai->form_host.data.gimbal.yaw - eulr->yaw) * AI_CTRL_SENSE;
+  cmd_host->gimbal_delta.pit =
+      (ai->form_host.data.gimbal.pit - eulr->pit) * AI_CTRL_SENSE;
+  clampf(&cmd_host->gimbal_delta.yaw, -AI_CMD_LIMIT, AI_CMD_LIMIT);
+  clampf(&cmd_host->gimbal_delta.pit, -AI_CMD_LIMIT, AI_CMD_LIMIT);
 
   cmd_host->fire = (ai->form_host.data.notice & AI_NOTICE_FIRE);
   cmd_host->chassis_move_vec.vx = ai->form_host.data.chassis_move_vec.vx;
