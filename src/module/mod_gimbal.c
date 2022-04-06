@@ -6,8 +6,6 @@
 
 #include <stdlib.h>
 
-
-
 /**
  * @brief 设置云台模式
  *
@@ -19,11 +17,20 @@ static void gimbal_set_mode(gimbal_t *g, gimbal_mode_t mode) {
   if (mode == g->mode) return;
 
   /* 切换模式后重置PID和滤波器 */
-  for (size_t i = 0; i < GIMBAL_CTRL_NUM; i++) {
-    kpid_reset(g->pid + i);
+  for (size_t i = 0; i < g->num_yaw; i++) {
+    kpid_reset(g->pid[GIMBAL_CTRL_YAW_OMEGA_IDX] + i);
   }
-  for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
-    low_pass_filter_2p_reset(g->filter_out + i, 0.0f);
+
+  for (size_t i = 0; i < g->num_pit; i++) {
+    kpid_reset(g->pid[GIMBAL_CTRL_PIT_OMEGA_IDX] + i);
+  }
+
+  for (size_t i = 0; i < g->num_yaw; i++) {
+    low_pass_filter_2p_reset(g->filter_out[GIMBAL_ACTR_YAW_IDX] + i, 0.0f);
+  }
+
+  for (size_t i = 0; i < g->num_pit; i++) {
+    low_pass_filter_2p_reset(g->filter_out[GIMBAL_ACTR_PIT_IDX] + i, 0.0f);
   }
 
   ahrs_set_eulr(&(g->setpoint.eulr),
@@ -60,26 +67,61 @@ void gimbal_init(gimbal_t *g, const gimbal_params_t *param, float limit_max,
   g->mode = GIMBAL_MODE_RELAX; /* 设置默认模式 */
   g->mech_zero = mech_zero;
 
+  switch (g->param->type) {
+    case GIMBAL_TYPE_ROTATRY:
+      g->num_yaw = 1;
+      g->num_pit = 1;
+      break;
+    case GIMBAL_TYPE_LINEAR:
+      g->num_yaw = 1;
+      g->num_pit = 2;
+      break;
+  }
+
+  g->pid[GIMBAL_CTRL_YAW_OMEGA_IDX] = pvPortMalloc(sizeof(kpid_t) * g->num_yaw);
+  g->pid[GIMBAL_CTRL_PIT_OMEGA_IDX] = pvPortMalloc(sizeof(kpid_t) * g->num_pit);
+  g->pid[GIMBAL_CTRL_YAW_ANGLE_IDX] = pvPortMalloc(sizeof(kpid_t) * g->num_yaw);
+  g->pid[GIMBAL_CTRL_PIT_ANGLE_IDX] = pvPortMalloc(sizeof(kpid_t) * g->num_pit);
+
+  g->filter_out[GIMBAL_ACTR_YAW_IDX] =
+      pvPortMalloc(sizeof(low_pass_filter_2p_t) * g->num_yaw);
+  g->filter_out[GIMBAL_ACTR_PIT_IDX] =
+      pvPortMalloc(sizeof(low_pass_filter_2p_t) * g->num_pit);
+
+  g->out[GIMBAL_ACTR_YAW_IDX] = pvPortMalloc(sizeof(float) * g->num_yaw);
+  g->out[GIMBAL_ACTR_PIT_IDX] = pvPortMalloc(sizeof(float) * g->num_pit);
+
   /* 设置软件限位 */
   if (g->param->reverse.pit) circle_reverse(&limit_max);
   g->limit.min = g->limit.max = limit_max;
   circle_add(&(g->limit.min), -g->param->pitch_travel_rad, M_2PI);
 
   /* 初始化云台电机控制PID和LPF */
-  kpid_init(g->pid + GIMBAL_CTRL_YAW_ANGLE_IDX, KPID_MODE_NO_D, KPID_MODE_K_SET,
-            target_freq, g->param->pid + GIMBAL_CTRL_YAW_ANGLE_IDX);
-  kpid_init(g->pid + GIMBAL_CTRL_YAW_OMEGA_IDX, KPID_MODE_CALC_D,
-            KPID_MODE_K_DYNAMIC, target_freq,
-            g->param->pid + GIMBAL_CTRL_YAW_OMEGA_IDX);
+  for (size_t i = 0; i < g->num_yaw; i++) {
+    kpid_init(g->pid[GIMBAL_CTRL_YAW_ANGLE_IDX + i], KPID_MODE_NO_D,
+              KPID_MODE_K_SET, target_freq,
+              g->param->pid + GIMBAL_CTRL_YAW_ANGLE_IDX);
+    kpid_init(g->pid[GIMBAL_CTRL_YAW_OMEGA_IDX] + i, KPID_MODE_CALC_D,
+              KPID_MODE_K_DYNAMIC, target_freq,
+              g->param->pid + GIMBAL_CTRL_YAW_OMEGA_IDX);
+  }
 
-  kpid_init(g->pid + GIMBAL_CTRL_PIT_ANGLE_IDX, KPID_MODE_NO_D, KPID_MODE_K_SET,
-            target_freq, g->param->pid + GIMBAL_CTRL_PIT_ANGLE_IDX);
-  kpid_init(g->pid + GIMBAL_CTRL_PIT_OMEGA_IDX, KPID_MODE_CALC_D,
-            KPID_MODE_K_SET, target_freq,
-            g->param->pid + GIMBAL_CTRL_PIT_OMEGA_IDX);
+  for (size_t i = 0; i < g->num_pit; i++) {
+    kpid_init(g->pid[GIMBAL_CTRL_PIT_ANGLE_IDX] + i, KPID_MODE_NO_D,
+              KPID_MODE_K_SET, target_freq,
+              g->param->pid + GIMBAL_CTRL_PIT_ANGLE_IDX);
+    kpid_init(g->pid[GIMBAL_CTRL_PIT_OMEGA_IDX] + i, KPID_MODE_CALC_D,
+              KPID_MODE_K_SET, target_freq,
+              g->param->pid + GIMBAL_CTRL_PIT_OMEGA_IDX);
+  }
 
-  for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) {
-    low_pass_filter_2p_init(g->filter_out + i, target_freq,
+  for (size_t i = 0; i < g->num_pit; i++) {
+    low_pass_filter_2p_init(g->filter_out[GIMBAL_ACTR_PIT_IDX] + i, target_freq,
+                            g->param->low_pass_cutoff_freq.out);
+  }
+
+  for (size_t i = 0; i < g->num_yaw; i++) {
+    low_pass_filter_2p_init(g->filter_out[GIMBAL_ACTR_YAW_IDX] + i, target_freq,
                             g->param->low_pass_cutoff_freq.out);
   }
 }
@@ -97,13 +139,17 @@ void gimbal_update_feedback(gimbal_t *g,
   ASSERT(gimbal_motor_yaw);
   ASSERT(gimbal_motor_pit);
 
-  g->feedback.eulr.encoder.yaw =
-      gimbal_motor_yaw->as_gimbal_yaw.yaw.rotor_abs_angle;
-  g->feedback.eulr.encoder.pit =
-      gimbal_motor_pit->as_gimbal_pit.pit.rotor_abs_angle;
+  if (g->param->type == GIMBAL_TYPE_ROTATRY)
 
-  if (g->param->reverse.yaw) circle_reverse(&(g->feedback.eulr.encoder.yaw));
-  if (g->param->reverse.pit) circle_reverse(&(g->feedback.eulr.encoder.pit));
+  {
+    g->feedback.eulr.encoder.yaw =
+        gimbal_motor_yaw->as_array[0].rotor_abs_angle;
+    g->feedback.eulr.encoder.pit =
+        gimbal_motor_pit->as_array[0].rotor_abs_angle;
+
+    if (g->param->reverse.yaw) circle_reverse(&(g->feedback.eulr.encoder.yaw));
+    if (g->param->reverse.pit) circle_reverse(&(g->feedback.eulr.encoder.pit));
+  }
 }
 
 /**
@@ -185,53 +231,73 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
   float yaw_omega_set_point, pit_omega_set_point;
   switch (g->mode) {
     case GIMBAL_MODE_RELAX:
-      for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) g->out[i] = 0.0f;
+      for (size_t i = 0; i < g->num_yaw; i++)
+        g->out[GIMBAL_ACTR_YAW_IDX][i] = 0.0f;
+      for (size_t i = 0; i < g->num_pit; i++)
+        g->out[GIMBAL_ACTR_PIT_IDX][i] = 0.0f;
+
       break;
     case GIMBAL_MODE_SCAN:
     case GIMBAL_MODE_ABSOLUTE:
-      /* Yaw轴角速度环参数计算 */
-      kpid_set_k(g->pid + GIMBAL_CTRL_YAW_OMEGA_IDX,
-                 cf_get_value(&(g->param->st), g->feedback.eulr.imu.pit));
+      for (size_t i = 0; i < g->num_yaw; i++) {
+        /* Yaw轴角速度环参数计算 */
+        kpid_set_k(g->pid[GIMBAL_CTRL_YAW_OMEGA_IDX] + i,
+                   cf_get_value(&(g->param->st), g->feedback.eulr.imu.pit));
 
-      /* Yaw轴角度 反馈控制 */
-      yaw_omega_set_point =
-          kpid_calc(g->pid + GIMBAL_CTRL_YAW_ANGLE_IDX, g->setpoint.eulr.yaw,
-                    g->feedback.eulr.imu.yaw, 0.0f, g->dt);
+        /* Yaw轴角度 反馈控制 */
+        yaw_omega_set_point = kpid_calc(g->pid[GIMBAL_CTRL_YAW_ANGLE_IDX] + i,
+                                        g->setpoint.eulr.yaw,
+                                        g->feedback.eulr.imu.yaw, 0.0f, g->dt);
 
-      /* Yaw轴角速度 反馈控制 */
-      g->out[GIMBAL_ACTR_YAW_IDX] =
-          kpid_calc(g->pid + GIMBAL_CTRL_YAW_OMEGA_IDX, yaw_omega_set_point,
-                    g->feedback.gyro.z, 0.f, g->dt);
+        /* Yaw轴角速度 反馈控制 */
+        g->out[GIMBAL_ACTR_YAW_IDX][i] =
+            kpid_calc(g->pid[GIMBAL_CTRL_YAW_OMEGA_IDX] + i,
+                      yaw_omega_set_point, g->feedback.gyro.z, 0.f, g->dt);
+      }
 
-      /* Pitch轴角度 反馈控制 */
-      pit_omega_set_point =
-          kpid_calc(g->pid + GIMBAL_CTRL_PIT_ANGLE_IDX, g->setpoint.eulr.pit,
-                    g->feedback.eulr.imu.pit, 0.0f, g->dt);
+      for (size_t i = 0; i < g->num_pit; i++) {
+        /* Pitch轴角度 反馈控制 */
+        pit_omega_set_point = kpid_calc(g->pid[GIMBAL_CTRL_PIT_ANGLE_IDX] + i,
+                                        g->setpoint.eulr.pit,
+                                        g->feedback.eulr.imu.pit, 0.0f, g->dt);
 
-      /* Pitch轴角速度 反馈控制 */
-      g->out[GIMBAL_ACTR_PIT_IDX] =
-          kpid_calc(g->pid + GIMBAL_CTRL_PIT_OMEGA_IDX, pit_omega_set_point,
-                    g->feedback.gyro.x, 0.f, g->dt);
+        /* Pitch轴角速度 反馈控制 */
+        g->out[GIMBAL_ACTR_PIT_IDX][i] =
+            kpid_calc(g->pid[GIMBAL_CTRL_PIT_OMEGA_IDX] + i,
+                      pit_omega_set_point, g->feedback.gyro.x, 0.f, g->dt);
 
-      /* Pitch前馈控制 */
-      g->out[GIMBAL_ACTR_PIT_IDX] +=
-          cf_get_value(&(g->param->ff), g->feedback.eulr.imu.pit);
+        /* Pitch前馈控制 */
+        g->out[GIMBAL_ACTR_PIT_IDX][i] +=
+            cf_get_value(&(g->param->ff), g->feedback.eulr.imu.pit);
+
+        clampf(g->out[GIMBAL_ACTR_PIT_IDX] + i, -1.0, 1.0);
+      }
       break;
 
     case GIMBAL_MODE_RELATIVE:
-      for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++) g->out[i] = 0.0f;
+      for (size_t i = 0; i < g->num_yaw; i++)
+        g->out[GIMBAL_ACTR_YAW_IDX][i] = 0.0f;
+      for (size_t i = 0; i < g->num_pit; i++)
+        g->out[GIMBAL_ACTR_PIT_IDX][i] = 0.0f;
       break;
   }
 
   /* 输出滤波 */
-  for (size_t i = 0; i < GIMBAL_ACTR_NUM; i++)
-    g->out[i] = low_pass_filter_2p_apply(g->filter_out + i, g->out[i]);
+  for (size_t i = 0; i < g->num_yaw; i++)
+    g->out[GIMBAL_ACTR_YAW_IDX][i] = low_pass_filter_2p_apply(
+        g->filter_out[GIMBAL_ACTR_YAW_IDX] + i, g->out[GIMBAL_ACTR_YAW_IDX][i]);
+
+  for (size_t i = 0; i < g->num_pit; i++)
+    g->out[GIMBAL_ACTR_PIT_IDX][i] = low_pass_filter_2p_apply(
+        g->filter_out[GIMBAL_ACTR_PIT_IDX] + i, g->out[GIMBAL_ACTR_PIT_IDX][i]);
 
   /* 处理电机反装 */
   if (g->param->reverse.yaw)
-    g->out[GIMBAL_ACTR_YAW_IDX] = -g->out[GIMBAL_ACTR_YAW_IDX];
+    for (size_t i = 0; i < g->num_yaw; i++)
+      g->out[GIMBAL_ACTR_YAW_IDX][i] = -g->out[GIMBAL_ACTR_YAW_IDX][i];
   if (g->param->reverse.pit)
-    g->out[GIMBAL_ACTR_PIT_IDX] = -g->out[GIMBAL_ACTR_PIT_IDX];
+    for (size_t i = 0; i < g->num_pit; i++)
+      g->out[GIMBAL_ACTR_PIT_IDX][i] = -g->out[GIMBAL_ACTR_PIT_IDX][i];
 }
 
 /**
@@ -246,8 +312,11 @@ void gimbal_pack_output(gimbal_t *g, motor_control_t *pit_out,
   ASSERT(pit_out);
   ASSERT(yaw_out);
 
-  yaw_out->as_gimbal_yaw.yaw = g->out[GIMBAL_ACTR_YAW_IDX];
-  pit_out->as_gimbal_pit.pit = g->out[GIMBAL_ACTR_PIT_IDX];
+  for (size_t i = 0; i < g->num_yaw; i++)
+    yaw_out->as_array[i] = g->out[GIMBAL_ACTR_YAW_IDX][i];
+
+  for (size_t i = 0; i < g->num_pit; i++)
+    pit_out->as_array[i] = g->out[GIMBAL_ACTR_PIT_IDX][i];
 }
 
 /**

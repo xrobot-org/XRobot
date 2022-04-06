@@ -13,6 +13,11 @@
 #include "dev_motor.h"
 #include "dev_referee.h"
 
+typedef enum {
+  GIMBAL_TYPE_ROTATRY, /* 电机直接带动云台旋转 */
+  GIMBAL_TYPE_LINEAR,  /* 电机控制丝杆 */
+} gimbal_type_t;
+
 /* GIMBAL_CTRL_NUM长度的数组都可以用这个枚举访问 */
 enum gimbal_pid_e {
   GIMBAL_CTRL_YAW_OMEGA_IDX = 0, /* Yaw轴控制的角速度环控制器的索引值 */
@@ -31,6 +36,8 @@ enum gimbal_acuator_e {
 
 /* 云台参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
+  gimbal_type_t type;
+
   const kpid_params_t pid[GIMBAL_CTRL_NUM]; /* 云台电机控制PID的参数 */
 
   const cf_param_t ff; /* PITCH前馈 */
@@ -43,6 +50,7 @@ typedef struct {
   } low_pass_cutoff_freq;
 
   float pitch_travel_rad; /* 云台pitch轴行程弧度 */
+  float yaw_travel_rad;   /* 云台yaw轴行程弧度 */
 
   /* 设置默认运动方向 */
   struct {
@@ -87,13 +95,16 @@ typedef struct {
     eulr_t eulr; /* 表示云台姿态的欧拉角 */
   } setpoint;
 
-  kpid_t pid[GIMBAL_CTRL_NUM]; /* PID数组 */
+  size_t num_yaw; /* Yaw电机数量 */
+  size_t num_pit; /* Pit电机数量 */
+
+  kpid_t *pid[GIMBAL_CTRL_NUM]; /* PID数组 */
 
   gimbal_limit_t limit;
 
-  low_pass_filter_2p_t filter_out[GIMBAL_ACTR_NUM]; /* 输出滤波器滤波器数组 */
+  low_pass_filter_2p_t *filter_out[GIMBAL_ACTR_NUM]; /* 输出滤波器滤波器数组 */
 
-  float out[GIMBAL_ACTR_NUM]; /* 输出数组 */
+  float *out[GIMBAL_ACTR_NUM]; /* 输出数组 */
 
   gimbal_feedback_t feedback; /* 反馈 */
 

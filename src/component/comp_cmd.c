@@ -248,7 +248,7 @@ static void cmd_joystick_switch_logic(const cmd_rc_t *rc, cmd_t *cmd,
       break;
 
     case CMD_SW_DOWN:
-      cmd->gimbal.mode = cmd->def_mode->gimbal;
+      // cmd->gimbal.mode = cmd->def_mode->gimbal;
       cmd->launcher.mode = cmd->def_mode->launcher;
 #if LEVER_R_DEFAULT
 
