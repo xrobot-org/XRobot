@@ -13,7 +13,7 @@ typedef struct {
 } bmi088_cali_t;         /* BMI088校准数据 */
 
 typedef struct {
-  bool inverted;
+  float rot_mat[3][3];
 } bmi088_param_t;
 
 typedef struct {

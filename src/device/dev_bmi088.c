@@ -296,31 +296,17 @@ int8_t bmi088_gyro_wait_dma_cplt(bmi088_t *bmi088) {
 int8_t bmi088_parse_accl(bmi088_t *bmi088) {
   ASSERT(bmi088);
 
-#if 1
   int16_t raw_x, raw_y, raw_z;
   memcpy(&raw_x, dma_buf + 1, sizeof(raw_x));
   memcpy(&raw_y, dma_buf + 3, sizeof(raw_y));
   memcpy(&raw_z, dma_buf + 5, sizeof(raw_z));
 
-  bmi088->accl.x = (float)raw_x;
-  bmi088->accl.y = (float)raw_y;
-  bmi088->accl.z = (float)raw_z;
-
-#else
-  const int16_t *praw_x = (int16_t *)(dma_buf + 1);
-  const int16_t *praw_y = (int16_t *)(dma_buf + 3);
-  const int16_t *praw_z = (int16_t *)(dma_buf + 5);
-
-  bmi088->accl.x = (float)*praw_x;
-  bmi088->accl.y = (float)*praw_y;
-  bmi088->accl.z = (float)*praw_z;
-
-#endif
+  float accl[3] = {(float)raw_x, (float)raw_y, (float)raw_z};
 
   /* 3G: 10920. 6G: 5460. 12G: 2730. 24G: 1365. */
-  bmi088->accl.x /= 5460.0f;
-  bmi088->accl.y /= 5460.0f;
-  bmi088->accl.z /= 5460.0f;
+  for (int i = 0; i < 3; i++) {
+    accl[i] /= 5640.0f;
+  }
 
   int16_t raw_temp = (int16_t)((dma_buf[17] << 3) | (dma_buf[18] >> 5));
 
@@ -328,9 +314,12 @@ int8_t bmi088_parse_accl(bmi088_t *bmi088) {
 
   bmi088->temp = (float)raw_temp * 0.125f + 23.0f;
 
-  if (bmi088->param->inverted) {
-    bmi088->accl.x = -bmi088->accl.x;
-    bmi088->accl.z = -bmi088->accl.z;
+  memset(&(bmi088->accl), 0, sizeof(bmi088->accl));
+
+  for (int i = 0; i < 3; i++) {
+    bmi088->accl.x += bmi088->param->rot_mat[0][i] * accl[i];
+    bmi088->accl.y += bmi088->param->rot_mat[1][i] * accl[i];
+    bmi088->accl.z += bmi088->param->rot_mat[2][i] * accl[i];
   }
 
   return DEVICE_OK;
@@ -339,41 +328,28 @@ int8_t bmi088_parse_accl(bmi088_t *bmi088) {
 int8_t bmi088_parse_gyro(bmi088_t *bmi088) {
   ASSERT(bmi088);
 
-#if 1
   /* Gyroscope imu_raw -> degrees/sec -> radians/sec */
   int16_t raw_x, raw_y, raw_z;
   memcpy(&raw_x, dma_buf + BMI088_ACCL_RX_BUFF_LEN, sizeof(raw_x));
   memcpy(&raw_y, dma_buf + BMI088_ACCL_RX_BUFF_LEN + 2, sizeof(raw_y));
   memcpy(&raw_z, dma_buf + BMI088_ACCL_RX_BUFF_LEN + 4, sizeof(raw_z));
 
-  bmi088->gyro.x = (float)raw_x;
-  bmi088->gyro.y = (float)raw_y;
-  bmi088->gyro.z = (float)raw_z;
-
-#else
-  /* Gyroscope imu_raw -> degrees/sec -> radians/sec */
-  const int16_t *raw_x = (int16_t *)(dma_buf + BMI088_ACCL_RX_BUFF_LEN);
-  const int16_t *raw_y = (int16_t *)(dma_buf + BMI088_ACCL_RX_BUFF_LEN + 2);
-  const int16_t *raw_z = (int16_t *)(dma_buf + BMI088_ACCL_RX_BUFF_LEN + 4);
-
-  bmi088->gyro.x = (float)*raw_x;
-  bmi088->gyro.y = (float)*raw_y;
-  bmi088->gyro.z = (float)*raw_z;
-#endif
+  float gyro[3] = {(float)raw_x, (float)raw_y, (float)raw_z};
 
   /* FS125: 262.144. FS250: 131.072. FS500: 65.536. FS1000: 32.768.
    * FS2000: 16.384.*/
-  bmi088->gyro.x /= 32.768f;
-  bmi088->gyro.y /= 32.768f;
-  bmi088->gyro.z /= 32.768f;
 
-  bmi088->gyro.x *= M_DEG2RAD_MULT;
-  bmi088->gyro.y *= M_DEG2RAD_MULT;
-  bmi088->gyro.z *= M_DEG2RAD_MULT;
+  for (int i = 0; i < 3; i++) {
+    gyro[i] /= 32.768f;
+    gyro[i] *= M_DEG2RAD_MULT;
+  }
 
-  if (bmi088->param->inverted) {
-    bmi088->gyro.x = -bmi088->gyro.x;
-    bmi088->gyro.z = -bmi088->gyro.z;
+  memset(&(bmi088->gyro), 0, sizeof(bmi088->gyro));
+
+  for (int i = 0; i < 3; i++) {
+    bmi088->gyro.x += bmi088->param->rot_mat[0][i] * gyro[i];
+    bmi088->gyro.y += bmi088->param->rot_mat[1][i] * gyro[i];
+    bmi088->gyro.z += bmi088->param->rot_mat[2][i] * gyro[i];
   }
 
   bmi088->gyro.x -= bmi088->cali->gyro_offset.x;

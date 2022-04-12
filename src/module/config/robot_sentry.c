@@ -46,6 +46,8 @@ const config_robot_param_t param_robot = {
   }, /* chassis */
 
   .gimbal = { /* 云台模块参数 */
+    .type = GIMBAL_TYPE_ROTATRY,
+
     .ff = {
         /* GIMBAL_CTRL_PIT_FEEDFORWARD */
         .a = -0.2265f,
@@ -166,7 +168,11 @@ const config_robot_param_t param_robot = {
   }, /* launcher */
 
   .imu = {
-    .inverted = true,
+    .rot_mat = {
+      { -1, +0, +0},
+      { +0, +1, +0},
+      { +0, +0, -1},
+    },
   }, /* imu */
 
   .motor = {
