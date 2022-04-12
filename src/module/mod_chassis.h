@@ -29,6 +29,7 @@ typedef enum {
   CHASSIS_TYPE_OMNI_PLUS,  /* 十字型摆设的四个全向轮 */
   CHASSIS_TYPE_DRONE,      /* 底盘为无人机 */
   CHASSIS_TYPE_SINGLE,     /* 单个摩擦轮 */
+  CHASSIS_TYPE_NONE,       /* 无底盘 */
 } chassis_type_t;
 
 /* 底盘参数的结构体，包含所有初始化用的参数，通常是const，存好几组 */

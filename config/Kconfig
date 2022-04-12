@@ -1,3 +1,26 @@
+choice
+    prompt "兵种"
+    default ID_INFANTRY
+
+    config ID_HERO
+        bool "英雄"
+
+    config ID_INFANTRY
+        bool "步兵"
+
+    config ID_SENTRY
+        bool "哨兵"
+
+    config ID_ENGINEER
+        bool "工程"
+
+    config ID_DART
+        bool "飞镖"
+
+    config ID_RADAR
+        bool "雷达"
+endchoice
+
 source "../hw/Kconfig"
 
 source "../toolchain/Kconfig"

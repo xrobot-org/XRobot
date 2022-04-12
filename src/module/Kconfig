@@ -15,6 +15,31 @@ choice
         bool "功率无限制" if ID_ENGINEER || ID_DART || ID_RADAR
 endchoice
 
+choice
+    prompt "UI模式"
+    default UI_MODE_OP
+
+    config UI_MODE_OP
+        bool "操作手模式" if ID_HERO || ID_INFANTRY || ID_ENGINEER
+
+    config UI_MODE_REMOTE
+        bool "远控模式" if ID_SENTRY
+
+    config UI_MODE_NONE
+        bool "无UI" if ID_DART || ID_DART || ID_RADAR
+endchoice
+
+choice
+    prompt "控制方式"
+    default CTRL_MODE_OP
+
+    config CTRL_MODE_OP
+        bool "操作手控制" if ID_HERO || ID_INFANTRY || ID_ENGINEER  || ID_DART || ID
+
+    config CTRL_MODE_AUTO
+        bool "自动控制"
+endchoice
+
 if POWER_LIMIT_WITH_CAP
 
 menu "超级电容"
@@ -36,6 +61,7 @@ endmenu
 
 endif
 
+if ID_SENTRY
 menu "哨兵扫描参数"
 
 config GIM_SCAN_ANGLE_BASE
@@ -60,19 +86,7 @@ config GIM_SCAN_CRITICAL_ERR
 
 endmenu
 
-choice
-    prompt "UI模式"
-    default UI_MODE_OP
-
-    config UI_MODE_OP
-        bool "操作手模式" if ID_HERO || ID_INFANTRY || ID_ENGINEER
-
-    config UI_MODE_REMOTE
-        bool "远控模式" if ID_SENTRY
-
-    config UI_MODE_NONE
-        bool "无UI" if ID_DART || ID_DART || ID_RADAR
-endchoice
+endif
 
 if UI_MODE_OP || UI_MODE_REMOTE
 

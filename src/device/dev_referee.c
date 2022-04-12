@@ -163,6 +163,7 @@ int8_t referee_trans_init(referee_trans_t *ref, const ui_screen_t *screen) {
 
   bsp_uart_register_callback(BSP_UART_REF, BSP_UART_TX_CPLT_CB,
                              referee_tx_cplt_callback, ref);
+#if !UI_MODE_NONE
   ref->ui_fast_timer_id =
       xTimerCreate("fast_refresh", pdMS_TO_TICKS(UI_DYNAMIC_CYCLE), pdTRUE,
                    NULL, referee_fast_refresh_timer_callback);
@@ -173,6 +174,7 @@ int8_t referee_trans_init(referee_trans_t *ref, const ui_screen_t *screen) {
 
   xTimerStart(ref->ui_fast_timer_id, pdMS_TO_TICKS(UI_DYNAMIC_CYCLE));
   xTimerStart(ref->ui_slow_timer_id, pdMS_TO_TICKS(UI_STATIC_CYCLE));
+#endif
 
   __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_REF), UART_IT_IDLE);
 

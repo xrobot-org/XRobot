@@ -97,22 +97,47 @@ void gimbal_init(gimbal_t *g, const gimbal_params_t *param, float limit_max,
   circle_add(&(g->limit.min), -g->param->pitch_travel_rad, M_2PI);
 
   /* 初始化云台电机控制PID和LPF */
-  for (size_t i = 0; i < g->num_yaw; i++) {
-    kpid_init(g->pid[GIMBAL_CTRL_YAW_ANGLE_IDX + i], KPID_MODE_NO_D,
-              KPID_MODE_K_SET, target_freq,
-              g->param->pid + GIMBAL_CTRL_YAW_ANGLE_IDX);
-    kpid_init(g->pid[GIMBAL_CTRL_YAW_OMEGA_IDX] + i, KPID_MODE_CALC_D,
-              KPID_MODE_K_DYNAMIC, target_freq,
-              g->param->pid + GIMBAL_CTRL_YAW_OMEGA_IDX);
-  }
+  switch (g->param->type) {
+    case GIMBAL_TYPE_ROTATRY:
+      for (size_t i = 0; i < g->num_yaw; i++) {
+        kpid_init(g->pid[GIMBAL_CTRL_YAW_ANGLE_IDX + i], KPID_MODE_NO_D,
+                  KPID_MODE_K_SET, target_freq,
+                  g->param->pid + GIMBAL_CTRL_YAW_ANGLE_IDX);
+        kpid_init(g->pid[GIMBAL_CTRL_YAW_OMEGA_IDX] + i, KPID_MODE_CALC_D,
+                  KPID_MODE_K_DYNAMIC, target_freq,
+                  g->param->pid + GIMBAL_CTRL_YAW_OMEGA_IDX);
+      }
 
-  for (size_t i = 0; i < g->num_pit; i++) {
-    kpid_init(g->pid[GIMBAL_CTRL_PIT_ANGLE_IDX] + i, KPID_MODE_NO_D,
-              KPID_MODE_K_SET, target_freq,
-              g->param->pid + GIMBAL_CTRL_PIT_ANGLE_IDX);
-    kpid_init(g->pid[GIMBAL_CTRL_PIT_OMEGA_IDX] + i, KPID_MODE_CALC_D,
-              KPID_MODE_K_SET, target_freq,
-              g->param->pid + GIMBAL_CTRL_PIT_OMEGA_IDX);
+      for (size_t i = 0; i < g->num_pit; i++) {
+        kpid_init(g->pid[GIMBAL_CTRL_PIT_ANGLE_IDX] + i, KPID_MODE_NO_D,
+                  KPID_MODE_K_SET, target_freq,
+                  g->param->pid + GIMBAL_CTRL_PIT_ANGLE_IDX);
+        kpid_init(g->pid[GIMBAL_CTRL_PIT_OMEGA_IDX] + i, KPID_MODE_CALC_D,
+                  KPID_MODE_K_SET, target_freq,
+                  g->param->pid + GIMBAL_CTRL_PIT_OMEGA_IDX);
+      }
+
+      break;
+    case GIMBAL_TYPE_LINEAR:
+      for (size_t i = 0; i < g->num_yaw; i++) {
+        kpid_init(g->pid[GIMBAL_CTRL_YAW_ANGLE_IDX + i], KPID_MODE_NO_D,
+                  KPID_MODE_K_SET, target_freq,
+                  g->param->pid + GIMBAL_CTRL_YAW_ANGLE_IDX);
+        kpid_init(g->pid[GIMBAL_CTRL_YAW_OMEGA_IDX] + i, KPID_MODE_CALC_D,
+                  KPID_MODE_K_SET, target_freq,
+                  g->param->pid + GIMBAL_CTRL_YAW_OMEGA_IDX);
+      }
+
+      for (size_t i = 0; i < g->num_pit; i++) {
+        kpid_init(g->pid[GIMBAL_CTRL_PIT_ANGLE_IDX] + i, KPID_MODE_NO_D,
+                  KPID_MODE_K_SET, target_freq,
+                  g->param->pid + GIMBAL_CTRL_PIT_ANGLE_IDX);
+        kpid_init(g->pid[GIMBAL_CTRL_PIT_OMEGA_IDX] + i, KPID_MODE_CALC_D,
+                  KPID_MODE_K_SET, target_freq,
+                  g->param->pid + GIMBAL_CTRL_PIT_OMEGA_IDX);
+      }
+
+      break;
   }
 
   for (size_t i = 0; i < g->num_pit; i++) {
@@ -174,6 +199,7 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
   g_cmd->delta_eulr.yaw = -g_cmd->delta_eulr.yaw;
 
   switch (g->mode) {
+#if CTRL_MODE_AUTO
     case GIMBAL_MODE_SCAN: {
       /* 判断YAW轴运动方向 */
       const float yaw_offset = circle_error(g->feedback.eulr.imu.yaw, 0, M_2PI);
@@ -203,6 +229,7 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
 
       break;
     }
+#endif
     default:
       break;
   }

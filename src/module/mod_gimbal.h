@@ -50,7 +50,6 @@ typedef struct {
   } low_pass_cutoff_freq;
 
   float pitch_travel_rad; /* 云台pitch轴行程弧度 */
-  float yaw_travel_rad;   /* 云台yaw轴行程弧度 */
 
   /* 设置默认运动方向 */
   struct {
