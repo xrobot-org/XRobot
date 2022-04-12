@@ -44,7 +44,7 @@ void thd_cap(void* arg) {
     om_publish(ui_tp, OM_PRASE_VAR(cap_ui), true, false);
     om_publish(info_tp, OM_PRASE_VAR(cap.feedback), true, false);
 
-    om_suber_dump(out_sub, false);
+    om_suber_export(out_sub, false);
     cap_control(&cap, &cap_out);
 
     /* 运行结束，等待下一次唤醒 */

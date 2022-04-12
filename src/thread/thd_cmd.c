@@ -48,13 +48,13 @@ void thd_cmd(void* arg) {
 
   while (1) {
     /* 将接收机数据解析为指令数据 */
-    om_suber_dump(rc_sub, false);  // TODO: 可以阻塞
+    om_suber_export(rc_sub, false);  // TODO: 可以阻塞
 
     cmd_parse_rc(&rc, &cmd, (float)THD_PERIOD_MS / 1000.0f);
 
     /* 判断是否需要让上位机覆写指令 */
     if (cmd_check_host_overwrite(&rc, &cmd)) {
-      if (om_suber_dump(host_sub, false) == OM_OK)
+      if (om_suber_export(host_sub, false) == OM_OK)
         cmd_parse_host(&host, &cmd, (float)THD_PERIOD_MS / 1000.0f);
     }
     cmd_pack_ui(&cmd_ui, &cmd);

@@ -51,10 +51,10 @@ void thd_ctrl_launcher(void* arg) {
 
   while (1) {
     /* 读取控制指令、姿态、IMU、裁判系统、电机反馈 */
-    om_suber_dump(motor_fric_sub, false);
-    om_suber_dump(motor_trig_sub, false);
-    om_suber_dump(ref_sub, false);
-    om_suber_dump(cmd_sub, false);
+    om_suber_export(motor_fric_sub, false);
+    om_suber_export(motor_trig_sub, false);
+    om_suber_export(ref_sub, false);
+    om_suber_export(cmd_sub, false);
 
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     launcher_update_feedback(&launcher, &trig_motor_fb, &fric_motor_fb);

@@ -76,23 +76,23 @@ void thd_motor(void* arg) {
                motor.feedback + MOTOR_GROUP_ID_LAUNCHER_TRIG,
                sizeof(*motor.feedback), true, false);
 
-    if (om_suber_dump(chassis_out_sub, false) == OM_OK) {
+    if (om_suber_export(chassis_out_sub, false) == OM_OK) {
       motor_pack_data(&motor, MOTOR_GROUP_ID_CHASSIS, &motor_out);
     }
 
-    if (om_suber_dump(gimbal_yaw_out_sub, false) == OM_OK) {
+    if (om_suber_export(gimbal_yaw_out_sub, false) == OM_OK) {
       motor_pack_data(&motor, MOTOR_GROUP_ID_GIMBAL_YAW, &motor_out);
     }
 
-    if (om_suber_dump(gimbal_pit_out_sub, false) == OM_OK) {
+    if (om_suber_export(gimbal_pit_out_sub, false) == OM_OK) {
       motor_pack_data(&motor, MOTOR_GROUP_ID_GIMBAL_PIT, &motor_out);
     }
 
-    if (om_suber_dump(launcher_fric_out_sub, false) == OM_OK) {
+    if (om_suber_export(launcher_fric_out_sub, false) == OM_OK) {
       motor_pack_data(&motor, MOTOR_GROUP_ID_LAUNCHER_FRIC, &motor_out);
     }
 
-    if (om_suber_dump(launcher_trig_out_sub, false) == OM_OK) {
+    if (om_suber_export(launcher_trig_out_sub, false) == OM_OK) {
       motor_pack_data(&motor, MOTOR_GROUP_ID_LAUNCHER_TRIG, &motor_out);
     }
 

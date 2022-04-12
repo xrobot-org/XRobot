@@ -40,8 +40,8 @@ void thd_atti_esti(void* arg) {
   float now;
   uint32_t previous_wake_time = xTaskGetTickCount();
   while (1) {
-    om_suber_dump(accl_sub, false);
-    om_suber_dump(gyro_sub, false);
+    om_suber_export(accl_sub, false);
+    om_suber_export(gyro_sub, false);
 
     /* 锁住RTOS内核防止数据解析过程中断，造成错误 */
     vTaskSuspendAll();

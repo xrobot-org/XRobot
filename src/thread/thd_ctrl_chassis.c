@@ -61,12 +61,12 @@ void thd_ctrl_chassis(void* arg) {
 
   while (1) {
     /* 读取控制指令、电容、裁判系统、电机反馈 */
-    om_suber_dump(ch_mt_sub, false);
-    om_suber_dump(gm_mt_sub, false);
-    om_suber_dump(ref_sub, false);
-    om_suber_dump(cmd_sub, false);
-    om_suber_dump(cap_sub, false);
-    om_suber_dump(tof_sub, false);
+    om_suber_export(ch_mt_sub, false);
+    om_suber_export(gm_mt_sub, false);
+    om_suber_export(ref_sub, false);
+    om_suber_export(cmd_sub, false);
+    om_suber_export(cap_sub, false);
+    om_suber_export(tof_sub, false);
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     /* 更新反馈值 */
     chassis_update_feedback(&chassis, &ch_mt, &gm_mt, &tof);

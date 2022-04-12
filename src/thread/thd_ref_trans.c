@@ -49,11 +49,11 @@ void thd_ref_trans(void* arg) {
   uint32_t previous_wake_time = xTaskGetTickCount();
   while (1) {
     /* 获取其他进程数据用于绘制UI */
-    om_suber_dump(ui_cap_sub, false);
-    om_suber_dump(ui_chassis_sub, false);
-    om_suber_dump(ui_gimbal_sub, false);
-    om_suber_dump(ui_launcher_sub, false);
-    om_suber_dump(ui_cmd_sub, false);
+    om_suber_export(ui_cap_sub, false);
+    om_suber_export(ui_chassis_sub, false);
+    om_suber_export(ui_gimbal_sub, false);
+    om_suber_export(ui_launcher_sub, false);
+    om_suber_export(ui_cmd_sub, false);
 
     /* 刷新UI数据 */
     referee_refresh_ui(&ref);

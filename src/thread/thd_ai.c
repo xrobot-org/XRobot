@@ -46,16 +46,16 @@ void thd_ai(void* arg) {
 
     /* AI在线,发布控制命令 */
     if (ai.online) {
-      om_suber_dump(eulr_sub, false);
+      om_suber_export(eulr_sub, false);
       ai_pack_cmd(&ai, &cmd_host, &ai_eulr);
       om_publish(host_tp, OM_PRASE_VAR(cmd_host), true, false);
     }
 
     /* 发送数据到上位机 */
-    om_suber_dump(quat_sub, false);
+    om_suber_export(quat_sub, false);
     ai_pack_mcu_for_host(&ai, &ai_quat);
 
-    if (om_suber_dump(ref_sub, false) == OM_OK) {
+    if (om_suber_export(ref_sub, false) == OM_OK) {
       ai_pack_ref_for_host(&ai, &(referee_ai));
     }
 

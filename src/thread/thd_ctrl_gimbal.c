@@ -55,11 +55,11 @@ void thd_ctrl_gimbal(void* arg) {
 
   while (1) {
     /* 读取控制指令、姿态、IMU、电机反馈 */
-    om_suber_dump(motor_yaw_sub, false);
-    om_suber_dump(motor_pit_sub, false);
-    om_suber_dump(eulr_sub, false);
-    om_suber_dump(gyro_sub, false);
-    om_suber_dump(cmd_sub, false);
+    om_suber_export(motor_yaw_sub, false);
+    om_suber_export(motor_pit_sub, false);
+    om_suber_export(eulr_sub, false);
+    om_suber_export(gyro_sub, false);
+    om_suber_export(cmd_sub, false);
 
     vTaskSuspendAll(); /* 锁住RTOS内核防止控制过程中断，造成错误 */
     gimbal_update_feedback(&gimbal, &gimbal_yaw_motor, &gimbal_pit_motor);

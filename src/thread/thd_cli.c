@@ -250,7 +250,7 @@ static BaseType_t command_cali_gyro(char *out_buffer, size_t len,
       /* 记录1000组数据，求出平均值作为陀螺仪的3轴零偏 */
       snprintf(out_buffer, len, "Calibation in progress.\r\n");
       while (count < 2000) {
-        bool data_new = om_suber_dump(gyro_sub, false) == OM_OK;
+        bool data_new = om_suber_export(gyro_sub, false) == OM_OK;
         bool data_good = gyro_is_stable(&gyro);
         if (data_new && data_good) {
           x += gyro.x;
@@ -316,13 +316,13 @@ static BaseType_t command_set_mech_zero(char *out_buffer, size_t len,
       /* 获取到云台数据，用can上的新的云台机械零点的位置替代旧的位置 */
       config_get(&cfg);
 
-      if (om_suber_dump(gimbal_motor_yaw_sub, false) != OM_OK) {
+      if (om_suber_export(gimbal_motor_yaw_sub, false) != OM_OK) {
         snprintf(out_buffer, len, "Can not get gimbal data.\r\n");
         fsm.stage = 2;
         return pdPASS;
       }
       cfg.gimbal_mech_zero.yaw = motor_fb.as_gimbal_yaw.yaw.rotor_abs_angle;
-      if (om_suber_dump(gimbal_motor_pit_sub, false) != OM_OK) {
+      if (om_suber_export(gimbal_motor_pit_sub, false) != OM_OK) {
         snprintf(out_buffer, len, "Can not get gimbal data.\r\n");
         fsm.stage = 2;
         return pdPASS;
@@ -364,7 +364,7 @@ static BaseType_t command_set_gimbal_lim(char *out_buffer, size_t len,
       return pdPASS;
     case 1:
       /* 获取云台数据，获取新的限位角并替代旧的限位角 */
-      if (om_suber_dump(gimbal_motor_pit_sub, false) != OM_OK) {
+      if (om_suber_export(gimbal_motor_pit_sub, false) != OM_OK) {
         fsm.stage = 3;
         return pdPASS;
       }
