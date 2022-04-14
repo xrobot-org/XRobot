@@ -30,8 +30,8 @@
 /* OS层互斥锁api */
 #include "semphr.h"
 #define om_mutex_t SemaphoreHandle_t
-#define om_mutex_init(arg)        \
-  *arg = xSemaphoreCreateMutex(); \
+#define om_mutex_init(arg)         \
+  *arg = xSemaphoreCreateBinary(); \
   xSemaphoreGive(*arg)
 #define om_mutex_lock(arg) xSemaphoreTake(*arg, portMAX_DELAY)
 #define om_mutex_trylock(arg) \
