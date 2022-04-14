@@ -1,96 +1,105 @@
 menu "调试选项"
 
-config DEBUG_EN
-	tristate "开启调试"
+    config DEBUG_EN
+        tristate "开启调试"
 
-if DEBUG_EN
+    if DEBUG_EN
 
-menu "机器人"
+        menu "机器人"
 
-if ID_HERO || POWER_LIMIT_WITH_CAP || POWER_LIMIT
-config DEBUG_POWER_UNLIMIT
-	tristate "爆发吧 小宇宙！（不再限制功率）"
-endif
+        if ID_HERO || POWER_LIMIT_WITH_CAP || POWER_LIMIT
+            config DEBUG_POWER_UNLIMIT
+                tristate "爆发吧 小宇宙！（不再限制功率）"
+        endif
 
-endmenu
+        endmenu
 
-menu "裁判系统"
+    menu "裁判系统"
 
-config REF_VIRTUAL
-	tristate "预设参数覆盖裁判系统信息"
+        config REF_VIRTUAL
+            tristate "预设参数覆盖裁判系统信息"
 
-config REF_FORCE_ONLINE
-	tristate "强制认为裁判系统在线" if REF_VIRTUAL
+        config REF_FORCE_ONLINE
+            tristate "强制认为裁判系统在线" if REF_VIRTUAL
 
-config REF_LAUNCH_SPEED
-    int "射速限制" if REF_VIRTUAL
-    range 5 30
-    default 30
+        config REF_LAUNCH_SPEED
+            int "射速限制" if REF_VIRTUAL
+            range 5 30
+            default 30
 
-config REF_HEAT_LIMIT_17
-    int "17mm枪口热量限制" if REF_VIRTUAL
-    range 0 100
-    default 100
+        config REF_HEAT_LIMIT_17
+            int "17mm枪口热量限制" if REF_VIRTUAL
+            range 0 100
+            default 100
 
-config REF_HEAT_LIMIT_42
-    int "42mm枪口热量限制" if REF_VIRTUAL
-    range 0 100
-    default 100
+        config REF_HEAT_LIMIT_42
+            int "42mm枪口热量限制" if REF_VIRTUAL
+            range 0 100
+            default 100
 
-config REF_POWER_LIMIT
-    int "底盘功率限制" if REF_VIRTUAL
-    range 0 200
-    default 1000
+        config REF_POWER_LIMIT
+            int "底盘功率限制" if REF_VIRTUAL
+            range 0 200
+            default 1000
 
-config REF_POWER_BUFF
-    int "缓冲能量" if REF_VIRTUAL
-    range 0 100
-    default 100
+        config REF_POWER_BUFF
+            int "缓冲能量" if REF_VIRTUAL
+            range 0 100
+            default 100
 
-endmenu
+    endmenu
 
-menu "上位机"
+    menu "上位机"
 
-config HOST_CTRL_PRIORITY
-	tristate "优先把控制权交给上位机"
+        config HOST_CTRL_PRIORITY
+            tristate "优先把控制权交给上位机"
 
-config HOST_USB_DISABLE
-    tristate "让出usb串口,开启命令行"
+    endmenu
 
-endmenu
+    endif
 
-endif
 
-menu "遥控器"
+    choice
+        prompt "USB功能选择"
+        default USB_HOST
 
-choice
-    prompt "左拨杆-下 功能"
-    default LEVER_L_DEFAULT
+        config USB_HOST
+            bool "上位机通信"
 
-    config LEVER_L_DEFAULT
-        bool "默认"
+        config USB_CLI
+            bool "命令行" if DEBUG_EN
 
-    config LEVER_L_ROTATE
-        bool "小陀螺" if DEBUG_EN
-endchoice
+        config USB_REPORT
+            bool "消息日志上报" if DEBUG_EN
+    endchoice
 
-choice
-    prompt "右拨杆-下 功能"
-    default LEVER_R_DEFAULT
 
-    config LEVER_R_DEFAULT
-        bool "默认"
+    choice
+        prompt "左拨杆-下 功能"
+        default LEVER_L_DEFAULT
 
-    config LEVER_R_FIRE_SINLE
-        bool "单发开火" if DEBUG_EN
+        config LEVER_L_DEFAULT
+            bool "默认"
 
-    config LEVER_R_FIRE_BURST
-        bool "爆发开火" if DEBUG_EN
+        config LEVER_L_ROTATE
+            bool "小陀螺" if DEBUG_EN
+    endchoice
 
-    config LEVER_R_FIRE_CONT
-        bool "持续开火" if DEBUG_EN
-endchoice
+    choice
+        prompt "右拨杆-下 功能"
+        default LEVER_R_DEFAULT
 
-endmenu
+        config LEVER_R_DEFAULT
+            bool "默认"
+
+        config LEVER_R_FIRE_SINLE
+            bool "单发开火" if DEBUG_EN
+
+        config LEVER_R_FIRE_BURST
+            bool "爆发开火" if DEBUG_EN
+
+        config LEVER_R_FIRE_CONT
+            bool "持续开火" if DEBUG_EN
+    endchoice
 
 endmenu

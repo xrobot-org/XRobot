@@ -27,7 +27,7 @@ void thd_ai(void* arg) {
   om_suber_t* ref_sub = om_subscript(ref_tp, OM_PRASE_VAR(referee_ai));
   om_suber_t* eulr_sub = om_subscript(eulr, OM_PRASE_VAR(ai_eulr));
 
-#if HOST_USB_DISABLE
+#if !USB_HOST
   vTaskSuspend(xTaskGetCurrentTaskHandle());
 #endif
 
@@ -64,4 +64,4 @@ void thd_ai(void* arg) {
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
-THREAD_DECLEAR(thd_ai, 256, 4);
+THREAD_DECLEAR(thd_ai, 384, 4);

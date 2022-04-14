@@ -79,6 +79,7 @@ static void referee_abort_rx_cplt_callback(void *arg) {
   portYIELD_FROM_ISR(switch_required);
 }
 
+#if !UI_MODE_NONE
 static void referee_fast_refresh_timer_callback(TimerHandle_t arg) {
   RM_UNUSED(arg);
   BaseType_t switch_required;
@@ -92,6 +93,7 @@ static void referee_slow_refresh_timer_callback(TimerHandle_t arg) {
   xSemaphoreGiveFromISR(gref_trans->sem.ui_slow_refresh, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 }
+#endif
 
 static int8_t referee_set_packet_header(referee_header_t *header,
                                         uint16_t data_length) {

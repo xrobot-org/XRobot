@@ -62,3 +62,14 @@
 
 /* 话题名称最大长度 */
 #define OM_TOPIC_MAX_NAME_LEN (25)
+
+#define OM_REPORT_ACTIVITY (USB_REPORT)
+
+#if OM_REPORT_ACTIVITY
+#include "bsp_timer.h"
+#include "bsp_usb.h"
+#define om_get_realtime bsp_timer_get_realtime
+#define om_report_transmit bsp_usb_transmit
+#define OM_REPORT_DATA_BUFF_NUM (128)
+#define OM_REPORT_MAP_BUFF_SIZE (1024)
+#endif

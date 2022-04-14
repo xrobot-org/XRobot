@@ -540,7 +540,9 @@ void thd_cli(void *arg) {
   uint16_t index = 0;                           /* 字符串索引值 */
   BaseType_t processing = 0;                    /* 命令行解析控制 */
 
-  while (1) vTaskDelay(100);
+#if !USB_CLI
+  vTaskSuspend(xTaskGetCurrentTaskHandle());
+#endif
 
   /* 注册所有命令 */
   for (size_t j = 0; j < ARRAY_LEN(command_table); j++) {
