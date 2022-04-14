@@ -57,8 +57,6 @@
 extern uint32_t SystemCoreClock;
 void xPortSysTickHandler(void);
 /* USER CODE BEGIN 0 */
-extern void configureTimerForRunTimeStats(void);
-extern unsigned long getRunTimeCounterValue(void);
 /* USER CODE END 0 */
 
 #endif
@@ -73,9 +71,9 @@ extern unsigned long getRunTimeCounterValue(void);
 #define configUSE_TICK_HOOK 0
 #define configCPU_CLOCK_HZ (SystemCoreClock)
 #define configTICK_RATE_HZ (1000)
-#define configMAX_PRIORITIES (5)
+#define configMAX_PRIORITIES (6)
 #define configMINIMAL_STACK_SIZE (128)
-#define configTOTAL_HEAP_SIZE (0xF000)
+#define configTOTAL_HEAP_SIZE (0xFFFF)
 #define configAPPLICATION_ALLOCATED_HEAP 1
 #define configMAX_TASK_NAME_LEN (16)
 #define configGENERATE_RUN_TIME_STATS 1
@@ -173,7 +171,9 @@ standard names. */
 #define xPortPendSVHandler PendSV_Handler
 
 /* Definitions needed when configGENERATE_RUN_TIME_STATS is on */
-#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS configureTimerForRunTimeStats
-#define portGET_RUN_TIME_COUNTER_VALUE getRunTimeCounterValue
+extern unsigned long HAL_RealtimeClockGetValue(void);
+extern void HAL_RealtimeClockStart(void);
+#define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS HAL_RealtimeClockStart
+#define portGET_RUN_TIME_COUNTER_VALUE HAL_RealtimeClockGetValue
 
 #endif /* FREERTOS_CONFIG_H */

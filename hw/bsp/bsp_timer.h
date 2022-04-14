@@ -30,5 +30,6 @@ typedef enum {
 } bsp_timer_callback_t;
 
 TIM_HandleTypeDef *bsp_timer_get_handle(bsp_timer_t timer);
+uint64_t bsp_timer_get_realtime();
 int8_t bsp_timer_register_callback(bsp_timer_t timer, bsp_timer_callback_t type,
-                                  void (*callback)(void));
+                                   void (*callback)(void));

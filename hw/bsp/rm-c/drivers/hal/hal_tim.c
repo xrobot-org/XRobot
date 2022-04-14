@@ -667,5 +667,29 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle) {
 }
 
 /* USER CODE BEGIN 1 */
+/* TIM7 are used to generater high freq tick for debug. */
+volatile unsigned long runtime_ststus_timer_ticks;
 
+/* Functions needed when configGENERATE_RUN_TIME_STATS is on */
+/* Code inside this function should be simple and small. */
+void HAL_RealtimeClockStart(void) {
+  runtime_ststus_timer_ticks = 0;
+  HAL_TIM_Base_Start_IT(&htim7);
+}
+
+/* High freq timer ticks for runtime stats */
+inline unsigned long HAL_RealtimeClockGetValue(void) {
+  return runtime_ststus_timer_ticks;
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim) {
+#if 0
+  if (htim->Instance == TIM7) {
+    runtime_ststus_timer_ticks++;
+  }
+#endif
+  /* There is only one timer, so the timer ID is not judged */
+  UNUSED(htim);
+  runtime_ststus_timer_ticks++;
+}
 /* USER CODE END 1 */

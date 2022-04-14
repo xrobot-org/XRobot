@@ -55,6 +55,8 @@ void MX_TIM10_Init(void);
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* USER CODE BEGIN Prototypes */
+void HAL_RealtimeClockStart(void);
+unsigned long HAL_RealtimeClockGetValue(void);
 
 /* USER CODE END Prototypes */
 
