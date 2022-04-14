@@ -38,8 +38,6 @@ int8_t ai_init(ai_t *ai) {
 
   ai->sem.data_ready = xSemaphoreCreateBinary();
 
-  term_get_ctrl(0xff);
-
   return DEVICE_OK;
 }
 

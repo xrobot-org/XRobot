@@ -540,20 +540,16 @@ void thd_cli(void *arg) {
   uint16_t index = 0;                           /* 字符串索引值 */
   BaseType_t processing = 0;                    /* 命令行解析控制 */
 
+  while (1) vTaskDelay(100);
+
   /* 注册所有命令 */
   for (size_t j = 0; j < ARRAY_LEN(command_table); j++) {
     FreeRTOS_CLIRegisterCommand(command_table + j);
   }
 
   while (1) {
-    /* 获取终端控制权 */
-    if (term_get_ctrl(0xff) != RM_OK) {
-      continue;
-    }
-
     /* 等待连接 */
     if (!term_opened()) {
-      term_give_ctrl();
       vTaskDelay(10);
       continue;
     }
@@ -588,8 +584,6 @@ void thd_cli(void *arg) {
     if (rx_char == '\n' || rx_char == '\r') {
       term_printf("%c", rx_char);
       break;
-    } else {
-      term_give_ctrl();
     }
   }
 
