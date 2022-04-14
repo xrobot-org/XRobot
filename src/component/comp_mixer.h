@@ -27,6 +27,7 @@ typedef enum {
   MIXER_OMNICROSS, /* 叉形全向轮 */
   MIXER_OMNIPLUS,  /* 十字全向轮 */
   MIXER_SINGLE,    /* 单个摩擦轮 */
+  MIXER_NONE,      /* 不可移动底盘 */
 
   /* 空中用 */
   MIXER_CANARD, /* 飞镖鸭翼 */

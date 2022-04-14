@@ -67,6 +67,8 @@ int8_t mixer_apply(mixer_t *mixer, move_vector_t *move_vec, float *out,
     case MIXER_OMNICROSS:
     case MIXER_OMNIPLUS:
       break;
+    case MIXER_NONE:
+      break;
 
     case MIXER_CANARD:
       /* TODO */

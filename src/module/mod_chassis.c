@@ -141,6 +141,10 @@ void chassis_init(chassis_t *c, const chassis_params_t *param,
       c->num_wheel = 1;
       mixer_mode = MIXER_SINGLE;
       break;
+    case CHASSIS_TYPE_NONE:
+      c->num_wheel = 0;
+      mixer_mode = MIXER_NONE;
+      break;
 
     case CHASSIS_TYPE_DRONE:
       /* onboard sdk. */
@@ -265,7 +269,6 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
           sin_beta * c_cmd->ctrl_vec.vx + cos_beta * c_cmd->ctrl_vec.vy;
       break;
     }
-#if CTRL_MODE_AUTO
     case CHASSIS_MODE_SCAN:
       /* 根据距离传感器数据变向 */
       if (c->feedback.tof.data[DEV_TOF_SENSOR_LEFT].dist < SCAN_VY_LENGTH_MIN)
@@ -275,7 +278,6 @@ void chassis_control(chassis_t *c, const cmd_chassis_t *c_cmd, uint32_t now) {
         c->vy_dir_mult = -1;
       c->move_vec.vy = c->vy_dir_mult * SCAN_MOVEMENTS;
       break;
-#endif
   }
 
   /*哨兵底盘电机反装*/
