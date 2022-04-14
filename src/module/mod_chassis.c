@@ -144,7 +144,7 @@ void chassis_init(chassis_t *c, const chassis_params_t *param,
     case CHASSIS_TYPE_NONE:
       c->num_wheel = 0;
       mixer_mode = MIXER_NONE;
-      break;
+      return;
 
     case CHASSIS_TYPE_DRONE:
       /* onboard sdk. */

@@ -38,4 +38,4 @@ void thd_msg_dist(void *arg) {
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
-THREAD_DECLEAR(thd_msg_dist, 256, 4);
+THREAD_DECLEAR(thd_msg_dist, 256, 5);
