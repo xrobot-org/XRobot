@@ -11,19 +11,14 @@
  *
  */
 
-#include "bsp_usb.h"
 #include "bsp_wdg.h"
-#include "comp_capacity.h"
-#include "dev_adc.h"
-#include "dev_buzzer.h"
-#include "dev_rgb.h"
 #include "thd.h"
 
-#define THD_PERIOD_MS (200)
+#define THD_PERIOD_MS (10)
 #define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
 void thd_monitor(void* arg) {
-  runtime_t* runtime = arg;
+  RM_UNUSED(arg);
 
   uint32_t previous_wake_time = xTaskGetTickCount();
 
@@ -32,25 +27,12 @@ void thd_monitor(void* arg) {
     bsp_wdg_refresh();
 #endif
 
-    runtime->status.vbat = adc_get_batt_volt(); /* ADC监测电压 */
-    runtime->status.battery = capacity_get_battery_remain(runtime->status.vbat);
-    runtime->status.cpu_temp = adc_get_cpu_temp();
-
-    uint8_t status = 0;
-    status += (uint8_t)(runtime->status.battery < 0.5f);
-    status += (uint8_t)(runtime->status.cpu_temp > 50.0f);
-
-    /* 根据检测到的状态闪烁不同的颜色 */
-    if (status > 1) {
-      rgb_set_color(COLOR_HEX_RED, LED_TAGGLE);
-    } else if (status > 0) {
-      rgb_set_color(COLOR_HEX_YELLOW, LED_TAGGLE);
-    } else {
-      rgb_set_color(COLOR_HEX_GREEN, LED_TAGGLE);
-    }
+#if USB_REPORT
+    om_send_report_data();
+#endif
 
     /* 运行结束，等待下一次唤醒 */
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
-THREAD_DECLEAR(thd_monitor, 128, 1);
+THREAD_DECLEAR(thd_monitor, 512, 1);
