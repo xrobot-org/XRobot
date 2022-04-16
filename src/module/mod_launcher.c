@@ -16,6 +16,8 @@
 #include "comp_limiter.h"
 #include "comp_utils.h"
 
+#define LAUNCHER_TRIG_SPEED_MAX (8191)
+
 /**
  * @brief 设置发射器模式
  *
@@ -28,13 +30,15 @@ static void launcher_set_mode(launcher_t *l, launcher_mode_t mode) {
   if (mode == l->mode) return;
 
   /* 切换模式后重置PID和滤波器 */
+  for (size_t i = 0; i < LAUNCHER_CTRL_NUM; i++) {
+    kpid_reset(l->pid + i);
+  }
+
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
-    kpid_reset(l->pid.fric + i);
     low_pass_filter_2p_reset(l->filter.in.fric + i, 0.0f);
     low_pass_filter_2p_reset(l->filter.out.fric + i, 0.0f);
   }
   for (int i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
-    kpid_reset(l->pid.trig + i);
     low_pass_filter_2p_reset(l->filter.in.trig + i, 0.0f);
     low_pass_filter_2p_reset(l->filter.out.trig + i, 0.0f);
   }
@@ -108,11 +112,14 @@ void launcher_init(launcher_t *l, const launcher_params_t *param,
   l->param = param;              /* 初始化参数 */
   l->mode = LAUNCHER_MODE_RELAX; /* 设置默认模式 */
 
+  for (size_t i = 0; i < LAUNCHER_CTRL_NUM; i++) {
+    /* PI控制器初始化PID */
+    kpid_init(l->pid + i, KPID_MODE_NO_D, KPID_MODE_K_SET, target_freq,
+              param->pid_param + i);
+  }
+
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
     /* PI控制器初始化PID */
-    kpid_init(l->pid.fric + i, KPID_MODE_NO_D, KPID_MODE_K_SET, target_freq,
-              &(param->fric_pid_param));
-
     low_pass_filter_2p_init(l->filter.in.fric + i, target_freq,
                             param->low_pass_cutoff_freq.in.fric);
 
@@ -121,9 +128,6 @@ void launcher_init(launcher_t *l, const launcher_params_t *param,
   }
 
   for (int i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
-    kpid_init(l->pid.trig + i, KPID_MODE_CALC_D, KPID_MODE_K_SET, target_freq,
-              &(param->trig_pid_param));
-
     low_pass_filter_2p_init(l->filter.in.trig + i, target_freq,
                             param->low_pass_cutoff_freq.in.trig);
     low_pass_filter_2p_init(l->filter.out.trig + i, target_freq,
@@ -152,6 +156,8 @@ void launcher_update_feedback(
   }
 
   /* 更新拨弹电机 */
+  l->feedback.trig_rpm =
+      launcher_motor_trig->as_launcher_trig.trig.rotational_speed;
   const float last_trig_motor_angle = l->feedback.trig_motor_angle;
   l->feedback.trig_motor_angle =
       launcher_motor_trig->as_launcher_trig.trig.rotor_abs_angle;
@@ -282,10 +288,18 @@ void launcher_control(launcher_t *l, cmd_launcher_t *l_cmd,
         l->feedback.trig_angle = low_pass_filter_2p_apply(
             l->filter.in.trig + i, l->feedback.trig_angle);
 
-        l->trig_out[i] = kpid_calc(l->pid.trig + i, l->setpoint.trig_angle,
-                                   l->feedback.trig_angle, 0.0f, l->dt);
-        l->trig_out[LAUNCHER_ACTR_TRIG_IDX] = low_pass_filter_2p_apply(
-            l->filter.out.trig + i, l->trig_out[LAUNCHER_ACTR_TRIG_IDX]);
+        const float speed_setpoint =
+            kpid_calc(l->pid + LAUNCHER_CTRL_TRIG_ANGLE_IDX,
+                      l->setpoint.trig_angle, l->feedback.trig_angle, 0.0f,
+                      l->dt) *
+            LAUNCHER_TRIG_SPEED_MAX;
+
+        l->trig_out[i] =
+            kpid_calc(l->pid + LAUNCHER_CTRL_TRIG_SPEED_IDX, speed_setpoint,
+                      l->feedback.trig_rpm, 0.0f, l->dt);
+
+        l->trig_out[i] =
+            low_pass_filter_2p_apply(l->filter.out.trig + i, l->trig_out[i]);
       }
 
       for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
@@ -293,12 +307,12 @@ void launcher_control(launcher_t *l, cmd_launcher_t *l_cmd,
         l->feedback.fric_rpm[i] = low_pass_filter_2p_apply(
             l->filter.in.fric + i, l->feedback.fric_rpm[i]);
 
-        l->fric_out[LAUNCHER_ACTR_FRIC1_IDX + i] =
-            kpid_calc(l->pid.fric + i, l->setpoint.fric_rpm[i],
-                      l->feedback.fric_rpm[i], 0.0f, l->dt);
+        l->fric_out[i] = kpid_calc(l->pid + i + LAUNCHER_CTRL_FRIC1_SPEED_IDX,
+                                   l->setpoint.fric_rpm[i],
+                                   l->feedback.fric_rpm[i], 0.0f, l->dt);
 
-        l->fric_out[LAUNCHER_ACTR_FRIC1_IDX + i] = low_pass_filter_2p_apply(
-            l->filter.out.fric + i, l->fric_out[LAUNCHER_ACTR_FRIC1_IDX + i]);
+        l->fric_out[i] =
+            low_pass_filter_2p_apply(l->filter.out.fric + i, l->fric_out[i]);
       }
 
       /* 根据弹仓盖开关状态更新弹舱盖打开时舵机PWM占空比 */

@@ -76,7 +76,7 @@ const config_robot_param_t param_robot = {
 
   .launcher = { /* 发射器模块参数 */
 
-    .fric_pid_param = {
+    .pid_param[LAUNCHER_CTRL_FRIC1_SPEED_IDX] = {
       .k = 0.00015f,
       .p = 1.0f,
       .i = 0.4f,
@@ -86,11 +86,31 @@ const config_robot_param_t param_robot = {
       .d_cutoff_freq = -1.0f,
     },
 
-    .trig_pid_param = {
-      .k = 4.5f,
+    .pid_param[LAUNCHER_CTRL_FRIC2_SPEED_IDX] = {
+      .k = 0.00015f,
+      .p = 1.0f,
+      .i = 0.4f,
+      .d = 0.01f,
+      .i_limit = 0.5f,
+      .out_limit = 0.5f,
+      .d_cutoff_freq = -1.0f,
+    },
+
+    .pid_param[LAUNCHER_CTRL_TRIG_SPEED_IDX] = {
+      .k = 0.001f,
       .p = 1.0f,
       .i = 0.0f,
-      .d = 0.032f,
+      .d = 0.03f,
+      .i_limit = 0.5f,
+      .out_limit = 0.5f,
+      .d_cutoff_freq = -1.0f,
+    },
+
+    .pid_param[LAUNCHER_CTRL_TRIG_ANGLE_IDX] = {
+      .k = 1.2f,
+      .p = 1.0f,
+      .i = 0.0f,
+      .d = 0.012f,
       .i_limit = 1.0f,
       .out_limit = 1.0f,
       .d_cutoff_freq = -1.0f,

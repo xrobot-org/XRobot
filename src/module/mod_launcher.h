@@ -30,6 +30,14 @@ enum launcher_acuator_trig_e {
   LAUNCHER_ACTR_TRIG_NUM, /* 总共的动作器数量 */
 };
 
+enum launcher_pid_e {
+  LAUNCHER_CTRL_FRIC1_SPEED_IDX = 0, /* 摩擦轮1控制的速度环控制器的索引值 */
+  LAUNCHER_CTRL_FRIC2_SPEED_IDX, /* 摩擦轮2控制的速度环控制器的索引值 */
+  LAUNCHER_CTRL_TRIG_SPEED_IDX, /* 拨弹电机控制的速度环控制器的索引值 */
+  LAUNCHER_CTRL_TRIG_ANGLE_IDX, /* 拨弹电机控制的角度环控制器的索引值 */
+  LAUNCHER_CTRL_NUM,            /* 总共的控制器数量 */
+};
+
 /* 发射机构型号 */
 typedef enum {
   LAUNCHER_MODEL_17MM = 0, /* 17mm发射机构 */
@@ -38,8 +46,7 @@ typedef enum {
 
 /* 发射器参数的结构体，包含所有初始化用的参数，通常是const，存好几组。*/
 typedef struct {
-  kpid_params_t fric_pid_param; /* 摩擦轮电机控制PID的参数 */
-  kpid_params_t trig_pid_param; /* 拨弹电机控制PID的参数 */
+  kpid_params_t pid_param[LAUNCHER_CTRL_NUM]; /* 电机控制PID的参数 */
   /* 低通滤波器截止频率 */
   struct {
     /* 输入 */
@@ -107,6 +114,7 @@ typedef struct {
     float fric_rpm[2];      /* 摩擦轮电机转速，单位：RPM */
     float trig_motor_angle; /* 拨弹电机角度，单位：弧度 */
     float trig_angle;       /* 拨弹转盘角度，单位：弧度 */
+    float trig_rpm;
   } feedback;
 
   /* PID计算的目标值 */
@@ -116,10 +124,7 @@ typedef struct {
   } setpoint;
 
   /* 反馈控制用的PID */
-  struct {
-    kpid_t fric[LAUNCHER_ACTR_FRIC_NUM]; /* 控制摩擦轮 */
-    kpid_t trig[LAUNCHER_ACTR_TRIG_NUM]; /* 控制拨弹电机 */
-  } pid;
+  kpid_t pid[LAUNCHER_CTRL_NUM];
 
   /* 过滤器 */
   struct {
