@@ -92,6 +92,7 @@ int8_t dr16_parse_rc(const dr16_t *dr16, cmd_rc_t *rc) {
   ASSERT(rc);
 
   if (dr16_data_corrupted(dr16)) {
+    bsp_uart_reset(BSP_UART_DR16);
     return DEVICE_ERR;
   } else {
     memset(rc, 0, sizeof(*rc));

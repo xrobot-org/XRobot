@@ -88,7 +88,8 @@ UART_HandleTypeDef *bsp_uart_get_handle(bsp_uart_t uart) {
 }
 
 int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,
-                                 void (*callback)(void *), void *callback_arg) {
+                                  void (*callback)(void *),
+                                  void *callback_arg) {
   ASSERT(callback);
   ASSERT(type != BSP_UART_CB_NUM);
 
@@ -97,18 +98,44 @@ int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,
   return BSP_OK;
 }
 
-int8_t bsp_uart_transmit(bsp_uart_t uart, uint8_t *data, size_t size, bool block){
+int8_t bsp_uart_reset(bsp_uart_t uart) {
+  HAL_UART_DMAStop(bsp_uart_get_handle(uart));
+
+  switch (uart) {
+    case BSP_UART_DR16:
+      MX_USART3_UART_Init();
+      break;
+    case BSP_UART_REF:
+      MX_USART1_UART_Init();
+      break;
+    case BSP_UART_AI:
+      MX_USART6_UART_Init();
+      break;
+    default:
+      return BSP_ERR;
+  }
+
+  return BSP_OK;
+}
+
+int8_t bsp_uart_transmit(bsp_uart_t uart, uint8_t *data, size_t size,
+                         bool block) {
   if (block) {
-    return HAL_UART_Transmit(bsp_uart_get_handle(uart), data, size, 10) != HAL_OK;
+    return HAL_UART_Transmit(bsp_uart_get_handle(uart), data, size, 10) !=
+           HAL_OK;
   } else {
-    return HAL_UART_Transmit_DMA(bsp_uart_get_handle(uart), data, size) != HAL_OK;
+    return HAL_UART_Transmit_DMA(bsp_uart_get_handle(uart), data, size) !=
+           HAL_OK;
   }
 }
 
-int8_t bsp_uart_receive(bsp_uart_t uart, uint8_t *buff, size_t size, bool block){
+int8_t bsp_uart_receive(bsp_uart_t uart, uint8_t *buff, size_t size,
+                        bool block) {
   if (block) {
-    return HAL_UART_Receive(bsp_uart_get_handle(uart), buff, size, 10) != HAL_OK;
+    return HAL_UART_Receive(bsp_uart_get_handle(uart), buff, size, 10) !=
+           HAL_OK;
   } else {
-    return HAL_UART_Receive_DMA(bsp_uart_get_handle(uart), buff, size) != HAL_OK;
+    return HAL_UART_Receive_DMA(bsp_uart_get_handle(uart), buff, size) !=
+           HAL_OK;
   }
 }

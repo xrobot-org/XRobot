@@ -34,6 +34,7 @@ typedef enum {
 } bsp_uart_callback_t;
 
 UART_HandleTypeDef *bsp_uart_get_handle(bsp_uart_t uart);
+int8_t bsp_uart_reset(bsp_uart_t uart);
 int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,
                                   void (*callback)(void *), void *callback_arg);
 int8_t bsp_uart_transmit(bsp_uart_t uart, uint8_t *data, size_t size,
