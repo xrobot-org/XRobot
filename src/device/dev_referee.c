@@ -97,9 +97,10 @@ static void referee_slow_refresh_timer_callback(TimerHandle_t arg) {
 
 static int8_t referee_set_packet_header(referee_header_t *header,
                                         uint16_t data_length) {
+  static uint8_t seq = 0;
   header->sof = REF_HEADER_SOF;
   header->data_length = data_length;
-  header->seq = 0;
+  header->seq = seq++;
   header->crc8 =
       crc8_calc((const uint8_t *)header,
                 sizeof(referee_header_t) - sizeof(uint8_t), CRC8_INIT);
