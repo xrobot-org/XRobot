@@ -50,26 +50,26 @@ const config_robot_param_t param_robot = {
 
     .ff = {
         /* GIMBAL_CTRL_PIT_FEEDFORWARD */
-        .a = 0.0f,
-        .b =0.0f,
-        .c =0.0f,
-        .max =0.0f,
-        .min =0.0f,
+        .a = -0.5481f,
+        .b = -0.0996f,
+        .c = -0.0337f,
+        .max = 0.1f,
+        .min = -0.5f,
     }, /* ff */
 
     .st = {
         /* GIMBAL_CTRL_YAW_SELF_TUNING */
-        .a = 0.0677f,
-        .b = 0.1653f,
-        .c = 0.3379f,
-        .max = 0.37f,
-        .min = 0.29f,
+        .a = -0.3316f,
+        .b = 0.0653f,
+        .c = 0.8994f,
+        .max = 0.92f,
+        .min = 0.75f,
     }, /* st */
 
     .pid = {
       {
         /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-        .k = 0.45f,
+        .k = 0.05f,
         .p = 1.0f,
         .i = 6.0f,
         .d = 0.0008f,
@@ -89,9 +89,9 @@ const config_robot_param_t param_robot = {
         .range = M_2PI,
       }, {
         /* GIMBAL_CTRL_PIT_OMEGA_IDX */
-        .k = 0.25f,
+        .k = 0.3f,
         .p = 1.0f,
-        .i = 0.0f,
+        .i = 1.5f,
         .d = 0.0f,
         .i_limit = 1.0f,
         .out_limit = 1.0f,
@@ -146,7 +146,7 @@ const config_robot_param_t param_robot = {
     },
 
     .pid_param[LAUNCHER_CTRL_TRIG_SPEED_IDX] = {
-      .k = 0.001f,
+      .k = 0.0015f,
       .p = 1.0f,
       .i = 0.0f,
       .d = 0.03f,
@@ -156,7 +156,7 @@ const config_robot_param_t param_robot = {
     },
 
     .pid_param[LAUNCHER_CTRL_TRIG_ANGLE_IDX] = {
-      .k = 1.2f,
+      .k = 0.6f,
       .p = 1.0f,
       .i = 0.0f,
       .d = 0.012f,
@@ -189,8 +189,8 @@ const config_robot_param_t param_robot = {
 
   .imu = {
     .rot_mat = {
-      { +1, +0, +0},
-      { +0, +1, +0},
+      { -1, +0, +0},
+      { +0, -1, +0},
       { +0, +0, +1},
     },
   }, /* imu */
@@ -215,7 +215,7 @@ const config_robot_param_t param_robot = {
       .id_control = M3508_M2006_CTRL_ID_EXTAND,
       .model = {MOTOR_M2006, MOTOR_NONE, MOTOR_NONE, MOTOR_NONE},
       .num = 1,
-      .can = BSP_CAN_2,
+      .can = BSP_CAN_1,
     },
     [MOTOR_GROUP_ID_GIMBAL_YAW] = {
       .id_feedback = 0x209,
