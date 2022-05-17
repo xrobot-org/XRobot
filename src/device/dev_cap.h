@@ -37,6 +37,7 @@ typedef struct {
   const cap_param_t *param;
   uint32_t mailbox;
   cap_feedback_t feedback;
+  bool online;
 } cap_t;
 
 err_t cap_init(cap_t *cap, const cap_param_t *param);

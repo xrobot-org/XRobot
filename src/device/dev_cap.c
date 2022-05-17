@@ -62,8 +62,10 @@ err_t cap_update(cap_t *cap, uint32_t timeout) {
   while (pdPASS ==
          xQueueReceive(cap->msgq_feedback, &rx, pdMS_TO_TICKS(timeout))) {
     cap_decode(&(cap->feedback), rx.data);
+    cap->online = 1;
+    return RM_OK;
   }
-  return RM_OK;
+  return ERR_FAIL;
 }
 
 err_t cap_control(cap_t *cap, cap_control_t *output) {
@@ -87,10 +89,12 @@ err_t cap_handle_offline(cap_t *cap) {
   cap->feedback.input_curr = 0;
   cap->feedback.input_volt = 0;
   cap->feedback.target_power = 0;
+  cap->online = 0;
   return RM_OK;
 }
 
 err_t cap_pack_ui(const cap_t *cap, ui_cap_t *ui) {
   ui->percentage = cap->feedback.percentage;
+  ui->online = cap->online;
   return RM_OK;
 }
