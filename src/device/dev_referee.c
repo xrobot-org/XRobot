@@ -642,11 +642,9 @@ uint8_t referee_refresh_ui(referee_trans_t *ref) {
 
       default:
         ref->ui.refresh_fsm = 0;
+        if (graphic_op == UI_GRAPHIC_OP_ADD) graphic_op = UI_GRAPHIC_OP_REWRITE;
     }
   }
-
-  if (graphic_op == UI_GRAPHIC_OP_ADD && ref->ui.refresh_fsm == 1)
-    graphic_op = UI_GRAPHIC_OP_REWRITE;
 
 #elif UI_MODE_REMOTE
   if (xSemaphoreTake(ref->sem.ui_fast_refresh, 0)) {
@@ -688,15 +686,15 @@ int8_t referee_pack_ui_packet(referee_trans_t *ref) {
       size_data_content = sizeof(ui_ele_t) * 1;
       ui_cmd_id = REF_STDNT_CMD_ID_UI_DRAW1;
 
-    } else if (ref->ui.stack.size.graphic <= 2) {
+    } else if (ref->ui.stack.size.graphic == 2) {
       size_data_content = sizeof(ui_ele_t) * 2;
       ui_cmd_id = REF_STDNT_CMD_ID_UI_DRAW2;
 
-    } else if (ref->ui.stack.size.graphic <= 5) {
+    } else if (ref->ui.stack.size.graphic == 5) {
       size_data_content = sizeof(ui_ele_t) * 5;
       ui_cmd_id = REF_STDNT_CMD_ID_UI_DRAW5;
 
-    } else if (ref->ui.stack.size.graphic <= 7) {
+    } else if (ref->ui.stack.size.graphic == 7) {
       size_data_content = sizeof(ui_ele_t) * 7;
       ui_cmd_id = REF_STDNT_CMD_ID_UI_DRAW7;
 
