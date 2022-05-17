@@ -21,11 +21,14 @@
 
 static bool inited = false;
 
-static uint32_t motor_ctrl_id_map[] = {M3508_M2006_CTRL_ID_BASE,
-                                       M3508_M2006_CTRL_ID_EXTAND,
-                                       GM6020_CTRL_ID_EXTAND};
+static const uint32_t MOTOR_CTRL_ID_MAP[] = {M3508_M2006_CTRL_ID_BASE,
+                                             M3508_M2006_CTRL_ID_EXTAND,
+                                             GM6020_CTRL_ID_EXTAND};
 
-#define MOTOR_CTRL_ID_NUMBER (sizeof(motor_ctrl_id_map) / sizeof(uint32_t))
+static const char *MOTOR_GROUP_NAME_MAP[] = {
+    "chassis", "gimbal_yaw", "gimbal_pit", "launcher_fric", "launcher_trig"};
+
+#define MOTOR_CTRL_ID_NUMBER (sizeof(MOTOR_CTRL_ID_MAP) / sizeof(uint32_t))
 
 static uint8_t motor_tx_buff[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER][CAN_DATA_SIZE];
 static bool motor_tx_map[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
@@ -119,6 +122,7 @@ om_status_t motor_rx_callback(om_msg_t *msg, void *arg) {
 err_t motor_init(motor_t *motor, const motor_group_t *group_cfg) {
   ASSERT(motor);
   ASSERT(group_cfg);
+  ASSERT(sizeof(MOTOR_GROUP_NAME_MAP) / sizeof(char *) == MOTOR_GROUP_ID_NUM);
 
   bsp_can_wait_init();
 
@@ -126,11 +130,10 @@ err_t motor_init(motor_t *motor, const motor_group_t *group_cfg) {
   motor->group_cfg = group_cfg;
 
   char tp_name[OM_TOPIC_MAX_NAME_LEN] = {0};
-  uint8_t tp_num = 0;
 
   const motor_group_t *group = motor->group_cfg;
   for (int i = 0; i < MOTOR_GROUP_ID_NUM; i++) {
-    snprintf(tp_name, OM_LOG_MAX_LEN, "can_motor_%d", tp_num);
+    snprintf(tp_name, OM_LOG_MAX_LEN, "can_motor_%s", MOTOR_GROUP_NAME_MAP[i]);
     motor->msgq[i] = xQueueCreate(1, sizeof(can_rx_item_t));
     om_topic_t *motor_tp = om_config_topic(NULL, "DVA", tp_name,
                                            motor_rx_callback, motor->msgq[i]);
@@ -139,7 +142,6 @@ err_t motor_init(motor_t *motor, const motor_group_t *group_cfg) {
                                 group->num);
 
     group++;
-    tp_num++;
   }
 
   inited = true;
@@ -171,7 +173,7 @@ err_t motor_pack_data(motor_t *motor, motor_group_id_t group,
   uint8_t *data = NULL;
 
   for (uint32_t i = 0; i < MOTOR_CTRL_ID_NUMBER; i++) {
-    if (motor->group_cfg[group].id_control == motor_ctrl_id_map[i]) {
+    if (motor->group_cfg[group].id_control == MOTOR_CTRL_ID_MAP[i]) {
       motor_tx_map[motor->group_cfg[group].can][i] = true;
       data = motor_tx_buff[motor->group_cfg[group].can][i];
       break;
@@ -200,7 +202,7 @@ err_t motor_control(motor_t *motor) {
   for (uint32_t i = 0; i < BSP_CAN_NUM; i++) {
     for (uint32_t t = 0; t < MOTOR_CTRL_ID_NUMBER; t++) {
       if (motor_tx_map[i][t])
-        bsp_can_trans_packet(i, motor_ctrl_id_map[t], motor_tx_buff[i][t],
+        bsp_can_trans_packet(i, MOTOR_CTRL_ID_MAP[t], motor_tx_buff[i][t],
                              &motor->mailbox, 1);
     }
   }
