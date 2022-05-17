@@ -58,10 +58,11 @@ void thd_ref_trans(void* arg) {
     /* 刷新UI数据 */
     referee_refresh_ui(&ref);
 
-    if (referee_wait_trans_cplt(&ref, 0)) {
-      referee_pack_ui_packet(&ref);
-      referee_start_transmit(&ref);
-    }
+    if (!referee_ui_stack_empty(&ref))
+      if (referee_wait_trans_cplt(&ref, 0)) {
+        referee_pack_ui_packet(&ref);
+        referee_start_transmit(&ref);
+      }
 
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }

@@ -120,6 +120,14 @@ static int8_t referee_set_ui_header(referee_inter_student_header_t *header,
   return DEVICE_OK;
 }
 
+bool referee_ui_stack_empty(referee_trans_t *ref) {
+  ASSERT(ref);
+  if (ref->ui.stack.size.string || ref->ui.stack.size.graphic ||
+      ref->ui.stack.size.del)
+    return false;
+  return true;
+}
+
 int8_t referee_recv_init(referee_recv_t *ref) {
   ASSERT(ref);
   if (recv_inited) return DEVICE_ERR_INITED;

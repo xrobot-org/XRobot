@@ -382,6 +382,7 @@ typedef struct {
   referee_launcher_data_t launcher_data;
 } referee_for_launcher_t;
 
+bool referee_ui_stack_empty(referee_trans_t *ref);
 int8_t referee_trans_init(referee_trans_t *ref, const ui_screen_t *screen);
 int8_t referee_recv_init(referee_recv_t *ref);
 int8_t referee_restart(void);

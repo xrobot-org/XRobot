@@ -95,11 +95,11 @@ menu "操作手UI"
 config UI_DYNAMIC_CYCLE
     int "动态元素刷新周期"
     range 1 1000
-    default 50
+    default 20
 
 config UI_STATIC_CYCLE
     int "静态元素刷新周期"
-    range 100 10000
+    range 50 2000
     default 1000
 
 endmenu
