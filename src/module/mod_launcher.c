@@ -359,4 +359,12 @@ void launcher_pack_ui(launcher_t *l, ui_launcher_t *ui) {
   ASSERT(ui);
   ui->mode = l->mode;
   ui->fire = l->fire_ctrl.fire_mode;
+  ui->trig = l->feedback.trig_angle;
+  if (l->setpoint.fric_rpm[0] == 0) {
+    ui->fric_percent[0] = 0;
+    ui->fric_percent[1] = 0;
+  } else {
+    ui->fric_percent[0] = l->feedback.fric_rpm[0] / l->setpoint.fric_rpm[0];
+    ui->fric_percent[1] = l->feedback.fric_rpm[1] / l->setpoint.fric_rpm[1];
+  }
 }

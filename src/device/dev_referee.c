@@ -371,7 +371,7 @@ uint8_t referee_refresh_ui(referee_trans_t *ref) {
   /* UI静态元素刷新 */
   if (xSemaphoreTake(ref->sem.ui_slow_refresh, 0)) {
     graphic_op = UI_GRAPHIC_OP_ADD;
-    ref->ui.refresh_fsm = 1;
+    ref->ui.refresh_fsm = 0;
 
     ui_draw_string(&string, "8", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
                    UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
@@ -428,47 +428,6 @@ uint8_t referee_refresh_ui(referee_trans_t *ref) {
     switch (ref->ui.refresh_fsm) {
       case 0: {
         ref->ui.refresh_fsm++;
-
-        /* 更新云台底盘相对方位 */
-        const float kLEN = 22;
-        ui_draw_line(
-            &ele, "1", graphic_op, UI_GRAPHIC_LAYER_CHASSIS, UI_GREEN,
-            UI_DEFAULT_WIDTH * 12, (uint16_t)(kW * 0.4f), (uint16_t)(kH * 0.2f),
-            (uint16_t)(kW * 0.4f + sinf(ref->chassis_ui.angle) * 2 * kLEN),
-            (uint16_t)(kH * 0.2f + cosf(ref->chassis_ui.angle) * 2 * kLEN));
-
-        ui_stash_graphic(&(ref->ui), &ele);
-
-        /* 更新底盘模式选择框 */
-        switch (ref->chassis_ui.mode) {
-          case CHASSIS_MODE_FOLLOW_GIMBAL:
-            box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
-            box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
-            break;
-          case CHASSIS_MODE_FOLLOW_GIMBAL_35:
-            box_pos_left = REF_UI_MODE_OFFSET_3_LEFT;
-            box_pos_right = REF_UI_MODE_OFFSET_3_RIGHT;
-            break;
-          case CHASSIS_MODE_ROTOR:
-            box_pos_left = REF_UI_MODE_OFFSET_4_LEFT;
-            box_pos_right = REF_UI_MODE_OFFSET_4_RIGHT;
-            break;
-          default:
-            box_pos_left = 0.0f;
-            box_pos_right = 0.0f;
-            break;
-        }
-        if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
-          ui_draw_rectangle(
-              &ele, "2", graphic_op, UI_GRAPHIC_LAYER_CHASSIS, UI_GREEN,
-              UI_DEFAULT_WIDTH,
-              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_left),
-              (uint16_t)(kH * REF_UI_MODE_LINE1_H + REF_UI_BOX_UP_OFFSET),
-              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_right),
-              (uint16_t)(kH * REF_UI_MODE_LINE1_H + REF_UI_BOX_BOT_OFFSET));
-
-          ui_stash_graphic(&(ref->ui), &ele);
-        }
 
         /* 更新电容状态 */
         if (ref->cap_ui.online) {
@@ -595,6 +554,84 @@ uint8_t referee_refresh_ui(referee_trans_t *ref) {
         ui_stash_graphic(&(ref->ui), &ele);
         break;
       }
+      case 1: {
+        ref->ui.refresh_fsm++;
+
+        /*更新拨弹电机状态*/
+        float trig_start = ref->launcher_ui.trig / M_2PI * 360.f;
+        float trig_end = ref->launcher_ui.trig / M_2PI * 360.f;
+        circle_add(&trig_end, 60.0f, 360);
+        if (trig_end >= 360.f) trig_end = 360.f;
+        ui_draw_arc(&ele, "f", graphic_op, UI_GRAPHIC_LAYER_LAUNCHER, UI_GREEN,
+                    (uint16_t)trig_start, (uint16_t)trig_end,
+                    UI_DEFAULT_WIDTH * 5, (uint16_t)(kW * 0.4f),
+                    (uint16_t)(kH * 0.1f), 50, 50);
+        ui_stash_graphic(&(ref->ui), &ele);
+
+        /*更新摩擦轮电机状态*/
+        if (ref->launcher_ui.fric_percent[0] == 0 ||
+            ref->launcher_ui.fric_percent[1] == 0) {
+          ui_draw_arc(&ele, "g", graphic_op, UI_GRAPHIC_LAYER_LAUNCHER,
+                      UI_YELLOW, 0, 360, UI_DEFAULT_WIDTH * 5,
+                      (uint16_t)(kW * 0.6f), (uint16_t)(kH * 0.1f), 50, 50);
+        } else {
+          ui_draw_arc(&ele, "g", graphic_op, UI_GRAPHIC_LAYER_LAUNCHER,
+                      UI_GREEN,
+                      (uint16_t)180 - 170 * ref->launcher_ui.fric_percent[0],
+                      (uint16_t)(180 + 170 * ref->launcher_ui.fric_percent[1]),
+                      UI_DEFAULT_WIDTH * 5, (uint16_t)(kW * 0.6f),
+                      (uint16_t)(kH * 0.1f), 50, 50);
+        }
+        ui_stash_graphic(&(ref->ui), &ele);
+
+        break;
+      }
+
+      case 2: {
+        ref->ui.refresh_fsm++;
+        /* 更新云台底盘相对方位 */
+        const float kLEN = 22;
+        ui_draw_line(
+            &ele, "1", graphic_op, UI_GRAPHIC_LAYER_CHASSIS, UI_GREEN,
+            UI_DEFAULT_WIDTH * 12, (uint16_t)(kW * 0.4f), (uint16_t)(kH * 0.2f),
+            (uint16_t)(kW * 0.4f + sinf(ref->chassis_ui.angle) * 2 * kLEN),
+            (uint16_t)(kH * 0.2f + cosf(ref->chassis_ui.angle) * 2 * kLEN));
+
+        ui_stash_graphic(&(ref->ui), &ele);
+
+        /* 更新底盘模式选择框 */
+        switch (ref->chassis_ui.mode) {
+          case CHASSIS_MODE_FOLLOW_GIMBAL:
+            box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
+            box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
+            break;
+          case CHASSIS_MODE_FOLLOW_GIMBAL_35:
+            box_pos_left = REF_UI_MODE_OFFSET_3_LEFT;
+            box_pos_right = REF_UI_MODE_OFFSET_3_RIGHT;
+            break;
+          case CHASSIS_MODE_ROTOR:
+            box_pos_left = REF_UI_MODE_OFFSET_4_LEFT;
+            box_pos_right = REF_UI_MODE_OFFSET_4_RIGHT;
+            break;
+          default:
+            box_pos_left = 0.0f;
+            box_pos_right = 0.0f;
+            break;
+        }
+        if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
+          ui_draw_rectangle(
+              &ele, "2", graphic_op, UI_GRAPHIC_LAYER_CHASSIS, UI_GREEN,
+              UI_DEFAULT_WIDTH,
+              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_left),
+              (uint16_t)(kH * REF_UI_MODE_LINE1_H + REF_UI_BOX_UP_OFFSET),
+              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_right),
+              (uint16_t)(kH * REF_UI_MODE_LINE1_H + REF_UI_BOX_BOT_OFFSET));
+
+          ui_stash_graphic(&(ref->ui), &ele);
+        }
+        break;
+      }
+
       default:
         ref->ui.refresh_fsm = 0;
     }
