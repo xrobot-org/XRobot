@@ -1,16 +1,9 @@
-#include "hal.h"
+#include "bsp.h"
 #include "thd.h"
 
 int main(void) {
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick.
-   */
-  HAL_Init();
-
-  /* Configure the system clock */
-  SystemClock_Config();
-
-  /* Initialize all configured peripherals */
-  HAL_InitPeripherals();
+  /* Init Clock and Peripheral */
+  bsp_init();
 
   /* Init task */
   thd_init();
