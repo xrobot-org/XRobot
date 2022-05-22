@@ -1,23 +1,21 @@
 #include "dev_laser.h"
 
-#include "hal_tim.h"
+#include "bsp_pwm.h"
 
 int8_t laser_start(void) {
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+  bsp_pwm_start(BSP_PWM_LASER);
   return 0;
 }
 
 int8_t laser_set(float duty_cycle) {
   if (duty_cycle > 1.0f) return -1;
 
-  uint16_t pulse = (uint16_t)(duty_cycle * (float)UINT16_MAX);
-
-  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_3, pulse);
+  bsp_pwm_set_comp(BSP_PWM_LASER, duty_cycle);
 
   return 0;
 }
 
 int8_t laser_stop(void) {
-  HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_3);
+  bsp_pwm_stop(BSP_PWM_LASER);
   return 0;
 }

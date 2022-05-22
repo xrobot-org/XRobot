@@ -72,8 +72,8 @@ void thd_imu(void* arg) {
     // TODO: 添加滤波
 
     /* PID控制IMU温度，PWM输出 */
-    bsp_pwm_set(BSP_PWM_IMU_HEAT,
-                kpid_calc(&imu_temp_ctrl_pid, 40.0f, bmi088.temp, 0.0f, 0.0f));
+    bsp_pwm_set_comp(BSP_PWM_IMU_HEAT, kpid_calc(&imu_temp_ctrl_pid, 40.0f,
+                                                 bmi088.temp, 0.0f, 0.0f));
   }
 }
 THREAD_DECLEAR(thd_imu, 256, 4);

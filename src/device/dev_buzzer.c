@@ -1,22 +1,20 @@
 #include "dev_buzzer.h"
 
-#include "hal_tim.h"
+#include "bsp_pwm.h"
 
 int8_t buzzer_start(void) {
-  if (HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3) == HAL_OK) return 0;
+  if (bsp_pwm_start(BSP_PWM_BUZZER) == BSP_OK) return 0;
   return -1;
 }
 
 int8_t buzzer_set(float freq, float duty_cycle) {
-  uint16_t pulse = (uint16_t)(duty_cycle * (float)UINT16_MAX);
-  __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, pulse);
+  bsp_pwm_set_comp(BSP_PWM_BUZZER, duty_cycle);
+  bsp_pwm_set_freq(BSP_PWM_BUZZER, freq);
 
-  pulse = (uint16_t)freq;
-  __HAL_TIM_PRESCALER(&htim4, pulse);
   return 0;
 }
 
 int8_t buzzer_stop(void) {
-  if (HAL_TIM_PWM_Stop(&htim4, TIM_CHANNEL_3) == HAL_OK) return 0;
+  if (bsp_pwm_start(BSP_PWM_BUZZER) == BSP_OK) return 0;
   return -1;
 }
