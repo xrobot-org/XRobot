@@ -1,8 +1,5 @@
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
-
 #include "bsp.h"
 
 /* Base address of the Flash sectors */

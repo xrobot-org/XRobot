@@ -1,8 +1,6 @@
 #include "bsp_flash.h"
 
-#include <string.h>
-
-#include "hal.h"
+#include "main.h"
 
 void bsp_flash_erase_sector(uint32_t sector) {
   FLASH_EraseInitTypeDef flash_erase;

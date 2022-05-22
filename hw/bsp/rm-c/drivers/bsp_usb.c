@@ -1,11 +1,5 @@
 #include "bsp_usb.h"
 
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
-
-#include "bsp_delay.h"
-#include "comp_utils.h"
 #include "tusb.h"
 
 #define BSP_USB_MAX_RX_LEN 1024

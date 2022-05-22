@@ -1,7 +1,9 @@
 #include "bsp_spi.h"
 
-#include "comp_utils.h"
-#include "hal_spi.h"
+#include "main.h"
+
+extern SPI_HandleTypeDef hspi1;
+extern SPI_HandleTypeDef hspi2;
 
 static bsp_callback_t callback_list[BSP_SPI_NUM][BSP_SPI_CB_NUM];
 

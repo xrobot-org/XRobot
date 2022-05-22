@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-
 #include "bsp.h"
 /* PWM通道 */
 typedef enum {

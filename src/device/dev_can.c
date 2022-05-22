@@ -11,7 +11,7 @@ static bool inited = false;
 static can_rx_item_t raw_rx1, raw_rx2;
 
 static void can_can1_rx_fifo_msg_pending_callback(void *arg) {
-  UNUSED(arg);
+  RM_UNUSED(arg);
 
   while (bsp_can_get_msg(BSP_CAN_1, &raw_rx1) == BSP_OK) {
     om_publish(bsp_can_get_topic(BSP_CAN_1), OM_PRASE_VAR(raw_rx1), true, true);
@@ -19,7 +19,7 @@ static void can_can1_rx_fifo_msg_pending_callback(void *arg) {
 }
 
 static void can_can2_rx_fifo_msg_pending_callback(void *arg) {
-  UNUSED(arg);
+  RM_UNUSED(arg);
 
   while (bsp_can_get_msg(BSP_CAN_2, &raw_rx2) == BSP_OK) {
     om_publish(bsp_can_get_topic(BSP_CAN_2), OM_PRASE_VAR(raw_rx2), true, true);

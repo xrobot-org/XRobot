@@ -1,9 +1,5 @@
 #pragma once
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
-
 #include "bsp.h"
 
 /* Exported constants ------------------------------------------------------- */

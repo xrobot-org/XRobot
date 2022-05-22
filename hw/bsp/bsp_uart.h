@@ -1,10 +1,7 @@
 #pragma once
 
-#include <stdbool.h>
-#include <stdint.h>
-
 #include "bsp.h"
-#include "hal_usart.h"
+#include "main.h"
 
 /* 要添加使用UART的新设备，需要先在此添加对应的枚举值 */
 
@@ -33,6 +30,7 @@ typedef enum {
   BSP_UART_CB_NUM,
 } bsp_uart_callback_t;
 
+// TODO:移除UART_HandleTypeDef
 UART_HandleTypeDef *bsp_uart_get_handle(bsp_uart_t uart);
 int8_t bsp_uart_reset(bsp_uart_t uart);
 int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,

@@ -1,7 +1,6 @@
 #pragma once
 
-#include <stdbool.h>
-#include <stdint.h>
+#include "bsp.h"
 
 /* 电源输出接口 */
 typedef enum {

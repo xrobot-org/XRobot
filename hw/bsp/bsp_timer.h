@@ -1,9 +1,6 @@
 #pragma once
 
-#include <stdint.h>
-
 #include "bsp.h"
-#include "hal_tim.h"
 
 /* 要添加使用SPI的新设备，需要先在此添加对应的枚举值 */
 
@@ -29,7 +26,6 @@ typedef enum {
   BSP_TIMER_CB_NUM,
 } bsp_timer_callback_t;
 
-TIM_HandleTypeDef *bsp_timer_get_handle(bsp_timer_t timer);
 uint64_t bsp_timer_get_realtime();
 int8_t bsp_timer_register_callback(bsp_timer_t timer, bsp_timer_callback_t type,
                                    void (*callback)(void));

@@ -41,22 +41,19 @@ static TaskHandle_t thread_alert;
 static bool inited = false;
 
 static void ist8310_write_single(uint8_t reg, uint8_t data) {
-  bsp_i2c_mem_write(BSP_I2C_COMP, IST8310_IIC_ADDRESS, reg,
-                    I2C_MEMADD_SIZE_8BIT, &data, 1, true);
+  bsp_i2c_mem_write(BSP_I2C_COMP, IST8310_IIC_ADDRESS, reg, &data, 1, true);
 }
 
 static uint8_t ist8310_read_single(uint8_t reg) {
   uint8_t buf = 0;
-  bsp_i2c_mem_read(BSP_I2C_COMP, IST8310_IIC_ADDRESS, reg,
-                   I2C_MEMADD_SIZE_8BIT, &buf, 1, true);
+  bsp_i2c_mem_read(BSP_I2C_COMP, IST8310_IIC_ADDRESS, reg, &buf, 1, true);
   return buf;
 }
 
 static void ist8310_read(uint8_t reg, uint8_t *data, uint8_t len) {
   ASSERT(data);
 
-  bsp_i2c_mem_read(BSP_I2C_COMP, IST8310_IIC_ADDRESS,
-                  reg, I2C_MEMADD_SIZE_8BIT, data, len, false);
+  bsp_i2c_mem_read(BSP_I2C_COMP, IST8310_IIC_ADDRESS, reg, data, len, false);
 }
 
 static void ist8310_mem_rx_cplt_callback(void *arg) {
@@ -89,11 +86,11 @@ int8_t ist8310_init(ist8310_t *ist8310, const ist8310_cali_t *cali) {
   if (ist8310_read_single(IST8310_WAI) != IST8310_CHIP_ID)
     return DEVICE_ERR_NO_DEV;
 
-  bsp_gpio_disable_irq(CMPS_INT_Pin);
+  bsp_gpio_disable_irq(BSP_GPIO_CMPS_INT);
 
   bsp_i2c_register_callback(BSP_I2C_COMP, HAL_I2C_MEM_RX_CPLT_CB,
                             ist8310_mem_rx_cplt_callback, ist8310);
-  bsp_gpio_register_callback(CMPS_INT_Pin, ist8310_int_callback, ist8310);
+  bsp_gpio_register_callback(BSP_GPIO_CMPS_INT, ist8310_int_callback, ist8310);
 
   /* Init. */
   /* 0x00: Stand-By mode. 0x01: Single measurement mode. */
@@ -108,7 +105,7 @@ int8_t ist8310_init(ist8310_t *ist8310, const ist8310_cali_t *cali) {
 
   inited = true;
 
-  bsp_gpio_enable_irq(CMPS_INT_Pin);
+  bsp_gpio_enable_irq(BSP_GPIO_CMPS_INT);
   return DEVICE_OK;
 }
 

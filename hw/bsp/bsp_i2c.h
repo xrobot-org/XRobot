@@ -1,10 +1,6 @@
 #pragma once
 
-#include <stdbool.h>
-#include <stdint.h>
-
 #include "bsp.h"
-#include "hal_i2c.h"
 
 /* 要添加使用I2C的新设备，需要先在此添加对应的枚举值 */
 
@@ -30,13 +26,11 @@ typedef enum {
   BSP_I2C_CB_NUM,
 } bsp_i2c_callback_t;
 
-I2C_HandleTypeDef *bsp_i2c_get_handle(bsp_i2c_t i2c);
 int8_t bsp_i2c_register_callback(bsp_i2c_t i2c, bsp_i2c_callback_t type,
                                  void (*callback)(void *), void *callback_arg);
 
 int8_t bsp_i2c_mem_read(bsp_i2c_t i2c, uint16_t devaddress, uint16_t memaddress,
-                        size_t memaddsize, uint8_t *data, size_t size,
-                        bool block);
+                        uint8_t *data, size_t size, bool block);
 int8_t bsp_i2c_mem_write(bsp_i2c_t i2c, uint16_t devaddress,
-                         uint16_t memaddress, size_t memaddsize, uint8_t *data,
-                         size_t size, bool block);
+                         uint16_t memaddress, uint8_t *data, size_t size,
+                         bool block);

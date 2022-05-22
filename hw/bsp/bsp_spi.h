@@ -1,9 +1,5 @@
 #pragma once
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-
 #include "bsp.h"
 
 /* 要添加使用SPI的新设备，需要先在此添加对应的枚举值 */
@@ -17,6 +13,7 @@ typedef enum {
   BSP_SPI_ERR,
 } bsp_spi_t;
 
+//TODO：
 /* SPI支持的中断回调函数类型，具体参考HAL中定义 */
 typedef enum {
   BSP_SPI_TX_CPLT_CB,

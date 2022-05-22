@@ -1,6 +1,10 @@
 #include "bsp_uart.h"
 
-#include "comp_utils.h"
+#include "main.h"
+
+extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart3;
+extern UART_HandleTypeDef huart6;
 
 static bsp_callback_t callback_list[BSP_UART_NUM][BSP_UART_CB_NUM];
 

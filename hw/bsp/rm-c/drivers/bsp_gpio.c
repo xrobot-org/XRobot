@@ -1,6 +1,6 @@
 #include "bsp_gpio.h"
-#include "comp_utils.h"
-#include "hal.h"
+
+#include "main.h"
 
 typedef struct {
   uint16_t pin;
