@@ -1,7 +1,19 @@
-#include <string.h>
-
 #include "bsp_can.h"
-#include "comp_utils.h"
+
+#include "main.h"
+
+typedef struct {
+  CAN_RxHeaderTypeDef header;
+  uint8_t data[CAN_DATA_SIZE];
+} can_raw_rx_t;
+
+typedef struct {
+  CAN_TxHeaderTypeDef header;
+  uint8_t data[CAN_DATA_SIZE];
+} can_raw_tx_t;
+
+extern CAN_HandleTypeDef hcan1;
+extern CAN_HandleTypeDef hcan2;
 
 static om_topic_t *can_1_tp, *can_2_tp;
 

@@ -1,9 +1,6 @@
 #pragma once
 
-#include <stdint.h>
-
 #include "bsp.h"
-#include "hal_can.h"
 #include "om.h"
 
 #define CAN_DATA_SIZE (8)
@@ -17,6 +14,7 @@ typedef enum {
   BSP_CAN_ERR,
 } bsp_can_t;
 
+// TODO：与HAL库隔离，去除不必要的类型
 typedef enum {
   HAL_CAN_TX_MAILBOX0_CPLT_CB,
   HAL_CAN_TX_MAILBOX1_CPLT_CB,
@@ -33,16 +31,6 @@ typedef enum {
   HAL_CAN_ERROR_CB,
   BSP_CAN_CB_NUM
 } bsp_can_callback_t;
-
-typedef struct {
-  CAN_RxHeaderTypeDef header;
-  uint8_t data[CAN_DATA_SIZE];
-} can_raw_rx_t;
-
-typedef struct {
-  CAN_TxHeaderTypeDef header;
-  uint8_t data[CAN_DATA_SIZE];
-} can_raw_tx_t;
 
 typedef struct {
   uint32_t can_id;
