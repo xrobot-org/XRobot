@@ -11,9 +11,9 @@
  *
  */
 
+#include "bsp_adc.h"
 #include "comp_capacity.h"
 #include "comp_utils.h"
-#include "dev_adc.h"
 #include "dev_buzzer.h"
 #include "dev_led.h"
 #include "dev_rgb.h"
@@ -32,9 +32,9 @@ void thd_info(void* arg) {
   uint8_t led_fsm = 0;
 
   while (1) {
-    runtime->status.vbat = adc_get_batt_volt(); /* ADC监测电压 */
+    runtime->status.vbat = bsp_adc_get_batt_volt(); /* ADC监测电压 */
     runtime->status.battery = capacity_get_battery_remain(runtime->status.vbat);
-    runtime->status.cpu_temp = adc_get_cpu_temp();
+    runtime->status.cpu_temp = bsp_adc_get_cpu_temp();
 
     switch (led_fsm) {
       case 0:
