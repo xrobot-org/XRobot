@@ -1,10 +1,19 @@
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
-#include "hal_tim.h"
 #include "task.h"
 
 /* FreeRTOS Heap */
 uint8_t ucHeap[configTOTAL_HEAP_SIZE] __attribute__((section(".ccmram")));
+
+void SysTick_Handler(void) {
+#if (INCLUDE_xTaskGetSchedulerState == 1)
+  if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+#endif /* INCLUDE_xTaskGetSchedulerState */
+    xPortSysTickHandler();
+#if (INCLUDE_xTaskGetSchedulerState == 1)
+  }
+#endif
+}
 
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
   /* Run time stack overflow checking is performed if
