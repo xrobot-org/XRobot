@@ -1,5 +1,6 @@
 #include "bsp_usb.h"
 
+#include "main.h"
 #include "tusb.h"
 
 #define BSP_USB_MAX_RX_LEN 1024
@@ -63,8 +64,8 @@ static void bsp_usb_callback(bsp_usb_callback_t cb_type, bsp_usb_t bsp_usb) {
 
 int8_t bsp_usb_register_callback(bsp_usb_t usb, bsp_usb_callback_t type,
                                  void (*callback)(void *), void *callback_arg) {
-  ASSERT(callback);
-  ASSERT(type != BSP_USB_CB_NUM);
+  assert_param(callback);
+  assert_param(type != BSP_USB_CB_NUM);
 
   callback_list[usb][type].fn = callback;
   callback_list[usb][type].arg = callback_arg;

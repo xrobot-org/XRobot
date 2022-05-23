@@ -77,8 +77,8 @@ SPI_HandleTypeDef *bsp_spi_get_handle(bsp_spi_t spi) {
 
 int8_t bsp_spi_register_callback(bsp_spi_t spi, bsp_spi_callback_t type,
                                  void (*callback)(void *), void *callback_arg) {
-  ASSERT(callback);
-  ASSERT(type != BSP_SPI_CB_NUM);
+  assert_param(callback);
+  assert_param(type != BSP_SPI_CB_NUM);
 
   callback_list[spi][type].fn = callback;
   callback_list[spi][type].arg = callback_arg;

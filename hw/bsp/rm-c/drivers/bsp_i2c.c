@@ -78,7 +78,7 @@ static I2C_HandleTypeDef *bsp_i2c_get_handle(bsp_i2c_t i2c) {
 
 int8_t bsp_i2c_register_callback(bsp_i2c_t i2c, bsp_i2c_callback_t type,
                                  void (*callback)(void *), void *callback_arg) {
-  ASSERT(callback);
+  assert_param(callback);
   callback_list[i2c][type].fn = callback;
   callback_list[i2c][type].arg = callback_arg;
   return BSP_OK;

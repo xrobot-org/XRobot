@@ -9,8 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "comp_utils.h"
-
 typedef struct {
   void (*fn)(void *);
   void *arg;

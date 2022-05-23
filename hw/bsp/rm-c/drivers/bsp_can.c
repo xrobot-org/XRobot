@@ -166,8 +166,8 @@ void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
 
 int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
                                  void (*callback)(void *), void *callback_arg) {
-  ASSERT(callback);
-  ASSERT(type != BSP_CAN_CB_NUM);
+  assert_param(callback);
+  assert_param(type != BSP_CAN_CB_NUM);
 
   callback_list[can][type].fn = callback;
   callback_list[can][type].arg = callback_arg;

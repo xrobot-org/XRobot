@@ -94,8 +94,8 @@ UART_HandleTypeDef *bsp_uart_get_handle(bsp_uart_t uart) {
 int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,
                                   void (*callback)(void *),
                                   void *callback_arg) {
-  ASSERT(callback);
-  ASSERT(type != BSP_UART_CB_NUM);
+  assert_param(callback);
+  assert_param(type != BSP_UART_CB_NUM);
 
   callback_list[uart][type].fn = callback;
   callback_list[uart][type].arg = callback_arg;

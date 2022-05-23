@@ -37,7 +37,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
 int8_t bsp_gpio_register_callback(bsp_gpio_t gpio, void (*callback)(void *),
                                   void *callback_arg) {
-  ASSERT(callback);
+  assert_param(callback);
 
   uint16_t pin = bsp_gpio_map[gpio].pin;
 
