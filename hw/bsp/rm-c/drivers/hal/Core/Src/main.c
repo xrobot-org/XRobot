@@ -39,7 +39,7 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-ADC_HandleTypeDef hadc1;
+ ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc3;
 
 CAN_HandleTypeDef hcan1;
@@ -1288,7 +1288,10 @@ inline unsigned long HAL_RealtimeClockGetValue(void) {
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
-
+  if (htim->Instance == TIM7) {
+    runtime_ststus_timer_ticks++;
+    return;
+  }
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM2) {
     HAL_IncTick();
