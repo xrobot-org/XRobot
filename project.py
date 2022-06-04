@@ -5,7 +5,7 @@ import os
 
 def menuconfig():
     print('Start menu config.')
-    os.system('cd config && kconfig-gconf Kconfig')
+    os.system('cd config && kconfig-qconf Kconfig')
     print('Menu config done.')
 
 
@@ -29,7 +29,7 @@ def generate_cmake(path):
         print('Found config file.')
     else:
         print('No config file found. Start menuconfig.')
-        os.system('cd '+path+' && kconfig-gconf Kconfig')
+        os.system('cd '+path+' && kconfig-qconf Kconfig')
     config_file = open(path+'/.config', 'r')
     cmake_file = open(path+'/config.cmake', 'w')
 
