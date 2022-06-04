@@ -124,7 +124,7 @@ typedef struct {
 } motor_t;
 
 err_t motor_init(motor_t *motor, const motor_group_t *group_cfg);
-err_t motor_update(motor_t *motor, uint32_t timeout);
+err_t motor_update(motor_t *motor);
 err_t motor_pack_data(motor_t *motor, motor_group_id_t group,
                       motor_control_t *output);
 err_t motor_control(motor_t *motor);

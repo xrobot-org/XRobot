@@ -113,7 +113,7 @@ om_status_t motor_rx_callback(om_msg_t *msg, void *arg) {
   can_rx_item_t *rx = (can_rx_item_t *)msg->buff;
 
   BaseType_t switch_required;
-  xQueueOverwriteFromISR(msgq, rx, &switch_required);
+  xQueueSendFromISR(msgq, rx, &switch_required);
   portYIELD_FROM_ISR(switch_required);
 
   return OM_OK;
@@ -134,7 +134,7 @@ err_t motor_init(motor_t *motor, const motor_group_t *group_cfg) {
   const motor_group_t *group = motor->group_cfg;
   for (int i = 0; i < MOTOR_GROUP_ID_NUM; i++) {
     snprintf(tp_name, OM_LOG_MAX_LEN, "can_motor_%s", MOTOR_GROUP_NAME_MAP[i]);
-    motor->msgq[i] = xQueueCreate(1, sizeof(can_rx_item_t));
+    motor->msgq[i] = xQueueCreate(8, sizeof(can_rx_item_t));
     om_topic_t *motor_tp = om_config_topic(NULL, "DVA", tp_name,
                                            motor_rx_callback, motor->msgq[i]);
 
@@ -148,17 +148,16 @@ err_t motor_init(motor_t *motor, const motor_group_t *group_cfg) {
   return DEVICE_OK;
 }
 
-err_t motor_update(motor_t *motor, uint32_t timeout) {
+err_t motor_update(motor_t *motor) {
   can_rx_item_t pack;
 
   for (int i = 0; i < MOTOR_GROUP_ID_NUM; i++) {
-    while (pdPASS ==
-           xQueueReceive(motor->msgq[i], &pack, pdMS_TO_TICKS(timeout))) {
+    while (pdPASS == xQueueReceive(motor->msgq[i], &pack, 0)) {
       uint32_t index = pack.index - motor->group_cfg[i].id_feedback;
       if ((index < motor->group_cfg[i].num) &&
-          (MOTOR_NONE != motor->group_cfg[i].model[index]))
+          (MOTOR_NONE != motor->group_cfg[i].model[index])) {
         motor_decode(&(motor->feedback[i].as_array[index]), pack.data);
-      break;
+      }
     }
   }
 

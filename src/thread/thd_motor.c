@@ -58,7 +58,7 @@ void thd_motor(void* arg) {
 
   while (1) {
     /* 读取裁判系统信息 */
-    if (motor_update(&motor, THD_PERIOD_MS)) {
+    if (motor_update(&motor)) {
       /* 一定时间长度内接收不到电容反馈值，使电容离线 */
       motor_handle_offline(&motor);
     }
