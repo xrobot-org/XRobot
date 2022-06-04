@@ -9,7 +9,7 @@
 
 #define CAP_RES (100) /* 电容数据分辨率 */
 
-#define CAP_CUTOFF_VOLT 12.0f /* 电容截止电压，要高于电调最低工作电压 */
+#define CAP_CUTOFF_VOLT 4.0f /* 电容截止电压，未接升压模块时要高于电调最低工作电压 */
 
 static void cap_decode(cap_feedback_t *fb, const uint8_t *raw) {
   fb->input_volt = (float)((raw[1] << 8) | raw[0]) / (float)CAP_RES;
