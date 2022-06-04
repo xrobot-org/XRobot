@@ -378,17 +378,11 @@ void chassis_power_limit(chassis_t *c, const cap_feedback_t *cap,
 #if POWER_LIMIT_WITH_CAP
   else {
     if (cap->percentage > kCAP_PERCENTAGE_WORK) {
-      /* 电容在线且电量足够，使用电容 */
-      if (cap->percentage > kCAP_PERCENTAGE_NO_LIM) {
-        /* 电容接近充满时不再限制功率 */
-        power_limit = -1.0f;
-      } else {
-        /* 按照电容能量百分比计算输出功率 */
-        power_limit = ref->chassis_power_limit +
-                      (cap->percentage - kCAP_PERCENTAGE_WORK) /
-                          (kCAP_PERCENTAGE_NO_LIM - kCAP_PERCENTAGE_WORK) *
-                          (float)CAP_MAX_LOAD;
-      }
+      /* 按照电容能量百分比计算输出功率 */
+      power_limit = ref->chassis_power_limit +
+                    (cap->percentage - kCAP_PERCENTAGE_WORK) /
+                        (kCAP_PERCENTAGE_NO_LIM - kCAP_PERCENTAGE_WORK) *
+                        (float)CAP_MAX_LOAD;
     } else {
       /* 电容不在工作，根据缓冲能量计算输出功率限制 */
       power_limit = limit_calc_chassic_output_power(ref->chassis_power_limit,
