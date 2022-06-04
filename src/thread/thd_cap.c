@@ -14,7 +14,7 @@
 #include "om.h"
 #include "thd.h"
 
-#define THD_PERIOD_MS (10)
+#define THD_PERIOD_MS (250)
 #define THD_DELAY_TICK (pdMS_TO_TICKS(THD_PERIOD_MS))
 
 void thd_cap(void* arg) {
