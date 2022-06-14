@@ -18,4 +18,4 @@ void thd_can(void *arg) {
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
-THREAD_DECLEAR(thd_can, 256, 4);
+THREAD_DECLEAR(thd_can, 128, 4);

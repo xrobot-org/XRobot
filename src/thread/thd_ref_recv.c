@@ -60,4 +60,4 @@ void thd_ref_recv(void* arg) {
     om_publish(ref_launcher_pub, OM_PRASE_VAR(for_launcher), true, false);
   }
 }
-THREAD_DECLEAR(thd_ref_recv, 512, 4);
+THREAD_DECLEAR(thd_ref_recv, 256, 4);

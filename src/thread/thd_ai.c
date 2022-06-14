@@ -64,4 +64,4 @@ void thd_ai(void* arg) {
     xTaskDelayUntil(&previous_wake_time, THD_DELAY_TICK);
   }
 }
-THREAD_DECLEAR(thd_ai, 384, 4);
+THREAD_DECLEAR(thd_ai, 256, 4);
