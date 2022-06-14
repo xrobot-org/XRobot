@@ -5,6 +5,11 @@
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart3;
 extern UART_HandleTypeDef huart6;
+extern DMA_HandleTypeDef hdma_usart1_tx;
+extern DMA_HandleTypeDef hdma_usart1_rx;
+extern DMA_HandleTypeDef hdma_usart3_rx;
+extern DMA_HandleTypeDef hdma_usart6_rx;
+extern DMA_HandleTypeDef hdma_usart6_tx;
 
 static bsp_callback_t callback_list[BSP_UART_NUM][BSP_UART_CB_NUM];
 
@@ -102,19 +107,44 @@ int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,
   return BSP_OK;
 }
 
-int8_t bsp_uart_reset(bsp_uart_t uart) {
-  HAL_UART_DMAStop(bsp_uart_get_handle(uart));
+int8_t bsp_uart_abort_receive(bsp_uart_t uart) {
+  HAL_UART_AbortReceive_IT(bsp_uart_get_handle(uart));
 
   switch (uart) {
-    case BSP_UART_DR16:
-      MX_USART3_UART_Init();
+    case BSP_UART_DR16: {
+      __HAL_DMA_SET_COUNTER(&hdma_usart3_rx, 0);
       break;
-    case BSP_UART_REF:
-      MX_USART1_UART_Init();
+    }
+    case BSP_UART_REF: {
+      __HAL_DMA_SET_COUNTER(&hdma_usart1_rx, 0);
       break;
-    case BSP_UART_AI:
-      MX_USART6_UART_Init();
+    }
+    case BSP_UART_AI: {
+      __HAL_DMA_SET_COUNTER(&hdma_usart6_rx, 0);
       break;
+    }
+    default:
+      return BSP_ERR;
+  }
+  return BSP_OK;
+}
+
+int8_t bsp_uart_abort_transmit(bsp_uart_t uart) {
+  HAL_UART_AbortTransmit_IT(bsp_uart_get_handle(uart));
+
+  switch (uart) {
+    case BSP_UART_DR16: {
+      return BSP_ERR;
+      break;
+    }
+    case BSP_UART_REF: {
+      __HAL_DMA_SET_COUNTER(&hdma_usart1_tx, 0);
+      break;
+    }
+    case BSP_UART_AI: {
+      __HAL_DMA_SET_COUNTER(&hdma_usart6_tx, 0);
+      break;
+    }
     default:
       return BSP_ERR;
   }
