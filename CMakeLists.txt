@@ -12,7 +12,7 @@ project(
   qdu_rm_mcu
   DESCRIPTION "MCU for Robomaster"
   VERSION 2022.0.0
-  LANGUAGES C ASM)
+  LANGUAGES C CXX ASM)
 # ---------------------------------------------------------------------------------------
 # Config
 include(${CMAKE_CURRENT_SOURCE_DIR}/config/config.cmake)

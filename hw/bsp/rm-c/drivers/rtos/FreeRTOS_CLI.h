@@ -19,16 +19,22 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * http://www.FreeRTOS.org
- * http://aws.amazon.com/freertos
+ * https://www.FreeRTOS.org
+ * https://aws.amazon.com/freertos
  *
- * 1 tab == 4 spaces!
  */
 
 #ifndef COMMAND_INTERPRETER_H
 #define COMMAND_INTERPRETER_H
 
-/* This config should be defined in FreeRTOSConfig.h. But due to the limition of CubeMX I put it here. */
+/* *INDENT-OFF* */
+#ifdef __cplusplus
+    extern "C" {
+#endif
+/* *INDENT-ON* */
+
+//TODO:FreeRTOS-Plus/Source/FreeRTOS-Plus-CLI
+
 #define configCOMMAND_INT_MAX_OUTPUT_SIZE  1024
 
 /* The prototype to which callback functions used to process command line
@@ -72,7 +78,7 @@ BaseType_t FreeRTOS_CLIRegisterCommand( const CLI_Command_Definition_t * const p
  */
 BaseType_t FreeRTOS_CLIProcessCommand( const char * const pcCommandInput, char * pcWriteBuffer, size_t xWriteBufferLen  );
 
-/*---------------------------------------------------------- */
+/*-----------------------------------------------------------*/
 
 /*
  * A buffer into which command outputs can be written is declared in the
@@ -91,5 +97,11 @@ char *FreeRTOS_CLIGetOutputBuffer( void );
  * Return a pointer to the xParameterNumber'th word in pcCommandString.
  */
 const char *FreeRTOS_CLIGetParameter( const char *pcCommandString, UBaseType_t uxWantedParameter, BaseType_t *pxParameterStringLength );
+
+/* *INDENT-OFF* */
+#ifdef __cplusplus
+    }
+#endif
+/* *INDENT-ON* */
 
 #endif /* COMMAND_INTERPRETER_H */

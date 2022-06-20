@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "bsp.h"
 
 typedef enum {
@@ -24,3 +28,7 @@ int8_t bsp_gpio_enable_irq(bsp_gpio_t gpio);
 int8_t bsp_gpio_disable_irq(bsp_gpio_t gpio);
 int8_t bsp_gpio_write_pin(bsp_gpio_t gpio, bool value);
 bool bsp_gpio_read_pin(bsp_gpio_t gpio);
+
+#ifdef __cplusplus
+}
+#endif

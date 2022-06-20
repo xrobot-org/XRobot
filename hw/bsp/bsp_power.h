@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "bsp.h"
 
 /* 电源输出接口 */
@@ -11,3 +15,7 @@ typedef enum {
 } bsp_power_port_t;
 
 int8_t bsp_power_set(bsp_power_port_t port, bool s);
+
+#ifdef __cplusplus
+}
+#endif

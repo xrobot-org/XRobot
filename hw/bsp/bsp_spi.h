@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "bsp.h"
 
 /* 要添加使用SPI的新设备，需要先在此添加对应的枚举值 */
@@ -31,3 +35,7 @@ int8_t bsp_spi_register_callback(bsp_spi_t spi, bsp_spi_callback_t type,
                                  void (*callback)(void *), void *callback_arg);
 int8_t bsp_spi_transmit(bsp_spi_t spi, uint8_t *data, size_t size, bool block);
 int8_t bsp_spi_receive(bsp_spi_t spi, uint8_t *buff, size_t size, bool block);
+
+#ifdef __cplusplus
+}
+#endif

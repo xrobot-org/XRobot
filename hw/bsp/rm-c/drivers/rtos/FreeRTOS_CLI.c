@@ -19,10 +19,9 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * http://www.FreeRTOS.org
- * http://aws.amazon.com/freertos
+ * https://www.FreeRTOS.org
+ * https://aws.amazon.com/freertos
  *
- * 1 tab == 4 spaces!
  */
 
 /* Standard includes. */
@@ -38,7 +37,7 @@
 
 /* If the application writer needs to place the buffer used by the CLI at a
 fixed address then set configAPPLICATION_PROVIDES_cOutputBuffer to 1 in
-FreeRTOSConfig.h, then declare an array with the following name and size in 
+FreeRTOSConfig.h, then declare an array with the following name and size in
 one of the application files:
 	char cOutputBuffer[ configCOMMAND_INT_MAX_OUTPUT_SIZE ];
 */
@@ -93,7 +92,6 @@ attempted.
 configAPPLICATION_PROVIDES_cOutputBuffer is provided to allow the application
 writer to provide their own cOutputBuffer declaration in cases where the
 buffer needs to be placed at a fixed address (rather than by the linker). */
-
 #if( configAPPLICATION_PROVIDES_cOutputBuffer == 0 )
 	static char cOutputBuffer[ configCOMMAND_INT_MAX_OUTPUT_SIZE ];
 #else
@@ -101,7 +99,7 @@ buffer needs to be placed at a fixed address (rather than by the linker). */
 #endif
 
 
-/*---------------------------------------------------------- */
+/*-----------------------------------------------------------*/
 
 BaseType_t FreeRTOS_CLIRegisterCommand( const CLI_Command_Definition_t * const pxCommandToRegister )
 {
@@ -142,7 +140,7 @@ BaseType_t xReturn = pdFAIL;
 
 	return xReturn;
 }
-/*---------------------------------------------------------- */
+/*-----------------------------------------------------------*/
 
 BaseType_t FreeRTOS_CLIProcessCommand( const char * const pcCommandInput, char * pcWriteBuffer, size_t xWriteBufferLen  )
 {
@@ -166,9 +164,9 @@ size_t xCommandStringLength;
 			a sub-string of a longer command, check the byte after the expected
 			end of the string is either the end of the string or a space before
 			a parameter. */
-			if( ( pcCommandInput[ xCommandStringLength ] == ' ' ) || ( pcCommandInput[ xCommandStringLength ] == 0x00 ) )
+			if( strncmp( pcCommandInput, pcRegisteredCommandString, xCommandStringLength ) == 0 )
 			{
-				if( strncmp( pcCommandInput, pcRegisteredCommandString, xCommandStringLength ) == 0 )
+				if( ( pcCommandInput[ xCommandStringLength ] == ' ' ) || ( pcCommandInput[ xCommandStringLength ] == 0x00 ) )
 				{
 					/* The command has been found.  Check it has the expected
 					number of parameters.  If cExpectedNumberOfParameters is -1,
@@ -217,13 +215,13 @@ size_t xCommandStringLength;
 
 	return xReturn;
 }
-/*---------------------------------------------------------- */
+/*-----------------------------------------------------------*/
 
 char *FreeRTOS_CLIGetOutputBuffer( void )
 {
 	return cOutputBuffer;
 }
-/*---------------------------------------------------------- */
+/*-----------------------------------------------------------*/
 
 const char *FreeRTOS_CLIGetParameter( const char *pcCommandString, UBaseType_t uxWantedParameter, BaseType_t *pxParameterStringLength )
 {
@@ -279,7 +277,7 @@ const char *pcReturn = NULL;
 
 	return pcReturn;
 }
-/*---------------------------------------------------------- */
+/*-----------------------------------------------------------*/
 
 static BaseType_t prvHelpCommand( char *pcWriteBuffer, size_t xWriteBufferLen, const char *pcCommandString )
 {
@@ -312,7 +310,7 @@ BaseType_t xReturn;
 
 	return xReturn;
 }
-/*---------------------------------------------------------- */
+/*-----------------------------------------------------------*/
 
 static int8_t prvGetNumberOfParameters( const char *pcCommandString )
 {
@@ -349,4 +347,3 @@ BaseType_t xLastCharacterWasSpace = pdFALSE;
 	as the first word should be the command itself. */
 	return cParameters;
 }
-

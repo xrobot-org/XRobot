@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "bsp.h"
 
 /* Exported constants ------------------------------------------------------- */
@@ -30,3 +34,7 @@ void bsp_usb_update(void);
 
 int8_t bsp_usb_register_callback(bsp_usb_t usb, bsp_usb_callback_t type,
                                  void (*callback)(void *), void *callback_arg);
+
+#ifdef __cplusplus
+}
+#endif

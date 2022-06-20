@@ -9,6 +9,11 @@ set(GENERAL_FLAGS
 set(CMAKE_C_FLAGS
     "${CPU_FLAGS} ${GENERAL_FLAGS} -fshort-enums -fdiagnostics-color=auto"
     CACHE INTERNAL "" FORCE)
+
+set(CMAKE_CXX_FLAGS
+    "${CPU_FLAGS} ${GENERAL_FLAGS} -fshort-enums -fdiagnostics-color=auto"
+    CACHE INTERNAL "" FORCE)
+
 set(CMAKE_ASM_FLAGS
     "${CPU_FLAGS} -x assembler-with-cpp"
     CACHE INTERNAL "" FORCE)

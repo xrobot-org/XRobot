@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "bsp.h"
 #include "om.h"
 
@@ -52,3 +56,7 @@ int8_t bsp_can_trans_packet(bsp_can_t can, uint32_t StdId, uint8_t *data,
 int8_t bsp_can_get_msg(bsp_can_t can, can_rx_item_t *item);
 int8_t bsp_can_register_subscriber(bsp_can_t can, om_topic_t *sub,
                                    uint32_t index_id, uint32_t number);
+
+#ifdef __cplusplus
+}
+#endif

@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "bsp.h"
 
 /* 要添加使用I2C的新设备，需要先在此添加对应的枚举值 */
@@ -34,3 +38,7 @@ int8_t bsp_i2c_mem_read(bsp_i2c_t i2c, uint16_t devaddress, uint16_t memaddress,
 int8_t bsp_i2c_mem_write(bsp_i2c_t i2c, uint16_t devaddress,
                          uint16_t memaddress, uint8_t *data, size_t size,
                          bool block);
+
+#ifdef __cplusplus
+}
+#endif

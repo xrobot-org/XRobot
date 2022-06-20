@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "bsp.h"
 
 /* 要添加使用SPI的新设备，需要先在此添加对应的枚举值 */
@@ -29,3 +33,7 @@ typedef enum {
 uint64_t bsp_timer_get_realtime();
 int8_t bsp_timer_register_callback(bsp_timer_t timer, bsp_timer_callback_t type,
                                    void (*callback)(void));
+
+#ifdef __cplusplus
+}
+#endif

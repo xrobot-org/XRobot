@@ -8,7 +8,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/thread)
 
 add_executable(${PROJECT_NAME}.elf)
 
-target_sources(${PROJECT_NAME}.elf PRIVATE main.c)
+target_sources(${PROJECT_NAME}.elf PRIVATE main.cpp)
 
 target_link_libraries(
   ${PROJECT_NAME}.elf
