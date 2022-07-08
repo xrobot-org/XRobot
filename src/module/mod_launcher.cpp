@@ -12,7 +12,6 @@
 #include "mod_launcher.hpp"
 
 #include "bsp_pwm.h"
-#include "comp_limiter.hpp"
 #include "comp_utils.hpp"
 
 #define LAUNCHER_TRIG_SPEED_MAX (8191)
@@ -137,10 +136,7 @@ void Launcher::Control() {
       break;
 
     case Component::CMD::FIRE_MODE_CONT: { /* 持续开火模式 */
-      float launch_freq = limit_launcher_freq(
-          this->heat_ctrl_.heat, this->heat_ctrl_.heat_limit,
-          this->heat_ctrl_.cooling_rate, this->heat_ctrl_.heat_increase,
-          this->param_.model == LAUNCHER_MODEL_42MM);
+      float launch_freq = this->LimitLauncherFreq();
       this->fire_ctrl_.launch_delay =
           (launch_freq == 0.0f) ? UINT32_MAX : (uint32_t)(1000.f / launch_freq);
       break;
@@ -295,4 +291,26 @@ void Launcher::PraseRef(Device::Referee::Data& ref) {
   memcpy(&(this->ref_.launcher_data), &(ref.launcher_data),
          sizeof(this->ref_.launcher_data));
   this->ref_.status = ref.status;
+}
+
+float Launcher::LimitLauncherFreq() {
+  float heat_percent = this->heat_ctrl_.heat / this->heat_ctrl_.heat_limit;
+  float stable_freq =
+      this->heat_ctrl_.cooling_rate / this->heat_ctrl_.heat_increase;
+  if (this->param_.model == LAUNCHER_MODEL_42MM)
+    return stable_freq;
+  else {
+    if (heat_percent > 0.9f)
+      return 0.5f;
+    else if (heat_percent > 0.8f)
+      return 1.0f;
+    else if (heat_percent > 0.6f)
+      return 2.0f * stable_freq;
+    else if (heat_percent > 0.2f)
+      return 3.0f * stable_freq;
+    else if (heat_percent > 0.1f)
+      return 4.0f * stable_freq;
+    else
+      return 5.0f;
+  }
 }

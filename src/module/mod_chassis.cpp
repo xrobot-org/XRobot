@@ -14,7 +14,6 @@
 #include <stdlib.h>
 
 #include "FreeRTOS.h"
-#include "comp_limiter.hpp"
 #include "dev_can.hpp"
 #include "dev_cap.hpp"
 #include "dev_tof.hpp"

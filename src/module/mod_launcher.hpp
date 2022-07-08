@@ -101,6 +101,8 @@ class Launcher {
 
   void HeatLimit();
 
+  float LimitLauncherFreq();
+
   void PraseRef(Device::Referee::Data &ref);
 
   uint32_t lask_wakeup_;
