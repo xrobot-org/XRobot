@@ -1,5 +1,5 @@
 /**
- * @file cmd.h
+ * @file cmd->h
  * @author Qu Shen
  * @brief
  * @version 1.0.0
@@ -25,83 +25,324 @@
 
 #include <string.h>
 
-/**
- * @brief 找到行为对应的按键值
- *
- * @param cmd 控制指令数据
- * @param behavior 行为
- * @return cmd_key_t 按键值
- */
-static inline cmd_key_t cmd_behavior_to_key(const cmd_t *cmd,
-                                            cmd_behavior_t behavior) {
-  return cmd->param->key_map[behavior].key;
+#include "message.hpp"
+#include "om.h"
+
+using namespace Component;
+
+CMD::CMD(CMD::Param& param)
+    : param_(param),
+      ctrl_source_(CMD_SOURCE_RC),
+      ctrl_method_(CMD_METHOD_JOYSTICK_SWITCH) {
+  memset(&this->rc_, 0, sizeof(this->rc_));
+  memset(&this->gimbal_, 0, sizeof(this->gimbal_));
+  memset(&this->chassis_, 0, sizeof(this->chassis_));
+  memset(&this->launcher_, 0, sizeof(this->launcher_));
+
+  auto cmd_thread = [](void* arg) {
+    CMD* cmd = (CMD*)arg;
+
+    DECLARE_TOPIC(ch_tp, cmd->chassis_, "cmd_chassis", true);
+    DECLARE_TOPIC(gm_tp, cmd->gimbal_, "cmd_gimbal", true);
+    DECLARE_TOPIC(la_tp, cmd->launcher_, "cmd_launcher", true);
+    DECLARE_TOPIC(ui_tp, cmd->ui_, "cmd_ui", true);
+
+    DECLARE_SUBER(rc_sub, cmd->rc_, "cmd_rc");
+    DECLARE_SUBER(host_sub, cmd->host_, "cmd_host");
+
+    while (1) {
+      /* 将接收机数据解析为指令数据 */
+      rc_sub.DumpData();
+
+      cmd->PraseRC();
+
+      /* 判断是否需要让上位机覆写指令 */
+      if (cmd->HostCtrl()) {
+        if (host_sub.DumpData()) cmd->PraseHost();
+      }
+
+      cmd->PackUI();
+
+      ch_tp.Publish();
+      gm_tp.Publish();
+      la_tp.Publish();
+      ui_tp.Publish();
+
+      /* 运行结束，等待下一次唤醒 */
+      cmd->thread_.Sleep(2);
+    }
+  };
+
+  THREAD_DECLEAR(this->thread_, cmd_thread, 256, System::Thread::High, this);
 }
 
-/**
- * @brief 找到行为对应的出发类型
- *
- * @param cmd 控制指令数据
- * @param behavior 行为
- * @return cmd_activation_t 触发类型
- */
-static inline cmd_activation_t cmd_behavior_to_activation(
-    const cmd_t *cmd, cmd_behavior_t behavior) {
-  return cmd->param->key_map[behavior].active;
+bool CMD::HostCtrl() {
+#if HOST_CTRL_PRIORITY
+  /* 保证丢控时上位机无法控制 */
+  return !this->RCLost();
+#else
+  return this->ctrl_source_ == CMD_SOURCE_HOST;
+#endif
 }
 
-/**
- * @brief 检查按键是否按下
- *
- * @param rc 遥控器数据
- * @param key 按键名称
- * @param stateful 是否为状态切换按键
- * @return true 按下
- * @return false 未按下
- */
-static bool cmd_key_pressed(const cmd_rc_t *rc, cmd_key_t key) {
-  /* 鼠标左右键需要单独判断 */
+bool CMD::PraseRC() {
+  /* 在键盘鼠标和摇杆拨杆控制间切换 */
+  if (this->PraseMouseKey(CMD_KEY_SHIFT) && this->PraseMouseKey(CMD_KEY_CTRL) &&
+      this->PraseMouseKey(CMD_KEY_Q)) {
+    this->ctrl_method_ = CMD_METHOD_MOUSE_KEYBOARD;
+  }
+
+  if (this->PraseMouseKey(CMD_KEY_SHIFT) && this->PraseMouseKey(CMD_KEY_CTRL) &&
+      this->PraseMouseKey(CMD_KEY_E)) {
+    this->ctrl_method_ = CMD_METHOD_JOYSTICK_SWITCH;
+  }
+
+  /* 当遥控链路丢失时，恢复机器人至默认状态 */
+  if (this->RCLost()) {
+    /* 遥控链路应该拥有最高控制权，
+     * 任何时候关闭遥控器，都必须保证机器人进入放松状态
+     * 进而保证任何失控可以通过关闭遥控器来解决
+     */
+    this->StopCtrl();
+  } else {
+    switch (this->ctrl_method_) {
+      case CMD_METHOD_MOUSE_KEYBOARD:
+        this->PraseKeyboard();
+        break;
+      default:
+        this->PraseJoystick();
+        break;
+    }
+  }
+
+  return true;
+}
+
+bool CMD::PraseHost() {
+  /* 哨兵开启云台绝对角度控制 */
+#if ID_SENTRY
+  this->gimbal_.mode = GIMBAL_MODE_ABSOLUTE;
+#endif
+
+  /* 云台欧拉角设置为host相应的变化的欧拉角 */
+  this->gimbal_.delta_eulr.yaw = this->host_.gimbal_delta.yaw;
+  this->gimbal_.delta_eulr.pit = this->host_.gimbal_delta.pit;
+
+  return true;
+}
+
+bool CMD::PraseMouseKey(CMD::Key key) {
   switch (key) {
-    case CMD_KEY_L_CLICK:
-      return rc->mouse.click.l;
+    case CMD::CMD_KEY_L_CLICK:
+      return this->rc_.mouse.click.l;
 
-    case CMD_KEY_R_CLICK:
-      return rc->mouse.click.r;
+    case CMD::CMD_KEY_R_CLICK:
+      return this->rc_.mouse.click.r;
 
     default:
-      return rc->key & (1u << key);
+      return this->rc_.key & (1u << key);
   }
 }
 
-/**
- * @brief 检查行为触发条件是否满足
- *
- * @param rc 遥控器数据
- * @param cmd 控制指令数据
- * @param behavior 行为
- * @return true 满足
- * @return false 不满足
- */
-static bool cmd_behavior_occurred(const cmd_rc_t *rc, const cmd_t *cmd,
-                                  cmd_behavior_t behavior) {
-  cmd_key_t key = cmd_behavior_to_key(cmd, behavior);
-  cmd_activation_t active = cmd_behavior_to_activation(cmd, behavior);
+bool CMD::PraseKeyboard() {
+  this->gimbal_.mode = GIMBAL_MODE_ABSOLUTE;
+
+  /* 云台设置为鼠标控制欧拉角的变化，底盘的控制向量设置为零 */
+  this->gimbal_.delta_eulr.yaw =
+      (float)this->rc_.mouse.x * 0.002f * this->param_.sens_mouse;
+  this->gimbal_.delta_eulr.pit =
+      (float)(-this->rc_.mouse.y) * 0.002f * this->param_.sens_mouse;
+  this->chassis_.ctrl_vec.vx = this->chassis_.ctrl_vec.vy = 0.0f;
+  this->launcher_.reverse_trig = false;
+
+  /* 按键行为映射相关逻辑 */
+  if (this->BehaviorOccurred(CMD_BEHAVIOR_FORE)) {
+    this->chassis_.ctrl_vec.vy += this->param_.move.sense_norm;
+  }
+  if (this->BehaviorOccurred(CMD_BEHAVIOR_BACK)) {
+    this->chassis_.ctrl_vec.vy -= this->param_.move.sense_norm;
+  }
+  if (this->BehaviorOccurred(CMD_BEHAVIOR_LEFT)) {
+    this->chassis_.ctrl_vec.vx -= this->param_.move.sense_norm;
+  }
+  if (this->BehaviorOccurred(CMD_BEHAVIOR_RIGHT)) {
+    this->chassis_.ctrl_vec.vx += this->param_.move.sense_norm;
+  }
+  if (this->BehaviorOccurred(CMD_BEHAVIOR_ACCELERATE)) {
+    this->chassis_.ctrl_vec.vx *= this->param_.move.sense_fast;
+    this->chassis_.ctrl_vec.vy *= this->param_.move.sense_fast;
+  }
+  if (this->BehaviorOccurred(CMD_BEHAVIOR_DECELEBRATE)) {
+    this->chassis_.ctrl_vec.vx *= this->param_.move.sense_slow;
+    this->chassis_.ctrl_vec.vy *= this->param_.move.sense_slow;
+  }
+  if (this->BehaviorOccurred(CMD_BEHAVIOR_FIRE)) {
+    /* 切换至开火模式，设置相应的发射频率和弹丸初速度 */
+    this->launcher_.mode = LAUNCHER_MODE_LOADED;
+    this->launcher_.fire = true;
+  } else {
+    /* 切换至准备模式，停止发射 */
+    this->launcher_.mode = LAUNCHER_MODE_LOADED;
+    this->launcher_.fire = false;
+  }
+  if (this->BehaviorOccurred(CMD_BEHAVIOR_FIRE_MODE)) {
+    /* 每按一次依次切换开火下一个模式 */
+    switch (this->launcher_.fire_mode) {
+      case FIRE_MODE_SINGLE:
+        this->launcher_.fire_mode = FIRE_MODE_BURST;
+        break;
+      case FIRE_MODE_BURST:
+        this->launcher_.fire_mode = FIRE_MODE_CONT;
+        break;
+      case FIRE_MODE_CONT:
+        this->launcher_.fire_mode = FIRE_MODE_SINGLE;
+        break;
+      default:
+        break;
+    }
+  }
+  if (this->BehaviorOccurred(CMD_BEHAVIOR_ROTOR)) {
+    /* 切换到小陀螺模式 */
+    this->chassis_.mode = CHASSIS_MODE_ROTOR;
+    this->chassis_.mode_rotor = ROTOR_MODE_RAND;
+  }
+  if (this->BehaviorOccurred(CMD_BEHAVIOR_OPENCOVER)) {
+    /* 每按一次开、关弹舱盖 */
+    this->launcher_.cover_open = !this->launcher_.cover_open;
+  }
+  if (this->BehaviorOccurred(CMD_BEHAVIOR_AUTOAIM)) {
+    if (this->ctrl_source_ == CMD_SOURCE_HOST) {
+      /* 停止ai的自瞄模式，停用host控制 */
+      this->ctrl_source_ = CMD_SOURCE_RC;
+    } else {
+      /* ai切换至自瞄模式，启用host控制 */
+      this->ctrl_source_ = CMD_SOURCE_HOST;
+    }
+  }
+  if (this->BehaviorOccurred(CMD_BEHAVIOR_REVTRIG)) {
+    /* 按下拨弹反转 */
+    this->launcher_.reverse_trig = true;
+  }
+  if (this->BehaviorOccurred(CMD_BEHAVIOR_FOLLOWGIMBAL35)) {
+    this->chassis_.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
+  }
+  /* 保存当前按下的键位状态 */
+  this->key_last_ = this->rc_.key;
+  memcpy(&(this->mouse_last_), &(this->rc_.mouse), sizeof(this->mouse_last_));
+
+  return true;
+}
+
+bool CMD::PraseJoystick() {
+  switch (this->rc_.sw_l) {
+      /* 左拨杆相应行为选择和解析 */
+    case CMD_SW_UP:
+      this->chassis_.mode = CHASSIS_MODE_BREAK;
+      break;
+
+    case CMD_SW_MID:
+      this->chassis_.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
+      break;
+
+    case CMD_SW_DOWN:
+#if LEVER_R_DEFAULT
+      this->chassis_.mode = this->param_.default_mode.chassis;
+#elif LEVER_L_ROTATE
+      this->chassis_.mode = CHASSIS_MODE_ROTOR;
+#endif
+      break;
+
+    case CMD_SW_ERR:
+      this->chassis_.mode = CHASSIS_MODE_RELAX;
+      break;
+  }
+  switch (this->rc_.sw_r) {
+      /* 右拨杆相应行为选择和解析 */
+    case CMD_SW_UP:
+      this->gimbal_.mode = GIMBAL_MODE_ABSOLUTE;
+      this->launcher_.mode = LAUNCHER_MODE_SAFE;
+      this->launcher_.fire_mode = FIRE_MODE_SINGLE;
+      this->launcher_.fire = false;
+      break;
+
+    case CMD_SW_MID:
+      this->gimbal_.mode = GIMBAL_MODE_ABSOLUTE;
+      this->launcher_.mode = LAUNCHER_MODE_LOADED;
+      this->launcher_.fire_mode = FIRE_MODE_SINGLE;
+      this->launcher_.fire = false;
+      break;
+
+    case CMD_SW_DOWN:
+      this->gimbal_.mode = this->param_.default_mode.gimbal;
+      this->launcher_.mode = this->param_.default_mode.launcher;
+#if LEVER_R_DEFAULT
+
+#elif LEVER_R_FIRE_SINLE
+      this->launcher_.fire = true;
+      this->launcher_.fire_mode = FIRE_MODE_SINGLE;
+#elif LEVER_R_FIRE_BURST
+      this->launcher_.fire = true;
+      this->launcher_.fire_mode = FIRE_MODE_BURST;
+#elif LEVER_R_FIRE_CONT
+      this->launcher_.fire = true;
+      this->launcher_.fire_mode = FIRE_MODE_CONT;
+#endif
+      break;
+
+    case CMD_SW_ERR:
+      this->gimbal_.mode = GIMBAL_MODE_RELAX;
+      this->launcher_.mode = LAUNCHER_MODE_RELAX;
+  }
+  /* 将操纵杆的对应值转换为底盘的控制向量和云台变化的欧拉角 */
+  this->chassis_.ctrl_vec.vx = this->rc_.ch.l.x;
+  this->chassis_.ctrl_vec.vy = this->rc_.ch.l.y;
+  this->gimbal_.delta_eulr.yaw =
+      this->rc_.ch.r.x * 0.002f * this->param_.sens_stick;
+  this->gimbal_.delta_eulr.pit =
+      this->rc_.ch.r.y * 0.002f * this->param_.sens_stick;
+
+  return true;
+}
+
+void CMD::PackUI() {
+  this->ui_.ctrl_method = this->ctrl_method_;
+  this->ui_.ctrl_source = this->ctrl_source_;
+}
+
+void CMD::StopCtrl() {
+  this->chassis_.mode = CHASSIS_MODE_RELAX;
+  this->gimbal_.mode = GIMBAL_MODE_RELAX;
+  this->launcher_.mode = LAUNCHER_MODE_RELAX;
+}
+
+CMD::Key CMD::BehaviorToKey(CMD::Behavior behavior) {
+  return this->param_.key_map[behavior].key;
+}
+
+CMD::Activation CMD::BehaviorToActivation(CMD::Behavior behavior) {
+  return this->param_.key_map[behavior].active;
+}
+
+bool CMD::BehaviorOccurred(CMD::Behavior behavior) {
+  CMD::Key key = BehaviorToKey(behavior);
+  CMD::Activation active = BehaviorToActivation(behavior);
 
   bool now_key_pressed, last_key_pressed;
   /* 鼠标左右键需要单独判断 */
   switch (key) {
     case CMD_KEY_L_CLICK:
-      now_key_pressed = rc->mouse.click.l;
-      last_key_pressed = cmd->mouse_last.click.l;
+      now_key_pressed = this->rc_.mouse.click.l;
+      last_key_pressed = this->mouse_last_.click.l;
       break;
 
     case CMD_KEY_R_CLICK:
-      now_key_pressed = rc->mouse.click.r;
-      last_key_pressed = cmd->mouse_last.click.r;
+      now_key_pressed = this->rc_.mouse.click.r;
+      last_key_pressed = this->mouse_last_.click.r;
       break;
 
     default:
-      now_key_pressed = rc->key & (1u << key);
-      last_key_pressed = cmd->key_last & (1u << key);
+      now_key_pressed = this->rc_.key & (1u << key);
+      last_key_pressed = this->key_last_ & (1u << key);
       break;
   }
   switch (active) {
@@ -116,314 +357,6 @@ static bool cmd_behavior_occurred(const cmd_rc_t *rc, const cmd_t *cmd,
   }
 }
 
-/**
- * @brief 解析键盘鼠标控制逻辑
- *
- * @param rc 遥控器数据
- * @param cmd 控制指令数据
- * @param dt_sec 两次解析的间隔
- */
-static void cmd_mouse_keyboard_logic(const cmd_rc_t *rc, cmd_t *cmd,
-                                     float dt_sec) {
-  cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-
-  /* 云台设置为鼠标控制欧拉角的变化，底盘的控制向量设置为零 */
-  cmd->gimbal.delta_eulr.yaw =
-      (float)rc->mouse.x * dt_sec * cmd->param->sens_mouse;
-  cmd->gimbal.delta_eulr.pit =
-      (float)(-rc->mouse.y) * dt_sec * cmd->param->sens_mouse;
-  cmd->chassis.ctrl_vec.vx = cmd->chassis.ctrl_vec.vy = 0.0f;
-  cmd->launcher.reverse_trig = false;
-
-  /* 按键行为映射相关逻辑 */
-  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_FORE)) {
-    cmd->chassis.ctrl_vec.vy += cmd->param->move.sense_norm;
-  }
-  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_BACK)) {
-    cmd->chassis.ctrl_vec.vy -= cmd->param->move.sense_norm;
-  }
-  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_LEFT)) {
-    cmd->chassis.ctrl_vec.vx -= cmd->param->move.sense_norm;
-  }
-  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_RIGHT)) {
-    cmd->chassis.ctrl_vec.vx += cmd->param->move.sense_norm;
-  }
-  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_ACCELERATE)) {
-    cmd->chassis.ctrl_vec.vx *= cmd->param->move.sense_fast;
-    cmd->chassis.ctrl_vec.vy *= cmd->param->move.sense_fast;
-  }
-  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_DECELEBRATE)) {
-    cmd->chassis.ctrl_vec.vx *= cmd->param->move.sense_slow;
-    cmd->chassis.ctrl_vec.vy *= cmd->param->move.sense_slow;
-  }
-  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_FIRE)) {
-    /* 切换至开火模式，设置相应的发射频率和弹丸初速度 */
-    cmd->launcher.mode = LAUNCHER_MODE_LOADED;
-    cmd->launcher.fire = true;
-  } else {
-    /* 切换至准备模式，停止发射 */
-    cmd->launcher.mode = LAUNCHER_MODE_LOADED;
-    cmd->launcher.fire = false;
-  }
-  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_FIRE_MODE)) {
-    /* 每按一次依次切换开火下一个模式 */
-    switch (cmd->launcher.fire_mode) {
-      case FIRE_MODE_SINGLE:
-        cmd->launcher.fire_mode = FIRE_MODE_BURST;
-        break;
-      case FIRE_MODE_BURST:
-        cmd->launcher.fire_mode = FIRE_MODE_CONT;
-        break;
-      case FIRE_MODE_CONT:
-        cmd->launcher.fire_mode = FIRE_MODE_SINGLE;
-        break;
-      default:
-        break;
-    }
-  }
-  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_ROTOR)) {
-    /* 切换到小陀螺模式 */
-    cmd->chassis.mode = CHASSIS_MODE_ROTOR;
-    cmd->chassis.mode_rotor = ROTOR_MODE_RAND;
-  }
-  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_OPENCOVER)) {
-    /* 每按一次开、关弹舱盖 */
-    cmd->launcher.cover_open = !cmd->launcher.cover_open;
-  }
-  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_AUTOAIM)) {
-    if (cmd->ctrl_source == CMD_SOURCE_HOST) {
-      /* 停止ai的自瞄模式，停用host控制 */
-      cmd->ctrl_source = CMD_SOURCE_RC;
-    } else {
-      /* ai切换至自瞄模式，启用host控制 */
-      cmd->ctrl_source = CMD_SOURCE_HOST;
-    }
-  }
-  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_REVTRIG)) {
-    /* 按下拨弹反转 */
-    cmd->launcher.reverse_trig = true;
-  }
-  if (cmd_behavior_occurred(rc, cmd, CMD_BEHAVIOR_FOLLOWGIMBAL35)) {
-    cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
-  }
-  /* 保存当前按下的键位状态 */
-  cmd->key_last = rc->key;
-  memcpy(&(cmd->mouse_last), &(rc->mouse), sizeof(cmd->mouse_last));
-}
-
-/**
- * @brief 解析摇杆拨杆控制逻辑
- *
- * @param rc 遥控器数据
- * @param cmd 控制指令数据
- * @param dt_sec 两次解析的间隔
- */
-static void cmd_joystick_switch_logic(const cmd_rc_t *rc, cmd_t *cmd,
-                                      float dt_sec) {
-  switch (rc->sw_l) {
-      /* 左拨杆相应行为选择和解析 */
-    case CMD_SW_UP:
-      cmd->chassis.mode = CHASSIS_MODE_BREAK;
-      break;
-
-    case CMD_SW_MID:
-      cmd->chassis.mode = CHASSIS_MODE_FOLLOW_GIMBAL;
-      break;
-
-    case CMD_SW_DOWN:
-#if LEVER_R_DEFAULT
-      cmd->chassis.mode = cmd->def_mode->chassis;
-#elif LEVER_L_ROTATE
-      cmd->chassis.mode = CHASSIS_MODE_ROTOR;
-#endif
-      break;
-
-    case CMD_SW_ERR:
-      cmd->chassis.mode = CHASSIS_MODE_RELAX;
-      break;
-  }
-  switch (rc->sw_r) {
-      /* 右拨杆相应行为选择和解析 */
-    case CMD_SW_UP:
-      cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-      cmd->launcher.mode = LAUNCHER_MODE_SAFE;
-      cmd->launcher.fire_mode = FIRE_MODE_SINGLE;
-      cmd->launcher.fire = false;
-      break;
-
-    case CMD_SW_MID:
-      cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-      cmd->launcher.mode = LAUNCHER_MODE_LOADED;
-      cmd->launcher.fire_mode = FIRE_MODE_SINGLE;
-      cmd->launcher.fire = false;
-      break;
-
-    case CMD_SW_DOWN:
-      // cmd->gimbal.mode = cmd->def_mode->gimbal;
-      cmd->launcher.mode = cmd->def_mode->launcher;
-#if LEVER_R_DEFAULT
-
-#elif LEVER_R_FIRE_SINLE
-      cmd->launcher.fire = true;
-      cmd->launcher.fire_mode = FIRE_MODE_SINGLE;
-#elif LEVER_R_FIRE_BURST
-      cmd->launcher.fire = true;
-      cmd->launcher.fire_mode = FIRE_MODE_BURST;
-#elif LEVER_R_FIRE_CONT
-      cmd->launcher.fire = true;
-      cmd->launcher.fire_mode = FIRE_MODE_CONT;
-#endif
-      break;
-
-    case CMD_SW_ERR:
-      cmd->gimbal.mode = GIMBAL_MODE_RELAX;
-      cmd->launcher.mode = LAUNCHER_MODE_RELAX;
-  }
-  /* 将操纵杆的对应值转换为底盘的控制向量和云台变化的欧拉角 */
-  cmd->chassis.ctrl_vec.vx = rc->ch.l.x;
-  cmd->chassis.ctrl_vec.vy = rc->ch.l.y;
-  cmd->gimbal.delta_eulr.yaw = rc->ch.r.x * dt_sec * cmd->param->sens_stick;
-  cmd->gimbal.delta_eulr.pit = rc->ch.r.y * dt_sec * cmd->param->sens_stick;
-}
-
-static bool cmd_rc_losted(const cmd_rc_t *rc) {
-  return (rc->sw_l == CMD_SW_ERR) || (rc->sw_r == CMD_SW_ERR);
-}
-
-/**
- * @brief rc失控时机器人恢复放松模式
- *
- * @param cmd 控制指令数据
- */
-static void cmd_rc_lost_logic(cmd_t *cmd) {
-  /* 机器人底盘、云台、发射器运行模式恢复至放松模式 */
-  cmd->chassis.mode = CHASSIS_MODE_RELAX;
-  cmd->gimbal.mode = GIMBAL_MODE_RELAX;
-  cmd->launcher.mode = LAUNCHER_MODE_RELAX;
-}
-
-/**
- * @brief 初始化命令解析
- *
- * @param cmd 控制指令数据
- * @param param 参数
- * @return int8_t 0对应没有错误
- */
-int8_t cmd_init(cmd_t *cmd, const cmd_params_t *param,
-                const cmd_mode_group_t *def_mode) {
-  /* 指针检测 */
-  ASSERT(cmd);
-  ASSERT(param);
-
-  memset(cmd, 0, sizeof(*cmd));
-
-  /* 设置机器人的命令参数，初始化控制方式为摇杆控制 */
-  cmd->ctrl_method = CMD_METHOD_JOYSTICK_SWITCH;
-  cmd->param = param;
-  cmd->def_mode = def_mode;
-
-  return 0;
-}
-
-/**
- * @brief 检查是否启用上位机控制指令覆盖
- *
- * @param rc 遥控链路数据
- * @param cmd 控制指令数据
- * @return true 启用
- * @return false 不启用
- */
-bool cmd_check_host_overwrite(const cmd_rc_t *rc, cmd_t *cmd) {
-  ASSERT(rc);
-  ASSERT(cmd);
-
-#if HOST_CTRL_PRIORITY
-  RM_UNUSED(cmd);
-  /* 保证丢控时上位机无法控制 */
-  return !cmd_rc_losted(rc);
-#else
-  return cmd->ctrl_source == CMD_SOURCE_HOST;
-#endif
-}
-
-/**
- * @brief 解析命令
- *
- * @param rc 遥控器数据
- * @param cmd 控制指令数据
- * @param dt_sec 两次解析的间隔
- * @return int8_t 0对应没有错误
- */
-int8_t cmd_parse_rc(const cmd_rc_t *rc, cmd_t *cmd, float dt_sec) {
-  /* 指针检测 */
-  ASSERT(rc);
-  ASSERT(cmd);
-
-  /* 在键盘鼠标和摇杆拨杆控制间切换 */
-  if (cmd_key_pressed(rc, CMD_KEY_SHIFT) && cmd_key_pressed(rc, CMD_KEY_CTRL) &&
-      cmd_key_pressed(rc, CMD_KEY_Q)) {
-    cmd->ctrl_method = CMD_METHOD_MOUSE_KEYBOARD;
-  }
-
-  if (cmd_key_pressed(rc, CMD_KEY_SHIFT) && cmd_key_pressed(rc, CMD_KEY_CTRL) &&
-      cmd_key_pressed(rc, CMD_KEY_E)) {
-    cmd->ctrl_method = CMD_METHOD_JOYSTICK_SWITCH;
-  }
-
-  /* 当遥控链路丢失时，恢复机器人至默认状态 */
-  if (cmd_rc_losted(rc)) {
-    /* 遥控链路应该拥有最高控制权，
-     * 任何时候关闭遥控器，都必须保证机器人进入放松状态
-     * 进而保证任何失控可以通过关闭遥控器来解决
-     */
-    cmd_rc_lost_logic(cmd);
-  } else {
-    switch (cmd->ctrl_method) {
-      case CMD_METHOD_MOUSE_KEYBOARD:
-        cmd_mouse_keyboard_logic(rc, cmd, dt_sec);
-        break;
-      default:
-        cmd_joystick_switch_logic(rc, cmd, dt_sec);
-        break;
-    }
-  }
-  return 0;
-}
-
-/**
- * @brief 解析上位机命令
- *
- * @param host host数据
- * @param cmd 控制指令数据
- * @param dt_sec 两次解析的间隔
- * @return int8_t 0对应没有错误
- */
-int8_t cmd_parse_host(const cmd_host_t *host, cmd_t *cmd, float dt_sec) {
-  RM_UNUSED(dt_sec); /* 未使用dt_sec，消除警告 */
-  /* 指针检测 */
-  ASSERT(host);
-  ASSERT(cmd);
-
-/* 哨兵开启云台绝对角度控制 */
-#if ID_SENTRY
-  cmd->gimbal.mode = GIMBAL_MODE_ABSOLUTE;
-#endif
-
-  /* 云台欧拉角设置为host相应的变化的欧拉角 */
-  cmd->gimbal.delta_eulr.yaw = host->gimbal_delta.yaw;
-  cmd->gimbal.delta_eulr.pit = host->gimbal_delta.pit;
-
-  /* host发射命令，设置不同的发射频率和弹丸初速度 */
-  return 0;
-}
-
-/**
- * @brief 导出控制指令UI数据
- *
- * @param cmd_ui 控制指令UI数据
- * @param cmd 控制指令数据
- */
-void cmd_pack_ui(cmd_ui_t *cmd_ui, const cmd_t *cmd) {
-  cmd_ui->ctrl_method = cmd->ctrl_method;
-  cmd_ui->ctrl_source = cmd->ctrl_source;
+bool CMD::RCLost() {
+  return (this->rc_.sw_l == CMD_SW_ERR) || (this->rc_.sw_r == CMD_SW_ERR);
 }
