@@ -6,232 +6,111 @@
 
 #include <stdlib.h>
 
-/**
- * @brief 设置云台模式
- *
- * @param g 包含云台数据的结构体
- * @param mode 要设置的模式
- */
-static void gimbal_set_mode(gimbal_t *g, gimbal_mode_t mode) {
-  ASSERT(g);
-  if (mode == g->mode) return;
+using namespace Module;
 
-  /* 切换模式后重置PID和滤波器 */
-  for (size_t i = 0; i < g->num_yaw; i++) {
-    kpid_reset(g->pid[GIMBAL_CTRL_YAW_OMEGA_IDX] + i);
-  }
+Gimbal* debug = NULL;
 
-  for (size_t i = 0; i < g->num_pit; i++) {
-    kpid_reset(g->pid[GIMBAL_CTRL_PIT_OMEGA_IDX] + i);
-  }
+Device::Actuator* debug_a = NULL;
 
-  for (size_t i = 0; i < g->num_yaw; i++) {
-    low_pass_filter_2p_reset(g->filter_out[GIMBAL_ACTR_YAW_IDX] + i, 0.0f);
-  }
+Gimbal::Gimbal(Param& param)
+    : param_(param),
+      mode_(Component::CMD::GIMBAL_MODE_RELAX),
+      ff_(param.ff),
+      st_(param.st) {
+  debug = this;
 
-  for (size_t i = 0; i < g->num_pit; i++) {
-    low_pass_filter_2p_reset(g->filter_out[GIMBAL_ACTR_PIT_IDX] + i, 0.0f);
-  }
+  this->actuator_ = (Device::Actuator*)System::Memory::Malloc(
+      sizeof(Device::Actuator) * GIMBAL_ACTR_NUM);
+  new (this->actuator_ + GIMBAL_ACTR_YAW_IDX) Device::Actuator(
+      this->param_.actuator[GIMBAL_ACTR_YAW_IDX], 500.0f, "gimbal_yaw");
+  new (this->actuator_ + GIMBAL_ACTR_PIT_IDX) Device::Actuator(
+      this->param_.actuator[GIMBAL_ACTR_PIT_IDX], 500.0f, "gimbal_pitch");
 
-  ahrs_set_eulr(&(g->setpoint.eulr),
-                &(g->feedback.eulr.imu)); /* 切换模式后重置设定值 */
-  if (g->mode == GIMBAL_MODE_RELAX) {
-    if (mode == GIMBAL_MODE_ABSOLUTE) {
-      g->setpoint.eulr.yaw = g->feedback.eulr.imu.yaw;
-    } else if (mode == GIMBAL_MODE_RELATIVE) {
-      g->setpoint.eulr.yaw = g->feedback.eulr.encoder.yaw;
+  debug_a = this->actuator_ + GIMBAL_ACTR_PIT_IDX;
+
+  auto gimbal_thread = [](void* arg) {
+    Gimbal* gimbal = (Gimbal*)arg;
+
+    DECLARE_TOPIC(ui_tp, gimbal->ui_, "gimbal_ui", true);
+    DECLARE_TOPIC(yaw_tp, gimbal->yaw_offset_angle_, "gimbal_yaw_offset", true);
+
+    DECLARE_SUBER(eulr_tp, gimbal->feedback_.imu, "gimbal_eulr");
+    DECLARE_SUBER(gyro_tp, gimbal->feedback_.gyro, "gimbal_gyro");
+    DECLARE_SUBER(cmd_tp, gimbal->cmd_, "cmd_gimbal");
+
+    while (1) {
+      /* 读取控制指令、姿态、IMU、电机反馈 */
+      eulr_tp.DumpData();
+      gyro_tp.DumpData();
+      cmd_tp.DumpData();
+
+      gimbal->UpdateFeedback();
+      gimbal->Control();
+      gimbal->PackUI();
+
+      ui_tp.Publish();
+      yaw_tp.Publish();
+
+      /* 运行结束，等待下一次唤醒 */
+      gimbal->thread_.Sleep(2);
     }
-  }
+  };
 
-  if (mode == GIMBAL_MODE_SCAN) {
-    g->scan_pit_direction = (rand() % 2) ? -1 : 1;
-    g->scan_yaw_direction = (rand() % 2) ? -1 : 1;
-  }
-
-  g->mode = mode;
+  THREAD_DECLEAR(this->thread_, gimbal_thread, 512, System::Thread::Medium,
+                 this);
 }
 
-/**
- * @brief 初始化云台
- *
- * @param g 包含云台数据的结构体
- * @param param 包含云台参数的结构体指针
- * @param target_freq 线程预期的运行频率
- */
-void gimbal_init(gimbal_t *g, const gimbal_params_t *param, float limit_max,
-                 eulr_t *mech_zero, float target_freq) {
-  ASSERT(g);
-  ASSERT(param);
+void Gimbal::UpdateFeedback() {
+  this->actuator_[GIMBAL_ACTR_PIT_IDX].UpdateFeedback();
+  this->actuator_[GIMBAL_ACTR_YAW_IDX].UpdateFeedback();
 
-  g->param = param;            /* 初始化参数 */
-  g->mode = GIMBAL_MODE_RELAX; /* 设置默认模式 */
-  g->mech_zero = mech_zero;
+  this->yaw_offset_angle_ = circle_error(
 
-  switch (g->param->type) {
-    case GIMBAL_TYPE_ROTATRY:
-      g->num_yaw = 1;
-      g->num_pit = 1;
-      break;
-    case GIMBAL_TYPE_LINEAR:
-      g->num_yaw = 1;
-      g->num_pit = 2;
-      break;
-  }
-
-  g->pid[GIMBAL_CTRL_YAW_OMEGA_IDX] =
-      (kpid_t *)pvPortMalloc(sizeof(kpid_t) * g->num_yaw);
-  g->pid[GIMBAL_CTRL_PIT_OMEGA_IDX] =
-      (kpid_t *)pvPortMalloc(sizeof(kpid_t) * g->num_pit);
-  g->pid[GIMBAL_CTRL_YAW_ANGLE_IDX] =
-      (kpid_t *)pvPortMalloc(sizeof(kpid_t) * g->num_yaw);
-  g->pid[GIMBAL_CTRL_PIT_ANGLE_IDX] =
-      (kpid_t *)pvPortMalloc(sizeof(kpid_t) * g->num_pit);
-
-  g->filter_out[GIMBAL_ACTR_YAW_IDX] = (low_pass_filter_2p_t *)pvPortMalloc(
-      sizeof(low_pass_filter_2p_t) * g->num_yaw);
-  g->filter_out[GIMBAL_ACTR_PIT_IDX] = (low_pass_filter_2p_t *)pvPortMalloc(
-      sizeof(low_pass_filter_2p_t) * g->num_pit);
-
-  g->out[GIMBAL_ACTR_YAW_IDX] =
-      (float_t *)pvPortMalloc(sizeof(float) * g->num_yaw);
-  g->out[GIMBAL_ACTR_PIT_IDX] =
-      (float_t *)pvPortMalloc(sizeof(float) * g->num_pit);
-
-  /* 设置软件限位 */
-  if (g->param->reverse.pit) circle_reverse(&limit_max);
-  g->limit.min = g->limit.max = limit_max;
-  circle_add(&(g->limit.min), -g->param->pitch_travel_rad, M_2PI);
-
-  /* 初始化云台电机控制PID和LPF */
-  switch (g->param->type) {
-    case GIMBAL_TYPE_ROTATRY:
-      for (size_t i = 0; i < g->num_yaw; i++) {
-        kpid_init(g->pid[GIMBAL_CTRL_YAW_ANGLE_IDX + i], KPID_MODE_NO_D,
-                  KPID_MODE_K_SET, target_freq,
-                  g->param->pid + GIMBAL_CTRL_YAW_ANGLE_IDX);
-        kpid_init(g->pid[GIMBAL_CTRL_YAW_OMEGA_IDX] + i, KPID_MODE_CALC_D,
-                  KPID_MODE_K_DYNAMIC, target_freq,
-                  g->param->pid + GIMBAL_CTRL_YAW_OMEGA_IDX);
-      }
-
-      for (size_t i = 0; i < g->num_pit; i++) {
-        kpid_init(g->pid[GIMBAL_CTRL_PIT_ANGLE_IDX] + i, KPID_MODE_NO_D,
-                  KPID_MODE_K_SET, target_freq,
-                  g->param->pid + GIMBAL_CTRL_PIT_ANGLE_IDX);
-        kpid_init(g->pid[GIMBAL_CTRL_PIT_OMEGA_IDX] + i, KPID_MODE_CALC_D,
-                  KPID_MODE_K_SET, target_freq,
-                  g->param->pid + GIMBAL_CTRL_PIT_OMEGA_IDX);
-      }
-
-      break;
-    case GIMBAL_TYPE_LINEAR:
-      for (size_t i = 0; i < g->num_yaw; i++) {
-        kpid_init(g->pid[GIMBAL_CTRL_YAW_ANGLE_IDX + i], KPID_MODE_NO_D,
-                  KPID_MODE_K_SET, target_freq,
-                  g->param->pid + GIMBAL_CTRL_YAW_ANGLE_IDX);
-        kpid_init(g->pid[GIMBAL_CTRL_YAW_OMEGA_IDX] + i, KPID_MODE_CALC_D,
-                  KPID_MODE_K_SET, target_freq,
-                  g->param->pid + GIMBAL_CTRL_YAW_OMEGA_IDX);
-      }
-
-      for (size_t i = 0; i < g->num_pit; i++) {
-        kpid_init(g->pid[GIMBAL_CTRL_PIT_ANGLE_IDX] + i, KPID_MODE_NO_D,
-                  KPID_MODE_K_SET, target_freq,
-                  g->param->pid + GIMBAL_CTRL_PIT_ANGLE_IDX);
-        kpid_init(g->pid[GIMBAL_CTRL_PIT_OMEGA_IDX] + i, KPID_MODE_CALC_D,
-                  KPID_MODE_K_SET, target_freq,
-                  g->param->pid + GIMBAL_CTRL_PIT_OMEGA_IDX);
-      }
-
-      break;
-  }
-
-  for (size_t i = 0; i < g->num_pit; i++) {
-    low_pass_filter_2p_init(g->filter_out[GIMBAL_ACTR_PIT_IDX] + i, target_freq,
-                            g->param->low_pass_cutoff_freq.out);
-  }
-
-  for (size_t i = 0; i < g->num_yaw; i++) {
-    low_pass_filter_2p_init(g->filter_out[GIMBAL_ACTR_YAW_IDX] + i, target_freq,
-                            g->param->low_pass_cutoff_freq.out);
-  }
+      this->actuator_[GIMBAL_ACTR_YAW_IDX].motor_.feedback_.rotor_abs_angle,
+      this->param_.mech_zero.yaw, M_2PI);
 }
 
-/**
- * @brief 通过CAN设备更新云台反馈信息
- *
- * @param g 云台
- * @param can CAN设备
- */
-void gimbal_update_feedback(gimbal_t *g,
-                            const motor_feedback_group_t *gimbal_motor_yaw,
-                            const motor_feedback_group_t *gimbal_motor_pit) {
-  ASSERT(g);
-  ASSERT(gimbal_motor_yaw);
-  ASSERT(gimbal_motor_pit);
+void Gimbal::Control() {
+  this->now_ = System::Thread::GetTick();
+  this->dt_ = (float)(this->now_ - this->lask_wakeup_) / 1000.0f;
+  this->lask_wakeup_ = this->now_;
 
-  if (g->param->type == GIMBAL_TYPE_ROTATRY)
-
-  {
-    g->feedback.eulr.encoder.yaw =
-        gimbal_motor_yaw->as_array[0].rotor_abs_angle;
-    g->feedback.eulr.encoder.pit =
-        gimbal_motor_pit->as_array[0].rotor_abs_angle;
-
-    if (g->param->reverse.yaw) circle_reverse(&(g->feedback.eulr.encoder.yaw));
-    if (g->param->reverse.pit) circle_reverse(&(g->feedback.eulr.encoder.pit));
-  }
-}
-
-/**
- * @brief 运行云台控制逻辑
- *
- * @param g 包含云台数据的结构体
- * @param fb 云台反馈信息
- * @param g_cmd 云台控制指令
- * @param dt_sec 两次调用的时间间隔
- */
-void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
-  ASSERT(g);
-  ASSERT(g_cmd);
-
-  g->dt = (float)(now - g->lask_wakeup) / 1000.0f;
-  g->lask_wakeup = now;
-
-  gimbal_set_mode(g, g_cmd->mode);
+  SetMode(this->cmd_.mode);
 
   /* yaw坐标正方向与遥控器操作逻辑相反 */
-  g_cmd->delta_eulr.pit = g_cmd->delta_eulr.pit;
-  g_cmd->delta_eulr.yaw = -g_cmd->delta_eulr.yaw;
+  this->cmd_.delta_eulr.pit = this->cmd_.delta_eulr.pit;
+  this->cmd_.delta_eulr.yaw = -this->cmd_.delta_eulr.yaw;
 
-  switch (g->mode) {
+  switch (this->mode_) {
 #if CTRL_MODE_AUTO
-    case GIMBAL_MODE_SCAN: {
+    case Component::CMD::GIMBAL_MODE_SCAN: {
       /* 判断YAW轴运动方向 */
-      const float yaw_offset = circle_error(g->feedback.eulr.imu.yaw, 0, M_2PI);
+      const float yaw_offset = circle_error(this->feedback_.imu.yaw, 0, M_2PI);
 
       if (fabs(yaw_offset) > ANGLE2RANDIAN(GIM_SCAN_ANGLE_BASE)) {
         if (yaw_offset > 0)
-          g->scan_yaw_direction = -1;
+          this->scan_yaw_direction_ = -1;
         else {
-          g->scan_yaw_direction = 1;
+          this->scan_yaw_direction_ = 1;
         }
       }
 
       /* 判断PIT轴运动方向 */
-      if (circle_error(g->feedback.eulr.encoder.pit, g->limit.min, M_2PI) <=
-          ANGLE2RANDIAN(GIM_SCAN_CRITICAL_ERR)) {
-        g->scan_pit_direction = 1;
-      } else if (circle_error(g->limit.max, g->feedback.eulr.encoder.pit,
+      if (circle_error(this->actuator_[GIMBAL_ACTR_PIT_IDX].GetPos(),
+                       this->param_.limit.pitch_min,
+                       M_2PI) <= ANGLE2RANDIAN(GIM_SCAN_CRITICAL_ERR)) {
+        this->scan_pit_direction_ = 1;
+      } else if (circle_error(this->param_.limit.pitch_max,
+                              this->actuator_[GIMBAL_ACTR_PIT_IDX].GetPos(),
                               M_2PI) <= ANGLE2RANDIAN(GIM_SCAN_CRITICAL_ERR)) {
-        g->scan_pit_direction = -1;
+        this->scan_pit_direction_ = -1;
       }
 
       /* 覆盖控制命令 */
-      g_cmd->delta_eulr.yaw =
-          SPEED2DELTA(GIM_SCAN_YAW_SPEED, g->dt) * g->scan_yaw_direction;
-      g_cmd->delta_eulr.pit =
-          SPEED2DELTA(GIM_SCAN_PIT_SPEED, g->dt) * g->scan_pit_direction;
+      this->cmd_.delta_eulr.yaw = SPEED2DELTA(GIM_SCAN_YAW_SPEED, this->dt_) *
+                                  this->scan_yaw_direction_;
+      this->cmd_.delta_eulr.pit = SPEED2DELTA(GIM_SCAN_PIT_SPEED, this->dt_) *
+                                  this->scan_pit_direction_;
 
       break;
     }
@@ -241,125 +120,93 @@ void gimbal_control(gimbal_t *g, cmd_gimbal_t *g_cmd, uint32_t now) {
   }
 
   /* 处理yaw控制命令 */
-  circle_add(&(g->setpoint.eulr.yaw), g_cmd->delta_eulr.yaw, M_2PI);
+  circle_add(&(this->setpoint.eulr_.yaw), this->cmd_.delta_eulr.yaw, M_2PI);
 
   /* 处理pitch控制命令，软件限位 */
   const float delta_max =
-      circle_error(g->limit.max,
-                   (g->feedback.eulr.encoder.pit + g->setpoint.eulr.pit -
-                    g->feedback.eulr.imu.pit),
+      circle_error(this->param_.limit.pitch_max,
+                   (this->actuator_[GIMBAL_ACTR_PIT_IDX].GetPos() +
+                    this->setpoint.eulr_.pit - this->feedback_.imu.pit),
                    M_2PI);
   const float delta_min =
-      circle_error(g->limit.min,
-                   (g->feedback.eulr.encoder.pit + g->setpoint.eulr.pit -
-                    g->feedback.eulr.imu.pit),
+      circle_error(this->param_.limit.pitch_min,
+                   (this->actuator_[GIMBAL_ACTR_PIT_IDX].GetPos() +
+                    this->setpoint.eulr_.pit - this->feedback_.imu.pit),
                    M_2PI);
-  clampf(&(g_cmd->delta_eulr.pit), delta_min, delta_max);
-  g->setpoint.eulr.pit += g_cmd->delta_eulr.pit;
-
-  /* 重置输入指令，防止重复处理 */
-  ahrs_reset_eulr(&(g_cmd->delta_eulr));
+  clampf(&(this->cmd_.delta_eulr.pit), delta_min, delta_max);
+  this->setpoint.eulr_.pit += this->cmd_.delta_eulr.pit;
 
   /* 控制相关逻辑 */
-  float yaw_omega_set_point, pit_omega_set_point;
-  switch (g->mode) {
-    case GIMBAL_MODE_RELAX:
-      for (size_t i = 0; i < g->num_yaw; i++)
-        g->out[GIMBAL_ACTR_YAW_IDX][i] = 0.0f;
-      for (size_t i = 0; i < g->num_pit; i++)
-        g->out[GIMBAL_ACTR_PIT_IDX][i] = 0.0f;
-
+  switch (this->mode_) {
+    case Component::CMD::GIMBAL_MODE_RELAX:
+    case Component::CMD::GIMBAL_MODE_RELATIVE:
+      this->actuator_[GIMBAL_ACTR_YAW_IDX].Relax();
+      this->actuator_[GIMBAL_ACTR_PIT_IDX].Relax();
       break;
-    case GIMBAL_MODE_SCAN:
-    case GIMBAL_MODE_ABSOLUTE:
-      for (size_t i = 0; i < g->num_yaw; i++) {
-        /* Yaw轴角速度环参数计算 */
-        kpid_set_k(g->pid[GIMBAL_CTRL_YAW_OMEGA_IDX] + i,
-                   cf_get_value(&(g->param->st), g->feedback.eulr.imu.pit));
+    case Component::CMD::GIMBAL_MODE_SCAN:
+    case Component::CMD::GIMBAL_MODE_ABSOLUTE:
+      /* Yaw轴角速度环参数计算 */
+      // float pit_k = this->st_.GetValue(this->feedback_.imu.pit);
+      // this->actuator_[GIMBAL_CTRL_YAW_OMEGA_IDX].speed_->SetK(pit_k);
 
-        /* Yaw轴角度 反馈控制 */
-        yaw_omega_set_point = kpid_calc(g->pid[GIMBAL_CTRL_YAW_ANGLE_IDX] + i,
-                                        g->setpoint.eulr.yaw,
-                                        g->feedback.eulr.imu.yaw, 0.0f, g->dt);
+      this->actuator_[GIMBAL_ACTR_YAW_IDX].Control(
+          this->setpoint.eulr_.yaw, this->feedback_.imu.yaw,
+          this->feedback_.gyro.z, this->dt_);
 
-        /* Yaw轴角速度 反馈控制 */
-        g->out[GIMBAL_ACTR_YAW_IDX][i] =
-            kpid_calc(g->pid[GIMBAL_CTRL_YAW_OMEGA_IDX] + i,
-                      yaw_omega_set_point, g->feedback.gyro.z, 0.f, g->dt);
-      }
+      this->actuator_[GIMBAL_ACTR_PIT_IDX].Control(
+          this->setpoint.eulr_.pit, this->feedback_.imu.pit,
+          this->feedback_.gyro.x, this->dt_);
 
-      for (size_t i = 0; i < g->num_pit; i++) {
-        /* Pitch轴角度 反馈控制 */
-        pit_omega_set_point = kpid_calc(g->pid[GIMBAL_CTRL_PIT_ANGLE_IDX] + i,
-                                        g->setpoint.eulr.pit,
-                                        g->feedback.eulr.imu.pit, 0.0f, g->dt);
+      // /* Pitch前馈控制 */
+      // this->actuator_[GIMBAL_ACTR_PIT_IDX].output_ +=
+      //     this->ff_.GetValue(this->feedback_.imu.pit);
 
-        /* Pitch轴角速度 反馈控制 */
-        g->out[GIMBAL_ACTR_PIT_IDX][i] =
-            kpid_calc(g->pid[GIMBAL_CTRL_PIT_OMEGA_IDX] + i,
-                      pit_omega_set_point, g->feedback.gyro.x, 0.f, g->dt);
+      // clampf(&(this->actuator_[GIMBAL_ACTR_PIT_IDX].output_), -1.0, 1.0);
 
-        /* Pitch前馈控制 */
-        g->out[GIMBAL_ACTR_PIT_IDX][i] +=
-            cf_get_value(&(g->param->ff), g->feedback.eulr.imu.pit);
-
-        clampf(g->out[GIMBAL_ACTR_PIT_IDX] + i, -1.0, 1.0);
-      }
-      break;
-
-    case GIMBAL_MODE_RELATIVE:
-      for (size_t i = 0; i < g->num_yaw; i++)
-        g->out[GIMBAL_ACTR_YAW_IDX][i] = 0.0f;
-      for (size_t i = 0; i < g->num_pit; i++)
-        g->out[GIMBAL_ACTR_PIT_IDX][i] = 0.0f;
       break;
   }
-
-  /* 输出滤波 */
-  for (size_t i = 0; i < g->num_yaw; i++)
-    g->out[GIMBAL_ACTR_YAW_IDX][i] = low_pass_filter_2p_apply(
-        g->filter_out[GIMBAL_ACTR_YAW_IDX] + i, g->out[GIMBAL_ACTR_YAW_IDX][i]);
-
-  for (size_t i = 0; i < g->num_pit; i++)
-    g->out[GIMBAL_ACTR_PIT_IDX][i] = low_pass_filter_2p_apply(
-        g->filter_out[GIMBAL_ACTR_PIT_IDX] + i, g->out[GIMBAL_ACTR_PIT_IDX][i]);
-
-  /* 处理电机反装 */
-  if (g->param->reverse.yaw)
-    for (size_t i = 0; i < g->num_yaw; i++)
-      g->out[GIMBAL_ACTR_YAW_IDX][i] = -g->out[GIMBAL_ACTR_YAW_IDX][i];
-  if (g->param->reverse.pit)
-    for (size_t i = 0; i < g->num_pit; i++)
-      g->out[GIMBAL_ACTR_PIT_IDX][i] = -g->out[GIMBAL_ACTR_PIT_IDX][i];
 }
 
-/**
- * @brief 复制云台输出值
- *
- * @param g 包含云台数据的结构体
- * @param out CAN设备云台输出结构体
- */
-void gimbal_pack_output(gimbal_t *g, motor_control_t *pit_out,
-                        motor_control_t *yaw_out) {
-  ASSERT(g);
-  ASSERT(pit_out);
-  ASSERT(yaw_out);
+void Gimbal::PackUI() { this->ui_.mode = this->mode_; }
 
-  for (size_t i = 0; i < g->num_yaw; i++)
-    yaw_out->as_array[i] = g->out[GIMBAL_ACTR_YAW_IDX][i];
+void Gimbal::SetMode(Component::CMD::GimbalMode mode) {
+  if (mode == this->mode_) return;
 
-  for (size_t i = 0; i < g->num_pit; i++)
-    pit_out->as_array[i] = g->out[GIMBAL_ACTR_PIT_IDX][i];
-}
+  /* 切换模式后重置PID和滤波器 */
+  this->actuator_[GIMBAL_ACTR_PIT_IDX].Reset();
+  this->actuator_[GIMBAL_ACTR_YAW_IDX].Reset();
 
-/**
- * @brief 导出云台UI数据
- *
- * @param g 云台结构体
- * @param ui UI结构体
- */
-void gimbal_pack_ui(const gimbal_t *g, ui_gimbal_t *ui) {
-  ASSERT(g);
-  ASSERT(ui);
-  ui->mode = g->mode;
+  memcpy(&(this->setpoint.eulr_), &(this->feedback_.imu),
+         sizeof(this->setpoint.eulr_)); /* 切换模式后重置设定值 */
+  if (this->mode_ == Component::CMD::GIMBAL_MODE_RELAX) {
+    if (mode == Component::CMD::GIMBAL_MODE_ABSOLUTE) {
+      this->setpoint.eulr_.yaw = this->feedback_.imu.yaw;
+    } else if (mode == Component::CMD::GIMBAL_MODE_RELATIVE) {
+      this->setpoint.eulr_.yaw = this->actuator_[GIMBAL_ACTR_YAW_IDX].GetPos();
+    }
+  }
+
+  if (mode == Component::CMD::GIMBAL_MODE_SCAN) {
+    this->scan_pit_direction_ = (rand() % 2) ? -1 : 1;
+    this->scan_yaw_direction_ = (rand() % 2) ? -1 : 1;
+  }
+
+  this->mode_ = mode;
+
+  memcpy(&(this->setpoint.eulr_), &(this->feedback_.imu),
+         sizeof(this->setpoint.eulr_)); /* 切换模式后重置设定值 */
+  if (this->mode_ == Component::CMD::GIMBAL_MODE_RELAX) {
+    if (mode == Component::CMD::GIMBAL_MODE_ABSOLUTE) {
+      this->setpoint.eulr_.yaw = this->feedback_.imu.yaw;
+    } else if (mode == Component::CMD::GIMBAL_MODE_RELATIVE) {
+      this->setpoint.eulr_.yaw = this->actuator_[GIMBAL_ACTR_YAW_IDX].GetPos();
+    }
+  }
+
+  if (mode == Component::CMD::GIMBAL_MODE_SCAN) {
+    this->scan_pit_direction_ = (rand() % 2) ? -1 : 1;
+    this->scan_yaw_direction_ = (rand() % 2) ? -1 : 1;
+  }
+
+  this->mode_ = mode;
 }
