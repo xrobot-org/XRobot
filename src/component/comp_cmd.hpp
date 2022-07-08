@@ -269,6 +269,10 @@ class CMD {
     CtrlSource ctrl_source;
   } UI;
 
+  uint32_t now_;
+  uint32_t last_online_time_;
+  float dt_;
+
   Param &param_; /* 命令参数 */
 
   CtrlSource ctrl_source_; /* 指令来源 */

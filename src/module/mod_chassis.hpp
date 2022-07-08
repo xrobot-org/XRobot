@@ -41,7 +41,7 @@ class Chassis {
     float chassis_watt;
   } RefForChassis;
 
-  Chassis(Param &param);
+  Chassis(Param &param, float control_freq);
 
   void UpdateFeedback();
 

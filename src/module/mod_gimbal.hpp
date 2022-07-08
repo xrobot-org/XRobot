@@ -53,7 +53,7 @@ class Gimbal {
 
   } Feedback;
 
-  Gimbal(Param &param);
+  Gimbal(Param &param, float control_freq);
 
   void UpdateFeedback();
 

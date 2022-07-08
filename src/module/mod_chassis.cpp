@@ -50,18 +50,18 @@ using namespace Module;
 
 Device::LimitedActuator* debug_ch_[4];
 
-Chassis::Chassis(Param& param)
+Chassis::Chassis(Param& param, float control_freq)
     : param_(param),
       mode_(Component::CMD::CHASSIS_MODE_RELAX),
       mixer_(param.type),
-      follow_pid_(param.follow_pid_param, 500.0f) {
+      follow_pid_(param.follow_pid_param, control_freq) {
   memset(&(this->cmd_), 0, sizeof(this->cmd_));
 
   this->actuator_ = (Device::LimitedActuator*)System::Memory::Malloc(
       sizeof(Device::LimitedActuator) * this->mixer_.len_);
   for (uint8_t i = 0; i < this->mixer_.len_; i++) {
     new (this->actuator_ + i) Device::LimitedActuator(
-        param.actuator_param[i], param.limit_param, 500.0f,
+        param.actuator_param[i], param.limit_param, control_freq,
         (std::string("chassis_") + std::to_string(i)).c_str());
     debug_ch_[i] = this->actuator_ + i;
   }

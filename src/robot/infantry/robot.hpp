@@ -42,13 +42,13 @@ class Infantry : public System::Message {
   Module::Gimbal gimbal_;
   Module::Launcher launcher_;
 
-  Infantry(Param& param)
+  Infantry(Param& param, float control_freq)
       : cmd_(param.cmd),
         ahrs_(Component::AHRS::GIMBAL),
         bmi088_(param.bmi088_cali, param.bmi088_rot),
         cap_(param.cap),
-        chassis_(param.chassis),
-        gimbal_(param.gimbal),
-        launcher_(param.launcher) {}
+        chassis_(param.chassis, control_freq),
+        gimbal_(param.gimbal, control_freq),
+        launcher_(param.launcher, control_freq) {}
 };
 }  // namespace Robot

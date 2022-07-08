@@ -87,7 +87,7 @@ class Launcher {
     Device::Referee::LauncherData launcher_data;
   } RefForLauncher;
 
-  Launcher(Param &param_);
+  Launcher(Param &param, float control_freq);
 
   void UpdateFeedback();
 

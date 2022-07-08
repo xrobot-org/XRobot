@@ -21,7 +21,7 @@ using namespace Module;
 
 Launcher* launcher_debug = NULL;
 
-Launcher::Launcher(Param& param)
+Launcher::Launcher(Param& param, float control_freq)
     : param_(param), mode_(Component::CMD::LAUNCHER_MODE_RELAX) {
   this->trig_actuator_ = (Device::Actuator*)System::Memory::Malloc(
       sizeof(Device::Actuator) * LAUNCHER_ACTR_TRIG_NUM);
@@ -32,12 +32,12 @@ Launcher::Launcher(Param& param)
 
   for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
     new (this->trig_actuator_ + i)
-        Device::Actuator(param.trig_motor[i], 500.0f, "launcher_trig");
+        Device::Actuator(param.trig_motor[i], control_freq, "launcher_trig");
   }
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
     new (this->fric_actuator_ + i)
-        Device::Actuator(param.fric_motor[i], 500.0f,
+        Device::Actuator(param.fric_motor[i], control_freq,
                          ("launcher_fric" + std::to_string(i)).c_str());
   }
 

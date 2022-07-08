@@ -86,6 +86,10 @@ bool CMD::HostCtrl() {
 }
 
 bool CMD::PraseRC() {
+  this->last_online_time_ = this->now_;
+  this->now_ = System::Thread::GetTick();
+  this->dt_ = (now_ - last_online_time_) / 1000.0f;
+
   /* 在键盘鼠标和摇杆拨杆控制间切换 */
   if (this->PraseMouseKey(CMD_KEY_SHIFT) && this->PraseMouseKey(CMD_KEY_CTRL) &&
       this->PraseMouseKey(CMD_KEY_Q)) {
@@ -149,9 +153,9 @@ bool CMD::PraseKeyboard() {
 
   /* 云台设置为鼠标控制欧拉角的变化，底盘的控制向量设置为零 */
   this->gimbal_.delta_eulr.yaw =
-      (float)this->rc_.mouse.x * 0.002f * this->param_.sens_mouse;
+      (float)this->rc_.mouse.x * this->dt_ * this->param_.sens_mouse;
   this->gimbal_.delta_eulr.pit =
-      (float)(-this->rc_.mouse.y) * 0.002f * this->param_.sens_mouse;
+      (float)(-this->rc_.mouse.y) * this->dt_ * this->param_.sens_mouse;
   this->chassis_.ctrl_vec.vx = this->chassis_.ctrl_vec.vy = 0.0f;
   this->launcher_.reverse_trig = false;
 
@@ -297,9 +301,9 @@ bool CMD::PraseJoystick() {
   this->chassis_.ctrl_vec.vx = this->rc_.ch.l.x;
   this->chassis_.ctrl_vec.vy = this->rc_.ch.l.y;
   this->gimbal_.delta_eulr.yaw =
-      this->rc_.ch.r.x * 0.002f * this->param_.sens_stick;
+      this->rc_.ch.r.x * this->dt_ * this->param_.sens_stick;
   this->gimbal_.delta_eulr.pit =
-      this->rc_.ch.r.y * 0.002f * this->param_.sens_stick;
+      this->rc_.ch.r.y * this->dt_ * this->param_.sens_stick;
 
   return true;
 }
