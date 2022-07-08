@@ -6,13 +6,22 @@
 
 #include "comp_utils.hpp"
 
-/* y=ax^2+bx+c */
-typedef struct {
-  float a;
-  float b;
-  float c;
-  float max;
-  float min;
-} cf_param_t;
+namespace Component {
+class SecOrderFunction {
+ public:
+  /* y=ax^2+bx+c */
+  typedef struct {
+    float a;
+    float b;
+    float c;
+    float max;
+    float min;
+  } Param;
 
-float cf_get_value(const cf_param_t* param, float fb);
+  SecOrderFunction(Param& param);
+
+  float GetValue(float fb);
+
+  Param param_;
+};
+}  // namespace Component
