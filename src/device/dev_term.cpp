@@ -1,35 +1,38 @@
 #include "dev_term.hpp"
 
-#include "FreeRTOS.h"
 #include "bsp_usb.h"
-#include "queue.h"
-#include "semphr.h"
 
-static bool inited = false;
+using namespace Device;
 
-int8_t term_init() {
-  if (inited) return RM_OK;
+Term::Term() { bsp_usb_init(); }
 
-  bsp_usb_init();
-  inited = true;
-  return RM_OK;
-}
-
-int8_t term_update() {
+bool Term::Update() {
   bsp_usb_update();
-  return RM_OK;
+
+  auto term_thread = [](void *arg) {
+    Term *term = (Term *)arg;
+
+    while (1) {
+      term->Update();
+    }
+  };
+
+  THREAD_DECLEAR(this->thread_, term_thread, 256, System::Thread::Realtime,
+                 this);
+
+  return true;
 }
 
-bool term_opened() { return bsp_usb_connect(); }
+bool Term::Opened() { return bsp_usb_connect(); }
 
-uint32_t term_avail() { return bsp_usb_avail(); }
+uint32_t Term::Available() { return bsp_usb_avail(); }
 
-char term_read_char() { return bsp_usb_read_char(); }
+char Term::ReadChar() { return bsp_usb_read_char(); }
 
-uint16_t term_read(uint8_t *buffer, uint32_t len) {
+uint32_t Term::Read(uint8_t *buffer, uint32_t len) {
   return bsp_usb_read(buffer, len);
 }
 
-int8_t term_write(uint8_t *buffer, uint32_t len) {
-  return (int8_t)bsp_usb_transmit(buffer, len);
+bool Term::Write(uint8_t *buffer, uint32_t len) {
+  return bsp_usb_transmit(buffer, len) == BSP_OK;
 }

@@ -1,24 +1,22 @@
-#pragma once
-
-#include <stdbool.h>
-#include <stdint.h>
-
-#include "bsp_usb.h"
-#include "comp_type.hpp"
 #include "dev.hpp"
 
-#define term_printf bsp_usb_printf
+namespace Device {
+class Term {
+ public:
+  Term();
 
-int8_t term_init();
+  bool Update();
 
-int8_t term_update();
+  bool Opened();
 
-bool term_opened();
+  uint32_t Available();
 
-uint32_t term_avail();
+  char ReadChar();
 
-char term_read_char();
+  uint32_t Read(uint8_t *buffer, uint32_t len);
 
-uint16_t term_read(uint8_t *buffer, uint32_t len);
+  bool Write(uint8_t *buffer, uint32_t len);
 
-int8_t term_write(uint8_t *buffer, uint32_t len);
+  System::Thread thread_;
+};
+}  // namespace Device

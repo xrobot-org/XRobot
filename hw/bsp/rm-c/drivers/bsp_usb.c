@@ -3,12 +3,7 @@
 #include "main.h"
 #include "tusb.h"
 
-#define BSP_USB_MAX_RX_LEN 1024
-#define BSP_USB_MAX_TX_LEN 1024
-
 static bsp_callback_t callback_list[BSP_USB_NUM][BSP_USB_CB_NUM];
-
-uint8_t usb_tx_buf[BSP_USB_MAX_TX_LEN];
 
 int8_t bsp_usb_transmit(uint8_t *buffer, uint32_t len) {
   tud_cdc_write(buffer, len);
@@ -33,20 +28,6 @@ uint32_t bsp_usb_read(uint8_t *buffer, uint32_t len) {
 bool bsp_usb_connect(void) { return tud_cdc_connected(); }
 
 uint32_t bsp_usb_avail(void) { return tud_cdc_available(); }
-
-int8_t bsp_usb_printf(const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  int len = vsnprintf((char *)usb_tx_buf, BSP_USB_MAX_TX_LEN - 1, fmt, ap);
-  va_end(ap);
-
-  if (len > 0) {
-    bsp_usb_transmit(usb_tx_buf, (uint16_t)(len));
-    return BSP_OK;
-  } else {
-    return BSP_ERR_NULL;
-  }
-}
 
 void bsp_usb_init() { tusb_init(); }
 
