@@ -3,63 +3,67 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "comp_utils.hpp"
-#include "dev_referee.hpp"
-
 #define TOF_RES (1000) /* TOF数据分辨率 */
 
-void tof_decode(tof_feedback_data_t *fb_data, const uint8_t *raw) {
-  fb_data->dist =
-      (float)((raw[2] << 16) | (raw[1] << 8) | raw[0]) / (float)TOF_RES;
-  fb_data->status = raw[3];
-  fb_data->signal_strength = (uint16_t)((raw[5] << 8) | raw[4]);
+using namespace Device;
+
+Tof::Tof(Param &param) : param_(param), recv_(sizeof(can_rx_item_t), 1) {
+  auto rx_callback = [](om_msg_t *msg, void *arg) {
+    Tof *tof = (Tof *)arg;
+    can_rx_item_t *rx = (can_rx_item_t *)msg->buff;
+    rx->index -= tof->param_.index;
+    if (rx->index < DEV_TOF_SENSOR_NUMBER) {
+      tof->recv_.OverwriteFromISR(rx);
+    }
+
+    return OM_OK;
+  };
+
+  System::Message::Topic<can_rx_item_t> tof_tp("can_tof", false);
+
+  System::Message::Subscription<can_rx_item_t> tof_sub(tof_tp, rx_callback,
+                                                       this);
+
+  bsp_can_register_subscriber(this->param_.can, tof_tp.GetHandle(),
+                              this->param_.index, DEV_TOF_SENSOR_NUMBER);
+
+  auto tof_thread = [](void *arg) {
+    Tof *tof = (Tof *)arg;
+
+    DECLARE_TOPIC(tof_tp, tof->feedback_, "tof_fb", true);
+
+    while (1) {
+      if (!tof->Update()) {
+        tof->Offline();
+      }
+
+      tof_tp.Publish();
+      /* 运行结束，等待下一次唤醒 */
+      tof->thread_.Sleep(2);
+    }
+  };
+
+  THREAD_DECLEAR(this->thread_, tof_thread, 256, System::Thread::Realtime,
+                 this);
 }
 
-void tof_rx_callback(om_msg_t *msg, void *arg) {
-  ASSERT(msg);
-  ASSERT(arg);
-
-  can_rx_item_t *rx = (can_rx_item_t *)msg->buff;
-  tof_t *tof = (tof_t *)arg;
-
-  rx->index -= tof->param->index;
-
-  if (rx->index < DEV_TOF_SENSOR_NUMBER) {
-    BaseType_t switch_required;
-    xQueueOverwriteFromISR(tof->msgq_feedback, rx, &switch_required);
-    portYIELD_FROM_ISR(switch_required);
-  }
+void Tof::Decode(can_rx_item_t &rx) {
+  this->feedback_[rx.index].dist =
+      (float)((rx.data[2] << 16) | (rx.data[1] << 8) | rx.data[0]) /
+      (float)TOF_RES;
+  this->feedback_[rx.index].status = rx.data[3];
+  this->feedback_[rx.index].signal_strength =
+      (uint16_t)((rx.data[5] << 8) | rx.data[4]);
 }
 
-int8_t tof_init(tof_t *tof, const tof_param_t *param) {
-  bsp_can_wait_init();
-
-  tof->param = param;
-  tof->msgq_feedback = xQueueCreate(1, sizeof(can_rx_item_t));
-
-  om_topic_t *tp =
-      om_config_topic(NULL, "VDA", "can_tof", tof_rx_callback, tof);
-
-  bsp_can_register_subscriber(tof->param->can, tp, tof->param->index,
-                              tof->param->num);
-  if (tof->msgq_feedback)
-    return RM_OK;
-  else
-    return ERR_FAIL;
-}
-
-int8_t tof_update(tof_t *tof, uint32_t timeout) {
-  ASSERT(tof);
+bool Tof::Update() {
   can_rx_item_t pack;
-  while (pdPASS ==
-         xQueueReceive(tof->msgq_feedback, &pack, pdMS_TO_TICKS(timeout))) {
-    tof_decode(&(tof->feedback.data[pack.index]), pack.data);
+
+  while (this->recv_.Receive(&pack, 2)) {
+    this->Decode(pack);
   }
-  return RM_OK;
+
+  return true;
 }
 
-int8_t tof_handle_offline(tof_t *tof) {
-  ASSERT(tof);
-  memset(&(tof->feedback), 0, sizeof(tof->feedback));
-  return RM_OK;
-}
+void Tof::Offline() { memset(this->feedback_, 0, sizeof(this->feedback_)); }

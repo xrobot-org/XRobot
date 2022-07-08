@@ -1,7 +1,10 @@
 #pragma once
 
-#define DEVICE_OK (0)
-#define DEVICE_ERR (-1)
-#define DEVICE_ERR_NULL (-2)
-#define DEVICE_ERR_INITED (-3)
-#define DEVICE_ERR_NO_DEV (-4)
+#include <stdint.h>
+
+#include "memory.hpp"
+#include "message.hpp"
+#include "queue.hpp"
+#include "semaphore.hpp"
+#include "thread.hpp"
+#include "timer.hpp"

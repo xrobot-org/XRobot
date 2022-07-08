@@ -3,52 +3,75 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "FreeRTOS.h"
 #include "comp_ahrs.hpp"
-#include "comp_cmd.hpp"
+
 #include "comp_utils.hpp"
 #include "dev.hpp"
 #include "dev_referee.hpp"
 #include "protocol.h"
-#include "semphr.h"
 
-typedef struct __packed {
-  uint8_t id;
-  Protocol_UpPackageReferee_t package;
-} ai_up_pckage_referee_t;
+namespace Device {
+class AI {
+ public:
+  typedef struct __packed {
+    uint8_t id;
+    Protocol_UpPackageReferee_t package;
+  } RefereePckage;
 
-typedef struct __packed {
-  uint8_t id;
-  Protocol_UpPackageMCU_t package;
-} ai_up_pckage_mcu_t;
+  typedef struct __packed {
+    uint8_t id;
+    Protocol_UpPackageMCU_t package;
+  } MCUPckage;
 
-typedef struct {
-  bool ref_updated;
+  typedef struct {
+    uint8_t game_type;
+    Device::Referee::Status status;
+    uint8_t team;
+    uint8_t robot_id;
+    uint8_t robot_buff;
+    uint32_t ball_speed;
+    uint32_t max_hp;
+    uint32_t hp;
+  } RefForAI;
+
+  struct {
+    System::Semaphore data_ready_;
+  } sem;
+
+  Component::Type::Quaternion quat_;
+  RefForAI ref_;
+  Component::CMD::Host cmd_;
+  Component::Type::Eulr eulr_;
+
+  AI();
+
+  bool StartRecv();
+
+  bool PraseHost();
+
+  bool StartTrans();
+
+  bool Offline();
+
+  bool PackMCU();
+
+  bool PackRef();
+
+  void PraseRef(Device::Referee::Data *ref);
+
+  bool PackCMD();
+
+  bool ref_updated_;
+  bool online_;
+  uint32_t last_online_time_;
 
   Protocol_DownPackage_t form_host;
 
   struct {
-    ai_up_pckage_referee_t ref;
-    ai_up_pckage_mcu_t mcu;
+    RefereePckage ref_;
+    MCUPckage mcu_;
   } to_host;
 
-  struct {
-    SemaphoreHandle_t data_ready;
-  } sem;
-
-  bool online;
-  uint32_t last_online_time;
-} ai_t;
-
-int8_t ai_init(ai_t *ai);
-int8_t ai_restart(void);
-
-bool ai_start_receiving(ai_t *ai);
-int8_t ai_read_host(ai_t *ai);
-bool ai_wait_recv_cplt(ai_t *ai);
-bool ai_start_trans(ai_t *ai);
-int8_t ai_parse_host(ai_t *ai, uint32_t tick);
-int8_t ai_handle_offline(ai_t *ai, uint32_t tick);
-int8_t ai_pack_mcu_for_host(ai_t *ai, const quaternion_t *quat);
-int8_t ai_pack_ref_for_host(ai_t *ai, const referee_for_ai_t *ref);
-void ai_pack_cmd(ai_t *ai, cmd_host_t *cmd_host, eulr_t *eulr);
+  System::Thread thread_;
+};
+}  // namespace Device

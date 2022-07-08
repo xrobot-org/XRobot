@@ -1,7 +1,10 @@
 #pragma once
 
-#include <stdint.h>
-
-int8_t buzzer_start(void);
-int8_t buzzer_set(float freq, float duty_cycle);
-int8_t buzzer_stop(void);
+namespace Device {
+class Buzzer {
+ public:
+  bool Start(void);
+  bool Stop(void);
+  bool Set(float freq, float duty_cycle);
+};
+}  // namespace Device
