@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.11)
 project(module)
 
 file(GLOB ${PROJECT_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
-     "${CMAKE_CURRENT_SOURCE_DIR}/config/*.cpp")
+)
 
 add_library(${PROJECT_NAME} STATIC)
 
