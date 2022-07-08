@@ -1,6 +1,7 @@
 #include "bsp_uart.h"
 
 #include "main.h"
+#include "stm32f4xx_it.h"
 
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart3;
@@ -78,6 +79,8 @@ void bsp_uart_irq_handler(UART_HandleTypeDef *huart) {
     bsp_uart_callback(BSP_UART_IDLE_LINE_CB, huart);
   }
 }
+
+void bsp_uart_init() { HAL_UART_RegisterUserCallback(bsp_uart_irq_handler); }
 
 UART_HandleTypeDef *bsp_uart_get_handle(bsp_uart_t uart) {
   switch (uart) {

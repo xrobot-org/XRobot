@@ -1,6 +1,9 @@
 #include "bsp.h"
 
+#include "bsp_can.h"
+#include "bsp_uart.h"
 #include "main.h"
+#include "stm32f4xx_it.h"
 
 void bsp_init() {
   /* Reset of all peripherals, Initializes the Flash interface and the Systick.
@@ -11,6 +14,8 @@ void bsp_init() {
   SystemClock_Config();
 
   /* Initialize all configured peripherals */
+  bsp_uart_init();
+
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_ADC1_Init();
