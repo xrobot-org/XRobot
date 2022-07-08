@@ -136,7 +136,7 @@ float bullet_speed_to_fric_rpm(float bullet_speed, float fric_radius,
   return 60.0f * bullet_speed / (M_2PI * fric_radius);
 }
 
-bool gyro_is_stable(vector3_t *gyro) {
+bool gyro_is_stable(Component::Type::Vector3 *gyro) {
   return ((gyro->x < 0.03f) && (gyro->y < 0.03f) && (gyro->z < 0.03f));
 }
 

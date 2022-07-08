@@ -201,7 +201,7 @@ void circle_reverse(float *origin);
 float bullet_speed_to_fric_rpm(float bullet_speed, float fric_radius,
                                bool is17mm);
 
-bool gyro_is_stable(vector3_t *gyro);
+bool gyro_is_stable(Component::Type::Vector3 *gyro);
 
 /**
  * @brief 断言失败处理

@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "comp_game.hpp"
+#include "comp_cmd.hpp"
 #include "comp_utils.hpp"
 
 #define UI_GRAPHIC_LAYER_CONST (0)
@@ -83,7 +83,7 @@ typedef struct {
 
 typedef struct {
   /* 屏幕分辨率 */
-  const ui_screen_t *screen;
+  ui_screen_t screen = {1920, 1080};
 
   uint8_t refresh_fsm;
   struct {
@@ -102,7 +102,7 @@ typedef struct {
 } ui_t;
 
 typedef struct {
-  chassis_mode_t mode;
+  Component::CMD::ChassisMode mode;
   float angle;
 } ui_chassis_t;
 
@@ -112,12 +112,12 @@ typedef struct {
 } ui_cap_t;
 
 typedef struct {
-  gimbal_mode_t mode;
+  Component::CMD::GimbalMode mode;
 } ui_gimbal_t;
 
 typedef struct {
-  launcher_mode_t mode;
-  fire_mode_t fire;
+  Component::CMD::LauncherMode mode;
+  Component::CMD::FireMode fire;
   float trig;
   float fric_percent[2];
 } ui_launcher_t;

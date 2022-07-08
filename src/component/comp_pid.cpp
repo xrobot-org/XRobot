@@ -15,113 +15,55 @@
 
 #define SIGMA 0.000001f
 
-/**
- * @brief 初始化PID
- *
- * @param pid PID结构体
- * @param i_mode PID i模式
- * @param k_mode PID k模式
- * @param sample_freq 采样频率
- * @param param PID参数
- */
-void kpid_init(kpid_t *pid, kpid_i_mode_t i_mode, kpid_k_mode_t k_mode,
-               float sample_freq, const kpid_params_t *param) {
-  ASSERT(pid);
+using namespace Component;
 
-  ASSERT(isfinite(param->p));
-  ASSERT(isfinite(param->i));
-  ASSERT(isfinite(param->d));
-  ASSERT(isfinite(param->i_limit));
-  ASSERT(isfinite(param->out_limit));
-  pid->param = param;
-
+PID::PID(PID::Param &param, float sample_freq)
+    : param_(param), dfilter_(sample_freq, param.d_cutoff_freq) {
   float dt_min = 1.0f / sample_freq;
   ASSERT(isfinite(dt_min));
-  pid->dt_min = dt_min;
+  this->dt_min_ = dt_min;
 
-  low_pass_filter_2p_init(&(pid->dfilter), sample_freq,
-                          pid->param->d_cutoff_freq);
-
-  pid->i_mode = i_mode;
-  pid->k_mode = k_mode;
-  kpid_reset(pid);
+  this->Reset();
 }
 
-/**
- * @brief PID计算
- *
- * @param pid PID结构体
- * @param sp 设定值
- * @param fb 反馈值
- * @param fb_dot 反馈值微分
- * @param dt 间隔时间
- * @return float 计算的输出
- */
-float kpid_calc(kpid_t *pid, float sp, float fb, float fb_dot, float dt) {
-  if (!isfinite(sp) || !isfinite(fb) || !isfinite(fb_dot) || !isfinite(dt)) {
-    return pid->last.out;
+float PID::Calculate(float sp, float fb, float dt) {
+  if (!isfinite(sp) || !isfinite(fb) || !isfinite(dt)) {
+    return this->last.out_;
   }
 
   /* 计算误差值 */
-  const float err = circle_error(sp, fb, pid->param->range);
+  const float err = circle_error(sp, fb, this->param_.range);
 
   /* 计算P项 */
-  float k_err;
-  switch (pid->k_mode) {
-    case KPID_MODE_K_SET:
-      k_err = err * pid->param->k;
-      break;
-    case KPID_MODE_K_DYNAMIC:
-      k_err = err * pid->dynamic_k;
-      break;
-    default:
-      k_err = 0.0f;
-      break;
-  }
+  float k_err = err * this->param_.k;
 
   /* 计算D项 */
-  const float k_fb = pid->param->k * fb;
-  const float filtered_k_fb = low_pass_filter_2p_apply(&(pid->dfilter), k_fb);
+  const float k_fb = this->param_.k * fb;
+  const float filtered_k_fb = this->dfilter_.Apply(k_fb);
 
-  float d;
-  switch (pid->i_mode) {
-    case KPID_MODE_CALC_D:
-      /* 通过fb计算D，避免了由于sp变化导致err突变的问题 */
-      /* 当sp不变时，err的微分等于负的fb的微分 */
-      d = (filtered_k_fb - pid->last.k_fb) / fmaxf(dt, pid->dt_min);
-      break;
+  /* 通过fb计算D，避免了由于sp变化导致err突变的问题 */
+  /* 当sp不变时，err的微分等于负的fb的微分 */
+  float d = (filtered_k_fb - this->last.k_fb_) / fmaxf(dt, this->dt_min_);
 
-    case KPID_MODE_SET_D:
-      d = fb_dot;
-      break;
-
-    case KPID_MODE_NO_D:
-      d = 0.0f;
-      break;
-
-    default:
-      d = 0.0f;
-      break;
-  }
-  pid->last.err = err;
-  pid->last.k_fb = filtered_k_fb;
+  this->last.err_ = err;
+  this->last.k_fb_ = filtered_k_fb;
 
   if (!isfinite(d)) d = 0.0f;
 
   /* 计算PD输出 */
-  float output = (k_err * pid->param->p) - (d * pid->param->d);
+  float output = (k_err * this->param_.p) - (d * this->param_.d);
 
   /* 计算I项 */
-  const float i = pid->i + (k_err * dt);
-  const float i_out = i * pid->param->i;
+  const float i = this->i_ + (k_err * dt);
+  const float i_out = i * this->param_.i;
 
-  if (pid->param->i > SIGMA) {
+  if (this->param_.i > SIGMA) {
     /* 检查是否饱和 */
     if (isfinite(i)) {
-      if ((fabsf(output + i_out) <= pid->param->out_limit) &&
-          (fabsf(i) <= pid->param->i_limit)) {
+      if ((fabsf(output + i_out) <= this->param_.out_limit) &&
+          (fabsf(i) <= this->param_.i_limit)) {
         /* 未饱和，使用新积分 */
-        pid->i = i;
+        this->i_ = i;
       }
     }
   }
@@ -131,48 +73,73 @@ float kpid_calc(kpid_t *pid, float sp, float fb, float fb_dot, float dt) {
 
   /* 限制输出 */
   if (isfinite(output)) {
-    if (pid->param->out_limit > SIGMA) {
-      output = abs_clampf(output, pid->param->out_limit);
+    if (this->param_.out_limit > SIGMA) {
+      output = abs_clampf(output, this->param_.out_limit);
     }
-    pid->last.out = output;
+    this->last.out_ = output;
   }
-  return pid->last.out;
+  return this->last.out_;
 }
-
-/**
- * @brief 更改K的值
- *
- * @param pid PID结构体
- * @param new_k 新的K值
- */
-void kpid_set_k(kpid_t *pid, float new_k) {
-  if (pid->k_mode == KPID_MODE_K_DYNAMIC) {
-    pid->dynamic_k = new_k;
+float PID::Calculate(float sp, float fb, float fb_dot, float dt) {
+  if (!isfinite(sp) || !isfinite(fb) || !isfinite(fb_dot) || !isfinite(dt)) {
+    return this->last.out_;
   }
+
+  /* 计算误差值 */
+  const float err = circle_error(sp, fb, this->param_.range);
+
+  /* 计算P项 */
+  float k_err = err * this->param_.k;
+
+  /* 计算D项 */
+  const float k_fb = this->param_.k * fb;
+  const float filtered_k_fb = this->dfilter_.Apply(k_fb);
+
+  float d;
+
+  d = fb_dot;
+
+  this->last.err_ = err;
+  this->last.k_fb_ = filtered_k_fb;
+
+  if (!isfinite(d)) d = 0.0f;
+
+  /* 计算PD输出 */
+  float output = (k_err * this->param_.p) - (d * this->param_.d);
+
+  /* 计算I项 */
+  const float i = this->i_ + (k_err * dt);
+  const float i_out = i * this->param_.i;
+
+  if (this->param_.i > SIGMA) {
+    /* 检查是否饱和 */
+    if (isfinite(i)) {
+      if ((fabsf(output + i_out) <= this->param_.out_limit) &&
+          (fabsf(i) <= this->param_.i_limit)) {
+        /* 未饱和，使用新积分 */
+        this->i_ = i;
+      }
+    }
+  }
+
+  /* 计算PID输出 */
+  output += i_out;
+
+  /* 限制输出 */
+  if (isfinite(output)) {
+    if (this->param_.out_limit > SIGMA) {
+      output = abs_clampf(output, this->param_.out_limit);
+    }
+    this->last.out_ = output;
+  }
+  return this->last.out_;
 }
+void PID::SetK(float k) { this->param_.k = k; };
 
-/**
- * @brief 重置微分项
- *
- * @param pid PID结构体
- */
-void kpid_reset_i(kpid_t *pid) {
-  ASSERT(pid);
-
-  pid->i = 0.0f;
-}
-
-/**
- * @brief 重置PID
- *
- * @param pid PID结构体
- */
-void kpid_reset(kpid_t *pid) {
-  ASSERT(pid);
-
-  pid->i = 0.0f;
-  pid->last.err = 0.0f;
-  pid->last.k_fb = 0.0f;
-  pid->last.out = 0.0f;
-  low_pass_filter_2p_reset(&(pid->dfilter), 0.0f);
+void PID::Reset() {
+  this->i_ = 0.0f;
+  this->last.err_ = 0.0f;
+  this->last.k_fb_ = 0.0f;
+  this->last.out_ = 0.0f;
+  this->dfilter_.Reset(0.0f);
 }
