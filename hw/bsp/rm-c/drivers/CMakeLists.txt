@@ -10,7 +10,7 @@ target_link_libraries(
   ${PROJECT_NAME}
   PUBLIC hal
   PRIVATE component
-  PUBLIC OneMessage
+  PRIVATE OneMessage
   PUBLIC rtos
   PUBLIC usb)
 
