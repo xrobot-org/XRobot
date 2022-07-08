@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 
+#include "comp_cf.hpp"
 #include "comp_filter.hpp"
 #include "comp_pid.hpp"
 #include "comp_utils.hpp"
@@ -84,5 +85,16 @@ class LimitedActuator : public Actuator {
   float load_;
 
   const float default_k_;
+};
+
+class FeedForwardActuator : public Actuator {
+ public:
+  FeedForwardActuator(Component::SecOrderFunction::Param& ff_param,
+                      PosParam& pos_param, float sample_freq, const char* name);
+
+  bool Control(float setpoint, float pos_fb, float speed_fb, float ff_fb,
+               float dt);
+
+  Component::SecOrderFunction ff_;
 };
 }  // namespace Device

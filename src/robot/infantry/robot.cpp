@@ -132,26 +132,25 @@ Robot::Infantry::Param param = {
 
   .gimbal = {
     .ff = {
-        /* GIMBAL_CTRL_PIT_FEEDFORWARD */
-        .a = 0.0439f,
-        .b = -0.0896f,
-        .c = 0.077f,
-        .max = 0.1f,
-        .min = -0.2f,
+      /* GIMBAL_CTRL_PIT_FEEDFORWARD */
+      .a = 0.0439f,
+      .b = -0.0896f,
+      .c = 0.077f,
+      .max = 0.1f,
+      .min = -0.2f,
     }, /* ff */
 
     .st = {
-        /* GIMBAL_CTRL_YAW_SELF_TUNING */
-        .a = 0.0677f,
-        .b = 0.1653f,
-        .c = 0.3379f,
-        .max = 0.37f,
-        .min = 0.29f,
+      /* GIMBAL_CTRL_YAW_SELF_TUNING */
+      .a = 0.0677f,
+      .b = 0.1653f,
+      .c = 0.3379f,
+      .max = 0.37f,
+      .min = 0.29f,
     }, /* st */
 
-    .actuator = {
-      {
-        .speed = {
+    .yaw = {
+      .speed = {
           /* GIMBAL_CTRL_YAW_OMEGA_IDX */
           .k = 0.14f,
           .p = 1.f,
@@ -188,8 +187,9 @@ Robot::Infantry::Param param = {
         },
 
         .reverse = false,
-      },
-      {
+    },
+
+    .pit = {
         .speed = {
           /* GIMBAL_CTRL_PIT_OMEGA_IDX */
           .k = 0.1f,
@@ -227,7 +227,6 @@ Robot::Infantry::Param param = {
         },
 
         .reverse = false,
-      },
     },
 
     .mech_zero = {

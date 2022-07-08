@@ -23,17 +23,12 @@ class Gimbal {
     GIMBAL_CTRL_NUM,           /* 总共的控制器数量 */
   };
 
-  enum {
-    GIMBAL_ACTR_YAW_IDX = 0, /* Yaw轴动作器的索引值 */
-    GIMBAL_ACTR_PIT_IDX,     /* Pitch动作器索引值 */
-    GIMBAL_ACTR_NUM,         /* 总共的动作器数量 */
-  };
-
   typedef struct {
     Component::SecOrderFunction::Param ff; /* PITCH前馈 */
     Component::SecOrderFunction::Param st; /* YAW自整定参数 */
 
-    Device::Actuator::PosParam actuator[GIMBAL_ACTR_NUM];
+    Device::Actuator::PosParam yaw;
+    Device::Actuator::PosParam pit;
 
     Component::Type::Eulr mech_zero;
 
@@ -84,10 +79,10 @@ class Gimbal {
   float scan_yaw_direction_; /* 扫描模式yaw轴旋转方向 */
   float scan_pit_direction_; /* 扫描模式pit轴旋转方向 */
 
-  Component::SecOrderFunction ff_; /* PITCH前馈 */
   Component::SecOrderFunction st_; /* YAW自整定参数 */
 
-  Device::Actuator *actuator_;
+  Device::Actuator yaw_actuator_;
+  Device::FeedForwardActuator pit_actuator_;
 
   Component::CMD::GimbalCMD cmd_;
 

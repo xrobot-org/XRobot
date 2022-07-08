@@ -11,15 +11,10 @@ using namespace Module;
 Gimbal::Gimbal(Param& param, float control_freq)
     : param_(param),
       mode_(Component::CMD::GIMBAL_MODE_RELAX),
-      ff_(param.ff),
-      st_(param.st) {
-  this->actuator_ = (Device::Actuator*)System::Memory::Malloc(
-      sizeof(Device::Actuator) * GIMBAL_ACTR_NUM);
-  new (this->actuator_ + GIMBAL_ACTR_YAW_IDX) Device::Actuator(
-      this->param_.actuator[GIMBAL_ACTR_YAW_IDX], control_freq, "gimbal_yaw");
-  new (this->actuator_ + GIMBAL_ACTR_PIT_IDX) Device::Actuator(
-      this->param_.actuator[GIMBAL_ACTR_PIT_IDX], control_freq, "gimbal_pitch");
-
+      st_(param.st),
+      yaw_actuator_(this->param_.yaw, control_freq, "gimbal_yaw"),
+      pit_actuator_(this->param_.ff, this->param_.pit, control_freq,
+                    "gimbal_pit") {
   auto gimbal_thread = [](void* arg) {
     Gimbal* gimbal = (Gimbal*)arg;
 
@@ -53,13 +48,12 @@ Gimbal::Gimbal(Param& param, float control_freq)
 }
 
 void Gimbal::UpdateFeedback() {
-  this->actuator_[GIMBAL_ACTR_PIT_IDX].UpdateFeedback();
-  this->actuator_[GIMBAL_ACTR_YAW_IDX].UpdateFeedback();
+  this->pit_actuator_.UpdateFeedback();
+  this->yaw_actuator_.UpdateFeedback();
 
-  this->yaw_offset_angle_ = circle_error(
-
-      this->actuator_[GIMBAL_ACTR_YAW_IDX].motor_.feedback_.rotor_abs_angle,
-      this->param_.mech_zero.yaw, M_2PI);
+  this->yaw_offset_angle_ =
+      circle_error(this->yaw_actuator_.motor_.feedback_.rotor_abs_angle,
+                   this->param_.mech_zero.yaw, M_2PI);
 }
 
 void Gimbal::Control() {
@@ -88,12 +82,12 @@ void Gimbal::Control() {
       }
 
       /* 判断PIT轴运动方向 */
-      if (circle_error(this->actuator_[GIMBAL_ACTR_PIT_IDX].GetPos(),
+      if (circle_error(this->pit_actuator_.GetPos(),
                        this->param_.limit.pitch_min,
                        M_2PI) <= ANGLE2RANDIAN(GIM_SCAN_CRITICAL_ERR)) {
         this->scan_pit_direction_ = 1;
       } else if (circle_error(this->param_.limit.pitch_max,
-                              this->actuator_[GIMBAL_ACTR_PIT_IDX].GetPos(),
+                              this->pit_actuator_.GetPos(),
                               M_2PI) <= ANGLE2RANDIAN(GIM_SCAN_CRITICAL_ERR)) {
         this->scan_pit_direction_ = -1;
       }
@@ -117,13 +111,13 @@ void Gimbal::Control() {
   /* 处理pitch控制命令，软件限位 */
   const float delta_max =
       circle_error(this->param_.limit.pitch_max,
-                   (this->actuator_[GIMBAL_ACTR_PIT_IDX].GetPos() +
-                    this->setpoint.eulr_.pit - this->feedback_.imu.pit),
+                   (this->pit_actuator_.GetPos() + this->setpoint.eulr_.pit -
+                    this->feedback_.imu.pit),
                    M_2PI);
   const float delta_min =
       circle_error(this->param_.limit.pitch_min,
-                   (this->actuator_[GIMBAL_ACTR_PIT_IDX].GetPos() +
-                    this->setpoint.eulr_.pit - this->feedback_.imu.pit),
+                   (this->pit_actuator_.GetPos() + this->setpoint.eulr_.pit -
+                    this->feedback_.imu.pit),
                    M_2PI);
   clampf(&(this->cmd_.delta_eulr.pit), delta_min, delta_max);
   this->setpoint.eulr_.pit += this->cmd_.delta_eulr.pit;
@@ -132,28 +126,22 @@ void Gimbal::Control() {
   switch (this->mode_) {
     case Component::CMD::GIMBAL_MODE_RELAX:
     case Component::CMD::GIMBAL_MODE_RELATIVE:
-      this->actuator_[GIMBAL_ACTR_YAW_IDX].Relax();
-      this->actuator_[GIMBAL_ACTR_PIT_IDX].Relax();
+      this->yaw_actuator_.Relax();
+      this->pit_actuator_.Relax();
       break;
     case Component::CMD::GIMBAL_MODE_SCAN:
     case Component::CMD::GIMBAL_MODE_ABSOLUTE:
       /* Yaw轴角速度环参数计算 */
-      // float pit_k = this->st_.GetValue(this->feedback_.imu.pit);
-      // this->actuator_[GIMBAL_CTRL_YAW_OMEGA_IDX].speed_->SetK(pit_k);
+      float yaw_k = this->st_.GetValue(this->feedback_.imu.pit);
+      this->yaw_actuator_.speed_->SetK(yaw_k);
 
-      this->actuator_[GIMBAL_ACTR_YAW_IDX].Control(
-          this->setpoint.eulr_.yaw, this->feedback_.imu.yaw,
-          this->feedback_.gyro.z, this->dt_);
+      this->yaw_actuator_.Control(this->setpoint.eulr_.yaw,
+                                  this->feedback_.imu.yaw,
+                                  this->feedback_.gyro.z, this->dt_);
 
-      this->actuator_[GIMBAL_ACTR_PIT_IDX].Control(
+      this->pit_actuator_.Control(
           this->setpoint.eulr_.pit, this->feedback_.imu.pit,
-          this->feedback_.gyro.x, this->dt_);
-
-      // /* Pitch前馈控制 */
-      // this->actuator_[GIMBAL_ACTR_PIT_IDX].output_ +=
-      //     this->ff_.GetValue(this->feedback_.imu.pit);
-
-      // clampf(&(this->actuator_[GIMBAL_ACTR_PIT_IDX].output_), -1.0, 1.0);
+          this->feedback_.gyro.x, this->feedback_.imu.pit, this->dt_);
 
       break;
   }
@@ -165,8 +153,8 @@ void Gimbal::SetMode(Component::CMD::GimbalMode mode) {
   if (mode == this->mode_) return;
 
   /* 切换模式后重置PID和滤波器 */
-  this->actuator_[GIMBAL_ACTR_PIT_IDX].Reset();
-  this->actuator_[GIMBAL_ACTR_YAW_IDX].Reset();
+  this->pit_actuator_.Reset();
+  this->yaw_actuator_.Reset();
 
   memcpy(&(this->setpoint.eulr_), &(this->feedback_.imu),
          sizeof(this->setpoint.eulr_)); /* 切换模式后重置设定值 */
@@ -174,7 +162,7 @@ void Gimbal::SetMode(Component::CMD::GimbalMode mode) {
     if (mode == Component::CMD::GIMBAL_MODE_ABSOLUTE) {
       this->setpoint.eulr_.yaw = this->feedback_.imu.yaw;
     } else if (mode == Component::CMD::GIMBAL_MODE_RELATIVE) {
-      this->setpoint.eulr_.yaw = this->actuator_[GIMBAL_ACTR_YAW_IDX].GetPos();
+      this->setpoint.eulr_.yaw = this->yaw_actuator_.GetPos();
     }
   }
 
@@ -191,7 +179,7 @@ void Gimbal::SetMode(Component::CMD::GimbalMode mode) {
     if (mode == Component::CMD::GIMBAL_MODE_ABSOLUTE) {
       this->setpoint.eulr_.yaw = this->feedback_.imu.yaw;
     } else if (mode == Component::CMD::GIMBAL_MODE_RELATIVE) {
-      this->setpoint.eulr_.yaw = this->actuator_[GIMBAL_ACTR_YAW_IDX].GetPos();
+      this->setpoint.eulr_.yaw = this->yaw_actuator_.GetPos();
     }
   }
 

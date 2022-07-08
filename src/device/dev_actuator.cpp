@@ -170,3 +170,29 @@ void LimitedActuator::Reset() {
   this->in_load_.Reset(0.0f);
   this->Actuator::Reset();
 }
+
+FeedForwardActuator::FeedForwardActuator(
+    Component::SecOrderFunction::Param& ff_param, Actuator::PosParam& pos_param,
+    float sample_freq, const char* name)
+    : Actuator(pos_param, sample_freq, name), ff_(ff_param) {}
+
+bool FeedForwardActuator::Control(float setpoint, float pos_fb, float speed_fb,
+                                  float ff_fb, float dt) {
+  float speed_setpoint = this->pos_->Calculate(setpoint, pos_fb, dt);
+
+  float out = this->speed_->Calculate(speed_setpoint, speed_fb, dt);
+
+  out += this->ff_.GetValue(ff_fb);
+
+  clampf(&out, -this->speed_->param_.out_limit, this->speed_->param_.out_limit);
+
+  if (this->reverse_) {
+    this->motor_.Control(-out);
+  } else {
+    this->motor_.Control(out);
+  }
+
+  this->motor_.AddData();
+
+  return true;
+}
