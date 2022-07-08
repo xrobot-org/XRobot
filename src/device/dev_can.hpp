@@ -7,6 +7,10 @@
 #include "comp_ahrs.hpp"
 #include "comp_utils.hpp"
 #include "dev.hpp"
-#include "queue.h"
 
-int8_t can_init(void);
+namespace Device {
+class CAN {
+ public:
+  CAN();
+};
+}  // namespace Device

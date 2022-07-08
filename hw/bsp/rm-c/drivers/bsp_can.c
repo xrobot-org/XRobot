@@ -23,12 +23,6 @@ static SemaphoreHandle_t bsp_can_sem[BSP_CAN_NUM];
 
 static bool bsp_can_initd = false;
 
-void bsp_can_wait_init(void) {
-  while (!bsp_can_initd) {
-    vTaskDelay(1);
-  }
-}
-
 CAN_HandleTypeDef *bsp_can_get_handle(bsp_can_t can) {
   switch (can) {
     case BSP_CAN_2:
@@ -224,6 +218,7 @@ int8_t bsp_can_get_msg(bsp_can_t can, can_rx_item_t *item) {
 
 int8_t bsp_can_register_subscriber(bsp_can_t can, om_topic_t *sub,
                                    uint32_t index_id, uint32_t number) {
+  if (!bsp_can_initd) return BSP_ERR;
   return om_config_filter(bsp_can_get_topic(can), "R", sub,
                           OM_PRASE_STRUCT(can_rx_item_t, index), index_id,
                           number) != OM_OK;

@@ -47,7 +47,6 @@ typedef struct {
 } can_rx_item_t;
 
 void bsp_can_init(void);
-void bsp_can_wait_init(void);
 om_topic_t *bsp_can_get_topic(bsp_can_t can);
 int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
                                  void (*callback)(void *), void *callback_arg);
