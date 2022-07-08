@@ -6,6 +6,8 @@
 #include "stm32f4xx_it.h"
 
 void bsp_init() {
+  uwTickPrio = TICK_INT_PRIORITY;
+
   /* Reset of all peripherals, Initializes the Flash interface and the Systick.
    */
   HAL_Init();
