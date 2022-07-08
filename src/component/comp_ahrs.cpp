@@ -8,35 +8,73 @@
 #include <string.h>
 
 #include "comp_utils.hpp"
+#include "message.hpp"
+#include "om.h"
 
 #define BETA_IMU (0.033f)
 #define BETA_AHRS (0.041f)
 
-/**
- * @brief 不使用磁力计计算姿态
- *
- * @param ahrs 姿态解算主结构体
- * @param accl 加速度计数据
- * @param gyro 陀螺仪数据
- * @param now 现在时刻
- * @return int8_t 0对应没有错误
- */
-static int8_t ahrs_update_imu(ahrs_t *ahrs, const vector3_t *accl,
-                              const vector3_t *gyro, float now) {
-  ASSERT(ahrs);
-  ASSERT(accl);
-  ASSERT(gyro);
+using namespace Component;
 
-  ahrs->dt = now - ahrs->last_update;
-  ahrs->last_update = now;
+AHRS* debug_ = NULL;
 
-  float ax = accl->x;
-  float ay = accl->y;
-  float az = accl->z;
+AHRS::AHRS(Source source) : source_(source) {
+  debug_ = this;
+  this->quat_.q0 = 1.0f;
+  this->quat_.q1 = 0.0f;
+  this->quat_.q2 = 0.0f;
+  this->quat_.q3 = 0.0f;
 
-  float gx = gyro->x;
-  float gy = gyro->y;
-  float gz = gyro->z;
+  auto ahrs_thread = [](void* arg) {
+    AHRS* ahrs = (AHRS*)arg;
+
+    std::string prefix;
+
+    if (ahrs->source_ == AHRS::GIMBAL) {
+      prefix = "gimbal";
+    } else {
+      prefix = "chassis";
+    }
+
+    DECLARE_TOPIC(quat_tp, ahrs->quat_, (prefix + "_quat").c_str(), true);
+    DECLARE_TOPIC(eulr_tp, ahrs->eulr_, (prefix + "_eulr").c_str(), true);
+
+    DECLARE_SUBER(accl_sub, ahrs->accl_, (prefix + "_accl").c_str());
+    DECLARE_SUBER(gyro_sub, ahrs->gyro_, (prefix + "_gyro").c_str());
+
+    while (1) {
+      accl_sub.DumpData();
+      gyro_sub.DumpData();
+
+      ahrs->Update();
+
+      /* 根据解析出来的四元数计算欧拉角 */
+      ahrs->GetEulr();
+      /* 发布数据 */
+      quat_tp.Publish();
+      eulr_tp.Publish();
+
+      /* 运行结束，等待下一次唤醒 */
+      ahrs->thread_.Sleep(2);
+    }
+  };
+
+  THREAD_DECLEAR(this->thread_, ahrs_thread, 256, System::Thread::High, this);
+}
+
+void AHRS::Update() {
+  this->now_ = System::Thread::GetTick() / 1000.0f;
+
+  this->dt_ = this->now_ - this->last_update_;
+  this->last_update_ = this->now_;
+
+  float ax = this->accl_.x;
+  float ay = this->accl_.y;
+  float az = this->accl_.z;
+
+  float gx = this->gyro_.x;
+  float gy = this->gyro_.y;
+  float gz = this->gyro_.z;
 
   float recip_norm;
   float s0, s1, s2, s3;
@@ -46,13 +84,13 @@ static int8_t ahrs_update_imu(ahrs_t *ahrs, const vector3_t *accl,
 
   /* Rate of change of quaternion from gyroscope */
   q_dot1 =
-      0.5f * (-ahrs->quat.q1 * gx - ahrs->quat.q2 * gy - ahrs->quat.q3 * gz);
+      0.5f * (-this->quat_.q1 * gx - this->quat_.q2 * gy - this->quat_.q3 * gz);
   q_dot2 =
-      0.5f * (ahrs->quat.q0 * gx + ahrs->quat.q2 * gz - ahrs->quat.q3 * gy);
+      0.5f * (this->quat_.q0 * gx + this->quat_.q2 * gz - this->quat_.q3 * gy);
   q_dot3 =
-      0.5f * (ahrs->quat.q0 * gy - ahrs->quat.q1 * gz + ahrs->quat.q3 * gx);
+      0.5f * (this->quat_.q0 * gy - this->quat_.q1 * gz + this->quat_.q3 * gx);
   q_dot4 =
-      0.5f * (ahrs->quat.q0 * gz + ahrs->quat.q1 * gy - ahrs->quat.q2 * gx);
+      0.5f * (this->quat_.q0 * gz + this->quat_.q1 * gy - this->quat_.q2 * gx);
 
   /* Compute feedback only if accelerometer measurement valid (avoids NaN in
    * accelerometer normalisation) */
@@ -64,28 +102,28 @@ static int8_t ahrs_update_imu(ahrs_t *ahrs, const vector3_t *accl,
     az *= recip_norm;
 
     /* Auxiliary variables to avoid repeated arithmetic */
-    _2q0 = 2.0f * ahrs->quat.q0;
-    _2q1 = 2.0f * ahrs->quat.q1;
-    _2q2 = 2.0f * ahrs->quat.q2;
-    _2q3 = 2.0f * ahrs->quat.q3;
-    _4q0 = 4.0f * ahrs->quat.q0;
-    _4q1 = 4.0f * ahrs->quat.q1;
-    _4q2 = 4.0f * ahrs->quat.q2;
-    _8q1 = 8.0f * ahrs->quat.q1;
-    _8q2 = 8.0f * ahrs->quat.q2;
-    q0q0 = ahrs->quat.q0 * ahrs->quat.q0;
-    q1q1 = ahrs->quat.q1 * ahrs->quat.q1;
-    q2q2 = ahrs->quat.q2 * ahrs->quat.q2;
-    q3q3 = ahrs->quat.q3 * ahrs->quat.q3;
+    _2q0 = 2.0f * this->quat_.q0;
+    _2q1 = 2.0f * this->quat_.q1;
+    _2q2 = 2.0f * this->quat_.q2;
+    _2q3 = 2.0f * this->quat_.q3;
+    _4q0 = 4.0f * this->quat_.q0;
+    _4q1 = 4.0f * this->quat_.q1;
+    _4q2 = 4.0f * this->quat_.q2;
+    _8q1 = 8.0f * this->quat_.q1;
+    _8q2 = 8.0f * this->quat_.q2;
+    q0q0 = this->quat_.q0 * this->quat_.q0;
+    q1q1 = this->quat_.q1 * this->quat_.q1;
+    q2q2 = this->quat_.q2 * this->quat_.q2;
+    q3q3 = this->quat_.q3 * this->quat_.q3;
 
     /* Gradient decent algorithm corrective step */
     s0 = _4q0 * q2q2 + _2q2 * ax + _4q0 * q1q1 - _2q1 * ay;
-    s1 = _4q1 * q3q3 - _2q3 * ax + 4.0f * q0q0 * ahrs->quat.q1 - _2q0 * ay -
+    s1 = _4q1 * q3q3 - _2q3 * ax + 4.0f * q0q0 * this->quat_.q1 - _2q0 * ay -
          _4q1 + _8q1 * q1q1 + _8q1 * q2q2 + _4q1 * az;
-    s2 = 4.0f * q0q0 * ahrs->quat.q2 + _2q0 * ax + _4q2 * q3q3 - _2q3 * ay -
+    s2 = 4.0f * q0q0 * this->quat_.q2 + _2q0 * ax + _4q2 * q3q3 - _2q3 * ay -
          _4q2 + _8q2 * q1q1 + _8q2 * q2q2 + _4q2 * az;
-    s3 = 4.0f * q1q1 * ahrs->quat.q3 - _2q1 * ax + 4.0f * q2q2 * ahrs->quat.q3 -
-         _2q2 * ay;
+    s3 = 4.0f * q1q1 * this->quat_.q3 - _2q1 * ax +
+         4.0f * q2q2 * this->quat_.q3 - _2q2 * ay;
 
     /* normalise step magnitude */
     recip_norm = inv_sqrtf(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3);
@@ -103,305 +141,39 @@ static int8_t ahrs_update_imu(ahrs_t *ahrs, const vector3_t *accl,
   }
 
   /* Integrate rate of change of quaternion to yield quaternion */
-  ahrs->quat.q0 += q_dot1 * ahrs->dt;
-  ahrs->quat.q1 += q_dot2 * ahrs->dt;
-  ahrs->quat.q2 += q_dot3 * ahrs->dt;
-  ahrs->quat.q3 += q_dot4 * ahrs->dt;
+  this->quat_.q0 += q_dot1 * this->dt_;
+  this->quat_.q1 += q_dot2 * this->dt_;
+  this->quat_.q2 += q_dot3 * this->dt_;
+  this->quat_.q3 += q_dot4 * this->dt_;
 
   /* Normalise quaternion */
-  recip_norm =
-      inv_sqrtf(ahrs->quat.q0 * ahrs->quat.q0 + ahrs->quat.q1 * ahrs->quat.q1 +
-                ahrs->quat.q2 * ahrs->quat.q2 + ahrs->quat.q3 * ahrs->quat.q3);
-  ahrs->quat.q0 *= recip_norm;
-  ahrs->quat.q1 *= recip_norm;
-  ahrs->quat.q2 *= recip_norm;
-  ahrs->quat.q3 *= recip_norm;
-
-  return 0;
+  recip_norm = inv_sqrtf(
+      this->quat_.q0 * this->quat_.q0 + this->quat_.q1 * this->quat_.q1 +
+      this->quat_.q2 * this->quat_.q2 + this->quat_.q3 * this->quat_.q3);
+  this->quat_.q0 *= recip_norm;
+  this->quat_.q1 *= recip_norm;
+  this->quat_.q2 *= recip_norm;
+  this->quat_.q3 *= recip_norm;
 }
 
-/**
- * @brief 初始化姿态解算
- *
- * @param ahrs 姿态解算主结构体
- * @param magn 磁力计数据
- * @return int8_t 0对应没有错误
- */
-int8_t ahrs_init(ahrs_t *ahrs, const vector3_t *magn) {
-  ASSERT(ahrs);
+void AHRS::GetEulr() {
+  const float sinr_cosp = 2.0f * (this->quat_.q0 * this->quat_.q1 +
+                                  this->quat_.q2 * this->quat_.q3);
+  const float cosr_cosp = 1.0f - 2.0f * (this->quat_.q1 * this->quat_.q1 +
+                                         this->quat_.q2 * this->quat_.q2);
+  this->eulr_.pit = atan2f(sinr_cosp, cosr_cosp);
 
-  ahrs->quat.q0 = 1.0f;
-  ahrs->quat.q1 = 0.0f;
-  ahrs->quat.q2 = 0.0f;
-  ahrs->quat.q3 = 0.0f;
-
-  if (magn) {
-    float yaw = -atan2f(magn->y, magn->x);
-
-    if ((magn->x == 0.0f) && (magn->y == 0.0f) && (magn->z == 0.0f)) {
-      ahrs->quat.q0 = 0.800884545f;
-      ahrs->quat.q1 = 0.00862364192f;
-      ahrs->quat.q2 = -0.00283267116f;
-      ahrs->quat.q3 = 0.598749936f;
-
-    } else if ((yaw < (M_PI / 2.0f)) || (yaw > 0.0f)) {
-      ahrs->quat.q0 = 0.997458339f;
-      ahrs->quat.q1 = 0.000336312107f;
-      ahrs->quat.q2 = -0.0057230792f;
-      ahrs->quat.q3 = 0.0740156546f;
-
-    } else if ((yaw < M_PI) || (yaw > (M_PI / 2.0f))) {
-      ahrs->quat.q0 = 0.800884545f;
-      ahrs->quat.q1 = 0.00862364192f;
-      ahrs->quat.q2 = -0.00283267116f;
-      ahrs->quat.q3 = 0.598749936f;
-
-    } else if ((yaw < 90.0f) || (yaw > M_PI)) {
-      ahrs->quat.q0 = 0.800884545f;
-      ahrs->quat.q1 = 0.00862364192f;
-      ahrs->quat.q2 = -0.00283267116f;
-      ahrs->quat.q3 = 0.598749936f;
-
-    } else if ((yaw < 90.0f) || (yaw > 0.0f)) {
-      ahrs->quat.q0 = 0.800884545f;
-      ahrs->quat.q1 = 0.00862364192f;
-      ahrs->quat.q2 = -0.00283267116f;
-      ahrs->quat.q3 = 0.598749936f;
-    }
-  }
-  return 0;
-}
-
-/**
- * @brief 姿态运算更新一次
- * @note 输入数据必须是NED(North East Down) 参考坐标系
- *
- * @param ahrs 姿态解算主结构体
- * @param accl 加速度计数据
- * @param gyro 陀螺仪数据
- * @param magn 磁力计数据
- * @param now 现在时刻
- * @return int8_t 0对应没有错误
- */
-int8_t ahrs_update(ahrs_t *ahrs, const vector3_t *accl, const vector3_t *gyro,
-                   const vector3_t *magn, float now) {
-  ASSERT(ahrs);
-  ASSERT(accl);
-  ASSERT(gyro);
-
-  if (magn == NULL) return ahrs_update_imu(ahrs, accl, gyro, now);
-
-  float recip_norm;
-  float s0, s1, s2, s3;
-  float q_dot1, q_dot2, q_dot3, q_dot4;
-  float hx, hy;
-  float _2q0mx, _2q0my, _2q0mz, _2q1mx, _2bx, _2bz, _4bx, _4bz, _2q0, _2q1,
-      _2q2, _2q3, _2q0q2, _2q2q3, q0q0, q0q1, q0q2, q0q3, q1q1, q1q2, q1q3,
-      q2q2, q2q3, q3q3;
-
-  float mx = magn->x;
-  float my = magn->y;
-  float mz = magn->z;
-
-  /* Use IMU algorithm if magnetometer measurement invalid (avoids NaN in */
-  /* magnetometer normalisation) */
-  if ((mx == 0.0f) && (my == 0.0f) && (mz == 0.0f)) {
-    return ahrs_update_imu(ahrs, accl, gyro, now);
-  }
-
-  ahrs->dt = now - ahrs->last_update;
-  ahrs->last_update = now;
-
-  float ax = accl->x;
-  float ay = accl->y;
-  float az = accl->z;
-
-  float gx = gyro->x;
-  float gy = gyro->y;
-  float gz = gyro->z;
-
-  /* Rate of change of quaternion from gyroscope */
-  q_dot1 =
-      0.5f * (-ahrs->quat.q1 * gx - ahrs->quat.q2 * gy - ahrs->quat.q3 * gz);
-  q_dot2 =
-      0.5f * (ahrs->quat.q0 * gx + ahrs->quat.q2 * gz - ahrs->quat.q3 * gy);
-  q_dot3 =
-      0.5f * (ahrs->quat.q0 * gy - ahrs->quat.q1 * gz + ahrs->quat.q3 * gx);
-  q_dot4 =
-      0.5f * (ahrs->quat.q0 * gz + ahrs->quat.q1 * gy - ahrs->quat.q2 * gx);
-
-  /* Compute feedback only if accelerometer measurement valid (avoids NaN in
-   * accelerometer normalisation) */
-  if (!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
-    /* Normalise accelerometer measurement */
-    recip_norm = inv_sqrtf(ax * ax + ay * ay + az * az);
-    ax *= recip_norm;
-    ay *= recip_norm;
-    az *= recip_norm;
-
-    /* Normalise magnetometer measurement */
-    recip_norm = inv_sqrtf(mx * mx + my * my + mz * mz);
-    mx *= recip_norm;
-    my *= recip_norm;
-    mz *= recip_norm;
-
-    /* Auxiliary variables to avoid repeated arithmetic */
-    _2q0mx = 2.0f * ahrs->quat.q0 * mx;
-    _2q0my = 2.0f * ahrs->quat.q0 * my;
-    _2q0mz = 2.0f * ahrs->quat.q0 * mz;
-    _2q1mx = 2.0f * ahrs->quat.q1 * mx;
-    _2q0 = 2.0f * ahrs->quat.q0;
-    _2q1 = 2.0f * ahrs->quat.q1;
-    _2q2 = 2.0f * ahrs->quat.q2;
-    _2q3 = 2.0f * ahrs->quat.q3;
-    _2q0q2 = 2.0f * ahrs->quat.q0 * ahrs->quat.q2;
-    _2q2q3 = 2.0f * ahrs->quat.q2 * ahrs->quat.q3;
-    q0q0 = ahrs->quat.q0 * ahrs->quat.q0;
-    q0q1 = ahrs->quat.q0 * ahrs->quat.q1;
-    q0q2 = ahrs->quat.q0 * ahrs->quat.q2;
-    q0q3 = ahrs->quat.q0 * ahrs->quat.q3;
-    q1q1 = ahrs->quat.q1 * ahrs->quat.q1;
-    q1q2 = ahrs->quat.q1 * ahrs->quat.q2;
-    q1q3 = ahrs->quat.q1 * ahrs->quat.q3;
-    q2q2 = ahrs->quat.q2 * ahrs->quat.q2;
-    q2q3 = ahrs->quat.q2 * ahrs->quat.q3;
-    q3q3 = ahrs->quat.q3 * ahrs->quat.q3;
-
-    /* Reference direction of Earth's magnetic field */
-    hx = mx * q0q0 - _2q0my * ahrs->quat.q3 + _2q0mz * ahrs->quat.q2 +
-         mx * q1q1 + _2q1 * my * ahrs->quat.q2 + _2q1 * mz * ahrs->quat.q3 -
-         mx * q2q2 - mx * q3q3;
-    hy = _2q0mx * ahrs->quat.q3 + my * q0q0 - _2q0mz * ahrs->quat.q1 +
-         _2q1mx * ahrs->quat.q2 - my * q1q1 + my * q2q2 +
-         _2q2 * mz * ahrs->quat.q3 - my * q3q3;
-    _2bx = sqrtf(hx * hx + hy * hy);
-    _2bz = -_2q0mx * ahrs->quat.q2 + _2q0my * ahrs->quat.q1 + mz * q0q0 +
-           _2q1mx * ahrs->quat.q3 - mz * q1q1 + _2q2 * my * ahrs->quat.q3 -
-           mz * q2q2 + mz * q3q3;
-    _4bx = 2.0f * _2bx;
-    _4bz = 2.0f * _2bz;
-
-    /* Gradient decent algorithm corrective step */
-    s0 = -_2q2 * (2.0f * q1q3 - _2q0q2 - ax) +
-         _2q1 * (2.0f * q0q1 + _2q2q3 - ay) -
-         _2bz * ahrs->quat.q2 *
-             (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - mx) +
-         (-_2bx * ahrs->quat.q3 + _2bz * ahrs->quat.q1) *
-             (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my) +
-         _2bx * ahrs->quat.q2 *
-             (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
-    s1 = _2q3 * (2.0f * q1q3 - _2q0q2 - ax) +
-         _2q0 * (2.0f * q0q1 + _2q2q3 - ay) -
-         4.0f * ahrs->quat.q1 * (1 - 2.0f * q1q1 - 2.0f * q2q2 - az) +
-         _2bz * ahrs->quat.q3 *
-             (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - mx) +
-         (_2bx * ahrs->quat.q2 + _2bz * ahrs->quat.q0) *
-             (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my) +
-         (_2bx * ahrs->quat.q3 - _4bz * ahrs->quat.q1) *
-             (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
-    s2 = -_2q0 * (2.0f * q1q3 - _2q0q2 - ax) +
-         _2q3 * (2.0f * q0q1 + _2q2q3 - ay) -
-         4.0f * ahrs->quat.q2 * (1 - 2.0f * q1q1 - 2.0f * q2q2 - az) +
-         (-_4bx * ahrs->quat.q2 - _2bz * ahrs->quat.q0) *
-             (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - mx) +
-         (_2bx * ahrs->quat.q1 + _2bz * ahrs->quat.q3) *
-             (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my) +
-         (_2bx * ahrs->quat.q0 - _4bz * ahrs->quat.q2) *
-             (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
-    s3 = _2q1 * (2.0f * q1q3 - _2q0q2 - ax) +
-         _2q2 * (2.0f * q0q1 + _2q2q3 - ay) +
-         (-_4bx * ahrs->quat.q3 + _2bz * ahrs->quat.q1) *
-             (_2bx * (0.5f - q2q2 - q3q3) + _2bz * (q1q3 - q0q2) - mx) +
-         (-_2bx * ahrs->quat.q0 + _2bz * ahrs->quat.q2) *
-             (_2bx * (q1q2 - q0q3) + _2bz * (q0q1 + q2q3) - my) +
-         _2bx * ahrs->quat.q1 *
-             (_2bx * (q0q2 + q1q3) + _2bz * (0.5f - q1q1 - q2q2) - mz);
-    /* normalise step magnitude */
-    recip_norm = inv_sqrtf(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3);
-    s0 *= recip_norm;
-    s1 *= recip_norm;
-    s2 *= recip_norm;
-    s3 *= recip_norm;
-
-    /* Apply feedback step */
-    q_dot1 -= BETA_AHRS * s0;
-    q_dot2 -= BETA_AHRS * s1;
-    q_dot3 -= BETA_AHRS * s2;
-    q_dot4 -= BETA_AHRS * s3;
-  }
-
-  /* Integrate rate of change of quaternion to yield quaternion */
-  ahrs->quat.q0 += q_dot1 * ahrs->dt;
-  ahrs->quat.q1 += q_dot2 * ahrs->dt;
-  ahrs->quat.q2 += q_dot3 * ahrs->dt;
-  ahrs->quat.q3 += q_dot4 * ahrs->dt;
-
-  /* Normalise quaternion */
-  recip_norm =
-      inv_sqrtf(ahrs->quat.q0 * ahrs->quat.q0 + ahrs->quat.q1 * ahrs->quat.q1 +
-                ahrs->quat.q2 * ahrs->quat.q2 + ahrs->quat.q3 * ahrs->quat.q3);
-  ahrs->quat.q0 *= recip_norm;
-  ahrs->quat.q1 *= recip_norm;
-  ahrs->quat.q2 *= recip_norm;
-  ahrs->quat.q3 *= recip_norm;
-
-  return 0;
-}
-
-/**
- * @brief 通过姿态解算主结构体中的四元数计算欧拉角
- *
- * @param eulr 欧拉角
- * @param ahrs 姿态解算主结构体
- * @return int8_t 0对应没有错误
- */
-int8_t ahrs_get_eulr(eulr_t *eulr, const ahrs_t *ahrs) {
-  ASSERT(eulr);
-  ASSERT(ahrs);
-
-  const float sinr_cosp =
-      2.0f * (ahrs->quat.q0 * ahrs->quat.q1 + ahrs->quat.q2 * ahrs->quat.q3);
-  const float cosr_cosp = 1.0f - 2.0f * (ahrs->quat.q1 * ahrs->quat.q1 +
-                                         ahrs->quat.q2 * ahrs->quat.q2);
-  eulr->pit = atan2f(sinr_cosp, cosr_cosp);
-
-  const float sinp =
-      2.0f * (ahrs->quat.q0 * ahrs->quat.q2 - ahrs->quat.q3 * ahrs->quat.q1);
+  const float sinp = 2.0f * (this->quat_.q0 * this->quat_.q2 -
+                             this->quat_.q3 * this->quat_.q1);
 
   if (fabsf(sinp) >= 1.0f)
-    eulr->rol = copysignf(M_PI / 2.0f, sinp);
+    this->eulr_.rol = copysignf(M_PI / 2.0f, sinp);
   else
-    eulr->rol = asinf(sinp);
+    this->eulr_.rol = asinf(sinp);
 
-  const float siny_cosp =
-      2.0f * (ahrs->quat.q0 * ahrs->quat.q3 + ahrs->quat.q1 * ahrs->quat.q2);
-  const float cosy_cosp = 1.0f - 2.0f * (ahrs->quat.q2 * ahrs->quat.q2 +
-                                         ahrs->quat.q3 * ahrs->quat.q3);
-  eulr->yaw = atan2f(siny_cosp, cosy_cosp);
-
-#if 0
-  eulr->yaw *= M_RAD2DEG_MULT;
-  eulr->rol *= M_RAD2DEG_MULT;
-  eulr->pit *= M_RAD2DEG_MULT;
-#endif
-
-  return 0;
-}
-
-/**
- * @brief 将对应数据拷贝
- *
- * @param eulr 被操作的数据
- */
-void ahrs_set_eulr(eulr_t *setpoint, const eulr_t *feedback) {
-  memcpy(setpoint, feedback, sizeof(*setpoint));
-}
-
-/**
- * @brief 将对应数据置零
- *
- * @param eulr 被操作的数据
- */
-void ahrs_reset_eulr(eulr_t *setpoint) {
-  memset(setpoint, 0, sizeof(*setpoint));
+  const float siny_cosp = 2.0f * (this->quat_.q0 * this->quat_.q3 +
+                                  this->quat_.q1 * this->quat_.q2);
+  const float cosy_cosp = 1.0f - 2.0f * (this->quat_.q2 * this->quat_.q2 +
+                                         this->quat_.q3 * this->quat_.q3);
+  this->eulr_.yaw = atan2f(siny_cosp, cosy_cosp);
 }
