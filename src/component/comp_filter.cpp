@@ -6,180 +6,80 @@
 
 #include "comp_utils.hpp"
 
-/**
- * @brief 初始化滤波器
- *
- * @param f 滤波器
- * @param sample_freq 采样频率
- * @param cutoff_freq 截止频率
- */
-void low_pass_filter_2p_init(low_pass_filter_2p_t *f, float sample_freq,
-                             float cutoff_freq) {
-  ASSERT(f);
+using namespace Component;
 
-  f->cutoff_freq = cutoff_freq;
+LowPassFilter::LowPassFilter(float k) : k_(k) { this->last_out_ = 0; }
 
-  f->delay_element_1 = 0.0f;
-  f->delay_element_2 = 0.0f;
+float LowPassFilter::Apply(float sample) {
+  float out = this->k_ * sample + (1 - this->k_) * this->last_out_;
+  this->last_out_ = out;
 
-  if (f->cutoff_freq <= 0.0f) {
+  return out;
+}
+
+void LowPassFilter::Reset(float sample) { this->last_out_ = sample; }
+
+LowPassFilter2p::LowPassFilter2p(float sample_freq, float cutoff_freq) {
+  this->cutoff_freq_ = cutoff_freq;
+
+  this->delay_element_1_ = 0.0f;
+  this->delay_element_2_ = 0.0f;
+
+  if (this->cutoff_freq_ <= 0.0f) {
     /* no filtering */
-    f->b0 = 1.0f;
-    f->b1 = 0.0f;
-    f->b2 = 0.0f;
+    this->b0_ = 1.0f;
+    this->b1_ = 0.0f;
+    this->b2_ = 0.0f;
 
-    f->a1 = 0.0f;
-    f->a2 = 0.0f;
+    this->a1_ = 0.0f;
+    this->a2_ = 0.0f;
 
     return;
   }
-  const float fr = sample_freq / f->cutoff_freq;
+  const float fr = sample_freq / this->cutoff_freq_;
   const float ohm = tanf(M_PI / fr);
   const float c = 1.0f + 2.0f * cosf(M_PI / 4.0f) * ohm + ohm * ohm;
 
-  f->b0 = ohm * ohm / c;
-  f->b1 = 2.0f * f->b0;
-  f->b2 = f->b0;
+  this->b0_ = ohm * ohm / c;
+  this->b1_ = 2.0f * this->b0_;
+  this->b2_ = this->b0_;
 
-  f->a1 = 2.0f * (ohm * ohm - 1.0f) / c;
-  f->a2 = (1.0f - 2.0f * cosf(M_PI / 4.0f) * ohm + ohm * ohm) / c;
+  this->a1_ = 2.0f * (ohm * ohm - 1.0f) / c;
+  this->a2_ = (1.0f - 2.0f * cosf(M_PI / 4.0f) * ohm + ohm * ohm) / c;
 }
 
-/**
- * @brief 施加一次滤波计算
- *
- * @param f 滤波器
- * @param sample 采样的值
- * @return float 滤波后的值
- */
-float low_pass_filter_2p_apply(low_pass_filter_2p_t *f, float sample) {
-  ASSERT(f);
-
+float LowPassFilter2p::Apply(float sample) {
   /* do the filtering */
-  float delay_element_0 =
-      sample - f->delay_element_1 * f->a1 - f->delay_element_2 * f->a2;
+  float delay_element_0 = sample - this->delay_element_1_ * this->a1_ -
+                          this->delay_element_2_ * this->a2_;
 
   if (isinf(delay_element_0)) {
     /* don't allow bad values to propagate via the filter */
     delay_element_0 = sample;
   }
 
-  const float output = delay_element_0 * f->b0 + f->delay_element_1 * f->b1 +
-                       f->delay_element_2 * f->b2;
+  const float output = delay_element_0 * this->b0_ +
+                       this->delay_element_1_ * this->b1_ +
+                       this->delay_element_2_ * this->b2_;
 
-  f->delay_element_2 = f->delay_element_1;
-  f->delay_element_1 = delay_element_0;
+  this->delay_element_2_ = this->delay_element_1_;
+  this->delay_element_1_ = delay_element_0;
 
   /* return the value. Should be no need to check limits */
   return output;
 }
 
-/**
- * @brief 重置滤波器
- *
- * @param f 滤波器
- * @param sample 采样的值
- * @return float 滤波后的值
- */
-float low_pass_filter_2p_reset(low_pass_filter_2p_t *f, float sample) {
-  ASSERT(f);
-
-  const float dval = sample / (f->b0 + f->b1 + f->b2);
+float LowPassFilter2p::Reset(float sample) {
+  const float dval = sample / (this->b0_ + this->b1_ + this->b2_);
 
   if (isfinite(dval)) {
-    f->delay_element_1 = dval;
-    f->delay_element_2 = dval;
+    this->delay_element_1_ = dval;
+    this->delay_element_2_ = dval;
 
   } else {
-    f->delay_element_1 = sample;
-    f->delay_element_2 = sample;
+    this->delay_element_1_ = sample;
+    this->delay_element_2_ = sample;
   }
 
-  return low_pass_filter_2p_apply(f, sample);
-}
-
-/**
- * @brief 初始化滤波器
- *
- * @param f 滤波器
- * @param sample_freq 采样频率
- * @param notch_freq 中心频率
- * @param bandwidth 带宽
- */
-void notch_filter_init(notch_filter_t *f, float sample_freq, float notch_freq,
-                       float bandwidth) {
-  ASSERT(f);
-
-  f->notch_freq = notch_freq;
-  f->bandwidth = bandwidth;
-
-  f->delay_element_1 = 0.0f;
-  f->delay_element_2 = 0.0f;
-
-  if (notch_freq <= 0.0f) {
-    /* no filtering */
-    f->b0 = 1.0f;
-    f->b1 = 0.0f;
-    f->b2 = 0.0f;
-
-    f->a1 = 0.0f;
-    f->a2 = 0.0f;
-
-    return;
-  }
-
-  const float alpha = tanf(M_PI * bandwidth / sample_freq);
-  const float beta = -cosf(M_2PI * notch_freq / sample_freq);
-  const float a0_inv = 1.0f / (alpha + 1.0f);
-
-  f->b0 = a0_inv;
-  f->b1 = 2.0f * beta * a0_inv;
-  f->b2 = a0_inv;
-
-  f->a1 = f->b1;
-  f->a2 = (1.0f - alpha) * a0_inv;
-}
-
-/**
- * @brief 施加一次滤波计算
- *
- * @param f 滤波器
- * @param sample 采样的值
- * @return float 滤波后的值
- */
-float notch_filter_apply(notch_filter_t *f, float sample) {
-  ASSERT(f);
-
-  /* Direct Form II implementation */
-  const float delay_element_0 =
-      sample - f->delay_element_1 * f->a1 - f->delay_element_2 * f->a2;
-  const float output = delay_element_0 * f->b0 + f->delay_element_1 * f->b1 +
-                       f->delay_element_2 * f->b2;
-
-  f->delay_element_2 = f->delay_element_1;
-  f->delay_element_1 = delay_element_0;
-
-  return output;
-}
-
-/**
- * @brief 重置滤波器
- *
- * @param f 滤波器
- * @param sample 采样的值
- * @return float 滤波后的值
- */
-float notch_filter_reset(notch_filter_t *f, float sample) {
-  ASSERT(f);
-
-  float dval = sample;
-
-  if (fabsf(f->b0 + f->b1 + f->b2) > FLT_EPSILON) {
-    dval = dval / (f->b0 + f->b1 + f->b2);
-  }
-
-  f->delay_element_1 = dval;
-  f->delay_element_2 = dval;
-
-  return notch_filter_apply(f, sample);
+  return this->Apply(sample);
 }
