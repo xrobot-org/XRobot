@@ -19,16 +19,12 @@
 
 using namespace Module;
 
-Launcher* launcher_debug = NULL;
-
 Launcher::Launcher(Param& param, float control_freq)
     : param_(param), mode_(Component::CMD::LAUNCHER_MODE_RELAX) {
   this->trig_actuator_ = (Device::Actuator*)System::Memory::Malloc(
       sizeof(Device::Actuator) * LAUNCHER_ACTR_TRIG_NUM);
   this->fric_actuator_ = (Device::Actuator*)System::Memory::Malloc(
       sizeof(Device::Actuator) * LAUNCHER_ACTR_FRIC_NUM);
-
-  launcher_debug = this;
 
   for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
     new (this->trig_actuator_ + i)

@@ -8,25 +8,17 @@
 
 using namespace Module;
 
-Gimbal* debug = NULL;
-
-Device::Actuator* debug_a = NULL;
-
 Gimbal::Gimbal(Param& param, float control_freq)
     : param_(param),
       mode_(Component::CMD::GIMBAL_MODE_RELAX),
       ff_(param.ff),
       st_(param.st) {
-  debug = this;
-
   this->actuator_ = (Device::Actuator*)System::Memory::Malloc(
       sizeof(Device::Actuator) * GIMBAL_ACTR_NUM);
   new (this->actuator_ + GIMBAL_ACTR_YAW_IDX) Device::Actuator(
       this->param_.actuator[GIMBAL_ACTR_YAW_IDX], control_freq, "gimbal_yaw");
   new (this->actuator_ + GIMBAL_ACTR_PIT_IDX) Device::Actuator(
       this->param_.actuator[GIMBAL_ACTR_PIT_IDX], control_freq, "gimbal_pitch");
-
-  debug_a = this->actuator_ + GIMBAL_ACTR_PIT_IDX;
 
   auto gimbal_thread = [](void* arg) {
     Gimbal* gimbal = (Gimbal*)arg;

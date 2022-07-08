@@ -79,8 +79,6 @@ static Component::PID::Param imu_temp_ctrl_pid_param = {
 
 using namespace Device;
 
-BMI088 *bmi088 = NULL;
-
 void BMI088::Select(BMI088::DeviceType type) {
   if (type == BMI_ACCL) {
     bsp_gpio_write_pin(BSP_GPIO_IMU_ACCL_CS, false);
@@ -134,7 +132,6 @@ void BMI088::Read(BMI088::DeviceType type, uint8_t reg, uint8_t *data,
 
 BMI088::BMI088(BMI088::Calibration &cali, BMI088::Rotation &rot)
     : cali(cali), rot(rot) {
-  bmi088 = this;
   auto recv_cplt_callback = [](void *arg) {
     BMI088 *bmi088 = (BMI088 *)arg;
 

@@ -48,8 +48,6 @@ static const float kCAP_PERCENTAGE_WORK = (float)CAP_PERCENT_WORK / 100.0f;
 
 using namespace Module;
 
-Device::LimitedActuator* debug_ch_[4];
-
 Chassis::Chassis(Param& param, float control_freq)
     : param_(param),
       mode_(Component::CMD::CHASSIS_MODE_RELAX),
@@ -63,7 +61,6 @@ Chassis::Chassis(Param& param, float control_freq)
     new (this->actuator_ + i) Device::LimitedActuator(
         param.actuator_param[i], param.limit_param, control_freq,
         (std::string("chassis_") + std::to_string(i)).c_str());
-    debug_ch_[i] = this->actuator_ + i;
   }
   this->setpoint.motor_rotational_speed = (float*)System::Memory::Malloc(
       this->mixer_.len_ * sizeof(*this->setpoint.motor_rotational_speed));
