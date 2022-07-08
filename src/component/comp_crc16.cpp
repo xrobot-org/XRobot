@@ -1,5 +1,7 @@
 #include "comp_crc16.hpp"
 
+using namespace Component;
+
 static const uint16_t crc16_tab[256] = {
     0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf, 0x8c48,
     0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7, 0x1081, 0x0108,
@@ -35,15 +37,15 @@ static inline uint16_t crc16_byte(uint16_t crc, const uint8_t data) {
   return (crc >> 8) ^ crc16_tab[(crc ^ data) & 0xff];
 }
 
-uint16_t crc16_calc(const uint8_t *buf, size_t len, uint16_t crc) {
+uint16_t CRC16::Calculate(const uint8_t *buf, size_t len, uint16_t crc) {
   while (len--) crc = crc16_byte(crc, *buf++);
   return crc;
 }
 
-bool crc16_verify(const uint8_t *buf, size_t len) {
+bool CRC16::Verify(const uint8_t *buf, size_t len) {
   if (len < 2) return false;
 
-  uint16_t expected = crc16_calc(buf, len - sizeof(uint16_t), CRC16_INIT);
+  uint16_t expected = Calculate(buf, len - sizeof(uint16_t), CRC16_INIT);
   return expected ==
          ((const uint16_t *)((const uint8_t *)buf +
                              (len % 2)))[len / sizeof(uint16_t) - 1];

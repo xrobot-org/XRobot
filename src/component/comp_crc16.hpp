@@ -1,11 +1,14 @@
 #pragma once
 
-#include <stdbool.h>
 #include <stddef.h>
-
-#include "comp_utils.hpp"
+#include <stdint.h>
 
 #define CRC16_INIT 0XFFFF
 
-uint16_t crc16_calc(const uint8_t *buf, size_t len, uint16_t crc);
-bool crc16_verify(const uint8_t *buf, size_t len);
+namespace Component {
+class CRC16 {
+ public:
+  static uint16_t Calculate(const uint8_t *buf, size_t len, uint16_t crc);
+  static bool Verify(const uint8_t *buf, size_t len);
+};
+}  // namespace Component

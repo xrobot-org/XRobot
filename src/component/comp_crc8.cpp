@@ -4,6 +4,8 @@
 
 #include "comp_crc8.hpp"
 
+using namespace Component;
+
 static const uint8_t crc8_tab[256] = {
     0x00, 0x5e, 0xbc, 0xe2, 0x61, 0x3f, 0xdd, 0x83, 0xc2, 0x9c, 0x7e, 0x20,
     0xa3, 0xfd, 0x1f, 0x41, 0x9d, 0xc3, 0x21, 0x7f, 0xfc, 0xa2, 0x40, 0x1e,
@@ -29,16 +31,16 @@ static const uint8_t crc8_tab[256] = {
     0xd7, 0x89, 0x6b, 0x35,
 };
 
-uint8_t crc8_calc(const uint8_t *buf, size_t len, uint8_t crc) {
+uint8_t CRC8::Calculate(const uint8_t *buf, size_t len, uint8_t crc) {
   /* loop over the buffer data */
   while (len-- > 0) crc = crc8_tab[(crc ^ *buf++) & 0xff];
 
   return crc;
 }
 
-bool crc8_verify(const uint8_t *buf, size_t len) {
+bool CRC8::Verify(const uint8_t *buf, size_t len) {
   if (len < 2) return false;
 
-  uint8_t expected = crc8_calc(buf, len - sizeof(uint8_t), CRC8_INIT);
+  uint8_t expected = Calculate(buf, len - sizeof(uint8_t), CRC8_INIT);
   return expected == buf[len - sizeof(uint8_t)];
 }
