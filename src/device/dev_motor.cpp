@@ -60,7 +60,7 @@ Motor::Motor(const Param &param, const char *name)
                                                          this);
 
   bsp_can_register_subscriber(this->param_.can, motor_tp.GetHandle(),
-                              this->param_.id_feedback, 1);
+                              this->param_.id_feedback, 0);
 
   motor_tx_map_[this->param_.can][this->index_] |= 1 << (this->param_.num);
 }
