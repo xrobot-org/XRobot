@@ -8,10 +8,13 @@
 
 using namespace Component;
 
-LowPassFilter::LowPassFilter(float k) : k_(k) { this->last_out_ = 0; }
+LowPassFilter::LowPassFilter(float cut_freq)
+    : cut_freq_(cut_freq), last_out_(0) {}
 
-float LowPassFilter::Apply(float sample) {
-  float out = this->k_ * sample + (1 - this->k_) * this->last_out_;
+float LowPassFilter::Apply(float sample, float dt) {
+  float k = 2 * M_2PI * this->cut_freq_ * dt;
+  k = k / (1 + k);
+  float out = k * sample + (1 - k) * this->last_out_;
   this->last_out_ = out;
 
   return out;

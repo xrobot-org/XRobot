@@ -10,13 +10,13 @@ namespace Component {
 /* 一阶数字低通滤波器 */
 class LowPassFilter {
  public:
-  LowPassFilter(float k);
+  LowPassFilter(float cut_freq);
 
-  float Apply(float sample);
+  float Apply(float sample, float dt);
 
   void Reset(float sample);
 
-  float k_;
+  float cut_freq_;
 
   float last_out_;
 };
