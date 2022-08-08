@@ -106,7 +106,10 @@ float RMMotor::GetLSB() {
   }
 }
 
-bool RMMotor::AddData() {
+void RMMotor::Control(float out) {
+  clampf(&out, -1.0f, 1.0f);
+  this->output_ = out;
+
   float lsb = this->GetLSB();
 
   if (lsb != 0.0f) {
@@ -121,10 +124,7 @@ bool RMMotor::AddData() {
          (motor_tx_map_[this->param_.can][this->index_])) == 0) {
       this->SendData();
     }
-    return true;
   }
-
-  return false;
 }
 
 bool RMMotor::SendData() {
@@ -137,11 +137,8 @@ bool RMMotor::SendData() {
   return true;
 }
 
-void RMMotor::Control(float out) {
-  clampf(&out, -1.0f, 1.0f);
-  this->output_ = out;
-}
-
 void RMMotor::Offline() {
   memset(&(this->feedback_), 0, sizeof(this->feedback_));
 }
+
+void RMMotor::Relax() { this->Control(0.0f); }

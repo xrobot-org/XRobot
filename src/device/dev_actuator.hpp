@@ -20,7 +20,7 @@ class SpeedActuator {
 
   SpeedActuator(Param& param, float sample_freq);
 
-  float Control(float setpoint, float feedback, float dt);
+  float Calculation(float setpoint, float feedback, float dt);
 
   void Reset();
 
@@ -41,7 +41,7 @@ class PosActuator {
 
   PosActuator(Param& param, float sample_freq);
 
-  float Control(float setpoint, float speed_fb, float pos_fb, float dt);
+  float Calculation(float setpoint, float speed_fb, float pos_fb, float dt);
 
   void Reset();
 

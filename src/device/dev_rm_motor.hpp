@@ -52,8 +52,6 @@ class RMMotor : public Motor {
 
   bool Update();
 
-  bool AddData();
-
   bool SendData();
 
   void Control(float output);
@@ -61,6 +59,8 @@ class RMMotor : public Motor {
   void Offline();
 
   float GetLSB();
+
+  void Relax();
 
   Param param_;
 
