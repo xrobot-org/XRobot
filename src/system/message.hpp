@@ -31,6 +31,10 @@ class Message {
       }
     }
 
+    bool Link(Topic& source) {
+      return om_core_link(source.GetHandle(), this->GetHandle()) == OM_OK;
+    }
+
     inline bool Publish() {
       return om_publish(this->topic_, this->data_, sizeof(Data), true, false) ==
              OM_OK;
