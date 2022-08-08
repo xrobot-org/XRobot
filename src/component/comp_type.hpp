@@ -51,7 +51,7 @@ class Position2 {
     return sqrtf(dx * dx + dy * dy);
   }
 
-  Position2() : x_(0), y_(0) {}
+  Position2() = default;
 
   Position2(float x, float y) : x_(x), y_(y) {}
 
@@ -77,7 +77,7 @@ class Polar2 {
                      this->distance_ * sinf(this->angle_));
   }
 
-  Polar2() : angle_(0), distance_(0) {}
+  Polar2() = default;
 
   Polar2(float angle, float distance) : angle_(angle), distance_(distance) {}
 
@@ -90,9 +90,10 @@ class Polar2 {
 
 class Line {
  public:
+  Line() = default;
+
   Line(const Position2& start, const Position2& end)
       : start_(start), end_(end) {}
-  Line() : start_(0, 0), end_(0, 0){};
 
   static const Position2 CrossPoint(const Line& l1, const Line& l2) {
     float x;

@@ -36,9 +36,7 @@ float inv_sqrtf(float x) {
  * @param limit 上下界的绝对值
  * @return float 操作后的值
  */
-float abs_clampf(float x, float limit) {
-  return MIN(limit, MAX(x, -limit));
-}
+float abs_clampf(float x, float limit) { return MIN(limit, MAX(x, -limit)); }
 
 /**
  * @brief 将值限制在下限和上限之间。
@@ -121,7 +119,7 @@ void circle_reverse(float *origin) { *origin = -(*origin) + M_2PI; }
  * @return 摩擦轮转速
  */
 float bullet_speed_to_fric_rpm(float bullet_speed, float fric_radius,
-                                      bool is17mm) {
+                               bool is17mm) {
   if (bullet_speed == 0.0f) return 0.f;
   if (is17mm) {
     if (bullet_speed == 15.0f) return 4670.f;
@@ -151,4 +149,18 @@ void verify_failed(const char *file, uint32_t line) {
   RM_UNUSED(line);
   while (1) {
   };
+}
+
+int float_to_uint(float x, float x_min, float x_max, int bits) {
+  /// Converts a float to an unsigned int, given range and number of bits ///
+  float span = x_max - x_min;
+  float offset = x_min;
+  return (int)((x - offset) * ((float)((1 << bits) - 1)) / span);
+}
+
+float uint_to_float(int x_int, float x_min, float x_max, int bits) {
+  /// converts unsigned int to float, given range and number of bits ///
+  float span = x_max - x_min;
+  float offset = x_min;
+  return ((float)x_int) * span / ((float)((1 << bits) - 1)) + offset;
 }

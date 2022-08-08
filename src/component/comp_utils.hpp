@@ -210,3 +210,7 @@ bool gyro_is_stable(Component::Type::Vector3 *gyro);
  * @param line 行号
  */
 void verify_failed(const char *file, uint32_t line);
+
+int float_to_uint(float x, float x_min, float x_max, int bits);
+
+float uint_to_float(int x_int, float x_min, float x_max, int bits);
