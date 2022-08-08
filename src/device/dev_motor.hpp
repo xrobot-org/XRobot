@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string.h>
 
 namespace Device {
@@ -21,10 +23,16 @@ class Motor {
 
   virtual void Relax() = 0;
 
+  float GetAngle() { return this->feedback_.rotor_abs_angle; }
+
+  float GetSpeed() { return this->feedback_.rotational_speed; }
+
+  float GetCurrent() { return this->feedback_.torque_current; }
+
   char name_[20];
 
   Feedback feedback_;
 
-  bool reverse_;
+  // TODO： 电机反装
 };
 }  // namespace Device

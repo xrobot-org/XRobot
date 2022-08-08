@@ -26,7 +26,7 @@ uint8_t RMMotor::motor_tx_flag_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 uint8_t RMMotor::motor_tx_map_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 
 RMMotor::RMMotor(const Param &param, const char *name)
-    : param_(param), recv_(sizeof(can_rx_item_t), 1), Motor(name) {
+    : Motor(name), param_(param), recv_(sizeof(can_rx_item_t), 1) {
   strncpy(this->name_, name, sizeof(this->name_));
 
   memset(&(this->feedback_), 0, sizeof(this->feedback_));

@@ -15,25 +15,48 @@
 
 using namespace Device;
 
+uint8_t RELAX_CMD[8] = {0X7F, 0XFF, 0X7F, 0XF0, 0X00, 0X00, 0X07, 0XFF};
+uint8_t ENABLE_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFC};
+
+static bool initd[BSP_CAN_NUM] = {false};
+System::Message::Topic<can_rx_item_t> *MitMotor::mit_tp[BSP_CAN_NUM];
+
 MitMotor::MitMotor(const Param &param, const char *name)
-    : param_(param), recv_(sizeof(can_rx_item_t), 1), Motor(name) {
+    : Motor(name), param_(param), recv_(sizeof(can_rx_item_t), 1) {
   om_user_fun_t rx_callback = [](om_msg_t *msg, void *arg) {
     can_rx_item_t *rx = (can_rx_item_t *)msg->buff;
 
     MitMotor *motor = (MitMotor *)arg;
 
-    motor->recv_.OverwriteFromISR(rx);
+    if (rx->data[0] == motor->param_.id) motor->recv_.OverwriteFromISR(rx);
 
     return OM_OK;
   };
 
-  System::Message::Topic<can_rx_item_t> motor_tp(this->name_, false);
+  if (!initd[this->param_.can]) {
+    MitMotor::mit_tp[this->param_.can] =
+        (System::Message::Topic<can_rx_item_t> *)System::Memory::Malloc(
+            sizeof(System::Message::Topic<can_rx_item_t>));
+
+    new (MitMotor::mit_tp[this->param_.can])
+        System::Message::Topic<can_rx_item_t>("mit motor", false);
+
+    bsp_can_register_subscriber(this->param_.can,
+                                MitMotor::mit_tp[this->param_.can]->GetHandle(),
+                                0, 0);
+
+    initd[this->param_.can] = true;
+  }
+
+  System::Message::Topic<can_rx_item_t> motor_tp(name, false);
 
   System::Message::Subscription<can_rx_item_t> motor_sub(motor_tp, rx_callback,
                                                          this);
 
-  bsp_can_register_subscriber(this->param_.can, motor_tp.GetHandle(),
-                              this->param_.id, 0);
+  motor_tp.Link(*this->mit_tp[this->param_.can]);
+
+  bsp_can_trans_packet(param.can, param.id, ENABLE_CMD, &(this->mailbox_),
+                       0xff);
 }
 
 bool MitMotor::Update() {
@@ -63,21 +86,24 @@ void MitMotor::Decode(can_rx_item_t &rx) {
   speed = uint_to_float(raw_speed, V_MIN, V_MAX, 12);
   current = uint_to_float(raw_current, -T_MAX, T_MAX, 12);
 
-  if (this->reverse_) {
-    circle_reverse(&position);
-    speed = -speed;
-    current = -current;
-  }
-
   this->feedback_.rotational_speed = speed;
   this->feedback_.rotor_abs_angle = position;
   this->feedback_.torque_current = current;
 }
 
 /* MIT电机协议只提供pd位置控制 */
-void MitMotor::Control(float output) { ASSERT(false); }
+void MitMotor::Control(float output) {
+  RM_UNUSED(output);
+  ASSERT(false);
+}
 
-void MitMotor::Set(float pos_sp) {
+void MitMotor::Set(float pos_error) {
+  float pos_sp = this->GetAngle() + 4 * M_PI;
+
+  circle_add(&pos_sp, pos_error, 8 * M_PI);
+
+  pos_sp -= 4 * M_PI;
+
   int p_int = float_to_uint(pos_sp, P_MIN, P_MAX, 16);
   int v_int = float_to_uint(this->param_.def_speed, V_MIN, V_MAX, 12);
   int kp_int = float_to_uint(this->param_.kp, KP_MIN, KP_MAX, 12);
@@ -96,5 +122,10 @@ void MitMotor::Set(float pos_sp) {
   data[7] = t_int & 0xff;
 
   bsp_can_trans_packet(this->param_.can, this->param_.id, data,
+                       &(this->mailbox_), 1);
+}
+
+void MitMotor::Relax() {
+  bsp_can_trans_packet(this->param_.can, this->param_.id, RELAX_CMD,
                        &(this->mailbox_), 1);
 }

@@ -27,12 +27,14 @@ class MitMotor : public Motor {
 
   void Decode(can_rx_item_t &rx);
 
-  void Set(float pos_sp);
+  void Set(float pos_error);
 
   Param param_;
 
   System::Queue recv_;
 
   uint32_t mailbox_;
+
+  static System::Message::Topic<can_rx_item_t> *mit_tp[BSP_CAN_NUM];
 };
 }  // namespace Device
