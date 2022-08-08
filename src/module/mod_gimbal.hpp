@@ -11,6 +11,7 @@
 #include "dev_actuator.hpp"
 #include "dev_bmi088.hpp"
 #include "dev_referee.hpp"
+#include "dev_rm_motor.hpp"
 
 namespace Module {
 class Gimbal {
@@ -27,8 +28,11 @@ class Gimbal {
     Component::SecOrderFunction::Param ff; /* PITCH前馈 */
     Component::SecOrderFunction::Param st; /* YAW自整定参数 */
 
-    Device::Actuator::PosParam yaw;
-    Device::Actuator::PosParam pit;
+    Device::PosActuator::Param yaw_actr;
+    Device::PosActuator::Param pit_actr;
+
+    Device::RMMotor::Param yaw_motor;
+    Device::RMMotor::Param pit_motor;
 
     Component::Type::Eulr mech_zero;
 
@@ -81,8 +85,11 @@ class Gimbal {
 
   Component::SecOrderFunction st_; /* YAW自整定参数 */
 
-  Device::Actuator yaw_actuator_;
-  Device::FeedForwardActuator pit_actuator_;
+  Device::PosActuator yaw_actuator_;
+  Device::PosActuator pit_actuator_;
+
+  Device::RMMotor yaw_motor_;
+  Device::RMMotor pit_motor_;
 
   Component::CMD::GimbalCMD cmd_;
 

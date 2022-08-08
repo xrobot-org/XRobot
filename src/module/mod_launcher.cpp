@@ -20,20 +20,32 @@ using namespace Module;
 
 Launcher::Launcher(Param& param, float control_freq)
     : param_(param), mode_(Component::CMD::LAUNCHER_MODE_RELAX) {
-  this->trig_actuator_ = (Device::Actuator*)System::Memory::Malloc(
-      sizeof(Device::Actuator) * LAUNCHER_ACTR_TRIG_NUM);
-  this->fric_actuator_ = (Device::Actuator*)System::Memory::Malloc(
-      sizeof(Device::Actuator) * LAUNCHER_ACTR_FRIC_NUM);
-
   for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
-    new (this->trig_actuator_ + i)
-        Device::Actuator(param.trig_motor[i], control_freq, "launcher_trig");
+    this->trig_actuator_[i] = (Device::PosActuator*)System::Memory::Malloc(
+        sizeof(Device::PosActuator));
+    new (this->trig_actuator_[i])
+        Device::PosActuator(param.trig_actr[i], control_freq);
+
+    this->trig_motor_[i] =
+        (Device::RMMotor*)System::Memory::Malloc(sizeof(Device::RMMotor));
+
+    new (this->trig_motor_[i])
+        Device::RMMotor(this->param_.trig_motor[i],
+                        ("launcher_trig" + std::to_string(i)).c_str());
   }
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
-    new (this->fric_actuator_ + i)
-        Device::Actuator(param.fric_motor[i], control_freq,
-                         ("launcher_fric" + std::to_string(i)).c_str());
+    this->fric_actuator_[i] = (Device::SpeedActuator*)System::Memory::Malloc(
+        sizeof(Device::SpeedActuator));
+    new (this->fric_actuator_[i])
+        Device::SpeedActuator(param.fric_actr[i], control_freq);
+
+    this->fric_motor_[i] =
+        (Device::RMMotor*)System::Memory::Malloc(sizeof(Device::RMMotor));
+
+    new (this->fric_motor_[i])
+        Device::RMMotor(this->param_.fric_motor[i],
+                        ("launcher_fric" + std::to_string(i)).c_str());
   }
 
   bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
@@ -70,17 +82,17 @@ Launcher::Launcher(Param& param, float control_freq)
 }
 
 void Launcher::UpdateFeedback() {
-  const float last_trig_motor_angle = this->trig_actuator_->GetPos();
+  const float last_trig_motor_angle = this->trig_motor_[0]->GetAngle();
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
-    this->fric_actuator_[i].UpdateFeedback();
+    this->fric_motor_[i]->Update();
   }
 
   for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
-    this->trig_actuator_[i].UpdateFeedback();
+    this->trig_motor_[i]->Update();
   }
 
-  const float delta_motor_angle = circle_error(this->trig_actuator_->GetPos(),
+  const float delta_motor_angle = circle_error(this->trig_motor_[0]->GetAngle(),
                                                last_trig_motor_angle, M_2PI);
   circle_add(&(this->trig_angle_),
              delta_motor_angle / this->param_.trig_gear_ratio, M_2PI);
@@ -180,10 +192,10 @@ void Launcher::Control() {
   switch (this->mode_) {
     case Component::CMD::LAUNCHER_MODE_RELAX:
       for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
-        this->trig_actuator_[i].Relax();
+        this->trig_motor_[i]->Relax();
       }
       for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
-        this->fric_actuator_[i].Relax();
+        this->fric_motor_[i]->Relax();
       }
       bsp_pwm_stop(BSP_PWM_LAUNCHER_SERVO);
       break;
@@ -192,15 +204,21 @@ void Launcher::Control() {
     case Component::CMD::LAUNCHER_MODE_LOADED:
       for (int i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
         /* 控制拨弹电机 */
-        this->trig_actuator_[i].Control(
-            this->setpoint.trig_angle_, this->trig_angle_,
-            this->trig_actuator_[i].GetSpeed() / LAUNCHER_TRIG_SPEED_MAX,
-            this->dt_);
+        float trig_out = this->trig_actuator_[i]->Calculation(
+            this->setpoint.trig_angle_,
+            this->trig_motor_[i]->GetSpeed() / LAUNCHER_TRIG_SPEED_MAX,
+            this->trig_angle_, this->dt_);
+
+        this->trig_motor_[i]->Control(trig_out);
       }
 
       for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
         /* 控制摩擦轮 */
-        this->fric_actuator_[i].Control(this->setpoint.fric_rpm_[i], this->dt_);
+        float fric_out = this->fric_actuator_[i]->Calculation(
+            this->setpoint.fric_rpm_[i], this->fric_motor_[i]->GetSpeed(),
+            this->dt_);
+
+        this->fric_motor_[i]->Control(fric_out);
       }
 
       /* 根据弹仓盖开关状态更新弹舱盖打开时舵机PWM占空比 */
@@ -218,13 +236,13 @@ void Launcher::Control() {
 void Launcher::PackUI() {
   this->ui_.mode = this->mode_;
   this->ui_.fire = this->fire_ctrl_.fire_mode;
-  this->ui_.trig = this->trig_actuator_->GetPos();
+  this->ui_.trig = this->trig_angle_;
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
     if (this->setpoint.fric_rpm_[i] == 0) {
       this->ui_.fric_percent[i] = 0;
     } else {
       this->ui_.fric_percent[i] =
-          this->trig_actuator_[i].GetPos() / this->setpoint.fric_rpm_[i];
+          this->fric_motor_[i]->GetSpeed() / this->setpoint.fric_rpm_[i];
     }
   }
 }
@@ -233,10 +251,10 @@ void Launcher::SetMode(Component::CMD::LauncherMode mode) {
   if (mode == this->mode_) return;
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
-    this->fric_actuator_[i].Reset();
+    this->fric_actuator_[i]->Reset();
   }
   for (int i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
-    this->trig_actuator_[i].Reset();
+    this->trig_actuator_[i]->Reset();
   }
 
   if (mode == Component::CMD::LAUNCHER_MODE_LOADED)

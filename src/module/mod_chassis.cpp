@@ -54,13 +54,19 @@ Chassis::Chassis(Param& param, float control_freq)
       follow_pid_(param.follow_pid_param, control_freq) {
   memset(&(this->cmd_), 0, sizeof(this->cmd_));
 
-  this->actuator_ = (Device::LimitedActuator*)System::Memory::Malloc(
-      sizeof(Device::LimitedActuator) * this->mixer_.len_);
   for (uint8_t i = 0; i < this->mixer_.len_; i++) {
-    new (this->actuator_ + i) Device::LimitedActuator(
-        param.actuator_param[i], param.limit_param, control_freq,
-        (std::string("chassis_") + std::to_string(i)).c_str());
+    this->actuator_[i] = (Device::SpeedActuator*)System::Memory::Malloc(
+        sizeof(Device::SpeedActuator));
+    new (this->actuator_[i])
+        Device::SpeedActuator(param.actuator_param[i], control_freq);
+
+    this->motor_[i] =
+        (Device::RMMotor*)System::Memory::Malloc(sizeof(Device::RMMotor));
+    new (this->motor_[i])
+        Device::RMMotor(param.motor_param[i],
+                        (std::string("chassis_") + std::to_string(i)).c_str());
   }
+
   this->setpoint.motor_rotational_speed = (float*)System::Memory::Malloc(
       this->mixer_.len_ * sizeof(*this->setpoint.motor_rotational_speed));
   ASSERT(this->setpoint.motor_rotational_speed);
@@ -112,7 +118,7 @@ Chassis::Chassis(Param& param, float control_freq)
 void Chassis::UpdateFeedback() {
   /* 将CAN中的反馈数据写入到feedback中 */
   for (size_t i = 0; i < this->mixer_.len_; i++) {
-    this->actuator_[i].UpdateFeedback();
+    this->motor_[i]->Update();
   }
 }
 
@@ -211,16 +217,20 @@ void Chassis::Control() {
     case Component::CMD::CHASSIS_MODE_INDENPENDENT: /* 独立模式,受PID控制 */ {
       float buff_percentage = this->ref_.chassis_pwr_buff / 30.0f;
       clampf(&buff_percentage, 0.0f, 1.0f);
-      for (unsigned i = 0; i < this->mixer_.len_; i++)
-        this->setpoint.motor_rotational_speed[i] *= MOTOR_MAX_ROTATIONAL_SPEED;
-      Device::LimitedActuator::Control(this->setpoint.motor_rotational_speed,
-                                       this->actuator_, this->mixer_.len_,
-                                       buff_percentage, this->dt_);
+      for (unsigned i = 0; i < this->mixer_.len_; i++) {
+        float out = this->actuator_[i]->Calculation(
+            this->setpoint.motor_rotational_speed[i] *
+                MOTOR_MAX_ROTATIONAL_SPEED,
+            this->motor_[i]->GetSpeed(), this->dt_);
+
+        this->motor_[i]->Control(out);
+      }
+
       break;
     }
     case Component::CMD::CHASSIS_MODE_RELAX: /* 放松模式,不输出 */
       for (size_t i = 0; i < this->mixer_.len_; i++) {
-        this->actuator_[i].Relax();
+        this->motor_[i]->Relax();
       }
       break;
     default:
@@ -262,7 +272,7 @@ void Chassis::SetMode(Component::CMD::ChassisMode mode) {
   }
   /* 切换模式后重置PID和滤波器 */
   for (size_t i = 0; i < this->mixer_.len_; i++) {
-    this->actuator_[i].Reset();
+    this->actuator_[i]->Reset();
   }
   this->mode_ = mode;
 }

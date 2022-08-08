@@ -17,6 +17,7 @@
 #include "dev_actuator.hpp"
 #include "dev_cap.hpp"
 #include "dev_referee.hpp"
+#include "dev_rm_motor.hpp"
 #include "dev_tof.hpp"
 
 namespace Module {
@@ -28,10 +29,9 @@ class Chassis {
 
     Component::PID::Param follow_pid_param; /* 跟随云台PID的参数 */
 
-    Device::Actuator::SpeedParam actuator_param[4];
+    Device::SpeedActuator::Param actuator_param[4];
 
-    Device::LimitedActuator::LimitParam limit_param;
-
+    Device::RMMotor::Param motor_param[4];
   } Param;
 
   typedef struct {
@@ -73,7 +73,9 @@ class Chassis {
 
   Component::CMD::ChassisMode mode_;
 
-  Device::LimitedActuator *actuator_;
+  Device::SpeedActuator *actuator_[4];
+
+  Device::RMMotor *motor_[4];
 
   /* 底盘设计 */
   Component::Mixer mixer_;

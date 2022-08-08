@@ -15,6 +15,7 @@
 #include "comp_pid.hpp"
 #include "dev_actuator.hpp"
 #include "dev_referee.hpp"
+#include "dev_rm_motor.hpp"
 
 namespace Module {
 class Launcher {
@@ -53,8 +54,10 @@ class Launcher {
     float default_bullet_speed; /* 默认弹丸初速度 */
     uint32_t min_launch_delay;  /* 最小发射间隔(1s/最大射频) */
 
-    Device::Actuator::PosParam trig_motor[LAUNCHER_ACTR_TRIG_NUM];
-    Device::Actuator::SpeedParam fric_motor[LAUNCHER_ACTR_FRIC_NUM];
+    Device::PosActuator::Param trig_actr[LAUNCHER_ACTR_TRIG_NUM];
+    Device::SpeedActuator::Param fric_actr[LAUNCHER_ACTR_FRIC_NUM];
+    Device::RMMotor::Param trig_motor[LAUNCHER_ACTR_TRIG_NUM];
+    Device::RMMotor::Param fric_motor[LAUNCHER_ACTR_FRIC_NUM];
   } Param;
 
   /* 热量控制 */
@@ -130,8 +133,11 @@ class Launcher {
   HeatControl heat_ctrl_;
   FireControl fire_ctrl_;
 
-  Device::Actuator *trig_actuator_;
-  Device::Actuator *fric_actuator_;
+  Device::PosActuator *trig_actuator_[LAUNCHER_ACTR_TRIG_NUM];
+  Device::SpeedActuator *fric_actuator_[LAUNCHER_ACTR_FRIC_NUM];
+
+  Device::RMMotor *trig_motor_[LAUNCHER_ACTR_TRIG_NUM];
+  Device::RMMotor *fric_motor_[LAUNCHER_ACTR_FRIC_NUM];
 
   RefForLauncher ref_;
 
