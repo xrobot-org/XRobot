@@ -1,4 +1,4 @@
-#include "dev_motor.hpp"
+#include "dev_rm_motor.hpp"
 
 #include <string.h>
 
@@ -19,13 +19,14 @@
 
 using namespace Device;
 
-uint8_t Motor::motor_tx_buff_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER][CAN_DATA_SIZE];
+uint8_t RMMotor::motor_tx_buff_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER]
+                               [CAN_DATA_SIZE];
 
-uint8_t Motor::motor_tx_flag_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
-uint8_t Motor::motor_tx_map_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
+uint8_t RMMotor::motor_tx_flag_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
+uint8_t RMMotor::motor_tx_map_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 
-Motor::Motor(const Param &param, const char *name)
-    : param_(param), recv_(sizeof(can_rx_item_t), 1) {
+RMMotor::RMMotor(const Param &param, const char *name)
+    : param_(param), recv_(sizeof(can_rx_item_t), 1), Motor(name) {
   strncpy(this->name_, name, sizeof(this->name_));
 
   memset(&(this->feedback_), 0, sizeof(this->feedback_));
@@ -47,7 +48,7 @@ Motor::Motor(const Param &param, const char *name)
   om_user_fun_t rx_callback = [](om_msg_t *msg, void *arg) {
     can_rx_item_t *rx = (can_rx_item_t *)msg->buff;
 
-    Motor *motor = (Motor *)arg;
+    RMMotor *motor = (RMMotor *)arg;
 
     motor->recv_.OverwriteFromISR(rx);
 
@@ -65,7 +66,7 @@ Motor::Motor(const Param &param, const char *name)
   motor_tx_map_[this->param_.can][this->index_] |= 1 << (this->param_.num);
 }
 
-bool Motor::Update() {
+bool RMMotor::Update() {
   can_rx_item_t pack;
 
   while (this->recv_.Receive(&pack, 0)) {
@@ -78,7 +79,7 @@ bool Motor::Update() {
   return true;
 }
 
-void Motor::Decode(can_rx_item_t &rx) {
+void RMMotor::Decode(can_rx_item_t &rx) {
   uint16_t raw_angle = (uint16_t)((rx.data[0] << 8) | rx.data[1]);
   int16_t raw_current = (int16_t)((rx.data[4] << 8) | rx.data[5]);
 
@@ -89,7 +90,7 @@ void Motor::Decode(can_rx_item_t &rx) {
   this->feedback_.temp = rx.data[6];
 }
 
-float Motor::GetLSB() {
+float RMMotor::GetLSB() {
   switch (this->param_.model) {
     case MOTOR_M2006:
       return (float)M2006_MAX_ABS_LSB;
@@ -105,7 +106,7 @@ float Motor::GetLSB() {
   }
 }
 
-bool Motor::AddData() {
+bool RMMotor::AddData() {
   float lsb = this->GetLSB();
 
   if (lsb != 0.0f) {
@@ -126,7 +127,7 @@ bool Motor::AddData() {
   return false;
 }
 
-bool Motor::SendData() {
+bool RMMotor::SendData() {
   bsp_can_trans_packet(this->param_.can, this->param_.id_control,
                        motor_tx_buff_[this->param_.can][this->index_],
                        &this->mailbox_, 1);
@@ -136,11 +137,11 @@ bool Motor::SendData() {
   return true;
 }
 
-void Motor::Control(float out) {
+void RMMotor::Control(float out) {
   clampf(&out, -1.0f, 1.0f);
   this->output_ = out;
 }
 
-void Motor::Offline() {
+void RMMotor::Offline() {
   memset(&(this->feedback_), 0, sizeof(this->feedback_));
 }
