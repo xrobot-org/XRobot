@@ -41,9 +41,6 @@ void BalanceChassis::UpdateFeedback() {
 
 BalanceChassis::BalanceChassis(BalanceChassis::Param& param, float sample_freq)
     : param_(param) {
-  this->setpoint_[0].whell_pos.x_ = 0;
-  this->setpoint_[0].motor_angle[1] = 1.8;
-
   for (uint8_t i = 0; i < LEG_NUM; i++) {
     for (uint8_t j = 0; j < LEG_MOTOR_NUM; j++) {
       this->leg_motor_[i * LEG_MOTOR_NUM + j] =

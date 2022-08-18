@@ -10,22 +10,29 @@
 #include "dev_referee.hpp"
 #include "dev_tof.hpp"
 
-/*          L1             */
-/* M_FRONT ☉---☉ M_BACK    */
-/*        /     \          */
-/*       /       \L2       */
-/*      /         \        */
-/*     ◉           ◉       */
-/*      \         /        */
-/*       \  ___  /L3       */
-/*        /     \          */
-/*       |   ◉   | M_MOVE  */
-/*        \ ___ /          */
+/*          L1          */
+/* M_FRONT ☉---☉ M_BACK */
+/*        /     \       */
+/*       /       \L2    */
+/*      /         \     */
+/*     ◉           ◉    */
+/*      \         /     */
+/*       \  ___  /L3    */
+/*        /     \       */
+/*       |   ◉   |      */
+/*        \ ___ /       */
 namespace Module {
 class BalanceChassis {
  public:
   typedef enum { LEFT, RIGHT, LEG_NUM } Leg;
   typedef enum { FRONT, BACK, LEG_MOTOR_NUM } LegMotor;
+
+  typedef enum {
+    Relax, /* 放松模式，电机不输出 */
+    Break, /* 电机保持当前角度 */
+    Squat, /* 稳定模式，以较低高度补偿角度 */
+    Jump,  /* 短时间内移动至最高高度后，切换至稳定模式 */
+  } Mode;
 
   typedef struct {
     float l1;
