@@ -4,8 +4,7 @@
 
 ***开发测试中***
 
-[Gitee](https://gitee.com/qsheeeeen/qdu-rm-mcu)
-[Github](https://github.com/qsheeeeen/qdu-rm-mcu)
+[Gitee](https://gitee.com/qdu-rm-2022/qdu-rm-mcu)
 
 ## 软件功能介绍
 
@@ -13,16 +12,23 @@
 
 主要特色：
 
-- 实时性强，CPU利用率低
-- 一个项目适配不同型号的机器人和不同的操作手。
+- BSP兼容层使用纯C实现，上层代码使用C++，稳定实时，开发方便
+- 一个项目适配不同型号的机器人型号，现已支持步兵/英雄/哨兵/平衡
 - 利用Cmake & GCC实现跨平台开发
-- 不依赖特定操作系统和IDE
-
-实现了可以通过命令行，切换所适配的机器人和操作手。代码完成后只需要烧写一次，减少维护的工作量，减少出错的可能性。用到的系统和软件全部免费。
+- 多开发板支持
+- 兵种配置文件及图形化配置
+- 操作手自定义UI
+- 命令行界面（CLI）
+- USB上位机控制
+- VSCode一键编译调试
 
 ## 图片展示
 
 利用命令行可以辅助调试程序、校准开发板、初始化机器人、读取不同参数配置。
+
+| ![客户端UI](./doc/image/调试界面.png?raw=true "VSCode调试界面") |
+| :-------------------------------------------------------------: |
+|                        *VSCode调试界面*                         |
 
 | ![命令行界面（CLI）](./doc/image/命令行界面.png?raw=true "命令行界面（CLI）") |
 | :---------------------------------------------------------------------------: |
@@ -100,19 +106,19 @@ TODO
 | build     | CMake  | 构建产物                            |
 | config    | 用户   | 配置文件                            |
 | doc       | 开发者 | 文档                                |
-| hw        | 开发者 | 开发板信息                          |
+| hw        | 开发者 | 板级支持包                          |
 | src       | 开发者 | 源代码                              |
 | lib       | 开发者 | 第三方仓库                          |
 | toolchain | 开发者 | 编译工具链相关文件                  |
 | utils     | 开发者 | 使用到的工具，如CubeMonitor, Matlab |
 
-| src        | 内容                                                   |
-| ---------- | ------------------------------------------------------ |
-| component  | 包含各种组件，自成一体，相互依赖，但不依赖于其他文件夹 |
-| device     | 独立于开发板的设备，依赖于HAL和bsp                     |
-| middleware | 中间件，基于RTOS为thread提供功能                       |
-| module     | 对机器人各模块的抽象，各模块一起组成机器人             |
-| thread     | 独立的线程，module的运行容器，也包含通信、姿态解算等   |
+| src       | 内容                                                   |
+| --------- | ------------------------------------------------------ |
+| component | 包含各种组件，自成一体，相互依赖，但不依赖于其他文件夹 |
+| device    | 独立于开发板的设备，依赖于bsp                          |
+| system    | 系统兼容层                                             |
+| module    | 对机器人各模块的抽象，各模块一起组成机器人             |
+| robot     | 机器人的配置文件与初始化                                 |
 
 ## 系统介绍
 
@@ -136,10 +142,7 @@ TODO
 | :-----------------------------------------------------------------------------------: |
 |                              *云台控制原理（与PX类似）*                               |
 
-### 其他参考文献
-
-- 软件架构参考[PX4 Architectural Overview](https://dev.px4.io/master/en/concept/architecture.html)
-
+### 其他参考文献新
 - 云台控制参考[PX4 Controller Diagrams](https://dev.px4.io/master/en/flight_stack/controller_diagrams.html)
 
 - 底盘Mixer和CAN的Control Group参考[PX4 Mixing and Actuators](https://dev.px4.io/master/en/concept/mixing.html)
@@ -149,6 +152,6 @@ TODO
 ### TODO
 
 - [x] 利用好CCM RAM[参考文档](https://www.st.com/resource/en/application_note/an4296-use-stm32f4stm32g4-ccm-sram-with-iar-embedded-workbench-keil-mdkarm-stmicroelectronics-stm32cubeide-and-other-gnubased-toolchains-stmicroelectronics.pdf)
-- [ ] 使用[TinyUSB](https://github.com/hathach/tinyusb)
+- [x] 使用[TinyUSB](https://github.com/hathach/tinyusb)
 - [ ] 使用MPU保护内存地址空间，防止错误访存出现。例如NULL指针读写。
 - [ ] 实现固件运行在开发板，机器人运行在Gazebo的Hardware in the Loop(HITL)仿真
