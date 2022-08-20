@@ -6,3 +6,6 @@ utils/ozone/rm_c.jdebug.user
 hw/bsp/rm-c/drivers/hal/.mxproject
 hw/bsp/rm-c/drivers/hal/DevC.gpdsc
 hw/bsp/rm-c/drivers/hal/Core/Src/system_stm32f4xx.c
+.vscode/.cortex-debug.registers.state.json
+.vscode/.cortex-debug.peripherals.state.json
+.vscode/launch.json

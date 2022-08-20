@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "ARM-Debug",
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceRoot}/build/src/qdu_rm_mcu.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "jlink",
+            "device": "STM32F407IG",
+            "interface": "swd",
+            "runToEntryPoint": "main",
+            "svdFile": "${workspaceRoot}/lib/cmsis_svd/data/STMicro/STM32F407.svd",
+            "configFiles": [
+                "",
+                ""
+            ]
+        }
+    ],
+    "version": "0.2.0"
+}

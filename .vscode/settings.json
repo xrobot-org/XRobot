@@ -19,4 +19,6 @@
         "*.cpp": "cpp",
         "*.hpp": "cpp",
     },
+    "cortex-debug.showRTOS": true,
+    "C_Cpp.clang_format_fallbackStyle": "Google",
 }

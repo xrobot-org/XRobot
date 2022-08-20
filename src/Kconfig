@@ -27,6 +27,8 @@ endchoice
 
 endmenu
 
+source "../src/robot/Kconfig"
+
 source "../src/device/Kconfig"
 
 source "../src/module/Kconfig"

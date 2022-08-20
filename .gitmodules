@@ -19,3 +19,6 @@
 [submodule "lib/one-message"]
 	path = lib/one-message
 	url = https://gitee.com/jiu-xiao/one-message.git
+[submodule "lib/cmsis_svd"]
+	path = lib/cmsis_svd
+	url = https://gitee.com/jiu-xiao/cmsis-svd
