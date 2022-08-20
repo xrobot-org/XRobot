@@ -1,8 +1,11 @@
 cmake_minimum_required(VERSION 3.11)
 project(robot)
 
-if(CONFIG_ID_INFANTRY)
+if(${CONFIG_RB_WHELL_LEG})
   file(GLOB ${PROJECT_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/balance_infantry/*.cpp"
+  )
+elseif(${CONFIG_RB_INFANTRY})
+  file(GLOB ${PROJECT_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/infantry/*.cpp"
   )
 endif()
 

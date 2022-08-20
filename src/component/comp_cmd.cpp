@@ -124,7 +124,7 @@ bool CMD::PraseRC() {
 
 bool CMD::PraseHost() {
   /* 哨兵开启云台绝对角度控制 */
-#if ID_SENTRY
+#if RB_SENTRY
   this->gimbal_.mode = GIMBAL_MODE_ABSOLUTE;
 #endif
 

@@ -158,7 +158,7 @@ bool AI::PackCMD() {
 }
 
 void AI::PraseRef(Device::Referee::Data *ref) {
-#if ID_HERO
+#if RB_HERO
   this->ref_.ball_speed = ref->robot_status.launcher_42_speed_limit;
 #else
   this->ref_.ball_speed = ref->robot_status.launcher_id1_17_speed_limit;

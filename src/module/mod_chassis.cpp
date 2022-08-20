@@ -84,7 +84,7 @@ Chassis::Chassis(Param& param, float control_freq)
     DECLARE_SUBER(yaw_tp, chassis->gimbal_yaw_offset, "gimbal_yaw_offset");
     DECLARE_SUBER(cmd_tp, chassis->cmd_, "cmd_chassis");
 
-#if ID_SENTRY
+#if RB_SENTRY
     DECLARE_SUBER(tof_tp, chassis->tof_fb_, "tof_fb");
 #endif
 
@@ -94,7 +94,7 @@ Chassis::Chassis(Param& param, float control_freq)
       ref_tp.DumpData();
       cmd_tp.DumpData();
       cap_info_tp.DumpData();
-#if ID_SENTRY
+#if RB_SENTRY
       tof_tp.DumpData();
 #endif
       /* 更新反馈值 */
@@ -158,7 +158,7 @@ void Chassis::Control() {
           sin_beta * this->cmd_.ctrl_vec.vx + cos_beta * this->cmd_.ctrl_vec.vy;
       break;
     }
-#if ID_SENTRY
+#if RB_SENTRY
     case Component::CMD::CHASSIS_MODE_SCAN:
       /* 根据距离传感器数据变向 */
       if (this->tof_fb_[Device::Tof::DEV_TOF_SENSOR_LEFT].dist <

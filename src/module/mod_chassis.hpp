@@ -100,7 +100,7 @@ class Chassis {
 
   Device::Cap::Feedback cap_fb_;
 
-#if ID_SENTRY
+#if RB_SENTRY
   Device::Tof::Feedback tof_fb_[Device::Tof::DEV_TOF_SENSOR_NUMBER];
 #endif
 

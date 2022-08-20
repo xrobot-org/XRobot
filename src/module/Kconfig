@@ -6,38 +6,13 @@ choice
     default POWER_LIMIT_WITH_CAP
 
     config POWER_LIMIT_WITH_CAP
-        bool "有超级电容的功率限制" if ID_HERO || ID_INFANTRY
+        bool "有超级电容的功率限制" if RB_HERO || RB_INFANTRY
 
     config POWER_LIMIT
-        bool "功率限制" if ID_SENTRY
+        bool "功率限制" if RB_SENTRY
 
     config POWER_UNLIMIT
-        bool "功率无限制" if ID_ENGINEER || ID_DART || ID_RADAR
-endchoice
-
-choice
-    prompt "UI模式"
-    default UI_MODE_OP
-
-    config UI_MODE_OP
-        bool "操作手模式" if ID_HERO || ID_INFANTRY || ID_ENGINEER
-
-    config UI_MODE_REMOTE
-        bool "远控模式" if ID_SENTRY
-
-    config UI_MODE_NONE
-        bool "无UI" if ID_DART || ID_DART || ID_RADAR
-endchoice
-
-choice
-    prompt "控制方式"
-    default CTRL_MODE_OP
-
-    config CTRL_MODE_OP
-        bool "操作手控制" if ID_HERO || ID_INFANTRY || ID_ENGINEER  || ID_DART || ID
-
-    config CTRL_MODE_AUTO
-        bool "自动控制"
+        bool "功率无限制" if RB_ENGINEER || RB_DART || RB_RADAR
 endchoice
 
 if POWER_LIMIT_WITH_CAP
@@ -61,7 +36,7 @@ endmenu
 
 endif
 
-if ID_SENTRY
+if RB_SENTRY
 menu "哨兵扫描参数"
 
 config GIM_SCAN_ANGLE_BASE
@@ -88,8 +63,6 @@ endmenu
 
 endif
 
-if UI_MODE_OP || UI_MODE_REMOTE
-
 menu "操作手UI"
 
 config UI_DYNAMIC_CYCLE
@@ -103,7 +76,5 @@ config UI_STATIC_CYCLE
     default 1000
 
 endmenu
-
-endif
 
 endmenu

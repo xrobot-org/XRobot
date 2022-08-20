@@ -7,7 +7,7 @@ menu "调试选项"
 
         menu "机器人"
 
-        if ID_HERO || POWER_LIMIT_WITH_CAP || POWER_LIMIT
+        if RB_HERO || POWER_LIMIT_WITH_CAP || POWER_LIMIT
             config DEBUG_POWER_UNLIMIT
                 tristate "爆发吧 小宇宙！（不再限制功率）"
         endif
