@@ -61,12 +61,12 @@ Referee::Referee() {
   ui_slow_refresh = &(this->ui_slow_refresh_);
 
   auto rx_cplt_callback = [](void *arg) {
-    Referee *ref = (Referee *)arg;
+    Referee *ref = static_cast<Referee *>(arg);
     ref->raw_ready_.GiveFromISR();
   };
 
   auto tx_cplt_callback = [](void *arg) {
-    Referee *ref = (Referee *)arg;
+    Referee *ref = static_cast<Referee *>(arg);
     ref->packet_sent_.GiveFromISR();
   };
 
@@ -76,7 +76,7 @@ Referee::Referee() {
   };
 
   auto abort_rx_cplt_callback = [](void *arg) {
-    Referee *ref = (Referee *)arg;
+    Referee *ref = static_cast<Referee *>(arg);
     ref->raw_ready_.GiveFromISR();
   };
 
@@ -95,44 +95,9 @@ Referee::Referee() {
 
   __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_REF), UART_IT_IDLE);
 
-  auto ref_trans_thread = [](void *arg) {
-    Referee *ref = (Referee *)arg;
-
-    DECLARE_SUBER(ui_cap_tp, ref->ui_.cap_ui, "cap_ui");
-    DECLARE_SUBER(ui_ch_tp, ref->ui_.chassis_ui, "chassis_ui");
-    DECLARE_SUBER(ui_gm_tp, ref->ui_.gimbal_ui, "gimbal_ui");
-    DECLARE_SUBER(ui_la_tp, ref->ui_.launcher_ui, "launcher_ui");
-    DECLARE_SUBER(ui_cmd_tp, ref->ui_.cmd_ui, "cmd_ui");
-
-#if UI_MODE_NONE
-    ref->trans_thread_.Stop();
-#endif
-
-    while (1) {
-      /* 获取其他进程数据用于绘制UI */
-      ui_cap_tp.DumpData();
-      ui_ch_tp.DumpData();
-      ui_gm_tp.DumpData();
-      ui_la_tp.DumpData();
-      ui_cmd_tp.DumpData();
-
-      /* 刷新UI数据 */
-      ref->RefreshUI();
-
-      if (!ref->UIStackEmpty())
-        if (ref->packet_sent_.Take(0)) {
-          ref->PackUI();
-          ref->StartTrans();
-        }
-
-      ref->trans_thread_.Sleep(2);
-    }
-  };
-
   auto ref_recv_thread = [](void *arg) {
-    Referee *ref = (Referee *)arg;
-
-    DECLARE_TOPIC(ref_tp, ref->data_, "referee", false);
+    Referee *ref = static_cast<Referee *>(arg);
+    DECLARE_PUBER(ref_tp, ref->data_, "referee", false);
 
     while (1) {
       ref->StartRecv();
@@ -153,17 +118,8 @@ Referee::Referee() {
     }
   };
 
-  THREAD_DECLEAR(this->trans_thread_, ref_trans_thread, 512,
-                 System::Thread::Realtime, this);
   THREAD_DECLEAR(this->recv_thread_, ref_recv_thread, 256,
                  System::Thread::Realtime, this);
-}
-
-bool Referee::UIStackEmpty() {
-  if (this->ui_.ui.stack.size.string || this->ui_.ui.stack.size.graphic ||
-      this->ui_.ui.stack.size.del)
-    return false;
-  return true;
 }
 
 void Referee::Offline() { this->data_.status = OFFLINE; }
@@ -407,11 +363,11 @@ bool Referee::RefreshUI() {
 
         /* 更新云台模式选择框 */
         switch (this->ui_.gimbal_ui.mode) {
-          case Component::CMD::GIMBAL_MODE_RELAX:
+          case Component::CMD::Relax:
             box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
             box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
             break;
-          case Component::CMD::GIMBAL_MODE_ABSOLUTE:
+          case Component::CMD::Absolute:
             box_pos_left = REF_UI_MODE_OFFSET_3_LEFT;
             box_pos_right = REF_UI_MODE_OFFSET_3_RIGHT;
             break;
@@ -437,15 +393,15 @@ bool Referee::RefreshUI() {
 
         /* 更新发射器模式选择框 */
         switch (this->ui_.launcher_ui.mode) {
-          case Component::CMD::LAUNCHER_MODE_RELAX:
+          case Component::CMD::Relax:
             box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
             box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
             break;
-          case Component::CMD::LAUNCHER_MODE_SAFE:
+          case Component::CMD::Safe:
             box_pos_left = REF_UI_MODE_OFFSET_3_LEFT;
             box_pos_right = REF_UI_MODE_OFFSET_3_RIGHT;
             break;
-          case Component::CMD::LAUNCHER_MODE_LOADED:
+          case Component::CMD::Loaded:
             box_pos_left = REF_UI_MODE_OFFSET_4_LEFT;
             box_pos_right = REF_UI_MODE_OFFSET_4_RIGHT;
             break;
@@ -467,15 +423,15 @@ bool Referee::RefreshUI() {
 
         /* 更新开火模式选择框 */
         switch (this->ui_.launcher_ui.fire) {
-          case Component::CMD::FIRE_MODE_SINGLE:
+          case Component::CMD::Single:
             box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
             box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
             break;
-          case Component::CMD::FIRE_MODE_BURST:
+          case Component::CMD::Burst:
             box_pos_left = REF_UI_MODE_OFFSET_3_LEFT;
             box_pos_right = REF_UI_MODE_OFFSET_3_RIGHT;
             break;
-          case Component::CMD::FIRE_MODE_CONT:
+          case Component::CMD::Continued:
             box_pos_left = REF_UI_MODE_OFFSET_4_LEFT;
             box_pos_right = REF_UI_MODE_OFFSET_4_RIGHT;
             break;
@@ -565,7 +521,7 @@ bool Referee::RefreshUI() {
 
         /* 更新底盘模式选择框 */
         switch (this->ui_.chassis_ui.mode) {
-          case Component::CMD::CHASSIS_MODE_FOLLOW_GIMBAL:
+          case Component::CMD::FollowGimbal:
             box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
             box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
             break;
@@ -573,7 +529,7 @@ bool Referee::RefreshUI() {
             box_pos_left = REF_UI_MODE_OFFSET_3_LEFT;
             box_pos_right = REF_UI_MODE_OFFSET_3_RIGHT;
             break;
-          case Component::CMD::CHASSIS_MODE_ROTOR:
+          case Component::CMD::Rotor:
             box_pos_left = REF_UI_MODE_OFFSET_4_LEFT;
             box_pos_right = REF_UI_MODE_OFFSET_4_RIGHT;
             break;
@@ -612,81 +568,6 @@ bool Referee::RefreshUI() {
   }
 
 #endif
-  return true;
-}
-
-bool Referee::PackUI() {
-  ui_ele_t *ele = NULL;
-  ui_string_t string;
-  ui_del_t del;
-
-  Referee::CMDID ui_cmd_id;
-  static const size_t ksize_data_header = sizeof(Referee::InterStudentHeader);
-  size_t size_data_content;
-  static const size_t ksize_packet_crc = sizeof(uint16_t);
-  void *source = NULL;
-
-  if (!ui_pop_del(&(this->ui_.ui), &del)) {
-    source = &del;
-    size_data_content = sizeof(ui_del_t);
-    ui_cmd_id = REF_STDNT_CMD_ID_UI_DEL;
-  } else if (this->ui_.ui.stack.size.graphic) { /* 绘制图形 */
-    if (this->ui_.ui.stack.size.graphic <= 1) {
-      size_data_content = sizeof(ui_ele_t) * 1;
-      ui_cmd_id = REF_STDNT_CMD_ID_UI_DRAW1;
-
-    } else if (this->ui_.ui.stack.size.graphic == 2) {
-      size_data_content = sizeof(ui_ele_t) * 2;
-      ui_cmd_id = REF_STDNT_CMD_ID_UI_DRAW2;
-
-    } else if (this->ui_.ui.stack.size.graphic == 5) {
-      size_data_content = sizeof(ui_ele_t) * 5;
-      ui_cmd_id = REF_STDNT_CMD_ID_UI_DRAW5;
-
-    } else if (this->ui_.ui.stack.size.graphic == 7) {
-      size_data_content = sizeof(ui_ele_t) * 7;
-      ui_cmd_id = REF_STDNT_CMD_ID_UI_DRAW7;
-
-    } else {
-      return false;
-    }
-    ele = (ui_ele_t *)pvPortMalloc(size_data_content);
-    ui_ele_t *cursor = ele;
-    while (!ui_pop_graphic(&(this->ui_.ui), cursor)) {
-      cursor++;
-    }
-    source = ele;
-  } else if (!ui_pop_string(&(this->ui_.ui), &string)) { /* 绘制字符 */
-    source = &string;
-    size_data_content = sizeof(ui_string_t);
-    ui_cmd_id = REF_STDNT_CMD_ID_UI_STR;
-  } else {
-    return false;
-  }
-
-  this->packet.size_ =
-      sizeof(Referee::UIPacketHeader) + size_data_content + ksize_packet_crc;
-
-  this->packet.data_ = (uint8_t *)pvPortMalloc(this->packet.size_);
-
-  Referee::UIPacketHeader *packet_head =
-      (Referee::UIPacketHeader *)(this->packet.data_);
-
-  Referee::SetPacketHeader(packet_head->header,
-                           ksize_data_header + (uint16_t)size_data_content);
-  packet_head->cmd_id = REF_CMD_ID_INTER_STUDENT;
-  this->SetUIHeader(packet_head->student_header, ui_cmd_id,
-                    (Referee::RobotID)this->data_.robot_status.robot_id);
-  memcpy(this->packet.data_ + sizeof(Referee::UIPacketHeader), source,
-         size_data_content);
-
-  vPortFree(ele);
-  uint16_t *crc =
-      (uint16_t *)(this->packet.data_ + this->packet.size_ - ksize_packet_crc);
-  *crc = Component::CRC16::Calculate((const uint8_t *)this->packet.data_,
-                                     this->packet.size_ - ksize_packet_crc,
-                                     CRC16_INIT);
-
   return true;
 }
 

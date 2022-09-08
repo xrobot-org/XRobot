@@ -36,10 +36,10 @@ class Tof {
 
   Param param_;
 
-  Feedback feedback_[DEV_TOF_SENSOR_NUMBER];
-
   System::Queue recv_;
 
   System::Thread thread_;
+
+  DECLARE_PUBER(fb_, Feedback[DEV_TOF_SENSOR_NUMBER], "tof_fb", true);
 };
 }  // namespace Device

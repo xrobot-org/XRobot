@@ -44,21 +44,17 @@ class BMI088 {
 
   void Read(DeviceType type, uint8_t reg, uint8_t *data, uint8_t len);
 
-  struct {
-    System::Semaphore gyro_raw_;
-    System::Semaphore accl_raw_;
-  } sem;
-
   Calibration &cali;
   Rotation &rot;
 
-  struct {
-    Component::Type::Vector3 accl_;
-    Component::Type::Vector3 gyro_;
+  System::Semaphore gyro_ready_;
+  System::Semaphore accl_ready_;
 
-    float temp_; /* 温度 */
-  } data;
+  float temp_; /* 温度 */
 
   System::Thread thread_;
+
+  DECLARE_PUBER(accl_, Component::Type::Vector3, "imu_accl", true);
+  DECLARE_PUBER(gyro_, Component::Type::Vector3, "imu_gyro", true);
 };
 }  // namespace Device

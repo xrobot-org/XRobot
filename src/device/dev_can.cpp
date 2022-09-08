@@ -36,5 +36,7 @@ CAN::CAN() {
   bsp_can_register_callback(BSP_CAN_2, HAL_CAN_RX_FIFO1_MSG_PENDING_CB,
                             can2_callback, NULL);
 
+  //TODO:解耦
+
   bsp_can_init();
 }

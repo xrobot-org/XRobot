@@ -11,27 +11,48 @@
 
 #pragma once
 
+#include "comp_actuator.hpp"
 #include "comp_filter.hpp"
 #include "comp_mixer.hpp"
 #include "comp_pid.hpp"
-#include "dev_actuator.hpp"
 #include "dev_cap.hpp"
+#include "dev_motor.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
 #include "dev_tof.hpp"
 
 namespace Module {
+template <typename Motor, typename MotorParam>
 class Chassis {
  public:
-  /* 底盘参数的结构体，包含所有初始化用的参数，通常是const，存好几组 */
+  /* 底盘运行模式 */
+  typedef enum {
+    Relax, /* 放松模式，电机不输出。一般情况底盘初始化之后的模式 */
+    Break, /* 刹车模式，电机闭环控制保持静止。用于机器人停止状态 */
+    FollowGimbal, /* 通过闭环控制使车头方向跟随云台 */
+    Rotor, /* 小陀螺模式，通过闭环控制使底盘不停旋转 */
+    Indenpendent, /* 独立模式。底盘运行不受云台影响 */
+    Scan,         /* 未找到目标，底盘处于自由活动模式 */
+  } Mode;
+
+  typedef enum {
+    ChangeModeRelax,
+    ChangeModeFollow,
+    ChangeModeRotor,
+    ChangeModeIndenpendent,
+  } ChassisEvent;
+
+  /* 底盘参数的结构体，包含所有初始Component化用的参数，通常是const，存好几组 */
   typedef struct {
     Component::Mixer::Mode type; /* 底盘类型，底盘的机械设计和轮子选型 */
 
     Component::PID::Param follow_pid_param; /* 跟随云台PID的参数 */
 
+    const std::vector<Component::CMD::EventMapItem> event_map;
+
     Device::SpeedActuator::Param actuator_param[4];
 
-    Device::RMMotor::Param motor_param[4];
+    MotorParam motor_param[4];
   } Param;
 
   typedef struct {
@@ -47,13 +68,11 @@ class Chassis {
 
   void Control();
 
-  void SetMode(Component::CMD::ChassisMode mode);
+  void SetMode(Mode mode);
 
   void PackOutput();
 
-  void PackUI();
-
-  void PraseRef(Device::Referee::Data &ref);
+  void PraseRef();
 
   float CalcWz(const float lo, const float hi);
 
@@ -65,24 +84,18 @@ class Chassis {
 
   uint32_t now_;
 
-  ui_chassis_t ui_;
-
-  Component::CMD::ChassisCMD cmd_;
-
   RefForChassis ref_;
 
-  Component::CMD::ChassisMode mode_;
+  Mode mode_ = Relax;
 
   Device::SpeedActuator *actuator_[4];
 
-  Device::RMMotor *motor_[4];
+  Device::BaseMotor *motor_[4];
 
   /* 底盘设计 */
   Component::Mixer mixer_;
 
   Component::Type::MoveVector move_vec_; /* 底盘实际的运动向量 */
-
-  float gimbal_yaw_offset;
 
   float wz_dir_mult_; /* 小陀螺模式旋转方向乘数 */
   float vy_dir_mult_; /* scan模式移动方向乘数 */
@@ -96,14 +109,17 @@ class Chassis {
 
   Component::PID follow_pid_; /* 跟随云台用的PID */
 
-  Device::Cap::Output cap_control_;
-
-  Device::Cap::Feedback cap_fb_;
-
-#if RB_SENTRY
-  Device::Tof::Feedback tof_fb_[Device::Tof::DEV_TOF_SENSOR_NUMBER];
-#endif
-
   System::Thread thread_;
+
+  System::Semaphore ctrl_lock_;
+
+  DECLARE_PUBER(cap_out_, Device::Cap::Output, "cap_out", true);
+
+  float yaw_;
+  Device::Referee::Data raw_ref_;
+  Device::Cap::Info cap_info_;
+  Component::CMD::ChassisCMD cmd_;
 };
+
+typedef Chassis<Device::RMMotor, Device::RMMotor::Param> RMChassis;
 }  // namespace Module

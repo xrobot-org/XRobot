@@ -4,11 +4,11 @@
 
 #pragma once
 
+#include "comp_actuator.hpp"
 #include "comp_ahrs.hpp"
 #include "comp_cf.hpp"
 #include "comp_filter.hpp"
 #include "comp_pid.hpp"
-#include "dev_actuator.hpp"
 #include "dev_bmi088.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
@@ -16,6 +16,13 @@
 namespace Module {
 class Gimbal {
  public:
+  /* 云台运行模式 */
+  typedef enum {
+    Relax, /* 放松模式，电机不输出。一般情况云台初始化之后的模式 */
+    Absolute, /* 绝对坐标系控制，控制在空间内的绝对姿态 */
+    Scan,     /* 主动遍历每个角度，以便上位机识别 */
+  } Mode;
+
   enum {
     GIMBAL_CTRL_YAW_OMEGA_IDX = 0, /* Yaw轴控制的角速度环控制器的索引值 */
     GIMBAL_CTRL_YAW_ANGLE_IDX, /* Yaw轴控制的角度环控制器的索引值 */
@@ -23,6 +30,12 @@ class Gimbal {
     GIMBAL_CTRL_PIT_ANGLE_IDX, /* Pitch轴控制的角度环控制器的索引值 */
     GIMBAL_CTRL_NUM,           /* 总共的控制器数量 */
   };
+
+  typedef enum {
+    SetModeRelax,
+    SetModeAbsolute,
+    SetModeScan,
+  } GimbalEvent;
 
   typedef struct {
     Component::SecOrderFunction::Param ff; /* PITCH前馈 */
@@ -41,16 +54,9 @@ class Gimbal {
       float pitch_min;
     } limit;
 
+    const std::vector<Component::CMD::EventMapItem> event_map;
+
   } Param;
-
-  /* 云台反馈数据的结构体，包含反馈控制用的反馈数据 */
-  typedef struct {
-    Component::Type::Vector3 gyro; /* IMU的陀螺仪数据 */
-
-    /* 欧拉角 */
-    Component::Type::Eulr imu; /* 由IMU计算的欧拉角 */
-
-  } Feedback;
 
   Gimbal(Param &param, float control_freq);
 
@@ -58,9 +64,7 @@ class Gimbal {
 
   void Control();
 
-  void PackUI();
-
-  void SetMode(Component::CMD::GimbalMode mode);
+  void SetMode(Mode mode);
 
   uint32_t lask_wakeup_;
 
@@ -70,15 +74,11 @@ class Gimbal {
 
   Param param_;
 
-  Component::CMD::GimbalMode mode_; /* 云台模式 */
+  Gimbal::Mode mode_ = Relax; /* 云台模式 */
 
   struct {
     Component::Type::Eulr eulr_; /* 表示云台姿态的欧拉角 */
   } setpoint;
-
-  Feedback feedback_; /* 反馈 */
-
-  float yaw_offset_angle_;
 
   float scan_yaw_direction_; /* 扫描模式yaw轴旋转方向 */
   float scan_pit_direction_; /* 扫描模式pit轴旋转方向 */
@@ -91,10 +91,14 @@ class Gimbal {
   Device::RMMotor yaw_motor_;
   Device::RMMotor pit_motor_;
 
-  Component::CMD::GimbalCMD cmd_;
-
-  ui_gimbal_t ui_;
-
   System::Thread thread_;
+
+  System::Semaphore ctrl_lock_;
+
+  DECLARE_PUBER(yaw_, float, "gimbal_yaw_offset", true);
+
+  Component::Type::Eulr eulr_;
+  Component::Type::Vector3 gyro_;
+  Component::CMD::GimbalCMD cmd_;
 };
 }  // namespace Module

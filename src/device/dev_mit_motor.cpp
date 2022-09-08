@@ -1,5 +1,7 @@
 #include "dev_mit_motor.hpp"
 
+#include <string>
+
 #include "comp_utils.hpp"
 
 #define P_MIN -12.5f
@@ -19,27 +21,27 @@ uint8_t RELAX_CMD[8] = {0X7F, 0XFF, 0X7F, 0XF0, 0X00, 0X00, 0X07, 0XFF};
 uint8_t ENABLE_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFC};
 
 static bool initd[BSP_CAN_NUM] = {false};
-System::Message::Topic<can_rx_item_t> *MitMotor::mit_tp[BSP_CAN_NUM];
+System::Message::Topic *MitMotor::mit_tp[BSP_CAN_NUM];
 
 MitMotor::MitMotor(const Param &param, const char *name)
-    : Motor(name), param_(param), recv_(sizeof(can_rx_item_t), 1) {
-  om_user_fun_t rx_callback = [](om_msg_t *msg, void *arg) {
-    can_rx_item_t *rx = (can_rx_item_t *)msg->buff;
-
-    MitMotor *motor = (MitMotor *)arg;
+    : BaseMotor(name), param_(param), recv_(sizeof(can_rx_item_t), 1) {
+  DECLARE_MESSAGE_FUN(rx_callback) {
+    GetMessage(can_rx_item_t, rx);
+    GetARG(MitMotor, motor);
 
     if (rx->data[0] == motor->param_.id) motor->recv_.OverwriteFromISR(rx);
 
-    return OM_OK;
+    MESSAGE_FUN_PASSED();
   };
 
   if (!initd[this->param_.can]) {
-    MitMotor::mit_tp[this->param_.can] =
-        (System::Message::Topic<can_rx_item_t> *)System::Memory::Malloc(
-            sizeof(System::Message::Topic<can_rx_item_t>));
+    DECLARE_TOPIC_STATIC(
+        motor_tp,
+        (std::string("mit_motor_can") + std::to_string(this->param_.can))
+            .c_str(),
+        false);
 
-    new (MitMotor::mit_tp[this->param_.can])
-        System::Message::Topic<can_rx_item_t>("mit motor", false);
+    MitMotor::mit_tp[this->param_.can] = motor_tp;
 
     bsp_can_register_subscriber(this->param_.can,
                                 MitMotor::mit_tp[this->param_.can]->GetHandle(),
@@ -48,10 +50,9 @@ MitMotor::MitMotor(const Param &param, const char *name)
     initd[this->param_.can] = true;
   }
 
-  System::Message::Topic<can_rx_item_t> motor_tp(name, false);
+  DECLARE_TOPIC(motor_tp, name, false);
 
-  System::Message::Subscription<can_rx_item_t> motor_sub(motor_tp, rx_callback,
-                                                         this);
+  MESSAGE_REGISTER_CALLBACK(motor_tp, rx_callback, this);
 
   motor_tp.Link(*this->mit_tp[this->param_.can]);
 

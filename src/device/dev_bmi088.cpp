@@ -131,17 +131,17 @@ void BMI088::Read(BMI088::DeviceType type, uint8_t reg, uint8_t *data,
 }
 
 BMI088::BMI088(BMI088::Calibration &cali, BMI088::Rotation &rot)
-    : cali(cali), rot(rot) {
+    : cali(cali), rot(rot), gyro_ready_(false), accl_ready_(false) {
   auto recv_cplt_callback = [](void *arg) {
-    BMI088 *bmi088 = (BMI088 *)arg;
+    BMI088 *bmi088 = static_cast<BMI088 *>(arg);
 
     if (!bsp_gpio_read_pin(BSP_GPIO_IMU_ACCL_CS)) {
       bmi088->Unselect(BMI_ACCL);
-      bmi088->sem.accl_raw_.GiveFromISR();
+      bmi088->accl_ready_.GiveFromISR();
     }
     if (!bsp_gpio_read_pin(BSP_GPIO_IMU_GYRO_CS)) {
       bmi088->Unselect(BMI_GYRO);
-      bmi088->sem.gyro_raw_.GiveFromISR();
+      bmi088->gyro_ready_.GiveFromISR();
     }
   };
 
@@ -149,12 +149,9 @@ BMI088::BMI088(BMI088::Calibration &cali, BMI088::Rotation &rot)
                             this);
 
   auto thread_bmi088 = [](void *arg) {
-    BMI088 *bmi088 = (BMI088 *)arg;
+    BMI088 *bmi088 = static_cast<BMI088 *>(arg);
 
     Component::PID imu_temp_ctrl_pid(imu_temp_ctrl_pid_param, 1000.0f);
-
-    DECLARE_TOPIC(accl_tp, bmi088->data.accl_, "gimbal_accl", true);
-    DECLARE_TOPIC(gyro_tp, bmi088->data.gyro_, "gimbal_gyro", true);
 
     bsp_pwm_start(BSP_PWM_IMU_HEAT);
 
@@ -167,22 +164,22 @@ BMI088::BMI088(BMI088::Calibration &cali, BMI088::Rotation &rot)
        * 一次只能开启一个DMA
        */
       bmi088->StartRecvAccel();
-      bmi088->sem.accl_raw_.Take(UINT16_MAX);
+      bmi088->accl_ready_.Take(UINT16_MAX);
       bmi088->PraseAccel();
 
-      accl_tp.Publish();
+      bmi088->accl_.Publish();
 
       bmi088->StartRecvGyro();
-      bmi088->sem.gyro_raw_.Take(UINT16_MAX);
+      bmi088->gyro_ready_.Take(UINT16_MAX);
       bmi088->PraseGyro();
 
-      gyro_tp.Publish();
+      bmi088->gyro_.Publish();
 
       // TODO: 添加滤波
 
       /* PID控制IMU温度，PWM输出 */
-      bsp_pwm_set_comp(BSP_PWM_IMU_HEAT, imu_temp_ctrl_pid.Calculate(
-                                             40.0f, bmi088->data.temp_, 0));
+      bsp_pwm_set_comp(BSP_PWM_IMU_HEAT,
+                       imu_temp_ctrl_pid.Calculate(40.0f, bmi088->temp_, 0));
       bmi088->thread_.Sleep(1);
     }
   };
@@ -267,17 +264,17 @@ void BMI088::PraseGyro() {
     gyro[i] *= M_DEG2RAD_MULT;
   }
 
-  memset(&(this->data.gyro_), 0, sizeof(this->data.gyro_));
+  memset(&(this->gyro_.data_), 0, sizeof(this->gyro_.data_));
 
   for (int i = 0; i < 3; i++) {
-    this->data.gyro_.x += this->rot.rot_mat[0][i] * gyro[i];
-    this->data.gyro_.y += this->rot.rot_mat[1][i] * gyro[i];
-    this->data.gyro_.z += this->rot.rot_mat[2][i] * gyro[i];
+    this->gyro_.data_.x += this->rot.rot_mat[0][i] * gyro[i];
+    this->gyro_.data_.y += this->rot.rot_mat[1][i] * gyro[i];
+    this->gyro_.data_.z += this->rot.rot_mat[2][i] * gyro[i];
   }
 
-  this->data.gyro_.x -= this->cali.gyro_offset.x;
-  this->data.gyro_.y -= this->cali.gyro_offset.y;
-  this->data.gyro_.z -= this->cali.gyro_offset.z;
+  this->gyro_.data_.x -= this->cali.gyro_offset.x;
+  this->gyro_.data_.y -= this->cali.gyro_offset.y;
+  this->gyro_.data_.z -= this->cali.gyro_offset.z;
 }
 
 void BMI088::PraseAccel() {
@@ -297,14 +294,14 @@ void BMI088::PraseAccel() {
 
   if (raw_temp > 1023) raw_temp -= 2048;
 
-  this->data.temp_ = (float)raw_temp * 0.125f + 23.0f;
+  this->temp_ = (float)raw_temp * 0.125f + 23.0f;
 
-  memset(&(this->data.accl_), 0, sizeof(this->data.accl_));
+  memset(&(this->accl_.data_), 0, sizeof(this->accl_.data_));
 
   for (int i = 0; i < 3; i++) {
-    this->data.accl_.x += this->rot.rot_mat[0][i] * accl[i];
-    this->data.accl_.y += this->rot.rot_mat[1][i] * accl[i];
-    this->data.accl_.z += this->rot.rot_mat[2][i] * accl[i];
+    this->accl_.data_.x += this->rot.rot_mat[0][i] * accl[i];
+    this->accl_.data_.y += this->rot.rot_mat[1][i] * accl[i];
+    this->accl_.data_.z += this->rot.rot_mat[2][i] * accl[i];
   }
 }
 

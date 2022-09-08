@@ -26,7 +26,7 @@ uint8_t RMMotor::motor_tx_flag_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 uint8_t RMMotor::motor_tx_map_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 
 RMMotor::RMMotor(const Param &param, const char *name)
-    : Motor(name), param_(param), recv_(sizeof(can_rx_item_t), 1) {
+    : BaseMotor(name), param_(param), recv_(sizeof(can_rx_item_t), 1) {
   strncpy(this->name_, name, sizeof(this->name_));
 
   memset(&(this->feedback_), 0, sizeof(this->feedback_));
@@ -44,6 +44,25 @@ RMMotor::RMMotor(const Param &param, const char *name)
     default:
       ASSERT(false);
   }
+  switch (param.model) {
+    case MOTOR_M2006:
+    case MOTOR_M3508:
+      if (param.id_control == M3508_M2006_CTRL_ID_BASE) {
+        this->num_ = param.id_feedback - M3508_M2006_FB_ID_BASE;
+      } else {
+        this->num_ = param.id_feedback - M3508_M2006_FB_ID_EXTAND;
+      }
+      break;
+    case MOTOR_GM6020:
+      if (param.id_control == GM6020_CTRL_ID_BASE) {
+        this->num_ = param.id_feedback - GM6020_FB_ID_BASE;
+      } else {
+        this->num_ = param.id_feedback - GM6020_FB_ID_EXTAND;
+      }
+      break;
+    default:
+      break;
+  }
 
   om_user_fun_t rx_callback = [](om_msg_t *msg, void *arg) {
     can_rx_item_t *rx = (can_rx_item_t *)msg->buff;
@@ -55,15 +74,14 @@ RMMotor::RMMotor(const Param &param, const char *name)
     return OM_OK;
   };
 
-  System::Message::Topic<can_rx_item_t> motor_tp(this->name_, false);
+  DECLARE_TOPIC(motor_tp, name, false);
 
-  System::Message::Subscription<can_rx_item_t> motor_sub(motor_tp, rx_callback,
-                                                         this);
+  MESSAGE_REGISTER_CALLBACK(motor_tp, rx_callback, this);
 
   bsp_can_register_subscriber(this->param_.can, motor_tp.GetHandle(),
                               this->param_.id_feedback, 0);
 
-  motor_tx_map_[this->param_.can][this->index_] |= 1 << (this->param_.num);
+  motor_tx_map_[this->param_.can][this->index_] |= 1 << (this->num_);
 }
 
 bool RMMotor::Update() {
@@ -114,11 +132,11 @@ void RMMotor::Control(float out) {
 
   if (lsb != 0.0f) {
     int16_t ctrl_cmd = this->output_ * lsb;
-    motor_tx_buff_[this->param_.can][this->index_][2 * this->param_.num] =
+    motor_tx_buff_[this->param_.can][this->index_][2 * this->num_] =
         (uint8_t)((ctrl_cmd >> 8) & 0xFF);
-    motor_tx_buff_[this->param_.can][this->index_][2 * this->param_.num + 1] =
+    motor_tx_buff_[this->param_.can][this->index_][2 * this->num_ + 1] =
         (uint8_t)(ctrl_cmd & 0xFF);
-    motor_tx_flag_[this->param_.can][this->index_] |= 1 << (this->param_.num);
+    motor_tx_flag_[this->param_.can][this->index_] |= 1 << (this->num_);
 
     if (((~motor_tx_flag_[this->param_.can][this->index_]) &
          (motor_tx_map_[this->param_.can][this->index_])) == 0) {

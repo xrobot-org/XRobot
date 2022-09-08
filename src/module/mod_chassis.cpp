@@ -13,9 +13,9 @@
 
 #include <stdlib.h>
 
-#include "FreeRTOS.h"
 #include "dev_can.hpp"
 #include "dev_cap.hpp"
+#include "dev_dr16.hpp"
 #include "dev_tof.hpp"
 
 #define ROTOR_WZ_MIN 0.6f /* 小陀螺旋转位移下界 */
@@ -47,11 +47,13 @@ static const float kCAP_PERCENTAGE_WORK = (float)CAP_PERCENT_WORK / 100.0f;
 
 using namespace Module;
 
-Chassis::Chassis(Param& param, float control_freq)
+template <typename Motor, typename MotorParam>
+Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
     : param_(param),
-      mode_(Component::CMD::CHASSIS_MODE_RELAX),
+      mode_(Chassis::Relax),
       mixer_(param.type),
-      follow_pid_(param.follow_pid_param, control_freq) {
+      follow_pid_(param.follow_pid_param, control_freq),
+      ctrl_lock_(true) {
   memset(&(this->cmd_), 0, sizeof(this->cmd_));
 
   for (uint8_t i = 0; i < this->mixer_.len_; i++) {
@@ -60,51 +62,69 @@ Chassis::Chassis(Param& param, float control_freq)
     new (this->actuator_[i])
         Device::SpeedActuator(param.actuator_param[i], control_freq);
 
-    this->motor_[i] =
-        (Device::RMMotor*)System::Memory::Malloc(sizeof(Device::RMMotor));
+    this->motor_[i] = (Motor*)System::Memory::Malloc(sizeof(Motor));
     new (this->motor_[i])
-        Device::RMMotor(param.motor_param[i],
-                        (std::string("chassis_") + std::to_string(i)).c_str());
+        Motor(param.motor_param[i],
+              (std::string("chassis_") + std::to_string(i)).c_str());
   }
 
   this->setpoint.motor_rotational_speed = (float*)System::Memory::Malloc(
       this->mixer_.len_ * sizeof(*this->setpoint.motor_rotational_speed));
   ASSERT(this->setpoint.motor_rotational_speed);
 
+  auto event_callback = [](uint32_t event, void* arg) {
+    Chassis* chassis = static_cast<Chassis*>(arg);
+
+    chassis->ctrl_lock_.Take(UINT32_MAX);
+
+    switch (event) {
+      case ChangeModeRelax:
+        chassis->SetMode(Relax);
+        break;
+      case ChangeModeFollow:
+        chassis->SetMode(FollowGimbal);
+        break;
+      case ChangeModeRotor:
+        chassis->SetMode(Rotor);
+        break;
+      case ChangeModeIndenpendent:
+        chassis->SetMode(Indenpendent);
+        break;
+      default:
+        break;
+    }
+
+    chassis->ctrl_lock_.Give();
+  };
+
+  Component::CMD::RegisterEvent(event_callback, this, this->param_.event_map);
+
   auto chassis_thread = [](void* arg) {
     Chassis* chassis = (Chassis*)arg;
 
-    Device::Referee::Data ref_raw;
-
-    DECLARE_TOPIC(cap_out_tp, chassis->cap_control_, "cap_out", true);
-    DECLARE_TOPIC(ui_tp, chassis->ui_, "chassis_ui", true);
-
-    DECLARE_SUBER(ref_tp, ref_raw, "referee");
-    DECLARE_SUBER(cap_info_tp, chassis->cap_fb_, "cap_info");
-    DECLARE_SUBER(yaw_tp, chassis->gimbal_yaw_offset, "gimbal_yaw_offset");
-    DECLARE_SUBER(cmd_tp, chassis->cmd_, "cmd_chassis");
-
-#if RB_SENTRY
-    DECLARE_SUBER(tof_tp, chassis->tof_fb_, "tof_fb");
-#endif
+    DECLARE_SUBER(raw_ref_, chassis->raw_ref_, "referee");
+    DECLARE_SUBER(cap_info_, chassis->cap_info_, "cap_info");
+    DECLARE_SUBER(yaw_, chassis->yaw_, "gimbal_yaw_offset");
+    DECLARE_SUBER(cmd_, chassis->cmd_, "cmd_chassis");
 
     while (1) {
       /* 读取控制指令、电容、裁判系统、电机反馈 */
-      yaw_tp.DumpData();
-      ref_tp.DumpData();
-      cmd_tp.DumpData();
-      cap_info_tp.DumpData();
+      yaw_.DumpData();
+      raw_ref_.DumpData();
+      cmd_.DumpData();
+      cap_info_.DumpData();
 #if RB_SENTRY
       tof_tp.DumpData();
 #endif
       /* 更新反馈值 */
-      chassis->PraseRef(ref_raw);
+      chassis->PraseRef();
+
+      chassis->ctrl_lock_.Take(UINT32_MAX);
       chassis->UpdateFeedback();
       chassis->Control();
-      chassis->PackUI();
+      chassis->ctrl_lock_.Give();
 
-      cap_out_tp.Publish();
-      ui_tp.Publish();
+      chassis->cap_out_.Publish();
 
       /* 运行结束，等待下一次唤醒 */
       chassis->thread_.Sleep(2);
@@ -115,51 +135,48 @@ Chassis::Chassis(Param& param, float control_freq)
                  this);
 }
 
-void Chassis::UpdateFeedback() {
+template <typename Motor, typename MotorParam>
+void Chassis<Motor, MotorParam>::UpdateFeedback() {
   /* 将CAN中的反馈数据写入到feedback中 */
   for (size_t i = 0; i < this->mixer_.len_; i++) {
     this->motor_[i]->Update();
   }
 }
 
-void Chassis::Control() {
+template <typename Motor, typename MotorParam>
+void Chassis<Motor, MotorParam>::Control() {
   this->now_ = System::Thread::GetTick();
 
   this->dt_ = (float)(this->now_ - this->last_wakeup_) / 1000.0f;
   this->last_wakeup_ = this->now_;
 
-  /* 根据遥控器命令更改底盘模式 */
-  this->SetMode(cmd_.mode);
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
   /* 计算vx、vy */
   switch (this->mode_) {
-    case Component::CMD::CHASSIS_MODE_BREAK: /* 刹车模式电机停止 */
+    case Chassis::Break: /* 刹车模式电机停止 */
       this->move_vec_.vx = 0.0f;
       this->move_vec_.vy = 0.0f;
       break;
 
-    case Component::CMD::
-        CHASSIS_MODE_INDENPENDENT: /* 独立模式控制向量与运动向量相等
-                                    */
-      this->move_vec_.vx = this->cmd_.ctrl_vec.vx;
-      this->move_vec_.vy = this->cmd_.ctrl_vec.vy;
+    case Chassis::Indenpendent: /* 独立模式控制向量与运动向量相等
+                                 */
+      this->move_vec_.vx = this->cmd_.x;
+      this->move_vec_.vy = this->cmd_.y;
       break;
 
-    case Component::CMD::CHASSIS_MODE_RELAX:
-    case Component::CMD::CHASSIS_MODE_FOLLOW_GIMBAL: /* 按照云台方向换算运动向量
-                                                      */
-    case Component::CMD::CHASSIS_MODE_ROTOR: {
-      float beta = this->gimbal_yaw_offset;
+    case Chassis::Relax:
+    case Chassis::FollowGimbal: /* 按照云台方向换算运动向量
+                                 */
+    case Chassis::Rotor: {
+      float beta = this->yaw_;
       float cos_beta = cosf(beta);
       float sin_beta = sinf(beta);
-      this->move_vec_.vx =
-          cos_beta * this->cmd_.ctrl_vec.vx - sin_beta * this->cmd_.ctrl_vec.vy;
-      this->move_vec_.vy =
-          sin_beta * this->cmd_.ctrl_vec.vx + cos_beta * this->cmd_.ctrl_vec.vy;
+      this->move_vec_.vx = cos_beta * this->cmd_.x - sin_beta * this->cmd_.y;
+      this->move_vec_.vy = sin_beta * this->cmd_.x + cos_beta * this->cmd_.y;
       break;
     }
 #if RB_SENTRY
-    case Component::CMD::CHASSIS_MODE_SCAN:
+    case Chassis::Scan:
       /* 根据距离传感器数据变向 */
       if (this->tof_fb_[Device::Tof::DEV_TOF_SENSOR_LEFT].dist <
           SCAN_VY_LENGTH_MIN)
@@ -176,26 +193,25 @@ void Chassis::Control() {
 
   /* 计算wz */
   switch (this->mode_) {
-    case Component::CMD::CHASSIS_MODE_RELAX:
-    case Component::CMD::CHASSIS_MODE_BREAK:
-    case Component::CMD::CHASSIS_MODE_INDENPENDENT: /* 独立模式wz为0 */
+    case Chassis::Relax:
+    case Chassis::Break:
+    case Chassis::Indenpendent: /* 独立模式wz为0 */
       this->move_vec_.wz = 0.0f;
       break;
 
-    case Component::CMD::
-        CHASSIS_MODE_FOLLOW_GIMBAL: /* 跟随模式通过PID控制使车头跟随云台
-                                     */
+    case Chassis::FollowGimbal: /* 跟随模式通过PID控制使车头跟随云台
+                                 */
       this->move_vec_.wz =
-          this->follow_pid_.Calculate(0.0f, this->gimbal_yaw_offset, this->dt_);
+          this->follow_pid_.Calculate(0.0f, this->yaw_, this->dt_);
       break;
 
-    case Component::CMD::CHASSIS_MODE_ROTOR: { /* 小陀螺模式使底盘以一定速度旋转
-                                                */
+    case Chassis::Rotor: { /* 小陀螺模式使底盘以一定速度旋转
+                            */
       this->move_vec_.wz =
           this->wz_dir_mult_ * CalcWz(ROTOR_WZ_MIN, ROTOR_WZ_MAX);
       break;
     }
-    case Component::CMD::CHASSIS_MODE_SCAN:
+    case Chassis::Scan:
       this->move_vec_.wz = 0;
       break;
     default:
@@ -210,11 +226,11 @@ void Chassis::Control() {
 
   /* 根据底盘模式计算输出值 */
   switch (this->mode_) {
-    case Component::CMD::CHASSIS_MODE_BREAK:
-    case Component::CMD::CHASSIS_MODE_FOLLOW_GIMBAL:
-    case Component::CMD::CHASSIS_MODE_ROTOR:
-    case Component::CMD::CHASSIS_MODE_SCAN:
-    case Component::CMD::CHASSIS_MODE_INDENPENDENT: /* 独立模式,受PID控制 */ {
+    case Chassis::Break:
+    case Chassis::FollowGimbal:
+    case Chassis::Rotor:
+    case Chassis::Scan:
+    case Chassis::Indenpendent: /* 独立模式,受PID控制 */ {
       float buff_percentage = this->ref_.chassis_pwr_buff / 30.0f;
       clampf(&buff_percentage, 0.0f, 1.0f);
       for (unsigned i = 0; i < this->mixer_.len_; i++) {
@@ -228,7 +244,7 @@ void Chassis::Control() {
 
       break;
     }
-    case Component::CMD::CHASSIS_MODE_RELAX: /* 放松模式,不输出 */
+    case Chassis::Relax: /* 放松模式,不输出 */
       for (size_t i = 0; i < this->mixer_.len_; i++) {
         this->motor_[i]->Relax();
       }
@@ -239,34 +255,31 @@ void Chassis::Control() {
   }
 }
 
-void Chassis::PackUI() {
-  this->ui_.mode = this->mode_;
-  this->ui_.angle = this->gimbal_yaw_offset;
+template <typename Motor, typename MotorParam>
+void Chassis<Motor, MotorParam>::PraseRef() {
+  this->ref_.chassis_power_limit =
+      this->raw_ref_.robot_status.chassis_power_limit;
+  this->ref_.chassis_pwr_buff = this->raw_ref_.power_heat.chassis_pwr_buff;
+  this->ref_.chassis_watt = this->raw_ref_.power_heat.chassis_watt;
+  this->ref_.status = this->raw_ref_.status;
 }
 
-void Chassis::PraseRef(Device::Referee::Data& ref) {
-  this->ref_.chassis_power_limit = ref.robot_status.chassis_power_limit;
-  this->ref_.chassis_pwr_buff = ref.power_heat.chassis_pwr_buff;
-  this->ref_.chassis_watt = ref.power_heat.chassis_watt;
-  this->ref_.status = ref.status;
-}
-
-float Chassis::CalcWz(const float lo, const float hi) {
+template <typename Motor, typename MotorParam>
+float Chassis<Motor, MotorParam>::CalcWz(const float lo, const float hi) {
   float wz_vary = fabsf(0.2f * sinf(ROTOR_OMEGA * (float)this->now_)) + lo;
   clampf(&wz_vary, lo, hi);
   return wz_vary;
 }
 
-void Chassis::SetMode(Component::CMD::ChassisMode mode) {
+template <typename Motor, typename MotorParam>
+void Chassis<Motor, MotorParam>::SetMode(Chassis::Mode mode) {
   if (mode == this->mode_) return; /* 模式未改变直接返回 */
 
-  if (mode == Component::CMD::CHASSIS_MODE_SCAN &&
-      this->mode_ != Component::CMD::CHASSIS_MODE_SCAN) {
+  if (mode == Chassis::Scan && this->mode_ != Chassis::Scan) {
     this->vy_dir_mult_ = (rand() % 2) ? -1 : 1;
   }
 
-  if (mode == Component::CMD::CHASSIS_MODE_ROTOR &&
-      this->mode_ != Component::CMD::CHASSIS_MODE_ROTOR) {
+  if (mode == Chassis::Rotor && this->mode_ != Chassis::Rotor) {
     srand(this->now_);
     this->wz_dir_mult_ = (rand() % 2) ? -1 : 1;
   }
@@ -276,3 +289,5 @@ void Chassis::SetMode(Component::CMD::ChassisMode mode) {
   }
   this->mode_ = mode;
 }
+
+template class Chassis<Device::RMMotor, Device::RMMotor::Param>;

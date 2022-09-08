@@ -4,10 +4,14 @@
 
 #pragma once
 
-
 #include "comp_ui.hpp"
 #include "comp_utils.hpp"
 #include "dev.hpp"
+
+#define GAME_HEAT_INCREASE_42MM (100.0f) /* 每发射一颗42mm弹丸增加100热量 */
+#define GAME_HEAT_INCREASE_17MM (10.0f) /* 每发射一颗17mm弹丸增加10热量 */
+
+#define GAME_CHASSIS_MAX_POWER_WO_REF 40.0f /* 裁判系统离线时底盘最大功率 */
 
 namespace Device {
 class Referee {
@@ -356,24 +360,14 @@ class Referee {
   Data data_;
 
   struct {
-    ui_t ui;
-    /* UI所需信息 */
-    ui_cap_t cap_ui;
-    ui_chassis_t chassis_ui;
-    ui_launcher_t launcher_ui;
-    ui_gimbal_t gimbal_ui;
-    Component::CMD::UI cmd_ui;
-  } ui_;
-
-  struct {
     uint8_t *data_;
     size_t size_;
   } packet;
 
-  System::Semaphore raw_ready_;
-  System::Semaphore packet_sent_;
-  System::Semaphore ui_fast_refresh_;
-  System::Semaphore ui_slow_refresh_;
+  System::Semaphore raw_ready_ = System::Semaphore(false);
+  System::Semaphore packet_sent_ = System::Semaphore(false);
+  System::Semaphore ui_fast_refresh_ = System::Semaphore(false);
+  System::Semaphore ui_slow_refresh_ = System::Semaphore(false);
 
   System::Thread recv_thread_;
   System::Thread trans_thread_;

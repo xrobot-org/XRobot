@@ -3,7 +3,7 @@
 #include <string.h>
 
 namespace Device {
-class Motor {
+class BaseMotor {
  public:
   typedef struct {
     float rotor_abs_angle;  /* 转子绝对角度 单位：rad */
@@ -12,7 +12,7 @@ class Motor {
     float temp;             /* 电机温度 单位：℃*/
   } Feedback;
 
-  Motor(const char *name) {
+  BaseMotor(const char *name) {
     strncpy(this->name_, name, sizeof(this->name_));
     memset(&(this->feedback_), 0, sizeof(this->feedback_));
   }

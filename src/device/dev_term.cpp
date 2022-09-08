@@ -10,8 +10,7 @@ bool Term::Update() {
   bsp_usb_update();
 
   auto term_thread = [](void *arg) {
-    Term *term = (Term *)arg;
-
+    Term *term = static_cast<Term *>(arg);
     while (1) {
       term->Update();
     }

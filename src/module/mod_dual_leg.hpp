@@ -4,7 +4,7 @@
 #include "comp_mixer.hpp"
 #include "comp_pid.hpp"
 #include "comp_triangle.hpp"
-#include "dev_actuator.hpp"
+#include "comp_actuator.hpp"
 #include "dev_cap.hpp"
 #include "dev_mit_motor.hpp"
 #include "dev_referee.hpp"

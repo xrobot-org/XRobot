@@ -19,7 +19,7 @@
 using namespace Module;
 
 Launcher::Launcher(Param& param, float control_freq)
-    : param_(param), mode_(Component::CMD::LAUNCHER_MODE_RELAX) {
+    : param_(param), ctrl_lock_(true) {
   for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
     this->trig_actuator_[i] = (Device::PosActuator*)System::Memory::Malloc(
         sizeof(Device::PosActuator));
@@ -48,29 +48,52 @@ Launcher::Launcher(Param& param, float control_freq)
                         ("launcher_fric" + std::to_string(i)).c_str());
   }
 
+  auto event_callback = [](uint32_t event, void* arg) {
+    Launcher* launcher = static_cast<Launcher*>(arg);
+
+    launcher->ctrl_lock_.Take(UINT32_MAX);
+
+    switch (event) {
+      case ChangeFireModeRelax:
+      case ChangeFireModeSafe:
+      case ChangeFireModeLoaded:
+        launcher->SetFireMode((FireMode)event);
+        break;
+      case ChangeTrigModeSingle:
+      case ChangeTrigModeBurst:
+        launcher->SetTrigMode((TrigMode)event);
+        break;
+      case StartFire:
+        launcher->fire_ctrl_.fire = true;
+        break;
+      default:
+        break;
+    }
+
+    launcher->ctrl_lock_.Give();
+  };
+
+  Component::CMD::RegisterEvent(event_callback, this, this->param_.event_map);
+
   bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
   bsp_pwm_set_comp(BSP_PWM_LAUNCHER_SERVO, this->param_.cover_close_duty);
 
   auto launcher_thread = [](void* arg) {
     Launcher* launcher = (Launcher*)arg;
 
-    Device::Referee::Data raw_ref;
-
-    DECLARE_TOPIC(ui_tp, launcher->ui_, "launcher_ui", true);
-
-    DECLARE_SUBER(ref_tp, raw_ref, "referee");
-    DECLARE_SUBER(cmd_tp, launcher->cmd_, "cmd_launcher");
+    DECLARE_SUBER(raw_ref_, launcher->raw_ref_, "referee");
 
     while (1) {
-      ref_tp.DumpData();
-      cmd_tp.DumpData();
+      raw_ref_.DumpData();
 
-      launcher->PraseRef(raw_ref);
+      launcher->PraseRef();
+
+      launcher->ctrl_lock_.Take(UINT32_MAX);
+
       launcher->UpdateFeedback();
       launcher->Control();
-      launcher->PackUI();
 
-      ui_tp.Publish();
+      launcher->ctrl_lock_.Give();
 
       /* 运行结束，等待下一次唤醒 */
       launcher->thread_.Sleep(2);
@@ -103,17 +126,15 @@ void Launcher::Control() {
   this->dt_ = (float)(this->now_ - this->lask_wakeup_) / 1000.0f;
   this->lask_wakeup_ = this->now_;
 
-  this->SetMode(this->cmd_.mode);
   this->HeatLimit();
 
   /* 根据开火模式计算发射行为 */
-  this->fire_ctrl_.fire_mode = this->cmd_.fire_mode;
   uint32_t max_burst;
-  switch (this->cmd_.fire_mode) {
-    case Component::CMD::FIRE_MODE_SINGLE: /* 点射开火模式 */
+  switch (this->fire_ctrl_.trig_mode_) {
+    case Single: /* 点射开火模式 */
       max_burst = 1;
       break;
-    case Component::CMD::FIRE_MODE_BURST: /* 爆发开火模式 */
+    case Burst: /* 爆发开火模式 */
       max_burst = 5;
       break;
     default:
@@ -121,14 +142,14 @@ void Launcher::Control() {
       break;
   }
 
-  switch (this->cmd_.fire_mode) {
-    case Component::CMD::FIRE_MODE_SINGLE: /* 点射开火模式 */
-    case Component::CMD::FIRE_MODE_BURST:  /* 爆发开火模式 */
+  switch (this->fire_ctrl_.trig_mode_) {
+    case Single: /* 点射开火模式 */
+    case Burst:  /* 爆发开火模式 */
 
       /* 计算是否是第一次按下开火键 */
       this->fire_ctrl_.first_pressed_fire =
-          this->cmd_.fire && !this->fire_ctrl_.last_fire;
-      this->fire_ctrl_.last_fire = this->cmd_.fire;
+          this->fire_ctrl_.fire && !this->fire_ctrl_.last_fire;
+      this->fire_ctrl_.last_fire = this->fire_ctrl_.fire;
 
       /* 设置要发射多少弹丸 */
       if (this->fire_ctrl_.first_pressed_fire && !this->fire_ctrl_.to_launch) {
@@ -147,7 +168,7 @@ void Launcher::Control() {
       }
       break;
 
-    case Component::CMD::FIRE_MODE_CONT: { /* 持续开火模式 */
+    case Continued: { /* 持续开火模式 */
       float launch_freq = this->LimitLauncherFreq();
       this->fire_ctrl_.launch_delay =
           (launch_freq == 0.0f) ? UINT32_MAX : (uint32_t)(1000.f / launch_freq);
@@ -158,12 +179,12 @@ void Launcher::Control() {
   }
 
   /* 根据模式选择是否使用计算出来的值 */
-  switch (this->mode_) {
-    case Component::CMD::LAUNCHER_MODE_RELAX:
-    case Component::CMD::LAUNCHER_MODE_SAFE:
+  switch (this->fire_ctrl_.fire_mode_) {
+    case Relax:
+    case Safe:
       this->fire_ctrl_.bullet_speed = 0.0f;
       this->fire_ctrl_.launch_delay = UINT32_MAX;
-    case Component::CMD::LAUNCHER_MODE_LOADED:
+    case Loaded:
       break;
   }
 
@@ -177,20 +198,15 @@ void Launcher::Control() {
   if ((this->now_ - this->fire_ctrl_.last_launch) >=
       this->fire_ctrl_.launch_delay) {
     /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗弹丸的弧度变化 */
-    if (this->cmd_.reverse_trig) { /* 反转拨盘，用来解决卡顿*/
-      circle_add(&(this->setpoint.trig_angle_),
-                 M_2PI / this->param_.num_trig_tooth, M_2PI);
-    } else {
-      circle_add(&(this->setpoint.trig_angle_),
-                 -M_2PI / this->param_.num_trig_tooth, M_2PI);
-      /* 计算已发射弹丸 */
-      this->fire_ctrl_.launched++;
-      this->fire_ctrl_.last_launch = this->now_;
-    }
+    circle_add(&(this->setpoint.trig_angle_),
+               -M_2PI / this->param_.num_trig_tooth, M_2PI);
+    /* 计算已发射弹丸 */
+    this->fire_ctrl_.launched++;
+    this->fire_ctrl_.last_launch = this->now_;
   }
 
-  switch (this->mode_) {
-    case Component::CMD::LAUNCHER_MODE_RELAX:
+  switch (this->fire_ctrl_.fire_mode_) {
+    case Relax:
       for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
         this->trig_motor_[i]->Relax();
       }
@@ -200,8 +216,8 @@ void Launcher::Control() {
       bsp_pwm_stop(BSP_PWM_LAUNCHER_SERVO);
       break;
 
-    case Component::CMD::LAUNCHER_MODE_SAFE:
-    case Component::CMD::LAUNCHER_MODE_LOADED:
+    case Safe:
+    case Loaded:
       for (int i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
         /* 控制拨弹电机 */
         float trig_out = this->trig_actuator_[i]->Calculation(
@@ -222,7 +238,7 @@ void Launcher::Control() {
       }
 
       /* 根据弹仓盖开关状态更新弹舱盖打开时舵机PWM占空比 */
-      if (this->cmd_.cover_open) {
+      if (this->cover_mode_ == Open) {
         bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
         bsp_pwm_set_comp(BSP_PWM_LAUNCHER_SERVO, this->param_.cover_open_duty);
       } else {
@@ -233,34 +249,22 @@ void Launcher::Control() {
   }
 }
 
-void Launcher::PackUI() {
-  this->ui_.mode = this->mode_;
-  this->ui_.fire = this->fire_ctrl_.fire_mode;
-  this->ui_.trig = this->trig_angle_;
-  for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
-    if (this->setpoint.fric_rpm_[i] == 0) {
-      this->ui_.fric_percent[i] = 0;
-    } else {
-      this->ui_.fric_percent[i] =
-          this->fric_motor_[i]->GetSpeed() / this->setpoint.fric_rpm_[i];
-    }
-  }
+void Launcher::SetTrigMode(TrigMode mode) {
+  if (mode == this->fire_ctrl_.trig_mode_) return;
+
+  this->fire_ctrl_.trig_mode_ = mode;
 }
 
-void Launcher::SetMode(Component::CMD::LauncherMode mode) {
-  if (mode == this->mode_) return;
+void Launcher::SetFireMode(FireMode mode) {
+  if (mode == this->fire_ctrl_.fire_mode_) return;
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
     this->fric_actuator_[i]->Reset();
   }
-  for (int i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
-    this->trig_actuator_[i]->Reset();
-  }
 
-  if (mode == Component::CMD::LAUNCHER_MODE_LOADED)
-    this->fire_ctrl_.to_launch = 0;
+  if (mode == Loaded) this->fire_ctrl_.to_launch = 0;
 
-  this->mode_ = mode;
+  this->fire_ctrl_.fire_mode_ = mode;
 }
 
 void Launcher::HeatLimit() {
@@ -301,14 +305,14 @@ void Launcher::HeatLimit() {
   }
 }
 
-void Launcher::PraseRef(Device::Referee::Data& ref) {
-  memcpy(&(this->ref_.power_heat), &(ref.power_heat),
+void Launcher::PraseRef() {
+  memcpy(&(this->ref_.power_heat), &(this->raw_ref_.power_heat),
          sizeof(this->ref_.power_heat));
-  memcpy(&(this->ref_.robot_status), &(ref.robot_status),
+  memcpy(&(this->ref_.robot_status), &(this->raw_ref_.robot_status),
          sizeof(this->ref_.robot_status));
-  memcpy(&(this->ref_.launcher_data), &(ref.launcher_data),
+  memcpy(&(this->ref_.launcher_data), &(this->raw_ref_.launcher_data),
          sizeof(this->ref_.launcher_data));
-  this->ref_.status = ref.status;
+  this->ref_.status = this->raw_ref_.status;
 }
 
 float Launcher::LimitLauncherFreq() {

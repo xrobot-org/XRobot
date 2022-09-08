@@ -7,7 +7,7 @@
 #include "dev_motor.hpp"
 
 namespace Device {
-class MitMotor : public Motor {
+class MitMotor : public BaseMotor {
  public:
   typedef struct {
     float kp;
@@ -35,6 +35,6 @@ class MitMotor : public Motor {
 
   uint32_t mailbox_;
 
-  static System::Message::Topic<can_rx_item_t> *mit_tp[BSP_CAN_NUM];
+  static System::Message::Topic *mit_tp[BSP_CAN_NUM];
 };
 }  // namespace Device

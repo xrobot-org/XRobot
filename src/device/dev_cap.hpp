@@ -19,7 +19,7 @@ class Cap {
     float input_curr_;
     float target_power_;
     float percentage_;
-  } Feedback;
+  } Info;
 
   typedef struct {
     float power_limit_;
@@ -29,18 +29,6 @@ class Cap {
     bsp_can_t can;
     uint32_t index;
   } Param;
-
-  Param param_;
-  Output output;
-  Feedback feedback_;
-  bool online_;
-  uint32_t last_online_time_;
-  uint32_t mailbox_;
-  ui_cap_t ui_;
-
-  System::Queue control_feedback_ = System::Queue(sizeof(can_rx_item_t), 1);
-
-  System::Thread thread_;
 
   Cap(Param& param);
 
@@ -54,6 +42,20 @@ class Cap {
 
   float GetPercentage();
 
-  void PackUI();
+  Param param_;
+
+  bool online_;
+
+  uint32_t last_online_time_;
+
+  uint32_t mailbox_;
+
+  System::Queue control_feedback_ = System::Queue(sizeof(can_rx_item_t), 1);
+
+  System::Thread thread_;
+
+  DECLARE_PUBER(info_, Cap::Info, "cap_info", true);
+
+  Cap::Output out_;
 };
 }  // namespace Device

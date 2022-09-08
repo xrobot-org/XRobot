@@ -27,7 +27,7 @@
 #define MOTOR_CTRL_ID_NUMBER (3)
 
 namespace Device {
-class RMMotor : public Motor {
+class RMMotor : public BaseMotor {
  public:
   typedef enum {
     MOTOR_NONE = 0,
@@ -40,7 +40,6 @@ class RMMotor : public Motor {
     uint32_t id_feedback;
     uint32_t id_control;
     Model model;
-    uint8_t num;
     bsp_can_t can;
   } Param;
 
@@ -63,6 +62,8 @@ class RMMotor : public Motor {
   void Relax();
 
   Param param_;
+
+  uint8_t num_;
 
   uint8_t index_;
 

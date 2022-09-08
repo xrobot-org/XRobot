@@ -11,15 +11,40 @@
 
 #pragma once
 
+#include "comp_actuator.hpp"
 #include "comp_filter.hpp"
 #include "comp_pid.hpp"
-#include "dev_actuator.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
 
 namespace Module {
 class Launcher {
  public:
+  /* 发射器运行模式 */
+  typedef enum {
+    Relax,  /* 放松模式，电机不输出 */
+    Safe,   /* 保险模式，电机闭环控制保持静止 */
+    Loaded, /* 上膛模式，摩擦轮开启。随时准备开火 */
+  } FireMode;
+
+  /* 开火模式 */
+  typedef enum {
+    Single,    /* 单发开火模式  */
+    Burst,     /* N爆发开火模式 */
+    Continued, /* 持续开火模式 */
+  } TrigMode;
+
+  typedef enum { Open, Close } CoverMode;
+
+  typedef enum {
+    ChangeFireModeRelax,
+    ChangeFireModeSafe,
+    ChangeFireModeLoaded,
+    ChangeTrigModeSingle,
+    ChangeTrigModeBurst,
+    StartFire,
+  } LauncherEvent;
+
   enum {
     LAUNCHER_ACTR_FRIC1_IDX = 0, /* 1号摩擦轮相关的索引值 */
     LAUNCHER_ACTR_FRIC2_IDX,     /* 2号摩擦轮相关的索引值 */
@@ -58,6 +83,8 @@ class Launcher {
     Device::SpeedActuator::Param fric_actr[LAUNCHER_ACTR_FRIC_NUM];
     Device::RMMotor::Param trig_motor[LAUNCHER_ACTR_TRIG_NUM];
     Device::RMMotor::Param fric_motor[LAUNCHER_ACTR_FRIC_NUM];
+
+    const std::vector<Component::CMD::EventMapItem> event_map;
   } Param;
 
   /* 热量控制 */
@@ -73,14 +100,16 @@ class Launcher {
   } HeatControl;
 
   typedef struct {
-    uint32_t last_launch;    /* 上次发射器时间 单位：ms */
-    bool last_fire;          /* 上次开火状态 */
-    bool first_pressed_fire; /* 第一次收到开火指令 */
-    uint32_t launched;       /* 已经发射的弹丸 */
-    uint32_t to_launch;      /* 计划发射的弹丸 */
-    uint32_t launch_delay;   /* 弹丸击发延迟 */
-    float bullet_speed;      /* 弹丸初速度 */
-    Component::CMD::FireMode fire_mode;
+    bool fire;
+    uint32_t last_launch;         /* 上次发射器时间 单位：ms */
+    bool last_fire;               /* 上次开火状态 */
+    bool first_pressed_fire;      /* 第一次收到开火指令 */
+    uint32_t launched;            /* 已经发射的弹丸 */
+    uint32_t to_launch;           /* 计划发射的弹丸 */
+    uint32_t launch_delay;        /* 弹丸击发延迟 */
+    float bullet_speed;           /* 弹丸初速度 */
+    TrigMode trig_mode_ = Single; /* 发射器模式 */
+    FireMode fire_mode_ = Relax;
   } FireControl;
 
   typedef struct {
@@ -98,15 +127,15 @@ class Launcher {
 
   void PackOutput();
 
-  void PackUI();
+  void SetTrigMode(TrigMode mode);
 
-  void SetMode(Component::CMD::LauncherMode mode);
+  void SetFireMode(FireMode mode);
 
   void HeatLimit();
 
   float LimitLauncherFreq();
 
-  void PraseRef(Device::Referee::Data &ref);
+  void PraseRef();
 
   uint32_t lask_wakeup_;
 
@@ -118,11 +147,7 @@ class Launcher {
 
   Param param_;
 
-  Component::CMD::LauncherMode mode_; /* 发射器模式 */
-
-  Component::CMD::LauncherCMD cmd_;
-
-  ui_launcher_t ui_;
+  CoverMode cover_mode_ = Close; /* 弹舱盖模式 */
 
   /* PID计算的目标值 */
   struct {
@@ -142,5 +167,9 @@ class Launcher {
   RefForLauncher ref_;
 
   System::Thread thread_;
+
+  System::Semaphore ctrl_lock_;
+
+  Device::Referee::Data raw_ref_;
 };
 }  // namespace Module
