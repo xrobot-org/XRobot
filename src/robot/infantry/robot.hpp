@@ -17,13 +17,12 @@ namespace Robot {
 class Infantry : public System::Message {
  public:
   typedef struct {
-    Module::Chassis::Param chassis;
+    Module::RMChassis::Param chassis;
     Module::Gimbal::Param gimbal;
     Module::Launcher::Param launcher;
     Device::BMI088::Rotation bmi088_rot;
     Device::BMI088::Calibration bmi088_cali;
     Device::Cap::Param cap;
-    Component::CMD::Param cmd;
   } Param;
 
   Component::CMD cmd_;
@@ -38,14 +37,12 @@ class Infantry : public System::Message {
   Device::Referee referee_;
   Device::Term term_;
 
-  Module::Chassis chassis_;
+  Module::RMChassis chassis_;
   Module::Gimbal gimbal_;
   Module::Launcher launcher_;
 
   Infantry(Param& param, float control_freq)
-      : cmd_(param.cmd),
-        ahrs_(Component::AHRS::GIMBAL),
-        bmi088_(param.bmi088_cali, param.bmi088_rot),
+      : bmi088_(param.bmi088_cali, param.bmi088_rot),
         cap_(param.cap),
         chassis_(param.chassis, control_freq),
         gimbal_(param.gimbal, control_freq),

@@ -15,6 +15,25 @@ Robot::Infantry::Param param = {
       .range = M_2PI,
     },
 
+    .event_map = {
+      Component::CMD::CreateMapItem(
+        Component::CMD::EventLostCtrl,
+        Module::RMChassis::ChangeModeRelax
+      ),
+      Component::CMD::CreateMapItem(
+        Device::DR16::SwitchPosLeftTop,
+        Module::RMChassis::ChangeModeRelax
+      ),
+      Component::CMD::CreateMapItem(
+        Device::DR16::SwitchPosLeftMid,
+        Module::RMChassis::ChangeModeFollow
+      ),
+      Component::CMD::CreateMapItem(
+        Device::DR16::SwitchPosLeftBot,
+        Module::RMChassis::ChangeModeRotor
+      )
+    },
+
     .actuator_param = {
       {
         .speed = {
@@ -32,15 +51,6 @@ Robot::Infantry::Param param = {
 
         .out_cutoff_freq = -1.0f,
 
-        .motor = {
-          .id_feedback = 0x201,
-          .id_control = M3508_M2006_CTRL_ID_BASE,
-          .model = Device::Motor::MOTOR_M3508,
-          .num = 0,
-          .can = BSP_CAN_1,
-        },
-
-        .reverse = false,
       },
       {
         .speed = {
@@ -57,16 +67,6 @@ Robot::Infantry::Param param = {
         .in_cutoff_freq = -1.0f,
 
         .out_cutoff_freq = -1.0f,
-
-        .motor = {
-          .id_feedback = 0x202,
-          .id_control = M3508_M2006_CTRL_ID_BASE,
-          .model = Device::Motor::MOTOR_M3508,
-          .num = 1,
-          .can = BSP_CAN_1,
-        },
-
-        .reverse = false,
       },
       {
         .speed = {
@@ -83,16 +83,6 @@ Robot::Infantry::Param param = {
         .in_cutoff_freq = -1.0f,
 
         .out_cutoff_freq = -1.0f,
-
-        .motor = {
-          .id_feedback = 0x203,
-          .id_control = M3508_M2006_CTRL_ID_BASE,
-          .model = Device::Motor::MOTOR_M3508,
-          .num = 2,
-          .can = BSP_CAN_1,
-        },
-
-        .reverse = false,
       },
       {
         .speed = {
@@ -109,25 +99,35 @@ Robot::Infantry::Param param = {
         .in_cutoff_freq = -1.0f,
 
         .out_cutoff_freq = -1.0f,
-
-        .motor = {
-          .id_feedback = 0x204,
-          .id_control = M3508_M2006_CTRL_ID_BASE,
-          .model = Device::Motor::MOTOR_M3508,
-          .num = 3,
-          .can = BSP_CAN_1,
-        },
-
-        .reverse = false,
       },
     },
-    .limit_param = {
-      .min_k_percent = 0.6f,
-      .max_k_percent = 4.0f,
-      .max_load = 10.0f,
-      .min_current = 0.1f,
-      .filter_k = 0.05f,
-    }
+
+    .motor_param = {
+      {
+          .id_feedback = 0x201,
+          .id_control = M3508_M2006_CTRL_ID_BASE,
+          .model = Device::RMMotor::MOTOR_M3508,
+          .can = BSP_CAN_1,
+      },
+      {
+          .id_feedback = 0x202,
+          .id_control = M3508_M2006_CTRL_ID_BASE,
+          .model = Device::RMMotor::MOTOR_M3508,
+          .can = BSP_CAN_1,
+      },
+      {
+          .id_feedback = 0x203,
+          .id_control = M3508_M2006_CTRL_ID_BASE,
+          .model = Device::RMMotor::MOTOR_M3508,
+          .can = BSP_CAN_1,
+      },
+      {
+          .id_feedback = 0x204,
+          .id_control = M3508_M2006_CTRL_ID_BASE,
+          .model = Device::RMMotor::MOTOR_M3508,
+          .can = BSP_CAN_1,
+      },
+    },
   },
 
   .gimbal = {
@@ -149,7 +149,7 @@ Robot::Infantry::Param param = {
       .min = 0.29f,
     }, /* st */
 
-    .yaw = {
+    .yaw_actr = {
       .speed = {
           /* GIMBAL_CTRL_YAW_OMEGA_IDX */
           .k = 0.14f,
@@ -162,7 +162,7 @@ Robot::Infantry::Param param = {
           .range = -1.0f,
         },
 
-        .pos = {
+        .position = {
           /* GIMBAL_CTRL_YAW_ANGLE_IDX */
           .k = 20.0f,
           .p = 1.0f,
@@ -177,19 +177,8 @@ Robot::Infantry::Param param = {
         .in_cutoff_freq = -1.0f,
 
         .out_cutoff_freq = -1.0f,
-
-        .motor = {
-          .id_feedback = 0x209,
-          .id_control = GM6020_CTRL_ID_EXTAND,
-          .model = Device::Motor::MOTOR_GM6020,
-          .num = 0,
-          .can = BSP_CAN_1,
-        },
-
-        .reverse = false,
     },
-
-    .pit = {
+    .pit_actr = {
         .speed = {
           /* GIMBAL_CTRL_PIT_OMEGA_IDX */
           .k = 0.1f,
@@ -202,7 +191,7 @@ Robot::Infantry::Param param = {
           .range = -1.0f,
         },
 
-        .pos = {
+        .position = {
           /* GIMBAL_CTRL_PIT_ANGLE_IDX */
           .k = 20.0f,
           .p = 1.0f,
@@ -217,16 +206,20 @@ Robot::Infantry::Param param = {
         .in_cutoff_freq = -1.0f,
 
         .out_cutoff_freq = -1.0f,
+    },
 
-        .motor = {
-          .id_feedback = 0x20A,
-          .id_control = GM6020_CTRL_ID_EXTAND,
-          .model = Device::Motor::MOTOR_GM6020,
-          .num = 1,
-          .can = BSP_CAN_2,
-        },
+    .yaw_motor = {
+      .id_feedback = 0x209,
+      .id_control = GM6020_CTRL_ID_EXTAND,
+      .model = Device::RMMotor::MOTOR_GM6020,
+      .can = BSP_CAN_1,
+    },
 
-        .reverse = false,
+    .pit_motor = {
+      .id_feedback = 0x20A,
+      .id_control = GM6020_CTRL_ID_EXTAND,
+      .model = Device::RMMotor::MOTOR_GM6020,
+      .can = BSP_CAN_2,
     },
 
     .mech_zero = {
@@ -238,6 +231,25 @@ Robot::Infantry::Param param = {
     .limit = {
       .pitch_max = 3.8f,
       .pitch_min = 3.0f,
+    },
+
+    .event_map = {
+      Component::CMD::CreateMapItem(
+        Component::CMD::EventLostCtrl,
+        Module::Gimbal::SetModeRelax
+      ),
+      Component::CMD::CreateMapItem(
+        Device::DR16::SwitchPosRightTop,
+        Module::Gimbal::SetModeAbsolute
+      ),
+      Component::CMD::CreateMapItem(
+        Device::DR16::SwitchPosRightMid,
+        Module::Gimbal::SetModeAbsolute
+      ),
+      Component::CMD::CreateMapItem(
+        Device::DR16::SwitchPosRightBot,
+        Module::Gimbal::SetModeAbsolute
+      )
     },
 
   },
@@ -252,7 +264,7 @@ Robot::Infantry::Param param = {
     .default_bullet_speed = 30.f,
     .min_launch_delay = (uint32_t)(1000.0f / 20.0f),
 
-    .trig_motor = {
+    .trig_actr = {
       {
         .speed = {
           .k = 1.5f,
@@ -265,7 +277,7 @@ Robot::Infantry::Param param = {
           .range = -1.0f,
         },
 
-        .pos = {
+        .position = {
           .k = 1.2f,
           .p = 1.0f,
           .i = 0.0f,
@@ -279,73 +291,94 @@ Robot::Infantry::Param param = {
         .in_cutoff_freq = -1.0f,
 
         .out_cutoff_freq = -1.0f,
+      },
+    },
 
-        .motor = {
-          .id_feedback = 0x207,
-          .id_control = M3508_M2006_CTRL_ID_EXTAND,
-          .model = Device::Motor::MOTOR_M2006,
-          .num = 2,
-          .can = BSP_CAN_2,
+    .fric_actr = {
+      {
+        .speed = {
+          .k = 0.00015f,
+          .p = 1.0f,
+          .i = 0.4f,
+          .d = 0.01f,
+          .i_limit = 0.5f,
+          .out_limit = 0.5f,
+          .d_cutoff_freq = -1.0f,
+          .range = -1.0f,
         },
 
-        .reverse = false,
+        .in_cutoff_freq = -1.0f,
+
+        .out_cutoff_freq = -1.0f,
       },
+      {
+        .speed = {
+          .k = 0.00015f,
+          .p = 1.0f,
+          .i = 0.4f,
+          .d = 0.01f,
+          .i_limit = 0.5f,
+          .out_limit = 0.5f,
+          .d_cutoff_freq = -1.0f,
+          .range = -1.0f,
+        },
+
+        .in_cutoff_freq = -1.0f,
+
+        .out_cutoff_freq = -1.0f,
+      },
+    },
+
+    .trig_motor = {
+      {
+        .id_feedback = 0x207,
+        .id_control = M3508_M2006_CTRL_ID_EXTAND,
+        .model = Device::RMMotor::MOTOR_M2006,
+        .can = BSP_CAN_2,
+      }
     },
 
     .fric_motor = {
       {
-        .speed = {
-          .k = 0.00015f,
-          .p = 1.0f,
-          .i = 0.4f,
-          .d = 0.01f,
-          .i_limit = 0.5f,
-          .out_limit = 0.5f,
-          .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
-        },
-
-        .in_cutoff_freq = -1.0f,
-
-        .out_cutoff_freq = -1.0f,
-
-        .motor = {
           .id_feedback = 0x205,
           .id_control = M3508_M2006_CTRL_ID_EXTAND,
-          .model = Device::Motor::MOTOR_M3508,
-          .num = 0,
+          .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
-        },
-
-        .reverse = false,
       },
       {
-        .speed = {
-          .k = 0.00015f,
-          .p = 1.0f,
-          .i = 0.4f,
-          .d = 0.01f,
-          .i_limit = 0.5f,
-          .out_limit = 0.5f,
-          .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
-        },
-
-        .in_cutoff_freq = -1.0f,
-
-        .out_cutoff_freq = -1.0f,
-
-        .motor = {
           .id_feedback = 0x206,
           .id_control = M3508_M2006_CTRL_ID_EXTAND,
-          .model = Device::Motor::MOTOR_M3508,
-          .num = 1,
+          .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
-        },
-
-        .reverse = false,
       },
-    }
+    },
+
+    .event_map = {
+      Component::CMD::CreateMapItem(
+        Component::CMD::EventLostCtrl,
+        Module::Launcher::ChangeFireModeRelax
+      ),
+      Component::CMD::CreateMapItem(
+        Device::DR16::SwitchPosRightTop,
+        Module::Launcher::ChangeFireModeSafe
+      ),
+      Component::CMD::CreateMapItem(
+        Device::DR16::SwitchPosRightMid,
+        Module::Launcher::ChangeFireModeLoaded
+      ),
+      Component::CMD::CreateMapItem(
+        Device::DR16::SwitchPosRightBot,
+        Module::Launcher::ChangeFireModeLoaded
+      ),
+      Component::CMD::CreateMapItem(
+        Device::DR16::SwitchPosRightBot,
+        Module::Launcher::StartFire
+      ),
+      Component::CMD::CreateMapItem(
+        Device::DR16::KeyLClick,
+        Module::Launcher::StartFire
+      )
+    },
   }, /* launcher */
 
   .bmi088_rot = {
@@ -368,40 +401,6 @@ Robot::Infantry::Param param = {
     .can = BSP_CAN_1,
     .index = DEV_CAP_FB_ID_BASE,
   },
-
-  .cmd = {
-    .sens_mouse = 0.06f,
-    .sens_stick = 6.0f,
-    .key_map = {
-            {Component::CMD::CMD_ACTIVE_PRESSED, Component::CMD::CMD_KEY_W},        /* 向前 */
-            {Component::CMD::CMD_ACTIVE_PRESSED, Component::CMD::CMD_KEY_S},        /* 向后 */
-            {Component::CMD::CMD_ACTIVE_PRESSED, Component::CMD::CMD_KEY_A},        /* 向左 */
-            {Component::CMD::CMD_ACTIVE_PRESSED, Component::CMD::CMD_KEY_D},        /* 向右 */
-            {Component::CMD::CMD_ACTIVE_PRESSED, Component::CMD::CMD_KEY_SHIFT},    /* 加速 */
-            {Component::CMD::CMD_ACTIVE_PRESSED, Component::CMD::CMD_KEY_CTRL},     /* 减速 */
-            {Component::CMD::CMD_ACTIVE_PRESSED, Component::CMD::CMD_KEY_L_CLICK},  /* 开火 */
-            {Component::CMD::CMD_ACTIVE_PRESSING, Component::CMD::CMD_KEY_R_CLICK}, /* 切换开火模式 */
-            {Component::CMD::CMD_ACTIVE_PRESSING, Component::CMD::CMD_KEY_E},       /* 自瞄模式 */
-            {Component::CMD::CMD_ACTIVE_PRESSING, Component::CMD::CMD_KEY_F},       /* 弹舱盖开关 */
-            {Component::CMD::CMD_ACTIVE_PRESSING, Component::CMD::CMD_KEY_R},       /* 小陀螺模式 */
-            {Component::CMD::CMD_ACTIVE_PRESSING, Component::CMD::CMD_KEY_G},       /* 反转拨弹 */
-            {Component::CMD::CMD_ACTIVE_PRESSING, Component::CMD::CMD_KEY_C}, },    /* 跟随云台呈35度 */
-
-    .move = {
-      .sense_norm = 0.8f,
-      .sense_fast = 1.25f,
-      .sense_slow = 0.8f,
-    },
-
-    .default_mode = {
-      .gimbal = Component::CMD::GIMBAL_MODE_ABSOLUTE,
-      .chassis = Component::CMD::CHASSIS_MODE_FOLLOW_GIMBAL,
-      .launcher = Component::CMD::LAUNCHER_MODE_LOADED,
-    }
-  },
-
-
-
 };
 /* clang-format on */
 
