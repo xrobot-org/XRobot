@@ -101,27 +101,6 @@ typedef struct {
   } stack;
 } ui_t;
 
-typedef struct {
-  Component::CMD::ChassisMode mode;
-  float angle;
-} ui_chassis_t;
-
-typedef struct {
-  float percentage;
-  bool online;
-} ui_cap_t;
-
-typedef struct {
-  Component::CMD::GimbalMode mode;
-} ui_gimbal_t;
-
-typedef struct {
-  Component::CMD::LauncherMode mode;
-  Component::CMD::FireMode fire;
-  float trig;
-  float fric_percent[2];
-} ui_launcher_t;
-
 /**
  * @brief UI_绘制直线段
  *
