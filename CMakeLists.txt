@@ -58,7 +58,7 @@ include(${HW_DIR}/hw.cmake)
 # Default Options
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 # ---------------------------------------------------------------------------------------
 # Source
