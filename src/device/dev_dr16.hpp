@@ -7,6 +7,47 @@
 namespace Device {
 class DR16 {
  public:
+  typedef enum {
+    ControlSourceSW,
+    ControlSourceMouse,
+  } ControlSource;
+
+  typedef enum {
+    SwitchPosLeftTop = 0,
+    SwitchPosLeftBot,
+    SwitchPosLeftMid,
+    SwitchPosRightTop,
+    SwitchPosRightBot,
+    SwitchPosRightMid,
+    SwitchPosNum
+  } SwitchPos;
+
+  typedef enum {
+    KeyW = SwitchPosNum,
+    KeyS,
+    KeyA,
+    KeyD,
+    KeySHIFT,
+    KeyCTRL,
+    KeyQ,
+    KeyE,
+    KeyR,
+    KeyF,
+    KeyG,
+    KeyZ,
+    KeyX,
+    KeyC,
+    KeyV,
+    KeyB,
+    KeyLClick,
+    KeyRClick,
+    KeyNum,
+  } Key;
+
+  constexpr uint32_t ShiftWith(Key key) { return key + 1 * KeyNum; }
+  constexpr uint32_t CtrlWith(Key key) { return key + 2 * KeyNum; }
+  constexpr uint32_t ShiftCtrlWith(Key key) { return key + 3 * KeyNum; }
+
   typedef struct __packed {
     uint16_t ch_r_x : 11;
     uint16_t ch_r_y : 11;
@@ -33,12 +74,16 @@ class DR16 {
 
   bool DataCorrupted();
 
-  static Data data_;
+  static DR16::Data data_;
 
-  Component::CMD::RC rc_;
+  ControlSource ctrl_source_ = ControlSourceSW;
 
   System::Semaphore new_;
 
   System::Thread thread_;
+
+  System::Message::Event event_;
+
+  DECLARE_PUBER(cmd_, Component::CMD::Data, "cmd_rc", false);
 };
 }  // namespace Device

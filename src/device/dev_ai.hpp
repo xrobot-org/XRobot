@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 #include "comp_ahrs.hpp"
-
 #include "comp_utils.hpp"
 #include "dev.hpp"
 #include "dev_referee.hpp"
@@ -34,15 +33,6 @@ class AI {
     uint32_t hp;
   } RefForAI;
 
-  struct {
-    System::Semaphore data_ready_;
-  } sem;
-
-  Component::Type::Quaternion quat_;
-  RefForAI ref_;
-  Component::CMD::Host cmd_;
-  Component::Type::Eulr eulr_;
-
   AI();
 
   bool StartRecv();
@@ -57,12 +47,11 @@ class AI {
 
   bool PackRef();
 
-  void PraseRef(Device::Referee::Data *ref);
+  void PraseRef();
 
   bool PackCMD();
 
   bool ref_updated_;
-  bool online_;
   uint32_t last_online_time_;
 
   Protocol_DownPackage_t form_host;
@@ -72,6 +61,15 @@ class AI {
     MCUPckage mcu_;
   } to_host;
 
+  RefForAI ref_;
+
   System::Thread thread_;
+
+  System::Semaphore data_ready_;
+
+  DECLARE_PUBER(cmd_, Component::CMD::Data, "cmd_ai", false);
+
+  Component::Type::Quaternion quat_;
+  Device::Referee::Data raw_ref_;
 };
 }  // namespace Device

@@ -18,19 +18,20 @@ using namespace Device;
 
 DR16::Data DR16::data_;
 
-DR16::DR16() {
+DR16::DR16()
+    : new_(false), event_(System::Message::Event::FindEvent("cmd_event")) {
   auto rx_cplt_callback = [](void *arg) {
-    DR16 *dr16 = (DR16 *)arg;
+    DR16 *dr16 = static_cast<DR16 *>(arg);
     dr16->new_.GiveFromISR();
   };
 
   bsp_uart_register_callback(BSP_UART_DR16, BSP_UART_RX_CPLT_CB,
                              rx_cplt_callback, this);
 
-  auto dr16_thread = [](void *arg) {
-    DR16 *dr16 = (DR16 *)arg;
+  Component::CMD::RegisterController(this->cmd_);
 
-    DECLARE_TOPIC(rc_tp, dr16->rc_, "cmd_rc", true);
+  auto dr16_thread = [](void *arg) {
+    DR16 *dr16 = static_cast<DR16 *>(arg);
 
     while (1) {
       /* 开启DMA */
@@ -44,12 +45,10 @@ DR16::DR16() {
         /* 处理遥控器离线 */
         dr16->Offline();
       }
-
-      rc_tp.Publish();
     }
   };
 
-  THREAD_DECLEAR(this->thread_, dr16_thread, 128, System::Thread::Realtime,
+  THREAD_DECLEAR(this->thread_, dr16_thread, 256, System::Thread::Realtime,
                  this);
 }
 
@@ -91,30 +90,91 @@ void DR16::PraseRC() {
     return;
   }
 
-  float full_range = (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
+  this->data_.key = 0;
 
-  this->rc_.ch.r.x =
-      2 * ((float)this->data_.ch_r_x - DR16_CH_VALUE_MID) / full_range;
-  this->rc_.ch.r.y =
-      2 * ((float)this->data_.ch_r_y - DR16_CH_VALUE_MID) / full_range;
-  this->rc_.ch.l.x =
-      2 * ((float)this->data_.ch_l_x - DR16_CH_VALUE_MID) / full_range;
-  this->rc_.ch.l.y =
-      2 * ((float)this->data_.ch_l_y - DR16_CH_VALUE_MID) / full_range;
+  /* SwitchPos */
+  this->event_.Active(SwitchPosLeftTop + this->data_.sw_l - 1);
 
-  this->rc_.sw_l = (Component::CMD::SwitchPos)this->data_.sw_l;
-  this->rc_.sw_r = (Component::CMD::SwitchPos)this->data_.sw_r;
+  this->event_.Active(SwitchPosRightTop + this->data_.sw_r - 1);
 
-  this->rc_.mouse.x = this->data_.x;
-  this->rc_.mouse.y = this->data_.y;
-  this->rc_.mouse.z = this->data_.z;
+  uint32_t tmp = 0;
 
-  this->rc_.mouse.click.l = this->data_.press_l;
-  this->rc_.mouse.click.r = this->data_.press_r;
+  if (this->data_.key & (1 << (KeySHIFT - KeyW))) {
+    tmp += KeyNum;
+  }
 
-  this->rc_.key = this->data_.key;
+  if (this->data_.key & (1 << (KeyCTRL - KeyW))) {
+    tmp += 2 * KeyNum;
+  }
 
-  this->rc_.ch_res = ((float)this->data_.res - DR16_CH_VALUE_MID) / full_range;
+  for (int i = 0; i < 16; i++) {
+    if (this->data_.key & (1 << i)) {
+      this->event_.Active(KeyW + i + tmp);
+    }
+  }
+
+  if ((this->data_.key & ShiftCtrlWith(KeyE)) == ShiftCtrlWith(KeyE)) {
+    this->ctrl_source_ = ControlSourceSW;
+  }
+
+  if ((this->data_.key & ShiftCtrlWith(KeyQ)) == ShiftCtrlWith(KeyQ)) {
+    this->ctrl_source_ = ControlSourceMouse;
+  }
+
+  constexpr float full_range = (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
+
+  if (this->ctrl_source_ == ControlSourceMouse) {
+    if (this->data_.press_l) this->event_.Active(KeyLClick);
+    if (this->data_.press_r) this->event_.Active(KeyRClick);
+
+    /* Chassis Control */
+    if (this->data_.key & KeyA) this->cmd_.data_.chassis.x -= 0.5;
+
+    if (this->data_.key & KeyD) this->cmd_.data_.chassis.x += 0.5;
+
+    if (this->data_.key & KeyS) this->cmd_.data_.chassis.y -= 0.5;
+
+    if (this->data_.key & KeyW) this->cmd_.data_.chassis.y += 0.5;
+
+    if (this->data_.key & KeySHIFT) {
+      this->cmd_.data_.chassis.x *= 2;
+      this->cmd_.data_.chassis.y *= 2;
+    }
+
+    this->cmd_.data_.chassis.z = 0.0f;
+
+    /* Gimbal Control */
+    this->cmd_.data_.gimbal.eulr.pit = this->data_.y / 32768.0f;
+    this->cmd_.data_.gimbal.eulr.yaw = this->data_.x / 32768.0f;
+    this->cmd_.data_.gimbal.eulr.rol = 0.0f;
+
+  } else if (this->ctrl_source_ == ControlSourceSW) {
+    /* Chassis Control */
+    this->cmd_.data_.chassis.x =
+        2 * ((float)this->data_.ch_l_x - DR16_CH_VALUE_MID) / full_range;
+    this->cmd_.data_.chassis.y =
+        2 * ((float)this->data_.ch_l_y - DR16_CH_VALUE_MID) / full_range;
+    this->cmd_.data_.chassis.z = 0.0f;
+
+    /* Gimbal Control */
+    this->cmd_.data_.gimbal.eulr.yaw =
+        2 * ((float)this->data_.ch_r_x - DR16_CH_VALUE_MID) / full_range;
+    this->cmd_.data_.gimbal.eulr.pit =
+        2 * ((float)this->data_.ch_r_y - DR16_CH_VALUE_MID) / full_range;
+    this->cmd_.data_.gimbal.eulr.rol = 0.0f;
+  }
+
+  this->cmd_.data_.online = true;
+
+  this->cmd_.Publish();
 }
 
-void DR16::Offline() { memset(&(this->rc_), 0, sizeof(this->rc_)); }
+void DR16::Offline() {
+  this->cmd_.data_.online = false;
+
+  this->ctrl_source_ = ControlSourceSW;
+
+  memset(&(this->cmd_.data_), 0, sizeof(this->cmd_.data_));
+
+  this->cmd_.Publish();
+}
