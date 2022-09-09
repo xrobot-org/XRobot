@@ -15,7 +15,7 @@ CMD::CMD() : event_("cmd_event") {
     GetMessage(Data, data);
     GetARG(CMD, cmd);
 
-    memcpy((cmd->data_ + data->ctrl_source), data, sizeof(Data));
+    memcpy(&(cmd->data_[data->ctrl_source]), data, sizeof(Data));
 
     if (!cmd->data_[ControlSourceRC].online) {
       cmd->event_.Active(EventLostCtrl);

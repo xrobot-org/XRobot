@@ -93,9 +93,11 @@ void DR16::PraseRC() {
   this->data_.key = 0;
 
   /* SwitchPos */
-  this->event_.Active(SwitchPosLeftTop + this->data_.sw_l - 1);
+  if (this->data_.sw_l != this->last_data_.sw_l)
+    this->event_.Active(SwitchPosLeftTop + this->data_.sw_l - 1);
 
-  this->event_.Active(SwitchPosRightTop + this->data_.sw_r - 1);
+  if (this->data_.sw_r != this->last_data_.sw_r)
+    this->event_.Active(SwitchPosRightTop + this->data_.sw_r - 1);
 
   uint32_t tmp = 0;
 
@@ -108,7 +110,7 @@ void DR16::PraseRC() {
   }
 
   for (int i = 0; i < 16; i++) {
-    if (this->data_.key & (1 << i)) {
+    if ((this->data_.key & (1 << i)) && !(this->last_data_.key & (1 << i))) {
       this->event_.Active(KeyW + i + tmp);
     }
   }
@@ -124,8 +126,10 @@ void DR16::PraseRC() {
   constexpr float full_range = (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
 
   if (this->ctrl_source_ == ControlSourceMouse) {
-    if (this->data_.press_l) this->event_.Active(KeyLClick);
-    if (this->data_.press_r) this->event_.Active(KeyRClick);
+    if (this->data_.press_l && !this->last_data_.press_l)
+      this->event_.Active(KeyLClick);
+    if (this->data_.press_r && !this->last_data_.press_r)
+      this->event_.Active(KeyRClick);
 
     /* Chassis Control */
     if (this->data_.key & KeyA) this->cmd_.data_.chassis.x -= 0.5;
@@ -166,7 +170,11 @@ void DR16::PraseRC() {
 
   this->cmd_.data_.online = true;
 
+  this->cmd_.data_.ctrl_source = Component::CMD::ControlSourceRC;
+
   this->cmd_.Publish();
+
+  memcpy(&(this->last_data_), &(this->data_), sizeof(Data));
 }
 
 void DR16::Offline() {
@@ -175,6 +183,8 @@ void DR16::Offline() {
   this->ctrl_source_ = ControlSourceSW;
 
   memset(&(this->cmd_.data_), 0, sizeof(this->cmd_.data_));
+
+  memset(&(this->last_data_), 0, sizeof(this->last_data_));
 
   this->cmd_.Publish();
 }

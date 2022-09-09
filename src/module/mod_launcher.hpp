@@ -100,9 +100,9 @@ class Launcher {
   } HeatControl;
 
   typedef struct {
-    bool fire;
-    uint32_t last_launch;         /* 上次发射器时间 单位：ms */
-    bool last_fire;               /* 上次开火状态 */
+    bool fire = false;
+    uint32_t last_launch = 0;     /* 上次发射器时间 单位：ms */
+    bool last_fire = false;       /* 上次开火状态 */
     bool first_pressed_fire;      /* 第一次收到开火指令 */
     uint32_t launched;            /* 已经发射的弹丸 */
     uint32_t to_launch;           /* 计划发射的弹丸 */

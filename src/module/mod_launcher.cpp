@@ -56,7 +56,11 @@ Launcher::Launcher(Param& param, float control_freq)
     switch (event) {
       case ChangeFireModeRelax:
       case ChangeFireModeSafe:
+        launcher->fire_ctrl_.fire = false;
+        launcher->SetFireMode((FireMode)event);
+        break;
       case ChangeFireModeLoaded:
+        launcher->fire_ctrl_.fire = false;
         launcher->SetFireMode((FireMode)event);
         break;
       case ChangeTrigModeSingle:
@@ -64,7 +68,8 @@ Launcher::Launcher(Param& param, float control_freq)
         launcher->SetTrigMode((TrigMode)event);
         break;
       case StartFire:
-        launcher->fire_ctrl_.fire = true;
+        if (launcher->fire_ctrl_.fire_mode_ == Loaded)
+          launcher->fire_ctrl_.fire = true;
         break;
       default:
         break;

@@ -76,6 +76,8 @@ class DR16 {
 
   static DR16::Data data_;
 
+  Data last_data_;
+
   ControlSource ctrl_source_ = ControlSourceSW;
 
   System::Semaphore new_;

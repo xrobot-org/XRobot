@@ -141,6 +141,8 @@ bool AI::PackCMD() {
   memcpy(&(this->cmd_.data_.gimbal.eulr), &(this->form_host.data.gimbal),
          sizeof(this->cmd_.data_.gimbal.eulr));
 
+  this->cmd_.data_.ctrl_source = Component::CMD::ControlSourceAI;
+
   this->cmd_.Publish();
 
   return true;
