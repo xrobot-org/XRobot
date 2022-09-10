@@ -80,8 +80,6 @@ void bsp_uart_irq_handler(UART_HandleTypeDef *huart) {
   }
 }
 
-void bsp_uart_init() { HAL_UART_RegisterUserCallback(bsp_uart_irq_handler); }
-
 UART_HandleTypeDef *bsp_uart_get_handle(bsp_uart_t uart) {
   switch (uart) {
     case BSP_UART_DR16:
@@ -97,6 +95,11 @@ UART_HandleTypeDef *bsp_uart_get_handle(bsp_uart_t uart) {
     default:
       return NULL;
   }
+}
+
+void bsp_uart_init() {
+  HAL_UART_RegisterUserCallback(bsp_uart_irq_handler);
+  __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_REF), UART_IT_IDLE);
 }
 
 int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,

@@ -93,8 +93,6 @@ Referee::Referee() {
   this->tim.slow_refresh_.Start();
 #endif
 
-  // __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_REF), UART_IT_IDLE);
-
   auto ref_recv_thread = [](void *arg) {
     Referee *ref = static_cast<Referee *>(arg);
     DECLARE_PUBER(ref_tp, ref->data_, "referee", false);
@@ -126,7 +124,7 @@ void Referee::Offline() { this->data_.status = OFFLINE; }
 
 bool Referee::StartRecv() {
   return bsp_uart_receive(BSP_UART_REF, rxbuf, REF_LEN_RX_BUFF, false) ==
-         HAL_OK;
+         BSP_OK;
 }
 
 void Referee::Prase() {
@@ -580,7 +578,7 @@ bool Referee::StartTrans() {
   }
 
   if (bsp_uart_transmit(BSP_UART_REF, txbuf, (uint16_t)this->packet.size_,
-                        false) == HAL_OK) {
+                        false) == BSP_OK) {
     return true;
   } else {
     this->packet_sent_.Give();
