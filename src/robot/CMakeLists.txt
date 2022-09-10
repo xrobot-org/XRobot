@@ -7,6 +7,9 @@ if(${CONFIG_RB_WHELL_LEG})
 elseif(${CONFIG_RB_INFANTRY})
   file(GLOB ${PROJECT_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/infantry/*.cpp"
   )
+elseif(${CONFIG_RB_WEARLAB_IMU})
+  file(GLOB ${PROJECT_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/wearlab_imu/*.cpp"
+  )
 endif()
 
 add_library(${PROJECT_NAME} STATIC)
