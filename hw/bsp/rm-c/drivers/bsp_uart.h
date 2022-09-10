@@ -34,9 +34,9 @@ typedef enum {
   BSP_UART_CB_NUM,
 } bsp_uart_callback_t;
 
-// TODO:移除UART_HandleTypeDef
 void bsp_uart_init();
 int8_t bsp_uart_abort_receive(bsp_uart_t uart);
+uint32_t bsp_uart_get_count(bsp_uart_t uart);
 int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,
                                   void (*callback)(void *), void *callback_arg);
 int8_t bsp_uart_transmit(bsp_uart_t uart, uint8_t *data, size_t size,

@@ -357,8 +357,6 @@ class Referee {
 
   void SetPacketHeader(Referee::Header &header, uint16_t data_length);
 
-  Data data_;
-
   struct {
     uint8_t *data_;
     size_t size_;
@@ -379,5 +377,7 @@ class Referee {
     System::Timer slow_refresh_ =
         System::Timer("slow_refresh", UI_STATIC_CYCLE, SlowRefreshCallback);
   } tim;
+
+  DECLARE_PUBER(ref_data_, Data, "referee", false);
 };
 }  // namespace Device

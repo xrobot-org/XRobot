@@ -179,3 +179,8 @@ int8_t bsp_uart_receive(bsp_uart_t uart, uint8_t *buff, size_t size,
            HAL_OK;
   }
 }
+
+uint32_t bsp_uart_get_count(bsp_uart_t uart) {
+  return bsp_uart_get_handle(uart)->RxXferSize -
+         __HAL_DMA_GET_COUNTER(bsp_uart_get_handle(BSP_UART_REF)->hdmarx);
+}
