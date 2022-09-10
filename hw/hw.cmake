@@ -5,6 +5,8 @@ set(MCU_DIR ${HW_DIR}/mcu)
 
 if(CONFIG_BOARD_DEV_C)
   set(BOARD_DIR ${BSP_DIR}/rm-c)
+elseif(CONFIG_BOARD_WEARLAB_NODE)
+  set(BOARD_DIR ${BSP_DIR}/wear_lab_node)
 else()
   message(FATAL_ERROR "No board selected.")
 endif()
