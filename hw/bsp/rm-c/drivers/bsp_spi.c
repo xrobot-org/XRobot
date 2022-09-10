@@ -8,10 +8,7 @@ extern SPI_HandleTypeDef hspi2;
 static bsp_callback_t callback_list[BSP_SPI_NUM][BSP_SPI_CB_NUM];
 
 static bsp_spi_t spi_get(SPI_HandleTypeDef *hspi) {
-  if (hspi->Instance == SPI1)
-    return BSP_SPI_IMU;
-  else if (hspi->Instance == SPI2)
-    return BSP_SPI_OLED;
+  if (hspi->Instance == SPI1) return BSP_SPI_IMU;
   /*
   else if (hspi->Instance == SPIX)
                   return BSP_SPI_XXX;
@@ -36,34 +33,12 @@ void HAL_SPI_RxCpltCallback(SPI_HandleTypeDef *hspi) {
   bsp_spi_callback(BSP_SPI_RX_CPLT_CB, hspi);
 }
 
-void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
-  bsp_spi_callback(BSP_SPI_TX_RX_CPLT_CB, hspi);
-}
-
-void HAL_SPI_TxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-  bsp_spi_callback(BSP_SPI_TX_HALF_CPLT_CB, hspi);
-}
-
-void HAL_SPI_RxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-  bsp_spi_callback(BSP_SPI_RX_HALF_CPLT_CB, hspi);
-}
-
-void HAL_SPI_TxRxHalfCpltCallback(SPI_HandleTypeDef *hspi) {
-  bsp_spi_callback(BSP_SPI_TX_RX_HALF_CPLT_CB, hspi);
-}
-
-void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi) {
-  bsp_spi_callback(BSP_SPI_ERROR_CB, hspi);
-}
-
-void HAL_SPI_AbortCpltCallback(SPI_HandleTypeDef *hspi) {
-  bsp_spi_callback(BSP_SPI_ABORT_CPLT_CB, hspi);
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
+  bsp_spi_callback(BSP_SPI_TX_CPLT_CB, hspi);
 }
 
 SPI_HandleTypeDef *bsp_spi_get_handle(bsp_spi_t spi) {
   switch (spi) {
-    case BSP_SPI_OLED:
-      return &hspi2;
     case BSP_SPI_IMU:
       return &hspi1;
     /*
