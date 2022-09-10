@@ -145,6 +145,24 @@ BMI088::BMI088(BMI088::Calibration &cali, BMI088::Rotation &rot)
     }
   };
 
+  auto accl_int_callback = [](void *arg) {
+    BMI088 *bmi088 = (BMI088 *)arg;
+    bmi088->sem.accl_new_.GiveFromISR();
+    bmi088->sem.new_.GiveFromISR();
+  };
+
+  auto gyro_int_callback = [](void *arg) {
+    BMI088 *bmi088 = (BMI088 *)arg;
+    bmi088->sem.gyro_new_.GiveFromISR();
+    bmi088->sem.new_.GiveFromISR();
+  };
+
+  bsp_gpio_disable_irq(BSP_GPIO_IMU_ACCL_INT);
+  bsp_gpio_disable_irq(BSP_GPIO_IMU_GYRO_INT);
+
+  bsp_gpio_register_callback(BSP_GPIO_IMU_ACCL_INT, accl_int_callback, this);
+  bsp_gpio_register_callback(BSP_GPIO_IMU_GYRO_INT, gyro_int_callback, this);
+
   bsp_spi_register_callback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB, recv_cplt_callback,
                             this);
 
@@ -166,17 +184,23 @@ BMI088::BMI088(BMI088::Calibration &cali, BMI088::Rotation &rot)
       /* 开始数据接收DMA，加速度计和陀螺仪共用同一个SPI接口，
        * 一次只能开启一个DMA
        */
-      bmi088->StartRecvAccel();
-      bmi088->sem.accl_raw_.Take(UINT16_MAX);
-      bmi088->PraseAccel();
+      if (bmi088->sem.new_.Take(UINT32_MAX)) {
+        if (bmi088->sem.accl_new_.Take(0)) {
+          bmi088->StartRecvAccel();
+          bmi088->sem.accl_raw_.Take(UINT16_MAX);
+          bmi088->PraseAccel();
 
-      accl_tp.Publish();
+          accl_tp.Publish();
+        }
 
-      bmi088->StartRecvGyro();
-      bmi088->sem.gyro_raw_.Take(UINT16_MAX);
-      bmi088->PraseGyro();
+        if (bmi088->sem.gyro_new_.Take(0)) {
+          bmi088->StartRecvGyro();
+          bmi088->sem.gyro_raw_.Take(UINT16_MAX);
+          bmi088->PraseGyro();
 
-      gyro_tp.Publish();
+          gyro_tp.Publish();
+        }
+      }
 
       // TODO: 添加滤波
 
@@ -204,9 +228,6 @@ bool BMI088::Init() {
 
   if (ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID) != BMI088_CHIP_ID_GYRO)
     return false;
-
-  bsp_gpio_disable_irq(BSP_GPIO_IMU_ACCL_INT);
-  bsp_gpio_disable_irq(BSP_GPIO_IMU_GYRO_INT);
 
   /* Accl init. */
   /* Filter setting: Normal. */

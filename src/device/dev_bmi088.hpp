@@ -47,6 +47,9 @@ class BMI088 {
   struct {
     System::Semaphore gyro_raw_;
     System::Semaphore accl_raw_;
+    System::Semaphore gyro_new_;
+    System::Semaphore accl_new_;
+    System::Semaphore new_;
   } sem;
 
   Calibration &cali;
