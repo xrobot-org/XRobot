@@ -25,4 +25,7 @@ choice
 
     config RB_RADAR
         bool "雷达"
+
+    config RB_WEARLAB_IMU
+        bool "智能穿戴IMU"
 endchoice

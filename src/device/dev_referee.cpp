@@ -72,7 +72,7 @@ Referee::Referee() {
 
   auto idle_line_callback = [](void *arg) {
     RM_UNUSED(arg);
-    HAL_UART_AbortReceive_IT(bsp_uart_get_handle(BSP_UART_REF));
+    bsp_uart_abort_receive(BSP_UART_REF);
   };
 
   auto abort_rx_cplt_callback = [](void *arg) {
@@ -93,7 +93,7 @@ Referee::Referee() {
   this->tim.slow_refresh_.Start();
 #endif
 
-  __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_REF), UART_IT_IDLE);
+  // __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_REF), UART_IT_IDLE);
 
   auto ref_recv_thread = [](void *arg) {
     Referee *ref = static_cast<Referee *>(arg);
@@ -131,9 +131,7 @@ bool Referee::StartRecv() {
 
 void Referee::Prase() {
   this->data_.status = RUNNING;
-  size_t data_length =
-      REF_LEN_RX_BUFF -
-      __HAL_DMA_GET_COUNTER(bsp_uart_get_handle(BSP_UART_REF)->hdmarx);
+  size_t data_length;
 
   const uint8_t *index = rxbuf; /* const 保护原始rxbuf不被修改 */
   const uint8_t *const rxbuf_end = rxbuf + data_length;

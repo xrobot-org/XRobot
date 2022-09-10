@@ -67,40 +67,6 @@ Robot::Infantry::Param param = {
     .can = BSP_CAN_1,
     .index = DEV_CAP_FB_ID_BASE,
   },
-
-  .cmd = {
-    .sens_mouse = 0.06f,
-    .sens_stick = 6.0f,
-    .key_map = {
-            {Component::CMD::CMD_ACTIVE_PRESSED, Component::CMD::CMD_KEY_W},        /* 向前 */
-            {Component::CMD::CMD_ACTIVE_PRESSED, Component::CMD::CMD_KEY_S},        /* 向后 */
-            {Component::CMD::CMD_ACTIVE_PRESSED, Component::CMD::CMD_KEY_A},        /* 向左 */
-            {Component::CMD::CMD_ACTIVE_PRESSED, Component::CMD::CMD_KEY_D},        /* 向右 */
-            {Component::CMD::CMD_ACTIVE_PRESSED, Component::CMD::CMD_KEY_SHIFT},    /* 加速 */
-            {Component::CMD::CMD_ACTIVE_PRESSED, Component::CMD::CMD_KEY_CTRL},     /* 减速 */
-            {Component::CMD::CMD_ACTIVE_PRESSED, Component::CMD::CMD_KEY_L_CLICK},  /* 开火 */
-            {Component::CMD::CMD_ACTIVE_PRESSING, Component::CMD::CMD_KEY_R_CLICK}, /* 切换开火模式 */
-            {Component::CMD::CMD_ACTIVE_PRESSING, Component::CMD::CMD_KEY_E},       /* 自瞄模式 */
-            {Component::CMD::CMD_ACTIVE_PRESSING, Component::CMD::CMD_KEY_F},       /* 弹舱盖开关 */
-            {Component::CMD::CMD_ACTIVE_PRESSING, Component::CMD::CMD_KEY_R},       /* 小陀螺模式 */
-            {Component::CMD::CMD_ACTIVE_PRESSING, Component::CMD::CMD_KEY_G},       /* 反转拨弹 */
-            {Component::CMD::CMD_ACTIVE_PRESSING, Component::CMD::CMD_KEY_C}, },    /* 跟随云台呈35度 */
-
-    .move = {
-      .sense_norm = 0.8f,
-      .sense_fast = 1.25f,
-      .sense_slow = 0.8f,
-    },
-
-    .default_mode = {
-      .gimbal = Component::CMD::GIMBAL_MODE_ABSOLUTE,
-      .chassis = Component::CMD::CHASSIS_MODE_FOLLOW_GIMBAL,
-      .launcher = Component::CMD::LAUNCHER_MODE_LOADED,
-    }
-  },
-
-
-
 };
 /* clang-format on */
 

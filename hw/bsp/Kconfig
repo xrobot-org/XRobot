@@ -9,6 +9,9 @@ choice
     config BOARD_DEV_C
         bool "DEV_C-STM32F407IG"
 
+    config BOARD_WEARLAB_NODE
+        bool "WEARLAB_NODE-STM32F103C6"
+
     config BOARD_NX
         bool "NX-ARM64"
 

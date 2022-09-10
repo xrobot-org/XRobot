@@ -4,10 +4,8 @@
 
 using namespace Device;
 
-Term::Term() { bsp_usb_init(); }
-
-bool Term::Update() {
-  bsp_usb_update();
+Term::Term() {
+  bsp_usb_init();
 
   auto term_thread = [](void *arg) {
     Term *term = static_cast<Term *>(arg);
@@ -18,7 +16,10 @@ bool Term::Update() {
 
   THREAD_DECLEAR(this->thread_, term_thread, 256, System::Thread::Realtime,
                  this);
+}
 
+bool Term::Update() {
+  bsp_usb_update();
   return true;
 }
 

@@ -47,8 +47,11 @@ class BMI088 {
   Calibration &cali;
   Rotation &rot;
 
-  System::Semaphore gyro_ready_;
-  System::Semaphore accl_ready_;
+  System::Semaphore gyro_raw_;
+  System::Semaphore accl_raw_;
+  System::Semaphore gyro_new_;
+  System::Semaphore accl_new_;
+  System::Semaphore new_;
 
   float temp_; /* 温度 */
 

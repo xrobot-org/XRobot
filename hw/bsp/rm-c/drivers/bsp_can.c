@@ -23,6 +23,10 @@ static SemaphoreHandle_t bsp_can_sem[BSP_CAN_NUM];
 
 static bool bsp_can_initd = false;
 
+static can_rx_item_t raw_rx1;
+
+static can_rx_item_t raw_rx2;
+
 CAN_HandleTypeDef *bsp_can_get_handle(bsp_can_t can) {
   switch (can) {
     case BSP_CAN_2:
@@ -54,6 +58,22 @@ static bsp_can_t can_get(CAN_HandleTypeDef *hcan) {
     return BSP_CAN_ERR;
 }
 
+static void can1_callback(void *arg) {
+  (void)(arg);
+
+  while (bsp_can_get_msg(BSP_CAN_1, &raw_rx1) == BSP_OK) {
+    om_publish(bsp_can_get_topic(BSP_CAN_1), OM_PRASE_VAR(raw_rx1), true, true);
+  }
+};
+
+static void can2_callback(void *arg) {
+  (void)(arg);
+
+  while (bsp_can_get_msg(BSP_CAN_2, &raw_rx2) == BSP_OK) {
+    om_publish(bsp_can_get_topic(BSP_CAN_2), OM_PRASE_VAR(raw_rx2), true, true);
+  }
+};
+
 void bsp_can_init(void) {
   can_1_tp = om_config_topic(NULL, "VA", "can_1_rx");
   can_2_tp = om_config_topic(NULL, "VA", "can_2_rx");
@@ -62,6 +82,12 @@ void bsp_can_init(void) {
     bsp_can_sem[i] = xSemaphoreCreateBinary();
     xSemaphoreGive(bsp_can_sem[i]);
   }
+
+  bsp_can_register_callback(BSP_CAN_1, CAN_RX_MSG_CALLBACK, can1_callback,
+                            NULL);
+
+  bsp_can_register_callback(BSP_CAN_2, CAN_RX_MSG_CALLBACK, can2_callback,
+                            NULL);
 
   CAN_FilterTypeDef can_filter = {0};
 
@@ -106,56 +132,12 @@ static void bsp_can_callback(bsp_can_callback_t cb_type,
   }
 }
 
-void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(HAL_CAN_TX_MAILBOX0_CPLT_CB, hcan);
-}
-
-void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(HAL_CAN_TX_MAILBOX1_CPLT_CB, hcan);
-}
-
-void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(HAL_CAN_TX_MAILBOX2_CPLT_CB, hcan);
-}
-
-void HAL_CAN_TxMailbox0AbortCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(HAL_CAN_TX_MAILBOX0_ABORT_CB, hcan);
-}
-
-void HAL_CAN_TxMailbox1AbortCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(HAL_CAN_TX_MAILBOX1_ABORT_CB, hcan);
-}
-
-void HAL_CAN_TxMailbox2AbortCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(HAL_CAN_TX_MAILBOX2_ABORT_CB, hcan);
-}
-
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(HAL_CAN_RX_FIFO0_MSG_PENDING_CB, hcan);
-}
-
-void HAL_CAN_RxFifo0FullCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(HAL_CAN_RX_FIFO0_FULL_CB, hcan);
+  bsp_can_callback(CAN_RX_MSG_CALLBACK, hcan);
 }
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(HAL_CAN_RX_FIFO1_MSG_PENDING_CB, hcan);
-}
-
-void HAL_CAN_RxFifo1FullCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(HAL_CAN_RX_FIFO1_FULL_CB, hcan);
-}
-
-void HAL_CAN_SleepCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(HAL_CAN_SLEEP_CB, hcan);
-}
-
-void HAL_CAN_WakeUpFromRxMsgCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(HAL_CAN_WAKEUP_FROM_RX_MSG_CB, hcan);
-}
-
-void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(HAL_CAN_ERROR_CB, hcan);
+  bsp_can_callback(CAN_RX_MSG_CALLBACK, hcan);
 }
 
 int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,

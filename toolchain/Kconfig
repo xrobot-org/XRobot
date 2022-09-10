@@ -5,7 +5,7 @@ choice
     default TC_ARM_NONE_EABI
 
     config TC_ARM_NONE_EABI
-        bool "arm-none-eabi-" if BOARD_DEV_C
+        bool "arm-none-eabi-" if BOARD_DEV_C || BOARD_WEARLAB_NODE
 
     config TC_ARM64_LINUX_GNUEABIHF
         bool "arm64-linux-gnueabihf" if BOARD_NX

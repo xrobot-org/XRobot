@@ -9,6 +9,10 @@ elseif(${CONFIG_RB_INFANTRY})
   file(GLOB ${PROJECT_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/infantry/*.cpp"
   )
   set(ROBOT_INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/infantry)
+elseif(${CONFIG_RB_WEARLAB_IMU})
+  file(GLOB ${PROJECT_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/wearlab_imu/*.cpp"
+  )
+  set(ROBOT_INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/wearlab_imu)
 endif()
 
 add_library(${PROJECT_NAME} STATIC)

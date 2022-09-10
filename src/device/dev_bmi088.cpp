@@ -131,19 +131,43 @@ void BMI088::Read(BMI088::DeviceType type, uint8_t reg, uint8_t *data,
 }
 
 BMI088::BMI088(BMI088::Calibration &cali, BMI088::Rotation &rot)
-    : cali(cali), rot(rot), gyro_ready_(false), accl_ready_(false) {
+    : cali(cali),
+      rot(rot),
+      gyro_raw_(false),
+      accl_raw_(false),
+      gyro_new_(false),
+      accl_new_(false),
+      new_(false) {
   auto recv_cplt_callback = [](void *arg) {
     BMI088 *bmi088 = static_cast<BMI088 *>(arg);
 
     if (!bsp_gpio_read_pin(BSP_GPIO_IMU_ACCL_CS)) {
       bmi088->Unselect(BMI_ACCL);
-      bmi088->accl_ready_.GiveFromISR();
+      bmi088->accl_raw_.GiveFromISR();
     }
     if (!bsp_gpio_read_pin(BSP_GPIO_IMU_GYRO_CS)) {
       bmi088->Unselect(BMI_GYRO);
-      bmi088->gyro_ready_.GiveFromISR();
+      bmi088->gyro_raw_.GiveFromISR();
     }
   };
+
+  auto accl_int_callback = [](void *arg) {
+    BMI088 *bmi088 = (BMI088 *)arg;
+    bmi088->accl_new_.GiveFromISR();
+    bmi088->new_.GiveFromISR();
+  };
+
+  auto gyro_int_callback = [](void *arg) {
+    BMI088 *bmi088 = (BMI088 *)arg;
+    bmi088->gyro_new_.GiveFromISR();
+    bmi088->new_.GiveFromISR();
+  };
+
+  bsp_gpio_disable_irq(BSP_GPIO_IMU_ACCL_INT);
+  bsp_gpio_disable_irq(BSP_GPIO_IMU_GYRO_INT);
+
+  bsp_gpio_register_callback(BSP_GPIO_IMU_ACCL_INT, accl_int_callback, this);
+  bsp_gpio_register_callback(BSP_GPIO_IMU_GYRO_INT, gyro_int_callback, this);
 
   bsp_spi_register_callback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB, recv_cplt_callback,
                             this);
@@ -163,17 +187,23 @@ BMI088::BMI088(BMI088::Calibration &cali, BMI088::Rotation &rot)
       /* 开始数据接收DMA，加速度计和陀螺仪共用同一个SPI接口，
        * 一次只能开启一个DMA
        */
-      bmi088->StartRecvAccel();
-      bmi088->accl_ready_.Take(UINT16_MAX);
-      bmi088->PraseAccel();
+      if (bmi088->new_.Take(UINT32_MAX)) {
+        if (bmi088->accl_new_.Take(0)) {
+          bmi088->StartRecvAccel();
+          bmi088->accl_raw_.Take(UINT16_MAX);
+          bmi088->PraseAccel();
 
-      bmi088->accl_.Publish();
+          bmi088->accl_.Publish();
+        }
 
-      bmi088->StartRecvGyro();
-      bmi088->gyro_ready_.Take(UINT16_MAX);
-      bmi088->PraseGyro();
+        if (bmi088->gyro_new_.Take(0)) {
+          bmi088->StartRecvGyro();
+          bmi088->gyro_raw_.Take(UINT16_MAX);
+          bmi088->PraseGyro();
 
-      bmi088->gyro_.Publish();
+          bmi088->gyro_.Publish();
+        }
+      }
 
       // TODO: 添加滤波
 
@@ -201,9 +231,6 @@ bool BMI088::Init() {
 
   if (ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID) != BMI088_CHIP_ID_GYRO)
     return false;
-
-  bsp_gpio_disable_irq(BSP_GPIO_IMU_ACCL_INT);
-  bsp_gpio_disable_irq(BSP_GPIO_IMU_GYRO_INT);
 
   /* Accl init. */
   /* Filter setting: Normal. */

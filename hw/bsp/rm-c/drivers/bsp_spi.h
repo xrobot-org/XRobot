@@ -10,24 +10,17 @@ extern "C" {
 
 /* SPI实体枚举，与设备对应 */
 typedef enum {
-  BSP_SPI_OLED,
   BSP_SPI_IMU,
   /* BSP_SPI_XXX,*/
   BSP_SPI_NUM,
   BSP_SPI_ERR,
 } bsp_spi_t;
 
-//TODO：
+// TODO：
 /* SPI支持的中断回调函数类型，具体参考HAL中定义 */
 typedef enum {
   BSP_SPI_TX_CPLT_CB,
   BSP_SPI_RX_CPLT_CB,
-  BSP_SPI_TX_RX_CPLT_CB,
-  BSP_SPI_TX_HALF_CPLT_CB,
-  BSP_SPI_RX_HALF_CPLT_CB,
-  BSP_SPI_TX_RX_HALF_CPLT_CB,
-  BSP_SPI_ERROR_CB,
-  BSP_SPI_ABORT_CPLT_CB,
   BSP_SPI_CB_NUM,
 } bsp_spi_callback_t;
 

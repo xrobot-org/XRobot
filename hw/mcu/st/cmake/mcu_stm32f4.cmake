@@ -19,7 +19,7 @@ set(CMAKE_ASM_FLAGS
     CACHE INTERNAL "" FORCE)
 
 # Linker Flag
-set(LINKER_SCRIPT ${BOARD_DIR}/ld/rm_c.ld)
+set(LINKER_SCRIPT ${BOARD_DIR}/ld/LinkerScripts.ld)
 
 set(CMAKE_EXE_LINKER_FLAGS
     "-T${LINKER_SCRIPT} --specs=nano.specs --specs=nosys.specs -u _printf_float -Wl,--cref,--gc-sections,--print-memory-usage,-Map=${CMAKE_PROJECT_NAME}.map"

@@ -8,13 +8,6 @@ typedef struct {
 } bsp_gpio_map_t;
 
 static const bsp_gpio_map_t bsp_gpio_map[BSP_GPIO_NUM] = {
-    {LED_G_Pin, LED_G_GPIO_Port},
-    {LED_B_Pin, LED_B_GPIO_Port},
-    {LED_R_Pin, LED_R_GPIO_Port},
-    {LASER_Pin, LASER_GPIO_Port},
-    {IMU_HEAT_PWM_Pin, IMU_HEAT_PWM_GPIO_Port},
-    {CMPS_RST_Pin, CMPS_RST_GPIO_Port},
-    {CMPS_INT_Pin, CMPS_INT_GPIO_Port},
     {ACCL_CS_Pin, ACCL_CS_GPIO_Port},
     {GYRO_CS_Pin, GYRO_CS_GPIO_Port},
     {ACCL_INT_Pin, ACCL_INT_GPIO_Port},
@@ -62,14 +55,6 @@ int8_t bsp_gpio_enable_irq(bsp_gpio_t gpio) {
     case GYRO_INT_Pin:
       HAL_NVIC_EnableIRQ(GYRO_INT_EXTI_IRQn);
       break;
-
-    case USER_KEY_Pin:
-      HAL_NVIC_EnableIRQ(USER_KEY_EXTI_IRQn);
-      break;
-
-    case CMPS_INT_Pin:
-      HAL_NVIC_EnableIRQ(CMPS_INT_EXTI_IRQn);
-      break;
       /*
       case XXX_Pin:
               HAL_NVIC_EnableIRQ(XXX_IRQn);
@@ -92,14 +77,6 @@ int8_t bsp_gpio_disable_irq(bsp_gpio_t gpio) {
 
     case GYRO_INT_Pin:
       HAL_NVIC_DisableIRQ(GYRO_INT_EXTI_IRQn);
-      break;
-
-    case USER_KEY_Pin:
-      HAL_NVIC_DisableIRQ(USER_KEY_EXTI_IRQn);
-      break;
-
-    case CMPS_INT_Pin:
-      HAL_NVIC_DisableIRQ(CMPS_INT_EXTI_IRQn);
       break;
       /*
       case XXX_Pin:

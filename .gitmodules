@@ -22,3 +22,9 @@
 [submodule "lib/cmsis_svd"]
 	path = lib/cmsis_svd
 	url = https://gitee.com/jiu-xiao/cmsis-svd
+[submodule "hw/mcu/st/stm32f1xx_hal_driver"]
+	path = hw/mcu/st/stm32f1xx_hal_driver
+	url = https://gitee.com/jiu-xiao/stm32f1xx_hal_driver.git
+[submodule "hw/mcu/st/cmsis_device_f1"]
+	path = hw/mcu/st/cmsis_device_f1
+	url = https://gitee.com/jiu-xiao/cmsis_device_f1.git
