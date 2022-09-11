@@ -19,7 +19,7 @@ void bsp_init() {
   MX_GPIO_Init();
   MX_SPI1_Init();
   MX_USB_PCD_Init();
-  // MX_CAN_Init();
+  MX_CAN_Init();
   // MX_I2C1_Init();
   // MX_USART1_UART_Init();
   MX_TIM2_Init();

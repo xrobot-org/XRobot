@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.11)
 
 project(hal)
 
+add_compile_options(-w)
+
 file(GLOB ${PROJECT_NAME}_SOURCES_MX "${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/*.c")
 file(GLOB ${PROJECT_NAME}_SOURCES_HAL "${HAL_DIR}/Src/*.c")
 

@@ -14,6 +14,10 @@ project(
   VERSION 2022.0.0
   LANGUAGES C CXX ASM)
 # ---------------------------------------------------------------------------------------
+# Tools
+include(${CMAKE_CURRENT_SOURCE_DIR}/utils/CMake/tools.cmake)
+
+# ---------------------------------------------------------------------------------------
 # Config
 include(${CMAKE_CURRENT_SOURCE_DIR}/config/config.cmake)
 

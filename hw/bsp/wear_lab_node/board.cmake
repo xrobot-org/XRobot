@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.11)
 
 set(BOARD_NAME wear_lab_node)
 
+set(SPI_BMI088 True)
+set(BSP_CAN True)
+set(PWM_LED True)
+set(USB_CDC True)
+
 add_compile_definitions(BOARD_WEARLAB_NODE STM32F103xB)
 
 set(BOARD_DIR ${BSP_DIR}/${BOARD_NAME})

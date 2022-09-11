@@ -13,13 +13,12 @@ class Infantry : public System::Message {
     Device::BMI088::Rotation bmi088_rot;
     Device::BMI088::Calibration bmi088_cali;
   } Param;
+
   Component::AHRS ahrs_;
-  // Device::CAN can_;
+  Device::CAN can_;
   Device::BMI088 bmi088_;
   Device::LED led_;
   Device::Term term_;
-  // Module::Gimbal gimbal_;
-  // Module::Launcher launcher_;
 
   Infantry(Param& param) : bmi088_(param.bmi088_cali, param.bmi088_rot) {}
 };
