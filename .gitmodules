@@ -28,3 +28,6 @@
 [submodule "hw/mcu/st/cmsis_device_f1"]
 	path = hw/mcu/st/cmsis_device_f1
 	url = https://gitee.com/jiu-xiao/cmsis_device_f1.git
+[submodule "lib/Kconfiglib"]
+	path = lib/Kconfiglib
+	url = https://gitee.com/jiu-xiao/Kconfiglib.git

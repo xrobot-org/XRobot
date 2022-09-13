@@ -9,3 +9,5 @@ hw/bsp/rm-c/drivers/hal/Core/Src/system_stm32f4xx.c
 .vscode/.cortex-debug.registers.state.json
 .vscode/.cortex-debug.peripherals.state.json
 .vscode/launch.json
+**.config.old
+firmware/**

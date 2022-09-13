@@ -1,5 +1,3 @@
-source "../hw/Kconfig"
+source "./auto.Kconfig"
 
-source "../toolchain/Kconfig"
-
-source "../src/Kconfig"
+# source "../src/Kconfig"

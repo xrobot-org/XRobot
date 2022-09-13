@@ -20,3 +20,8 @@ MACRO(SUB_ADD_INC inc)
         LIST(APPEND ${PROJECT_NAME}_INCLUDES ${item})
     ENDFOREACH()
 ENDMACRO()
+
+MACRO(CHECK_SUB_ENABLE enable)
+    string(REGEX REPLACE ".*/\(.*\)" "\\1" ${enable} ${SUB_DIR})
+    set(${enable} ${_SUB_CFG_${${enable}}})
+ENDMACRO()

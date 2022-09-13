@@ -28,7 +28,7 @@ void robot_init() {
   auto init_thread_fn = [](void* arg) {
     RM_UNUSED(arg);
 
-    Robot::Infantry infantry(param);
+    Robot::Infantry robot(param);
 
     while (1) {
       System::Thread::Sleep(1);

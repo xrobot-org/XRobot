@@ -5,9 +5,7 @@
 #include "comp_pid.hpp"
 #include "comp_triangle.hpp"
 #include "comp_actuator.hpp"
-#include "dev_cap.hpp"
 #include "dev_mit_motor.hpp"
-#include "dev_tof.hpp"
 
 /*          L1          */
 /* M_FRONT ☉---☉ M_BACK */

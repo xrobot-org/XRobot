@@ -404,15 +404,11 @@ Robot::Infantry::Param param = {
 };
 /* clang-format on */
 
-Robot::Infantry* infantry_debug = NULL;
-
 void robot_init() {
   auto init_thread_fn = [](void* arg) {
     RM_UNUSED(arg);
 
-    Robot::Infantry infantry(param, 500.0f);
-
-    infantry_debug = &infantry;
+    Robot::Infantry robot(param, 500.0f);
     while (1) {
       System::Thread::Sleep(UINT32_MAX);
     }

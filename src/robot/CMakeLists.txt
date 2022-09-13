@@ -1,19 +1,16 @@
 cmake_minimum_required(VERSION 3.11)
 project(robot)
 
-if(${CONFIG_RB_WHELL_LEG})
-  file(GLOB ${PROJECT_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/balance_infantry/*.cpp"
-  )
-  set(ROBOT_INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/balance_infantry)
-elseif(${CONFIG_RB_INFANTRY})
-  file(GLOB ${PROJECT_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/infantry/*.cpp"
-  )
-  set(ROBOT_INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/infantry)
-elseif(${CONFIG_RB_WEARLAB_IMU})
-  file(GLOB ${PROJECT_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/wearlab_imu/*.cpp"
-  )
-  set(ROBOT_INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/wearlab_imu)
-endif()
+FILE(GLOB children RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)
+
+FOREACH(child ${children})
+  IF(${_SUB_CFG_${child}})
+    set(ROBOT_DIR ${child})
+  ENDIF()
+ENDFOREACH()
+
+file(GLOB ${PROJECT_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${ROBOT_DIR}/*.cpp")
+set(ROBOT_INC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${ROBOT_DIR})
 
 add_library(${PROJECT_NAME} STATIC)
 

@@ -1,0 +1,225 @@
+# QDU-RM-MCU
+# Auto generated file. Do not edit.
+# -----------------------------------------------
+# 开发板/board
+choice
+	prompt "开发板/board"
+
+	config _SUB_CFG_wear_lab_node
+		bool "wear_lab_node"
+
+	config _SUB_CFG_rm-c
+		bool "rm-c"
+endchoice
+
+if _SUB_CFG_wear_lab_node
+	source "/home/xiao/qdu-rm-mcu/hw/bsp/wear_lab_node/Kconfig"
+endif
+
+if _SUB_CFG_rm-c
+	source "/home/xiao/qdu-rm-mcu/hw/bsp/rm-c/Kconfig"
+endif
+
+# 机器人/robot
+choice
+	prompt "机器人/robot"
+
+	config _SUB_CFG_balance_infantry
+		bool "balance_infantry"
+
+	config _SUB_CFG_infantry
+		bool "infantry"
+
+	config _SUB_CFG_wearlab_imu
+		bool "wearlab_imu"
+endchoice
+
+if _SUB_CFG_balance_infantry
+	source "/home/xiao/qdu-rm-mcu/src/robot/balance_infantry/Kconfig"
+endif
+
+if _SUB_CFG_infantry
+	source "/home/xiao/qdu-rm-mcu/src/robot/infantry/Kconfig"
+endif
+
+if _SUB_CFG_wearlab_imu
+	source "/home/xiao/qdu-rm-mcu/src/robot/wearlab_imu/Kconfig"
+endif
+
+# 设备/device
+menu "设备/device"
+
+menu "servo"
+
+	config _SUB_CFG_servo
+		tristate "servo"
+
+if _SUB_CFG_servo
+	source "/home/xiao/qdu-rm-mcu/src/device/servo/Kconfig"
+endif
+endmenu
+
+menu "cap"
+
+	config _SUB_CFG_cap
+		tristate "cap"
+
+if _SUB_CFG_cap
+	source "/home/xiao/qdu-rm-mcu/src/device/cap/Kconfig"
+endif
+endmenu
+
+menu "referee"
+
+	config _SUB_CFG_referee
+		tristate "referee"
+
+if _SUB_CFG_referee
+	source "/home/xiao/qdu-rm-mcu/src/device/referee/Kconfig"
+endif
+endmenu
+
+menu "laser"
+
+	config _SUB_CFG_laser
+		tristate "laser"
+
+if _SUB_CFG_laser
+	source "/home/xiao/qdu-rm-mcu/src/device/laser/Kconfig"
+endif
+endmenu
+
+menu "can"
+
+	config _SUB_CFG_can
+		tristate "can"
+
+if _SUB_CFG_can
+	source "/home/xiao/qdu-rm-mcu/src/device/can/Kconfig"
+endif
+endmenu
+
+menu "motor"
+
+	config _SUB_CFG_motor
+		tristate "motor"
+
+if _SUB_CFG_motor
+	source "/home/xiao/qdu-rm-mcu/src/device/motor/Kconfig"
+endif
+endmenu
+
+menu "bmi088"
+
+	config _SUB_CFG_bmi088
+		tristate "bmi088"
+
+if _SUB_CFG_bmi088
+	source "/home/xiao/qdu-rm-mcu/src/device/bmi088/Kconfig"
+endif
+endmenu
+
+menu "led"
+
+	config _SUB_CFG_led
+		tristate "led"
+
+if _SUB_CFG_led
+	source "/home/xiao/qdu-rm-mcu/src/device/led/Kconfig"
+endif
+endmenu
+
+menu "buzzer"
+
+	config _SUB_CFG_buzzer
+		tristate "buzzer"
+
+if _SUB_CFG_buzzer
+	source "/home/xiao/qdu-rm-mcu/src/device/buzzer/Kconfig"
+endif
+endmenu
+
+menu "term"
+
+	config _SUB_CFG_term
+		tristate "term"
+
+if _SUB_CFG_term
+	source "/home/xiao/qdu-rm-mcu/src/device/term/Kconfig"
+endif
+endmenu
+
+menu "tof"
+
+	config _SUB_CFG_tof
+		tristate "tof"
+
+if _SUB_CFG_tof
+	source "/home/xiao/qdu-rm-mcu/src/device/tof/Kconfig"
+endif
+endmenu
+
+menu "dr16"
+
+	config _SUB_CFG_dr16
+		tristate "dr16"
+
+if _SUB_CFG_dr16
+	source "/home/xiao/qdu-rm-mcu/src/device/dr16/Kconfig"
+endif
+endmenu
+
+menu "ai"
+
+	config _SUB_CFG_ai
+		tristate "ai"
+
+if _SUB_CFG_ai
+	source "/home/xiao/qdu-rm-mcu/src/device/ai/Kconfig"
+endif
+endmenu
+endmenu
+
+# 模块/module
+menu "模块/module"
+
+menu "gimbal"
+
+	config _SUB_CFG_gimbal
+		tristate "gimbal"
+
+if _SUB_CFG_gimbal
+	source "/home/xiao/qdu-rm-mcu/src/module/gimbal/Kconfig"
+endif
+endmenu
+
+menu "chassis"
+
+	config _SUB_CFG_chassis
+		tristate "chassis"
+
+if _SUB_CFG_chassis
+	source "/home/xiao/qdu-rm-mcu/src/module/chassis/Kconfig"
+endif
+endmenu
+
+menu "launcher"
+
+	config _SUB_CFG_launcher
+		tristate "launcher"
+
+if _SUB_CFG_launcher
+	source "/home/xiao/qdu-rm-mcu/src/module/launcher/Kconfig"
+endif
+endmenu
+
+menu "wheel_leg"
+
+	config _SUB_CFG_wheel_leg
+		tristate "wheel_leg"
+
+if _SUB_CFG_wheel_leg
+	source "/home/xiao/qdu-rm-mcu/src/module/wheel_leg/Kconfig"
+endif
+endmenu
+endmenu

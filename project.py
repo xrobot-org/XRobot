@@ -1,11 +1,37 @@
 #!/usr/bin/python3
 import sys
 import os
+import shutil
+
+project_path = os.path.split(os.path.realpath(__file__))[0]
 
 
-def menuconfig():
+def build_all():
+    os.system("rm -rf " + project_path + '/firmware')
+    for dirname in os.listdir(project_path + '/hw/bsp'):
+        if os.path.isdir(project_path + '/hw/bsp/' + dirname):
+            for filename in os.listdir(project_path + '/hw/bsp/' + dirname +
+                                       '/config'):
+                if os.path.isfile(project_path + '/hw/bsp/' + dirname +
+                                  '/config/' + filename):
+                    if filename.endswith(".config"):
+                        shutil.copyfile(
+                            project_path + '/hw/bsp/' + dirname + '/config/' +
+                            filename, project_path + '/config/.config')
+                        os.system(
+                            "cd " + project_path +
+                            ' && ./project.py refresh && cd build && ninja')
+                        os.makedirs(project_path + '/firmware', exist_ok=True)
+                        shutil.copyfile(
+                            project_path + '/build/src/qdu_rm_mcu.elf',
+                            project_path + '/firmware/' + dirname + '&' +
+                            filename.removesuffix(".config") + '.elf')
+
+
+def menuconfig(path):
     print('Start menu config.')
-    os.system('cd config && kconfig-qconf Kconfig')
+    os.system('cd ' + path + ' && ' + project_path +
+              '/lib/Kconfiglib/guiconfig.py')
     print('Menu config done.')
 
 
@@ -14,24 +40,74 @@ def clean_cache():
 
 
 def config_cmake():
-    os.system('cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=toolchain/toolchain.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_BUILD_TYPE:STRING=Debug -Bbuild -G Ninja')
+    os.system(
+        'cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=toolchain/toolchain.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_BUILD_TYPE:STRING=Debug -Bbuild -G Ninja'
+    )
 
 
 def add_detail(file, name: str, value: str):
-    file.write('set('+name+' '+value+')\n')
-    file.write('add_compile_definitions(' +
-               name.replace('CONFIG_', '')+'=${'+name+'})\n')
+    name = name.removeprefix('CONFIG_')
+    file.write('set(' + name + ' ' + value + ')\n')
+    file.write('add_compile_definitions(' + name + '=${' + name + '})\n')
+
+
+def foreach_config_single(head, file, path):
+    file.write('\n# ' + head)
+    file.write('\nchoice\n\tprompt \"' + head + '"\n')
+
+    for dirname in os.listdir(path):
+        if os.path.isdir(path + '/' + dirname):
+            file.write('\n\tconfig _SUB_CFG_' + dirname + '\n\t\tbool \"' +
+                       dirname + '\"\n')
+    file.write('endchoice\n')
+
+    for dirname in os.listdir(path):
+        if os.path.isdir(path + '/' + dirname):
+            file.write('\nif ' + '_SUB_CFG_' + dirname + '\n\tsource \"' +
+                       path + '/' + dirname + '/Kconfig"\nendif\n')
+
+
+def foreach_config(head, file, path):
+    file.write('\n# ' + head)
+    file.write('\nmenu \"' + head + '"\n')
+
+    for dirname in os.listdir(path):
+        if os.path.isdir(path + '/' + dirname):
+            file.write('\nmenu \"' + dirname + '"\n')
+            file.write('\n\tconfig _SUB_CFG_' + dirname + '\n\t\ttristate \"' +
+                       dirname + '\"\n')
+
+            file.write('\nif ' + '_SUB_CFG_' + dirname + '\n\tsource \"' +
+                       path + '/' + dirname + '/Kconfig"\nendif\n')
+            file.write('endmenu\n')
+    file.write('endmenu\n')
+
+
+def generate_kconfig():
+    print("Start generate Kconfig.")
+    cmake_file = open(project_path + '/config/auto.Kconfig', 'w')
+    cmake_file.write('# QDU-RM-MCU\n')
+    cmake_file.write('# Auto generated file. Do not edit.\n')
+    cmake_file.write('# -----------------------------------------------')
+
+    foreach_config_single('开发板/board', cmake_file, project_path + '/hw/bsp')
+    foreach_config_single('机器人/robot', cmake_file, project_path + '/src/robot')
+    foreach_config('设备/device', cmake_file, project_path + '/src/device')
+    foreach_config('模块/module', cmake_file, project_path + '/src/module')
+
+    cmake_file.close()
+    print("Generate Kconfig done.")
 
 
 def generate_cmake(path):
     print('Start generate config.cmake.')
-    if os.path.exists(path+'/.config'):
+    if os.path.exists(path + '/.config'):
         print('Found config file.')
     else:
-        print('No config file found. Start menuconfig.')
-        os.system('cd '+path+' && kconfig-qconf Kconfig')
-    config_file = open(path+'/.config', 'r')
-    cmake_file = open(path+'/config.cmake', 'w')
+        menuconfig(path)
+        print(path)
+    config_file = open(path + '/.config', 'r')
+    cmake_file = open(path + '/config.cmake', 'w')
 
     cmake_file.write('# QDU-RM-MCU\n')
     cmake_file.write('# Auto generated file. Do not edit.\n')
@@ -43,13 +119,15 @@ def generate_cmake(path):
             continue
 
         if line.startswith('#') and line.endswith(' is not set'):
-            print('[CONFIG] '+line.strip('# '))
-            add_detail(cmake_file, line.rstrip(' is not set').strip('# '), '0')
+            print('[CONFIG] ' + line.strip('# '))
+            add_detail(cmake_file,
+                       line.removesuffix(' is not set').removeprefix('# '),
+                       '0')
             continue
 
         if line.endswith('=y'):
-            print('[CONFIG] '+line)
-            add_detail(cmake_file, line.rstrip('=y'), '1')
+            print('[CONFIG] ' + line)
+            add_detail(cmake_file, line.removesuffix('=y'), '1')
             continue
 
         if line.startswith('#'):
@@ -71,8 +149,9 @@ if cmd_len < 2:
 
 if cmd[1] == 'config':
     clean_cache()
-    menuconfig()
-    generate_cmake('./config')
+    generate_kconfig()
+    menuconfig(project_path + '/config')
+    generate_cmake(project_path + '/config')
     config_cmake()
 
 elif cmd[1] == 'help':
@@ -82,11 +161,16 @@ elif cmd[1] == 'help':
     print('refresh       -   重新生成cmake缓存')
 
 elif cmd[1] == 'generate':
-    generate_cmake(cmd[2]+'/config')
+    generate_cmake(cmd[2] + '/config')
 
 elif cmd[1] == 'refresh':
     clean_cache()
     config_cmake()
+
+elif cmd[1] == 'build':
+    if cmd[2] == 'all':
+        print("Build all target.")
+        build_all()
 
 else:
     print('错误的参数')

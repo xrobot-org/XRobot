@@ -1,10 +1,15 @@
 execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/project.py generate
-                        ${CMAKE_CURRENT_SOURCE_DIR})
+  ${CMAKE_CURRENT_SOURCE_DIR})
 
 include(${CMAKE_CURRENT_LIST_DIR}/../config/config.cmake)
 
-if(CONFIG_TC_ARM_NONE_EABI)
-  include(${CMAKE_CURRENT_LIST_DIR}/arm-none-eabi.cmake)
-else()
-  message(FATAL_ERROR "No compiler selected.")
-endif()
+set(BSP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/hw/bsp)
+set(TOOLCHAIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/toolchain)
+
+FILE(GLOB children RELATIVE ${BSP_DIR} ${BSP_DIR}/*)
+
+FOREACH(child ${children})
+  IF(${_SUB_CFG_${child}})
+    include(${BSP_DIR}/${child}/toolchain.cmake)
+  ENDIF()
+ENDFOREACH()
