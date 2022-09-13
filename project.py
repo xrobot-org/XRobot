@@ -25,7 +25,7 @@ def build_all():
                         shutil.copyfile(
                             project_path + '/build/src/qdu_rm_mcu.elf',
                             project_path + '/firmware/' + dirname + '&' +
-                            filename.removesuffix(".config") + '.elf')
+                            filename[:-7] + '.elf')
 
 
 def menuconfig(path):
@@ -46,7 +46,7 @@ def config_cmake():
 
 
 def add_detail(file, name: str, value: str):
-    name = name.removeprefix('CONFIG_')
+    name = name[7:]
     file.write('set(' + name + ' ' + value + ')\n')
     file.write('add_compile_definitions(' + name + '=${' + name + '})\n')
 
@@ -120,14 +120,12 @@ def generate_cmake(path):
 
         if line.startswith('#') and line.endswith(' is not set'):
             print('[CONFIG] ' + line.strip('# '))
-            add_detail(cmake_file,
-                       line.removesuffix(' is not set').removeprefix('# '),
-                       '0')
+            add_detail(cmake_file, line[2:-11], '0')
             continue
 
         if line.endswith('=y'):
             print('[CONFIG] ' + line)
-            add_detail(cmake_file, line.removesuffix('=y'), '1')
+            add_detail(cmake_file, line[:-2], '1')
             continue
 
         if line.startswith('#'):
