@@ -37,7 +37,7 @@ jobs:
         path: ${{github.workspace}}/firmware
 
     - name: Pack
-      run: zip -r ${{github.workspace}}/firmware.zip ${{github.workspace}}/firmware
+      run: cd ${{github.workspace}} && zip -r ${{github.workspace}}/firmware.zip ./firmware
 
     - name: Create release
       run:  echo "release_name=$(date +v%Y.%m.%d.vv%M.%S)" >> $GITHUB_ENV
