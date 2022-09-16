@@ -6,15 +6,19 @@ import shutil
 project_path = os.path.split(os.path.realpath(__file__))[0]
 
 
-def build_all():
+def build(board, robot):
+    target = []
+
     os.system("rm -rf " + project_path + '/firmware')
     for dirname in os.listdir(project_path + '/hw/bsp'):
         if os.path.isdir(project_path + '/hw/bsp/' + dirname):
             for filename in os.listdir(project_path + '/hw/bsp/' + dirname +
                                        '/config'):
                 if os.path.isfile(project_path + '/hw/bsp/' + dirname +
-                                  '/config/' + filename):
-                    if filename.endswith(".config"):
+                                  '/config/' + filename) and (
+                                      board == 'all' or dirname == board):
+                    if filename.endswith(".config") and (
+                            robot == 'all' or filename[:-7] == robot):
                         shutil.copyfile(
                             project_path + '/hw/bsp/' + dirname + '/config/' +
                             filename, project_path + '/config/.config')
@@ -26,6 +30,16 @@ def build_all():
                             project_path + '/build/src/qdu_rm_mcu.elf',
                             project_path + '/firmware/' + dirname + '&' +
                             filename[:-7] + '.elf')
+
+                        print('\n')
+
+                        target.append([dirname, filename[:-7]])
+    if len(target) == 0:
+        print('ERROR:No target select.')
+    else:
+        for item in target:
+            print('Robot[' + item[1] + ']' + ' for board ' + item[0] +
+                  ' build done.')
 
 
 def menuconfig(path):
@@ -45,9 +59,14 @@ def config_cmake():
     )
 
 
+config_prefix = '_SUB_CFG_'
+
+
 def add_detail(file, name: str, value: str):
     name = name[7:]
     file.write('set(' + name + ' ' + value + ')\n')
+    if name.startswith(config_prefix):
+        return
     file.write('add_compile_definitions(' + name + '=${' + name + '})\n')
 
 
@@ -57,13 +76,13 @@ def foreach_config_single(head, file, path):
 
     for dirname in os.listdir(path):
         if os.path.isdir(path + '/' + dirname):
-            file.write('\n\tconfig _SUB_CFG_' + dirname + '\n\t\tbool \"' +
-                       dirname + '\"\n')
+            file.write('\n\tconfig ' + config_prefix + dirname +
+                       '\n\t\tbool \"' + dirname + '\"\n')
     file.write('endchoice\n')
 
     for dirname in os.listdir(path):
         if os.path.isdir(path + '/' + dirname):
-            file.write('\nif ' + '_SUB_CFG_' + dirname + '\n\tsource \"' +
+            file.write('\nif ' + config_prefix + dirname + '\n\tsource \"' +
                        path + '/' + dirname + '/Kconfig"\nendif\n')
 
 
@@ -74,10 +93,10 @@ def foreach_config(head, file, path):
     for dirname in os.listdir(path):
         if os.path.isdir(path + '/' + dirname):
             file.write('\nmenu \"' + dirname + '"\n')
-            file.write('\n\tconfig _SUB_CFG_' + dirname + '\n\t\ttristate \"' +
-                       dirname + '\"\n')
+            file.write('\n\tconfig ' + config_prefix + dirname +
+                       '\n\t\ttristate \"' + dirname + '\"\n')
 
-            file.write('\nif ' + '_SUB_CFG_' + dirname + '\n\tsource \"' +
+            file.write('\nif ' + config_prefix + dirname + '\n\tsource \"' +
                        path + '/' + dirname + '/Kconfig"\nendif\n')
             file.write('endmenu\n')
     file.write('endmenu\n')
@@ -166,9 +185,6 @@ elif cmd[1] == 'refresh':
     config_cmake()
 
 elif cmd[1] == 'build':
-    if cmd[2] == 'all':
-        print("Build all target.")
-        build_all()
-
+    build(cmd[2], cmd[3])
 else:
     print('错误的参数')
