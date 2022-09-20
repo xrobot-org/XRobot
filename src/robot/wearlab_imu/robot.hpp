@@ -2,8 +2,7 @@
 #include "dev_bmi088.hpp"
 #include "dev_can.hpp"
 #include "dev_led.hpp"
-#include "dev_term.hpp"
-#include "mod_dual_leg.hpp"
+#include "mod_can_imu.hpp"
 
 void robot_init();
 namespace Robot {
@@ -18,7 +17,7 @@ class Infantry : public System::Message {
   Device::CAN can_;
   Device::BMI088 bmi088_;
   Device::LED led_;
-  Device::Term term_;
+  Module::CanIMU imu_;
 
   Infantry(Param& param) : bmi088_(param.bmi088_cali, param.bmi088_rot) {}
 };

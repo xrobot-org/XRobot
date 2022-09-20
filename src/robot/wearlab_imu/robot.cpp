@@ -31,7 +31,7 @@ void robot_init() {
     Robot::Infantry robot(param);
 
     while (1) {
-      System::Thread::Sleep(1);
+      System::Thread::Sleep(UINT32_MAX);
     }
   };
 

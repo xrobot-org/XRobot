@@ -31,7 +31,7 @@ Gimbal::Gimbal(Param& param, float control_freq)
   Component::CMD::RegisterEvent(event_callback, this, this->param_.event_map);
 
   auto gimbal_thread = [](void* arg) {
-    Gimbal* gimbal = (Gimbal*)arg;
+    Gimbal* gimbal = static_cast<Gimbal*>(arg);
 
     DECLARE_SUBER(eulr_, gimbal->eulr_, "imu_eulr");
     DECLARE_SUBER(gyro_, gimbal->gyro_, "imu_gyro");
