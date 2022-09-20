@@ -158,22 +158,8 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* hcan)
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_8|GPIO_PIN_9);
 
     /* CAN1 interrupt DeInit */
-  /* USER CODE BEGIN CAN1:USB_HP_CAN1_TX_IRQn disable */
-    /**
-    * Uncomment the line below to disable the "USB_HP_CAN1_TX_IRQn" interrupt
-    * Be aware, disabling shared interrupt may affect other IPs
-    */
-    /* HAL_NVIC_DisableIRQ(USB_HP_CAN1_TX_IRQn); */
-  /* USER CODE END CAN1:USB_HP_CAN1_TX_IRQn disable */
-
-  /* USER CODE BEGIN CAN1:USB_LP_CAN1_RX0_IRQn disable */
-    /**
-    * Uncomment the line below to disable the "USB_LP_CAN1_RX0_IRQn" interrupt
-    * Be aware, disabling shared interrupt may affect other IPs
-    */
-    /* HAL_NVIC_DisableIRQ(USB_LP_CAN1_RX0_IRQn); */
-  /* USER CODE END CAN1:USB_LP_CAN1_RX0_IRQn disable */
-
+    HAL_NVIC_DisableIRQ(USB_HP_CAN1_TX_IRQn);
+    HAL_NVIC_DisableIRQ(USB_LP_CAN1_RX0_IRQn);
     HAL_NVIC_DisableIRQ(CAN1_RX1_IRQn);
   /* USER CODE BEGIN CAN1_MspDeInit 1 */
 
@@ -360,73 +346,6 @@ void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* htim_pwm)
   /* USER CODE BEGIN TIM2_MspDeInit 1 */
 
   /* USER CODE END TIM2_MspDeInit 1 */
-  }
-
-}
-
-/**
-* @brief PCD MSP Initialization
-* This function configures the hardware resources used in this example
-* @param hpcd: PCD handle pointer
-* @retval None
-*/
-void HAL_PCD_MspInit(PCD_HandleTypeDef* hpcd)
-{
-  if(hpcd->Instance==USB)
-  {
-  /* USER CODE BEGIN USB_MspInit 0 */
-
-  /* USER CODE END USB_MspInit 0 */
-    /* Peripheral clock enable */
-    __HAL_RCC_USB_CLK_ENABLE();
-    /* USB interrupt Init */
-    HAL_NVIC_SetPriority(USB_HP_CAN1_TX_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(USB_HP_CAN1_TX_IRQn);
-    HAL_NVIC_SetPriority(USB_LP_CAN1_RX0_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(USB_LP_CAN1_RX0_IRQn);
-  /* USER CODE BEGIN USB_MspInit 1 */
-
-  /* USER CODE END USB_MspInit 1 */
-  }
-
-}
-
-/**
-* @brief PCD MSP De-Initialization
-* This function freeze the hardware resources used in this example
-* @param hpcd: PCD handle pointer
-* @retval None
-*/
-void HAL_PCD_MspDeInit(PCD_HandleTypeDef* hpcd)
-{
-  if(hpcd->Instance==USB)
-  {
-  /* USER CODE BEGIN USB_MspDeInit 0 */
-
-  /* USER CODE END USB_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_USB_CLK_DISABLE();
-
-    /* USB interrupt DeInit */
-  /* USER CODE BEGIN USB:USB_HP_CAN1_TX_IRQn disable */
-    /**
-    * Uncomment the line below to disable the "USB_HP_CAN1_TX_IRQn" interrupt
-    * Be aware, disabling shared interrupt may affect other IPs
-    */
-    /* HAL_NVIC_DisableIRQ(USB_HP_CAN1_TX_IRQn); */
-  /* USER CODE END USB:USB_HP_CAN1_TX_IRQn disable */
-
-  /* USER CODE BEGIN USB:USB_LP_CAN1_RX0_IRQn disable */
-    /**
-    * Uncomment the line below to disable the "USB_LP_CAN1_RX0_IRQn" interrupt
-    * Be aware, disabling shared interrupt may affect other IPs
-    */
-    /* HAL_NVIC_DisableIRQ(USB_LP_CAN1_RX0_IRQn); */
-  /* USER CODE END USB:USB_LP_CAN1_RX0_IRQn disable */
-
-  /* USER CODE BEGIN USB_MspDeInit 1 */
-
-  /* USER CODE END USB_MspDeInit 1 */
   }
 
 }

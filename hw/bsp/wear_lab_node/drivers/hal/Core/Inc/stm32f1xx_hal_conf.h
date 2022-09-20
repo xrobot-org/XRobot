@@ -53,7 +53,7 @@
 /*#define HAL_NOR_MODULE_ENABLED   */
 /*#define HAL_NAND_MODULE_ENABLED   */
 /*#define HAL_PCCARD_MODULE_ENABLED   */
-#define HAL_PCD_MODULE_ENABLED
+/*#define HAL_PCD_MODULE_ENABLED   */
 /*#define HAL_HCD_MODULE_ENABLED   */
 /*#define HAL_PWR_MODULE_ENABLED   */
 /*#define HAL_RCC_MODULE_ENABLED   */

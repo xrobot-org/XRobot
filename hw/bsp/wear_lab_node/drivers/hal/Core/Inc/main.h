@@ -72,7 +72,6 @@ void Error_Handler(void);
 void   MX_GPIO_Init(void);
 void   MX_SPI1_Init(void);
 void   MX_DMA_Init(void);
-void   MX_USB_PCD_Init(void);
 void   MX_CAN_Init(void);
 void   MX_TIM2_Init(void);
 /* USER CODE BEGIN Private defines */
