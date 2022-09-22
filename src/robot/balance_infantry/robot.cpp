@@ -9,40 +9,152 @@ Robot::Infantry::Param param = {
       .leg_max_angle = 0.0f,
 
       .mech_zero = {
-        2.5f,
-        6.14f,
-        0.0f,
-        0.0f,
+        0.630508065f,
+        5.75973034f,
+        1.45487654f,
+        3.00471401f,
+      },
+
+      .leg_actr = {
+        {
+        .speed = {
+          .k = 1.0f,
+          .p = 1.0f,
+          .i = 1.2f,
+          .d = 0.0f,
+          .i_limit = 3.0f,
+          .out_limit = 3.0f,
+          .d_cutoff_freq = -1.0f,
+          .range = -1.0f,
+        },
+
+        .position = {
+          .k = 20.0f,
+          .p = 1.0f,
+          .i = 0.3f,
+          .d = 0.0f,
+          .i_limit = 0.0f,
+          .out_limit = 10.0f,
+          .d_cutoff_freq = -1.0f,
+          .range = M_2PI,
+        },
+
+        .in_cutoff_freq = -1.0f,
+
+        .out_cutoff_freq = -1.0f,
+        },{
+        .speed = {
+          .k = 1.0f,
+          .p = 1.0f,
+          .i = 1.2f,
+          .d = 0.0f,
+          .i_limit = 3.0f,
+          .out_limit = 3.0f,
+          .d_cutoff_freq = -1.0f,
+          .range = -1.0f,
+        },
+
+        .position = {
+          .k = 20.0f,
+          .p = 1.0f,
+          .i = 0.3f,
+          .d = 0.0f,
+          .i_limit = 0.0f,
+          .out_limit = 10.0f,
+          .d_cutoff_freq = -1.0f,
+          .range = M_2PI,
+        },
+
+        .in_cutoff_freq = -1.0f,
+
+        .out_cutoff_freq = -1.0f,
+        },{
+        .speed = {
+          .k = 1.0f,
+          .p = 1.0f,
+          .i = 1.2f,
+          .d = 0.0f,
+          .i_limit = 3.0f,
+          .out_limit = 3.0f,
+          .d_cutoff_freq = -1.0f,
+          .range = -1.0f,
+        },
+
+        .position = {
+          .k = 20.0f,
+          .p = 1.0f,
+          .i = 0.3f,
+          .d = 0.0f,
+          .i_limit = 0.0f,
+          .out_limit = 10.0f,
+          .d_cutoff_freq = -1.0f,
+          .range = M_2PI,
+        },
+
+        .in_cutoff_freq = -1.0f,
+
+        .out_cutoff_freq = -1.0f,
+        },{
+        .speed = {
+          .k = 1.0f,
+          .p = 1.0f,
+          .i = 1.2f,
+          .d = 0.0f,
+          .i_limit = 3.0f,
+          .out_limit = 3.0f,
+          .d_cutoff_freq = -1.0f,
+          .range = -1.0f,
+        },
+
+        .position = {
+          .k = 20.0f,
+          .p = 1.0f,
+          .i = 0.3f,
+          .d = 0.0f,
+          .i_limit = 0.0f,
+          .out_limit = 10.0f,
+          .d_cutoff_freq = -1.0f,
+          .range = M_2PI,
+        },
+
+        .in_cutoff_freq = -1.0f,
+
+        .out_cutoff_freq = -1.0f,
+        },
       },
 
       .leg_motor = {
         {
-          .kp = 20.0f,
+          .kp = 30.0f,
           .kd = 0.1f,
           .def_speed = 0.0f,
           .id = 1,
           .can = BSP_CAN_1,
+          .max_error = 0.1f,
         },
         {
-          .kp = 20.0f,
+          .kp = 30.0f,
           .kd = 0.1f,
           .def_speed = 0.0f,
           .id = 2,
           .can = BSP_CAN_1,
+          .max_error = 0.1f,
         },
         {
-          .kp = 2.0f,
+          .kp = 30.0f,
           .kd = 0.1f,
           .def_speed = 0.0f,
           .id = 3,
           .can = BSP_CAN_1,
+          .max_error = 0.1f,
         },
         {
-          .kp = 2.0f,
+          .kp = 30.0f,
           .kd = 0.1f,
           .def_speed = 0.0f,
           .id = 4,
           .can = BSP_CAN_1,
+          .max_error = 0.1f,
         },
       },
   },
