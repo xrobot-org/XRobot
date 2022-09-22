@@ -50,7 +50,7 @@ class Chassis {
 
     const std::vector<Component::CMD::EventMapItem> event_map;
 
-    Device::SpeedActuator::Param actuator_param[4];
+    Component::SpeedActuator::Param actuator_param[4];
 
     MotorParam motor_param[4];
   } Param;
@@ -88,7 +88,7 @@ class Chassis {
 
   Mode mode_ = Relax;
 
-  Device::SpeedActuator *actuator_[4];
+  Component::SpeedActuator *actuator_[4];
 
   Device::BaseMotor *motor_[4];
 

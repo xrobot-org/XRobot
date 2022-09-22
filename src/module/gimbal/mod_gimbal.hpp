@@ -41,8 +41,8 @@ class Gimbal {
     Component::SecOrderFunction::Param ff; /* PITCH前馈 */
     Component::SecOrderFunction::Param st; /* YAW自整定参数 */
 
-    Device::PosActuator::Param yaw_actr;
-    Device::PosActuator::Param pit_actr;
+    Component::PosActuator::Param yaw_actr;
+    Component::PosActuator::Param pit_actr;
 
     Device::RMMotor::Param yaw_motor;
     Device::RMMotor::Param pit_motor;
@@ -85,8 +85,8 @@ class Gimbal {
 
   Component::SecOrderFunction st_; /* YAW自整定参数 */
 
-  Device::PosActuator yaw_actuator_;
-  Device::PosActuator pit_actuator_;
+  Component::PosActuator yaw_actuator_;
+  Component::PosActuator pit_actuator_;
 
   Device::RMMotor yaw_motor_;
   Device::RMMotor pit_motor_;

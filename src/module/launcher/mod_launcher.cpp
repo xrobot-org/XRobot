@@ -21,10 +21,10 @@ using namespace Module;
 Launcher::Launcher(Param& param, float control_freq)
     : param_(param), ctrl_lock_(true) {
   for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
-    this->trig_actuator_[i] = (Device::PosActuator*)System::Memory::Malloc(
-        sizeof(Device::PosActuator));
+    this->trig_actuator_[i] = (Component::PosActuator*)System::Memory::Malloc(
+        sizeof(Component::PosActuator));
     new (this->trig_actuator_[i])
-        Device::PosActuator(param.trig_actr[i], control_freq);
+        Component::PosActuator(param.trig_actr[i], control_freq);
 
     this->trig_motor_[i] =
         (Device::RMMotor*)System::Memory::Malloc(sizeof(Device::RMMotor));
@@ -35,10 +35,10 @@ Launcher::Launcher(Param& param, float control_freq)
   }
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
-    this->fric_actuator_[i] = (Device::SpeedActuator*)System::Memory::Malloc(
-        sizeof(Device::SpeedActuator));
+    this->fric_actuator_[i] = (Component::SpeedActuator*)System::Memory::Malloc(
+        sizeof(Component::SpeedActuator));
     new (this->fric_actuator_[i])
-        Device::SpeedActuator(param.fric_actr[i], control_freq);
+        Component::SpeedActuator(param.fric_actr[i], control_freq);
 
     this->fric_motor_[i] =
         (Device::RMMotor*)System::Memory::Malloc(sizeof(Device::RMMotor));

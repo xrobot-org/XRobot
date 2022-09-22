@@ -7,7 +7,7 @@
 #include "comp_pid.hpp"
 #include "comp_utils.hpp"
 
-namespace Device {
+namespace Component {
 class SpeedActuator {
  public:
   typedef struct {

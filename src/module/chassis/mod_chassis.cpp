@@ -57,10 +57,10 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
   memset(&(this->cmd_), 0, sizeof(this->cmd_));
 
   for (uint8_t i = 0; i < this->mixer_.len_; i++) {
-    this->actuator_[i] = (Device::SpeedActuator*)System::Memory::Malloc(
-        sizeof(Device::SpeedActuator));
+    this->actuator_[i] = (Component::SpeedActuator*)System::Memory::Malloc(
+        sizeof(Component::SpeedActuator));
     new (this->actuator_[i])
-        Device::SpeedActuator(param.actuator_param[i], control_freq);
+        Component::SpeedActuator(param.actuator_param[i], control_freq);
 
     this->motor_[i] = (Motor*)System::Memory::Malloc(sizeof(Motor));
     new (this->motor_[i])

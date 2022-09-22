@@ -79,8 +79,8 @@ class Launcher {
     float default_bullet_speed; /* 默认弹丸初速度 */
     uint32_t min_launch_delay;  /* 最小发射间隔(1s/最大射频) */
 
-    Device::PosActuator::Param trig_actr[LAUNCHER_ACTR_TRIG_NUM];
-    Device::SpeedActuator::Param fric_actr[LAUNCHER_ACTR_FRIC_NUM];
+    Component::PosActuator::Param trig_actr[LAUNCHER_ACTR_TRIG_NUM];
+    Component::SpeedActuator::Param fric_actr[LAUNCHER_ACTR_FRIC_NUM];
     Device::RMMotor::Param trig_motor[LAUNCHER_ACTR_TRIG_NUM];
     Device::RMMotor::Param fric_motor[LAUNCHER_ACTR_FRIC_NUM];
 
@@ -158,8 +158,8 @@ class Launcher {
   HeatControl heat_ctrl_;
   FireControl fire_ctrl_;
 
-  Device::PosActuator *trig_actuator_[LAUNCHER_ACTR_TRIG_NUM];
-  Device::SpeedActuator *fric_actuator_[LAUNCHER_ACTR_FRIC_NUM];
+  Component::PosActuator *trig_actuator_[LAUNCHER_ACTR_TRIG_NUM];
+  Component::SpeedActuator *fric_actuator_[LAUNCHER_ACTR_FRIC_NUM];
 
   Device::RMMotor *trig_motor_[LAUNCHER_ACTR_TRIG_NUM];
   Device::RMMotor *fric_motor_[LAUNCHER_ACTR_FRIC_NUM];

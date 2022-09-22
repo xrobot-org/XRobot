@@ -1,6 +1,6 @@
 #include "comp_actuator.hpp"
 
-using namespace Device;
+using namespace Component;
 
 SpeedActuator::SpeedActuator(Param& param, float sample_freq)
     : pid_(param.speed, sample_freq),
