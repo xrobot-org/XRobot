@@ -3,6 +3,7 @@
 #include "bsp_can.h"
 #include "comp_type.hpp"
 #include "dev.hpp"
+#include "dev_can.hpp"
 
 #define DEV_TOF_ID_BASE (0x20c)
 
@@ -32,7 +33,7 @@ class Tof {
 
   void Offline();
 
-  void Decode(can_rx_item_t& rx);
+  void Decode(CAN::Pack& rx);
 
   Param param_;
 

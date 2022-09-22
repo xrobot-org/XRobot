@@ -22,18 +22,11 @@
 
 #define DECLARE_MESSAGE_FUN(_name) \
   om_user_fun_t _name = [](om_msg_t * msg, void* arg)
-#define GetMessage(_type, _name) _type* _name = static_cast<_type*>(msg->buff)
-#define GetARG(_type, _name) _type* _name = static_cast<_type*>(arg)
+#define MESSAGE_GET_DATA(_type, _name) \
+  _type* _name = static_cast<_type*>(msg->buff)
+#define MESSAGE_GET_ARG(_type, _name) _type* _name = static_cast<_type*>(arg)
 #define MESSAGE_FUN_PASSED() return OM_OK
 #define MESSAGE_FUN_FAILED() return OM_ERROR
-
-#define MESSAGE_REGISTER_FILTER(_topic, _callback, _arg)            \
-  (void)(((__typeof__(_topic)*)0) == ((System::Message::Topic*)0)); \
-  om_config_topic(_topic.GetHandle(), "F", _callback, _arg)
-
-#define MESSAGE_REGISTER_CALLBACK(_topic, _callback, _arg)          \
-  (void)(((__typeof__(_topic)*)0) == ((System::Message::Topic*)0)); \
-  om_config_topic(_topic.GetHandle(), "D", _callback, _arg)
 
 namespace System {
 class Message {
@@ -56,6 +49,18 @@ class Message {
     bool Link(const char* source_name) {
       return om_core_link(om_find_topic(source_name, UINT32_MAX),
                           this->GetHandle()) == OM_OK;
+    }
+
+    bool RegisterFilter(om_user_fun_t callback, void* arg) {
+      om_config_topic(this->topic_, "F", callback, arg);
+
+      return true;
+    }
+
+    bool RegisterCallback(om_user_fun_t callback, void* arg) {
+      om_config_topic(this->topic_, "D", callback, arg);
+
+      return true;
     }
 
     inline om_topic_t* GetHandle() { return this->topic_; }

@@ -19,14 +19,13 @@
 
 using namespace Device;
 
-uint8_t RMMotor::motor_tx_buff_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER]
-                               [CAN_DATA_SIZE];
+uint8_t RMMotor::motor_tx_buff_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER][8];
 
 uint8_t RMMotor::motor_tx_flag_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 uint8_t RMMotor::motor_tx_map_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 
 RMMotor::RMMotor(const Param &param, const char *name)
-    : BaseMotor(name), param_(param), recv_(sizeof(can_rx_item_t), 1) {
+    : BaseMotor(name), param_(param), recv_(sizeof(CAN::Pack), 1) {
   strncpy(this->name_, name, sizeof(this->name_));
 
   memset(&(this->feedback_), 0, sizeof(this->feedback_));
@@ -65,7 +64,7 @@ RMMotor::RMMotor(const Param &param, const char *name)
   }
 
   om_user_fun_t rx_callback = [](om_msg_t *msg, void *arg) {
-    can_rx_item_t *rx = (can_rx_item_t *)msg->buff;
+    CAN::Pack *rx = (CAN::Pack *)msg->buff;
 
     RMMotor *motor = (RMMotor *)arg;
 
@@ -76,16 +75,15 @@ RMMotor::RMMotor(const Param &param, const char *name)
 
   DECLARE_TOPIC(motor_tp, name, false);
 
-  MESSAGE_REGISTER_CALLBACK(motor_tp, rx_callback, this);
+  motor_tp.RegisterCallback(rx_callback, this);
 
-  bsp_can_register_subscriber(this->param_.can, motor_tp.GetHandle(),
-                              this->param_.id_feedback, 0);
+  CAN::Subscribe(motor_tp, this->param_.can, this->param_.id_feedback, 1);
 
   motor_tx_map_[this->param_.can][this->index_] |= 1 << (this->num_);
 }
 
 bool RMMotor::Update() {
-  can_rx_item_t pack;
+  CAN::Pack pack;
 
   while (this->recv_.Receive(&pack, 0)) {
     if ((pack.index == this->param_.id_feedback) &&
@@ -97,7 +95,7 @@ bool RMMotor::Update() {
   return true;
 }
 
-void RMMotor::Decode(can_rx_item_t &rx) {
+void RMMotor::Decode(CAN::Pack &rx) {
   uint16_t raw_angle = (uint16_t)((rx.data[0] << 8) | rx.data[1]);
   int16_t raw_current = (int16_t)((rx.data[4] << 8) | rx.data[5]);
 
@@ -146,9 +144,14 @@ void RMMotor::Control(float out) {
 }
 
 bool RMMotor::SendData() {
-  bsp_can_trans_packet(this->param_.can, this->param_.id_control,
-                       motor_tx_buff_[this->param_.can][this->index_],
-                       &this->mailbox_, 1);
+  CAN::Pack tx_buff;
+
+  tx_buff.index = this->param_.id_control;
+
+  memcpy(tx_buff.data, motor_tx_buff_[this->param_.can][this->index_],
+         sizeof(tx_buff.data));
+
+  CAN::SendPack(this->param_.can, tx_buff);
 
   motor_tx_flag_[this->param_.can][this->index_] = 0;
 

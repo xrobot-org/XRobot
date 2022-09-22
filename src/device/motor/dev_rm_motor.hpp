@@ -4,6 +4,7 @@
 #include "comp_ahrs.hpp"
 #include "comp_utils.hpp"
 #include "dev.hpp"
+#include "dev_can.hpp"
 #include "dev_motor.hpp"
 
 /* RMMotor id */
@@ -47,7 +48,7 @@ class RMMotor : public BaseMotor {
 
   RMMotor(RMMotor& motor);
 
-  void Decode(can_rx_item_t& rx);
+  void Decode(CAN::Pack& rx);
 
   bool Update();
 
@@ -71,8 +72,7 @@ class RMMotor : public BaseMotor {
 
   float output_;
 
-  static uint8_t motor_tx_buff_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER]
-                               [CAN_DATA_SIZE];
+  static uint8_t motor_tx_buff_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER][8];
 
   static uint8_t motor_tx_flag_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
   static uint8_t motor_tx_map_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];

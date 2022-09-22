@@ -12,8 +12,8 @@ CMD::CMD() : event_("cmd_event") {
   CMD::self_ = this;
 
   DECLARE_MESSAGE_FUN(rx_callback) {
-    GetMessage(Data, data);
-    GetARG(CMD, cmd);
+    MESSAGE_GET_DATA(Data, data);
+    MESSAGE_GET_ARG(CMD, cmd);
 
     memcpy(&(cmd->data_[data->ctrl_source]), data, sizeof(Data));
 
@@ -42,7 +42,8 @@ CMD::CMD() : event_("cmd_event") {
     MESSAGE_FUN_PASSED();
   };
 
-  MESSAGE_REGISTER_CALLBACK(this->data_in_, rx_callback, this);
+  this->data_in_.RegisterCallback(rx_callback, this);
+
 }
 
 void CMD::RegisterEvent(void (*callback)(uint32_t event, void* arg), void* arg,

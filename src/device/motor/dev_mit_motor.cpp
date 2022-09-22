@@ -24,10 +24,10 @@ static bool initd[BSP_CAN_NUM] = {false};
 System::Message::Topic *MitMotor::mit_tp[BSP_CAN_NUM];
 
 MitMotor::MitMotor(const Param &param, const char *name)
-    : BaseMotor(name), param_(param), recv_(sizeof(can_rx_item_t), 1) {
+    : BaseMotor(name), param_(param), recv_(sizeof(CAN::Pack), 1) {
   DECLARE_MESSAGE_FUN(rx_callback) {
-    GetMessage(can_rx_item_t, rx);
-    GetARG(MitMotor, motor);
+    MESSAGE_GET_DATA(CAN::Pack, rx);
+    MESSAGE_GET_ARG(MitMotor, motor);
 
     if (rx->data[0] == motor->param_.id) motor->recv_.OverwriteFromISR(rx);
 
@@ -43,25 +43,27 @@ MitMotor::MitMotor(const Param &param, const char *name)
 
     MitMotor::mit_tp[this->param_.can] = motor_tp;
 
-    bsp_can_register_subscriber(this->param_.can,
-                                MitMotor::mit_tp[this->param_.can]->GetHandle(),
-                                0, 0);
+    CAN::Subscribe(*MitMotor::mit_tp[this->param_.can], this->param_.can, 0, 1);
 
     initd[this->param_.can] = true;
   }
 
   DECLARE_TOPIC(motor_tp, name, false);
 
-  MESSAGE_REGISTER_CALLBACK(motor_tp, rx_callback, this);
+  motor_tp.RegisterCallback(rx_callback, this);
 
   motor_tp.Link(*this->mit_tp[this->param_.can]);
 
-  bsp_can_trans_packet(param.can, param.id, ENABLE_CMD, &(this->mailbox_),
-                       0xff);
+  CAN::Pack tx_buff;
+
+  tx_buff.index = param.id;
+  memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
+
+  CAN::SendPack(this->param_.can, tx_buff);
 }
 
 bool MitMotor::Update() {
-  can_rx_item_t pack;
+  CAN::Pack pack;
 
   while (this->recv_.Receive(&pack, 0)) {
     this->Decode(pack);
@@ -70,7 +72,7 @@ bool MitMotor::Update() {
   return true;
 }
 
-void MitMotor::Decode(can_rx_item_t &rx) {
+void MitMotor::Decode(CAN::Pack &rx) {
   if (this->param_.id != rx.data[0]) return;
 
   uint16_t raw_position, raw_speed, raw_current;
@@ -98,7 +100,11 @@ void MitMotor::Control(float output) {
   ASSERT(false);
 }
 
-void MitMotor::Set(float pos_error) {
+void MitMotor::SetCurrent(float current) { this->current_ = current; }
+
+void MitMotor::SetPos(float pos_error) {
+  clampf(&pos_error, -this->param_.max_error, this->param_.max_error);
+
   float pos_sp = this->GetAngle() + 4 * M_PI;
 
   circle_add(&pos_sp, pos_error, 8 * M_PI);
@@ -109,24 +115,29 @@ void MitMotor::Set(float pos_error) {
   int v_int = float_to_uint(this->param_.def_speed, V_MIN, V_MAX, 12);
   int kp_int = float_to_uint(this->param_.kp, KP_MIN, KP_MAX, 12);
   int kd_int = float_to_uint(this->param_.kd, KD_MIN, KD_MAX, 12);
-  int t_int = float_to_uint(0, T_MIN, T_MAX, 12);
+  int t_int = float_to_uint(this->current_, T_MIN, T_MAX, 12);
 
-  uint8_t data[8];
+  CAN::Pack tx_buff;
 
-  data[0] = p_int >> 8;
-  data[1] = p_int & 0xFF;
-  data[2] = v_int >> 4;
-  data[3] = ((v_int & 0xF) << 4) | (kp_int >> 8);
-  data[4] = kp_int & 0xFF;
-  data[5] = kd_int >> 4;
-  data[6] = ((kd_int & 0xF) << 4) | (t_int >> 8);
-  data[7] = t_int & 0xff;
+  tx_buff.index = this->param_.id;
 
-  bsp_can_trans_packet(this->param_.can, this->param_.id, data,
-                       &(this->mailbox_), 1);
+  tx_buff.data[0] = p_int >> 8;
+  tx_buff.data[1] = p_int & 0xFF;
+  tx_buff.data[2] = v_int >> 4;
+  tx_buff.data[3] = ((v_int & 0xF) << 4) | (kp_int >> 8);
+  tx_buff.data[4] = kp_int & 0xFF;
+  tx_buff.data[5] = kd_int >> 4;
+  tx_buff.data[6] = ((kd_int & 0xF) << 4) | (t_int >> 8);
+  tx_buff.data[7] = t_int & 0xff;
+
+  CAN::SendPack(this->param_.can, tx_buff);
 }
 
 void MitMotor::Relax() {
-  bsp_can_trans_packet(this->param_.can, this->param_.id, RELAX_CMD,
-                       &(this->mailbox_), 1);
+  CAN::Pack tx_buff;
+
+  tx_buff.index = this->param_.id;
+  memcpy(tx_buff.data, RELAX_CMD, sizeof(ENABLE_CMD));
+
+  CAN::SendPack(this->param_.can, tx_buff);
 }

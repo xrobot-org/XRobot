@@ -15,8 +15,8 @@ using namespace Device;
 
 Cap::Cap(Cap::Param &param) : param_(param) {
   DECLARE_MESSAGE_FUN(rx_callback) {
-    GetMessage(can_rx_item_t, rx);
-    GetARG(Cap, cap);
+    MESSAGE_GET_DATA(CAN::Pack, rx);
+    MESSAGE_GET_ARG(Cap, cap);
 
     rx->index -= cap->param_.index;
 
@@ -28,10 +28,9 @@ Cap::Cap(Cap::Param &param) : param_(param) {
   };
 
   DECLARE_TOPIC(cap_tp, "can_cap", false);
-  MESSAGE_REGISTER_CALLBACK(cap_tp, rx_callback, this);
+  cap_tp.RegisterCallback(rx_callback, this);
 
-  bsp_can_register_subscriber(this->param_.can, cap_tp.GetHandle(),
-                              this->param_.index, 1);
+  CAN::Subscribe(cap_tp, this->param_.can, this->param_.index, 1);
 
   auto cap_thread = [](void *arg) {
     Cap *cap = static_cast<Cap *>(arg);
@@ -58,7 +57,7 @@ Cap::Cap(Cap::Param &param) : param_(param) {
 }
 
 bool Cap::Update() {
-  can_rx_item_t rx;
+  CAN::Pack rx;
   while (this->control_feedback_.Receive(&rx, 0)) {
     this->Decode(rx);
     this->online_ = 1;
@@ -73,7 +72,7 @@ bool Cap::Update() {
   }
 }
 
-void Cap::Decode(can_rx_item_t &rx) {
+void Cap::Decode(CAN::Pack &rx) {
   uint8_t *raw = rx.data;
   this->info_.data_.input_volt_ =
       (float)((raw[1] << 8) | raw[0]) / (float)CAP_RES;
@@ -91,12 +90,14 @@ void Cap::Decode(can_rx_item_t &rx) {
 bool Cap::Control() {
   uint16_t pwr_lim = (uint16_t)(this->out_.power_limit_ * CAP_RES);
 
-  uint8_t data[8] = {0};
-  data[0] = (pwr_lim >> 8) & 0xFF;
-  data[1] = pwr_lim & 0xFF;
+  CAN::Pack tx_buff;
 
-  return bsp_can_trans_packet(this->param_.can, DEV_CAP_CTRL_ID_BASE, data,
-                              &this->mailbox_, 1) == BSP_OK;
+  tx_buff.index = DEV_CAP_CTRL_ID_BASE;
+
+  tx_buff.data[0] = (pwr_lim >> 8) & 0xFF;
+  tx_buff.data[1] = pwr_lim & 0xFF;
+
+  return CAN::SendPack(this->param_.can, tx_buff);
 }
 
 bool Cap::Offline() {

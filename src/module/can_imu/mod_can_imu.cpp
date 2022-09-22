@@ -1,9 +1,10 @@
 #include "mod_can_imu.hpp"
 
+#include "dev_can.hpp"
+
 using namespace Module;
 
-static uint8_t imu_tx_buff[8];
-
+static Device::CAN::Pack send_buff;
 static const uint8_t IMU_DEVICE_ID = 0x01;
 
 static const uint8_t ACCL_DATA_ID = 0x01;
@@ -42,34 +43,32 @@ CanIMU::CanIMU() {
 }
 
 void CanIMU::SendAccl() {
-  int16_t *tmp = (int16_t *)imu_tx_buff;
+  int16_t *tmp = (int16_t *)send_buff.data;
   tmp[1] = this->accl_.x / 6.0f * (float)INT16_MAX;
   tmp[2] = this->accl_.y / 6.0f * (float)INT16_MAX;
   tmp[3] = this->accl_.z / 6.0f * (float)INT16_MAX;
-  imu_tx_buff[0] = IMU_DEVICE_ID;
-  imu_tx_buff[1] = ACCL_DATA_ID;
-  bsp_can_trans_packet(BSP_CAN_1, IMU_SEND_CAN_ID, imu_tx_buff, &this->mailbox_,
-                       1);
+  send_buff.data[0] = IMU_DEVICE_ID;
+  send_buff.data[1] = ACCL_DATA_ID;
+  send_buff.index = IMU_SEND_CAN_ID;
+  Device::CAN::SendPack(BSP_CAN_1, send_buff);
 }
 
 void CanIMU::SendGyro() {
-  int16_t *tmp = (int16_t *)imu_tx_buff;
+  int16_t *tmp = (int16_t *)send_buff.data;
   tmp[1] = this->gyro_.x / 20.0f * (float)INT16_MAX;
   tmp[2] = this->gyro_.y / 20.0f * (float)INT16_MAX;
   tmp[3] = this->gyro_.z / 20.0f * (float)INT16_MAX;
-  imu_tx_buff[0] = IMU_DEVICE_ID;
-  imu_tx_buff[1] = GYRO_DATA_ID;
-  bsp_can_trans_packet(BSP_CAN_1, IMU_SEND_CAN_ID, imu_tx_buff, &this->mailbox_,
-                       1);
+  send_buff.data[0] = IMU_DEVICE_ID;
+  send_buff.data[1] = GYRO_DATA_ID;
+  Device::CAN::SendPack(BSP_CAN_1, send_buff);
 }
 
 void CanIMU::SendEulr() {
-  int16_t *tmp = (int16_t *)imu_tx_buff;
+  int16_t *tmp = (int16_t *)send_buff.data;
   tmp[1] = this->eulr_.pit / M_2PI * (float)INT16_MAX;
   tmp[2] = this->eulr_.rol / M_2PI * (float)INT16_MAX;
   tmp[3] = this->eulr_.yaw / M_2PI * (float)INT16_MAX;
-  imu_tx_buff[0] = IMU_DEVICE_ID;
-  imu_tx_buff[1] = EULR_DATA_ID;
-  bsp_can_trans_packet(BSP_CAN_1, IMU_SEND_CAN_ID, imu_tx_buff, &this->mailbox_,
-                       1);
+  send_buff.data[0] = IMU_DEVICE_ID;
+  send_buff.data[1] = EULR_DATA_ID;
+  Device::CAN::SendPack(BSP_CAN_1, send_buff);
 }

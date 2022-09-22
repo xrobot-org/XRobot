@@ -6,6 +6,7 @@
 #include "comp_type.hpp"
 #include "comp_ui.hpp"
 #include "dev.hpp"
+#include "dev_can.hpp"
 
 #define DEV_CAP_FB_ID_BASE (0x211)
 #define DEV_CAP_CTRL_ID_BASE (0x210)
@@ -38,7 +39,7 @@ class Cap {
 
   bool Offline();
 
-  void Decode(can_rx_item_t& rx);
+  void Decode(CAN::Pack& rx);
 
   float GetPercentage();
 
@@ -50,7 +51,7 @@ class Cap {
 
   uint32_t mailbox_;
 
-  System::Queue control_feedback_ = System::Queue(sizeof(can_rx_item_t), 1);
+  System::Queue control_feedback_ = System::Queue(sizeof(CAN::Pack), 1);
 
   System::Thread thread_;
 
