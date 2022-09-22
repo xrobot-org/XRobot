@@ -1,10 +1,10 @@
 #pragma once
 
+#include "comp_actuator.hpp"
 #include "comp_filter.hpp"
 #include "comp_mixer.hpp"
 #include "comp_pid.hpp"
 #include "comp_triangle.hpp"
-#include "comp_actuator.hpp"
 #include "dev_mit_motor.hpp"
 
 /*          L1          */
@@ -40,6 +40,8 @@ class BalanceChassis {
 
     float mech_zero[LEG_NUM * LEG_MOTOR_NUM];
 
+    Component::PosActuator::Param leg_actr[LEG_NUM * LEG_MOTOR_NUM];
+
     Device::MitMotor::Param leg_motor[LEG_NUM * LEG_MOTOR_NUM];
   } Param;
 
@@ -63,11 +65,21 @@ class BalanceChassis {
 
   Param param_;
 
+  float dt_;
+
+  uint32_t last_wakeup_;
+
+  uint32_t now_;
+
+  Component::PosActuator* leg_actuator_[LEG_NUM * LEG_MOTOR_NUM];
+
   Device::MitMotor* leg_motor_[LEG_NUM * LEG_MOTOR_NUM];
 
   Setpoint setpoint_[LEG_NUM];
 
   Feedback feedback_[LEG_NUM];
+
+  Mode mode_ = Relax;
 
   System::Thread thread_;
 };

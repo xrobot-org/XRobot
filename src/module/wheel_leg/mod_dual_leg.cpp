@@ -48,6 +48,18 @@ BalanceChassis::BalanceChassis(BalanceChassis::Param& param, float sample_freq)
       new (this->leg_motor_[i * LEG_MOTOR_NUM + j]) Device::MitMotor(
           this->param_.leg_motor[i * LEG_MOTOR_NUM + j],
           ("chassis_" + std::to_string(i) + "_" + std::to_string(j)).c_str());
+
+      this->leg_actuator_[i * LEG_MOTOR_NUM + j] =
+          (Component::PosActuator*)System::Memory::Malloc(
+              sizeof(Component::PosActuator));
+      new (this->leg_actuator_[i * LEG_MOTOR_NUM + j]) Component::PosActuator(
+          this->param_.leg_actr[i * LEG_MOTOR_NUM + j], sample_freq);
+    }
+  }
+
+  for (int i = 0; i < LEG_NUM; i++) {
+    for (int j = 0; j < LEG_MOTOR_NUM; j++) {
+      circle_add(this->param_.mech_zero + i * 2 + j, M_PI, M_2PI);
     }
   }
 
@@ -56,6 +68,7 @@ BalanceChassis::BalanceChassis(BalanceChassis::Param& param, float sample_freq)
 
     while (1) {
       chassis->UpdateFeedback();
+
       chassis->Control();
 
       chassis->thread_.Sleep(2);
@@ -67,32 +80,77 @@ BalanceChassis::BalanceChassis(BalanceChassis::Param& param, float sample_freq)
 }
 
 void BalanceChassis::Control() {
-  for (uint8_t i = 0; i < LEG_NUM; i++) {
-    Position2 motor_pos[LEG_MOTOR_NUM] = {{-param_.l1 / 2.0f, 0.0f},
-                                          {param_.l1 / 2.0f, 0.0f}};
+  this->now_ = System::Thread::GetTick();
 
-    for (uint8_t j = 0; j < LEG_MOTOR_NUM; j++) {
-      Component::Triangle leg_tri;
+  this->dt_ = (float)(this->now_ - this->last_wakeup_) / 1000.0f;
+  this->last_wakeup_ = this->now_;
 
-      leg_tri.data_.side[0] = this->param_.l3;
-      leg_tri.data_.side[1] = this->param_.l2;
-      leg_tri.data_.side[2] =
-          Position2::Distance(this->setpoint_[i].whell_pos, motor_pos[j]);
-
-      leg_tri.Slove();
-
-      float _angle = Line(motor_pos[j], this->setpoint_[i].whell_pos).Angle();
-
-      if (j == FRONT) {
-        circle_add(&_angle, -leg_tri.data_.angle[0], M_2PI);
-      } else {
-        circle_add(&_angle, leg_tri.data_.angle[0], M_2PI);
+  /* 处理控制命令 */
+  switch (this->mode_) {
+    case Relax:
+    case Break:
+    case Squat:
+    case Jump:
+      for (int i = 0; i < LEG_NUM; i++) {
+        this->setpoint_[i].whell_pos.x_ = 0.0f;
+        this->setpoint_[i].whell_pos.y_ = -0.3f;
       }
+      break;
+    default:
+      ASSERT(false);
+      return;
+  }
 
-      this->setpoint_[i].motor_angle[j] = _angle;
+  /* 控制逻辑 */
+  switch (this->mode_) {
+    case Relax:
+      for (uint8_t i = 0; i < LEG_NUM; i++) {
+        for (int j = 0; j < LEG_MOTOR_NUM; j++) {
+          this->leg_motor_[i * LEG_MOTOR_NUM + j]->Relax();
+        }
+      }
+      break;
 
-      this->leg_motor_[i * LEG_MOTOR_NUM + j]->Set(
-          circle_error(_angle, this->feedback_[i].motor_angle[j], M_2PI));
-    }
+    case Break:
+    case Squat:
+    case Jump:
+      for (uint8_t i = 0; i < LEG_NUM; i++) {
+        Position2 motor_pos[LEG_MOTOR_NUM] = {{-param_.l1 / 2.0f, 0.0f},
+                                              {param_.l1 / 2.0f, 0.0f}};
+
+        for (uint8_t j = 0; j < LEG_MOTOR_NUM; j++) {
+          Component::Triangle leg_tri;
+
+          leg_tri.data_.side[0] = this->param_.l3;
+          leg_tri.data_.side[1] = this->param_.l2;
+          leg_tri.data_.side[2] =
+              Position2::Distance(this->setpoint_[i].whell_pos, motor_pos[j]);
+
+          leg_tri.Slove();
+
+          float _angle =
+              Line(motor_pos[j], this->setpoint_[i].whell_pos).Angle();
+
+          if (j == FRONT) {
+            circle_add(&_angle, -leg_tri.data_.angle[0], M_2PI);
+          } else {
+            circle_add(&_angle, leg_tri.data_.angle[0], M_2PI);
+          }
+
+          this->setpoint_[i].motor_angle[j] = _angle;
+
+          this->leg_motor_[i * LEG_MOTOR_NUM + j]->SetCurrent(
+              this->leg_actuator_[i * LEG_MOTOR_NUM + j]->Calculation(
+                  _angle, this->leg_motor_[i * LEG_MOTOR_NUM + j]->GetSpeed(),
+                  this->feedback_[i].motor_angle[j], this->dt_));
+
+          this->leg_motor_[i * LEG_MOTOR_NUM + j]->SetPos(
+              circle_error(_angle, this->feedback_[i].motor_angle[j], M_2PI));
+        }
+      }
+      break;
+    default:
+      ASSERT(false);
+      return;
   }
 }
