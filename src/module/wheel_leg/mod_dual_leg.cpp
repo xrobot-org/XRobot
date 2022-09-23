@@ -4,6 +4,73 @@ using namespace Module;
 
 using namespace Component::Type;
 
+BalanceChassis::BalanceChassis(BalanceChassis::Param& param, float sample_freq)
+    : param_(param), ctrl_lock_(true) {
+  for (uint8_t i = 0; i < LEG_NUM; i++) {
+    for (uint8_t j = 0; j < LEG_MOTOR_NUM; j++) {
+      this->leg_motor_[i * LEG_MOTOR_NUM + j] =
+          (Device::MitMotor*)System::Memory::Malloc(sizeof(Device::MitMotor));
+      new (this->leg_motor_[i * LEG_MOTOR_NUM + j]) Device::MitMotor(
+          this->param_.leg_motor[i * LEG_MOTOR_NUM + j],
+          ("chassis_" + std::to_string(i) + "_" + std::to_string(j)).c_str());
+
+      this->leg_actuator_[i * LEG_MOTOR_NUM + j] =
+          (Component::PosActuator*)System::Memory::Malloc(
+              sizeof(Component::PosActuator));
+      new (this->leg_actuator_[i * LEG_MOTOR_NUM + j]) Component::PosActuator(
+          this->param_.leg_actr[i * LEG_MOTOR_NUM + j], sample_freq);
+    }
+  }
+
+  for (int i = 0; i < LEG_NUM; i++) {
+    for (int j = 0; j < LEG_MOTOR_NUM; j++) {
+      circle_add(this->param_.mech_zero + i * 2 + j, M_PI, M_2PI);
+    }
+  }
+
+  auto event_callback = [](uint32_t event, void* arg) {
+    BalanceChassis* chassis = static_cast<BalanceChassis*>(arg);
+
+    chassis->ctrl_lock_.Take(UINT32_MAX);
+
+    switch (event) {
+      case ChangeModeRelax:
+        chassis->SetMode(Relax);
+        break;
+      case ChangeModeBreak:
+        chassis->SetMode(Break);
+        break;
+      case ChangeModeSquat:
+        chassis->SetMode(Squat);
+        break;
+      case ChangeModeJump:
+        chassis->SetMode(Jump);
+        break;
+      default:
+        break;
+    }
+
+    chassis->ctrl_lock_.Give();
+  };
+
+  Component::CMD::RegisterEvent(event_callback, this, this->param_.event_map);
+
+  auto chassis_thread = [](void* arg) {
+    BalanceChassis* chassis = (BalanceChassis*)arg;
+
+    while (1) {
+      chassis->UpdateFeedback();
+
+      chassis->Control();
+
+      chassis->thread_.Sleep(2);
+    }
+  };
+
+  THREAD_DECLEAR(this->thread_, chassis_thread, 768, System::Thread::Medium,
+                 this);
+}
+
 void BalanceChassis::UpdateFeedback() {
   for (uint8_t i = 0; i < LEG_NUM; i++)
     for (uint8_t j = 0; j < LEG_MOTOR_NUM; j++)
@@ -39,46 +106,6 @@ void BalanceChassis::UpdateFeedback() {
   }
 }
 
-BalanceChassis::BalanceChassis(BalanceChassis::Param& param, float sample_freq)
-    : param_(param) {
-  for (uint8_t i = 0; i < LEG_NUM; i++) {
-    for (uint8_t j = 0; j < LEG_MOTOR_NUM; j++) {
-      this->leg_motor_[i * LEG_MOTOR_NUM + j] =
-          (Device::MitMotor*)System::Memory::Malloc(sizeof(Device::MitMotor));
-      new (this->leg_motor_[i * LEG_MOTOR_NUM + j]) Device::MitMotor(
-          this->param_.leg_motor[i * LEG_MOTOR_NUM + j],
-          ("chassis_" + std::to_string(i) + "_" + std::to_string(j)).c_str());
-
-      this->leg_actuator_[i * LEG_MOTOR_NUM + j] =
-          (Component::PosActuator*)System::Memory::Malloc(
-              sizeof(Component::PosActuator));
-      new (this->leg_actuator_[i * LEG_MOTOR_NUM + j]) Component::PosActuator(
-          this->param_.leg_actr[i * LEG_MOTOR_NUM + j], sample_freq);
-    }
-  }
-
-  for (int i = 0; i < LEG_NUM; i++) {
-    for (int j = 0; j < LEG_MOTOR_NUM; j++) {
-      circle_add(this->param_.mech_zero + i * 2 + j, M_PI, M_2PI);
-    }
-  }
-
-  auto chassis_thread = [](void* arg) {
-    BalanceChassis* chassis = (BalanceChassis*)arg;
-
-    while (1) {
-      chassis->UpdateFeedback();
-
-      chassis->Control();
-
-      chassis->thread_.Sleep(2);
-    }
-  };
-
-  THREAD_DECLEAR(this->thread_, chassis_thread, 768, System::Thread::Medium,
-                 this);
-}
-
 void BalanceChassis::Control() {
   this->now_ = System::Thread::GetTick();
 
@@ -93,7 +120,7 @@ void BalanceChassis::Control() {
     case Jump:
       for (int i = 0; i < LEG_NUM; i++) {
         this->setpoint_[i].whell_pos.x_ = 0.0f;
-        this->setpoint_[i].whell_pos.y_ = -0.3f;
+        this->setpoint_[i].whell_pos.y_ = -0.45f;
       }
       break;
     default:
@@ -153,4 +180,15 @@ void BalanceChassis::Control() {
       ASSERT(false);
       return;
   }
+}
+
+void BalanceChassis::SetMode(Mode mode) {
+  if (mode == this->mode_) return; /* 模式未改变直接返回 */
+
+  /* 切换模式后重置PID和滤波器 */
+  for (size_t i = 0; i < LEG_NUM * LEG_MOTOR_NUM; i++) {
+    this->leg_actuator_[i]->Reset();
+  }
+
+  this->mode_ = mode;
 }

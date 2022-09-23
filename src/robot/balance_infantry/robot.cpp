@@ -15,6 +15,25 @@ Robot::Infantry::Param param = {
         3.00471401f,
       },
 
+      .event_map = {
+        Component::CMD::CreateMapItem(
+          Component::CMD::EventLostCtrl,
+          Module::BalanceChassis::ChangeModeRelax
+        ),
+        Component::CMD::CreateMapItem(
+          Device::DR16::SwitchPosLeftTop,
+          Module::BalanceChassis::ChangeModeRelax
+        ),
+        Component::CMD::CreateMapItem(
+          Device::DR16::SwitchPosLeftMid,
+          Module::BalanceChassis::ChangeModeBreak
+        ),
+        Component::CMD::CreateMapItem(
+          Device::DR16::SwitchPosLeftBot,
+          Module::BalanceChassis::ChangeModeSquat
+        )
+      },
+
       .leg_actr = {
         {
         .speed = {

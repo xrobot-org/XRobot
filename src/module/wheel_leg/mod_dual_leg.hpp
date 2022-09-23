@@ -1,6 +1,7 @@
 #pragma once
 
 #include "comp_actuator.hpp"
+#include "comp_cmd.hpp"
 #include "comp_filter.hpp"
 #include "comp_mixer.hpp"
 #include "comp_pid.hpp"
@@ -31,6 +32,13 @@ class BalanceChassis {
     Jump,  /* 短时间内移动至最高高度后，切换至稳定模式 */
   } Mode;
 
+  typedef enum {
+    ChangeModeRelax,
+    ChangeModeBreak,
+    ChangeModeSquat,
+    ChangeModeJump,
+  } ChassisEvent;
+
   typedef struct {
     float l1;
     float l2;
@@ -39,6 +47,8 @@ class BalanceChassis {
     float leg_max_angle;
 
     float mech_zero[LEG_NUM * LEG_MOTOR_NUM];
+
+    const std::vector<Component::CMD::EventMapItem> event_map;
 
     Component::PosActuator::Param leg_actr[LEG_NUM * LEG_MOTOR_NUM];
 
@@ -63,6 +73,8 @@ class BalanceChassis {
 
   void Control();
 
+  void SetMode(Mode mode);
+
   Param param_;
 
   float dt_;
@@ -80,6 +92,8 @@ class BalanceChassis {
   Feedback feedback_[LEG_NUM];
 
   Mode mode_ = Relax;
+
+  System::Semaphore ctrl_lock_;
 
   System::Thread thread_;
 };
