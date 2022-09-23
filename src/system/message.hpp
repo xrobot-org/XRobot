@@ -36,9 +36,9 @@ class Message {
    public:
     Topic(const char* name, bool cache) {
       if (cache) {
-        this->topic_ = om_config_topic(NULL, "A", name);
+        this->topic_ = om_config_topic(NULL, "A", name, sys_msg_net_);
       } else {
-        this->topic_ = om_config_topic(NULL, "VA", name);
+        this->topic_ = om_config_topic(NULL, "VA", name, sys_msg_net_);
       }
     }
 
@@ -47,7 +47,7 @@ class Message {
     }
 
     bool Link(const char* source_name) {
-      return om_core_link(om_find_topic(source_name, UINT32_MAX),
+      return om_core_link(om_find_topic(source_name, sys_msg_net_, UINT32_MAX),
                           this->GetHandle()) == OM_OK;
     }
 
@@ -89,8 +89,8 @@ class Message {
   class Subscriber {
    public:
     Subscriber(const char* name, Data& data) {
-      this->handle_ =
-          om_subscript(om_find_topic(name, UINT32_MAX), OM_PRASE_VAR(data));
+      this->handle_ = om_subscript(
+          om_find_topic(name, sys_msg_net_, UINT32_MAX), OM_PRASE_VAR(data));
     }
 
     bool DumpData() { return om_suber_export(this->handle_, false) == OM_OK; }
@@ -134,5 +134,7 @@ class Message {
 
     om_event_group_t group_;
   };
+
+  static om_net_t* sys_msg_net_;
 };
 }  // namespace System

@@ -5,12 +5,6 @@
 #define OM_DEBUG (0)
 #endif
 
-/* OneMessage主线程调用的频率 */
-#define OM_CALL_FREQ (1000)
-
-/* 使能这个宏可能会提高刷新频率的精度，但会消耗更多性能 */
-#define OM_FREQ_USE_FLOAT (0)
-
 /* 严格限制导出数据时的长度 */
 #define OM_STRICT_LIMIT (1)
 
@@ -41,6 +35,7 @@
 #define om_mutex_lock_isr(arg) \
   xSemaphoreTakeFromISR(*arg, NULL) == pdTRUE ? OM_OK : OM_ERROR
 #define om_mutex_unlock_isr(arg) xSemaphoreGiveFromISR(*arg, NULL)
+#define om_mutex_delete(arg) vSemaphoreDelete(*arg)
 
 /* 将运行时间作为消息发出的时间 */
 #define OM_VIRTUAL_TIME (0)
@@ -63,14 +58,3 @@
 
 /* 话题名称最大长度 */
 #define OM_TOPIC_MAX_NAME_LEN (25)
-
-#define OM_REPORT_ACTIVITY (USB_REPORT)
-
-#if OM_REPORT_ACTIVITY
-#include "bsp_timer.h"
-#include "bsp_usb.h"
-#define om_get_realtime bsp_timer_get_realtime
-#define om_report_transmit bsp_usb_transmit
-#define OM_REPORT_DATA_BUFF_NUM (128)
-#define OM_REPORT_MAP_BUFF_SIZE (1024)
-#endif
