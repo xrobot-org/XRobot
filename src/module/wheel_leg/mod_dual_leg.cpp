@@ -4,7 +4,7 @@ using namespace Module;
 
 using namespace Component::Type;
 
-BalanceChassis::BalanceChassis(BalanceChassis::Param& param, float sample_freq)
+WheelLeg::WheelLeg(WheelLeg::Param& param, float sample_freq)
     : param_(param), ctrl_lock_(true) {
   for (uint8_t i = 0; i < LEG_NUM; i++) {
     for (uint8_t j = 0; j < LEG_MOTOR_NUM; j++) {
@@ -29,7 +29,7 @@ BalanceChassis::BalanceChassis(BalanceChassis::Param& param, float sample_freq)
   }
 
   auto event_callback = [](uint32_t event, void* arg) {
-    BalanceChassis* chassis = static_cast<BalanceChassis*>(arg);
+    WheelLeg* chassis = static_cast<WheelLeg*>(arg);
 
     chassis->ctrl_lock_.Take(UINT32_MAX);
 
@@ -56,7 +56,7 @@ BalanceChassis::BalanceChassis(BalanceChassis::Param& param, float sample_freq)
   Component::CMD::RegisterEvent(event_callback, this, this->param_.event_map);
 
   auto chassis_thread = [](void* arg) {
-    BalanceChassis* chassis = (BalanceChassis*)arg;
+    WheelLeg* chassis = (WheelLeg*)arg;
 
     while (1) {
       chassis->UpdateFeedback();
@@ -71,7 +71,7 @@ BalanceChassis::BalanceChassis(BalanceChassis::Param& param, float sample_freq)
                  this);
 }
 
-void BalanceChassis::UpdateFeedback() {
+void WheelLeg::UpdateFeedback() {
   for (uint8_t i = 0; i < LEG_NUM; i++)
     for (uint8_t j = 0; j < LEG_MOTOR_NUM; j++)
       this->leg_motor_[i * LEG_MOTOR_NUM + j]->Update();
@@ -102,11 +102,14 @@ void BalanceChassis::UpdateFeedback() {
 
     this->feedback_[i].whell_pos =
         (Position2)Polar2(_angle, _length) + middle_point;
+    if (i == LEFT) {
+      this->feedback_[i].whell_pos.x_ = -this->feedback_[i].whell_pos.x_;
+    }
     this->feedback_[i].whell_polar = Polar2(this->feedback_[i].whell_pos);
   }
 }
 
-void BalanceChassis::Control() {
+void WheelLeg::Control() {
   this->now_ = System::Thread::GetTick();
 
   this->dt_ = (float)(this->now_ - this->last_wakeup_) / 1000.0f;
@@ -120,7 +123,7 @@ void BalanceChassis::Control() {
     case Jump:
       for (int i = 0; i < LEG_NUM; i++) {
         this->setpoint_[i].whell_pos.x_ = 0.0f;
-        this->setpoint_[i].whell_pos.y_ = -0.45f;
+        this->setpoint_[i].whell_pos.y_ = -0.17f;
       }
       break;
     default:
@@ -146,17 +149,21 @@ void BalanceChassis::Control() {
                                               {param_.l1 / 2.0f, 0.0f}};
 
         for (uint8_t j = 0; j < LEG_MOTOR_NUM; j++) {
+          Component::Type::Position2 target = this->setpoint_[i].whell_pos;
+
+          if (i == LEFT) {
+            target.x_ = -target.x_;
+          }
+
           Component::Triangle leg_tri;
 
           leg_tri.data_.side[0] = this->param_.l3;
           leg_tri.data_.side[1] = this->param_.l2;
-          leg_tri.data_.side[2] =
-              Position2::Distance(this->setpoint_[i].whell_pos, motor_pos[j]);
+          leg_tri.data_.side[2] = Position2::Distance(target, motor_pos[j]);
 
           leg_tri.Slove();
 
-          float _angle =
-              Line(motor_pos[j], this->setpoint_[i].whell_pos).Angle();
+          float _angle = Line(motor_pos[j], target).Angle();
 
           if (j == FRONT) {
             circle_add(&_angle, -leg_tri.data_.angle[0], M_2PI);
@@ -182,7 +189,7 @@ void BalanceChassis::Control() {
   }
 }
 
-void BalanceChassis::SetMode(Mode mode) {
+void WheelLeg::SetMode(Mode mode) {
   if (mode == this->mode_) return; /* 模式未改变直接返回 */
 
   /* 切换模式后重置PID和滤波器 */

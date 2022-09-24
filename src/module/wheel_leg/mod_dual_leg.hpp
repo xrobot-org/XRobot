@@ -20,7 +20,7 @@
 /*       |   ◉   |      */
 /*        \ ___ /       */
 namespace Module {
-class BalanceChassis {
+class WheelLeg {
  public:
   typedef enum { LEFT, RIGHT, LEG_NUM } Leg;
   typedef enum { FRONT, BACK, LEG_MOTOR_NUM } LegMotor;
@@ -67,7 +67,7 @@ class BalanceChassis {
     float motor_angle[LEG_MOTOR_NUM];
   } Setpoint;
 
-  BalanceChassis(Param& param, float sample_freq);
+  WheelLeg(Param& param, float sample_freq);
 
   void UpdateFeedback();
 

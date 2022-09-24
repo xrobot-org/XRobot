@@ -1,7 +1,149 @@
 #include "robot.hpp"
 /* clang-format off */
 Robot::Infantry::Param param = {
-    .chassis={
+    .balance = {
+      .follow_pid_param = {
+        .k = 0.2f,
+        .p = 1.0f,
+        .i = 0.5f,
+        .d = 0.0f,
+        .i_limit = 0.011f,
+        .out_limit = 1.0f,
+        .d_cutoff_freq = -1.0f,
+        .range = M_2PI,
+      },
+
+      .comp_pid_param = {
+        .k = 0.2f,
+        .p = 1.0f,
+        .i = 0.5f,
+        .d = 0.0f,
+        .i_limit = 0.011f,
+        .out_limit = 1.0f,
+        .d_cutoff_freq = -1.0f,
+        .range = M_2PI,
+      },
+
+      .event_map = {
+        Component::CMD::CreateMapItem(
+          Component::CMD::EventLostCtrl,
+          Module::RMBalance::ChangeModeRelax
+        ),
+        Component::CMD::CreateMapItem(
+          Device::DR16::SwitchPosLeftTop,
+          Module::RMBalance::ChangeModeRelax
+        ),
+        Component::CMD::CreateMapItem(
+          Device::DR16::SwitchPosLeftMid,
+          Module::RMBalance::ChangeModeRelax
+        ),
+        Component::CMD::CreateMapItem(
+          Device::DR16::SwitchPosLeftBot,
+          Module::RMBalance::ChangeModeFollow
+        )
+      },
+
+      .wheel_param = {
+        {
+          .speed = {
+            .k = 0.0002f,
+            .p = 1.0f,
+            .i = 0.0f,
+            .d = 0.0f,
+            .i_limit = 1.0f,
+            .out_limit = 1.0f,
+            .d_cutoff_freq = -1.0f,
+            .range = -1.0f,
+          },
+
+          .in_cutoff_freq = -1.0f,
+
+          .out_cutoff_freq = -1.0f,
+        },{
+          .speed = {
+            .k = 0.0002f,
+            .p = 1.0f,
+            .i = 0.0f,
+            .d = 0.0f,
+            .i_limit = 1.0f,
+            .out_limit = 1.0f,
+            .d_cutoff_freq = -1.0f,
+            .range = -1.0f,
+          },
+
+          .in_cutoff_freq = -1.0f,
+
+          .out_cutoff_freq = -1.0f,
+        },
+      },
+
+      .balance_param = {
+        .speed = {
+          /* GIMBAL_CTRL_YAW_OMEGA_IDX */
+          .k = 0.2f,
+          .p = 1.0f,
+          .i = 0.0f,
+          .d = 0.001f,
+          .i_limit = 1.0f,
+          .out_limit = 1.0f,
+          .d_cutoff_freq = -1.0f,
+          .range = -1.0f,
+        },
+
+        .position = {
+          /* GIMBAL_CTRL_YAW_ANGLE_IDX */
+          .k = 12.0f,
+          .p = 1.0f,
+          .i = 3.0f,
+          .d = 0.0f,
+          .i_limit = 20.0f,
+          .out_limit = 20.0f,
+          .d_cutoff_freq = -1.0f,
+          .range = M_2PI,
+        },
+
+        .in_cutoff_freq = -1.0f,
+
+        .out_cutoff_freq = -1.0f,
+      },
+
+      .speed_param = {
+        .speed = {
+            .k = 1.0f,
+            .p = 1.0f,
+            .i = 3.0f,
+            .d = 0.0f,
+            .i_limit = 0.15f,
+            .out_limit = 0.2f,
+            .d_cutoff_freq = -1.0f,
+            .range = -1.0f,
+        },
+
+        .in_cutoff_freq = -1.0f,
+
+        .out_cutoff_freq = -1.0f,
+      },
+
+      .center_filter_cutoff_freq = 10.0f,
+
+      .motor_param = {
+        {
+          .id_feedback = 0x201,
+          .id_control = M3508_M2006_CTRL_ID_BASE,
+          .model = Device::RMMotor::MOTOR_M3508,
+          .can = BSP_CAN_1,
+        },
+        {
+          .id_feedback = 0x202,
+          .id_control = M3508_M2006_CTRL_ID_BASE,
+          .model = Device::RMMotor::MOTOR_M3508,
+          .can = BSP_CAN_1,
+        },
+      },
+
+    },
+
+    .leg = {
       .l1 = 0.11f,
       .l2 = 0.2f,
       .l3 = 0.31f,
@@ -18,19 +160,19 @@ Robot::Infantry::Param param = {
       .event_map = {
         Component::CMD::CreateMapItem(
           Component::CMD::EventLostCtrl,
-          Module::BalanceChassis::ChangeModeRelax
+          Module::WheelLeg::ChangeModeRelax
         ),
         Component::CMD::CreateMapItem(
           Device::DR16::SwitchPosLeftTop,
-          Module::BalanceChassis::ChangeModeRelax
+          Module::WheelLeg::ChangeModeRelax
         ),
         Component::CMD::CreateMapItem(
           Device::DR16::SwitchPosLeftMid,
-          Module::BalanceChassis::ChangeModeBreak
+          Module::WheelLeg::ChangeModeBreak
         ),
         Component::CMD::CreateMapItem(
           Device::DR16::SwitchPosLeftBot,
-          Module::BalanceChassis::ChangeModeSquat
+          Module::WheelLeg::ChangeModeSquat
         )
       },
 
@@ -201,11 +343,15 @@ Robot::Infantry::Param param = {
 };
 /* clang-format on */
 
+Robot::Infantry* debug_ = NULL;
+
 void robot_init() {
   auto init_thread_fn = [](void* arg) {
     RM_UNUSED(arg);
 
     Robot::Infantry robot(param, 500.0f);
+
+    debug_ = &robot;
     while (1) {
       System::Thread::Sleep(UINT32_MAX);
     }

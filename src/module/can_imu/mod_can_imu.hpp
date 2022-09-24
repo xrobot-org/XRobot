@@ -2,17 +2,6 @@
 
 #include "dev_can.hpp"
 
-/*          L1          */
-/* M_FRONT ☉---☉ M_BACK */
-/*        /     \       */
-/*       /       \L2    */
-/*      /         \     */
-/*     ◉           ◉    */
-/*      \         /     */
-/*       \  ___  /L3    */
-/*        /     \       */
-/*       |   ◉   |      */
-/*        \ ___ /       */
 namespace Module {
 class CanIMU {
  public:

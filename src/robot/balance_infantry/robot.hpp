@@ -8,6 +8,7 @@
 #include "dev_led.hpp"
 #include "dev_referee.hpp"
 #include "dev_term.hpp"
+#include "mod_balance.hpp"
 #include "mod_dual_leg.hpp"
 
 void robot_init();
@@ -15,7 +16,8 @@ namespace Robot {
 class Infantry : public System::Message {
  public:
   typedef struct {
-    Module::BalanceChassis::Param chassis;
+    Module::RMBalance::Param balance;
+    Module::WheelLeg::Param leg;
     Device::BMI088::Rotation bmi088_rot;
     Device::BMI088::Calibration bmi088_cali;
     Device::Cap::Param cap;
@@ -33,13 +35,15 @@ class Infantry : public System::Message {
   Device::Referee referee_;
   Device::Term term_;
 
-  Module::BalanceChassis chassis_;
+  Module::WheelLeg leg_;
+  Module::RMBalance balance_;
   // Module::Gimbal gimbal_;
   // Module::Launcher launcher_;
 
   Infantry(Param& param, float control_freq)
       : bmi088_(param.bmi088_cali, param.bmi088_rot),
         cap_(param.cap),
-        chassis_(param.chassis, control_freq) {}
+        leg_(param.leg, control_freq),
+        balance_(param.balance, control_freq) {}
 };
 }  // namespace Robot
