@@ -24,7 +24,7 @@ WheelLeg::WheelLeg(WheelLeg::Param& param, float sample_freq)
 
   for (int i = 0; i < LEG_NUM; i++) {
     for (int j = 0; j < LEG_MOTOR_NUM; j++) {
-      circle_add(this->param_.mech_zero + i * 2 + j, M_PI, M_2PI);
+      circle_add(this->param_.motor_zero + i * 2 + j, M_PI, M_2PI);
     }
   }
 
@@ -58,7 +58,11 @@ WheelLeg::WheelLeg(WheelLeg::Param& param, float sample_freq)
   auto chassis_thread = [](void* arg) {
     WheelLeg* chassis = (WheelLeg*)arg;
 
+    DECLARE_SUBER(eulr_, chassis->eulr_, "imu_eulr");
+
     while (1) {
+      eulr_.DumpData();
+
       chassis->UpdateFeedback();
 
       chassis->Control();
@@ -81,7 +85,7 @@ void WheelLeg::UpdateFeedback() {
       this->feedback_[i].motor_angle[j] =
           this->leg_motor_[i * LEG_MOTOR_NUM + j]->GetAngle();
       circle_add(this->feedback_[i].motor_angle + j,
-                 -this->param_.mech_zero[i * LEG_MOTOR_NUM + j], M_2PI);
+                 -this->param_.motor_zero[i * LEG_MOTOR_NUM + j], M_2PI);
     }
 
     Polar2 polar_l2[LEG_MOTOR_NUM]{
@@ -119,13 +123,36 @@ void WheelLeg::Control() {
   switch (this->mode_) {
     case Relax:
     case Break:
-    case Squat:
-    case Jump:
       for (int i = 0; i < LEG_NUM; i++) {
         this->setpoint_[i].whell_pos.x_ = 0.0f;
-        this->setpoint_[i].whell_pos.y_ = -0.17f;
+        this->setpoint_[i].whell_pos.y_ = -this->param_.limit.high_min;
       }
       break;
+    case Squat:
+    case Jump: {
+      float y_err = sinf(this->eulr_.rol) * this->param_.l4 * 10.0f;
+
+      if (this->eulr_.rol < 0.0f) {
+        this->setpoint_[RIGHT].whell_pos.x_ = 0.0f;
+        this->setpoint_[RIGHT].whell_pos.y_ += y_err * this->dt_;
+      } else {
+        this->setpoint_[LEFT].whell_pos.x_ = 0.0f;
+        this->setpoint_[LEFT].whell_pos.y_ -= y_err * this->dt_;
+      }
+
+      float tmp = MAX(this->setpoint_[LEFT].whell_pos.y_,
+                      this->setpoint_[RIGHT].whell_pos.y_) +
+                  this->param_.limit.high_min;
+
+      this->setpoint_[LEFT].whell_pos.y_ -= tmp;
+      this->setpoint_[RIGHT].whell_pos.y_ -= tmp;
+
+      clampf(&this->setpoint_[LEFT].whell_pos.y_, -this->param_.limit.high_max,
+             -this->param_.limit.high_min);
+      clampf(&this->setpoint_[RIGHT].whell_pos.y_, -this->param_.limit.high_max,
+             -this->param_.limit.high_min);
+      break;
+    }
     default:
       ASSERT(false);
       return;

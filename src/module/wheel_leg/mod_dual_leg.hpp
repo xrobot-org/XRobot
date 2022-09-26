@@ -8,17 +8,17 @@
 #include "comp_triangle.hpp"
 #include "dev_mit_motor.hpp"
 
-/*          L1          */
-/* M_FRONT ☉---☉ M_BACK */
-/*        /     \       */
-/*       /       \L2    */
-/*      /         \     */
-/*     ◉           ◉    */
-/*      \         /     */
-/*       \  ___  /L3    */
-/*        /     \       */
-/*       |   ◉   |      */
-/*        \ ___ /       */
+/*          L1              LEFT   L4  RIGHT  */
+/* M_FRONT ☉---☉ M_BACK       ☉----------☉    */
+/*        /     \             |          |    */
+/*       /       \L2          |          |    */
+/*      /         \           |          |    */
+/*     ◉           ◉          ◉          ◉    */
+/*      \         /           |          |    */
+/*       \  ___  /L3          |          |    */
+/*        /     \            ---        ---   */
+/*       |   ◉   |           | |        | |   */
+/*        \ ___ /            ---        ---   */
 namespace Module {
 class WheelLeg {
  public:
@@ -43,10 +43,16 @@ class WheelLeg {
     float l1;
     float l2;
     float l3;
+    float l4;
+
+    struct {
+      float high_max;
+      float high_min;
+    } limit;
 
     float leg_max_angle;
 
-    float mech_zero[LEG_NUM * LEG_MOTOR_NUM];
+    float motor_zero[LEG_NUM * LEG_MOTOR_NUM];
 
     const std::vector<Component::CMD::EventMapItem> event_map;
 
@@ -86,6 +92,8 @@ class WheelLeg {
   Component::PosActuator* leg_actuator_[LEG_NUM * LEG_MOTOR_NUM];
 
   Device::MitMotor* leg_motor_[LEG_NUM * LEG_MOTOR_NUM];
+
+  Component::Type::Eulr eulr_;
 
   Setpoint setpoint_[LEG_NUM];
 

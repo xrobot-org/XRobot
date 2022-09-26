@@ -63,6 +63,8 @@ class Balance {
 
   /* 底盘参数的结构体，包含所有初始Component化用的参数，通常是const，存好几组 */
   typedef struct {
+    float init_g_center;
+
     Component::PID::Param follow_pid_param; /* 跟随云台PID的参数 */
 
     Component::PID::Param comp_pid_param;
@@ -127,11 +129,13 @@ class Balance {
 
   Component::LowPassFilter2p center_filter_;
 
-  System::Thread thread_;
-
   System::Semaphore ctrl_lock_;
 
   Component::CMD::ChassisCMD cmd_;
+
+  System::Thread thread_;
+
+  DECLARE_PUBER(speed_err_, float, "chassis_speed_err", true);
 };
 
 typedef Balance<Device::RMMotor, Device::RMMotor::Param> RMBalance;

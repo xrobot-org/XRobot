@@ -2,6 +2,8 @@
 /* clang-format off */
 Robot::Infantry::Param param = {
     .balance = {
+      .init_g_center = 0.13f,
+
       .follow_pid_param = {
         .k = 0.2f,
         .p = 1.0f,
@@ -147,10 +149,16 @@ Robot::Infantry::Param param = {
       .l1 = 0.11f,
       .l2 = 0.2f,
       .l3 = 0.31f,
+      .l4 = 0.455f,
+
+      .limit = {
+        .high_max = 0.45,
+        .high_min = 0.15,
+      },
 
       .leg_max_angle = 0.0f,
 
-      .mech_zero = {
+      .motor_zero = {
         0.630508065f,
         5.75973034f,
         1.45487654f,

@@ -39,7 +39,7 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
       ctrl_lock_(true) {
   memset(&(this->cmd_), 0, sizeof(this->cmd_));
 
-  this->setpoint_.angle.g_center = 0.13f;
+  this->setpoint_.angle.g_center = param.init_g_center;
 
   for (uint8_t i = 0; i < WheelNum; i++) {
     this->wheel_actr_[i] = (Component::SpeedActuator*)System::Memory::Malloc(
@@ -97,7 +97,7 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
       chassis->ctrl_lock_.Give();
 
       /* 运行结束，等待下一次唤醒 */
-      chassis->thread_.Sleep(2);
+      chassis->thread_.Sleep(1);
     }
   };
 
@@ -231,6 +231,8 @@ void Balance<Motor, MotorParam>::SetMode(Balance::Mode mode) {
 
   this->balance_actr_.Reset();
   this->mode_ = mode;
+
+  this->setpoint_.angle.g_center = param_.init_g_center;
 }
 
 template class Balance<Device::RMMotor, Device::RMMotor::Param>;
