@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dev_can.hpp"
+#include "dev_can_imu.hpp"
 
 namespace Module {
 class CanIMU {

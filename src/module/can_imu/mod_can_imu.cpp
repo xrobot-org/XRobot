@@ -5,11 +5,6 @@
 using namespace Module;
 
 static Device::CAN::Pack send_buff;
-static const uint8_t IMU_DEVICE_ID = 0x01;
-
-static const uint8_t ACCL_DATA_ID = 0x01;
-static const uint8_t GYRO_DATA_ID = 0x02;
-static const uint8_t EULR_DATA_ID = 0x03;
 
 CanIMU::CanIMU() {
   auto imu_thread = [](void *arg) {
@@ -39,7 +34,7 @@ CanIMU::CanIMU() {
     }
   };
 
-  THREAD_DECLEAR(this->thread_, imu_thread, 512, System::Thread::Medium, this);
+  THREAD_DECLEAR(this->thread_, imu_thread, 256, System::Thread::Medium, this);
 }
 
 void CanIMU::SendAccl() {
@@ -47,8 +42,8 @@ void CanIMU::SendAccl() {
   tmp[1] = this->accl_.x / 6.0f * (float)INT16_MAX;
   tmp[2] = this->accl_.y / 6.0f * (float)INT16_MAX;
   tmp[3] = this->accl_.z / 6.0f * (float)INT16_MAX;
-  send_buff.data[0] = IMU_DEVICE_ID;
-  send_buff.data[1] = ACCL_DATA_ID;
+  send_buff.data[0] = Device::IMU::IMU_DEVICE_ID;
+  send_buff.data[1] = Device::IMU::ACCL_DATA_ID;
   send_buff.index = IMU_SEND_CAN_ID;
   Device::CAN::SendPack(BSP_CAN_1, send_buff);
 }
@@ -58,8 +53,8 @@ void CanIMU::SendGyro() {
   tmp[1] = this->gyro_.x / 20.0f * (float)INT16_MAX;
   tmp[2] = this->gyro_.y / 20.0f * (float)INT16_MAX;
   tmp[3] = this->gyro_.z / 20.0f * (float)INT16_MAX;
-  send_buff.data[0] = IMU_DEVICE_ID;
-  send_buff.data[1] = GYRO_DATA_ID;
+  send_buff.data[0] = Device::IMU::IMU_DEVICE_ID;
+  send_buff.data[1] = Device::IMU::GYRO_DATA_ID;
   Device::CAN::SendPack(BSP_CAN_1, send_buff);
 }
 
@@ -68,7 +63,7 @@ void CanIMU::SendEulr() {
   tmp[1] = this->eulr_.pit / M_2PI * (float)INT16_MAX;
   tmp[2] = this->eulr_.rol / M_2PI * (float)INT16_MAX;
   tmp[3] = this->eulr_.yaw / M_2PI * (float)INT16_MAX;
-  send_buff.data[0] = IMU_DEVICE_ID;
-  send_buff.data[1] = EULR_DATA_ID;
+  send_buff.data[0] = Device::IMU::IMU_DEVICE_ID;
+  send_buff.data[1] = Device::IMU::EULR_DATA_ID;
   Device::CAN::SendPack(BSP_CAN_1, send_buff);
 }
