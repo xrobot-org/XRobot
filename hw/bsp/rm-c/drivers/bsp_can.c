@@ -106,6 +106,11 @@ void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan) {
   bsp_can_callback(CAN_TX_CPLT_CALLBACK, hcan);
 }
 
+void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
+  HAL_CAN_ResetError(hcan);
+  bsp_can_callback(CAN_TX_CPLT_CALLBACK, hcan);
+}
+
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
   bsp_can_callback(CAN_RX_MSG_CALLBACK, hcan);
 }
