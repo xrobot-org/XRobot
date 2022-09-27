@@ -81,8 +81,8 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
     Balance* chassis = (Balance*)arg;
 
     DECLARE_SUBER(cmd_, chassis->cmd_, "cmd_chassis");
-    DECLARE_SUBER(eulr_, chassis->eulr_, "imu_eulr");
-    DECLARE_SUBER(gyro_, chassis->gyro_, "imu_gyro");
+    DECLARE_SUBER(eulr_, chassis->eulr_, "chassis_eulr");
+    DECLARE_SUBER(gyro_, chassis->gyro_, "chassis_gyro");
 
     while (1) {
       /* 读取控制指令、电容、裁判系统、电机反馈 */

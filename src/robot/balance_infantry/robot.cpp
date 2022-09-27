@@ -176,7 +176,7 @@ Robot::Infantry::Param param = {
         ),
         Component::CMD::CreateMapItem(
           Device::DR16::SwitchPosLeftMid,
-          Module::WheelLeg::ChangeModeBreak
+          Module::WheelLeg::ChangeModeSquat
         ),
         Component::CMD::CreateMapItem(
           Device::DR16::SwitchPosLeftBot,
@@ -346,12 +346,19 @@ Robot::Infantry::Param param = {
 
   .cap = {
     .can = BSP_CAN_1,
-    .index = DEV_CAP_FB_ID_BASE,
+    .index = 0x30,
   },
+
+  .can_imu = {
+    .tp_name_prefix = "chassis",
+
+    .can = BSP_CAN_1,
+
+    .index = 30,
+  }
 };
 /* clang-format on */
 
-Robot::Infantry* debug_ = NULL;
 
 void robot_init() {
   auto init_thread_fn = [](void* arg) {
@@ -359,7 +366,6 @@ void robot_init() {
 
     Robot::Infantry robot(param, 500.0f);
 
-    debug_ = &robot;
     while (1) {
       System::Thread::Sleep(UINT32_MAX);
     }

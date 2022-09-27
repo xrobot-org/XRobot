@@ -58,7 +58,7 @@ WheelLeg::WheelLeg(WheelLeg::Param& param, float sample_freq)
   auto chassis_thread = [](void* arg) {
     WheelLeg* chassis = (WheelLeg*)arg;
 
-    DECLARE_SUBER(eulr_, chassis->eulr_, "imu_eulr");
+    DECLARE_SUBER(eulr_, chassis->eulr_, "chassis_eulr");
 
     while (1) {
       eulr_.DumpData();

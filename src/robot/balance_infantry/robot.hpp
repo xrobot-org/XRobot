@@ -3,6 +3,7 @@
 #include "dev_ai.hpp"
 #include "dev_bmi088.hpp"
 #include "dev_can.hpp"
+#include "dev_can_imu.hpp"
 #include "dev_cap.hpp"
 #include "dev_dr16.hpp"
 #include "dev_led.hpp"
@@ -21,6 +22,7 @@ class Infantry : public System::Message {
     Device::BMI088::Rotation bmi088_rot;
     Device::BMI088::Calibration bmi088_cali;
     Device::Cap::Param cap;
+    Device::IMU::Param can_imu;
   } Param;
 
   Component::CMD cmd_;
@@ -29,6 +31,7 @@ class Infantry : public System::Message {
   Device::AI ai_;
   Device::BMI088 bmi088_;
   Device::CAN can_;
+  Device::IMU can_imu_;
   Device::Cap cap_;
   Device::DR16 dr16_;
   Device::LED led_;
@@ -42,6 +45,7 @@ class Infantry : public System::Message {
 
   Infantry(Param& param, float control_freq)
       : bmi088_(param.bmi088_cali, param.bmi088_rot),
+        can_imu_(param.can_imu),
         cap_(param.cap),
         leg_(param.leg, control_freq),
         balance_(param.balance, control_freq) {}
