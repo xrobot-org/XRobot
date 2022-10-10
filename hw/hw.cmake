@@ -6,7 +6,7 @@ set(MCU_DIR ${HW_DIR}/mcu)
 FILE(GLOB children RELATIVE ${BSP_DIR} ${BSP_DIR}/*)
 
 FOREACH(child ${children})
-  IF(${_SUB_CFG_${child}})
+  IF(${${CONFIG_PREFIX}${child}})
     set(BOARD_DIR ${child})
   ENDIF()
 ENDFOREACH()

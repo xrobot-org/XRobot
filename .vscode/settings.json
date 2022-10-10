@@ -21,4 +21,7 @@
     },
     "cortex-debug.showRTOS": true,
     "C_Cpp.clang_format_fallbackStyle": "Google",
+    "python.analysis.extraPaths": [
+        "./utils/python"
+    ],
 }
