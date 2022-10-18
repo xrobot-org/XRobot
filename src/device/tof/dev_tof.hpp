@@ -37,7 +37,7 @@ class Tof {
 
   Param param_;
 
-  System::Queue recv_;
+  System::Queue<CAN::Pack> recv_ = System::Queue<CAN::Pack>(1);
 
   System::Thread thread_;
 

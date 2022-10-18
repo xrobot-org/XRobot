@@ -36,7 +36,7 @@ class MitMotor : public BaseMotor {
 
   float current_ = 0.0f;
 
-  System::Queue recv_;
+  System::Queue<CAN::Pack> recv_ = System::Queue<CAN::Pack>(1);
 
   uint32_t mailbox_;
 

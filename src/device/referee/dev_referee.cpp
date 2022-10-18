@@ -93,9 +93,7 @@ Referee::Referee() {
   this->tim.slow_refresh_.Start();
 #endif
 
-  auto ref_recv_thread = [](void *arg) {
-    Referee *ref = static_cast<Referee *>(arg);
-
+  auto ref_recv_thread = [](Referee *ref) {
     while (1) {
       ref->StartRecv();
 
@@ -115,8 +113,8 @@ Referee::Referee() {
     }
   };
 
-  THREAD_DECLEAR(this->recv_thread_, ref_recv_thread, 256,
-                 System::Thread::Realtime, this);
+  this->recv_thread_.Create(ref_recv_thread, this, "ref_recv_thread", 256,
+                            System::Thread::Realtime);
 }
 
 void Referee::Offline() { this->ref_data_.status = OFFLINE; }

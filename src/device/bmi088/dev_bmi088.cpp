@@ -174,9 +174,7 @@ BMI088::BMI088(BMI088::Calibration &cali, BMI088::Rotation &rot)
   bsp_spi_register_callback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB, recv_cplt_callback,
                             this);
 
-  auto thread_bmi088 = [](void *arg) {
-    BMI088 *bmi088 = static_cast<BMI088 *>(arg);
-
+  auto thread_bmi088 = [](BMI088 *bmi088) {
     Component::PID imu_temp_ctrl_pid(imu_temp_ctrl_pid_param, 1000.0f);
 
     bsp_pwm_start(BSP_PWM_IMU_HEAT);
@@ -216,8 +214,8 @@ BMI088::BMI088(BMI088::Calibration &cali, BMI088::Rotation &rot)
     }
   };
 
-  THREAD_DECLEAR(this->thread_, thread_bmi088, 256, System::Thread::Realtime,
-                 this);
+  this->thread_.Create(thread_bmi088, this, "thread_bmi088", 256,
+                       System::Thread::Realtime);
 }
 
 bool BMI088::Init() {

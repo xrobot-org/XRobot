@@ -36,6 +36,7 @@ void robot_init() {
   };
 
   System::Thread init_thread;
-  THREAD_DECLEAR(init_thread, init_thread_fn, 512, System::Thread::Realtime,
-                 NULL);
+
+  init_thread.Create(init_thread_fn, (void*)0, "init_thread_fn", 512,
+                     System::Thread::Realtime);
 }

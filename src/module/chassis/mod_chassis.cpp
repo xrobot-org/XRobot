@@ -99,18 +99,14 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
 
   Component::CMD::RegisterEvent(event_callback, this, this->param_.event_map);
 
-  auto chassis_thread = [](void* arg) {
-    Chassis* chassis = (Chassis*)arg;
-
-    auto raw_ref_sub = Message::Subscriber<Device::Referee::Data>(
-        "referee", chassis->raw_ref_);
+  auto chassis_thread = [](Chassis* chassis) {
+    auto raw_ref_sub = Message::Subscriber("referee", chassis->raw_ref_);
 
     auto cap_info_sub = Message::Subscriber("cap_info", chassis->cap_info_);
 
     auto yaw_sub = Message::Subscriber("gimbal_yaw_offset", chassis->yaw_);
 
-    auto cmd_sub = Message::Subscriber<Component::CMD::ChassisCMD>(
-        "cmd_chassis", chassis->cmd_);
+    auto cmd_sub = Message::Subscriber("cmd_chassis", chassis->cmd_);
 
     while (1) {
       /* 读取控制指令、电容、裁判系统、电机反馈 */
@@ -136,8 +132,8 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
     }
   };
 
-  THREAD_DECLEAR(this->thread_, chassis_thread, 384, System::Thread::Medium,
-                 this);
+  this->thread_.Create(chassis_thread, this, "chassis_thread", 384,
+                       System::Thread::Medium);
 }
 
 template <typename Motor, typename MotorParam>

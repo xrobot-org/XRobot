@@ -7,9 +7,7 @@ using namespace Module;
 static Device::CAN::Pack send_buff;
 
 CanIMU::CanIMU() {
-  auto imu_thread = [](void *arg) {
-    CanIMU *imu = static_cast<CanIMU *>(arg);
-
+  auto imu_thread = [](CanIMU *imu) {
     auto eulr_sub = Message::Subscriber("imu_eulr", imu->eulr_);
     auto gyro_sub = Message::Subscriber("imu_eulr", imu->eulr_);
     auto accl_sub = Message::Subscriber("imu_eulr", imu->eulr_);
@@ -34,7 +32,8 @@ CanIMU::CanIMU() {
     }
   };
 
-  THREAD_DECLEAR(this->thread_, imu_thread, 256, System::Thread::Medium, this);
+  this->thread_.Create(imu_thread, this, "imu_thread", 256,
+                       System::Thread::Medium);
 }
 
 void CanIMU::SendAccl() {

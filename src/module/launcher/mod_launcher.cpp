@@ -83,11 +83,8 @@ Launcher::Launcher(Param& param, float control_freq)
   bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
   bsp_pwm_set_comp(BSP_PWM_LAUNCHER_SERVO, this->param_.cover_close_duty);
 
-  auto launcher_thread = [](void* arg) {
-    Launcher* launcher = (Launcher*)arg;
-
-    auto ref_sub = Message::Subscriber<Device::Referee::Data>(
-        "referee", launcher->raw_ref_);
+  auto launcher_thread = [](Launcher* launcher) {
+    auto ref_sub = Message::Subscriber("referee", launcher->raw_ref_);
 
     while (1) {
       ref_sub.DumpData();
@@ -106,8 +103,8 @@ Launcher::Launcher(Param& param, float control_freq)
     }
   };
 
-  THREAD_DECLEAR(this->thread_, launcher_thread, 384, System::Thread::Medium,
-                 this);
+  this->thread_.Create(launcher_thread, this, "launcher_thread", 384,
+                       System::Thread::Medium);
 }
 
 void Launcher::UpdateFeedback() {

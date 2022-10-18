@@ -9,7 +9,7 @@ IMU::IMU(IMU::Param &param)
       eulr_tp_((param.tp_name_prefix + std::string("_eulr")).c_str()) {
   auto rx_callback = [](CAN::Pack &rx, IMU *imu) {
     if (rx.index == imu->param_.index && rx.data[0] == IMU_DEVICE_ID) {
-      imu->recv_.SendFromISR(&rx);
+      imu->recv_.SendFromISR(rx);
     }
 
     return true;
@@ -20,9 +20,7 @@ IMU::IMU(IMU::Param &param)
 
   CAN::Subscribe(imu_tp, this->param_.can, this->param_.index, 1);
 
-  auto imu_thread = [](void *arg) {
-    IMU *imu = static_cast<IMU *>(arg);
-
+  auto imu_thread = [](IMU *imu) {
     while (1) {
       /* 读取裁判系统信息 */
       imu->Update();
@@ -34,12 +32,13 @@ IMU::IMU(IMU::Param &param)
     }
   };
 
-  THREAD_DECLEAR(this->thread_, imu_thread, 256, System::Thread::Medium, this);
+  this->thread_.Create(imu_thread, this, "imu_thread", 256,
+                       System::Thread::Medium);
 }
 
 void IMU::Update() {
   CAN::Pack rx;
-  while (this->recv_.Receive(&rx, 0)) {
+  while (this->recv_.Receive(rx, 0)) {
     this->Decode(rx);
     this->online_ = true;
     this->last_online_time_ = System::Thread::GetTick();

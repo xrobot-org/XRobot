@@ -25,7 +25,7 @@ uint8_t RMMotor::motor_tx_flag_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 uint8_t RMMotor::motor_tx_map_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 
 RMMotor::RMMotor(const Param &param, const char *name)
-    : BaseMotor(name), param_(param), recv_(sizeof(CAN::Pack), 1) {
+    : BaseMotor(name), param_(param) {
   strncpy(this->name_, name, sizeof(this->name_));
 
   memset(&(this->feedback_), 0, sizeof(this->feedback_));
@@ -64,7 +64,7 @@ RMMotor::RMMotor(const Param &param, const char *name)
   }
 
   auto rx_callback = [](CAN::Pack &rx, RMMotor *motor) {
-    motor->recv_.OverwriteFromISR(&rx);
+    motor->recv_.OverwriteFromISR(rx);
 
     return true;
   };
@@ -81,7 +81,7 @@ RMMotor::RMMotor(const Param &param, const char *name)
 bool RMMotor::Update() {
   CAN::Pack pack;
 
-  while (this->recv_.Receive(&pack, 0)) {
+  while (this->recv_.Receive(pack, 0)) {
     if ((pack.index == this->param_.id_feedback) &&
         (MOTOR_NONE != this->param_.model)) {
       this->Decode(pack);

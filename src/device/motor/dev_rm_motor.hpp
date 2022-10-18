@@ -77,6 +77,6 @@ class RMMotor : public BaseMotor {
   static uint8_t motor_tx_flag_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
   static uint8_t motor_tx_map_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 
-  System::Queue recv_;
+  System::Queue<CAN::Pack> recv_ = System::Queue<CAN::Pack>(1);
 };
 }  // namespace Device

@@ -24,9 +24,9 @@ static bool initd[BSP_CAN_NUM] = {false};
 Message::Topic<CAN::Pack> *MitMotor::mit_tp[BSP_CAN_NUM];
 
 MitMotor::MitMotor(const Param &param, const char *name)
-    : BaseMotor(name), param_(param), recv_(sizeof(CAN::Pack), 1) {
+    : BaseMotor(name), param_(param) {
   auto rx_callback = [](CAN::Pack &rx, MitMotor *motor) {
-    if (rx.data[0] == motor->param_.id) motor->recv_.OverwriteFromISR(&rx);
+    if (rx.data[0] == motor->param_.id) motor->recv_.OverwriteFromISR(rx);
 
     return true;
   };
@@ -61,7 +61,7 @@ MitMotor::MitMotor(const Param &param, const char *name)
 bool MitMotor::Update() {
   CAN::Pack pack;
 
-  while (this->recv_.Receive(&pack, 0)) {
+  while (this->recv_.Receive(pack, 0)) {
     this->Decode(pack);
   }
 

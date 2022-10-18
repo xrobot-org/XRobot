@@ -31,11 +31,8 @@ AI::AI() : data_ready_(false), cmd_tp_("cmd_ai") {
 
   Component::CMD::RegisterController(this->cmd_tp_);
 
-  auto ai_thread = [](void *arg) {
-    AI *ai = static_cast<AI *>(arg);
-
-    Message::Subscriber<Component::Type::Quaternion> quat_sub("gimbal_quat",
-                                                              ai->quat_);
+  auto ai_thread = [](AI *ai) {
+    auto quat_sub = Message::Subscriber("gimbal_quat", ai->quat_);
     Message::Subscriber ref_sub("referee", ai->raw_ref_);
 
     while (1) {
@@ -66,7 +63,8 @@ AI::AI() : data_ready_(false), cmd_tp_("cmd_ai") {
     }
   };
 
-  THREAD_DECLEAR(this->thread_, ai_thread, 256, System::Thread::Realtime, this);
+  this->thread_.Create(ai_thread, this, "ai_thread", 256,
+                       System::Thread::Realtime);
 }
 
 bool AI::StartRecv() {

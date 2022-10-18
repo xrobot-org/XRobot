@@ -32,9 +32,7 @@ DR16::DR16()
 
   Component::CMD::RegisterController(this->cmd_tp_);
 
-  auto dr16_thread = [](void *arg) {
-    DR16 *dr16 = static_cast<DR16 *>(arg);
-
+  auto dr16_thread = [](DR16 *dr16) {
     while (1) {
       /* 开启DMA */
       dr16->StartRecv();
@@ -50,8 +48,8 @@ DR16::DR16()
     }
   };
 
-  THREAD_DECLEAR(this->thread_, dr16_thread, 256, System::Thread::Realtime,
-                 this);
+  this->thread_.Create(dr16_thread, this, "dr16_thread", 256,
+                       System::Thread::Realtime);
 }
 
 bool DR16::StartRecv() {

@@ -7,15 +7,14 @@ using namespace Device;
 Term::Term() {
   bsp_usb_init();
 
-  auto term_thread = [](void *arg) {
-    Term *term = static_cast<Term *>(arg);
+  auto term_thread = [](Term *term) {
     while (1) {
       term->Update();
     }
   };
 
-  THREAD_DECLEAR(this->thread_, term_thread, 256, System::Thread::Realtime,
-                 this);
+  this->thread_.Create(term_thread, this, "term_thread", 256,
+                       System::Thread::Realtime);
 }
 
 bool Term::Update() {

@@ -51,7 +51,7 @@ class Cap {
 
   uint32_t mailbox_;
 
-  System::Queue control_feedback_ = System::Queue(sizeof(CAN::Pack), 1);
+  System::Queue<CAN::Pack> control_feedback_ = System::Queue<CAN::Pack>(1);
 
   System::Thread thread_;
 

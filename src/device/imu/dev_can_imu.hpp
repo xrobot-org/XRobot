@@ -42,7 +42,7 @@ class IMU {
   Component::Type::Vector3 gyro_;
   Component::Type::Eulr eulr_;
 
-  System::Queue recv_ = System::Queue(sizeof(CAN::Pack), 4);
+  System::Queue<CAN::Pack> recv_ = System::Queue<CAN::Pack>(4);
 
   System::Thread thread_;
 };

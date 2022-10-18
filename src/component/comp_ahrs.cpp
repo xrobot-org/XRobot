@@ -20,9 +20,7 @@ AHRS::AHRS() : quat_tp_("imu_quat"), eulr_tp_("imu_eulr") {
   this->quat_.q2 = 0.0f;
   this->quat_.q3 = 0.0f;
 
-  auto ahrs_thread = [](void* arg) {
-    AHRS* ahrs = static_cast<AHRS*>(arg);
-
+  auto ahrs_thread = [](AHRS* ahrs) {
     Message::Subscriber accl_sub("imu_accl", ahrs->accl_);
     Message::Subscriber gyro_sub("imu_gyro", ahrs->gyro_);
 
@@ -43,7 +41,8 @@ AHRS::AHRS() : quat_tp_("imu_quat"), eulr_tp_("imu_eulr") {
     }
   };
 
-  THREAD_DECLEAR(this->thread_, ahrs_thread, 256, System::Thread::High, this);
+  this->thread_.Create(ahrs_thread, this, "ahrs_thread", 256,
+                       System::Thread::High);
 }
 
 void AHRS::Update() {

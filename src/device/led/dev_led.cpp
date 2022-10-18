@@ -8,9 +8,7 @@ using namespace Device;
 static uint32_t led_stats;
 
 LED::LED() {
-  auto led_thread = [](void* arg) {
-    LED* led = (LED*)arg;
-
+  auto led_thread = [](LED* led) {
     uint8_t led_fsm = 0;
 
     while (1) {
@@ -39,7 +37,8 @@ LED::LED() {
     }
   };
 
-  THREAD_DECLEAR(this->thread_, led_thread, 128, System::Thread::Low, this);
+  this->thread_.Create(led_thread, this, "led_thread", 128,
+                       System::Thread::Low);
 }
 
 bool LED::Set(LED::Channel ch, LED::Status status, float duty_cycle) {

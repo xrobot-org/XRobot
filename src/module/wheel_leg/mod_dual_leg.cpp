@@ -55,9 +55,7 @@ WheelLeg::WheelLeg(WheelLeg::Param& param, float sample_freq)
 
   Component::CMD::RegisterEvent(event_callback, this, this->param_.event_map);
 
-  auto leg_thread = [](void* arg) {
-    WheelLeg* leg = (WheelLeg*)arg;
-
+  auto leg_thread = [](WheelLeg* leg) {
     auto eulr_sub = Message::Subscriber("chassis_eulr", leg->eulr_);
 
     while (1) {
@@ -71,7 +69,8 @@ WheelLeg::WheelLeg(WheelLeg::Param& param, float sample_freq)
     }
   };
 
-  THREAD_DECLEAR(this->thread_, leg_thread, 768, System::Thread::Medium, this);
+  this->thread_.Create(leg_thread, this, "leg_thread", 768,
+                       System::Thread::Medium);
 }
 
 void WheelLeg::UpdateFeedback() {

@@ -30,9 +30,7 @@ Gimbal::Gimbal(Param& param, float control_freq)
 
   Component::CMD::RegisterEvent(event_callback, this, this->param_.event_map);
 
-  auto gimbal_thread = [](void* arg) {
-    Gimbal* gimbal = static_cast<Gimbal*>(arg);
-
+  auto gimbal_thread = [](Gimbal* gimbal) {
     auto eulr_sub = Message::Subscriber("imu_eulr", gimbal->eulr_);
 
     auto gyro_sub = Message::Subscriber("imu_gyro", gimbal->gyro_);
@@ -57,8 +55,8 @@ Gimbal::Gimbal(Param& param, float control_freq)
     }
   };
 
-  THREAD_DECLEAR(this->thread_, gimbal_thread, 512, System::Thread::Medium,
-                 this);
+  this->thread_.Create(gimbal_thread, this, "gimbal_thread", 512,
+                       System::Thread::Medium);
 }
 
 void Gimbal::UpdateFeedback() {

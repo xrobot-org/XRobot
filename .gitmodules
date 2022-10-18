@@ -18,7 +18,7 @@
 	url = https://github.com/hathach/tinyusb.git
 [submodule "lib/one-message"]
 	path = lib/one-message
-	url = https://github.com/Jiu-xiao/OneMessage.git
+	url = https://github.com/Jiu-xiao/OneMessageCPP.git
 [submodule "lib/cmsis_svd"]
 	path = lib/cmsis_svd
 	url = https://github.com/posborne/cmsis-svd.git

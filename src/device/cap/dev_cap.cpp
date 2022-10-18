@@ -18,7 +18,7 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
     rx.index -= cap->param_.index;
 
     if (rx.index == 0) {
-      cap->control_feedback_.OverwriteFromISR(&rx);
+      cap->control_feedback_.OverwriteFromISR(rx);
     }
 
     return true;
@@ -29,9 +29,7 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
 
   CAN::Subscribe(cap_tp, this->param_.can, this->param_.index, 1);
 
-  auto cap_thread = [](void *arg) {
-    Cap *cap = static_cast<Cap *>(arg);
-
+  auto cap_thread = [](Cap *cap) {
     Message::Subscriber out_sub("cap_out", cap->out_);
 
     while (1) {
@@ -50,12 +48,13 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
     }
   };
 
-  THREAD_DECLEAR(this->thread_, cap_thread, 256, System::Thread::Medium, this);
+  this->thread_.Create(cap_thread, this, "cap_thread", 256,
+                       System::Thread::Medium);
 }
 
 bool Cap::Update() {
   CAN::Pack rx;
-  while (this->control_feedback_.Receive(&rx, 0)) {
+  while (this->control_feedback_.Receive(rx, 0)) {
     this->Decode(rx);
     this->online_ = 1;
     this->last_online_time_ = System::Thread::GetTick();

@@ -77,15 +77,10 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
 
   Component::CMD::RegisterEvent(event_callback, this, this->param_.event_map);
 
-  auto chassis_thread = [](void* arg) {
-    Balance* chassis = (Balance*)arg;
-
-    auto cmd_sub = Message::Subscriber<Component::CMD::ChassisCMD>(
-        "cmd_chassis", chassis->cmd_);
-    auto eulr_sub = Message::Subscriber<Component::Type::Eulr>("chassis_eulr",
-                                                               chassis->eulr_);
-    auto gyro_sub = Message::Subscriber<Component::Type::Vector3>(
-        "chassis_gyro", chassis->gyro_);
+  auto chassis_thread = [](Balance* chassis) {
+    auto cmd_sub = Message::Subscriber("cmd_chassis", chassis->cmd_);
+    auto eulr_sub = Message::Subscriber("chassis_eulr", chassis->eulr_);
+    auto gyro_sub = Message::Subscriber("chassis_gyro", chassis->gyro_);
 
     while (1) {
       /* 读取控制指令、电容、裁判系统、电机反馈 */
@@ -104,8 +99,8 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
     }
   };
 
-  THREAD_DECLEAR(this->thread_, chassis_thread, 384, System::Thread::Medium,
-                 this);
+  this->thread_.Create(chassis_thread, this, "chassis_thread", 384,
+                       System::Thread::Medium);
 }
 
 template <typename Motor, typename MotorParam>
