@@ -34,12 +34,17 @@ class IMU {
 
   bool online_;
 
-  System::Message::Publisher<Component::Type::Vector3> accl_;
-  System::Message::Publisher<Component::Type::Vector3> gyro_;
-  System::Message::Publisher<Component::Type::Eulr> eulr_;
+  Message::Topic<Component::Type::Vector3> accl_tp_;
+  Message::Topic<Component::Type::Vector3> gyro_tp_;
+  Message::Topic<Component::Type::Eulr> eulr_tp_;
+
+  Component::Type::Vector3 accl_;
+  Component::Type::Vector3 gyro_;
+  Component::Type::Eulr eulr_;
 
   System::Queue recv_ = System::Queue(sizeof(CAN::Pack), 4);
 
   System::Thread thread_;
 };
+
 }  // namespace Device

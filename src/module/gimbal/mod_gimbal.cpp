@@ -33,22 +33,24 @@ Gimbal::Gimbal(Param& param, float control_freq)
   auto gimbal_thread = [](void* arg) {
     Gimbal* gimbal = static_cast<Gimbal*>(arg);
 
-    DECLARE_SUBER(eulr_, gimbal->eulr_, "imu_eulr");
-    DECLARE_SUBER(gyro_, gimbal->gyro_, "imu_gyro");
-    DECLARE_SUBER(cmd_, gimbal->cmd_, "cmd_gimbal");
+    auto eulr_sub = Message::Subscriber("imu_eulr", gimbal->eulr_);
+
+    auto gyro_sub = Message::Subscriber("imu_gyro", gimbal->gyro_);
+
+    auto cmd_sub = Message::Subscriber("cmd_gimbal", gimbal->cmd_);
 
     while (1) {
       /* 读取控制指令、姿态、IMU、电机反馈 */
-      eulr_.DumpData();
-      gyro_.DumpData();
-      cmd_.DumpData();
+      eulr_sub.DumpData();
+      gyro_sub.DumpData();
+      cmd_sub.DumpData();
 
       gimbal->ctrl_lock_.Take(UINT32_MAX);
       gimbal->UpdateFeedback();
       gimbal->Control();
       gimbal->ctrl_lock_.Give();
 
-      gimbal->yaw_.Publish();
+      gimbal->yaw_tp_.Publish(gimbal->yaw_);
 
       /* 运行结束，等待下一次唤醒 */
       gimbal->thread_.Sleep(2);
@@ -63,8 +65,8 @@ void Gimbal::UpdateFeedback() {
   this->pit_motor_.Update();
   this->yaw_motor_.Update();
 
-  this->yaw_.data_ = circle_error(this->yaw_motor_.GetAngle(),
-                                  this->param_.mech_zero.yaw, M_2PI);
+  this->yaw_ = circle_error(this->yaw_motor_.GetAngle(),
+                            this->param_.mech_zero.yaw, M_2PI);
 }
 
 void Gimbal::Control() {

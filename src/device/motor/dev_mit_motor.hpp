@@ -40,6 +40,6 @@ class MitMotor : public BaseMotor {
 
   uint32_t mailbox_;
 
-  static System::Message::Topic *mit_tp[BSP_CAN_NUM];
+  static Message::Topic<CAN::Pack> *mit_tp[BSP_CAN_NUM];
 };
 }  // namespace Device

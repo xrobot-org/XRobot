@@ -8,18 +8,16 @@
 using namespace Device;
 
 Tof::Tof(Param &param) : param_(param), recv_(sizeof(CAN::Pack), 1) {
-  auto rx_callback = [](om_msg_t *msg, void *arg) {
-    Tof *tof = static_cast<Tof *>(arg);
-    CAN::Pack *rx = (CAN::Pack *)msg->buff;
-    rx->index -= tof->param_.index;
-    if (rx->index < DEV_TOF_SENSOR_NUMBER) {
-      tof->recv_.OverwriteFromISR(rx);
+  auto rx_callback = [](CAN::Pack &rx, Tof *tof) {
+    rx.index -= tof->param_.index;
+    if (rx.index < DEV_TOF_SENSOR_NUMBER) {
+      tof->recv_.OverwriteFromISR(&rx);
     }
 
-    return OM_OK;
+    return true;
   };
 
-  DECLARE_TOPIC(tof_tp, "can_tof", false);
+  auto tof_tp = Message::Topic<CAN::Pack>("can_tof");
 
   tof_tp.RegisterCallback(rx_callback, this);
 
@@ -34,7 +32,7 @@ Tof::Tof(Param &param) : param_(param), recv_(sizeof(CAN::Pack), 1) {
         tof->Offline();
       }
 
-      tof->fb_.Publish();
+      tof->fb_tp_.Publish(tof->fb_);
       /* 运行结束，等待下一次唤醒 */
       tof->thread_.Sleep(2);
     }
@@ -45,11 +43,11 @@ Tof::Tof(Param &param) : param_(param), recv_(sizeof(CAN::Pack), 1) {
 }
 
 void Tof::Decode(CAN::Pack &rx) {
-  this->fb_.data_[rx.index].dist =
+  this->fb_[rx.index].dist =
       (float)((rx.data[2] << 16) | (rx.data[1] << 8) | rx.data[0]) /
       (float)TOF_RES;
-  this->fb_.data_[rx.index].status = rx.data[3];
-  this->fb_.data_[rx.index].signal_strength =
+  this->fb_[rx.index].status = rx.data[3];
+  this->fb_[rx.index].signal_strength =
       (uint16_t)((rx.data[5] << 8) | rx.data[4]);
 }
 
@@ -63,4 +61,4 @@ bool Tof::Update() {
   return true;
 }
 
-void Tof::Offline() { memset(this->fb_.data_, 0, sizeof(this->fb_.data_)); }
+void Tof::Offline() { memset(this->fb_, 0, sizeof(this->fb_)); }

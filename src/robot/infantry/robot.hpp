@@ -14,7 +14,7 @@
 
 void robot_init();
 namespace Robot {
-class Infantry : public System::Message {
+class Infantry : public Message {
  public:
   typedef struct {
     Module::RMChassis::Param chassis;

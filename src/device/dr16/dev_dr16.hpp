@@ -84,8 +84,10 @@ class DR16 {
 
   System::Thread thread_;
 
-  System::Message::Event event_;
+  Message::Event event_;
 
-  DECLARE_PUBER(cmd_, Component::CMD::Data, "cmd_rc", false);
+  Message::Topic<Component::CMD::Data> cmd_tp_;
+
+  Component::CMD::Data cmd_;
 };
 }  // namespace Device

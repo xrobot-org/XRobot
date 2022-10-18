@@ -378,6 +378,8 @@ class Referee {
         System::Timer("slow_refresh", UI_STATIC_CYCLE, SlowRefreshCallback);
   } tim;
 
-  DECLARE_PUBER(ref_data_, Data, "referee", false);
+  Message::Topic<Data> ref_data_tp_ = Message::Topic<Data>("referee");
+
+  Data ref_data_;
 };
 }  // namespace Device

@@ -21,34 +21,30 @@ uint8_t RELAX_CMD[8] = {0X7F, 0XFF, 0X7F, 0XF0, 0X00, 0X00, 0X07, 0XFF};
 uint8_t ENABLE_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFC};
 
 static bool initd[BSP_CAN_NUM] = {false};
-System::Message::Topic *MitMotor::mit_tp[BSP_CAN_NUM];
+Message::Topic<CAN::Pack> *MitMotor::mit_tp[BSP_CAN_NUM];
 
 MitMotor::MitMotor(const Param &param, const char *name)
     : BaseMotor(name), param_(param), recv_(sizeof(CAN::Pack), 1) {
-  DECLARE_MESSAGE_FUN(rx_callback) {
-    MESSAGE_GET_DATA(CAN::Pack, rx);
-    MESSAGE_GET_ARG(MitMotor, motor);
+  auto rx_callback = [](CAN::Pack &rx, MitMotor *motor) {
+    if (rx.data[0] == motor->param_.id) motor->recv_.OverwriteFromISR(&rx);
 
-    if (rx->data[0] == motor->param_.id) motor->recv_.OverwriteFromISR(rx);
-
-    MESSAGE_FUN_PASSED();
+    return true;
   };
 
   if (!initd[this->param_.can]) {
-    DECLARE_TOPIC_STATIC(
-        motor_tp,
+    MitMotor::mit_tp[this->param_.can] =
+        static_cast<Message::Topic<CAN::Pack> *>(
+            System::Memory::Malloc(sizeof(Message::Topic<CAN::Pack>)));
+    *MitMotor::mit_tp[this->param_.can] = Message::Topic<CAN::Pack>(
         (std::string("mit_motor_can") + std::to_string(this->param_.can))
-            .c_str(),
-        false);
-
-    MitMotor::mit_tp[this->param_.can] = motor_tp;
+            .c_str());
 
     CAN::Subscribe(*MitMotor::mit_tp[this->param_.can], this->param_.can, 0, 1);
 
     initd[this->param_.can] = true;
   }
 
-  DECLARE_TOPIC(motor_tp, name, false);
+  Message::Topic<CAN::Pack> motor_tp(name);
 
   motor_tp.RegisterCallback(rx_callback, this);
 

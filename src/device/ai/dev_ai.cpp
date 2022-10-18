@@ -20,7 +20,7 @@ static uint8_t txbuf[AI_LEN_TX_BUFF];
 
 using namespace Device;
 
-AI::AI() : data_ready_(false) {
+AI::AI() : data_ready_(false), cmd_tp_("cmd_ai") {
   auto rx_cplt_callback = [](void *arg) {
     AI *ai = static_cast<AI *>(arg);
     ai->data_ready_.GiveFromISR();
@@ -29,13 +29,14 @@ AI::AI() : data_ready_(false) {
   bsp_uart_register_callback(BSP_UART_AI, BSP_UART_RX_CPLT_CB, rx_cplt_callback,
                              this);
 
-  Component::CMD::RegisterController(this->cmd_);
+  Component::CMD::RegisterController(this->cmd_tp_);
 
   auto ai_thread = [](void *arg) {
     AI *ai = static_cast<AI *>(arg);
 
-    DECLARE_SUBER(quat_, ai->quat_, "gimbal_quat");
-    DECLARE_SUBER(raw_ref_, ai->raw_ref_, "referee");
+    Message::Subscriber<Component::Type::Quaternion> quat_sub("gimbal_quat",
+                                                              ai->quat_);
+    Message::Subscriber ref_sub("referee", ai->raw_ref_);
 
     while (1) {
       /* 接收指令 */
@@ -51,10 +52,10 @@ AI::AI() : data_ready_(false) {
       ai->PackCMD();
 
       /* 发送数据到上位机 */
-      quat_.DumpData();
+      quat_sub.DumpData();
       ai->PackMCU();
 
-      if (raw_ref_.DumpData()) {
+      if (ref_sub.DumpData()) {
         ai->PraseRef();
         ai->PackRef();
       }
@@ -76,7 +77,7 @@ bool AI::StartRecv() {
 bool AI::PraseHost() {
   if (Component::CRC16::Verify((const uint8_t *)&(rxbuf),
                                sizeof(this->form_host))) {
-    this->cmd_.data_.online = true;
+    this->cmd_.online = true;
     this->last_online_time_ = System::Thread::GetTick();
     memcpy(&(this->form_host), rxbuf, sizeof(this->form_host));
     memset(rxbuf, 0, AI_LEN_RX_BUFF);
@@ -103,8 +104,8 @@ bool AI::StartTrans() {
 bool AI::Offline() {
   /* 离线移交控制权 */
   if (System::Thread::GetTick() - this->last_online_time_ > 50) {
-    this->cmd_.data_.online = false;
-    this->cmd_.Publish();
+    this->cmd_.online = false;
+    this->cmd_tp_.Publish(this->cmd_);
   }
   return true;
 }
@@ -136,14 +137,14 @@ bool AI::PackRef() {
 }
 
 bool AI::PackCMD() {
-  this->cmd_.data_.gimbal.mode = Component::CMD::GimbalAbsoluteCtrl;
+  this->cmd_.gimbal.mode = Component::CMD::GimbalAbsoluteCtrl;
 
-  memcpy(&(this->cmd_.data_.gimbal.eulr), &(this->form_host.data.gimbal),
-         sizeof(this->cmd_.data_.gimbal.eulr));
+  memcpy(&(this->cmd_.gimbal.eulr), &(this->form_host.data.gimbal),
+         sizeof(this->cmd_.gimbal.eulr));
 
-  this->cmd_.data_.ctrl_source = Component::CMD::ControlSourceAI;
+  this->cmd_.ctrl_source = Component::CMD::ControlSourceAI;
 
-  this->cmd_.Publish();
+  this->cmd_tp_.Publish(this->cmd_);
 
   return true;
 }

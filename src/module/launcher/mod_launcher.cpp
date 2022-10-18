@@ -86,10 +86,11 @@ Launcher::Launcher(Param& param, float control_freq)
   auto launcher_thread = [](void* arg) {
     Launcher* launcher = (Launcher*)arg;
 
-    DECLARE_SUBER(raw_ref_, launcher->raw_ref_, "referee");
+    auto ref_sub = Message::Subscriber<Device::Referee::Data>(
+        "referee", launcher->raw_ref_);
 
     while (1) {
-      raw_ref_.DumpData();
+      ref_sub.DumpData();
 
       launcher->PraseRef();
 

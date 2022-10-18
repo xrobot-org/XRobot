@@ -7,7 +7,7 @@
 
 #include "comp_type.hpp"
 #include "list.hpp"
-#include "message.hpp"
+#include "om.hpp"
 
 namespace Component {
 class CMD {
@@ -52,17 +52,17 @@ class CMD {
       void (*callback)(uint32_t event, void* arg), void* arg,
       const std::vector<Component::CMD::EventMapItem>& map);
 
-  static void RegisterController(System::Message::Topic& source);
+  static void RegisterController(Message::Topic<Data>& source);
 
   ControlSource ctrl_source_ = ControlSourceRC;
 
-  System::Message::Event event_;
+  Message::Event event_;
 
   Data data_[ControlSourceNum];
 
-  DECLARE_TOPIC(data_in_, "cmd_data_in", true);
-  DECLARE_PUBER(chassis_data_, ChassisCMD, "cmd_chassis", true);
-  DECLARE_PUBER(gimbal_data_, GimbalCMD, "cmd_gimbal", true);
+  Message::Topic<Data> data_in_tp_;
+  Message::Topic<ChassisCMD> chassis_data_tp_;
+  Message::Topic<GimbalCMD> gimbal_data_tp_;
 
   static CMD* self_;
 };

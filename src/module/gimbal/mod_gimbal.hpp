@@ -95,7 +95,9 @@ class Gimbal {
 
   System::Semaphore ctrl_lock_;
 
-  DECLARE_PUBER(yaw_, float, "gimbal_yaw_offset", true);
+  Message::Topic<float> yaw_tp_ = Message::Topic<float>("gimbal_yaw_offset");
+
+  float yaw_;
 
   Component::Type::Eulr eulr_;
   Component::Type::Vector3 gyro_;

@@ -8,14 +8,15 @@ using namespace Component;
 
 CMD* CMD::self_;
 
-CMD::CMD() : event_("cmd_event") {
+CMD::CMD()
+    : event_("cmd_event"),
+      data_in_tp_("cmd_data_in"),
+      chassis_data_tp_("cmd_chassis"),
+      gimbal_data_tp_("cmd_gimbal") {
   CMD::self_ = this;
 
-  DECLARE_MESSAGE_FUN(rx_callback) {
-    MESSAGE_GET_DATA(Data, data);
-    MESSAGE_GET_ARG(CMD, cmd);
-
-    memcpy(&(cmd->data_[data->ctrl_source]), data, sizeof(Data));
+  auto rx_callback = [](Data& data, CMD* cmd) {
+    memcpy(&(cmd->data_[data.ctrl_source]), &data, sizeof(Data));
 
     if (!cmd->data_[ControlSourceRC].online) {
       cmd->event_.Active(EventLostCtrl);
@@ -23,27 +24,18 @@ CMD::CMD() : event_("cmd_event") {
 
     if (cmd->ctrl_source_ == ControlSourceRC ||
         (!cmd->data_[cmd->ctrl_source_].online)) {
-      memcpy(&(cmd->gimbal_data_.data_), &(cmd->data_[ControlSourceRC].gimbal),
-             sizeof(GimbalCMD));
-      cmd->gimbal_data_.Publish();
-      memcpy(&(cmd->chassis_data_.data_),
-             &(cmd->data_[ControlSourceRC].chassis), sizeof(ChassisCMD));
-      cmd->chassis_data_.Publish();
+      cmd->gimbal_data_tp_.Publish(cmd->data_[ControlSourceRC].gimbal);
+      cmd->chassis_data_tp_.Publish(cmd->data_[ControlSourceRC].chassis);
     } else if (cmd->ctrl_source_ == ControlSourceAI &&
                cmd->data_[ControlSourceAI].online) {
-      memcpy(&(cmd->chassis_data_.data_),
-             &(cmd->data_[ControlSourceRC].chassis), sizeof(ChassisCMD));
-      cmd->gimbal_data_.Publish();
-      memcpy(&(cmd->gimbal_data_.data_), &(cmd->data_[ControlSourceAI].gimbal),
-             sizeof(GimbalCMD));
-      cmd->chassis_data_.Publish();
+      cmd->gimbal_data_tp_.Publish(cmd->data_[ControlSourceAI].gimbal);
+      cmd->chassis_data_tp_.Publish(cmd->data_[ControlSourceRC].chassis);
     };
 
-    MESSAGE_FUN_PASSED();
+    return true;
   };
 
-  this->data_in_.RegisterCallback(rx_callback, this);
-
+  this->data_in_tp_.RegisterCallback(rx_callback, this);
 }
 
 void CMD::RegisterEvent(void (*callback)(uint32_t event, void* arg), void* arg,
@@ -69,11 +61,11 @@ void CMD::RegisterEvent(void (*callback)(uint32_t event, void* arg), void* arg,
     block->callback = callback;
     block->target_event = map[i].target;
 
-    self_->event_.Register(map[i].source, System::Message::Event::EventProgress,
+    self_->event_.Register(map[i].source, Message::Event::EventProgress,
                            cmd_callback, block);
   }
 }
 
-void CMD::RegisterController(System::Message::Topic& source) {
-  CMD::self_->data_in_.Link(source);
+void CMD::RegisterController(Message::Topic<Data>& source) {
+  CMD::self_->data_in_tp_.Link(source);
 }

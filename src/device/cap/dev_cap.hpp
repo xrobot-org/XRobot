@@ -55,7 +55,9 @@ class Cap {
 
   System::Thread thread_;
 
-  DECLARE_PUBER(info_, Cap::Info, "cap_info", true);
+  Message::Topic<Cap::Info> info_tp_;
+
+  Cap::Info info_;
 
   Cap::Output out_;
 };

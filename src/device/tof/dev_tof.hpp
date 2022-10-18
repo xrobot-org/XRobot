@@ -41,6 +41,9 @@ class Tof {
 
   System::Thread thread_;
 
-  DECLARE_PUBER(fb_, Feedback[DEV_TOF_SENSOR_NUMBER], "tof_fb", true);
+  Message::Topic<Feedback[DEV_TOF_SENSOR_NUMBER]> fb_tp_ =
+      Message::Topic<Feedback[DEV_TOF_SENSOR_NUMBER]>("tof_fb");
+
+  Feedback fb_[DEV_TOF_SENSOR_NUMBER];
 };
 }  // namespace Device

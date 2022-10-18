@@ -113,7 +113,10 @@ class Chassis {
 
   System::Semaphore ctrl_lock_;
 
-  DECLARE_PUBER(cap_out_, Device::Cap::Output, "cap_out", true);
+  Message::Topic<Device::Cap::Output> cap_out_tp_ =
+      Message::Topic<Device::Cap::Output>("cap_out");
+
+  Device::Cap::Output cap_out_;
 
   float yaw_;
   Device::Referee::Data raw_ref_;

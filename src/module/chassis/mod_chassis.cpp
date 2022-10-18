@@ -102,17 +102,22 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
   auto chassis_thread = [](void* arg) {
     Chassis* chassis = (Chassis*)arg;
 
-    DECLARE_SUBER(raw_ref_, chassis->raw_ref_, "referee");
-    DECLARE_SUBER(cap_info_, chassis->cap_info_, "cap_info");
-    DECLARE_SUBER(yaw_, chassis->yaw_, "gimbal_yaw_offset");
-    DECLARE_SUBER(cmd_, chassis->cmd_, "cmd_chassis");
+    auto raw_ref_sub = Message::Subscriber<Device::Referee::Data>(
+        "referee", chassis->raw_ref_);
+
+    auto cap_info_sub = Message::Subscriber("cap_info", chassis->cap_info_);
+
+    auto yaw_sub = Message::Subscriber("gimbal_yaw_offset", chassis->yaw_);
+
+    auto cmd_sub = Message::Subscriber<Component::CMD::ChassisCMD>(
+        "cmd_chassis", chassis->cmd_);
 
     while (1) {
       /* 读取控制指令、电容、裁判系统、电机反馈 */
-      yaw_.DumpData();
-      raw_ref_.DumpData();
-      cmd_.DumpData();
-      cap_info_.DumpData();
+      yaw_sub.DumpData();
+      raw_ref_sub.DumpData();
+      cmd_sub.DumpData();
+      cap_info_sub.DumpData();
 #if RB_SENTRY
       tof_tp.DumpData();
 #endif
@@ -124,7 +129,7 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
       chassis->Control();
       chassis->ctrl_lock_.Give();
 
-      chassis->cap_out_.Publish();
+      chassis->cap_out_tp_.Publish(chassis->cap_out_);
 
       /* 运行结束，等待下一次唤醒 */
       chassis->thread_.Sleep(2);

@@ -19,7 +19,9 @@ using namespace Device;
 DR16::Data DR16::data_;
 
 DR16::DR16()
-    : new_(false), event_(System::Message::Event::FindEvent("cmd_event")) {
+    : new_(false),
+      event_(Message::Event::FindEvent("cmd_event")),
+      cmd_tp_("cmd_rc") {
   auto rx_cplt_callback = [](void *arg) {
     DR16 *dr16 = static_cast<DR16 *>(arg);
     dr16->new_.GiveFromISR();
@@ -28,7 +30,7 @@ DR16::DR16()
   bsp_uart_register_callback(BSP_UART_DR16, BSP_UART_RX_CPLT_CB,
                              rx_cplt_callback, this);
 
-  Component::CMD::RegisterController(this->cmd_);
+  Component::CMD::RegisterController(this->cmd_tp_);
 
   auto dr16_thread = [](void *arg) {
     DR16 *dr16 = static_cast<DR16 *>(arg);
@@ -132,59 +134,59 @@ void DR16::PraseRC() {
       this->event_.Active(KeyRClick);
 
     /* Chassis Control */
-    if (this->data_.key & KeyA) this->cmd_.data_.chassis.x -= 0.5;
+    if (this->data_.key & KeyA) this->cmd_.chassis.x -= 0.5;
 
-    if (this->data_.key & KeyD) this->cmd_.data_.chassis.x += 0.5;
+    if (this->data_.key & KeyD) this->cmd_.chassis.x += 0.5;
 
-    if (this->data_.key & KeyS) this->cmd_.data_.chassis.y -= 0.5;
+    if (this->data_.key & KeyS) this->cmd_.chassis.y -= 0.5;
 
-    if (this->data_.key & KeyW) this->cmd_.data_.chassis.y += 0.5;
+    if (this->data_.key & KeyW) this->cmd_.chassis.y += 0.5;
 
     if (this->data_.key & KeySHIFT) {
-      this->cmd_.data_.chassis.x *= 2;
-      this->cmd_.data_.chassis.y *= 2;
+      this->cmd_.chassis.x *= 2;
+      this->cmd_.chassis.y *= 2;
     }
 
-    this->cmd_.data_.chassis.z = 0.0f;
+    this->cmd_.chassis.z = 0.0f;
 
     /* Gimbal Control */
-    this->cmd_.data_.gimbal.eulr.pit = this->data_.y / 32768.0f;
-    this->cmd_.data_.gimbal.eulr.yaw = this->data_.x / 32768.0f;
-    this->cmd_.data_.gimbal.eulr.rol = 0.0f;
+    this->cmd_.gimbal.eulr.pit = this->data_.y / 32768.0f;
+    this->cmd_.gimbal.eulr.yaw = this->data_.x / 32768.0f;
+    this->cmd_.gimbal.eulr.rol = 0.0f;
 
   } else if (this->ctrl_source_ == ControlSourceSW) {
     /* Chassis Control */
-    this->cmd_.data_.chassis.x =
+    this->cmd_.chassis.x =
         2 * ((float)this->data_.ch_l_x - DR16_CH_VALUE_MID) / full_range;
-    this->cmd_.data_.chassis.y =
+    this->cmd_.chassis.y =
         2 * ((float)this->data_.ch_l_y - DR16_CH_VALUE_MID) / full_range;
-    this->cmd_.data_.chassis.z = 0.0f;
+    this->cmd_.chassis.z = 0.0f;
 
     /* Gimbal Control */
-    this->cmd_.data_.gimbal.eulr.yaw =
+    this->cmd_.gimbal.eulr.yaw =
         2 * ((float)this->data_.ch_r_x - DR16_CH_VALUE_MID) / full_range;
-    this->cmd_.data_.gimbal.eulr.pit =
+    this->cmd_.gimbal.eulr.pit =
         2 * ((float)this->data_.ch_r_y - DR16_CH_VALUE_MID) / full_range;
-    this->cmd_.data_.gimbal.eulr.rol = 0.0f;
+    this->cmd_.gimbal.eulr.rol = 0.0f;
   }
 
-  this->cmd_.data_.online = true;
+  this->cmd_.online = true;
 
-  this->cmd_.data_.ctrl_source = Component::CMD::ControlSourceRC;
+  this->cmd_.ctrl_source = Component::CMD::ControlSourceRC;
 
-  this->cmd_.Publish();
+  this->cmd_tp_.Publish(this->cmd_);
 
   memcpy(&(this->last_data_), &(this->data_), sizeof(Data));
 }
 
 void DR16::Offline() {
-  this->cmd_.data_.online = false;
+  this->cmd_.online = false;
 
   this->ctrl_source_ = ControlSourceSW;
 
-  memset(&(this->cmd_.data_), 0, sizeof(this->cmd_.data_));
+  memset(&(this->cmd_), 0, sizeof(this->cmd_));
 
   memset(&(this->last_data_), 0, sizeof(this->last_data_));
 
-  this->cmd_.Publish();
+  this->cmd_tp_.Publish(this->cmd_);
 }

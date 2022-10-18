@@ -63,17 +63,13 @@ RMMotor::RMMotor(const Param &param, const char *name)
       break;
   }
 
-  om_user_fun_t rx_callback = [](om_msg_t *msg, void *arg) {
-    CAN::Pack *rx = (CAN::Pack *)msg->buff;
+  auto rx_callback = [](CAN::Pack &rx, RMMotor *motor) {
+    motor->recv_.OverwriteFromISR(&rx);
 
-    RMMotor *motor = (RMMotor *)arg;
-
-    motor->recv_.OverwriteFromISR(rx);
-
-    return OM_OK;
+    return true;
   };
 
-  DECLARE_TOPIC(motor_tp, name, false);
+  Message::Topic<CAN::Pack> motor_tp(name);
 
   motor_tp.RegisterCallback(rx_callback, this);
 

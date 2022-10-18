@@ -137,7 +137,9 @@ BMI088::BMI088(BMI088::Calibration &cali, BMI088::Rotation &rot)
       accl_raw_(false),
       gyro_new_(false),
       accl_new_(false),
-      new_(false) {
+      new_(false),
+      accl_tp_("imu_accl"),
+      gyro_tp_("imu_gyro") {
   auto recv_cplt_callback = [](void *arg) {
     BMI088 *bmi088 = static_cast<BMI088 *>(arg);
 
@@ -193,7 +195,7 @@ BMI088::BMI088(BMI088::Calibration &cali, BMI088::Rotation &rot)
           bmi088->accl_raw_.Take(UINT16_MAX);
           bmi088->PraseAccel();
 
-          bmi088->accl_.Publish();
+          bmi088->accl_tp_.Publish(bmi088->accl_);
         }
 
         if (bmi088->gyro_new_.Take(0)) {
@@ -201,7 +203,7 @@ BMI088::BMI088(BMI088::Calibration &cali, BMI088::Rotation &rot)
           bmi088->gyro_raw_.Take(UINT16_MAX);
           bmi088->PraseGyro();
 
-          bmi088->gyro_.Publish();
+          bmi088->gyro_tp_.Publish(bmi088->gyro_);
         }
       }
 
@@ -291,17 +293,17 @@ void BMI088::PraseGyro() {
     gyro[i] *= M_DEG2RAD_MULT;
   }
 
-  memset(&(this->gyro_.data_), 0, sizeof(this->gyro_.data_));
+  memset(&(this->gyro_), 0, sizeof(this->gyro_));
 
   for (int i = 0; i < 3; i++) {
-    this->gyro_.data_.x += this->rot.rot_mat[0][i] * gyro[i];
-    this->gyro_.data_.y += this->rot.rot_mat[1][i] * gyro[i];
-    this->gyro_.data_.z += this->rot.rot_mat[2][i] * gyro[i];
+    this->gyro_.x += this->rot.rot_mat[0][i] * gyro[i];
+    this->gyro_.y += this->rot.rot_mat[1][i] * gyro[i];
+    this->gyro_.z += this->rot.rot_mat[2][i] * gyro[i];
   }
 
-  this->gyro_.data_.x -= this->cali.gyro_offset.x;
-  this->gyro_.data_.y -= this->cali.gyro_offset.y;
-  this->gyro_.data_.z -= this->cali.gyro_offset.z;
+  this->gyro_.x -= this->cali.gyro_offset.x;
+  this->gyro_.y -= this->cali.gyro_offset.y;
+  this->gyro_.z -= this->cali.gyro_offset.z;
 }
 
 void BMI088::PraseAccel() {
@@ -323,12 +325,12 @@ void BMI088::PraseAccel() {
 
   this->temp_ = (float)raw_temp * 0.125f + 23.0f;
 
-  memset(&(this->accl_.data_), 0, sizeof(this->accl_.data_));
+  memset(&(this->accl_), 0, sizeof(this->accl_));
 
   for (int i = 0; i < 3; i++) {
-    this->accl_.data_.x += this->rot.rot_mat[0][i] * accl[i];
-    this->accl_.data_.y += this->rot.rot_mat[1][i] * accl[i];
-    this->accl_.data_.z += this->rot.rot_mat[2][i] * accl[i];
+    this->accl_.x += this->rot.rot_mat[0][i] * accl[i];
+    this->accl_.y += this->rot.rot_mat[1][i] * accl[i];
+    this->accl_.z += this->rot.rot_mat[2][i] * accl[i];
   }
 }
 

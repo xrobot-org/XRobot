@@ -8,7 +8,7 @@
 
 using namespace Device;
 
-System::Message::Topic* CAN::can_tp_[BSP_CAN_NUM];
+Message::Topic<CAN::Pack>* CAN::can_tp_[BSP_CAN_NUM];
 System::Semaphore* CAN::can_sem_[BSP_CAN_NUM];
 
 static CAN::Pack pack;
@@ -17,10 +17,10 @@ CAN::CAN() {
   bsp_can_init();
 
   for (int i = 0; i < BSP_CAN_NUM; i++) {
-    can_tp_[i] = static_cast<System::Message::Topic*>(
-        System::Memory::Malloc(sizeof(System::Message::Topic)));
+    can_tp_[i] = static_cast<Message::Topic<CAN::Pack>*>(
+        System::Memory::Malloc(sizeof(Message::Topic<CAN::Pack>)));
     new (can_tp_[i])
-        System::Message::Topic(("dev_can_" + std::to_string(i)).c_str(), false);
+        Message::Topic<CAN::Pack>(("dev_can_" + std::to_string(i)).c_str());
 
     can_sem_[i] = static_cast<System::Semaphore*>(
         System::Memory::Malloc(sizeof(System::Semaphore)));
@@ -32,7 +32,7 @@ CAN::CAN() {
     (void)(arg);
 
     while (bsp_can_get_msg(can, pack.data, &(pack.index)) == BSP_OK) {
-      om_publish(can_tp_[can]->GetHandle(), OM_PRASE_VAR(pack), true, true);
+      can_tp_[can]->PublishFromISR(pack);
     }
   };
 
@@ -56,10 +56,10 @@ bool CAN::SendPack(bsp_can_t can, Pack& pack) {
   return bsp_can_trans_packet(can, pack.index, pack.data) == BSP_OK;
 }
 
-bool CAN::Subscribe(System::Message::Topic& tp, bsp_can_t can, uint32_t index,
-                    uint32_t num) {
+bool CAN::Subscribe(Message::Topic<CAN::Pack>& tp, bsp_can_t can,
+                    uint32_t index, uint32_t num) {
   ASSERT(num > 0);
-  return om_config_filter(can_tp_[can]->GetHandle(), "R", tp.GetHandle(),
-                          OM_PRASE_STRUCT(Pack, index), index,
-                          num - 1) == OM_OK;
+
+  can_tp_[can]->RangeDivide(tp, OM_PRASE_STRUCT(Pack, index), index, num - 1);
+  return true;
 }

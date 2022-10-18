@@ -29,50 +29,49 @@ WheelLeg::WheelLeg(WheelLeg::Param& param, float sample_freq)
   }
 
   auto event_callback = [](uint32_t event, void* arg) {
-    WheelLeg* chassis = static_cast<WheelLeg*>(arg);
+    WheelLeg* leg = static_cast<WheelLeg*>(arg);
 
-    chassis->ctrl_lock_.Take(UINT32_MAX);
+    leg->ctrl_lock_.Take(UINT32_MAX);
 
     switch (event) {
       case ChangeModeRelax:
-        chassis->SetMode(Relax);
+        leg->SetMode(Relax);
         break;
       case ChangeModeBreak:
-        chassis->SetMode(Break);
+        leg->SetMode(Break);
         break;
       case ChangeModeSquat:
-        chassis->SetMode(Squat);
+        leg->SetMode(Squat);
         break;
       case ChangeModeJump:
-        chassis->SetMode(Jump);
+        leg->SetMode(Jump);
         break;
       default:
         break;
     }
 
-    chassis->ctrl_lock_.Give();
+    leg->ctrl_lock_.Give();
   };
 
   Component::CMD::RegisterEvent(event_callback, this, this->param_.event_map);
 
-  auto chassis_thread = [](void* arg) {
-    WheelLeg* chassis = (WheelLeg*)arg;
+  auto leg_thread = [](void* arg) {
+    WheelLeg* leg = (WheelLeg*)arg;
 
-    DECLARE_SUBER(eulr_, chassis->eulr_, "chassis_eulr");
+    auto eulr_sub = Message::Subscriber("chassis_eulr", leg->eulr_);
 
     while (1) {
-      eulr_.DumpData();
+      eulr_sub.DumpData();
 
-      chassis->UpdateFeedback();
+      leg->UpdateFeedback();
 
-      chassis->Control();
+      leg->Control();
 
-      chassis->thread_.Sleep(2);
+      leg->thread_.Sleep(2);
     }
   };
 
-  THREAD_DECLEAR(this->thread_, chassis_thread, 768, System::Thread::Medium,
-                 this);
+  THREAD_DECLEAR(this->thread_, leg_thread, 768, System::Thread::Medium, this);
 }
 
 void WheelLeg::UpdateFeedback() {

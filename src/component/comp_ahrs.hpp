@@ -7,7 +7,7 @@
 
 #include "comp_type.hpp"
 #include "comp_utils.hpp"
-#include "message.hpp"
+#include "om.hpp"
 #include "thread.hpp"
 
 namespace Component {
@@ -25,8 +25,12 @@ class AHRS {
 
   System::Thread thread_;
 
-  DECLARE_PUBER(quat_, Type::Quaternion, "imu_quat", true);
-  DECLARE_PUBER(eulr_, Type::Eulr, "imu_eulr", true);
+  Message::Topic<Type::Quaternion> quat_tp_;
+
+  Message::Topic<Type::Eulr> eulr_tp_;
+
+  Type::Quaternion quat_;
+  Type::Eulr eulr_;
 
   Type::Vector3 accl_;
   Type::Vector3 gyro_;

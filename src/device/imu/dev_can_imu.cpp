@@ -4,21 +4,18 @@ using namespace Device;
 
 IMU::IMU(IMU::Param &param)
     : param_(param),
-      accl_((param.tp_name_prefix + std::string("_accl")).c_str(), true),
-      gyro_((param.tp_name_prefix + std::string("_gyro")).c_str(), true),
-      eulr_((param.tp_name_prefix + std::string("_eulr")).c_str(), true) {
-  DECLARE_MESSAGE_FUN(rx_callback) {
-    MESSAGE_GET_DATA(CAN::Pack, rx);
-    MESSAGE_GET_ARG(IMU, imu);
-
-    if (rx->index == imu->param_.index && rx->data[0] == IMU_DEVICE_ID) {
-      imu->recv_.SendFromISR(rx);
+      accl_tp_((param.tp_name_prefix + std::string("_accl")).c_str()),
+      gyro_tp_((param.tp_name_prefix + std::string("_gyro")).c_str()),
+      eulr_tp_((param.tp_name_prefix + std::string("_eulr")).c_str()) {
+  auto rx_callback = [](CAN::Pack &rx, IMU *imu) {
+    if (rx.index == imu->param_.index && rx.data[0] == IMU_DEVICE_ID) {
+      imu->recv_.SendFromISR(&rx);
     }
 
-    MESSAGE_FUN_PASSED();
+    return true;
   };
 
-  DECLARE_TOPIC(imu_tp, param.tp_name_prefix, false);
+  auto imu_tp = Message::Topic<CAN::Pack>(param.tp_name_prefix);
   imu_tp.RegisterCallback(rx_callback, this);
 
   CAN::Subscribe(imu_tp, this->param_.can, this->param_.index, 1);
@@ -53,22 +50,22 @@ bool IMU::Decode(CAN::Pack &rx) {
   int16_t *tmp = (int16_t *)rx.data;
   switch (rx.data[1]) {
     case ACCL_DATA_ID:
-      this->accl_.data_.x = tmp[1] * 6.0f / (float)INT16_MAX;
-      this->accl_.data_.y = tmp[2] * 6.0f / (float)INT16_MAX;
-      this->accl_.data_.z = tmp[3] * 6.0f / (float)INT16_MAX;
-      this->accl_.Publish();
+      this->accl_.x = tmp[1] * 6.0f / (float)INT16_MAX;
+      this->accl_.y = tmp[2] * 6.0f / (float)INT16_MAX;
+      this->accl_.z = tmp[3] * 6.0f / (float)INT16_MAX;
+      this->accl_tp_.Publish(this->accl_);
       break;
     case GYRO_DATA_ID:
-      this->gyro_.data_.x = tmp[1] * 20.0f / (float)INT16_MAX;
-      this->gyro_.data_.y = tmp[2] * 20.0f / (float)INT16_MAX;
-      this->gyro_.data_.z = tmp[3] * 20.0f / (float)INT16_MAX;
-      this->gyro_.Publish();
+      this->gyro_.x = tmp[1] * 20.0f / (float)INT16_MAX;
+      this->gyro_.y = tmp[2] * 20.0f / (float)INT16_MAX;
+      this->gyro_.z = tmp[3] * 20.0f / (float)INT16_MAX;
+      this->gyro_tp_.Publish(this->gyro_);
       break;
     case EULR_DATA_ID:
-      this->eulr_.data_.pit = tmp[1] * M_2PI / (float)INT16_MAX;
-      this->eulr_.data_.rol = tmp[2] * M_2PI / (float)INT16_MAX;
-      this->eulr_.data_.yaw = tmp[3] * M_2PI / (float)INT16_MAX;
-      this->eulr_.Publish();
+      this->eulr_.pit = tmp[1] * M_2PI / (float)INT16_MAX;
+      this->eulr_.rol = tmp[2] * M_2PI / (float)INT16_MAX;
+      this->eulr_.yaw = tmp[3] * M_2PI / (float)INT16_MAX;
+      this->eulr_tp_.Publish(this->eulr_);
       break;
     default:
       return false;

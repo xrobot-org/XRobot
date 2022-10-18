@@ -67,7 +67,9 @@ class AI {
 
   System::Semaphore data_ready_;
 
-  DECLARE_PUBER(cmd_, Component::CMD::Data, "cmd_ai", false);
+  Message::Topic<Component::CMD::Data> cmd_tp_;
+
+  Component::CMD::Data cmd_;
 
   Component::Type::Quaternion quat_;
   Device::Referee::Data raw_ref_;

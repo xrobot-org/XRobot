@@ -57,7 +57,10 @@ class BMI088 {
 
   System::Thread thread_;
 
-  DECLARE_PUBER(accl_, Component::Type::Vector3, "imu_accl", true);
-  DECLARE_PUBER(gyro_, Component::Type::Vector3, "imu_gyro", true);
+  Message::Topic<Component::Type::Vector3> accl_tp_;
+  Message::Topic<Component::Type::Vector3> gyro_tp_;
+
+  Component::Type::Vector3 accl_;
+  Component::Type::Vector3 gyro_;
 };
 }  // namespace Device

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.11)
 
-add_subdirectory(${LIB_DIR}/one-message/src om.out)
+add_subdirectory(${LIB_DIR}/one-message om.out)
 
 target_include_directories(
   OneMessage

@@ -80,15 +80,18 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
   auto chassis_thread = [](void* arg) {
     Balance* chassis = (Balance*)arg;
 
-    DECLARE_SUBER(cmd_, chassis->cmd_, "cmd_chassis");
-    DECLARE_SUBER(eulr_, chassis->eulr_, "chassis_eulr");
-    DECLARE_SUBER(gyro_, chassis->gyro_, "chassis_gyro");
+    auto cmd_sub = Message::Subscriber<Component::CMD::ChassisCMD>(
+        "cmd_chassis", chassis->cmd_);
+    auto eulr_sub = Message::Subscriber<Component::Type::Eulr>("chassis_eulr",
+                                                               chassis->eulr_);
+    auto gyro_sub = Message::Subscriber<Component::Type::Vector3>(
+        "chassis_gyro", chassis->gyro_);
 
     while (1) {
       /* 读取控制指令、电容、裁判系统、电机反馈 */
-      cmd_.DumpData();
-      eulr_.DumpData();
-      gyro_.DumpData();
+      cmd_sub.DumpData();
+      eulr_sub.DumpData();
+      gyro_sub.DumpData();
 
       /* 更新反馈值 */
       chassis->ctrl_lock_.Take(UINT32_MAX);

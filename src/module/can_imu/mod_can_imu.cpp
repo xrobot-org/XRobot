@@ -10,23 +10,23 @@ CanIMU::CanIMU() {
   auto imu_thread = [](void *arg) {
     CanIMU *imu = static_cast<CanIMU *>(arg);
 
-    DECLARE_SUBER(eulr_, imu->eulr_, "imu_eulr");
-    DECLARE_SUBER(gyro_, imu->gyro_, "imu_gyro");
-    DECLARE_SUBER(accl_, imu->accl_, "imu_accl");
+    auto eulr_sub = Message::Subscriber("imu_eulr", imu->eulr_);
+    auto gyro_sub = Message::Subscriber("imu_eulr", imu->eulr_);
+    auto accl_sub = Message::Subscriber("imu_eulr", imu->eulr_);
 
     while (1) {
 #if IMU_SEND_ACCL
-      accl_.DumpData();
+      accl_sub.DumpData();
       imu->SendAccl();
 #endif
 
 #if IMU_SEND_GYRO
-      gyro_.DumpData();
+      gyro_sub.DumpData();
       imu->SendGyro();
 #endif
 
 #if IMU_SEND_EULR
-      eulr_.DumpData();
+      eulr_sub.DumpData();
       imu->SendEulr();
 #endif
 

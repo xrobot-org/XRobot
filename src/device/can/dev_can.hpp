@@ -20,10 +20,10 @@ class CAN {
 
   static bool SendPack(bsp_can_t can, Pack& pack);
 
-  static bool Subscribe(System::Message::Topic& tp, bsp_can_t can,
+  static bool Subscribe(Message::Topic<CAN::Pack>& tp, bsp_can_t can,
                         uint32_t index, uint32_t num);
 
-  static System::Message::Topic* can_tp_[BSP_CAN_NUM];
+  static Message::Topic<CAN::Pack>* can_tp_[BSP_CAN_NUM];
   static System::Semaphore* can_sem_[BSP_CAN_NUM];
 };
 }  // namespace Device

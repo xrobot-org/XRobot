@@ -135,7 +135,7 @@ class Balance {
 
   System::Thread thread_;
 
-  DECLARE_PUBER(speed_err_, float, "chassis_speed_err", true);
+  Message::Topic<float> speed_err_ = Message::Topic<float>("chassis_speed_err");
 };
 
 typedef Balance<Device::RMMotor, Device::RMMotor::Param> RMBalance;

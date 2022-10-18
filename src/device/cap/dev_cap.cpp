@@ -13,21 +13,18 @@
 
 using namespace Device;
 
-Cap::Cap(Cap::Param &param) : param_(param) {
-  DECLARE_MESSAGE_FUN(rx_callback) {
-    MESSAGE_GET_DATA(CAN::Pack, rx);
-    MESSAGE_GET_ARG(Cap, cap);
+Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
+  auto rx_callback = [](CAN::Pack &rx, Cap *cap) {
+    rx.index -= cap->param_.index;
 
-    rx->index -= cap->param_.index;
-
-    if (rx->index == 0) {
-      cap->control_feedback_.OverwriteFromISR(rx);
+    if (rx.index == 0) {
+      cap->control_feedback_.OverwriteFromISR(&rx);
     }
 
-    MESSAGE_FUN_PASSED();
+    return true;
   };
 
-  DECLARE_TOPIC(cap_tp, "can_cap", false);
+  Message::Topic<CAN::Pack> cap_tp("can_cap");
   cap_tp.RegisterCallback(rx_callback, this);
 
   CAN::Subscribe(cap_tp, this->param_.can, this->param_.index, 1);
@@ -35,7 +32,7 @@ Cap::Cap(Cap::Param &param) : param_(param) {
   auto cap_thread = [](void *arg) {
     Cap *cap = static_cast<Cap *>(arg);
 
-    DECLARE_SUBER(out_, cap->out_, "cap_out");
+    Message::Subscriber out_sub("cap_out", cap->out_);
 
     while (1) {
       /* 读取裁判系统信息 */
@@ -43,9 +40,9 @@ Cap::Cap(Cap::Param &param) : param_(param) {
         /* 一定时间长度内接收不到电容反馈值，使电容离线 */
         cap->Offline();
       }
-      cap->info_.Publish();
+      cap->info_tp_.Publish(cap->info_);
 
-      out_.DumpData();
+      out_sub.DumpData();
       cap->Control();
 
       /* 运行结束，等待下一次唤醒 */
@@ -74,17 +71,13 @@ bool Cap::Update() {
 
 void Cap::Decode(CAN::Pack &rx) {
   uint8_t *raw = rx.data;
-  this->info_.data_.input_volt_ =
-      (float)((raw[1] << 8) | raw[0]) / (float)CAP_RES;
-  this->info_.data_.cap_volt_ =
-      (float)((raw[3] << 8) | raw[2]) / (float)CAP_RES;
-  this->info_.data_.input_curr_ =
-      (float)((raw[5] << 8) | raw[4]) / (float)CAP_RES;
-  this->info_.data_.target_power_ =
-      (float)((raw[7] << 8) | raw[6]) / (float)CAP_RES;
+  this->info_.input_volt_ = (float)((raw[1] << 8) | raw[0]) / (float)CAP_RES;
+  this->info_.cap_volt_ = (float)((raw[3] << 8) | raw[2]) / (float)CAP_RES;
+  this->info_.input_curr_ = (float)((raw[5] << 8) | raw[4]) / (float)CAP_RES;
+  this->info_.target_power_ = (float)((raw[7] << 8) | raw[6]) / (float)CAP_RES;
 
   /* 更新电容状态和百分比 */
-  this->info_.data_.percentage_ = this->GetPercentage();
+  this->info_.percentage_ = this->GetPercentage();
 }
 
 bool Cap::Control() {
@@ -101,19 +94,18 @@ bool Cap::Control() {
 }
 
 bool Cap::Offline() {
-  this->info_.data_.cap_volt_ = 0;
-  this->info_.data_.input_curr_ = 0;
-  this->info_.data_.input_volt_ = 0;
-  this->info_.data_.target_power_ = 0;
+  this->info_.cap_volt_ = 0;
+  this->info_.input_curr_ = 0;
+  this->info_.input_volt_ = 0;
+  this->info_.target_power_ = 0;
   this->online_ = 0;
 
   return true;
 }
 
 float Cap::GetPercentage() {
-  const float c_max =
-      this->info_.data_.input_volt_ * this->info_.data_.input_volt_;
-  const float c_cap = this->info_.data_.cap_volt_ * this->info_.data_.cap_volt_;
+  const float c_max = this->info_.input_volt_ * this->info_.input_volt_;
+  const float c_cap = this->info_.cap_volt_ * this->info_.cap_volt_;
   const float c_min = CAP_CUTOFF_VOLT * CAP_CUTOFF_VOLT;
   float percentage = (c_cap - c_min) / (c_max - c_min);
   clampf(&percentage, 0.0f, 1.0f);

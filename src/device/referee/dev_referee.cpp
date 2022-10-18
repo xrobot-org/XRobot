@@ -111,7 +111,7 @@ Referee::Referee() {
 #endif
 
       /* 发布裁判系统数据 */
-      ref->ref_data_.Publish();
+      ref->ref_data_tp_.Publish(ref->ref_data_);
     }
   };
 
@@ -119,7 +119,7 @@ Referee::Referee() {
                  System::Thread::Realtime, this);
 }
 
-void Referee::Offline() { this->ref_data_.data_.status = OFFLINE; }
+void Referee::Offline() { this->ref_data_.status = OFFLINE; }
 
 bool Referee::StartRecv() {
   return bsp_uart_receive(BSP_UART_REF, rxbuf, REF_LEN_RX_BUFF, false) ==
@@ -127,7 +127,7 @@ bool Referee::StartRecv() {
 }
 
 void Referee::Prase() {
-  this->ref_data_.data_.status = RUNNING;
+  this->ref_data_.status = RUNNING;
   size_t data_length = bsp_uart_get_count(BSP_UART_REF);
 
   const uint8_t *index = rxbuf; /* const 保护原始rxbuf不被修改 */
@@ -161,88 +161,88 @@ void Referee::Prase() {
 
     switch ((int)(*cmd_id)) {
       case REF_CMD_ID_GAME_STATUS:
-        destination = &(this->ref_data_.data_.game_status);
-        size = sizeof(this->ref_data_.data_.game_status);
+        destination = &(this->ref_data_.game_status);
+        size = sizeof(this->ref_data_.game_status);
         break;
       case REF_CMD_ID_GAME_RESULT:
-        destination = &(this->ref_data_.data_.game_result);
-        size = sizeof(this->ref_data_.data_.game_result);
+        destination = &(this->ref_data_.game_result);
+        size = sizeof(this->ref_data_.game_result);
         break;
       case REF_CMD_ID_GAME_ROBOT_HP:
-        destination = &(this->ref_data_.data_.game_robot_hp);
-        size = sizeof(this->ref_data_.data_.game_robot_hp);
+        destination = &(this->ref_data_.game_robot_hp);
+        size = sizeof(this->ref_data_.game_robot_hp);
         break;
       case REF_CMD_ID_DART_STATUS:
-        destination = &(this->ref_data_.data_.dart_status);
-        size = sizeof(this->ref_data_.data_.dart_status);
+        destination = &(this->ref_data_.dart_status);
+        size = sizeof(this->ref_data_.dart_status);
         break;
       case REF_CMD_ID_ICRA_ZONE_STATUS:
-        destination = &(this->ref_data_.data_.icra_zone);
-        size = sizeof(this->ref_data_.data_.icra_zone);
+        destination = &(this->ref_data_.icra_zone);
+        size = sizeof(this->ref_data_.icra_zone);
         break;
       case REF_CMD_ID_FIELD_EVENTS:
-        destination = &(this->ref_data_.data_.field_event);
-        size = sizeof(this->ref_data_.data_.field_event);
+        destination = &(this->ref_data_.field_event);
+        size = sizeof(this->ref_data_.field_event);
         break;
       case REF_CMD_ID_SUPPLY_ACTION:
-        destination = &(this->ref_data_.data_.supply_action);
-        size = sizeof(this->ref_data_.data_.supply_action);
+        destination = &(this->ref_data_.supply_action);
+        size = sizeof(this->ref_data_.supply_action);
         break;
       case REF_CMD_ID_WARNING:
-        destination = &(this->ref_data_.data_.warning);
-        size = sizeof(this->ref_data_.data_.warning);
+        destination = &(this->ref_data_.warning);
+        size = sizeof(this->ref_data_.warning);
         break;
       case REF_CMD_ID_DART_COUNTDOWN:
-        destination = &(this->ref_data_.data_.dart_countdown);
-        size = sizeof(this->ref_data_.data_.dart_countdown);
+        destination = &(this->ref_data_.dart_countdown);
+        size = sizeof(this->ref_data_.dart_countdown);
         break;
       case REF_CMD_ID_ROBOT_STATUS:
-        destination = &(this->ref_data_.data_.robot_status);
-        size = sizeof(this->ref_data_.data_.robot_status);
+        destination = &(this->ref_data_.robot_status);
+        size = sizeof(this->ref_data_.robot_status);
         break;
       case REF_CMD_ID_POWER_HEAT_DATA:
-        destination = &(this->ref_data_.data_.power_heat);
-        size = sizeof(this->ref_data_.data_.power_heat);
+        destination = &(this->ref_data_.power_heat);
+        size = sizeof(this->ref_data_.power_heat);
         break;
       case REF_CMD_ID_ROBOT_POS:
-        destination = &(this->ref_data_.data_.robot_pos);
-        size = sizeof(this->ref_data_.data_.robot_pos);
+        destination = &(this->ref_data_.robot_pos);
+        size = sizeof(this->ref_data_.robot_pos);
         break;
       case REF_CMD_ID_ROBOT_BUFF:
-        destination = &(this->ref_data_.data_.robot_buff);
-        size = sizeof(this->ref_data_.data_.robot_buff);
+        destination = &(this->ref_data_.robot_buff);
+        size = sizeof(this->ref_data_.robot_buff);
         break;
       case REF_CMD_ID_DRONE_ENERGY:
-        destination = &(this->ref_data_.data_.drone_energy);
-        size = sizeof(this->ref_data_.data_.drone_energy);
+        destination = &(this->ref_data_.drone_energy);
+        size = sizeof(this->ref_data_.drone_energy);
         break;
       case REF_CMD_ID_ROBOT_DMG:
-        destination = &(this->ref_data_.data_.robot_danage);
-        size = sizeof(this->ref_data_.data_.robot_danage);
+        destination = &(this->ref_data_.robot_danage);
+        size = sizeof(this->ref_data_.robot_danage);
         break;
       case REF_CMD_ID_LAUNCHER_DATA:
-        destination = &(this->ref_data_.data_.launcher_data);
-        size = sizeof(this->ref_data_.data_.launcher_data);
+        destination = &(this->ref_data_.launcher_data);
+        size = sizeof(this->ref_data_.launcher_data);
         break;
       case REF_CMD_ID_BULLET_REMAINING:
-        destination = &(this->ref_data_.data_.bullet_remain);
-        size = sizeof(this->ref_data_.data_.bullet_remain);
+        destination = &(this->ref_data_.bullet_remain);
+        size = sizeof(this->ref_data_.bullet_remain);
         break;
       case REF_CMD_ID_RFID:
-        destination = &(this->ref_data_.data_.rfid);
-        size = sizeof(this->ref_data_.data_.rfid);
+        destination = &(this->ref_data_.rfid);
+        size = sizeof(this->ref_data_.rfid);
         break;
       case REF_CMD_ID_DART_CLIENT:
-        destination = &(this->ref_data_.data_.dart_client);
-        size = sizeof(this->ref_data_.data_.dart_client);
+        destination = &(this->ref_data_.dart_client);
+        size = sizeof(this->ref_data_.dart_client);
         break;
       case REF_CMD_ID_CLIENT_MAP:
-        destination = &(this->ref_data_.data_.client_map);
-        size = sizeof(this->ref_data_.data_.client_map);
+        destination = &(this->ref_data_.client_map);
+        size = sizeof(this->ref_data_.client_map);
         break;
       case REF_CMD_ID_KEYBOARD_MOUSE:
-        destination = &(this->ref_data_.data_.keyboard_mouse);
-        size = sizeof(this->ref_data_.data_.keyboard_mouse);
+        destination = &(this->ref_data_.keyboard_mouse);
+        size = sizeof(this->ref_data_.keyboard_mouse);
         break;
       default:
         return;
@@ -259,15 +259,14 @@ void Referee::Prase() {
   }
 #if REF_VIRTUAL
 #if REF_FORCE_ONLINE
-  this->ref_data_.data_.status = RUNNING;
+  this->ref_data_.status = RUNNING;
 #endif
-  this->ref_data_.data_.power_heat.launcher_id1_17_heat = REF_HEAT_LIMIT_17;
-  this->ref_data_.data_.power_heat.launcher_42_heat = REF_HEAT_LIMIT_42;
-  this->ref_data_.data_.robot_status.launcher_id1_17_speed_limit =
-      REF_LAUNCH_SPEED;
-  this->ref_data_.data_.robot_status.launcher_42_speed_limit = REF_LAUNCH_SPEED;
-  this->ref_data_.data_.robot_status.chassis_power_limit = REF_POWER_LIMIT;
-  this->ref_data_.data_.power_heat.chassis_pwr_buff = REF_POWER_BUFF;
+  this->ref_data_.power_heat.launcher_id1_17_heat = REF_HEAT_LIMIT_17;
+  this->ref_data_.power_heat.launcher_42_heat = REF_HEAT_LIMIT_42;
+  this->ref_data_.robot_status.launcher_id1_17_speed_limit = REF_LAUNCH_SPEED;
+  this->ref_data_.robot_status.launcher_42_speed_limit = REF_LAUNCH_SPEED;
+  this->ref_data_.robot_status.chassis_power_limit = REF_POWER_LIMIT;
+  this->ref_data_.power_heat.chassis_pwr_buff = REF_POWER_BUFF;
 #endif
 }
 
