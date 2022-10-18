@@ -5,9 +5,6 @@
 #define OM_DEBUG (0)
 #endif
 
-/* 严格限制导出数据时的长度 */
-#define OM_STRICT_LIMIT (1)
-
 /* 使用用户自定义的内存分配 */
 #define OM_USE_USER_MALLOC (1)
 
@@ -38,13 +35,7 @@
 #define om_mutex_delete(arg) vSemaphoreDelete(*arg)
 
 /* 将运行时间作为消息发出的时间 */
-#define OM_VIRTUAL_TIME (0)
-
-#if !OM_VIRTUAL_TIME
-#include <time.h>
-#define om_time_t uint32_t
-#define om_time_get(_time) (*_time = xTaskGetTickCount())
-#endif
+#define OM_TIME (0)
 
 /* 开启"om_log"话题作为OneMessage的日志输出 */
 #define OM_LOG_OUTPUT (1)

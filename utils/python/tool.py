@@ -48,18 +48,18 @@ class ProjectTools:
                        '\n\t\tbool \"' + item + '\"\n')
         file.write('endchoice\n')
 
-    def kconfig_conditional_include(self, path, file, list):
-        for item in list:
-            file.write('\nif ' + self.config_prefix + item + '\n\tsource \"' +
-                       path + '/' + item + '/Kconfig"\nendif\n')
+    def kconfig_conditional_include(self, path, file, name):
+        file.write('\nif ' + self.config_prefix + name + '\n\tsource \"' +
+                   path + '/' + name + '/Kconfig"\nendif\n')
 
-    def kconfig_add_menu(self, name, file, list):
+    def kconfig_add_menu(self, name, file, list, path):
         file.write('\n# ' + name)
         file.write('\nmenu \"' + name + '"\n')
 
         for item in list:
             file.write('\n\tconfig ' + self.config_prefix + item +
                        '\n\t\ttristate \"' + item + '\"\n')
+            self.kconfig_conditional_include(path, file, item)
         file.write('endmenu\n')
 
     def cmake_add_detail(self, file, name, value):

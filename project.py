@@ -64,18 +64,17 @@ def generate_kconfig():
 
     tools.kconfig_add_choice('开发板/board', kconfig_file,
                              tools.list_dir(tools.project_path + '/hw/bsp'))
+    tools.kconfig_add_choice(
+        '系统/system', kconfig_file,
+        tools.list_dir(tools.project_path + '/src/system'))
     tools.kconfig_add_choice('机器人/robot', kconfig_file,
                              tools.list_dir(tools.project_path + '/src/robot'))
     tools.kconfig_add_menu('设备/device', kconfig_file,
-                           tools.list_dir(tools.project_path + '/src/device'))
+                           tools.list_dir(tools.project_path + '/src/device'),
+                           tools.project_path + '/src/device')
     tools.kconfig_add_menu('模块/module', kconfig_file,
-                           tools.list_dir(tools.project_path + '/src/module'))
-    tools.kconfig_conditional_include(
-        tools.project_path + '/src/device', kconfig_file,
-        tools.list_dir(tools.project_path + '/src/device'))
-    tools.kconfig_conditional_include(
-        tools.project_path + '/src/module', kconfig_file,
-        tools.list_dir(tools.project_path + '/src/module'))
+                           tools.list_dir(tools.project_path + '/src/module'),
+                           tools.project_path + '/src/module')
 
     kconfig_file.close()
     print("Generate Kconfig done.")
