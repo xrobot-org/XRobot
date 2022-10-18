@@ -24,7 +24,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/config/config.cmake)
 # ---------------------------------------------------------------------------------------
 # Building Options
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(CMAKE_C_FLAGS_DEBUG "-Og -g3 -ggdb3")
+  set(CMAKE_C_FLAGS_DEBUG "-O2 -ggdb3")
   set(CMAKE_ASM_FLAGS_DEBUG "-g3 -ggdb3")
   set(CMAKE_EXE_LINKER_FLAGS_DEBUG "")
   add_compile_definitions(MCU_DEBUG_BUILD USE_FULL_ASSERT)
