@@ -31,3 +31,6 @@
 [submodule "lib/Kconfiglib"]
 	path = lib/Kconfiglib
 	url = https://github.com/ulfalizer/Kconfiglib
+[submodule "lib/mini_shell"]
+	path = lib/mini_shell
+	url = https://gitee.com/jiu-xiao/mini_shell.git

@@ -5,7 +5,7 @@
 
 static bsp_callback_t callback_list[BSP_USB_NUM][BSP_USB_CB_NUM];
 
-int8_t bsp_usb_transmit(uint8_t *buffer, uint32_t len) {
+int8_t bsp_usb_transmit(const uint8_t *buffer, uint32_t len) {
   tud_cdc_write(buffer, len);
   tud_cdc_write_flush();
   return BSP_OK;

@@ -4,6 +4,8 @@ import os
 import shutil
 
 sys.path.insert(0, './utils/python')
+sys.path.insert(0, '../utils/python')
+
 import tool
 
 tools = tool.ProjectTools()

@@ -58,10 +58,15 @@
 
 /* default environment variables set for user */
 static const ef_env default_env_set[] = {{
-    "SN",
-    "\0",
-    sizeof(uint32_t),
-}};
+                                             "SN",
+                                             "\0",
+                                             32 * sizeof(uint8_t),
+                                         },
+                                         {
+                                             "WRITE TIMES",
+                                             "\0",
+                                             sizeof(uint32_t),
+                                         }};
 
 static uint32_t stm32_get_sector(uint32_t address) {
   uint32_t sector = 0;

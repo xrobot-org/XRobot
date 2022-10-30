@@ -1,5 +1,6 @@
 #include "comp_ahrs.hpp"
 #include "comp_cmd.hpp"
+#include "database.hpp"
 #include "dev_ai.hpp"
 #include "dev_bmi088.hpp"
 #include "dev_can.hpp"
@@ -8,13 +9,14 @@
 #include "dev_dr16.hpp"
 #include "dev_led.hpp"
 #include "dev_referee.hpp"
-#include "dev_term.hpp"
 #include "mod_balance.hpp"
 #include "mod_dual_leg.hpp"
+#include "om.hpp"
+#include "term.hpp"
 
 void robot_init();
 namespace Robot {
-class Infantry : public Message {
+class Infantry {
  public:
   typedef struct {
     Module::RMBalance::Param balance;
@@ -24,6 +26,10 @@ class Infantry : public Message {
     Device::Cap::Param cap;
     Device::IMU::Param can_imu;
   } Param;
+
+  Message message_;
+  System::Term term_;
+  System::Database database_;
 
   Component::CMD cmd_;
   Component::AHRS ahrs_;
@@ -36,7 +42,6 @@ class Infantry : public Message {
   Device::DR16 dr16_;
   Device::LED led_;
   Device::Referee referee_;
-  Device::Term term_;
 
   Module::WheelLeg leg_;
   Module::RMBalance balance_;

@@ -7,7 +7,6 @@
 #include "dev_dr16.hpp"
 #include "dev_led.hpp"
 #include "dev_referee.hpp"
-#include "dev_term.hpp"
 #include "mod_chassis.hpp"
 #include "mod_gimbal.hpp"
 #include "mod_launcher.hpp"
@@ -35,7 +34,6 @@ class Infantry : public Message {
   Device::DR16 dr16_;
   Device::LED led_;
   Device::Referee referee_;
-  Device::Term term_;
 
   Module::RMChassis chassis_;
   Module::Gimbal gimbal_;

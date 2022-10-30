@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.11)
 
 add_subdirectory(${LIB_DIR}/one-message om.out)
+add_subdirectory(${LIB_DIR}/mini_shell ms.out)
 
 project(system)
 
