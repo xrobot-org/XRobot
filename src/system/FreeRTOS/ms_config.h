@@ -5,7 +5,7 @@
 #define MS_MAX_ARG_NUM (5)
 
 /* 历史命令数量 */
-#define MS_MAX_HISTORY_NUM (8)
+#define MS_MAX_HISTORY_NUM (4)
 
 /* 命令行打印缓冲区长度 */
 #define MS_WIRITE_BUFF_SIZE (128)

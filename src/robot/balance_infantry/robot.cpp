@@ -336,14 +336,6 @@ Robot::Infantry::Param param = {
     },
   },
 
-  .bmi088_cali = {
-    .gyro_offset = {
-      .x = 0.000332771f,
-      .y = 0.004123951f,
-      .z = -0.000634991f,
-    },
-  },
-
   .cap = {
     .can = BSP_CAN_1,
     .index = 0x30,

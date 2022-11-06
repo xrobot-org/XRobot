@@ -22,7 +22,7 @@ class BMI088 {
     BMI_GYRO,
   } DeviceType;
 
-  BMI088(BMI088::Calibration &cali, BMI088::Rotation &rot);
+  BMI088(BMI088::Rotation &rot);
 
   bool Init();
 
@@ -44,7 +44,7 @@ class BMI088 {
 
   void Read(DeviceType type, uint8_t reg, uint8_t *data, uint8_t len);
 
-  Calibration &cali;
+  Calibration cali;
   Rotation &rot;
 
   System::Semaphore gyro_raw_;

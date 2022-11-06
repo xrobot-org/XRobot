@@ -1,24 +1,32 @@
 #include "comp_ahrs.hpp"
+#include "database.hpp"
+#include "dev_blink_led.hpp"
 #include "dev_bmi088.hpp"
 #include "dev_can.hpp"
-#include "dev_led.hpp"
 #include "mod_can_imu.hpp"
+#include "term.hpp"
 
 void robot_init();
 namespace Robot {
-class Infantry : public Message {
+class Infantry {
  public:
   typedef struct {
     Device::BMI088::Rotation bmi088_rot;
-    Device::BMI088::Calibration bmi088_cali;
+    Device::BlinkLED::Param led_;
   } Param;
 
+  Message message_;
+
+  System::Term term_;
+  System::Database database_;
+
   Component::AHRS ahrs_;
-  Device::CAN can_;
+
   Device::BMI088 bmi088_;
-  Device::LED led_;
+  Device::BlinkLED led_;
+  Device::Can can_;
   Module::CanIMU imu_;
 
-  Infantry(Param& param) : bmi088_(param.bmi088_cali, param.bmi088_rot) {}
+  Infantry(Param& param) : bmi088_(param.bmi088_rot), led_(param.led_) {}
 };
 }  // namespace Robot

@@ -1,38 +1,43 @@
 #include "comp_ahrs.hpp"
 #include "comp_cmd.hpp"
+#include "database.hpp"
 #include "dev_ai.hpp"
 #include "dev_bmi088.hpp"
 #include "dev_can.hpp"
 #include "dev_cap.hpp"
 #include "dev_dr16.hpp"
-#include "dev_led.hpp"
+#include "dev_led_rgb.hpp"
 #include "dev_referee.hpp"
 #include "mod_chassis.hpp"
 #include "mod_gimbal.hpp"
 #include "mod_launcher.hpp"
+#include "term.hpp"
 
 void robot_init();
 namespace Robot {
-class Infantry : public Message {
+class Infantry {
  public:
   typedef struct {
     Module::RMChassis::Param chassis;
     Module::Gimbal::Param gimbal;
     Module::Launcher::Param launcher;
     Device::BMI088::Rotation bmi088_rot;
-    Device::BMI088::Calibration bmi088_cali;
     Device::Cap::Param cap;
   } Param;
+
+  Message message_;
+  System::Term term_;
+  System::Database database_;
 
   Component::CMD cmd_;
   Component::AHRS ahrs_;
 
   Device::AI ai_;
   Device::BMI088 bmi088_;
-  Device::CAN can_;
+  Device::Can can_;
   Device::Cap cap_;
   Device::DR16 dr16_;
-  Device::LED led_;
+  Device::RGB led_;
   Device::Referee referee_;
 
   Module::RMChassis chassis_;
@@ -40,7 +45,7 @@ class Infantry : public Message {
   Module::Launcher launcher_;
 
   Infantry(Param& param, float control_freq)
-      : bmi088_(param.bmi088_cali, param.bmi088_rot),
+      : bmi088_(param.bmi088_rot),
         cap_(param.cap),
         chassis_(param.chassis, control_freq),
         gimbal_(param.gimbal, control_freq),

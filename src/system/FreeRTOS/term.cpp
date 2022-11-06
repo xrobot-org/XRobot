@@ -10,13 +10,15 @@ using namespace System;
 
 static System::Thread term_thread_, usb_thread_;
 
-static int userShellWrite(const char *data, uint32_t len) {
+static int TermWrite(const char *data, uint32_t len) {
   bsp_usb_transmit((uint8_t *)data, len);
   return len;
 }
 
 Term::Term() {
   bsp_usb_init();
+
+  ms_init(TermWrite);
 
   auto usb_thread = [](void *arg) {
     (void)arg;
@@ -30,13 +32,14 @@ Term::Term() {
 
   auto term_thread = [](void *arg) {
     (void)arg;
+
     while (!bsp_usb_connect()) term_thread_.Sleep(1);
 
-    ms_init(userShellWrite);
+    ms_start();
 
     while (1) {
       if (bsp_usb_avail()) ms_input(bsp_usb_read_char());
-      vTaskDelay(1);
+      vTaskDelay(10);
     }
   };
 

@@ -12,15 +12,10 @@ Robot::Infantry::Param param = {
     },
   },
 
-  .bmi088_cali =
-  {
-    .gyro_offset =
-    {
-      .x = -0.00174048,
-      .y = -0.00141542,
-      .z = +0.00311609,
-    },
-  },
+  .led_ = {
+    .gpio = BSP_GPIO_LED,
+    .timeout = 200,
+  }
 };
 /* clang-format on */
 
