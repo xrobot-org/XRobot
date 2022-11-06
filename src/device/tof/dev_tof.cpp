@@ -8,7 +8,7 @@
 using namespace Device;
 
 Tof::Tof(Param &param) : param_(param) {
-  auto rx_callback = [](CAN::Pack &rx, Tof *tof) {
+  auto rx_callback = [](Can::Pack &rx, Tof *tof) {
     rx.index -= tof->param_.index;
     if (rx.index < DEV_TOF_SENSOR_NUMBER) {
       tof->recv_.OverwriteFromISR(rx);
@@ -17,11 +17,11 @@ Tof::Tof(Param &param) : param_(param) {
     return true;
   };
 
-  auto tof_tp = Message::Topic<CAN::Pack>("can_tof");
+  auto tof_tp = Message::Topic<Can::Pack>("can_tof");
 
   tof_tp.RegisterCallback(rx_callback, this);
 
-  CAN::Subscribe(tof_tp, this->param_.can, this->param_.index,
+  Can::Subscribe(tof_tp, this->param_.can, this->param_.index,
                  DEV_TOF_SENSOR_NUMBER);
 
   auto tof_thread = [](Tof *tof) {
@@ -40,7 +40,7 @@ Tof::Tof(Param &param) : param_(param) {
                        System::Thread::Realtime);
 }
 
-void Tof::Decode(CAN::Pack &rx) {
+void Tof::Decode(Can::Pack &rx) {
   this->fb_[rx.index].dist =
       (float)((rx.data[2] << 16) | (rx.data[1] << 8) | rx.data[0]) /
       (float)TOF_RES;
@@ -50,7 +50,7 @@ void Tof::Decode(CAN::Pack &rx) {
 }
 
 bool Tof::Update() {
-  CAN::Pack pack;
+  Can::Pack pack;
 
   while (this->recv_.Receive(pack, 2)) {
     this->Decode(pack);

@@ -8,19 +8,19 @@
 
 using namespace Device;
 
-Message::Topic<CAN::Pack>* CAN::can_tp_[BSP_CAN_NUM];
-System::Semaphore* CAN::can_sem_[BSP_CAN_NUM];
+Message::Topic<Can::Pack>* Can::can_tp_[BSP_CAN_NUM];
+System::Semaphore* Can::can_sem_[BSP_CAN_NUM];
 
-static CAN::Pack pack;
+static Can::Pack pack;
 
-CAN::CAN() {
+Can::Can() {
   bsp_can_init();
 
   for (int i = 0; i < BSP_CAN_NUM; i++) {
-    can_tp_[i] = static_cast<Message::Topic<CAN::Pack>*>(
-        System::Memory::Malloc(sizeof(Message::Topic<CAN::Pack>)));
+    can_tp_[i] = static_cast<Message::Topic<Can::Pack>*>(
+        System::Memory::Malloc(sizeof(Message::Topic<Can::Pack>)));
     new (can_tp_[i])
-        Message::Topic<CAN::Pack>(("dev_can_" + std::to_string(i)).c_str());
+        Message::Topic<Can::Pack>(("dev_can_" + std::to_string(i)).c_str());
 
     can_sem_[i] = static_cast<System::Semaphore*>(
         System::Memory::Malloc(sizeof(System::Semaphore)));
@@ -39,7 +39,7 @@ CAN::CAN() {
   auto tx_cplt_callback = [](bsp_can_t can, void* arg) {
     (void)(arg);
 
-    CAN::can_sem_[can]->GiveFromISR();
+    Can::can_sem_[can]->GiveFromISR();
   };
 
   for (int i = 0; i < BSP_CAN_NUM; i++) {
@@ -50,13 +50,13 @@ CAN::CAN() {
   }
 }
 
-bool CAN::SendPack(bsp_can_t can, Pack& pack) {
-  CAN::can_sem_[can]->Take(UINT32_MAX);
+bool Can::SendPack(bsp_can_t can, Pack& pack) {
+  Can::can_sem_[can]->Take(UINT32_MAX);
 
   return bsp_can_trans_packet(can, pack.index, pack.data) == BSP_OK;
 }
 
-bool CAN::Subscribe(Message::Topic<CAN::Pack>& tp, bsp_can_t can,
+bool Can::Subscribe(Message::Topic<Can::Pack>& tp, bsp_can_t can,
                     uint32_t index, uint32_t num) {
   ASSERT(num > 0);
 

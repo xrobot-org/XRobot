@@ -7,7 +7,7 @@ IMU::IMU(IMU::Param &param)
       accl_tp_((param.tp_name_prefix + std::string("_accl")).c_str()),
       gyro_tp_((param.tp_name_prefix + std::string("_gyro")).c_str()),
       eulr_tp_((param.tp_name_prefix + std::string("_eulr")).c_str()) {
-  auto rx_callback = [](CAN::Pack &rx, IMU *imu) {
+  auto rx_callback = [](Can::Pack &rx, IMU *imu) {
     if (rx.index == imu->param_.index && rx.data[0] == IMU_DEVICE_ID) {
       imu->recv_.SendFromISR(rx);
     }
@@ -15,10 +15,10 @@ IMU::IMU(IMU::Param &param)
     return true;
   };
 
-  auto imu_tp = Message::Topic<CAN::Pack>(param.tp_name_prefix);
+  auto imu_tp = Message::Topic<Can::Pack>(param.tp_name_prefix);
   imu_tp.RegisterCallback(rx_callback, this);
 
-  CAN::Subscribe(imu_tp, this->param_.can, this->param_.index, 1);
+  Can::Subscribe(imu_tp, this->param_.can, this->param_.index, 1);
 
   auto imu_thread = [](IMU *imu) {
     while (1) {
@@ -37,7 +37,7 @@ IMU::IMU(IMU::Param &param)
 }
 
 void IMU::Update() {
-  CAN::Pack rx;
+  Can::Pack rx;
   while (this->recv_.Receive(rx, 0)) {
     this->Decode(rx);
     this->online_ = true;
@@ -45,7 +45,7 @@ void IMU::Update() {
   }
 }
 
-bool IMU::Decode(CAN::Pack &rx) {
+bool IMU::Decode(Can::Pack &rx) {
   int16_t *tmp = (int16_t *)rx.data;
   switch (rx.data[1]) {
     case ACCL_DATA_ID:

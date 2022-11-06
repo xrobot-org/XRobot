@@ -4,7 +4,7 @@
 
 using namespace Module;
 
-static Device::CAN::Pack send_buff;
+static Device::Can::Pack send_buff;
 
 CanIMU::CanIMU() {
   auto imu_thread = [](CanIMU *imu) {
@@ -44,7 +44,7 @@ void CanIMU::SendAccl() {
   send_buff.data[0] = Device::IMU::IMU_DEVICE_ID;
   send_buff.data[1] = Device::IMU::ACCL_DATA_ID;
   send_buff.index = IMU_SEND_CAN_ID;
-  Device::CAN::SendPack(BSP_CAN_1, send_buff);
+  Device::Can::SendPack(BSP_CAN_1, send_buff);
 }
 
 void CanIMU::SendGyro() {
@@ -54,7 +54,7 @@ void CanIMU::SendGyro() {
   tmp[3] = this->gyro_.z / 20.0f * (float)INT16_MAX;
   send_buff.data[0] = Device::IMU::IMU_DEVICE_ID;
   send_buff.data[1] = Device::IMU::GYRO_DATA_ID;
-  Device::CAN::SendPack(BSP_CAN_1, send_buff);
+  Device::Can::SendPack(BSP_CAN_1, send_buff);
 }
 
 void CanIMU::SendEulr() {
@@ -64,5 +64,5 @@ void CanIMU::SendEulr() {
   tmp[3] = this->eulr_.yaw / M_2PI * (float)INT16_MAX;
   send_buff.data[0] = Device::IMU::IMU_DEVICE_ID;
   send_buff.data[1] = Device::IMU::EULR_DATA_ID;
-  Device::CAN::SendPack(BSP_CAN_1, send_buff);
+  Device::Can::SendPack(BSP_CAN_1, send_buff);
 }

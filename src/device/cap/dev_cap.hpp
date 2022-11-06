@@ -39,7 +39,7 @@ class Cap {
 
   bool Offline();
 
-  void Decode(CAN::Pack& rx);
+  void Decode(Can::Pack& rx);
 
   float GetPercentage();
 
@@ -51,7 +51,7 @@ class Cap {
 
   uint32_t mailbox_;
 
-  System::Queue<CAN::Pack> control_feedback_ = System::Queue<CAN::Pack>(1);
+  System::Queue<Can::Pack> control_feedback_ = System::Queue<Can::Pack>(1);
 
   System::Thread thread_;
 

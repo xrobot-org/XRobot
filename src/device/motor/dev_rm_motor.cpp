@@ -63,23 +63,23 @@ RMMotor::RMMotor(const Param &param, const char *name)
       break;
   }
 
-  auto rx_callback = [](CAN::Pack &rx, RMMotor *motor) {
+  auto rx_callback = [](Can::Pack &rx, RMMotor *motor) {
     motor->recv_.OverwriteFromISR(rx);
 
     return true;
   };
 
-  Message::Topic<CAN::Pack> motor_tp(name);
+  Message::Topic<Can::Pack> motor_tp(name);
 
   motor_tp.RegisterCallback(rx_callback, this);
 
-  CAN::Subscribe(motor_tp, this->param_.can, this->param_.id_feedback, 1);
+  Can::Subscribe(motor_tp, this->param_.can, this->param_.id_feedback, 1);
 
   motor_tx_map_[this->param_.can][this->index_] |= 1 << (this->num_);
 }
 
 bool RMMotor::Update() {
-  CAN::Pack pack;
+  Can::Pack pack;
 
   while (this->recv_.Receive(pack, 0)) {
     if ((pack.index == this->param_.id_feedback) &&
@@ -91,7 +91,7 @@ bool RMMotor::Update() {
   return true;
 }
 
-void RMMotor::Decode(CAN::Pack &rx) {
+void RMMotor::Decode(Can::Pack &rx) {
   uint16_t raw_angle = (uint16_t)((rx.data[0] << 8) | rx.data[1]);
   int16_t raw_current = (int16_t)((rx.data[4] << 8) | rx.data[5]);
 
@@ -140,14 +140,14 @@ void RMMotor::Control(float out) {
 }
 
 bool RMMotor::SendData() {
-  CAN::Pack tx_buff;
+  Can::Pack tx_buff;
 
   tx_buff.index = this->param_.id_control;
 
   memcpy(tx_buff.data, motor_tx_buff_[this->param_.can][this->index_],
          sizeof(tx_buff.data));
 
-  CAN::SendPack(this->param_.can, tx_buff);
+  Can::SendPack(this->param_.can, tx_buff);
 
   motor_tx_flag_[this->param_.can][this->index_] = 0;
 

@@ -33,11 +33,11 @@ class Tof {
 
   void Offline();
 
-  void Decode(CAN::Pack& rx);
+  void Decode(Can::Pack& rx);
 
   Param param_;
 
-  System::Queue<CAN::Pack> recv_ = System::Queue<CAN::Pack>(1);
+  System::Queue<Can::Pack> recv_ = System::Queue<Can::Pack>(1);
 
   System::Thread thread_;
 

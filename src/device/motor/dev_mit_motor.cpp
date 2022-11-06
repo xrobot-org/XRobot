@@ -21,11 +21,11 @@ uint8_t RELAX_CMD[8] = {0X7F, 0XFF, 0X7F, 0XF0, 0X00, 0X00, 0X07, 0XFF};
 uint8_t ENABLE_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFC};
 
 static bool initd[BSP_CAN_NUM] = {false};
-Message::Topic<CAN::Pack> *MitMotor::mit_tp[BSP_CAN_NUM];
+Message::Topic<Can::Pack> *MitMotor::mit_tp[BSP_CAN_NUM];
 
 MitMotor::MitMotor(const Param &param, const char *name)
     : BaseMotor(name), param_(param) {
-  auto rx_callback = [](CAN::Pack &rx, MitMotor *motor) {
+  auto rx_callback = [](Can::Pack &rx, MitMotor *motor) {
     if (rx.data[0] == motor->param_.id) motor->recv_.OverwriteFromISR(rx);
 
     return true;
@@ -33,33 +33,33 @@ MitMotor::MitMotor(const Param &param, const char *name)
 
   if (!initd[this->param_.can]) {
     MitMotor::mit_tp[this->param_.can] =
-        static_cast<Message::Topic<CAN::Pack> *>(
-            System::Memory::Malloc(sizeof(Message::Topic<CAN::Pack>)));
-    *MitMotor::mit_tp[this->param_.can] = Message::Topic<CAN::Pack>(
+        static_cast<Message::Topic<Can::Pack> *>(
+            System::Memory::Malloc(sizeof(Message::Topic<Can::Pack>)));
+    *MitMotor::mit_tp[this->param_.can] = Message::Topic<Can::Pack>(
         (std::string("mit_motor_can") + std::to_string(this->param_.can))
             .c_str());
 
-    CAN::Subscribe(*MitMotor::mit_tp[this->param_.can], this->param_.can, 0, 1);
+    Can::Subscribe(*MitMotor::mit_tp[this->param_.can], this->param_.can, 0, 1);
 
     initd[this->param_.can] = true;
   }
 
-  Message::Topic<CAN::Pack> motor_tp(name);
+  Message::Topic<Can::Pack> motor_tp(name);
 
   motor_tp.RegisterCallback(rx_callback, this);
 
   motor_tp.Link(*this->mit_tp[this->param_.can]);
 
-  CAN::Pack tx_buff;
+  Can::Pack tx_buff;
 
   tx_buff.index = param.id;
   memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
 
-  CAN::SendPack(this->param_.can, tx_buff);
+  Can::SendPack(this->param_.can, tx_buff);
 }
 
 bool MitMotor::Update() {
-  CAN::Pack pack;
+  Can::Pack pack;
 
   while (this->recv_.Receive(pack, 0)) {
     this->Decode(pack);
@@ -68,7 +68,7 @@ bool MitMotor::Update() {
   return true;
 }
 
-void MitMotor::Decode(CAN::Pack &rx) {
+void MitMotor::Decode(Can::Pack &rx) {
   if (this->param_.id != rx.data[0]) return;
 
   uint16_t raw_position, raw_speed, raw_current;
@@ -113,7 +113,7 @@ void MitMotor::SetPos(float pos_error) {
   int kd_int = float_to_uint(this->param_.kd, KD_MIN, KD_MAX, 12);
   int t_int = float_to_uint(this->current_, T_MIN, T_MAX, 12);
 
-  CAN::Pack tx_buff;
+  Can::Pack tx_buff;
 
   tx_buff.index = this->param_.id;
 
@@ -126,14 +126,14 @@ void MitMotor::SetPos(float pos_error) {
   tx_buff.data[6] = ((kd_int & 0xF) << 4) | (t_int >> 8);
   tx_buff.data[7] = t_int & 0xff;
 
-  CAN::SendPack(this->param_.can, tx_buff);
+  Can::SendPack(this->param_.can, tx_buff);
 }
 
 void MitMotor::Relax() {
-  CAN::Pack tx_buff;
+  Can::Pack tx_buff;
 
   tx_buff.index = this->param_.id;
   memcpy(tx_buff.data, RELAX_CMD, sizeof(ENABLE_CMD));
 
-  CAN::SendPack(this->param_.can, tx_buff);
+  Can::SendPack(this->param_.can, tx_buff);
 }

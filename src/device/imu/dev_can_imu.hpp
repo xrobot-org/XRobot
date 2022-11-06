@@ -26,7 +26,7 @@ class IMU {
 
   bool Offline();
 
-  bool Decode(CAN::Pack& rx);
+  bool Decode(Device::Can::Pack& rx);
 
   Param param_;
 
@@ -42,7 +42,7 @@ class IMU {
   Component::Type::Vector3 gyro_;
   Component::Type::Eulr eulr_;
 
-  System::Queue<CAN::Pack> recv_ = System::Queue<CAN::Pack>(4);
+  System::Queue<Device::Can::Pack> recv_ = System::Queue<Can::Pack>(4);
 
   System::Thread thread_;
 };

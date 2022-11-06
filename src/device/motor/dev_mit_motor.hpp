@@ -26,7 +26,7 @@ class MitMotor : public BaseMotor {
 
   void Relax();
 
-  void Decode(CAN::Pack &rx);
+  void Decode(Can::Pack &rx);
 
   void SetCurrent(float current);
 
@@ -36,10 +36,10 @@ class MitMotor : public BaseMotor {
 
   float current_ = 0.0f;
 
-  System::Queue<CAN::Pack> recv_ = System::Queue<CAN::Pack>(1);
+  System::Queue<Can::Pack> recv_ = System::Queue<Can::Pack>(1);
 
   uint32_t mailbox_;
 
-  static Message::Topic<CAN::Pack> *mit_tp[BSP_CAN_NUM];
+  static Message::Topic<Can::Pack> *mit_tp[BSP_CAN_NUM];
 };
 }  // namespace Device
