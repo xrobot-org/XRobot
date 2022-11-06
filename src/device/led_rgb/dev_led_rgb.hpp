@@ -3,7 +3,7 @@
 #include "dev.hpp"
 
 namespace Device {
-class LED {
+class RGB {
  public:
   typedef enum {
     ON,
@@ -18,7 +18,7 @@ class LED {
     CHANNEL_NUMBER,
   } Channel;
 
-  LED();
+  RGB();
 
   bool Set(Channel ch, Status status, float duty_cycle);
 

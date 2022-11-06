@@ -1,4 +1,4 @@
-#include "dev_led.hpp"
+#include "dev_led_rgb.hpp"
 
 #include "bsp_pwm.h"
 #include "comp_utils.hpp"
@@ -7,8 +7,8 @@ using namespace Device;
 
 static uint32_t led_stats;
 
-LED::LED() {
-  auto led_thread = [](LED* led) {
+RGB::RGB() {
+  auto led_thread = [](RGB* led) {
     uint8_t led_fsm = 0;
 
     while (1) {
@@ -41,7 +41,7 @@ LED::LED() {
                        System::Thread::Low);
 }
 
-bool LED::Set(LED::Channel ch, LED::Status status, float duty_cycle) {
+bool RGB::Set(RGB::Channel ch, RGB::Status status, float duty_cycle) {
   clampf(&duty_cycle, 0.0f, 1.0f);
 
   bsp_pwm_channel_t pwm_ch;
