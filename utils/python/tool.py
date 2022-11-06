@@ -39,7 +39,7 @@ class ProjectTools:
                 ans.append(filename)
         return ans
 
-    def kconfig_add_choice(self, name, file, list):
+    def kconfig_add_choice(self, name, file, list, path):
         file.write('\n# ' + name)
         file.write('\nchoice\n\tprompt \"' + name + '"\n')
 
@@ -47,6 +47,9 @@ class ProjectTools:
             file.write('\n\tconfig ' + self.config_prefix + item +
                        '\n\t\tbool \"' + item + '\"\n')
         file.write('endchoice\n')
+
+        for item in list:
+            self.kconfig_conditional_include(path, file, item)
 
     def kconfig_conditional_include(self, path, file, name):
         file.write('\nif ' + self.config_prefix + name + '\n\tsource \"' +

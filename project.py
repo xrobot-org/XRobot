@@ -65,12 +65,15 @@ def generate_kconfig():
     kconfig_file.write('# -----------------------------------------------')
 
     tools.kconfig_add_choice('开发板/board', kconfig_file,
-                             tools.list_dir(tools.project_path + '/hw/bsp'))
+                             tools.list_dir(tools.project_path + '/hw/bsp'),
+                             tools.project_path + '/hw/bsp')
     tools.kconfig_add_choice(
         '系统/system', kconfig_file,
-        tools.list_dir(tools.project_path + '/src/system'))
+        tools.list_dir(tools.project_path + '/src/system'),
+        tools.project_path + '/src/system')
     tools.kconfig_add_choice('机器人/robot', kconfig_file,
-                             tools.list_dir(tools.project_path + '/src/robot'))
+                             tools.list_dir(tools.project_path + '/src/robot'),
+                             tools.project_path + '/src/robot')
     tools.kconfig_add_menu('设备/device', kconfig_file,
                            tools.list_dir(tools.project_path + '/src/device'),
                            tools.project_path + '/src/device')

@@ -24,26 +24,26 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/config/config.cmake)
 # ---------------------------------------------------------------------------------------
 # Building Options
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(CMAKE_C_FLAGS_DEBUG "-ggdb3")
-  set(CMAKE_ASM_FLAGS_DEBUG "-g3 -ggdb3")
+  set(CMAKE_C_FLAGS_DEBUG "-Og -g")
+  set(CMAKE_ASM_FLAGS_DEBUG "-Og -g")
   set(CMAKE_EXE_LINKER_FLAGS_DEBUG "")
   add_compile_definitions(MCU_DEBUG_BUILD USE_FULL_ASSERT)
 
 elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-  set(CMAKE_C_FLAGS_RELEASE "-O3")
-  set(CMAKE_ASM_FLAGS_RELEASE "")
+  set(CMAKE_C_FLAGS_RELEASE "-O3 -g")
+  set(CMAKE_ASM_FLAGS_RELEASE "-O3 -g")
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "")
   add_compile_definitions(MCU_DEBUG_BUILD USE_FULL_ASSERT)
 
 elseif(CMAKE_BUILD_TYPE STREQUAL "Realase")
   set(CMAKE_C_FLAGS_RELEASE "-O3")
-  set(CMAKE_ASM_FLAGS_RELEASE "")
+  set(CMAKE_ASM_FLAGS_RELEASE "-O3")
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "")
   add_compile_definitions()
 
 elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
   set(CMAKE_C_FLAGS_RELEASE "-Os")
-  set(CMAKE_ASM_FLAGS_RELEASE "")
+  set(CMAKE_ASM_FLAGS_RELEASE "-Os")
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "")
   add_compile_definitions()
 
