@@ -11,6 +11,7 @@ typedef enum {
   BSP_GPIO_IMU_GYRO_CS,
   BSP_GPIO_IMU_ACCL_INT,
   BSP_GPIO_IMU_GYRO_INT,
+  BSP_GPIO_LED,
   BSP_GPIO_NUM,
 } bsp_gpio_t;
 

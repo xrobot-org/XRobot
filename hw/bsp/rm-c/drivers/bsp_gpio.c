@@ -1,5 +1,6 @@
 #include "bsp_gpio.h"
 
+#include "bsp_pwm.h"
 #include "main.h"
 
 typedef struct {
@@ -91,6 +92,16 @@ int8_t bsp_gpio_disable_irq(bsp_gpio_t gpio) {
 }
 
 inline int8_t bsp_gpio_write_pin(bsp_gpio_t gpio, bool value) {
+  if (gpio == BSP_GPIO_LED) {
+    bsp_pwm_set_comp(BSP_PWM_LED_RED, 1.0f);
+    if (value)
+      bsp_pwm_start(BSP_PWM_LED_RED);
+    else {
+      bsp_pwm_stop(BSP_PWM_LED_RED);
+    }
+
+    return BSP_OK;
+  }
   HAL_GPIO_WritePin(bsp_gpio_map[gpio].gpio, bsp_gpio_map[gpio].pin, value);
   return BSP_OK;
 }
