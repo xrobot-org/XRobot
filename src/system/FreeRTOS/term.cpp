@@ -32,14 +32,16 @@ Term::Term() {
 
   auto term_thread = [](void *arg) {
     (void)arg;
-
-    while (!bsp_usb_connect()) term_thread_.Sleep(1);
-
-    ms_start();
-
     while (1) {
-      if (bsp_usb_avail()) ms_input(bsp_usb_read_char());
-      vTaskDelay(10);
+      while (!bsp_usb_connect()) term_thread_.Sleep(1);
+
+      ms_start();
+
+      while (1) {
+        if (bsp_usb_avail()) ms_input(bsp_usb_read_char());
+        if (!bsp_usb_connect()) break;
+        vTaskDelay(10);
+      }
     }
   };
 
