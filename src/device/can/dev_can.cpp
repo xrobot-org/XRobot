@@ -60,6 +60,6 @@ bool Can::Subscribe(Message::Topic<Can::Pack>& tp, bsp_can_t can,
                     uint32_t index, uint32_t num) {
   ASSERT(num > 0);
 
-  can_tp_[can]->RangeDivide(tp, OM_PRASE_STRUCT(Pack, index), index, num - 1);
+  can_tp_[can]->RangeDivide(tp, OM_PRASE_STRUCT(Pack, index), index, num);
   return true;
 }
