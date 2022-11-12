@@ -16,15 +16,11 @@
 #include "dev_can.hpp"
 #include "dev_cap.hpp"
 #include "dev_dr16.hpp"
-#include "dev_tof.hpp"
 
 #define ROTOR_WZ_MIN 0.6f /* 小陀螺旋转位移下界 */
 #define ROTOR_WZ_MAX 0.8f /* 小陀螺旋转位移上界 */
 
 #define ROTOR_OMEGA 0.0015f /* 小陀螺转动频率 */
-
-#define SCAN_VY_LENGTH_MIN 0.3f /* 哨兵返回时距离边界的最小值 */
-#define SCAN_MOVEMENTS 0.6f     /* 哨兵移动速度 */
 
 #define MOTOR_MAX_ROTATIONAL_SPEED 7000.0f /* 电机的最大转速 */
 
@@ -114,9 +110,6 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
       raw_ref_sub.DumpData();
       cmd_sub.DumpData();
       cap_info_sub.DumpData();
-#if RB_SENTRY
-      tof_tp.DumpData();
-#endif
       /* 更新反馈值 */
       chassis->PraseRef();
 
@@ -176,18 +169,6 @@ void Chassis<Motor, MotorParam>::Control() {
       this->move_vec_.vy = sin_beta * this->cmd_.x + cos_beta * this->cmd_.y;
       break;
     }
-#if RB_SENTRY
-    case Chassis::Scan:
-      /* 根据距离传感器数据变向 */
-      if (this->tof_fb_[Device::Tof::DEV_TOF_SENSOR_LEFT].dist <
-          SCAN_VY_LENGTH_MIN)
-        this->vy_dir_mult_ = 1;
-      else if (this->tof_fb_[Device::Tof::DEV_TOF_SENSOR_RIGHT].dist <
-               SCAN_VY_LENGTH_MIN)
-        this->vy_dir_mult_ = -1;
-      this->move_vec_.vy = this->vy_dir_mult_ * SCAN_MOVEMENTS;
-      break;
-#endif
     default:
       break;
   }
@@ -212,9 +193,6 @@ void Chassis<Motor, MotorParam>::Control() {
           this->wz_dir_mult_ * CalcWz(ROTOR_WZ_MIN, ROTOR_WZ_MAX);
       break;
     }
-    case Chassis::Scan:
-      this->move_vec_.wz = 0;
-      break;
     default:
       ASSERT(false);
       return;
@@ -230,7 +208,6 @@ void Chassis<Motor, MotorParam>::Control() {
     case Chassis::Break:
     case Chassis::FollowGimbal:
     case Chassis::Rotor:
-    case Chassis::Scan:
     case Chassis::Indenpendent: /* 独立模式,受PID控制 */ {
       float buff_percentage = this->ref_.chassis_pwr_buff / 30.0f;
       clampf(&buff_percentage, 0.0f, 1.0f);
@@ -275,10 +252,6 @@ float Chassis<Motor, MotorParam>::CalcWz(const float lo, const float hi) {
 template <typename Motor, typename MotorParam>
 void Chassis<Motor, MotorParam>::SetMode(Chassis::Mode mode) {
   if (mode == this->mode_) return; /* 模式未改变直接返回 */
-
-  if (mode == Chassis::Scan && this->mode_ != Chassis::Scan) {
-    this->vy_dir_mult_ = (rand() % 2) ? -1 : 1;
-  }
 
   if (mode == Chassis::Rotor && this->mode_ != Chassis::Rotor) {
     srand(this->now_);

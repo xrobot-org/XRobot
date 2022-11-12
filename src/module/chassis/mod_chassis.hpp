@@ -19,7 +19,6 @@
 #include "dev_motor.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
-#include "dev_tof.hpp"
 
 namespace Module {
 template <typename Motor, typename MotorParam>
@@ -32,7 +31,6 @@ class Chassis {
     FollowGimbal, /* 通过闭环控制使车头方向跟随云台 */
     Rotor, /* 小陀螺模式，通过闭环控制使底盘不停旋转 */
     Indenpendent, /* 独立模式。底盘运行不受云台影响 */
-    Scan,         /* 未找到目标，底盘处于自由活动模式 */
   } Mode;
 
   typedef enum {
@@ -98,7 +96,6 @@ class Chassis {
   Component::Type::MoveVector move_vec_; /* 底盘实际的运动向量 */
 
   float wz_dir_mult_; /* 小陀螺模式旋转方向乘数 */
-  float vy_dir_mult_; /* scan模式移动方向乘数 */
 
   /* PID计算的目标值 */
   struct {

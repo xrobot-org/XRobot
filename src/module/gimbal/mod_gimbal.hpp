@@ -20,7 +20,6 @@ class Gimbal {
   typedef enum {
     Relax, /* 放松模式，电机不输出。一般情况云台初始化之后的模式 */
     Absolute, /* 绝对坐标系控制，控制在空间内的绝对姿态 */
-    Scan,     /* 主动遍历每个角度，以便上位机识别 */
   } Mode;
 
   enum {
@@ -34,7 +33,6 @@ class Gimbal {
   typedef enum {
     SetModeRelax,
     SetModeAbsolute,
-    SetModeScan,
   } GimbalEvent;
 
   typedef struct {
@@ -79,9 +77,6 @@ class Gimbal {
   struct {
     Component::Type::Eulr eulr_; /* 表示云台姿态的欧拉角 */
   } setpoint;
-
-  float scan_yaw_direction_; /* 扫描模式yaw轴旋转方向 */
-  float scan_pit_direction_; /* 扫描模式pit轴旋转方向 */
 
   Component::SecOrderFunction st_; /* YAW自整定参数 */
 

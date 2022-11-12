@@ -76,44 +76,6 @@ void Gimbal::Control() {
   float gimbal_pit_cmd = this->cmd_.eulr.pit * this->dt_ * GIMBAL_MAX_SPEED;
   float gimbal_yaw_cmd = -this->cmd_.eulr.yaw * this->dt_ * GIMBAL_MAX_SPEED;
 
-  switch (this->mode_) {
-#if CTRL_MODE_AUTO
-    case Component::CMD::Scan: {
-      /* 判断YAW轴运动方向 */
-      const float yaw_offset = circle_error(this->eulr_..yaw, 0, M_2PI);
-
-      if (fabs(yaw_offset) > ANGLE2RANDIAN(GIM_SCAN_ANGLE_BASE)) {
-        if (yaw_offset > 0)
-          this->scan_yaw_direction_ = -1;
-        else {
-          this->scan_yaw_direction_ = 1;
-        }
-      }
-
-      /* 判断PIT轴运动方向 */
-      if (circle_error(this->pit_actuator_.GetAngle(),
-                       this->param_.limit.pitch_min,
-                       M_2PI) <= ANGLE2RANDIAN(GIM_SCAN_CRITICAL_ERR)) {
-        this->scan_pit_direction_ = 1;
-      } else if (circle_error(this->param_.limit.pitch_max,
-                              this->pit_actuator_.GetAngle(),
-                              M_2PI) <= ANGLE2RANDIAN(GIM_SCAN_CRITICAL_ERR)) {
-        this->scan_pit_direction_ = -1;
-      }
-
-      /* 覆盖控制命令 */
-      gimbal_yaw_cmd = SPEED2DELTA(GIM_SCAN_YAW_SPEED, this->dt_) *
-                       this->scan_yaw_direction_;
-      gimbal_pit_cmd = SPEED2DELTA(GIM_SCAN_PIT_SPEED, this->dt_) *
-                       this->scan_pit_direction_;
-
-      break;
-    }
-#endif
-    default:
-      break;
-  }
-
   /* 处理yaw控制命令 */
   circle_add(&(this->setpoint.eulr_.yaw), gimbal_yaw_cmd, M_2PI);
 
@@ -137,7 +99,6 @@ void Gimbal::Control() {
       this->yaw_motor_.Relax();
       this->pit_motor_.Relax();
       break;
-    case Scan:
     case Absolute:
       /* Yaw轴角速度环参数计算 */
       float yaw_out = this->yaw_actuator_.Calculation(
@@ -168,11 +129,6 @@ void Gimbal::SetMode(Mode mode) {
     }
   }
 
-  if (mode == Scan) {
-    this->scan_pit_direction_ = (rand() % 2) ? -1 : 1;
-    this->scan_yaw_direction_ = (rand() % 2) ? -1 : 1;
-  }
-
   this->mode_ = mode;
 
   memcpy(&(this->setpoint.eulr_), &(this->eulr_),
@@ -181,11 +137,6 @@ void Gimbal::SetMode(Mode mode) {
     if (mode == Absolute) {
       this->setpoint.eulr_.yaw = this->eulr_.yaw;
     }
-  }
-
-  if (mode == Scan) {
-    this->scan_pit_direction_ = (rand() % 2) ? -1 : 1;
-    this->scan_yaw_direction_ = (rand() % 2) ? -1 : 1;
   }
 
   this->mode_ = mode;
