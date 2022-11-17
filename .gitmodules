@@ -40,3 +40,6 @@
 [submodule "hw/mcu/st/stm32f3xx_hal_driver"]
 	path = hw/mcu/st/stm32f3xx_hal_driver
 	url = https://github.com/STMicroelectronics/stm32f3xx_hal_driver.git
+[submodule "lib/magic_enum"]
+	path = lib/magic_enum
+	url = https://github.com/Neargye/magic_enum.git
