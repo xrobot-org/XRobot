@@ -31,7 +31,7 @@ Launcher::Launcher(Param& param, float control_freq)
 
     new (this->trig_motor_[i])
         Device::RMMotor(this->param_.trig_motor[i],
-                        ("launcher_trig" + std::to_string(i)).c_str());
+                        ("Launcher_Trig" + std::to_string(i)).c_str());
   }
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
@@ -45,7 +45,7 @@ Launcher::Launcher(Param& param, float control_freq)
 
     new (this->fric_motor_[i])
         Device::RMMotor(this->param_.fric_motor[i],
-                        ("launcher_fric" + std::to_string(i)).c_str());
+                        ("Launcher_Fric" + std::to_string(i)).c_str());
   }
 
   auto event_callback = [](uint32_t event, void* arg) {

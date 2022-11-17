@@ -65,7 +65,7 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
     this->motor_[i] = (Motor*)System::Memory::Malloc(sizeof(Motor));
     new (this->motor_[i])
         Motor(param.motor_param[i],
-              (std::string("chassis_") + std::to_string(i)).c_str());
+              (std::string("Chassis_") + std::to_string(i)).c_str());
   }
 
   this->setpoint.motor_rotational_speed = (float*)System::Memory::Malloc(

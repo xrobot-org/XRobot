@@ -17,6 +17,7 @@
 #include "dev_cap.hpp"
 #include "dev_dr16.hpp"
 #include "dev_tof.hpp"
+#include "magic_enum.hpp"
 
 #define ROTOR_WZ_MIN 0.6f /* 小陀螺旋转位移下界 */
 #define ROTOR_WZ_MAX 0.8f /* 小陀螺旋转位移上界 */
@@ -41,6 +42,8 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
 
   this->setpoint_.angle.g_center = param.init_g_center;
 
+  constexpr auto whell_names = magic_enum::enum_names<Wheel>();
+
   for (uint8_t i = 0; i < WheelNum; i++) {
     this->wheel_actr_[i] = (Component::SpeedActuator*)System::Memory::Malloc(
         sizeof(Component::SpeedActuator));
@@ -50,7 +53,7 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
     this->motor_[i] = (Motor*)System::Memory::Malloc(sizeof(Motor));
     new (this->motor_[i])
         Motor(param.motor_param[i],
-              (std::string("chassis_") + std::to_string(i)).c_str());
+              (std::string("Chassis_Wheel_") + whell_names[i].data()).c_str());
   }
 
   auto event_callback = [](uint32_t event, void* arg) {

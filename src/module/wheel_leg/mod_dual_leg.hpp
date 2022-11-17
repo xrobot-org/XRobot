@@ -22,8 +22,8 @@
 namespace Module {
 class WheelLeg {
  public:
-  typedef enum { LEFT, RIGHT, LEG_NUM } Leg;
-  typedef enum { FRONT, BACK, LEG_MOTOR_NUM } LegMotor;
+  typedef enum { Left, Right, LegNum } Leg;
+  typedef enum { Front, Back, LegMotorNum } LegMotor;
 
   typedef enum {
     Relax, /* 放松模式，电机不输出 */
@@ -52,17 +52,17 @@ class WheelLeg {
 
     float leg_max_angle;
 
-    float motor_zero[LEG_NUM * LEG_MOTOR_NUM];
+    float motor_zero[LegNum * LegMotorNum];
 
     const std::vector<Component::CMD::EventMapItem> event_map;
 
-    Component::PosActuator::Param leg_actr[LEG_NUM * LEG_MOTOR_NUM];
+    Component::PosActuator::Param leg_actr[LegNum * LegMotorNum];
 
-    Device::MitMotor::Param leg_motor[LEG_NUM * LEG_MOTOR_NUM];
+    Device::MitMotor::Param leg_motor[LegNum * LegMotorNum];
   } Param;
 
   typedef struct {
-    float motor_angle[LEG_MOTOR_NUM];
+    float motor_angle[LegMotorNum];
     Component::Type::Line diagonal;
     Component::Type::Polar2 whell_polar;
     Component::Type::Position2 whell_pos;
@@ -70,7 +70,7 @@ class WheelLeg {
 
   typedef struct {
     Component::Type::Position2 whell_pos;
-    float motor_angle[LEG_MOTOR_NUM];
+    float motor_angle[LegMotorNum];
   } Setpoint;
 
   WheelLeg(Param& param, float sample_freq);
@@ -89,15 +89,15 @@ class WheelLeg {
 
   uint32_t now_;
 
-  Component::PosActuator* leg_actuator_[LEG_NUM * LEG_MOTOR_NUM];
+  Component::PosActuator* leg_actuator_[LegNum * LegMotorNum];
 
-  Device::MitMotor* leg_motor_[LEG_NUM * LEG_MOTOR_NUM];
+  Device::MitMotor* leg_motor_[LegNum * LegMotorNum];
 
   Component::Type::Eulr eulr_;
 
-  Setpoint setpoint_[LEG_NUM];
+  Setpoint setpoint_[LegNum];
 
-  Feedback feedback_[LEG_NUM];
+  Feedback feedback_[LegNum];
 
   Mode mode_ = Relax;
 

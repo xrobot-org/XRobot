@@ -15,8 +15,8 @@ Gimbal::Gimbal(Param& param, float control_freq)
       st_(param.st),
       yaw_actuator_(this->param_.yaw_actr, control_freq),
       pit_actuator_(this->param_.pit_actr, control_freq),
-      yaw_motor_(this->param_.yaw_motor, "gimbal_yaw"),
-      pit_motor_(this->param_.pit_motor, "gimbal_pit"),
+      yaw_motor_(this->param_.yaw_motor, "Gimbal_Yaw"),
+      pit_motor_(this->param_.pit_motor, "Gimbal_Pitch"),
       ctrl_lock_(true) {
   auto event_callback = [](uint32_t event, void* arg) {
     Gimbal* gimbal = static_cast<Gimbal*>(arg);
