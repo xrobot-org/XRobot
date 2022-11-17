@@ -17,8 +17,9 @@
 
 using namespace Device;
 
-uint8_t RELAX_CMD[8] = {0X7F, 0XFF, 0X7F, 0XF0, 0X00, 0X00, 0X07, 0XFF};
-uint8_t ENABLE_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFC};
+static uint8_t RELAX_CMD[8] = {0X7F, 0XFF, 0X7F, 0XF0, 0X00, 0X00, 0X07, 0XFF};
+static uint8_t ENABLE_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFC};
+static uint8_t RESET_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFD};
 
 static bool initd[BSP_CAN_NUM] = {false};
 Message::Topic<Can::Pack> *MitMotor::mit_tp[BSP_CAN_NUM];
@@ -27,6 +28,8 @@ MitMotor::MitMotor(const Param &param, const char *name)
     : BaseMotor(name), param_(param) {
   auto rx_callback = [](Can::Pack &rx, MitMotor *motor) {
     if (rx.data[0] == motor->param_.id) motor->recv_.OverwriteFromISR(rx);
+
+    motor->last_online_tick_ = System::Thread::GetTick();
 
     return true;
   };
@@ -53,7 +56,7 @@ MitMotor::MitMotor(const Param &param, const char *name)
   Can::Pack tx_buff;
 
   tx_buff.index = param.id;
-  memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
+  memcpy(tx_buff.data, RESET_CMD, sizeof(RESET_CMD));
 
   Can::SendPack(this->param_.can, tx_buff);
 }
@@ -126,6 +129,10 @@ void MitMotor::SetPos(float pos_error) {
   tx_buff.data[6] = ((kd_int & 0xF) << 4) | (t_int >> 8);
   tx_buff.data[7] = t_int & 0xff;
 
+  if (last_online_tick_ - System::Thread::GetTick() > 500) {
+    memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
+  }
+
   Can::SendPack(this->param_.can, tx_buff);
 }
 
@@ -133,7 +140,11 @@ void MitMotor::Relax() {
   Can::Pack tx_buff;
 
   tx_buff.index = this->param_.id;
-  memcpy(tx_buff.data, RELAX_CMD, sizeof(ENABLE_CMD));
+  memcpy(tx_buff.data, RELAX_CMD, sizeof(RELAX_CMD));
+
+  if (last_online_tick_ - System::Thread::GetTick() > 500) {
+    memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
+  }
 
   Can::SendPack(this->param_.can, tx_buff);
 }

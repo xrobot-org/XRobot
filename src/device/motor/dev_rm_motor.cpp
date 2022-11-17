@@ -66,6 +66,8 @@ RMMotor::RMMotor(const Param &param, const char *name)
   auto rx_callback = [](Can::Pack &rx, RMMotor *motor) {
     motor->recv_.OverwriteFromISR(rx);
 
+    motor->last_online_tick_ = System::Thread::GetTick();
+
     return true;
   };
 
