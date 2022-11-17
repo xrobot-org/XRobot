@@ -35,7 +35,8 @@ float PosActuator::Calculation(float setpoint, float speed_fb, float pos_fb,
   speed_fb = this->in_speed_.Apply(speed_fb);
   pos_fb = this->in_position_.Apply(pos_fb);
 
-  float speed_setpoint = this->pid_position_.Calculate(setpoint, pos_fb, dt);
+  float speed_setpoint =
+      this->pid_position_.Calculate(setpoint, pos_fb, speed_fb, dt);
 
   float out = this->pid_speed_.Calculate(speed_setpoint, speed_fb, dt);
 

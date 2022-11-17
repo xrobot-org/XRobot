@@ -80,6 +80,7 @@ float PID::Calculate(float sp, float fb, float dt) {
   }
   return this->last.out_;
 }
+
 float PID::Calculate(float sp, float fb, float fb_dot, float dt) {
   if (!isfinite(sp) || !isfinite(fb) || !isfinite(fb_dot) || !isfinite(dt)) {
     return this->last.out_;
@@ -134,6 +135,7 @@ float PID::Calculate(float sp, float fb, float fb_dot, float dt) {
   }
   return this->last.out_;
 }
+
 void PID::SetK(float k) { this->param_.k = k; };
 
 void PID::Reset() {
