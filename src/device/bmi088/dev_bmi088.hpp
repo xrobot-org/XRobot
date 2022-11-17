@@ -5,6 +5,7 @@
 
 #include "comp_ahrs.hpp"
 #include "dev.hpp"
+#include "term.hpp"
 
 namespace Device {
 class BMI088 {
@@ -44,6 +45,8 @@ class BMI088 {
 
   void Read(DeviceType type, uint8_t reg, uint8_t *data, uint8_t len);
 
+  static void CaliCMD(BMI088 *bmi088, int argc, char *argv[]);
+
   Calibration cali;
   Rotation &rot;
 
@@ -62,5 +65,7 @@ class BMI088 {
 
   Component::Type::Vector3 accl_;
   Component::Type::Vector3 gyro_;
+
+  System::Term::Command<BMI088 *> cmd_;
 };
 }  // namespace Device

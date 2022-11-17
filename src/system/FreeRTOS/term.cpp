@@ -1,7 +1,6 @@
 #include "term.hpp"
 
 #include "FreeRTOS.h"
-#include "ms.h"
 #include "semphr.h"
 #include "task.h"
 #include "thread.hpp"

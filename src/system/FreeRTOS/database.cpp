@@ -12,7 +12,9 @@ static uint8_t sn_buff[33];
 static ms_item_t sn_tools;
 
 Database::Database() {
-  auto sn_cmd_fn = [](int argc, char *argv[]) {
+  auto sn_cmd_fn = [](ms_item_t *item, int argc, char *argv[]) {
+    MS_UNUSED(item);
+
     if (argc == 1) {
       ms_printf("-show        show SN code.");
       ms_enter();
