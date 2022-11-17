@@ -230,12 +230,14 @@ BMI088::BMI088(BMI088::Rotation &rot)
 
 void BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
   if (argc == 1) {
-    ms_printf("[show] 列出校准数据");
+    ms_printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据");
+    ms_enter();
+    ms_printf("[list] 列出校准数据");
     ms_enter();
     ms_printf("[cali] 开始校准");
     ms_enter();
   } else if (argc == 2) {
-    if (strcmp(argv[1], "show") == 0) {
+    if (strcmp(argv[1], "list") == 0) {
       ms_printf("校准数据 x:%f y:%f z:%f", bmi088->cali.gyro_offset.x,
                 bmi088->cali.gyro_offset.y, bmi088->cali.gyro_offset.z);
       ms_enter();
@@ -284,6 +286,29 @@ void BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
       ms_enter();
 
       ms_printf("完成");
+      ms_enter();
+    }
+  } else if (argc == 4) {
+    if (strcmp(argv[1], "show") == 0) {
+      int time = std::stoi(argv[2]);
+      int delay = std::stoi(argv[3]);
+
+      if (delay > 1000) delay = 1000;
+      if (delay < 2) delay = 2;
+
+      while (time > delay) {
+        ms_printf("accl x:%+5f y:%+5f z:%+5f gyro x:%+5f y:%+5f z:%+5f",
+                  bmi088->accl_.x, bmi088->accl_.y, bmi088->accl_.z,
+                  bmi088->gyro_.x, bmi088->gyro_.y, bmi088->gyro_.z);
+        System::Thread::Sleep(delay);
+        ms_clear_line();
+        time -= delay;
+      }
+
+      ms_printf("accl x:%+5f y:%+5f z:%+5f gyro x:%+5f y:%+5f z:%+5f",
+                bmi088->accl_.x, bmi088->accl_.y, bmi088->accl_.z,
+                bmi088->gyro_.x, bmi088->gyro_.y, bmi088->gyro_.z);
+
       ms_enter();
     }
   } else {
