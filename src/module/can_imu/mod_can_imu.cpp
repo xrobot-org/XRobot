@@ -8,9 +8,15 @@ static Device::Can::Pack send_buff;
 
 CanIMU::CanIMU() {
   auto imu_thread = [](CanIMU *imu) {
+#if IMU_SEND_EULR
     auto eulr_sub = Message::Subscriber("imu_eulr", imu->eulr_);
-    auto gyro_sub = Message::Subscriber("imu_eulr", imu->eulr_);
-    auto accl_sub = Message::Subscriber("imu_eulr", imu->eulr_);
+#endif
+#if IMU_SEND_GYRO
+    auto gyro_sub = Message::Subscriber("imu_gyro", imu->gyro_);
+#endif
+#if IMU_SEND_ACCL
+    auto accl_sub = Message::Subscriber("imu_accl", imu->accl_);
+#endif
 
     while (1) {
 #if IMU_SEND_ACCL
