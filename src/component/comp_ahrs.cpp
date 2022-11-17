@@ -14,13 +14,16 @@
 
 using namespace Component;
 
-AHRS::AHRS() : quat_tp_("imu_quat"), eulr_tp_("imu_eulr") {
+AHRS::AHRS()
+    : quat_tp_("imu_quat"),
+      eulr_tp_("imu_eulr"),
+      cmd_(this, AHRS::ShowCMD, "AHRS", System::Term::DevDir()) {
   this->quat_.q0 = 1.0f;
   this->quat_.q1 = 0.0f;
   this->quat_.q2 = 0.0f;
   this->quat_.q3 = 0.0f;
 
-  auto ahrs_thread = [](AHRS* ahrs) {
+  auto ahrs_thread = [](AHRS *ahrs) {
     Message::Subscriber accl_sub("imu_accl", ahrs->accl_);
     Message::Subscriber gyro_sub("imu_gyro", ahrs->gyro_);
 
@@ -43,6 +46,32 @@ AHRS::AHRS() : quat_tp_("imu_quat"), eulr_tp_("imu_eulr") {
 
   this->thread_.Create(ahrs_thread, this, "ahrs_thread", 256,
                        System::Thread::High);
+}
+
+void AHRS::ShowCMD(AHRS *ahrs, int argc, char *argv[]) {
+  if (argc == 1) {
+    ms_printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据");
+    ms_enter();
+  } else if (argc == 4) {
+    if (strcmp(argv[1], "show") == 0) {
+      int time = std::stoi(argv[2]);
+      int delay = std::stoi(argv[3]);
+
+      if (delay > 1000) delay = 1000;
+      if (delay < 2) delay = 2;
+
+      while (time > delay) {
+        ms_printf("pitch:%f roll:%f yaw:%f", ahrs->eulr_.pit, ahrs->eulr_.rol,
+                  ahrs->eulr_.yaw);
+        System::Thread::Sleep(delay);
+        ms_clear_line();
+        time -= delay;
+      }
+      ms_printf("pitch:%f roll:%f yaw:%f", ahrs->eulr_.pit, ahrs->eulr_.rol,
+                ahrs->eulr_.yaw);
+      ms_enter();
+    }
+  }
 }
 
 void AHRS::Update() {
