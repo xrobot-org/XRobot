@@ -151,6 +151,7 @@ elif cmd[1] == 'help':
     print('clean                  -   清除编译产物')
     print('build [BOARD] [ROBOT]  -   构建目标')
     print('list                   -   列出可构建目标')
+    print('init                   -   安装必备软件包')
 
 elif cmd[1] == 'generate':
     generate_cmake(cmd[2] + '/config')
@@ -168,8 +169,10 @@ elif cmd[1] == 'build':
         print('参数错误')
         exit()
     build(cmd[2], cmd[3])
-
 elif cmd[1] == 'list':
     list_target()
+elif cmd[1] == 'init':
+    os.system(
+        'sudo apt install cmake gcc-arm-none-eabi ninja-build python3-tk')
 else:
     print('参数错误，请输入./project.py help')

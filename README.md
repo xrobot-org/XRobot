@@ -5,6 +5,7 @@
 ***开发测试中***
 
 [Gitee](https://gitee.com/qdu-rm-2022/qdu-rm-mcu)
+[Github](https://github.com/Jiu-xiao/qdu-rm-mcu.git)
 
 ## 软件功能介绍
 
@@ -50,7 +51,7 @@
 
 - [Visual Studio Code](https://code.visualstudio.com/)
   - 安装必备插件`C/C++` `CMake`
-- 安装构建工具`sudo apt install cmake gcc-arm-none-eabi ninja-build kconfig-frontends`
+- 安装构建工具`sudo apt install cmake gcc-arm-none-eabi ninja-build python3-tk`
 
 ### 获取源代码
 
@@ -63,7 +64,7 @@
 
 ### 配置工程
 
-- `./project.py`
+- `./project.py config`
 ![配置界面](./doc/image/配置工具.png?raw=true "配置界面")
 
 ### 编译固件
@@ -76,6 +77,16 @@
 ![命令行界面（CLI）](./doc/image/VSCode编译固件.png?raw=true "命令行界面（CLI）")
   1. 选择构建类型
   1. 编译
+
+### 使用预先设置好的配置文件编译
+
+![编译目标](./doc/image/编译目标.png?raw=true "编译目标")
+
+1. 查看可编译目标
+`./project.py list`
+
+2. 选择目标进行编译
+例如：`./project.py build rm-c infantry`编译C板步兵代码，或者使用`./project.py build all all`编译所有开发板的所有兵种代码。
 
 ### 调试 & 烧写
 
@@ -118,7 +129,7 @@ TODO
 | device    | 独立于开发板的设备，依赖于bsp                          |
 | system    | 系统兼容层                                             |
 | module    | 对机器人各模块的抽象，各模块一起组成机器人             |
-| robot     | 机器人的配置文件与初始化                                 |
+| robot     | 机器人的配置文件与初始化                               |
 
 ## 系统介绍
 
@@ -143,6 +154,7 @@ TODO
 |                              *云台控制原理（与PX类似）*                               |
 
 ### 其他参考文献新
+
 - 云台控制参考[PX4 Controller Diagrams](https://dev.px4.io/master/en/flight_stack/controller_diagrams.html)
 
 - 底盘Mixer和CAN的Control Group参考[PX4 Mixing and Actuators](https://dev.px4.io/master/en/concept/mixing.html)
