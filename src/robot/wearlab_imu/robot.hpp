@@ -8,11 +8,11 @@
 
 void robot_init();
 namespace Robot {
-class Infantry {
+class WearLabIMU {
  public:
   typedef struct {
     Device::BMI088::Rotation bmi088_rot;
-    Device::BlinkLED::Param led_;
+    Device::BlinkLED::Param led;
   } Param;
 
   Message message_;
@@ -27,6 +27,6 @@ class Infantry {
   Device::Can can_;
   Module::CanIMU imu_;
 
-  Infantry(Param& param) : bmi088_(param.bmi088_rot), led_(param.led_) {}
+  WearLabIMU(Param& param) : bmi088_(param.bmi088_rot), led_(param.led) {}
 };
 }  // namespace Robot

@@ -1,17 +1,7 @@
 #include "robot.hpp"
 
 /* clang-format off */
-Robot::WearLabIMU::Param param = {
-  .bmi088_rot =
-  {
-    .rot_mat =
-    {
-      {-1, +0, +0},
-      {+0, +1, +0},
-      {+0, +0, -1},
-    },
-  },
-
+Robot::Blink::Param param = {
   .led = {
     .gpio = BSP_GPIO_LED,
     .timeout = 200,
@@ -23,7 +13,7 @@ void robot_init() {
   auto init_thread_fn = [](void* arg) {
     RM_UNUSED(arg);
 
-    Robot::WearLabIMU robot(param);
+    Robot::Blink blink(param);
 
     while (1) {
       System::Thread::Sleep(UINT32_MAX);
