@@ -38,7 +38,7 @@ class BaseMotor {
 
     ms_printf("电机 [%s] 反馈数据:", motor->name_);
     ms_enter();
-    ms_printf("最近一次反馈时间:%fs.", motor->last_online_tick_ / 1000.0f);
+    ms_printf("最近一次反馈时间:%fs.", motor->last_online_time_);
     ms_enter();
     ms_printf("角度:%frad 速度:%frpm 电流:%fA 温度:%f℃",
               motor->feedback_.rotor_abs_angle,
@@ -51,7 +51,7 @@ class BaseMotor {
 
   Feedback feedback_;
 
-  uint32_t last_online_tick_ = 0;
+  float last_online_time_ = 0.0f;
 
   System::Term::Command<BaseMotor *> cmd_;
 };

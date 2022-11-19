@@ -47,7 +47,7 @@ class Cap {
 
   bool online_;
 
-  uint32_t last_online_time_;
+  float last_online_time_ = 0.0f;
 
   uint32_t mailbox_;
 

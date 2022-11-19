@@ -52,7 +52,7 @@ class AI {
   bool PackCMD();
 
   bool ref_updated_;
-  uint32_t last_online_time_;
+  float last_online_time_ = 0.0f;
 
   Protocol_DownPackage_t form_host;
 

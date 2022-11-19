@@ -85,9 +85,9 @@ class WheelLeg {
 
   float dt_;
 
-  uint32_t last_wakeup_;
+  float last_wakeup_;
 
-  uint32_t now_;
+  float now_;
 
   Component::PosActuator* leg_actuator_[LegNum * LegMotorNum];
 

@@ -12,6 +12,7 @@
 #include "mod_launcher.hpp"
 
 #include "bsp_pwm.h"
+#include "bsp_time.h"
 #include "comp_utils.hpp"
 
 #define LAUNCHER_TRIG_SPEED_MAX (8191)
@@ -125,8 +126,8 @@ void Launcher::UpdateFeedback() {
 }
 
 void Launcher::Control() {
-  this->now_ = System::Thread::GetTick();
-  this->dt_ = (float)(this->now_ - this->lask_wakeup_) / 1000.0f;
+  this->now_ = bsp_time_get();
+  this->dt_ = this->now_ - this->lask_wakeup_;
   this->lask_wakeup_ = this->now_;
 
   this->HeatLimit();
@@ -223,7 +224,7 @@ void Launcher::Control() {
     case Loaded:
       for (int i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
         /* 控制拨弹电机 */
-        float trig_out = this->trig_actuator_[i]->Calculation(
+        float trig_out = this->trig_actuator_[i]->Calculate(
             this->setpoint.trig_angle_,
             this->trig_motor_[i]->GetSpeed() / LAUNCHER_TRIG_SPEED_MAX,
             this->trig_angle_, this->dt_);
@@ -233,7 +234,7 @@ void Launcher::Control() {
 
       for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
         /* 控制摩擦轮 */
-        float fric_out = this->fric_actuator_[i]->Calculation(
+        float fric_out = this->fric_actuator_[i]->Calculate(
             this->setpoint.fric_rpm_[i], this->fric_motor_[i]->GetSpeed(),
             this->dt_);
 

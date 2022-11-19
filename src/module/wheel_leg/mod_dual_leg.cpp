@@ -1,5 +1,6 @@
 #include "mod_dual_leg.hpp"
 
+#include "bsp_time.h"
 #include "magic_enum.hpp"
 
 using namespace Module;
@@ -118,9 +119,9 @@ void WheelLeg::UpdateFeedback() {
 }
 
 void WheelLeg::Control() {
-  this->now_ = System::Thread::GetTick();
+  this->now_ = bsp_time_get();
 
-  this->dt_ = (float)(this->now_ - this->last_wakeup_) / 1000.0f;
+  this->dt_ = this->now_ - this->last_wakeup_;
   this->last_wakeup_ = this->now_;
 
   /* 处理控制命令 */
@@ -134,7 +135,7 @@ void WheelLeg::Control() {
       break;
     case Squat:
     case Jump: {
-      float y_err = sinf(this->eulr_.rol) * this->param_.l4 * 10.0f;
+      float y_err = sinf(this->eulr_.rol) * this->param_.l4 * 3.0f;
 
       if (this->eulr_.rol < 0.0f) {
         this->setpoint_[Right].whell_pos.x_ = 0.0f;
@@ -205,7 +206,7 @@ void WheelLeg::Control() {
           this->setpoint_[i].motor_angle[j] = _angle;
 
           this->leg_motor_[i * LegMotorNum + j]->SetCurrent(
-              this->leg_actuator_[i * LegMotorNum + j]->Calculation(
+              this->leg_actuator_[i * LegMotorNum + j]->Calculate(
                   _angle, this->leg_motor_[i * LegMotorNum + j]->GetSpeed(),
                   this->feedback_[i].motor_angle[j], this->dt_));
 

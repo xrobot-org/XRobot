@@ -5,6 +5,7 @@
 #include <string>
 
 #include "FreeRTOS.h"
+#include "bsp_time.h"
 #include "task.h"
 
 #define THREAD_DECLEAR(_handle, _fn, _stack_depth, _priority, _arg) \
@@ -48,8 +49,6 @@ class Thread {
   static void Sleep(uint32_t microseconds) { vTaskDelay(microseconds); }
 
   void Stop();
-
-  static uint32_t GetTick() { return xTaskGetTickCount(); }
 
   static void StartKernel();
 

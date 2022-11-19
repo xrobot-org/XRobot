@@ -7,7 +7,7 @@ SpeedActuator::SpeedActuator(Param& param, float sample_freq)
       in_(sample_freq, param.in_cutoff_freq),
       out_(sample_freq, param.out_cutoff_freq) {}
 
-float SpeedActuator::Calculation(float setpoint, float feedback, float dt) {
+float SpeedActuator::Calculate(float setpoint, float feedback, float dt) {
   feedback = this->in_.Apply(feedback);
 
   float out = this->pid_.Calculate(setpoint, feedback, dt);
@@ -30,7 +30,7 @@ PosActuator::PosActuator(Param& param, float sample_freq)
       in_position_(sample_freq, param.in_cutoff_freq),
       out_(sample_freq, param.out_cutoff_freq) {}
 
-float PosActuator::Calculation(float setpoint, float speed_fb, float pos_fb,
+float PosActuator::Calculate(float setpoint, float speed_fb, float pos_fb,
                                float dt) {
   speed_fb = this->in_speed_.Apply(speed_fb);
   pos_fb = this->in_position_.Apply(pos_fb);

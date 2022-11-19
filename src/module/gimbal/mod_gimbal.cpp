@@ -6,6 +6,8 @@
 
 #include <stdlib.h>
 
+#include "bsp_time.h"
+
 using namespace Module;
 
 #define GIMBAL_MAX_SPEED (M_2PI * 1.5f)
@@ -68,8 +70,8 @@ void Gimbal::UpdateFeedback() {
 }
 
 void Gimbal::Control() {
-  this->now_ = System::Thread::GetTick();
-  this->dt_ = (float)(this->now_ - this->lask_wakeup_) / 1000.0f;
+  this->now_ = bsp_time_get();
+  this->dt_ = this->now_ - this->lask_wakeup_;
   this->lask_wakeup_ = this->now_;
 
   /* yaw坐标正方向与遥控器操作逻辑相反 */
@@ -101,10 +103,10 @@ void Gimbal::Control() {
       break;
     case Absolute:
       /* Yaw轴角速度环参数计算 */
-      float yaw_out = this->yaw_actuator_.Calculation(
+      float yaw_out = this->yaw_actuator_.Calculate(
           this->setpoint.eulr_.yaw, this->gyro_.z, this->eulr_.yaw, this->dt_);
 
-      float pit_out = this->pit_actuator_.Calculation(
+      float pit_out = this->pit_actuator_.Calculate(
           this->setpoint.eulr_.pit, this->gyro_.x, this->eulr_.pit, this->dt_);
 
       this->yaw_motor_.Control(yaw_out);

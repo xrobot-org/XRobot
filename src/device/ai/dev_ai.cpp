@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "bsp_delay.h"
+#include "bsp_time.h"
 #include "bsp_uart.h"
 #include "comp_crc16.hpp"
 #include "comp_crc8.hpp"
@@ -76,7 +77,7 @@ bool AI::PraseHost() {
   if (Component::CRC16::Verify((const uint8_t *)&(rxbuf),
                                sizeof(this->form_host))) {
     this->cmd_.online = true;
-    this->last_online_time_ = System::Thread::GetTick();
+    this->last_online_time_ = bsp_time_get();
     memcpy(&(this->form_host), rxbuf, sizeof(this->form_host));
     memset(rxbuf, 0, AI_LEN_RX_BUFF);
     return true;
@@ -101,7 +102,7 @@ bool AI::StartTrans() {
 
 bool AI::Offline() {
   /* 离线移交控制权 */
-  if (System::Thread::GetTick() - this->last_online_time_ > 50) {
+  if (bsp_time_get() - this->last_online_time_ > 0.05f) {
     this->cmd_.online = false;
     this->cmd_tp_.Publish(this->cmd_);
   }

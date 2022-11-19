@@ -30,7 +30,7 @@ class IMU {
 
   Param param_;
 
-  uint32_t last_online_time_;
+  float last_online_time_ = 0.0f;
 
   bool online_;
 

@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "bsp_time.h"
 #include "comp_utils.hpp"
 #include "om.h"
 
@@ -57,11 +58,11 @@ bool Cap::Update() {
   while (this->control_feedback_.Receive(rx, 0)) {
     this->Decode(rx);
     this->online_ = 1;
-    this->last_online_time_ = System::Thread::GetTick();
+    this->last_online_time_ = bsp_time_get();
     return true;
   }
 
-  if (System::Thread::GetTick() - this->last_online_time_ > 250) {
+  if (bsp_time_get() - this->last_online_time_ > 0.25f) {
     return false;
   } else {
     return true;

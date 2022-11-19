@@ -13,6 +13,7 @@
 
 #include <stdlib.h>
 
+#include "bsp_time.h"
 #include "dev_can.hpp"
 #include "dev_cap.hpp"
 #include "dev_dr16.hpp"
@@ -139,9 +140,9 @@ void Chassis<Motor, MotorParam>::UpdateFeedback() {
 
 template <typename Motor, typename MotorParam>
 void Chassis<Motor, MotorParam>::Control() {
-  this->now_ = System::Thread::GetTick();
+  this->now_ = bsp_time_get();
 
-  this->dt_ = (float)(this->now_ - this->last_wakeup_) / 1000.0f;
+  this->dt_ = this->now_ - this->last_wakeup_;
   this->last_wakeup_ = this->now_;
 
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
@@ -212,7 +213,7 @@ void Chassis<Motor, MotorParam>::Control() {
       float buff_percentage = this->ref_.chassis_pwr_buff / 30.0f;
       clampf(&buff_percentage, 0.0f, 1.0f);
       for (unsigned i = 0; i < this->mixer_.len_; i++) {
-        float out = this->actuator_[i]->Calculation(
+        float out = this->actuator_[i]->Calculate(
             this->setpoint.motor_rotational_speed[i] *
                 MOTOR_MAX_ROTATIONAL_SPEED,
             this->motor_[i]->GetSpeed(), this->dt_);

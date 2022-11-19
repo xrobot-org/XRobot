@@ -78,9 +78,9 @@ class Chassis {
 
   float dt_;
 
-  uint32_t last_wakeup_;
+  float last_wakeup_;
 
-  uint32_t now_;
+  float now_;
 
   RefForChassis ref_;
 

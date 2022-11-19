@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "bsp_time.h"
 #include "comp_utils.hpp"
 
 #define P_MIN -12.5f
@@ -29,7 +30,7 @@ MitMotor::MitMotor(const Param &param, const char *name)
   auto rx_callback = [](Can::Pack &rx, MitMotor *motor) {
     if (rx.data[0] == motor->param_.id) motor->recv_.OverwriteFromISR(rx);
 
-    motor->last_online_tick_ = System::Thread::GetTick();
+    motor->last_online_time_ = bsp_time_get();
 
     return true;
   };
@@ -57,6 +58,7 @@ MitMotor::MitMotor(const Param &param, const char *name)
 
   tx_buff.index = param.id;
   memcpy(tx_buff.data, RESET_CMD, sizeof(RESET_CMD));
+  memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
 
   Can::SendPack(this->param_.can, tx_buff);
 }
@@ -129,7 +131,7 @@ void MitMotor::SetPos(float pos_error) {
   tx_buff.data[6] = ((kd_int & 0xF) << 4) | (t_int >> 8);
   tx_buff.data[7] = t_int & 0xff;
 
-  if (last_online_tick_ - System::Thread::GetTick() > 500) {
+  if (bsp_time_get() - last_online_time_ > 0.5f) {
     memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
   }
 
@@ -142,7 +144,7 @@ void MitMotor::Relax() {
   tx_buff.index = this->param_.id;
   memcpy(tx_buff.data, RELAX_CMD, sizeof(RELAX_CMD));
 
-  if (last_online_tick_ - System::Thread::GetTick() > 500) {
+  if (bsp_time_get() - last_online_time_ > 0.5f) {
     memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
   }
 

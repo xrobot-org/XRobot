@@ -139,7 +139,7 @@ class Launcher {
 
   uint32_t lask_wakeup_;
 
-  uint32_t now_;
+  float now_;
 
   float dt_;
 

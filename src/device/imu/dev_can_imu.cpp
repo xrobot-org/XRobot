@@ -1,5 +1,7 @@
 #include "dev_can_imu.hpp"
 
+#include "bsp_time.h"
+
 using namespace Device;
 
 IMU::IMU(IMU::Param &param)
@@ -41,7 +43,7 @@ void IMU::Update() {
   while (this->recv_.Receive(rx, 0)) {
     this->Decode(rx);
     this->online_ = true;
-    this->last_online_time_ = System::Thread::GetTick();
+    this->last_online_time_ = bsp_time_get();
   }
 }
 
@@ -71,13 +73,13 @@ bool IMU::Decode(Can::Pack &rx) {
   }
 
   this->online_ = 1;
-  this->last_online_time_ = System::Thread::GetTick();
+  this->last_online_time_ = bsp_time_get();
 
   return true;
 }
 
 bool IMU::Offline() {
-  if (System::Thread::GetTick() - this->last_online_time_ > 10) {
+  if (bsp_time_get() - this->last_online_time_ > 0.1f) {
     this->online_ = 0;
   }
 
