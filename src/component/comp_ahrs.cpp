@@ -7,17 +7,21 @@
 
 #include <string.h>
 
+#include "bsp_time.h"
 #include "comp_utils.hpp"
 
 #define BETA_IMU (0.033f)
 #define BETA_AHRS (0.041f)
 
 using namespace Component;
-
+uint32_t counter = 0;
 AHRS::AHRS()
     : quat_tp_("imu_quat"),
       eulr_tp_("imu_eulr"),
-      cmd_(this, AHRS::ShowCMD, "AHRS", System::Term::DevDir()) {
+      cmd_(this, AHRS::ShowCMD, "AHRS", System::Term::DevDir()),
+      accl_ready_(false),
+      gyro_ready_(false),
+      ready_(false) {
   this->quat_.q0 = 1.0f;
   this->quat_.q1 = 0.0f;
   this->quat_.q2 = 0.0f;
@@ -27,9 +31,45 @@ AHRS::AHRS()
     Message::Subscriber accl_sub("imu_accl", ahrs->accl_);
     Message::Subscriber gyro_sub("imu_gyro", ahrs->gyro_);
 
+    auto accl_cb = [](Component::Type::Vector3 &accl, AHRS *ahrs) {
+      RM_UNUSED(accl);
+
+      ahrs->ready_.Give();
+
+      ahrs->accl_ready_.Give();
+
+      return true;
+    };
+
+    auto gyro_cb = [](Component::Type::Vector3 &gyro, AHRS *ahrs) {
+      RM_UNUSED(gyro);
+
+      ahrs->ready_.Give();
+
+      ahrs->gyro_ready_.Give();
+
+      return true;
+    };
+
+    ((Message::Topic<Component::Type::Vector3>)
+         Message::Topic<Component::Type::Vector3>::Find("imu_accl"))
+        .RegisterCallback(accl_cb, ahrs);
+
+    ((Message::Topic<Component::Type::Vector3>)
+         Message::Topic<Component::Type::Vector3>::Find("imu_gyro"))
+        .RegisterCallback(gyro_cb, ahrs);
+
     while (1) {
-      accl_sub.DumpData();
-      gyro_sub.DumpData();
+      ahrs->ready_.Take(UINT32_MAX);
+
+      counter++;
+
+      if (ahrs->accl_ready_.Take(0)) {
+        accl_sub.DumpData();
+      }
+      if (ahrs->gyro_ready_.Take(0)) {
+        gyro_sub.DumpData();
+      }
 
       ahrs->Update();
 
@@ -38,9 +78,6 @@ AHRS::AHRS()
       /* 发布数据 */
       ahrs->quat_tp_.Publish(ahrs->quat_);
       ahrs->eulr_tp_.Publish(ahrs->eulr_);
-
-      /* 运行结束，等待下一次唤醒 */
-      ahrs->thread_.Sleep(2);
     }
   };
 
@@ -75,7 +112,7 @@ void AHRS::ShowCMD(AHRS *ahrs, int argc, char *argv[]) {
 }
 
 void AHRS::Update() {
-  this->now_ = System::Thread::GetTick() / 1000.0f;
+  this->now_ = bsp_time_get();
 
   this->dt_ = this->now_ - this->last_update_;
   this->last_update_ = this->now_;

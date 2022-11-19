@@ -8,6 +8,7 @@
 #include "comp_type.hpp"
 #include "comp_utils.hpp"
 #include "om.hpp"
+#include "semaphore.hpp"
 #include "term.hpp"
 #include "thread.hpp"
 
@@ -39,5 +40,9 @@ class AHRS {
   Type::Vector3 gyro_;
 
   System::Term::Command<AHRS *> cmd_;
+
+  System::Semaphore accl_ready_;
+  System::Semaphore gyro_ready_;
+  System::Semaphore ready_;
 };
 }  // namespace Component
