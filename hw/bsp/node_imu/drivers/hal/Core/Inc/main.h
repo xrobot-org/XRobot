@@ -47,7 +47,7 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-
+extern TIM_HandleTypeDef htim17;
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
@@ -75,6 +75,7 @@ void   MX_CAN_Init(void);
 void   MX_DMA_Init(void);
 void   MX_SPI1_Init(void);
 void   MX_USB_PCD_Init(void);
+void   MX_TIM17_Init(void);
 /* USER CODE BEGIN Private defines */
 void SystemClock_Config(void);
 /* USER CODE END Private defines */

@@ -67,6 +67,7 @@ TIM_HandleTypeDef htim5;
 TIM_HandleTypeDef htim7;
 TIM_HandleTypeDef htim8;
 TIM_HandleTypeDef htim10;
+TIM_HandleTypeDef htim14;
 
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart3;
@@ -993,6 +994,37 @@ void MX_TIM10_Init(void)
 
   /* USER CODE END TIM10_Init 2 */
   HAL_TIM_MspPostInit(&htim10);
+
+}
+
+/**
+  * @brief TIM14 Initialization Function
+  * @param None
+  * @retval None
+  */
+void MX_TIM14_Init(void)
+{
+
+  /* USER CODE BEGIN TIM14_Init 0 */
+
+  /* USER CODE END TIM14_Init 0 */
+
+  /* USER CODE BEGIN TIM14_Init 1 */
+
+  /* USER CODE END TIM14_Init 1 */
+  htim14.Instance = TIM14;
+  htim14.Init.Prescaler = 83;
+  htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim14.Init.Period = 999;
+  htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM14_Init 2 */
+
+  /* USER CODE END TIM14_Init 2 */
 
 }
 

@@ -18,6 +18,8 @@ void bsp_init() {
   /* Initialize all configured peripherals */
   bsp_uart_init();
 
+  MX_TIM14_Init();
+  HAL_TIM_Base_Start(&htim14);
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_ADC1_Init();

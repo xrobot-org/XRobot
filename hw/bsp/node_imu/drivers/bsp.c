@@ -2,8 +2,8 @@
 
 #include "bsp_can.h"
 #include "main.h"
-#include "stm32f3xx_it.c"
 #include "stm32f3xx_hal_msp.c"
+#include "stm32f3xx_it.c"
 
 void bsp_init() {
   uwTickPrio = TICK_INT_PRIORITY;
@@ -16,6 +16,8 @@ void bsp_init() {
   SystemClock_Config();
 
   /* Initialize all configured peripherals */
+  MX_TIM17_Init();
+  HAL_TIM_Base_Start(&htim17);
   MX_GPIO_Init();
   MX_CAN_Init();
   MX_DMA_Init();
