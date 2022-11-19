@@ -8,7 +8,7 @@ INCLUDE_ALL_DIR(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_library(${PROJECT_NAME} STATIC)
 
-target_sources(${PROJECT_NAME} PRIVATE ${${PROJECT_NAME}_SOURCES})
+target_sources(${PROJECT_NAME} PRIVATE ${${PROJECT_NAME}_SOURCES} module.hpp)
 
 target_link_libraries(
   ${PROJECT_NAME}
