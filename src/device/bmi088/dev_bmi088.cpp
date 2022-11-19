@@ -245,12 +245,12 @@ void BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
       ms_printf("开始校准，请保持陀螺仪稳定");
       ms_enter();
       double x = 0.0f, y = 0.0f, z = 0.0f;
-      for (int i = 0; i < 10000; i++) {
-        x += double(bmi088->gyro_.x) / 10000.0l;
-        y += double(bmi088->gyro_.y) / 10000.0l;
-        z += double(bmi088->gyro_.z) / 10000.0l;
-        ms_printf("进度：%d/10000", i);
-        System::Thread::Sleep(2);
+      for (int i = 0; i < 30000; i++) {
+        x += double(bmi088->gyro_.x) / 30000.0l;
+        y += double(bmi088->gyro_.y) / 30000.0l;
+        z += double(bmi088->gyro_.z) / 30000.0l;
+        ms_printf("进度：%d/30000", i);
+        System::Thread::Sleep(1);
         ms_clear_line();
       }
 
@@ -267,12 +267,12 @@ void BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
       ms_printf("开始分析校准质量");
       ms_enter();
 
-      for (int i = 0; i < 10000; i++) {
-        x += double(bmi088->gyro_.x) / 10000.0l;
-        y += double(bmi088->gyro_.y) / 10000.0l;
-        z += double(bmi088->gyro_.z) / 10000.0l;
-        ms_printf("进度：%d/10000", i);
-        System::Thread::Sleep(2);
+      for (int i = 0; i < 30000; i++) {
+        x += double(bmi088->gyro_.x) / 30000.0l;
+        y += double(bmi088->gyro_.y) / 30000.0l;
+        z += double(bmi088->gyro_.z) / 30000.0l;
+        ms_printf("进度：%d/30000", i);
+        System::Thread::Sleep(1);
         ms_clear_line();
       }
 
@@ -336,7 +336,7 @@ bool BMI088::Init() {
   /* Accl init. */
   /* Filter setting: Normal. */
   /* ODR: 0xAB: 800Hz. 0xAA: 400Hz. 0xA9: 200Hz. 0xA8: 100Hz. 0xA6: 25Hz. */
-  WriteSingle(BMI_ACCL, BMI088_REG_ACCL_CONF, 0xAB);
+  WriteSingle(BMI_ACCL, BMI088_REG_ACCL_CONF, 0xAC);
 
   /* 0x00: +-3G. 0x01: +-6G. 0x02: +-12G. 0x03: +-24G. */
   WriteSingle(BMI_ACCL, BMI088_REG_ACCL_RANGE, 0x01);
@@ -357,7 +357,7 @@ bool BMI088::Init() {
 
   /* Filter bw: 47Hz. */
   /* ODR: 0x02: 1000Hz. 0x03: 400Hz. 0x06: 200Hz. 0x07: 100Hz. */
-  WriteSingle(BMI_GYRO, BMI088_REG_GYRO_BANDWIDTH, 0x03);
+  WriteSingle(BMI_GYRO, BMI088_REG_GYRO_BANDWIDTH, 0x00);
 
   /* INT3 and INT4 as output. Push-pull. Active low. */
   WriteSingle(BMI_GYRO, BMI088_REG_GYRO_INT3_INT4_IO_CONF, 0x00);
