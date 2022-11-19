@@ -1,18 +1,8 @@
-/**
- * @file chassis.c
- * @author Qu Shen (503578404@qq.com)
- * @brief 底盘模组
- * @version 1.0.0
- * @date 2021-04-15
- *
- * @copyright Copyright (c) 2021
- *
- */
-
 #include "mod_balance.hpp"
 
 #include <stdlib.h>
 
+#include "bsp_time.h"
 #include "dev_can.hpp"
 #include "dev_cap.hpp"
 #include "dev_dr16.hpp"
@@ -32,8 +22,9 @@ template <typename Motor, typename MotorParam>
 Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
     : param_(param),
       mode_(Balance::Relax),
-      balance_actr_(param.balance_param, control_freq),
-      speed_actr_(param.speed_param, control_freq),
+      eulr_pid_(param.eulr_param, control_freq),
+      gyro_pid_(param.gyro_param, control_freq),
+      speed_pid_(param.speed_param, control_freq),
       follow_pid_(param.follow_pid_param, control_freq),
       comp_pid_(param.comp_pid_param, control_freq),
       center_filter_(control_freq, param.center_filter_cutoff_freq),
@@ -98,7 +89,7 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
       chassis->ctrl_lock_.Give();
 
       /* 运行结束，等待下一次唤醒 */
-      chassis->thread_.Sleep(1);
+      chassis->thread_.Sleep(2);
     }
   };
 
@@ -120,9 +111,9 @@ void Balance<Motor, MotorParam>::UpdateFeedback() {
 
 template <typename Motor, typename MotorParam>
 void Balance<Motor, MotorParam>::Control() {
-  this->now_ = System::Thread::GetTick();
+  this->now_ = bsp_time_get();
 
-  this->dt_ = (float)(this->now_ - this->last_wakeup_) / 1000.0f;
+  this->dt_ = this->now_ - this->last_wakeup_;
   this->last_wakeup_ = this->now_;
 
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
@@ -160,7 +151,7 @@ void Balance<Motor, MotorParam>::Control() {
     case Balance::FollowGimbal:
     case Balance::Rotor: {
       /* 速度环 */
-      this->setpoint_.wheel_speed.speed = -this->speed_actr_.Calculation(
+      this->setpoint_.wheel_speed.speed = -this->speed_pid_.Calculate(
           this->move_vec_.vy, this->feeback_.forward_speed, this->dt_);
 
       /* 加减速时保证稳定姿态 */
@@ -169,18 +160,18 @@ void Balance<Motor, MotorParam>::Control() {
 
       /* 速度误差积分估计重心 */
       this->setpoint_.angle.g_center += this->center_filter_.Apply(
-          (this->feeback_.forward_speed - this->move_vec_.vy) * this->dt_ *
-          0.3);
+          (this->feeback_.forward_speed - this->move_vec_.vy) * this->dt_);
 
-      clampf(&(this->setpoint_.angle.g_center), -M_PI / 6.0f, M_PI / 6.0f);
+      clampf(&(this->setpoint_.angle.g_center), -0.05 + param_.init_g_center,
+             0.05 + param_.init_g_center);
 
       /* 直立环 */
-      for (uint8_t i = 0; i < WheelNum; i++) {
-        this->setpoint_.wheel_speed.balance[i] =
-            this->balance_actr_.Calculation(
-                this->setpoint_.angle.g_center - this->setpoint_.angle.g_comp,
-                this->gyro_.x, this->eulr_.pit, this->dt_);
-      }
+      this->setpoint_.wheel_speed.balance = this->eulr_pid_.Calculate(
+          this->setpoint_.angle.g_center - this->setpoint_.angle.g_comp,
+          this->eulr_.pit, this->gyro_.x, this->dt_);
+
+      this->setpoint_.wheel_speed.balance +=
+          this->gyro_pid_.Calculate(0.0f, this->gyro_.x, this->dt_);
 
       /* 角度环 */
       this->setpoint_.wheel_speed.angle[Left] = -this->move_vec_.vx;
@@ -189,7 +180,7 @@ void Balance<Motor, MotorParam>::Control() {
       /* 轮子速度控制 */
       for (uint8_t i = 0; i < WheelNum; i++) {
         float speed_sp = this->setpoint_.wheel_speed.speed +
-                         this->setpoint_.wheel_speed.balance[i] +
+                         this->setpoint_.wheel_speed.balance +
                          this->setpoint_.wheel_speed.angle[i];
 
         clampf(&speed_sp, -1.0f, 1.0f);
@@ -198,7 +189,7 @@ void Balance<Motor, MotorParam>::Control() {
           speed_sp = -speed_sp;
         }
 
-        this->motor_out[i] = this->wheel_actr_[i]->Calculation(
+        this->motor_out[i] = this->wheel_actr_[i]->Calculate(
             speed_sp * MOTOR_MAX_ROTATIONAL_SPEED, this->motor_[i]->GetSpeed(),
             this->dt_);
       }
@@ -230,7 +221,9 @@ void Balance<Motor, MotorParam>::SetMode(Balance::Mode mode) {
     this->wheel_actr_[i]->Reset();
   }
 
-  this->balance_actr_.Reset();
+  this->eulr_pid_.Reset();
+  this->gyro_pid_.Reset();
+  this->speed_pid_.Reset();
   this->mode_ = mode;
 
   this->setpoint_.angle.g_center = param_.init_g_center;

@@ -2,7 +2,7 @@
 /* clang-format off */
 Robot::Infantry::Param param = {
     .balance = {
-      .init_g_center = 0.13f,
+      .init_g_center = 0.108f,
 
       .follow_pid_param = {
         .k = 0.2f,
@@ -48,9 +48,9 @@ Robot::Infantry::Param param = {
       .wheel_param = {
         {
           .speed = {
-            .k = 0.0002f,
+            .k = 0.00025f,
             .p = 1.0f,
-            .i = 0.0f,
+            .i = 1.0f,
             .d = 0.0f,
             .i_limit = 1.0f,
             .out_limit = 1.0f,
@@ -63,9 +63,9 @@ Robot::Infantry::Param param = {
           .out_cutoff_freq = -1.0f,
         },{
           .speed = {
-            .k = 0.0002f,
+            .k = 0.00025f,
             .p = 1.0f,
-            .i = 0.0f,
+            .i = 1.0f,
             .d = 0.0f,
             .i_limit = 1.0f,
             .out_limit = 1.0f,
@@ -79,51 +79,37 @@ Robot::Infantry::Param param = {
         },
       },
 
-      .balance_param = {
-        .speed = {
-          /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-          .k = 0.2f,
-          .p = 1.0f,
-          .i = 0.0f,
-          .d = 0.001f,
-          .i_limit = 1.0f,
-          .out_limit = 1.0f,
-          .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
-        },
+      .eulr_param = {
+        .k = 2.0f,
+        .p = 1.0f,
+        .i = 1.0f,
+        .d = 0.04f,
+        .i_limit = 20.0f,
+        .out_limit = 20.0f,
+        .d_cutoff_freq = -1.0f,
+        .range = M_2PI,
+      },
 
-        .position = {
-          /* GIMBAL_CTRL_YAW_ANGLE_IDX */
-          .k = 12.0f,
-          .p = 1.0f,
-          .i = 3.0f,
-          .d = 0.0f,
-          .i_limit = 20.0f,
-          .out_limit = 20.0f,
-          .d_cutoff_freq = -1.0f,
-          .range = M_2PI,
-        },
-
-        .in_cutoff_freq = -1.0f,
-
-        .out_cutoff_freq = -1.0f,
+      .gyro_param = {
+        .k = 0.15f,
+        .p = 1.0f,
+        .i = 0.0f,
+        .d = 0.0f,
+        .i_limit = 1.0f,
+        .out_limit = 1.0f,
+        .d_cutoff_freq = -1.0f,
+        .range = -1.0f,
       },
 
       .speed_param = {
-        .speed = {
-            .k = 1.0f,
-            .p = 1.0f,
-            .i = 3.0f,
-            .d = 0.0f,
-            .i_limit = 0.15f,
-            .out_limit = 0.2f,
-            .d_cutoff_freq = -1.0f,
-            .range = -1.0f,
-        },
-
-        .in_cutoff_freq = -1.0f,
-
-        .out_cutoff_freq = -1.0f,
+          .k = 2.0f,
+          .p = 1.0f,
+          .i = 1.0f,
+          .d = 0.0f,
+          .i_limit = 0.15f,
+          .out_limit = 0.2f,
+          .d_cutoff_freq = -1.0f,
+          .range = -1.0f,
       },
 
       .center_filter_cutoff_freq = 10.0f,

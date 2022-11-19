@@ -1,14 +1,3 @@
-/**
- * @file chassis.h
- * @author Qu Shen (503578404@qq.com)
- * @brief 底盘模组
- * @version 1.0.0
- * @date 2021-04-15
- *
- * @copyright Copyright (c) 2021
- *
- */
-
 #pragma once
 
 #include "comp_actuator.hpp"
@@ -50,9 +39,9 @@ class Balance {
 
   typedef struct {
     struct {
-      float speed;             /* 速度环 */
-      float balance[WheelNum]; /* 直立环 */
-      float angle[WheelNum];   /* 角度环 */
+      float speed;           /* 速度环 */
+      float balance;         /* 直立环 */
+      float angle[WheelNum]; /* 角度环 */
     } wheel_speed;
 
     struct {
@@ -73,8 +62,11 @@ class Balance {
 
     Component::SpeedActuator::Param wheel_param[WheelNum];
 
-    Component::PosActuator::Param balance_param;
-    Component::SpeedActuator::Param speed_param;
+    Component::PID::Param eulr_param;
+
+    Component::PID::Param gyro_param;
+
+    Component::PID::Param speed_param;
 
     float center_filter_cutoff_freq;
 
@@ -95,16 +87,19 @@ class Balance {
 
   float dt_;
 
-  uint32_t last_wakeup_;
+  float last_wakeup_;
 
-  uint32_t now_;
+  float now_;
 
   Mode mode_ = Relax;
 
   Component::SpeedActuator *wheel_actr_[WheelNum];
 
-  Component::PosActuator balance_actr_;
-  Component::SpeedActuator speed_actr_;
+  Component::PID eulr_pid_;
+
+  Component::PID gyro_pid_;
+
+  Component::PID speed_pid_;
 
   Device::BaseMotor *motor_[WheelNum];
 
