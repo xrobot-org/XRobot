@@ -92,7 +92,7 @@ void DR16::PraseRC() {
 
   this->data_.key = 0;
 
-  /* SwitchPos */
+  /* 检测拨杆开关 */
   if (this->data_.sw_l != this->last_data_.sw_l)
     this->event_.Active(SwitchPosLeftTop + this->data_.sw_l - 1);
 
@@ -101,20 +101,24 @@ void DR16::PraseRC() {
 
   uint32_t tmp = 0;
 
+  /* 检测Shift */
   if (this->data_.key & (1 << (KeySHIFT - KeyW))) {
     tmp += KeyNum;
   }
 
+  /* 检测Ctrl */
   if (this->data_.key & (1 << (KeyCTRL - KeyW))) {
     tmp += 2 * KeyNum;
   }
 
+  /* 检测剩余按键 */
   for (int i = 0; i < 16; i++) {
     if ((this->data_.key & (1 << i)) && !(this->last_data_.key & (1 << i))) {
       this->event_.Active(KeyW + i + tmp);
     }
   }
 
+  /* 控制权切换 */
   if ((this->data_.key & ShiftCtrlWith(KeyE)) == ShiftCtrlWith(KeyE)) {
     this->ctrl_source_ = ControlSourceSW;
   }
@@ -123,15 +127,17 @@ void DR16::PraseRC() {
     this->ctrl_source_ = ControlSourceMouse;
   }
 
+  /* 最大量程 */
   constexpr float full_range = (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
 
-  if (this->ctrl_source_ == ControlSourceMouse) {
+  if (this->ctrl_source_ == ControlSourceMouse) { /* 键鼠控制 */
+    /* 鼠标左右键 */
     if (this->data_.press_l && !this->last_data_.press_l)
       this->event_.Active(KeyLClick);
     if (this->data_.press_r && !this->last_data_.press_r)
       this->event_.Active(KeyRClick);
 
-    /* Chassis Control */
+    /* 底盘控制 */
     if (this->data_.key & KeyA) this->cmd_.chassis.x -= 0.5;
 
     if (this->data_.key & KeyD) this->cmd_.chassis.x += 0.5;
@@ -140,6 +146,7 @@ void DR16::PraseRC() {
 
     if (this->data_.key & KeyW) this->cmd_.chassis.y += 0.5;
 
+    /* 加速 */
     if (this->data_.key & KeySHIFT) {
       this->cmd_.chassis.x *= 2;
       this->cmd_.chassis.y *= 2;
@@ -147,12 +154,12 @@ void DR16::PraseRC() {
 
     this->cmd_.chassis.z = 0.0f;
 
-    /* Gimbal Control */
+    /* 云台控制 */
     this->cmd_.gimbal.eulr.pit = this->data_.y / 32768.0f;
     this->cmd_.gimbal.eulr.yaw = this->data_.x / 32768.0f;
     this->cmd_.gimbal.eulr.rol = 0.0f;
 
-  } else if (this->ctrl_source_ == ControlSourceSW) {
+  } else if (this->ctrl_source_ == ControlSourceSW) { /* 遥控器控制 */
     /* Chassis Control */
     this->cmd_.chassis.x =
         2 * ((float)this->data_.ch_l_x - DR16_CH_VALUE_MID) / full_range;

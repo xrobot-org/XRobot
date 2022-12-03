@@ -7,11 +7,13 @@
 namespace Device {
 class DR16 {
  public:
+  /* 控制方式选择 */
   typedef enum {
     ControlSourceSW,
     ControlSourceMouse,
   } ControlSource;
 
+  /* 拨杆开关 */
   typedef enum {
     SwitchPosLeftTop = 0,
     SwitchPosLeftBot,
@@ -22,6 +24,7 @@ class DR16 {
     SwitchPosNum
   } SwitchPos;
 
+  /* 键盘按键 */
   typedef enum {
     KeyW = SwitchPosNum,
     KeyS,
@@ -66,12 +69,33 @@ class DR16 {
 
   DR16();
 
+
+  /**
+   * @brief 开始接收
+   *
+   * @return true 成功
+   * @return false 失败
+   */
   bool StartRecv();
 
+  /**
+   * @brief 控制选择
+   *
+   */
   void PraseRC();
 
+  /**
+   * @brief 离线处理
+   *
+   */
   void Offline();
 
+  /**
+   * @brief 数据包损坏
+   *
+   * @return true 损坏
+   * @return false 完好
+   */
   bool DataCorrupted();
 
   static DR16::Data data_;
