@@ -13,38 +13,62 @@ tools = tool.ProjectTools()
 welcome_str = 'QDU-RM-MCU 2023\n感谢使用本项目，使用./project.py help获取使用方法'
 project_path_str = '工程目录:'
 
+cfg_dir = tools.project_path + '/config'
+bsp_dir = tools.project_path + '/hw/bsp'
+src_dir = tools.project_path + '/src'
+dev_dir = tools.project_path + '/src/device'
+mod_dir = tools.project_path + '/src/module'
+sys_dir = tools.project_path + '/src/system'
+rbt_dir = tools.project_path + '/src/robot'
+fm_dir = tools.project_path + '/firmware'
+build_dir = tools.project_path + '/build'
+
 
 def list_target():
-    for dirname in tools.list_dir(tools.project_path + '/hw/bsp'):
+    for dirname in tools.list_dir(bsp_dir):
         print('Board[' + dirname + ']')
-        config_dir = tools.project_path + '/hw/bsp/' + dirname + '/config'
+        config_dir = bsp_dir + '/' + dirname + '/config'
         for filename in tools.list_file(config_dir):
             if filename.endswith('.config'):
                 print('\tRobot[' + filename[0:-7] + ']')
 
 
+def select_config(board, robot):
+    board_dir = bsp_dir + '/' + board
+    config_path = bsp_dir + '/' + board + '/config/' + robot + '.config'
+
+    if not os.path.exists(board_dir):
+        print('Error:Board not found.')
+        exit(-1)
+
+    if not os.path.exists(config_path):
+        print('Error:Robot not found.')
+        exit(-1)
+
+    shutil.copyfile(config_path, cfg_dir + '/.config')
+    os.system("cd " + tools.project_path + ' && ./project.py refresh')
+
+    print('Load config success for [' + board + ']', robot)
+
+
 def build(board, robot):
     target = []
 
-    os.system("rm -rf " + tools.project_path + '/firmware')
-    for dirname in tools.list_dir(tools.project_path + '/hw/bsp'):
-        config_dir = tools.project_path + '/hw/bsp/' + dirname + '/config'
+    os.system("rm -rf " + fm_dir)
+    for dirname in tools.list_dir(bsp_dir):
+        config_dir = bsp_dir + '/' + dirname + '/config'
 
         for filename in tools.list_file(config_dir):
             if (board == 'all'
                     or dirname == board) and filename.endswith('.config'):
                 if filename.endswith(".config") and (robot == 'all' or
                                                      filename[:-7] == robot):
-                    shutil.copyfile(config_dir + '/' + filename,
-                                    tools.project_path + '/config/.config')
-                    os.system("cd " + tools.project_path +
-                              ' && ./project.py refresh && cd build && ninja')
-                    os.makedirs(tools.project_path + '/firmware',
-                                exist_ok=True)
+                    select_config(dirname, filename[:-7])
+                    os.system("cd " + build_dir + ' && ninja')
+                    os.makedirs(fm_dir, exist_ok=True)
                     shutil.copyfile(
                         tools.project_path + '/build/src/qdu_rm_mcu.elf',
-                        tools.project_path + '/firmware/' + dirname + '&' +
-                        filename[:-7] + '.elf')
+                        fm_dir + '/' + dirname + '&' + filename[:-7] + '.elf')
 
                     print('\n')
 
@@ -65,21 +89,15 @@ def generate_kconfig():
     kconfig_file.write('# -----------------------------------------------')
 
     tools.kconfig_add_choice('开发板/board', kconfig_file,
-                             tools.list_dir(tools.project_path + '/hw/bsp'),
-                             tools.project_path + '/hw/bsp')
-    tools.kconfig_add_choice(
-        '系统/system', kconfig_file,
-        tools.list_dir(tools.project_path + '/src/system'),
-        tools.project_path + '/src/system')
+                             tools.list_dir(bsp_dir), bsp_dir)
+    tools.kconfig_add_choice('系统/system', kconfig_file,
+                             tools.list_dir(sys_dir), sys_dir)
     tools.kconfig_add_choice('机器人/robot', kconfig_file,
-                             tools.list_dir(tools.project_path + '/src/robot'),
-                             tools.project_path + '/src/robot')
-    tools.kconfig_add_menu('设备/device', kconfig_file,
-                           tools.list_dir(tools.project_path + '/src/device'),
-                           tools.project_path + '/src/device')
-    tools.kconfig_add_menu('模块/module', kconfig_file,
-                           tools.list_dir(tools.project_path + '/src/module'),
-                           tools.project_path + '/src/module')
+                             tools.list_dir(rbt_dir), rbt_dir)
+    tools.kconfig_add_menu('设备/device', kconfig_file, tools.list_dir(dev_dir),
+                           dev_dir)
+    tools.kconfig_add_menu('模块/module', kconfig_file, tools.list_dir(mod_dir),
+                           dev_dir)
 
     kconfig_file.close()
     print("Generate Kconfig done.")
@@ -136,8 +154,8 @@ if cmd_len < 2:
 if cmd[1] == 'config':
     tools.clean_cache()
     generate_kconfig()
-    tools.menuconfig(tools.project_path + '/config')
-    generate_cmake(tools.project_path + '/config')
+    tools.menuconfig(cfg_dir)
+    generate_cmake(cfg_dir)
     tools.config_cmake()
 
 elif cmd[1] == 'help':
@@ -152,6 +170,7 @@ elif cmd[1] == 'help':
     print('build [BOARD] [ROBOT]  -   构建目标')
     print('list                   -   列出可构建目标')
     print('init                   -   安装必备软件包')
+    print('select [BOARD] [ROBOT] -   选择构建目标')
 
 elif cmd[1] == 'generate':
     generate_cmake(cmd[2] + '/config')
@@ -167,12 +186,19 @@ elif cmd[1] == 'clean':
 elif cmd[1] == 'build':
     if (cmd_len < 4):
         print('参数错误')
-        exit()
+        exit(-1)
     build(cmd[2], cmd[3])
 elif cmd[1] == 'list':
     list_target()
 elif cmd[1] == 'init':
     os.system(
         'sudo apt install cmake gcc-arm-none-eabi ninja-build python3-tk')
+elif cmd[1] == 'select':
+    if (cmd_len < 4):
+        print('参数错误')
+        exit(-1)
+    select_config(cmd[2], cmd[3])
 else:
     print('参数错误，请输入./project.py help')
+
+exit(0)

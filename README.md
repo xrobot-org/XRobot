@@ -85,7 +85,10 @@
 1. 查看可编译目标
 `./project.py list`
 
-2. 选择目标进行编译
+1. 选择加载某个编译目标的配置文件
+例如：`./project.py select rm-c infantry`加载c板步兵配置。之后手动编译
+
+1. 选择目标配置文件并直接进行编译
 例如：`./project.py build rm-c infantry`编译C板步兵代码，或者使用`./project.py build all all`编译所有开发板的所有兵种代码。
 
 ### 调试 & 烧写
