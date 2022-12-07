@@ -45,7 +45,7 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
       cap->Control();
 
       /* 运行结束，等待下一次唤醒 */
-      System::Thread::SleepUntil(10);
+      cap->thread_.SleepUntil(10);
     }
   };
 
