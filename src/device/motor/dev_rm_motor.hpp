@@ -68,8 +68,6 @@ class RMMotor : public BaseMotor {
 
   uint8_t index_;
 
-  uint32_t mailbox_;
-
   float output_;
 
   static uint8_t motor_tx_buff_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER][8];

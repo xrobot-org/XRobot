@@ -18,7 +18,9 @@ class Can {
 
   Can();
 
-  static bool SendPack(bsp_can_t can, Pack& pack);
+  static bool SendStdPack(bsp_can_t can, Pack& pack);
+
+  static bool SendExtPack(bsp_can_t can, Pack& pack);
 
   static bool Subscribe(Message::Topic<Can::Pack>& tp, bsp_can_t can,
                         uint32_t index, uint32_t num);

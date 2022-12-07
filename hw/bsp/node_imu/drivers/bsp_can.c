@@ -110,10 +110,18 @@ int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
   return BSP_OK;
 }
 
-int8_t bsp_can_trans_packet(bsp_can_t can, uint32_t StdId, uint8_t *data) {
+int8_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format, uint32_t id,
+                            uint8_t *data) {
   CAN_TxHeaderTypeDef header;
-  header.StdId = StdId;
-  header.IDE = CAN_ID_STD;
+
+  if (format == CAN_FORMAT_STD) {
+    header.StdId = id;
+    header.IDE = CAN_ID_STD;
+  } else {
+    header.ExtId = id;
+    header.IDE = CAN_ID_EXT;
+  }
+
   header.RTR = CAN_RTR_DATA;
   header.TransmitGlobalTime = DISABLE;
   header.DLC = 8;

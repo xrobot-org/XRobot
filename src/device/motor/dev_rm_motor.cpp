@@ -150,7 +150,7 @@ bool RMMotor::SendData() {
   memcpy(tx_buff.data, motor_tx_buff_[this->param_.can][this->index_],
          sizeof(tx_buff.data));
 
-  Can::SendPack(this->param_.can, tx_buff);
+  Can::SendStdPack(this->param_.can, tx_buff);
 
   motor_tx_flag_[this->param_.can][this->index_] = 0;
 

@@ -60,7 +60,7 @@ MitMotor::MitMotor(const Param &param, const char *name)
   memcpy(tx_buff.data, RESET_CMD, sizeof(RESET_CMD));
   memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
 
-  Can::SendPack(this->param_.can, tx_buff);
+  Can::SendStdPack(this->param_.can, tx_buff);
 }
 
 bool MitMotor::Update() {
@@ -135,7 +135,7 @@ void MitMotor::SetPos(float pos_error) {
     memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
   }
 
-  Can::SendPack(this->param_.can, tx_buff);
+  Can::SendStdPack(this->param_.can, tx_buff);
 }
 
 void MitMotor::Relax() {
@@ -148,5 +148,5 @@ void MitMotor::Relax() {
     memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
   }
 
-  Can::SendPack(this->param_.can, tx_buff);
+  Can::SendStdPack(this->param_.can, tx_buff);
 }

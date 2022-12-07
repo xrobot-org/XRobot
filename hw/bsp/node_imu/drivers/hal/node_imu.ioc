@@ -1,11 +1,13 @@
 #MicroXplorer Configuration settings - do not modify
-CAN.BS1=CAN_BS1_4TQ
-CAN.BS2=CAN_BS2_4TQ
+CAN.BS1=CAN_BS1_5TQ
+CAN.BS2=CAN_BS2_3TQ
 CAN.CalculateBaudRate=1000000
 CAN.CalculateTimeBit=1000
 CAN.CalculateTimeQuantum=111.11111111111111
-CAN.IPParameters=CalculateTimeQuantum,CalculateTimeBit,CalculateBaudRate,Prescaler,BS2,BS1
+CAN.IPParameters=CalculateTimeQuantum,CalculateTimeBit,CalculateBaudRate,Prescaler,BS2,NART,SJW,BS1
+CAN.NART=DISABLE
 CAN.Prescaler=4
+CAN.SJW=CAN_SJW_1TQ
 Dma.Request0=SPI1_RX
 Dma.Request1=SPI1_TX
 Dma.RequestsNb=2

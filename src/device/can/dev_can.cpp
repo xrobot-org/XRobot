@@ -50,10 +50,18 @@ Can::Can() {
   }
 }
 
-bool Can::SendPack(bsp_can_t can, Pack& pack) {
+bool Can::SendStdPack(bsp_can_t can, Pack& pack) {
   Can::can_sem_[can]->Take(UINT32_MAX);
 
-  return bsp_can_trans_packet(can, pack.index, pack.data) == BSP_OK;
+  return bsp_can_trans_packet(can, CAN_FORMAT_STD, pack.index, pack.data) ==
+         BSP_OK;
+}
+
+bool Can::SendExtPack(bsp_can_t can, Pack& pack) {
+  Can::can_sem_[can]->Take(UINT32_MAX);
+
+  return bsp_can_trans_packet(can, CAN_FORMAT_EXT, pack.index, pack.data) ==
+         BSP_OK;
 }
 
 bool Can::Subscribe(Message::Topic<Can::Pack>& tp, bsp_can_t can,

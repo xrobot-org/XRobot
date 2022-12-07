@@ -90,7 +90,7 @@ bool Cap::Control() {
   tx_buff.data[0] = (pwr_lim >> 8) & 0xFF;
   tx_buff.data[1] = pwr_lim & 0xFF;
 
-  return Can::SendPack(this->param_.can, tx_buff);
+  return Can::SendStdPack(this->param_.can, tx_buff);
 }
 
 bool Cap::Offline() {

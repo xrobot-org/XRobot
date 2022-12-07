@@ -38,8 +38,6 @@ class MitMotor : public BaseMotor {
 
   System::Queue<Can::Pack> recv_ = System::Queue<Can::Pack>(1);
 
-  uint32_t mailbox_;
-
   static Message::Topic<Can::Pack> *mit_tp[BSP_CAN_NUM];
 };
 }  // namespace Device

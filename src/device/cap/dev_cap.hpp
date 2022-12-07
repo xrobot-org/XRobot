@@ -49,8 +49,6 @@ class Cap {
 
   float last_online_time_ = 0.0f;
 
-  uint32_t mailbox_;
-
   System::Queue<Can::Pack> control_feedback_ = System::Queue<Can::Pack>(1);
 
   System::Thread thread_;
