@@ -16,3 +16,9 @@ config IMU_SEND_GYRO
 
 config IMU_SEND_EULR
     tristate "发送欧拉角数据"
+
+config IMU_SEND_QUAT
+    tristate "发送四元数数据"
+
+config IMU_USE_IN_WEARLAB
+    tristate "For WearLab"

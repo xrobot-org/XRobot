@@ -3,6 +3,10 @@
 #include "dev_can.hpp"
 #include "dev_can_imu.hpp"
 
+#if IMU_USE_IN_WEARLAB
+#include "wearlab.hpp"
+#endif
+
 namespace Module {
 class CanIMU {
  public:
@@ -14,11 +18,12 @@ class CanIMU {
 
   void SendEulr();
 
+  void SendQuat();
+
   Component::Type::Eulr eulr_;
+  Component::Type::Quaternion quat_;
   Component::Type::Vector3 gyro_;
   Component::Type::Vector3 accl_;
-
-  uint32_t mailbox_;
 
   System::Thread thread_;
 };

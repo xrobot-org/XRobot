@@ -17,7 +17,8 @@ class IMU {
     IMU_DEVICE_ID = 0x01,
     ACCL_DATA_ID = 0x01,
     GYRO_DATA_ID = 0x02,
-    EULR_DATA_ID = 0x03
+    EULR_DATA_ID = 0x03,
+    QUAT_DATA_ID = 0x04
   } ID;
 
   IMU(Param& param);
