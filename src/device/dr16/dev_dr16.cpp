@@ -85,7 +85,7 @@ void DR16::PraseRC() {
   if (this->DataCorrupted()) {
     bsp_uart_abort_receive(BSP_UART_DR16);
     /* 等待错误包结束 */
-    this->thread_.Sleep(3);
+    this->thread_.SleepUntil(3);
 
     return;
   }

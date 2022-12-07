@@ -34,7 +34,7 @@ CanIMU::CanIMU() {
       imu->SendEulr();
 #endif
 
-      imu->thread_.Sleep(1000 / IMU_SEND_FREQ);
+      imu->thread_.SleepUntil(1000 / IMU_SEND_FREQ);
     }
   };
 

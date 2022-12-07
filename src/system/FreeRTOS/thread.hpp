@@ -48,11 +48,16 @@ class Thread {
 
   static void Sleep(uint32_t microseconds) { vTaskDelay(microseconds); }
 
+  void SleepUntil(uint32_t microseconds) {
+    xTaskDelayUntil(&last_weakup_tick_, microseconds);
+  }
+
   void Stop();
 
   static void StartKernel();
 
  private:
   TaskHandle_t handle_ = NULL;
+  uint32_t last_weakup_tick_ = 0;
 };
 }  // namespace System

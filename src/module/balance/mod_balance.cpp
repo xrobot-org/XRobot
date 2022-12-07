@@ -89,7 +89,7 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
       chassis->ctrl_lock_.Give();
 
       /* 运行结束，等待下一次唤醒 */
-      chassis->thread_.Sleep(2);
+      chassis->thread_.SleepUntil(2);
     }
   };
 

@@ -53,7 +53,7 @@ Gimbal::Gimbal(Param& param, float control_freq)
       gimbal->yaw_tp_.Publish(gimbal->yaw_);
 
       /* 运行结束，等待下一次唤醒 */
-      gimbal->thread_.Sleep(2);
+      gimbal->thread_.SleepUntil(2);
     }
   };
 

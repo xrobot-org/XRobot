@@ -32,7 +32,7 @@ Tof::Tof(Param &param) : param_(param) {
 
       tof->fb_tp_.Publish(tof->fb_);
       /* 运行结束，等待下一次唤醒 */
-      tof->thread_.Sleep(2);
+      tof->thread_.SleepUntil(2);
     }
   };
 

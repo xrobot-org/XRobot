@@ -7,11 +7,11 @@ BlinkLED::BlinkLED(BlinkLED::Param& param) : param_(param) {
     while (1) {
       bsp_gpio_write_pin(led->param_.gpio, true);
 
-      led->thread_.Sleep(led->param_.timeout);
+      led->thread_.SleepUntil(led->param_.timeout);
 
       bsp_gpio_write_pin(led->param_.gpio, false);
 
-      led->thread_.Sleep(led->param_.timeout);
+      led->thread_.SleepUntil(led->param_.timeout);
     }
   };
 

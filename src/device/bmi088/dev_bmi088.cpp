@@ -191,7 +191,7 @@ BMI088::BMI088(BMI088::Rotation &rot)
     bsp_pwm_start(BSP_PWM_IMU_HEAT);
 
     while (!bmi088->Init()) {
-      bmi088->thread_.Sleep(1);
+      bmi088->thread_.SleepUntil(1);
     }
 
     while (1) {

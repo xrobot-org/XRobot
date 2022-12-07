@@ -72,7 +72,7 @@ WheelLeg::WheelLeg(WheelLeg::Param& param, float sample_freq)
 
       leg->Control();
 
-      leg->thread_.Sleep(2);
+      leg->thread_.SleepUntil(2);
     }
   };
 

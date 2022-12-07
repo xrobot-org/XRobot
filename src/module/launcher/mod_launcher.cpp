@@ -100,7 +100,7 @@ Launcher::Launcher(Param& param, float control_freq)
       launcher->ctrl_lock_.Give();
 
       /* 运行结束，等待下一次唤醒 */
-      launcher->thread_.Sleep(2);
+      launcher->thread_.SleepUntil(2);
     }
   };
 

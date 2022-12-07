@@ -33,7 +33,7 @@ RGB::RGB() {
           break;
       }
 
-      led->thread_.Sleep(250);
+      led->thread_.SleepUntil(250);
     }
   };
 

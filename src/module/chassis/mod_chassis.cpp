@@ -122,7 +122,7 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
       chassis->cap_out_tp_.Publish(chassis->cap_out_);
 
       /* 运行结束，等待下一次唤醒 */
-      chassis->thread_.Sleep(2);
+      chassis->thread_.SleepUntil(2);
     }
   };
 
