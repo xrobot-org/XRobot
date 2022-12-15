@@ -3,7 +3,9 @@
         {
             "name": "Linux",
             "configurationProvider": "ms-vscode.cmake-tools",
-            "compileCommands": "build/compile_commands.json"
+            "compileCommands": "build/compile_commands.json",
+            "cppStandard": "c++17",
+            "cStandard": "c99"
         }
     ],
     "version": 4
