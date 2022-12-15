@@ -50,7 +50,7 @@ typedef enum {
   UI_GRAPHIC_OP_DEL = 3,
 } ui_graphic_op_t;
 
-typedef struct __packed {
+typedef struct __attribute__((packed)) {
   uint8_t name[3];
   uint16_t op : 3;
   uint16_t type_ele : 3;
@@ -66,12 +66,12 @@ typedef struct __packed {
   uint16_t y_end : 11;
 } ui_ele_t;
 
-typedef struct __packed {
+typedef struct __attribute__((packed)) {
   ui_ele_t graphic;
   uint8_t str[30];
 } ui_string_t;
 
-typedef struct __packed {
+typedef struct __attribute__((packed)) {
   uint8_t op;
   uint8_t layer;
 } ui_del_t;

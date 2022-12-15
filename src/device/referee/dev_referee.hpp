@@ -16,7 +16,7 @@
 namespace Device {
 class Referee {
  public:
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t sof;
     uint16_t data_length;
     uint8_t seq;
@@ -62,18 +62,18 @@ class Referee {
     REF_GAME_TYPE_RMUL_1V1,
   } GameType;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t game_type : 4;
     uint8_t game_progress : 4;
     uint16_t stage_remain_time;
     uint64_t sync_time_stamp;
   } GameStatus;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t winner;
   } GameResult;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint16_t red_1;
     uint16_t red_2;
     uint16_t red_3;
@@ -94,12 +94,12 @@ class Referee {
     uint16_t blue_base;
   } RobotHP;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t dart_belong;
     uint16_t stage_remain_time;
   } DartStatus;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t f1_status : 1;
     uint8_t f1_buff_status : 3;
     uint8_t f2_status : 1;
@@ -118,30 +118,30 @@ class Referee {
     uint16_t blue2_bullet_remain;
   } IcraZoneStatus;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t copter_pad : 2;
     uint8_t energy_mech : 2;
     uint8_t virtual_shield : 1;
     uint32_t res : 27;
   } FieldEvents;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t supply_id;
     uint8_t robot_id;
     uint8_t supply_step;
     uint8_t supply_sum;
   } SupplyAction;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t level;
     uint8_t robot_id;
   } Warning;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t countdown;
   } DartCountdown;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t robot_id;
     uint8_t robot_level;
     uint16_t remain_hp;
@@ -161,7 +161,7 @@ class Referee {
     uint8_t power_launcher_output : 1;
   } RobotStatus;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint16_t chassis_volt;
     uint16_t chassis_amp;
     float chassis_watt;
@@ -171,14 +171,14 @@ class Referee {
     uint16_t launcher_42_heat;
   } PowerHeat;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     float x;
     float y;
     float z;
     float yaw;
   } RobotPOS;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t healing : 1;
     uint8_t cooling_acc : 1;
     uint8_t defense_buff : 1;
@@ -186,29 +186,29 @@ class Referee {
     uint8_t res : 4;
   } RobotBuff;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t attack_countdown;
   } DroneEnergy;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t armor_id : 4;
     uint8_t damage_type : 4;
   } RobotDamage;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t bullet_type;
     uint8_t launcherer_id;
     uint8_t bullet_freq;
     float bullet_speed;
   } LauncherData;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint16_t bullet_17_remain;
     uint16_t bullet_42_remain;
     uint16_t coin_remain;
   } BulletRemain;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t base : 1;
     uint8_t high_ground : 1;
     uint8_t energy_mech : 1;
@@ -219,7 +219,7 @@ class Referee {
     uint32_t res : 24;
   } RFID;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t opening;
     uint8_t target;
     uint8_t target_changable_countdown;
@@ -231,7 +231,7 @@ class Referee {
     uint16_t operator_cmd_launch_time;
   } DartClient;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     float position_x;
     float position_y;
     float position_z;
@@ -239,7 +239,7 @@ class Referee {
     uint16_t robot_id;
   } ClientMap;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     int16_t mouse_x;
     int16_t mouse_y;
     int16_t mouse_wheel;
@@ -296,13 +296,13 @@ class Referee {
     REF_STDNT_CMD_ID_CUSTOM = 0x0200,
   } CMDID;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     CMDID cmd_id;
     uint16_t id_sender;
     uint16_t id_receiver;
   } InterStudentHeader;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     Referee::Header header;
     uint16_t cmd_id;
     Referee::InterStudentHeader student_header;

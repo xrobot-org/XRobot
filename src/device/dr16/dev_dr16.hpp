@@ -51,7 +51,7 @@ class DR16 {
   constexpr uint32_t CtrlWith(Key key) { return key + 2 * KeyNum; }
   constexpr uint32_t ShiftCtrlWith(Key key) { return key + 3 * KeyNum; }
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint16_t ch_r_x : 11;
     uint16_t ch_r_y : 11;
     uint16_t ch_l_x : 11;
@@ -68,7 +68,6 @@ class DR16 {
   } Data;
 
   DR16();
-
 
   /**
    * @brief 开始接收

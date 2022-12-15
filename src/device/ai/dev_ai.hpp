@@ -12,12 +12,12 @@
 namespace Device {
 class AI {
  public:
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t id;
     Protocol_UpPackageReferee_t package;
   } RefereePckage;
 
-  typedef struct __packed {
+  typedef struct __attribute__((packed)) {
     uint8_t id;
     Protocol_UpPackageMCU_t package;
   } MCUPckage;
