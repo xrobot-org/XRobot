@@ -45,17 +45,6 @@ static uint8_t txbuf[REF_LEN_TX_BUFF];
 System::Semaphore *ui_fast_refresh;
 System::Semaphore *ui_slow_refresh;
 
-void Referee::FastRefreshCallback(TimerHandle_t arg) {
-  RM_UNUSED(arg);
-
-  ui_fast_refresh->GiveFromISR();
-}
-void Referee::SlowRefreshCallback(TimerHandle_t arg) {
-  RM_UNUSED(arg);
-
-  ui_slow_refresh->GiveFromISR();
-}
-
 Referee::Referee() {
   ui_fast_refresh = &(this->ui_fast_refresh_);
   ui_slow_refresh = &(this->ui_slow_refresh_);
@@ -89,8 +78,7 @@ Referee::Referee() {
   bsp_uart_register_callback(BSP_UART_REF, BSP_UART_TX_CPLT_CB,
                              tx_cplt_callback, this);
 #if !UI_MODE_NONE
-  this->tim.fast_refresh_.Start();
-  this->tim.slow_refresh_.Start();
+
 #endif
 
   auto ref_recv_thread = [](Referee *ref) {

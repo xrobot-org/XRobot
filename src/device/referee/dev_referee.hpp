@@ -333,9 +333,6 @@ class Referee {
     KeyboardMouse keyboard_mouse;
   } Data;
 
-  static void FastRefreshCallback(TimerHandle_t arg);
-  static void SlowRefreshCallback(TimerHandle_t arg);
-
   Referee();
 
   bool UIStackEmpty();
@@ -369,14 +366,6 @@ class Referee {
 
   System::Thread recv_thread_;
   System::Thread trans_thread_;
-
-  struct {
-    System::Timer fast_refresh_ =
-        System::Timer("fast_refresh", UI_DYNAMIC_CYCLE, FastRefreshCallback);
-
-    System::Timer slow_refresh_ =
-        System::Timer("slow_refresh", UI_STATIC_CYCLE, SlowRefreshCallback);
-  } tim;
 
   Message::Topic<Data> ref_data_tp_ = Message::Topic<Data>("referee");
 
