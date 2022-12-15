@@ -97,7 +97,7 @@ def generate_kconfig():
     tools.kconfig_add_menu('设备/device', kconfig_file, tools.list_dir(dev_dir),
                            dev_dir)
     tools.kconfig_add_menu('模块/module', kconfig_file, tools.list_dir(mod_dir),
-                           dev_dir)
+                           mod_dir)
 
     kconfig_file.close()
     print("Generate Kconfig done.")
