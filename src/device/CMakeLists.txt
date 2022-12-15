@@ -26,4 +26,4 @@ target_include_directories(
   PUBLIC $<TARGET_PROPERTY:component,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
-add_dependencies(${PROJECT_NAME} bsp component hal system OneMessage)
+add_dependencies(${PROJECT_NAME} bsp component system OneMessage)
