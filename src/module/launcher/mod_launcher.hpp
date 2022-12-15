@@ -137,7 +137,7 @@ class Launcher {
 
   void PraseRef();
 
-  uint32_t lask_wakeup_;
+  uint32_t last_wakeup_;
 
   float now_;
 

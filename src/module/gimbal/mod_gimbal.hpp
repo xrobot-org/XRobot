@@ -64,7 +64,7 @@ class Gimbal {
 
   void SetMode(Mode mode);
 
-  uint32_t lask_wakeup_;
+  uint32_t last_wakeup_;
 
   float now_;
 

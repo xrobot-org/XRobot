@@ -127,8 +127,8 @@ void Launcher::UpdateFeedback() {
 
 void Launcher::Control() {
   this->now_ = bsp_time_get();
-  this->dt_ = this->now_ - this->lask_wakeup_;
-  this->lask_wakeup_ = this->now_;
+  this->dt_ = this->now_ - this->last_wakeup_;
+  this->last_wakeup_ = this->now_;
 
   this->HeatLimit();
 

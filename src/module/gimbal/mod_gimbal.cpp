@@ -71,8 +71,8 @@ void Gimbal::UpdateFeedback() {
 
 void Gimbal::Control() {
   this->now_ = bsp_time_get();
-  this->dt_ = this->now_ - this->lask_wakeup_;
-  this->lask_wakeup_ = this->now_;
+  this->dt_ = this->now_ - this->last_wakeup_;
+  this->last_wakeup_ = this->now_;
 
   /* yaw坐标正方向与遥控器操作逻辑相反 */
   float gimbal_pit_cmd = this->cmd_.eulr.pit * this->dt_ * GIMBAL_MAX_SPEED;
