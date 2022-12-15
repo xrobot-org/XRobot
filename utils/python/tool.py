@@ -10,6 +10,14 @@ class ProjectTools:
     def __init__(self):
         self.project_path = os.path.split(os.path.realpath(__file__))[0][:-13]
         self.kconfig_path = self.project_path + '/lib/Kconfiglib'
+        if ' ' in self.project_path:
+            print('工程路径请不要带有空格')
+            exit()
+
+        for ch in self.project_path:
+            if u'\u4e00' <= ch <= u'\u9fff':
+                print('工程路径请不要带有中文')
+                exit()
 
     def menuconfig(self, path):
         print('Start menu config.')
