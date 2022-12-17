@@ -47,30 +47,30 @@ class ProjectTools:
                 ans.append(filename)
         return ans
 
-    def kconfig_add_choice(self, name, file, list, path):
+    def kconfig_add_choice(self, prefix, name, file, list, path):
         file.write('\n# ' + name)
         file.write('\nchoice\n\tprompt \"' + name + '"\n')
 
         for item in list:
-            file.write('\n\tconfig ' + self.config_prefix + item +
-                       '\n\t\tbool \"' + item + '\"\n')
+            file.write('\n\tconfig ' + self.config_prefix + prefix + item +
+                       '\n\t\tbool \"' + prefix + item + '\"\n')
         file.write('endchoice\n')
 
         for item in list:
-            self.kconfig_conditional_include(path, file, item)
+            self.kconfig_conditional_include(prefix, path, file, item)
 
-    def kconfig_conditional_include(self, path, file, name):
-        file.write('\nif ' + self.config_prefix + name + '\n\tsource \"' +
-                   path + '/' + name + '/Kconfig"\nendif\n')
+    def kconfig_conditional_include(self, prefix, path, file, name):
+        file.write('\nif ' + self.config_prefix + prefix + name +
+                   '\n\tsource \"' + path + '/' + name + '/Kconfig"\nendif\n')
 
-    def kconfig_add_menu(self, name, file, list, path):
+    def kconfig_add_menu(self, prefix, name, file, list, path):
         file.write('\n# ' + name)
         file.write('\nmenu \"' + name + '"\n')
 
         for item in list:
-            file.write('\n\tconfig ' + self.config_prefix + item +
-                       '\n\t\ttristate \"' + item + '\"\n')
-            self.kconfig_conditional_include(path, file, item)
+            file.write('\n\tconfig ' + self.config_prefix + prefix + item +
+                       '\n\t\ttristate \"' + prefix + item + '\"\n')
+            self.kconfig_conditional_include(prefix, path, file, item)
         file.write('endmenu\n')
 
     def cmake_add_detail(self, file, name, value):

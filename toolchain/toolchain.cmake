@@ -9,7 +9,7 @@ set(TOOLCHAIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/toolchain)
 FILE(GLOB children RELATIVE ${BSP_DIR} ${BSP_DIR}/*)
 
 FOREACH(child ${children})
-  IF(${${CONFIG_PREFIX}${child}})
+  IF(${${CONFIG_PREFIX}board-${child}})
     include(${BSP_DIR}/${child}/toolchain.cmake)
   ENDIF()
 ENDFOREACH()

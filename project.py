@@ -88,16 +88,16 @@ def generate_kconfig():
     kconfig_file.write('# Auto generated file. Do not edit.\n')
     kconfig_file.write('# -----------------------------------------------')
 
-    tools.kconfig_add_choice('开发板/board', kconfig_file,
+    tools.kconfig_add_choice('board-', '开发板', kconfig_file,
                              tools.list_dir(bsp_dir), bsp_dir)
-    tools.kconfig_add_choice('系统/system', kconfig_file,
+    tools.kconfig_add_choice('system-', '系统', kconfig_file,
                              tools.list_dir(sys_dir), sys_dir)
-    tools.kconfig_add_choice('机器人/robot', kconfig_file,
+    tools.kconfig_add_choice('robot-', '机器人', kconfig_file,
                              tools.list_dir(rbt_dir), rbt_dir)
-    tools.kconfig_add_menu('设备/device', kconfig_file, tools.list_dir(dev_dir),
-                           dev_dir)
-    tools.kconfig_add_menu('模块/module', kconfig_file, tools.list_dir(mod_dir),
-                           mod_dir)
+    tools.kconfig_add_menu('device-', '设备', kconfig_file,
+                           tools.list_dir(dev_dir), dev_dir)
+    tools.kconfig_add_menu('module-', '模块', kconfig_file,
+                           tools.list_dir(mod_dir), mod_dir)
 
     kconfig_file.close()
     print("Generate Kconfig done.")

@@ -4,7 +4,7 @@ project(robot)
 FILE(GLOB children RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)
 
 FOREACH(child ${children})
-  IF(${${CONFIG_PREFIX}${child}})
+  IF(${${CONFIG_PREFIX}robot-${child}})
     set(ROBOT_DIR ${child})
   ENDIF()
 ENDFOREACH()
