@@ -24,7 +24,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Install dependence
-      run: sudo apt install cmake gcc-arm-none-eabi ninja-build
+      run: sudo apt update && sudo apt upgrade && sudo apt install cmake gcc-arm-none-eabi ninja-build
+
+    - name: Install webots
+      run: wget https://github.com/cyberbotics/webots/releases/download/R2023a/webots_2023a_amd64.deb -O ./webots.deb && sudo apt install ./webots.deb -y
 
     - name: Init submodule
       run: cd ${{github.workspace}} && git submodule init && git submodule update
