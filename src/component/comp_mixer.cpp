@@ -55,10 +55,10 @@ bool Mixer::Apply(Component::Type::MoveVector &move_vec, float *out) {
 
     case PARLFIX4:
       ASSERT(this->len_ == 4);
-      out[0] = -move_vec.vx;
-      out[1] = move_vec.vx;
-      out[2] = move_vec.vx;
-      out[3] = -move_vec.vx;
+      out[0] = -move_vec.vy;
+      out[1] = move_vec.vy;
+      out[2] = move_vec.vy;
+      out[3] = -move_vec.vy;
       break;
 
     case PARLFIX2:
