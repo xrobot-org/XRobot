@@ -17,8 +17,15 @@ class CMD {
   typedef enum {
     ControlSourceRC,
     ControlSourceAI,
+    ControlSourceTerm,
     ControlSourceNum
   } ControlSource;
+
+  typedef enum {
+    OperatorControl,
+    AutoControl,
+    TerminalControl,
+  } Mode;
 
   typedef Type::Vector3 ChassisCMD;
 
@@ -41,7 +48,7 @@ class CMD {
     uint32_t target;
   } EventMapItem;
 
-  CMD();
+  CMD(Mode mode = OperatorControl);
 
   static constexpr auto CreateMapItem(uint32_t source, uint32_t target) {
     const EventMapItem item = {source, target};
@@ -54,7 +61,9 @@ class CMD {
 
   static void RegisterController(Message::Topic<Data>& source);
 
-  ControlSource ctrl_source_ = ControlSourceRC;
+  ControlSource ctrl_source_;
+
+  Mode mode_;
 
   Message::Event event_;
 

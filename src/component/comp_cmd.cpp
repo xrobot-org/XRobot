@@ -8,14 +8,15 @@ using namespace Component;
 
 CMD* CMD::self_;
 
-CMD::CMD()
-    : event_("cmd_event"),
+CMD::CMD(Mode mode)
+    : mode_(mode),
+      event_("cmd_event"),
       data_in_tp_("cmd_data_in"),
       chassis_data_tp_("cmd_chassis"),
       gimbal_data_tp_("cmd_gimbal") {
   CMD::self_ = this;
 
-  auto rx_callback = [](Data& data, CMD* cmd) {
+  auto op_ctrl_callback = [](Data& data, CMD* cmd) {
     memcpy(&(cmd->data_[data.ctrl_source]), &data, sizeof(Data));
 
     if (!cmd->data_[ControlSourceRC].online) {
@@ -35,7 +36,29 @@ CMD::CMD()
     return true;
   };
 
-  this->data_in_tp_.RegisterCallback(rx_callback, this);
+  auto term_ctrl_callback = [](Data& data, CMD* cmd) {
+    memcpy(&(cmd->data_[ControlSourceTerm]), &data, sizeof(Data));
+
+    cmd->gimbal_data_tp_.Publish(cmd->data_[ControlSourceTerm].gimbal);
+    cmd->chassis_data_tp_.Publish(cmd->data_[ControlSourceTerm].chassis);
+
+    return true;
+  };
+
+  switch (mode) {
+    case OperatorControl:
+      this->ctrl_source_ = ControlSourceRC;
+      this->data_in_tp_.RegisterCallback(op_ctrl_callback, this);
+      break;
+    case AutoControl:
+      this->ctrl_source_ = ControlSourceAI;
+      this->data_in_tp_.RegisterCallback(op_ctrl_callback, this);
+      break;
+    case TerminalControl:
+      this->ctrl_source_ = ControlSourceTerm;
+      this->data_in_tp_.RegisterCallback(term_ctrl_callback, this);
+      break;
+  }
 }
 
 void CMD::RegisterEvent(void (*callback)(uint32_t event, void* arg), void* arg,
