@@ -90,7 +90,7 @@ class Gimbal {
 
   System::Semaphore ctrl_lock_;
 
-  Message::Topic<float> yaw_tp_ = Message::Topic<float>("gimbal_yaw_offset");
+  Message::Topic<float> yaw_tp_ = Message::Topic<float>("chassis_yaw");
 
   float yaw_;
 

@@ -96,7 +96,7 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
   auto chassis_thread = [](Chassis* chassis) {
     auto raw_ref_sub = Message::Subscriber("referee", chassis->raw_ref_);
 
-    auto yaw_sub = Message::Subscriber("gimbal_yaw_offset", chassis->yaw_);
+    auto yaw_sub = Message::Subscriber("chassis_yaw", chassis->yaw_);
 
     auto cmd_sub = Message::Subscriber("cmd_chassis", chassis->cmd_);
 
