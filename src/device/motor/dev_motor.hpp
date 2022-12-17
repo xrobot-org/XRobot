@@ -1,8 +1,9 @@
 #pragma once
 
-#include <string.h>
+#include <string>
 
 #include "term.hpp"
+#include "thread.hpp"
 
 namespace Device {
 class BaseMotor {
