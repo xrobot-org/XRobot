@@ -13,10 +13,10 @@
 
 主要特色：
 
+- 利用Cmake & GCC实现跨平台开发
 - BSP兼容层使用纯C实现，上层代码使用C++，稳定实时，开发方便
 - 一个项目适配不同型号的机器人型号，现已支持步兵/英雄/哨兵/平衡
-- 利用Cmake & GCC实现跨平台开发
-- 多开发板支持
+- 兼容多开发板和操作系统，支持Linux原生运行和Linux上的Webots仿真
 - 兵种配置文件及图形化配置
 - 操作手自定义UI
 - 命令行界面（CLI）
@@ -27,13 +27,17 @@
 
 利用命令行可以辅助调试程序、校准开发板、初始化机器人、读取不同参数配置。
 
-| ![客户端UI](./doc/image/调试界面.png?raw=true "VSCode调试界面") |
+| ![VSCode调试界面](./doc/image/调试界面.png?raw=true "VSCode调试界面") |
 | :-------------------------------------------------------------: |
 |                        *VSCode调试界面*                         |
 
-| ![命令行界面（CLI）](./doc/image/命令行界面.png?raw=true "命令行界面（CLI）") |
-| :---------------------------------------------------------------------------: |
-|                              *命令行界面（CLI）*                              |
+| ![Webots仿真](./doc/image/Webots仿真.png?raw=true "Webots仿真") |
+| :-------------------------------------------------------: |
+|                        *Webots仿真*                         |
+
+| ![命令行](./doc/image/命令行.png?raw=true "命令行") |
+| :-------------------------------------------------------: |
+|                        *命令行*                         |
 
 | ![客户端UI](./doc/image/客户端UI.png?raw=true "客户端UI") |
 | :-------------------------------------------------------: |
@@ -166,7 +170,4 @@ TODO
 
 ### TODO
 
-- [x] 利用好CCM RAM[参考文档](https://www.st.com/resource/en/application_note/an4296-use-stm32f4stm32g4-ccm-sram-with-iar-embedded-workbench-keil-mdkarm-stmicroelectronics-stm32cubeide-and-other-gnubased-toolchains-stmicroelectronics.pdf)
-- [x] 使用[TinyUSB](https://github.com/hathach/tinyusb)
-- [ ] 使用MPU保护内存地址空间，防止错误访存出现。例如NULL指针读写。
-- [ ] 实现固件运行在开发板，机器人运行在Gazebo的Hardware in the Loop(HITL)仿真
+- [ ] 完善机器人模型，实现全兵种在线仿真。
