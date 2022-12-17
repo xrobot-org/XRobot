@@ -3,10 +3,6 @@
 #include <stdlib.h>
 
 #include "bsp_time.h"
-#include "dev_can.hpp"
-#include "dev_cap.hpp"
-#include "dev_dr16.hpp"
-#include "dev_tof.hpp"
 #include "magic_enum.hpp"
 
 #define ROTOR_WZ_MIN 0.6f /* 小陀螺旋转位移下界 */

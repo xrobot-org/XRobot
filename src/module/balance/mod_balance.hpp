@@ -2,13 +2,10 @@
 
 #include "comp_actuator.hpp"
 #include "comp_filter.hpp"
-#include "comp_mixer.hpp"
 #include "comp_pid.hpp"
 #include "dev_cap.hpp"
-#include "dev_motor.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
-#include "dev_tof.hpp"
 
 namespace Module {
 template <typename Motor, typename MotorParam>

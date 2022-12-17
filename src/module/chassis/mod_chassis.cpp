@@ -14,9 +14,6 @@
 #include <stdlib.h>
 
 #include "bsp_time.h"
-#include "dev_can.hpp"
-#include "dev_cap.hpp"
-#include "dev_dr16.hpp"
 
 #define ROTOR_WZ_MIN 0.6f /* 小陀螺旋转位移下界 */
 #define ROTOR_WZ_MAX 0.8f /* 小陀螺旋转位移上界 */
