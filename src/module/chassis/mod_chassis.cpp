@@ -96,8 +96,6 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
   auto chassis_thread = [](Chassis* chassis) {
     auto raw_ref_sub = Message::Subscriber("referee", chassis->raw_ref_);
 
-    auto cap_info_sub = Message::Subscriber("cap_info", chassis->cap_info_);
-
     auto yaw_sub = Message::Subscriber("gimbal_yaw_offset", chassis->yaw_);
 
     auto cmd_sub = Message::Subscriber("cmd_chassis", chassis->cmd_);
@@ -107,7 +105,7 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
       yaw_sub.DumpData();
       raw_ref_sub.DumpData();
       cmd_sub.DumpData();
-      cap_info_sub.DumpData();
+
       /* 更新反馈值 */
       chassis->PraseRef();
 
@@ -115,8 +113,6 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
       chassis->UpdateFeedback();
       chassis->Control();
       chassis->ctrl_lock_.Give();
-
-      chassis->cap_out_tp_.Publish(chassis->cap_out_);
 
       /* 运行结束，等待下一次唤醒 */
       chassis->thread_.SleepUntil(2);

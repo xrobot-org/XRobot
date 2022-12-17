@@ -15,7 +15,6 @@
 #include "comp_filter.hpp"
 #include "comp_mixer.hpp"
 #include "comp_pid.hpp"
-#include "dev_cap.hpp"
 #include "dev_motor.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
@@ -110,14 +109,8 @@ class Chassis {
 
   System::Semaphore ctrl_lock_;
 
-  Message::Topic<Device::Cap::Output> cap_out_tp_ =
-      Message::Topic<Device::Cap::Output>("cap_out");
-
-  Device::Cap::Output cap_out_;
-
   float yaw_;
   Device::Referee::Data raw_ref_;
-  Device::Cap::Info cap_info_;
   Component::CMD::ChassisCMD cmd_;
 };
 
