@@ -18,6 +18,8 @@ class RMMotor : public BaseMotor {
 
   void Control(float output);
 
+  bool Update();
+
   Param param_;
 };
 }  // namespace Device
