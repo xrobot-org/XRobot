@@ -18,7 +18,7 @@ Robot::Simulator::Param param = {
       .i = 0.0f,
       .d = 0.0f,
       .i_limit = 1.0f,
-      .out_limit = 1.0f,
+      .out_limit = 0.4f,
       .d_cutoff_freq = -1.0f,
       .range = M_2PI,
     },
@@ -37,12 +37,12 @@ Robot::Simulator::Param param = {
     .actuator_param = {
       {
         .speed = {
-          .k = 0.003f,
+          .k = 0.0001f,
           .p = 1.0f,
-          .i = 0.5f,
+          .i = 0.1f,
           .d = 0.0f,
           .i_limit = 0.02f,
-          .out_limit = 1.0f,
+          .out_limit = 0.4f,
           .d_cutoff_freq = -1.0f,
           .range = -1.0f,
         },
@@ -54,12 +54,12 @@ Robot::Simulator::Param param = {
       },
       {
         .speed = {
-          .k = 0.003f,
+          .k = 0.0001f,
           .p = 1.0f,
-          .i = 0.5f,
+          .i = 0.1f,
           .d = 0.0f,
           .i_limit = 0.02f,
-          .out_limit = 1.0f,
+          .out_limit = 0.4f,
           .d_cutoff_freq = -1.0f,
           .range = -1.0f,
         },
@@ -70,12 +70,12 @@ Robot::Simulator::Param param = {
       },
       {
         .speed = {
-          .k = 0.003f,
+          .k = 0.00015f,
           .p = 1.0f,
-          .i = 0.5f,
+          .i = 0.1f,
           .d = 0.0f,
           .i_limit = 0.02f,
-          .out_limit = 1.0f,
+          .out_limit = 0.4f,
           .d_cutoff_freq = -1.0f,
           .range = -1.0f,
         },
@@ -86,12 +86,12 @@ Robot::Simulator::Param param = {
       },
       {
         .speed = {
-          .k = 0.003f,
+          .k = 0.0001f,
           .p = 1.0f,
-          .i = 0.5f,
+          .i = 0.1f,
           .d = 0.0f,
           .i_limit = 0.02f,
-          .out_limit = 1.0f,
+          .out_limit = 0.4f,
           .d_cutoff_freq = -1.0f,
           .range = -1.0f,
         },
