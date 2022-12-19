@@ -99,6 +99,7 @@ void GetRegistersFromStack(uint32_t *pulFaultStackAddress) {
  */
 void HardFault_Handler(void) {
   __asm volatile(
+      ".align 8                                                   \n"
       " tst lr, #4                                                \n"
       " ite eq                                                    \n"
       " mrseq r0, msp                                             \n"
