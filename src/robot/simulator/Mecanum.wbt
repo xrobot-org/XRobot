@@ -82,6 +82,7 @@ Robot {
       children [
         DEF body Shape {
           appearance PBRAppearance {
+            baseColor 0 0.9 0.5
           }
           geometry Box {
             size 0.45 0.3 0.1
@@ -912,6 +913,7 @@ Solid {
   children [
     DEF body Shape {
       appearance PBRAppearance {
+        baseColor 0.7 0.8 1
       }
       geometry Box {
         size 3 4 1
