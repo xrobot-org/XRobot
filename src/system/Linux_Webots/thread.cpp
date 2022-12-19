@@ -1,30 +1,34 @@
 #include "thread.hpp"
 
+#include "bsp_time.h"
 #include "webots/robot.h"
+#include "webots/supervisor.h"
 
 using namespace System;
 
-static bool thread_continue;
+static bool simulating = false;
 
 void Thread::StartKernel() {
   while (1) {
+    simulating = true;
     wb_robot_step(1);
-    thread_continue = true;
-    poll(NULL, 0, 1);
-    thread_continue = true;
+    simulating = false;
+    poll(NULL, 0, 2);
   }
 }
 
 void Thread::Sleep(uint32_t microseconds) {
-  while (microseconds) {
+  float time = bsp_time_get() + microseconds / 1000.0f;
+
+  while (simulating || bsp_time_get() < time) {
     poll(NULL, 0, 1);
-    if (thread_continue) microseconds--;
   }
 }
 
 void Thread::SleepUntil(uint32_t microseconds) {
-  while (microseconds) {
+  float time = bsp_time_get() + microseconds / 1000.0f;
+
+  while (simulating || bsp_time_get() < time) {
     poll(NULL, 0, 1);
-    if (thread_continue) microseconds--;
   }
 }
