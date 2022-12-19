@@ -1,5 +1,6 @@
 #include "comp_utils.hpp"
 #include "dev_blink_led.hpp"
+#include "dev_camera.hpp"
 #include "dev_controller.hpp"
 #include "mod_chassis.hpp"
 #include "om.hpp"
@@ -24,6 +25,7 @@ class Simulator {
   Device::BlinkLED led_;
   Device::Referee referee_;
   Device::TerminalController ctrl_;
+  Device::Camera camera_;
 
   Module::RMChassis chassis_;
 
