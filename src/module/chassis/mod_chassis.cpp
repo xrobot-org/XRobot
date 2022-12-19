@@ -172,7 +172,7 @@ void Chassis<Motor, MotorParam>::Control() {
     case Chassis::Relax:
     case Chassis::Break:
     case Chassis::Indenpendent: /* 独立模式wz为0 */
-      this->move_vec_.wz = 0.0f;
+      this->move_vec_.wz = this->cmd_.z;
       break;
 
     case Chassis::FollowGimbal: /* 跟随模式通过PID控制使车头跟随云台
