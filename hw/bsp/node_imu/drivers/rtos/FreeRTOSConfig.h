@@ -78,7 +78,7 @@ void xPortSysTickHandler(void);
 #define configMAX_TASK_NAME_LEN (16)
 #define configGENERATE_RUN_TIME_STATS 0
 #define configUSE_TRACE_FACILITY 0
-#define configUSE_STATS_FORMATTING_FUNCTIONS 1
+#define configUSE_STATS_FORMATTING_FUNCTIONS 0
 #define configUSE_16_BIT_TICKS 0
 #define configUSE_MUTEXES 1
 #define configQUEUE_REGISTRY_SIZE 8

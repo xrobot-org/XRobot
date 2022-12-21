@@ -59,14 +59,8 @@ extern "C" {
 #endif
 #endif
 
-// Device mode with rhport and speed defined by board.mk
-#if BOARD_DEVICE_RHPORT_NUM == 0
 #define CFG_TUSB_RHPORT0_MODE (OPT_MODE_DEVICE | BOARD_DEVICE_RHPORT_SPEED)
-#elif BOARD_DEVICE_RHPORT_NUM == 1
-#define CFG_TUSB_RHPORT1_MODE (OPT_MODE_DEVICE | BOARD_DEVICE_RHPORT_SPEED)
-#else
-#error "Incorrect RHPort configuration"
-#endif
+#define CFG_TUSB_RHPORT1_MODE  OPT_MODE_NONE
 
 // This examples use FreeRTOS
 #define CFG_TUSB_OS OPT_OS_FREERTOS
