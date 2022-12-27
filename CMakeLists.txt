@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.11)
 
 # 版本第一位与赛季年份对应，同时与branch对应 第二位代表功能变化 第三位代表bug修复
 project(
-  qdu_rm_mcu
+  xrobot
   DESCRIPTION "MCU for Robomaster"
   VERSION 2022.0.0
   LANGUAGES C CXX ASM)

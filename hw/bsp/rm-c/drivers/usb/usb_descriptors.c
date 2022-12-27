@@ -149,8 +149,8 @@ uint8_t const* tud_descriptor_configuration_cb(uint8_t index) {
 // array of pointer to string descriptors
 char const* string_desc_arr[] = {
     (const char[]){0x09, 0x04},  // 0: is supported language is English (0x0409)
-    "QDU-RM",                    // 1: Manufacturer
-    "MCU",                       // 2: Product
+    "XRobot",                    // 1: Manufacturer
+    "RM-C",                       // 2: Product
     "123456",                    // 3: Serials, should use chip ID
     "Host Serial",               // 4: CDC Interface
 };

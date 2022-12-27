@@ -10,7 +10,7 @@ import tool
 
 tools = tool.ProjectTools()
 
-welcome_str = 'QDU-RM-MCU 2023\n感谢使用本项目，使用./project.py help获取使用方法'
+welcome_str = 'XRobot 2023\n感谢使用本项目，使用./project.py help获取使用方法'
 project_path_str = '工程目录:'
 
 cfg_dir = tools.project_path + '/config'
@@ -67,7 +67,7 @@ def build(board, robot):
                     os.system("cd " + build_dir + ' && ninja')
                     os.makedirs(fm_dir, exist_ok=True)
                     shutil.copyfile(
-                        tools.project_path + '/build/src/qdu_rm_mcu.elf',
+                        tools.project_path + '/build/src/xrobot.elf',
                         fm_dir + '/' + dirname + '&' + filename[:-7] + '.elf')
 
                     print('\n')
@@ -84,7 +84,7 @@ def build(board, robot):
 def generate_kconfig():
     print("Start generate Kconfig.")
     kconfig_file = open(tools.project_path + '/config/auto.Kconfig', 'w')
-    kconfig_file.write('# QDU-RM-MCU\n')
+    kconfig_file.write('# XRobot\n')
     kconfig_file.write('# Auto generated file. Do not edit.\n')
     kconfig_file.write('# -----------------------------------------------')
 
@@ -112,7 +112,7 @@ def generate_cmake(path):
     config_file = open(path + '/.config', 'r')
     cmake_file = open(path + '/config.cmake', 'w')
 
-    cmake_file.write('# QDU-RM-MCU\n')
+    cmake_file.write('# XRobot\n')
     cmake_file.write('# Auto generated file. Do not edit.\n')
 
     cmake_file.write('set(CONFIG_PREFIX  ' + tools.config_prefix + ')\n')
