@@ -3,11 +3,11 @@ name: build_firmware
 
 on:
   push:
-    branches: [ "2023" ]
+    branches: [ "master" ]
     tags:
       - 'v*'
   pull_request:
-    branches: [ "2023" ]
+    branches: [ "master" ]
 
 
 env:
@@ -24,7 +24,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Install dependence
-      run: sudo apt update && sudo apt upgrade && sudo apt install cmake gcc-arm-none-eabi ninja-build
+      run: sudo apt update && sudo apt install cmake gcc-arm-none-eabi ninja-build
 
     - name: Install webots
       run: wget https://github.com/cyberbotics/webots/releases/download/R2023a/webots_2023a_amd64.deb -O ./webots.deb && sudo apt install ./webots.deb -y
@@ -35,11 +35,7 @@ jobs:
     - name: Build
       run: python ${{github.workspace}}/project.py build all all
 
-    - uses: actions/upload-artifact@v3
-      with:
-        path: ${{github.workspace}}/firmware
-
-    - name: Pack
+    - name: Pack firmware
       run: cd ${{github.workspace}} && zip -r ${{github.workspace}}/firmware.zip ./firmware
 
     - name: Create release
@@ -55,8 +51,9 @@ jobs:
           draft: false
           prerelease: false
 
-    - uses: actions/upload-release-asset@v1
-      id: upload-release-asset
+    - name: Upload firmware
+      uses: actions/upload-release-asset@v1
+      id: upload-firmware
       env:
         GITHUB_TOKEN: ${{ github.token }}
       with:
