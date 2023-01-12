@@ -45,7 +45,7 @@ class BMI088 {
 
   void Read(DeviceType type, uint8_t reg, uint8_t *data, uint8_t len);
 
-  static void CaliCMD(BMI088 *bmi088, int argc, char *argv[]);
+  static int CaliCMD(BMI088 *bmi088, int argc, char *argv[]);
 
   Calibration cali;
   Rotation &rot;

@@ -6,52 +6,32 @@
 
 #include "bsp_usb.h"
 #include "ms.h"
+#include "system.hpp"
 
 namespace System {
 class Term {
  public:
-  template <typename Arg>
+  template <typename ArgType>
   class Command {
    public:
-    Command(Arg arg, void (*fun)(Arg, int, char *[]), const char *name,
-            ms_item_t *dir)
-        : arg_(arg), fun_(fun) {
-      ms_file_init(&this->cmd_, name, this->Helper, NULL, NULL);
-      if (dir) {
-        ms_item_add(&this->cmd_, dir);
-      } else {
-        ms_cmd_add(&this->cmd_);
-      }
+    Command(ArgType arg, int (*fun)(ArgType, int, char *[]), const char *name,
+            ms_item_t *dir = ms_get_bin_dir())
+        : type_(fun, arg) {
+      ms_file_init(&this->cmd_, name, this->Call, NULL, NULL);
+      ms_item_add(&this->cmd_, dir);
     }
 
-    static int Helper(ms_item_t *item, int argc, char *argv[]) {
-      Command<Arg> *cmd = ms_container_of(item, Command<Arg>, cmd_);
-      cmd->fun_(cmd->arg_, argc, argv);
-
-      return 0;
+    static int Call(ms_item_t *cmd, int argc, char *argv[]) {
+      Command<ArgType> *self = ms_container_of(cmd, Command<ArgType>, cmd_);
+      return self->type_.Port(&self->type_, argc, argv);
     }
 
    private:
     ms_item_t cmd_;
-    Arg arg_;
-    void (*fun_)(Arg, int, char *[]);
+    TypeErasure<int, ArgType, int, char *[]> type_;
   };
 
   Term();
-
-  static bool Opened() { return bsp_usb_connect(); }
-
-  static uint32_t Available() { return bsp_usb_avail(); }
-
-  static char ReadChar() { return bsp_usb_read_char(); }
-
-  static uint32_t Read(uint8_t *buffer, uint32_t len) {
-    return bsp_usb_read(buffer, len);
-  }
-
-  static bool Write(uint8_t *buffer, uint32_t len) {
-    return bsp_usb_transmit(buffer, len) == BSP_OK;
-  }
 
   static ms_item_t *BinDir() { return ms_get_bin_dir(); }
 

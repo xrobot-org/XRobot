@@ -85,7 +85,7 @@ AHRS::AHRS()
                        System::Thread::High);
 }
 
-void AHRS::ShowCMD(AHRS *ahrs, int argc, char *argv[]) {
+int AHRS::ShowCMD(AHRS *ahrs, int argc, char *argv[]) {
   if (argc == 1) {
     ms_printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据");
     ms_enter();
@@ -109,6 +109,8 @@ void AHRS::ShowCMD(AHRS *ahrs, int argc, char *argv[]) {
       ms_enter();
     }
   }
+
+  return 0;
 }
 
 void AHRS::Update() {

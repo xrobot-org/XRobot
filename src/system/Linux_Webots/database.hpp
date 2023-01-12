@@ -1,3 +1,5 @@
+#pragma once
+
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>

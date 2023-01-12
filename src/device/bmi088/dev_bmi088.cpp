@@ -228,7 +228,7 @@ BMI088::BMI088(BMI088::Rotation &rot)
                        System::Thread::Realtime);
 }
 
-void BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
+int BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
   if (argc == 1) {
     ms_printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据");
     ms_enter();
@@ -314,7 +314,10 @@ void BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
   } else {
     ms_printf("参数错误");
     ms_enter();
+    return -1;
   }
+
+  return 0;
 };
 
 bool BMI088::Init() {

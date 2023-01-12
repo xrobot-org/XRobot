@@ -11,8 +11,8 @@ TerminalController::TerminalController()
   Component::CMD::RegisterController(this->cmd_tp_);
 }
 
-void TerminalController::ControlCMD(TerminalController* ctrl, int argc,
-                                    char* argv[]) {
+int TerminalController::ControlCMD(TerminalController* ctrl, int argc,
+                                   char* argv[]) {
   if (argc == 1) {
     ms_printf("[w/a/s/d] [speed 0-100] [time ms] 向某个方向运动");
     ms_enter();
@@ -73,7 +73,7 @@ void TerminalController::ControlCMD(TerminalController* ctrl, int argc,
             ms_printf("exit.");
             ms_enter();
 
-            return;
+            return 0;
           default:
             x = 0.0f;
             y = 0.0f;
@@ -99,7 +99,7 @@ void TerminalController::ControlCMD(TerminalController* ctrl, int argc,
     } else {
       ms_printf("参数错误");
       ms_enter();
-      return;
+      return -1;
     }
   } else if (argc == 4) {
     float x = 0.0f, y = 0.0f;
@@ -119,7 +119,7 @@ void TerminalController::ControlCMD(TerminalController* ctrl, int argc,
       default:
         ms_printf("方向错误");
         ms_enter();
-        return;
+        return -1;
     }
 
     float speed = std::stoi(argv[2]);
@@ -142,4 +142,6 @@ void TerminalController::ControlCMD(TerminalController* ctrl, int argc,
     ms_printf("参数错误");
     ms_enter();
   }
+
+  return 0;
 }

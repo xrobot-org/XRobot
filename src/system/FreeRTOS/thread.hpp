@@ -6,39 +6,26 @@
 
 #include "FreeRTOS.h"
 #include "bsp_time.h"
+#include "system.hpp"
 #include "task.h"
 
 namespace System {
 class Thread {
- private:
-  template <typename Arg>
-  class HelperFunction {
-   public:
-    HelperFunction(void (*fun)(Arg arg), Arg arg) : fun_(fun), arg_(arg) {}
-
-    static void Call(void* arg) {
-      auto self = static_cast<HelperFunction*>(arg);
-      self->fun_(self->arg_);
-    }
-
-    void (*fun_)(Arg arg);
-    Arg arg_;
-  };
-
  public:
   typedef enum { IDLE, Low, Medium, High, Realtime } Priority;
 
-  template <typename Fun, typename Arg>
-  void Create(Fun fn, Arg arg, const char* name, uint32_t stack_depth,
+  template <typename FunType, typename ArgType>
+  void Create(FunType fun, ArgType arg, const char* name, uint32_t stack_depth,
               Priority priority) {
-    static_cast<void (*)(Arg)>(fn);
-    HelperFunction<Arg>* helper_fn = static_cast<HelperFunction<Arg>*>(
-        pvPortMalloc(sizeof(HelperFunction<Arg>)));
+    static_cast<void (*)(ArgType)>(fun);
 
-    *helper_fn = HelperFunction<Arg>(fn, arg);
+    TypeErasure<void, ArgType>* type = static_cast<TypeErasure<void, ArgType>*>(
+        pvPortMalloc(sizeof(TypeErasure<void, ArgType>)));
 
-    xTaskCreate(HelperFunction<Arg>::Call, name, stack_depth, helper_fn,
-                priority, &(this->handle_));
+    *type = TypeErasure<void, ArgType>(fun, arg);
+
+    xTaskCreate(type->Port, name, stack_depth, type, priority,
+                &(this->handle_));
   }
 
   static void Sleep(uint32_t microseconds) { vTaskDelay(microseconds); }

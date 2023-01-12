@@ -6,41 +6,34 @@
 
 #include <string>
 
+#include "system.hpp"
+
 namespace System {
 class Thread {
- private:
-  template <typename Arg>
-  class HelperFunction {
-   public:
-    HelperFunction(void (*fun)(Arg arg), Arg arg) : fun_(fun), arg_(arg) {}
-
-    static void* Call(void* arg) {
-      auto self = static_cast<HelperFunction*>(arg);
-      self->fun_(self->arg_);
-      return NULL;
-    }
-
-    void (*fun_)(Arg arg);
-    Arg arg_;
-  };
-
  public:
   typedef enum { IDLE, Low, Medium, High, Realtime } Priority;
 
-  template <typename Fun, typename Arg>
-  void Create(Fun fn, Arg arg, const char* name, uint32_t stack_depth,
+  template <typename FunType, typename ArgType>
+  void Create(FunType fun, ArgType arg, const char* name, uint32_t stack_depth,
               Priority priority) {
     (void)name;
     (void)stack_depth;
     (void)priority;
 
-    static_cast<void (*)(Arg)>(fn);
-    HelperFunction<Arg>* helper_fn =
-        static_cast<HelperFunction<Arg>*>(malloc(sizeof(HelperFunction<Arg>)));
+    static_cast<void (*)(ArgType)>(fun);
+    TypeErasure<void, ArgType>* type = static_cast<TypeErasure<void, ArgType>*>(
+        malloc(sizeof(TypeErasure<void, ArgType>)));
 
-    *helper_fn = HelperFunction<Arg>(fn, arg);
+    *type = TypeErasure<void, ArgType>(fun, arg);
 
-    pthread_create(&this->handle_, NULL, HelperFunction<Arg>::Call, helper_fn);
+    auto port = [](void* arg) {
+      TypeErasure<void, ArgType>* type =
+          static_cast<TypeErasure<void, ArgType>*>(arg);
+      type->fun_(type->arg_);
+      return (void*)NULL;
+    };
+
+    pthread_create(&this->handle_, NULL, port, type);
   }
 
   static void Sleep(uint32_t microseconds);

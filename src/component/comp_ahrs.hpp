@@ -21,11 +21,11 @@ class AHRS {
 
   void GetEulr();
 
-  static void ShowCMD(AHRS *ahrs, int argc, char *argv[]);
+  static int ShowCMD(AHRS *ahrs, int argc, char *argv[]);
 
   float last_update_;
   float dt_;
-  float now_;  // TODO:封装
+  float now_;
 
   System::Thread thread_;
 

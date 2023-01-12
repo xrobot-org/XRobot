@@ -10,7 +10,7 @@ class List {
   } Node;
   List() {
     INIT_LIST_HEAD(&(this->head_));
-    &this->sem_handle_ = pthread_mutex_init(&this->sem_handle_, NULL);
+    pthread_mutex_init(&this->sem_handle_, NULL);
     om_mutex_unlock(&this->sem_handle_);
   }
 

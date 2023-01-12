@@ -1,3 +1,5 @@
+#pragma once
+
 #include "easyflash.h"
 
 namespace System {
