@@ -12,3 +12,4 @@ hw/bsp/rm-c/drivers/hal/Core/Src/system_stm32f4xx.c
 **.config.old
 firmware/**
 config/auto.Kconfig
+**.pyc
