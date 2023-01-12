@@ -15,6 +15,6 @@ class BlinkLED {
 
   Param param_;
 
-  System::Thread thread_;
+  bool state_;
 };
 }  // namespace Device
