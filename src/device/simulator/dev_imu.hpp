@@ -13,6 +13,8 @@ class IMU {
 
   void Update();
 
+  static int ShowCMD(IMU* imu, int argc, char* argv[]);
+
   Param param_;
 
   Message::Topic<Component::Type::Vector3> accl_tp_;
@@ -26,6 +28,8 @@ class IMU {
   Component::Type::Vector3 accl_;
   Component::Type::Vector3 gyro_;
   Component::Type::Eulr eulr_;
+
+  System::Term::Command<IMU*> cmd_;
 
   System::Thread thread_;
 };

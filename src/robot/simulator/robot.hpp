@@ -2,6 +2,7 @@
 #include "dev_blink_led.hpp"
 #include "dev_camera.hpp"
 #include "dev_controller.hpp"
+#include "dev_imu.hpp"
 #include "mod_chassis.hpp"
 #include "om.hpp"
 #include "term.hpp"
@@ -13,12 +14,14 @@ class Simulator {
  public:
   typedef struct {
     Device::BlinkLED::Param led;
+    Device::IMU::Param imu;
     Module::RMChassis::Param chassis;
   } Param;
 
   Message message_;
 
   System::Term term_;
+  System::Timer timer_;
 
   Component::CMD cmd_;
 
@@ -26,12 +29,14 @@ class Simulator {
   Device::Referee referee_;
   Device::TerminalController ctrl_;
   Device::Camera camera_;
+  Device::IMU imu_;
 
   Module::RMChassis chassis_;
 
   Simulator(Param& param)
       : cmd_(Component::CMD::TerminalControl),
         led_(param.led),
+        imu_(param.imu),
         chassis_(param.chassis, 500) {}
 };
 }  // namespace Robot

@@ -9,6 +9,10 @@ Robot::Simulator::Param param = {
     .timeout = 200,
   },
 
+  .imu = {
+    .tp_name_prefix = "chassis",
+  },
+
   .chassis={
       .type = Component::Mixer::MECANUM,
 

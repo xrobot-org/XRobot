@@ -1,5 +1,6 @@
 #include "dev_imu.hpp"
 
+#include "bsp_time.h"
 #include "webots/accelerometer.h"
 #include "webots/gyro.h"
 #include "webots/inertial_unit.h"
@@ -10,14 +11,15 @@ IMU::IMU(IMU::Param& param)
     : param_(param),
       accl_tp_((param.tp_name_prefix + std::string("_accl")).c_str()),
       gyro_tp_((param.tp_name_prefix + std::string("_gyro")).c_str()),
-      eulr_tp_((param.tp_name_prefix + std::string("_eulr")).c_str()) {
+      eulr_tp_((param.tp_name_prefix + std::string("_eulr")).c_str()),
+      cmd_(this, IMU::ShowCMD, "imu", System::Term::DevDir()) {
   this->ahrs_handle_ = wb_robot_get_device("imu");
   this->gyro_handle_ = wb_robot_get_device("gyro");
   this->accl_handle_ = wb_robot_get_device("accl");
 
-  wb_inertial_unit_enable(this->ahrs_handle_, 1000);
-  wb_accelerometer_enable(this->accl_handle_, 1000);
-  wb_gyro_enable(this->gyro_handle_, 1000);
+  wb_inertial_unit_enable(this->ahrs_handle_, 1);
+  wb_accelerometer_enable(this->accl_handle_, 1);
+  wb_gyro_enable(this->gyro_handle_, 1);
 
   auto thread_fn = [](IMU* imu) {
     while (1) {
@@ -51,4 +53,29 @@ void IMU::Update() {
   this->accl_.x = accl_data[0];
   this->accl_.y = accl_data[1];
   this->accl_.z = accl_data[2];
+}
+
+int IMU::ShowCMD(IMU* imu, int argc, char* argv[]) {
+  if (argc == 1) {
+    ms_printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据");
+    ms_enter();
+  } else if (argc == 4) {
+    int time = std::stoi(argv[2]);
+    int delay = std::stoi(argv[3]);
+
+    if (delay > 1000) delay = 1000;
+    if (delay < 2) delay = 2;
+
+    while (time > delay) {
+      ms_printf(
+          "Accl[x:%f y:%f z:%f] Gyro[x:%f y:%f z:%f] Eulr[pit:%f rol:%f "
+          "yaw:%f]",
+          imu->accl_.x, imu->accl_.y, imu->accl_.z, imu->gyro_.x, imu->gyro_.y,
+          imu->gyro_.z, imu->eulr_.pit, imu->eulr_.rol, imu->eulr_.yaw);
+      ms_enter();
+      System::Thread::Sleep(delay);
+      ms_clear_line();
+      time -= delay;
+    }
+  }
 }

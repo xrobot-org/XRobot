@@ -5,12 +5,13 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/floors/protos/CircleArena.proto"
 
 WorldInfo {
+  basicTimeStep 1
   coordinateSystem "NUE"
   contactProperties [
     ContactProperties {
       material1 "InteriorWheelMat"
       coulombFriction [
-        1.8, 0, 0.2
+        3.6, 0, 0.4
       ]
       frictionRotation -0.965 0
       bounce 0
@@ -21,7 +22,7 @@ WorldInfo {
     ContactProperties {
       material1 "ExteriorWheelMat"
       coulombFriction [
-        1.8, 0, 0.2
+        3.6, 0, 0.4
       ]
       frictionRotation 0.965 0
       bounce 0
@@ -33,7 +34,7 @@ WorldInfo {
 }
 Viewpoint {
   orientation -0.8748354691217258 -0.06092730252091491 -0.4805733718945474 1.5745223029074207
-  position -16.75930359321559 6.893919503147762 -8.576595792150062
+  position -1.8037847350749978 1.0741206304443465 -3.9838315326277742
   follow "youBot"
   followType "Pan and Tilt Shot"
 }
@@ -45,6 +46,14 @@ Robot {
   translation 0.11734310985837282 0.0881754607021073 -3.008898868830081
   rotation -0.44986524730966504 -0.6315317702103691 -0.6314973337061459 2.3027312061175635
   children [
+    Gyro {
+    }
+    InertialUnit {
+      name "imu"
+    }
+    Accelerometer {
+      name "accl"
+    }
     LED {
       translation 0.1637 0 0.051
       rotation 0 1 0 4.07987e-06
@@ -110,8 +119,8 @@ Robot {
         }
       ]
       endPoint DEF WHEEL_SOLID Solid {
-        translation 0.1509204825916703 -0.20000441901682678 -0.049951797703066125
-        rotation -2.6421855308310967e-08 0.9999999999999757 2.1923440105942512e-07 4.943687546181658
+        translation 0.15092048259167032 -0.20000441901682678 -0.04995179770306617
+        rotation -2.6421855308336887e-08 0.9999999999999755 2.192344010596407e-07 4.9436875461816765
         children [
           Shape {
             appearance PBRAppearance {
@@ -308,8 +317,8 @@ Robot {
         }
       ]
       endPoint DEF WHEEL_SOLID Solid {
-        translation 0.15056830884884942 0.19999703771834368 -0.050879337372427294
-        rotation -9.384279545012574e-07 -0.999999999999439 -4.913325634409625e-07 2.0476286134717556
+        translation 0.1505683088488494 0.19999703771834368 -0.050879337372427294
+        rotation -9.38427954501275e-07 -0.999999999999439 -4.913325634409714e-07 2.047628613471757
         children [
           Shape {
             appearance PBRAppearance {
@@ -508,8 +517,8 @@ Robot {
         }
       ]
       endPoint DEF WHEEL_SOLID Solid {
-        translation -0.1468736843074184 0.20053577876187542 -0.05047736796948901
-        rotation 4.39242185415602e-07 0.9999999999999025 -4.266664714078548e-08 2.7707492199057566
+        translation -0.14687368430741843 0.20053577876187542 -0.050477367969489026
+        rotation 4.392421854155926e-07 0.9999999999999025 -4.2666647140783994e-08 2.7707492199057517
         children [
           Shape {
             appearance PBRAppearance {
@@ -706,8 +715,8 @@ Robot {
         }
       ]
       endPoint DEF WHEEL_SOLID Solid {
-        translation -0.14909817639018833 -0.20000267204621955 -0.049459821956662514
-        rotation 4.457605609914604e-07 -0.9999999999998097 -4.264430974646749e-07 0.6508027907995305
+        translation -0.1490981763901883 -0.20000267204621955 -0.04945982195666253
+        rotation 4.457605609322183e-07 -0.9999999999998097 -4.2644309740800016e-07 0.6508027907997688
         children [
           Shape {
             appearance PBRAppearance {
