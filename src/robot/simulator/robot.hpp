@@ -4,8 +4,6 @@
 #include "dev_controller.hpp"
 #include "dev_imu.hpp"
 #include "mod_chassis.hpp"
-#include "om.hpp"
-#include "term.hpp"
 
 void robot_init();
 
@@ -17,11 +15,6 @@ class Simulator {
     Device::IMU::Param imu;
     Module::RMChassis::Param chassis;
   } Param;
-
-  Message message_;
-
-  System::Term term_;
-  System::Timer timer_;
 
   Component::CMD cmd_;
 

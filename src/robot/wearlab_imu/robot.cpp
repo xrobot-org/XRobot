@@ -1,5 +1,7 @@
 #include "robot.hpp"
 
+#include "system.hpp"
+
 /* clang-format off */
 Robot::WearLabIMU::Param param = {
   .bmi088_rot =
@@ -22,6 +24,8 @@ Robot::WearLabIMU::Param param = {
 void robot_init() {
   auto init_thread_fn = [](void* arg) {
     RM_UNUSED(arg);
+
+    System::Init();
 
     Robot::WearLabIMU robot(param);
 

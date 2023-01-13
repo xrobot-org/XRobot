@@ -1,6 +1,5 @@
 #include "comp_ahrs.hpp"
 #include "comp_cmd.hpp"
-#include "database.hpp"
 #include "dev_ai.hpp"
 #include "dev_bmi088.hpp"
 #include "dev_can.hpp"
@@ -11,7 +10,6 @@
 #include "mod_chassis.hpp"
 #include "mod_gimbal.hpp"
 #include "mod_launcher.hpp"
-#include "term.hpp"
 
 void robot_init();
 namespace Robot {
@@ -24,10 +22,6 @@ class Infantry {
     Device::BMI088::Rotation bmi088_rot;
     Device::Cap::Param cap;
   } Param;
-
-  Message message_;
-  System::Term term_;
-  System::Database database_;
 
   Component::CMD cmd_;
   Component::AHRS ahrs_;

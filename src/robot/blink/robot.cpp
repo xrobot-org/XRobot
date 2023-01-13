@@ -1,5 +1,7 @@
 #include "robot.hpp"
 
+#include "system.hpp"
+
 /* clang-format off */
 Robot::Blink::Param param = {
   .led = {
@@ -12,6 +14,8 @@ Robot::Blink::Param param = {
 void robot_init() {
   auto init_thread_fn = [](void* arg) {
     RM_UNUSED(arg);
+
+    System::Init();
 
     Robot::Blink blink(param);
 

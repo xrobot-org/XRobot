@@ -11,8 +11,6 @@
 #include "dev_referee.hpp"
 #include "mod_balance.hpp"
 #include "mod_dual_leg.hpp"
-#include "om.hpp"
-#include "term.hpp"
 
 void robot_init();
 namespace Robot {
@@ -25,10 +23,6 @@ class Infantry {
     Device::Cap::Param cap;
     Device::IMU::Param can_imu;
   } Param;
-
-  Message message_;
-  System::Term term_;
-  System::Database database_;
 
   Component::CMD cmd_;
   Component::AHRS ahrs_;

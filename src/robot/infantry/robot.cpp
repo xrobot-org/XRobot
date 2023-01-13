@@ -1,4 +1,7 @@
 #include "robot.hpp"
+
+#include "system.hpp"
+
 /* clang-format off */
 Robot::Infantry::Param param = {
     .chassis={
@@ -399,6 +402,8 @@ Robot::Infantry::Param param = {
 void robot_init() {
   auto init_thread_fn = [](void* arg) {
     RM_UNUSED(arg);
+
+    System::Init();
 
     Robot::Infantry robot(param, 500.0f);
     while (1) {

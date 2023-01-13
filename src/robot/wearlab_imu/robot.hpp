@@ -1,10 +1,8 @@
 #include "comp_ahrs.hpp"
-#include "database.hpp"
 #include "dev_blink_led.hpp"
 #include "dev_bmi088.hpp"
 #include "dev_can.hpp"
 #include "mod_can_imu.hpp"
-#include "term.hpp"
 
 void robot_init();
 namespace Robot {
@@ -14,11 +12,6 @@ class WearLabIMU {
     Device::BMI088::Rotation bmi088_rot;
     Device::BlinkLED::Param led;
   } Param;
-
-  Message message_;
-
-  System::Term term_;
-  System::Database database_;
 
   Component::AHRS ahrs_;
 

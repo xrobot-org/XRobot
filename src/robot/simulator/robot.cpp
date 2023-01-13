@@ -1,5 +1,6 @@
 #include "robot.hpp"
 
+#include "system.hpp"
 #include "thread.hpp"
 
 /* clang-format off */
@@ -127,6 +128,8 @@ Robot::Simulator::Param param = {
 void robot_init() {
   auto init_thread_fn = [](void* arg) {
     RM_UNUSED(arg);
+
+    System::Init();
 
     Robot::Simulator blink(param);
 
