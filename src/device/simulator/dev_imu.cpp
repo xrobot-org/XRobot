@@ -78,4 +78,6 @@ int IMU::ShowCMD(IMU* imu, int argc, char* argv[]) {
       time -= delay;
     }
   }
+
+  return 0;
 }
