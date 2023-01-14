@@ -14,3 +14,5 @@ firmware/**
 config/auto.Kconfig
 **.pyc
 **.jdebug.user
+src/robot/**/**.jpg
+**.wbproj

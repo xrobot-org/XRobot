@@ -3,7 +3,6 @@
 #include "comp_actuator.hpp"
 #include "comp_filter.hpp"
 #include "comp_pid.hpp"
-#include "dev_cap.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
 

@@ -1,0 +1,159 @@
+#VRML_SIM R2023a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/appearances/protos/CementTiles.proto"
+
+WorldInfo {
+  contactProperties [
+    ContactProperties {
+      coulombFriction [
+        10
+      ]
+    }
+  ]
+}
+Viewpoint {
+  orientation 0.021640479482809213 -0.02331453338657541 -0.9994939330384754 4.786195976850137
+  position -0.20983217554797612 -2.418036574470119 0.5305443075044861
+  follow "robot"
+  followType "Pan and Tilt Shot"
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 3 3
+}
+Robot {
+  translation 0 0 0.13
+  children [
+    Gyro {
+    }
+    InertialUnit {
+      name "imu"
+    }
+    Accelerometer {
+      name "accl"
+    }
+    LED {
+      translation 0.0637 0 0.071
+      rotation 0 1 0 4.07987e-06
+      children [
+        Shape {
+          appearance PBRAppearance {
+            roughness 0.2
+            metalness 0.5
+            emissiveIntensity 100
+          }
+          geometry DEF EPUCK_LED_GEOMETRY Box {
+            size 0.003 0.004 0.003
+          }
+        }
+      ]
+    }
+    Camera {
+      translation -0.04 0 0.07
+      children [
+        Transform {
+          children [
+            Shape {
+              geometry Cylinder {
+                height 0.03
+                radius 0.03
+              }
+            }
+          ]
+        }
+      ]
+      width 640
+      height 480
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 0 -1 0
+        anchor 0 0.14 -0.08
+      }
+      device [
+        RotationalMotor {
+          name "Chassis_Wheel_Right"
+          maxTorque 1
+        }
+        PositionSensor {
+          name "Chassis_Wheel_Right_Sensor"
+        }
+      ]
+      endPoint Solid {
+        translation 0 -0.13999999999999457 -0.08
+        rotation -0.9999999999999999 -3.297195993907878e-15 -7.065419666083107e-16 1.5707953071795389
+        children [
+          DEF wheel Shape {
+            appearance CementTiles {
+            }
+            geometry Cylinder {
+              height 0.03
+              radius 0.05
+            }
+          }
+        ]
+        name "solid(2)"
+        boundingObject USE wheel
+        physics Physics {
+        }
+      }
+    }
+    HingeJoint {
+      jointParameters HingeJointParameters {
+        axis 0 1 0
+        anchor 0 0.14 -0.08
+      }
+      device [
+        RotationalMotor {
+          name "Chassis_Wheel_Left"
+          maxTorque 1
+        }
+        PositionSensor {
+          name "Chassis_Wheel_Left_Sensor"
+        }
+      ]
+      endPoint Solid {
+        translation 0 0.14 -0.08
+        rotation -0.9999999999999999 1.6485978846521137e-15 -7.850462552253838e-17 1.5707953071795437
+        children [
+          DEF wheel Shape {
+            appearance CementTiles {
+            }
+            geometry Cylinder {
+              height 0.03
+              radius 0.05
+            }
+          }
+        ]
+        name "solid(1)"
+        boundingObject USE wheel
+        physics Physics {
+        }
+      }
+    }
+    Solid {
+      children [
+        DEF body Shape {
+          appearance PBRAppearance {
+            baseColor 0.6 0.6 1
+            roughness 1
+          }
+          geometry Box {
+            size 0.15 0.25 0.13
+          }
+        }
+      ]
+    }
+  ]
+  boundingObject USE body
+  physics Physics {
+    density 4000
+  }
+  controller "<extern>"
+}

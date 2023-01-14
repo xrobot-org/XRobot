@@ -42,9 +42,9 @@ Robot::Simulator::Param param = {
     .actuator_param = {
       {
         .speed = {
-          .k = 0.00005f,
+          .k = 0.00025f,
           .p = 1.0f,
-          .i = 0.1f,
+          .i = 0.0f,
           .d = 0.0f,
           .i_limit = 0.02f,
           .out_limit = 1.0f,
@@ -59,9 +59,9 @@ Robot::Simulator::Param param = {
       },
       {
         .speed = {
-          .k = 0.00005f,
+          .k = 0.00025f,
           .p = 1.0f,
-          .i = 0.1f,
+          .i = 0.0f,
           .d = 0.0f,
           .i_limit = 0.02f,
           .out_limit = 1.0f,
@@ -75,9 +75,9 @@ Robot::Simulator::Param param = {
       },
       {
         .speed = {
-          .k = 0.00005f,
+          .k = 0.00025f,
           .p = 1.0f,
-          .i = 0.1f,
+          .i = 0.0f,
           .d = 0.0f,
           .i_limit = 0.02f,
           .out_limit = 1.0f,
@@ -91,9 +91,9 @@ Robot::Simulator::Param param = {
       },
       {
         .speed = {
-          .k = 0.00005f,
+          .k = 0.00025f,
           .p = 1.0f,
-          .i = 0.1f,
+          .i = 0.0f,
           .d = 0.0f,
           .i_limit = 0.02f,
           .out_limit = 1.0f,
