@@ -67,7 +67,7 @@ def build(board, robot):
                     os.system("cd " + build_dir + ' && ninja')
                     os.makedirs(fm_dir, exist_ok=True)
                     shutil.copyfile(
-                        tools.project_path + '/build/src/xrobot.elf',
+                        tools.project_path + '/build/xrobot.elf',
                         fm_dir + '/' + dirname + '&' + filename[:-7] + '.elf')
 
                     print('\n')

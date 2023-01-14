@@ -8,7 +8,7 @@
             "name": "(gdb) 启动",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/build/src/xrobot.elf",
+            "program": "${workspaceRoot}/build/xrobot.elf",
             "args": [],
             "stopAtEntry": true,
             "cwd": "${fileDirname}",

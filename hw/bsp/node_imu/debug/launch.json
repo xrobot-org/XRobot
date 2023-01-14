@@ -3,7 +3,7 @@
         {
             "name": "ARM-Debug",
             "cwd": "${workspaceRoot}",
-            "executable": "${workspaceRoot}/build/src/xrobot.elf",
+            "executable": "${workspaceRoot}/build/xrobot.elf",
             "request": "launch",
             "type": "cortex-debug",
             "servertype": "jlink",

@@ -33,7 +33,7 @@ void OnProjectLoad (void) {
   //
   // User settings
   //
-  File.Open ("../../../../build/src/xrobot.elf");
+  File.Open ("../../../../build/xrobot.elf");
 }
 
 /*********************************************************************
