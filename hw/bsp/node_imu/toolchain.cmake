@@ -18,10 +18,6 @@ set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
 # to pre-set linker flags and scripts
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
-EXECUTE_PROCESS(COMMAND /opt/arm-gnu-toolchain-12.2/bin/../arm-none-eabi
-  OUTPUT_VARIABLE CLANG_SYS_ROOT
-)
-
 set(CLANG_TARGET arm-none-eabi)
 set(GNU_COMPILER arm-none-eabi)
 
@@ -35,11 +31,22 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-get_filename_component(GCC_ARM_NONE_EABI_ROOT
-    "${GCC_ARM_NONE_EABI_ROOT}"
-    REALPATH
-)
+if(NOT EXISTS ${GCC_ARM_NONE_EABI_ROOT})
+    if(NOT EXISTS /usr/lib/arm-none-eabi OR NOT EXISTS /usr/include/newlib)
+    message(FATAL_ERROR "Could not find arm-none-eabi toolchain.")
+    endif()
+    file(GLOB GCC_ARM_NONE_EABI_INCLUDE
+    "/usr/include/newlib/c++/*/cstddef")
 
+    get_filename_component(GCC_ARM_NONE_EABI_INCLUDE
+    "${GCC_ARM_NONE_EABI_INCLUDE}" DIRECTORY)
+    add_compile_options(
+        --sysroot=/usr/lib/arm-none-eabi
+        -isystem${GCC_ARM_NONE_EABI_INCLUDE}
+        -isystem${GCC_ARM_NONE_EABI_INCLUDE}/arm-none-eabi
+        -isystem${GCC_ARM_NONE_EABI_INCLUDE}/../../
+    )
+else()
 file(GLOB_RECURSE GCC_ARM_NONE_EABI_INCLUDE
     "${GCC_ARM_NONE_EABI_ROOT}/include/c++/*/cstddef")
 
@@ -47,12 +54,15 @@ get_filename_component(GCC_ARM_NONE_EABI_INCLUDE
     "${GCC_ARM_NONE_EABI_INCLUDE}" DIRECTORY)
 
 add_compile_options(
-    --target=${CLANG_TARGET}
-    --sysroot=${CLANG_SYS_ROOT}
     -isystem${GCC_ARM_NONE_EABI_INCLUDE}
     -isystem${GCC_ARM_NONE_EABI_INCLUDE}/arm-none-eabi
     -isystem${GCC_ARM_NONE_EABI_INCLUDE}/arm-none-eabi/include
     -isystem${GCC_ARM_NONE_EABI_ROOT}/include
+)
+endif()
+
+add_compile_options(
+    --target=${CLANG_TARGET}
 )
 
 # Use GUN linker. Because this project use nano and nosys lib, but lld.ld do not
