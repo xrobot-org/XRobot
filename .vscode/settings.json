@@ -26,7 +26,6 @@
     "editor.snippetSuggestions": "bottom",
     "editor.suggest.showStatusBar": true,
     "cortex-debug.showRTOS": true,
-    "C_Cpp.clang_format_fallbackStyle": "Google",
     "C_Cpp.intelliSenseEngine": "disabled",
     "python.analysis.extraPaths": [
         "./utils/python"

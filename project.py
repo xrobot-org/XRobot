@@ -144,6 +144,95 @@ def generate_cmake(path):
     print('Generate done.')
 
 
+def new_component(name: str):
+    cppfile = open(tools.project_path + '/src/component/comp_' + name + '.cpp',
+                   mode='w+')
+    cppfile.write('#include \"comp_' + name +
+                  '.hpp\"\n\nusing namespace Component;\n')
+    cppfile.close()
+    hppfile = open(tools.project_path + '/src/component/comp_' + name + '.hpp',
+                   mode='w+')
+    hppfile.write('#include "component.hpp"\n\nnamespace Component {\n' +
+                  'class YourComponentName {\n' + ' public:\n};\n' +
+                  '}  // namespace Component')
+    hppfile.close()
+    print('Create new component [' + name + '] done.')
+
+
+def new_device(name: str):
+    os.mkdir(tools.project_path + '/src/device/' + name)
+    cppfile = open(tools.project_path + '/src/device/' + name + '/dev_' +
+                   name + '.cpp',
+                   mode='w+')
+    cppfile.write('#include \"dev_' + name +
+                  '.hpp\"\n\nusing namespace Device;\n')
+    cppfile.close()
+    hppfile = open(tools.project_path + '/src/device/' + name + '/dev_' +
+                   name + '.hpp',
+                   mode='w+')
+    hppfile.write('#include \"device.hpp\"\n\nnamespace Device {\n' +
+                  'class YourDeviceName {\n' + ' public:\n};\n' +
+                  '}  // namespace Device')
+    hppfile.close()
+    configfile = open(tools.project_path + '/src/device/' + name + '/Kconfig',
+                      mode='w+')
+    configfile.close()
+    infofile = open(tools.project_path + '/src/device/' + name + '/info.cmake',
+                    mode='w+')
+    infofile.write(
+        'CHECK_SUB_ENABLE(MODULE_ENABLE device)\nif(${MODULE_ENABLE})\n    '
+        'file(GLOB CUR_SOURCES "${SUB_DIR}/*.cpp")\n    SUB_ADD_SRC(CUR_SOURCES)\n    SUB_ADD_INC(SUB_DIR)\nendif()'
+    )
+    infofile.close()
+    print('Create new device [' + name + '] done.')
+
+
+def new_module(name: str):
+    os.mkdir(tools.project_path + '/src/module/' + name)
+    cppfile = open(tools.project_path + '/src/module/' + name + '/mod_' +
+                   name + '.cpp',
+                   mode='w+')
+    cppfile.write('#include \"mod_' + name +
+                  '.hpp\"\n\nusing namespace Module;\n')
+    cppfile.close()
+    hppfile = open(tools.project_path + '/src/module/' + name + '/mod_' +
+                   name + '.hpp',
+                   mode='w+')
+    hppfile.write('#include \"module.hpp\"\n\nnamespace Module {\n' +
+                  'class YourModuleName {\n' + ' public:\n};\n' +
+                  '}  // namespace Module')
+    hppfile.close()
+    configfile = open(tools.project_path + '/src/module/' + name + '/Kconfig',
+                      mode='w+')
+    configfile.close()
+    infofile = open(tools.project_path + '/src/module/' + name + '/info.cmake',
+                    mode='w+')
+    infofile.write(
+        'CHECK_SUB_ENABLE(MODULE_ENABLE module)\nif(${MODULE_ENABLE})\n    '
+        'file(GLOB CUR_SOURCES "${SUB_DIR}/*.cpp")\n'
+        '    SUB_ADD_SRC(CUR_SOURCES)\n    '
+        'SUB_ADD_INC(SUB_DIR)\nendif()')
+    infofile.close()
+    print('Create new module [' + name + '] done.')
+
+
+def new_robot(name: str):
+    os.mkdir(tools.project_path + '/src/robot/' + name)
+    cppfile = open(tools.project_path + '/src/robot/' + name + '/robot.cpp',
+                   mode='w+')
+    cppfile.write('#include \"robot.hpp\"\n\nusing namespace Robot;\n')
+    cppfile.close()
+    hppfile = open(tools.project_path + '/src/robot/' + name + '/robot.hpp',
+                   mode='w+')
+    hppfile.write('namespace Robot {\n' + 'class YourRobotName {\n' +
+                  ' public:\n};\n' + '}  // namespace Robot')
+    hppfile.close()
+    configfile = open(tools.project_path + '/src/robot/' + name + '/Kconfig',
+                      mode='w+')
+    configfile.close()
+    print('Create new Robot [' + name + '] done.')
+
+
 cmd = sys.argv
 cmd_len = len(cmd)
 
@@ -167,10 +256,11 @@ elif cmd[1] == 'help':
     print('config                 -   生成新配置')
     print('refresh                -   重新生成cmake缓存')
     print('clean                  -   清除编译产物')
-    print('build [BOARD] [ROBOT]  -   构建目标')
+    print('build  [BOARD] [ROBOT] -   构建目标')
     print('list                   -   列出可构建目标')
     print('init                   -   安装必备软件包')
     print('select [BOARD] [ROBOT] -   选择构建目标')
+    print('new    [TYPE]  [NAME]  -   新建模块')
 
 elif cmd[1] == 'generate':
     generate_cmake(cmd[2] + '/config')
@@ -192,12 +282,20 @@ elif cmd[1] == 'list':
     list_target()
 elif cmd[1] == 'init':
     os.system(
-        'sudo apt install cmake gcc-arm-none-eabi ninja-build python3-tk')
+        'sudo apt install cmake gcc-arm-none-eabi ninja-build python3-tk clang clangd'
+    )
 elif cmd[1] == 'select':
     if (cmd_len < 4):
         print('参数错误')
         exit(-1)
     select_config(cmd[2], cmd[3])
+elif cmd[1] == 'new':
+    if (cmd_len < 4):
+        print('参数错误')
+    try:
+        eval('new_' + cmd[2] + '(cmd[3])')
+    except:
+        print('命令错误')
 else:
     print('参数错误，请输入./project.py help')
 
