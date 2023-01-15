@@ -1,0 +1,44 @@
+Diagnostics:
+  ClangTidy:
+    Add:   [readability-braces-around-statements,
+            readability-identifier-naming,
+            misc-unused-parameters,google*,
+            clang-analyzer-nullability*,
+            clang-analyzer-*, cert-*,
+            bugprone-*,
+            cppcoreguidelines-*,
+            concurrency-*,
+            performance-*]
+    Remove: [google-build-using-namespace,
+            cppcoreguidelines-pro-type-member-init,
+            google-readability-todo,
+            bugprone-easily-swappable-parameters,
+            cppcoreguidelines-pro-bounds-constant-array-index,
+            cppcoreguidelines-explicit-virtual-functions,
+            cppcoreguidelines-virtual-class-destructor,
+            bugprone-narrowing-conversions,
+            cppcoreguidelines-narrowing-conversions,
+            google-readability-casting,
+            cppcoreguidelines-pro-type-reinterpret-cast,
+            google-explicit-constructor,
+            cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+            cppcoreguidelines-pro-bounds-pointer-arithmetic,
+            cppcoreguidelines-pro-type-vararg,
+            cppcoreguidelines-avoid-magic-numbers,
+            cppcoreguidelines-avoid-c-arrays,
+            cppcoreguidelines-avoid-non-const-global-variables,
+            cppcoreguidelines-non-private-member-variables-in-classes]
+    CheckOptions:
+      readability-identifier-naming.VariableCase: lower_case
+      readability-identifier-naming.GlobalVariableCase: lower_case
+      readability-identifier-naming.ClassMemberCase: lower_case
+      readability-identifier-naming.ClassMemberSuffix: _
+#       readability-identifier-naming.EnumCase: UPPER_CASE
+#       readability-identifier-naming.EnumConstantCase: UPPER_CASE
+#       readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
+#       readability-identifier-naming.ConstantCase: UPPER_CASE
+      readability-identifier-naming.ClassCase: CamelCase
+      readability-identifier-naming.StructCase  : CamelCase
+      readability-identifier-naming.FunctionCase: lower_case
+      readability-identifier-naming.ClassMethodCase: CamelCase
+      readability-identifier-naming.MethodCase: CamelCase

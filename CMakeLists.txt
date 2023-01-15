@@ -14,7 +14,14 @@ project(
   VERSION 2022.0.0
   LANGUAGES C CXX ASM)
 
+# ---------------------------------------------------------------------------------------
+# Default Options
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/build)
+
 # ---------------------------------------------------------------------------------------
 # Tools
 include(${CMAKE_CURRENT_SOURCE_DIR}/utils/CMake/tools.cmake)
@@ -59,12 +66,6 @@ set(LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 # Hardware
 set(HW_DIR ${CMAKE_CURRENT_SOURCE_DIR}/hw)
 include(${HW_DIR}/hw.cmake)
-
-# ---------------------------------------------------------------------------------------
-# Default Options
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 17)
 
 # ---------------------------------------------------------------------------------------
 # Source

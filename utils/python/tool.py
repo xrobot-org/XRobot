@@ -30,7 +30,7 @@ class ProjectTools:
     def config_cmake(self):
         os.system(
             'cd ' + self.project_path +
-            ' && cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=toolchain/toolchain.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_BUILD_TYPE:STRING=Debug -Bbuild -G Ninja'
+            ' && cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=utils/CMake/toolchain.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_BUILD_TYPE:STRING=Debug -Bbuild -G Ninja'
         )
 
     def list_dir(self, path):

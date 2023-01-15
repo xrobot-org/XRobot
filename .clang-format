@@ -1,2 +1,3 @@
-Language:        Cpp
-BasedOnStyle:  Google
+Language: Cpp
+BasedOnStyle: Google
+IncludeBlocks: Regroup

@@ -2,7 +2,7 @@
 {
     "cmake.configureSettings": {
         // Specifies the path to the CMAKE toolchain file.
-        "CMAKE_TOOLCHAIN_FILE": "toolchain/toolchain.cmake",
+        "CMAKE_TOOLCHAIN_FILE": "utils/CMake/toolchain.cmake",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
     },
     "cmake.preferredGenerators": [
@@ -11,7 +11,6 @@
     "files.insertFinalNewline": true,
     "files.trimTrailingWhitespace": true,
     "files.trimFinalNewlines": true,
-    "editor.trimAutoWhitespace": true,
     "files.autoSave": "onFocusChange",
     "files.associations": {
         "*.c": "c",
@@ -19,9 +18,37 @@
         "*.cpp": "cpp",
         "*.hpp": "cpp",
     },
+    "editor.trimAutoWhitespace": true,
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true,
+    "editor.inlineSuggest.enabled": true,
+    "editor.parameterHints.enabled": true,
+    "editor.snippetSuggestions": "bottom",
+    "editor.suggest.showStatusBar": true,
     "cortex-debug.showRTOS": true,
     "C_Cpp.clang_format_fallbackStyle": "Google",
+    "C_Cpp.intelliSenseEngine": "disabled",
     "python.analysis.extraPaths": [
         "./utils/python"
     ],
+    "clangd.checkUpdates": false,
+    "clangd.onConfigChanged": "restart",
+    "clangd.arguments": [
+        "--background-index",
+        "--clang-tidy",
+        "--compile-commands-dir=build",
+        "--completion-style=detailed",
+        "--enable-config",
+        "--fallback-style=Google",
+        "--function-arg-placeholders=false",
+        "--header-insertion-decorators",
+        "--header-insertion=iwyu",
+        "--log=verbose",
+        "--pch-storage=memory",
+        "--pretty",
+        "--ranking-model=heuristics",
+        "-j=8"
+    ],
+    "clangd.path": "clangd",
+    "editor.inlayHints.enabled": "offUnlessPressed",
 }

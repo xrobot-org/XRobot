@@ -22,8 +22,7 @@ target_link_libraries(
   PUBLIC bsp
   PUBLIC system
   PUBLIC robot
-  )
-
+)
 
 target_include_directories(
   ${PROJECT_NAME}.elf
