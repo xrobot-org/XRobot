@@ -4,8 +4,6 @@
 
 #include "comp_mixer.hpp"
 
-#include "comp_utils.hpp"
-
 using namespace Component;
 
 Mixer::Mixer(Mixer::Mode mode) : mode_(mode) {

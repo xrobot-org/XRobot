@@ -4,11 +4,6 @@
 
 #include "dev_referee.hpp"
 
-#include <string.h>
-
-#include "comp_utils.hpp"
-#include "om.hpp"
-
 using namespace Device;
 
 Referee::Referee() {

@@ -11,6 +11,7 @@ class List {
     Data data_;
     om_list_head_t node_;
   } Node;
+
   List() {
     INIT_LIST_HEAD(&(this->head_));
     this->sem_handle_ = xSemaphoreCreateBinary();

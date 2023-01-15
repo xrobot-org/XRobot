@@ -11,8 +11,6 @@
 
 #include "mod_chassis.hpp"
 
-#include <stdlib.h>
-
 #include "bsp_time.h"
 
 #define ROTOR_WZ_MIN 0.6f /* 小陀螺旋转位移下界 */
@@ -258,4 +256,4 @@ void Chassis<Motor, MotorParam>::SetMode(Chassis::Mode mode) {
   this->mode_ = mode;
 }
 
-template class Chassis<Device::RMMotor, Device::RMMotor::Param>;
+template class Module::Chassis<Device::RMMotor, Device::RMMotor::Param>;

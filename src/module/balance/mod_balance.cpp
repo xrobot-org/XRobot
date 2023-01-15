@@ -1,9 +1,6 @@
 #include "mod_balance.hpp"
 
-#include <stdlib.h>
-
 #include "bsp_time.h"
-#include "magic_enum.hpp"
 
 #define ROTOR_WZ_MIN 0.6f /* 小陀螺旋转位移下界 */
 #define ROTOR_WZ_MAX 0.8f /* 小陀螺旋转位移上界 */
@@ -225,4 +222,4 @@ void Balance<Motor, MotorParam>::SetMode(Balance::Mode mode) {
   this->setpoint_.angle.g_center = param_.init_g_center;
 }
 
-template class Balance<Device::RMMotor, Device::RMMotor::Param>;
+template class Module::Balance<Device::RMMotor, Device::RMMotor::Param>;

@@ -4,11 +4,7 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <string.h>
-
-#include "comp_cmd.hpp"
-#include "comp_utils.hpp"
+#include "component.hpp"
 
 #define UI_GRAPHIC_LAYER_CONST (0)
 #define UI_GRAPHIC_LAYER_AUTOAIM (1)
@@ -80,26 +76,6 @@ typedef struct {
   uint16_t width;
   uint16_t height;
 } ui_screen_t;
-
-typedef struct {
-  /* 屏幕分辨率 */
-  ui_screen_t screen = {1920, 1080};
-
-  uint8_t refresh_fsm;
-  struct {
-    struct {
-      ui_ele_t graphic[UI_MAX_GRAPHIC_NUM];
-      ui_string_t string[UI_MAX_STRING_NUM];
-      ui_del_t del[UI_MAX_DEL_NUM];
-    } data;
-
-    struct {
-      uint8_t graphic;
-      uint8_t string;
-      uint8_t del;
-    } size;
-  } stack;
-} ui_t;
 
 /**
  * @brief UI_绘制直线段
@@ -278,11 +254,3 @@ int8_t ui_draw_string(ui_string_t *ele, const char *name, ui_graphic_op_t op,
  * @return int8_t
  */
 int8_t ui_del_layer(ui_del_t *del, ui_del_op_t op, uint8_t layer);
-
-int8_t ui_stash_graphic(ui_t *ui, const ui_ele_t *ele);
-int8_t ui_pop_graphic(ui_t *ui, ui_ele_t *ele);
-int8_t ui_stash_string(ui_t *ui, const ui_string_t *string);
-int8_t ui_pop_string(ui_t *ui, ui_string_t *string);
-int8_t ui_stash_del(ui_t *ui, const ui_del_t *del);
-int8_t ui_pop_del(ui_t *ui, ui_del_t *del);
-void ui_empty_stash(ui_t *ui);

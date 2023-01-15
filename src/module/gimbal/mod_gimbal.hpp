@@ -7,11 +7,13 @@
 #include "comp_actuator.hpp"
 #include "comp_ahrs.hpp"
 #include "comp_cf.hpp"
+#include "comp_cmd.hpp"
 #include "comp_filter.hpp"
 #include "comp_pid.hpp"
 #include "dev_bmi088.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
+#include "module.hpp"
 
 namespace Module {
 class Gimbal {

@@ -1,13 +1,8 @@
 #pragma once
 
-#include <stdbool.h>
-#include <stdint.h>
-
 #include <vector>
 
-#include "comp_type.hpp"
-#include "list.hpp"
-#include "om.hpp"
+#include "component.hpp"
 
 namespace Component {
 class CMD {

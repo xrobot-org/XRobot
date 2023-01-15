@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "comp_utils.hpp"
+#include "component.hpp"
 
 namespace Component {
 /* 一阶数字低通滤波器 */

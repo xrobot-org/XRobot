@@ -2,7 +2,8 @@
 
 #include <stdarg.h>
 #include <stdint.h>
-#include <string.h>
+
+#include <cstring>
 
 #include "bsp_usb.h"
 #include "ms.h"

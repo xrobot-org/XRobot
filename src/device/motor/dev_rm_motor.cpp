@@ -1,9 +1,6 @@
 #include "dev_rm_motor.hpp"
 
-#include <string.h>
-
 #include "bsp_time.h"
-#include "comp_utils.hpp"
 
 /* 电机最大控制输出绝对值 */
 #define GM6020_MAX_ABS_LSB (30000)

@@ -1,11 +1,7 @@
 #pragma once
 
-#include <stdbool.h>
-#include <stdint.h>
-
 #include "comp_ahrs.hpp"
-#include "dev.hpp"
-#include "term.hpp"
+#include "device.hpp"
 
 namespace Device {
 class BMI088 {

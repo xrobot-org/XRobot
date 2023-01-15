@@ -5,16 +5,12 @@
 
 #include "dev_bmi088.hpp"
 
-#include <stdbool.h>
-#include <string.h>
-
 #include "bsp_delay.h"
 #include "bsp_gpio.h"
 #include "bsp_pwm.h"
 #include "bsp_spi.h"
 #include "comp_pid.hpp"
 #include "comp_utils.hpp"
-#include "database.hpp"
 
 #define BMI088_REG_ACCL_CHIP_ID (0x00)
 #define BMI088_REG_ACCL_ERR (0x02)
@@ -246,9 +242,9 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
       ms_enter();
       double x = 0.0f, y = 0.0f, z = 0.0f;
       for (int i = 0; i < 30000; i++) {
-        x += double(bmi088->gyro_.x) / 30000.0l;
-        y += double(bmi088->gyro_.y) / 30000.0l;
-        z += double(bmi088->gyro_.z) / 30000.0l;
+        x += double(bmi088->gyro_.x) / 30000.0f;
+        y += double(bmi088->gyro_.y) / 30000.0f;
+        z += double(bmi088->gyro_.z) / 30000.0f;
         ms_printf("进度：%d/30000", i);
         System::Thread::Sleep(1);
         ms_clear_line();
@@ -268,9 +264,9 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
       ms_enter();
 
       for (int i = 0; i < 30000; i++) {
-        x += double(bmi088->gyro_.x) / 30000.0l;
-        y += double(bmi088->gyro_.y) / 30000.0l;
-        z += double(bmi088->gyro_.z) / 30000.0l;
+        x += double(bmi088->gyro_.x) / 30000.0f;
+        y += double(bmi088->gyro_.y) / 30000.0f;
+        z += double(bmi088->gyro_.z) / 30000.0f;
         ms_printf("进度：%d/30000", i);
         System::Thread::Sleep(1);
         ms_clear_line();

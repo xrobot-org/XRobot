@@ -7,6 +7,7 @@
 #include "comp_pid.hpp"
 #include "comp_triangle.hpp"
 #include "dev_mit_motor.hpp"
+#include "module.hpp"
 
 /*          L1              LEFT   L4  RIGHT  */
 /* M_FRONT ☉---☉ M_BACK       ☉----------☉    */

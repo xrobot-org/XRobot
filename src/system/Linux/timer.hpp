@@ -20,7 +20,7 @@ class Timer {
 
   template <typename FunType, typename ArgType>
   static void Create(FunType fun, ArgType arg, uint32_t cycle) {
-    static_cast<void (*)(ArgType)>(fun);
+    (void)static_cast<void (*)(ArgType)>(fun);
     TypeErasure<void, ArgType>* type = static_cast<TypeErasure<void, ArgType>*>(
         malloc(sizeof(TypeErasure<void, ArgType>)));
     *type = TypeErasure<void, ArgType>(fun, arg);

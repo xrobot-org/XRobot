@@ -13,7 +13,6 @@
 
 #include "bsp_pwm.h"
 #include "bsp_time.h"
-#include "comp_utils.hpp"
 
 #define LAUNCHER_TRIG_SPEED_MAX (8191)
 
@@ -199,14 +198,14 @@ void Launcher::Control() {
   this->setpoint.fric_rpm_[0] = -this->setpoint.fric_rpm_[1];
 
   /* 计算拨弹电机位置的目标值 */
-  if ((this->now_ - this->fire_ctrl_.last_launch) >=
+  if ((bsp_time_get_ms() - this->fire_ctrl_.last_launch) >=
       this->fire_ctrl_.launch_delay) {
     /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗弹丸的弧度变化 */
     circle_add(&(this->setpoint.trig_angle_),
                -M_2PI / this->param_.num_trig_tooth, M_2PI);
     /* 计算已发射弹丸 */
     this->fire_ctrl_.launched++;
-    this->fire_ctrl_.last_launch = this->now_;
+    this->fire_ctrl_.last_launch = bsp_time_get_ms();
   }
 
   switch (this->fire_ctrl_.fire_mode_) {

@@ -1,9 +1,7 @@
 #pragma once
 
-#include "bsp_can.h"
-#include "comp_type.hpp"
-#include "dev.hpp"
 #include "dev_can.hpp"
+#include "device.hpp"
 
 #define DEV_TOF_ID_BASE (0x20c)
 

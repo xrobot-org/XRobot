@@ -1,7 +1,6 @@
 #include "dev_led_rgb.hpp"
 
 #include "bsp_pwm.h"
-#include "comp_utils.hpp"
 
 using namespace Device;
 

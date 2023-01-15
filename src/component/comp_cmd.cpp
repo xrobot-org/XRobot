@@ -1,9 +1,5 @@
 #include "comp_cmd.hpp"
 
-#include <string.h>
-
-#include "memory.hpp"
-
 using namespace Component;
 
 CMD* CMD::self_;

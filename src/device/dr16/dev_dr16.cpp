@@ -5,13 +5,11 @@
 
 #include "dev_dr16.hpp"
 
-#include <string.h>
-
 #include "bsp_uart.h"
-#include "om.h"
 
 #define DR16_CH_VALUE_MIN (364u)
 #define DR16_CH_VALUE_MID (1024u)
+
 #define DR16_CH_VALUE_MAX (1684u)
 
 using namespace Device;

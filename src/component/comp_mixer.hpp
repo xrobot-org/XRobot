@@ -4,10 +4,7 @@
 
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
-
-#include "comp_type.hpp"
+#include "component.hpp"
 
 /** 四轮布局 */
 /* 前 */

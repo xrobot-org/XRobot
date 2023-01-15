@@ -1,7 +1,5 @@
 #include "dev_rm_motor.hpp"
 
-#include "comp_utils.hpp"
-
 #define T_3508 (2.8f)
 #define T_2006 (1.0f)
 #define T_6020 (1.2f)

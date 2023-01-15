@@ -1,11 +1,6 @@
 #include "dev_cap.hpp"
 
-#include <stdbool.h>
-#include <string.h>
-
 #include "bsp_time.h"
-#include "comp_utils.hpp"
-#include "om.h"
 
 #define CAP_RES (100) /* 电容数据分辨率 */
 

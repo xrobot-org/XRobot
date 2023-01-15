@@ -1,12 +1,10 @@
 #pragma once
 
-#include <stdbool.h>
-
 #include "bsp_can.h"
 #include "comp_type.hpp"
 #include "comp_ui.hpp"
-#include "dev.hpp"
 #include "dev_can.hpp"
+#include "device.hpp"
 
 #define DEV_CAP_FB_ID_BASE (0x211)
 #define DEV_CAP_CTRL_ID_BASE (0x210)

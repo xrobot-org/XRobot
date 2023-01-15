@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>
+#include "device.hpp"
 
 namespace Device {
 class Servo {

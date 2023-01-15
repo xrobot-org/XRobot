@@ -1,9 +1,6 @@
 #include "dev_mit_motor.hpp"
 
-#include <string>
-
 #include "bsp_time.h"
-#include "comp_utils.hpp"
 
 #define P_MIN -12.5f
 #define P_MAX 12.5f

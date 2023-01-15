@@ -1,12 +1,10 @@
 #pragma once
 
-#include <stdbool.h>
-#include <stdint.h>
-
 #include "comp_ahrs.hpp"
+#include "comp_cmd.hpp"
 #include "comp_utils.hpp"
-#include "dev.hpp"
 #include "dev_referee.hpp"
+#include "device.hpp"
 #include "protocol.h"
 
 namespace Device {

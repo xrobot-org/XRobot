@@ -3,8 +3,6 @@
 */
 #include "comp_ui.hpp"
 
-#include <stdio.h>
-
 typedef enum {
   UI_ELE_LINE = 0,
   UI_ELE_RECT,
@@ -310,74 +308,4 @@ int8_t ui_del_layer(ui_del_t *del, ui_del_op_t op, uint8_t layer) {
   del->op = op;
   del->layer = layer;
   return 0;
-}
-
-int8_t ui_stash_graphic(ui_t *ui, const ui_ele_t *ele) {
-  if (ui->stack.size.graphic < UI_MAX_GRAPHIC_NUM) {
-    memcpy(ui->stack.data.graphic + ui->stack.size.graphic, ele,
-           sizeof(ui_ele_t));
-    ui->stack.size.graphic++;
-    return 0;
-  } else {
-    return -1;
-  }
-}
-
-int8_t ui_pop_graphic(ui_t *ui, ui_ele_t *ele) {
-  if (ui->stack.size.graphic) {
-    ui->stack.size.graphic--;
-    memcpy(ele, ui->stack.data.graphic + ui->stack.size.graphic,
-           sizeof(ui_ele_t));
-    return 0;
-  } else {
-    return -1;
-  }
-}
-
-int8_t ui_stash_string(ui_t *ui, const ui_string_t *string) {
-  if (ui->stack.size.string < UI_MAX_STRING_NUM) {
-    memcpy(ui->stack.data.string + ui->stack.size.string, string,
-           sizeof(ui_string_t));
-    ui->stack.size.string++;
-    return 0;
-  } else {
-    return -1;
-  }
-}
-
-int8_t ui_pop_string(ui_t *ui, ui_string_t *string) {
-  if (ui->stack.size.string) {
-    ui->stack.size.string--;
-    memcpy(string, ui->stack.data.string + ui->stack.size.string,
-           sizeof(ui_string_t));
-    return 0;
-  } else {
-    return -1;
-  }
-}
-
-int8_t ui_stash_del(ui_t *ui, const ui_del_t *del) {
-  if (ui->stack.size.del < UI_MAX_DEL_NUM) {
-    memcpy(ui->stack.data.del + ui->stack.size.del, del, sizeof(ui_del_t));
-    ui->stack.size.del++;
-    return 0;
-  } else {
-    return -1;
-  }
-}
-
-int8_t ui_pop_del(ui_t *ui, ui_del_t *del) {
-  if (ui->stack.size.del) {
-    ui->stack.size.del--;
-    memcpy(del, ui->stack.data.del + ui->stack.size.del, sizeof(ui_del_t));
-    return 0;
-  } else {
-    return -1;
-  }
-}
-
-void ui_empty_stash(ui_t *ui) {
-  ui->stack.size.graphic = 0;
-  ui->stack.size.string = 0;
-  ui->stack.size.del = 0;
 }

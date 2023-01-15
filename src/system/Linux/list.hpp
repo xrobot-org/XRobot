@@ -1,3 +1,5 @@
+#pragma once
+
 #include "om.h"
 
 namespace System {

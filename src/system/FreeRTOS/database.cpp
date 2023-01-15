@@ -1,6 +1,6 @@
 #include "database.hpp"
 
-#include <string.h>
+#include <cstring>
 
 #include "ms.h"
 #include "term.hpp"

@@ -1,11 +1,9 @@
 #pragma once
 
-#include <stdint.h>
-
 #include "comp_cf.hpp"
 #include "comp_filter.hpp"
 #include "comp_pid.hpp"
-#include "comp_utils.hpp"
+#include "component.hpp"
 
 namespace Component {
 class SpeedActuator {
@@ -51,4 +49,4 @@ class PosActuator {
 
   Component::LowPassFilter2p out_;
 };
-}  // namespace Device
+}  // namespace Component

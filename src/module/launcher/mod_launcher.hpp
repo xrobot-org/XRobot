@@ -12,10 +12,12 @@
 #pragma once
 
 #include "comp_actuator.hpp"
+#include "comp_cmd.hpp"
 #include "comp_filter.hpp"
 #include "comp_pid.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
+#include "module.hpp"
 
 namespace Module {
 class Launcher {
@@ -88,7 +90,7 @@ class Launcher {
   } Param;
 
   /* 热量控制 */
-  typedef struct {
+  struct HeatControl {
     float heat;          /* 现在热量水平 */
     float last_heat;     /* 之前的热量水平 */
     float heat_limit;    /* 热量上限 */
@@ -97,9 +99,9 @@ class Launcher {
     float heat_increase; /* 每发热量增加值 */
 
     uint32_t available_shot; /* 热量范围内还可以发射的数量 */
-  } HeatControl;
+  };
 
-  typedef struct {
+  struct FireControl {
     bool fire = false;
     uint32_t last_launch = 0;     /* 上次发射器时间 单位：ms */
     bool last_fire = false;       /* 上次开火状态 */
@@ -110,7 +112,7 @@ class Launcher {
     float bullet_speed;           /* 弹丸初速度 */
     TrigMode trig_mode_ = Single; /* 发射器模式 */
     FireMode fire_mode_ = Relax;
-  } FireControl;
+  };
 
   typedef struct {
     Device::Referee::Status status;
@@ -137,7 +139,7 @@ class Launcher {
 
   void PraseRef();
 
-  uint32_t last_wakeup_;
+  float last_wakeup_;
 
   float now_;
 

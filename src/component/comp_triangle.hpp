@@ -1,14 +1,14 @@
 #pragma once
 
-#include "comp_utils.hpp"
+#include "component.hpp"
 
 namespace Component {
 class Triangle {
  public:
-  typedef struct {
+  struct Data {
     float angle[3] = {0.0f, 0.0f, 0.0f}; /* 内角 */
     float side[3] = {0.0f, 0.0f, 0.0f};  /* 对边 */
-  } Data;
+  };
 
   bool Slove();
 

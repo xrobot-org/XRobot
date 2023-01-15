@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "comp_utils.hpp"
+#include "component.hpp"
 
 namespace Component {
 class SecOrderFunction {

@@ -1,8 +1,5 @@
 #include "dev_tof.hpp"
 
-#include <stdbool.h>
-#include <string.h>
-
 #define TOF_RES (1000) /* TOF数据分辨率 */
 
 using namespace Device;

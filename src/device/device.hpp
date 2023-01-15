@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include <cstring>
 #include <string>
@@ -14,7 +13,6 @@
 #include "comp_utils.hpp"
 #include "database.hpp"
 #include "list.hpp"
-#include "magic_enum.hpp"
 #include "memory.hpp"
 #include "om.hpp"
 #include "queue.hpp"

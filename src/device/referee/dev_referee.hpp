@@ -6,7 +6,7 @@
 
 #include "comp_ui.hpp"
 #include "comp_utils.hpp"
-#include "dev.hpp"
+#include "device.hpp"
 
 #define GAME_HEAT_INCREASE_42MM (100.0f) /* 每发射一颗42mm弹丸增加100热量 */
 #define GAME_HEAT_INCREASE_17MM (10.0f) /* 每发射一颗17mm弹丸增加10热量 */

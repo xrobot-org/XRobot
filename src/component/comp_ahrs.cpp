@@ -5,16 +5,12 @@
 
 #include "comp_ahrs.hpp"
 
-#include <string.h>
-
 #include "bsp_time.h"
-#include "comp_utils.hpp"
 
 #define BETA_IMU (0.033f)
 #define BETA_AHRS (0.041f)
 
 using namespace Component;
-uint32_t counter = 0;
 AHRS::AHRS()
     : quat_tp_("imu_quat"),
       eulr_tp_("imu_eulr"),
@@ -61,8 +57,6 @@ AHRS::AHRS()
 
     while (1) {
       ahrs->ready_.Take(UINT32_MAX);
-
-      counter++;
 
       if (ahrs->accl_ready_.Take(0)) {
         accl_sub.DumpData();

@@ -4,8 +4,6 @@
 
 #include "comp_filter.hpp"
 
-#include "comp_utils.hpp"
-
 using namespace Component;
 
 LowPassFilter::LowPassFilter(float cut_freq)

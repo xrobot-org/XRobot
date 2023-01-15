@@ -4,8 +4,6 @@
 
 #include "mod_gimbal.hpp"
 
-#include <stdlib.h>
-
 #include "bsp_time.h"
 
 using namespace Module;

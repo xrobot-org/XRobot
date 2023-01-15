@@ -17,7 +17,7 @@ class Thread {
   template <typename FunType, typename ArgType>
   void Create(FunType fun, ArgType arg, const char* name, uint32_t stack_depth,
               Priority priority) {
-    static_cast<void (*)(ArgType)>(fun);
+    (void)static_cast<void (*)(ArgType)>(fun);
 
     TypeErasure<void, ArgType>* type = static_cast<TypeErasure<void, ArgType>*>(
         pvPortMalloc(sizeof(TypeErasure<void, ArgType>)));

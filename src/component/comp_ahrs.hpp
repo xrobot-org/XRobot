@@ -5,12 +5,7 @@
 
 #pragma once
 
-#include "comp_type.hpp"
-#include "comp_utils.hpp"
-#include "om.hpp"
-#include "semaphore.hpp"
-#include "term.hpp"
-#include "thread.hpp"
+#include "component.hpp"
 
 namespace Component {
 class AHRS {

@@ -20,7 +20,7 @@ class Thread {
     (void)stack_depth;
     (void)priority;
 
-    static_cast<void (*)(ArgType)>(fun);
+    (void)static_cast<void (*)(ArgType)>(fun);
     TypeErasure<void, ArgType>* type = static_cast<TypeErasure<void, ArgType>*>(
         malloc(sizeof(TypeErasure<void, ArgType>)));
 

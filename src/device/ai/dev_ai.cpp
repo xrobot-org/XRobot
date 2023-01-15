@@ -1,14 +1,11 @@
 #include "dev_ai.hpp"
 
-#include <string.h>
-
 #include "bsp_delay.h"
 #include "bsp_time.h"
 #include "bsp_uart.h"
 #include "comp_crc16.hpp"
 #include "comp_crc8.hpp"
 #include "comp_utils.hpp"
-#include "om.h"
 
 #define AI_CMD_LIMIT (0.08f)
 #define AI_CTRL_SENSE (1.0f / 90.0f)

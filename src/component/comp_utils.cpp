@@ -4,7 +4,7 @@
 
 #include "comp_utils.hpp"
 
-#include <string.h>
+#include <cstring>
 
 /**
  * @brief 计算平方根倒数

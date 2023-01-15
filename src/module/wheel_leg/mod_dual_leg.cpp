@@ -1,20 +1,19 @@
 #include "mod_dual_leg.hpp"
 
 #include "bsp_time.h"
-#include "magic_enum.hpp"
 
 using namespace Module;
 
 using namespace Component::Type;
 
-WheelLeg::WheelLeg(WheelLeg::Param& param, float sample_freq)
+WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
     : param_(param), ctrl_lock_(true) {
   constexpr auto leg_names = magic_enum::enum_names<Leg>();
   constexpr auto motor_names = magic_enum::enum_names<LegMotor>();
   for (uint8_t i = 0; i < LegNum; i++) {
     for (uint8_t j = 0; j < LegMotorNum; j++) {
       this->leg_motor_[i * LegMotorNum + j] =
-          (Device::MitMotor*)System::Memory::Malloc(sizeof(Device::MitMotor));
+          (Device::MitMotor *)System::Memory::Malloc(sizeof(Device::MitMotor));
       new (this->leg_motor_[i * LegMotorNum + j])
           Device::MitMotor(this->param_.leg_motor[i * LegMotorNum + j],
                            (((std::string) "Leg_") + leg_names[i].data() + "_" +
@@ -22,7 +21,7 @@ WheelLeg::WheelLeg(WheelLeg::Param& param, float sample_freq)
                                .c_str());
 
       this->leg_actuator_[i * LegMotorNum + j] =
-          (Component::PosActuator*)System::Memory::Malloc(
+          (Component::PosActuator *)System::Memory::Malloc(
               sizeof(Component::PosActuator));
       new (this->leg_actuator_[i * LegMotorNum + j]) Component::PosActuator(
           this->param_.leg_actr[i * LegMotorNum + j], sample_freq);
@@ -35,8 +34,8 @@ WheelLeg::WheelLeg(WheelLeg::Param& param, float sample_freq)
     }
   }
 
-  auto event_callback = [](uint32_t event, void* arg) {
-    WheelLeg* leg = static_cast<WheelLeg*>(arg);
+  auto event_callback = [](uint32_t event, void *arg) {
+    WheelLeg *leg = static_cast<WheelLeg *>(arg);
 
     leg->ctrl_lock_.Take(UINT32_MAX);
 
@@ -62,7 +61,7 @@ WheelLeg::WheelLeg(WheelLeg::Param& param, float sample_freq)
 
   Component::CMD::RegisterEvent(event_callback, this, this->param_.event_map);
 
-  auto leg_thread = [](WheelLeg* leg) {
+  auto leg_thread = [](WheelLeg *leg) {
     auto eulr_sub = Message::Subscriber("chassis_eulr", leg->eulr_);
 
     while (1) {

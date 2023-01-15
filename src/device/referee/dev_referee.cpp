@@ -4,14 +4,10 @@
 
 #include "dev_referee.hpp"
 
-#include <string.h>
-
 #include "bsp_delay.h"
 #include "bsp_uart.h"
 #include "comp_crc16.hpp"
 #include "comp_crc8.hpp"
-#include "comp_utils.hpp"
-#include "om.h"
 #include "protocol.h"
 
 #define REF_HEADER_SOF (0xA5)
@@ -589,6 +585,6 @@ void Referee::SetPacketHeader(Referee::Header &header, uint16_t data_length) {
   header.data_length = data_length;
   header.seq = seq++;
   header.crc8 = Component::CRC8::Calculate(
-      (const uint8_t *)&header, sizeof(Referee::Header) - sizeof(uint8_t),
-      CRC8_INIT);
+      reinterpret_cast<const uint8_t *>(&header),
+      sizeof(Referee::Header) - sizeof(uint8_t), CRC8_INIT);
 }
