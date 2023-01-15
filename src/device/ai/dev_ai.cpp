@@ -1,5 +1,7 @@
 #include "dev_ai.hpp"
 
+#include <sys/_stdint.h>
+
 #include "bsp_delay.h"
 #include "bsp_time.h"
 #include "bsp_uart.h"
@@ -66,13 +68,11 @@ AI::AI() : data_ready_(false), cmd_tp_("cmd_ai") {
 }
 
 bool AI::StartRecv() {
-  return bsp_uart_receive(BSP_UART_AI, (uint8_t *)&(rxbuf), sizeof(rxbuf),
-                          false) == HAL_OK;
+  return bsp_uart_receive(BSP_UART_AI, rxbuf, sizeof(rxbuf), false) == HAL_OK;
 }
 
 bool AI::PraseHost() {
-  if (Component::CRC16::Verify((const uint8_t *)&(rxbuf),
-                               sizeof(this->form_host))) {
+  if (Component::CRC16::Verify(rxbuf, sizeof(this->form_host))) {
     this->cmd_.online = true;
     this->last_online_time_ = bsp_time_get();
     memcpy(&(this->form_host), rxbuf, sizeof(this->form_host));
@@ -84,7 +84,7 @@ bool AI::PraseHost() {
 
 bool AI::StartTrans() {
   size_t len = sizeof(this->to_host.mcu_);
-  void *src;
+  void *src = NULL;
   if (this->ref_updated_) {
     len += sizeof(this->to_host.ref_);
     src = &(this->to_host);
@@ -111,7 +111,7 @@ bool AI::PackMCU() {
   memcpy(&(this->to_host.mcu_.package.data.quat), &(this->quat_),
          sizeof(this->quat_));
   this->to_host.mcu_.package.crc16 = Component::CRC16::Calculate(
-      (const uint8_t *)&(this->to_host.mcu_.package),
+      reinterpret_cast<const uint8_t *>(&(this->to_host.mcu_.package)),
       sizeof(this->to_host.mcu_.package) - sizeof(uint16_t), CRC16_INIT);
   return true;
 }
@@ -124,7 +124,7 @@ bool AI::PackRef() {
   this->to_host.ref_.package.data.team = this->ref_.team;
   this->to_host.ref_.package.data.race = this->ref_.game_type;
   this->to_host.ref_.package.crc16 = Component::CRC16::Calculate(
-      (const uint8_t *)&(this->to_host.ref_.package),
+      reinterpret_cast<const uint8_t *>(&(this->to_host.ref_.package)),
       sizeof(this->to_host.ref_.package) - sizeof(uint16_t), CRC16_INIT);
 
   this->ref_updated_ = true;
@@ -133,12 +133,12 @@ bool AI::PackRef() {
 }
 
 bool AI::PackCMD() {
-  this->cmd_.gimbal.mode = Component::CMD::GimbalAbsoluteCtrl;
+  this->cmd_.gimbal.mode = Component::CMD::GIMBAL_ABSOLUTE_CTRL;
 
   memcpy(&(this->cmd_.gimbal.eulr), &(this->form_host.data.gimbal),
          sizeof(this->cmd_.gimbal.eulr));
 
-  this->cmd_.ctrl_source = Component::CMD::ControlSourceAI;
+  this->cmd_.ctrl_source = Component::CMD::CTRL_SOURCE_AI;
 
   this->cmd_tp_.Publish(this->cmd_);
 
@@ -157,22 +157,20 @@ void AI::PraseRef() {
 
   this->ref_.hp = this->raw_ref_.robot_status.remain_hp;
 
-  if (this->raw_ref_.robot_status.robot_id < Referee::REF_BOT_BLU_HERO)
+  if (this->raw_ref_.robot_status.robot_id < Referee::REF_BOT_BLU_HERO) {
     this->ref_.team = AI_TEAM_RED;
-  else
+  } else {
     this->ref_.team = AI_TEAM_BLUE;
-
+  }
   this->ref_.status = this->raw_ref_.status;
 
-  if (this->raw_ref_.rfid.high_ground == 1)
+  if (this->raw_ref_.rfid.high_ground == 1) {
     this->ref_.robot_buff |= AI_RFID_SNIP;
-
-  else if (this->raw_ref_.rfid.energy_mech == 1)
+  } else if (this->raw_ref_.rfid.energy_mech == 1) {
     this->ref_.robot_buff |= AI_RFID_BUFF;
-
-  else
+  } else {
     this->ref_.robot_buff = 0;
-
+  }
   switch (this->raw_ref_.game_status.game_type) {
     case Referee::REF_GAME_TYPE_RMUC:
       this->ref_.game_type = AI_RACE_RMUC;

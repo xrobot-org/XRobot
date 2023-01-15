@@ -7,19 +7,19 @@
 namespace Component {
 class CMD {
  public:
-  typedef enum { GimbalAbsoluteCtrl, GimbalRelativeCtrl } GimbalCommandMode;
+  typedef enum { GIMBAL_ABSOLUTE_CTRL, GIMBAL_RELATIVE_CTRL } GimbalCommandMode;
 
   typedef enum {
-    ControlSourceRC,
-    ControlSourceAI,
-    ControlSourceTerm,
-    ControlSourceNum
+    CTRL_SOURCE_RC,
+    CTRL_SOURCE_AI,
+    CTRL_SOURCE_TERM,
+    CTRL_SOURCE_NUM
   } ControlSource;
 
   typedef enum {
-    OperatorControl,
-    AutoControl,
-    TerminalControl,
+    CMD_OP_CTRL,
+    CMD_AUTO_CTRL,
+    CMD_TERM_CTRL,
   } Mode;
 
   typedef Type::Vector3 ChassisCMD;
@@ -36,18 +36,18 @@ class CMD {
     ControlSource ctrl_source;
   } Data;
 
-  enum { EventLostCtrl = 0x13212509 };
+  enum { CMD_EVENT_LOST_CTRL = 0x13212509 };
 
   typedef struct {
     uint32_t source;
     uint32_t target;
   } EventMapItem;
 
-  CMD(Mode mode = OperatorControl);
+  CMD(Mode mode = CMD_OP_CTRL);
 
   static constexpr auto CreateMapItem(uint32_t source, uint32_t target) {
-    const EventMapItem item = {source, target};
-    return item;
+    const EventMapItem ITEM = {source, target};
+    return ITEM;
   }
 
   static void RegisterEvent(
@@ -62,7 +62,7 @@ class CMD {
 
   Message::Event event_;
 
-  Data data_[ControlSourceNum];
+  Data data_[CTRL_SOURCE_NUM];
 
   Message::Topic<Data> data_in_tp_;
   Message::Topic<ChassisCMD> chassis_data_tp_;

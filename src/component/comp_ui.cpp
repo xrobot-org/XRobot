@@ -34,7 +34,7 @@ int8_t ui_draw_line(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
                     uint16_t x_start, uint16_t y_start, uint16_t x_end,
                     uint16_t y_end) {
   ASSERT(ele);
-  snprintf((char *)ele->name, 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->name), 2, "%-2s", name);
   ele->layer = layer;
   ele->op = op;
   ele->type_ele = UI_ELE_LINE;
@@ -67,7 +67,7 @@ int8_t ui_draw_rectangle(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
                          uint16_t x_start, uint16_t y_start, uint16_t x_end,
                          uint16_t y_end) {
   ASSERT(ele);
-  snprintf((char *)ele->name, 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->name), 2, "%-2s", name);
   ele->op = op;
   ele->type_ele = UI_ELE_RECT;
   ele->layer = layer;
@@ -98,7 +98,7 @@ int8_t ui_draw_cycle(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
                      uint8_t layer, ui_color_t color, uint16_t width,
                      uint16_t x_center, uint16_t y_center, uint16_t radius) {
   ASSERT(ele);
-  snprintf((char *)ele->name, 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->name), 2, "%-2s", name);
   ele->op = op;
   ele->layer = layer;
   ele->type_ele = UI_ELE_CYCLE;
@@ -130,7 +130,7 @@ int8_t ui_draw_oval(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
                     uint16_t x_center, uint16_t y_center, uint16_t x_semiaxis,
                     uint16_t y_semiaxis) {
   ASSERT(ele);
-  snprintf((char *)ele->name, 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->name), 2, "%-2s", name);
   ele->op = op;
   ele->type_ele = UI_ELE_OVAL;
   ele->layer = layer;
@@ -166,7 +166,7 @@ int8_t ui_draw_arc(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
                    uint16_t y_center, uint16_t x_semiaxis,
                    uint16_t y_semiaxis) {
   ASSERT(ele);
-  snprintf((char *)ele->name, 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->name), 2, "%-2s", name);
   ele->op = op;
   ele->type_ele = UI_ELE_ARC;
   ele->layer = layer;
@@ -205,7 +205,7 @@ int8_t ui_draw_float(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
                      uint16_t y_start, uint16_t float_high,
                      uint16_t float_middle, uint16_t float_low) {
   ASSERT(ele);
-  snprintf((char *)ele->name, 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->name), 2, "%-2s", name);
   ele->op = op;
   ele->type_ele = UI_ELE_FLOAT;
   ele->layer = layer;
@@ -244,7 +244,7 @@ int8_t ui_draw_int(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
                    uint16_t int32_t_high, uint16_t int32_t_middle,
                    uint16_t int32_t_low) {
   ASSERT(ele);
-  snprintf((char *)ele->name, 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->name), 2, "%-2s", name);
   ele->op = op;
   ele->type_ele = UI_ELE_INT;
   ele->layer = layer;
@@ -280,7 +280,7 @@ int8_t ui_draw_string(ui_string_t *ele, const char *name, ui_graphic_op_t op,
                       uint16_t length, uint16_t width, uint16_t x_start,
                       uint16_t y_start, const char *str) {
   ASSERT(ele);
-  snprintf((char *)ele->graphic.name, 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->graphic.name), 2, "%-2s", name);
   ele->graphic.op = op;
   ele->graphic.type_ele = UI_ELE_STR;
   ele->graphic.layer = layer;
@@ -291,7 +291,8 @@ int8_t ui_draw_string(ui_string_t *ele, const char *name, ui_graphic_op_t op,
   ele->graphic.x_start = x_start;
   ele->graphic.y_start = y_start;
   memset(ele->str, 0x00, sizeof(ele->str));
-  snprintf((char *)ele->str, strlen(str) + 1, "%-2s", str);
+  (void)snprintf(reinterpret_cast<char *>(ele->str), strlen(str) + 1, "%-2s",
+                 str);
   return 0;
 }
 

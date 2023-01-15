@@ -27,18 +27,18 @@ class Chassis {
  public:
   /* 底盘运行模式 */
   typedef enum {
-    Relax, /* 放松模式，电机不输出。一般情况底盘初始化之后的模式 */
-    Break, /* 刹车模式，电机闭环控制保持静止。用于机器人停止状态 */
-    FollowGimbal, /* 通过闭环控制使车头方向跟随云台 */
-    Rotor, /* 小陀螺模式，通过闭环控制使底盘不停旋转 */
-    Indenpendent, /* 独立模式。底盘运行不受云台影响 */
+    RELAX, /* 放松模式，电机不输出。一般情况底盘初始化之后的模式 */
+    BREAK, /* 刹车模式，电机闭环控制保持静止。用于机器人停止状态 */
+    FOLLOW_GIMBAL, /* 通过闭环控制使车头方向跟随云台 */
+    ROTOR, /* 小陀螺模式，通过闭环控制使底盘不停旋转 */
+    INDENPENDENT, /* 独立模式。底盘运行不受云台影响 */
   } Mode;
 
   typedef enum {
-    ChangeModeRelax,
-    ChangeModeFollow,
-    ChangeModeRotor,
-    ChangeModeIndenpendent,
+    SET_MODE_RELAX,
+    SET_MODE_FOLLOW,
+    SET_MODE_ROTOR,
+    SET_MODE_INDENPENDENT,
   } ChassisEvent;
 
   /* 底盘参数的结构体，包含所有初始Component化用的参数，通常是const，存好几组 */
@@ -47,7 +47,7 @@ class Chassis {
 
     Component::PID::Param follow_pid_param; /* 跟随云台PID的参数 */
 
-    const std::vector<Component::CMD::EventMapItem> event_map;
+    const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
 
     Component::SpeedActuator::Param actuator_param[4];
 
@@ -73,7 +73,7 @@ class Chassis {
 
   void PraseRef();
 
-  float CalcWz(const float lo, const float hi);
+  float CalcWz(const float LO, const float HI);
 
   Param param_;
 
@@ -85,7 +85,7 @@ class Chassis {
 
   RefForChassis ref_;
 
-  Mode mode_ = Relax;
+  Mode mode_ = RELAX;
 
   Component::SpeedActuator *actuator_[4];
 

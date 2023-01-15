@@ -7,7 +7,7 @@ typedef struct {
   GPIO_TypeDef *gpio;
 } bsp_gpio_map_t;
 
-static const bsp_gpio_map_t bsp_gpio_map[BSP_GPIO_NUM] = {
+static const bsp_gpio_map_t BSP_GPIO_MAP[BSP_GPIO_NUM] = {
     {ACCL_CS_Pin, ACCL_CS_GPIO_Port},   {GYRO_CS_Pin, GYRO_CS_GPIO_Port},
     {ACCL_INT_Pin, ACCL_INT_GPIO_Port}, {GYRO_INT_Pin, GYRO_INT_GPIO_Port},
     {LED_Pin, LED_GPIO_Port},
@@ -31,7 +31,7 @@ int8_t bsp_gpio_register_callback(bsp_gpio_t gpio, void (*callback)(void *),
                                   void *callback_arg) {
   assert_param(callback);
 
-  uint16_t pin = bsp_gpio_map[gpio].pin;
+  uint16_t pin = BSP_GPIO_MAP[gpio].pin;
 
   for (uint8_t i = 0; i < 16; i++) {
     if (pin & (1 << i)) {
@@ -44,7 +44,7 @@ int8_t bsp_gpio_register_callback(bsp_gpio_t gpio, void (*callback)(void *),
 }
 
 int8_t bsp_gpio_enable_irq(bsp_gpio_t gpio) {
-  uint16_t pin = bsp_gpio_map[gpio].pin;
+  uint16_t pin = BSP_GPIO_MAP[gpio].pin;
 
   switch (pin) {
     case ACCL_INT_Pin:
@@ -67,7 +67,7 @@ int8_t bsp_gpio_enable_irq(bsp_gpio_t gpio) {
 }
 
 int8_t bsp_gpio_disable_irq(bsp_gpio_t gpio) {
-  uint16_t pin = bsp_gpio_map[gpio].pin;
+  uint16_t pin = BSP_GPIO_MAP[gpio].pin;
 
   switch (pin) {
     case ACCL_INT_Pin:
@@ -90,10 +90,10 @@ int8_t bsp_gpio_disable_irq(bsp_gpio_t gpio) {
 }
 
 inline int8_t bsp_gpio_write_pin(bsp_gpio_t gpio, bool value) {
-  HAL_GPIO_WritePin(bsp_gpio_map[gpio].gpio, bsp_gpio_map[gpio].pin, value);
+  HAL_GPIO_WritePin(BSP_GPIO_MAP[gpio].gpio, BSP_GPIO_MAP[gpio].pin, value);
   return BSP_OK;
 }
 
 inline bool bsp_gpio_read_pin(bsp_gpio_t gpio) {
-  return HAL_GPIO_ReadPin(bsp_gpio_map[gpio].gpio, bsp_gpio_map[gpio].pin);
+  return HAL_GPIO_ReadPin(BSP_GPIO_MAP[gpio].gpio, BSP_GPIO_MAP[gpio].pin);
 }

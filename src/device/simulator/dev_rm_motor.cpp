@@ -41,8 +41,12 @@ bool RMMotor::Update() {
 
   raw_pos *= 19.0;
 
-  while (raw_pos < 0.0f) raw_pos += M_2PI;
-  while (raw_pos > M_2PI) raw_pos -= M_2PI;
+  while (raw_pos < 0.0f) {
+    raw_pos += M_2PI;
+  }
+  while (raw_pos > M_2PI) {
+    raw_pos -= M_2PI;
+  }
 
   this->feedback_.rotor_abs_angle = raw_pos;
 

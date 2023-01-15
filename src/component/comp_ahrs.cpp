@@ -88,8 +88,13 @@ int AHRS::ShowCMD(AHRS *ahrs, int argc, char *argv[]) {
       int time = std::stoi(argv[2]);
       int delay = std::stoi(argv[3]);
 
-      if (delay > 1000) delay = 1000;
-      if (delay < 2) delay = 2;
+      if (delay > 1000) {
+        delay = 1000;
+      }
+
+      if (delay < 2) {
+        delay = 2;
+      }
 
       while (time > delay) {
         ms_printf("pitch:%f roll:%f yaw:%f", ahrs->eulr_.pit, ahrs->eulr_.rol,
@@ -120,6 +125,8 @@ void AHRS::Update() {
   float gx = this->gyro_.x;
   float gy = this->gyro_.y;
   float gz = this->gyro_.z;
+
+  // TODO:
 
   float recip_norm;
   float s0, s1, s2, s3;

@@ -113,19 +113,21 @@ void Referee::Prase() {
   size_t data_length = bsp_uart_get_count(BSP_UART_REF);
 
   const uint8_t *index = rxbuf; /* const 保护原始rxbuf不被修改 */
-  const uint8_t *const rxbuf_end = rxbuf + data_length;
+  const uint8_t *const RXBUF_END = rxbuf + data_length;
 
-  while (index < rxbuf_end) {
+  while (index < RXBUF_END) {
     /* 1.处理帧头 */
     /* 1.1遍历所有找到SOF */
-    while ((*index != REF_HEADER_SOF) && (index < rxbuf_end)) {
+    while ((*index != REF_HEADER_SOF) && (index < RXBUF_END)) {
       index++;
     }
     /* 1.2将剩余数据当做帧头部 */
-    Referee::Header *header = (Referee::Header *)index;
+    const Referee::Header *header =
+        reinterpret_cast<const Referee::Header *>(index);
 
     /* 1.3验证完整性 */
-    if (!Component::CRC8::Verify((uint8_t *)header, sizeof(*header))) {
+    if (!Component::CRC8::Verify(reinterpret_cast<const uint8_t *>(header),
+                                 sizeof(*header))) {
       index++;
       continue;
     }
@@ -133,13 +135,14 @@ void Referee::Prase() {
 
     /* 2.处理CMD ID */
     /* 2.1将剩余数据当做CMD ID处理 */
-    Referee::CMDID *cmd_id = (Referee::CMDID *)index;
+    const Referee::CMDID *cmd_id =
+        reinterpret_cast<const Referee::CMDID *>(index);
     index += sizeof(*cmd_id);
 
     /* 3.处理数据段 */
     const void *source = index;
-    void *destination;
-    size_t size;
+    void *destination = NULL;
+    size_t size = 0;
 
     switch ((int)(*cmd_id)) {
       case REF_CMD_ID_GAME_STATUS:
@@ -235,9 +238,11 @@ void Referee::Prase() {
     index += sizeof(Referee::Tail);
 
     /* 验证无误则接受数据 */
-    if (Component::CRC16::Verify((uint8_t *)header,
-                                 (uint8_t)(index - (uint8_t *)header)))
+    if (Component::CRC16::Verify(
+            reinterpret_cast<const uint8_t *>((header)),
+            (uint8_t)(index - reinterpret_cast<const uint8_t *>((header))))) {
       memcpy(destination, source, size);
+    }
   }
 #if REF_VIRTUAL
 #if REF_FORCE_ONLINE
@@ -568,9 +573,9 @@ bool Referee::StartTrans() {
 }
 
 void Referee::SetUIHeader(Referee::InterStudentHeader &header,
-                          const Referee::CMDID cmd_id,
+                          const Referee::CMDID CMD_ID,
                           Referee::RobotID robot_id) {
-  header.cmd_id = cmd_id;
+  header.cmd_id = CMD_ID;
   header.id_sender = robot_id;
   if (robot_id > 100) {
     header.id_receiver = robot_id - 101 + 0x0165;

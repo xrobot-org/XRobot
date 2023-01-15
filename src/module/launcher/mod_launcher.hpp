@@ -24,27 +24,27 @@ class Launcher {
  public:
   /* 发射器运行模式 */
   typedef enum {
-    Relax,  /* 放松模式，电机不输出 */
-    Safe,   /* 保险模式，电机闭环控制保持静止 */
-    Loaded, /* 上膛模式，摩擦轮开启。随时准备开火 */
+    RELAX,  /* 放松模式，电机不输出 */
+    SAFE,   /* 保险模式，电机闭环控制保持静止 */
+    LOADED, /* 上膛模式，摩擦轮开启。随时准备开火 */
   } FireMode;
 
   /* 开火模式 */
   typedef enum {
-    Single,    /* 单发开火模式  */
-    Burst,     /* N爆发开火模式 */
-    Continued, /* 持续开火模式 */
+    SINGLE,    /* 单发开火模式  */
+    BURST,     /* N爆发开火模式 */
+    CONTINUED, /* 持续开火模式 */
   } TrigMode;
 
-  typedef enum { Open, Close } CoverMode;
+  typedef enum { OPEN, CLOSE } CoverMode;
 
   typedef enum {
-    ChangeFireModeRelax,
-    ChangeFireModeSafe,
-    ChangeFireModeLoaded,
-    ChangeTrigModeSingle,
-    ChangeTrigModeBurst,
-    StartFire,
+    CHANGE_FIRE_MODE_RELAX,
+    CHANGE_FIRE_MODE_SAFE,
+    CHANGE_FIRE_MODE_LOADED,
+    CHANGE_FIRE_MODE_SINGLE,
+    CHANGE_FIRE_MODE_BURST,
+    LAUNCHER_START_FIRE,
   } LauncherEvent;
 
   enum {
@@ -86,7 +86,7 @@ class Launcher {
     Device::RMMotor::Param trig_motor[LAUNCHER_ACTR_TRIG_NUM];
     Device::RMMotor::Param fric_motor[LAUNCHER_ACTR_FRIC_NUM];
 
-    const std::vector<Component::CMD::EventMapItem> event_map;
+    const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
   } Param;
 
   /* 热量控制 */
@@ -110,8 +110,8 @@ class Launcher {
     uint32_t to_launch;           /* 计划发射的弹丸 */
     uint32_t launch_delay;        /* 弹丸击发延迟 */
     float bullet_speed;           /* 弹丸初速度 */
-    TrigMode trig_mode_ = Single; /* 发射器模式 */
-    FireMode fire_mode_ = Relax;
+    TrigMode trig_mode_ = SINGLE; /* 发射器模式 */
+    FireMode fire_mode_ = RELAX;
   };
 
   typedef struct {
@@ -149,7 +149,7 @@ class Launcher {
 
   Param param_;
 
-  CoverMode cover_mode_ = Close; /* 弹舱盖模式 */
+  CoverMode cover_mode_ = CLOSE; /* 弹舱盖模式 */
 
   /* PID计算的目标值 */
   struct {

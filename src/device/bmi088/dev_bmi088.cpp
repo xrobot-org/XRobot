@@ -73,7 +73,7 @@ static Component::PID::Param imu_temp_ctrl_pid_param = {
     .range = 0.0f,
 };
 
-static const char bmi088_cali_key_name[] = "bmi088_cali";
+static const char BMI088_CALI_KEY_NAME[] = "bmi088_cali";
 
 using namespace Device;
 
@@ -113,10 +113,11 @@ uint8_t BMI088::ReadSingle(BMI088::DeviceType type, uint8_t reg) {
   bsp_spi_transmit(BSP_SPI_IMU, tx_rx_buf, 1u, true);
   bsp_spi_receive(BSP_SPI_IMU, tx_rx_buf, 2u, true);
   this->Unselect(type);
-  if (type == BMI088::BMI_ACCL)
+  if (type == BMI088::BMI_ACCL) {
     return tx_rx_buf[1];
-  else
+  } else {
     return tx_rx_buf[0];
+  }
 }
 
 void BMI088::Read(BMI088::DeviceType type, uint8_t reg, uint8_t *data,
@@ -152,13 +153,13 @@ BMI088::BMI088(BMI088::Rotation &rot)
   };
 
   auto accl_int_callback = [](void *arg) {
-    BMI088 *bmi088 = (BMI088 *)arg;
+    BMI088 *bmi088 = static_cast<BMI088 *>(arg);
     bmi088->accl_new_.GiveFromISR();
     bmi088->new_.GiveFromISR();
   };
 
   auto gyro_int_callback = [](void *arg) {
-    BMI088 *bmi088 = (BMI088 *)arg;
+    BMI088 *bmi088 = static_cast<BMI088 *>(arg);
     bmi088->gyro_new_.GiveFromISR();
     bmi088->new_.GiveFromISR();
   };
@@ -172,12 +173,12 @@ BMI088::BMI088(BMI088::Rotation &rot)
   bsp_spi_register_callback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB, recv_cplt_callback,
                             this);
 
-  if (System::Database::Find(bmi088_cali_key_name) != sizeof(Calibration)) {
+  if (System::Database::Find(BMI088_CALI_KEY_NAME) != sizeof(Calibration)) {
     memset(&this->cali, 0, sizeof(this->cali));
-    System::Database::Set(bmi088_cali_key_name, &this->cali,
+    System::Database::Set(BMI088_CALI_KEY_NAME, &this->cali,
                           sizeof(this->cali));
   } else {
-    System::Database::Get(bmi088_cali_key_name, &this->cali,
+    System::Database::Get(BMI088_CALI_KEY_NAME, &this->cali,
                           sizeof(this->cali));
   }
 
@@ -275,7 +276,7 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
       ms_printf("校准误差: x:%f y:%f z:%f", x, y, z);
       ms_enter();
 
-      System::Database::Set(bmi088_cali_key_name, &bmi088->cali,
+      System::Database::Set(BMI088_CALI_KEY_NAME, &bmi088->cali,
                             sizeof(bmi088->cali));
 
       ms_printf("保存校准数据");
@@ -289,8 +290,12 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
       int time = std::stoi(argv[2]);
       int delay = std::stoi(argv[3]);
 
-      if (delay > 1000) delay = 1000;
-      if (delay < 2) delay = 2;
+      if (delay > 1000) {
+        delay = 1000;
+      }
+      if (delay < 2) {
+        delay = 2;
+      }
 
       while (time > delay) {
         ms_printf("accl x:%+5f y:%+5f z:%+5f gyro x:%+5f y:%+5f z:%+5f",
@@ -326,11 +331,13 @@ bool BMI088::Init() {
   ReadSingle(BMI_ACCL, BMI088_REG_ACCL_CHIP_ID);
   ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID);
 
-  if (ReadSingle(BMI_ACCL, BMI088_REG_ACCL_CHIP_ID) != BMI088_CHIP_ID_ACCL)
+  if (ReadSingle(BMI_ACCL, BMI088_REG_ACCL_CHIP_ID) != BMI088_CHIP_ID_ACCL) {
     return false;
+  }
 
-  if (ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID) != BMI088_CHIP_ID_GYRO)
+  if (ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID) != BMI088_CHIP_ID_GYRO) {
     return false;
+  }
 
   /* Accl init. */
   /* Filter setting: Normal. */
@@ -376,7 +383,7 @@ bool BMI088::Init() {
 }
 
 void BMI088::PraseGyro() {
-  int16_t raw_x, raw_y, raw_z;
+  int16_t raw_x = 0, raw_y = 0, raw_z = 0;
   memcpy(&raw_x, dma_buf + BMI088_ACCL_RX_BUFF_LEN, sizeof(raw_x));
   memcpy(&raw_y, dma_buf + BMI088_ACCL_RX_BUFF_LEN + 2, sizeof(raw_y));
   memcpy(&raw_z, dma_buf + BMI088_ACCL_RX_BUFF_LEN + 4, sizeof(raw_z));
@@ -405,7 +412,7 @@ void BMI088::PraseGyro() {
 }
 
 void BMI088::PraseAccel() {
-  int16_t raw_x, raw_y, raw_z;
+  int16_t raw_x = 0, raw_y = 0, raw_z = 0;
   memcpy(&raw_x, dma_buf + 1, sizeof(raw_x));
   memcpy(&raw_y, dma_buf + 3, sizeof(raw_y));
   memcpy(&raw_z, dma_buf + 5, sizeof(raw_z));
@@ -419,7 +426,9 @@ void BMI088::PraseAccel() {
 
   int16_t raw_temp = (int16_t)((dma_buf[17] << 3) | (dma_buf[18] >> 5));
 
-  if (raw_temp > 1023) raw_temp -= 2048;
+  if (raw_temp > 1023) {
+    raw_temp -= 2048;
+  }
 
   this->temp_ = (float)raw_temp * 0.125f + 23.0f;
 

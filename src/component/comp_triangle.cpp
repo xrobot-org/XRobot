@@ -26,23 +26,32 @@ bool Triangle::Slove() {
   uint8_t known_angle_num = 0, known_side_num = 0;
 
   for (uint8_t i = 0; i < 3; i++) {
-    if (this->data_.angle[i] != 0) known_angle_num++;
-    if (this->data_.side[i] != 0) known_side_num++;
+    if (this->data_.angle[i] != 0) {
+      known_angle_num++;
+    }
+    if (this->data_.side[i] != 0) {
+      known_side_num++;
+    }
   }
 
-  if (known_angle_num + known_side_num < 3 || known_side_num == 0) return false;
+  if (known_angle_num + known_side_num < 3 || known_side_num == 0) {
+    return false;
+  }
 
-  if (known_angle_num + known_side_num == 6) return true;
+  if (known_angle_num + known_side_num == 6) {
+    return true;
+  }
 
   switch (known_angle_num) {
     case 0:
-      for (uint8_t i = 0; i < 3; i++)
+      for (uint8_t i = 0; i < 3; i++) {
         this->data_.angle[i] =
             InvCosThrm(this->data_.side[(i + 1) % 3],
                        this->data_.side[(i + 2) % 3], this->data_.side[i]);
+      }
       return true;
     case 1:
-      for (uint8_t i = 0; i < 3; i++)
+      for (uint8_t i = 0; i < 3; i++) {
         if (this->data_.angle[i] > 0) {
           uint8_t index[2] = {(uint8_t)((i + 1) % 3), (uint8_t)((i + 2) % 3)};
 
@@ -59,14 +68,16 @@ bool Triangle::Slove() {
                   InvSinThrm(this->data_.angle[i], this->data_.side[i],
                              this->data_.side[index[t]]);
             } else if (this->data_.angle[index[t]] > 0 &&
-                       this->data_.side[index[t]] == 0.0f)
+                       this->data_.side[index[t]] == 0.0f) {
               this->data_.side[index[t]] =
                   SinThrm(this->data_.angle[i], this->data_.side[i],
                           this->data_.angle[index[t]]);
+            }
           }
 
           return this->Slove();
         }
+      }
       return false;
     case 2:
       for (uint8_t i = 0; i < 3; i++) {
@@ -86,7 +97,9 @@ bool Triangle::Slove() {
         }
       }
 
-      if (index > 2) return false;
+      if (index > 2) {
+        return false;
+      }
 
       if (this->data_.side[(index + 1) % 3] == 0.0f) {
         this->data_.side[(index + 1) % 3] =

@@ -18,10 +18,10 @@ class BaseMotor {
   } Feedback;
 
   BaseMotor(const char *name)
-      : cmd_(this, BaseMotor::ShowCMD, this->name_, System::Term::DevDir()) {
+      : handle_(wb_robot_get_device(name)),
+        cmd_(this, BaseMotor::ShowCMD, this->name_, System::Term::DevDir()) {
     strncpy(this->name_, name, sizeof(this->name_));
     memset(&(this->feedback_), 0, sizeof(this->feedback_));
-    this->handle_ = wb_robot_get_device(name);
     this->sensor_ =
         wb_robot_get_device((std::string(name) + "_Sensor").c_str());
     wb_motor_set_position(this->handle_, INFINITY);
@@ -50,8 +50,12 @@ class BaseMotor {
         int time = std::stoi(argv[2]);
         int delay = std::stoi(argv[3]);
 
-        if (delay > 1000) delay = 1000;
-        if (delay < 2) delay = 2;
+        if (delay > 1000) {
+          delay = 1000;
+        }
+        if (delay < 2) {
+          delay = 2;
+        }
         while (time > delay) {
           ms_printf("电机 [%s] 反馈数据:", motor->name_);
           ms_enter();

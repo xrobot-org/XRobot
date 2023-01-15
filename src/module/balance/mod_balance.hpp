@@ -14,21 +14,21 @@ class Balance {
  public:
   /* 底盘运行模式 */
   typedef enum {
-    Relax, /* 放松模式，电机不输出。一般情况底盘初始化之后的模式 */
-    FollowGimbal, /* 通过闭环控制使车头方向跟随云台 */
-    Rotor, /* 小陀螺模式，通过闭环控制使底盘不停旋转 */
+    RELAX, /* 放松模式，电机不输出。一般情况底盘初始化之后的模式 */
+    FOLLOW_GIMBAL, /* 通过闭环控制使车头方向跟随云台 */
+    ROTOR, /* 小陀螺模式，通过闭环控制使底盘不停旋转 */
   } Mode;
 
   typedef enum {
-    ChangeModeRelax,
-    ChangeModeFollow,
-    ChangeModeRotor,
+    SET_MODE_RELAX,
+    SET_MODE_FOLLOW,
+    SET_MODE_ROTOR,
   } ChassisEvent;
 
   typedef enum {
-    Left,
-    Right,
-    WheelNum,
+    LEFT_WHEEL,
+    RIGHT_WHEEL,
+    WHEEL_NUM,
   } Wheel;
 
   typedef struct {
@@ -37,9 +37,9 @@ class Balance {
 
   typedef struct {
     struct {
-      float speed;           /* 速度环 */
-      float balance;         /* 直立环 */
-      float angle[WheelNum]; /* 角度环 */
+      float speed;            /* 速度环 */
+      float balance;          /* 直立环 */
+      float angle[WHEEL_NUM]; /* 角度环 */
     } wheel_speed;
 
     struct {
@@ -56,9 +56,9 @@ class Balance {
 
     Component::PID::Param comp_pid_param;
 
-    const std::vector<Component::CMD::EventMapItem> event_map;
+    const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
 
-    Component::SpeedActuator::Param wheel_param[WheelNum];
+    Component::SpeedActuator::Param wheel_param[WHEEL_NUM];
 
     Component::PID::Param eulr_param;
 
@@ -68,7 +68,7 @@ class Balance {
 
     float center_filter_cutoff_freq;
 
-    MotorParam motor_param[WheelNum];
+    MotorParam motor_param[WHEEL_NUM];
   } Param;
 
   Balance(Param &param, float control_freq);
@@ -89,9 +89,9 @@ class Balance {
 
   float now_;
 
-  Mode mode_ = Relax;
+  Mode mode_ = RELAX;
 
-  Component::SpeedActuator *wheel_actr_[WheelNum];
+  Component::SpeedActuator *wheel_actr_[WHEEL_NUM];
 
   Component::PID eulr_pid_;
 
@@ -99,7 +99,7 @@ class Balance {
 
   Component::PID speed_pid_;
 
-  Device::BaseMotor *motor_[WheelNum];
+  Device::BaseMotor *motor_[WHEEL_NUM];
 
   Component::Type::MoveVector move_vec_; /* 底盘实际的运动向量 */
 
@@ -110,7 +110,7 @@ class Balance {
   float vy_dir_mult_; /* scan模式移动方向乘数 */
 
   /* PID计算的输出值 */
-  float motor_out[WheelNum];
+  float motor_out[WHEEL_NUM];
 
   Feedback feeback_;
 

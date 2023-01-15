@@ -96,8 +96,8 @@ class Line {
       : start_(start), end_(end) {}
 
   static const Position2 CrossPoint(const Line& l1, const Line& l2) {
-    float x;
-    float y;
+    float x = 0.0f;
+    float y = 0.0f;
 
     float k = (l1.start_.y_ - l1.end_.y_) / (l1.start_.x_ - l1.end_.x_);
     float b = l1.start_.y_ - k * l1.start_.x_;

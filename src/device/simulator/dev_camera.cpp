@@ -4,7 +4,6 @@
 
 using namespace Device;
 
-Camera::Camera() {
-  this->handle_ = wb_robot_get_device("camera");
+Camera::Camera() : handle_(wb_robot_get_device("camera")) {
   wb_camera_enable(this->handle_, 10);
 }

@@ -21,13 +21,13 @@ using namespace Module;
 Launcher::Launcher(Param& param, float control_freq)
     : param_(param), ctrl_lock_(true) {
   for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
-    this->trig_actuator_[i] = (Component::PosActuator*)System::Memory::Malloc(
-        sizeof(Component::PosActuator));
+    this->trig_actuator_[i] = static_cast<Component::PosActuator*>(
+        System::Memory::Malloc(sizeof(Component::PosActuator)));
     new (this->trig_actuator_[i])
         Component::PosActuator(param.trig_actr[i], control_freq);
 
-    this->trig_motor_[i] =
-        (Device::RMMotor*)System::Memory::Malloc(sizeof(Device::RMMotor));
+    this->trig_motor_[i] = static_cast<Device::RMMotor*>(
+        System::Memory::Malloc(sizeof(Device::RMMotor)));
 
     new (this->trig_motor_[i])
         Device::RMMotor(this->param_.trig_motor[i],
@@ -35,13 +35,13 @@ Launcher::Launcher(Param& param, float control_freq)
   }
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
-    this->fric_actuator_[i] = (Component::SpeedActuator*)System::Memory::Malloc(
-        sizeof(Component::SpeedActuator));
+    this->fric_actuator_[i] = static_cast<Component::SpeedActuator*>(
+        System::Memory::Malloc(sizeof(Component::SpeedActuator)));
     new (this->fric_actuator_[i])
         Component::SpeedActuator(param.fric_actr[i], control_freq);
 
-    this->fric_motor_[i] =
-        (Device::RMMotor*)System::Memory::Malloc(sizeof(Device::RMMotor));
+    this->fric_motor_[i] = static_cast<Device::RMMotor*>(
+        System::Memory::Malloc(sizeof(Device::RMMotor)));
 
     new (this->fric_motor_[i])
         Device::RMMotor(this->param_.fric_motor[i],
@@ -54,22 +54,23 @@ Launcher::Launcher(Param& param, float control_freq)
     launcher->ctrl_lock_.Take(UINT32_MAX);
 
     switch (event) {
-      case ChangeFireModeRelax:
-      case ChangeFireModeSafe:
+      case CHANGE_FIRE_MODE_RELAX:
+      case CHANGE_FIRE_MODE_SAFE:
+      case CHANGE_FIRE_MODE_LOADED:
         launcher->fire_ctrl_.fire = false;
         launcher->SetFireMode((FireMode)event);
         break;
-      case ChangeFireModeLoaded:
         launcher->fire_ctrl_.fire = false;
         launcher->SetFireMode((FireMode)event);
         break;
-      case ChangeTrigModeSingle:
-      case ChangeTrigModeBurst:
+      case CHANGE_FIRE_MODE_SINGLE:
+      case CHANGE_FIRE_MODE_BURST:
         launcher->SetTrigMode((TrigMode)event);
         break;
-      case StartFire:
-        if (launcher->fire_ctrl_.fire_mode_ == Loaded)
+      case LAUNCHER_START_FIRE:
+        if (launcher->fire_ctrl_.fire_mode_ == LOADED) {
           launcher->fire_ctrl_.fire = true;
+        }
         break;
       default:
         break;
@@ -78,7 +79,7 @@ Launcher::Launcher(Param& param, float control_freq)
     launcher->ctrl_lock_.Give();
   };
 
-  Component::CMD::RegisterEvent(event_callback, this, this->param_.event_map);
+  Component::CMD::RegisterEvent(event_callback, this, this->param_.EVENT_MAP);
 
   bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
   bsp_pwm_set_comp(BSP_PWM_LAUNCHER_SERVO, this->param_.cover_close_duty);
@@ -108,7 +109,7 @@ Launcher::Launcher(Param& param, float control_freq)
 }
 
 void Launcher::UpdateFeedback() {
-  const float last_trig_motor_angle = this->trig_motor_[0]->GetAngle();
+  const float LAST_TRIG_MOTOR_ANGLE = this->trig_motor_[0]->GetAngle();
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
     this->fric_motor_[i]->Update();
@@ -118,10 +119,10 @@ void Launcher::UpdateFeedback() {
     this->trig_motor_[i]->Update();
   }
 
-  const float delta_motor_angle = circle_error(this->trig_motor_[0]->GetAngle(),
-                                               last_trig_motor_angle, M_2PI);
+  const float DELTA_MOTOR_ANGLE = circle_error(this->trig_motor_[0]->GetAngle(),
+                                               LAST_TRIG_MOTOR_ANGLE, M_2PI);
   circle_add(&(this->trig_angle_),
-             delta_motor_angle / this->param_.trig_gear_ratio, M_2PI);
+             DELTA_MOTOR_ANGLE / this->param_.trig_gear_ratio, M_2PI);
 }
 
 void Launcher::Control() {
@@ -132,12 +133,12 @@ void Launcher::Control() {
   this->HeatLimit();
 
   /* 根据开火模式计算发射行为 */
-  uint32_t max_burst;
+  uint32_t max_burst = 0;
   switch (this->fire_ctrl_.trig_mode_) {
-    case Single: /* 点射开火模式 */
+    case SINGLE: /* 点射开火模式 */
       max_burst = 1;
       break;
-    case Burst: /* 爆发开火模式 */
+    case BURST: /* 爆发开火模式 */
       max_burst = 5;
       break;
     default:
@@ -146,8 +147,8 @@ void Launcher::Control() {
   }
 
   switch (this->fire_ctrl_.trig_mode_) {
-    case Single: /* 点射开火模式 */
-    case Burst:  /* 爆发开火模式 */
+    case SINGLE: /* 点射开火模式 */
+    case BURST:  /* 爆发开火模式 */
 
       /* 计算是否是第一次按下开火键 */
       this->fire_ctrl_.first_pressed_fire =
@@ -171,7 +172,7 @@ void Launcher::Control() {
       }
       break;
 
-    case Continued: { /* 持续开火模式 */
+    case CONTINUED: { /* 持续开火模式 */
       float launch_freq = this->LimitLauncherFreq();
       this->fire_ctrl_.launch_delay =
           (launch_freq == 0.0f) ? UINT32_MAX : (uint32_t)(1000.f / launch_freq);
@@ -183,11 +184,11 @@ void Launcher::Control() {
 
   /* 根据模式选择是否使用计算出来的值 */
   switch (this->fire_ctrl_.fire_mode_) {
-    case Relax:
-    case Safe:
+    case RELAX:
+    case SAFE:
       this->fire_ctrl_.bullet_speed = 0.0f;
       this->fire_ctrl_.launch_delay = UINT32_MAX;
-    case Loaded:
+    case LOADED:
       break;
   }
 
@@ -209,7 +210,7 @@ void Launcher::Control() {
   }
 
   switch (this->fire_ctrl_.fire_mode_) {
-    case Relax:
+    case RELAX:
       for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
         this->trig_motor_[i]->Relax();
       }
@@ -219,8 +220,8 @@ void Launcher::Control() {
       bsp_pwm_stop(BSP_PWM_LAUNCHER_SERVO);
       break;
 
-    case Safe:
-    case Loaded:
+    case SAFE:
+    case LOADED:
       for (int i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
         /* 控制拨弹电机 */
         float trig_out = this->trig_actuator_[i]->Calculate(
@@ -241,7 +242,7 @@ void Launcher::Control() {
       }
 
       /* 根据弹仓盖开关状态更新弹舱盖打开时舵机PWM占空比 */
-      if (this->cover_mode_ == Open) {
+      if (this->cover_mode_ == OPEN) {
         bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
         bsp_pwm_set_comp(BSP_PWM_LAUNCHER_SERVO, this->param_.cover_open_duty);
       } else {
@@ -253,19 +254,25 @@ void Launcher::Control() {
 }
 
 void Launcher::SetTrigMode(TrigMode mode) {
-  if (mode == this->fire_ctrl_.trig_mode_) return;
+  if (mode == this->fire_ctrl_.trig_mode_) {
+    return;
+  }
 
   this->fire_ctrl_.trig_mode_ = mode;
 }
 
 void Launcher::SetFireMode(FireMode mode) {
-  if (mode == this->fire_ctrl_.fire_mode_) return;
+  if (mode == this->fire_ctrl_.fire_mode_) {
+    return;
+  }
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
     this->fric_actuator_[i]->Reset();
   }
 
-  if (mode == Loaded) this->fire_ctrl_.to_launch = 0;
+  if (mode == LOADED) {
+    this->fire_ctrl_.to_launch = 0;
+  }
 
   this->fire_ctrl_.fire_mode_ = mode;
 }
@@ -322,20 +329,21 @@ float Launcher::LimitLauncherFreq() {
   float heat_percent = this->heat_ctrl_.heat / this->heat_ctrl_.heat_limit;
   float stable_freq =
       this->heat_ctrl_.cooling_rate / this->heat_ctrl_.heat_increase;
-  if (this->param_.model == LAUNCHER_MODEL_42MM)
+  if (this->param_.model == LAUNCHER_MODEL_42MM) {
     return stable_freq;
-  else {
-    if (heat_percent > 0.9f)
+  } else {
+    if (heat_percent > 0.9f) {
       return 0.5f;
-    else if (heat_percent > 0.8f)
+    } else if (heat_percent > 0.8f) {
       return 1.0f;
-    else if (heat_percent > 0.6f)
+    } else if (heat_percent > 0.6f) {
       return 2.0f * stable_freq;
-    else if (heat_percent > 0.2f)
+    } else if (heat_percent > 0.2f) {
       return 3.0f * stable_freq;
-    else if (heat_percent > 0.1f)
+    } else if (heat_percent > 0.1f) {
       return 4.0f * stable_freq;
-    else
+    } else {
       return 5.0f;
+    }
   }
 }

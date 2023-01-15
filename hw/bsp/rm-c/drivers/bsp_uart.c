@@ -15,18 +15,19 @@ extern DMA_HandleTypeDef hdma_usart6_tx;
 static bsp_callback_t callback_list[BSP_UART_NUM][BSP_UART_CB_NUM];
 
 static bsp_uart_t uart_get(UART_HandleTypeDef *huart) {
-  if (huart->Instance == USART3)
+  if (huart->Instance == USART3) {
     return BSP_UART_DR16;
-  else if (huart->Instance == USART1)
+  } else if (huart->Instance == USART1) {
     return BSP_UART_REF;
-  else if (huart->Instance == USART6)
+  } else if (huart->Instance == USART6) {
     return BSP_UART_AI;
-  /*
-  else if (huart->Instance == USARTX)
-                  return BSP_UART_XXX;
-  */
-  else
+  } /*
+   else if (huart->Instance == USARTX)
+                   return BSP_UART_XXX;
+   */
+  else {
     return BSP_UART_ERR;
+  }
 }
 
 static void bsp_uart_callback(bsp_uart_callback_t cb_type,

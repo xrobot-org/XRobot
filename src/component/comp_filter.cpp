@@ -20,12 +20,10 @@ float LowPassFilter::Apply(float sample, float dt) {
 
 void LowPassFilter::Reset(float sample) { this->last_out_ = sample; }
 
-LowPassFilter2p::LowPassFilter2p(float sample_freq, float cutoff_freq) {
-  this->cutoff_freq_ = cutoff_freq;
-
-  this->delay_element_1_ = 0.0f;
-  this->delay_element_2_ = 0.0f;
-
+LowPassFilter2p::LowPassFilter2p(float sample_freq, float cutoff_freq)
+    : cutoff_freq_(cutoff_freq),
+      delay_element_1_(0.0f),
+      delay_element_2_(0.0f) {
   if (this->cutoff_freq_ <= 0.0f) {
     /* no filtering */
     this->b0_ = 1.0f;
@@ -37,16 +35,16 @@ LowPassFilter2p::LowPassFilter2p(float sample_freq, float cutoff_freq) {
 
     return;
   }
-  const float fr = sample_freq / this->cutoff_freq_;
-  const float ohm = tanf(M_PI / fr);
-  const float c = 1.0f + 2.0f * cosf(M_PI / 4.0f) * ohm + ohm * ohm;
+  const float FR = sample_freq / this->cutoff_freq_;
+  const float OHM = tanf(M_PI / FR);
+  const float C = 1.0f + 2.0f * cosf(M_PI / 4.0f) * OHM + OHM * OHM;
 
-  this->b0_ = ohm * ohm / c;
+  this->b0_ = OHM * OHM / C;
   this->b1_ = 2.0f * this->b0_;
   this->b2_ = this->b0_;
 
-  this->a1_ = 2.0f * (ohm * ohm - 1.0f) / c;
-  this->a2_ = (1.0f - 2.0f * cosf(M_PI / 4.0f) * ohm + ohm * ohm) / c;
+  this->a1_ = 2.0f * (OHM * OHM - 1.0f) / C;
+  this->a2_ = (1.0f - 2.0f * cosf(M_PI / 4.0f) * OHM + OHM * OHM) / C;
 }
 
 float LowPassFilter2p::Apply(float sample) {
@@ -59,7 +57,7 @@ float LowPassFilter2p::Apply(float sample) {
     delay_element_0 = sample;
   }
 
-  const float output = delay_element_0 * this->b0_ +
+  const float OUTPUT = delay_element_0 * this->b0_ +
                        this->delay_element_1_ * this->b1_ +
                        this->delay_element_2_ * this->b2_;
 
@@ -67,15 +65,15 @@ float LowPassFilter2p::Apply(float sample) {
   this->delay_element_1_ = delay_element_0;
 
   /* return the value. Should be no need to check limits */
-  return output;
+  return OUTPUT;
 }
 
 float LowPassFilter2p::Reset(float sample) {
-  const float dval = sample / (this->b0_ + this->b1_ + this->b2_);
+  const float DVAL = sample / (this->b0_ + this->b1_ + this->b2_);
 
-  if (isfinite(dval)) {
-    this->delay_element_1_ = dval;
-    this->delay_element_2_ = dval;
+  if (isfinite(DVAL)) {
+    this->delay_element_1_ = DVAL;
+    this->delay_element_2_ = DVAL;
 
   } else {
     this->delay_element_1_ = sample;

@@ -14,7 +14,7 @@ using namespace Module;
 template <typename Motor, typename MotorParam>
 Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
     : param_(param),
-      mode_(Balance::Relax),
+      mode_(Balance::RELAX),
       eulr_pid_(param.eulr_param, control_freq),
       gyro_pid_(param.gyro_param, control_freq),
       speed_pid_(param.speed_param, control_freq),
@@ -26,18 +26,18 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
 
   this->setpoint_.angle.g_center = param.init_g_center;
 
-  constexpr auto whell_names = magic_enum::enum_names<Wheel>();
+  constexpr auto WHELL_NAMES = magic_enum::enum_names<Wheel>();
 
-  for (uint8_t i = 0; i < WheelNum; i++) {
-    this->wheel_actr_[i] = (Component::SpeedActuator*)System::Memory::Malloc(
-        sizeof(Component::SpeedActuator));
+  for (uint8_t i = 0; i < WHEEL_NUM; i++) {
+    this->wheel_actr_[i] = static_cast<Component::SpeedActuator*>(
+        System::Memory::Malloc(sizeof(Component::SpeedActuator)));
     new (this->wheel_actr_[i])
         Component::SpeedActuator(param.wheel_param[i], control_freq);
 
     this->motor_[i] = (Motor*)System::Memory::Malloc(sizeof(Motor));
     new (this->motor_[i])
         Motor(param.motor_param[i],
-              (std::string("Chassis_Wheel_") + whell_names[i].data()).c_str());
+              (std::string("Chassis_Wheel_") + WHELL_NAMES[i].data()).c_str());
   }
 
   auto event_callback = [](uint32_t event, void* arg) {
@@ -46,14 +46,14 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
     chassis->ctrl_lock_.Take(UINT32_MAX);
 
     switch (event) {
-      case ChangeModeRelax:
-        chassis->SetMode(Relax);
+      case SET_MODE_RELAX:
+        chassis->SetMode(RELAX);
         break;
-      case ChangeModeFollow:
-        chassis->SetMode(FollowGimbal);
+      case SET_MODE_FOLLOW:
+        chassis->SetMode(FOLLOW_GIMBAL);
         break;
-      case ChangeModeRotor:
-        chassis->SetMode(Rotor);
+      case SET_MODE_ROTOR:
+        chassis->SetMode(ROTOR);
         break;
       default:
         break;
@@ -62,7 +62,7 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
     chassis->ctrl_lock_.Give();
   };
 
-  Component::CMD::RegisterEvent(event_callback, this, this->param_.event_map);
+  Component::CMD::RegisterEvent(event_callback, this, this->param_.EVENT_MAP);
 
   auto chassis_thread = [](Balance* chassis) {
     auto cmd_sub = Message::Subscriber("cmd_chassis", chassis->cmd_);
@@ -93,13 +93,13 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
 template <typename Motor, typename MotorParam>
 void Balance<Motor, MotorParam>::UpdateFeedback() {
   /* 将CAN中的反馈数据写入到feedback中 */
-  for (size_t i = 0; i < WheelNum; i++) {
+  for (size_t i = 0; i < WHEEL_NUM; i++) {
     this->motor_[i]->Update();
   }
 
-  this->feeback_.forward_speed =
-      (this->motor_[Right]->GetSpeed() - this->motor_[Left]->GetSpeed()) /
-      2.0f / MOTOR_MAX_ROTATIONAL_SPEED;
+  this->feeback_.forward_speed = (this->motor_[RIGHT_WHEEL]->GetSpeed() -
+                                  this->motor_[LEFT_WHEEL]->GetSpeed()) /
+                                 2.0f / MOTOR_MAX_ROTATIONAL_SPEED;
 }
 
 template <typename Motor, typename MotorParam>
@@ -112,12 +112,12 @@ void Balance<Motor, MotorParam>::Control() {
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
   /* 计算vx、vy */
   switch (this->mode_) {
-    case Balance::Relax:
+    case Balance::RELAX:
       this->move_vec_.vx = 0.0f;
       this->move_vec_.vy = 0.0f;
       break;
-    case Balance::Rotor:
-    case Balance::FollowGimbal:
+    case Balance::ROTOR:
+    case Balance::FOLLOW_GIMBAL:
       this->move_vec_.vx = this->cmd_.x;
       this->move_vec_.vy = this->cmd_.y;
       break;
@@ -128,9 +128,9 @@ void Balance<Motor, MotorParam>::Control() {
 
   /* 计算wz */
   switch (this->mode_) {
-    case Balance::Relax:
-    case Balance::FollowGimbal:
-    case Balance::Rotor:
+    case Balance::RELAX:
+    case Balance::FOLLOW_GIMBAL:
+    case Balance::ROTOR:
       this->move_vec_.wz = 0;
       break;
 
@@ -141,8 +141,8 @@ void Balance<Motor, MotorParam>::Control() {
 
   /* 根据底盘模式计算输出值 */
   switch (this->mode_) {
-    case Balance::FollowGimbal:
-    case Balance::Rotor: {
+    case Balance::FOLLOW_GIMBAL:
+    case Balance::ROTOR: {
       /* 速度环 */
       this->setpoint_.wheel_speed.speed = -this->speed_pid_.Calculate(
           this->move_vec_.vy, this->feeback_.forward_speed, this->dt_);
@@ -167,18 +167,18 @@ void Balance<Motor, MotorParam>::Control() {
           this->gyro_pid_.Calculate(0.0f, this->gyro_.x, this->dt_);
 
       /* 角度环 */
-      this->setpoint_.wheel_speed.angle[Left] = -this->move_vec_.vx;
-      this->setpoint_.wheel_speed.angle[Right] = this->move_vec_.vx;
+      this->setpoint_.wheel_speed.angle[LEFT_WHEEL] = -this->move_vec_.vx;
+      this->setpoint_.wheel_speed.angle[RIGHT_WHEEL] = this->move_vec_.vx;
 
       /* 轮子速度控制 */
-      for (uint8_t i = 0; i < WheelNum; i++) {
+      for (uint8_t i = 0; i < WHEEL_NUM; i++) {
         float speed_sp = this->setpoint_.wheel_speed.speed +
                          this->setpoint_.wheel_speed.balance +
                          this->setpoint_.wheel_speed.angle[i];
 
         clampf(&speed_sp, -1.0f, 1.0f);
 
-        if (i == Left) {
+        if (i == LEFT_WHEEL) {
           speed_sp = -speed_sp;
         }
 
@@ -188,14 +188,14 @@ void Balance<Motor, MotorParam>::Control() {
       }
 
       /* 电机输出 */
-      for (uint8_t i = 0; i < WheelNum; i++) {
+      for (uint8_t i = 0; i < WHEEL_NUM; i++) {
         this->motor_[i]->Control(this->motor_out[i]);
       }
       break;
     }
 
-    case Balance::Relax: /* 放松模式,不输出 */
-      for (size_t i = 0; i < WheelNum; i++) {
+    case Balance::RELAX: /* 放松模式,不输出 */
+      for (size_t i = 0; i < WHEEL_NUM; i++) {
         this->motor_[i]->Relax();
       }
       break;
@@ -207,10 +207,12 @@ void Balance<Motor, MotorParam>::Control() {
 
 template <typename Motor, typename MotorParam>
 void Balance<Motor, MotorParam>::SetMode(Balance::Mode mode) {
-  if (mode == this->mode_) return; /* 模式未改变直接返回 */
+  if (mode == this->mode_) {
+    return; /* 模式未改变直接返回 */
+  }
 
   /* 切换模式后重置PID和滤波器 */
-  for (size_t i = 0; i < WheelNum; i++) {
+  for (size_t i = 0; i < WHEEL_NUM; i++) {
     this->wheel_actr_[i]->Reset();
   }
 

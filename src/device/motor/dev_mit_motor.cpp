@@ -15,17 +15,22 @@
 
 using namespace Device;
 
-static uint8_t RELAX_CMD[8] = {0X7F, 0XFF, 0X7F, 0XF0, 0X00, 0X00, 0X07, 0XFF};
-static uint8_t ENABLE_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFC};
-static uint8_t RESET_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFF, 0XFD};
+static const uint8_t RELAX_CMD[8] = {0X7F, 0XFF, 0X7F, 0XF0,
+                                     0X00, 0X00, 0X07, 0XFF};
+static const uint8_t ENABLE_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF,
+                                      0XFF, 0XFF, 0XFF, 0XFC};
+static const uint8_t RESET_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF,
+                                     0XFF, 0XFF, 0XFF, 0XFD};
 
 static bool initd[BSP_CAN_NUM] = {false};
-Message::Topic<Can::Pack> *MitMotor::mit_tp[BSP_CAN_NUM];
+Message::Topic<Can::Pack> *MitMotor::mit_tp_[BSP_CAN_NUM];
 
 MitMotor::MitMotor(const Param &param, const char *name)
     : BaseMotor(name), param_(param) {
   auto rx_callback = [](Can::Pack &rx, MitMotor *motor) {
-    if (rx.data[0] == motor->param_.id) motor->recv_.OverwriteFromISR(rx);
+    if (rx.data[0] == motor->param_.id) {
+      motor->recv_.OverwriteFromISR(rx);
+    }
 
     motor->last_online_time_ = bsp_time_get();
 
@@ -33,14 +38,15 @@ MitMotor::MitMotor(const Param &param, const char *name)
   };
 
   if (!initd[this->param_.can]) {
-    MitMotor::mit_tp[this->param_.can] =
+    MitMotor::mit_tp_[this->param_.can] =
         static_cast<Message::Topic<Can::Pack> *>(
             System::Memory::Malloc(sizeof(Message::Topic<Can::Pack>)));
-    *MitMotor::mit_tp[this->param_.can] = Message::Topic<Can::Pack>(
+    *MitMotor::mit_tp_[this->param_.can] = Message::Topic<Can::Pack>(
         (std::string("mit_motor_can") + std::to_string(this->param_.can))
             .c_str());
 
-    Can::Subscribe(*MitMotor::mit_tp[this->param_.can], this->param_.can, 0, 1);
+    Can::Subscribe(*MitMotor::mit_tp_[this->param_.can], this->param_.can, 0,
+                   1);
 
     initd[this->param_.can] = true;
   }
@@ -49,7 +55,7 @@ MitMotor::MitMotor(const Param &param, const char *name)
 
   motor_tp.RegisterCallback(rx_callback, this);
 
-  motor_tp.Link(*this->mit_tp[this->param_.can]);
+  motor_tp.Link(*this->mit_tp_[this->param_.can]);
 
   Can::Pack tx_buff;
 
@@ -71,21 +77,19 @@ bool MitMotor::Update() {
 }
 
 void MitMotor::Decode(Can::Pack &rx) {
-  if (this->param_.id != rx.data[0]) return;
+  if (this->param_.id != rx.data[0]) {
+    return;
+  }
 
-  uint16_t raw_position, raw_speed, raw_current;
+  uint16_t raw_position = rx.data[1] << 8 | rx.data[2];
 
-  raw_position = rx.data[1] << 8 | rx.data[2];
+  uint16_t raw_speed = (rx.data[3] << 4) | (rx.data[4] >> 4);
 
-  raw_speed = (rx.data[3] << 4) | (rx.data[4] >> 4);
+  uint16_t raw_current = (rx.data[4] & 0x0f) << 8 | rx.data[5];
 
-  raw_current = (rx.data[4] & 0x0f) << 8 | rx.data[5];
-
-  float position, speed, current;
-
-  position = uint_to_float(raw_position, P_MIN, P_MAX, 16);
-  speed = uint_to_float(raw_speed, V_MIN, V_MAX, 12);
-  current = uint_to_float(raw_current, -T_MAX, T_MAX, 12);
+  float position = uint_to_float(raw_position, P_MIN, P_MAX, 16);
+  float speed = uint_to_float(raw_speed, V_MIN, V_MAX, 12);
+  float current = uint_to_float(raw_current, -T_MAX, T_MAX, 12);
 
   this->feedback_.rotational_speed = speed;
   this->feedback_.rotor_abs_angle = position;

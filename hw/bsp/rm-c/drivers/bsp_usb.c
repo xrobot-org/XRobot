@@ -12,12 +12,13 @@ int8_t bsp_usb_transmit(const uint8_t *buffer, uint32_t len) {
 }
 
 char bsp_usb_read_char(void) {
-  char buff;
+  char buff = 0;
   uint8_t len = tud_cdc_read(&buff, 1);
-  if (len == 1)
+  if (len == 1) {
     return buff;
-  else
+  } else {
     return 0;
+  }
 }
 
 uint32_t bsp_usb_read(uint8_t *buffer, uint32_t len) {

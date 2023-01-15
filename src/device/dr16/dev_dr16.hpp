@@ -9,47 +9,47 @@ class DR16 {
  public:
   /* 控制方式选择 */
   typedef enum {
-    ControlSourceSW,
-    ControlSourceMouse,
+    DR16_CTRL_SOURCE_SW,
+    DR16_CTRL_SOURCE_MOUSE,
   } ControlSource;
 
   /* 拨杆开关 */
   typedef enum {
-    SwitchPosLeftTop = 0,
-    SwitchPosLeftBot,
-    SwitchPosLeftMid,
-    SwitchPosRightTop,
-    SwitchPosRightBot,
-    SwitchPosRightMid,
-    SwitchPosNum
+    DR16_SW_L_POS_TOP = 0,
+    DR16_SW_L_POS_BOT,
+    DR16_SW_L_POS_MID,
+    DR16_SW_R_POS_TOP,
+    DR16_SW_R_POS_BOT,
+    DR16_SW_R_POS_MID,
+    DR16_SW_POS_NUM
   } SwitchPos;
 
   /* 键盘按键 */
   typedef enum {
-    KeyW = SwitchPosNum,
-    KeyS,
-    KeyA,
-    KeyD,
-    KeySHIFT,
-    KeyCTRL,
-    KeyQ,
-    KeyE,
-    KeyR,
-    KeyF,
-    KeyG,
-    KeyZ,
-    KeyX,
-    KeyC,
-    KeyV,
-    KeyB,
-    KeyLClick,
-    KeyRClick,
-    KeyNum,
+    KEY_W = DR16_SW_POS_NUM,
+    KEY_S,
+    KEY_A,
+    KEY_D,
+    KEY_SHIFT,
+    KEY_CTRL,
+    KEY_Q,
+    KEY_E,
+    KEY_R,
+    KEY_F,
+    KEY_G,
+    KEY_Z,
+    KEY_X,
+    KEY_C,
+    KEY_V,
+    KEY_B,
+    KEY_L_CLICK,
+    KEY_R_CLICK,
+    KEY_NUM,
   } Key;
 
-  constexpr uint32_t ShiftWith(Key key) { return key + 1 * KeyNum; }
-  constexpr uint32_t CtrlWith(Key key) { return key + 2 * KeyNum; }
-  constexpr uint32_t ShiftCtrlWith(Key key) { return key + 3 * KeyNum; }
+  constexpr uint32_t ShiftWith(Key key) { return key + 1 * KEY_NUM; }
+  constexpr uint32_t CtrlWith(Key key) { return key + 2 * KEY_NUM; }
+  constexpr uint32_t ShiftCtrlWith(Key key) { return key + 3 * KEY_NUM; }
 
   typedef struct __attribute__((packed)) {
     uint16_t ch_r_x : 11;
@@ -101,7 +101,7 @@ class DR16 {
 
   Data last_data_;
 
-  ControlSource ctrl_source_ = ControlSourceSW;
+  ControlSource ctrl_source_ = DR16_CTRL_SOURCE_SW;
 
   System::Semaphore new_;
 

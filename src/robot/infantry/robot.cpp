@@ -1,5 +1,6 @@
 #include "robot.hpp"
 
+#include "mod_chassis.hpp"
 #include "system.hpp"
 
 /* clang-format off */
@@ -18,22 +19,22 @@ Robot::Infantry::Param param = {
       .range = M_2PI,
     },
 
-    .event_map = {
+    .EVENT_MAP = {
       Component::CMD::CreateMapItem(
-        Component::CMD::EventLostCtrl,
-        Module::RMChassis::ChangeModeRelax
+        Component::CMD::CMD_EVENT_LOST_CTRL,
+        Module::RMChassis::SET_MODE_RELAX
       ),
       Component::CMD::CreateMapItem(
-        Device::DR16::SwitchPosLeftTop,
-        Module::RMChassis::ChangeModeRelax
+        Device::DR16::DR16_SW_L_POS_TOP,
+        Module::RMChassis::SET_MODE_RELAX
       ),
       Component::CMD::CreateMapItem(
-        Device::DR16::SwitchPosLeftMid,
-        Module::RMChassis::ChangeModeFollow
+        Device::DR16::DR16_SW_L_POS_MID,
+        Module::RMChassis::SET_MODE_FOLLOW
       ),
       Component::CMD::CreateMapItem(
-        Device::DR16::SwitchPosLeftBot,
-        Module::RMChassis::ChangeModeRotor
+        Device::DR16::DR16_SW_L_POS_BOT,
+        Module::RMChassis::SET_MODE_ROTOR
       )
     },
 
@@ -236,22 +237,22 @@ Robot::Infantry::Param param = {
       .pitch_min = 3.0f,
     },
 
-    .event_map = {
+    .EVENT_MAP = {
       Component::CMD::CreateMapItem(
-        Component::CMD::EventLostCtrl,
-        Module::Gimbal::SetModeRelax
+        Component::CMD::CMD_EVENT_LOST_CTRL,
+        Module::Gimbal::SET_MODE_RELAX
       ),
       Component::CMD::CreateMapItem(
-        Device::DR16::SwitchPosRightTop,
-        Module::Gimbal::SetModeAbsolute
+        Device::DR16::DR16_SW_R_POS_TOP,
+        Module::Gimbal::SET_MODE_ABSOLUTE
       ),
       Component::CMD::CreateMapItem(
-        Device::DR16::SwitchPosRightMid,
-        Module::Gimbal::SetModeAbsolute
+        Device::DR16::DR16_SW_R_POS_MID,
+        Module::Gimbal::SET_MODE_ABSOLUTE
       ),
       Component::CMD::CreateMapItem(
-        Device::DR16::SwitchPosRightBot,
-        Module::Gimbal::SetModeAbsolute
+        Device::DR16::DR16_SW_R_POS_BOT,
+        Module::Gimbal::SET_MODE_ABSOLUTE
       )
     },
 
@@ -356,30 +357,30 @@ Robot::Infantry::Param param = {
       },
     },
 
-    .event_map = {
+    .EVENT_MAP = {
       Component::CMD::CreateMapItem(
-        Component::CMD::EventLostCtrl,
-        Module::Launcher::ChangeFireModeRelax
+        Component::CMD::CMD_EVENT_LOST_CTRL,
+        Module::Launcher::CHANGE_FIRE_MODE_RELAX
       ),
       Component::CMD::CreateMapItem(
-        Device::DR16::SwitchPosRightTop,
-        Module::Launcher::ChangeFireModeSafe
+        Device::DR16::DR16_SW_R_POS_TOP,
+        Module::Launcher::CHANGE_FIRE_MODE_SAFE
       ),
       Component::CMD::CreateMapItem(
-        Device::DR16::SwitchPosRightMid,
-        Module::Launcher::ChangeFireModeLoaded
+        Device::DR16::DR16_SW_R_POS_MID,
+        Module::Launcher::CHANGE_FIRE_MODE_LOADED
       ),
       Component::CMD::CreateMapItem(
-        Device::DR16::SwitchPosRightBot,
-        Module::Launcher::ChangeFireModeLoaded
+        Device::DR16::DR16_SW_R_POS_BOT,
+        Module::Launcher::CHANGE_FIRE_MODE_LOADED
       ),
       Component::CMD::CreateMapItem(
-        Device::DR16::SwitchPosRightBot,
-        Module::Launcher::StartFire
+        Device::DR16::DR16_SW_R_POS_BOT,
+        Module::Launcher::LAUNCHER_START_FIRE
       ),
       Component::CMD::CreateMapItem(
-        Device::DR16::KeyLClick,
-        Module::Launcher::StartFire
+        Device::DR16::KEY_L_CLICK,
+        Module::Launcher::LAUNCHER_START_FIRE
       )
     },
   }, /* launcher */

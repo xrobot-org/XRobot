@@ -51,30 +51,35 @@ DR16::DR16()
 }
 
 bool DR16::StartRecv() {
-  return bsp_uart_receive(BSP_UART_DR16, (uint8_t *)&(this->data_),
+  return bsp_uart_receive(BSP_UART_DR16,
+                          reinterpret_cast<uint8_t *>(&this->data_),
                           sizeof(this->data_), false) == BSP_OK;
 }
 
 bool DR16::DataCorrupted() {
   if ((this->data_.ch_r_x < DR16_CH_VALUE_MIN) ||
-      (this->data_.ch_r_x > DR16_CH_VALUE_MAX))
+      (this->data_.ch_r_x > DR16_CH_VALUE_MAX)) {
     return true;
-
+  }
   if ((this->data_.ch_r_y < DR16_CH_VALUE_MIN) ||
-      (this->data_.ch_r_y > DR16_CH_VALUE_MAX))
+      (this->data_.ch_r_y > DR16_CH_VALUE_MAX)) {
     return true;
-
+  }
   if ((this->data_.ch_l_x < DR16_CH_VALUE_MIN) ||
-      (this->data_.ch_l_x > DR16_CH_VALUE_MAX))
+      (this->data_.ch_l_x > DR16_CH_VALUE_MAX)) {
     return true;
-
+  }
   if ((this->data_.ch_l_y < DR16_CH_VALUE_MIN) ||
-      (this->data_.ch_l_y > DR16_CH_VALUE_MAX))
+      (this->data_.ch_l_y > DR16_CH_VALUE_MAX)) {
     return true;
+  }
+  if (this->data_.sw_l == 0) {
+    return true;
+  }
 
-  if (this->data_.sw_l == 0) return true;
-
-  if (this->data_.sw_r == 0) return true;
+  if (this->data_.sw_r == 0) {
+    return true;
+  }
 
   return false;
 }
@@ -91,61 +96,72 @@ void DR16::PraseRC() {
   this->data_.key = 0;
 
   /* 检测拨杆开关 */
-  if (this->data_.sw_l != this->last_data_.sw_l)
-    this->event_.Active(SwitchPosLeftTop + this->data_.sw_l - 1);
+  if (this->data_.sw_l != this->last_data_.sw_l) {
+    this->event_.Active(DR16_SW_L_POS_TOP + this->data_.sw_l - 1);
+  }
 
-  if (this->data_.sw_r != this->last_data_.sw_r)
-    this->event_.Active(SwitchPosRightTop + this->data_.sw_r - 1);
+  if (this->data_.sw_r != this->last_data_.sw_r) {
+    this->event_.Active(DR16_SW_R_POS_TOP + this->data_.sw_r - 1);
+  }
 
   uint32_t tmp = 0;
 
   /* 检测Shift */
-  if (this->data_.key & (1 << (KeySHIFT - KeyW))) {
-    tmp += KeyNum;
+  if (this->data_.key & (1 << (KEY_SHIFT - KEY_W))) {
+    tmp += KEY_NUM;
   }
 
   /* 检测Ctrl */
-  if (this->data_.key & (1 << (KeyCTRL - KeyW))) {
-    tmp += 2 * KeyNum;
+  if (this->data_.key & (1 << (KEY_CTRL - KEY_W))) {
+    tmp += 2 * KEY_NUM;
   }
 
   /* 检测剩余按键 */
   for (int i = 0; i < 16; i++) {
     if ((this->data_.key & (1 << i)) && !(this->last_data_.key & (1 << i))) {
-      this->event_.Active(KeyW + i + tmp);
+      this->event_.Active(KEY_W + i + tmp);
     }
   }
 
   /* 控制权切换 */
-  if ((this->data_.key & ShiftCtrlWith(KeyE)) == ShiftCtrlWith(KeyE)) {
-    this->ctrl_source_ = ControlSourceSW;
+  if ((this->data_.key & ShiftCtrlWith(KEY_E)) == ShiftCtrlWith(KEY_E)) {
+    this->ctrl_source_ = DR16_CTRL_SOURCE_SW;
   }
 
-  if ((this->data_.key & ShiftCtrlWith(KeyQ)) == ShiftCtrlWith(KeyQ)) {
-    this->ctrl_source_ = ControlSourceMouse;
+  if ((this->data_.key & ShiftCtrlWith(KEY_Q)) == ShiftCtrlWith(KEY_Q)) {
+    this->ctrl_source_ = DR16_CTRL_SOURCE_MOUSE;
   }
 
   /* 最大量程 */
-  constexpr float full_range = (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
+  constexpr float FULL_RANGE = (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
 
-  if (this->ctrl_source_ == ControlSourceMouse) { /* 键鼠控制 */
+  if (this->ctrl_source_ == DR16_CTRL_SOURCE_MOUSE) { /* 键鼠控制 */
     /* 鼠标左右键 */
-    if (this->data_.press_l && !this->last_data_.press_l)
-      this->event_.Active(KeyLClick);
-    if (this->data_.press_r && !this->last_data_.press_r)
-      this->event_.Active(KeyRClick);
-
+    if (this->data_.press_l && !this->last_data_.press_l) {
+      this->event_.Active(KEY_L_CLICK);
+    }
+    if (this->data_.press_r && !this->last_data_.press_r) {
+      this->event_.Active(KEY_R_CLICK);
+    }
     /* 底盘控制 */
-    if (this->data_.key & KeyA) this->cmd_.chassis.x -= 0.5;
+    if (this->data_.key & KEY_A) {
+      this->cmd_.chassis.x -= 0.5;
+    }
 
-    if (this->data_.key & KeyD) this->cmd_.chassis.x += 0.5;
+    if (this->data_.key & KEY_D) {
+      this->cmd_.chassis.x += 0.5;
+    }
 
-    if (this->data_.key & KeyS) this->cmd_.chassis.y -= 0.5;
+    if (this->data_.key & KEY_S) {
+      this->cmd_.chassis.y -= 0.5;
+    }
 
-    if (this->data_.key & KeyW) this->cmd_.chassis.y += 0.5;
+    if (this->data_.key & KEY_W) {
+      this->cmd_.chassis.y += 0.5;
+    }
 
     /* 加速 */
-    if (this->data_.key & KeySHIFT) {
+    if (this->data_.key & KEY_SHIFT) {
       this->cmd_.chassis.x *= 2;
       this->cmd_.chassis.y *= 2;
     }
@@ -157,25 +173,25 @@ void DR16::PraseRC() {
     this->cmd_.gimbal.eulr.yaw = this->data_.x / 32768.0f;
     this->cmd_.gimbal.eulr.rol = 0.0f;
 
-  } else if (this->ctrl_source_ == ControlSourceSW) { /* 遥控器控制 */
+  } else if (this->ctrl_source_ == DR16_CTRL_SOURCE_SW) { /* 遥控器控制 */
     /* Chassis Control */
     this->cmd_.chassis.x =
-        2 * ((float)this->data_.ch_l_x - DR16_CH_VALUE_MID) / full_range;
+        2 * ((float)this->data_.ch_l_x - DR16_CH_VALUE_MID) / FULL_RANGE;
     this->cmd_.chassis.y =
-        2 * ((float)this->data_.ch_l_y - DR16_CH_VALUE_MID) / full_range;
+        2 * ((float)this->data_.ch_l_y - DR16_CH_VALUE_MID) / FULL_RANGE;
     this->cmd_.chassis.z = 0.0f;
 
     /* Gimbal Control */
     this->cmd_.gimbal.eulr.yaw =
-        2 * ((float)this->data_.ch_r_x - DR16_CH_VALUE_MID) / full_range;
+        2 * ((float)this->data_.ch_r_x - DR16_CH_VALUE_MID) / FULL_RANGE;
     this->cmd_.gimbal.eulr.pit =
-        2 * ((float)this->data_.ch_r_y - DR16_CH_VALUE_MID) / full_range;
+        2 * ((float)this->data_.ch_r_y - DR16_CH_VALUE_MID) / FULL_RANGE;
     this->cmd_.gimbal.eulr.rol = 0.0f;
   }
 
   this->cmd_.online = true;
 
-  this->cmd_.ctrl_source = Component::CMD::ControlSourceRC;
+  this->cmd_.ctrl_source = Component::CMD::CTRL_SOURCE_RC;
 
   this->cmd_tp_.Publish(this->cmd_);
 
@@ -185,7 +201,7 @@ void DR16::PraseRC() {
 void DR16::Offline() {
   this->cmd_.online = false;
 
-  this->ctrl_source_ = ControlSourceSW;
+  this->ctrl_source_ = DR16_CTRL_SOURCE_SW;
 
   memset(&(this->cmd_), 0, sizeof(this->cmd_));
 

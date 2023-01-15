@@ -22,9 +22,9 @@ int TerminalController::ControlCMD(TerminalController* ctrl, int argc,
     ms_enter();
   } else if (argc == 2) {
     if (!strcmp(argv[1], "start")) {
-      ctrl->event_.Active(Start);
+      ctrl->event_.Active(START_CTRL);
     } else if (!strcmp(argv[1], "stop")) {
-      ctrl->event_.Active(Stop);
+      ctrl->event_.Active(STOP_CTRL);
     } else if (!strcmp(argv[1], "keyboard")) {
       ms_printf(
           "Start keyboard control. press w/a/s/d to move, q/e to turn, and r "
@@ -33,7 +33,7 @@ int TerminalController::ControlCMD(TerminalController* ctrl, int argc,
 
       wb_keyboard_enable(30);
 
-      float x, y, z;
+      float x = 0.0f, y = 0.0f, z = 0.0f;
 
       while (1) {
         switch (wb_keyboard_get_key()) {
@@ -84,7 +84,7 @@ int TerminalController::ControlCMD(TerminalController* ctrl, int argc,
         ctrl->cmd_data_.chassis.y = y;
         ctrl->cmd_data_.chassis.z = z;
 
-        ctrl->cmd_data_.ctrl_source = Component::CMD::ControlSourceTerm;
+        ctrl->cmd_data_.ctrl_source = Component::CMD::CTRL_SOURCE_TERM;
 
         ctrl->cmd_tp_.Publish(ctrl->cmd_data_);
 
@@ -128,7 +128,7 @@ int TerminalController::ControlCMD(TerminalController* ctrl, int argc,
     ctrl->cmd_data_.chassis.x = x * speed / 100.0f;
     ctrl->cmd_data_.chassis.y = y * speed / 100.0f;
 
-    ctrl->cmd_data_.ctrl_source = Component::CMD::ControlSourceTerm;
+    ctrl->cmd_data_.ctrl_source = Component::CMD::CTRL_SOURCE_TERM;
 
     ctrl->cmd_tp_.Publish(ctrl->cmd_data_);
 

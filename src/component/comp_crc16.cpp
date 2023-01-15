@@ -1,8 +1,10 @@
 #include "comp_crc16.hpp"
 
+#include <stdint.h>
+
 using namespace Component;
 
-static const uint16_t crc16_tab[256] = {
+static const uint16_t CRC16_TAB[256] = {
     0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf, 0x8c48,
     0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7, 0x1081, 0x0108,
     0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e, 0x9cc9, 0x8d40, 0xbfdb,
@@ -33,20 +35,24 @@ static const uint16_t crc16_tab[256] = {
     0xc514, 0xb1ab, 0xa022, 0x92b9, 0x8330, 0x7bc7, 0x6a4e, 0x58d5, 0x495c,
     0x3de3, 0x2c6a, 0x1ef1, 0x0f78};
 
-static inline uint16_t crc16_byte(uint16_t crc, const uint8_t data) {
-  return (crc >> 8) ^ crc16_tab[(crc ^ data) & 0xff];
+static inline uint16_t crc16_byte(uint16_t crc, const uint8_t DATA) {
+  return (crc >> 8) ^ CRC16_TAB[(crc ^ DATA) & 0xff];
 }
 
 uint16_t CRC16::Calculate(const uint8_t *buf, size_t len, uint16_t crc) {
-  while (len--) crc = crc16_byte(crc, *buf++);
+  while (len--) {
+    crc = crc16_byte(crc, *buf++);
+  }
   return crc;
 }
 
 bool CRC16::Verify(const uint8_t *buf, size_t len) {
-  if (len < 2) return false;
+  if (len < 2) {
+    return false;
+  }
 
   uint16_t expected = Calculate(buf, len - sizeof(uint16_t), CRC16_INIT);
   return expected ==
-         ((const uint16_t *)((const uint8_t *)buf +
-                             (len % 2)))[len / sizeof(uint16_t) - 1];
+         reinterpret_cast<const uint16_t *>(
+             ((const uint8_t *)buf + (len % 2)))[len / sizeof(uint16_t) - 1];
 }

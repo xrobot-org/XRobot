@@ -56,7 +56,8 @@ CanIMU::CanIMU() {
 
 void CanIMU::SendAccl() {
 #if IMU_USE_IN_WEARLAB
-  Device::WearLab::CanData3 *tmp = (Device::WearLab::CanData3 *)send_buff.data;
+  Device::WearLab::CanData3 *tmp =
+      reinterpret_cast<Device::WearLab::CanData3 *>(send_buff.data);
   header.data.device_id = IMU_SEND_CAN_ID;
   header.data.device_type = Device::IMU::IMU_DEVICE_ID;
   header.data.data_type = Device::IMU::ACCL_DATA_ID;
@@ -82,7 +83,8 @@ void CanIMU::SendAccl() {
 
 void CanIMU::SendGyro() {
 #if IMU_USE_IN_WEARLAB
-  Device::WearLab::CanData3 *tmp = (Device::WearLab::CanData3 *)send_buff.data;
+  Device::WearLab::CanData3 *tmp =
+      reinterpret_cast<Device::WearLab::CanData3 *>(send_buff.data);
   header.data.device_id = IMU_SEND_CAN_ID;
   header.data.device_type = Device::IMU::IMU_DEVICE_ID;
   header.data.data_type = Device::IMU::GYRO_DATA_ID;
@@ -107,7 +109,8 @@ void CanIMU::SendGyro() {
 
 void CanIMU::SendEulr() {
 #if IMU_USE_IN_WEARLAB
-  Device::WearLab::CanData3 *tmp = (Device::WearLab::CanData3 *)send_buff.data;
+  Device::WearLab::CanData3 *tmp =
+      reinterpret_cast<Device::WearLab::CanData3 *>(send_buff.data);
   header.data.device_id = IMU_SEND_CAN_ID;
   header.data.device_type = Device::IMU::IMU_DEVICE_ID;
   header.data.data_type = Device::IMU::EULR_DATA_ID;
@@ -132,7 +135,9 @@ void CanIMU::SendEulr() {
 
 void CanIMU::SendQuat() {
 #if IMU_USE_IN_WEARLAB
-  Device::WearLab::CanData4 *tmp = (Device::WearLab::CanData4 *)send_buff.data;
+  Device::WearLab::CanData4 *tmp =
+      reinterpret_cast<Device::WearLab::CanData4 *>(send_buff.data);
+
   header.data.device_id = IMU_SEND_CAN_ID;
   header.data.device_type = Device::IMU::IMU_DEVICE_ID;
   header.data.data_type = Device::IMU::QUAT_DATA_ID;

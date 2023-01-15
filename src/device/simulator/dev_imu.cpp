@@ -12,11 +12,10 @@ IMU::IMU(IMU::Param& param)
       accl_tp_((param.tp_name_prefix + std::string("_accl")).c_str()),
       gyro_tp_((param.tp_name_prefix + std::string("_gyro")).c_str()),
       eulr_tp_((param.tp_name_prefix + std::string("_eulr")).c_str()),
+      ahrs_handle_(wb_robot_get_device("imu")),
+      gyro_handle_(wb_robot_get_device("gyro")),
+      accl_handle_(wb_robot_get_device("accl")),
       cmd_(this, IMU::ShowCMD, "imu", System::Term::DevDir()) {
-  this->ahrs_handle_ = wb_robot_get_device("imu");
-  this->gyro_handle_ = wb_robot_get_device("gyro");
-  this->accl_handle_ = wb_robot_get_device("accl");
-
   wb_inertial_unit_enable(this->ahrs_handle_, 1);
   wb_accelerometer_enable(this->accl_handle_, 1);
   wb_gyro_enable(this->gyro_handle_, 1);
@@ -63,8 +62,13 @@ int IMU::ShowCMD(IMU* imu, int argc, char* argv[]) {
     int time = std::stoi(argv[2]);
     int delay = std::stoi(argv[3]);
 
-    if (delay > 1000) delay = 1000;
-    if (delay < 2) delay = 2;
+    if (delay > 1000) {
+      delay = 1000;
+    }
+
+    if (delay < 2) {
+      delay = 2;
+    }
 
     while (time > delay) {
       ms_printf(

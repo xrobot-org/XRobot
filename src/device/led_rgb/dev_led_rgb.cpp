@@ -43,7 +43,7 @@ RGB::RGB() {
 bool RGB::Set(RGB::Channel ch, RGB::Status status, float duty_cycle) {
   clampf(&duty_cycle, 0.0f, 1.0f);
 
-  bsp_pwm_channel_t pwm_ch;
+  bsp_pwm_channel_t pwm_ch = BSP_PWM_NUMBER;
 
   switch (ch) {
     case RED:

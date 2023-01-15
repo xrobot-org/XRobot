@@ -15,7 +15,7 @@ typedef struct {
   uint16_t channel;
 } bsp_pwm_config_t;
 
-static bsp_pwm_config_t BSP_PWM_MAP[BSP_PWM_NUMBER] = {
+static bsp_pwm_config_t bsp_pwm_map[BSP_PWM_NUMBER] = {
     [BSP_PWM_IMU_HEAT] = {&htim10, TIM_CHANNEL_1},
     [BSP_PWM_LAUNCHER_SERVO] = {&htim1, TIM_CHANNEL_1},
     [BSP_PWM_BUZZER] = {&htim4, TIM_CHANNEL_3},
@@ -33,21 +33,26 @@ static bsp_pwm_config_t BSP_PWM_MAP[BSP_PWM_NUMBER] = {
 };
 
 int8_t bsp_pwm_start(bsp_pwm_channel_t ch) {
-  HAL_TIM_PWM_Start(BSP_PWM_MAP[ch].tim, BSP_PWM_MAP[ch].channel);
+  HAL_TIM_PWM_Start(bsp_pwm_map[ch].tim, bsp_pwm_map[ch].channel);
 
   return BSP_OK;
 }
 
 int8_t bsp_pwm_set_comp(bsp_pwm_channel_t ch, float duty_cycle) {
-  if (duty_cycle > 1.0f) return BSP_ERR;
-  if (duty_cycle < 0.0f) duty_cycle = 0.f;
+  if (duty_cycle > 1.0f) {
+    return BSP_ERR;
+  }
+
+  if (duty_cycle < 0.0f) {
+    duty_cycle = 0.f;
+  }
 
   /* 通过PWM通道对应定时器重载值和给定占空比，计算PWM周期值 */
   uint16_t pulse = (uint16_t)(duty_cycle * (float)__HAL_TIM_GET_AUTORELOAD(
-                                               BSP_PWM_MAP[ch].tim));
+                                               bsp_pwm_map[ch].tim));
 
   if (pulse > 0) {
-    __HAL_TIM_SET_COMPARE(BSP_PWM_MAP[ch].tim, BSP_PWM_MAP[ch].channel, pulse);
+    __HAL_TIM_SET_COMPARE(bsp_pwm_map[ch].tim, bsp_pwm_map[ch].channel, pulse);
   } else {
     bsp_pwm_stop(ch);
   }
@@ -58,7 +63,7 @@ int8_t bsp_pwm_set_freq(bsp_pwm_channel_t ch, float freq) {
   uint16_t reload = (uint16_t)(1000000U / freq);
 
   if (reload > 0) {
-    __HAL_TIM_PRESCALER(BSP_PWM_MAP[ch].tim, reload);
+    __HAL_TIM_PRESCALER(bsp_pwm_map[ch].tim, reload);
   } else {
     return BSP_ERR;
   }
@@ -67,6 +72,6 @@ int8_t bsp_pwm_set_freq(bsp_pwm_channel_t ch, float freq) {
 }
 
 int8_t bsp_pwm_stop(bsp_pwm_channel_t ch) {
-  HAL_TIM_PWM_Stop(BSP_PWM_MAP[ch].tim, BSP_PWM_MAP[ch].channel);
+  HAL_TIM_PWM_Stop(bsp_pwm_map[ch].tim, bsp_pwm_map[ch].channel);
   return BSP_OK;
 }

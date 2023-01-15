@@ -42,15 +42,15 @@ using namespace Module;
 template <typename Motor, typename MotorParam>
 Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
     : param_(param),
-      mode_(Chassis::Relax),
+      mode_(Chassis::RELAX),
       mixer_(param.type),
       follow_pid_(param.follow_pid_param, control_freq),
       ctrl_lock_(true) {
   memset(&(this->cmd_), 0, sizeof(this->cmd_));
 
   for (uint8_t i = 0; i < this->mixer_.len_; i++) {
-    this->actuator_[i] = (Component::SpeedActuator*)System::Memory::Malloc(
-        sizeof(Component::SpeedActuator));
+    this->actuator_[i] = static_cast<Component::SpeedActuator*>(
+        System::Memory::Malloc(sizeof(Component::SpeedActuator)));
     new (this->actuator_[i])
         Component::SpeedActuator(param.actuator_param[i], control_freq);
 
@@ -70,17 +70,17 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
     chassis->ctrl_lock_.Take(UINT32_MAX);
 
     switch (event) {
-      case ChangeModeRelax:
-        chassis->SetMode(Relax);
+      case SET_MODE_RELAX:
+        chassis->SetMode(RELAX);
         break;
-      case ChangeModeFollow:
-        chassis->SetMode(FollowGimbal);
+      case SET_MODE_FOLLOW:
+        chassis->SetMode(FOLLOW_GIMBAL);
         break;
-      case ChangeModeRotor:
-        chassis->SetMode(Rotor);
+      case SET_MODE_ROTOR:
+        chassis->SetMode(ROTOR);
         break;
-      case ChangeModeIndenpendent:
-        chassis->SetMode(Indenpendent);
+      case SET_MODE_INDENPENDENT:
+        chassis->SetMode(INDENPENDENT);
         break;
       default:
         break;
@@ -89,7 +89,7 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
     chassis->ctrl_lock_.Give();
   };
 
-  Component::CMD::RegisterEvent(event_callback, this, this->param_.event_map);
+  Component::CMD::RegisterEvent(event_callback, this, this->param_.EVENT_MAP);
 
   auto chassis_thread = [](Chassis* chassis) {
     auto raw_ref_sub = Message::Subscriber("referee", chassis->raw_ref_);
@@ -139,21 +139,21 @@ void Chassis<Motor, MotorParam>::Control() {
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
   /* 计算vx、vy */
   switch (this->mode_) {
-    case Chassis::Break: /* 刹车模式电机停止 */
+    case Chassis::BREAK: /* 刹车模式电机停止 */
       this->move_vec_.vx = 0.0f;
       this->move_vec_.vy = 0.0f;
       break;
 
-    case Chassis::Indenpendent: /* 独立模式控制向量与运动向量相等
+    case Chassis::INDENPENDENT: /* 独立模式控制向量与运动向量相等
                                  */
       this->move_vec_.vx = this->cmd_.x;
       this->move_vec_.vy = this->cmd_.y;
       break;
 
-    case Chassis::Relax:
-    case Chassis::FollowGimbal: /* 按照云台方向换算运动向量
-                                 */
-    case Chassis::Rotor: {
+    case Chassis::RELAX:
+    case Chassis::FOLLOW_GIMBAL: /* 按照云台方向换算运动向量
+                                  */
+    case Chassis::ROTOR: {
       float beta = this->yaw_;
       float cos_beta = cosf(beta);
       float sin_beta = sinf(beta);
@@ -167,19 +167,19 @@ void Chassis<Motor, MotorParam>::Control() {
 
   /* 计算wz */
   switch (this->mode_) {
-    case Chassis::Relax:
-    case Chassis::Break:
-    case Chassis::Indenpendent: /* 独立模式wz为0 */
+    case Chassis::RELAX:
+    case Chassis::BREAK:
+    case Chassis::INDENPENDENT: /* 独立模式wz为0 */
       this->move_vec_.wz = this->cmd_.z;
       break;
 
-    case Chassis::FollowGimbal: /* 跟随模式通过PID控制使车头跟随云台
-                                 */
+    case Chassis::FOLLOW_GIMBAL: /* 跟随模式通过PID控制使车头跟随云台
+                                  */
       this->move_vec_.wz =
           this->follow_pid_.Calculate(0.0f, this->yaw_, this->dt_);
       break;
 
-    case Chassis::Rotor: { /* 小陀螺模式使底盘以一定速度旋转
+    case Chassis::ROTOR: { /* 小陀螺模式使底盘以一定速度旋转
                             */
       this->move_vec_.wz =
           this->wz_dir_mult_ * CalcWz(ROTOR_WZ_MIN, ROTOR_WZ_MAX);
@@ -197,10 +197,10 @@ void Chassis<Motor, MotorParam>::Control() {
 
   /* 根据底盘模式计算输出值 */
   switch (this->mode_) {
-    case Chassis::Break:
-    case Chassis::FollowGimbal:
-    case Chassis::Rotor:
-    case Chassis::Indenpendent: /* 独立模式,受PID控制 */ {
+    case Chassis::BREAK:
+    case Chassis::FOLLOW_GIMBAL:
+    case Chassis::ROTOR:
+    case Chassis::INDENPENDENT: /* 独立模式,受PID控制 */ {
       float buff_percentage = this->ref_.chassis_pwr_buff / 30.0f;
       clampf(&buff_percentage, 0.0f, 1.0f);
       for (unsigned i = 0; i < this->mixer_.len_; i++) {
@@ -214,7 +214,7 @@ void Chassis<Motor, MotorParam>::Control() {
 
       break;
     }
-    case Chassis::Relax: /* 放松模式,不输出 */
+    case Chassis::RELAX: /* 放松模式,不输出 */
       for (size_t i = 0; i < this->mixer_.len_; i++) {
         this->motor_[i]->Relax();
       }
@@ -235,17 +235,19 @@ void Chassis<Motor, MotorParam>::PraseRef() {
 }
 
 template <typename Motor, typename MotorParam>
-float Chassis<Motor, MotorParam>::CalcWz(const float lo, const float hi) {
-  float wz_vary = fabsf(0.2f * sinf(ROTOR_OMEGA * (float)this->now_)) + lo;
-  clampf(&wz_vary, lo, hi);
+float Chassis<Motor, MotorParam>::CalcWz(const float LO, const float HI) {
+  float wz_vary = fabsf(0.2f * sinf(ROTOR_OMEGA * (float)this->now_)) + LO;
+  clampf(&wz_vary, LO, HI);
   return wz_vary;
 }
 
 template <typename Motor, typename MotorParam>
 void Chassis<Motor, MotorParam>::SetMode(Chassis::Mode mode) {
-  if (mode == this->mode_) return; /* 模式未改变直接返回 */
+  if (mode == this->mode_) {
+    return; /* 模式未改变直接返回 */
+  }
 
-  if (mode == Chassis::Rotor && this->mode_ != Chassis::Rotor) {
+  if (mode == Chassis::ROTOR && this->mode_ != Chassis::ROTOR) {
     srand(this->now_);
     this->wz_dir_mult_ = (rand() % 2) ? -1 : 1;
   }

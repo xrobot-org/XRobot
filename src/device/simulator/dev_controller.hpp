@@ -5,8 +5,8 @@ namespace Device {
 class TerminalController {
  public:
   typedef enum {
-    Start = 25,
-    Stop,
+    START_CTRL = 25,
+    STOP_CTRL,
   } Event;
 
   TerminalController();

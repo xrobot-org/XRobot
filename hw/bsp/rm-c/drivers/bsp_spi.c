@@ -8,13 +8,16 @@ extern SPI_HandleTypeDef hspi2;
 static bsp_callback_t callback_list[BSP_SPI_NUM][BSP_SPI_CB_NUM];
 
 static bsp_spi_t spi_get(SPI_HandleTypeDef *hspi) {
-  if (hspi->Instance == SPI1) return BSP_SPI_IMU;
+  if (hspi->Instance == SPI1) {
+    return BSP_SPI_IMU;
+  }
   /*
   else if (hspi->Instance == SPIX)
                   return BSP_SPI_XXX;
   */
-  else
+  else {
     return BSP_SPI_ERR;
+  }
 }
 
 static void bsp_spi_callback(bsp_spi_callback_t cb_type,

@@ -20,8 +20,8 @@ class Gimbal {
  public:
   /* 云台运行模式 */
   typedef enum {
-    Relax, /* 放松模式，电机不输出。一般情况云台初始化之后的模式 */
-    Absolute, /* 绝对坐标系控制，控制在空间内的绝对姿态 */
+    RELAX, /* 放松模式，电机不输出。一般情况云台初始化之后的模式 */
+    ABSOLUTE, /* 绝对坐标系控制，控制在空间内的绝对姿态 */
   } Mode;
 
   enum {
@@ -33,8 +33,8 @@ class Gimbal {
   };
 
   typedef enum {
-    SetModeRelax,
-    SetModeAbsolute,
+    SET_MODE_RELAX,
+    SET_MODE_ABSOLUTE,
   } GimbalEvent;
 
   typedef struct {
@@ -54,7 +54,7 @@ class Gimbal {
       float pitch_min;
     } limit;
 
-    const std::vector<Component::CMD::EventMapItem> event_map;
+    const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
 
   } Param;
 
@@ -74,7 +74,7 @@ class Gimbal {
 
   Param param_;
 
-  Gimbal::Mode mode_ = Relax; /* 云台模式 */
+  Gimbal::Mode mode_ = RELAX; /* 云台模式 */
 
   struct {
     Component::Type::Eulr eulr_; /* 表示云台姿态的欧拉角 */

@@ -1,5 +1,6 @@
 #include "robot.hpp"
 
+#include "mod_chassis.hpp"
 #include "system.hpp"
 #include "thread.hpp"
 
@@ -28,14 +29,14 @@ Robot::Simulator::Param param = {
       .range = M_2PI,
     },
 
-    .event_map = {
+    .EVENT_MAP = {
       Component::CMD::CreateMapItem(
-        Device::TerminalController::Stop,
-        Module::RMChassis::ChangeModeRelax
+        Device::TerminalController::STOP_CTRL,
+        Module::RMChassis::SET_MODE_RELAX
       ),
       Component::CMD::CreateMapItem(
-        Device::TerminalController::Start,
-        Module::RMChassis::ChangeModeIndenpendent
+        Device::TerminalController::START_CTRL,
+        Module::RMChassis::SET_MODE_INDENPENDENT
       ),
     },
 

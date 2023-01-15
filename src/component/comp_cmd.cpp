@@ -15,43 +15,43 @@ CMD::CMD(Mode mode)
   auto op_ctrl_callback = [](Data& data, CMD* cmd) {
     memcpy(&(cmd->data_[data.ctrl_source]), &data, sizeof(Data));
 
-    if (!cmd->data_[ControlSourceRC].online) {
-      cmd->event_.Active(EventLostCtrl);
+    if (!cmd->data_[CTRL_SOURCE_RC].online) {
+      cmd->event_.Active(CMD_EVENT_LOST_CTRL);
     }
 
-    if (cmd->ctrl_source_ == ControlSourceRC ||
+    if (cmd->ctrl_source_ == CTRL_SOURCE_RC ||
         (!cmd->data_[cmd->ctrl_source_].online)) {
-      cmd->gimbal_data_tp_.Publish(cmd->data_[ControlSourceRC].gimbal);
-      cmd->chassis_data_tp_.Publish(cmd->data_[ControlSourceRC].chassis);
-    } else if (cmd->ctrl_source_ == ControlSourceAI &&
-               cmd->data_[ControlSourceAI].online) {
-      cmd->gimbal_data_tp_.Publish(cmd->data_[ControlSourceAI].gimbal);
-      cmd->chassis_data_tp_.Publish(cmd->data_[ControlSourceRC].chassis);
+      cmd->gimbal_data_tp_.Publish(cmd->data_[CTRL_SOURCE_RC].gimbal);
+      cmd->chassis_data_tp_.Publish(cmd->data_[CTRL_SOURCE_RC].chassis);
+    } else if (cmd->ctrl_source_ == CTRL_SOURCE_AI &&
+               cmd->data_[CTRL_SOURCE_AI].online) {
+      cmd->gimbal_data_tp_.Publish(cmd->data_[CTRL_SOURCE_AI].gimbal);
+      cmd->chassis_data_tp_.Publish(cmd->data_[CTRL_SOURCE_RC].chassis);
     };
 
     return true;
   };
 
   auto term_ctrl_callback = [](Data& data, CMD* cmd) {
-    memcpy(&(cmd->data_[ControlSourceTerm]), &data, sizeof(Data));
+    memcpy(&(cmd->data_[CTRL_SOURCE_TERM]), &data, sizeof(Data));
 
-    cmd->gimbal_data_tp_.Publish(cmd->data_[ControlSourceTerm].gimbal);
-    cmd->chassis_data_tp_.Publish(cmd->data_[ControlSourceTerm].chassis);
+    cmd->gimbal_data_tp_.Publish(cmd->data_[CTRL_SOURCE_TERM].gimbal);
+    cmd->chassis_data_tp_.Publish(cmd->data_[CTRL_SOURCE_TERM].chassis);
 
     return true;
   };
 
   switch (mode) {
-    case OperatorControl:
-      this->ctrl_source_ = ControlSourceRC;
+    case CMD_OP_CTRL:
+      this->ctrl_source_ = CTRL_SOURCE_RC;
       this->data_in_tp_.RegisterCallback(op_ctrl_callback, this);
       break;
-    case AutoControl:
-      this->ctrl_source_ = ControlSourceAI;
+    case CMD_AUTO_CTRL:
+      this->ctrl_source_ = CTRL_SOURCE_AI;
       this->data_in_tp_.RegisterCallback(op_ctrl_callback, this);
       break;
-    case TerminalControl:
-      this->ctrl_source_ = ControlSourceTerm;
+    case CMD_TERM_CTRL:
+      this->ctrl_source_ = CTRL_SOURCE_TERM;
       this->data_in_tp_.RegisterCallback(term_ctrl_callback, this);
       break;
   }

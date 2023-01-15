@@ -27,7 +27,7 @@ class Simulator {
   Module::RMBalance chassis_;
 
   Simulator(Param& param)
-      : cmd_(Component::CMD::TerminalControl),
+      : cmd_(Component::CMD::CMD_TERM_CTRL),
         led_(param.led),
         imu_(param.imu),
         chassis_(param.chassis, 500) {}

@@ -94,9 +94,9 @@ int8_t bsp_gpio_disable_irq(bsp_gpio_t gpio) {
 inline int8_t bsp_gpio_write_pin(bsp_gpio_t gpio, bool value) {
   if (gpio == BSP_GPIO_LED) {
     bsp_pwm_set_comp(BSP_PWM_LED_RED, 1.0f);
-    if (value)
+    if (value) {
       bsp_pwm_start(BSP_PWM_LED_RED);
-    else {
+    } else {
       bsp_pwm_stop(BSP_PWM_LED_RED);
     }
 

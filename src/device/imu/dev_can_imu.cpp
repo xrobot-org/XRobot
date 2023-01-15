@@ -48,7 +48,7 @@ void IMU::Update() {
 }
 
 bool IMU::Decode(Can::Pack &rx) {
-  int16_t *tmp = (int16_t *)rx.data;
+  int16_t *tmp = reinterpret_cast<int16_t *>(rx.data);
   switch (rx.data[1]) {
     case ACCL_DATA_ID:
       this->accl_.x = tmp[1] * 6.0f / (float)INT16_MAX;

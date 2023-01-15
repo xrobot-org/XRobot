@@ -349,7 +349,7 @@ class Referee {
 
   bool StartTrans();
 
-  void SetUIHeader(InterStudentHeader &header, const CMDID cmd_id,
+  void SetUIHeader(InterStudentHeader &header, const CMDID CMD_ID,
                    RobotID robot_id);
 
   void SetPacketHeader(Referee::Header &header, uint16_t data_length);

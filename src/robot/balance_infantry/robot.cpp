@@ -29,22 +29,22 @@ Robot::Infantry::Param param = {
         .range = M_2PI,
       },
 
-      .event_map = {
+      .EVENT_MAP = {
         Component::CMD::CreateMapItem(
-          Component::CMD::EventLostCtrl,
-          Module::RMBalance::ChangeModeRelax
+          Component::CMD::CMD_EVENT_LOST_CTRL,
+          Module::RMBalance::SET_MODE_RELAX
         ),
         Component::CMD::CreateMapItem(
-          Device::DR16::SwitchPosLeftTop,
-          Module::RMBalance::ChangeModeRelax
+          Device::DR16::DR16_SW_L_POS_TOP,
+          Module::RMBalance::SET_MODE_RELAX
         ),
         Component::CMD::CreateMapItem(
-          Device::DR16::SwitchPosLeftMid,
-          Module::RMBalance::ChangeModeRelax
+          Device::DR16::DR16_SW_L_POS_MID,
+          Module::RMBalance::SET_MODE_RELAX
         ),
         Component::CMD::CreateMapItem(
-          Device::DR16::SwitchPosLeftBot,
-          Module::RMBalance::ChangeModeFollow
+          Device::DR16::DR16_SW_L_POS_BOT,
+          Module::RMBalance::SET_MODE_FOLLOW
         )
       },
 
@@ -154,22 +154,22 @@ Robot::Infantry::Param param = {
         3.00471401f,
       },
 
-      .event_map = {
+      .EVENT_MAP = {
         Component::CMD::CreateMapItem(
-          Component::CMD::EventLostCtrl,
-          Module::WheelLeg::ChangeModeRelax
+          Component::CMD::CMD_EVENT_LOST_CTRL,
+          Module::WheelLeg::SET_MODE_RELAX
         ),
         Component::CMD::CreateMapItem(
-          Device::DR16::SwitchPosLeftTop,
-          Module::WheelLeg::ChangeModeRelax
+          Device::DR16::DR16_SW_L_POS_TOP,
+          Module::WheelLeg::SET_MODE_RELAX
         ),
         Component::CMD::CreateMapItem(
-          Device::DR16::SwitchPosLeftMid,
-          Module::WheelLeg::ChangeModeSquat
+          Device::DR16::DR16_SW_L_POS_MID,
+          Module::WheelLeg::SET_MODE_SQUAT
         ),
         Component::CMD::CreateMapItem(
-          Device::DR16::SwitchPosLeftBot,
-          Module::WheelLeg::ChangeModeSquat
+          Device::DR16::DR16_SW_L_POS_BOT,
+          Module::WheelLeg::SET_MODE_SQUAT
         )
       },
 

@@ -99,10 +99,10 @@ bool Cap::Offline() {
 }
 
 float Cap::GetPercentage() {
-  const float c_max = this->info_.input_volt_ * this->info_.input_volt_;
-  const float c_cap = this->info_.cap_volt_ * this->info_.cap_volt_;
-  const float c_min = CAP_CUTOFF_VOLT * CAP_CUTOFF_VOLT;
-  float percentage = (c_cap - c_min) / (c_max - c_min);
+  const float C_MAX = this->info_.input_volt_ * this->info_.input_volt_;
+  const float C_CAP = this->info_.cap_volt_ * this->info_.cap_volt_;
+  const float C_MIN = CAP_CUTOFF_VOLT * CAP_CUTOFF_VOLT;
+  float percentage = (C_CAP - C_MIN) / (C_MAX - C_MIN);
   clampf(&percentage, 0.0f, 1.0f);
   return percentage;
 }

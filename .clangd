@@ -11,8 +11,10 @@ Diagnostics:
             performance-*]
     Remove: [google-build-using-namespace,
             cppcoreguidelines-pro-type-member-init,
+            cert-env33-c,
             cppcoreguidelines-no-malloc,
             cppcoreguidelines-owning-memory,
+            cppcoreguidelines-special-member-functions,
             google-readability-todo,
             bugprone-easily-swappable-parameters,
             cppcoreguidelines-pro-bounds-constant-array-index,
@@ -35,10 +37,10 @@ Diagnostics:
       readability-identifier-naming.GlobalVariableCase: lower_case
       readability-identifier-naming.ClassMemberCase: lower_case
       readability-identifier-naming.ClassMemberSuffix: _
-#       readability-identifier-naming.EnumCase: UPPER_CASE
-#       readability-identifier-naming.EnumConstantCase: UPPER_CASE
-#       readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
-#       readability-identifier-naming.ConstantCase: UPPER_CASE
+      readability-identifier-naming.EnumCase: UPPER_CASE
+      readability-identifier-naming.EnumConstantCase: UPPER_CASE
+      readability-identifier-naming.MacroDefinitionCase: UPPER_CASE
+      readability-identifier-naming.ConstantCase: UPPER_CASE
       readability-identifier-naming.ClassCase: CamelCase
       readability-identifier-naming.StructCase  : CamelCase
       readability-identifier-naming.FunctionCase: lower_case

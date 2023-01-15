@@ -28,7 +28,7 @@ Gimbal::Gimbal(Param& param, float control_freq)
     gimbal->ctrl_lock_.Give();
   };
 
-  Component::CMD::RegisterEvent(event_callback, this, this->param_.event_map);
+  Component::CMD::RegisterEvent(event_callback, this, this->param_.EVENT_MAP);
 
   auto gimbal_thread = [](Gimbal* gimbal) {
     auto eulr_sub = Message::Subscriber("imu_eulr", gimbal->eulr_);
@@ -80,26 +80,26 @@ void Gimbal::Control() {
   circle_add(&(this->setpoint.eulr_.yaw), gimbal_yaw_cmd, M_2PI);
 
   /* 处理pitch控制命令，软件限位 */
-  const float delta_max =
+  const float DELTA_MAX =
       circle_error(this->param_.limit.pitch_max,
                    (this->pit_motor_.GetAngle() + this->setpoint.eulr_.pit -
                     this->eulr_.pit),
                    M_2PI);
-  const float delta_min =
+  const float DELTA_MIN =
       circle_error(this->param_.limit.pitch_min,
                    (this->pit_motor_.GetAngle() + this->setpoint.eulr_.pit -
                     this->eulr_.pit),
                    M_2PI);
-  clampf(&(gimbal_pit_cmd), delta_min, delta_max);
+  clampf(&(gimbal_pit_cmd), DELTA_MIN, DELTA_MAX);
   circle_add(&(this->setpoint.eulr_.pit), gimbal_pit_cmd, M_2PI);
 
   /* 控制相关逻辑 */
   switch (this->mode_) {
-    case Relax:
+    case RELAX:
       this->yaw_motor_.Relax();
       this->pit_motor_.Relax();
       break;
-    case Absolute:
+    case ABSOLUTE:
       /* Yaw轴角速度环参数计算 */
       float yaw_out = this->yaw_actuator_.Calculate(
           this->setpoint.eulr_.yaw, this->gyro_.z, this->eulr_.yaw, this->dt_);
@@ -115,7 +115,9 @@ void Gimbal::Control() {
 }
 
 void Gimbal::SetMode(Mode mode) {
-  if (mode == this->mode_) return;
+  if (mode == this->mode_) {
+    return;
+  }
 
   /* 切换模式后重置PID和滤波器 */
   this->pit_actuator_.Reset();
@@ -123,8 +125,8 @@ void Gimbal::SetMode(Mode mode) {
 
   memcpy(&(this->setpoint.eulr_), &(this->eulr_),
          sizeof(this->setpoint.eulr_)); /* 切换模式后重置设定值 */
-  if (this->mode_ == Relax) {
-    if (mode == Absolute) {
+  if (this->mode_ == RELAX) {
+    if (mode == ABSOLUTE) {
       this->setpoint.eulr_.yaw = this->eulr_.yaw;
     }
   }
@@ -133,8 +135,8 @@ void Gimbal::SetMode(Mode mode) {
 
   memcpy(&(this->setpoint.eulr_), &(this->eulr_),
          sizeof(this->setpoint.eulr_)); /* 切换模式后重置设定值 */
-  if (this->mode_ == Relax) {
-    if (mode == Absolute) {
+  if (this->mode_ == RELAX) {
+    if (mode == ABSOLUTE) {
       this->setpoint.eulr_.yaw = this->eulr_.yaw;
     }
   }

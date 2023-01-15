@@ -57,10 +57,11 @@ void clampf(float *origin, float lo, float hi) {
  * @return float 运算结果
  */
 float signf(float x) {
-  if (x == 0.0f)
+  if (x == 0.0f) {
     return x;
-  else
+  } else {
     return (x > 0) ? 1.0f : 0.0f;
+  }
 }
 
 /**
@@ -78,10 +79,11 @@ float circle_error(float sp, float fb, float range) {
   if (range > 0.0f) {
     float half_range = range / 2.0f;
 
-    if (error > half_range)
+    if (error > half_range) {
       error -= range;
-    else if (error < -half_range)
+    } else if (error < -half_range) {
       error += range;
+    }
   }
   return error;
 }
@@ -97,8 +99,12 @@ float circle_error(float sp, float fb, float range) {
 void circle_add(float *origin, float delta, float range) {
   float out = *origin + delta;
   if (range > 0.0f) {
-    while (out >= range) out -= range;
-    while (out < 0.0f) out += range;
+    while (out >= range) {
+      out -= range;
+    }
+    while (out < 0.0f) {
+      out += range;
+    }
   }
   *origin = out;
 }
@@ -120,16 +126,29 @@ void circle_reverse(float *origin) { *origin = -(*origin) + M_2PI; }
  */
 float bullet_speed_to_fric_rpm(float bullet_speed, float fric_radius,
                                bool is17mm) {
-  if (bullet_speed == 0.0f) return 0.f;
+  if (bullet_speed == 0.0f) {
+    return 0.f;
+  }
   if (is17mm) {
-    if (bullet_speed == 15.0f) return 4670.f;
-    if (bullet_speed == 18.0f) return 5200.f;
-    if (bullet_speed == 30.0f) return 7350.f;
+    if (bullet_speed == 15.0f) {
+      return 4670.f;
+    }
+    if (bullet_speed == 18.0f) {
+      return 5200.f;
+    }
+    if (bullet_speed == 30.0f) {
+      return 7350.f;
+    }
   } else {
-    if (bullet_speed == 10.0f) return 4450.f;
-    if (bullet_speed == 16.0f) return 5800.f;
+    if (bullet_speed == 10.0f) {
+      return 4450.f;
+    }
+    if (bullet_speed == 16.0f) {
+      return 5800.f;
+    }
   }
 
+  // TODO:
   /* 不为裁判系统设定值时,计算转速 */
   return 60.0f * bullet_speed / (M_2PI * fric_radius);
 }

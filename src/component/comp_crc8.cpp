@@ -6,7 +6,7 @@
 
 using namespace Component;
 
-static const uint8_t crc8_tab[256] = {
+static const uint8_t CRC8_TAB[256] = {
     0x00, 0x5e, 0xbc, 0xe2, 0x61, 0x3f, 0xdd, 0x83, 0xc2, 0x9c, 0x7e, 0x20,
     0xa3, 0xfd, 0x1f, 0x41, 0x9d, 0xc3, 0x21, 0x7f, 0xfc, 0xa2, 0x40, 0x1e,
     0x5f, 0x01, 0xe3, 0xbd, 0x3e, 0x60, 0x82, 0xdc, 0x23, 0x7d, 0x9f, 0xc1,
@@ -33,13 +33,16 @@ static const uint8_t crc8_tab[256] = {
 
 uint8_t CRC8::Calculate(const uint8_t *buf, size_t len, uint8_t crc) {
   /* loop over the buffer data */
-  while (len-- > 0) crc = crc8_tab[(crc ^ *buf++) & 0xff];
-
+  while (len-- > 0) {
+    crc = CRC8_TAB[(crc ^ *buf++) & 0xff];
+  }
   return crc;
 }
 
 bool CRC8::Verify(const uint8_t *buf, size_t len) {
-  if (len < 2) return false;
+  if (len < 2) {
+    return false;
+  }
 
   uint8_t expected = Calculate(buf, len - sizeof(uint8_t), CRC8_INIT);
   return expected == buf[len - sizeof(uint8_t)];

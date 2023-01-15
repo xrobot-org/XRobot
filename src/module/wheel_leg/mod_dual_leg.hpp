@@ -23,21 +23,21 @@
 namespace Module {
 class WheelLeg {
  public:
-  typedef enum { Left, Right, LegNum } Leg;
-  typedef enum { Front, Back, LegMotorNum } LegMotor;
+  typedef enum { LEG_LEFT, LEG_RIGHT, LEG_NUM } Leg;
+  typedef enum { LEG_FRONT, LEG_BACK, LEG_MOTOR_NUM } LegMotor;
 
   typedef enum {
-    Relax, /* 放松模式，电机不输出 */
-    Break, /* 电机保持当前角度 */
-    Squat, /* 稳定模式，以较低高度补偿角度 */
-    Jump,  /* 短时间内移动至最高高度后，切换至稳定模式 */
+    RELAX, /* 放松模式，电机不输出 */
+    BREAK, /* 电机保持当前角度 */
+    SQUAT, /* 稳定模式，以较低高度补偿角度 */
+    JUMP,  /* 短时间内移动至最高高度后，切换至稳定模式 */
   } Mode;
 
   typedef enum {
-    ChangeModeRelax,
-    ChangeModeBreak,
-    ChangeModeSquat,
-    ChangeModeJump,
+    SET_MODE_RELAX,
+    SET_MODE_BREAK,
+    SET_MODE_SQUAT,
+    SET_MODE_JUMP,
   } ChassisEvent;
 
   typedef struct {
@@ -53,17 +53,17 @@ class WheelLeg {
 
     float leg_max_angle;
 
-    float motor_zero[LegNum * LegMotorNum];
+    float motor_zero[LEG_NUM * LEG_MOTOR_NUM];
 
-    const std::vector<Component::CMD::EventMapItem> event_map;
+    const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
 
-    Component::PosActuator::Param leg_actr[LegNum * LegMotorNum];
+    Component::PosActuator::Param leg_actr[LEG_NUM * LEG_MOTOR_NUM];
 
-    Device::MitMotor::Param leg_motor[LegNum * LegMotorNum];
+    Device::MitMotor::Param leg_motor[LEG_NUM * LEG_MOTOR_NUM];
   } Param;
 
   typedef struct {
-    float motor_angle[LegMotorNum];
+    float motor_angle[LEG_MOTOR_NUM];
     Component::Type::Line diagonal;
     Component::Type::Polar2 whell_polar;
     Component::Type::Position2 whell_pos;
@@ -71,7 +71,7 @@ class WheelLeg {
 
   typedef struct {
     Component::Type::Position2 whell_pos;
-    float motor_angle[LegMotorNum];
+    float motor_angle[LEG_MOTOR_NUM];
   } Setpoint;
 
   WheelLeg(Param& param, float sample_freq);
@@ -90,17 +90,17 @@ class WheelLeg {
 
   float now_;
 
-  Component::PosActuator* leg_actuator_[LegNum * LegMotorNum];
+  Component::PosActuator* leg_actuator_[LEG_NUM * LEG_MOTOR_NUM];
 
-  Device::MitMotor* leg_motor_[LegNum * LegMotorNum];
+  Device::MitMotor* leg_motor_[LEG_NUM * LEG_MOTOR_NUM];
 
   Component::Type::Eulr eulr_;
 
-  Setpoint setpoint_[LegNum];
+  Setpoint setpoint_[LEG_NUM];
 
-  Feedback feedback_[LegNum];
+  Feedback feedback_[LEG_NUM];
 
-  Mode mode_ = Relax;
+  Mode mode_ = RELAX;
 
   System::Semaphore ctrl_lock_;
 

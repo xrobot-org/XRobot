@@ -35,10 +35,11 @@ CAN_HandleTypeDef *bsp_can_get_handle(bsp_can_t can) {
 }
 
 static bsp_can_t can_get(CAN_HandleTypeDef *hcan) {
-  if (hcan->Instance == CAN)
+  if (hcan->Instance == CAN) {
     return BSP_CAN_1;
-  else
+  } else {
     return BSP_CAN_ERR;
+  }
 }
 
 void bsp_can_init(void) {
@@ -129,15 +130,16 @@ int8_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format, uint32_t id,
   HAL_StatusTypeDef res = HAL_CAN_AddTxMessage(bsp_can_get_handle(can), &header,
                                                data, mailbox + can);
 
-  if (res == HAL_OK)
+  if (res == HAL_OK) {
     return BSP_OK;
-  else
+  } else {
     return BSP_ERR;
+  }
 }
 
 int8_t bsp_can_get_msg(bsp_can_t can, uint8_t *data, uint32_t *index) {
-  can_raw_rx_t rx;
-  HAL_StatusTypeDef res;
+  can_raw_rx_t rx = {};
+  HAL_StatusTypeDef res = HAL_OK;
 
   switch (can) {
     case BSP_CAN_1:

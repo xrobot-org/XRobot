@@ -39,8 +39,12 @@ class BaseMotor {
         int time = std::stoi(argv[2]);
         int delay = std::stoi(argv[3]);
 
-        if (delay > 1000) delay = 1000;
-        if (delay < 2) delay = 2;
+        if (delay > 1000) {
+          delay = 1000;
+        }
+        if (delay < 2) {
+          delay = 2;
+        }
         while (time > delay) {
           ms_printf("电机 [%s] 反馈数据:", motor->name_);
           ms_enter();

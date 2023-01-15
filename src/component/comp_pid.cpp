@@ -32,44 +32,45 @@ float PID::Calculate(float sp, float fb, float dt) {
   }
 
   /* 计算误差值 */
-  const float err = circle_error(sp, fb, this->param_.range);
+  const float ERR = circle_error(sp, fb, this->param_.range);
 
   /* 计算P项 */
-  float k_err = err * this->param_.k;
+  float k_err = ERR * this->param_.k;
 
   /* 计算D项 */
-  const float k_fb = this->param_.k * fb;
-  const float filtered_k_fb = this->dfilter_.Apply(k_fb);
+  const float K_FB = this->param_.k * fb;
+  const float FILTERED_K_FB = this->dfilter_.Apply(K_FB);
 
   /* 通过fb计算D，避免了由于sp变化导致err突变的问题 */
   /* 当sp不变时，err的微分等于负的fb的微分 */
-  float d = (filtered_k_fb - this->last.k_fb_) / fmaxf(dt, this->dt_min_);
+  float d = (FILTERED_K_FB - this->last.k_fb_) / fmaxf(dt, this->dt_min_);
 
-  this->last.err_ = err;
-  this->last.k_fb_ = filtered_k_fb;
+  this->last.err_ = ERR;
+  this->last.k_fb_ = FILTERED_K_FB;
 
-  if (!isfinite(d)) d = 0.0f;
-
+  if (!isfinite(d)) {
+    d = 0.0f;
+  }
   /* 计算PD输出 */
   float output = (k_err * this->param_.p) - (d * this->param_.d);
 
   /* 计算I项 */
-  const float i = this->i_ + (k_err * dt);
-  const float i_out = i * this->param_.i;
+  const float I = this->i_ + (k_err * dt);
+  const float I_OUT = I * this->param_.i;
 
   if (this->param_.i > SIGMA) {
     /* 检查是否饱和 */
-    if (isfinite(i)) {
-      if ((fabsf(output + i_out) <= this->param_.out_limit) &&
-          (fabsf(i) <= this->param_.i_limit)) {
+    if (isfinite(I)) {
+      if ((fabsf(output + I_OUT) <= this->param_.out_limit) &&
+          (fabsf(I) <= this->param_.i_limit)) {
         /* 未饱和，使用新积分 */
-        this->i_ = i;
+        this->i_ = I;
       }
     }
   }
 
   /* 计算PID输出 */
-  output += i_out;
+  output += I_OUT;
 
   /* 限制输出 */
   if (isfinite(output)) {
@@ -87,44 +88,43 @@ float PID::Calculate(float sp, float fb, float fb_dot, float dt) {
   }
 
   /* 计算误差值 */
-  const float err = circle_error(sp, fb, this->param_.range);
+  const float ERR = circle_error(sp, fb, this->param_.range);
 
   /* 计算P项 */
-  float k_err = err * this->param_.k;
+  float k_err = ERR * this->param_.k;
 
   /* 计算D项 */
-  const float k_fb = this->param_.k * fb;
-  const float filtered_k_fb = this->dfilter_.Apply(k_fb);
+  const float K_FB = this->param_.k * fb;
+  const float FILTERED_K_FB = this->dfilter_.Apply(K_FB);
 
-  float d;
+  float d = fb_dot;
 
-  d = fb_dot;
+  this->last.err_ = ERR;
+  this->last.k_fb_ = FILTERED_K_FB;
 
-  this->last.err_ = err;
-  this->last.k_fb_ = filtered_k_fb;
-
-  if (!isfinite(d)) d = 0.0f;
-
+  if (!isfinite(d)) {
+    d = 0.0f;
+  }
   /* 计算PD输出 */
   float output = (k_err * this->param_.p) - (d * this->param_.d);
 
   /* 计算I项 */
-  const float i = this->i_ + (k_err * dt);
-  const float i_out = i * this->param_.i;
+  const float I = this->i_ + (k_err * dt);
+  const float I_OUT = I * this->param_.i;
 
   if (this->param_.i > SIGMA) {
     /* 检查是否饱和 */
-    if (isfinite(i)) {
-      if ((fabsf(output + i_out) <= this->param_.out_limit) &&
-          (fabsf(i) <= this->param_.i_limit)) {
+    if (isfinite(I)) {
+      if ((fabsf(output + I_OUT) <= this->param_.out_limit) &&
+          (fabsf(I) <= this->param_.i_limit)) {
         /* 未饱和，使用新积分 */
-        this->i_ = i;
+        this->i_ = I;
       }
     }
   }
 
   /* 计算PID输出 */
-  output += i_out;
+  output += I_OUT;
 
   /* 限制输出 */
   if (isfinite(output)) {
