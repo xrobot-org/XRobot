@@ -42,11 +42,11 @@ Robot::Simulator::Param param = {
     .EVENT_MAP = {
       Component::CMD::CreateMapItem(
         Device::TerminalController::STOP_CTRL,
-        Module::RMBalance::ChangeModeRelax
+        Module::RMBalance::SET_MODE_RELAX
       ),
       Component::CMD::CreateMapItem(
         Device::TerminalController::START_CTRL,
-        Module::SET_MODE_FOLLOW
+        Module::RMBalance::SET_MODE_FOLLOW
       )
     },
 
