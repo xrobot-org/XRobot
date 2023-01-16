@@ -2,8 +2,10 @@
 
 #include <poll.h>
 #include <semaphore.h>
-#include <stdint.h>
-#include <stdio.h>
+
+#include <cstdint>
+#include <cstdio>
+#include <thread.hpp>
 
 namespace System {
 class Semaphore {
@@ -17,21 +19,24 @@ class Semaphore {
   }
 
   void Give() {
-    int tmp;
-    if (sem_getvalue(&this->handle_, &tmp) < this->max_count_)
+    int tmp = 0;
+    sem_getvalue(&this->handle_, &tmp);
+    if (tmp < this->max_count_) {
       sem_post(&this->handle_);
+    }
   }
 
   bool Take(uint32_t timeout) {
-    while (!sem_trywait(&this->handle_) && timeout) {
-      poll(NULL, 0, 1);
+    while (sem_trywait(&this->handle_) && timeout) {
+      System::Thread::Sleep(1);
       timeout--;
     }
 
-    if (sem_trywait(&this->handle_))
+    if (sem_trywait(&this->handle_)) {
       return false;
-    else
+    } else {
       return true;
+    }
   }
 
   void GiveFromISR() { Give(); }

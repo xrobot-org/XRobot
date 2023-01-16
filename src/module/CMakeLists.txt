@@ -17,10 +17,13 @@ target_link_libraries(
 
 target_include_directories(
   ${PROJECT_NAME}
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
   PUBLIC ${${PROJECT_NAME}_INCLUDES}
   PUBLIC ${LIB_DIR}/magic_enum/include
   PUBLIC $<TARGET_PROPERTY:component,INTERFACE_INCLUDE_DIRECTORIES>
   PUBLIC $<TARGET_PROPERTY:device,INTERFACE_INCLUDE_DIRECTORIES>)
+
+target_include_directories(
+    ${PROJECT_NAME} SYSTEM
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_dependencies(${PROJECT_NAME} component device)

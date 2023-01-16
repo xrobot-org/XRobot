@@ -1,9 +1,9 @@
-#include "database.hpp"
-
 #include <poll.h>
 
+#include <database.hpp>
+#include <term.hpp>
+
 #include "ms.h"
-#include "term.hpp"
 
 using namespace System;
 

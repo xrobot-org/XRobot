@@ -105,7 +105,7 @@ Launcher::Launcher(Param& param, float control_freq)
   };
 
   this->thread_.Create(launcher_thread, this, "launcher_thread", 384,
-                       System::Thread::Medium);
+                       System::Thread::MEDIUM);
 }
 
 void Launcher::UpdateFeedback() {

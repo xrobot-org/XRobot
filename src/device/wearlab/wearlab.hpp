@@ -1,4 +1,4 @@
-#include "device.hpp"
+#include <device.hpp>
 
 namespace Device {
 class WearLab {

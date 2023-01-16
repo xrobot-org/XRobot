@@ -1,17 +1,15 @@
-#include "semaphore.hpp"
+#include <semaphore.hpp>
 
 using namespace System;
 
-Semaphore::Semaphore(bool init_count) {
-  this->handle_ = xSemaphoreCreateBinary();
+Semaphore::Semaphore(bool init_count) : handle_(xSemaphoreCreateBinary()) {
   if (init_count) {
     this->Give();
   }
 }
 
-Semaphore::Semaphore(uint16_t max_count, uint16_t init_count) {
-  this->handle_ = xSemaphoreCreateCounting(max_count, init_count);
-}
+Semaphore::Semaphore(uint16_t max_count, uint16_t init_count)
+    : handle_(xSemaphoreCreateCounting(max_count, init_count)) {}
 
 void Semaphore::Give() { xSemaphoreGive(this->handle_); }
 

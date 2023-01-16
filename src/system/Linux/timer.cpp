@@ -1,4 +1,4 @@
-#include "timer.hpp"
+#include <timer.hpp>
 
 using namespace System;
 
@@ -15,8 +15,8 @@ Timer::Timer() {
     }
   };
 
-  this->thread_.Create(thread_fn, (void*)NULL, "timer_task", 256,
-                       Thread::Medium);
+  this->thread_.Create(thread_fn, static_cast<void*>(NULL), "timer_task", 256,
+                       Thread::MEDIUM);
 }
 
 bool Timer::Refresh(ControlBlock& block, void* arg) {

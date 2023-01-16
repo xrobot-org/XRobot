@@ -1,10 +1,11 @@
 #pragma once
 
+#include <list.hpp>
+#include <thread.hpp>
+
 #include "FreeRTOS.h"
-#include "list.hpp"
 #include "system.hpp"
 #include "task.h"
-#include "thread.hpp"
 
 namespace System {
 class Timer {

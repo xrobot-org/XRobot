@@ -1,7 +1,8 @@
 #pragma once
+#include <module.hpp>
+
 #include "dev_can.hpp"
 #include "dev_can_imu.hpp"
-#include "module.hpp"
 
 #if IMU_USE_IN_WEARLAB
 #include "wearlab.hpp"

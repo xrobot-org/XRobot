@@ -1,3 +1,3 @@
-#include "thread.hpp"
+#include <thread.hpp>
 
 using namespace System;

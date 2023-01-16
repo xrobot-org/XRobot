@@ -8,17 +8,17 @@
 #include <stdlib.h>
 
 #include <cstring>
+#include <database.hpp>
+#include <list.hpp>
+#include <memory.hpp>
+#include <queue.hpp>
+#include <semaphore.hpp>
 #include <string>
+#include <term.hpp>
+#include <thread.hpp>
+#include <timer.hpp>
 
 #include "comp_type.hpp"
 #include "comp_utils.hpp"
-#include "database.hpp"
-#include "list.hpp"
 #include "magic_enum.hpp"
-#include "memory.hpp"
 #include "om.hpp"
-#include "queue.hpp"
-#include "semaphore.hpp"
-#include "term.hpp"
-#include "thread.hpp"
-#include "timer.hpp"

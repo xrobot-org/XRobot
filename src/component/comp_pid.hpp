@@ -5,8 +5,9 @@
 
 #pragma once
 
+#include <component.hpp>
+
 #include "comp_filter.hpp"
-#include "component.hpp"
 
 namespace Component {
 class PID {

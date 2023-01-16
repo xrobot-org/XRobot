@@ -1,6 +1,6 @@
 #pragma once
 
-#include "component.hpp"
+#include <component.hpp>
 
 #define CRC16_INIT 0XFFFF
 

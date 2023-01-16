@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "component.hpp"
+#include <component.hpp>
 
 /** 四轮布局 */
 /* 前 */

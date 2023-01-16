@@ -31,6 +31,12 @@ target_include_directories(
   PUBLIC $<TARGET_PROPERTY:OneMessage,INTERFACE_INCLUDE_DIRECTORIES>
   PUBLIC $<TARGET_PROPERTY:MiniShell,INTERFACE_INCLUDE_DIRECTORIES>)
 
+target_include_directories(
+  ${PROJECT_NAME} SYSTEM
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Linux
+)
+
 add_dependencies(
   ${PROJECT_NAME}
   bsp

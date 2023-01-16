@@ -1,8 +1,7 @@
 #pragma once
 
+#include <component.hpp>
 #include <vector>
-
-#include "component.hpp"
 
 namespace Component {
 class CMD {

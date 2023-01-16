@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "component.hpp"
+#include <component.hpp>
 
 #define CRC8_INIT 0xFF
 

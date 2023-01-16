@@ -1,7 +1,8 @@
 #pragma once
 
+#include <device.hpp>
+
 #include "dev_can.hpp"
-#include "device.hpp"
 
 namespace Device {
 class IMU {

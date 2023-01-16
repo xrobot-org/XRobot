@@ -11,13 +11,14 @@
 
 #pragma once
 
+#include <module.hpp>
+
 #include "comp_actuator.hpp"
 #include "comp_cmd.hpp"
 #include "comp_filter.hpp"
 #include "comp_pid.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
-#include "module.hpp"
 
 namespace Module {
 class Launcher {

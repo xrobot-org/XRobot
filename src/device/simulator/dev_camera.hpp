@@ -1,4 +1,5 @@
-#include "device.hpp"
+#include <device.hpp>
+
 #include "webots/robot.h"
 
 namespace Device {

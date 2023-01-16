@@ -1,8 +1,9 @@
 #pragma once
 
+#include <device.hpp>
+
 #include "bsp_can.h"
 #include "comp_ahrs.hpp"
-#include "device.hpp"
 
 namespace Device {
 class Can {

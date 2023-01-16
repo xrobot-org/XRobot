@@ -1,3 +1,3 @@
-#include "semaphore.hpp"
+#include <semaphore.hpp>
 
 using namespace System;

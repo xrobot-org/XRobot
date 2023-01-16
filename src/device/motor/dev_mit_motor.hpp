@@ -1,9 +1,10 @@
 #pragma once
 
+#include <device.hpp>
+
 #include "comp_ahrs.hpp"
 #include "dev_can.hpp"
 #include "dev_motor.hpp"
-#include "device.hpp"
 
 namespace Device {
 class MitMotor : public BaseMotor {

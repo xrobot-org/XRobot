@@ -1,13 +1,13 @@
 #pragma once
 
 #include <fcntl.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <string>
 
 namespace System {
@@ -24,7 +24,7 @@ class Database {
   }
 
   static uint32_t Get(const char* name, void* buff, uint32_t len) {
-    FILE* fd;
+    FILE* fd = NULL;
 
     if (!access((path_ + name).c_str(), W_OK)) {
       fd = fopen((path_ + name).c_str(), "r");
@@ -32,9 +32,9 @@ class Database {
       fd = fopen((path_ + name).c_str(), "w+");
     }
 
-    fread(buff, len, 1, fd);
+    static_cast<void>(fread(buff, len, 1, fd));
 
-    fclose(fd);
+    static_cast<void>(fclose(fd));
 
     return len;
   }
@@ -42,9 +42,9 @@ class Database {
   static bool Set(const char* name, void* data, uint32_t len) {
     FILE* fd = fopen((path_ + name).c_str(), "w+");
 
-    fwrite(data, len, 1, fd);
+    static_cast<void>(fwrite(data, len, 1, fd));
 
-    fclose(fd);
+    static_cast<void>(fclose(fd));
 
     return true;
   }

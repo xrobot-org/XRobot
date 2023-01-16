@@ -1,7 +1,8 @@
 #pragma once
 
+#include <device.hpp>
+
 #include "comp_ahrs.hpp"
-#include "device.hpp"
 
 namespace Device {
 class BMI088 {

@@ -76,7 +76,7 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
   };
 
   this->thread_.Create(leg_thread, this, "leg_thread", 768,
-                       System::Thread::Medium);
+                       System::Thread::MEDIUM);
 }
 
 void WheelLeg::UpdateFeedback() {

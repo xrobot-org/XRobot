@@ -2,8 +2,8 @@
 
 #include <poll.h>
 #include <pthread.h>
-#include <stdint.h>
 
+#include <cstdint>
 #include <string>
 
 #include "system.hpp"
@@ -11,7 +11,7 @@
 namespace System {
 class Thread {
  public:
-  typedef enum { IDLE, Low, Medium, High, Realtime } Priority;
+  typedef enum { IDLE, LOW, MEDIUM, HIGH, REALTIME } Priority;
 
   template <typename FunType, typename ArgType>
   void Create(FunType fun, ArgType arg, const char* name, uint32_t stack_depth,
@@ -30,7 +30,7 @@ class Thread {
       TypeErasure<void, ArgType>* type =
           static_cast<TypeErasure<void, ArgType>*>(arg);
       type->fun_(type->arg_);
-      return (void*)NULL;
+      return static_cast<void*>(NULL);
     };
 
     pthread_create(&this->handle_, NULL, port, type);

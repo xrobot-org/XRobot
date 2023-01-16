@@ -19,7 +19,7 @@ Referee::Referee() {
   };
 
   this->recv_thread_.Create(ref_recv_thread, this, "ref_recv_thread", 256,
-                            System::Thread::Realtime);
+                            System::Thread::REALTIME);
 }
 
 void Referee::Prase() {

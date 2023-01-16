@@ -1,7 +1,8 @@
 #pragma once
 
+#include <device.hpp>
+
 #include "dev_can.hpp"
-#include "device.hpp"
 
 #define DEV_TOF_ID_BASE (0x20c)
 

@@ -1,6 +1,7 @@
+#include <database.hpp>
+
 #include "comp_ahrs.hpp"
 #include "comp_cmd.hpp"
-#include "database.hpp"
 #include "dev_ai.hpp"
 #include "dev_bmi088.hpp"
 #include "dev_can.hpp"

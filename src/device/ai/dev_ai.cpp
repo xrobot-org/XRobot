@@ -62,7 +62,7 @@ AI::AI() : data_ready_(false), cmd_tp_("cmd_ai") {
   };
 
   this->thread_.Create(ai_thread, this, "ai_thread", 256,
-                       System::Thread::Realtime);
+                       System::Thread::REALTIME);
 }
 
 bool AI::StartRecv() {

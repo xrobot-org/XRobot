@@ -12,9 +12,13 @@ target_link_libraries(${PROJECT_NAME}
     PRIVATE system
     PRIVATE bsp)
 
-target_include_directories(${PROJECT_NAME}
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+target_include_directories(
+    ${PROJECT_NAME}
     PUBLIC $<TARGET_PROPERTY:bsp,INTERFACE_INCLUDE_DIRECTORIES>
     PUBLIC $<TARGET_PROPERTY:system,INTERFACE_INCLUDE_DIRECTORIES>)
+
+target_include_directories(
+    ${PROJECT_NAME} SYSTEM
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_dependencies(${PROJECT_NAME} OneMessage system)

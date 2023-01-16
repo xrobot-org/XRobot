@@ -1,10 +1,11 @@
 #pragma once
 
+#include <device.hpp>
+
 #include "bsp_can.h"
 #include "comp_ahrs.hpp"
 #include "dev_can.hpp"
 #include "dev_motor.hpp"
-#include "device.hpp"
 
 /* RMMotor id */
 /* id     feedback id     control id */

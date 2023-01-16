@@ -76,7 +76,7 @@ AHRS::AHRS()
   };
 
   this->thread_.Create(ahrs_thread, this, "ahrs_thread", 256,
-                       System::Thread::High);
+                       System::Thread::HIGH);
 }
 
 int AHRS::ShowCMD(AHRS *ahrs, int argc, char *argv[]) {

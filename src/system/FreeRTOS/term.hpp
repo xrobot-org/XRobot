@@ -1,13 +1,12 @@
 #pragma once
 
-#include <stdarg.h>
-#include <stdint.h>
-
+#include <cstdarg>
+#include <cstdint>
 #include <cstring>
+#include <system.hpp>
 
 #include "bsp_usb.h"
 #include "ms.h"
-#include "system.hpp"
 
 namespace System {
 class Term {

@@ -1,5 +1,6 @@
+#include <device.hpp>
+
 #include "comp_cmd.hpp"
-#include "device.hpp"
 
 namespace Device {
 class TerminalController {

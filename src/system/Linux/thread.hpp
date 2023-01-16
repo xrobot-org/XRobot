@@ -11,7 +11,7 @@
 namespace System {
 class Thread {
  public:
-  typedef enum { IDLE, Low, Medium, High, Realtime } Priority;
+  typedef enum { IDLE, LOW, MEDIUM, HIGH, REALTIME } Priority;
 
   template <typename FunType, typename ArgType>
   void Create(FunType fun, ArgType arg, const char* name, uint32_t stack_depth,

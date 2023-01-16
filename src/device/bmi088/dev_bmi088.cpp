@@ -222,7 +222,7 @@ BMI088::BMI088(BMI088::Rotation &rot)
   };
 
   this->thread_.Create(thread_bmi088, this, "thread_bmi088", 256,
-                       System::Thread::Realtime);
+                       System::Thread::REALTIME);
 }
 
 int BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {

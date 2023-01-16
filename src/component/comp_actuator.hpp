@@ -1,9 +1,10 @@
 #pragma once
 
+#include <component.hpp>
+
 #include "comp_cf.hpp"
 #include "comp_filter.hpp"
 #include "comp_pid.hpp"
-#include "component.hpp"
 
 namespace Component {
 class SpeedActuator {

@@ -1,7 +1,8 @@
 #pragma once
 
+#include <device.hpp>
+
 #include "bsp_gpio.h"
-#include "device.hpp"
 
 namespace Device {
 class BlinkLED {

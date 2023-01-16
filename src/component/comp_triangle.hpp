@@ -1,6 +1,6 @@
 #pragma once
 
-#include "component.hpp"
+#include <component.hpp>
 
 namespace Component {
 class Triangle {

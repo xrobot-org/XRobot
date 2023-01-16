@@ -1,5 +1,7 @@
 #pragma once
 
+#include <module.hpp>
+
 #include "comp_actuator.hpp"
 #include "comp_cmd.hpp"
 #include "comp_filter.hpp"
@@ -7,7 +9,6 @@
 #include "comp_pid.hpp"
 #include "comp_triangle.hpp"
 #include "dev_mit_motor.hpp"
-#include "module.hpp"
 
 /*          L1              LEFT   L4  RIGHT  */
 /* M_FRONT ☉---☉ M_BACK       ☉----------☉    */

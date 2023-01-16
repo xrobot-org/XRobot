@@ -32,7 +32,7 @@ IMU::IMU(IMU::Param& param)
     }
   };
 
-  this->thread_.Create(thread_fn, this, "imu", 512, System::Thread::Realtime);
+  this->thread_.Create(thread_fn, this, "imu", 512, System::Thread::REALTIME);
 }
 
 void IMU::Update() {

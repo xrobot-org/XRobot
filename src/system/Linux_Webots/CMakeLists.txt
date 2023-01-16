@@ -42,6 +42,12 @@ target_include_directories(
   PUBLIC ${WEBOTS_HOME}/lib/controller
 )
 
+target_include_directories(
+  ${PROJECT_NAME} SYSTEM
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Linux_Webots
+)
+
 add_dependencies(
   ${PROJECT_NAME}
   bsp

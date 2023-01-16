@@ -1,8 +1,9 @@
 #pragma once
 
-#include "list.hpp"
+#include <list.hpp>
+#include <thread.hpp>
+
 #include "system.hpp"
-#include "thread.hpp"
 
 namespace System {
 class Timer {

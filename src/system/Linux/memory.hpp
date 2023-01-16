@@ -1,7 +1,8 @@
 #pragma once
 
 #include <malloc.h>
-#include <stdint.h>
+
+#include <cstdint>
 
 namespace System {
 class Memory {

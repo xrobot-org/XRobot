@@ -4,8 +4,9 @@
 
 #pragma once
 
+#include <device.hpp>
+
 #include "comp_ui.hpp"
-#include "device.hpp"
 
 namespace Device {
 class Referee {

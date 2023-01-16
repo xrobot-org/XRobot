@@ -1,8 +1,7 @@
 #pragma once
 
-#include <stdarg.h>
-#include <stdint.h>
-
+#include <cstdarg>
+#include <cstdint>
 #include <cstring>
 
 #include "ms.h"

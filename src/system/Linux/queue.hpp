@@ -1,9 +1,9 @@
 #pragma once
 
 #include <poll.h>
-#include <stdint.h>
-#include <stdio.h>
 
+#include <cstdint>
+#include <cstdio>
 #include <queue>
 namespace System {
 template <typename Data>
@@ -52,7 +52,9 @@ class Queue {
   bool OverwriteFromISR(const Data& data) { return Overwrite(data); }
 
   bool Reset() {
-    while (this->handle_.size()) this->handle_.pop();
+    while (this->handle_.size()) {
+      this->handle_.pop();
+    }
     return true;
   }
 

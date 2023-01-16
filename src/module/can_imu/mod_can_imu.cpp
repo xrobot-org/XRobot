@@ -51,7 +51,7 @@ CanIMU::CanIMU() {
   };
 
   this->thread_.Create(imu_thread, this, "imu_thread", 256,
-                       System::Thread::Medium);
+                       System::Thread::MEDIUM);
 }
 
 void CanIMU::SendAccl() {

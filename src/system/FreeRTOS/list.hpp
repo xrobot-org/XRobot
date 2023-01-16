@@ -40,10 +40,12 @@ class List {
 
   void Foreach(bool (*fun)(Data&, void*), void* arg) {
     xSemaphoreTake(this->sem_handle_, UINT32_MAX);
-    om_list_head_t* pos;
+    om_list_head_t* pos = NULL;
     om_list_for_each(pos, &(this->head_)) {
       Node* data = om_list_entry(pos, Node, node_);
-      if (!fun(data->data_, arg)) break;
+      if (!fun(data->data_, arg)) {
+        break;
+      }
     }
     xSemaphoreGive(this->sem_handle_);
   }

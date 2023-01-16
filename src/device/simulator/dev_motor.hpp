@@ -4,8 +4,9 @@
 #include <webots/position_sensor.h>
 #include <webots/robot.h>
 
+#include <device.hpp>
+
 #include "bsp_time.h"
-#include "device.hpp"
 
 namespace Device {
 class BaseMotor {

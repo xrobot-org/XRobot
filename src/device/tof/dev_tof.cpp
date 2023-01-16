@@ -34,7 +34,7 @@ Tof::Tof(Param &param) : param_(param) {
   };
 
   this->thread_.Create(tof_thread, this, "tof_thread", 256,
-                       System::Thread::Realtime);
+                       System::Thread::REALTIME);
 }
 
 void Tof::Decode(Can::Pack &rx) {

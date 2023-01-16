@@ -18,12 +18,15 @@ target_link_libraries(
 
 target_include_directories(
   ${PROJECT_NAME}
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
   PUBLIC ${LIB_DIR}/magic_enum/include
   PUBLIC ${${PROJECT_NAME}_INCLUDES}
   PUBLIC $<TARGET_PROPERTY:bsp,INTERFACE_INCLUDE_DIRECTORIES>
   PUBLIC $<TARGET_PROPERTY:system,INTERFACE_INCLUDE_DIRECTORIES>
   PUBLIC $<TARGET_PROPERTY:component,INTERFACE_INCLUDE_DIRECTORIES>
 )
+
+target_include_directories(
+    ${PROJECT_NAME} SYSTEM
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_dependencies(${PROJECT_NAME} bsp component system OneMessage)

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "component.hpp"
+#include <component.hpp>
 
 #define UI_GRAPHIC_LAYER_CONST (0)
 #define UI_GRAPHIC_LAYER_AUTOAIM (1)
