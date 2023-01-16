@@ -23,7 +23,7 @@ Gimbal::Gimbal(Param& param, float control_freq)
 
     gimbal->ctrl_lock_.Take(UINT32_MAX);
 
-    gimbal->SetMode((Mode)event);
+    gimbal->SetMode(static_cast<Mode>(event));
 
     gimbal->ctrl_lock_.Give();
   };

@@ -107,7 +107,7 @@ void MitMotor::SetCurrent(float current) { this->current_ = current; }
 void MitMotor::SetPos(float pos_error) {
   clampf(&pos_error, -this->param_.max_error, this->param_.max_error);
 
-  float pos_sp = this->GetAngle() + 4 * M_PI;
+  float pos_sp = this->GetAngle() + static_cast<float>(4.0f * M_PI);
 
   circle_add(&pos_sp, pos_error, 8 * M_PI);
 

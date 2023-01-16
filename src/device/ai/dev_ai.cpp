@@ -1,7 +1,5 @@
 #include "dev_ai.hpp"
 
-#include <sys/_stdint.h>
-
 #include "bsp_delay.h"
 #include "bsp_time.h"
 #include "bsp_uart.h"
@@ -118,7 +116,8 @@ bool AI::PackMCU() {
 
 bool AI::PackRef() {
   this->to_host.ref_.id = AI_ID_REF;
-  this->to_host.mcu_.package.data.ball_speed = this->ref_.ball_speed;
+  this->to_host.mcu_.package.data.ball_speed =
+      static_cast<float>(this->ref_.ball_speed);
   this->to_host.ref_.package.data.arm = this->ref_.robot_id;
   this->to_host.ref_.package.data.rfid = this->ref_.robot_buff;
   this->to_host.ref_.package.data.team = this->ref_.team;

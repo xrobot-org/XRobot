@@ -1,7 +1,5 @@
 #include "comp_crc16.hpp"
 
-#include <stdint.h>
-
 using namespace Component;
 
 static const uint16_t CRC16_TAB[256] = {
@@ -52,7 +50,6 @@ bool CRC16::Verify(const uint8_t *buf, size_t len) {
   }
 
   uint16_t expected = Calculate(buf, len - sizeof(uint16_t), CRC16_INIT);
-  return expected ==
-         reinterpret_cast<const uint16_t *>(
-             ((const uint8_t *)buf + (len % 2)))[len / sizeof(uint16_t) - 1];
+  return expected == reinterpret_cast<const uint16_t *>(
+                         (buf + (len % 2)))[len / sizeof(uint16_t) - 1];
 }

@@ -122,11 +122,11 @@ int TerminalController::ControlCMD(TerminalController* ctrl, int argc,
         return -1;
     }
 
-    float speed = std::stoi(argv[2]);
-    float time = std::stoi(argv[3]);
+    int speed = std::stoi(argv[2]);
+    int time = std::stoi(argv[3]);
 
-    ctrl->cmd_data_.chassis.x = x * speed / 100.0f;
-    ctrl->cmd_data_.chassis.y = y * speed / 100.0f;
+    ctrl->cmd_data_.chassis.x = x * static_cast<float>(speed) / 100.0f;
+    ctrl->cmd_data_.chassis.y = y * static_cast<float>(speed) / 100.0f;
 
     ctrl->cmd_data_.ctrl_source = Component::CMD::CTRL_SOURCE_TERM;
 

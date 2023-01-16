@@ -31,7 +31,8 @@ void RMMotor::Control(float output) {
 }
 
 bool RMMotor::Update() {
-  float raw_pos = wb_position_sensor_get_value(this->sensor_);
+  float raw_pos =
+      static_cast<float>(wb_position_sensor_get_value(this->sensor_));
 
   this->feedback_.rotational_speed =
       circle_error(raw_pos, this->last_pos_, M_2PI) /
@@ -56,7 +57,8 @@ bool RMMotor::Update() {
 
   this->last_sensor_time_ = bsp_time_get();
 
-  this->feedback_.torque_current = wb_motor_get_torque_feedback(this->handle_);
+  this->feedback_.torque_current =
+      static_cast<float>(wb_motor_get_torque_feedback(this->handle_));
 
   return true;
 }

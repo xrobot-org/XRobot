@@ -144,7 +144,7 @@ void Referee::Prase() {
     void *destination = NULL;
     size_t size = 0;
 
-    switch ((int)(*cmd_id)) {
+    switch (static_cast<int>(*cmd_id)) {
       case REF_CMD_ID_GAME_STATUS:
         destination = &(this->ref_data_.game_status);
         size = sizeof(this->ref_data_.game_status);
@@ -240,7 +240,8 @@ void Referee::Prase() {
     /* 验证无误则接受数据 */
     if (Component::CRC16::Verify(
             reinterpret_cast<const uint8_t *>((header)),
-            (uint8_t)(index - reinterpret_cast<const uint8_t *>((header))))) {
+            static_cast<uint8_t>(
+                index - reinterpret_cast<const uint8_t *>((header))))) {
       memcpy(destination, source, size);
     }
   }
@@ -563,7 +564,8 @@ bool Referee::StartTrans() {
     return false;
   }
 
-  if (bsp_uart_transmit(BSP_UART_REF, txbuf, (uint16_t)this->packet.size_,
+  if (bsp_uart_transmit(BSP_UART_REF, txbuf,
+                        static_cast<uint16_t>(this->packet.size_),
                         false) == BSP_OK) {
     return true;
   } else {

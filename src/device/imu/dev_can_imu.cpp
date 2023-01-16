@@ -51,21 +51,21 @@ bool IMU::Decode(Can::Pack &rx) {
   int16_t *tmp = reinterpret_cast<int16_t *>(rx.data);
   switch (rx.data[1]) {
     case ACCL_DATA_ID:
-      this->accl_.x = tmp[1] * 6.0f / (float)INT16_MAX;
-      this->accl_.y = tmp[2] * 6.0f / (float)INT16_MAX;
-      this->accl_.z = tmp[3] * 6.0f / (float)INT16_MAX;
+      this->accl_.x = static_cast<float>(tmp[1]) * 6.0f / INT16_MAX;
+      this->accl_.y = static_cast<float>(tmp[2]) * 6.0f / INT16_MAX;
+      this->accl_.z = static_cast<float>(tmp[3]) * 6.0f / INT16_MAX;
       this->accl_tp_.Publish(this->accl_);
       break;
     case GYRO_DATA_ID:
-      this->gyro_.x = tmp[1] * 20.0f / (float)INT16_MAX;
-      this->gyro_.y = tmp[2] * 20.0f / (float)INT16_MAX;
-      this->gyro_.z = tmp[3] * 20.0f / (float)INT16_MAX;
+      this->gyro_.x = static_cast<float>(tmp[1]) * 20.0f / INT16_MAX;
+      this->gyro_.y = static_cast<float>(tmp[2]) * 20.0f / INT16_MAX;
+      this->gyro_.z = static_cast<float>(tmp[3]) * 20.0f / INT16_MAX;
       this->gyro_tp_.Publish(this->gyro_);
       break;
     case EULR_DATA_ID:
-      this->eulr_.pit = tmp[1] * M_2PI / (float)INT16_MAX;
-      this->eulr_.rol = tmp[2] * M_2PI / (float)INT16_MAX;
-      this->eulr_.yaw = tmp[3] * M_2PI / (float)INT16_MAX;
+      this->eulr_.pit = static_cast<float>(tmp[1]) * M_2PI / INT16_MAX;
+      this->eulr_.rol = static_cast<float>(tmp[2]) * M_2PI / INT16_MAX;
+      this->eulr_.yaw = static_cast<float>(tmp[3]) * M_2PI / INT16_MAX;
       this->eulr_tp_.Publish(this->eulr_);
       break;
     default:

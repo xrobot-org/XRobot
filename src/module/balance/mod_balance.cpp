@@ -34,7 +34,8 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
     new (this->wheel_actr_[i])
         Component::SpeedActuator(param.wheel_param[i], control_freq);
 
-    this->motor_[i] = (Motor*)System::Memory::Malloc(sizeof(Motor));
+    this->motor_[i] =
+        static_cast<Motor*>(System::Memory::Malloc(sizeof(Motor)));
     new (this->motor_[i])
         Motor(param.motor_param[i],
               (std::string("Chassis_Wheel_") + WHELL_NAMES[i].data()).c_str());

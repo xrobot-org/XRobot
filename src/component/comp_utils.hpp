@@ -4,10 +4,9 @@
 
 #pragma once
 
-#include <float.h>
-#include <math.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include <cfloat>
+#include <cmath>
+#include <cstdint>
 
 #include "comp_type.hpp"
 

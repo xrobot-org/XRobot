@@ -11,6 +11,8 @@
 
 #include "mod_chassis.hpp"
 
+#include <random>
+
 #include "bsp_time.h"
 
 #define ROTOR_WZ_MIN 0.6f /* 小陀螺旋转位移下界 */
@@ -54,14 +56,16 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
     new (this->actuator_[i])
         Component::SpeedActuator(param.actuator_param[i], control_freq);
 
-    this->motor_[i] = (Motor*)System::Memory::Malloc(sizeof(Motor));
+    this->motor_[i] =
+        reinterpret_cast<Motor*>(System::Memory::Malloc(sizeof(Motor)));
     new (this->motor_[i])
         Motor(param.motor_param[i],
               (std::string("Chassis_") + std::to_string(i)).c_str());
   }
 
-  this->setpoint.motor_rotational_speed = (float*)System::Memory::Malloc(
-      this->mixer_.len_ * sizeof(*this->setpoint.motor_rotational_speed));
+  this->setpoint.motor_rotational_speed =
+      reinterpret_cast<float*>(System::Memory::Malloc(
+          this->mixer_.len_ * sizeof(*this->setpoint.motor_rotational_speed)));
   ASSERT(this->setpoint.motor_rotational_speed);
 
   auto event_callback = [](uint32_t event, void* arg) {
@@ -236,7 +240,7 @@ void Chassis<Motor, MotorParam>::PraseRef() {
 
 template <typename Motor, typename MotorParam>
 float Chassis<Motor, MotorParam>::CalcWz(const float LO, const float HI) {
-  float wz_vary = fabsf(0.2f * sinf(ROTOR_OMEGA * (float)this->now_)) + LO;
+  float wz_vary = fabsf(0.2f * sinf(ROTOR_OMEGA * this->now_)) + LO;
   clampf(&wz_vary, LO, HI);
   return wz_vary;
 }
@@ -248,8 +252,8 @@ void Chassis<Motor, MotorParam>::SetMode(Chassis::Mode mode) {
   }
 
   if (mode == Chassis::ROTOR && this->mode_ != Chassis::ROTOR) {
-    srand(this->now_);
-    this->wz_dir_mult_ = (rand() % 2) ? -1 : 1;
+    std::srand(this->now_);
+    this->wz_dir_mult_ = (std::rand() % 2) ? -1 : 1;
   }
   /* 切换模式后重置PID和滤波器 */
   for (size_t i = 0; i < this->mixer_.len_; i++) {

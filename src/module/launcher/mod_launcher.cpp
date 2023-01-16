@@ -58,14 +58,14 @@ Launcher::Launcher(Param& param, float control_freq)
       case CHANGE_FIRE_MODE_SAFE:
       case CHANGE_FIRE_MODE_LOADED:
         launcher->fire_ctrl_.fire = false;
-        launcher->SetFireMode((FireMode)event);
+        launcher->SetFireMode(static_cast<FireMode>(event));
         break;
         launcher->fire_ctrl_.fire = false;
-        launcher->SetFireMode((FireMode)event);
+        launcher->SetFireMode(static_cast<FireMode>(event));
         break;
       case CHANGE_FIRE_MODE_SINGLE:
       case CHANGE_FIRE_MODE_BURST:
-        launcher->SetTrigMode((TrigMode)event);
+        launcher->SetTrigMode(static_cast<TrigMode>(event));
         break;
       case LAUNCHER_START_FIRE:
         if (launcher->fire_ctrl_.fire_mode_ == LOADED) {
@@ -175,7 +175,8 @@ void Launcher::Control() {
     case CONTINUED: { /* 持续开火模式 */
       float launch_freq = this->LimitLauncherFreq();
       this->fire_ctrl_.launch_delay =
-          (launch_freq == 0.0f) ? UINT32_MAX : (uint32_t)(1000.f / launch_freq);
+          (launch_freq == 0.0f) ? UINT32_MAX
+                                : static_cast<uint32_t>(1000.f / launch_freq);
       break;
     }
     default:
@@ -302,9 +303,9 @@ void Launcher::HeatLimit() {
     /* 检测热量更新后,计算可发射弹丸 */
     if ((this->heat_ctrl_.heat != this->heat_ctrl_.last_heat) ||
         this->heat_ctrl_.available_shot == 0 || (this->heat_ctrl_.heat == 0)) {
-      this->heat_ctrl_.available_shot = (uint32_t)floorf(
-          (this->heat_ctrl_.heat_limit - this->heat_ctrl_.heat) /
-          this->heat_ctrl_.heat_increase);
+      this->heat_ctrl_.available_shot = static_cast<uint32_t>(
+          floorf((this->heat_ctrl_.heat_limit - this->heat_ctrl_.heat) /
+                 this->heat_ctrl_.heat_increase));
       this->heat_ctrl_.last_heat = this->heat_ctrl_.heat;
     }
     this->fire_ctrl_.bullet_speed = this->heat_ctrl_.speed_limit;

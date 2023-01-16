@@ -27,8 +27,8 @@ Can::Can() {
   };
 
   for (int i = 0; i < BSP_CAN_NUM; i++) {
-    bsp_can_register_callback((bsp_can_t)i, CAN_RX_MSG_CALLBACK, rx_callback,
-                              NULL);
+    bsp_can_register_callback(static_cast<bsp_can_t>(i), CAN_RX_MSG_CALLBACK,
+                              rx_callback, NULL);
   }
 }
 

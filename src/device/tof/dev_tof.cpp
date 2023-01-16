@@ -39,11 +39,11 @@ Tof::Tof(Param &param) : param_(param) {
 
 void Tof::Decode(Can::Pack &rx) {
   this->fb_[rx.index].dist =
-      (float)((rx.data[2] << 16) | (rx.data[1] << 8) | rx.data[0]) /
-      (float)TOF_RES;
+      static_cast<float>((rx.data[2] << 16) | (rx.data[1] << 8) | rx.data[0]) /
+      TOF_RES;
   this->fb_[rx.index].status = rx.data[3];
   this->fb_[rx.index].signal_strength =
-      (uint16_t)((rx.data[5] << 8) | rx.data[4]);
+      static_cast<uint16_t>((rx.data[5] << 8) | rx.data[4]);
 }
 
 bool Tof::Update() {

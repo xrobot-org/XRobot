@@ -105,7 +105,7 @@ void BMI088::WriteSingle(BMI088::DeviceType type, uint8_t reg, uint8_t data) {
 }
 
 uint8_t BMI088::ReadSingle(BMI088::DeviceType type, uint8_t reg) {
-  tx_rx_buf[0] = (uint8_t)(reg | 0x80);
+  tx_rx_buf[0] = static_cast<uint8_t>(reg | 0x80);
 
   bsp_delay(1);
 
@@ -122,7 +122,7 @@ uint8_t BMI088::ReadSingle(BMI088::DeviceType type, uint8_t reg) {
 
 void BMI088::Read(BMI088::DeviceType type, uint8_t reg, uint8_t *data,
                   uint8_t len) {
-  tx_rx_buf[0] = (uint8_t)(reg | 0x80);
+  tx_rx_buf[0] = static_cast<uint8_t>(reg | 0x80);
 
   this->Select(type);
   bsp_spi_transmit(BSP_SPI_IMU, tx_rx_buf, 1u, true);
@@ -243,17 +243,17 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
       ms_enter();
       double x = 0.0f, y = 0.0f, z = 0.0f;
       for (int i = 0; i < 30000; i++) {
-        x += double(bmi088->gyro_.x) / 30000.0f;
-        y += double(bmi088->gyro_.y) / 30000.0f;
-        z += double(bmi088->gyro_.z) / 30000.0f;
+        x += static_cast<double>(bmi088->gyro_.x) / 30000.0f;
+        y += static_cast<double>(bmi088->gyro_.y) / 30000.0f;
+        z += static_cast<double>(bmi088->gyro_.z) / 30000.0f;
         ms_printf("进度：%d/30000", i);
         System::Thread::Sleep(1);
         ms_clear_line();
       }
 
-      bmi088->cali.gyro_offset.x += x;
-      bmi088->cali.gyro_offset.y += y;
-      bmi088->cali.gyro_offset.z += z;
+      bmi088->cali.gyro_offset.x += static_cast<float>(x);
+      bmi088->cali.gyro_offset.y += static_cast<float>(y);
+      bmi088->cali.gyro_offset.z += static_cast<float>(z);
 
       ms_printf("校准数据 x:%f y:%f z:%f", bmi088->cali.gyro_offset.x,
                 bmi088->cali.gyro_offset.y, bmi088->cali.gyro_offset.z);
@@ -265,9 +265,9 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
       ms_enter();
 
       for (int i = 0; i < 30000; i++) {
-        x += double(bmi088->gyro_.x) / 30000.0f;
-        y += double(bmi088->gyro_.y) / 30000.0f;
-        z += double(bmi088->gyro_.z) / 30000.0f;
+        x += static_cast<double>(bmi088->gyro_.x) / 30000.0f;
+        y += static_cast<double>(bmi088->gyro_.y) / 30000.0f;
+        z += static_cast<double>(bmi088->gyro_.z) / 30000.0f;
         ms_printf("进度：%d/30000", i);
         System::Thread::Sleep(1);
         ms_clear_line();
@@ -388,7 +388,8 @@ void BMI088::PraseGyro() {
   memcpy(&raw_y, dma_buf + BMI088_ACCL_RX_BUFF_LEN + 2, sizeof(raw_y));
   memcpy(&raw_z, dma_buf + BMI088_ACCL_RX_BUFF_LEN + 4, sizeof(raw_z));
 
-  float gyro[3] = {(float)raw_x, (float)raw_y, (float)raw_z};
+  float gyro[3] = {static_cast<float>(raw_x), static_cast<float>(raw_y),
+                   static_cast<float>(raw_z)};
 
   /* FS125: 262.144. FS250: 131.072. FS500: 65.536. FS1000: 32.768.
    * FS2000: 16.384.*/
@@ -417,20 +418,22 @@ void BMI088::PraseAccel() {
   memcpy(&raw_y, dma_buf + 3, sizeof(raw_y));
   memcpy(&raw_z, dma_buf + 5, sizeof(raw_z));
 
-  float accl[3] = {(float)raw_x, (float)raw_y, (float)raw_z};
+  float accl[3] = {static_cast<float>(raw_x), static_cast<float>(raw_y),
+                   static_cast<float>(raw_z)};
 
   /* 3G: 10920. 6G: 5460. 12G: 2730. 24G: 1365. */
   for (int i = 0; i < 3; i++) {
     accl[i] /= 5640.0f;
   }
 
-  int16_t raw_temp = (int16_t)((dma_buf[17] << 3) | (dma_buf[18] >> 5));
+  int16_t raw_temp =
+      static_cast<int16_t>((dma_buf[17] << 3) | (dma_buf[18] >> 5));
 
   if (raw_temp > 1023) {
     raw_temp -= 2048;
   }
 
-  this->temp_ = (float)raw_temp * 0.125f + 23.0f;
+  this->temp_ = static_cast<float>(raw_temp) * 0.125f + 23.0f;
 
   memset(&(this->accl_), 0, sizeof(this->accl_));
 

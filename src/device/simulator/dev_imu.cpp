@@ -41,17 +41,17 @@ void IMU::Update() {
   const double* eulr_data =
       wb_inertial_unit_get_roll_pitch_yaw(this->ahrs_handle_);
 
-  this->eulr_.rol = eulr_data[0];
-  this->eulr_.pit = eulr_data[1];
-  this->eulr_.yaw = eulr_data[2];
+  this->eulr_.rol = static_cast<float>(eulr_data[0]);
+  this->eulr_.pit = static_cast<float>(eulr_data[1]);
+  this->eulr_.yaw = static_cast<float>(eulr_data[2]);
 
-  this->gyro_.x = gyro_data[0];
-  this->gyro_.y = gyro_data[1];
-  this->gyro_.z = gyro_data[2];
+  this->gyro_.x = static_cast<float>(gyro_data[0]);
+  this->gyro_.y = static_cast<float>(gyro_data[1]);
+  this->gyro_.z = static_cast<float>(gyro_data[2]);
 
-  this->accl_.x = accl_data[0];
-  this->accl_.y = accl_data[1];
-  this->accl_.z = accl_data[2];
+  this->accl_.x = static_cast<float>(accl_data[0]);
+  this->accl_.y = static_cast<float>(accl_data[1]);
+  this->accl_.z = static_cast<float>(accl_data[2]);
 }
 
 int IMU::ShowCMD(IMU* imu, int argc, char* argv[]) {

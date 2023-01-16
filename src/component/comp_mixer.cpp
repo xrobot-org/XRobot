@@ -83,8 +83,8 @@ bool Mixer::Apply(Component::Type::MoveVector &move_vec, float *out) {
 
   float abs_max = 0.f;
   for (size_t i = 0; i < this->len_; i++) {
-    const float abs_val = fabsf(out[i]);
-    abs_max = (abs_val > abs_max) ? abs_val : abs_max;
+    const float ABS_VAL = fabsf(out[i]);
+    abs_max = (ABS_VAL > abs_max) ? ABS_VAL : abs_max;
   }
   if (abs_max > 1.f) {
     for (size_t i = 0; i < this->len_; i++) {

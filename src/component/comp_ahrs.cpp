@@ -47,12 +47,12 @@ AHRS::AHRS()
       return true;
     };
 
-    ((Message::Topic<Component::Type::Vector3>)
-         Message::Topic<Component::Type::Vector3>::Find("imu_accl"))
+    (Message::Topic<Component::Type::Vector3>(
+         Message::Topic<Component::Type::Vector3>::Find("imu_accl")))
         .RegisterCallback(accl_cb, ahrs);
 
-    ((Message::Topic<Component::Type::Vector3>)
-         Message::Topic<Component::Type::Vector3>::Find("imu_gyro"))
+    (Message::Topic<Component::Type::Vector3>(
+         Message::Topic<Component::Type::Vector3>::Find("imu_gyro")))
         .RegisterCallback(gyro_cb, ahrs);
 
     while (1) {
@@ -112,6 +112,12 @@ int AHRS::ShowCMD(AHRS *ahrs, int argc, char *argv[]) {
   return 0;
 }
 
+static float recip_norm;
+static float s0, s1, s2, s3;
+static float q_dot1, q_dot2, q_dot3, q_dot4;
+static float q_2q0, q_2q1, q_2q2, q_2q3, q_4q0, q_4q1, q_4q2, q_8q1, q_8q2,
+    q0q0, q1q1, q2q2, q3q3;
+
 void AHRS::Update() {
   this->now_ = bsp_time_get();
 
@@ -125,14 +131,6 @@ void AHRS::Update() {
   float gx = this->gyro_.x;
   float gy = this->gyro_.y;
   float gz = this->gyro_.z;
-
-  // TODO:
-
-  float recip_norm;
-  float s0, s1, s2, s3;
-  float q_dot1, q_dot2, q_dot3, q_dot4;
-  float _2q0, _2q1, _2q2, _2q3, _4q0, _4q1, _4q2, _8q1, _8q2, q0q0, q1q1, q2q2,
-      q3q3;
 
   /* Rate of change of quaternion from gyroscope */
   q_dot1 =
@@ -154,28 +152,28 @@ void AHRS::Update() {
     az *= recip_norm;
 
     /* Auxiliary variables to avoid repeated arithmetic */
-    _2q0 = 2.0f * this->quat_.q0;
-    _2q1 = 2.0f * this->quat_.q1;
-    _2q2 = 2.0f * this->quat_.q2;
-    _2q3 = 2.0f * this->quat_.q3;
-    _4q0 = 4.0f * this->quat_.q0;
-    _4q1 = 4.0f * this->quat_.q1;
-    _4q2 = 4.0f * this->quat_.q2;
-    _8q1 = 8.0f * this->quat_.q1;
-    _8q2 = 8.0f * this->quat_.q2;
+    q_2q0 = 2.0f * this->quat_.q0;
+    q_2q1 = 2.0f * this->quat_.q1;
+    q_2q2 = 2.0f * this->quat_.q2;
+    q_2q3 = 2.0f * this->quat_.q3;
+    q_4q0 = 4.0f * this->quat_.q0;
+    q_4q1 = 4.0f * this->quat_.q1;
+    q_4q2 = 4.0f * this->quat_.q2;
+    q_8q1 = 8.0f * this->quat_.q1;
+    q_8q2 = 8.0f * this->quat_.q2;
     q0q0 = this->quat_.q0 * this->quat_.q0;
     q1q1 = this->quat_.q1 * this->quat_.q1;
     q2q2 = this->quat_.q2 * this->quat_.q2;
     q3q3 = this->quat_.q3 * this->quat_.q3;
 
     /* Gradient decent algorithm corrective step */
-    s0 = _4q0 * q2q2 + _2q2 * ax + _4q0 * q1q1 - _2q1 * ay;
-    s1 = _4q1 * q3q3 - _2q3 * ax + 4.0f * q0q0 * this->quat_.q1 - _2q0 * ay -
-         _4q1 + _8q1 * q1q1 + _8q1 * q2q2 + _4q1 * az;
-    s2 = 4.0f * q0q0 * this->quat_.q2 + _2q0 * ax + _4q2 * q3q3 - _2q3 * ay -
-         _4q2 + _8q2 * q1q1 + _8q2 * q2q2 + _4q2 * az;
-    s3 = 4.0f * q1q1 * this->quat_.q3 - _2q1 * ax +
-         4.0f * q2q2 * this->quat_.q3 - _2q2 * ay;
+    s0 = q_4q0 * q2q2 + q_2q2 * ax + q_4q0 * q1q1 - q_2q1 * ay;
+    s1 = q_4q1 * q3q3 - q_2q3 * ax + 4.0f * q0q0 * this->quat_.q1 - q_2q0 * ay -
+         q_4q1 + q_8q1 * q1q1 + q_8q1 * q2q2 + q_4q1 * az;
+    s2 = 4.0f * q0q0 * this->quat_.q2 + q_2q0 * ax + q_4q2 * q3q3 - q_2q3 * ay -
+         q_4q2 + q_8q2 * q1q1 + q_8q2 * q2q2 + q_4q2 * az;
+    s3 = 4.0f * q1q1 * this->quat_.q3 - q_2q1 * ax +
+         4.0f * q2q2 * this->quat_.q3 - q_2q2 * ay;
 
     /* normalise step magnitude */
     recip_norm = inv_sqrtf(s0 * s0 + s1 * s1 + s2 * s2 + s3 * s3);
@@ -209,23 +207,23 @@ void AHRS::Update() {
 }
 
 void AHRS::GetEulr() {
-  const float sinr_cosp = 2.0f * (this->quat_.q0 * this->quat_.q1 +
+  const float SINR_COSP = 2.0f * (this->quat_.q0 * this->quat_.q1 +
                                   this->quat_.q2 * this->quat_.q3);
-  const float cosr_cosp = 1.0f - 2.0f * (this->quat_.q1 * this->quat_.q1 +
+  const float COSR_COSP = 1.0f - 2.0f * (this->quat_.q1 * this->quat_.q1 +
                                          this->quat_.q2 * this->quat_.q2);
-  this->eulr_.pit = atan2f(sinr_cosp, cosr_cosp);
+  this->eulr_.pit = atan2f(SINR_COSP, COSR_COSP);
 
-  const float sinp = 2.0f * (this->quat_.q0 * this->quat_.q2 -
+  const float SINP = 2.0f * (this->quat_.q0 * this->quat_.q2 -
                              this->quat_.q3 * this->quat_.q1);
 
-  if (fabsf(sinp) >= 1.0f)
-    this->eulr_.rol = copysignf(M_PI / 2.0f, sinp);
-  else
-    this->eulr_.rol = asinf(sinp);
-
-  const float siny_cosp = 2.0f * (this->quat_.q0 * this->quat_.q3 +
+  if (fabsf(SINP) >= 1.0f) {
+    this->eulr_.rol = copysignf(M_PI / 2.0f, SINP);
+  } else {
+    this->eulr_.rol = asinf(SINP);
+  }
+  const float SINY_COSP = 2.0f * (this->quat_.q0 * this->quat_.q3 +
                                   this->quat_.q1 * this->quat_.q2);
-  const float cosy_cosp = 1.0f - 2.0f * (this->quat_.q2 * this->quat_.q2 +
+  const float COSY_COSP = 1.0f - 2.0f * (this->quat_.q2 * this->quat_.q2 +
                                          this->quat_.q3 * this->quat_.q3);
-  this->eulr_.yaw = atan2f(siny_cosp, cosy_cosp);
+  this->eulr_.yaw = atan2f(SINY_COSP, COSY_COSP);
 }

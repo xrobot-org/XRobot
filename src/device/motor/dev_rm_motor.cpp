@@ -1,5 +1,7 @@
 #include "dev_rm_motor.hpp"
 
+#include <sys/_stdint.h>
+
 #include "bsp_time.h"
 
 /* 电机最大控制输出绝对值 */
@@ -92,26 +94,28 @@ bool RMMotor::Update() {
 }
 
 void RMMotor::Decode(Can::Pack &rx) {
-  uint16_t raw_angle = (uint16_t)((rx.data[0] << 8) | rx.data[1]);
-  int16_t raw_current = (int16_t)((rx.data[4] << 8) | rx.data[5]);
+  uint16_t raw_angle = static_cast<uint16_t>((rx.data[0] << 8) | rx.data[1]);
+  int16_t raw_current = static_cast<int16_t>((rx.data[4] << 8) | rx.data[5]);
 
-  this->feedback_.rotor_abs_angle = raw_angle / (float)MOTOR_ENC_RES * M_2PI;
-  this->feedback_.rotational_speed = (int16_t)((rx.data[2] << 8) | rx.data[3]);
+  this->feedback_.rotor_abs_angle =
+      static_cast<float>(raw_angle) / (MOTOR_ENC_RES * M_2PI);
+  this->feedback_.rotational_speed =
+      static_cast<int16_t>((rx.data[2] << 8) | rx.data[3]);
   this->feedback_.torque_current =
-      raw_current * M3508_MAX_ABS_CUR / (float)MOTOR_CUR_RES;
+      static_cast<float>(raw_current) * M3508_MAX_ABS_CUR / MOTOR_CUR_RES;
   this->feedback_.temp = rx.data[6];
 }
 
 float RMMotor::GetLSB() {
   switch (this->param_.model) {
     case MOTOR_M2006:
-      return (float)M2006_MAX_ABS_LSB;
+      return M2006_MAX_ABS_LSB;
 
     case MOTOR_M3508:
-      return (float)M3508_MAX_ABS_LSB;
+      return M3508_MAX_ABS_LSB;
 
     case MOTOR_GM6020:
-      return (float)GM6020_MAX_ABS_LSB;
+      return GM6020_MAX_ABS_LSB;
 
     default:
       return 0.0f;
@@ -125,11 +129,11 @@ void RMMotor::Control(float out) {
   float lsb = this->GetLSB();
 
   if (lsb != 0.0f) {
-    int16_t ctrl_cmd = this->output_ * lsb;
+    int16_t ctrl_cmd = static_cast<int16_t>(this->output_ * lsb);
     motor_tx_buff_[this->param_.can][this->index_][2 * this->num_] =
-        (uint8_t)((ctrl_cmd >> 8) & 0xFF);
+        static_cast<uint8_t>((ctrl_cmd >> 8) & 0xFF);
     motor_tx_buff_[this->param_.can][this->index_][2 * this->num_ + 1] =
-        (uint8_t)(ctrl_cmd & 0xFF);
+        static_cast<uint8_t>(ctrl_cmd & 0xFF);
     motor_tx_flag_[this->param_.can][this->index_] |= 1 << (this->num_);
 
     if (((~motor_tx_flag_[this->param_.can][this->index_]) &

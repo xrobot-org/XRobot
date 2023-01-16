@@ -16,7 +16,7 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
           System::Memory::Malloc(sizeof(Device::MitMotor)));
       new (this->leg_motor_[i * LEG_MOTOR_NUM + j])
           Device::MitMotor(this->param_.leg_motor[i * LEG_MOTOR_NUM + j],
-                           (((std::string) "Leg_") + LEG_NAMES[i].data() + "_" +
+                           ((std::string("Leg_")) + LEG_NAMES[i].data() + "_" +
                             MOTOR_NAMES[j].data())
                                .c_str());
 
@@ -98,8 +98,10 @@ void WheelLeg::UpdateFeedback() {
         {this->feedback_[i].motor_angle[LEG_FRONT], this->param_.l2},
         {this->feedback_[i].motor_angle[LEG_BACK], this->param_.l2}};
     Position2 pos_l2_end[LEG_MOTOR_NUM]{
-        {Position2(polar_l2[LEG_FRONT]) + Position2(-param_.l1 / 2.0f, 0.0f)},
-        {Position2(polar_l2[LEG_BACK]) + Position2(param_.l1 / 2.0f, 0.0f)}};
+        {static_cast<Position2>(polar_l2[LEG_FRONT]) +
+         Position2(-param_.l1 / 2.0f, 0.0f)},
+        {static_cast<Position2>(polar_l2[LEG_BACK]) +
+         Position2(param_.l1 / 2.0f, 0.0f)}};
 
     this->feedback_[i].diagonal =
         Line(pos_l2_end[LEG_FRONT], pos_l2_end[LEG_BACK]);
@@ -112,7 +114,7 @@ void WheelLeg::UpdateFeedback() {
     circle_add(&angle, M_PI / 2.0f, M_2PI);
 
     this->feedback_[i].whell_pos =
-        (Position2)Polar2(angle, length) + middle_point;
+        Position2(Polar2(angle, length)) + middle_point;
     if (i == LEG_LEFT) {
       this->feedback_[i].whell_pos.x_ = -this->feedback_[i].whell_pos.x_;
     }

@@ -2,7 +2,7 @@
 
 #include "bsp_time.h"
 
-#define CAP_RES (100) /* 电容数据分辨率 */
+#define CAP_RES (100.0f) /* 电容数据分辨率 */
 
 #define CAP_CUTOFF_VOLT \
   13.0f /* 电容截止电压，未接升压模块时要高于电调最低工作电压 */
@@ -66,17 +66,20 @@ bool Cap::Update() {
 
 void Cap::Decode(Can::Pack &rx) {
   uint8_t *raw = rx.data;
-  this->info_.input_volt_ = (float)((raw[1] << 8) | raw[0]) / (float)CAP_RES;
-  this->info_.cap_volt_ = (float)((raw[3] << 8) | raw[2]) / (float)CAP_RES;
-  this->info_.input_curr_ = (float)((raw[5] << 8) | raw[4]) / (float)CAP_RES;
-  this->info_.target_power_ = (float)((raw[7] << 8) | raw[6]) / (float)CAP_RES;
+  this->info_.input_volt_ =
+      static_cast<float>((raw[1] << 8) | raw[0]) / CAP_RES;
+  this->info_.cap_volt_ = static_cast<float>((raw[3] << 8) | raw[2]) / CAP_RES;
+  this->info_.input_curr_ =
+      static_cast<float>((raw[5] << 8) | raw[4]) / CAP_RES;
+  this->info_.target_power_ =
+      static_cast<float>((raw[7] << 8) | raw[6]) / CAP_RES;
 
   /* 更新电容状态和百分比 */
   this->info_.percentage_ = this->GetPercentage();
 }
 
 bool Cap::Control() {
-  uint16_t pwr_lim = (uint16_t)(this->out_.power_limit_ * CAP_RES);
+  uint16_t pwr_lim = static_cast<uint16_t>(this->out_.power_limit_ * CAP_RES);
 
   Can::Pack tx_buff;
 

@@ -133,7 +133,8 @@ void DR16::PraseRC() {
   }
 
   /* 最大量程 */
-  constexpr float FULL_RANGE = (float)(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
+  constexpr float FULL_RANGE =
+      static_cast<float>(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
 
   if (this->ctrl_source_ == DR16_CTRL_SOURCE_MOUSE) { /* 键鼠控制 */
     /* 鼠标左右键 */
@@ -169,23 +170,27 @@ void DR16::PraseRC() {
     this->cmd_.chassis.z = 0.0f;
 
     /* 云台控制 */
-    this->cmd_.gimbal.eulr.pit = this->data_.y / 32768.0f;
-    this->cmd_.gimbal.eulr.yaw = this->data_.x / 32768.0f;
+    this->cmd_.gimbal.eulr.pit = static_cast<float>(this->data_.y) / 32768.0f;
+    this->cmd_.gimbal.eulr.yaw = static_cast<float>(this->data_.x) / 32768.0f;
     this->cmd_.gimbal.eulr.rol = 0.0f;
 
   } else if (this->ctrl_source_ == DR16_CTRL_SOURCE_SW) { /* 遥控器控制 */
     /* Chassis Control */
     this->cmd_.chassis.x =
-        2 * ((float)this->data_.ch_l_x - DR16_CH_VALUE_MID) / FULL_RANGE;
+        2 * (static_cast<float>(this->data_.ch_l_x) - DR16_CH_VALUE_MID) /
+        FULL_RANGE;
     this->cmd_.chassis.y =
-        2 * ((float)this->data_.ch_l_y - DR16_CH_VALUE_MID) / FULL_RANGE;
+        2 * (static_cast<float>(this->data_.ch_l_y) - DR16_CH_VALUE_MID) /
+        FULL_RANGE;
     this->cmd_.chassis.z = 0.0f;
 
     /* Gimbal Control */
     this->cmd_.gimbal.eulr.yaw =
-        2 * ((float)this->data_.ch_r_x - DR16_CH_VALUE_MID) / FULL_RANGE;
+        2 * (static_cast<float>(this->data_.ch_r_x) - DR16_CH_VALUE_MID) /
+        FULL_RANGE;
     this->cmd_.gimbal.eulr.pit =
-        2 * ((float)this->data_.ch_r_y - DR16_CH_VALUE_MID) / FULL_RANGE;
+        2 * (static_cast<float>(this->data_.ch_r_y) - DR16_CH_VALUE_MID) /
+        FULL_RANGE;
     this->cmd_.gimbal.eulr.rol = 0.0f;
   }
 
