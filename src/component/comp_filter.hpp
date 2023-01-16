@@ -16,6 +16,7 @@ class LowPassFilter {
 
   void Reset(float sample);
 
+ private:
   float cut_freq_;
 
   float last_out_;
@@ -23,6 +24,13 @@ class LowPassFilter {
 /* 二阶巴特沃斯低通滤波器 */
 class LowPassFilter2p {
  public:
+  LowPassFilter2p(float sample_freq, float cutoff_freq);
+
+  float Apply(float sample);
+
+  float Reset(float sample);
+
+ private:
   float cutoff_freq_; /* 截止频率 */
 
   float a1_;
@@ -34,11 +42,5 @@ class LowPassFilter2p {
 
   float delay_element_1_;
   float delay_element_2_;
-
-  LowPassFilter2p(float sample_freq, float cutoff_freq);
-
-  float Apply(float sample);
-
-  float Reset(float sample);
 };
 }  // namespace Component

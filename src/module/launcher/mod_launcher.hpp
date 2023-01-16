@@ -140,6 +140,7 @@ class Launcher {
 
   void PraseRef();
 
+ private:
   float last_wakeup_;
 
   float now_;
@@ -156,7 +157,7 @@ class Launcher {
   struct {
     float fric_rpm_[2]; /* 摩擦轮电机转速，单位：RPM */
     float trig_angle_;  /* 拨弹电机角度，单位：弧度 */
-  } setpoint;
+  } setpoint_;
 
   HeatControl heat_ctrl_;
   FireControl fire_ctrl_;

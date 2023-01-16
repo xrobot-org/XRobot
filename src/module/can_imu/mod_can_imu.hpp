@@ -21,10 +21,19 @@ class CanIMU {
 
   void SendQuat();
 
+ private:
+#if IMU_SEND_EULR
   Component::Type::Eulr eulr_;
+#endif
+#if IMU_SEND_QUAT
   Component::Type::Quaternion quat_;
+#endif
+#if IMU_SEND_GYRO
   Component::Type::Vector3 gyro_;
+#endif
+#if IMU_SEND_ACCL
   Component::Type::Vector3 accl_;
+#endif
 
   System::Thread thread_;
 };

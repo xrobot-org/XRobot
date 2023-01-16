@@ -8,8 +8,7 @@
 using namespace Device;
 
 IMU::IMU(IMU::Param& param)
-    : param_(param),
-      accl_tp_((param.tp_name_prefix + std::string("_accl")).c_str()),
+    : accl_tp_((param.tp_name_prefix + std::string("_accl")).c_str()),
       gyro_tp_((param.tp_name_prefix + std::string("_gyro")).c_str()),
       eulr_tp_((param.tp_name_prefix + std::string("_eulr")).c_str()),
       ahrs_handle_(wb_robot_get_device("imu")),

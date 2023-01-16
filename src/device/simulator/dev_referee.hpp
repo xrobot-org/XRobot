@@ -332,6 +332,7 @@ class Referee {
 
   void Prase();
 
+ private:
   System::Thread recv_thread_;
 
   Message::Topic<Data> ref_data_tp_ = Message::Topic<Data>("referee");

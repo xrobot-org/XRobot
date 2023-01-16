@@ -76,6 +76,7 @@ class Chassis {
 
   float CalcWz(const float LO, const float HI);
 
+ private:
   Param param_;
 
   float dt_;
@@ -102,7 +103,7 @@ class Chassis {
   /* PID计算的目标值 */
   struct {
     float *motor_rotational_speed; /* 电机转速的动态数组，单位：RPM */
-  } setpoint;
+  } setpoint_;
 
   /* 反馈控制用的PID */
 

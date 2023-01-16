@@ -22,6 +22,7 @@ class SecOrderFunction {
 
   float GetValue(float fb);
 
+ private:
   Param param_;
 };
 }  // namespace Component

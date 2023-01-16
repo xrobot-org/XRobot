@@ -14,6 +14,7 @@ class BlinkLED {
 
   BlinkLED(Param& param);
 
+ private:
   Param param_;
 
   bool state_;

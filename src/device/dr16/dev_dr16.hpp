@@ -100,6 +100,7 @@ class DR16 {
 
   static DR16::Data data_;
 
+ private:
   Data last_data_;
 
   ControlSource ctrl_source_ = DR16_CTRL_SOURCE_SW;

@@ -55,6 +55,7 @@ class CMD {
 
   static void RegisterController(Message::Topic<Data>& source);
 
+ private:
   ControlSource ctrl_source_;
 
   Mode mode_;

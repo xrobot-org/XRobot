@@ -15,8 +15,7 @@ class IMU {
 
   static int ShowCMD(IMU* imu, int argc, char* argv[]);
 
-  Param param_;
-
+ private:
   Message::Topic<Component::Type::Vector3> accl_tp_;
   Message::Topic<Component::Type::Vector3> gyro_tp_;
   Message::Topic<Component::Type::Eulr> eulr_tp_;

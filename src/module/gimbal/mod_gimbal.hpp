@@ -67,6 +67,7 @@ class Gimbal {
 
   void SetMode(Mode mode);
 
+ private:
   float last_wakeup_;
 
   float now_;
@@ -79,7 +80,7 @@ class Gimbal {
 
   struct {
     Component::Type::Eulr eulr_; /* 表示云台姿态的欧拉角 */
-  } setpoint;
+  } setpoint_;
 
   Component::SecOrderFunction st_; /* YAW自整定参数 */
 

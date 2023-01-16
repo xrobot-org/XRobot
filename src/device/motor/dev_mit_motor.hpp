@@ -32,6 +32,7 @@ class MitMotor : public BaseMotor {
 
   void SetPos(float pos_error);
 
+ private:
   Param param_;
 
   float current_ = 0.0f;

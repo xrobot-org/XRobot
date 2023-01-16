@@ -29,6 +29,7 @@ class IMU {
 
   bool Decode(Device::Can::Pack& rx);
 
+ private:
   Param param_;
 
   float last_online_time_ = 0.0f;

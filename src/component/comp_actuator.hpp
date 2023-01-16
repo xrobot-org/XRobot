@@ -21,6 +21,7 @@ class SpeedActuator {
 
   void Reset();
 
+ private:
   Component::PID pid_;
 
   Component::LowPassFilter2p in_;
@@ -42,6 +43,7 @@ class PosActuator {
 
   void Reset();
 
+ private:
   Component::PID pid_speed_;
   Component::PID pid_position_;
 

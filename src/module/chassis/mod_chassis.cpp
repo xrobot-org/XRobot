@@ -63,10 +63,10 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
               (std::string("Chassis_") + std::to_string(i)).c_str());
   }
 
-  this->setpoint.motor_rotational_speed =
+  this->setpoint_.motor_rotational_speed =
       reinterpret_cast<float*>(System::Memory::Malloc(
-          this->mixer_.len_ * sizeof(*this->setpoint.motor_rotational_speed)));
-  ASSERT(this->setpoint.motor_rotational_speed);
+          this->mixer_.len_ * sizeof(*this->setpoint_.motor_rotational_speed)));
+  ASSERT(this->setpoint_.motor_rotational_speed);
 
   auto event_callback = [](uint32_t event, void* arg) {
     Chassis* chassis = static_cast<Chassis*>(arg);
@@ -195,7 +195,7 @@ void Chassis<Motor, MotorParam>::Control() {
   }
 
   /* move_vec -> motor_rpm_set. 通过运动向量计算轮子转速目标值 */
-  this->mixer_.Apply(this->move_vec_, this->setpoint.motor_rotational_speed);
+  this->mixer_.Apply(this->move_vec_, this->setpoint_.motor_rotational_speed);
 
   /* 根据轮子转速目标值，利用PID计算电机输出值 */
 
@@ -209,7 +209,7 @@ void Chassis<Motor, MotorParam>::Control() {
       clampf(&buff_percentage, 0.0f, 1.0f);
       for (unsigned i = 0; i < this->mixer_.len_; i++) {
         float out = this->actuator_[i]->Calculate(
-            this->setpoint.motor_rotational_speed[i] *
+            this->setpoint_.motor_rotational_speed[i] *
                 MOTOR_MAX_ROTATIONAL_SPEED,
             this->motor_[i]->GetSpeed(), this->dt_);
 

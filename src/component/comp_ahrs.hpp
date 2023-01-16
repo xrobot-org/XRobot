@@ -18,6 +18,7 @@ class AHRS {
 
   static int ShowCMD(AHRS *ahrs, int argc, char *argv[]);
 
+ private:
   float last_update_;
   float dt_;
   float now_;

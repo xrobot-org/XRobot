@@ -14,6 +14,7 @@ class TerminalController {
 
   static int ControlCMD(TerminalController* ctrl, int argc, char* argv[]);
 
+ private:
   Message::Event event_;
 
   Message::Topic<Component::CMD::Data> cmd_tp_;

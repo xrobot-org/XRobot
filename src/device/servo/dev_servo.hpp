@@ -23,6 +23,7 @@ class Servo {
 
   bool Stop();
 
+ private:
   Channel channel_;
 
   float max_angle_;

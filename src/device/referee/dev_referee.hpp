@@ -360,6 +360,7 @@ class Referee {
     size_t size_;
   } packet;
 
+ private:
   System::Semaphore raw_ready_ = System::Semaphore(false);
   System::Semaphore packet_sent_ = System::Semaphore(false);
   System::Semaphore ui_fast_refresh_ = System::Semaphore(false);

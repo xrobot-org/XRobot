@@ -42,6 +42,7 @@ class Cap {
 
   float GetPercentage();
 
+ private:
   Param param_;
 
   bool online_;

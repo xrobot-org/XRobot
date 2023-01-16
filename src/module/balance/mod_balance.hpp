@@ -82,6 +82,7 @@ class Balance {
 
   void PackOutput();
 
+ private:
   Param param_;
 
   float dt_;
@@ -111,7 +112,7 @@ class Balance {
   float vy_dir_mult_; /* scan模式移动方向乘数 */
 
   /* PID计算的输出值 */
-  float motor_out[WHEEL_NUM];
+  float motor_out_[WHEEL_NUM];
 
   Feedback feeback_;
 

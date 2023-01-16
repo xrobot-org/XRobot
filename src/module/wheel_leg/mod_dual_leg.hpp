@@ -83,6 +83,7 @@ class WheelLeg {
 
   void SetMode(Mode mode);
 
+ private:
   Param param_;
 
   float dt_;

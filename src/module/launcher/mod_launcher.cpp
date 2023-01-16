@@ -194,16 +194,16 @@ void Launcher::Control() {
   }
 
   /* 计算摩擦轮转速的目标值 */
-  this->setpoint.fric_rpm_[1] = bullet_speed_to_fric_rpm(
+  this->setpoint_.fric_rpm_[1] = bullet_speed_to_fric_rpm(
       this->fire_ctrl_.bullet_speed, this->param_.fric_radius,
       (this->param_.model == LAUNCHER_MODEL_17MM));
-  this->setpoint.fric_rpm_[0] = -this->setpoint.fric_rpm_[1];
+  this->setpoint_.fric_rpm_[0] = -this->setpoint_.fric_rpm_[1];
 
   /* 计算拨弹电机位置的目标值 */
   if ((bsp_time_get_ms() - this->fire_ctrl_.last_launch) >=
       this->fire_ctrl_.launch_delay) {
     /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗弹丸的弧度变化 */
-    circle_add(&(this->setpoint.trig_angle_),
+    circle_add(&(this->setpoint_.trig_angle_),
                -M_2PI / this->param_.num_trig_tooth, M_2PI);
     /* 计算已发射弹丸 */
     this->fire_ctrl_.launched++;
@@ -226,7 +226,7 @@ void Launcher::Control() {
       for (int i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
         /* 控制拨弹电机 */
         float trig_out = this->trig_actuator_[i]->Calculate(
-            this->setpoint.trig_angle_,
+            this->setpoint_.trig_angle_,
             this->trig_motor_[i]->GetSpeed() / LAUNCHER_TRIG_SPEED_MAX,
             this->trig_angle_, this->dt_);
 
@@ -236,7 +236,7 @@ void Launcher::Control() {
       for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
         /* 控制摩擦轮 */
         float fric_out = this->fric_actuator_[i]->Calculate(
-            this->setpoint.fric_rpm_[i], this->fric_motor_[i]->GetSpeed(),
+            this->setpoint_.fric_rpm_[i], this->fric_motor_[i]->GetSpeed(),
             this->dt_);
 
         this->fric_motor_[i]->Control(fric_out);

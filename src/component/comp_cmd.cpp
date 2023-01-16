@@ -41,7 +41,7 @@ CMD::CMD(Mode mode)
     return true;
   };
 
-  switch (mode) {
+  switch (this->mode_) {
     case CMD_OP_CTRL:
       this->ctrl_source_ = CTRL_SOURCE_RC;
       this->data_in_tp_.RegisterCallback(op_ctrl_callback, this);

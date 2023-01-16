@@ -34,6 +34,7 @@ class Tof {
 
   void Decode(Can::Pack& rx);
 
+ private:
   Param param_;
 
   System::Queue<Can::Pack> recv_ = System::Queue<Can::Pack>(1);

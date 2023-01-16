@@ -34,6 +34,7 @@ class PID {
 
   float Calculate(float sp, float fb, float fb_dot, float dt);
 
+ private:
   Param param_;
 
   float dt_min_; /* 最小PID_Calc调用间隔 */

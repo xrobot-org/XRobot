@@ -50,15 +50,16 @@ class AI {
 
   bool PackCMD();
 
+ private:
   bool ref_updated_;
   float last_online_time_ = 0.0f;
 
-  Protocol_DownPackage_t form_host;
+  Protocol_DownPackage_t form_host_;
 
   struct {
-    RefereePckage ref_;
-    MCUPckage mcu_;
-  } to_host;
+    RefereePckage ref;
+    MCUPckage mcu;
+  } to_host_;
 
   RefForAI ref_;
 

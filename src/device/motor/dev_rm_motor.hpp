@@ -62,6 +62,7 @@ class RMMotor : public BaseMotor {
 
   void Relax();
 
+ private:
   Param param_;
 
   uint8_t num_;

@@ -7,6 +7,7 @@ class Camera {
  public:
   Camera();
 
+ private:
   WbDeviceTag handle_;
 };
 }  // namespace Device

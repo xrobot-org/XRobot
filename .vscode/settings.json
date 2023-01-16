@@ -35,7 +35,7 @@
     "clangd.arguments": [
         "--background-index",
         "--clang-tidy",
-        "--compile-commands-dir=build",
+        "--compile-commands-dir=${workspaceRoot}/build",
         "--completion-style=detailed",
         "--enable-config",
         "--fallback-style=Google",

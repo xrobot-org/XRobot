@@ -70,10 +70,10 @@ bool AI::StartRecv() {
 }
 
 bool AI::PraseHost() {
-  if (Component::CRC16::Verify(rxbuf, sizeof(this->form_host))) {
+  if (Component::CRC16::Verify(rxbuf, sizeof(this->form_host_))) {
     this->cmd_.online = true;
     this->last_online_time_ = bsp_time_get();
-    memcpy(&(this->form_host), rxbuf, sizeof(this->form_host));
+    memcpy(&(this->form_host_), rxbuf, sizeof(this->form_host_));
     memset(rxbuf, 0, AI_LEN_RX_BUFF);
     return true;
   }
@@ -81,13 +81,13 @@ bool AI::PraseHost() {
 }
 
 bool AI::StartTrans() {
-  size_t len = sizeof(this->to_host.mcu_);
+  size_t len = sizeof(this->to_host_.mcu);
   void *src = NULL;
   if (this->ref_updated_) {
-    len += sizeof(this->to_host.ref_);
-    src = &(this->to_host);
+    len += sizeof(this->to_host_.ref);
+    src = &(this->to_host_);
   } else {
-    src = &(this->to_host.mcu_);
+    src = &(this->to_host_.mcu);
   }
   this->ref_updated_ = false;
 
@@ -105,26 +105,26 @@ bool AI::Offline() {
 }
 
 bool AI::PackMCU() {
-  this->to_host.mcu_.id = AI_ID_MCU;
-  memcpy(&(this->to_host.mcu_.package.data.quat), &(this->quat_),
+  this->to_host_.mcu.id = AI_ID_MCU;
+  memcpy(&(this->to_host_.mcu.package.data.quat), &(this->quat_),
          sizeof(this->quat_));
-  this->to_host.mcu_.package.crc16 = Component::CRC16::Calculate(
-      reinterpret_cast<const uint8_t *>(&(this->to_host.mcu_.package)),
-      sizeof(this->to_host.mcu_.package) - sizeof(uint16_t), CRC16_INIT);
+  this->to_host_.mcu.package.crc16 = Component::CRC16::Calculate(
+      reinterpret_cast<const uint8_t *>(&(this->to_host_.mcu.package)),
+      sizeof(this->to_host_.mcu.package) - sizeof(uint16_t), CRC16_INIT);
   return true;
 }
 
 bool AI::PackRef() {
-  this->to_host.ref_.id = AI_ID_REF;
-  this->to_host.mcu_.package.data.ball_speed =
+  this->to_host_.ref.id = AI_ID_REF;
+  this->to_host_.mcu.package.data.ball_speed =
       static_cast<float>(this->ref_.ball_speed);
-  this->to_host.ref_.package.data.arm = this->ref_.robot_id;
-  this->to_host.ref_.package.data.rfid = this->ref_.robot_buff;
-  this->to_host.ref_.package.data.team = this->ref_.team;
-  this->to_host.ref_.package.data.race = this->ref_.game_type;
-  this->to_host.ref_.package.crc16 = Component::CRC16::Calculate(
-      reinterpret_cast<const uint8_t *>(&(this->to_host.ref_.package)),
-      sizeof(this->to_host.ref_.package) - sizeof(uint16_t), CRC16_INIT);
+  this->to_host_.ref.package.data.arm = this->ref_.robot_id;
+  this->to_host_.ref.package.data.rfid = this->ref_.robot_buff;
+  this->to_host_.ref.package.data.team = this->ref_.team;
+  this->to_host_.ref.package.data.race = this->ref_.game_type;
+  this->to_host_.ref.package.crc16 = Component::CRC16::Calculate(
+      reinterpret_cast<const uint8_t *>(&(this->to_host_.ref.package)),
+      sizeof(this->to_host_.ref.package) - sizeof(uint16_t), CRC16_INIT);
 
   this->ref_updated_ = true;
 
@@ -134,7 +134,7 @@ bool AI::PackRef() {
 bool AI::PackCMD() {
   this->cmd_.gimbal.mode = Component::CMD::GIMBAL_ABSOLUTE_CTRL;
 
-  memcpy(&(this->cmd_.gimbal.eulr), &(this->form_host.data.gimbal),
+  memcpy(&(this->cmd_.gimbal.eulr), &(this->form_host_.data.gimbal),
          sizeof(this->cmd_.gimbal.eulr));
 
   this->cmd_.ctrl_source = Component::CMD::CTRL_SOURCE_AI;

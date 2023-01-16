@@ -20,6 +20,7 @@ class RMMotor : public BaseMotor {
 
   bool Update();
 
+ private:
   Param param_;
 };
 }  // namespace Device

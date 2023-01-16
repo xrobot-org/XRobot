@@ -77,21 +77,21 @@ void Gimbal::Control() {
   float gimbal_yaw_cmd = -this->cmd_.eulr.yaw * this->dt_ * GIMBAL_MAX_SPEED;
 
   /* 处理yaw控制命令 */
-  circle_add(&(this->setpoint.eulr_.yaw), gimbal_yaw_cmd, M_2PI);
+  circle_add(&(this->setpoint_.eulr_.yaw), gimbal_yaw_cmd, M_2PI);
 
   /* 处理pitch控制命令，软件限位 */
   const float DELTA_MAX =
       circle_error(this->param_.limit.pitch_max,
-                   (this->pit_motor_.GetAngle() + this->setpoint.eulr_.pit -
+                   (this->pit_motor_.GetAngle() + this->setpoint_.eulr_.pit -
                     this->eulr_.pit),
                    M_2PI);
   const float DELTA_MIN =
       circle_error(this->param_.limit.pitch_min,
-                   (this->pit_motor_.GetAngle() + this->setpoint.eulr_.pit -
+                   (this->pit_motor_.GetAngle() + this->setpoint_.eulr_.pit -
                     this->eulr_.pit),
                    M_2PI);
   clampf(&(gimbal_pit_cmd), DELTA_MIN, DELTA_MAX);
-  circle_add(&(this->setpoint.eulr_.pit), gimbal_pit_cmd, M_2PI);
+  circle_add(&(this->setpoint_.eulr_.pit), gimbal_pit_cmd, M_2PI);
 
   /* 控制相关逻辑 */
   switch (this->mode_) {
@@ -102,10 +102,10 @@ void Gimbal::Control() {
     case ABSOLUTE:
       /* Yaw轴角速度环参数计算 */
       float yaw_out = this->yaw_actuator_.Calculate(
-          this->setpoint.eulr_.yaw, this->gyro_.z, this->eulr_.yaw, this->dt_);
+          this->setpoint_.eulr_.yaw, this->gyro_.z, this->eulr_.yaw, this->dt_);
 
       float pit_out = this->pit_actuator_.Calculate(
-          this->setpoint.eulr_.pit, this->gyro_.x, this->eulr_.pit, this->dt_);
+          this->setpoint_.eulr_.pit, this->gyro_.x, this->eulr_.pit, this->dt_);
 
       this->yaw_motor_.Control(yaw_out);
       this->pit_motor_.Control(pit_out);
@@ -123,21 +123,21 @@ void Gimbal::SetMode(Mode mode) {
   this->pit_actuator_.Reset();
   this->yaw_actuator_.Reset();
 
-  memcpy(&(this->setpoint.eulr_), &(this->eulr_),
-         sizeof(this->setpoint.eulr_)); /* 切换模式后重置设定值 */
+  memcpy(&(this->setpoint_.eulr_), &(this->eulr_),
+         sizeof(this->setpoint_.eulr_)); /* 切换模式后重置设定值 */
   if (this->mode_ == RELAX) {
     if (mode == ABSOLUTE) {
-      this->setpoint.eulr_.yaw = this->eulr_.yaw;
+      this->setpoint_.eulr_.yaw = this->eulr_.yaw;
     }
   }
 
   this->mode_ = mode;
 
-  memcpy(&(this->setpoint.eulr_), &(this->eulr_),
-         sizeof(this->setpoint.eulr_)); /* 切换模式后重置设定值 */
+  memcpy(&(this->setpoint_.eulr_), &(this->eulr_),
+         sizeof(this->setpoint_.eulr_)); /* 切换模式后重置设定值 */
   if (this->mode_ == RELAX) {
     if (mode == ABSOLUTE) {
-      this->setpoint.eulr_.yaw = this->eulr_.yaw;
+      this->setpoint_.eulr_.yaw = this->eulr_.yaw;
     }
   }
 

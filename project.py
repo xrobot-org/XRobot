@@ -152,7 +152,7 @@ def new_component(name: str):
     cppfile.close()
     hppfile = open(tools.project_path + '/src/component/comp_' + name + '.hpp',
                    mode='w+')
-    hppfile.write('#include "component.hpp"\n\nnamespace Component {\n' +
+    hppfile.write('#include <component.hpp>\n\nnamespace Component {\n' +
                   'class YourComponentName {\n' + ' public:\n};\n' +
                   '}  // namespace Component')
     hppfile.close()
@@ -220,23 +220,26 @@ def new_robot(name: str):
     os.mkdir(tools.project_path + '/src/robot/' + name)
     cppfile = open(tools.project_path + '/src/robot/' + name + '/robot.cpp',
                    mode='w+')
-    cppfile.write('#include \"robot.hpp\"\n\nusing namespace Robot;\n\n')
+    cppfile.write(
+        '#include \"robot.hpp\"\n\n#include <system.hpp>\n#include <thread.hpp>\n\nusing namespace Robot;\n\n'
+    )
     cppfile.write(
         '/* clang-format off */\n//TODO: write your param\n/* clang-format on */\n\n'
     )
     cppfile.write(
-        'void robot_init() {\nauto init_thread_fn = [](void* arg) {\n    RM_UNUSED(arg);\n\n'
+        'void robot_init() {\n  auto init_thread_fn = [](void* arg) {\n    static_cast<void>(arg);\n\n'
         '    System::Init();\n\n    //TODO: create your robot\n\n    while (1) {\n'
         '      System::Thread::Sleep(UINT32_MAX);\n    }\n  };\n\n  System::Thread init_thread;\n\n'
         '  init_thread.Create(init_thread_fn, (void*)0, "init_thread_fn", 512,\n'
-        '                     System::Thread::Realtime);\n}\n')
+        '                     System::Thread::REALTIME);\n}\n')
 
     cppfile.close()
     hppfile = open(tools.project_path + '/src/robot/' + name + '/robot.hpp',
                    mode='w+')
-    hppfile.write('#include "dev_blink_led.hpp"\n\nnamespace Robot {\n' +
-                  'class YourRobotName {\n' + ' public:\n};\n' +
-                  '}  // namespace Robot')
+    hppfile.write(
+        '/* #include "dev_xxx.hpp" */\n\nvoid robot_init();\n\nnamespace Robot {\n'
+        + 'class YourRobotName {\n' + ' public:\n};\n' +
+        '}  // namespace Robot')
     hppfile.close()
     configfile = open(tools.project_path + '/src/robot/' + name + '/Kconfig',
                       mode='w+')

@@ -12,7 +12,6 @@ Diagnostics:
             performance-*]
     Remove: [google-build-using-namespace,
             cppcoreguidelines-pro-type-member-init,
-            misc-non-private-member-variables-in-classes,
             misc-no-recursion,
             cert-env33-c,
             cert-err58-cpp,
@@ -36,10 +35,15 @@ Diagnostics:
             cppcoreguidelines-avoid-non-const-global-variables,
             cppcoreguidelines-non-private-member-variables-in-classes]
     CheckOptions:
+      misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: 1
       readability-identifier-naming.VariableCase: lower_case
       readability-identifier-naming.GlobalVariableCase: lower_case
       readability-identifier-naming.ClassMemberCase: lower_case
       readability-identifier-naming.ClassMemberSuffix: _
+      readability-identifier-naming.PrivateMemberCase: lower_case
+      readability-identifier-naming.PrivateMemberSuffix: _
+      readability-identifier-naming.ProtectedMemberCase: lower_case
+      readability-identifier-naming.ProtectedMemberSuffix: _
       readability-identifier-naming.EnumCase: UPPER_CASE
       readability-identifier-naming.EnumConstantCase: UPPER_CASE
       readability-identifier-naming.MacroDefinitionCase: UPPER_CASE

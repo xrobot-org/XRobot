@@ -44,8 +44,9 @@ class BMI088 {
 
   static int CaliCMD(BMI088 *bmi088, int argc, char *argv[]);
 
-  Calibration cali;
-  Rotation &rot;
+ private:
+  Calibration cali_;
+  Rotation &rot_;
 
   System::Semaphore gyro_raw_;
   System::Semaphore accl_raw_;

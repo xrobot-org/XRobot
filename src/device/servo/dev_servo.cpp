@@ -16,7 +16,7 @@ bool Servo::Set(float angle) {
   clampf(&angle, 0.0f, this->max_angle_);
   return bsp_pwm_set_comp(
              static_cast<bsp_pwm_channel_t>(BSP_PWM_SERVO_A + this->channel_),
-             (this->max_angle_ - angle) / this->max_angle_ / 10.0f + 0.025) ==
+             (this->max_angle_ - angle) / this->max_angle_ / 10.0f + 0.025f) ==
          BSP_OK;
 }
 

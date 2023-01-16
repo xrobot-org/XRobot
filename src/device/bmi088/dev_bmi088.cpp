@@ -130,7 +130,7 @@ void BMI088::Read(BMI088::DeviceType type, uint8_t reg, uint8_t *data,
 }
 
 BMI088::BMI088(BMI088::Rotation &rot)
-    : rot(rot),
+    : rot_(rot),
       gyro_raw_(false),
       accl_raw_(false),
       gyro_new_(false),
@@ -174,12 +174,12 @@ BMI088::BMI088(BMI088::Rotation &rot)
                             this);
 
   if (System::Database::Find(BMI088_CALI_KEY_NAME) != sizeof(Calibration)) {
-    memset(&this->cali, 0, sizeof(this->cali));
-    System::Database::Set(BMI088_CALI_KEY_NAME, &this->cali,
-                          sizeof(this->cali));
+    memset(&this->cali_, 0, sizeof(this->cali_));
+    System::Database::Set(BMI088_CALI_KEY_NAME, &this->cali_,
+                          sizeof(this->cali_));
   } else {
-    System::Database::Get(BMI088_CALI_KEY_NAME, &this->cali,
-                          sizeof(this->cali));
+    System::Database::Get(BMI088_CALI_KEY_NAME, &this->cali_,
+                          sizeof(this->cali_));
   }
 
   auto thread_bmi088 = [](BMI088 *bmi088) {
@@ -235,8 +235,8 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
     ms_enter();
   } else if (argc == 2) {
     if (strcmp(argv[1], "list") == 0) {
-      ms_printf("校准数据 x:%f y:%f z:%f", bmi088->cali.gyro_offset.x,
-                bmi088->cali.gyro_offset.y, bmi088->cali.gyro_offset.z);
+      ms_printf("校准数据 x:%f y:%f z:%f", bmi088->cali_.gyro_offset.x,
+                bmi088->cali_.gyro_offset.y, bmi088->cali_.gyro_offset.z);
       ms_enter();
     } else if (strcmp(argv[1], "cali") == 0) {
       ms_printf("开始校准，请保持陀螺仪稳定");
@@ -251,12 +251,12 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
         ms_clear_line();
       }
 
-      bmi088->cali.gyro_offset.x += static_cast<float>(x);
-      bmi088->cali.gyro_offset.y += static_cast<float>(y);
-      bmi088->cali.gyro_offset.z += static_cast<float>(z);
+      bmi088->cali_.gyro_offset.x += static_cast<float>(x);
+      bmi088->cali_.gyro_offset.y += static_cast<float>(y);
+      bmi088->cali_.gyro_offset.z += static_cast<float>(z);
 
-      ms_printf("校准数据 x:%f y:%f z:%f", bmi088->cali.gyro_offset.x,
-                bmi088->cali.gyro_offset.y, bmi088->cali.gyro_offset.z);
+      ms_printf("校准数据 x:%f y:%f z:%f", bmi088->cali_.gyro_offset.x,
+                bmi088->cali_.gyro_offset.y, bmi088->cali_.gyro_offset.z);
       ms_enter();
 
       x = y = z = 0.0f;
@@ -276,8 +276,8 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
       ms_printf("校准误差: x:%f y:%f z:%f", x, y, z);
       ms_enter();
 
-      System::Database::Set(BMI088_CALI_KEY_NAME, &bmi088->cali,
-                            sizeof(bmi088->cali));
+      System::Database::Set(BMI088_CALI_KEY_NAME, &bmi088->cali_,
+                            sizeof(bmi088->cali_));
 
       ms_printf("保存校准数据");
       ms_enter();
@@ -402,14 +402,14 @@ void BMI088::PraseGyro() {
   memset(&(this->gyro_), 0, sizeof(this->gyro_));
 
   for (int i = 0; i < 3; i++) {
-    this->gyro_.x += this->rot.rot_mat[0][i] * gyro[i];
-    this->gyro_.y += this->rot.rot_mat[1][i] * gyro[i];
-    this->gyro_.z += this->rot.rot_mat[2][i] * gyro[i];
+    this->gyro_.x += this->rot_.rot_mat[0][i] * gyro[i];
+    this->gyro_.y += this->rot_.rot_mat[1][i] * gyro[i];
+    this->gyro_.z += this->rot_.rot_mat[2][i] * gyro[i];
   }
 
-  this->gyro_.x -= this->cali.gyro_offset.x;
-  this->gyro_.y -= this->cali.gyro_offset.y;
-  this->gyro_.z -= this->cali.gyro_offset.z;
+  this->gyro_.x -= this->cali_.gyro_offset.x;
+  this->gyro_.y -= this->cali_.gyro_offset.y;
+  this->gyro_.z -= this->cali_.gyro_offset.z;
 }
 
 void BMI088::PraseAccel() {
@@ -438,9 +438,9 @@ void BMI088::PraseAccel() {
   memset(&(this->accl_), 0, sizeof(this->accl_));
 
   for (int i = 0; i < 3; i++) {
-    this->accl_.x += this->rot.rot_mat[0][i] * accl[i];
-    this->accl_.y += this->rot.rot_mat[1][i] * accl[i];
-    this->accl_.z += this->rot.rot_mat[2][i] * accl[i];
+    this->accl_.x += this->rot_.rot_mat[0][i] * accl[i];
+    this->accl_.y += this->rot_.rot_mat[1][i] * accl[i];
+    this->accl_.z += this->rot_.rot_mat[2][i] * accl[i];
   }
 }
 

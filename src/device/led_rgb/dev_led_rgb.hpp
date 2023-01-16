@@ -22,6 +22,7 @@ class RGB {
 
   bool Set(Channel ch, Status status, float duty_cycle);
 
+ private:
   System::Thread thread_;
 };
 }  // namespace Device

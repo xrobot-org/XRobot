@@ -183,14 +183,14 @@ void Balance<Motor, MotorParam>::Control() {
           speed_sp = -speed_sp;
         }
 
-        this->motor_out[i] = this->wheel_actr_[i]->Calculate(
+        this->motor_out_[i] = this->wheel_actr_[i]->Calculate(
             speed_sp * MOTOR_MAX_ROTATIONAL_SPEED, this->motor_[i]->GetSpeed(),
             this->dt_);
       }
 
       /* 电机输出 */
       for (uint8_t i = 0; i < WHEEL_NUM; i++) {
-        this->motor_[i]->Control(this->motor_out[i]);
+        this->motor_[i]->Control(this->motor_out_[i]);
       }
       break;
     }
