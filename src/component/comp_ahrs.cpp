@@ -28,7 +28,7 @@ AHRS::AHRS()
     Message::Subscriber gyro_sub("imu_gyro", ahrs->gyro_);
 
     auto accl_cb = [](Component::Type::Vector3 &accl, AHRS *ahrs) {
-      RM_UNUSED(accl);
+      static_cast<void>(accl);
 
       ahrs->ready_.Give();
 
@@ -38,7 +38,7 @@ AHRS::AHRS()
     };
 
     auto gyro_cb = [](Component::Type::Vector3 &gyro, AHRS *ahrs) {
-      RM_UNUSED(gyro);
+      static_cast<void>(gyro);
 
       ahrs->ready_.Give();
 

@@ -402,7 +402,7 @@ Robot::Infantry::Param param = {
 
 void robot_init() {
   auto init_thread_fn = [](void* arg) {
-    RM_UNUSED(arg);
+    static_cast<void>(arg);
 
     System::Init();
 

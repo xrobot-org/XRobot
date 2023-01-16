@@ -164,8 +164,8 @@ bool gyro_is_stable(Component::Type::Vector3 *gyro) {
  * @param line 行号
  */
 void verify_failed(const char *file, uint32_t line) {
-  RM_UNUSED(file);
-  RM_UNUSED(line);
+  static_cast<void>(file);
+  static_cast<void>(line);
   while (1) {
   };
 }

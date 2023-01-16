@@ -101,15 +101,6 @@
 #define VERIFY(expr) ((void)(expr))
 #endif
 
-#ifndef RM_UNUSED
-
-/**
- * @brief 标记未使用的参数，防止编译器警告
- *
- */
-#define RM_UNUSED(X) ((void)X)
-#endif
-
 /**
  * @brief 获取结构体或者联合成员的容器
  *

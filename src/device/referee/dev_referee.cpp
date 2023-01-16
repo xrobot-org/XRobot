@@ -56,7 +56,7 @@ Referee::Referee() {
   };
 
   auto idle_line_callback = [](void *arg) {
-    RM_UNUSED(arg);
+    static_cast<void>(arg);
     bsp_uart_abort_receive(BSP_UART_REF);
   };
 
