@@ -6,8 +6,6 @@ extern "C" {
 
 #include "bsp.h"
 
-#define BSP_CAN_MAILBOX_NUM (3)
-
 typedef enum {
   BSP_CAN_1,
   BSP_CAN_NUM,

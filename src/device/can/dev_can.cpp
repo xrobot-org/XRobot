@@ -1,9 +1,10 @@
 #include "dev_can.hpp"
 
+#include <cstddef>
+
 using namespace Device;
 
 Message::Topic<Can::Pack>* Can::can_tp_[BSP_CAN_NUM];
-System::Semaphore* Can::can_sem_[BSP_CAN_NUM];
 
 static Can::Pack pack;
 
@@ -15,11 +16,6 @@ Can::Can() {
         System::Memory::Malloc(sizeof(Message::Topic<Can::Pack>)));
     new (can_tp_[i])
         Message::Topic<Can::Pack>(("dev_can_" + std::to_string(i)).c_str());
-
-    can_sem_[i] = static_cast<System::Semaphore*>(
-        System::Memory::Malloc(sizeof(System::Semaphore)));
-    new (can_sem_[i])
-        System::Semaphore(BSP_CAN_MAILBOX_NUM, BSP_CAN_MAILBOX_NUM);
   }
 
   auto rx_callback = [](bsp_can_t can, void* arg) {
@@ -30,30 +26,18 @@ Can::Can() {
     }
   };
 
-  auto tx_cplt_callback = [](bsp_can_t can, void* arg) {
-    (void)(arg);
-
-    Can::can_sem_[can]->GiveFromISR();
-  };
-
   for (int i = 0; i < BSP_CAN_NUM; i++) {
     bsp_can_register_callback((bsp_can_t)i, CAN_RX_MSG_CALLBACK, rx_callback,
                               NULL);
-    bsp_can_register_callback((bsp_can_t)i, CAN_TX_CPLT_CALLBACK,
-                              tx_cplt_callback, NULL);
   }
 }
 
 bool Can::SendStdPack(bsp_can_t can, Pack& pack) {
-  Can::can_sem_[can]->Take(UINT32_MAX);
-
   return bsp_can_trans_packet(can, CAN_FORMAT_STD, pack.index, pack.data) ==
          BSP_OK;
 }
 
 bool Can::SendExtPack(bsp_can_t can, Pack& pack) {
-  Can::can_sem_[can]->Take(UINT32_MAX);
-
   return bsp_can_trans_packet(can, CAN_FORMAT_EXT, pack.index, pack.data) ==
          BSP_OK;
 }
@@ -62,6 +46,7 @@ bool Can::Subscribe(Message::Topic<Can::Pack>& tp, bsp_can_t can,
                     uint32_t index, uint32_t num) {
   ASSERT(num > 0);
 
-  can_tp_[can]->RangeDivide(tp, OM_PRASE_STRUCT(Pack, index), index, num);
+  can_tp_[can]->RangeDivide(tp, sizeof(Pack), offsetof(Pack, index),
+                            om_member_size_of(Pack, index), index, num);
   return true;
 }
