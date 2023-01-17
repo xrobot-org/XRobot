@@ -72,15 +72,17 @@ void CMD::RegisterEvent(void (*callback)(uint32_t event, void* arg), void* arg,
     block->callback(block->target_event, block->arg);
   };
 
-  for (size_t i = 0; i < map.size(); i++) {
+  std::vector<Component::CMD::EventMapItem>::const_iterator it;
+
+  for (it = map.begin(); it != map.end(); it++) {
     EventCallbackBlock* block = static_cast<EventCallbackBlock*>(
         System::Memory::Malloc(sizeof(EventCallbackBlock)));
 
     block->arg = arg;
     block->callback = callback;
-    block->target_event = map[i].target;
+    block->target_event = it->target;
 
-    self_->event_.Register(map[i].source, Message::Event::EventProgress,
+    self_->event_.Register(it->source, Message::Event::EventProgress,
                            cmd_callback, block);
   }
 }

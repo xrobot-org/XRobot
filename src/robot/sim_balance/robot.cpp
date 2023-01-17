@@ -1,5 +1,6 @@
 #include "robot.hpp"
 
+#include <comp_pid.hpp>
 #include <thread.hpp>
 
 #include "system.hpp"
@@ -41,18 +42,18 @@ Robot::Simulator::Param param = {
     },
 
     .EVENT_MAP = {
-      Component::CMD::CreateMapItem(
+      Component::CMD::EventMapItem{
         Device::TerminalController::STOP_CTRL,
         Module::RMBalance::SET_MODE_RELAX
-      ),
-      Component::CMD::CreateMapItem(
+      },
+      Component::CMD::EventMapItem{
         Device::TerminalController::START_CTRL,
         Module::RMBalance::SET_MODE_FOLLOW
-      )
+      }
     },
 
     .wheel_param = {
-      {
+      Component::SpeedActuator::Param{
         .speed = {
           .k = 0.00015f,
           .p = 1.0f,
@@ -67,7 +68,8 @@ Robot::Simulator::Param param = {
         .in_cutoff_freq = -1.0f,
 
         .out_cutoff_freq = -1.0f,
-      },{
+      },
+      Component::SpeedActuator::Param{
         .speed = {
           .k = 0.00015f,
           .p = 1.0f,
@@ -85,7 +87,7 @@ Robot::Simulator::Param param = {
       },
     },
 
-    .eulr_param = {
+    .eulr_param = Component::PID::Param{
       .k = 2.0f,
       .p = 1.0f,
       .i = 0.0f,
@@ -96,7 +98,7 @@ Robot::Simulator::Param param = {
       .range = M_2PI,
     },
 
-    .gyro_param = {
+    .gyro_param = Component::PID::Param{
       .k = 1.2f,
       .p = 1.0f,
       .i = 0.0f,
@@ -107,7 +109,7 @@ Robot::Simulator::Param param = {
       .range = -1.0f,
     },
 
-    .speed_param = {
+    .speed_param = Component::PID::Param{
         .k = 0.7f,
         .p = 1.0f,
         .i = 0.0f,
@@ -121,10 +123,10 @@ Robot::Simulator::Param param = {
     .center_filter_cutoff_freq = 10.0f,
 
     .motor_param = {
-      {
+      Device::RMMotor::Param{
         .model = Device::RMMotor::MOTOR_M3508,
       },
-      {
+      Device::RMMotor::Param{
         .model = Device::RMMotor::MOTOR_M3508,
       },
     },

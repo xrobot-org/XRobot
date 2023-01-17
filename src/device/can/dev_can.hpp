@@ -10,7 +10,7 @@ class Can {
  public:
   typedef struct {
     uint32_t index;
-    uint8_t data[8];
+    uint8_t data[8];  // NOLINT(modernize-avoid-c-arrays)
   } Pack;
 
   Can();
@@ -22,6 +22,6 @@ class Can {
   static bool Subscribe(Message::Topic<Can::Pack>& tp, bsp_can_t can,
                         uint32_t index, uint32_t num);
 
-  static Message::Topic<Can::Pack>* can_tp_[BSP_CAN_NUM];
+  static std::array<Message::Topic<Can::Pack>*, BSP_CAN_NUM> can_tp_;
 };
 }  // namespace Device

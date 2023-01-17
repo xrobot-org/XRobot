@@ -38,9 +38,9 @@ class Balance {
 
   typedef struct {
     struct {
-      float speed;            /* 速度环 */
-      float balance;          /* 直立环 */
-      float angle[WHEEL_NUM]; /* 角度环 */
+      float speed;                        /* 速度环 */
+      float balance;                      /* 直立环 */
+      std::array<float, WHEEL_NUM> angle; /* 角度环 */
     } wheel_speed;
 
     struct {
@@ -59,7 +59,7 @@ class Balance {
 
     const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
 
-    Component::SpeedActuator::Param wheel_param[WHEEL_NUM];
+    std::array<Component::SpeedActuator::Param, WHEEL_NUM> wheel_param;
 
     Component::PID::Param eulr_param;
 
@@ -69,7 +69,7 @@ class Balance {
 
     float center_filter_cutoff_freq;
 
-    MotorParam motor_param[WHEEL_NUM];
+    std::array<MotorParam, WHEEL_NUM> motor_param;
   } Param;
 
   Balance(Param &param, float control_freq);
@@ -93,7 +93,7 @@ class Balance {
 
   Mode mode_ = RELAX;
 
-  Component::SpeedActuator *wheel_actr_[WHEEL_NUM];
+  std::array<Component::SpeedActuator *, WHEEL_NUM> wheel_actr_;
 
   Component::PID eulr_pid_;
 
@@ -101,7 +101,7 @@ class Balance {
 
   Component::PID speed_pid_;
 
-  Device::BaseMotor *motor_[WHEEL_NUM];
+  std::array<Device::BaseMotor *, WHEEL_NUM> motor_;
 
   Component::Type::MoveVector move_vec_; /* 底盘实际的运动向量 */
 
@@ -112,7 +112,7 @@ class Balance {
   float vy_dir_mult_; /* scan模式移动方向乘数 */
 
   /* PID计算的输出值 */
-  float motor_out_[WHEEL_NUM];
+  std::array<float, WHEEL_NUM> motor_out_;
 
   Feedback feeback_;
 

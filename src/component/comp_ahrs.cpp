@@ -79,7 +79,7 @@ AHRS::AHRS()
                        System::Thread::HIGH);
 }
 
-int AHRS::ShowCMD(AHRS *ahrs, int argc, char *argv[]) {
+int AHRS::ShowCMD(AHRS *ahrs, int argc, char **argv) {
   if (argc == 1) {
     ms_printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据");
     ms_enter();

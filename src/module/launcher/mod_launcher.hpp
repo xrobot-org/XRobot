@@ -82,10 +82,11 @@ class Launcher {
     float default_bullet_speed; /* 默认弹丸初速度 */
     uint32_t min_launch_delay;  /* 最小发射间隔(1s/最大射频) */
 
-    Component::PosActuator::Param trig_actr[LAUNCHER_ACTR_TRIG_NUM];
-    Component::SpeedActuator::Param fric_actr[LAUNCHER_ACTR_FRIC_NUM];
-    Device::RMMotor::Param trig_motor[LAUNCHER_ACTR_TRIG_NUM];
-    Device::RMMotor::Param fric_motor[LAUNCHER_ACTR_FRIC_NUM];
+    std::array<Component::PosActuator::Param, LAUNCHER_ACTR_TRIG_NUM> trig_actr;
+    std::array<Component::SpeedActuator::Param, LAUNCHER_ACTR_FRIC_NUM>
+        fric_actr;
+    std::array<Device::RMMotor::Param, LAUNCHER_ACTR_TRIG_NUM> trig_motor;
+    std::array<Device::RMMotor::Param, LAUNCHER_ACTR_FRIC_NUM> fric_motor;
 
     const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
   } Param;
@@ -155,18 +156,18 @@ class Launcher {
 
   /* PID计算的目标值 */
   struct {
-    float fric_rpm_[2]; /* 摩擦轮电机转速，单位：RPM */
-    float trig_angle_;  /* 拨弹电机角度，单位：弧度 */
+    std::array<float, 2> fric_rpm_; /* 摩擦轮电机转速，单位：RPM */
+    float trig_angle_;              /* 拨弹电机角度，单位：弧度 */
   } setpoint_;
 
   HeatControl heat_ctrl_;
   FireControl fire_ctrl_;
 
-  Component::PosActuator *trig_actuator_[LAUNCHER_ACTR_TRIG_NUM];
-  Component::SpeedActuator *fric_actuator_[LAUNCHER_ACTR_FRIC_NUM];
+  std::array<Component::PosActuator *, LAUNCHER_ACTR_TRIG_NUM> trig_actuator_;
+  std::array<Component::SpeedActuator *, LAUNCHER_ACTR_FRIC_NUM> fric_actuator_;
 
-  Device::RMMotor *trig_motor_[LAUNCHER_ACTR_TRIG_NUM];
-  Device::RMMotor *fric_motor_[LAUNCHER_ACTR_FRIC_NUM];
+  std::array<Device::RMMotor *, LAUNCHER_ACTR_TRIG_NUM> trig_motor_;
+  std::array<Device::RMMotor *, LAUNCHER_ACTR_FRIC_NUM> fric_motor_;
 
   RefForLauncher ref_;
 

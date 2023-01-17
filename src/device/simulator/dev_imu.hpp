@@ -13,7 +13,7 @@ class IMU {
 
   void Update();
 
-  static int ShowCMD(IMU* imu, int argc, char* argv[]);
+  static int ShowCMD(IMU* imu, int argc, char** argv);
 
  private:
   Message::Topic<Component::Type::Vector3> accl_tp_;

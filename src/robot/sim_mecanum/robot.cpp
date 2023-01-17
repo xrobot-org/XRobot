@@ -31,18 +31,18 @@ Robot::Simulator::Param param = {
     },
 
     .EVENT_MAP = {
-      Component::CMD::CreateMapItem(
+      Component::CMD::EventMapItem{
         Device::TerminalController::STOP_CTRL,
         Module::RMChassis::SET_MODE_RELAX
-      ),
-      Component::CMD::CreateMapItem(
+      },
+      Component::CMD::EventMapItem{
         Device::TerminalController::START_CTRL,
         Module::RMChassis::SET_MODE_INDENPENDENT
-      ),
+      },
     },
 
     .actuator_param = {
-      {
+      Component::SpeedActuator::Param{
         .speed = {
           .k = 0.00025f,
           .p = 1.0f,
@@ -59,7 +59,7 @@ Robot::Simulator::Param param = {
         .out_cutoff_freq = -1.0f,
 
       },
-      {
+      Component::SpeedActuator::Param{
         .speed = {
           .k = 0.00025f,
           .p = 1.0f,
@@ -75,7 +75,7 @@ Robot::Simulator::Param param = {
 
         .out_cutoff_freq = -1.0f,
       },
-      {
+      Component::SpeedActuator::Param{
         .speed = {
           .k = 0.00025f,
           .p = 1.0f,
@@ -91,7 +91,7 @@ Robot::Simulator::Param param = {
 
         .out_cutoff_freq = -1.0f,
       },
-      {
+      Component::SpeedActuator::Param{
         .speed = {
           .k = 0.00025f,
           .p = 1.0f,
@@ -110,16 +110,16 @@ Robot::Simulator::Param param = {
     },
 
     .motor_param = {
-      {
+      Device::RMMotor::Param{
           .model = Device::RMMotor::MOTOR_M3508,
       },
-      {
+      Device::RMMotor::Param{
           .model = Device::RMMotor::MOTOR_M3508,
       },
-      {
+      Device::RMMotor::Param{
           .model = Device::RMMotor::MOTOR_M3508,
       },
-      {
+      Device::RMMotor::Param{
           .model = Device::RMMotor::MOTOR_M3508,
       },
     },

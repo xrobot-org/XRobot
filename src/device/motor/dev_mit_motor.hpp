@@ -39,6 +39,6 @@ class MitMotor : public BaseMotor {
 
   System::Queue<Can::Pack> recv_ = System::Queue<Can::Pack>(1);
 
-  static Message::Topic<Can::Pack> *mit_tp_[BSP_CAN_NUM];
+  static std::array<Message::Topic<Can::Pack> *, BSP_CAN_NUM> mit_tp_;
 };
 }  // namespace Device

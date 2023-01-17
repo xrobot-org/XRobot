@@ -12,7 +12,8 @@ class BMI088 {
   } Calibration;                          /* BMI088校准数据 */
 
   typedef struct {
-    float rot_mat[3][3]; /* 旋转矩阵 */
+    /* 旋转矩阵 */
+    float rot_mat[3][3];  // NOLINT(modernize-avoid-c-arrays)
   } Rotation;
 
   typedef enum {
@@ -42,7 +43,7 @@ class BMI088 {
 
   void Read(DeviceType type, uint8_t reg, uint8_t *data, uint8_t len);
 
-  static int CaliCMD(BMI088 *bmi088, int argc, char *argv[]);
+  static int CaliCMD(BMI088 *bmi088, int argc, char **argv);
 
  private:
   Calibration cali_;

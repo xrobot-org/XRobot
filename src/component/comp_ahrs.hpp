@@ -16,7 +16,7 @@ class AHRS {
 
   void GetEulr();
 
-  static int ShowCMD(AHRS *ahrs, int argc, char *argv[]);
+  static int ShowCMD(AHRS *ahrs, int argc, char **argv);
 
  private:
   float last_update_;

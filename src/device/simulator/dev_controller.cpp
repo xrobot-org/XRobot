@@ -12,7 +12,7 @@ TerminalController::TerminalController()
 }
 
 int TerminalController::ControlCMD(TerminalController* ctrl, int argc,
-                                   char* argv[]) {
+                                   char** argv) {
   if (argc == 1) {
     ms_printf("[w/a/s/d] [speed 0-100] [time ms] 向某个方向运动");
     ms_enter();

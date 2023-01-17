@@ -6,8 +6,8 @@ namespace Component {
 class Triangle {
  public:
   struct Data {
-    float angle[3] = {0.0f, 0.0f, 0.0f}; /* 内角 */
-    float side[3] = {0.0f, 0.0f, 0.0f};  /* 对边 */
+    std::array<float, 3> angle = {0.0f, 0.0f, 0.0f}; /* 内角 */
+    std::array<float, 3> side = {0.0f, 0.0f, 0.0f};  /* 对边 */
   };
 
   bool Slove();

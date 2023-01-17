@@ -20,7 +20,7 @@ class Term {
       ms_item_add(&this->cmd_, dir);
     }
 
-    static int Call(ms_item_t *cmd, int argc, char *argv[]) {
+    static int Call(ms_item_t *cmd, int argc, char **argv) {
       Command<ArgType> *self = ms_container_of(cmd, Command<ArgType>, cmd_);
       return self->type_.Port(&self->type_, argc, argv);
     }

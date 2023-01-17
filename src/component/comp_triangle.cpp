@@ -53,8 +53,8 @@ bool Triangle::Slove() {
     case 1:
       for (uint8_t i = 0; i < 3; i++) {
         if (this->data_.angle[i] > 0) {
-          uint8_t index[2] = {static_cast<uint8_t>((i + 1) % 3),
-                              static_cast<uint8_t>((i + 2) % 3)};
+          std::array<uint8_t, 2> index = {static_cast<uint8_t>((i + 1) % 3),
+                                          static_cast<uint8_t>((i + 2) % 3)};
 
           if (this->data_.side[i] == 0.0f) {
             this->data_.side[i] =

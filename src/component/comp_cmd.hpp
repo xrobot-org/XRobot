@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <component.hpp>
 #include <vector>
 
@@ -44,11 +45,6 @@ class CMD {
 
   CMD(Mode mode = CMD_OP_CTRL);
 
-  static constexpr auto CreateMapItem(uint32_t source, uint32_t target) {
-    const EventMapItem ITEM = {source, target};
-    return ITEM;
-  }
-
   static void RegisterEvent(
       void (*callback)(uint32_t event, void* arg), void* arg,
       const std::vector<Component::CMD::EventMapItem>& map);
@@ -62,7 +58,7 @@ class CMD {
 
   Message::Event event_;
 
-  Data data_[CTRL_SOURCE_NUM];
+  std::array<Data, CTRL_SOURCE_NUM> data_;
 
   Message::Topic<Data> data_in_tp_;
   Message::Topic<ChassisCMD> chassis_data_tp_;

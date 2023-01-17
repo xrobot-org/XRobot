@@ -1,5 +1,9 @@
 #include "robot.hpp"
 
+#include <comp_actuator.hpp>
+#include <comp_pid.hpp>
+
+#include "dev_mit_motor.hpp"
 #include "system.hpp"
 
 /* clang-format off */
@@ -30,26 +34,26 @@ Robot::Infantry::Param param = {
       },
 
       .EVENT_MAP = {
-        Component::CMD::CreateMapItem(
+        Component::CMD::EventMapItem{
           Component::CMD::CMD_EVENT_LOST_CTRL,
           Module::RMBalance::SET_MODE_RELAX
-        ),
-        Component::CMD::CreateMapItem(
+        },
+        Component::CMD::EventMapItem{
           Device::DR16::DR16_SW_L_POS_TOP,
           Module::RMBalance::SET_MODE_RELAX
-        ),
-        Component::CMD::CreateMapItem(
+        },
+        Component::CMD::EventMapItem{
           Device::DR16::DR16_SW_L_POS_MID,
           Module::RMBalance::SET_MODE_RELAX
-        ),
-        Component::CMD::CreateMapItem(
+        },
+        Component::CMD::EventMapItem{
           Device::DR16::DR16_SW_L_POS_BOT,
           Module::RMBalance::SET_MODE_FOLLOW
-        )
+        }
       },
 
       .wheel_param = {
-        {
+        Component::SpeedActuator::Param{
           .speed = {
             .k = 0.00025f,
             .p = 1.0f,
@@ -64,7 +68,8 @@ Robot::Infantry::Param param = {
           .in_cutoff_freq = -1.0f,
 
           .out_cutoff_freq = -1.0f,
-        },{
+        },
+        Component::SpeedActuator::Param{
           .speed = {
             .k = 0.00025f,
             .p = 1.0f,
@@ -82,7 +87,7 @@ Robot::Infantry::Param param = {
         },
       },
 
-      .eulr_param = {
+      .eulr_param = Component::PID::Param{
         .k = 2.0f,
         .p = 1.0f,
         .i = 1.0f,
@@ -93,7 +98,7 @@ Robot::Infantry::Param param = {
         .range = M_2PI,
       },
 
-      .gyro_param = {
+      .gyro_param = Component::PID::Param{
         .k = 0.15f,
         .p = 1.0f,
         .i = 0.0f,
@@ -104,7 +109,7 @@ Robot::Infantry::Param param = {
         .range = -1.0f,
       },
 
-      .speed_param = {
+      .speed_param = Component::PID::Param{
           .k = 2.0f,
           .p = 1.0f,
           .i = 1.0f,
@@ -118,13 +123,13 @@ Robot::Infantry::Param param = {
       .center_filter_cutoff_freq = 10.0f,
 
       .motor_param = {
-        {
+        Device::RMMotor::Param{
           .id_feedback = 0x201,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_1,
         },
-        {
+        Device::RMMotor::Param{
           .id_feedback = 0x202,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
@@ -155,26 +160,26 @@ Robot::Infantry::Param param = {
       },
 
       .EVENT_MAP = {
-        Component::CMD::CreateMapItem(
+        Component::CMD::EventMapItem{
           Component::CMD::CMD_EVENT_LOST_CTRL,
           Module::WheelLeg::SET_MODE_RELAX
-        ),
-        Component::CMD::CreateMapItem(
+        },
+        Component::CMD::EventMapItem{
           Device::DR16::DR16_SW_L_POS_TOP,
           Module::WheelLeg::SET_MODE_RELAX
-        ),
-        Component::CMD::CreateMapItem(
+        },
+        Component::CMD::EventMapItem{
           Device::DR16::DR16_SW_L_POS_MID,
           Module::WheelLeg::SET_MODE_SQUAT
-        ),
-        Component::CMD::CreateMapItem(
+        },
+        Component::CMD::EventMapItem{
           Device::DR16::DR16_SW_L_POS_BOT,
           Module::WheelLeg::SET_MODE_SQUAT
-        )
+        }
       },
 
       .leg_actr = {
-        {
+        Component::PosActuator::Param{
         .speed = {
           .k = 1.0f,
           .p = 1.0f,
@@ -200,7 +205,8 @@ Robot::Infantry::Param param = {
         .in_cutoff_freq = -1.0f,
 
         .out_cutoff_freq = -1.0f,
-        },{
+        },
+        Component::PosActuator::Param{
         .speed = {
           .k = 1.0f,
           .p = 1.0f,
@@ -226,7 +232,8 @@ Robot::Infantry::Param param = {
         .in_cutoff_freq = -1.0f,
 
         .out_cutoff_freq = -1.0f,
-        },{
+        },
+        Component::PosActuator::Param{
         .speed = {
           .k = 1.0f,
           .p = 1.0f,
@@ -252,7 +259,8 @@ Robot::Infantry::Param param = {
         .in_cutoff_freq = -1.0f,
 
         .out_cutoff_freq = -1.0f,
-        },{
+        },
+        Component::PosActuator::Param{
         .speed = {
           .k = 1.0f,
           .p = 1.0f,
@@ -282,7 +290,7 @@ Robot::Infantry::Param param = {
       },
 
       .leg_motor = {
-        {
+        Device::MitMotor::Param{
           .kp = 30.0f,
           .kd = 0.1f,
           .def_speed = 0.0f,
@@ -290,7 +298,7 @@ Robot::Infantry::Param param = {
           .can = BSP_CAN_1,
           .max_error = 0.1f,
         },
-        {
+        Device::MitMotor::Param{
           .kp = 30.0f,
           .kd = 0.1f,
           .def_speed = 0.0f,
@@ -298,7 +306,7 @@ Robot::Infantry::Param param = {
           .can = BSP_CAN_1,
           .max_error = 0.1f,
         },
-        {
+        Device::MitMotor::Param{
           .kp = 30.0f,
           .kd = 0.1f,
           .def_speed = 0.0f,
@@ -306,7 +314,7 @@ Robot::Infantry::Param param = {
           .can = BSP_CAN_1,
           .max_error = 0.1f,
         },
-        {
+        Device::MitMotor::Param{
           .kp = 30.0f,
           .kd = 0.1f,
           .def_speed = 0.0f,

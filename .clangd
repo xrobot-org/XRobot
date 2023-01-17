@@ -8,6 +8,8 @@ Diagnostics:
             bugprone-*,
             cppcoreguidelines-*,
             modernize-deprecated-headers,
+            modernize-loop-convert,
+            modernize-avoid-c-arrays,
             concurrency-*,
             performance-*]
     Remove: [google-build-using-namespace,
@@ -36,6 +38,7 @@ Diagnostics:
             cppcoreguidelines-non-private-member-variables-in-classes]
     CheckOptions:
       misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: 1
+      modernize-loop-convert.MinConfidence: risky
       readability-identifier-naming.VariableCase: lower_case
       readability-identifier-naming.GlobalVariableCase: lower_case
       readability-identifier-naming.ClassMemberCase: lower_case

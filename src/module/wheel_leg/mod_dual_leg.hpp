@@ -54,17 +54,17 @@ class WheelLeg {
 
     float leg_max_angle;
 
-    float motor_zero[LEG_NUM * LEG_MOTOR_NUM];
+    std::array<float, LEG_NUM * LEG_MOTOR_NUM> motor_zero;
 
     const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
 
-    Component::PosActuator::Param leg_actr[LEG_NUM * LEG_MOTOR_NUM];
+    std::array<Component::PosActuator::Param, LEG_NUM * LEG_MOTOR_NUM> leg_actr;
 
-    Device::MitMotor::Param leg_motor[LEG_NUM * LEG_MOTOR_NUM];
+    std::array<Device::MitMotor::Param, LEG_NUM * LEG_MOTOR_NUM> leg_motor;
   } Param;
 
   typedef struct {
-    float motor_angle[LEG_MOTOR_NUM];
+    std::array<float, LEG_MOTOR_NUM> motor_angle;
     Component::Type::Line diagonal;
     Component::Type::Polar2 whell_polar;
     Component::Type::Position2 whell_pos;
@@ -72,7 +72,7 @@ class WheelLeg {
 
   typedef struct {
     Component::Type::Position2 whell_pos;
-    float motor_angle[LEG_MOTOR_NUM];
+    std::array<float, LEG_MOTOR_NUM> motor_angle;
   } Setpoint;
 
   WheelLeg(Param& param, float sample_freq);
@@ -92,15 +92,15 @@ class WheelLeg {
 
   float now_;
 
-  Component::PosActuator* leg_actuator_[LEG_NUM * LEG_MOTOR_NUM];
+  std::array<Component::PosActuator*, LEG_NUM * LEG_MOTOR_NUM> leg_actuator_;
 
-  Device::MitMotor* leg_motor_[LEG_NUM * LEG_MOTOR_NUM];
+  std::array<Device::MitMotor*, LEG_NUM * LEG_MOTOR_NUM> leg_motor_;
 
   Component::Type::Eulr eulr_;
 
-  Setpoint setpoint_[LEG_NUM];
+  std::array<Setpoint, LEG_NUM> setpoint_;
 
-  Feedback feedback_[LEG_NUM];
+  std::array<Feedback, LEG_NUM> feedback_;
 
   Mode mode_ = RELAX;
 

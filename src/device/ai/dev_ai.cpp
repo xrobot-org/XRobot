@@ -13,8 +13,8 @@
 #define AI_LEN_TX_BUFF \
   (sizeof(Protocol_UpPackageMCU_t) + sizeof(Protocol_UpPackageReferee_t))
 
-static uint8_t rxbuf[AI_LEN_RX_BUFF];
-static uint8_t txbuf[AI_LEN_TX_BUFF];
+static uint8_t rxbuf[AI_LEN_RX_BUFF];  // NOLINT(modernize-avoid-c-arrays)
+static uint8_t txbuf[AI_LEN_TX_BUFF];  // NOLINT(modernize-avoid-c-arrays)
 
 using namespace Device;
 

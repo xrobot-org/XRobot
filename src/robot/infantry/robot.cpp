@@ -1,5 +1,8 @@
 #include "robot.hpp"
 
+#include <comp_actuator.hpp>
+
+#include "dev_rm_motor.hpp"
 #include "mod_chassis.hpp"
 #include "system.hpp"
 
@@ -20,26 +23,26 @@ Robot::Infantry::Param param = {
     },
 
     .EVENT_MAP = {
-      Component::CMD::CreateMapItem(
+      Component::CMD::EventMapItem{
         Component::CMD::CMD_EVENT_LOST_CTRL,
         Module::RMChassis::SET_MODE_RELAX
-      ),
-      Component::CMD::CreateMapItem(
+      },
+      Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_L_POS_TOP,
         Module::RMChassis::SET_MODE_RELAX
-      ),
-      Component::CMD::CreateMapItem(
+      },
+      Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_L_POS_MID,
         Module::RMChassis::SET_MODE_FOLLOW
-      ),
-      Component::CMD::CreateMapItem(
+      },
+      Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_L_POS_BOT,
         Module::RMChassis::SET_MODE_ROTOR
-      )
+      }
     },
 
     .actuator_param = {
-      {
+      Component::SpeedActuator::Param{
         .speed = {
           .k = 0.00015f,
           .p = 1.0f,
@@ -56,7 +59,7 @@ Robot::Infantry::Param param = {
         .out_cutoff_freq = -1.0f,
 
       },
-      {
+      Component::SpeedActuator::Param{
         .speed = {
           .k = 0.00018f,
           .p = 1.0f,
@@ -72,7 +75,7 @@ Robot::Infantry::Param param = {
 
         .out_cutoff_freq = -1.0f,
       },
-      {
+      Component::SpeedActuator::Param{
         .speed = {
           .k = 0.00015f,
           .p = 1.0f,
@@ -88,7 +91,7 @@ Robot::Infantry::Param param = {
 
         .out_cutoff_freq = -1.0f,
       },
-      {
+      Component::SpeedActuator::Param{
         .speed = {
           .k = 0.00015f,
           .p = 1.0f,
@@ -107,25 +110,25 @@ Robot::Infantry::Param param = {
     },
 
     .motor_param = {
-      {
+      Device::RMMotor::Param{
           .id_feedback = 0x201,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_1,
       },
-      {
+      Device::RMMotor::Param{
           .id_feedback = 0x202,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_1,
       },
-      {
+      Device::RMMotor::Param{
           .id_feedback = 0x203,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_1,
       },
-      {
+      Device::RMMotor::Param{
           .id_feedback = 0x204,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
@@ -238,22 +241,22 @@ Robot::Infantry::Param param = {
     },
 
     .EVENT_MAP = {
-      Component::CMD::CreateMapItem(
+      Component::CMD::EventMapItem{
         Component::CMD::CMD_EVENT_LOST_CTRL,
         Module::Gimbal::SET_MODE_RELAX
-      ),
-      Component::CMD::CreateMapItem(
+      },
+      Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_TOP,
         Module::Gimbal::SET_MODE_ABSOLUTE
-      ),
-      Component::CMD::CreateMapItem(
+      },
+      Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_MID,
         Module::Gimbal::SET_MODE_ABSOLUTE
-      ),
-      Component::CMD::CreateMapItem(
+      },
+      Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_BOT,
         Module::Gimbal::SET_MODE_ABSOLUTE
-      )
+      }
     },
 
   },
@@ -266,10 +269,10 @@ Robot::Infantry::Param param = {
     .cover_close_duty = 0.075f,
     .model = Module::Launcher::LAUNCHER_MODEL_17MM,
     .default_bullet_speed = 30.f,
-    .min_launch_delay = (uint32_t)(1000.0f / 20.0f),
+    .min_launch_delay = static_cast<uint32_t>(1000.0f / 20.0f),
 
     .trig_actr = {
-      {
+      Component::PosActuator::Param{
         .speed = {
           .k = 1.5f,
           .p = 1.0f,
@@ -299,7 +302,7 @@ Robot::Infantry::Param param = {
     },
 
     .fric_actr = {
-      {
+      Component::SpeedActuator::Param{
         .speed = {
           .k = 0.00015f,
           .p = 1.0f,
@@ -315,7 +318,7 @@ Robot::Infantry::Param param = {
 
         .out_cutoff_freq = -1.0f,
       },
-      {
+      Component::SpeedActuator::Param{
         .speed = {
           .k = 0.00015f,
           .p = 1.0f,
@@ -334,7 +337,7 @@ Robot::Infantry::Param param = {
     },
 
     .trig_motor = {
-      {
+      Device::RMMotor::Param{
         .id_feedback = 0x207,
         .id_control = M3508_M2006_CTRL_ID_EXTAND,
         .model = Device::RMMotor::MOTOR_M2006,
@@ -343,13 +346,13 @@ Robot::Infantry::Param param = {
     },
 
     .fric_motor = {
-      {
+      Device::RMMotor::Param{
           .id_feedback = 0x205,
           .id_control = M3508_M2006_CTRL_ID_EXTAND,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
       },
-      {
+      Device::RMMotor::Param{
           .id_feedback = 0x206,
           .id_control = M3508_M2006_CTRL_ID_EXTAND,
           .model = Device::RMMotor::MOTOR_M3508,
@@ -358,30 +361,30 @@ Robot::Infantry::Param param = {
     },
 
     .EVENT_MAP = {
-      Component::CMD::CreateMapItem(
+      Component::CMD::EventMapItem{
         Component::CMD::CMD_EVENT_LOST_CTRL,
         Module::Launcher::CHANGE_FIRE_MODE_RELAX
-      ),
-      Component::CMD::CreateMapItem(
+      },
+      Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_TOP,
         Module::Launcher::CHANGE_FIRE_MODE_SAFE
-      ),
-      Component::CMD::CreateMapItem(
+      },
+      Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_MID,
         Module::Launcher::CHANGE_FIRE_MODE_LOADED
-      ),
-      Component::CMD::CreateMapItem(
+      },
+      Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_BOT,
         Module::Launcher::CHANGE_FIRE_MODE_LOADED
-      ),
-      Component::CMD::CreateMapItem(
+      },
+      Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_BOT,
         Module::Launcher::LAUNCHER_START_FIRE
-      ),
-      Component::CMD::CreateMapItem(
+      },
+      Component::CMD::EventMapItem{
         Device::DR16::KEY_L_CLICK,
         Module::Launcher::LAUNCHER_START_FIRE
-      )
+      }
     },
   }, /* launcher */
 

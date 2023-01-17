@@ -5,6 +5,8 @@
 
 #include "dev_bmi088.hpp"
 
+#include <string_view>
+
 #include "bsp_delay.h"
 #include "bsp_gpio.h"
 #include "bsp_pwm.h"
@@ -60,7 +62,10 @@
 #define BMI088_ACCL_RX_BUFF_LEN (19)
 #define BMI088_GYRO_RX_BUFF_LEN (6)
 
+// NOLINTNEXTLINE(modernize-avoid-c-arrays)
 static uint8_t tx_rx_buf[2];
+
+// NOLINTNEXTLINE(modernize-avoid-c-arrays)
 static uint8_t dma_buf[BMI088_ACCL_RX_BUFF_LEN + BMI088_GYRO_RX_BUFF_LEN];
 static Component::PID::Param imu_temp_ctrl_pid_param = {
     .k = 0.15f,
@@ -73,7 +78,7 @@ static Component::PID::Param imu_temp_ctrl_pid_param = {
     .range = 0.0f,
 };
 
-static const char BMI088_CALI_KEY_NAME[] = "bmi088_cali";
+static const std::string BMI088_CALI_KEY_NAME("bmi088_cali");
 
 using namespace Device;
 
@@ -173,12 +178,13 @@ BMI088::BMI088(BMI088::Rotation &rot)
   bsp_spi_register_callback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB, recv_cplt_callback,
                             this);
 
-  if (System::Database::Find(BMI088_CALI_KEY_NAME) != sizeof(Calibration)) {
+  if (System::Database::Find(BMI088_CALI_KEY_NAME.c_str()) !=
+      sizeof(Calibration)) {
     memset(&this->cali_, 0, sizeof(this->cali_));
-    System::Database::Set(BMI088_CALI_KEY_NAME, &this->cali_,
+    System::Database::Set(BMI088_CALI_KEY_NAME.c_str(), &this->cali_,
                           sizeof(this->cali_));
   } else {
-    System::Database::Get(BMI088_CALI_KEY_NAME, &this->cali_,
+    System::Database::Get(BMI088_CALI_KEY_NAME.c_str(), &this->cali_,
                           sizeof(this->cali_));
   }
 
@@ -225,7 +231,7 @@ BMI088::BMI088(BMI088::Rotation &rot)
                        System::Thread::REALTIME);
 }
 
-int BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
+int BMI088::CaliCMD(BMI088 *bmi088, int argc, char **argv) {
   if (argc == 1) {
     ms_printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据");
     ms_enter();
@@ -276,7 +282,7 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char *argv[]) {
       ms_printf("校准误差: x:%f y:%f z:%f", x, y, z);
       ms_enter();
 
-      System::Database::Set(BMI088_CALI_KEY_NAME, &bmi088->cali_,
+      System::Database::Set(BMI088_CALI_KEY_NAME.c_str(), &bmi088->cali_,
                             sizeof(bmi088->cali_));
 
       ms_printf("保存校准数据");
@@ -388,15 +394,16 @@ void BMI088::PraseGyro() {
   memcpy(&raw_y, dma_buf + BMI088_ACCL_RX_BUFF_LEN + 2, sizeof(raw_y));
   memcpy(&raw_z, dma_buf + BMI088_ACCL_RX_BUFF_LEN + 4, sizeof(raw_z));
 
-  float gyro[3] = {static_cast<float>(raw_x), static_cast<float>(raw_y),
-                   static_cast<float>(raw_z)};
+  std::array<float, 3> gyro = {static_cast<float>(raw_x),
+                               static_cast<float>(raw_y),
+                               static_cast<float>(raw_z)};
 
   /* FS125: 262.144. FS250: 131.072. FS500: 65.536. FS1000: 32.768.
    * FS2000: 16.384.*/
 
-  for (int i = 0; i < 3; i++) {
-    gyro[i] /= 32.768f;
-    gyro[i] *= M_DEG2RAD_MULT;
+  for (float &it : gyro) {
+    it /= 32.768f;
+    it *= M_DEG2RAD_MULT;
   }
 
   memset(&(this->gyro_), 0, sizeof(this->gyro_));
@@ -418,12 +425,13 @@ void BMI088::PraseAccel() {
   memcpy(&raw_y, dma_buf + 3, sizeof(raw_y));
   memcpy(&raw_z, dma_buf + 5, sizeof(raw_z));
 
-  float accl[3] = {static_cast<float>(raw_x), static_cast<float>(raw_y),
-                   static_cast<float>(raw_z)};
+  std::array<float, 3> accl = {static_cast<float>(raw_x),
+                               static_cast<float>(raw_y),
+                               static_cast<float>(raw_z)};
 
   /* 3G: 10920. 6G: 5460. 12G: 2730. 24G: 1365. */
-  for (int i = 0; i < 3; i++) {
-    accl[i] /= 5640.0f;
+  for (float &it : accl) {
+    it /= 5640.0f;
   }
 
   int16_t raw_temp =

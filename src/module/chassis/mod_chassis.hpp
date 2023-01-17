@@ -50,9 +50,9 @@ class Chassis {
 
     const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
 
-    Component::SpeedActuator::Param actuator_param[4];
+    std::array<Component::SpeedActuator::Param, 4> actuator_param;
 
-    MotorParam motor_param[4];
+    std::array<MotorParam, 4> motor_param;
   } Param;
 
   typedef struct {
@@ -89,9 +89,9 @@ class Chassis {
 
   Mode mode_ = RELAX;
 
-  Component::SpeedActuator *actuator_[4];
+  std::array<Component::SpeedActuator *, 4> actuator_;
 
-  Device::BaseMotor *motor_[4];
+  std::array<Device::BaseMotor *, 4> motor_;
 
   /* 底盘设计 */
   Component::Mixer mixer_;

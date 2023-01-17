@@ -28,7 +28,7 @@ PID::PID(PID::Param &param, float sample_freq)
 
 float PID::Calculate(float sp, float fb, float dt) {
   if (!isfinite(sp) || !isfinite(fb) || !isfinite(dt)) {
-    return this->last.out_;
+    return this->last_.out;
   }
 
   /* 计算误差值 */
@@ -43,10 +43,10 @@ float PID::Calculate(float sp, float fb, float dt) {
 
   /* 通过fb计算D，避免了由于sp变化导致err突变的问题 */
   /* 当sp不变时，err的微分等于负的fb的微分 */
-  float d = (FILTERED_K_FB - this->last.k_fb_) / fmaxf(dt, this->dt_min_);
+  float d = (FILTERED_K_FB - this->last_.k_fb) / fmaxf(dt, this->dt_min_);
 
-  this->last.err_ = ERR;
-  this->last.k_fb_ = FILTERED_K_FB;
+  this->last_.err = ERR;
+  this->last_.k_fb = FILTERED_K_FB;
 
   if (!isfinite(d)) {
     d = 0.0f;
@@ -77,14 +77,14 @@ float PID::Calculate(float sp, float fb, float dt) {
     if (this->param_.out_limit > SIGMA) {
       output = abs_clampf(output, this->param_.out_limit);
     }
-    this->last.out_ = output;
+    this->last_.out = output;
   }
-  return this->last.out_;
+  return this->last_.out;
 }
 
 float PID::Calculate(float sp, float fb, float fb_dot, float dt) {
   if (!isfinite(sp) || !isfinite(fb) || !isfinite(fb_dot) || !isfinite(dt)) {
-    return this->last.out_;
+    return this->last_.out;
   }
 
   /* 计算误差值 */
@@ -99,8 +99,8 @@ float PID::Calculate(float sp, float fb, float fb_dot, float dt) {
 
   float d = fb_dot;
 
-  this->last.err_ = ERR;
-  this->last.k_fb_ = FILTERED_K_FB;
+  this->last_.err = ERR;
+  this->last_.k_fb = FILTERED_K_FB;
 
   if (!isfinite(d)) {
     d = 0.0f;
@@ -131,17 +131,17 @@ float PID::Calculate(float sp, float fb, float fb_dot, float dt) {
     if (this->param_.out_limit > SIGMA) {
       output = abs_clampf(output, this->param_.out_limit);
     }
-    this->last.out_ = output;
+    this->last_.out = output;
   }
-  return this->last.out_;
+  return this->last_.out;
 }
 
 void PID::SetK(float k) { this->param_.k = k; };
 
 void PID::Reset() {
   this->i_ = 0.0f;
-  this->last.err_ = 0.0f;
-  this->last.k_fb_ = 0.0f;
-  this->last.out_ = 0.0f;
+  this->last_.err = 0.0f;
+  this->last_.k_fb = 0.0f;
+  this->last_.out = 0.0f;
   this->dfilter_.Reset(0.0f);
 }

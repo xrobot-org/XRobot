@@ -42,7 +42,7 @@ class BaseMotor {
 
   float GetCurrent() { return this->feedback_.torque_current; }
 
-  static int ShowCMD(BaseMotor *motor, int argc, char *argv[]) {
+  static int ShowCMD(BaseMotor *motor, int argc, char **argv) {
     if (argc == 1) {
       ms_printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据");
       ms_enter();
@@ -76,6 +76,7 @@ class BaseMotor {
     return 0;
   }
 
+  // NOLINTNEXTLINE(modernize-avoid-c-arrays)
   char name_[20];
 
   Feedback feedback_;

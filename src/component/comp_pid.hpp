@@ -41,10 +41,10 @@ class PID {
   float i_;      /* 积分 */
 
   struct {
-    float err_;  /* 上次误差 */
-    float k_fb_; /* 上次反馈值 */
-    float out_;  /* 上次输出 */
-  } last;
+    float err;  /* 上次误差 */
+    float k_fb; /* 上次反馈值 */
+    float out;  /* 上次输出 */
+  } last_;
 
   LowPassFilter2p dfilter_;
 };

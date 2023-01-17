@@ -12,7 +12,7 @@ class TerminalController {
 
   TerminalController();
 
-  static int ControlCMD(TerminalController* ctrl, int argc, char* argv[]);
+  static int ControlCMD(TerminalController* ctrl, int argc, char** argv);
 
  private:
   Message::Event event_;

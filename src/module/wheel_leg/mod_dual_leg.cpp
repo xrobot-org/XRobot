@@ -30,7 +30,7 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
 
   for (int i = 0; i < LEG_NUM; i++) {
     for (int j = 0; j < LEG_MOTOR_NUM; j++) {
-      circle_add(this->param_.motor_zero + i * 2 + j, M_PI, M_2PI);
+      circle_add(&this->param_.motor_zero[i * 2 + j], M_PI, M_2PI);
     }
   }
 
@@ -90,18 +90,18 @@ void WheelLeg::UpdateFeedback() {
     for (uint8_t j = 0; j < LEG_MOTOR_NUM; j++) {
       this->feedback_[i].motor_angle[j] =
           this->leg_motor_[i * LEG_MOTOR_NUM + j]->GetAngle();
-      circle_add(this->feedback_[i].motor_angle + j,
+      circle_add(&this->feedback_[i].motor_angle[j],
                  -this->param_.motor_zero[i * LEG_MOTOR_NUM + j], M_2PI);
     }
 
-    Polar2 polar_l2[LEG_MOTOR_NUM]{
-        {this->feedback_[i].motor_angle[LEG_FRONT], this->param_.l2},
-        {this->feedback_[i].motor_angle[LEG_BACK], this->param_.l2}};
-    Position2 pos_l2_end[LEG_MOTOR_NUM]{
-        {static_cast<Position2>(polar_l2[LEG_FRONT]) +
-         Position2(-param_.l1 / 2.0f, 0.0f)},
-        {static_cast<Position2>(polar_l2[LEG_BACK]) +
-         Position2(param_.l1 / 2.0f, 0.0f)}};
+    std::array<Polar2, LEG_MOTOR_NUM> polar_l2{
+        Polar2{this->feedback_[i].motor_angle[LEG_FRONT], this->param_.l2},
+        Polar2{this->feedback_[i].motor_angle[LEG_BACK], this->param_.l2}};
+    std::array<Position2, LEG_MOTOR_NUM> pos_l2_end{
+        Position2{static_cast<Position2>(polar_l2[LEG_FRONT]) +
+                  Position2(-param_.l1 / 2.0f, 0.0f)},
+        Position2{static_cast<Position2>(polar_l2[LEG_BACK]) +
+                  Position2(param_.l1 / 2.0f, 0.0f)}};
 
     this->feedback_[i].diagonal =
         Line(pos_l2_end[LEG_FRONT], pos_l2_end[LEG_BACK]);
@@ -181,8 +181,9 @@ void WheelLeg::Control() {
     case SQUAT:
     case JUMP:
       for (uint8_t i = 0; i < LEG_NUM; i++) {
-        Position2 motor_pos[LEG_MOTOR_NUM] = {{-param_.l1 / 2.0f, 0.0f},
-                                              {param_.l1 / 2.0f, 0.0f}};
+        std::array<Position2, LEG_MOTOR_NUM> motor_pos = {
+            Position2{-param_.l1 / 2.0f, 0.0f},
+            Position2{param_.l1 / 2.0f, 0.0f}};
 
         for (uint8_t j = 0; j < LEG_MOTOR_NUM; j++) {
           Component::Type::Position2 target = this->setpoint_[i].whell_pos;

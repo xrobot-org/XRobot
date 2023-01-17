@@ -6,6 +6,8 @@
 
 #include <component.hpp>
 
+// NOLINTBEGIN(modernize-avoid-c-arrays)
+
 #define UI_GRAPHIC_LAYER_CONST (0)
 #define UI_GRAPHIC_LAYER_AUTOAIM (1)
 #define UI_GRAPHIC_LAYER_CHASSIS (2)
@@ -47,7 +49,7 @@ typedef enum {
 } ui_graphic_op_t;
 
 typedef struct __attribute__((packed)) {
-  uint8_t name[3];
+  uint8_t name[3];  // NOLINT(modernize-avoid-c-arrays)
   uint16_t op : 3;
   uint16_t type_ele : 3;
   uint16_t layer : 4;
@@ -64,7 +66,7 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
   ui_ele_t graphic;
-  uint8_t str[30];
+  uint8_t str[30];  // NOLINT(modernize-avoid-c-arrays)
 } ui_string_t;
 
 typedef struct __attribute__((packed)) {
@@ -254,3 +256,5 @@ int8_t ui_draw_string(ui_string_t *ele, const char *name, ui_graphic_op_t op,
  * @return int8_t
  */
 int8_t ui_del_layer(ui_del_t *del, ui_del_op_t op, uint8_t layer);
+
+// NOLINTEND(modernize-avoid-c-arrays)

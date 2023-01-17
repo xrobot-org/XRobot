@@ -14,7 +14,7 @@ static ms_item_t sn_tools;
 std::string Database::path_(std::string(getenv("HOME")) + "/.rm_database/");
 
 Database::Database() {
-  auto sn_cmd_fn = [](ms_item_t *item, int argc, char *argv[]) {
+  auto sn_cmd_fn = [](ms_item_t *item, int argc, char **argv) {
     MS_UNUSED(item);
 
     if (argc == 1) {

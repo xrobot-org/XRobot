@@ -4,7 +4,7 @@
 
 using namespace Device;
 
-Message::Topic<Can::Pack>* Can::can_tp_[BSP_CAN_NUM];
+std::array<Message::Topic<Can::Pack>*, BSP_CAN_NUM> Can::can_tp_;
 
 static Can::Pack pack;
 

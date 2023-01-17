@@ -34,6 +34,7 @@ class WearLab {
   } CanData3;
 
   typedef struct __attribute__((packed)) {
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays)
     int16_t data[4];
   } CanData4;
 };

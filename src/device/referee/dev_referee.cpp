@@ -35,7 +35,9 @@
 
 using namespace Device;
 
+// NOLINTNEXTLINE(modernize-avoid-c-arrays)
 static uint8_t rxbuf[REF_LEN_RX_BUFF];
+// NOLINTNEXTLINE(modernize-avoid-c-arrays)
 static uint8_t txbuf[REF_LEN_TX_BUFF];
 
 System::Semaphore *ui_fast_refresh;

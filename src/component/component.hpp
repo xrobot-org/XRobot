@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cfloat>
 #include <cmath>
 #include <cstddef>
