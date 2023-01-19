@@ -37,7 +37,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(CMAKE_ASM_FLAGS_DEBUG "-Og -g")
   set(CMAKE_EXE_LINKER_FLAGS_DEBUG "")
   add_compile_definitions(MCU_DEBUG_BUILD USE_FULL_ASSERT)
-  add_compile_options(-Werror)
+  add_compile_options(-Werror -gdwarf-4)
 
 elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
   set(CMAKE_C_FLAGS_RELEASE "-O3 -g")

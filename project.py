@@ -66,19 +66,22 @@ def build(board, robot):
                     select_config(dirname, filename[:-7])
                     os.system("cd " + build_dir + ' && ninja')
                     os.makedirs(fm_dir, exist_ok=True)
-                    shutil.copyfile(
-                        tools.project_path + '/build/xrobot.elf',
-                        fm_dir + '/' + dirname + '&' + filename[:-7] + '.elf')
-
-                    print('\n')
+                    try:
+                        shutil.copyfile(
+                            tools.project_path + '/build/xrobot.elf', fm_dir +
+                            '/' + dirname + '&' + filename[:-7] + '.elf')
+                    except:
+                        print('\033[0;31;40mBuild' + dirname + ' [' +
+                              filename[:-7] + '] failed.\033[0m')
+                        exit(-1)
 
                     target.append([dirname, filename[:-7]])
     if len(target) == 0:
         print('ERROR:No target select.')
     else:
         for item in target:
-            print('Robot[' + item[1] + ']' + ' for board ' + item[0] +
-                  ' build done.')
+            print('\033[0;32;40mRobot[' + item[1] + ']' + ' for board ' +
+                  item[0] + ' build done.\033[0m')
 
 
 def generate_kconfig():

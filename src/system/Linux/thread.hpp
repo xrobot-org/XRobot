@@ -30,7 +30,7 @@ class Thread {
       TypeErasure<void, ArgType>* type =
           static_cast<TypeErasure<void, ArgType>*>(arg);
       type->fun_(type->arg_);
-      return (void*)NULL;
+      return static_cast<void*>(NULL);
     };
 
     pthread_create(&this->handle_, NULL, port, type);

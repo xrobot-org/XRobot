@@ -37,6 +37,7 @@
  */
 #define SPEED2DELTA(_speed, _dt) (ANGLE2RANDIAN(_speed * _dt))
 
+#ifndef MAX
 /**
  * @brief 返回两个值中的最大值
  *
@@ -48,6 +49,9 @@
     _a > _b ? _a : _b;      \
   })
 
+#endif
+
+#ifndef MIN
 /**
  * @brief 返回两个值中的最小值
  *
@@ -58,6 +62,8 @@
     __typeof__(b) _b = (b); \
     _a < _b ? _a : _b;      \
   })
+
+#endif
 
 #ifdef MCU_DEBUG_BUILD
 
