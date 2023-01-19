@@ -3,14 +3,15 @@
   MadgwickAHRS
 */
 
-#include "comp_ahrs.hpp"
+#include "dev_ahrs.hpp"
 
 #include "bsp_time.h"
 
 #define BETA_IMU (0.033f)
 #define BETA_AHRS (0.041f)
 
-using namespace Component;
+using namespace Device;
+
 AHRS::AHRS()
     : quat_tp_("imu_quat"),
       eulr_tp_("imu_eulr"),
@@ -75,8 +76,8 @@ AHRS::AHRS()
     }
   };
 
-  this->thread_.Create(ahrs_thread, this, "ahrs_thread", 256,
-                       System::Thread::HIGH);
+  this->thread_.Create(ahrs_thread, this, "ahrs_thread",
+                       DEVICE_AHRS_TASK_STACK_DEPTH, System::Thread::HIGH);
 }
 
 int AHRS::ShowCMD(AHRS *ahrs, int argc, char **argv) {

@@ -1,4 +1,4 @@
-#include "comp_ahrs.hpp"
+#include "dev_ahrs.hpp"
 #include "dev_blink_led.hpp"
 #include "dev_bmi088.hpp"
 #include "dev_can.hpp"
@@ -13,8 +13,7 @@ class WearLabIMU {
     Device::BlinkLED::Param led;
   } Param;
 
-  Component::AHRS ahrs_;
-
+  Device::AHRS ahrs_;
   Device::BMI088 bmi088_;
   Device::BlinkLED led_;
   Device::Can can_;

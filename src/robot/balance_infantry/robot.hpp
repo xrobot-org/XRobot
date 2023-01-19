@@ -1,7 +1,7 @@
 #include <database.hpp>
 
-#include "comp_ahrs.hpp"
 #include "comp_cmd.hpp"
+#include "dev_ahrs.hpp"
 #include "dev_ai.hpp"
 #include "dev_bmi088.hpp"
 #include "dev_can.hpp"
@@ -26,9 +26,9 @@ class Infantry {
   } Param;
 
   Component::CMD cmd_;
-  Component::AHRS ahrs_;
 
   Device::AI ai_;
+  Device::AHRS ahrs_;
   Device::BMI088 bmi088_;
   Device::Can can_;
   Device::IMU can_imu_;

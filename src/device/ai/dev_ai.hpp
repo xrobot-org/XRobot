@@ -2,9 +2,9 @@
 
 #include <device.hpp>
 
-#include "comp_ahrs.hpp"
 #include "comp_cmd.hpp"
 #include "comp_utils.hpp"
+#include "dev_ahrs.hpp"
 #include "dev_referee.hpp"
 #include "protocol.h"
 

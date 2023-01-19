@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <component.hpp>
+#include <device.hpp>
 
-namespace Component {
+namespace Device {
 class AHRS {
  public:
   AHRS();
@@ -25,15 +25,15 @@ class AHRS {
 
   System::Thread thread_;
 
-  Message::Topic<Type::Quaternion> quat_tp_;
+  Message::Topic<Component::Type::Quaternion> quat_tp_;
 
-  Message::Topic<Type::Eulr> eulr_tp_;
+  Message::Topic<Component::Type::Eulr> eulr_tp_;
 
-  Type::Quaternion quat_;
-  Type::Eulr eulr_;
+  Component::Type::Quaternion quat_;
+  Component::Type::Eulr eulr_;
 
-  Type::Vector3 accl_;
-  Type::Vector3 gyro_;
+  Component::Type::Vector3 accl_;
+  Component::Type::Vector3 gyro_;
 
   System::Term::Command<AHRS *> cmd_;
 
@@ -41,4 +41,4 @@ class AHRS {
   System::Semaphore gyro_ready_;
   System::Semaphore ready_;
 };
-}  // namespace Component
+}  // namespace Device

@@ -3,7 +3,7 @@
 #include <database.hpp>
 #include <device.hpp>
 
-#include "comp_ahrs.hpp"
+#include "dev_ahrs.hpp"
 
 namespace Device {
 class BMI088 {
