@@ -5,7 +5,6 @@
 #include <cstring>
 #include <system.hpp>
 
-#include "bsp_usb.h"
 #include "ms.h"
 
 namespace System {

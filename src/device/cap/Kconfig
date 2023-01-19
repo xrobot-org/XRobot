@@ -1,3 +1,8 @@
+config DEVICE_CAP_TASK_STACK_DEPTH
+    int "CAP任务堆栈大小"
+    range 128 4096
+    default 256
+
 menu "超级电容"
 config CAP_PERCENT_NO_LIM
     int "底盘不再限制功率的电容电量"

@@ -3,7 +3,6 @@
 #include <device.hpp>
 
 #include "bsp_can.h"
-#include "comp_ahrs.hpp"
 
 namespace Device {
 class Can {

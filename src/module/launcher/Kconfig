@@ -1,0 +1,4 @@
+config MODULE_LAUNCHER_TASK_STACK_DEPTH
+    int "LAUNCHER任务堆栈大小"
+    range 128 4096
+    default 384

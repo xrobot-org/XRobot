@@ -75,7 +75,8 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
     }
   };
 
-  this->thread_.Create(leg_thread, this, "leg_thread", 768,
+  this->thread_.Create(leg_thread, this, "leg_thread",
+                       MODULE_WHEELLEG_TASK_STACK_DEPTH,
                        System::Thread::MEDIUM);
 }
 

@@ -1,0 +1,6 @@
+menu Linux
+config INIT_TASK_STACK_DEPTH
+    int "init任务堆栈大小(Linux下不可用)"
+    range 0 0
+    default 0
+endmenu

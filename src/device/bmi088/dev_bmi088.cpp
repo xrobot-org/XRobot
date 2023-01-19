@@ -216,7 +216,8 @@ BMI088::BMI088(BMI088::Rotation &rot)
     }
   };
 
-  this->thread_.Create(thread_bmi088, this, "thread_bmi088", 256,
+  this->thread_.Create(thread_bmi088, this, "thread_bmi088",
+                       DEVICE_BMI088_TASK_STACK_DEPTH,
                        System::Thread::REALTIME);
 }
 

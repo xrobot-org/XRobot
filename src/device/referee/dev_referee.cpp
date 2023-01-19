@@ -99,7 +99,8 @@ Referee::Referee() {
     }
   };
 
-  this->recv_thread_.Create(ref_recv_thread, this, "ref_recv_thread", 256,
+  this->recv_thread_.Create(ref_recv_thread, this, "ref_recv_thread",
+                            DEVICE_REF_RECV_TASK_STACK_DEPTH,
                             System::Thread::REALTIME);
 }
 

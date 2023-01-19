@@ -87,8 +87,8 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
     }
   };
 
-  this->thread_.Create(chassis_thread, this, "chassis_thread", 384,
-                       System::Thread::MEDIUM);
+  this->thread_.Create(chassis_thread, this, "chassis_thread",
+                       MODULE_BALANCE_TASK_STACK_DEPTH, System::Thread::MEDIUM);
 }
 
 template <typename Motor, typename MotorParam>

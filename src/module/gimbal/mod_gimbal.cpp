@@ -55,8 +55,8 @@ Gimbal::Gimbal(Param& param, float control_freq)
     }
   };
 
-  this->thread_.Create(gimbal_thread, this, "gimbal_thread", 512,
-                       System::Thread::MEDIUM);
+  this->thread_.Create(gimbal_thread, this, "gimbal_thread",
+                       MODULE_GIMBAL_TASK_STACK_DEPTH, System::Thread::MEDIUM);
 }
 
 void Gimbal::UpdateFeedback() {

@@ -1,0 +1,4 @@
+config DEVICE_BMI088_TASK_STACK_DEPTH
+    int "BMI088任务堆栈大小"
+    range 128 4096
+    default 256

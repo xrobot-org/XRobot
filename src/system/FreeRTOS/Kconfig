@@ -1,0 +1,23 @@
+menu FreeRTOS
+
+config INIT_TASK_STACK_DEPTH
+    int "init任务堆栈大小"
+    range 128 4096
+    default 1024
+
+config FREERTOS_TIMER_TASK_STACK_DEPTH
+    int "软定时器任务堆栈大小"
+    range 128 4096
+    default 256
+
+config FREERTOS_USB_TASK_STACK_DEPTH
+    int "USB任务堆栈大小"
+    range 128 4096
+    default 256
+
+config FREERTOS_TERM_TASK_STACK_DEPTH
+    int "终端任务堆栈大小"
+    range 128 4096
+    default 512
+
+endmenu

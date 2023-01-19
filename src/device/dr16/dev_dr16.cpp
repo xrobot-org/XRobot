@@ -46,8 +46,8 @@ DR16::DR16()
     }
   };
 
-  this->thread_.Create(dr16_thread, this, "dr16_thread", 256,
-                       System::Thread::REALTIME);
+  this->thread_.Create(dr16_thread, this, "dr16_thread",
+                       DEVICE_DR16_TASK_STACK_DEPTH, System::Thread::REALTIME);
 }
 
 bool DR16::StartRecv() {

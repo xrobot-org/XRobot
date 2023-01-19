@@ -36,8 +36,8 @@ RGB::RGB() {
     }
   };
 
-  this->thread_.Create(led_thread, this, "led_thread", 128,
-                       System::Thread::LOW);
+  this->thread_.Create(led_thread, this, "led_thread",
+                       DEVICE_LED_RGB_TASK_STACK_DEPTH, System::Thread::LOW);
 }
 
 bool RGB::Set(RGB::Channel ch, RGB::Status status, float duty_cycle) {

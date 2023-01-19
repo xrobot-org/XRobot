@@ -2,6 +2,7 @@
 #include <thread.hpp>
 
 #include "FreeRTOS.h"
+#include "bsp_usb.h"
 #include "semphr.h"
 #include "task.h"
 
@@ -26,8 +27,8 @@ Term::Term() {
     }
   };
 
-  usb_thread.Create(usb_thread_fn, static_cast<void *>(0), "term_thread", 256,
-                    System::Thread::REALTIME);
+  usb_thread.Create(usb_thread_fn, static_cast<void *>(0), "usb_thread",
+                    FREERTOS_USB_TASK_STACK_DEPTH, System::Thread::REALTIME);
 
   auto term_thread_fn = [](void *arg) {
     (void)arg;
@@ -50,6 +51,6 @@ Term::Term() {
     }
   };
 
-  term_thread.Create(term_thread_fn, static_cast<void *>(0), "term_thread", 512,
-                     System::Thread::LOW);
+  term_thread.Create(term_thread_fn, static_cast<void *>(0), "term_thread",
+                     FREERTOS_TERM_TASK_STACK_DEPTH, System::Thread::LOW);
 }

@@ -44,8 +44,8 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
     }
   };
 
-  this->thread_.Create(cap_thread, this, "cap_thread", 256,
-                       System::Thread::MEDIUM);
+  this->thread_.Create(cap_thread, this, "cap_thread",
+                       DEVICE_CAP_TASK_STACK_DEPTH, System::Thread::MEDIUM);
 }
 
 bool Cap::Update() {

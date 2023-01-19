@@ -417,5 +417,5 @@ void robot_init() {
 
   System::Thread init_thread;
   init_thread.Create(init_thread_fn, static_cast<void*>(NULL), "init_thread_fn",
-                     1024, System::Thread::REALTIME);
+                     2048, System::Thread::REALTIME);
 }

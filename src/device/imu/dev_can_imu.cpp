@@ -34,8 +34,8 @@ IMU::IMU(IMU::Param &param)
     }
   };
 
-  this->thread_.Create(imu_thread, this, "imu_thread", 256,
-                       System::Thread::MEDIUM);
+  this->thread_.Create(imu_thread, this, "imu_thread",
+                       DEVICE_CAN_IMU_TASK_STACK_DEPTH, System::Thread::MEDIUM);
 }
 
 void IMU::Update() {

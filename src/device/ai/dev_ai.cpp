@@ -61,7 +61,7 @@ AI::AI() : data_ready_(false), cmd_tp_("cmd_ai") {
     }
   };
 
-  this->thread_.Create(ai_thread, this, "ai_thread", 256,
+  this->thread_.Create(ai_thread, this, "ai_thread", DEVICE_AI_TASK_STACK_DEPTH,
                        System::Thread::REALTIME);
 }
 
