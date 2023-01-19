@@ -1,0 +1,28 @@
+{
+    // 使用 IntelliSense 了解相关属性。
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceRoot}/build/xrobot.elf",
+            "name": "Debug with OpenOCD",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "configFiles": [
+                "board/esp32c3-builtin.cfg"
+            ],
+            "gdbPath": "riscv32-esp-elf-gdb",
+            "searchDir": [],
+            "runToEntryPoint": "app_main",
+            "postLaunchCommands": [
+                "mon program_esp build/xrobot.bin 0x10000 verify",
+                "set remote hardware-watchpoint-limit 2",
+                "mon reset halt",
+                "flushregs"
+            ]
+        }
+    ]
+}
