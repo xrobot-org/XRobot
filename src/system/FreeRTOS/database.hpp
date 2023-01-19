@@ -1,31 +1,39 @@
 #pragma once
 
-#include "easyflash.h"
+#include <cstring>
+
+#include "bsp_flash.h"
 
 namespace System {
 class Database {
  public:
   Database();
+  template <typename Data>
+  class Key {
+   public:
+    Key(const char* name) : name_(name) {
+      if (bsp_flash_check_blog(name) == sizeof(Data)) {
+        bsp_flash_get_blog(name, reinterpret_cast<uint8_t*>(&this->data_),
+                           sizeof(Data));
+      } else {
+        memset(&this->data_, 0, sizeof(Data));
+        bsp_flash_set_blog(name, reinterpret_cast<uint8_t*>(&this->data_),
+                           sizeof(Data));
+      }
+    }
 
-  static uint32_t Find(const char* name) {
-    size_t len;
-    ef_get_env_blob(name, NULL, 0, &len);
-    return len;
-  }
+    void Set() {
+      bsp_flash_set_blog(name_, reinterpret_cast<uint8_t*>(&this->data_),
+                         sizeof(Data));
+    }
 
-  static uint32_t Get(const char* name, void* buff, uint32_t len) {
-    return ef_get_env_blob(name, buff, len, NULL);
-  }
+    void Get() {
+      bsp_flash_get_blog(name_, reinterpret_cast<uint8_t*>(&this->data_),
+                         sizeof(Data));
+    }
 
-  static bool Set(const char* name, void* data, uint32_t len) {
-    uint32_t write_times;
-    ef_get_env_blob("WRITE TIMES", &write_times, sizeof(uint32_t), NULL);
-
-    write_times += 2;
-
-    ef_set_env_blob("WRITE TIMES", &write_times, sizeof(uint32_t));
-
-    return ef_set_env_blob(name, data, len) == EF_NO_ERR;
-  }
+    Data data_;
+    const char* name_;
+  };
 };
 }  // namespace System

@@ -78,8 +78,6 @@ static Component::PID::Param imu_temp_ctrl_pid_param = {
     .range = 0.0f,
 };
 
-static const std::string BMI088_CALI_KEY_NAME("bmi088_cali");
-
 using namespace Device;
 
 void BMI088::Select(BMI088::DeviceType type) {
@@ -135,7 +133,8 @@ void BMI088::Read(BMI088::DeviceType type, uint8_t reg, uint8_t *data,
 }
 
 BMI088::BMI088(BMI088::Rotation &rot)
-    : rot_(rot),
+    : cali_("bmi088_cali"),
+      rot_(rot),
       gyro_raw_(false),
       accl_raw_(false),
       gyro_new_(false),
@@ -177,16 +176,6 @@ BMI088::BMI088(BMI088::Rotation &rot)
 
   bsp_spi_register_callback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB, recv_cplt_callback,
                             this);
-
-  if (System::Database::Find(BMI088_CALI_KEY_NAME.c_str()) !=
-      sizeof(Calibration)) {
-    memset(&this->cali_, 0, sizeof(this->cali_));
-    System::Database::Set(BMI088_CALI_KEY_NAME.c_str(), &this->cali_,
-                          sizeof(this->cali_));
-  } else {
-    System::Database::Get(BMI088_CALI_KEY_NAME.c_str(), &this->cali_,
-                          sizeof(this->cali_));
-  }
 
   auto thread_bmi088 = [](BMI088 *bmi088) {
     Component::PID imu_temp_ctrl_pid(imu_temp_ctrl_pid_param, 1000.0f);
@@ -241,8 +230,9 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char **argv) {
     ms_enter();
   } else if (argc == 2) {
     if (strcmp(argv[1], "list") == 0) {
-      ms_printf("校准数据 x:%f y:%f z:%f", bmi088->cali_.gyro_offset.x,
-                bmi088->cali_.gyro_offset.y, bmi088->cali_.gyro_offset.z);
+      ms_printf("校准数据 x:%f y:%f z:%f", bmi088->cali_.data_.gyro_offset.x,
+                bmi088->cali_.data_.gyro_offset.y,
+                bmi088->cali_.data_.gyro_offset.z);
       ms_enter();
     } else if (strcmp(argv[1], "cali") == 0) {
       ms_printf("开始校准，请保持陀螺仪稳定");
@@ -257,12 +247,13 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char **argv) {
         ms_clear_line();
       }
 
-      bmi088->cali_.gyro_offset.x += static_cast<float>(x);
-      bmi088->cali_.gyro_offset.y += static_cast<float>(y);
-      bmi088->cali_.gyro_offset.z += static_cast<float>(z);
+      bmi088->cali_.data_.gyro_offset.x += static_cast<float>(x);
+      bmi088->cali_.data_.gyro_offset.y += static_cast<float>(y);
+      bmi088->cali_.data_.gyro_offset.z += static_cast<float>(z);
 
-      ms_printf("校准数据 x:%f y:%f z:%f", bmi088->cali_.gyro_offset.x,
-                bmi088->cali_.gyro_offset.y, bmi088->cali_.gyro_offset.z);
+      ms_printf("校准数据 x:%f y:%f z:%f", bmi088->cali_.data_.gyro_offset.x,
+                bmi088->cali_.data_.gyro_offset.y,
+                bmi088->cali_.data_.gyro_offset.z);
       ms_enter();
 
       x = y = z = 0.0f;
@@ -282,8 +273,7 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char **argv) {
       ms_printf("校准误差: x:%f y:%f z:%f", x, y, z);
       ms_enter();
 
-      System::Database::Set(BMI088_CALI_KEY_NAME.c_str(), &bmi088->cali_,
-                            sizeof(bmi088->cali_));
+      bmi088->cali_.Set();
 
       ms_printf("保存校准数据");
       ms_enter();
@@ -414,9 +404,9 @@ void BMI088::PraseGyro() {
     this->gyro_.z += this->rot_.rot_mat[2][i] * gyro[i];
   }
 
-  this->gyro_.x -= this->cali_.gyro_offset.x;
-  this->gyro_.y -= this->cali_.gyro_offset.y;
-  this->gyro_.z -= this->cali_.gyro_offset.z;
+  this->gyro_.x -= this->cali_.data_.gyro_offset.x;
+  this->gyro_.y -= this->cali_.data_.gyro_offset.y;
+  this->gyro_.z -= this->cali_.data_.gyro_offset.z;
 }
 
 void BMI088::PraseAccel() {

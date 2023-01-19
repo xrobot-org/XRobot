@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <string>
 
 namespace System {
@@ -15,39 +16,40 @@ class Database {
  public:
   Database();
 
-  static uint32_t Find(const char* name) {
-    if (access((path_ + name).c_str(), W_OK)) {
-      return 0;
-    } else {
-      return 1;
+  template <typename Data>
+  class Key {
+   public:
+    Key(const char* name) : name_(name) {
+      FILE* fd = NULL;
+      if (!access((path_ + name).c_str(), W_OK)) {
+        fd = fopen((path_ + name).c_str(), "r");
+        static_cast<void>(fread(&this->data_, sizeof(Data), 1, fd));
+        static_cast<void>(fclose(fd));
+      } else {
+        fd = fopen((path_ + name).c_str(), "w+");
+        memset(&this->data_, 0, sizeof(Data));
+        static_cast<void>(fwrite(&this->data_, sizeof(Data), 1, fd));
+        static_cast<void>(fclose(fd));
+      }
     }
-  }
 
-  static uint32_t Get(const char* name, void* buff, uint32_t len) {
-    FILE* fd = NULL;
-
-    if (!access((path_ + name).c_str(), W_OK)) {
-      fd = fopen((path_ + name).c_str(), "r");
-    } else {
-      fd = fopen((path_ + name).c_str(), "w+");
+    void Set() {
+      FILE* fd = NULL;
+      fd = fopen((path_ + name_).c_str(), "w+");
+      static_cast<void>(fwrite(&this->data_, sizeof(Data), 1, fd));
+      static_cast<void>(fclose(fd));
     }
 
-    static_cast<void>(fread(buff, len, 1, fd));
+    void Get() {
+      FILE* fd = NULL;
+      fd = fopen((path_ + name_).c_str(), "r");
+      static_cast<void>(fread(&this->data_, sizeof(Data), 1, fd));
+      static_cast<void>(fclose(fd));
+    }
 
-    static_cast<void>(fclose(fd));
-
-    return len;
-  }
-
-  static bool Set(const char* name, void* data, uint32_t len) {
-    FILE* fd = fopen((path_ + name).c_str(), "w+");
-
-    static_cast<void>(fwrite(data, len, 1, fd));
-
-    static_cast<void>(fclose(fd));
-
-    return true;
-  }
+    Data data_;
+    const char* name_;
+  };
 
   static std::string path_;
 };

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <database.hpp>
 #include <device.hpp>
 
 #include "comp_ahrs.hpp"
@@ -46,7 +47,7 @@ class BMI088 {
   static int CaliCMD(BMI088 *bmi088, int argc, char **argv);
 
  private:
-  Calibration cali_;
+  System::Database::Key<Calibration> cali_;
   Rotation &rot_;
 
   System::Semaphore gyro_raw_;

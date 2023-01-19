@@ -7,11 +7,11 @@
 
 using namespace System;
 
-static uint8_t sn_buff[33];
-
 static ms_item_t sn_tools;
 
 std::string Database::path_(std::string(getenv("HOME")) + "/.rm_database/");
+
+Database::Key<uint8_t[32]> sn("SN");  // NOLINT(modernize-avoid-c-arrays)
 
 Database::Database() {
   auto sn_cmd_fn = [](ms_item_t *item, int argc, char **argv) {
@@ -24,12 +24,11 @@ Database::Database() {
       ms_enter();
     } else if (argc == 2) {
       if (strcmp("show", argv[1]) == 0) {
-        Database::Get("SN", sn_buff, sizeof(sn_buff) - 1);
-        sn_buff[32] = '\0';
-        ms_printf("SN:%s", sn_buff);
+        sn.Get();
+        ms_printf("SN:%.32s", sn.data_);
         ms_enter();
       } else {
-        ms_printf("Error command.", sn_buff);
+        ms_printf("Error command.");
         ms_enter();
       }
     } else if (argc == 3) {
@@ -38,24 +37,24 @@ Database::Database() {
 
         for (uint8_t i = 0; i < 32; i++) {
           if (isalnum(argv[2][i])) {
-            sn_buff[i] = argv[2][i];
+            sn.data_[i] = argv[2][i];
           } else {
             check_ok = false;
+            sn.Get();
             break;
           }
         }
 
         if (check_ok) {
-          Database::Set("SN", sn_buff, sizeof(sn_buff) - 1);
-          sn_buff[32] = '\0';
-          ms_printf("SN:%s", sn_buff);
+          sn.Set();
+          ms_printf("SN:%.32s", sn.data_);
           ms_enter();
         } else {
-          ms_printf("SN code format error.", sn_buff);
+          ms_printf("Error sn code format: %s", argv[2]);
           ms_enter();
         }
       } else {
-        ms_printf("Error command.", sn_buff);
+        ms_printf("Error sn code format: %s", argv[2]);
         ms_enter();
       }
     }
