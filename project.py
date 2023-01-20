@@ -67,11 +67,23 @@ def build(board, robot):
                     os.system("cd " + build_dir + ' && ninja')
                     os.makedirs(fm_dir, exist_ok=True)
                     try:
+                        os.makedirs(fm_dir + '/' + dirname, exist_ok=True)
                         shutil.copyfile(
-                            tools.project_path + '/build/xrobot.elf', fm_dir +
-                            '/' + dirname + '&' + filename[:-7] + '.elf')
+                            tools.project_path + '/build/xrobot.elf',
+                            fm_dir + '/' + dirname + '/xrobot.elf')
+                        if os.path.exists(bsp_dir + '/' + dirname +
+                                          '/firmware.list'):
+                            fm_list = open(bsp_dir + '/' + dirname +
+                                           '/firmware.list')
+                            for item in fm_list.readlines():
+                                item = item.rstrip('\n')
+                                print(tools.project_path + '/' + item)
+                                shutil.copyfile(
+                                    tools.project_path + '/' + item, fm_dir +
+                                    '/' + dirname + '/' + item.split('/')[-1])
+                            fm_list.close()
                     except:
-                        print('\033[0;31;40mBuild' + dirname + ' [' +
+                        print('\033[0;31;40mBuild ' + dirname + ' [' +
                               filename[:-7] + '] failed.\033[0m')
                         exit(-1)
 

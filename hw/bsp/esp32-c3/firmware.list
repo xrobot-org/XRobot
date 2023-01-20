@@ -1,0 +1,4 @@
+build/xrobot.bin
+build/bootloader/bootloader.bin
+build/bootloader/bootloader.elf
+build/partition_table/partition-table.bin
