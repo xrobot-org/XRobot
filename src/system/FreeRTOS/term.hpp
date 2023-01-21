@@ -13,7 +13,7 @@ class Term {
   template <typename ArgType>
   class Command {
    public:
-    Command(ArgType arg, int (*fun)(ArgType, int, char *[]), const char *name,
+    Command(ArgType arg, int (*fun)(ArgType, int, char **), const char *name,
             ms_item_t *dir = ms_get_bin_dir())
         : type_(fun, arg) {
       ms_file_init(&this->cmd_, name, this->Call, NULL, NULL);
@@ -27,7 +27,7 @@ class Term {
 
    private:
     ms_item_t cmd_;
-    TypeErasure<int, ArgType, int, char *[]> type_;
+    TypeErasure<int, ArgType, int, char **> type_;
   };
 
   Term();

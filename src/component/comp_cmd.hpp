@@ -51,6 +51,10 @@ class CMD {
 
   static void RegisterController(Message::Topic<Data>& source);
 
+  static void SetCtrlSource(ControlSource source) {
+    self_->ctrl_source_ = source;
+  }
+
  private:
   ControlSource ctrl_source_;
 
