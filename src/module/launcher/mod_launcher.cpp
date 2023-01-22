@@ -21,20 +21,20 @@ using namespace Module;
 Launcher::Launcher(Param& param, float control_freq)
     : param_(param), ctrl_lock_(true) {
   for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
-    this->trig_actuator_[i] =
-        new Component::PosActuator(param.trig_actr[i], control_freq);
+    this->trig_actuator_.at(i) =
+        new Component::PosActuator(param.trig_actr.at(i), control_freq);
 
-    this->trig_motor_[i] =
-        new Device::RMMotor(this->param_.trig_motor[i],
+    this->trig_motor_.at(i) =
+        new Device::RMMotor(this->param_.trig_motor.at(i),
                             ("Launcher_Trig" + std::to_string(i)).c_str());
   }
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
-    this->fric_actuator_[i] =
-        new Component::SpeedActuator(param.fric_actr[i], control_freq);
+    this->fric_actuator_.at(i) =
+        new Component::SpeedActuator(param.fric_actr.at(i), control_freq);
 
-    this->fric_motor_[i] =
-        new Device::RMMotor(this->param_.fric_motor[i],
+    this->fric_motor_.at(i) =
+        new Device::RMMotor(this->param_.fric_motor.at(i),
                             ("Launcher_Fric" + std::to_string(i)).c_str());
   }
 

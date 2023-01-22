@@ -29,11 +29,11 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
   constexpr auto WHELL_NAMES = magic_enum::enum_names<Wheel>();
 
   for (uint8_t i = 0; i < WHEEL_NUM; i++) {
-    this->wheel_actr_[i] =
-        new Component::SpeedActuator(param.wheel_param[i], control_freq);
+    this->wheel_actr_.at(i) =
+        new Component::SpeedActuator(param.wheel_param.at(i), control_freq);
 
-    this->motor_[i] = new Motor(
-        param.motor_param[i],
+    this->motor_.at(i) = new Motor(
+        param.motor_param.at(i),
         (std::string("Chassis_Wheel_") + WHELL_NAMES[i].data()).c_str());
   }
 

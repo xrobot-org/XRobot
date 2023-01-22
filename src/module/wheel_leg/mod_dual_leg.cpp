@@ -13,19 +13,20 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
   for (uint8_t i = 0; i < LEG_NUM; i++) {
     for (uint8_t j = 0; j < LEG_MOTOR_NUM; j++) {
       this->leg_motor_[i * LEG_MOTOR_NUM + j] =
-          new Device::MitMotor(this->param_.leg_motor[i * LEG_MOTOR_NUM + j],
+          new Device::MitMotor(this->param_.leg_motor.at(i * LEG_MOTOR_NUM + j),
                                ((std::string("Leg_")) + LEG_NAMES[i].data() +
                                 "_" + MOTOR_NAMES[j].data())
                                    .c_str());
 
-      this->leg_actuator_[i * LEG_MOTOR_NUM + j] = new Component::PosActuator(
-          this->param_.leg_actr[i * LEG_MOTOR_NUM + j], sample_freq);
+      this->leg_actuator_.at(i * LEG_MOTOR_NUM + j) =
+          new Component::PosActuator(
+              this->param_.leg_actr.at(i * LEG_MOTOR_NUM + j), sample_freq);
     }
   }
 
   for (int i = 0; i < LEG_NUM; i++) {
     for (int j = 0; j < LEG_MOTOR_NUM; j++) {
-      circle_add(&this->param_.motor_zero[i * 2 + j], M_PI, M_2PI);
+      circle_add(&this->param_.motor_zero.at(i * 2 + j), M_PI, M_2PI);
     }
   }
 
