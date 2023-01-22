@@ -3,10 +3,13 @@
 #include "bsp_can.h"
 #include "bsp_uart.h"
 #include "main.h"
+#include "stm32f4xx_hal_tim.h"
 #include "stm32f4xx_it.h"
 
+extern TIM_HandleTypeDef htim2;
+
 void bsp_init() {
-  uwTickPrio = TICK_INT_PRIORITY;
+  uwTickPrio = 0;
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick.
    */
@@ -18,8 +21,6 @@ void bsp_init() {
   /* Initialize all configured peripherals */
   bsp_uart_init();
 
-  MX_TIM14_Init();
-  HAL_TIM_Base_Start(&htim14);
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_ADC1_Init();
@@ -43,7 +44,10 @@ void bsp_init() {
   MX_USART6_UART_Init();
   MX_TIM7_Init();
   MX_USB_OTG_FS_PCD_Init();
+  MX_TIM14_Init();
+  HAL_TIM_Base_Start(&htim14);
 #if !MCU_DEBUG_BUILD
   MX_IWDG_Init();
 #endif
+  HAL_TIM_Base_Stop_IT(&htim2);
 }
