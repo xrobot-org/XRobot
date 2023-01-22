@@ -21,31 +21,21 @@ using namespace Module;
 Launcher::Launcher(Param& param, float control_freq)
     : param_(param), ctrl_lock_(true) {
   for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
-    this->trig_actuator_[i] = static_cast<Component::PosActuator*>(
-        System::Memory::Malloc(sizeof(Component::PosActuator)));
-    new (this->trig_actuator_[i])
-        Component::PosActuator(param.trig_actr[i], control_freq);
+    this->trig_actuator_[i] =
+        new Component::PosActuator(param.trig_actr[i], control_freq);
 
-    this->trig_motor_[i] = static_cast<Device::RMMotor*>(
-        System::Memory::Malloc(sizeof(Device::RMMotor)));
-
-    new (this->trig_motor_[i])
-        Device::RMMotor(this->param_.trig_motor[i],
-                        ("Launcher_Trig" + std::to_string(i)).c_str());
+    this->trig_motor_[i] =
+        new Device::RMMotor(this->param_.trig_motor[i],
+                            ("Launcher_Trig" + std::to_string(i)).c_str());
   }
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
-    this->fric_actuator_[i] = static_cast<Component::SpeedActuator*>(
-        System::Memory::Malloc(sizeof(Component::SpeedActuator)));
-    new (this->fric_actuator_[i])
-        Component::SpeedActuator(param.fric_actr[i], control_freq);
+    this->fric_actuator_[i] =
+        new Component::SpeedActuator(param.fric_actr[i], control_freq);
 
-    this->fric_motor_[i] = static_cast<Device::RMMotor*>(
-        System::Memory::Malloc(sizeof(Device::RMMotor)));
-
-    new (this->fric_motor_[i])
-        Device::RMMotor(this->param_.fric_motor[i],
-                        ("Launcher_Fric" + std::to_string(i)).c_str());
+    this->fric_motor_[i] =
+        new Device::RMMotor(this->param_.fric_motor[i],
+                            ("Launcher_Fric" + std::to_string(i)).c_str());
   }
 
   auto event_callback = [](uint32_t event, void* arg) {

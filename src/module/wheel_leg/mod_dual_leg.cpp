@@ -12,18 +12,13 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
   constexpr auto MOTOR_NAMES = magic_enum::enum_names<LegMotor>();
   for (uint8_t i = 0; i < LEG_NUM; i++) {
     for (uint8_t j = 0; j < LEG_MOTOR_NUM; j++) {
-      this->leg_motor_[i * LEG_MOTOR_NUM + j] = static_cast<Device::MitMotor *>(
-          System::Memory::Malloc(sizeof(Device::MitMotor)));
-      new (this->leg_motor_[i * LEG_MOTOR_NUM + j])
-          Device::MitMotor(this->param_.leg_motor[i * LEG_MOTOR_NUM + j],
-                           ((std::string("Leg_")) + LEG_NAMES[i].data() + "_" +
-                            MOTOR_NAMES[j].data())
-                               .c_str());
+      this->leg_motor_[i * LEG_MOTOR_NUM + j] =
+          new Device::MitMotor(this->param_.leg_motor[i * LEG_MOTOR_NUM + j],
+                               ((std::string("Leg_")) + LEG_NAMES[i].data() +
+                                "_" + MOTOR_NAMES[j].data())
+                                   .c_str());
 
-      this->leg_actuator_[i * LEG_MOTOR_NUM + j] =
-          static_cast<Component::PosActuator *>(
-              System::Memory::Malloc(sizeof(Component::PosActuator)));
-      new (this->leg_actuator_[i * LEG_MOTOR_NUM + j]) Component::PosActuator(
+      this->leg_actuator_[i * LEG_MOTOR_NUM + j] = new Component::PosActuator(
           this->param_.leg_actr[i * LEG_MOTOR_NUM + j], sample_freq);
     }
   }

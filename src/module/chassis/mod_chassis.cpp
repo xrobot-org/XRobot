@@ -51,16 +51,12 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
   memset(&(this->cmd_), 0, sizeof(this->cmd_));
 
   for (uint8_t i = 0; i < this->mixer_.len_; i++) {
-    this->actuator_[i] = static_cast<Component::SpeedActuator*>(
-        System::Memory::Malloc(sizeof(Component::SpeedActuator)));
-    new (this->actuator_[i])
-        Component::SpeedActuator(param.actuator_param[i], control_freq);
+    this->actuator_[i] =
+        new Component::SpeedActuator(param.actuator_param[i], control_freq);
 
     this->motor_[i] =
-        reinterpret_cast<Motor*>(System::Memory::Malloc(sizeof(Motor)));
-    new (this->motor_[i])
-        Motor(param.motor_param[i],
-              (std::string("Chassis_") + std::to_string(i)).c_str());
+        new Motor(param.motor_param[i],
+                  (std::string("Chassis_") + std::to_string(i)).c_str());
   }
 
   this->setpoint_.motor_rotational_speed =

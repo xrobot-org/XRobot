@@ -29,16 +29,12 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
   constexpr auto WHELL_NAMES = magic_enum::enum_names<Wheel>();
 
   for (uint8_t i = 0; i < WHEEL_NUM; i++) {
-    this->wheel_actr_[i] = static_cast<Component::SpeedActuator*>(
-        System::Memory::Malloc(sizeof(Component::SpeedActuator)));
-    new (this->wheel_actr_[i])
-        Component::SpeedActuator(param.wheel_param[i], control_freq);
+    this->wheel_actr_[i] =
+        new Component::SpeedActuator(param.wheel_param[i], control_freq);
 
-    this->motor_[i] =
-        static_cast<Motor*>(System::Memory::Malloc(sizeof(Motor)));
-    new (this->motor_[i])
-        Motor(param.motor_param[i],
-              (std::string("Chassis_Wheel_") + WHELL_NAMES[i].data()).c_str());
+    this->motor_[i] = new Motor(
+        param.motor_param[i],
+        (std::string("Chassis_Wheel_") + WHELL_NAMES[i].data()).c_str());
   }
 
   auto event_callback = [](uint32_t event, void* arg) {

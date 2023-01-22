@@ -12,10 +12,8 @@ Can::Can() {
   bsp_can_init();
 
   for (int i = 0; i < BSP_CAN_NUM; i++) {
-    can_tp_[i] = static_cast<Message::Topic<Can::Pack>*>(
-        System::Memory::Malloc(sizeof(Message::Topic<Can::Pack>)));
-    new (can_tp_[i])
-        Message::Topic<Can::Pack>(("dev_can_" + std::to_string(i)).c_str());
+    can_tp_[i] =
+        new Message::Topic<Can::Pack>(("dev_can_" + std::to_string(i)).c_str());
   }
 
   auto rx_callback = [](bsp_can_t can, void* arg) {
