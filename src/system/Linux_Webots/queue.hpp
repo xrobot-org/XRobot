@@ -59,6 +59,7 @@ class Queue {
     }
     return true;
   }
+  uint32_t Size() { return this->handle_.size(); }
 
  private:
   std::queue<Data> handle_;

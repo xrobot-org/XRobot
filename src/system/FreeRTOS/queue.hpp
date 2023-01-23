@@ -37,6 +37,8 @@ class Queue {
 
   bool Reset() { return xQueueReset(this->handle_) == pdTRUE; }
 
+  uint32_t Size() { return uxQueueMessagesWaiting(this->handle_); }
+
  private:
   QueueHandle_t handle_;
 };
