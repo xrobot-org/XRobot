@@ -30,9 +30,7 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
     }
   }
 
-  auto event_callback = [](uint32_t event, void *arg) {
-    WheelLeg *leg = static_cast<WheelLeg *>(arg);
-
+  auto event_callback = [](ChassisEvent event, WheelLeg *leg) {
     leg->ctrl_lock_.Take(UINT32_MAX);
 
     switch (event) {
@@ -55,7 +53,8 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
     leg->ctrl_lock_.Give();
   };
 
-  Component::CMD::RegisterEvent(event_callback, this, this->param_.EVENT_MAP);
+  Component::CMD::RegisterEvent<WheelLeg *, ChassisEvent>(
+      event_callback, this, this->param_.EVENT_MAP);
 
   auto leg_thread = [](WheelLeg *leg) {
     auto eulr_sub = Message::Subscriber("chassis_eulr", leg->eulr_);

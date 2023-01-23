@@ -18,9 +18,7 @@ Gimbal::Gimbal(Param& param, float control_freq)
       yaw_motor_(this->param_.yaw_motor, "Gimbal_Yaw"),
       pit_motor_(this->param_.pit_motor, "Gimbal_Pitch"),
       ctrl_lock_(true) {
-  auto event_callback = [](uint32_t event, void* arg) {
-    Gimbal* gimbal = static_cast<Gimbal*>(arg);
-
+  auto event_callback = [](GimbalEvent event, Gimbal* gimbal) {
     gimbal->ctrl_lock_.Take(UINT32_MAX);
 
     gimbal->SetMode(static_cast<Mode>(event));
@@ -28,7 +26,8 @@ Gimbal::Gimbal(Param& param, float control_freq)
     gimbal->ctrl_lock_.Give();
   };
 
-  Component::CMD::RegisterEvent(event_callback, this, this->param_.EVENT_MAP);
+  Component::CMD::RegisterEvent<Gimbal*, GimbalEvent>(event_callback, this,
+                                                      this->param_.EVENT_MAP);
 
   auto gimbal_thread = [](Gimbal* gimbal) {
     auto eulr_sub = Message::Subscriber("imu_eulr", gimbal->eulr_);

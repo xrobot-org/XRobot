@@ -1,3 +1,5 @@
+#pragma once
+
 #include "dev_motor.hpp"
 
 namespace Device {

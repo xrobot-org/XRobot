@@ -1,5 +1,7 @@
 #include "dev_rm_motor.hpp"
 
+#include <comp_utils.hpp>
+
 #define T_3508 (2.8f)
 #define T_2006 (1.0f)
 #define T_6020 (1.2f)
@@ -31,8 +33,14 @@ void RMMotor::Control(float output) {
 }
 
 bool RMMotor::Update() {
+  if (bsp_time_get() == this->last_sensor_time_) {
+    return false;
+  }
+
   float raw_pos =
       static_cast<float>(wb_position_sensor_get_value(this->sensor_));
+
+  raw_pos = fmodf(raw_pos, M_2PI);
 
   this->feedback_.rotational_speed =
       circle_error(raw_pos, this->last_pos_, M_2PI) /

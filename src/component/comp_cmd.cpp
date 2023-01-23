@@ -57,36 +57,6 @@ CMD::CMD(Mode mode)
   }
 }
 
-void CMD::RegisterEvent(void (*callback)(uint32_t event, void* arg), void* arg,
-                        const std::vector<Component::CMD::EventMapItem>& map) {
-  typedef struct {
-    uint32_t target_event;
-    void (*callback)(uint32_t event, void* arg);
-    void* arg;
-  } EventCallbackBlock;
-
-  auto cmd_callback = [](uint32_t event, void* arg) {
-    (void)(event);
-    EventCallbackBlock* block = static_cast<EventCallbackBlock*>(arg);
-
-    block->callback(block->target_event, block->arg);
-  };
-
-  std::vector<Component::CMD::EventMapItem>::const_iterator it;
-
-  for (it = map.begin(); it != map.end(); it++) {
-    EventCallbackBlock* block = static_cast<EventCallbackBlock*>(
-        System::Memory::Malloc(sizeof(EventCallbackBlock)));
-
-    block->arg = arg;
-    block->callback = callback;
-    block->target_event = it->target;
-
-    self_->event_.Register(it->source, Message::Event::EventProgress,
-                           cmd_callback, block);
-  }
-}
-
 void CMD::RegisterController(Message::Topic<Data>& source) {
   CMD::self_->data_in_tp_.Link(source);
 }

@@ -45,9 +45,38 @@ class CMD {
 
   CMD(Mode mode = CMD_OP_CTRL);
 
+  template <typename Type, typename EventType>
   static void RegisterEvent(
-      void (*callback)(uint32_t event, void* arg), void* arg,
-      const std::vector<Component::CMD::EventMapItem>& map);
+      void (*callback)(EventType event, Type arg), Type arg,
+      const std::vector<Component::CMD::EventMapItem>& map) {
+    typedef struct {
+      uint32_t target_event;
+      void (*callback)(EventType event, Type arg);
+      void* arg;
+    } EventCallbackBlock;
+
+    auto cmd_callback = [](uint32_t event, void* arg) {
+      (void)(event);
+      EventCallbackBlock* block = static_cast<EventCallbackBlock*>(arg);
+
+      block->callback(static_cast<EventType>(block->target_event),
+                      static_cast<Type>(block->arg));
+    };
+
+    std::vector<Component::CMD::EventMapItem>::const_iterator it;
+
+    for (it = map.begin(); it != map.end(); it++) {
+      EventCallbackBlock* block = static_cast<EventCallbackBlock*>(
+          System::Memory::Malloc(sizeof(EventCallbackBlock)));
+
+      block->arg = arg;
+      block->callback = callback;
+      block->target_event = it->target;
+
+      self_->event_.Register(it->source, Message::Event::EVENT_PROGRESS,
+                             cmd_callback, block);
+    }
+  }
 
   static void RegisterController(Message::Topic<Data>& source);
 

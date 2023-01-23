@@ -37,9 +37,7 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
         (std::string("Chassis_Wheel_") + WHELL_NAMES[i].data()).c_str());
   }
 
-  auto event_callback = [](uint32_t event, void* arg) {
-    Balance* chassis = static_cast<Balance*>(arg);
-
+  auto event_callback = [](ChassisEvent event, Balance* chassis) {
     chassis->ctrl_lock_.Take(UINT32_MAX);
 
     switch (event) {
@@ -59,7 +57,8 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
     chassis->ctrl_lock_.Give();
   };
 
-  Component::CMD::RegisterEvent(event_callback, this, this->param_.EVENT_MAP);
+  Component::CMD::RegisterEvent<Balance*, ChassisEvent>(event_callback, this,
+                                                        this->param_.EVENT_MAP);
 
   auto chassis_thread = [](Balance* chassis) {
     auto cmd_sub = Message::Subscriber("cmd_chassis", chassis->cmd_);

@@ -64,9 +64,7 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
           this->mixer_.len_ * sizeof(*this->setpoint_.motor_rotational_speed)));
   ASSERT(this->setpoint_.motor_rotational_speed);
 
-  auto event_callback = [](uint32_t event, void* arg) {
-    Chassis* chassis = static_cast<Chassis*>(arg);
-
+  auto event_callback = [](ChassisEvent event, Chassis* chassis) {
     chassis->ctrl_lock_.Take(UINT32_MAX);
 
     switch (event) {
@@ -89,7 +87,8 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
     chassis->ctrl_lock_.Give();
   };
 
-  Component::CMD::RegisterEvent(event_callback, this, this->param_.EVENT_MAP);
+  Component::CMD::RegisterEvent<Chassis*, ChassisEvent>(event_callback, this,
+                                                        this->param_.EVENT_MAP);
 
   auto chassis_thread = [](Chassis* chassis) {
     auto raw_ref_sub = Message::Subscriber("referee", chassis->raw_ref_);

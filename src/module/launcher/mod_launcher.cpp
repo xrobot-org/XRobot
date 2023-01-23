@@ -38,9 +38,7 @@ Launcher::Launcher(Param& param, float control_freq)
                             ("Launcher_Fric" + std::to_string(i)).c_str());
   }
 
-  auto event_callback = [](uint32_t event, void* arg) {
-    Launcher* launcher = static_cast<Launcher*>(arg);
-
+  auto event_callback = [](LauncherEvent event, Launcher* launcher) {
     launcher->ctrl_lock_.Take(UINT32_MAX);
 
     switch (event) {
@@ -69,7 +67,8 @@ Launcher::Launcher(Param& param, float control_freq)
     launcher->ctrl_lock_.Give();
   };
 
-  Component::CMD::RegisterEvent(event_callback, this, this->param_.EVENT_MAP);
+  Component::CMD::RegisterEvent<Launcher*, LauncherEvent>(
+      event_callback, this, this->param_.EVENT_MAP);
 
   bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
   bsp_pwm_set_comp(BSP_PWM_LAUNCHER_SERVO, this->param_.cover_close_duty);
