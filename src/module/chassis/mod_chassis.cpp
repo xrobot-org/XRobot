@@ -118,6 +118,10 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
 
   this->thread_.Create(chassis_thread, this, "chassis_thread",
                        MODULE_CHASSIS_TASK_STACK_DEPTH, System::Thread::MEDIUM);
+
+  System::Timer::Create(this->DrawUIStatic, this, 10000);
+
+  System::Timer::Create(this->DrawUIDynamic, this, 50);
 }
 
 template <typename Motor, typename MotorParam>
@@ -255,6 +259,134 @@ void Chassis<Motor, MotorParam>::SetMode(Chassis::Mode mode) {
     this->actuator_[i]->Reset();
   }
   this->mode_ = mode;
+}
+
+template <typename Motor, typename MotorParam>
+void Chassis<Motor, MotorParam>::DrawUIStatic(
+    Chassis<Motor, MotorParam>* chassis) {
+  ui_draw_string(&(chassis->ui_string_data_), "CM", UI_GRAPHIC_OP_ADD,
+                 UI_GRAPHIC_LAYER_CONST, UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
+                 UI_CHAR_DEFAULT_WIDTH,
+                 static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                       REF_UI_RIGHT_START_W),
+                 static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                       REF_UI_MODE_LINE1_H),
+                 "CHAS  FLLW  FL35  ROTR");
+
+  float box_pos_left = 0.0f, box_pos_right = 0.0f;
+  ui_draw_line(
+      &(chassis->ui_line_data_), "c", UI_GRAPHIC_OP_ADD, UI_GRAPHIC_LAYER_CONST,
+      UI_GREEN, UI_DEFAULT_WIDTH * 3,
+      static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
+      static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f),
+      static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
+      static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f + 50.f));
+
+  ui_draw_line(&(chassis->ui_chassis_angle_data_), "CA", UI_GRAPHIC_OP_ADD,
+               UI_GRAPHIC_LAYER_CHASSIS, UI_GREEN, UI_DEFAULT_WIDTH * 12,
+               static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
+               static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f),
+               static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f +
+                                     sinf(chassis->yaw_) * 44),
+               static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f +
+                                     cosf(chassis->yaw_) * 44));
+
+  /* 更新底盘模式选择框 */
+  switch (chassis->mode_) {
+    case FOLLOW_GIMBAL:
+      box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
+      break;
+    case ROTOR:
+      box_pos_left = REF_UI_MODE_OFFSET_4_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_4_RIGHT;
+      break;
+    case RELAX:
+
+    case BREAK:
+
+    default:
+      box_pos_left = 0.0f;
+      box_pos_right = 0.0f;
+      break;
+  }
+
+  if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
+    ui_draw_rectangle(&(chassis->ui_mode_data_), "CS", UI_GRAPHIC_OP_ADD,
+                      UI_GRAPHIC_LAYER_CHASSIS, UI_GREEN, UI_DEFAULT_WIDTH,
+                      static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                                REF_UI_RIGHT_START_W +
+                                            box_pos_left),
+                      static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                                REF_UI_MODE_LINE1_H +
+                                            REF_UI_BOX_UP_OFFSET),
+                      static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                                REF_UI_RIGHT_START_W +
+                                            box_pos_right),
+                      static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                                REF_UI_MODE_LINE1_H +
+                                            REF_UI_BOX_BOT_OFFSET));
+  }
+  Device::Referee::AddUI(chassis->ui_chassis_angle_data_);
+  Device::Referee::AddUI(chassis->ui_string_data_);
+  Device::Referee::AddUI(chassis->ui_line_data_);
+  Device::Referee::AddUI(chassis->ui_mode_data_);
+}
+
+template <typename Motor, typename MotorParam>
+void Chassis<Motor, MotorParam>::DrawUIDynamic(
+    Chassis<Motor, MotorParam>* chassis) {
+  float box_pos_left = 0.0f, box_pos_right = 0.0f;
+
+  /* 更新底盘模式选择框 */
+  switch (chassis->mode_) {
+    case FOLLOW_GIMBAL:
+      box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
+      break;
+    case ROTOR:
+      box_pos_left = REF_UI_MODE_OFFSET_4_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_4_RIGHT;
+      break;
+    case RELAX:
+
+    case BREAK:
+
+    default:
+      box_pos_left = 0.0f;
+      box_pos_right = 0.0f;
+      break;
+  }
+
+  if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
+    ui_draw_rectangle(&(chassis->ui_mode_data_), "CS", UI_GRAPHIC_OP_REWRITE,
+                      UI_GRAPHIC_LAYER_CHASSIS, UI_GREEN, UI_DEFAULT_WIDTH,
+                      static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                                REF_UI_RIGHT_START_W +
+                                            box_pos_left),
+                      static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                                REF_UI_MODE_LINE1_H +
+                                            REF_UI_BOX_UP_OFFSET),
+                      static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                                REF_UI_RIGHT_START_W +
+                                            box_pos_right),
+                      static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                                REF_UI_MODE_LINE1_H +
+                                            REF_UI_BOX_BOT_OFFSET));
+  }
+  ui_draw_line(&(chassis->ui_chassis_angle_data_), "CA", UI_GRAPHIC_OP_REWRITE,
+               UI_GRAPHIC_LAYER_CHASSIS, UI_GREEN, UI_DEFAULT_WIDTH * 12,
+               static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
+               static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f),
+               static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f +
+                                     sinf(chassis->yaw_) * 44),
+               static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f +
+                                     cosf(chassis->yaw_) * 44));
+
+  Device::Referee::AddUI(chassis->ui_mode_data_);
+  Device::Referee::AddUI(chassis->ui_line_data_);
+  Device::Referee::AddUI(chassis->ui_line_data_);
+  Device::Referee::AddUI(chassis->ui_mode_data_);
 }
 
 template class Module::Chassis<Device::RMMotor, Device::RMMotor::Param>;

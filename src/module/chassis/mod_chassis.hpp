@@ -74,6 +74,10 @@ class Chassis {
 
   void PraseRef();
 
+  static void DrawUIStatic(Chassis<Motor, MotorParam> *chassis);
+
+  static void DrawUIDynamic(Chassis<Motor, MotorParam> *chassis);
+
   float CalcWz(const float LO, const float HI);
 
  private:
@@ -116,6 +120,10 @@ class Chassis {
   float yaw_;
   Device::Referee::Data raw_ref_;
   Component::CMD::ChassisCMD cmd_;
+  ui_ele_t ui_line_data_;
+  ui_ele_t ui_mode_data_;
+  ui_string_t ui_string_data_;
+  ui_ele_t ui_chassis_angle_data_;
 };
 
 typedef Chassis<Device::RMMotor, Device::RMMotor::Param> RMChassis;

@@ -14,6 +14,7 @@ Diagnostics:
             performance-*]
     Remove: [google-build-using-namespace,
             cppcoreguidelines-pro-type-member-init,
+            cppcoreguidelines-pro-type-union-access,
             misc-no-recursion,
             cert-env33-c,
             cert-err58-cpp,

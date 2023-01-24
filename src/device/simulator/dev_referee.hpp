@@ -8,6 +8,25 @@
 
 #include "comp_ui.hpp"
 
+#define REF_UI_BOX_UP_OFFSET (4)
+#define REF_UI_BOX_BOT_OFFSET (-14)
+
+#define REF_UI_RIGHT_START_W (0.85f)
+
+#define REF_UI_MODE_LINE1_H (0.7f)
+#define REF_UI_MODE_LINE2_H (0.68f)
+#define REF_UI_MODE_LINE3_H (0.66f)
+#define REF_UI_MODE_LINE4_H (0.64f)
+
+#define REF_UI_MODE_OFFSET_1_LEFT (-6)
+#define REF_UI_MODE_OFFSET_1_RIGHT (44)
+#define REF_UI_MODE_OFFSET_2_LEFT (54)
+#define REF_UI_MODE_OFFSET_2_RIGHT (102)
+#define REF_UI_MODE_OFFSET_3_LEFT (114)
+#define REF_UI_MODE_OFFSET_3_RIGHT (162)
+#define REF_UI_MODE_OFFSET_4_LEFT (174)
+#define REF_UI_MODE_OFFSET_4_RIGHT (222)
+
 namespace Device {
 class Referee {
  public:
@@ -331,6 +350,24 @@ class Referee {
   Referee();
 
   void Prase();
+
+  static bool AddUI(ui_ele_t ui_data) {
+    (void)ui_data;
+    return true;
+  }
+
+  static bool AddUI(ui_del_t ui_data) {
+    (void)ui_data;
+    return true;
+  }
+
+  static bool AddUI(ui_string_t ui_data) {
+    (void)ui_data;
+    return true;
+  }
+
+  static float UIGetHeight() { return 1080.0f; }
+  static float UIGetWidth() { return 1920.0f; }
 
  private:
   System::Thread recv_thread_;
