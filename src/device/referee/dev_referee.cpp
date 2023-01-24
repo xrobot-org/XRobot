@@ -38,14 +38,11 @@ using namespace Device;
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)
 static uint8_t rxbuf[REF_LEN_RX_BUFF];
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)
-static uint8_t txbuf[REF_LEN_TX_BUFF];
-
-System::Semaphore *ui_fast_refresh;
-System::Semaphore *ui_slow_refresh;
+Referee::UIPack Referee::ui_pack_;
+Referee *Referee::self_;
 
 Referee::Referee() {
-  ui_fast_refresh = &(this->ui_fast_refresh_);
-  ui_slow_refresh = &(this->ui_slow_refresh_);
+  self_ = this;
 
   auto rx_cplt_callback = [](void *arg) {
     Referee *ref = static_cast<Referee *>(arg);
@@ -102,6 +99,15 @@ Referee::Referee() {
   this->recv_thread_.Create(ref_recv_thread, this, "ref_recv_thread",
                             DEVICE_REF_RECV_TASK_STACK_DEPTH,
                             System::Thread::REALTIME);
+  auto ref_trans_thread = [](Referee *ref) {
+    while (1) {
+      ref->UpdateUI();
+      ref->trans_thread_.SleepUntil(2);
+    }
+  };
+  this->trans_thread_.Create(ref_trans_thread, this, "ref_trans_thread",
+                             DEVICE_REF_TRANS_TASK_STACK_DEPTH,
+                             System::Thread::MEDIUM);
 }
 
 void Referee::Offline() { this->ref_data_.status = OFFLINE; }
@@ -261,320 +267,127 @@ void Referee::Prase() {
 #endif
 }
 
-bool Referee::RefreshUI() {
-#if UI_MODE_OP
-  ui_ele_t ele;
-  ui_string_t string;
+bool Referee::UpdateUI() {
+  this->packet_sent_.Take(UINT32_MAX);
 
-  const float kW = this->ui_.ui.screen.width;
-  const float kH = this->ui_.ui.screen.height;
+  this->ui_lock_.Take(UINT32_MAX);
 
-  float box_pos_left = 0.0f, box_pos_right = 0.0f;
+  bool done = false;
+  uint32_t ele_counter = 0;
+  uint32_t pack_size = 0;
+  CMDID cmd_id = REF_STDNT_CMD_ID_UI_DEL;
 
-  static ui_graphic_op_t graphic_op = UI_GRAPHIC_OP_ADD;
-
-  /* UI静态元素刷新 */
-  if (this->ui_slow_refresh_.Take(0)) {
-    graphic_op = UI_GRAPHIC_OP_ADD;
-    this->ui_.ui.refresh_fsm = 0;
-
-    ui_draw_string(&string, "8", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
-                   UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
-                   (uint16_t)(kW * REF_UI_RIGHT_START_W),
-                   (uint16_t)(kH * REF_UI_MODE_LINE1_H),
-                   "CHAS  FLLW  FL35  ROTR");
-    ui_stash_string(&(this->ui_.ui), &string);
-
-    ui_draw_string(&string, "9", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
-                   UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
-                   (uint16_t)(kW * REF_UI_RIGHT_START_W),
-                   (uint16_t)(kH * REF_UI_MODE_LINE2_H),
-                   "GMBL  RELX  ABSL  RLTV");
-    ui_stash_string(&(this->ui_.ui), &string);
-
-    ui_draw_string(&string, "a", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
-                   UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
-                   (uint16_t)(kW * REF_UI_RIGHT_START_W),
-                   (uint16_t)(kH * REF_UI_MODE_LINE3_H),
-                   "SHOT  RELX  SAFE  LOAD");
-    ui_stash_string(&(this->ui_.ui), &string);
-
-    ui_draw_string(&string, "b", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
-                   UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
-                   (uint16_t)(kW * REF_UI_RIGHT_START_W),
-                   (uint16_t)(kH * REF_UI_MODE_LINE4_H),
-                   "FIRE  SNGL  BRST  CONT");
-    ui_stash_string(&(this->ui_.ui), &string);
-
-    ui_draw_line(&ele, "c", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
-                 UI_DEFAULT_WIDTH * 3, (uint16_t)(kW * 0.4f),
-                 (uint16_t)(kH * 0.2f), (uint16_t)(kW * 0.4f),
-                 (uint16_t)(kH * 0.2f + 50.f));
-    ui_stash_graphic(&(this->ui_.ui), &ele);
-
-    ui_draw_string(&string, "d", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
-                   UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
-                   (uint16_t)(kW * REF_UI_RIGHT_START_W), (uint16_t)(kH * 0.4f),
-                   "CTRL  JS  KM");
-    ui_stash_string(&(this->ui_.ui), &string);
-
-    ui_draw_string(&string, "e", graphic_op, UI_GRAPHIC_LAYER_CONST, UI_GREEN,
-                   UI_DEFAULT_WIDTH * 20, 80, UI_CHAR_DEFAULT_WIDTH * 2,
-                   (uint16_t)(kW * 0.6f - 26.0f), (uint16_t)(kH * 0.2f + 10.0f),
-                   "CAP");
-    ui_stash_string(&(this->ui_.ui), &string);
-
-    return true;
+  switch (this->ele_data_.Size()) {
+    case 0:
+      break;
+    case 1:
+      cmd_id = REF_STDNT_CMD_ID_UI_DRAW1;
+      done = true;
+      ele_counter = 1;
+      pack_size = sizeof(UIElePack_1);
+      break;
+    case 2:
+    case 3:
+    case 4:
+      cmd_id = REF_STDNT_CMD_ID_UI_DRAW2;
+      done = true;
+      ele_counter = 2;
+      pack_size = sizeof(UIElePack_2);
+      break;
+    case 5:
+    case 6:
+      cmd_id = REF_STDNT_CMD_ID_UI_DRAW5;
+      done = true;
+      ele_counter = 5;
+      pack_size = sizeof(UIElePack_5);
+      break;
+    default:
+      cmd_id = REF_STDNT_CMD_ID_UI_DRAW7;
+      done = true;
+      ele_counter = 7;
+      pack_size = sizeof(UIElePack_7);
+      break;
   }
 
-  /* UI动态元素刷新 */
-  if (this->ui_fast_refresh_.Take(0)) {
-    /* 使用状态机算法，每次更新一个图层 */
-    switch (this->ui_.ui.refresh_fsm) {
-      case 0: {
-        this->ui_.ui.refresh_fsm++;
+  if (!done && this->del_data_.Size() > 0) {
+    cmd_id = REF_STDNT_CMD_ID_UI_DEL;
+    pack_size = sizeof(UIDelPack);
+    done = true;
+  }
 
-        /* 更新电容状态 */
-        if (this->ui_.cap_ui.online) {
-          ui_draw_arc(&ele, "3", graphic_op, UI_GRAPHIC_LAYER_CAP, UI_GREEN, 0,
-                      (uint16_t)(this->ui_.cap_ui.percentage * 360.f),
-                      UI_DEFAULT_WIDTH * 5, (uint16_t)(kW * 0.6f),
-                      (uint16_t)(kH * 0.2f), 50, 50);
-        } else {
-          ui_draw_arc(&ele, "3", graphic_op, UI_GRAPHIC_LAYER_CAP, UI_YELLOW, 0,
-                      360, UI_DEFAULT_WIDTH * 5, (uint16_t)(kW * 0.6f),
-                      (uint16_t)(kH * 0.2), 50, 50);
-        }
-        ui_stash_graphic(&(this->ui_.ui), &ele);
+  if (!done && this->string_data_.Size() > 0) {
+    cmd_id = REF_STDNT_CMD_ID_UI_STR;
+    pack_size = sizeof(UIStringPack);
+    done = true;
+  }
 
-        /* 更新云台模式选择框 */
-        switch (this->ui_.gimbal_ui.mode) {
-          case Component::CMD::Relax:
-            box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
-            box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
-            break;
-          case Component::CMD::Absolute:
-            box_pos_left = REF_UI_MODE_OFFSET_3_LEFT;
-            box_pos_right = REF_UI_MODE_OFFSET_3_RIGHT;
-            break;
-          case Component::CMD::GIMBAL_MODE_RELATIVE:
-            box_pos_left = REF_UI_MODE_OFFSET_4_LEFT;
-            box_pos_right = REF_UI_MODE_OFFSET_4_RIGHT;
-            break;
-          default:
-            box_pos_left = 0.0f;
-            box_pos_right = 0.0f;
-            break;
-        }
-        if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
-          ui_draw_rectangle(
-              &ele, "4", graphic_op, UI_GRAPHIC_LAYER_GIMBAL, UI_GREEN,
-              UI_DEFAULT_WIDTH,
-              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_left),
-              (uint16_t)(kH * REF_UI_MODE_LINE2_H + REF_UI_BOX_UP_OFFSET),
-              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_right),
-              (uint16_t)(kH * REF_UI_MODE_LINE2_H + REF_UI_BOX_BOT_OFFSET));
-          ui_stash_graphic(&(this->ui_.ui), &ele);
-        }
+  if (!done) {
+    this->ui_lock_.Give();
+    this->packet_sent_.Give();
+    return false;
+  }
 
-        /* 更新发射器模式选择框 */
-        switch (this->ui_.launcher_ui.mode) {
-          case Component::CMD::Relax:
-            box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
-            box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
-            break;
-          case Component::CMD::Safe:
-            box_pos_left = REF_UI_MODE_OFFSET_3_LEFT;
-            box_pos_right = REF_UI_MODE_OFFSET_3_RIGHT;
-            break;
-          case Component::CMD::Loaded:
-            box_pos_left = REF_UI_MODE_OFFSET_4_LEFT;
-            box_pos_right = REF_UI_MODE_OFFSET_4_RIGHT;
-            break;
-          default:
-            box_pos_left = 0.0f;
-            box_pos_right = 0.0f;
-            break;
-        }
-        if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
-          ui_draw_rectangle(
-              &ele, "5", graphic_op, UI_GRAPHIC_LAYER_LAUNCHER, UI_GREEN,
-              UI_DEFAULT_WIDTH,
-              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_left),
-              (uint16_t)(kH * REF_UI_MODE_LINE3_H + REF_UI_BOX_UP_OFFSET),
-              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_right),
-              (uint16_t)(kH * REF_UI_MODE_LINE3_H + REF_UI_BOX_BOT_OFFSET));
-          ui_stash_graphic(&(this->ui_.ui), &ele);
-        }
+  this->ui_pack_.raw.cmd_id = REF_CMD_ID_INTER_STUDENT;
 
-        /* 更新开火模式选择框 */
-        switch (this->ui_.launcher_ui.fire) {
-          case Component::CMD::Single:
-            box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
-            box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
-            break;
-          case Component::CMD::Burst:
-            box_pos_left = REF_UI_MODE_OFFSET_3_LEFT;
-            box_pos_right = REF_UI_MODE_OFFSET_3_RIGHT;
-            break;
-          case Component::CMD::Continued:
-            box_pos_left = REF_UI_MODE_OFFSET_4_LEFT;
-            box_pos_right = REF_UI_MODE_OFFSET_4_RIGHT;
-            break;
-          default:
-            box_pos_left = 0.0f;
-            box_pos_right = 0.0f;
-            break;
-        }
-        if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
-          ui_draw_rectangle(
-              &ele, "6", graphic_op, UI_GRAPHIC_LAYER_LAUNCHER, UI_GREEN,
-              UI_DEFAULT_WIDTH,
-              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_left),
-              (uint16_t)(kH * REF_UI_MODE_LINE4_H + REF_UI_BOX_UP_OFFSET),
-              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_right),
-              (uint16_t)(kH * REF_UI_MODE_LINE4_H + REF_UI_BOX_BOT_OFFSET));
-          ui_stash_graphic(&(this->ui_.ui), &ele);
-        }
+  SetUIHeader(this->ui_pack_.raw.student_header, cmd_id,
+              static_cast<RobotID>(this->ref_data_.robot_status.robot_id));
 
-        /* 更新控制权选择框 */
-        switch (this->ui_.cmd_ui.ctrl_method) {
-          case Component::CMD::CMD_METHOD_MOUSE_KEYBOARD:
-            ui_draw_rectangle(&ele, "7", graphic_op, UI_GRAPHIC_LAYER_CMD,
-                              UI_GREEN, UI_DEFAULT_WIDTH,
-                              (uint16_t)(kW * REF_UI_RIGHT_START_W + 96.f),
-                              (uint16_t)(kH * 0.4f + REF_UI_BOX_UP_OFFSET),
-                              (uint16_t)(kW * REF_UI_RIGHT_START_W + 120.f),
-                              (uint16_t)(kH * 0.4f + REF_UI_BOX_BOT_OFFSET));
-            break;
-          case Component::CMD::CMD_METHOD_JOYSTICK_SWITCH:
-            ui_draw_rectangle(&ele, "7", graphic_op, UI_GRAPHIC_LAYER_CMD,
-                              UI_GREEN, UI_DEFAULT_WIDTH,
-                              (uint16_t)(kW * REF_UI_RIGHT_START_W + 56.f),
-                              (uint16_t)(kH * 0.4f + REF_UI_BOX_UP_OFFSET),
-                              (uint16_t)(kW * REF_UI_RIGHT_START_W + 80.f),
-                              (uint16_t)(kH * 0.4f + REF_UI_BOX_BOT_OFFSET));
-            break;
-        }
-        ui_stash_graphic(&(this->ui_.ui), &ele);
-        break;
-      }
-      case 1: {
-        this->ui_.ui.refresh_fsm++;
+  SetPacketHeader(this->ui_pack_.raw.frame_header, pack_size - 9);
 
-        /*更新拨弹电机状态*/
-        float trig_start = this->ui_.launcher_ui.trig / M_2PI * 360.f;
-        float trig_end = this->ui_.launcher_ui.trig / M_2PI * 360.f;
-        circle_add(&trig_end, 60.0f, 360);
-        if (trig_end >= 360.f) trig_end = 360.f;
-        ui_draw_arc(&ele, "f", graphic_op, UI_GRAPHIC_LAYER_LAUNCHER, UI_GREEN,
-                    (uint16_t)trig_start, (uint16_t)trig_end,
-                    UI_DEFAULT_WIDTH * 5, (uint16_t)(kW * 0.4f),
-                    (uint16_t)(kH * 0.1f), 50, 50);
-        ui_stash_graphic(&(this->ui_.ui), &ele);
-
-        /*更新摩擦轮电机状态*/
-        if (this->ui_.launcher_ui.fric_percent[0] == 0 ||
-            this->ui_.launcher_ui.fric_percent[1] == 0) {
-          ui_draw_arc(&ele, "g", graphic_op, UI_GRAPHIC_LAYER_LAUNCHER,
-                      UI_YELLOW, 0, 360, UI_DEFAULT_WIDTH * 5,
-                      (uint16_t)(kW * 0.6f), (uint16_t)(kH * 0.1f), 50, 50);
-        } else {
-          ui_draw_arc(
-              &ele, "g", graphic_op, UI_GRAPHIC_LAYER_LAUNCHER, UI_GREEN,
-              (uint16_t)180 - 170 * this->ui_.launcher_ui.fric_percent[0],
-              (uint16_t)(180 + 170 * this->ui_.launcher_ui.fric_percent[1]),
-              UI_DEFAULT_WIDTH * 5, (uint16_t)(kW * 0.6f),
-              (uint16_t)(kH * 0.1f), 50, 50);
-        }
-        ui_stash_graphic(&(this->ui_.ui), &ele);
-
-        break;
-      }
-
-      case 2: {
-        this->ui_.ui.refresh_fsm++;
-        /* 更新云台底盘相对方位 */
-        const float kLEN = 22;
-        ui_draw_line(
-            &ele, "1", graphic_op, UI_GRAPHIC_LAYER_CHASSIS, UI_GREEN,
-            UI_DEFAULT_WIDTH * 12, (uint16_t)(kW * 0.4f), (uint16_t)(kH * 0.2f),
-            (uint16_t)(kW * 0.4f + sinf(this->ui_.chassis_ui.angle) * 2 * kLEN),
-            (uint16_t)(kH * 0.2f +
-                       cosf(this->ui_.chassis_ui.angle) * 2 * kLEN));
-
-        ui_stash_graphic(&(this->ui_.ui), &ele);
-
-        /* 更新底盘模式选择框 */
-        switch (this->ui_.chassis_ui.mode) {
-          case Component::CMD::FollowGimbal:
-            box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
-            box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
-            break;
-          case Component::CMD::CHASSIS_MODE_FOLLOW_GIMBAL_35:
-            box_pos_left = REF_UI_MODE_OFFSET_3_LEFT;
-            box_pos_right = REF_UI_MODE_OFFSET_3_RIGHT;
-            break;
-          case Component::CMD::Rotor:
-            box_pos_left = REF_UI_MODE_OFFSET_4_LEFT;
-            box_pos_right = REF_UI_MODE_OFFSET_4_RIGHT;
-            break;
-          default:
-            box_pos_left = 0.0f;
-            box_pos_right = 0.0f;
-            break;
-        }
-        if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
-          ui_draw_rectangle(
-              &ele, "2", graphic_op, UI_GRAPHIC_LAYER_CHASSIS, UI_GREEN,
-              UI_DEFAULT_WIDTH,
-              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_left),
-              (uint16_t)(kH * REF_UI_MODE_LINE1_H + REF_UI_BOX_UP_OFFSET),
-              (uint16_t)(kW * REF_UI_RIGHT_START_W + box_pos_right),
-              (uint16_t)(kH * REF_UI_MODE_LINE1_H + REF_UI_BOX_BOT_OFFSET));
-
-          ui_stash_graphic(&(this->ui_.ui), &ele);
-        }
-        break;
-      }
-
-      default:
-        this->ui_.ui.refresh_fsm = 0;
-        if (graphic_op == UI_GRAPHIC_OP_ADD) graphic_op = UI_GRAPHIC_OP_REWRITE;
+  if (ele_counter) {
+    for (uint32_t i = 0; i < ele_counter; i++) {
+      this->ele_data_.Receive(this->ui_pack_.ele_7.ele_data[i], UINT32_MAX);
     }
+
+    uint16_t *crc_addr = reinterpret_cast<uint16_t *>(
+        &this->ui_pack_.ele_7.ele_data[ele_counter]);
+
+    *crc_addr = Component::CRC16::Calculate(
+        reinterpret_cast<const uint8_t *>(&this->ui_pack_), pack_size,
+        CRC16_INIT);
+  } else if (cmd_id == REF_STDNT_CMD_ID_UI_DEL) {
+    this->del_data_.Receive(this->ui_pack_.del.del_data, UINT32_MAX);
+    this->ui_pack_.del.crc16 = Component::CRC16::Calculate(
+        reinterpret_cast<const uint8_t *>(&this->ui_pack_), pack_size,
+        CRC16_INIT);
+
+  } else if (cmd_id == REF_STDNT_CMD_ID_UI_STR) {
+    this->string_data_.Receive(this->ui_pack_.str.str_data, UINT32_MAX);
+    this->ui_pack_.str.crc16 = Component::CRC16::Calculate(
+        reinterpret_cast<const uint8_t *>(&this->ui_pack_), pack_size,
+        CRC16_INIT);
   }
 
-#elif UI_MODE_REMOTE
-  if (this->ui_slow_refresh_.Take(0)) {
-    // TODO:
-  }
+  bsp_uart_transmit(BSP_UART_REF, reinterpret_cast<uint8_t *>(&this->ui_pack_),
+                    pack_size, false);
 
-  if (this->ui_fast_refresh_.Take(0)) {
-    // TODO:
-  }
+  this->ui_lock_.Give();
 
-#endif
   return true;
 }
 
-bool Referee::StartTrans() {
-  if (this->packet.data_ != NULL && this->packet.size_ > 0) {
-    memcpy(txbuf, this->packet.data_, this->packet.size_);
-    vPortFree(this->packet.data_);
-    this->packet.data_ = NULL;
-  } else {
-    this->packet_sent_.Give();
-    return false;
-  }
+bool Referee::AddUI(ui_ele_t ui_data) {
+  self_->ui_lock_.Take(UINT32_MAX);
+  self_->ele_data_.Send(ui_data, 0);
+  self_->ui_lock_.Give();
 
-  if (bsp_uart_transmit(BSP_UART_REF, txbuf,
-                        static_cast<uint16_t>(this->packet.size_),
-                        false) == BSP_OK) {
-    return true;
-  } else {
-    this->packet_sent_.Give();
-    return false;
-  }
+  return true;
+}
+
+bool Referee::AddUI(ui_del_t ui_data) {
+  self_->ui_lock_.Take(UINT32_MAX);
+  self_->del_data_.Send(ui_data, 0);
+  self_->ui_lock_.Give();
+
+  return true;
+}
+
+bool Referee::AddUI(ui_string_t ui_data) {
+  self_->ui_lock_.Take(UINT32_MAX);
+  self_->string_data_.Send(ui_data, 0);
+  self_->ui_lock_.Give();
+
+  return true;
 }
 
 void Referee::SetUIHeader(Referee::InterStudentHeader &header,

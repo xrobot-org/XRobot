@@ -13,7 +13,24 @@
 #define GAME_HEAT_INCREASE_17MM (10.0f) /* 每发射一颗17mm弹丸增加10热量 */
 
 #define GAME_CHASSIS_MAX_POWER_WO_REF 40.0f /* 裁判系统离线时底盘最大功率 */
+#define REF_UI_BOX_UP_OFFSET (4)
+#define REF_UI_BOX_BOT_OFFSET (-14)
 
+#define REF_UI_RIGHT_START_W (0.85f)
+
+#define REF_UI_MODE_LINE1_H (0.7f)
+#define REF_UI_MODE_LINE2_H (0.68f)
+#define REF_UI_MODE_LINE3_H (0.66f)
+#define REF_UI_MODE_LINE4_H (0.64f)
+
+#define REF_UI_MODE_OFFSET_1_LEFT (-6)
+#define REF_UI_MODE_OFFSET_1_RIGHT (44)
+#define REF_UI_MODE_OFFSET_2_LEFT (54)
+#define REF_UI_MODE_OFFSET_2_RIGHT (102)
+#define REF_UI_MODE_OFFSET_3_LEFT (114)
+#define REF_UI_MODE_OFFSET_3_RIGHT (162)
+#define REF_UI_MODE_OFFSET_4_LEFT (174)
+#define REF_UI_MODE_OFFSET_4_RIGHT (222)
 namespace Device {
 class Referee {
  public:
@@ -293,7 +310,6 @@ class Referee {
     REF_STDNT_CMD_ID_UI_DRAW5 = 0x0103,
     REF_STDNT_CMD_ID_UI_DRAW7 = 0x0104,
     REF_STDNT_CMD_ID_UI_STR = 0x0110,
-
     REF_STDNT_CMD_ID_CUSTOM = 0x0200,
   } CMDID;
 
@@ -302,12 +318,6 @@ class Referee {
     uint16_t id_sender;
     uint16_t id_receiver;
   } InterStudentHeader;
-
-  typedef struct __attribute__((packed)) {
-    Referee::Header header;
-    uint16_t cmd_id;
-    Referee::InterStudentHeader student_header;
-  } UIPacketHeader;
 
   typedef struct {
     Status status;
@@ -334,6 +344,65 @@ class Referee {
     KeyboardMouse keyboard_mouse;
   } Data;
 
+  typedef struct __attribute__((packed)) {
+    Header frame_header;
+    uint16_t cmd_id;
+    Referee::InterStudentHeader student_header;
+    std::array<ui_ele_t, 1> ele_data;
+    uint16_t crc16;
+  } UIElePack_1;
+
+  typedef struct __attribute__((packed)) {
+    Header frame_header;
+    uint16_t cmd_id;
+    Referee::InterStudentHeader student_header;
+    std::array<ui_ele_t, 2> ele_data;
+    uint16_t crc16;
+  } UIElePack_2;
+
+  typedef struct __attribute__((packed)) {
+    Header frame_header;
+    uint16_t cmd_id;
+    Referee::InterStudentHeader student_header;
+    std::array<ui_ele_t, 5> ele_data;
+    uint16_t crc16;
+  } UIElePack_5;
+
+  typedef struct __attribute__((packed)) {
+    Header frame_header;
+    uint16_t cmd_id;
+    Referee::InterStudentHeader student_header;
+    std::array<ui_ele_t, 7> ele_data;
+    uint16_t crc16;
+  } UIElePack_7;
+
+  typedef struct __attribute__((packed)) {
+    Header frame_header;
+    uint16_t cmd_id;
+    Referee::InterStudentHeader student_header;
+    ui_del_t del_data;
+    uint16_t crc16;
+  } UIDelPack;
+
+  typedef struct __attribute__((packed)) {
+    Header frame_header;
+    uint16_t cmd_id;
+    Referee::InterStudentHeader student_header;
+    ui_string_t str_data;
+    uint16_t crc16;
+  } UIStringPack;
+
+  union UIPack {
+    UIElePack_7 ele_7;
+    UIStringPack str;
+    UIDelPack del;
+    struct {
+      Header frame_header;
+      uint16_t cmd_id;
+      Referee::InterStudentHeader student_header;
+    } raw;
+  };
+
   Referee();
 
   bool UIStackEmpty();
@@ -344,7 +413,14 @@ class Referee {
 
   void Prase();
 
-  bool RefreshUI();
+  bool UpdateUI();
+
+  static bool AddUI(ui_ele_t ui_data);
+  static bool AddUI(ui_del_t ui_data);
+  static bool AddUI(ui_string_t ui_data);
+
+  static float UIGetHeight() { return 1080.0f; }
+  static float UIGetWidth() { return 1920.0f; }
 
   bool PackUI();
 
@@ -355,22 +431,25 @@ class Referee {
 
   void SetPacketHeader(Referee::Header &header, uint16_t data_length);
 
-  struct {
-    uint8_t *data_;
-    size_t size_;
-  } packet;
-
  private:
   System::Semaphore raw_ready_ = System::Semaphore(false);
-  System::Semaphore packet_sent_ = System::Semaphore(false);
-  System::Semaphore ui_fast_refresh_ = System::Semaphore(false);
-  System::Semaphore ui_slow_refresh_ = System::Semaphore(false);
+  System::Semaphore packet_sent_ = System::Semaphore(true);
 
   System::Thread recv_thread_;
   System::Thread trans_thread_;
 
   Message::Topic<Data> ref_data_tp_ = Message::Topic<Data>("referee");
 
+  System::Queue<ui_ele_t> ele_data_ = System::Queue<ui_ele_t>(20);
+  System::Queue<ui_string_t> string_data_ = System::Queue<ui_string_t>(20);
+  System::Queue<ui_del_t> del_data_ = System::Queue<ui_del_t>(20);
+
+  System::Semaphore ui_lock_ = System::Semaphore(true);
+
   Data ref_data_;
+
+  static UIPack ui_pack_;
+
+  static Referee *self_;
 };
 }  // namespace Device
