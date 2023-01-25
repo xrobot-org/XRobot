@@ -44,8 +44,8 @@ class Balance {
     } wheel_speed;
 
     struct {
-      float g_center; /* 重心角度 */
-      float g_comp;   /* 加速补偿 */
+      float g_comp; /* 加速补偿 */
+      float yaw;
     } angle;
   } Setpoint;
 
