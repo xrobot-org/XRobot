@@ -1,5 +1,7 @@
 #include "dev_imu.hpp"
 
+#include <comp_utils.hpp>
+
 #include "bsp_time.h"
 #include "webots/accelerometer.h"
 #include "webots/gyro.h"
@@ -40,9 +42,21 @@ void IMU::Update() {
   const double* eulr_data =
       wb_inertial_unit_get_roll_pitch_yaw(this->ahrs_handle_);
 
-  this->eulr_.rol = static_cast<float>(eulr_data[0]);
-  this->eulr_.pit = static_cast<float>(eulr_data[1]);
+  this->eulr_.rol = static_cast<float>(eulr_data[1]);
+  this->eulr_.pit = static_cast<float>(eulr_data[0]);
   this->eulr_.yaw = static_cast<float>(eulr_data[2]);
+
+  if (this->eulr_.rol < 0.0f) {
+    this->eulr_.rol += M_2PI;
+  }
+
+  if (this->eulr_.pit < 0.0f) {
+    this->eulr_.pit += M_2PI;
+  }
+
+  if (this->eulr_.yaw < 0.0f) {
+    this->eulr_.yaw += M_2PI;
+  }
 
   this->gyro_.x = static_cast<float>(gyro_data[0]);
   this->gyro_.y = static_cast<float>(gyro_data[1]);
@@ -53,7 +67,7 @@ void IMU::Update() {
   this->accl_.z = static_cast<float>(accl_data[2]);
 }
 
-int IMU::ShowCMD(IMU* imu, int argc, char* argv[]) {
+int IMU::ShowCMD(IMU* imu, int argc, char** argv) {
   if (argc == 1) {
     ms_printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据");
     ms_enter();

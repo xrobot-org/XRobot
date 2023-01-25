@@ -222,6 +222,7 @@ void AHRS::GetEulr() {
   } else {
     this->eulr_.rol = asinf(SINP);
   }
+
   const float SINY_COSP = 2.0f * (this->quat_.q0 * this->quat_.q3 +
                                   this->quat_.q1 * this->quat_.q2);
   const float COSY_COSP = 1.0f - 2.0f * (this->quat_.q2 * this->quat_.q2 +

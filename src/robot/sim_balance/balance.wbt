@@ -6,6 +6,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/appearances/protos/CementTiles.proto"
 
 WorldInfo {
+  basicTimeStep 1
   contactProperties [
     ContactProperties {
       coulombFriction [
@@ -31,11 +32,14 @@ Robot {
   translation 0 0 0.13
   children [
     Gyro {
+      rotation 0 0 1 -1.5707953071795862
     }
     InertialUnit {
+      rotation 0 0 1 -1.5707953071795862
       name "imu"
     }
     Accelerometer {
+      rotation 0 0 1 -1.5707953071795862
       name "accl"
     }
     LED {
