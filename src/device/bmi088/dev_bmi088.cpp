@@ -223,11 +223,11 @@ BMI088::BMI088(BMI088::Rotation &rot)
 
 int BMI088::CaliCMD(BMI088 *bmi088, int argc, char **argv) {
   if (argc == 1) {
-    ms_printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据");
+    ms_printf("show [time] [delay] 在time时间内每隔delay打印一次数据");
     ms_enter();
-    ms_printf("[list] 列出校准数据");
+    ms_printf("list 列出校准数据");
     ms_enter();
-    ms_printf("[cali] 开始校准");
+    ms_printf("cali 开始校准");
     ms_enter();
   } else if (argc == 2) {
     if (strcmp(argv[1], "list") == 0) {

@@ -2,28 +2,3 @@ config MODULE_CAN_IMU_TASK_STACK_DEPTH
     int "CAN_IMU任务堆栈大小"
     range 128 4096
     default 256
-
-config IMU_SEND_CAN_ID
-    int "IMU模块CAN_ID"
-    range 0 255
-    default 30
-
-config IMU_SEND_FREQ
-    int "IMU数据反馈频率"
-    range 10 1000
-    default 500
-
-config IMU_SEND_ACCL
-    tristate "发送加速度数据"
-
-config IMU_SEND_GYRO
-    tristate "发送陀螺仪数据"
-
-config IMU_SEND_EULR
-    tristate "发送欧拉角数据"
-
-config IMU_SEND_QUAT
-    tristate "发送四元数数据"
-
-config IMU_USE_IN_WEARLAB
-    tristate "For WearLab"

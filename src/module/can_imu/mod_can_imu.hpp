@@ -21,19 +21,24 @@ class CanIMU {
 
   void SendQuat();
 
+  static int SetCMD(CanIMU* imu, int argc, char** argv);
+
  private:
-#if IMU_SEND_EULR
   Component::Type::Eulr eulr_;
-#endif
-#if IMU_SEND_QUAT
   Component::Type::Quaternion quat_;
-#endif
-#if IMU_SEND_GYRO
   Component::Type::Vector3 gyro_;
-#endif
-#if IMU_SEND_ACCL
   Component::Type::Vector3 accl_;
-#endif
+
+  System::Database::Key<bool> enable_eulr_;
+  System::Database::Key<bool> enable_quat_;
+  System::Database::Key<bool> enable_gyro_;
+  System::Database::Key<bool> enable_accl_;
+
+  System::Database::Key<uint32_t> delay_;
+
+  System::Database::Key<uint32_t> can_id_;
+
+  System::Term::Command<CanIMU*> cmd_;
 
   System::Thread thread_;
 };
