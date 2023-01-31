@@ -384,9 +384,7 @@ void Chassis<Motor, MotorParam>::DrawUIDynamic(
                                      cosf(chassis->yaw_) * 44));
 
   Device::Referee::AddUI(chassis->ui_mode_data_);
-  Device::Referee::AddUI(chassis->ui_line_data_);
-  Device::Referee::AddUI(chassis->ui_line_data_);
-  Device::Referee::AddUI(chassis->ui_mode_data_);
+  Device::Referee::AddUI(chassis->ui_chassis_angle_data_);
 }
 
 template class Module::Chassis<Device::RMMotor, Device::RMMotor::Param>;

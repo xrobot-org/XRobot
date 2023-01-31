@@ -6,6 +6,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/project
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/appearances/protos/CementTiles.proto"
 
 WorldInfo {
+  basicTimeStep 1
   contactProperties [
     ContactProperties {
       coulombFriction [
@@ -31,11 +32,14 @@ Robot {
   translation 0 0 0.13
   children [
     Gyro {
+      rotation 0 0 1 -1.5707953071795862
     }
     InertialUnit {
+      rotation 0 0 1 -1.5707953071795862
       name "imu"
     }
     Accelerometer {
+      rotation 0 0 1 -1.5707953071795862
       name "accl"
     }
     LED {
@@ -78,22 +82,22 @@ Robot {
       }
       device [
         RotationalMotor {
-          name "Chassis_Wheel_Right"
-          maxTorque 1
+          name "RIGHT_WHEEL"
+          maxTorque 4
         }
         PositionSensor {
-          name "Chassis_Wheel_Right_Sensor"
+          name "RIGHT_WHEEL_Sensor"
         }
       ]
       endPoint Solid {
-        translation 0 -0.13999999999999457 -0.08
-        rotation -0.9999999999999999 -3.297195993907878e-15 -7.065419666083107e-16 1.5707953071795389
+        translation 0 -0.13999999999999257 -0.08
+        rotation -0.9999999999999999 -3.2971958441721484e-15 -9.813082869559969e-16 1.570795307179519
         children [
           DEF wheel Shape {
             appearance CementTiles {
             }
             geometry Cylinder {
-              height 0.03
+              height 0.01
               radius 0.05
             }
           }
@@ -111,22 +115,22 @@ Robot {
       }
       device [
         RotationalMotor {
-          name "Chassis_Wheel_Left"
-          maxTorque 1
+          name "LEFT_WHEEL"
+          maxTorque 4
         }
         PositionSensor {
-          name "Chassis_Wheel_Left_Sensor"
+          name "LEFT_WHEEL_Sensor"
         }
       ]
       endPoint Solid {
         translation 0 0.14 -0.08
-        rotation -0.9999999999999999 1.6485978846521137e-15 -7.850462552253838e-17 1.5707953071795437
+        rotation -0.9999999999999999 1.0205606184342315e-15 2.7476632034767777e-16 1.5707953071795286
         children [
           DEF wheel Shape {
             appearance CementTiles {
             }
             geometry Cylinder {
-              height 0.03
+              height 0.01
               radius 0.05
             }
           }

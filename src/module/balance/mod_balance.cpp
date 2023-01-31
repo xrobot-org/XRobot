@@ -24,17 +24,14 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
       ctrl_lock_(true) {
   memset(&(this->cmd_), 0, sizeof(this->cmd_));
 
-  this->setpoint_.angle.g_center = param.init_g_center;
-
   constexpr auto WHELL_NAMES = magic_enum::enum_names<Wheel>();
 
   for (uint8_t i = 0; i < WHEEL_NUM; i++) {
     this->wheel_actr_.at(i) =
         new Component::SpeedActuator(param.wheel_param.at(i), control_freq);
 
-    this->motor_.at(i) = new Motor(
-        param.motor_param.at(i),
-        (std::string("Chassis_Wheel_") + WHELL_NAMES[i].data()).c_str());
+    this->motor_.at(i) =
+        new Motor(param.motor_param.at(i), WHELL_NAMES[i].data());
   }
 
   auto event_callback = [](ChassisEvent event, Balance* chassis) {
@@ -93,8 +90,8 @@ void Balance<Motor, MotorParam>::UpdateFeedback() {
     this->motor_[i]->Update();
   }
 
-  this->feeback_.forward_speed = (this->motor_[RIGHT_WHEEL]->GetSpeed() -
-                                  this->motor_[LEFT_WHEEL]->GetSpeed()) /
+  this->feeback_.forward_speed = (this->motor_[LEFT_WHEEL]->GetSpeed() -
+                                  this->motor_[RIGHT_WHEEL]->GetSpeed()) /
                                  2.0f / MOTOR_MAX_ROTATIONAL_SPEED;
 }
 
@@ -147,24 +144,21 @@ void Balance<Motor, MotorParam>::Control() {
       this->setpoint_.angle.g_comp = this->comp_pid_.Calculate(
           this->move_vec_.vy, this->feeback_.forward_speed, this->dt_);
 
-      /* 速度误差积分估计重心 */
-      this->setpoint_.angle.g_center += this->center_filter_.Apply(
-          (this->feeback_.forward_speed - this->move_vec_.vy) * this->dt_);
-
-      clampf(&(this->setpoint_.angle.g_center), -0.05 + param_.init_g_center,
-             0.05 + param_.init_g_center);
-
       /* 直立环 */
       this->setpoint_.wheel_speed.balance = this->eulr_pid_.Calculate(
-          this->setpoint_.angle.g_center - this->setpoint_.angle.g_comp,
+          this->param_.init_g_center - this->setpoint_.angle.g_comp,
           this->eulr_.pit, this->gyro_.x, this->dt_);
 
       this->setpoint_.wheel_speed.balance +=
           this->gyro_pid_.Calculate(0.0f, this->gyro_.x, this->dt_);
 
       /* 角度环 */
-      this->setpoint_.wheel_speed.angle[LEFT_WHEEL] = -this->move_vec_.vx;
-      this->setpoint_.wheel_speed.angle[RIGHT_WHEEL] = this->move_vec_.vx;
+      circle_add(&this->setpoint_.angle.yaw, -this->move_vec_.vx * dt_, M_2PI);
+      this->setpoint_.wheel_speed.angle[RIGHT_WHEEL] =
+          this->follow_pid_.Calculate(this->setpoint_.angle.yaw,
+                                      this->eulr_.yaw, dt_);
+      this->setpoint_.wheel_speed.angle[LEFT_WHEEL] =
+          -this->setpoint_.wheel_speed.angle[RIGHT_WHEEL];
 
       /* 轮子速度控制 */
       for (uint8_t i = 0; i < WHEEL_NUM; i++) {
@@ -174,7 +168,7 @@ void Balance<Motor, MotorParam>::Control() {
 
         clampf(&speed_sp, -1.0f, 1.0f);
 
-        if (i == LEFT_WHEEL) {
+        if (i == RIGHT_WHEEL) {
           speed_sp = -speed_sp;
         }
 
@@ -216,8 +210,6 @@ void Balance<Motor, MotorParam>::SetMode(Balance::Mode mode) {
   this->gyro_pid_.Reset();
   this->speed_pid_.Reset();
   this->mode_ = mode;
-
-  this->setpoint_.angle.g_center = param_.init_g_center;
 }
 
 template class Module::Balance<Device::RMMotor, Device::RMMotor::Param>;

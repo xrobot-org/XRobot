@@ -20,23 +20,23 @@ Robot::Simulator::Param param = {
     .init_g_center = 0.0f,
 
     .follow_pid_param = {
-      .k = 0.0f,
+      .k = 3.0f,
       .p = 1.0f,
       .i = 0.5f,
       .d = 0.0f,
-      .i_limit = 0.011f,
-      .out_limit = 1.0f,
+      .i_limit = 0.2f,
+      .out_limit = 0.5f,
       .d_cutoff_freq = -1.0f,
       .range = M_2PI,
     },
 
     .comp_pid_param = {
-      .k = 0.0f,
+      .k = 0.02f,
       .p = 1.0f,
-      .i = 0.5f,
-      .d = 0.0f,
-      .i_limit = 0.011f,
-      .out_limit = 1.0f,
+      .i = 0.0f,
+      .d = 0.002f,
+      .i_limit = 0.01f,
+      .out_limit = 0.3f,
       .d_cutoff_freq = -1.0f,
       .range = M_2PI,
     },
@@ -55,11 +55,11 @@ Robot::Simulator::Param param = {
     .wheel_param = {
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00015f,
+          .k = 0.0002f,
           .p = 1.0f,
-          .i = 0.5f,
+          .i = 0.0f,
           .d = 0.0f,
-          .i_limit = 0.2f,
+          .i_limit = 0.4f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .range = -1.0f,
@@ -71,11 +71,11 @@ Robot::Simulator::Param param = {
       },
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00015f,
+          .k = 0.0002f,
           .p = 1.0f,
-          .i = 0.5f,
+          .i = 0.0f,
           .d = 0.0f,
-          .i_limit = 0.2f,
+          .i_limit = 0.4f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .range = -1.0f,
@@ -88,10 +88,10 @@ Robot::Simulator::Param param = {
     },
 
     .eulr_param = Component::PID::Param{
-      .k = 2.0f,
+      .k = 16.0f,
       .p = 1.0f,
       .i = 0.0f,
-      .d = 0.005f,
+      .d = 0.008f,
       .i_limit = 20.0f,
       .out_limit = 20.0f,
       .d_cutoff_freq = -1.0f,
@@ -110,10 +110,10 @@ Robot::Simulator::Param param = {
     },
 
     .speed_param = Component::PID::Param{
-        .k = 0.7f,
+        .k = 6.5f,
         .p = 1.0f,
-        .i = 0.0f,
-        .d = 0.0f,
+        .i = 0.3f,
+        .d = 0.005f,
         .i_limit = 0.3f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
