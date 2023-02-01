@@ -54,6 +54,7 @@ class WheelLeg {
 
     float leg_max_angle;
 
+    /* 电机关节指向底盘正前方的角度 */
     std::array<float, LEG_NUM * LEG_MOTOR_NUM> motor_zero;
 
     const std::vector<Component::CMD::EventMapItem> EVENT_MAP;

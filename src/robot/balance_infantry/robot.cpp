@@ -55,7 +55,7 @@ Robot::Infantry::Param param = {
       .wheel_param = {
         Component::SpeedActuator::Param{
           .speed = {
-            .k = 0.00025f,
+            .k = 0.0002f,
             .p = 1.0f,
             .i = 1.0f,
             .d = 0.0f,
@@ -71,7 +71,7 @@ Robot::Infantry::Param param = {
         },
         Component::SpeedActuator::Param{
           .speed = {
-            .k = 0.00025f,
+            .k = 0.0002f,
             .p = 1.0f,
             .i = 1.0f,
             .d = 0.0f,
@@ -99,7 +99,7 @@ Robot::Infantry::Param param = {
       },
 
       .gyro_param = Component::PID::Param{
-        .k = 0.15f,
+        .k = 0.2f,
         .p = 1.0f,
         .i = 0.0f,
         .d = 0.0f,
@@ -124,13 +124,13 @@ Robot::Infantry::Param param = {
 
       .motor_param = {
         Device::RMMotor::Param{
-          .id_feedback = 0x201,
+          .id_feedback = 0x202,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_1,
         },
         Device::RMMotor::Param{
-          .id_feedback = 0x202,
+          .id_feedback = 0x201,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_1,
