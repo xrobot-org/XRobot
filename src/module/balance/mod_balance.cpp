@@ -209,6 +209,7 @@ void Balance<Motor, MotorParam>::SetMode(Balance::Mode mode) {
   this->eulr_pid_.Reset();
   this->gyro_pid_.Reset();
   this->speed_pid_.Reset();
+  this->setpoint_.angle.yaw = this->eulr_.yaw;
   this->mode_ = mode;
 }
 
