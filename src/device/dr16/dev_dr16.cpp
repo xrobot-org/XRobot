@@ -186,13 +186,15 @@ void DR16::PraseRC() {
 
     /* Gimbal Control */
     this->cmd_.gimbal.eulr.yaw =
-        2 * (static_cast<float>(this->data_.ch_r_x) - DR16_CH_VALUE_MID) /
+        -2 * (static_cast<float>(this->data_.ch_r_x) - DR16_CH_VALUE_MID) /
         FULL_RANGE;
     this->cmd_.gimbal.eulr.pit =
         2 * (static_cast<float>(this->data_.ch_r_y) - DR16_CH_VALUE_MID) /
         FULL_RANGE;
     this->cmd_.gimbal.eulr.rol = 0.0f;
   }
+
+  this->cmd_.gimbal.mode = Component::CMD::GIMBAL_RELATIVE_CTRL;
 
   this->cmd_.online = true;
 
