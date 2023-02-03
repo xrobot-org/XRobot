@@ -6,6 +6,21 @@
 
 #include <cmath>
 
+#define M_DEG2RAD_MULT (0.01745329251f)
+#define M_RAD2DEG_MULT (57.2957795131f)
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+#endif
+
+#ifndef M_2PI
+#define M_2PI 6.28318530717958647692f
+#endif
+
+#ifndef M_1G
+#define M_1G 9.80665ff
+#endif
+
 namespace Component {
 namespace Type {
 /* 欧拉角（Euler angle） */
@@ -135,6 +150,77 @@ class Line {
   }
 
   Position2 start_, end_;
+};
+
+class CycleValue {
+ public:
+  CycleValue(const float& value) : value_(value) {}
+
+  float operator+(const float& value) {
+    float ans = value + value_;
+    while (ans >= M_2PI) {
+      ans -= M_2PI;
+    }
+
+    while (ans < 0) {
+      ans += M_2PI;
+    }
+
+    return ans;
+  }
+
+  float operator+=(const float& value) {
+    float ans = value + value_;
+    while (ans >= M_2PI) {
+      ans -= M_2PI;
+    }
+
+    while (ans < 0) {
+      ans += M_2PI;
+    }
+
+    value_ = ans;
+
+    return ans;
+  }
+
+  float operator-(const float& value) {
+    float ans = value_ - value;
+    while (ans >= M_2PI) {
+      ans -= M_2PI;
+    }
+
+    while (ans < 0) {
+      ans += M_2PI;
+    }
+
+    return ans;
+  }
+
+  float operator-=(const float& value) {
+    float ans = value_ - value;
+    while (ans >= M_2PI) {
+      ans -= M_2PI;
+    }
+
+    while (ans < 0) {
+      ans += M_2PI;
+    }
+
+    value_ = ans;
+
+    return ans;
+  }
+
+  operator float() { return this->value_; }
+
+  CycleValue& operator=(const float& value) {
+    value_ = value;
+    return *this;
+  }
+
+ private:
+  float value_;
 };
 
 };  // namespace Type
