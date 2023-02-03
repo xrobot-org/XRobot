@@ -100,7 +100,7 @@ void RMMotor::Decode(Can::Pack &rx) {
   int16_t raw_current = static_cast<int16_t>((rx.data[4] << 8) | rx.data[5]);
 
   this->feedback_.rotor_abs_angle =
-      static_cast<float>(raw_angle) / (MOTOR_ENC_RES * M_2PI);
+      static_cast<float>(raw_angle) / MOTOR_ENC_RES * M_2PI;
   this->feedback_.rotational_speed =
       static_cast<int16_t>((rx.data[2] << 8) | rx.data[3]);
   this->feedback_.torque_current =
