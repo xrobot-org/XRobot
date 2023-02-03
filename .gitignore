@@ -16,3 +16,5 @@ config/auto.Kconfig
 src/robot/**/**.jpg
 **.wbproj
 **.old
+.cache/**
+.history/**
