@@ -1,5 +1,8 @@
 #include "mod_dual_leg.hpp"
 
+#include <comp_type.hpp>
+
+#include "bsp_delay.h"
 #include "bsp_time.h"
 
 using namespace Module;
@@ -26,7 +29,7 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
 
   for (int i = 0; i < LEG_NUM; i++) {
     for (int j = 0; j < LEG_MOTOR_NUM; j++) {
-      circle_add(&this->param_.motor_zero.at(i * 2 + j), M_PI, M_2PI);
+      this->param_.motor_zero.at(i * 2 + j) += M_PI;
     }
   }
 
@@ -86,8 +89,8 @@ void WheelLeg::UpdateFeedback() {
     for (uint8_t j = 0; j < LEG_MOTOR_NUM; j++) {
       this->feedback_[i].motor_angle[j] =
           this->leg_motor_[i * LEG_MOTOR_NUM + j]->GetAngle();
-      circle_add(&this->feedback_[i].motor_angle[j],
-                 -this->param_.motor_zero[i * LEG_MOTOR_NUM + j], M_2PI);
+      this->feedback_[i].motor_angle[j] -=
+          this->param_.motor_zero[i * LEG_MOTOR_NUM + j];
     }
 
     std::array<Polar2, LEG_MOTOR_NUM> polar_l2{
@@ -105,9 +108,9 @@ void WheelLeg::UpdateFeedback() {
     Position2 middle_point = this->feedback_[i].diagonal.MiddlePoint();
     float length = sqrtf(powf(this->param_.l3, 2) -
                          powf(this->feedback_[i].diagonal.Length() / 2.0f, 2));
-    float angle = -Component::Triangle::Supplementary(
+    Component::Type::CycleValue angle = -Component::Triangle::Supplementary(
         this->feedback_[i].diagonal.Angle());
-    circle_add(&angle, M_PI / 2.0f, M_2PI);
+    angle += M_PI / 2.0f;
 
     this->feedback_[i].whell_pos =
         Position2(Polar2(angle, length)) + middle_point;
@@ -196,12 +199,13 @@ void WheelLeg::Control() {
 
           leg_tri.Slove();
 
-          float angle = Line(motor_pos[j], target).Angle();
+          Component::Type::CycleValue angle =
+              Line(motor_pos[j], target).Angle();
 
           if (j == LEG_FRONT) {
-            circle_add(&angle, -leg_tri.data_.angle[0], M_2PI);
+            angle -= leg_tri.data_.angle[0];
           } else {
-            circle_add(&angle, leg_tri.data_.angle[0], M_2PI);
+            angle += leg_tri.data_.angle[0];
           }
 
           this->setpoint_[i].motor_angle[j] = angle;
@@ -212,7 +216,7 @@ void WheelLeg::Control() {
                   this->feedback_[i].motor_angle[j], this->dt_));
 
           this->leg_motor_[i * LEG_MOTOR_NUM + j]->SetPos(
-              circle_error(angle, this->feedback_[i].motor_angle[j], M_2PI));
+              angle + this->param_.motor_zero[i * LEG_MOTOR_NUM + j]);
         }
       }
       break;

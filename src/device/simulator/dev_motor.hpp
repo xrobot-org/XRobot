@@ -4,6 +4,7 @@
 #include <webots/position_sensor.h>
 #include <webots/robot.h>
 
+#include <comp_type.hpp>
 #include <device.hpp>
 
 #include "bsp_time.h"
@@ -83,7 +84,7 @@ class BaseMotor {
 
   float last_online_time_ = 0.0f;
 
-  float last_pos_;
+  Component::Type::CycleValue last_pos_;
 
   float last_sensor_time_;
 

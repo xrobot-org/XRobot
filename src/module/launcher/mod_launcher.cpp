@@ -109,10 +109,9 @@ void Launcher::UpdateFeedback() {
     this->trig_motor_[i]->Update();
   }
 
-  const float DELTA_MOTOR_ANGLE = circle_error(this->trig_motor_[0]->GetAngle(),
-                                               LAST_TRIG_MOTOR_ANGLE, M_2PI);
-  circle_add(&(this->trig_angle_),
-             DELTA_MOTOR_ANGLE / this->param_.trig_gear_ratio, M_2PI);
+  const float DELTA_MOTOR_ANGLE =
+      this->trig_motor_[0]->GetAngle() - LAST_TRIG_MOTOR_ANGLE;
+  this->trig_angle_ += DELTA_MOTOR_ANGLE / this->param_.trig_gear_ratio;
 }
 
 void Launcher::Control() {
@@ -193,8 +192,7 @@ void Launcher::Control() {
   if ((bsp_time_get_ms() - this->fire_ctrl_.last_launch) >=
       this->fire_ctrl_.launch_delay) {
     /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗弹丸的弧度变化 */
-    circle_add(&(this->setpoint_.trig_angle_),
-               -M_2PI / this->param_.num_trig_tooth, M_2PI);
+    this->setpoint_.trig_angle_ -= M_2PI / this->param_.num_trig_tooth;
     /* 计算已发射弹丸 */
     this->fire_ctrl_.launched++;
     this->fire_ctrl_.last_launch = bsp_time_get_ms();

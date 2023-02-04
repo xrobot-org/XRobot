@@ -62,8 +62,7 @@ void Gimbal::UpdateFeedback() {
   this->pit_motor_.Update();
   this->yaw_motor_.Update();
 
-  this->yaw_ = circle_error(this->yaw_motor_.GetAngle(),
-                            this->param_.mech_zero.yaw, M_2PI);
+  this->yaw_ = this->yaw_motor_.GetAngle() - this->param_.mech_zero.yaw;
 }
 
 void Gimbal::Control() {
@@ -77,46 +76,30 @@ void Gimbal::Control() {
     float gimbal_yaw_cmd = this->cmd_.eulr.yaw * this->dt_ * GIMBAL_MAX_SPEED;
 
     /* 处理yaw控制命令 */
-    circle_add(&(this->setpoint_.eulr_.yaw), gimbal_yaw_cmd, M_2PI);
+    this->setpoint_.eulr_.yaw += gimbal_yaw_cmd;
 
     /* 处理pitch控制命令，软件限位 */
     const float DELTA_MAX =
-        circle_error(this->param_.limit.pitch_max,
-                     (this->pit_motor_.GetAngle() + this->setpoint_.eulr_.pit -
-                      this->eulr_.pit),
-                     M_2PI);
+        (this->param_.limit.pitch_max + eulr_.pit) -
+        (this->pit_motor_.GetAngle() + this->setpoint_.eulr_.pit);
     const float DELTA_MIN =
-        circle_error(this->param_.limit.pitch_min,
-                     (this->pit_motor_.GetAngle() + this->setpoint_.eulr_.pit -
-                      this->eulr_.pit),
-                     M_2PI);
+        (this->param_.limit.pitch_min + eulr_.pit) -
+        (this->pit_motor_.GetAngle() + this->setpoint_.eulr_.pit);
     clampf(&(gimbal_pit_cmd), DELTA_MIN, DELTA_MAX);
-    circle_add(&(this->setpoint_.eulr_.pit), gimbal_pit_cmd, M_2PI);
+    this->setpoint_.eulr_.pit += gimbal_pit_cmd;
   } else {
     this->setpoint_.eulr_.yaw = this->cmd_.eulr.yaw;
-    float gimbal_pit_cmd = 0.0f;
+    float gimbal_pit_cmd = this->cmd_.eulr.pit - this->eulr_.pit;
 
-    const float ENCODER_ERR = -this->pit_motor_.GetAngle() + this->eulr_.pit;
-
-    const float PIT_RANGE = circle_error(this->param_.limit.pitch_max,
-                                         this->param_.limit.pitch_min, M_2PI);
-
-    const float MAX_ERROR = circle_error(
-        this->param_.limit.pitch_max + ENCODER_ERR, this->cmd_.eulr.pit, M_2PI);
-
-    if (!(MAX_ERROR < PIT_RANGE && MAX_ERROR > 0)) {
-      const float MIN_ERROR =
-          circle_error(this->param_.limit.pitch_min + ENCODER_ERR,
-                       this->cmd_.eulr.pit, M_2PI);
-      if (fabsf(MAX_ERROR) < fabsf(MIN_ERROR)) {
-        gimbal_pit_cmd = this->param_.limit.pitch_max + ENCODER_ERR;
-      } else {
-        gimbal_pit_cmd = this->param_.limit.pitch_min + ENCODER_ERR;
-      }
-    } else {
-      gimbal_pit_cmd = this->cmd_.eulr.pit;
-    }
-    this->setpoint_.eulr_.pit = gimbal_pit_cmd;
+    /* 处理pitch控制命令，软件限位 */
+    const float DELTA_MAX = this->param_.limit.pitch_max -=
+        (this->pit_motor_.GetAngle() + this->setpoint_.eulr_.pit -
+         this->eulr_.pit);
+    const float DELTA_MIN = this->param_.limit.pitch_min -
+                            (this->pit_motor_.GetAngle() +
+                             this->setpoint_.eulr_.pit - this->eulr_.pit);
+    clampf(&(gimbal_pit_cmd), DELTA_MIN, DELTA_MAX);
+    this->setpoint_.eulr_.pit += gimbal_pit_cmd;
   }
 
   /* 控制相关逻辑 */

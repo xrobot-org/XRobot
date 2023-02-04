@@ -98,14 +98,14 @@ int AHRS::ShowCMD(AHRS *ahrs, int argc, char **argv) {
       }
 
       while (time > delay) {
-        ms_printf("pitch:%f roll:%f yaw:%f", ahrs->eulr_.pit, ahrs->eulr_.rol,
-                  ahrs->eulr_.yaw);
+        ms_printf("pitch:%f roll:%f yaw:%f", ahrs->eulr_.pit.Value(),
+                  ahrs->eulr_.rol.Value(), ahrs->eulr_.yaw.Value());
         System::Thread::Sleep(delay);
         ms_clear_line();
         time -= delay;
       }
-      ms_printf("pitch:%f roll:%f yaw:%f", ahrs->eulr_.pit, ahrs->eulr_.rol,
-                ahrs->eulr_.yaw);
+      ms_printf("pitch:%f roll:%f yaw:%f", ahrs->eulr_.pit.Value(),
+                ahrs->eulr_.rol.Value(), ahrs->eulr_.yaw.Value());
       ms_enter();
     }
   }

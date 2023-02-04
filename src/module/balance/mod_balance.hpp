@@ -45,7 +45,7 @@ class Balance {
 
     struct {
       float g_comp; /* 加速补偿 */
-      float yaw;
+      Component::Type::CycleValue yaw;
     } angle;
   } Setpoint;
 

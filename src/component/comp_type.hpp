@@ -23,11 +23,205 @@
 
 namespace Component {
 namespace Type {
+class CycleValue {
+ public:
+  CycleValue(const float& value) : value_(value) {
+    while (value_ >= M_2PI) {
+      value_ -= M_2PI;
+    }
+
+    while (value_ < 0) {
+      value_ += M_2PI;
+    }
+  }
+
+  CycleValue(const double& value) : value_(static_cast<float>(value)) {
+    while (value_ >= M_2PI) {
+      value_ -= M_2PI;
+    }
+
+    while (value_ < 0) {
+      value_ += M_2PI;
+    }
+  }
+
+  CycleValue(const CycleValue& value) : value_(value.value_) {
+    while (value_ >= M_2PI) {
+      value_ -= M_2PI;
+    }
+
+    while (value_ < 0) {
+      value_ += M_2PI;
+    }
+  }
+
+  CycleValue() = default;
+
+  CycleValue operator+(const float& value) {
+    return CycleValue(value + value_);
+  }
+
+  CycleValue operator+(const double& value) {
+    return CycleValue(static_cast<float>(value) + value_);
+  }
+
+  CycleValue operator+(const CycleValue& value) {
+    return CycleValue(value.value_ + value_);
+  }
+
+  CycleValue operator+=(const float& value) {
+    float ans = value + value_;
+    while (ans >= M_2PI) {
+      ans -= M_2PI;
+    }
+
+    while (ans < 0) {
+      ans += M_2PI;
+    }
+
+    value_ = ans;
+
+    return *this;
+  }
+
+  CycleValue operator+=(const double& value) {
+    float ans = static_cast<float>(value) + value_;
+    while (ans >= M_2PI) {
+      ans -= M_2PI;
+    }
+
+    while (ans < 0) {
+      ans += M_2PI;
+    }
+
+    value_ = ans;
+
+    return *this;
+  }
+
+  CycleValue operator+=(const CycleValue& value) {
+    float ans = value.value_ + value_;
+    while (ans >= M_2PI) {
+      ans -= M_2PI;
+    }
+
+    while (ans < 0) {
+      ans += M_2PI;
+    }
+
+    value_ = ans;
+
+    return *this;
+  }
+
+  float operator-(const float& value) {
+    float ans = value_ - value;
+    while (ans >= M_PI) {
+      ans -= M_2PI;
+    }
+
+    while (ans < -M_PI) {
+      ans += M_2PI;
+    }
+
+    return ans;
+  }
+
+  float operator-(const double& value) {
+    float ans = value_ - static_cast<float>(value);
+    while (ans >= M_PI) {
+      ans -= M_2PI;
+    }
+
+    while (ans < -M_PI) {
+      ans += M_2PI;
+    }
+
+    return ans;
+  }
+
+  float operator-(const CycleValue& value) {
+    float ans = value_ - value.value_;
+    while (ans >= M_PI) {
+      ans -= M_2PI;
+    }
+
+    while (ans < -M_PI) {
+      ans += M_2PI;
+    }
+
+    return ans;
+  }
+
+  CycleValue operator-=(const float& value) {
+    float ans = value_ - value;
+    while (ans >= M_2PI) {
+      ans -= M_2PI;
+    }
+
+    while (ans < 0) {
+      ans += M_2PI;
+    }
+
+    value_ = ans;
+
+    return *this;
+  }
+
+  CycleValue operator-=(const double& value) {
+    float ans = value_ - static_cast<float>(value);
+    while (ans >= M_2PI) {
+      ans -= M_2PI;
+    }
+
+    while (ans < 0) {
+      ans += M_2PI;
+    }
+
+    value_ = ans;
+
+    return *this;
+  }
+
+  CycleValue operator-=(const CycleValue& value) {
+    float ans = value_ - value.value_;
+    while (ans >= M_2PI) {
+      ans -= M_2PI;
+    }
+
+    while (ans < 0) {
+      ans += M_2PI;
+    }
+
+    value_ = ans;
+
+    return *this;
+  }
+
+  CycleValue operator-() { return CycleValue(M_2PI - value_); }
+
+  operator float() { return this->value_; }
+
+  CycleValue& operator=(const float& value) {
+    value_ = value;
+    return *this;
+  }
+
+  CycleValue& operator=(const double& value) {
+    value_ = static_cast<float>(value);
+    return *this;
+  }
+
+  float Value() { return value_; }
+
+ private:
+  float value_;
+};
 /* 欧拉角（Euler angle） */
 typedef struct {
-  float yaw; /* 偏航角（Yaw angle） */
-  float pit; /* 俯仰角（Pitch angle） */
-  float rol; /* 翻滚角（Roll angle） */
+  CycleValue yaw; /* 偏航角（Yaw angle） */
+  CycleValue pit; /* 俯仰角（Pitch angle） */
+  CycleValue rol; /* 翻滚角（Roll angle） */
 } Eulr;
 
 /* 四元数 */
@@ -150,77 +344,6 @@ class Line {
   }
 
   Position2 start_, end_;
-};
-
-class CycleValue {
- public:
-  CycleValue(const float& value) : value_(value) {}
-
-  float operator+(const float& value) {
-    float ans = value + value_;
-    while (ans >= M_2PI) {
-      ans -= M_2PI;
-    }
-
-    while (ans < 0) {
-      ans += M_2PI;
-    }
-
-    return ans;
-  }
-
-  float operator+=(const float& value) {
-    float ans = value + value_;
-    while (ans >= M_2PI) {
-      ans -= M_2PI;
-    }
-
-    while (ans < 0) {
-      ans += M_2PI;
-    }
-
-    value_ = ans;
-
-    return ans;
-  }
-
-  float operator-(const float& value) {
-    float ans = value_ - value;
-    while (ans >= M_2PI) {
-      ans -= M_2PI;
-    }
-
-    while (ans < 0) {
-      ans += M_2PI;
-    }
-
-    return ans;
-  }
-
-  float operator-=(const float& value) {
-    float ans = value_ - value;
-    while (ans >= M_2PI) {
-      ans -= M_2PI;
-    }
-
-    while (ans < 0) {
-      ans += M_2PI;
-    }
-
-    value_ = ans;
-
-    return ans;
-  }
-
-  operator float() { return this->value_; }
-
-  CycleValue& operator=(const float& value) {
-    value_ = value;
-    return *this;
-  }
-
- private:
-  float value_;
 };
 
 };  // namespace Type

@@ -153,7 +153,7 @@ void Balance<Motor, MotorParam>::Control() {
           this->gyro_pid_.Calculate(0.0f, this->gyro_.x, this->dt_);
 
       /* 角度环 */
-      circle_add(&this->setpoint_.angle.yaw, -this->move_vec_.vx * dt_, M_2PI);
+      this->setpoint_.angle.yaw -= this->move_vec_.vx * dt_;
       this->setpoint_.wheel_speed.angle[RIGHT_WHEEL] =
           this->follow_pid_.Calculate(this->setpoint_.angle.yaw,
                                       this->eulr_.yaw, dt_);

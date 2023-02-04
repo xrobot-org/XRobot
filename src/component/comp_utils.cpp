@@ -65,58 +65,6 @@ float signf(float x) {
 }
 
 /**
- * @brief 计算循环值的误差，用于没有负数值，并在一定范围内变化的值
- * 例如编码器：相差1.5PI其实等于相差-0.5PI
- *
- * @param sp 被操作的值
- * @param fb 变化量
- * @param range 被操作的值变化范围，正数时起效
- *
- * @return 函数运行结果
- */
-float circle_error(float sp, float fb, float range) {
-  float error = sp - fb;
-  if (range > 0.0f) {
-    float half_range = range / 2.0f;
-
-    if (error > half_range) {
-      error -= range;
-    } else if (error < -half_range) {
-      error += range;
-    }
-  }
-  return error;
-}
-
-/**
- * @brief 循环加法，用于没有负数值，并在一定范围内变化的值
- * 例如编码器，在0-2PI内变化，1.5PI + 1.5PI = 1PI
- *
- * @param origin 被操作的值
- * @param delta 变化量
- * @param range 被操作的值变化范围，正数时起效
- */
-void circle_add(float *origin, float delta, float range) {
-  float out = *origin + delta;
-  if (range > 0.0f) {
-    while (out >= range) {
-      out -= range;
-    }
-    while (out < 0.0f) {
-      out += range;
-    }
-  }
-  *origin = out;
-}
-
-/**
- * @brief 循环值取反
- *
- * @param origin 被操作的值
- */
-void circle_reverse(float *origin) { *origin = -(*origin) + M_2PI; }
-
-/**
  * @brief 根据目标弹丸速度计算摩擦轮转速
  *
  * @param bullet_speed 弹丸速度

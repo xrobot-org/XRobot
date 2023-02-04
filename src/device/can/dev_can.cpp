@@ -2,9 +2,13 @@
 
 #include <cstddef>
 
+#include "bsp_can.h"
+
 using namespace Device;
 
 std::array<Message::Topic<Can::Pack>*, BSP_CAN_NUM> Can::can_tp_;
+
+std::array<System::Semaphore*, BSP_CAN_NUM> Can::can_sem_;
 
 static Can::Pack pack;
 
@@ -14,6 +18,7 @@ Can::Can() {
   for (int i = 0; i < BSP_CAN_NUM; i++) {
     can_tp_[i] =
         new Message::Topic<Can::Pack>(("dev_can_" + std::to_string(i)).c_str());
+    can_sem_[i] = new System::Semaphore(true);
   }
 
   auto rx_callback = [](bsp_can_t can, void* arg) {
@@ -31,13 +36,19 @@ Can::Can() {
 }
 
 bool Can::SendStdPack(bsp_can_t can, Pack& pack) {
-  return bsp_can_trans_packet(can, CAN_FORMAT_STD, pack.index, pack.data) ==
-         BSP_OK;
+  can_sem_[can]->Take(UINT32_MAX);
+  bool ans = bsp_can_trans_packet(can, CAN_FORMAT_STD, pack.index, pack.data) ==
+             BSP_OK;
+  can_sem_[can]->Give();
+  return ans;
 }
 
 bool Can::SendExtPack(bsp_can_t can, Pack& pack) {
-  return bsp_can_trans_packet(can, CAN_FORMAT_EXT, pack.index, pack.data) ==
-         BSP_OK;
+  can_sem_[can]->Take(UINT32_MAX);
+  bool ans = bsp_can_trans_packet(can, CAN_FORMAT_EXT, pack.index, pack.data) ==
+             BSP_OK;
+  can_sem_[can]->Give();
+  return ans;
 }
 
 bool Can::Subscribe(Message::Topic<Can::Pack>& tp, bsp_can_t can,

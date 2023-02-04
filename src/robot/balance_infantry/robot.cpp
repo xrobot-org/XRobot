@@ -9,7 +9,7 @@
 /* clang-format off */
 Robot::Infantry::Param param = {
     .balance = {
-      .init_g_center = 0.108f,
+      .init_g_center = 0.08f,
 
       .follow_pid_param = {
         .k = 0.2f,
@@ -19,7 +19,7 @@ Robot::Infantry::Param param = {
         .i_limit = 0.011f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
-        .range = M_2PI,
+        .cycle = true,
       },
 
       .comp_pid_param = {
@@ -30,7 +30,7 @@ Robot::Infantry::Param param = {
         .i_limit = 0.011f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
-        .range = M_2PI,
+        .cycle = true,
       },
 
       .EVENT_MAP = {
@@ -62,7 +62,7 @@ Robot::Infantry::Param param = {
             .i_limit = 1.0f,
             .out_limit = 1.0f,
             .d_cutoff_freq = -1.0f,
-            .range = -1.0f,
+            .cycle = false,
           },
 
           .in_cutoff_freq = -1.0f,
@@ -78,7 +78,7 @@ Robot::Infantry::Param param = {
             .i_limit = 1.0f,
             .out_limit = 1.0f,
             .d_cutoff_freq = -1.0f,
-            .range = -1.0f,
+            .cycle = false,
           },
 
           .in_cutoff_freq = -1.0f,
@@ -95,7 +95,7 @@ Robot::Infantry::Param param = {
         .i_limit = 20.0f,
         .out_limit = 20.0f,
         .d_cutoff_freq = -1.0f,
-        .range = M_2PI,
+        .cycle = true,
       },
 
       .gyro_param = Component::PID::Param{
@@ -106,7 +106,7 @@ Robot::Infantry::Param param = {
         .i_limit = 1.0f,
         .out_limit = 1.0f,
         .d_cutoff_freq = -1.0f,
-        .range = -1.0f,
+        .cycle = false,
       },
 
       .speed_param = Component::PID::Param{
@@ -117,7 +117,7 @@ Robot::Infantry::Param param = {
           .i_limit = 0.15f,
           .out_limit = 0.2f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
       },
 
       .center_filter_cutoff_freq = 10.0f,
@@ -188,23 +188,23 @@ Robot::Infantry::Param param = {
           .i_limit = 3.0f,
           .out_limit = 3.0f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .position = {
-          .k = 20.0f,
+          .k = 3.0f,
           .p = 1.0f,
           .i = 0.3f,
           .d = 0.0f,
           .i_limit = 0.0f,
           .out_limit = 10.0f,
           .d_cutoff_freq = -1.0f,
-          .range = M_2PI,
+          .cycle = true,
         },
 
         .in_cutoff_freq = -1.0f,
 
-        .out_cutoff_freq = -1.0f,
+        .out_cutoff_freq = 250.0f,
         },
         Component::PosActuator::Param{
         .speed = {
@@ -215,23 +215,23 @@ Robot::Infantry::Param param = {
           .i_limit = 3.0f,
           .out_limit = 3.0f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .position = {
-          .k = 20.0f,
+          .k = 3.0f,
           .p = 1.0f,
           .i = 0.3f,
           .d = 0.0f,
           .i_limit = 0.0f,
           .out_limit = 10.0f,
           .d_cutoff_freq = -1.0f,
-          .range = M_2PI,
+          .cycle = true,
         },
 
         .in_cutoff_freq = -1.0f,
 
-        .out_cutoff_freq = -1.0f,
+        .out_cutoff_freq = 250.0f,
         },
         Component::PosActuator::Param{
         .speed = {
@@ -242,23 +242,23 @@ Robot::Infantry::Param param = {
           .i_limit = 3.0f,
           .out_limit = 3.0f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .position = {
-          .k = 20.0f,
+          .k = 3.0f,
           .p = 1.0f,
           .i = 0.3f,
           .d = 0.0f,
           .i_limit = 0.0f,
           .out_limit = 10.0f,
           .d_cutoff_freq = -1.0f,
-          .range = M_2PI,
+          .cycle = true,
         },
 
         .in_cutoff_freq = -1.0f,
 
-        .out_cutoff_freq = -1.0f,
+        .out_cutoff_freq = 250.0f,
         },
         Component::PosActuator::Param{
         .speed = {
@@ -269,23 +269,23 @@ Robot::Infantry::Param param = {
           .i_limit = 3.0f,
           .out_limit = 3.0f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .position = {
-          .k = 20.0f,
+          .k = 3.0f,
           .p = 1.0f,
           .i = 0.3f,
           .d = 0.0f,
           .i_limit = 0.0f,
           .out_limit = 10.0f,
           .d_cutoff_freq = -1.0f,
-          .range = M_2PI,
+          .cycle = true,
         },
 
         .in_cutoff_freq = -1.0f,
 
-        .out_cutoff_freq = -1.0f,
+        .out_cutoff_freq = 250.0f,
         },
       },
 

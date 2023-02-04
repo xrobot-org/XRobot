@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <comp_type.hpp>
 #include <module.hpp>
 
 #include "comp_actuator.hpp"
@@ -51,8 +52,8 @@ class Gimbal {
     Component::Type::Eulr mech_zero;
 
     struct {
-      float pitch_max;
-      float pitch_min;
+      Component::Type::CycleValue pitch_max;
+      Component::Type::CycleValue pitch_min;
     } limit;
 
     const std::vector<Component::CMD::EventMapItem> EVENT_MAP;

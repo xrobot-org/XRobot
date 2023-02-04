@@ -29,10 +29,14 @@ class MitMotor : public BaseMotor {
 
   void SetCurrent(float current);
 
-  void SetPos(float pos_error);
+  void SetPos(float pos);
 
  private:
   Param param_;
+
+  bool need_init_ = true;
+
+  float raw_pos_;
 
   float current_ = 0.0f;
 

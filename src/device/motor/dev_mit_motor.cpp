@@ -1,5 +1,6 @@
 #include "dev_mit_motor.hpp"
 
+#include "bsp_delay.h"
 #include "bsp_time.h"
 
 #define P_MIN -12.5f
@@ -35,8 +36,6 @@ MitMotor::MitMotor(const Param &param, const char *name)
       motor->recv_.OverwriteFromISR(rx);
     }
 
-    motor->last_online_time_ = bsp_time_get();
-
     return true;
   };
 
@@ -59,14 +58,6 @@ MitMotor::MitMotor(const Param &param, const char *name)
   motor_tp.RegisterCallback(rx_callback, this);
 
   motor_tp.Link(*this->mit_tp_[this->param_.can]);
-
-  Can::Pack tx_buff;
-
-  tx_buff.index = param.id;
-  memcpy(tx_buff.data, RESET_CMD, sizeof(RESET_CMD));
-  memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
-
-  Can::SendStdPack(this->param_.can, tx_buff);
 }
 
 bool MitMotor::Update() {
@@ -74,6 +65,28 @@ bool MitMotor::Update() {
 
   while (this->recv_.Receive(pack, 0)) {
     this->Decode(pack);
+    if (bsp_time_get() - last_online_time_ > 1.5f) {
+      need_init_ = true;
+    }
+    last_online_time_ = bsp_time_get();
+  }
+
+  if (this->need_init_) {
+    this->need_init_ = false;
+    Can::Pack tx_buff;
+
+    bsp_delay(300);
+
+    tx_buff.index = param_.id;
+    memcpy(tx_buff.data, RESET_CMD, sizeof(RESET_CMD));
+
+    Can::SendStdPack(this->param_.can, tx_buff);
+
+    bsp_delay(30);
+
+    memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
+
+    Can::SendStdPack(this->param_.can, tx_buff);
   }
 
   return true;
@@ -90,12 +103,12 @@ void MitMotor::Decode(Can::Pack &rx) {
 
   uint16_t raw_current = (rx.data[4] & 0x0f) << 8 | rx.data[5];
 
-  float position = uint_to_float(raw_position, P_MIN, P_MAX, 16);
+  raw_pos_ = uint_to_float(raw_position, P_MIN, P_MAX, 16);
   float speed = uint_to_float(raw_speed, V_MIN, V_MAX, 12);
   float current = uint_to_float(raw_current, -T_MAX, T_MAX, 12);
 
   this->feedback_.rotational_speed = speed;
-  this->feedback_.rotor_abs_angle = position;
+  this->feedback_.rotor_abs_angle = raw_pos_;
   this->feedback_.torque_current = current;
 }
 
@@ -107,14 +120,20 @@ void MitMotor::Control(float output) {
 
 void MitMotor::SetCurrent(float current) { this->current_ = current; }
 
-void MitMotor::SetPos(float pos_error) {
-  clampf(&pos_error, -this->param_.max_error, this->param_.max_error);
+void MitMotor::SetPos(float pos) {
+  float pos_sp = Component::Type::CycleValue(pos) - this->GetAngle();
 
-  float pos_sp = this->GetAngle() + static_cast<float>(4.0f * M_PI);
+  clampf(&pos_sp, -param_.max_error, param_.max_error);
 
-  circle_add(&pos_sp, pos_error, 8 * M_PI);
+  pos_sp += this->raw_pos_;
 
-  pos_sp -= 4 * M_PI;
+  while (pos_sp > 4 * M_PI) {
+    pos_sp -= 8 * M_PI;
+  }
+
+  while (pos_sp < -4 * M_PI) {
+    pos_sp += 8 * M_PI;
+  }
 
   int p_int = float_to_uint(pos_sp, P_MIN, P_MAX, 16);
   int v_int = float_to_uint(this->param_.def_speed, V_MIN, V_MAX, 12);
@@ -135,10 +154,6 @@ void MitMotor::SetPos(float pos_error) {
   tx_buff.data[6] = ((kd_int & 0xF) << 4) | (t_int >> 8);
   tx_buff.data[7] = t_int & 0xff;
 
-  if (bsp_time_get() - last_online_time_ > 0.5f) {
-    memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
-  }
-
   Can::SendStdPack(this->param_.can, tx_buff);
 }
 
@@ -146,11 +161,8 @@ void MitMotor::Relax() {
   Can::Pack tx_buff;
 
   tx_buff.index = this->param_.id;
-  memcpy(tx_buff.data, RELAX_CMD, sizeof(RELAX_CMD));
 
-  if (bsp_time_get() - last_online_time_ > 0.5f) {
-    memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
-  }
+  memcpy(tx_buff.data, RELAX_CMD, sizeof(RELAX_CMD));
 
   Can::SendStdPack(this->param_.can, tx_buff);
 }

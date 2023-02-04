@@ -55,7 +55,7 @@ class WheelLeg {
     float leg_max_angle;
 
     /* 电机关节指向底盘正前方的角度 */
-    std::array<float, LEG_NUM * LEG_MOTOR_NUM> motor_zero;
+    std::array<Component::Type::CycleValue, LEG_NUM * LEG_MOTOR_NUM> motor_zero;
 
     const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
 
@@ -65,7 +65,7 @@ class WheelLeg {
   } Param;
 
   typedef struct {
-    std::array<float, LEG_MOTOR_NUM> motor_angle;
+    std::array<Component::Type::CycleValue, LEG_MOTOR_NUM> motor_angle;
     Component::Type::Line diagonal;
     Component::Type::Polar2 whell_polar;
     Component::Type::Position2 whell_pos;

@@ -32,10 +32,16 @@ float PID::Calculate(float sp, float fb, float dt) {
   }
 
   /* 计算误差值 */
-  const float ERR = circle_error(sp, fb, this->param_.range);
+  float err = 0.0f;
+
+  if (param_.cycle) {
+    err = Component::Type::CycleValue(sp) - fb;
+  } else {
+    err = sp - fb;
+  }
 
   /* 计算P项 */
-  float k_err = ERR * this->param_.k;
+  float k_err = err * this->param_.k;
 
   /* 计算D项 */
   const float K_FB = this->param_.k * fb;
@@ -45,7 +51,7 @@ float PID::Calculate(float sp, float fb, float dt) {
   /* 当sp不变时，err的微分等于负的fb的微分 */
   float d = (FILTERED_K_FB - this->last_.k_fb) / fmaxf(dt, this->dt_min_);
 
-  this->last_.err = ERR;
+  this->last_.err = err;
   this->last_.k_fb = FILTERED_K_FB;
 
   if (!isfinite(d)) {
@@ -88,10 +94,16 @@ float PID::Calculate(float sp, float fb, float fb_dot, float dt) {
   }
 
   /* 计算误差值 */
-  const float ERR = circle_error(sp, fb, this->param_.range);
+  float err = 0.0f;
+
+  if (param_.cycle) {
+    err = Component::Type::CycleValue(sp) - fb;
+  } else {
+    err = sp - fb;
+  }
 
   /* 计算P项 */
-  float k_err = ERR * this->param_.k;
+  float k_err = err * this->param_.k;
 
   /* 计算D项 */
   const float K_FB = this->param_.k * fb;
@@ -99,7 +111,7 @@ float PID::Calculate(float sp, float fb, float fb_dot, float dt) {
 
   float d = fb_dot;
 
-  this->last_.err = ERR;
+  this->last_.err = err;
   this->last_.k_fb = FILTERED_K_FB;
 
   if (!isfinite(d)) {

@@ -88,7 +88,8 @@ int IMU::ShowCMD(IMU* imu, int argc, char** argv) {
           "Accl[x:%f y:%f z:%f] Gyro[x:%f y:%f z:%f] Eulr[pit:%f rol:%f "
           "yaw:%f]",
           imu->accl_.x, imu->accl_.y, imu->accl_.z, imu->gyro_.x, imu->gyro_.y,
-          imu->gyro_.z, imu->eulr_.pit, imu->eulr_.rol, imu->eulr_.yaw);
+          imu->gyro_.z, imu->eulr_.pit.Value(), imu->eulr_.rol.Value(),
+          imu->eulr_.yaw.Value());
       ms_enter();
       System::Thread::Sleep(delay);
       ms_clear_line();

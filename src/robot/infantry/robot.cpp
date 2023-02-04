@@ -19,7 +19,7 @@ Robot::Infantry::Param param = {
       .i_limit = 1.0f,
       .out_limit = 1.0f,
       .d_cutoff_freq = -1.0f,
-      .range = M_2PI,
+      .cycle = true,
     },
 
     .EVENT_MAP = {
@@ -51,7 +51,7 @@ Robot::Infantry::Param param = {
           .i_limit = 1.0f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .in_cutoff_freq = -1.0f,
@@ -68,7 +68,7 @@ Robot::Infantry::Param param = {
           .i_limit = 1.0f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .in_cutoff_freq = -1.0f,
@@ -84,7 +84,7 @@ Robot::Infantry::Param param = {
           .i_limit = 1.0f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .in_cutoff_freq = -1.0f,
@@ -100,7 +100,7 @@ Robot::Infantry::Param param = {
           .i_limit = 1.0f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .in_cutoff_freq = -1.0f,
@@ -166,7 +166,7 @@ Robot::Infantry::Param param = {
           .i_limit = 0.2f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .position = {
@@ -178,7 +178,7 @@ Robot::Infantry::Param param = {
           .i_limit = 0.0f,
           .out_limit = 10.0f,
           .d_cutoff_freq = -1.0f,
-          .range = M_2PI,
+          .cycle = true,
         },
 
         .in_cutoff_freq = -1.0f,
@@ -195,7 +195,7 @@ Robot::Infantry::Param param = {
           .i_limit = 0.8f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .position = {
@@ -207,7 +207,7 @@ Robot::Infantry::Param param = {
           .i_limit = 0.0f,
           .out_limit = 10.0f,
           .d_cutoff_freq = -1.0f,
-          .range = M_2PI,
+          .cycle = true,
         },
 
         .in_cutoff_freq = -1.0f,
@@ -232,7 +232,7 @@ Robot::Infantry::Param param = {
     .mech_zero = {
       .yaw = 1.3f,
       .pit = 4.0f,
-      .rol = 0,
+      .rol = 0.0f,
     },
 
     .limit = {
@@ -281,7 +281,7 @@ Robot::Infantry::Param param = {
           .i_limit = 0.5f,
           .out_limit = 0.5f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .position = {
@@ -292,7 +292,7 @@ Robot::Infantry::Param param = {
           .i_limit = 1.0f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
-          .range = M_2PI,
+          .cycle = true,
         },
 
         .in_cutoff_freq = -1.0f,
@@ -311,7 +311,7 @@ Robot::Infantry::Param param = {
           .i_limit = 0.5f,
           .out_limit = 0.5f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .in_cutoff_freq = -1.0f,
@@ -327,7 +327,7 @@ Robot::Infantry::Param param = {
           .i_limit = 0.5f,
           .out_limit = 0.5f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .in_cutoff_freq = -1.0f,

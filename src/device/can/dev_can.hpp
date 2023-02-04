@@ -1,6 +1,7 @@
 #pragma once
 
 #include <device.hpp>
+#include <semaphore.hpp>
 
 #include "bsp_can.h"
 
@@ -22,5 +23,6 @@ class Can {
                         uint32_t index, uint32_t num);
 
   static std::array<Message::Topic<Can::Pack>*, BSP_CAN_NUM> can_tp_;
+  static std::array<System::Semaphore*, BSP_CAN_NUM> can_sem_;
 };
 }  // namespace Device

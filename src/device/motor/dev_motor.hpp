@@ -6,10 +6,10 @@ namespace Device {
 class BaseMotor {
  public:
   typedef struct {
-    float rotor_abs_angle;  /* 转子绝对角度 单位：rad */
-    float rotational_speed; /* 转速 单位：rpm */
-    float torque_current;   /* 转矩电流 单位：A*/
-    float temp;             /* 电机温度 单位：℃*/
+    Component::Type::CycleValue rotor_abs_angle; /* 转子绝对角度 单位：rad */
+    float rotational_speed;                      /* 转速 单位：rpm */
+    float torque_current;                        /* 转矩电流 单位：A*/
+    float temp;                                  /* 电机温度 单位：℃*/
   } Feedback;
 
   BaseMotor(const char *name)
@@ -24,7 +24,9 @@ class BaseMotor {
 
   virtual void Relax() = 0;
 
-  float GetAngle() { return this->feedback_.rotor_abs_angle; }
+  Component::Type::CycleValue GetAngle() {
+    return this->feedback_.rotor_abs_angle;
+  }
 
   float GetSpeed() { return this->feedback_.rotational_speed; }
 
@@ -51,7 +53,7 @@ class BaseMotor {
           ms_printf("最近一次反馈时间:%fs.", motor->last_online_time_);
           ms_enter();
           ms_printf("角度:%frad 速度:%frpm 电流:%fA 温度:%f℃",
-                    motor->feedback_.rotor_abs_angle,
+                    motor->feedback_.rotor_abs_angle.Value(),
                     motor->feedback_.rotational_speed,
                     motor->feedback_.torque_current, motor->feedback_.temp);
           ms_enter();

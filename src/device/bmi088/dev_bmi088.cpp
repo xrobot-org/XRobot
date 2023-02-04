@@ -75,7 +75,7 @@ static Component::PID::Param imu_temp_ctrl_pid_param = {
     .i_limit = 1.0f,
     .out_limit = 1.0f,
     .d_cutoff_freq = 0.0f,
-    .range = 0.0f,
+    .cycle = false,
 };
 
 using namespace Device;

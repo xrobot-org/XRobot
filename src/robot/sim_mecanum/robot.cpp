@@ -27,7 +27,7 @@ Robot::Simulator::Param param = {
       .i_limit = 1.0f,
       .out_limit = 1.0f,
       .d_cutoff_freq = -1.0f,
-      .range = M_2PI,
+      .cycle = true,
     },
 
     .EVENT_MAP = {
@@ -51,7 +51,7 @@ Robot::Simulator::Param param = {
           .i_limit = 0.02f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .in_cutoff_freq = -1.0f,
@@ -68,7 +68,7 @@ Robot::Simulator::Param param = {
           .i_limit = 0.02f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .in_cutoff_freq = -1.0f,
@@ -84,7 +84,7 @@ Robot::Simulator::Param param = {
           .i_limit = 0.02f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .in_cutoff_freq = -1.0f,
@@ -100,7 +100,7 @@ Robot::Simulator::Param param = {
           .i_limit = 0.02f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
-          .range = -1.0f,
+          .cycle = false,
         },
 
         .in_cutoff_freq = -1.0f,
