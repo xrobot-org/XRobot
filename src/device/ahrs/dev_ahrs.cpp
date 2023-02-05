@@ -8,8 +8,6 @@
 #include "bsp_time.h"
 
 #define BETA_IMU (0.033f)
-#define BETA_AHRS (0.041f)
-
 using namespace Device;
 
 AHRS::AHRS()

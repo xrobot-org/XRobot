@@ -25,7 +25,11 @@ class CMD {
   typedef Type::Vector3 ChassisCMD;
 
   typedef struct {
-    Type::Eulr eulr;
+    struct {
+      float yaw; /* 偏航角（Yaw angle） */
+      float pit; /* 俯仰角（Pitch angle） */
+      float rol; /* 翻滚角（Roll angle） */
+    } eulr;
     GimbalCommandMode mode;
   } GimbalCMD;
 

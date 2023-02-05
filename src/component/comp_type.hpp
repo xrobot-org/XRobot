@@ -204,6 +204,13 @@ class CycleValue {
 
   CycleValue& operator=(const float& value) {
     value_ = value;
+    while (value_ >= M_2PI) {
+      value_ -= M_2PI;
+    }
+
+    while (value_ < 0) {
+      value_ += M_2PI;
+    }
     return *this;
   }
 
