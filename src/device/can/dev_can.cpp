@@ -13,8 +13,6 @@ std::array<System::Semaphore*, BSP_CAN_NUM> Can::can_sem_;
 static Can::Pack pack;
 
 Can::Can() {
-  bsp_can_init();
-
   for (int i = 0; i < BSP_CAN_NUM; i++) {
     can_tp_[i] =
         new Message::Topic<Can::Pack>(("dev_can_" + std::to_string(i)).c_str());
@@ -33,6 +31,8 @@ Can::Can() {
     bsp_can_register_callback(static_cast<bsp_can_t>(i), CAN_RX_MSG_CALLBACK,
                               rx_callback, NULL);
   }
+
+  bsp_can_init();
 }
 
 bool Can::SendStdPack(bsp_can_t can, Pack& pack) {
