@@ -32,6 +32,8 @@ class BaseMotor {
 
   float GetCurrent() { return this->feedback_.torque_current; }
 
+  float GetTemp() { return this->feedback_.temp; }
+
   static int ShowCMD(BaseMotor *motor, int argc, char **argv) {
     if (argc == 1) {
       ms_printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据");

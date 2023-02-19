@@ -7,6 +7,40 @@
 #include "comp_pid.hpp"
 
 namespace Component {
+class ActuatorStallDetect {
+ public:
+  typedef struct {
+    float speed_thld;   /* 速度阈值 */
+    float current_thld; /* 电流阈值 */
+    float temp_thld;    /* 温度阈值 */
+    float timeout;      /* 检测时间 */
+  } Param;
+
+  ActuatorStallDetect(Param& param) : param_(param) {}
+
+  bool Calculate(float speed_fb, float current_fb, float temp_fb, float dt) {
+    if (temp_fb >= param_.temp_thld) {
+      return true;
+    }
+
+    if (fabsf(current_fb) >= param_.current_thld &&
+        fabsf(speed_fb) <= param_.speed_thld) {
+      time_ += dt;
+    } else {
+      time_ = 0;
+    }
+
+    if (time_ >= param_.timeout) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+ private:
+  Param& param_;
+  float time_ = 0.0f;
+};
 class SpeedActuator {
  public:
   typedef struct {
