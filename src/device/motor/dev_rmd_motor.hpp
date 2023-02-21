@@ -12,6 +12,7 @@ class RMDMotor : public BaseMotor {
   typedef struct {
     uint8_t num;
     bsp_can_t can;
+    bool reverse;
   } Param;
 
   RMDMotor(const Param& param, const char* name);

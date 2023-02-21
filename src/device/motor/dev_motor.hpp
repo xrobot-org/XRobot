@@ -12,8 +12,9 @@ class BaseMotor {
     float temp;                                  /* 电机温度 单位：℃*/
   } Feedback;
 
-  BaseMotor(const char *name)
-      : cmd_(this, BaseMotor::ShowCMD, this->name_, System::Term::DevDir()) {
+  BaseMotor(const char *name, bool reverse)
+      : reverse_(reverse),
+        cmd_(this, BaseMotor::ShowCMD, this->name_, System::Term::DevDir()) {
     strncpy(this->name_, name, sizeof(this->name_));
     memset(&(this->feedback_), 0, sizeof(this->feedback_));
   }
@@ -25,12 +26,28 @@ class BaseMotor {
   virtual void Relax() = 0;
 
   Component::Type::CycleValue GetAngle() {
-    return this->feedback_.rotor_abs_angle;
+    if (reverse_) {
+      return -this->feedback_.rotor_abs_angle;
+    } else {
+      return this->feedback_.rotor_abs_angle;
+    }
   }
 
-  float GetSpeed() { return this->feedback_.rotational_speed; }
+  float GetSpeed() {
+    if (reverse_) {
+      return -this->feedback_.rotational_speed;
+    } else {
+      return this->feedback_.rotational_speed;
+    }
+  }
 
-  float GetCurrent() { return this->feedback_.torque_current; }
+  float GetCurrent() {
+    if (reverse_) {
+      return -this->feedback_.torque_current;
+    } else {
+      return this->feedback_.torque_current;
+    }
+  }
 
   static int ShowCMD(BaseMotor *motor, int argc, char **argv) {
     if (argc == 1) {
@@ -53,9 +70,8 @@ class BaseMotor {
           ms_printf("最近一次反馈时间:%fs.", motor->last_online_time_);
           ms_enter();
           ms_printf("角度:%frad 速度:%frpm 电流:%fA 温度:%f℃",
-                    motor->feedback_.rotor_abs_angle.Value(),
-                    motor->feedback_.rotational_speed,
-                    motor->feedback_.torque_current, motor->feedback_.temp);
+                    motor->GetAngle().Value(), motor->GetSpeed(),
+                    motor->GetCurrent(), motor->feedback_.temp);
           ms_enter();
           System::Thread::Sleep(delay);
           ms_clear_line();
@@ -72,6 +88,8 @@ class BaseMotor {
   Feedback feedback_;
 
   float last_online_time_ = 0.0f;
+
+  bool reverse_; /* 电机反装 */
 
   System::Term::Command<BaseMotor *> cmd_;
 };

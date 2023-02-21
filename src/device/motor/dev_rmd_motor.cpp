@@ -18,7 +18,7 @@ uint8_t RMDMotor::motor_tx_flag_[BSP_CAN_NUM];
 uint8_t RMDMotor::motor_tx_map_[BSP_CAN_NUM];
 
 RMDMotor::RMDMotor(const Param &param, const char *name)
-    : BaseMotor(name), param_(param) {
+    : BaseMotor(name, param.reverse), param_(param) {
   strncpy(this->name_, name, sizeof(this->name_));
 
   memset(&(this->feedback_), 0, sizeof(this->feedback_));
@@ -65,7 +65,11 @@ void RMDMotor::Decode(Can::Pack &rx) {
 
 void RMDMotor::Control(float out) {
   clampf(&out, -1.0f, 1.0f);
-  this->output_ = out;
+  if (reverse_) {
+    this->output_ = -out;
+  } else {
+    this->output_ = out;
+  }
 
   float lsb = RMD9250_MAX_ABS_LSB;
 

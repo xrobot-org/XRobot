@@ -27,7 +27,7 @@ uint8_t RMMotor::motor_tx_flag_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 uint8_t RMMotor::motor_tx_map_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 
 RMMotor::RMMotor(const Param &param, const char *name)
-    : BaseMotor(name), param_(param) {
+    : BaseMotor(name, param.reverse), param_(param) {
   strncpy(this->name_, name, sizeof(this->name_));
 
   memset(&(this->feedback_), 0, sizeof(this->feedback_));
@@ -126,8 +126,11 @@ float RMMotor::GetLSB() {
 
 void RMMotor::Control(float out) {
   clampf(&out, -1.0f, 1.0f);
-  this->output_ = out;
-
+  if (reverse_) {
+    this->output_ = -out;
+  } else {
+    this->output_ = out;
+  }
   float lsb = this->GetLSB();
 
   if (lsb != 0.0f) {

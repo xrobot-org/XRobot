@@ -30,7 +30,7 @@ static std::array<bool, BSP_CAN_NUM> initd = {false};
 std::array<Message::Topic<Can::Pack> *, BSP_CAN_NUM> MitMotor::mit_tp_;
 
 MitMotor::MitMotor(const Param &param, const char *name)
-    : BaseMotor(name), param_(param) {
+    : BaseMotor(name, param.reverse), param_(param) {
   auto rx_callback = [](Can::Pack &rx, MitMotor *motor) {
     if (rx.data[0] == motor->param_.id) {
       motor->recv_.OverwriteFromISR(rx);
@@ -118,10 +118,20 @@ void MitMotor::Control(float output) {
   ASSERT(false);
 }
 
-void MitMotor::SetCurrent(float current) { this->current_ = current; }
+void MitMotor::SetCurrent(float current) {
+  if (reverse_) {
+    this->current_ = -current;
+  } else {
+    this->current_ = current;
+  }
+}
 
 void MitMotor::SetPos(float pos) {
   float pos_sp = Component::Type::CycleValue(pos) - this->GetAngle();
+
+  if (reverse_) {
+    pos_sp = -pos_sp;
+  }
 
   clampf(&pos_sp, -param_.max_error, param_.max_error);
 
