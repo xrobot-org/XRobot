@@ -360,7 +360,7 @@ bool BMI088::Init() {
 
   /* Filter bw: 47Hz. */
   /* ODR: 0x02: 1000Hz. 0x03: 400Hz. 0x06: 200Hz. 0x07: 100Hz. */
-  WriteSingle(BMI_GYRO, BMI088_REG_GYRO_BANDWIDTH, 0x00);
+  WriteSingle(BMI_GYRO, BMI088_REG_GYRO_BANDWIDTH, 0x02);
 
   /* INT3 and INT4 as output. Push-pull. Active low. */
   WriteSingle(BMI_GYRO, BMI088_REG_GYRO_INT3_INT4_IO_CONF, 0x00);
