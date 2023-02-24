@@ -119,6 +119,11 @@ void MitMotor::Control(float output) {
 }
 
 void MitMotor::SetCurrent(float current) {
+  if (this->feedback_.temp > 75.0f) {
+    Relax();
+    return;
+  }
+
   if (reverse_) {
     this->current_ = -current;
   } else {
@@ -127,6 +132,11 @@ void MitMotor::SetCurrent(float current) {
 }
 
 void MitMotor::SetPos(float pos) {
+  if (this->feedback_.temp > 75.0f) {
+    Relax();
+    return;
+  }
+
   float pos_sp = Component::Type::CycleValue(pos) - this->GetAngle();
 
   if (reverse_) {

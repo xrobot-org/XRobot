@@ -64,6 +64,10 @@ void RMDMotor::Decode(Can::Pack &rx) {
 }
 
 void RMDMotor::Control(float out) {
+  if (this->feedback_.temp > 75.0f) {
+    out = 0.0f;
+  }
+
   clampf(&out, -1.0f, 1.0f);
   if (reverse_) {
     this->output_ = -out;
