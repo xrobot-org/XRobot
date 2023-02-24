@@ -41,6 +41,7 @@ class RMMotor : public BaseMotor {
     uint32_t id_control;
     Model model;
     bsp_can_t can;
+    bool reverse;
   } Param;
 
   RMMotor(const Param& param, const char* name);

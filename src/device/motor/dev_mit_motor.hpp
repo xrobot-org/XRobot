@@ -15,6 +15,7 @@ class MitMotor : public BaseMotor {
     uint32_t id;
     bsp_can_t can;
     float max_error;
+    bool reverse;
   } Param;
 
   MitMotor(const Param &param, const char *name);
