@@ -26,20 +26,18 @@ Term::Term() {
 
   auto term_thread_fn = [](void *arg) {
     (void)arg;
-    while (1) {
-      if (!bsp_usb_connect()) {
-        connected = false;
-        return;
-      } else {
-        if (!connected) {
-          connected = true;
-          ms_start();
-        }
+    if (!bsp_usb_connect()) {
+      connected = false;
+      return;
+    } else {
+      if (!connected) {
+        connected = true;
+        ms_start();
       }
+    }
 
-      if (bsp_usb_avail()) {
-        ms_input(bsp_usb_read_char());
-      }
+    if (bsp_usb_avail()) {
+      ms_input(bsp_usb_read_char());
     }
   };
 
