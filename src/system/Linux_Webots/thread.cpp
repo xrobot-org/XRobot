@@ -6,13 +6,6 @@
 
 using namespace System;
 
-void Thread::StartKernel() {
-  while (1) {
-    wb_robot_step(1);
-    poll(NULL, 0, 2);
-  }
-}
-
 void Thread::Sleep(uint32_t microseconds) {
   float time = bsp_time_get() + static_cast<float>(microseconds) / 1000.0f;
 

@@ -6,7 +6,7 @@
 
 #include <string>
 
-#include "system.hpp"
+#include "system_ext.hpp"
 
 namespace System {
 class Thread {
@@ -41,10 +41,6 @@ class Thread {
   void SleepUntil(uint32_t microseconds) { poll(NULL, 0, microseconds); }
 
   void Stop() { pthread_cancel(this->handle_); }
-
-  static void StartKernel() {
-    while (1) poll(NULL, 0, UINT32_MAX);
-  }
 
  private:
   pthread_t handle_;

@@ -135,20 +135,5 @@ Robot::Simulator::Param param = {
 /* clang-format on */
 
 void robot_init() {
-  auto init_thread_fn = [](void* arg) {
-    static_cast<void>(arg);
-
-    System::Init();
-
-    Robot::Simulator blink(param);
-
-    while (1) {
-      System::Thread::Sleep(UINT32_MAX);
-    }
-  };
-
-  System::Thread init_thread;
-
-  init_thread.Create(init_thread_fn, static_cast<void*>(NULL), "init_thread_fn",
-                     INIT_TASK_STACK_DEPTH, System::Thread::REALTIME);
+  System::Start<Robot::Simulator, Robot::Simulator::Param>(param);
 }

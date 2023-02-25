@@ -349,19 +349,5 @@ Robot::Infantry::Param param = {
 /* clang-format on */
 
 void robot_init() {
-  auto init_thread_fn = [](void* arg) {
-    static_cast<void>(arg);
-
-    System::Init();
-
-    Robot::Infantry robot(param, 500.0f);
-
-    while (1) {
-      System::Thread::Sleep(UINT32_MAX);
-    }
-  };
-
-  System::Thread init_thread;
-  init_thread.Create(init_thread_fn, static_cast<void*>(NULL), "init_thread_fn",
-                     INIT_TASK_STACK_DEPTH, System::Thread::REALTIME);
+  System::Start<Robot::Infantry, Robot::Infantry::Param>(param, 500.0f);
 }

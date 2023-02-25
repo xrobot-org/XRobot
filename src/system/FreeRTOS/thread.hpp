@@ -5,7 +5,7 @@
 
 #include "FreeRTOS.h"
 #include "bsp_time.h"
-#include "system.hpp"
+#include "system_ext.hpp"
 #include "task.h"
 
 namespace System {
@@ -33,9 +33,7 @@ class Thread {
     xTaskDelayUntil(&last_weakup_tick_, microseconds);
   }
 
-  void Stop();
-
-  static void StartKernel();
+  void Stop() { vTaskSuspend(this->handle_); }
 
  private:
   TaskHandle_t handle_ = NULL;

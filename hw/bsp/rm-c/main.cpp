@@ -1,10 +1,8 @@
-#include <thread.hpp>
+#include <robot.hpp>
 
 #include "bsp.h"
-#include "robot.hpp"
 
 int main() {
   bsp_init();
   robot_init();
-  System::Thread::StartKernel();
 }

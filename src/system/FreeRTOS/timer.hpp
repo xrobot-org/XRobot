@@ -4,7 +4,7 @@
 #include <thread.hpp>
 
 #include "FreeRTOS.h"
-#include "system.hpp"
+#include "system_ext.hpp"
 #include "task.h"
 
 namespace System {

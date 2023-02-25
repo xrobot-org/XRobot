@@ -409,19 +409,5 @@ Robot::Hero::Param param = {
 Robot::Hero* hero = NULL;
 
 void robot_init() {
-  auto init_thread_fn = [](void* arg) {
-    static_cast<void>(arg);
-
-    System::Init();
-
-    Robot::Hero robot(param, 500.0f);
-    hero = &robot;
-    while (1) {
-      System::Thread::Sleep(UINT32_MAX);
-    }
-  };
-
-  System::Thread init_thread;
-  init_thread.Create(init_thread_fn, static_cast<void*>(NULL), "init_thread_he",
-                     2048, System::Thread::REALTIME);
+  System::Start<Robot::Hero, Robot::Hero::Param>(param, 500.0f);
 }

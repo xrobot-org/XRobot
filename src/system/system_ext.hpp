@@ -16,6 +16,4 @@ class TypeErasure {
   ResultType (*fun_)(ArgType, Args... args);
   ArgType arg_;
 };
-
-void Init();
 }  // namespace System

@@ -6,5 +6,7 @@
 int main() {
   bsp_init();
   robot_init();
-  System::Thread::StartKernel();
+  while (1) {
+    poll(NULL, 0, UINT32_MAX);
+  }
 }
