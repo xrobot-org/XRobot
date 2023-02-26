@@ -1,6 +1,7 @@
 #include "bsp_can.h"
 
 #include "bsp_delay.h"
+#include "cmsis_gcc.h"
 #include "main.h"
 
 typedef struct {
@@ -126,6 +127,14 @@ int8_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format, uint32_t id,
   header.RTR = CAN_RTR_DATA;
   header.TransmitGlobalTime = DISABLE;
   header.DLC = 8;
+
+  uint32_t tsr = READ_REG(bsp_can_get_handle(can)->Instance->TSR);
+
+  while (((tsr & CAN_TSR_TME0) == 0U) && ((tsr & CAN_TSR_TME1) == 0U) &&
+         ((tsr & CAN_TSR_TME2) == 0U)) {
+    tsr = READ_REG(bsp_can_get_handle(can)->Instance->TSR);
+    __NOP();
+  }
 
   HAL_StatusTypeDef res = HAL_CAN_AddTxMessage(bsp_can_get_handle(can), &header,
                                                data, mailbox + can);

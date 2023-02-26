@@ -1,7 +1,9 @@
 #include "bsp_can.h"
 
+#include "FreeRTOS.h"
 #include "bsp_delay.h"
 #include "main.h"
+#include "task.h"
 
 typedef struct {
   CAN_RxHeaderTypeDef header;
@@ -133,7 +135,7 @@ int8_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format, uint32_t id,
   while (((tsr & CAN_TSR_TME0) == 0U) && ((tsr & CAN_TSR_TME1) == 0U) &&
          ((tsr & CAN_TSR_TME2) == 0U)) {
     tsr = READ_REG(bsp_can_get_handle(can)->Instance->TSR);
-    bsp_delay(1);
+    taskYIELD();
   }
 
   HAL_StatusTypeDef res = HAL_CAN_AddTxMessage(bsp_can_get_handle(can), &header,
