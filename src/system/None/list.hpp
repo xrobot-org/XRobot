@@ -1,6 +1,7 @@
 #pragma once
 
-#include "FreeRTOS.h"
+#include <cstdlib>
+
 #include "om.h"
 
 namespace System {
@@ -15,7 +16,7 @@ class List {
   List() { INIT_LIST_HEAD(&(this->head_)); }
 
   bool Add(Data data) {
-    Node* node = static_cast<Node*>(pvPortMalloc(sizeof(Node)));
+    Node* node = static_cast<Node*>(malloc(sizeof(Node)));
     memcpy(&(node->data_), &data, sizeof(data));
     om_list_add(&(node->node_), &(this->head_));
 
@@ -23,7 +24,7 @@ class List {
   }
 
   bool AddTail(Data data) {
-    Node* node = static_cast<Node*>(pvPortMalloc(sizeof(Node)));
+    Node* node = static_cast<Node*>(malloc(sizeof(Node)));
     memcpy(&(node->data_), &data, sizeof(data));
     om_list_add_tail(&(node->node_), (this->head_));
 
