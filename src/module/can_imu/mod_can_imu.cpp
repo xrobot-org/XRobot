@@ -103,6 +103,7 @@ void CanIMU::SendGyro() {
   tmp[3] = this->gyro_.z / 20.0f * INT16_MAX;
   send_buff.data[0] = Device::IMU::IMU_DEVICE_ID;
   send_buff.data[1] = Device::IMU::GYRO_DATA_ID;
+  send_buff.index = this->can_id_.data_;
   Device::Can::SendStdPack(BSP_CAN_1, send_buff);
 #endif
 }
@@ -129,6 +130,7 @@ void CanIMU::SendEulr() {
   tmp[3] = this->eulr_.yaw / M_2PI * INT16_MAX;
   send_buff.data[0] = Device::IMU::IMU_DEVICE_ID;
   send_buff.data[1] = Device::IMU::EULR_DATA_ID;
+  send_buff.index = this->can_id_.data_;
   Device::Can::SendStdPack(BSP_CAN_1, send_buff);
 #endif
 }
