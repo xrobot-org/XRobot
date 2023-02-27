@@ -30,7 +30,8 @@ class Thread {
   static void Sleep(uint32_t microseconds) { vTaskDelay(microseconds); }
 
   void SleepUntil(uint32_t microseconds) {
-    xTaskDelayUntil(&last_weakup_tick_, microseconds);
+    vTaskDelayUntil(&last_weakup_tick_, microseconds);
+    last_weakup_tick_ = xTaskGetTickCount();
   }
 
   void Stop() { vTaskSuspend(this->handle_); }
