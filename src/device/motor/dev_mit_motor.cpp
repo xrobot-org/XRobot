@@ -22,9 +22,12 @@ static const uint8_t RELAX_CMD[8] = {0X7F, 0XFF, 0X7F, 0XF0,
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)
 static const uint8_t ENABLE_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF,
                                       0XFF, 0XFF, 0XFF, 0XFC};
+/*
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)
 static const uint8_t RESET_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF,
                                      0XFF, 0XFF, 0XFF, 0XFD};
+*/
+
 static std::array<bool, BSP_CAN_NUM> initd = {false};
 
 std::array<Message::Topic<Can::Pack> *, BSP_CAN_NUM> MitMotor::mit_tp_;
@@ -65,28 +68,7 @@ bool MitMotor::Update() {
 
   while (this->recv_.Receive(pack, 0)) {
     this->Decode(pack);
-    if (bsp_time_get() - last_online_time_ > 1.5f) {
-      need_init_ = true;
-    }
     last_online_time_ = bsp_time_get();
-  }
-
-  if (this->need_init_) {
-    this->need_init_ = false;
-    Can::Pack tx_buff;
-
-    bsp_delay(300);
-
-    tx_buff.index = param_.id;
-    memcpy(tx_buff.data, RESET_CMD, sizeof(RESET_CMD));
-
-    Can::SendStdPack(this->param_.can, tx_buff);
-
-    bsp_delay(30);
-
-    memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
-
-    Can::SendStdPack(this->param_.can, tx_buff);
   }
 
   return true;
@@ -183,6 +165,16 @@ void MitMotor::Relax() {
   tx_buff.index = this->param_.id;
 
   memcpy(tx_buff.data, RELAX_CMD, sizeof(RELAX_CMD));
+
+  Can::SendStdPack(this->param_.can, tx_buff);
+}
+
+void MitMotor::Enable() {
+  Can::Pack tx_buff;
+
+  tx_buff.index = param_.id;
+
+  memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
 
   Can::SendStdPack(this->param_.can, tx_buff);
 }

@@ -32,10 +32,10 @@ class MitMotor : public BaseMotor {
 
   void SetPos(float pos);
 
+  void Enable();
+
  private:
   Param param_;
-
-  bool need_init_ = true;
 
   float raw_pos_;
 

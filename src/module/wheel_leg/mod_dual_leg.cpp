@@ -231,6 +231,10 @@ void WheelLeg::SetMode(Mode mode) {
     return; /* 模式未改变直接返回 */
   }
 
+  for (auto motor : this->leg_motor_) {
+    motor->Enable();
+  }
+
   /* 切换模式后重置PID和滤波器 */
   for (size_t i = 0; i < LEG_NUM * LEG_MOTOR_NUM; i++) {
     this->leg_actuator_[i]->Reset();
