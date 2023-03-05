@@ -54,11 +54,11 @@ class BMI088 {
   System::Semaphore accl_raw_;
   System::Semaphore gyro_new_;
   System::Semaphore accl_new_;
-  System::Semaphore new_;
+  System::Semaphore spi_lock_;
 
   float temp_; /* 温度 */
 
-  System::Thread thread_;
+  System::Thread thread_accl_, thread_gyro_;
 
   Message::Topic<Component::Type::Vector3> accl_tp_;
   Message::Topic<Component::Type::Vector3> gyro_tp_;

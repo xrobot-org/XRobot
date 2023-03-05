@@ -5,7 +5,9 @@
 
 #include "dev_bmi088.hpp"
 
+#include <cstdint>
 #include <string_view>
+#include <thread.hpp>
 
 #include "bsp_delay.h"
 #include "bsp_gpio.h"
@@ -139,7 +141,7 @@ BMI088::BMI088(BMI088::Rotation &rot)
       accl_raw_(false),
       gyro_new_(false),
       accl_new_(false),
-      new_(false),
+      spi_lock_(true),
       accl_tp_("imu_accl"),
       gyro_tp_("imu_gyro"),
       cmd_(this, this->CaliCMD, "bmi088", System::Term::DevDir()) {
@@ -159,13 +161,11 @@ BMI088::BMI088(BMI088::Rotation &rot)
   auto accl_int_callback = [](void *arg) {
     BMI088 *bmi088 = static_cast<BMI088 *>(arg);
     bmi088->accl_new_.GiveFromISR();
-    bmi088->new_.GiveFromISR();
   };
 
   auto gyro_int_callback = [](void *arg) {
     BMI088 *bmi088 = static_cast<BMI088 *>(arg);
     bmi088->gyro_new_.GiveFromISR();
-    bmi088->new_.GiveFromISR();
   };
 
   bsp_gpio_disable_irq(BSP_GPIO_IMU_ACCL_INT);
@@ -177,38 +177,28 @@ BMI088::BMI088(BMI088::Rotation &rot)
   bsp_spi_register_callback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB, recv_cplt_callback,
                             this);
 
-  auto thread_bmi088 = [](BMI088 *bmi088) {
+  while (!Init()) {
+    System::Thread::Sleep(1);
+  }
+
+  auto thread_bmi088_accl = [](BMI088 *bmi088) {
     Component::PID imu_temp_ctrl_pid(imu_temp_ctrl_pid_param, 1000.0f);
 
     bsp_pwm_start(BSP_PWM_IMU_HEAT);
-
-    while (!bmi088->Init()) {
-      bmi088->thread_.SleepUntil(1);
-    }
 
     while (1) {
       /* 开始数据接收DMA，加速度计和陀螺仪共用同一个SPI接口，
        * 一次只能开启一个DMA
        */
-      if (bmi088->new_.Take(UINT32_MAX)) {
-        if (bmi088->accl_new_.Take(0)) {
-          bmi088->StartRecvAccel();
-          bmi088->accl_raw_.Take(UINT16_MAX);
-          bmi088->PraseAccel();
+      if (bmi088->accl_new_.Take(UINT32_MAX)) {
+        bmi088->spi_lock_.Take(UINT32_MAX);
+        bmi088->StartRecvAccel();
+        bmi088->accl_raw_.Take(UINT32_MAX);
+        bmi088->PraseAccel();
+        bmi088->spi_lock_.Give();
 
-          bmi088->accl_tp_.Publish(bmi088->accl_);
-        }
-
-        if (bmi088->gyro_new_.Take(0)) {
-          bmi088->StartRecvGyro();
-          bmi088->gyro_raw_.Take(UINT16_MAX);
-          bmi088->PraseGyro();
-
-          bmi088->gyro_tp_.Publish(bmi088->gyro_);
-        }
+        bmi088->accl_tp_.Publish(bmi088->accl_);
       }
-
-      // TODO: 添加滤波
 
       /* PID控制IMU温度，PWM输出 */
       bsp_pwm_set_comp(BSP_PWM_IMU_HEAT,
@@ -216,9 +206,31 @@ BMI088::BMI088(BMI088::Rotation &rot)
     }
   };
 
-  this->thread_.Create(thread_bmi088, this, "thread_bmi088",
-                       DEVICE_BMI088_TASK_STACK_DEPTH,
-                       System::Thread::REALTIME);
+  auto thread_bmi088_gyro = [](BMI088 *bmi088) {
+    bsp_pwm_start(BSP_PWM_IMU_HEAT);
+
+    while (1) {
+      /* 开始数据接收DMA，加速度计和陀螺仪共用同一个SPI接口，
+       * 一次只能开启一个DMA
+       */
+      if (bmi088->gyro_new_.Take(UINT32_MAX)) {
+        bmi088->spi_lock_.Take(UINT32_MAX);
+        bmi088->StartRecvGyro();
+        bmi088->gyro_raw_.Take(UINT32_MAX);
+        bmi088->PraseGyro();
+        bmi088->spi_lock_.Give();
+        bmi088->gyro_tp_.Publish(bmi088->gyro_);
+      }
+    }
+  };
+
+  this->thread_accl_.Create(thread_bmi088_accl, this, "thread_bmi088_accl",
+                            DEVICE_BMI088_TASK_STACK_DEPTH,
+                            System::Thread::REALTIME);
+
+  this->thread_gyro_.Create(thread_bmi088_gyro, this, "thread_bmi088_gyro",
+                            DEVICE_BMI088_TASK_STACK_DEPTH,
+                            System::Thread::REALTIME);
 }
 
 int BMI088::CaliCMD(BMI088 *bmi088, int argc, char **argv) {
