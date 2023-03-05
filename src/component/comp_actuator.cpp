@@ -31,7 +31,7 @@ PosActuator::PosActuator(Param& param, float sample_freq)
       out_(sample_freq, param.out_cutoff_freq) {}
 
 float PosActuator::Calculate(float setpoint, float speed_fb, float pos_fb,
-                               float dt) {
+                             float dt) {
   speed_fb = this->in_speed_.Apply(speed_fb);
   pos_fb = this->in_position_.Apply(pos_fb);
 
@@ -51,4 +51,14 @@ void PosActuator::Reset() {
   this->out_.Reset(0.0f);
   this->pid_speed_.Reset();
   this->pid_position_.Reset();
+}
+
+float PosActuator::SpeedCalculate(float setpoint, float feedback, float dt) {
+  feedback = this->in_speed_.Apply(feedback);
+
+  float out = this->pid_speed_.Calculate(setpoint, feedback, dt);
+
+  this->out_.Apply(out);
+
+  return out;
 }

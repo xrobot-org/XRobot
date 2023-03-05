@@ -75,6 +75,8 @@ class PosActuator {
 
   float Calculate(float setpoint, float speed_fb, float pos_fb, float dt);
 
+  float SpeedCalculate(float setpoint, float feedback, float dt);
+
   void Reset();
 
  private:

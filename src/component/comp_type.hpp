@@ -18,7 +18,7 @@
 #endif
 
 #ifndef M_1G
-#define M_1G 9.80665ff
+#define M_1G 9.80665f
 #endif
 
 namespace Component {
