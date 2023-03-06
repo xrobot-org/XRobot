@@ -182,7 +182,9 @@ void DR16::PraseRC() {
     this->cmd_.chassis.y =
         2 * (static_cast<float>(this->data_.ch_l_y) - DR16_CH_VALUE_MID) /
         FULL_RANGE;
-    this->cmd_.chassis.z = 0.0f;
+    this->cmd_.chassis.z =
+        -2 * (static_cast<float>(this->data_.ch_r_x) - DR16_CH_VALUE_MID) /
+        FULL_RANGE;
 
     /* Gimbal Control */
     this->cmd_.gimbal.eulr.yaw =

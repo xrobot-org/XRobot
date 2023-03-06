@@ -10,10 +10,11 @@ namespace Component {
 class ActuatorStallDetect {
  public:
   typedef struct {
-    float speed_thld;   /* 速度阈值 */
-    float current_thld; /* 电流阈值 */
-    float temp_thld;    /* 温度阈值 */
-    float timeout;      /* 检测时间 */
+    float speed_thld;        /* 速度阈值 */
+    float current_thld;      /* 电流阈值 */
+    float stop_current_thld; /* 静止电流阈值 */
+    float temp_thld;         /* 温度阈值 */
+    float timeout;           /* 检测时间 */
   } Param;
 
   ActuatorStallDetect(Param& param) : param_(param) {}
@@ -23,8 +24,9 @@ class ActuatorStallDetect {
       return true;
     }
 
-    if (fabsf(current_fb) >= param_.current_thld &&
-        fabsf(speed_fb) <= param_.speed_thld) {
+    if ((fabsf(current_fb) >= param_.current_thld &&
+         fabsf(speed_fb) >= param_.speed_thld) ||
+        fabsf(current_fb) >= param_.current_thld) {
       time_ += dt;
     } else {
       time_ = 0;

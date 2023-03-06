@@ -9,10 +9,9 @@ typedef struct {
 } bsp_gpio_map_t;
 
 static const bsp_gpio_map_t bsp_gpio_map[BSP_GPIO_NUM] = {
-    {ACCL_CS_Pin, ACCL_CS_GPIO_Port},
-    {GYRO_CS_Pin, GYRO_CS_GPIO_Port},
-    {ACCL_INT_Pin, ACCL_INT_GPIO_Port},
-    {GYRO_INT_Pin, GYRO_INT_GPIO_Port},
+    {ACCL_CS_Pin, ACCL_CS_GPIO_Port},   {GYRO_CS_Pin, GYRO_CS_GPIO_Port},
+    {ACCL_INT_Pin, ACCL_INT_GPIO_Port}, {GYRO_INT_Pin, GYRO_INT_GPIO_Port},
+    {SWITCH_Pin, SWITCH_GPIO_Port},
 };
 
 static bsp_callback_t callback_list[16];

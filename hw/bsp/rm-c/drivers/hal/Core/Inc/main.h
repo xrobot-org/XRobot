@@ -95,8 +95,8 @@ void Error_Handler(void);
 #define GYRO_INT_Pin GPIO_PIN_5
 #define GYRO_INT_GPIO_Port GPIOC
 #define GYRO_INT_EXTI_IRQn EXTI9_5_IRQn
-#define SPI2_CS_Pin GPIO_PIN_12
-#define SPI2_CS_GPIO_Port GPIOB
+#define SWITCH_Pin GPIO_PIN_12
+#define SWITCH_GPIO_Port GPIOB
 #define GYRO_CS_Pin GPIO_PIN_0
 #define GYRO_CS_GPIO_Port GPIOB
 void   MX_GPIO_Init(void);
@@ -114,7 +114,6 @@ void   MX_TIM8_Init(void);
 void   MX_RNG_Init(void);
 void   MX_I2C2_Init(void);
 void   MX_I2C3_Init(void);
-void   MX_SPI2_Init(void);
 void   MX_TIM1_Init(void);
 void   MX_TIM3_Init(void);
 void   MX_TIM10_Init(void);
