@@ -1,6 +1,6 @@
 #include "dev_can.hpp"
 
-#include <cstddef>
+#include <array>
 
 #include "bsp_can.h"
 
@@ -10,7 +10,7 @@ std::array<Message::Topic<Can::Pack>*, BSP_CAN_NUM> Can::can_tp_;
 
 std::array<System::Semaphore*, BSP_CAN_NUM> Can::can_sem_;
 
-static Can::Pack pack;
+static std::array<Can::Pack, BSP_CAN_NUM> pack;
 
 Can::Can() {
   for (int i = 0; i < BSP_CAN_NUM; i++) {
@@ -19,12 +19,14 @@ Can::Can() {
     can_sem_[i] = new System::Semaphore(true);
   }
 
-  auto rx_callback = [](bsp_can_t can, void* arg) {
+  auto rx_callback = [](bsp_can_t can, uint32_t id, uint8_t* data, void* arg) {
     (void)(arg);
 
-    while (bsp_can_get_msg(can, pack.data, &(pack.index)) == BSP_OK) {
-      can_tp_[can]->PublishFromISR(pack);
-    }
+    pack[can].index = id;
+
+    memcpy(pack[can].data, data, sizeof(pack[can].data));
+
+    can_tp_[can]->PublishFromISR(pack[can]);
   };
 
   for (int i = 0; i < BSP_CAN_NUM; i++) {

@@ -26,7 +26,8 @@ typedef enum {
 
 void bsp_can_init(void);
 int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
-                                 void (*callback)(bsp_can_t can, void *),
+                                 void (*callback)(bsp_can_t can, uint32_t id,
+                                                  uint8_t *data, void *arg),
                                  void *callback_arg);
 int8_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format, uint32_t id,
                             uint8_t *data);
