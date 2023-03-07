@@ -137,6 +137,9 @@ bool AI::PackCMD() {
   memcpy(&(this->cmd_.gimbal.eulr), &(this->form_host_.data.gimbal),
          sizeof(this->cmd_.gimbal.eulr));
 
+  memcpy(&(this->cmd_.chassis), &(this->form_host_.data.chassis_move_vec),
+         sizeof(this->form_host_.data.chassis_move_vec));
+
   this->cmd_.ctrl_source = Component::CMD::CTRL_SOURCE_AI;
 
   this->cmd_tp_.Publish(this->cmd_);

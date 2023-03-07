@@ -32,6 +32,26 @@ CMD::CMD(Mode mode)
     return true;
   };
 
+  auto auto_ctrl_callback = [](Data& data, CMD* cmd) {
+    memcpy(&(cmd->data_[data.ctrl_source]), &data, sizeof(Data));
+
+    if (!cmd->data_[CTRL_SOURCE_RC].online) {
+      cmd->event_.Active(CMD_EVENT_LOST_CTRL);
+    }
+
+    if (cmd->ctrl_source_ == CTRL_SOURCE_RC ||
+        (!cmd->data_[cmd->ctrl_source_].online)) {
+      cmd->gimbal_data_tp_.Publish(cmd->data_[CTRL_SOURCE_RC].gimbal);
+      cmd->chassis_data_tp_.Publish(cmd->data_[CTRL_SOURCE_RC].chassis);
+    } else if (cmd->ctrl_source_ == CTRL_SOURCE_AI &&
+               cmd->data_[CTRL_SOURCE_AI].online) {
+      cmd->gimbal_data_tp_.Publish(cmd->data_[CTRL_SOURCE_AI].gimbal);
+      cmd->chassis_data_tp_.Publish(cmd->data_[CTRL_SOURCE_AI].chassis);
+    };
+
+    return true;
+  };
+
   auto term_ctrl_callback = [](Data& data, CMD* cmd) {
     memcpy(&(cmd->data_[CTRL_SOURCE_TERM]), &data, sizeof(Data));
 
@@ -48,7 +68,7 @@ CMD::CMD(Mode mode)
       break;
     case CMD_AUTO_CTRL:
       this->ctrl_source_ = CTRL_SOURCE_AI;
-      this->data_in_tp_.RegisterCallback(op_ctrl_callback, this);
+      this->data_in_tp_.RegisterCallback(auto_ctrl_callback, this);
       break;
     case CMD_TERM_CTRL:
       this->ctrl_source_ = CTRL_SOURCE_TERM;
