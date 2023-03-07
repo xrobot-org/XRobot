@@ -30,7 +30,7 @@ AI::AI() : data_ready_(false), cmd_tp_("cmd_ai") {
   Component::CMD::RegisterController(this->cmd_tp_);
 
   auto ai_thread = [](AI *ai) {
-    auto quat_sub = Message::Subscriber("gimbal_quat", ai->quat_);
+    auto quat_sub = Message::Subscriber("imu_quat", ai->quat_);
     Message::Subscriber ref_sub("referee", ai->raw_ref_);
 
     while (1) {
