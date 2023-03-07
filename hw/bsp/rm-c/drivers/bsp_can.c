@@ -16,7 +16,7 @@ typedef struct {
 } can_raw_tx_t;
 
 typedef struct {
-  void (*fn)(bsp_can_t can, void *);
+  void (*fn)(bsp_can_t can, uint32_t id, uint8_t *data, void *arg);
   void *arg;
 } can_callback_t;
 
@@ -28,6 +28,7 @@ static can_callback_t callback_list[BSP_CAN_NUM][BSP_CAN_CB_NUM];
 static bool bsp_can_initd = false;
 
 static uint32_t mailbox[BSP_CAN_NUM];
+static can_raw_rx_t rx_buff[BSP_CAN_NUM];
 
 CAN_HandleTypeDef *bsp_can_get_handle(bsp_can_t can) {
   switch (can) {
@@ -86,45 +87,41 @@ void bsp_can_init(void) {
   bsp_can_initd = true;
 }
 
-static void bsp_can_callback(bsp_can_callback_t cb_type,
-                             CAN_HandleTypeDef *hcan) {
-  bsp_can_t bsp_can = can_get(hcan);
-  if (bsp_can != BSP_CAN_ERR) {
-    can_callback_t cb = callback_list[bsp_can][cb_type];
+static void can_rx_cb_fn(bsp_can_t can) {
+  uint32_t fifo = CAN_FILTER_FIFO0;
 
-    if (cb.fn) {
-      cb.fn(bsp_can, cb.arg);
+  if (can == BSP_CAN_2) {
+    fifo = CAN_FILTER_FIFO1;
+  }
+
+  if (callback_list[can][CAN_RX_MSG_CALLBACK].fn) {
+    while (HAL_CAN_GetRxMessage(bsp_can_get_handle(can), fifo,
+                                &rx_buff[can].header,
+                                rx_buff[can].data) == HAL_OK) {
+      if (rx_buff[can].header.IDE == CAN_ID_STD) {
+        callback_list[can][CAN_RX_MSG_CALLBACK].fn(
+            can, rx_buff->header.StdId, rx_buff->data,
+            callback_list[can][CAN_RX_MSG_CALLBACK].arg);
+      } else {
+        callback_list[can][CAN_RX_MSG_CALLBACK].fn(
+            can, rx_buff->header.ExtId, rx_buff->data,
+            callback_list[can][CAN_RX_MSG_CALLBACK].arg);
+      }
     }
   }
 }
 
-void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(CAN_TX_CPLT_CALLBACK, hcan);
-}
-
-void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(CAN_TX_CPLT_CALLBACK, hcan);
-}
-
-void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(CAN_TX_CPLT_CALLBACK, hcan);
-}
-
-void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
-  HAL_CAN_ResetError(hcan);
-  bsp_can_callback(CAN_TX_CPLT_CALLBACK, hcan);
-}
-
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(CAN_RX_MSG_CALLBACK, hcan);
+  can_rx_cb_fn(can_get(hcan));
 }
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) {
-  bsp_can_callback(CAN_RX_MSG_CALLBACK, hcan);
+  can_rx_cb_fn(can_get(hcan));
 }
 
 int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
-                                 void (*callback)(bsp_can_t can, void *),
+                                 void (*callback)(bsp_can_t can, uint32_t id,
+                                                  uint8_t *data, void *arg),
                                  void *callback_arg) {
   assert_param(callback);
   assert_param(type != BSP_CAN_CB_NUM);
