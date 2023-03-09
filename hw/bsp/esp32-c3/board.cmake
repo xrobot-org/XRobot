@@ -14,7 +14,7 @@ idf_build_process("esp32c3"
                 # although esptool_py does not generate static library,
                 # processing the component is needed for flashing related
                 # targets and file generation
-                COMPONENTS freertos esptool_py driver nvs_flash
+                COMPONENTS freertos esptool_py driver nvs_flash bt
                 SDKCONFIG ${BOARD_DIR}/sdkconfig
                 BUILD_DIR ${CMAKE_BINARY_DIR})
 
@@ -26,6 +26,7 @@ add_executable(${elf_file} ${BOARD_DIR}/main.cpp)
 # Link the static libraries to the executable
 target_link_libraries(
   ${elf_file}
+  idf::bt
   idf::freertos
   idf::spi_flash
   idf::driver
