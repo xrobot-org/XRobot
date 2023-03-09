@@ -23,5 +23,5 @@ ENDMACRO()
 
 MACRO(CHECK_SUB_ENABLE enable prefix)
     set(${enable} ${${CONFIG_PREFIX}${prefix}-${SUB_DIR}})
-    message(${CONFIG_PREFIX}${prefix}-${SUB_DIR})
+    message(${CONFIG_PREFIX}${prefix}-${SUB_DIR}\ ${${enable}})
 ENDMACRO()
