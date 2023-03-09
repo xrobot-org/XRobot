@@ -2,11 +2,11 @@
 
 一套可在PC/MCU/模拟器运行的机器人控制系统，诞生于Robomaster比赛，但绝不局限于此。
 
-<figure class="half">
-<img src="./doc/image/平衡.gif" width=260/>
-<img src="./doc/image/英雄.gif" width=260/>
-<img src="./doc/image/工程.gif" width=260/>
-<img src="./doc/image/飞镖架.gif" width=260/>
+<figure class="third">
+<img src="./doc/image/平衡.gif" width=100/>
+<img src="./doc/image/英雄.gif" width=100/>
+<img src="./doc/image/工程.gif" width=100/>
+<img src="./doc/image/飞镖架.gif" width=100/>
 </figure>
 
 ## 硬件支持
