@@ -64,6 +64,11 @@ endif()
 set(LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
 # ---------------------------------------------------------------------------------------
+# User
+set(USER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/user)
+set(USER_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/user/lib)
+
+# ---------------------------------------------------------------------------------------
 # Hardware
 set(HW_DIR ${CMAKE_CURRENT_SOURCE_DIR}/hw)
 include(${HW_DIR}/hw.cmake)

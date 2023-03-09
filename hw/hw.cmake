@@ -7,10 +7,20 @@ FILE(GLOB children RELATIVE ${BSP_DIR} ${BSP_DIR}/*)
 
 FOREACH(child ${children})
   IF(${${CONFIG_PREFIX}board-${child}})
-    set(BOARD_DIR ${child})
+    set(BOARD_DIR ${BSP_DIR}/${child})
+    set(CMAKE_MODULE_PATH ${BOARD_DIR})
   ENDIF()
 ENDFOREACH()
 
-set(CMAKE_MODULE_PATH ${BSP_DIR}/${BOARD_DIR})
+FILE(GLOB children RELATIVE ${USER_DIR}/bsp ${USER_DIR}/bsp/*)
+
+FOREACH(child ${children})
+  IF(${${CONFIG_PREFIX}board-${child}})
+    set(BOARD_DIR ${USER_DIR}/bsp/${child})
+    set(CMAKE_MODULE_PATH ${BOARD_DIR})
+  ELSE()
+  ENDIF()
+ENDFOREACH()
+
 include(board)
 execute_process(COMMAND cp ./debug/launch.json ${CMAKE_CURRENT_SOURCE_DIR}/.vscode WORKING_DIRECTORY ${BOARD_DIR})

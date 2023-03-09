@@ -22,6 +22,13 @@ sys_dir = tools.project_path + '/src/system'
 rbt_dir = tools.project_path + '/src/robot'
 fm_dir = tools.project_path + '/firmware'
 build_dir = tools.project_path + '/build'
+user_dir = tools.project_path + '/user'
+user_bsp_dir = user_dir + '/bsp'
+user_cmp_dir = user_dir + '/component'
+user_dev_dir = user_dir + '/device'
+user_mod_dir = user_dir + '/module'
+user_sys_dir = user_dir + '/system'
+user_rbt_dir = user_dir + '/robot'
 
 
 def list_target():
@@ -103,16 +110,28 @@ def generate_kconfig():
     kconfig_file.write('# Auto generated file. Do not edit.\n')
     kconfig_file.write('# -----------------------------------------------')
 
-    tools.kconfig_add_choice('board-', '开发板', kconfig_file,
-                             tools.list_dir(bsp_dir), bsp_dir)
-    tools.kconfig_add_choice('system-', '系统', kconfig_file,
-                             tools.list_dir(sys_dir), sys_dir)
-    tools.kconfig_add_choice('robot-', '机器人', kconfig_file,
-                             tools.list_dir(rbt_dir), rbt_dir)
-    tools.kconfig_add_menu('device-', '设备', kconfig_file,
-                           tools.list_dir(dev_dir), dev_dir)
-    tools.kconfig_add_menu('module-', '模块', kconfig_file,
-                           tools.list_dir(mod_dir), mod_dir)
+    tools.kconfig_add_choice(
+        'board-', '开发板', kconfig_file,
+        [tools.list_dir(bsp_dir),
+         tools.list_dir(user_bsp_dir)], [bsp_dir, user_bsp_dir])
+    tools.kconfig_add_choice(
+        'system-', '系统', kconfig_file,
+        [tools.list_dir(sys_dir),
+         tools.list_dir(user_sys_dir)], [sys_dir, user_sys_dir])
+    tools.kconfig_add_choice(
+        'robot-', '机器人', kconfig_file,
+        [tools.list_dir(rbt_dir),
+         tools.list_dir(user_rbt_dir)], [rbt_dir, user_rbt_dir])
+    tools.kconfig_add_menu('component-', '组件', kconfig_file,
+                           [tools.list_dir(user_cmp_dir)], [user_cmp_dir])
+    tools.kconfig_add_menu(
+        'device-', '设备', kconfig_file,
+        [tools.list_dir(dev_dir),
+         tools.list_dir(user_dev_dir)], [dev_dir, user_dev_dir])
+    tools.kconfig_add_menu(
+        'module-', '模块', kconfig_file,
+        [tools.list_dir(mod_dir),
+         tools.list_dir(user_mod_dir)], [mod_dir, user_mod_dir])
 
     kconfig_file.close()
     print("Generate Kconfig done.")
@@ -242,11 +261,8 @@ def new_robot(name: str):
         '/* clang-format off */\n//TODO: write your param\n/* clang-format on */\n\n'
     )
     cppfile.write(
-        'void robot_init() {\n  auto init_thread_fn = [](void* arg) {\n    static_cast<void>(arg);\n\n'
-        '    System::Init();\n\n    //TODO: create your robot\n\n    while (1) {\n'
-        '      System::Thread::Sleep(UINT32_MAX);\n    }\n  };\n\n  System::Thread init_thread;\n\n'
-        '  init_thread.Create(init_thread_fn, (void*)0, "init_thread_fn", 512,\n'
-        '                     System::Thread::REALTIME);\n}\n')
+        'void robot_init() {\n  System::Start<Robot::YourRobotName, Robot::YourRobotName::Param>(param);\n}\n'
+    )
 
     cppfile.close()
     hppfile = open(tools.project_path + '/src/robot/' + name + '/robot.hpp',
