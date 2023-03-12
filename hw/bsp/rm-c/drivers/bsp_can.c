@@ -100,11 +100,11 @@ static void can_rx_cb_fn(bsp_can_t can) {
                                 rx_buff[can].data) == HAL_OK) {
       if (rx_buff[can].header.IDE == CAN_ID_STD) {
         callback_list[can][CAN_RX_MSG_CALLBACK].fn(
-            can, rx_buff->header.StdId, rx_buff->data,
+            can, rx_buff[can].header.StdId, rx_buff[can].data,
             callback_list[can][CAN_RX_MSG_CALLBACK].arg);
       } else {
         callback_list[can][CAN_RX_MSG_CALLBACK].fn(
-            can, rx_buff->header.ExtId, rx_buff->data,
+            can, rx_buff[can].header.ExtId, rx_buff[can].data,
             callback_list[can][CAN_RX_MSG_CALLBACK].arg);
       }
     }
