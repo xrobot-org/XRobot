@@ -2,19 +2,18 @@
 
 一套可在PC/MCU/模拟器运行的机器人控制系统，诞生于Robomaster比赛，但绝不局限于此。
 
-<figure class="third">
-<img src="./doc/image/平衡.gif" width=100/>
-<img src="./doc/image/英雄.gif" width=100/>
-<img src="./doc/image/工程.gif" width=100/>
-<img src="./doc/image/飞镖架.gif" width=100/>
-</figure>
+![平衡](./doc/image/平衡.gif "平衡") ![英雄](./doc/image/英雄.gif "英雄") ![工程](./doc/image/工程.gif "工程") ![飞镖架](./doc/image/飞镖架.gif "飞镖架")
 
 ## 硬件支持
 
-* STM32F407
-* STM32F302
-* ESP32-C3
-* Linux x86/arm
+| MCU           | Board                                                                                                                                                              | Image                                                              |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| STM32F407IG   | [Robomaster C型开发板](https://www.robomaster.com/zh-CN/products/components/general/development-board-type-c/info)                                                 | <img src="doc/image/rm-c.png" width="500" height="220">            |
+| STM32F302CB   | [IMU-DEV-BOARD](https://xrobot-org.github.io/1.hardware/3.IMU-DEV.html)                                                                                            | <img src="doc/image/IMU-DEV-1.jpg" width="350" height="200">       |
+| STM32F446RE   | [C-Mini](https://xrobot-org.github.io/1.hardware/1.C-MINI.html)                                                                                                    | <img src="doc/image/C-MINI-1.jpg" width="350" height="250">        |
+| STM32F103     | Wait for update                                                                                                                                                    | Wait for update                                                    |
+| ESP32-C3      | [ESP32C3-Core](https://xrobot-org.github.io/1.hardware/2.ESP32C3-Core.html)                                                                                        | <img src="doc/image/esp32c3-core-1.jpeg" width="260" height="200"> |
+| Linux x86/arm | [Intel NUC](https://www.intel.cn/content/www/cn/zh/products/details/nuc.html)/[Jetson TX2](https://www.nvidia.cn/autonomous-machines/embedded-systems/jetson-tx2/) | <img src="doc/image/nuc.jpg" width="350" height="200">             |
 
 ## 主要特色
 
@@ -34,39 +33,38 @@
 
 利用命令行可以辅助调试程序、校准开发板、初始化机器人、读取不同参数配置。
 
-| ![VSCode调试界面](./doc/image/调试界面.png?raw=true "VSCode调试界面") |
-| :-------------------------------------------------------------------: |
-|                           *VSCode调试界面*                            |
+|
 
-| ![Webots仿真](./doc/image/Webots仿真.png?raw=true "Webots仿真") |
-| :-------------------------------------------------------------: |
-|                          *Webots仿真*                           |
+![VSCode调试界面](./doc/image/调试界面.png?raw=true "VSCode调试界面")
 
-| ![命令行](./doc/image/命令行.png?raw=true "命令行") |
-| :-------------------------------------------------: |
-|                      *命令行*                       |
+ |                  |
+ | :--------------: |
+ | *VSCode调试界面* |
 
-| ![客户端UI](./doc/image/客户端UI.png?raw=true "客户端UI") |
-| :-------------------------------------------------------: |
-|                        *客户端UI*                         |
+|
 
-## 推荐开发配置
+![Webots仿真](./doc/image/Webots仿真.png?raw=true "Webots仿真")
 
-### 系统
+ |              |
+ | :----------: |
+ | *Webots仿真* |
 
-* Ubuntu native [详细信息](https://ubuntu.com)
+|
 
-### 配置环境
+![命令行](./doc/image/命令行.png?raw=true "命令行")
 
-* [Visual Studio Code](https://code.visualstudio.com/)
-  * 安装必备插件`C/C++` `CMake`
-* 安装构建工具`sudo apt install cmake gcc-arm-none-eabi clang clangd ninja-build python3-tk`
+ |          |
+ | :------: |
+ | *命令行* |
 
-### 获取源代码
+|
 
-1. 克隆本库 `git clone --recursive https://gitee.com/qsheeeeen/qdu-rm-mcu.git`
+![客户端UI](./doc/image/客户端UI.png?raw=true "客户端UI")
 
-或者
+ |            |
+ | :--------: |
+ | *客户端UI* |
 
-1. `git clone https://gitee.com/qsheeeeen/qdu-rm-mcu.git`
-1. `git submodule init && git submodule update`
+## 使用和入门
+
+请阅读我们的[文档](https://xrobot-org.github.io)
