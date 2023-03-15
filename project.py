@@ -75,9 +75,13 @@ def build(board, robot):
                     os.makedirs(fm_dir, exist_ok=True)
                     try:
                         os.makedirs(fm_dir + '/' + dirname, exist_ok=True)
+                        os.makedirs(fm_dir + '/' + dirname + '/' +
+                                    filename[:-7],
+                                    exist_ok=True)
                         shutil.copyfile(
                             tools.project_path + '/build/xrobot.elf',
-                            fm_dir + '/' + dirname + '/xrobot.elf')
+                            fm_dir + '/' + dirname + '/' + filename[:-7] +
+                            '/xrobot.elf')
                         if os.path.exists(bsp_dir + '/' + dirname +
                                           '/firmware.list'):
                             fm_list = open(bsp_dir + '/' + dirname +
@@ -86,8 +90,9 @@ def build(board, robot):
                                 item = item.rstrip('\n')
                                 print(tools.project_path + '/' + item)
                                 shutil.copyfile(
-                                    tools.project_path + '/' + item, fm_dir +
-                                    '/' + dirname + '/' + item.split('/')[-1])
+                                    tools.project_path + '/' + item,
+                                    fm_dir + '/' + dirname + '/' +
+                                    filename[:-7] + '/' + item.split('/')[-1])
                             fm_list.close()
                     except:
                         print('\033[0;31;40mBuild ' + dirname + ' [' +
