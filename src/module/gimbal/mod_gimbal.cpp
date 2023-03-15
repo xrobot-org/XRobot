@@ -4,6 +4,8 @@
 
 #include "mod_gimbal.hpp"
 
+#include <comp_type.hpp>
+
 #include "bsp_time.h"
 
 using namespace Module;
@@ -79,8 +81,10 @@ void Gimbal::Control() {
     gimbal_pit_cmd = this->cmd_.eulr.pit * this->dt_ * GIMBAL_MAX_SPEED;
 
   } else {
-    gimbal_yaw_cmd = this->cmd_.eulr.yaw - this->setpoint_.eulr_.yaw;
-    gimbal_pit_cmd = this->cmd_.eulr.pit - this->setpoint_.eulr_.pit;
+    gimbal_yaw_cmd = Component::Type::CycleValue(this->cmd_.eulr.yaw) -
+                     this->setpoint_.eulr_.yaw;
+    gimbal_pit_cmd = Component::Type::CycleValue(this->cmd_.eulr.pit) -
+                     this->setpoint_.eulr_.pit;
   }
 
   /* 处理yaw控制命令 */
