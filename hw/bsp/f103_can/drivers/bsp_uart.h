@@ -27,7 +27,6 @@ typedef enum {
   BSP_UART_ABORT_CPLT_CB,
   BSP_UART_ABORT_TX_CPLT_CB,
   BSP_UART_ABORT_RX_CPLT_CB,
-
   BSP_UART_IDLE_LINE_CB,
   BSP_UART_CB_NUM,
 } bsp_uart_callback_t;
@@ -40,7 +39,7 @@ int8_t bsp_uart_transmit(bsp_uart_t uart, uint8_t *data, size_t size,
                          bool block);
 int8_t bsp_uart_receive(bsp_uart_t uart, uint8_t *buff, size_t size,
                         bool block);
-
+int8_t bsp_uart_abort_receive(bsp_uart_t uart);
 #ifdef __cplusplus
 }
 #endif

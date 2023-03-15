@@ -20,5 +20,10 @@ bool Semaphore::Take(uint32_t timeout) {
 void Semaphore::GiveFromISR() { xSemaphoreGiveFromISR(this->handle_, NULL); }
 
 bool Semaphore::TakeFromISR() {
-  return xSemaphoreTakeFromISR(this->handle_, NULL) == pdTRUE;
+  BaseType_t px_higher_priority_task_woken = 0;
+  bool ans = xSemaphoreTakeFromISR(this->handle_,
+                                   &px_higher_priority_task_woken) == pdTRUE;
+
+  portYIELD_FROM_ISR(px_higher_priority_task_woken);
+  return ans;
 }

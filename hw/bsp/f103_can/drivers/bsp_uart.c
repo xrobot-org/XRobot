@@ -128,3 +128,9 @@ uint32_t bsp_uart_get_count(bsp_uart_t uart) {
   return bsp_uart_get_handle(uart)->RxXferSize -
          __HAL_DMA_GET_COUNTER(bsp_uart_get_handle(BSP_UART_MCU)->hdmarx);
 }
+
+int8_t bsp_uart_abort_receive(bsp_uart_t uart) {
+  HAL_UART_AbortReceive_IT(bsp_uart_get_handle(uart));
+
+  return BSP_OK;
+}

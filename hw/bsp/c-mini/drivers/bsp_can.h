@@ -1,17 +1,22 @@
 #pragma once
 
+#include <stdint.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "FreeRTOS.h"
 #include "bsp.h"
-
 typedef enum {
   BSP_CAN_1,
   BSP_CAN_2,
+  BSP_CAN_3,
+  BSP_CAN_4,
   BSP_CAN_NUM,
   BSP_CAN_ERR,
 } bsp_can_t;
+
+#define BSP_CAN_BASE_NUM (BSP_CAN_2 + 1)
+#define BSP_CAN_EXT_NUM (BSP_CAN_NUM - BSP_CAN_BASE_NUM)
 
 typedef enum {
   CAN_RX_MSG_CALLBACK,
@@ -31,8 +36,7 @@ int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
                                  void *callback_arg);
 int8_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format, uint32_t id,
                             uint8_t *data);
-int8_t bsp_can_get_msg(bsp_can_t can, uint8_t *data, uint32_t *index);
-
+int8_t bsp_cantouart_get_msg(bsp_can_t can, uint8_t *data);
 #ifdef __cplusplus
 }
 #endif

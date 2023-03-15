@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.11)
 
 set(BOARD_NAME f103_can)
 
-add_compile_definitions(BOARD_WEARLAB_NODE STM32F103xB)
+add_compile_definitions(BOARD_F103_CAN STM32F103xB)
 
 set(BOARD_DIR ${BSP_DIR}/${BOARD_NAME})
 set(HAL_DIR ${MCU_DIR}/st/stm32f1xx_hal_driver)

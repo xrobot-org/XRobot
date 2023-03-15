@@ -1,12 +1,21 @@
 #include "bsp_uart.h"
 
 #include "main.h"
+#include "stm32f4xx_hal_dma.h"
 #include "stm32f4xx_it.h"
 
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart6;
 extern UART_HandleTypeDef huart4;
+extern UART_HandleTypeDef huart3;
+extern UART_HandleTypeDef huart5;
+
+extern DMA_HandleTypeDef hdma_usart3_rx;
+extern DMA_HandleTypeDef hdma_usart3_tx;
+extern DMA_HandleTypeDef hdma_uart5_rx;
+extern DMA_HandleTypeDef hdma_uart5_tx;
+
 extern DMA_HandleTypeDef hdma_uart4_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
 extern DMA_HandleTypeDef hdma_usart1_rx;
@@ -26,6 +35,10 @@ static bsp_uart_t uart_get(UART_HandleTypeDef *huart) {
     return BSP_UART_AI;
   } else if (huart->Instance == USART2) {
     return BSP_UART_EXT;
+  } else if (huart->Instance == USART3) {
+    return BSP_UART_CAN3;
+  } else if (huart->Instance == UART5) {
+    return BSP_UART_CAN4;
   } /*
     else if (huart->Instance == USARTX)
                     return BSP_UART_XXX;
@@ -96,6 +109,10 @@ UART_HandleTypeDef *bsp_uart_get_handle(bsp_uart_t uart) {
       return &huart6;
     case BSP_UART_EXT:
       return &huart2;
+    case BSP_UART_CAN3:
+      return &huart3;
+    case BSP_UART_CAN4:
+      return &huart5;
     /*
     case BSP_UART_XXX:
             return &huartX;
@@ -108,10 +125,12 @@ UART_HandleTypeDef *bsp_uart_get_handle(bsp_uart_t uart) {
 void bsp_uart_init() {
   HAL_UART_RegisterUserCallback(bsp_uart_irq_handler);
   __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_REF), UART_IT_IDLE);
+  __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_CAN3), UART_IT_IDLE);
+  __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_CAN4), UART_IT_IDLE);
 }
 
 int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,
-                                  void (*callback)(void *),
+                                  void (*callback)(void *arg),
                                   void *callback_arg) {
   assert_param(callback);
   assert_param(type != BSP_UART_CB_NUM);
@@ -141,6 +160,14 @@ int8_t bsp_uart_abort_receive(bsp_uart_t uart) {
       __HAL_DMA_SET_COUNTER(&hdma_usart2_rx, 0);
       break;
     }
+    case BSP_UART_CAN3: {
+      __HAL_DMA_SET_COUNTER(&hdma_usart3_rx, 0);
+      break;
+    }
+    case BSP_UART_CAN4: {
+      __HAL_DMA_SET_COUNTER(&hdma_uart5_rx, 0);
+      break;
+    }
     default:
       return BSP_ERR;
   }
@@ -161,6 +188,14 @@ int8_t bsp_uart_abort_transmit(bsp_uart_t uart) {
     }
     case BSP_UART_AI: {
       __HAL_DMA_SET_COUNTER(&hdma_usart6_tx, 0);
+      break;
+    }
+    case BSP_UART_CAN3: {
+      __HAL_DMA_SET_COUNTER(&hdma_usart3_tx, 0);
+      break;
+    }
+    case BSP_UART_CAN4: {
+      __HAL_DMA_SET_COUNTER(&hdma_uart5_tx, 0);
       break;
     }
     default:
