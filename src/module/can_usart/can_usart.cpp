@@ -72,7 +72,7 @@ CantoUsart::CantoUsart()
     return true;
   };
 
-  Message::Topic<Device::Can::Pack> cap_tp("can_cap");
+  Message::Topic<Device::Can::Pack> cap_tp("can_to_usart");
   cap_tp.RegisterCallback(rx_callback, this);
 
   Device::Can::Subscribe(cap_tp, BSP_CAN_1, 0, UINT32_MAX);
