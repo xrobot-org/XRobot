@@ -1,9 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(BOARD_NAME esp32-c3)
-
-set(BOARD_DIR ${BSP_DIR}/${BOARD_NAME})
-
 # Include for ESP-IDF build system functions
 include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
 # Create idf::{target} and idf::freertos static libraries

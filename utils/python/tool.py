@@ -27,11 +27,11 @@ class ProjectTools:
     def clean_cache(self):
         os.system('rm -rf ' + self.project_path + '/build/*')
 
-    def config_cmake(self):
+    def config_cmake(self, type='Debug'):
         os.system(
             'cd ' + self.project_path +
-            ' && cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=utils/CMake/toolchain.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_BUILD_TYPE:STRING=Debug -Bbuild -G Ninja'
-        )
+            ' && cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=utils/CMake/toolchain.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_BUILD_TYPE:STRING='
+            + type + ' -Bbuild -G Ninja')
 
     def list_dir(self, path):
         ans = []

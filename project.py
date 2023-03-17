@@ -32,80 +32,109 @@ user_rbt_dir = user_dir + '/robot'
 
 
 def list_target():
+    print("Offical:")
     for dirname in tools.list_dir(bsp_dir):
-        print('Board[' + dirname + ']')
+        print('  Board[' + dirname + ']')
         config_dir = bsp_dir + '/' + dirname + '/config'
         for filename in tools.list_file(config_dir):
             if filename.endswith('.config'):
-                print('\tRobot[' + filename[0:-7] + ']')
+                print('    Robot[' + filename[0:-7] + ']')
+    print("User:")
+    for dirname in tools.list_dir(user_bsp_dir):
+        print('  Board[' + dirname + ']')
+        config_dir = user_bsp_dir + '/' + dirname + '/config'
+        for filename in tools.list_file(config_dir):
+            if filename.endswith('.config'):
+                print('    Robot[' + filename[0:-7] + ']')
 
 
-def select_config(board, robot):
-    board_dir = bsp_dir + '/' + board
-    config_path = bsp_dir + '/' + board + '/config/' + robot + '.config'
-
-    if not os.path.exists(board_dir):
-        print('Error:Board not found.')
-        exit(-1)
+def select_config(config_path, type):
 
     if not os.path.exists(config_path):
         print('Error:Robot not found.')
         exit(-1)
 
     shutil.copyfile(config_path, cfg_dir + '/.config')
-    os.system("cd " + tools.project_path + ' && ./project.py refresh')
+    tools.clean_cache()
+    tools.config_cmake(type)
 
-    print('Load config success for [' + board + ']', robot)
+    print('Load config success from', config_path)
 
 
-def build(board, robot):
+def build(board, robot, type='Debug'):
     target = []
 
     os.system("rm -rf " + fm_dir)
-    for dirname in tools.list_dir(bsp_dir):
-        config_dir = bsp_dir + '/' + dirname + '/config'
+    os.makedirs(fm_dir, exist_ok=True)
 
-        for filename in tools.list_file(config_dir):
-            if (board == 'all'
-                    or dirname == board) and filename.endswith('.config'):
-                if filename.endswith(".config") and (robot == 'all' or
-                                                     filename[:-7] == robot):
-                    select_config(dirname, filename[:-7])
-                    os.system("cd " + build_dir + ' && ninja')
-                    os.makedirs(fm_dir, exist_ok=True)
-                    try:
-                        os.makedirs(fm_dir + '/' + dirname, exist_ok=True)
-                        os.makedirs(fm_dir + '/' + dirname + '/' +
-                                    filename[:-7],
-                                    exist_ok=True)
-                        shutil.copyfile(
-                            tools.project_path + '/build/xrobot.elf',
-                            fm_dir + '/' + dirname + '/' + filename[:-7] +
-                            '/xrobot.elf')
-                        if os.path.exists(bsp_dir + '/' + dirname +
-                                          '/firmware.list'):
-                            fm_list = open(bsp_dir + '/' + dirname +
-                                           '/firmware.list')
-                            for item in fm_list.readlines():
-                                item = item.rstrip('\n')
-                                print(tools.project_path + '/' + item)
-                                shutil.copyfile(
-                                    tools.project_path + '/' + item,
-                                    fm_dir + '/' + dirname + '/' +
-                                    filename[:-7] + '/' + item.split('/')[-1])
-                            fm_list.close()
-                    except:
-                        print('\033[0;31;40mBuild ' + dirname + ' [' +
-                              filename[:-7] + '] failed.\033[0m')
-                        exit(-1)
+    if board == 'all':
+        for dirname in tools.list_dir(bsp_dir):
+            target.append([bsp_dir + '/' + dirname, []])
+        for dirname in tools.list_dir(user_bsp_dir):
+            target.append([user_bsp_dir + '/' + dirname, []])
+    else:
+        for dirname in tools.list_dir(bsp_dir):
+            if dirname == board:
+                target.append([bsp_dir + '/' + dirname, []])
+        for dirname in tools.list_dir(user_bsp_dir):
+            if dirname == board:
+                target.append([user_bsp_dir + '/' + dirname, []])
 
-                    target.append([dirname, filename[:-7]])
     if len(target) == 0:
         print('ERROR:No target select.')
-    else:
-        for item in target:
-            print('\033[0;32;40mRobot[' + item[1] + ']' + ' for board ' +
-                  item[0] + ' build done.\033[0m')
+        return
+
+    for i in range(len(target)):
+        config_dir = target[i][0] + '/config'
+        for filename in tools.list_file(config_dir):
+            if filename.endswith(".config") and (robot == 'all'
+                                                 or robot == filename[:-7]):
+                target[i][1].append(filename[:-7])
+                print('Select config ' + target[i][0] + ' ' + filename)
+        if (len(target[i][1]) == 0):
+            print('ERROR:No target select.')
+            return
+
+    for item in target:
+        bsp = item[0]
+        for rbt in item[1]:
+            config_file = bsp + '/config/' + rbt + '.config'
+            fm_board_dir = fm_dir + '/' + bsp.split('/')[-1]
+            fm_robot_dir = fm_board_dir + '/' + rbt
+            select_config(config_file, type)
+            os.system("cd " + build_dir + ' && ninja')
+            if not os.path.exists(build_dir + '/' + 'xrobot.elf'):
+                print('\033[0;31;40mBuild ' + bsp + ' [' + rbt +
+                      '] failed.\033[0m')
+                exit(-1)
+            os.makedirs(fm_board_dir, exist_ok=True)
+            os.makedirs(fm_robot_dir, exist_ok=True)
+            dirlist = os.walk(build_dir, )
+            for root, dirs, files in dirlist:
+                for file in files:
+                    tmp_path = root[len(build_dir):]
+                    if tmp_path.count('/') > 1:
+                        continue
+                    if len(tmp_path) == 0:
+                        tmp_path = '/'
+                    else:
+                        tmp_path = tmp_path + '/'
+                    if file.endswith('.hex') or file.endswith(
+                            '.bin') or file.endswith('.elf'):
+                        print('Found object', file)
+                        os.makedirs(fm_robot_dir + '/' + tmp_path,
+                                    exist_ok=True)
+                        shutil.copyfile(
+                            root + '/' + file,
+                            fm_robot_dir + tmp_path + file.split('/')[-1])
+                        os.system('md5sum ' + fm_robot_dir + tmp_path +
+                                  file.split('/')[-1] + ' > ' + fm_robot_dir +
+                                  tmp_path + file.split('/')[-1] + '.md5')
+    for item in target:
+        bsp = item[0]
+        for rbt in item[1]:
+            print('\033[0;32;40mRobot[' + rbt + ']' + ' for board ' + bsp +
+                  ' build done.\033[0m')
 
 
 def generate_kconfig():
@@ -328,6 +357,18 @@ elif cmd[1] == 'build':
         print('参数错误')
         exit(-1)
     build(cmd[2], cmd[3])
+
+elif cmd[1] == 'build-debug':
+    if (cmd_len < 4):
+        print('参数错误')
+        exit(-1)
+    build(cmd[2], cmd[3], 'Debug')
+
+elif cmd[1] == 'build-release':
+    if (cmd_len < 4):
+        print('参数错误')
+        exit(-1)
+    build(cmd[2], cmd[3], 'Release')
 elif cmd[1] == 'list':
     list_target()
 elif cmd[1] == 'init':

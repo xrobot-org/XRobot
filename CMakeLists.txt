@@ -45,7 +45,7 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "")
   add_compile_definitions(MCU_DEBUG_BUILD USE_FULL_ASSERT)
 
-elseif(CMAKE_BUILD_TYPE STREQUAL "Realase")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
   set(CMAKE_C_FLAGS_RELEASE "-O3")
   set(CMAKE_ASM_FLAGS_RELEASE "-O3")
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "")
@@ -56,7 +56,8 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
   set(CMAKE_ASM_FLAGS_RELEASE "-Os")
   set(CMAKE_EXE_LINKER_FLAGS_RELEASE "")
   add_compile_definitions()
-
+else()
+  message(FATAL_ERROR "Unknown build type.")
 endif()
 
 # ---------------------------------------------------------------------------------------
