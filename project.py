@@ -137,6 +137,20 @@ def build(board, robot, type='Debug'):
                   ' build done.\033[0m')
 
 
+def select(board, robot):
+    config_file = ''
+    for dirname in tools.list_dir(bsp_dir):
+        if dirname == board:
+            config_file = bsp_dir + '/' + dirname + '/config/' + robot + '.config'
+    for dirname in tools.list_dir(user_bsp_dir):
+        if dirname == board:
+            config_file = user_bsp_dir + '/' + dirname + '/config/' + robot + '.config'
+    if len(config_file) == 0:
+        print('No config file found')
+        exit(-1)
+    select_config(config_file, 'Debug')
+
+
 def generate_kconfig():
     print("Start generate Kconfig.")
     kconfig_file = open(tools.project_path + '/config/auto.Kconfig', 'w')
@@ -379,7 +393,7 @@ elif cmd[1] == 'select':
     if (cmd_len < 4):
         print('参数错误')
         exit(-1)
-    select_config(cmd[2], cmd[3])
+    select(cmd[2], cmd[3])
 elif cmd[1] == 'new':
     if (cmd_len < 4):
         print('参数错误')
