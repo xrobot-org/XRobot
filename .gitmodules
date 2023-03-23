@@ -1,6 +1,6 @@
-[submodule "protocol"]
-	path = lib/protocol
-	url = https://gitee.com/qsheeeeen/qdu-rm-protocol
+[submodule "lib/host-protocol"]
+	path = lib/host-protocol
+	url = https://github.com/Jiu-xiao/host-protocol.git
 [submodule "stm32_cmsis"]
 	path = hw/mcu/st/cmsis_device_f4
 	url = https://github.com/STMicroelectronics/cmsis_device_f4.git
