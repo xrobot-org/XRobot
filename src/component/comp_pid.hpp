@@ -28,6 +28,12 @@ class PID {
 
   void SetK(float k);
 
+  void SetP(float p);
+
+  void SetI(float i);
+
+  void SetD(float d);
+
   void Reset();
 
   float Calculate(float sp, float fb, float dt);
