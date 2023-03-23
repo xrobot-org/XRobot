@@ -60,7 +60,7 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
       event_callback, this, this->param_.EVENT_MAP);
 
   auto leg_thread = [](WheelLeg *leg) {
-    auto eulr_sub = Message::Subscriber("chassis_eulr", leg->eulr_);
+    auto eulr_sub = Message::Subscriber("imu_eulr", leg->eulr_);
 
     while (1) {
       eulr_sub.DumpData();
@@ -69,7 +69,7 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
 
       leg->Control();
 
-      leg->thread_.SleepUntil(2);
+      leg->thread_.SleepUntil(5);
     }
   };
 
@@ -172,6 +172,7 @@ void WheelLeg::Control() {
       for (uint8_t i = 0; i < LEG_NUM; i++) {
         for (int j = 0; j < LEG_MOTOR_NUM; j++) {
           this->leg_motor_[i * LEG_MOTOR_NUM + j]->Relax();
+          bsp_delay(1);
         }
       }
       break;
@@ -217,6 +218,7 @@ void WheelLeg::Control() {
 
           this->leg_motor_[i * LEG_MOTOR_NUM + j]->SetPos(
               angle + this->param_.motor_zero[i * LEG_MOTOR_NUM + j]);
+          bsp_delay(1);
         }
       }
       break;
