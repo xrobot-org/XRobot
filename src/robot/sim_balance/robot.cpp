@@ -13,33 +13,11 @@ Robot::Simulator::Param param = {
   },
 
   .imu = {
-    .tp_name_prefix = "chassis",
+    .tp_name_prefix = "imu",
   },
 
   .chassis={
     .init_g_center = 0.0f,
-
-    .follow_pid_param = {
-      .k = 3.0f,
-      .p = 1.0f,
-      .i = 0.5f,
-      .d = 0.0f,
-      .i_limit = 0.2f,
-      .out_limit = 0.5f,
-      .d_cutoff_freq = -1.0f,
-      .cycle = true,
-    },
-
-    .comp_pid_param = {
-      .k = 0.02f,
-      .p = 1.0f,
-      .i = 0.0f,
-      .d = 0.002f,
-      .i_limit = 0.01f,
-      .out_limit = 0.3f,
-      .d_cutoff_freq = -1.0f,
-      .cycle = true,
-    },
 
     .EVENT_MAP = {
       Component::CMD::EventMapItem{
@@ -48,88 +26,87 @@ Robot::Simulator::Param param = {
       },
       Component::CMD::EventMapItem{
         Device::TerminalController::START_CTRL,
-        Module::RMBalance::SET_MODE_FOLLOW
+        Module::RMBalance::SET_MODE_INDENPENDENT
       }
     },
 
-    .wheel_param = {
-      Component::SpeedActuator::Param{
-        .speed = {
-          .k = 0.0002f,
-          .p = 1.0f,
-          .i = 0.0f,
-          .d = 0.0f,
-          .i_limit = 0.4f,
-          .out_limit = 1.0f,
-          .d_cutoff_freq = -1.0f,
-          .cycle = false,
-        },
-
-        .in_cutoff_freq = -1.0f,
-
-        .out_cutoff_freq = -1.0f,
-      },
-      Component::SpeedActuator::Param{
-        .speed = {
-          .k = 0.0002f,
-          .p = 1.0f,
-          .i = 0.0f,
-          .d = 0.0f,
-          .i_limit = 0.4f,
-          .out_limit = 1.0f,
-          .d_cutoff_freq = -1.0f,
-          .cycle = false,
-        },
-
-        .in_cutoff_freq = -1.0f,
-
-        .out_cutoff_freq = -1.0f,
-      },
-    },
-
-    .eulr_param = Component::PID::Param{
-      .k = 16.0f,
-      .p = 1.0f,
-      .i = 0.0f,
-      .d = 0.008f,
-      .i_limit = 20.0f,
-      .out_limit = 20.0f,
-      .d_cutoff_freq = -1.0f,
-      .cycle = true,
-    },
-
-    .gyro_param = Component::PID::Param{
-      .k = 1.2f,
-      .p = 1.0f,
-      .i = 0.0f,
-      .d = 0.0f,
-      .i_limit = 1.0f,
-      .out_limit = 1.0f,
-      .d_cutoff_freq = -1.0f,
-      .cycle = false,
-    },
-
-    .speed_param = Component::PID::Param{
-        .k = 6.5f,
-        .p = 1.0f,
-        .i = 0.3f,
-        .d = 0.005f,
-        .i_limit = 0.3f,
-        .out_limit = 1.0f,
-        .d_cutoff_freq = -1.0f,
-        .cycle = false,
-    },
-
-    .center_filter_cutoff_freq = 10.0f,
+    .speed_filter_cutoff_freq = -1.0f,
 
     .motor_param = {
-      Device::RMMotor::Param{
-        .model = Device::RMMotor::MOTOR_M3508,
+      Device::RMDMotor::Param{
       },
-      Device::RMMotor::Param{
-        .model = Device::RMMotor::MOTOR_M3508,
+      Device::RMDMotor::Param{
       },
     },
+
+    .pid_param = {
+        /* CTRL_CH_DISPLACEMENT */
+        Component::PID::Param{
+          .k = 40.0f,
+          .p = 1.0f,
+          .i = 0.0f,
+          .d = 25.0f,
+          .i_limit = 0.6f,
+          .out_limit = 0.8f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = false,
+        },
+        /* CTRL_CH_FORWARD_SPEED */
+        Component::PID::Param{
+          .k = 0.5f,
+          .p = 1.0f,
+          .i = 0.0f,
+          .d = 0.0f,
+          .i_limit = 0.3f,
+          .out_limit = 0.8f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = false,
+        },
+        /* CTRL_CH_PITCH_ANGLE */
+        Component::PID::Param{
+          .k = 3.0f,
+          .p = 1.0f,
+          .i = 0.0f,
+          .d = 0.0f,
+          .i_limit = 1.0f,
+          .out_limit = 1.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = true,
+        },
+        /* CTRL_CH_GYRO_X */
+        Component::PID::Param{
+          .k = 0.2f,
+          .p = 1.0f,
+          .i = 0.0f,
+          .d = 0.0f,
+          .i_limit = 1.0f,
+          .out_limit = 1.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = false,
+        },
+        /* CTRL_CH_YAW_ANGLE */
+        Component::PID::Param{
+          .k = 3.0f,
+          .p = 1.0f,
+          .i = 0.0f,
+          .d = 0.0f,
+          .i_limit = 1.0f,
+          .out_limit = 1.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = true,
+        },
+        /* CTRL_CH_GYRO_Z */
+        Component::PID::Param{
+          .k = 0.03f,
+          .p = 1.0f,
+          .i = 0.0f,
+          .d = 0.0f,
+          .i_limit = 0.011f,
+          .out_limit = 1.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = true,
+        },
+      }
   }
 };
 /* clang-format on */

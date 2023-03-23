@@ -13,7 +13,7 @@ class Simulator {
   typedef struct {
     Device::BlinkLED::Param led;
     Device::IMU::Param imu;
-    Module::RMBalance::Param chassis;
+    Module::RMDBalance::Param chassis;
   } Param;
 
   Component::CMD cmd_;
@@ -21,10 +21,11 @@ class Simulator {
   Device::BlinkLED led_;
   Device::Referee referee_;
   Device::TerminalController ctrl_;
-  Device::Camera camera_;
   Device::IMU imu_;
 
-  Module::RMBalance chassis_;
+  Module::RMDBalance chassis_;
+
+  Device::Camera camera_;
 
   Simulator(Param& param)
       : cmd_(Component::CMD::CMD_TERM_CTRL),
