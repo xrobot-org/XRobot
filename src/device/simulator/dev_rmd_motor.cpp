@@ -5,14 +5,17 @@
 
 using namespace Device;
 
-RMDMotor::RMDMotor(const Param& param, const char* name) : BaseMotor(name) {
-  (void)param;
-}
+RMDMotor::RMDMotor(const Param& param, const char* name)
+    : BaseMotor(name), param_(param) {}
 
 void RMDMotor::Control(float output) {
   clampf(&output, -1.0f, 1.0f);
   output *= 4.5;
-  wb_motor_set_torque(this->handle_, output);
+  if (!param_.reverse) {
+    wb_motor_set_torque(this->handle_, output);
+  } else {
+    wb_motor_set_torque(this->handle_, -output);
+  }
 }
 
 bool RMDMotor::Update() {

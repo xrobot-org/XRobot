@@ -6,6 +6,7 @@ namespace Device {
 class RMDMotor : public BaseMotor {
  public:
   typedef struct {
+    bool reverse;
   } Param;
 
   RMDMotor(const Param& param, const char* name);
@@ -13,5 +14,7 @@ class RMDMotor : public BaseMotor {
   void Control(float output);
 
   bool Update();
+
+  Param param_;
 };
 }  // namespace Device
