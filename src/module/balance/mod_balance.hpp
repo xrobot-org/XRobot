@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+#include <comp_type.hpp>
 #include <module.hpp>
 
 #include "comp_actuator.hpp"
@@ -8,6 +10,7 @@
 #include "comp_pid.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
+#include "dev_rmd_motor.hpp"
 
 namespace Module {
 template <typename Motor, typename MotorParam>
@@ -17,12 +20,21 @@ class Balance {
   typedef enum {
     RELAX, /* 放松模式，电机不输出。一般情况底盘初始化之后的模式 */
     FOLLOW_GIMBAL, /* 通过闭环控制使车头方向跟随云台 */
+    INDENPENDENT,  /* 独立模式。底盘运行不受云台影响 */
     ROTOR, /* 小陀螺模式，通过闭环控制使底盘不停旋转 */
   } Mode;
 
   typedef enum {
+    MOVING,     /* 运动 */
+    STATIONARY, /* 静止 */
+    SLIP,       /* 打滑 */
+    ROLLOVER    /* 翻倒 */
+  } Status;
+
+  typedef enum {
     SET_MODE_RELAX,
     SET_MODE_FOLLOW,
+    SET_MODE_INDENPENDENT,
     SET_MODE_ROTOR,
   } ChassisEvent;
 
@@ -32,55 +44,47 @@ class Balance {
     WHEEL_NUM,
   } Wheel;
 
-  typedef struct {
-    float forward_speed;
-  } Feedback;
+  typedef enum {
+    CTRL_CH_DISPLACEMENT,
+    CTRL_CH_FORWARD_SPEED,
+    CTRL_CH_PITCH_ANGLE,
+    CTRL_CH_GYRO_X,
+    CTRL_CH_YAW_ANGLE,
+    CTRL_CH_GYRO_Z,
+    CTRL_CH_NUM
+  } ControlChannel;
+
+  typedef std::array<float, CTRL_CH_NUM> Feedback;
+
+  typedef std::array<float, CTRL_CH_NUM> Setpoint;
+
+  typedef std::array<float, CTRL_CH_NUM> Output;
 
   typedef struct {
-    struct {
-      float speed;                        /* 速度环 */
-      float balance;                      /* 直立环 */
-      std::array<float, WHEEL_NUM> angle; /* 角度环 */
-    } wheel_speed;
-
-    struct {
-      float g_comp; /* 加速补偿 */
-      Component::Type::CycleValue yaw;
-    } angle;
-  } Setpoint;
-
-  /* 底盘参数的结构体，包含所有初始Component化用的参数，通常是const，存好几组 */
-  typedef struct {
-    float init_g_center;
-
-    Component::PID::Param follow_pid_param; /* 跟随云台PID的参数 */
-
-    Component::PID::Param comp_pid_param;
+    Component::Type::CycleValue init_g_center;
 
     const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
 
-    std::array<Component::SpeedActuator::Param, WHEEL_NUM> wheel_param;
-
-    Component::PID::Param eulr_param;
-
-    Component::PID::Param gyro_param;
-
-    Component::PID::Param speed_param;
-
-    float center_filter_cutoff_freq;
+    float speed_filter_cutoff_freq;
 
     std::array<MotorParam, WHEEL_NUM> motor_param;
+
+    std::array<Component::PID::Param, CTRL_CH_NUM> pid_param;
   } Param;
 
   Balance(Param &param, float control_freq);
 
   void UpdateFeedback();
 
+  void UpdateStatus();
+
   void Control();
 
   void SetMode(Mode mode);
 
-  void PackOutput();
+  bool SlipDetect();
+
+  bool RolloverDetect();
 
  private:
   Param param_;
@@ -93,15 +97,18 @@ class Balance {
 
   Mode mode_ = RELAX;
 
-  std::array<Component::SpeedActuator *, WHEEL_NUM> wheel_actr_;
+  Status status_ = STATIONARY;
 
-  Component::PID eulr_pid_;
+  uint8_t pid_enable_ = 0;
 
-  Component::PID gyro_pid_;
-
-  Component::PID speed_pid_;
-
+  std::array<Component::PID *, CTRL_CH_NUM> pid_;
   std::array<Device::BaseMotor *, WHEEL_NUM> motor_;
+
+  Feedback feeback_;
+
+  Setpoint setpoint_;
+
+  Output output_;
 
   Component::Type::MoveVector move_vec_; /* 底盘实际的运动向量 */
 
@@ -109,20 +116,11 @@ class Balance {
   Component::Type::Vector3 gyro_;
 
   float wz_dir_mult_; /* 小陀螺模式旋转方向乘数 */
-  float vy_dir_mult_; /* scan模式移动方向乘数 */
 
   /* PID计算的输出值 */
   std::array<float, WHEEL_NUM> motor_out_;
 
-  Feedback feeback_;
-
-  Setpoint setpoint_;
-
-  Component::PID follow_pid_; /* 跟随云台用的PID */
-
-  Component::PID comp_pid_;
-
-  Component::LowPassFilter2p center_filter_;
+  Component::LowPassFilter2p speed_filter_;
 
   System::Semaphore ctrl_lock_;
 
@@ -134,4 +132,5 @@ class Balance {
 };
 
 typedef Balance<Device::RMMotor, Device::RMMotor::Param> RMBalance;
+typedef Balance<Device::RMDMotor, Device::RMDMotor::Param> RMDBalance;
 }  // namespace Module

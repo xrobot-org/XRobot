@@ -7,31 +7,35 @@
 
 #define ROTOR_OMEGA 0.0015f /* 小陀螺转动频率 */
 
-#define MOTOR_MAX_ROTATIONAL_SPEED 7000.0f /* 电机的最大转速 */
+#define MOTOR_MAX_ROTATIONAL_SPEED 6000.0f /* 电机的最大转速 */
+
+#define YAW_MAX_MOVE_SPEED (10.0f)
 
 using namespace Module;
+
+static constexpr uint8_t enable_pid(uint8_t ch) { return (1 << (ch)); }
+static constexpr bool check_pid(uint8_t pid, uint8_t ch) {
+  return ((1 << (ch)) | pid) != 0;
+}
 
 template <typename Motor, typename MotorParam>
 Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
     : param_(param),
-      mode_(Balance::RELAX),
-      eulr_pid_(param.eulr_param, control_freq),
-      gyro_pid_(param.gyro_param, control_freq),
-      speed_pid_(param.speed_param, control_freq),
-      follow_pid_(param.follow_pid_param, control_freq),
-      comp_pid_(param.comp_pid_param, control_freq),
-      center_filter_(control_freq, param.center_filter_cutoff_freq),
+      speed_filter_(control_freq, param.speed_filter_cutoff_freq),
       ctrl_lock_(true) {
-  memset(&(this->cmd_), 0, sizeof(this->cmd_));
-
   constexpr auto WHELL_NAMES = magic_enum::enum_names<Wheel>();
 
-  for (uint8_t i = 0; i < WHEEL_NUM; i++) {
-    this->wheel_actr_.at(i) =
-        new Component::SpeedActuator(param.wheel_param.at(i), control_freq);
+  memset(&this->move_vec_, 0, sizeof(this->move_vec_));
+  memset(&this->cmd_, 0, sizeof(this->cmd_));
+  memset(&this->eulr_, 0, sizeof(this->eulr_));
 
+  for (uint8_t i = 0; i < WHEEL_NUM; i++) {
     this->motor_.at(i) =
         new Motor(param.motor_param.at(i), WHELL_NAMES[i].data());
+  }
+
+  for (uint8_t i = 0; i < CTRL_CH_NUM; i++) {
+    this->pid_[i] = new Component::PID(param.pid_param.at(i), control_freq);
   }
 
   auto event_callback = [](ChassisEvent event, Balance* chassis) {
@@ -43,6 +47,9 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
         break;
       case SET_MODE_FOLLOW:
         chassis->SetMode(FOLLOW_GIMBAL);
+        break;
+      case SET_MODE_INDENPENDENT:
+        chassis->SetMode(INDENPENDENT);
         break;
       case SET_MODE_ROTOR:
         chassis->SetMode(ROTOR);
@@ -59,8 +66,8 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
 
   auto chassis_thread = [](Balance* chassis) {
     auto cmd_sub = Message::Subscriber("cmd_chassis", chassis->cmd_);
-    auto eulr_sub = Message::Subscriber("chassis_eulr", chassis->eulr_);
-    auto gyro_sub = Message::Subscriber("chassis_gyro", chassis->gyro_);
+    auto eulr_sub = Message::Subscriber("imu_eulr", chassis->eulr_);
+    auto gyro_sub = Message::Subscriber("imu_gyro", chassis->gyro_);
 
     while (1) {
       /* 读取控制指令、电容、裁判系统、电机反馈 */
@@ -71,6 +78,7 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
       /* 更新反馈值 */
       chassis->ctrl_lock_.Take(UINT32_MAX);
       chassis->UpdateFeedback();
+      chassis->UpdateStatus();
       chassis->Control();
       chassis->ctrl_lock_.Give();
 
@@ -85,14 +93,57 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
 
 template <typename Motor, typename MotorParam>
 void Balance<Motor, MotorParam>::UpdateFeedback() {
-  /* 将CAN中的反馈数据写入到feedback中 */
+  /* 接收电机反馈 */
   for (size_t i = 0; i < WHEEL_NUM; i++) {
     this->motor_[i]->Update();
   }
 
-  this->feeback_.forward_speed = (this->motor_[LEFT_WHEEL]->GetSpeed() -
-                                  this->motor_[RIGHT_WHEEL]->GetSpeed()) /
-                                 2.0f / MOTOR_MAX_ROTATIONAL_SPEED;
+  /* 更新反馈值 */
+  this->feeback_[CTRL_CH_FORWARD_SPEED] = this->speed_filter_.Apply(
+      (this->motor_[0]->GetSpeed() - this->motor_[1]->GetSpeed()) / 2.0f /
+      MOTOR_MAX_ROTATIONAL_SPEED);
+  this->feeback_[CTRL_CH_DISPLACEMENT] +=
+      this->feeback_[CTRL_CH_FORWARD_SPEED] * dt_;
+  this->feeback_[CTRL_CH_PITCH_ANGLE] = this->eulr_.pit;
+  this->feeback_[CTRL_CH_GYRO_X] = this->gyro_.x;
+  this->feeback_[CTRL_CH_YAW_ANGLE] = this->eulr_.yaw;
+  this->feeback_[CTRL_CH_GYRO_Z] = this->gyro_.z;
+}
+
+template <typename Motor, typename MotorParam>
+void Balance<Motor, MotorParam>::UpdateStatus() {
+  Status now_status = MOVING;
+
+  if (cmd_.y != 0.0f) {
+    now_status = MOVING;
+  } else {
+    now_status = STATIONARY;
+  }
+
+  if (SlipDetect()) {
+    now_status = SLIP;
+  }
+
+  if (RolloverDetect()) {
+    now_status = ROLLOVER;
+  }
+
+  if (now_status != status_) {
+    now_status = status_;
+    feeback_[CTRL_CH_DISPLACEMENT] = 0.0f;
+  }
+}
+
+template <typename Motor, typename MotorParam>
+bool Balance<Motor, MotorParam>::SlipDetect() {
+  // TODO:
+  return false;
+}
+
+template <typename Motor, typename MotorParam>
+bool Balance<Motor, MotorParam>::RolloverDetect() {
+  // TODO:
+  return false;
 }
 
 template <typename Motor, typename MotorParam>
@@ -103,88 +154,153 @@ void Balance<Motor, MotorParam>::Control() {
   this->last_wakeup_ = this->now_;
 
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
-  /* 计算vx、vy */
   switch (this->mode_) {
     case Balance::RELAX:
       this->move_vec_.vx = 0.0f;
       this->move_vec_.vy = 0.0f;
+      this->move_vec_.wz = 0.0f;
+      break;
+    case Balance::INDENPENDENT:
+      this->move_vec_.vx = this->cmd_.x;
+      this->move_vec_.vy = this->cmd_.y;
+      this->move_vec_.wz = this->cmd_.z;
+      break;
+    case Balance::FOLLOW_GIMBAL:
+      // TODO:
       break;
     case Balance::ROTOR:
-    case Balance::FOLLOW_GIMBAL:
       this->move_vec_.vx = this->cmd_.x;
       this->move_vec_.vy = this->cmd_.y;
       break;
-
     default:
       break;
   }
 
-  /* 计算wz */
-  switch (this->mode_) {
-    case Balance::RELAX:
-    case Balance::FOLLOW_GIMBAL:
-    case Balance::ROTOR:
-      this->move_vec_.wz = 0;
+  /* 根据底盘状态选择开启哪些pid环 */
+  switch (status_) {
+    case MOVING:
+      pid_enable_ = enable_pid(CTRL_CH_FORWARD_SPEED) |
+                    enable_pid(CTRL_CH_PITCH_ANGLE) |
+                    enable_pid(CTRL_CH_GYRO_X) | enable_pid(CTRL_CH_YAW_ANGLE) |
+                    enable_pid(CTRL_CH_GYRO_Z);
       break;
-
-    default:
-      ASSERT(false);
-      return;
+    case STATIONARY:
+      pid_enable_ =
+          enable_pid(CTRL_CH_DISPLACEMENT) | enable_pid(CTRL_CH_FORWARD_SPEED) |
+          enable_pid(CTRL_CH_PITCH_ANGLE) | enable_pid(CTRL_CH_GYRO_X) |
+          enable_pid(CTRL_CH_YAW_ANGLE) | enable_pid(CTRL_CH_GYRO_Z);
+      break;
+    case SLIP:
+    case ROLLOVER:
+      pid_enable_ =
+          enable_pid(CTRL_CH_PITCH_ANGLE) | enable_pid(CTRL_CH_GYRO_X);
+      break;
   }
 
-  /* 根据底盘模式计算输出值 */
+  /* 计算目标值 */
+  setpoint_[CTRL_CH_DISPLACEMENT] = 0.0f;
+  setpoint_[CTRL_CH_FORWARD_SPEED] = this->move_vec_.vy;
+  setpoint_[CTRL_CH_PITCH_ANGLE] = param_.init_g_center;
+  setpoint_[CTRL_CH_GYRO_X] = 0.0f;
+  float yaw_delta = this->move_vec_.wz * YAW_MAX_MOVE_SPEED * dt_;
+  setpoint_[CTRL_CH_YAW_ANGLE] =
+      Component::Type::CycleValue(setpoint_[CTRL_CH_YAW_ANGLE] + yaw_delta);
+  setpoint_[CTRL_CH_GYRO_Z] = 0.0f;
+
+  /* 全状态反馈控制 */
   switch (this->mode_) {
     case Balance::FOLLOW_GIMBAL:
+    case Balance::INDENPENDENT:
     case Balance::ROTOR: {
-      /* 速度环 */
-      this->setpoint_.wheel_speed.speed = -this->speed_pid_.Calculate(
-          this->move_vec_.vy, this->feeback_.forward_speed, this->dt_);
-
-      /* 加减速时保证稳定姿态 */
-      this->setpoint_.angle.g_comp = this->comp_pid_.Calculate(
-          this->move_vec_.vy, this->feeback_.forward_speed, this->dt_);
-
-      /* 直立环 */
-      this->setpoint_.wheel_speed.balance = this->eulr_pid_.Calculate(
-          this->param_.init_g_center - this->setpoint_.angle.g_comp,
-          this->eulr_.pit, this->gyro_.x, this->dt_);
-
-      this->setpoint_.wheel_speed.balance +=
-          this->gyro_pid_.Calculate(0.0f, this->gyro_.x, this->dt_);
-
-      /* 角度环 */
-      this->setpoint_.angle.yaw -= this->move_vec_.vx * dt_;
-      this->setpoint_.wheel_speed.angle[RIGHT_WHEEL] =
-          this->follow_pid_.Calculate(this->setpoint_.angle.yaw,
-                                      this->eulr_.yaw, dt_);
-      this->setpoint_.wheel_speed.angle[LEFT_WHEEL] =
-          -this->setpoint_.wheel_speed.angle[RIGHT_WHEEL];
-
-      /* 轮子速度控制 */
-      for (uint8_t i = 0; i < WHEEL_NUM; i++) {
-        float speed_sp = this->setpoint_.wheel_speed.speed +
-                         this->setpoint_.wheel_speed.balance +
-                         this->setpoint_.wheel_speed.angle[i];
-
-        clampf(&speed_sp, -1.0f, 1.0f);
-
-        if (i == RIGHT_WHEEL) {
-          speed_sp = -speed_sp;
-        }
-
-        this->motor_out_[i] = this->wheel_actr_[i]->Calculate(
-            speed_sp * MOTOR_MAX_ROTATIONAL_SPEED, this->motor_[i]->GetSpeed(),
-            this->dt_);
+      /* 位移环，微分为速度 */
+      /* 使用较小K和较大D来保证静止时停在原地 */
+      /* 帮助车身减速时向减速方向倾斜，速度快速减小到0 */
+      /* 目标速度不为0时不应该输出 */
+      if (check_pid(pid_enable_, CTRL_CH_DISPLACEMENT)) {
+        output_[CTRL_CH_DISPLACEMENT] =
+            -this->pid_[CTRL_CH_DISPLACEMENT]->Calculate(
+                this->setpoint_[CTRL_CH_DISPLACEMENT],
+                this->feeback_[CTRL_CH_DISPLACEMENT],
+                this->feeback_[CTRL_CH_FORWARD_SPEED], dt_);
+      } else {
+        output_[CTRL_CH_DISPLACEMENT] = 0;
       }
 
-      /* 电机输出 */
+      /* 速度环 */
+      /* 帮助车身加速时向加速方向倾斜 */
+      if (check_pid(pid_enable_, CTRL_CH_FORWARD_SPEED)) {
+        output_[CTRL_CH_FORWARD_SPEED] =
+            -this->pid_[CTRL_CH_FORWARD_SPEED]->Calculate(
+                this->setpoint_[CTRL_CH_FORWARD_SPEED],
+                this->feeback_[CTRL_CH_FORWARD_SPEED], dt_);
+      } else {
+        output_[CTRL_CH_FORWARD_SPEED] = 0;
+      }
+
+      /* pitch角度环，微分为x轴角速度 */
+      if (check_pid(pid_enable_, CTRL_CH_PITCH_ANGLE)) {
+        output_[CTRL_CH_PITCH_ANGLE] =
+            this->pid_[CTRL_CH_PITCH_ANGLE]->Calculate(
+                this->setpoint_[CTRL_CH_PITCH_ANGLE],
+                this->feeback_[CTRL_CH_PITCH_ANGLE],
+                this->feeback_[CTRL_CH_GYRO_X], dt_);
+      } else {
+        output_[CTRL_CH_PITCH_ANGLE] = 0;
+      }
+
+      /* x轴角速度环 */
+      if (check_pid(pid_enable_, CTRL_CH_GYRO_X)) {
+        output_[CTRL_CH_GYRO_X] = this->pid_[CTRL_CH_GYRO_X]->Calculate(
+            this->setpoint_[CTRL_CH_GYRO_X], this->feeback_[CTRL_CH_GYRO_X],
+            dt_);
+      } else {
+        output_[CTRL_CH_GYRO_X] = 0;
+      }
+
+      /* yaw角度环，微分为z轴角速度 */
+      if (check_pid(pid_enable_, CTRL_CH_YAW_ANGLE)) {
+        output_[CTRL_CH_YAW_ANGLE] = this->pid_[CTRL_CH_YAW_ANGLE]->Calculate(
+            this->setpoint_[CTRL_CH_YAW_ANGLE],
+            this->feeback_[CTRL_CH_YAW_ANGLE], this->feeback_[CTRL_CH_GYRO_Z],
+            dt_);
+      } else {
+        output_[CTRL_CH_YAW_ANGLE] = 0;
+      }
+
+      /* z轴角速度环 */
+      if (check_pid(pid_enable_, CTRL_CH_GYRO_Z)) {
+        output_[CTRL_CH_GYRO_Z] = this->pid_[CTRL_CH_GYRO_Z]->Calculate(
+            this->setpoint_[CTRL_CH_GYRO_Z], this->feeback_[CTRL_CH_GYRO_Z],
+            dt_);
+      } else {
+        output_[CTRL_CH_GYRO_Z] = 0;
+      }
+
+      /* 输出加和 */
+      float out_balance = 0.0f, out_yaw = 0.0f;
+
+      for (int i = 0; i < CTRL_CH_YAW_ANGLE; i++) {
+        out_balance += output_[i];
+      }
+
+      for (int i = CTRL_CH_YAW_ANGLE; i < CTRL_CH_NUM; i++) {
+        out_yaw += output_[i];
+      }
+
+      motor_out_[LEFT_WHEEL] = out_balance - out_yaw;
+      motor_out_[RIGHT_WHEEL] = -out_balance - out_yaw;
+
+      clampf(&motor_out_[LEFT_WHEEL], -1.0f, 1.0f);
+      clampf(&motor_out_[RIGHT_WHEEL], -1.0f, 1.0f);
+
       for (uint8_t i = 0; i < WHEEL_NUM; i++) {
         this->motor_[i]->Control(this->motor_out_[i]);
       }
       break;
     }
 
-    case Balance::RELAX: /* 放松模式,不输出 */
+    /* 放松模式,不输出 */
+    case Balance::RELAX:
       for (size_t i = 0; i < WHEEL_NUM; i++) {
         this->motor_[i]->Relax();
       }
@@ -202,15 +318,24 @@ void Balance<Motor, MotorParam>::SetMode(Balance::Mode mode) {
   }
 
   /* 切换模式后重置PID和滤波器 */
-  for (size_t i = 0; i < WHEEL_NUM; i++) {
-    this->wheel_actr_[i]->Reset();
+  for (auto pid : pid_) {
+    pid->Reset();
   }
 
-  this->eulr_pid_.Reset();
-  this->gyro_pid_.Reset();
-  this->speed_pid_.Reset();
-  this->setpoint_.angle.yaw = this->eulr_.yaw;
+  speed_filter_.Reset(0.0f);
+
+  for (auto data : setpoint_) {
+    data = 0.0f;
+  }
+
+  for (auto data : feeback_) {
+    data = 0.0f;
+  }
+
+  this->setpoint_[CTRL_CH_YAW_ANGLE] = this->eulr_.yaw;
+  this->feeback_[CTRL_CH_DISPLACEMENT] = 0.0f;
   this->mode_ = mode;
 }
 
 template class Module::Balance<Device::RMMotor, Device::RMMotor::Param>;
+template class Module::Balance<Device::RMDMotor, Device::RMDMotor::Param>;
