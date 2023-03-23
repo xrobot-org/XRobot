@@ -25,25 +25,18 @@ namespace Component {
 namespace Type {
 class CycleValue {
  public:
-  CycleValue(const float& value) : value_(value) {
-    while (value_ >= M_2PI) {
-      value_ -= M_2PI;
+  static float Calculate(float value) {
+    value = fmodf(value, M_2PI);
+    if (value < 0) {
+      value += M_2PI;
     }
-
-    while (value_ < 0) {
-      value_ += M_2PI;
-    }
+    return value;
   }
 
-  CycleValue(const double& value) : value_(static_cast<float>(value)) {
-    while (value_ >= M_2PI) {
-      value_ -= M_2PI;
-    }
+  CycleValue(const float& value) : value_(Calculate(value)) {}
 
-    while (value_ < 0) {
-      value_ += M_2PI;
-    }
-  }
+  CycleValue(const double& value)
+      : value_(Calculate(static_cast<float>(value))) {}
 
   CycleValue(const CycleValue& value) : value_(value.value_) {
     while (value_ >= M_2PI) {
@@ -70,31 +63,13 @@ class CycleValue {
   }
 
   CycleValue operator+=(const float& value) {
-    float ans = value + value_;
-    while (ans >= M_2PI) {
-      ans -= M_2PI;
-    }
-
-    while (ans < 0) {
-      ans += M_2PI;
-    }
-
-    value_ = ans;
+    value_ = Calculate(value + value_);
 
     return *this;
   }
 
   CycleValue operator+=(const double& value) {
-    float ans = static_cast<float>(value) + value_;
-    while (ans >= M_2PI) {
-      ans -= M_2PI;
-    }
-
-    while (ans < 0) {
-      ans += M_2PI;
-    }
-
-    value_ = ans;
+    value_ = Calculate(static_cast<float>(value) + value_);
 
     return *this;
   }
@@ -114,7 +89,8 @@ class CycleValue {
     return *this;
   }
 
-  float operator-(const float& value) {
+  float operator-(const float& raw_value) {
+    float value = Calculate(raw_value);
     float ans = value_ - value;
     while (ans >= M_PI) {
       ans -= M_2PI;
@@ -127,8 +103,9 @@ class CycleValue {
     return ans;
   }
 
-  float operator-(const double& value) {
-    float ans = value_ - static_cast<float>(value);
+  float operator-(const double& raw_value) {
+    float value = Calculate(static_cast<float>(raw_value));
+    float ans = value_ - value;
     while (ans >= M_PI) {
       ans -= M_2PI;
     }
@@ -154,31 +131,13 @@ class CycleValue {
   }
 
   CycleValue operator-=(const float& value) {
-    float ans = value_ - value;
-    while (ans >= M_2PI) {
-      ans -= M_2PI;
-    }
-
-    while (ans < 0) {
-      ans += M_2PI;
-    }
-
-    value_ = ans;
+    value_ = Calculate(value_ - value);
 
     return *this;
   }
 
   CycleValue operator-=(const double& value) {
-    float ans = value_ - static_cast<float>(value);
-    while (ans >= M_2PI) {
-      ans -= M_2PI;
-    }
-
-    while (ans < 0) {
-      ans += M_2PI;
-    }
-
-    value_ = ans;
+    value_ = Calculate(value_ - static_cast<float>(value));
 
     return *this;
   }
@@ -203,14 +162,7 @@ class CycleValue {
   operator float() { return this->value_; }
 
   CycleValue& operator=(const float& value) {
-    value_ = value;
-    while (value_ >= M_2PI) {
-      value_ -= M_2PI;
-    }
-
-    while (value_ < 0) {
-      value_ += M_2PI;
-    }
+    value_ = Calculate(value);
     return *this;
   }
 
