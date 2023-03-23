@@ -18,7 +18,7 @@ namespace Robot {
 class Infantry {
  public:
   typedef struct {
-    Module::RMBalance::Param balance;
+    Module::RMDBalance::Param balance;
     Module::WheelLeg::Param leg;
     Device::BMI088::Rotation bmi088_rot;
     Device::Cap::Param cap;
@@ -38,7 +38,7 @@ class Infantry {
   Device::Referee referee_;
 
   Module::WheelLeg leg_;
-  Module::RMBalance balance_;
+  Module::RMDBalance balance_;
   // Module::Gimbal gimbal_;
   // Module::Launcher launcher_;
 

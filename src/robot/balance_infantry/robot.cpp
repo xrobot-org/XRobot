@@ -1,37 +1,11 @@
 #include "robot.hpp"
 
-#include <comp_actuator.hpp>
-#include <comp_pid.hpp>
-
-#include "dev_mit_motor.hpp"
 #include "system.hpp"
 
 /* clang-format off */
 Robot::Infantry::Param param = {
     .balance = {
-      .init_g_center = 0.08f,
-
-      .follow_pid_param = {
-        .k = 0.2f,
-        .p = 1.0f,
-        .i = 0.5f,
-        .d = 0.0f,
-        .i_limit = 0.011f,
-        .out_limit = 1.0f,
-        .d_cutoff_freq = -1.0f,
-        .cycle = true,
-      },
-
-      .comp_pid_param = {
-        .k = 0.2f,
-        .p = 1.0f,
-        .i = 0.5f,
-        .d = 0.0f,
-        .i_limit = 0.011f,
-        .out_limit = 1.0f,
-        .d_cutoff_freq = -1.0f,
-        .cycle = true,
-      },
+      .init_g_center = 0.0f,
 
       .EVENT_MAP = {
         Component::CMD::EventMapItem{
@@ -48,94 +22,93 @@ Robot::Infantry::Param param = {
         },
         Component::CMD::EventMapItem{
           Device::DR16::DR16_SW_L_POS_BOT,
-          Module::RMBalance::SET_MODE_FOLLOW
+          Module::RMBalance::SET_MODE_INDENPENDENT
         }
       },
 
-      .wheel_param = {
-        Component::SpeedActuator::Param{
-          .speed = {
-            .k = 0.0002f,
-            .p = 1.0f,
-            .i = 1.0f,
-            .d = 0.0f,
-            .i_limit = 1.0f,
-            .out_limit = 1.0f,
-            .d_cutoff_freq = -1.0f,
-            .cycle = false,
-          },
-
-          .in_cutoff_freq = -1.0f,
-
-          .out_cutoff_freq = -1.0f,
-        },
-        Component::SpeedActuator::Param{
-          .speed = {
-            .k = 0.0002f,
-            .p = 1.0f,
-            .i = 1.0f,
-            .d = 0.0f,
-            .i_limit = 1.0f,
-            .out_limit = 1.0f,
-            .d_cutoff_freq = -1.0f,
-            .cycle = false,
-          },
-
-          .in_cutoff_freq = -1.0f,
-
-          .out_cutoff_freq = -1.0f,
-        },
-      },
-
-      .eulr_param = Component::PID::Param{
-        .k = 2.0f,
-        .p = 1.0f,
-        .i = 1.0f,
-        .d = 0.04f,
-        .i_limit = 20.0f,
-        .out_limit = 20.0f,
-        .d_cutoff_freq = -1.0f,
-        .cycle = true,
-      },
-
-      .gyro_param = Component::PID::Param{
-        .k = 0.2f,
-        .p = 1.0f,
-        .i = 0.0f,
-        .d = 0.0f,
-        .i_limit = 1.0f,
-        .out_limit = 1.0f,
-        .d_cutoff_freq = -1.0f,
-        .cycle = false,
-      },
-
-      .speed_param = Component::PID::Param{
-          .k = 2.0f,
-          .p = 1.0f,
-          .i = 1.0f,
-          .d = 0.0f,
-          .i_limit = 0.15f,
-          .out_limit = 0.2f,
-          .d_cutoff_freq = -1.0f,
-          .cycle = false,
-      },
-
-      .center_filter_cutoff_freq = 10.0f,
+      .speed_filter_cutoff_freq = 0.0f,
 
       .motor_param = {
-        Device::RMMotor::Param{
-          .id_feedback = 0x202,
-          .id_control = M3508_M2006_CTRL_ID_BASE,
-          .model = Device::RMMotor::MOTOR_M3508,
-          .can = BSP_CAN_1,
+        Device::RMDMotor::Param{
+          .num = 0,
+          .can = BSP_CAN_2,
+          .reverse = false,
         },
-        Device::RMMotor::Param{
-          .id_feedback = 0x201,
-          .id_control = M3508_M2006_CTRL_ID_BASE,
-          .model = Device::RMMotor::MOTOR_M3508,
-          .can = BSP_CAN_1,
+        Device::RMDMotor::Param{
+          .num = 1,
+          .can = BSP_CAN_2,
+          .reverse = false,
         },
       },
+
+      .pid_param = {
+        /* CTRL_CH_DISPLACEMENT */
+        Component::PID::Param{
+          .k = 0.0f,
+          .p = 1.0f,
+          .i = 0.0f,
+          .d = 15.0f,
+          .i_limit = 0.0f,
+          .out_limit = 0.35f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = false,
+        },
+        /* CTRL_CH_FORWARD_SPEED */
+        Component::PID::Param{
+          .k = 0.0f,
+          .p = 1.0f,
+          .i = 0.0f,
+          .d = 0.0f,
+          .i_limit = 0.5f,
+          .out_limit = 1.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = false,
+        },
+        /* CTRL_CH_PITCH_ANGLE */
+        Component::PID::Param{
+          .k = 1.0f,
+          .p = 1.0f,
+          .i = 0.0f,
+          .d = 0.0f,
+          .i_limit = 0.1f,
+          .out_limit = 1.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = true,
+        },
+        /* CTRL_CH_GYRO_X */
+        Component::PID::Param{
+          .k = 0.2f,
+          .p = 1.0f,
+          .i = 0.0f,
+          .d = 0.008f,
+          .i_limit = 1.0f,
+          .out_limit = 1.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = false,
+        },
+        /* CTRL_CH_YAW_ANGLE */
+        Component::PID::Param{
+          .k = 0.05f,
+          .p = 1.0f,
+          .i = 0.0f,
+          .d = 0.0f,
+          .i_limit = 0.011f,
+          .out_limit = 1.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = true,
+        },
+        /* CTRL_CH_GYRO_Z */
+        Component::PID::Param{
+          .k = 0.05f,
+          .p = 1.0f,
+          .i = 0.0f,
+          .d = 0.0f,
+          .i_limit = 0.011f,
+          .out_limit = 1.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = true,
+        },
+      }
 
     },
 
@@ -147,16 +120,16 @@ Robot::Infantry::Param param = {
 
       .limit = {
         .high_max = 0.45,
-        .high_min = 0.15,
+        .high_min = 0.16,
       },
 
       .leg_max_angle = 0.0f,
 
       .motor_zero = {
-        0.630508065f,
-        5.75973034f,
-        1.45487654f,
-        3.00471401f,
+        5.87863111f,
+        3.565917625f,
+        1.73f,
+        2.86f,
       },
 
       .EVENT_MAP = {
@@ -170,11 +143,11 @@ Robot::Infantry::Param param = {
         },
         Component::CMD::EventMapItem{
           Device::DR16::DR16_SW_L_POS_MID,
-          Module::WheelLeg::SET_MODE_SQUAT
+          Module::WheelLeg::SET_MODE_RELAX
         },
         Component::CMD::EventMapItem{
           Device::DR16::DR16_SW_L_POS_BOT,
-          Module::WheelLeg::SET_MODE_SQUAT
+          Module::WheelLeg::SET_MODE_RELAX
         }
       },
 
@@ -185,8 +158,8 @@ Robot::Infantry::Param param = {
           .p = 1.0f,
           .i = 1.2f,
           .d = 0.0f,
-          .i_limit = 3.0f,
-          .out_limit = 3.0f,
+          .i_limit = 1.0f,
+          .out_limit = 2.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -212,8 +185,8 @@ Robot::Infantry::Param param = {
           .p = 1.0f,
           .i = 1.2f,
           .d = 0.0f,
-          .i_limit = 3.0f,
-          .out_limit = 3.0f,
+          .i_limit = 1.0f,
+          .out_limit = 2.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -239,8 +212,8 @@ Robot::Infantry::Param param = {
           .p = 1.0f,
           .i = 1.2f,
           .d = 0.0f,
-          .i_limit = 3.0f,
-          .out_limit = 3.0f,
+          .i_limit = 1.0f,
+          .out_limit = 2.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -266,8 +239,8 @@ Robot::Infantry::Param param = {
           .p = 1.0f,
           .i = 1.2f,
           .d = 0.0f,
-          .i_limit = 3.0f,
-          .out_limit = 3.0f,
+          .i_limit = 1.0f,
+          .out_limit = 2.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -291,45 +264,45 @@ Robot::Infantry::Param param = {
 
       .leg_motor = {
         Device::MitMotor::Param{
-          .kp = 30.0f,
+          .kp = 60.0f,
+          .kd = 0.1f,
+          .def_speed = 0.0f,
+          .id = 1,
+          .can = BSP_CAN_2,
+          .max_error = 0.05f,
+        },
+        Device::MitMotor::Param{
+          .kp = 60.0f,
+          .kd = 0.1f,
+          .def_speed = 0.0f,
+          .id = 2,
+          .can = BSP_CAN_2,
+          .max_error = 0.05f,
+        },
+        Device::MitMotor::Param{
+          .kp = 60.0f,
           .kd = 0.1f,
           .def_speed = 0.0f,
           .id = 1,
           .can = BSP_CAN_1,
-          .max_error = 0.1f,
+          .max_error = 0.05f,
         },
         Device::MitMotor::Param{
-          .kp = 30.0f,
-          .kd = 0.1f,
-          .def_speed = 0.0f,
-          .id = 2,
-          .can = BSP_CAN_1,
-          .max_error = 0.1f,
-        },
-        Device::MitMotor::Param{
-          .kp = 30.0f,
-          .kd = 0.1f,
-          .def_speed = 0.0f,
-          .id = 3,
-          .can = BSP_CAN_1,
-          .max_error = 0.1f,
-        },
-        Device::MitMotor::Param{
-          .kp = 30.0f,
+          .kp = 60.0f,
           .kd = 0.1f,
           .def_speed = 0.0f,
           .id = 4,
           .can = BSP_CAN_1,
-          .max_error = 0.1f,
+          .max_error = 0.05f,
         },
       },
   },
 
   .bmi088_rot = {
     .rot_mat = {
-      { +1, +0, +0},
-      { +0, +1, +0},
-      { +0, +0, +1},
+      {+0, -1, +0},
+      {+1, +0, +0},
+      {+0, +0, +1},
     },
   },
 
