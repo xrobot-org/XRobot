@@ -61,6 +61,11 @@ class ProjectTools:
                 self.kconfig_conditional_include(prefix, path[i], file, item)
 
     def kconfig_conditional_include(self, prefix, path, file, name):
+        kconfig_file_path = path + '/' + name + '/Kconfig'
+        if not os.path.exists(kconfig_file_path):
+            print('\033[0;31;40mError:Kconfig file [' + kconfig_file_path +
+                  '] not found.\033[0m')
+            exit(-1)
         file.write('\nif ' + self.config_prefix + prefix + name +
                    '\n\tsource \"' + path + '/' + name + '/Kconfig"\nendif\n')
 
