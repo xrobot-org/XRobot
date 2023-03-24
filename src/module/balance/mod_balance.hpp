@@ -70,6 +70,8 @@ class Balance {
     std::array<MotorParam, WHEEL_NUM> motor_param;
 
     std::array<Component::PID::Param, CTRL_CH_NUM> pid_param;
+
+    Component::PID::Param offset_pid;
   } Param;
 
   Balance(Param &param, float control_freq);
@@ -103,6 +105,8 @@ class Balance {
 
   std::array<Component::PID *, CTRL_CH_NUM> pid_;
   std::array<Device::BaseMotor *, WHEEL_NUM> motor_;
+
+  Component::PID offset_pid_;
 
   Feedback feeback_;
 

@@ -9,7 +9,7 @@
 
 #define MOTOR_MAX_ROTATIONAL_SPEED 6000.0f /* 电机的最大转速 */
 
-#define YAW_MAX_MOVE_SPEED (10.0f)
+#define YAW_MAX_MOVE_SPEED (2.0f)
 
 using namespace Module;
 
@@ -21,6 +21,7 @@ static constexpr bool check_pid(uint8_t pid, uint8_t ch) {
 template <typename Motor, typename MotorParam>
 Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
     : param_(param),
+      offset_pid_(param.offset_pid, control_freq),
       speed_filter_(control_freq, param.speed_filter_cutoff_freq),
       ctrl_lock_(true) {
   constexpr auto WHELL_NAMES = magic_enum::enum_names<Wheel>();
@@ -202,9 +203,10 @@ void Balance<Motor, MotorParam>::Control() {
   setpoint_[CTRL_CH_FORWARD_SPEED] = this->move_vec_.vy;
   setpoint_[CTRL_CH_PITCH_ANGLE] = param_.init_g_center;
   setpoint_[CTRL_CH_GYRO_X] = 0.0f;
-  float yaw_delta = this->move_vec_.wz * YAW_MAX_MOVE_SPEED * dt_;
+  float yaw_delta =
+      (this->move_vec_.vx + this->move_vec_.wz) * YAW_MAX_MOVE_SPEED * dt_;
   setpoint_[CTRL_CH_YAW_ANGLE] =
-      Component::Type::CycleValue(setpoint_[CTRL_CH_YAW_ANGLE] + yaw_delta);
+      Component::Type::CycleValue(setpoint_[CTRL_CH_YAW_ANGLE] - yaw_delta);
   setpoint_[CTRL_CH_GYRO_Z] = 0.0f;
 
   /* 全状态反馈控制 */
@@ -283,6 +285,8 @@ void Balance<Motor, MotorParam>::Control() {
         out_balance += output_[i];
       }
 
+      out_balance = offset_pid_.Calculate(0.0f, -out_balance, dt_);
+
       for (int i = CTRL_CH_YAW_ANGLE; i < CTRL_CH_NUM; i++) {
         out_yaw += output_[i];
       }
@@ -321,6 +325,8 @@ void Balance<Motor, MotorParam>::SetMode(Balance::Mode mode) {
   for (auto pid : pid_) {
     pid->Reset();
   }
+
+  offset_pid_.Reset();
 
   speed_filter_.Reset(0.0f);
 

@@ -45,7 +45,7 @@ Robot::Simulator::Param param = {
           .k = 40.0f,
           .p = 1.0f,
           .i = 0.0f,
-          .d = 25.0f,
+          .d = 45.0f,
           .i_limit = 0.6f,
           .out_limit = 0.8f,
           .d_cutoff_freq = -1.0f,
@@ -53,12 +53,12 @@ Robot::Simulator::Param param = {
         },
         /* CTRL_CH_FORWARD_SPEED */
         Component::PID::Param{
-          .k = 0.5f,
+          .k = 0.7f,
           .p = 1.0f,
           .i = 0.0f,
-          .d = 0.0f,
+          .d = 0.2f,
           .i_limit = 0.3f,
-          .out_limit = 0.8f,
+          .out_limit = 0.6f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -75,7 +75,7 @@ Robot::Simulator::Param param = {
         },
         /* CTRL_CH_GYRO_X */
         Component::PID::Param{
-          .k = 0.2f,
+          .k = 0.4f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.0f,
@@ -106,6 +106,17 @@ Robot::Simulator::Param param = {
           .d_cutoff_freq = -1.0f,
           .cycle = true,
         },
+      },
+
+      .offset_pid = {
+        .k = 1.0f,
+        .p = 1.0f,
+        .i = 10.0f,
+        .d = 0.0f,
+        .i_limit = 1.0f,
+        .out_limit = 1.0f,
+        .d_cutoff_freq = -1.0f,
+        .cycle = true,
       }
   }
 };

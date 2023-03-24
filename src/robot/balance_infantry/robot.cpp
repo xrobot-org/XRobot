@@ -30,21 +30,21 @@ Robot::Infantry::Param param = {
 
       .motor_param = {
         Device::RMDMotor::Param{
-          .num = 0,
-          .can = BSP_CAN_2,
-          .reverse = false,
-        },
-        Device::RMDMotor::Param{
           .num = 1,
           .can = BSP_CAN_2,
-          .reverse = false,
+          .reverse = true,
+        },
+        Device::RMDMotor::Param{
+          .num = 0,
+          .can = BSP_CAN_2,
+          .reverse = true,
         },
       },
 
       .pid_param = {
         /* CTRL_CH_DISPLACEMENT */
         Component::PID::Param{
-          .k = 0.0f,
+          .k = 10.0f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 15.0f,
@@ -55,7 +55,7 @@ Robot::Infantry::Param param = {
         },
         /* CTRL_CH_FORWARD_SPEED */
         Component::PID::Param{
-          .k = 0.0f,
+          .k = 0.3f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.0f,
@@ -88,26 +88,37 @@ Robot::Infantry::Param param = {
         },
         /* CTRL_CH_YAW_ANGLE */
         Component::PID::Param{
-          .k = 0.05f,
+          .k = 0.45f,
           .p = 1.0f,
-          .i = 0.0f,
-          .d = 0.0f,
-          .i_limit = 0.011f,
-          .out_limit = 1.0f,
+          .i = 0.3f,
+          .d = 0.002f,
+          .i_limit = 0.2f,
+          .out_limit = 0.4f,
           .d_cutoff_freq = -1.0f,
           .cycle = true,
         },
         /* CTRL_CH_GYRO_Z */
         Component::PID::Param{
-          .k = 0.05f,
+          .k = 0.1f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.0f,
           .i_limit = 0.011f,
-          .out_limit = 1.0f,
+          .out_limit = 0.2f,
           .d_cutoff_freq = -1.0f,
           .cycle = true,
         },
+      },
+
+      .offset_pid = {
+        .k = 1.0f,
+        .p = 1.0f,
+        .i = 3.0f,
+        .d = 0.0f,
+        .i_limit = 1.0f,
+        .out_limit = 1.0f,
+        .d_cutoff_freq = -1.0f,
+        .cycle = true,
       }
 
     },
@@ -143,11 +154,11 @@ Robot::Infantry::Param param = {
         },
         Component::CMD::EventMapItem{
           Device::DR16::DR16_SW_L_POS_MID,
-          Module::WheelLeg::SET_MODE_RELAX
+          Module::WheelLeg::SET_MODE_SQUAT
         },
         Component::CMD::EventMapItem{
           Device::DR16::DR16_SW_L_POS_BOT,
-          Module::WheelLeg::SET_MODE_RELAX
+          Module::WheelLeg::SET_MODE_SQUAT
         }
       },
 
