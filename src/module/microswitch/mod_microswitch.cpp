@@ -11,11 +11,6 @@ MicroSwitch::MicroSwitch()
       on_send_delay_("sw_on_delay", 2),
       off_send_delay_("sw_off_delay", 100),
       cmd_(this, SetCMD, "set_switch") {
-  for (int i = 0; i < SWITCH_NUM; i++) {
-    switch_id_[i] = new System::Database::Key<uint32_t>(
-        (std::string("sw_id_") + std::to_string(i)).c_str(), i);
-  }
-
   auto microswitch_thread = [](MicroSwitch *microswitch) {
     microswitch->UpdatePinStatus();
     microswitch->TransData();
@@ -55,7 +50,7 @@ void MicroSwitch::TransData() {
   if (bsp_time_get_ms() - last_send_time_ >= delay) {
     last_send_time_ = bsp_time_get_ms();
     for (int i = 0; i < SWITCH_NUM; i++) {
-      send_buff_.data[i * 2] = switch_id_[i]->data_;
+      send_buff_.data[i * 2] = i;
       send_buff_.data[i * 2 + 1] = gpio_status_[i];
     }
     send_buff_.index = can_id_.data_;
@@ -71,8 +66,6 @@ int MicroSwitch::SetCMD(MicroSwitch *microswitch, int argc, char **argv) {
     ms_printf("set_off_delay  [time]  设置开关未闭合时发送延时ms");
     ms_enter();
     ms_printf("set_on_delay   [time]  设置开关闭合时发送延时ms");
-    ms_enter();
-    ms_printf("set_switch_id  [num] [id]   设置每个开关的id");
     ms_enter();
   } else if (argc == 3 && strcmp(argv[1], "set_off_delay") == 0) {
     int delay = std::stoi(argv[2]);
@@ -113,22 +106,6 @@ int MicroSwitch::SetCMD(MicroSwitch *microswitch, int argc, char **argv) {
 
     ms_enter();
 
-  } else if (argc == 4 && strcmp(argv[1], "set_switch_id") == 0) {
-    int num = std::stoi(argv[2]);
-
-    int id = std::stoi(argv[3]);
-
-    if (num >= SWITCH_NUM || num < 0) {
-      ms_printf("命令错误");
-      ms_enter();
-      return 0;
-    }
-
-    microswitch->switch_id_[num]->Set(id);
-
-    ms_printf("switch %d id:%d", num, id);
-
-    ms_enter();
   } else {
     ms_printf("命令错误");
 

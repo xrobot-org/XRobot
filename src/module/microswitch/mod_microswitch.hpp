@@ -6,7 +6,7 @@ class MicroSwitch {
  public:
   typedef enum { SWITCH_1, SWITCH_2, SWITCH_3, SWITCH_4, SWITCH_NUM } SwitchID;
 
-  typedef enum { ON, OFF } Status;
+  typedef enum { OFF, ON } Status;
 
   MicroSwitch();
 
@@ -17,8 +17,6 @@ class MicroSwitch {
   static int SetCMD(MicroSwitch* imu, int argc, char** argv);
 
  private:
-  std::array<System::Database::Key<uint32_t>*, SWITCH_NUM> switch_id_;
-
   std::array<uint8_t, SWITCH_NUM> gpio_status_;
 
   System::Database::Key<uint32_t> can_id_;
