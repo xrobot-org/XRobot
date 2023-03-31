@@ -3,6 +3,7 @@
 #include <device.hpp>
 
 #include "comp_cmd.hpp"
+#include "comp_ui.hpp"
 #include "comp_utils.hpp"
 
 namespace Device {
@@ -98,6 +99,10 @@ class DR16 {
    */
   bool DataCorrupted();
 
+  static void DrawUIStatic(DR16* dr16);
+
+  static void DrawUIDynamic(DR16* dr16);
+
   static DR16::Data data_;
 
  private:
@@ -114,5 +119,13 @@ class DR16 {
   Message::Topic<Component::CMD::Data> cmd_tp_;
 
   Component::CMD::Data cmd_;
+
+  Component::UI::Ele ui_mode_data_;
+
+  Component::UI::Str ui_string_data_;
+
+  Component::UI::String string_;
+
+  Component::UI::Rectangle rectangle_;
 };
 }  // namespace Device

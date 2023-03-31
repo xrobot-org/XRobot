@@ -3,6 +3,7 @@
 */
 #include "comp_ui.hpp"
 
+using namespace Component;
 typedef enum {
   UI_ELE_LINE = 0,
   UI_ELE_RECT,
@@ -29,12 +30,13 @@ typedef enum {
  * @param y_end 终点y坐标
  * @return int8_t
  */
-int8_t ui_draw_line(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
-                    uint8_t layer, ui_color_t color, uint16_t width,
-                    uint16_t x_start, uint16_t y_start, uint16_t x_end,
-                    uint16_t y_end) {
+int8_t Component::UI::Line::Draw(Ele *ele, const char *name,
+                                 GraphicOperation op, uint8_t layer,
+                                 Color color, uint16_t width, uint16_t x_start,
+                                 uint16_t y_start, uint16_t x_end,
+                                 uint16_t y_end) {
   ASSERT(ele);
-  (void)snprintf(reinterpret_cast<char *>(ele->name), 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->name), 3, "%-3s", name);
   ele->layer = layer;
   ele->op = op;
   ele->type_ele = UI_ELE_LINE;
@@ -62,12 +64,13 @@ int8_t ui_draw_line(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
  * @param y_end 对角顶点y坐标
  * @return int8_t
  */
-int8_t ui_draw_rectangle(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
-                         uint8_t layer, ui_color_t color, uint16_t width,
-                         uint16_t x_start, uint16_t y_start, uint16_t x_end,
-                         uint16_t y_end) {
+int8_t Component::UI::Rectangle::Draw(Ele *ele, const char *name,
+                                      GraphicOperation op, uint8_t layer,
+                                      Color color, uint16_t width,
+                                      uint16_t x_start, uint16_t y_start,
+                                      uint16_t x_end, uint16_t y_end) {
   ASSERT(ele);
-  (void)snprintf(reinterpret_cast<char *>(ele->name), 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->name), 3, "%-3s", name);
   ele->op = op;
   ele->type_ele = UI_ELE_RECT;
   ele->layer = layer;
@@ -94,11 +97,13 @@ int8_t ui_draw_rectangle(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
  * @param radius 半径
  * @return int8_t
  */
-int8_t ui_draw_cycle(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
-                     uint8_t layer, ui_color_t color, uint16_t width,
-                     uint16_t x_center, uint16_t y_center, uint16_t radius) {
+int8_t Component::UI::Cycle::Draw(Ele *ele, const char *name,
+                                  GraphicOperation op, uint8_t layer,
+                                  Color color, uint16_t width,
+                                  uint16_t x_center, uint16_t y_center,
+                                  uint16_t radius) {
   ASSERT(ele);
-  (void)snprintf(reinterpret_cast<char *>(ele->name), 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->name), 3, "%-3s", name);
   ele->op = op;
   ele->layer = layer;
   ele->type_ele = UI_ELE_CYCLE;
@@ -125,12 +130,13 @@ int8_t ui_draw_cycle(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
  * @param y_semiaxis y半轴长度
  * @return int8_t
  */
-int8_t ui_draw_oval(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
-                    uint8_t layer, ui_color_t color, uint16_t width,
-                    uint16_t x_center, uint16_t y_center, uint16_t x_semiaxis,
-                    uint16_t y_semiaxis) {
+int8_t Component::UI::Oval::Draw(Ele *ele, const char *name,
+                                 GraphicOperation op, uint8_t layer,
+                                 Color color, uint16_t width, uint16_t x_center,
+                                 uint16_t y_center, uint16_t x_semiaxis,
+                                 uint16_t y_semiaxis) {
   ASSERT(ele);
-  (void)snprintf(reinterpret_cast<char *>(ele->name), 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->name), 3, "%-3s", name);
   ele->op = op;
   ele->type_ele = UI_ELE_OVAL;
   ele->layer = layer;
@@ -160,13 +166,14 @@ int8_t ui_draw_oval(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
  * @param y_semiaxis y半轴长度
  * @return int8_t
  */
-int8_t ui_draw_arc(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
-                   uint8_t layer, ui_color_t color, uint16_t angle_start,
-                   uint16_t angle_end, uint16_t width, uint16_t x_center,
-                   uint16_t y_center, uint16_t x_semiaxis,
-                   uint16_t y_semiaxis) {
+int8_t Component::UI::Arc::Draw(Ele *ele, const char *name, GraphicOperation op,
+                                uint8_t layer, Color color,
+                                uint16_t angle_start, uint16_t angle_end,
+                                uint16_t width, uint16_t x_center,
+                                uint16_t y_center, uint16_t x_semiaxis,
+                                uint16_t y_semiaxis) {
   ASSERT(ele);
-  (void)snprintf(reinterpret_cast<char *>(ele->name), 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->name), 3, "%-3s", name);
   ele->op = op;
   ele->type_ele = UI_ELE_ARC;
   ele->layer = layer;
@@ -199,13 +206,15 @@ int8_t ui_draw_arc(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
  * @param float_low 32位浮点数
  * @return int8_t
  */
-int8_t ui_draw_float(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
-                     uint8_t layer, ui_color_t color, uint16_t font_size,
-                     uint16_t digits, uint16_t width, uint16_t x_start,
-                     uint16_t y_start, uint16_t float_high,
-                     uint16_t float_middle, uint16_t float_low) {
+int8_t Component::UI::FloatNum::Draw(Ele *ele, const char *name,
+                                     GraphicOperation op, uint8_t layer,
+                                     Color color, uint16_t font_size,
+                                     uint16_t digits, uint16_t width,
+                                     uint16_t x_start, uint16_t y_start,
+                                     uint16_t float_high, uint16_t float_middle,
+                                     uint16_t float_low) {
   ASSERT(ele);
-  (void)snprintf(reinterpret_cast<char *>(ele->name), 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->name), 3, "%-3s", name);
   ele->op = op;
   ele->type_ele = UI_ELE_FLOAT;
   ele->layer = layer;
@@ -238,13 +247,12 @@ int8_t ui_draw_float(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
  * @param int32_t_low 32位整型数
  * @return int8_t
  */
-int8_t ui_draw_int(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
-                   uint8_t layer, ui_color_t color, uint16_t font_size,
-                   uint16_t width, uint16_t x_start, uint16_t y_start,
-                   uint16_t int32_t_high, uint16_t int32_t_middle,
-                   uint16_t int32_t_low) {
+int8_t Component::UI::IntNum::Draw(
+    Ele *ele, const char *name, GraphicOperation op, uint8_t layer, Color color,
+    uint16_t font_size, uint16_t width, uint16_t x_start, uint16_t y_start,
+    uint16_t int32_t_high, uint16_t int32_t_middle, uint16_t int32_t_low) {
   ASSERT(ele);
-  (void)snprintf(reinterpret_cast<char *>(ele->name), 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->name), 3, "%-3s", name);
   ele->op = op;
   ele->type_ele = UI_ELE_INT;
   ele->layer = layer;
@@ -275,12 +283,14 @@ int8_t ui_draw_int(ui_ele_t *ele, const char *name, ui_graphic_op_t op,
  * @param str 字符串首地址
  * @return int8_t
  */
-int8_t ui_draw_string(ui_string_t *ele, const char *name, ui_graphic_op_t op,
-                      uint8_t layer, ui_color_t color, uint16_t font_size,
-                      uint16_t length, uint16_t width, uint16_t x_start,
-                      uint16_t y_start, const char *str) {
+int8_t Component::UI::String::Draw(Str *ele, const char *name,
+                                   GraphicOperation op, uint8_t layer,
+                                   Color color, uint16_t font_size,
+                                   uint16_t length, uint16_t width,
+                                   uint16_t x_start, uint16_t y_start,
+                                   const char *str) {
   ASSERT(ele);
-  (void)snprintf(reinterpret_cast<char *>(ele->graphic.name), 2, "%-2s", name);
+  (void)snprintf(reinterpret_cast<char *>(ele->graphic.name), 3, "%-3s", name);
   ele->graphic.op = op;
   ele->graphic.type_ele = UI_ELE_STR;
   ele->graphic.layer = layer;
@@ -291,7 +301,7 @@ int8_t ui_draw_string(ui_string_t *ele, const char *name, ui_graphic_op_t op,
   ele->graphic.x_start = x_start;
   ele->graphic.y_start = y_start;
   memset(ele->str, 0x00, sizeof(ele->str));
-  (void)snprintf(reinterpret_cast<char *>(ele->str), strlen(str) + 1, "%-2s",
+  (void)snprintf(reinterpret_cast<char *>(ele->str), strlen(str) + 1, "%-3s",
                  str);
   return 0;
 }
@@ -304,7 +314,7 @@ int8_t ui_draw_string(ui_string_t *ele, const char *name, ui_graphic_op_t op,
  * @param layer 图层
  * @return int8_t
  */
-int8_t ui_del_layer(ui_del_t *del, ui_del_op_t op, uint8_t layer) {
+int8_t Component::UI::Delete::Draw(Del *del, DelOperation op, uint8_t layer) {
   ASSERT(del);
   del->op = op;
   del->layer = layer;

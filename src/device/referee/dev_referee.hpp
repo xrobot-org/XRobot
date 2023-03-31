@@ -348,7 +348,7 @@ class Referee {
     Header frame_header;
     uint16_t cmd_id;
     Referee::InterStudentHeader student_header;
-    std::array<ui_ele_t, 1> ele_data;
+    std::array<Component::UI::Ele, 1> ele_data;
     uint16_t crc16;
   } UIElePack_1;
 
@@ -356,7 +356,7 @@ class Referee {
     Header frame_header;
     uint16_t cmd_id;
     Referee::InterStudentHeader student_header;
-    std::array<ui_ele_t, 2> ele_data;
+    std::array<Component::UI::Ele, 2> ele_data;
     uint16_t crc16;
   } UIElePack_2;
 
@@ -364,7 +364,7 @@ class Referee {
     Header frame_header;
     uint16_t cmd_id;
     Referee::InterStudentHeader student_header;
-    std::array<ui_ele_t, 5> ele_data;
+    std::array<Component::UI::Ele, 5> ele_data;
     uint16_t crc16;
   } UIElePack_5;
 
@@ -372,7 +372,7 @@ class Referee {
     Header frame_header;
     uint16_t cmd_id;
     Referee::InterStudentHeader student_header;
-    std::array<ui_ele_t, 7> ele_data;
+    std::array<Component::UI::Ele, 7> ele_data;
     uint16_t crc16;
   } UIElePack_7;
 
@@ -380,7 +380,7 @@ class Referee {
     Header frame_header;
     uint16_t cmd_id;
     Referee::InterStudentHeader student_header;
-    ui_del_t del_data;
+    Component::UI::Del del_data;
     uint16_t crc16;
   } UIDelPack;
 
@@ -388,7 +388,7 @@ class Referee {
     Header frame_header;
     uint16_t cmd_id;
     Referee::InterStudentHeader student_header;
-    ui_string_t str_data;
+    Component::UI::Str str_data;
     uint16_t crc16;
   } UIStringPack;
 
@@ -396,7 +396,7 @@ class Referee {
     UIElePack_7 ele_7;
     UIStringPack str;
     UIDelPack del;
-    struct {
+    struct __attribute__((packed)) {
       Header frame_header;
       uint16_t cmd_id;
       Referee::InterStudentHeader student_header;
@@ -415,9 +415,9 @@ class Referee {
 
   bool UpdateUI();
 
-  static bool AddUI(ui_ele_t ui_data);
-  static bool AddUI(ui_del_t ui_data);
-  static bool AddUI(ui_string_t ui_data);
+  static bool AddUI(Component::UI::Ele ui_data);
+  static bool AddUI(Component::UI::Del ui_data);
+  static bool AddUI(Component::UI::Str ui_data);
 
   static float UIGetHeight() { return 1080.0f; }
   static float UIGetWidth() { return 1920.0f; }
@@ -440,9 +440,23 @@ class Referee {
 
   Message::Topic<Data> ref_data_tp_ = Message::Topic<Data>("referee");
 
-  System::Queue<ui_ele_t> ele_data_ = System::Queue<ui_ele_t>(20);
-  System::Queue<ui_string_t> string_data_ = System::Queue<ui_string_t>(20);
-  System::Queue<ui_del_t> del_data_ = System::Queue<ui_del_t>(20);
+  System::Queue<Component::UI::Ele> ele_data_ =
+      System::Queue<Component::UI::Ele>(10);
+
+  System::Queue<Component::UI::Str> string_data_ =
+      System::Queue<Component::UI::Str>(10);
+
+  System::Queue<Component::UI::Del> del_data_ =
+      System::Queue<Component::UI::Del>(10);
+
+  System::Queue<Component::UI::Ele> static_ele_data_ =
+      System::Queue<Component::UI::Ele>(10);
+
+  System::Queue<Component::UI::Str> static_string_data_ =
+      System::Queue<Component::UI::Str>(10);
+
+  System::Queue<Component::UI::Del> static_del_data_ =
+      System::Queue<Component::UI::Del>(10);
 
   System::Semaphore ui_lock_ = System::Semaphore(true);
 

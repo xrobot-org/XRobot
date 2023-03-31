@@ -1,5 +1,5 @@
 #include "dev_cap.hpp"
-
+#include "dev_referee.hpp"
 #include "bsp_time.h"
 
 #define CAP_RES (100.0f) /* 电容数据分辨率 */
@@ -46,6 +46,9 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
 
   this->thread_.Create(cap_thread, this, "cap_thread",
                        DEVICE_CAP_TASK_STACK_DEPTH, System::Thread::MEDIUM);
+  System::Timer::Create(this->DrawUIStatic, this, 2300);
+
+  System::Timer::Create(this->DrawUIDynamic, this, 200);
 }
 
 bool Cap::Update() {
@@ -108,4 +111,53 @@ float Cap::GetPercentage() {
   float percentage = (C_CAP - C_MIN) / (C_MAX - C_MIN);
   clampf(&percentage, 0.0f, 1.0f);
   return percentage;
+}
+
+void Cap::DrawUIStatic(Cap *cap) {
+  cap->string_.Draw(
+      &(cap->ui_string_data_), "CE", Component::UI::UI_GRAPHIC_OP_ADD,
+      Component::UI::UI_GRAPHIC_LAYER_CONST, Component::UI::UI_GREEN,
+      UI_DEFAULT_WIDTH * 20, 80, UI_CHAR_DEFAULT_WIDTH * 2,
+      static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.6f - 26.0f),
+      static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f + 10.0f),
+      "CAP");
+
+  if (cap->online_) {
+    cap->arc_.Draw(&(cap->ui_ele_data_), "CP", Component::UI::UI_GRAPHIC_OP_ADD,
+                   Component::UI::UI_GRAPHIC_LAYER_CAP, Component::UI::UI_GREEN,
+                   0, static_cast<uint16_t>(cap->info_.percentage_ * 360.f),
+                   UI_DEFAULT_WIDTH * 5,
+                   static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.6f),
+                   static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f),
+                   50, 50);
+  } else {
+    cap->arc_.Draw(&(cap->ui_ele_data_), "CP", Component::UI::UI_GRAPHIC_OP_ADD,
+                   Component::UI::UI_GRAPHIC_LAYER_CAP,
+                   Component::UI::UI_YELLOW, 0, 360, UI_DEFAULT_WIDTH * 5,
+                   static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.6f),
+                   static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2),
+                   50, 50);
+  }
+  Device::Referee::AddUI(cap->ui_ele_data_);
+  Device::Referee::AddUI(cap->ui_string_data_);
+}
+
+void Cap::DrawUIDynamic(Cap *cap) {
+  if (cap->online_) {
+    cap->arc_.Draw(
+        &(cap->ui_ele_data_), "CP", Component::UI::UI_GRAPHIC_OP_REWRITE,
+        Component::UI::UI_GRAPHIC_LAYER_CAP, Component::UI::UI_GREEN, 0,
+        static_cast<uint16_t>(cap->info_.percentage_ * 360.f),
+        UI_DEFAULT_WIDTH * 5,
+        static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.6f),
+        static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f), 50, 50);
+  } else {
+    cap->arc_.Draw(
+        &(cap->ui_ele_data_), "CP", Component::UI::UI_GRAPHIC_OP_REWRITE,
+        Component::UI::UI_GRAPHIC_LAYER_CAP, Component::UI::UI_YELLOW, 0, 360,
+        UI_DEFAULT_WIDTH * 5,
+        static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.6f),
+        static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2), 50, 50);
+  }
+  Device::Referee::AddUI(cap->ui_ele_data_);
 }

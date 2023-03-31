@@ -68,6 +68,10 @@ class Gimbal {
 
   void SetMode(Mode mode);
 
+  static void DrawUIStatic(Gimbal *gimbal);
+
+  static void DrawUIDynamic(Gimbal *gimbal);
+
  private:
   float last_wakeup_;
 
@@ -98,6 +102,13 @@ class Gimbal {
   Message::Topic<float> yaw_tp_ = Message::Topic<float>("chassis_yaw");
 
   float yaw_;
+
+  Component::UI::Ele ui_mode_data_;
+  Component::UI::Str ui_string_data_;
+
+  Component::UI::String string_;
+
+  Component::UI::Rectangle rectangle_;
 
   Component::Type::Eulr eulr_;
   Component::Type::Vector3 gyro_;

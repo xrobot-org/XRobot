@@ -96,6 +96,9 @@ Launcher::Launcher(Param& param, float control_freq)
   this->thread_.Create(launcher_thread, this, "launcher_thread",
                        MODULE_LAUNCHER_TASK_STACK_DEPTH,
                        System::Thread::MEDIUM);
+  System::Timer::Create(this->DrawUIStatic, this, 2200);
+
+  System::Timer::Create(this->DrawUIDynamic, this, 200);
 }
 
 void Launcher::UpdateFeedback() {
@@ -335,4 +338,189 @@ float Launcher::LimitLauncherFreq() {
       return 5.0f;
     }
   }
+}
+void Launcher::DrawUIStatic(Launcher* launcher) {
+  launcher->string_.Draw(
+      &(launcher->ui_string_data_1_), "SM", Component::UI::UI_GRAPHIC_OP_ADD,
+      Component::UI::UI_GRAPHIC_LAYER_CONST, Component::UI::UI_GREEN,
+      UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
+      static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                            REF_UI_RIGHT_START_W),
+      static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                            REF_UI_MODE_LINE3_H),
+      "SHOT  RELX  SAFE  LOAD");
+
+  launcher->string_.Draw(
+      &(launcher->ui_string_data_2_), "FM", Component::UI::UI_GRAPHIC_OP_ADD,
+      Component::UI::UI_GRAPHIC_LAYER_CONST, Component::UI::UI_GREEN,
+      UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
+      static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                            REF_UI_RIGHT_START_W),
+      static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                            REF_UI_MODE_LINE4_H),
+      "FIRE  SNGL  BRST  CONT");
+  float box_pos_left = 0.0f, box_pos_right = 0.0f;
+
+  /* 更新发射器模式选择框 */
+  switch (launcher->fire_ctrl_.fire_mode_) {
+    case RELAX:
+      box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
+      break;
+    case SAFE:
+      box_pos_left = REF_UI_MODE_OFFSET_3_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_3_RIGHT;
+      break;
+    case LOADED:
+      box_pos_left = REF_UI_MODE_OFFSET_4_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_4_RIGHT;
+      break;
+    default:
+      box_pos_left = 0.0f;
+      box_pos_right = 0.0f;
+      break;
+  }
+  if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
+    launcher->rectangle_.Draw(
+        &(launcher->ui_mode_data_2_), "FS", Component::UI::UI_GRAPHIC_OP_ADD,
+        Component::UI::UI_GRAPHIC_LAYER_LAUNCHER, Component::UI::UI_GREEN,
+        UI_DEFAULT_WIDTH,
+        static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                  REF_UI_RIGHT_START_W +
+                              box_pos_left),
+        static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                  REF_UI_MODE_LINE3_H +
+                              REF_UI_BOX_UP_OFFSET),
+        static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                  REF_UI_RIGHT_START_W +
+                              box_pos_right),
+        static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                  REF_UI_MODE_LINE3_H +
+                              REF_UI_BOX_BOT_OFFSET));
+  }
+
+  /* 更新开火模式选择框 */
+  switch (launcher->fire_ctrl_.trig_mode_) {
+    case SINGLE:
+      box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
+      break;
+    case BURST:
+      box_pos_left = REF_UI_MODE_OFFSET_3_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_3_RIGHT;
+      break;
+    case CONTINUED:
+      box_pos_left = REF_UI_MODE_OFFSET_4_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_4_RIGHT;
+      break;
+    default:
+      box_pos_left = 0.0f;
+      box_pos_right = 0.0f;
+      break;
+  }
+  if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
+    launcher->rectangle_.Draw(
+        &(launcher->ui_mode_data_1_), "TS", Component::UI::UI_GRAPHIC_OP_ADD,
+        Component::UI::UI_GRAPHIC_LAYER_LAUNCHER, Component::UI::UI_GREEN,
+        UI_DEFAULT_WIDTH,
+        static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                  REF_UI_RIGHT_START_W +
+                              box_pos_left),
+        static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                  REF_UI_MODE_LINE4_H +
+                              REF_UI_BOX_UP_OFFSET),
+        static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                  REF_UI_RIGHT_START_W +
+                              box_pos_right),
+        static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                  REF_UI_MODE_LINE4_H +
+                              REF_UI_BOX_BOT_OFFSET));
+  }
+  Device::Referee::AddUI(launcher->ui_mode_data_1_);
+  Device::Referee::AddUI(launcher->ui_string_data_1_);
+  Device::Referee::AddUI(launcher->ui_string_data_2_);
+}
+
+void Launcher::DrawUIDynamic(Launcher* launcher) {
+  float box_pos_left = 0.0f, box_pos_right = 0.0f;
+
+  /* 更新发射器模式选择框 */
+  switch (launcher->fire_ctrl_.fire_mode_) {
+    case RELAX:
+      box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
+      break;
+    case SAFE:
+      box_pos_left = REF_UI_MODE_OFFSET_3_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_3_RIGHT;
+      break;
+    case LOADED:
+      box_pos_left = REF_UI_MODE_OFFSET_4_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_4_RIGHT;
+      break;
+    default:
+      box_pos_left = 0.0f;
+      box_pos_right = 0.0f;
+      break;
+  }
+  if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
+    launcher->rectangle_.Draw(
+        &(launcher->ui_mode_data_2_), "FS",
+        Component::UI::UI_GRAPHIC_OP_REWRITE,
+        Component::UI::UI_GRAPHIC_LAYER_LAUNCHER, Component::UI::UI_GREEN,
+        UI_DEFAULT_WIDTH,
+        static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                  REF_UI_RIGHT_START_W +
+                              box_pos_left),
+        static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                  REF_UI_MODE_LINE3_H +
+                              REF_UI_BOX_UP_OFFSET),
+        static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                  REF_UI_RIGHT_START_W +
+                              box_pos_right),
+        static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                  REF_UI_MODE_LINE3_H +
+                              REF_UI_BOX_BOT_OFFSET));
+  }
+
+  /* 更新开火模式选择框 */
+  switch (launcher->fire_ctrl_.trig_mode_) {
+    case SINGLE:
+      box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
+      break;
+    case BURST:
+      box_pos_left = REF_UI_MODE_OFFSET_3_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_3_RIGHT;
+      break;
+    case CONTINUED:
+      box_pos_left = REF_UI_MODE_OFFSET_4_LEFT;
+      box_pos_right = REF_UI_MODE_OFFSET_4_RIGHT;
+      break;
+    default:
+      box_pos_left = 0.0f;
+      box_pos_right = 0.0f;
+      break;
+  }
+  if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
+    launcher->rectangle_.Draw(
+        &(launcher->ui_mode_data_1_), "TS",
+        Component::UI::UI_GRAPHIC_OP_REWRITE,
+        Component::UI::UI_GRAPHIC_LAYER_LAUNCHER, Component::UI::UI_GREEN,
+        UI_DEFAULT_WIDTH,
+        static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                  REF_UI_RIGHT_START_W +
+                              box_pos_left),
+        static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                  REF_UI_MODE_LINE3_H +
+                              REF_UI_BOX_UP_OFFSET),
+        static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                  REF_UI_RIGHT_START_W +
+                              box_pos_right),
+        static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                  REF_UI_MODE_LINE3_H +
+                              REF_UI_BOX_BOT_OFFSET));
+  }
+  Device::Referee::AddUI(launcher->ui_mode_data_1_);
+  Device::Referee::AddUI(launcher->ui_mode_data_2_);
 }

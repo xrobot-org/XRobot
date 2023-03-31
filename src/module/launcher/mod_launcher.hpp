@@ -141,6 +141,10 @@ class Launcher {
 
   void PraseRef();
 
+  static void DrawUIStatic(Launcher *launcher);
+
+  static void DrawUIDynamic(Launcher *launcher);
+
  private:
   float last_wakeup_;
 
@@ -176,5 +180,16 @@ class Launcher {
   System::Semaphore ctrl_lock_;
 
   Device::Referee::Data raw_ref_;
+
+  Component::UI::Ele ui_mode_data_1_;
+  Component::UI::Ele ui_mode_data_2_;
+
+  Component::UI::Str ui_string_data_1_;
+
+  Component::UI::Str ui_string_data_2_;
+
+  Component::UI::String string_;
+
+  Component::UI::Rectangle rectangle_;
 };
 }  // namespace Module

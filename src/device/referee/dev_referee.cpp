@@ -5,6 +5,7 @@
 #include "dev_referee.hpp"
 
 #include "bsp_delay.h"
+#include "bsp_time.h"
 #include "bsp_uart.h"
 #include "comp_crc16.hpp"
 #include "comp_crc8.hpp"
@@ -102,7 +103,7 @@ Referee::Referee() {
   auto ref_trans_thread = [](Referee *ref) {
     while (1) {
       ref->UpdateUI();
-      ref->trans_thread_.SleepUntil(2);
+      ref->trans_thread_.SleepUntil(40);
     }
   };
   this->trans_thread_.Create(ref_trans_thread, this, "ref_trans_thread",
@@ -276,49 +277,116 @@ bool Referee::UpdateUI() {
   uint32_t ele_counter = 0;
   uint32_t pack_size = 0;
   CMDID cmd_id = REF_STDNT_CMD_ID_UI_DEL;
+  Component::UI::GraphicOperation op = Component::UI::UI_GRAPHIC_OP_NOTHING;
 
-  switch (this->ele_data_.Size()) {
-    case 0:
-      break;
-    case 1:
-      cmd_id = REF_STDNT_CMD_ID_UI_DRAW1;
+  if (!done && this->static_del_data_.Size() > 0) {
+    cmd_id = REF_STDNT_CMD_ID_UI_DEL;
+    pack_size = sizeof(UIDelPack);
+    done = true;
+    op = Component::UI::UI_GRAPHIC_OP_ADD;
+  }
+
+  if (bsp_time_get_ms() % 6000 > 3000) {
+    if (!done && this->static_string_data_.Size() > 0) {
+      cmd_id = REF_STDNT_CMD_ID_UI_STR;
+      pack_size = sizeof(UIStringPack);
       done = true;
-      ele_counter = 1;
-      pack_size = sizeof(UIElePack_1);
-      break;
-    case 2:
-    case 3:
-    case 4:
-      cmd_id = REF_STDNT_CMD_ID_UI_DRAW2;
-      done = true;
-      ele_counter = 2;
-      pack_size = sizeof(UIElePack_2);
-      break;
-    case 5:
-    case 6:
-      cmd_id = REF_STDNT_CMD_ID_UI_DRAW5;
-      done = true;
-      ele_counter = 5;
-      pack_size = sizeof(UIElePack_5);
-      break;
-    default:
-      cmd_id = REF_STDNT_CMD_ID_UI_DRAW7;
-      done = true;
-      ele_counter = 7;
-      pack_size = sizeof(UIElePack_7);
-      break;
+      op = Component::UI::UI_GRAPHIC_OP_ADD;
+    }
+
+    static_ele_data_.Reset();
+  } else {
+    if (!done && this->static_ele_data_.Size() > 0) {
+      switch (this->static_ele_data_.Size()) {
+        case 0:
+          break;
+        case 1:
+          cmd_id = REF_STDNT_CMD_ID_UI_DRAW1;
+          done = true;
+          op = Component::UI::UI_GRAPHIC_OP_ADD;
+          ele_counter = 1;
+          pack_size = sizeof(UIElePack_1);
+          break;
+        case 2:
+        case 3:
+        case 4:
+          cmd_id = REF_STDNT_CMD_ID_UI_DRAW2;
+          done = true;
+          op = Component::UI::UI_GRAPHIC_OP_ADD;
+          ele_counter = 2;
+          pack_size = sizeof(UIElePack_2);
+          break;
+        case 5:
+        case 6:
+          cmd_id = REF_STDNT_CMD_ID_UI_DRAW5;
+          done = true;
+          op = Component::UI::UI_GRAPHIC_OP_ADD;
+          ele_counter = 5;
+          pack_size = sizeof(UIElePack_5);
+          break;
+        default:
+          cmd_id = REF_STDNT_CMD_ID_UI_DRAW7;
+          done = true;
+          op = Component::UI::UI_GRAPHIC_OP_ADD;
+          ele_counter = 7;
+          pack_size = sizeof(UIElePack_7);
+          break;
+      }
+    }
+
+    static_string_data_.Reset();
   }
 
   if (!done && this->del_data_.Size() > 0) {
     cmd_id = REF_STDNT_CMD_ID_UI_DEL;
     pack_size = sizeof(UIDelPack);
     done = true;
+    op = Component::UI::UI_GRAPHIC_OP_REWRITE;
   }
 
   if (!done && this->string_data_.Size() > 0) {
     cmd_id = REF_STDNT_CMD_ID_UI_STR;
     pack_size = sizeof(UIStringPack);
     done = true;
+    op = Component::UI::UI_GRAPHIC_OP_REWRITE;
+  }
+
+  if (!done && this->ele_data_.Size() > 0) {
+    switch (this->ele_data_.Size()) {
+      case 0:
+        break;
+      case 1:
+        cmd_id = REF_STDNT_CMD_ID_UI_DRAW1;
+        done = true;
+        op = Component::UI::UI_GRAPHIC_OP_REWRITE;
+        ele_counter = 1;
+        pack_size = sizeof(UIElePack_1);
+        break;
+      case 2:
+      case 3:
+      case 4:
+        cmd_id = REF_STDNT_CMD_ID_UI_DRAW2;
+        done = true;
+        op = Component::UI::UI_GRAPHIC_OP_REWRITE;
+        ele_counter = 2;
+        pack_size = sizeof(UIElePack_2);
+        break;
+      case 5:
+      case 6:
+        cmd_id = REF_STDNT_CMD_ID_UI_DRAW5;
+        done = true;
+        op = Component::UI::UI_GRAPHIC_OP_REWRITE;
+        ele_counter = 5;
+        pack_size = sizeof(UIElePack_5);
+        break;
+      default:
+        cmd_id = REF_STDNT_CMD_ID_UI_DRAW7;
+        done = true;
+        ele_counter = 7;
+        op = Component::UI::UI_GRAPHIC_OP_REWRITE;
+        pack_size = sizeof(UIElePack_7);
+        break;
+    }
   }
 
   if (!done) {
@@ -336,26 +404,40 @@ bool Referee::UpdateUI() {
 
   if (ele_counter) {
     for (uint32_t i = 0; i < ele_counter; i++) {
-      this->ele_data_.Receive(this->ui_pack_.ele_7.ele_data[i], UINT32_MAX);
+      if (op == Component::UI::UI_GRAPHIC_OP_REWRITE) {
+        this->ele_data_.Receive(this->ui_pack_.ele_7.ele_data[i], UINT32_MAX);
+      } else {
+        this->static_ele_data_.Receive(this->ui_pack_.ele_7.ele_data[i],
+                                       UINT32_MAX);
+      }
     }
 
     uint16_t *crc_addr = reinterpret_cast<uint16_t *>(
         &this->ui_pack_.ele_7.ele_data[ele_counter]);
 
     *crc_addr = Component::CRC16::Calculate(
-        reinterpret_cast<const uint8_t *>(&this->ui_pack_), pack_size,
-        CRC16_INIT);
+        reinterpret_cast<const uint8_t *>(&this->ui_pack_),
+        pack_size - sizeof(uint16_t), CRC16_INIT);
   } else if (cmd_id == REF_STDNT_CMD_ID_UI_DEL) {
-    this->del_data_.Receive(this->ui_pack_.del.del_data, UINT32_MAX);
+    if (op == Component::UI::UI_GRAPHIC_OP_REWRITE) {
+      this->del_data_.Receive(this->ui_pack_.del.del_data, UINT32_MAX);
+    } else {
+      this->static_del_data_.Receive(this->ui_pack_.del.del_data, UINT32_MAX);
+    }
     this->ui_pack_.del.crc16 = Component::CRC16::Calculate(
-        reinterpret_cast<const uint8_t *>(&this->ui_pack_), pack_size,
-        CRC16_INIT);
+        reinterpret_cast<const uint8_t *>(&this->ui_pack_),
+        pack_size - sizeof(uint16_t), CRC16_INIT);
 
   } else if (cmd_id == REF_STDNT_CMD_ID_UI_STR) {
-    this->string_data_.Receive(this->ui_pack_.str.str_data, UINT32_MAX);
+    if (op == Component::UI::UI_GRAPHIC_OP_REWRITE) {
+      this->string_data_.Receive(this->ui_pack_.str.str_data, UINT32_MAX);
+    } else {
+      this->static_string_data_.Receive(this->ui_pack_.str.str_data,
+                                        UINT32_MAX);
+    }
     this->ui_pack_.str.crc16 = Component::CRC16::Calculate(
-        reinterpret_cast<const uint8_t *>(&this->ui_pack_), pack_size,
-        CRC16_INIT);
+        reinterpret_cast<const uint8_t *>(&this->ui_pack_),
+        pack_size - sizeof(uint16_t), CRC16_INIT);
   }
 
   bsp_uart_transmit(BSP_UART_REF, reinterpret_cast<uint8_t *>(&this->ui_pack_),
@@ -366,15 +448,19 @@ bool Referee::UpdateUI() {
   return true;
 }
 
-bool Referee::AddUI(ui_ele_t ui_data) {
+bool Referee::AddUI(Component::UI::Ele ui_data) {
   self_->ui_lock_.Take(UINT32_MAX);
-  self_->ele_data_.Send(ui_data, 0);
+  if (ui_data.op == Component::UI::UI_GRAPHIC_OP_ADD) {
+    self_->static_ele_data_.Send(ui_data, 0);
+  } else {
+    self_->ele_data_.Send(ui_data, 0);
+  }
   self_->ui_lock_.Give();
 
   return true;
 }
 
-bool Referee::AddUI(ui_del_t ui_data) {
+bool Referee::AddUI(Component::UI::Del ui_data) {
   self_->ui_lock_.Take(UINT32_MAX);
   self_->del_data_.Send(ui_data, 0);
   self_->ui_lock_.Give();
@@ -382,9 +468,13 @@ bool Referee::AddUI(ui_del_t ui_data) {
   return true;
 }
 
-bool Referee::AddUI(ui_string_t ui_data) {
+bool Referee::AddUI(Component::UI::Str ui_data) {
   self_->ui_lock_.Take(UINT32_MAX);
-  self_->string_data_.Send(ui_data, 0);
+  if (ui_data.graphic.op == Component::UI::UI_GRAPHIC_OP_ADD) {
+    self_->static_string_data_.Send(ui_data, 0);
+  } else {
+    self_->string_data_.Send(ui_data, 0);
+  }
   self_->ui_lock_.Give();
 
   return true;
