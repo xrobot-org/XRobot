@@ -351,17 +351,17 @@ class Referee {
 
   void Prase();
 
-  static bool AddUI(ui_ele_t ui_data) {
+  static bool AddUI(Component::UI::Ele ui_data) {
     (void)ui_data;
     return true;
   }
 
-  static bool AddUI(ui_del_t ui_data) {
+  static bool AddUI(Component::UI::Del ui_data) {
     (void)ui_data;
     return true;
   }
 
-  static bool AddUI(ui_string_t ui_data) {
+  static bool AddUI(Component::UI::Str ui_data) {
     (void)ui_data;
     return true;
   }

@@ -9,7 +9,6 @@
 #include "bsp_uart.h"
 #include "comp_crc16.hpp"
 #include "comp_crc8.hpp"
-#include "protocol.h"
 
 #define REF_HEADER_SOF (0xA5)
 #define REF_LEN_RX_BUFF (0xFF)
