@@ -71,9 +71,9 @@ static uint8_t tx_rx_buf[2];
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)
 static uint8_t dma_buf[BMI088_ACCL_RX_BUFF_LEN + BMI088_GYRO_RX_BUFF_LEN];
 static Component::PID::Param imu_temp_ctrl_pid_param = {
-    .k = 0.15f,
+    .k = 0.1f,
     .p = 1.0f,
-    .i = 0.0f,
+    .i = 0.05f,
     .d = 0.0f,
     .i_limit = 1.0f,
     .out_limit = 1.0f,
