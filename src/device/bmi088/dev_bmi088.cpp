@@ -13,6 +13,7 @@
 #include "bsp_gpio.h"
 #include "bsp_pwm.h"
 #include "bsp_spi.h"
+#include "bsp_time.h"
 #include "comp_pid.hpp"
 #include "comp_utils.hpp"
 
@@ -70,15 +71,17 @@ static uint8_t tx_rx_buf[2];
 // NOLINTNEXTLINE(modernize-avoid-c-arrays)
 static uint8_t dma_buf[BMI088_ACCL_RX_BUFF_LEN + BMI088_GYRO_RX_BUFF_LEN];
 static Component::PID::Param imu_temp_ctrl_pid_param = {
-    .k = 0.15f,
+    .k = 0.1f,
     .p = 1.0f,
-    .i = 0.0f,
+    .i = 0.05f,
     .d = 0.0f,
     .i_limit = 1.0f,
     .out_limit = 1.0f,
     .d_cutoff_freq = 0.0f,
     .cycle = false,
 };
+
+static float imu_temp_ctrl_time = 0.0f;
 
 using namespace Device;
 
@@ -177,7 +180,11 @@ BMI088::BMI088(BMI088::Rotation &rot)
   bsp_spi_register_callback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB, recv_cplt_callback,
                             this);
 
-  while (!Init()) {
+  while (!AcclInit()) {
+    System::Thread::Sleep(1);
+  }
+
+  while (!GyroInit()) {
     System::Thread::Sleep(1);
   }
 
@@ -190,7 +197,7 @@ BMI088::BMI088(BMI088::Rotation &rot)
       /* 开始数据接收DMA，加速度计和陀螺仪共用同一个SPI接口，
        * 一次只能开启一个DMA
        */
-      if (bmi088->accl_new_.Take(UINT32_MAX)) {
+      if (bmi088->accl_new_.Take(10)) {
         bmi088->spi_lock_.Take(UINT32_MAX);
         bmi088->StartRecvAccel();
         bmi088->accl_raw_.Take(UINT32_MAX);
@@ -198,11 +205,21 @@ BMI088::BMI088(BMI088::Rotation &rot)
         bmi088->spi_lock_.Give();
 
         bmi088->accl_tp_.Publish(bmi088->accl_);
+      } else {
+        bmi088->spi_lock_.Take(UINT32_MAX);
+        while (!bmi088->AcclInit()) {
+          System::Thread::Sleep(1);
+        }
+        bmi088->spi_lock_.Give();
       }
 
       /* PID控制IMU温度，PWM输出 */
-      bsp_pwm_set_comp(BSP_PWM_IMU_HEAT,
-                       imu_temp_ctrl_pid.Calculate(40.0f, bmi088->temp_, 0));
+      bsp_pwm_set_comp(
+          BSP_PWM_IMU_HEAT,
+          imu_temp_ctrl_pid.Calculate(40.0f, bmi088->temp_,
+                                      bsp_time_get() - imu_temp_ctrl_time));
+
+      imu_temp_ctrl_time = bsp_time_get();
     }
   };
 
@@ -220,6 +237,12 @@ BMI088::BMI088(BMI088::Rotation &rot)
         bmi088->PraseGyro();
         bmi088->spi_lock_.Give();
         bmi088->gyro_tp_.Publish(bmi088->gyro_);
+      } else {
+        bmi088->spi_lock_.Take(UINT32_MAX);
+        while (!bmi088->AcclInit()) {
+          System::Thread::Sleep(1);
+        }
+        bmi088->spi_lock_.Give();
       }
     }
   };
@@ -330,28 +353,22 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char **argv) {
   return 0;
 };
 
-bool BMI088::Init() {
+bool BMI088::AcclInit() {
   /* BMI088软件重启 */
   WriteSingle(BMI_ACCL, BMI088_REG_ACCL_SOFTRESET, 0xB6);
-  WriteSingle(BMI_GYRO, BMI088_REG_GYRO_SOFTRESET, 0xB6);
 
   bsp_delay(10);
 
   ReadSingle(BMI_ACCL, BMI088_REG_ACCL_CHIP_ID);
-  ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID);
 
   if (ReadSingle(BMI_ACCL, BMI088_REG_ACCL_CHIP_ID) != BMI088_CHIP_ID_ACCL) {
-    return false;
-  }
-
-  if (ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID) != BMI088_CHIP_ID_GYRO) {
     return false;
   }
 
   /* Accl init. */
   /* Filter setting: Normal. */
   /* ODR: 0xAB: 800Hz. 0xAA: 400Hz. 0xA9: 200Hz. 0xA8: 100Hz. 0xA6: 25Hz. */
-  WriteSingle(BMI_ACCL, BMI088_REG_ACCL_CONF, 0xAC);
+  WriteSingle(BMI_ACCL, BMI088_REG_ACCL_CONF, 0xAA);
 
   /* 0x00: +-3G. 0x01: +-6G. 0x02: +-12G. 0x03: +-24G. */
   WriteSingle(BMI_ACCL, BMI088_REG_ACCL_RANGE, 0x01);
@@ -365,6 +382,23 @@ bool BMI088::Init() {
   /* Turn on accl. Now we can read data. */
   WriteSingle(BMI_ACCL, BMI088_REG_ACCL_PWR_CTRL, 0x04);
   bsp_delay(50);
+
+  bsp_gpio_enable_irq(BSP_GPIO_IMU_ACCL_INT);
+
+  return true;
+}
+
+bool BMI088::GyroInit() {
+  /* BMI088软件重启 */
+  WriteSingle(BMI_GYRO, BMI088_REG_GYRO_SOFTRESET, 0xB6);
+
+  bsp_delay(10);
+
+  ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID);
+
+  if (ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID) != BMI088_CHIP_ID_GYRO) {
+    return false;
+  }
 
   /* Gyro init. */
   /* 0x00: +-2000. 0x01: +-1000. 0x02: +-500. 0x03: +-250. 0x04: +-125. */
@@ -384,8 +418,6 @@ bool BMI088::Init() {
   WriteSingle(BMI_GYRO, BMI088_REG_GYRO_INT_CTRL, 0x80);
 
   bsp_delay(30);
-
-  bsp_gpio_enable_irq(BSP_GPIO_IMU_ACCL_INT);
   bsp_gpio_enable_irq(BSP_GPIO_IMU_GYRO_INT);
 
   return true;

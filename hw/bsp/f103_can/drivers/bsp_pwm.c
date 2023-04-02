@@ -37,11 +37,8 @@ int8_t bsp_pwm_set_comp(bsp_pwm_channel_t ch, float duty_cycle) {
   uint16_t pulse = (uint16_t)(duty_cycle * (float)__HAL_TIM_GET_AUTORELOAD(
                                                bsp_pwm_map[ch].tim));
 
-  if (pulse > 0) {
-    __HAL_TIM_SET_COMPARE(bsp_pwm_map[ch].tim, bsp_pwm_map[ch].channel, pulse);
-  } else {
-    bsp_pwm_stop(ch);
-  }
+  __HAL_TIM_SET_COMPARE(bsp_pwm_map[ch].tim, bsp_pwm_map[ch].channel, pulse);
+
   return BSP_OK;
 }
 
