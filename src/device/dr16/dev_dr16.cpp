@@ -97,8 +97,6 @@ void DR16::PraseRC() {
     return;
   }
 
-  this->data_.key = 0;
-
   /* 检测拨杆开关 */
   if (this->data_.sw_l != this->last_data_.sw_l) {
     this->event_.Active(DR16_SW_L_POS_TOP + this->data_.sw_l - 1);
@@ -111,12 +109,12 @@ void DR16::PraseRC() {
   uint32_t tmp = 0;
 
   /* 检测Shift */
-  if (this->data_.key & (1 << (KEY_SHIFT - KEY_W))) {
+  if (this->data_.key & RawValue(KEY_SHIFT)) {
     tmp += KEY_NUM;
   }
 
   /* 检测Ctrl */
-  if (this->data_.key & (1 << (KEY_CTRL - KEY_W))) {
+  if (this->data_.key & RawValue(KEY_CTRL)) {
     tmp += 2 * KEY_NUM;
   }
 
@@ -128,11 +126,15 @@ void DR16::PraseRC() {
   }
 
   /* 控制权切换 */
-  if ((this->data_.key & ShiftCtrlWith(KEY_E)) == ShiftCtrlWith(KEY_E)) {
+  if (((this->data_.key &
+        (RawValue(KEY_SHIFT) | RawValue(KEY_CTRL) | RawValue(KEY_Q))) ==
+       (RawValue(KEY_SHIFT) | RawValue(KEY_CTRL) | RawValue(KEY_Q)))) {
     this->ctrl_source_ = DR16_CTRL_SOURCE_SW;
   }
 
-  if ((this->data_.key & ShiftCtrlWith(KEY_Q)) == ShiftCtrlWith(KEY_Q)) {
+  if (((this->data_.key &
+        (RawValue(KEY_SHIFT) | RawValue(KEY_CTRL) | RawValue(KEY_E))) ==
+       (RawValue(KEY_SHIFT) | RawValue(KEY_CTRL) | RawValue(KEY_E)))) {
     this->ctrl_source_ = DR16_CTRL_SOURCE_MOUSE;
   }
 
@@ -149,24 +151,24 @@ void DR16::PraseRC() {
       this->event_.Active(KEY_R_CLICK);
     }
     /* 底盘控制 */
-    if (this->data_.key & KEY_A) {
+    if (this->data_.key & RawValue(KEY_A)) {
       this->cmd_.chassis.x -= 0.5;
     }
 
-    if (this->data_.key & KEY_D) {
+    if (this->data_.key & RawValue(KEY_D)) {
       this->cmd_.chassis.x += 0.5;
     }
 
-    if (this->data_.key & KEY_S) {
+    if (this->data_.key & RawValue(KEY_S)) {
       this->cmd_.chassis.y -= 0.5;
     }
 
-    if (this->data_.key & KEY_W) {
+    if (this->data_.key & RawValue(KEY_W)) {
       this->cmd_.chassis.y += 0.5;
     }
 
     /* 加速 */
-    if (this->data_.key & KEY_SHIFT) {
+    if (this->data_.key & RawValue(KEY_SHIFT)) {
       this->cmd_.chassis.x *= 2;
       this->cmd_.chassis.y *= 2;
     }
@@ -174,8 +176,10 @@ void DR16::PraseRC() {
     this->cmd_.chassis.z = 0.0f;
 
     /* 云台控制 */
-    this->cmd_.gimbal.eulr.pit = static_cast<float>(this->data_.y) / 32768.0f;
-    this->cmd_.gimbal.eulr.yaw = static_cast<float>(this->data_.x) / 32768.0f;
+    this->cmd_.gimbal.eulr.pit =
+        -static_cast<float>(this->data_.y) / 32768.0f * 1000.0f;
+    this->cmd_.gimbal.eulr.yaw =
+        -static_cast<float>(this->data_.x) / 32768.0f * 1000.0f;
     this->cmd_.gimbal.eulr.rol = 0.0f;
 
   } else if (this->ctrl_source_ == DR16_CTRL_SOURCE_SW) { /* 遥控器控制 */

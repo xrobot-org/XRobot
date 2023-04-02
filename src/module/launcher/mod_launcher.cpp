@@ -51,9 +51,13 @@ Launcher::Launcher(Param& param, float control_freq)
         launcher->fire_ctrl_.fire = false;
         launcher->SetFireMode(static_cast<FireMode>(event));
         break;
-      case CHANGE_FIRE_MODE_SINGLE:
-      case CHANGE_FIRE_MODE_BURST:
+      case CHANGE_TRIG_MODE_SINGLE:
+      case CHANGE_TRIG_MODE_BURST:
         launcher->SetTrigMode(static_cast<TrigMode>(event));
+        break;
+      case CHANGE_TRIG_MODE:
+        launcher->SetTrigMode(static_cast<TrigMode>(
+            (launcher->fire_ctrl_.trig_mode_ + 1) % CONTINUED));
         break;
       case LAUNCHER_START_FIRE:
         if (launcher->fire_ctrl_.fire_mode_ == LOADED) {
@@ -159,6 +163,7 @@ void Launcher::Control() {
         this->fire_ctrl_.launch_delay = UINT32_MAX;
         this->fire_ctrl_.launched = 0;
         this->fire_ctrl_.to_launch = 0;
+        this->fire_ctrl_.fire = false;
       } else {
         this->fire_ctrl_.launch_delay = this->param_.min_launch_delay;
       }
