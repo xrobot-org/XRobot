@@ -142,6 +142,8 @@ void DR16::PraseRC() {
   constexpr float FULL_RANGE =
       static_cast<float>(DR16_CH_VALUE_MAX - DR16_CH_VALUE_MIN);
 
+  memset(&this->cmd_, 0, sizeof(this->cmd_));
+
   if (this->ctrl_source_ == DR16_CTRL_SOURCE_MOUSE) { /* 键鼠控制 */
     /* 鼠标左右键 */
     if (this->data_.press_l && !this->last_data_.press_l) {
