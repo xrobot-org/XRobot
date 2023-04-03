@@ -160,9 +160,9 @@ Robot::Hero::Param param = {
     .yaw_actr = {
       .speed = {
           /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-          .k = 0.35f,
+          .k = 0.47f,
           .p = 1.0f,
-          .i = 0.5f,
+          .i = 0.2f,
           .d = 0.0f,
           .i_limit = 0.2f,
           .out_limit = 1.0f,
@@ -172,7 +172,7 @@ Robot::Hero::Param param = {
 
         .position = {
           /* GIMBAL_CTRL_YAW_ANGLE_IDX */
-          .k = 20.0f,
+          .k = 19.0f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.0f,
@@ -189,11 +189,11 @@ Robot::Hero::Param param = {
     .pit_actr = {
         .speed = {
           /* GIMBAL_CTRL_PIT_OMEGA_IDX */
-          .k = 0.25f,
+          .k = 0.47f,
           .p = 1.0f,
-          .i = 1.0f,
+          .i = 0.5f,
           .d = 0.f,
-          .i_limit = 0.8f,
+          .i_limit = 0.2f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
@@ -239,8 +239,8 @@ Robot::Hero::Param param = {
     },
 
     .limit = {
-      .pitch_max = 2.8f,
-      .pitch_min = 1.7f,
+      .pitch_max = 2.62f,
+      .pitch_min = 1.73f,
     },
 
     .EVENT_MAP = {
@@ -272,7 +272,7 @@ Robot::Hero::Param param = {
     .cover_close_duty = 0.075f,
     .model = Module::Launcher::LAUNCHER_MODEL_42MM,
     .default_bullet_speed = 16.0f,
-    .min_launch_delay = static_cast<uint32_t>(1000.0f / 20.0f),
+    .min_launch_delay = 800,
 
     .trig_actr = {
       Component::PosActuator::Param{
@@ -280,18 +280,18 @@ Robot::Hero::Param param = {
           .k = 2.0f,
           .p = 1.0f,
           .i = 0.0f,
-          .d = 0.05f,
+          .d = 0.0f,
           .i_limit = 0.5f,
-          .out_limit = 0.5f,
+          .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
 
         .position = {
-          .k = 0.5f,
+          .k = 0.7f,
           .p = 1.0f,
           .i = 0.0f,
-          .d = 0.3f,
+          .d = 0.1f,
           .i_limit = 1.0f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
@@ -307,12 +307,12 @@ Robot::Hero::Param param = {
     .fric_actr = {
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00015f,
+          .k = 0.0002f,
           .p = 1.0f,
-          .i = 0.4f,
+          .i = 0.0f,
           .d = 0.01f,
           .i_limit = 0.5f,
-          .out_limit = 0.5f,
+          .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -323,12 +323,12 @@ Robot::Hero::Param param = {
       },
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00015f,
+          .k = 0.0002f,
           .p = 1.0f,
-          .i = 0.4f,
+          .i = 0.0f,
           .d = 0.01f,
           .i_limit = 0.5f,
-          .out_limit = 0.5f,
+          .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -350,13 +350,13 @@ Robot::Hero::Param param = {
 
     .fric_motor = {
       Device::RMMotor::Param{
-          .id_feedback = 0x205,
+          .id_feedback = 0x206,
           .id_control = M3508_M2006_CTRL_ID_EXTAND,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
       },
       Device::RMMotor::Param{
-          .id_feedback = 0x206,
+          .id_feedback = 0x205,
           .id_control = M3508_M2006_CTRL_ID_EXTAND,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
