@@ -63,10 +63,6 @@ class Cap {
 
   Cap::Output out_;
 
-  Component::UI::Ele ui_ele_data_;
-
-  Component::UI::Str ui_string_data_;
-
   Component::UI::String string_;
 
   Component::UI::Arc arc_;

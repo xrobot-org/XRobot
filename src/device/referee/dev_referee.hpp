@@ -18,10 +18,14 @@
 
 #define REF_UI_RIGHT_START_W (0.85f)
 
+#define REF_UI_RIGHT_FRIC (0.60f)
+#define REF_UI_RIGHT_TRIC (0.60f)
+
 #define REF_UI_MODE_LINE1_H (0.7f)
 #define REF_UI_MODE_LINE2_H (0.68f)
 #define REF_UI_MODE_LINE3_H (0.66f)
 #define REF_UI_MODE_LINE4_H (0.64f)
+#define REF_UI_MODE_LINE_BOTTOM_H (0.1f)
 
 #define REF_UI_MODE_OFFSET_1_LEFT (-6)
 #define REF_UI_MODE_OFFSET_1_RIGHT (44)

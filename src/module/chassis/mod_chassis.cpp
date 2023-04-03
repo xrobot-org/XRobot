@@ -264,36 +264,39 @@ void Chassis<Motor, MotorParam>::SetMode(Chassis::Mode mode) {
 template <typename Motor, typename MotorParam>
 void Chassis<Motor, MotorParam>::DrawUIStatic(
     Chassis<Motor, MotorParam>* chassis) {
-  chassis->string_.Draw(
-      &(chassis->ui_string_data_), "CM", Component::UI::UI_GRAPHIC_OP_ADD,
-      Component::UI::UI_GRAPHIC_LAYER_CONST, Component::UI::UI_GREEN,
-      UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
-      static_cast<uint16_t>(Device::Referee::UIGetWidth() *
-                            REF_UI_RIGHT_START_W),
-      static_cast<uint16_t>(Device::Referee::UIGetHeight() *
-                            REF_UI_MODE_LINE1_H),
-      "CHAS  FLLW  INDT  ROTR");
+  chassis->string_.Draw("CM", Component::UI::UI_GRAPHIC_OP_ADD,
+                        Component::UI::UI_GRAPHIC_LAYER_CONST,
+                        Component::UI::UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
+                        UI_CHAR_DEFAULT_WIDTH,
+                        static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                              REF_UI_RIGHT_START_W),
+                        static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                              REF_UI_MODE_LINE1_H),
+                        "CHAS  FLLW  INDT  ROTR");
+  Device::Referee::AddUI(chassis->string_);
 
   float box_pos_left = 0.0f, box_pos_right = 0.0f;
   chassis->line_.Draw(
-      &(chassis->ui_line_data_), "c", Component::UI::UI_GRAPHIC_OP_ADD,
+      "c", Component::UI::UI_GRAPHIC_OP_ADD,
       Component::UI::UI_GRAPHIC_LAYER_CONST, Component::UI::UI_GREEN,
       UI_DEFAULT_WIDTH * 3,
       static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
       static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f),
       static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
       static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f + 50.f));
+  Device::Referee::AddUI(chassis->line_);
 
   chassis->line_.Draw(
-      &(chassis->ui_chassis_angle_data_), "CA",
-      Component::UI::UI_GRAPHIC_OP_ADD, Component::UI::UI_GRAPHIC_LAYER_CHASSIS,
-      Component::UI::UI_GREEN, UI_DEFAULT_WIDTH * 12,
+      "CA", Component::UI::UI_GRAPHIC_OP_ADD,
+      Component::UI::UI_GRAPHIC_LAYER_CHASSIS, Component::UI::UI_GREEN,
+      UI_DEFAULT_WIDTH * 12,
       static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
       static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f),
       static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f +
                             sinf(chassis->yaw_) * 44),
       static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f +
                             cosf(chassis->yaw_) * 44));
+  Device::Referee::AddUI(chassis->line_);
 
   /* 更新底盘模式选择框 */
   switch (chassis->mode_) {
@@ -319,7 +322,7 @@ void Chassis<Motor, MotorParam>::DrawUIStatic(
 
   if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
     chassis->rectange_.Draw(
-        &(chassis->ui_mode_data_), "CS", Component::UI::UI_GRAPHIC_OP_ADD,
+        "CS", Component::UI::UI_GRAPHIC_OP_ADD,
         Component::UI::UI_GRAPHIC_LAYER_CHASSIS, Component::UI::UI_GREEN,
         UI_DEFAULT_WIDTH,
         static_cast<uint16_t>(Device::Referee::UIGetWidth() *
@@ -334,13 +337,8 @@ void Chassis<Motor, MotorParam>::DrawUIStatic(
         static_cast<uint16_t>(Device::Referee::UIGetHeight() *
                                   REF_UI_MODE_LINE1_H +
                               REF_UI_BOX_BOT_OFFSET));
-
-    Device::Referee::AddUI(chassis->ui_mode_data_);
+    Device::Referee::AddUI(chassis->rectange_);
   }
-
-  Device::Referee::AddUI(chassis->ui_chassis_angle_data_);
-  Device::Referee::AddUI(chassis->ui_string_data_);
-  Device::Referee::AddUI(chassis->ui_line_data_);
 }
 
 template <typename Motor, typename MotorParam>
@@ -370,7 +368,7 @@ void Chassis<Motor, MotorParam>::DrawUIDynamic(
 
   if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
     chassis->rectange_.Draw(
-        &(chassis->ui_mode_data_), "CS", Component::UI::UI_GRAPHIC_OP_REWRITE,
+        "CS", Component::UI::UI_GRAPHIC_OP_REWRITE,
         Component::UI::UI_GRAPHIC_LAYER_CHASSIS, Component::UI::UI_GREEN,
         UI_DEFAULT_WIDTH,
         static_cast<uint16_t>(Device::Referee::UIGetWidth() *
@@ -385,22 +383,21 @@ void Chassis<Motor, MotorParam>::DrawUIDynamic(
         static_cast<uint16_t>(Device::Referee::UIGetHeight() *
                                   REF_UI_MODE_LINE1_H +
                               REF_UI_BOX_BOT_OFFSET));
-    Device::Referee::AddUI(chassis->ui_mode_data_);
+    Device::Referee::AddUI(chassis->rectange_);
   }
 
   chassis->line_.Draw(
-      &(chassis->ui_chassis_angle_data_), "CA",
-      Component::UI::UI_GRAPHIC_OP_REWRITE,
+      "CA", Component::UI::UI_GRAPHIC_OP_REWRITE,
       Component::UI::UI_GRAPHIC_LAYER_CHASSIS, Component::UI::UI_GREEN,
       UI_DEFAULT_WIDTH * 12,
       static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
       static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f),
       static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f +
-                            sinf(chassis->yaw_) * 44),
+                            -sinf(chassis->yaw_) * 44),
       static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f +
                             cosf(chassis->yaw_) * 44));
 
-  Device::Referee::AddUI(chassis->ui_chassis_angle_data_);
+  Device::Referee::AddUI(chassis->line_);
 }
 
 template class Module::Chassis<Device::RMMotor, Device::RMMotor::Param>;

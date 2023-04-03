@@ -120,10 +120,6 @@ class Chassis {
   float yaw_;
   Device::Referee::Data raw_ref_;
   Component::CMD::ChassisCMD cmd_;
-  Component::UI::Ele ui_line_data_;
-  Component::UI::Ele ui_mode_data_;
-  Component::UI::Str ui_string_data_;
-  Component::UI::Ele ui_chassis_angle_data_;
 
   Component::UI::String string_;
 

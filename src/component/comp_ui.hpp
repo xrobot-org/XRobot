@@ -82,7 +82,7 @@ class UI {
   } Scr;
   class Line {
    public:
-    int8_t Draw(Ele *ele, const char *name, GraphicOperation op, uint8_t layer,
+    int8_t Draw(const char *name, GraphicOperation op, uint8_t layer,
                 Color color, uint16_t width, uint16_t x_start, uint16_t y_start,
                 uint16_t x_end, uint16_t y_end);
 
@@ -93,7 +93,7 @@ class UI {
 
   class Rectangle {
    public:
-    int8_t Draw(Ele *ele, const char *name, GraphicOperation op, uint8_t layer,
+    int8_t Draw(const char *name, GraphicOperation op, uint8_t layer,
                 Color color, uint16_t width, uint16_t x_start, uint16_t y_start,
                 uint16_t x_end, uint16_t y_end);
 
@@ -106,7 +106,7 @@ class UI {
    public:
     Ele ele_;
 
-    int8_t Draw(Ele *ele, const char *name, GraphicOperation op, uint8_t layer,
+    int8_t Draw(const char *name, GraphicOperation op, uint8_t layer,
                 Color color, uint16_t width, uint16_t x_center,
                 uint16_t y_center, uint16_t radius);
     operator Ele() { return ele_; }
@@ -114,7 +114,7 @@ class UI {
   class Oval {
    public:
     Ele ele_;
-    int8_t Draw(Ele *ele, const char *name, GraphicOperation op, uint8_t layer,
+    int8_t Draw(const char *name, GraphicOperation op, uint8_t layer,
                 Color color, uint16_t width, uint16_t x_center,
                 uint16_t y_center, uint16_t x_semiaxis, uint16_t y_semiaxis);
     operator Ele() { return ele_; }
@@ -124,7 +124,7 @@ class UI {
    public:
     Ele ele_;
 
-    int8_t Draw(Ele *ele, const char *name, GraphicOperation op, uint8_t layer,
+    int8_t Draw(const char *name, GraphicOperation op, uint8_t layer,
                 Color color, uint16_t angle_start, uint16_t angle_end,
                 uint16_t width, uint16_t x_center, uint16_t y_center,
                 uint16_t x_semiaxis, uint16_t y_semiaxis);
@@ -135,7 +135,7 @@ class UI {
    public:
     Ele ele_;
 
-    int8_t Draw(Ele *ele, const char *name, GraphicOperation op, uint8_t layer,
+    int8_t Draw(const char *name, GraphicOperation op, uint8_t layer,
                 Color color, uint16_t font_size, uint16_t digits,
                 uint16_t width, uint16_t x_start, uint16_t y_start,
                 uint16_t float_high, uint16_t float_middle, uint16_t float_low);
@@ -146,7 +146,7 @@ class UI {
    public:
     Ele ele_;
 
-    int8_t Draw(Ele *ele, const char *name, GraphicOperation op, uint8_t layer,
+    int8_t Draw(const char *name, GraphicOperation op, uint8_t layer,
                 Color color, uint16_t font_size, uint16_t width,
                 uint16_t x_start, uint16_t y_start, uint16_t int32_t_high,
                 uint16_t int32_t_middle, uint16_t int32_t_low);
@@ -155,20 +155,20 @@ class UI {
 
   class String {
    public:
-    Ele ele_;
+    Str str_;
 
-    int8_t Draw(Str *ele, const char *name, GraphicOperation op, uint8_t layer,
+    int8_t Draw(const char *name, GraphicOperation op, uint8_t layer,
                 Color color, uint16_t font_size, uint16_t length,
                 uint16_t width, uint16_t x_start, uint16_t y_start,
                 const char *str);
-    operator Ele() { return ele_; }
+    operator Str() { return str_; }
   };
 
   class Delete {
    public:
     Del del_;
 
-    int8_t Draw(Del *del, DelOperation op, uint8_t layer);
+    int8_t Draw(DelOperation op, uint8_t layer);
     operator Del() { return del_; }
   };
 };
