@@ -180,11 +180,11 @@ BMI088::BMI088(BMI088::Rotation &rot)
   bsp_spi_register_callback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB, recv_cplt_callback,
                             this);
 
-  while (!AcclInit()) {
+  while (!GyroInit()) {
     System::Thread::Sleep(1);
   }
 
-  while (!GyroInit()) {
+  while (!AcclInit()) {
     System::Thread::Sleep(1);
   }
 
@@ -230,7 +230,7 @@ BMI088::BMI088(BMI088::Rotation &rot)
       /* 开始数据接收DMA，加速度计和陀螺仪共用同一个SPI接口，
        * 一次只能开启一个DMA
        */
-      if (bmi088->gyro_new_.Take(UINT32_MAX)) {
+      if (bmi088->gyro_new_.Take(10)) {
         bmi088->spi_lock_.Take(UINT32_MAX);
         bmi088->StartRecvGyro();
         bmi088->gyro_raw_.Take(UINT32_MAX);
@@ -357,7 +357,7 @@ bool BMI088::AcclInit() {
   /* BMI088软件重启 */
   WriteSingle(BMI_ACCL, BMI088_REG_ACCL_SOFTRESET, 0xB6);
 
-  bsp_delay(10);
+  bsp_delay(30);
 
   ReadSingle(BMI_ACCL, BMI088_REG_ACCL_CHIP_ID);
 
@@ -392,7 +392,7 @@ bool BMI088::GyroInit() {
   /* BMI088软件重启 */
   WriteSingle(BMI_GYRO, BMI088_REG_GYRO_SOFTRESET, 0xB6);
 
-  bsp_delay(10);
+  bsp_delay(30);
 
   ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID);
 
@@ -417,7 +417,7 @@ bool BMI088::GyroInit() {
   /* Enable new data interrupt. */
   WriteSingle(BMI_GYRO, BMI088_REG_GYRO_INT_CTRL, 0x80);
 
-  bsp_delay(30);
+  bsp_delay(50);
   bsp_gpio_enable_irq(BSP_GPIO_IMU_GYRO_INT);
 
   return true;
