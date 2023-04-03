@@ -345,25 +345,28 @@ float Launcher::LimitLauncherFreq() {
   }
 }
 void Launcher::DrawUIStatic(Launcher* launcher) {
-  launcher->string_.Draw(
-      &(launcher->ui_string_data_1_), "SM", Component::UI::UI_GRAPHIC_OP_ADD,
-      Component::UI::UI_GRAPHIC_LAYER_CONST, Component::UI::UI_GREEN,
-      UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
+  launcher->string_.Draw("SM", Component::UI::UI_GRAPHIC_OP_ADD,
+                         Component::UI::UI_GRAPHIC_LAYER_CONST,
+                         Component::UI::UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
+                         UI_CHAR_DEFAULT_WIDTH,
       static_cast<uint16_t>(Device::Referee::UIGetWidth() *
                             REF_UI_RIGHT_START_W),
       static_cast<uint16_t>(Device::Referee::UIGetHeight() *
                             REF_UI_MODE_LINE3_H),
       "SHOT  RELX  SAFE  LOAD");
+  Device::Referee::AddUI(launcher->string_);
 
-  launcher->string_.Draw(
-      &(launcher->ui_string_data_2_), "FM", Component::UI::UI_GRAPHIC_OP_ADD,
-      Component::UI::UI_GRAPHIC_LAYER_CONST, Component::UI::UI_GREEN,
-      UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
+  launcher->string_.Draw("FM", Component::UI::UI_GRAPHIC_OP_ADD,
+                         Component::UI::UI_GRAPHIC_LAYER_CONST,
+                         Component::UI::UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
+                         UI_CHAR_DEFAULT_WIDTH,
       static_cast<uint16_t>(Device::Referee::UIGetWidth() *
                             REF_UI_RIGHT_START_W),
       static_cast<uint16_t>(Device::Referee::UIGetHeight() *
                             REF_UI_MODE_LINE4_H),
       "FIRE  SNGL  BRST  CONT");
+  Device::Referee::AddUI(launcher->string_);
+
   float box_pos_left = 0.0f, box_pos_right = 0.0f;
 
   /* 更新发射器模式选择框 */
@@ -387,7 +390,7 @@ void Launcher::DrawUIStatic(Launcher* launcher) {
   }
   if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
     launcher->rectangle_.Draw(
-        &(launcher->ui_mode_data_2_), "FS", Component::UI::UI_GRAPHIC_OP_ADD,
+        "FS", Component::UI::UI_GRAPHIC_OP_ADD,
         Component::UI::UI_GRAPHIC_LAYER_LAUNCHER, Component::UI::UI_GREEN,
         UI_DEFAULT_WIDTH,
         static_cast<uint16_t>(Device::Referee::UIGetWidth() *
@@ -402,6 +405,7 @@ void Launcher::DrawUIStatic(Launcher* launcher) {
         static_cast<uint16_t>(Device::Referee::UIGetHeight() *
                                   REF_UI_MODE_LINE3_H +
                               REF_UI_BOX_BOT_OFFSET));
+    Device::Referee::AddUI(launcher->rectangle_);
   }
 
   /* 更新开火模式选择框 */
@@ -425,7 +429,7 @@ void Launcher::DrawUIStatic(Launcher* launcher) {
   }
   if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
     launcher->rectangle_.Draw(
-        &(launcher->ui_mode_data_1_), "TS", Component::UI::UI_GRAPHIC_OP_ADD,
+        "TS", Component::UI::UI_GRAPHIC_OP_ADD,
         Component::UI::UI_GRAPHIC_LAYER_LAUNCHER, Component::UI::UI_GREEN,
         UI_DEFAULT_WIDTH,
         static_cast<uint16_t>(Device::Referee::UIGetWidth() *
@@ -440,10 +444,43 @@ void Launcher::DrawUIStatic(Launcher* launcher) {
         static_cast<uint16_t>(Device::Referee::UIGetHeight() *
                                   REF_UI_MODE_LINE4_H +
                               REF_UI_BOX_BOT_OFFSET));
+    Device::Referee::AddUI(launcher->rectangle_);
   }
-  Device::Referee::AddUI(launcher->ui_mode_data_1_);
-  Device::Referee::AddUI(launcher->ui_string_data_1_);
-  Device::Referee::AddUI(launcher->ui_string_data_2_);
+
+  launcher->arc_.Draw(
+      "F0", Component::UI::UI_GRAPHIC_OP_ADD,
+      Component::UI::UI_GRAPHIC_LAYER_LAUNCHER, Component::UI::UI_GREEN,
+      static_cast<uint16_t>((launcher->fric_motor_[0]->GetSpeed() /
+                             launcher->setpoint_.fric_rpm_[0]) *
+                            180),
+      360 - static_cast<uint16_t>((launcher->fric_motor_[0]->GetSpeed() /
+                                   launcher->setpoint_.fric_rpm_[0]) *
+                                  180),
+      UI_DEFAULT_WIDTH * 5,
+      static_cast<uint16_t>(Device::Referee::UIGetWidth() * REF_UI_RIGHT_FRIC),
+      static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                            REF_UI_MODE_LINE_BOTTOM_H),
+      50, 50);
+  Device::Referee::AddUI(launcher->arc_);
+
+  uint16_t arc_start = static_cast<uint16_t>(
+      -Component::Type::CycleValue(launcher->trig_angle_) / M_2PI * 360.f);
+  uint16_t arc_end = static_cast<uint16_t>(
+      -Component::Type::CycleValue(launcher->trig_angle_) / M_2PI * 360.f + 30);
+
+  if (arc_end > 360) {
+    arc_end = arc_end - 360;
+  }
+
+  launcher->arc_.Draw(
+      "TP", Component::UI::UI_GRAPHIC_OP_ADD,
+      Component::UI::UI_GRAPHIC_LAYER_LAUNCHER, Component::UI::UI_GREEN,
+      arc_start, arc_end, UI_DEFAULT_WIDTH * 5,
+      static_cast<uint16_t>(Device::Referee::UIGetWidth() * REF_UI_RIGHT_TRIC),
+      static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                            REF_UI_MODE_LINE_BOTTOM_H),
+      40, 40);
+  Device::Referee::AddUI(launcher->arc_);
 }
 
 void Launcher::DrawUIDynamic(Launcher* launcher) {
@@ -470,8 +507,7 @@ void Launcher::DrawUIDynamic(Launcher* launcher) {
   }
   if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
     launcher->rectangle_.Draw(
-        &(launcher->ui_mode_data_2_), "FS",
-        Component::UI::UI_GRAPHIC_OP_REWRITE,
+        "FS", Component::UI::UI_GRAPHIC_OP_REWRITE,
         Component::UI::UI_GRAPHIC_LAYER_LAUNCHER, Component::UI::UI_GREEN,
         UI_DEFAULT_WIDTH,
         static_cast<uint16_t>(Device::Referee::UIGetWidth() *
@@ -486,6 +522,7 @@ void Launcher::DrawUIDynamic(Launcher* launcher) {
         static_cast<uint16_t>(Device::Referee::UIGetHeight() *
                                   REF_UI_MODE_LINE3_H +
                               REF_UI_BOX_BOT_OFFSET));
+    Device::Referee::AddUI(launcher->rectangle_);
   }
 
   /* 更新开火模式选择框 */
@@ -507,10 +544,10 @@ void Launcher::DrawUIDynamic(Launcher* launcher) {
       box_pos_right = 0.0f;
       break;
   }
+
   if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
     launcher->rectangle_.Draw(
-        &(launcher->ui_mode_data_1_), "TS",
-        Component::UI::UI_GRAPHIC_OP_REWRITE,
+        "TS", Component::UI::UI_GRAPHIC_OP_REWRITE,
         Component::UI::UI_GRAPHIC_LAYER_LAUNCHER, Component::UI::UI_GREEN,
         UI_DEFAULT_WIDTH,
         static_cast<uint16_t>(Device::Referee::UIGetWidth() *
@@ -525,7 +562,68 @@ void Launcher::DrawUIDynamic(Launcher* launcher) {
         static_cast<uint16_t>(Device::Referee::UIGetHeight() *
                                   REF_UI_MODE_LINE3_H +
                               REF_UI_BOX_BOT_OFFSET));
+    Device::Referee::AddUI(launcher->rectangle_);
   }
-  Device::Referee::AddUI(launcher->ui_mode_data_1_);
-  Device::Referee::AddUI(launcher->ui_mode_data_2_);
+
+  uint16_t fric_1_sp =
+      180 - static_cast<uint16_t>((launcher->fric_motor_[0]->GetSpeed() /
+                                   launcher->setpoint_.fric_rpm_[0]) *
+                                  180);
+  uint16_t fric_2_sp =
+      180 + static_cast<uint16_t>((launcher->fric_motor_[1]->GetSpeed() /
+                                   launcher->setpoint_.fric_rpm_[1]) *
+                                  180);
+
+  Component::UI::Color fric_color = Component::UI::UI_GREEN;
+
+  if (fric_1_sp > 360) {
+    fric_1_sp = 0;
+  }
+
+  if (fric_2_sp > 360) {
+    fric_2_sp = 360;
+  }
+
+  if (launcher->setpoint_.fric_rpm_[0] == 0) {
+    fric_color = Component::UI::UI_GREEN;
+    fric_1_sp = 270;
+    fric_2_sp = 90;
+  } else if ((fric_1_sp < 10) && (fric_2_sp > 350)) {
+    fric_color = Component::UI::UI_GREEN;
+  } else if ((fric_1_sp < 30) && (fric_2_sp > 330)) {
+    fric_color = Component::UI::UI_ORANGE;
+  } else {
+    fric_1_sp = 270;
+    fric_2_sp = 90;
+    fric_color = Component::UI::UI_ORANGE;
+  }
+
+  launcher->arc_.Draw(
+      "F0", Component::UI::UI_GRAPHIC_OP_REWRITE,
+      Component::UI::UI_GRAPHIC_LAYER_LAUNCHER, fric_color, fric_1_sp,
+      fric_2_sp, UI_DEFAULT_WIDTH * 5,
+      static_cast<uint16_t>(Device::Referee::UIGetWidth() * REF_UI_RIGHT_FRIC),
+      static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                            REF_UI_MODE_LINE_BOTTOM_H),
+      50, 50);
+  Device::Referee::AddUI(launcher->arc_);
+
+  uint16_t arc_start = static_cast<uint16_t>(
+      -Component::Type::CycleValue(launcher->trig_angle_) / M_2PI * 360.f);
+  uint16_t arc_end = static_cast<uint16_t>(
+      -Component::Type::CycleValue(launcher->trig_angle_) / M_2PI * 360.f + 30);
+
+  if (arc_end > 360) {
+    arc_end = arc_end - 360;
+  }
+
+  launcher->arc_.Draw(
+      "TP", Component::UI::UI_GRAPHIC_OP_REWRITE,
+      Component::UI::UI_GRAPHIC_LAYER_LAUNCHER, Component::UI::UI_GREEN,
+      arc_start, arc_end, UI_DEFAULT_WIDTH * 5,
+      static_cast<uint16_t>(Device::Referee::UIGetWidth() * REF_UI_RIGHT_TRIC),
+      static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                            REF_UI_MODE_LINE_BOTTOM_H),
+      40, 40);
+  Device::Referee::AddUI(launcher->arc_);
 }

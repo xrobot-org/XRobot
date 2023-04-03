@@ -231,7 +231,7 @@ void DR16::Offline() {
 
 void DR16::DrawUIStatic(DR16 *dr16) {
   dr16->string_.Draw(
-      &(dr16->ui_string_data_), "DM", Component::UI::UI_GRAPHIC_OP_ADD,
+      "DM", Component::UI::UI_GRAPHIC_OP_ADD,
       Component::UI::UI_GRAPHIC_LAYER_CONST, Component::UI::UI_GREEN,
       UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
       static_cast<uint16_t>(Device::Referee::UIGetWidth() *
@@ -242,7 +242,7 @@ void DR16::DrawUIStatic(DR16 *dr16) {
   switch (dr16->ctrl_source_) {
     case DR16_CTRL_SOURCE_MOUSE:
       dr16->rectangle_.Draw(
-          &(dr16->ui_mode_data_), "DS", Component::UI::UI_GRAPHIC_OP_ADD,
+          "DS", Component::UI::UI_GRAPHIC_OP_ADD,
           Component::UI::UI_GRAPHIC_LAYER_CMD, Component::UI::UI_GREEN,
           UI_DEFAULT_WIDTH,
           static_cast<uint16_t>(
@@ -253,10 +253,11 @@ void DR16::DrawUIStatic(DR16 *dr16) {
               Device::Referee::UIGetWidth() * REF_UI_RIGHT_START_W + 120.f),
           static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.4f +
                                 REF_UI_BOX_BOT_OFFSET));
+      Device::Referee::AddUI(dr16->rectangle_);
       break;
     case DR16_CTRL_SOURCE_SW:
       dr16->rectangle_.Draw(
-          &(dr16->ui_mode_data_), "DS", Component::UI::UI_GRAPHIC_OP_ADD,
+          "DS", Component::UI::UI_GRAPHIC_OP_ADD,
           Component::UI::UI_GRAPHIC_LAYER_CMD, Component::UI::UI_GREEN,
           UI_DEFAULT_WIDTH,
           static_cast<uint16_t>(
@@ -267,17 +268,17 @@ void DR16::DrawUIStatic(DR16 *dr16) {
               Device::Referee::UIGetWidth() * REF_UI_RIGHT_START_W + 80.f),
           static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.4f +
                                 REF_UI_BOX_BOT_OFFSET));
+      Device::Referee::AddUI(dr16->rectangle_);
       break;
   }
-  Device::Referee::AddUI(dr16->ui_string_data_);
-  Device::Referee::AddUI(dr16->ui_mode_data_);
+  Device::Referee::AddUI(dr16->string_);
 }
 
 void DR16::DrawUIDynamic(DR16 *dr16) {
   switch (dr16->ctrl_source_) {
     case DR16_CTRL_SOURCE_MOUSE:
       dr16->rectangle_.Draw(
-          &(dr16->ui_mode_data_), "DS", Component::UI::UI_GRAPHIC_OP_REWRITE,
+          "DS", Component::UI::UI_GRAPHIC_OP_REWRITE,
           Component::UI::UI_GRAPHIC_LAYER_CMD, Component::UI::UI_GREEN,
           UI_DEFAULT_WIDTH,
           static_cast<uint16_t>(
@@ -288,10 +289,11 @@ void DR16::DrawUIDynamic(DR16 *dr16) {
               Device::Referee::UIGetWidth() * REF_UI_RIGHT_START_W + 120.f),
           static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.4f +
                                 REF_UI_BOX_BOT_OFFSET));
+      Device::Referee::AddUI(dr16->rectangle_);
       break;
     case DR16_CTRL_SOURCE_SW:
       dr16->rectangle_.Draw(
-          &(dr16->ui_mode_data_), "DS", Component::UI::UI_GRAPHIC_OP_REWRITE,
+          "DS", Component::UI::UI_GRAPHIC_OP_REWRITE,
           Component::UI::UI_GRAPHIC_LAYER_CMD, Component::UI::UI_GREEN,
           UI_DEFAULT_WIDTH,
           static_cast<uint16_t>(
@@ -303,6 +305,6 @@ void DR16::DrawUIDynamic(DR16 *dr16) {
           static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.4f +
                                 REF_UI_BOX_BOT_OFFSET));
       break;
+      Device::Referee::AddUI(dr16->rectangle_);
   }
-  Device::Referee::AddUI(dr16->ui_mode_data_);
 }

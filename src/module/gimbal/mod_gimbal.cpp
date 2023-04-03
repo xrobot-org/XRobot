@@ -157,15 +157,17 @@ void Gimbal::SetMode(Mode mode) {
 }
 
 void Gimbal::DrawUIStatic(Gimbal* gimbal) {
-  gimbal->string_.Draw(
-      &(gimbal->ui_string_data_), "GM", Component::UI::UI_GRAPHIC_OP_ADD,
-      Component::UI::UI_GRAPHIC_LAYER_CONST, Component::UI::UI_GREEN,
-      UI_DEFAULT_WIDTH * 10, 80, UI_CHAR_DEFAULT_WIDTH,
-      static_cast<uint16_t>(Device::Referee::UIGetWidth() *
-                            REF_UI_RIGHT_START_W),
-      static_cast<uint16_t>(Device::Referee::UIGetHeight() *
-                            REF_UI_MODE_LINE2_H),
-      "GMBL  RELX  ABSL  RLTV");
+  gimbal->string_.Draw("GM", Component::UI::UI_GRAPHIC_OP_ADD,
+                       Component::UI::UI_GRAPHIC_LAYER_CONST,
+                       Component::UI::UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
+                       UI_CHAR_DEFAULT_WIDTH,
+                       static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                             REF_UI_RIGHT_START_W),
+                       static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                             REF_UI_MODE_LINE2_H),
+                       "GMBL  RELX  ABSL  RLTV");
+  Device::Referee::AddUI(gimbal->string_);
+
   float box_pos_left = 0.0f, box_pos_right = 0.0f;
 
   /* 更新云台模式选择框 */
@@ -190,7 +192,7 @@ void Gimbal::DrawUIStatic(Gimbal* gimbal) {
   }
   if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
     gimbal->rectangle_.Draw(
-        &(gimbal->ui_mode_data_), "GS", Component::UI::UI_GRAPHIC_OP_ADD,
+        "GS", Component::UI::UI_GRAPHIC_OP_ADD,
         Component::UI::UI_GRAPHIC_LAYER_GIMBAL, Component::UI::UI_GREEN,
         UI_DEFAULT_WIDTH,
         static_cast<uint16_t>(Device::Referee::UIGetWidth() *
@@ -205,10 +207,8 @@ void Gimbal::DrawUIStatic(Gimbal* gimbal) {
         static_cast<uint16_t>(Device::Referee::UIGetHeight() *
                                   REF_UI_MODE_LINE2_H +
                               REF_UI_BOX_BOT_OFFSET));
+    Device::Referee::AddUI(gimbal->rectangle_);
   }
-
-  Device::Referee::AddUI(gimbal->ui_string_data_);
-  Device::Referee::AddUI(gimbal->ui_mode_data_);
 }
 
 void Gimbal::DrawUIDynamic(Gimbal* gimbal) {
@@ -236,7 +236,7 @@ void Gimbal::DrawUIDynamic(Gimbal* gimbal) {
   }
   if (box_pos_left != 0.0f && box_pos_right != 0.0f) {
     gimbal->rectangle_.Draw(
-        &(gimbal->ui_mode_data_), "GS", Component::UI::UI_GRAPHIC_OP_REWRITE,
+        "GS", Component::UI::UI_GRAPHIC_OP_REWRITE,
         Component::UI::UI_GRAPHIC_LAYER_GIMBAL, Component::UI::UI_GREEN,
         UI_DEFAULT_WIDTH,
         static_cast<uint16_t>(Device::Referee::UIGetWidth() *
@@ -251,7 +251,6 @@ void Gimbal::DrawUIDynamic(Gimbal* gimbal) {
         static_cast<uint16_t>(Device::Referee::UIGetHeight() *
                                   REF_UI_MODE_LINE2_H +
                               REF_UI_BOX_BOT_OFFSET));
+    Device::Referee::AddUI(gimbal->rectangle_);
   }
-
-  Device::Referee::AddUI(gimbal->ui_mode_data_);
 }

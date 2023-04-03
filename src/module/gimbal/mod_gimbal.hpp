@@ -103,9 +103,6 @@ class Gimbal {
 
   float yaw_;
 
-  Component::UI::Ele ui_mode_data_;
-  Component::UI::Str ui_string_data_;
-
   Component::UI::String string_;
 
   Component::UI::Rectangle rectangle_;

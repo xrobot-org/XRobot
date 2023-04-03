@@ -182,15 +182,10 @@ class Launcher {
 
   Device::Referee::Data raw_ref_;
 
-  Component::UI::Ele ui_mode_data_1_;
-  Component::UI::Ele ui_mode_data_2_;
-
-  Component::UI::Str ui_string_data_1_;
-
-  Component::UI::Str ui_string_data_2_;
-
   Component::UI::String string_;
 
   Component::UI::Rectangle rectangle_;
+
+  Component::UI::Arc arc_;
 };
 }  // namespace Module
