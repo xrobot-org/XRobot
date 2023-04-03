@@ -102,7 +102,7 @@ Launcher::Launcher(Param& param, float control_freq)
                        System::Thread::MEDIUM);
   System::Timer::Create(this->DrawUIStatic, this, 2200);
 
-  System::Timer::Create(this->DrawUIDynamic, this, 200);
+  System::Timer::Create(this->DrawUIDynamic, this, 100);
 }
 
 void Launcher::UpdateFeedback() {
@@ -199,11 +199,25 @@ void Launcher::Control() {
   /* 计算拨弹电机位置的目标值 */
   if ((bsp_time_get_ms() - this->fire_ctrl_.last_launch) >=
       this->fire_ctrl_.launch_delay) {
-    /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗弹丸的弧度变化 */
-    this->setpoint_.trig_angle_ -= M_2PI / this->param_.num_trig_tooth;
-    /* 计算已发射弹丸 */
-    this->fire_ctrl_.launched++;
-    this->fire_ctrl_.last_launch = bsp_time_get_ms();
+    if ((fire_ctrl_.last_trig_angle - trig_angle_) / M_2PI *
+            this->param_.num_trig_tooth >
+        0.9) {
+      if (!fire_ctrl_.stall) {
+        fire_ctrl_.last_trig_angle = this->setpoint_.trig_angle_;
+        /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗弹丸的弧度变化 */
+        this->setpoint_.trig_angle_ -= M_2PI / this->param_.num_trig_tooth;
+      }
+      /* 计算已发射弹丸 */
+      this->fire_ctrl_.launched++;
+      this->fire_ctrl_.last_launch = bsp_time_get_ms();
+      fire_ctrl_.stall = false;
+    } else {
+      fire_ctrl_.stall = true;
+      float tmp = this->setpoint_.trig_angle_;
+      this->setpoint_.trig_angle_ = fire_ctrl_.last_trig_angle;
+      fire_ctrl_.last_trig_angle = tmp;
+      this->fire_ctrl_.last_launch = bsp_time_get_ms();
+    }
   }
 
   switch (this->fire_ctrl_.fire_mode_) {
@@ -349,22 +363,22 @@ void Launcher::DrawUIStatic(Launcher* launcher) {
                          Component::UI::UI_GRAPHIC_LAYER_CONST,
                          Component::UI::UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
                          UI_CHAR_DEFAULT_WIDTH,
-      static_cast<uint16_t>(Device::Referee::UIGetWidth() *
-                            REF_UI_RIGHT_START_W),
-      static_cast<uint16_t>(Device::Referee::UIGetHeight() *
-                            REF_UI_MODE_LINE3_H),
-      "SHOT  RELX  SAFE  LOAD");
+                         static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                               REF_UI_RIGHT_START_W),
+                         static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                               REF_UI_MODE_LINE3_H),
+                         "SHOT  RELX  SAFE  LOAD");
   Device::Referee::AddUI(launcher->string_);
 
   launcher->string_.Draw("FM", Component::UI::UI_GRAPHIC_OP_ADD,
                          Component::UI::UI_GRAPHIC_LAYER_CONST,
                          Component::UI::UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
                          UI_CHAR_DEFAULT_WIDTH,
-      static_cast<uint16_t>(Device::Referee::UIGetWidth() *
-                            REF_UI_RIGHT_START_W),
-      static_cast<uint16_t>(Device::Referee::UIGetHeight() *
-                            REF_UI_MODE_LINE4_H),
-      "FIRE  SNGL  BRST  CONT");
+                         static_cast<uint16_t>(Device::Referee::UIGetWidth() *
+                                               REF_UI_RIGHT_START_W),
+                         static_cast<uint16_t>(Device::Referee::UIGetHeight() *
+                                               REF_UI_MODE_LINE4_H),
+                         "FIRE  SNGL  BRST  CONT");
   Device::Referee::AddUI(launcher->string_);
 
   float box_pos_left = 0.0f, box_pos_right = 0.0f;

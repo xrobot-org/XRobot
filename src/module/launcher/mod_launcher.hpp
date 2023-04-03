@@ -106,8 +106,10 @@ class Launcher {
 
   struct FireControl {
     bool fire = false;
-    uint32_t last_launch = 0;     /* 上次发射器时间 单位：ms */
-    bool last_fire = false;       /* 上次开火状态 */
+    bool stall = false;
+    uint32_t last_launch = 0; /* 上次发射器时间 单位：ms */
+    bool last_fire = false;   /* 上次开火状态 */
+    float last_trig_angle = 1.0f;
     bool first_pressed_fire;      /* 第一次收到开火指令 */
     uint32_t launched;            /* 已经发射的弹丸 */
     uint32_t to_launch;           /* 计划发射的弹丸 */
