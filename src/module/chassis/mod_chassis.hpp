@@ -18,6 +18,7 @@
 #include "comp_filter.hpp"
 #include "comp_mixer.hpp"
 #include "comp_pid.hpp"
+#include "dev_cap.hpp"
 #include "dev_motor.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
@@ -92,6 +93,8 @@ class Chassis {
   RefForChassis ref_;
 
   Mode mode_ = RELAX;
+
+  Device::Cap::Info cap_;
 
   std::array<Component::SpeedActuator *, 4> actuator_;
 

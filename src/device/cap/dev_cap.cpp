@@ -5,12 +5,13 @@
 
 #define CAP_RES (100.0f) /* 电容数据分辨率 */
 
-#define CAP_CUTOFF_VOLT \
-  13.0f /* 电容截止电压，未接升压模块时要高于电调最低工作电压 */
-
 using namespace Device;
 
 Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
+  ASSERT(param.cutoff_volt > 3.0f && param.cutoff_volt < 24.0f);
+
+  out_.power_limit_ = 40.0f;
+
   auto rx_callback = [](Can::Pack &rx, Cap *cap) {
     rx.index -= cap->param_.index;
 
@@ -26,9 +27,31 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
 
   Can::Subscribe(cap_tp, this->param_.can, this->param_.index, 1);
 
-  auto cap_thread = [](Cap *cap) {
-    Message::Subscriber out_sub("cap_out", cap->out_);
+  auto ref_cb = [](Device::Referee::Data &ref, Cap *cap) {
+    if (ref.status != Device::Referee::RUNNING) {
+      cap->out_.power_limit_ = 40.0f;
+    } else if (ref.power_heat.chassis_pwr_buff > 30) {
+      cap->out_.power_limit_ =
+          static_cast<float>(ref.robot_status.chassis_power_limit) +
+          60.0f *
+              (static_cast<float>(ref.power_heat.chassis_pwr_buff) - 30.0f) /
+              30.0f;
+    } else {
+      cap->out_.power_limit_ =
+          static_cast<float>(ref.robot_status.chassis_power_limit) *
+          (static_cast<float>(ref.power_heat.chassis_pwr_buff) / 30.0f);
+    }
 
+    clampf(&cap->out_.power_limit_, 20.0f, 100.0f);
+
+    return true;
+  };
+
+  Message::Topic<Device::Referee::Data>(
+      Message::Topic<Device::Referee::Data>::Find("referee"))
+      .RegisterCallback(ref_cb, this);
+
+  auto cap_thread = [](Cap *cap) {
     while (1) {
       /* 读取裁判系统信息 */
       if (!cap->Update()) {
@@ -37,11 +60,10 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
       }
       cap->info_tp_.Publish(cap->info_);
 
-      out_sub.DumpData();
       cap->Control();
 
       /* 运行结束，等待下一次唤醒 */
-      cap->thread_.SleepUntil(10);
+      cap->thread_.SleepUntil(100);
     }
   };
 
@@ -56,12 +78,12 @@ bool Cap::Update() {
   Can::Pack rx;
   while (this->control_feedback_.Receive(rx, 0)) {
     this->Decode(rx);
-    this->online_ = 1;
+    this->info_.online_ = 1;
     this->last_online_time_ = bsp_time_get();
     return true;
   }
 
-  if (bsp_time_get() - this->last_online_time_ > 0.25f) {
+  if (bsp_time_get() - this->last_online_time_ > 0.5f) {
     return false;
   } else {
     return true;
@@ -100,7 +122,7 @@ bool Cap::Offline() {
   this->info_.input_curr_ = 0;
   this->info_.input_volt_ = 0;
   this->info_.target_power_ = 0;
-  this->online_ = 0;
+  this->info_.online_ = 0;
 
   return true;
 }
@@ -108,7 +130,7 @@ bool Cap::Offline() {
 float Cap::GetPercentage() {
   const float C_MAX = this->info_.input_volt_ * this->info_.input_volt_;
   const float C_CAP = this->info_.cap_volt_ * this->info_.cap_volt_;
-  const float C_MIN = CAP_CUTOFF_VOLT * CAP_CUTOFF_VOLT;
+  const float C_MIN = param_.cutoff_volt * param_.cutoff_volt;
   float percentage = (C_CAP - C_MIN) / (C_MAX - C_MIN);
   clampf(&percentage, 0.0f, 1.0f);
   return percentage;
@@ -123,7 +145,7 @@ void Cap::DrawUIStatic(Cap *cap) {
       static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f + 10.0f),
       "CAP");
 
-  if (cap->online_) {
+  if (cap->info_.online_) {
     cap->arc_.Draw("CP", Component::UI::UI_GRAPHIC_OP_ADD,
                    Component::UI::UI_GRAPHIC_LAYER_CAP, Component::UI::UI_GREEN,
                    0, static_cast<uint16_t>(cap->info_.percentage_ * 360.f),
@@ -146,7 +168,7 @@ void Cap::DrawUIStatic(Cap *cap) {
 }
 
 void Cap::DrawUIDynamic(Cap *cap) {
-  if (cap->online_) {
+  if (cap->info_.online_) {
     cap->arc_.Draw("CP", Component::UI::UI_GRAPHIC_OP_REWRITE,
                    Component::UI::UI_GRAPHIC_LAYER_CAP, Component::UI::UI_GREEN,
                    0, static_cast<uint16_t>(cap->info_.percentage_ * 360.f),

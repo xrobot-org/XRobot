@@ -165,7 +165,7 @@ Robot::Hero::Param param = {
           .i = 0.2f,
           .d = 0.0f,
           .i_limit = 0.2f,
-          .out_limit = 1.0f,
+          .out_limit = 0.5f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -189,12 +189,12 @@ Robot::Hero::Param param = {
     .pit_actr = {
         .speed = {
           /* GIMBAL_CTRL_PIT_OMEGA_IDX */
-          .k = 0.47f,
+          .k = 0.25f,
           .p = 1.0f,
-          .i = 0.5f,
+          .i = 1.0f,
           .d = 0.f,
-          .i_limit = 0.2f,
-          .out_limit = 1.0f,
+          .i_limit = 0.4f,
+          .out_limit = 0.5f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -239,8 +239,8 @@ Robot::Hero::Param param = {
     },
 
     .limit = {
-      .pitch_max = 2.62f,
-      .pitch_min = 1.73f,
+      .pitch_max = 2.55f,
+      .pitch_min = 1.82f,
     },
 
     .EVENT_MAP = {
@@ -402,6 +402,7 @@ Robot::Hero::Param param = {
   .cap = {
     .can = BSP_CAN_1,
     .index = DEV_CAP_FB_ID_BASE,
+    .cutoff_volt = 10.0f,
   },
 };
 /* clang-format on */
