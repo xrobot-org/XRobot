@@ -98,7 +98,9 @@ bool AI::StartTrans() {
 bool AI::Offline() {
   /* 离线移交控制权 */
   if (bsp_time_get() - this->last_online_time_ > 0.2f) {
+    memset(&this->cmd_, 0, sizeof(cmd_));
     this->cmd_.online = false;
+    this->cmd_.ctrl_source = Component::CMD::CTRL_SOURCE_AI;
     this->cmd_tp_.Publish(this->cmd_);
   }
   return true;
