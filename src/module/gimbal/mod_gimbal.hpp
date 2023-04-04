@@ -5,6 +5,7 @@
 #pragma once
 
 #include <comp_type.hpp>
+#include <comp_ui.hpp>
 #include <module.hpp>
 
 #include "comp_actuator.hpp"
@@ -106,6 +107,8 @@ class Gimbal {
   Component::UI::String string_;
 
   Component::UI::Rectangle rectangle_;
+
+  Component::UI::Line line_;
 
   Component::Type::Eulr eulr_;
   Component::Type::Vector3 gyro_;

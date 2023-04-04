@@ -5,6 +5,7 @@
 #include "mod_gimbal.hpp"
 
 #include <comp_type.hpp>
+#include <comp_ui.hpp>
 
 #include "bsp_time.h"
 
@@ -59,9 +60,9 @@ Gimbal::Gimbal(Param& param, float control_freq)
   this->thread_.Create(gimbal_thread, this, "gimbal_thread",
                        MODULE_GIMBAL_TASK_STACK_DEPTH, System::Thread::MEDIUM);
 
-  System::Timer::Create(this->DrawUIStatic, this, 2100);
+  System::Timer::Create(this->DrawUIStatic, this, 2000);
 
-  System::Timer::Create(this->DrawUIDynamic, this, 200);
+  System::Timer::Create(this->DrawUIDynamic, this, 60);
 }
 
 void Gimbal::UpdateFeedback() {
@@ -209,6 +210,26 @@ void Gimbal::DrawUIStatic(Gimbal* gimbal) {
                               REF_UI_BOX_BOT_OFFSET));
     Device::Referee::AddUI(gimbal->rectangle_);
   }
+  gimbal->line_.Draw(
+      "g", Component::UI::UI_GRAPHIC_OP_ADD,
+      Component::UI::UI_GRAPHIC_LAYER_CONST, Component::UI::UI_GREEN,
+      UI_DEFAULT_WIDTH * 3,
+      static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
+      static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f),
+      static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
+      static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f + 50.f));
+  Device::Referee::AddUI(gimbal->line_);
+  gimbal->line_.Draw(
+      "GA", Component::UI::UI_GRAPHIC_OP_ADD,
+      Component::UI::UI_GRAPHIC_LAYER_GIMBAL, Component::UI::UI_GREEN,
+      UI_DEFAULT_WIDTH * 12,
+      static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
+      static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f),
+      static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f +
+                            -sinf(gimbal->yaw_) * 44),
+      static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f +
+                            cosf(gimbal->yaw_) * 44));
+  Device::Referee::AddUI(gimbal->line_);
 }
 
 void Gimbal::DrawUIDynamic(Gimbal* gimbal) {
@@ -253,4 +274,15 @@ void Gimbal::DrawUIDynamic(Gimbal* gimbal) {
                               REF_UI_BOX_BOT_OFFSET));
     Device::Referee::AddUI(gimbal->rectangle_);
   }
+  gimbal->line_.Draw(
+      "GA", Component::UI::UI_GRAPHIC_OP_REWRITE,
+      Component::UI::UI_GRAPHIC_LAYER_GIMBAL, Component::UI::UI_GREEN,
+      UI_DEFAULT_WIDTH * 12,
+      static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
+      static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f),
+      static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f +
+                            -sinf(gimbal->yaw_) * 44),
+      static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f +
+                            cosf(gimbal->yaw_) * 44));
+  Device::Referee::AddUI(gimbal->line_);
 }
