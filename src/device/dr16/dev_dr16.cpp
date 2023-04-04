@@ -294,7 +294,7 @@ void DR16::DrawUIDynamic(DR16 *dr16) {
     case DR16_CTRL_SOURCE_SW:
       dr16->rectangle_.Draw(
           "DS", Component::UI::UI_GRAPHIC_OP_REWRITE,
-          Component::UI::UI_GRAPHIC_LAYER_CMD, Component::UI::UI_GREEN,
+          Component::UI::UI_GRAPHIC_LAYER_CMD, Component::UI::UI_ORANGE,
           UI_DEFAULT_WIDTH,
           static_cast<uint16_t>(
               Device::Referee::UIGetWidth() * REF_UI_RIGHT_START_W + 56.f),
@@ -304,7 +304,7 @@ void DR16::DrawUIDynamic(DR16 *dr16) {
               Device::Referee::UIGetWidth() * REF_UI_RIGHT_START_W + 80.f),
           static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.4f +
                                 REF_UI_BOX_BOT_OFFSET));
-      break;
       Device::Referee::AddUI(dr16->rectangle_);
+      break;
   }
 }

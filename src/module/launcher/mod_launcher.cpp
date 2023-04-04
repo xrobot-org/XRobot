@@ -568,13 +568,13 @@ void Launcher::DrawUIDynamic(Launcher* launcher) {
                                   REF_UI_RIGHT_START_W +
                               box_pos_left),
         static_cast<uint16_t>(Device::Referee::UIGetHeight() *
-                                  REF_UI_MODE_LINE3_H +
+                                  REF_UI_MODE_LINE4_H +
                               REF_UI_BOX_UP_OFFSET),
         static_cast<uint16_t>(Device::Referee::UIGetWidth() *
                                   REF_UI_RIGHT_START_W +
                               box_pos_right),
         static_cast<uint16_t>(Device::Referee::UIGetHeight() *
-                                  REF_UI_MODE_LINE3_H +
+                                  REF_UI_MODE_LINE4_H +
                               REF_UI_BOX_BOT_OFFSET));
     Device::Referee::AddUI(launcher->rectangle_);
   }
