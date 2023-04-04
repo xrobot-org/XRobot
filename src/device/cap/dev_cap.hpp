@@ -6,6 +6,7 @@
 #include "comp_type.hpp"
 #include "comp_ui.hpp"
 #include "dev_can.hpp"
+#include "dev_referee.hpp"
 
 #define DEV_CAP_FB_ID_BASE (0x211)
 #define DEV_CAP_CTRL_ID_BASE (0x210)
@@ -19,6 +20,7 @@ class Cap {
     float input_curr_;
     float target_power_;
     float percentage_;
+    bool online_;
   } Info;
 
   typedef struct {
@@ -28,6 +30,7 @@ class Cap {
   typedef struct {
     bsp_can_t can;
     uint32_t index;
+    float cutoff_volt;
   } Param;
 
   Cap(Param& param);
@@ -48,8 +51,6 @@ class Cap {
 
  private:
   Param param_;
-
-  bool online_;
 
   float last_online_time_ = 0.0f;
 

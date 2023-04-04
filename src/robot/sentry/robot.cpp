@@ -247,15 +247,15 @@ Robot::Infantry::Param param = {
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_TOP,
-        Module::Gimbal::SET_MODE_RELAX
+        Module::Gimbal::SET_MODE_ABSOLUTE
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_MID,
-        Module::Gimbal::SET_MODE_RELAX
+        Module::Gimbal::SET_MODE_ABSOLUTE
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_BOT,
-        Module::Gimbal::SET_MODE_RELAX
+        Module::Gimbal::SET_MODE_ABSOLUTE
       }
     },
 
@@ -399,6 +399,7 @@ Robot::Infantry::Param param = {
   .cap = {
     .can = BSP_CAN_1,
     .index = DEV_CAP_FB_ID_BASE,
+    .cutoff_volt = 15.0f,
   },
 };
 /* clang-format on */

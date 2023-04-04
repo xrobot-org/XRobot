@@ -97,11 +97,14 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
 
     auto cmd_sub = Message::Subscriber("cmd_chassis", chassis->cmd_);
 
+    auto cap_sub = Message::Subscriber("cap_info", chassis->cap_);
+
     while (1) {
       /* 读取控制指令、电容、裁判系统、电机反馈 */
       yaw_sub.DumpData();
       raw_ref_sub.DumpData();
       cmd_sub.DumpData();
+      cap_sub.DumpData();
 
       /* 更新反馈值 */
       chassis->PraseRef();
@@ -119,9 +122,9 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
   this->thread_.Create(chassis_thread, this, "chassis_thread",
                        MODULE_CHASSIS_TASK_STACK_DEPTH, System::Thread::MEDIUM);
 
-  System::Timer::Create(this->DrawUIStatic, this, 2000);
+  System::Timer::Create(this->DrawUIStatic, this, 2100);
 
-  System::Timer::Create(this->DrawUIDynamic, this, 60);
+  System::Timer::Create(this->DrawUIDynamic, this, 200);
 }
 
 template <typename Motor, typename MotorParam>
@@ -204,15 +207,23 @@ void Chassis<Motor, MotorParam>::Control() {
     case Chassis::FOLLOW_GIMBAL:
     case Chassis::ROTOR:
     case Chassis::INDENPENDENT: /* 独立模式,受PID控制 */ {
-      float buff_percentage = this->ref_.chassis_pwr_buff / 30.0f;
-      clampf(&buff_percentage, 0.0f, 1.0f);
+      float percentage = 0.0f;
+      if (cap_.online_) {
+        percentage = cap_.percentage_;
+      } else if (ref_.status == Device::Referee::RUNNING) {
+        percentage = this->ref_.chassis_pwr_buff / 30.0f;
+      } else {
+        percentage = 1.0f;
+      }
+
+      clampf(&percentage, 0.0f, 1.0f);
+
       for (unsigned i = 0; i < this->mixer_.len_; i++) {
         float out = this->actuator_[i]->Calculate(
             this->setpoint_.motor_rotational_speed[i] *
                 MOTOR_MAX_ROTATIONAL_SPEED,
             this->motor_[i]->GetSpeed(), this->dt_);
-
-        this->motor_[i]->Control(out);
+        this->motor_[i]->Control(out * percentage);
       }
 
       break;
@@ -276,27 +287,6 @@ void Chassis<Motor, MotorParam>::DrawUIStatic(
   Device::Referee::AddUI(chassis->string_);
 
   float box_pos_left = 0.0f, box_pos_right = 0.0f;
-  chassis->line_.Draw(
-      "c", Component::UI::UI_GRAPHIC_OP_ADD,
-      Component::UI::UI_GRAPHIC_LAYER_CONST, Component::UI::UI_GREEN,
-      UI_DEFAULT_WIDTH * 3,
-      static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
-      static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f),
-      static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
-      static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f + 50.f));
-  Device::Referee::AddUI(chassis->line_);
-
-  chassis->line_.Draw(
-      "CA", Component::UI::UI_GRAPHIC_OP_ADD,
-      Component::UI::UI_GRAPHIC_LAYER_CHASSIS, Component::UI::UI_GREEN,
-      UI_DEFAULT_WIDTH * 12,
-      static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
-      static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f),
-      static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f +
-                            sinf(chassis->yaw_) * 44),
-      static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f +
-                            cosf(chassis->yaw_) * 44));
-  Device::Referee::AddUI(chassis->line_);
 
   /* 更新底盘模式选择框 */
   switch (chassis->mode_) {
@@ -385,19 +375,6 @@ void Chassis<Motor, MotorParam>::DrawUIDynamic(
                               REF_UI_BOX_BOT_OFFSET));
     Device::Referee::AddUI(chassis->rectange_);
   }
-
-  chassis->line_.Draw(
-      "CA", Component::UI::UI_GRAPHIC_OP_REWRITE,
-      Component::UI::UI_GRAPHIC_LAYER_CHASSIS, Component::UI::UI_GREEN,
-      UI_DEFAULT_WIDTH * 12,
-      static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f),
-      static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f),
-      static_cast<uint16_t>(Device::Referee::UIGetWidth() * 0.4f +
-                            -sinf(chassis->yaw_) * 44),
-      static_cast<uint16_t>(Device::Referee::UIGetHeight() * 0.2f +
-                            cosf(chassis->yaw_) * 44));
-
-  Device::Referee::AddUI(chassis->line_);
 }
 
 template class Module::Chassis<Device::RMMotor, Device::RMMotor::Param>;

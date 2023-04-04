@@ -29,10 +29,10 @@ class Hero {
   Device::AHRS ahrs_;
   Device::BMI088 bmi088_;
   Device::Can can_;
+  Device::Referee referee_;
   Device::Cap cap_;
   Device::DR16 dr16_;
   Device::RGB led_;
-  Device::Referee referee_;
 
   Module::RMChassis chassis_;
   Module::Gimbal gimbal_;
