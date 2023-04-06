@@ -1,11 +1,13 @@
 #include "mod_balance.hpp"
 
 #include "bsp_time.h"
+#include "dev_referee.hpp"
+#include "om.hpp"
 
 #define ROTOR_WZ_MIN 0.6f /* 小陀螺旋转位移下界 */
 #define ROTOR_WZ_MAX 0.8f /* 小陀螺旋转位移上界 */
 
-#define ROTOR_OMEGA 0.0015f /* 小陀螺转动频率 */
+#define ROTOR_OMEGA 0.003f /* 小陀螺转动频率 */
 
 #define MOTOR_MAX_ROTATIONAL_SPEED 6000.0f /* 电机的最大转速 */
 
@@ -66,17 +68,26 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
                                                         this->param_.EVENT_MAP);
 
   auto chassis_thread = [](Balance* chassis) {
+    auto raw_ref_sub = Message::Subscriber("referee", chassis->raw_ref_);
     auto cmd_sub = Message::Subscriber("cmd_chassis", chassis->cmd_);
-    auto eulr_sub = Message::Subscriber("imu_eulr", chassis->eulr_);
-    auto gyro_sub = Message::Subscriber("imu_gyro", chassis->gyro_);
+    auto eulr_sub = Message::Subscriber("chassis_eulr", chassis->eulr_);
+    auto gyro_sub = Message::Subscriber("chassis_gyro", chassis->gyro_);
+    auto yaw_sub = Message::Subscriber("chassis_yaw", chassis->yaw_);
+    auto leg_sub = Message::Subscriber("leg_whell_polor", chassis->leg_);
+    auto cap_sub = Message::Subscriber("cap_info", chassis->cap_);
 
     while (1) {
       /* 读取控制指令、电容、裁判系统、电机反馈 */
       cmd_sub.DumpData();
+      raw_ref_sub.DumpData();
       eulr_sub.DumpData();
       gyro_sub.DumpData();
+      yaw_sub.DumpData();
+      leg_sub.DumpData();
+      cap_sub.DumpData();
 
       /* 更新反馈值 */
+      chassis->PraseRef();
       chassis->ctrl_lock_.Take(UINT32_MAX);
       chassis->UpdateFeedback();
       chassis->UpdateStatus();
@@ -90,6 +101,15 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
 
   this->thread_.Create(chassis_thread, this, "chassis_thread",
                        MODULE_BALANCE_TASK_STACK_DEPTH, System::Thread::MEDIUM);
+}
+
+template <typename Motor, typename MotorParam>
+void Balance<Motor, MotorParam>::PraseRef() {
+  this->ref_.chassis_power_limit =
+      this->raw_ref_.robot_status.chassis_power_limit;
+  this->ref_.chassis_pwr_buff = this->raw_ref_.power_heat.chassis_pwr_buff;
+  this->ref_.chassis_watt = this->raw_ref_.power_heat.chassis_watt;
+  this->ref_.status = this->raw_ref_.status;
 }
 
 template <typename Motor, typename MotorParam>
@@ -108,7 +128,9 @@ void Balance<Motor, MotorParam>::UpdateFeedback() {
   this->feeback_[CTRL_CH_PITCH_ANGLE] = this->eulr_.pit;
   this->feeback_[CTRL_CH_GYRO_X] = this->gyro_.x;
   this->feeback_[CTRL_CH_YAW_ANGLE] = this->eulr_.yaw;
-  this->feeback_[CTRL_CH_GYRO_Z] = this->gyro_.z;
+  this->feeback_[CTRL_CH_GYRO_Z] =
+      -(this->motor_[0]->GetSpeed() + this->motor_[1]->GetSpeed()) / 2.0f /
+      MOTOR_MAX_ROTATIONAL_SPEED;
 }
 
 template <typename Motor, typename MotorParam>
@@ -129,22 +151,45 @@ void Balance<Motor, MotorParam>::UpdateStatus() {
     now_status = ROLLOVER;
   }
 
+  if (LowPowerDetect()) {
+    now_status = LOW_POWER;
+  }
+
   if (now_status != status_) {
-    now_status = status_;
+    status_ = now_status;
     feeback_[CTRL_CH_DISPLACEMENT] = 0.0f;
   }
 }
 
 template <typename Motor, typename MotorParam>
 bool Balance<Motor, MotorParam>::SlipDetect() {
-  // TODO:
-  return false;
+  if (bsp_time_get() - last_detect_time_ > 0.2) {
+    last_detect_time_ = bsp_time_get();
+    slip_counter_ = 0.0f;
+    if (fabsf(gyro_.x) > 0.6f) {
+      if (last_detect_dir_ * gyro_.x < 0) {
+        last_detect_dir_ = -last_detect_dir_;
+        slip_counter_++;
+      }
+    }
+  }
+  if (slip_counter_ >= 3) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 template <typename Motor, typename MotorParam>
 bool Balance<Motor, MotorParam>::RolloverDetect() {
   // TODO:
   return false;
+}
+
+template <typename Motor, typename MotorParam>
+bool Balance<Motor, MotorParam>::LowPowerDetect() {
+  return (ref_.status != Device::Referee::OFFLINE) &&
+         (ref_.chassis_pwr_buff < 30.0f);
 }
 
 template <typename Motor, typename MotorParam>
@@ -162,17 +207,16 @@ void Balance<Motor, MotorParam>::Control() {
       this->move_vec_.wz = 0.0f;
       break;
     case Balance::INDENPENDENT:
-      this->move_vec_.vx = this->cmd_.x;
-      this->move_vec_.vy = this->cmd_.y;
+    case Balance::FOLLOW_GIMBAL:
+    case Balance::ROTOR: {
+      float cos_beta = cosf(yaw_);
+      float sin_beta = sinf(yaw_);
+      this->move_vec_.vx = cos_beta * this->cmd_.x - sin_beta * this->cmd_.y;
+      this->move_vec_.vy = sin_beta * this->cmd_.x + cos_beta * this->cmd_.y;
       this->move_vec_.wz = this->cmd_.z;
       break;
-    case Balance::FOLLOW_GIMBAL:
-      // TODO:
-      break;
-    case Balance::ROTOR:
-      this->move_vec_.vx = this->cmd_.x;
-      this->move_vec_.vy = this->cmd_.y;
-      break;
+    }
+
     default:
       break;
   }
@@ -192,6 +236,7 @@ void Balance<Motor, MotorParam>::Control() {
           enable_pid(CTRL_CH_YAW_ANGLE) | enable_pid(CTRL_CH_GYRO_Z);
       break;
     case SLIP:
+    case LOW_POWER:
     case ROLLOVER:
       pid_enable_ =
           enable_pid(CTRL_CH_PITCH_ANGLE) | enable_pid(CTRL_CH_GYRO_X);
@@ -203,11 +248,52 @@ void Balance<Motor, MotorParam>::Control() {
   setpoint_[CTRL_CH_FORWARD_SPEED] = this->move_vec_.vy;
   setpoint_[CTRL_CH_PITCH_ANGLE] = param_.init_g_center;
   setpoint_[CTRL_CH_GYRO_X] = 0.0f;
-  float yaw_delta =
-      (this->move_vec_.vx + this->move_vec_.wz) * YAW_MAX_MOVE_SPEED * dt_;
-  setpoint_[CTRL_CH_YAW_ANGLE] =
-      Component::Type::CycleValue(setpoint_[CTRL_CH_YAW_ANGLE] - yaw_delta);
+  if (mode_ != FOLLOW_GIMBAL) {
+  } else {
+    setpoint_[CTRL_CH_YAW_ANGLE] = 0.0f;
+    feeback_[CTRL_CH_YAW_ANGLE] = -yaw_;
+  }
   setpoint_[CTRL_CH_GYRO_Z] = 0.0f;
+
+  switch (mode_) {
+    case RELAX:
+      setpoint_[CTRL_CH_DISPLACEMENT] = 0.0f;
+      setpoint_[CTRL_CH_FORWARD_SPEED] = 0.0f;
+      setpoint_[CTRL_CH_PITCH_ANGLE] = 0.0f;
+      setpoint_[CTRL_CH_GYRO_X] = 0.0f;
+      setpoint_[CTRL_CH_YAW_ANGLE] = feeback_[CTRL_CH_YAW_ANGLE];
+      setpoint_[CTRL_CH_GYRO_Z] = 0.0f;
+      break;
+    case FOLLOW_GIMBAL:
+      setpoint_[CTRL_CH_DISPLACEMENT] = 0.0f;
+      setpoint_[CTRL_CH_FORWARD_SPEED] = this->move_vec_.vy;
+      setpoint_[CTRL_CH_PITCH_ANGLE] = param_.init_g_center;
+      setpoint_[CTRL_CH_GYRO_X] = 0.0f;
+      feeback_[CTRL_CH_YAW_ANGLE] = -yaw_;
+      setpoint_[CTRL_CH_GYRO_Z] = 0.0f;
+    case INDENPENDENT: {
+      setpoint_[CTRL_CH_DISPLACEMENT] = 0.0f;
+      setpoint_[CTRL_CH_FORWARD_SPEED] = this->move_vec_.vy;
+      setpoint_[CTRL_CH_PITCH_ANGLE] = param_.init_g_center;
+      setpoint_[CTRL_CH_GYRO_X] = 0.0f;
+      float yaw_delta =
+          (this->move_vec_.vx + this->move_vec_.wz) * YAW_MAX_MOVE_SPEED * dt_;
+      setpoint_[CTRL_CH_YAW_ANGLE] =
+          Component::Type::CycleValue(setpoint_[CTRL_CH_YAW_ANGLE] - yaw_delta);
+      setpoint_[CTRL_CH_GYRO_Z] = 0.0f;
+
+      break;
+    }
+    case ROTOR: {
+      setpoint_[CTRL_CH_DISPLACEMENT] = 0.0f;
+      setpoint_[CTRL_CH_FORWARD_SPEED] = this->move_vec_.vy;
+      setpoint_[CTRL_CH_PITCH_ANGLE] = 0.0f;
+      setpoint_[CTRL_CH_GYRO_X] = 0.0f;
+      setpoint_[CTRL_CH_YAW_ANGLE] = feeback_[CTRL_CH_YAW_ANGLE];
+      setpoint_[CTRL_CH_GYRO_Z] = 0.05f;
+      break;
+    }
+  }
 
   /* 全状态反馈控制 */
   switch (this->mode_) {
@@ -279,16 +365,36 @@ void Balance<Motor, MotorParam>::Control() {
       }
 
       /* 输出加和 */
-      float out_balance = 0.0f, out_yaw = 0.0f;
+      float out_balance = 0.0f, out_yaw = 0.0f, buff_percentage = 1.0f;
 
-      for (int i = 0; i < CTRL_CH_YAW_ANGLE; i++) {
+      if (!cap_.online_) {
+        if (ref_.status == Device::Referee::OFFLINE) {
+          buff_percentage = 0.8f;
+        } else if (ref_.chassis_pwr_buff > 40.0f) {
+          buff_percentage = 1.0f;
+        } else {
+          buff_percentage = ref_.chassis_pwr_buff / 40.0f;
+        }
+      } else {
+        if (cap_.percentage_ > 0.7f) {
+          buff_percentage = 1.0f;
+        } else {
+          buff_percentage = cap_.percentage_ / 0.7f;
+        }
+      }
+
+      for (int i = 0; i < CTRL_CH_PITCH_ANGLE; i++) {
+        out_balance += output_[i] * buff_percentage;
+      }
+
+      for (int i = CTRL_CH_PITCH_ANGLE; i < CTRL_CH_YAW_ANGLE; i++) {
         out_balance += output_[i];
       }
 
       out_balance = offset_pid_.Calculate(0.0f, -out_balance, dt_);
 
       for (int i = CTRL_CH_YAW_ANGLE; i < CTRL_CH_NUM; i++) {
-        out_yaw += output_[i];
+        out_yaw += output_[i] * buff_percentage;
       }
 
       motor_out_[LEFT_WHEEL] = out_balance - out_yaw;
@@ -338,7 +444,6 @@ void Balance<Motor, MotorParam>::SetMode(Balance::Mode mode) {
     data = 0.0f;
   }
 
-  this->setpoint_[CTRL_CH_YAW_ANGLE] = this->eulr_.yaw;
   this->feeback_[CTRL_CH_DISPLACEMENT] = 0.0f;
   this->mode_ = mode;
 }

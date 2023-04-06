@@ -8,6 +8,7 @@
 #include "comp_cmd.hpp"
 #include "comp_filter.hpp"
 #include "comp_pid.hpp"
+#include "dev_cap.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
 #include "dev_rmd_motor.hpp"
@@ -28,7 +29,8 @@ class Balance {
     MOVING,     /* 运动 */
     STATIONARY, /* 静止 */
     SLIP,       /* 打滑 */
-    ROLLOVER    /* 翻倒 */
+    ROLLOVER,   /* 翻倒 */
+    LOW_POWER   /* 能量耗尽 */
   } Status;
 
   typedef enum {
@@ -74,6 +76,13 @@ class Balance {
     Component::PID::Param offset_pid;
   } Param;
 
+  typedef struct {
+    Device::Referee::Status status;
+    float chassis_power_limit;
+    float chassis_pwr_buff;
+    float chassis_watt;
+  } RefForChassis;
+
   Balance(Param &param, float control_freq);
 
   void UpdateFeedback();
@@ -82,11 +91,15 @@ class Balance {
 
   void Control();
 
+  void PraseRef();
+
   void SetMode(Mode mode);
 
   bool SlipDetect();
 
   bool RolloverDetect();
+
+  bool LowPowerDetect();
 
  private:
   Param param_;
@@ -96,6 +109,14 @@ class Balance {
   float last_wakeup_;
 
   float now_;
+
+  float last_detect_time_ = 0.0f;
+  float last_detect_dir_ = 1.0f;
+  uint16_t slip_counter_ = 0;
+
+  float yaw_;
+
+  RefForChassis ref_;
 
   Mode mode_ = RELAX;
 
@@ -114,11 +135,13 @@ class Balance {
 
   Output output_;
 
+  Device::Cap::Info cap_;
+
   Component::Type::MoveVector move_vec_; /* 底盘实际的运动向量 */
 
   Component::Type::Eulr eulr_;
   Component::Type::Vector3 gyro_;
-
+  Component::Type::Polar2 leg_;
   float wz_dir_mult_; /* 小陀螺模式旋转方向乘数 */
 
   /* PID计算的输出值 */
@@ -127,6 +150,7 @@ class Balance {
   Component::LowPassFilter2p speed_filter_;
 
   System::Semaphore ctrl_lock_;
+  Device::Referee::Data raw_ref_;
 
   Component::CMD::ChassisCMD cmd_;
 
