@@ -46,6 +46,8 @@ class Launcher {
     CHANGE_TRIG_MODE_SINGLE,
     CHANGE_TRIG_MODE_BURST,
     CHANGE_TRIG_MODE,
+    OPEN_COVER,
+    CLOSE_COVER,
     LAUNCHER_START_FIRE,
   } LauncherEvent;
 

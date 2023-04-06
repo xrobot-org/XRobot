@@ -64,6 +64,12 @@ Launcher::Launcher(Param& param, float control_freq)
           launcher->fire_ctrl_.fire = true;
         }
         break;
+      case OPEN_COVER:
+        launcher->cover_mode_ = OPEN;
+        break;
+      case CLOSE_COVER:
+        launcher->cover_mode_ = CLOSE;
+        break;
       default:
         break;
     }
