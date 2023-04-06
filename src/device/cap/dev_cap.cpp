@@ -30,16 +30,8 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
   auto ref_cb = [](Device::Referee::Data &ref, Cap *cap) {
     if (ref.status != Device::Referee::RUNNING) {
       cap->out_.power_limit_ = 40.0f;
-    } else if (ref.power_heat.chassis_pwr_buff > 30) {
-      cap->out_.power_limit_ =
-          static_cast<float>(ref.robot_status.chassis_power_limit) +
-          60.0f *
-              (static_cast<float>(ref.power_heat.chassis_pwr_buff) - 30.0f) /
-              30.0f;
     } else {
-      cap->out_.power_limit_ =
-          static_cast<float>(ref.robot_status.chassis_power_limit) *
-          (static_cast<float>(ref.power_heat.chassis_pwr_buff) / 30.0f);
+      cap->out_.power_limit_ = ref.robot_status.chassis_power_limit;
     }
 
     clampf(&cap->out_.power_limit_, 20.0f, 100.0f);
