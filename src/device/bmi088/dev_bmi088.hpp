@@ -24,8 +24,7 @@ class BMI088 {
 
   BMI088(BMI088::Rotation &rot);
 
-  bool AcclInit();
-  bool GyroInit();
+  bool Init();
 
   void PraseGyro();
 
