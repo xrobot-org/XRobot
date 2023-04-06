@@ -99,11 +99,15 @@ class WheelLeg {
 
   Component::Type::Eulr eulr_;
 
+  Component::Type::Vector3 gyro_;
+
   std::array<Setpoint, LEG_NUM> setpoint_;
 
   std::array<Feedback, LEG_NUM> feedback_;
 
   Mode mode_ = RELAX;
+
+  Message::Topic<Component::Type::Polar2> wheel_polor_;
 
   System::Semaphore ctrl_lock_;
 

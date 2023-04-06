@@ -180,11 +180,7 @@ BMI088::BMI088(BMI088::Rotation &rot)
   bsp_spi_register_callback(BSP_SPI_IMU, BSP_SPI_RX_CPLT_CB, recv_cplt_callback,
                             this);
 
-  while (!GyroInit()) {
-    System::Thread::Sleep(1);
-  }
-
-  while (!AcclInit()) {
+  while (!Init()) {
     System::Thread::Sleep(1);
   }
 
@@ -207,7 +203,7 @@ BMI088::BMI088(BMI088::Rotation &rot)
         bmi088->accl_tp_.Publish(bmi088->accl_);
       } else {
         bmi088->spi_lock_.Take(UINT32_MAX);
-        while (!bmi088->AcclInit()) {
+        while (!bmi088->Init()) {
           System::Thread::Sleep(1);
         }
         bmi088->spi_lock_.Give();
@@ -239,7 +235,7 @@ BMI088::BMI088(BMI088::Rotation &rot)
         bmi088->gyro_tp_.Publish(bmi088->gyro_);
       } else {
         bmi088->spi_lock_.Take(UINT32_MAX);
-        while (!bmi088->AcclInit()) {
+        while (!bmi088->Init()) {
           System::Thread::Sleep(1);
         }
         bmi088->spi_lock_.Give();
@@ -353,15 +349,21 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char **argv) {
   return 0;
 };
 
-bool BMI088::AcclInit() {
+bool BMI088::Init() {
   /* BMI088软件重启 */
   WriteSingle(BMI_ACCL, BMI088_REG_ACCL_SOFTRESET, 0xB6);
+  WriteSingle(BMI_GYRO, BMI088_REG_GYRO_SOFTRESET, 0xB6);
 
   bsp_delay(30);
 
   ReadSingle(BMI_ACCL, BMI088_REG_ACCL_CHIP_ID);
+  ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID);
 
   if (ReadSingle(BMI_ACCL, BMI088_REG_ACCL_CHIP_ID) != BMI088_CHIP_ID_ACCL) {
+    return false;
+  }
+
+  if (ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID) != BMI088_CHIP_ID_GYRO) {
     return false;
   }
 
@@ -384,21 +386,6 @@ bool BMI088::AcclInit() {
   bsp_delay(50);
 
   bsp_gpio_enable_irq(BSP_GPIO_IMU_ACCL_INT);
-
-  return true;
-}
-
-bool BMI088::GyroInit() {
-  /* BMI088软件重启 */
-  WriteSingle(BMI_GYRO, BMI088_REG_GYRO_SOFTRESET, 0xB6);
-
-  bsp_delay(30);
-
-  ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID);
-
-  if (ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID) != BMI088_CHIP_ID_GYRO) {
-    return false;
-  }
 
   /* Gyro init. */
   /* 0x00: +-2000. 0x01: +-1000. 0x02: +-500. 0x03: +-250. 0x04: +-125. */

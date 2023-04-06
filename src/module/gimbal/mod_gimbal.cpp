@@ -4,6 +4,7 @@
 
 #include "mod_gimbal.hpp"
 
+#include <comp_cmd.hpp>
 #include <comp_type.hpp>
 #include <comp_ui.hpp>
 
@@ -24,8 +25,18 @@ Gimbal::Gimbal(Param& param, float control_freq)
   auto event_callback = [](GimbalEvent event, Gimbal* gimbal) {
     gimbal->ctrl_lock_.Take(UINT32_MAX);
 
-    gimbal->SetMode(static_cast<Mode>(event));
-
+    switch (event) {
+      case SET_MODE_RELAX:
+      case SET_MODE_ABSOLUTE:
+        gimbal->SetMode(static_cast<Mode>(event));
+        break;
+      case START_AUTO_AIM:
+        Component::CMD::SetCtrlSource(Component::CMD::CTRL_SOURCE_AI);
+        break;
+      case STOP_AUTO_AIM:
+        Component::CMD::SetCtrlSource(Component::CMD::CTRL_SOURCE_RC);
+        break;
+    }
     gimbal->ctrl_lock_.Give();
   };
 

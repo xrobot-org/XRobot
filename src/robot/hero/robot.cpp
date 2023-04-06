@@ -21,122 +21,131 @@ Robot::Hero::Param param = {
       .out_limit = 1.0f,
       .d_cutoff_freq = -1.0f,
       .cycle = true,
-    },
+      },
 
-    .EVENT_MAP = {
-      Component::CMD::EventMapItem{
-        Component::CMD::CMD_EVENT_LOST_CTRL,
-        Module::RMChassis::SET_MODE_RELAX
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::DR16_SW_L_POS_TOP,
-        Module::RMChassis::SET_MODE_RELAX
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::DR16_SW_L_POS_MID,
-        Module::RMChassis::SET_MODE_FOLLOW
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::DR16_SW_L_POS_BOT,
-        Module::RMChassis::SET_MODE_ROTOR
-      }
-    },
-
-    .actuator_param = {
-      Component::SpeedActuator::Param{
-        .speed = {
-          .k = 0.00015f,
-          .p = 1.0f,
-          .i = 0.0f,
-          .d = 0.0f,
-          .i_limit = 1.0f,
-          .out_limit = 1.0f,
-          .d_cutoff_freq = -1.0f,
-          .cycle = false,
+      .EVENT_MAP = {
+        Component::CMD::EventMapItem{
+          Component::CMD::CMD_EVENT_LOST_CTRL,
+          Module::RMChassis::SET_MODE_RELAX
         },
-
-        .in_cutoff_freq = -1.0f,
-
-        .out_cutoff_freq = -1.0f,
-
-      },
-      Component::SpeedActuator::Param{
-        .speed = {
-          .k = 0.00018f,
-          .p = 1.0f,
-          .i = 0.0f,
-          .d = 0.0f,
-          .i_limit = 1.0f,
-          .out_limit = 1.0f,
-          .d_cutoff_freq = -1.0f,
-          .cycle = false,
+        Component::CMD::EventMapItem{
+          Device::DR16::DR16_SW_L_POS_TOP,
+          Module::RMChassis::SET_MODE_RELAX
         },
-
-        .in_cutoff_freq = -1.0f,
-
-        .out_cutoff_freq = -1.0f,
-      },
-      Component::SpeedActuator::Param{
-        .speed = {
-          .k = 0.00015f,
-          .p = 1.0f,
-          .i = 0.0f,
-          .d = 0.0f,
-          .i_limit = 1.0f,
-          .out_limit = 1.0f,
-          .d_cutoff_freq = -1.0f,
-          .cycle = false,
+        Component::CMD::EventMapItem{
+          Device::DR16::DR16_SW_L_POS_MID,
+          Module::RMChassis::SET_MODE_FOLLOW
         },
-
-        .in_cutoff_freq = -1.0f,
-
-        .out_cutoff_freq = -1.0f,
-      },
-      Component::SpeedActuator::Param{
-        .speed = {
-          .k = 0.00015f,
-          .p = 1.0f,
-          .i = 0.0f,
-          .d = 0.0f,
-          .i_limit = 1.0f,
-          .out_limit = 1.0f,
-          .d_cutoff_freq = -1.0f,
-          .cycle = false,
+        Component::CMD::EventMapItem{
+          Device::DR16::DR16_SW_L_POS_BOT,
+          Module::RMChassis::SET_MODE_ROTOR
         },
+        Component::CMD::EventMapItem{
+          Device::DR16::KEY_V,
+          Module::RMChassis::SET_MODE_ROTOR
+        },
+        Component::CMD::EventMapItem{
+          Device::DR16::KEY_B,
+          Module::RMChassis::SET_MODE_FOLLOW
+        }
+      },
 
-        .in_cutoff_freq = -1.0f,
+      .actuator_param = {
+        Component::SpeedActuator::Param{
+          .speed = {
+            .k = 0.00015f,
+            .p = 1.0f,
+            .i = 0.0f,
+            .d = 0.0f,
+            .i_limit = 1.0f,
+            .out_limit = 1.0f,
+            .d_cutoff_freq = -1.0f,
+            .cycle = false,
+          },
 
-        .out_cutoff_freq = -1.0f,
-      },
-    },
+          .in_cutoff_freq = -1.0f,
 
-    .motor_param = {
-      Device::RMMotor::Param{
-          .id_feedback = 0x201,
-          .id_control = M3508_M2006_CTRL_ID_BASE,
-          .model = Device::RMMotor::MOTOR_M3508,
-          .can = BSP_CAN_1,
+          .out_cutoff_freq = -1.0f,
+
+        },
+        Component::SpeedActuator::Param{
+          .speed = {
+            .k = 0.00018f,
+            .p = 1.0f,
+            .i = 0.0f,
+            .d = 0.0f,
+            .i_limit = 1.0f,
+            .out_limit = 1.0f,
+            .d_cutoff_freq = -1.0f,
+            .cycle = false,
+          },
+
+          .in_cutoff_freq = -1.0f,
+
+          .out_cutoff_freq = -1.0f,
+        },
+        Component::SpeedActuator::Param{
+          .speed = {
+            .k = 0.00015f,
+            .p = 1.0f,
+            .i = 0.0f,
+            .d = 0.0f,
+            .i_limit = 1.0f,
+            .out_limit = 1.0f,
+            .d_cutoff_freq = -1.0f,
+            .cycle = false,
+          },
+
+          .in_cutoff_freq = -1.0f,
+
+          .out_cutoff_freq = -1.0f,
+        },
+        Component::SpeedActuator::Param{
+          .speed = {
+            .k = 0.00015f,
+            .p = 1.0f,
+            .i = 0.0f,
+            .d = 0.0f,
+            .i_limit = 1.0f,
+            .out_limit = 1.0f,
+            .d_cutoff_freq = -1.0f,
+            .cycle = false,
+          },
+
+          .in_cutoff_freq = -1.0f,
+
+          .out_cutoff_freq = -1.0f,
+        },
       },
-      Device::RMMotor::Param{
-          .id_feedback = 0x202,
-          .id_control = M3508_M2006_CTRL_ID_BASE,
-          .model = Device::RMMotor::MOTOR_M3508,
-          .can = BSP_CAN_1,
-      },
-      Device::RMMotor::Param{
-          .id_feedback = 0x203,
-          .id_control = M3508_M2006_CTRL_ID_BASE,
-          .model = Device::RMMotor::MOTOR_M3508,
-          .can = BSP_CAN_1,
-      },
-      Device::RMMotor::Param{
-          .id_feedback = 0x204,
-          .id_control = M3508_M2006_CTRL_ID_BASE,
-          .model = Device::RMMotor::MOTOR_M3508,
-          .can = BSP_CAN_1,
-      },
+
+      .motor_param = {
+        Device::RMMotor::Param{
+            .id_feedback = 0x201,
+            .id_control = M3508_M2006_CTRL_ID_BASE,
+            .model = Device::RMMotor::MOTOR_M3508,
+            .can = BSP_CAN_1,
+        },
+        Device::RMMotor::Param{
+            .id_feedback = 0x202,
+            .id_control = M3508_M2006_CTRL_ID_BASE,
+            .model = Device::RMMotor::MOTOR_M3508,
+            .can = BSP_CAN_1,
+        },
+        Device::RMMotor::Param{
+            .id_feedback = 0x203,
+            .id_control = M3508_M2006_CTRL_ID_BASE,
+            .model = Device::RMMotor::MOTOR_M3508,
+            .can = BSP_CAN_1,
+        },
+        Device::RMMotor::Param{
+            .id_feedback = 0x204,
+            .id_control = M3508_M2006_CTRL_ID_BASE,
+            .model = Device::RMMotor::MOTOR_M3508,
+            .can = BSP_CAN_1,
+        },
     },
   },
+
 
   .gimbal = {
     .ff = {
@@ -255,10 +264,18 @@ Robot::Hero::Param param = {
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_MID,
         Module::Gimbal::SET_MODE_ABSOLUTE
-      },
+        },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_BOT,
         Module::Gimbal::SET_MODE_ABSOLUTE
+      },
+      Component::CMD::EventMapItem{
+        Device::DR16::KEY_R_PRESS,
+        Module::Gimbal::START_AUTO_AIM
+      },
+      Component::CMD::EventMapItem{
+        Device::DR16::KEY_R_RELEASE,
+        Module::Gimbal::STOP_AUTO_AIM
       }
     },
 
@@ -385,8 +402,20 @@ Robot::Hero::Param param = {
         Module::Launcher::LAUNCHER_START_FIRE
       },
       Component::CMD::EventMapItem{
-        Device::DR16::KEY_L_CLICK,
+        Device::DR16::KEY_L_PRESS,
         Module::Launcher::LAUNCHER_START_FIRE
+      },
+      Component::CMD::EventMapItem{
+        Device::DR16::KEY_G,
+        Module::Launcher::CHANGE_TRIG_MODE
+      },
+      Component::CMD::EventMapItem{
+        Device::DR16::KEY_R,
+        Module::Launcher::OPEN_COVER
+      },
+      Component::CMD::EventMapItem{
+        Device::DR16::KEY_F,
+        Module::Launcher::CLOSE_COVER
       }
     },
   }, /* launcher */
@@ -406,8 +435,6 @@ Robot::Hero::Param param = {
   },
 };
 /* clang-format on */
-
-Robot::Hero* hero = NULL;
 
 void robot_init() {
   System::Start<Robot::Hero, Robot::Hero::Param>(param, 500.0f);
