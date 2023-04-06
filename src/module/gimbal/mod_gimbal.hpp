@@ -38,6 +38,8 @@ class Gimbal {
   typedef enum {
     SET_MODE_RELAX,
     SET_MODE_ABSOLUTE,
+    START_AUTO_AIM,
+    STOP_AUTO_AIM
   } GimbalEvent;
 
   typedef struct {
