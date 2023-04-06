@@ -1,6 +1,7 @@
 #include "mod_dual_leg.hpp"
 
 #include <comp_type.hpp>
+#include <comp_utils.hpp>
 
 #include "bsp_delay.h"
 #include "bsp_time.h"
@@ -10,7 +11,7 @@ using namespace Module;
 using namespace Component::Type;
 
 WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
-    : param_(param), ctrl_lock_(true) {
+    : param_(param), wheel_polor_("leg_whell_polor"), ctrl_lock_(true) {
   constexpr auto LEG_NAMES = magic_enum::enum_names<Leg>();
   constexpr auto MOTOR_NAMES = magic_enum::enum_names<LegMotor>();
   for (uint8_t i = 0; i < LEG_NUM; i++) {
@@ -60,7 +61,9 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
       event_callback, this, this->param_.EVENT_MAP);
 
   auto leg_thread = [](WheelLeg *leg) {
-    auto eulr_sub = Message::Subscriber("imu_eulr", leg->eulr_);
+    auto eulr_sub = Message::Subscriber("chassis_eulr", leg->eulr_);
+
+    auto gyro_sub = Message::Subscriber("chassis_gyro", leg->gyro_);
 
     while (1) {
       eulr_sub.DumpData();
@@ -68,6 +71,8 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
       leg->UpdateFeedback();
 
       leg->Control();
+
+      leg->wheel_polor_.Publish(leg->feedback_[0].whell_polar);
 
       leg->thread_.SleepUntil(5);
     }
@@ -106,6 +111,7 @@ void WheelLeg::UpdateFeedback() {
         Line(pos_l2_end[LEG_FRONT], pos_l2_end[LEG_BACK]);
 
     Position2 middle_point = this->feedback_[i].diagonal.MiddlePoint();
+
     float length = sqrtf(powf(this->param_.l3, 2) -
                          powf(this->feedback_[i].diagonal.Length() / 2.0f, 2));
     Component::Type::CycleValue angle = -Component::Triangle::Supplementary(
@@ -130,35 +136,33 @@ void WheelLeg::Control() {
   /* 处理控制命令 */
   switch (this->mode_) {
     case RELAX:
-    case BREAK:
+    case BREAK: {
       for (int i = 0; i < LEG_NUM; i++) {
         this->setpoint_[i].whell_pos.x_ = 0.0f;
         this->setpoint_[i].whell_pos.y_ = -this->param_.limit.high_min;
       }
-      break;
+    }
+
+    break;
     case SQUAT:
     case JUMP: {
-      float y_err = sinf(this->eulr_.rol) * this->param_.l4 * 3.0f;
+      float angle = eulr_.pit - Component::Type::CycleValue(0.15f);
 
-      if (this->eulr_.rol < 0.0f) {
-        this->setpoint_[LEG_RIGHT].whell_pos.x_ = 0.0f;
-        this->setpoint_[LEG_RIGHT].whell_pos.y_ += y_err * this->dt_;
+      if (fabsf(angle) < 0.05f) {
+        angle = 0;
       } else {
-        this->setpoint_[LEG_LEFT].whell_pos.x_ = 0.0f;
-        this->setpoint_[LEG_LEFT].whell_pos.y_ -= y_err * this->dt_;
+        if (angle > 0) {
+          angle -= 0.05f;
+        } else {
+          angle += 0.05f;
+        }
       }
 
-      float tmp = MAX(this->setpoint_[LEG_LEFT].whell_pos.y_,
-                      this->setpoint_[LEG_RIGHT].whell_pos.y_) +
-                  this->param_.limit.high_min;
-
-      this->setpoint_[LEG_LEFT].whell_pos.y_ -= tmp;
-      this->setpoint_[LEG_RIGHT].whell_pos.y_ -= tmp;
-
-      clampf(&this->setpoint_[LEG_LEFT].whell_pos.y_,
-             -this->param_.limit.high_max, -this->param_.limit.high_min);
-      clampf(&this->setpoint_[LEG_RIGHT].whell_pos.y_,
-             -this->param_.limit.high_max, -this->param_.limit.high_min);
+      Component::Type::Polar2 target_wheel_polor(
+          angle - static_cast<float>(M_PI) * 0.5f, param_.limit.high_min);
+      clampf(&target_wheel_polor.angle_, -0.2f - M_PI * 0.5, 0.2f - M_PI * 0.5);
+      setpoint_[LEG_RIGHT].whell_pos = setpoint_[LEG_LEFT].whell_pos =
+          target_wheel_polor;
       break;
     }
     default:
