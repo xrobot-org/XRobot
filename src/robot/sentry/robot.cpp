@@ -382,7 +382,7 @@ Robot::Infantry::Param param = {
         Module::Launcher::LAUNCHER_START_FIRE
       },
       Component::CMD::EventMapItem{
-        Device::DR16::KEY_L_CLICK,
+        Device::DR16::KEY_L_PRESS,
         Module::Launcher::LAUNCHER_START_FIRE
       }
     },

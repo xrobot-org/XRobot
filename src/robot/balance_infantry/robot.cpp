@@ -617,7 +617,6 @@ Robot::Infantry::Param param = {
   }
 };
 /* clang-format on */
-Robot::Infantry* Robot::Infantry::self_;
 
 void robot_init() {
   System::Start<Robot::Infantry, Robot::Infantry::Param>(param, 500.0f);

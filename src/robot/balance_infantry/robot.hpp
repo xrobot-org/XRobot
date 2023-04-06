@@ -47,8 +47,6 @@ class Infantry {
   Module::Gimbal gimbal_;
   Module::Launcher launcher_;
 
-  static Infantry* self_;
-
   Infantry(Param& param, float control_freq)
       : bmi088_(param.bmi088_rot),
         can_imu_(param.can_imu),
@@ -57,8 +55,6 @@ class Infantry {
         leg_(param.leg, control_freq),
         balance_(param.balance, control_freq),
         gimbal_(param.gimbal, control_freq),
-        launcher_(param.launcher, control_freq) {
-    self_ = this;
-  }
+        launcher_(param.launcher, control_freq) {}
 };
 }  // namespace Robot
