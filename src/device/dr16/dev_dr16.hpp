@@ -44,8 +44,10 @@ class DR16 {
     KEY_C,
     KEY_V,
     KEY_B,
-    KEY_L_CLICK,
-    KEY_R_CLICK,
+    KEY_L_PRESS,
+    KEY_R_PRESS,
+    KEY_L_RELEASE,
+    KEY_R_RELEASE,
     KEY_NUM,
   } Key;
 

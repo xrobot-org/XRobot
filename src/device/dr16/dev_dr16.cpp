@@ -147,10 +147,16 @@ void DR16::PraseRC() {
   if (this->ctrl_source_ == DR16_CTRL_SOURCE_MOUSE) { /* 键鼠控制 */
     /* 鼠标左右键 */
     if (this->data_.press_l && !this->last_data_.press_l) {
-      this->event_.Active(KEY_L_CLICK);
+      this->event_.Active(KEY_L_PRESS);
     }
     if (this->data_.press_r && !this->last_data_.press_r) {
-      this->event_.Active(KEY_R_CLICK);
+      this->event_.Active(KEY_R_PRESS);
+    }
+    if (!this->data_.press_l && this->last_data_.press_l) {
+      this->event_.Active(KEY_L_RELEASE);
+    }
+    if (!this->data_.press_r && this->last_data_.press_r) {
+      this->event_.Active(KEY_R_RELEASE);
     }
     /* 底盘控制 */
     if (this->data_.key & RawValue(KEY_A)) {
