@@ -106,6 +106,8 @@ static void rx_callback_fn(void *arg) {
         uart_recv_buff[can - BSP_CAN_BASE_NUM][0];
   }
 
+  bsp_uart_abort_receive(bsp_ext_can_get_handle(can));
+
   bsp_uart_receive(bsp_ext_can_get_handle(can),
                    uart_recv_buff_addr[can - BSP_CAN_BASE_NUM],
                    sizeof(CanUartPack), false);

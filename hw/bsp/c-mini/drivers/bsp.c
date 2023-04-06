@@ -34,6 +34,7 @@ void bsp_init() {
   MX_USART6_UART_Init();
   MX_USB_OTG_FS_PCD_Init();
   MX_TIM14_Init();
+  MX_TIM7_Init();
   HAL_TIM_Base_Start(&htim14);
 #if !MCU_DEBUG_BUILD
   MX_IWDG_Init();

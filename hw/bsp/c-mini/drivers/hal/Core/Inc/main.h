@@ -53,21 +53,22 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
-void   MX_GPIO_Init(void);
-void   MX_DMA_Init(void);
-void   MX_CAN1_Init(void);
-void   MX_UART4_Init(void);
-void   MX_CAN2_Init(void);
-void   MX_SPI1_Init(void);
-void   MX_TIM3_Init(void);
-void   MX_UART5_Init(void);
-void   MX_USART1_UART_Init(void);
-void   MX_USART2_UART_Init(void);
-void   MX_USART3_UART_Init(void);
-void   MX_USART6_UART_Init(void);
-void   MX_USB_OTG_FS_PCD_Init(void);
-void   MX_IWDG_Init(void);
-void   MX_TIM14_Init(void);
+void MX_GPIO_Init(void);
+void MX_DMA_Init(void);
+void MX_CAN1_Init(void);
+void MX_UART4_Init(void);
+void MX_CAN2_Init(void);
+void MX_SPI1_Init(void);
+void MX_TIM3_Init(void);
+void MX_UART5_Init(void);
+void MX_USART1_UART_Init(void);
+void MX_USART2_UART_Init(void);
+void MX_USART3_UART_Init(void);
+void MX_USART6_UART_Init(void);
+void MX_USB_OTG_FS_PCD_Init(void);
+void MX_IWDG_Init(void);
+void MX_TIM14_Init(void);
+void MX_TIM7_Init(void);
 
 /* USER CODE BEGIN EFP */
 
