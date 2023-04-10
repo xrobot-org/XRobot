@@ -52,40 +52,40 @@ Robot::Infantry::Param param = {
       .pid_param = {
         /* CTRL_CH_DISPLACEMENT */
         Component::PID::Param{
-          .k = 2.0f,
+          .k = 1.3f,
           .p = 1.0f,
           .i = 0.0f,
-          .d = 6.0f,
+          .d = 8.0f,
           .i_limit = 0.0f,
-          .out_limit = 0.1f,
+          .out_limit = 0.15f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
         /* CTRL_CH_FORWARD_SPEED */
         Component::PID::Param{
-          .k = 0.6f,
+          .k = 0.4f,
           .p = 1.0f,
-          .i = 0.2f,
+          .i = 1.0f,
           .d = 0.0f,
           .i_limit = 0.1f,
-          .out_limit = 0.12f,
+          .out_limit = 0.1f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
         /* CTRL_CH_PITCH_ANGLE */
         Component::PID::Param{
-          .k = 1.3f,
+          .k = 1.5f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.0f,
           .i_limit = 0.1f,
-          .out_limit = 0.15f,
+          .out_limit = 0.25f,
           .d_cutoff_freq = -1.0f,
           .cycle = true,
         },
         /* CTRL_CH_GYRO_X */
         Component::PID::Param{
-          .k = 0.12f,
+          .k = 0.15f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.0f,
@@ -101,7 +101,7 @@ Robot::Infantry::Param param = {
           .i = 0.0f,
           .d = 0.05f,
           .i_limit = 0.1f,
-          .out_limit = 0.12f,
+          .out_limit = 0.14f,
           .d_cutoff_freq = -1.0f,
           .cycle = true,
         },
@@ -121,10 +121,10 @@ Robot::Infantry::Param param = {
       .offset_pid = {
         .k = 1.0f,
         .p = 1.0f,
-        .i = 3.0f,
+        .i = 1.0f,
         .d = 0.0f,
         .i_limit = 0.05f,
-        .out_limit = 0.2f,
+        .out_limit = 0.5f,
         .d_cutoff_freq = -1.0f,
         .cycle = true,
       },
@@ -138,17 +138,11 @@ Robot::Infantry::Param param = {
 
       .limit = {
         .high_max = 0.45f,
-        .high_min = 0.18f,
+        .high_min = 0.14f,
       },
 
       .leg_max_angle = 0.0f,
 
-      .motor_zero = {
-        5.26f,
-        4.22f,
-        3.71f,
-        3.595f,
-      },
 
       .EVENT_MAP = {
         Component::CMD::EventMapItem{
@@ -340,9 +334,9 @@ Robot::Infantry::Param param = {
         },
 
         .position = {
-          .k = 1.0f,
+          .k = 0.4f,
           .p = 1.0f,
-          .i = 0.3f,
+          .i = 0.5f,
           .d = 0.0f,
           .i_limit = 1.0f,
           .out_limit = 1.0f,
@@ -359,7 +353,7 @@ Robot::Infantry::Param param = {
     .fric_actr = {
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00025f,
+          .k = 0.0002f,
           .p = 1.0f,
           .i = 0.4f,
           .d = 0.0f,
@@ -375,10 +369,10 @@ Robot::Infantry::Param param = {
       },
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00025f,
+          .k = 0.0002f,
           .p = 1.0f,
           .i = 0.4f,
-          .d = 0.01f,
+          .d = 0.0f,
           .i_limit = 0.5f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
@@ -478,12 +472,12 @@ Robot::Infantry::Param param = {
     .yaw_actr = {
       .speed = {
           /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-          .k = 0.2f,
+          .k = 0.4f,
           .p = 1.0f,
-          .i = 0.3f,
+          .i = 0.1f,
           .d = 0.0f,
           .i_limit = 0.4f,
-          .out_limit = 1.0f,
+          .out_limit = 0.8f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -509,7 +503,7 @@ Robot::Infantry::Param param = {
           /* GIMBAL_CTRL_PIT_OMEGA_IDX */
           .k = 0.2f,
           .p = 1.0f,
-          .i = 1.0f,
+          .i = 0.2f,
           .d = 0.0f,
           .i_limit = 0.8f,
           .out_limit = 1.0f,
