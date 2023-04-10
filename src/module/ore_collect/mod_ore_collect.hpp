@@ -11,27 +11,25 @@ class OreCollect {
  public:
   typedef struct {
     const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
+    Device::LinearMech<Device::RMMotor, Device::MicroSwitchLimit, 1>::Param
+        x_actr;
+    Device::SteeringMech<Device::RMMotor, Device::MicroSwitchLimit, 1>::Param
+        pitch_actr;
+    Device::SteeringMech<Device::RMMotor, Device::MicroSwitchLimit, 1>::Param
+        pitch_1_actr;
+    Device::SteeringMech<Device::RMMotor, Device::MicroSwitchLimit, 1>::Param
+        yaw_actr;
+    Device::SteeringMech<Device::RMMotor, Device::MicroSwitchLimit, 1>::Param
+        roll_actr;
 
-    Device::AutoCaliLimitedMech<Device::RMMotor, Device::RMMotor::Param,
-                                1>::Param x_actr;
+    Device::LinearMech<Device::RMMotor, Device::MicroSwitchLimit, 2>::Param
+        y_actr;
+    Device::LinearMech<Device::RMMotor, Device::AutoReturnLimit, 2>::Param
+        z_actr;
+    Device::LinearMech<Device::RMMotor, Device::AutoReturnLimit, 2>::Param
+        z_1_actr;
 
-    Device::AutoCaliLimitedMech<Device::RMMotor, Device::RMMotor::Param,
-                                1>::Param pitch_actr;
-
-    Device::AutoCaliLimitedMech<Device::RMMotor, Device::RMMotor::Param,
-                                1>::Param pitch_1_actr;
-
-    Device::AutoCaliLimitedMech<Device::RMMotor, Device::RMMotor::Param,
-                                1>::Param yaw_actr;
-
-    Device::AutoCaliLimitedMech<Device::RMMotor, Device::RMMotor::Param,
-                                2>::Param z_actr;
-
-    Device::AutoCaliLimitedMech<Device::RMMotor, Device::RMMotor::Param,
-                                2>::Param z_1_actr;
-
-    Device::AutoCaliLimitedMech<Device::RMMotor, Device::RMMotor::Param,
-                                2>::Param y_actr;
+    Component::Type::Vector3 zero_position;
   } Param;
 
   typedef struct {
@@ -39,6 +37,7 @@ class OreCollect {
     float pitch;
     float pitch_1;
     float yaw;
+    float roll;
     float z;
     float z_1;
     float y;
@@ -46,19 +45,13 @@ class OreCollect {
 
   typedef enum {
     RESET,
-    STEP_1,  /* 对准地面矿 */
-    STEP_2,  /* 贴近地面矿 */
-    STEP_3,  /* 放入存矿区 */
-    STEP_4,  /* 对准小资源岛矿 */
-    STEP_5,  /* 贴近小资源岛 */
-    STEP_6,  /* 放入存矿区（边缘） */
-    STEP_7,  /* 下降高度 */
-    STEP_8,  /* 对准兑换站 */
-    STEP_9,  /* 进入兑换站 */
-    STEP_10, /* 拿矿 */
-    START,
-    STOP,
+    FOLD,
+    WORK,
+    START_VACUUM,
+    STOP_VACUUM,
   } Event;
+
+  typedef enum { RELAX, CALI, MOVE } Mode;
 
   OreCollect(Param& param, float control_freq);
 
@@ -75,28 +68,29 @@ class OreCollect {
 
   float now_;
 
+  Mode mode_ = RELAX;
+
   Setpoint setpoint_;
 
-  Device::AutoCaliLimitedMech<Device::RMMotor, Device::RMMotor::Param, 1>
-      x_actr_;
+  Component::Type::Eulr eulr_;
 
-  Device::AutoCaliLimitedMech<Device::RMMotor, Device::RMMotor::Param, 1>
+  Device::LinearMech<Device::RMMotor, Device::MicroSwitchLimit, 1> x_actr_;
+
+  Device::SteeringMech<Device::RMMotor, Device::MicroSwitchLimit, 1>
       pitch_actr_;
 
-  Device::AutoCaliLimitedMech<Device::RMMotor, Device::RMMotor::Param, 1>
+  Device::SteeringMech<Device::RMMotor, Device::MicroSwitchLimit, 1>
       pitch_1_actr_;
 
-  Device::AutoCaliLimitedMech<Device::RMMotor, Device::RMMotor::Param, 1>
-      yaw_actr_;
+  Device::SteeringMech<Device::RMMotor, Device::MicroSwitchLimit, 1> yaw_actr_;
 
-  Device::AutoCaliLimitedMech<Device::RMMotor, Device::RMMotor::Param, 2>
-      z_actr_;
+  Device::SteeringMech<Device::RMMotor, Device::MicroSwitchLimit, 1> roll_actr_;
 
-  Device::AutoCaliLimitedMech<Device::RMMotor, Device::RMMotor::Param, 2>
-      z_1_actr_;
+  Device::LinearMech<Device::RMMotor, Device::MicroSwitchLimit, 2> y_actr_;
 
-  Device::AutoCaliLimitedMech<Device::RMMotor, Device::RMMotor::Param, 2>
-      y_actr_;
+  Device::LinearMech<Device::RMMotor, Device::AutoReturnLimit, 2> z_actr_;
+
+  Device::LinearMech<Device::RMMotor, Device::AutoReturnLimit, 2> z_1_actr_;
 
   System::Thread thread_;
 };
