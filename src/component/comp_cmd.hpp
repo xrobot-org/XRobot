@@ -89,6 +89,7 @@ class CMD {
   }
 
  private:
+  bool online_ = false;
   ControlSource ctrl_source_;
 
   Mode mode_;
