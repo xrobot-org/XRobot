@@ -62,6 +62,7 @@ class WheelLeg {
     std::array<Component::PosActuator::Param, LEG_NUM * LEG_MOTOR_NUM> leg_actr;
 
     std::array<Device::MitMotor::Param, LEG_NUM * LEG_MOTOR_NUM> leg_motor;
+
   } Param;
 
   typedef struct {

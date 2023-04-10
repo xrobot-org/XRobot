@@ -12,6 +12,8 @@ MicroSwitch::MicroSwitch(Param &param) : param_(param) {
     topic_ = new Message::Topic<Data>("micro_switch_data");
   }
 
+  inited_ = true;
+
   auto rx_callback = [](Can::Pack &rx, MicroSwitch *sw) {
     if (rx.index == sw->param_.id) {
       for (int i = 0; i < 4; i++) {
@@ -25,7 +27,8 @@ MicroSwitch::MicroSwitch(Param &param) : param_(param) {
     return true;
   };
 
-  Message::Topic<Can::Pack> sw_tp("can_sw");
+  Message::Topic<Can::Pack> sw_tp(
+      (std::string("can_sw_") + std::to_string(param.id)).c_str());
   sw_tp.RegisterCallback(rx_callback, this);
 
   Can::Subscribe(sw_tp, this->param_.can, this->param_.id, 1);

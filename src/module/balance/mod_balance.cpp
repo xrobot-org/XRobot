@@ -222,6 +222,7 @@ void Balance<Motor, MotorParam>::Control() {
   }
 
   /* 根据底盘状态选择开启哪些pid环 */
+  // TODO：enable_pid无效
   switch (status_) {
     case MOVING:
       pid_enable_ = enable_pid(CTRL_CH_FORWARD_SPEED) |
@@ -287,10 +288,10 @@ void Balance<Motor, MotorParam>::Control() {
     case ROTOR: {
       setpoint_[CTRL_CH_DISPLACEMENT] = 0.0f;
       setpoint_[CTRL_CH_FORWARD_SPEED] = this->move_vec_.vy;
-      setpoint_[CTRL_CH_PITCH_ANGLE] = 0.0f;
+      setpoint_[CTRL_CH_PITCH_ANGLE] = param_.init_g_center;
       setpoint_[CTRL_CH_GYRO_X] = 0.0f;
       setpoint_[CTRL_CH_YAW_ANGLE] = feeback_[CTRL_CH_YAW_ANGLE];
-      setpoint_[CTRL_CH_GYRO_Z] = 0.05f;
+      setpoint_[CTRL_CH_GYRO_Z] = 0.03f;
       break;
     }
   }
@@ -304,7 +305,7 @@ void Balance<Motor, MotorParam>::Control() {
       /* 使用较小K和较大D来保证静止时停在原地 */
       /* 帮助车身减速时向减速方向倾斜，速度快速减小到0 */
       /* 目标速度不为0时不应该输出 */
-      if (check_pid(pid_enable_, CTRL_CH_DISPLACEMENT)) {
+      if (status_ == STATIONARY) {
         output_[CTRL_CH_DISPLACEMENT] =
             -this->pid_[CTRL_CH_DISPLACEMENT]->Calculate(
                 this->setpoint_[CTRL_CH_DISPLACEMENT],
@@ -346,7 +347,7 @@ void Balance<Motor, MotorParam>::Control() {
       }
 
       /* yaw角度环，微分为z轴角速度 */
-      if (check_pid(pid_enable_, CTRL_CH_YAW_ANGLE)) {
+      if (mode_ != ROTOR) {
         output_[CTRL_CH_YAW_ANGLE] = this->pid_[CTRL_CH_YAW_ANGLE]->Calculate(
             this->setpoint_[CTRL_CH_YAW_ANGLE],
             this->feeback_[CTRL_CH_YAW_ANGLE], this->feeback_[CTRL_CH_GYRO_Z],

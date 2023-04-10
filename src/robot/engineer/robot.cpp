@@ -15,6 +15,28 @@ Robot::Engineer::Param param = {
     .timeout = 200,
   },
 
+  .sw_2 = {
+    .can = BSP_CAN_2,
+    .id = 3,
+  },
+
+
+  .sw_3 = {
+    .can = BSP_CAN_2,
+    .id = 4,
+  },
+
+  .sw_4 = {
+    .can = BSP_CAN_2,
+    .id = 5,
+  },
+
+  .imu = {
+    .tp_name_prefix = "custom_ctrl",
+    .can = BSP_CAN_2,
+    .index = 31,
+  },
+
   .ore_collect = {
     .EVENT_MAP = {
       Component::CMD::EventMapItem{
@@ -22,50 +44,27 @@ Robot::Engineer::Param param = {
         Module::OreCollect::RESET
       },
       Component::CMD::EventMapItem{
-        Component::CMD::CMD_EVENT_LOST_CTRL,
-        Module::OreCollect::STOP
-      },
-      Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_L_POS_TOP,
-        Module::OreCollect::STEP_10
+        Module::OreCollect::FOLD
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_L_POS_MID,
-        Module::OreCollect::STEP_8
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::DR16_SW_L_POS_BOT,
-        Module::OreCollect::STEP_9
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::DR16_SW_R_POS_TOP,
-        Module::OreCollect::STOP
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::DR16_SW_R_POS_MID,
-        Module::OreCollect::START
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::DR16_SW_R_POS_BOT,
-        Module::OreCollect::STEP_7
+        Module::OreCollect::WORK
       }
     },
 
     .x_actr = {
-      .stall_detect = {
-        .speed_thld = 300.0f,
-        .current_thld = 2.0f,
-        .stop_current_thld = 4.0f,
-        .temp_thld = 40.0f,
-        .timeout = 0.1f
+      .limit_param = {
+        Device::MicroSwitchLimit::Param{
+          .id = 14,
+        },
       },
-
       .pos_actuator = {
         Component::PosActuator::Param{
           .speed = {
-            .k = 0.0003f,
+            .k = 0.0002f,
             .p = 1.0f,
-            .i = 0.3f,
+            .i = 0.5f,
             .d = 0.0f,
             .i_limit = 0.5f,
             .out_limit = 0.5f,
@@ -74,12 +73,12 @@ Robot::Engineer::Param param = {
           },
 
           .position = {
-            .k = 600.0f,
+            .k = 120000.0f,
             .p = 1.0f,
-            .i = 0.1f,
+            .i = 0.3f,
             .d = 0.0f,
-            .i_limit = 500.0f,
-            .out_limit = 3000.0f,
+            .i_limit = 1000.0f,
+            .out_limit = 5000.0f,
             .d_cutoff_freq = -1.0f,
             .cycle = false,
           },
@@ -96,6 +95,7 @@ Robot::Engineer::Param param = {
             .id_control = M3508_M2006_CTRL_ID_BASE,
             .model = Device::RMMotor::MOTOR_M2006,
             .can = BSP_CAN_2,
+            .reverse = true,
         },
       },
 
@@ -103,44 +103,45 @@ Robot::Engineer::Param param = {
         "x_actr"
       },
 
-      .cali_speed = -2000.0f,
+      .cali_speed = -3000.0f,
 
-      .max_range = 33.44f,
+      .max_distance = 25.7f * 0.01f,
 
-      .margin_error = 0.5f,
+      .margin_error = 0.0f,
 
-      .reduction_ratio = 3591.0f / 187.0f
+      .zero_position = 0.0f,
+
+      .reduction_ratio = 22.896133278f * 100.0f,
+
+      .axis = Device::AXIS_X
     },
 
     .pitch_actr = {
-      .stall_detect = {
-        .speed_thld = 300.0f,
-        .current_thld = 2.2f,
-        .stop_current_thld = 4.0f,
-        .temp_thld = 40.0f,
-        .timeout = 0.1f
+      .limit_param = {
+        Device::MicroSwitchLimit::Param{
+          .id = 19,
+        },
       },
-
       .pos_actuator = {
         Component::PosActuator::Param{
           .speed = {
             .k = 0.0001f,
             .p = 1.0f,
-            .i = 0.0f,
+            .i = 0.5f,
             .d = 0.0f,
-            .i_limit = 0.5f,
-            .out_limit = 0.5f,
+            .i_limit = 1.0f,
+            .out_limit = 1.0f,
             .d_cutoff_freq = -1.0f,
             .cycle = false,
           },
 
           .position = {
-            .k = 3000.0f,
+            .k = 120000.0f,
             .p = 1.0f,
-            .i = 0.0f,
+            .i = 0.3f,
             .d = 0.0f,
-            .i_limit = 4000.0f,
-            .out_limit = 8000.0f,
+            .i_limit = 1000.0f,
+            .out_limit = 5000.0f,
             .d_cutoff_freq = -1.0f,
             .cycle = false,
           },
@@ -148,7 +149,7 @@ Robot::Engineer::Param param = {
           .in_cutoff_freq = 10.0f,
 
           .out_cutoff_freq = 30.0f,
-        }
+        },
       },
 
       .motor_param = {
@@ -157,38 +158,47 @@ Robot::Engineer::Param param = {
             .id_control = M3508_M2006_CTRL_ID_BASE,
             .model = Device::RMMotor::MOTOR_M2006,
             .can = BSP_CAN_2,
-            .reverse = true
-        }
+            .reverse = true,
+        },
       },
 
       .motor_name = {
-        "pitch_1",
+        "pitch_actr"
       },
 
-      .cali_speed = -2000.0f,
+      .cali_speed = -3000.0f,
 
-      .max_range = 67.0f,
+      .min_angle = -66.0f / 180.0f * M_PI,
 
-      .margin_error = 1.0f,
+      .max_angle = 95.0f / 180.0f * M_PI,
 
-      .reduction_ratio = 36.0f
+      .margin_error = 0.0f,
+
+      .zero_angle = -66.0f / 180.0f * M_PI,
+
+      .reduction_ratio = 19.252851377f / M_PI * 180.0f,
+
+      .translation = {
+        .x = 0.0f,
+        .y = 0.085f,
+        .z = 0.0f,
+      },
+
+      .axis = Device::AXIS_X
     },
 
     .pitch_1_actr = {
-      .stall_detect = {
-        .speed_thld = 500.0f,
-        .current_thld = 2.0f,
-        .stop_current_thld = 5.0f,
-        .temp_thld = 40.0f,
-        .timeout = 0.15f
+      .limit_param = {
+        Device::MicroSwitchLimit::Param{
+          .id = 15,
+        },
       },
-
       .pos_actuator = {
         Component::PosActuator::Param{
           .speed = {
-            .k = 0.00015f,
+            .k = 0.0001f,
             .p = 1.0f,
-            .i = 0.0f,
+            .i = 0.5f,
             .d = 0.0f,
             .i_limit = 0.5f,
             .out_limit = 0.5f,
@@ -197,12 +207,12 @@ Robot::Engineer::Param param = {
           },
 
           .position = {
-            .k = 1000.0f,
+            .k = 30000.0f,
             .p = 1.0f,
-            .i = 0.0f,
+            .i = 0.3f,
             .d = 0.0f,
-            .i_limit = 2000.0f,
-            .out_limit = 4000.0f,
+            .i_limit = 1000.0f,
+            .out_limit = 5000.0f,
             .d_cutoff_freq = -1.0f,
             .cycle = false,
           },
@@ -210,7 +220,7 @@ Robot::Engineer::Param param = {
           .in_cutoff_freq = 10.0f,
 
           .out_cutoff_freq = 30.0f,
-        }
+        },
       },
 
       .motor_param = {
@@ -219,52 +229,130 @@ Robot::Engineer::Param param = {
             .id_control = M3508_M2006_CTRL_ID_EXTAND,
             .model = Device::RMMotor::MOTOR_M3508,
             .can = BSP_CAN_2,
-            .reverse = false,
-        }
+        },
       },
 
       .motor_name = {
-        "pitch_2",
+        "pitch_1_actr"
       },
 
-      .cali_speed = -2000.0f,
+      .cali_speed = -3000.0f,
 
-      .max_range = 66.4788589f,
+      .min_angle = -52.8f / 180.0f * M_PI,
+
+      .max_angle = 177.6f / 180.0f * M_PI,
 
       .margin_error = 0.0f,
 
-      .reduction_ratio = 36.0f
+      .zero_angle = -52.8f / 180.0f * M_PI,
+
+      .reduction_ratio = 10.07565889f / M_PI * 180.0f,
+
+      .translation = {
+        .x = 0.0f,
+        .y = 0.2f,
+        .z = 0.055f,
+      },
+
+      .axis = Device::AXIS_X
     },
 
     .yaw_actr = {
-      .stall_detect = {
-        .speed_thld = 300.0f,
-        .current_thld = 2.0f,
-        .stop_current_thld = 3.5f,
-        .temp_thld = 40.0f,
-        .timeout = 0.1f
+      .limit_param = {
+        Device::MicroSwitchLimit::Param{
+          .id = 17,
+        },
       },
-
       .pos_actuator = {
         Component::PosActuator::Param{
           .speed = {
-            .k = 0.00005f,
+            .k = 0.0001f,
             .p = 1.0f,
-            .i = 0.8f,
+            .i = 0.1f,
             .d = 0.0f,
             .i_limit = 0.5f,
-            .out_limit = 0.5f,
+            .out_limit = 0.8f,
             .d_cutoff_freq = -1.0f,
             .cycle = false,
           },
 
           .position = {
-            .k = 2000.0f,
+            .k = 120000.0f,
             .p = 1.0f,
-            .i = 0.0f,
+            .i = 0.3f,
             .d = 0.0f,
-            .i_limit = 4000.0f,
-            .out_limit = 8000.0f,
+            .i_limit = 1000.0f,
+            .out_limit = 6000.0f,
+            .d_cutoff_freq = -1.0f,
+            .cycle = false,
+          },
+
+          .in_cutoff_freq = 10.0f,
+
+          .out_cutoff_freq = 30.0f,
+        },
+      },
+
+      .motor_param = {
+        Device::RMMotor::Param{
+            .id_feedback = 0x203,
+            .id_control = M3508_M2006_CTRL_ID_BASE,
+            .model = Device::RMMotor::MOTOR_M2006,
+            .can = BSP_CAN_2,
+        },
+      },
+
+      .motor_name = {
+        "yaw_actr"
+      },
+
+      .cali_speed = -5000.0f,
+
+      .min_angle = -90.0f / 180.0f * M_PI,
+
+      .max_angle = 90.0f / 180.0f * M_PI,
+
+      .margin_error = 0.0f,
+
+      .zero_angle = -90.0f / 180.0f * M_PI,
+
+      .reduction_ratio = 19.031800126f / M_PI * 180.0f,
+
+      .translation = {
+        .x = 0.0f,
+        .y = 0.23f,
+        .z = 0.0f,
+      },
+
+      .axis = Device::AXIS_Z,
+    },
+
+    .roll_actr = {
+      .limit_param = {
+        Device::MicroSwitchLimit::Param{
+          .id = 18,
+        },
+      },
+      .pos_actuator = {
+        Component::PosActuator::Param{
+          .speed = {
+            .k = 0.0001f,
+            .p = 1.0f,
+            .i = 0.5f,
+            .d = 0.0f,
+            .i_limit = 0.5f,
+            .out_limit = 0.8f,
+            .d_cutoff_freq = -1.0f,
+            .cycle = false,
+          },
+
+          .position = {
+            .k = 3000.0f,
+            .p = 1.0f,
+            .i = 0.6f,
+            .d = 0.0f,
+            .i_limit = 300.0f,
+            .out_limit = 5000.0f,
             .d_cutoff_freq = -1.0f,
             .cycle = false,
           },
@@ -285,47 +373,59 @@ Robot::Engineer::Param param = {
       },
 
       .motor_name = {
-        "yaw_actr"
+        "roll_actr"
       },
 
-      .cali_speed = -4000.0f,
+      .cali_speed = 3000.0f,
 
-      .max_range = 98.8634644f * 2.0f,
+      .min_angle = -180.0f / 180.0f * M_PI,
 
-      .margin_error = 1.0f,
+      .max_angle = 96.9 / 180.0f * M_PI,
 
-      .reduction_ratio = 3591.0f / 187.0f
+      .margin_error = 0.0f,
+
+      .zero_angle = 96.9 / 180.0f * M_PI,
+
+      .reduction_ratio = 36.0f,
+
+      .translation = {
+        .x = 0.0f,
+        .y = 0.0f,
+        .z = 0.0f,
+      },
+
+      .axis = Device::AXIS_Y,
     },
 
-    .z_actr = {
-      .stall_detect = {
-        .speed_thld = 300.0f,
-        .current_thld = 1.0f,
-        .stop_current_thld = 2.0f,
-        .temp_thld = 40.0f,
-        .timeout = 0.01f
+    .y_actr = {
+      .limit_param = {
+        Device::MicroSwitchLimit::Param{
+          .id = 20,
+        },
+        Device::MicroSwitchLimit::Param{
+          .id = 23,
+        },
       },
-
       .pos_actuator = {
         Component::PosActuator::Param{
           .speed = {
             .k = 0.0001f,
             .p = 1.0f,
-            .i = 0.6f,
+            .i = 0.5f,
             .d = 0.0f,
             .i_limit = 0.5f,
-            .out_limit = 0.5f,
+            .out_limit = 0.8f,
             .d_cutoff_freq = -1.0f,
             .cycle = false,
           },
 
           .position = {
-            .k = 1500.0f,
+            .k = 120000.0f,
             .p = 1.0f,
-            .i = 0.7f,
+            .i = 0.3f,
             .d = 0.0f,
             .i_limit = 1000.0f,
-            .out_limit = 2000.0f,
+            .out_limit = 5000.0f,
             .d_cutoff_freq = -1.0f,
             .cycle = false,
           },
@@ -338,21 +438,21 @@ Robot::Engineer::Param param = {
           .speed = {
             .k = 0.0001f,
             .p = 1.0f,
-            .i = 0.6f,
+            .i = 0.5f,
             .d = 0.0f,
             .i_limit = 0.5f,
-            .out_limit = 0.5f,
+            .out_limit = 0.8f,
             .d_cutoff_freq = -1.0f,
             .cycle = false,
           },
 
           .position = {
-            .k = 1500.0f,
+            .k = 120000.0f,
             .p = 1.0f,
-            .i = 0.7f,
+            .i = 0.3f,
             .d = 0.0f,
             .i_limit = 1000.0f,
-            .out_limit = 2000.0f,
+            .out_limit = 3000.0f,
             .d_cutoff_freq = -1.0f,
             .cycle = false,
           },
@@ -365,63 +465,69 @@ Robot::Engineer::Param param = {
 
       .motor_param = {
         Device::RMMotor::Param{
-            .id_feedback = 0x207,
-            .id_control = M3508_M2006_CTRL_ID_EXTAND,
-            .model = Device::RMMotor::MOTOR_M3508,
-            .can = BSP_CAN_2,
-        },
-        Device::RMMotor::Param{
             .id_feedback = 0x208,
             .id_control = M3508_M2006_CTRL_ID_EXTAND,
-            .model = Device::RMMotor::MOTOR_M3508,
-            .can = BSP_CAN_2,
+            .model = Device::RMMotor::MOTOR_M2006,
+            .can = BSP_CAN_1,
             .reverse = true,
+        },
+        Device::RMMotor::Param{
+            .id_feedback = 0x207,
+            .id_control = M3508_M2006_CTRL_ID_EXTAND,
+            .model = Device::RMMotor::MOTOR_M2006,
+            .can = BSP_CAN_2,
+            .reverse = false,
         },
       },
 
       .motor_name = {
-        "z_actr_1_1",
-        "z_actr_1_2",
+        "y_1_actr",
+        "y_2_actr"
       },
 
-      .cali_speed = -500.0f,
+      .cali_speed = -3000.0f,
 
-      .max_range = 8.45f,
+      .max_distance = 22.0f * 0.01f,
 
-      .margin_error = 0.5f,
+      .margin_error = 0.0f,
 
-      .reduction_ratio = 3591.0f / 187.0f
+      .zero_position = 0.0f,
+
+      .reduction_ratio = 47.579500315f * 100.0f,
+
+      .axis = Device::AXIS_Y,
     },
 
-    .z_1_actr = {
-      .stall_detect = {
-        .speed_thld = 300.0f,
-        .current_thld = 1.0f,
-        .stop_current_thld = 2.0f,
-        .temp_thld = 40.0f,
-        .timeout = 0.01f
+    .z_actr = {
+      .limit_param = {
+        Device::AutoReturnLimit::Param{
+          .timeout = 4.0,
+        },
+        Device::AutoReturnLimit::Param{
+          .timeout = 4.0,
+        },
       },
 
       .pos_actuator = {
         Component::PosActuator::Param{
           .speed = {
-            .k = 0.0001f,
+            .k = 0.00015f,
             .p = 1.0f,
-            .i = 0.6f,
+            .i = 0.3f,
             .d = 0.0f,
             .i_limit = 0.5f,
-            .out_limit = 0.5f,
+            .out_limit = 0.8f,
             .d_cutoff_freq = -1.0f,
             .cycle = false,
           },
 
           .position = {
-            .k = 1500.0f,
+            .k = 60000.0f,
             .p = 1.0f,
-            .i = 0.7f,
+            .i = 0.1f,
             .d = 0.0f,
             .i_limit = 1000.0f,
-            .out_limit = 2000.0f,
+            .out_limit = 3000.0f,
             .d_cutoff_freq = -1.0f,
             .cycle = false,
           },
@@ -432,23 +538,125 @@ Robot::Engineer::Param param = {
         },
         Component::PosActuator::Param{
           .speed = {
-            .k = 0.0001f,
+            .k = 0.00015f,
             .p = 1.0f,
-            .i = 0.6f,
+            .i = 0.3f,
             .d = 0.0f,
             .i_limit = 0.5f,
-            .out_limit = 0.5f,
+            .out_limit = 0.8f,
             .d_cutoff_freq = -1.0f,
             .cycle = false,
           },
 
           .position = {
-            .k = 1500.0f,
+            .k = 60000.0f,
             .p = 1.0f,
-            .i = 0.7f,
+            .i = 0.1f,
             .d = 0.0f,
             .i_limit = 1000.0f,
-            .out_limit = 2000.0f,
+            .out_limit = 3000.0f,
+            .d_cutoff_freq = -1.0f,
+            .cycle = false,
+          },
+
+          .in_cutoff_freq = 10.0f,
+
+          .out_cutoff_freq = 30.0f,
+        },
+      },
+
+      .motor_param = {
+        Device::RMMotor::Param{
+            .id_feedback = 0x208,
+            .id_control = M3508_M2006_CTRL_ID_EXTAND,
+            .model = Device::RMMotor::MOTOR_M3508,
+            .can = BSP_CAN_2,
+            .reverse = false,
+        },
+        Device::RMMotor::Param{
+            .id_feedback = 0x205,
+            .id_control = M3508_M2006_CTRL_ID_EXTAND,
+            .model = Device::RMMotor::MOTOR_M3508,
+            .can = BSP_CAN_2,
+            .reverse = true,
+        },
+      },
+
+      .motor_name = {
+        "z_1_1_actr",
+        "z_1_2_actr"
+      },
+
+      .cali_speed = -0.0f,
+
+      .max_distance = 17.0 * 0.01f,
+
+      .margin_error = 0.0f,
+
+      .zero_position = 0.0f,
+
+      .reduction_ratio = 9.236020649f * 100.0f,
+
+      .axis = Device::AXIS_Z,
+    },
+
+    .z_1_actr = {
+      .limit_param = {
+        Device::AutoReturnLimit::Param{
+          .timeout = 1.5,
+        },
+        Device::AutoReturnLimit::Param{
+          .timeout = 1.5,
+        },
+      },
+
+      .pos_actuator = {
+        Component::PosActuator::Param{
+          .speed = {
+            .k = 0.00015f,
+            .p = 1.0f,
+            .i = 0.3f,
+            .d = 0.0f,
+            .i_limit = 0.5f,
+            .out_limit = 0.8f,
+            .d_cutoff_freq = -1.0f,
+            .cycle = false,
+          },
+
+          .position = {
+            .k = 60000.0f,
+            .p = 1.0f,
+            .i = 0.1f,
+            .d = 0.0f,
+            .i_limit = 1000.0f,
+            .out_limit = 3000.0f,
+            .d_cutoff_freq = -1.0f,
+            .cycle = false,
+          },
+
+          .in_cutoff_freq = 10.0f,
+
+          .out_cutoff_freq = 30.0f,
+        },
+        Component::PosActuator::Param{
+          .speed = {
+            .k = 0.00015f,
+            .p = 1.0f,
+            .i = 0.3f,
+            .d = 0.0f,
+            .i_limit = 0.5f,
+            .out_limit = 0.8f,
+            .d_cutoff_freq = -1.0f,
+            .cycle = false,
+          },
+
+          .position = {
+            .k = 60000.0f,
+            .p = 1.0f,
+            .i = 0.1f,
+            .d = 0.0f,
+            .i_limit = 1000.0f,
+            .out_limit = 3000.0f,
             .d_cutoff_freq = -1.0f,
             .cycle = false,
           },
@@ -472,119 +680,34 @@ Robot::Engineer::Param param = {
             .id_control = M3508_M2006_CTRL_ID_EXTAND,
             .model = Device::RMMotor::MOTOR_M3508,
             .can = BSP_CAN_1,
+            .reverse = false,
         },
       },
 
       .motor_name = {
-        "z_actr_2_1",
-        "z_actr_2_2",
+        "z_2_1_actr",
+        "z_2_2_actr"
       },
 
       .cali_speed = -500.0f,
 
-      .max_range = 19.0f,
+      .max_distance = 35.0f * 0.01f,
 
-      .margin_error = 0.5f,
+      .margin_error = 0.0f,
 
-      .reduction_ratio = 3591.0f / 187.0f
+      .zero_position = 0.0f,
+
+      .reduction_ratio = 9.923724351f * 100.0f,
+
+      .axis = Device::AXIS_Z,
     },
 
-    .y_actr = {
-      .stall_detect = {
-        .speed_thld = 300.0f,
-        .current_thld = 1.6f,
-        .stop_current_thld = 3.0f,
-        .temp_thld = 40.0f,
-        .timeout = 0.05f
-      },
-
-      .pos_actuator = {
-        Component::PosActuator::Param{
-          .speed = {
-            .k = 0.0001f,
-            .p = 1.0f,
-            .i = 0.6f,
-            .d = 0.0f,
-            .i_limit = 0.5f,
-            .out_limit = 0.5f,
-            .d_cutoff_freq = -1.0f,
-            .cycle = false,
-          },
-
-          .position = {
-            .k = 1500.0f,
-            .p = 1.0f,
-            .i = 0.7f,
-            .d = 0.0f,
-            .i_limit = 1000.0f,
-            .out_limit = 2000.0f,
-            .d_cutoff_freq = -1.0f,
-            .cycle = false,
-          },
-
-          .in_cutoff_freq = 10.0f,
-
-          .out_cutoff_freq = 30.0f,
-        },
-        Component::PosActuator::Param{
-          .speed = {
-            .k = 0.0001f,
-            .p = 1.0f,
-            .i = 0.6f,
-            .d = 0.0f,
-            .i_limit = 0.5f,
-            .out_limit = 0.5f,
-            .d_cutoff_freq = -1.0f,
-            .cycle = false,
-          },
-
-          .position = {
-            .k = 1500.0f,
-            .p = 1.0f,
-            .i = 0.7f,
-            .d = 0.0f,
-            .i_limit = 2000.0f,
-            .out_limit = 000.0f,
-            .d_cutoff_freq = -1.0f,
-            .cycle = false,
-          },
-
-          .in_cutoff_freq = 10.0f,
-
-          .out_cutoff_freq = 30.0f,
-        },
-      },
-
-      .motor_param = {
-        Device::RMMotor::Param{
-            .id_feedback = 0x207,
-            .id_control = M3508_M2006_CTRL_ID_EXTAND,
-            .model = Device::RMMotor::MOTOR_M2006,
-            .can = BSP_CAN_1,
-            .reverse = false,
-        },
-        Device::RMMotor::Param{
-            .id_feedback = 0x208,
-            .id_control = M3508_M2006_CTRL_ID_EXTAND,
-            .model = Device::RMMotor::MOTOR_M2006,
-            .can = BSP_CAN_1,
-            .reverse = true,
-        },
-      },
-
-      .motor_name = {
-        "y_actr_1",
-        "y_actr_2",
-      },
-
-      .cali_speed = -1000.0f,
-
-      .max_range = 57.5f,
-
-      .margin_error = 0.5f,
-
-      .reduction_ratio = 3591.0f / 187.0f
+    .zero_position = {
+      .x = -0.13f,
+      .y = -0.08f,
+      .z = 0.355f,
     },
+
 
   },
 

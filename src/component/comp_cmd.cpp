@@ -16,8 +16,11 @@ CMD::CMD(Mode mode)
     ASSERT(data.ctrl_source < CTRL_SOURCE_NUM);
     memcpy(&(cmd->data_[data.ctrl_source]), &data, sizeof(Data));
 
-    if (!cmd->data_[CTRL_SOURCE_RC].online) {
+    if (!cmd->data_[CTRL_SOURCE_RC].online && cmd->online_) {
       cmd->event_.Active(CMD_EVENT_LOST_CTRL);
+      cmd->online_ = false;
+    } else if (cmd->data_[CTRL_SOURCE_RC].online) {
+      cmd->online_ = true;
     }
 
     if (cmd->ctrl_source_ == CTRL_SOURCE_RC ||
@@ -36,8 +39,11 @@ CMD::CMD(Mode mode)
   auto auto_ctrl_callback = [](Data& data, CMD* cmd) {
     memcpy(&(cmd->data_[data.ctrl_source]), &data, sizeof(Data));
 
-    if (!cmd->data_[CTRL_SOURCE_RC].online) {
+    if (!cmd->data_[CTRL_SOURCE_RC].online && cmd->online_) {
       cmd->event_.Active(CMD_EVENT_LOST_CTRL);
+      cmd->online_ = false;
+    } else {
+      cmd->online_ = true;
     }
 
     if (cmd->ctrl_source_ == CTRL_SOURCE_RC ||
