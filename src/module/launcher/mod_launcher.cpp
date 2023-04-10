@@ -217,7 +217,7 @@ void Launcher::Control() {
       this->fire_ctrl_.launched++;
       this->fire_ctrl_.last_launch = bsp_time_get_ms();
       fire_ctrl_.stall = false;
-    } else {
+    } else if (param_.model == LAUNCHER_MODEL_42MM) {
       fire_ctrl_.stall = true;
       float tmp = this->setpoint_.trig_angle_;
       this->setpoint_.trig_angle_ = fire_ctrl_.last_trig_angle;
