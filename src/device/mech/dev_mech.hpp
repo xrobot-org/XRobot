@@ -1,3 +1,5 @@
+#pragma once
+
 #include <comp_filter.hpp>
 #include <comp_pid.hpp>
 #include <comp_type.hpp>
