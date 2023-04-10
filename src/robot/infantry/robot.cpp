@@ -38,6 +38,14 @@ Robot::Infantry::Param param = {
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_L_POS_BOT,
         Module::RMChassis::SET_MODE_ROTOR
+      },
+      Component::CMD::EventMapItem{
+        Device::DR16::KEY_V,
+        Module::RMChassis::SET_MODE_ROTOR
+      },
+      Component::CMD::EventMapItem{
+        Device::DR16::KEY_B,
+        Module::RMChassis::SET_MODE_FOLLOW
       }
     },
 
@@ -159,9 +167,9 @@ Robot::Infantry::Param param = {
     .yaw_actr = {
       .speed = {
           /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-          .k = 0.14f,
+          .k = 0.28f,
           .p = 1.f,
-          .i = 3.f,
+          .i = 1.f,
           .d = 0.f,
           .i_limit = 0.2f,
           .out_limit = 1.0f,
@@ -188,7 +196,7 @@ Robot::Infantry::Param param = {
     .pit_actr = {
         .speed = {
           /* GIMBAL_CTRL_PIT_OMEGA_IDX */
-          .k = 0.1f,
+          .k = 0.25f,
           .p = 1.0f,
           .i = 0.f,
           .d = 0.f,
@@ -256,6 +264,14 @@ Robot::Infantry::Param param = {
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_BOT,
         Module::Gimbal::SET_MODE_ABSOLUTE
+      },
+      Component::CMD::EventMapItem{
+        Device::DR16::KEY_R_PRESS,
+        Module::Gimbal::START_AUTO_AIM
+      },
+      Component::CMD::EventMapItem{
+        Device::DR16::KEY_R_RELEASE,
+        Module::Gimbal::STOP_AUTO_AIM
       }
     },
 
@@ -268,7 +284,7 @@ Robot::Infantry::Param param = {
     .cover_open_duty = 0.125f,
     .cover_close_duty = 0.075f,
     .model = Module::Launcher::LAUNCHER_MODEL_17MM,
-    .default_bullet_speed = 30.f,
+    .default_bullet_speed = 15.f,
     .min_launch_delay = static_cast<uint32_t>(1000.0f / 20.0f),
 
     .trig_actr = {
@@ -304,12 +320,12 @@ Robot::Infantry::Param param = {
     .fric_actr = {
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00015f,
+          .k = 0.00025f,
           .p = 1.0f,
           .i = 0.4f,
           .d = 0.01f,
           .i_limit = 0.5f,
-          .out_limit = 0.5f,
+          .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -320,12 +336,12 @@ Robot::Infantry::Param param = {
       },
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00015f,
+          .k = 0.00025f,
           .p = 1.0f,
           .i = 0.4f,
           .d = 0.01f,
           .i_limit = 0.5f,
-          .out_limit = 0.5f,
+          .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -384,6 +400,18 @@ Robot::Infantry::Param param = {
       Component::CMD::EventMapItem{
         Device::DR16::KEY_L_PRESS,
         Module::Launcher::LAUNCHER_START_FIRE
+      },
+      Component::CMD::EventMapItem{
+        Device::DR16::KEY_G,
+        Module::Launcher::CHANGE_TRIG_MODE
+      },
+      Component::CMD::EventMapItem{
+        Device::DR16::KEY_R,
+        Module::Launcher::OPEN_COVER
+      },
+      Component::CMD::EventMapItem{
+        Device::DR16::KEY_F,
+        Module::Launcher::CLOSE_COVER
       }
     },
   }, /* launcher */
@@ -399,6 +427,7 @@ Robot::Infantry::Param param = {
   .cap = {
     .can = BSP_CAN_1,
     .index = DEV_CAP_FB_ID_BASE,
+    .cutoff_volt = 13.0f,
   },
 };
 /* clang-format on */
