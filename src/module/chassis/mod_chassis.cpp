@@ -18,7 +18,7 @@
 #define ROTOR_WZ_MIN 0.6f /* 小陀螺旋转位移下界 */
 #define ROTOR_WZ_MAX 0.8f /* 小陀螺旋转位移上界 */
 
-#define ROTOR_OMEGA 0.0015f /* 小陀螺转动频率 */
+#define ROTOR_OMEGA 0.0025f /* 小陀螺转动频率 */
 
 #define MOTOR_MAX_ROTATIONAL_SPEED 7000.0f /* 电机的最大转速 */
 
