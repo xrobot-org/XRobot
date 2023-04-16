@@ -6,7 +6,10 @@ add_library(${PROJECT_NAME} STATIC)
 
 target_sources(${PROJECT_NAME} PRIVATE ${${PROJECT_NAME}_SOURCES})
 
-# target_link_libraries(${PROJECT_NAME})
+target_link_libraries(
+  ${PROJECT_NAME}
+  PUBLIC -lhv
+)
 
 target_include_directories(
   ${PROJECT_NAME}
