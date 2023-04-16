@@ -26,6 +26,9 @@ jobs:
     - name: Install dependence
       run: sudo apt update && sudo apt install cmake gcc-arm-none-eabi ninja-build clang clangd
 
+    - name: Install libhv
+      run: git clone https://github.com/ithewei/libhv.git && cd libhv && ./configure && make && sudo make install && cd ${{github.workspace}}
+
     - name: Get ESP-IDF
       run: bash ${{github.workspace}}/hw/mcu/esp/Shell/install_esp-idf.sh
 
