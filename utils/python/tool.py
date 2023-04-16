@@ -19,9 +19,14 @@ class ProjectTools:
                 print('工程路径请不要带有中文')
                 exit()
 
-    def menuconfig(self, path):
+    def guiconfig(self, path):
         print('Start menu config.')
         os.system('cd ' + path + ' && ' + self.kconfig_path + '/guiconfig.py')
+        print('Menu config done.')
+
+    def menuconfig(self, path):
+        print('Start menu config.')
+        os.system('cd ' + path + ' && ' + self.kconfig_path + '/menuconfig.py')
         print('Menu config done.')
 
     def clean_cache(self):
