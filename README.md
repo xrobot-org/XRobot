@@ -13,7 +13,9 @@
 | STM32F446RE   | [C-Mini](https://xrobot-org.github.io/1.hardware/1.C-MINI.html)                                                                                                    | <img src="doc/image/C-MINI-1.jpg" width="350" height="250">        |
 | STM32F103     | Wait for update                                                                                                                                                    | Wait for update                                                    |
 | ESP32-C3      | [ESP32C3-Core](https://xrobot-org.github.io/1.hardware/2.ESP32C3-Core.html)                                                                                        | <img src="doc/image/esp32c3-core-1.jpeg" width="260" height="200"> |
-| Linux x86/arm | [Intel NUC](https://www.intel.cn/content/www/cn/zh/products/details/nuc.html)/[Jetson TX2](https://www.nvidia.cn/autonomous-machines/embedded-systems/jetson-tx2/) | <img src="doc/image/nuc.jpg" width="350" height="200">             |
+| Linux x86 | [Intel NUC](https://www.intel.cn/content/www/cn/zh/products/details/nuc.html) | <img src="doc/image/nuc.jpg" width="350" height="200">             |
+| Linux arm | [Raspberry pi 4B](https://www.raspberrypi.com/)| <img src="doc/image/raspi.png" width="350" height="200">             |
+
 
 ## 主要特色
 
