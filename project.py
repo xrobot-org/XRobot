@@ -336,6 +336,13 @@ if cmd_len < 2:
 if cmd[1] == 'config':
     tools.clean_cache()
     generate_kconfig()
+    tools.guiconfig(cfg_dir)
+    generate_cmake(cfg_dir)
+    tools.config_cmake()
+
+if cmd[1] == 'menuconfig':
+    tools.clean_cache()
+    generate_kconfig()
     tools.menuconfig(cfg_dir)
     generate_cmake(cfg_dir)
     tools.config_cmake()
@@ -346,7 +353,8 @@ elif cmd[1] == 'help':
     print('帮助页面/help')
     print('#命令                  -   #功能')
     print('help                   -   显示本页面')
-    print('config                 -   生成新配置')
+    print('config                 -   生成新配置(GUI)')
+    print('menuconfig             -   生成新配置(Terminal)')
     print('refresh                -   重新生成cmake缓存')
     print('clean                  -   清除编译产物')
     print('build  [BOARD] [ROBOT] -   构建目标')
