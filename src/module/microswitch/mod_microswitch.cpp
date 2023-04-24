@@ -61,12 +61,9 @@ void MicroSwitch::TransData() {
 
 int MicroSwitch::SetCMD(MicroSwitch *microswitch, int argc, char **argv) {
   if (argc == 1) {
-    ms_printf("set_can_id     [id]    设置can id");
-    ms_enter();
-    ms_printf("set_off_delay  [time]  设置开关未闭合时发送延时ms");
-    ms_enter();
-    ms_printf("set_on_delay   [time]  设置开关闭合时发送延时ms");
-    ms_enter();
+    printf("set_can_id     [id]    设置can id\r\n");
+    printf("set_off_delay  [time]  设置开关未闭合时发送延时ms\r\n");
+    printf("set_on_delay   [time]  设置开关闭合时发送延时ms\r\n");
   } else if (argc == 3 && strcmp(argv[1], "set_off_delay") == 0) {
     int delay = std::stoi(argv[2]);
 
@@ -80,8 +77,7 @@ int MicroSwitch::SetCMD(MicroSwitch *microswitch, int argc, char **argv) {
 
     microswitch->off_send_delay_.Set(delay);
 
-    ms_printf("off delay:%d", delay);
-    ms_enter();
+    printf("off delay:%d\r\n", delay);
   } else if (argc == 3 && strcmp(argv[1], "set_on_delay") == 0) {
     int delay = std::stoi(argv[2]);
 
@@ -95,21 +91,16 @@ int MicroSwitch::SetCMD(MicroSwitch *microswitch, int argc, char **argv) {
 
     microswitch->on_send_delay_.Set(delay);
 
-    ms_printf("on delay:%d", delay);
-    ms_enter();
+    printf("on delay:%d\r\n", delay);
   } else if (argc == 3 && strcmp(argv[1], "set_can_id") == 0) {
     int id = std::stoi(argv[2]);
 
     microswitch->can_id_.Set(id);
 
-    ms_printf("can id:%d", id);
-
-    ms_enter();
+    printf("can id:%d\r\n", id);
 
   } else {
-    ms_printf("命令错误");
-
-    ms_enter();
+    printf("命令错误\r\n");
   }
 
   return 0;

@@ -254,27 +254,22 @@ BMI088::BMI088(BMI088::Rotation &rot)
 
 int BMI088::CaliCMD(BMI088 *bmi088, int argc, char **argv) {
   if (argc == 1) {
-    ms_printf("show [time] [delay] 在time时间内每隔delay打印一次数据");
-    ms_enter();
-    ms_printf("list 列出校准数据");
-    ms_enter();
-    ms_printf("cali 开始校准");
-    ms_enter();
+    printf("show [time] [delay] 在time时间内每隔delay打印一次数据\r\n");
+    printf("list 列出校准数据\r\n");
+    printf("cali 开始校准\r\n");
   } else if (argc == 2) {
     if (strcmp(argv[1], "list") == 0) {
-      ms_printf("校准数据 x:%f y:%f z:%f", bmi088->cali_.data_.gyro_offset.x,
-                bmi088->cali_.data_.gyro_offset.y,
-                bmi088->cali_.data_.gyro_offset.z);
-      ms_enter();
+      printf("校准数据 x:%f y:%f z:%f\r\n", bmi088->cali_.data_.gyro_offset.x,
+             bmi088->cali_.data_.gyro_offset.y,
+             bmi088->cali_.data_.gyro_offset.z);
     } else if (strcmp(argv[1], "cali") == 0) {
-      ms_printf("开始校准，请保持陀螺仪稳定");
-      ms_enter();
+      printf("开始校准，请保持陀螺仪稳定\r\n");
       double x = 0.0f, y = 0.0f, z = 0.0f;
       for (int i = 0; i < 30000; i++) {
         x += static_cast<double>(bmi088->gyro_.x) / 30000.0f;
         y += static_cast<double>(bmi088->gyro_.y) / 30000.0f;
         z += static_cast<double>(bmi088->gyro_.z) / 30000.0f;
-        ms_printf("进度：%d/30000", i);
+        printf("进度：%d/30000", i);
         System::Thread::Sleep(1);
         ms_clear_line();
       }
@@ -283,35 +278,30 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char **argv) {
       bmi088->cali_.data_.gyro_offset.y += static_cast<float>(y);
       bmi088->cali_.data_.gyro_offset.z += static_cast<float>(z);
 
-      ms_printf("校准数据 x:%f y:%f z:%f", bmi088->cali_.data_.gyro_offset.x,
-                bmi088->cali_.data_.gyro_offset.y,
-                bmi088->cali_.data_.gyro_offset.z);
-      ms_enter();
+      printf("校准数据 x:%f y:%f z:%f\r\n", bmi088->cali_.data_.gyro_offset.x,
+             bmi088->cali_.data_.gyro_offset.y,
+             bmi088->cali_.data_.gyro_offset.z);
 
       x = y = z = 0.0f;
 
-      ms_printf("开始分析校准质量");
-      ms_enter();
+      printf("开始分析校准质量\r\n");
 
       for (int i = 0; i < 30000; i++) {
         x += static_cast<double>(bmi088->gyro_.x) / 30000.0f;
         y += static_cast<double>(bmi088->gyro_.y) / 30000.0f;
         z += static_cast<double>(bmi088->gyro_.z) / 30000.0f;
-        ms_printf("进度：%d/30000", i);
+        printf("进度：%d/30000", i);
         System::Thread::Sleep(1);
         ms_clear_line();
       }
 
-      ms_printf("校准误差: x:%f y:%f z:%f", x, y, z);
-      ms_enter();
+      printf("校准误差: x:%f y:%f z:%f\r\n", x, y, z);
 
       bmi088->cali_.Set();
 
-      ms_printf("保存校准数据");
-      ms_enter();
+      printf("保存校准数据\r\n");
 
-      ms_printf("完成");
-      ms_enter();
+      printf("完成\r\n");
     }
   } else if (argc == 4) {
     if (strcmp(argv[1], "show") == 0) {
@@ -326,28 +316,25 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char **argv) {
       }
 
       while (time > delay) {
-        ms_printf("accl x:%+5f y:%+5f z:%+5f gyro x:%+5f y:%+5f z:%+5f",
-                  bmi088->accl_.x, bmi088->accl_.y, bmi088->accl_.z,
-                  bmi088->gyro_.x, bmi088->gyro_.y, bmi088->gyro_.z);
+        printf("accl x:%+5f y:%+5f z:%+5f gyro x:%+5f y:%+5f z:%+5f",
+               bmi088->accl_.x, bmi088->accl_.y, bmi088->accl_.z,
+               bmi088->gyro_.x, bmi088->gyro_.y, bmi088->gyro_.z);
         System::Thread::Sleep(delay);
         ms_clear_line();
         time -= delay;
       }
 
-      ms_printf("accl x:%+5f y:%+5f z:%+5f gyro x:%+5f y:%+5f z:%+5f",
-                bmi088->accl_.x, bmi088->accl_.y, bmi088->accl_.z,
-                bmi088->gyro_.x, bmi088->gyro_.y, bmi088->gyro_.z);
-
-      ms_enter();
+      printf("accl x:%+5f y:%+5f z:%+5f gyro x:%+5f y:%+5f z:%+5f\r\n",
+             bmi088->accl_.x, bmi088->accl_.y, bmi088->accl_.z, bmi088->gyro_.x,
+             bmi088->gyro_.y, bmi088->gyro_.z);
     }
   } else {
-    ms_printf("参数错误");
-    ms_enter();
+    printf("参数错误\r\n");
     return -1;
   }
 
   return 0;
-};
+}
 
 bool BMI088::Init() {
   /* BMI088软件重启 */

@@ -20,15 +20,15 @@
 #define om_delay_ms bsp_delay
 
 /* OS层互斥锁api */
-#define om_mutex_t int
-#define om_mutex_init(arg) (void)(arg)
-#define om_mutex_lock(arg) (void)(arg)
-#define om_mutex_trylock(arg) OM_OK
-#define om_mutex_unlock(arg) (void)(arg)
+#define om_mutex_t uint8_t
+#define om_mutex_init(arg) (void)arg, OM_OK
+#define om_mutex_lock(arg) (void)arg, OM_OK
+#define om_mutex_trylock(arg) (void)arg, OM_OK
+#define om_mutex_unlock(arg) (void)arg, OM_OK
 
-#define om_mutex_lock_isr(arg) OM_OK
-#define om_mutex_unlock_isr(arg)
-#define om_mutex_delete(arg)
+#define om_mutex_lock_isr(arg) (void)arg, OM_OK
+#define om_mutex_unlock_isr(arg) (void)arg, OM_OK
+#define om_mutex_delete(arg) (void)arg, OM_OK
 
 /* 将运行时间作为消息发出的时间 */
 #define OM_TIME (0)
@@ -41,6 +41,8 @@
 #define OM_LOG_COLORFUL (1)
 /* 日志最大长度 */
 #define OM_LOG_MAX_LEN (60)
+/* 日志等级 1:default 2:notice 3:pass 4:warning 5:error  */
+#define OM_LOG_LEVEL (1)
 #endif
 
 /* 话题名称最大长度 */

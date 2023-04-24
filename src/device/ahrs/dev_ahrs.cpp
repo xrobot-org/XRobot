@@ -80,8 +80,7 @@ AHRS::AHRS()
 
 int AHRS::ShowCMD(AHRS *ahrs, int argc, char **argv) {
   if (argc == 1) {
-    ms_printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据");
-    ms_enter();
+    printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据\r\n");
   } else if (argc == 4) {
     if (strcmp(argv[1], "show") == 0) {
       int time = std::stoi(argv[2]);
@@ -96,15 +95,14 @@ int AHRS::ShowCMD(AHRS *ahrs, int argc, char **argv) {
       }
 
       while (time > delay) {
-        ms_printf("pitch:%f roll:%f yaw:%f", ahrs->eulr_.pit.Value(),
-                  ahrs->eulr_.rol.Value(), ahrs->eulr_.yaw.Value());
+        printf("pitch:%f roll:%f yaw:%f", ahrs->eulr_.pit.Value(),
+               ahrs->eulr_.rol.Value(), ahrs->eulr_.yaw.Value());
         System::Thread::Sleep(delay);
         ms_clear_line();
         time -= delay;
       }
-      ms_printf("pitch:%f roll:%f yaw:%f", ahrs->eulr_.pit.Value(),
-                ahrs->eulr_.rol.Value(), ahrs->eulr_.yaw.Value());
-      ms_enter();
+      printf("pitch:%f roll:%f yaw:%f\r\n", ahrs->eulr_.pit.Value(),
+             ahrs->eulr_.rol.Value(), ahrs->eulr_.yaw.Value());
     }
   }
 

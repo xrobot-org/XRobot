@@ -2,14 +2,27 @@
 
 #include <stdint.h>
 
+#include "bsp_delay.h"
 #include "main.h"
 #include "tusb.h"
 
 static bsp_callback_t callback_list[BSP_USB_NUM][BSP_USB_CB_NUM];
 
 int8_t bsp_usb_transmit(const uint8_t *buffer, uint32_t len) {
-  tud_cdc_write(buffer, len);
-  tud_cdc_write_flush();
+  while (1) {
+    uint32_t avil = tud_cdc_write_available();
+    if (avil > len) {
+      tud_cdc_write(buffer, len);
+      tud_cdc_write_flush();
+      break;
+    } else {
+      tud_cdc_write(buffer, avil);
+      tud_cdc_write_flush();
+      buffer += avil;
+      len -= avil;
+      bsp_delay(1);
+    }
+  }
   return BSP_OK;
 }
 

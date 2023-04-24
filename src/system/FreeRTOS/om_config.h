@@ -26,11 +26,11 @@
   xSemaphoreGive(*arg)
 #define om_mutex_lock(arg) xSemaphoreTake(*arg, portMAX_DELAY)
 #define om_mutex_trylock(arg) \
-  xSemaphoreTake(*arg, 0) == pdTRUE ? OM_OK : OM_ERROR
+  (xSemaphoreTake(*arg, 0) == pdTRUE ? OM_OK : OM_ERROR)
 #define om_mutex_unlock(arg) xSemaphoreGive(*arg)
 
 #define om_mutex_lock_isr(arg) \
-  xSemaphoreTakeFromISR(*arg, NULL) == pdTRUE ? OM_OK : OM_ERROR
+  (xSemaphoreTakeFromISR(*arg, NULL) == pdTRUE ? OM_OK : OM_ERROR)
 #define om_mutex_unlock_isr(arg) xSemaphoreGiveFromISR(*arg, NULL)
 #define om_mutex_delete(arg) vSemaphoreDelete(*arg)
 
@@ -45,6 +45,8 @@
 #define OM_LOG_COLORFUL (1)
 /* 日志最大长度 */
 #define OM_LOG_MAX_LEN (60)
+/* 日志等级 1:default 2:notice 3:pass 4:warning 5:error  */
+#define OM_LOG_LEVEL (1)
 #endif
 
 /* 话题名称最大长度 */

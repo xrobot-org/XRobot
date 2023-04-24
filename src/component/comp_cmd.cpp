@@ -31,7 +31,7 @@ CMD::CMD(Mode mode)
                cmd->data_[CTRL_SOURCE_AI].online) {
       cmd->gimbal_data_tp_.Publish(cmd->data_[CTRL_SOURCE_AI].gimbal);
       cmd->chassis_data_tp_.Publish(cmd->data_[CTRL_SOURCE_RC].chassis);
-    };
+    }
 
     return true;
   };
@@ -54,7 +54,7 @@ CMD::CMD(Mode mode)
                cmd->data_[CTRL_SOURCE_AI].online) {
       cmd->gimbal_data_tp_.Publish(cmd->data_[CTRL_SOURCE_AI].gimbal);
       cmd->chassis_data_tp_.Publish(cmd->data_[CTRL_SOURCE_AI].chassis);
-    };
+    }
 
     return true;
   };

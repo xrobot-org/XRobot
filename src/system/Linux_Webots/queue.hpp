@@ -1,68 +1,134 @@
 #pragma once
 
-#include <poll.h>
-
-#include <cstdint>
-#include <cstdio>
-#include <queue>
+#include <mutex.hpp>
+#include <semaphore.hpp>
 #include <thread.hpp>
+
+#include "bsp_time.h"
+#include "om.hpp"
 
 namespace System {
 template <typename Data>
 class Queue {
  public:
-  Queue(uint16_t length) : max_length_(length) {}
+  Queue(uint16_t length) {
+    om_fifo_create(&fifo_, malloc(length * sizeof(Data)), length, sizeof(Data));
+  }
 
   bool Send(const Data& data, uint32_t timeout) {
-    while (this->handle_.size() >= this->max_length_ && timeout) {
-      System::Thread::Sleep(1);
-      timeout--;
-    }
-
-    if (this->handle_.size() < this->max_length_) {
-      this->handle_.push(data);
-      return true;
-    } else {
+    uint32_t start_time = bsp_time_get_ms();
+    if (!mutex_.Lock(timeout)) {
       return false;
     }
+
+    if (om_fifo_write(&fifo_, &data) == OM_OK) {
+      mutex_.Unlock();
+      return true;
+    }
+
+    bool ans = false;
+    while (bsp_time_get_ms() - start_time < timeout) {
+      ans = om_fifo_write(&fifo_, &data) == OM_OK;
+      if (ans) {
+        break;
+      }
+      System::Thread::Sleep(1);
+    }
+
+    mutex_.Unlock();
+
+    return ans;
   }
 
   bool Receive(Data& data, uint32_t timeout) {
-    while (this->handle_.size() >= 0 && timeout) {
-      System::Thread::Sleep(1);
-      timeout--;
-    }
-
-    if (this->handle_.size() > 0) {
-      data = this->handle_.front();
-      return true;
-    } else {
+    uint32_t start_time = bsp_time_get_ms();
+    if (!mutex_.Lock(timeout)) {
       return false;
     }
+
+    if (om_fifo_read(&fifo_, &data) == OM_OK) {
+      mutex_.Unlock();
+      return true;
+    }
+
+    bool ans = false;
+    while (bsp_time_get_ms() - start_time < timeout) {
+      ans = om_fifo_read(&fifo_, &data) == OM_OK;
+      if (ans) {
+        break;
+      }
+      System::Thread::Sleep(1);
+    }
+
+    mutex_.Unlock();
+
+    return ans;
   }
 
   bool Overwrite(const Data& data) {
-    Reset();
-    this->handle_.push(data);
-    return true;
+    if (!mutex_.Lock(0)) {
+      return false;
+    }
+
+    bool ans = om_fifo_overwrite(&fifo_, &data) == OM_OK;
+
+    mutex_.Unlock();
+
+    return ans;
   }
 
-  bool SendFromISR(const Data& data) { return Send(data); }
+  bool SendFromISR(const Data& data) {
+    if (!mutex_.LockFromISR()) {
+      return false;
+    }
 
-  bool ReceiveFromISR(Data& data) { return Receive(data); }
+    bool ans = om_fifo_write(&fifo_, &data) == OM_OK;
 
-  bool OverwriteFromISR(const Data& data) { return Overwrite(data); }
+    mutex_.UnlockFromISR();
+
+    return ans;
+  }
+
+  bool ReceiveFromISR(Data& data) {
+    if (!mutex_.LockFromISR()) {
+      return false;
+    }
+
+    bool ans = om_fifo_read(&fifo_, &data) == OM_OK;
+
+    mutex_.UnlockFromISR();
+
+    return ans;
+  }
+
+  bool OverwriteFromISR(const Data& data) {
+    if (!mutex_.LockFromISR()) {
+      return false;
+    }
+
+    bool ans = om_fifo_overwrite(&fifo_, &data) == OM_OK;
+
+    mutex_.UnlockFromISR();
+
+    return ans;
+  }
 
   bool Reset() {
-    while (this->handle_.size()) {
-      this->handle_.pop();
+    if (!mutex_.Lock(0)) {
+      return false;
     }
-    return true;
+
+    bool ans = om_fifo_reset(&fifo_) == OM_OK;
+
+    mutex_.Unlock();
+
+    return ans;
   }
-  uint32_t Size() { return this->handle_.size(); }
+
+  uint32_t Size() { return om_fifo_readable_item_count(&fifo_); }
 
  private:
-  std::queue<Data> handle_;
-  size_t max_length_;
+  om_fifo_t fifo_;
+  System::Mutex mutex_;
 };
 }  // namespace System

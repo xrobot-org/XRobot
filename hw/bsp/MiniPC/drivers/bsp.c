@@ -1,3 +1,5 @@
 #include "bsp.h"
 
-void bsp_init() {}
+#include "bsp_time.h"
+
+void bsp_init() { bsp_time_init(); }

@@ -148,13 +148,13 @@ float PID::Calculate(float sp, float fb, float fb_dot, float dt) {
   return this->last_.out;
 }
 
-void PID::SetK(float k) { this->param_.k = k; };
+void PID::SetK(float k) { this->param_.k = k; }
 
-void PID::SetP(float p) { this->param_.p = p; };
+void PID::SetP(float p) { this->param_.p = p; }
 
-void PID::SetI(float i) { this->param_.i = i; };
+void PID::SetI(float i) { this->param_.i = i; }
 
-void PID::SetD(float d) { this->param_.d = d; };
+void PID::SetD(float d) { this->param_.d = d; }
 
 void PID::Reset() {
   this->i_ = 0.0f;

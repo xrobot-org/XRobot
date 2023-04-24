@@ -8,13 +8,19 @@
 #define MS_MAX_HISTORY_NUM (4)
 
 /* 命令行打印缓冲区长度 */
-#define MS_WIRITE_BUFF_SIZE (128)
+#define MS_WIRITE_BUFF_SIZE (256)
 
 /* 自定义颜色 */
 #define MS_HEAD_COLOR MS_COLOR_GREEN
 
 /* 系统名称 */
-#define MS_OS_NAME "Linux"
+#define MS_OS_NAME "Webots"
 
 /* 用户名称 */
-#define MS_USER_NAME "PC"
+#define MS_USER_NAME "simulator"
+
+/* 欢迎信息 */
+#define MS_HELLO_MESSAGE "Welcome to use XRobot!"
+
+/* 登陆命令 */
+#define MS_INIT_COMMAND ""
