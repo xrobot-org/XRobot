@@ -53,8 +53,7 @@ class BaseMotor {
 
   static int ShowCMD(BaseMotor *motor, int argc, char **argv) {
     if (argc == 1) {
-      ms_printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据");
-      ms_enter();
+      printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据\r\n");
     } else if (argc == 4) {
       if (strcmp(argv[1], "show") == 0) {
         int time = std::stoi(argv[2]);
@@ -67,14 +66,11 @@ class BaseMotor {
           delay = 2;
         }
         while (time > delay) {
-          ms_printf("电机 [%s] 反馈数据:", motor->name_);
-          ms_enter();
-          ms_printf("最近一次反馈时间:%fs.", motor->last_online_time_);
-          ms_enter();
-          ms_printf("角度:%frad 速度:%frpm 电流:%fA 温度:%f℃",
-                    motor->GetAngle().Value(), motor->GetSpeed(),
-                    motor->GetCurrent(), motor->feedback_.temp);
-          ms_enter();
+          printf("电机 [%s] 反馈数据:\r\n", motor->name_);
+          printf("最近一次反馈时间:%fs.\r\n", motor->last_online_time_);
+          printf("角度:%frad 速度:%frpm 电流:%fA 温度:%f℃\r\n",
+                 motor->GetAngle().Value(), motor->GetSpeed(),
+                 motor->GetCurrent(), motor->feedback_.temp);
           System::Thread::Sleep(delay);
           ms_clear_line();
           time -= delay;

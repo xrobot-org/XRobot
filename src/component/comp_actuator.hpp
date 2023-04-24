@@ -37,7 +37,7 @@ class ActuatorStallDetect {
     } else {
       return false;
     }
-  };
+  }
 
  private:
   Param& param_;

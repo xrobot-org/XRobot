@@ -154,14 +154,10 @@ void CanIMU::SendQuat() {
 
 int CanIMU::SetCMD(CanIMU *imu, int argc, char **argv) {
   if (argc == 1) {
-    ms_printf("set_delay  [time]  设置发送延时ms");
-    ms_enter();
-    ms_printf("enable     [accl/gyro/eulr/quat] 开启功能");
-    ms_enter();
-    ms_printf("disable    [accl/gyro/eulr/quat] 关闭功能");
-    ms_enter();
-    ms_printf("set_can_id [id] 设置can id");
-    ms_enter();
+    printf("set_delay  [time]  设置发送延时ms\r\n");
+    printf("enable     [accl/gyro/eulr/quat] 开启功能\r\n");
+    printf("disable    [accl/gyro/eulr/quat] 关闭功能\r\n");
+    printf("set_can_id [id] 设置can id\r\n");
   } else if (argc == 3 && (strcmp(argv[1], "enable") == 0 ||
                            strcmp(argv[1], "disable") == 0)) {
     bool enable = (strcmp(argv[1], "enable") == 0);
@@ -175,8 +171,7 @@ int CanIMU::SetCMD(CanIMU *imu, int argc, char **argv) {
     } else if (strcmp(argv[2], "quat") == 0) {
       imu->enable_quat_.Set(enable);
     } else {
-      ms_printf("命令错误");
-      ms_enter();
+      printf("命令错误\r\n");
     }
   } else if (argc == 3 && strcmp(argv[1], "set_delay") == 0) {
     int delay = std::stoi(argv[2]);
@@ -191,18 +186,15 @@ int CanIMU::SetCMD(CanIMU *imu, int argc, char **argv) {
 
     imu->delay_.Set(delay);
 
-    ms_printf("delay:%d", delay);
-    ms_enter();
+    printf("delay:%d\r\n", delay);
   } else if (argc == 3 && strcmp(argv[1], "set_can_id") == 0) {
     int id = std::stoi(argv[2]);
 
     imu->can_id_.Set(id);
 
-    ms_printf("can_id:%d", id);
-    ms_enter();
+    printf("can_id:%d\r\n", id);
   } else {
-    ms_printf("命令错误");
-    ms_enter();
+    printf("命令错误\r\n");
   }
 
   return 0;
