@@ -96,10 +96,10 @@ Robot::Infantry::Param param = {
         },
         /* CTRL_CH_YAW_ANGLE */
         Component::PID::Param{
-          .k = 0.3f,
+          .k = 0.2f,
           .p = 1.0f,
           .i = 0.0f,
-          .d = 0.05f,
+          .d = 0.0f,
           .i_limit = 0.1f,
           .out_limit = 0.14f,
           .d_cutoff_freq = -1.0f,
@@ -107,7 +107,7 @@ Robot::Infantry::Param param = {
         },
         /* CTRL_CH_GYRO_Z */
         Component::PID::Param{
-          .k = 10.0f,
+          .k = 8.0f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.0f,
@@ -142,6 +142,13 @@ Robot::Infantry::Param param = {
       },
 
       .leg_max_angle = 0.0f,
+
+      .motor_zero = {
+        5.21f,
+        4.22f,
+        1.79f,
+        3.62f,
+      },
 
 
       .EVENT_MAP = {

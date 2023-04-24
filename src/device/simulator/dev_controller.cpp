@@ -14,22 +14,18 @@ TerminalController::TerminalController()
 int TerminalController::ControlCMD(TerminalController* ctrl, int argc,
                                    char** argv) {
   if (argc == 1) {
-    ms_printf("[w/a/s/d] [speed 0-100] [time ms] 向某个方向运动");
-    ms_enter();
-    ms_printf("[start/stop]             运行/停止");
-    ms_enter();
-    ms_printf("[keyboard]                使用键鼠控制");
-    ms_enter();
+    printf("[w/a/s/d] [speed 0-100] [time ms] 向某个方向运动\r\n");
+    printf("[start/stop]             运行/停止\r\n");
+    printf("[keyboard]                使用键鼠控制\r\n");
   } else if (argc == 2) {
     if (!strcmp(argv[1], "start")) {
       ctrl->event_.Active(START_CTRL);
     } else if (!strcmp(argv[1], "stop")) {
       ctrl->event_.Active(STOP_CTRL);
     } else if (!strcmp(argv[1], "keyboard")) {
-      ms_printf(
+      printf(
           "Start keyboard control. press w/a/s/d to move, q/e to turn, and r "
-          "to exit.");
-      ms_enter();
+          "to exit.\r\n");
 
       wb_keyboard_enable(30);
 
@@ -70,8 +66,7 @@ int TerminalController::ControlCMD(TerminalController* ctrl, int argc,
           case 'R':
             wb_keyboard_disable();
 
-            ms_printf("exit.");
-            ms_enter();
+            printf("exit.\r\n");
 
             return 0;
           default:
@@ -97,8 +92,7 @@ int TerminalController::ControlCMD(TerminalController* ctrl, int argc,
       }
 
     } else {
-      ms_printf("参数错误");
-      ms_enter();
+      printf("参数错误\r\n");
       return -1;
     }
   } else if (argc == 4) {
@@ -117,8 +111,7 @@ int TerminalController::ControlCMD(TerminalController* ctrl, int argc,
         x = 0.8f;
         break;
       default:
-        ms_printf("方向错误");
-        ms_enter();
+        printf("方向错误\r\n");
         return -1;
     }
 
@@ -139,8 +132,7 @@ int TerminalController::ControlCMD(TerminalController* ctrl, int argc,
 
     ctrl->cmd_tp_.Publish(ctrl->cmd_data_);
   } else {
-    ms_printf("参数错误");
-    ms_enter();
+    printf("参数错误\r\n");
   }
 
   return 0;

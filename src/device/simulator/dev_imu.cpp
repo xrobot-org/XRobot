@@ -69,8 +69,7 @@ void IMU::Update() {
 
 int IMU::ShowCMD(IMU* imu, int argc, char** argv) {
   if (argc == 1) {
-    ms_printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据");
-    ms_enter();
+    printf("[show] [time] [delay] 在time时间内每隔delay打印一次数据\r\n");
   } else if (argc == 4) {
     int time = std::stoi(argv[2]);
     int delay = std::stoi(argv[3]);
@@ -84,13 +83,12 @@ int IMU::ShowCMD(IMU* imu, int argc, char** argv) {
     }
 
     while (time > delay) {
-      ms_printf(
+      printf(
           "Accl[x:%f y:%f z:%f] Gyro[x:%f y:%f z:%f] Eulr[pit:%f rol:%f "
-          "yaw:%f]",
+          "yaw:%f]\r\n",
           imu->accl_.x, imu->accl_.y, imu->accl_.z, imu->gyro_.x, imu->gyro_.y,
           imu->gyro_.z, imu->eulr_.pit.Value(), imu->eulr_.rol.Value(),
           imu->eulr_.yaw.Value());
-      ms_enter();
       System::Thread::Sleep(delay);
       ms_clear_line();
       time -= delay;

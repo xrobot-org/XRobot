@@ -29,4 +29,4 @@ bool Timer::Refresh(ControlBlock& block, void* arg) {
   }
 
   return true;
-};
+}

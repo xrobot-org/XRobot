@@ -31,14 +31,13 @@ class UartToUDP {
                sizeof(Device::WearLab::UdpData));
         udp->udp_rx_sem_[data->area_id]->Give();
 #ifdef MCU_DEBUG_BUILD
-        ms_printf("udp pack received.");
-        ms_enter();
+        printf("udp pack received.\r\n");
 #endif
         return;
       }
 
 #ifdef MCU_DEBUG_BUILD
-      ms_printf("udp receive pack error. len:%d\n", size);
+      printf("udp receive pack error. len:%d\n", size);
 #endif
     };
 
@@ -64,20 +63,17 @@ class UartToUDP {
         if (uart_udp->uart_rx_[uart].end != 0xe3) {
           bsp_uart_abort_receive(uart);
 #ifdef MCU_DEBUG_BUILD
-          ms_printf("uart :%d end data: %d", uart,
-                    uart_udp->uart_rx_[uart].end);
-          ms_enter();
-          ms_printf("Recv data error\n");
-          ms_enter();
+          printf("uart :%d end data: %d\r\n", uart,
+                 uart_udp->uart_rx_[uart].end);
+          printf("Recv data error\n\r\n");
 #endif
           continue;
         } else {
           uart_udp->header_[uart].raw = uart_udp->uart_rx_[uart].id;
 #ifdef MCU_DEBUG_BUILD
-          ms_printf("received uart%d pack time:%d count:%d", uart,
-                    bsp_time_get_ms(), count++,
-                    uart_udp->header_[uart].data.device_id);
-          ms_enter();
+          printf("received uart%d pack time:%d count:%d\r\n", uart,
+                 bsp_time_get_ms(), count++,
+                 uart_udp->header_[uart].data.device_id);
 #endif
 
           uart_udp->udp_tx_[uart].device_id =

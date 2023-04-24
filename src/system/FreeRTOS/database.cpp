@@ -17,20 +17,19 @@ Database::Database() {
     MS_UNUSED(item);
 
     if (argc == 1) {
-      ms_printf("-show        show SN code.");
-      ms_enter();
-      ms_printf("-set [code]  set  SN code.");
-      ms_enter();
+      printf("-show        show SN code.\r\n");
+
+      printf("-set [code]  set  SN code.\r\n");
+
     } else if (argc == 2) {
       if (strcmp("show", argv[1]) == 0) {
         memset(sn_buff, 0, sizeof(sn_buff));
         bsp_flash_get_blog("SN", sn_buff, sizeof(sn_buff) - 1);
         sn_buff[32] = '\0';
-        ms_printf("SN:%s", sn_buff);
-        ms_enter();
+        printf("SN:%s\r\n", sn_buff);
+
       } else {
-        ms_printf("Error command.");
-        ms_enter();
+        printf("Error command.\r\n");
       }
     } else if (argc == 3) {
       if (strcmp("set", argv[1]) == 0 && strlen(argv[2]) == 32) {
@@ -48,15 +47,13 @@ Database::Database() {
         if (check_ok) {
           bsp_flash_set_blog("SN", sn_buff, sizeof(sn_buff) - 1);
           sn_buff[32] = '\0';
-          ms_printf("SN:%s", sn_buff);
-          ms_enter();
+          printf("SN:%s\r\n", sn_buff);
+
         } else {
-          ms_printf("Error sn code format: %s", argv[2]);
-          ms_enter();
+          printf("Error sn code format: %s\r\n", argv[2]);
         }
       } else {
-        ms_printf("Error sn code format: %s", argv[2]);
-        ms_enter();
+        printf("Error sn code format: %s\r\n", argv[2]);
       }
     }
 

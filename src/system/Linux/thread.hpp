@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "bsp_time.h"
 #include "system_ext.hpp"
 
 namespace System {
@@ -38,11 +39,17 @@ class Thread {
 
   static void Sleep(uint32_t microseconds) { poll(NULL, 0, microseconds); }
 
-  void SleepUntil(uint32_t microseconds) { poll(NULL, 0, microseconds); }
+  void SleepUntil(uint32_t microseconds) {
+    last_weakup_tick_ += microseconds;
+    while (bsp_time_get_ms() < last_weakup_tick_) {
+      poll(NULL, 0, 1);
+    }
+  }
 
   void Stop() { pthread_cancel(this->handle_); }
 
  private:
   pthread_t handle_;
+  uint32_t last_weakup_tick_ = bsp_time_get_ms();
 };
 }  // namespace System

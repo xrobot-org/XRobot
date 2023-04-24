@@ -115,7 +115,7 @@ void verify_failed(const char *file, uint32_t line) {
   static_cast<void>(file);
   static_cast<void>(line);
   while (1) {
-  };
+  }
 }
 
 int float_to_uint(float x, float x_min, float x_max, int bits) {

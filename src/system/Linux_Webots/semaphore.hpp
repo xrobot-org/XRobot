@@ -7,6 +7,8 @@
 #include <cstdio>
 #include <thread.hpp>
 
+#include "bsp_time.h"
+
 namespace System {
 class Semaphore {
  public:
@@ -27,16 +29,26 @@ class Semaphore {
   }
 
   bool Take(uint32_t timeout) {
-    while (sem_trywait(&this->handle_) && timeout) {
-      System::Thread::Sleep(1);
-      timeout--;
-    }
-
-    if (sem_trywait(&this->handle_)) {
-      return false;
-    } else {
+    if (!sem_trywait(&this->handle_)) {
       return true;
     }
+
+    if (!timeout) {
+      return false;
+    }
+
+    uint32_t start_time = bsp_time_get_ms();
+    bool ans = false;
+
+    while (bsp_time_get_ms() - start_time < timeout) {
+      ans = !sem_trywait(&this->handle_);
+      if (ans) {
+        return true;
+      }
+      System::Thread::Sleep(1);
+    }
+
+    return false;
   }
 
   void GiveFromISR() { Give(); }

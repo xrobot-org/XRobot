@@ -1,13 +1,13 @@
 #pragma once
 
+#include <malloc.h>
+
 #include <cstdint>
 
-void* operator new(std::size_t size);
-void operator delete(void* ptr) noexcept;
 namespace System {
 class Memory {
  public:
-  static void* Malloc(size_t size);
-  static void Free(void* block);
+  static void* Malloc(size_t size) { return malloc(size); }
+  static void Free(void* block) { free(block); }
 };
 }  // namespace System

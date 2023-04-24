@@ -38,6 +38,6 @@ class Thread {
 
  private:
   TaskHandle_t handle_ = NULL;
-  uint32_t last_weakup_tick_ = 0;
+  uint32_t last_weakup_tick_ = bsp_time_get_ms();
 };
 }  // namespace System

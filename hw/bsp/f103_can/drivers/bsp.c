@@ -19,7 +19,7 @@ void bsp_init() {
   MX_SPI1_Init();
   MX_CAN_Init();
   MX_TIM2_Init();
-  MX_USART1_UART_Init();
+  MX_USART3_UART_Init();
 
   bsp_uart_init();
 }
