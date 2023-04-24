@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdlib>
-
 #include "om.h"
 
 namespace System {
@@ -15,7 +13,8 @@ class List {
 
   List() { INIT_LIST_HEAD(&(this->head_)); }
 
-  bool Add(Data data) {
+  bool Add(Data data, uint32_t timeout = UINT32_MAX) {
+    (void)timeout;
     Node* node = static_cast<Node*>(malloc(sizeof(Node)));
     memcpy(&(node->data_), &data, sizeof(data));
     om_list_add(&(node->node_), &(this->head_));
@@ -23,7 +22,8 @@ class List {
     return true;
   }
 
-  bool AddTail(Data data) {
+  bool AddTail(Data data, uint32_t timeout = UINT32_MAX) {
+    (void)timeout;
     Node* node = static_cast<Node*>(malloc(sizeof(Node)));
     memcpy(&(node->data_), &data, sizeof(data));
     om_list_add_tail(&(node->node_), (this->head_));

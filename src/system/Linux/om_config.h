@@ -25,11 +25,12 @@
 #include <pthread.h>
 #define om_mutex_t pthread_mutex_t
 #define om_mutex_init(arg) pthread_mutex_init(arg, NULL)
-#define om_mutex_lock(arg) pthread_mutex_lock(arg)
-#define om_mutex_trylock(arg) pthread_mutex_trylock(arg) == 0 ? OM_OK : OM_ERROR
+#define om_mutex_lock(arg) (pthread_mutex_lock(arg) == 0 ? OM_OK : OM_ERROR)
+#define om_mutex_trylock(arg) \
+  (pthread_mutex_trylock(arg) == 0 ? OM_OK : OM_ERROR)
 #define om_mutex_unlock(arg) pthread_mutex_unlock(arg)
 
-#define om_mutex_lock_isr(arg) pthread_mutex_lock(arg)
+#define om_mutex_lock_isr(arg) (pthread_mutex_lock(arg) == 0 ? OM_OK : OM_ERROR)
 #define om_mutex_unlock_isr(arg) pthread_mutex_unlock(arg)
 
 #define om_mutex_delete(arg) pthread_mutex_destroy(arg)
@@ -51,6 +52,8 @@
 #define OM_LOG_COLORFUL (1)
 /* 日志最大长度 */
 #define OM_LOG_MAX_LEN (60)
+/* 日志等级 1:default 2:notice 3:pass 4:warning 5:error  */
+#define OM_LOG_LEVEL (1)
 #endif
 
 /* 话题名称最大长度 */

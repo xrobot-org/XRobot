@@ -18,18 +18,17 @@ Database::Database() {
     MS_UNUSED(item);
 
     if (argc == 1) {
-      ms_printf("-show        show SN code.");
-      ms_enter();
-      ms_printf("-set [code]  set  SN code.");
-      ms_enter();
+      printf("-show        show SN code.\r\n");
+
+      printf("-set [code]  set  SN code.\r\n");
+
     } else if (argc == 2) {
       if (strcmp("show", argv[1]) == 0) {
         sn->Get();
-        ms_printf("SN:%.32s", sn->data_);
-        ms_enter();
+        printf("SN\r\n:%.32s", sn->data_);
+
       } else {
-        ms_printf("Error command.");
-        ms_enter();
+        printf("Error command.\r\n");
       }
     } else if (argc == 3) {
       if (strcmp("set", argv[1]) == 0 && strlen(argv[2]) == 32) {
@@ -47,15 +46,13 @@ Database::Database() {
 
         if (check_ok) {
           sn->Set();
-          ms_printf("SN:%.32s", sn->data_);
-          ms_enter();
+          printf("SN:%.32s\r\n", sn->data_);
+
         } else {
-          ms_printf("Error sn code format: %s", argv[2]);
-          ms_enter();
+          printf("Error sn code format: %s\r\n", argv[2]);
         }
       } else {
-        ms_printf("Error sn code format: %s", argv[2]);
-        ms_enter();
+        printf("Error sn code format: %s\r\n", argv[2]);
       }
     }
 
