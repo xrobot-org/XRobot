@@ -340,7 +340,7 @@ if cmd[1] == 'config':
     generate_cmake(cfg_dir)
     tools.config_cmake()
 
-if cmd[1] == 'menuconfig':
+elif cmd[1] == 'menuconfig':
     tools.clean_cache()
     generate_kconfig()
     tools.menuconfig(cfg_dir)
