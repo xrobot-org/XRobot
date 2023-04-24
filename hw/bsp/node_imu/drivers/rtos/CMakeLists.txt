@@ -7,6 +7,9 @@ file(GLOB ${PROJECT_NAME}_SOURCES
     "${LIB_DIR}/freertos/portable/MemMang/heap_4.c"
 )
 
+list(FILTER ${PROJECT_NAME}_SOURCES EXCLUDE REGEX "stream_buffer.c$")
+
+
 add_library(${PROJECT_NAME} STATIC)
 
 target_sources(${PROJECT_NAME}
