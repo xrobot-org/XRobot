@@ -14,10 +14,13 @@
 #define MS_HEAD_COLOR MS_COLOR_GREEN
 
 /* 系统名称 */
-#define MS_OS_NAME "FreeRTOS"
+#define MS_OS_NAME "XRobot"
+
+#define _MS_STR_2(_arg) #_arg
+#define _MS_STR_1(_arg) _MS_STR_2(_arg)
 
 /* 用户名称 */
-#define MS_USER_NAME "MCU"
+#define MS_USER_NAME _MS_STR_1(XROBOT_BOARD)
 
 /* 欢迎信息 */
 #define MS_HELLO_MESSAGE "Welcome to use XRobot!"
