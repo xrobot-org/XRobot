@@ -19,6 +19,10 @@ class UartToUDP {
   } Param;
 
   UartToUDP(Param& param) {
+    for (int i = 0; i < BSP_UART_NUM; i++) {
+      udp_rx_sem_[i] = new System::Semaphore(false);
+    }
+
     bsp_udp_server_init(&udp_server_, param.port);
 
     auto udp_rx_cb = [](void* arg, void* buff, uint32_t size) {
@@ -107,8 +111,6 @@ class UartToUDP {
     };
 
     for (int i = 0; i < BSP_UART_NUM; i++) {
-      udp_rx_sem_[i] = new System::Semaphore(false);
-
       uart_tx_thread_[i].Create(
           uart_tx_thread_fn, this,
           (std::string("uart_to_udp_tx_") + std::to_string(i)).c_str(), 512,
