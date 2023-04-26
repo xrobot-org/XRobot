@@ -30,8 +30,8 @@ void bsp_uart_init() {
     tty_cfg.c_cflag &= ~CSTOPB;
     tty_cfg.c_cflag &= ~CRTSCTS;
 
-    cfsetispeed(&tty_cfg, B3500000);
-    cfsetospeed(&tty_cfg, B3500000);
+    cfsetispeed(&tty_cfg, B2000000);
+    cfsetospeed(&tty_cfg, B2000000);
 
     // 一般必设置的标志
     tty_cfg.c_cflag |= (CLOCAL | CREAD);
