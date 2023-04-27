@@ -7,12 +7,15 @@
 
 static bool connected = false;
 
+static const char print_tab[] = "\033[s\033[1A\n\033[u";
+
 int8_t bsp_usb_transmit(const uint8_t *buffer, uint32_t len) {
   for (int i = 0; i < len; i++) {
     putchar(buffer[i]);
   }
-  printf("\033[s\033[1A\n\033[u");
-  vTaskDelay(1);
+  for (int i = 0; i < sizeof(print_tab) - 1; i++) {
+    putchar(print_tab[i]);
+  }
   return BSP_OK;
 }
 
