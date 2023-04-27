@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo ln -s build/xrobot.elf /usr/bin/xrobot
+sudo ln -s $(pwd)/build/xrobot.elf /usr/bin/xrobot
