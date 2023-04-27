@@ -41,6 +41,8 @@ void Start(RobotParam... param) {
   init_thread.Create(init_thread_fn, init_fun_call, "init_thread_fn",
                      INIT_TASK_STACK_DEPTH, System::Thread::REALTIME);
 
-  vTaskStartScheduler();
+  if (xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED) {
+    vTaskStartScheduler();
+  }
 }
 }  // namespace System
