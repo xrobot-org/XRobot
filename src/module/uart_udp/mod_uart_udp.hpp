@@ -9,6 +9,7 @@
 #include "bsp_udp_server.h"
 #include "module.hpp"
 #include "ms.h"
+#include "om_log.h"
 #include "wearlab.hpp"
 
 namespace Module {
@@ -21,6 +22,8 @@ class UartToUDP {
   UartToUDP(Param& param) {
     for (int i = 0; i < BSP_UART_NUM; i++) {
       udp_rx_sem_[i] = new System::Semaphore(false);
+      count[i] = 0;
+      last_log_time[i] = 0;
     }
 
     bsp_udp_server_init(&udp_server_, param.port);
@@ -52,7 +55,6 @@ class UartToUDP {
       bsp_uart_t uart = static_cast<bsp_uart_t>(uart_udp->num_++);
 
       uint8_t prefix = 0;
-      uint32_t count = 0;
 
       while (true) {
         do {
@@ -66,19 +68,9 @@ class UartToUDP {
                          sizeof(uart_udp->uart_rx_[uart]), true);
         if (uart_udp->uart_rx_[uart].end != 0xe3) {
           bsp_uart_abort_receive(uart);
-#ifdef MCU_DEBUG_BUILD
-          printf("uart :%d end data: %d\r\n", uart,
-                 uart_udp->uart_rx_[uart].end);
-          printf("Recv data error\n\r\n");
-#endif
           continue;
         } else {
           uart_udp->header_[uart].raw = uart_udp->uart_rx_[uart].id;
-#ifdef MCU_DEBUG_BUILD
-          printf("received uart%d pack time:%d count:%d\r\n", uart,
-                 bsp_time_get_ms(), count++,
-                 uart_udp->header_[uart].data.device_id);
-#endif
           uart_udp->udp_tx_[uart].time = bsp_time_get_ms();
           uart_udp->udp_tx_[uart].device_id =
               uart_udp->header_[uart].data.device_id;
@@ -89,6 +81,13 @@ class UartToUDP {
               uart_udp->header_[uart].data.data_type;
           memcpy(uart_udp->udp_tx_[uart].data, uart_udp->uart_rx_[uart].data,
                  8);
+          uart_udp->count[uart]++;
+          if (uart_udp->udp_tx_[uart].time - uart_udp->last_log_time[uart] >
+              1000) {
+            uart_udp->last_log_time[uart] = uart_udp->udp_tx_[uart].time;
+            OMLOG_NOTICE("uart %d get count %d at %d ms\r\n", uart,
+                         uart_udp->count[uart], uart_udp->udp_tx_[uart].time);
+          }
           bsp_udp_server_transmit(
               &uart_udp->udp_server_,
               reinterpret_cast<const uint8_t*>(&uart_udp->udp_tx_[uart]),
@@ -146,5 +145,9 @@ class UartToUDP {
   System::Thread udp_rx_thread_;
 
   bsp_udp_server_t udp_server_;
+
+  std::array<uint32_t, BSP_UART_NUM> count;
+
+  std::array<uint32_t, BSP_UART_NUM> last_log_time;
 };
 }  // namespace Module
