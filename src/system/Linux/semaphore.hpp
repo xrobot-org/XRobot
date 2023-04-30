@@ -29,26 +29,18 @@ class Semaphore {
   }
 
   bool Take(uint32_t timeout) {
-    if (!sem_trywait(&this->handle_)) {
-      return true;
-    }
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    uint32_t secs = timeout / 1000;
+    timeout = timeout % 1000;
 
-    if (!timeout) {
-      return false;
-    }
+    uint32_t add = 0;
+    long raw_time = timeout * 1000U * 1000U + ts.tv_nsec;
+    add = raw_time / (1000U * 1000U * 1000U);
+    ts.tv_sec += (add + secs);
+    ts.tv_nsec = raw_time % (1000U * 1000U * 1000U);
 
-    uint32_t start_time = bsp_time_get_ms();
-    bool ans = false;
-
-    while (bsp_time_get_ms() - start_time < timeout) {
-      ans = !sem_trywait(&this->handle_);
-      if (ans) {
-        return true;
-      }
-      System::Thread::Sleep(1);
-    }
-
-    return false;
+    return sem_timedwait(&handle_, &ts) == 0;
   }
 
   void GiveFromISR() { Give(); }

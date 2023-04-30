@@ -1,13 +1,24 @@
 # XRobot
 
-一套可在PC/MCU/模拟器运行的机器人控制系统，诞生于Robomaster比赛，但绝不局限于此。
+颠覆传统理念的嵌入式软件开发框架。诞生于Robomaster比赛，但绝不局限于此。
 
 ![平衡](./doc/image/平衡.gif "平衡") ![英雄](./doc/image/英雄.gif "英雄") ![工程](./doc/image/工程.gif "工程") ![飞镖架](./doc/image/飞镖架.gif "飞镖架")
 
+## 主要特色
+
+* 利用CMake & Clang实现跨平台开发
+* VSCode一键编译调试
+* ClangTidy代码检查
+* 完善的[文档](https://xrobot-org.github.io)
+* CI/CD自动构建和固件发布
+* 兼容多开发板和操作系统（Linux/Webots仿真/FreeRTOS/裸机）
+* 图形化/命令行参数配置
+* 命令行界面（CLI）
+* 部分开发板支持Arduino开发
 
 ## 组成
 
-XRobot基本部分是一套开发板与功能模块的管理系统，能够让使用者选择所需的模块并搭建成完整的机器人系统。既有模块化开发即插即用的便利，又易于对模块功能进行定制和调整以便适应多种场景，还有完善简洁的底层API封装保证良好的运行效率。
+XRobot基本部分是一套开发板与功能模块的管理系统，能够让使用者选择所需的模块并搭建成完整的机器人系统。基于模块化开发即插即用，又易于对功能细节进行定制和调整以便适应多种场景，底层API封装完善简洁保证良好的运行效率。
 
 * hw/bsp 包含底层外设驱动的通用封装，主函数入口，开发板的调试工程和配置文件等。
 * hw/mcu 不同厂家和型号MCU的通用SDK和配置脚本。
@@ -19,7 +30,7 @@ XRobot基本部分是一套开发板与功能模块的管理系统，能够让�
 
 ## 软件工具
 
-以下工具在所有框架支持的平台上都提供了实现
+以下工具在所有框架支持的平台上都提供了实现，保证系统API的统一
 
 * 消息订阅
 * 命令行
@@ -37,25 +48,11 @@ XRobot基本部分是一套开发板与功能模块的管理系统，能够让�
 | STM32F407IG | [Robomaster C型开发板](https://www.robomaster.com/zh-CN/products/components/general/development-board-type-c/info) | <img src="doc/image/rm-c.png" width="500" height="220">            |
 | STM32F302CB | [IMU-DEV-BOARD](https://xrobot-org.github.io/1.hardware/3.IMU-DEV.html)                                            | <img src="doc/image/IMU-DEV-1.jpg" width="350" height="200">       |
 | STM32F446RE | [C-Mini](https://xrobot-org.github.io/1.hardware/1.C-MINI.html)                                                    | <img src="doc/image/C-MINI-1.jpg" width="350" height="250">        |
-| STM32F103   | [F103 CAN](https://xrobot-org.github.io/1.hardware/4.F103_CAN.html)                                                | ![F103 CAN](./doc/image/f103_can.jpeg)                             |
+| STM32F103   | [F103 CAN](https://xrobot-org.github.io/1.hardware/4.F103_CAN.html)                                                | <img src="doc/image/f103_can.jpeg" width="350" height="250">       |
 | ESP32-C3    | [ESP32C3-Core](https://xrobot-org.github.io/1.hardware/2.ESP32C3-Core.html)                                        | <img src="doc/image/esp32c3-core-1.jpeg" width="260" height="200"> |
 | Linux x86   | [Intel NUC](https://www.intel.cn/content/www/cn/zh/products/details/nuc.html)                                      | <img src="doc/image/nuc.jpg" width="350" height="200">             |
 | Linux arm   | [Raspberry pi 4B](https://www.raspberrypi.com/)                                                                    | <img src="doc/image/raspi.png" width="350" height="200">           |
 
-
-## 主要特色
-
-* 利用CMake & Clang实现跨平台开发
-* VSCode一键编译调试
-* ClangTidy代码检查
-* 完善的[文档](https://xrobot-org.github.io)
-* BSP兼容层使用纯C实现，上层代码使用C++，稳定实时，开发方便
-* 一个项目适配不同型号的机器人型号，现已支持步兵/英雄/哨兵/平衡
-* 兼容多开发板和操作系统，支持Linux原生运行和Linux上的Webots仿真
-* 兵种配置文件及图形化配置
-* 操作手自定义UI
-* 命令行界面（CLI）
-* USB上位机控制
 
 ## 图片展示
 
