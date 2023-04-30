@@ -3,4 +3,12 @@ config INIT_TASK_STACK_DEPTH
     int "init任务堆栈大小(Linux下不可用)"
     range 0 0
     default 0
+
+config TERM_LOG_UDP_SERVER
+    tristate "开启UDP服务器log打印"
+
+config TERM_LOG_UDP_SERVER_PORT
+    int "UDP服务器log打印端口" if TERM_LOG_UDP_SERVER
+    range 0 65535
+    default 1230
 endmenu
