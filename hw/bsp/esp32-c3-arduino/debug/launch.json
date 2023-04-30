@@ -18,6 +18,10 @@
             "searchDir": [],
             "runToEntryPoint": "app_main",
             "postLaunchCommands": [
+                "mon reset halt",
+                "flushregs",
+                "mon program_esp build/bootloader/bootloader.bin 0x0 verify",
+                "mon program_esp build/partition_table/partition-table.bin 0x8000 verify",
                 "mon program_esp build/xrobot.bin 0x10000 verify",
                 "set remote hardware-watchpoint-limit 2",
                 "mon reset halt",

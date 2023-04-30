@@ -11,6 +11,7 @@ class WearLab {
   } UartData;
 
   typedef struct __attribute__((packed)) {
+    uint32_t time;
     uint8_t device_id : 6;      //设备ID
     uint8_t area_id;            //区域ID
     uint16_t device_type : 12;  //设备类型
