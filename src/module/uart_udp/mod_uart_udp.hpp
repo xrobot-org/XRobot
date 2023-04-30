@@ -79,7 +79,7 @@ class UartToUDP {
                  bsp_time_get_ms(), count++,
                  uart_udp->header_[uart].data.device_id);
 #endif
-
+          uart_udp->udp_tx_[uart].time = bsp_time_get_ms();
           uart_udp->udp_tx_[uart].device_id =
               uart_udp->header_[uart].data.device_id;
           uart_udp->udp_tx_[uart].area_id = uart;
