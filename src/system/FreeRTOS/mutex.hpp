@@ -45,7 +45,9 @@ class Mutex {
   void UnlockFromISR() {
     BaseType_t px_higher_priority_task_woken = 0;
     xSemaphoreGiveFromISR(this->handle_, &px_higher_priority_task_woken);
-    portYIELD_FROM_ISR(px_higher_priority_task_woken);
+    if (px_higher_priority_task_woken != pdFALSE) {
+      portYIELD();
+    }
   }
 
   bool LockFromISR() {
@@ -53,7 +55,9 @@ class Mutex {
     bool ans = xSemaphoreTakeFromISR(this->handle_,
                                      &px_higher_priority_task_woken) == pdTRUE;
 
-    portYIELD_FROM_ISR(px_higher_priority_task_woken);
+    if (px_higher_priority_task_woken != pdFALSE) {
+      portYIELD();
+    }
     return ans;
   }
 
