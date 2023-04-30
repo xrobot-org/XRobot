@@ -2,12 +2,15 @@
 #include <thread.hpp>
 
 #include "bsp_time.h"
+#include "bsp_udp_server.h"
 #include "ms.h"
 #include "om.hpp"
 
 using namespace System;
 
-static System::Thread term_thread;
+static System::Thread term_thread, term_udp_thread;
+
+static bsp_udp_server_t term_udp_server;
 
 static ms_item_t log_control;
 
@@ -48,13 +51,27 @@ int show_fun(const char *data, uint32_t len) {
 static om_status_t print_log(om_msg_t *msg, void *arg) {
   (void)arg;
 
+  static char time_print_buff[20];
+
+  om_log_t *log = static_cast<om_log_t *>(msg->buff);
+
+  snprintf(time_print_buff, sizeof(time_print_buff), "%-.4f ", bsp_time_get());
+
+#ifdef TERM_LOG_UDP_SERVER
+  bsp_udp_server_transmit(&term_udp_server,
+                          reinterpret_cast<const uint8_t *>(time_print_buff),
+                          strlen(time_print_buff));
+
+  bsp_udp_server_transmit(&term_udp_server,
+                          reinterpret_cast<const uint8_t *>(log->data),
+                          strlen(log->data));
+#endif
+
   if (!log_enable) {
     return OM_OK;
   }
 
-  om_log_t *log = static_cast<om_log_t *>(msg->buff);
-
-  printf("%-.4f %s", bsp_time_get(), log->data);
+  printf("%s%s", time_print_buff, log->data);
 
   return OM_OK;
 }
@@ -67,6 +84,25 @@ Term::Term() {
 
   ms_file_init(&log_control, "log", log_ctrl_fn, NULL, NULL);
   ms_cmd_add(&log_control);
+
+  auto term_udp_thread_fn = [](void *arg) {
+    (void)arg;
+    bsp_udp_server_start(&term_udp_server);
+    while (true) {
+      System::Thread::Sleep(UINT32_MAX);
+    }
+  };
+
+#ifdef TERM_LOG_UDP_SERVER
+  bsp_udp_server_init(&term_udp_server, TERM_LOG_UDP_SERVER_PORT);
+
+  term_udp_thread.Create(term_udp_thread_fn, static_cast<void *>(0),
+                         "term_udp_thread", 512, System::Thread::HIGH);
+#else
+  (void)term_udp_server;
+  (void)term_udp_thread_fn;
+  (void)term_udp_thread;
+#endif
 
   om_config_topic(om_get_log_handle(), "d", print_log, NULL);
 
