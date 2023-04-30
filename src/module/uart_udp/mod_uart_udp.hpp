@@ -1,5 +1,8 @@
+#include <stdint.h>
+
 #include <array>
 #include <cstdint>
+#include <queue.hpp>
 #include <semaphore.hpp>
 #include <string>
 #include <thread.hpp>
@@ -9,6 +12,7 @@
 #include "bsp_udp_server.h"
 #include "module.hpp"
 #include "ms.h"
+#include "om_log.h"
 #include "wearlab.hpp"
 
 namespace Module {
@@ -16,11 +20,19 @@ class UartToUDP {
  public:
   typedef struct {
     int port;
+    bsp_uart_t start_uart;
+    bsp_uart_t end_uart;
   } Param;
 
-  UartToUDP(Param& param) {
-    for (int i = 0; i < BSP_UART_NUM; i++) {
+  UartToUDP(Param& param)
+      : param_(param),
+        udp_trans_buff(128),
+        num_lock_(true),
+        udp_tx_sem_(128, 0) {
+    for (int i = param.start_uart; i <= param_.end_uart; i++) {
       udp_rx_sem_[i] = new System::Semaphore(false);
+      count[i] = 0;
+      last_log_time[i] = 0;
     }
 
     bsp_udp_server_init(&udp_server_, param.port);
@@ -34,25 +46,23 @@ class UartToUDP {
         memcpy(&udp->udp_rx_[data->area_id], data,
                sizeof(Device::WearLab::UdpData));
         udp->udp_rx_sem_[data->area_id]->Give();
-#ifdef MCU_DEBUG_BUILD
-        printf("udp pack received.\r\n");
-#endif
+        OMLOG_PASS("udp pack received.");
         return;
       }
 
-#ifdef MCU_DEBUG_BUILD
-      printf("udp receive pack error. len:%d\n", size);
-#endif
+      OMLOG_ERROR("udp receive pack error. len:%d", size);
     };
 
     bsp_udp_register_callback(&udp_server_, BSP_UDP_RX_CPLT_CB, udp_rx_cb,
                               this);
 
     auto uart_rx_thread_fn = [](UartToUDP* uart_udp) {
-      bsp_uart_t uart = static_cast<bsp_uart_t>(uart_udp->num_++);
+      uart_udp->num_lock_.Take(UINT32_MAX);
+      bsp_uart_t uart = static_cast<bsp_uart_t>(uart_udp->num_);
+      uart_udp->num_++;
+      uart_udp->num_lock_.Give();
 
       uint8_t prefix = 0;
-      uint32_t count = 0;
 
       while (true) {
         do {
@@ -66,20 +76,12 @@ class UartToUDP {
                          sizeof(uart_udp->uart_rx_[uart]), true);
         if (uart_udp->uart_rx_[uart].end != 0xe3) {
           bsp_uart_abort_receive(uart);
-#ifdef MCU_DEBUG_BUILD
-          printf("uart :%d end data: %d\r\n", uart,
-                 uart_udp->uart_rx_[uart].end);
-          printf("Recv data error\n\r\n");
-#endif
+          OMLOG_ERROR("uart %d receive data error. end:%d", uart,
+                      uart_udp->uart_rx_[uart].end);
           continue;
         } else {
           uart_udp->header_[uart].raw = uart_udp->uart_rx_[uart].id;
-#ifdef MCU_DEBUG_BUILD
-          printf("received uart%d pack time:%d count:%d\r\n", uart,
-                 bsp_time_get_ms(), count++,
-                 uart_udp->header_[uart].data.device_id);
-#endif
-
+          uart_udp->udp_tx_[uart].time = bsp_time_get_ms();
           uart_udp->udp_tx_[uart].device_id =
               uart_udp->header_[uart].data.device_id;
           uart_udp->udp_tx_[uart].area_id = uart;
@@ -89,10 +91,22 @@ class UartToUDP {
               uart_udp->header_[uart].data.data_type;
           memcpy(uart_udp->udp_tx_[uart].data, uart_udp->uart_rx_[uart].data,
                  8);
-          bsp_udp_server_transmit(
-              &uart_udp->udp_server_,
-              reinterpret_cast<const uint8_t*>(&uart_udp->udp_tx_[uart]),
-              sizeof(uart_udp->udp_tx_[uart]));
+          uart_udp->count[uart]++;
+
+          if (uart_udp->udp_tx_[uart].time - uart_udp->last_log_time[uart] >
+              1000) {
+            while (uart_udp->udp_tx_[uart].time -
+                       uart_udp->last_log_time[uart] >
+                   1000) {
+              uart_udp->last_log_time[uart] += 1000;
+            }
+            OMLOG_NOTICE("uart %d get count %d at 1s", uart,
+                         uart_udp->count[uart]);
+            uart_udp->count[uart] = 0;
+          }
+
+          uart_udp->udp_trans_buff.Send(uart_udp->udp_tx_[uart], UINT32_MAX);
+          uart_udp->udp_tx_sem_.Give();
         }
       }
     };
@@ -110,7 +124,7 @@ class UartToUDP {
       }
     };
 
-    for (int i = 0; i < BSP_UART_NUM; i++) {
+    for (int i = param_.start_uart; i <= param_.end_uart; i++) {
       uart_tx_thread_[i].Create(
           uart_tx_thread_fn, this,
           (std::string("uart_to_udp_tx_") + std::to_string(i)).c_str(), 512,
@@ -122,16 +136,32 @@ class UartToUDP {
           System::Thread::HIGH);
     }
 
-    auto udp_thread_fn = [](UartToUDP* uart_udp) {
+    auto udp_rx_thread_fn = [](UartToUDP* uart_udp) {
       bsp_udp_server_start(&uart_udp->udp_server_);
       while (true) {
         System::Thread::Sleep(UINT32_MAX);
       }
     };
 
-    udp_rx_thread_.Create(udp_thread_fn, this, "udp_tx_thread", 512,
+    auto udp_tx_thread_fn = [](UartToUDP* uart_udp) {
+      Device::WearLab::UdpData trans_buff;
+      while (true) {
+        uart_udp->udp_tx_sem_.Take(UINT32_MAX);
+        uart_udp->udp_trans_buff.Receive(trans_buff, UINT32_MAX);
+        bsp_udp_server_transmit(&uart_udp->udp_server_,
+                                reinterpret_cast<const uint8_t*>(&trans_buff),
+                                sizeof(trans_buff));
+      }
+    };
+
+    udp_rx_thread_.Create(udp_rx_thread_fn, this, "udp_rx_thread", 512,
+                          System::Thread::HIGH);
+
+    udp_tx_thread_.Create(udp_tx_thread_fn, this, "udp_tx_thread", 512,
                           System::Thread::HIGH);
   }
+
+  Param param_;
 
   std::array<Device::WearLab::UartData, BSP_UART_NUM> uart_rx_;
   std::array<Device::WearLab::UartData, BSP_UART_NUM> uart_tx_;
@@ -142,9 +172,22 @@ class UartToUDP {
   std::array<System::Thread, BSP_UART_NUM> uart_tx_thread_;
 
   std::array<System::Semaphore*, BSP_UART_NUM> udp_rx_sem_;
+
+  System::Queue<Device::WearLab::UdpData> udp_trans_buff;
+
+  System::Semaphore num_lock_;
   int num_ = 0;
+
   System::Thread udp_rx_thread_;
 
+  System::Thread udp_tx_thread_;
+
+  System::Semaphore udp_tx_sem_;
+
   bsp_udp_server_t udp_server_;
+
+  std::array<uint32_t, BSP_UART_NUM> count;
+
+  std::array<uint32_t, BSP_UART_NUM> last_log_time;
 };
 }  // namespace Module
