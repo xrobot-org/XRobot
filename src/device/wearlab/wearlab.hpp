@@ -3,7 +3,7 @@
 namespace Device {
 class WearLab {
  public:
-  typedef struct {
+  typedef struct __attribute__((packed)) {
     uint32_t id;
     // NOLINTNEXTLINE(modernize-avoid-c-arrays)
     uint8_t data[8];
