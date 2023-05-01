@@ -57,7 +57,17 @@ class Queue {
       if (ans) {
         break;
       }
+      mutex_.Unlock();
       System::Thread::Sleep(1);
+      while (1) {
+        if (mutex_.Lock(1)) {
+          break;
+        } else {
+          if (bsp_time_get_ms() - start_time < timeout) {
+            return false;
+          }
+        }
+      }
     }
 
     mutex_.Unlock();

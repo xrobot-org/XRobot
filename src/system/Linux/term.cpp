@@ -1,3 +1,9 @@
+
+#include <fcntl.h>
+#include <stdio.h>
+#include <termios.h>
+#include <unistd.h>
+
 #include <term.hpp>
 #include <thread.hpp>
 
@@ -15,6 +21,26 @@ static bsp_udp_server_t term_udp_server;
 static ms_item_t log_control;
 
 static bool log_enable = false;
+
+static int kbhit(void) {
+  struct termios oldt, newt;
+  int ch;
+  int oldf;
+  tcgetattr(STDIN_FILENO, &oldt);
+  newt = oldt;
+  newt.c_lflag &= ~(ICANON | ECHO);
+  tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+  oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+  fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+  ch = getchar();
+  tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+  fcntl(STDIN_FILENO, F_SETFL, oldf);
+  if (ch != EOF) {
+    ungetc(ch, stdin);
+    return 1;
+  }
+  return 0;
+}
 
 static int log_ctrl_fn(ms_item_t *item, int argc, char **argv) {
   MS_UNUSED(item);
@@ -112,7 +138,11 @@ Term::Term() {
     ms_start();
 
     while (1) {
-      ms_input(static_cast<char>(getchar()));
+      if (kbhit()) {
+        ms_input(static_cast<char>(getchar()));
+      } else {
+        System::Thread::Sleep(10);
+      }
     }
   };
 

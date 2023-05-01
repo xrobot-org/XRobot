@@ -35,3 +35,5 @@ bool Semaphore::TakeFromISR() {
   }
   return ans;
 }
+
+uint32_t Semaphore::GetCount() { return uxSemaphoreGetCount(&handle_); }

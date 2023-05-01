@@ -43,6 +43,12 @@ class Semaphore {
     return sem_timedwait(&handle_, &ts) == 0;
   }
 
+  uint32_t GetCount() {
+    int value = 0;
+    sem_getvalue(&handle_, &value);
+    return value;
+  }
+
   void GiveFromISR() { Give(); }
   bool TakeFromISR() { return Take(0); }
 
