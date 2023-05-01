@@ -124,18 +124,6 @@ class UartToUDP {
       }
     };
 
-    for (int i = param_.start_uart; i <= param_.end_uart; i++) {
-      uart_tx_thread_[i].Create(
-          uart_tx_thread_fn, this,
-          (std::string("uart_to_udp_tx_") + std::to_string(i)).c_str(), 512,
-          System::Thread::HIGH);
-
-      uart_rx_thread_[i].Create(
-          uart_rx_thread_fn, this,
-          (std::string("uart_to_udp_rx_") + std::to_string(i)).c_str(), 512,
-          System::Thread::HIGH);
-    }
-
     auto udp_rx_thread_fn = [](UartToUDP* uart_udp) {
       bsp_udp_server_start(&uart_udp->udp_server_);
       while (true) {
@@ -144,21 +132,47 @@ class UartToUDP {
     };
 
     auto udp_tx_thread_fn = [](UartToUDP* uart_udp) {
-      Device::WearLab::UdpData trans_buff;
+      std::array<Device::WearLab::UdpData, 128> trans_buff;
+      uint32_t buff_num = 0;
+
       while (true) {
         uart_udp->udp_tx_sem_.Take(UINT32_MAX);
-        uart_udp->udp_trans_buff.Receive(trans_buff, UINT32_MAX);
+        buff_num = uart_udp->udp_tx_sem_.GetCount() + 1;
+
+        uart_udp->udp_trans_buff.Receive(trans_buff[0], UINT32_MAX);
+
+        for (uint32_t i = 1; i < buff_num; i++) {
+          uart_udp->udp_tx_sem_.Take(UINT32_MAX);
+          uart_udp->udp_trans_buff.Receive(trans_buff[i], UINT32_MAX);
+        }
+
         bsp_udp_server_transmit(&uart_udp->udp_server_,
                                 reinterpret_cast<const uint8_t*>(&trans_buff),
-                                sizeof(trans_buff));
+                                sizeof(trans_buff[0]) * buff_num);
       }
     };
+
+    for (int i = param_.start_uart; i <= param_.end_uart; i++) {
+      uart_tx_thread_[i].Create(
+          uart_tx_thread_fn, this,
+          (std::string("uart_to_udp_tx_") + std::to_string(i)).c_str(), 512,
+          System::Thread::HIGH);
+    }
 
     udp_rx_thread_.Create(udp_rx_thread_fn, this, "udp_rx_thread", 512,
                           System::Thread::HIGH);
 
     udp_tx_thread_.Create(udp_tx_thread_fn, this, "udp_tx_thread", 512,
                           System::Thread::HIGH);
+
+    System::Thread::Sleep(100);
+
+    for (int i = param_.start_uart; i <= param_.end_uart; i++) {
+      uart_rx_thread_[i].Create(
+          uart_rx_thread_fn, this,
+          (std::string("uart_to_udp_rx_") + std::to_string(i)).c_str(), 512,
+          System::Thread::HIGH);
+    }
   }
 
   Param param_;
