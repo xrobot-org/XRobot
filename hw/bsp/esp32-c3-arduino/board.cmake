@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.16)
 # Include for ESP-IDF build system functions
 include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
 
-add_compile_options(-Wno-missing-field-initializers)
+add_compile_options(-Wno-missing-field-initializers -Wno-write-strings)
 add_compile_definitions(ARDUINO_USB_CDC_ON_BOOT=1 ARDUINO_USB_MODE=1)
 
 # Create idf::{target} and idf::freertos static libraries

@@ -1,8 +1,5 @@
 #include "Arduino.h"
 
-void setup() { Serial.begin(115200); }
+void setup() {}
 
-void loop() {
-  Serial.println("loop");
-  sleep(1000);
-}
+void loop() { sleep(1000); }

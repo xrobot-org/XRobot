@@ -2,11 +2,22 @@ project(bsp)
 
 file(GLOB ${PROJECT_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.c")
 
+file(GLOB ${PROJECT_NAME}_SOURCES_CPP "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+
 add_library(${PROJECT_NAME} STATIC)
 
-target_sources(${PROJECT_NAME} PRIVATE ${${PROJECT_NAME}_SOURCES})
+target_sources(${PROJECT_NAME}
+  PRIVATE ${${PROJECT_NAME}_SOURCES}
+  PRIVATE ${${PROJECT_NAME}_SOURCES_CPP}
+  PRIVATE ${MCU_DIR}/esp/ESP32_BleSerial/src/BleSerial.cpp
+  PRIVATE ${MCU_DIR}/esp/ESP32_BleSerial/src/BleSerial.h
+  PRIVATE ${MCU_DIR}/esp/ESP32_BleSerial/src/ByteRingBuffer.h
+)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC idf::bt)
+target_link_libraries(${PROJECT_NAME}
+  PUBLIC idf::arduino-esp32
+  PUBLIC idf::bt
+)
 
 target_include_directories(
   ${PROJECT_NAME}
@@ -16,8 +27,10 @@ target_include_directories(
   PUBLIC $<TARGET_PROPERTY:idf::nvs_flash,INTERFACE_INCLUDE_DIRECTORIES>
   PUBLIC $<TARGET_PROPERTY:idf::esp_timer,INTERFACE_INCLUDE_DIRECTORIES>
   PUBLIC $<TARGET_PROPERTY:idf::bt,INTERFACE_INCLUDE_DIRECTORIES>
+  PUBLIC $<TARGET_PROPERTY:idf::arduino-esp32,INTERFACE_INCLUDE_DIRECTORIES>
   PUBLIC $ENV{IDF_PATH}/components/freertos/include/freertos
   PUBLIC $ENV{IDF_PATH}/components/freertos/FreeRTOS-Kernel/include/freertos
+  PUBLIC ${MCU_DIR}/esp/ESP32_BleSerial/src
 )
 
 # add_dependencies(${PROJECT_NAME})
