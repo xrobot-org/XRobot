@@ -51,7 +51,7 @@
 /* 按照日志等级以不同颜色输出 */
 #define OM_LOG_COLORFUL (1)
 /* 日志最大长度 */
-#define OM_LOG_MAX_LEN (60)
+#define OM_LOG_MAX_LEN (120)
 /* 日志等级 1:default 2:notice 3:pass 4:warning 5:error  */
 #define OM_LOG_LEVEL (1)
 #endif
