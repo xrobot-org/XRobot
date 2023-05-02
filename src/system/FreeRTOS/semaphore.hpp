@@ -14,6 +14,7 @@ class Semaphore {
   bool Take(uint32_t timeout);
   void GiveFromISR();
   bool TakeFromISR();
+  uint32_t GetCount();
 
  private:
   SemaphoreHandle_t handle_;
