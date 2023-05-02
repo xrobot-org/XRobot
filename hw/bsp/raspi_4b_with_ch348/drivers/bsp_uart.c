@@ -17,11 +17,11 @@ static bool uart_block[BSP_UART_NUM];
 
 static const char *uart_dev_path[] = {
     "/dev/ttyCH9344USB0", "/dev/ttyCH9344USB1", "/dev/ttyCH9344USB2",
-    "/dev/ttyCH9344USB3", "/dev/ttyCH9344USB4", "/dev/ttyCH9344USB5",
-    "/dev/ttyCH9344USB6", "/dev/ttyCH9344USB7"};
+    "/dev/ttyCH9344USB7", "/dev/ttyCH9344USB4", "/dev/ttyCH9344USB5",
+    "/dev/ttyCH9344USB6", "/dev/ttyCH9344USB3"};
 
 static const uint32_t UART_SPEED[] = {B2000000, B2000000, B2000000, B2000000,
-                                      B2000000, B2000000, B2000000, B2000000};
+                                      B2000000, B2000000, B2000000, B115200};
 
 void bsp_uart_init() {
   for (int i = 0; i < BSP_UART_NUM; i++) {
