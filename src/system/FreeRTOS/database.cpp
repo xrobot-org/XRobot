@@ -60,6 +60,7 @@ Database::Database() {
     return 0;
   };
 
-  ms_file_init(&sn_tools, "sn_tools", sn_cmd_fn, NULL, NULL);
+  ms_file_init(&sn_tools, "sn_tools", sn_cmd_fn, sn_buff, sizeof(sn_buff),
+               false);
   ms_cmd_add(&sn_tools);
 }
