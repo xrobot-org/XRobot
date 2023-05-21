@@ -65,6 +65,8 @@ Database::Database() {
 
   sn =
       new Database::Key<uint8_t[32]>("SN");  // NOLINT(modernize-avoid-c-arrays)
-  ms_file_init(&sn_tools, "sn_tools", sn_cmd_fn, NULL, NULL);
+
+  ms_file_init(&sn_tools, "sn_tools", sn_cmd_fn, sn->data_, sizeof(sn->data_),
+               false);
   ms_cmd_add(&sn_tools);
 }

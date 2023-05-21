@@ -4,6 +4,7 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include <cstddef>
 #include <term.hpp>
 #include <thread.hpp>
 
@@ -17,10 +18,6 @@ using namespace System;
 static System::Thread term_thread, term_udp_thread;
 
 static bsp_udp_server_t term_udp_server;
-
-static ms_item_t log_control;
-
-static bool log_enable = false;
 
 static int kbhit(void) {
   struct termios oldt, newt;
@@ -42,31 +39,7 @@ static int kbhit(void) {
   return 0;
 }
 
-static int log_ctrl_fn(ms_item_t *item, int argc, char **argv) {
-  MS_UNUSED(item);
-  if (argc == 1) {
-    printf("on开启/off关闭\r\n");
-  } else if (argc == 2) {
-    if (strcmp(argv[1], "on") == 0) {
-      ms_clear();
-      log_enable = true;
-    } else if (strcmp(argv[1], "off") == 0) {
-      log_enable = false;
-    } else {
-      printf("命令错误。\r\n");
-    }
-  } else {
-    printf("命令错误。\r\n");
-  }
-
-  return 0;
-}
-
-int show_fun(const char *data, uint32_t len) {
-  if (log_enable) {
-    return OM_OK;
-  }
-
+int show_fun(const char *data, size_t len) {
   while (len--) {
     putchar(*data++);
   }
@@ -93,11 +66,7 @@ static om_status_t print_log(om_msg_t *msg, void *arg) {
                           strlen(log->data));
 #endif
 
-  if (!log_enable) {
-    return OM_OK;
-  }
-
-  printf("%s%s", time_print_buff, log->data);
+  ms_printf_insert("%s%s", time_print_buff, log->data);
 
   return OM_OK;
 }
@@ -107,9 +76,6 @@ Term::Term() {
   system("stty -echo");
 
   ms_init(show_fun);
-
-  ms_file_init(&log_control, "log", log_ctrl_fn, NULL, NULL);
-  ms_cmd_add(&log_control);
 
   auto term_udp_thread_fn = [](void *arg) {
     (void)arg;

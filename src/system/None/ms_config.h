@@ -10,6 +10,9 @@
 /* 命令行打印缓冲区长度 */
 #define MS_WIRITE_BUFF_SIZE (128)
 
+/* cat命令缓冲区 */
+#define MS_CAT_BUFF_SIZE (128)
+
 /* 自定义颜色 */
 #define MS_HEAD_COLOR MS_COLOR_GREEN
 
