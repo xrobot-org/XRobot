@@ -4,16 +4,17 @@ name: build_firmware
 on:
   push:
     branches: [ "master" ]
-      paths:
-        - '**.c'
-        - '**.h'
-        - '**.cpp'
-        - '**.hpp'
-        - '**.cmake'
-        - '**.CMakeLists.txt'
-        - 'Kconfig'
-        - '**.ld'
-        - '**.s'
+
+    paths:
+      - '**.c'
+      - '**.h'
+      - '**.cpp'
+      - '**.hpp'
+      - '**.cmake'
+      - '**.CMakeLists.txt'
+      - 'Kconfig'
+      - '**.ld'
+      - '**.s'
 
 
 env:
