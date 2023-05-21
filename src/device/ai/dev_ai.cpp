@@ -139,6 +139,10 @@ bool AI::PackCMD() {
   memcpy(&(this->cmd_.gimbal.eulr), &(this->form_host_.data.gimbal),
          sizeof(this->cmd_.gimbal.eulr));
 
+  memcpy(&(this->cmd_.ext.exchange_station_postion),
+         &(this->form_host_.data.exchange_station_aim_point),
+         sizeof(this->cmd_.ext.exchange_station_postion));
+
   memcpy(&(this->cmd_.chassis), &(this->form_host_.data.chassis_move_vec),
          sizeof(this->form_host_.data.chassis_move_vec));
 

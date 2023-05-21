@@ -13,6 +13,7 @@ class CMD {
     CTRL_SOURCE_RC,
     CTRL_SOURCE_AI,
     CTRL_SOURCE_TERM,
+    CTRL_SOURCE_EXT,
     CTRL_SOURCE_NUM
   } ControlSource;
 
@@ -34,8 +35,21 @@ class CMD {
   } GimbalCMD;
 
   typedef struct {
+    struct {
+      float yaw; /* 偏航角（Yaw angle） */
+      float pit; /* 俯仰角（Pitch angle） */
+      float rol; /* 翻滚角（Roll angle） */
+      float x;
+      float y;
+      float z;
+    } extern_channel;
+
+  } ExtCMD;
+
+  typedef struct {
     GimbalCMD gimbal;
     ChassisCMD chassis;
+    ExtCMD ext;
     bool online;
     ControlSource ctrl_source;
   } Data;
@@ -101,7 +115,7 @@ class CMD {
   Message::Topic<Data> data_in_tp_;
   Message::Topic<ChassisCMD> chassis_data_tp_;
   Message::Topic<GimbalCMD> gimbal_data_tp_;
-
+  Message::Topic<ExtCMD> ext_data_tp_;
   static CMD* self_;
 };
 
