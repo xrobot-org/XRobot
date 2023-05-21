@@ -9,7 +9,8 @@ CMD::CMD(Mode mode)
       event_("cmd_event"),
       data_in_tp_("cmd_data_in"),
       chassis_data_tp_("cmd_chassis"),
-      gimbal_data_tp_("cmd_gimbal") {
+      gimbal_data_tp_("cmd_gimbal"),
+      ext_data_tp_("cmd_ext") {
   CMD::self_ = this;
 
   auto op_ctrl_callback = [](Data& data, CMD* cmd) {
@@ -27,10 +28,12 @@ CMD::CMD(Mode mode)
         (!cmd->data_[cmd->ctrl_source_].online)) {
       cmd->gimbal_data_tp_.Publish(cmd->data_[CTRL_SOURCE_RC].gimbal);
       cmd->chassis_data_tp_.Publish(cmd->data_[CTRL_SOURCE_RC].chassis);
+      cmd->ext_data_tp_.Publish(cmd->data_[CTRL_SOURCE_EXT].ext);
     } else if (cmd->ctrl_source_ == CTRL_SOURCE_AI &&
                cmd->data_[CTRL_SOURCE_AI].online) {
       cmd->gimbal_data_tp_.Publish(cmd->data_[CTRL_SOURCE_AI].gimbal);
       cmd->chassis_data_tp_.Publish(cmd->data_[CTRL_SOURCE_RC].chassis);
+      cmd->ext_data_tp_.Publish(cmd->data_[CTRL_SOURCE_AI].ext);
     }
 
     return true;

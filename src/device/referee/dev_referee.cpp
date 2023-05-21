@@ -41,7 +41,7 @@ static uint8_t rxbuf[REF_LEN_RX_BUFF];
 Referee::UIPack Referee::ui_pack_;
 Referee *Referee::self_;
 
-Referee::Referee() {
+Referee::Referee() : event_(Message::Event::FindEvent("cmd_event")) {
   self_ = this;
 
   auto rx_cplt_callback = [](void *arg) {
@@ -211,8 +211,8 @@ void Referee::Prase() {
         size = sizeof(this->ref_data_.drone_energy);
         break;
       case REF_CMD_ID_ROBOT_DMG:
-        destination = &(this->ref_data_.robot_danage);
-        size = sizeof(this->ref_data_.robot_danage);
+        destination = &(this->ref_data_.robot_damage);
+        size = sizeof(this->ref_data_.robot_damage);
         break;
       case REF_CMD_ID_LAUNCHER_DATA:
         destination = &(this->ref_data_.launcher_data);
@@ -230,6 +230,18 @@ void Referee::Prase() {
         destination = &(this->ref_data_.dart_client);
         size = sizeof(this->ref_data_.dart_client);
         break;
+      case REF_CMD_ID_ROBOT_POS_TO_SENTRY:
+        destination = &(this->ref_data_.robot_pos_for_snetry);
+        size = sizeof(this->ref_data_.robot_pos_for_snetry);
+        break;
+      case REF_CMD_ID_RADAR_MARK:
+        destination = &(this->ref_data_.radar_mark_progress);
+        size = sizeof(this->ref_data_.radar_mark_progress);
+        break;
+      case REF_CMD_ID_INTER_STUDENT_CUSTOM:
+        destination = &(this->ref_data_.custom_controller);
+        size = sizeof(this->ref_data_.custom_controller);
+        break;
       case REF_CMD_ID_CLIENT_MAP:
         destination = &(this->ref_data_.client_map);
         size = sizeof(this->ref_data_.client_map);
@@ -238,6 +250,15 @@ void Referee::Prase() {
         destination = &(this->ref_data_.keyboard_mouse);
         size = sizeof(this->ref_data_.keyboard_mouse);
         break;
+      case REF_CMD_ID_CUSTOM_KEYBOARD_MOUSE:
+        destination = &(this->ref_data_.custom_key_mouse_data);
+        size = sizeof(this->ref_data_.custom_key_mouse_data);
+        break;
+      case REF_CMD_ID_SENTRY_POS_DATA:
+        destination = &(this->ref_data_.sentry_postion);
+        size = sizeof(this->ref_data_.sentry_postion);
+        break;
+
       default:
         return;
     }
@@ -253,6 +274,15 @@ void Referee::Prase() {
                 index - reinterpret_cast<const uint8_t *>((header))))) {
       memcpy(destination, source, size);
     }
+    if (ref_data_.robot_damage.damage_type == 0x0 &&
+        !last_data_.robot_damage.damage_type) {
+      this->event_.Active(REF_ATTACKED);
+    }
+    if (ref_data_.game_status.game_progress == 4 &&
+        !last_data_.game_status.game_progress) {
+      this->event_.Active(REF_GAME_START);
+    }
+    memcpy(&(this->last_data_), &(destination), sizeof(Data));
   }
 #if REF_VIRTUAL
 #if REF_FORCE_ONLINE

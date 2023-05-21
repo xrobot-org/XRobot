@@ -17,7 +17,8 @@ Device::PosStream ps = {
 };
 
 OreCollect::OreCollect(Param& param, float control_freq)
-    : param_(param),
+    : ctrl_lock_(true),
+      param_(param),
       x_actr_(param_.x_actr, control_freq),
       pitch_actr_(param.pitch_actr, control_freq),
       pitch_1_actr_(param.pitch_1_actr, control_freq),
@@ -26,7 +27,7 @@ OreCollect::OreCollect(Param& param, float control_freq)
       y_actr_(param.y_actr, control_freq),
       z_actr_(param.z_actr, control_freq),
       z_1_actr_(param.z_1_actr, control_freq) {
-  auto event_callback = [](Event event, OreCollect* ore) {
+  auto event_callback = [](Collect_Event event, OreCollect* ore) {
     switch (event) {
       case START_VACUUM:
         bsp_gpio_write_pin(BSP_GPIO_SWITCH, true);
@@ -50,12 +51,16 @@ OreCollect::OreCollect(Param& param, float control_freq)
         break;
       case WORK:
         ore->mode_ = MOVE;
+      case START_AUTO_COLLECT:
+        Component::CMD::SetCtrlSource(Component::CMD::CTRL_SOURCE_AI);
+      case STOP_AUTO_COLLECT:
+        Component::CMD::SetCtrlSource(Component::CMD::CTRL_SOURCE_EXT);
         break;
     }
   };
 
-  Component::CMD::RegisterEvent<OreCollect*, Event>(event_callback, this,
-                                                    this->param_.EVENT_MAP);
+  Component::CMD::RegisterEvent<OreCollect*, Collect_Event>(
+      event_callback, this, this->param_.EVENT_MAP);
 
   auto ore_thread = [](OreCollect* ore) {
     auto eulr_sub = Message::Subscriber<Component::Type::Eulr>(

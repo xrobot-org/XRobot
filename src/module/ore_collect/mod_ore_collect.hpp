@@ -49,7 +49,9 @@ class OreCollect {
     WORK,
     START_VACUUM,
     STOP_VACUUM,
-  } Event;
+    START_AUTO_COLLECT,
+    STOP_AUTO_COLLECT,
+  } Collect_Event;
 
   typedef enum { RELAX, CALI, MOVE } Mode;
 
@@ -60,6 +62,8 @@ class OreCollect {
   void UpdateFeedback();
 
  private:
+  System::Semaphore ctrl_lock_;
+
   Param& param_;
 
   float dt_;
