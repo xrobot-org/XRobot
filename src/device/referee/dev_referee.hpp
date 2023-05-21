@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include <sys/_stdint.h>
+
+#include <array>
 #include <device.hpp>
 
 #include "comp_ui.hpp"
@@ -70,10 +73,14 @@ class Referee {
     REF_CMD_ID_BULLET_REMAINING = 0x0208,
     REF_CMD_ID_RFID = 0x0209,
     REF_CMD_ID_DART_CLIENT = 0x020A,
+    REF_CMD_ID_ROBOT_POS_TO_SENTRY = 0X020B,
+    REF_CMD_ID_RADAR_MARK = 0X020C,
     REF_CMD_ID_INTER_STUDENT = 0x0301,
     REF_CMD_ID_INTER_STUDENT_CUSTOM = 0x0302,
     REF_CMD_ID_CLIENT_MAP = 0x0303,
     REF_CMD_ID_KEYBOARD_MOUSE = 0x0304,
+    REF_CMD_ID_CUSTOM_KEYBOARD_MOUSE = 0X0306,
+    REF_CMD_ID_SENTRY_POS_DATA = 0x0307,
   } CommandID;
 
   typedef enum {
@@ -83,6 +90,12 @@ class Referee {
     REF_GAME_TYPE_RMUL_3V3,
     REF_GAME_TYPE_RMUL_1V1,
   } GameType;
+
+  typedef enum {
+    REF_GAME_START = 28,
+    REF_ATTACKED,
+    GIMBALCONTROLLER_CONTROL,
+  } SentryControl;
 
   typedef struct __attribute__((packed)) {
     uint8_t game_type : 4;
@@ -270,6 +283,45 @@ class Referee {
     uint16_t keyboard_value;
     uint16_t res;
   } KeyboardMouse;
+  typedef struct __attribute__((packed)) {
+    uint8_t intention;
+    uint16_t start_position_x;
+    uint16_t start_position_y;
+    std::array<int8_t, 49> delta_x;
+    std::array<int8_t, 49> delta_y;
+  } SentryPosition;
+
+  typedef struct __attribute__((packed)) {
+    std::array<uint8_t, 30> data;
+  } CustomController;
+  typedef struct __attribute__((packed)) {
+    float hero_x;
+    float hero_y;
+    float engineer_x;
+    float engineer_y;
+    float standard_3_x;
+    float standard_3_y;
+    float standard_4_x;
+    float standard_4_y;
+    float standard_5_x;
+    float standard_5_y;
+  } RobotPosForSentry;
+  typedef struct __attribute__((packed)) {
+    uint8_t mark_hero_progress;
+    uint8_t mark_engineer_progress;
+    uint8_t mark_standard_3_progress;
+    uint8_t mark_standard_4_progress;
+    uint8_t mark_standard_5_progress;
+    uint8_t mark_sentry_progress;
+  } RadarMarkProgress;
+  typedef struct __attribute__((packed)) {
+    uint16_t key_value;
+    uint16_t x_position : 12;
+    uint16_t mouse_left : 4;
+    uint16_t y_position : 12;
+    uint16_t mouse_right : 4;
+    uint16_t reserved;
+  } CustomKeyMouseData;
 
   typedef uint16_t Tail;
 
@@ -339,13 +391,18 @@ class Referee {
     RobotPOS robot_pos;
     RobotBuff robot_buff;
     DroneEnergy drone_energy;
-    RobotDamage robot_danage;
+    RobotDamage robot_damage;
     LauncherData launcher_data;
     BulletRemain bullet_remain;
     RFID rfid;
     DartClient dart_client;
     ClientMap client_map;
     KeyboardMouse keyboard_mouse;
+    SentryPosition sentry_postion;
+    CustomController custom_controller;
+    RobotPosForSentry robot_pos_for_snetry;
+    RadarMarkProgress radar_mark_progress;
+    CustomKeyMouseData custom_key_mouse_data;
   } Data;
 
   typedef struct __attribute__((packed)) {
@@ -465,6 +522,10 @@ class Referee {
   System::Semaphore ui_lock_ = System::Semaphore(true);
 
   Data ref_data_;
+
+  Data last_data_;
+
+  Message::Event event_;
 
   static UIPack ui_pack_;
 
