@@ -4,16 +4,17 @@ name: build_firmware
 on:
   push:
     branches: [ "dev" ]
-      paths:
-        - '**.c'
-        - '**.h'
-        - '**.cpp'
-        - '**.hpp'
-        - '**.cmake'
-        - '**.CMakeLists.txt'
-        - 'Kconfig'
-        - '**.ld'
-        - '**.s'
+
+    paths:
+      - '**.c'
+      - '**.h'
+      - '**.cpp'
+      - '**.hpp'
+      - '**.cmake'
+      - '**.CMakeLists.txt'
+      - 'Kconfig'
+      - '**.ld'
+      - '**.s'
   pull_request:
     branches: [ "master" ]
     types: [opened, reopened]
