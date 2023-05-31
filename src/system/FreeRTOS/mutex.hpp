@@ -16,9 +16,9 @@ class Mutex {
 
   bool Lock(uint32_t timeout) { return sem_.Take(timeout); }
 
-  void UnlockFromISR() { sem_.Give(); }
+  void UnlockFromISR() { sem_.GiveFromISR(); }
 
-  bool LockFromISR() { return sem_.Take(UINT32_MAX); }
+  bool LockFromISR() { return sem_.TakeFromISR(); }
 
  private:
   System::Semaphore sem_;
