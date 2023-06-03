@@ -1,18 +1,13 @@
-#include <stdint.h>
-
-#include <array>
-#include <cstdint>
-#include <queue.hpp>
-#include <semaphore.hpp>
-#include <string>
+#include <comp_utils.hpp>
+#include <module.hpp>
 #include <thread.hpp>
 
+#include "bsp_dns_client.h"
 #include "bsp_time.h"
 #include "bsp_uart.h"
-#include "bsp_udp_server.h"
-#include "module.hpp"
-#include "ms.h"
+#include "bsp_udp_client.h"
 #include "om_log.h"
+#include "udp_param.h"
 #include "wearlab.hpp"
 
 namespace Module {
@@ -35,7 +30,22 @@ class UartToUDP {
       last_log_time[i] = 0;
     }
 
-    bsp_udp_server_init(&udp_server_, param.port);
+    bsp_dns_addr_t addrs;
+    while (true) {
+      auto ans = bsp_dns_prase_domain(UDP_DOMAIN, &addrs);
+      if (ans != BSP_OK) {
+        OMLOG_ERROR("Prase domain failed:%s", UDP_DOMAIN);
+        OMLOG_WARNING("Sleep 5s to wait network ready");
+        System::Thread::Sleep(5000);
+      } else {
+        OMLOG_PASS("Prase domain done:%s", UDP_DOMAIN);
+        OMLOG_NOTICE("Server ip:%s", &addrs);
+        break;
+      }
+    }
+
+    bsp_udp_client_init(&udp_client_, UDP_PORT,
+                        reinterpret_cast<char*>(&addrs));
 
     auto udp_rx_cb = [](void* arg, void* buff, uint32_t size) {
       UartToUDP* udp = static_cast<UartToUDP*>(arg);
@@ -53,7 +63,7 @@ class UartToUDP {
       OMLOG_ERROR("udp receive pack error. len:%d", size);
     };
 
-    bsp_udp_server_register_callback(&udp_server_, BSP_UDP_RX_CPLT_CB,
+    bsp_udp_client_register_callback(&udp_client_, BSP_UDP_RX_CPLT_CB,
                                      udp_rx_cb, this);
 
     auto uart_rx_thread_fn = [](UartToUDP* uart_udp) {
@@ -125,7 +135,7 @@ class UartToUDP {
     };
 
     auto udp_rx_thread_fn = [](UartToUDP* uart_udp) {
-      bsp_udp_server_start(&uart_udp->udp_server_);
+      bsp_udp_client_start(&uart_udp->udp_client_);
       while (true) {
         System::Thread::Sleep(UINT32_MAX);
       }
@@ -146,7 +156,7 @@ class UartToUDP {
           uart_udp->udp_trans_buff.Receive(trans_buff[i], UINT32_MAX);
         }
 
-        bsp_udp_server_transmit(&uart_udp->udp_server_,
+        bsp_udp_client_transmit(&uart_udp->udp_client_,
                                 reinterpret_cast<const uint8_t*>(&trans_buff),
                                 sizeof(trans_buff[0]) * buff_num);
       }
@@ -198,7 +208,7 @@ class UartToUDP {
 
   System::Semaphore udp_tx_sem_;
 
-  bsp_udp_server_t udp_server_;
+  bsp_udp_client_t udp_client_;
 
   std::array<uint32_t, BSP_UART_NUM> count;
 

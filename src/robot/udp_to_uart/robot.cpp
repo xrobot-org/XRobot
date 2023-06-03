@@ -13,13 +13,13 @@ Robot::UdpToUart::Param param = {
   .uart_udp = {
     .port = 4321,
     .start_uart = BSP_UART_1,
-    .end_uart = BSP_UART_7
+    .end_uart = BSP_UART_8
   },
 
   .topic_share = {
     .topic_name = {"net_info"},
     .block = true,
-    .uart = BSP_UART_8,
+    .uart = BSP_UART_ESP,
     .cycle = 10,
   }
 };

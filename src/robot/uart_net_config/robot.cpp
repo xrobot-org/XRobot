@@ -12,7 +12,7 @@ Robot::NetConfig::Param param = {
   .topic_share = {
     .topic_name = {"net_info"},
     .block = true,
-    .uart = BSP_UART_1,
+    .uart = BSP_UART_ESP,
     .cycle = 10,
   }
 };
