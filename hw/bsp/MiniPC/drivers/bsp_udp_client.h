@@ -1,66 +1,41 @@
-#include "bsp_udp_client.h"
+#pragma once
 
-#include <assert.h>
-#include <hv/hloop.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-int8_t bsp_udp_client_start(bsp_udp_client_t *udp) {
-  hio_read(udp->io);
-  hloop_run(udp->loop);
-  hloop_free(&udp->loop);
+#include "bsp.h"
+#include "hv/hloop.h"
+#include "hv/hsocket.h"
 
-  return BSP_OK;
-}
+typedef struct {
+  void (*fn)(void* arg, void* data, uint32_t size);
+  void* arg;
+} udp_callback_t;
 
-int8_t bsp_udp_client_init(bsp_udp_client_t *udp, int port, const char *addr) {
-  udp->loop = hloop_new(0);
-  udp->io = hloop_create_udp_client(udp->loop, addr, port);
+typedef enum {
+  BSP_UDP_TX_CPLT_CB,
+  BSP_UDP_RX_CPLT_CB,
+  BSP_UDP_CLIENT_CB_NUM
+} bsp_udp_client_callback_t;
 
-  assert(udp->io != NULL);
+typedef struct {
+  hloop_t* loop;
+  hio_t* io;
+  udp_callback_t cb[BSP_UDP_CLIENT_CB_NUM];
+} bsp_udp_client_t;
 
-  memset(udp->cb, 0, sizeof(udp->cb));
+int8_t bsp_udp_client_init(bsp_udp_client_t* udp, int port, const char* addr);
 
-  hevent_set_userdata(udp->io, udp);
-
-  return BSP_OK;
-}
-
-static void bsp_udp_rx_cb(hio_t *io, void *buf, int readbytes) {
-  bsp_udp_client_t *udp = hevent_userdata(io);
-
-  if (udp->cb[BSP_UDP_RX_CPLT_CB].fn != NULL) {
-    udp->cb[BSP_UDP_RX_CPLT_CB].fn(udp->cb[BSP_UDP_RX_CPLT_CB].arg, buf,
-                                   readbytes);
-  }
-}
-
-static void bsp_udp_tx_cb(hio_t *io, const void *buf, int readbytes) {
-  (void)buf;
-  bsp_udp_client_t *udp = hevent_userdata(io);
-  if (udp->cb[BSP_UDP_TX_CPLT_CB].fn != NULL) {
-    udp->cb[BSP_UDP_TX_CPLT_CB].fn(udp->cb[BSP_UDP_TX_CPLT_CB].arg, NULL,
-                                   readbytes);
-  }
-}
+int8_t bsp_udp_client_start(bsp_udp_client_t* udp);
 
 int8_t bsp_udp_client_register_callback(
-    bsp_udp_client_t *udp, bsp_udp_client_callback_t type,
-    void (*callback)(void *, void *, uint32_t), void *callback_arg) {
-  udp->cb[type].fn = callback;
-  udp->cb[type].arg = callback_arg;
+    bsp_udp_client_t* udp, bsp_udp_client_callback_t type,
+    void (*callback)(void*, void*, uint32_t), void* callback_arg);
 
-  if (type == BSP_UDP_RX_CPLT_CB) {
-    hio_setcb_read(udp->io, bsp_udp_rx_cb);
-  } else if (type == BSP_UDP_TX_CPLT_CB) {
-    hio_setcb_write(udp->io, bsp_udp_tx_cb);
-  } else {
-    assert(false);
-  }
+int8_t bsp_udp_client_transmit(bsp_udp_client_t* udp, const uint8_t* data,
+                               uint32_t size);
 
-  return BSP_OK;
+#ifdef __cplusplus
 }
-
-int8_t bsp_udp_client_transmit(bsp_udp_client_t *udp, const uint8_t *data,
-                               uint32_t size) {
-  hio_write(udp->io, data, size);
-  return BSP_OK;
-}
+#endif
