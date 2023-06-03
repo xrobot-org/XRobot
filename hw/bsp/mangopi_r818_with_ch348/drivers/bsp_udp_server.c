@@ -42,10 +42,9 @@ static void bsp_udp_tx_cb(hio_t *io, const void *buf, int readbytes) {
   }
 }
 
-int8_t bsp_udp_register_callback(bsp_udp_server_t *udp,
-                                 bsp_udp_server_callback_t type,
-                                 void (*callback)(void *, void *, uint32_t),
-                                 void *callback_arg) {
+int8_t bsp_udp_server_register_callback(
+    bsp_udp_server_t *udp, bsp_udp_server_callback_t type,
+    void (*callback)(void *, void *, uint32_t), void *callback_arg) {
   udp->cb[type].fn = callback;
   udp->cb[type].arg = callback_arg;
 

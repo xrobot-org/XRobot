@@ -18,10 +18,11 @@ static bool uart_block[BSP_UART_NUM];
 static const char *uart_dev_path[] = {
     "/dev/ttyCH9344USB0", "/dev/ttyCH9344USB1", "/dev/ttyCH9344USB2",
     "/dev/ttyCH9344USB7", "/dev/ttyCH9344USB4", "/dev/ttyCH9344USB5",
-    "/dev/ttyCH9344USB6", "/dev/ttyCH9344USB3"};
+    "/dev/ttyCH9344USB6", "/dev/ttyCH9344USB3", "/dev/ttyS4"};
 
-static const uint32_t UART_SPEED[] = {B2000000, B2000000, B2000000, B2000000,
-                                      B2000000, B2000000, B2000000, B115200};
+static const uint32_t UART_SPEED[] = {B2000000, B2000000, B2000000,
+                                      B2000000, B2000000, B2000000,
+                                      B2000000, B2000000, B115200};
 
 void bsp_uart_init() {
   for (int i = 0; i < BSP_UART_NUM; i++) {
@@ -100,6 +101,7 @@ int8_t bsp_uart_receive(bsp_uart_t uart, uint8_t *buff, size_t size,
 
   return true;
 }
+
 uint32_t bsp_uart_get_count(bsp_uart_t uart) { return rx_count[uart]; }
 
 int8_t bsp_uart_abort_receive(bsp_uart_t uart) {

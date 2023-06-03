@@ -17,6 +17,7 @@ typedef enum {
   BSP_UART_6,
   BSP_UART_7,
   BSP_UART_8,
+  BSP_UART_ESP,
   /* BSP_UART_XXX, */
   BSP_UART_NUM,
   BSP_UART_ERR,
