@@ -2,7 +2,14 @@
 
 颠覆传统理念的嵌入式软件开发框架。诞生于Robomaster比赛，但绝不局限于此。
 
-![平衡](./doc/image/平衡.gif "平衡") ![英雄](./doc/image/英雄.gif "英雄") ![工程](./doc/image/工程.gif "工程") ![飞镖架](./doc/image/飞镖架.gif "飞镖架")
+<img src="./doc/image/rmuc.jpg"  height="210" width="265">
+<img src="./doc/image/rmuc1.jpg"  height="210" width="265">
+<img src="./doc/image/rmuc2.jpg"  height="210" width="265">
+
+
+<img src="./doc/image/rmuc3.jpg"  height="600" width="800">
+
+`以上机器人均使用XRobot驱动`
 
 ## 主要特色
 
@@ -52,6 +59,7 @@ XRobot基本部分是一套开发板与功能模块的管理系统，能够让�
 | ESP32-C3    | [ESP32C3-Core](https://xrobot-org.github.io/1.hardware/2.ESP32C3-Core.html)                                        | <img src="doc/image/esp32c3-core-1.jpeg" width="260" height="200"> |
 | Linux x86   | [Intel NUC](https://www.intel.cn/content/www/cn/zh/products/details/nuc.html)                                      | <img src="doc/image/nuc.jpg" width="350" height="200">             |
 | Linux arm   | [Raspberry pi 4B](https://www.raspberrypi.com/)                                                                    | <img src="doc/image/raspi.png" width="350" height="200">           |
+| Linux arm   | [mCore-R818](https://mangopi.org/mcorer818)                                                                        | <img src="doc/image/mCore-R818.jpg" width="200" height="200">      |
 
 
 ## 图片展示
