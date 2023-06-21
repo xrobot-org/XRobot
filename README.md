@@ -1,10 +1,9 @@
 # XRobot
 
 颠覆传统理念的嵌入式软件开发框架。诞生于Robomaster比赛，但绝不局限于此。
-
-<img src="./doc/image/rmuc.jpg"  height="210" width="265">
-<img src="./doc/image/rmuc1.jpg"  height="210" width="265">
-<img src="./doc/image/rmuc2.jpg"  height="210" width="265">
+|                                                            |                                                             |                                                             |
+| ---------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
+| <img src="./doc/image/rmuc.jpg"  height="210" width="265"> | <img src="./doc/image/rmuc1.jpg"  height="210" width="265"> | <img src="./doc/image/rmuc2.jpg"  height="210" width="265"> |
 
 
 <img src="./doc/image/rmuc3.jpg"  height="600" width="800">
