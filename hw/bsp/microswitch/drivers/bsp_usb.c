@@ -7,7 +7,7 @@ static uint8_t usb_rx_buff[100] = {0}, usb_buff_len = 0, usb_buff_index = 0;
 
 static volatile bool connected = false, avail = false;
 
-int8_t bsp_usb_transmit(const uint8_t *buffer, uint32_t len) {
+bsp_status_t bsp_usb_transmit(const uint8_t *buffer, uint32_t len) {
   while (len >= 64) {
     bsp_uart_transmit(BSP_UART_MCU, (uint8_t *)(buffer), 64, true);
     buffer += 64;
@@ -31,7 +31,7 @@ char bsp_usb_read_char(void) {
   }
 }
 
-uint32_t bsp_usb_read(uint8_t *buffer, uint32_t len) {
+size_t bsp_usb_read(uint8_t *buffer, uint32_t len) {
   if (avail) {
     uint32_t count = 0;
     while (usb_buff_index < usb_buff_len && count < len) {
@@ -46,7 +46,7 @@ uint32_t bsp_usb_read(uint8_t *buffer, uint32_t len) {
 
 bool bsp_usb_connect(void) { return connected; }
 
-uint32_t bsp_usb_avail(void) { return avail; }
+size_t bsp_usb_avail(void) { return avail; }
 
 static void usb_rx_cb(void *arg) {
   (void)(arg);

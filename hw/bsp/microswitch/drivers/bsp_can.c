@@ -2,7 +2,6 @@
 
 #include <stdint.h>
 
-#include "bsp_delay.h"
 #include "main.h"
 uint32_t i;
 typedef struct {

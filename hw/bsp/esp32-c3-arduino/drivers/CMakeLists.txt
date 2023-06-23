@@ -14,6 +14,8 @@ target_sources(${PROJECT_NAME}
   PRIVATE ${MCU_DIR}/esp/ESP32_BleSerial/src/ByteRingBuffer.h
 )
 
+include(${MCU_DIR}/default/CMakeLists.txt)
+
 target_link_libraries(${PROJECT_NAME}
   PUBLIC idf::arduino-esp32
   PUBLIC idf::bt

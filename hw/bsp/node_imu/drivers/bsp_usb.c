@@ -1,12 +1,13 @@
 #include "bsp_usb.h"
 
-#include "bsp_delay.h"
+#include "FreeRTOS.h"
 #include "main.h"
+#include "task.h"
 #include "tusb.h"
 
 static bsp_callback_t callback_list[BSP_USB_NUM][BSP_USB_CB_NUM];
 
-int8_t bsp_usb_transmit(const uint8_t *buffer, uint32_t len) {
+bsp_status_t bsp_usb_transmit(const uint8_t *buffer, uint32_t len) {
   while (1) {
     uint32_t avil = tud_cdc_write_available();
     if (avil > len) {
@@ -18,7 +19,7 @@ int8_t bsp_usb_transmit(const uint8_t *buffer, uint32_t len) {
       tud_cdc_write_flush();
       buffer += avil;
       len -= avil;
-      bsp_delay(1);
+      vTaskDelay(1);
     }
   }
   return BSP_OK;
@@ -34,14 +35,14 @@ char bsp_usb_read_char(void) {
   }
 }
 
-uint32_t bsp_usb_read(uint8_t *buffer, uint32_t len) {
-  uint32_t recv_len = tud_cdc_read(buffer, len);
+size_t bsp_usb_read(uint8_t *buffer, uint32_t len) {
+  size_t recv_len = tud_cdc_read(buffer, len);
   return recv_len;
 }
 
 bool bsp_usb_connect(void) { return tud_cdc_connected(); }
 
-uint32_t bsp_usb_avail(void) { return tud_cdc_available(); }
+size_t bsp_usb_avail(void) { return tud_cdc_available(); }
 
 void bsp_usb_init() { tusb_init(); }
 

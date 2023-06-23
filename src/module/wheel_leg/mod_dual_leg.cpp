@@ -3,7 +3,6 @@
 #include <comp_type.hpp>
 #include <comp_utils.hpp>
 
-#include "bsp_delay.h"
 #include "bsp_time.h"
 
 using namespace Module;
@@ -176,7 +175,7 @@ void WheelLeg::Control() {
       for (uint8_t i = 0; i < LEG_NUM; i++) {
         for (int j = 0; j < LEG_MOTOR_NUM; j++) {
           this->leg_motor_[i * LEG_MOTOR_NUM + j]->Relax();
-          bsp_delay(1);
+          System::Thread::Sleep(1);
         }
       }
       break;
@@ -222,7 +221,7 @@ void WheelLeg::Control() {
 
           this->leg_motor_[i * LEG_MOTOR_NUM + j]->SetPos(
               angle + this->param_.motor_zero[i * LEG_MOTOR_NUM + j]);
-          bsp_delay(1);
+          System::Thread::Sleep(1);
         }
       }
       break;

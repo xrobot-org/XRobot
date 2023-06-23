@@ -1,6 +1,5 @@
 #include "dev_mit_motor.hpp"
 
-#include "bsp_delay.h"
 #include "bsp_time.h"
 
 #define P_MIN -12.5f

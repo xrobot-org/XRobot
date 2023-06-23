@@ -9,7 +9,6 @@
 #include <string_view>
 #include <thread.hpp>
 
-#include "bsp_delay.h"
 #include "bsp_gpio.h"
 #include "bsp_pwm.h"
 #include "bsp_spi.h"
@@ -105,7 +104,7 @@ void BMI088::WriteSingle(BMI088::DeviceType type, uint8_t reg, uint8_t data) {
   tx_rx_buf[0] = (reg & 0x7f);
   tx_rx_buf[1] = data;
 
-  bsp_delay(1);
+  System::Thread::Sleep(1);
 
   this->Select(type);
   bsp_spi_transmit(BSP_SPI_IMU, tx_rx_buf, 2u, true);
@@ -115,7 +114,7 @@ void BMI088::WriteSingle(BMI088::DeviceType type, uint8_t reg, uint8_t data) {
 uint8_t BMI088::ReadSingle(BMI088::DeviceType type, uint8_t reg) {
   tx_rx_buf[0] = static_cast<uint8_t>(reg | 0x80);
 
-  bsp_delay(1);
+  System::Thread::Sleep(1);
 
   this->Select(type);
   bsp_spi_transmit(BSP_SPI_IMU, tx_rx_buf, 1u, true);
@@ -341,7 +340,7 @@ bool BMI088::Init() {
   WriteSingle(BMI_ACCL, BMI088_REG_ACCL_SOFTRESET, 0xB6);
   WriteSingle(BMI_GYRO, BMI088_REG_GYRO_SOFTRESET, 0xB6);
 
-  bsp_delay(30);
+  System::Thread::Sleep(30);
 
   ReadSingle(BMI_ACCL, BMI088_REG_ACCL_CHIP_ID);
   ReadSingle(BMI_GYRO, BMI088_REG_GYRO_CHIP_ID);
@@ -370,7 +369,7 @@ bool BMI088::Init() {
 
   /* Turn on accl. Now we can read data. */
   WriteSingle(BMI_ACCL, BMI088_REG_ACCL_PWR_CTRL, 0x04);
-  bsp_delay(50);
+  System::Thread::Sleep(50);
 
   bsp_gpio_enable_irq(BSP_GPIO_IMU_ACCL_INT);
 
@@ -391,7 +390,7 @@ bool BMI088::Init() {
   /* Enable new data interrupt. */
   WriteSingle(BMI_GYRO, BMI088_REG_GYRO_INT_CTRL, 0x80);
 
-  bsp_delay(50);
+  System::Thread::Sleep(50);
   bsp_gpio_enable_irq(BSP_GPIO_IMU_GYRO_INT);
 
   return true;

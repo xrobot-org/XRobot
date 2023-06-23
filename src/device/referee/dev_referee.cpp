@@ -4,7 +4,6 @@
 
 #include "dev_referee.hpp"
 
-#include "bsp_delay.h"
 #include "bsp_time.h"
 #include "bsp_uart.h"
 #include "comp_crc16.hpp"

@@ -1,7 +1,6 @@
 #include "bsp_can.h"
 
 #include "FreeRTOS.h"
-#include "bsp_delay.h"
 #include "main.h"
 #include "task.h"
 

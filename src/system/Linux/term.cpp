@@ -8,6 +8,7 @@
 #include <term.hpp>
 #include <thread.hpp>
 
+#include "bsp_sys.h"
 #include "bsp_time.h"
 #include "bsp_udp_server.h"
 #include "ms.h"
@@ -18,6 +19,8 @@ using namespace System;
 static System::Thread term_thread, term_udp_thread;
 
 static bsp_udp_server_t term_udp_server;
+
+static ms_item_t power_ctrl;
 
 static int kbhit(void) {
   struct termios oldt, newt;
@@ -111,6 +114,29 @@ Term::Term() {
       }
     }
   };
+
+  auto pwr_cmd_fn = [](ms_item_t *item, int argc, char **argv) {
+    (void)item;
+
+    if (argc == 1) {
+      printf("Please add option:shutdown reboot sleep or stop.\r\n");
+    } else if (argc == 2) {
+      if (strcmp(argv[1], "sleep") == 0) {
+        bsp_sys_sleep();
+      } else if (strcmp(argv[1], "stop") == 0) {
+        bsp_sys_stop();
+      } else if (strcmp(argv[1], "shutdown") == 0) {
+        bsp_sys_shutdown();
+      } else if (strcmp(argv[1], "reboot") == 0) {
+        bsp_sys_reset();
+      }
+    }
+
+    return 0;
+  };
+
+  ms_file_init(&power_ctrl, "power", pwr_cmd_fn, NULL, 0, false);
+  ms_cmd_add(&power_ctrl);
 
   term_thread.Create(term_thread_fn, static_cast<void *>(0), "term_thread", 512,
                      System::Thread::LOW);

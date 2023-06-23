@@ -2,6 +2,7 @@
 #include <term.hpp>
 #include <thread.hpp>
 
+#include "bsp_sys.h"
 #include "bsp_usb.h"
 #include "ms.h"
 #include "om.hpp"
@@ -11,7 +12,7 @@ using namespace System;
 
 static System::Thread term_thread, usb_thread;
 
-static ms_item_t task_info;
+static ms_item_t task_info, power_ctrl;
 
 #ifdef MCU_DEBUG_BUILD
 static char task_print_buff[1024];
@@ -73,8 +74,31 @@ Term::Term() {
     return 0;
   };
 
+  auto pwr_cmd_fn = [](ms_item_t *item, int argc, char **argv) {
+    (void)item;
+
+    if (argc == 1) {
+      printf("Please add option:shutdown reboot sleep or stop.\r\n");
+    } else if (argc == 2) {
+      if (strcmp(argv[1], "sleep") == 0) {
+        bsp_sys_sleep();
+      } else if (strcmp(argv[1], "stop") == 0) {
+        bsp_sys_stop();
+      } else if (strcmp(argv[1], "shutdown") == 0) {
+        bsp_sys_shutdown();
+      } else if (strcmp(argv[1], "reboot") == 0) {
+        bsp_sys_reset();
+      }
+    }
+
+    return 0;
+  };
+
   ms_file_init(&task_info, "task_info", task_cmd_fn, NULL, 0, false);
   ms_cmd_add(&task_info);
+
+  ms_file_init(&power_ctrl, "power", pwr_cmd_fn, NULL, 0, false);
+  ms_cmd_add(&power_ctrl);
 
 #endif
 

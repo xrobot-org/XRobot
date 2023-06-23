@@ -1,3 +1,4 @@
+#include <atomic>
 #include <cstring>
 #include <database.hpp>
 #include <term.hpp>
@@ -12,6 +13,8 @@ static ms_item_t sn_tools;
 
 Database::Database() {
   bsp_flash_init();
+
+  // std::atomic_thread_fence();
 
   auto sn_cmd_fn = [](ms_item_t *item, int argc, char **argv) {
     MS_UNUSED(item);

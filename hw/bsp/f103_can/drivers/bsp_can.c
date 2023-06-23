@@ -1,6 +1,5 @@
 #include "bsp_can.h"
 
-#include "bsp_delay.h"
 #include "main.h"
 
 typedef struct {
