@@ -15,13 +15,13 @@ class UdpToUart {
   } Param;
 
   Device::BlinkLED led_;
-  Module::UartToUDP uart_udp_;
   Device::NetConfig net_config_;
   Module::TopicShareClientUart topic_share_;
+  Module::UartToUDP uart_udp_;
 
   UdpToUart(Param& param)
       : led_(param.led),
-        uart_udp_(param.uart_udp),
-        topic_share_(param.topic_share) {}
+        topic_share_(param.topic_share),
+        uart_udp_(param.uart_udp) {}
 };
 }  // namespace Robot
