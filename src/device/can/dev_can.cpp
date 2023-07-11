@@ -26,7 +26,7 @@ Can::Can() {
 
     memcpy(pack[can].data, data, sizeof(pack[can].data));
 
-    can_tp_[can]->PublishFromISR(pack[can]);
+    can_tp_[can]->Publish(pack[can]);
   };
 
   for (int i = 0; i < BSP_CAN_NUM; i++) {

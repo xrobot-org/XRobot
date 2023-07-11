@@ -27,7 +27,7 @@ __attribute__((always_inline, unused)) static inline void bsp_sys_stop(void) {
 
 /* 中断状态 */
 __attribute__((always_inline, unused)) static inline bool bsp_sys_in_isr(void) {
-  uint32_t ipsr = 0;
-  __asm volatile("MRS ipsr, IPSR    \n");
-  return ipsr & 0x1f;
+  uint32_t result;
+  __asm__ volatile("MRS %0, ipsr" : "=r"(result));
+  return (result);
 }
