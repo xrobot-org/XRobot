@@ -25,6 +25,8 @@ CanIMU::CanIMU()
     auto gyro_sub = Message::Subscriber("imu_gyro", imu->gyro_);
     auto accl_sub = Message::Subscriber("imu_accl", imu->accl_);
 
+    uint32_t last_online_time = bsp_time_get_ms();
+
     while (1) {
       if (imu->enable_accl_.data_) {
         accl_sub.DumpData();
@@ -46,7 +48,7 @@ CanIMU::CanIMU()
         imu->SendQuat();
       }
 
-      imu->thread_.SleepUntil(imu->delay_.data_);
+      imu->thread_.SleepUntil(imu->delay_.data_, last_online_time);
     }
   };
 

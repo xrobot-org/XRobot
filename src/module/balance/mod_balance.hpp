@@ -104,11 +104,11 @@ class Balance {
  private:
   Param param_;
 
-  float dt_;
+  float dt_ = 0.0f;
 
-  float last_wakeup_;
+  float last_wakeup_ = 0.0f;
 
-  float now_;
+  float now_ = 0.0f;
 
   float last_detect_time_ = 0.0f;
   float last_detect_dir_ = 1.0f;

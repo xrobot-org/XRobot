@@ -35,7 +35,7 @@ MitMotor::MitMotor(const Param &param, const char *name)
     : BaseMotor(name, param.reverse), param_(param) {
   auto rx_callback = [](Can::Pack &rx, MitMotor *motor) {
     if (rx.data[0] == motor->param_.id) {
-      motor->recv_.OverwriteFromISR(rx);
+      motor->recv_.Overwrite(rx);
     }
 
     return true;
@@ -65,7 +65,7 @@ MitMotor::MitMotor(const Param &param, const char *name)
 bool MitMotor::Update() {
   Can::Pack pack;
 
-  while (this->recv_.Receive(pack, 0)) {
+  while (this->recv_.Receive(pack)) {
     this->Decode(pack);
     last_online_time_ = bsp_time_get();
   }

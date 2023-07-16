@@ -74,7 +74,7 @@ class CMD {
     } EventCallbackBlock;
 
     auto cmd_callback = [](uint32_t event, void* arg) {
-      (void)(event);
+      XB_UNUSED(event);
       EventCallbackBlock* block = static_cast<EventCallbackBlock*>(arg);
 
       block->callback(static_cast<EventType>(block->target_event),

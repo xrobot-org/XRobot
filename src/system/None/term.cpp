@@ -11,7 +11,7 @@ static bool connected = false;
 static ms_item_t power_ctrl;
 
 static om_status_t print_log(om_msg_t *msg, void *arg) {
-  (void)arg;
+  XB_UNUSED(arg);
 
   if (!bsp_usb_connect()) {
     return OM_ERROR_NOT_INIT;
@@ -37,14 +37,14 @@ Term::Term() {
   om_config_topic(om_get_log_handle(), "d", print_log, NULL);
 
   auto usb_thread_fn = [](void *arg) {
-    (void)arg;
+    XB_UNUSED(arg);
     bsp_usb_update();
   };
 
   System::Timer::Create(usb_thread_fn, static_cast<void *>(0), 10);
 
   auto term_thread_fn = [](void *arg) {
-    (void)arg;
+    XB_UNUSED(arg);
     if (!bsp_usb_connect()) {
       connected = false;
       return;
@@ -61,7 +61,7 @@ Term::Term() {
   };
 
   auto pwr_cmd_fn = [](ms_item_t *item, int argc, char **argv) {
-    (void)item;
+    XB_UNUSED(item);
 
     if (argc == 1) {
       printf("Please add option:shutdown reboot sleep or stop.\r\n");

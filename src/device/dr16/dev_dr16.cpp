@@ -5,6 +5,8 @@
 
 #include "dev_dr16.hpp"
 
+#include <signal.hpp>
+
 #include "bsp_uart.h"
 #include "dev_referee.hpp"
 
@@ -18,12 +20,10 @@ using namespace Device;
 DR16::Data DR16::data_;
 
 DR16::DR16()
-    : new_(false),
-      event_(Message::Event::FindEvent("cmd_event")),
-      cmd_tp_("cmd_rc") {
+    : event_(Message::Event::FindEvent("cmd_event")), cmd_tp_("cmd_rc") {
   auto rx_cplt_callback = [](void *arg) {
     DR16 *dr16 = static_cast<DR16 *>(arg);
-    dr16->new_.GiveFromISR();
+    System::Signal::Action(dr16->thread_, 0);
   };
 
   bsp_uart_register_callback(BSP_UART_DR16, BSP_UART_RX_CPLT_CB,
@@ -37,7 +37,7 @@ DR16::DR16()
       dr16->StartRecv();
 
       /* 等待DMA完成 */
-      if (dr16->new_.Take(20)) {
+      if (System::Signal::Wait(0, 20)) {
         /* 进行解析 */
         dr16->PraseRC();
       } else {
@@ -92,7 +92,7 @@ void DR16::PraseRC() {
   if (this->DataCorrupted()) {
     bsp_uart_abort_receive(BSP_UART_DR16);
     /* 等待错误包结束 */
-    this->thread_.SleepUntil(3);
+    this->thread_.Sleep(3);
 
     return;
   }

@@ -15,24 +15,42 @@ class Timer {
     void (*fun)(void*);
     uint16_t cycle;
     uint16_t count;
+    bool running;
   } ControlBlock;
+
+  typedef System::List<ControlBlock>::Node* TimerHandle;
 
   Timer();
 
   static bool Refresh(ControlBlock& block, void* arg);
 
   template <typename FunType, typename ArgType>
-  static void Create(FunType fun, ArgType arg, uint32_t cycle) {
+  static TimerHandle Create(FunType fun, ArgType arg, uint32_t cycle) {
     (void)static_cast<void (*)(ArgType)>(fun);
     TypeErasure<void, ArgType>* type = static_cast<TypeErasure<void, ArgType>*>(
         pvPortMalloc(sizeof(TypeErasure<void, ArgType>)));
     *type = TypeErasure<void, ArgType>(fun, arg);
-    ControlBlock block;
-    block.count = 0;
-    block.cycle = cycle;
-    block.fun = type->Port;
-    block.type = type;
-    self_->list_.Add(block);
+    auto block = new System::List<ControlBlock>::Node;
+    block->data_.count = 0;
+    block->data_.cycle = cycle;
+    block->data_.fun = type->Port;
+    block->data_.type = type;
+    block->data_.running = true;
+    self_->list_.Add(*block);
+    return block;
+  }
+
+  static void Delete(TimerHandle& handle) {
+    self_->list_.Delete(*handle);
+    delete (handle);
+  }
+
+  static void Start(TimerHandle& handle) { handle->data_.running = true; }
+
+  static void Stop(TimerHandle& handle) { handle->data_.running = false; }
+
+  void SetCycle(TimerHandle& timer, uint32_t cycle) {
+    timer->data_.cycle = cycle;
   }
 
   static Timer* self_;

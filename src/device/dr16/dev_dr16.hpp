@@ -114,8 +114,6 @@ class DR16 {
 
   ControlSource ctrl_source_ = DR16_CTRL_SOURCE_SW;
 
-  System::Semaphore new_;
-
   System::Thread thread_;
 
   Message::Event event_;

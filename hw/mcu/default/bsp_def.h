@@ -14,10 +14,11 @@ extern "C" {
 #include <string.h>
 
 #if MCU_DEBUG_BUILD
-#define XB_ASSERT(arg) \
-  if (!(arg))          \
-    while (1) {        \
-    };
+#define XB_ASSERT(arg)                                         \
+  if (!(arg))                                                  \
+    while (1) {                                                \
+      printf("Assert error at %s:%d\r\n", __FILE__, __LINE__); \
+    }
 #else
 #define XB_ASSERT(arg) (void)0;
 #endif

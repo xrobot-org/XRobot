@@ -15,7 +15,7 @@ FreeGimbal::FreeGimbal(Param& param, float control_freq)
       yaw_motor_(this->param_.yaw_motor, "Gimbal_Yaw"),
       ctrl_lock_(true) {
   auto event_callback = [](GimbalEvent event, FreeGimbal* gimbal) {
-    gimbal->ctrl_lock_.Take(UINT32_MAX);
+    gimbal->ctrl_lock_.Wait(UINT32_MAX);
 
     switch (event) {
       case SET_MODE_FORWARD:
@@ -29,7 +29,7 @@ FreeGimbal::FreeGimbal(Param& param, float control_freq)
         Component::CMD::SetCtrlSource(Component::CMD::CTRL_SOURCE_RC);
         break;
     }
-    gimbal->ctrl_lock_.Give();
+    gimbal->ctrl_lock_.Post();
   };
   Component::CMD::RegisterEvent<FreeGimbal*, GimbalEvent>(
       event_callback, this, this->param_.EVENT_MAP);
@@ -40,9 +40,9 @@ FreeGimbal::FreeGimbal(Param& param, float control_freq)
     while (1) {
       cmd_sub.DumpData();
 
-      gimbal->ctrl_lock_.Take(UINT32_MAX);
+      gimbal->ctrl_lock_.Wait(UINT32_MAX);
       gimbal->Control();
-      gimbal->ctrl_lock_.Give();
+      gimbal->ctrl_lock_.Post();
 
       /* 运行结束，等待下一次唤醒 */
       gimbal->thread_.SleepUntil(2);

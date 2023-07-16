@@ -20,7 +20,7 @@ Can::Can() {
   }
 
   auto rx_callback = [](bsp_can_t can, uint32_t id, uint8_t* data, void* arg) {
-    (void)(arg);
+    XB_UNUSED(arg);
 
     pack[can].index = id;
 
@@ -38,18 +38,18 @@ Can::Can() {
 }
 
 bool Can::SendStdPack(bsp_can_t can, Pack& pack) {
-  can_sem_[can]->Take(UINT32_MAX);
+  can_sem_[can]->Wait(UINT32_MAX);
   bool ans = bsp_can_trans_packet(can, CAN_FORMAT_STD, pack.index, pack.data) ==
              BSP_OK;
-  can_sem_[can]->Give();
+  can_sem_[can]->Post();
   return ans;
 }
 
 bool Can::SendExtPack(bsp_can_t can, Pack& pack) {
-  can_sem_[can]->Take(UINT32_MAX);
+  can_sem_[can]->Wait(UINT32_MAX);
   bool ans = bsp_can_trans_packet(can, CAN_FORMAT_EXT, pack.index, pack.data) ==
              BSP_OK;
-  can_sem_[can]->Give();
+  can_sem_[can]->Post();
   return ans;
 }
 

@@ -12,23 +12,11 @@
 namespace System {
 class Semaphore {
  public:
-  Semaphore(bool init_count) : max_count_(1) {
-    sem_init(&this->handle_, 0, init_count);
-  }
+  Semaphore(uint16_t init_count) { sem_init(&this->handle_, 0, init_count); }
 
-  Semaphore(uint16_t max_count, uint16_t init_count) : max_count_(max_count) {
-    sem_init(&this->handle_, 0, init_count);
-  }
+  void Post() { sem_post(&this->handle_); }
 
-  void Give() {
-    int tmp = 0;
-    sem_getvalue(&this->handle_, &tmp);
-    if (tmp < this->max_count_) {
-      sem_post(&this->handle_);
-    }
-  }
-
-  bool Take(uint32_t timeout) {
+  bool Wait(uint32_t timeout = UINT32_MAX) {
     if (!sem_trywait(&this->handle_)) {
       return true;
     }
@@ -40,22 +28,27 @@ class Semaphore {
     uint32_t start_time = bsp_time_get_ms();
     bool ans = false;
 
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+
+    uint32_t add = 0;
+    long raw_time = 1U * 1000U * 1000U + ts.tv_nsec;
+    add = raw_time / (1000U * 1000U * 1000U);
+
+    ts.tv_sec += add;
+    ts.tv_nsec = raw_time % (1000U * 1000U * 1000U);
+
     while (bsp_time_get_ms() - start_time < timeout) {
-      ans = !sem_trywait(&this->handle_);
+      ans = !sem_timedwait(&handle_, &ts);
       if (ans) {
         return true;
       }
-      System::Thread::Sleep(1);
     }
 
     return false;
   }
 
-  void GiveFromISR() { Give(); }
-  bool TakeFromISR() { return Take(0); }
-
  private:
   sem_t handle_;
-  int max_count_;
 };
 }  // namespace System

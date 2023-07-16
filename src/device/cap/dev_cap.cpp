@@ -16,7 +16,7 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
     rx.index -= cap->param_.index;
 
     if (rx.index == 0) {
-      cap->control_feedback_.OverwriteFromISR(rx);
+      cap->control_feedback_.Overwrite(rx);
     }
 
     return true;
@@ -44,6 +44,7 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
       .RegisterCallback(ref_cb, this);
 
   auto cap_thread = [](Cap *cap) {
+    uint32_t last_online_time = bsp_time_get_ms();
     while (1) {
       /* 读取裁判系统信息 */
       if (!cap->Update()) {
@@ -55,7 +56,7 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
       cap->Control();
 
       /* 运行结束，等待下一次唤醒 */
-      cap->thread_.SleepUntil(100);
+      cap->thread_.SleepUntil(100, last_online_time);
     }
   };
 
@@ -68,7 +69,7 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
 
 bool Cap::Update() {
   Can::Pack rx;
-  while (this->control_feedback_.Receive(rx, 0)) {
+  while (this->control_feedback_.Receive(rx)) {
     this->Decode(rx);
     this->info_.online_ = 1;
     this->last_online_time_ = bsp_time_get();

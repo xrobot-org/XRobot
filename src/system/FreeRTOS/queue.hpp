@@ -1,144 +1,139 @@
 #pragma once
 
+#include <cstdint>
 #include <mutex.hpp>
 #include <semaphore.hpp>
 #include <thread.hpp>
 
+#include "FreeRTOS.h"
+#include "bsp_sys.h"
 #include "bsp_time.h"
 #include "om.hpp"
+#include "projdefs.h"
+#include "task.h"
 
 namespace System {
 template <typename Data>
 class Queue {
  public:
-  Queue(uint16_t length) {
+  Queue(uint16_t length) : mutex_(xSemaphoreCreateBinary()) {
     om_fifo_create(&fifo_, malloc(length * sizeof(Data)), length, sizeof(Data));
+    xSemaphoreGive(mutex_);
   }
 
-  bool Send(const Data& data, uint32_t timeout) {
-    uint32_t start_time = bsp_time_get_ms();
-    if (!mutex_.Lock(timeout)) {
+  bool Send(const Data& data) {
+    if (bsp_sys_in_isr()) {
+      if (xSemaphoreTakeFromISR(mutex_, NULL) != pdTRUE) {
+        return false;
+      }
+
+      if (om_fifo_write(&fifo_, &data) == OM_OK) {
+        xSemaphoreGiveFromISR(mutex_, NULL);
+        return true;
+      } else {
+        xSemaphoreGiveFromISR(mutex_, NULL);
+        return false;
+      }
+    } else {
+      xSemaphoreTake(mutex_, UINT32_MAX);
+      if (om_fifo_write(&fifo_, &data) == OM_OK) {
+        xSemaphoreGive(this->mutex_);
+        return true;
+      }
+      xSemaphoreGive(this->mutex_);
       return false;
     }
-
-    if (om_fifo_write(&fifo_, &data) == OM_OK) {
-      mutex_.Unlock();
-      return true;
-    }
-
-    bool ans = false;
-    while (bsp_time_get_ms() - start_time < timeout) {
-      ans = om_fifo_write(&fifo_, &data) == OM_OK;
-      if (ans) {
-        break;
-      }
-      System::Thread::Sleep(1);
-    }
-
-    mutex_.Unlock();
-
-    return ans;
   }
 
-  bool Receive(Data& data, uint32_t timeout) {
-    uint32_t start_time = bsp_time_get_ms();
-    if (!mutex_.Lock(timeout)) {
+  bool Receive(Data& data) {
+    if (bsp_sys_in_isr()) {
+      if (xSemaphoreTakeFromISR(mutex_, NULL) != pdTRUE) {
+        return false;
+      }
+
+      if (om_fifo_read(&fifo_, &data) == OM_OK) {
+        xSemaphoreGiveFromISR(mutex_, NULL);
+        return true;
+      }
+      xSemaphoreGiveFromISR(mutex_, NULL);
+      return false;
+    } else {
+      xSemaphoreTake(mutex_, UINT32_MAX);
+      if (om_fifo_read(&fifo_, &data) == OM_OK) {
+        xSemaphoreGive(this->mutex_);
+        return true;
+      }
+      xSemaphoreGive(this->mutex_);
       return false;
     }
-
-    if (om_fifo_read(&fifo_, &data) == OM_OK) {
-      mutex_.Unlock();
-      return true;
-    }
-
-    bool ans = false;
-    while (bsp_time_get_ms() - start_time < timeout) {
-      ans = om_fifo_read(&fifo_, &data) == OM_OK;
-      if (ans) {
-        break;
-      }
-      mutex_.Unlock();
-      System::Thread::Sleep(1);
-      while (1) {
-        if (mutex_.Lock(1)) {
-          break;
-        } else {
-          if (bsp_time_get_ms() - start_time < timeout) {
-            return false;
-          }
-        }
-      }
-    }
-
-    mutex_.Unlock();
-
-    return ans;
   }
 
   bool Overwrite(const Data& data) {
-    if (!mutex_.Lock(0)) {
+    if (bsp_sys_in_isr()) {
+      if (xSemaphoreTakeFromISR(mutex_, NULL) != pdTRUE) {
+        return false;
+      }
+      if (om_fifo_overwrite(&fifo_, &data) == OM_OK) {
+        xSemaphoreGiveFromISR(mutex_, NULL);
+        return true;
+      }
+      xSemaphoreGiveFromISR(mutex_, NULL);
+      return false;
+    } else {
+      xSemaphoreTake(mutex_, UINT32_MAX);
+
+      if (om_fifo_overwrite(&fifo_, &data) == OM_OK) {
+        xSemaphoreGive(this->mutex_);
+        return true;
+      }
+      xSemaphoreGive(this->mutex_);
       return false;
     }
-
-    bool ans = om_fifo_overwrite(&fifo_, &data) == OM_OK;
-
-    mutex_.Unlock();
-
-    return ans;
-  }
-
-  bool SendFromISR(const Data& data) {
-    if (!mutex_.LockFromISR()) {
-      return false;
-    }
-
-    bool ans = om_fifo_write(&fifo_, &data) == OM_OK;
-
-    mutex_.UnlockFromISR();
-
-    return ans;
-  }
-
-  bool ReceiveFromISR(Data& data) {
-    if (!mutex_.LockFromISR()) {
-      return false;
-    }
-
-    bool ans = om_fifo_read(&fifo_, &data) == OM_OK;
-
-    mutex_.UnlockFromISR();
-
-    return ans;
-  }
-
-  bool OverwriteFromISR(const Data& data) {
-    if (!mutex_.LockFromISR()) {
-      return false;
-    }
-
-    bool ans = om_fifo_overwrite(&fifo_, &data) == OM_OK;
-
-    mutex_.UnlockFromISR();
-
-    return ans;
   }
 
   bool Reset() {
-    if (!mutex_.Lock(0)) {
+    if (bsp_sys_in_isr()) {
+      if (xSemaphoreTakeFromISR(mutex_, NULL) != pdTRUE) {
+        return false;
+      }
+      if (om_fifo_reset(&fifo_) == OM_OK) {
+        xSemaphoreGiveFromISR(mutex_, NULL);
+        return true;
+      }
+      xSemaphoreGiveFromISR(mutex_, NULL);
+      return false;
+    } else {
+      xSemaphoreTake(mutex_, UINT32_MAX);
+
+      if (om_fifo_reset(&fifo_) == OM_OK) {
+        xSemaphoreGive(this->mutex_);
+        return true;
+      }
+      xSemaphoreGive(this->mutex_);
       return false;
     }
-
-    bool ans = om_fifo_reset(&fifo_) == OM_OK;
-
-    mutex_.Unlock();
-
-    return ans;
   }
 
-  uint32_t Size() { return om_fifo_readable_item_count(&fifo_); }
+  uint32_t Size() {
+    uint32_t size = 0;
+    if (bsp_sys_in_isr()) {
+      if (xSemaphoreTakeFromISR(mutex_, NULL) != pdTRUE) {
+        return false;
+      }
+      size = om_fifo_readable_item_count(&fifo_);
+      xSemaphoreGiveFromISR(mutex_, NULL);
+      return false;
+    } else {
+      xSemaphoreTake(mutex_, UINT32_MAX);
+
+      size = om_fifo_readable_item_count(&fifo_);
+      xSemaphoreGive(this->mutex_);
+    }
+    return size;
+  }
 
  private:
   om_fifo_t fifo_;
-  System::Mutex mutex_;
+  SemaphoreHandle_t mutex_;
 };
 }  // namespace System

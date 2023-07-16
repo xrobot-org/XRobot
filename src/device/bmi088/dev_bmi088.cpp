@@ -139,11 +139,11 @@ void BMI088::Read(BMI088::DeviceType type, uint8_t reg, uint8_t *data,
 BMI088::BMI088(BMI088::Rotation &rot)
     : cali_("bmi088_cali"),
       rot_(rot),
-      gyro_raw_(false),
-      accl_raw_(false),
-      gyro_new_(false),
-      accl_new_(false),
-      spi_lock_(true),
+      gyro_raw_(0),
+      accl_raw_(0),
+      gyro_new_(0),
+      accl_new_(0),
+      new_(0),
       accl_tp_("imu_accl"),
       gyro_tp_("imu_gyro"),
       cmd_(this, this->CaliCMD, "bmi088", System::Term::DevDir()) {
@@ -152,22 +152,24 @@ BMI088::BMI088(BMI088::Rotation &rot)
 
     if (!bsp_gpio_read_pin(BSP_GPIO_IMU_ACCL_CS)) {
       bmi088->Unselect(BMI_ACCL);
-      bmi088->accl_raw_.GiveFromISR();
+      bmi088->accl_raw_.Post();
     }
     if (!bsp_gpio_read_pin(BSP_GPIO_IMU_GYRO_CS)) {
       bmi088->Unselect(BMI_GYRO);
-      bmi088->gyro_raw_.GiveFromISR();
+      bmi088->gyro_raw_.Post();
     }
   };
 
   auto accl_int_callback = [](void *arg) {
     BMI088 *bmi088 = static_cast<BMI088 *>(arg);
-    bmi088->accl_new_.GiveFromISR();
+    bmi088->new_.Post();
+    bmi088->accl_new_.Post();
   };
 
   auto gyro_int_callback = [](void *arg) {
     BMI088 *bmi088 = static_cast<BMI088 *>(arg);
-    bmi088->gyro_new_.GiveFromISR();
+    bmi088->new_.Post();
+    bmi088->gyro_new_.Post();
   };
 
   bsp_gpio_disable_irq(BSP_GPIO_IMU_ACCL_INT);
@@ -192,61 +194,36 @@ BMI088::BMI088(BMI088::Rotation &rot)
       /* 开始数据接收DMA，加速度计和陀螺仪共用同一个SPI接口，
        * 一次只能开启一个DMA
        */
-      if (bmi088->accl_new_.Take(10)) {
-        bmi088->spi_lock_.Take(UINT32_MAX);
-        bmi088->StartRecvAccel();
-        bmi088->accl_raw_.Take(UINT32_MAX);
-        bmi088->PraseAccel();
-        bmi088->spi_lock_.Give();
+      if (bmi088->new_.Wait(20)) {
+        if (bmi088->accl_new_.Wait(0)) {
+          bmi088->StartRecvAccel();
+          bmi088->accl_raw_.Wait(UINT32_MAX);
+          bmi088->PraseAccel();
 
-        bmi088->accl_tp_.Publish(bmi088->accl_);
-      } else {
-        bmi088->spi_lock_.Take(UINT32_MAX);
-        while (!bmi088->Init()) {
-          System::Thread::Sleep(1);
+          bmi088->accl_tp_.Publish(bmi088->accl_);
         }
-        bmi088->spi_lock_.Give();
-      }
 
-      /* PID控制IMU温度，PWM输出 */
-      bsp_pwm_set_comp(
-          BSP_PWM_IMU_HEAT,
-          imu_temp_ctrl_pid.Calculate(40.0f, bmi088->temp_,
-                                      bsp_time_get() - imu_temp_ctrl_time));
-
-      imu_temp_ctrl_time = bsp_time_get();
-    }
-  };
-
-  auto thread_bmi088_gyro = [](BMI088 *bmi088) {
-    bsp_pwm_start(BSP_PWM_IMU_HEAT);
-
-    while (1) {
-      /* 开始数据接收DMA，加速度计和陀螺仪共用同一个SPI接口，
-       * 一次只能开启一个DMA
-       */
-      if (bmi088->gyro_new_.Take(10)) {
-        bmi088->spi_lock_.Take(UINT32_MAX);
-        bmi088->StartRecvGyro();
-        bmi088->gyro_raw_.Take(UINT32_MAX);
-        bmi088->PraseGyro();
-        bmi088->spi_lock_.Give();
-        bmi088->gyro_tp_.Publish(bmi088->gyro_);
-      } else {
-        bmi088->spi_lock_.Take(UINT32_MAX);
-        while (!bmi088->Init()) {
-          System::Thread::Sleep(1);
+        if (bmi088->gyro_new_.Wait(0)) {
+          bmi088->StartRecvGyro();
+          bmi088->gyro_raw_.Wait(UINT32_MAX);
+          bmi088->PraseGyro();
+          bmi088->gyro_tp_.Publish(bmi088->gyro_);
         }
-        bmi088->spi_lock_.Give();
+
+        /* PID控制IMU温度，PWM输出 */
+        bsp_pwm_set_comp(
+            BSP_PWM_IMU_HEAT,
+            imu_temp_ctrl_pid.Calculate(40.0f, bmi088->temp_,
+                                        bsp_time_get() - imu_temp_ctrl_time));
+        imu_temp_ctrl_time = bsp_time_get();
+
+      } else {
+        OMLOG_ERROR("BMI088 wait timeout.");
       }
     }
   };
 
   this->thread_accl_.Create(thread_bmi088_accl, this, "thread_bmi088_accl",
-                            DEVICE_BMI088_TASK_STACK_DEPTH,
-                            System::Thread::REALTIME);
-
-  this->thread_gyro_.Create(thread_bmi088_gyro, this, "thread_bmi088_gyro",
                             DEVICE_BMI088_TASK_STACK_DEPTH,
                             System::Thread::REALTIME);
 }

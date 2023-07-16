@@ -25,10 +25,7 @@ class UartToUDP {
   } Param;
 
   UartToUDP(Param& param)
-      : param_(param),
-        udp_trans_buff(128),
-        num_lock_(true),
-        udp_tx_sem_(128, 0) {
+      : param_(param), udp_trans_buff(128), num_lock_(true), udp_tx_sem_(0) {
     for (int i = param.start_uart; i <= param_.end_uart; i++) {
       udp_rx_sem_[i] = new System::Semaphore(false);
       count[i] = 0;
@@ -45,7 +42,7 @@ class UartToUDP {
 
         memcpy(&udp->udp_rx_[data->area_id], data,
                sizeof(Device::WearLab::UdpData));
-        udp->udp_rx_sem_[data->area_id]->Give();
+        udp->udp_rx_sem_[data->area_id]->Post();
         OMLOG_PASS("udp pack received.");
         return;
       }
@@ -57,10 +54,10 @@ class UartToUDP {
                                      udp_rx_cb, this);
 
     auto uart_rx_thread_fn = [](UartToUDP* uart_udp) {
-      uart_udp->num_lock_.Take(UINT32_MAX);
+      uart_udp->num_lock_.Wait(UINT32_MAX);
       bsp_uart_t uart = static_cast<bsp_uart_t>(uart_udp->num_);
       uart_udp->num_++;
-      uart_udp->num_lock_.Give();
+      uart_udp->num_lock_.Post();
 
       uint8_t prefix = 0;
 
@@ -105,8 +102,8 @@ class UartToUDP {
             uart_udp->count[uart] = 0;
           }
 
-          uart_udp->udp_trans_buff.Send(uart_udp->udp_tx_[uart], UINT32_MAX);
-          uart_udp->udp_tx_sem_.Give();
+          uart_udp->udp_trans_buff.Send(uart_udp->udp_tx_[uart]);
+          uart_udp->udp_tx_sem_.Post();
         }
       }
     };
@@ -115,7 +112,7 @@ class UartToUDP {
       bsp_uart_t uart = static_cast<bsp_uart_t>(uart_udp->num_);
 
       while (true) {
-        uart_udp->udp_rx_sem_[uart]->Take(UINT32_MAX);
+        uart_udp->udp_rx_sem_[uart]->Wait(UINT32_MAX);
         uart_udp->uart_tx_[uart].id = uart_udp->udp_rx_[uart].device_id;
         memcpy(uart_udp->uart_tx_[uart].data, uart_udp->udp_rx_[uart].data, 8);
         bsp_uart_transmit(uart,
@@ -136,14 +133,14 @@ class UartToUDP {
       uint32_t buff_num = 0;
 
       while (true) {
-        uart_udp->udp_tx_sem_.Take(UINT32_MAX);
-        buff_num = uart_udp->udp_tx_sem_.GetCount() + 1;
+        uart_udp->udp_tx_sem_.Wait(UINT32_MAX);
+        buff_num = uart_udp->udp_tx_sem_.Value() + 1;
 
-        uart_udp->udp_trans_buff.Receive(trans_buff[0], UINT32_MAX);
+        uart_udp->udp_trans_buff.Receive(trans_buff[0]);
 
         for (uint32_t i = 1; i < buff_num; i++) {
-          uart_udp->udp_tx_sem_.Take(UINT32_MAX);
-          uart_udp->udp_trans_buff.Receive(trans_buff[i], UINT32_MAX);
+          uart_udp->udp_tx_sem_.Wait(UINT32_MAX);
+          uart_udp->udp_trans_buff.Receive(trans_buff[i]);
         }
 
         bsp_udp_server_transmit(&uart_udp->udp_server_,

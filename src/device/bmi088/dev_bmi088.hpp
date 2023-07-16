@@ -54,7 +54,7 @@ class BMI088 {
   System::Semaphore accl_raw_;
   System::Semaphore gyro_new_;
   System::Semaphore accl_new_;
-  System::Semaphore spi_lock_;
+  System::Semaphore new_;
 
   float temp_; /* 温度 */
 

@@ -8,7 +8,7 @@
 using namespace Device;
 
 Cap::Cap(Cap::Param &param) : info_tp_("cap_info") {
-  (void)param;
+  XB_UNUSED(param);
   info_ = {
       .input_volt_ = 25.0f,
       .cap_volt_ = 23.0f,

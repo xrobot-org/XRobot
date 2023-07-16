@@ -5,11 +5,12 @@
 namespace Device {
 class BaseMotor {
  public:
-  typedef struct {
-    Component::Type::CycleValue rotor_abs_angle; /* 转子绝对角度 单位：rad */
-    float rotational_speed;                      /* 转速 单位：rpm */
-    float torque_current;                        /* 转矩电流 单位：A*/
-    float temp;                                  /* 电机温度 单位：℃*/
+  typedef struct Feedback {
+    Component::Type::CycleValue rotor_abs_angle =
+        0.0f;                      /* 转子绝对角度 单位：rad */
+    float rotational_speed = 0.0f; /* 转速 单位：rpm */
+    float torque_current = 0.0f;   /* 转矩电流 单位：A*/
+    float temp = 0.0f;             /* 电机温度 单位：℃*/
   } Feedback;
 
   BaseMotor(const char *name, bool reverse)

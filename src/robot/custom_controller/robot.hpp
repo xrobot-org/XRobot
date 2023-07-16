@@ -10,6 +10,6 @@ class CustomController {
   typedef struct {
   } Param;
   Module::CustomController cust_ctrl;
-  CustomController(Param& param) : cust_ctrl() { (void)param; }
+  CustomController(Param& param) : cust_ctrl() { XB_UNUSED(param); }
 };
 }  // namespace Robot

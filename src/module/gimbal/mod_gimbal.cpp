@@ -23,7 +23,7 @@ Gimbal::Gimbal(Param& param, float control_freq)
       pit_motor_(this->param_.pit_motor, "Gimbal_Pitch"),
       ctrl_lock_(true) {
   auto event_callback = [](GimbalEvent event, Gimbal* gimbal) {
-    gimbal->ctrl_lock_.Take(UINT32_MAX);
+    gimbal->ctrl_lock_.Wait(UINT32_MAX);
 
     switch (event) {
       case SET_MODE_RELAX:
@@ -37,7 +37,7 @@ Gimbal::Gimbal(Param& param, float control_freq)
         Component::CMD::SetCtrlSource(Component::CMD::CTRL_SOURCE_RC);
         break;
     }
-    gimbal->ctrl_lock_.Give();
+    gimbal->ctrl_lock_.Post();
   };
 
   Component::CMD::RegisterEvent<Gimbal*, GimbalEvent>(event_callback, this,
@@ -50,21 +50,23 @@ Gimbal::Gimbal(Param& param, float control_freq)
 
     auto cmd_sub = Message::Subscriber("cmd_gimbal", gimbal->cmd_);
 
+    uint32_t last_online_time = bsp_time_get_ms();
+
     while (1) {
       /* 读取控制指令、姿态、IMU、电机反馈 */
       eulr_sub.DumpData();
       gyro_sub.DumpData();
       cmd_sub.DumpData();
 
-      gimbal->ctrl_lock_.Take(UINT32_MAX);
+      gimbal->ctrl_lock_.Wait(UINT32_MAX);
       gimbal->UpdateFeedback();
       gimbal->Control();
-      gimbal->ctrl_lock_.Give();
+      gimbal->ctrl_lock_.Post();
 
       gimbal->yaw_tp_.Publish(gimbal->yaw_);
 
       /* 运行结束，等待下一次唤醒 */
-      gimbal->thread_.SleepUntil(2);
+      gimbal->thread_.SleepUntil(2, last_online_time);
     }
   };
 

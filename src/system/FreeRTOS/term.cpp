@@ -21,7 +21,7 @@ static char task_print_buff[1024];
 extern ms_t ms;
 
 static om_status_t print_log(om_msg_t *msg, void *arg) {
-  (void)arg;
+  XB_UNUSED(arg);
 
   if (!bsp_usb_connect()) {
     return OM_ERROR_NOT_INIT;
@@ -42,8 +42,8 @@ static int term_write(const char *data, size_t len) {
 int printf(const char *format, ...) {
   va_list v_arg_list;
   va_start(v_arg_list, format);
-  (void)vsnprintf(ms.buff.write_buff, sizeof(ms.buff.write_buff), format,
-                  v_arg_list);
+  XB_UNUSED(vsnprintf(ms.buff.write_buff, sizeof(ms.buff.write_buff), format,
+                      v_arg_list));
   va_end(v_arg_list);
 
   bsp_usb_transmit(reinterpret_cast<const uint8_t *>(ms.buff.write_buff),
@@ -62,9 +62,9 @@ Term::Term() {
 #ifdef MCU_DEBUG_BUILD
 
   auto task_cmd_fn = [](ms_item_t *item, int argc, char **argv) {
-    (void)item;
-    (void)argc;
-    (void)argv;
+    XB_UNUSED(item);
+    XB_UNUSED(argc);
+    XB_UNUSED(argv);
 
     vTaskList(task_print_buff);
     printf("Name            State   Pri     Stack   Num\r\n");
@@ -75,7 +75,7 @@ Term::Term() {
   };
 
   auto pwr_cmd_fn = [](ms_item_t *item, int argc, char **argv) {
-    (void)item;
+    XB_UNUSED(item);
 
     if (argc == 1) {
       printf("Please add option:shutdown reboot sleep or stop.\r\n");
@@ -103,7 +103,7 @@ Term::Term() {
 #endif
 
   auto usb_thread_fn = [](void *arg) {
-    (void)arg;
+    XB_UNUSED(arg);
     while (1) {
       bsp_usb_update();
       vTaskDelay(10);
@@ -111,10 +111,10 @@ Term::Term() {
   };
 
   usb_thread.Create(usb_thread_fn, static_cast<void *>(0), "usb_thread",
-                    FREERTOS_USB_TASK_STACK_DEPTH, System::Thread::REALTIME);
+                    FREERTOS_USB_TASK_STACK_DEPTH, System::Thread::HIGH);
 
   auto term_thread_fn = [](void *arg) {
-    (void)arg;
+    XB_UNUSED(arg);
     while (1) {
       while (!bsp_usb_connect()) {
         term_thread.Sleep(1);
@@ -135,5 +135,5 @@ Term::Term() {
   };
 
   term_thread.Create(term_thread_fn, static_cast<void *>(0), "term_thread",
-                     FREERTOS_TERM_TASK_STACK_DEPTH, System::Thread::MEDIUM);
+                     FREERTOS_TERM_TASK_STACK_DEPTH, System::Thread::REALTIME);
 }

@@ -21,7 +21,7 @@ int show_fun(const char *data, size_t len) {
 }
 
 static om_status_t print_log(om_msg_t *msg, void *arg) {
-  (void)arg;
+  XB_UNUSED(arg);
 
   om_log_t *log = static_cast<om_log_t *>(msg->buff);
 
@@ -39,7 +39,7 @@ Term::Term() {
   om_config_topic(om_get_log_handle(), "d", print_log, NULL);
 
   auto term_thread_fn = [](void *arg) {
-    (void)arg;
+    XB_UNUSED(arg);
 
     ms_start();
 
@@ -49,7 +49,7 @@ Term::Term() {
   };
 
   auto pwr_cmd_fn = [](ms_item_t *item, int argc, char **argv) {
-    (void)item;
+    XB_UNUSED(item);
 
     if (argc == 1) {
       printf("Please add option:shutdown reboot sleep or stop.\r\n");

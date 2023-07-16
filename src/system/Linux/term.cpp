@@ -22,7 +22,7 @@ static bsp_udp_server_t term_udp_server;
 
 static ms_item_t power_ctrl;
 
-static int kbhit(void) {
+static int kbhit() {
   struct termios oldt, newt;
   int ch;
   int oldf;
@@ -51,7 +51,7 @@ int show_fun(const char *data, size_t len) {
 }
 
 static om_status_t print_log(om_msg_t *msg, void *arg) {
-  (void)arg;
+  XB_UNUSED(arg);
 
   static char time_print_buff[20];
 
@@ -81,7 +81,7 @@ Term::Term() {
   ms_init(show_fun);
 
   auto term_udp_thread_fn = [](void *arg) {
-    (void)arg;
+    XB_UNUSED(arg);
     bsp_udp_server_start(&term_udp_server);
     while (true) {
       System::Thread::Sleep(UINT32_MAX);
@@ -94,15 +94,15 @@ Term::Term() {
   term_udp_thread.Create(term_udp_thread_fn, static_cast<void *>(0),
                          "term_udp_thread", 512, System::Thread::HIGH);
 #else
-  (void)term_udp_server;
-  (void)term_udp_thread_fn;
-  (void)term_udp_thread;
+  XB_UNUSED(term_udp_server);
+  XB_UNUSED(term_udp_thread_fn);
+  XB_UNUSED(term_udp_thread);
 #endif
 
   om_config_topic(om_get_log_handle(), "d", print_log, NULL);
 
   auto term_thread_fn = [](void *arg) {
-    (void)arg;
+    XB_UNUSED(arg);
 
     ms_start();
 
@@ -116,7 +116,7 @@ Term::Term() {
   };
 
   auto pwr_cmd_fn = [](ms_item_t *item, int argc, char **argv) {
-    (void)item;
+    XB_UNUSED(item);
 
     if (argc == 1) {
       printf("Please add option:shutdown reboot sleep or stop.\r\n");

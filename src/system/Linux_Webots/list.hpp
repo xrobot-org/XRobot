@@ -3,6 +3,7 @@
 #include <mutex.hpp>
 
 #include "om.h"
+#include "om_list.h"
 
 namespace System {
 template <typename Data>
@@ -15,28 +16,22 @@ class List {
 
   List() { INIT_LIST_HEAD(&(this->head_)); }
 
-  bool Add(Data data, uint32_t timeout = UINT32_MAX) {
-    mutex_.Lock(timeout);
-    Node* node = static_cast<Node*>(malloc(sizeof(Node)));
-    memcpy(&(node->data_), &data, sizeof(data));
-    om_list_add(&(node->node_), &(this->head_));
+  bool Add(Node& node) {
+    mutex_.Lock();
+    om_list_add(&(node.node_), &(this->head_));
     mutex_.Unlock();
 
     return true;
   }
 
-  bool AddTail(Data data, uint32_t timeout = UINT32_MAX) {
-    mutex_.Lock(timeout);
-    Node* node = static_cast<Node*>(malloc(sizeof(Node)));
-    memcpy(&(node->data_), &data, sizeof(data));
-    om_list_add_tail(&(node->node_), (this->head_));
+  void Delete(Node& node) {
+    mutex_.Lock();
+    om_list_del(node.node_.next);
     mutex_.Unlock();
-
-    return true;
   }
 
   void Foreach(bool (*fun)(Data&, void*), void* arg) {
-    mutex_.Lock(UINT32_MAX);
+    mutex_.Lock();
     om_list_head_t* pos = NULL;
     om_list_for_each(pos, &(this->head_)) {
       Node* data = om_list_entry(pos, Node, node_);

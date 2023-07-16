@@ -66,7 +66,7 @@ RMMotor::RMMotor(const Param &param, const char *name)
   }
 
   auto rx_callback = [](Can::Pack &rx, RMMotor *motor) {
-    motor->recv_.OverwriteFromISR(rx);
+    motor->recv_.Overwrite(rx);
 
     motor->last_online_time_ = bsp_time_get();
 
@@ -85,7 +85,7 @@ RMMotor::RMMotor(const Param &param, const char *name)
 bool RMMotor::Update() {
   Can::Pack pack;
 
-  while (this->recv_.Receive(pack, 0)) {
+  while (this->recv_.Receive(pack)) {
     if ((pack.index == this->param_.id_feedback) &&
         (MOTOR_NONE != this->param_.model)) {
       this->Decode(pack);

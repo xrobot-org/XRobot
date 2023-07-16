@@ -34,7 +34,7 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
   }
 
   auto event_callback = [](ChassisEvent event, WheelLeg *leg) {
-    leg->ctrl_lock_.Take(UINT32_MAX);
+    leg->ctrl_lock_.Wait(UINT32_MAX);
 
     switch (event) {
       case SET_MODE_RELAX:
@@ -53,7 +53,7 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
         break;
     }
 
-    leg->ctrl_lock_.Give();
+    leg->ctrl_lock_.Post();
   };
 
   Component::CMD::RegisterEvent<WheelLeg *, ChassisEvent>(
@@ -64,6 +64,8 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
 
     auto gyro_sub = Message::Subscriber("chassis_gyro", leg->gyro_);
 
+    uint32_t last_online_time = bsp_time_get_ms();
+
     while (1) {
       eulr_sub.DumpData();
 
@@ -73,7 +75,7 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
 
       leg->wheel_polor_.Publish(leg->feedback_[0].whell_polar);
 
-      leg->thread_.SleepUntil(5);
+      leg->thread_.SleepUntil(5, last_online_time);
     }
   };
 

@@ -26,11 +26,13 @@ Dartgimbal::Dartgimbal(Dartgimbal::Param& param, float control_freq)
       event_callback, this, this->param_.EVENT_MAP);
 
   auto thread_fn = [](Dartgimbal* dart_gimbal) {
+    uint32_t last_online_time = bsp_time_get_ms();
+
     while (1) {
       dart_gimbal->UpdateFeedback();
       dart_gimbal->Control();
 
-      dart_gimbal->thread_.SleepUntil(2);
+      dart_gimbal->thread_.SleepUntil(2, last_online_time);
     }
   };
 
@@ -53,11 +55,6 @@ void Dartgimbal::Control() {
       this->setpoint_.yaw, this->yaw_motor_.GetSpeed(),
       this->yaw_motor_.GetAngle() + (M_2PI - this->param_.yaw_zero), dt_);
   this->yaw_motor_.Control(yaw_out_);
-
-
-
-
-
 
   this->pitch_actr_.Control(
       this->setpoint_.pitch * this->param_.pitch_actr.max_range, dt_);

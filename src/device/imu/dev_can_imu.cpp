@@ -11,7 +11,7 @@ IMU::IMU(IMU::Param &param)
       eulr_tp_((param.tp_name_prefix + std::string("_eulr")).c_str()) {
   auto rx_callback = [](Can::Pack &rx, IMU *imu) {
     if (rx.index == imu->param_.index && rx.data[0] == IMU_DEVICE_ID) {
-      imu->recv_.SendFromISR(rx);
+      // imu->recv_.SendFromISR(rx);
     }
 
     return true;
@@ -41,7 +41,7 @@ IMU::IMU(IMU::Param &param)
 
 void IMU::Update() {
   Can::Pack rx;
-  while (this->recv_.Receive(rx, 0)) {
+  while (this->recv_.Receive(rx)) {
     this->Decode(rx);
     this->online_ = true;
     this->last_online_time_ = bsp_time_get();

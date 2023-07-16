@@ -6,15 +6,12 @@ Timer* Timer::self_ = NULL;
 
 Timer::Timer() { self_ = this; }
 
-void Timer::Start() {
-  while (1) {
-    Timer::self_->list_.Foreach(Timer::Refresh, NULL);
-    Timer::self_->thread_.SleepUntil(1);
-  }
-}
-
 bool Timer::Refresh(ControlBlock& block, void* arg) {
-  (void)arg;
+  XB_UNUSED(arg);
+
+  if (!block.running) {
+    return true;
+  }
 
   block.count++;
   if (block.cycle <= block.count) {
