@@ -15,14 +15,13 @@
 
 using namespace Device;
 
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
 static const uint8_t RELAX_CMD[8] = {0X7F, 0XFF, 0X7F, 0XF0,
                                      0X00, 0X00, 0X07, 0XFF};
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
+
 static const uint8_t ENABLE_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF,
                                       0XFF, 0XFF, 0XFF, 0XFC};
 /*
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
+
 static const uint8_t RESET_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF,
                                      0XFF, 0XFF, 0XFF, 0XFD};
 */

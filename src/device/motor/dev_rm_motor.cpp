@@ -19,11 +19,10 @@
 
 using namespace Device;
 
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
 uint8_t RMMotor::motor_tx_buff_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER][8];
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
+
 uint8_t RMMotor::motor_tx_flag_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
+
 uint8_t RMMotor::motor_tx_map_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 
 RMMotor::RMMotor(const Param &param, const char *name)

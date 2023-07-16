@@ -82,7 +82,7 @@ class BaseMotor {
     return 0;
   }
 
-  char name_[25];  // NOLINT(modernize-avoid-c-arrays)
+  char name_[25]{};
 
   Feedback feedback_;
 

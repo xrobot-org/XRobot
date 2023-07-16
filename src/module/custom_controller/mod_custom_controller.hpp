@@ -19,7 +19,7 @@ class CustomController {
 
   struct __attribute__((packed)) UartData {
     uint8_t start_frame;
-    uint8_t data[3];  // NOLINT(modernize-avoid-c-arrays)
+    uint8_t data[3];
     uint8_t end_frame;
   };
 

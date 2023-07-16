@@ -56,7 +56,7 @@ AHRS::AHRS()
          Message::Topic<Component::Type::Vector3>::Find("imu_gyro")))
         .RegisterCallback(gyro_cb, ahrs);
 
-    System::Thread::Sleep(200);
+    System::Thread::Sleep(10);
 
     while (1) {
       ahrs->ready_.Wait(UINT32_MAX);

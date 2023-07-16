@@ -10,11 +10,10 @@
 
 using namespace Device;
 
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
 uint8_t RMDMotor::motor_tx_buff_[BSP_CAN_NUM][8];
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
+
 uint8_t RMDMotor::motor_tx_flag_[BSP_CAN_NUM];
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
+
 uint8_t RMDMotor::motor_tx_map_[BSP_CAN_NUM];
 
 RMDMotor::RMDMotor(const Param &param, const char *name)

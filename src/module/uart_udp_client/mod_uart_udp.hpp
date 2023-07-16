@@ -184,15 +184,15 @@ class UartToUDP {
 
   Param param_;
 
-  std::array<Device::WearLab::UartData, BSP_UART_NUM> uart_rx_;
-  std::array<Device::WearLab::UartData, BSP_UART_NUM> uart_tx_;
-  std::array<Device::WearLab::UdpData, BSP_UART_NUM> udp_rx_;
-  std::array<Device::WearLab::UdpData, BSP_UART_NUM> udp_tx_;
-  std::array<Device::WearLab::CanHeader, BSP_UART_NUM> header_;
+  std::array<Device::WearLab::UartData, BSP_UART_NUM> uart_rx_{};
+  std::array<Device::WearLab::UartData, BSP_UART_NUM> uart_tx_{};
+  std::array<Device::WearLab::UdpData, BSP_UART_NUM> udp_rx_{};
+  std::array<Device::WearLab::UdpData, BSP_UART_NUM> udp_tx_{};
+  std::array<Device::WearLab::CanHeader, BSP_UART_NUM> header_{};
   std::array<System::Thread, BSP_UART_NUM> uart_rx_thread_;
   std::array<System::Thread, BSP_UART_NUM> uart_tx_thread_;
 
-  std::array<System::Semaphore*, BSP_UART_NUM> udp_rx_sem_;
+  std::array<System::Semaphore*, BSP_UART_NUM> udp_rx_sem_{};
 
   System::Queue<Device::WearLab::UdpData> udp_trans_buff;
 
@@ -205,10 +205,10 @@ class UartToUDP {
 
   System::Semaphore udp_tx_sem_;
 
-  bsp_udp_client_t udp_client_;
+  bsp_udp_client_t udp_client_{};
 
-  std::array<uint32_t, BSP_UART_NUM> count;
+  std::array<uint32_t, BSP_UART_NUM> count{};
 
-  std::array<uint32_t, BSP_UART_NUM> last_log_time;
+  std::array<uint32_t, BSP_UART_NUM> last_log_time{};
 };
 }  // namespace Module

@@ -29,11 +29,11 @@ class AHRS {
 
   Message::Topic<Component::Type::Eulr> eulr_tp_;
 
-  Component::Type::Quaternion quat_;
-  Component::Type::Eulr eulr_;
+  Component::Type::Quaternion quat_{};
+  Component::Type::Eulr eulr_{};
 
-  Component::Type::Vector3 accl_;
-  Component::Type::Vector3 gyro_;
+  Component::Type::Vector3 accl_{};
+  Component::Type::Vector3 gyro_{};
 
   System::Term::Command<AHRS *> cmd_;
 

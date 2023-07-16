@@ -15,12 +15,12 @@ void robot_init();
 namespace Robot {
 class Infantry {
  public:
-  typedef struct {
+  typedef struct Param {
     Module::RMChassis::Param chassis;
     Module::Gimbal::Param gimbal;
     Module::Launcher::Param launcher;
-    Device::BMI088::Rotation bmi088_rot;
-    Device::Cap::Param cap;
+    Device::BMI088::Rotation bmi088_rot{};
+    Device::Cap::Param cap{};
   } Param;
 
   Component::CMD cmd_;

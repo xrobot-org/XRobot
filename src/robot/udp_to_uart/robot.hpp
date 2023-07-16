@@ -8,9 +8,9 @@ void robot_init();
 namespace Robot {
 class UdpToUart {
  public:
-  typedef struct {
-    Device::BlinkLED::Param led;
-    Module::UartToUDP::Param uart_udp;
+  typedef struct Param {
+    Device::BlinkLED::Param led{};
+    Module::UartToUDP::Param uart_udp{};
     Module::TopicShareClientUart::Param topic_share;
   } Param;
 

@@ -34,9 +34,8 @@
 
 using namespace Device;
 
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
 static uint8_t rxbuf[REF_LEN_RX_BUFF];
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
+
 Referee::UIPack Referee::ui_pack_;
 Referee *Referee::self_;
 

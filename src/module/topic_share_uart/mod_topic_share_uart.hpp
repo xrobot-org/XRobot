@@ -66,7 +66,7 @@ class TopicShareClientUart {
 
   Message::Remote remote_;
 
-  std::array<uint8_t, 128> recv_buff;
+  std::array<uint8_t, 128> recv_buff{};
 
   System::Thread thread_;
 };

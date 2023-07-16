@@ -51,17 +51,17 @@ class AI {
   bool PackCMD();
 
  private:
-  bool ref_updated_;
+  bool ref_updated_ = false;
   float last_online_time_ = 0.0f;
 
-  Protocol_DownPackage_t form_host_;
+  Protocol_DownPackage_t form_host_{};
 
   struct {
-    RefereePckage ref;
-    MCUPckage mcu;
+    RefereePckage ref{};
+    MCUPckage mcu{};
   } to_host_;
 
-  RefForAI ref_;
+  RefForAI ref_{};
 
   System::Thread thread_;
 
@@ -69,9 +69,9 @@ class AI {
 
   Message::Topic<Component::CMD::Data> cmd_tp_;
 
-  Component::CMD::Data cmd_;
+  Component::CMD::Data cmd_{};
 
-  Component::Type::Quaternion quat_;
-  Device::Referee::Data raw_ref_;
+  Component::Type::Quaternion quat_{};
+  Device::Referee::Data raw_ref_{};
 };
 }  // namespace Device

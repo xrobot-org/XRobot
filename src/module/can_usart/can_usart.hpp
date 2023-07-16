@@ -14,7 +14,7 @@ class CantoUsart {
     uint8_t start_frame;
     uint32_t id : 31;
     uint8_t type : 1;
-    uint8_t data[8];  // NOLINT(modernize-avoid-c-arrays)
+    uint8_t data[8];
     uint8_t end_frame;
   };
 

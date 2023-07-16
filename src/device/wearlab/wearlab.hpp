@@ -5,7 +5,7 @@ class WearLab {
  public:
   typedef struct __attribute__((packed)) {
     uint32_t id;
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays)
+
     uint8_t data[8];
     uint8_t end;
   } UartData;
@@ -16,8 +16,8 @@ class WearLab {
     uint8_t area_id;            //区域ID
     uint16_t device_type : 12;  //设备类型
     uint8_t data_type : 6;      //数据类型
-                                // NOLINTNEXTLINE(modernize-avoid-c-arrays)
-    uint8_t data[8];            //数据
+
+    uint8_t data[8];  //数据
   } UdpData;
 
   typedef union {
@@ -51,7 +51,6 @@ class WearLab {
   } CanData3;
 
   typedef struct __attribute__((packed)) {
-    // NOLINTNEXTLINE(modernize-avoid-c-arrays)
     int16_t data[4];
   } CanData4;
 };

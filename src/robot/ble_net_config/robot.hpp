@@ -13,8 +13,8 @@ class NetConfig {
   } Param;
 
   Device::BlinkLED led_;
-  Module::BleNetConfig ble_net_config_;
-  Device::NetConfig net_config_;
+  Module::BleNetConfig ble_net_config_{};
+  Device::NetConfig net_config_{};
   Module::TopicShareServerUart<Device::NetConfig::Data> topic_share_;
 
   NetConfig(Param& param) : led_(param.led), topic_share_(param.topic_share) {}

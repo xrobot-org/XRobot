@@ -10,7 +10,7 @@ class Can {
  public:
   typedef struct {
     uint32_t index;
-    uint8_t data[8];  // NOLINT(modernize-avoid-c-arrays)
+    uint8_t data[8];
   } Pack;
 
   Can();

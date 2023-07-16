@@ -110,7 +110,7 @@ class CMD {
 
   Message::Event event_;
 
-  std::array<Data, CTRL_SOURCE_NUM> data_;
+  std::array<Data, CTRL_SOURCE_NUM> data_{};
 
   Message::Topic<Data> data_in_tp_;
   Message::Topic<ChassisCMD> chassis_data_tp_;

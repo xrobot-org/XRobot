@@ -8,9 +8,9 @@ void robot_init();
 namespace Robot {
 class WearLabIMU {
  public:
-  typedef struct {
-    Device::BMI088::Rotation bmi088_rot;
-    Device::BlinkLED::Param led;
+  typedef struct Param {
+    Device::BMI088::Rotation bmi088_rot{};
+    Device::BlinkLED::Param led{};
   } Param;
 
   Device::AHRS ahrs_;

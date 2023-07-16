@@ -71,9 +71,9 @@ class NetConfig {
     thread_.Create(thread_fn, this, "net_config", 2048, System::Thread::HIGH);
   }
 
-  Data data_;
+  Data data_{};
 
-  Status status_;
+  Status status_ = NOT_CONNECTED;
 
   uint32_t last_config_time = 0;
 

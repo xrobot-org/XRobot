@@ -136,7 +136,7 @@ class MicroSwitchLimit : public LimitCheck {
 
   bool ReachLimit() { return sw_data_.status == MicroSwitch::ON; }
 
-  MicroSwitch::Data sw_data_;
+  MicroSwitch::Data sw_data_{};
 };
 
 /* 自归位限位，在重力作用下自由运动一段时间后就为零点 */
