@@ -12,6 +12,7 @@
 #include <memory.hpp>
 #include <queue.hpp>
 #include <semaphore.hpp>
+#include <signal.hpp>
 #include <string>
 #include <term.hpp>
 #include <thread.hpp>
