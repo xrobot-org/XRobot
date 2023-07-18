@@ -29,4 +29,4 @@
 #define MS_HELLO_MESSAGE "Welcome to use XRobot!"
 
 /* 登陆命令 */
-#define MS_INIT_COMMAND "task_info"
+#define MS_INIT_COMMAND ""
