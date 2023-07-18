@@ -4,10 +4,6 @@
 #include "dev_can.hpp"
 #include "dev_can_imu.hpp"
 
-#if IMU_USE_IN_WEARLAB
-#include "wearlab.hpp"
-#endif
-
 namespace Module {
 class CanIMU {
  public:
