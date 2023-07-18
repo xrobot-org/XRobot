@@ -6,6 +6,7 @@
 #include "bsp_time.h"
 #include "bsp_uart.h"
 #include "bsp_udp_client.h"
+#include "om.hpp"
 #include "om_log.h"
 #include "udp_param.h"
 #include "wearlab.hpp"
@@ -14,17 +15,40 @@ namespace Module {
 class UartToUDP {
  public:
   typedef struct {
+    uint32_t id;
     int port;
     bsp_uart_t start_uart;
     bsp_uart_t end_uart;
   } Param;
 
+  typedef struct __attribute__((packed)) {
+    Device::WearLab::CanHeader id;
+    Component::Type::Quaternion quat_;
+    Component::Type::Vector3 gyro_;
+    Component::Type::Vector3 accl_;
+    uint16_t res;
+  } Data;
+
+  typedef struct __attribute__((packed)) {
+    uint32_t time;
+    Data data;
+  } TimedData;
+
   UartToUDP(Param& param)
-      : param_(param), udp_trans_buff(128), num_lock_(true), udp_tx_sem_(0) {
+      : param_(param),
+        wl_imu_data_("wl_imu_data"),
+        udp_trans_buff(128),
+        num_lock_(true),
+        udp_tx_sem_(0) {
     for (int i = param.start_uart; i <= param_.end_uart; i++) {
       udp_rx_sem_[i] = new System::Semaphore(false);
       count[i] = 0;
       last_log_time[i] = 0;
+    }
+
+    for (auto& buff : wl_remote_) {
+      buff = new Message::Remote(512, 10);
+      buff->AddTopic("wl_imu_data");
     }
 
     bsp_dns_addr_t addrs;
@@ -87,24 +111,14 @@ class UartToUDP {
                       uart_udp->uart_rx_[uart].end);
           continue;
         } else {
+          uint32_t time = bsp_time_get_ms();
+
           uart_udp->header_[uart].raw = uart_udp->uart_rx_[uart].id;
-          uart_udp->udp_tx_[uart].time = bsp_time_get_ms();
-          uart_udp->udp_tx_[uart].device_id =
-              uart_udp->header_[uart].data.device_id;
-          uart_udp->udp_tx_[uart].area_id = uart;
-          uart_udp->udp_tx_[uart].device_type =
-              uart_udp->header_[uart].data.device_type;
-          uart_udp->udp_tx_[uart].data_type =
-              uart_udp->header_[uart].data.data_type;
-          memcpy(uart_udp->udp_tx_[uart].data, uart_udp->uart_rx_[uart].data,
-                 8);
+
           uart_udp->count[uart]++;
 
-          if (uart_udp->udp_tx_[uart].time - uart_udp->last_log_time[uart] >
-              1000) {
-            while (uart_udp->udp_tx_[uart].time -
-                       uart_udp->last_log_time[uart] >
-                   1000) {
+          if (time - uart_udp->last_log_time[uart] > 1000) {
+            if (time - uart_udp->last_log_time[uart] > 1000) {
               uart_udp->last_log_time[uart] += 1000;
             }
             OMLOG_NOTICE("uart %d get count %d at 1s", uart,
@@ -112,8 +126,11 @@ class UartToUDP {
             uart_udp->count[uart] = 0;
           }
 
-          uart_udp->udp_trans_buff.Send(uart_udp->udp_tx_[uart]);
-          uart_udp->udp_tx_sem_.Post();
+          if (uart_udp->wl_remote_[uart_udp->header_[uart].data.device_id]
+                  ->PraseData(uart_udp->uart_rx_[uart].data,
+                              sizeof(uart_udp->uart_rx_[uart].data))) {
+            OMLOG_PASS("Topic Pack prase ok.");
+          }
         }
       }
     };
@@ -138,8 +155,24 @@ class UartToUDP {
       }
     };
 
+    auto msg_rx_cb = [](Data& data, UartToUDP* udp) {
+      TimedData timed_date = {bsp_time_get_ms(), data};
+      udp->udp_trans_buff.Send(timed_date);
+      udp->udp_tx_sem_.Post();
+
+      static int i = 0;
+
+      i++;
+
+      OMLOG_WARNING("%d", i);
+
+      return true;
+    };
+
+    wl_imu_data_.RegisterCallback(msg_rx_cb, this);
+
     auto udp_tx_thread_fn = [](UartToUDP* uart_udp) {
-      std::array<Device::WearLab::UdpData, 128> trans_buff;
+      std::array<TimedData, 128> trans_buff;
       uint32_t buff_num = 0;
 
       while (true) {
@@ -187,14 +220,17 @@ class UartToUDP {
   std::array<Device::WearLab::UartData, BSP_UART_NUM> uart_rx_{};
   std::array<Device::WearLab::UartData, BSP_UART_NUM> uart_tx_{};
   std::array<Device::WearLab::UdpData, BSP_UART_NUM> udp_rx_{};
-  std::array<Device::WearLab::UdpData, BSP_UART_NUM> udp_tx_{};
   std::array<Device::WearLab::CanHeader, BSP_UART_NUM> header_{};
   std::array<System::Thread, BSP_UART_NUM> uart_rx_thread_;
   std::array<System::Thread, BSP_UART_NUM> uart_tx_thread_;
 
+  Message::Topic<Data> wl_imu_data_;
+
+  std::array<Message::Remote*, 32> wl_remote_;
+
   std::array<System::Semaphore*, BSP_UART_NUM> udp_rx_sem_{};
 
-  System::Queue<Device::WearLab::UdpData> udp_trans_buff;
+  System::Queue<TimedData> udp_trans_buff;
 
   System::Semaphore num_lock_;
   int num_ = 0;
