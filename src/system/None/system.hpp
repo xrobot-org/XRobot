@@ -8,6 +8,7 @@
 #include <thread.hpp>
 #include <timer.hpp>
 
+#include "bsp_time.h"
 #include "om.hpp"
 
 namespace System {
@@ -18,8 +19,13 @@ void Start(RobotParam... param) {
   new Term();
   new Database();
 
-  RobotType robot(param...);
+  static auto xrobot_debug_handle = new RobotType(param...);
 
-  Timer::Start();
+  uint32_t last_online_time = bsp_time_get_ms();
+
+  while (1) {
+    Timer::self_->list_.Foreach(Timer::Refresh, NULL);
+    Timer::self_->thread_.SleepUntil(1, last_online_time);
+  }
 }
 }  // namespace System

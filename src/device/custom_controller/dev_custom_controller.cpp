@@ -12,7 +12,7 @@ CustomController::CustomController()
     : event_(Message::Event::FindEvent("cmd_event")) {
   auto rx_cplt_callback = [](void *arg) {
     CustomController *cust_ctrl = static_cast<CustomController *>(arg);
-    cust_ctrl->packet_recv_.GiveFromISR();
+    cust_ctrl->packet_recv_.Post();
   };
 
   bsp_uart_register_callback(BSP_UART_EXT, BSP_UART_RX_CPLT_CB,
@@ -20,7 +20,7 @@ CustomController::CustomController()
   Component::CMD::RegisterController(this->controller_angel_);
   auto controller_recv_thread = [](CustomController *cust_ctrl) {
     while (1) {
-      if (cust_ctrl->packet_recv_.Take(20)) {
+      if (cust_ctrl->packet_recv_.Wait(20)) {
         cust_ctrl->Prase();
         cust_ctrl->controller_angel_.Publish(cust_ctrl->controller_data_);
       } else {

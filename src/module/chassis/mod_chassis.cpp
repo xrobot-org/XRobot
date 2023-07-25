@@ -65,7 +65,7 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
   ASSERT(this->setpoint_.motor_rotational_speed);
 
   auto event_callback = [](ChassisEvent event, Chassis* chassis) {
-    chassis->ctrl_lock_.Take(UINT32_MAX);
+    chassis->ctrl_lock_.Wait(UINT32_MAX);
 
     switch (event) {
       case SET_MODE_RELAX:
@@ -84,7 +84,7 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
         break;
     }
 
-    chassis->ctrl_lock_.Give();
+    chassis->ctrl_lock_.Post();
   };
 
   Component::CMD::RegisterEvent<Chassis*, ChassisEvent>(event_callback, this,
@@ -99,6 +99,8 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
 
     auto cap_sub = Message::Subscriber("cap_info", chassis->cap_);
 
+    uint32_t last_online_time = bsp_time_get_ms();
+
     while (1) {
       /* 读取控制指令、电容、裁判系统、电机反馈 */
       yaw_sub.DumpData();
@@ -109,13 +111,13 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
       /* 更新反馈值 */
       chassis->PraseRef();
 
-      chassis->ctrl_lock_.Take(UINT32_MAX);
+      chassis->ctrl_lock_.Wait(UINT32_MAX);
       chassis->UpdateFeedback();
       chassis->Control();
-      chassis->ctrl_lock_.Give();
+      chassis->ctrl_lock_.Post();
 
       /* 运行结束，等待下一次唤醒 */
-      chassis->thread_.SleepUntil(2);
+      chassis->thread_.SleepUntil(2, last_online_time);
     }
   };
 

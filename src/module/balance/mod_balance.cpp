@@ -42,7 +42,7 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
   }
 
   auto event_callback = [](ChassisEvent event, Balance* chassis) {
-    chassis->ctrl_lock_.Take(UINT32_MAX);
+    chassis->ctrl_lock_.Wait(UINT32_MAX);
 
     switch (event) {
       case SET_MODE_RELAX:
@@ -61,7 +61,7 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
         break;
     }
 
-    chassis->ctrl_lock_.Give();
+    chassis->ctrl_lock_.Post();
   };
 
   Component::CMD::RegisterEvent<Balance*, ChassisEvent>(event_callback, this,
@@ -76,6 +76,8 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
     auto leg_sub = Message::Subscriber("leg_whell_polor", chassis->leg_);
     auto cap_sub = Message::Subscriber("cap_info", chassis->cap_);
 
+    uint32_t last_online_time = bsp_time_get_ms();
+
     while (1) {
       /* 读取控制指令、电容、裁判系统、电机反馈 */
       cmd_sub.DumpData();
@@ -88,14 +90,14 @@ Balance<Motor, MotorParam>::Balance(Param& param, float control_freq)
 
       /* 更新反馈值 */
       chassis->PraseRef();
-      chassis->ctrl_lock_.Take(UINT32_MAX);
+      chassis->ctrl_lock_.Wait(UINT32_MAX);
       chassis->UpdateFeedback();
       chassis->UpdateStatus();
       chassis->Control();
-      chassis->ctrl_lock_.Give();
+      chassis->ctrl_lock_.Post();
 
       /* 运行结束，等待下一次唤醒 */
-      chassis->thread_.SleepUntil(2);
+      chassis->thread_.SleepUntil(2, last_online_time);
     }
   };
 

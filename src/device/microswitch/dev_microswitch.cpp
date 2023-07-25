@@ -20,7 +20,7 @@ MicroSwitch::MicroSwitch(Param &param) : param_(param) {
         if (rx.data[i * 2] == i) {
           sw->data_.id = sw->param_.id * 4 + i;
           sw->data_.status = static_cast<Status>(rx.data[i * 2 + 1]);
-          sw->topic_->PublishFromISR(sw->data_);
+          sw->topic_->Publish(sw->data_);
         }
       }
     }

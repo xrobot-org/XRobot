@@ -22,6 +22,8 @@ IMU::IMU(IMU::Param& param)
   wb_gyro_enable(this->gyro_handle_, 1);
 
   auto thread_fn = [](IMU* imu) {
+    uint32_t last_online_time = bsp_time_get_ms();
+
     while (1) {
       imu->accl_tp_.Publish(imu->accl_);
       imu->gyro_tp_.Publish(imu->gyro_);
@@ -29,7 +31,7 @@ IMU::IMU(IMU::Param& param)
 
       imu->Update();
 
-      imu->thread_.SleepUntil(1);
+      imu->thread_.SleepUntil(1, last_online_time);
     }
   };
 

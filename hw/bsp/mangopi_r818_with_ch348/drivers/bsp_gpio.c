@@ -12,7 +12,7 @@ inline int8_t bsp_gpio_write_pin(bsp_gpio_t gpio, bool value) {
   (void)gpio;
 
   if (dev == -1) {
-    dev = open("/sys/class/leds/xrobot:system:blink_led/brightness",
+    dev = open("/sys/class/leds/blink_led/brightness",
                O_WRONLY | O_CREAT | O_TRUNC, DEFFILEMODE);
   }
 

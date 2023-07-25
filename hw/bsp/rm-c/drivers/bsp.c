@@ -6,7 +6,7 @@
 #include "stm32f4xx_hal_tim.h"
 #include "stm32f4xx_it.h"
 
-extern TIM_HandleTypeDef htim2;
+extern TIM_HandleTypeDef htim6;
 
 void bsp_init() {
   uwTickPrio = 0;
@@ -43,10 +43,8 @@ void bsp_init() {
   MX_USART6_UART_Init();
   MX_TIM7_Init();
   MX_USB_OTG_FS_PCD_Init();
-  MX_TIM14_Init();
-  HAL_TIM_Base_Start(&htim14);
 #if !MCU_DEBUG_BUILD
   MX_IWDG_Init();
 #endif
-  HAL_TIM_Base_Stop_IT(&htim2);
+  HAL_TIM_Base_Stop_IT(&htim6);
 }

@@ -26,6 +26,6 @@ class MicroSwitch {
 
   Param& param_;
 
-  Data data_;
+  Data data_{};
 };
 }  // namespace Device

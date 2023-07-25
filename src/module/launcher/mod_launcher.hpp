@@ -151,13 +151,13 @@ class Launcher {
   static void DrawUIDynamic(Launcher *launcher);
 
  private:
-  float last_wakeup_;
+  float last_wakeup_ = 0.0f;
 
-  float now_;
+  float now_ = 0.0f;
 
-  float dt_;
+  float dt_ = 0.0f;
 
-  float trig_angle_;
+  float trig_angle_ = 0.0f;
 
   Param param_;
 
@@ -166,7 +166,7 @@ class Launcher {
   /* PID计算的目标值 */
   struct {
     std::array<float, 2> fric_rpm_; /* 摩擦轮电机转速，单位：RPM */
-    float trig_angle_;              /* 拨弹电机角度，单位：弧度 */
+    float trig_angle_ = 0.0f;       /* 拨弹电机角度，单位：弧度 */
   } setpoint_;
 
   HeatControl heat_ctrl_;

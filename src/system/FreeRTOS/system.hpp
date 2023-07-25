@@ -22,7 +22,7 @@ void Start(RobotParam... param) {
     Timer* timer = static_cast<Timer*>(pvPortMalloc(sizeof(Timer)));
     new (timer) Timer();
 
-    RobotType robot(param...);
+    static auto xrobot_debug_handle = new RobotType(param...);
 
     while (1) {
       System::Thread::Sleep(UINT32_MAX);

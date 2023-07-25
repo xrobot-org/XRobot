@@ -73,16 +73,15 @@ class BaseMotor {
     return 0;
   }
 
-  // NOLINTNEXTLINE(modernize-avoid-c-arrays)
-  char name_[20];
+  char name_[20]{};
 
-  Feedback feedback_;
+  Feedback feedback_{};
 
   float last_online_time_ = 0.0f;
 
-  Component::Type::CycleValue last_pos_;
+  Component::Type::CycleValue last_pos_ = 0.0f;
 
-  float last_sensor_time_;
+  float last_sensor_time_ = 0.0f;
 
   WbDeviceTag handle_;
 

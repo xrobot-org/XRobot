@@ -71,11 +71,10 @@ class RMMotor : public BaseMotor {
 
   float output_;
 
-  // NOLINTNEXTLINE(modernize-avoid-c-arrays)
   static uint8_t motor_tx_buff_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER][8];
-  // NOLINTNEXTLINE(modernize-avoid-c-arrays)
+
   static uint8_t motor_tx_flag_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
-  // NOLINTNEXTLINE(modernize-avoid-c-arrays)
+
   static uint8_t motor_tx_map_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 
   System::Queue<Can::Pack> recv_ = System::Queue<Can::Pack>(1);

@@ -1,6 +1,5 @@
 #include "dev_mit_motor.hpp"
 
-#include "bsp_delay.h"
 #include "bsp_time.h"
 
 #define P_MIN -12.5f
@@ -16,14 +15,13 @@
 
 using namespace Device;
 
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
 static const uint8_t RELAX_CMD[8] = {0X7F, 0XFF, 0X7F, 0XF0,
                                      0X00, 0X00, 0X07, 0XFF};
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
+
 static const uint8_t ENABLE_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF,
                                       0XFF, 0XFF, 0XFF, 0XFC};
 /*
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
+
 static const uint8_t RESET_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF,
                                      0XFF, 0XFF, 0XFF, 0XFD};
 */
@@ -36,7 +34,7 @@ MitMotor::MitMotor(const Param &param, const char *name)
     : BaseMotor(name, param.reverse), param_(param) {
   auto rx_callback = [](Can::Pack &rx, MitMotor *motor) {
     if (rx.data[0] == motor->param_.id) {
-      motor->recv_.OverwriteFromISR(rx);
+      motor->recv_.Overwrite(rx);
     }
 
     return true;
@@ -66,7 +64,7 @@ MitMotor::MitMotor(const Param &param, const char *name)
 bool MitMotor::Update() {
   Can::Pack pack;
 
-  while (this->recv_.Receive(pack, 0)) {
+  while (this->recv_.Receive(pack)) {
     this->Decode(pack);
     last_online_time_ = bsp_time_get();
   }

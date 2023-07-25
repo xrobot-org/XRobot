@@ -19,7 +19,7 @@ void Start(RobotParam... param) {
     new Database();
     new Timer();
 
-    RobotType robot(param...);
+    static auto xrobot_debug_handle = new RobotType(param...);
 
     while (1) {
       poll(NULL, 0, UINT32_MAX);

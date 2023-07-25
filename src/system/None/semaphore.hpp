@@ -7,10 +7,8 @@ class Semaphore {
  public:
   Semaphore(bool init_count);
   Semaphore(uint16_t max_count, uint16_t init_count);
-  void Give();
-  bool Take(uint32_t timeout);
-  void GiveFromISR();
-  bool TakeFromISR();
+  void Post();
+  bool Wait(uint32_t timeout = UINT32_MAX);
 
  private:
   uint32_t count_;

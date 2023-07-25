@@ -6,8 +6,6 @@
 
 #include <component.hpp>
 
-// NOLINTBEGIN(modernize-avoid-c-arrays)
-
 #define UI_DEFAULT_WIDTH (0x01)
 #define UI_CHAR_DEFAULT_WIDTH (0x02)
 
@@ -54,7 +52,7 @@ class UI {
   } GraphicOperation;
 
   typedef struct __attribute__((packed)) {
-    uint8_t name[3];  // NOLINT(modernize-avoid-c-arrays)
+    uint8_t name[3];
     uint16_t op : 3;
     uint16_t type_ele : 3;
     uint16_t layer : 4;
@@ -70,7 +68,7 @@ class UI {
   } Ele;
   typedef struct __attribute__((packed)) {
     Ele graphic;
-    uint8_t str[30];  // NOLINT(modernize-avoid-c-arrays)
+    uint8_t str[30];
   } Str;
   typedef struct __attribute__((packed)) {
     uint8_t op;
@@ -173,5 +171,3 @@ class UI {
   };
 };
 }  // namespace Component
-
-// NOLINTEND(modernize-avoid-c-arrays)

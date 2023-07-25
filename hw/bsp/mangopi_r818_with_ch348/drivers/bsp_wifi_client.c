@@ -42,7 +42,15 @@ bool bsp_wifi_connected() {
   status[2] = '\0';
   if (0 == strcmp("up", status)) {
     return true;
-  } else {
-    return false;
   }
+
+  ret = open("/sys/class/net/wlan1/operstate", O_RDONLY);
+
+  (void)read(ret, status, 2);
+  status[2] = '\0';
+  if (0 == strcmp("up", status)) {
+    return true;
+  }
+
+  return false;
 }

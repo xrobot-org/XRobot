@@ -3,7 +3,6 @@
 #include <comp_type.hpp>
 #include <comp_utils.hpp>
 
-#include "bsp_delay.h"
 #include "bsp_time.h"
 
 using namespace Module;
@@ -35,7 +34,7 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
   }
 
   auto event_callback = [](ChassisEvent event, WheelLeg *leg) {
-    leg->ctrl_lock_.Take(UINT32_MAX);
+    leg->ctrl_lock_.Wait(UINT32_MAX);
 
     switch (event) {
       case SET_MODE_RELAX:
@@ -54,7 +53,7 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
         break;
     }
 
-    leg->ctrl_lock_.Give();
+    leg->ctrl_lock_.Post();
   };
 
   Component::CMD::RegisterEvent<WheelLeg *, ChassisEvent>(
@@ -65,6 +64,8 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
 
     auto gyro_sub = Message::Subscriber("chassis_gyro", leg->gyro_);
 
+    uint32_t last_online_time = bsp_time_get_ms();
+
     while (1) {
       eulr_sub.DumpData();
 
@@ -74,7 +75,7 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
 
       leg->wheel_polor_.Publish(leg->feedback_[0].whell_polar);
 
-      leg->thread_.SleepUntil(5);
+      leg->thread_.SleepUntil(5, last_online_time);
     }
   };
 
@@ -176,7 +177,7 @@ void WheelLeg::Control() {
       for (uint8_t i = 0; i < LEG_NUM; i++) {
         for (int j = 0; j < LEG_MOTOR_NUM; j++) {
           this->leg_motor_[i * LEG_MOTOR_NUM + j]->Relax();
-          bsp_delay(1);
+          System::Thread::Sleep(1);
         }
       }
       break;
@@ -222,7 +223,7 @@ void WheelLeg::Control() {
 
           this->leg_motor_[i * LEG_MOTOR_NUM + j]->SetPos(
               angle + this->param_.motor_zero[i * LEG_MOTOR_NUM + j]);
-          bsp_delay(1);
+          System::Thread::Sleep(1);
         }
       }
       break;

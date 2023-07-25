@@ -53,6 +53,29 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
+void MX_GPIO_Init(void);
+void MX_DMA_Init(void);
+void MX_ADC1_Init(void);
+void MX_ADC3_Init(void);
+void MX_CAN1_Init(void);
+void MX_CAN2_Init(void);
+void MX_I2C1_Init(void);
+void MX_SPI1_Init(void);
+void MX_TIM4_Init(void);
+void MX_TIM5_Init(void);
+void MX_USART3_UART_Init(void);
+void MX_TIM8_Init(void);
+void MX_RNG_Init(void);
+void MX_I2C2_Init(void);
+void MX_I2C3_Init(void);
+void MX_TIM1_Init(void);
+void MX_TIM3_Init(void);
+void MX_TIM10_Init(void);
+void MX_USART1_UART_Init(void);
+void MX_USART6_UART_Init(void);
+void MX_TIM7_Init(void);
+void MX_USB_OTG_FS_PCD_Init(void);
+void MX_IWDG_Init(void);
 
 /* USER CODE BEGIN EFP */
 
@@ -99,30 +122,7 @@ void Error_Handler(void);
 #define SWITCH_GPIO_Port GPIOB
 #define GYRO_CS_Pin GPIO_PIN_0
 #define GYRO_CS_GPIO_Port GPIOB
-void   MX_GPIO_Init(void);
-void   MX_DMA_Init(void);
-void   MX_ADC1_Init(void);
-void   MX_ADC3_Init(void);
-void   MX_CAN1_Init(void);
-void   MX_CAN2_Init(void);
-void   MX_I2C1_Init(void);
-void   MX_SPI1_Init(void);
-void   MX_TIM4_Init(void);
-void   MX_TIM5_Init(void);
-void   MX_USART3_UART_Init(void);
-void   MX_TIM8_Init(void);
-void   MX_RNG_Init(void);
-void   MX_I2C2_Init(void);
-void   MX_I2C3_Init(void);
-void   MX_TIM1_Init(void);
-void   MX_TIM3_Init(void);
-void   MX_TIM10_Init(void);
-void   MX_USART1_UART_Init(void);
-void   MX_USART6_UART_Init(void);
-void   MX_TIM7_Init(void);
-void   MX_USB_OTG_FS_PCD_Init(void);
-void   MX_IWDG_Init(void);
-void   MX_TIM14_Init(void);
+
 /* USER CODE BEGIN Private defines */
 void SystemClock_Config(void);
 void HAL_RealtimeClockStart(void);

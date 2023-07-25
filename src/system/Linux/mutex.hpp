@@ -1,5 +1,7 @@
 #pragma once
 
+#include <pthread.h>
+
 #include <cstdint>
 #include <cstdio>
 #include <semaphore.hpp>
@@ -10,17 +12,15 @@
 namespace System {
 class Mutex {
  public:
-  Mutex(bool unlock = true) : sem_(1, unlock) {}
+  Mutex() {}
 
-  void Unlock() { sem_.Give(); }
+  ~Mutex() {}
 
-  bool Lock(uint32_t timeout) { return sem_.Take(timeout); }
+  void Unlock() { pthread_mutex_unlock(&mutex_); }
 
-  void UnlockFromISR() { sem_.Give(); }
-
-  bool LockFromISR() { return sem_.Take(UINT32_MAX); }
+  bool Lock() { return pthread_mutex_lock(&mutex_) == 0; }
 
  private:
-  System::Semaphore sem_;
+  pthread_mutex_t mutex_ = PTHREAD_MUTEX_INITIALIZER;
 };
 }  // namespace System

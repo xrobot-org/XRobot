@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import random
 import sys
 import os
 import shutil
@@ -79,6 +80,8 @@ def build(board, robot, type='Debug'):
         for dirname in tools.list_dir(user_bsp_dir):
             if dirname == board:
                 target.append([user_bsp_dir + '/' + dirname, []])
+
+    random.shuffle(target)
 
     if len(target) == 0:
         print('ERROR:No target select.')

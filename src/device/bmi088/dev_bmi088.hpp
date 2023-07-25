@@ -14,7 +14,7 @@ class BMI088 {
 
   typedef struct {
     /* 旋转矩阵 */
-    float rot_mat[3][3];  // NOLINT(modernize-avoid-c-arrays)
+    float rot_mat[3][3];
   } Rotation;
 
   typedef enum {
@@ -54,17 +54,17 @@ class BMI088 {
   System::Semaphore accl_raw_;
   System::Semaphore gyro_new_;
   System::Semaphore accl_new_;
-  System::Semaphore spi_lock_;
+  System::Semaphore new_;
 
-  float temp_; /* 温度 */
+  float temp_ = 0.0f; /* 温度 */
 
   System::Thread thread_accl_, thread_gyro_;
 
   Message::Topic<Component::Type::Vector3> accl_tp_;
   Message::Topic<Component::Type::Vector3> gyro_tp_;
 
-  Component::Type::Vector3 accl_;
-  Component::Type::Vector3 gyro_;
+  Component::Type::Vector3 accl_{};
+  Component::Type::Vector3 gyro_{};
 
   System::Term::Command<BMI088 *> cmd_;
 };

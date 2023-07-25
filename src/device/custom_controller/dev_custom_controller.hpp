@@ -25,6 +25,6 @@ class CustomController {
   Message::Event event_;
   System::Thread recv_thread_;
   System::Thread trans_thread_;
-  Component::CMD::Data controller_data_;
+  Component::CMD::Data controller_data_{};
 };
 }  // namespace Device

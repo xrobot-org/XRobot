@@ -4,7 +4,6 @@
 
 #include "dev_referee.hpp"
 
-#include "bsp_delay.h"
 #include "bsp_time.h"
 #include "bsp_uart.h"
 #include "comp_crc16.hpp"
@@ -35,9 +34,8 @@
 
 using namespace Device;
 
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
 static uint8_t rxbuf[REF_LEN_RX_BUFF];
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
+
 Referee::UIPack Referee::ui_pack_;
 Referee *Referee::self_;
 
@@ -46,12 +44,12 @@ Referee::Referee() : event_(Message::Event::FindEvent("cmd_event")) {
 
   auto rx_cplt_callback = [](void *arg) {
     Referee *ref = static_cast<Referee *>(arg);
-    ref->raw_ready_.GiveFromISR();
+    ref->raw_ready_.Post();
   };
 
   auto tx_cplt_callback = [](void *arg) {
     Referee *ref = static_cast<Referee *>(arg);
-    ref->packet_sent_.GiveFromISR();
+    ref->packet_sent_.Post();
   };
 
   auto idle_line_callback = [](void *arg) {
@@ -61,7 +59,7 @@ Referee::Referee() : event_(Message::Event::FindEvent("cmd_event")) {
 
   auto abort_rx_cplt_callback = [](void *arg) {
     Referee *ref = static_cast<Referee *>(arg);
-    ref->raw_ready_.GiveFromISR();
+    ref->raw_ready_.Post();
   };
 
   bsp_uart_register_callback(BSP_UART_REF, BSP_UART_RX_CPLT_CB,
@@ -81,10 +79,10 @@ Referee::Referee() : event_(Message::Event::FindEvent("cmd_event")) {
       ref->StartRecv();
 
 #if REF_FORCE_ONLINE
-      ref->raw_ready_.Take(100);
+      ref->raw_ready_.Wait(100);
       ref->Prase();
 #else
-      if (!ref->raw_ready_.Take(100)) { /* 判断裁判系统数据是否接收完成 */
+      if (!ref->raw_ready_.Wait(100)) { /* 判断裁判系统数据是否接收完成 */
         ref->Offline(); /* 长时间未接收到数据，裁判系统离线 */
       } else {
         ref->Prase(); /* 解析裁判系统数据 */
@@ -100,9 +98,11 @@ Referee::Referee() : event_(Message::Event::FindEvent("cmd_event")) {
                             DEVICE_REF_RECV_TASK_STACK_DEPTH,
                             System::Thread::REALTIME);
   auto ref_trans_thread = [](Referee *ref) {
+    uint32_t last_online_time = bsp_time_get_ms();
+
     while (1) {
       ref->UpdateUI();
-      ref->trans_thread_.SleepUntil(40);
+      ref->trans_thread_.SleepUntil(40, last_online_time);
     }
   };
   this->trans_thread_.Create(ref_trans_thread, this, "ref_trans_thread",
@@ -298,9 +298,9 @@ void Referee::Prase() {
 }
 
 bool Referee::UpdateUI() {
-  this->packet_sent_.Take(UINT32_MAX);
+  this->packet_sent_.Wait(UINT32_MAX);
 
-  this->ui_lock_.Take(UINT32_MAX);
+  this->ui_lock_.Wait(UINT32_MAX);
 
   bool done = false;
   uint32_t ele_counter = 0;
@@ -419,8 +419,8 @@ bool Referee::UpdateUI() {
   }
 
   if (!done) {
-    this->ui_lock_.Give();
-    this->packet_sent_.Give();
+    this->ui_lock_.Post();
+    this->packet_sent_.Post();
     return false;
   }
 
@@ -434,10 +434,9 @@ bool Referee::UpdateUI() {
   if (ele_counter) {
     for (uint32_t i = 0; i < ele_counter; i++) {
       if (op == Component::UI::UI_GRAPHIC_OP_REWRITE) {
-        this->ele_data_.Receive(this->ui_pack_.ele_7.ele_data[i], UINT32_MAX);
+        this->ele_data_.Receive(this->ui_pack_.ele_7.ele_data[i]);
       } else {
-        this->static_ele_data_.Receive(this->ui_pack_.ele_7.ele_data[i],
-                                       UINT32_MAX);
+        this->static_ele_data_.Receive(this->ui_pack_.ele_7.ele_data[i]);
       }
     }
 
@@ -449,9 +448,9 @@ bool Referee::UpdateUI() {
         pack_size - sizeof(uint16_t), CRC16_INIT);
   } else if (cmd_id == REF_STDNT_CMD_ID_UI_DEL) {
     if (op == Component::UI::UI_GRAPHIC_OP_REWRITE) {
-      this->del_data_.Receive(this->ui_pack_.del.del_data, UINT32_MAX);
+      this->del_data_.Receive(this->ui_pack_.del.del_data);
     } else {
-      this->static_del_data_.Receive(this->ui_pack_.del.del_data, UINT32_MAX);
+      this->static_del_data_.Receive(this->ui_pack_.del.del_data);
     }
     this->ui_pack_.del.crc16 = Component::CRC16::Calculate(
         reinterpret_cast<const uint8_t *>(&this->ui_pack_),
@@ -459,10 +458,9 @@ bool Referee::UpdateUI() {
 
   } else if (cmd_id == REF_STDNT_CMD_ID_UI_STR) {
     if (op == Component::UI::UI_GRAPHIC_OP_REWRITE) {
-      this->string_data_.Receive(this->ui_pack_.str.str_data, UINT32_MAX);
+      this->string_data_.Receive(this->ui_pack_.str.str_data);
     } else {
-      this->static_string_data_.Receive(this->ui_pack_.str.str_data,
-                                        UINT32_MAX);
+      this->static_string_data_.Receive(this->ui_pack_.str.str_data);
     }
     this->ui_pack_.str.crc16 = Component::CRC16::Calculate(
         reinterpret_cast<const uint8_t *>(&this->ui_pack_),
@@ -472,39 +470,39 @@ bool Referee::UpdateUI() {
   bsp_uart_transmit(BSP_UART_REF, reinterpret_cast<uint8_t *>(&this->ui_pack_),
                     pack_size, false);
 
-  this->ui_lock_.Give();
+  this->ui_lock_.Post();
 
   return true;
 }
 
 bool Referee::AddUI(Component::UI::Ele ui_data) {
-  self_->ui_lock_.Take(UINT32_MAX);
+  self_->ui_lock_.Wait(UINT32_MAX);
   if (ui_data.op == Component::UI::UI_GRAPHIC_OP_ADD) {
-    self_->static_ele_data_.Send(ui_data, 0);
+    self_->static_ele_data_.Send(ui_data);
   } else {
-    self_->ele_data_.Send(ui_data, 0);
+    self_->ele_data_.Send(ui_data);
   }
-  self_->ui_lock_.Give();
+  self_->ui_lock_.Post();
 
   return true;
 }
 
 bool Referee::AddUI(Component::UI::Del ui_data) {
-  self_->ui_lock_.Take(UINT32_MAX);
-  self_->del_data_.Send(ui_data, 0);
-  self_->ui_lock_.Give();
+  self_->ui_lock_.Wait(UINT32_MAX);
+  self_->del_data_.Send(ui_data);
+  self_->ui_lock_.Post();
 
   return true;
 }
 
 bool Referee::AddUI(Component::UI::Str ui_data) {
-  self_->ui_lock_.Take(UINT32_MAX);
+  self_->ui_lock_.Wait(UINT32_MAX);
   if (ui_data.graphic.op == Component::UI::UI_GRAPHIC_OP_ADD) {
-    self_->static_string_data_.Send(ui_data, 0);
+    self_->static_string_data_.Send(ui_data);
   } else {
-    self_->string_data_.Send(ui_data, 0);
+    self_->string_data_.Send(ui_data);
   }
-  self_->ui_lock_.Give();
+  self_->ui_lock_.Post();
 
   return true;
 }

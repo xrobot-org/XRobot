@@ -74,7 +74,7 @@ class CMD {
     } EventCallbackBlock;
 
     auto cmd_callback = [](uint32_t event, void* arg) {
-      (void)(event);
+      XB_UNUSED(event);
       EventCallbackBlock* block = static_cast<EventCallbackBlock*>(arg);
 
       block->callback(static_cast<EventType>(block->target_event),
@@ -110,7 +110,7 @@ class CMD {
 
   Message::Event event_;
 
-  std::array<Data, CTRL_SOURCE_NUM> data_;
+  std::array<Data, CTRL_SOURCE_NUM> data_{};
 
   Message::Topic<Data> data_in_tp_;
   Message::Topic<ChassisCMD> chassis_data_tp_;

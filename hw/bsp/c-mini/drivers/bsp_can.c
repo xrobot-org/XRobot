@@ -49,6 +49,8 @@ static CanUartPack tx_ext_buff[BSP_CAN_EXT_NUM];
 
 static SemaphoreHandle_t tx_cplt[BSP_CAN_EXT_NUM];
 
+static SemaphoreHandle_t rx_cplt_wait_sem[BSP_CAN_BASE_NUM];
+
 CAN_HandleTypeDef *bsp_can_get_handle(bsp_can_t can) {
   switch (can) {
     case BSP_CAN_2:
@@ -71,7 +73,6 @@ bsp_uart_t bsp_ext_can_get_handle(bsp_can_t can) {
   }
 }
 
-#if 0
 static bsp_can_t can_get(CAN_HandleTypeDef *hcan) {
   if (hcan->Instance == CAN2) {
     return BSP_CAN_2;
@@ -81,7 +82,43 @@ static bsp_can_t can_get(CAN_HandleTypeDef *hcan) {
     return BSP_CAN_ERR;
   }
 }
-#endif
+
+void HAL_CAN_TxMailbox0CompleteCallback(CAN_HandleTypeDef *hcan) {
+  BaseType_t px_higher_priority_task_woken = 0;
+  xSemaphoreGiveFromISR(rx_cplt_wait_sem[can_get(hcan)],
+                        &px_higher_priority_task_woken);
+  if (px_higher_priority_task_woken != pdFALSE) {
+    portYIELD();
+  }
+}
+
+void HAL_CAN_TxMailbox1CompleteCallback(CAN_HandleTypeDef *hcan) {
+  BaseType_t px_higher_priority_task_woken = 0;
+  xSemaphoreGiveFromISR(rx_cplt_wait_sem[can_get(hcan)],
+                        &px_higher_priority_task_woken);
+  if (px_higher_priority_task_woken != pdFALSE) {
+    portYIELD();
+  }
+}
+
+void HAL_CAN_TxMailbox2CompleteCallback(CAN_HandleTypeDef *hcan) {
+  BaseType_t px_higher_priority_task_woken = 0;
+  xSemaphoreGiveFromISR(rx_cplt_wait_sem[can_get(hcan)],
+                        &px_higher_priority_task_woken);
+  if (px_higher_priority_task_woken != pdFALSE) {
+    portYIELD();
+  }
+}
+
+void HAL_CAN_ErrorCallback(CAN_HandleTypeDef *hcan) {
+  HAL_CAN_ResetError(hcan);
+  BaseType_t px_higher_priority_task_woken = 0;
+  xSemaphoreGiveFromISR(rx_cplt_wait_sem[can_get(hcan)],
+                        &px_higher_priority_task_woken);
+  if (px_higher_priority_task_woken != pdFALSE) {
+    portYIELD();
+  }
+}
 
 static void tx_cplt_callback(void *arg) {
   SemaphoreHandle_t *sem = (SemaphoreHandle_t *)arg;
@@ -127,6 +164,10 @@ static void rx_callback_fn(void *arg) {
 };
 
 void bsp_can_init(void) {
+  for (int i = 0; i < BSP_CAN_BASE_NUM; i++) {
+    rx_cplt_wait_sem[i] = xSemaphoreCreateBinary();
+  }
+
   CAN_FilterTypeDef can_filter = {0};
 
   can_filter.FilterBank = 0;
@@ -264,8 +305,8 @@ int8_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format, uint32_t id,
 
   while (((tsr & CAN_TSR_TME0) == 0U) && ((tsr & CAN_TSR_TME1) == 0U) &&
          ((tsr & CAN_TSR_TME2) == 0U)) {
+    xSemaphoreTake(rx_cplt_wait_sem[can], 1);
     tsr = READ_REG(bsp_can_get_handle(can)->Instance->TSR);
-    taskYIELD();
   }
 
   HAL_StatusTypeDef res = HAL_CAN_AddTxMessage(

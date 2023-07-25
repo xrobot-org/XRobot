@@ -1,5 +1,3 @@
-#include <stdint.h>
-
 #include <array>
 #include <cstdint>
 #include <queue.hpp>
@@ -25,10 +23,7 @@ class UartToUDP {
   } Param;
 
   UartToUDP(Param& param)
-      : param_(param),
-        udp_trans_buff(128),
-        num_lock_(true),
-        udp_tx_sem_(128, 0) {
+      : param_(param), udp_trans_buff(128), num_lock_(true), udp_tx_sem_(0) {
     for (int i = param.start_uart; i <= param_.end_uart; i++) {
       udp_rx_sem_[i] = new System::Semaphore(false);
       count[i] = 0;
@@ -45,7 +40,7 @@ class UartToUDP {
 
         memcpy(&udp->udp_rx_[data->area_id], data,
                sizeof(Device::WearLab::UdpData));
-        udp->udp_rx_sem_[data->area_id]->Give();
+        udp->udp_rx_sem_[data->area_id]->Post();
         OMLOG_PASS("udp pack received.");
         return;
       }
@@ -57,10 +52,10 @@ class UartToUDP {
                                      udp_rx_cb, this);
 
     auto uart_rx_thread_fn = [](UartToUDP* uart_udp) {
-      uart_udp->num_lock_.Take(UINT32_MAX);
+      uart_udp->num_lock_.Wait(UINT32_MAX);
       bsp_uart_t uart = static_cast<bsp_uart_t>(uart_udp->num_);
       uart_udp->num_++;
-      uart_udp->num_lock_.Give();
+      uart_udp->num_lock_.Post();
 
       uint8_t prefix = 0;
 
@@ -105,8 +100,8 @@ class UartToUDP {
             uart_udp->count[uart] = 0;
           }
 
-          uart_udp->udp_trans_buff.Send(uart_udp->udp_tx_[uart], UINT32_MAX);
-          uart_udp->udp_tx_sem_.Give();
+          uart_udp->udp_trans_buff.Send(uart_udp->udp_tx_[uart]);
+          uart_udp->udp_tx_sem_.Post();
         }
       }
     };
@@ -115,7 +110,7 @@ class UartToUDP {
       bsp_uart_t uart = static_cast<bsp_uart_t>(uart_udp->num_);
 
       while (true) {
-        uart_udp->udp_rx_sem_[uart]->Take(UINT32_MAX);
+        uart_udp->udp_rx_sem_[uart]->Wait(UINT32_MAX);
         uart_udp->uart_tx_[uart].id = uart_udp->udp_rx_[uart].device_id;
         memcpy(uart_udp->uart_tx_[uart].data, uart_udp->udp_rx_[uart].data, 8);
         bsp_uart_transmit(uart,
@@ -136,14 +131,14 @@ class UartToUDP {
       uint32_t buff_num = 0;
 
       while (true) {
-        uart_udp->udp_tx_sem_.Take(UINT32_MAX);
-        buff_num = uart_udp->udp_tx_sem_.GetCount() + 1;
+        uart_udp->udp_tx_sem_.Wait(UINT32_MAX);
+        buff_num = uart_udp->udp_tx_sem_.Value() + 1;
 
-        uart_udp->udp_trans_buff.Receive(trans_buff[0], UINT32_MAX);
+        uart_udp->udp_trans_buff.Receive(trans_buff[0]);
 
         for (uint32_t i = 1; i < buff_num; i++) {
-          uart_udp->udp_tx_sem_.Take(UINT32_MAX);
-          uart_udp->udp_trans_buff.Receive(trans_buff[i], UINT32_MAX);
+          uart_udp->udp_tx_sem_.Wait(UINT32_MAX);
+          uart_udp->udp_trans_buff.Receive(trans_buff[i]);
         }
 
         bsp_udp_server_transmit(&uart_udp->udp_server_,
@@ -177,15 +172,15 @@ class UartToUDP {
 
   Param param_;
 
-  std::array<Device::WearLab::UartData, BSP_UART_NUM> uart_rx_;
-  std::array<Device::WearLab::UartData, BSP_UART_NUM> uart_tx_;
-  std::array<Device::WearLab::UdpData, BSP_UART_NUM> udp_rx_;
-  std::array<Device::WearLab::UdpData, BSP_UART_NUM> udp_tx_;
-  std::array<Device::WearLab::CanHeader, BSP_UART_NUM> header_;
+  std::array<Device::WearLab::UartData, BSP_UART_NUM> uart_rx_{};
+  std::array<Device::WearLab::UartData, BSP_UART_NUM> uart_tx_{};
+  std::array<Device::WearLab::UdpData, BSP_UART_NUM> udp_rx_{};
+  std::array<Device::WearLab::UdpData, BSP_UART_NUM> udp_tx_{};
+  std::array<Device::WearLab::CanHeader, BSP_UART_NUM> header_{};
   std::array<System::Thread, BSP_UART_NUM> uart_rx_thread_;
   std::array<System::Thread, BSP_UART_NUM> uart_tx_thread_;
 
-  std::array<System::Semaphore*, BSP_UART_NUM> udp_rx_sem_;
+  std::array<System::Semaphore*, BSP_UART_NUM> udp_rx_sem_{};
 
   System::Queue<Device::WearLab::UdpData> udp_trans_buff;
 
@@ -198,10 +193,10 @@ class UartToUDP {
 
   System::Semaphore udp_tx_sem_;
 
-  bsp_udp_server_t udp_server_;
+  bsp_udp_server_t udp_server_{};
 
-  std::array<uint32_t, BSP_UART_NUM> count;
+  std::array<uint32_t, BSP_UART_NUM> count{};
 
-  std::array<uint32_t, BSP_UART_NUM> last_log_time;
+  std::array<uint32_t, BSP_UART_NUM> last_log_time{};
 };
 }  // namespace Module

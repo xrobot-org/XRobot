@@ -1,5 +1,7 @@
 #include "mod_dart_launcher.hpp"
 
+#include <sys/_stdint.h>
+
 #include <comp_utils.hpp>
 #include <string>
 #include <thread.hpp>
@@ -56,11 +58,13 @@ DartLauncher::DartLauncher(DartLauncher::Param& param, float control_freq)
                                                       this->param_.EVENT_MAP);
 
   auto thread_fn = [](DartLauncher* dart) {
+    uint32_t last_online_time = bsp_time_get_ms();
+
     while (true) {
       dart->UpdateFeedback();
       dart->Control();
 
-      dart->thread_.SleepUntil(2);
+      dart->thread_.SleepUntil(2, last_online_time);
     }
   };
 

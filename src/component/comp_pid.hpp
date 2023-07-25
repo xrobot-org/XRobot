@@ -43,13 +43,13 @@ class PID {
  private:
   Param param_;
 
-  float dt_min_; /* 最小PID_Calc调用间隔 */
-  float i_;      /* 积分 */
+  float dt_min_;   /* 最小PID_Calc调用间隔 */
+  float i_ = 0.0f; /* 积分 */
 
   struct {
-    float err;  /* 上次误差 */
-    float k_fb; /* 上次反馈值 */
-    float out;  /* 上次输出 */
+    float err = 0.0f;  /* 上次误差 */
+    float k_fb = 0.0f; /* 上次反馈值 */
+    float out = 0.0f;  /* 上次输出 */
   } last_;
 
   LowPassFilter2p dfilter_;

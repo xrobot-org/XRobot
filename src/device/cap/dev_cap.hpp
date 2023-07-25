@@ -60,12 +60,12 @@ class Cap {
 
   Message::Topic<Cap::Info> info_tp_;
 
-  Cap::Info info_;
+  Cap::Info info_{};
 
-  Cap::Output out_;
+  Cap::Output out_{};
 
-  Component::UI::String string_;
+  Component::UI::String string_{};
 
-  Component::UI::Arc arc_;
+  Component::UI::Arc arc_{};
 };
 }  // namespace Device

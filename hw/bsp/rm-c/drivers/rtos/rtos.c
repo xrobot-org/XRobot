@@ -1,5 +1,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
+#include "main.h"
 #include "task.h"
 
 /* FreeRTOS Heap */

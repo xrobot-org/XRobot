@@ -1,6 +1,5 @@
 #include "dev_ai.hpp"
 
-#include "bsp_delay.h"
 #include "bsp_time.h"
 #include "bsp_uart.h"
 #include "comp_crc16.hpp"
@@ -13,15 +12,15 @@
 #define AI_LEN_TX_BUFF \
   (sizeof(Protocol_UpPackageMCU_t) + sizeof(Protocol_UpPackageReferee_t))
 
-static uint8_t rxbuf[AI_LEN_RX_BUFF];  // NOLINT(modernize-avoid-c-arrays)
-static uint8_t txbuf[AI_LEN_TX_BUFF];  // NOLINT(modernize-avoid-c-arrays)
+static uint8_t rxbuf[AI_LEN_RX_BUFF];
+static uint8_t txbuf[AI_LEN_TX_BUFF];
 
 using namespace Device;
 
 AI::AI() : data_ready_(false), cmd_tp_("cmd_ai") {
   auto rx_cplt_callback = [](void *arg) {
     AI *ai = static_cast<AI *>(arg);
-    ai->data_ready_.GiveFromISR();
+    ai->data_ready_.Post();
   };
 
   bsp_uart_register_callback(BSP_UART_AI, BSP_UART_RX_CPLT_CB, rx_cplt_callback,
@@ -37,7 +36,7 @@ AI::AI() : data_ready_(false), cmd_tp_("cmd_ai") {
       /* 接收指令 */
       ai->StartRecv();
 
-      if (ai->data_ready_.Take(0)) {
+      if (ai->data_ready_.Wait(0)) {
         ai->PraseHost();
       } else {
         ai->Offline();

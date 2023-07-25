@@ -50,9 +50,9 @@ class BleNetConfig {
                    System::Thread::MEDIUM);
   }
 
-  uint8_t recv_buff[100];
+  uint8_t recv_buff[100]{};
 
-  Device::NetConfig::Data data_;
+  Device::NetConfig::Data data_{};
 
   Message::Topic<Device::NetConfig::Data> net_info_;
 

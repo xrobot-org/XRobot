@@ -10,6 +10,8 @@ RGB::RGB() {
   auto led_thread = [](RGB* led) {
     uint8_t led_fsm = 0;
 
+    uint32_t last_online_time = bsp_time_get_ms();
+
     while (1) {
       switch (led_fsm) {
         case 0:
@@ -32,7 +34,7 @@ RGB::RGB() {
           break;
       }
 
-      led->thread_.SleepUntil(250);
+      led->thread_.SleepUntil(250, last_online_time);
     }
   };
 

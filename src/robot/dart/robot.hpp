@@ -12,14 +12,14 @@ void robot_init();
 namespace Robot {
 class Dart {
  public:
-  typedef struct {
-    Module::DartLauncher::Param dart;
-    Module::Dartgimbal::Param gimbal;
-    Device::BMI088::Rotation bmi088;
+  typedef struct Param {
+    Module::DartLauncher::Param dart{};
+    Module::Dartgimbal::Param gimbal{};
+    Device::BMI088::Rotation bmi088{};
   } Param;
 
   Component::CMD cmd_;
-  Device::RGB rgb_;
+  Device::RGB rgb_{};
   Device::Can can_;
   Device::DR16 dr16_;
   Device::BMI088 bmi088_;

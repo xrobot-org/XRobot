@@ -10,7 +10,7 @@ class CanToUart {
   } Param;
 
   Device::Can can_;
-  Module::CantoUsart can_uart_;
-  CanToUart(Param& param) : can_uart_() { (void)param; }
+  Module::CantoUsart can_uart_{};
+  CanToUart(Param& param) { XB_UNUSED(param); }
 };
 }  // namespace Robot

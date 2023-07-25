@@ -37,7 +37,7 @@ class MitMotor : public BaseMotor {
  private:
   Param param_;
 
-  float raw_pos_;
+  float raw_pos_ = 0.0f;
 
   float current_ = 0.0f;
 

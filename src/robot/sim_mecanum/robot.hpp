@@ -10,10 +10,10 @@ void robot_init();
 namespace Robot {
 class Simulator {
  public:
-  typedef struct {
-    Device::BlinkLED::Param led;
-    Device::IMU::Param imu;
-    Module::RMChassis::Param chassis;
+  typedef struct Param {
+    Device::BlinkLED::Param led{};
+    Device::IMU::Param imu{};
+    Module::RMChassis::Param chassis{};
   } Param;
 
   Component::CMD cmd_;

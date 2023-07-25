@@ -19,11 +19,10 @@
 
 using namespace Device;
 
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
 uint8_t RMMotor::motor_tx_buff_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER][8];
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
+
 uint8_t RMMotor::motor_tx_flag_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
-// NOLINTNEXTLINE(modernize-avoid-c-arrays)
+
 uint8_t RMMotor::motor_tx_map_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER];
 
 RMMotor::RMMotor(const Param &param, const char *name)
@@ -66,7 +65,7 @@ RMMotor::RMMotor(const Param &param, const char *name)
   }
 
   auto rx_callback = [](Can::Pack &rx, RMMotor *motor) {
-    motor->recv_.OverwriteFromISR(rx);
+    motor->recv_.Overwrite(rx);
 
     motor->last_online_time_ = bsp_time_get();
 
@@ -85,7 +84,7 @@ RMMotor::RMMotor(const Param &param, const char *name)
 bool RMMotor::Update() {
   Can::Pack pack;
 
-  while (this->recv_.Receive(pack, 0)) {
+  while (this->recv_.Receive(pack)) {
     if ((pack.index == this->param_.id_feedback) &&
         (MOTOR_NONE != this->param_.model)) {
       this->Decode(pack);

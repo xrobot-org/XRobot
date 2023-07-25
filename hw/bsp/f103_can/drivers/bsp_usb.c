@@ -8,7 +8,7 @@
 
 static bsp_callback_t callback_list[BSP_USB_NUM][BSP_USB_CB_NUM];
 
-int8_t bsp_usb_transmit(const uint8_t *buffer, uint32_t len) {
+bsp_status_t bsp_usb_transmit(const uint8_t *buffer, uint32_t len) {
   while (1) {
     uint32_t avil = tud_cdc_write_available();
     if (avil > len) {
@@ -36,14 +36,14 @@ char bsp_usb_read_char(void) {
   }
 }
 
-uint32_t bsp_usb_read(uint8_t *buffer, uint32_t len) {
-  uint32_t recv_len = tud_cdc_read(buffer, len);
+size_t bsp_usb_read(uint8_t *buffer, uint32_t len) {
+  size_t recv_len = tud_cdc_read(buffer, len);
   return recv_len;
 }
 
 bool bsp_usb_connect(void) { return false; }
 
-uint32_t bsp_usb_avail(void) { return 0; }
+size_t bsp_usb_avail(void) { return 0; }
 
 #if 0
 

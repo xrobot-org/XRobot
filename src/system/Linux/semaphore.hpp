@@ -12,23 +12,13 @@
 namespace System {
 class Semaphore {
  public:
-  Semaphore(bool init_count) : max_count_(1) {
-    sem_init(&this->handle_, 0, init_count);
-  }
+  Semaphore(uint32_t init_count) { sem_init(&this->handle_, 0, init_count); }
 
-  Semaphore(uint16_t max_count, uint16_t init_count) : max_count_(max_count) {
-    sem_init(&this->handle_, 0, init_count);
-  }
+  ~Semaphore() { sem_destroy(&this->handle_); }
 
-  void Give() {
-    int tmp = 0;
-    sem_getvalue(&this->handle_, &tmp);
-    if (tmp < this->max_count_) {
-      sem_post(&this->handle_);
-    }
-  }
+  void Post() { sem_post(&this->handle_); }
 
-  bool Take(uint32_t timeout) {
+  bool Wait(uint32_t timeout) {
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     uint32_t secs = timeout / 1000;
@@ -43,17 +33,13 @@ class Semaphore {
     return sem_timedwait(&handle_, &ts) == 0;
   }
 
-  uint32_t GetCount() {
+  uint32_t Value() {
     int value = 0;
     sem_getvalue(&handle_, &value);
     return value;
   }
 
-  void GiveFromISR() { Give(); }
-  bool TakeFromISR() { return Take(0); }
-
  private:
   sem_t handle_;
-  int max_count_;
 };
 }  // namespace System

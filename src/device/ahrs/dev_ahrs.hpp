@@ -19,9 +19,9 @@ class AHRS {
   static int ShowCMD(AHRS *ahrs, int argc, char **argv);
 
  private:
-  float last_update_;
-  float dt_;
-  float now_;
+  float last_update_ = 0.0f;
+  float dt_ = 0.0f;
+  float now_ = 0.0f;
 
   System::Thread thread_;
 
@@ -29,11 +29,11 @@ class AHRS {
 
   Message::Topic<Component::Type::Eulr> eulr_tp_;
 
-  Component::Type::Quaternion quat_;
-  Component::Type::Eulr eulr_;
+  Component::Type::Quaternion quat_{};
+  Component::Type::Eulr eulr_{};
 
-  Component::Type::Vector3 accl_;
-  Component::Type::Vector3 gyro_;
+  Component::Type::Vector3 accl_{};
+  Component::Type::Vector3 gyro_{};
 
   System::Term::Command<AHRS *> cmd_;
 

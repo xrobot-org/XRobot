@@ -39,16 +39,12 @@ Launcher::Launcher(Param& param, float control_freq)
   }
 
   auto event_callback = [](LauncherEvent event, Launcher* launcher) {
-    launcher->ctrl_lock_.Take(UINT32_MAX);
+    launcher->ctrl_lock_.Wait(UINT32_MAX);
 
     switch (event) {
       case CHANGE_FIRE_MODE_RELAX:
       case CHANGE_FIRE_MODE_SAFE:
       case CHANGE_FIRE_MODE_LOADED:
-        launcher->fire_ctrl_.fire = false;
-        launcher->SetFireMode(static_cast<FireMode>(event));
-        break;
-        launcher->fire_ctrl_.fire = false;
         launcher->SetFireMode(static_cast<FireMode>(event));
         break;
       case CHANGE_TRIG_MODE_SINGLE:
@@ -74,7 +70,7 @@ Launcher::Launcher(Param& param, float control_freq)
         break;
     }
 
-    launcher->ctrl_lock_.Give();
+    launcher->ctrl_lock_.Post();
   };
 
   Component::CMD::RegisterEvent<Launcher*, LauncherEvent>(
@@ -86,20 +82,22 @@ Launcher::Launcher(Param& param, float control_freq)
   auto launcher_thread = [](Launcher* launcher) {
     auto ref_sub = Message::Subscriber("referee", launcher->raw_ref_);
 
+    uint32_t last_online_time = bsp_time_get_ms();
+
     while (1) {
       ref_sub.DumpData();
 
       launcher->PraseRef();
 
-      launcher->ctrl_lock_.Take(UINT32_MAX);
+      launcher->ctrl_lock_.Wait(UINT32_MAX);
 
       launcher->UpdateFeedback();
       launcher->Control();
 
-      launcher->ctrl_lock_.Give();
+      launcher->ctrl_lock_.Post();
 
       /* 运行结束，等待下一次唤醒 */
-      launcher->thread_.SleepUntil(2);
+      launcher->thread_.SleepUntil(2, last_online_time);
     }
   };
 
@@ -282,6 +280,8 @@ void Launcher::SetFireMode(FireMode mode) {
   if (mode == this->fire_ctrl_.fire_mode_) {
     return;
   }
+
+  fire_ctrl_.fire = false;
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
     this->fric_actuator_[i]->Reset();
