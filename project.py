@@ -398,7 +398,7 @@ elif cmd[1] == 'list':
     list_target()
 elif cmd[1] == 'init':
     os.system(
-        'sudo apt install cmake gcc-arm-none-eabi ninja-build python3-tk clang clangd'
+        'sudo apt install cmake ninja-build python3-tk clang clangd'
     )
 elif cmd[1] == 'select':
     if (cmd_len < 4):
