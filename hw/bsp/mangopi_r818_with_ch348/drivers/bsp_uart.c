@@ -59,9 +59,10 @@ void bsp_uart_init() {
   }
 }
 
-int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,
-                                  void (*callback)(void *),
-                                  void *callback_arg) {
+bsp_status_t bsp_uart_register_callback(bsp_uart_t uart,
+                                        bsp_uart_callback_t type,
+                                        void (*callback)(void *),
+                                        void *callback_arg) {
   assert(callback);
   assert(type != BSP_UART_CB_NUM);
 
@@ -70,8 +71,8 @@ int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,
   return BSP_OK;
 }
 
-int8_t bsp_uart_transmit(bsp_uart_t uart, uint8_t *data, size_t size,
-                         bool block) {
+bsp_status_t bsp_uart_transmit(bsp_uart_t uart, uint8_t *data, size_t size,
+                               bool block) {
   if (block) {
     write(uart_fd[uart], data, size);
     return true;
@@ -81,8 +82,8 @@ int8_t bsp_uart_transmit(bsp_uart_t uart, uint8_t *data, size_t size,
   }
 }
 
-int8_t bsp_uart_receive(bsp_uart_t uart, uint8_t *buff, size_t size,
-                        bool block) {
+bsp_status_t bsp_uart_receive(bsp_uart_t uart, uint8_t *buff, size_t size,
+                              bool block) {
   if (block && !uart_block[uart]) {
     fcntl(uart_fd[uart], F_SETFL, 0);
     uart_block[uart] = block;
@@ -104,7 +105,7 @@ int8_t bsp_uart_receive(bsp_uart_t uart, uint8_t *buff, size_t size,
 
 uint32_t bsp_uart_get_count(bsp_uart_t uart) { return rx_count[uart]; }
 
-int8_t bsp_uart_abort_receive(bsp_uart_t uart) {
+bsp_status_t bsp_uart_abort_receive(bsp_uart_t uart) {
   tcflush(uart_fd[uart], TCIFLUSH);
   return BSP_OK;
 }

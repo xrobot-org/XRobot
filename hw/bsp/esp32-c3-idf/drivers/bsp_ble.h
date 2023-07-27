@@ -40,7 +40,7 @@ typedef enum {
 
 typedef struct {
   uint8_t *prepare_buf;
-  int8_t prepare_len;
+  bsp_status_t prepare_len;
 } bsp_prepare_env_t;
 
 typedef struct {

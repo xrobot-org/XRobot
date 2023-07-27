@@ -10,7 +10,8 @@ extern "C" {
 
 typedef char bsp_dns_addr_t[INET_ADDRSTRLEN];
 
-int8_t bsp_dns_prase_domain(const char* domain_name, bsp_dns_addr_t* result);
+bsp_status_t bsp_dns_prase_domain(const char* domain_name,
+                                  bsp_dns_addr_t* result);
 
 #ifdef __cplusplus
 }

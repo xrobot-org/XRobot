@@ -12,7 +12,7 @@ typedef struct {
 static bsp_pwm_config_t bsp_pwm_map[BSP_PWM_NUMBER] = {
     [BSP_PWM_LED_RED] = {&htim2, TIM_CHANNEL_2}};
 
-int8_t bsp_pwm_start(bsp_pwm_channel_t ch) {
+bsp_status_t bsp_pwm_start(bsp_pwm_channel_t ch) {
   if (ch != BSP_PWM_LED_RED) {
     return BSP_ERR;
   }
@@ -21,7 +21,7 @@ int8_t bsp_pwm_start(bsp_pwm_channel_t ch) {
   return BSP_OK;
 }
 
-int8_t bsp_pwm_set_comp(bsp_pwm_channel_t ch, float duty_cycle) {
+bsp_status_t bsp_pwm_set_comp(bsp_pwm_channel_t ch, float duty_cycle) {
   if (ch != BSP_PWM_LED_RED) {
     return BSP_ERR;
   }
@@ -42,7 +42,7 @@ int8_t bsp_pwm_set_comp(bsp_pwm_channel_t ch, float duty_cycle) {
   return BSP_OK;
 }
 
-int8_t bsp_pwm_set_freq(bsp_pwm_channel_t ch, float freq) {
+bsp_status_t bsp_pwm_set_freq(bsp_pwm_channel_t ch, float freq) {
   if (ch != BSP_PWM_LED_RED) {
     return BSP_ERR;
   }
@@ -58,7 +58,7 @@ int8_t bsp_pwm_set_freq(bsp_pwm_channel_t ch, float freq) {
   return BSP_OK;
 }
 
-int8_t bsp_pwm_stop(bsp_pwm_channel_t ch) {
+bsp_status_t bsp_pwm_stop(bsp_pwm_channel_t ch) {
   if (ch != BSP_PWM_LED_RED) {
     return BSP_ERR;
   }

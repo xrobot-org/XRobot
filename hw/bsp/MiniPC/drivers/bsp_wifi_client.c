@@ -5,37 +5,37 @@
 #include <unistd.h>
 
 #include "bsp.h"
+#include "bsp_def.h"
+#include "bsp_linux_base.h"
 
 static char cmd_buff[100];
 
 void bsp_wifi_client_init() {}
 
-int8_t bsp_wifi_connect(const char *name, const char *password) {
-  (void)name;
-  (void)password;
+bsp_status_t bsp_wifi_connect(const char *name, const char *password) {
   (void)snprintf(cmd_buff, sizeof(cmd_buff), "nmcli con delete %s", name);
   (void)system(cmd_buff);
   (void)snprintf(cmd_buff, sizeof(cmd_buff),
-                 "nmcli dev wifi connect %s password \"%s\"", name, password);
-  int ans = system(cmd_buff);
-
-  if (-1 == ans) {
-    return BSP_ERR;
+                 "nmcli dev wifi connect %s password \"%s\" name %s", name,
+                 password, name);
+  if (bsp_shell_success(system(cmd_buff))) {
+    return BSP_OK;
   } else {
-    if (WIFEXITED(ans)) {
-      if (0 == WEXITSTATUS(ans)) {
-        return BSP_OK;
-      } else {
-        return BSP_ERR;
-      }
-    } else {
-      return BSP_ERR;
-    }
+    return BSP_ERR;
+  }
+}
+
+bsp_status_t bsp_wifi_delete(const char *name) {
+  (void)snprintf(cmd_buff, sizeof(cmd_buff), "nmcli con del %s", name);
+  if (bsp_shell_success(system(cmd_buff))) {
+    return BSP_OK;
+  } else {
+    return BSP_ERR;
   }
 }
 
 bool bsp_wifi_connected() {
-  int ret = open("/sys/class/net/wlan0/operstate", O_RDONLY);
+  int ret = open("/sys/class/net/wlp0s20f3/operstate", O_RDONLY);
 
   char status[3] = "wl\0";
   (void)read(ret, status, 2);

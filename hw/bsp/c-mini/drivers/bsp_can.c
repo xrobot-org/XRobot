@@ -255,10 +255,10 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) {
   can_rx_cb_fn(BSP_CAN_2);
 }
 
-int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
-                                 void (*callback)(bsp_can_t can, uint32_t id,
-                                                  uint8_t *data, void *arg),
-                                 void *callback_arg) {
+bsp_status_t bsp_can_register_callback(
+    bsp_can_t can, bsp_can_callback_t type,
+    void (*callback)(bsp_can_t can, uint32_t id, uint8_t *data, void *arg),
+    void *callback_arg) {
   assert_param(callback);
   assert_param(type != BSP_CAN_CB_NUM);
 
@@ -267,8 +267,8 @@ int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
   return BSP_OK;
 }
 
-int8_t bsp_ext_can_trans_packet(bsp_can_t can, bsp_can_format_t format,
-                                uint32_t id, uint8_t *data) {
+bsp_status_t bsp_ext_can_trans_packet(bsp_can_t can, bsp_can_format_t format,
+                                      uint32_t id, uint8_t *data) {
   tx_ext_buff[can - BSP_CAN_BASE_NUM].id = id;
   tx_ext_buff[can - BSP_CAN_BASE_NUM].type = format;
   memcpy(tx_ext_buff[can - BSP_CAN_BASE_NUM].data, data, 8);
@@ -283,8 +283,8 @@ int8_t bsp_ext_can_trans_packet(bsp_can_t can, bsp_can_format_t format,
              : BSP_ERR;
 }
 
-int8_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format, uint32_t id,
-                            uint8_t *data) {
+bsp_status_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format,
+                                  uint32_t id, uint8_t *data) {
   if (can >= BSP_CAN_BASE_NUM) {
     return bsp_ext_can_trans_packet(can, format, id, data);
   }
