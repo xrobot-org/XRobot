@@ -65,7 +65,7 @@ class NetConfig {
                          net->connect_wait_time / 1000);
             break;
         }
-        net->thread_.Sleep(100);
+        net->thread_.Sleep(1000);
       }
     };
     thread_.Create(thread_fn, this, "net_config", 2048, System::Thread::HIGH);

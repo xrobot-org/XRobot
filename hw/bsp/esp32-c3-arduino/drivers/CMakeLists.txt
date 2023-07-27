@@ -9,9 +9,9 @@ add_library(${PROJECT_NAME} STATIC)
 target_sources(${PROJECT_NAME}
   PRIVATE ${${PROJECT_NAME}_SOURCES}
   PRIVATE ${${PROJECT_NAME}_SOURCES_CPP}
-  PRIVATE ${MCU_DIR}/esp/ESP32_BleSerial/src/BleSerial.cpp
-  PRIVATE ${MCU_DIR}/esp/ESP32_BleSerial/src/BleSerial.h
-  PRIVATE ${MCU_DIR}/esp/ESP32_BleSerial/src/ByteRingBuffer.h
+  PRIVATE ${MCU_DIR}/esp/ESP32_BleSerial/BleSerial.cpp
+  PRIVATE ${MCU_DIR}/esp/ESP32_BleSerial/BleSerial.h
+  PRIVATE ${MCU_DIR}/esp/ESP32_BleSerial/ByteRingBuffer.h
 )
 
 include(${MCU_DIR}/default/CMakeLists.txt)
@@ -32,7 +32,7 @@ target_include_directories(
   PUBLIC $<TARGET_PROPERTY:idf::arduino-esp32,INTERFACE_INCLUDE_DIRECTORIES>
   PUBLIC $ENV{IDF_PATH}/components/freertos/include/freertos
   PUBLIC $ENV{IDF_PATH}/components/freertos/FreeRTOS-Kernel/include/freertos
-  PUBLIC ${MCU_DIR}/esp/ESP32_BleSerial/src
+  PUBLIC ${MCU_DIR}/esp/ESP32_BleSerial
 )
 
 # add_dependencies(${PROJECT_NAME})
