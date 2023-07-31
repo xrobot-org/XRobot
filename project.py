@@ -3,6 +3,7 @@ import random
 import sys
 import os
 import shutil
+import time
 
 sys.path.insert(0, './utils/python')
 sys.path.insert(0, '../utils/python')
@@ -23,6 +24,8 @@ sys_dir = tools.project_path + '/src/system'
 rbt_dir = tools.project_path + '/src/robot'
 fm_dir = tools.project_path + '/firmware'
 build_dir = tools.project_path + '/build'
+report_dir = build_dir + '/report'
+report_ans_dir = build_dir + '/report_ans'
 user_dir = tools.project_path + '/user'
 user_bsp_dir = user_dir + '/bsp'
 user_cmp_dir = user_dir + '/component'
@@ -62,8 +65,10 @@ def select_config(config_path, type):
     print('Load config success from', config_path)
 
 
-def build(board, robot, type='Debug'):
+def build(board, robot, type='Debug', code_check = False):
     target = []
+    time_count = 0.0
+
 
     os.system("rm -rf " + fm_dir)
     os.makedirs(fm_dir, exist_ok=True)
@@ -92,7 +97,7 @@ def build(board, robot, type='Debug'):
         for filename in tools.list_file(config_dir):
             if filename.endswith(".config") and (robot == 'all'
                                                  or robot == filename[:-7]):
-                target[i][1].append(filename[:-7])
+                target[i][1].append([filename[:-7], 0.0])
                 print('Select config ' + target[i][0] + ' ' + filename)
         if (len(target[i][1]) == 0):
             print('ERROR:No target select.')
@@ -100,7 +105,9 @@ def build(board, robot, type='Debug'):
 
     for item in target:
         bsp = item[0]
-        for rbt in item[1]:
+        for rbt_data in item[1]:
+            rbt = rbt_data[0]
+            rbt_data[1] = time.time()
             config_file = bsp + '/config/' + rbt + '.config'
             fm_board_dir = fm_dir + '/' + bsp.split('/')[-1]
             fm_robot_dir = fm_board_dir + '/' + rbt
@@ -110,8 +117,18 @@ def build(board, robot, type='Debug'):
                 print('\033[0;31;40mBuild ' + bsp + ' [' + rbt +
                       '] failed.\033[0m')
                 exit(-1)
+            rbt_data[1] = time.time() - rbt_data[1]
+            time_count += rbt_data[1]
             os.makedirs(fm_board_dir, exist_ok=True)
             os.makedirs(fm_robot_dir, exist_ok=True)
+            if code_check:
+                os.makedirs(report_dir, exist_ok=True)
+                os.makedirs(report_ans_dir, exist_ok=True)
+                os.system("CodeChecker analyze " + build_dir + "/compile_commands.json"
+                        " --enable sensitive --output " + report_dir)
+                os.system("CodeChecker parse --export html --output " + report_ans_dir +
+                        " " + report_dir)
+                os.system("cp -r " + report_ans_dir + ' ' + fm_robot_dir)
             dirlist = os.walk(build_dir, )
             for root, dirs, files in dirlist:
                 for file in files:
@@ -135,9 +152,11 @@ def build(board, robot, type='Debug'):
                                   tmp_path + file.split('/')[-1] + '.md5')
     for item in target:
         bsp = item[0]
-        for rbt in item[1]:
-            print('\033[0;32;40mRobot[' + rbt + ']' + ' for board ' + bsp +
-                  ' build done.\033[0m')
+        for rbt_data in item[1]:
+            rbt = rbt_data[0]
+            print('\033[0;32;40mRobot[' + rbt + ']' + ' for board ' + bsp[len(bsp_dir) + 1:] +
+                  ' build done in %.2f seconds.\033[0m' % rbt_data[1])
+    print('\033[0;32;40mAll target build done in %.2f seconds.\033[0m' % time_count)
 
 
 def select(board, robot):
@@ -394,6 +413,17 @@ elif cmd[1] == 'build-release':
         print('参数错误')
         exit(-1)
     build(cmd[2], cmd[3], 'Release')
+elif cmd[1] == 'build-debug-check':
+    if (cmd_len < 4):
+        print('参数错误')
+        exit(-1)
+    build(cmd[2], cmd[3], 'Debug', True)
+
+elif cmd[1] == 'build-release-check':
+    if (cmd_len < 4):
+        print('参数错误')
+        exit(-1)
+    build(cmd[2], cmd[3], 'Release', True)
 elif cmd[1] == 'list':
     list_target()
 elif cmd[1] == 'init':

@@ -31,7 +31,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Install dependence
-      run: sudo apt update && sudo apt install cmake gcc-arm-none-eabi ninja-build clang clangd
+      run: sudo apt update && sudo apt install cmake gcc-arm-none-eabi ninja-build clang clangd clang-tidy
+
+    - name: Install CodeChecker
+      run: pip3 install codechecker
 
     - name: Install libhv
       run: git clone https://github.com/ithewei/libhv.git && cd libhv && ./configure && make && sudo make install && cd ${{github.workspace}}
@@ -49,7 +52,7 @@ jobs:
       run: cd ${{github.workspace}} && git submodule init && git submodule update
 
     - name: Build
-      run: source ~/.idf_profile && python ${{github.workspace}}/project.py build all all
+      run: source ~/.idf_profile && python ${{github.workspace}}/project.py build-debug-check all all
 
     - name: Pack firmware
       run: cd ${{github.workspace}} && zip -r ${{github.workspace}}/firmware.zip ./firmware
