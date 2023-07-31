@@ -65,7 +65,7 @@ AI::AI() : data_ready_(false), cmd_tp_("cmd_ai") {
 }
 
 bool AI::StartRecv() {
-  return bsp_uart_receive(BSP_UART_AI, rxbuf, sizeof(rxbuf), false) == HAL_OK;
+  return bsp_uart_receive(BSP_UART_AI, rxbuf, sizeof(rxbuf), false) == BSP_OK;
 }
 
 bool AI::PraseHost() {

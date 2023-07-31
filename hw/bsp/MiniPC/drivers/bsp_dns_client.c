@@ -5,7 +5,8 @@
 
 #include "bsp.h"
 
-int8_t bsp_dns_prase_domain(const char* domain_name, bsp_dns_addr_t* result) {
+bsp_status_t bsp_dns_prase_domain(const char* domain_name,
+                                  bsp_dns_addr_t* result) {
   struct addrinfo hints;
   struct addrinfo* tmp = NULL;
 

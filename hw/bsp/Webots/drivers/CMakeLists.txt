@@ -6,7 +6,7 @@ add_library(${PROJECT_NAME} STATIC)
 
 target_sources(${PROJECT_NAME} PRIVATE ${${PROJECT_NAME}_SOURCES})
 
-include(${MCU_DIR}/default/CMakeLists.txt)
+include(${MCU_DIR}/linux/driver/CMakeLists.txt)
 
 target_link_directories(
   ${PROJECT_NAME}

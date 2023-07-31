@@ -14,7 +14,7 @@ class List {
     om_list_head_t node_;
   } Node;
 
-  List() { INIT_LIST_HEAD(&(this->head_)); }
+  List() { OM_INIT_LIST_HEAD(&(this->head_)); }
 
   bool Add(Node& node) {
     mutex_.Lock();

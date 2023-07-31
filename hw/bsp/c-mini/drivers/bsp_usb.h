@@ -31,8 +31,9 @@ bsp_status_t bsp_usb_transmit(const uint8_t *buffer, uint32_t len);
 void bsp_usb_init(void);
 void bsp_usb_update(void);
 
-int8_t bsp_usb_register_callback(bsp_usb_t usb, bsp_usb_callback_t type,
-                                 void (*callback)(void *), void *callback_arg);
+bsp_status_t bsp_usb_register_callback(bsp_usb_t usb, bsp_usb_callback_t type,
+                                       void (*callback)(void *),
+                                       void *callback_arg);
 
 #ifdef __cplusplus
 }

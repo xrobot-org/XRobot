@@ -24,10 +24,13 @@ typedef enum {
   BSP_SPI_CB_NUM,
 } bsp_spi_callback_t;
 
-int8_t bsp_spi_register_callback(bsp_spi_t spi, bsp_spi_callback_t type,
-                                 void (*callback)(void *), void *callback_arg);
-int8_t bsp_spi_transmit(bsp_spi_t spi, uint8_t *data, size_t size, bool block);
-int8_t bsp_spi_receive(bsp_spi_t spi, uint8_t *buff, size_t size, bool block);
+bsp_status_t bsp_spi_register_callback(bsp_spi_t spi, bsp_spi_callback_t type,
+                                       void (*callback)(void *),
+                                       void *callback_arg);
+bsp_status_t bsp_spi_transmit(bsp_spi_t spi, uint8_t *data, size_t size,
+                              bool block);
+bsp_status_t bsp_spi_receive(bsp_spi_t spi, uint8_t *buff, size_t size,
+                             bool block);
 
 #ifdef __cplusplus
 }

@@ -95,10 +95,10 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
   can_rx_cb_fn(can_get(hcan));
 }
 
-int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
-                                 void (*callback)(bsp_can_t can, uint32_t id,
-                                                  uint8_t *data, void *arg),
-                                 void *callback_arg) {
+bsp_status_t bsp_can_register_callback(
+    bsp_can_t can, bsp_can_callback_t type,
+    void (*callback)(bsp_can_t can, uint32_t id, uint8_t *data, void *arg),
+    void *callback_arg) {
   assert_param(callback);
   assert_param(type != BSP_CAN_CB_NUM);
 
@@ -107,8 +107,8 @@ int8_t bsp_can_register_callback(bsp_can_t can, bsp_can_callback_t type,
   return BSP_OK;
 }
 
-int8_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format, uint32_t id,
-                            uint8_t *data) {
+bsp_status_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format,
+                                  uint32_t id, uint8_t *data) {
   CAN_TxHeaderTypeDef header;
   i++;
   if (format == CAN_FORMAT_STD) {
@@ -141,7 +141,7 @@ int8_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format, uint32_t id,
   }
 }
 
-int8_t bsp_can_get_msg(bsp_can_t can, uint8_t *data, uint32_t *index) {
+bsp_status_t bsp_can_get_msg(bsp_can_t can, uint8_t *data, uint32_t *index) {
   can_raw_rx_t rx = {};
   HAL_StatusTypeDef res = HAL_OK;
 

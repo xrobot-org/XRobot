@@ -43,6 +43,3 @@
 [submodule "lib/magic_enum"]
 	path = lib/magic_enum
 	url = https://github.com/Neargye/magic_enum.git
-[submodule "hw/mcu/esp/ESP32_BleSerial"]
-	path = hw/mcu/esp/ESP32_BleSerial
-	url = https://github.com/avinabmalla/ESP32_BleSerial.git

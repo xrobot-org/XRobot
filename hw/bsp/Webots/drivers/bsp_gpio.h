@@ -11,7 +11,7 @@ typedef enum {
   BSP_GPIO_NUM,
 } bsp_gpio_t;
 
-int8_t bsp_gpio_write_pin(bsp_gpio_t gpio, bool value);
+bsp_status_t bsp_gpio_write_pin(bsp_gpio_t gpio, bool value);
 
 #ifdef __cplusplus
 }

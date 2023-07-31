@@ -8,7 +8,7 @@
 static int dev = -1;
 static const char ON = '1', OFF = '0';
 
-inline int8_t bsp_gpio_write_pin(bsp_gpio_t gpio, bool value) {
+inline bsp_status_t bsp_gpio_write_pin(bsp_gpio_t gpio, bool value) {
   (void)gpio;
 
   if (dev == -1) {

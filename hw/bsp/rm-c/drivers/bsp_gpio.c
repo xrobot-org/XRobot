@@ -28,8 +28,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   }
 }
 
-int8_t bsp_gpio_register_callback(bsp_gpio_t gpio, void (*callback)(void *),
-                                  void *callback_arg) {
+bsp_status_t bsp_gpio_register_callback(bsp_gpio_t gpio,
+                                        void (*callback)(void *),
+                                        void *callback_arg) {
   assert_param(callback);
 
   uint16_t pin = bsp_gpio_map[gpio].pin;
@@ -44,7 +45,7 @@ int8_t bsp_gpio_register_callback(bsp_gpio_t gpio, void (*callback)(void *),
   return BSP_ERR;
 }
 
-int8_t bsp_gpio_enable_irq(bsp_gpio_t gpio) {
+bsp_status_t bsp_gpio_enable_irq(bsp_gpio_t gpio) {
   uint16_t pin = bsp_gpio_map[gpio].pin;
 
   switch (pin) {
@@ -67,7 +68,7 @@ int8_t bsp_gpio_enable_irq(bsp_gpio_t gpio) {
   return BSP_OK;
 }
 
-int8_t bsp_gpio_disable_irq(bsp_gpio_t gpio) {
+bsp_status_t bsp_gpio_disable_irq(bsp_gpio_t gpio) {
   uint16_t pin = bsp_gpio_map[gpio].pin;
 
   switch (pin) {
@@ -90,7 +91,7 @@ int8_t bsp_gpio_disable_irq(bsp_gpio_t gpio) {
   return BSP_OK;
 }
 
-inline int8_t bsp_gpio_write_pin(bsp_gpio_t gpio, bool value) {
+inline bsp_status_t bsp_gpio_write_pin(bsp_gpio_t gpio, bool value) {
   if (gpio == BSP_GPIO_LED) {
     bsp_pwm_set_comp(BSP_PWM_LED_RED, 1.0f);
     if (value) {

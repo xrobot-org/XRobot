@@ -32,13 +32,13 @@ static bsp_pwm_config_t bsp_pwm_map[BSP_PWM_NUMBER] = {
     [BSP_PWM_SERVO_G] = {&htim8, TIM_CHANNEL_3},
 };
 
-int8_t bsp_pwm_start(bsp_pwm_channel_t ch) {
+bsp_status_t bsp_pwm_start(bsp_pwm_channel_t ch) {
   HAL_TIM_PWM_Start(bsp_pwm_map[ch].tim, bsp_pwm_map[ch].channel);
 
   return BSP_OK;
 }
 
-int8_t bsp_pwm_set_comp(bsp_pwm_channel_t ch, float duty_cycle) {
+bsp_status_t bsp_pwm_set_comp(bsp_pwm_channel_t ch, float duty_cycle) {
   if (duty_cycle > 1.0f) {
     return BSP_ERR;
   }
@@ -56,7 +56,7 @@ int8_t bsp_pwm_set_comp(bsp_pwm_channel_t ch, float duty_cycle) {
   return BSP_OK;
 }
 
-int8_t bsp_pwm_set_freq(bsp_pwm_channel_t ch, float freq) {
+bsp_status_t bsp_pwm_set_freq(bsp_pwm_channel_t ch, float freq) {
   uint16_t reload = (uint16_t)(1000000U / freq);
 
   if (reload > 0) {
@@ -68,7 +68,7 @@ int8_t bsp_pwm_set_freq(bsp_pwm_channel_t ch, float freq) {
   return BSP_OK;
 }
 
-int8_t bsp_pwm_stop(bsp_pwm_channel_t ch) {
+bsp_status_t bsp_pwm_stop(bsp_pwm_channel_t ch) {
   HAL_TIM_PWM_Stop(bsp_pwm_map[ch].tim, bsp_pwm_map[ch].channel);
   return BSP_OK;
 }

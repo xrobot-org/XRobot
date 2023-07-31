@@ -103,9 +103,10 @@ void bsp_uart_init() {
   __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_REF), UART_IT_IDLE);
 }
 
-int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,
-                                  void (*callback)(void *),
-                                  void *callback_arg) {
+bsp_status_t bsp_uart_register_callback(bsp_uart_t uart,
+                                        bsp_uart_callback_t type,
+                                        void (*callback)(void *),
+                                        void *callback_arg) {
   assert_param(callback);
   assert_param(type != BSP_UART_CB_NUM);
 
@@ -114,7 +115,7 @@ int8_t bsp_uart_register_callback(bsp_uart_t uart, bsp_uart_callback_t type,
   return BSP_OK;
 }
 
-int8_t bsp_uart_abort_receive(bsp_uart_t uart) {
+bsp_status_t bsp_uart_abort_receive(bsp_uart_t uart) {
   HAL_UART_AbortReceive_IT(bsp_uart_get_handle(uart));
 
   switch (uart) {
@@ -136,7 +137,7 @@ int8_t bsp_uart_abort_receive(bsp_uart_t uart) {
   return BSP_OK;
 }
 
-int8_t bsp_uart_abort_transmit(bsp_uart_t uart) {
+bsp_status_t bsp_uart_abort_transmit(bsp_uart_t uart) {
   HAL_UART_AbortTransmit_IT(bsp_uart_get_handle(uart));
 
   switch (uart) {
@@ -159,8 +160,8 @@ int8_t bsp_uart_abort_transmit(bsp_uart_t uart) {
   return BSP_OK;
 }
 
-int8_t bsp_uart_transmit(bsp_uart_t uart, uint8_t *data, size_t size,
-                         bool block) {
+bsp_status_t bsp_uart_transmit(bsp_uart_t uart, uint8_t *data, size_t size,
+                               bool block) {
   if (block) {
     return HAL_UART_Transmit(bsp_uart_get_handle(uart), data, size, 10) !=
            HAL_OK;
@@ -170,8 +171,8 @@ int8_t bsp_uart_transmit(bsp_uart_t uart, uint8_t *data, size_t size,
   }
 }
 
-int8_t bsp_uart_receive(bsp_uart_t uart, uint8_t *buff, size_t size,
-                        bool block) {
+bsp_status_t bsp_uart_receive(bsp_uart_t uart, uint8_t *buff, size_t size,
+                              bool block) {
   if (block) {
     return HAL_UART_Receive(bsp_uart_get_handle(uart), buff, size, 10) !=
            HAL_OK;
