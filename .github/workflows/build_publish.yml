@@ -52,7 +52,7 @@ jobs:
       run: cd ${{github.workspace}} && git submodule init && git submodule update
 
     - name: Build
-      run: source ~/.idf_profile && python ${{github.workspace}}/project.py build-debug-check all all
+      run: source ~/.idf_profile && python ${{github.workspace}}/project.py build all all
 
     - name: Pack firmware
       run: cd ${{github.workspace}} && zip -r ${{github.workspace}}/firmware.zip ./firmware
