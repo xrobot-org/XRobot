@@ -1,7 +1,5 @@
 #include "dev_rm_motor.hpp"
 
-#include <sys/_stdint.h>
-
 #include "bsp_time.h"
 
 /* 电机最大控制输出绝对值 */
@@ -34,12 +32,15 @@ RMMotor::RMMotor(const Param &param, const char *name)
   switch (param.id_control) {
     case M3508_M2006_CTRL_ID_BASE:
       this->index_ = 0;
+      ASSERT(param.id_feedback > 0x200 && param.id_feedback <= 0x204);
       break;
     case M3508_M2006_CTRL_ID_EXTAND:
       this->index_ = 1;
+      ASSERT(param.id_feedback > 0x204 && param.id_feedback <= 0x208);
       break;
     case GM6020_CTRL_ID_EXTAND:
       this->index_ = 2;
+      ASSERT(param.id_feedback > 0x208 && param.id_feedback <= 0x20B);
       break;
     default:
       ASSERT(false);
