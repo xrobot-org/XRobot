@@ -21,7 +21,7 @@ class Term {
     }
 
     static int Call(ms_item_t *cmd, int argc, char **argv) {
-      Command<ArgType> *self = ms_container_of(cmd, Command<ArgType>, cmd_);
+      Command<ArgType> *self = om_container_of(cmd, Command<ArgType>, cmd_);
       return self->type_.Port(&self->type_, argc, argv);
     }
 
