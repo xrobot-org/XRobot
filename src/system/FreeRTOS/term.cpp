@@ -1,8 +1,11 @@
+
+#include <cmath>
 #include <cstdlib>
 #include <term.hpp>
 #include <thread.hpp>
 
 #include "bsp_sys.h"
+#include "bsp_time.h"
 #include "bsp_usb.h"
 #include "ms.h"
 #include "om.hpp"
@@ -12,7 +15,7 @@ using namespace System;
 
 static System::Thread term_thread, usb_thread;
 
-static ms_item_t task_info, power_ctrl;
+static ms_item_t task_info, power_ctrl, date;
 
 #ifdef MCU_DEBUG_BUILD
 static char task_print_buff[1024];
@@ -94,11 +97,29 @@ Term::Term() {
     return 0;
   };
 
+  auto date_cmd_fn = [](ms_item_t *item, int argc, char **argv) {
+    XB_UNUSED(item);
+    XB_UNUSED(argc);
+    XB_UNUSED(argv);
+
+    uint32_t time = bsp_time_get_ms();
+
+    printf("%d days %d hours %d minutes %.3f seconds\r\n",
+           time / 24 / 3600 / 1000, time / 1000 % (24 * 3600) / 3600,
+           time / 1000 % 3600 / 60,
+           fmodf(static_cast<float>(time), 60 * 1000) / 1000.0);
+
+    return 0;
+  };
+
   ms_file_init(&task_info, "task_info", task_cmd_fn, NULL, 0, false);
   ms_cmd_add(&task_info);
 
   ms_file_init(&power_ctrl, "power", pwr_cmd_fn, NULL, 0, false);
   ms_cmd_add(&power_ctrl);
+
+  ms_file_init(&date, "date", date_cmd_fn, NULL, 0, false);
+  ms_cmd_add(&date);
 
 #endif
 
