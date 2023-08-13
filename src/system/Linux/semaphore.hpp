@@ -18,7 +18,7 @@ class Semaphore {
 
   void Post() { sem_post(&this->handle_); }
 
-  bool Wait(uint32_t timeout) {
+  bool Wait(uint32_t timeout = UINT32_MAX) {
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     uint32_t secs = timeout / 1000;
