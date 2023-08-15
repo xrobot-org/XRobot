@@ -30,3 +30,21 @@
 
 /* 登陆命令 */
 #define MS_INIT_COMMAND ""
+
+/* 内置文件选择编译 */
+#define MS_FILE_TTY (0)
+
+#define MS_FILE_README (0)
+
+/* 内置命令选择编译 */
+#define MS_CMD_PWD (0)
+
+#define MS_CMD_LS (0)
+
+#define MS_CMD_CD (0)
+
+#define MS_CMD_CAT (0)
+
+#define MS_CMD_ECHO (0)
+
+#define MS_CMD_CLEAR (0)
