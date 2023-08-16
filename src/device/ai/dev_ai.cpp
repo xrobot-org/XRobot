@@ -71,7 +71,7 @@ bool AI::StartRecv() {
 bool AI::PraseHost() {
   if (Component::CRC16::Verify(rxbuf, sizeof(this->form_host_))) {
     this->cmd_.online = true;
-    this->last_online_time_ = bsp_time_get();
+    this->last_online_time_ = bsp_time_get_ms();
     memcpy(&(this->form_host_), rxbuf, sizeof(this->form_host_));
     memset(rxbuf, 0, AI_LEN_RX_BUFF);
     return true;
@@ -96,7 +96,7 @@ bool AI::StartTrans() {
 
 bool AI::Offline() {
   /* 离线移交控制权 */
-  if (bsp_time_get() - this->last_online_time_ > 0.2f) {
+  if (bsp_time_get_ms() - this->last_online_time_ > 200) {
     memset(&this->cmd_, 0, sizeof(cmd_));
     this->cmd_.online = false;
     this->cmd_.ctrl_source = Component::CMD::CTRL_SOURCE_AI;

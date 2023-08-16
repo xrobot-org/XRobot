@@ -19,9 +19,9 @@ class AHRS {
   static int ShowCMD(AHRS *ahrs, int argc, char **argv);
 
  private:
-  float last_update_ = 0.0f;
+  uint64_t last_wakeup_ = 0;
+  uint64_t now_ = 0;
   float dt_ = 0.0f;
-  float now_ = 0.0f;
 
   System::Thread thread_;
 

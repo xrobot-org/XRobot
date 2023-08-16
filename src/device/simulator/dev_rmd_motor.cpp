@@ -19,7 +19,7 @@ void RMDMotor::Control(float output) {
 }
 
 bool RMDMotor::Update() {
-  if (bsp_time_get() == this->last_sensor_time_) {
+  if (bsp_time_get_ms() == this->last_sensor_time_) {
     return false;
   }
 
@@ -27,8 +27,8 @@ bool RMDMotor::Update() {
       static_cast<float>(wb_position_sensor_get_value(this->sensor_));
 
   this->feedback_.rotational_speed =
-      (raw_pos - this->last_pos_) / (bsp_time_get() - this->last_sensor_time_) /
-      M_2PI * 60.0f;
+      (raw_pos - this->last_pos_) /
+      (bsp_time_get_ms() - this->last_sensor_time_) / 1000.0f / M_2PI * 60.0f;
 
   this->last_pos_ = raw_pos;
 
@@ -36,9 +36,9 @@ bool RMDMotor::Update() {
 
   this->feedback_.temp = 28.0f;
 
-  this->last_online_time_ = bsp_time_get();
+  this->last_online_time_ = bsp_time_get_ms();
 
-  this->last_sensor_time_ = bsp_time_get();
+  this->last_sensor_time_ = bsp_time_get_ms();
 
   this->feedback_.torque_current =
       static_cast<float>(wb_motor_get_torque_feedback(this->handle_));

@@ -40,7 +40,7 @@ class Performance {
 
       System::Thread::Sleep(100);
       perf->sem_1_.Post();
-      float time = bsp_time_get();
+      uint64_t time = bsp_time_get();
       for (int i = 0; i < 1000000; i++) {
         perf->sem_1_.Post();
       }
@@ -49,7 +49,7 @@ class Performance {
       printf("\tPost millon times\r\n");
 
       printf("\t\t%f microseconds per session\r\n",
-             time * 1000.0f / 1000000.0f);
+             static_cast<float>(time) / 1000.0f / 1000000.0f);
 
       perf->sem_2_.Post();
 
@@ -81,7 +81,8 @@ class Performance {
 
       printf("\tWait and post millon times\r\n");
 
-      printf("\t\t%f microseconds per session\r\n", time * 1000.0 / 1000000.0);
+      printf("\t\t%f microseconds per session\r\n",
+             static_cast<float>(time) / 1000.0f / 1000000.0f);
 
       /* post */
       perf->sem_2_.Wait();
@@ -95,7 +96,8 @@ class Performance {
 
       printf("\tWait millon times\r\n");
 
-      printf("\t\t%f microseconds per session\r\n", time * 1000.0 / 1000000.0);
+      printf("\t\t%f microseconds per session\r\n",
+             static_cast<float>(time) / 1000.0f / 1000000.0f);
 
       perf->sem_2_.Wait(UINT32_MAX);
 
@@ -117,7 +119,8 @@ class Performance {
     time = bsp_time_get() - time;
 
     printf("\tOverwrite 1k length memory in heap 10000 times\r\n");
-    printf("\t\t%f Mb/s\r\n", 10000.0 / time / 1024.0);
+    printf("\t\t%f Mb/s\r\n",
+           10000.0 / static_cast<float>(time) / 1024.0 * 1000000);
 
     time = bsp_time_get();
 
@@ -128,7 +131,8 @@ class Performance {
     time = bsp_time_get() - time;
 
     printf("\tOverwrite 64byte length memory in heap 160000 times\r\n");
-    printf("\t\t%f Mb/s\r\n", 10000.0 / time / 1024.0);
+    printf("\t\t%f Mb/s\r\n",
+           10000.0 / static_cast<float>(time) / 1024.0 * 1000000);
 
     free(mem);
 
@@ -141,7 +145,8 @@ class Performance {
     time = bsp_time_get() - time;
 
     printf("\tOverwrite 64byte length memory in stack 160000 times\r\n");
-    printf("\t\t%f Mb/s\r\n", 10000.0 / time / 1024.0);
+    printf("\t\t%f Mb/s\r\n",
+           10000.0 / static_cast<float>(time) / 1024.0 * 1000000);
 
     printf("*** Memory Test End ***\r\n");
 

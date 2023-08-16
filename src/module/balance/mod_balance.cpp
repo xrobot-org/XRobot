@@ -165,8 +165,8 @@ void Balance<Motor, MotorParam>::UpdateStatus() {
 
 template <typename Motor, typename MotorParam>
 bool Balance<Motor, MotorParam>::SlipDetect() {
-  if (bsp_time_get() - last_detect_time_ > 0.2) {
-    last_detect_time_ = bsp_time_get();
+  if (bsp_time_get_ms() - last_detect_time_ > 0.2) {
+    last_detect_time_ = bsp_time_get_ms();
     slip_counter_ = 0.0f;
     if (fabsf(gyro_.x) > 0.6f) {
       if (last_detect_dir_ * gyro_.x < 0) {
@@ -198,7 +198,8 @@ template <typename Motor, typename MotorParam>
 void Balance<Motor, MotorParam>::Control() {
   this->now_ = bsp_time_get();
 
-  this->dt_ = this->now_ - this->last_wakeup_;
+  this->dt_ = TIME_DIFF(this->last_wakeup_, this->now_);
+
   this->last_wakeup_ = this->now_;
 
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */

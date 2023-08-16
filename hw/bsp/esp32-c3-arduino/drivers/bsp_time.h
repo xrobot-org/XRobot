@@ -10,9 +10,9 @@ void bsp_time_init();
 
 uint32_t bsp_time_get_ms();
 
-uint32_t bsp_time_get_us();
+uint64_t bsp_time_get_us();
 
-float bsp_time_get();
+uint64_t bsp_time_get();
 
 #ifdef __cplusplus
 }

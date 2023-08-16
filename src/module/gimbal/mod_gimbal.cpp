@@ -87,7 +87,8 @@ void Gimbal::UpdateFeedback() {
 
 void Gimbal::Control() {
   this->now_ = bsp_time_get();
-  this->dt_ = this->now_ - this->last_wakeup_;
+  this->dt_ = TIME_DIFF(this->last_wakeup_, this->now_);
+
   this->last_wakeup_ = this->now_;
 
   float gimbal_pit_cmd = 0.0f;

@@ -52,7 +52,7 @@ class Cap {
  private:
   Param param_;
 
-  float last_online_time_ = 0.0f;
+  uint32_t last_online_time_ = 0;
 
   System::Queue<Can::Pack> control_feedback_ = System::Queue<Can::Pack>(1);
 

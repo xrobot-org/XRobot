@@ -78,7 +78,7 @@ static Component::PID::Param imu_temp_ctrl_pid_param = {
     .cycle = false,
 };
 
-static float imu_temp_ctrl_time = 0.0f;
+static uint64_t imu_temp_ctrl_time = 0;
 
 using namespace Device;
 
@@ -209,10 +209,10 @@ BMI088::BMI088(BMI088::Rotation &rot)
         }
 
         /* PID控制IMU温度，PWM输出 */
-        bsp_pwm_set_comp(
-            BSP_PWM_IMU_HEAT,
-            imu_temp_ctrl_pid.Calculate(40.0f, bmi088->temp_,
-                                        bsp_time_get() - imu_temp_ctrl_time));
+        bsp_pwm_set_comp(BSP_PWM_IMU_HEAT,
+                         imu_temp_ctrl_pid.Calculate(
+                             40.0f, bmi088->temp_,
+                             TIME_DIFF(imu_temp_ctrl_time, bsp_time_get())));
         imu_temp_ctrl_time = bsp_time_get();
 
       } else {

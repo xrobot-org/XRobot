@@ -106,11 +106,12 @@ class Balance {
 
   float dt_ = 0.0f;
 
-  float last_wakeup_ = 0.0f;
+  uint64_t last_wakeup_ = 0;
 
-  float now_ = 0.0f;
+  uint64_t now_ = 0;
 
-  float last_detect_time_ = 0.0f;
+  uint32_t last_detect_time_ = 0;
+
   float last_detect_dir_ = 1.0f;
   uint16_t slip_counter_ = 0;
 
