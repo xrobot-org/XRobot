@@ -48,7 +48,7 @@ class CycleValue {
     }
   }
 
-  CycleValue() = default;
+  CycleValue() : value_(0.0f) {}
 
   CycleValue operator+(const float& value) {
     return CycleValue(value + value_);
