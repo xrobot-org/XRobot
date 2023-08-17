@@ -43,3 +43,9 @@
 [submodule "lib/magic_enum"]
 	path = lib/magic_enum
 	url = https://github.com/Neargye/magic_enum.git
+[submodule "hw/mcu/st/stm32g4xx_hal_driver"]
+	path = hw/mcu/st/stm32g4xx_hal_driver
+	url = https://github.com/STMicroelectronics/stm32g4xx_hal_driver.git
+[submodule "hw/mcu/st/cmsis_device_g4"]
+	path = hw/mcu/st/cmsis_device_g4
+	url = https://github.com/STMicroelectronics/cmsis_device_g4
