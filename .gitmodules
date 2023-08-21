@@ -49,3 +49,6 @@
 [submodule "hw/mcu/st/cmsis_device_g4"]
 	path = hw/mcu/st/cmsis_device_g4
 	url = https://github.com/STMicroelectronics/cmsis_device_g4
+[submodule "lib/MiniFlashDB"]
+	path = lib/MiniFlashDB
+	url = https://github.com/Jiu-xiao/MiniFlashDB.git
