@@ -210,9 +210,9 @@ bool ICM42688::Init() {
   /*中断输出设置*/
   WriteSingle(0x14, 0x12);  // INT1 INT2 脉冲模式，低有效
   /*Gyro设置*/
-  WriteSingle(0x4F, 0x26);  // 1000dps 1KHz
+  WriteSingle(0x4F, 0x06);  // 2000dps 1KHz
   /*Accel设置*/
-  WriteSingle(0x50, 0x26);  // 8G 1KHz
+  WriteSingle(0x50, 0x06);  // 16G 1KHz
   /*Tem设置&Gyro_Config1*/
   WriteSingle(0x51, 0x56);  // BW 82Hz Latency = 2ms
   /*GYRO_ACCEL_CONFIG0*/
@@ -283,11 +283,8 @@ void ICM42688::Prase() {
                                static_cast<float>(raw_y),
                                static_cast<float>(raw_z)};
 
-  /* FS125: 262.144. FS250: 131.072. FS500: 65.536. FS1000: 32.768.
-   * FS2000: 16.384.*/
-
   for (float &it : accl) {
-    it /= 4096.0f;
+    it /= 2048.0f;
   }
 
   memset(&(this->accl_), 0, sizeof(this->accl_));
@@ -306,9 +303,8 @@ void ICM42688::Prase() {
                                static_cast<float>(raw_y),
                                static_cast<float>(raw_z)};
 
-  /* 3G: 10920. 6G: 5460. 12G: 2730. 24G: 1365. */
   for (float &it : gyro) {
-    it = it / 32.768f * M_DEG2RAD_MULT;
+    it = it / 16.384f * M_DEG2RAD_MULT;
   }
 
   memset(&(this->gyro_), 0, sizeof(this->gyro_));
