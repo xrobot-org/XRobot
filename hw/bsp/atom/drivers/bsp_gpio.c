@@ -19,6 +19,7 @@ static bsp_callback_t callback_list[16];
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
   for (uint8_t i = 0; i < 16; i++) {
     if (GPIO_Pin & (1 << i)) {
+      __HAL_GPIO_EXTI_CLEAR_IT(GPIO_Pin);
       bsp_callback_t cb = callback_list[i];
 
       if (cb.fn) {
@@ -46,9 +47,7 @@ bsp_status_t bsp_gpio_register_callback(bsp_gpio_t gpio,
 }
 
 bsp_status_t bsp_gpio_enable_irq(bsp_gpio_t gpio) {
-  uint16_t pin = BSP_GPIO_MAP[gpio].pin;
-
-  switch (pin) {
+  switch (gpio) {
     case BSP_GPIO_IMU_INT_1:
       HAL_NVIC_EnableIRQ(IMU_INT1_EXTI_IRQn);
       break;
@@ -69,9 +68,7 @@ bsp_status_t bsp_gpio_enable_irq(bsp_gpio_t gpio) {
 }
 
 bsp_status_t bsp_gpio_disable_irq(bsp_gpio_t gpio) {
-  uint16_t pin = BSP_GPIO_MAP[gpio].pin;
-
-  switch (pin) {
+  switch (gpio) {
     case BSP_GPIO_IMU_INT_1:
       HAL_NVIC_DisableIRQ(IMU_INT1_EXTI_IRQn);
       break;
