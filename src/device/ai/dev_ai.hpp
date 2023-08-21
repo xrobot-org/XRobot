@@ -52,7 +52,7 @@ class AI {
 
  private:
   bool ref_updated_ = false;
-  float last_online_time_ = 0.0f;
+  uint32_t last_online_time_ = 0;
 
   Protocol_DownPackage_t form_host_{};
 

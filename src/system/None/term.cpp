@@ -8,7 +8,7 @@ using namespace System;
 
 static bool connected = false;
 
-static ms_item_t power_ctrl;
+static ms_item_t power_ctrl, date;
 
 static om_status_t print_log(om_msg_t *msg, void *arg) {
   XB_UNUSED(arg);
@@ -19,7 +19,8 @@ static om_status_t print_log(om_msg_t *msg, void *arg) {
 
   om_log_t *log = static_cast<om_log_t *>(msg->buff);
 
-  ms_printf_insert("%-.4f %s", bsp_time_get(), log->data);
+  ms_printf_insert("%-.4f %s", static_cast<float>(bsp_time_get()) / 1000000.0f,
+                   log->data);
 
   return OM_OK;
 }
@@ -80,8 +81,26 @@ Term::Term() {
     return 0;
   };
 
+  auto date_cmd_fn = [](ms_item_t *item, int argc, char **argv) {
+    XB_UNUSED(item);
+    XB_UNUSED(argc);
+    XB_UNUSED(argv);
+
+    uint32_t time = bsp_time_get_ms();
+
+    printf("%d days %d hours %d minutes %.3f seconds\r\n",
+           time / 24 / 3600 / 1000, time / 1000 % (24 * 3600) / 3600,
+           time / 1000 % 3600 / 60,
+           fmodf(static_cast<float>(time), 60 * 1000) / 1000.0);
+
+    return 0;
+  };
+
   ms_file_init(&power_ctrl, "power", pwr_cmd_fn, NULL, 0, false);
   ms_cmd_add(&power_ctrl);
+
+  ms_file_init(&date, "date", date_cmd_fn, NULL, 0, false);
+  ms_cmd_add(&date);
 
   System::Timer::Create(term_thread_fn, static_cast<void *>(0), 10);
 }

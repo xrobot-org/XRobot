@@ -149,11 +149,13 @@ class AutoReturnLimit : public LimitCheck {
   AutoReturnLimit(Param param)
       : LimitCheck(), param_(param), start_time_(bsp_time_get()) {}
 
-  bool ReachLimit() { return (bsp_time_get() - start_time_) > param_.timeout; }
+  bool ReachLimit() {
+    return TIME_DIFF(start_time_, bsp_time_get()) > param_.timeout;
+  }
 
   Param param_;
 
-  float start_time_;
+  uint64_t start_time_;
 };
 
 typedef enum { AXIS_X, AXIS_Y, AXIS_Z, AXIS_NUM } Axis;
@@ -310,7 +312,7 @@ class SteeringMech {
         break;
     }
 
-    mech.Control(setpoint, bsp_time_get() - mech.last_control_time_);
+    mech.Control(setpoint, TIME_DIFF(mech.last_control_time_, bsp_time_get()));
 
     Component::Type::Vector3 transform = mech.param_.translation;
 
@@ -373,8 +375,10 @@ class SteeringMech {
 
     setpoint_1 += error;
     setpoint_2 -= error;
-    mech_1.Control(setpoint_1, bsp_time_get() - mech_1.last_control_time_);
-    mech_2.Control(setpoint_2, bsp_time_get() - mech_2.last_control_time_);
+    mech_1.Control(setpoint_1,
+                   TIME_DIFF(mech_1.last_control_time_, bsp_time_get()));
+    mech_2.Control(setpoint_2,
+                   TIME_DIFF(mech_2.last_control_time_, bsp_time_get()));
 
     switch (mech_1.param_.axis) {
       case AXIS_X: {
@@ -440,7 +444,7 @@ class SteeringMech {
   Param& param_;
   std::array<Component::PosActuator*, Num> pos_actuator_;
   std::array<LimitType*, Num> limit_check_;
-  float last_control_time_ = 0.0f;
+  uint64_t last_control_time_ = 0;
 };
 
 template <typename MotorType, typename LimitType, int Num>
@@ -583,7 +587,7 @@ class LinearMech {
         break;
     }
 
-    mech.Control(setpoint, bsp_time_get() - mech.last_control_time_);
+    mech.Control(setpoint, TIME_DIFF(mech.last_control_time_, bsp_time_get()));
 
     return stream;
   }
@@ -598,6 +602,6 @@ class LinearMech {
   Param& param_;
   std::array<Component::PosActuator*, Num> pos_actuator_;
   std::array<LimitType*, Num> limit_check_;
-  float last_control_time_ = 0.0f;
+  uint64_t last_control_time_ = 0;
 };
 }  // namespace Device

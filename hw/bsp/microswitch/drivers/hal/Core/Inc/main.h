@@ -51,10 +51,10 @@ extern "C" {
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
-void   MX_GPIO_Init(void);
-void   MX_DMA_Init(void);
-void   MX_CAN_Init(void);
-void   MX_USART1_UART_Init(void);
+void MX_GPIO_Init(void);
+void MX_DMA_Init(void);
+void MX_CAN_Init(void);
+void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN EFP */
 

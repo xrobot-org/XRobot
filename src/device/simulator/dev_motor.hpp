@@ -77,11 +77,11 @@ class BaseMotor {
 
   Feedback feedback_{};
 
-  float last_online_time_ = 0.0f;
+  uint32_t last_online_time_ = 0;
 
   Component::Type::CycleValue last_pos_ = 0.0f;
 
-  float last_sensor_time_ = 0.0f;
+  uint32_t last_sensor_time_ = 0;
 
   WbDeviceTag handle_;
 

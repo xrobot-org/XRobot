@@ -57,7 +57,8 @@ static om_status_t print_log(om_msg_t *msg, void *arg) {
 
   om_log_t *log = static_cast<om_log_t *>(msg->buff);
 
-  snprintf(time_print_buff, sizeof(time_print_buff), "%-.4f ", bsp_time_get());
+  (void)snprintf(time_print_buff, sizeof(time_print_buff), "%-.4f ",
+                 static_cast<float>(bsp_time_get()) / 1000000.0f);
 
 #ifdef TERM_LOG_UDP_SERVER
   bsp_udp_server_transmit(&term_udp_server,

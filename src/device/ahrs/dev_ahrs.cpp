@@ -121,9 +121,8 @@ static float q_2q0, q_2q1, q_2q2, q_2q3, q_4q0, q_4q1, q_4q2, q_8q1, q_8q2,
 
 void AHRS::Update() {
   this->now_ = bsp_time_get();
-
-  this->dt_ = this->now_ - this->last_update_;
-  this->last_update_ = this->now_;
+  this->dt_ = TIME_DIFF(this->last_wakeup_, this->now_);
+  this->last_wakeup_ = this->now_;
 
   float ax = this->accl_.x;
   float ay = this->accl_.y;

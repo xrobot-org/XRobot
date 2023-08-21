@@ -68,7 +68,7 @@ RMMotor::RMMotor(const Param &param, const char *name)
   auto rx_callback = [](Can::Pack &rx, RMMotor *motor) {
     motor->recv_.Overwrite(rx);
 
-    motor->last_online_time_ = bsp_time_get();
+    motor->last_online_time_ = bsp_time_get_ms();
 
     return true;
   };

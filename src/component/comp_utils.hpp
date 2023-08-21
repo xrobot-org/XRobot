@@ -11,6 +11,14 @@
 #include "comp_type.hpp"
 
 /**
+ * @brief 计算时间戳相差秒数
+ *
+ */
+#define TIME_DIFF(_start, _end) ((float)(_end - _start) / 1000000.0f)
+#define TIME_DIFF_US(_start, _end) ((float)(_end - _start) / 1000000.0f)
+#define TIME_DIFF_MS(_start, _end) ((float)(_end - _start) / 1000.0f)
+
+/**
  * @brief 角度到弧度转换
  *
  */

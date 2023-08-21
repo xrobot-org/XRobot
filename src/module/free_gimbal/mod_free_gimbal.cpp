@@ -64,7 +64,8 @@ void FreeGimbal::Control() {
   this->yaw_ = this->yaw_motor_.GetAngle();
 
   this->now_ = bsp_time_get();
-  this->dt_ = this->now_ - this->last_wakeup_;
+  this->dt_ = TIME_DIFF(this->last_wakeup_, this->now_);
+
   this->last_wakeup_ = this->now_;
   float gimbal_yaw_cmd = 0.0f;
 

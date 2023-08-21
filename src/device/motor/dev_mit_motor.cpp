@@ -66,7 +66,7 @@ bool MitMotor::Update() {
 
   while (this->recv_.Receive(pack)) {
     this->Decode(pack);
-    last_online_time_ = bsp_time_get();
+    last_online_time_ = bsp_time_get_ms();
   }
 
   return true;

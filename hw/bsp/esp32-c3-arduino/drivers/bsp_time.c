@@ -15,7 +15,7 @@ uint32_t bsp_time_get_ms() {
          UINT32_MAX;
 }
 
-uint32_t bsp_time_get_us() {
+uint64_t bsp_time_get_us() {
   struct timeval tv;
   gettimeofday(&tv, NULL);
   return ((tv.tv_sec - start_time.tv_sec) * 1000000 +
@@ -23,9 +23,4 @@ uint32_t bsp_time_get_us() {
          UINT32_MAX;
 }
 
-float bsp_time_get() {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return (tv.tv_sec - start_time.tv_sec) +
-         ((float)(tv.tv_usec - start_time.tv_usec) / 1000000.0f);
-}
+uint64_t bsp_time_get() __attribute__((alias("bsp_time_get_us")));

@@ -42,9 +42,9 @@ class Dartgimbal {
   void Control();
 
  private:
-  float last_wakeup_ = 0.0f;
+  uint64_t last_wakeup_ = 0;
 
-  float now_ = 0.0f;
+  uint64_t now_ = 0;
 
   float dt_ = 0.0f;
   Param param_;

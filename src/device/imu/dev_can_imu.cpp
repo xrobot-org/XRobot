@@ -44,7 +44,7 @@ void IMU::Update() {
   while (this->recv_.Receive(rx)) {
     this->Decode(rx);
     this->online_ = true;
-    this->last_online_time_ = bsp_time_get();
+    this->last_online_time_ = bsp_time_get_ms();
   }
 }
 
@@ -73,14 +73,11 @@ bool IMU::Decode(Can::Pack &rx) {
       return false;
   }
 
-  this->online_ = 1;
-  this->last_online_time_ = bsp_time_get();
-
   return true;
 }
 
 bool IMU::Offline() {
-  if (bsp_time_get() - this->last_online_time_ > 0.1f) {
+  if (bsp_time_get_ms() - this->last_online_time_ > 100) {
     this->online_ = 0;
   }
 

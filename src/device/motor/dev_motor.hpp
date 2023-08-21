@@ -68,7 +68,8 @@ class BaseMotor {
         }
         while (time > delay) {
           printf("电机 [%s] 反馈数据:\r\n", motor->name_);
-          printf("最近一次反馈时间:%fs.\r\n", motor->last_online_time_);
+          printf("最近一次反馈时间:%fs.\r\n",
+                 static_cast<float>(motor->last_online_time_) / 1000.0f);
           printf("角度:%frad 速度:%frpm 电流:%fA 温度:%f℃\r\n",
                  motor->GetAngle().Value(), motor->GetSpeed(),
                  motor->GetCurrent(), motor->feedback_.temp);
@@ -86,7 +87,7 @@ class BaseMotor {
 
   Feedback feedback_;
 
-  float last_online_time_ = 0.0f;
+  uint32_t last_online_time_ = 0;
 
   bool reverse_; /* 电机反装 */
 

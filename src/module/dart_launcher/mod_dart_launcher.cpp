@@ -30,10 +30,10 @@ DartLauncher::DartLauncher(DartLauncher::Param& param, float control_freq)
   auto event_callback = [](Event event, DartLauncher* dart) {
     switch (event) {
       case RELOAD:
-        if (bsp_time_get() - dart->last_reload_time_ < 0.5f) {
+        if (bsp_time_get_ms() - dart->last_reload_time_ < 500) {
           return;
         } else {
-          dart->last_reload_time_ = bsp_time_get();
+          dart->last_reload_time_ = bsp_time_get_ms();
           dart->setpoint_.reload += 0.25;
           clampf(&dart->setpoint_.reload, 0, 1.0);
         }
@@ -83,7 +83,8 @@ void DartLauncher::UpdateFeedback() {
 void DartLauncher::Control() {
   this->now_ = bsp_time_get();
 
-  this->dt_ = this->now_ - this->last_wakeup_;
+  this->dt_ = TIME_DIFF(this->last_wakeup_, this->now_);
+
   this->last_wakeup_ = this->now_;
 
   this->rod_actr_.Control(this->setpoint_.rod * this->param_.rod_actr.max_range,

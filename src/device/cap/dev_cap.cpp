@@ -72,11 +72,11 @@ bool Cap::Update() {
   while (this->control_feedback_.Receive(rx)) {
     this->Decode(rx);
     this->info_.online_ = 1;
-    this->last_online_time_ = bsp_time_get();
+    this->last_online_time_ = bsp_time_get_ms();
     return true;
   }
 
-  if (bsp_time_get() - this->last_online_time_ > 0.5f) {
+  if (bsp_time_get_ms() - this->last_online_time_ > 500) {
     return false;
   } else {
     return true;

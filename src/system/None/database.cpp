@@ -14,7 +14,7 @@ Database::Database() {
   bsp_flash_init();
 
   auto sn_cmd_fn = [](ms_item_t *item, int argc, char **argv) {
-    MS_UNUSED(item);
+    OM_UNUSED(item);
 
     if (argc == 1) {
       printf("-show        show SN code.\r\n");

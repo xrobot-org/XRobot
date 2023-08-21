@@ -131,7 +131,8 @@ void WheelLeg::UpdateFeedback() {
 void WheelLeg::Control() {
   this->now_ = bsp_time_get();
 
-  this->dt_ = this->now_ - this->last_wakeup_;
+  this->dt_ = TIME_DIFF(this->last_wakeup_, this->now_);
+
   this->last_wakeup_ = this->now_;
 
   /* 处理控制命令 */

@@ -16,124 +16,61 @@ namespace System {
 template <typename Data>
 class Queue {
  public:
-  Queue(uint16_t length) : mutex_(xSemaphoreCreateBinary()) {
-    om_fifo_create(&fifo_, malloc(length * sizeof(Data)), length, sizeof(Data));
-    xSemaphoreGive(mutex_);
-  }
+  Queue(uint16_t length) { xQueueCreate(length, sizeof(Data)); }
 
   bool Send(const Data& data) {
     if (bsp_sys_in_isr()) {
-      if (xSemaphoreTakeFromISR(mutex_, NULL) != pdTRUE) {
-        return false;
+      BaseType_t xHigherPriorityTaskWoken;
+      auto ans = xQueueSendFromISR(queue_, &data, &xHigherPriorityTaskWoken);
+      if (xHigherPriorityTaskWoken) {
+        /* Actual macro used here is port specific. */
+        portYIELD();
       }
-
-      if (om_fifo_write(&fifo_, &data) == OM_OK) {
-        xSemaphoreGiveFromISR(mutex_, NULL);
-        return true;
-      } else {
-        xSemaphoreGiveFromISR(mutex_, NULL);
-        return false;
-      }
+      return ans == pdTRUE;
     } else {
-      xSemaphoreTake(mutex_, UINT32_MAX);
-      if (om_fifo_write(&fifo_, &data) == OM_OK) {
-        xSemaphoreGive(this->mutex_);
-        return true;
-      }
-      xSemaphoreGive(this->mutex_);
-      return false;
+      return xQueueSend(queue_, &data, 0) == pdTRUE;
     }
   }
 
   bool Receive(Data& data) {
     if (bsp_sys_in_isr()) {
-      if (xSemaphoreTakeFromISR(mutex_, NULL) != pdTRUE) {
-        return false;
+      BaseType_t xHigherPriorityTaskWoken;
+      auto ans = xQueueReceiveFromISR(queue_, &data, &xHigherPriorityTaskWoken);
+      if (xHigherPriorityTaskWoken) {
+        portYIELD();
       }
-
-      if (om_fifo_read(&fifo_, &data) == OM_OK) {
-        xSemaphoreGiveFromISR(mutex_, NULL);
-        return true;
-      }
-      xSemaphoreGiveFromISR(mutex_, NULL);
-      return false;
+      return ans == pdTRUE;
     } else {
-      xSemaphoreTake(mutex_, UINT32_MAX);
-      if (om_fifo_read(&fifo_, &data) == OM_OK) {
-        xSemaphoreGive(this->mutex_);
-        return true;
-      }
-      xSemaphoreGive(this->mutex_);
-      return false;
+      return xQueueReceive(queue_, &data, 0) == pdTRUE;
     }
   }
 
   bool Overwrite(const Data& data) {
     if (bsp_sys_in_isr()) {
-      if (xSemaphoreTakeFromISR(mutex_, NULL) != pdTRUE) {
-        return false;
-      }
-      if (om_fifo_overwrite(&fifo_, &data) == OM_OK) {
-        xSemaphoreGiveFromISR(mutex_, NULL);
-        return true;
-      }
-      xSemaphoreGiveFromISR(mutex_, NULL);
-      return false;
-    } else {
-      xSemaphoreTake(mutex_, UINT32_MAX);
+      BaseType_t xHigherPriorityTaskWoken;
 
-      if (om_fifo_overwrite(&fifo_, &data) == OM_OK) {
-        xSemaphoreGive(this->mutex_);
-        return true;
+      auto ans =
+          xQueueOverwriteFromISR(queue_, &data, &xHigherPriorityTaskWoken);
+      if (xHigherPriorityTaskWoken) {
+        portYIELD();
       }
-      xSemaphoreGive(this->mutex_);
-      return false;
+      return ans == pdTRUE;
+    } else {
+      return xQueueOverwrite(queue_, &data) == pdTRUE;
     }
   }
 
-  bool Reset() {
-    if (bsp_sys_in_isr()) {
-      if (xSemaphoreTakeFromISR(mutex_, NULL) != pdTRUE) {
-        return false;
-      }
-      if (om_fifo_reset(&fifo_) == OM_OK) {
-        xSemaphoreGiveFromISR(mutex_, NULL);
-        return true;
-      }
-      xSemaphoreGiveFromISR(mutex_, NULL);
-      return false;
-    } else {
-      xSemaphoreTake(mutex_, UINT32_MAX);
-
-      if (om_fifo_reset(&fifo_) == OM_OK) {
-        xSemaphoreGive(this->mutex_);
-        return true;
-      }
-      xSemaphoreGive(this->mutex_);
-      return false;
-    }
-  }
+  bool Reset() { xQueueReset(queue_); }
 
   uint32_t Size() {
-    uint32_t size = 0;
     if (bsp_sys_in_isr()) {
-      if (xSemaphoreTakeFromISR(mutex_, NULL) != pdTRUE) {
-        return false;
-      }
-      size = om_fifo_readable_item_count(&fifo_);
-      xSemaphoreGiveFromISR(mutex_, NULL);
-      return false;
+      return uxQueueMessagesWaitingFromISR(queue_);
     } else {
-      xSemaphoreTake(mutex_, UINT32_MAX);
-
-      size = om_fifo_readable_item_count(&fifo_);
-      xSemaphoreGive(this->mutex_);
+      return uxQueueMessagesWaiting(queue_);
     }
-    return size;
   }
 
  private:
-  om_fifo_t fifo_;
-  SemaphoreHandle_t mutex_;
+  QueueHandle_t queue_;
 };
 }  // namespace System

@@ -4,6 +4,6 @@
 
 uint32_t bsp_time_get_ms() { return wb_robot_get_time() * 1000; }
 
-uint32_t bsp_time_get_us() { return wb_robot_get_time() * 1000000; }
+uint64_t bsp_time_get_us() { return wb_robot_get_time() * 1000000; }
 
-float bsp_time_get() { return wb_robot_get_time(); }
+uint64_t bsp_time_get() __attribute__((alias("bsp_time_get_us")));
