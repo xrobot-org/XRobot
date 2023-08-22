@@ -111,7 +111,7 @@ void MMC5603::PraseData() {
   this->intensity_ =
       sqrtf(magn_.x * magn_.x + magn_.y * magn_.y + magn_.z * magn_.z);
 
-  if (intensity_ > 0.55f || intensity_ < 0.45f) {
+  if (intensity_ > 0.6f || intensity_ < 0.4f) {
     magn_.x = magn_.y = magn_.z = 0.0f;
   }
 }
@@ -138,7 +138,7 @@ int MMC5603::CaliCMD(MMC5603 *mmc5603, int argc, char **argv) {
                          {mmc5603->raw_magn_.y, mmc5603->raw_magn_.y},
                          {mmc5603->raw_magn_.z, mmc5603->raw_magn_.z}};
       float *data = &mmc5603->raw_magn_.x;
-      for (int i = 0; i < 10000; i++) {
+      for (int i = 0; i < 30000; i++) {
         for (int i = 0; i < 3; i++) {
           if (data[i] > tmp[i][0]) {
             tmp[i][0] = data[i];
@@ -147,7 +147,7 @@ int MMC5603::CaliCMD(MMC5603 *mmc5603, int argc, char **argv) {
             tmp[i][1] = data[i];
           }
         }
-        printf("进度：%d/10000 %.3f %.3f %.3f", i, tmp[0][0] - tmp[0][1],
+        printf("进度：%d/30000 %.3f %.3f %.3f", i, tmp[0][0] - tmp[0][1],
                tmp[1][0] - tmp[1][1], tmp[2][0] - tmp[2][1]);
         System::Thread::Sleep(1);
         ms_clear_line();
