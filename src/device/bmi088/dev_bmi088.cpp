@@ -99,13 +99,10 @@ void BMI088::Unselect(BMI088::DeviceType type) {
 }
 
 void BMI088::WriteSingle(BMI088::DeviceType type, uint8_t reg, uint8_t data) {
-  tx_rx_buf[0] = (reg & 0x7f);
-  tx_rx_buf[1] = data;
-
   System::Thread::Sleep(1);
 
   this->Select(type);
-  bsp_spi_transmit(BSP_SPI_IMU, tx_rx_buf, 2u, true);
+  bsp_spi_mem_write_byte(BSP_SPI_IMU, reg, data);
   this->Unselect(type);
 }
 
@@ -115,8 +112,7 @@ uint8_t BMI088::ReadSingle(BMI088::DeviceType type, uint8_t reg) {
   System::Thread::Sleep(1);
 
   this->Select(type);
-  bsp_spi_transmit(BSP_SPI_IMU, tx_rx_buf, 1u, true);
-  bsp_spi_receive(BSP_SPI_IMU, tx_rx_buf, 2u, true);
+  bsp_spi_mem_read(BSP_SPI_IMU, reg, tx_rx_buf, 2u, true);
   this->Unselect(type);
   if (type == BMI088::BMI_ACCL) {
     return tx_rx_buf[1];
@@ -127,11 +123,8 @@ uint8_t BMI088::ReadSingle(BMI088::DeviceType type, uint8_t reg) {
 
 void BMI088::Read(BMI088::DeviceType type, uint8_t reg, uint8_t *data,
                   uint8_t len) {
-  tx_rx_buf[0] = static_cast<uint8_t>(reg | 0x80);
-
   this->Select(type);
-  bsp_spi_transmit(BSP_SPI_IMU, tx_rx_buf, 1u, true);
-  bsp_spi_receive(BSP_SPI_IMU, data, len, false);
+  bsp_spi_mem_read(BSP_SPI_IMU, reg, data, len, false);
 }
 
 BMI088::BMI088(BMI088::Rotation &rot)
