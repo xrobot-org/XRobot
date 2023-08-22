@@ -16,7 +16,7 @@ namespace System {
 template <typename Data>
 class Queue {
  public:
-  Queue(uint16_t length) { xQueueCreate(length, sizeof(Data)); }
+  Queue(uint16_t length) : queue_(xQueueCreate(length, sizeof(Data))) {}
 
   bool Send(const Data& data) {
     if (bsp_sys_in_isr()) {
@@ -60,7 +60,7 @@ class Queue {
     }
   }
 
-  bool Reset() { xQueueReset(queue_); }
+  bool Reset() { return xQueueReset(queue_) == pdTRUE; }
 
   uint32_t Size() {
     if (bsp_sys_in_isr()) {
