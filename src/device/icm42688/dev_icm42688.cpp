@@ -17,39 +17,28 @@
 #include "comp_utils.hpp"
 #include "om_log.h"
 
-static uint8_t tx_rx_buf[2];
-
 static uint8_t dma_buf[14];
 
 using namespace Device;
 
 void ICM42688::WriteSingle(uint8_t reg, uint8_t data) {
-  tx_rx_buf[0] = (reg & 0x7f);
-  tx_rx_buf[1] = data;
   System::Thread::Sleep(1);
   this->Select();
-  bsp_spi_transmit(BSP_SPI_IMU, tx_rx_buf, 2u, true);
+  bsp_spi_mem_write_byte(BSP_SPI_IMU, reg, data);
   this->Unselect();
 }
 
 uint8_t ICM42688::ReadSingle(uint8_t reg) {
-  tx_rx_buf[0] = static_cast<uint8_t>(reg | 0x80);
-
   System::Thread::Sleep(1);
-
   this->Select();
-  bsp_spi_transmit(BSP_SPI_IMU, tx_rx_buf, 1u, true);
-  bsp_spi_receive(BSP_SPI_IMU, tx_rx_buf, 1u, true);
+  reg = bsp_spi_mem_read_byte(BSP_SPI_IMU, reg);
   this->Unselect();
-  return tx_rx_buf[0];
+  return reg;
 }
 
 void ICM42688::Read(uint8_t reg, uint8_t *data, uint8_t len) {
-  tx_rx_buf[0] = static_cast<uint8_t>(reg | 0x80);
-
   this->Select();
-  bsp_spi_transmit(BSP_SPI_IMU, tx_rx_buf, 1u, true);
-  bsp_spi_receive(BSP_SPI_IMU, data, len, false);
+  bsp_spi_mem_read(BSP_SPI_IMU, reg, data, len, false);
 }
 
 ICM42688::ICM42688(ICM42688::Rotation &rot)

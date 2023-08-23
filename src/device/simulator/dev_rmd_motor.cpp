@@ -28,7 +28,7 @@ bool RMDMotor::Update() {
 
   this->feedback_.rotational_speed =
       (raw_pos - this->last_pos_) /
-      (bsp_time_get_ms() - this->last_sensor_time_) / 1000.0f / M_2PI * 60.0f;
+      (bsp_time_get_ms() - this->last_sensor_time_) * 1000.0f / M_2PI * 60.0f;
 
   this->last_pos_ = raw_pos;
 

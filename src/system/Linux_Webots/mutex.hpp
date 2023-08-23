@@ -16,7 +16,7 @@ class Mutex {
 
   ~Mutex() {}
 
-  void Unlock() { pthread_mutex_lock(&mutex_); }
+  void Unlock() { pthread_mutex_unlock(&mutex_); }
 
   bool Lock() { return pthread_mutex_lock(&mutex_) == 0; }
 

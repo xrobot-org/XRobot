@@ -23,10 +23,8 @@ static void uart_tx_cb(void *arg) {
 }
 
 bsp_status_t bsp_usb_transmit(const uint8_t *buffer, uint32_t len) {
-  xSemaphoreTake(sem, UINT32_MAX);
-
   bsp_uart_transmit(BSP_UART_MCU, (uint8_t *)(buffer), len, false);
-
+  xSemaphoreTake(sem, 10);
   return BSP_OK;
 }
 
@@ -82,8 +80,6 @@ void bsp_usb_init() {
   bsp_uart_receive(BSP_UART_MCU, usb_rx_buff, sizeof(usb_rx_buff), false);
 
   sem = xSemaphoreCreateBinary();
-
-  xSemaphoreGive(sem);
 }
 
 void bsp_usb_update() {}
