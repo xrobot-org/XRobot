@@ -103,6 +103,21 @@ bsp_status_t bsp_i2c_receive(bsp_i2c_t i2c, uint8_t addr, uint8_t *buff,
   }
 }
 
+uint8_t bsp_i2c_mem_read_byte(bsp_i2c_t i2c, uint8_t addr, uint8_t reg) {
+  uint8_t buff = 0;
+  HAL_I2C_Mem_Read(bsp_i2c_get_handle(i2c), addr, reg, I2C_MEMADD_SIZE_8BIT,
+                   &buff, 1, 10);
+  return buff;
+}
+
+bsp_status_t bsp_i2c_mem_write_byte(bsp_i2c_t i2c, uint8_t addr, uint8_t reg,
+                                    uint8_t data) {
+  return HAL_I2C_Mem_Write(bsp_i2c_get_handle(i2c), addr, reg,
+                           I2C_MEMADD_SIZE_8BIT, &data, 1, 10) == HAL_OK
+             ? BSP_OK
+             : BSP_ERR;
+}
+
 bsp_status_t bsp_i2c_mem_read(bsp_i2c_t i2c, uint8_t addr, uint8_t reg,
                               uint8_t *data, size_t size, bool block) {
   if (block) {
