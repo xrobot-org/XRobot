@@ -10,12 +10,7 @@
 
 using namespace Device;
 
-static uint8_t data[1], dma_buff[10];
-
-static uint8_t mmc5603_reset = 0x10;
-static uint8_t mmc5603_odr = 0xff;
-static uint8_t mmc5603_ctrl_0 = 0xa0;
-static uint8_t mmc5603_ctrl_2 = 0x98;
+static uint8_t dma_buff[10];
 
 MMC5603::MMC5603(MMC5603::Rotation &rot)
     : rot_(rot),
@@ -57,18 +52,22 @@ MMC5603::MMC5603(MMC5603::Rotation &rot)
 
 bool MMC5603::Init() {
   /* Check Product id */
-  bsp_i2c_mem_read(BSP_I2C_MAGN, 0x60, 0x39, data, 1, true);
-  if (*data != 0x10) {
+
+  if (bsp_i2c_mem_read_byte(BSP_I2C_MAGN, 0x60, 0x39) != 0x10) {
     return false;
   }
 
   /* Reset */
-  bsp_i2c_mem_write(BSP_I2C_MAGN, 0x60, 0x1B, &mmc5603_reset, 1, true);
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x60, 0x1B, 0x10);
 
-  /* Set ODR */
-  bsp_i2c_mem_write(BSP_I2C_MAGN, 0x60, 0x1A, &mmc5603_odr, 1, true);
-  bsp_i2c_mem_write(BSP_I2C_MAGN, 0x60, 0x1B, &mmc5603_ctrl_0, 1, true);
-  bsp_i2c_mem_write(BSP_I2C_MAGN, 0x60, 0x1D, &mmc5603_ctrl_2, 1, true);
+  /* Set CTRL_1 bandwith */
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x60, 0x1C, 0x02);
+  /* Set ODR sampling_rate */
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x60, 0x1A, 0xff);
+  /* Set CTRL_0 Auto_SR_en Cmm_freq_en */
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x60, 0x1B, 0xa0);
+  /* Set CTRL_2 Cmm_en */
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x60, 0x1D, 0x10);
 
   return true;
 }
