@@ -1,7 +1,9 @@
+include(${MCU_DIR}/default/custom_printf.cmake)
+
 set(CPU_FLAGS "-mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb")
 
 set(GENERAL_FLAGS
-    "-Wall -Wextra -Wstack-usage=1024 --specs=nano.specs --specs=nosys.specs -u _printf_float -fno-builtin -ffunction-sections -fdata-sections"
+    "-Wall -Wextra -Wstack-usage=1024 --specs=nano.specs --specs=nosys.specs -fno-builtin -ffunction-sections -fdata-sections"
 )
 
 set(CMAKE_C_FLAGS

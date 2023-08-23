@@ -1,3 +1,5 @@
+include(${MCU_DIR}/default/custom_printf.cmake)
+
 set(CPU_FLAGS
     "-mcpu=cortex-m3 -mthumb -mfloat-abi=soft"
     CACHE INTERNAL "" FORCE)
@@ -11,7 +13,7 @@ set(CMAKE_C_FLAGS
     CACHE INTERNAL "" FORCE)
 
 set(CMAKE_CXX_FLAGS
-    "${CPU_FLAGS} ${GENERAL_FLAGS} -fno-rtti -fshort-enums -fdiagnostics-color=auto"
+    "${CPU_FLAGS} ${GENERAL_FLAGS} -fno-threadsafe-statics -fno-rtti -fshort-enums -fdiagnostics-color=auto"
     CACHE INTERNAL "" FORCE)
 
 set(CMAKE_ASM_FLAGS
