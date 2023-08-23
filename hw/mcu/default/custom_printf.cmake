@@ -15,3 +15,5 @@ add_compile_options(
 )
 
 target_compile_options(printf PRIVATE -w)
+
+link_libraries(printf)
