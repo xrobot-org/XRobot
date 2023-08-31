@@ -1,7 +1,7 @@
 #include <semaphore.hpp>
 
 #include "bsp_delay.h"
-#include "stm32f1xx_hal.h"
+#include "bsp_time.h"
 
 using namespace System;
 
@@ -17,9 +17,9 @@ void Semaphore::Post() {
 }
 
 bool Semaphore::Wait(uint32_t timeout) {
-  uint32_t time = HAL_GetTick();
+  uint32_t time = bsp_time_get_ms();
   while (!count_) {
-    if (HAL_GetTick() - time >= timeout) {
+    if (bsp_time_get_ms() - time >= timeout) {
       return false;
     }
   }

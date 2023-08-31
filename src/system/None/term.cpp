@@ -10,6 +10,8 @@ static bool connected = false;
 
 static ms_item_t power_ctrl, date;
 
+extern ms_t ms;
+
 static om_status_t print_log(om_msg_t *msg, void *arg) {
   XB_UNUSED(arg);
 
@@ -23,6 +25,19 @@ static om_status_t print_log(om_msg_t *msg, void *arg) {
                    log->data);
 
   return OM_OK;
+}
+
+int printf(const char *format, ...) {
+  va_list v_arg_list;
+  va_start(v_arg_list, format);
+  XB_UNUSED(vsnprintf(ms.buff.write_buff, sizeof(ms.buff.write_buff), format,
+                      v_arg_list));
+  va_end(v_arg_list);
+
+  bsp_usb_transmit(reinterpret_cast<const uint8_t *>(ms.buff.write_buff),
+                   strlen(ms.buff.write_buff));
+
+  return 0;
 }
 
 static int term_write(const char *data, size_t len) {
