@@ -48,7 +48,6 @@ MxDb.Version=DB.6.0.90
 NVIC.BusFault_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:false
 NVIC.DebugMonitor_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:false
 NVIC.FDCAN1_IT0_IRQn=true\:5\:0\:true\:false\:true\:true\:true\:true
-NVIC.FDCAN1_IT1_IRQn=true\:5\:0\:true\:false\:true\:true\:true\:true
 NVIC.ForceEnableDMAVector=true
 NVIC.HardFault_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:false
 NVIC.MemoryManagement_IRQn=true\:0\:0\:false\:false\:true\:false\:false\:false

@@ -2,19 +2,22 @@
 
 #include "bsp_def.h"
 #include "main.h"
+#include "stm32g4xx_hal.h"
 #include "stm32g4xx_it.h"
 
 uint8_t bsp_usart2_read_byte(void) {
-  while (!LL_USART_IsActiveFlag_RXNE_RXFNE(USART2)) {
+  uint32_t tick = HAL_GetTick();
+  while (!LL_USART_IsActiveFlag_RXNE_RXFNE(USART2) &&
+         HAL_GetTick() - tick < 25) {
   }
 
   return LL_USART_ReceiveData8(USART2);
 }
 
 void bsp_usart2_send_byte(uint8_t Byte) {
+  uint32_t tick = HAL_GetTick();
   LL_USART_TransmitData8(USART2, (Byte & 0xFF));
-
-  while (!LL_USART_IsActiveFlag_TC(USART2)) {
+  while (!LL_USART_IsActiveFlag_TC(USART2) && HAL_GetTick() - tick < 25) {
   }
 }
 
