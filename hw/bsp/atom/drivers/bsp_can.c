@@ -179,18 +179,13 @@ bsp_status_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format,
              : BSP_ERR;
 }
 
-static const struct {
-  uint8_t data_len;
-  uint32_t code;
-} FDCAN_PACK_LEN_MAP[16] = {
-    {0, FDCAN_DLC_BYTES_0},   {1, FDCAN_DLC_BYTES_1},
-    {2, FDCAN_DLC_BYTES_2},   {3, FDCAN_DLC_BYTES_3},
-    {4, FDCAN_DLC_BYTES_4},   {5, FDCAN_DLC_BYTES_5},
-    {6, FDCAN_DLC_BYTES_6},   {7, FDCAN_DLC_BYTES_7},
-    {8, FDCAN_DLC_BYTES_8},   {12, FDCAN_DLC_BYTES_12},
-    {16, FDCAN_DLC_BYTES_16}, {20, FDCAN_DLC_BYTES_20},
-    {24, FDCAN_DLC_BYTES_24}, {32, FDCAN_DLC_BYTES_32},
-    {48, FDCAN_DLC_BYTES_48}, {64, FDCAN_DLC_BYTES_64},
+static const uint32_t FDCAN_PACK_LEN_MAP[16] = {
+    FDCAN_DLC_BYTES_0,  FDCAN_DLC_BYTES_1,  FDCAN_DLC_BYTES_2,
+    FDCAN_DLC_BYTES_3,  FDCAN_DLC_BYTES_4,  FDCAN_DLC_BYTES_5,
+    FDCAN_DLC_BYTES_6,  FDCAN_DLC_BYTES_7,  FDCAN_DLC_BYTES_8,
+    FDCAN_DLC_BYTES_12, FDCAN_DLC_BYTES_16, FDCAN_DLC_BYTES_20,
+    FDCAN_DLC_BYTES_24, FDCAN_DLC_BYTES_32, FDCAN_DLC_BYTES_48,
+    FDCAN_DLC_BYTES_64,
 };
 
 bsp_status_t bsp_canfd_trans_packet(bsp_can_t can, bsp_can_format_t format,
@@ -208,11 +203,19 @@ bsp_status_t bsp_canfd_trans_packet(bsp_can_t can, bsp_can_format_t format,
   }
 
   header.TxFrameType = FDCAN_DATA_FRAME;
-  for (int i = 0; i < 16; i++) {
-    if (FDCAN_PACK_LEN_MAP[i].data_len >= size) {
-      header.DataLength = FDCAN_PACK_LEN_MAP[i].code;
-    }
+
+  if (size <= 8) {
+    header.DataLength = FDCAN_PACK_LEN_MAP[size];
+  } else if (size <= 24) {
+    header.DataLength = FDCAN_PACK_LEN_MAP[(size - 9) / 4 + 1 + 8];
+  } else if (size < 32) {
+    header.DataLength = FDCAN_DLC_BYTES_32;
+  } else if (size < 48) {
+    header.DataLength = FDCAN_DLC_BYTES_48;
+  } else {
+    header.DataLength = FDCAN_DLC_BYTES_64;
   }
+
   header.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
   header.BitRateSwitch = FDCAN_BRS_OFF;
   header.FDFormat = FDCAN_FD_CAN;
