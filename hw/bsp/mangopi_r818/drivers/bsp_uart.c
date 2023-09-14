@@ -1,7 +1,13 @@
 #include "bsp_uart.h"
 
+#define termios asmtermios
+#include <asm/termbits.h>
 #include <assert.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#undef termios
 #include <termios.h>
 #include <unistd.h>
 
@@ -15,14 +21,10 @@ static int rx_count[BSP_UART_NUM];
 
 static bool uart_block[BSP_UART_NUM];
 
-static const char *uart_dev_path[] = {
-    "/dev/ttyCH9344USB0", "/dev/ttyCH9344USB1", "/dev/ttyCH9344USB2",
-    "/dev/ttyCH9344USB7", "/dev/ttyCH9344USB4", "/dev/ttyCH9344USB5",
-    "/dev/ttyCH9344USB6", "/dev/ttyCH9344USB3", "/dev/ttyS4"};
+static const char *uart_dev_path[] = {"/dev/ttyCH343USB0", "/dev/ttyCH343USB1",
+                                      "/dev/ttyS4"};
 
-static const uint32_t UART_SPEED[] = {B2000000, B2000000, B2000000,
-                                      B2000000, B2000000, B2000000,
-                                      B2000000, B2000000, B115200};
+static const uint32_t UART_SPEED[] = {9000000, 9000000, 115200};
 
 void bsp_uart_init() {
   for (int i = 0; i < BSP_UART_NUM; i++) {
@@ -38,8 +40,14 @@ void bsp_uart_init() {
     tty_cfg.c_cflag &= ~CSTOPB;
     tty_cfg.c_cflag &= ~CRTSCTS;
 
-    cfsetispeed(&tty_cfg, UART_SPEED[i]);
-    cfsetospeed(&tty_cfg, UART_SPEED[i]);
+    struct termios2 tio;
+
+    ioctl(uart_fd[i], TCGETS2, &tio);
+    tio.c_cflag &= ~CBAUD;
+    tio.c_cflag |= BOTHER;
+    tio.c_ispeed = UART_SPEED[i];
+    tio.c_ospeed = UART_SPEED[i];
+    ioctl(uart_fd[i], TCSETS2, &tio);
 
     // 一般必设置的标志
     tty_cfg.c_cflag |= (CLOCAL | CREAD);
