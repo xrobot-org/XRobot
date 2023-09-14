@@ -1,5 +1,7 @@
 #include <poll.h>
+#include <stdint.h>
 
+#include <array>
 #include <database.hpp>
 #include <term.hpp>
 
@@ -11,7 +13,7 @@ static ms_item_t sn_tools;
 
 std::string Database::path_(std::string(getenv("HOME")) + "/.rm_database/");
 
-Database::Key<uint8_t[32]> *sn;
+Database::Key<std::array<uint8_t, 32>> *sn;
 
 Database::Database() {
   auto sn_cmd_fn = [](ms_item_t *item, int argc, char **argv) {
@@ -63,9 +65,9 @@ Database::Database() {
 
   mkdir(path_.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 
-  sn = new Database::Key<uint8_t[32]>("SN");
+  sn = new Database::Key<std::array<uint8_t, 32>>("SN");
 
-  ms_file_init(&sn_tools, "sn_tools", sn_cmd_fn, sn->data_, sizeof(sn->data_),
-               false);
+  ms_file_init(&sn_tools, "sn_tools", sn_cmd_fn, &(sn->data_),
+               sizeof(sn->data_), false);
   ms_cmd_add(&sn_tools);
 }
