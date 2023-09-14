@@ -74,7 +74,7 @@ void bsp_can_init(void) {
   }
 
   can_filter.IdType = FDCAN_STANDARD_ID;
-  can_filter.FilterIndex = 0;
+  can_filter.FilterIndex = 2;
   can_filter.FilterType = FDCAN_FILTER_MASK;
   can_filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO1;
   can_filter.FilterID1 = 0x0000;
@@ -84,7 +84,7 @@ void bsp_can_init(void) {
   }
 
   can_filter.IdType = FDCAN_EXTENDED_ID;
-  can_filter.FilterIndex = 1;
+  can_filter.FilterIndex = 3;
   can_filter.FilterType = FDCAN_FILTER_MASK;
   can_filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO1;
   can_filter.FilterID1 = 0x0000;
@@ -94,6 +94,7 @@ void bsp_can_init(void) {
   }
 
   HAL_FDCAN_Start(&hfdcan1);  //开启FDCAN
+  HAL_FDCAN_Start(&hfdcan2);  //开启FDCAN
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_TX_FIFO_EMPTY, 0);
   HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0);
@@ -102,18 +103,25 @@ void bsp_can_init(void) {
   bsp_can_initd = true;
 }
 
+static const uint8_t DLCtoBytes[] = {0, 1,  2,  3,  4,  5,  6,  7,
+                                     8, 12, 16, 20, 24, 32, 48, 64};
+
 static void can_rx_cb_fn(bsp_can_t can) {
   if (callback_list[can][CAN_RX_MSG_CALLBACK].fn) {
     while (HAL_FDCAN_GetRxMessage(bsp_can_get_handle(can), FDCAN_RX_FIFO0,
                                   &rx_buff[can].header,
                                   rx_buff[can].data) == HAL_OK) {
-      if (rx_buff[can].header.IdType == FDCAN_STANDARD_ID) {
+      if (rx_buff[can].header.FDFormat == FDCAN_CLASSIC_CAN) {
         callback_list[can][CAN_RX_MSG_CALLBACK].fn(
             can, rx_buff[can].header.Identifier, rx_buff[can].data,
             callback_list[can][CAN_RX_MSG_CALLBACK].arg);
       } else {
+        bsp_canfd_data_t data = {
+            .data = rx_buff[can].data,
+            .size = DLCtoBytes[rx_buff[can].header.DataLength >> 16U]};
+
         callback_list[can][CANFD_RX_MSG_CALLBACK].fn(
-            can, rx_buff[can].header.Identifier, rx_buff[can].data,
+            can, rx_buff[can].header.Identifier, (uint8_t *)&data,
             callback_list[can][CANFD_RX_MSG_CALLBACK].arg);
       }
     }
@@ -122,6 +130,11 @@ static void can_rx_cb_fn(bsp_can_t can) {
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs) {
   (void)RxFifo0ITs;
+  can_rx_cb_fn(can_get(hcan));
+}
+
+void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo1ITs) {
+  (void)RxFifo1ITs;
   can_rx_cb_fn(can_get(hcan));
 }
 

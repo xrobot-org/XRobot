@@ -23,7 +23,4 @@ void bsp_init() {
   MX_LPUART1_UART_Init();
   MX_FDCAN1_Init();
   MX_FDCAN2_Init();
-
-  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(SysTick_IRQn);
 }
