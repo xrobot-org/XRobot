@@ -28,7 +28,7 @@
 
 #include <easyflash.h>
 
-extern const uint32_t OM_CRC32_TAB[];
+extern uint32_t om_crc32_tab[];
 
 /**
  * Calculate the CRC32 value of a memory buffer.
@@ -46,7 +46,7 @@ uint32_t ef_calc_crc32(uint32_t crc, const void *buf, size_t size) {
   crc = crc ^ ~0U;
 
   while (size--) {
-    crc = OM_CRC32_TAB[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
+    crc = om_crc32_tab[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
   }
 
   return crc ^ ~0U;

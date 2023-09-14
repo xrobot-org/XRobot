@@ -115,18 +115,25 @@ void bsp_can_init(void) {
   bsp_can_initd = true;
 }
 
+static const uint8_t DLCtoBytes[] = {0, 1,  2,  3,  4,  5,  6,  7,
+                                     8, 12, 16, 20, 24, 32, 48, 64};
+
 static void can_rx_cb_fn(bsp_can_t can) {
   if (callback_list[can][CAN_RX_MSG_CALLBACK].fn) {
     while (HAL_FDCAN_GetRxMessage(bsp_can_get_handle(can), FDCAN_RX_FIFO0,
                                   &rx_buff[can].header,
                                   rx_buff[can].data) == HAL_OK) {
-      if (rx_buff[can].header.IdType == FDCAN_STANDARD_ID) {
+      if (rx_buff[can].header.FDFormat == FDCAN_CLASSIC_CAN) {
         callback_list[can][CAN_RX_MSG_CALLBACK].fn(
             can, rx_buff[can].header.Identifier, rx_buff[can].data,
             callback_list[can][CAN_RX_MSG_CALLBACK].arg);
       } else {
+        bsp_canfd_data_t data = {
+            .data = rx_buff[can].data,
+            .size = DLCtoBytes[rx_buff[can].header.DataLength >> 16U]};
+
         callback_list[can][CANFD_RX_MSG_CALLBACK].fn(
-            can, rx_buff[can].header.Identifier, rx_buff[can].data,
+            can, rx_buff[can].header.Identifier, (uint8_t *)&data,
             callback_list[can][CANFD_RX_MSG_CALLBACK].arg);
       }
     }
@@ -179,18 +186,13 @@ bsp_status_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format,
              : BSP_ERR;
 }
 
-static const struct {
-  uint8_t data_len;
-  uint32_t code;
-} FDCAN_PACK_LEN_MAP[16] = {
-    {0, FDCAN_DLC_BYTES_0},   {1, FDCAN_DLC_BYTES_1},
-    {2, FDCAN_DLC_BYTES_2},   {3, FDCAN_DLC_BYTES_3},
-    {4, FDCAN_DLC_BYTES_4},   {5, FDCAN_DLC_BYTES_5},
-    {6, FDCAN_DLC_BYTES_6},   {7, FDCAN_DLC_BYTES_7},
-    {8, FDCAN_DLC_BYTES_8},   {12, FDCAN_DLC_BYTES_12},
-    {16, FDCAN_DLC_BYTES_16}, {20, FDCAN_DLC_BYTES_20},
-    {24, FDCAN_DLC_BYTES_24}, {32, FDCAN_DLC_BYTES_32},
-    {48, FDCAN_DLC_BYTES_48}, {64, FDCAN_DLC_BYTES_64},
+static const uint32_t FDCAN_PACK_LEN_MAP[16] = {
+    FDCAN_DLC_BYTES_0,  FDCAN_DLC_BYTES_1,  FDCAN_DLC_BYTES_2,
+    FDCAN_DLC_BYTES_3,  FDCAN_DLC_BYTES_4,  FDCAN_DLC_BYTES_5,
+    FDCAN_DLC_BYTES_6,  FDCAN_DLC_BYTES_7,  FDCAN_DLC_BYTES_8,
+    FDCAN_DLC_BYTES_12, FDCAN_DLC_BYTES_16, FDCAN_DLC_BYTES_20,
+    FDCAN_DLC_BYTES_24, FDCAN_DLC_BYTES_32, FDCAN_DLC_BYTES_48,
+    FDCAN_DLC_BYTES_64,
 };
 
 bsp_status_t bsp_canfd_trans_packet(bsp_can_t can, bsp_can_format_t format,
@@ -208,16 +210,24 @@ bsp_status_t bsp_canfd_trans_packet(bsp_can_t can, bsp_can_format_t format,
   }
 
   header.TxFrameType = FDCAN_DATA_FRAME;
-  for (int i = 0; i < 16; i++) {
-    if (FDCAN_PACK_LEN_MAP[i].data_len >= size) {
-      header.DataLength = FDCAN_PACK_LEN_MAP[i].code;
-    }
+
+  if (size <= 8) {
+    header.DataLength = FDCAN_PACK_LEN_MAP[size];
+  } else if (size <= 24) {
+    header.DataLength = FDCAN_PACK_LEN_MAP[(size - 9) / 4 + 1 + 8];
+  } else if (size < 32) {
+    header.DataLength = FDCAN_DLC_BYTES_32;
+  } else if (size < 48) {
+    header.DataLength = FDCAN_DLC_BYTES_48;
+  } else {
+    header.DataLength = FDCAN_DLC_BYTES_64;
   }
+
   header.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
-  header.BitRateSwitch = FDCAN_BRS_OFF;
+  header.BitRateSwitch = FDCAN_BRS_ON;
   header.FDFormat = FDCAN_FD_CAN;
-  header.TxEventFifoControl = FDCAN_STORE_TX_EVENTS;
-  header.MessageMarker = 0x01;
+  header.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
+  header.MessageMarker = 0x00;
   while ((bsp_can_get_handle(can)->Instance->TXFQS & FDCAN_TXFQS_TFQF) != 0U) {
     xSemaphoreTake(rx_cplt_wait_sem[can], 1);
   }

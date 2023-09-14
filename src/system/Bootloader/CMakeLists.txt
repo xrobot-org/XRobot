@@ -1,0 +1,40 @@
+target_include_directories(
+  OneMessage
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Bootloader
+  PRIVATE $<TARGET_PROPERTY:bsp,INTERFACE_INCLUDE_DIRECTORIES>)
+
+
+target_include_directories(
+  MiniShell
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Bootloader
+  PRIVATE $<TARGET_PROPERTY:bsp,INTERFACE_INCLUDE_DIRECTORIES>)
+
+file(GLOB ${PROJECT_NAME}_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/Bootloader/*.cpp")
+
+add_library(${PROJECT_NAME} OBJECT)
+
+target_sources(${PROJECT_NAME}
+  PRIVATE ${${PROJECT_NAME}_SOURCES})
+
+target_link_libraries(
+  ${PROJECT_NAME}
+  PRIVATE bsp
+  PRIVATE OneMessage
+  PRIVATE MiniShell)
+
+target_include_directories(
+  ${PROJECT_NAME}
+  PUBLIC $<TARGET_PROPERTY:bsp,INTERFACE_INCLUDE_DIRECTORIES>
+  PUBLIC $<TARGET_PROPERTY:OneMessage,INTERFACE_INCLUDE_DIRECTORIES>
+  PUBLIC $<TARGET_PROPERTY:MiniShell,INTERFACE_INCLUDE_DIRECTORIES>)
+
+target_include_directories(
+  ${PROJECT_NAME} SYSTEM
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Bootloader
+)
+
+add_dependencies(
+  ${PROJECT_NAME}
+  bsp
+  OneMessage)

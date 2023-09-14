@@ -15,6 +15,7 @@ Diagnostics:
     Remove: [google-build-using-namespace,
             bugprone-undefined-memory-manipulation,
             cppcoreguidelines-pro-type-union-access,
+            cppcoreguidelines-pro-type-member-init,
             misc-no-recursion,
             cert-env33-c,
             cert-err58-cpp,
