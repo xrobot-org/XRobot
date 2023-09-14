@@ -3,7 +3,7 @@
 #include "bsp_def.h"
 #include "cmsis_gcc.h"
 #include "main.h"
-#include "stm32g4xx_hal_fdcan.h"
+#include "stm32g0xx_hal_fdcan.h"
 
 typedef struct {
   FDCAN_RxHeaderTypeDef header;
@@ -21,6 +21,7 @@ typedef struct {
 } can_callback_t;
 
 extern FDCAN_HandleTypeDef hfdcan1;
+extern FDCAN_HandleTypeDef hfdcan2;
 
 static can_callback_t callback_list[BSP_CAN_NUM][BSP_CAN_CB_NUM];
 
@@ -32,6 +33,8 @@ FDCAN_HandleTypeDef *bsp_can_get_handle(bsp_can_t can) {
   switch (can) {
     case BSP_CAN_1:
       return &hfdcan1;
+    case BSP_CAN_2:
+      return &hfdcan2;
     default:
       return NULL;
   }
@@ -39,6 +42,8 @@ FDCAN_HandleTypeDef *bsp_can_get_handle(bsp_can_t can) {
 
 static bsp_can_t can_get(FDCAN_HandleTypeDef *hcan) {
   if (hcan->Instance == FDCAN1) {
+    return BSP_CAN_1;
+  } else if (hcan->Instance == FDCAN2) {
     return BSP_CAN_1;
   } else {
     return BSP_CAN_ERR;
@@ -68,9 +73,31 @@ void bsp_can_init(void) {
     XB_ASSERT(false);
   }
 
+  can_filter.IdType = FDCAN_STANDARD_ID;
+  can_filter.FilterIndex = 0;
+  can_filter.FilterType = FDCAN_FILTER_MASK;
+  can_filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO1;
+  can_filter.FilterID1 = 0x0000;
+  can_filter.FilterID2 = 0x0000;
+  if (HAL_FDCAN_ConfigFilter(&hfdcan2, &can_filter) != HAL_OK) {
+    XB_ASSERT(false);
+  }
+
+  can_filter.IdType = FDCAN_EXTENDED_ID;
+  can_filter.FilterIndex = 1;
+  can_filter.FilterType = FDCAN_FILTER_MASK;
+  can_filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO1;
+  can_filter.FilterID1 = 0x0000;
+  can_filter.FilterID2 = 0x0000;
+  if (HAL_FDCAN_ConfigFilter(&hfdcan2, &can_filter) != HAL_OK) {
+    XB_ASSERT(false);
+  }
+
   HAL_FDCAN_Start(&hfdcan1);  //开启FDCAN
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_TX_FIFO_EMPTY, 0);
+  HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0);
+  HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_TX_FIFO_EMPTY, 0);
 
   bsp_can_initd = true;
 }

@@ -1,8 +1,8 @@
 #include "bsp_uart.h"
 
 #include "main.h"
-#include "stm32f1xx_hal_dma.h"
-#include "stm32f1xx_it.h"
+#include "stm32g0xx_hal_dma.h"
+#include "stm32g0xx_it.h"
 
 extern UART_HandleTypeDef hlpuart1;
 extern DMA_HandleTypeDef hdma_lpuart1_tx;
@@ -11,7 +11,7 @@ extern DMA_HandleTypeDef hdma_lpuart1_rx;
 static bsp_callback_t callback_list[BSP_UART_NUM][BSP_UART_CB_NUM];
 
 static bsp_uart_t uart_get(UART_HandleTypeDef *huart) {
-  if (huart->Instance == USART1) {
+  if (huart->Instance == LPUART1) {
     return BSP_UART_MCU;
   } /*
     else if (huart->Instance == USARTX)
