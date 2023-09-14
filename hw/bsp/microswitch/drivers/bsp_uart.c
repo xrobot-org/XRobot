@@ -4,9 +4,9 @@
 #include "stm32f1xx_hal_dma.h"
 #include "stm32f1xx_it.h"
 
-extern UART_HandleTypeDef hlpuart1;
-extern DMA_HandleTypeDef hdma_lpuart1_tx;
-extern DMA_HandleTypeDef hdma_lpuart1_rx;
+extern UART_HandleTypeDef huart1;
+extern DMA_HandleTypeDef hdma_usart1_tx;
+extern DMA_HandleTypeDef hdma_usart1_rx;
 
 static bsp_callback_t callback_list[BSP_UART_NUM][BSP_UART_CB_NUM];
 
@@ -76,7 +76,7 @@ void bsp_uart_irq_handler(UART_HandleTypeDef *huart) {
 UART_HandleTypeDef *bsp_uart_get_handle(bsp_uart_t uart) {
   switch (uart) {
     case BSP_UART_MCU:
-      return &hlpuart1;
+      return &huart1;
     /*
     case BSP_UART_XXX:
             return &huartX;
