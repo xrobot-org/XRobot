@@ -49,6 +49,8 @@ class Database {
                          sizeof(Data));
     }
 
+    operator Data() { return data_; }
+
     Data data_;
     const char* name_;
   };

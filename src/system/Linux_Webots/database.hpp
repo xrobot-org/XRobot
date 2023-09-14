@@ -69,6 +69,8 @@ class Database {
       static_cast<void>(fclose(fd));
     }
 
+    operator Data() { return data_; }
+
     Data data_;
     const char* name_;
   };
