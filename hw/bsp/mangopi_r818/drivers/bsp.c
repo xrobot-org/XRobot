@@ -10,7 +10,7 @@
 #include "bsp_uart.h"
 
 void bsp_init() {
-  if (access("/dev/ttyCH9344USB0", W_OK)) {
+  if (access("/dev/ttyCH343USB0", W_OK)) {
     system(
         "$(echo 1 > /sys/class/leds/usb_enable/brightness && sleep 3 && echo 0 "
         "> /sys/class/leds/usb_enable/brightness && sleep 3)");

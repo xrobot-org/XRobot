@@ -11,12 +11,6 @@ extern "C" {
 typedef enum {
   BSP_UART_1,
   BSP_UART_2,
-  BSP_UART_3,
-  BSP_UART_4,
-  BSP_UART_5,
-  BSP_UART_6,
-  BSP_UART_7,
-  BSP_UART_8,
   BSP_UART_ESP,
   /* BSP_UART_XXX, */
   BSP_UART_NUM,
