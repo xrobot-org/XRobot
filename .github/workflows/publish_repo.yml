@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/xrobot-org/docker-image:main
+      options: --user 1001
 
     steps:
     - uses: actions/checkout@v3

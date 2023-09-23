@@ -30,21 +30,22 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/xrobot-org/docker-image:main
+      options: --user 1001
 
     steps:
     - uses: actions/checkout@v3
 
     - name: Init submodule
-      run: git submodule init && git submodule update
+      run: git config --global --add safe.directory /__w/XRobot/XRobot && git submodule init && git submodule update
 
     - name: Build
-      run: source ~/.idf_profile && python ./project.py build all all
+      run: export HOME=/root && bash -c "source ~/.idf_profile && python project.py build all all"
 
     - name: Pack firmware
       run: zip -r ./firmware.zip ./firmware
 
     - name: Create release
-      run:  echo "release_name=$(date +v%Y.%m.%d.vv%H.%M)" >> $GITHUB_ENV
+      run: echo "release_name=$(date +v%Y.%m.%d.vv%H.%M)" >> $GITHUB_ENV
 
     - uses: actions/create-release@v1
       id: create_release

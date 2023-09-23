@@ -33,12 +33,13 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/xrobot-org/docker-image:main
+      options: --user 0
 
     steps:
     - uses: actions/checkout@v3
 
     - name: Init submodule
-      run: git submodule init && git submodule update
+      run: git config --global --add safe.directory /__w/XRobot/XRobot && git submodule init && git submodule update
 
     - name: Build
-      run: source ~/.idf_profile && python project.py build all all
+      run: export HOME=/root && bash -c "source ~/.idf_profile && python project.py build all all"
