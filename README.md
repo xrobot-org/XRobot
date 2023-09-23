@@ -16,6 +16,9 @@
 <img src="https://github.com/xrobot-org/XRobot/actions/workflows/build_publish.yml/badge.svg"/>
 <img src="https://github.com/xrobot-org/XRobot/actions/workflows/publish_repo.yml/badge.svg"/>
 
+<img src="https://github.com/xrobot-org/Docker-Image/actions/workflows/docker-publish.yml/badge.svg"/>
+
+
 <p>
 
 [![star](https://gitee.com/xrobot_1/XRobot/badge/star.svg?theme=black)](https://gitee.com/xrobot_1/XRobot/stargazers)
