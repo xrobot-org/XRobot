@@ -15,6 +15,7 @@ on:
       - 'Kconfig'
       - '**.ld'
       - '**.s'
+      - '**.yml'
 
 
 env:
@@ -29,9 +30,6 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/xrobot-org/docker-image:main
-      credentials:
-          username: xrobot-org
-          password: ${{  secrets.DOCKER_CONTAINER_REGISTRY_TOKEN }}
 
     steps:
     - uses: actions/checkout@v3
