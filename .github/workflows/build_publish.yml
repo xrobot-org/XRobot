@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/xrobot-org/docker-image:main
-      options: --user 1001
+      options: --user 0
 
     steps:
     - uses: actions/checkout@v3
