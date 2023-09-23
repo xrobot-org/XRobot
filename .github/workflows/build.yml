@@ -38,7 +38,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Init submodule
-      run: cd ${{github.workspace}} && git submodule init && git submodule update
+      run: git submodule init && git submodule update
 
     - name: Build
-      run: source ~/.idf_profile && python ${{github.workspace}}/project.py build all all
+      run: source ~/.idf_profile && python project.py build all all
