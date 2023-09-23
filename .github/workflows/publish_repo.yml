@@ -8,11 +8,14 @@ on:
 jobs:
   Pack:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/xrobot-org/docker-image:main
+      credentials:
+          username: xrobot-org
+          password: ${{  secrets.DOCKER_CONTAINER_REGISTRY_TOKEN }}
 
     steps:
     - uses: actions/checkout@v3
-    - name: Install dependence
-      run: sudo apt update
 
     - name: Init submodule
       run: cd ${{github.workspace}} && git submodule init && git submodule update
