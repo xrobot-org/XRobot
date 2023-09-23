@@ -3,22 +3,28 @@ name: pack_repo
 
 on:
   workflow_dispatch:
+  push:
+    branches: [ "master" ]
+
+    paths:
+      - '**.gitmodules'
 
 
 jobs:
   Pack:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/xrobot-org/docker-image:main
+      options: --user 0
 
     steps:
     - uses: actions/checkout@v3
-    - name: Install dependence
-      run: sudo apt update
 
     - name: Init submodule
-      run: cd ${{github.workspace}} && git submodule init && git submodule update
+      run: git config --global --add safe.directory /__w/XRobot/XRobot && git submodule init && git submodule update
 
     - name: Pack repo
-      run: cd ${{github.workspace}} && zip -r ${{github.workspace}}/repo.zip ./
+      run: zip -r repo.zip ./
 
     - name: Create release
       run:  echo "release_name=repo.$(date +v%Y.%m.%d.vv%H.%M)" >> $GITHUB_ENV

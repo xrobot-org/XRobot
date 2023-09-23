@@ -15,6 +15,7 @@ on:
       - 'Kconfig'
       - '**.ld'
       - '**.s'
+      - '**.yml'
   pull_request:
     branches: [ "master" ]
     types: [opened, reopened]
@@ -30,26 +31,15 @@ jobs:
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/xrobot-org/docker-image:main
+      options: --user 0
 
     steps:
     - uses: actions/checkout@v3
-    - name: Install dependence
-      run: sudo apt update && sudo apt install cmake gcc-arm-none-eabi ninja-build clang clangd
-
-    - name: Install libhv
-      run: git clone https://github.com/ithewei/libhv.git && cd libhv && ./configure && make && sudo make install && cd ${{github.workspace}}
-
-    - name: Get ESP-IDF
-      run: bash ${{github.workspace}}/hw/mcu/esp/Shell/install_esp-idf.sh
-
-    - name: Set ESP-IDF path
-      run: bash ${{github.workspace}}/hw/mcu/esp/Shell/set-idf-path.sh
-
-    - name: Install webots
-      run: wget https://github.com/cyberbotics/webots/releases/download/R2023a/webots_2023a_amd64.deb -O ./webots.deb && sudo apt install ./webots.deb -y
 
     - name: Init submodule
-      run: cd ${{github.workspace}} && git submodule init && git submodule update
+      run: git config --global --add safe.directory /__w/XRobot/XRobot && git submodule init && git submodule update
 
     - name: Build
-      run: source ~/.idf_profile && python ${{github.workspace}}/project.py build all all
+      run: export HOME=/root && bash -c "source ~/.idf_profile && python project.py build all all"

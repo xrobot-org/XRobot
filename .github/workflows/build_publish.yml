@@ -15,6 +15,7 @@ on:
       - 'Kconfig'
       - '**.ld'
       - '**.s'
+      - '**.yml'
 
 
 env:
@@ -27,38 +28,24 @@ jobs:
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/xrobot-org/docker-image:main
+      options: --user 1001
 
     steps:
     - uses: actions/checkout@v3
-    - name: Install dependence
-      run: sudo apt update && sudo apt install cmake gcc-arm-none-eabi ninja-build clang clangd clang-tidy
-
-    - name: Install CodeChecker
-      run: pip3 install codechecker
-
-    - name: Install libhv
-      run: git clone https://github.com/ithewei/libhv.git && cd libhv && ./configure && make && sudo make install && cd ${{github.workspace}}
-
-    - name: Get ESP-IDF
-      run: bash ${{github.workspace}}/hw/mcu/esp/Shell/install_esp-idf.sh
-
-    - name: Set ESP-IDF path
-      run: bash ${{github.workspace}}/hw/mcu/esp/Shell/set-idf-path.sh
-
-    - name: Install webots
-      run: wget https://github.com/cyberbotics/webots/releases/download/R2023a/webots_2023a_amd64.deb -O ./webots.deb && sudo apt install ./webots.deb -y
 
     - name: Init submodule
-      run: cd ${{github.workspace}} && git submodule init && git submodule update
+      run: git config --global --add safe.directory /__w/XRobot/XRobot && git submodule init && git submodule update
 
     - name: Build
-      run: source ~/.idf_profile && python ${{github.workspace}}/project.py build all all
+      run: export HOME=/root && bash -c "source ~/.idf_profile && python project.py build all all"
 
     - name: Pack firmware
-      run: cd ${{github.workspace}} && zip -r ${{github.workspace}}/firmware.zip ./firmware
+      run: zip -r ./firmware.zip ./firmware
 
     - name: Create release
-      run:  echo "release_name=$(date +v%Y.%m.%d.vv%H.%M)" >> $GITHUB_ENV
+      run: echo "release_name=$(date +v%Y.%m.%d.vv%H.%M)" >> $GITHUB_ENV
 
     - uses: actions/create-release@v1
       id: create_release
