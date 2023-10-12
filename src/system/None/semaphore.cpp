@@ -1,6 +1,5 @@
 #include <semaphore.hpp>
 
-#include "bsp_delay.h"
 #include "bsp_time.h"
 
 using namespace System;
