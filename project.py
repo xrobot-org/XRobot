@@ -232,12 +232,10 @@ def generate_cmake(path):
             continue
 
         if line.startswith('#') and line.endswith(' is not set'):
-            print('[CONFIG] ' + line.strip('# '))
             tools.cmake_add_detail(cmake_file, line[2:-11], '0')
             continue
 
         if line.endswith('=y'):
-            print('[CONFIG] ' + line)
             tools.cmake_add_detail(cmake_file, line[:-2], '1')
             continue
 
