@@ -154,7 +154,11 @@ def build(board, robot, type='Debug', code_check = False):
         bsp = item[0]
         for rbt_data in item[1]:
             rbt = rbt_data[0]
-            print('\033[0;32;40mRobot[' + rbt + ']' + ' for board ' + bsp[len(bsp_dir) + 1:] +
+            if(bsp.startswith(bsp_dir)):
+                print('\033[0;32;40mRobot[' + rbt + ']' + ' for board ' + bsp[len(bsp_dir) + 1:] +
+                  ' build done in %.2f seconds.\033[0m' % rbt_data[1])
+            else:
+                print('\033[0;32;40mRobot[' + rbt + ']' + ' for custom board ' + bsp[len(user_bsp_dir) + 1:] +
                   ' build done in %.2f seconds.\033[0m' % rbt_data[1])
     print('\033[0;32;40mAll target build done in %.2f seconds.\033[0m' % time_count)
 
@@ -228,12 +232,10 @@ def generate_cmake(path):
             continue
 
         if line.startswith('#') and line.endswith(' is not set'):
-            print('[CONFIG] ' + line.strip('# '))
             tools.cmake_add_detail(cmake_file, line[2:-11], '0')
             continue
 
         if line.endswith('=y'):
-            print('[CONFIG] ' + line)
             tools.cmake_add_detail(cmake_file, line[:-2], '1')
             continue
 

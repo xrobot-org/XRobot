@@ -4,7 +4,6 @@
 #include <thread.hpp>
 
 #include "bsp_def.h"
-#include "bsp_delay.h"
 #include "bsp_sys.h"
 
 static uint32_t signal_value;
@@ -26,7 +25,7 @@ class Signal {
         signal_value &= ~1 << sig;
         return true;
       }
-      bsp_delay(1);
+      Thread::Sleep(1);
     }
 
     return false;

@@ -4,7 +4,6 @@
 #include <string>
 
 #include "bsp_def.h"
-#include "bsp_delay.h"
 #include "bsp_time.h"
 #include "system_ext.hpp"
 
@@ -21,13 +20,17 @@ class Thread {
 
   static Thread Current(void) { return Thread(); }
 
-  static void Sleep(uint32_t microseconds) { bsp_delay(microseconds); }
-
-  static void SleepMilliseconds(uint32_t microseconds) {
-    bsp_delay(microseconds);
+  static void Sleep(uint32_t microseconds) {
+    auto last_time = bsp_time_get_ms();
+    while ((bsp_time_get_ms() - last_time) < microseconds) {
+    }
   }
 
-  static void SleepSeconds(uint32_t seconds) { bsp_delay(seconds * 1000); }
+  static void SleepMilliseconds(uint32_t microseconds) { Sleep(microseconds); }
+
+  static void SleepSeconds(uint32_t seconds) {
+    SleepMilliseconds(seconds * 1000);
+  }
 
   static void SleepMinutes(uint32_t minutes) { SleepSeconds(minutes * 60); }
 
@@ -44,7 +47,9 @@ class Thread {
   }
 
   void SleepUntil(uint32_t microseconds, uint32_t& last_time) {
-    bsp_delay(microseconds + last_time - bsp_time_get_ms());
+    while ((bsp_time_get_ms() - last_time) < microseconds) {
+    }
+
     last_time += microseconds;
   }
 

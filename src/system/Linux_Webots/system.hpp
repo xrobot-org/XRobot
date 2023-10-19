@@ -1,3 +1,5 @@
+#include <webots/robot.h>
+
 #include <cstdint>
 #include <database.hpp>
 #include <functional>
@@ -19,6 +21,12 @@ void Start(RobotParam... param) {
     new Database();
     new Timer();
 
+    if (wb_robot_get_basic_time_step() >= 2.0f) {
+      OMLOG_WARNING(
+          "webots basic time step should be less than 2ms, but now it is "
+          "%.3f ms.",
+          wb_robot_get_basic_time_step());
+    }
     static auto xrobot_debug_handle = new RobotType(param...);
 
     while (1) {

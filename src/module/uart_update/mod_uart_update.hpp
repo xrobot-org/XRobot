@@ -2,7 +2,6 @@
 
 #include <queue.hpp>
 
-#include "bsp_delay.h"
 #include "bsp_flash.h"
 #include "bsp_time.h"
 #include "bsp_usb.h"

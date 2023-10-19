@@ -2,7 +2,6 @@
 
 #include <stdint.h>
 
-#include "bsp_delay.h"
 #include "main.h"
 #include "tusb.h"
 
@@ -20,7 +19,7 @@ bsp_status_t bsp_usb_transmit(const uint8_t *buffer, uint32_t len) {
       tud_cdc_write_flush();
       buffer += avil;
       len -= avil;
-      bsp_delay(1);
+      HAL_Delay(0);
     }
   }
   return BSP_OK;

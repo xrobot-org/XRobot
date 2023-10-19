@@ -3,7 +3,6 @@
 #include <stdint.h>
 
 #include "bsp_def.h"
-#include "bsp_delay.h"
 #include "main.h"
 
 static bsp_callback_t callback_list[BSP_USB_NUM][BSP_USB_CB_NUM];
