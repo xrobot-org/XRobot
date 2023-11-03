@@ -48,7 +48,7 @@ ICM42688::ICM42688(ICM42688::Rotation &rot)
       new_(0),
       accl_tp_("imu_accl"),
       gyro_tp_("imu_gyro"),
-      cmd_(this, this->CaliCMD, "icm42688", System::Term::DevDir()) {
+      cmd_(this, this->CaliCMD, "icm42688") {
   auto recv_cplt_callback = [](void *arg) {
     ICM42688 *icm42688 = static_cast<ICM42688 *>(arg);
     icm42688->Unselect();

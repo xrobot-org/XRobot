@@ -137,7 +137,7 @@ BMI088::BMI088(BMI088::Rotation &rot)
       new_(0),
       accl_tp_("imu_accl"),
       gyro_tp_("imu_gyro"),
-      cmd_(this, this->CaliCMD, "bmi088", System::Term::DevDir()) {
+      cmd_(this, this->CaliCMD, "bmi088") {
   auto recv_cplt_callback = [](void *arg) {
     BMI088 *bmi088 = static_cast<BMI088 *>(arg);
 

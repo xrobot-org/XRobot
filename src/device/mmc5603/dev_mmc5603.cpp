@@ -292,12 +292,15 @@ int MMC5603::CaliCMD(MMC5603 *mmc5603, int argc, char **argv) {
         delay = 2;
       }
       do {
-        printf("x:%+5f y:%+5f z:%+5f", mmc5603->raw_magn_.x,
-               mmc5603->raw_magn_.y, mmc5603->raw_magn_.z);
+        printf("x:%+5f y:%+5f z:%+5f intensity:%f", mmc5603->raw_magn_.x,
+               mmc5603->raw_magn_.y, mmc5603->raw_magn_.z, mmc5603->intensity_);
         System::Thread::Sleep(delay);
         ms_clear_line();
         time -= delay;
       } while (time > delay);
+
+      printf("x:%+5f y:%+5f z:%+5f intensity:%f", mmc5603->raw_magn_.x,
+             mmc5603->raw_magn_.y, mmc5603->raw_magn_.z, mmc5603->intensity_);
 
       printf("\r\n");
     }
