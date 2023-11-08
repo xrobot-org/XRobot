@@ -1,13 +1,10 @@
 #include <comp_utils.hpp>
 #include <module.hpp>
-#include <thread.hpp>
 
 #include "bsp_dns_client.h"
 #include "bsp_time.h"
 #include "bsp_uart.h"
 #include "bsp_udp_client.h"
-#include "om.hpp"
-#include "om_log.h"
 #include "udp_param.h"
 #include "wearlab.hpp"
 

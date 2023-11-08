@@ -5,17 +5,13 @@
 
 #include "dev_icm42688.hpp"
 
-#include <cstdint>
 #include <string_view>
-#include <thread.hpp>
 
 #include "bsp_def.h"
 #include "bsp_gpio.h"
 #include "bsp_spi.h"
 #include "bsp_time.h"
 #include "comp_pid.hpp"
-#include "comp_utils.hpp"
-#include "om_log.h"
 
 static uint8_t dma_buf[14];
 
@@ -48,7 +44,7 @@ ICM42688::ICM42688(ICM42688::Rotation &rot)
       new_(0),
       accl_tp_("imu_accl"),
       gyro_tp_("imu_gyro"),
-      cmd_(this, this->CaliCMD, "icm42688", System::Term::DevDir()) {
+      cmd_(this, this->CaliCMD, "icm42688") {
   auto recv_cplt_callback = [](void *arg) {
     ICM42688 *icm42688 = static_cast<ICM42688 *>(arg);
     icm42688->Unselect();

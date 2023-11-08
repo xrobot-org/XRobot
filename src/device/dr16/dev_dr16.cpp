@@ -5,8 +5,6 @@
 
 #include "dev_dr16.hpp"
 
-#include <signal.hpp>
-
 #include "bsp_uart.h"
 #include "dev_referee.hpp"
 

@@ -1,5 +1,4 @@
 #include <comp_actuator.hpp>
-#include <thread.hpp>
 #include <vector>
 
 #include "comp_cmd.hpp"

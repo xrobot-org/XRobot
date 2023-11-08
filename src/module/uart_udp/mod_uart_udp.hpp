@@ -1,16 +1,7 @@
-#include <array>
-#include <cstdint>
-#include <queue.hpp>
-#include <semaphore.hpp>
-#include <string>
-#include <thread.hpp>
-
 #include "bsp_time.h"
 #include "bsp_uart.h"
 #include "bsp_udp_server.h"
 #include "module.hpp"
-#include "ms.h"
-#include "om_log.h"
 #include "wearlab.hpp"
 
 namespace Module {

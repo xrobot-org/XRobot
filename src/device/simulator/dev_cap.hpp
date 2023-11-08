@@ -2,7 +2,6 @@
 
 #include <device.hpp>
 
-#include "comp_type.hpp"
 #include "dev_referee.hpp"
 
 #define DEV_CAP_FB_ID_BASE (0x211)

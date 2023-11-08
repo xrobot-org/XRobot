@@ -1,5 +1,3 @@
-#include <thread.hpp>
-
 #include "mod_uart_update.hpp"
 
 void robot_init();

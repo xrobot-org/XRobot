@@ -1,9 +1,5 @@
 #include "can_usart.hpp"
 
-#include <cstdint>
-#include <cstring>
-#include <timer.hpp>
-
 #include "bsp_can.h"
 #include "bsp_uart.h"
 

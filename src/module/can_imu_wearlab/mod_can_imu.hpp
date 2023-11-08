@@ -1,10 +1,8 @@
 #pragma once
-#include <sys/_stdint.h>
 
 #include <module.hpp>
 
 #include "dev_can.hpp"
-#include "om.hpp"
 
 namespace Module {
 class CanIMU {

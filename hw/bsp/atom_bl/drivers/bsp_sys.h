@@ -2,6 +2,7 @@
 
 #include "bsp_def.h"
 #include "main.h"
+#include "stm32g4xx_hal_uart.h"
 
 /* 软件复位 */
 __attribute__((always_inline, unused)) static inline void bsp_sys_reset(void) {
@@ -18,7 +19,19 @@ __attribute__((always_inline, unused)) static inline void bsp_sys_shutdown(
 /* 进入Bootloader */
 __attribute__((always_inline, unused)) static inline void bsp_sys_bootloader(
     void) {
-  __set_FAULTMASK(1);
+  __enable_irq();
+  HAL_RCC_DeInit();
+  HAL_DeInit();
+  SysTick->CTRL = SysTick->LOAD = SysTick->VAL = 0;
+  __HAL_SYSCFG_REMAPMEMORY_SYSTEMFLASH();
+
+  const uint32_t p = (*((uint32_t *)0x1FFF0000));
+  __set_MSP(p);
+
+  void (*SysMemBootJump)(void);
+  SysMemBootJump = (void (*)(void))(*((uint32_t *)0x1FFF0004));
+  SysMemBootJump();
+
   NVIC_SystemReset();
 }
 

@@ -5,16 +5,13 @@
 
 #include "dev_bmi088.hpp"
 
-#include <cstdint>
 #include <string_view>
-#include <thread.hpp>
 
 #include "bsp_gpio.h"
 #include "bsp_pwm.h"
 #include "bsp_spi.h"
 #include "bsp_time.h"
 #include "comp_pid.hpp"
-#include "comp_utils.hpp"
 
 #define BMI088_REG_ACCL_CHIP_ID (0x00)
 #define BMI088_REG_ACCL_ERR (0x02)
@@ -137,7 +134,7 @@ BMI088::BMI088(BMI088::Rotation &rot)
       new_(0),
       accl_tp_("imu_accl"),
       gyro_tp_("imu_gyro"),
-      cmd_(this, this->CaliCMD, "bmi088", System::Term::DevDir()) {
+      cmd_(this, this->CaliCMD, "bmi088") {
   auto recv_cplt_callback = [](void *arg) {
     BMI088 *bmi088 = static_cast<BMI088 *>(arg);
 

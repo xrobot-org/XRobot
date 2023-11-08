@@ -1,20 +1,19 @@
 #include "mod_custom_controller.hpp"
 
-#include <thread.hpp>
-
 #include "bsp_uart.h"
 
 using namespace Module;
 
 CustomController::CustomController() {
   auto imu_thread = [](CustomController *imu) {
-    auto eulr_sub = Message::Subscriber("imu_eulr", imu->eulr_);
-    auto quar_sub = Message::Subscriber("imu_quat", imu->quat_);
-    auto gyro_sub = Message::Subscriber("imu_gyro", imu->gyro_);
-    auto accl_sub = Message::Subscriber("imu_accl", imu->accl_);
+    auto eulr_sub = Message::Subscriber<Component::Type::Eulr>("imu_eulr");
+    auto quat_sub =
+        Message::Subscriber<Component::Type::Quaternion>("imu_quat");
+    auto gyro_sub = Message::Subscriber<Component::Type::Vector3>("imu_gyro");
+    auto accl_sub = Message::Subscriber<Component::Type::Vector3>("imu_accl");
 
     while (1) {
-      eulr_sub.DumpData();
+      eulr_sub.DumpData(imu->eulr_);
       imu->SendEulr();
       imu->thread_.SleepUntil(2);
     }

@@ -1,14 +1,7 @@
-#include <sys/_stdint.h>
-
-#include <queue.hpp>
-
 #include "bsp_flash.h"
 #include "bsp_time.h"
 #include "bsp_usb.h"
 #include "module.hpp"
-#include "om.hpp"
-#include "om_core.h"
-#include "om_fmt.h"
 
 namespace Module {
 class UartUpdate {

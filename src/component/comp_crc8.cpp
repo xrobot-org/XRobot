@@ -4,9 +4,6 @@
 
 #include "comp_crc8.hpp"
 
-#include <array>
-#include <cstdint>
-
 using namespace Component;
 
 static const std::array<uint8_t, 256> CRC8_TAB = {

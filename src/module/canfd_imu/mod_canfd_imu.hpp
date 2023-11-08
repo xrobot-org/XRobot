@@ -17,11 +17,16 @@ class CanfdImu {
   } CanHeader;
 
   typedef struct __attribute__((packed)) {
-    uint32_t time;
-    Component::Type::Quaternion quat_;
-    Component::Type::Vector3 gyro_;
-    Component::Type::Vector3 accl_;
-    Component::Type::Vector3 magn_;
+    uint8_t prefix;
+    uint8_t id;
+    struct __attribute__((packed)) {
+      uint32_t time;
+      Component::Type::Quaternion quat_;
+      Component::Type::Vector3 gyro_;
+      Component::Type::Vector3 accl_;
+      Component::Type::Vector3 magn_;
+    } raw;
+    uint8_t crc8;
   } Data;
 
   Data data_;
@@ -31,6 +36,10 @@ class CanfdImu {
   Message::Topic<Data> data_tp_;
 
   System::Thread thread_;
+
+  System::Database::Key<bool> uart_output_;
+
+  System::Database::Key<bool> canfd_output_;
 
   System::Database::Key<uint32_t> id_;
 

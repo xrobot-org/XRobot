@@ -1,10 +1,4 @@
-#include <comp_type.hpp>
-#include <database.hpp>
-#include <semaphore.hpp>
-#include <thread.hpp>
-
 #include "device.hpp"
-#include "om.hpp"
 
 namespace Device {
 class MMC5603 {

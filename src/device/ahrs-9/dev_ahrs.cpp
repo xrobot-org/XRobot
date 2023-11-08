@@ -5,9 +5,6 @@
 
 #include "dev_ahrs.hpp"
 
-#include <cstdint>
-#include <thread.hpp>
-
 #include "bsp_time.h"
 
 #define BETA_AHRS (0.05f)
@@ -25,9 +22,9 @@ AHRS::AHRS()
   this->quat_.q3 = 0.0f;
 
   auto ahrs_thread = [](AHRS *ahrs) {
-    Message::Subscriber accl_sub("imu_accl", ahrs->accl_);
-    Message::Subscriber gyro_sub("imu_gyro", ahrs->gyro_);
-    Message::Subscriber magn_sub("magn", ahrs->magn_);
+    Message::Subscriber<Component::Type::Vector3> accl_sub("imu_accl");
+    Message::Subscriber<Component::Type::Vector3> gyro_sub("imu_gyro");
+    Message::Subscriber<Component::Type::Vector3> magn_sub("magn");
 
     System::Thread::Sleep(10);
 
@@ -77,9 +74,9 @@ AHRS::AHRS()
 
     while (1) {
       if (ahrs->gyro_ready_.Wait(UINT32_MAX)) {
-        gyro_sub.DumpData();
-        accl_sub.DumpData();
-        magn_sub.DumpData();
+        gyro_sub.DumpData(ahrs->gyro_);
+        accl_sub.DumpData(ahrs->accl_);
+        magn_sub.DumpData(ahrs->magn_);
       }
       if (ahrs->magn_.x == 0 && ahrs->magn_.y == 0 && ahrs->magn_.z == 0) {
         ahrs->UpdateWithoutMagn();

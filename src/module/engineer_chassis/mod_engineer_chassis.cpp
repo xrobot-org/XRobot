@@ -93,20 +93,12 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
                                                         this->param_.EVENT_MAP);
 
   auto chassis_thread = [](Chassis* chassis) {
-    // auto raw_ref_sub = Message::Subscriber("referee", chassis->raw_ref_);
-
-    // auto yaw_sub = Message::Subscriber("chassis_yaw", chassis->yaw_);
-
-    auto cmd_sub = Message::Subscriber("cmd_chassis", chassis->cmd_);
-
-    // auto cap_sub = Message::Subscriber("cap_info", chassis->cap_);
+    auto cmd_sub =
+        Message::Subscriber<Component::CMD::ChassisCMD>("cmd_chassis");
 
     while (1) {
       /* 读取控制指令、电容、裁判系统、电机反馈 */
-      // yaw_sub.DumpData();
-      // raw_ref_sub.DumpData();
-      cmd_sub.DumpData();
-      // cap_sub.DumpData();
+      cmd_sub.DumpData(chassis->cmd_);
 
       /* 更新反馈值 */
       chassis->PraseRef();

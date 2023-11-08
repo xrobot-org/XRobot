@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <component.hpp>
 #include <vector>
 

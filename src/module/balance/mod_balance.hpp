@@ -1,7 +1,5 @@
 #pragma once
 
-#include <array>
-#include <comp_type.hpp>
 #include <module.hpp>
 
 #include "comp_actuator.hpp"

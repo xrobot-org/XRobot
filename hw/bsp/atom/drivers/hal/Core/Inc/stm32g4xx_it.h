@@ -65,6 +65,8 @@ void TIM1_BRK_TIM15_IRQHandler(void);
 void I2C1_EV_IRQHandler(void);
 void SPI1_IRQHandler(void);
 void USART2_IRQHandler(void);
+void DMA2_Channel1_IRQHandler(void);
+void DMA2_Channel2_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 void HAL_UART_RegisterUserCallback(void (*fn)(UART_HandleTypeDef *huart));
 /* USER CODE END EFP */

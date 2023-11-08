@@ -91,22 +91,22 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
                                                         this->param_.EVENT_MAP);
 
   auto chassis_thread = [](Chassis* chassis) {
-    auto raw_ref_sub = Message::Subscriber("referee", chassis->raw_ref_);
+    auto raw_ref_sub = Message::Subscriber<Device::Referee::Data>("referee");
+    auto cmd_sub =
+        Message::Subscriber<Component::CMD::ChassisCMD>("cmd_chassis");
 
-    auto yaw_sub = Message::Subscriber("chassis_yaw", chassis->yaw_);
+    auto yaw_sub = Message::Subscriber<float>("chassis_yaw");
 
-    auto cmd_sub = Message::Subscriber("cmd_chassis", chassis->cmd_);
-
-    auto cap_sub = Message::Subscriber("cap_info", chassis->cap_);
+    auto cap_sub = Message::Subscriber<Device::Cap::Info>("cap_info");
 
     uint32_t last_online_time = bsp_time_get_ms();
 
     while (1) {
       /* 读取控制指令、电容、裁判系统、电机反馈 */
-      yaw_sub.DumpData();
-      raw_ref_sub.DumpData();
-      cmd_sub.DumpData();
-      cap_sub.DumpData();
+      cmd_sub.DumpData(chassis->cmd_);
+      raw_ref_sub.DumpData(chassis->raw_ref_);
+      yaw_sub.DumpData(chassis->yaw_);
+      cap_sub.DumpData(chassis->cap_);
 
       /* 更新反馈值 */
       chassis->PraseRef();

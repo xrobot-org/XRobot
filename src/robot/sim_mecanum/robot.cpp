@@ -1,7 +1,5 @@
 #include "robot.hpp"
 
-#include <thread.hpp>
-
 #include "mod_chassis.hpp"
 #include "system.hpp"
 
