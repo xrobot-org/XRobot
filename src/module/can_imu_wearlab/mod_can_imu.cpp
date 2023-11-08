@@ -22,16 +22,17 @@ CanIMU::CanIMU()
       cmd_(this, SetCMD, "set_imu"),
       wl_imu_data_("wl_imu_data") {
   auto imu_thread = [](CanIMU *imu) {
-    auto quar_sub = Message::Subscriber("imu_quat", imu->data_.quat_);
-    auto gyro_sub = Message::Subscriber("imu_gyro", imu->data_.gyro_);
-    auto accl_sub = Message::Subscriber("imu_accl", imu->data_.accl_);
+    auto quat_sub =
+        Message::Subscriber<Component::Type::Quaternion>("imu_quat");
+    auto gyro_sub = Message::Subscriber<Component::Type::Vector3>("imu_gyro");
+    auto accl_sub = Message::Subscriber<Component::Type::Vector3>("imu_accl");
 
     uint32_t last_online_time = bsp_time_get_ms();
 
     while (1) {
-      accl_sub.DumpData();
-      gyro_sub.DumpData();
-      quar_sub.DumpData();
+      accl_sub.DumpData(imu->data_.accl_);
+      gyro_sub.DumpData(imu->data_.gyro_);
+      quat_sub.DumpData(imu->data_.quat_);
 
       imu->SendData();
 

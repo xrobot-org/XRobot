@@ -80,12 +80,12 @@ Launcher::Launcher(Param& param, float control_freq)
   bsp_pwm_set_comp(BSP_PWM_LAUNCHER_SERVO, this->param_.cover_close_duty);
 
   auto launcher_thread = [](Launcher* launcher) {
-    auto ref_sub = Message::Subscriber("referee", launcher->raw_ref_);
+    auto ref_sub = Message::Subscriber<Device::Referee::Data>("referee");
 
     uint32_t last_online_time = bsp_time_get_ms();
 
     while (1) {
-      ref_sub.DumpData();
+      ref_sub.DumpData(launcher->raw_ref_);
 
       launcher->PraseRef();
 

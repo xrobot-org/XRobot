@@ -60,14 +60,16 @@ WheelLeg::WheelLeg(WheelLeg::Param &param, float sample_freq)
       event_callback, this, this->param_.EVENT_MAP);
 
   auto leg_thread = [](WheelLeg *leg) {
-    auto eulr_sub = Message::Subscriber("chassis_eulr", leg->eulr_);
+    auto eulr_sub = Message::Subscriber<Component::Type::Eulr>("chassis_eulr");
 
-    auto gyro_sub = Message::Subscriber("chassis_gyro", leg->gyro_);
+    auto gyro_sub =
+        Message::Subscriber<Component::Type::Vector3>("chassis_gyro");
 
     uint32_t last_online_time = bsp_time_get_ms();
 
     while (1) {
-      eulr_sub.DumpData();
+      eulr_sub.DumpData(leg->eulr_);
+      gyro_sub.DumpData(leg->gyro_);
 
       leg->UpdateFeedback();
 

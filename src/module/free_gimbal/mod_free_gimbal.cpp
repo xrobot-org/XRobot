@@ -35,10 +35,10 @@ FreeGimbal::FreeGimbal(Param& param, float control_freq)
       event_callback, this, this->param_.EVENT_MAP);
 
   auto gimbal_thread = [](FreeGimbal* gimbal) {
-    auto cmd_sub = Message::Subscriber("cmd_gimbal", gimbal->cmd_);
+    auto cmd_sub = Message::Subscriber<Component::CMD::GimbalCMD>("cmd_gimbal");
     gimbal->cmd_.mode = Component::CMD::GIMBAL_RELATIVE_CTRL;
     while (1) {
-      cmd_sub.DumpData();
+      cmd_sub.DumpData(gimbal->cmd_);
 
       gimbal->ctrl_lock_.Wait(UINT32_MAX);
       gimbal->Control();
@@ -52,6 +52,7 @@ FreeGimbal::FreeGimbal(Param& param, float control_freq)
   this->thread_.Create(gimbal_thread, this, "gimbal_thread", 512,
                        System::Thread::MEDIUM);
 }
+
 void FreeGimbal::SetMode(Mode mode) {
   if (mode == this->mode_) {
     return;

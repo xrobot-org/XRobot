@@ -29,8 +29,9 @@ AI::AI() : data_ready_(false), cmd_tp_("cmd_ai") {
   Component::CMD::RegisterController(this->cmd_tp_);
 
   auto ai_thread = [](AI *ai) {
-    auto quat_sub = Message::Subscriber("imu_quat", ai->quat_);
-    Message::Subscriber ref_sub("referee", ai->raw_ref_);
+    auto quat_sub =
+        Message::Subscriber<Component::Type::Quaternion>("imu_quat");
+    auto ref_sub = Message::Subscriber<Device::Referee::Data>("referee");
 
     while (1) {
       /* 接收指令 */
@@ -46,10 +47,10 @@ AI::AI() : data_ready_(false), cmd_tp_("cmd_ai") {
       ai->PackCMD();
 
       /* 发送数据到上位机 */
-      quat_sub.DumpData();
+      quat_sub.DumpData(ai->quat_);
       ai->PackMCU();
 
-      if (ref_sub.DumpData()) {
+      if (ref_sub.DumpData(ai->raw_ref_)) {
         ai->PraseRef();
         ai->PackRef();
       }

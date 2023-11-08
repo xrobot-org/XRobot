@@ -44,19 +44,19 @@ Gimbal::Gimbal(Param& param, float control_freq)
                                                       this->param_.EVENT_MAP);
 
   auto gimbal_thread = [](Gimbal* gimbal) {
-    auto eulr_sub = Message::Subscriber("imu_eulr", gimbal->eulr_);
+    auto eulr_sub = Message::Subscriber<Component::Type::Eulr>("imu_eulr");
 
-    auto gyro_sub = Message::Subscriber("imu_gyro", gimbal->gyro_);
+    auto gyro_sub = Message::Subscriber<Component::Type::Vector3>("imu_gyro");
 
-    auto cmd_sub = Message::Subscriber("cmd_gimbal", gimbal->cmd_);
+    auto cmd_sub = Message::Subscriber<Component::CMD::GimbalCMD>("cmd_gimbal");
 
     uint32_t last_online_time = bsp_time_get_ms();
 
     while (1) {
       /* 读取控制指令、姿态、IMU、电机反馈 */
-      eulr_sub.DumpData();
-      gyro_sub.DumpData();
-      cmd_sub.DumpData();
+      eulr_sub.DumpData(gimbal->eulr_);
+      gyro_sub.DumpData(gimbal->gyro_);
+      cmd_sub.DumpData(gimbal->cmd_);
 
       gimbal->ctrl_lock_.Wait(UINT32_MAX);
       gimbal->UpdateFeedback();

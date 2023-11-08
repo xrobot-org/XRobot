@@ -25,8 +25,8 @@ AHRS::AHRS()
   this->quat_.q3 = 0.0f;
 
   auto ahrs_thread = [](AHRS *ahrs) {
-    Message::Subscriber accl_sub("imu_accl", ahrs->accl_);
-    Message::Subscriber gyro_sub("imu_gyro", ahrs->gyro_);
+    Message::Subscriber<Component::Type::Vector3> accl_sub("imu_accl");
+    Message::Subscriber<Component::Type::Vector3> gyro_sub("imu_gyro");
 
     auto accl_cb = [](Component::Type::Vector3 &accl, AHRS *ahrs) {
       static_cast<void>(accl);
@@ -62,10 +62,10 @@ AHRS::AHRS()
       ahrs->ready_.Wait(UINT32_MAX);
 
       if (ahrs->accl_ready_.Wait(0)) {
-        accl_sub.DumpData();
+        accl_sub.DumpData(ahrs->accl_);
       }
       if (ahrs->gyro_ready_.Wait(0)) {
-        gyro_sub.DumpData();
+        gyro_sub.DumpData(ahrs->gyro_);
       }
 
       ahrs->Update();

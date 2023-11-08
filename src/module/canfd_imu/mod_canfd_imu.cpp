@@ -4,6 +4,7 @@
 #include <sys/_stdint.h>
 
 #include <comp_crc8.hpp>
+#include <comp_type.hpp>
 #include <thread.hpp>
 
 #include "bsp_can.h"
@@ -21,18 +22,19 @@ CanfdImu::CanfdImu()
       cycle_("canfd_imu_cycle", 10),
       cmd_(this, SetCMD, "set_imu") {
   auto thread_fn = [](CanfdImu *imu) {
-    Message::Subscriber accl_sub("imu_accl", imu->data_.raw.accl_);
-    Message::Subscriber gyro_sub("imu_gyro", imu->data_.raw.gyro_);
-    Message::Subscriber magn_sub("magn", imu->data_.raw.magn_);
-    Message::Subscriber quat_sub("imu_quat", imu->data_.raw.quat_);
+    auto magn_sub = Message::Subscriber<Component::Type::Vector3>("magn");
+    auto quat_sub =
+        Message::Subscriber<Component::Type::Quaternion>("imu_quat");
+    auto gyro_sub = Message::Subscriber<Component::Type::Vector3>("imu_gyro");
+    auto accl_sub = Message::Subscriber<Component::Type::Vector3>("imu_accl");
 
     uint32_t last_wakeup = bsp_time_get_ms();
 
     while (true) {
-      accl_sub.DumpData();
-      gyro_sub.DumpData();
-      magn_sub.DumpData();
-      quat_sub.DumpData();
+      accl_sub.DumpData(imu->data_.raw.accl_);
+      gyro_sub.DumpData(imu->data_.raw.gyro_);
+      magn_sub.DumpData(imu->data_.raw.magn_);
+      quat_sub.DumpData(imu->data_.raw.quat_);
 
       imu->header_.data = {
           .device_type = 0x01, .data_type = 0x01, .device_id = imu->id_};
