@@ -2,8 +2,6 @@
 #include "bsp_time.h"
 #include "dev_net_config.hpp"
 #include "module.hpp"
-#include "om.hpp"
-#include "om_log.h"
 
 namespace Module {
 class BleNetConfig {

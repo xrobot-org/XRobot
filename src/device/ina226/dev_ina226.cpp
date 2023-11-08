@@ -1,12 +1,6 @@
 #include "dev_ina226.hpp"
 
-#include <sys/_stdint.h>
-
-#include <cstring>
-#include <thread.hpp>
-
 #include "bsp_i2c.h"
-#include "om_log.h"
 
 #define INA226_CALIB_VAL 1024
 #define INA226_CURRENTLSB 0.5F                            // mA/bit

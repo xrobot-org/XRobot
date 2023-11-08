@@ -1,11 +1,6 @@
 #include "mod_canfd_imu.hpp"
 
-#include <stdint.h>
-#include <sys/_stdint.h>
-
 #include <comp_crc8.hpp>
-#include <comp_type.hpp>
-#include <thread.hpp>
 
 #include "bsp_can.h"
 #include "bsp_time.h"

@@ -1,7 +1,3 @@
-#include <array>
-#include <cstdint>
-#include <semaphore.hpp>
-
 #include "dev_can.hpp"
 #include "module.hpp"
 

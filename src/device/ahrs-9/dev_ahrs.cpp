@@ -5,9 +5,6 @@
 
 #include "dev_ahrs.hpp"
 
-#include <cstdint>
-#include <thread.hpp>
-
 #include "bsp_time.h"
 
 #define BETA_AHRS (0.05f)

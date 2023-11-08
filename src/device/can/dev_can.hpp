@@ -1,7 +1,6 @@
 #pragma once
 
 #include <device.hpp>
-#include <semaphore.hpp>
 
 #include "bsp_can.h"
 

@@ -5,17 +5,13 @@
 
 #include "dev_icm42688.hpp"
 
-#include <cstdint>
 #include <string_view>
-#include <thread.hpp>
 
 #include "bsp_def.h"
 #include "bsp_gpio.h"
 #include "bsp_spi.h"
 #include "bsp_time.h"
 #include "comp_pid.hpp"
-#include "comp_utils.hpp"
-#include "om_log.h"
 
 static uint8_t dma_buf[14];
 

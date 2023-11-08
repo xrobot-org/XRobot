@@ -1,7 +1,5 @@
 #include "bsp_flash.h"
 
-#include <sys/_stdint.h>
-
 #include "bsp_def.h"
 #include "stm32g4xx_hal.h"
 

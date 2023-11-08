@@ -1,11 +1,6 @@
-#include <thread.hpp>
-#include <timer.hpp>
-
 #include "bsp_time.h"
 #include "bsp_wifi_client.h"
 #include "device.hpp"
-#include "om.hpp"
-#include "om_log.h"
 
 namespace Device {
 class NetConfig {

@@ -1,7 +1,5 @@
 #include "dev_canfd.hpp"
 
-#include <array>
-
 #include "bsp_can.h"
 
 using namespace Device;

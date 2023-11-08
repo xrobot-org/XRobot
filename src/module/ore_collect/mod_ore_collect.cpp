@@ -1,14 +1,8 @@
 #include "mod_ore_collect.hpp"
 
-#include <sys/_stdint.h>
-
-#include <comp_type.hpp>
-
 #include "bsp_gpio.h"
 #include "bsp_time.h"
 #include "comp_cmd.hpp"
-#include "ms.h"
-#include "om.hpp"
 
 using namespace Module;
 

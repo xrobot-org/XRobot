@@ -1,7 +1,5 @@
 #include "mod_custom_controller.hpp"
 
-#include <thread.hpp>
-
 #include "bsp_uart.h"
 
 using namespace Module;

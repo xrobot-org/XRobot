@@ -1,13 +1,8 @@
 #include "mod_can_imu.hpp"
 
-#include <cstring>
-#include <thread.hpp>
-
 #include "bsp_can.h"
 #include "dev_can.hpp"
 #include "dev_can_imu.hpp"
-#include "ms.h"
-#include "om.hpp"
 #include "wearlab.hpp"
 
 using namespace Module;

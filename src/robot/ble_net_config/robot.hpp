@@ -1,4 +1,3 @@
-#include "comp_utils.hpp"
 #include "dev_blink_led.hpp"
 #include "mod_ble_net_config.hpp"
 #include "mod_topic_share_uart.hpp"

@@ -1,11 +1,5 @@
 #include "mod_dart_launcher.hpp"
 
-#include <sys/_stdint.h>
-
-#include <comp_utils.hpp>
-#include <string>
-#include <thread.hpp>
-
 #include "bsp_time.h"
 
 #define MAX_FRIC_SPEED (7500.0f)

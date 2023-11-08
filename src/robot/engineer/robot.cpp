@@ -2,7 +2,6 @@
 
 #include <comp_cmd.hpp>
 #include <system.hpp>
-#include <thread.hpp>
 
 #include "dev_rm_motor.hpp"
 

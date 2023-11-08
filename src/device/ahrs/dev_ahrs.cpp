@@ -5,8 +5,6 @@
 
 #include "dev_ahrs.hpp"
 
-#include <thread.hpp>
-
 #include "bsp_time.h"
 
 #define BETA_IMU (0.033f)

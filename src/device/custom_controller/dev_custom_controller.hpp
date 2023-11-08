@@ -1,5 +1,3 @@
-#include <sys/_stdint.h>
-
 #include "comp_ui.hpp"
 #include "device.hpp"
 

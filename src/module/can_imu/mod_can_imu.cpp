@@ -3,7 +3,6 @@
 #include <comp_type.hpp>
 
 #include "dev_can.hpp"
-#include "ms.h"
 
 using namespace Module;
 

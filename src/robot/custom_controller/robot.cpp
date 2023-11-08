@@ -1,7 +1,6 @@
 #include "robot.hpp"
 
 #include <system.hpp>
-#include <thread.hpp>
 
 using namespace Robot;
 

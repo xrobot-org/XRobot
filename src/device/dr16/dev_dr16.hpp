@@ -4,7 +4,6 @@
 
 #include "comp_cmd.hpp"
 #include "comp_ui.hpp"
-#include "comp_utils.hpp"
 
 namespace Device {
 class DR16 {

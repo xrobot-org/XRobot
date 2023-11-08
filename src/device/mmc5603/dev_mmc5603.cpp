@@ -1,12 +1,7 @@
 #include "dev_mmc5603.hpp"
 
-#include <cmath>
-#include <cstring>
-#include <thread.hpp>
-
 #include "bsp_i2c.h"
 #include "bsp_time.h"
-#include "om_log.h"
 
 using namespace Device;
 

@@ -1,4 +1,3 @@
-#include <thread.hpp>
 #include <vector>
 
 #include "comp_cmd.hpp"

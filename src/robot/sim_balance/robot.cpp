@@ -1,7 +1,6 @@
 #include "robot.hpp"
 
 #include <comp_pid.hpp>
-#include <thread.hpp>
 
 #include "system.hpp"
 

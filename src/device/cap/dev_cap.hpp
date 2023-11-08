@@ -3,7 +3,6 @@
 #include <device.hpp>
 
 #include "bsp_can.h"
-#include "comp_type.hpp"
 #include "comp_ui.hpp"
 #include "dev_can.hpp"
 #include "dev_referee.hpp"
