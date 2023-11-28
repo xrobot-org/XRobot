@@ -14,7 +14,7 @@ class Can {
 
   typedef struct {
     uint32_t index;
-    bsp_canfd_data_t data;
+    bsp_canfd_data_t info;
   } FDPack;
 
   Can();

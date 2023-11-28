@@ -23,4 +23,6 @@ void bsp_init() {
   MX_LPUART1_UART_Init();
   MX_FDCAN1_Init();
   MX_FDCAN2_Init();
+
+  bsp_uart_init();
 }

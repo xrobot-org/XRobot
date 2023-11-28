@@ -12,7 +12,7 @@ using namespace Module;
 CanfdImu::CanfdImu()
     : data_tp_("canfd_imu"),
       uart_output_("imu_uart", true),
-      canfd_output_("imu_canfd", false),
+      canfd_output_("imu_canfd", true),
       id_("canfd_imu_id", 0x30),
       cycle_("canfd_imu_cycle", 10),
       cmd_(this, SetCMD, "set_imu") {
