@@ -16,6 +16,37 @@ CanfdImu::CanfdImu()
       id_("canfd_imu_id", 0x30),
       cycle_("canfd_imu_cycle", 10),
       cmd_(this, SetCMD, "set_imu") {
+  auto cmd_cb = [](Device::Can::FDPack &pack, CanfdImu *imu) {
+    if (pack.info.size != sizeof(ControlData)) {
+      return false;
+    }
+
+    ControlData *data = reinterpret_cast<ControlData *>(pack.info.data);
+    if (data->id != imu->id_) {
+      imu->id_.Set(data->id);
+      bsp_sys_reset();
+    }
+    if (data->cycle != imu->cycle_) {
+      imu->cycle_.Set(data->cycle);
+    }
+    if (static_cast<bool>(data->uart_output) != imu->uart_output_) {
+      imu->id_.Set(data->uart_output);
+    }
+    if (static_cast<bool>(data->canfd_output) != imu->canfd_output_) {
+      imu->id_.Set(data->canfd_output);
+    }
+    return true;
+  };
+
+  auto cmd_tp = new Message::Topic<Device::Can::FDPack>("imu_cmd");
+
+  CanHeader tmp;
+  tmp.data = {.device_type = IMU_9, .data_type = CONTROL, .device_id = id_};
+
+  cmd_tp->RegisterCallback(cmd_cb, this);
+
+  Device::Can::SubscribeFD(*cmd_tp, BSP_CAN_1, tmp.raw, 1);
+
   auto thread_fn = [](CanfdImu *imu) {
     auto magn_sub = Message::Subscriber<Component::Type::Vector3>("magn");
     auto quat_sub =
@@ -32,7 +63,7 @@ CanfdImu::CanfdImu()
       quat_sub.DumpData(imu->data_.raw.quat_);
 
       imu->header_.data = {
-          .device_type = 0x01, .data_type = 0x01, .device_id = imu->id_};
+          .device_type = IMU_9, .data_type = FEEDBACK, .device_id = imu->id_};
 
       imu->data_.raw.time = bsp_time_get_ms();
 

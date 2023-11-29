@@ -5,6 +5,10 @@
 namespace Module {
 class CanfdImu {
  public:
+  typedef enum { IMU_9 = 2 } DeviceType;
+
+  typedef enum { FEEDBACK = 1, CONTROL } DataType;
+
   typedef union {
     struct __attribute__((packed)) {
       uint32_t device_type : 12;
@@ -28,6 +32,14 @@ class CanfdImu {
     } raw;
     uint8_t crc8;
   } Data;
+
+  typedef struct __attribute__((packed)) {
+    uint16_t id;
+    uint16_t cycle;
+    uint8_t uart_output;
+    uint8_t canfd_output;
+    uint16_t res;
+  } ControlData;
 
   Data data_;
 
