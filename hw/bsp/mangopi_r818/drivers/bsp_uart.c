@@ -21,7 +21,7 @@ static int rx_count[BSP_UART_NUM];
 
 static bool uart_block[BSP_UART_NUM];
 
-static const char *uart_dev_path[] = {"/dev/ttyCH343USB0", "/dev/ttyCH343USB1",
+static const char *uart_dev_path[] = {"/dev/ttyACM0", "/dev/ttyACM1",
                                       "/dev/ttyS4"};
 
 static const uint32_t UART_SPEED[] = {9000000, 9000000, 115200};
