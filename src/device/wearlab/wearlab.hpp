@@ -10,16 +10,6 @@ class WearLab {
     uint8_t end;
   } UartData;
 
-  typedef struct __attribute__((packed)) {
-    uint32_t time;
-    uint8_t device_id : 6;      //设备ID
-    uint8_t area_id;            //区域ID
-    uint16_t device_type : 12;  //设备类型
-    uint8_t data_type : 6;      //数据类型
-
-    uint8_t data[8];  //数据
-  } UdpData;
-
   typedef union {
     struct __attribute__((packed)) {
       uint32_t device_type : 12;
@@ -30,6 +20,17 @@ class WearLab {
 
     uint32_t raw;
   } CanHeader;
+
+  typedef struct __attribute__((packed)) {
+    uint8_t prefix;
+    uint32_t time;
+    uint8_t area_id;  //区域ID
+
+    CanHeader can_header;
+
+    uint8_t data_len : 7;
+    uint8_t fd : 1;
+  } UdpDataHeader;
 
   typedef struct __attribute__((packed)) {
     double data1;
