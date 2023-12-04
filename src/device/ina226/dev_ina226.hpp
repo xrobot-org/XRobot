@@ -9,7 +9,7 @@ class Ina226 {
   typedef struct {
     uint8_t device_id;
     bsp_i2c_t i2c;
-    uint16_t cali;
+    float resistance;
   } Param;
 
   typedef struct {
@@ -21,8 +21,23 @@ class Ina226 {
 
   Ina226(Param &param);
 
+  static int Cali(Ina226 *ina, int argc, char **argv);
+
+  void GetData();
+
   Param param_;
   Info info_;
+
+  System::Database::Key<float> current_offset_;
+
+  System::Term::Command<Ina226 *> cmd_;
+
+  float max_current_;
+  float current_lsb_;
+  float power_lsb_;
+  uint32_t cali_;
+
+  System::Timer::TimerHandle timer_;
 
   Message::Topic<Info> info_tp_;
 };

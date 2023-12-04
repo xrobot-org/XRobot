@@ -101,7 +101,7 @@ class Thread {
 
   void Delete() { pthread_cancel(this->handle_); }
 
-  static void Yield() { pthread_yield(); }
+  static void Yield() { sched_yield(); }
 
   pthread_t handle_;
 };

@@ -81,7 +81,16 @@ using namespace Device;
 
 static uint8_t i2c_buff[8] = {0};
 
-Ina226::Ina226(Param& param) : param_(param), info_tp_("ina226_info") {
+Ina226::Ina226(Param& param)
+    : param_(param),
+      current_offset_("ina226_offset"),
+      cmd_(this, Cali, "ina226_cali"),
+      max_current_(param.resistance * 81.92f),
+      current_lsb_(max_current_ / 32768.0f),
+      power_lsb_(current_lsb_ * 25),
+      cali_(static_cast<uint32_t>(0.00512f / current_lsb_ / param.resistance *
+                                  1000.0f)),
+      info_tp_("ina226_info") {
   bsp_i2c_mem_read(param.i2c, param.device_id, INA226_MANUF_ID, i2c_buff, 2,
                    true);
   while (strcmp(reinterpret_cast<char*>(i2c_buff), "TI") != 0) {
@@ -99,29 +108,57 @@ Ina226::Ina226(Param& param) : param_(param), info_tp_("ina226_info") {
 
   /* Calibration Register */
   *reinterpret_cast<uint16_t*>(i2c_buff) =
-      ((param.cali & 0xff) << 8 | (param.cali & 0xff00) >> 8);
+      ((cali_ & 0xff) << 8 | (cali_ & 0xff00) >> 8);
   bsp_i2c_mem_write(param.i2c, param.device_id, INA226_CALIB, i2c_buff, 2,
                     true);
 
   auto ina_task = [](Ina226* ina) {
-    bsp_i2c_mem_read(ina->param_.i2c, ina->param_.device_id, INA226_SHUNTV,
-                     i2c_buff, 2, true);
-    bsp_i2c_mem_read(ina->param_.i2c, ina->param_.device_id, INA226_BUSV,
-                     i2c_buff + 2, 2, true);
-    bsp_i2c_mem_read(ina->param_.i2c, ina->param_.device_id, INA226_POWER,
-                     i2c_buff + 4, 2, true);
-    bsp_i2c_mem_read(ina->param_.i2c, ina->param_.device_id, INA226_CURRENT,
-                     i2c_buff + 6, 2, true);
-    ina->info_.shunt_volt =
-        static_cast<float>(i2c_buff[0] << 8 | i2c_buff[1]) * 0.0000025f;
-    ina->info_.bus_volt =
-        static_cast<float>(i2c_buff[2] << 8 | i2c_buff[3]) * 0.00125f;
-    ina->info_.current =
-        static_cast<float>(i2c_buff[6] << 8 | i2c_buff[7]) * 0.000000305f;
-    ina->info_.power =
-        static_cast<float>(i2c_buff[4] << 8 | i2c_buff[5]) * 0.025f;
+    ina->GetData();
     ina->info_tp_.Publish(ina->info_);
   };
+  timer_ = System::Timer::Create(ina_task, this, 10);
+}
 
-  System::Timer::Create(ina_task, this, 10);
+void Ina226::GetData() {
+  bsp_i2c_mem_read(param_.i2c, param_.device_id, INA226_SHUNTV, i2c_buff, 2,
+                   true);
+  bsp_i2c_mem_read(param_.i2c, param_.device_id, INA226_BUSV, i2c_buff + 2, 2,
+                   true);
+  bsp_i2c_mem_read(param_.i2c, param_.device_id, INA226_POWER, i2c_buff + 4, 2,
+                   true);
+  bsp_i2c_mem_read(param_.i2c, param_.device_id, INA226_CURRENT, i2c_buff + 6,
+                   2, true);
+  info_.shunt_volt =
+      static_cast<float>(i2c_buff[0] << 8 | i2c_buff[1]) * 0.0000025f;
+  info_.bus_volt =
+      static_cast<float>(i2c_buff[2] << 8 | i2c_buff[3]) * 0.00125f;
+  info_.current =
+      static_cast<float>(i2c_buff[6] << 8 | i2c_buff[7]) * current_lsb_ -
+      current_offset_;
+  info_.power = static_cast<float>(i2c_buff[4] << 8 | i2c_buff[5]) * power_lsb_;
+}
+
+int Ina226::Cali(Ina226* ina, int argc, char** argv) {
+  XB_UNUSED(argc);
+  XB_UNUSED(argv);
+
+  printf("Start cali ina226 current\r\n");
+  System::Timer::Stop(ina->timer_);
+  ina->current_offset_.data_ = 0;
+
+  float offset = 0.0f;
+
+  for (int i = 0; i < 100; i++) {
+    ina->GetData();
+    offset += ina->info_.current * 0.01f;
+    printf("%d/100", i);
+    System::Thread::Sleep(10);
+    ms_clear_line();
+  }
+
+  ina->current_offset_.Set(offset);
+
+  System::Timer::Start(ina->timer_);
+
+  return 0;
 }

@@ -15,7 +15,8 @@
 		"ms-vscode.hexeditor",
 		"davidanson.vscode-markdownlint",
 		"marus25.cortex-debug",
-		"xyz.local-history"
+		"xyz.local-history",
+		"usernamehw.errorlens"
 	],
 	// List of extensions recommended by VS Code that should not be recommended for users of this workspace.
 	"unwantedRecommendations": []

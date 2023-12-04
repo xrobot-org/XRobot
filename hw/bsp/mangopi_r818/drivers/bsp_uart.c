@@ -21,49 +21,160 @@ static int rx_count[BSP_UART_NUM];
 
 static bool uart_block[BSP_UART_NUM];
 
-static const char *uart_dev_path[] = {"/dev/ttyCH343USB0", "/dev/ttyCH343USB1",
+static const char *uart_dev_path[] = {"/dev/ttyCH343USB1", "/dev/ttyCH343USB0",
                                       "/dev/ttyS4"};
 
 static const uint32_t UART_SPEED[] = {9000000, 9000000, 115200};
 
+static int libtty_setcustombaudrate(int fd, int baudrate) {
+  struct termios2 tio;
+
+  if (ioctl(fd, TCGETS2, &tio)) {
+    perror("TCGETS2");
+    return -1;
+  }
+
+  tio.c_cflag &= ~CBAUD;
+  tio.c_cflag |= BOTHER;
+  tio.c_ispeed = baudrate;
+  tio.c_ospeed = baudrate;
+
+  if (ioctl(fd, TCSETS2, &tio)) {
+    perror("TCSETS2");
+    return -1;
+  }
+
+  if (ioctl(fd, TCGETS2, &tio)) {
+    perror("TCGETS2");
+    return -1;
+  }
+
+  return 0;
+}
+
+static int libtty_open(const char *devname) {
+  int fd = open(devname, O_RDWR | O_NOCTTY | O_NDELAY);
+  int flags = 0;
+
+  if (fd < 0) {
+    perror("open device failed");
+    return -1;
+  }
+
+  flags = fcntl(fd, F_GETFL, 0);
+  flags &= ~O_NONBLOCK;
+  if (fcntl(fd, F_SETFL, flags) < 0) {
+    printf("fcntl failed.\n");
+    return -1;
+  }
+
+  if (isatty(fd) == 0) {
+    printf("not tty device.\n");
+    return -1;
+  } else
+    printf("tty device test ok.\n");
+
+  return fd;
+}
+
+static int libtty_setopt(int fd, int speed, int databits, int stopbits,
+                         char parity, char hardflow) {
+  struct termios newtio;
+  struct termios oldtio;
+
+  bzero(&newtio, sizeof(newtio));
+  bzero(&oldtio, sizeof(oldtio));
+
+  if (tcgetattr(fd, &oldtio) != 0) {
+    perror("tcgetattr");
+    return -1;
+  }
+  newtio.c_cflag |= CLOCAL | CREAD;
+  newtio.c_cflag &= ~CSIZE;
+
+  /* set data bits */
+  switch (databits) {
+    case 5:
+      newtio.c_cflag |= CS5;
+      break;
+    case 6:
+      newtio.c_cflag |= CS6;
+      break;
+    case 7:
+      newtio.c_cflag |= CS7;
+      break;
+    case 8:
+      newtio.c_cflag |= CS8;
+      break;
+    default:
+      fprintf(stderr, "unsupported data size\n");
+      return -1;
+  }
+
+  /* set parity */
+  switch (parity) {
+    case 'n':
+    case 'N':
+      newtio.c_cflag &= ~PARENB; /* Clear parity enable */
+      newtio.c_iflag &= ~INPCK;  /* Disable input parity check */
+      break;
+    case 'o':
+    case 'O':
+      newtio.c_cflag |= (PARODD | PARENB); /* Odd parity instead of even */
+      newtio.c_iflag |= INPCK;             /* Enable input parity check */
+      break;
+    case 'e':
+    case 'E':
+      newtio.c_cflag |= PARENB;  /* Enable parity */
+      newtio.c_cflag &= ~PARODD; /* Even parity instead of odd */
+      newtio.c_iflag |= INPCK;   /* Enable input parity check */
+      break;
+    default:
+      fprintf(stderr, "unsupported parity\n");
+      return -1;
+  }
+
+  /* set stop bits */
+  switch (stopbits) {
+    case 1:
+      newtio.c_cflag &= ~CSTOPB;
+      break;
+    case 2:
+      newtio.c_cflag |= CSTOPB;
+      break;
+    default:
+      perror("unsupported stop bits\n");
+      return -1;
+  }
+
+  if (hardflow)
+    newtio.c_cflag |= CRTSCTS;
+  else
+    newtio.c_cflag &= ~CRTSCTS;
+
+  newtio.c_cc[VTIME] = 10; /* Time-out value (tenths of a second) [!ICANON]. */
+  newtio.c_cc[VMIN] = 0;   /* Minimum number of bytes read at once [!ICANON]. */
+
+  tcflush(fd, TCIOFLUSH);
+
+  if (tcsetattr(fd, TCSANOW, &newtio) != 0) {
+    perror("tcsetattr");
+    return -1;
+  }
+
+  /* set tty speed */
+  if (libtty_setcustombaudrate(fd, speed) != 0) {
+    perror("setbaudrate");
+    return -1;
+  }
+
+  return 0;
+}
+
 void bsp_uart_init() {
   for (int i = 0; i < BSP_UART_NUM; i++) {
-    uart_fd[i] = open(uart_dev_path[i], O_RDWR | O_NOCTTY);
-    printf("uart %s dev id:%d\n", uart_dev_path, uart_fd[i]);
-    assert(uart_fd[i] != -1);
-    struct termios tty_cfg;
-
-    tcgetattr(uart_fd[i], &tty_cfg);
-
-    tty_cfg.c_cflag &= ~PARENB;
-    tty_cfg.c_iflag &= ~INPCK;
-    tty_cfg.c_cflag &= ~CSTOPB;
-    tty_cfg.c_cflag &= ~CRTSCTS;
-
-    struct termios2 tio;
-
-    ioctl(uart_fd[i], TCGETS2, &tio);
-    tio.c_cflag &= ~CBAUD;
-    tio.c_cflag |= BOTHER;
-    tio.c_ispeed = UART_SPEED[i];
-    tio.c_ospeed = UART_SPEED[i];
-    ioctl(uart_fd[i], TCSETS2, &tio);
-
-    // 一般必设置的标志
-    tty_cfg.c_cflag |= (CLOCAL | CREAD);
-    tty_cfg.c_oflag &= ~(OPOST);
-    tty_cfg.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-    tty_cfg.c_iflag &= ~(ICRNL | INLCR | IGNCR | IXON | IXOFF | IXANY);
-
-    tty_cfg.c_cc[VMIN] = 16;
-
-    // 清空输入输出缓冲区
-    tcflush(uart_fd[i], TCIOFLUSH);
-
-    tty_cfg.c_cflag &= ~CSIZE;
-    tty_cfg.c_cflag |= CS8;
-
-    tcsetattr(uart_fd[i], TCSANOW, &tty_cfg);
+    uart_fd[i] = libtty_open(uart_dev_path[i]);
+    libtty_setopt(uart_fd[i], UART_SPEED[i], 8, 1, 'n', 0);
   }
 }
 
@@ -101,10 +212,13 @@ bsp_status_t bsp_uart_receive(bsp_uart_t uart, uint8_t *buff, size_t size,
     uart_block[uart] = block;
   }
 
+rework:
   rx_count[uart] = read(uart_fd[uart], buff, size);
 
-  if (rx_count[uart] < 0) {
-    assert(false);
+  while (rx_count[uart] != (int)(size)) {
+    size -= rx_count[uart];
+    buff += rx_count[uart];
+    goto rework;
     return BSP_ERR;
   }
 

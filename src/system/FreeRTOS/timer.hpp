@@ -49,7 +49,7 @@ class Timer {
 
   static void Stop(TimerHandle& handle) { handle->data_.running = false; }
 
-  void SetCycle(TimerHandle& timer, uint32_t cycle) {
+  static void SetCycle(TimerHandle& timer, uint32_t cycle) {
     timer->data_.cycle = cycle;
   }
 

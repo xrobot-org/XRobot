@@ -44,7 +44,7 @@ static bsp_can_t can_get(FDCAN_HandleTypeDef *hcan) {
   if (hcan->Instance == FDCAN1) {
     return BSP_CAN_1;
   } else if (hcan->Instance == FDCAN2) {
-    return BSP_CAN_1;
+    return BSP_CAN_2;
   } else {
     return BSP_CAN_ERR;
   }
@@ -106,16 +106,18 @@ void bsp_can_init(void) {
 static const uint8_t DLCtoBytes[] = {0, 1,  2,  3,  4,  5,  6,  7,
                                      8, 12, 16, 20, 24, 32, 48, 64};
 
-static void can_rx_cb_fn(bsp_can_t can) {
-  if (callback_list[can][CAN_RX_MSG_CALLBACK].fn) {
-    while (HAL_FDCAN_GetRxMessage(bsp_can_get_handle(can), FDCAN_RX_FIFO0,
-                                  &rx_buff[can].header,
-                                  rx_buff[can].data) == HAL_OK) {
-      if (rx_buff[can].header.FDFormat == FDCAN_CLASSIC_CAN) {
+static void can_rx_cb_fn(bsp_can_t can, uint32_t fifo) {
+  while (HAL_FDCAN_GetRxMessage(bsp_can_get_handle(can), fifo,
+                                &rx_buff[can].header,
+                                rx_buff[can].data) == HAL_OK) {
+    if (rx_buff[can].header.FDFormat == FDCAN_CLASSIC_CAN) {
+      if (callback_list[can][CAN_RX_MSG_CALLBACK].fn) {
         callback_list[can][CAN_RX_MSG_CALLBACK].fn(
             can, rx_buff[can].header.Identifier, rx_buff[can].data,
             callback_list[can][CAN_RX_MSG_CALLBACK].arg);
-      } else {
+      }
+    } else {
+      if (callback_list[can][CANFD_RX_MSG_CALLBACK].fn) {
         bsp_canfd_data_t data = {
             .data = rx_buff[can].data,
             .size = DLCtoBytes[rx_buff[can].header.DataLength >> 16U]};
@@ -130,12 +132,12 @@ static void can_rx_cb_fn(bsp_can_t can) {
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo0ITs) {
   (void)RxFifo0ITs;
-  can_rx_cb_fn(can_get(hcan));
+  can_rx_cb_fn(can_get(hcan), FDCAN_RX_FIFO0);
 }
 
 void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hcan, uint32_t RxFifo1ITs) {
   (void)RxFifo1ITs;
-  can_rx_cb_fn(can_get(hcan));
+  can_rx_cb_fn(can_get(hcan), FDCAN_RX_FIFO1);
 }
 
 bsp_status_t bsp_can_register_callback(

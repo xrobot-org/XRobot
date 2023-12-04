@@ -10,12 +10,6 @@ Robot::UdpToUart::Param param = {
     .timeout = 200,
   },
 
-  .uart_udp = {
-    .port = 4321,
-    .start_uart = BSP_UART_1,
-    .end_uart = BSP_UART_2
-  },
-
   .topic_share = {
     .topic_name = {"net_info"},
     .block = true,

@@ -39,7 +39,7 @@ Can::Can() {
 
     fd_pack[can].index = id;
 
-    memcpy(&fd_pack[can].data, data, sizeof(bsp_canfd_data_t));
+    memcpy(&fd_pack[can].info, data, sizeof(bsp_canfd_data_t));
 
     canfd_tp_[can]->Publish(fd_pack[can]);
   };
@@ -94,5 +94,14 @@ bool Can::Subscribe(Message::Topic<Can::Pack>& tp, bsp_can_t can,
 
   can_tp_[can]->RangeDivide(tp, sizeof(Pack), offsetof(Pack, index),
                             om_member_size_of(Pack, index), index, num);
+  return true;
+}
+
+bool Can::SubscribeFD(Message::Topic<Can::FDPack>& tp, bsp_can_t can,
+                      uint32_t index, uint32_t num) {
+  ASSERT(num > 0);
+
+  canfd_tp_[can]->RangeDivide(tp, sizeof(FDPack), offsetof(FDPack, index),
+                              om_member_size_of(Pack, index), index, num);
   return true;
 }
