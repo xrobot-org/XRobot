@@ -1,5 +1,6 @@
 #include "bsp_can.h"
 
+#include <poll.h>
 #include <pthread.h>
 
 #include <array>
@@ -80,7 +81,7 @@ inline bsp_can_t bsp_can_get(bsp_uart_t uart, uint8_t id) {
 }
 
 inline bsp_uart_t bsp_can_get_uart(bsp_can_t can) {
-  if (can < BSP_CAN_2) {
+  if (can <= BSP_CAN_2) {
     return BSP_UART_1;
   } else {
     return BSP_UART_2;
@@ -95,7 +96,6 @@ void bsp_can_init(void) {
 
     while (true) {
       auto index = uart_rx_buff[uart];
-      memset(uart_rx_buff[uart], 0, sizeof(uart_rx_buff[uart]));
       do {
         bsp_uart_receive(uart, uart_rx_buff[uart], sizeof(uint8_t), true);
       } while (*uart_rx_buff[uart] != 0xa5);
@@ -143,6 +143,7 @@ void bsp_can_init(void) {
 
     return static_cast<void *>(0);
   };
+
   static bsp_uart_t uart[BSP_CAN_UART_NUM];
   static pthread_t thread[BSP_CAN_UART_NUM];
 
