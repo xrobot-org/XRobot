@@ -34,6 +34,7 @@ class FDCanToUart {
 
     auto uart_rx_cplt_cb = [](void* arg) {
       XB_UNUSED(arg);
+      bsp_uart_abort_receive(BSP_UART_MCU);
       om_fifo_writes(&self_->uart_rx_fifo, self_->uart_rx_buff,
                      bsp_uart_get_count(BSP_UART_MCU));
 
@@ -43,10 +44,10 @@ class FDCanToUart {
       UartDataHeader* header = reinterpret_cast<UartDataHeader*>(&prase_buff);
       uint32_t len = om_fifo_readable_item_count(&self_->uart_rx_fifo);
       while (len > sizeof(UartDataHeader) + sizeof(uint8_t)) {
-        om_fifo_peek(&self_->uart_rx_fifo, &header);
-        len--;
+        om_fifo_peek(&self_->uart_rx_fifo, header);
         if (header->prefix != 0xa5) {
           om_fifo_pop(&self_->uart_rx_fifo);
+          len--;
           continue;
         }
 
@@ -117,7 +118,7 @@ class FDCanToUart {
           sizeof(UartDataHeader) + pack.info.size, CRC8_INIT);
       if (self_->uart_sent.Wait(UINT32_MAX)) {
         bsp_uart_transmit(
-            BSP_UART_MCU, self_->curr_uart_tx_buff[*can],
+            BSP_UART_MCU, reinterpret_cast<uint8_t*>(header),
             sizeof(UartDataHeader) + pack.info.size + sizeof(uint8_t), false);
       }
       return false;
@@ -167,6 +168,9 @@ class FDCanToUart {
       fd_tp[i]->RegisterCallback(canfd_rx_fun, &can_id_[i]);
       tp[i]->RegisterCallback(can_rx_fun, &can_id_[i]);
     }
+
+    bsp_uart_receive(BSP_UART_MCU, self_->uart_rx_buff,
+                     sizeof(self_->uart_rx_buff), false);
   }
 
   struct __attribute__((packed)) {
@@ -176,8 +180,8 @@ class FDCanToUart {
 
   uint8_t* curr_uart_tx_buff[BSP_CAN_NUM];
 
-  uint8_t uart_rx_buff[256];
-  uint8_t uart_tx_buff[BSP_CAN_NUM][2][256];
+  uint8_t uart_rx_buff[256] = {};
+  uint8_t uart_tx_buff[BSP_CAN_NUM][2][256] = {};
 
   System::Semaphore uart_received, uart_sent;
   om_fifo_t uart_rx_fifo;
