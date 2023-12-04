@@ -18,6 +18,7 @@ Diagnostics:
             cppcoreguidelines-pro-type-member-init,
             misc-no-recursion,
             cert-env33-c,
+            cert-err34-c,
             cert-err58-cpp,
             cert-msc*,
             concurrency-mt-unsafe,
