@@ -14,6 +14,8 @@ class Can {
 
   Can();
 
+  static bool SendPack(bsp_can_t can, bsp_can_format_t format, Pack& pack);
+
   static bool SendStdPack(bsp_can_t can, Pack& pack);
 
   static bool SendExtPack(bsp_can_t can, Pack& pack);

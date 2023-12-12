@@ -1,6 +1,6 @@
 #include "bsp_uart.h"
 #include "comp_crc8.hpp"
-#include "dev_canfd.hpp"
+#include "dev_can.hpp"
 #include "module.hpp"
 
 namespace Module {
@@ -10,10 +10,12 @@ class FDCanToUart {
     uint8_t prefix;
     uint8_t id;
     uint32_t index;
-    uint8_t data_len : 7;
+    uint8_t data_len : 6;
+    uint8_t ext : 1;
     uint8_t fd : 1;
     uint8_t crc8;
   } UartDataHeader;
+
   FDCanToUart() : uart_received(0), uart_sent(1) {
     self_ = this;
 
@@ -74,14 +76,17 @@ class FDCanToUart {
         pack.index = header->index;
 
         if (header->fd) {
-          Device::Can::SendFDExtPack(
-              static_cast<bsp_can_t>(header->id), header->index,
+          Device::Can::SendFDPack(
+              static_cast<bsp_can_t>(header->id),
+              header->ext ? CAN_FORMAT_EXT : CAN_FORMAT_STD, header->index,
               prase_buff + sizeof(UartDataHeader), header->data_len);
         } else {
           static Device::Can::Pack pack = {};
           memcpy(pack.data, prase_buff + sizeof(UartDataHeader), 8);
           pack.index = header->index;
-          Device::Can::SendExtPack(static_cast<bsp_can_t>(header->id), pack);
+          Device::Can::SendPack(static_cast<bsp_can_t>(header->id),
+                                header->ext ? CAN_FORMAT_EXT : CAN_FORMAT_STD,
+                                pack);
         }
       }
     };
@@ -93,6 +98,8 @@ class FDCanToUart {
                                uart_tx_cplt_cb, this);
 
     auto canfd_rx_fun = [](Device::Can::FDPack& pack, uint8_t* can) {
+      XB_ASSERT(pack.info.size <= 64);
+
       if (self_->curr_uart_tx_buff[*can] == self_->uart_tx_buff[*can][0]) {
         self_->curr_uart_tx_buff[*can] = self_->uart_tx_buff[*can][1];
       } else {

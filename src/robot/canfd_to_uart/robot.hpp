@@ -1,7 +1,7 @@
 /* #include "dev_xxx.hpp" */
 
 #include "dev_blink_led.hpp"
-#include "dev_canfd.hpp"
+#include "dev_can.hpp"
 #include "mod_canfd_to_uart.hpp"
 
 void robot_init();

@@ -21,10 +21,9 @@ static int rx_count[BSP_UART_NUM];
 
 static bool uart_block[BSP_UART_NUM];
 
-static const char *uart_dev_path[] = {"/dev/ttyCH343USB1", "/dev/ttyCH343USB0",
-                                      "/dev/ttyS4"};
+static const char *uart_dev_path[] = {"/dev/ttyCH343USB1", "/dev/ttyCH343USB0"};
 
-static const uint32_t UART_SPEED[] = {9000000, 9000000, 115200};
+static const uint32_t UART_SPEED[] = {9000000, 9000000};
 
 static int libtty_setcustombaudrate(int fd, int baudrate) {
   struct termios2 tio;
@@ -174,6 +173,9 @@ static int libtty_setopt(int fd, int speed, int databits, int stopbits,
 void bsp_uart_init() {
   for (int i = 0; i < BSP_UART_NUM; i++) {
     uart_fd[i] = libtty_open(uart_dev_path[i]);
+    if (uart_fd[i] <= 0) {
+      XB_ASSERT(false);
+    }
     libtty_setopt(uart_fd[i], UART_SPEED[i], 8, 1, 'n', 0);
   }
 }
