@@ -35,6 +35,13 @@ Can::Can() {
   bsp_can_init();
 }
 
+bool Can::SendPack(bsp_can_t can, bsp_can_format_t format, Pack& pack) {
+  can_sem_[can]->Wait(UINT32_MAX);
+  bool ans = bsp_can_trans_packet(can, format, pack.index, pack.data) == BSP_OK;
+  can_sem_[can]->Post();
+  return ans;
+}
+
 bool Can::SendStdPack(bsp_can_t can, Pack& pack) {
   can_sem_[can]->Wait(UINT32_MAX);
   bool ans = bsp_can_trans_packet(can, CAN_FORMAT_STD, pack.index, pack.data) ==

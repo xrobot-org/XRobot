@@ -54,6 +54,13 @@ Can::Can() {
   bsp_can_init();
 }
 
+bool Can::SendPack(bsp_can_t can, bsp_can_format_t format, Pack& pack) {
+  can_sem_[can]->Wait(UINT32_MAX);
+  bool ans = bsp_can_trans_packet(can, format, pack.index, pack.data) == BSP_OK;
+  can_sem_[can]->Post();
+  return ans;
+}
+
 bool Can::SendStdPack(bsp_can_t can, Pack& pack) {
   can_sem_[can]->Wait(UINT32_MAX);
   bool ans = bsp_can_trans_packet(can, CAN_FORMAT_STD, pack.index, pack.data) ==
@@ -66,6 +73,14 @@ bool Can::SendExtPack(bsp_can_t can, Pack& pack) {
   can_sem_[can]->Wait(UINT32_MAX);
   bool ans = bsp_can_trans_packet(can, CAN_FORMAT_EXT, pack.index, pack.data) ==
              BSP_OK;
+  can_sem_[can]->Post();
+  return ans;
+}
+
+bool Can::SendFDPack(bsp_can_t can, bsp_can_format_t format, uint32_t id,
+                     uint8_t* data, size_t size) {
+  can_sem_[can]->Wait(UINT32_MAX);
+  bool ans = bsp_canfd_trans_packet(can, format, id, data, size) == BSP_OK;
   can_sem_[can]->Post();
   return ans;
 }
