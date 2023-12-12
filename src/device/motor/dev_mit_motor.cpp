@@ -101,6 +101,7 @@ void MitMotor::Control(float output) {
 void MitMotor::SetCurrent(float current) {
   if (this->feedback_.temp > 75.0f) {
     Relax();
+    OMLOG_WARNING("motor %s high temperature detected", name_);
     return;
   }
 
@@ -114,6 +115,7 @@ void MitMotor::SetCurrent(float current) {
 void MitMotor::SetPos(float pos) {
   if (this->feedback_.temp > 75.0f) {
     Relax();
+    OMLOG_WARNING("motor %s high temperature detected", name_);
     return;
   }
 

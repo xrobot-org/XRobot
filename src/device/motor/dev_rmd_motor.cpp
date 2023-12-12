@@ -65,6 +65,7 @@ void RMDMotor::Decode(Can::Pack &rx) {
 void RMDMotor::Control(float out) {
   if (this->feedback_.temp > 75.0f) {
     out = 0.0f;
+    OMLOG_WARNING("motor %s high temperature detected", name_);
   }
 
   clampf(&out, -1.0f, 1.0f);
