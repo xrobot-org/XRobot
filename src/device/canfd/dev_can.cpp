@@ -1,4 +1,4 @@
-#include "dev_canfd.hpp"
+#include "dev_can.hpp"
 
 #include "bsp_can.h"
 

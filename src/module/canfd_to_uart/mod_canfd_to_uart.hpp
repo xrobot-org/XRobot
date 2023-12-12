@@ -1,6 +1,6 @@
 #include "bsp_uart.h"
 #include "comp_crc8.hpp"
-#include "dev_canfd.hpp"
+#include "dev_can.hpp"
 #include "module.hpp"
 
 namespace Module {

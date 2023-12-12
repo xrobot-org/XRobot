@@ -53,7 +53,7 @@ static int libtty_setcustombaudrate(int fd, int baudrate) {
 }
 
 static int libtty_open(const char *devname) {
-  int fd = open(devname, O_RDWR | O_NOCTTY | O_NDELAY);
+  int fd = open(devname, O_RDWR | O_NOCTTY);
   int flags = 0;
 
   if (fd < 0) {
