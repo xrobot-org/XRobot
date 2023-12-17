@@ -12,7 +12,6 @@ extern "C" {
 
 typedef enum {
   BSP_USB_CDC,
-  BSP_GPIO_LED,
   /* BSP_USB_XXX, */
   BSP_USB_NUM,
   BSP_USB_ERR,

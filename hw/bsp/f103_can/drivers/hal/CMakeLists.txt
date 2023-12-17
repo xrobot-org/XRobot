@@ -4,8 +4,6 @@ project(hal)
 
 add_compile_options(-w)
 
-add_compile_definitions(USE_FULL_ASSERT)
-
 file(GLOB ${PROJECT_NAME}_SOURCES_MX "${CMAKE_CURRENT_SOURCE_DIR}/Core/Src/*.c")
 file(GLOB ${PROJECT_NAME}_SOURCES_HAL "${HAL_DIR}/Src/*.c")
 
