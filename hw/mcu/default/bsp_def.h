@@ -13,6 +13,9 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 
+#define XB_TO_STR(_arg) #_arg
+#define XB_DEF2STR(_arg) XB_TO_STR(_arg)
+
 #if MCU_DEBUG_BUILD
 #define XB_ASSERT(arg)                                         \
   if (!(arg))                                                  \
