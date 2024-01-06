@@ -49,4 +49,5 @@
     ],
     "clangd.path": "clangd",
     "editor.inlayHints.enabled": "offUnlessPressed",
+    "cmake.options.statusBarVisibility": "visible",
 }

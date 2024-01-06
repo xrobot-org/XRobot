@@ -1,9 +1,15 @@
 cmake_minimum_required(VERSION 3.16)
 
+include_directories(
+  PUBLIC $ENV{IDF_PATH}/components/esp_http_client/include
+  PUBLIC $ENV{IDF_PATH}/components/mdns/include
+  PUBLIC $ENV{IDF_PATH}/components/lwip/lwip/src/include/lwip/apps
+  PUBLIC $ENV{IDF_PATH}/components/libhelix-mp3/libhelix-mp3/pub
+)
+
 # Include for ESP-IDF build system functions
 include($ENV{IDF_PATH}/tools/cmake/idf.cmake)
 
-add_compile_options(-Wno-missing-field-initializers -Wno-write-strings)
 add_compile_definitions(ARDUINO_USB_CDC_ON_BOOT=1 ARDUINO_USB_MODE=1)
 
 # Create idf::{target} and idf::freertos static libraries
@@ -14,7 +20,7 @@ idf_build_process("esp32c3"
                 # although esptool_py does not generate static library,
                 # processing the component is needed for flashing related
                 # targets and file generation
-                COMPONENTS freertos esptool_py driver nvs_flash bt esp_http_client esp_https_ota arduino-esp32
+                COMPONENTS freertos esptool_py driver nvs_flash bt mdns libhelix-mp3 esp_http_client esp_https_ota arduino-esp32
                 SDKCONFIG ${BOARD_DIR}/sdkconfig
                 BUILD_DIR ${CMAKE_BINARY_DIR})
 
@@ -31,6 +37,8 @@ target_link_libraries(
   idf::spi_flash
   idf::driver
   idf::nvs_flash
+  idf::mdns
+  idf::libhelix-mp3
   idf::esp_wifi
   idf::esp_http_client
   idf::esp_https_ota
@@ -39,19 +47,17 @@ target_link_libraries(
   system
   robot
 )
-# Attach additional targets to the executable file for flashing,
-# linker script generation, partition_table generation, etc.
-idf_build_executable(${elf_file})
 
 add_subdirectory(${BOARD_DIR}/drivers)
 
-# add_compile_options(-Wno-missing-field-initializers)
 
 target_include_directories(
   ${PROJECT_NAME}.elf
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-  PRIVATE $ENV{IDF_PATH}/components/esp_http_client/include
-  PRIVATE $<TARGET_PROPERTY:bsp,INTERFACE_INCLUDE_DIRECTORIES>
-  PRIVATE $<TARGET_PROPERTY:system,INTERFACE_INCLUDE_DIRECTORIES>
-  PRIVATE $<TARGET_PROPERTY:robot,INTERFACE_INCLUDE_DIRECTORIES>
+  PUBLIC $<TARGET_PROPERTY:idf::mdns,INTERFACE_INCLUDE_DIRECTORIES>
+  PUBLIC $<TARGET_PROPERTY:bsp,INTERFACE_INCLUDE_DIRECTORIES>
+  PUBLIC $<TARGET_PROPERTY:system,INTERFACE_INCLUDE_DIRECTORIES>
+  PUBLIC $<TARGET_PROPERTY:robot,INTERFACE_INCLUDE_DIRECTORIES>
 )
+
+idf_build_executable(${elf_file})
