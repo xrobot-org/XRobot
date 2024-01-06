@@ -16,6 +16,8 @@ idf_build_process("esp32c3"
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+add_compile_options()
+
 set(elf_file ${CMAKE_PROJECT_NAME}.elf)
 add_executable(${elf_file} ${BOARD_DIR}/main.cpp)
 
@@ -31,9 +33,6 @@ target_link_libraries(
   system
   robot
 )
-# Attach additional targets to the executable file for flashing,
-# linker script generation, partition_table generation, etc.
-idf_build_executable(${elf_file})
 
 add_subdirectory(${BOARD_DIR}/drivers)
 
@@ -44,3 +43,5 @@ target_include_directories(
   PRIVATE $<TARGET_PROPERTY:system,INTERFACE_INCLUDE_DIRECTORIES>
   PRIVATE $<TARGET_PROPERTY:robot,INTERFACE_INCLUDE_DIRECTORIES>
 )
+
+idf_build_executable(${elf_file})

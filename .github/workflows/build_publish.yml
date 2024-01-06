@@ -39,7 +39,7 @@ jobs:
       run: git config --global --add safe.directory /__w/XRobot/XRobot && git submodule init && git submodule update
 
     - name: Build
-      run: export HOME=/root && bash -c "source ~/.idf_profile && python project.py build all all"
+      run: export HOME=/root && bash -c "python project.py build all all"
 
     - name: Pack firmware
       run: zip -r ./firmware.zip ./firmware

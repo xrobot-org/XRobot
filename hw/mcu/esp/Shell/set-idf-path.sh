@@ -49,3 +49,4 @@ fi
 source ~/.idf_profile
 
 echo source $IDF_PATH/export.sh >>~/.idf_profile
+echo export IDF_TOOLCHAIN=clang >>~/.idf_profile

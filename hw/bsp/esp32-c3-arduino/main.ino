@@ -2,4 +2,4 @@
 
 void setup() {}
 
-void loop() { sleep(1000); }
+void loop() { delay(1000); }

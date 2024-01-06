@@ -15,6 +15,8 @@ bsp_status_t bsp_flash_init() {
     err = nvs_flash_init();
   }
   ESP_ERROR_CHECK(err);
+
+  return err == ESP_OK ? BSP_OK : BSP_ERR;
 }
 
 size_t bsp_flash_check_blog(const char* name) {
