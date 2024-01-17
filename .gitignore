@@ -21,3 +21,4 @@ src/robot/**/**.jpg
 .codechecker/**
 .idea/*
 !.idea/workspace.xml
+!.idea/misc.xml
