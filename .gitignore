@@ -19,3 +19,5 @@ src/robot/**/**.jpg
 .cache/**
 .history/**
 .codechecker/**
+.idea/*
+!.idea/workspace.xml

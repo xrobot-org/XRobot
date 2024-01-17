@@ -2,7 +2,6 @@
 
 颠覆传统理念的嵌入式软件开发框架。诞生于Robomaster比赛，但绝不局限于此。
 
-
 <div align=center>
 <img src="./doc/image/XRobot.jpeg"  height="100">
 <p>
@@ -17,7 +16,6 @@
 <img src="https://github.com/xrobot-org/XRobot/actions/workflows/publish_repo.yml/badge.svg"/>
 
 <img src="https://github.com/xrobot-org/Docker-Image/actions/workflows/docker-publish.yml/badge.svg"/>
-
 
 <p>
 
@@ -52,7 +50,7 @@
 ## 主要特色
 
 * 利用现代化的构建系统(CMake & Clang & Ninja)实现跨平台高速编译
-* VSCode一键编译调试与ClangTidy代码检查
+* VSCode/CLion一键编译调试与ClangTidy代码检查
 * 完善的[文档](https://xrobot-org.github.io)与入门教程
 * CI/CD自动构建和固件发布
 * 兼容多开发板和操作系统（Linux/Webots仿真/FreeRTOS/裸机）
@@ -132,13 +130,23 @@ XRobot基本部分是一套开发板与功能模块的管理系统，能够让�
 
 ## 图片展示
 
-利用命令行可以辅助调试程序、校准开发板、初始化机器人、读取不同参数配置。
+`VSCode与openOCD联合调试`
 
 ![VSCode调试界面](./doc/image/调试界面.png?raw=true "VSCode调试界面")
 
+`Windows11使用CLion在WSL下开发`
+
+![CLion调试界面](./doc/image/clion.png?raw=true "CLion调试界面")
+
+`XRobot作为外部控制器在Webots进行运动学仿真`
+
 ![Webots仿真](./doc/image/Webots仿真.png?raw=true "Webots仿真")
 
+`利用命令行查看log、校准陀螺仪、监控电机运行数据和机器人参数配置`
+
 ![命令行](./doc/image/命令行.png?raw=true "命令行")
+
+`自定义UI框架`
 
 ![客户端UI](./doc/image/客户端UI.png?raw=true "客户端UI")
 
