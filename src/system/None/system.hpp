@@ -21,6 +21,8 @@ void Start(RobotParam... param) {
 
   static auto xrobot_debug_handle = new RobotType(param...);
 
+  XB_UNUSED(xrobot_debug_handle);
+
   uint32_t last_online_time = bsp_time_get_ms();
 
   while (1) {

@@ -25,6 +25,8 @@ void Start(RobotParam... param) {
 
   static auto xrobot_debug_handle = new RobotType(param...);
 
+  XB_UNUSED(xrobot_debug_handle);
+
   printf("\r\n--------------------------------\r\n");
   printf("Start jump to app.\r\n");
   printf("App info: addr 0x%x size %d\r\n", BSP_FLASH_APP_ADDR,
