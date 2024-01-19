@@ -15,7 +15,11 @@ class Thread {
   template <typename FunType, typename ArgType>
   void Create(FunType fun, ArgType arg, const char* name, uint32_t stack_depth,
               Priority priority) {
-    (void)(fun, arg, name, stack_depth, priority);
+    XB_UNUSED(fun);
+    XB_UNUSED(arg);
+    XB_UNUSED(name);
+    XB_UNUSED(stack_depth);
+    XB_UNUSED(priority);
   }
 
   static Thread Current(void) { return Thread(); }
