@@ -1,5 +1,6 @@
 import sys
 import os
+import shutil
 
 
 class ProjectTools:
@@ -9,6 +10,7 @@ class ProjectTools:
 
     def __init__(self):
         self.project_path = os.path.split(os.path.realpath(__file__))[0][:-13]
+        self.project_path = self.project_path.replace("\\", "/")
         self.kconfig_path = self.project_path + "/lib/Kconfiglib"
         if " " in self.project_path:
             print("工程路径请不要带有空格")
@@ -30,7 +32,20 @@ class ProjectTools:
         print("Menu config done.")
 
     def clean_cache(self):
-        os.system("rm -rf " + self.project_path + "/build/*")
+        filepath = self.project_path + "/build"
+
+        if not os.path.exists(filepath):
+            os.mkdir(filepath)
+            return
+
+        del_list = os.listdir(filepath)
+
+        for f in del_list:
+            file_path = os.path.join(filepath, f)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
 
     def config_cmake(self, type="Debug"):
         os.system(

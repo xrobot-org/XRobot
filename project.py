@@ -58,6 +58,10 @@ def select_config(config_path, type):
         exit(-1)
 
     shutil.copyfile(config_path, cfg_dir + "/.config")
+    print("Copy " + config_path + " to config/.config")
+    # The above code is calling a function `generate_cmake` and passing `tools.project_path` as an
+    # argument.
+    generate_cmake(cfg_dir)
     tools.clean_cache()
     tools.config_cmake(type)
 
@@ -70,6 +74,8 @@ def select_config_idf(config_path, type):
         exit(-1)
 
     shutil.copyfile(config_path, cfg_dir + "/.config")
+    print("Copy " + config_path + " to config/.config")
+    generate_cmake(cfg_dir)
     tools.clean_cache()
     tools.config_cmake_idf(type)
 
@@ -80,7 +86,7 @@ def build(board, robot, type="Debug", code_check=False):
     target = []
     time_count = 0.0
 
-    os.system("rm -rf " + fm_dir)
+    shutil.rmtree(fm_dir)
     os.makedirs(fm_dir, exist_ok=True)
 
     if board == "all":
