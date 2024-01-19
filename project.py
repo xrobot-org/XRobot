@@ -86,7 +86,8 @@ def build(board, robot, type="Debug", code_check=False):
     target = []
     time_count = 0.0
 
-    shutil.rmtree(fm_dir)
+    if os.path.exists(fm_dir):
+        shutil.rmtree(fm_dir)
     os.makedirs(fm_dir, exist_ok=True)
 
     if board == "all":
