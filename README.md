@@ -134,6 +134,10 @@ XRobot基本部分是一套开发板与功能模块的管理系统，能够让�
 
 ![VSCode调试界面](./doc/image/调试界面.png?raw=true "VSCode调试界面")
 
+`Windows使用Mingw64原生开发`
+
+![Windows](./doc/image/windows.png?raw=true "Windows")
+
 `Windows11使用CLion在WSL下开发`
 
 ![CLion调试界面](./doc/image/clion.png?raw=true "CLion调试界面")

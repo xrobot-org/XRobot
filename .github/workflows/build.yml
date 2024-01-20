@@ -1,5 +1,5 @@
 
-name: build_firmware
+name: build_publish_firmware
 
 on:
   push:

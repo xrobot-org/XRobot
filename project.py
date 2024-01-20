@@ -58,6 +58,10 @@ def select_config(config_path, type):
         exit(-1)
 
     shutil.copyfile(config_path, cfg_dir + "/.config")
+    print("Copy " + config_path + " to config/.config")
+    # The above code is calling a function `generate_cmake` and passing `tools.project_path` as an
+    # argument.
+    generate_cmake(cfg_dir)
     tools.clean_cache()
     tools.config_cmake(type)
 
@@ -70,6 +74,8 @@ def select_config_idf(config_path, type):
         exit(-1)
 
     shutil.copyfile(config_path, cfg_dir + "/.config")
+    print("Copy " + config_path + " to config/.config")
+    generate_cmake(cfg_dir)
     tools.clean_cache()
     tools.config_cmake_idf(type)
 
@@ -80,7 +86,8 @@ def build(board, robot, type="Debug", code_check=False):
     target = []
     time_count = 0.0
 
-    os.system("rm -rf " + fm_dir)
+    if os.path.exists(fm_dir):
+        shutil.rmtree(fm_dir)
     os.makedirs(fm_dir, exist_ok=True)
 
     if board == "all":
@@ -226,7 +233,9 @@ def select(board, robot):
 
 def generate_kconfig():
     print("Start generate Kconfig.")
-    kconfig_file = open(tools.project_path + "/config/auto.Kconfig", "w")
+    kconfig_file = open(
+        tools.project_path + "/config/auto.Kconfig", "w", encoding="utf8"
+    )
     kconfig_file.write("# XRobot\n")
     kconfig_file.write("# Auto generated file. Do not edit.\n")
     kconfig_file.write("# -----------------------------------------------")
@@ -280,8 +289,8 @@ def generate_cmake(path):
         print("Found config file.")
     else:
         tools.menuconfig(path)
-    config_file = open(path + "/.config", "r")
-    cmake_file = open(path + "/config.cmake", "w")
+    config_file = open(path + "/.config", "r", encoding="utf8")
+    cmake_file = open(path + "/config.cmake", "w", encoding="utf8")
 
     cmake_file.write("# XRobot\n")
     cmake_file.write("# Auto generated file. Do not edit.\n")
@@ -315,12 +324,16 @@ def generate_cmake(path):
 
 def new_component(name: str):
     cppfile = open(
-        tools.project_path + "/src/component/comp_" + name + ".cpp", mode="w+"
+        tools.project_path + "/src/component/comp_" + name + ".cpp",
+        mode="w+",
+        encoding="utf8",
     )
     cppfile.write('#include "comp_' + name + '.hpp"\n\nusing namespace Component;\n')
     cppfile.close()
     hppfile = open(
-        tools.project_path + "/src/component/comp_" + name + ".hpp", mode="w+"
+        tools.project_path + "/src/component/comp_" + name + ".hpp",
+        mode="w+",
+        encoding="utf8",
     )
     hppfile.write(
         "#include <component.hpp>\n\nnamespace Component {\n"
@@ -335,12 +348,16 @@ def new_component(name: str):
 def new_device(name: str):
     os.mkdir(tools.project_path + "/src/device/" + name)
     cppfile = open(
-        tools.project_path + "/src/device/" + name + "/dev_" + name + ".cpp", mode="w+"
+        tools.project_path + "/src/device/" + name + "/dev_" + name + ".cpp",
+        mode="w+",
+        encoding="utf8",
     )
     cppfile.write('#include "dev_' + name + '.hpp"\n\nusing namespace Device;\n')
     cppfile.close()
     hppfile = open(
-        tools.project_path + "/src/device/" + name + "/dev_" + name + ".hpp", mode="w+"
+        tools.project_path + "/src/device/" + name + "/dev_" + name + ".hpp",
+        mode="w+",
+        encoding="utf8",
     )
     hppfile.write(
         '#include "device.hpp"\n\nnamespace Device {\n'
@@ -350,11 +367,15 @@ def new_device(name: str):
     )
     hppfile.close()
     configfile = open(
-        tools.project_path + "/src/device/" + name + "/Kconfig", mode="w+"
+        tools.project_path + "/src/device/" + name + "/Kconfig",
+        mode="w+",
+        encoding="utf8",
     )
     configfile.close()
     infofile = open(
-        tools.project_path + "/src/device/" + name + "/info.cmake", mode="w+"
+        tools.project_path + "/src/device/" + name + "/info.cmake",
+        mode="w+",
+        encoding="utf8",
     )
     infofile.write(
         "CHECK_SUB_ENABLE(MODULE_ENABLE device)\nif(${MODULE_ENABLE})\n    "
@@ -367,12 +388,16 @@ def new_device(name: str):
 def new_module(name: str):
     os.mkdir(tools.project_path + "/src/module/" + name)
     cppfile = open(
-        tools.project_path + "/src/module/" + name + "/mod_" + name + ".cpp", mode="w+"
+        tools.project_path + "/src/module/" + name + "/mod_" + name + ".cpp",
+        mode="w+",
+        encoding="utf8",
     )
     cppfile.write('#include "mod_' + name + '.hpp"\n\nusing namespace Module;\n')
     cppfile.close()
     hppfile = open(
-        tools.project_path + "/src/module/" + name + "/mod_" + name + ".hpp", mode="w+"
+        tools.project_path + "/src/module/" + name + "/mod_" + name + ".hpp",
+        mode="w+",
+        encoding="utf8",
     )
     hppfile.write(
         '#include "module.hpp"\n\nnamespace Module {\n'
@@ -382,11 +407,15 @@ def new_module(name: str):
     )
     hppfile.close()
     configfile = open(
-        tools.project_path + "/src/module/" + name + "/Kconfig", mode="w+"
+        tools.project_path + "/src/module/" + name + "/Kconfig",
+        mode="w+",
+        encoding="utf8",
     )
     configfile.close()
     infofile = open(
-        tools.project_path + "/src/module/" + name + "/info.cmake", mode="w+"
+        tools.project_path + "/src/module/" + name + "/info.cmake",
+        mode="w+",
+        encoding="utf8",
     )
     infofile.write(
         "CHECK_SUB_ENABLE(MODULE_ENABLE module)\nif(${MODULE_ENABLE})\n    "
@@ -400,7 +429,11 @@ def new_module(name: str):
 
 def new_robot(name: str):
     os.mkdir(tools.project_path + "/src/robot/" + name)
-    cppfile = open(tools.project_path + "/src/robot/" + name + "/robot.cpp", mode="w+")
+    cppfile = open(
+        tools.project_path + "/src/robot/" + name + "/robot.cpp",
+        mode="w+",
+        encoding="utf8",
+    )
     cppfile.write(
         '#include "robot.hpp"\n\n#include <system.hpp>\n#include <thread.hpp>\n\nusing namespace Robot;\n\n'
     )
@@ -412,7 +445,11 @@ def new_robot(name: str):
     )
 
     cppfile.close()
-    hppfile = open(tools.project_path + "/src/robot/" + name + "/robot.hpp", mode="w+")
+    hppfile = open(
+        tools.project_path + "/src/robot/" + name + "/robot.hpp",
+        mode="w+",
+        encoding="utf8",
+    )
     hppfile.write(
         '/* #include "dev_xxx.hpp" */\n\nvoid robot_init();\n\nnamespace Robot {\n'
         + "class YourRobotName {\n"
@@ -420,7 +457,11 @@ def new_robot(name: str):
         + "}  // namespace Robot"
     )
     hppfile.close()
-    configfile = open(tools.project_path + "/src/robot/" + name + "/Kconfig", mode="w+")
+    configfile = open(
+        tools.project_path + "/src/robot/" + name + "/Kconfig",
+        mode="w+",
+        encoding="utf8",
+    )
     configfile.close()
     print("Create new Robot [" + name + "] done.")
 

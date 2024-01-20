@@ -1,6 +1,3 @@
-execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/project.py generate
-  ${CMAKE_CURRENT_SOURCE_DIR})
-
 include(${CMAKE_CURRENT_LIST_DIR}/../../config/config.cmake)
 
 set(BSP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/hw/bsp)
