@@ -1,7 +1,8 @@
 
-name: build_firmware
+name: build_test
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "master" ]
 
