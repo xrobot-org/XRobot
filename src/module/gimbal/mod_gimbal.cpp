@@ -159,16 +159,6 @@ void Gimbal::SetMode(Mode mode) {
   }
 
   this->mode_ = mode;
-
-  memcpy(&(this->setpoint_.eulr_), &(this->eulr_),
-         sizeof(this->setpoint_.eulr_)); /* 切换模式后重置设定值 */
-  if (this->mode_ == RELAX) {
-    if (mode == ABSOLUTE) {
-      this->setpoint_.eulr_.yaw = this->eulr_.yaw;
-    }
-  }
-
-  this->mode_ = mode;
 }
 
 void Gimbal::DrawUIStatic(Gimbal* gimbal) {
