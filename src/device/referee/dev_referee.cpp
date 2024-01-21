@@ -166,14 +166,6 @@ void Referee::Prase() {
         destination = &(this->ref_data_.game_robot_hp);
         size = sizeof(this->ref_data_.game_robot_hp);
         break;
-      case REF_CMD_ID_DART_STATUS:
-        destination = &(this->ref_data_.dart_status);
-        size = sizeof(this->ref_data_.dart_status);
-        break;
-      case REF_CMD_ID_ICRA_ZONE_STATUS:
-        destination = &(this->ref_data_.icra_zone);
-        size = sizeof(this->ref_data_.icra_zone);
-        break;
       case REF_CMD_ID_FIELD_EVENTS:
         destination = &(this->ref_data_.field_event);
         size = sizeof(this->ref_data_.field_event);
@@ -238,6 +230,18 @@ void Referee::Prase() {
         destination = &(this->ref_data_.radar_mark_progress);
         size = sizeof(this->ref_data_.radar_mark_progress);
         break;
+      case REF_CMD_ID_SENTRY_DECISION:
+        destination = &(this->ref_data_.sentry_decision);
+        size = sizeof(this->ref_data_.sentry_decision);
+        break;
+      case REF_CMD_ID_RADAR_DECISION:
+        destination = &(this->ref_data_.radar_decision);
+        size = sizeof(this->ref_data_.radar_decision);
+        break;
+      case REF_CMD_ID_INTER_STUDENT:
+        destination = &(this->ref_data_.robot_ineraction_data);
+        size = sizeof(this->ref_data_.robot_ineraction_data);
+        break;
       case REF_CMD_ID_INTER_STUDENT_CUSTOM:
         destination = &(this->ref_data_.custom_controller);
         size = sizeof(this->ref_data_.custom_controller);
@@ -257,6 +261,10 @@ void Referee::Prase() {
       case REF_CMD_ID_SENTRY_POS_DATA:
         destination = &(this->ref_data_.sentry_postion);
         size = sizeof(this->ref_data_.sentry_postion);
+        break;
+      case REF_CMD_ID_ROBOT_POS_DATA:
+        destination = &(this->ref_data_.robot_position);
+        size = sizeof(this->ref_data_.robot_position);
         break;
 
       default:

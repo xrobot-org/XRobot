@@ -50,11 +50,10 @@ class Referee {
   } Status;
 
   typedef enum {
+    /* DRONE空中机器人,DART飞镖,RADAR雷达 */
     REF_CMD_ID_GAME_STATUS = 0x0001,
     REF_CMD_ID_GAME_RESULT = 0x0002,
     REF_CMD_ID_GAME_ROBOT_HP = 0x0003,
-    REF_CMD_ID_DART_STATUS = 0x0004,
-    REF_CMD_ID_ICRA_ZONE_STATUS = 0x0005,
     REF_CMD_ID_FIELD_EVENTS = 0x0101,
     REF_CMD_ID_SUPPLY_ACTION = 0x0102,
     REF_CMD_ID_WARNING = 0x0104,
@@ -71,12 +70,15 @@ class Referee {
     REF_CMD_ID_DART_CLIENT = 0x020A,
     REF_CMD_ID_ROBOT_POS_TO_SENTRY = 0X020B,
     REF_CMD_ID_RADAR_MARK = 0X020C,
+    REF_CMD_ID_SENTRY_DECISION = 0x020D, /* 哨兵自主决策相关信息同步 */
+    REF_CMD_ID_RADAR_DECISION = 0x020E, /* 雷达自主决策相关信息同步 */
     REF_CMD_ID_INTER_STUDENT = 0x0301,
     REF_CMD_ID_INTER_STUDENT_CUSTOM = 0x0302,
     REF_CMD_ID_CLIENT_MAP = 0x0303,
     REF_CMD_ID_KEYBOARD_MOUSE = 0x0304,
     REF_CMD_ID_CUSTOM_KEYBOARD_MOUSE = 0X0306,
     REF_CMD_ID_SENTRY_POS_DATA = 0x0307,
+    REF_CMD_ID_ROBOT_POS_DATA = 0x0308, /* 选手端小地图接受机器人消息 */
   } CommandID;
 
   typedef enum {
@@ -150,15 +152,23 @@ class Referee {
   } IcraZoneStatus;
 
   typedef struct __attribute__((packed)) {
-    uint8_t copter_pad : 2;
-    uint8_t energy_mech : 2;
-    uint8_t virtual_shield : 1;
-    uint32_t res : 27;
+    uint8_t depot_status : 1;
+    uint8_t depot_inner_status : 1;
+    uint8_t depot_res : 1;
+    uint8_t energy_traps_status : 1;
+    uint8_t energy_traps_small_status : 1;
+    uint8_t energy_traps_big_status : 1;
+    uint8_t circular_heights_2_status : 2;
+    uint8_t circular_heights_3_status : 2;
+    uint8_t circular_heights_4_status : 2;
+    uint8_t virtual_shield_value : 8;
+    uint16_t outpost_last_time : 9;
+    uint8_t dart_last_target : 2;
+    uint8_t res : 1;
   } FieldEvents;
-
   typedef struct __attribute__((packed)) {
-    uint8_t supply_id;
-    uint8_t robot_id;
+    uint8_t res;
+    uint8_t supply_robot_id;
     uint8_t supply_step;
     uint8_t supply_sum;
   } SupplyAction;
@@ -166,30 +176,25 @@ class Referee {
   typedef struct __attribute__((packed)) {
     uint8_t level;
     uint8_t robot_id;
+    uint8_t count;
   } Warning;
 
   typedef struct __attribute__((packed)) {
     uint8_t countdown;
+    uint8_t dart_last_target : 2;
+    uint8_t attack_count : 3;
+    uint8_t dart_target : 2;
+    uint8_t res : 1;
   } DartCountdown;
 
   typedef struct __attribute__((packed)) {
     uint8_t robot_id;
-    uint8_t robot_level;
+    uint16_t robot_level;
     uint16_t remain_hp;
-    uint16_t max_hp;
-    uint16_t launcher_id1_17_cooling_rate;
-    uint16_t launcher_id1_17_heat_limit;
-    uint16_t launcher_id1_17_speed_limit;
-    uint16_t launcher_id2_17_cooling_rate;
-    uint16_t launcher_id2_17_heat_limit;
-    uint16_t launcher_id2_17_speed_limit;
-    uint16_t launcher_42_cooling_rate;
-    uint16_t launcher_42_heat_limit;
-    uint16_t launcher_42_speed_limit;
-    uint16_t chassis_power_limit;
     uint8_t power_gimbal_output : 1;
     uint8_t power_chassis_output : 1;
     uint8_t power_launcher_output : 1;
+    uint8_t res : 5;
   } RobotStatus;
 
   typedef struct __attribute__((packed)) {
@@ -205,19 +210,18 @@ class Referee {
   typedef struct __attribute__((packed)) {
     float x;
     float y;
-    float z;
-    float yaw;
+    float angle;
   } RobotPOS;
 
   typedef struct __attribute__((packed)) {
     uint8_t healing : 1;
     uint8_t cooling_acc : 1;
     uint8_t defense_buff : 1;
-    uint8_t attack_buff : 1;
-    uint8_t res : 4;
+    uint8_t attack_buff : 2;
   } RobotBuff;
 
   typedef struct __attribute__((packed)) {
+    uint8_t status;
     uint8_t attack_countdown;
   } DroneEnergy;
 
@@ -240,14 +244,26 @@ class Referee {
   } BulletRemain;
 
   typedef struct __attribute__((packed)) {
-    uint8_t base : 1;
-    uint8_t high_ground : 1;
-    uint8_t energy_mech : 1;
-    uint8_t slope : 1;
-    uint8_t outpose : 1;
-    uint8_t resource : 1;
-    uint8_t healing_card : 1;
-    uint32_t res : 24;
+    uint8_t own_base : 1;
+    uint8_t own_high_ground : 1;
+    uint8_t enemy_high_ground : 1;
+    uint8_t own_trapezium_R3B3 : 1;
+    uint8_t enemy_trapezium_R3B3 : 1;
+    uint8_t own_trapezium_R4B4 : 1;
+    uint8_t enemy_trapezium_R4B4 : 1;
+    uint8_t own_energy_traps : 1;
+    uint8_t own_slope_before : 1;
+    uint8_t own_slope_after : 1;
+    uint8_t enemy_slope_before : 1;
+    uint8_t enemy_slope_after : 1;
+    uint8_t own_outpose : 1;
+    uint8_t own_blood_supply : 1;
+    uint8_t own_patol_area : 1;
+    uint8_t enemy_patol_area : 1;
+    uint8_t own_resource : 1;
+    uint8_t enemy_resource : 1;
+    uint8_t exchange : 1;
+    uint32_t res : 13;
   } RFID;
 
   typedef struct __attribute__((packed)) {
@@ -265,9 +281,9 @@ class Referee {
   typedef struct __attribute__((packed)) {
     float position_x;
     float position_y;
-    float position_z;
     uint8_t commd_keyboard;
-    uint16_t robot_id;
+    uint8_t robot_id;
+    uint8_t cmd_source;
   } ClientMap;
 
   typedef struct __attribute__((packed)) {
@@ -285,7 +301,13 @@ class Referee {
     uint16_t start_position_y;
     std::array<int8_t, 49> delta_x;
     std::array<int8_t, 49> delta_y;
+    uint16_t sender_id;
   } SentryPosition;
+  typedef struct __attribute__((packed)) {
+    uint16_t sender_id;
+    uint16_t receiver_id;
+    std::array<int16_t, 49> user_data;
+  } RobotPosition;
 
   typedef struct __attribute__((packed)) {
     std::array<uint8_t, 30> data;
@@ -310,6 +332,21 @@ class Referee {
     uint8_t mark_standard_5_progress;
     uint8_t mark_sentry_progress;
   } RadarMarkProgress;
+  typedef struct __attribute__((packed)) {
+    uint32_t sentry_info;
+  } SentryDecision;
+  typedef struct __attribute__((packed)) {
+    uint8_t qualification : 2;
+    uint8_t status : 1;
+    uint8_t reserved : 5;
+  } RadarDecision;
+  typedef struct __attribute__((packed)) {
+    uint16_t data_cmd_id;
+    uint16_t sender_id;
+    uint16_t receiver_id;
+    std::array<int8_t, 113> user_data;
+    /*最大值113*/
+  } RobotInteractionData;
   typedef struct __attribute__((packed)) {
     uint16_t key_value;
     uint16_t x_position : 12;
@@ -395,10 +432,15 @@ class Referee {
     ClientMap client_map;
     KeyboardMouse keyboard_mouse;
     SentryPosition sentry_postion;
+    RobotPosition robot_position;
     CustomController custom_controller;
     RobotPosForSentry robot_pos_for_snetry;
     RadarMarkProgress radar_mark_progress;
+    SentryDecision sentry_decision;
+    RadarDecision radar_decision;
+    RobotInteractionData robot_ineraction_data;
     CustomKeyMouseData custom_key_mouse_data;
+
   } Data;
 
   typedef struct __attribute__((packed)) {
