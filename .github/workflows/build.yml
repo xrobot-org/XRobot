@@ -1,5 +1,5 @@
 
-name: build_publish_firmware
+name: build_test
 
 on:
   push:
@@ -17,7 +17,6 @@ on:
       - '**.s'
       - '**.yml'
   pull_request:
-    branches: [ "master" ]
     types: [opened, reopened]
 
 
