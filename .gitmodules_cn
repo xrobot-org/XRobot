@@ -1,63 +1,63 @@
 [submodule "lib/host-protocol"]
 	path = lib/host-protocol
-	url =https://github.com/xrobot-org/host-protocol.git
+	url =https://gitee.com/x-robot/host-protocol.git
 [submodule "stm32_cmsis"]
 	path = hw/mcu/st/cmsis_device_f4
-	url = https://github.com/STMicroelectronics/cmsis_device_f4.git
+	url = https://gitee.com/x-robot/cmsis_device_f4.git
 [submodule "stm32_hal"]
 	path = hw/mcu/st/stm32f4xx_hal_driver
-	url = https://github.com/STMicroelectronics/stm32f4xx_hal_driver.git
+	url = https://gitee.com/x-robot/stm32f4xx_hal_driver.git
 [submodule "freertos"]
 	path = lib/freertos
-	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git
+	url = https://gitee.com/x-robot/FreeRTOS-Kernel.git
 [submodule "arm_cmsis"]
 	path = lib/cmsis_5
-	url = https://github.com/ARM-software/CMSIS_5.git
+	url = https://gitee.com/x-robot/CMSIS_5.git
 [submodule "tinyusb"]
 	path = lib/tinyusb
-	url = https://github.com/hathach/tinyusb.git
+	url = https://gitee.com/x-robot/tinyusb.git
 [submodule "lib/one-message"]
 	path = lib/one-message
-	url = https://github.com/Jiu-xiao/OneMessageCPP.git
+	url = https://gitee.com/Jiu-xiao/OneMessageCPP.git
 [submodule "lib/cmsis_svd"]
 	path = lib/cmsis_svd
-	url = https://github.com/posborne/cmsis-svd.git
+	url = https://gitee.com/x-robot/cmsis-svd.git
 [submodule "hw/mcu/st/stm32f1xx_hal_driver"]
 	path = hw/mcu/st/stm32f1xx_hal_driver
-	url = https://github.com/STMicroelectronics/stm32f1xx_hal_driver.git
+	url = https://gitee.com/x-robot/stm32f1xx_hal_driver.git
 [submodule "hw/mcu/st/cmsis_device_f1"]
 	path = hw/mcu/st/cmsis_device_f1
-	url = https://github.com/STMicroelectronics/cmsis_device_f1.git
+	url = https://gitee.com/x-robot/cmsis_device_f1.git
 [submodule "lib/Kconfiglib"]
 	path = lib/Kconfiglib
-	url = https://github.com/ulfalizer/Kconfiglib.git
+	url = https://gitee.com/x-robot/Kconfiglib.git
 [submodule "lib/mini_shell"]
 	path = lib/mini_shell
-	url = https://github.com/Jiu-xiao/mini_shell.git
+	url = https://gitee.com/jiu-xiao/mini_shell.git
 [submodule "hw/mcu/st/cmsis_device_f3"]
 	path = hw/mcu/st/cmsis_device_f3
-	url = https://github.com/STMicroelectronics/cmsis_device_f3.git
+	url = https://gitee.com/x-robot/cmsis_device_f3.git
 [submodule "hw/mcu/st/stm32f3xx_hal_driver"]
 	path = hw/mcu/st/stm32f3xx_hal_driver
-	url = https://github.com/STMicroelectronics/stm32f3xx_hal_driver.git
+	url = https://gitee.com/x-robot/stm32f3xx_hal_driver.git
 [submodule "lib/magic_enum"]
 	path = lib/magic_enum
-	url = https://github.com/Neargye/magic_enum.git
+	url = https://gitee.com/x-robot/magic_enum.git
 [submodule "hw/mcu/st/stm32g4xx_hal_driver"]
 	path = hw/mcu/st/stm32g4xx_hal_driver
-	url = https://github.com/STMicroelectronics/stm32g4xx_hal_driver.git
+	url = https://gitee.com/x-robot/stm32g4xx_hal_driver.git
 [submodule "hw/mcu/st/cmsis_device_g4"]
 	path = hw/mcu/st/cmsis_device_g4
-	url = https://github.com/STMicroelectronics/cmsis_device_g4
+	url = https://gitee.com/x-robot/cmsis_device_g4.git
 [submodule "lib/MiniFlashDB"]
 	path = lib/MiniFlashDB
-	url = https://github.com/Jiu-xiao/MiniFlashDB.git
+	url = https://gitee.com/jiu-xiao/MiniFlashDB.git
 [submodule "lib/printf"]
 	path = lib/printf
-	url = https://github.com/xrobot-org/printf.git
+	url = https://gitee.com/x-robot/printf.git
 [submodule "hw/mcu/st/stm32g0xx_hal_driver"]
 	path = hw/mcu/st/stm32g0xx_hal_driver
-	url = https://github.com/STMicroelectronics/stm32g0xx_hal_driver.git
+	url = https://gitee.com/x-robot/stm32g0xx_hal_driver.git
 [submodule "hw/mcu/st/cmsis_device_g0"]
 	path = hw/mcu/st/cmsis_device_g0
-	url = https://github.com/STMicroelectronics/cmsis_device_g0.git
+	url = https://gitee.com/x-robot/cmsis_device_g0.git
