@@ -90,7 +90,7 @@ XRobot基本部分是一套开发板与功能模块的管理系统，能够让�
 
 ## 应用案例
 
->Robomaster
+> Robomaster
 
 * 麦轮/舵轮/平衡步兵
 * 英雄
@@ -99,7 +99,7 @@ XRobot基本部分是一套开发板与功能模块的管理系统，能够让�
 * 飞镖架
 * 无人机
 
->成品模块
+> 成品模块
 
 * 六轴CAN总线IMU模块
 * CAN转UART模块
@@ -107,9 +107,9 @@ XRobot基本部分是一套开发板与功能模块的管理系统，能够让�
 * CAN总线微动检测模块
 * 诸多商业产品案例
 
-|                                                            |                                                             |                                                             |
-| ---------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
-| <img src="./doc/image/rmuc.jpg"  height="210" width="265"> | <img src="./doc/image/rmuc1.jpg"  height="210" width="265"> | <img src="./doc/image/rmuc2.jpg"  height="210" width="265"> |
+|                                                                |                                                                 |                                                                 |
+| -------------------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------- |
+| `<img src="./doc/image/rmuc.jpg"  height="210" width="265">` | `<img src="./doc/image/rmuc1.jpg"  height="210" width="265">` | `<img src="./doc/image/rmuc2.jpg"  height="210" width="265">` |
 
 <img src="./doc/image/rmuc3.jpg"  height="600" width="800">
 
@@ -117,16 +117,16 @@ XRobot基本部分是一套开发板与功能模块的管理系统，能够让�
 
 ## 硬件支持
 
-| MCU         | Board                                                                                                              | Image                                                              |
-| ----------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| STM32F407IG | [Robomaster C型开发板](https://www.robomaster.com/zh-CN/products/components/general/development-board-type-c/info) | <img src="doc/image/rm-c.png" width="500" height="220">            |
-| STM32F302CB | [IMU-DEV-BOARD](https://xrobot-org.github.io/1.hardware/3.IMU-DEV.html)                                            | <img src="doc/image/IMU-DEV-1.jpg" width="350" height="200">       |
-| STM32F446RE | [C-Mini](https://xrobot-org.github.io/1.hardware/1.C-MINI.html)                                                    | <img src="doc/image/C-MINI-1.jpg" width="350" height="250">        |
-| STM32F103   | [F103 CAN](https://xrobot-org.github.io/1.hardware/4.F103_CAN.html)                                                | <img src="doc/image/f103_can.jpeg" width="350" height="250">       |
-| ESP32-C3    | [ESP32C3-Core](https://xrobot-org.github.io/1.hardware/2.ESP32C3-Core.html)                                        | <img src="doc/image/esp32c3-core-1.jpeg" width="260" height="200"> |
-| Linux x86   | [Intel NUC](https://www.intel.cn/content/www/cn/zh/products/details/nuc.html)                                      | <img src="doc/image/nuc.jpg" width="350" height="200">             |
-| Linux arm   | [Raspberry pi 4B](https://www.raspberrypi.com/)                                                                    | <img src="doc/image/raspi.png" width="350" height="200">           |
-| Linux arm   | [mCore-R818](https://mangopi.org/mcorer818)                                                                        | <img src="doc/image/mCore-R818.jpg" width="200" height="200">      |
+| MCU         | Board                                                                                                           | Image                                                                  |
+| ----------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| STM32F407IG | [Robomaster C型开发板](https://www.robomaster.com/zh-CN/products/components/general/development-board-type-c/info) | `<img src="doc/image/rm-c.png" width="500" height="220">`            |
+| STM32F302CB | [IMU-DEV-BOARD](https://xrobot-org.github.io/1.hardware/3.IMU-DEV.html)                                            | `<img src="doc/image/IMU-DEV-1.jpg" width="350" height="200">`       |
+| STM32F446RE | [C-Mini](https://xrobot-org.github.io/1.hardware/1.C-MINI.html)                                                    | `<img src="doc/image/C-MINI-1.jpg" width="350" height="250">`        |
+| STM32F103   | [F103 CAN](https://xrobot-org.github.io/1.hardware/4.F103_CAN.html)                                                | `<img src="doc/image/f103_can.jpeg" width="350" height="250">`       |
+| ESP32-C3    | [ESP32C3-Core](https://xrobot-org.github.io/1.hardware/2.ESP32C3-Core.html)                                        | `<img src="doc/image/esp32c3-core-1.jpeg" width="260" height="200">` |
+| Linux x86   | [Intel NUC](https://www.intel.cn/content/www/cn/zh/products/details/nuc.html)                                      | `<img src="doc/image/nuc.jpg" width="350" height="200">`             |
+| Linux arm   | [Raspberry pi 4B](https://www.raspberrypi.com/)                                                                    | `<img src="doc/image/raspi.png" width="350" height="200">`           |
+| Linux arm   | [mCore-R818](https://mangopi.org/mcorer818)                                                                        | `<img src="doc/image/mCore-R818.jpg" width="200" height="200">`      |
 
 ## 图片展示
 
