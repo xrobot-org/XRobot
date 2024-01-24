@@ -545,7 +545,9 @@ elif cmd[1] == "build-release-check":
 elif cmd[1] == "list":
     list_target()
 elif cmd[1] == "init":
-    os.system("sudo apt install cmake ninja-build python3-tk clang clangd")
+    os.system("git submodule init && git submodule update")
+elif cmd[1] == "init-cn":
+    os.system("mv .gitmodules .gitmodules_en && mv .gitmodules_cn .gitmodules && git submodule init && git submodule update")
 elif cmd[1] == "select":
     if cmd_len < 4:
         print("参数错误")
