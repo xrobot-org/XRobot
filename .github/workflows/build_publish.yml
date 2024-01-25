@@ -1,5 +1,5 @@
 
-name: build_test
+name: build_publish_firmware
 
 on:
   workflow_dispatch:

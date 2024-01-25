@@ -499,7 +499,8 @@ elif cmd[1] == "help":
     print("clean                  -   清除编译产物")
     print("build  [BOARD] [ROBOT] -   构建目标")
     print("list                   -   列出可构建目标")
-    print("init                   -   安装必备软件包")
+    print("init                   -   初始化submodule")
+    print("init-cn                -   使用gitee镜像初始化submodule")
     print("select [BOARD] [ROBOT] -   选择构建目标")
     print("new    [TYPE]  [NAME]  -   新建模块")
 
@@ -547,7 +548,11 @@ elif cmd[1] == "list":
 elif cmd[1] == "init":
     os.system("git submodule init && git submodule update")
 elif cmd[1] == "init-cn":
-    os.system("mv .gitmodules .gitmodules_en && mv .gitmodules_cn .gitmodules && git submodule init && git submodule update")
+    if os.path.exists(".gitmodules_cn"):
+        os.system("mv .gitmodules .gitmodules_en && mv .gitmodules_cn .gitmodules && git submodule init && git submodule update")
+    else:
+        os.system("git submodule init && git submodule update")
+    os.system("mv .gitmodules .gitmodules_cn && mv .gitmodules_en .gitmodules")
 elif cmd[1] == "select":
     if cmd_len < 4:
         print("参数错误")
