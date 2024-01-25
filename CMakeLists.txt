@@ -1,17 +1,17 @@
 if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
   message(
     FATAL_ERROR
-      "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there."
+    "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there."
   )
 endif()
 
 cmake_minimum_required(VERSION 3.11)
 
-# 版本第一位与赛季年份对应，同时与branch对应 第二位代表功能变化 第三位代表bug修复
+# 版本第一位与年份对应 第二位代表功能变化 第三位代表bug修复
 project(
   xrobot
-  DESCRIPTION "MCU for Robomaster"
-  VERSION 2022.0.0
+  DESCRIPTION "XRobot Build"
+  VERSION 2024.1.1
   LANGUAGES C CXX ASM)
 
 # ---------------------------------------------------------------------------------------
@@ -86,21 +86,23 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
 # Build information
 message(
   STATUS
-    "------------------------- Host Platform ------------------------------")
+  "------------------------- Host Platform ------------------------------")
 
 string(TIMESTAMP CONFIG_TIMESTAMP "" UTC)
 message(STATUS "Timestamp: ${CONFIG_TIMESTAMP}")
 message(
   STATUS
-    "Host: ${CMAKE_HOST_SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_VERSION} ${CMAKE_HOST_SYSTEM_PROCESSOR}"
+  "Host: ${CMAKE_HOST_SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_VERSION} ${CMAKE_HOST_SYSTEM_PROCESSOR}"
 )
+
 if(CMAKE_CROSSCOMPILING) # set to true by CMake if the CMAKE_SYSTEM_NAME has
-                         # been set manually
+  # been set manually
   message(
     STATUS
-      "Target: ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_VERSION} ${CMAKE_SYSTEM_PROCESSOR}"
+    "Target: ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_VERSION} ${CMAKE_SYSTEM_PROCESSOR}"
   )
 endif()
+
 message(STATUS "CMake: ${CMAKE_VERSION}")
 message(STATUS "CMake generator: ${CMAKE_GENERATOR}")
 message(STATUS "CMake build tool: ${CMAKE_BUILD_TOOL}")
@@ -112,6 +114,7 @@ endif()
 if(CMAKE_GENERATOR MATCHES Xcode)
   message(STATUS "Xcode: ${XCODE_VERSION}")
 endif()
+
 if(NOT CMAKE_GENERATOR MATCHES "Xcode|Visual Studio")
   message(STATUS "Configuration: ${CMAKE_BUILD_TYPE}")
 endif()
@@ -119,7 +122,7 @@ endif()
 # ---------------------------------------------------------------------------------------
 message(
   STATUS
-    "---------------------- Compiler Linker option ------------------------")
+  "---------------------- Compiler Linker option ------------------------")
 
 message(STATUS "C standard: ${CMAKE_C_STANDARD}")
 message(STATUS "")
