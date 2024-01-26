@@ -79,7 +79,7 @@ void MMC5603::PraseData() {
   raw[1] = dma_buff[7] | (dma_buff[3] << 4) | (dma_buff[2] << 12);
   raw[2] = dma_buff[8] | (dma_buff[5] << 4) | (dma_buff[4] << 12);
 
-  for (int &i : raw) {
+  for (int32_t &i : raw) {
     i -= (1 << 19);
   }
 
@@ -158,7 +158,7 @@ int MMC5603::CaliCMD(MMC5603 *mmc5603, int argc, char **argv) {
         V[4] = z;
         V[5] = 1.0;
         V[6] = -x * x;
-        //构建系数矩阵，并进行累加
+        // 构建系数矩阵，并进行累加
         for (uint8_t row = 0; row < MATRIX_SIZE; row++) {
           for (uint8_t column = 0; column < MATRIX_SIZE + 1; column++) {
             (*m_matrix)[row * (MATRIX_SIZE + 1) + column] += V[row] * V[column];
@@ -211,12 +211,12 @@ int MMC5603::CaliCMD(MMC5603 *mmc5603, int argc, char **argv) {
       float k = 0;
       /* 进行第k次的运算，主要是针对k行以下的行数把k列的元素都变成0 */
       for (uint8_t cnt = 0; cnt < MATRIX_SIZE; cnt++) {
-        //把k行依据k列的元素大小，进行排序
+        // 把k行依据k列的元素大小，进行排序
         move_biggest_element_to_top(cnt);
         if ((*m_matrix)[cnt * (MATRIX_SIZE + 1) + cnt] == 0) {
-          return -1;  //返回值表示错误
+          return -1;  // 返回值表示错误
         }
-        //把k行下面的行元素全部消成0，整行变化
+        // 把k行下面的行元素全部消成0，整行变化
         for (uint8_t row = cnt + 1; row < MATRIX_SIZE; row++) {
           k = -(*m_matrix)[row * (MATRIX_SIZE + 1) + cnt] /
               (*m_matrix)[cnt * (MATRIX_SIZE + 1) + cnt];
