@@ -43,7 +43,8 @@ MMC5603::MMC5603(MMC5603::Rotation &rot)
     }
   };
 
-  this->thread_.Create(thread_fn, this, "mmc5603_thread", 512,
+  this->thread_.Create(thread_fn, this, "mmc5603_thread",
+                       DEVICE_MMC5603_TASK_STACK_DEPTH,
                        System::Thread::REALTIME);
 }
 
