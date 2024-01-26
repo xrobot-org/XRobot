@@ -7,6 +7,10 @@ using namespace Device;
 static uint32_t led_stats;
 
 RGB::RGB() {
+  bsp_pwm_start(BSP_PWM_LED_RED);
+  bsp_pwm_start(BSP_PWM_LED_BLU);
+  bsp_pwm_start(BSP_PWM_LED_GRN);
+
   auto led_thread = [](RGB* led) {
     uint8_t led_fsm = 0;
 

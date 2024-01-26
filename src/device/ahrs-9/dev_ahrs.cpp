@@ -92,8 +92,8 @@ AHRS::AHRS()
     }
   };
 
-  this->thread_.Create(ahrs_thread, this, "ahrs_thread", 512,
-                       System::Thread::HIGH);
+  this->thread_.Create(ahrs_thread, this, "ahrs_thread",
+                       DEVICE_AHRS_TASK_STACK_DEPTH, System::Thread::HIGH);
 }
 
 int AHRS::ShowCMD(AHRS *ahrs, int argc, char **argv) {
