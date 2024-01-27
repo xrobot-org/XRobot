@@ -7,7 +7,7 @@
 #include "system.hpp"
 
 /* clang-format off */
-Robot::Infantry::Param param = {
+Robot::Sentry::Param param = {
     .chassis={
       .type = Component::Mixer::MECANUM,
 
@@ -405,5 +405,5 @@ Robot::Infantry::Param param = {
 /* clang-format on */
 
 void robot_init() {
-  System::Start<Robot::Infantry, Robot::Infantry::Param>(param, 500.0f);
+  System::Start<Robot::Sentry, Robot::Sentry::Param>(param, 500.0f);
 }

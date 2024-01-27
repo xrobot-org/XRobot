@@ -13,7 +13,7 @@
 
 void robot_init();
 namespace Robot {
-class Infantry {
+class Sentry {
  public:
   typedef struct Param {
     Module::RMChassis::Param chassis;
@@ -38,7 +38,7 @@ class Infantry {
   Module::Gimbal gimbal_;
   Module::Launcher launcher_;
 
-  Infantry(Param& param, float control_freq)
+  Sentry(Param& param, float control_freq)
       : cmd_(Component::CMD::CMD_AUTO_CTRL),
         bmi088_(param.bmi088_rot),
         cap_(param.cap),
