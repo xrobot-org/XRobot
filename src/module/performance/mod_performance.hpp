@@ -150,6 +150,17 @@ class Performance {
 
     printf("*** Memory Test End ***\r\n");
 
+    printf("*** Float Test Start ***\r\n");
+    float a = 1.0;
+    auto start_time = bsp_time_get();
+    for (uint32_t i = 0; i < 1000000; i++) {
+      a = a * static_cast<float>(i);
+    }
+    auto end_time = bsp_time_get();
+    printf("Multiply floating-point numbers 1000 times use %d us\r\n",
+           static_cast<uint32_t>((end_time - start_time) / 1000));
+    printf("*** Float Test End ***\r\n");
+
     return 0;
   }
 
