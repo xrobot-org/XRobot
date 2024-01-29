@@ -5,8 +5,8 @@ triggers:
   trigger: auto
   push:
     branches:
-      prefix:
-        - ''
+      exclude:
+        - master
   pr:
     branches:
       prefix:
