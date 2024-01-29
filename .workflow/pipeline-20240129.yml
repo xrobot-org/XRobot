@@ -27,7 +27,7 @@ stages:
         command:
           - '# 请在此输入您想执行的脚本'
           - python project.py init-cn
-          - export HOME=/root && bash -c "python project.py build all all"
+          - export HOME=/root && python project.py build all all
         artifacts:
           - name: BUILD_ARTIFACT
             path:
