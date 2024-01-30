@@ -1,0 +1,37 @@
+version: '1.0'
+name: pipeline-20240129
+displayName: build-test
+triggers:
+  trigger: auto
+  push:
+    branches:
+      exclude:
+        - master
+  pr:
+    branches:
+      prefix:
+        - ''
+stages:
+  - name: stage-01a96b0b
+    displayName: build
+    strategy: naturally
+    trigger: auto
+    executor:
+      - jiu-xiao
+    steps:
+      - step: execute@docker
+        name: execute_by_docker
+        displayName: 基于镜像的脚本执行
+        certificate: ''
+        image: xrimage/build
+        command:
+          - '# 请在此输入您想执行的脚本'
+          - python project.py init-cn
+          - export HOME=/root && python project.py build all all
+        artifacts:
+          - name: BUILD_ARTIFACT
+            path:
+              - ./firmware
+        notify: []
+        strategy:
+          retry: '0'
