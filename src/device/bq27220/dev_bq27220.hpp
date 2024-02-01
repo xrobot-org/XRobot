@@ -8,11 +8,11 @@ class BQ27220 {
   } Param;
 
   typedef struct {
-    uint32_t voltage;
-    uint32_t temperate;
-    uint32_t current;
-    uint32_t real_capacity;
-    uint16_t percentage;
+    float voltage;
+    float temperate;
+    float current;
+    int16_t real_capacity;
+    uint8_t percentage;
   } Data;
 
   BQ27220(Param& param);
