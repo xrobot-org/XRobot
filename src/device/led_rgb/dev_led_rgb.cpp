@@ -4,8 +4,6 @@
 
 using namespace Device;
 
-static uint32_t led_stats;
-
 RGB::RGB(bool auto_start) {
   bsp_pwm_start(BSP_PWM_LED_RED);
   bsp_pwm_start(BSP_PWM_LED_BLU);
@@ -36,6 +34,9 @@ RGB::RGB(bool auto_start) {
           led->Set(BLUE, 1);
           led_fsm = 0;
           break;
+        default:
+          led_fsm = 0;
+          break;
       }
 
       led->thread_.SleepUntil(250, last_online_time);
@@ -51,25 +52,20 @@ RGB::RGB(bool auto_start) {
 bool RGB::Set(RGB::Channel ch, float duty_cycle) {
   clampf(&duty_cycle, 0.0f, 1.0f);
 
-  bsp_pwm_channel_t pwm_ch = BSP_PWM_NUMBER;
-
   switch (ch) {
     case RED:
       bsp_pwm_set_comp(BSP_PWM_LED_RED, duty_cycle);
-      pwm_ch = BSP_PWM_LED_RED;
       break;
 
     case GREEN:
       bsp_pwm_set_comp(BSP_PWM_LED_GRN, duty_cycle);
-      pwm_ch = BSP_PWM_LED_GRN;
       break;
 
     case BLUE:
       bsp_pwm_set_comp(BSP_PWM_LED_BLU, duty_cycle);
-      pwm_ch = BSP_PWM_LED_BLU;
       break;
     default:
-      pwm_ch = BSP_PWM_LED_RED;
+      break;
   }
 
   return true;
