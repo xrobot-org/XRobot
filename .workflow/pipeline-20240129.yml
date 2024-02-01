@@ -5,8 +5,8 @@ triggers:
   trigger: auto
   push:
     branches:
-      exclude:
-        - master
+      precise:
+        - dev
   pr:
     branches:
       prefix:
@@ -25,13 +25,11 @@ stages:
         certificate: ''
         image: xrimage/build
         command:
-          - '# 请在此输入您想执行的脚本'
           - python project.py init-cn
           - export HOME=/root && python project.py build all all
-        artifacts:
-          - name: BUILD_ARTIFACT
-            path:
-              - ./firmware
         notify: []
         strategy:
           retry: '0'
+strategy:
+  cloneDepth: 1
+  blocking: true
