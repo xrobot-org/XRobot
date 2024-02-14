@@ -22,6 +22,9 @@ target_include_directories(
 target_include_directories(
     ${PROJECT_NAME} SYSTEM
     PUBLIC ${${PROJECT_NAME}_INCLUDES}
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+    PUBLIC ${LIB_DIR}/eigen/Eigen)
+
+add_compile_definitions(EIGEN_NO_MALLOC)
 
 add_dependencies(${PROJECT_NAME} OneMessage system)
