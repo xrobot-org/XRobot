@@ -21,7 +21,7 @@
 	url = https://github.com/Jiu-xiao/OneMessageCPP.git
 [submodule "lib/cmsis_svd"]
 	path = lib/cmsis_svd
-	url = https://github.com/posborne/cmsis-svd.git
+	url = https://github.com/cmsis-svd/cmsis-svd-data
 [submodule "hw/mcu/st/stm32f1xx_hal_driver"]
 	path = hw/mcu/st/stm32f1xx_hal_driver
 	url = https://github.com/STMicroelectronics/stm32f1xx_hal_driver.git
