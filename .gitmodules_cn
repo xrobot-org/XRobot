@@ -61,3 +61,6 @@
 [submodule "hw/mcu/st/cmsis_device_g0"]
 	path = hw/mcu/st/cmsis_device_g0
 	url = https://gitee.com/x-robot/cmsis_device_g0.git
+[submodule "lib/eigen"]
+	path = lib/eigen
+	url = https://gitee.com/x-robot/eigen.git
