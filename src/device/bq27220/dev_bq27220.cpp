@@ -14,7 +14,7 @@
 
 using namespace Device;
 
-BQ27220::BQ27220(Param& param) : param_(param) {
+BQ27220::BQ27220(Param& param) : param_(param), cmd_(this, CMD, "bq27220") {
   static uint8_t old_capacity[2];
 
   /* Read old capacity */
@@ -161,4 +161,13 @@ void BQ27220::WriteParam() {
                          0X30);
   bsp_i2c_mem_write_byte(BSP_I2C_BQ27220, BQ27220_DEVICE_ID, CTRL_REG_ADDR + 1,
                          0X00);
+}
+
+int BQ27220::CMD(BQ27220* bq27220, int argc, char** argv) {
+  XB_UNUSED(argc);
+  XB_UNUSED(argv);
+  printf("%d percentage Current:%f ma Voltage:%f V Tempreature:%f °c\r\n",
+         bq27220->data_.percentage, bq27220->data_.current,
+         bq27220->data_.voltage, bq27220->data_.temperate);
+  return 0;
 }
