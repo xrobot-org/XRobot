@@ -25,7 +25,7 @@ MMC5603::MMC5603(MMC5603::Rotation &rot)
 
   auto thread_fn = [](MMC5603 *mmc5603) {
     while (!mmc5603->Init()) {
-      System::Thread::Sleep(1);
+      System::Thread::Sleep(20);
     }
 
     uint32_t last_wakeup_time = bsp_time_get_ms();
@@ -43,35 +43,37 @@ MMC5603::MMC5603(MMC5603::Rotation &rot)
     }
   };
 
-  this->thread_.Create(thread_fn, this, "mmc5603_thread",
-                       DEVICE_MMC5603_TASK_STACK_DEPTH,
+  this->thread_.Create(thread_fn, this, "mmc5603_thread", 4096,
                        System::Thread::REALTIME);
 }
 
 bool MMC5603::Init() {
   /* Check Product id */
 
-  if (bsp_i2c_mem_read_byte(BSP_I2C_MAGN, 0x60, 0x39) != 0x10) {
+  if (uint8_t product_id =
+          bsp_i2c_mem_read_byte(BSP_I2C_MAGN, 0x30, 0x39) != 0x10) {
+    OMLOG_ERROR("mmc5603 product id read error:%d", product_id);
+
     return false;
   }
 
   /* Reset */
-  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x60, 0x1B, 0x10);
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x30, 0x1B, 0x10);
 
   /* Set CTRL_1 bandwith */
-  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x60, 0x1C, 0x02);
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x30, 0x1C, 0x02);
   /* Set ODR sampling_rate */
-  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x60, 0x1A, 0xff);
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x30, 0x1A, 0xff);
   /* Set CTRL_0 Auto_SR_en Cmm_freq_en */
-  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x60, 0x1B, 0xa0);
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x30, 0x1B, 0xa0);
   /* Set CTRL_2 Cmm_en */
-  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x60, 0x1D, 0x10);
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x30, 0x1D, 0x10);
 
   return true;
 }
 
 void MMC5603::StartRecv() {
-  bsp_i2c_mem_read(BSP_I2C_MAGN, 0x60, 0x00, dma_buff, sizeof(dma_buff), false);
+  bsp_i2c_mem_read(BSP_I2C_MAGN, 0x30, 0x00, dma_buff, sizeof(dma_buff), false);
 }
 
 void MMC5603::PraseData() {
