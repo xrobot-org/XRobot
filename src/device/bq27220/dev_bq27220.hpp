@@ -15,11 +15,15 @@ class BQ27220 {
     uint8_t percentage;
   } Data;
 
-  BQ27220(Param& param);
+  BQ27220(Param &param);
+
+  static int CMD(BQ27220 *bq27220, int argc, char **argv);
 
   void WriteParam();
 
   Param param_;
+
+  System::Term::Command<BQ27220 *> cmd_;
 
   Data data_ = {};
 };
