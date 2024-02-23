@@ -3,6 +3,7 @@
 #include "FreeRTOS.h"
 #include "main.h"
 #include "semphr.h"
+#include "string.h"
 #include "task.h"
 
 typedef struct {

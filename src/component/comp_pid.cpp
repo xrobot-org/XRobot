@@ -20,7 +20,7 @@ using namespace Component;
 PID::PID(PID::Param &param, float sample_freq)
     : param_(param), dfilter_(sample_freq, param.d_cutoff_freq) {
   float dt_min = 1.0f / sample_freq;
-  ASSERT(isfinite(dt_min));
+  XB_ASSERT(isfinite(dt_min));
   this->dt_min_ = dt_min;
 
   this->Reset();

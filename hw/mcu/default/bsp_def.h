@@ -4,24 +4,27 @@
 extern "C" {
 #endif
 
-#include <ctype.h>
-#include <math.h>
-#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #define XB_TO_STR(_arg) #_arg
 #define XB_DEF2STR(_arg) XB_TO_STR(_arg)
 
-#if MCU_DEBUG_BUILD
-#define XB_ASSERT(arg)                                         \
-  if (!(arg))                                                  \
-    while (1) {                                                \
-      printf("Assert error at %s:%d\r\n", __FILE__, __LINE__); \
+__attribute__((unused)) static void xb_verify_failed(const char* file,
+                                                     uint32_t line) {
+  while (1) {
+    while (1) {
+      printf("Assert error at %s:%d\r\n", file, line);
     }
+  }
+}
+
+#if MCU_DEBUG_BUILD
+#define XB_ASSERT(arg)                    \
+  if (!(arg)) {                           \
+    xb_verify_failed(__FILE__, __LINE__); \
+  }
 #else
 #define XB_ASSERT(arg) (void)0;
 #endif

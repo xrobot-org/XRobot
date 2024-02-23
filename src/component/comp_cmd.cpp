@@ -14,7 +14,7 @@ CMD::CMD(Mode mode)
   CMD::self_ = this;
 
   auto op_ctrl_callback = [](Data& data, CMD* cmd) {
-    ASSERT(data.ctrl_source < CTRL_SOURCE_NUM);
+    XB_ASSERT(data.ctrl_source < CTRL_SOURCE_NUM);
     memcpy(&(cmd->data_[data.ctrl_source]), &data, sizeof(Data));
 
     if (!cmd->data_[CTRL_SOURCE_RC].online && cmd->online_) {
