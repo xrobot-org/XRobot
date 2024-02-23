@@ -4,9 +4,14 @@
 extern "C" {
 #endif
 
+#include <ctype.h>
+#include <math.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define XB_TO_STR(_arg) #_arg
 #define XB_DEF2STR(_arg) XB_TO_STR(_arg)
