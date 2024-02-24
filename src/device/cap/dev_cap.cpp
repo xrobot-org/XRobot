@@ -8,7 +8,7 @@
 using namespace Device;
 
 Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
-  ASSERT(param.cutoff_volt > 3.0f && param.cutoff_volt < 24.0f);
+  XB_ASSERT(param.cutoff_volt > 3.0f && param.cutoff_volt < 24.0f);
 
   out_.power_limit_ = 40.0f;
 

@@ -62,7 +62,7 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
   this->setpoint_.motor_rotational_speed =
       reinterpret_cast<float*>(System::Memory::Malloc(
           this->mixer_.len_ * sizeof(*this->setpoint_.motor_rotational_speed)));
-  ASSERT(this->setpoint_.motor_rotational_speed);
+  XB_ASSERT(this->setpoint_.motor_rotational_speed);
 
   auto event_callback = [](ChassisEvent event, Chassis* chassis) {
     chassis->ctrl_lock_.Wait(UINT32_MAX);
@@ -195,7 +195,7 @@ void Chassis<Motor, MotorParam>::Control() {
       break;
     }
     default:
-      ASSERT(false);
+      XB_ASSERT(false);
       return;
   }
 
@@ -237,7 +237,7 @@ void Chassis<Motor, MotorParam>::Control() {
       }
       break;
     default:
-      ASSERT(false);
+      XB_ASSERT(false);
       return;
   }
 }

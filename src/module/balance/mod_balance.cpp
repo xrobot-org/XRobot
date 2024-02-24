@@ -422,7 +422,7 @@ void Balance<Motor, MotorParam>::Control() {
       }
       break;
     default:
-      ASSERT(false);
+      XB_ASSERT(false);
       return;
   }
 }

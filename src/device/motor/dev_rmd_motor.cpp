@@ -36,6 +36,11 @@ RMDMotor::RMDMotor(const Param &param, const char *name)
 
   Can::Subscribe(motor_tp, this->param_.can, this->param_.num + 0x141, 1);
 
+  if ((motor_tx_map_[this->param_.can] & (1 << (this->param_.num))) != 0) {
+    /* Error: ID duplicate */
+    XB_ASSERT(false);
+  }
+
   motor_tx_map_[this->param_.can] |= 1 << (this->param_.num);
 }
 

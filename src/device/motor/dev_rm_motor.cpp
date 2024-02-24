@@ -32,18 +32,18 @@ RMMotor::RMMotor(const Param &param, const char *name)
   switch (param.id_control) {
     case M3508_M2006_CTRL_ID_BASE:
       this->index_ = 0;
-      ASSERT(param.id_feedback > 0x200 && param.id_feedback <= 0x204);
+      XB_ASSERT(param.id_feedback > 0x200 && param.id_feedback <= 0x204);
       break;
     case M3508_M2006_CTRL_ID_EXTAND:
       this->index_ = 1;
-      ASSERT(param.id_feedback > 0x204 && param.id_feedback <= 0x208);
+      XB_ASSERT(param.id_feedback > 0x204 && param.id_feedback <= 0x208);
       break;
     case GM6020_CTRL_ID_EXTAND:
       this->index_ = 2;
-      ASSERT(param.id_feedback > 0x208 && param.id_feedback <= 0x20B);
+      XB_ASSERT(param.id_feedback > 0x208 && param.id_feedback <= 0x20B);
       break;
     default:
-      ASSERT(false);
+      XB_ASSERT(false);
   }
   switch (param.model) {
     case MOTOR_M2006:
@@ -78,6 +78,12 @@ RMMotor::RMMotor(const Param &param, const char *name)
   motor_tp.RegisterCallback(rx_callback, this);
 
   Can::Subscribe(motor_tp, this->param_.can, this->param_.id_feedback, 1);
+
+  if ((motor_tx_map_[this->param_.can][this->index_] & (1 << (this->num_))) !=
+      0) {
+    /* Error: ID duplicate */
+    XB_ASSERT(false);
+  }
 
   motor_tx_map_[this->param_.can][this->index_] |= 1 << (this->num_);
 }
