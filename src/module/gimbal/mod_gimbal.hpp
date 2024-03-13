@@ -1,7 +1,3 @@
-/*
- * 云台模组
- */
-
 #pragma once
 
 #include <comp_type.hpp>
@@ -25,6 +21,7 @@ class Gimbal {
   typedef enum {
     RELAX, /* 放松模式，电机不输出。一般情况云台初始化之后的模式 */
     ABSOLUTE, /* 绝对坐标系控制，控制在空间内的绝对姿态 */
+    AUTOPATROL,
   } Mode;
 
   enum {
@@ -39,7 +36,8 @@ class Gimbal {
     SET_MODE_RELAX,
     SET_MODE_ABSOLUTE,
     START_AUTO_AIM,
-    STOP_AUTO_AIM
+    STOP_AUTO_AIM,
+    SET_AUTOPATROL,
   } GimbalEvent;
 
   typedef struct {
@@ -53,6 +51,8 @@ class Gimbal {
     Device::RMMotor::Param pit_motor;
 
     Component::Type::Eulr mech_zero;
+
+    double patrol_rate;
 
     struct {
       Component::Type::CycleValue pitch_max;
@@ -104,7 +104,10 @@ class Gimbal {
 
   Message::Topic<float> yaw_tp_ = Message::Topic<float>("chassis_yaw");
 
+  double t_;
+
   float yaw_;
+  float yaw_virtual_; /* 用于标定哨兵小陀螺摆头巡航模式下的正方向 */
 
   Component::UI::String string_;
 

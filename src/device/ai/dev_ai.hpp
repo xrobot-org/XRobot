@@ -31,6 +31,14 @@ class AI {
     uint32_t hp;
   } RefForAI;
 
+  typedef enum {
+    AI_FIRE_COMMAND = 128,
+    AI_FIND_TARGET,
+    AI_AUTOPATROL,
+    IS_INVALID_DATA,
+    IS_USEFUL_DATA
+  } AI_DATA;
+  /* 这个变量如何跟notice建立联系 */
   AI();
 
   bool StartRecv();
@@ -53,7 +61,11 @@ class AI {
   bool ref_updated_ = false;
   uint32_t last_online_time_ = 0;
 
-  Protocol_DownPackage_t form_host_{};
+  Protocol_DownPackage_t from_host_{}; /* 从ai拿到的原始数据数组 */
+
+  uint8_t ai_data_;
+
+  uint8_t fire_command_;
 
   struct {
     RefereePckage ref{};
@@ -65,6 +77,8 @@ class AI {
   System::Thread thread_;
 
   System::Semaphore data_ready_;
+
+  Message::Event event_; /* 为了上面那个功能，尝试中 */
 
   Message::Topic<Component::CMD::Data> cmd_tp_;
 

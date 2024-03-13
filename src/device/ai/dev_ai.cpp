@@ -16,7 +16,10 @@ static uint8_t txbuf[AI_LEN_TX_BUFF];
 
 using namespace Device;
 
-AI::AI() : data_ready_(false), cmd_tp_("cmd_ai") {
+AI::AI()
+    : data_ready_(false),
+      event_(Message::Event::FindEvent("cmd_event")),
+      cmd_tp_("cmd_ai") {
   auto rx_cplt_callback = [](void *arg) {
     AI *ai = static_cast<AI *>(arg);
     ai->data_ready_.Post();
@@ -69,10 +72,10 @@ bool AI::StartRecv() {
 }
 
 bool AI::PraseHost() {
-  if (Component::CRC16::Verify(rxbuf, sizeof(this->form_host_))) {
+  if (Component::CRC16::Verify(rxbuf, sizeof(this->from_host_))) {
     this->cmd_.online = true;
     this->last_online_time_ = bsp_time_get_ms();
-    memcpy(&(this->form_host_), rxbuf, sizeof(this->form_host_));
+    memcpy(&(this->from_host_), rxbuf, sizeof(this->from_host_));
     memset(rxbuf, 0, AI_LEN_RX_BUFF);
     return true;
   }
@@ -132,23 +135,53 @@ bool AI::PackRef() {
   return true;
 }
 
-bool AI::PackCMD() {
+bool AI::PackCMD() { /* 将原始数据进行copy转移 */
   this->cmd_.gimbal.mode = Component::CMD::GIMBAL_ABSOLUTE_CTRL;
 
-  memcpy(&(this->cmd_.gimbal.eulr), &(this->form_host_.data.gimbal),
+  memcpy(&(this->cmd_.gimbal.eulr), &(this->from_host_.data.gimbal),
          sizeof(this->cmd_.gimbal.eulr));
 
   memcpy(&(this->cmd_.ext.extern_channel),
-         &(this->form_host_.data.extern_channel),
+         &(this->from_host_.data.extern_channel),
          sizeof(this->cmd_.ext.extern_channel));
 
-  memcpy(&(this->cmd_.chassis), &(this->form_host_.data.chassis_move_vec),
-         sizeof(this->form_host_.data.chassis_move_vec));
+  memcpy(&(this->cmd_.chassis), &(this->from_host_.data.chassis_move_vec),
+         sizeof(this->from_host_.data.chassis_move_vec));
+  // memcpy(&(this->fire_command_), &(this->from_host_.data.notice),
+  //        sizeof(this->from_host_.data.notice));
+
+  /* 判断是否为有效数据,即是否看到目标 */
+  if (fabs(this->cmd_.gimbal.last_eulr.pit - this->cmd_.gimbal.last_eulr.pit) <
+          0.01 &&
+      fabs(this->cmd_.gimbal.last_eulr.yaw - this->cmd_.gimbal.last_eulr.yaw) <
+          0.01) {
+    this->ai_data_ = this->IS_INVALID_DATA;
+  } else {
+    this->ai_data_ = this->IS_USEFUL_DATA;
+  }
+
+  /*AI数据无效，云台采用巡逻模式 */
+  // if (this->ai_data_ == this->IS_INVALID_DATA) {
+  //   this->event_.Active(AI_AUTOPATROL);
+  //   this->fire_command_ = 0;
+  // }
+
+  /*AI数据有效，采用自动瞄准模式，也就是云台ABSOLUTE模式 */
+  // if (this->ai_data_ == IS_USEFUL_DATA) {
+  //   this->event_.Active(AI_FIND_TARGET);
+  //   this->fire_command_ = this->from_host_.data.notice; /* 0或者2 */
+  // }
+
+  /* AI开火发弹指令 */
+  if (this->ai_data_ == IS_USEFUL_DATA && this->fire_command_ != 0) {
+    this->event_.Active(AI_FIRE_COMMAND);
+  }
+
+  this->cmd_.gimbal.last_eulr = this->cmd_.gimbal.eulr;
 
   this->cmd_.ctrl_source = Component::CMD::CTRL_SOURCE_AI;
 
   this->cmd_tp_.Publish(this->cmd_);
-
   return true;
 }
 
