@@ -85,8 +85,12 @@ void Gimbal::UpdateFeedback() {
     case RELAX:
     case ABSOLUTE:
       this->yaw_ = this->yaw_motor_.GetAngle() - this->param_.mech_zero.yaw;
+      break;
     case AUTOPATROL:
-      this->yaw_ = this->yaw_virtual_;
+      this->yaw_ = this->yaw_motor_.GetAngle() - this->param_.mech_zero.yaw -
+                   this->param_.patrol_range *
+                       sin(this->param_.patrol_omega * bsp_time_get_ms());
+
       break;
   }
 }
@@ -150,14 +154,14 @@ void Gimbal::Control() {
 
     case AUTOPATROL:
       /* 以sin变化左右摆头 */
+      float autopatrol_yaw = 0;
+      this->setpoint_.eulr_.yaw = this->eulr_.yaw; /* 巡逻中间值 */
+      autopatrol_yaw = this->setpoint_.eulr_.yaw +
+                       this->param_.patrol_range *
+                           sin(this->param_.patrol_omega * bsp_time_get_ms());
 
-      this->t_ = this->t_ + 0.01;
-      this->setpoint_.eulr_.yaw =
-          this->eulr_.yaw + this->param_.patrol_rate * sin(this->t_);
-
-      yaw_out = this->yaw_actuator_.Calculate(
-          this->setpoint_.eulr_.yaw, this->gyro_.z, this->eulr_.yaw, this->dt_);
-
+      yaw_out = this->yaw_actuator_.Calculate(autopatrol_yaw, this->gyro_.z,
+                                              this->eulr_.yaw, this->dt_);
       pit_out = this->pit_actuator_.Calculate(
           this->setpoint_.eulr_.pit, this->gyro_.x, this->eulr_.pit, this->dt_);
 
@@ -185,9 +189,8 @@ void Gimbal::SetMode(Mode mode) {
   }
   if (this->mode_ != AUTOPATROL) {
     if (mode == AUTOPATROL) { /* 切换到AUTOPATROL */
-      this->t_ = 0;           /* t_置零，保证sin从0开始 */
-      this->yaw_virtual_ =
-          this->yaw_motor_.GetAngle() - this->param_.mech_zero.yaw;
+      /* t_置零，保证sin从0开始 */
+      // this->yaw_virtual_ = this->eulr_.yaw;
       /* 锁定切换模式时的yaw角度作为巡逻基准角度 */
     }
   }

@@ -52,14 +52,15 @@ class Gimbal {
 
     Component::Type::Eulr mech_zero;
 
-    double patrol_rate;
+    double patrol_range;
+    double patrol_omega;
 
     struct {
       Component::Type::CycleValue pitch_max;
       Component::Type::CycleValue pitch_min;
     } limit;
 
-    const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
+    std::vector<Component::CMD::EventMapItem> EVENT_MAP;
 
   } Param;
 
@@ -104,10 +105,8 @@ class Gimbal {
 
   Message::Topic<float> yaw_tp_ = Message::Topic<float>("chassis_yaw");
 
-  double t_;
-
   float yaw_;
-  float yaw_virtual_; /* 用于标定哨兵小陀螺摆头巡航模式下的正方向 */
+  // float yaw_virtual_; /* 用于标定哨兵小陀螺摆头巡航模式下的正方向 */
 
   Component::UI::String string_;
 
