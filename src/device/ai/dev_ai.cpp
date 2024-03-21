@@ -135,7 +135,7 @@ bool AI::PackRef() {
   return true;
 }
 
-bool AI::PackCMD() { /* 将原始数据进行copy转移 */
+bool AI::PackCMD() {
   this->cmd_.gimbal.mode = Component::CMD::GIMBAL_ABSOLUTE_CTRL;
 
   memcpy(&(this->cmd_.gimbal.eulr), &(this->from_host_.data.gimbal),
@@ -147,33 +147,39 @@ bool AI::PackCMD() { /* 将原始数据进行copy转移 */
 
   memcpy(&(this->cmd_.chassis), &(this->from_host_.data.chassis_move_vec),
          sizeof(this->from_host_.data.chassis_move_vec));
-  // memcpy(&(this->fire_command_), &(this->from_host_.data.notice),
-  //        sizeof(this->from_host_.data.notice));
 
-  /* 判断是否为有效数据,即是否看到目标 */
-  if (fabs(this->cmd_.gimbal.last_eulr.pit - this->cmd_.gimbal.last_eulr.pit) <
-          0.01 &&
-      fabs(this->cmd_.gimbal.last_eulr.yaw - this->cmd_.gimbal.last_eulr.yaw) <
-          0.01) {
-    this->ai_data_ = this->IS_INVALID_DATA;
+  /* AI在线的情况下，根据AI的数据来判定此时的状态 */
+  /* 因为如果收不到AI的数据，那么from_host的值就不会更新 */
+  if (this->cmd_.online) {
+    if (this->cmd_.gimbal.last_eulr.yaw == this->cmd_.gimbal.eulr.yaw &&
+        this->cmd_.gimbal.last_eulr.pit == this->cmd_.gimbal.eulr.pit) {
+      this->ai_data_status_ = this->IS_INVALID_DATA;
+    } else {
+      this->ai_data_status_ = this->IS_USEFUL_DATA;
+    }
   } else {
-    this->ai_data_ = this->IS_USEFUL_DATA;
+    this->ai_data_status_ = this->AI_OFFLINE;
+  }
+
+  /* AI离线，底盘RELEX模式 */
+  if (!this->cmd_.online) {
+    this->event_.Active(AI_OFFLINE);
   }
 
   /*AI数据无效，云台采用巡逻模式 */
-  // if (this->ai_data_ == this->IS_INVALID_DATA) {
-  //   this->event_.Active(AI_AUTOPATROL);
-  //   this->fire_command_ = 0;
-  // }
+  if (this->ai_data_status_ == this->IS_INVALID_DATA) {
+    this->event_.Active(AI_AUTOPATROL);
+    this->fire_command_ = 0;
+  }
 
   /*AI数据有效，采用自动瞄准模式，也就是云台ABSOLUTE模式 */
-  // if (this->ai_data_ == IS_USEFUL_DATA) {
-  //   this->event_.Active(AI_FIND_TARGET);
-  //   this->fire_command_ = this->from_host_.data.notice; /* 0或者2 */
-  // }
+  if (this->ai_data_status_ == IS_USEFUL_DATA) {
+    this->event_.Active(AI_FIND_TARGET);
+    this->fire_command_ = this->from_host_.data.notice;
+  }
 
   /* AI开火发弹指令 */
-  if (this->ai_data_ == IS_USEFUL_DATA && this->fire_command_ != 0) {
+  if (this->ai_data_status_ == IS_USEFUL_DATA && this->fire_command_ != 0) {
     this->event_.Active(AI_FIRE_COMMAND);
   }
 
@@ -189,8 +195,8 @@ void AI::PraseRef() {
 #if RB_HERO
   this->ref_.ball_speed = this->ref_.data_.robot_status.launcher_42_speed_limit;
 #else
-  this->ref_.ball_speed =
-      this->raw_ref_.robot_status.launcher_id1_17_speed_limit;
+  // this->ref_.ball_speed =
+  //     this->raw_ref_.robot_status.launcher_id1_17_speed_limit;
 #endif
 
   this->ref_.max_hp = this->raw_ref_.robot_status.max_hp;
@@ -204,9 +210,10 @@ void AI::PraseRef() {
   }
   this->ref_.status = this->raw_ref_.status;
 
-  if (this->raw_ref_.rfid.high_ground == 1) {
+  if (this->raw_ref_.rfid.own_highland_annular == 1 ||
+      this->raw_ref_.rfid.enemy_highland_annular == 1) {
     this->ref_.robot_buff |= AI_RFID_SNIP;
-  } else if (this->raw_ref_.rfid.energy_mech == 1) {
+  } else if (this->raw_ref_.rfid.own_energy_mech_activation == 1) {
     this->ref_.robot_buff |= AI_RFID_BUFF;
   } else {
     this->ref_.robot_buff = 0;

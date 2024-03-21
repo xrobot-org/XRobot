@@ -32,11 +32,12 @@ class AI {
   } RefForAI;
 
   typedef enum {
-    AI_FIRE_COMMAND = 128,
+    AI_OFFLINE = 128,
+    IS_INVALID_DATA,
+    IS_USEFUL_DATA,
     AI_FIND_TARGET,
     AI_AUTOPATROL,
-    IS_INVALID_DATA,
-    IS_USEFUL_DATA
+    AI_FIRE_COMMAND,
   } AI_DATA;
   /* 这个变量如何跟notice建立联系 */
   AI();
@@ -63,7 +64,7 @@ class AI {
 
   Protocol_DownPackage_t from_host_{}; /* 从ai拿到的原始数据数组 */
 
-  uint8_t ai_data_;
+  uint8_t ai_data_status_;
 
   uint8_t fire_command_;
 
