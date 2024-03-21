@@ -1,14 +1,3 @@
-/**
- * @file launcher.c
- * @author Qu Shen (503578404@qq.com)
- * @brief 弹丸发射器模块
- * @version 1.0.0
- * @date 2021-05-04
- *
- * @copyright Copyright (c) 2021
- *
- */
-
 #include "mod_launcher.hpp"
 
 #include "bsp_pwm.h"
@@ -40,13 +29,18 @@ Launcher::Launcher(Param& param, float control_freq)
 
   auto event_callback = [](LauncherEvent event, Launcher* launcher) {
     launcher->ctrl_lock_.Wait(UINT32_MAX);
-
-    switch (event) {
+    switch (event) { /* 根据event设置模式 */
       case CHANGE_FIRE_MODE_RELAX:
       case CHANGE_FIRE_MODE_SAFE:
       case CHANGE_FIRE_MODE_LOADED:
         launcher->SetFireMode(static_cast<FireMode>(event));
         break;
+      case LAUNCHER_START_FIRE: /* 摩擦轮开启条件下，开火控制fire为ture */
+        if (launcher->fire_ctrl_.fire_mode_ == LOADED) {
+          launcher->fire_ctrl_.fire = true;
+        }
+        break;
+
       case CHANGE_TRIG_MODE_SINGLE:
       case CHANGE_TRIG_MODE_BURST:
         launcher->SetTrigMode(static_cast<TrigMode>(event));
@@ -54,11 +48,6 @@ Launcher::Launcher(Param& param, float control_freq)
       case CHANGE_TRIG_MODE:
         launcher->SetTrigMode(static_cast<TrigMode>(
             (launcher->fire_ctrl_.trig_mode_ + 1) % CONTINUED));
-        break;
-      case LAUNCHER_START_FIRE:
-        if (launcher->fire_ctrl_.fire_mode_ == LOADED) {
-          launcher->fire_ctrl_.fire = true;
-        }
         break;
       case OPEN_COVER:
         launcher->cover_mode_ = OPEN;
@@ -101,8 +90,7 @@ Launcher::Launcher(Param& param, float control_freq)
     }
   };
 
-  this->thread_.Create(launcher_thread, this, "launcher_thread",
-                       MODULE_LAUNCHER_TASK_STACK_DEPTH,
+  this->thread_.Create(launcher_thread, this, "launcher_thread", 512,
                        System::Thread::MEDIUM);
   System::Timer::Create(this->DrawUIStatic, this, 2200);
 
@@ -146,7 +134,7 @@ void Launcher::Control() {
       max_burst = 1;
       break;
   }
-
+  /* 发弹量设置 */
   switch (this->fire_ctrl_.trig_mode_) {
     case SINGLE: /* 点射开火模式 */
     case BURST:  /* 爆发开火模式 */
@@ -224,7 +212,7 @@ void Launcher::Control() {
       this->fire_ctrl_.last_launch = bsp_time_get_ms();
     }
   }
-
+  /* 计算摩擦轮和拨弹盘并输出 */
   switch (this->fire_ctrl_.fire_mode_) {
     case RELAX:
       for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
@@ -268,7 +256,8 @@ void Launcher::Control() {
       break;
   }
 }
-
+/* 拨弹盘模式 */
+/* SINGLE,BURST,CONTINUED,  */
 void Launcher::SetTrigMode(TrigMode mode) {
   if (mode == this->fire_ctrl_.trig_mode_) {
     return;
@@ -276,9 +265,10 @@ void Launcher::SetTrigMode(TrigMode mode) {
 
   this->fire_ctrl_.trig_mode_ = mode;
 }
-
+/* 设置摩擦轮模式 */
+/* RELEX SAFE LOADED三种模式可以选择 */
 void Launcher::SetFireMode(FireMode mode) {
-  if (mode == this->fire_ctrl_.fire_mode_) {
+  if (mode == this->fire_ctrl_.fire_mode_) { /* 未更改，return */
     return;
   }
 
@@ -286,7 +276,7 @@ void Launcher::SetFireMode(FireMode mode) {
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
     this->fric_actuator_[i]->Reset();
-  }
+  } /* reset 所有电机执行器PID等参数 */
 
   if (mode == LOADED) {
     this->fire_ctrl_.to_launch = 0;
@@ -300,24 +290,21 @@ void Launcher::HeatLimit() {
     /* 根据机器人型号获得对应数据 */
     if (this->param_.model == LAUNCHER_MODEL_42MM) {
       this->heat_ctrl_.heat = this->ref_.power_heat.launcher_42_heat;
-      this->heat_ctrl_.heat_limit =
-          this->ref_.robot_status.launcher_42_heat_limit;
-      this->heat_ctrl_.speed_limit =
-          this->ref_.robot_status.launcher_42_speed_limit;
+      this->heat_ctrl_.heat_limit = this->ref_.robot_status.shooter_heat_limit;
+      this->heat_ctrl_.speed_limit = 16;
       this->heat_ctrl_.cooling_rate =
-          this->ref_.robot_status.launcher_42_cooling_rate;
+          this->ref_.robot_status.shooter_cooling_value;
       this->heat_ctrl_.heat_increase = GAME_HEAT_INCREASE_42MM;
     } else if (this->param_.model == LAUNCHER_MODEL_17MM) {
       this->heat_ctrl_.heat = this->ref_.power_heat.launcher_id1_17_heat;
-      this->heat_ctrl_.heat_limit =
-          this->ref_.robot_status.launcher_id1_17_heat_limit;
-      this->heat_ctrl_.speed_limit =
-          this->ref_.robot_status.launcher_id1_17_speed_limit;
+      this->heat_ctrl_.heat_limit = this->ref_.robot_status.shooter_heat_limit;
+      this->heat_ctrl_.speed_limit = 30;
       this->heat_ctrl_.cooling_rate =
-          this->ref_.robot_status.launcher_id1_17_cooling_rate;
+          this->ref_.robot_status.shooter_cooling_value;
       this->heat_ctrl_.heat_increase = GAME_HEAT_INCREASE_17MM;
     }
     /* 检测热量更新后,计算可发射弹丸 */
+
     if ((this->heat_ctrl_.heat != this->heat_ctrl_.last_heat) ||
         this->heat_ctrl_.available_shot == 0 || (this->heat_ctrl_.heat == 0)) {
       this->heat_ctrl_.available_shot = static_cast<uint32_t>(
@@ -343,7 +330,7 @@ void Launcher::PraseRef() {
   this->ref_.status = this->raw_ref_.status;
 }
 
-float Launcher::LimitLauncherFreq() {
+float Launcher::LimitLauncherFreq() { /* 热量限制计算 */
   float heat_percent = this->heat_ctrl_.heat / this->heat_ctrl_.heat_limit;
   float stable_freq =
       this->heat_ctrl_.cooling_rate / this->heat_ctrl_.heat_increase;

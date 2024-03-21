@@ -1,14 +1,3 @@
-/**
- * @file launcher.h
- * @author Qu Shen (503578404@qq.com)
- * @brief 弹丸发射器模块
- * @version 1.0.0
- * @date 2021-05-04
- *
- * @copyright Copyright (c) 2021
- *
- */
-
 #pragma once
 
 #include <module.hpp>
@@ -48,7 +37,7 @@ class Launcher {
     CHANGE_TRIG_MODE,
     OPEN_COVER,
     CLOSE_COVER,
-    LAUNCHER_START_FIRE,
+    LAUNCHER_START_FIRE, /* 开火，拨弹盘开始发弹 */
   } LauncherEvent;
 
   enum {
@@ -66,7 +55,6 @@ class Launcher {
     LAUNCHER_CTRL_FRIC1_SPEED_IDX = 0, /* 摩擦轮1控制的速度环控制器的索引值 */
     LAUNCHER_CTRL_FRIC2_SPEED_IDX, /* 摩擦轮2控制的速度环控制器的索引值 */
     LAUNCHER_CTRL_TRIG_SPEED_IDX, /* 拨弹电机控制的速度环控制器的索引值 */
-    LAUNCHER_CTRL_TRIG_ANGLE_IDX, /* 拨弹电机控制的角度环控制器的索引值 */
     LAUNCHER_CTRL_NUM,            /* 总共的控制器数量 */
   };
 
@@ -91,7 +79,7 @@ class Launcher {
     std::array<Device::RMMotor::Param, LAUNCHER_ACTR_TRIG_NUM> trig_motor;
     std::array<Device::RMMotor::Param, LAUNCHER_ACTR_FRIC_NUM> fric_motor;
 
-    const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
+    std::vector<Component::CMD::EventMapItem> EVENT_MAP;
   } Param;
 
   /* 热量控制 */
