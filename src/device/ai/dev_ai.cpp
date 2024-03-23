@@ -148,39 +148,42 @@ bool AI::PackCMD() {
   memcpy(&(this->cmd_.chassis), &(this->from_host_.data.chassis_move_vec),
          sizeof(this->from_host_.data.chassis_move_vec));
 
-  /* AI在线的情况下，根据AI的数据来判定此时的状态 */
-  /* 因为如果收不到AI的数据，那么from_host的值就不会更新 */
-  if (this->cmd_.online) {
-    if (this->cmd_.gimbal.last_eulr.yaw == this->cmd_.gimbal.eulr.yaw &&
-        this->cmd_.gimbal.last_eulr.pit == this->cmd_.gimbal.eulr.pit) {
-      this->ai_data_status_ = this->IS_INVALID_DATA;
+  /* 判断控制权是否在AI，以保证AI的event不会干扰dr16的event */
+  if (Component::CMD::GetCtrlMode() == Component::CMD::CMD_AUTO_CTRL) {
+    /* AI在线的情况下，根据AI的数据来判定此时的状态 */
+    /* 如果收不到AI的数据，那么from_host的值就不会更新 */
+    if (this->cmd_.online) {
+      if (this->cmd_.gimbal.last_eulr.yaw == this->cmd_.gimbal.eulr.yaw &&
+          this->cmd_.gimbal.last_eulr.pit == this->cmd_.gimbal.eulr.pit) {
+        this->ai_data_status_ = this->IS_INVALID_DATA;
+      } else {
+        this->ai_data_status_ = this->IS_USEFUL_DATA;
+      }
     } else {
-      this->ai_data_status_ = this->IS_USEFUL_DATA;
+      this->ai_data_status_ = this->AI_OFFLINE;
     }
-  } else {
-    this->ai_data_status_ = this->AI_OFFLINE;
-  }
 
-  /* AI离线，底盘RELEX模式 */
-  if (!this->cmd_.online) {
-    this->event_.Active(AI_OFFLINE);
-  }
+    /* AI离线，底盘RELEX模式 */
+    if (!this->cmd_.online) {
+      this->event_.Active(AI_OFFLINE);
+    }
 
-  /*AI数据无效，云台采用巡逻模式 */
-  if (this->ai_data_status_ == this->IS_INVALID_DATA) {
-    this->event_.Active(AI_AUTOPATROL);
-    this->fire_command_ = 0;
-  }
+    /*AI数据无效，云台采用巡逻模式 */
+    if (this->ai_data_status_ == this->IS_INVALID_DATA) {
+      this->event_.Active(AI_AUTOPATROL);
+      this->fire_command_ = 0;
+    }
 
-  /*AI数据有效，采用自动瞄准模式，也就是云台ABSOLUTE模式 */
-  if (this->ai_data_status_ == IS_USEFUL_DATA) {
-    this->event_.Active(AI_FIND_TARGET);
-    this->fire_command_ = this->from_host_.data.notice;
-  }
+    /*AI数据有效，采用自动瞄准模式，也就是云台ABSOLUTE模式 */
+    if (this->ai_data_status_ == IS_USEFUL_DATA) {
+      this->event_.Active(AI_FIND_TARGET);
+      this->fire_command_ = this->from_host_.data.notice;
+    }
 
-  /* AI开火发弹指令 */
-  if (this->ai_data_status_ == IS_USEFUL_DATA && this->fire_command_ != 0) {
-    this->event_.Active(AI_FIRE_COMMAND);
+    /* AI开火发弹指令 */
+    if (this->ai_data_status_ == IS_USEFUL_DATA && this->fire_command_ != 0) {
+      this->event_.Active(AI_FIRE_COMMAND);
+    }
   }
 
   this->cmd_.gimbal.last_eulr = this->cmd_.gimbal.eulr;
