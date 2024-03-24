@@ -254,6 +254,10 @@ void Referee::Prase() {
         destination = &(this->ref_data_.keyboard_mouse);
         size = sizeof(this->ref_data_.keyboard_mouse);
         break;
+      case REF_CMD_ID_MAP_ROBOT_DATA:
+        destination = &(this->ref_data_.map_robot_data);
+        size = sizeof(this->ref_data_.map_robot_data);
+        break;
       case REF_CMD_ID_CUSTOM_KEYBOARD_MOUSE:
         destination = &(this->ref_data_.custom_key_mouse_data);
         size = sizeof(this->ref_data_.custom_key_mouse_data);
@@ -298,9 +302,6 @@ void Referee::Prase() {
 #endif
   this->ref_data_.power_heat.launcher_id1_17_heat = REF_HEAT_LIMIT_17;
   this->ref_data_.power_heat.launcher_42_heat = REF_HEAT_LIMIT_42;
-  // this->ref_data_.robot_status.launcher_id1_17_speed_limit =
-  // REF_LAUNCH_SPEED;
-  this->ref_data_.robot_status.launcher_42_speed_limit = REF_LAUNCH_SPEED;
   this->ref_data_.robot_status.chassis_power_limit = REF_POWER_LIMIT;
   this->ref_data_.power_heat.chassis_pwr_buff = REF_POWER_BUFF;
 #endif

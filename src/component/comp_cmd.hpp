@@ -16,6 +16,12 @@ class CMD {
     CTRL_SOURCE_NUM
   } ControlSource;
 
+  typedef struct {
+    float yaw; /* 偏航角（Yaw angle） */
+    float pit; /* 俯仰角（Pitch angle） */
+    float rol; /* 翻滚角（Roll angle） */
+  } Eulr;
+
   typedef enum {
     CMD_OP_CTRL,
     CMD_AUTO_CTRL,
@@ -25,11 +31,7 @@ class CMD {
   typedef Type::Vector3 ChassisCMD;
 
   typedef struct {
-    struct {
-      float yaw; /* 偏航角（Yaw angle） */
-      float pit; /* 俯仰角（Pitch angle） */
-      float rol; /* 翻滚角（Roll angle） */
-    } eulr, last_eulr;
+    Eulr eulr;
     GimbalCommandMode mode;
   } GimbalCMD;
 

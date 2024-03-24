@@ -12,6 +12,9 @@
 #define GAME_HEAT_INCREASE_42MM (100.0f) /* 每发射一颗42mm弹丸增加100热量 */
 #define GAME_HEAT_INCREASE_17MM (10.0f) /* 每发射一颗17mm弹丸增加10热量 */
 
+#define BULLET_SPEED_LIMIT_42MM (16.0)
+#define BULLET_SPEED_LIMIT_17MM (30.0)
+
 #define GAME_CHASSIS_MAX_POWER_WO_REF 40.0f /* 裁判系统离线时底盘最大功率 */
 #define REF_UI_BOX_UP_OFFSET (4)
 #define REF_UI_BOX_BOT_OFFSET (-14)
@@ -77,7 +80,7 @@ class Referee {
     REF_CMD_ID_INTER_STUDENT_CUSTOM = 0x0302,
     REF_CMD_ID_CLIENT_MAP = 0x0303,
     REF_CMD_ID_KEYBOARD_MOUSE = 0x0304,
-    // 0x0305
+    REF_CMD_ID_MAP_ROBOT_DATA = 0x0305,  // 0x0305
     REF_CMD_ID_CUSTOM_KEYBOARD_MOUSE = 0X0306,
     REF_CMD_ID_SENTRY_POS_DATA = 0x0307,
     REF_CMD_ID_ROBOT_POS_DATA = 0x0308, /* 选手端小地图接受机器人消息 */
@@ -126,31 +129,6 @@ class Referee {
     uint16_t blue_outpose;
     uint16_t blue_base;
   } RobotHP; /* 0x0003 */
-             /*
-               typedef struct __attribute__((packed)) {
-                 uint8_t dart_belong;
-                 uint16_t stage_remain_time;
-               } DartStatus;//0x0105已经有代替
-           
-               typedef struct __attribute__((packed)) {
-                 uint8_t f1_status : 1;
-                 uint8_t f1_buff_status : 3;
-                 uint8_t f2_status : 1;
-                 uint8_t f2_buff_status : 3;
-                 uint8_t f3_status : 1;
-                 uint8_t f3_buff_status : 3;
-                 uint8_t f4_status : 1;
-                 uint8_t f4_buff_status : 3;
-                 uint8_t f5_status : 1;
-                 uint8_t f5_buff_status : 3;
-                 uint8_t f6_status : 1;
-                 uint8_t f6_buff_status : 3;
-                 uint16_t red1_bullet_remain;
-                 uint16_t red2_bullet_remain;
-                 uint16_t blue1_bullet_remain;
-                 uint16_t blue2_bullet_remain;
-               } IcraZoneStatus;
-             */
   typedef struct __attribute__((packed)) {
     uint32_t blood_supply_before_status : 1;
     uint32_t blood_supply_inner_status : 1;
@@ -411,7 +389,8 @@ class Referee {
     REF_STDNT_CMD_ID_UI_DRAW7 = 0x0104,
     REF_STDNT_CMD_ID_UI_STR = 0x0110,
     REF_STDNT_CMD_ID_CUSTOM = 0x0200,
-    // 新的 0x0120 0x0121 未写入
+    REF_STDNT_CMD_ID_SENTRY_COMMAND = 0X0120,
+    REF_STDNT_CMD_ID_RADAR_COMMAND = 0X0121,
   } CMDID;
 
   typedef struct __attribute__((packed)) {
@@ -422,11 +401,9 @@ class Referee {
 
   typedef struct {
     Status status;
-    GameStatus game_status; /* 0x0001 */
-    GameResult game_result; /* 0x0002 */
-    RobotHP game_robot_hp;  /* 0x0003 */
-    // DartStatus dart_status;
-    // IcraZoneStatus icra_zone;
+    GameStatus game_status;                     /* 0x0001 */
+    GameResult game_result;                     /* 0x0002 */
+    RobotHP game_robot_hp;                      /* 0x0003 */
     FieldEvents field_event;                    /* 0x0101 */
     SupplyAction supply_action;                 /* 0x0102 */
     Warning warning;                            /* 0x0104 */
@@ -451,6 +428,7 @@ class Referee {
     SentryInfo sentry_decision;                 /* 0x020D */
     RadarInfo radar_decision;                   /* 0x020E */
     RobotInteractionData robot_ineraction_data; /* 0x0301 */
+    MapRobotData map_robot_data;                /* 0x0305 */
     CustomKeyMouseData custom_key_mouse_data;   /* 0x0306 */
   } Data;
 
