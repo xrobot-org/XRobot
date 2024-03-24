@@ -48,15 +48,14 @@ class Gimbal {
 
     Component::PosActuator::Param yaw_actr;
     Component::PosActuator::Param pit_actr;
-    Component::SpeedActuator::Param yaw_speed_actr;
 
     Device::RMMotor::Param yaw_motor;
     Device::RMMotor::Param pit_motor;
 
     Component::Type::Eulr mech_zero;
 
-    double patrol_range;
-    double patrol_omega;
+    float patrol_range;
+    float patrol_omega;
 
     struct {
       Component::Type::CycleValue pitch_max;
@@ -88,7 +87,7 @@ class Gimbal {
 
   Param param_;
 
-  Gimbal::Mode mode_ = RELAX; /* 云台模式 */
+  Gimbal::Mode mode_ = ABSOLUTE; /* 云台模式 */
 
   struct {
     Component::Type::Eulr eulr_; /* 表示云台姿态的欧拉角 */
@@ -98,7 +97,6 @@ class Gimbal {
 
   Component::PosActuator yaw_actuator_;
   Component::PosActuator pit_actuator_;
-  Component::SpeedActuator yaw_speed_actuator_;
 
   Device::RMMotor yaw_motor_;
   Device::RMMotor pit_motor_;

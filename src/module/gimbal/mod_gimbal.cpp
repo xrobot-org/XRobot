@@ -15,7 +15,6 @@ Gimbal::Gimbal(Param& param, float control_freq)
       st_(param.st),
       yaw_actuator_(this->param_.yaw_actr, control_freq),
       pit_actuator_(this->param_.pit_actr, control_freq),
-      yaw_speed_actuator_(this->param_.yaw_speed_actr, control_freq),
       yaw_motor_(this->param_.yaw_motor, "Gimbal_Yaw"),
       pit_motor_(this->param_.pit_motor, "Gimbal_Pitch"),
       ctrl_lock_(true) {
@@ -34,10 +33,10 @@ Gimbal::Gimbal(Param& param, float control_freq)
       case STOP_AUTO_AIM:
         Component::CMD::SetCtrlSource(Component::CMD::CTRL_SOURCE_RC);
         break;
-      case SET_AUTOPATROL: /* 自动巡逻 */
+      case SET_AUTOPATROL:
         gimbal->SetMode(static_cast<Mode>(AUTOPATROL));
         break;
-      case SET_AI_TURN: /* AI转向 */
+      case SET_AI_TURN:
         gimbal->SetMode(static_cast<Mode>(TURN));
         break;
     }
@@ -144,8 +143,8 @@ void Gimbal::Control() {
       this->yaw_motor_.Relax();
       this->pit_motor_.Relax();
       break;
-
-    case ABSOLUTE:  //作为瞄准模式使用
+    case ABSOLUTE:
+    case TURN:
       /* Yaw轴角速度环参数计算 */
       yaw_out = this->yaw_actuator_.Calculate(
           this->setpoint_.eulr_.yaw, this->gyro_.z, this->eulr_.yaw, this->dt_);
@@ -173,13 +172,6 @@ void Gimbal::Control() {
       this->yaw_motor_.Control(yaw_out);
       this->pit_motor_.Control(pit_out);
       break;
-
-    case TURN: /* 转向的时候不进行摆头扫描动作 */
-      this->setpoint_.eulr_.yaw = this->eulr_.yaw;
-      yaw_out =
-          this->yaw_speed_actuator_.Calculate(0.0f, this->eulr_.yaw, this->dt_);
-      this->yaw_motor_.Control(yaw_out);
-      break;
   }
 }
 
@@ -194,16 +186,9 @@ void Gimbal::SetMode(Mode mode) {
 
   memcpy(&(this->setpoint_.eulr_), &(this->eulr_),
          sizeof(this->setpoint_.eulr_)); /* 切换模式后重置设定值 */
-  if (this->mode_ != ABSOLUTE) {
+  if (this->mode_ == RELAX) {
     if (mode == ABSOLUTE) {
-      this->setpoint_.eulr_.yaw = this->eulr_.yaw; /* imu的eulr */
-    }
-  }
-  if (this->mode_ != AUTOPATROL) {
-    if (mode == AUTOPATROL) { /* 切换到AUTOPATROL */
-      /* t_置零，保证sin从0开始 */
-      // this->yaw_virtual_ = this->eulr_.yaw;
-      /* 锁定切换模式时的yaw角度作为巡逻基准角度 */
+      this->setpoint_.eulr_.yaw = this->eulr_.yaw;
     }
   }
 

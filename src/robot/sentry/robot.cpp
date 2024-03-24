@@ -37,7 +37,7 @@ Robot::Sentry::Param param = {
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_L_POS_BOT,/* 模拟未找到目标，巡逻模式 */
-        Module::RMChassis::SET_MODE_ROTOR
+        Module::RMChassis::SET_MODE_ROTOR,
       },
       Component::CMD::EventMapItem{
         Device::AI::AI_FIND_TARGET,
@@ -46,13 +46,17 @@ Robot::Sentry::Param param = {
       Component::CMD::EventMapItem{
         Device::AI::AI_AUTOPATROL,
         Module::RMChassis::SET_MODE_ROTOR
+      },
+      Component::CMD::EventMapItem{
+        Device::AI::AI_TURN,
+        Module::RMChassis::SET_MODE_ROTOR
       }
     },
 
     .actuator_param = {
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00015f,
+          .k = 0.00020f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.0f,
@@ -85,7 +89,7 @@ Robot::Sentry::Param param = {
       },
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00015f,
+          .k = 0.00020f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.0f,
@@ -101,7 +105,7 @@ Robot::Sentry::Param param = {
       },
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00015f,
+          .k = 0.00022f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.0f,
@@ -179,7 +183,7 @@ Robot::Sentry::Param param = {
 
         .position = {
           /* GIMBAL_CTRL_YAW_ANGLE_IDX */
-          .k = 10.0f,
+          .k = 5.0f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 1.4f,
@@ -208,8 +212,8 @@ Robot::Sentry::Param param = {
 
         .position = {
           /* GIMBAL_CTRL_PIT_ANGLE_IDX */
-          .k = 20.0f,
-          .p = 1.0f,
+          .k = 8.0f,
+          .p = 0.5f,
           .i = 0.0f,
           .d = 0.8f,
           .i_limit = 0.0f,
@@ -242,7 +246,9 @@ Robot::Sentry::Param param = {
       .pit = 4.0f,
       .rol = 0.0f,
     },
-    .patrol_rate = 0.25,
+
+    .patrol_range = 0.25,
+    .patrol_omega = 0.005,
 
     .limit = {
       .pitch_max = 0.57f,
@@ -252,7 +258,7 @@ Robot::Sentry::Param param = {
     .EVENT_MAP = {
       Component::CMD::EventMapItem{
         Component::CMD::CMD_EVENT_LOST_CTRL,
-        Module::Gimbal::SET_MODE_RELAX
+        Module::Gimbal::SET_MODE_ABSOLUTE
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_TOP,
@@ -272,7 +278,11 @@ Robot::Sentry::Param param = {
       },
       Component::CMD::EventMapItem{
         Device::AI::AI_AUTOPATROL,
-        Module::Gimbal::SET_AUTOPATROL
+        Module::Gimbal::SET_MODE_ABSOLUTE
+      },
+      Component::CMD::EventMapItem{
+        Device::AI::AI_TURN,
+        Module::Gimbal::SET_AI_TURN
       }
     },
 
@@ -399,19 +409,19 @@ Robot::Sentry::Param param = {
         Module::Launcher::LAUNCHER_START_FIRE
       },
       Component::CMD::EventMapItem{
-        Device::DR16::KEY_L_PRESS,
-        Module::Launcher::LAUNCHER_START_FIRE
+        Device::AI::AIControlData::AI_FIND_TARGET,
+        Module::Launcher::CHANGE_FIRE_MODE_LOADED
       },
       Component::CMD::EventMapItem{
-        Device::AI::AI_DATA::AI_FIRE_COMMAND,
-        Module::Launcher::LAUNCHER_START_FIRE
-      },
-      Component::CMD::EventMapItem{
-        Device::AI::AI_DATA::AI_FIRE_COMMAND,
+        Device::AI::AIControlData::AI_FIRE_COMMAND,
           Module::Launcher::CHANGE_FIRE_MODE_LOADED
       },
+        Component::CMD::EventMapItem{
+        Device::AI::AIControlData::AI_FIRE_COMMAND,
+        Module::Launcher::LAUNCHER_START_FIRE
+      },
       Component::CMD::EventMapItem{
-        Device::AI::AI_DATA::AI_FIRE_COMMAND,
+        Device::AI::AIControlData::AI_FIRE_COMMAND,
         Module::Launcher::CHANGE_TRIG_MODE_SINGLE
       }
 
@@ -498,7 +508,7 @@ Robot::Sentry::Param param = {
         .id_control = M3508_M2006_CTRL_ID_EXTAND,
         .model = Device::RMMotor::MOTOR_M2006,
         .can = BSP_CAN_2,
-        .reverse = false,
+        .reverse = true,
       },
     },
 
@@ -508,17 +518,19 @@ Robot::Sentry::Param param = {
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
+          .reverse = true,
       },
       Device::RMMotor::Param{
           .id_feedback = 0x201,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
+          .reverse = true,
       },
     },
 
     .EVENT_MAP = {
-      Component::CMD::EventMapItem{
+     Component::CMD::EventMapItem{
         Component::CMD::CMD_EVENT_LOST_CTRL,
         Module::Launcher::CHANGE_FIRE_MODE_RELAX
       },
@@ -539,19 +551,19 @@ Robot::Sentry::Param param = {
         Module::Launcher::LAUNCHER_START_FIRE
       },
       Component::CMD::EventMapItem{
-        Device::DR16::KEY_L_PRESS,
-        Module::Launcher::LAUNCHER_START_FIRE
+        Device::AI::AIControlData::AI_FIND_TARGET,
+        Module::Launcher::CHANGE_FIRE_MODE_LOADED
       },
       Component::CMD::EventMapItem{
-        Device::AI::AI_DATA::AI_FIRE_COMMAND,
-        Module::Launcher::LAUNCHER_START_FIRE
-      },
-      Component::CMD::EventMapItem{
-        Device::AI::AI_DATA::AI_FIRE_COMMAND,
+        Device::AI::AIControlData::AI_FIRE_COMMAND,
           Module::Launcher::CHANGE_FIRE_MODE_LOADED
       },
+        Component::CMD::EventMapItem{
+        Device::AI::AIControlData::AI_FIRE_COMMAND,
+        Module::Launcher::LAUNCHER_START_FIRE
+      },
       Component::CMD::EventMapItem{
-        Device::AI::AI_DATA::AI_FIRE_COMMAND,
+        Device::AI::AIControlData::AI_FIRE_COMMAND,
         Module::Launcher::CHANGE_TRIG_MODE_SINGLE
       }
 

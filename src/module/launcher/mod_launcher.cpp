@@ -291,14 +291,14 @@ void Launcher::HeatLimit() {
     if (this->param_.model == LAUNCHER_MODEL_42MM) {
       this->heat_ctrl_.heat = this->ref_.power_heat.launcher_42_heat;
       this->heat_ctrl_.heat_limit = this->ref_.robot_status.shooter_heat_limit;
-      this->heat_ctrl_.speed_limit = 16;
+      this->heat_ctrl_.speed_limit = BULLET_SPEED_LIMIT_42MM;
       this->heat_ctrl_.cooling_rate =
           this->ref_.robot_status.shooter_cooling_value;
       this->heat_ctrl_.heat_increase = GAME_HEAT_INCREASE_42MM;
     } else if (this->param_.model == LAUNCHER_MODEL_17MM) {
       this->heat_ctrl_.heat = this->ref_.power_heat.launcher_id1_17_heat;
       this->heat_ctrl_.heat_limit = this->ref_.robot_status.shooter_heat_limit;
-      this->heat_ctrl_.speed_limit = 30;
+      this->heat_ctrl_.speed_limit = BULLET_SPEED_LIMIT_17MM;
       this->heat_ctrl_.cooling_rate =
           this->ref_.robot_status.shooter_cooling_value;
       this->heat_ctrl_.heat_increase = GAME_HEAT_INCREASE_17MM;

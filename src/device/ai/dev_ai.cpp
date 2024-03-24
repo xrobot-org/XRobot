@@ -136,8 +136,6 @@ bool AI::PackRef() {
 }
 
 bool AI::PackCMD() {
-  this->cmd_.gimbal.mode = Component::CMD::GIMBAL_ABSOLUTE_CTRL;
-
   memcpy(&(this->cmd_.gimbal.eulr), &(this->from_host_.data.gimbal),
          sizeof(this->cmd_.gimbal.eulr));
 
@@ -148,14 +146,14 @@ bool AI::PackCMD() {
   memcpy(&(this->cmd_.chassis), &(this->from_host_.data.chassis_move_vec),
          sizeof(this->from_host_.data.chassis_move_vec));
 
-  /* 判断控制权是否在AI，以保证AI的event不会干扰dr16的event */
+  memcpy(&(this->fire_command_), &(this->from_host_.data.notice),
+         sizeof(this->from_host_.data.notice));
+
+  /* 控制权在AI */
   if (Component::CMD::GetCtrlMode() == Component::CMD::CMD_AUTO_CTRL) {
-    /* AI在线的情况下，根据AI的数据来判定此时的状态 */
-    /* 如果收不到AI的数据，那么from_host的值就不会更新 */
     if (this->cmd_.online) {
-      this->ai_data_status_ = this->AI_ONLINE;
-      if (this->cmd_.gimbal.last_eulr.yaw == this->cmd_.gimbal.eulr.yaw &&
-          this->cmd_.gimbal.last_eulr.pit == this->cmd_.gimbal.eulr.pit) {
+      if (this->last_eulr_.yaw == this->cmd_.gimbal.eulr.yaw &&
+          this->last_eulr_.pit == this->cmd_.gimbal.eulr.pit) {
         this->ai_data_status_ = this->IS_INVALID_AMING_DATA;
       } else {
         this->ai_data_status_ = this->IS_USEFUL_AMING_DATA;
@@ -164,41 +162,29 @@ bool AI::PackCMD() {
       this->ai_data_status_ = this->AI_OFFLINE;
     }
 
-    /* AI离线，底盘RELEX模式 */
-    if (this->cmd_.online) {
-      this->event_.Active(AI_ONLINE);
-    } else {
-      this->event_.Active(AI_OFFLINE);
-    }
-
-    /*AI云台数据无效，采用巡逻模式 */
+    /*AI云台数据无效，巡逻模式 */
     if (this->ai_data_status_ == this->IS_INVALID_AMING_DATA) {
       this->event_.Active(AI_AUTOPATROL);
-      this->fire_command_ = 0;
     }
 
     /* AI转向 */
     /* 自瞄优先级高于转向 */
-    if (this->ai_data_status_ == IS_USEFUL_AMING_DATA &&
+    if (this->ai_data_status_ == IS_INVALID_AMING_DATA &&
         this->cmd_.chassis.z != 0) {
       this->event_.Active(AI_TURN);
-      this->cmd_.gimbal.eulr.yaw = this->cmd_.chassis.z;
     }
 
-    /*AI云台数据有效，采用自动瞄准模式，也就是云台ABSOLUTE模式 */
+    /*AI云台数据有效，自动瞄准模式 */
     if (this->ai_data_status_ == IS_USEFUL_AMING_DATA) {
       this->event_.Active(AI_FIND_TARGET);
-      this->fire_command_ = this->from_host_.data.notice;
-    }
-
-    /* AI开火发弹指令 */
-    if (this->ai_data_status_ == IS_USEFUL_AMING_DATA &&
-        this->fire_command_ != 0) {
-      this->event_.Active(AI_FIRE_COMMAND);
+      if (fire_command_ == AI_NOTICE_FIRE) {
+        this->event_.Active(AI_FIRE_COMMAND); /* AI开火发弹指令 */
+      }
     }
   }
 
-  this->cmd_.gimbal.last_eulr = this->cmd_.gimbal.eulr;
+  memcpy(&(this->last_eulr_), &(this->cmd_.gimbal.eulr),
+         sizeof(this->cmd_.gimbal.eulr));
 
   this->cmd_.ctrl_source = Component::CMD::CTRL_SOURCE_AI;
 
@@ -208,13 +194,13 @@ bool AI::PackCMD() {
 
 void AI::PraseRef() {
 #if RB_HERO
-  this->ref_.ball_speed = this->ref_.data_.robot_status.launcher_42_speed_limit;
+  this->ref_.ball_speed = BULLET_SPEED_LIMIT_42MM
 #else
-  // this->ref_.ball_speed =
-  //     this->raw_ref_.robot_status.launcher_id1_17_speed_limit;
+  this->ref_.ball_speed = BULLET_SPEED_LIMIT_17MM;
 #endif
 
-  this->ref_.max_hp = this->raw_ref_.robot_status.max_hp;
+                          this->ref_.max_hp =
+      this->raw_ref_.robot_status.max_hp;
 
   this->ref_.hp = this->raw_ref_.robot_status.remain_hp;
 

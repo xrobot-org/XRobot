@@ -32,16 +32,17 @@ class AI {
   } RefForAI;
 
   typedef enum {
-    AI_OFFLINE = 128,
-    AI_ONLINE,
     IS_INVALID_AMING_DATA,
     IS_USEFUL_AMING_DATA,
-    AI_FIND_TARGET,
-    AI_AUTOPATROL, /* 直线巡逻，不含转弯（可能也不需要单独写个模式） */
+    AI_OFFLINE,
+  } AIDataStatus;
+  typedef enum {
+    AI_FIND_TARGET = 128,
+    AI_AUTOPATROL,
     AI_TURN,
     AI_FIRE_COMMAND,
-  } AI_DATA;
-  /* 这个变量如何跟notice建立联系 */
+  } AIControlData;
+
   AI();
 
   bool StartRecv();
@@ -62,9 +63,10 @@ class AI {
 
  private:
   bool ref_updated_ = false;
+
   uint32_t last_online_time_ = 0;
 
-  Protocol_DownPackage_t from_host_{}; /* 从ai拿到的原始数据数组 */
+  Protocol_DownPackage_t from_host_{};
 
   uint8_t ai_data_status_;
 
@@ -81,11 +83,13 @@ class AI {
 
   System::Semaphore data_ready_;
 
-  Message::Event event_; /* 为了上面那个功能，尝试中 */
+  Message::Event event_;
 
   Message::Topic<Component::CMD::Data> cmd_tp_;
 
   Component::CMD::Data cmd_{};
+
+  Component::CMD::Eulr last_eulr_;
 
   Component::Type::Quaternion quat_{};
   Device::Referee::Data raw_ref_{};
