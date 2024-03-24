@@ -153,35 +153,47 @@ bool AI::PackCMD() {
     /* AI在线的情况下，根据AI的数据来判定此时的状态 */
     /* 如果收不到AI的数据，那么from_host的值就不会更新 */
     if (this->cmd_.online) {
+      this->ai_data_status_ = this->AI_ONLINE;
       if (this->cmd_.gimbal.last_eulr.yaw == this->cmd_.gimbal.eulr.yaw &&
           this->cmd_.gimbal.last_eulr.pit == this->cmd_.gimbal.eulr.pit) {
-        this->ai_data_status_ = this->IS_INVALID_DATA;
+        this->ai_data_status_ = this->IS_INVALID_AMING_DATA;
       } else {
-        this->ai_data_status_ = this->IS_USEFUL_DATA;
+        this->ai_data_status_ = this->IS_USEFUL_AMING_DATA;
       }
     } else {
       this->ai_data_status_ = this->AI_OFFLINE;
     }
 
     /* AI离线，底盘RELEX模式 */
-    if (!this->cmd_.online) {
+    if (this->cmd_.online) {
+      this->event_.Active(AI_ONLINE);
+    } else {
       this->event_.Active(AI_OFFLINE);
     }
 
-    /*AI数据无效，云台采用巡逻模式 */
-    if (this->ai_data_status_ == this->IS_INVALID_DATA) {
+    /*AI云台数据无效，采用巡逻模式 */
+    if (this->ai_data_status_ == this->IS_INVALID_AMING_DATA) {
       this->event_.Active(AI_AUTOPATROL);
       this->fire_command_ = 0;
     }
 
-    /*AI数据有效，采用自动瞄准模式，也就是云台ABSOLUTE模式 */
-    if (this->ai_data_status_ == IS_USEFUL_DATA) {
+    /* AI转向 */
+    /* 自瞄优先级高于转向 */
+    if (this->ai_data_status_ == IS_USEFUL_AMING_DATA &&
+        this->cmd_.chassis.z != 0) {
+      this->event_.Active(AI_TURN);
+      this->cmd_.gimbal.eulr.yaw = this->cmd_.chassis.z;
+    }
+
+    /*AI云台数据有效，采用自动瞄准模式，也就是云台ABSOLUTE模式 */
+    if (this->ai_data_status_ == IS_USEFUL_AMING_DATA) {
       this->event_.Active(AI_FIND_TARGET);
       this->fire_command_ = this->from_host_.data.notice;
     }
 
     /* AI开火发弹指令 */
-    if (this->ai_data_status_ == IS_USEFUL_DATA && this->fire_command_ != 0) {
+    if (this->ai_data_status_ == IS_USEFUL_AMING_DATA &&
+        this->fire_command_ != 0) {
       this->event_.Active(AI_FIRE_COMMAND);
     }
   }

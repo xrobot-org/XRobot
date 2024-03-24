@@ -15,6 +15,7 @@ Gimbal::Gimbal(Param& param, float control_freq)
       st_(param.st),
       yaw_actuator_(this->param_.yaw_actr, control_freq),
       pit_actuator_(this->param_.pit_actr, control_freq),
+      yaw_speed_actuator_(this->param_.yaw_speed_actr, control_freq),
       yaw_motor_(this->param_.yaw_motor, "Gimbal_Yaw"),
       pit_motor_(this->param_.pit_motor, "Gimbal_Pitch"),
       ctrl_lock_(true) {
@@ -35,6 +36,9 @@ Gimbal::Gimbal(Param& param, float control_freq)
         break;
       case SET_AUTOPATROL: /* 自动巡逻 */
         gimbal->SetMode(static_cast<Mode>(AUTOPATROL));
+        break;
+      case SET_AI_TURN: /* AI转向 */
+        gimbal->SetMode(static_cast<Mode>(TURN));
         break;
     }
     gimbal->ctrl_lock_.Post();
@@ -84,6 +88,7 @@ void Gimbal::UpdateFeedback() {
   switch (this->mode_) {
     case RELAX:
     case ABSOLUTE:
+    case TURN:
       this->yaw_ = this->yaw_motor_.GetAngle() - this->param_.mech_zero.yaw;
       break;
     case AUTOPATROL:
@@ -133,6 +138,7 @@ void Gimbal::Control() {
   /* 控制相关逻辑 */
   float yaw_out = 0;
   float pit_out = 0;
+  float autopatrol_yaw = 0;
   switch (this->mode_) {
     case RELAX:
       this->yaw_motor_.Relax();
@@ -154,7 +160,6 @@ void Gimbal::Control() {
 
     case AUTOPATROL:
       /* 以sin变化左右摆头 */
-      float autopatrol_yaw = 0;
       this->setpoint_.eulr_.yaw = this->eulr_.yaw; /* 巡逻中间值 */
       autopatrol_yaw = this->setpoint_.eulr_.yaw +
                        this->param_.patrol_range *
@@ -167,6 +172,13 @@ void Gimbal::Control() {
 
       this->yaw_motor_.Control(yaw_out);
       this->pit_motor_.Control(pit_out);
+      break;
+
+    case TURN: /* 转向的时候不进行摆头扫描动作 */
+      this->setpoint_.eulr_.yaw = this->eulr_.yaw;
+      yaw_out =
+          this->yaw_speed_actuator_.Calculate(0.0f, this->eulr_.yaw, this->dt_);
+      this->yaw_motor_.Control(yaw_out);
       break;
   }
 }

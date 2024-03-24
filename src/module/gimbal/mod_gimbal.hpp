@@ -22,6 +22,7 @@ class Gimbal {
     RELAX, /* 放松模式，电机不输出。一般情况云台初始化之后的模式 */
     ABSOLUTE, /* 绝对坐标系控制，控制在空间内的绝对姿态 */
     AUTOPATROL,
+    TURN,
   } Mode;
 
   enum {
@@ -38,6 +39,7 @@ class Gimbal {
     START_AUTO_AIM,
     STOP_AUTO_AIM,
     SET_AUTOPATROL,
+    SET_AI_TURN,
   } GimbalEvent;
 
   typedef struct {
@@ -46,6 +48,7 @@ class Gimbal {
 
     Component::PosActuator::Param yaw_actr;
     Component::PosActuator::Param pit_actr;
+    Component::SpeedActuator::Param yaw_speed_actr;
 
     Device::RMMotor::Param yaw_motor;
     Device::RMMotor::Param pit_motor;
@@ -60,7 +63,7 @@ class Gimbal {
       Component::Type::CycleValue pitch_min;
     } limit;
 
-    std::vector<Component::CMD::EventMapItem> EVENT_MAP;
+    const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
 
   } Param;
 
@@ -95,6 +98,7 @@ class Gimbal {
 
   Component::PosActuator yaw_actuator_;
   Component::PosActuator pit_actuator_;
+  Component::SpeedActuator yaw_speed_actuator_;
 
   Device::RMMotor yaw_motor_;
   Device::RMMotor pit_motor_;
@@ -106,7 +110,6 @@ class Gimbal {
   Message::Topic<float> yaw_tp_ = Message::Topic<float>("chassis_yaw");
 
   float yaw_;
-  // float yaw_virtual_; /* 用于标定哨兵小陀螺摆头巡航模式下的正方向 */
 
   Component::UI::String string_;
 

@@ -33,10 +33,12 @@ class AI {
 
   typedef enum {
     AI_OFFLINE = 128,
-    IS_INVALID_DATA,
-    IS_USEFUL_DATA,
+    AI_ONLINE,
+    IS_INVALID_AMING_DATA,
+    IS_USEFUL_AMING_DATA,
     AI_FIND_TARGET,
-    AI_AUTOPATROL,
+    AI_AUTOPATROL, /* 直线巡逻，不含转弯（可能也不需要单独写个模式） */
+    AI_TURN,
     AI_FIRE_COMMAND,
   } AI_DATA;
   /* 这个变量如何跟notice建立联系 */

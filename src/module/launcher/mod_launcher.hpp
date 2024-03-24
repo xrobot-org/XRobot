@@ -79,7 +79,7 @@ class Launcher {
     std::array<Device::RMMotor::Param, LAUNCHER_ACTR_TRIG_NUM> trig_motor;
     std::array<Device::RMMotor::Param, LAUNCHER_ACTR_FRIC_NUM> fric_motor;
 
-    std::vector<Component::CMD::EventMapItem> EVENT_MAP;
+    const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
   } Param;
 
   /* 热量控制 */
