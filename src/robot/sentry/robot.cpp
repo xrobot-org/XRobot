@@ -9,10 +9,10 @@
 /* clang-format off */
 Robot::Sentry::Param param = {
     .chassis={
-      .type = Component::Mixer::MECANUM,
+      .type = Component::Mixer::OMNICROSS,
 
       .follow_pid_param = {
-      .k = 0.5f,
+      .k = 0.8f,
       .p = 1.0f,
       .i = 0.0f,
       .d = 0.0f,
@@ -200,7 +200,7 @@ Robot::Sentry::Param param = {
     .pit_actr = {
         .speed = {
           /* GIMBAL_CTRL_PIT_OMEGA_IDX */
-          .k = 0.1f,
+          .k = 0.25f,
           .p = 1.0f,
           .i = 0.f,
           .d = 0.f,
@@ -212,10 +212,10 @@ Robot::Sentry::Param param = {
 
         .position = {
           /* GIMBAL_CTRL_PIT_ANGLE_IDX */
-          .k = 8.0f,
-          .p = 0.5f,
+          .k = 16.0f,
+          .p = 1.0f,
           .i = 0.0f,
-          .d = 0.8f,
+          .d = 0.0f,
           .i_limit = 0.0f,
           .out_limit = 10.0f,
           .d_cutoff_freq = -1.0f,
@@ -242,7 +242,7 @@ Robot::Sentry::Param param = {
     },
 
     .mech_zero = {
-      .yaw = 1.3f,
+      .yaw = 3.12f,
       .pit = 4.0f,
       .rol = 0.0f,
     },
@@ -258,7 +258,7 @@ Robot::Sentry::Param param = {
     .EVENT_MAP = {
       Component::CMD::EventMapItem{
         Component::CMD::CMD_EVENT_LOST_CTRL,
-        Module::Gimbal::SET_MODE_ABSOLUTE
+        Module::Gimbal::SET_MODE_RELAX
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_TOP,
@@ -278,7 +278,7 @@ Robot::Sentry::Param param = {
       },
       Component::CMD::EventMapItem{
         Device::AI::AI_AUTOPATROL,
-        Module::Gimbal::SET_MODE_ABSOLUTE
+        Module::Gimbal::SET_AUTOPATROL
       },
       Component::CMD::EventMapItem{
         Device::AI::AI_TURN,

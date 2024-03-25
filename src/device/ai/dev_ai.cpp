@@ -171,11 +171,15 @@ bool AI::PackCMD() {
     /* 自瞄优先级高于转向 */
     if (this->ai_data_status_ == IS_INVALID_AMING_DATA &&
         this->cmd_.chassis.z != 0) {
+      /* 将底盘wz复制给yaw,实现AI间接控制云台进而控制底盘 */
+      this->cmd_.gimbal.eulr.yaw = this->cmd_.chassis.z;
+      this->cmd_.gimbal.mode = Component::CMD::GIMBAL_RELATIVE_CTRL;
       this->event_.Active(AI_TURN);
     }
 
     /*AI云台数据有效，自动瞄准模式 */
     if (this->ai_data_status_ == IS_USEFUL_AMING_DATA) {
+      this->cmd_.gimbal.mode = Component::CMD::GIMBAL_ABSOLUTE_CTRL;
       this->event_.Active(AI_FIND_TARGET);
       if (fire_command_ == AI_NOTICE_FIRE) {
         this->event_.Active(AI_FIRE_COMMAND); /* AI开火发弹指令 */
