@@ -71,7 +71,7 @@ bool Mixer::Apply(Component::Type::MoveVector &move_vec, float *out) {
       break;
 
     case OMNICROSS:
-      ASSERT(this->len_ == 4);
+      XB_ASSERT(this->len_ == 4);
       out[0] = move_vec.vx - move_vec.vy + move_vec.wz;
       out[1] = move_vec.vx + move_vec.vy + move_vec.wz;
       out[2] = -move_vec.vx + move_vec.vy + move_vec.wz;
