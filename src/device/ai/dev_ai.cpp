@@ -146,31 +146,27 @@ bool AI::PackCMD() {
   memcpy(&(this->cmd_.chassis), &(this->from_host_.data.chassis_move_vec),
          sizeof(this->from_host_.data.chassis_move_vec));
 
-  memcpy(&(this->fire_command_), &(this->from_host_.data.notice),
-         sizeof(this->from_host_.data.notice));
+  this->notice_ = this->from_host_.data.notice;
 
   /* 控制权在AI */
   if (Component::CMD::GetCtrlMode() == Component::CMD::CMD_AUTO_CTRL) {
     if (this->cmd_.online) {
       if (this->last_eulr_.yaw == this->cmd_.gimbal.eulr.yaw &&
           this->last_eulr_.pit == this->cmd_.gimbal.eulr.pit) {
-        this->ai_data_status_ = this->IS_INVALID_AMING_DATA;
+        this->auto_aim_enable_ = false;
       } else {
-        this->ai_data_status_ = this->IS_USEFUL_AMING_DATA;
+        this->auto_aim_enable_ = true;
       }
-    } else {
-      this->ai_data_status_ = this->AI_OFFLINE;
     }
 
     /*AI云台数据无效，巡逻模式 */
-    if (this->ai_data_status_ == this->IS_INVALID_AMING_DATA) {
+    if (!this->auto_aim_enable_) {
       this->event_.Active(AI_AUTOPATROL);
     }
 
     /* AI转向 */
     /* 自瞄优先级高于转向 */
-    if (this->ai_data_status_ == IS_INVALID_AMING_DATA &&
-        this->cmd_.chassis.z != 0) {
+    if (!this->auto_aim_enable_ && this->cmd_.chassis.z != 0) {
       /* 将底盘wz复制给yaw,实现AI间接控制云台进而控制底盘 */
       this->cmd_.gimbal.eulr.yaw = this->cmd_.chassis.z;
       this->cmd_.gimbal.mode = Component::CMD::GIMBAL_RELATIVE_CTRL;
@@ -178,10 +174,10 @@ bool AI::PackCMD() {
     }
 
     /*AI云台数据有效，自动瞄准模式 */
-    if (this->ai_data_status_ == IS_USEFUL_AMING_DATA) {
+    if (this->auto_aim_enable_) {
       this->cmd_.gimbal.mode = Component::CMD::GIMBAL_ABSOLUTE_CTRL;
       this->event_.Active(AI_FIND_TARGET);
-      if (fire_command_ == AI_NOTICE_FIRE) {
+      if (notice_ == AI_NOTICE_FIRE) {
         this->event_.Active(AI_FIRE_COMMAND); /* AI开火发弹指令 */
       }
     }

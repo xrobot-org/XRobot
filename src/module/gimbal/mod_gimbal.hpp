@@ -20,9 +20,9 @@ class Gimbal {
   /* 云台运行模式 */
   typedef enum {
     RELAX, /* 放松模式，电机不输出。一般情况云台初始化之后的模式 */
-    ABSOLUTE, /* 绝对坐标系控制，控制在空间内的绝对姿态 */
-    AUTOPATROL,
-    TURN,
+    ABSOLUTE,   /* 绝对坐标系控制，控制在空间内的绝对姿态 */
+    AUTOPATROL, /* 自动巡逻模式，云台yaw轴按sin曲线进行扫描 */
+    TURN,       /* AI转弯模式，采用相对控制 */
   } Mode;
 
   enum {
@@ -87,7 +87,7 @@ class Gimbal {
 
   Param param_;
 
-  Gimbal::Mode mode_ = ABSOLUTE; /* 云台模式 */
+  Gimbal::Mode mode_ = RELAX; /* 云台模式 */
 
   struct {
     Component::Type::Eulr eulr_; /* 表示云台姿态的欧拉角 */

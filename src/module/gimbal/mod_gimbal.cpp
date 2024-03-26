@@ -66,7 +66,7 @@ Gimbal::Gimbal(Param& param, float control_freq)
       gimbal->Control();
       gimbal->ctrl_lock_.Post();
 
-      gimbal->yaw_tp_.Publish(gimbal->yaw_); /* 底盘用的yaw_ */
+      gimbal->yaw_tp_.Publish(gimbal->yaw_);
 
       /* 运行结束，等待下一次唤醒 */
       gimbal->thread_.SleepUntil(2, last_online_time);
@@ -82,7 +82,7 @@ Gimbal::Gimbal(Param& param, float control_freq)
 }
 
 void Gimbal::UpdateFeedback() {
-  this->pit_motor_.Update(); /* 电机*/
+  this->pit_motor_.Update();
   this->yaw_motor_.Update();
   switch (this->mode_) {
     case RELAX:
@@ -191,7 +191,6 @@ void Gimbal::SetMode(Mode mode) {
       this->setpoint_.eulr_.yaw = this->eulr_.yaw;
     }
   }
-
   this->mode_ = mode;
 }
 

@@ -90,7 +90,8 @@ Launcher::Launcher(Param& param, float control_freq)
     }
   };
 
-  this->thread_.Create(launcher_thread, this, "launcher_thread", 512,
+  this->thread_.Create(launcher_thread, this, "launcher_thread",
+                       MODULE_LAUNCHER_TASK_STACK_DEPTH,
                        System::Thread::MEDIUM);
   System::Timer::Create(this->DrawUIStatic, this, 2200);
 

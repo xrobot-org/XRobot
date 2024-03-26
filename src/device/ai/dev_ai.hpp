@@ -32,11 +32,6 @@ class AI {
   } RefForAI;
 
   typedef enum {
-    IS_INVALID_AMING_DATA,
-    IS_USEFUL_AMING_DATA,
-    AI_OFFLINE,
-  } AIDataStatus;
-  typedef enum {
     AI_FIND_TARGET = 128,
     AI_AUTOPATROL,
     AI_TURN,
@@ -68,9 +63,9 @@ class AI {
 
   Protocol_DownPackage_t from_host_{};
 
-  uint8_t ai_data_status_;
+  bool auto_aim_enable_;
 
-  uint8_t fire_command_;
+  uint8_t notice_;
 
   struct {
     RefereePckage ref{};
@@ -89,7 +84,7 @@ class AI {
 
   Component::CMD::Data cmd_{};
 
-  Component::CMD::Eulr last_eulr_;
+  Component::Type::Eulr last_eulr_;
 
   Component::Type::Quaternion quat_{};
   Device::Referee::Data raw_ref_{};
