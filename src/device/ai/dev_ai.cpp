@@ -16,7 +16,10 @@ static uint8_t txbuf[AI_LEN_TX_BUFF];
 
 using namespace Device;
 
-AI::AI() : data_ready_(false), cmd_tp_("cmd_ai") {
+AI::AI()
+    : data_ready_(false),
+      event_(Message::Event::FindEvent("cmd_event")),
+      cmd_tp_("cmd_ai") {
   auto rx_cplt_callback = [](void *arg) {
     AI *ai = static_cast<AI *>(arg);
     ai->data_ready_.Post();
@@ -69,10 +72,10 @@ bool AI::StartRecv() {
 }
 
 bool AI::PraseHost() {
-  if (Component::CRC16::Verify(rxbuf, sizeof(this->form_host_))) {
+  if (Component::CRC16::Verify(rxbuf, sizeof(this->from_host_))) {
     this->cmd_.online = true;
     this->last_online_time_ = bsp_time_get_ms();
-    memcpy(&(this->form_host_), rxbuf, sizeof(this->form_host_));
+    memcpy(&(this->from_host_), rxbuf, sizeof(this->from_host_));
     memset(rxbuf, 0, AI_LEN_RX_BUFF);
     return true;
   }
@@ -133,34 +136,71 @@ bool AI::PackRef() {
 }
 
 bool AI::PackCMD() {
-  this->cmd_.gimbal.mode = Component::CMD::GIMBAL_ABSOLUTE_CTRL;
-
-  memcpy(&(this->cmd_.gimbal.eulr), &(this->form_host_.data.gimbal),
+  memcpy(&(this->cmd_.gimbal.eulr), &(this->from_host_.data.gimbal),
          sizeof(this->cmd_.gimbal.eulr));
 
   memcpy(&(this->cmd_.ext.extern_channel),
-         &(this->form_host_.data.extern_channel),
+         &(this->from_host_.data.extern_channel),
          sizeof(this->cmd_.ext.extern_channel));
 
-  memcpy(&(this->cmd_.chassis), &(this->form_host_.data.chassis_move_vec),
-         sizeof(this->form_host_.data.chassis_move_vec));
+  memcpy(&(this->cmd_.chassis), &(this->from_host_.data.chassis_move_vec),
+         sizeof(this->from_host_.data.chassis_move_vec));
+
+  this->notice_ = this->from_host_.data.notice;
+
+  /* 控制权在AI */
+  if (Component::CMD::GetCtrlMode() == Component::CMD::CMD_AUTO_CTRL) {
+    if (this->cmd_.online) {
+      if (this->last_eulr_.yaw == this->cmd_.gimbal.eulr.yaw &&
+          this->last_eulr_.pit == this->cmd_.gimbal.eulr.pit) {
+        this->auto_aim_enable_ = false;
+      } else {
+        this->auto_aim_enable_ = true;
+      }
+    }
+
+    /*AI云台数据无效，巡逻模式 */
+    if (!this->auto_aim_enable_) {
+      this->event_.Active(AI_AUTOPATROL);
+    }
+
+    /* AI转向 */
+    /* 自瞄优先级高于转向 */
+    if (!this->auto_aim_enable_ && this->cmd_.chassis.z != 0) {
+      /* 将底盘wz复制给yaw,实现AI间接控制云台进而控制底盘 */
+      this->cmd_.gimbal.eulr.yaw = this->cmd_.chassis.z;
+      this->cmd_.gimbal.mode = Component::CMD::GIMBAL_RELATIVE_CTRL;
+      this->event_.Active(AI_TURN);
+    }
+
+    /*AI云台数据有效，自动瞄准模式 */
+    if (this->auto_aim_enable_) {
+      this->cmd_.gimbal.mode = Component::CMD::GIMBAL_ABSOLUTE_CTRL;
+      this->event_.Active(AI_FIND_TARGET);
+      if (notice_ == AI_NOTICE_FIRE) {
+        this->event_.Active(AI_FIRE_COMMAND); /* AI开火发弹指令 */
+      }
+    }
+  }
+
+  memcpy(&(this->last_eulr_), &(this->cmd_.gimbal.eulr),
+         sizeof(this->cmd_.gimbal.eulr));
 
   this->cmd_.ctrl_source = Component::CMD::CTRL_SOURCE_AI;
 
   this->cmd_tp_.Publish(this->cmd_);
-
   return true;
 }
 
 void AI::PraseRef() {
 #if RB_HERO
-  this->ref_.ball_speed = this->ref_.data_.robot_status.launcher_42_speed_limit;
+  this->ref_.ball_speed = BULLET_SPEED_LIMIT_42MM
 #else
-  this->ref_.ball_speed =
-      this->raw_ref_.robot_status.launcher_id1_17_speed_limit;
+  this->ref_.ball_speed = BULLET_SPEED_LIMIT_17MM;
 #endif
 
-  this->ref_.max_hp = this->raw_ref_.robot_status.max_hp;
+                          this->ref_.max_hp =
+      this->raw_ref_.robot_status.max_hp;
 
   this->ref_.hp = this->raw_ref_.robot_status.remain_hp;
 
@@ -171,9 +211,10 @@ void AI::PraseRef() {
   }
   this->ref_.status = this->raw_ref_.status;
 
-  if (this->raw_ref_.rfid.high_ground == 1) {
+  if (this->raw_ref_.rfid.own_highland_annular == 1 ||
+      this->raw_ref_.rfid.enemy_highland_annular == 1) {
     this->ref_.robot_buff |= AI_RFID_SNIP;
-  } else if (this->raw_ref_.rfid.energy_mech == 1) {
+  } else if (this->raw_ref_.rfid.own_energy_mech_activation == 1) {
     this->ref_.robot_buff |= AI_RFID_BUFF;
   } else {
     this->ref_.robot_buff = 0;

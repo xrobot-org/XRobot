@@ -25,11 +25,7 @@ class CMD {
   typedef Type::Vector3 ChassisCMD;
 
   typedef struct {
-    struct {
-      float yaw; /* 偏航角（Yaw angle） */
-      float pit; /* 俯仰角（Pitch angle） */
-      float rol; /* 翻滚角（Roll angle） */
-    } eulr;
+    Component::Type::Eulr eulr;
     GimbalCommandMode mode;
   } GimbalCMD;
 
@@ -100,6 +96,7 @@ class CMD {
   static void SetCtrlSource(ControlSource source) {
     self_->ctrl_source_ = source;
   }
+  static uint8_t GetCtrlMode() { return self_->mode_; }
 
  private:
   bool online_ = false;

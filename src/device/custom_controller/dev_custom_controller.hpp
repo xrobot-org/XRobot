@@ -6,7 +6,7 @@ class CustomController {
  public:
   CustomController();
 
-  typedef enum { NUM = 31 } ControllerEvent;
+  typedef enum { NUM = 144 } ControllerEvent;
 
   bool StartRecv();
 

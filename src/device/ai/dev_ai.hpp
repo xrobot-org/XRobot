@@ -31,6 +31,13 @@ class AI {
     uint32_t hp;
   } RefForAI;
 
+  typedef enum {
+    AI_FIND_TARGET = 128,
+    AI_AUTOPATROL,
+    AI_TURN,
+    AI_FIRE_COMMAND,
+  } AIControlData;
+
   AI();
 
   bool StartRecv();
@@ -51,9 +58,14 @@ class AI {
 
  private:
   bool ref_updated_ = false;
+
   uint32_t last_online_time_ = 0;
 
-  Protocol_DownPackage_t form_host_{};
+  Protocol_DownPackage_t from_host_{};
+
+  bool auto_aim_enable_;
+
+  uint8_t notice_;
 
   struct {
     RefereePckage ref{};
@@ -66,9 +78,13 @@ class AI {
 
   System::Semaphore data_ready_;
 
+  Message::Event event_;
+
   Message::Topic<Component::CMD::Data> cmd_tp_;
 
   Component::CMD::Data cmd_{};
+
+  Component::Type::Eulr last_eulr_;
 
   Component::Type::Quaternion quat_{};
   Device::Referee::Data raw_ref_{};

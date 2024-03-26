@@ -1,5 +1,6 @@
 /*
   裁判系统抽象。
+  2024_03_21 已修改。
 */
 
 #pragma once
@@ -10,6 +11,9 @@
 
 #define GAME_HEAT_INCREASE_42MM (100.0f) /* 每发射一颗42mm弹丸增加100热量 */
 #define GAME_HEAT_INCREASE_17MM (10.0f) /* 每发射一颗17mm弹丸增加10热量 */
+
+#define BULLET_SPEED_LIMIT_42MM (16.0)
+#define BULLET_SPEED_LIMIT_17MM (30.0)
 
 #define GAME_CHASSIS_MAX_POWER_WO_REF 40.0f /* 裁判系统离线时底盘最大功率 */
 #define REF_UI_BOX_UP_OFFSET (4)
@@ -50,11 +54,10 @@ class Referee {
   } Status;
 
   typedef enum {
+    /* DRONE空中机器人,DART飞镖,RADAR雷达 */
     REF_CMD_ID_GAME_STATUS = 0x0001,
     REF_CMD_ID_GAME_RESULT = 0x0002,
     REF_CMD_ID_GAME_ROBOT_HP = 0x0003,
-    REF_CMD_ID_DART_STATUS = 0x0004,
-    REF_CMD_ID_ICRA_ZONE_STATUS = 0x0005,
     REF_CMD_ID_FIELD_EVENTS = 0x0101,
     REF_CMD_ID_SUPPLY_ACTION = 0x0102,
     REF_CMD_ID_WARNING = 0x0104,
@@ -71,12 +74,16 @@ class Referee {
     REF_CMD_ID_DART_CLIENT = 0x020A,
     REF_CMD_ID_ROBOT_POS_TO_SENTRY = 0X020B,
     REF_CMD_ID_RADAR_MARK = 0X020C,
+    REF_CMD_ID_SENTRY_DECISION = 0x020D, /* 哨兵自主决策相关信息同步 */
+    REF_CMD_ID_RADAR_DECISION = 0x020E, /* 雷达自主决策相关信息同步 */
     REF_CMD_ID_INTER_STUDENT = 0x0301,
     REF_CMD_ID_INTER_STUDENT_CUSTOM = 0x0302,
     REF_CMD_ID_CLIENT_MAP = 0x0303,
     REF_CMD_ID_KEYBOARD_MOUSE = 0x0304,
+    REF_CMD_ID_MAP_ROBOT_DATA = 0x0305,  // 0x0305
     REF_CMD_ID_CUSTOM_KEYBOARD_MOUSE = 0X0306,
     REF_CMD_ID_SENTRY_POS_DATA = 0x0307,
+    REF_CMD_ID_ROBOT_POS_DATA = 0x0308, /* 选手端小地图接受机器人消息 */
   } CommandID;
 
   typedef enum {
@@ -98,11 +105,11 @@ class Referee {
     uint8_t game_progress : 4;
     uint16_t stage_remain_time;
     uint64_t sync_time_stamp;
-  } GameStatus;
+  } GameStatus; /* 0x0001 */
 
   typedef struct __attribute__((packed)) {
     uint8_t winner;
-  } GameResult;
+  } GameResult; /* 0x0002 */
 
   typedef struct __attribute__((packed)) {
     uint16_t red_1;
@@ -110,7 +117,6 @@ class Referee {
     uint16_t red_3;
     uint16_t red_4;
     uint16_t red_5;
-    uint16_t red_6;
     uint16_t red_7;
     uint16_t red_outpose;
     uint16_t red_base;
@@ -119,78 +125,60 @@ class Referee {
     uint16_t blue_3;
     uint16_t blue_4;
     uint16_t blue_5;
-    uint16_t blue_6;
     uint16_t blue_7;
     uint16_t blue_outpose;
     uint16_t blue_base;
-  } RobotHP;
-
+  } RobotHP; /* 0x0003 */
   typedef struct __attribute__((packed)) {
-    uint8_t dart_belong;
-    uint16_t stage_remain_time;
-  } DartStatus;
+    uint32_t blood_supply_before_status : 1;
+    uint32_t blood_supply_inner_status : 1;
+    uint32_t blood_supply_status_RMUL : 1;
+    uint32_t energy_mech_activation_status : 1;
+    uint32_t energy_mech_small_status : 1;
+    uint32_t energy_mech_big_status : 1;
+    uint32_t highland_annular : 2;
 
+    uint32_t highland_trapezium_1 : 2;
+    uint32_t highland_trapezium_2 : 2;
+    uint32_t virtual_shield_value : 8;
+    uint32_t last_hit_time : 9;
+    uint32_t last_hit_target : 2;
+    uint32_t res : 1;
+  } FieldEvents; /* 0x0101 */
   typedef struct __attribute__((packed)) {
-    uint8_t f1_status : 1;
-    uint8_t f1_buff_status : 3;
-    uint8_t f2_status : 1;
-    uint8_t f2_buff_status : 3;
-    uint8_t f3_status : 1;
-    uint8_t f3_buff_status : 3;
-    uint8_t f4_status : 1;
-    uint8_t f4_buff_status : 3;
-    uint8_t f5_status : 1;
-    uint8_t f5_buff_status : 3;
-    uint8_t f6_status : 1;
-    uint8_t f6_buff_status : 3;
-    uint16_t red1_bullet_remain;
-    uint16_t red2_bullet_remain;
-    uint16_t blue1_bullet_remain;
-    uint16_t blue2_bullet_remain;
-  } IcraZoneStatus;
-
-  typedef struct __attribute__((packed)) {
-    uint8_t copter_pad : 2;
-    uint8_t energy_mech : 2;
-    uint8_t virtual_shield : 1;
-    uint32_t res : 27;
-  } FieldEvents;
-
-  typedef struct __attribute__((packed)) {
-    uint8_t supply_id;
-    uint8_t robot_id;
+    uint8_t res;
+    uint8_t supply_robot_id;
     uint8_t supply_step;
     uint8_t supply_sum;
-  } SupplyAction;
+  } SupplyAction; /* 0x0102 */
 
   typedef struct __attribute__((packed)) {
     uint8_t level;
     uint8_t robot_id;
-  } Warning;
+    uint8_t count;
+  } Warning; /* 0x0104 */
 
   typedef struct __attribute__((packed)) {
     uint8_t countdown;
-  } DartCountdown;
+
+    uint16_t dart_last_target : 2;
+    uint16_t attack_count : 3;
+    uint16_t dart_target : 2;
+    uint16_t res : 9;
+  } DartCountdown; /* 0x0105 */
 
   typedef struct __attribute__((packed)) {
     uint8_t robot_id;
     uint8_t robot_level;
     uint16_t remain_hp;
     uint16_t max_hp;
-    uint16_t launcher_id1_17_cooling_rate;
-    uint16_t launcher_id1_17_heat_limit;
-    uint16_t launcher_id1_17_speed_limit;
-    uint16_t launcher_id2_17_cooling_rate;
-    uint16_t launcher_id2_17_heat_limit;
-    uint16_t launcher_id2_17_speed_limit;
-    uint16_t launcher_42_cooling_rate;
-    uint16_t launcher_42_heat_limit;
-    uint16_t launcher_42_speed_limit;
+    uint16_t shooter_cooling_value;
+    uint16_t shooter_heat_limit;
     uint16_t chassis_power_limit;
     uint8_t power_gimbal_output : 1;
     uint8_t power_chassis_output : 1;
     uint8_t power_launcher_output : 1;
-  } RobotStatus;
+  } RobotStatus; /* 0x0201 */
 
   typedef struct __attribute__((packed)) {
     uint16_t chassis_volt;
@@ -200,96 +188,74 @@ class Referee {
     uint16_t launcher_id1_17_heat;
     uint16_t launcher_id2_17_heat;
     uint16_t launcher_42_heat;
-  } PowerHeat;
+  } PowerHeat; /* 0x0202 */
 
   typedef struct __attribute__((packed)) {
     float x;
     float y;
-    float z;
-    float yaw;
-  } RobotPOS;
+    float angle;
+  } RobotPOS; /* 0x0203 */
 
   typedef struct __attribute__((packed)) {
-    uint8_t healing : 1;
-    uint8_t cooling_acc : 1;
-    uint8_t defense_buff : 1;
-    uint8_t attack_buff : 1;
-    uint8_t res : 4;
-  } RobotBuff;
+    uint8_t healing_buff;
+    uint8_t cooling_acc;
+    uint8_t defense_buff;
+    uint8_t vulnerability_buff;
+    uint16_t attack_buff;
+  } RobotBuff; /* 0x0204 */
 
   typedef struct __attribute__((packed)) {
+    uint8_t status;
     uint8_t attack_countdown;
-  } DroneEnergy;
+  } DroneEnergy; /* 0x0205 */
 
   typedef struct __attribute__((packed)) {
     uint8_t armor_id : 4;
     uint8_t damage_type : 4;
-  } RobotDamage;
+  } RobotDamage; /* 0x0206 */
 
   typedef struct __attribute__((packed)) {
     uint8_t bullet_type;
     uint8_t launcherer_id;
     uint8_t bullet_freq;
     float bullet_speed;
-  } LauncherData;
+  } LauncherData; /* 0x0207 */
 
   typedef struct __attribute__((packed)) {
     uint16_t bullet_17_remain;
     uint16_t bullet_42_remain;
     uint16_t coin_remain;
-  } BulletRemain;
+  } BulletRemain; /* 0x0208 */
 
   typedef struct __attribute__((packed)) {
-    uint8_t base : 1;
-    uint8_t high_ground : 1;
-    uint8_t energy_mech : 1;
-    uint8_t slope : 1;
-    uint8_t outpose : 1;
-    uint8_t resource : 1;
-    uint8_t healing_card : 1;
-    uint32_t res : 24;
-  } RFID;
+    uint32_t own_base : 1;
+    uint32_t own_highland_annular : 1;
+    uint32_t enemy_highland_annular : 1;
+    uint32_t own_trapezium_R3B3 : 1;
+    uint32_t enemy_trapezium_R3B3 : 1;
+    uint32_t own_trapezium_R4B4 : 1;
+    uint32_t enemy_trapezium_R4B4 : 1;
+    uint32_t own_energy_mech_activation : 1;
+    uint32_t own_slope_before : 1;
+    uint32_t own_slope_after : 1;
+    uint32_t enemy_slope_before : 1;
+    uint32_t enemy_slope_after : 1;
+    uint32_t own_outpose : 1;
+    uint32_t own_blood_supply : 1;
+    uint32_t own_sentry_area : 1;
+    uint32_t enemy_sentry_area : 1;
+    uint32_t own_resource : 1;
+    uint32_t enemy_resource : 1;
+    uint32_t own_exchange_area : 1;
+    uint32_t res : 13;
+  } RFID; /* 0x0209 */
 
   typedef struct __attribute__((packed)) {
-    uint8_t opening;
+    uint8_t opening_status;
     uint8_t target;
-    uint8_t target_changable_countdown;
-    uint8_t dart1_speed;
-    uint8_t dart2_speed;
-    uint8_t dart3_speed;
-    uint8_t dart4_speed;
-    uint16_t last_dart_launch_time;
+    uint16_t target_changable_countdown;
     uint16_t operator_cmd_launch_time;
-  } DartClient;
-
-  typedef struct __attribute__((packed)) {
-    float position_x;
-    float position_y;
-    float position_z;
-    uint8_t commd_keyboard;
-    uint16_t robot_id;
-  } ClientMap;
-
-  typedef struct __attribute__((packed)) {
-    int16_t mouse_x;
-    int16_t mouse_y;
-    int16_t mouse_wheel;
-    int8_t button_l;
-    int8_t button_r;
-    uint16_t keyboard_value;
-    uint16_t res;
-  } KeyboardMouse;
-  typedef struct __attribute__((packed)) {
-    uint8_t intention;
-    uint16_t start_position_x;
-    uint16_t start_position_y;
-    std::array<int8_t, 49> delta_x;
-    std::array<int8_t, 49> delta_y;
-  } SentryPosition;
-
-  typedef struct __attribute__((packed)) {
-    std::array<uint8_t, 30> data;
-  } CustomController;
+  } DartClient; /* 0x020A */
   typedef struct __attribute__((packed)) {
     float hero_x;
     float hero_y;
@@ -301,7 +267,7 @@ class Referee {
     float standard_4_y;
     float standard_5_x;
     float standard_5_y;
-  } RobotPosForSentry;
+  } RobotPosForSentry; /* 0x020B */
   typedef struct __attribute__((packed)) {
     uint8_t mark_hero_progress;
     uint8_t mark_engineer_progress;
@@ -309,15 +275,75 @@ class Referee {
     uint8_t mark_standard_4_progress;
     uint8_t mark_standard_5_progress;
     uint8_t mark_sentry_progress;
-  } RadarMarkProgress;
+  } RadarMarkProgress; /* 0x020C */
+  typedef struct __attribute__((packed)) {
+    uint32_t exchanged_bullet_num : 11;
+    uint32_t exchanged_bullet_times : 4;
+    uint32_t exchanged_blood_times : 4;
+    uint32_t res : 13;
+  } SentryInfo; /* 0x020D */
+  typedef struct __attribute__((packed)) {
+    uint8_t qualification : 2;
+    uint8_t enemy_status : 1;
+    uint8_t res : 5;
+  } RadarInfo; /* 0x020E */
+  typedef struct __attribute__((packed)) {
+    uint16_t data_cmd_id;
+    uint16_t sender_id;
+    uint16_t receiver_id;
+    std::array<int8_t, 113> user_data;
+    /*最大值113*/
+  } RobotInteractionData; /* 0x0301 */
+
+  typedef struct __attribute__((packed)) {
+    std::array<uint8_t, 30> data;
+  } CustomController; /* 0x0302 */
+
+  typedef struct __attribute__((packed)) {
+    float position_x;
+    float position_y;
+    uint8_t commd_keyboard;
+    uint8_t robot_id;
+    uint8_t cmd_source;
+  } ClientMap; /* 0x0303 */
+
+  typedef struct __attribute__((packed)) {
+    int16_t mouse_x;
+    int16_t mouse_y;
+    int16_t mouse_wheel;
+    int8_t button_l;
+    int8_t button_r;
+    uint16_t keyboard_value;
+    uint16_t res;
+  } KeyboardMouse; /* 0x0304 */
+  typedef struct __attribute__((packed)) {
+    uint16_t target_robot_id;
+    float target_position_x;
+    float target_position_y;
+  } MapRobotData; /* 0x0305 */
+
   typedef struct __attribute__((packed)) {
     uint16_t key_value;
     uint16_t x_position : 12;
     uint16_t mouse_left : 4;
     uint16_t y_position : 12;
     uint16_t mouse_right : 4;
-    uint16_t reserved;
-  } CustomKeyMouseData;
+    uint16_t res;
+  } CustomKeyMouseData; /* 0x0306 */
+
+  typedef struct __attribute__((packed)) {
+    uint8_t intention;
+    uint16_t start_position_x;
+    uint16_t start_position_y;
+    std::array<int8_t, 49> delta_x;
+    std::array<int8_t, 49> delta_y;
+    uint16_t sender_id;
+  } SentryPosition; /* 0x0307 */
+  typedef struct __attribute__((packed)) {
+    uint16_t sender_id;
+    uint16_t receiver_id;
+    std::array<int8_t, 30> user_data;
+  } RobotPosition; /* 0x0308 */
 
   typedef uint16_t Tail;
 
@@ -363,6 +389,8 @@ class Referee {
     REF_STDNT_CMD_ID_UI_DRAW7 = 0x0104,
     REF_STDNT_CMD_ID_UI_STR = 0x0110,
     REF_STDNT_CMD_ID_CUSTOM = 0x0200,
+    REF_STDNT_CMD_ID_SENTRY_COMMAND = 0X0120,
+    REF_STDNT_CMD_ID_RADAR_COMMAND = 0X0121,
   } CMDID;
 
   typedef struct __attribute__((packed)) {
@@ -373,32 +401,35 @@ class Referee {
 
   typedef struct {
     Status status;
-    GameStatus game_status;
-    GameResult game_result;
-    RobotHP game_robot_hp;
-    DartStatus dart_status;
-    IcraZoneStatus icra_zone;
-    FieldEvents field_event;
-    SupplyAction supply_action;
-    Warning warning;
-    DartCountdown dart_countdown;
-    RobotStatus robot_status;
-    PowerHeat power_heat;
-    RobotPOS robot_pos;
-    RobotBuff robot_buff;
-    DroneEnergy drone_energy;
-    RobotDamage robot_damage;
-    LauncherData launcher_data;
-    BulletRemain bullet_remain;
-    RFID rfid;
-    DartClient dart_client;
-    ClientMap client_map;
-    KeyboardMouse keyboard_mouse;
-    SentryPosition sentry_postion;
-    CustomController custom_controller;
-    RobotPosForSentry robot_pos_for_snetry;
-    RadarMarkProgress radar_mark_progress;
-    CustomKeyMouseData custom_key_mouse_data;
+    GameStatus game_status;                     /* 0x0001 */
+    GameResult game_result;                     /* 0x0002 */
+    RobotHP game_robot_hp;                      /* 0x0003 */
+    FieldEvents field_event;                    /* 0x0101 */
+    SupplyAction supply_action;                 /* 0x0102 */
+    Warning warning;                            /* 0x0104 */
+    DartCountdown dart_countdown;               /* 0x0105 */
+    RobotStatus robot_status;                   /* 0x0201 */
+    PowerHeat power_heat;                       /* 0x0202 */
+    RobotPOS robot_pos;                         /* 0x0203 */
+    RobotBuff robot_buff;                       /* 0x0204 */
+    DroneEnergy drone_energy;                   /* 0x0205 */
+    RobotDamage robot_damage;                   /* 0x0206 */
+    LauncherData launcher_data;                 /* 0x0207 */
+    BulletRemain bullet_remain;                 /* 0x0208 */
+    RFID rfid;                                  /* 0x0209 */
+    DartClient dart_client;                     /* 0x020A */
+    ClientMap client_map;                       /* 0x0303 */
+    KeyboardMouse keyboard_mouse;               /* 0x0304 */
+    SentryPosition sentry_postion;              /* 0x0307 */
+    RobotPosition robot_position;               /* 0x0308 */
+    CustomController custom_controller;         /* 0x0302 */
+    RobotPosForSentry robot_pos_for_snetry;     /* 0x020B */
+    RadarMarkProgress radar_mark_progress;      /* 0x020C */
+    SentryInfo sentry_decision;                 /* 0x020D */
+    RadarInfo radar_decision;                   /* 0x020E */
+    RobotInteractionData robot_ineraction_data; /* 0x0301 */
+    MapRobotData map_robot_data;                /* 0x0305 */
+    CustomKeyMouseData custom_key_mouse_data;   /* 0x0306 */
   } Data;
 
   typedef struct __attribute__((packed)) {

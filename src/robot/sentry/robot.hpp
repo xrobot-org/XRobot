@@ -18,7 +18,8 @@ class Sentry {
   typedef struct Param {
     Module::RMChassis::Param chassis;
     Module::Gimbal::Param gimbal;
-    Module::Launcher::Param launcher;
+    Module::Launcher::Param launcher1;
+    Module::Launcher::Param launcher2;
     Device::BMI088::Rotation bmi088_rot{};
     Device::Cap::Param cap{};
   } Param;
@@ -36,14 +37,15 @@ class Sentry {
 
   Module::RMChassis chassis_;
   Module::Gimbal gimbal_;
-  Module::Launcher launcher_;
-
+  Module::Launcher launcher1_;
+  Module::Launcher launcher2_;
   Sentry(Param& param, float control_freq)
       : cmd_(Component::CMD::CMD_AUTO_CTRL),
         bmi088_(param.bmi088_rot),
         cap_(param.cap),
         chassis_(param.chassis, control_freq),
         gimbal_(param.gimbal, control_freq),
-        launcher_(param.launcher, control_freq) {}
+        launcher1_(param.launcher1, control_freq),
+        launcher2_(param.launcher2, control_freq) {}
 };
 }  // namespace Robot

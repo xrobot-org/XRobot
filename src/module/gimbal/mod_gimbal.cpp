@@ -1,7 +1,3 @@
-/*
- * 云台模组
- */
-
 #include "mod_gimbal.hpp"
 
 #include <comp_cmd.hpp>
@@ -30,11 +26,18 @@ Gimbal::Gimbal(Param& param, float control_freq)
       case SET_MODE_ABSOLUTE:
         gimbal->SetMode(static_cast<Mode>(event));
         break;
+
       case START_AUTO_AIM:
         Component::CMD::SetCtrlSource(Component::CMD::CTRL_SOURCE_AI);
         break;
       case STOP_AUTO_AIM:
         Component::CMD::SetCtrlSource(Component::CMD::CTRL_SOURCE_RC);
+        break;
+      case SET_AUTOPATROL:
+        gimbal->SetMode(static_cast<Mode>(AUTOPATROL));
+        break;
+      case SET_AI_TURN:
+        gimbal->SetMode(static_cast<Mode>(TURN));
         break;
     }
     gimbal->ctrl_lock_.Post();
@@ -54,9 +57,9 @@ Gimbal::Gimbal(Param& param, float control_freq)
 
     while (1) {
       /* 读取控制指令、姿态、IMU、电机反馈 */
-      eulr_sub.DumpData(gimbal->eulr_);
-      gyro_sub.DumpData(gimbal->gyro_);
-      cmd_sub.DumpData(gimbal->cmd_);
+      eulr_sub.DumpData(gimbal->eulr_); /* imu */
+      gyro_sub.DumpData(gimbal->gyro_); /* imu */
+      cmd_sub.DumpData(gimbal->cmd_);   /* cmd */
 
       gimbal->ctrl_lock_.Wait(UINT32_MAX);
       gimbal->UpdateFeedback();
@@ -81,8 +84,19 @@ Gimbal::Gimbal(Param& param, float control_freq)
 void Gimbal::UpdateFeedback() {
   this->pit_motor_.Update();
   this->yaw_motor_.Update();
+  switch (this->mode_) {
+    case RELAX:
+    case ABSOLUTE:
+    case TURN:
+      this->yaw_ = this->yaw_motor_.GetAngle() - this->param_.mech_zero.yaw;
+      break;
+    case AUTOPATROL:
+      this->yaw_ = this->yaw_motor_.GetAngle() - this->param_.mech_zero.yaw -
+                   this->param_.patrol_range *
+                       sin(this->param_.patrol_omega * bsp_time_get_ms());
 
-  this->yaw_ = this->yaw_motor_.GetAngle() - this->param_.mech_zero.yaw;
+      break;
+  }
 }
 
 void Gimbal::Control() {
@@ -121,22 +135,42 @@ void Gimbal::Control() {
   this->setpoint_.eulr_.pit += gimbal_pit_cmd;
 
   /* 控制相关逻辑 */
+  float yaw_out = 0;
+  float pit_out = 0;
+  float autopatrol_yaw = 0;
   switch (this->mode_) {
     case RELAX:
       this->yaw_motor_.Relax();
       this->pit_motor_.Relax();
       break;
     case ABSOLUTE:
+    case TURN:
       /* Yaw轴角速度环参数计算 */
-      float yaw_out = this->yaw_actuator_.Calculate(
+      yaw_out = this->yaw_actuator_.Calculate(
           this->setpoint_.eulr_.yaw, this->gyro_.z, this->eulr_.yaw, this->dt_);
 
-      float pit_out = this->pit_actuator_.Calculate(
+      pit_out = this->pit_actuator_.Calculate(
           this->setpoint_.eulr_.pit, this->gyro_.x, this->eulr_.pit, this->dt_);
 
       this->yaw_motor_.Control(yaw_out);
       this->pit_motor_.Control(pit_out);
 
+      break;
+
+    case AUTOPATROL:
+      /* 以sin变化左右摆头 */
+      this->setpoint_.eulr_.yaw = this->eulr_.yaw; /* 巡逻中间值 */
+      autopatrol_yaw = this->setpoint_.eulr_.yaw +
+                       this->param_.patrol_range *
+                           sin(this->param_.patrol_omega * bsp_time_get_ms());
+
+      yaw_out = this->yaw_actuator_.Calculate(autopatrol_yaw, this->gyro_.z,
+                                              this->eulr_.yaw, this->dt_);
+      pit_out = this->pit_actuator_.Calculate(
+          this->setpoint_.eulr_.pit, this->gyro_.x, this->eulr_.pit, this->dt_);
+
+      this->yaw_motor_.Control(yaw_out);
+      this->pit_motor_.Control(pit_out);
       break;
   }
 }
@@ -157,7 +191,6 @@ void Gimbal::SetMode(Mode mode) {
       this->setpoint_.eulr_.yaw = this->eulr_.yaw;
     }
   }
-
   this->mode_ = mode;
 }
 
