@@ -1,0 +1,64 @@
+version: '1.0'
+name: pipeline-20240129_pub
+displayName: publish_firmware
+triggers:
+  trigger: auto
+  push:
+    branches:
+      precise:
+        - master
+stages:
+  - name: stage-4d07c82f
+    displayName: build
+    strategy: naturally
+    trigger: auto
+    executor: []
+    steps:
+      - step: execute@docker
+        name: build_and_publish
+        displayName: 基于镜像的脚本执行
+        certificate: ''
+        image: xrimage/build
+        command:
+          - python project.py init-cn
+          - export HOME=/root && python project.py build all all
+          - ''
+        artifacts:
+          - name: BUILD_ARTIFACT
+            path:
+              - ./firmware
+        notify: []
+        strategy:
+          retry: '0'
+  - name: stage-87689e6d
+    displayName: upload
+    strategy: naturally
+    trigger: auto
+    executor: []
+    steps:
+      - step: publish@general_artifacts
+        name: publish_general_artifacts
+        displayName: 上传制品
+        dependArtifact: BUILD_ARTIFACT
+        artifactName: firmware
+        notify: []
+        strategy:
+          retry: '0'
+  - name: stage-6f7f1ad3
+    displayName: publish
+    strategy: naturally
+    trigger: auto
+    executor: []
+    steps:
+      - step: publish@release_artifacts
+        name: publish_release_artifacts
+        displayName: 发布
+        dependArtifact: firmware
+        version: 1.0.0.0
+        autoIncrement: true
+        notify: []
+        strategy:
+          retry: '0'
+strategy:
+  cloneDepth: 1
+  blocking: true

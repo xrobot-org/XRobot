@@ -25,7 +25,7 @@ MMC5603::MMC5603(MMC5603::Rotation &rot)
 
   auto thread_fn = [](MMC5603 *mmc5603) {
     while (!mmc5603->Init()) {
-      System::Thread::Sleep(1);
+      System::Thread::Sleep(20);
     }
 
     uint32_t last_wakeup_time = bsp_time_get_ms();
@@ -43,34 +43,37 @@ MMC5603::MMC5603(MMC5603::Rotation &rot)
     }
   };
 
-  this->thread_.Create(thread_fn, this, "mmc5603_thread", 512,
+  this->thread_.Create(thread_fn, this, "mmc5603_thread", 4096,
                        System::Thread::REALTIME);
 }
 
 bool MMC5603::Init() {
   /* Check Product id */
 
-  if (bsp_i2c_mem_read_byte(BSP_I2C_MAGN, 0x60, 0x39) != 0x10) {
+  if (uint8_t product_id =
+          bsp_i2c_mem_read_byte(BSP_I2C_MAGN, 0x30, 0x39) != 0x10) {
+    OMLOG_ERROR("mmc5603 product id read error:%d", product_id);
+
     return false;
   }
 
   /* Reset */
-  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x60, 0x1B, 0x10);
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x30, 0x1B, 0x10);
 
   /* Set CTRL_1 bandwith */
-  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x60, 0x1C, 0x02);
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x30, 0x1C, 0x02);
   /* Set ODR sampling_rate */
-  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x60, 0x1A, 0xff);
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x30, 0x1A, 0xff);
   /* Set CTRL_0 Auto_SR_en Cmm_freq_en */
-  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x60, 0x1B, 0xa0);
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x30, 0x1B, 0xa0);
   /* Set CTRL_2 Cmm_en */
-  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x60, 0x1D, 0x10);
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x30, 0x1D, 0x10);
 
   return true;
 }
 
 void MMC5603::StartRecv() {
-  bsp_i2c_mem_read(BSP_I2C_MAGN, 0x60, 0x00, dma_buff, sizeof(dma_buff), false);
+  bsp_i2c_mem_read(BSP_I2C_MAGN, 0x30, 0x00, dma_buff, sizeof(dma_buff), false);
 }
 
 void MMC5603::PraseData() {
@@ -79,7 +82,7 @@ void MMC5603::PraseData() {
   raw[1] = dma_buff[7] | (dma_buff[3] << 4) | (dma_buff[2] << 12);
   raw[2] = dma_buff[8] | (dma_buff[5] << 4) | (dma_buff[4] << 12);
 
-  for (int &i : raw) {
+  for (int32_t &i : raw) {
     i -= (1 << 19);
   }
 
@@ -158,7 +161,7 @@ int MMC5603::CaliCMD(MMC5603 *mmc5603, int argc, char **argv) {
         V[4] = z;
         V[5] = 1.0;
         V[6] = -x * x;
-        //构建系数矩阵，并进行累加
+        // 构建系数矩阵，并进行累加
         for (uint8_t row = 0; row < MATRIX_SIZE; row++) {
           for (uint8_t column = 0; column < MATRIX_SIZE + 1; column++) {
             (*m_matrix)[row * (MATRIX_SIZE + 1) + column] += V[row] * V[column];
@@ -211,12 +214,12 @@ int MMC5603::CaliCMD(MMC5603 *mmc5603, int argc, char **argv) {
       float k = 0;
       /* 进行第k次的运算，主要是针对k行以下的行数把k列的元素都变成0 */
       for (uint8_t cnt = 0; cnt < MATRIX_SIZE; cnt++) {
-        //把k行依据k列的元素大小，进行排序
+        // 把k行依据k列的元素大小，进行排序
         move_biggest_element_to_top(cnt);
         if ((*m_matrix)[cnt * (MATRIX_SIZE + 1) + cnt] == 0) {
-          return -1;  //返回值表示错误
+          return -1;  // 返回值表示错误
         }
-        //把k行下面的行元素全部消成0，整行变化
+        // 把k行下面的行元素全部消成0，整行变化
         for (uint8_t row = cnt + 1; row < MATRIX_SIZE; row++) {
           k = -(*m_matrix)[row * (MATRIX_SIZE + 1) + cnt] /
               (*m_matrix)[cnt * (MATRIX_SIZE + 1) + cnt];

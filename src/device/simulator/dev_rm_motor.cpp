@@ -26,7 +26,7 @@ void RMMotor::Control(float output) {
       output *= T_6020;
       break;
     default:
-      ASSERT(false);
+      XB_ASSERT(false);
       return;
   }
 

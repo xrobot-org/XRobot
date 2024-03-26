@@ -170,7 +170,7 @@ void WheelLeg::Control() {
       break;
     }
     default:
-      ASSERT(false);
+      XB_ASSERT(false);
       return;
   }
 
@@ -231,7 +231,7 @@ void WheelLeg::Control() {
       }
       break;
     default:
-      ASSERT(false);
+      XB_ASSERT(false);
       return;
   }
 }

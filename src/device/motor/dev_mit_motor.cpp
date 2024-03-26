@@ -95,7 +95,7 @@ void MitMotor::Decode(Can::Pack &rx) {
 /* MIT电机协议只提供pd位置控制 */
 void MitMotor::Control(float output) {
   static_cast<void>(output);
-  ASSERT(false);
+  XB_ASSERT(false);
 }
 
 void MitMotor::SetCurrent(float current) {

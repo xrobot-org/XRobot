@@ -37,14 +37,14 @@ Mixer::Mixer(Mixer::Mode mode) : mode_(mode) {
       return;
 
     default:
-      ASSERT(0);
+      XB_ASSERT(false);
   }
 }
 
 bool Mixer::Apply(Component::Type::MoveVector &move_vec, float *out) {
   switch (this->mode_) {
     case MECANUM:
-      ASSERT(this->len_ == 4);
+      XB_ASSERT(this->len_ == 4);
       out[0] = move_vec.vx - move_vec.vy + move_vec.wz;
       out[1] = move_vec.vx + move_vec.vy + move_vec.wz;
       out[2] = -move_vec.vx + move_vec.vy + move_vec.wz;
@@ -52,7 +52,7 @@ bool Mixer::Apply(Component::Type::MoveVector &move_vec, float *out) {
       break;
 
     case PARLFIX4:
-      ASSERT(this->len_ == 4);
+      XB_ASSERT(this->len_ == 4);
       out[0] = -move_vec.vy;
       out[1] = move_vec.vy;
       out[2] = move_vec.vy;
@@ -60,13 +60,13 @@ bool Mixer::Apply(Component::Type::MoveVector &move_vec, float *out) {
       break;
 
     case PARLFIX2:
-      ASSERT(this->len_ == 2);
+      XB_ASSERT(this->len_ == 2);
       out[0] = -move_vec.vx;
       out[1] = move_vec.vx;
       break;
 
     case SINGLE:
-      ASSERT(this->len_ == 1);
+      XB_ASSERT(this->len_ == 1);
       out[0] = move_vec.vy;
       break;
 

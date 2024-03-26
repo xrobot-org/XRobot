@@ -282,7 +282,7 @@ class SteeringMech {
         error = stream.target_angle_.yaw - stream.angle_.yaw;
         break;
       default:
-        ASSERT(false);
+        XB_ASSERT(false);
         break;
     }
 
@@ -308,7 +308,7 @@ class SteeringMech {
         stream.angle_.yaw += setpoint;
         break;
       default:
-        ASSERT(false);
+        XB_ASSERT(false);
         break;
     }
 
@@ -329,7 +329,7 @@ class SteeringMech {
       PosStream& stream, SteeringMech<MotorType, LimitType, Num>& mech_1,
       SteeringMech<MotorType, LimitType, Num>& mech_2) {
     if (mech_1.param_.axis != mech_2.param_.axis) {
-      ASSERT(false);
+      XB_ASSERT(false);
     }
 
     if (!mech_1.Ready() || !mech_2.Ready()) {
@@ -351,7 +351,7 @@ class SteeringMech {
         error = stream.target_angle_.yaw - stream.angle_.yaw;
         break;
       default:
-        ASSERT(false);
+        XB_ASSERT(false);
         break;
     }
 
@@ -427,7 +427,7 @@ class SteeringMech {
         break;
       }
       default:
-        ASSERT(false);
+        XB_ASSERT(false);
         break;
     }
 
@@ -558,7 +558,7 @@ class LinearMech {
         error = stream.target_pos_.z - stream.pos_.z;
         break;
       default:
-        ASSERT(false);
+        XB_ASSERT(false);
         break;
     }
 
@@ -583,7 +583,7 @@ class LinearMech {
         stream.pos_.z += setpoint;
         break;
       default:
-        ASSERT(false);
+        XB_ASSERT(false);
         break;
     }
 

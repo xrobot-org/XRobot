@@ -17,7 +17,7 @@ class TopicShareServerUart {
 
   TopicShareServerUart(Param& param)
       : param_(param), topic_(Message::Topic<Data>::Find(param_.topic_name)) {
-    ASSERT(topic_.om_topic_);
+    XB_ASSERT(topic_.om_topic_);
 
     auto task_fn = [](TopicShareServerUart* share) {
       share->topic_.PackData(share->data_);

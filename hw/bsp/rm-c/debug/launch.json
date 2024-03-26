@@ -17,5 +17,9 @@
             ]
         }
     ],
-    "version": "0.2.0"
+    "version": "0.2.0",
+    "liveWatch": {
+        "enabled": true,
+        "samplesPerSecond": 4
+    }
 }

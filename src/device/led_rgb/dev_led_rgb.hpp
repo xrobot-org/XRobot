@@ -6,21 +6,15 @@ namespace Device {
 class RGB {
  public:
   typedef enum {
-    ON,
-    OFF,
-    TAGGLE,
-  } Status;
-
-  typedef enum {
     BLUE,
     RED,
     GREEN,
     CHANNEL_NUMBER,
   } Channel;
 
-  RGB();
+  RGB(bool auto_start = true);
 
-  bool Set(Channel ch, Status status, float duty_cycle);
+  bool Set(Channel ch, float duty_cycle);
 
  private:
   System::Thread thread_;

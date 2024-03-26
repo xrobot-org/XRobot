@@ -28,7 +28,7 @@ DartLauncher::DartLauncher(DartLauncher::Param& param, float control_freq)
           return;
         } else {
           dart->last_reload_time_ = bsp_time_get_ms();
-          dart->setpoint_.reload += 0.25;
+          dart->setpoint_.reload += 0.013;
           clampf(&dart->setpoint_.reload, 0, 1.0);
         }
         dart->setpoint_.fric_speed = 0;
@@ -38,12 +38,12 @@ DartLauncher::DartLauncher(DartLauncher::Param& param, float control_freq)
         dart->setpoint_.fric_speed = 0;
         break;
       case ON:
-        dart->setpoint_.rod = 0.9f;
+        dart->setpoint_.rod = 1.0f;
         dart->setpoint_.fric_speed = 1.0f;
         break;
       case OFF:
         dart->setpoint_.fric_speed = 0;
-        dart->setpoint_.rod = 0.1f;
+        dart->setpoint_.rod = 0.0f;
         break;
     }
   };

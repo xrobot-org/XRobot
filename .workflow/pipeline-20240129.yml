@@ -1,0 +1,35 @@
+version: '1.0'
+name: pipeline-20240129
+displayName: build-test
+triggers:
+  trigger: auto
+  push:
+    branches:
+      precise:
+        - dev
+  pr:
+    branches:
+      prefix:
+        - ''
+stages:
+  - name: stage-01a96b0b
+    displayName: build
+    strategy: naturally
+    trigger: auto
+    executor:
+      - jiu-xiao
+    steps:
+      - step: execute@docker
+        name: execute_by_docker
+        displayName: 基于镜像的脚本执行
+        certificate: ''
+        image: xrimage/build
+        command:
+          - python project.py init-cn
+          - export HOME=/root && python project.py build all all
+        notify: []
+        strategy:
+          retry: '0'
+strategy:
+  cloneDepth: 1
+  blocking: true

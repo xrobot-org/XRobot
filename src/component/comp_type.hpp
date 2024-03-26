@@ -25,6 +25,8 @@ namespace Component {
 namespace Type {
 class CycleValue {
  public:
+  CycleValue& operator=(const CycleValue&) = default;
+
   static float Calculate(float value) {
     value = fmodf(value, M_2PI);
     if (value < 0) {

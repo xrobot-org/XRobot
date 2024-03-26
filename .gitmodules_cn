@@ -21,7 +21,7 @@
 	url = https://gitee.com/Jiu-xiao/OneMessageCPP.git
 [submodule "lib/cmsis_svd"]
 	path = lib/cmsis_svd
-	url = https://gitee.com/x-robot/cmsis-svd.git
+	url = https://gitee.com/x-robot/cmsis-svd-data.git
 [submodule "hw/mcu/st/stm32f1xx_hal_driver"]
 	path = hw/mcu/st/stm32f1xx_hal_driver
 	url = https://gitee.com/x-robot/stm32f1xx_hal_driver.git
@@ -61,3 +61,6 @@
 [submodule "hw/mcu/st/cmsis_device_g0"]
 	path = hw/mcu/st/cmsis_device_g0
 	url = https://gitee.com/x-robot/cmsis_device_g0.git
+[submodule "lib/eigen"]
+	path = lib/eigen
+	url = https://gitee.com/x-robot/eigen.git
