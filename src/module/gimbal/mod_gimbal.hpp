@@ -60,6 +60,8 @@ class Gimbal {
     struct {
       Component::Type::CycleValue pitch_max;
       Component::Type::CycleValue pitch_min;
+      Component::Type::CycleValue yaw_max;
+      Component::Type::CycleValue yaw_min;
     } limit;
 
     const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
