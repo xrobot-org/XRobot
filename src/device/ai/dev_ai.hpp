@@ -32,7 +32,8 @@ class AI {
   } RefForAI;
 
   typedef enum {
-    AI_FIND_TARGET = 128,
+    AI_OFFLINE = 128,
+    AI_FIND_TARGET,
     AI_AUTOPATROL,
     AI_TURN,
     AI_FIRE_COMMAND,
@@ -62,8 +63,6 @@ class AI {
   uint32_t last_online_time_ = 0;
 
   Protocol_DownPackage_t from_host_{};
-
-  bool auto_aim_enable_;
 
   uint8_t notice_;
 

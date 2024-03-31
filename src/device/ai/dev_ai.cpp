@@ -148,47 +148,37 @@ bool AI::PackCMD() {
 
   this->notice_ = this->from_host_.data.notice;
 
-  /* 控制权在AI */
-  if (Component::CMD::GetCtrlMode() == Component::CMD::CMD_AUTO_CTRL) {
-    if (this->cmd_.online) {
-      if (this->last_eulr_.yaw == this->cmd_.gimbal.eulr.yaw &&
-          this->last_eulr_.pit == this->cmd_.gimbal.eulr.pit) {
-        this->auto_aim_enable_ = false;
-      } else {
-        this->auto_aim_enable_ = true;
-      }
-    }
-
-    /*AI云台数据无效，巡逻模式 */
-    if (!this->auto_aim_enable_) {
-      this->event_.Active(AI_AUTOPATROL);
-    }
-
-    /* AI转向 */
-    /* 自瞄优先级高于转向 */
-    if (!this->auto_aim_enable_ && this->cmd_.chassis.z != 0) {
-      /* 将底盘wz复制给yaw,实现AI间接控制云台进而控制底盘 */
-      this->cmd_.gimbal.eulr.yaw = this->cmd_.chassis.z;
-      this->cmd_.gimbal.mode = Component::CMD::GIMBAL_RELATIVE_CTRL;
-      this->event_.Active(AI_TURN);
-    }
-
-    /*AI云台数据有效，自动瞄准模式 */
-    if (this->auto_aim_enable_) {
-      this->cmd_.gimbal.mode = Component::CMD::GIMBAL_ABSOLUTE_CTRL;
-      this->event_.Active(AI_FIND_TARGET);
-      if (notice_ == AI_NOTICE_FIRE) {
-        this->event_.Active(AI_FIRE_COMMAND); /* AI开火发弹指令 */
-      }
-    }
-  }
-
   memcpy(&(this->last_eulr_), &(this->cmd_.gimbal.eulr),
          sizeof(this->cmd_.gimbal.eulr));
 
   this->cmd_.ctrl_source = Component::CMD::CTRL_SOURCE_AI;
 
   this->cmd_tp_.Publish(this->cmd_);
+
+  if (!Component::CMD::Online()) {
+    return false;
+  }
+
+  /* 控制权在AI */
+  if (Component::CMD::GetCtrlSource() == Component::CMD::CTRL_SOURCE_AI) {
+    if (this->cmd_.online) {
+      if (this->notice_ == AI_NOTICE_AUTO_AIM) {
+        this->cmd_.gimbal.mode = Component::CMD::GIMBAL_ABSOLUTE_CTRL;
+        this->event_.Active(AI_FIND_TARGET);
+      } else if (this->notice_ == AI_NOTICE_FIRE) {
+        this->cmd_.gimbal.mode = Component::CMD::GIMBAL_ABSOLUTE_CTRL;
+        this->event_.Active(AI_FIND_TARGET);
+        this->event_.Active(AI_FIRE_COMMAND);
+      } else {
+        this->event_.Active(AI_AUTOPATROL);
+      }
+    } else {
+      this->event_.Active(AI_OFFLINE);
+    }
+  }
+
+  this->notice_ = 0;
+
   return true;
 }
 

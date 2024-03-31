@@ -42,8 +42,10 @@ Launcher::Launcher(Param& param, float control_freq)
         break;
 
       case CHANGE_TRIG_MODE_SINGLE:
+        launcher->SetTrigMode(static_cast<TrigMode>(SINGLE));
+        break;
       case CHANGE_TRIG_MODE_BURST:
-        launcher->SetTrigMode(static_cast<TrigMode>(event));
+        launcher->SetTrigMode(static_cast<TrigMode>(CONTINUED));
         break;
       case CHANGE_TRIG_MODE:
         launcher->SetTrigMode(static_cast<TrigMode>(

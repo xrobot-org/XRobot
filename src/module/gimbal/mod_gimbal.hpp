@@ -22,7 +22,6 @@ class Gimbal {
     RELAX, /* 放松模式，电机不输出。一般情况云台初始化之后的模式 */
     ABSOLUTE,   /* 绝对坐标系控制，控制在空间内的绝对姿态 */
     AUTOPATROL, /* 自动巡逻模式，云台yaw轴按sin曲线进行扫描 */
-    TURN,       /* AI转弯模式，采用相对控制 */
   } Mode;
 
   enum {
@@ -39,7 +38,6 @@ class Gimbal {
     START_AUTO_AIM,
     STOP_AUTO_AIM,
     SET_AUTOPATROL,
-    SET_AI_TURN,
   } GimbalEvent;
 
   typedef struct {
@@ -56,6 +54,7 @@ class Gimbal {
 
     float patrol_range;
     float patrol_omega;
+    float patrol_hight;
 
     struct {
       Component::Type::CycleValue pitch_max;
@@ -86,6 +85,8 @@ class Gimbal {
   uint64_t now_ = 0;
 
   float dt_ = 0.0f;
+
+  uint32_t autopatrol_start_time_ = 0;
 
   Param param_;
 

@@ -100,7 +100,9 @@ class CMD {
   static void SetCtrlSource(ControlSource source) {
     self_->ctrl_source_ = source;
   }
-  static uint8_t GetCtrlMode() { return self_->mode_; }
+  static ControlSource GetCtrlSource() { return self_->ctrl_source_; }
+
+  static bool Online() { return self_->online_; }
 
  private:
   bool online_ = false;
