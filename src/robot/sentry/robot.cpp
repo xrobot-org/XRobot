@@ -33,11 +33,15 @@ Robot::Sentry::Param param = {
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_L_POS_MID,/* 模拟找到目标模式，云台绝对 */
-        Module::RMChassis::SET_MODE_ROTOR,
+        Module::RMChassis::SET_MODE_FOLLOW,
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_L_POS_BOT,/* 模拟未找到目标，巡逻模式 */
         Module::RMChassis::SET_MODE_ROTOR,
+      },
+      Component::CMD::EventMapItem{
+        Device::AI::AI_OFFLINE,
+        Module::RMChassis::SET_MODE_ROTOR
       },
       Component::CMD::EventMapItem{
         Device::AI::AI_FIND_TARGET,
@@ -171,9 +175,9 @@ Robot::Sentry::Param param = {
     .yaw_actr = {
       .speed = {
           /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-          .k = 0.6f,
-          .p = 1.f,
-          .i = 3.f,
+          .k = 0.7f,
+          .p = 1.0f,
+          .i = 0.3f,
           .d = 0.f,
           .i_limit = 0.2f,
           .out_limit = 1.0f,
@@ -183,12 +187,12 @@ Robot::Sentry::Param param = {
 
         .position = {
           /* GIMBAL_CTRL_YAW_ANGLE_IDX */
-          .k = 5.0f,
+          .k = 20.0f,
           .p = 1.0f,
           .i = 0.0f,
-          .d = 1.4f,
+          .d = 0.0f,
           .i_limit = 0.0f,
-          .out_limit = 10.0f,
+          .out_limit = 20.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = true,
         },
@@ -200,7 +204,7 @@ Robot::Sentry::Param param = {
     .pit_actr = {
         .speed = {
           /* GIMBAL_CTRL_PIT_OMEGA_IDX */
-          .k = 0.25f,
+          .k = 0.2f,
           .p = 1.0f,
           .i = 0.f,
           .d = 0.f,
@@ -212,7 +216,7 @@ Robot::Sentry::Param param = {
 
         .position = {
           /* GIMBAL_CTRL_PIT_ANGLE_IDX */
-          .k = 16.0f,
+          .k = 20.0f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.0f,
@@ -243,16 +247,17 @@ Robot::Sentry::Param param = {
 
     .mech_zero = {
       .yaw = 3.12f,
-      .pit = 4.0f,
+      .pit = 0.50f,
       .rol = 0.0f,
     },
 
-    .patrol_range = 0.25,
-    .patrol_omega = 0.005,
+    .patrol_range = 0.4f,
+    .patrol_omega = 2.0f,
+    .patrol_hight = 6.0,
 
     .limit = {
-      .pitch_max = 0.57f,
-      .pitch_min = 0.23f,
+      .pitch_max = 0.60f,
+      .pitch_min = 0.19f,
     },
 
     .EVENT_MAP = {
@@ -273,16 +278,16 @@ Robot::Sentry::Param param = {
         Module::Gimbal::SET_AUTOPATROL
       },
       Component::CMD::EventMapItem{
+        Device::AI::AI_OFFLINE,
+        Module::Gimbal::SET_AUTOPATROL
+      },
+      Component::CMD::EventMapItem{
         Device::AI::AI_FIND_TARGET,
         Module::Gimbal::SET_MODE_ABSOLUTE
       },
       Component::CMD::EventMapItem{
         Device::AI::AI_AUTOPATROL,
         Module::Gimbal::SET_AUTOPATROL
-      },
-      Component::CMD::EventMapItem{
-        Device::AI::AI_TURN,
-        Module::Gimbal::SET_AI_TURN
       }
     },
 
@@ -409,12 +414,8 @@ Robot::Sentry::Param param = {
         Module::Launcher::LAUNCHER_START_FIRE
       },
       Component::CMD::EventMapItem{
-        Device::AI::AIControlData::AI_FIND_TARGET,
-        Module::Launcher::CHANGE_FIRE_MODE_LOADED
-      },
-      Component::CMD::EventMapItem{
-        Device::AI::AIControlData::AI_FIRE_COMMAND,
-          Module::Launcher::CHANGE_FIRE_MODE_LOADED
+        Device::AI::AIControlData::AI_AUTOPATROL,
+        Module::Launcher::CHANGE_FIRE_MODE_RELAX
       },
         Component::CMD::EventMapItem{
         Device::AI::AIControlData::AI_FIRE_COMMAND,
@@ -551,12 +552,8 @@ Robot::Sentry::Param param = {
         Module::Launcher::LAUNCHER_START_FIRE
       },
       Component::CMD::EventMapItem{
-        Device::AI::AIControlData::AI_FIND_TARGET,
-        Module::Launcher::CHANGE_FIRE_MODE_LOADED
-      },
-      Component::CMD::EventMapItem{
-        Device::AI::AIControlData::AI_FIRE_COMMAND,
-          Module::Launcher::CHANGE_FIRE_MODE_LOADED
+        Device::AI::AIControlData::AI_AUTOPATROL,
+        Module::Launcher::CHANGE_FIRE_MODE_RELAX
       },
         Component::CMD::EventMapItem{
         Device::AI::AIControlData::AI_FIRE_COMMAND,

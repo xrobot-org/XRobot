@@ -83,7 +83,11 @@ class AI {
 
   Component::CMD::Data cmd_{};
 
-  Component::Type::Eulr last_eulr_;
+  struct {
+    float yaw; /* 偏航角（Yaw angle） */
+    float pit; /* 俯仰角（Pitch angle） */
+    float rol; /* 翻滚角（Roll angle） */
+  } last_eulr_;
 
   Component::Type::Quaternion quat_{};
   Device::Referee::Data raw_ref_{};
