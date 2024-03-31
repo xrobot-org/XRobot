@@ -32,7 +32,8 @@ class AI {
   } RefForAI;
 
   typedef enum {
-    AI_FIND_TARGET = 128,
+    AI_OFFLINE = 128,
+    AI_FIND_TARGET,
     AI_AUTOPATROL,
     AI_TURN,
     AI_FIRE_COMMAND,
@@ -63,8 +64,6 @@ class AI {
 
   Protocol_DownPackage_t from_host_{};
 
-  bool auto_aim_enable_;
-
   uint8_t notice_;
 
   struct {
@@ -84,7 +83,11 @@ class AI {
 
   Component::CMD::Data cmd_{};
 
-  Component::Type::Eulr last_eulr_;
+  struct {
+    float yaw; /* 偏航角（Yaw angle） */
+    float pit; /* 俯仰角（Pitch angle） */
+    float rol; /* 翻滚角（Roll angle） */
+  } last_eulr_;
 
   Component::Type::Quaternion quat_{};
   Device::Referee::Data raw_ref_{};

@@ -36,9 +36,6 @@ Gimbal::Gimbal(Param& param, float control_freq)
       case SET_AUTOPATROL:
         gimbal->SetMode(static_cast<Mode>(AUTOPATROL));
         break;
-      case SET_AI_TURN:
-        gimbal->SetMode(static_cast<Mode>(TURN));
-        break;
     }
     gimbal->ctrl_lock_.Post();
   };
@@ -87,13 +84,15 @@ void Gimbal::UpdateFeedback() {
   switch (this->mode_) {
     case RELAX:
     case ABSOLUTE:
-    case TURN:
       this->yaw_ = this->yaw_motor_.GetAngle() - this->param_.mech_zero.yaw;
       break;
     case AUTOPATROL:
       this->yaw_ = this->yaw_motor_.GetAngle() - this->param_.mech_zero.yaw -
                    this->param_.patrol_range *
-                       sin(this->param_.patrol_omega * bsp_time_get_ms());
+                       sinf(this->param_.patrol_omega *
+                            static_cast<float>(bsp_time_get_ms() -
+                                               autopatrol_start_time_) /
+                            1000.0f);
 
       break;
   }
@@ -157,7 +156,6 @@ void Gimbal::Control() {
       this->pit_motor_.Relax();
       break;
     case ABSOLUTE:
-    case TURN:
       /* Yaw轴角速度环参数计算 */
       yaw_out = this->yaw_actuator_.Calculate(
           this->setpoint_.eulr_.yaw, this->gyro_.z, this->eulr_.yaw, this->dt_);
@@ -172,15 +170,17 @@ void Gimbal::Control() {
 
     case AUTOPATROL:
       /* 以sin变化左右摆头 */
-      this->setpoint_.eulr_.yaw = this->eulr_.yaw; /* 巡逻中间值 */
       autopatrol_yaw = this->setpoint_.eulr_.yaw +
                        this->param_.patrol_range *
-                           sin(this->param_.patrol_omega * bsp_time_get_ms());
+                           sinf(this->param_.patrol_omega *
+                                static_cast<float>(bsp_time_get_ms() -
+                                                   autopatrol_start_time_) /
+                                1000.0f);
 
       yaw_out = this->yaw_actuator_.Calculate(autopatrol_yaw, this->gyro_.z,
                                               this->eulr_.yaw, this->dt_);
       pit_out = this->pit_actuator_.Calculate(
-          this->setpoint_.eulr_.pit, this->gyro_.x, this->eulr_.pit, this->dt_);
+          this->param_.patrol_hight, this->gyro_.x, this->eulr_.pit, this->dt_);
 
       this->yaw_motor_.Control(yaw_out);
       this->pit_motor_.Control(pit_out);
@@ -204,6 +204,11 @@ void Gimbal::SetMode(Mode mode) {
       this->setpoint_.eulr_.yaw = this->eulr_.yaw;
     }
   }
+
+  if (mode == AUTOPATROL) {
+    autopatrol_start_time_ = bsp_time_get_ms();
+  }
+
   this->mode_ = mode;
 }
 

@@ -45,7 +45,7 @@ CMD::CMD(Mode mode)
     if (!cmd->data_[CTRL_SOURCE_RC].online && cmd->online_) {
       cmd->event_.Active(CMD_EVENT_LOST_CTRL);
       cmd->online_ = false;
-    } else {
+    } else if (cmd->data_[CTRL_SOURCE_RC].online) {
       cmd->online_ = true;
     }
 
