@@ -120,27 +120,31 @@ void Gimbal::Control() {
                      this->setpoint_.eulr_.pit;
   }
 
-  /* 处理yaw控制命令 */
-  this->setpoint_.eulr_.yaw += gimbal_yaw_cmd;
-  const float ENCODER_DELTA_MAX_YAW =
-      this->param_.limit.yaw_max - this->yaw_motor_.GetAngle();
-  const float ENCODER_DELTA_MIN_YAW =
-      this->param_.limit.yaw_min - this->yaw_motor_.GetAngle();
-  const float YAW_ERR = this->setpoint_.eulr_.yaw - eulr_.yaw;
-  const float DELTA_MAX_YAW = ENCODER_DELTA_MAX_YAW - YAW_ERR;
-  const float DELTA_MIN_YAW = ENCODER_DELTA_MIN_YAW - YAW_ERR;
-  clampf(&(gimbal_yaw_cmd), DELTA_MIN_YAW, DELTA_MAX_YAW);
+  /* 处理yaw控制命令，软件限位  */
+  /* 某个轴max=min时不进行限位,配置文件默认不写 */
+  if (param_.limit.yaw_max != param_.limit.yaw_min) {
+    const float ENCODER_DELTA_MAX_YAW =
+        this->param_.limit.yaw_max - this->yaw_motor_.GetAngle();
+    const float ENCODER_DELTA_MIN_YAW =
+        this->param_.limit.yaw_min - this->yaw_motor_.GetAngle();
+    const float YAW_ERR = this->setpoint_.eulr_.yaw - eulr_.yaw;
+    const float DELTA_MAX_YAW = ENCODER_DELTA_MAX_YAW - YAW_ERR;
+    const float DELTA_MIN_YAW = ENCODER_DELTA_MIN_YAW - YAW_ERR;
+    clampf(&(gimbal_yaw_cmd), DELTA_MIN_YAW, DELTA_MAX_YAW);
+  }
   this->setpoint_.eulr_.yaw += gimbal_yaw_cmd;
 
   /* 处理pitch控制命令，软件限位 */
-  const float ENCODER_DELTA_MAX_PIT =
-      this->param_.limit.pitch_max - this->pit_motor_.GetAngle();
-  const float ENCODER_DELTA_MIN_PIT =
-      this->param_.limit.pitch_min - this->pit_motor_.GetAngle();
-  const float PIT_ERR = this->setpoint_.eulr_.pit - eulr_.pit;
-  const float DELTA_MAX_PIT = ENCODER_DELTA_MAX_PIT - PIT_ERR;
-  const float DELTA_MIN_PIT = ENCODER_DELTA_MIN_PIT - PIT_ERR;
-  clampf(&(gimbal_pit_cmd), DELTA_MIN_PIT, DELTA_MAX_PIT);
+  if (param_.limit.pitch_max != param_.limit.pitch_min) {
+    const float ENCODER_DELTA_MAX_PIT =
+        this->param_.limit.pitch_max - this->pit_motor_.GetAngle();
+    const float ENCODER_DELTA_MIN_PIT =
+        this->param_.limit.pitch_min - this->pit_motor_.GetAngle();
+    const float PIT_ERR = this->setpoint_.eulr_.pit - eulr_.pit;
+    const float DELTA_MAX_PIT = ENCODER_DELTA_MAX_PIT - PIT_ERR;
+    const float DELTA_MIN_PIT = ENCODER_DELTA_MIN_PIT - PIT_ERR;
+    clampf(&(gimbal_pit_cmd), DELTA_MIN_PIT, DELTA_MAX_PIT);
+  }
   this->setpoint_.eulr_.pit += gimbal_pit_cmd;
 
   /* 控制相关逻辑 */
