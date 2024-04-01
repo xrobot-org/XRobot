@@ -107,6 +107,8 @@ HelmChassis<Motor, MotorParam>::HelmChassis(Param& param, float control_freq)
     auto cmd_sub =
         Message::Subscriber<Component::CMD::ChassisCMD>("cmd_chassis");
     auto yaw_sub = Message::Subscriber<float>("chassis_yaw");
+    auto raw_ref_sub = Message::Subscriber<Device::Referee::Data>("referee");
+    auto cap_sub = Message::Subscriber<Device::Cap::Info>("cap_info");
 
     uint32_t last_online_time = bsp_time_get_ms();
 
@@ -114,9 +116,12 @@ HelmChassis<Motor, MotorParam>::HelmChassis(Param& param, float control_freq)
       /* 读取控制指令、电容、裁判系统、电机反馈 */
       cmd_sub.DumpData(chassis->cmd_);
       yaw_sub.DumpData(chassis->yaw_);
+      raw_ref_sub.DumpData(chassis->raw_ref_);
+      cap_sub.DumpData(chassis->cap_);
 
       chassis->ctrl_lock_.Wait(UINT32_MAX);
       /* 更新反馈值 */
+      chassis->PraseRef();
       chassis->UpdateFeedback();
       chassis->Control();
       chassis->ctrl_lock_.Post();
@@ -132,6 +137,15 @@ HelmChassis<Motor, MotorParam>::HelmChassis(Param& param, float control_freq)
   System::Timer::Create(this->DrawUIStatic, this, 2100);
 
   System::Timer::Create(this->DrawUIDynamic, this, 200);
+}
+
+template <typename Motor, typename MotorParam>
+void HelmChassis<Motor, MotorParam>::PraseRef() {
+  this->ref_.chassis_power_limit =
+      this->raw_ref_.robot_status.chassis_power_limit;
+  this->ref_.chassis_pwr_buff = this->raw_ref_.power_heat.chassis_pwr_buff;
+  this->ref_.chassis_watt = this->raw_ref_.power_heat.chassis_watt;
+  this->ref_.status = this->raw_ref_.status;
 }
 
 template <typename Motor, typename MotorParam>
@@ -289,7 +303,12 @@ void HelmChassis<Motor, MotorParam>::Control() {
   /* 控制 */
   for (int i = 0; i < 4; i++) {
     speed_motor_[i]->Control(speed_motor_out_[i] * percentage);
-    pos_motor_[i]->Control(pos_motor_out_[i]);
+  }
+
+  clampf(&percentage, 0.5f, 1.0f);
+
+  for (int i = 0; i < 4; i++) {
+    pos_motor_[i]->Control(pos_motor_out_[i] * percentage);
   }
 }
 

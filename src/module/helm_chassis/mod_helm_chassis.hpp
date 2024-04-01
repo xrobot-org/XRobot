@@ -70,6 +70,8 @@ class HelmChassis {
 
   HelmChassis(Param &param, float control_freq);
 
+  void PraseRef();
+
   void UpdateFeedback();
 
   void Control();
@@ -94,6 +96,8 @@ class HelmChassis {
   float yaw_;
 
   Device::Cap::Info cap_;
+
+  Device::Referee::Data raw_ref_;
 
   RefForChassis ref_;
 

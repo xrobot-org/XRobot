@@ -40,7 +40,7 @@ class Sentry {
   Module::Launcher launcher1_;
   Module::Launcher launcher2_;
   Sentry(Param& param, float control_freq)
-      : cmd_(Component::CMD::CMD_AUTO_CTRL),
+      : cmd_(Component::CMD::CMD_OP_CTRL),
         bmi088_(param.bmi088_rot),
         cap_(param.cap),
         chassis_(param.chassis, control_freq),
