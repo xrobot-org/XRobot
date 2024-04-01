@@ -175,11 +175,11 @@ Robot::Sentry::Param param = {
     .yaw_actr = {
       .speed = {
           /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-          .k = 0.7f,
+          .k = 1.2f,
           .p = 1.0f,
-          .i = 0.3f,
+          .i = 0.1f,
           .d = 0.f,
-          .i_limit = 0.2f,
+          .i_limit = 0.6f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
@@ -187,7 +187,7 @@ Robot::Sentry::Param param = {
 
         .position = {
           /* GIMBAL_CTRL_YAW_ANGLE_IDX */
-          .k = 20.0f,
+          .k = 8.0f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.0f,
@@ -204,9 +204,9 @@ Robot::Sentry::Param param = {
     .pit_actr = {
         .speed = {
           /* GIMBAL_CTRL_PIT_OMEGA_IDX */
-          .k = 0.2f,
+          .k = 0.3f,
           .p = 1.0f,
-          .i = 0.f,
+          .i = 0.5f,
           .d = 0.f,
           .i_limit = 0.8f,
           .out_limit = 1.0f,
@@ -216,7 +216,7 @@ Robot::Sentry::Param param = {
 
         .position = {
           /* GIMBAL_CTRL_PIT_ANGLE_IDX */
-          .k = 20.0f,
+          .k = 10.0f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.0f,
@@ -246,7 +246,7 @@ Robot::Sentry::Param param = {
     },
 
     .mech_zero = {
-      .yaw = 3.12f,
+      .yaw = 5.55f,
       .pit = 0.50f,
       .rol = 0.0f,
     },
@@ -306,21 +306,21 @@ Robot::Sentry::Param param = {
     .trig_actr = {
       Component::PosActuator::Param{
         .speed = {
-          .k = 1.5f,
+          .k = 3.0f,
           .p = 1.0f,
-          .i = 0.0f,
-          .d = 0.03f,
+          .i = 0.5f,
+          .d = 0.0f,
           .i_limit = 0.5f,
-          .out_limit = 0.5f,
+          .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
 
         .position = {
-          .k = 1.2f,
+          .k = 1.5f,
           .p = 1.0f,
           .i = 0.0f,
-          .d = 0.012f,
+          .d = 0.0f,
           .i_limit = 1.0f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
@@ -336,12 +336,12 @@ Robot::Sentry::Param param = {
     .fric_actr = {
      Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00015f,
+          .k = 0.00035f,
           .p = 1.0f,
-          .i = 0.4f,
-          .d = 0.01f,
+          .i = 0.5f,
+          .d = 0.0f,
           .i_limit = 0.5f,
-          .out_limit = 0.5f,
+          .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -352,12 +352,12 @@ Robot::Sentry::Param param = {
       },
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00015f,
+          .k = 0.00035f,
           .p = 1.0f,
-          .i = 0.4f,
-          .d = 0.01f,
+          .i = 0.5f,
+          .d = 0.0f,
           .i_limit = 0.5f,
-          .out_limit = 0.5f,
+          .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -441,21 +441,21 @@ Robot::Sentry::Param param = {
     .trig_actr = {
       Component::PosActuator::Param{
         .speed = {
-          .k = 1.0f,
+          .k = 3.0f,
           .p = 1.0f,
-          .i = 0.0f,
-          .d = 0.03f,
+          .i = 0.5f,
+          .d = 0.0f,
           .i_limit = 0.5f,
-          .out_limit = 0.5f,
+          .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
 
         .position = {
-          .k = 1.0f,
+          .k = 1.5f,
           .p = 1.0f,
           .i = 0.0f,
-          .d = 0.012f,
+          .d = 0.0f,
           .i_limit = 1.0f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
@@ -471,12 +471,12 @@ Robot::Sentry::Param param = {
     .fric_actr = {
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00015f,
+          .k = 0.00035f,
           .p = 1.0f,
-          .i = 0.4f,
-          .d = 0.01f,
+          .i = 0.5f,
+          .d = 0.0f,
           .i_limit = 0.5f,
-          .out_limit = 0.5f,
+          .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -487,12 +487,12 @@ Robot::Sentry::Param param = {
       },
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00015f,
+          .k = 0.00035f,
           .p = 1.0f,
-          .i = 0.4f,
-          .d = 0.01f,
+          .i = 0.5f,
+          .d = 0.0f,
           .i_limit = 0.5f,
-          .out_limit = 0.5f,
+          .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },

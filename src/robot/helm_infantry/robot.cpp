@@ -41,35 +41,7 @@ Robot::HelmInfantry::Param param =
                                     .i = 0.3f,
                                     .d = 0.0f,
                                     .i_limit = 0.25f,
-                                    .out_limit = 0.5f,
-                                    .d_cutoff_freq = -1.0f,
-                                    .cycle = false,
-                                },
-                            .position =
-                                {
-                                    .k = 400.0f,
-                                    .p = 1.0f,
-                                    .i = 0.5f,
-                                    .d = 0.0f,
-                                    .i_limit = 0.0f,
-                                    .out_limit = 300.0f,
-                                    .d_cutoff_freq = -1.0f,
-                                    .cycle = true,
-                                },
-                            .in_cutoff_freq = -1.0f,
-
-                            .out_cutoff_freq = -1.0f,
-
-                        },
-                        Component::PosActuator::Param{
-                            .speed =
-                                {
-                                    .k = 0.005f,
-                                    .p = 1.f,
-                                    .i = 0.3f,
-                                    .d = 0.0f,
-                                    .i_limit = 0.25f,
-                                    .out_limit = 1.0f,
+                                    .out_limit = 0.4f,
                                     .d_cutoff_freq = -1.0f,
                                     .cycle = false,
                                 },
@@ -77,10 +49,10 @@ Robot::HelmInfantry::Param param =
                                 {
                                     .k = 150.0f,
                                     .p = 1.0f,
-                                    .i = 0.5f,
+                                    .i = 0.3f,
                                     .d = 0.0f,
-                                    .i_limit = 100.0f,
-                                    .out_limit = 300.0f,
+                                    .i_limit = 0.0f,
+                                    .out_limit = 200.0f,
                                     .d_cutoff_freq = -1.0f,
                                     .cycle = true,
                                 },
@@ -97,18 +69,18 @@ Robot::HelmInfantry::Param param =
                                     .i = 0.3f,
                                     .d = 0.0f,
                                     .i_limit = 0.25f,
-                                    .out_limit = 0.5f,
+                                    .out_limit = 0.4f,
                                     .d_cutoff_freq = -1.0f,
                                     .cycle = false,
                                 },
                             .position =
                                 {
-                                    .k = 400.0f,
+                                    .k = 150.0f,
                                     .p = 1.0f,
-                                    .i = 0.5f,
+                                    .i = 0.3f,
                                     .d = 0.0f,
                                     .i_limit = 0.0f,
-                                    .out_limit = 300.0f,
+                                    .out_limit = 200.0f,
                                     .d_cutoff_freq = -1.0f,
                                     .cycle = true,
                                 },
@@ -120,23 +92,51 @@ Robot::HelmInfantry::Param param =
                         Component::PosActuator::Param{
                             .speed =
                                 {
-                                    .k = 0.003f,
+                                    .k = 0.005f,
                                     .p = 1.f,
                                     .i = 0.3f,
                                     .d = 0.0f,
                                     .i_limit = 0.25f,
-                                    .out_limit = 0.5f,
+                                    .out_limit = 0.4f,
                                     .d_cutoff_freq = -1.0f,
                                     .cycle = false,
                                 },
                             .position =
                                 {
-                                    .k = 400.0f,
+                                    .k = 150.0f,
                                     .p = 1.0f,
-                                    .i = 0.5f,
+                                    .i = 0.3f,
                                     .d = 0.0f,
                                     .i_limit = 0.0f,
-                                    .out_limit = 250.0f,
+                                    .out_limit = 200.0f,
+                                    .d_cutoff_freq = -1.0f,
+                                    .cycle = true,
+                                },
+                            .in_cutoff_freq = -1.0f,
+
+                            .out_cutoff_freq = -1.0f,
+
+                        },
+                        Component::PosActuator::Param{
+                            .speed =
+                                {
+                                    .k = 0.005f,
+                                    .p = 1.f,
+                                    .i = 0.3f,
+                                    .d = 0.0f,
+                                    .i_limit = 0.25f,
+                                    .out_limit = 0.4f,
+                                    .d_cutoff_freq = -1.0f,
+                                    .cycle = false,
+                                },
+                            .position =
+                                {
+                                    .k = 150.0f,
+                                    .p = 1.0f,
+                                    .i = 0.3f,
+                                    .d = 0.0f,
+                                    .i_limit = 0.0f,
+                                    .out_limit = 200.0f,
                                     .d_cutoff_freq = -1.0f,
                                     .cycle = true,
                                 },
@@ -308,9 +308,9 @@ Robot::HelmInfantry::Param param =
                         .speed =
                             {
                                 /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-                                .k = 0.3f,
+                                .k = 0.4f,
                                 .p = 1.f,
-                                .i = 0.3f,
+                                .i = 0.5f,
                                 .d = 0.f,
                                 .i_limit = 0.2f,
                                 .out_limit = 1.0f,
@@ -340,7 +340,7 @@ Robot::HelmInfantry::Param param =
                         .speed =
                             {
                                 /* GIMBAL_CTRL_PIT_OMEGA_IDX */
-                                .k = 0.3,
+                                .k = 0.4,
                                 .p = 1.0f,
                                 .i = 0.6f,
                                 .d = 0.f,
@@ -418,145 +418,145 @@ Robot::HelmInfantry::Param param =
                                   Module::Gimbal::STOP_AUTO_AIM}},
 
             },
-         .launcher = {
-    .num_trig_tooth = 8.0f,
-    .trig_gear_ratio = 36.0f,
-    .fric_radius = 0.03f,
-    .cover_open_duty = 0.125f,
-    .cover_close_duty = 0.075f,
-    .model = Module::Launcher::LAUNCHER_MODEL_17MM,
-    .default_bullet_speed = 15.f,
-    .min_launch_delay = static_cast<uint32_t>(1000.0f / 20.0f),
+    .launcher = {
+        .num_trig_tooth = 8.0f,
+        .trig_gear_ratio = 36.0f,
+        .fric_radius = 0.03f,
+        .cover_open_duty = 0.125f,
+        .cover_close_duty = 0.075f,
+        .model = Module::Launcher::LAUNCHER_MODEL_17MM,
+        .default_bullet_speed = 15.f,
+        .min_launch_delay = static_cast<uint32_t>(1000.0f / 20.0f),
 
-    .trig_actr = {
-      Component::PosActuator::Param{
-        .speed = {
-          .k = 4.0f,
-          .p = 1.0f,
-          .i = 0.0f,
-          .d = 0.0f,
-          .i_limit = 0.5f,
-          .out_limit = 1.0f,
-          .d_cutoff_freq = -1.0f,
-          .cycle = false,
+        .trig_actr = {
+            Component::PosActuator::Param{
+                .speed = {
+                .k = 3.0f,
+                .p = 1.0f,
+                .i = 0.5f,
+                .d = 0.0f,
+                .i_limit = 0.5f,
+                .out_limit = 1.0f,
+                .d_cutoff_freq = -1.0f,
+                .cycle = false,
+                },
+
+                .position = {
+                .k = 1.5f,
+                .p = 1.0f,
+                .i = 0.0f,
+                .d = 0.0f,
+                .i_limit = 1.0f,
+                .out_limit = 1.0f,
+                .d_cutoff_freq = -1.0f,
+                .cycle = true,
+                },
+
+                .in_cutoff_freq = -1.0f,
+
+                .out_cutoff_freq = -1.0f,
+            },
         },
 
-        .position = {
-          .k = 1.5f,
-          .p = 1.0f,
-          .i = 0.0f,
-          .d = 0.0f,
-          .i_limit = 1.0f,
-          .out_limit = 1.0f,
-          .d_cutoff_freq = -1.0f,
-          .cycle = true,
+        .fric_actr = {
+           Component::SpeedActuator::Param{
+            .speed = {
+            .k = 0.0003f,
+            .p = 1.0f,
+            .i = 0.8f,
+            .d = 0.0f,
+            .i_limit = 0.2f,
+            .out_limit = 1.0f,
+            .d_cutoff_freq = -1.0f,
+            .cycle = false,
+            },
+
+            .in_cutoff_freq = -1.0f,
+
+            .out_cutoff_freq = -1.0f,
+            },
+           Component::SpeedActuator::Param{
+            .speed = {
+            .k = 0.0003f,
+            .p = 1.0f,
+            .i = 0.8f,
+            .d = 0.0f,
+            .i_limit = 0.2f,
+            .out_limit = 1.0f,
+            .d_cutoff_freq = -1.0f,
+            .cycle = false,
+            },
+
+            .in_cutoff_freq = -1.0f,
+
+            .out_cutoff_freq = -1.0f,
+        },
         },
 
-        .in_cutoff_freq = -1.0f,
-
-        .out_cutoff_freq = -1.0f,
-      },
-    },
-
-    .fric_actr = {
-      Component::SpeedActuator::Param{
-        .speed = {
-          .k = 0.00025f,
-          .p = 1.0f,
-          .i = 0.4f,
-          .d = 0.01f,
-          .i_limit = 0.5f,
-          .out_limit = 1.0f,
-          .d_cutoff_freq = -1.0f,
-          .cycle = false,
+        .trig_motor = {
+        Device::RMMotor::Param{
+            .id_feedback = 0x204,
+            .id_control = M3508_M2006_CTRL_ID_BASE,
+            .model = Device::RMMotor::MOTOR_M2006,
+            .can = BSP_CAN_1,
+        }
         },
 
-        .in_cutoff_freq = -1.0f,
-
-        .out_cutoff_freq = -1.0f,
-      },
-      Component::SpeedActuator::Param{
-        .speed = {
-          .k = 0.00025f,
-          .p = 1.0f,
-          .i = 0.4f,
-          .d = 0.01f,
-          .i_limit = 0.5f,
-          .out_limit = 1.0f,
-          .d_cutoff_freq = -1.0f,
-          .cycle = false,
+        .fric_motor = {
+        Device::RMMotor::Param{
+            .id_feedback = 0x207,
+            .id_control = M3508_M2006_CTRL_ID_EXTAND,
+            .model = Device::RMMotor::MOTOR_M3508,
+            .can = BSP_CAN_1,
+        },
+        Device::RMMotor::Param{
+            .id_feedback = 0x206,
+            .id_control = M3508_M2006_CTRL_ID_EXTAND,
+            .model = Device::RMMotor::MOTOR_M3508,
+            .can = BSP_CAN_1,
+        },
         },
 
-        .in_cutoff_freq = -1.0f,
-
-        .out_cutoff_freq = -1.0f,
-      },
-    },
-
-    .trig_motor = {
-      Device::RMMotor::Param{
-        .id_feedback = 0x204,
-        .id_control = M3508_M2006_CTRL_ID_BASE,
-        .model = Device::RMMotor::MOTOR_M2006,
-        .can = BSP_CAN_1,
-      }
-    },
-
-    .fric_motor = {
-      Device::RMMotor::Param{
-          .id_feedback = 0x207,
-          .id_control = M3508_M2006_CTRL_ID_EXTAND,
-          .model = Device::RMMotor::MOTOR_M3508,
-          .can = BSP_CAN_1,
-      },
-      Device::RMMotor::Param{
-          .id_feedback = 0x206,
-          .id_control = M3508_M2006_CTRL_ID_EXTAND,
-          .model = Device::RMMotor::MOTOR_M3508,
-          .can = BSP_CAN_1,
-      },
-    },
-
-    .EVENT_MAP = {
-      Component::CMD::EventMapItem{
-        Component::CMD::CMD_EVENT_LOST_CTRL,
-        Module::Launcher::CHANGE_FIRE_MODE_RELAX
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::DR16_SW_R_POS_TOP,
-        Module::Launcher::CHANGE_FIRE_MODE_SAFE
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::DR16_SW_R_POS_MID,
-        Module::Launcher::CHANGE_FIRE_MODE_LOADED
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::DR16_SW_R_POS_BOT,
-        Module::Launcher::CHANGE_FIRE_MODE_LOADED
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::DR16_SW_R_POS_BOT,
-        Module::Launcher::LAUNCHER_START_FIRE
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::KEY_L_PRESS,
-        Module::Launcher::LAUNCHER_START_FIRE
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::KEY_G,
-        Module::Launcher::CHANGE_TRIG_MODE
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::KEY_R,
-        Module::Launcher::OPEN_COVER
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::KEY_F,
-        Module::Launcher::CLOSE_COVER
-      }
+        .EVENT_MAP = {
+        Component::CMD::EventMapItem{
+            Component::CMD::CMD_EVENT_LOST_CTRL,
+            Module::Launcher::CHANGE_FIRE_MODE_RELAX
+        },
+        Component::CMD::EventMapItem{
+            Device::DR16::DR16_SW_R_POS_TOP,
+            Module::Launcher::CHANGE_FIRE_MODE_SAFE
+        },
+        Component::CMD::EventMapItem{
+            Device::DR16::DR16_SW_R_POS_MID,
+            Module::Launcher::CHANGE_FIRE_MODE_LOADED
+        },
+        Component::CMD::EventMapItem{
+            Device::DR16::DR16_SW_R_POS_BOT,
+            Module::Launcher::CHANGE_FIRE_MODE_LOADED
+        },
+        Component::CMD::EventMapItem{
+            Device::DR16::DR16_SW_R_POS_BOT,
+            Module::Launcher::LAUNCHER_START_FIRE
+        },
+        Component::CMD::EventMapItem{
+            Device::DR16::KEY_L_PRESS,
+            Module::Launcher::LAUNCHER_START_FIRE
+        },
+        Component::CMD::EventMapItem{
+            Device::DR16::KEY_G,
+            Module::Launcher::CHANGE_TRIG_MODE
+        },
+        Component::CMD::EventMapItem{
+            Device::DR16::KEY_R,
+            Module::Launcher::OPEN_COVER
+        },
+        Component::CMD::EventMapItem{
+            Device::DR16::KEY_F,
+            Module::Launcher::CLOSE_COVER
+        }
     },
   }, /* launcher */
-        .bmi088_rot =
+  .bmi088_rot =
             {
                 .rot_mat =
                     {
@@ -565,6 +565,11 @@ Robot::HelmInfantry::Param param =
                         {+0, +0, +1},
                     },
             },
+  .cap = {
+    .can = BSP_CAN_1,
+    .index = DEV_CAP_FB_ID_BASE,
+    .cutoff_volt = 10.0f,
+  },
 };
 /* clang-format on */
 

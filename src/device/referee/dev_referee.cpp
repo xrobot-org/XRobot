@@ -82,7 +82,7 @@ Referee::Referee() : event_(Message::Event::FindEvent("cmd_event")) {
       ref->raw_ready_.Wait(100);
       ref->Prase();
 #else
-      if (!ref->raw_ready_.Wait(100)) { /* 判断裁判系统数据是否接收完成 */
+      if (!ref->raw_ready_.Wait(200)) { /* 判断裁判系统数据是否接收完成 */
         ref->Offline(); /* 长时间未接收到数据，裁判系统离线 */
       } else {
         ref->Prase(); /* 解析裁判系统数据 */
@@ -119,7 +119,7 @@ bool Referee::StartRecv() {
 
 void Referee::Prase() {
   this->ref_data_.status = RUNNING;
-  size_t data_length = bsp_uart_get_count(BSP_UART_REF);
+  const size_t data_length = bsp_uart_get_count(BSP_UART_REF);
 
   const uint8_t *index = rxbuf; /* const 保护原始rxbuf不被修改 */
   const uint8_t *const RXBUF_END = rxbuf + data_length;
@@ -305,6 +305,8 @@ void Referee::Prase() {
   this->ref_data_.robot_status.chassis_power_limit = REF_POWER_LIMIT;
   this->ref_data_.power_heat.chassis_pwr_buff = REF_POWER_BUFF;
 #endif
+
+  memset(rxbuf, 0, data_length);
 }
 
 bool Referee::UpdateUI() {

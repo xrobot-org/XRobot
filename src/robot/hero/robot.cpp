@@ -53,7 +53,7 @@ Robot::Hero::Param param = {
       .actuator_param = {
         Component::SpeedActuator::Param{
           .speed = {
-            .k = 0.00015f,
+            .k = 0.0001f,
             .p = 1.0f,
             .i = 0.0f,
             .d = 0.0f,
@@ -70,7 +70,7 @@ Robot::Hero::Param param = {
         },
         Component::SpeedActuator::Param{
           .speed = {
-            .k = 0.00018f,
+            .k = 0.0001f,
             .p = 1.0f,
             .i = 0.0f,
             .d = 0.0f,
@@ -86,7 +86,7 @@ Robot::Hero::Param param = {
         },
         Component::SpeedActuator::Param{
           .speed = {
-            .k = 0.00015f,
+            .k = 0.0001f,
             .p = 1.0f,
             .i = 0.0f,
             .d = 0.0f,
@@ -102,7 +102,7 @@ Robot::Hero::Param param = {
         },
         Component::SpeedActuator::Param{
           .speed = {
-            .k = 0.00015f,
+            .k = 0.0001f,
             .p = 1.0f,
             .i = 0.0f,
             .d = 0.0f,
@@ -324,11 +324,11 @@ Robot::Hero::Param param = {
     .fric_actr = {
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.0002f,
+          .k = 0.001f,
           .p = 1.0f,
-          .i = 0.0f,
-          .d = 0.01f,
-          .i_limit = 0.5f,
+          .i = 0.2,
+          .d = 0.0f,
+          .i_limit = 0.3f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
@@ -340,11 +340,11 @@ Robot::Hero::Param param = {
       },
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.0002f,
+          .k = 0.001f,
           .p = 1.0f,
-          .i = 0.0f,
-          .d = 0.01f,
-          .i_limit = 0.5f,
+          .i = 0.2f,
+          .d = 0.0f,
+          .i_limit = 0.3f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,

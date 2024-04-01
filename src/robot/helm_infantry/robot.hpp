@@ -22,6 +22,7 @@ class HelmInfantry {
     Module::Gimbal::Param gimbal;
     Module::Launcher::Param launcher;
     Device::BMI088::Rotation bmi088_rot{};
+    Device::Cap::Param cap{};
   } Param;
 
   Component::CMD cmd_;
@@ -30,6 +31,7 @@ class HelmInfantry {
   Device::AHRS ahrs_;
   Device::BMI088 bmi088_;
   Device::Can can_;
+  Device::Cap cap_;
   Device::DR16 dr16_;
   Device::RGB led_;
   Device::Referee referee_;
@@ -40,6 +42,7 @@ class HelmInfantry {
 
   HelmInfantry(Param& param, float control_freq)
       : bmi088_(param.bmi088_rot),
+        cap_(param.cap),
         chassis_(param.chassis, control_freq),
         gimbal_(param.gimbal, control_freq),
         launcher_(param.launcher, control_freq) {}
