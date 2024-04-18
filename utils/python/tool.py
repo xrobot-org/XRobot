@@ -23,12 +23,12 @@ class ProjectTools:
 
     def guiconfig(self, path):
         print("Start menu config.")
-        os.system("cd " + path + " && " + self.kconfig_path + "/guiconfig.py")
+        os.system("cd " + path + " && python3 " + self.kconfig_path + "/guiconfig.py")
         print("Menu config done.")
 
     def menuconfig(self, path):
         print("Start menu config.")
-        os.system("cd " + path + " && " + self.kconfig_path + "/menuconfig.py")
+        os.system("cd " + path + " && python3 " + self.kconfig_path + "/menuconfig.py")
         print("Menu config done.")
 
     def clean_cache(self):
