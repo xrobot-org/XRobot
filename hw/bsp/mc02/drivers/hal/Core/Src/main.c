@@ -92,12 +92,6 @@ PCD_HandleTypeDef hpcd_USB_OTG_HS;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void PeriphCommonClock_Config(void);
-static void MX_BDMA_Init(void);
-static void MX_UART7_Init(void);
-static void MX_USART1_UART_Init(void);
-static void MX_USART2_UART_Init(void);
-static void MX_USART10_UART_Init(void);
-static void MX_UART5_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -853,7 +847,7 @@ void MX_TIM12_Init(void)
   * @param None
   * @retval None
   */
-static void MX_UART5_Init(void)
+void MX_UART5_Init(void)
 {
 
   /* USER CODE BEGIN UART5_Init 0 */
@@ -901,7 +895,7 @@ static void MX_UART5_Init(void)
   * @param None
   * @retval None
   */
-static void MX_UART7_Init(void)
+void MX_UART7_Init(void)
 {
 
   /* USER CODE BEGIN UART7_Init 0 */
@@ -949,7 +943,7 @@ static void MX_UART7_Init(void)
   * @param None
   * @retval None
   */
-static void MX_USART1_UART_Init(void)
+void MX_USART1_UART_Init(void)
 {
 
   /* USER CODE BEGIN USART1_Init 0 */
@@ -997,7 +991,7 @@ static void MX_USART1_UART_Init(void)
   * @param None
   * @retval None
   */
-static void MX_USART2_UART_Init(void)
+void MX_USART2_UART_Init(void)
 {
 
   /* USER CODE BEGIN USART2_Init 0 */
@@ -1093,7 +1087,7 @@ void MX_USART3_UART_Init(void)
   * @param None
   * @retval None
   */
-static void MX_USART10_UART_Init(void)
+void MX_USART10_UART_Init(void)
 {
 
   /* USER CODE BEGIN USART10_Init 0 */
@@ -1175,7 +1169,7 @@ void MX_USB_OTG_HS_PCD_Init(void)
 /**
   * Enable DMA controller clock
   */
-static void MX_BDMA_Init(void)
+void MX_BDMA_Init(void)
 {
 
   /* DMA controller clock enable */
