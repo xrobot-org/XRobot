@@ -3,717 +3,723 @@
 extern OSPI_HandleTypeDef hospi2;
 
 /*************************************************************************************************
- *	�� �� ��: OSPI_W25Qxx_Init
- *	��ڲ���: ��
- *	�� �� ֵ: OSPI_W25Qxx_OK - ��ʼ���ɹ���W25Qxx_ERROR_INIT - ��ʼ������
- *	��������: ��ʼ�� OSPI ���ã���ȡW25Q64ID
- *	˵    ��: ��
+ *	函 数 名: OSPI_W25Qxx_Init
+ *	入口参数: 无
+ *	返 回 值: OSPI_W25Qxx_OK - 初始化成功，W25Qxx_ERROR_INIT - 初始化错误
+ *	函数功能: 初始化 OSPI 配置，读取W25Q64ID
+ *	说    明: 无
  *************************************************************************************************/
 
 int8_t OSPI_W25Qxx_Init(void) {
-  uint32_t Device_ID;  // ����ID
+  uint32_t Device_ID;  // 器件ID
 
-  Device_ID = OSPI_W25Qxx_ReadID();  // ��ȡ����ID
+  Device_ID = OSPI_W25Qxx_ReadID();  // 读取器件ID
 
-  if (Device_ID == W25Qxx_FLASH_ID)  // ����ƥ��
+  if (Device_ID == W25Qxx_FLASH_ID)  // 进行匹配
   {
     //        printf ("W25Q64 OK,flash ID:%X\r\n",Device_ID);		//
-    //        ��ʼ���ɹ�
-    return OSPI_W25Qxx_OK;  // ���سɹ���־
+    //        初始化成功
+    return OSPI_W25Qxx_OK;  // 返回成功标志
   } else {
     //        printf ("W25Q64 ERROR!!!!!  ID:%X\r\n",Device_ID);	//
-    //        ��ʼ��ʧ��
-    return W25Qxx_ERROR_INIT;  // ���ش����־
+    //        初始化失败
+    return W25Qxx_ERROR_INIT;  // 返回错误标志
   }
 }
 
 /*************************************************************************************************
- *	�� �� ��: OSPI_W25Qxx_AutoPollingMemReady
- *	��ڲ���: ��
- *	�� �� ֵ: OSPI_W25Qxx_OK - ͨ������������W25Qxx_ERROR_AUTOPOLLING -
- *��ѯ�ȴ�����Ӧ ��������: ʹ���Զ���ѯ��־��ѯ���ȴ�ͨ�Ž��� ˵    ��:
- *ÿһ��ͨ�Ŷ�Ӧ�õ��ô˺������ȴ�ͨ�Ž������������Ĳ���
+ *	函 数 名: OSPI_W25Qxx_AutoPollingMemReady
+ *	入口参数: 无
+ *	返 回 值: OSPI_W25Qxx_OK - 通信正常结束，W25Qxx_ERROR_AUTOPOLLING -
+ *轮询等待无响应 函数功能: 使用自动轮询标志查询，等待通信结束 说    明:
+ *每一次通信都应该调用此函数，等待通信结束，避免错误的操作
  ******************************************************************************************FANKE*****/
 
 int8_t OSPI_W25Qxx_AutoPollingMemReady(void) {
-  OSPI_RegularCmdTypeDef sCommand;  // OSPI��������
-  OSPI_AutoPollingTypeDef sConfig;  // ��ѯ�Ƚ�������ò���
+  OSPI_RegularCmdTypeDef sCommand;  // OSPI传输配置
+  OSPI_AutoPollingTypeDef sConfig;  // 轮询比较相关配置参数
 
-  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // ͨ������
+  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // 通用配置
   sCommand.FlashId = HAL_OSPI_FLASH_ID_1;                  // flash ID
-  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1��ָ��ģʽ
-  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // ָ���8λ
+  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1线指令模式
+  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // 指令长度8位
   sCommand.InstructionDtrMode =
-      HAL_OSPI_INSTRUCTION_DTR_DISABLE;             // ��ָֹ��DTRģʽ
-  sCommand.Address = 0x0;                           // ��ַ0
-  sCommand.AddressMode = HAL_OSPI_ADDRESS_NONE;     // �޵�ַģʽ
-  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;  // ��ַ����24λ
-  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // ��ֹ��ַDTRģʽ
-  sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;  //	�޽����ֽ�
-  sCommand.DataMode = HAL_OSPI_DATA_1_LINE;          // 1������ģʽ
-  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // ��ֹ����DTRģʽ
-  sCommand.NbData = 1;                               // ͨ�����ݳ���
-  sCommand.DummyCycles = 0;                          // �����ڸ���
-  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // ��ʹ��DQS
-  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // ÿ�δ������ݶ�����ָ��
+      HAL_OSPI_INSTRUCTION_DTR_DISABLE;             // 禁止指令DTR模式
+  sCommand.Address = 0x0;                           // 地址0
+  sCommand.AddressMode = HAL_OSPI_ADDRESS_NONE;     // 无地址模式
+  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;  // 地址长度24位
+  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // 禁止地址DTR模式
+  sCommand.AlternateBytesMode =
+      HAL_OSPI_ALTERNATE_BYTES_NONE;                 //	无交替字节
+  sCommand.DataMode = HAL_OSPI_DATA_1_LINE;          // 1线数据模式
+  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // 禁止数据DTR模式
+  sCommand.NbData = 1;                               // 通信数据长度
+  sCommand.DummyCycles = 0;                          // 空周期个数
+  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // 不使用DQS
+  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // 每次传输数据都发送指令
 
-  sCommand.Instruction = W25Qxx_CMD_ReadStatus_REG1;  // ��״̬��Ϣ�Ĵ���
+  sCommand.Instruction = W25Qxx_CMD_ReadStatus_REG1;  // 读状态信息寄存器
 
   if (HAL_OSPI_Command(&hospi2, &sCommand, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
       HAL_OK) {
-    return W25Qxx_ERROR_AUTOPOLLING;  // ��ѯ�ȴ�����Ӧ
+    return W25Qxx_ERROR_AUTOPOLLING;  // 轮询等待无响应
   }
 
-  // ��ͣ�Ĳ�ѯ W25Qxx_CMD_ReadStatus_REG1 �Ĵ���������ȡ����״̬�ֽ��е�
-  // W25Qxx_Status_REG1_BUSY ��ͣ����0���Ƚ�
-  // ��״̬�Ĵ���1�ĵ�0λ��ֻ������Busy��־λ�������ڲ���/д������/д����ʱ�ᱻ��1�����л�ͨ�Ž���Ϊ0
+  // 不停的查询 W25Qxx_CMD_ReadStatus_REG1 寄存器，将读取到的状态字节中的
+  // W25Qxx_Status_REG1_BUSY 不停的与0作比较
+  // 读状态寄存器1的第0位（只读），Busy标志位，当正在擦除/写入数据/写命令时会被置1，空闲或通信结束为0
   // FANKE
-  sConfig.Match = 0;                                       //	ƥ��ֵ
-  sConfig.MatchMode = HAL_OSPI_MATCH_MODE_AND;             //	������
-  sConfig.Interval = 0x10;                                 //	��ѯ���
-  sConfig.AutomaticStop = HAL_OSPI_AUTOMATIC_STOP_ENABLE;  // �Զ�ֹͣģʽ
+  sConfig.Match = 0;                                       //	匹配值
+  sConfig.MatchMode = HAL_OSPI_MATCH_MODE_AND;             //	与运算
+  sConfig.Interval = 0x10;                                 //	轮询间隔
+  sConfig.AutomaticStop = HAL_OSPI_AUTOMATIC_STOP_ENABLE;  // 自动停止模式
   sConfig.Mask =
-      W25Qxx_Status_REG1_BUSY;  // ������ѯģʽ�½��յ�״̬�ֽڽ������Σ�ֻ�Ƚ���Ҫ�õ���λ
+      W25Qxx_Status_REG1_BUSY;  // 对在轮询模式下接收的状态字节进行屏蔽，只比较需要用到的位
 
-  // ������ѯ�ȴ�����
+  // 发送轮询等待命令
   if (HAL_OSPI_AutoPolling(&hospi2, &sConfig, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
       HAL_OK) {
-    return W25Qxx_ERROR_AUTOPOLLING;  // ��ѯ�ȴ�����Ӧ
+    return W25Qxx_ERROR_AUTOPOLLING;  // 轮询等待无响应
   }
-  return OSPI_W25Qxx_OK;  // ͨ����������
+  return OSPI_W25Qxx_OK;  // 通信正常结束
 }
 
 /*************************************************************************************************
- *	�� �� ��: OSPI_W25Qxx_ReadID
- *	��ڲ���: ��
- *	�� �� ֵ: W25Qxx_ID - ��ȡ��������ID��W25Qxx_ERROR_INIT -
- *ͨ�š���ʼ������ ��������: ��ʼ�� OSPI ���ã���ȡ����ID ˵    ��: ��
+ *	函 数 名: OSPI_W25Qxx_ReadID
+ *	入口参数: 无
+ *	返 回 值: W25Qxx_ID - 读取到的器件ID，W25Qxx_ERROR_INIT -
+ *通信、初始化错误 函数功能: 初始化 OSPI 配置，读取器件ID 说    明: 无
  **************************************************************************************************/
 
 uint32_t OSPI_W25Qxx_ReadID(void) {
-  OSPI_RegularCmdTypeDef sCommand;  // OSPI��������
+  OSPI_RegularCmdTypeDef sCommand;  // OSPI传输配置
 
-  uint8_t OSPI_ReceiveBuff[3];  // �洢OSPI����������
-  uint32_t W25Qxx_ID;           // ������ID
+  uint8_t OSPI_ReceiveBuff[3];  // 存储OSPI读到的数据
+  uint32_t W25Qxx_ID;           // 器件的ID
 
-  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // ͨ������
+  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // 通用配置
   sCommand.FlashId = HAL_OSPI_FLASH_ID_1;                  // flash ID
-  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1��ָ��ģʽ
-  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // ָ���8λ
+  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1线指令模式
+  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // 指令长度8位
   sCommand.InstructionDtrMode =
-      HAL_OSPI_INSTRUCTION_DTR_DISABLE;             // ��ָֹ��DTRģʽ
-  sCommand.AddressMode = HAL_OSPI_ADDRESS_NONE;     // �޵�ַģʽ
-  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;  // ��ַ����24λ
-  sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;  //	�޽����ֽ�
-  sCommand.DataMode = HAL_OSPI_DATA_1_LINE;          // 1������ģʽ
-  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // ��ֹ����DTRģʽ
-  sCommand.NbData = 3;                               // �������ݵĳ���
-  sCommand.DummyCycles = 0;                          // �����ڸ���
-  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // ��ʹ��DQS
-  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // ÿ�δ������ݶ�����ָ��
+      HAL_OSPI_INSTRUCTION_DTR_DISABLE;             // 禁止指令DTR模式
+  sCommand.AddressMode = HAL_OSPI_ADDRESS_NONE;     // 无地址模式
+  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;  // 地址长度24位
+  sCommand.AlternateBytesMode =
+      HAL_OSPI_ALTERNATE_BYTES_NONE;                 //	无交替字节
+  sCommand.DataMode = HAL_OSPI_DATA_1_LINE;          // 1线数据模式
+  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // 禁止数据DTR模式
+  sCommand.NbData = 3;                               // 传输数据的长度
+  sCommand.DummyCycles = 0;                          // 空周期个数
+  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // 不使用DQS
+  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // 每次传输数据都发送指令
 
-  sCommand.Instruction = W25Qxx_CMD_JedecID;  // ִ�ж�����ID����
+  sCommand.Instruction = W25Qxx_CMD_JedecID;  // 执行读器件ID命令
 
   HAL_OSPI_Command(&hospi2, &sCommand,
-                   HAL_OSPI_TIMEOUT_DEFAULT_VALUE);  // ����ָ��
+                   HAL_OSPI_TIMEOUT_DEFAULT_VALUE);  // 发送指令
 
   HAL_OSPI_Receive(&hospi2, OSPI_ReceiveBuff,
-                   HAL_OSPI_TIMEOUT_DEFAULT_VALUE);  // ��������
+                   HAL_OSPI_TIMEOUT_DEFAULT_VALUE);  // 接收数据
 
   W25Qxx_ID = (OSPI_ReceiveBuff[0] << 16) | (OSPI_ReceiveBuff[1] << 8) |
-              OSPI_ReceiveBuff[2];  // ���õ���������ϳ�ID
+              OSPI_ReceiveBuff[2];  // 将得到的数据组合成ID
 
-  return W25Qxx_ID;  // ����ID
+  return W25Qxx_ID;  // 返回ID
 }
 
 /*************************************************************************************************
- *	�� �� ��: OSPI_W25Qxx_MemoryMappedMode
- *	��ڲ���: ��
- *	�� �� ֵ: OSPI_W25Qxx_OK - дʹ�ܳɹ���W25Qxx_ERROR_WriteEnable -
- *дʹ��ʧ�� ��������: ��OSPI����Ϊ�ڴ�ӳ��ģʽ ˵    ��: ��
+ *	函 数 名: OSPI_W25Qxx_MemoryMappedMode
+ *	入口参数: 无
+ *	返 回 值: OSPI_W25Qxx_OK - 写使能成功，W25Qxx_ERROR_WriteEnable -
+ *写使能失败 函数功能: 将OSPI设置为内存映射模式 说    明: 无
  **************************************************************************************************/
 
 int8_t OSPI_W25Qxx_MemoryMappedMode(void) {
-  OSPI_RegularCmdTypeDef sCommand;         // QSPI��������
-  OSPI_MemoryMappedTypeDef sMemMappedCfg;  // �ڴ�ӳ����ʲ���
+  OSPI_RegularCmdTypeDef sCommand;         // QSPI传输配置
+  OSPI_MemoryMappedTypeDef sMemMappedCfg;  // 内存映射访问参数
 
-  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;  // ͨ������
+  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;  // 通用配置
   sCommand.FlashId = HAL_OSPI_FLASH_ID_1;               // flash ID
 
   sCommand.Instruction =
-      W25Qxx_CMD_FastReadQuad_IO;  // 1-4-4ģʽ��(1��ָ��4�ߵ�ַ4������)�����ٶ�ȡָ��
-  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1��ָ��ģʽ
-  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // ָ���8λ
+      W25Qxx_CMD_FastReadQuad_IO;  // 1-4-4模式下(1线指令4线地址4线数据)，快速读取指令
+  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1线指令模式
+  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // 指令长度8位
   sCommand.InstructionDtrMode =
-      HAL_OSPI_INSTRUCTION_DTR_DISABLE;  // ��ָֹ��DTRģʽ
+      HAL_OSPI_INSTRUCTION_DTR_DISABLE;  // 禁止指令DTR模式
 
-  sCommand.AddressMode = HAL_OSPI_ADDRESS_4_LINES;         // 4�ߵ�ַģʽ
-  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;         // ��ַ����24λ
-  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // ��ֹ��ַDTRģʽ
+  sCommand.AddressMode = HAL_OSPI_ADDRESS_4_LINES;         // 4线地址模式
+  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;         // 地址长度24位
+  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // 禁止地址DTR模式
 
-  sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;  // �޽����ֽ�
+  sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;  // 无交替字节
   sCommand.AlternateBytesDtrMode =
-      HAL_OSPI_ALTERNATE_BYTES_DTR_DISABLE;  // ��ֹ���ֽ�DTRģʽ
+      HAL_OSPI_ALTERNATE_BYTES_DTR_DISABLE;  // 禁止替字节DTR模式
 
-  sCommand.DataMode = HAL_OSPI_DATA_4_LINES;         // 4������ģʽ
-  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // ��ֹ����DTRģʽ
+  sCommand.DataMode = HAL_OSPI_DATA_4_LINES;         // 4线数据模式
+  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // 禁止数据DTR模式
 
-  sCommand.DummyCycles = 6;                          // �����ڸ���
-  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // ��ʹ��DQS
-  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // ÿ�δ������ݶ�����ָ��
+  sCommand.DummyCycles = 6;                          // 空周期个数
+  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // 不使用DQS
+  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // 每次传输数据都发送指令
 
-  // д����
+  // 写配置
   if (HAL_OSPI_Command(&hospi2, &sCommand, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
       HAL_OK) {
-    return W25Qxx_ERROR_TRANSMIT;  // �������ݴ���
+    return W25Qxx_ERROR_TRANSMIT;  // 传输数据错误
   }
 
   sMemMappedCfg.TimeOutActivation =
-      HAL_OSPI_TIMEOUT_COUNTER_DISABLE;  // ���ó�ʱ������, nCS ���ּ���״̬
-  sMemMappedCfg.TimeOutPeriod = 0;  // ��ʱ�ж�����
-  // �����ڴ�ӳ��ģʽ
-  if (HAL_OSPI_MemoryMapped(&hospi2, &sMemMappedCfg) != HAL_OK)  // ��������
+      HAL_OSPI_TIMEOUT_COUNTER_DISABLE;  // 禁用超时计数器, nCS 保持激活状态
+  sMemMappedCfg.TimeOutPeriod = 0;  // 超时判断周期
+  // 开启内存映射模式
+  if (HAL_OSPI_MemoryMapped(&hospi2, &sMemMappedCfg) != HAL_OK)  // 进行配置
   {
-    return W25Qxx_ERROR_MemoryMapped;  // �����ڴ�ӳ��ģʽ����
+    return W25Qxx_ERROR_MemoryMapped;  // 设置内存映射模式错误
   }
-  return OSPI_W25Qxx_OK;  // ���óɹ�
+  return OSPI_W25Qxx_OK;  // 配置成功
 }
 
 /*************************************************************************************************
- *   �� �� ��: OSPI_W25Qxx_WriteEnable
- *   ��ڲ���: ��
- *   �� �� ֵ: OSPI_W25Qxx_OK - дʹ�ܳɹ���W25Qxx_ERROR_WriteEnable -
- *дʹ��ʧ�� ��������: ����дʹ������ ˵    ��: ��
+ *   函 数 名: OSPI_W25Qxx_WriteEnable
+ *   入口参数: 无
+ *   返 回 值: OSPI_W25Qxx_OK - 写使能成功，W25Qxx_ERROR_WriteEnable -
+ *写使能失败 函数功能: 发送写使能命令 说    明: 无
  **************************************************************************************************/
 
 int8_t OSPI_W25Qxx_WriteEnable(void) {
-  OSPI_RegularCmdTypeDef sCommand;  // OSPI��������
-  OSPI_AutoPollingTypeDef sConfig;  // ��ѯ�Ƚ�������ò���
+  OSPI_RegularCmdTypeDef sCommand;  // OSPI传输配置
+  OSPI_AutoPollingTypeDef sConfig;  // 轮询比较相关配置参数
 
-  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // ͨ������
+  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // 通用配置
   sCommand.FlashId = HAL_OSPI_FLASH_ID_1;                  // flash ID
-  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1��ָ��ģʽ
-  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // ָ���8λ
+  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1线指令模式
+  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // 指令长度8位
   sCommand.InstructionDtrMode =
-      HAL_OSPI_INSTRUCTION_DTR_DISABLE;             // ��ָֹ��DTRģʽ
-  sCommand.Address = 0;                             // ��ַ0
-  sCommand.AddressMode = HAL_OSPI_ADDRESS_NONE;     // �޵�ַģʽ
-  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;  // ��ַ����24λ
-  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // ��ֹ��ַDTRģʽ
+      HAL_OSPI_INSTRUCTION_DTR_DISABLE;             // 禁止指令DTR模式
+  sCommand.Address = 0;                             // 地址0
+  sCommand.AddressMode = HAL_OSPI_ADDRESS_NONE;     // 无地址模式
+  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;  // 地址长度24位
+  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // 禁止地址DTR模式
   sCommand.AlternateBytesDtrMode =
-      HAL_OSPI_ALTERNATE_BYTES_DTR_DISABLE;  //	��ֹ���ֽ�DTRģʽ
-  sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;  //	�޽����ֽ�
-  sCommand.DataMode = HAL_OSPI_DATA_NONE;            // ������ģʽ
-  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // ��ֹ����DTRģʽ
-  sCommand.DummyCycles = 0;                          // �����ڸ���
-  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // ��ʹ��DQS
-  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // ÿ�δ������ݶ�����ָ��
-
-  sCommand.Instruction = W25Qxx_CMD_WriteEnable;  // дʹ������
-
-  // ����дʹ������
-  if (HAL_OSPI_Command(&hospi2, &sCommand, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
-      HAL_OK) {
-    return W25Qxx_ERROR_WriteEnable;
-  }
-  // ���Ͳ�ѯ״̬�Ĵ�������
-  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // ͨ������
-  sCommand.FlashId = HAL_OSPI_FLASH_ID_1;                  // flash ID
-  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1��ָ��ģʽ
-  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // ָ���8λ
-  sCommand.InstructionDtrMode =
-      HAL_OSPI_INSTRUCTION_DTR_DISABLE;          // ��ָֹ��DTRģʽ
-  sCommand.AddressMode = HAL_OSPI_ADDRESS_NONE;  // �޵�ַģʽ
+      HAL_OSPI_ALTERNATE_BYTES_DTR_DISABLE;  //	禁止替字节DTR模式
   sCommand.AlternateBytesMode =
-      HAL_OSPI_ALTERNATE_BYTES_NONE;                 //	�޽����ֽ�
-  sCommand.DummyCycles = 0;                          // �����ڸ���
-  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // ��ʹ��DQS
-  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // ÿ�δ������ݶ�����ָ��
-  sCommand.DataMode = HAL_OSPI_DATA_1_LINE;  // 1������ģʽ
-  sCommand.NbData = 1;                       // ͨ�����ݳ���
+      HAL_OSPI_ALTERNATE_BYTES_NONE;                 //	无交替字节
+  sCommand.DataMode = HAL_OSPI_DATA_NONE;            // 无数据模式
+  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // 禁止数据DTR模式
+  sCommand.DummyCycles = 0;                          // 空周期个数
+  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // 不使用DQS
+  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // 每次传输数据都发送指令
 
-  sCommand.Instruction = W25Qxx_CMD_ReadStatus_REG1;  // ��ѯ״̬�Ĵ�������
+  sCommand.Instruction = W25Qxx_CMD_WriteEnable;  // 写使能命令
+
+  // 发送写使能命令
+  if (HAL_OSPI_Command(&hospi2, &sCommand, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
+      HAL_OK) {
+    return W25Qxx_ERROR_WriteEnable;
+  }
+  // 发送查询状态寄存器命令
+  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // 通用配置
+  sCommand.FlashId = HAL_OSPI_FLASH_ID_1;                  // flash ID
+  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1线指令模式
+  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // 指令长度8位
+  sCommand.InstructionDtrMode =
+      HAL_OSPI_INSTRUCTION_DTR_DISABLE;          // 禁止指令DTR模式
+  sCommand.AddressMode = HAL_OSPI_ADDRESS_NONE;  // 无地址模式
+  sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;  //	无交替字节
+  sCommand.DummyCycles = 0;                          // 空周期个数
+  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // 不使用DQS
+  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // 每次传输数据都发送指令
+  sCommand.DataMode = HAL_OSPI_DATA_1_LINE;  // 1线数据模式
+  sCommand.NbData = 1;                       // 通信数据长度
+
+  sCommand.Instruction = W25Qxx_CMD_ReadStatus_REG1;  // 查询状态寄存器命令
 
   if (HAL_OSPI_Command(&hospi2, &sCommand, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
       HAL_OK) {
     return W25Qxx_ERROR_WriteEnable;
   }
 
-  // ��ͣ�Ĳ�ѯ W25Qxx_CMD_ReadStatus_REG1 �Ĵ���������ȡ����״̬�ֽ��е�
-  // W25Qxx_Status_REG1_WEL ��ͣ���� 0x02 ���Ƚ�
-  // ��״̬�Ĵ���1�ĵ�1λ��ֻ������WELдʹ�ܱ�־λ���ñ�־λΪ1ʱ���������Խ���д����
+  // 不停的查询 W25Qxx_CMD_ReadStatus_REG1 寄存器，将读取到的状态字节中的
+  // W25Qxx_Status_REG1_WEL 不停的与 0x02 作比较
+  // 读状态寄存器1的第1位（只读），WEL写使能标志位，该标志位为1时，代表可以进行写操作
   // FANKE	7B0
-  sConfig.Match = 0x02;                                    //	ƥ��ֵ
-  sConfig.MatchMode = HAL_OSPI_MATCH_MODE_AND;             //	������
-  sConfig.Interval = 0x10;                                 //	��ѯ���
-  sConfig.AutomaticStop = HAL_OSPI_AUTOMATIC_STOP_ENABLE;  // �Զ�ֹͣģʽ
+  sConfig.Match = 0x02;                                    //	匹配值
+  sConfig.MatchMode = HAL_OSPI_MATCH_MODE_AND;             //	与运算
+  sConfig.Interval = 0x10;                                 //	轮询间隔
+  sConfig.AutomaticStop = HAL_OSPI_AUTOMATIC_STOP_ENABLE;  // 自动停止模式
   sConfig.Mask =
-      W25Qxx_Status_REG1_WEL;  // ������ѯģʽ�½��յ�״̬�ֽڽ������Σ�ֻ�Ƚ���Ҫ�õ���λ
+      W25Qxx_Status_REG1_WEL;  // 对在轮询模式下接收的状态字节进行屏蔽，只比较需要用到的位
 
   if (HAL_OSPI_AutoPolling(&hospi2, &sConfig, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
       HAL_OK) {
-    return W25Qxx_ERROR_AUTOPOLLING;  // ��ѯ�ȴ�����Ӧ
+    return W25Qxx_ERROR_AUTOPOLLING;  // 轮询等待无响应
   }
-  return OSPI_W25Qxx_OK;  // ͨ����������
+  return OSPI_W25Qxx_OK;  // 通信正常结束
 }
 
 /*************************************************************************************************
  *
- *	�� �� ��: OSPI_W25Qxx_SectorErase
+ *	函 数 名: OSPI_W25Qxx_SectorErase
  *
- *	��ڲ���: SectorAddress - Ҫ�����ĵ�ַ
+ *	入口参数: SectorAddress - 要擦除的地址
  *
- *	�� �� ֵ: OSPI_W25Qxx_OK - �����ɹ�
- *			    W25Qxx_ERROR_Erase - ����ʧ��
- *				 W25Qxx_ERROR_AUTOPOLLING - ��ѯ�ȴ�����Ӧ
+ *	返 回 值: OSPI_W25Qxx_OK - 擦除成功
+ *			    W25Qxx_ERROR_Erase - 擦除失败
+ *				 W25Qxx_ERROR_AUTOPOLLING - 轮询等待无响应
  *
- *	��������: ������������������ÿ�β���4K�ֽ�
+ *	函数功能: 进行扇区擦除操作，每次擦除4K字节
  *
- *	˵    ��: 1.���� W25Q64JV �����ֲ�����Ĳ����ο�ʱ�䣬����ֵΪ
- *45ms�����ֵΪ400ms 2.ʵ�ʵĲ����ٶȿ��ܴ���45ms��Ҳ����С��45ms
- *				 3.flashʹ�õ�ʱ��Խ������������ʱ��Ҳ��Խ��
+ *	说    明: 1.按照 W25Q64JV 数据手册给出的擦除参考时间，典型值为
+ *45ms，最大值为400ms 2.实际的擦除速度可能大于45ms，也可能小于45ms
+ *				 3.flash使用的时间越长，擦除所需时间也会越长
  *
  **************************************************************************************************/
 
 int8_t OSPI_W25Qxx_SectorErase(uint32_t SectorAddress) {
-  OSPI_RegularCmdTypeDef sCommand;  // OSPI��������
+  OSPI_RegularCmdTypeDef sCommand;  // OSPI传输配置
 
-  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // ͨ������
+  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // 通用配置
   sCommand.FlashId = HAL_OSPI_FLASH_ID_1;                  // flash ID
-  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1��ָ��ģʽ
-  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // ָ���8λ
+  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1线指令模式
+  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // 指令长度8位
   sCommand.InstructionDtrMode =
-      HAL_OSPI_INSTRUCTION_DTR_DISABLE;             // ��ָֹ��DTRģʽ
-  sCommand.Address = SectorAddress;                 // ��ַ
-  sCommand.AddressMode = HAL_OSPI_ADDRESS_1_LINE;   // 1�ߵ�ַģʽ
-  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;  // ��ַ����24λ
-  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // ��ֹ��ַDTRģʽ
-  sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;  //	�޽����ֽ�
-  sCommand.DataMode = HAL_OSPI_DATA_NONE;            // ������ģʽ
-  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // ��ֹ����DTRģʽ
-  sCommand.DummyCycles = 0;                          // �����ڸ���
-  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // ��ʹ��DQS
-  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // ÿ�δ������ݶ�����ָ��
+      HAL_OSPI_INSTRUCTION_DTR_DISABLE;             // 禁止指令DTR模式
+  sCommand.Address = SectorAddress;                 // 地址
+  sCommand.AddressMode = HAL_OSPI_ADDRESS_1_LINE;   // 1线地址模式
+  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;  // 地址长度24位
+  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // 禁止地址DTR模式
+  sCommand.AlternateBytesMode =
+      HAL_OSPI_ALTERNATE_BYTES_NONE;                 //	无交替字节
+  sCommand.DataMode = HAL_OSPI_DATA_NONE;            // 无数据模式
+  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // 禁止数据DTR模式
+  sCommand.DummyCycles = 0;                          // 空周期个数
+  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // 不使用DQS
+  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // 每次传输数据都发送指令
 
   sCommand.Instruction =
-      W25Qxx_CMD_SectorErase;  // ��������ָ�ÿ�β���4K�ֽ�
+      W25Qxx_CMD_SectorErase;  // 扇区擦除指令，每次擦除4K字节
 
-  // ����дʹ��
+  // 发送写使能
   if (OSPI_W25Qxx_WriteEnable() != OSPI_W25Qxx_OK) {
-    return W25Qxx_ERROR_WriteEnable;  // дʹ��ʧ��
+    return W25Qxx_ERROR_WriteEnable;  // 写使能失败
   }
-  // ���Ͳ���ָ��
+  // 发送擦除指令
   if (HAL_OSPI_Command(&hospi2, &sCommand, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
       HAL_OK) {
-    return W25Qxx_ERROR_AUTOPOLLING;  // ��ѯ�ȴ�����Ӧ
+    return W25Qxx_ERROR_AUTOPOLLING;  // 轮询等待无响应
   }
-  // ʹ���Զ���ѯ��־λ���ȴ������Ľ���
+  // 使用自动轮询标志位，等待擦除的结束
   if (OSPI_W25Qxx_AutoPollingMemReady() != OSPI_W25Qxx_OK) {
-    return W25Qxx_ERROR_AUTOPOLLING;  // ��ѯ�ȴ�����Ӧ
+    return W25Qxx_ERROR_AUTOPOLLING;  // 轮询等待无响应
   }
-  return OSPI_W25Qxx_OK;  // �����ɹ�
+  return OSPI_W25Qxx_OK;  // 擦除成功
 }
 
 /*************************************************************************************************
  *
- *	�� �� ��: OSPI_W25Qxx_BlockErase_32K
+ *	函 数 名: OSPI_W25Qxx_BlockErase_32K
  *
- *	��ڲ���: SectorAddress - Ҫ�����ĵ�ַ
+ *	入口参数: SectorAddress - 要擦除的地址
  *
- *	�� �� ֵ: OSPI_W25Qxx_OK - �����ɹ�
- *			    W25Qxx_ERROR_Erase - ����ʧ��
- *				 W25Qxx_ERROR_AUTOPOLLING - ��ѯ�ȴ�����Ӧ
+ *	返 回 值: OSPI_W25Qxx_OK - 擦除成功
+ *			    W25Qxx_ERROR_Erase - 擦除失败
+ *				 W25Qxx_ERROR_AUTOPOLLING - 轮询等待无响应
  *
- *	��������: ���п����������ÿ�β���32K�ֽ�
+ *	函数功能: 进行块擦除操作，每次擦除32K字节
  *
- *	˵    ��: 1.���� W25Q64JV �����ֲ�����Ĳ����ο�ʱ�䣬����ֵΪ
- *120ms�����ֵΪ1600ms 2.ʵ�ʵĲ����ٶȿ��ܴ���120ms��Ҳ����С��120ms
- *				 3.flashʹ�õ�ʱ��Խ������������ʱ��Ҳ��Խ��
+ *	说    明: 1.按照 W25Q64JV 数据手册给出的擦除参考时间，典型值为
+ *120ms，最大值为1600ms 2.实际的擦除速度可能大于120ms，也可能小于120ms
+ *				 3.flash使用的时间越长，擦除所需时间也会越长
  *
  *************************************************************************************************/
 
 int8_t OSPI_W25Qxx_BlockErase_32K(uint32_t SectorAddress) {
-  OSPI_RegularCmdTypeDef sCommand;  // OSPI��������
+  OSPI_RegularCmdTypeDef sCommand;  // OSPI传输配置
 
-  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // ͨ������
+  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // 通用配置
   sCommand.FlashId = HAL_OSPI_FLASH_ID_1;                  // flash ID
-  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1��ָ��ģʽ
-  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // ָ���8λ
+  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1线指令模式
+  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // 指令长度8位
   sCommand.InstructionDtrMode =
-      HAL_OSPI_INSTRUCTION_DTR_DISABLE;             // ��ָֹ��DTRģʽ
-  sCommand.Address = SectorAddress;                 // ��ַ
-  sCommand.AddressMode = HAL_OSPI_ADDRESS_1_LINE;   // 1�ߵ�ַģʽ
-  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;  // ��ַ����24λ
-  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // ��ֹ��ַDTRģʽ
-  sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;  //	�޽����ֽ�
-  sCommand.DataMode = HAL_OSPI_DATA_NONE;            // ������ģʽ
-  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // ��ֹ����DTRģʽ
-  sCommand.DummyCycles = 0;                          // �����ڸ���
-  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // ��ʹ��DQS
-  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // ÿ�δ������ݶ�����ָ��
+      HAL_OSPI_INSTRUCTION_DTR_DISABLE;             // 禁止指令DTR模式
+  sCommand.Address = SectorAddress;                 // 地址
+  sCommand.AddressMode = HAL_OSPI_ADDRESS_1_LINE;   // 1线地址模式
+  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;  // 地址长度24位
+  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // 禁止地址DTR模式
+  sCommand.AlternateBytesMode =
+      HAL_OSPI_ALTERNATE_BYTES_NONE;                 //	无交替字节
+  sCommand.DataMode = HAL_OSPI_DATA_NONE;            // 无数据模式
+  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // 禁止数据DTR模式
+  sCommand.DummyCycles = 0;                          // 空周期个数
+  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // 不使用DQS
+  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // 每次传输数据都发送指令
 
   sCommand.Instruction =
-      W25Qxx_CMD_BlockErase_32K;  // �����ָ�ÿ�β���32K�ֽ�
+      W25Qxx_CMD_BlockErase_32K;  // 块擦除指令，每次擦除32K字节
 
-  // ����дʹ��
+  // 发送写使能
   if (OSPI_W25Qxx_WriteEnable() != OSPI_W25Qxx_OK) {
-    return W25Qxx_ERROR_WriteEnable;  // дʹ��ʧ��
+    return W25Qxx_ERROR_WriteEnable;  // 写使能失败
   }
-  // ���Ͳ���ָ��
+  // 发送擦除指令
   if (HAL_OSPI_Command(&hospi2, &sCommand, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
       HAL_OK) {
-    return W25Qxx_ERROR_AUTOPOLLING;  // ��ѯ�ȴ�����Ӧ
+    return W25Qxx_ERROR_AUTOPOLLING;  // 轮询等待无响应
   }
-  // ʹ���Զ���ѯ��־λ���ȴ������Ľ���
+  // 使用自动轮询标志位，等待擦除的结束
   if (OSPI_W25Qxx_AutoPollingMemReady() != OSPI_W25Qxx_OK) {
-    return W25Qxx_ERROR_AUTOPOLLING;  // ��ѯ�ȴ�����Ӧ
+    return W25Qxx_ERROR_AUTOPOLLING;  // 轮询等待无响应
   }
-  return OSPI_W25Qxx_OK;  // �����ɹ�
+  return OSPI_W25Qxx_OK;  // 擦除成功
 }
 
 /*************************************************************************************************
  *
- *	�� �� ��: OSPI_W25Qxx_BlockErase_64K
+ *	函 数 名: OSPI_W25Qxx_BlockErase_64K
  *
- *	��ڲ���: SectorAddress - Ҫ�����ĵ�ַ
+ *	入口参数: SectorAddress - 要擦除的地址
  *
- *	�� �� ֵ: OSPI_W25Qxx_OK - �����ɹ�
- *			    W25Qxx_ERROR_Erase - ����ʧ��
- *				 W25Qxx_ERROR_AUTOPOLLING - ��ѯ�ȴ�����Ӧ
+ *	返 回 值: OSPI_W25Qxx_OK - 擦除成功
+ *			    W25Qxx_ERROR_Erase - 擦除失败
+ *				 W25Qxx_ERROR_AUTOPOLLING - 轮询等待无响应
  *
- *	��������: ���п����������ÿ�β���64K�ֽ�
+ *	函数功能: 进行块擦除操作，每次擦除64K字节
  *
- *	˵    ��: 1.���� W25Q64JV �����ֲ�����Ĳ����ο�ʱ�䣬����ֵΪ
- *150ms�����ֵΪ2000ms 2.ʵ�ʵĲ����ٶȿ��ܴ���150ms��Ҳ����С��150ms
- *				 3.flashʹ�õ�ʱ��Խ������������ʱ��Ҳ��Խ��
- *				 4.ʵ��ʹ�ý���ʹ��64K������������ʱ�����
+ *	说    明: 1.按照 W25Q64JV 数据手册给出的擦除参考时间，典型值为
+ *150ms，最大值为2000ms 2.实际的擦除速度可能大于150ms，也可能小于150ms
+ *				 3.flash使用的时间越长，擦除所需时间也会越长
+ *				 4.实际使用建议使用64K擦除，擦除的时间最快
  *
  **************************************************************************************************/
 int8_t OSPI_W25Qxx_BlockErase_64K(uint32_t SectorAddress) {
-  OSPI_RegularCmdTypeDef sCommand;  // OSPI��������
+  OSPI_RegularCmdTypeDef sCommand;  // OSPI传输配置
 
-  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // ͨ������
+  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // 通用配置
   sCommand.FlashId = HAL_OSPI_FLASH_ID_1;                  // flash ID
-  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1��ָ��ģʽ
-  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // ָ���8λ
+  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1线指令模式
+  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // 指令长度8位
   sCommand.InstructionDtrMode =
-      HAL_OSPI_INSTRUCTION_DTR_DISABLE;             // ��ָֹ��DTRģʽ
-  sCommand.Address = SectorAddress;                 // ��ַ
-  sCommand.AddressMode = HAL_OSPI_ADDRESS_1_LINE;   // 1�ߵ�ַģʽ
-  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;  // ��ַ����24λ
-  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // ��ֹ��ַDTRģʽ
-  sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;  //	�޽����ֽ�
-  sCommand.DataMode = HAL_OSPI_DATA_NONE;            // ������ģʽ
-  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // ��ֹ����DTRģʽ
-  sCommand.DummyCycles = 0;                          // �����ڸ���
-  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // ��ʹ��DQS
-  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // ÿ�δ������ݶ�����ָ��
+      HAL_OSPI_INSTRUCTION_DTR_DISABLE;             // 禁止指令DTR模式
+  sCommand.Address = SectorAddress;                 // 地址
+  sCommand.AddressMode = HAL_OSPI_ADDRESS_1_LINE;   // 1线地址模式
+  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;  // 地址长度24位
+  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // 禁止地址DTR模式
+  sCommand.AlternateBytesMode =
+      HAL_OSPI_ALTERNATE_BYTES_NONE;                 //	无交替字节
+  sCommand.DataMode = HAL_OSPI_DATA_NONE;            // 无数据模式
+  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // 禁止数据DTR模式
+  sCommand.DummyCycles = 0;                          // 空周期个数
+  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // 不使用DQS
+  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // 每次传输数据都发送指令
 
   sCommand.Instruction =
-      W25Qxx_CMD_BlockErase_64K;  // ��������ָ�ÿ�β���64K�ֽ�
+      W25Qxx_CMD_BlockErase_64K;  // 扇区擦除指令，每次擦除64K字节
 
-  // ����дʹ��
+  // 发送写使能
   if (OSPI_W25Qxx_WriteEnable() != OSPI_W25Qxx_OK) {
-    return W25Qxx_ERROR_WriteEnable;  // дʹ��ʧ��
+    return W25Qxx_ERROR_WriteEnable;  // 写使能失败
   }
-  // ���Ͳ���ָ��
+  // 发送擦除指令
   if (HAL_OSPI_Command(&hospi2, &sCommand, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
       HAL_OK) {
-    return W25Qxx_ERROR_AUTOPOLLING;  // ��ѯ�ȴ�����Ӧ
+    return W25Qxx_ERROR_AUTOPOLLING;  // 轮询等待无响应
   }
-  // ʹ���Զ���ѯ��־λ���ȴ������Ľ���
+  // 使用自动轮询标志位，等待擦除的结束
   if (OSPI_W25Qxx_AutoPollingMemReady() != OSPI_W25Qxx_OK) {
-    return W25Qxx_ERROR_AUTOPOLLING;  // ��ѯ�ȴ�����Ӧ
+    return W25Qxx_ERROR_AUTOPOLLING;  // 轮询等待无响应
   }
-  return OSPI_W25Qxx_OK;  // �����ɹ�
+  return OSPI_W25Qxx_OK;  // 擦除成功
 }
 
 /*************************************************************************************************
  *
- *	�� �� ��: OSPI_W25Qxx_ChipErase
+ *	函 数 名: OSPI_W25Qxx_ChipErase
  *
- *	��ڲ���: ��
+ *	入口参数: 无
  *
- *	�� �� ֵ: OSPI_W25Qxx_OK - �����ɹ�
- *			    W25Qxx_ERROR_Erase - ����ʧ��
- *				 W25Qxx_ERROR_AUTOPOLLING - ��ѯ�ȴ�����Ӧ
+ *	返 回 值: OSPI_W25Qxx_OK - 擦除成功
+ *			    W25Qxx_ERROR_Erase - 擦除失败
+ *				 W25Qxx_ERROR_AUTOPOLLING - 轮询等待无响应
  *
- *	��������: ������Ƭ��������
+ *	函数功能: 进行整片擦除操作
  *
- *	˵    ��: 1.���� W25Q64JV �����ֲ�����Ĳ����ο�ʱ�䣬����ֵΪ
- *20s�����ֵΪ100s 2.ʵ�ʵĲ����ٶȿ��ܴ���20s��Ҳ����С��20s
- *				 3.flashʹ�õ�ʱ��Խ������������ʱ��Ҳ��Խ��
+ *	说    明: 1.按照 W25Q64JV 数据手册给出的擦除参考时间，典型值为
+ *20s，最大值为100s 2.实际的擦除速度可能大于20s，也可能小于20s
+ *				 3.flash使用的时间越长，擦除所需时间也会越长
  *
  *************************************************************************************************/
 int8_t OSPI_W25Qxx_ChipErase(void) {
-  OSPI_RegularCmdTypeDef sCommand;  // OSPI��������
-  OSPI_AutoPollingTypeDef sConfig;  // ��ѯ�Ƚ�������ò���
+  OSPI_RegularCmdTypeDef sCommand;  // OSPI传输配置
+  OSPI_AutoPollingTypeDef sConfig;  // 轮询比较相关配置参数
 
-  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // ͨ������
+  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;     // 通用配置
   sCommand.FlashId = HAL_OSPI_FLASH_ID_1;                  // flash ID
-  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1��ָ��ģʽ
-  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // ָ���8λ
+  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1线指令模式
+  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // 指令长度8位
   sCommand.InstructionDtrMode =
-      HAL_OSPI_INSTRUCTION_DTR_DISABLE;          // ��ָֹ��DTRģʽ
-  sCommand.AddressMode = HAL_OSPI_ADDRESS_NONE;  // �޵�ַģʽ
-  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // ��ֹ��ַDTRģʽ
-  sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;  //	�޽����ֽ�
-  sCommand.DataMode = HAL_OSPI_DATA_NONE;            // ������ģʽ
-  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // ��ֹ����DTRģʽ
-  sCommand.DummyCycles = 0;                          // �����ڸ���
-  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // ��ʹ��DQS
-  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // ÿ�δ������ݶ�����ָ��
+      HAL_OSPI_INSTRUCTION_DTR_DISABLE;          // 禁止指令DTR模式
+  sCommand.AddressMode = HAL_OSPI_ADDRESS_NONE;  // 无地址模式
+  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // 禁止地址DTR模式
+  sCommand.AlternateBytesMode =
+      HAL_OSPI_ALTERNATE_BYTES_NONE;                 //	无交替字节
+  sCommand.DataMode = HAL_OSPI_DATA_NONE;            // 无数据模式
+  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // 禁止数据DTR模式
+  sCommand.DummyCycles = 0;                          // 空周期个数
+  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // 不使用DQS
+  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // 每次传输数据都发送指令
 
-  sCommand.Instruction = W25Qxx_CMD_ChipErase;  // ȫƬ����ָ��
+  sCommand.Instruction = W25Qxx_CMD_ChipErase;  // 全片擦除指令
 
-  // ����дʹ��
+  // 发送写使能
   if (OSPI_W25Qxx_WriteEnable() != OSPI_W25Qxx_OK) {
-    return W25Qxx_ERROR_WriteEnable;  // дʹ��ʧ��
+    return W25Qxx_ERROR_WriteEnable;  // 写使能失败
   }
-  // ���Ͳ���ָ��
+  // 发送擦除指令
   if (HAL_OSPI_Command(&hospi2, &sCommand, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
       HAL_OK) {
-    return W25Qxx_ERROR_AUTOPOLLING;  // ��ѯ�ȴ�����Ӧ
+    return W25Qxx_ERROR_AUTOPOLLING;  // 轮询等待无响应
   }
 
-  // ���Ͳ�ѯ״̬�Ĵ�������
-  sCommand.DataMode = HAL_OSPI_DATA_1_LINE;           // һ������ģʽ
-  sCommand.NbData = 1;                                // ���ݳ���1
-  sCommand.Instruction = W25Qxx_CMD_ReadStatus_REG1;  // ״̬�Ĵ�������
+  // 发送查询状态寄存器命令
+  sCommand.DataMode = HAL_OSPI_DATA_1_LINE;           // 一线数据模式
+  sCommand.NbData = 1;                                // 数据长度1
+  sCommand.Instruction = W25Qxx_CMD_ReadStatus_REG1;  // 状态寄存器命令
 
   if (HAL_OSPI_Command(&hospi2, &sCommand, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
       HAL_OK) {
     return W25Qxx_ERROR_AUTOPOLLING;
   }
 
-  // ��ͣ�Ĳ�ѯ W25Qxx_CMD_ReadStatus_REG1 �Ĵ���������ȡ����״̬�ֽ��е�
-  // W25Qxx_Status_REG1_BUSY ��ͣ����0���Ƚ�
-  // ��״̬�Ĵ���1�ĵ�0λ��ֻ������Busy��־λ�������ڲ���/д������/д����ʱ�ᱻ��1�����л�ͨ�Ž���Ϊ0
+  // 不停的查询 W25Qxx_CMD_ReadStatus_REG1 寄存器，将读取到的状态字节中的
+  // W25Qxx_Status_REG1_BUSY 不停的与0作比较
+  // 读状态寄存器1的第0位（只读），Busy标志位，当正在擦除/写入数据/写命令时会被置1，空闲或通信结束为0
 
-  sConfig.Match = 0;                                       //	ƥ��ֵ
-  sConfig.MatchMode = HAL_OSPI_MATCH_MODE_AND;             //	������
-  sConfig.Interval = 0x10;                                 //	��ѯ���
-  sConfig.AutomaticStop = HAL_OSPI_AUTOMATIC_STOP_ENABLE;  // �Զ�ֹͣģʽ
+  sConfig.Match = 0;                                       //	匹配值
+  sConfig.MatchMode = HAL_OSPI_MATCH_MODE_AND;             //	与运算
+  sConfig.Interval = 0x10;                                 //	轮询间隔
+  sConfig.AutomaticStop = HAL_OSPI_AUTOMATIC_STOP_ENABLE;  // 自动停止模式
   sConfig.Mask =
-      W25Qxx_Status_REG1_BUSY;  // ������ѯģʽ�½��յ�״̬�ֽڽ������Σ�ֻ�Ƚ���Ҫ�õ���λ
+      W25Qxx_Status_REG1_BUSY;  // 对在轮询模式下接收的状态字节进行屏蔽，只比较需要用到的位
 
-  // W25Q64��Ƭ�����ĵ��Ͳο�ʱ��Ϊ20s�����ʱ��Ϊ100s������ĳ�ʱ�ȴ�ֵ
-  // W25Qxx_ChipErase_TIMEOUT_MAX Ϊ 100S
+  // W25Q64整片擦除的典型参考时间为20s，最大时间为100s，这里的超时等待值
+  // W25Qxx_ChipErase_TIMEOUT_MAX 为 100S
   if (HAL_OSPI_AutoPolling(&hospi2, &sConfig, W25Qxx_ChipErase_TIMEOUT_MAX) !=
       HAL_OK) {
-    return W25Qxx_ERROR_AUTOPOLLING;  // ��ѯ�ȴ�����Ӧ
+    return W25Qxx_ERROR_AUTOPOLLING;  // 轮询等待无响应
   }
-  return OSPI_W25Qxx_OK;  // �����ɹ�
+  return OSPI_W25Qxx_OK;  // 擦除成功
 }
 
 /**********************************************************************************************************
  *
- *	�� �� ��: OSPI_W25Qxx_WritePage
+ *	函 数 名: OSPI_W25Qxx_WritePage
  *
- *	��ڲ���: pBuffer 		 - Ҫд�������
- *				 WriteAddr 		 - Ҫд�� W25Qxx �ĵ�ַ
- *				 NumByteToWrite - ���ݳ��ȣ����ֻ��256�ֽ�
+ *	入口参数: pBuffer 		 - 要写入的数据
+ *				 WriteAddr 		 - 要写入 W25Qxx 的地址
+ *				 NumByteToWrite - 数据长度，最大只能256字节
  *
- *	�� �� ֵ: OSPI_W25Qxx_OK 		     - д���ݳɹ�
- *			    W25Qxx_ERROR_WriteEnable - дʹ��ʧ��
- *				 W25Qxx_ERROR_TRANSMIT	  - ����ʧ��
- *				 W25Qxx_ERROR_AUTOPOLLING - ��ѯ�ȴ�����Ӧ
+ *	返 回 值: OSPI_W25Qxx_OK 		     - 写数据成功
+ *			    W25Qxx_ERROR_WriteEnable - 写使能失败
+ *				 W25Qxx_ERROR_TRANSMIT	  - 传输失败
+ *				 W25Qxx_ERROR_AUTOPOLLING - 轮询等待无响应
  *
- *	��������: ��ҳд�룬���ֻ��256�ֽڣ�������д��֮ǰ���������ɲ�������
+ *	函数功能: 按页写入，最大只能256字节，在数据写入之前，请务必完成擦除操作
  *
- *	˵
- *��: 1.Flash��д��ʱ��Ͳ���ʱ��һ�������޶��ģ�������˵OSPI����ʱ��133M�Ϳ���������ٶȽ���д��
- *				 2.���� W25Q64JV �����ֲ������ ҳ(256�ֽ�)
- *д��ο�ʱ�䣬����ֵΪ 0.4ms�����ֵΪ3ms
- *				 3.ʵ�ʵ�д���ٶȿ��ܴ���0.4ms��Ҳ����С��0.4ms
- *				 4.Flashʹ�õ�ʱ��Խ����д������ʱ��Ҳ��Խ��
- *				 5.������д��֮ǰ���������ɲ�������
+ *	说
+ *明: 1.Flash的写入时间和擦除时间一样，是限定的，并不是说OSPI驱动时钟133M就可以以这个速度进行写入
+ *				 2.按照 W25Q64JV 数据手册给出的 页(256字节)
+ *写入参考时间，典型值为 0.4ms，最大值为3ms
+ *				 3.实际的写入速度可能大于0.4ms，也可能小于0.4ms
+ *				 4.Flash使用的时间越长，写入所需时间也会越长
+ *				 5.在数据写入之前，请务必完成擦除操作
  *
  ***********************************************************************************************************/
 int8_t OSPI_W25Qxx_WritePage(uint8_t* pBuffer, uint32_t WriteAddr,
                              uint16_t NumByteToWrite) {
-  OSPI_RegularCmdTypeDef sCommand;  // OSPI��������
+  OSPI_RegularCmdTypeDef sCommand;  // OSPI传输配置
 
-  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;  // ͨ������
+  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;  // 通用配置
   sCommand.FlashId = HAL_OSPI_FLASH_ID_1;               // flash ID
 
   sCommand.Instruction =
-      W25Qxx_CMD_QuadInputPageProgram;  // 1-1-4ģʽ��(1��ָ��1�ߵ�ַ4������)��ҳ���ָ��
-  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1��ָ��ģʽ
-  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // ָ���8λ
+      W25Qxx_CMD_QuadInputPageProgram;  // 1-1-4模式下(1线指令1线地址4线数据)，页编程指令
+  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1线指令模式
+  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // 指令长度8位
   sCommand.InstructionDtrMode =
-      HAL_OSPI_INSTRUCTION_DTR_DISABLE;  // ��ָֹ��DTRģʽ
+      HAL_OSPI_INSTRUCTION_DTR_DISABLE;  // 禁止指令DTR模式
 
-  sCommand.Address = WriteAddr;                            // ��ַ
-  sCommand.AddressMode = HAL_OSPI_ADDRESS_1_LINE;          // 1�ߵ�ַģʽ
-  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;         // ��ַ����24λ
-  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // ��ֹ��ַDTRģʽ
+  sCommand.Address = WriteAddr;                            // 地址
+  sCommand.AddressMode = HAL_OSPI_ADDRESS_1_LINE;          // 1线地址模式
+  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;         // 地址长度24位
+  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // 禁止地址DTR模式
 
-  sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;  // �޽����ֽ�
+  sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;  // 无交替字节
   sCommand.AlternateBytesDtrMode =
-      HAL_OSPI_ALTERNATE_BYTES_DTR_DISABLE;  // ��ֹ���ֽ�DTRģʽ
+      HAL_OSPI_ALTERNATE_BYTES_DTR_DISABLE;  // 禁止替字节DTR模式
 
-  sCommand.DataMode = HAL_OSPI_DATA_4_LINES;         // 4������ģʽ
-  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // ��ֹ����DTRģʽ
-  sCommand.NbData = NumByteToWrite;                  // ���ݳ���
+  sCommand.DataMode = HAL_OSPI_DATA_4_LINES;         // 4线数据模式
+  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // 禁止数据DTR模式
+  sCommand.NbData = NumByteToWrite;                  // 数据长度
 
-  sCommand.DummyCycles = 0;                          // �����ڸ���
-  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // ��ʹ��DQS
-  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // ÿ�δ������ݶ�����ָ��
+  sCommand.DummyCycles = 0;                          // 空周期个数
+  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // 不使用DQS
+  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // 每次传输数据都发送指令
 
-  // дʹ��
+  // 写使能
   if (OSPI_W25Qxx_WriteEnable() != OSPI_W25Qxx_OK) {
-    return W25Qxx_ERROR_WriteEnable;  // дʹ��ʧ��
+    return W25Qxx_ERROR_WriteEnable;  // 写使能失败
   }
-  // д����
+  // 写命令
   if (HAL_OSPI_Command(&hospi2, &sCommand, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
       HAL_OK) {
-    return W25Qxx_ERROR_TRANSMIT;  // �������ݴ���
+    return W25Qxx_ERROR_TRANSMIT;  // 传输数据错误
   }
-  // ��ʼ��������
+  // 开始传输数据
   if (HAL_OSPI_Transmit(&hospi2, pBuffer, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
       HAL_OK) {
-    return W25Qxx_ERROR_TRANSMIT;  // �������ݴ���
+    return W25Qxx_ERROR_TRANSMIT;  // 传输数据错误
   }
-  // ʹ���Զ���ѯ��־λ���ȴ�д��Ľ���
+  // 使用自动轮询标志位，等待写入的结束
   if (OSPI_W25Qxx_AutoPollingMemReady() != OSPI_W25Qxx_OK) {
-    return W25Qxx_ERROR_AUTOPOLLING;  // ��ѯ�ȴ�����Ӧ
+    return W25Qxx_ERROR_AUTOPOLLING;  // 轮询等待无响应
   }
-  return OSPI_W25Qxx_OK;  // д���ݳɹ�
+  return OSPI_W25Qxx_OK;  // 写数据成功
 }
 
 /**********************************************************************************************************
  *
- *	�� �� ��: OSPI_W25Qxx_WriteBuffer
+ *	函 数 名: OSPI_W25Qxx_WriteBuffer
  *
- *	��ڲ���: pBuffer 		 - Ҫд�������
- *				 WriteAddr 		 - Ҫд�� W25Qxx �ĵ�ַ
+ *	入口参数: pBuffer 		 - 要写入的数据
+ *				 WriteAddr 		 - 要写入 W25Qxx 的地址
  *				 NumByteToWrite -
- *���ݳ��ȣ�����ܳ���flashоƬ�Ĵ�С
+ *数据长度，最大不能超过flash芯片的大小
  *
- *	�� �� ֵ: OSPI_W25Qxx_OK 		     - д���ݳɹ�
- *			    W25Qxx_ERROR_WriteEnable - дʹ��ʧ��
- *				 W25Qxx_ERROR_TRANSMIT	  - ����ʧ��
- *				 W25Qxx_ERROR_AUTOPOLLING - ��ѯ�ȴ�����Ӧ
+ *	返 回 值: OSPI_W25Qxx_OK 		     - 写数据成功
+ *			    W25Qxx_ERROR_WriteEnable - 写使能失败
+ *				 W25Qxx_ERROR_TRANSMIT	  - 传输失败
+ *				 W25Qxx_ERROR_AUTOPOLLING - 轮询等待无响应
  *
- *	��������: д�����ݣ�����ܳ���flashоƬ�Ĵ�С���������ɲ�������
+ *	函数功能: 写入数据，最大不能超过flash芯片的大小，请务必完成擦除操作
  *
- *	˵
- *��: 1.Flash��д��ʱ��Ͳ���ʱ��һ���������޶��ģ�������˵OSPI����ʱ��133M�Ϳ���������ٶȽ���д��
- *				 2.���� W25Q64JV �����ֲ������ ҳ
- *д��ο�ʱ�䣬����ֵΪ 0.4ms�����ֵΪ3ms
- *				 3.ʵ�ʵ�д���ٶȿ��ܴ���0.4ms��Ҳ����С��0.4ms
- *				 4.Flashʹ�õ�ʱ��Խ����д������ʱ��Ҳ��Խ��
- *				 5.������д��֮ǰ���������ɲ�������
- *				 6.�ú�����ֲ�� stm32h743i_eval_qspi.c
+ *	说
+ *明: 1.Flash的写入时间和擦除时间一样，是有限定的，并不是说OSPI驱动时钟133M就可以以这个速度进行写入
+ *				 2.按照 W25Q64JV 数据手册给出的 页
+ *写入参考时间，典型值为 0.4ms，最大值为3ms
+ *				 3.实际的写入速度可能大于0.4ms，也可能小于0.4ms
+ *				 4.Flash使用的时间越长，写入所需时间也会越长
+ *				 5.在数据写入之前，请务必完成擦除操作
+ *				 6.该函数移植于 stm32h743i_eval_qspi.c
  *
  **********************************************************************************************************/
 
 int8_t OSPI_W25Qxx_WriteBuffer(uint8_t* pBuffer, uint32_t WriteAddr,
                                uint32_t Size) {
   uint32_t end_addr, current_size, current_addr;
-  uint8_t* write_data;  // Ҫд�������
+  uint8_t* write_data;  // 要写入的数据
 
   current_size = W25Qxx_PageSize -
-                 (WriteAddr % W25Qxx_PageSize);  // ���㵱ǰҳ��ʣ��Ŀռ�
+                 (WriteAddr % W25Qxx_PageSize);  // 计算当前页还剩余的空间
 
-  if (current_size > Size)  // �жϵ�ǰҳʣ��Ŀռ��Ƿ��㹻д����������
+  if (current_size > Size)  // 判断当前页剩余的空间是否足够写入所有数据
   {
-    current_size = Size;  // ����㹻����ֱ�ӻ�ȡ��ǰ����
+    current_size = Size;  // 如果足够，则直接获取当前长度
   }
 
-  current_addr = WriteAddr;     // ��ȡҪд��ĵ�ַ
-  end_addr = WriteAddr + Size;  // ���������ַ
-  write_data = pBuffer;         // ��ȡҪд�������
+  current_addr = WriteAddr;     // 获取要写入的地址
+  end_addr = WriteAddr + Size;  // 计算结束地址
+  write_data = pBuffer;         // 获取要写入的数据
 
   do {
-    // ��ҳд������
+    // 按页写入数据
     if (OSPI_W25Qxx_WritePage(write_data, current_addr, current_size) !=
         OSPI_W25Qxx_OK) {
       return W25Qxx_ERROR_TRANSMIT;
     }
 
-    else  // ��ҳд�����ݳɹ���������һ��д���ݵ�׼������
+    else  // 按页写入数据成功，进行下一次写数据的准备工作
     {
-      current_addr += current_size;  // ������һ��Ҫд��ĵ�ַ
-      write_data += current_size;  // ��ȡ��һ��Ҫд������ݴ洢����ַ
-      // ������һ��д���ݵĳ���
+      current_addr += current_size;  // 计算下一次要写入的地址
+      write_data += current_size;  // 获取下一次要写入的数据存储区地址
+      // 计算下一次写数据的长度
       current_size = ((current_addr + W25Qxx_PageSize) > end_addr)
                          ? (end_addr - current_addr)
                          : W25Qxx_PageSize;
     }
-  } while (current_addr < end_addr);  // �ж������Ƿ�ȫ��д�����
+  } while (current_addr < end_addr);  // 判断数据是否全部写入完毕
 
-  return OSPI_W25Qxx_OK;  // д�����ݳɹ�
+  return OSPI_W25Qxx_OK;  // 写入数据成功
 }
 
 /**********************************************************************************************************************************
  *
- *	�� �� ��: OSPI_W25Qxx_ReadBuffer
+ *	函 数 名: OSPI_W25Qxx_ReadBuffer
  *
- *	��ڲ���: pBuffer 		 - Ҫ��ȡ������
- *				 ReadAddr 		 - Ҫ��ȡ W25Qxx �ĵ�ַ
+ *	入口参数: pBuffer 		 - 要读取的数据
+ *				 ReadAddr 		 - 要读取 W25Qxx 的地址
  *				 NumByteToRead  -
- *���ݳ��ȣ�����ܳ���flashоƬ�Ĵ�С
+ *数据长度，最大不能超过flash芯片的大小
  *
- *	�� �� ֵ: OSPI_W25Qxx_OK 		     - �����ݳɹ�
- *				 W25Qxx_ERROR_TRANSMIT	  - ����ʧ��
- *				 W25Qxx_ERROR_AUTOPOLLING - ��ѯ�ȴ�����Ӧ
+ *	返 回 值: OSPI_W25Qxx_OK 		     - 读数据成功
+ *				 W25Qxx_ERROR_TRANSMIT	  - 传输失败
+ *				 W25Qxx_ERROR_AUTOPOLLING - 轮询等待无响应
  *
- *	��������: ��ȡ���ݣ�����ܳ���flashоƬ�Ĵ�С
+ *	函数功能: 读取数据，最大不能超过flash芯片的大小
  *
- *	˵    ��: 1.Flash�Ķ�ȡ�ٶ�ȡ����OSPI��ͨ��ʱ�ӣ�����ܳ���133M
- *				 2.����ʹ�õ���1-4-4ģʽ��(1��ָ��4�ߵ�ַ4������)�����ٶ�ȡָ��
- *Fast Read Quad I/O 3.ʹ�ÿ��ٶ�ȡָ�����п����ڵģ�����ο�W25Q64JV���ֲ� Fast
- *Read Quad I/O  ��0xEB��ָ��
- *				 4.ʵ��ʹ���У��Ƿ�ʹ��DMA�����������Ż��ȼ��Լ����ݴ洢����λ��(�ڲ�
- *TCM SRAM ���� AXI SRAM)����Ӱ���ȡ���ٶ� FANKE
+ *	说    明: 1.Flash的读取速度取决于OSPI的通信时钟，最大不能超过133M
+ *				 2.这里使用的是1-4-4模式下(1线指令4线地址4线数据)，快速读取指令
+ *Fast Read Quad I/O 3.使用快速读取指令是有空周期的，具体参考W25Q64JV的手册 Fast
+ *Read Quad I/O  （0xEB）指令
+ *				 4.实际使用中，是否使用DMA、编译器的优化等级以及数据存储区的位置(内部
+ *TCM SRAM 或者 AXI SRAM)都会影响读取的速度 FANKE
  *****************************************************************************************************************FANKE************/
 
 int8_t OSPI_W25Qxx_ReadBuffer(uint8_t* pBuffer, uint32_t ReadAddr,
                               uint32_t NumByteToRead) {
-  OSPI_RegularCmdTypeDef sCommand;  // OSPI��������
+  OSPI_RegularCmdTypeDef sCommand;  // OSPI传输配置
 
-  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;  // ͨ������
+  sCommand.OperationType = HAL_OSPI_OPTYPE_COMMON_CFG;  // 通用配置
   sCommand.FlashId = HAL_OSPI_FLASH_ID_1;               // flash ID
 
   sCommand.Instruction =
-      W25Qxx_CMD_FastReadQuad_IO;  // 1-4-4ģʽ��(1��ָ��4�ߵ�ַ4������)�����ٶ�ȡָ��
-  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1��ָ��ģʽ
-  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // ָ���8λ
+      W25Qxx_CMD_FastReadQuad_IO;  // 1-4-4模式下(1线指令4线地址4线数据)，快速读取指令
+  sCommand.InstructionMode = HAL_OSPI_INSTRUCTION_1_LINE;  // 1线指令模式
+  sCommand.InstructionSize = HAL_OSPI_INSTRUCTION_8_BITS;  // 指令长度8位
   sCommand.InstructionDtrMode =
-      HAL_OSPI_INSTRUCTION_DTR_DISABLE;  // ��ָֹ��DTRģʽ
+      HAL_OSPI_INSTRUCTION_DTR_DISABLE;  // 禁止指令DTR模式
 
-  sCommand.Address = ReadAddr;                             // ��ַ
-  sCommand.AddressMode = HAL_OSPI_ADDRESS_4_LINES;         // 4�ߵ�ַģʽ
-  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;         // ��ַ����24λ
-  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // ��ֹ��ַDTRģʽ
+  sCommand.Address = ReadAddr;                             // 地址
+  sCommand.AddressMode = HAL_OSPI_ADDRESS_4_LINES;         // 4线地址模式
+  sCommand.AddressSize = HAL_OSPI_ADDRESS_24_BITS;         // 地址长度24位
+  sCommand.AddressDtrMode = HAL_OSPI_ADDRESS_DTR_DISABLE;  // 禁止地址DTR模式
 
-  sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;  // �޽����ֽ�
+  sCommand.AlternateBytesMode = HAL_OSPI_ALTERNATE_BYTES_NONE;  // 无交替字节
   sCommand.AlternateBytesDtrMode =
-      HAL_OSPI_ALTERNATE_BYTES_DTR_DISABLE;  // ��ֹ���ֽ�DTRģʽ
+      HAL_OSPI_ALTERNATE_BYTES_DTR_DISABLE;  // 禁止替字节DTR模式
 
-  sCommand.DataMode = HAL_OSPI_DATA_4_LINES;         // 4������ģʽ
-  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // ��ֹ����DTRģʽ
-  sCommand.NbData = NumByteToRead;                   // ���ݳ���
+  sCommand.DataMode = HAL_OSPI_DATA_4_LINES;         // 4线数据模式
+  sCommand.DataDtrMode = HAL_OSPI_DATA_DTR_DISABLE;  // 禁止数据DTR模式
+  sCommand.NbData = NumByteToRead;                   // 数据长度
 
-  sCommand.DummyCycles = 6;                          // �����ڸ���
-  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // ��ʹ��DQS
-  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // ÿ�δ������ݶ�����ָ��
+  sCommand.DummyCycles = 6;                          // 空周期个数
+  sCommand.DQSMode = HAL_OSPI_DQS_DISABLE;           // 不使用DQS
+  sCommand.SIOOMode = HAL_OSPI_SIOO_INST_EVERY_CMD;  // 每次传输数据都发送指令
 
-  // д����
+  // 写命令
   if (HAL_OSPI_Command(&hospi2, &sCommand, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
       HAL_OK) {
-    return W25Qxx_ERROR_TRANSMIT;  // �������ݴ���
+    return W25Qxx_ERROR_TRANSMIT;  // 传输数据错误
   }
-  //	��������
+  //	接收数据
   if (HAL_OSPI_Receive(&hospi2, pBuffer, HAL_OSPI_TIMEOUT_DEFAULT_VALUE) !=
       HAL_OK) {
-    return W25Qxx_ERROR_TRANSMIT;  // �������ݴ���
+    return W25Qxx_ERROR_TRANSMIT;  // 传输数据错误
   }
-  // ʹ���Զ���ѯ��־λ���ȴ����յĽ���
+  // 使用自动轮询标志位，等待接收的结束
   if (OSPI_W25Qxx_AutoPollingMemReady() != OSPI_W25Qxx_OK) {
-    return W25Qxx_ERROR_AUTOPOLLING;  // ��ѯ�ȴ�����Ӧ
+    return W25Qxx_ERROR_AUTOPOLLING;  // 轮询等待无响应
   }
-  return OSPI_W25Qxx_OK;  // ��ȡ���ݳɹ�
+  return OSPI_W25Qxx_OK;  // 读取数据成功
 }

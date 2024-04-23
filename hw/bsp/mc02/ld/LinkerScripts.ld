@@ -177,16 +177,16 @@ SECTIONS
     . = ALIGN(8);
   } >DTCMRAM
 
-  .ram_d1 : ALIGN(4)
+  .itcram : ALIGN(4)
   {
     . = ALIGN(4);
-    _sram_d1 = .;        /* create a global symbol at data start */
-    *(.ram_d1)           /* .data sections */
-    *(.ram_d1*)          /* .data* sections */
+    _sitcram = .;        /* create a global symbol at data start */
+    *(.itcram)           /* .data sections */
+    *(.itcram*)          /* .data* sections */
 
     . = ALIGN(4);
-    _eram_d1 = .;        /* define a global symbol at data end */
-  } >RAM_D1 AT> FLASH
+    _eitcram = .;        /* define a global symbol at data end */
+  } >ITCMRAM
 
 
   /* Remove information from the standard libraries */

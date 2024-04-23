@@ -4,7 +4,7 @@
 #include "task.h"
 
 /* FreeRTOS Heap */
-uint8_t ucHeap[configTOTAL_HEAP_SIZE] __attribute__((section(".ram_d1")));
+uint8_t ucHeap[configTOTAL_HEAP_SIZE] __attribute__((section(".itcram")));
 
 void SysTick_Handler(void) {
 #if (INCLUDE_xTaskGetSchedulerState == 1)

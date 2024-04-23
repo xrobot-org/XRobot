@@ -5,69 +5,69 @@
 
 #include "main.h"
 
-/*----------------------------------------------- ÃüÃû²ÎÊıºê
+/*----------------------------------------------- å‘½åå‚æ•°å®
  * -------------------------------------------*/
 
-#define OSPI_W25Qxx_OK 0              // W25QxxÍ¨ĞÅÕı³£
-#define W25Qxx_ERROR_INIT -1          // ³õÊ¼»¯´íÎó
-#define W25Qxx_ERROR_WriteEnable -2   // Ğ´Ê¹ÄÜ´íÎó
-#define W25Qxx_ERROR_AUTOPOLLING -3   // ÂÖÑ¯µÈ´ı´íÎó£¬ÎŞÏìÓ¦
-#define W25Qxx_ERROR_Erase -4         // ²Á³ı´íÎó
-#define W25Qxx_ERROR_TRANSMIT -5      // ´«Êä´íÎó
-#define W25Qxx_ERROR_MemoryMapped -6  // ÄÚ´æÓ³ÉäÄ£Ê½´íÎó
+#define OSPI_W25Qxx_OK 0              // W25Qxxé€šä¿¡æ­£å¸¸
+#define W25Qxx_ERROR_INIT -1          // åˆå§‹åŒ–é”™è¯¯
+#define W25Qxx_ERROR_WriteEnable -2   // å†™ä½¿èƒ½é”™è¯¯
+#define W25Qxx_ERROR_AUTOPOLLING -3   // è½®è¯¢ç­‰å¾…é”™è¯¯ï¼Œæ— å“åº”
+#define W25Qxx_ERROR_Erase -4         // æ“¦é™¤é”™è¯¯
+#define W25Qxx_ERROR_TRANSMIT -5      // ä¼ è¾“é”™è¯¯
+#define W25Qxx_ERROR_MemoryMapped -6  // å†…å­˜æ˜ å°„æ¨¡å¼é”™è¯¯
 
-#define W25Qxx_CMD_EnableReset 0x66  // Ê¹ÄÜ¸´Î»
-#define W25Qxx_CMD_ResetDevice 0x99  // ¸´Î»Æ÷¼ş
+#define W25Qxx_CMD_EnableReset 0x66  // ä½¿èƒ½å¤ä½
+#define W25Qxx_CMD_ResetDevice 0x99  // å¤ä½å™¨ä»¶
 #define W25Qxx_CMD_JedecID 0x9F      // JEDEC ID
-#define W25Qxx_CMD_WriteEnable 0X06  // Ğ´Ê¹ÄÜ
+#define W25Qxx_CMD_WriteEnable 0X06  // å†™ä½¿èƒ½
 
-#define W25Qxx_CMD_SectorErase 0x20  // ÉÈÇø²Á³ı£¬4K×Ö½Ú£¬ ²Î¿¼²Á³ıÊ±¼ä 45ms
-#define W25Qxx_CMD_BlockErase_32K 0x52  // ¿é²Á³ı£¬  32K×Ö½Ú£¬²Î¿¼²Á³ıÊ±¼ä 120ms
-#define W25Qxx_CMD_BlockErase_64K 0xD8  // ¿é²Á³ı£¬  64K×Ö½Ú£¬²Î¿¼²Á³ıÊ±¼ä 150ms
-#define W25Qxx_CMD_ChipErase 0xC7  // ÕûÆ¬²Á³ı£¬²Î¿¼²Á³ıÊ±¼ä 20S
+#define W25Qxx_CMD_SectorErase 0x20  // æ‰‡åŒºæ“¦é™¤ï¼Œ4Kå­—èŠ‚ï¼Œ å‚è€ƒæ“¦é™¤æ—¶é—´ 45ms
+#define W25Qxx_CMD_BlockErase_32K 0x52  // å—æ“¦é™¤ï¼Œ  32Kå­—èŠ‚ï¼Œå‚è€ƒæ“¦é™¤æ—¶é—´ 120ms
+#define W25Qxx_CMD_BlockErase_64K 0xD8  // å—æ“¦é™¤ï¼Œ  64Kå­—èŠ‚ï¼Œå‚è€ƒæ“¦é™¤æ—¶é—´ 150ms
+#define W25Qxx_CMD_ChipErase 0xC7  // æ•´ç‰‡æ“¦é™¤ï¼Œå‚è€ƒæ“¦é™¤æ—¶é—´ 20S
 
 #define W25Qxx_CMD_QuadInputPageProgram \
-  0x32  // 1-1-4Ä£Ê½ÏÂ(1ÏßÖ¸Áî1ÏßµØÖ·4ÏßÊı¾İ)£¬Ò³±à³ÌÖ¸Áî£¬²Î¿¼Ğ´ÈëÊ±¼ä 0.4ms
+  0x32  // 1-1-4æ¨¡å¼ä¸‹(1çº¿æŒ‡ä»¤1çº¿åœ°å€4çº¿æ•°æ®)ï¼Œé¡µç¼–ç¨‹æŒ‡ä»¤ï¼Œå‚è€ƒå†™å…¥æ—¶é—´ 0.4ms
 #define W25Qxx_CMD_FastReadQuad_IO \
-  0xEB  // 1-4-4Ä£Ê½ÏÂ(1ÏßÖ¸Áî4ÏßµØÖ·4ÏßÊı¾İ)£¬¿ìËÙ¶ÁÈ¡Ö¸Áî
+  0xEB  // 1-4-4æ¨¡å¼ä¸‹(1çº¿æŒ‡ä»¤4çº¿åœ°å€4çº¿æ•°æ®)ï¼Œå¿«é€Ÿè¯»å–æŒ‡ä»¤
 
-#define W25Qxx_CMD_ReadStatus_REG1 0X05  // ¶Á×´Ì¬¼Ä´æÆ÷1
+#define W25Qxx_CMD_ReadStatus_REG1 0X05  // è¯»çŠ¶æ€å¯„å­˜å™¨1
 #define W25Qxx_Status_REG1_BUSY \
-  0x01  // ¶Á×´Ì¬¼Ä´æÆ÷1µÄµÚ0Î»£¨Ö»¶Á£©£¬Busy±êÖ¾Î»£¬µ±ÕıÔÚ²Á³ı/Ğ´ÈëÊı¾İ/Ğ´ÃüÁîÊ±»á±»ÖÃ1
+  0x01  // è¯»çŠ¶æ€å¯„å­˜å™¨1çš„ç¬¬0ä½ï¼ˆåªè¯»ï¼‰ï¼ŒBusyæ ‡å¿—ä½ï¼Œå½“æ­£åœ¨æ“¦é™¤/å†™å…¥æ•°æ®/å†™å‘½ä»¤æ—¶ä¼šè¢«ç½®1
 #define W25Qxx_Status_REG1_WEL \
-  0x02  // ¶Á×´Ì¬¼Ä´æÆ÷1µÄµÚ1Î»£¨Ö»¶Á£©£¬WELĞ´Ê¹ÄÜ±êÖ¾Î»£¬¸Ã±êÖ¾Î»Îª1Ê±£¬´ú±í¿ÉÒÔ½øĞĞĞ´²Ù×÷
+  0x02  // è¯»çŠ¶æ€å¯„å­˜å™¨1çš„ç¬¬1ä½ï¼ˆåªè¯»ï¼‰ï¼ŒWELå†™ä½¿èƒ½æ ‡å¿—ä½ï¼Œè¯¥æ ‡å¿—ä½ä¸º1æ—¶ï¼Œä»£è¡¨å¯ä»¥è¿›è¡Œå†™æ“ä½œ
 
-#define W25Qxx_PageSize 256        // Ò³´óĞ¡£¬256×Ö½Ú
-#define W25Qxx_FlashSize 0x800000  // W25Q64´óĞ¡£¬8M×Ö½Ú
+#define W25Qxx_PageSize 256        // é¡µå¤§å°ï¼Œ256å­—èŠ‚
+#define W25Qxx_FlashSize 0x800000  // W25Q64å¤§å°ï¼Œ8Må­—èŠ‚
 #define W25Qxx_FLASH_ID 0Xef4017   // W25Q64 JEDEC ID
 #define W25Qxx_ChipErase_TIMEOUT_MAX \
-  100000U  // ³¬Ê±µÈ´ıÊ±¼ä£¬W25Q64ÕûÆ¬²Á³ıËùĞè×î´óÊ±¼äÊÇ100S
-#define W25Qxx_Mem_Addr 0x90000000  // ÄÚ´æÓ³ÉäÄ£Ê½µÄµØÖ·
+  100000U  // è¶…æ—¶ç­‰å¾…æ—¶é—´ï¼ŒW25Q64æ•´ç‰‡æ“¦é™¤æ‰€éœ€æœ€å¤§æ—¶é—´æ˜¯100S
+#define W25Qxx_Mem_Addr 0x90000000  // å†…å­˜æ˜ å°„æ¨¡å¼çš„åœ°å€
 
-/*----------------------------------------------- º¯ÊıÉùÃ÷
+/*----------------------------------------------- å‡½æ•°å£°æ˜
  * ---------------------------------------------------*/
 
-int8_t OSPI_W25Qxx_Init(void);      // W25Qxx³õÊ¼»¯
-uint32_t OSPI_W25Qxx_ReadID(void);  // ¶ÁÈ¡Æ÷¼şID
+int8_t OSPI_W25Qxx_Init(void);      // W25Qxxåˆå§‹åŒ–
+uint32_t OSPI_W25Qxx_ReadID(void);  // è¯»å–å™¨ä»¶ID
 
-int8_t OSPI_W25Qxx_MemoryMappedMode(void);  // ½«OSPIÉèÖÃÎªÄÚ´æÓ³ÉäÄ£Ê½
+int8_t OSPI_W25Qxx_MemoryMappedMode(void);  // å°†OSPIè®¾ç½®ä¸ºå†…å­˜æ˜ å°„æ¨¡å¼
 
 int8_t OSPI_W25Qxx_SectorErase(
-    uint32_t SectorAddress);  // ÉÈÇø²Á³ı£¬4K×Ö½Ú£¬ ²Î¿¼²Á³ıÊ±¼ä 45ms
+    uint32_t SectorAddress);  // æ‰‡åŒºæ“¦é™¤ï¼Œ4Kå­—èŠ‚ï¼Œ å‚è€ƒæ“¦é™¤æ—¶é—´ 45ms
 int8_t OSPI_W25Qxx_BlockErase_32K(
-    uint32_t SectorAddress);  // ¿é²Á³ı£¬  32K×Ö½Ú£¬²Î¿¼²Á³ıÊ±¼ä 120ms
+    uint32_t SectorAddress);  // å—æ“¦é™¤ï¼Œ  32Kå­—èŠ‚ï¼Œå‚è€ƒæ“¦é™¤æ—¶é—´ 120ms
 int8_t OSPI_W25Qxx_BlockErase_64K(
-    uint32_t SectorAddress);  // ¿é²Á³ı£¬  64K×Ö½Ú£¬²Î¿¼²Á³ıÊ±¼ä
-                              // 150ms£¬Êµ¼Ê½¨ÒéÊ¹ÓÃ64K²Á³ı£¬²Á³ıµÄÊ±¼ä×î¿ì
-int8_t OSPI_W25Qxx_ChipErase(void);  // ÕûÆ¬²Á³ı£¬²Î¿¼²Á³ıÊ±¼ä 20S
+    uint32_t SectorAddress);  // å—æ“¦é™¤ï¼Œ  64Kå­—èŠ‚ï¼Œå‚è€ƒæ“¦é™¤æ—¶é—´
+                              // 150msï¼Œå®é™…å»ºè®®ä½¿ç”¨64Kæ“¦é™¤ï¼Œæ“¦é™¤çš„æ—¶é—´æœ€å¿«
+int8_t OSPI_W25Qxx_ChipErase(void);  // æ•´ç‰‡æ“¦é™¤ï¼Œå‚è€ƒæ“¦é™¤æ—¶é—´ 20S
 
 int8_t OSPI_W25Qxx_WritePage(uint8_t* pBuffer, uint32_t WriteAddr,
-                             uint16_t NumByteToWrite);  // °´Ò³Ğ´Èë£¬×î´ó256×Ö½Ú
+                             uint16_t NumByteToWrite);  // æŒ‰é¡µå†™å…¥ï¼Œæœ€å¤§256å­—èŠ‚
 int8_t OSPI_W25Qxx_WriteBuffer(
     uint8_t* pBuffer, uint32_t WriteAddr,
-    uint32_t Size);  // Ğ´ÈëÊı¾İ£¬×î´ó²»ÄÜ³¬¹ıflashĞ¾Æ¬µÄ´óĞ¡
+    uint32_t Size);  // å†™å…¥æ•°æ®ï¼Œæœ€å¤§ä¸èƒ½è¶…è¿‡flashèŠ¯ç‰‡çš„å¤§å°
 int8_t OSPI_W25Qxx_ReadBuffer(
     uint8_t* pBuffer, uint32_t ReadAddr,
-    uint32_t NumByteToRead);  // ¶ÁÈ¡Êı¾İ£¬×î´ó²»ÄÜ³¬¹ıflashĞ¾Æ¬µÄ´óĞ¡
+    uint32_t NumByteToRead);  // è¯»å–æ•°æ®ï¼Œæœ€å¤§ä¸èƒ½è¶…è¿‡flashèŠ¯ç‰‡çš„å¤§å°
 
 #endif

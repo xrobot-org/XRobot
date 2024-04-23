@@ -69,7 +69,7 @@ void bsp_can_init(void) {
   }
 
   can_filter.IdType = FDCAN_EXTENDED_ID;
-  can_filter.FilterIndex = 1;
+  can_filter.FilterIndex = 0;
   can_filter.FilterType = FDCAN_FILTER_MASK;
   can_filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
   can_filter.FilterID1 = 0x0000;
@@ -84,9 +84,9 @@ void bsp_can_init(void) {
   };
 
   can_filter.IdType = FDCAN_STANDARD_ID;
-  can_filter.FilterIndex = 2;
+  can_filter.FilterIndex = 1;
   can_filter.FilterType = FDCAN_FILTER_MASK;
-  can_filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+  can_filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO1;
   can_filter.FilterID1 = 0x0000;
   can_filter.FilterID2 = 0x0000;
   if (HAL_FDCAN_ConfigFilter(&hfdcan2, &can_filter) != HAL_OK) {
@@ -97,9 +97,9 @@ void bsp_can_init(void) {
   }
 
   can_filter.IdType = FDCAN_EXTENDED_ID;
-  can_filter.FilterIndex = 3;
+  can_filter.FilterIndex = 1;
   can_filter.FilterType = FDCAN_FILTER_MASK;
-  can_filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
+  can_filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO1;
   can_filter.FilterID1 = 0x0000;
   can_filter.FilterID2 = 0x0000;
   if (HAL_FDCAN_ConfigFilter(&hfdcan2, &can_filter) != HAL_OK) {
@@ -109,23 +109,23 @@ void bsp_can_init(void) {
     XB_ASSERT(false);
   }
 
-  if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan2, FDCAN_ACCEPT_IN_RX_FIFO0,
+  if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan2, FDCAN_ACCEPT_IN_RX_FIFO1,
                                    FDCAN_REJECT, ENABLE, ENABLE) != HAL_OK) {
     XB_ASSERT(false);
   };
-  if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan3, FDCAN_ACCEPT_IN_RX_FIFO0,
+  if (HAL_FDCAN_ConfigGlobalFilter(&hfdcan3, FDCAN_ACCEPT_IN_RX_FIFO1,
                                    FDCAN_REJECT, ENABLE, ENABLE) != HAL_OK) {
     XB_ASSERT(false);
   };
 
-  HAL_FDCAN_Start(&hfdcan1);  //开启FDCAN
-  HAL_FDCAN_Start(&hfdcan2);  //开启FDCAN
-  HAL_FDCAN_Start(&hfdcan3);  //开启FDCAN
+  HAL_FDCAN_Start(&hfdcan1);  // 开启FDCAN
+  HAL_FDCAN_Start(&hfdcan2);  // 开启FDCAN
+  HAL_FDCAN_Start(&hfdcan3);  // 开启FDCAN
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_TX_FIFO_EMPTY, 0);
-  HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+  HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0);
   HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_TX_FIFO_EMPTY, 0);
-  HAL_FDCAN_ActivateNotification(&hfdcan3, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+  HAL_FDCAN_ActivateNotification(&hfdcan3, FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0);
   HAL_FDCAN_ActivateNotification(&hfdcan3, FDCAN_IT_TX_FIFO_EMPTY, 0);
 
   bsp_can_initd = true;

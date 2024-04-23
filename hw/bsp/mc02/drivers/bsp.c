@@ -1,10 +1,10 @@
 #include "bsp.h"
 
-#include "bsp_dwt.h"
 #include "bsp_uart.h"
 #include "main.h"
 #include "stm32h7xx_hal_tim.h"
 #include "stm32h7xx_it.h"
+
 extern TIM_HandleTypeDef htim23;
 void bsp_init(void) {
   HAL_Init();
@@ -34,6 +34,5 @@ void bsp_init(void) {
   MX_USB_OTG_HS_PCD_Init();
   MX_TIM7_Init();
   MX_SPI6_Init();
-  DWT_Init(550);  // 喵喵时钟频率550MHz
   HAL_TIM_Base_Stop_IT(&htim23);
 }
