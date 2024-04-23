@@ -55,7 +55,6 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 void Error_Handler(void);
 void MX_GPIO_Init(void);
 void MX_DMA_Init(void);
-void MX_ADC1_Init(void);
 void MX_TIM12_Init(void);
 void MX_SPI2_Init(void);
 void MX_TIM3_Init(void);
@@ -68,7 +67,7 @@ void MX_OCTOSPI2_Init(void);
 void MX_USB_OTG_HS_PCD_Init(void);
 void MX_TIM7_Init(void);
 void MX_SPI6_Init(void);
-void MX_UART5_Init(void);
+void MX_ADC1_Init(void);
 void MX_USART3_UART_Init(void);
 
 /* USER CODE BEGIN EFP */
@@ -78,6 +77,8 @@ void MX_USART3_UART_Init(void);
 /* Private defines -----------------------------------------------------------*/
 #define POWER_24V_2_Pin GPIO_PIN_13
 #define POWER_24V_2_GPIO_Port GPIOC
+#define POWER_24V_1_Pin GPIO_PIN_14
+#define POWER_24V_1_GPIO_Port GPIOC
 #define POWER_5V_Pin GPIO_PIN_15
 #define POWER_5V_GPIO_Port GPIOC
 #define ACCL_CS_Pin GPIO_PIN_0

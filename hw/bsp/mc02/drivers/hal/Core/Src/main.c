@@ -57,6 +57,7 @@ SPI_HandleTypeDef hspi2;
 SPI_HandleTypeDef hspi6;
 DMA_HandleTypeDef hdma_spi2_tx;
 DMA_HandleTypeDef hdma_spi2_rx;
+DMA_HandleTypeDef hdma_spi6_tx;
 
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
@@ -65,10 +66,22 @@ TIM_HandleTypeDef htim7;
 TIM_HandleTypeDef htim12;
 
 UART_HandleTypeDef huart5;
+UART_HandleTypeDef huart7;
+UART_HandleTypeDef huart1;
+UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
+UART_HandleTypeDef huart10;
 DMA_HandleTypeDef hdma_uart5_rx;
+DMA_HandleTypeDef hdma_uart7_rx;
+DMA_HandleTypeDef hdma_uart7_tx;
+DMA_HandleTypeDef hdma_usart1_rx;
+DMA_HandleTypeDef hdma_usart1_tx;
+DMA_HandleTypeDef hdma_usart2_rx;
+DMA_HandleTypeDef hdma_usart2_tx;
 DMA_HandleTypeDef hdma_usart3_tx;
 DMA_HandleTypeDef hdma_usart3_rx;
+DMA_HandleTypeDef hdma_usart10_rx;
+DMA_HandleTypeDef hdma_usart10_tx;
 
 PCD_HandleTypeDef hpcd_USB_OTG_HS;
 
@@ -79,6 +92,12 @@ PCD_HandleTypeDef hpcd_USB_OTG_HS;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void PeriphCommonClock_Config(void);
+static void MX_BDMA_Init(void);
+static void MX_UART7_Init(void);
+static void MX_USART1_UART_Init(void);
+static void MX_USART2_UART_Init(void);
+static void MX_USART10_UART_Init(void);
+static void MX_UART5_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -292,9 +311,9 @@ void MX_FDCAN1_Init(void)
   hfdcan1.Init.MessageRAMOffset = 0;
   hfdcan1.Init.StdFiltersNbr = 1;
   hfdcan1.Init.ExtFiltersNbr = 1;
-  hfdcan1.Init.RxFifo0ElmtsNbr = 32;
+  hfdcan1.Init.RxFifo0ElmtsNbr = 16;
   hfdcan1.Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
-  hfdcan1.Init.RxFifo1ElmtsNbr = 0;
+  hfdcan1.Init.RxFifo1ElmtsNbr = 16;
   hfdcan1.Init.RxFifo1ElmtSize = FDCAN_DATA_BYTES_8;
   hfdcan1.Init.RxBuffersNbr = 0;
   hfdcan1.Init.RxBufferSize = FDCAN_DATA_BYTES_8;
@@ -345,9 +364,9 @@ void MX_FDCAN2_Init(void)
   hfdcan2.Init.MessageRAMOffset = 0x406;
   hfdcan2.Init.StdFiltersNbr = 1;
   hfdcan2.Init.ExtFiltersNbr = 1;
-  hfdcan2.Init.RxFifo0ElmtsNbr = 32;
+  hfdcan2.Init.RxFifo0ElmtsNbr = 16;
   hfdcan2.Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
-  hfdcan2.Init.RxFifo1ElmtsNbr = 0;
+  hfdcan2.Init.RxFifo1ElmtsNbr = 16;
   hfdcan2.Init.RxFifo1ElmtSize = FDCAN_DATA_BYTES_8;
   hfdcan2.Init.RxBuffersNbr = 0;
   hfdcan2.Init.RxBufferSize = FDCAN_DATA_BYTES_8;
@@ -398,9 +417,9 @@ void MX_FDCAN3_Init(void)
   hfdcan3.Init.MessageRAMOffset = 0x812;
   hfdcan3.Init.StdFiltersNbr = 1;
   hfdcan3.Init.ExtFiltersNbr = 1;
-  hfdcan3.Init.RxFifo0ElmtsNbr = 32;
+  hfdcan3.Init.RxFifo0ElmtsNbr = 16;
   hfdcan3.Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
-  hfdcan3.Init.RxFifo1ElmtsNbr = 0;
+  hfdcan3.Init.RxFifo1ElmtsNbr = 16;
   hfdcan3.Init.RxFifo1ElmtSize = FDCAN_DATA_BYTES_8;
   hfdcan3.Init.RxBuffersNbr = 0;
   hfdcan3.Init.RxBufferSize = FDCAN_DATA_BYTES_8;
@@ -834,7 +853,7 @@ void MX_TIM12_Init(void)
   * @param None
   * @retval None
   */
-void MX_UART5_Init(void)
+static void MX_UART5_Init(void)
 {
 
   /* USER CODE BEGIN UART5_Init 0 */
@@ -878,6 +897,150 @@ void MX_UART5_Init(void)
 }
 
 /**
+  * @brief UART7 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_UART7_Init(void)
+{
+
+  /* USER CODE BEGIN UART7_Init 0 */
+
+  /* USER CODE END UART7_Init 0 */
+
+  /* USER CODE BEGIN UART7_Init 1 */
+
+  /* USER CODE END UART7_Init 1 */
+  huart7.Instance = UART7;
+  huart7.Init.BaudRate = 115200;
+  huart7.Init.WordLength = UART_WORDLENGTH_8B;
+  huart7.Init.StopBits = UART_STOPBITS_1;
+  huart7.Init.Parity = UART_PARITY_NONE;
+  huart7.Init.Mode = UART_MODE_TX_RX;
+  huart7.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart7.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart7.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart7.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart7.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart7) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart7, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart7, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart7) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART7_Init 2 */
+
+  /* USER CODE END UART7_Init 2 */
+
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart1.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart1.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart1.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart1, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart1, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_RS485Ex_Init(&huart2, UART_DE_POLARITY_HIGH, 0, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart2, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart2, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
   * @brief USART3 Initialization Function
   * @param None
   * @retval None
@@ -903,7 +1066,7 @@ void MX_USART3_UART_Init(void)
   huart3.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
   huart3.Init.ClockPrescaler = UART_PRESCALER_DIV1;
   huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart3) != HAL_OK)
+  if (HAL_RS485Ex_Init(&huart3, UART_DE_POLARITY_HIGH, 0, 0) != HAL_OK)
   {
     Error_Handler();
   }
@@ -922,6 +1085,54 @@ void MX_USART3_UART_Init(void)
   /* USER CODE BEGIN USART3_Init 2 */
 
   /* USER CODE END USART3_Init 2 */
+
+}
+
+/**
+  * @brief USART10 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART10_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART10_Init 0 */
+
+  /* USER CODE END USART10_Init 0 */
+
+  /* USER CODE BEGIN USART10_Init 1 */
+
+  /* USER CODE END USART10_Init 1 */
+  huart10.Instance = USART10;
+  huart10.Init.BaudRate = 115200;
+  huart10.Init.WordLength = UART_WORDLENGTH_8B;
+  huart10.Init.StopBits = UART_STOPBITS_1;
+  huart10.Init.Parity = UART_PARITY_NONE;
+  huart10.Init.Mode = UART_MODE_TX_RX;
+  huart10.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart10.Init.OverSampling = UART_OVERSAMPLING_16;
+  huart10.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
+  huart10.Init.ClockPrescaler = UART_PRESCALER_DIV1;
+  huart10.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  if (HAL_UART_Init(&huart10) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetTxFifoThreshold(&huart10, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_SetRxFifoThreshold(&huart10, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_UARTEx_DisableFifoMode(&huart10) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART10_Init 2 */
+
+  /* USER CODE END USART10_Init 2 */
 
 }
 
@@ -964,6 +1175,22 @@ void MX_USB_OTG_HS_PCD_Init(void)
 /**
   * Enable DMA controller clock
   */
+static void MX_BDMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_BDMA_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* BDMA_Channel0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(BDMA_Channel0_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(BDMA_Channel0_IRQn);
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
 void MX_DMA_Init(void)
 {
 
@@ -981,15 +1208,39 @@ void MX_DMA_Init(void)
   /* DMA1_Stream2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);
+  /* DMA1_Stream3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
   /* DMA1_Stream4_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
   /* DMA1_Stream5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
+  /* DMA1_Stream6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
+  /* DMA1_Stream7_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream7_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream7_IRQn);
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+  /* DMA2_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
+  /* DMA2_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+  /* DMA2_Stream3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
   /* DMA2_Stream4_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream4_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream4_IRQn);
+  /* DMA2_Stream5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream5_IRQn);
 
 }
 
@@ -1005,11 +1256,11 @@ void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
@@ -1017,7 +1268,7 @@ void MX_GPIO_Init(void)
                           |DCMI_PWDN_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_14, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(POWER_24V_1_GPIO_Port, POWER_24V_1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LCD_CS_GPIO_Port, LCD_CS_Pin, GPIO_PIN_RESET);
@@ -1031,8 +1282,8 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : POWER_24V_2_Pin PC14 POWER_5V_Pin */
-  GPIO_InitStruct.Pin = POWER_24V_2_Pin|GPIO_PIN_14|POWER_5V_Pin;
+  /*Configure GPIO pins : POWER_24V_2_Pin POWER_24V_1_Pin POWER_5V_Pin */
+  GPIO_InitStruct.Pin = POWER_24V_2_Pin|POWER_24V_1_Pin|POWER_5V_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -1099,14 +1350,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PD7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_7;
-  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 0);

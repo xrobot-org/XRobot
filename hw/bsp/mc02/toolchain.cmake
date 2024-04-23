@@ -26,24 +26,21 @@ set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_ASM_COMPILER clang)
 
 execute_process(
-    COMMAND where arm-none-eabi-gcc
+    COMMAND arm-none-eabi-gcc -print-sysroot
     OUTPUT_VARIABLE GCC_ARM_NONE_EABI_ROOT
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-if(NOT EXISTS${GCC_ARM_NONE_EABI_ROOT} AND EXISTS "${GCC_ARM_NONE_EABI_ROOT}\\..\\..\\${CLANG_TARGET}")
-    set(GCC_ARM_NONE_EABI_ROOT "${GCC_ARM_NONE_EABI_ROOT}\\..\\..\\${CLANG_TARGET}")
-endif()
-
 if(NOT EXISTS ${GCC_ARM_NONE_EABI_ROOT})
     if(NOT EXISTS /usr/lib/arm-none-eabi OR NOT EXISTS /usr/include/newlib)
-    message(FATAL_ERROR "Could not find arm-none-eabi toolchain.")
+        message(FATAL_ERROR "Could not find arm-none-eabi toolchain.")
     endif()
+
     file(GLOB GCC_ARM_NONE_EABI_INCLUDE
-    "/usr/include/newlib/c++/*/cstddef")
+        "/usr/include/newlib/c++/*/cstddef")
 
     get_filename_component(GCC_ARM_NONE_EABI_INCLUDE
-    "${GCC_ARM_NONE_EABI_INCLUDE}" DIRECTORY)
+        "${GCC_ARM_NONE_EABI_INCLUDE}" DIRECTORY)
     add_compile_options(
         --sysroot=/usr/lib/arm-none-eabi
         -isystem${GCC_ARM_NONE_EABI_INCLUDE}
@@ -51,18 +48,18 @@ if(NOT EXISTS ${GCC_ARM_NONE_EABI_ROOT})
         -isystem${GCC_ARM_NONE_EABI_INCLUDE}/../../
     )
 else()
-file(GLOB_RECURSE GCC_ARM_NONE_EABI_INCLUDE
-    "${GCC_ARM_NONE_EABI_ROOT}/include/c++/*/cstddef")
+    file(GLOB_RECURSE GCC_ARM_NONE_EABI_INCLUDE
+        "${GCC_ARM_NONE_EABI_ROOT}/include/c++/*/cstddef")
 
-get_filename_component(GCC_ARM_NONE_EABI_INCLUDE
-    "${GCC_ARM_NONE_EABI_INCLUDE}" DIRECTORY)
+    get_filename_component(GCC_ARM_NONE_EABI_INCLUDE
+        "${GCC_ARM_NONE_EABI_INCLUDE}" DIRECTORY)
 
-add_compile_options(
-    -isystem${GCC_ARM_NONE_EABI_INCLUDE}
-    -isystem${GCC_ARM_NONE_EABI_INCLUDE}/arm-none-eabi
-    -isystem${GCC_ARM_NONE_EABI_INCLUDE}/arm-none-eabi/include
-    -isystem${GCC_ARM_NONE_EABI_ROOT}/include
-)
+    add_compile_options(
+        -isystem${GCC_ARM_NONE_EABI_INCLUDE}
+        -isystem${GCC_ARM_NONE_EABI_INCLUDE}/arm-none-eabi
+        -isystem${GCC_ARM_NONE_EABI_INCLUDE}/arm-none-eabi/include
+        -isystem${GCC_ARM_NONE_EABI_ROOT}/include
+    )
 endif()
 
 add_compile_options(
