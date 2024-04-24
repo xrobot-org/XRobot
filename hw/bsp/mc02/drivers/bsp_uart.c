@@ -4,22 +4,43 @@
 #include "stm32h7xx_it.h"
 
 extern UART_HandleTypeDef huart5;
+extern UART_HandleTypeDef huart7;
+extern UART_HandleTypeDef huart1;
+extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
+extern UART_HandleTypeDef huart10;
 extern DMA_HandleTypeDef hdma_uart5_rx;
+extern DMA_HandleTypeDef hdma_uart7_rx;
+extern DMA_HandleTypeDef hdma_uart7_tx;
+extern DMA_HandleTypeDef hdma_usart1_rx;
+extern DMA_HandleTypeDef hdma_usart1_tx;
+extern DMA_HandleTypeDef hdma_usart2_rx;
+extern DMA_HandleTypeDef hdma_usart2_tx;
 extern DMA_HandleTypeDef hdma_usart3_tx;
 extern DMA_HandleTypeDef hdma_usart3_rx;
+extern DMA_HandleTypeDef hdma_usart10_rx;
+extern DMA_HandleTypeDef hdma_usart10_tx;
 
 static bsp_callback_t callback_list[BSP_UART_NUM][BSP_UART_CB_NUM];
 
 static bsp_uart_t uart_get(UART_HandleTypeDef *huart) {
   if (huart->Instance == UART5) {
     return BSP_UART_DR16;
-  } else if (huart->Instance == USART3) {
+  } else if (huart->Instance == USART1) {
     return BSP_UART_REF;
-  } /*
-   else if (huart->Instance == USARTX)
-                   return BSP_UART_XXX;
-   */
+  } else if (huart->Instance == UART7) {
+    return BSP_UART_AI;
+  } else if (huart->Instance == USART10) {
+    return BSP_UART_CUSTOM;
+  } else if (huart->Instance == USART2) {
+    return BSP_UART_RS485_1;
+  } else if (huart->Instance == USART3) {
+    return BSP_UART_RS485_2;
+  }
+  /*
+  else if (huart->Instance == USARTX)
+                  return BSP_UART_XXX;
+  */
   else {
     return BSP_UART_ERR;
   }
@@ -29,6 +50,14 @@ UART_HandleTypeDef *bsp_uart_get_handle(bsp_uart_t uart) {
     case BSP_UART_DR16:
       return &huart5;
     case BSP_UART_REF:
+      return &huart1;
+    case BSP_UART_AI:
+      return &huart7;
+    case BSP_UART_CUSTOM:
+      return &huart10;
+    case BSP_UART_RS485_1:
+      return &huart2;
+    case BSP_UART_RS485_2:
       return &huart3;
     /*
     case BSP_UART_XXX:
@@ -115,6 +144,22 @@ bsp_status_t bsp_uart_abort_receive(bsp_uart_t uart) {
       break;
     }
     case BSP_UART_REF: {
+      __HAL_DMA_SET_COUNTER(&hdma_usart1_rx, 0);
+      break;
+    }
+    case BSP_UART_AI: {
+      __HAL_DMA_SET_COUNTER(&hdma_uart7_rx, 0);
+      break;
+    }
+    case BSP_UART_CUSTOM: {
+      __HAL_DMA_SET_COUNTER(&hdma_usart10_rx, 0);
+      break;
+    }
+    case BSP_UART_RS485_1: {
+      __HAL_DMA_SET_COUNTER(&hdma_usart2_rx, 0);
+      break;
+    }
+    case BSP_UART_RS485_2: {
       __HAL_DMA_SET_COUNTER(&hdma_usart3_rx, 0);
       break;
     }
@@ -133,6 +178,22 @@ bsp_status_t bsp_uart_abort_transmit(bsp_uart_t uart) {
       break;
     }
     case BSP_UART_REF: {
+      __HAL_DMA_SET_COUNTER(&hdma_usart1_tx, 0);
+      break;
+    }
+    case BSP_UART_AI: {
+      __HAL_DMA_SET_COUNTER(&hdma_uart7_tx, 0);
+      break;
+    }
+    case BSP_UART_CUSTOM: {
+      __HAL_DMA_SET_COUNTER(&hdma_usart10_tx, 0);
+      break;
+    }
+    case BSP_UART_RS485_1: {
+      __HAL_DMA_SET_COUNTER(&hdma_usart2_tx, 0);
+      break;
+    }
+    case BSP_UART_RS485_2: {
       __HAL_DMA_SET_COUNTER(&hdma_usart3_tx, 0);
       break;
     }

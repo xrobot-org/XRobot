@@ -1,5 +1,6 @@
 #include "bsp_gpio.h"
 
+#include "bsp_pwm.h"
 #include "bsp_spi.h"
 #include "main.h"
 
@@ -13,7 +14,9 @@ static const bsp_gpio_map_t bsp_gpio_map[BSP_GPIO_NUM] = {
     {GYRO_CS_Pin, GYRO_CS_GPIO_Port},
     {ACCL_INT_Pin, ACCL_INT_GPIO_Port},
     {GYRO_INT_Pin, GYRO_INT_GPIO_Port},
-    // {CAM_TRIG_Pin, CAM_TRIG_GPIO_Port},
+    {POWER_5V_Pin, POWER_5V_GPIO_Port},
+    {POWER_24V_1_Pin, POWER_24V_1_GPIO_Port},
+    {POWER_24V_2_Pin, POWER_24V_2_GPIO_Port},
 };
 
 static bsp_callback_t callback_list[16];
@@ -95,15 +98,10 @@ bsp_status_t bsp_gpio_disable_irq(bsp_gpio_t gpio) {
 
 inline bsp_status_t bsp_gpio_write_pin(bsp_gpio_t gpio, bool value) {
   if (gpio == BSP_GPIO_LED) {
-    uint8_t txbuff[24];
-    memset(txbuff, 0xC, 24);
     if (value) {
-      memset(txbuff, 0XF, 8);
-      bsp_spi_transmit(BSP_SPI_LED, txbuff, 24, true);
-    }
-    if (!value) {
-      memset(txbuff + 16, 0XF, 8);
-      bsp_spi_transmit(BSP_SPI_LED, txbuff, 24, true);
+      bsp_pwm_set_comp(BSP_PWM_LED_RED, 1.0f);
+    } else if (!value) {
+      bsp_pwm_set_comp(BSP_PWM_LED_RED, 0.0f);
     }
 
     return BSP_OK;

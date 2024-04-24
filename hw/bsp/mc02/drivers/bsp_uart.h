@@ -13,7 +13,10 @@ extern "C" {
 typedef enum {
   BSP_UART_DR16,
   BSP_UART_REF,
-  // BSP_UART_AI,
+  BSP_UART_AI,
+  BSP_UART_CUSTOM,
+  BSP_UART_RS485_1,
+  BSP_UART_RS485_2,
   /* BSP_UART_XXX, */
   BSP_UART_NUM,
   BSP_UART_ERR,
