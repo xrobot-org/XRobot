@@ -121,6 +121,10 @@ void bsp_uart_irq_handler(UART_HandleTypeDef *huart) {
 void bsp_uart_init() {
   HAL_UART_RegisterUserCallback(bsp_uart_irq_handler);
   __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_REF), UART_IT_IDLE);
+  __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_AI), UART_IT_IDLE);
+  __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_CUSTOM), UART_IT_IDLE);
+  __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_RS485_1), UART_IT_IDLE);
+  __HAL_UART_ENABLE_IT(bsp_uart_get_handle(BSP_UART_RS485_2), UART_IT_IDLE);
 }
 
 bsp_status_t bsp_uart_register_callback(bsp_uart_t uart,
