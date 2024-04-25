@@ -1,7 +1,7 @@
 #include <database.hpp>
 
+#include "dev_can.hpp"
 #include "module.hpp"
-#include "wearlab.hpp"
 
 namespace Module {
 class CanfdImu {

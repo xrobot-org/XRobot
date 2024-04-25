@@ -37,15 +37,7 @@ CanfdImu::CanfdImu()
 
   auto cali_tp = new Message::Topic<Device::Can::FDPack>("imu_cali");
 
-  Device::WearLab::CanHeader tmp;
-  tmp.data = {.device_type = Device::WearLab::DEV_TYPE_IMU_9,
-              .data_type = Device::WearLab::IMU_9_CALI_DATA,
-              .device_id = id_,
-              .res = 0};
-
   cali_tp->RegisterCallback(cali_cb, this);
-
-  Device::Can::SubscribeFD(*cali_tp, BSP_CAN_1, tmp.raw, 1);
 
   auto thread_fn = [](CanfdImu *imu) {
     auto magn_sub = Message::Subscriber<Component::Type::Vector3>("magn");
