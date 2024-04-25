@@ -20,6 +20,7 @@ MMC5603::MMC5603(MMC5603::Rotation &rot, float max_offset, DataRate data_rate)
       data_rate_(data_rate),
       max_offset_(max_offset),
       magn_tp_("magn"),
+      raw_magn_tp_("raw_magn"),
       cmd_(this, CaliCMD, "mmc5603"),
       cali_data_("mmc5603_cali", default_cali),
       raw_(0) {
@@ -54,7 +55,8 @@ MMC5603::MMC5603(MMC5603::Rotation &rot, float max_offset, DataRate data_rate)
     }
   };
 
-  this->thread_.Create(thread_fn, this, "mmc5603_thread", 4096,
+  this->thread_.Create(thread_fn, this, "mmc5603_thread",
+                       DEVICE_MMC5603_TASK_STACK_DEPTH,
                        System::Thread::REALTIME);
 }
 

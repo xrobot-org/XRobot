@@ -43,6 +43,7 @@ class MMC5603 {
   Component::Type::Vector3 magn_, raw_magn_;
 
   Message::Topic<Component::Type::Vector3> magn_tp_;
+  Message::Topic<Component::Type::Vector3> raw_magn_tp_;
 
   System::Term::Command<MMC5603 *> cmd_;
 
