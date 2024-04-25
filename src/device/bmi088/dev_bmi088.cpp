@@ -280,17 +280,19 @@ int BMI088::CaliCMD(BMI088 *bmi088, int argc, char **argv) {
       }
 
       while (time > delay) {
-        printf("accl x:%+5f y:%+5f z:%+5f gyro x:%+5f y:%+5f z:%+5f",
+        printf("accl x:%+5f y:%+5f z:%+5f gyro x:%+5f y:%+5f z:%+5f, temp:%+3f",
                bmi088->accl_.x, bmi088->accl_.y, bmi088->accl_.z,
-               bmi088->gyro_.x, bmi088->gyro_.y, bmi088->gyro_.z);
+               bmi088->gyro_.x, bmi088->gyro_.y, bmi088->gyro_.z,
+               bmi088->temp_);
         System::Thread::Sleep(delay);
         ms_clear_line();
         time -= delay;
       }
 
-      printf("accl x:%+5f y:%+5f z:%+5f gyro x:%+5f y:%+5f z:%+5f\r\n",
-             bmi088->accl_.x, bmi088->accl_.y, bmi088->accl_.z, bmi088->gyro_.x,
-             bmi088->gyro_.y, bmi088->gyro_.z);
+      printf(
+          "accl x:%+5f y:%+5f z:%+5f gyro x:%+5f y:%+5f z:%+5f temp:%+3f\r\n",
+          bmi088->accl_.x, bmi088->accl_.y, bmi088->accl_.z, bmi088->gyro_.x,
+          bmi088->gyro_.y, bmi088->gyro_.z, bmi088->temp_);
     }
   } else {
     printf("参数错误\r\n");
