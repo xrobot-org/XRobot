@@ -1,35 +1,41 @@
-#include "dev_bmi088.hpp"
+#include "bsp_uart.h"
+#include "dev_mt6701.hpp"
 #include "module.hpp"
+
+static char uart_tx_buff[1024] = {0};
 
 namespace Module {
 class CustomController {
  public:
-  CustomController();
+  typedef struct {
+    Device::MT6701::Param mt6701[6];
+  } Param;
+  CustomController(Param& param)
+      : mt6701_1(param.mt6701[0]),
+        mt6701_2(param.mt6701[1]),
+        mt6701_3(param.mt6701[2]),
+        mt6701_4(param.mt6701[3]),
+        mt6701_5(param.mt6701[4]),
+        mt6701_6(param.mt6701[5]) {
+    auto task_fun = [](CustomController* ctrl) {
+      (void)snprintf(
+          uart_tx_buff, sizeof(uart_tx_buff), "%f,%f,%f,%f,%f,%f\n",
+          ctrl->mt6701_1.angle_.Value(), ctrl->mt6701_2.angle_.Value(),
+          ctrl->mt6701_3.angle_.Value(), ctrl->mt6701_4.angle_.Value(),
+          ctrl->mt6701_5.angle_.Value(), ctrl->mt6701_6.angle_.Value());
 
-  void SendAccl();
+      bsp_uart_transmit(BSP_UART_MCU, reinterpret_cast<uint8_t*>(uart_tx_buff),
+                        strlen(uart_tx_buff), false);
+    };
 
-  void SendGyro();
+    System::Timer::Create(task_fun, this, 10);
+  }
 
-  void SendEulr();
-
-  void SendQuat();
-
- private:
-  enum FRAME { START = 0xa5, END = 0Xe3 };
-
-  struct __attribute__((packed)) UartData {
-    uint8_t start_frame;
-    uint8_t data[3];
-    uint8_t end_frame;
-  };
-
-  Component::Type::Eulr eulr_;
-  Component::Type::Quaternion quat_;
-  Component::Type::Vector3 gyro_;
-  Component::Type::Vector3 accl_;
-
-  System::Thread thread_;
-
-  UartData uart_trans_buff_;
+  Device::MT6701 mt6701_1;
+  Device::MT6701 mt6701_2;
+  Device::MT6701 mt6701_3;
+  Device::MT6701 mt6701_4;
+  Device::MT6701 mt6701_5;
+  Device::MT6701 mt6701_6;
 };
 }  // namespace Module
