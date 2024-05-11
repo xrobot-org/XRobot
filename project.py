@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!python3
 import random
 import sys
 import os
