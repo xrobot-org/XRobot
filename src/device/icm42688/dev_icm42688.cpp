@@ -9,6 +9,7 @@
 
 #include "bsp_def.h"
 #include "bsp_gpio.h"
+#include "bsp_pwm.h"
 #include "bsp_spi.h"
 #include "bsp_time.h"
 #include "comp_pid.hpp"
@@ -16,6 +17,19 @@
 static uint8_t dma_buf[14];
 
 using namespace Device;
+
+static Component::PID::Param imu_temp_ctrl_pid_param = {
+    .k = 0.4f,
+    .p = 1.0f,
+    .i = 0.05f,
+    .d = 0.0f,
+    .i_limit = 1.0f,
+    .out_limit = 1.0f,
+    .d_cutoff_freq = 0.0f,
+    .cycle = false,
+};
+
+static uint64_t imu_temp_ctrl_time = 0;
 
 void ICM42688::WriteSingle(uint8_t reg, uint8_t data) {
   System::Thread::Sleep(1);
@@ -37,9 +51,10 @@ void ICM42688::Read(uint8_t reg, uint8_t *data, uint8_t len) {
   bsp_spi_mem_read(BSP_SPI_IMU, reg, data, len, false);
 }
 
-ICM42688::ICM42688(ICM42688::Rotation &rot)
+ICM42688::ICM42688(ICM42688::Rotation &rot, DataRate date_rate)
     : cali_("icm42688_cali"),
       rot_(rot),
+      datarate_(date_rate),
       raw_(0),
       new_(0),
       accl_tp_("imu_accl"),
@@ -66,9 +81,13 @@ ICM42688::ICM42688(ICM42688::Rotation &rot)
                             this);
 
   auto thread_icm42688 = [](ICM42688 *icm42688) {
-    while (!icm42688->Init()) {
+    while (!icm42688->Init(icm42688->datarate_)) {
       System::Thread::Sleep(1);
     }
+
+    Component::PID imu_temp_ctrl_pid(imu_temp_ctrl_pid_param, 1000.0f);
+
+    bsp_pwm_start(BSP_PWM_IMU_HEAT);
 
     while (1) {
       /* 开始数据接收DMA，加速度计和陀螺仪共用同一个SPI接口，
@@ -81,6 +100,11 @@ ICM42688::ICM42688(ICM42688::Rotation &rot)
 
         icm42688->accl_tp_.Publish(icm42688->accl_);
         icm42688->gyro_tp_.Publish(icm42688->gyro_);
+
+        bsp_pwm_set_comp(BSP_PWM_IMU_HEAT,
+                         imu_temp_ctrl_pid.Calculate(
+                             50.0f, icm42688->temp_,
+                             TIME_DIFF(imu_temp_ctrl_time, bsp_time_get())));
 
       } else {
         OMLOG_ERROR("ICM42688 wait timeout.");
@@ -157,11 +181,13 @@ int ICM42688::CaliCMD(ICM42688 *icm42688, int argc, char **argv) {
       }
 
       do {
-        printf("accl x:%+5f y:%+5f z:%+5f gyro x:%+5f y:%+5f z:%+5f",
-               icm42688->accl_.x, icm42688->accl_.y, icm42688->accl_.z,
-               icm42688->gyro_.x, icm42688->gyro_.y, icm42688->gyro_.z);
-        System::Thread::Sleep(delay);
         ms_clear_line();
+
+        printf("accl x:%+5f y:%+5f z:%+5f gyro x:%+5f y:%+5f z:%+5f temp:%+3f",
+               icm42688->accl_.x, icm42688->accl_.y, icm42688->accl_.z,
+               icm42688->gyro_.x, icm42688->gyro_.y, icm42688->gyro_.z,
+               icm42688->temp_);
+        System::Thread::Sleep(delay);
         time -= delay;
       } while (time > delay);
 
@@ -175,7 +201,7 @@ int ICM42688::CaliCMD(ICM42688 *icm42688, int argc, char **argv) {
   return 0;
 }
 
-bool ICM42688::Init() {
+bool ICM42688::Init(DataRate date_rate) {
   /*指定Bank0*/
   WriteSingle(0x76, 0x00);
   /*软重启*/
@@ -195,9 +221,9 @@ bool ICM42688::Init() {
   /*中断输出设置*/
   WriteSingle(0x14, 0x12);  // INT1 INT2 脉冲模式，低有效
   /*Gyro设置*/
-  WriteSingle(0x4F, 0x06);  // 2000dps 1KHz
+  WriteSingle(0x4F, date_rate);  // 2000dps 1KHz
   /*Accel设置*/
-  WriteSingle(0x50, 0x06);  // 16G 1KHz
+  WriteSingle(0x50, date_rate);  // 16G 1KHz
   /*Tem设置&Gyro_Config1*/
   WriteSingle(0x51, 0x56);  // BW 82Hz Latency = 2ms
   /*GYRO_ACCEL_CONFIG0*/
@@ -207,7 +233,7 @@ bool ICM42688::Init() {
   /*INT_CONFIG0*/
   WriteSingle(0x63, 0x00);  // Null
   /*INT_CONFIG1*/
-  WriteSingle(0x64, 0x00);  //中断引脚正常启用
+  WriteSingle(0x64, 0x00);  // 中断引脚正常启用
   /*INT_SOURCE0*/
   WriteSingle(0x65, 0x08);  // DRDY INT1
   /*INT_SOURCE1*/
@@ -223,7 +249,7 @@ bool ICM42688::Init() {
   /*指定Bank1*/
   WriteSingle(0x76, 0x01);
   /*GYRO抗混叠滤波器配置*/
-  WriteSingle(0x0B, 0xA0);  //开启抗混叠和陷波滤波器
+  WriteSingle(0x0B, 0xA0);  // 开启抗混叠和陷波滤波器
   WriteSingle(0x0C, 0x0C);  // GYRO_AAF_DELT 12 (default 13)
   WriteSingle(0x0D, 0x90);  // GYRO_AAF_DELTSQR 144 (default 170)
   WriteSingle(0x0E, 0x80);  // GYRO_AAF_BITSHIFT 8 (default 8)
@@ -232,7 +258,7 @@ bool ICM42688::Init() {
   /*指定Bank2*/
   WriteSingle(0x76, 0x02);
   /*ACCEL抗混叠滤波器配置*/
-  WriteSingle(0x03, 0x18);  //开启滤波器 ACCEL_AFF_DELT 12 (default 24)
+  WriteSingle(0x03, 0x18);  // 开启滤波器 ACCEL_AFF_DELT 12 (default 24)
   WriteSingle(0x04, 0x90);  // ACCEL_AFF_DELTSQR 144 (default 64)
   WriteSingle(0x05, 0x80);  // ACCEL_AAF_BITSHIFT 8 (default 6)
 
@@ -306,7 +332,7 @@ void ICM42688::Prase() {
 
   int16_t raw_temp = static_cast<int16_t>(dma_buf[0] << 8 | dma_buf[1]);
 
-  this->temp_ = raw_temp;
+  this->temp_ = static_cast<float>(raw_temp) / 132.48f + 25;
 }
 
 bool ICM42688::StartRecv() {

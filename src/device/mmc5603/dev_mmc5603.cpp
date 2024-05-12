@@ -9,11 +9,20 @@ static uint8_t dma_buff[10];
 
 #define MATRIX_SIZE (6)
 
-MMC5603::MMC5603(MMC5603::Rotation &rot)
+static const MMC5603::Calibration default_cali = {.scale = {
+                                                      .x = 0.5,
+                                                      .y = 0.5,
+                                                      .z = 0.5,
+                                                  }};
+
+MMC5603::MMC5603(MMC5603::Rotation &rot, float max_offset, DataRate data_rate)
     : rot_(rot),
+      data_rate_(data_rate),
+      max_offset_(max_offset),
       magn_tp_("magn"),
+      raw_magn_tp_("raw_magn"),
       cmd_(this, CaliCMD, "mmc5603"),
-      cali_data_("mmc5603_cali"),
+      cali_data_("mmc5603_cali", default_cali),
       raw_(0) {
   auto recv_cplt_callback = [](void *arg) {
     MMC5603 *mmc5603 = static_cast<MMC5603 *>(arg);
@@ -24,7 +33,7 @@ MMC5603::MMC5603(MMC5603::Rotation &rot)
                             recv_cplt_callback, this);
 
   auto thread_fn = [](MMC5603 *mmc5603) {
-    while (!mmc5603->Init()) {
+    while (!mmc5603->Init(mmc5603->data_rate_)) {
       System::Thread::Sleep(20);
     }
 
@@ -39,15 +48,19 @@ MMC5603::MMC5603(MMC5603::Rotation &rot)
         OMLOG_ERROR("mmc5603 recv timeout");
       }
 
-      mmc5603->thread_.SleepUntil(1, last_wakeup_time);
+      static uint32_t timeout_map[] = {13, 6, 4};
+
+      mmc5603->thread_.SleepUntil(timeout_map[mmc5603->data_rate_],
+                                  last_wakeup_time);
     }
   };
 
-  this->thread_.Create(thread_fn, this, "mmc5603_thread", 4096,
+  this->thread_.Create(thread_fn, this, "mmc5603_thread",
+                       DEVICE_MMC5603_TASK_STACK_DEPTH,
                        System::Thread::REALTIME);
 }
 
-bool MMC5603::Init() {
+bool MMC5603::Init(DataRate date_rate) {
   /* Check Product id */
 
   if (uint8_t product_id =
@@ -63,7 +76,7 @@ bool MMC5603::Init() {
   /* Set CTRL_1 bandwith */
   bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x30, 0x1C, 0x02);
   /* Set ODR sampling_rate */
-  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x30, 0x1A, 0xff);
+  bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x30, 0x1A, date_rate);
   /* Set CTRL_0 Auto_SR_en Cmm_freq_en */
   bsp_i2c_mem_write_byte(BSP_I2C_MAGN, 0x30, 0x1B, 0xa0);
   /* Set CTRL_2 Cmm_en */

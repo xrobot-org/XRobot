@@ -105,6 +105,24 @@ int AHRS::ShowCMD(AHRS *ahrs, int argc, char **argv) {
       }
       printf("pitch:%f roll:%f yaw:%f\r\n", ahrs->eulr_.pit.Value(),
              ahrs->eulr_.rol.Value(), ahrs->eulr_.yaw.Value());
+    } else if (strcmp(argv[1], "print_quat") == 0) {
+      int time = std::stoi(argv[2]);
+      int delay = std::stoi(argv[3]);
+
+      if (delay > 1000) {
+        delay = 1000;
+      }
+
+      if (delay < 2) {
+        delay = 2;
+      }
+
+      while (time > delay) {
+        printf("%f,%f,%f,%f\n", ahrs->quat_.q0, ahrs->quat_.q1, ahrs->quat_.q2,
+               ahrs->quat_.q3);
+        System::Thread::Sleep(delay);
+        time -= delay;
+      }
     }
   }
 

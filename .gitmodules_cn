@@ -64,3 +64,9 @@
 [submodule "lib/eigen"]
 	path = lib/eigen
 	url = https://gitee.com/x-robot/eigen.git
+[submodule "hw/mcu/st/stm32h7xx_hal_driver"]
+	path = hw/mcu/st/stm32h7xx_hal_driver
+	url = https://gitee.com/x-robot/stm32h7xx_hal_driver.git
+[submodule "hw/mcu/st/cmsis_device_h7"]
+	path = hw/mcu/st/cmsis_device_h7
+	url = https://gitee.com/x-robot/cmsis_device_h7.git

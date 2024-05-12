@@ -18,9 +18,25 @@ class ICM42688 {
     float rot_mat[3][3];
   } Rotation;
 
-  ICM42688(ICM42688::Rotation &rot);
+  typedef enum {
+    DATA_RATE_UNKNOW,
+    DATA_RATE_32KHZ,
+    DATA_RATE_16KHZ,
+    DATA_RATE_8KHZ,
+    DATA_RATE_4KHZ,
+    DATA_RATE_2KHZ,
+    DATA_RATE_1KHZ,
+    DATA_RATE_200HZ,
+    DATA_RATE_100HZ,
+    DATA_RATE_50HZ,
+    DATA_RATE_25HZ,
+    DATA_RATE_12_5HZ,
+    DATA_RATE_500HZ = 0XF,
+  } DataRate;
 
-  bool Init();
+  ICM42688(ICM42688::Rotation &rot, DataRate date_rate = DATA_RATE_1KHZ);
+
+  bool Init(DataRate date_rate);
 
   void Prase();
 
@@ -41,6 +57,8 @@ class ICM42688 {
  private:
   System::Database::Key<Calibration> cali_;
   Rotation &rot_;
+
+  DataRate datarate_;
 
   System::Semaphore raw_;
   System::Semaphore new_;
