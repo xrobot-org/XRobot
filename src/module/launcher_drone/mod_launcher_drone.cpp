@@ -24,22 +24,22 @@ UVALauncher::UVALauncher(Param& param, float control_freq)
       case CHANGE_FIRE_MODE_SAFE:
 
         launcher->SetTrigMode(SAFE);
-        launcher->fire_ctrl_.fire = false;
-        launcher->fire_ctrl_.firc_on = false;
+        launcher->fire_ctrl_.fire = false;    /*拨弹盘静止*/
+        launcher->fire_ctrl_.fric_on = false; /*摩擦轮静止*/
 
         break;
       case CHANGE_TRIG_MODE_SINGLE:
 
-        launcher->fire_ctrl_.fire = true;
-        launcher->fire_ctrl_.firc_on = true;
+        launcher->fire_ctrl_.fire = true;    /*拨弹盘转动*/
+        launcher->fire_ctrl_.fric_on = true; /*摩擦轮转动*/
 
         launcher->SetTrigMode(SINGLE);
         break;
 
       case CHANGE_TRIG_MODE_BURST:
 
-        launcher->fire_ctrl_.fire = false;
-        launcher->fire_ctrl_.firc_on = false;
+        launcher->fire_ctrl_.fire = true;    /*拨弹盘转动*/
+        launcher->fire_ctrl_.fric_on = true; /*摩擦轮转动*/
 
         launcher->SetTrigMode(BURST);
         break;
@@ -97,7 +97,7 @@ void UVALauncher::Control() {
   this->trig_angle_ += DELTA_MOTOR_ANGLE / this->param_.trig_gear_ratio;
 
   this->now_ = bsp_time_get();
-  this->dt_ = this->now_ - this->last_wakeup_;
+  this->dt_ = TIME_DIFF(this->last_wakeup_, this->now_); /*注意单位是US*/
   this->last_wakeup_ = this->now_;
 
   /* 根据开火模式计算发射行为 */
@@ -120,7 +120,7 @@ void UVALauncher::Control() {
       /* 计算是否是第一次按下开火键 */
       this->fire_ctrl_.first_pressed_fire =
           this->fire_ctrl_.fire && !this->fire_ctrl_.last_fire;
-      this->fire_ctrl_.last_fire = this->fire_ctrl_.fire;
+      this->fire_ctrl_.last_fire = 0;
 
       /* 设置要发射多少弹丸 */
       if (this->fire_ctrl_.first_pressed_fire && !this->fire_ctrl_.to_launch) {
@@ -133,7 +133,6 @@ void UVALauncher::Control() {
       break;
     case SAFE:
       this->fire_ctrl_.launch_delay = UINT32_MAX;
-
       break;
     default:
       break;
@@ -172,13 +171,15 @@ void UVALauncher::PraseRef() {
 }
 void UVALauncher::FricControl() {
   if (/*this->raw_ref_.robot_status.power_launcher_output == 1 &&*/
-      this->fire_ctrl_.firc_on == true) {
+      this->fire_ctrl_.fric_on == true) {
+    /*摩擦轮开启模式*/
     bsp_pwm_start(BSP_PWM_SERVO_A);
     bsp_pwm_start(BSP_PWM_SERVO_B);
 
-    bsp_pwm_set_comp(BSP_PWM_SERVO_A, 0.09f);
-    bsp_pwm_set_comp(BSP_PWM_SERVO_B, 0.09f);
+    bsp_pwm_set_comp(BSP_PWM_SERVO_A, 0.08f); /*此处最高不得超过0.10f*/
+    bsp_pwm_set_comp(BSP_PWM_SERVO_B, 0.08f);
   } else {
+    /*摩擦轮预热模式*/
     bsp_pwm_start(BSP_PWM_SERVO_A);
     bsp_pwm_set_comp(BSP_PWM_SERVO_A, 0.02f);
     bsp_pwm_start(BSP_PWM_SERVO_B);
