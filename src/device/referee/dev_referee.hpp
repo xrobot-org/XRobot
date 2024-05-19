@@ -1,6 +1,6 @@
 /*
   裁判系统抽象。
-  2024_03_21 已修改。
+  2024_05_04 已更新至1.6.2版。
 */
 
 #pragma once
@@ -76,11 +76,11 @@ class Referee {
     REF_CMD_ID_RADAR_MARK = 0X020C,
     REF_CMD_ID_SENTRY_DECISION = 0x020D, /* 哨兵自主决策相关信息同步 */
     REF_CMD_ID_RADAR_DECISION = 0x020E, /* 雷达自主决策相关信息同步 */
-    REF_CMD_ID_INTER_STUDENT = 0x0301,
-    REF_CMD_ID_INTER_STUDENT_CUSTOM = 0x0302,
+    REF_CMD_ID_INTER_STUDENT = 0x0301,        /* 机器人交互数据 */
+    REF_CMD_ID_INTER_STUDENT_CUSTOM = 0x0302, /* 自定义控制器和机器人 */
     REF_CMD_ID_CLIENT_MAP = 0x0303,
     REF_CMD_ID_KEYBOARD_MOUSE = 0x0304,
-    REF_CMD_ID_MAP_ROBOT_DATA = 0x0305,  // 0x0305
+    REF_CMD_ID_MAP_ROBOT_DATA = 0x0305,
     REF_CMD_ID_CUSTOM_KEYBOARD_MOUSE = 0X0306,
     REF_CMD_ID_SENTRY_POS_DATA = 0x0307,
     REF_CMD_ID_ROBOT_POS_DATA = 0x0308, /* 选手端小地图接受机器人消息 */
@@ -288,11 +288,11 @@ class Referee {
     uint8_t res : 5;
   } RadarInfo; /* 0x020E */
   typedef struct __attribute__((packed)) {
-    uint16_t data_cmd_id;
+    uint16_t data_cmd_id; /* 子内容ID */
     uint16_t sender_id;
     uint16_t receiver_id;
-    std::array<int8_t, 113> user_data;
-    /*最大值113*/
+    std::array<int8_t, 112> user_data;
+    /*最大值112*/
   } RobotInteractionData; /* 0x0301 */
 
   typedef struct __attribute__((packed)) {
@@ -355,7 +355,10 @@ class Referee {
     REF_BOT_RED_INFANTRY_3 = 5,
     REF_BOT_RED_DRONE = 6,
     REF_BOT_RED_SENTRY = 7,
+    REF_BOT_RED_DART = 8,
     REF_BOT_RED_RADER = 9,
+    REF_BOT_RED_OUTPOST = 10,
+    REF_BOT_RED_BASE = 11,
     REF_BOT_BLU_HERO = 101,
     REF_BOT_BLU_ENGINEER = 102,
     REF_BOT_BLU_INFANTRY_1 = 103,
@@ -363,7 +366,10 @@ class Referee {
     REF_BOT_BLU_INFANTRY_3 = 105,
     REF_BOT_BLU_DRONE = 106,
     REF_BOT_BLU_SENTRY = 107,
+    REF_BOT_BLU_DART = 108,
     REF_BOT_BLU_RADER = 109,
+    REF_BOT_BLU_OUTPOST = 110,
+    REF_BOT_BLU_BASE = 111,
   } RobotID;
 
   typedef enum {
@@ -379,7 +385,8 @@ class Referee {
     REF_CL_BLU_INFANTRY_2 = 0x0168,
     REF_CL_BLU_INFANTRY_3 = 0x0169,
     REF_CL_BLU_DRONE = 0x016A,
-  } ClientID;
+    REF_CL_REFEREE_SERVER = 0x8080, /* 裁判系统服务器，用于哨兵和雷达自主决策 */
+  } ClientID;                       /* 子内容ID */
 
   typedef enum {
     REF_STDNT_CMD_ID_UI_DEL = 0x0100,
@@ -389,8 +396,8 @@ class Referee {
     REF_STDNT_CMD_ID_UI_DRAW7 = 0x0104,
     REF_STDNT_CMD_ID_UI_STR = 0x0110,
     REF_STDNT_CMD_ID_CUSTOM = 0x0200,
-    REF_STDNT_CMD_ID_SENTRY_COMMAND = 0X0120,
-    REF_STDNT_CMD_ID_RADAR_COMMAND = 0X0121,
+    REF_STDNT_CMD_ID_SENTRY_CMD = 0X0120,
+    REF_STDNT_CMD_ID_RADAR_CMD = 0X0121,
   } CMDID;
 
   typedef struct __attribute__((packed)) {
@@ -487,9 +494,34 @@ class Referee {
     struct __attribute__((packed)) {
       Header frame_header;
       uint16_t cmd_id;
-      Referee::InterStudentHeader student_header;
+      Referee::InterStudentHeader student_header;  //字命令、发送者、接受者
     } raw;
   };
+
+  typedef struct __attribute__((packed)) {
+    uint32_t confirm_resurrection : 1;
+    uint32_t buy_resurrection : 1;
+    uint32_t buy_bullet_num : 11;
+    uint32_t remote_buy_bullet_times : 4;
+    uint32_t romote_buy_hp_times : 4;
+    uint32_t res : 11;
+  } SentryDecisionData;
+
+  typedef struct __attribute__((packed)) {
+    Header frame_header;  // 0x0301
+    uint16_t cmd_id;
+    Referee::InterStudentHeader student_header;  //含0x0120
+    uint32_t data_cmd;
+    uint16_t crc16;
+  } SentryPack;
+
+  typedef struct __attribute__((packed)) {
+    Header frame_header;
+    uint16_t cmd_id;
+    Referee::InterStudentHeader student_header;
+    uint8_t radar_cmd;
+    uint16_t crc16;
+  } RadarPack;
 
   Referee();
 
@@ -501,7 +533,7 @@ class Referee {
 
   void Prase();
 
-  bool UpdateUI();
+  bool Update();
 
   static bool AddUI(Component::UI::Ele ui_data);
   static bool AddUI(Component::UI::Del ui_data);
@@ -516,6 +548,8 @@ class Referee {
 
   void SetUIHeader(InterStudentHeader &header, const CMDID CMD_ID,
                    RobotID robot_id);
+  void SetSentryHeader(InterStudentHeader &header, const CMDID CMD_ID,
+                       RobotID robot_id);
 
   void SetPacketHeader(Referee::Header &header, uint16_t data_length);
 
@@ -546,7 +580,12 @@ class Referee {
   System::Queue<Component::UI::Del> static_del_data_ =
       System::Queue<Component::UI::Del>(10);
 
+  System::Queue<SentryDecisionData> sentry_data_ =
+      System::Queue<SentryDecisionData>(10);
+
   System::Semaphore ui_lock_ = System::Semaphore(true);
+
+  System::Semaphore sentry_lock_ = System::Semaphore(true);
 
   Data ref_data_;
 
@@ -556,6 +595,9 @@ class Referee {
 
   static UIPack ui_pack_;
 
+  static SentryPack sentry_pack_;
+
   static Referee *self_;
+  SentryDecisionData data_from_sentry_;
 };
 }  // namespace Device
