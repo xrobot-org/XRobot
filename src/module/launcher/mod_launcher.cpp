@@ -114,6 +114,7 @@ void Launcher::UpdateFeedback() {
 
   for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
     this->fric_motor_[i]->Update();
+    speed[i] = fric_motor_[i]->GetSpeed();
   }
 
   for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {

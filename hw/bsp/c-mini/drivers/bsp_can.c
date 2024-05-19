@@ -269,6 +269,9 @@ bsp_status_t bsp_can_register_callback(
 
 bsp_status_t bsp_ext_can_trans_packet(bsp_can_t can, bsp_can_format_t format,
                                       uint32_t id, uint8_t *data) {
+  if (format == CAN_FORMAT_EXT_REMOTE || format == CAN_FORMAT_STD_REMOTE) {
+    return BSP_ERR;
+  }
   tx_ext_buff[can - BSP_CAN_BASE_NUM].id = id;
   tx_ext_buff[can - BSP_CAN_BASE_NUM].type = format;
   memcpy(tx_ext_buff[can - BSP_CAN_BASE_NUM].data, data, 8);
@@ -285,22 +288,40 @@ bsp_status_t bsp_ext_can_trans_packet(bsp_can_t can, bsp_can_format_t format,
 
 bsp_status_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format,
                                   uint32_t id, uint8_t *data) {
+  CAN_TxHeaderTypeDef header;
   if (can >= BSP_CAN_BASE_NUM) {
     return bsp_ext_can_trans_packet(can, format, id, data);
   }
 
-  if (format == CAN_FORMAT_STD) {
-    tx_buff[can].StdId = id;
-    tx_buff[can].IDE = CAN_ID_STD;
-  } else {
-    tx_buff[can].ExtId = id;
-    tx_buff[can].IDE = CAN_ID_EXT;
+  switch (format) {
+    case CAN_FORMAT_STD_DATA:
+      header.StdId = id;
+      header.IDE = CAN_ID_STD;
+      header.RTR = CAN_RTR_DATA;
+      header.TransmitGlobalTime = DISABLE;
+      header.DLC = 8;
+      break;
+    case CAN_FORMAT_EXT_DATA:
+      header.ExtId = id;
+      header.IDE = CAN_ID_EXT;
+      header.RTR = CAN_RTR_DATA;
+      header.TransmitGlobalTime = DISABLE;
+      header.DLC = 8;
+      break;
+    case CAN_FORMAT_STD_REMOTE:
+      header.StdId = id;
+      header.IDE = CAN_ID_STD;
+      header.RTR = CAN_RTR_REMOTE;
+      header.TransmitGlobalTime = DISABLE;
+      header.DLC = 8;
+      break;
+    case CAN_FORMAT_EXT_REMOTE:
+      header.ExtId = id;
+      header.IDE = CAN_ID_EXT;
+      header.RTR = CAN_RTR_REMOTE;
+      header.TransmitGlobalTime = DISABLE;
+      header.DLC = 8;
   }
-
-  tx_buff[can].RTR = CAN_RTR_DATA;
-  tx_buff[can].TransmitGlobalTime = DISABLE;
-  tx_buff[can].DLC = 8;
-
   uint32_t tsr = READ_REG(bsp_can_get_handle(can)->Instance->TSR);
 
   while (((tsr & CAN_TSR_TME0) == 0U) && ((tsr & CAN_TSR_TME1) == 0U) &&

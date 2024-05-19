@@ -122,6 +122,7 @@ class Launcher {
 
   Launcher(Param &param, float control_freq);
 
+  std::array<float, 2> speed;
   void UpdateFeedback();
 
   void Control();

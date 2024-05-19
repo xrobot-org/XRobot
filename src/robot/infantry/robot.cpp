@@ -9,6 +9,10 @@
 /* clang-format off */
 Robot::Infantry::Param param = {
     .chassis={
+      .toque_coefficient_ = 0.0327120418848f,
+      .speed_2_coefficient_ = 0.0f,
+      .out_2_coefficient_ = 0.0f,
+      .constant_ = 0.0f,
       .type = Component::Mixer::MECANUM,
 
       .follow_pid_param = {
@@ -33,7 +37,7 @@ Robot::Infantry::Param param = {
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_L_POS_MID,
-        Module::RMChassis::SET_MODE_FOLLOW
+        Module::RMChassis::SET_MODE_INDENPENDENT
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_L_POS_BOT,
@@ -143,6 +147,23 @@ Robot::Infantry::Param param = {
           .can = BSP_CAN_1,
       },
     },
+    .get_speed = [](float power_limit){
+      float speed = 0.0f;
+    if (power_limit <= 50.0f) {
+      speed = 0.0f;
+    } else if (power_limit <= 60.0f) {
+      speed = 3800;
+    } else if (power_limit <= 70.0f) {
+      speed = 5000;
+    } else if (power_limit <= 80.0f) {
+      speed = 5500;
+    } else if (power_limit <= 100.0f) {
+      speed = 6000;
+    } else {
+      speed = 6500;
+    }
+      return speed;
+    },
   },
 
   .gimbal = {
@@ -231,21 +252,22 @@ Robot::Infantry::Param param = {
     },
 
     .pit_motor = {
-      .id_feedback = 0x20A,
-      .id_control = GM6020_CTRL_ID_EXTAND,
+      .id_feedback = 0x206,
+      .id_control = GM6020_CTRL_ID_BASE,
       .model = Device::RMMotor::MOTOR_GM6020,
       .can = BSP_CAN_2,
+      .reverse = true ,
     },
 
     .mech_zero = {
       .yaw = 1.3f,
-      .pit = 4.0f,
+      .pit =M_2PI - 5.37046671f,
       .rol = 0.0f,
     },
 
     .limit = {
-      .pitch_max = 3.8f,
-      .pitch_min = 3.0f,
+      .pitch_max =M_2PI -  5.1f,
+      .pitch_min =M_2PI -  5.8f,
     },
 
     .EVENT_MAP = {
@@ -354,8 +376,8 @@ Robot::Infantry::Param param = {
 
     .trig_motor = {
       Device::RMMotor::Param{
-        .id_feedback = 0x207,
-        .id_control = M3508_M2006_CTRL_ID_EXTAND,
+        .id_feedback = 0x201,
+        .id_control = M3508_M2006_CTRL_ID_BASE,
         .model = Device::RMMotor::MOTOR_M2006,
         .can = BSP_CAN_2,
       }
@@ -363,14 +385,14 @@ Robot::Infantry::Param param = {
 
     .fric_motor = {
       Device::RMMotor::Param{
-          .id_feedback = 0x205,
-          .id_control = M3508_M2006_CTRL_ID_EXTAND,
+          .id_feedback = 0x203,
+          .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
       },
       Device::RMMotor::Param{
-          .id_feedback = 0x206,
-          .id_control = M3508_M2006_CTRL_ID_EXTAND,
+          .id_feedback = 0x204,
+          .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
       },
@@ -426,8 +448,6 @@ Robot::Infantry::Param param = {
 
   .cap = {
     .can = BSP_CAN_1,
-    .index = DEV_CAP_FB_ID_BASE,
-    .cutoff_volt = 13.0f,
   },
 };
 /* clang-format on */

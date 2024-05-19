@@ -25,8 +25,10 @@ typedef enum {
 } bsp_can_callback_t;
 
 typedef enum {
-  CAN_FORMAT_STD,
-  CAN_FORMAT_EXT,
+  CAN_FORMAT_STD_DATA,
+  CAN_FORMAT_EXT_DATA,
+  CAN_FORMAT_STD_REMOTE,
+  CAN_FORMAT_EXT_REMOTE,
 } bsp_can_format_t;
 
 void bsp_can_init(void);

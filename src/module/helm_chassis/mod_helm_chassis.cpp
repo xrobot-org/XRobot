@@ -1,3 +1,6 @@
+#include "mod_helm_chassis.hpp"
+
+using namespace Module;
 /**
  * @file chassis.c
  * @author Qu Shen (503578404@qq.com)
@@ -8,8 +11,6 @@
  * @copyright Copyright (c) 2021
  *
  */
-
-#include "mod_helm_chassis.hpp"
 
 #include <math.h>
 #include <sys/_stdint.h>
@@ -24,9 +25,10 @@
 #include <string>
 
 #include "bsp_time.h"
+#include "mod_helm_chassis.hpp"
 
-#define ROTOR_WZ_MIN 0.6f /* 小陀螺旋转位移下界 */
-#define ROTOR_WZ_MAX 0.8f /* 小陀螺旋转位移上界 */
+#define ROTOR_WZ_MIN 0.8f /* 小陀螺旋转位移下界 */
+#define ROTOR_WZ_MAX 1.0f /* 小陀螺旋转位移上界 */
 
 #define ROTOR_OMEGA 0.0025f /* 小陀螺转动频率 */
 
@@ -51,13 +53,16 @@ static const float kCAP_PERCENTAGE_WORK = (float)CAP_PERCENT_WORK / 100.0f;
 
 #endif
 
-#define MOTOR_MAX_ROTATIONAL_SPEED 7000.0f /* 电机的最大转速 */
+#define MOTOR_MAX_SPEED_COFFICIENT 1.2f /* 电机的最大转速 */
 
 using namespace Module;
 
 template <typename Motor, typename MotorParam>
 HelmChassis<Motor, MotorParam>::HelmChassis(Param& param, float control_freq)
-    : param_(param), mode_(HelmChassis::RELAX), ctrl_lock_(true) {
+    : param_(param),
+      mode_(HelmChassis::RELAX),
+      follow_pid_(param.follow_pid_param, control_freq),
+      ctrl_lock_(true) {
   memset(&(this->cmd_), 0, sizeof(this->cmd_));
   for (int i = 0; i < 4; i++) {
     this->pos_actr_.at(i) =
@@ -84,8 +89,11 @@ HelmChassis<Motor, MotorParam>::HelmChassis(Param& param, float control_freq)
       case SET_MODE_RELAX:
         chassis->SetMode(RELAX);
         break;
-      case SET_MODE_FOLLOW:
-        chassis->SetMode(FOLLOW_GIMBAL);
+      case SET_MODE_6020_FOLLOW:
+        chassis->SetMode(CHASSIS_6020_FOLLOW_GIMBAL);
+        break;
+      case SET_MODE_CHASSIS_FOLLOW:
+        chassis->SetMode(CHASSIS_FOLLOW_GIMBAL);
         break;
       case SET_MODE_ROTOR:
         chassis->SetMode(ROTOR);
@@ -147,16 +155,62 @@ void HelmChassis<Motor, MotorParam>::PraseRef() {
   this->ref_.chassis_watt = this->raw_ref_.power_heat.chassis_watt;
   this->ref_.status = this->raw_ref_.status;
 }
-
 template <typename Motor, typename MotorParam>
 void HelmChassis<Motor, MotorParam>::UpdateFeedback() {
   /* 将CAN中的反馈数据写入到feedback中 */
   for (size_t i = 0; i < 4; i++) {
     this->pos_motor_[i]->Update();
+    this->pos_motor_feedback_[i] = this->pos_motor_[i]->GetSpeed();
     this->speed_motor_[i]->Update();
+    this->speed_motor_feedback_[i] = this->speed_motor_[i]->GetSpeed();
   }
 }
 
+template <typename Motor, typename MotorParam>
+bool HelmChassis<Motor, MotorParam>::LimitChassisOutPower(float power_limit,
+                                                          float* motor_out,
+                                                          float* speed_rpm,
+                                                          uint32_t len) {
+  if (power_limit < 0.0f) {
+    return 0;
+  }
+
+  float sum_motor_power = 0.0f;
+  float motor_3508_power[len];
+  for (size_t i = 0; i < len; i++) {
+    motor_3508_power[i] =
+        this->param_.toque_coefficient_3508 * fabsf(motor_out[i]) *
+            fabsf(speed_rpm[i]) +
+        this->param_.speed_2_coefficient_3508 * speed_rpm[i] * speed_rpm[i] +
+        this->param_.out_2_coefficient_3508 * motor_out[i] * motor_out[i];
+    sum_motor_power += motor_3508_power[i];
+  }
+  sum_motor_power += this->param_.constant_3508;
+  if (sum_motor_power > power_limit) {
+    for (size_t i = 0; i < len; i++) {
+      motor_out[i] *= power_limit / sum_motor_power;
+    }
+  }
+  return true;
+}
+template <typename Motor, typename MotorParam>
+uint16_t HelmChassis<Motor, MotorParam>::MAXSPEEDGET(float power_limit) {
+  uint16_t speed = 0;
+  if (power_limit <= 50.0f) {
+    speed = 5000;
+  } else if (power_limit <= 60.0f) {
+    speed = 5500;
+  } else if (power_limit <= 70.0f) {
+    speed = 6000;
+  } else if (power_limit <= 80.0f) {
+    speed = 6500;
+  } else if (power_limit <= 100.0f) {
+    speed = 7000;
+  } else {
+    speed = 7500;
+  }
+  return speed;
+}
 template <typename Motor, typename MotorParam>
 void HelmChassis<Motor, MotorParam>::Control() {
   this->now_ = bsp_time_get();
@@ -164,7 +218,9 @@ void HelmChassis<Motor, MotorParam>::Control() {
   this->dt_ = TIME_DIFF(this->last_wakeup_, this->now_);
 
   this->last_wakeup_ = this->now_;
-
+  // max_motor_rotational_speed_ = this->MAXSPEEDGET(ref_.chassis_power_limit);
+  max_motor_rotational_speed_ =
+      this->MAXSPEEDGET(this->ref_.chassis_power_limit);
   /* 计算vx、vy */
   switch (this->mode_) {
     case HelmChassis::BREAK: /* 刹车/放松模式电机停止 */
@@ -174,7 +230,7 @@ void HelmChassis<Motor, MotorParam>::Control() {
       break;
       /* 独立模式控制向量与运动向量相等 */
     case HelmChassis::INDENPENDENT:
-    case HelmChassis::FOLLOW_GIMBAL: {
+    case HelmChassis::CHASSIS_6020_FOLLOW_GIMBAL: {
       float tmp = sqrtf(cmd_.x * cmd_.x + cmd_.y * cmd_.y) * 1.41421f / 2.0f;
 
       clampf(&tmp, -1.0f, 1.0f);
@@ -188,6 +244,7 @@ void HelmChassis<Motor, MotorParam>::Control() {
       }
       break;
     }
+    case HelmChassis::CHASSIS_FOLLOW_GIMBAL:
     case HelmChassis::ROTOR: {
       float beta = this->yaw_;
       float cos_beta = cosf(beta);
@@ -209,10 +266,15 @@ void HelmChassis<Motor, MotorParam>::Control() {
       this->move_vec_.wz = this->cmd_.z;
       this->main_direct_ -= this->move_vec_.wz * WZ_MAX_OMEGA * dt_;
       break;
-    case HelmChassis::FOLLOW_GIMBAL:
+    case HelmChassis::CHASSIS_6020_FOLLOW_GIMBAL:
       /* 跟随模式每个轮子的方向与云台相同 */
       this->move_vec_.wz = 0;
       this->main_direct_ = -yaw_;
+      break;
+    case HelmChassis::CHASSIS_FOLLOW_GIMBAL:
+      this->move_vec_.wz =
+          this->follow_pid_.Calculate(0.0f, this->yaw_, this->dt_) * 0.25f;
+
       break;
     case HelmChassis::ROTOR:
       /* 陀螺模式底盘以一定速度旋转 */
@@ -237,24 +299,27 @@ void HelmChassis<Motor, MotorParam>::Control() {
         speed = 0.0f;
       }
       break;
-    case HelmChassis::FOLLOW_GIMBAL:
+
+    case HelmChassis::CHASSIS_6020_FOLLOW_GIMBAL:
     case HelmChassis::INDENPENDENT: /* 独立模式,受PID控制 */
       for (auto& angle : setpoint_.wheel_pos) {
         angle = main_direct_ + direct_offset_;
       }
       for (auto& speed : setpoint_.motor_rotational_speed) {
-        speed = MOTOR_MAX_ROTATIONAL_SPEED * move_vec_.vy;
+        speed = max_motor_rotational_speed_ * move_vec_.vy;
       }
       break;
+    case HelmChassis::CHASSIS_FOLLOW_GIMBAL:
     case HelmChassis::ROTOR: {
       float x = 0, y = 0, wheel_pos = 0;
       for (int i = 0; i < 4; i++) {
-        wheel_pos = -i * M_PI / 2.0f + M_PI / 4.0f;
+        wheel_pos = -i * M_PI / 2.0f + M_PI / 4.0f * 3.0f;
         x = sinf(wheel_pos) * move_vec_.wz + move_vec_.vx;
         y = cosf(wheel_pos) * move_vec_.wz + move_vec_.vy;
         setpoint_.wheel_pos[i] = -(atan2(y, x) - M_PI / 2.0f);
-        setpoint_.motor_rotational_speed[i] =
-            MOTOR_MAX_ROTATIONAL_SPEED * sqrtf(x * x + y * y) * 1.41421f / 2.0f;
+        setpoint_.motor_rotational_speed[i] = max_motor_rotational_speed_ *
+                                              sqrtf(x * x + y * y) * 1.41421f /
+                                              2.0f;
       }
       break;
     }
@@ -274,41 +339,52 @@ void HelmChassis<Motor, MotorParam>::Control() {
   /* 输出计算 */
   for (int i = 0; i < 4; i++) {
     if (motor_reverse_[i]) {
-      speed_motor_out_[i] =
+      out_.speed_motor_out[i] =
           speed_actr_[i]->Calculate(-setpoint_.motor_rotational_speed[i],
                                     speed_motor_[i]->GetSpeed(), dt_);
-      pos_motor_out_[i] = pos_actr_[i]->Calculate(
+      out_.motor6020_out[i] = pos_actr_[i]->Calculate(
           setpoint_.wheel_pos[i] + M_PI + this->param_.mech_zero[i],
           pos_motor_[i]->GetSpeed(), pos_motor_[i]->GetAngle(), dt_);
     } else {
-      speed_motor_out_[i] =
+      out_.speed_motor_out[i] =
           speed_actr_[i]->Calculate(setpoint_.motor_rotational_speed[i],
                                     speed_motor_[i]->GetSpeed(), dt_);
-      pos_motor_out_[i] = pos_actr_[i]->Calculate(
+      out_.motor6020_out[i] = pos_actr_[i]->Calculate(
           setpoint_.wheel_pos[i] + this->param_.mech_zero[i],
           pos_motor_[i]->GetSpeed(), pos_motor_[i]->GetAngle(), dt_);
     }
   }
 
   float percentage = 0.0f;
-  if (cap_.online_) {
-    percentage = cap_.percentage_;
-  } else if (ref_.status == Device::Referee::RUNNING) {
-    percentage = this->ref_.chassis_pwr_buff / 60.0f;
+  if (ref_.status == Device::Referee::RUNNING) {
+    if (ref_.chassis_pwr_buff > 30) {
+      percentage = 1.0f;
+    } else {
+      percentage = this->ref_.chassis_pwr_buff / 30.0f;
+    }
   } else {
     percentage = 1.0f;
   }
 
   clampf(&percentage, 0.0f, 1.0f);
   /* 控制 */
+  float max_power_limit = ref_.chassis_power_limit + ref_.chassis_power_limit *
+                                                         0.2 *
+                                                         this->cap_.percentage_;
+  // sum_6020_out_ =
+  //     Calculate6020Power(out_.motor6020_out, motor_feedback_.pos_speed, 4);
   for (int i = 0; i < 4; i++) {
-    speed_motor_[i]->Control(speed_motor_out_[i] * percentage);
-  }
-
-  clampf(&percentage, 0.5f, 1.0f);
-
-  for (int i = 0; i < 4; i++) {
-    pos_motor_[i]->Control(pos_motor_out_[i] * percentage);
+    if (cap_.online_) {
+      LimitChassisOutPower(max_power_limit, out_.speed_motor_out,
+                           speed_motor_feedback_, 4);
+      this->speed_motor_[i]->Control(out_.speed_motor_out[i]);
+      this->pos_motor_[i]->Control(out_.motor6020_out[i]);
+    } else {
+      LimitChassisOutPower(max_power_limit, out_.speed_motor_out,
+                           speed_motor_feedback_, 4);
+      this->speed_motor_[i]->Control(out_.speed_motor_out[i]);
+      this->pos_motor_[i]->Control(out_.motor6020_out[i]);
+    }
   }
 }
 
@@ -359,7 +435,8 @@ void HelmChassis<Motor, MotorParam>::DrawUIStatic(
 
   /* 更新底盘模式选择框 */
   switch (chassis->mode_) {
-    case FOLLOW_GIMBAL:
+    case CHASSIS_6020_FOLLOW_GIMBAL:
+    case CHASSIS_FOLLOW_GIMBAL:
       box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
       box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
       break;
@@ -407,7 +484,8 @@ void HelmChassis<Motor, MotorParam>::DrawUIDynamic(
 
   /* 更新底盘模式选择框 */
   switch (chassis->mode_) {
-    case FOLLOW_GIMBAL:
+    case CHASSIS_6020_FOLLOW_GIMBAL:
+    case CHASSIS_FOLLOW_GIMBAL:
       box_pos_left = REF_UI_MODE_OFFSET_2_LEFT;
       box_pos_right = REF_UI_MODE_OFFSET_2_RIGHT;
       break;

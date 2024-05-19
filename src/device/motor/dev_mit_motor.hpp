@@ -11,10 +11,9 @@ class MitMotor : public BaseMotor {
   typedef struct {
     float kp;
     float kd;
-    float def_speed;
+    uint32_t feedback_id;
     uint32_t id;
     bsp_can_t can;
-    float max_error;
     bool reverse;
   } Param;
 
@@ -32,7 +31,8 @@ class MitMotor : public BaseMotor {
 
   void SetPos(float pos);
 
-  void Enable();
+  void SetMit(float out);
+  bool Enable();
 
  private:
   Param param_;

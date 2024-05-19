@@ -1,4 +1,3 @@
-/* #include "dev_xxx.hpp" */
 #include "comp_cmd.hpp"
 #include "dev_ahrs.hpp"
 #include "dev_ai.hpp"
@@ -8,17 +7,16 @@
 #include "dev_dr16.hpp"
 #include "dev_led_rgb.hpp"
 #include "dev_referee.hpp"
-#include "mod_gimbal.hpp"
-#include "mod_helm_chassis.hpp"
 #include "mod_launcher.hpp"
+#include "mod_omni_chassis.hpp"
+#include "mod_omni_gimbal.hpp"
 
 void robot_init();
-
 namespace Robot {
-class HelmInfantry {
+class OmniInfantry {
  public:
   typedef struct Param {
-    Module::RMHelmChassis::Param chassis;
+    Module::RMChassis::Param chassis;
     Module::Gimbal::Param gimbal;
     Module::Launcher::Param launcher;
     Device::BMI088::Rotation bmi088_rot{};
@@ -27,20 +25,20 @@ class HelmInfantry {
 
   Component::CMD cmd_;
 
-  Device::Referee referee_;
-  Device::Can can_;
   Device::AI ai_;
   Device::AHRS ahrs_;
   Device::BMI088 bmi088_;
+  Device::Can can_;
+  Device::Referee referee_;
   Device::Cap cap_;
   Device::DR16 dr16_;
   Device::RGB led_;
 
-  Module::RMHelmChassis chassis_;
+  Module::RMChassis chassis_;
   Module::Gimbal gimbal_;
   Module::Launcher launcher_;
 
-  HelmInfantry(Param& param, float control_freq)
+  OmniInfantry(Param& param, float control_freq)
       : bmi088_(param.bmi088_rot),
         cap_(param.cap),
         chassis_(param.chassis, control_freq),

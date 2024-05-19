@@ -15,16 +15,14 @@
 
 using namespace Device;
 
-static const uint8_t RELAX_CMD[8] = {0X7F, 0XFF, 0X7F, 0XF0,
-                                     0X00, 0X00, 0X07, 0XFF};
+// static const uint8_t RELAX_CMD[8] = {0X7F, 0XFF, 0X7F, 0XF0,
+//                                      0X00, 0X00, 0X07, 0XFF};
 
 static const uint8_t ENABLE_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF,
                                       0XFF, 0XFF, 0XFF, 0XFC};
-/*
 
-static const uint8_t RESET_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF,
+static const uint8_t RELAX_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF,
                                      0XFF, 0XFF, 0XFF, 0XFD};
-*/
 
 static std::array<bool, BSP_CAN_NUM> initd = {false};
 
@@ -33,7 +31,7 @@ std::array<Message::Topic<Can::Pack> *, BSP_CAN_NUM> MitMotor::mit_tp_;
 MitMotor::MitMotor(const Param &param, const char *name)
     : BaseMotor(name, param.reverse), param_(param) {
   auto rx_callback = [](Can::Pack &rx, MitMotor *motor) {
-    if (rx.data[0] == motor->param_.id) {
+    if ((rx.data[0] & 0x0f) == motor->param_.id) {
       motor->recv_.Overwrite(rx);
     }
 
@@ -71,9 +69,41 @@ bool MitMotor::Update() {
 
   return true;
 }
+void MitMotor::SetMit(float out) {
+  clampf(&out, -1.0f, 1.0f);
+  if (this->feedback_.temp > 75.0f) {
+    Relax();
+    OMLOG_WARNING("motor %s high temperature detected", name_);
+    return;
+  }
+  int p_int = float_to_uint(0.0f, P_MIN, P_MAX, 16);
+  int v_int = float_to_uint(0.0f, V_MIN, V_MAX, 12);
+  int kp_int = float_to_uint(0.0f, KP_MIN, KP_MAX, 12);
+  int kd_int = float_to_uint(0.0f, KD_MIN, KD_MAX, 12);
+  int t_int = 0;
+  if (reverse_) {
+    t_int = -float_to_uint(out * T_MAX, T_MIN, T_MAX, 12);
+  } else {
+    t_int = float_to_uint(out * T_MAX, T_MIN, T_MAX, 12);
+  }
+  Can::Pack tx_buff;
 
+  tx_buff.index = this->param_.id;
+
+  tx_buff.data[0] = p_int >> 8;
+  tx_buff.data[1] = p_int & 0xFF;
+  tx_buff.data[2] = v_int >> 4;
+  tx_buff.data[3] = ((v_int & 0xF) << 4) | (kp_int >> 8);
+  tx_buff.data[4] = kp_int & 0xFF;
+  tx_buff.data[5] = kd_int >> 4;
+  tx_buff.data[6] = ((kd_int & 0xF) << 4) | (t_int >> 8);
+  tx_buff.data[7] = t_int & 0xff;
+
+  Can::SendStdPack(this->param_.can, tx_buff);
+  this->Update();
+}
 void MitMotor::Decode(Can::Pack &rx) {
-  if (this->param_.id != rx.data[0]) {
+  if (this->param_.id != (rx.data[0] & 0x0f)) {
     return;
   }
 
@@ -125,7 +155,7 @@ void MitMotor::SetPos(float pos) {
     pos_sp = -pos_sp;
   }
 
-  clampf(&pos_sp, -param_.max_error, param_.max_error);
+  // clampf(&pos_sp, -param_.max_error, param_.max_error);
 
   pos_sp += this->raw_pos_;
 
@@ -138,7 +168,7 @@ void MitMotor::SetPos(float pos) {
   }
 
   int p_int = float_to_uint(pos_sp, P_MIN, P_MAX, 16);
-  int v_int = float_to_uint(this->param_.def_speed, V_MIN, V_MAX, 12);
+  int v_int = float_to_uint(0.0f, V_MIN, V_MAX, 12);
   int kp_int = float_to_uint(this->param_.kp, KP_MIN, KP_MAX, 12);
   int kd_int = float_to_uint(this->param_.kd, KD_MIN, KD_MAX, 12);
   int t_int = float_to_uint(this->current_, T_MIN, T_MAX, 12);
@@ -157,6 +187,7 @@ void MitMotor::SetPos(float pos) {
   tx_buff.data[7] = t_int & 0xff;
 
   Can::SendStdPack(this->param_.can, tx_buff);
+  this->Update();
 }
 
 void MitMotor::Relax() {
@@ -169,12 +200,16 @@ void MitMotor::Relax() {
   Can::SendStdPack(this->param_.can, tx_buff);
 }
 
-void MitMotor::Enable() {
+bool MitMotor::Enable() {
   Can::Pack tx_buff;
 
-  tx_buff.index = param_.id;
+  tx_buff.index = this->param_.id;
 
   memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
 
-  Can::SendStdPack(this->param_.can, tx_buff);
+  if (Can::SendStdPack(this->param_.can, tx_buff)) {
+    return true;
+  } else {
+    return false;
+  };
 }
