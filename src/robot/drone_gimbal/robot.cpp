@@ -14,9 +14,9 @@ Robot::UVA::Param param={
      .yaw_actr = {
       .speed = {
           /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-          .k = 0.2f,
+          .k = 0.22f,
           .p = 1.0f,
-          .i = 0.0f,
+          .i = 0.5f,
           .d = 0.0f,
           .i_limit = 0.2f,
           .out_limit = 0.1f,
@@ -26,7 +26,7 @@ Robot::UVA::Param param={
 
         .position = {
           /* GIMBAL_CTRL_YAW_ANGLE_IDX */
-          .k = 18.0f,
+          .k = 20.0f,
           .p = 2.5f,
           .i = 0.0f,
           .d = 0.0f,
@@ -87,16 +87,16 @@ Robot::UVA::Param param={
     },
 
     .mech_zero = {
-      .yaw = 4.8f,
+      .yaw = 1.65f,
       .pit = 1.7f,
       .rol = 0.0f,
     },
 
     .limit = {
-      .pitch_max = M_2PI - 0.06,
+      .pitch_max = M_2PI - 0.4,
       .pitch_min = M_2PI - 1.08,
-      .yaw_max = M_2PI - 3.8,
-      .yaw_min = M_2PI - 5.5,
+      .yaw_max = M_2PI - 0.7,
+      .yaw_min = M_2PI - 2.7,
 
     },
  .EVENT_MAP = {
@@ -133,7 +133,7 @@ Robot::UVA::Param param={
           .i = 0.0f,
           .d = 0.03f,
           .i_limit = 0.5f,
-          .out_limit = 0.5f,
+          .out_limit = 0.6f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -192,14 +192,6 @@ Robot::UVA::Param param={
         Device::DR16::KEY_L_RELEASE,
         Module::UVALauncher::CHANGE_FIRE_MODE_SAFE
       },
-      Component::CMD::EventMapItem{
-        Device::DR16::KEY_R,
-        Module::UVALauncher::OPEN_COVER
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::KEY_F,
-        Module::UVALauncher::CLOSE_COVER
-      }
     },
   },
  .bmi088_rot = {

@@ -15,7 +15,6 @@ class UVALauncher {
     SINGLE, /* 单发开火模式  */
     BURST,  /* N爆发开火模式 */
     SAFE,
-    FIRE
   } TrigMode;
 
   typedef struct {
@@ -35,12 +34,10 @@ class UVALauncher {
   typedef enum {
     CHANGE_FIRE_MODE_RELAX,
     CHANGE_FIRE_MODE_SAFE,
-    CHANGE_FIRE_MODE_LOADED,
+    CHANGE_FIRE_MODE_LOADED, /*摩擦轮*/
     CHANGE_TRIG_MODE_SINGLE,
     CHANGE_TRIG_MODE_BURST,
-    CHANGE_TRIG_MODE,
-    OPEN_COVER,
-    CLOSE_COVER,
+    CHANGE_TRIG_MODE, /*拨弹盘*/
     LAUNCHER_START_FIRE,
   } LauncherEvent;
 
@@ -50,8 +47,8 @@ class UVALauncher {
   };
 
   struct FireControl {
-    bool fire = false;
-    bool firc_on = false;
+    bool fire = false;        /*拨弹盘开启状态*/
+    bool fric_on = false;     /*摩擦轮开启状态*/
     uint32_t last_launch = 0; /* 上次发射器时间 单位：ms */
     bool last_fire = false;   /* 上次开火状态 */
     float last_trig_angle = 1.0f;
@@ -82,7 +79,7 @@ class UVALauncher {
 
   float now_ = 0;
 
-  float dt_ = 0;
+  float dt_ = 0; /*单位us*/
 
   float trig_angle_ = 0;
 

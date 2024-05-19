@@ -6,7 +6,6 @@
 #include "dev_dr16.hpp"
 #include "dev_led_rgb.hpp"
 #include "dev_referee.hpp"
-#include "mod_dart_gimbal.hpp"
 #include "mod_dart_launcher.hpp"
 void robot_init();
 
@@ -15,7 +14,6 @@ class Dart {
  public:
   typedef struct Param {
     Module::DartLauncher::Param dart{};
-    Module::Dartgimbal::Param gimbal{};
     Device::BMI088::Rotation bmi088{};
   } Param;
 
@@ -28,11 +26,8 @@ class Dart {
   Device::AHRS ahrs_;
 
   Module::DartLauncher dartlauncher_;
-  Module::Dartgimbal gimbal_;
 
   Dart(Param& param, float control_freq)
-      : bmi088_(param.bmi088),
-        dartlauncher_(param.dart, control_freq),
-        gimbal_(param.gimbal, control_freq) {}
+      : bmi088_(param.bmi088), dartlauncher_(param.dart, control_freq) {}
 };
 }  // namespace Robot
