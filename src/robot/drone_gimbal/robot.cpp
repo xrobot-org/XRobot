@@ -192,14 +192,6 @@ Robot::UVA::Param param={
         Device::DR16::KEY_L_RELEASE,
         Module::UVALauncher::CHANGE_FIRE_MODE_SAFE
       },
-      Component::CMD::EventMapItem{
-        Device::DR16::KEY_R,
-        Module::UVALauncher::OPEN_COVER
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::KEY_F,
-        Module::UVALauncher::CLOSE_COVER
-      }
     },
   },
  .bmi088_rot = {

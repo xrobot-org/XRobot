@@ -127,6 +127,7 @@ Robot::Infantry::Param param = {
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_1,
+
       },
       Device::RMMotor::Param{
           .id_feedback = 0x202,
@@ -205,7 +206,7 @@ Robot::Infantry::Param param = {
           .i = 0.0f,
           .d = 0.0f,
           .i_limit = 0.0f,
-          .out_limit = 10.0f,
+          .out_limit = 0.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = true,
         },
@@ -222,7 +223,7 @@ Robot::Infantry::Param param = {
           .i = 0.f,
           .d = 0.f,
           .i_limit = 0.8f,
-          .out_limit = 1.0f,
+          .out_limit = 0.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
@@ -256,18 +257,18 @@ Robot::Infantry::Param param = {
       .id_control = GM6020_CTRL_ID_BASE,
       .model = Device::RMMotor::MOTOR_GM6020,
       .can = BSP_CAN_2,
-      .reverse = true ,
+      .reverse = false ,
     },
 
     .mech_zero = {
-      .yaw = 1.3f,
-      .pit =M_2PI - 5.37046671f,
+      .yaw = 1.3f + M_PI,
+      .pit = 3.43f,
       .rol = 0.0f,
     },
 
     .limit = {
-      .pitch_max =M_2PI -  5.1f,
-      .pitch_min =M_2PI -  5.8f,
+      .pitch_max = 3.7f,
+      .pitch_min = 3.1f,
     },
 
     .EVENT_MAP = {
@@ -281,11 +282,11 @@ Robot::Infantry::Param param = {
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_MID,
-        Module::Gimbal::SET_MODE_ABSOLUTE
+        Module::Gimbal::START_AUTO_AIM
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_BOT,
-        Module::Gimbal::SET_MODE_ABSOLUTE
+        Module::Gimbal::START_AUTO_AIM
       },
       Component::CMD::EventMapItem{
         Device::DR16::KEY_R_PRESS,
@@ -312,8 +313,8 @@ Robot::Infantry::Param param = {
     .trig_actr = {
       Component::PosActuator::Param{
         .speed = {
-          .k = 1.5f,
-          .p = 1.0f,
+          .k = 3.5f,
+          .p = 1.1f,
           .i = 0.0f,
           .d = 0.03f,
           .i_limit = 0.5f,
@@ -323,7 +324,7 @@ Robot::Infantry::Param param = {
         },
 
         .position = {
-          .k = 1.2f,
+          .k = 1.5f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.012f,
@@ -342,7 +343,7 @@ Robot::Infantry::Param param = {
     .fric_actr = {
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00025f,
+          .k = 0.00052f,
           .p = 1.0f,
           .i = 0.4f,
           .d = 0.01f,
@@ -358,7 +359,7 @@ Robot::Infantry::Param param = {
       },
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00025f,
+          .k = 0.00052f,
           .p = 1.0f,
           .i = 0.4f,
           .d = 0.01f,
@@ -380,6 +381,7 @@ Robot::Infantry::Param param = {
         .id_control = M3508_M2006_CTRL_ID_BASE,
         .model = Device::RMMotor::MOTOR_M2006,
         .can = BSP_CAN_2,
+        .reverse = true,
       }
     },
 
@@ -389,12 +391,14 @@ Robot::Infantry::Param param = {
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
+          .reverse = true,
       },
       Device::RMMotor::Param{
           .id_feedback = 0x204,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
+          .reverse = true,
       },
     },
 
@@ -440,8 +444,8 @@ Robot::Infantry::Param param = {
 
   .bmi088_rot = {
     .rot_mat = {
-      { +1, +0, +0},
-      { +0, +1, +0},
+      { -1, +0, +0},
+      { +0, -1, +0},
       { +0, +0, +1},
     },
   },
