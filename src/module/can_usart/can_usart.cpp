@@ -61,7 +61,7 @@ CantoUsart::CantoUsart()
   auto rx_callback = [](Device::Can::Pack &rx, CantoUsart *can_uart) {
     can_uart->uart_trans_buff_.start_frame = START;
     can_uart->uart_trans_buff_.id = rx.index;
-    can_uart->uart_trans_buff_.type = CAN_FORMAT_STD;
+    can_uart->uart_trans_buff_.type = CAN_FORMAT_STD_DATA;
     memcpy(&can_uart->uart_trans_buff_.data, rx.data, sizeof(rx.data));
     can_uart->uart_trans_buff_.end_frame = END;
     can_uart->tx_ready_.Post();

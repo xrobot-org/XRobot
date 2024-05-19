@@ -92,7 +92,7 @@ float bullet_speed_to_fric_rpm(float bullet_speed, float fric_radius,
       return 4450.f;
     }
     if (bullet_speed == 16.0f) {
-      return 5750.f;
+      return 5700.f;
     }
   }
 

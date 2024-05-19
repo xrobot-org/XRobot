@@ -285,34 +285,26 @@ Robot::Infantry::Param param = {
         Device::MitMotor::Param{
           .kp = 50.0f,
           .kd = 0.05f,
-          .def_speed = 0.0f,
           .id = 1,
           .can = BSP_CAN_2,
-          .max_error = 0.1f,
         },
         Device::MitMotor::Param{
           .kp = 50.0f,
           .kd = 0.05f,
-          .def_speed = 0.0f,
           .id = 2,
           .can = BSP_CAN_2,
-          .max_error = 0.1f,
         },
         Device::MitMotor::Param{
           .kp = 50.0f,
           .kd = 0.05f,
-          .def_speed = 0.0f,
           .id = 1,
           .can = BSP_CAN_1,
-          .max_error = 0.1f,
         },
         Device::MitMotor::Param{
           .kp = 50.0f,
           .kd = 0.05f,
-          .def_speed = 0.0f,
           .id = 4,
           .can = BSP_CAN_1,
-          .max_error = 0.1f,
         },
       },
   },
@@ -600,8 +592,6 @@ Robot::Infantry::Param param = {
 
   .cap = {
     .can = BSP_CAN_2,
-    .index = DEV_CAP_FB_ID_BASE,
-    .cutoff_volt = 13.0f,
   },
 
   .can_imu = {

@@ -37,24 +37,31 @@ class HelmChassis {
   typedef enum {
     RELAX, /* 放松模式，电机不输出。一般情况底盘初始化之后的模式 */
     BREAK, /* 刹车模式，电机闭环控制保持静止。用于机器人停止状态 */
-    FOLLOW_GIMBAL, /* 通过闭环控制使车头方向跟随云台 */
+    CHASSIS_FOLLOW_GIMBAL, /* 通过闭环控制使车头方向跟随云台 */
+    CHASSIS_6020_FOLLOW_GIMBAL, /*6020电机直接跟随车头方向*/
     ROTOR, /* 小陀螺模式，通过闭环控制使底盘不停旋转 */
     INDENPENDENT, /* 独立模式。底盘运行不受云台影响 */
   } Mode;
 
   typedef enum {
     SET_MODE_RELAX,
-    SET_MODE_FOLLOW,
+    SET_MODE_CHASSIS_FOLLOW,
+    SET_MODE_6020_FOLLOW,
     SET_MODE_ROTOR,
     SET_MODE_INDENPENDENT,
   } ChassisEvent;
 
   /* 底盘参数的结构体，包含所有初始Component化用的参数，通常是const，存好几组 */
-  typedef struct {
+  typedef struct Param {
+    float toque_coefficient_3508;
+    float speed_2_coefficient_3508;
+    float out_2_coefficient_3508;
+    float constant_3508;
+    Component::PID::Param follow_pid_param{}; /* 跟随云台PID的参数 */
     const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
 
-    std::array<Component::PosActuator::Param, 4> pos_param;
-    std::array<Component::SpeedActuator::Param, 4> speed_param;
+    std::array<Component::PosActuator::Param, 4> pos_param{};
+    std::array<Component::SpeedActuator::Param, 4> speed_param{};
     std::array<Component::Type::CycleValue, 4> mech_zero;
 
     std::array<MotorParam, 4> pos_motor_param;
@@ -76,6 +83,14 @@ class HelmChassis {
 
   void Control();
 
+  bool LimitChassisOutPower(float power_limit, float *motor3508_out,
+                            float *speed_3508, uint32_t len);
+  bool LimitChassisOutput(float power_limit, float *motor_out, float *speed,
+                          uint32_t len);
+  // float Calculate6020Power(float *motor_out, float *speed, uint32_t len);
+
+  uint16_t MAXSPEEDGET(float power_limit);
+
   void SetMode(Mode mode);
 
   static void DrawUIStatic(HelmChassis<Motor, MotorParam> *chassis);
@@ -92,12 +107,17 @@ class HelmChassis {
   uint64_t last_wakeup_ = 0;
 
   uint64_t now_ = 0;
-
   float yaw_;
 
+  float pos_motor_sum_out_;
+
+  float max_motor_rotational_speed_;
   Device::Cap::Info cap_;
 
   Device::Referee::Data raw_ref_;
+
+  float speed_motor_feedback_[4];
+  float pos_motor_feedback_[4];
 
   RefForChassis ref_;
 
@@ -122,9 +142,15 @@ class HelmChassis {
     float motor_rotational_speed[4]; /* 电机转速的动态数组，单位：RPM */
     std::array<Component::Type::CycleValue, 4> wheel_pos;
   } setpoint_;
-
+  struct {
+    float speed_motor_out[4];
+    float motor6020_out[4];
+  } out_;
   Component::Type::CycleValue main_direct_ = 0.0f;
+
   float direct_offset_ = 0.0f;
+
+  Component::PID follow_pid_;
 
   System::Thread thread_;
 

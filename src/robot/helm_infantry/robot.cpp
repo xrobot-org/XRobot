@@ -11,6 +11,23 @@ Robot::HelmInfantry::Param param =
     {
         .chassis =
             {
+                .toque_coefficient_3508 = 0.044876589f,
+                .speed_2_coefficient_3508 = 1.563578147703433e-19f,
+                .out_2_coefficient_3508 = 54.67448580571495f,
+                .constant_3508 = 6.564590719535691f,
+
+                .follow_pid_param =
+                {
+                        .k = 5.0f,
+                        .p = 0.5f,
+                        .i = 0.5f,
+                        .d = 0.0f,
+                        .i_limit = 1.0f,
+                        .out_limit = 5.0f,
+                        .d_cutoff_freq = -1.0f,
+                        .cycle = true,
+                },
+
                 .EVENT_MAP =
                     {Component::CMD::EventMapItem{
                          Component::CMD::CMD_EVENT_LOST_CTRL,
@@ -20,7 +37,7 @@ Robot::HelmInfantry::Param param =
                          Module::RMHelmChassis::SET_MODE_RELAX},
                      Component::CMD::EventMapItem{
                          Device::DR16::DR16_SW_L_POS_MID,
-                         Module::RMHelmChassis::SET_MODE_FOLLOW},
+                         Module::RMHelmChassis::SET_MODE_CHASSIS_FOLLOW},
                      Component::CMD::EventMapItem{
                          Device::DR16::DR16_SW_L_POS_BOT,
                          Module::RMHelmChassis::SET_MODE_ROTOR},
@@ -29,7 +46,11 @@ Robot::HelmInfantry::Param param =
                          Module::RMHelmChassis::SET_MODE_ROTOR},
                      Component::CMD::EventMapItem{
                          Device::DR16::KEY_B,
-                         Module::RMHelmChassis::SET_MODE_FOLLOW}},
+                         Module::RMHelmChassis::SET_MODE_CHASSIS_FOLLOW},
+                     Component::CMD::EventMapItem{
+                         Device::DR16::KEY_F,
+                         Module::RMHelmChassis::SET_MODE_6020_FOLLOW}
+                         },
 
                 .pos_param =
                     {
@@ -152,11 +173,11 @@ Robot::HelmInfantry::Param param =
                             .speed =
                                 {
                                     .k = 0.0001f,
-                                    .p = 1.0f,
+                                    .p = 2.0f,
                                     .i = 0.0f,
                                     .d = 0.0f,
-                                    .i_limit = 0.3f,
-                                    .out_limit = 0.7f,
+                                    .i_limit = 1.0f,
+                                    .out_limit = 1.0f,
                                     .d_cutoff_freq = -1.0f,
                                     .cycle = false,
                                 },
@@ -170,11 +191,11 @@ Robot::HelmInfantry::Param param =
                             .speed =
                                 {
                                     .k = 0.0001f,
-                                    .p = 1.0f,
+                                    .p = 2.0f,
                                     .i = 0.0f,
                                     .d = 0.0f,
-                                    .i_limit = 0.3f,
-                                    .out_limit = 0.7f,
+                                    .i_limit = 1.0f,
+                                    .out_limit = 1.0f,
                                     .d_cutoff_freq = -1.0f,
                                     .cycle = false,
                                 },
@@ -187,11 +208,11 @@ Robot::HelmInfantry::Param param =
                             .speed =
                                 {
                                     .k = 0.0001f,
-                                    .p = 1.0f,
+                                    .p = 2.0f,
                                     .i = 0.0f,
                                     .d = 0.0f,
-                                    .i_limit = 0.3f,
-                                    .out_limit = 0.7f,
+                                    .i_limit = 1.0f,
+                                    .out_limit = 1.0f,
                                     .d_cutoff_freq = -1.0f,
                                     .cycle = false,
                                 },
@@ -204,11 +225,11 @@ Robot::HelmInfantry::Param param =
                             .speed =
                                 {
                                     .k = 0.0001f,
-                                    .p = 1.0f,
+                                    .p = 2.0f,
                                     .i = 0.0f,
                                     .d = 0.0f,
-                                    .i_limit = 0.3f,
-                                    .out_limit = 0.7f,
+                                    .i_limit = 1.0f,
+                                    .out_limit = 1.0f,
                                     .d_cutoff_freq = -1.0f,
                                     .cycle = false,
                                 },
@@ -219,7 +240,7 @@ Robot::HelmInfantry::Param param =
                         },
                     },
 
-                .mech_zero = {2.65762205, 2.33241792, 1.836174984, 2.5862916},
+                .mech_zero = { 1.15201962, 3.88327241, 3.41387439, 0.99171859},
 
                 .pos_motor_param =
                     {
@@ -255,13 +276,14 @@ Robot::HelmInfantry::Param param =
                             .id_control = M3508_M2006_CTRL_ID_BASE,
                             .model = Device::RMMotor::MOTOR_M3508,
                             .can = BSP_CAN_1,
+                            .reverse = true,
                         },
                         Device::RMMotor::Param{
                             .id_feedback = 0x202,
                             .id_control = M3508_M2006_CTRL_ID_BASE,
                             .model = Device::RMMotor::MOTOR_M3508,
                             .can = BSP_CAN_1,
-
+                            .reverse = true,
                         },
                         Device::RMMotor::Param{
                             .id_feedback = 0x203,
@@ -269,7 +291,6 @@ Robot::HelmInfantry::Param param =
                             .model = Device::RMMotor::MOTOR_M3508,
                             .can = BSP_CAN_1,
                             .reverse = true,
-
                         },
                         Device::RMMotor::Param{
                             .id_feedback = 0x205,
@@ -277,7 +298,6 @@ Robot::HelmInfantry::Param param =
                             .model = Device::RMMotor::MOTOR_M3508,
                             .can = BSP_CAN_1,
                             .reverse = true,
-
                         },
                     },
             },
@@ -387,15 +407,15 @@ Robot::HelmInfantry::Param param =
 
                 .mech_zero =
                     {
-                        .yaw = 4.16475773f,
-                        .pit = 4.8f,
+                        .yaw = 6.26477766f,
+                        .pit = M_2PI - 1.0f,
                         .rol = 0.0f,
                     },
 
                 .limit =
                     {
-                        .pitch_max = M_2PI - 4.03667068f,
-                        .pitch_min = M_2PI - 5.27919483f,
+                        .pitch_max = M_2PI - 0.60f,
+                        .pitch_min = M_2PI - 1.4f
                     },
 
                 .EVENT_MAP = {Component::CMD::EventMapItem{
@@ -406,10 +426,10 @@ Robot::HelmInfantry::Param param =
                                   Module::Gimbal::SET_MODE_ABSOLUTE},
                               Component::CMD::EventMapItem{
                                   Device::DR16::DR16_SW_R_POS_MID,
-                                  Module::Gimbal::SET_MODE_ABSOLUTE},
+                                  Module::Gimbal::START_AUTO_AIM},
                               Component::CMD::EventMapItem{
                                   Device::DR16::DR16_SW_R_POS_BOT,
-                                  Module::Gimbal::SET_MODE_ABSOLUTE},
+                                  Module::Gimbal::START_AUTO_AIM},
                               Component::CMD::EventMapItem{
                                   Device::DR16::KEY_R_PRESS,
                                   Module::Gimbal::START_AUTO_AIM},
@@ -425,7 +445,7 @@ Robot::HelmInfantry::Param param =
         .cover_open_duty = 0.125f,
         .cover_close_duty = 0.075f,
         .model = Module::Launcher::LAUNCHER_MODEL_17MM,
-        .default_bullet_speed = 15.f,
+        .default_bullet_speed = 30.f,
         .min_launch_delay = static_cast<uint32_t>(1000.0f / 20.0f),
 
         .trig_actr = {
@@ -461,9 +481,9 @@ Robot::HelmInfantry::Param param =
         .fric_actr = {
            Component::SpeedActuator::Param{
             .speed = {
-            .k = 0.0003f,
+            .k = 0.00025f,
             .p = 1.0f,
-            .i = 0.8f,
+            .i = 0.0f,
             .d = 0.0f,
             .i_limit = 0.2f,
             .out_limit = 1.0f,
@@ -477,9 +497,9 @@ Robot::HelmInfantry::Param param =
             },
            Component::SpeedActuator::Param{
             .speed = {
-            .k = 0.0003f,
+            .k = 0.00025f,
             .p = 1.0f,
-            .i = 0.8f,
+            .i = 0.0f,
             .d = 0.0f,
             .i_limit = 0.2f,
             .out_limit = 1.0f,
@@ -499,18 +519,19 @@ Robot::HelmInfantry::Param param =
             .id_control = M3508_M2006_CTRL_ID_BASE,
             .model = Device::RMMotor::MOTOR_M2006,
             .can = BSP_CAN_1,
+            .reverse = true,
         }
         },
 
         .fric_motor = {
         Device::RMMotor::Param{
-            .id_feedback = 0x207,
+            .id_feedback = 0x206,
             .id_control = M3508_M2006_CTRL_ID_EXTAND,
             .model = Device::RMMotor::MOTOR_M3508,
             .can = BSP_CAN_1,
         },
         Device::RMMotor::Param{
-            .id_feedback = 0x206,
+            .id_feedback = 0x207,
             .id_control = M3508_M2006_CTRL_ID_EXTAND,
             .model = Device::RMMotor::MOTOR_M3508,
             .can = BSP_CAN_1,
@@ -567,8 +588,6 @@ Robot::HelmInfantry::Param param =
             },
   .cap = {
     .can = BSP_CAN_1,
-    .index = DEV_CAP_FB_ID_BASE,
-    .cutoff_volt = 10.0f,
   },
 };
 /* clang-format on */

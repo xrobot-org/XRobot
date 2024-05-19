@@ -35,13 +35,13 @@ AI::AI(bool autoscan_enable)
     auto quat_sub =
         Message::Subscriber<Component::Type::Quaternion>("imu_quat");
     auto ref_sub = Message::Subscriber<Device::Referee::Data>("referee");
-    auto gimbal_sub = Message::Subscriber<float>("gimbal_data");
+    auto yaw_sub = Message::Subscriber<float>("chassis_yaw");
 
     auto eulr_sub = Message::Subscriber<Component::Type::Eulr>("imu_eulr");
 
     while (1) {
       /* 接收云台数据 */
-      gimbal_sub.DumpData(ai->chassis_yaw_offset_);
+      yaw_sub.DumpData(ai->chassis_yaw_offset_);
       eulr_sub.DumpData(ai->eulr_); /* imu */
 
       /* 接收裁判系统数据 */

@@ -4,38 +4,42 @@
 #include "dev_referee.hpp"
 
 #define CAP_RES (100.0f) /* 电容数据分辨率 */
-
+#define V_MAX (23.0f)
+#define V_MIN (16.0f)
 using namespace Device;
 
 Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
-  XB_ASSERT(param.cutoff_volt > 3.0f && param.cutoff_volt < 24.0f);
-
   out_.power_limit_ = 40.0f;
 
   auto rx_callback = [](Can::Pack &rx, Cap *cap) {
-    rx.index -= cap->param_.index;
-
-    if (rx.index == 0) {
-      cap->control_feedback_.Overwrite(rx);
-    }
-
+    cap->control_feedback_.Overwrite(rx);
+    cap->can_recv_.Post();
     return true;
   };
 
   Message::Topic<Can::Pack> cap_tp("can_cap");
   cap_tp.RegisterCallback(rx_callback, this);
 
-  Can::Subscribe(cap_tp, this->param_.can, this->param_.index, 1);
+  Can::Subscribe(cap_tp, this->param_.can, 0x600, 19);
 
   auto ref_cb = [](Device::Referee::Data &ref, Cap *cap) {
     if (ref.status != Device::Referee::RUNNING) {
       cap->out_.power_limit_ = 40.0f;
     } else {
-      cap->out_.power_limit_ = ref.robot_status.chassis_power_limit;
+      float power_buff_percentage = 0.0f;
+      if (ref.power_heat.chassis_pwr_buff >= 40) {
+        power_buff_percentage = 1.0f;
+      } else {
+        power_buff_percentage =
+            (ref.power_heat.chassis_pwr_buff - 20.0f) / 20.0f;
+      }
+      clampf(&power_buff_percentage, 0.0f, 1.0f);
+      cap->out_.power_limit_ =
+          static_cast<float>(ref.robot_status.chassis_power_limit) - 3.0f +
+          10.0f * power_buff_percentage;
     }
-
-    clampf(&cap->out_.power_limit_, 20.0f, 100.0f);
-
+    clampf(&cap->out_.power_limit_, 0.0f, 150.0f);
+    cap->power_limit_update_.Post();
     return true;
   };
 
@@ -44,19 +48,24 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
       .RegisterCallback(ref_cb, this);
 
   auto cap_thread = [](Cap *cap) {
-    uint32_t last_online_time = bsp_time_get_ms();
     while (1) {
       /* 读取裁判系统信息 */
       if (!cap->Update()) {
         /* 一定时间长度内接收不到电容反馈值，使电容离线 */
         cap->Offline();
       }
+      cap->InstructUpdata();
+      cap->Control(INSTRUCT);
+      cap->Control(OUTPUT_VOLT);
+      cap->Control(OUTPUT);
+      if (cap->power_limit_update_.Wait(10)) {
+        cap->Control(POWER_LIMIT);
+      }
+
+      if (cap->can_recv_.Wait(10)) {
+        cap->Update();
+      }
       cap->info_tp_.Publish(cap->info_);
-
-      cap->Control();
-
-      /* 运行结束，等待下一次唤醒 */
-      cap->thread_.SleepUntil(100, last_online_time);
     }
   };
 
@@ -67,6 +76,14 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
   System::Timer::Create(this->DrawUIDynamic, this, 200);
 }
 
+bool Cap::InstructUpdata() {
+  if (info_.online_ == 1) {
+    instruct_ = 2;
+  } else {
+    instruct_ = 0;
+  }
+  return true;
+}
 bool Cap::Update() {
   Can::Pack rx;
   while (this->control_feedback_.Receive(rx)) {
@@ -85,45 +102,81 @@ bool Cap::Update() {
 
 void Cap::Decode(Can::Pack &rx) {
   uint8_t *raw = rx.data;
-  this->info_.input_volt_ =
-      static_cast<float>((raw[1] << 8) | raw[0]) / CAP_RES;
-  this->info_.cap_volt_ = static_cast<float>((raw[3] << 8) | raw[2]) / CAP_RES;
-  this->info_.input_curr_ =
-      static_cast<float>((raw[5] << 8) | raw[4]) / CAP_RES;
-  this->info_.target_power_ =
-      static_cast<float>((raw[7] << 8) | raw[6]) / CAP_RES;
-
+  switch (rx.index) {
+    case OUTPUT: {
+      this->info_.output_power_ =
+          static_cast<float>((raw[0] << 8) | raw[1]) / 100;
+      this->info_.cap_volt_ = static_cast<float>((raw[2] << 8) | raw[3]) / 100;
+      this->info_.output_curr_ =
+          static_cast<float>((raw[4] << 8) | raw[5]) / 100;
+      break;
+    }
+    case INSTRUCT: {
+      this->info_.cap_instruct_ = static_cast<uint16_t>((raw[0] << 8) | raw[1]);
+      break;
+    }
+    case POWER_LIMIT: {
+      this->info_.target_power_ =
+          static_cast<float>((raw[0] << 8) | raw[1]) / 100;
+      break;
+    }
+    case OUTPUT_VOLT: {
+      this->info_.cap_volt_max_ =
+          static_cast<float>((raw[0] << 8) | raw[1]) / 100;
+      break;
+    }
+  }
+  this->info_.online_ = true;
   /* 更新电容状态和百分比 */
   this->info_.percentage_ = this->GetPercentage();
 }
 
-bool Cap::Control() {
-  uint16_t pwr_lim = static_cast<uint16_t>(this->out_.power_limit_ * CAP_RES);
-
+bool Cap::Control(CanID can_id_) {
   Can::Pack tx_buff;
-
-  tx_buff.index = DEV_CAP_CTRL_ID_BASE;
-
-  tx_buff.data[0] = (pwr_lim >> 8) & 0xFF;
-  tx_buff.data[1] = pwr_lim & 0xFF;
-
-  return Can::SendStdPack(this->param_.can, tx_buff);
+  tx_buff.index = can_id_;
+  switch (tx_buff.index) {
+    case OUTPUT_VOLT: {
+      uint16_t cap_volt = 2300;
+      tx_buff.data[0] = (cap_volt >> 8) & 0xFF;
+      tx_buff.data[1] = cap_volt & 0xFF;
+      Can::SendStdPack(this->param_.can, tx_buff);
+      break;
+    }
+    case OUTPUT: {
+      Can::SendStdRemotePack(this->param_.can, tx_buff);
+      break;
+    }
+    case INSTRUCT: {
+      tx_buff.data[0] = (instruct_ >> 8) & 0XFF;
+      tx_buff.data[1] = instruct_ & 0XFF;
+      Can::SendStdPack(this->param_.can, tx_buff);
+      break;
+    }
+    case POWER_LIMIT: {
+      uint16_t pwr_lim = static_cast<uint16_t>(this->out_.power_limit_ * 100);
+      tx_buff.data[0] = (pwr_lim >> 8) & 0xFF;
+      tx_buff.data[1] = pwr_lim & 0xFF;
+      Can::SendStdPack(this->param_.can, tx_buff);
+      break;
+    }
+  }
+  return true;
 }
 
 bool Cap::Offline() {
   this->info_.cap_volt_ = 0;
-  this->info_.input_curr_ = 0;
-  this->info_.input_volt_ = 0;
+  this->info_.output_curr_ = 0;
   this->info_.target_power_ = 0;
   this->info_.online_ = 0;
-
+  this->info_.cap_instruct_ = 0;
+  this->info_.cap_volt_max_ = 0;
   return true;
 }
 
 float Cap::GetPercentage() {
-  const float C_MAX = this->info_.input_volt_ * this->info_.input_volt_;
+  const float C_MAX = V_MAX * V_MAX;
   const float C_CAP = this->info_.cap_volt_ * this->info_.cap_volt_;
-  const float C_MIN = param_.cutoff_volt * param_.cutoff_volt;
+  const float C_MIN = V_MIN * V_MIN;
   float percentage = (C_CAP - C_MIN) / (C_MAX - C_MIN);
   clampf(&percentage, 0.0f, 1.0f);
   return percentage;

@@ -22,34 +22,34 @@
 #include "dev_motor.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
-
 namespace Module {
 template <typename Motor, typename MotorParam>
-class Chassis {
+class OmniChassis {
  public:
   /* 底盘运行模式 */
   typedef enum {
     RELAX, /* 放松模式，电机不输出。一般情况底盘初始化之后的模式 */
     BREAK, /* 刹车模式，电机闭环控制保持静止。用于机器人停止状态 */
-    FOLLOW_GIMBAL, /* 通过闭环控制使车头方向跟随云台 */
+    FOLLOW_GIMBAL_INTERSECT, /* 通过闭环控制使车头方向跟随云台 */
+    FOLLOW_GIMBAL_CROSS,     /* 通过闭环控制使车头方向跟随云台 */
     ROTOR, /* 小陀螺模式，通过闭环控制使底盘不停旋转 */
     INDENPENDENT, /* 独立模式。底盘运行不受云台影响 */
   } Mode;
 
   typedef enum {
     SET_MODE_RELAX,
-    SET_MODE_FOLLOW,
+    SET_MODE_INTERSECT,
+    SET_MODE_CROSS,
     SET_MODE_ROTOR,
     SET_MODE_INDENPENDENT,
   } ChassisEvent;
-
-  /* 底盘参数的结构体，包含所有初始Component化用的参数，通常是const，存好几组 */
+  /* 底盘参数的结构体，包含所有初始Component化用的参数，通常是const，存好几组
+   */
   typedef struct Param {
     float toque_coefficient_;
     float speed_2_coefficient_;
     float out_2_coefficient_;
     float constant_;
-
     Component::Mixer::Mode type =
         Component::Mixer::MECANUM; /* 底盘类型，底盘的机械设计和轮子选型 */
 
@@ -60,7 +60,7 @@ class Chassis {
     std::array<Component::SpeedActuator::Param, 4> actuator_param{};
 
     std::array<MotorParam, 4> motor_param;
-    float (*get_speed)(float);
+
   } Param;
 
   typedef struct {
@@ -70,7 +70,7 @@ class Chassis {
     float chassis_watt;
   } RefForChassis;
 
-  Chassis(Param &param, float control_freq);
+  OmniChassis(Param &param, float control_freq);
 
   void UpdateFeedback();
 
@@ -80,13 +80,14 @@ class Chassis {
 
   bool LimitChassisOutPower(float power_limit, float *motor_out, float *speed,
                             uint32_t len);
-  uint16_t MAXSPEEDGET(float power_limit);
+  bool LimitChassisOutput(float power_limit, float *motor_out, float *speed,
+                          uint32_t len);
 
   void PraseRef();
+  uint16_t MAXSPEEDGET(float power_limit);
+  static void DrawUIStatic(OmniChassis<Motor, MotorParam> *chassis);
 
-  static void DrawUIStatic(Chassis<Motor, MotorParam> *chassis);
-
-  static void DrawUIDynamic(Chassis<Motor, MotorParam> *chassis);
+  static void DrawUIDynamic(OmniChassis<Motor, MotorParam> *chassis);
 
   float CalcWz(const float LO, const float HI);
 
@@ -95,6 +96,8 @@ class Chassis {
 
   float max_motor_rotational_speed_ = 0.0f;
 
+  float power_1_;
+  float power_;
   float dt_ = 0.0f;
 
   float chassis_current_;
@@ -124,12 +127,10 @@ class Chassis {
   struct {
     float *motor_rotational_speed; /* 电机转速的动态数组，单位：RPM */
   } setpoint_;
-
-  float motor_feedback_[4];
-
   struct {
-    float motor_out[4];
+    float motor3508_out[4]; /*转矩电流范围-1--1*/
   } out_;
+  /* 反馈控制用的PID */
 
   Component::PID follow_pid_; /* 跟随云台用的PID */
 
@@ -140,6 +141,8 @@ class Chassis {
   float yaw_;
   Device::Referee::Data raw_ref_;
 
+  Device::BaseMotor::Feedback motor_feedback_;
+
   Component::CMD::ChassisCMD cmd_;
 
   Component::UI::String string_;
@@ -149,5 +152,5 @@ class Chassis {
   Component::UI::Rectangle rectange_;
 };
 
-typedef Chassis<Device::RMMotor, Device::RMMotor::Param> RMChassis;
+typedef OmniChassis<Device::RMMotor, Device::RMMotor::Param> RMChassis;
 }  // namespace Module

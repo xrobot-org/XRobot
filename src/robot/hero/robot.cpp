@@ -10,8 +10,11 @@
 /* clang-format off */
 Robot::Hero::Param param = {
     .chassis={
+      .toque_coefficient_ = 0.032717046f,
+      .speed_2_coefficient_ = 2.1878478350476053e-07f,
+      .out_2_coefficient_ = 74.32893136030049f,
+      .constant_ = 1.9021463852937033f,
       .type = Component::Mixer::MECANUM,
-
       .follow_pid_param = {
       .k = 0.5f,
       .p = 1.0f,
@@ -144,6 +147,24 @@ Robot::Hero::Param param = {
             .can = BSP_CAN_1,
         },
     },
+
+    .get_speed = [](float power_limit){
+      float speed = 0.0f;
+      if (power_limit <= 50.0f) {
+        speed = 5500;
+      } else if (power_limit <= 60.0f) {
+        speed = 5500;
+      } else if (power_limit <= 70.0f) {
+        speed = 5500;
+      } else if (power_limit <= 80.0f) {
+        speed = 6200;
+      } else if (power_limit <= 100.0f) {
+        speed = 7000;
+      } else {
+        speed = 7500;
+      }
+      return speed;
+    },
   },
 
 
@@ -248,8 +269,8 @@ Robot::Hero::Param param = {
     },
 
     .limit = {
-      .pitch_max = 2.7f,
-      .pitch_min = 2.0f,
+      .pitch_max = M_2PI - 3.51895213f,
+      .pitch_min = M_2PI - 4.46541834f,
     },
 
     .EVENT_MAP = {
@@ -259,15 +280,15 @@ Robot::Hero::Param param = {
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_TOP,
-        Module::Gimbal::SET_MODE_ABSOLUTE
+        Module::Gimbal::ABSOLUTE
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_MID,
-        Module::Gimbal::SET_MODE_ABSOLUTE
+        Module::Gimbal::START_AUTO_AIM
         },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_BOT,
-        Module::Gimbal::SET_MODE_ABSOLUTE
+        Module::Gimbal::START_AUTO_AIM
       },
       Component::CMD::EventMapItem{
         Device::DR16::KEY_R_PRESS,
@@ -325,8 +346,8 @@ Robot::Hero::Param param = {
       Component::SpeedActuator::Param{
         .speed = {
           .k = 0.001f,
-          .p = 1.0f,
-          .i = 0.2,
+          .p = 1.2f,
+          .i = 0.0f,
           .d = 0.0f,
           .i_limit = 0.3f,
           .out_limit = 1.0f,
@@ -341,8 +362,8 @@ Robot::Hero::Param param = {
       Component::SpeedActuator::Param{
         .speed = {
           .k = 0.001f,
-          .p = 1.0f,
-          .i = 0.2f,
+          .p = 1.2f,
+          .i = 0.0f,
           .d = 0.0f,
           .i_limit = 0.3f,
           .out_limit = 1.0f,
@@ -430,8 +451,6 @@ Robot::Hero::Param param = {
 
   .cap = {
     .can = BSP_CAN_1,
-    .index = DEV_CAP_FB_ID_BASE,
-    .cutoff_volt = 10.0f,
   },
 };
 /* clang-format on */

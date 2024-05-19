@@ -178,19 +178,35 @@ bsp_status_t bsp_can_register_callback(
 bsp_status_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format,
                                   uint32_t id, uint8_t *data) {
   CAN_TxHeaderTypeDef header;
-
-  if (format == CAN_FORMAT_STD) {
-    header.StdId = id;
-    header.IDE = CAN_ID_STD;
-  } else {
-    header.ExtId = id;
-    header.IDE = CAN_ID_EXT;
+  switch (format) {
+    case CAN_FORMAT_STD_DATA:
+      header.StdId = id;
+      header.IDE = CAN_ID_STD;
+      header.RTR = CAN_RTR_DATA;
+      header.TransmitGlobalTime = DISABLE;
+      header.DLC = 8;
+      break;
+    case CAN_FORMAT_EXT_DATA:
+      header.ExtId = id;
+      header.IDE = CAN_ID_EXT;
+      header.RTR = CAN_RTR_DATA;
+      header.TransmitGlobalTime = DISABLE;
+      header.DLC = 8;
+      break;
+    case CAN_FORMAT_STD_REMOTE:
+      header.StdId = id;
+      header.IDE = CAN_ID_STD;
+      header.RTR = CAN_RTR_REMOTE;
+      header.TransmitGlobalTime = DISABLE;
+      header.DLC = 8;
+      break;
+    case CAN_FORMAT_EXT_REMOTE:
+      header.ExtId = id;
+      header.IDE = CAN_ID_EXT;
+      header.RTR = CAN_RTR_REMOTE;
+      header.TransmitGlobalTime = DISABLE;
+      header.DLC = 8;
   }
-
-  header.RTR = CAN_RTR_DATA;
-  header.TransmitGlobalTime = DISABLE;
-  header.DLC = 8;
-
   uint32_t tsr = READ_REG(bsp_can_get_handle(can)->Instance->TSR);
 
   while (((tsr & CAN_TSR_TME0) == 0U) && ((tsr & CAN_TSR_TME1) == 0U) &&

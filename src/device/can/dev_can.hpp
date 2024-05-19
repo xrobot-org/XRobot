@@ -20,6 +20,10 @@ class Can {
 
   static bool SendExtPack(bsp_can_t can, Pack& pack);
 
+  static bool SendStdRemotePack(bsp_can_t can, Pack& pack);
+
+  static bool SendExtRemotePack(bsp_can_t can, Pack& pack);
+
   static bool Subscribe(Message::Topic<Can::Pack>& tp, bsp_can_t can,
                         uint32_t index, uint32_t num);
 
