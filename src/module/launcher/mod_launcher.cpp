@@ -31,9 +31,13 @@ Launcher::Launcher(Param& param, float control_freq)
     launcher->ctrl_lock_.Wait(UINT32_MAX);
     switch (event) { /* 根据event设置模式 */
       case CHANGE_FIRE_MODE_RELAX:
+        launcher->SetFireMode(static_cast<FireMode>(RELAX));
+        break;
       case CHANGE_FIRE_MODE_SAFE:
+        launcher->SetFireMode(static_cast<FireMode>(SAFE));
+        break;
       case CHANGE_FIRE_MODE_LOADED:
-        launcher->SetFireMode(static_cast<FireMode>(event));
+        launcher->SetFireMode(static_cast<FireMode>(LOADED));
         break;
       case LAUNCHER_START_FIRE: /* 摩擦轮开启条件下，开火控制fire为ture */
         if (launcher->fire_ctrl_.fire_mode_ == LOADED) {
@@ -51,12 +55,17 @@ Launcher::Launcher(Param& param, float control_freq)
         launcher->SetTrigMode(static_cast<TrigMode>(
             (launcher->fire_ctrl_.trig_mode_ + 1) % CONTINUED));
         break;
+      case LAUNCHER_STOP_TRIG:
+        launcher->SetTrigMode(static_cast<TrigMode>(STOP));
+        break;
+
       case OPEN_COVER:
         launcher->cover_mode_ = OPEN;
         break;
       case CLOSE_COVER:
         launcher->cover_mode_ = CLOSE;
         break;
+
       default:
         break;
     }
@@ -133,6 +142,9 @@ void Launcher::Control() {
     case BURST: /* 爆发开火模式 */
       max_burst = 5;
       break;
+    case STOP:
+      max_burst = 0;
+      break;
     default:
       max_burst = 1;
       break;
@@ -141,6 +153,7 @@ void Launcher::Control() {
   switch (this->fire_ctrl_.trig_mode_) {
     case SINGLE: /* 点射开火模式 */
     case BURST:  /* 爆发开火模式 */
+    case STOP:
 
       /* 计算是否是第一次按下开火键 */
       this->fire_ctrl_.first_pressed_fire =
@@ -168,10 +181,13 @@ void Launcher::Control() {
     case CONTINUED: { /* 持续开火模式 */
       float launch_freq = this->LimitLauncherFreq();
       this->fire_ctrl_.launch_delay =
-          (launch_freq == 0.0f) ? UINT32_MAX
-                                : static_cast<uint32_t>(1000.f / launch_freq);
+          (launch_freq == 0.0f)
+              ? UINT32_MAX
+              : static_cast<uint32_t>(1000.f / launch_freq); /* 毫秒级延时 */
+
       break;
     }
+
     default:
       break;
   }
@@ -198,6 +214,7 @@ void Launcher::Control() {
     if ((fire_ctrl_.last_trig_angle - trig_angle_) / M_2PI *
             this->param_.num_trig_tooth >
         0.9) {
+      /* 判定为未卡弹 */
       if (!fire_ctrl_.stall) {
         fire_ctrl_.last_trig_angle = this->setpoint_.trig_angle_;
         /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗弹丸的弧度变化 */
@@ -306,8 +323,7 @@ void Launcher::HeatLimit() {
           this->ref_.robot_status.shooter_cooling_value;
       this->heat_ctrl_.heat_increase = GAME_HEAT_INCREASE_17MM;
     }
-    /* 检测热量更新后,计算可发射弹丸 */
-
+    /* 检测热量更新后,计算可发射弹丸（裁判系统数据更新有延迟） */
     if ((this->heat_ctrl_.heat != this->heat_ctrl_.last_heat) ||
         this->heat_ctrl_.available_shot == 0 || (this->heat_ctrl_.heat == 0)) {
       this->heat_ctrl_.available_shot = static_cast<uint32_t>(
@@ -335,8 +351,8 @@ void Launcher::PraseRef() {
 
 float Launcher::LimitLauncherFreq() { /* 热量限制计算 */
   float heat_percent = this->heat_ctrl_.heat / this->heat_ctrl_.heat_limit;
-  float stable_freq =
-      this->heat_ctrl_.cooling_rate / this->heat_ctrl_.heat_increase;
+  float stable_freq = this->heat_ctrl_.cooling_rate /
+                      this->heat_ctrl_.heat_increase; /* 每秒可发弹量 */
   if (this->param_.model == LAUNCHER_MODEL_42MM) {
     return stable_freq;
   } else {

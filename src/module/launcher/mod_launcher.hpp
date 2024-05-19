@@ -24,6 +24,7 @@ class Launcher {
     SINGLE,    /* 单发开火模式  */
     BURST,     /* N爆发开火模式 */
     CONTINUED, /* 持续开火模式 */
+    STOP,
   } TrigMode;
 
   typedef enum { OPEN, CLOSE } CoverMode;
@@ -32,12 +33,15 @@ class Launcher {
     CHANGE_FIRE_MODE_RELAX,
     CHANGE_FIRE_MODE_SAFE,
     CHANGE_FIRE_MODE_LOADED,
+    LAUNCHER_START_FIRE, /* 开火，拨弹盘开始发弹 */
+
     CHANGE_TRIG_MODE_SINGLE,
     CHANGE_TRIG_MODE_BURST,
     CHANGE_TRIG_MODE,
+    LAUNCHER_STOP_TRIG,
+
     OPEN_COVER,
     CLOSE_COVER,
-    LAUNCHER_START_FIRE, /* 开火，拨弹盘开始发弹 */
   } LauncherEvent;
 
   enum {

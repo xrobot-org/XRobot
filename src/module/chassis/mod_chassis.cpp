@@ -95,7 +95,7 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
     auto cmd_sub =
         Message::Subscriber<Component::CMD::ChassisCMD>("cmd_chassis");
 
-    auto yaw_sub = Message::Subscriber<float>("chassis_yaw");
+    auto yaw_sub = Message::Subscriber<GimbalData>("gimbal_data");
 
     auto cap_sub = Message::Subscriber<Device::Cap::Info>("cap_info");
 
@@ -105,7 +105,7 @@ Chassis<Motor, MotorParam>::Chassis(Param& param, float control_freq)
       /* 读取控制指令、电容、裁判系统、电机反馈 */
       cmd_sub.DumpData(chassis->cmd_);
       raw_ref_sub.DumpData(chassis->raw_ref_);
-      yaw_sub.DumpData(chassis->yaw_);
+      yaw_sub.DumpData(chassis->gimbal_data_);
       cap_sub.DumpData(chassis->cap_);
 
       /* 更新反馈值 */
@@ -163,7 +163,7 @@ void Chassis<Motor, MotorParam>::Control() {
     case Chassis::FOLLOW_GIMBAL: /* 按照云台方向换算运动向量
                                   */
     case Chassis::ROTOR: {
-      float beta = this->yaw_;
+      float beta = this->gimbal_data_.yaw_;
       float cos_beta = cosf(beta);
       float sin_beta = sinf(beta);
       this->move_vec_.vx = cos_beta * this->cmd_.x - sin_beta * this->cmd_.y;
@@ -185,7 +185,7 @@ void Chassis<Motor, MotorParam>::Control() {
     case Chassis::FOLLOW_GIMBAL: /* 跟随模式通过PID控制使车头跟随云台
                                   */
       this->move_vec_.wz =
-          this->follow_pid_.Calculate(0.0f, this->yaw_, this->dt_);
+          this->follow_pid_.Calculate(0.0f, this->gimbal_data_.yaw_, this->dt_);
       break;
 
     case Chassis::ROTOR: { /* 小陀螺模式使底盘以一定速度旋转
@@ -222,11 +222,11 @@ void Chassis<Motor, MotorParam>::Control() {
       clampf(&percentage, 0.0f, 1.0f);
 
       for (unsigned i = 0; i < this->mixer_.len_; i++) {
-        float out = this->actuator_[i]->Calculate(
+        out_.motor3508_out[i] = this->actuator_[i]->Calculate(
             this->setpoint_.motor_rotational_speed[i] *
                 MOTOR_MAX_ROTATIONAL_SPEED,
             this->motor_[i]->GetSpeed(), this->dt_);
-        this->motor_[i]->Control(out * percentage);
+        this->motor_[i]->Control(out_.motor3508_out[i]);
       }
 
       break;

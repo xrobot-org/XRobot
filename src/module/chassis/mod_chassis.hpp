@@ -43,6 +43,11 @@ class Chassis {
     SET_MODE_INDENPENDENT,
   } ChassisEvent;
 
+  typedef struct {
+    float yaw_;
+    Component::Type::Eulr mech_zero;
+  } GimbalData;
+
   /* 底盘参数的结构体，包含所有初始Component化用的参数，通常是const，存好几组 */
   typedef struct Param {
     Component::Mixer::Mode type =
@@ -115,14 +120,18 @@ class Chassis {
 
   /* 反馈控制用的PID */
 
+  struct {
+    float motor3508_out[4];
+  } out_;
   Component::PID follow_pid_; /* 跟随云台用的PID */
 
   System::Thread thread_;
 
   System::Semaphore ctrl_lock_;
 
-  float yaw_;
+  GimbalData gimbal_data_;
   Device::Referee::Data raw_ref_;
+
   Component::CMD::ChassisCMD cmd_;
 
   Component::UI::String string_;

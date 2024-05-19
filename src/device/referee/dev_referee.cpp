@@ -37,6 +37,8 @@ using namespace Device;
 static uint8_t rxbuf[REF_LEN_RX_BUFF];
 
 Referee::UIPack Referee::ui_pack_;
+Referee::SentryPack Referee::sentry_pack_;
+
 Referee *Referee::self_;
 
 Referee::Referee() : event_(Message::Event::FindEvent("cmd_event")) {
@@ -97,11 +99,13 @@ Referee::Referee() : event_(Message::Event::FindEvent("cmd_event")) {
   this->recv_thread_.Create(ref_recv_thread, this, "ref_recv_thread",
                             DEVICE_REF_RECV_TASK_STACK_DEPTH,
                             System::Thread::REALTIME);
+
   auto ref_trans_thread = [](Referee *ref) {
     uint32_t last_online_time = bsp_time_get_ms();
-
+    auto ai_sub = Message::Subscriber<SentryDecisionData>("sentry_cmd_for_ref");
     while (1) {
-      ref->UpdateUI();
+      ai_sub.DumpData(ref->data_from_sentry_);
+      ref->Update(); /* 更新UI */
       ref->trans_thread_.SleepUntil(40, last_online_time);
     }
   };
@@ -309,7 +313,7 @@ void Referee::Prase() {
   memset(rxbuf, 0, data_length);
 }
 
-bool Referee::UpdateUI() {
+bool Referee::Update() {
   this->packet_sent_.Wait(UINT32_MAX);
 
   this->ui_lock_.Wait(UINT32_MAX);
@@ -318,6 +322,7 @@ bool Referee::UpdateUI() {
   uint32_t ele_counter = 0;
   uint32_t pack_size = 0;
   CMDID cmd_id = REF_STDNT_CMD_ID_UI_DEL;
+
   Component::UI::GraphicOperation op = Component::UI::UI_GRAPHIC_OP_NOTHING;
 
   if (!done && this->static_del_data_.Size() > 0) {
@@ -436,7 +441,7 @@ bool Referee::UpdateUI() {
     return false;
   }
 
-  this->ui_pack_.raw.cmd_id = REF_CMD_ID_INTER_STUDENT;
+  this->ui_pack_.raw.cmd_id = REF_CMD_ID_INTER_STUDENT; /* 0x0301 */
 
   SetUIHeader(this->ui_pack_.raw.student_header, cmd_id,
               static_cast<RobotID>(this->ref_data_.robot_status.robot_id));
@@ -529,6 +534,17 @@ void Referee::SetUIHeader(Referee::InterStudentHeader &header,
   } else {
     header.id_receiver = robot_id + 0x0100;
   }
+}
+void Referee::SetSentryHeader(Referee::InterStudentHeader &header,
+                              const Referee::CMDID CMD_ID,
+                              Referee::RobotID robot_id) {
+  header.cmd_id = CMD_ID;
+  if (robot_id > 100) {
+    header.id_sender = 0x0107;
+  } else {
+    header.id_sender = 0x0007;
+  }
+  header.id_receiver = 0x8080;
 }
 
 void Referee::SetPacketHeader(Referee::Header &header, uint16_t data_length) {

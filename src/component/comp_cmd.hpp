@@ -9,7 +9,7 @@ class CMD {
   typedef enum { GIMBAL_ABSOLUTE_CTRL, GIMBAL_RELATIVE_CTRL } GimbalCommandMode;
 
   typedef enum {
-    CTRL_SOURCE_RC,
+    CTRL_SOURCE_RC, /* 键鼠控制源 */
     CTRL_SOURCE_AI,
     CTRL_SOURCE_TERM,
     CTRL_SOURCE_EXT,
@@ -101,6 +101,7 @@ class CMD {
     self_->ctrl_source_ = source;
   }
   static ControlSource GetCtrlSource() { return self_->ctrl_source_; }
+  static Mode GetCtrlMode() { return self_->mode_; }
 
   static bool Online() { return self_->online_; }
 
