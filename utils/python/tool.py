@@ -1,6 +1,7 @@
 import sys
 import os
 import shutil
+import subprocess
 
 
 class ProjectTools:
@@ -22,14 +23,24 @@ class ProjectTools:
                 exit()
 
     def guiconfig(self, path):
-        print("Start menu config.")
-        os.system("cd " + path + " && python3 " + self.kconfig_path + "/guiconfig.py")
-        print("Menu config done.")
+        print("Start GUI config.")
+        try:
+            # 使用sys.executable调用当前虚拟环境的Python解释器
+            subprocess.run([sys.executable, self.kconfig_path + "/guiconfig.py"], cwd=path, check=True)
+        except subprocess.CalledProcessError as e:
+            print("Failed to run GUI config: ", e)
+        else:
+            print("GUI config done.")
 
     def menuconfig(self, path):
         print("Start menu config.")
-        os.system("cd " + path + " && python3 " + self.kconfig_path + "/menuconfig.py")
-        print("Menu config done.")
+        try:
+            # 使用sys.executable调用当前虚拟环境的Python解释器
+            subprocess.run([sys.executable, self.kconfig_path + "/menuconfig.py"], cwd=path, check=True)
+        except subprocess.CalledProcessError as e:
+            print("Failed to run menu config: ", e)
+        else:
+            print("Menu config done.")
 
     def clean_cache(self):
         filepath = self.project_path + "/build"
@@ -48,13 +59,20 @@ class ProjectTools:
                 shutil.rmtree(file_path)
 
     def config_cmake(self, type="Debug"):
-        os.system(
-            "cd "
-            + self.project_path
-            + " && cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=utils/CMake/toolchain.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -DCMAKE_BUILD_TYPE:STRING="
-            + type
-            + " -Bbuild -G Ninja"
-        )
+        try:
+            subprocess.run([
+                "cmake",
+                "--no-warn-unused-cli",
+                f"-DCMAKE_TOOLCHAIN_FILE:STRING=utils/CMake/toolchain.cmake",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE",
+                f"-DCMAKE_BUILD_TYPE:STRING={type}",
+                "-Bbuild",
+                "-G", "Ninja"
+            ], cwd=self.project_path, check=True)
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to configure CMake: {e}")
+        else:
+            print("CMake configuration successful.")
 
     def config_cmake_idf(self, type="Debug"):
         os.system(
