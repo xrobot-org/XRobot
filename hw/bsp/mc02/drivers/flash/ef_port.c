@@ -96,7 +96,7 @@ EfErrCode ef_port_erase(uint32_t addr, size_t size) {
 
   /* You can add your code under here. */
   while (erased_size < size) {
-    if (!OSPI_W25Qxx_SectorErase(addr + erased_size)) {
+    if (OSPI_W25Qxx_SectorErase(addr + erased_size)) {
       result = EF_ERASE_ERR;
       break;
     }
@@ -121,7 +121,7 @@ EfErrCode ef_port_write(uint32_t addr, const uint32_t *buf, size_t size) {
   EfErrCode result = EF_NO_ERR;
 
   /* You can add your code under here. */
-  if (!OSPI_W25Qxx_WriteBuffer((uint8_t *)buf, addr, size)) {
+  if (OSPI_W25Qxx_WriteBuffer((uint8_t *)buf, addr, size)) {
     result = EF_WRITE_ERR;
   }
   return result;
