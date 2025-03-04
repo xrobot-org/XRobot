@@ -42,5 +42,13 @@ class Can {
   static std::array<Message::Topic<Can::Pack>*, BSP_CAN_NUM> can_tp_;
   static std::array<Message::Topic<Can::FDPack>*, BSP_CAN_NUM> canfd_tp_;
   static std::array<System::Semaphore*, BSP_CAN_NUM> can_sem_;
+
+  static int CMD(Can* can, int argc, char** argv);
+
+  System::Term::Command<Can*> cmd_;
+  System::Semaphore print_sem_;
+  System::Queue<Can::Pack> queue_;
+
+  static Can* self_;
 };
 }  // namespace Device

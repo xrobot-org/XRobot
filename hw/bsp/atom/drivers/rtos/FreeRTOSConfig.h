@@ -73,8 +73,8 @@ void xPortSysTickHandler(void);
 #define configCPU_CLOCK_HZ (SystemCoreClock)
 #define configTICK_RATE_HZ (1000)
 #define configMAX_PRIORITIES (6)
-#define configMINIMAL_STACK_SIZE (128)
-#define configTOTAL_HEAP_SIZE (0x4FFF)
+#define configMINIMAL_STACK_SIZE (32)
+#define configTOTAL_HEAP_SIZE (0x54AF)
 #define configAPPLICATION_ALLOCATED_HEAP 1
 #define configMAX_TASK_NAME_LEN (16)
 #define configGENERATE_RUN_TIME_STATS 0
@@ -82,7 +82,7 @@ void xPortSysTickHandler(void);
 #define configUSE_16_BIT_TICKS 0
 #define configUSE_MUTEXES 1
 #define configQUEUE_REGISTRY_SIZE 0
-#define configCHECK_FOR_STACK_OVERFLOW 1
+#define configCHECK_FOR_STACK_OVERFLOW 2
 #define configUSE_RECURSIVE_MUTEXES 0
 #define configUSE_COUNTING_SEMAPHORES 1
 #define configENABLE_BACKWARD_COMPATIBILITY 0
@@ -120,7 +120,7 @@ to exclude the API function. */
 #define INCLUDE_uxTaskPriorityGet 0
 #define INCLUDE_vTaskDelete 1
 #define INCLUDE_vTaskCleanUpResources 0
-#define INCLUDE_vTaskSuspend 1
+#define INCLUDE_vTaskSuspend 0
 #define INCLUDE_vTaskDelayUntil 1
 #define INCLUDE_vTaskDelay 1
 #define INCLUDE_xTaskGetSchedulerState 1
@@ -169,8 +169,7 @@ header file. */
 #define configASSERT(x)       \
   if ((x) == 0) {             \
     taskDISABLE_INTERRUPTS(); \
-    for (;;)                  \
-      ;                       \
+    for (;;);                 \
   }
 /* USER CODE END 1 */
 

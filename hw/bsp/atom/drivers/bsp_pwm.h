@@ -8,6 +8,7 @@ extern "C" {
 
 /* PWM通道 */
 typedef enum {
+  BSP_PWM_BMI088_HEAT,
   BSP_PWM_IMU_HEAT,
   BSP_PWM_NUMBER,
 } bsp_pwm_channel_t;

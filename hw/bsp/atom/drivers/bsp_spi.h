@@ -11,6 +11,7 @@ extern "C" {
 /* SPI实体枚举，与设备对应 */
 typedef enum {
   BSP_SPI_IMU,
+  BSP_SPI_ICM42688,
   /* BSP_SPI_XXX,*/
   BSP_SPI_NUM,
   BSP_SPI_ERR,

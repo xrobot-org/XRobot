@@ -3,6 +3,7 @@
 #include "FreeRTOS.h"
 #include "bsp_def.h"
 #include "bsp_sys.h"
+#include "bsp_time.h"
 #include "main.h"
 #include "semphr.h"
 #include "stm32g4xx_hal_fdcan.h"
@@ -73,7 +74,6 @@ void HAL_FDCAN_TxBufferAbortCallback(FDCAN_HandleTypeDef *hcan,
 }
 
 void HAL_FDCAN_ErrorCallback(FDCAN_HandleTypeDef *hcan) {
-  hcan->ErrorCode &= ~FDCAN_FLAG_ARB_PROTOCOL_ERROR;
   BaseType_t px_higher_priority_task_woken = 0;
   xSemaphoreGiveFromISR(rx_cplt_wait_sem[can_get(hcan)],
                         &px_higher_priority_task_woken);
@@ -109,7 +109,7 @@ void bsp_can_init(void) {
     XB_ASSERT(false);
   }
 
-  HAL_FDCAN_Start(&hfdcan1);  //开启FDCAN
+  HAL_FDCAN_Start(&hfdcan1);  // 开启FDCAN
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_TX_FIFO_EMPTY, 0);
 
@@ -119,10 +119,13 @@ void bsp_can_init(void) {
 static const uint8_t DLCtoBytes[] = {0, 1,  2,  3,  4,  5,  6,  7,
                                      8, 12, 16, 20, 24, 32, 48, 64};
 
+static uint32_t count = 0;
+
 static void can_rx_cb_fn(bsp_can_t can) {
   while (HAL_FDCAN_GetRxMessage(bsp_can_get_handle(can), FDCAN_RX_FIFO0,
                                 &rx_buff[can].header,
                                 rx_buff[can].data) == HAL_OK) {
+    count++;
     if (rx_buff[can].header.FDFormat == FDCAN_CLASSIC_CAN) {
       if (callback_list[can][CAN_RX_MSG_CALLBACK].fn) {
         callback_list[can][CAN_RX_MSG_CALLBACK].fn(
@@ -174,13 +177,15 @@ bsp_status_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format,
 
   header.TxFrameType = FDCAN_DATA_FRAME;
   header.DataLength = FDCAN_DLC_BYTES_8;
-  header.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+  header.ErrorStateIndicator = FDCAN_ESI_PASSIVE;
   header.BitRateSwitch = FDCAN_BRS_OFF;
   header.FDFormat = FDCAN_CLASSIC_CAN;
   header.TxEventFifoControl = FDCAN_STORE_TX_EVENTS;
   header.MessageMarker = 0x01;
   while ((bsp_can_get_handle(can)->Instance->TXFQS & FDCAN_TXFQS_TFQF) != 0U) {
-    xSemaphoreTake(rx_cplt_wait_sem[can], 1);
+    if (!xSemaphoreTake(rx_cplt_wait_sem[can], 10)) {
+      return BSP_ERR_BUSY;
+    }
   }
 
   return HAL_FDCAN_AddMessageToTxFifoQ(bsp_can_get_handle(can), &header,
@@ -226,20 +231,24 @@ bsp_status_t bsp_canfd_trans_packet(bsp_can_t can, bsp_can_format_t format,
     header.DataLength = FDCAN_DLC_BYTES_64;
   }
 
-  header.ErrorStateIndicator = FDCAN_ESI_ACTIVE;
+  header.ErrorStateIndicator = FDCAN_ESI_PASSIVE;
   header.BitRateSwitch = FDCAN_BRS_ON;
   header.FDFormat = FDCAN_FD_CAN;
   header.TxEventFifoControl = FDCAN_NO_TX_EVENTS;
   header.MessageMarker = 0x00;
-  static uint32_t count = 0;
+  static uint32_t error_count = 0;
+
   while ((bsp_can_get_handle(can)->Instance->TXFQS & FDCAN_TXFQS_TFQF) != 0U) {
-    xSemaphoreTake(rx_cplt_wait_sem[can], 1);
-    count++;
-    if (count >= 10) {
-      bsp_sys_reset();
+    if (error_count > 10) {
+      return BSP_ERR;
+    }
+    if (!xSemaphoreTake(rx_cplt_wait_sem[can], 1)) {
+      error_count++;
+      return BSP_ERR_BUSY;
     }
   }
-  count = 0;
+
+  error_count = 0;
 
   return HAL_FDCAN_AddMessageToTxFifoQ(bsp_can_get_handle(can), &header,
                                        data) == HAL_OK

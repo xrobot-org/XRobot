@@ -10,10 +10,10 @@ class CanfdImu {
     uint8_t prefix;
     uint8_t id;
     struct __attribute__((packed)) {
+      uint32_t time;
       Component::Type::Quaternion quat_;
       Component::Type::Vector3 gyro_;
       Component::Type::Vector3 accl_;
-      Component::Type::Vector3 magn_;
       struct __attribute__((packed)) {
         float yaw; /* 偏航角（Yaw angle） */
         float pit; /* 俯仰角（Pitch angle） */
@@ -22,13 +22,6 @@ class CanfdImu {
     } raw;
     uint8_t crc8;
   } Data;
-
-  typedef struct __attribute__((packed)) {
-    uint32_t cali_magn;
-    uint32_t cali_gyro;
-  } ControlData;
-
-  bool cali_magn_ = false, cali_gyro_ = false;
 
   Data data_;
 
@@ -44,11 +37,9 @@ class CanfdImu {
 
   System::Database::Key<bool> accl_enable_;
   System::Database::Key<bool> gyro_enable_;
-  System::Database::Key<bool> magn_enable_;
   System::Database::Key<bool> quat_enable_;
   System::Database::Key<bool> eulr_enable_;
   System::Database::Key<bool> canfd_enable_;
-  System::Database::Key<bool> raw_magn_;
 
   System::Term::Command<CanfdImu *> cmd_;
 
@@ -74,21 +65,12 @@ class CanfdImu {
     Device::Can::SendStdPack(BSP_CAN_1, send_buff);
   }
 
-  void SendMagn() {
-    int16_t *tmp = reinterpret_cast<int16_t *>(send_buff.data);
-    tmp[0] = this->data_.raw.magn_.x / 2.0f * UINT16_MAX;
-    tmp[1] = this->data_.raw.magn_.y / 2.0f * UINT16_MAX;
-    tmp[2] = this->data_.raw.magn_.z / 2.0f * UINT16_MAX;
-    send_buff.index = this->id_.data_ + 1;
-    Device::Can::SendStdPack(BSP_CAN_1, send_buff);
-  }
-
   void SendEulr() {
     int16_t *tmp = reinterpret_cast<int16_t *>(send_buff.data);
     tmp[0] = this->data_.raw.eulr_.pit / M_2PI * INT16_MAX;
     tmp[1] = this->data_.raw.eulr_.rol / M_2PI * INT16_MAX;
     tmp[2] = this->data_.raw.eulr_.yaw / M_2PI * INT16_MAX;
-    send_buff.index = this->id_.data_ + 2;
+    send_buff.index = this->id_.data_ + 3;
     Device::Can::SendStdPack(BSP_CAN_1, send_buff);
   }
 
@@ -99,7 +81,7 @@ class CanfdImu {
     tmp[2] = this->data_.raw.quat_.q2 / 2.0f * INT16_MAX;
     tmp[3] = this->data_.raw.quat_.q3 / 2.0f * INT16_MAX;
 
-    send_buff.index = this->id_.data_ + 3;
+    send_buff.index = this->id_.data_ + 4;
     Device::Can::SendStdPack(BSP_CAN_1, send_buff);
   }
 
