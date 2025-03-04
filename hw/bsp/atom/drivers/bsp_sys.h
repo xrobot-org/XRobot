@@ -1,12 +1,17 @@
 #pragma once
 
 #include "bsp_def.h"
+#include "bsp_pwm.h"
 #include "main.h"
+
+__attribute__((section(".reboot_in_bootloader_section"), used)) static void
+bsp_reboot_in_bootloader(void);
 
 /* 软件复位 */
 __attribute__((always_inline, unused)) static inline void bsp_sys_reset(void) {
   __set_FAULTMASK(1);
   NVIC_SystemReset();
+  bsp_reboot_in_bootloader();
 }
 
 /* 关机 */
@@ -30,4 +35,9 @@ __attribute__((always_inline, unused)) static inline bool bsp_sys_in_isr(void) {
   uint32_t result;
   __asm__ volatile("MRS %0, ipsr" : "=r"(result));
   return (result);
+}
+
+__attribute__((section(".reboot_in_bootloader_section"), used)) static void
+bsp_reboot_in_bootloader(void) {
+  NVIC_SystemReset();
 }

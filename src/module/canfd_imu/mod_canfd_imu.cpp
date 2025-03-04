@@ -16,38 +16,16 @@ CanfdImu::CanfdImu()
       fb_cycle_("canfd_fb_cycle", 2),
       accl_enable_("accl_enable", true),
       gyro_enable_("gyro_enable", true),
-      magn_enable_("magn_enable", true),
       quat_enable_("quat_enable", true),
       eulr_enable_("eulr_enable", true),
       canfd_enable_("canfd_enable", false),
-      raw_magn_("raw_magn_enable", false),
       cmd_(this, SetCMD, "set_imu") {
-  auto cali_cb = [](Device::Can::FDPack &pack, CanfdImu *imu) {
-    if (pack.info.size != sizeof(ControlData)) {
-      return false;
-    }
-
-    auto cali_data = reinterpret_cast<ControlData *>(pack.info.data);
-
-    imu->cali_gyro_ = cali_data->cali_gyro;
-    imu->cali_magn_ = cali_data->cali_magn;
-
-    return true;
-  };
-
-  auto cali_tp = new Message::Topic<Device::Can::FDPack>("imu_cali");
-
-  cali_tp->RegisterCallback(cali_cb, this);
-
   auto thread_fn = [](CanfdImu *imu) {
-    auto magn_sub = Message::Subscriber<Component::Type::Vector3>("magn");
     auto quat_sub =
         Message::Subscriber<Component::Type::Quaternion>("imu_quat");
     auto gyro_sub = Message::Subscriber<Component::Type::Vector3>("imu_gyro");
     auto accl_sub = Message::Subscriber<Component::Type::Vector3>("imu_accl");
     auto eulr_sub = Message::Subscriber<Component::Type::Eulr>("imu_eulr");
-    auto raw_magn_sub =
-        Message::Subscriber<Component::Type::Vector3>("raw_magn");
 
     uint32_t last_wakeup = bsp_time_get_ms();
 
@@ -59,12 +37,7 @@ CanfdImu::CanfdImu()
       imu->data_.raw.eulr_.pit = imu->eulr_.pit;
       imu->data_.raw.eulr_.rol = imu->eulr_.rol;
       imu->data_.raw.eulr_.yaw = imu->eulr_.yaw;
-
-      if (imu->raw_magn_) {
-        raw_magn_sub.DumpData(imu->data_.raw.magn_);
-      } else {
-        magn_sub.DumpData(imu->data_.raw.magn_);
-      }
+      imu->data_.raw.time = bsp_time_get_ms();
 
       if (imu->canfd_enable_) {
         Device::Can::SendFDExtPack(BSP_CAN_1, imu->id_,
@@ -77,14 +50,11 @@ CanfdImu::CanfdImu()
         if (imu->gyro_enable_) {
           imu->SendGyro();
         }
-        if (imu->magn_enable_) {
-          imu->SendAccl();
-        }
         if (imu->quat_enable_) {
-          imu->SendAccl();
+          imu->SendQuat();
         }
         if (imu->eulr_enable_) {
-          imu->SendAccl();
+          imu->SendEulr();
         }
       }
 
@@ -109,7 +79,7 @@ int CanfdImu::SetCMD(CanfdImu *imu, int argc, char **argv) {
   if (argc == 1) {
     printf("set_delay  [time]       设置发送延时ms\r\n");
     printf("set_can_id [id]         设置can id\r\n");
-    printf("enable/disable     [accl/gyro/magn/raw_magn/quat/eulr/canfd]\r\n");
+    printf("enable/disable     [accl/gyro/quat/eulr/canfd]\r\n");
   } else if (argc == 3 && strcmp(argv[1], "set_delay") == 0) {
     int delay = std::stoi(argv[2]);
 
@@ -129,14 +99,10 @@ int CanfdImu::SetCMD(CanfdImu *imu, int argc, char **argv) {
       imu->accl_enable_.Set(true);
     } else if (strcmp(argv[2], "gyro") == 0) {
       imu->gyro_enable_.Set(true);
-    } else if (strcmp(argv[2], "magn") == 0) {
-      imu->magn_enable_.Set(true);
     } else if (strcmp(argv[2], "quat") == 0) {
       imu->quat_enable_.Set(true);
     } else if (strcmp(argv[2], "eulr") == 0) {
       imu->eulr_enable_.Set(true);
-    } else if (strcmp(argv[2], "raw_magn") == 0) {
-      imu->raw_magn_.Set(true);
     }
 
   } else if (argc == 3 && strcmp(argv[1], "disable") == 0) {
@@ -144,14 +110,10 @@ int CanfdImu::SetCMD(CanfdImu *imu, int argc, char **argv) {
       imu->accl_enable_.Set(false);
     } else if (strcmp(argv[2], "gyro") == 0) {
       imu->gyro_enable_.Set(false);
-    } else if (strcmp(argv[2], "magn") == 0) {
-      imu->magn_enable_.Set(false);
     } else if (strcmp(argv[2], "quat") == 0) {
       imu->quat_enable_.Set(false);
     } else if (strcmp(argv[2], "eulr") == 0) {
       imu->eulr_enable_.Set(false);
-    } else if (strcmp(argv[2], "raw_magn") == 0) {
-      imu->raw_magn_.Set(false);
     }
   } else if (argc == 3 && strcmp(argv[1], "set_can_id") == 0) {
     int id = std::stoi(argv[2]);

@@ -10,7 +10,10 @@ typedef struct {
 static const bsp_gpio_map_t BSP_GPIO_MAP[BSP_GPIO_NUM] = {
     {IMU_CS_Pin, IMU_CS_GPIO_Port},
     {IMU_INT1_Pin, IMU_INT1_GPIO_Port},
-    {IMU_INT2_Pin, IMU_INT2_GPIO_Port},
+    {BMI088_CS_1_Pin, BMI088_CS_1_GPIO_Port},
+    {BMI088_CS_2_Pin, BMI088_CS_2_GPIO_Port},
+    {BMI088_INT_1_Pin, BMI088_INT_1_GPIO_Port},
+    {BMI088_INT_2_Pin, BMI088_INT_2_GPIO_Port},
     {LED_RUN_Pin, LED_RUN_GPIO_Port},
 };
 
@@ -51,9 +54,11 @@ bsp_status_t bsp_gpio_enable_irq(bsp_gpio_t gpio) {
     case BSP_GPIO_IMU_INT_1:
       HAL_NVIC_EnableIRQ(IMU_INT1_EXTI_IRQn);
       break;
-
-    case BSP_GPIO_IMU_INT_2:
-      HAL_NVIC_EnableIRQ(IMU_INT2_EXTI_IRQn);
+    case BSP_GPIO_IMU_ACCL_INT:
+      HAL_NVIC_EnableIRQ(BMI088_INT_1_EXTI_IRQn);
+      break;
+    case BSP_GPIO_IMU_GYRO_INT:
+      HAL_NVIC_EnableIRQ(BMI088_INT_2_EXTI_IRQn);
       break;
       /*
       case XXX_Pin:
@@ -73,8 +78,11 @@ bsp_status_t bsp_gpio_disable_irq(bsp_gpio_t gpio) {
       HAL_NVIC_DisableIRQ(IMU_INT1_EXTI_IRQn);
       break;
 
-    case BSP_GPIO_IMU_INT_2:
-      HAL_NVIC_DisableIRQ(IMU_INT2_EXTI_IRQn);
+    case BSP_GPIO_IMU_ACCL_INT:
+      HAL_NVIC_DisableIRQ(BMI088_INT_1_EXTI_IRQn);
+      break;
+    case BSP_GPIO_IMU_GYRO_INT:
+      HAL_NVIC_DisableIRQ(BMI088_INT_2_EXTI_IRQn);
       break;
       /*
       case XXX_Pin:

@@ -76,6 +76,11 @@ SECTIONS
     . = ALIGN(4);
   } >FLASH
 
+  .reboot_in_bootloader_section 0x08000200:
+  {
+      KEEP(*(.reboot_in_bootloader_section))
+  } >FLASH
+
   /* The program code and other data goes into FLASH */
   .text :
   {

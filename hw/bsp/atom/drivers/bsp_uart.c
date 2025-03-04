@@ -15,9 +15,9 @@ extern DMA_HandleTypeDef hdma_usart1_tx;
 static bsp_callback_t callback_list[BSP_UART_NUM][BSP_UART_CB_NUM];
 
 static bsp_uart_t uart_get(UART_HandleTypeDef *huart) {
-  if (huart->Instance == USART2) {
+  if (huart->Instance == USART1) {
     return BSP_UART_MCU;
-  } else if (huart->Instance == USART1) {
+  } else if (huart->Instance == USART2) {
     return BSP_UART_USB;
   }
 
@@ -84,9 +84,9 @@ void bsp_uart_irq_handler(UART_HandleTypeDef *huart) {
 UART_HandleTypeDef *bsp_uart_get_handle(bsp_uart_t uart) {
   switch (uart) {
     case BSP_UART_MCU:
-      return &huart2;
-    case BSP_UART_USB:
       return &huart1;
+    case BSP_UART_USB:
+      return &huart2;
     /*
     case BSP_UART_XXX:
             return &huartX;

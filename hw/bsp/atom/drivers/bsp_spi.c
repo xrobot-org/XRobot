@@ -2,12 +2,14 @@
 
 #include "main.h"
 
-extern SPI_HandleTypeDef hspi1;
+extern SPI_HandleTypeDef hspi1, hspi3;
 
 static bsp_callback_t callback_list[BSP_SPI_NUM][BSP_SPI_CB_NUM];
 
 static bsp_spi_t spi_get(SPI_HandleTypeDef *hspi) {
   if (hspi->Instance == SPI1) {
+    return BSP_SPI_ICM42688;
+  } else if (hspi->Instance == SPI3) {
     return BSP_SPI_IMU;
   }
   /*
@@ -41,8 +43,10 @@ void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi) {
 
 SPI_HandleTypeDef *bsp_spi_get_handle(bsp_spi_t spi) {
   switch (spi) {
-    case BSP_SPI_IMU:
+    case BSP_SPI_ICM42688:
       return &hspi1;
+    case BSP_SPI_IMU:
+      return &hspi3;
     /*
     case BSP_SPI_XXX:
             return &hspiX;

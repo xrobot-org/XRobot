@@ -1,5 +1,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
+#include "main.h"
+#include "stdio.h"
 #include "task.h"
 
 /* FreeRTOS Heap */
@@ -24,6 +26,28 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
   (void)pcTaskName;
   taskDISABLE_INTERRUPTS();
   while (1) {
+    printf("Stack overflow\r\n");
+    __set_PRIMASK(1);
+
+    SysTick->CTRL = 0;
+    SysTick->LOAD = 0;
+    SysTick->VAL = 0;
+
+    HAL_RCC_DeInit();
+
+    for (int i = 0; i < 8; i++) {
+      NVIC->ICER[i] = 0xFFFFFFFF;
+      NVIC->ICPR[i] = 0xFFFFFFFF;
+    }
+
+    __set_PRIMASK(0);
+
+    __set_MSP(*(__IO uint32_t *)0x1FFF0000);
+    void (*sys_mem_boot_jump)(void) =
+        (void (*)(void))(*((uint32_t *)0x1FFF0004));
+    sys_mem_boot_jump();
+    pcTaskName = NULL;
+    *pcTaskName = 0;
   }
 }
 
