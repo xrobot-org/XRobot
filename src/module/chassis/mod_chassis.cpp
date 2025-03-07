@@ -157,7 +157,7 @@ bool Chassis<Motor, MotorParam>::LimitChassisOutPower(float power_limit,
     return 0;
   }
   float sum_motor_power = 0.0f;
-  float motor_power[len];
+  float motor_power[4];
   for (size_t i = 0; i < len; i++) {
     motor_power[i] =
         this->param_.toque_coefficient_ * fabsf(motor_out[i]) *

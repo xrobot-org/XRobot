@@ -8,7 +8,6 @@
 #include "bsp_time.h"
 #include "comp_actuator.hpp"
 #include "comp_trans.hpp"
-#include "dev_microswitch.hpp"
 #include "dev_motor.hpp"
 #include "dev_rm_motor.hpp"
 #include "device.hpp"
@@ -120,23 +119,6 @@ class LimitCheck {
  public:
   LimitCheck() {}
   virtual bool ReachLimit() = 0;
-};
-
-/* 微动开关限位，到达限位点时开关闭合 */
-class MicroSwitchLimit : public LimitCheck {
- public:
-  typedef struct {
-    uint8_t id;
-  } Param;
-
-  MicroSwitchLimit(Param param) : LimitCheck() {
-    sw_data_.status = MicroSwitch::OFF;
-    MicroSwitch::Subscriber(sw_data_, param.id);
-  }
-
-  bool ReachLimit() { return sw_data_.status == MicroSwitch::ON; }
-
-  MicroSwitch::Data sw_data_{};
 };
 
 /* 自归位限位，在重力作用下自由运动一段时间后就为零点 */
