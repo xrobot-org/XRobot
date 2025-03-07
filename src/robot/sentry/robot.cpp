@@ -123,24 +123,28 @@ Robot::Sentry::Param param = {
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_1,
+          .reverse = false
       },
       Device::RMMotor::Param{
           .id_feedback = 0x202,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_1,
+          .reverse = false
       },
       Device::RMMotor::Param{
           .id_feedback = 0x203,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_1,
+          .reverse = false
       },
       Device::RMMotor::Param{
           .id_feedback = 0x204,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_1,
+          .reverse = false
       },
     },
 
@@ -245,6 +249,7 @@ Robot::Sentry::Param param = {
       .id_control = GM6020_CTRL_ID_BASE,
       .model = Device::RMMotor::MOTOR_GM6020,
       .can = BSP_CAN_1,
+      .reverse = false
     },
 
     .pit_motor = {
@@ -252,6 +257,7 @@ Robot::Sentry::Param param = {
       .id_control = GM6020_CTRL_ID_EXTAND,
       .model = Device::RMMotor::MOTOR_GM6020,
       .can = BSP_CAN_2,
+      .reverse = false
     },
 
     .mech_zero = {
@@ -263,6 +269,8 @@ Robot::Sentry::Param param = {
     .limit = {
       .pitch_max = 4.9f,
       .pitch_min = 4.46f,
+      .yaw_max = 0.0f,
+      .yaw_min = 0.0f,
     },
 
     .EVENT_MAP = {
@@ -377,12 +385,14 @@ Robot::Sentry::Param param = {
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
+          .reverse = false
       },
       Device::RMMotor::Param{
           .id_feedback = 0x203,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
+          .reverse = false
       }
     },
 

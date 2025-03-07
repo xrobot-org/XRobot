@@ -11,6 +11,12 @@ using namespace Robot;
 /* clang-format off */
 Robot::UVA::Param param={
   .gimbal{
+     .ff = {
+     },
+
+     .st = {
+     },
+
      .yaw_actr = {
       .speed = {
           /* GIMBAL_CTRL_YAW_OMEGA_IDX */
@@ -161,6 +167,7 @@ Robot::UVA::Param param={
         .id_control = M3508_M2006_CTRL_ID_BASE,
         .model = Device::RMMotor::MOTOR_M2006,
         .can = BSP_CAN_2,
+        .reverse = false
       }
     },
     .EVENT_MAP = {

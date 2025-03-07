@@ -280,10 +280,7 @@ bsp_status_t bsp_ext_can_trans_packet(bsp_can_t can, bsp_can_format_t format,
   xSemaphoreTake(tx_cplt[can - BSP_CAN_BASE_NUM], UINT32_MAX);
   return bsp_uart_transmit(bsp_ext_can_get_handle(can),
                            (uint8_t *)(&tx_ext_buff[can - BSP_CAN_BASE_NUM]),
-                           sizeof(tx_ext_buff[can - BSP_CAN_BASE_NUM]),
-                           false) == HAL_OK
-             ? BSP_OK
-             : BSP_ERR;
+                           sizeof(tx_ext_buff[can - BSP_CAN_BASE_NUM]), false);
 }
 
 bsp_status_t bsp_can_trans_packet(bsp_can_t can, bsp_can_format_t format,

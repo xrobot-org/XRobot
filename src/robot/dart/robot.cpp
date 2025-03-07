@@ -55,6 +55,7 @@ Dart::Param param = {
             .id_control = M3508_M2006_CTRL_ID_EXTAND,
             .model = Device::RMMotor::MOTOR_M2006,
             .can = BSP_CAN_1,
+            .reverse = false
         },
       },
 

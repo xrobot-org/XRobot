@@ -176,7 +176,7 @@ bool HelmChassis<Motor, MotorParam>::LimitChassisOutPower(float power_limit,
   }
 
   float sum_motor_power = 0.0f;
-  float motor_3508_power[len];
+  float motor_3508_power[4];
   for (size_t i = 0; i < len; i++) {
     motor_3508_power[i] =
         this->param_.toque_coefficient_3508 * fabsf(motor_out[i]) *

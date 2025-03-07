@@ -127,24 +127,28 @@ Robot::Hero::Param param = {
             .id_control = M3508_M2006_CTRL_ID_BASE,
             .model = Device::RMMotor::MOTOR_M3508,
             .can = BSP_CAN_1,
+            .reverse = false
         },
         Device::RMMotor::Param{
             .id_feedback = 0x202,
             .id_control = M3508_M2006_CTRL_ID_BASE,
             .model = Device::RMMotor::MOTOR_M3508,
             .can = BSP_CAN_1,
+            .reverse = false
         },
         Device::RMMotor::Param{
             .id_feedback = 0x203,
             .id_control = M3508_M2006_CTRL_ID_BASE,
             .model = Device::RMMotor::MOTOR_M3508,
             .can = BSP_CAN_1,
+            .reverse = false
         },
         Device::RMMotor::Param{
             .id_feedback = 0x204,
             .id_control = M3508_M2006_CTRL_ID_BASE,
             .model = Device::RMMotor::MOTOR_M3508,
             .can = BSP_CAN_1,
+            .reverse = false
         },
     },
 
@@ -271,6 +275,8 @@ Robot::Hero::Param param = {
     .limit = {
       .pitch_max = M_2PI - 3.51895213f,
       .pitch_min = M_2PI - 4.46541834f,
+      .yaw_max = 0.0f,
+      .yaw_min = 0.0f,
     },
 
     .EVENT_MAP = {
@@ -383,6 +389,7 @@ Robot::Hero::Param param = {
         .id_control = M3508_M2006_CTRL_ID_EXTAND,
         .model = Device::RMMotor::MOTOR_M2006,
         .can = BSP_CAN_1,
+        .reverse = false
       }
     },
 
@@ -392,12 +399,15 @@ Robot::Hero::Param param = {
           .id_control = M3508_M2006_CTRL_ID_EXTAND,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
+          .reverse = false
       },
+
       Device::RMMotor::Param{
           .id_feedback = 0x205,
           .id_control = M3508_M2006_CTRL_ID_EXTAND,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
+          .reverse = false
       },
     },
 

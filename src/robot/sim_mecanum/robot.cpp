@@ -15,6 +15,11 @@ Robot::Simulator::Param param = {
   },
 
   .chassis={
+      .toque_coefficient_ = 0.0f,
+      .speed_2_coefficient_ = 0.0f,
+      .out_2_coefficient_ = 0.0f,
+      .constant_ = 0.0f,
+
       .type = Component::Mixer::MECANUM,
 
       .follow_pid_param = {
@@ -120,6 +125,24 @@ Robot::Simulator::Param param = {
       Device::RMMotor::Param{
           .model = Device::RMMotor::MOTOR_M3508,
       },
+    },
+
+    .get_speed = [](float power_limit){
+      float speed = 0.0f;
+      if (power_limit <= 50.0f) {
+        speed = 5500;
+      } else if (power_limit <= 60.0f) {
+        speed = 5500;
+      } else if (power_limit <= 70.0f) {
+        speed = 5500;
+      } else if (power_limit <= 80.0f) {
+        speed = 6200;
+      } else if (power_limit <= 100.0f) {
+        speed = 7000;
+      } else {
+        speed = 7500;
+      }
+      return speed;
     },
   },
 };

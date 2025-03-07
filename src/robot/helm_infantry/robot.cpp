@@ -249,24 +249,28 @@ Robot::HelmInfantry::Param param =
                             .id_control = GM6020_CTRL_ID_BASE,
                             .model = Device::RMMotor::MOTOR_GM6020,
                             .can = BSP_CAN_2,
+                            .reverse = false
                         },
                         Device::RMMotor::Param{
                             .id_feedback = 0x206,
                             .id_control = GM6020_CTRL_ID_BASE,
                             .model = Device::RMMotor::MOTOR_GM6020,
                             .can = BSP_CAN_2,
+                            .reverse = false
                         },
                         Device::RMMotor::Param{
                             .id_feedback = 0x208,
                             .id_control = GM6020_CTRL_ID_BASE,
                             .model = Device::RMMotor::MOTOR_GM6020,
                             .can = BSP_CAN_2,
+                            .reverse = false
                         },
                         Device::RMMotor::Param{
                             .id_feedback = 0x207,
                             .id_control = GM6020_CTRL_ID_BASE,
                             .model = Device::RMMotor::MOTOR_GM6020,
                             .can = BSP_CAN_2,
+                            .reverse = false
                         },
                     },
                 .speed_motor_param =
@@ -394,6 +398,7 @@ Robot::HelmInfantry::Param param =
                         .id_control = GM6020_CTRL_ID_EXTAND,
                         .model = Device::RMMotor::MOTOR_GM6020,
                         .can = BSP_CAN_2,
+                        .reverse = false
                     },
 
                 .pit_motor =
@@ -415,7 +420,9 @@ Robot::HelmInfantry::Param param =
                 .limit =
                     {
                         .pitch_max = M_2PI - 0.60f,
-                        .pitch_min = M_2PI - 1.4f
+                        .pitch_min = M_2PI - 1.4f,
+                        .yaw_max = 0.0f,
+                        .yaw_min = 0.0f,
                     },
 
                 .EVENT_MAP = {Component::CMD::EventMapItem{
@@ -529,12 +536,14 @@ Robot::HelmInfantry::Param param =
             .id_control = M3508_M2006_CTRL_ID_EXTAND,
             .model = Device::RMMotor::MOTOR_M3508,
             .can = BSP_CAN_1,
+            .reverse = false
         },
         Device::RMMotor::Param{
             .id_feedback = 0x207,
             .id_control = M3508_M2006_CTRL_ID_EXTAND,
             .model = Device::RMMotor::MOTOR_M3508,
             .can = BSP_CAN_1,
+            .reverse = false
         },
         },
 
