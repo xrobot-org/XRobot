@@ -1,0 +1,5 @@
+{
+    "cmake.configureArgs": [
+        "-DXROBOT_TEST_BUILD=True"
+    ]
+}

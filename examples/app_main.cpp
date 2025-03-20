@@ -1,5 +1,7 @@
-#include "xrobot/hardware_container.hpp"
-#include "xrobot/platform_adapter.hpp"
+#include "thread.hpp"
+#include "application.hpp"
+#include "hardware_container.hpp"
+#include "peripheral_manager.hpp"
 #include <iostream>
 
 struct ExampleUART {
@@ -14,11 +16,35 @@ struct ExampleCAN {
   }
 };
 
+class ExampleApp : public XRobot::Application {
+public:
+  void OnInit(PeripheralManager &pm) {
+    uart_ = pm.FindOrExit<ExampleUART>("uart_console");
+    debug_uart_ = pm.FindOrExit<ExampleUART>("debug_uart");
+    can_main_ = pm.FindOrExit<ExampleCAN>("can_bus_main");
+    can_backup_ = pm.FindOrExit<ExampleCAN>("can_backup");
+    std::cout << "Application Init" << std::endl;
+  }
+
+  void OnMonitor() {
+    uart_->Send("UART Console Start");
+    can_main_->AddMessage(0x123);
+    can_backup_->AddMessage(0x456);
+    debug_uart_->Send("Debug UART Start");
+  }
+
+private:
+  ExampleUART *uart_ = nullptr;
+  ExampleUART *debug_uart_ = nullptr;
+  ExampleCAN *can_main_ = nullptr;
+  ExampleCAN *can_backup_ = nullptr;
+};
+
 #define XR_HARDWARE_BINDINGS                                                   \
-  xrobot::MakeEntry(uart_console, "uart_console"),                             \
-      xrobot::MakeEntry(debug_uart, "debug_uart"),                             \
-      xrobot::MakeEntry(can_main, "can_bus_main"),                             \
-      xrobot::MakeEntry(can_backup, "can_backup")
+  XRobot::MakeEntry(uart_console, "uart_console"),                             \
+      XRobot::MakeEntry(debug_uart, "debug_uart"),                             \
+      XRobot::MakeEntry(can_main, "can_bus_main"),                             \
+      XRobot::MakeEntry(can_backup, "can_backup")
 
 int main() {
   ExampleUART uart_console;
@@ -26,14 +52,16 @@ int main() {
   ExampleCAN can_main;
   ExampleCAN can_backup;
 
-  xrobot::HardwareContainer container(XR_HARDWARE_BINDINGS);
-  xrobot::PlatformAdapter::Init(container);
+  PeripheralManager pm(XRobot::HardwareContainer{XR_HARDWARE_BINDINGS});
 
-  auto *uart = PeripheralManager::Instance().Find<ExampleUART>("uart_console");
-  if (uart) {
-    uart->Send("XRobot2.0 Framework Start");
-  } else {
-    std::cout << "UART not found." << std::endl;
+  ExampleApp app;
+
+  XRobot::ApplicationManager am;
+  am.RegisterApplication(app);
+  am.InitAll(pm);
+  while (true) {
+    am.MonitorAll();
+    LibXR::Thread::Sleep(1000);
   }
 
   return 0;
