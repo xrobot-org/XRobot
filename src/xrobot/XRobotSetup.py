@@ -23,6 +23,7 @@ def run_subprocess(cmd: list[str]):
 def ensure_module_config():
     """Create default module configuration if missing"""
     if not MODULE_CONFIG.exists():
+        MODULE_CONFIG.parent.mkdir(parents=True, exist_ok=True)
         MODULE_CONFIG.write_text("""modules:
   - name: BlinkLED
     repo: https://github.com/xrobot-org/BlinkLED
@@ -30,6 +31,30 @@ def ensure_module_config():
         print(f"[INFO] Default config created: {MODULE_CONFIG}")
         print("Please edit the file and rerun.")
         sys.exit(0)
+
+def ensure_modules_cmakelists():
+    """Ensure a default CMakeLists.txt exists under Modules/, used to auto-include submodules"""
+    cmake_file = MODULE_DIR / "CMakeLists.txt"
+    if cmake_file.exists():
+        return  # Do not overwrite existing file
+
+    cmake_code = r'''# Automatically include all module CMakeLists.txt files under Modules/
+
+message(STATUS "[XRobot] Scanning module directory: Modules/")
+
+file(GLOB MODULE_DIRS RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
+
+foreach(MOD ${MODULE_DIRS})
+    if(IS_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/${MOD}")
+        if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/${MOD}/CMakeLists.txt")
+            message(STATUS "[XRobot] Including module: ${MOD}")
+            include("${CMAKE_CURRENT_LIST_DIR}/${MOD}/CMakeLists.txt")
+        endif()
+    endif()
+endforeach()
+'''
+    cmake_file.write_text(cmake_code, encoding="utf-8")
+    print(f"[INFO] Generated default Modules/CMakeLists.txt at: {cmake_file}")
 
 
 def extract_modules() -> list[str]:
@@ -61,6 +86,8 @@ def main():
         "--config", str(MODULE_CONFIG),
         "--dir", str(MODULE_DIR)
     ])
+
+    ensure_modules_cmakelists()
 
     # Step 2: Generate constructor config if missing
     if not CONSTRUCTOR_CONFIG.exists():
