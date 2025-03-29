@@ -2,12 +2,14 @@ import subprocess
 import sys
 from pathlib import Path
 import yaml
+import argparse
+import urllib.request
 
 # Configuration paths
 MODULE_CONFIG = Path("./Modules/modules.yaml")
 MODULE_DIR = Path("./Modules/")
 OUTPUT_CPP = Path("./User/xrobot_main.hpp")
-CONSTRUCTOR_CONFIG = Path("./User/xrobot.yaml")
+CONSTRUCTOR_CONFIG: Path  # Type hint, no initial value
 
 # CLI tool names
 INIT_MODULE_CLI = "xrobot_init_mod"
@@ -57,6 +59,24 @@ endforeach()
     print(f"[INFO] Generated default Modules/CMakeLists.txt at: {cmake_file}")
 
 
+def resolve_config_path(user_input: str | None) -> Path:
+    """Resolve config path from local path or URL"""
+    default_path = Path("./User/xrobot.yaml")
+
+    if not user_input:
+        return default_path
+
+    if user_input.startswith("http://") or user_input.startswith("https://"):
+        # Download remote YAML to local path
+        print(f"[INFO] Downloading config from URL: {user_input}")
+        default_path.parent.mkdir(parents=True, exist_ok=True)
+        urllib.request.urlretrieve(user_input, default_path)
+        print(f"[INFO] Config downloaded to: {default_path}")
+        return default_path
+
+    return Path(user_input)
+
+
 def extract_modules() -> list[str]:
     """Retrieve module list from configuration"""
     if not MODULE_CONFIG.exists():
@@ -71,6 +91,14 @@ def extract_modules() -> list[str]:
 def main():
     """Main automation workflow"""
     print("Starting XRobot auto-configuration")
+
+    parser = argparse.ArgumentParser(description="XRobot setup automation")
+    parser.add_argument("--config", help="Path or URL to constructor config YAML")
+    args = parser.parse_args()
+
+    # Step 0: Resolve config path
+    global CONSTRUCTOR_CONFIG
+    CONSTRUCTOR_CONFIG = resolve_config_path(args.config)
 
     # Configuration validation
     ensure_module_config()
