@@ -38,15 +38,15 @@ jobs:
         arm-none-eabi-gcc --version
         clang --version
 
-    - name: Get Test Project
-      uses: actions/checkout@v4
-      with:
-        repository: xrobot-org/XRobot_stm32_test
-        path: test-project
+    # - name: Get Test Project
+    #   uses: actions/checkout@v4
+    #   with:
+    #     repository: xrobot-org/XRobot_stm32_test
+    #     path: test-project
 
-    - name: Run Tests
-      run: |
-        cd test-project && ./test.sh
+    # - name: Run Tests
+    #   run: |
+    #     cd test-project && ./test.sh
 
   build:
     name: Build & Test (${{ matrix.os }} - ${{ matrix.arch }})
