@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xrobot"
+version = "0.1.0"
+description = "A Python package for parsing IOC files and generating C++ code."
+requires-python = ">=3.8"
+authors = [
+    {name = "Xiao", email = "2592509183@qq.com"}
+]
+maintainers = [
+    {name = "Xiao", email = "2592509183@qq.com"}
+]
+readme = "README.md"
+license = {text = "Apache-2.0"}
+keywords = ["code generation", "embedded systems", "automation"]
+dependencies = [
+    "argparse",
+    "pyyaml"
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+
+[project.optional-dependencies]
+gui = ["PyQt5"]
+cli = ["rich", "click"]
+
+[project.urls]
+Homepage = "https://github.com/xrobot-org"
+Documentation = "xrobot-org.github.io/"
+Repository = "https://github.com/xrobot-org/XRobot"
+"Bug Tracker" = "https://github.com/xrobot-org/XRobot/issues"
+
+[project.scripts]
+xrobot_gen_main = "xrobot.GenerateMain:main"
+xrobot_mod_parser = "xrobot.ModuleParser:main"
+xrobot_create_mod = "xrobot.ModuleCreator:main"
+xrobot_init_mod = "xrobot.InitModule:main"
+xrobot_setup = "xrobot.XRobotSetup:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
