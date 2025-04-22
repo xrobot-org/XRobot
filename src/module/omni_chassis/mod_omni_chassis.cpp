@@ -17,12 +17,13 @@
 
 #include "bsp_time.h"
 
-#define ROTOR_WZ_MIN 0.8f /* 小陀螺旋转位移下界 */
-#define ROTOR_WZ_MAX 1.0f /* 小陀螺旋转位移上界 */
+#define ROTOR_WZ_MIN 0.6f /* 小陀螺旋转位移下界 */
+#define ROTOR_WZ_MAX 0.8f /* 小陀螺旋转位移上界 */
 
 #define ROTOR_OMEGA 0.0025f /* 小陀螺转动频率 */
 
 #define MOTOR_MAX_SPEED_COFFICIENT 1.2f /* 电机的最大转速 */
+#define MOTOR_MAX_ROTATIONAL_SPEED 9600 /* 电机最大转速 */
 
 #if POWER_LIMIT_WITH_CAP
 /* 保证电容电量宏定义在正确范围内 */
@@ -44,11 +45,13 @@ static const float kCAP_PERCENTAGE_WORK = (float)CAP_PERCENT_WORK / 100.0f;
 using namespace Module;
 
 template <typename Motor, typename MotorParam>
-OmniChassis<Motor, MotorParam>::OmniChassis(Param& param, float control_freq)
+nOmniChassis<Motor, MotorParam>::nOmniChassis(Param& param, float control_freq)
     : param_(param),
-      mode_(OmniChassis::RELAX),
+      mode_(nOmniChassis::RELAX),
       mixer_(param.type),
       follow_pid_(param.follow_pid_param, control_freq),
+      xaccl_pid_(param.xaccl_pid_param, control_freq),
+      yaccl_pid_(param.yaccl_pid_param, control_freq),
       ctrl_lock_(true) {
   memset(&(this->cmd_), 0, sizeof(this->cmd_));
 
@@ -61,12 +64,9 @@ OmniChassis<Motor, MotorParam>::OmniChassis(Param& param, float control_freq)
                   (std::string("Chassis_") + std::to_string(i)).c_str());
   }
 
-  this->setpoint_.motor_rotational_speed =
-      reinterpret_cast<float*>(System::Memory::Malloc(
-          this->mixer_.len_ * sizeof(*this->setpoint_.motor_rotational_speed)));
   XB_ASSERT(this->setpoint_.motor_rotational_speed);
 
-  auto event_callback = [](ChassisEvent event, OmniChassis* chassis) {
+  auto event_callback = [](ChassisEvent event, nOmniChassis* chassis) {
     chassis->ctrl_lock_.Wait(UINT32_MAX);
 
     switch (event) {
@@ -94,10 +94,10 @@ OmniChassis<Motor, MotorParam>::OmniChassis(Param& param, float control_freq)
     chassis->ctrl_lock_.Post();
   };
 
-  Component::CMD::RegisterEvent<OmniChassis*, ChassisEvent>(
+  Component::CMD::RegisterEvent<nOmniChassis*, ChassisEvent>(
       event_callback, this, this->param_.EVENT_MAP);
 
-  auto chassis_thread = [](OmniChassis* chassis) {
+  auto chassis_thread = [](nOmniChassis* chassis) {
     auto raw_ref_sub = Message::Subscriber<Device::Referee::Data>("referee");
     auto cmd_sub =
         Message::Subscriber<Component::CMD::ChassisCMD>("cmd_chassis");
@@ -137,36 +137,26 @@ OmniChassis<Motor, MotorParam>::OmniChassis(Param& param, float control_freq)
 }
 
 template <typename Motor, typename MotorParam>
-void OmniChassis<Motor, MotorParam>::UpdateFeedback() {
+void nOmniChassis<Motor, MotorParam>::UpdateFeedback() {
   /* 将CAN中的反馈数据写入到feedback中 */
   for (size_t i = 0; i < this->mixer_.len_; i++) {
     this->motor_[i]->Update();
-    this->motor_feedback_.motor_speed[i] = this->motor_[i]->GetSpeed();
+    this->motor_speed_[i] = this->motor_[i]->GetSpeed();
   }
 }
 template <typename Motor, typename MotorParam>
-uint16_t OmniChassis<Motor, MotorParam>::MAXSPEEDGET(float power_limit) {
-  uint16_t speed = 0.0f;
-  if (power_limit <= 50.0f) {
-    speed = 5000;
-  } else if (power_limit <= 60.0f) {
-    speed = 5500;
-  } else if (power_limit <= 70.0f) {
-    speed = 5500;
-  } else if (power_limit <= 80.0f) {
-    speed = 6500;
-  } else if (power_limit <= 100.0f) {
-    speed = 7000;
+uint16_t nOmniChassis<Motor, MotorParam>::MAXSPEEDGET(float power_limit) {
+  if (param_.get_speed) {
+    return param_.get_speed(power_limit);
   } else {
-    speed = 7500;
+    return 5500;
   }
-  return speed;
 }
 template <typename Motor, typename MotorParam>
-bool OmniChassis<Motor, MotorParam>::LimitChassisOutput(float power_limit,
-                                                        float* motor_out,
-                                                        float* speed_rpm,
-                                                        uint32_t len) {
+bool nOmniChassis<Motor, MotorParam>::LimitChassisOutput(float power_limit,
+                                                         float* motor_out,
+                                                         float* speed_rpm,
+                                                         uint32_t len) {
   if (power_limit < 0.0f) {
     return 0;
   }
@@ -209,34 +199,22 @@ bool OmniChassis<Motor, MotorParam>::LimitChassisOutput(float power_limit,
   return 0;
 }
 template <typename Motor, typename MotorParam>
-bool OmniChassis<Motor, MotorParam>::LimitChassisOutPower(float power_limit,
-                                                          float* motor_out,
-                                                          float* speed_rpm,
-                                                          uint32_t len) {
+bool nOmniChassis<Motor, MotorParam>::LimitChassisOutPower(float power_limit,
+                                                           float* motor_out,
+                                                           float* speed_rpm,
+                                                           uint32_t len) {
   if (power_limit < 0.0f) {
     return 0;
   }
-  // float sum_motor_out = 0.0f;
-  // for (size_t i = 0; i < len; i++) {
-  //   sum_motor_out += fabsf(motor_out[i]) * fabsf(speed[i]) * 0.06f;
-  // }
-  // sum_motor_out += 9.2326f;
-  // power_1_ = sum_motor_out;
-  // if (sum_motor_out > power_limit) {
-  //   for (size_t i = 0; i < len; i++) {
-  //     motor_out[i] *= power_limit / sum_motor_out;
-  //   }
-  // }
-  // return true;
   float sum_motor_power = 0.0f;
-  float motor_3508_power[len];
+  float motor_power[4];
   for (size_t i = 0; i < len; i++) {
-    motor_3508_power[i] =
+    motor_power[i] =
         this->param_.toque_coefficient_ * fabsf(motor_out[i]) *
             fabsf(speed_rpm[i]) +
         this->param_.speed_2_coefficient_ * speed_rpm[i] * speed_rpm[i] +
         this->param_.out_2_coefficient_ * motor_out[i] * motor_out[i];
-    sum_motor_power += motor_3508_power[i];
+    sum_motor_power += motor_power[i];
   }
   sum_motor_power += this->param_.constant_;
   power_ = sum_motor_power;
@@ -249,7 +227,7 @@ bool OmniChassis<Motor, MotorParam>::LimitChassisOutPower(float power_limit,
   return true;
 }
 template <typename Motor, typename MotorParam>
-void OmniChassis<Motor, MotorParam>::Control() {
+void nOmniChassis<Motor, MotorParam>::Control() {
   this->now_ = bsp_time_get();
 
   this->dt_ = TIME_DIFF(this->last_wakeup_, this->now_);
@@ -260,27 +238,58 @@ void OmniChassis<Motor, MotorParam>::Control() {
   /* ctrl_vec -> move_vec 控制向量和真实的移动向量之间有一个换算关系 */
   /* 计算vx、vy */
   switch (this->mode_) {
-    case OmniChassis::BREAK: /* 刹车模式电机停止 */
+    case nOmniChassis::BREAK: /* 刹车模式电机停止 */
       this->move_vec_.vx = 0.0f;
       this->move_vec_.vy = 0.0f;
       break;
 
-    case OmniChassis::INDENPENDENT: /* 独立模式控制向量与运动向量相等
-                                     */
+    case nOmniChassis::INDENPENDENT: /* 独立模式控制向量与运动向量相等
+                                      */
       this->move_vec_.vx = this->cmd_.x;
       this->move_vec_.vy = this->cmd_.y;
       break;
 
-    case OmniChassis::RELAX:
-    case OmniChassis::FOLLOW_GIMBAL_INTERSECT: /* 按照云台方向换算运动向量
-                                                */
-    case OmniChassis::FOLLOW_GIMBAL_CROSS:
-    case OmniChassis::ROTOR: {
+    case nOmniChassis::RELAX:
+    case nOmniChassis::FOLLOW_GIMBAL_INTERSECT: /* 按照云台方向换算运动向量 */
+    case nOmniChassis::FOLLOW_GIMBAL_CROSS: {
       float beta = this->yaw_;
+      float cos_beta = cosf(beta);
+      float sin_beta = sinf(beta);
+      /*控制加速度*/
+      this->move_vec_.vx = this->xaccl_pid_.Calculate(
+          (cos_beta * this->cmd_.x - sin_beta * this->cmd_.y),
+          this->move_vec_.vx, dt_);
+      if (!cmd_.x) {
+        this->xaccl_pid_.Reset();
+      }
+      this->move_vec_.vy = this->yaccl_pid_.Calculate(
+          (sin_beta * this->cmd_.x + cos_beta * this->cmd_.y),
+          this->move_vec_.vy, dt_);
+      if (!cmd_.y) {
+        this->yaccl_pid_.Reset();
+      }
+      float scalar_sum = fabs(this->move_vec_.vx) + fabs(this->move_vec_.vy);
+      if (scalar_sum > 1.01f) {
+        this->move_vec_.vx = this->move_vec_.vx / scalar_sum;
+        this->move_vec_.vy = this->move_vec_.vy / scalar_sum;
+      }
+    } break;
+    case nOmniChassis::ROTOR: {
+      float beta = this->yaw_ - M_PI / 8.0f;
+      // if (this->move_vec_.wz == 1) {
+      //   beta = this->yaw_ - M_PI_4;
+      // } else {
+      //   beta = this->yaw_;
+      // }
       float cos_beta = cosf(beta);
       float sin_beta = sinf(beta);
       this->move_vec_.vx = cos_beta * this->cmd_.x - sin_beta * this->cmd_.y;
       this->move_vec_.vy = sin_beta * this->cmd_.x + cos_beta * this->cmd_.y;
+      float scalar_sum = fabs(this->move_vec_.vx) + fabs(this->move_vec_.vy);
+      if (scalar_sum > 1.01f) {
+        this->move_vec_.vx = this->move_vec_.vx / scalar_sum;
+        this->move_vec_.vy = this->move_vec_.vy / scalar_sum;
+      }
       break;
     }
     default:
@@ -289,25 +298,74 @@ void OmniChassis<Motor, MotorParam>::Control() {
 
   /* 计算wz */
   switch (this->mode_) {
-    case OmniChassis::RELAX:
-    case OmniChassis::BREAK:
-    case OmniChassis::INDENPENDENT: /* 独立模式wz为0 */
+    case nOmniChassis::RELAX:
+    case nOmniChassis::BREAK:
+    case nOmniChassis::INDENPENDENT: /* 独立模式wz为0 */
       this->move_vec_.wz = this->cmd_.z;
       break;
 
-    case OmniChassis::FOLLOW_GIMBAL_INTERSECT:
+    case nOmniChassis::FOLLOW_GIMBAL_INTERSECT:
+      //{
+      //   float direction = 0.0f;
+      //   /*双零点*/
+      //   if (this->yaw_ > M_PI_2) {
+      //     direction = 3.14158f;
+      //   }
+      //   if (this->yaw_ < -M_PI_2) {
+      //     direction = 3.14158f;
+      //   }
+      //   this->move_vec_.wz =
+      //       this->follow_pid_.Calculate(direction, this->yaw_, this->dt_);
+      //   clampf(&this->move_vec_.wz, -1.0f, 1.0f);
+      //   float move_scal_sum = fabs(this->move_vec_.vx) +
+      //                         fabs(this->move_vec_.vy) +
+      //                         fabs(this->move_vec_.wz);
+      //   if (move_scal_sum > 1.01f) {
+      //     this->move_vec_.vx =
+      //         this->move_vec_.vx * (1 - fabs(this->move_vec_.wz));
+      //     this->move_vec_.vy =
+      //         this->move_vec_.vy * (1 - fabs(this->move_vec_.wz));
+      //   }
+      // } break;
       this->move_vec_.wz =
           this->follow_pid_.Calculate(0.0f, this->yaw_, this->dt_);
       break;
-    case OmniChassis::FOLLOW_GIMBAL_CROSS:
+    case nOmniChassis::FOLLOW_GIMBAL_CROSS: {
+      // float direction = 0.0f;
+      // /*双零点*/
+      // if (this->yaw_ > M_PI_2) {
+      //   direction = 3.14158f;
+      // }
+      // if (this->yaw_ < -M_PI_2) {
+      //   direction = 3.14158f;
+      // }
+      // this->move_vec_.wz = this->follow_pid_.Calculate(
+      //     direction, this->yaw_ - M_PI / 4.0f, this->dt_);
+      // clampf(&this->move_vec_.wz, -1.0f, 1.0f);
+      // float move_scal_sum = fabs(this->move_vec_.vx) +
+      //                       fabs(this->move_vec_.vy) +
+      //                       fabs(this->move_vec_.wz);
+      // if (move_scal_sum > 1.01f) {
+      //   this->move_vec_.vx =
+      //       this->move_vec_.vx * (1 - fabs(this->move_vec_.wz));
+      //   this->move_vec_.vy =
+      //       this->move_vec_.vy * (1 - fabs(this->move_vec_.wz));
+      // }
       this->move_vec_.wz = this->follow_pid_.Calculate(
           0.0f, this->yaw_ - M_PI / 4.0f, this->dt_);
-      break;
+    } break;
 
-    case OmniChassis::ROTOR: { /* 小陀螺模式使底盘以一定速度旋转
-                                */
-      this->move_vec_.wz =
-          this->wz_dir_mult_ * CalcWz(ROTOR_WZ_MIN, ROTOR_WZ_MAX);
+    case nOmniChassis::ROTOR: /* 小陀螺模式使底盘以一定速度旋转 */
+    {                         /* TODO 改成实际底盘速度 */
+      this->move_vec_.wz = 1;
+      // this->move_vec_.wz = this->wz_dir_mult_;
+      float move_scal_sum = fabs(this->move_vec_.vx) +
+                            fabs(this->move_vec_.vy) + fabs(this->move_vec_.wz);
+      if (move_scal_sum > 1.01f) {
+        this->move_vec_.wz = this->move_vec_.wz / move_scal_sum;
+        this->move_vec_.vx = this->move_vec_.vx / move_scal_sum;
+        this->move_vec_.vy = this->move_vec_.vy / move_scal_sum;
+      }
       break;
     }
     default:
@@ -322,11 +380,11 @@ void OmniChassis<Motor, MotorParam>::Control() {
 
   /* 根据底盘模式计算输出值 */
   switch (this->mode_) {
-    case OmniChassis::BREAK:
-    case OmniChassis::FOLLOW_GIMBAL_INTERSECT:
-    case OmniChassis::FOLLOW_GIMBAL_CROSS:
-    case OmniChassis::ROTOR:
-    case OmniChassis::INDENPENDENT: /* 独立模式,受PID控制 */ {
+    case nOmniChassis::BREAK:
+    case nOmniChassis::FOLLOW_GIMBAL_INTERSECT:
+    case nOmniChassis::FOLLOW_GIMBAL_CROSS:
+    case nOmniChassis::ROTOR:
+    case nOmniChassis::INDENPENDENT: /* 独立模式,受PID控制 */ {
       float percentage = 0.0f;
       if (ref_.status == Device::Referee::RUNNING) {
         if (ref_.chassis_pwr_buff > 30) {
@@ -337,31 +395,40 @@ void OmniChassis<Motor, MotorParam>::Control() {
       } else {
         percentage = 1.0f;
       }
+
       clampf(&percentage, 0.0f, 1.0f);
-      float max_power_limit =
-          ref_.chassis_power_limit +
-          ref_.chassis_power_limit * 0.2 * this->cap_.percentage_;
+
       for (unsigned i = 0; i < this->mixer_.len_; i++) {
         out_.motor3508_out[i] = this->actuator_[i]->Calculate(
             this->setpoint_.motor_rotational_speed[i] *
-                max_motor_rotational_speed_,
+                MOTOR_MAX_ROTATIONAL_SPEED,
             this->motor_[i]->GetSpeed(), this->dt_);
       }
+
+      if (this->cmd_.z > 0.5) {
+        this->max_power_limit = 120;
+      } else {
+        this->max_power_limit = ref_.chassis_power_limit;
+      }
+
       for (unsigned i = 0; i < this->mixer_.len_; i++) {
         if (cap_.online_) {
-          LimitChassisOutPower(max_power_limit, out_.motor3508_out,
-                               motor_feedback_.motor_speed, this->mixer_.len_);
+          // LimitChassisOutPower(this->max_power_limit, out_.motor3508_out,
+          //                      motor_speed_, this->mixer_.len_);
+          LimitChassisOutPower(180, out_.motor3508_out, motor_speed_,
+                               this->mixer_.len_);
           this->motor_[i]->Control(out_.motor3508_out[i]);
         } else {
+          /* 不限功率的兵种使用该底盘时
+           * 注意更改chassis_power_limit至电池安全功率 */
           LimitChassisOutPower(ref_.chassis_power_limit, out_.motor3508_out,
-                               motor_feedback_.motor_speed, this->mixer_.len_);
-
+                               motor_speed_, this->mixer_.len_);
           this->motor_[i]->Control(out_.motor3508_out[i]);
         }
       }
       break;
     }
-    case OmniChassis::RELAX: /* 放松模式,不输出 */
+    case nOmniChassis::RELAX: /* 放松模式,不输出 */
       for (size_t i = 0; i < this->mixer_.len_; i++) {
         this->motor_[i]->Relax();
       }
@@ -373,37 +440,38 @@ void OmniChassis<Motor, MotorParam>::Control() {
 }
 
 template <typename Motor, typename MotorParam>
-void OmniChassis<Motor, MotorParam>::PraseRef() {
+void nOmniChassis<Motor, MotorParam>::PraseRef() {
   this->ref_.chassis_power_limit =
       this->raw_ref_.robot_status.chassis_power_limit;
   this->ref_.chassis_pwr_buff = this->raw_ref_.power_heat.chassis_pwr_buff;
-  this->ref_.chassis_watt = this->raw_ref_.power_heat.chassis_watt;
+  // this->ref_.chassis_watt = this->raw_ref_.power_heat.chassis_watt;
   this->ref_.status = this->raw_ref_.status;
 }
 
+/* 随机转速小陀螺 结合自身超电与敌方视觉水平使用 */
 template <typename Motor, typename MotorParam>
-float OmniChassis<Motor, MotorParam>::CalcWz(const float LO, const float HI) {
+float nOmniChassis<Motor, MotorParam>::CalcWz(const float LO, const float HI) {
   float wz_vary = fabsf(0.2f * sinf(ROTOR_OMEGA * this->now_)) + LO;
   clampf(&wz_vary, LO, HI);
   return wz_vary;
 }
 
 template <typename Motor, typename MotorParam>
-void OmniChassis<Motor, MotorParam>::SetMode(OmniChassis::Mode mode) {
+void nOmniChassis<Motor, MotorParam>::SetMode(nOmniChassis::Mode mode) {
   if (mode == this->mode_) {
     return; /* 模式未改变直接返回 */
   }
 
-  if (mode == OmniChassis::ROTOR && this->mode_ != OmniChassis::ROTOR) {
+  if (mode == nOmniChassis::ROTOR && this->mode_ != nOmniChassis::ROTOR) {
     std::srand(this->now_);
     this->wz_dir_mult_ = (std::rand() % 2) ? -1 : 1;
   }
-  if (mode == OmniChassis::FOLLOW_GIMBAL_CROSS &&
-      this->mode_ != OmniChassis::FOLLOW_GIMBAL_CROSS) {
+  if (mode == nOmniChassis::FOLLOW_GIMBAL_CROSS &&
+      this->mode_ != nOmniChassis::FOLLOW_GIMBAL_CROSS) {
     this->param_.type = Component::Mixer::OMNICROSS;
   }
-  if (mode == OmniChassis::FOLLOW_GIMBAL_INTERSECT &&
-      this->mode_ != OmniChassis::FOLLOW_GIMBAL_INTERSECT) {
+  if (mode == nOmniChassis::FOLLOW_GIMBAL_INTERSECT &&
+      this->mode_ != nOmniChassis::FOLLOW_GIMBAL_INTERSECT) {
     this->param_.type = Component::Mixer::OMNIPLUS;
   }
   /* 切换模式后重置PID和滤波器 */
@@ -413,9 +481,10 @@ void OmniChassis<Motor, MotorParam>::SetMode(OmniChassis::Mode mode) {
   this->mode_ = mode;
 }
 
+/*慢速刷新*/
 template <typename Motor, typename MotorParam>
-void OmniChassis<Motor, MotorParam>::DrawUIStatic(
-    OmniChassis<Motor, MotorParam>* chassis) {
+void nOmniChassis<Motor, MotorParam>::DrawUIStatic(
+    nOmniChassis<Motor, MotorParam>* chassis) {
   chassis->string_.Draw("CM", Component::UI::UI_GRAPHIC_OP_ADD,
                         Component::UI::UI_GRAPHIC_LAYER_CONST,
                         Component::UI::UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
@@ -474,8 +543,8 @@ void OmniChassis<Motor, MotorParam>::DrawUIStatic(
 }
 
 template <typename Motor, typename MotorParam>
-void OmniChassis<Motor, MotorParam>::DrawUIDynamic(
-    OmniChassis<Motor, MotorParam>* chassis) {
+void nOmniChassis<Motor, MotorParam>::DrawUIDynamic(
+    nOmniChassis<Motor, MotorParam>* chassis) {
   float box_pos_left = 0.0f, box_pos_right = 0.0f;
 
   /* 更新底盘模式选择框 */
@@ -519,4 +588,4 @@ void OmniChassis<Motor, MotorParam>::DrawUIDynamic(
     Device::Referee::AddUI(chassis->rectange_);
   }
 }
-template class Module::OmniChassis<Device::RMMotor, Device::RMMotor::Param>;
+template class Module::nOmniChassis<Device::RMMotor, Device::RMMotor::Param>;

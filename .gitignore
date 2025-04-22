@@ -22,3 +22,4 @@ src/robot/**/**.jpg
 .idea/*
 !.idea/workspace.xml
 !.idea/misc.xml
+.qodo

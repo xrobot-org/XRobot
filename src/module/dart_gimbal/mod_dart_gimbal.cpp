@@ -3,24 +3,29 @@
 #include "bsp_time.h"
 #include "comp_cmd.hpp"
 
-#define DGIMBAL_MAXYAW_SPEED (M_2PI * 1.5f)
-#define DGIMBAL_MAXPIT_SPEED (M_2PI * 0.1f)
+#define DGIMBAL_MAXYAW_SPEED (M_2PI * 0.01f)
+#define DGIMBAL_MAXPIT_SPEED (M_2PI * 0.01f)
 using namespace Module;
 
 Dartgimbal::Dartgimbal(Dartgimbal::Param& param, float control_freq)
     : param_(param),
-      yaw_actr_(param.yaw_actr, control_freq),
-      pitch_actr_(this->param_.pitch_actr, control_freq, 500.0f),
-      yaw_motor_(param.yaw_motor, "dart_yaw") {
-  auto event_callback = [](GimbalEvent event, Dartgimbal* dart) {
+      yaw_(this->param_.yaw_param, control_freq, 500.0f),
+      pitch_(this->param_.pitch_param, control_freq, 500.0f),
+      ctrl_lock_(true) {
+  auto event_callback = [](GimbalEvent event, Dartgimbal* dart_gimbal) {
+    dart_gimbal->ctrl_lock_.Wait(UINT32_MAX);
     switch (event) {
       case SET_MODE_RELAX:
-        dart->setpoint_.eulr_.yaw = 0.5f;
-        dart->setpoint_.eulr_.pit = 0.0f;
+        dart_gimbal->SetMode(RELAX);
         break;
-      case SET_MODE_ABSOLUTE:
+      case SET_MODE_STABLE:
+        dart_gimbal->SetMode(STABLE);
+        break;
+      case SET_MODE_CONTROL:
+        dart_gimbal->SetMode(CONTROL);
         break;
     }
+    dart_gimbal->ctrl_lock_.Post();
   };
   Component::CMD::RegisterEvent<Dartgimbal*, GimbalEvent>(
       event_callback, this, this->param_.EVENT_MAP);
@@ -33,8 +38,10 @@ Dartgimbal::Dartgimbal(Dartgimbal::Param& param, float control_freq)
     while (1) {
       cmd_sub.DumpData(dart_gimbal->cmd_);
 
+      dart_gimbal->ctrl_lock_.Wait(UINT32_MAX);
       dart_gimbal->UpdateFeedback();
       dart_gimbal->Control();
+      dart_gimbal->ctrl_lock_.Post();
 
       dart_gimbal->thread_.SleepUntil(2, last_online_time);
     }
@@ -45,41 +52,66 @@ Dartgimbal::Dartgimbal(Dartgimbal::Param& param, float control_freq)
 }
 
 void Dartgimbal::UpdateFeedback() {
-  this->pitch_actr_.UpdateFeedback();
-  this->yaw_motor_.Update();
+  this->pitch_.UpdateFeedback();
+  this->yaw_.UpdateFeedback();
 }
 void Dartgimbal::Control() {
   this->now_ = bsp_time_get();
-
   this->dt_ = TIME_DIFF(this->last_wakeup_, this->now_);
-
   this->last_wakeup_ = this->now_;
 
-  float dart_gimbal_yaw_cmd = 0.0f;
-  float dart_gimbal_pit_cmd = 0.0f;
+  switch (mode_) {
+    case RELAX:
+      this->pitch_.Relax();
+      this->yaw_.Relax();
+      break;
+    case STABLE:
+      this->yaw_.Control(
+          this->setpoint_.eulr_.x * this->param_.yaw_param.max_range, dt_);
+      this->pitch_.Control(
+          this->setpoint_.eulr_.y * this->param_.pitch_param.max_range, dt_);
+      break;
+    case CONTROL:
+      float dart_gimbal_yaw_cmd = 0.0f;
+      float dart_gimbal_pit_cmd = 0.0f;
 
-  if (this->cmd_.mode == Component::CMD::GIMBAL_RELATIVE_CTRL) {
-    dart_gimbal_yaw_cmd =
-        this->cmd_.eulr.yaw * this->dt_ * DGIMBAL_MAXYAW_SPEED;
-    dart_gimbal_pit_cmd =
-        this->cmd_.eulr.pit * this->dt_ * DGIMBAL_MAXPIT_SPEED;
-    this->setpoint_.eulr_.yaw += dart_gimbal_yaw_cmd;
-    this->setpoint_.eulr_.pit += dart_gimbal_pit_cmd;
-  } else {
-    this->setpoint_.eulr_.yaw = this->cmd_.eulr.yaw;
-    this->setpoint_.eulr_.pit = this->cmd_.eulr.pit;
+      if (this->cmd_.mode == Component::CMD::GIMBAL_RELATIVE_CTRL) {
+        dart_gimbal_yaw_cmd =
+            this->cmd_.eulr.yaw * this->dt_ * DGIMBAL_MAXYAW_SPEED;
+        dart_gimbal_pit_cmd =
+            this->cmd_.eulr.pit * this->dt_ * DGIMBAL_MAXPIT_SPEED;
+        this->setpoint_.eulr_.x += dart_gimbal_yaw_cmd;
+        this->setpoint_.eulr_.y += dart_gimbal_pit_cmd;
+      } else {
+        this->setpoint_.eulr_.x = this->cmd_.eulr.yaw;
+        this->setpoint_.eulr_.y = this->cmd_.eulr.pit;
+      }
+
+      clampf(&this->setpoint_.eulr_.x, 0.0f, 1.0f);
+      clampf(&this->setpoint_.eulr_.y, 0.0f, 1.0f);
+
+      this->pitch_.Control(
+          this->setpoint_.eulr_.y * this->param_.pitch_param.max_range, dt_);
+      this->yaw_.Control(
+          this->setpoint_.eulr_.x * this->param_.yaw_param.max_range, dt_);
+      break;
   }
-
-  yaw_eulr_ = this->setpoint_.eulr_.yaw;
-  pit_eulr_ = this->setpoint_.eulr_.pit;
-
-  clampf(&yaw_eulr_, 0.1, 6.18);
-
-  clampf(&pit_eulr_, 0, 1);
-
-  float yaw_out = this->yaw_actr_.Calculate(
-      yaw_eulr_, this->yaw_motor_.GetSpeed(),
-      (this->yaw_motor_.GetAngle() + (M_2PI - this->param_.yaw_zero)), dt_);
-  this->yaw_motor_.Control(yaw_out);
-  this->pitch_actr_.Control(pit_eulr_ * this->param_.pitch_actr.max_range, dt_);
+}
+void Dartgimbal::SetMode(Mode mode) {
+  if (mode == this->mode_) {
+    return;
+  }
+  this->mode_ = mode;
+  switch (mode_) {
+    case RELAX:
+      this->setpoint_.eulr_.x = 0.0f;
+      this->setpoint_.eulr_.y = 0.0f;
+      break;
+    case STABLE:
+      this->setpoint_.eulr_.x = 0.5f;
+      this->setpoint_.eulr_.y = 0.0f;
+      break;
+    case CONTROL:
+      break;
+  }
 }

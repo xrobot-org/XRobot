@@ -158,28 +158,35 @@ void DR16::PraseRC() {
     }
     /* 底盘控制 */
     if (this->data_.key & RawValue(KEY_A)) {
-      this->cmd_.chassis.x -= 0.5;
+      this->cmd_.chassis.x -= 1;
     }
 
     if (this->data_.key & RawValue(KEY_D)) {
-      this->cmd_.chassis.x += 0.5;
+      this->cmd_.chassis.x += 1;
     }
 
     if (this->data_.key & RawValue(KEY_S)) {
-      this->cmd_.chassis.y -= 0.5;
+      this->cmd_.chassis.y -= 1;
     }
 
     if (this->data_.key & RawValue(KEY_W)) {
-      this->cmd_.chassis.y += 0.5;
+      this->cmd_.chassis.y += 1;
     }
 
-    /* 加速 */
+    /* 单位圆化 */
+    float vector_sum = sqrt(this->cmd_.chassis.x * this->cmd_.chassis.x +
+                            this->cmd_.chassis.y * this->cmd_.chassis.y);
+
+    if (vector_sum > 1.0f) {
+      this->cmd_.chassis.x = this->cmd_.chassis.x / vector_sum;
+      this->cmd_.chassis.y = this->cmd_.chassis.y / vector_sum;
+    }
+
     if (this->data_.key & RawValue(KEY_SHIFT)) {
-      this->cmd_.chassis.x *= 2;
-      this->cmd_.chassis.y *= 2;
+      this->cmd_.chassis.z = 1;
+    } else {
+      this->cmd_.chassis.z = 0;
     }
-
-    this->cmd_.chassis.z = 0.0f;
 
     /* 云台控制 */
     this->cmd_.gimbal.eulr.pit =
@@ -187,8 +194,8 @@ void DR16::PraseRC() {
     this->cmd_.gimbal.eulr.yaw =
         -static_cast<float>(this->data_.x) / 32768.0f * 1000.0f;
     this->cmd_.gimbal.eulr.rol = 0.0f;
-
   } else if (this->ctrl_source_ == DR16_CTRL_SOURCE_SW) { /* 遥控器控制 */
+
     /* Chassis Control */
     this->cmd_.chassis.x =
         2 * (static_cast<float>(this->data_.ch_l_x) - DR16_CH_VALUE_MID) /
@@ -201,6 +208,7 @@ void DR16::PraseRC() {
         FULL_RANGE;
 
     /* Gimbal Control */
+    /*吊射测试时系数改小 原本是2*/
     this->cmd_.gimbal.eulr.yaw =
         -2 * (static_cast<float>(this->data_.ch_r_x) - DR16_CH_VALUE_MID) /
         FULL_RANGE;
@@ -208,6 +216,14 @@ void DR16::PraseRC() {
         2 * (static_cast<float>(this->data_.ch_r_y) - DR16_CH_VALUE_MID) /
         FULL_RANGE;
     this->cmd_.gimbal.eulr.rol = 0.0f;
+  }
+  /* 单位圆化 */
+  float vector_sum = sqrt(this->cmd_.chassis.x * this->cmd_.chassis.x +
+                          this->cmd_.chassis.y * this->cmd_.chassis.y);
+
+  if (vector_sum > 1.0f) {
+    this->cmd_.chassis.x = this->cmd_.chassis.x / vector_sum;
+    this->cmd_.chassis.y = this->cmd_.chassis.y / vector_sum;
   }
 
   this->cmd_.gimbal.mode = Component::CMD::GIMBAL_RELATIVE_CTRL;

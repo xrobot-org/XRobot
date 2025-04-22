@@ -1,7 +1,7 @@
 /* #include "dev_xxx.hpp" */
 #include "comp_cmd.hpp"
 #include "dev_ahrs.hpp"
-#include "dev_ai.hpp"
+#include "dev_aim.hpp"
 #include "dev_bmi088.hpp"
 #include "dev_can.hpp"
 #include "dev_cap.hpp"
@@ -20,7 +20,7 @@ class HelmInfantry {
   typedef struct Param {
     Module::RMHelmChassis::Param chassis;
     Module::Gimbal::Param gimbal;
-    Module::Launcher::Param launcher;
+    Module::RMLauncher::Param launcher;
     Device::BMI088::Rotation bmi088_rot{};
     Device::Cap::Param cap{};
   } Param;
@@ -29,7 +29,7 @@ class HelmInfantry {
 
   Device::Referee referee_;
   Device::Can can_;
-  Device::AI ai_;
+  Device::AIM aim_;
   Device::AHRS ahrs_;
   Device::BMI088 bmi088_;
   Device::Cap cap_;
@@ -38,7 +38,7 @@ class HelmInfantry {
 
   Module::RMHelmChassis chassis_;
   Module::Gimbal gimbal_;
-  Module::Launcher launcher_;
+  Module::RMLauncher launcher_;
 
   HelmInfantry(Param& param, float control_freq)
       : bmi088_(param.bmi088_rot),

@@ -8,7 +8,6 @@
  * @copyright Copyright (c) 2021
  *
  */
-
 #pragma once
 
 #include <module.hpp>
@@ -36,11 +35,18 @@ class Chassis {
     INDENPENDENT,  /* 独立模式。底盘运行不受云台影响 */
   } Mode;
 
+  typedef enum{
+    COMMON,
+    BEAST,
+  }Power_Mode;
+
   typedef enum {
     SET_MODE_RELAX,
     SET_MODE_FOLLOW,
     SET_MODE_ROTOR,
     SET_MODE_INDENPENDENT,
+    CHANGE_POWER_UP,
+    CHANGE_POWER_DOWN,
   } ChassisEvent;
 
   /* 底盘参数的结构体，包含所有初始Component化用的参数，通常是const，存好几组 */
@@ -48,26 +54,22 @@ class Chassis {
     float toque_coefficient_;
     float speed_2_coefficient_;
     float out_2_coefficient_;
-    float constant_;
+    float constant_; //功率参数不能封装一下吗
 
-    Component::Mixer::Mode type =
-        Component::Mixer::MECANUM; /* 底盘类型，底盘的机械设计和轮子选型 */
-
+    Component::Mixer::Mode type = Component::Mixer::MECANUM; /* 底盘类型，底盘的机械设计和轮子选型 */
     Component::PID::Param follow_pid_param{}; /* 跟随云台PID的参数 */
-
-    const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
+    Component::PID::Param xaccl_pid_param{};   /* 加速跟随PID的参数 */
+    Component::PID::Param yaccl_pid_param{};   /* y方向加速跟随PID */
 
     std::array<Component::SpeedActuator::Param, 4> actuator_param{};
-
     std::array<MotorParam, 4> motor_param;
-    float (*get_speed)(float);
+  const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
   } Param;
 
   typedef struct {
     Device::Referee::Status status;
     float chassis_power_limit;
     float chassis_pwr_buff;
-    float chassis_watt;
   } RefForChassis;
 
   Chassis(Param &param, float control_freq);
@@ -78,10 +80,10 @@ class Chassis {
 
   void SetMode(Mode mode);
 
+  void ChangePowerlim(Power_Mode power_mode_);
+
   bool LimitChassisOutPower(float power_limit, float *motor_out, float *speed,
                             uint32_t len);
-  uint16_t MAXSPEEDGET(float power_limit);
-
   void PraseRef();
 
   static void DrawUIStatic(Chassis<Motor, MotorParam> *chassis);
@@ -92,8 +94,6 @@ class Chassis {
 
  private:
   Param param_;
-
-  float max_motor_rotational_speed_ = 0.0f;
 
   float dt_ = 0.0f;
 
@@ -106,6 +106,8 @@ class Chassis {
   RefForChassis ref_;
 
   Mode mode_ = RELAX;
+  Mode last_mode_ = mode_;
+  Power_Mode power_mode_ = COMMON;
 
   Device::Cap::Info cap_;
 
@@ -116,37 +118,36 @@ class Chassis {
   /* 底盘设计 */
   Component::Mixer mixer_;
 
-  Component::Type::MoveVector move_vec_; /* 底盘实际的运动向量 */
-
   float wz_dir_mult_; /* 小陀螺模式旋转方向乘数 */
 
-  /* PID计算的目标值 */
+  float yaw_;
+
+  Component::Type::MoveVector move_vec_; /* 底盘实际的运动向量 */
+
+  Component::PID follow_pid_; /* 跟随云台用的PID */
+  Component::PID xaccl_pid_;   /* x方向加速跟随PID */
+  Component::PID yaccl_pid_;   /* y方向加速跟随PID */
+
+  float max_power_limit_ ;
   struct {
     float *motor_rotational_speed; /* 电机转速的动态数组，单位：RPM */
   } setpoint_;
 
   float motor_feedback_[4];
-
   struct {
     float motor_out[4];
   } out_;
-
-  Component::PID follow_pid_; /* 跟随云台用的PID */
 
   System::Thread thread_;
 
   System::Semaphore ctrl_lock_;
 
-  float yaw_;
   Device::Referee::Data raw_ref_;
 
   Component::CMD::ChassisCMD cmd_;
 
   Component::UI::String string_;
-
-  Component::UI::Line line_;
-
-  Component::UI::Rectangle rectange_;
+  Component::UI::Cycle cycle_;
 };
 
 typedef Chassis<Device::RMMotor, Device::RMMotor::Param> RMChassis;

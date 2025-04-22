@@ -48,12 +48,13 @@ class DR16 {
     KEY_L_RELEASE,
     KEY_R_RELEASE,
     KEY_NUM,
+    KEY_SHIFT_PRESS,
+    KEY_SHIFT_RELEASE,
   } Key;
 
   constexpr uint32_t ShiftWith(Key key) { return key + 1 * KEY_NUM; }
   constexpr uint32_t CtrlWith(Key key) { return key + 2 * KEY_NUM; }
   constexpr uint32_t ShiftCtrlWith(Key key) { return key + 3 * KEY_NUM; }
-
   constexpr uint32_t RawValue(Key key) { return 1 << (key - KEY_W); }
 
   typedef struct __attribute__((packed)) {

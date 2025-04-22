@@ -16,7 +16,9 @@
 #include <array>
 #include <cmath>
 #include <comp_type.hpp>
+#include <cstdlib>
 #include <module.hpp>
+#include <vector>
 
 #include "comp_actuator.hpp"
 #include "comp_cmd.hpp"
@@ -27,7 +29,7 @@
 #include "dev_motor.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
-#define PI (M_2PI)
+#define PI_ (M_2PI)
 
 namespace Module {
 template <typename Motor, typename MotorParam>
@@ -99,6 +101,12 @@ class HelmChassis {
 
   float CalcWz(const float LO, const float HI);
 
+  int Getrandom();  //随机数
+
+  double GetTorqueLength(float angle_a, double angle_b, int selection);
+
+  float GetRelateAngle();  //相对偏航角
+
  private:
   Param param_;
 
@@ -108,17 +116,38 @@ class HelmChassis {
 
   uint64_t now_ = 0;
   float yaw_;
-
+  float pit_;
+  double alpha_;
+  float pos_motor_value_[4];
+  float speed_motor_value_[4];
+  float pos_err_value_[4];
+  float wz_test_;
   float pos_motor_sum_out_;
+  float eulr_yaw1_;
+  int random_;
+  float deviation_angle_value_;
+  float test_angle01_;
+  float test_angle02_;
+  double tan_pit_;
+  std::vector<std::string> string_vector1_{
+      "Chassis_pos_RightFront", "Chassis_pos_LeftFront", "Chassis_pos_LeftBack",
+      "Chassis_pos_RightBack"};
+
+  std::vector<std::string> string_vector2_{
+      "Chassis_speed_RightFront", "Chassis_speed_LeftFront",
+      "Chassis_speed_LeftBack", "Chassis_speed_RightBack"};
 
   float max_motor_rotational_speed_;
+
   Device::Cap::Info cap_;
 
   Device::Referee::Data raw_ref_;
 
   float speed_motor_feedback_[4];
   float pos_motor_feedback_[4];
-
+  float forward_coefficient_[4];
+  float l_data_[4];
+  float power_;
   RefForChassis ref_;
 
   Mode mode_ = RELAX;
@@ -150,6 +179,8 @@ class HelmChassis {
 
   float direct_offset_ = 0.0f;
 
+  float state_num_;
+
   Component::PID follow_pid_;
 
   System::Thread thread_;
@@ -167,6 +198,10 @@ class HelmChassis {
   std::array<float, 4> speed_motor_out_;
 
   std::array<float, 4> pos_motor_out_;
+
+  Component::Type::Eulr eulr_;
+  Component::Type::Quaternion quat_;
+  Component::Type::Vector3 gyro_;
 };
 
 typedef HelmChassis<Device::RMMotor, Device::RMMotor::Param> RMHelmChassis;
