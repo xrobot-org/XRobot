@@ -4,7 +4,6 @@
 #include <device.hpp>
 
 #include "bsp_gpio.h"
-#include "comp_pid.hpp"
 #include "dev_ahrs.hpp"
 
 namespace Device {
@@ -55,9 +54,7 @@ class ICM42688 {
 
   static int CaliCMD(ICM42688 *icm42688, int argc, char **argv);
 
-  void Off() { WriteSingle(0X4E, 0x00); }
-  void On() { WriteSingle(0X4E, 0x0f); }
-
+ private:
   System::Database::Key<Calibration> cali_;
   Rotation &rot_;
 
@@ -77,12 +74,5 @@ class ICM42688 {
   Component::Type::Vector3 gyro_{};
 
   System::Term::Command<ICM42688 *> cmd_;
-
-  Component::PID imu_temp_ctrl_pid_;
-  int16_t raw_data_[6];
-
-  double cali_x_, cali_y_, cali_z_;
-  uint32_t cali_count_;
-  bool in_cali_ = false;
 };
 }  // namespace Device

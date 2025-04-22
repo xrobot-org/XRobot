@@ -13,7 +13,7 @@
 #define GM6020_FB_ID_BASE (0x205)
 #define GM6020_FB_ID_EXTAND (0x209)
 #define GM6020_CTRL_ID_BASE (0x1ff)
-#define GM6020_CTRL_ID_EXTAND (0x2ff)
+#define GM6020_CTRL_ID_EXTAND (0x2fe)
 
 /* id     feedback id		  control id */
 /* 1-4		0x201 to 0x204  0x200 */
@@ -56,6 +56,8 @@ class RMMotor : public BaseMotor {
 
   void Control(float output);
 
+  void ControlCurrent(float current);
+
   void Offline();
 
   float GetLSB();
@@ -70,6 +72,8 @@ class RMMotor : public BaseMotor {
   uint8_t index_;
 
   float output_;
+
+  float current_;
 
   static uint8_t motor_tx_buff_[BSP_CAN_NUM][MOTOR_CTRL_ID_NUMBER][8];
 

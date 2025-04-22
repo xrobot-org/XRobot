@@ -22,6 +22,8 @@ class BaseMotor {
 
   virtual void Control(float output) = 0;
 
+  virtual void ControlCurrent(float current) = 0;
+
   virtual bool Update() = 0;
 
   virtual void Relax() = 0;

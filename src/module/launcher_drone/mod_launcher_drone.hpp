@@ -1,106 +1,90 @@
-#include "module.hpp"
-#pragma once
-
 #include "comp_actuator.hpp"
 #include "comp_cmd.hpp"
-#include "comp_filter.hpp"
-#include "comp_pid.hpp"
 #include "dev_referee.hpp"
 #include "dev_rm_motor.hpp"
+#include "module.hpp"
+
+#define TRIG_NUM 1
+#define FRIC_NUM 2
 
 namespace Module {
-class UVALauncher {
+class DroneLauncher {
  public:
   typedef enum {
-    SINGLE, /* 单发开火模式  */
-    BURST,  /* N爆发开火模式 */
-    SAFE,
-  } TrigMode;
-
-  typedef struct {
-    float trig_gear_ratio; /* 拨弹电机减速比 3508:19, 2006:36 */
-
-    float num_trig_tooth; /* 拨弹盘中一圈能存储几颗弹丸 */
-
-    uint32_t min_launch_delay; /* 最小发射间隔(1s/最大射频) */
-
-    std::array<Component::PosActuator::Param, 1> trig_actr;
-
-    std::array<Device::RMMotor::Param, 1> trig_motor;
-
-    const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
-  } Param;
-
-  typedef enum {
-    CHANGE_FIRE_MODE_RELAX,
-    CHANGE_FIRE_MODE_SAFE,
-    CHANGE_FIRE_MODE_LOADED, /*摩擦轮*/
+    SET_RELAX,
+    CHANGE_FRIC_MODE_SAFE,
+    CHANGE_FRIC_MODE_LOADED,
     CHANGE_TRIG_MODE_SINGLE,
     CHANGE_TRIG_MODE_BURST,
-    CHANGE_TRIG_MODE, /*拨弹盘*/
-    LAUNCHER_START_FIRE,
-  } LauncherEvent;
-
-  enum {
-    LAUNCHER_ACTR_TRIG_IDX, /* 拨弹电机相关的索引值 */
-    LAUNCHER_ACTR_TRIG_NUM, /* 总共的动作器数量 */
-  };
-
-  struct FireControl {
-    bool fire = false;        /*拨弹盘开启状态*/
-    bool fric_on = false;     /*摩擦轮开启状态*/
-    uint32_t last_launch = 0; /* 上次发射器时间 单位：ms */
-    bool last_fire = false;   /* 上次开火状态 */
-    float last_trig_angle = 1.0f;
-    bool first_pressed_fire;    /* 第一次收到开火指令 */
-    uint32_t to_launch = 0;     /* 计划发射的弹丸 */
-    uint32_t launch_delay;      /* 弹丸击发延迟 */
-    TrigMode trig_mode_ = SAFE; /* 发射器模式 */
-  };
-  UVALauncher(Param &param, float control_freq);
-
+    CHANGE_TRIG_MODE_CONTINUED,
+    SET_START_FIRE,
+  } Event;
+  typedef enum {
+    SAFE,
+    LOADED,
+  } FricMode;
+  typedef enum {
+    RELAX,
+    SINGLE,
+    BURST,
+    CONTINUED,
+  } TrigMode;
+  typedef struct {
+    float trig_gear_ratio;
+    float bullet_circle_num;
+    uint32_t min_launcher_delay;
+    std::array<Component::PosActuator::Param, TRIG_NUM> trig_actr;
+    std::array<Device::RMMotor::Param, TRIG_NUM> trig_motor;
+    const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
+  } Param;
+  typedef struct {
+    float trig_pos;
+  } Setpoint;
   typedef struct {
     Device::Referee::Status status;
-
     Device::Referee::RobotStatus robot_status;
-
   } RefForLauncher;
-
-  void Control();
-
+  DroneLauncher(Param& param, float control_freq);
   void SetTrigMode(TrigMode mode);
-
+  void SetFricMode(FricMode mode);
+  void Feedback();
+  void Control();
+  void FricControl();
+  void TrigControl();
   void PraseRef();
 
-  void FricControl();
-
  private:
-  float last_wakeup_ = 0;
+  float dt_;
+  uint64_t now_;
+  uint64_t last_wakeup_;
 
-  float now_ = 0;
+  Param& param_;
+  Setpoint setpoint_;
 
-  float dt_ = 0; /*单位us*/
-
-  float trig_angle_ = 0;
-
-  Param param_;
-
-  struct {
-    float trig_angle_ = 0; /* 拨弹电机角度，单位：弧度 */
-  } setpoint_;
-
-  FireControl fire_ctrl_;
+  TrigMode trigmode_ = RELAX;
+  FricMode fricmode_ = SAFE;
 
   RefForLauncher ref_;
-
   Device::Referee::Data raw_ref_;
 
-  std::array<Component::PosActuator *, 1> trig_actuator_;
-
-  std::array<Device::RMMotor *, 1> trig_motor_;
-
   System::Thread thread_;
-
   System::Semaphore ctrl_lock_;
+
+  float trig_out_ = 0.0f;
+
+  float trig_pos_ = 0.0f;
+  float trig_last_pos_ = 1.0f;
+
+  float continued_rotation_speed_;
+
+  uint32_t last_launch_time_;
+  uint32_t launch_delay_;
+
+  float trig_set_freq_;
+
+  bool stall_ = false;
+
+  std::array<Component::PosActuator*, TRIG_NUM> trig_actr_;
+  std::array<Device::RMMotor*, TRIG_NUM> trig_motor_;
 };
 }  // namespace Module

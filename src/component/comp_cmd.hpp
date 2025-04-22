@@ -22,7 +22,7 @@ class CMD {
     CMD_TERM_CTRL,
   } Mode;
 
-  typedef Type::Vector3 ChassisCMD;
+typedef Type::Vector3 ChassisCMD;
 
   typedef struct {
     struct {

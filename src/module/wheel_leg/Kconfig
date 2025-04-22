@@ -1,0 +1,4 @@
+config MODULE_WHEELLEG_TASK_STACK_DEPTH
+    int "WHEELLEG任务堆栈大小"
+    range 128 4096
+    default 768

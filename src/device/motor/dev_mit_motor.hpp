@@ -32,6 +32,7 @@ class MitMotor : public BaseMotor {
   void SetPos(float pos);
 
   void SetMit(float out);
+
   bool Enable();
 
  private:

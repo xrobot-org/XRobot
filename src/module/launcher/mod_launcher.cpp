@@ -3,28 +3,28 @@
 #include "bsp_pwm.h"
 #include "bsp_time.h"
 
-#define LAUNCHER_TRIG_SPEED_MAX (8191)
+#define LAUNCHER_TRIG_SPEED_MAX (16000)
 
 using namespace Module;
 
-Launcher::Launcher(Param& param, float control_freq)
+template <typename Motor, typename Motorparam, int Fric_num, int Trig_num>
+Launcher<Motor, Motorparam, Fric_num, Trig_num>::Launcher(Param& param,
+                                                          float control_freq)
     : param_(param), ctrl_lock_(true) {
-  for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
+  for (size_t i = 0; i < Trig_num; i++) {
     this->trig_actuator_.at(i) =
         new Component::PosActuator(param.trig_actr.at(i), control_freq);
 
-    this->trig_motor_.at(i) =
-        new Device::RMMotor(this->param_.trig_motor.at(i),
-                            ("Launcher_Trig" + std::to_string(i)).c_str());
+    this->trig_motor_.at(i) = new Motor(
+        param.trig_param.at(i), ("Launcher_Trig" + std::to_string(i)).c_str());
   }
 
-  for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
+  for (size_t i = 0; i < Fric_num; i++) {
     this->fric_actuator_.at(i) =
         new Component::SpeedActuator(param.fric_actr.at(i), control_freq);
 
-    this->fric_motor_.at(i) =
-        new Device::RMMotor(this->param_.fric_motor.at(i),
-                            ("Launcher_Fric" + std::to_string(i)).c_str());
+    this->fric_motor_.at(i) = new Motor(
+        param.fric_param.at(i), ("Launcher_Fric" + std::to_string(i)).c_str());
   }
 
   auto event_callback = [](LauncherEvent event, Launcher* launcher) {
@@ -76,8 +76,8 @@ Launcher::Launcher(Param& param, float control_freq)
   Component::CMD::RegisterEvent<Launcher*, LauncherEvent>(
       event_callback, this, this->param_.EVENT_MAP);
 
-  bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
-  bsp_pwm_set_comp(BSP_PWM_LAUNCHER_SERVO, this->param_.cover_close_duty);
+  // bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
+  // bsp_pwm_set_comp(BSP_PWM_LAUNCHER_SERVO, this->param_.cover_close_duty);
 
   auto launcher_thread = [](Launcher* launcher) {
     auto ref_sub = Message::Subscriber<Device::Referee::Data>("referee");
@@ -109,15 +109,16 @@ Launcher::Launcher(Param& param, float control_freq)
   System::Timer::Create(this->DrawUIDynamic, this, 100);
 }
 
-void Launcher::UpdateFeedback() {
+template <typename Motor, typename Motorparam, int Fric_num, int Trig_num>
+void Launcher<Motor, Motorparam, Fric_num, Trig_num>::UpdateFeedback() {
   const float LAST_TRIG_MOTOR_ANGLE = this->trig_motor_[0]->GetAngle();
 
-  for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
+  for (size_t i = 0; i < Fric_num; i++) {
     this->fric_motor_[i]->Update();
     speed[i] = fric_motor_[i]->GetSpeed();
   }
 
-  for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
+  for (size_t i = 0; i < Trig_num; i++) {
     this->trig_motor_[i]->Update();
   }
 
@@ -126,7 +127,8 @@ void Launcher::UpdateFeedback() {
   this->trig_angle_ += DELTA_MOTOR_ANGLE / this->param_.trig_gear_ratio;
 }
 
-void Launcher::Control() {
+template <typename Motor, typename Motorparam, int Fric_num, int Trig_num>
+void Launcher<Motor, Motorparam, Fric_num, Trig_num>::Control() {
   this->now_ = bsp_time_get();
   this->dt_ = TIME_DIFF(this->last_wakeup_, this->now_);
 
@@ -236,19 +238,21 @@ void Launcher::Control() {
   /* 计算摩擦轮和拨弹盘并输出 */
   switch (this->fire_ctrl_.fire_mode_) {
     case RELAX:
-      for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
+      for (size_t i = 0; i < Trig_num; i++) {
         this->trig_motor_[i]->Relax();
       }
-      for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
+      for (size_t i = 0; i < Fric_num; i++) {
         this->fric_motor_[i]->Relax();
       }
-      bsp_pwm_stop(BSP_PWM_LAUNCHER_SERVO);
+      // sp_pwm_stop(BSP_PWM_LAUNCHER_SERVO);
       break;
 
     case SAFE:
     case LOADED:
-      for (int i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
+      for (size_t i = 0; i < Trig_num; i++) {
         /* 控制拨弹电机 */
+        float trig_speed = this->trig_motor_[i]->GetSpeed();
+        clampf(&trig_speed, 0.f, LAUNCHER_TRIG_SPEED_MAX);
         float trig_out = this->trig_actuator_[i]->Calculate(
             this->setpoint_.trig_angle_,
             this->trig_motor_[i]->GetSpeed() / LAUNCHER_TRIG_SPEED_MAX,
@@ -257,7 +261,7 @@ void Launcher::Control() {
         this->trig_motor_[i]->Control(trig_out);
       }
 
-      for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
+      for (size_t i = 0; i < Fric_num; i++) {
         /* 控制摩擦轮 */
         float fric_out = this->fric_actuator_[i]->Calculate(
             this->setpoint_.fric_rpm_[i], this->fric_motor_[i]->GetSpeed(),
@@ -267,19 +271,23 @@ void Launcher::Control() {
       }
 
       /* 根据弹仓盖开关状态更新弹舱盖打开时舵机PWM占空比 */
-      if (this->cover_mode_ == OPEN) {
-        bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
-        bsp_pwm_set_comp(BSP_PWM_LAUNCHER_SERVO, this->param_.cover_open_duty);
-      } else {
-        bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
-        bsp_pwm_set_comp(BSP_PWM_LAUNCHER_SERVO, this->param_.cover_close_duty);
-      }
+      // if (this->cover_mode_ == OPEN) {
+      //   bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
+      //   bsp_pwm_set_comp(BSP_PWM_LAUNCHER_SERVO,
+      //   this->param_.cover_open_duty);
+      // } else {
+      //   bsp_pwm_start(BSP_PWM_LAUNCHER_SERVO);
+      //   bsp_pwm_set_comp(BSP_PWM_LAUNCHER_SERVO,
+      //   this->param_.cover_close_duty);
+      // }
       break;
   }
 }
 /* 拨弹盘模式 */
 /* SINGLE,BURST,CONTINUED,  */
-void Launcher::SetTrigMode(TrigMode mode) {
+template <typename Motor, typename Motorparam, int Fric_num, int Trig_num>
+void Launcher<Motor, Motorparam, Fric_num, Trig_num>::SetTrigMode(
+    TrigMode mode) {
   if (mode == this->fire_ctrl_.trig_mode_) {
     return;
   }
@@ -288,14 +296,16 @@ void Launcher::SetTrigMode(TrigMode mode) {
 }
 /* 设置摩擦轮模式 */
 /* RELEX SAFE LOADED三种模式可以选择 */
-void Launcher::SetFireMode(FireMode mode) {
+template <typename Motor, typename Motorparam, int Fric_num, int Trig_num>
+void Launcher<Motor, Motorparam, Fric_num, Trig_num>::SetFireMode(
+    FireMode mode) {
   if (mode == this->fire_ctrl_.fire_mode_) { /* 未更改，return */
     return;
   }
 
   fire_ctrl_.fire = false;
 
-  for (size_t i = 0; i < LAUNCHER_ACTR_FRIC_NUM; i++) {
+  for (size_t i = 0; i < Fric_num; i++) {
     this->fric_actuator_[i]->Reset();
   } /* reset 所有电机执行器PID等参数 */
 
@@ -306,7 +316,8 @@ void Launcher::SetFireMode(FireMode mode) {
   this->fire_ctrl_.fire_mode_ = mode;
 }
 
-void Launcher::HeatLimit() {
+template <typename Motor, typename Motorparam, int Fric_num, int Trig_num>
+void Launcher<Motor, Motorparam, Fric_num, Trig_num>::HeatLimit() {
   if (this->ref_.status == Device::Referee::RUNNING) {
     /* 根据机器人型号获得对应数据 */
     if (this->param_.model == LAUNCHER_MODEL_42MM) {
@@ -340,7 +351,8 @@ void Launcher::HeatLimit() {
   }
 }
 
-void Launcher::PraseRef() {
+template <typename Motor, typename Motorparam, int Fric_num, int Trig_num>
+void Launcher<Motor, Motorparam, Fric_num, Trig_num>::PraseRef() {
   memcpy(&(this->ref_.power_heat), &(this->raw_ref_.power_heat),
          sizeof(this->ref_.power_heat));
   memcpy(&(this->ref_.robot_status), &(this->raw_ref_.robot_status),
@@ -350,29 +362,51 @@ void Launcher::PraseRef() {
   this->ref_.status = this->raw_ref_.status;
 }
 
-float Launcher::LimitLauncherFreq() { /* 热量限制计算 */
+// float Launcher::LimitLauncherFreq() { /* 热量限制计算 */
+//   float heat_percent = this->heat_ctrl_.heat / this->heat_ctrl_.heat_limit;
+//   float stable_freq = this->heat_ctrl_.cooling_rate /
+//                       this->heat_ctrl_.heat_increase; /* 每秒可发弹量 */
+//   if (this->param_.model == LAUNCHER_MODEL_42MM) {
+//     return stable_freq;
+//   } else {
+//     if (heat_percent > 0.9f) {
+//       return 0.5f;
+//     } else if (heat_percent > 0.8f) {
+//       return 1.0f;
+//     } else if (heat_percent > 0.6f) {
+//       return 2.0f * stable_freq;
+//     } else if (heat_percent > 0.2f) {
+//       return 3.0f * stable_freq;
+//     } else if (heat_percent > 0.1f) {
+//       return 4.0f * stable_freq;
+//     } else {
+//       return 5.0f;
+//     }
+//   }
+// }
+
+template <typename Motor, typename Motorparam, int Fric_num, int Trig_num>
+float Launcher<Motor, Motorparam, Fric_num,
+               Trig_num>::LimitLauncherFreq() { /* 热量限制计算 */
   float heat_percent = this->heat_ctrl_.heat / this->heat_ctrl_.heat_limit;
   float stable_freq = this->heat_ctrl_.cooling_rate /
                       this->heat_ctrl_.heat_increase; /* 每秒可发弹量 */
-  if (this->param_.model == LAUNCHER_MODEL_42MM) {
-    return stable_freq;
+  if (heat_percent > 0.9f) {
+    return 0.5f;
+  } else if (heat_percent > 0.85f) {
+    return stable_freq * 0.6f;
+  } else if (heat_percent > 0.8f) {
+    return 0.6f * 1000 / this->param_.min_launch_delay;
+  } else if (heat_percent > 0.6f) {
+    return 0.8f * 1000 / this->param_.min_launch_delay;
   } else {
-    if (heat_percent > 0.9f) {
-      return 0.5f;
-    } else if (heat_percent > 0.8f) {
-      return 1.0f;
-    } else if (heat_percent > 0.6f) {
-      return 2.0f * stable_freq;
-    } else if (heat_percent > 0.2f) {
-      return 3.0f * stable_freq;
-    } else if (heat_percent > 0.1f) {
-      return 4.0f * stable_freq;
-    } else {
-      return 5.0f;
-    }
+    return 1000 / this->param_.min_launch_delay;
   }
 }
-void Launcher::DrawUIStatic(Launcher* launcher) {
+
+template <typename Motor, typename Motorparam, int Fric_num, int Trig_num>
+void Launcher<Motor, Motorparam, Fric_num, Trig_num>::DrawUIStatic(
+    Launcher* launcher) {
   launcher->string_.Draw("SM", Component::UI::UI_GRAPHIC_OP_ADD,
                          Component::UI::UI_GRAPHIC_LAYER_CONST,
                          Component::UI::UI_GREEN, UI_DEFAULT_WIDTH * 10, 80,
@@ -511,7 +545,9 @@ void Launcher::DrawUIStatic(Launcher* launcher) {
   Device::Referee::AddUI(launcher->arc_);
 }
 
-void Launcher::DrawUIDynamic(Launcher* launcher) {
+template <typename Motor, typename Motorparam, int Fric_num, int Trig_num>
+void Launcher<Motor, Motorparam, Fric_num, Trig_num>::DrawUIDynamic(
+    Launcher* launcher) {
   float box_pos_left = 0.0f, box_pos_right = 0.0f;
 
   /* 更新发射器模式选择框 */
@@ -655,3 +691,5 @@ void Launcher::DrawUIDynamic(Launcher* launcher) {
       40, 40);
   Device::Referee::AddUI(launcher->arc_);
 }
+
+template class Module::Launcher<Device::RMMotor, Device::RMMotor::Param>;

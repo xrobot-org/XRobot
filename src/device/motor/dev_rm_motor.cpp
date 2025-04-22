@@ -4,12 +4,14 @@
 
 /* 电机最大控制输出绝对值 */
 #define GM6020_MAX_ABS_LSB (30000)
+#define GM6020_MAX_ABS_CUR_LSB (16384)
 #define M3508_MAX_ABS_LSB (16384)
 #define M2006_MAX_ABS_LSB (10000)
 
 /* 电机最大电流绝对值 */
 #define GM6020_MAX_ABS_CUR (1)
-#define M3508_MAX_ABS_CUR (20)
+#define GM6020_MAX_CURRENT (3)
+#define M3508_MAX_ABS_CUR (20)  // 20
 #define M2006_MAX_ABS_CUR (10)
 
 #define MOTOR_ENC_RES (8192)  /* 电机编码器分辨率 */
@@ -123,7 +125,7 @@ float RMMotor::GetLSB() {
       return M3508_MAX_ABS_LSB;
 
     case MOTOR_GM6020:
-      return GM6020_MAX_ABS_LSB;
+      return GM6020_MAX_ABS_CUR_LSB;
 
     default:
       return 0.0f;
@@ -148,14 +150,39 @@ void RMMotor::Control(float out) {
     int16_t ctrl_cmd = static_cast<int16_t>(this->output_ * lsb);
     motor_tx_buff_[this->param_.can][this->index_][2 * this->num_] =
         static_cast<uint8_t>((ctrl_cmd >> 8) & 0xFF);
+
     motor_tx_buff_[this->param_.can][this->index_][2 * this->num_ + 1] =
         static_cast<uint8_t>(ctrl_cmd & 0xFF);
+
     motor_tx_flag_[this->param_.can][this->index_] |= 1 << (this->num_);
 
     if (((~motor_tx_flag_[this->param_.can][this->index_]) &
          (motor_tx_map_[this->param_.can][this->index_])) == 0) {
       this->SendData();
     }
+  }
+}
+
+void RMMotor::ControlCurrent(float current) {
+  clampf(&current, -GM6020_MAX_CURRENT, GM6020_MAX_CURRENT);
+
+  if (reverse_) {
+    this->current_ = -current;
+  } else {
+    this->current_ = current;
+  }
+
+  int16_t ctrl_cmd = static_cast<int16_t>((current / GM6020_MAX_CURRENT) *
+                                          GM6020_MAX_ABS_CUR_LSB);
+  motor_tx_buff_[this->param_.can][this->index_][2 * this->num_] =
+      static_cast<uint8_t>((ctrl_cmd >> 8) & 0xFF);
+  motor_tx_buff_[this->param_.can][this->index_][2 * this->num_ + 1] =
+      static_cast<uint8_t>(ctrl_cmd & 0xFF);
+  motor_tx_flag_[this->param_.can][this->index_] |= 1 << (this->num_);
+
+  if (((~motor_tx_flag_[this->param_.can][this->index_]) &
+       (motor_tx_map_[this->param_.can][this->index_])) == 0) {
+    this->SendData();
   }
 }
 

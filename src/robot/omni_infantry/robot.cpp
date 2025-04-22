@@ -3,36 +3,64 @@
 #include <comp_actuator.hpp>
 
 #include "dev_rm_motor.hpp"
-#include "mod_omni_chassis.hpp"
+// #include "mod_new_omni_chassis.hpp"
 #include "system.hpp"
 
 /* clang-format off */
 Robot::OmniInfantry::Param param = {
     .chassis={
-      .toque_coefficient_ = 0.0327120418848f,
-      .speed_2_coefficient_ = 1.227822928729637e-07,
-      .out_2_coefficient_ = 1.1108430132455055e-24,
-      .constant_ = 1.8135014050213443,
+      .toque_coefficient_ = 0.03985309056810189f,
+      .speed_2_coefficient_  = 5.297566618742181e-08f,
+      .out_2_coefficient_ = 28.851126052234243f,
+      .constant_ = 7.479591458247737f,
 
       .follow_pid_param = {
-      .k = 0.5f,
-      .p = 1.0f,
-      .i = 0.0f,
-      .d = 0.0f,
-      .i_limit = 1.0f,
+      .k = -1.5f,
+      //.p = 0.45f,
+      .p = 0.70f,
+      .i = 0.05f,
+      .d = 0.01f,
+      .i_limit = 0.5f,
       .out_limit = 1.0f,
       .d_cutoff_freq = -1.0f,
       .cycle = true,
     },
+
+      .xaccl_pid_param =
+      {
+      .k = 1.0f,
+      .p = 0.6f,
+      .i = 1.6f,
+      .d = 0.00f,
+      .i_limit = 1.0f,
+      .out_limit = 1.0f,
+      .d_cutoff_freq = -0.001f,
+      .cycle = false,
+      },
+      .yaccl_pid_param =
+      {
+      .k = 1.0f,
+      .p = 0.6f,
+      .i = 1.6f,
+      .d = 0.00f,
+      .i_limit = 1.0f,
+      .out_limit = 1.0f,
+      .d_cutoff_freq = -0.001f,
+      .cycle = false,
+      },
 
     .EVENT_MAP = {
       Component::CMD::EventMapItem{
         Component::CMD::CMD_EVENT_LOST_CTRL,
         Module::RMChassis::SET_MODE_RELAX
       },
+      // Component::CMD::EventMapItem{
+      //   Device::DR16::DR16_SW_L_POS_TOP,
+      //   Module::RMChassis::SET_MODE_RELAX
+      // },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_L_POS_TOP,
-        Module::RMChassis::SET_MODE_RELAX
+        Module::RMChassis::RELAX
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_L_POS_MID,
@@ -59,6 +87,7 @@ Robot::OmniInfantry::Param param = {
     .actuator_param = {
       Component::SpeedActuator::Param{
         .speed = {
+          //.k = 0.00050f,
           .k = 0.00015f,
           .p = 1.0f,
           .i = 0.0f,
@@ -76,7 +105,7 @@ Robot::OmniInfantry::Param param = {
       },
       Component::SpeedActuator::Param{
         .speed = {
-          .k = 0.00018f,
+          .k = 0.00015f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.0f,
@@ -130,25 +159,46 @@ Robot::OmniInfantry::Param param = {
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_1,
+          .reverse=false,
       },
       Device::RMMotor::Param{
           .id_feedback = 0x204,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_1,
+          .reverse=false,
       },
       Device::RMMotor::Param{
           .id_feedback = 0x201,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_1,
+          .reverse=false,
       },
       Device::RMMotor::Param{
           .id_feedback = 0x202,
           .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_1,
+          .reverse=false,
       },
+    },
+      .get_speed = [](float power_limit){
+      float speed = 0.0f;
+      if (power_limit <= 50.0f) {
+        speed = 5500;
+      } else if (power_limit <= 60.0f) {
+        speed = 6000;
+      } else if (power_limit <= 70.0f) {
+        speed = 6500;
+      } else if (power_limit <= 80.0f) {
+        speed = 7000;
+      } else if (power_limit <= 100.0f) {
+        speed = 7500;
+      } else {
+        speed = 8000;
+      }
+      return speed;
     },
   },
 
@@ -174,9 +224,9 @@ Robot::OmniInfantry::Param param = {
     .yaw_actr = {
       .speed = {
           /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-          .k = 0.28f,
+          .k = 0.4f,
           .p = 1.f,
-          .i = 1.f,
+          .i = 0.5f,
           .d = 0.f,
           .i_limit = 0.2f,
           .out_limit = 1.0f,
@@ -201,25 +251,83 @@ Robot::OmniInfantry::Param param = {
         .out_cutoff_freq = -1.0f,
     },
     .pit_actr = {
-        .speed = {
-          /* GIMBAL_CTRL_PIT_OMEGA_IDX */
-          .k = 0.0f,
-          .p = 0.0f,
-          .i = 0.f,
-          .d = 0.f,
-          .i_limit = 0.f,
-          .out_limit = 0.0f,
+      .speed = {
+          /* GIMBAL_CTRL_YAW_OMEGA_IDX */
+          .k = 0.4f,
+          .p = 0.8f,
+          .i = 0.1f,
+          .d = 0.0f,
+          .i_limit = 0.2f,
+          .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
 
         .position = {
-          /* GIMBAL_CTRL_PIT_ANGLE_IDX */
-          .k = 30.0f,
+          /* GIMBAL_CTRL_YAW_ANGLE_IDX */
+          .k = 20.0f,
+          .p = 0.75f,
+          .i = 0.1f,
+          .d = 0.0f,
+          .i_limit = 0.2f,
+          .out_limit = 10.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = true,
+        },
+
+        .in_cutoff_freq = -1.0f,
+
+        .out_cutoff_freq = -1.0f,
+    },
+        .yaw_ai_actr = {
+      .speed = {
+          /* GIMBAL_CTRL_YAW_OMEGA_IDX */
+          .k = 0.4f,
+          .p = 1.f,
+          .i = 0.5f,
+          .d = 0.f,
+          .i_limit = 0.2f,
+          .out_limit = 1.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = false,
+        },
+
+        .position = {
+          /* GIMBAL_CTRL_YAW_ANGLE_IDX */
+          .k = 20.0f,
           .p = 1.0f,
           .i = 0.0f,
           .d = 0.0f,
           .i_limit = 0.0f,
+          .out_limit = 10.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = true,
+        },
+
+        .in_cutoff_freq = -1.0f,
+
+        .out_cutoff_freq = -1.0f,
+    },
+    .pit_ai_actr = {
+      .speed = {
+          /* GIMBAL_CTRL_YAW_OMEGA_IDX */
+          .k = 0.4f,
+          .p = 0.8f,
+          .i = 0.1f,
+          .d = 0.0f,
+          .i_limit = 0.2f,
+          .out_limit = 1.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = false,
+        },
+
+        .position = {
+          /* GIMBAL_CTRL_YAW_ANGLE_IDX */
+          .k = 20.0f,
+          .p = 0.75f,
+          .i = 0.1f,
+          .d = 0.0f,
+          .i_limit = 0.2f,
           .out_limit = 10.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = true,
@@ -234,30 +342,36 @@ Robot::OmniInfantry::Param param = {
       .id_control = GM6020_CTRL_ID_BASE,
       .model = Device::RMMotor::MOTOR_GM6020,
       .can = BSP_CAN_1,
+      .reverse = true,
     },
     .pit_motor ={
-      .kp = 10.0f,
-      .kd = 1.0f,
-      .feedback_id = 0,
-      .id = 1,
+      .id_feedback = 0x207,
+      .id_control = GM6020_CTRL_ID_BASE,
+      .model = Device::RMMotor::MOTOR_GM6020,
       .can = BSP_CAN_2,
       .reverse = true,
     },
     .mech_zero = {
-      .yaw = 1.3f + M_PI / 2.0f,
-      .pit = 0.0f,
+      .yaw = M_2PI - 3.69229198f,
+      .pit = 5.82529211,
       .rol = 0.0f,
     },
 
     .limit = {
-      .pitch_max = M_2PI - 0.38f,
-      .pitch_min = M_2PI - 2.27f,
+      .pitch_max = M_2PI - 5.49569994f,
+      .pitch_min = M_2PI - 6.15663195f,
+      .yaw_max = 0.0f,
+      .yaw_min = 0.0f,
     },
 
     .EVENT_MAP = {
       Component::CMD::EventMapItem{
         Component::CMD::CMD_EVENT_LOST_CTRL,
         Module::Gimbal::SET_MODE_RELAX
+      },
+      Component::CMD::EventMapItem{
+        Device::DR16::DR16_SW_R_POS_TOP,
+        Module::Gimbal::ABSOLUTE
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_TOP,
@@ -269,50 +383,57 @@ Robot::OmniInfantry::Param param = {
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_BOT,
-        Module::Gimbal::SET_MODE_ABSOLUTE
+        Module::Gimbal::SET_MODE_AUTO_AIM
       },
+      // Component::CMD::EventMapItem{
+      //   Device::DR16::DR16_SW_R_POS_MID,
+      //   Module::Gimbal::ABSOLUTE
+      // },
+      // Component::CMD::EventMapItem{
+      //   Device::DR16::DR16_SW_R_POS_BOT,
+      //   Module::Gimbal::ABSOLUTE
+      // },
       Component::CMD::EventMapItem{
         Device::DR16::KEY_R_PRESS,
-        Module::Gimbal::START_AUTO_AIM
+        Module::Gimbal::SET_MODE_AUTO_AIM
       },
       Component::CMD::EventMapItem{
         Device::DR16::KEY_R_RELEASE,
-        Module::Gimbal::STOP_AUTO_AIM
+        Module::Gimbal::SET_MODE_ABSOLUTE
       }
     },
-
   },
 
   .launcher = {
-    .num_trig_tooth = 8.0f,
-    .trig_gear_ratio = 36.0f,
+    .num_trig_tooth = 10.0f,
+    .trig_gear_ratio = 36.0f * 2.5f,
     .fric_radius = 0.03f,
     .cover_open_duty = 0.125f,
     .cover_close_duty = 0.075f,
-    .model = Module::Launcher::LAUNCHER_MODEL_17MM,
-    .default_bullet_speed = 15.f,
-    .min_launch_delay = static_cast<uint32_t>(1000.0f / 20.0f),
+    .model = Module::RMLauncher::LAUNCHER_MODEL_17MM,
+    .default_bullet_speed = 25.0f,
+    .min_launch_delay = static_cast<uint32_t>(1000.0f / 12.0f),
 
     .trig_actr = {
       Component::PosActuator::Param{
         .speed = {
-          .k = 5.0f,
-          .p = 1.0f,
-          .i = 0.15f,
+          .k = 3.0f,
+          .p = 2.0f,
+          .i = 0.5f,
           .d = 0.0f,
-          .i_limit = 0.1f,
-          .out_limit = 1.5f,
+          .i_limit = 0.5f,
+          .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
 
         .position = {
-          .k = 5.0f,
+          .k = 1.8f,
           .p = 1.0f,
           .i = 0.0f,
-          .d = 0.010f,
+          .d = 0.0f,
           .i_limit = 0.0f,
-          .out_limit = 0.70f,
+          .out_limit = 0.55f,
           .d_cutoff_freq = -1.0f,
           .cycle = true,
         },
@@ -323,109 +444,128 @@ Robot::OmniInfantry::Param param = {
       },
     },
 
-    .fric_actr = {
-      Component::SpeedActuator::Param{
-        .speed = {
-          .k = 0.00025f,
-          .p = 1.0f,
-          .i = 0.4f,
-          .d = 0.01f,
-          .i_limit = 0.5f,
-          .out_limit = 1.0f,
-          .d_cutoff_freq = -1.0f,
-          .cycle = false,
+        .fric_actr = {
+           Component::SpeedActuator::Param{
+            .speed = {
+            .k = 0.00025f,
+            .p = 1.0f,
+            .i = 0.0f,
+            .d = 0.0f,
+            .i_limit = 0.2f,
+            .out_limit = 1.0f,
+            .d_cutoff_freq = -1.0f,
+            .cycle = false,
+            },
+
+            .in_cutoff_freq = -1.0f,
+
+            .out_cutoff_freq = -1.0f,
+            },
+           Component::SpeedActuator::Param{
+            .speed = {
+            .k = 0.00025f,
+            .p = 1.0f,
+            .i = 0.0f,
+            .d = 0.0f,
+            .i_limit = 0.2f,
+            .out_limit = 1.0f,
+            .d_cutoff_freq = -1.0f,
+            .cycle = false,
+            },
+
+            .in_cutoff_freq = -1.0f,
+
+            .out_cutoff_freq = -1.0f,
+        },
         },
 
-        .in_cutoff_freq = -1.0f,
-
-        .out_cutoff_freq = -1.0f,
-      },
-      Component::SpeedActuator::Param{
-        .speed = {
-          .k = 0.00025f,
-          .p = 1.0f,
-          .i = 0.4f,
-          .d = 0.01f,
-          .i_limit = 0.5f,
-          .out_limit = 1.0f,
-          .d_cutoff_freq = -1.0f,
-          .cycle = false,
-        },
-
-        .in_cutoff_freq = -1.0f,
-
-        .out_cutoff_freq = -1.0f,
-      },
-    },
-
-    .trig_motor = {
+    .trig_param = {
       Device::RMMotor::Param{
-        .id_feedback = 0x208,
+        .id_feedback = 0x207,
         .id_control = M3508_M2006_CTRL_ID_EXTAND,
         .model = Device::RMMotor::MOTOR_M2006,
-        .can = BSP_CAN_2,
+        .can = BSP_CAN_1,
+        .reverse = true,
       }
     },
 
-    .fric_motor = {
+    .fric_param = {
       Device::RMMotor::Param{
-          .id_feedback = 0x206,
-          .id_control = M3508_M2006_CTRL_ID_EXTAND,
+          .id_feedback = 0x201,
+          .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
+          .reverse=false,
       },
       Device::RMMotor::Param{
-          .id_feedback = 0x205,
-          .id_control = M3508_M2006_CTRL_ID_EXTAND,
+          .id_feedback = 0x203,
+          .id_control = M3508_M2006_CTRL_ID_BASE,
           .model = Device::RMMotor::MOTOR_M3508,
           .can = BSP_CAN_2,
+          .reverse=false,
       },
     },
 
     .EVENT_MAP = {
       Component::CMD::EventMapItem{
         Component::CMD::CMD_EVENT_LOST_CTRL,
-        Module::Launcher::CHANGE_FIRE_MODE_RELAX
+        Module::RMLauncher::CHANGE_FIRE_MODE_RELAX
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_TOP,
-        Module::Launcher::CHANGE_FIRE_MODE_SAFE
+        Module::RMLauncher::CHANGE_FIRE_MODE_SAFE
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_MID,
-        Module::Launcher::CHANGE_FIRE_MODE_LOADED
+        Module::RMLauncher::CHANGE_FIRE_MODE_LOADED
+      },
+      Component::CMD::EventMapItem{
+        Device::DR16::DR16_SW_R_POS_MID,
+        Module::RMLauncher::LAUNCHER_STOP_TRIG
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_BOT,
-        Module::Launcher::CHANGE_FIRE_MODE_LOADED
+        Module::RMLauncher::CHANGE_FIRE_MODE_LOADED
       },
+      // Component::CMD::EventMapItem{
+      //   Device::DR16::DR16_SW_R_POS_BOT,
+      //   Module::RMLauncher::LAUNCHER_START_FIRE
+      // },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_BOT,
-        Module::Launcher::LAUNCHER_START_FIRE
+        Module::RMLauncher::CHANGE_TRIG_MODE_BURST
       },
       Component::CMD::EventMapItem{
         Device::DR16::KEY_L_PRESS,
-        Module::Launcher::LAUNCHER_START_FIRE
+        Module::RMLauncher::CHANGE_TRIG_MODE_BURST
+      },
+      Component::CMD::EventMapItem{
+        Device::DR16::KEY_L_RELEASE,
+        Module::RMLauncher::LAUNCHER_STOP_TRIG
       },
       Component::CMD::EventMapItem{
         Device::DR16::KEY_G,
-        Module::Launcher::CHANGE_TRIG_MODE
+        Module::RMLauncher::CHANGE_TRIG_MODE
       },
       Component::CMD::EventMapItem{
         Device::DR16::KEY_R,
-        Module::Launcher::OPEN_COVER
+        Module::RMLauncher::OPEN_COVER
       },
       Component::CMD::EventMapItem{
         Device::DR16::KEY_F,
-        Module::Launcher::CLOSE_COVER
-      }
+        Module::RMLauncher::CLOSE_COVER
+      },
+      // Component::CMD::EventMapItem{
+      //   Device::DR16::KEY_V,
+      // }
+      //   Module::RMLauncher::CHANGE_AI_MODE
     },
   }, /* launcher */
 
   .bmi088_rot = {
     .rot_mat = {
-      { +1, +0, +0},
       { +0, +1, +0},
+      { -1, +0, +0},
       { +0, +0, +1},
     },
   },
