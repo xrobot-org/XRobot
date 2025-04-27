@@ -8,8 +8,7 @@
 #define AI_CMD_LIMIT (0.08f)
 #define AI_CTRL_SENSE (1.0f / 90.0f)
 #define AI_LEN_RX_BUFF (sizeof(Protocol_DownPackage_t))
-#define AI_LEN_TX_BUFF \
-  (sizeof(Protocol_UpPackageMCU_t) + sizeof(Protocol_UpPackageReferee_t))
+#define AI_LEN_TX_BUFF (sizeof(Protocol_UpPackage_t))
 
 static uint8_t rxbuf[AI_LEN_RX_BUFF];
 static uint8_t txbuf[AI_LEN_TX_BUFF];
@@ -32,11 +31,8 @@ AI::AI(bool autoscan_enable)
   Component::CMD::RegisterController(this->cmd_tp_);
 
   auto ai_thread = [](AI *ai) {
-    auto quat_sub =
-        Message::Subscriber<Component::Type::Quaternion>("imu_quat");
     auto ref_sub = Message::Subscriber<Device::Referee::Data>("referee");
     auto yaw_sub = Message::Subscriber<float>("chassis_yaw");
-
     auto eulr_sub = Message::Subscriber<Component::Type::Eulr>("imu_eulr");
 
     while (1) {
@@ -63,7 +59,7 @@ AI::AI(bool autoscan_enable)
       ai->ai_tp_.Publish(ai->cmd_for_ref_);
 
       /* 发送数据到上位机 */
-      quat_sub.DumpData(ai->quat_);
+      // quat_sub.DumpData(ai->quat_);
       ai->PackMCU();
 
       ai->StartTrans();
@@ -92,14 +88,12 @@ bool AI::PraseHost() {
 }
 
 bool AI::StartTrans() {
-  size_t len = sizeof(this->to_host_.mcu);
+  this->to_host_.crc16 = Component::CRC16::Calculate(
+      reinterpret_cast<const uint8_t *>(&(this->to_host_)),
+      sizeof(this->to_host_) - sizeof(uint16_t), CRC16_INIT);
+  size_t len = sizeof(this->to_host_);
   void *src = NULL;
-  if (this->ref_updated_) {
-    len += sizeof(this->to_host_.ref);
-    src = &(this->to_host_);
-  } else {
-    src = &(this->to_host_.mcu);
-  }
+  src = &(to_host_);
   this->ref_updated_ = false;
 
   memcpy(txbuf, src, len);
@@ -109,7 +103,6 @@ bool AI::StartTrans() {
 bool AI::Offline() {
   /* 离线移交控制权 */
   if (bsp_time_get_ms() - this->last_online_time_ > 200) {
-    memset(&this->cmd_, 0, sizeof(cmd_));
     if (!this->autoscan_enable_) {
       this->cmd_.online = true;
     } else {
@@ -122,30 +115,35 @@ bool AI::Offline() {
 }
 
 bool AI::PackMCU() {
-  this->to_host_.mcu.id = AI_ID_MCU;
-  memcpy(&(this->to_host_.mcu.package.data.quat), &(this->quat_),
-         sizeof(this->quat_));
-  this->to_host_.mcu.package.data.notice = this->notice_for_ai_;
-  this->to_host_.mcu.package.crc16 = Component::CRC16::Calculate(
-      reinterpret_cast<const uint8_t *>(&(this->to_host_.mcu.package)),
-      sizeof(this->to_host_.mcu.package) - sizeof(uint16_t), CRC16_INIT);
+  float temp = 0.0;
+
+  this->to_host_.id = AI_ID_MCU;
+
+  memcpy(&(this->to_host_.data.eulr), &(this->eulr_), sizeof(this->eulr_));
+  memcpy(&(this->to_host_.data.yaw), &temp, sizeof(this->to_host_.data.yaw));
+  memcpy(&(to_host_.data.pit), &temp, sizeof(this->to_host_.data.pit));
+  memcpy(&(to_host_.data.rol), &temp, sizeof(this->to_host_.data.rol));
+
+  this->to_host_.data.notice = this->notice_for_ai_;
+
   return true;
 }
 
 bool AI::PackRef() {
-  this->to_host_.ref.id = AI_ID_REF;
-  this->to_host_.mcu.package.data.ball_speed =
-      static_cast<float>(this->ref_.ball_speed);
-  this->to_host_.ref.package.data.arm = this->ref_.robot_id;
-  this->to_host_.ref.package.data.rfid = this->ref_.robot_buff;
-  this->to_host_.ref.package.data.team = this->ref_.team;
-  this->to_host_.ref.package.data.race = this->ref_.game_type;
-  this->to_host_.ref.package.crc16 = Component::CRC16::Calculate(
-      reinterpret_cast<const uint8_t *>(&(this->to_host_.ref.package)),
-      sizeof(this->to_host_.ref.package) - sizeof(uint16_t), CRC16_INIT);
-
+  this->to_host_.data.ball_speed = static_cast<float>(this->ref_.ball_speed);
+  this->to_host_.data.rfid = this->ref_.rfid;
+  this->to_host_.data.sentry_hp = this->ref_.hp;
+  this->to_host_.data.game_progress = this->ref_.game_progress;
+  this->to_host_.data.ballet_remain = this->ref_.bullet_num;
   this->ref_updated_ = true;
-
+  this->to_host_.data.hero_x = this->ref_.hero_x;
+  this->to_host_.data.hero_y = this->ref_.hero_y;
+  this->to_host_.data.standard_3_x = this->ref_.infantry_3_x;
+  this->to_host_.data.standard_3_y = this->ref_.infantry_3_y;
+  this->to_host_.data.standard_4_x = this->ref_.infantry_4_x;
+  this->to_host_.data.standard_4_y = this->ref_.infantry_4_y;
+  this->to_host_.data.engineer_x = this->ref_.engineer_x;
+  this->to_host_.data.engineer_y = this->ref_.engineer_y;
   return true;
 }
 
@@ -153,12 +151,9 @@ void AI::DecideAction() {
   memcpy(&(this->cmd_.gimbal.eulr), &(this->from_host_.data.gimbal),
          sizeof(this->cmd_.gimbal.eulr));
   this->notice_ = this->from_host_.data.notice;
-  /* AI自瞄数据不更新，重置notice_ */
-  // TODO:检测更新方式不合理
-  if (this->cmd_.gimbal.eulr.yaw == this->last_auto_aim_eulr_.yaw ||
-      this->cmd_.gimbal.eulr.pit == this->last_auto_aim_eulr_.pit) {
-    this->notice_ = 0;
-  } else {
+
+  if (this->cmd_.gimbal.eulr.yaw != this->last_auto_aim_eulr_.yaw ||
+      this->cmd_.gimbal.eulr.pit != this->last_auto_aim_eulr_.pit) {
     this->aim_time_ = bsp_time_get_ms(); /* 自瞄锁定时刻 */
   }
   memcpy(&(this->last_auto_aim_eulr_), &(this->cmd_.gimbal.eulr),
@@ -178,13 +173,7 @@ void AI::DecideAction() {
     this->damage_.is_damaged_ = false;
   }
 
-  /* 判定是否可以开始导航 */
-  if (this->from_host_.data.chassis_move_vec.vx == 0 && damage_.is_damaged_) {
-    navigation_enable_ = false;
-  } else {
-    navigation_enable_ = true;
-  }
-
+  navigation_enable_ = true;
   /* 裁判系统行为：确认复活、购买发弹量 */
   if (this->ref_.hp == 0) {
     this->action_.ai_to_referee = CONFIRM_RESURRECTION;
@@ -195,42 +184,26 @@ void AI::DecideAction() {
   }
 
   /* 底盘行为*/
-  if (navigation_enable_) {
-    if (this->ref_.outpost_hp > 200) { /* 认为哨兵&基地无敌 */
-      this->action_.ai_chassis = AI::Action::TO_HIGHWAY;
-      this->notice_for_ai_ = AI::Action::TO_HIGHWAY;
-    } else {
-      if (this->ref_.hp < 100 ||
-          (this->action_.ai_to_referee == EXCHANGE_BULLETS)) { /* max = 400 */
-        this->action_.ai_chassis = AI::Action::TO_SUPPLY;
-        this->notice_for_ai_ = AI::Action::TO_SUPPLY;
-      } else {
-        this->action_.ai_chassis = AI::Action::TO_PATROL_AREA;
-        this->notice_for_ai_ = AI::Action::TO_PATROL_AREA;
-      }
-    }
-  } else {
-    this->action_.ai_chassis = AI::Action::ROTOR;
+  if (navigation_enable_ && damage_.is_damaged_ == false) {
+    this->action_.ai_chassis = AI::Action::START_AUTO_CONTROL;
+  } else if (damage_.is_damaged_ == true) {
+    this->action_.ai_chassis = AI::Action::STOP_AUTO_CONTROL;
   }
 
   /* 云台行为 */
-  if (this->notice_ == AI_NOTICE_AUTO_AIM || this->notice_ == AI_NOTICE_FIRE ||
-      bsp_time_get_ms() - this->aim_time_ < 1000) {
+  if (this->notice_ == 2 || bsp_time_get_ms() - aim_time_ < 1300) {
     /* 自瞄/丢失目标1000ms内，进行视觉暂留 */
     this->action_.ai_gimbal = AI::Action::AUTO_AIM;
     this->cmd_.gimbal.mode = Component::CMD::GIMBAL_ABSOLUTE_CTRL;
-  } else if (damage_.is_damaged_) {
-    this->cmd_.gimbal.mode = Component::CMD::GIMBAL_ABSOLUTE_CTRL;
-    this->action_.ai_gimbal = AI::Action::AFFECTED;
-  } else {
+  } else if (this->notice_ == 5) {
     this->cmd_.gimbal.mode = Component::CMD::GIMBAL_ABSOLUTE_CTRL;
     this->action_.ai_gimbal = AI::Action::SCANF;
   }
 
   /* 发射机构行为 */
-  if (this->notice_ == AI_NOTICE_FIRE) { /* 开火 */
+  if (this->notice_ == 2) { /* 开火 */
     this->action_.ai_launcher = AI::Action::FIRE;
-  } else {
+  } else if (this->notice_ == 5) {
     this->action_.ai_launcher = AI::Action::CEASEFIRE; /* 不发弹 */
   }
 }
@@ -246,15 +219,12 @@ bool AI::PackCMD() {
     /* AUTO控制模式，用于全自动机器人 */
     if (Component::CMD::GetCtrlMode() == Component::CMD::CMD_AUTO_CTRL) {
       switch (this->action_.ai_chassis) {
-        case TO_PATROL_AREA:
-        case TO_HIGHWAY:
-        case TO_OUTPOST:
-        case TO_SUPPLY:
+        case START_AUTO_CONTROL:
           memcpy(&(this->cmd_.chassis),
                  &(this->from_host_.data.chassis_move_vec),
                  sizeof(this->from_host_.data.chassis_move_vec));
           break;
-        case ROTOR:
+        case STOP_AUTO_CONTROL:
           this->event_.Active(AI_ROTOR);
           break;
       }
@@ -263,25 +233,46 @@ bool AI::PackCMD() {
         case AUTO_AIM:
           memcpy(&(this->cmd_.gimbal.eulr), &(this->from_host_.data.gimbal),
                  sizeof(this->cmd_.gimbal.eulr));
-          break;
-        case AFFECTED:
-          this->cmd_.gimbal.eulr.yaw = this->damage_.gimbal_yaw_ +
-                                       this->damage_.id_ * (M_2PI / 4.0) -
-                                       this->damage_.yaw_offset_;
-          this->cmd_.gimbal.eulr.pit = 0.0f;
-          this->gimbal_scan_start_angle_ =
-              this->eulr_.yaw;            /* 更新yaw扫描的起始位置 */
-          this->target_scan_angle_ = 0.0; /* 置零yaw扫描的位置增量 */
+          if (cmd_.gimbal.eulr.pit == 0 && cmd_.gimbal.eulr.yaw == 0) {
+            cmd_.gimbal.eulr.pit = eulr_.pit;
+            cmd_.gimbal.eulr.yaw = eulr_.yaw;
+          }
           break;
         case SCANF:
-          this->target_scan_angle_ += this->scanf_mode_.scanf_yaw_rate;
-          this->cmd_.gimbal.eulr.yaw =
-              this->target_scan_angle_ + this->gimbal_scan_start_angle_;
+          /*yaw轴旋转加入随机数扰动*/
+          static float smoothed_random =
+              0.0f;            // 静态变量，用于存储平滑后的随机值
+          float alpha = 0.1f;  // 平滑系数，控制新随机值的影响程度
+          float raw_random =
+              static_cast<float>(rand() % 10 - 5) / 1000.0f;  // 原始随机扰动
+          smoothed_random = alpha * raw_random +
+                            (1.0f - alpha) * smoothed_random;  // 低通滤波
+          float yaw_rate = this->scanf_mode_.scanf_yaw_rate;
+          this->target_scan_angle_ += yaw_rate * (1.0f + smoothed_random);
+          // this->cmd_.gimbal.eulr.yaw = this->target_scan_angle_;
+          this->cmd_.gimbal.eulr.yaw = this->eulr_.yaw;
+
+          float t = static_cast<float>(bsp_time_get_ms()) / 1000.0f;
+          // float pit_phase =
+          //     fmodf(t * this->scanf_mode_.scanf_pit_omega, 2.0f * M_PI);
+          // // 三角波输出范围 [0, 1]
+          // float triangle_wave =
+          //     (pit_phase < M_PI ? pit_phase / M_PI
+          //                       : (2.0f * M_PI - pit_phase) / M_PI);
+          // float mapped_triangle_wave = 2.0f * triangle_wave - 1.0f;
+          // // 计算俯仰角
+          // this->cmd_.gimbal.eulr.pit =
+          //     this->scanf_mode_.scanf_pit_center +
+          //     this->scanf_mode_.scanf_pit_range * mapped_triangle_wave;
+
+          /*计算三角波*/
+          float phase =
+              fmodf(t * this->scanf_mode_.scanf_pit_omega, 2.0f * M_PI);
+          float triangle_wave_mapped =
+              (fabsf(phase / M_PI - 1.0f) * 2.0f) - 1.0f;
           this->cmd_.gimbal.eulr.pit =
               this->scanf_mode_.scanf_pit_center +
-              this->scanf_mode_.scanf_pit_range *
-                  sinf(this->scanf_mode_.scanf_pit_omega *
-                       static_cast<float>(bsp_time_get_ms()) / 1000.0f);
+              this->scanf_mode_.scanf_pit_range * triangle_wave_mapped;
           break;
       }
 
@@ -319,28 +310,22 @@ bool AI::PackCMD() {
       }
       this->last_buy_bullet_num_ = cmd_for_ref_.buy_bullet_num;
 
-      /* 比赛开始前不运行 */
-      if (this->ref_.game_progress == GAMING ||
-          this->ref_.game_progress == PREPARATION ||
-          this->ref_.game_progress == WAITTING) {
-        this->cmd_tp_.Publish(this->cmd_);
-      }
+      this->cmd_tp_.Publish(this->cmd_);
+      this->cmd_tp_.Publish(this->cmd_);
+      this->cmd_tp_.Publish(this->cmd_);
     }
     /* OP控制模式，用于鼠标右键自瞄 */
-    else if (Component::CMD::GetCtrlMode() == Component::CMD::CMD_OP_CTRL) {
+    if (Component::CMD::GetCtrlMode() == Component::CMD::CMD_OP_CTRL) {
       memcpy(&(this->cmd_.gimbal.eulr), &(this->from_host_.data.gimbal),
              sizeof(this->cmd_.gimbal.eulr));
 
-      memcpy(&(this->cmd_.ext.extern_channel),
-             &(this->from_host_.data.extern_channel),
-             sizeof(this->cmd_.ext.extern_channel));
+      if (cmd_.gimbal.eulr.pit == 0 && cmd_.gimbal.eulr.yaw == 0) {
+        cmd_.gimbal.eulr.pit = eulr_.pit;
+        cmd_.gimbal.eulr.yaw = eulr_.yaw;
+      }
 
       memcpy(&(this->cmd_.chassis), &(this->from_host_.data.chassis_move_vec),
              sizeof(this->from_host_.data.chassis_move_vec));
-
-      memcpy(&(this->cmd_.ext.extern_channel),
-             &(this->from_host_.data.extern_channel),
-             sizeof(this->cmd_.ext.extern_channel));
 
       this->notice_ = this->from_host_.data.notice;
 
@@ -373,14 +358,6 @@ void AI::PraseRef() {
   }
   this->ref_.status = this->raw_ref_.status;
 
-  if (this->raw_ref_.rfid.own_highland_annular == 1 ||
-      this->raw_ref_.rfid.enemy_highland_annular == 1) {
-    this->ref_.robot_buff |= AI_RFID_SNIP;
-  } else if (this->raw_ref_.rfid.own_energy_mech_activation == 1) {
-    this->ref_.robot_buff |= AI_RFID_BUFF;
-  } else {
-    this->ref_.robot_buff = 0;
-  }
   switch (this->raw_ref_.game_status.game_type) {
     case Referee::REF_GAME_TYPE_RMUC:
       this->ref_.game_type = AI_RACE_RMUC;
@@ -423,17 +400,24 @@ void AI::PraseRef() {
   if (this->raw_ref_.robot_status.robot_id < 100) {
     this->ref_.base_hp = this->raw_ref_.game_robot_hp.red_base;
     this->ref_.outpost_hp = this->raw_ref_.game_robot_hp.red_outpose;
-    this->ref_.own_virtual_shield_value =
-        this->raw_ref_.field_event.virtual_shield_value;
+    this->ref_.hp = this->raw_ref_.game_robot_hp.red_7;
+    // this->ref_.hp = 400;
+
   } else {
     this->ref_.base_hp = this->raw_ref_.game_robot_hp.blue_base;
     this->ref_.outpost_hp = this->raw_ref_.game_robot_hp.blue_outpose;
-    this->ref_.own_virtual_shield_value =
-        this->raw_ref_.field_event.virtual_shield_value;
+    this->ref_.hp = this->raw_ref_.game_robot_hp.blue_7;
   }
   this->ref_.coin_num = this->raw_ref_.bullet_remain.coin_remain;
-  this->ref_.pos_x = this->raw_ref_.robot_pos.x;
-  this->ref_.pos_y = this->raw_ref_.robot_pos.y;
+  this->ref_.bullet_num = this->raw_ref_.bullet_remain.bullet_17_remain;
+  this->ref_.hero_x = this->raw_ref_.robot_pos_for_snetry.hero_x;
+  this->ref_.hero_y = this->raw_ref_.robot_pos_for_snetry.hero_y;
+  this->ref_.infantry_3_x = this->raw_ref_.robot_pos_for_snetry.standard_3_x;
+  this->ref_.infantry_3_y = this->raw_ref_.robot_pos_for_snetry.standard_3_y;
+  this->ref_.infantry_4_x = this->raw_ref_.robot_pos_for_snetry.standard_4_x;
+  this->ref_.infantry_4_y = this->raw_ref_.robot_pos_for_snetry.standard_4_y;
+  this->ref_.engineer_x = this->raw_ref_.robot_pos_for_snetry.engineer_x;
+  this->ref_.engineer_y = this->raw_ref_.robot_pos_for_snetry.engineer_y;
   this->ref_.pos_angle = this->raw_ref_.robot_pos.angle;
 
   this->ref_.target_pos_x = this->raw_ref_.client_map.position_x;
@@ -442,4 +426,6 @@ void AI::PraseRef() {
   if (this->raw_ref_.robot_damage.damage_type == 0) {
     this->ref_.damaged_armor_id = this->raw_ref_.robot_damage.armor_id;
   }
+
+  std::memcpy(&this->ref_.rfid, &this->raw_ref_.rfid, sizeof(uint32_t));
 }
