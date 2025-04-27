@@ -1,28 +1,39 @@
 #include "robot.hpp"
 
-#include <cmath>
 #include <system.hpp>
 #include <thread.hpp>
-
-#include "dev_rm_motor.hpp"
 
 using namespace Robot;
 
 /* clang-format off */
-Robot::UVA::Param param={
-  .gimbal{
-     .ff = {
-     },
+//TODO: write your param
+Robot::Drone::Param param={
 
-     .st = {
-     },
+  .gimbal{
+        .ff = {
+      /* GIMBAL_CTRL_PIT_FEEDFORWARD */
+      .a = 0.0439f,
+      .b = -0.0896f,
+      .c = 0.077f,
+      .max = 0.1f,
+      .min = -0.2f,
+    }, /* ff */
+
+    .st = {
+      /* GIMBAL_CTRL_YAW_SELF_TUNING */
+      .a = 0.0677f,
+      .b = 0.1653f,
+      .c = 0.3379f,
+      .max = 0.37f,
+      .min = 0.29f,
+    }, /* st */
 
      .yaw_actr = {
       .speed = {
           /* GIMBAL_CTRL_YAW_OMEGA_IDX */
-          .k = 0.22f,
-          .p = 1.0f,
-          .i = 0.5f,
+          .k = 0.2f,
+          .p = 0.8f,
+          .i = 0.1f,
           .d = 0.0f,
           .i_limit = 0.2f,
           .out_limit = 0.1f,
@@ -32,10 +43,10 @@ Robot::UVA::Param param={
 
         .position = {
           /* GIMBAL_CTRL_YAW_ANGLE_IDX */
-          .k = 20.0f,
-          .p = 2.5f,
-          .i = 0.0f,
-          .d = 0.0f,
+          .k = 18.0f,
+          .p = 3.6f,
+          .i = 0.1f,
+          .d = 0.05f,
           .i_limit = 0.1f,
           .out_limit = 10.0f,
           .d_cutoff_freq = -1.0f,
@@ -50,8 +61,8 @@ Robot::UVA::Param param={
         .speed = {
           /* GIMBAL_CTRL_PIT_OMEGA_IDX */
           .k = 0.25f,
-          .p = 1.0f,
-          .i = 0.3f,
+          .p = 0.8f,
+          .i = 0.0f,
           .d = 0.0f,
           .i_limit = 1.0f,
           .out_limit = 1.0f,
@@ -61,10 +72,69 @@ Robot::UVA::Param param={
 
         .position = {
           /* GIMBAL_CTRL_PIT_ANGLE_IDX */
-          .k = 20.0f,
-          .p = 1.0f,
+          .k = 10.0f,
+          .p = 0.5f,
+          .i = 0.0f,
+          .d = 0.05f,
+          .i_limit = 1.0f,
+          .out_limit = 10.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = true,
+        },
+
+        .in_cutoff_freq = -1.0f,
+
+        .out_cutoff_freq = -1.0f,
+    },
+
+         .yaw_ai_actr = {
+      .speed = {
+          /* GIMBAL_CTRL_YAW_OMEGA_IDX */
+          .k = 0.2f,
+          .p = 0.8f,
+          .i = 0.1f,
+          .d = 0.0f,
+          .i_limit = 0.2f,
+          .out_limit = 0.1f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = false,
+        },
+
+        .position = {
+          /* GIMBAL_CTRL_YAW_ANGLE_IDX */
+          .k = 18.0f,
+          .p = 3.6f,
+          .i = 0.1f,
+          .d = 0.05f,
+          .i_limit = 0.1f,
+          .out_limit = 10.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = true,
+        },
+
+        .in_cutoff_freq = -1.0f,
+
+        .out_cutoff_freq = -1.0f,
+    },
+    .pit_ai_actr = {
+        .speed = {
+          /* GIMBAL_CTRL_PIT_OMEGA_IDX */
+          .k = 0.25f,
+          .p = 0.8f,
           .i = 0.0f,
           .d = 0.0f,
+          .i_limit = 1.0f,
+          .out_limit = 1.0f,
+          .d_cutoff_freq = -1.0f,
+          .cycle = false,
+        },
+
+        .position = {
+          /* GIMBAL_CTRL_PIT_ANGLE_IDX */
+          .k = 10.0f,
+          .p = 0.5f,
+          .i = 0.0f,
+          .d = 0.05f,
           .i_limit = 1.0f,
           .out_limit = 10.0f,
           .d_cutoff_freq = -1.0f,
@@ -77,10 +147,10 @@ Robot::UVA::Param param={
     },
 
     .yaw_motor = {
-      .id_feedback = 0x207,
+      .id_feedback = 0x208,
       .id_control = GM6020_CTRL_ID_BASE,
       .model = Device::RMMotor::MOTOR_GM6020,
-      .can = BSP_CAN_2,
+      .can = BSP_CAN_1,
       .reverse = true
     },
 
@@ -93,19 +163,19 @@ Robot::UVA::Param param={
     },
 
     .mech_zero = {
-      .yaw = 1.65f,
-      .pit = 1.7f,
+      .yaw = 0.0f,
+      .pit = 0.f,
       .rol = 0.0f,
     },
 
     .limit = {
-      .pitch_max = M_2PI - 0.4,
-      .pitch_min = M_2PI - 1.08,
-      .yaw_max = M_2PI - 0.7,
-      .yaw_min = M_2PI - 2.7,
-
+      .pitch_max = M_2PI-5.97f,
+      .pitch_min = M_2PI-1.f,
+      .yaw_max = 5.5f,
+      .yaw_min = 3.5f,
     },
- .EVENT_MAP = {
+
+    .EVENT_MAP = {
       Component::CMD::EventMapItem{
         Component::CMD::CMD_EVENT_LOST_CTRL,
         Module::Gimbal::SET_MODE_RELAX
@@ -122,33 +192,30 @@ Robot::UVA::Param param={
         Device::DR16::DR16_SW_L_POS_BOT,
         Module::Gimbal::SET_MODE_ABSOLUTE
       }
-
-     }
+    }
   },
-
   .launcher={
-  .trig_gear_ratio = 36.0f,
-  .num_trig_tooth = 8.0f,
-  .min_launch_delay = static_cast<uint32_t>(1000.0f / 20.0f),
-
-  .trig_actr = {
+    .trig_gear_ratio=36.0f,
+    .bullet_circle_num=8.0f,
+    .min_launcher_delay= static_cast<uint32_t>(1000.0f/20.0f),
+    .trig_actr={
       Component::PosActuator::Param{
         .speed = {
-          .k = 1.5,
+          .k = 3.0f,
           .p = 1.0f,
-          .i = 0.0f,
-          .d = 0.03f,
+          .i = 0.5f,
+          .d = 0.0f,
           .i_limit = 0.5f,
-          .out_limit = 0.6f,
+          .out_limit = 0.5f,
           .d_cutoff_freq = -1.0f,
           .cycle = false,
         },
 
         .position = {
-          .k = 1.2f,
+          .k = 1.5f,
           .p = 1.0f,
           .i = 0.0f,
-          .d = 0.012f,
+          .d = 0.0f,
           .i_limit = 1.0f,
           .out_limit = 1.0f,
           .d_cutoff_freq = -1.0f,
@@ -160,49 +227,36 @@ Robot::UVA::Param param={
         .out_cutoff_freq = -1.0f,
       },
     },
-
-    .trig_motor = {
+    .trig_motor={
       Device::RMMotor::Param{
         .id_feedback = 0x203,
         .id_control = M3508_M2006_CTRL_ID_BASE,
         .model = Device::RMMotor::MOTOR_M2006,
-        .can = BSP_CAN_2,
-        .reverse = false
+        .can = BSP_CAN_1,
+        .reverse=false,
       }
     },
-    .EVENT_MAP = {
+    .EVENT_MAP={
       Component::CMD::EventMapItem{
         Component::CMD::CMD_EVENT_LOST_CTRL,
-        Module::UVALauncher::CHANGE_FIRE_MODE_SAFE
+        Module::DroneLauncher::SET_RELAX,
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_TOP,
-        Module::UVALauncher::CHANGE_FIRE_MODE_SAFE
+        Module::DroneLauncher::SET_RELAX,
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_MID,
-        Module::UVALauncher::CHANGE_TRIG_MODE_SINGLE
+        Module::DroneLauncher::CHANGE_FRIC_MODE_LOADED,
       },
       Component::CMD::EventMapItem{
         Device::DR16::DR16_SW_R_POS_BOT,
-        Module::UVALauncher::CHANGE_TRIG_MODE_BURST
+        Module::DroneLauncher::CHANGE_TRIG_MODE_CONTINUED,
       },
-      Component::CMD::EventMapItem{
-        Device::DR16::DR16_SW_R_POS_BOT,
-        Module::UVALauncher::LAUNCHER_START_FIRE
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::KEY_L_PRESS,
-        Module::UVALauncher::CHANGE_TRIG_MODE_SINGLE
-      },
-      Component::CMD::EventMapItem{
-        Device::DR16::KEY_L_RELEASE,
-        Module::UVALauncher::CHANGE_FIRE_MODE_SAFE
-      },
-    },
+    }
   },
- .bmi088_rot = {
-    .rot_mat = {
+  .bmi088_rot={
+    .rot_mat={
       { +1, +0, +0},
       { +0, +1, +0},
       { +0, +0, +1},
@@ -210,8 +264,7 @@ Robot::UVA::Param param={
   },
 };
 /* clang-format on */
-Robot::UVA *Robot::UVA::self_;
 
 void robot_init() {
-  System::Start<Robot::UVA, Robot::UVA::Param>(param, 500.0f);
+  System::Start<Robot::Drone, Robot::Drone::Param>(param, 500.0f);
 }

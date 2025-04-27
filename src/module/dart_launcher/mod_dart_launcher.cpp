@@ -1,19 +1,14 @@
 #include "mod_dart_launcher.hpp"
 
-#include "bsp_time.h"
-
-#define MAX_FRIC_SPEED (7500.0f)
+#define FRIC_NUM 4
+#define FRIC_MAX_SPEED (7500.0f)
 #define DART_LEN 0.225
 
 using namespace Module;
 
 DartLauncher::DartLauncher(DartLauncher::Param& param, float control_freq)
-    : ctrl_lock_(true),
-      param_(param),
-      rod_actr_(param.rod_actr, control_freq, 500.0f) {
-  this->setpoint_.rod_position = 0.1f;
-
-  for (int i = 0; i < 4; i++) {
+    : ctrl_lock_(true), param_(param), rod_(param.rod_, control_freq, 500.0f) {
+  for (size_t i = 0; i < FRIC_NUM; i++) {
     fric_actr_[i] =
         new Component::SpeedActuator(param.fric_actr[i], control_freq);
     fric_motor_[i] = new Device::RMMotor(
@@ -21,130 +16,127 @@ DartLauncher::DartLauncher(DartLauncher::Param& param, float control_freq)
         (std::string("dart_fric_") + std::to_string(i)).c_str());
   }
 
-  auto event_callback = [](DartEvent event, DartLauncher* dart) {
+  auto event_callback = [](Event event, DartLauncher* dart) {
     dart->ctrl_lock_.Wait(UINT32_MAX);
     switch (event) {
-      case RELAX:
-        dart->SetFricMode(FRIC_OFF);
+      case SET_MODE_RELAX:
+        dart->SetMode(RELAX);
         break;
-      case SET_FRIC_OUTOST:
-        dart->SetFricMode(FRIC_OUTOST);
+      case SET_MODE_OFF:
+        dart->SetMode(OFF);
         break;
-      case SET_FRIC_BASE:
-        dart->SetFricMode(FRIC_BASE);
+      case SET_MODE_ROD:
+        dart->SetMode(ROD_ON);
         break;
-      case SET_FRIC_OFF:
-        dart->SetFricMode(FRIC_OFF);
+      case SET_MODE_FRIC:
+        dart->SetMode(FRIC_ON);
         break;
-      case SET_STAY:
-        dart->SetRodMode(STAY);
+      case SET_MODE_ON:
+        dart->SetMode(ON);
         break;
-      case RESET_POSITION:
-        dart->SetRodMode(BACK);
+      case SET_MODE_STAY:
+        dart->SetMode(STAY);
         break;
-      case FIRE:
-        dart->SetRodMode(ADVANCE);
-      default:
+      case SET_MODE_ADVANCE:
+        dart->SetMode(ADVANCE);
         break;
     }
     dart->ctrl_lock_.Post();
   };
-
-  Component::CMD::RegisterEvent<DartLauncher*, DartEvent>(
-      event_callback, this, this->param_.EVENT_MAP);
-
+  Component::CMD::RegisterEvent<DartLauncher*, Event>(event_callback, this,
+                                                      this->param_.EVENT_MAP);
   auto thread_fn = [](DartLauncher* dart) {
     uint32_t last_online_time = bsp_time_get_ms();
-
-    while (true) {
+    while (1) {
       dart->ctrl_lock_.Wait(UINT32_MAX);
-
-      dart->UpdateFeedback();
+      dart->Feedback();
       dart->Control();
-
       dart->ctrl_lock_.Post();
-
       dart->thread_.SleepUntil(2, last_online_time);
     }
   };
-
   this->thread_.Create(thread_fn, this, "dart_launcher", 512,
                        System::Thread::MEDIUM);
 }
-
-void DartLauncher::UpdateFeedback() {
-  this->rod_actr_.UpdateFeedback();
-  for (size_t i = 0; i < 4; i++) {
+void DartLauncher::Feedback() {
+  this->rod_.UpdateFeedback();
+  for (size_t i = 0; i < FRIC_NUM; i++) {
     this->fric_motor_[i]->Update();
   }
 }
-
 void DartLauncher::Control() {
   this->now_ = bsp_time_get();
-
   this->dt_ = TIME_DIFF(this->last_wakeup_, this->now_);
-
   this->last_wakeup_ = this->now_;
 
-  switch (this->fric_mode_) {
-    case FRIC_OUTOST:
-      this->setpoint_.fric_speed = 0.933f;
-      break;
-    case FRIC_BASE:
-      this->setpoint_.fric_speed = 1.0f;
-      break;
-    case FRIC_OFF:
-      this->setpoint_.fric_speed = 0.0f;
-      break;
-  }
-  switch (this->rod_mode_) {
-    case ADVANCE:
-      if (this->fric_mode_ == FRIC_OUTOST ||
-          this->fric_mode_ ==
-              FRIC_BASE) { /*只有在摩擦轮开启状态下飞镖被向前推进*/
-        this->setpoint_.rod_position =
-            (static_cast<float>(rod_position_)) * DART_LEN + 0.1;
+  if (!relax_) {
+    this->rod_.Control(this->setpoint_.rod_pos * this->param_.rod_.max_range,
+                       dt_);
+    for (size_t i = 0; i < FRIC_NUM; i++) {
+      if (i % 2) {
+        fric_out_[i] = this->fric_actr_[i]->Calculate(
+            this->setpoint_.fric_speed2 * FRIC_MAX_SPEED,
+            this->fric_motor_[i]->GetSpeed(), dt_);
+      } else {
+        fric_out_[i] = this->fric_actr_[i]->Calculate(
+            this->setpoint_.fric_speed1 * FRIC_MAX_SPEED,
+            this->fric_motor_[i]->GetSpeed(), dt_);
       }
-      break;
-    case STAY:
-      break;
-    case BACK:
-      this->setpoint_.rod_position = 0.1f;
-      if (rod_position_ == 4) {
-        rod_position_ = 0;
-      }
-  }
-  /* 上电自动校准 和控制电机输出 */
-  this->rod_actr_.Control(
-      this->setpoint_.rod_position * this->param_.rod_actr.max_range, dt_);
-
-  /* fric */
-  for (int i = 0; i < 4; i++) {
-    motor_out_[i] = this->fric_actr_[i]->Calculate(
-        this->setpoint_.fric_speed * MAX_FRIC_SPEED,
-        this->fric_motor_[i]->GetSpeed(), dt_);
-  }
-  for (int i = 0; i < 4; i++) {
-    this->fric_motor_[i]->Control(motor_out_[i]);
-  }
-}
-/*判断是否切换模式*/
-void DartLauncher::SetRodMode(RodMode mode) {
-  if (mode == this->rod_mode_) { /* 未更改，return */
-    return;
+    }
+    for (size_t i = 0; i < FRIC_NUM; i++) {
+      this->fric_motor_[i]->Control(fric_out_[i]);
+    }
   } else {
-    this->rod_mode_ = mode;
-    /*如果切换到前进模式，位置向前推进*/
-    if (mode == ADVANCE &&
-        (this->fric_mode_ == FRIC_OUTOST || this->fric_mode_ == FRIC_BASE)) {
-      rod_position_ = ((rod_position_ + 1) % 5);
+    this->rod_.Relax();
+    for (size_t i = 0; i < FRIC_NUM; i++) {
+      this->fric_motor_[i]->Relax();
     }
   }
 }
-
-void DartLauncher::SetFricMode(FricMode mode) {
-  if (mode == this->fric_mode_) { /* 未更改，return */
+void DartLauncher::SetMode(Mode mode) {
+  if (mode == this->mode_) {
     return;
   }
-  this->fric_mode_ = mode;
+  this->mode_ = mode;
+  switch (this->mode_) {
+    case RELAX:
+      this->relax_ = true;
+      this->setpoint_.fric_speed1 = 0.0f;
+      this->setpoint_.fric_speed2 = 0.0f;
+      this->setpoint_.rod_pos = 0.01f;
+      break;
+    case OFF:
+      this->relax_ = false;
+      this->setpoint_.fric_speed1 = 0.0f;
+      this->setpoint_.fric_speed2 = 0.0f;
+      this->setpoint_.rod_pos = 0.01f;
+      break;
+    case ON:
+      this->relax_ = false;
+      this->setpoint_.fric_speed1 = 1.0f;
+      this->setpoint_.fric_speed1 = 1.0f;
+      this->setpoint_.rod_pos = 1.0f;
+      break;
+    case ROD_ON:
+      this->relax_ = false;
+      this->setpoint_.fric_speed1 = 0.0f;
+      this->setpoint_.fric_speed2 = 0.0f;
+      this->setpoint_.rod_pos = 1.0f;
+      break;
+    case FRIC_ON:
+      this->relax_ = false;
+      this->setpoint_.fric_speed1 = 1.0f;
+      this->setpoint_.fric_speed2 = 1.0f;
+      // this->setpoint_.rod_pos = 0.01f;
+      break;
+    case ADVANCE:
+      this->relax_ = false;
+      this->setpoint_.fric_speed1 = 1.0f;
+      this->setpoint_.fric_speed2 = 1.0f;
+      this->setpoint_.rod_pos = static_cast<float>(rod_pos_ * DART_LEN) + 0.1f;
+      this->rod_pos_ = ((this->rod_pos_ + 1) % 5);
+      break;
+    case STAY:
+      break;
+  }
 }

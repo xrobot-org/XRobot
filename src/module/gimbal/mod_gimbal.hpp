@@ -20,7 +20,9 @@ class Gimbal {
   /* 云台运行模式 */
   typedef enum {
     RELAX, /* 放松模式，电机不输出。一般情况云台初始化之后的模式 */
-    ABSOLUTE, /* 绝对坐标系控制，控制在空间内的绝对姿态 */
+    ABSOLUTE,  /* 绝对坐标系控制，控制在空间内的绝对姿态 */
+    AI_CONTROL /*Host control mode, based on absolute coordinate system
+                  control*/
   } Mode;
 
   enum {
@@ -34,8 +36,7 @@ class Gimbal {
   typedef enum {
     SET_MODE_RELAX,
     SET_MODE_ABSOLUTE,
-    START_AUTO_AIM,
-    STOP_AUTO_AIM,
+    SET_MODE_AUTO_AIM,
   } GimbalEvent;
 
   typedef struct {
@@ -44,6 +45,8 @@ class Gimbal {
 
     Component::PosActuator::Param yaw_actr;
     Component::PosActuator::Param pit_actr;
+    Component::PosActuator::Param yaw_ai_actr;
+    Component::PosActuator::Param pit_ai_actr;
 
     Device::RMMotor::Param yaw_motor;
     Device::RMMotor::Param pit_motor;
@@ -67,11 +70,19 @@ class Gimbal {
 
   void Control();
 
+  float ChangeAngleRange(float angle);
+
   void SetMode(Mode mode);
 
   static void DrawUIStatic(Gimbal *gimbal);
 
   static void DrawUIDynamic(Gimbal *gimbal);
+
+  void GetSlopeAngle();
+
+  float RotateVector3D(float x, float y, float z);
+
+  double GetAlpha();
 
  private:
   uint64_t last_wakeup_ = 0;
@@ -79,6 +90,9 @@ class Gimbal {
   uint64_t now_ = 0;
 
   float dt_ = 0.0f;
+
+  float yaw_motor_value_;
+  float pit_motor_value_;
 
   Param param_;
 
@@ -92,6 +106,8 @@ class Gimbal {
 
   Component::PosActuator yaw_actuator_;
   Component::PosActuator pit_actuator_;
+  Component::PosActuator yaw_ai_actuator_;
+  Component::PosActuator pit_ai_actuator_;
 
   Device::RMMotor yaw_motor_;
   Device::RMMotor pit_motor_;
@@ -101,8 +117,27 @@ class Gimbal {
   System::Semaphore ctrl_lock_;
 
   Message::Topic<float> yaw_tp_ = Message::Topic<float>("chassis_yaw");
+  Message::Topic<float> eulr_tp_ = Message::Topic<float>("ahrs_eulr");
+  Message::Topic<float> quat_tp_ = Message::Topic<float>("ahrs_quat");
+  Message::Topic<float> pit_tp_ = Message::Topic<float>("chassis_pitch");
+  Message::Topic<double> alpha_tp_ = Message::Topic<double>("chassis_alpha");
+  Message::Topic<float> eulr_yaw1_tp_ =
+      Message::Topic<float>("chassis_eulr_yaw1"); /* 首次云台偏航角 */
+  Message::Topic<double> tan_pit_tp_ =
+      Message::Topic<double>("chassis_tan_pit");
 
   float yaw_;
+  float pit_;
+  double alpha_;
+  double slope_angle_;
+  float eulr_yaw1_;
+  double tan_pit_;
+  // Component::Type::CycleValue test_angle_2_;
+  double tan_rol_;
+  double test_angle_3_;
+  float test_angle_4_;
+
+  float rotation_mat_[3][3];
 
   Component::UI::String string_;
 
