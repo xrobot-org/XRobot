@@ -5,7 +5,7 @@
 
 #define CAP_RES (100.0f) /* 电容数据分辨率 */
 #define V_MAX (23.0f)
-#define V_MIN (16.0f)
+#define V_MIN (18.0f)
 using namespace Device;
 
 Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
@@ -35,8 +35,8 @@ Cap::Cap(Cap::Param &param) : param_(param), info_tp_("cap_info") {
       }
       clampf(&power_buff_percentage, 0.0f, 1.0f);
       cap->out_.power_limit_ =
-          static_cast<float>(ref.robot_status.chassis_power_limit) - 3.0f +
-          10.0f * power_buff_percentage;
+          static_cast<float>(ref.robot_status.chassis_power_limit) - 2.0f +
+          15.0f * power_buff_percentage;
     }
     clampf(&cap->out_.power_limit_, 0.0f, 150.0f);
     cap->power_limit_update_.Post();

@@ -10,10 +10,10 @@
 #include "comp_ui.hpp"
 
 #define GAME_HEAT_INCREASE_42MM (100.0f) /* 每发射一颗42mm弹丸增加100热量 */
-#define GAME_HEAT_INCREASE_17MM (10.0f) /* 每发射一颗17mm弹丸增加10热量 */
+#define GAME_HEAT_INCREASE_17MM (10.0f)  /* 每发射一颗17mm弹丸增加10热量 */
 
 #define BULLET_SPEED_LIMIT_42MM (16.0)
-#define BULLET_SPEED_LIMIT_17MM (30.0)
+#define BULLET_SPEED_LIMIT_17MM (25.0)
 
 #define GAME_CHASSIS_MAX_POWER_WO_REF 40.0f /* 裁判系统离线时底盘最大功率 */
 #define REF_UI_BOX_UP_OFFSET (4)
@@ -74,8 +74,8 @@ class Referee {
     REF_CMD_ID_DART_CLIENT = 0x020A,
     REF_CMD_ID_ROBOT_POS_TO_SENTRY = 0X020B,
     REF_CMD_ID_RADAR_MARK = 0X020C,
-    REF_CMD_ID_SENTRY_DECISION = 0x020D, /* 哨兵自主决策相关信息同步 */
-    REF_CMD_ID_RADAR_DECISION = 0x020E, /* 雷达自主决策相关信息同步 */
+    REF_CMD_ID_SENTRY_DECISION = 0x020D,      /* 哨兵自主决策相关信息同步 */
+    REF_CMD_ID_RADAR_DECISION = 0x020E,       /* 雷达自主决策相关信息同步 */
     REF_CMD_ID_INTER_STUDENT = 0x0301,        /* 机器人交互数据 */
     REF_CMD_ID_INTER_STUDENT_CUSTOM = 0x0302, /* 自定义控制器和机器人 */
     REF_CMD_ID_CLIENT_MAP = 0x0303,
@@ -116,7 +116,7 @@ class Referee {
     uint16_t red_2;
     uint16_t red_3;
     uint16_t red_4;
-    uint16_t red_5;
+    uint16_t res_1;
     uint16_t red_7;
     uint16_t red_outpose;
     uint16_t red_base;
@@ -124,7 +124,7 @@ class Referee {
     uint16_t blue_2;
     uint16_t blue_3;
     uint16_t blue_4;
-    uint16_t blue_5;
+    uint16_t res_2;
     uint16_t blue_7;
     uint16_t blue_outpose;
     uint16_t blue_base;
@@ -133,17 +133,16 @@ class Referee {
     uint32_t blood_supply_before_status : 1;
     uint32_t blood_supply_inner_status : 1;
     uint32_t blood_supply_status_RMUL : 1;
-    uint32_t energy_mech_activation_status : 1;
+    // uint32_t energy_mech_activation_status : 1;
     uint32_t energy_mech_small_status : 1;
     uint32_t energy_mech_big_status : 1;
-    uint32_t highland_annular : 2;
+    uint32_t highland_center : 2;
 
-    uint32_t highland_trapezium_1 : 2;
-    uint32_t highland_trapezium_2 : 2;
-    uint32_t virtual_shield_value : 8;
+    uint32_t highland_trapezium : 2;
     uint32_t last_hit_time : 9;
-    uint32_t last_hit_target : 2;
-    uint32_t res : 1;
+    uint32_t last_hit_target : 3;
+    uint32_t highland_center_status : 2;
+    uint32_t res : 9;
   } FieldEvents; /* 0x0101 */
   typedef struct __attribute__((packed)) {
     uint8_t res;
@@ -161,10 +160,10 @@ class Referee {
   typedef struct __attribute__((packed)) {
     uint8_t countdown;
 
-    uint16_t dart_last_target : 2;
+    uint16_t dart_last_target : 3;
     uint16_t attack_count : 3;
     uint16_t dart_target : 2;
-    uint16_t res : 9;
+    uint16_t res : 8;
   } DartCountdown; /* 0x0105 */
 
   typedef struct __attribute__((packed)) {
@@ -181,9 +180,9 @@ class Referee {
   } RobotStatus; /* 0x0201 */
 
   typedef struct __attribute__((packed)) {
-    uint16_t chassis_volt;
-    uint16_t chassis_amp;
-    float chassis_watt;
+    uint16_t res_1;
+    uint16_t res_2;
+    float res_3;
     uint16_t chassis_pwr_buff;
     uint16_t launcher_id1_17_heat;
     uint16_t launcher_id2_17_heat;
@@ -202,6 +201,11 @@ class Referee {
     uint8_t defense_buff;
     uint8_t vulnerability_buff;
     uint16_t attack_buff;
+    uint8_t percent_50_remain_energy : 1;
+    uint8_t percent_30_remain_energy : 1;
+    uint8_t percent_15_remain_energy : 1;
+    uint8_t percent_5_remain_energy : 1;
+    uint8_t percent_1_remain_energy : 1;
   } RobotBuff; /* 0x0204 */
 
   typedef struct __attribute__((packed)) {
@@ -229,25 +233,30 @@ class Referee {
 
   typedef struct __attribute__((packed)) {
     uint32_t own_base : 1;
-    uint32_t own_highland_annular : 1;
-    uint32_t enemy_highland_annular : 1;
-    uint32_t own_trapezium_R3B3 : 1;
-    uint32_t enemy_trapezium_R3B3 : 1;
-    uint32_t own_trapezium_R4B4 : 1;
-    uint32_t enemy_trapezium_R4B4 : 1;
-    uint32_t own_energy_mech_activation : 1;
-    uint32_t own_slope_before : 1;
-    uint32_t own_slope_after : 1;
-    uint32_t enemy_slope_before : 1;
-    uint32_t enemy_slope_after : 1;
-    uint32_t own_outpose : 1;
-    uint32_t own_blood_supply : 1;
-    uint32_t own_sentry_area : 1;
-    uint32_t enemy_sentry_area : 1;
+    uint32_t own_highland_center : 1;
+    uint32_t enemy_highland_center : 1;
+    uint32_t own_trapezium : 1;
+    uint32_t enemy_trapezium : 1;
+    uint32_t own_slope_before_R1B1 : 1;
+    uint32_t own_slope_after_R1B1 : 1;
+    uint32_t enemy_slope_before_R4B4 : 1;
+    uint32_t enemy_slope_after_R4B4 : 1;
+    uint32_t own_terrain_crossing_up_R2B2 : 1;
+    uint32_t own_terrain_crossing_down_R2B2 : 1;
+    uint32_t enemy_terrain_corrssing_up_R2B2 : 1;
+    uint32_t enemy_terrain_corrssing_down_R2B2 : 1;
+    uint32_t own_terrain_crossing_up_R3B3 : 1;
+    uint32_t own_terrain_crossing_down_R3B3 : 1;
+    uint32_t enemy_terrain_corrssing_up_R3B5 : 1;
+    uint32_t enemy_terrain_corrssing_down_R3B3 : 1;
+    uint32_t own_fortress : 1;
+    uint32_t own_outpost : 1;
+    uint32_t own_blood_supply_unoverlapping : 1;
+    uint32_t own_blood_supply_overlapping : 1;
     uint32_t own_resource : 1;
     uint32_t enemy_resource : 1;
-    uint32_t own_exchange_area : 1;
-    uint32_t res : 13;
+    uint32_t center_resource_RMUL : 1;
+    uint32_t res : 8;
   } RFID; /* 0x0209 */
 
   typedef struct __attribute__((packed)) {
@@ -265,16 +274,15 @@ class Referee {
     float standard_3_y;
     float standard_4_x;
     float standard_4_y;
-    float standard_5_x;
-    float standard_5_y;
+    float res_1;
+    float res_2;
   } RobotPosForSentry; /* 0x020B */
   typedef struct __attribute__((packed)) {
-    uint8_t mark_hero_progress;
-    uint8_t mark_engineer_progress;
-    uint8_t mark_standard_3_progress;
-    uint8_t mark_standard_4_progress;
-    uint8_t mark_standard_5_progress;
-    uint8_t mark_sentry_progress;
+    uint8_t mark_hero_progress : 1;
+    uint8_t mark_engineer_progress : 1;
+    uint8_t mark_standard_3_progress : 1;
+    uint8_t mark_standard_4_progress : 1;
+    uint8_t mark_sentry_progress : 1;
   } RadarMarkProgress; /* 0x020C */
   typedef struct __attribute__((packed)) {
     uint32_t exchanged_bullet_num : 11;
@@ -494,7 +502,7 @@ class Referee {
     struct __attribute__((packed)) {
       Header frame_header;
       uint16_t cmd_id;
-      Referee::InterStudentHeader student_header;  //字命令、发送者、接受者
+      Referee::InterStudentHeader student_header;  // 字命令、发送者、接受者
     } raw;
   };
 
@@ -510,7 +518,7 @@ class Referee {
   typedef struct __attribute__((packed)) {
     Header frame_header;  // 0x0301
     uint16_t cmd_id;
-    Referee::InterStudentHeader student_header;  //含0x0120
+    Referee::InterStudentHeader student_header;  // 含0x0120
     uint32_t data_cmd;
     uint16_t crc16;
   } SentryPack;

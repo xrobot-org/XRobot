@@ -9,7 +9,7 @@
 #include "dev_referee.hpp"
 #include "mod_chassis.hpp"
 #include "mod_gimbal.hpp"
-#include "mod_launcher.hpp"
+#include "mod_hero_launcher.hpp"
 
 void robot_init();
 namespace Robot {

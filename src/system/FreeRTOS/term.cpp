@@ -137,6 +137,7 @@ Term::Term() {
 
   auto term_thread_fn = [](void *arg) {
     XB_UNUSED(arg);
+    /*cmd calibration*/
     while (1) {
       while (!bsp_usb_connect()) {
         term_thread.Sleep(1);
@@ -146,6 +147,7 @@ Term::Term() {
 
       while (1) {
         if (bsp_usb_avail()) {
+          term_thread.Sleep(30000);
           ms_input(bsp_usb_read_char());
         }
         if (!bsp_usb_connect()) {
@@ -154,6 +156,13 @@ Term::Term() {
         vTaskDelay(10);
       }
     }
+    /*Manual calibration*/
+    //   System::Thread::Sleep(30000);
+    //   auto assert_str = "\r\nbmi088 cali\r\n";
+    //   for (size_t i = 0; i < strlen(assert_str); i++) {
+    //     ms_input(assert_str[i]);
+    //   }
+    //   XB_ASSERT(false);
   };
 
   term_thread.Create(term_thread_fn, static_cast<void *>(0), "term_thread",

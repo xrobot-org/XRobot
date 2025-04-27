@@ -24,7 +24,7 @@
 #include "dev_rm_motor.hpp"
 namespace Module {
 template <typename Motor, typename MotorParam>
-class OmniChassis {
+class nOmniChassis {
  public:
   /* 底盘运行模式 */
   typedef enum {
@@ -37,11 +37,18 @@ class OmniChassis {
   } Mode;
 
   typedef enum {
+    COMMON,
+    BEAST,
+  } Power_Mode;
+
+  typedef enum {
     SET_MODE_RELAX,
     SET_MODE_INTERSECT,
     SET_MODE_CROSS,
     SET_MODE_ROTOR,
     SET_MODE_INDENPENDENT,
+    CHANGE_POWER_UP,
+    CHANGE_POWER_DOWN,
   } ChassisEvent;
   /* 底盘参数的结构体，包含所有初始Component化用的参数，通常是const，存好几组
    */
@@ -54,13 +61,15 @@ class OmniChassis {
         Component::Mixer::MECANUM; /* 底盘类型，底盘的机械设计和轮子选型 */
 
     Component::PID::Param follow_pid_param{}; /* 跟随云台PID的参数 */
+    Component::PID::Param xaccl_pid_param{};  /* 加速跟随PID的参数 */
+    Component::PID::Param yaccl_pid_param{};  /* y方向加速跟随PID */
 
     const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
 
     std::array<Component::SpeedActuator::Param, 4> actuator_param{};
 
     std::array<MotorParam, 4> motor_param;
-
+    float (*get_speed)(float);
   } Param;
 
   typedef struct {
@@ -70,13 +79,15 @@ class OmniChassis {
     float chassis_watt;
   } RefForChassis;
 
-  OmniChassis(Param &param, float control_freq);
+  nOmniChassis(Param &param, float control_freq);
 
   void UpdateFeedback();
 
   void Control();
 
   void SetMode(Mode mode);
+
+  void ChangePowerlim(Power_Mode power_mode_);
 
   bool LimitChassisOutPower(float power_limit, float *motor_out, float *speed,
                             uint32_t len);
@@ -85,9 +96,9 @@ class OmniChassis {
 
   void PraseRef();
   uint16_t MAXSPEEDGET(float power_limit);
-  static void DrawUIStatic(OmniChassis<Motor, MotorParam> *chassis);
+  static void DrawUIStatic(nOmniChassis<Motor, MotorParam> *chassis);
 
-  static void DrawUIDynamic(OmniChassis<Motor, MotorParam> *chassis);
+  static void DrawUIDynamic(nOmniChassis<Motor, MotorParam> *chassis);
 
   float CalcWz(const float LO, const float HI);
 
@@ -109,6 +120,8 @@ class OmniChassis {
   RefForChassis ref_;
 
   Mode mode_ = RELAX;
+  Mode last_mode_ = mode_;
+  Power_Mode power_mode_ = COMMON;
 
   Device::Cap::Info cap_;
 
@@ -125,14 +138,19 @@ class OmniChassis {
 
   /* PID计算的目标值 */
   struct {
-    float *motor_rotational_speed; /* 电机转速的动态数组，单位：RPM */
+    float motor_rotational_speed[4]; /* 电机转速的动态数组，单位：RPM */
   } setpoint_;
+  float motor_speed_[4];
   struct {
     float motor3508_out[4]; /*转矩电流范围-1--1*/
   } out_;
   /* 反馈控制用的PID */
 
   Component::PID follow_pid_; /* 跟随云台用的PID */
+  Component::PID xaccl_pid_;  /* x方向加速跟随PID */
+  Component::PID yaccl_pid_;  /* y方向加速跟随PID */
+
+  float max_power_limit;
 
   System::Thread thread_;
 
@@ -141,16 +159,15 @@ class OmniChassis {
   float yaw_;
   Device::Referee::Data raw_ref_;
 
-  Device::BaseMotor::Feedback motor_feedback_;
-
   Component::CMD::ChassisCMD cmd_;
 
   Component::UI::String string_;
+  Component::UI::Cycle cycle_;
 
   Component::UI::Line line_;
 
   Component::UI::Rectangle rectange_;
 };
 
-typedef OmniChassis<Device::RMMotor, Device::RMMotor::Param> RMChassis;
+typedef nOmniChassis<Device::RMMotor, Device::RMMotor::Param> RMChassis;
 }  // namespace Module

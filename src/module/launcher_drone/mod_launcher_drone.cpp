@@ -1,188 +1,193 @@
 #include "mod_launcher_drone.hpp"
 
-#include <comp_actuator.hpp>
-#include <cstdint>
-
 #include "bsp_pwm.h"
-#include "bsp_time.h"
-#define LAUNCHER_TRIG_SPEED_MAX (8191)
+
+#define FRIC_NUM 2
+#define TRIG_NUM 1
+#define TRIG_MAX_SPEED (8191)
+#define FRIC_MAX_SPEED (7500.0f)
 
 using namespace Module;
-UVALauncher::UVALauncher(Param& param, float control_freq)
-    : param_(param), ctrl_lock_(true) {
-  for (size_t i = 0; i < 1; i++) {
-    this->trig_actuator_.at(i) =
-        new Component::PosActuator(param.trig_actr.at(i), control_freq);
 
+DroneLauncher::DroneLauncher(Param& param, float control_freq)
+    : param_(param), ctrl_lock_(true) {
+  for (size_t i = 0; i < TRIG_NUM; i++) {
+    this->trig_actr_.at(i) =
+        new Component::PosActuator(param.trig_actr.at(i), control_freq);
     this->trig_motor_.at(i) =
         new Device::RMMotor(this->param_.trig_motor.at(i),
                             ("Launcher_Trig" + std::to_string(i)).c_str());
   }
 
-  auto event_callback = [](LauncherEvent event, UVALauncher* launcher) {
+  auto event_callback = [](Event event, DroneLauncher* drone) {
+    drone->ctrl_lock_.Wait(UINT32_MAX);
     switch (event) {
-      case CHANGE_FIRE_MODE_SAFE:
-
-        launcher->SetTrigMode(SAFE);
-        launcher->fire_ctrl_.fire = false;    /*拨弹盘静止*/
-        launcher->fire_ctrl_.fric_on = false; /*摩擦轮静止*/
-
+      case SET_RELAX:
+        drone->SetTrigMode(RELAX);
+        drone->SetFricMode(SAFE);
+        break;
+      case CHANGE_FRIC_MODE_LOADED:
+        drone->SetTrigMode(RELAX);
+        drone->SetFricMode(LOADED);
+        break;
+      case CHANGE_FRIC_MODE_SAFE:
+        drone->SetTrigMode(RELAX);
+        drone->SetFricMode(SAFE);
         break;
       case CHANGE_TRIG_MODE_SINGLE:
-
-        launcher->fire_ctrl_.fire = true;    /*拨弹盘转动*/
-        launcher->fire_ctrl_.fric_on = true; /*摩擦轮转动*/
-
-        launcher->SetTrigMode(SINGLE);
+        drone->SetTrigMode(SINGLE);
         break;
-
       case CHANGE_TRIG_MODE_BURST:
-
-        launcher->fire_ctrl_.fire = true;    /*拨弹盘转动*/
-        launcher->fire_ctrl_.fric_on = true; /*摩擦轮转动*/
-
-        launcher->SetTrigMode(BURST);
+        drone->SetTrigMode(BURST);
         break;
-
-      default:
+      case CHANGE_TRIG_MODE_CONTINUED:
+        drone->SetTrigMode(CONTINUED);
+        break;
+      case SET_START_FIRE:
+        drone->SetFricMode(LOADED);
+        drone->SetTrigMode(BURST);
         break;
     }
+    drone->ctrl_lock_.Post();
   };
+  Component::CMD::RegisterEvent<DroneLauncher*, Event>(event_callback, this,
+                                                       this->param_.EVENT_MAP);
 
-  Component::CMD::RegisterEvent<UVALauncher*, LauncherEvent>(
-      event_callback, this, this->param_.EVENT_MAP);
-
-  auto launcher_thread = [](UVALauncher* launcher) {
+  auto drone_launcher_thread = [](DroneLauncher* drone) {
     auto ref_sub = Message::Subscriber<Device::Referee::Data>("referee");
 
     uint32_t last_online_time = bsp_time_get_ms();
-
     while (1) {
-      ref_sub.DumpData(launcher->raw_ref_);
+      ref_sub.DumpData(drone->raw_ref_);
 
-      launcher->PraseRef();
-      launcher->ctrl_lock_.Wait(UINT32_MAX);
-
-      launcher->FricControl();
-      launcher->Control();
-
-      launcher->ctrl_lock_.Post();
-
-      /* 运行结束，等待下一次唤醒 */
-      launcher->thread_.SleepUntil(2, last_online_time);
+      drone->PraseRef();
+      drone->ctrl_lock_.Wait(UINT32_MAX);
+      drone->Feedback();
+      drone->Control();
+      drone->ctrl_lock_.Post();
+      drone->thread_.SleepUntil(2, last_online_time);
     }
   };
-
-  this->thread_.Create(launcher_thread, this, "launcher_thread", 384,
-                       System::Thread::MEDIUM);
+  this->thread_.Create(drone_launcher_thread, this, "drone_launcher_thread",
+                       384, System::Thread::MEDIUM);
 }
 
-void UVALauncher::SetTrigMode(TrigMode mode) {
-  if (mode == this->fire_ctrl_.trig_mode_) {
-    return;
-  }
-
-  this->fire_ctrl_.trig_mode_ = mode;
-}
-void UVALauncher::Control() {
-  const float LAST_TRIG_MOTOR_ANGLE = this->trig_motor_[0]->GetAngle();
-
-  for (size_t i = 0; i < LAUNCHER_ACTR_TRIG_NUM; i++) {
+void DroneLauncher::Feedback() {
+  float trig_pos_last = this->trig_motor_[0]->GetAngle();
+  for (size_t i = 0; i < TRIG_NUM; i++) {
     this->trig_motor_[i]->Update();
   }
-
-  const float DELTA_MOTOR_ANGLE =
-      this->trig_motor_[0]->GetAngle() - LAST_TRIG_MOTOR_ANGLE;
-
-  this->trig_angle_ += DELTA_MOTOR_ANGLE / this->param_.trig_gear_ratio;
-
+  float trig_pos_delta = this->trig_motor_[0]->GetAngle() - trig_pos_last;
+  this->trig_pos_ += trig_pos_delta / this->param_.trig_gear_ratio;
+}
+void DroneLauncher::Control() {
   this->now_ = bsp_time_get();
-  this->dt_ = TIME_DIFF(this->last_wakeup_, this->now_); /*注意单位是US*/
+  this->dt_ = TIME_DIFF(this->last_wakeup_, this->now_);
   this->last_wakeup_ = this->now_;
 
-  /* 根据开火模式计算发射行为 */
-  uint32_t max_burst = 0;
-  switch (this->fire_ctrl_.trig_mode_) {
-    case SINGLE: /* 点射开火模式 */
-      max_burst = 1;
-      break;
-    case BURST: /* 爆发开火模式 */
-      max_burst = 8;
-      break;
-    default:
-      max_burst = 0;
-      break;
-  }
+  this->FricControl();
 
-  switch (this->fire_ctrl_.trig_mode_) {
-    case SINGLE: /* 点射开火模式 */
-    case BURST:  /* 爆发开火模式 */
-      /* 计算是否是第一次按下开火键 */
-      this->fire_ctrl_.first_pressed_fire =
-          this->fire_ctrl_.fire && !this->fire_ctrl_.last_fire;
-      this->fire_ctrl_.last_fire = 0;
-
-      /* 设置要发射多少弹丸 */
-      if (this->fire_ctrl_.first_pressed_fire && !this->fire_ctrl_.to_launch) {
-        this->fire_ctrl_.to_launch = max_burst;
-        this->fire_ctrl_.fire = false;
-      }
-
-      this->fire_ctrl_.launch_delay = this->param_.min_launch_delay;
-
-      break;
+  this->TrigControl();
+}
+void DroneLauncher::FricControl() {
+  switch (this->fricmode_) {
     case SAFE:
-      this->fire_ctrl_.launch_delay = UINT32_MAX;
+      bsp_pwm_start(BSP_PWM_SERVO_A);
+      bsp_pwm_set_comp(BSP_PWM_SERVO_A, 0.02f);
+      bsp_pwm_start(BSP_PWM_SERVO_B);
+      bsp_pwm_set_comp(BSP_PWM_SERVO_B, 0.02f);
       break;
-    default:
+    case LOADED:
+      bsp_pwm_start(BSP_PWM_SERVO_A);
+      bsp_pwm_start(BSP_PWM_SERVO_B);
+      bsp_pwm_set_comp(BSP_PWM_SERVO_A, 0.08f);
+      bsp_pwm_set_comp(BSP_PWM_SERVO_B, 0.08f);
       break;
-  }
-
-  /* 计算拨弹电机位置的目标值 */
-  if ((bsp_time_get_ms() - this->fire_ctrl_.last_launch) >=
-          this->fire_ctrl_.launch_delay &&
-      this->fire_ctrl_.to_launch) {
-    if ((fire_ctrl_.last_trig_angle - trig_angle_) / M_2PI *
-            this->param_.num_trig_tooth >
-        0.9) {
-      fire_ctrl_.last_trig_angle = this->setpoint_.trig_angle_;
-      /* 将拨弹电机角度进行循环加法，每次加(减)射出一颗弹丸的弧度变化 */
-      this->setpoint_.trig_angle_ -= M_2PI / this->param_.num_trig_tooth;
-      this->fire_ctrl_.to_launch--;
-      this->fire_ctrl_.last_launch = bsp_time_get_ms();
-    }
-  }
-
-  for (int i = 0; i < 1; i++) {
-    /* 控制拨弹电机 */
-    float trig_out = this->trig_actuator_[i]->Calculate(
-        this->setpoint_.trig_angle_,
-        this->trig_motor_[i]->GetSpeed() / LAUNCHER_TRIG_SPEED_MAX,
-        this->trig_angle_, this->dt_);
-
-    this->trig_motor_[i]->Control(trig_out);
   }
 }
-void UVALauncher::PraseRef() {
-  memcpy(&(this->ref_.robot_status), &(this->raw_ref_.robot_status),
+void DroneLauncher::TrigControl() {
+  switch (this->trigmode_) {
+    case RELAX:
+      this->setpoint_.trig_pos = this->trig_pos_;
+      break;
+    case SINGLE:
+    case BURST:
+      if ((bsp_time_get_ms() - this->last_launch_time_) >=
+          this->launch_delay_) {
+        if ((trig_last_pos_ - trig_pos_) / M_2PI *
+                this->param_.bullet_circle_num >
+            0.9) {
+          if (trig_set_freq_ > 0) {
+            if (!stall_) {
+              this->trig_last_pos_ = this->setpoint_.trig_pos;
+              this->setpoint_.trig_pos -=
+                  M_2PI / this->param_.bullet_circle_num;
+            }
+            trig_set_freq_--;
+            this->last_launch_time_ = bsp_time_get_ms();
+            this->stall_ = false;
+          }
+        }
+      }
+      break;
+    case CONTINUED:
+      this->continued_rotation_speed_ =
+          M_2PI / (8.0f * static_cast<float>(this->param_.min_launcher_delay));
+      this->setpoint_.trig_pos -=
+          this->continued_rotation_speed_ * dt_ * 1000.0f;
+      break;
+  }
+  switch (this->trigmode_) {
+    case RELAX:
+      for (size_t i = 0; i < TRIG_NUM; i++) {
+        this->trig_motor_[i]->Relax();
+      }
+      break;
+    case SINGLE:
+    case BURST:
+    case CONTINUED:
+      for (size_t i = 0; i < TRIG_NUM; i++) {
+        trig_out_ = this->trig_actr_[i]->Calculate(
+            this->setpoint_.trig_pos,
+            this->trig_motor_[i]->GetSpeed() / TRIG_MAX_SPEED, this->trig_pos_,
+            dt_);
+        this->trig_motor_[i]->Control(trig_out_);
+      }
+      break;
+  }
+}
+void DroneLauncher::SetFricMode(FricMode mode) {
+  if (this->fricmode_ == mode) {
+    return;
+  }
+  this->fricmode_ = mode;
+}
+void DroneLauncher::SetTrigMode(TrigMode mode) {
+  if (this->trigmode_ == mode) {
+    return;
+  }
+  this->trigmode_ = mode;
+  switch (this->trigmode_) {
+    case RELAX:
+      this->trig_set_freq_ = 0;
+      this->launch_delay_ = UINT32_MAX;
+      break;
+    case SINGLE:
+      this->trig_set_freq_ = 1;
+      this->launch_delay_ = this->param_.min_launcher_delay;
+      break;
+    case BURST:
+      this->trig_set_freq_ = 8;
+      this->launch_delay_ = this->param_.min_launcher_delay;
+      break;
+    case CONTINUED:
+      this->trig_set_freq_ = 0;
+      this->launch_delay_ = this->param_.min_launcher_delay;
+      break;
+  }
+}
+void DroneLauncher::PraseRef() {
+  memcpy(&(this->ref_.robot_status), &(raw_ref_.robot_status),
          sizeof(this->ref_.robot_status));
-
   this->ref_.status = this->raw_ref_.status;
-}
-void UVALauncher::FricControl() {
-  if (/*this->raw_ref_.robot_status.power_launcher_output == 1 &&*/
-      this->fire_ctrl_.fric_on == true) {
-    /*摩擦轮开启模式*/
-    bsp_pwm_start(BSP_PWM_SERVO_A);
-    bsp_pwm_start(BSP_PWM_SERVO_B);
-
-    bsp_pwm_set_comp(BSP_PWM_SERVO_A, 0.08f); /*此处最高不得超过0.10f*/
-    bsp_pwm_set_comp(BSP_PWM_SERVO_B, 0.08f);
-  } else {
-    /*摩擦轮预热模式*/
-    bsp_pwm_start(BSP_PWM_SERVO_A);
-    bsp_pwm_set_comp(BSP_PWM_SERVO_A, 0.02f);
-    bsp_pwm_start(BSP_PWM_SERVO_B);
-    bsp_pwm_set_comp(BSP_PWM_SERVO_B, 0.02f);
-  }
 }

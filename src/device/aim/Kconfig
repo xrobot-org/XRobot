@@ -1,0 +1,15 @@
+config DEVICE_AI_TASK_STACK_DEPTH
+
+    int "AI任务堆栈大小"
+
+    range 128 4096
+
+    default 256
+
+    menu "上位机"
+
+    config HOST_CTRL_PRIORITY
+
+        tristate "优先把控制权交给上位机"
+
+    endmenu

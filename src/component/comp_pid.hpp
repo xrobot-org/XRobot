@@ -40,6 +40,8 @@ class PID {
 
   float Calculate(float sp, float fb, float fb_dot, float dt);
 
+  float GetError() { return last_.err; }
+
  private:
   Param param_;
 

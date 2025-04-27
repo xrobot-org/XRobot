@@ -1,3 +1,4 @@
+
 #include "dev_mit_motor.hpp"
 
 #include "bsp_time.h"
@@ -10,13 +11,10 @@
 #define KP_MAX 500.0f
 #define KD_MIN 0.0f
 #define KD_MAX 5.0f
-#define T_MIN -18.0f
-#define T_MAX 18.0f
+#define T_MIN -10.0f
+#define T_MAX 10.0f
 
 using namespace Device;
-
-// static const uint8_t RELAX_CMD[8] = {0X7F, 0XFF, 0X7F, 0XF0,
-//                                      0X00, 0X00, 0X07, 0XFF};
 
 static const uint8_t ENABLE_CMD[8] = {0XFF, 0XFF, 0XFF, 0XFF,
                                       0XFF, 0XFF, 0XFF, 0XFC};
@@ -32,7 +30,9 @@ MitMotor::MitMotor(const Param &param, const char *name)
     : BaseMotor(name, param.reverse), param_(param) {
   auto rx_callback = [](Can::Pack &rx, MitMotor *motor) {
     if ((rx.data[0] & 0x0f) == motor->param_.id) {
-      motor->recv_.Overwrite(rx);
+      // motor->recv_.Overwrite(rx);
+      motor->last_online_time_ = bsp_time_get_ms();
+      motor->Decode(rx);
     }
 
     return true;
@@ -46,14 +46,15 @@ MitMotor::MitMotor(const Param &param, const char *name)
         (std::string("mit_motor_can") + std::to_string(this->param_.can))
             .c_str());
 
-    Can::Subscribe(*MitMotor::mit_tp_[this->param_.can], this->param_.can, 0,
-                   1);
-
     initd[this->param_.can] = true;
   }
 
+  // this->param_.feedback_id = this->param_.id;
   Message::Topic<Can::Pack> motor_tp(name);
-
+  // 订阅反馈消息
+  Can::Subscribe(*MitMotor::mit_tp_[this->param_.can], this->param_.can,
+                 this->param_.feedback_id, 1);
+  // 注册回调函数
   motor_tp.RegisterCallback(rx_callback, this);
 
   motor_tp.Link(*this->mit_tp_[this->param_.can]);
@@ -69,6 +70,7 @@ bool MitMotor::Update() {
 
   return true;
 }
+
 void MitMotor::SetMit(float out) {
   clampf(&out, -1.0f, 1.0f);
   if (this->feedback_.temp > 75.0f) {
@@ -82,9 +84,9 @@ void MitMotor::SetMit(float out) {
   int kd_int = float_to_uint(0.0f, KD_MIN, KD_MAX, 12);
   int t_int = 0;
   if (reverse_) {
-    t_int = -float_to_uint(out * T_MAX, T_MIN, T_MAX, 12);
+    t_int = -float_to_uint(out, T_MIN, T_MAX, 12);
   } else {
-    t_int = float_to_uint(out * T_MAX, T_MIN, T_MAX, 12);
+    t_int = float_to_uint(out, T_MIN, T_MAX, 12);
   }
   Can::Pack tx_buff;
 
@@ -100,29 +102,24 @@ void MitMotor::SetMit(float out) {
   tx_buff.data[7] = t_int & 0xff;
 
   Can::SendStdPack(this->param_.can, tx_buff);
-  this->Update();
+  // System::Thread::Sleep(100);
+  // this->Update();
 }
+
 void MitMotor::Decode(Can::Pack &rx) {
-  if (this->param_.id != (rx.data[0] & 0x0f)) {
-    return;
-  }
-
   uint16_t raw_position = rx.data[1] << 8 | rx.data[2];
-
   uint16_t raw_speed = (rx.data[3] << 4) | (rx.data[4] >> 4);
-
-  uint16_t raw_current = (rx.data[4] & 0x0f) << 8 | rx.data[5];
+  uint16_t raw_current = (rx.data[4] & 0x0F) << 8 | rx.data[5];
 
   raw_pos_ = uint_to_float(raw_position, P_MIN, P_MAX, 16);
   float speed = uint_to_float(raw_speed, V_MIN, V_MAX, 12);
-  float current = uint_to_float(raw_current, -T_MAX, T_MAX, 12);
+  float current = uint_to_float(raw_current, T_MIN, T_MAX, 12);
 
   this->feedback_.rotational_speed = speed;
   this->feedback_.rotor_abs_angle = raw_pos_;
   this->feedback_.torque_current = current;
 }
 
-/* MIT电机协议只提供pd位置控制 */
 void MitMotor::Control(float output) {
   static_cast<void>(output);
   XB_ASSERT(false);
@@ -155,8 +152,6 @@ void MitMotor::SetPos(float pos) {
     pos_sp = -pos_sp;
   }
 
-  // clampf(&pos_sp, -param_.max_error, param_.max_error);
-
   pos_sp += this->raw_pos_;
 
   while (pos_sp > 4 * M_PI) {
@@ -187,29 +182,29 @@ void MitMotor::SetPos(float pos) {
   tx_buff.data[7] = t_int & 0xff;
 
   Can::SendStdPack(this->param_.can, tx_buff);
-  this->Update();
+  // this->Update();
 }
 
 void MitMotor::Relax() {
   Can::Pack tx_buff;
-
   tx_buff.index = this->param_.id;
-
   memcpy(tx_buff.data, RELAX_CMD, sizeof(RELAX_CMD));
-
   Can::SendStdPack(this->param_.can, tx_buff);
+  System::Thread::Sleep(50);
 }
 
 bool MitMotor::Enable() {
   Can::Pack tx_buff;
-
   tx_buff.index = this->param_.id;
-
   memcpy(tx_buff.data, ENABLE_CMD, sizeof(ENABLE_CMD));
 
-  if (Can::SendStdPack(this->param_.can, tx_buff)) {
-    return true;
-  } else {
-    return false;
-  };
+  //  if (Can::SendStdPack(this->param_.can, tx_buff))
+  //  {
+  //   System::Thread::Sleep(50);
+  //   return true ;
+  //  }
+  //  return false;
+  Can::SendStdPack(this->param_.can, tx_buff);
+  System::Thread::Sleep(5);
+  return true;
 }

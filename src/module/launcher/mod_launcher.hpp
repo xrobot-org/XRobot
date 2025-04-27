@@ -10,6 +10,8 @@
 #include "dev_rm_motor.hpp"
 
 namespace Module {
+template <typename Motor, typename Motorparam, int Fric_num = 2,
+          int Trig_num = 1>
 class Launcher {
  public:
   /* 发射器运行模式 */
@@ -44,24 +46,6 @@ class Launcher {
     CLOSE_COVER,
   } LauncherEvent;
 
-  enum {
-    LAUNCHER_ACTR_FRIC1_IDX = 0, /* 1号摩擦轮相关的索引值 */
-    LAUNCHER_ACTR_FRIC2_IDX,     /* 2号摩擦轮相关的索引值 */
-    LAUNCHER_ACTR_FRIC_NUM,      /* 总共的动作器数量 */
-  };
-
-  enum {
-    LAUNCHER_ACTR_TRIG_IDX, /* 拨弹电机相关的索引值 */
-    LAUNCHER_ACTR_TRIG_NUM, /* 总共的动作器数量 */
-  };
-
-  enum {
-    LAUNCHER_CTRL_FRIC1_SPEED_IDX = 0, /* 摩擦轮1控制的速度环控制器的索引值 */
-    LAUNCHER_CTRL_FRIC2_SPEED_IDX, /* 摩擦轮2控制的速度环控制器的索引值 */
-    LAUNCHER_CTRL_TRIG_SPEED_IDX, /* 拨弹电机控制的速度环控制器的索引值 */
-    LAUNCHER_CTRL_NUM,            /* 总共的控制器数量 */
-  };
-
   typedef enum {
     LAUNCHER_MODEL_17MM = 0, /* 17mm发射机构 */
     LAUNCHER_MODEL_42MM,     /* 42mm发射机构 */
@@ -77,11 +61,10 @@ class Launcher {
     float default_bullet_speed; /* 默认弹丸初速度 */
     uint32_t min_launch_delay;  /* 最小发射间隔(1s/最大射频) */
 
-    std::array<Component::PosActuator::Param, LAUNCHER_ACTR_TRIG_NUM> trig_actr;
-    std::array<Component::SpeedActuator::Param, LAUNCHER_ACTR_FRIC_NUM>
-        fric_actr;
-    std::array<Device::RMMotor::Param, LAUNCHER_ACTR_TRIG_NUM> trig_motor;
-    std::array<Device::RMMotor::Param, LAUNCHER_ACTR_FRIC_NUM> fric_motor;
+    std::array<Component::PosActuator::Param, Trig_num> trig_actr;
+    std::array<Component::SpeedActuator::Param, Fric_num> fric_actr;
+    std::array<Motorparam, Trig_num> trig_param;
+    std::array<Motorparam, Fric_num> fric_param;
 
     const std::vector<Component::CMD::EventMapItem> EVENT_MAP;
   } Param;
@@ -165,11 +148,11 @@ class Launcher {
   HeatControl heat_ctrl_;
   FireControl fire_ctrl_;
 
-  std::array<Component::PosActuator *, LAUNCHER_ACTR_TRIG_NUM> trig_actuator_;
-  std::array<Component::SpeedActuator *, LAUNCHER_ACTR_FRIC_NUM> fric_actuator_;
+  std::array<Component::PosActuator *, Trig_num> trig_actuator_;
+  std::array<Component::SpeedActuator *, Fric_num> fric_actuator_;
 
-  std::array<Device::RMMotor *, LAUNCHER_ACTR_TRIG_NUM> trig_motor_;
-  std::array<Device::RMMotor *, LAUNCHER_ACTR_FRIC_NUM> fric_motor_;
+  std::array<Device::RMMotor *, Trig_num> trig_motor_;
+  std::array<Device::RMMotor *, Fric_num> fric_motor_;
 
   RefForLauncher ref_;
 
@@ -185,4 +168,5 @@ class Launcher {
 
   Component::UI::Arc arc_;
 };
+typedef class Launcher<Device::RMMotor, Device::RMMotor::Param> RMLauncher;
 }  // namespace Module

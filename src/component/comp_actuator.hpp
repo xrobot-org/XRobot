@@ -79,6 +79,8 @@ class PosActuator {
 
   float SpeedCalculate(float setpoint, float feedback, float dt);
 
+  float GetLastError() { return pid_speed_.GetError(); }
+
   void Reset();
 
  private:
