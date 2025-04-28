@@ -10,16 +10,6 @@
 namespace Device {
 class AI {
  public:
-  typedef struct __attribute__((packed)) {
-    uint8_t id;
-    Protocol_UpPackageReferee_t package;
-  } RefereePckage;
-
-  typedef struct __attribute__((packed)) {
-    uint8_t id;
-    Protocol_UpPackageMCU_t package;
-  } MCUPckage;
-
   typedef struct {
     uint8_t game_type;
     Device::Referee::Status status;
@@ -29,6 +19,7 @@ class AI {
     uint32_t ball_speed;
     uint32_t max_hp;
     uint32_t hp;
+    uint32_t rfid;
 
     uint8_t game_progress;
     uint16_t base_hp;
@@ -36,8 +27,16 @@ class AI {
     uint16_t bullet_num;
     uint16_t coin_num;
     uint8_t own_virtual_shield_value;
-    float pos_x;
-    float pos_y;
+
+    float hero_x;
+    float hero_y;
+    float infantry_3_x;
+    float infantry_3_y;
+    float infantry_4_x;
+    float infantry_4_y;
+    float engineer_x;
+    float engineer_y;
+
     float pos_angle;
     float target_pos_x;
     float target_pos_y;
@@ -69,22 +68,19 @@ class AI {
     GAME_END = 5,
   } GameProgress;
   typedef enum {
-    TO_PATROL_AREA = 0, /* 哨兵巡逻区 */
-    TO_SUPPLY = 1,      /* 补给区 */
-    TO_HIGHWAY = 2,     /* 公路区 */
-    TO_OUTPOST = 3,     /* 前哨站 */
-    ROTOR = 4,
+    START_AUTO_CONTROL = 0, /* 哨兵巡逻区 */
+    STOP_AUTO_CONTROL = 1,  /* 补给区 */
 
-    SCANF = 5,
-    AUTO_AIM = 6,
-    AFFECTED = 7, /* 反击*/
+    SCANF = 2,
+    AUTO_AIM = 3,
+    AFFECTED = 4, /* 反击*/
 
-    CEASEFIRE = 8, /* 停火 */
-    FIRE = 9,
+    CEASEFIRE = 5, /* 停火 */
+    FIRE = 6,
 
-    NOTHING = 10,
-    CONFIRM_RESURRECTION = 11, /* 确认复活 */
-    EXCHANGE_BULLETS = 12,     /* 兑换弹丸 */
+    NOTHING = 7,
+    CONFIRM_RESURRECTION = 8, /* 确认复活 */
+    EXCHANGE_BULLETS = 9,     /* 兑换弹丸 */
     /* 其他行为暂不考虑 */
   } Action;
 
@@ -138,9 +134,9 @@ class AI {
 
   /* angle record */
   float chassis_yaw_offset_ = 0;
-  float gimbal_scan_start_angle_;
+  // float gimbal_scan_start_angle_;
   Component::Type::Eulr eulr_;
-  Component::Type::Quaternion quat_;
+  // Component::Type::Quaternion quat_;
   Component::Type::CycleValue target_scan_angle_ = 0.0;
   struct {
     float yaw; /* 偏航角（Yaw angle） */
@@ -164,11 +160,7 @@ class AI {
 
   /* Data */
   Protocol_DownPackage_t from_host_{};
-
-  struct {
-    RefereePckage ref{};
-    MCUPckage mcu{};
-  } to_host_;
+  Protocol_UpPackage_t to_host_{};
 
   RefForAI ref_;
 
@@ -177,10 +169,10 @@ class AI {
   AICtrlAction action_;
 
   ScanfMode scanf_mode_ = {
-      .scanf_yaw_rate = 0.0025f,
-      .scanf_pit_center = 0.04f,
-      .scanf_pit_range = 0.22f,
-      .scanf_pit_omega = 5.0f,
+      .scanf_yaw_rate = 0.0053f,
+      .scanf_pit_center = 0.1f,
+      .scanf_pit_range = 0.5f,
+      .scanf_pit_omega = 13.0f,
   };
 
   SentryDecisionData cmd_for_ref_;
