@@ -23,7 +23,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/xrobot-org/docker-image-stm32:main
+      image: ghcr.io/xrobot-org/docker-image-linux:main
       options: --user 0
 
     steps:
@@ -35,7 +35,7 @@ jobs:
 
     - name: Compiler Version Check
       run: |
-        arm-none-eabi-gcc --version
+        gcc --version
         clang --version
 
     # - name: Get Test Project
