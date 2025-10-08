@@ -6,8 +6,7 @@ This script:
 1. Ensures `Modules/modules.yaml` and `Modules/sources.yaml` exist, generating templates if missing.
 2. Reads module list from modules.yaml.
 3. Invokes the CLI tools to fetch all modules and dependencies.
-4. Ensures a global Modules/CMakeLists.txt is present.
-5. Invokes code generation for the main C++ file.
+4. Invokes code generation for the main C++ file.
 
 Intended for rapid setup of an XRobot project workspace.
 """
@@ -86,31 +85,6 @@ def extract_modules() -> List[str]:
     data = load_yaml(MODULES_CONFIG)
     return [m for m in data.get("modules", []) if isinstance(m, str) and "/" in m]
 
-def ensure_modules_cmakelists():
-    """
-    Ensure Modules/CMakeLists.txt exists (generate if missing, one-time).
-    """
-    cmake_file = MODULES_DIR / "CMakeLists.txt"
-    if cmake_file.exists():
-        return
-    cmake_code = r'''# Automatically include all Modules/*/CMakeLists.txt
-
-message(STATUS "[XRobot] Scanning module directory: Modules/")
-
-file(GLOB MODULE_DIRS RELATIVE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/*)
-
-foreach(MOD ${MODULE_DIRS})
-    if(IS_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/${MOD}")
-        if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/${MOD}/CMakeLists.txt")
-            message(STATUS "[XRobot] Including module: ${MOD}")
-            include("${CMAKE_CURRENT_LIST_DIR}/${MOD}/CMakeLists.txt")
-        endif()
-    endif()
-endforeach()
-'''
-    cmake_file.write_text(cmake_code, encoding="utf-8")
-    print(f"[INFO] Created default Modules/CMakeLists.txt: {cmake_file}")
-
 def main():
     print("Starting XRobot auto-configuration...")
 
@@ -134,8 +108,6 @@ def main():
         "--directory", str(MODULES_DIR),
         "--sources", str(SOURCES_CONFIG)
     ])
-
-    ensure_modules_cmakelists()
 
     # Step 3: Generate main function code
     run_subprocess([

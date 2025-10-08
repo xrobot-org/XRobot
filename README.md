@@ -1,12 +1,12 @@
 
-# XRobot 自动代码生成工具集 / XRobot Auto Code Generation Toolkit
+# XRobot PkgKit 模块包管理与代码入口生成工具 / Package Management and Entry Point Generation Toolkit
 
 <h1 align="center">
 <img src="https://github.com/Jiu-xiao/LibXR_CppCodeGenerator/raw/main/imgs/XRobot.jpeg" width="300">
 </h1><br>
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
-[![GitHub Repo](https://img.shields.io/github/stars/xrobot-org/XRobot?style=social)](https://github.com/Jiu-xiao/libxr)
+[![GitHub Repo](https://img.shields.io/github/stars/xrobot-org/XRobot?style=social)](https://github.com/xrobot-org/XRobot)
 [![Documentation](https://img.shields.io/badge/docs-online-brightgreen)](https://xrobot-org.github.io/)
 [![GitHub Issues](https://img.shields.io/github/issues/xrobot-org/XRobot)](https://github.com/xrobot-org/XRobot/issues)
 [![CI/CD - Python Package](https://github.com/xrobot-org/XRobot/actions/workflows/python-publish.yml/badge.svg)](https://github.com/xrobot-org/XRobot/actions/workflows/python-publish.yml)
@@ -460,8 +460,8 @@ Required Hardware : led/LED/led1/LED1
 
 ### `xrobot_setup`
 
-该工具用于自动配置 XRobot 环境，生成模块仓库配置、CMake 配置以及主函数代码。它通过调用 `xrobot_init_mod` 初始化模块，生成 CMake 配置，并根据构造参数自动生成主函数代码。
-This tool automates the XRobot setup, generating module repository configuration, CMake configuration, and main function code. It initializes modules via `xrobot_init_mod`, generates CMake configuration, and automatically generates the main function code based on constructor parameters.
+该工具用于自动配置 XRobot 环境，生成模块仓库配置以及主函数代码。它通过调用 `xrobot_init_mod` 初始化模块，并根据构造参数自动生成主函数代码。
+This tool automates the XRobot setup, generating module repository configuration and main function code. It initializes modules via `xrobot_init_mod`, and automatically generates the main function code based on constructor parameters.
 
 #### 🚀 使用方法 / Usage
 
@@ -469,6 +469,13 @@ This tool automates the XRobot setup, generating module repository configuration
 # 自动配置并生成主函数代码
 # Auto-configure and generate main function code
 xrobot_setup
+```
+
+然后在`add_subdirectory(your_libxr_path/LibXR)`之前，添加如下内容：  
+Then add the following before `add_subdirectory(your_libxr_path/LibXR)`:
+
+```cmake
+set(XROBOT_MODULES_DIR YOUR_MODULES_PATH) # eg. ${CMAKE_CURRENT_SOURCE_DIR}/Modules
 ```
 
 #### 🎛️ 命令行参数 / Command-Line Arguments
@@ -487,10 +494,6 @@ xrobot_setup
   调用 `xrobot_init_mod` 命令初始化模块仓库，拉取模块代码。
   Calls `xrobot_init_mod` to initialize the module repository and clone modules.
 
-- **CMake 配置**：
-  生成 `Modules/CMakeLists.txt`，用于自动包含所有模块的构建配置。
-  Generates `Modules/CMakeLists.txt` for auto-including build configurations of all modules.
-
 - **主函数生成**：
   生成 `User/xrobot_main.hpp`，包含自动生成的 `XRobotMain()` 函数代码。
   Generates `User/xrobot_main.hpp` with the auto-generated `XRobotMain()` function code.
@@ -503,8 +506,8 @@ Starting XRobot auto-configuration
 [INFO] Default config created: ./Modules/modules.yaml
 Please edit the file and rerun.
 
-[EXEC] xrobot_init_mod --config ./Modules/modules.yaml --dir ./Modules
-[INFO] Generated default Modules/CMakeLists.txt at: Modules/CMakeLists.txt
+[EXEC] xrobot_init_mod --config ./Modules/modules.yaml -d ./Modules
+[SUCCESS] All modules and their dependencies processed.
 
 [EXEC] xrobot_gen_main --output ./User/xrobot_main.hpp --config ./User/xrobot.yaml
 [INFO] Constructor config generated: ./User/xrobot.yaml
@@ -620,7 +623,6 @@ remote: Total 31 (delta 10), reused 31 (delta 10), pack-reused 0 (from 0)
 Receiving objects: 100% (31/31), 4.43 KiB | 2.22 MiB/s, done.
 Resolving deltas: 100% (10/10), done.
 [SUCCESS] All modules and their dependencies processed.
-[INFO] Created default Modules/CMakeLists.txt: Modules\CMakeLists.txt
 [EXEC] xrobot_gen_main --output User\xrobot_main.hpp
 Discovered modules: BlinkLED
 [INFO] Successfully parsed manifest for BlinkLED
