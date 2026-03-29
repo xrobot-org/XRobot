@@ -321,6 +321,11 @@ def main():
         args.modules = extract_modules_from_config(config_data)
         if args.modules:
             print(f"[INFO] Using modules from configuration: {', '.join(args.modules)}")
+            modules_dir = Path("Modules")
+            for mod in args.modules:
+                hpp = modules_dir / mod / f"{mod}.hpp"
+                if not hpp.exists():
+                    print(f"[WARN] Module '{mod}' declared in config but header not found: {hpp}")
         else:
             args.modules = auto_discover_modules()
             print(f"Discovered modules: {', '.join(args.modules) or 'None'}")
