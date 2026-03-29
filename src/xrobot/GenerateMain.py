@@ -269,6 +269,35 @@ def auto_discover_modules(modules_dir: Path = Path("Modules")) -> List[str]:
         print("[WARN] No valid modules found in the Modules directory.")
     return discovered_modules
 
+def extract_modules_from_config(config: Dict) -> List[str]:
+    """
+    Extract a de-duplicated module include list from config["modules"] while
+    preserving declaration order.
+    """
+    module_entries = config.get("modules", [])
+    if not isinstance(module_entries, list):
+        print("[WARN] Config field 'modules' is not a list; falling back to discovery.")
+        return []
+
+    selected_modules = []
+    seen_modules = set()
+    for entry in module_entries:
+        if not isinstance(entry, dict):
+            continue
+
+        mod = entry.get("name")
+        if not isinstance(mod, str):
+            continue
+
+        mod = mod.strip()
+        if not mod or mod in seen_modules:
+            continue
+
+        selected_modules.append(mod)
+        seen_modules.add(mod)
+
+    return selected_modules
+
 def main():
     parser = argparse.ArgumentParser(description="XRobot code generation tool")
     parser.add_argument("-o", "--output", default='User/xrobot_main.hpp', help="Output C++ file path")
@@ -278,27 +307,31 @@ def main():
 
     args = parser.parse_args()
 
-    # Module discovery
-    if not args.modules:
-        args.modules = auto_discover_modules()
-        print(f"Discovered modules: {', '.join(args.modules) or 'None'}")
-
     # Configuration handling
     config_data = {}
-    if args.config:
-        config_path = Path(args.config)
-        if config_path.exists():
-            print(f"[INFO] Using existing configuration file: {config_path}")
-            config_data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+    config_path = Path(args.config) if args.config else Path("User/xrobot.yaml")
+    if config_path.exists():
+        print(f"[INFO] Using existing configuration file: {config_path}")
+        config_data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+    elif args.config:
+        print(f"[WARN] Configuration file not found: {config_path}")
+
+    # Module selection
+    if not args.modules:
+        args.modules = extract_modules_from_config(config_data)
+        if args.modules:
+            print(f"[INFO] Using modules from configuration: {', '.join(args.modules)}")
+            modules_dir = Path("Modules")
+            for mod in args.modules:
+                hpp = modules_dir / mod / f"{mod}.hpp"
+                if not hpp.exists():
+                    print(f"[WARN] Module '{mod}' declared in config but header not found: {hpp}")
         else:
-            print(f"[WARN] Configuration file not found: {config_path}")
-            config_data = extract_constructor_args(args.modules, Path("Modules"), config_path)
-    else:
-        config_path = Path("User/xrobot.yaml")
-        if config_path.exists():
-            config_data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
-        else:
-            config_data = extract_constructor_args(args.modules, Path("Modules"), config_path)
+            args.modules = auto_discover_modules()
+            print(f"Discovered modules: {', '.join(args.modules) or 'None'}")
+
+    if not config_path.exists():
+        config_data = extract_constructor_args(args.modules, Path("Modules"), config_path)
 
     # Code generation
     output_code = generate_xrobot_main_code(args.hw, args.modules, config_data)
