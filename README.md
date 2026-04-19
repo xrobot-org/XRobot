@@ -302,8 +302,11 @@ xrobot_gen_main -o main.cpp -m BlinkLED Motor IMU --config User/xrobot.yaml
 global_settings:
   monitor_sleep_ms: 5
 
+constexpr_namespace: ProjectConstexpr
+
 constexpr_includes:
   - libxr_def.hpp
+  - <system_error>
 
 constexprs:
   MainCameraInfo:
@@ -337,8 +340,14 @@ modules:
   `modules` is the module instance list; `id` becomes the generated C++ instance name, and `name` is the module class name.
 - `constructor_args` 与 `template_args` 会按配置顺序展开到构造参数和模板参数中。
   `constructor_args` and `template_args` are expanded into constructor arguments and template arguments in config order.
-- `{constexpr: Name}` 会展开为 `XRobotProject::Name`；若顶层存在 `constexprs`，则会额外生成 `xrobot_constexpr.hpp`。
-  `{constexpr: Name}` expands to `XRobotProject::Name`; when top-level `constexprs` exists, `xrobot_constexpr.hpp` is generated alongside the main file.
+- `constexpr_namespace` 可选，用于指定生成的项目级常量命名空间；默认值为 `ProjectConstexpr`。
+  `constexpr_namespace` is optional and controls the generated project-level constexpr namespace; the default is `ProjectConstexpr`.
+- `{constexpr: Name}` 会展开为 `ProjectConstexpr::Name` 或你配置的 `constexpr_namespace::Name`；若顶层存在 `constexprs`，则会额外生成 `xrobot_constexpr.hpp`。
+  `{constexpr: Name}` expands to `ProjectConstexpr::Name` or your configured `constexpr_namespace::Name`; when top-level `constexprs` exists, `xrobot_constexpr.hpp` is generated alongside the main file.
+- `{expr: Code}` 会原样输出为 C++ 表达式，`{string: Text}` 会强制输出为字符串字面量。
+  `{expr: Code}` is emitted as a raw C++ expression, while `{string: Text}` forces a string literal.
+- `constexpr_includes` 里的条目若写成 `<...>` 或 `"..."` 会按原样输出；裸字符串仍会生成双引号 include。
+  Entries in `constexpr_includes` preserve raw `<...>` / `"..."` forms; bare strings still emit quoted includes.
 - `@instance_id` 会被当作已有 C++ 实例名直接引用，例如 `@cam` 会展开为 `cam`。
   `@instance_id` is emitted as a direct C++ instance reference, for example `@cam` expands to `cam`.
 
@@ -346,8 +355,8 @@ modules:
 
 - 生成一个包含 `XRobotMain()` 的 `.hpp` 或 `.cpp` 文件。
   Generates a `.hpp` or `.cpp` file containing `XRobotMain()`.
-- 当配置里存在 `constexprs` 时，会在输出文件同目录额外生成 `xrobot_constexpr.hpp`。
-  When `constexprs` exists in the config, an extra `xrobot_constexpr.hpp` file is generated next to the main output.
+- 当配置里存在 `constexprs` 时，会在输出文件同目录额外生成 `xrobot_constexpr.hpp`；主文件会先 include 模块头，再 include 该头文件。
+  When `constexprs` exists in the config, an extra `xrobot_constexpr.hpp` file is generated next to the main output; the main file includes module headers first and then includes that header.
 - 每个模块按 `static ModuleName<...> id(hw, appmgr, ...);` 形式实例化。
   Each module instance is emitted in the form `static ModuleName<...> id(hw, appmgr, ...);`.
 - 主循环使用 `appmgr.MonitorAll()` 与 `Thread::Sleep(monitor_sleep_ms)`。
@@ -369,8 +378,11 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
   ApplicationManager appmgr;
 
   // Auto-generated module instantiations
-  static WebotsCamera<XRobotProject::MainCameraInfo> cam(hw, appmgr, XRobotProject::MainCameraInfo);
-  static ArmorDetector detector(hw, appmgr, cam, XRobotProject::DebugEnable);
+  static WebotsCamera<ProjectConstexpr::MainCameraInfo> cam(
+      hw,
+      appmgr,
+      ProjectConstexpr::MainCameraInfo);
+  static ArmorDetector detector(hw, appmgr, cam, ProjectConstexpr::DebugEnable);
 
   while (true) {
     appmgr.MonitorAll();
