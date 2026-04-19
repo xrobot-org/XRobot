@@ -263,18 +263,18 @@ xrobot_init_mod --config my_config.yaml --directory MyModules
 
 ### `xrobot_gen_main`
 
-该工具用于根据模块清单和构造参数配置文件，自动生成 C++ 入口函数 `XRobotMain()`，支持嵌套参数、重复实例、多模块构造。
-This tool generates a C++ entry function `XRobotMain()` based on the module list and configuration file, supporting nested args, multiple instances, and module composition.
+该工具用于根据模块实例配置生成 `XRobotMain()`，并在需要时同步生成项目级 `constexpr` 头文件。配置文件默认是 `User/xrobot.yaml`。
+This tool generates `XRobotMain()` from the module instance configuration, and can also emit a project-level `constexpr` header when requested. The default config file is `User/xrobot.yaml`.
 
 #### 🚀 使用方法 / Usage
 
 ```bash
-# 自动发现所有模块并生成主函数
-# Auto-discover modules and generate main entry
-xrobot_gen_main --output User/xrobot_main.hpp
+# 使用 User/xrobot.yaml 中的 modules 列表生成主函数
+# Generate main entry from module instances declared in User/xrobot.yaml
+xrobot_gen_main --output User/xrobot_main.hpp --config User/xrobot.yaml
 
-# 指定模块和构造参数配置
-# Specify modules and config manually
+# 直接指定模块名列表；若配置文件不存在则按模块 manifest 生成默认配置
+# Specify module names manually; if config is missing, generate a default one from module manifests
 xrobot_gen_main -o main.cpp -m BlinkLED Motor IMU --config User/xrobot.yaml
 ```
 
@@ -285,29 +285,73 @@ xrobot_gen_main -o main.cpp -m BlinkLED Motor IMU --config User/xrobot.yaml
   Output path of generated C++ file, default is `User/xrobot_main.hpp`.
 
 - `--modules`, `-m`
-  可选，指定模块名列表；若未指定，则自动扫描 `Modules/` 目录下的模块。
-  Optional. List of module names to include. If omitted, auto-discovered from `Modules/`.
+  可选，指定模块名列表。若未指定，则优先读取配置文件中 `modules[].name`；若仍为空，再回退到自动扫描 `Modules/`。
+  Optional. List of module names to include. If omitted, the generator first reads `modules[].name` from the config, and falls back to auto-discovery under `Modules/` only when needed.
 
 - `--hw`
   可选，指定硬件容器变量名，默认为 `hw`。
   Optional. Hardware container variable name. Default: `hw`.
 
 - `--config`, `-c`
-  可选，指定构造参数 YAML 文件；若文件不存在，则自动生成。
-  Optional. Path to constructor configuration file. Will be created if not found.
+  可选，指定实例配置 YAML 文件。若文件不存在，将根据模块 manifest 自动生成默认配置。
+  Optional. Path to the instance configuration YAML. If the file does not exist, a default config will be generated from module manifests.
+
+#### 🧩 `User/xrobot.yaml` 配置结构 / Configuration Layout
+
+```yaml
+global_settings:
+  monitor_sleep_ms: 5
+
+constexpr_includes:
+  - libxr_def.hpp
+
+constexprs:
+  MainCameraInfo:
+    type: CameraBase::StaticInfo
+    value:
+      width: 1280
+      height: 1024
+      fps: 100
+  DebugEnable:
+    type: bool
+    value: true
+
+modules:
+  - id: cam
+    name: WebotsCamera
+    template_args:
+      Info: {constexpr: MainCameraInfo}
+    constructor_args:
+      info: {constexpr: MainCameraInfo}
+
+  - id: detector
+    name: ArmorDetector
+    constructor_args:
+      camera: @cam
+      debug: {constexpr: DebugEnable}
+```
+
+- `global_settings.monitor_sleep_ms` 控制主循环中的 `Thread::Sleep(...)`。
+  `global_settings.monitor_sleep_ms` controls the `Thread::Sleep(...)` call in the generated main loop.
+- `modules` 是模块实例列表；`id` 用作生成出来的 C++ 实例名，`name` 是模块类名。
+  `modules` is the module instance list; `id` becomes the generated C++ instance name, and `name` is the module class name.
+- `constructor_args` 与 `template_args` 会按配置顺序展开到构造参数和模板参数中。
+  `constructor_args` and `template_args` are expanded into constructor arguments and template arguments in config order.
+- `{constexpr: Name}` 会展开为 `XRobotProject::Name`；若顶层存在 `constexprs`，则会额外生成 `xrobot_constexpr.hpp`。
+  `{constexpr: Name}` expands to `XRobotProject::Name`; when top-level `constexprs` exists, `xrobot_constexpr.hpp` is generated alongside the main file.
+- `@instance_id` 会被当作已有 C++ 实例名直接引用，例如 `@cam` 会展开为 `cam`。
+  `@instance_id` is emitted as a direct C++ instance reference, for example `@cam` expands to `cam`.
 
 #### 📤 输出结果 / Output
 
-- 若未指定 `--config`，将扫描模块头文件中的 `/* === MODULE MANIFEST === */` 区块并生成默认 YAML
-  If `--config` is not specified, will scan for `/* === MODULE MANIFEST === */` block and generate default YAML.
-- 生成一个包含 `XRobotMain()` 函数的 `.hpp` 或 `.cpp` 文件
-  Generates a `.hpp` or `.cpp` file containing the `XRobotMain()` function.
-- 每个模块按 `static ModuleName<HardwareContainer> name(hw, appmgr, ...);` 格式实例化
-  Each module is instantiated as `static ModuleName<HardwareContainer> name(hw, appmgr, ...);`
-- 支持自动添加头文件
-  Support for automatically adding header files
-- 主循环使用 `appmgr.MonitorAll()` 与 `Thread::Sleep()`
-  Main loop uses `appmgr.MonitorAll()` and `Thread::Sleep()`
+- 生成一个包含 `XRobotMain()` 的 `.hpp` 或 `.cpp` 文件。
+  Generates a `.hpp` or `.cpp` file containing `XRobotMain()`.
+- 当配置里存在 `constexprs` 时，会在输出文件同目录额外生成 `xrobot_constexpr.hpp`。
+  When `constexprs` exists in the config, an extra `xrobot_constexpr.hpp` file is generated next to the main output.
+- 每个模块按 `static ModuleName<...> id(hw, appmgr, ...);` 形式实例化。
+  Each module instance is emitted in the form `static ModuleName<...> id(hw, appmgr, ...);`.
+- 主循环使用 `appmgr.MonitorAll()` 与 `Thread::Sleep(monitor_sleep_ms)`。
+  The main loop uses `appmgr.MonitorAll()` and `Thread::Sleep(monitor_sleep_ms)`.
 
 输出代码示例 / Output Code Example：
 
@@ -316,23 +360,21 @@ xrobot_gen_main -o main.cpp -m BlinkLED Motor IMU --config User/xrobot.yaml
 #include "libxr.hpp"
 
 // Module headers
-#include "BlinkLED.hpp"
-#include "BMI088.hpp"
-#include "MadgwickAHRS.hpp"
+#include "WebotsCamera.hpp"
+#include "ArmorDetector.hpp"
+#include "xrobot_constexpr.hpp"
 
-template <typename HardwareContainer>
-static void XRobotMain(HardwareContainer &hw) {
+static void XRobotMain(LibXR::HardwareContainer &hw) {
   using namespace LibXR;
   ApplicationManager appmgr;
 
   // Auto-generated module instantiations
-  static BlinkLED<HardwareContainer> blinkled(hw, appmgr, 250);
-  static BMI088<HardwareContainer> bmi088(hw, appmgr, {1.0, 0.0, 0.0, 0.0}, {0.15, 1.0, 0.1, 0.0, 0.3, 1.0, false}, "bmi088_gyro", "bmi088_accl", 45, 512);
-  static MadgwickAHRS<HardwareContainer> madgwickahrs(hw, appmgr, 0.033, "bmi088_gyro", "bmi088_accl", "ahrs_quaternion", "ahrs_euler", 512);
+  static WebotsCamera<XRobotProject::MainCameraInfo> cam(hw, appmgr, XRobotProject::MainCameraInfo);
+  static ArmorDetector detector(hw, appmgr, cam, XRobotProject::DebugEnable);
 
   while (true) {
     appmgr.MonitorAll();
-    Thread::Sleep(1000);
+    Thread::Sleep(5);
   }
 }
 ```
@@ -462,8 +504,8 @@ Required Hardware : led/LED/led1/LED1
 
 ### `xrobot_setup`
 
-该工具用于自动配置 XRobot 环境，生成模块仓库配置以及主函数代码。它通过调用 `xrobot_init_mod` 初始化模块，并根据构造参数自动生成主函数代码。
-This tool automates the XRobot setup, generating module repository configuration and main function code. It initializes modules via `xrobot_init_mod`, and automatically generates the main function code based on constructor parameters.
+该工具用于自动配置 XRobot 环境：检查 `Modules/modules.yaml` 与 `Modules/sources.yaml`，拉取模块仓库，并调用 `xrobot_gen_main` 生成 `User/xrobot_main.hpp`。
+This tool automates XRobot workspace setup: it checks `Modules/modules.yaml` and `Modules/sources.yaml`, fetches module repositories, and invokes `xrobot_gen_main` to generate `User/xrobot_main.hpp`.
 
 #### 🚀 使用方法 / Usage
 
@@ -483,8 +525,8 @@ set(XROBOT_MODULES_DIR YOUR_MODULES_PATH) # eg. ${CMAKE_CURRENT_SOURCE_DIR}/Modu
 #### 🎛️ 命令行参数 / Command-Line Arguments
 
 - `--config`, `-c`
-  可选，指定构造参数配置文件路径，可以是本地文件或远程 URL。
-  Optional. Path to constructor configuration file, can be a local file or a URL.
+  当前版本保留该参数位；主流程仍使用 `xrobot_gen_main` 的默认配置路径 `User/xrobot.yaml`。
+  This option is currently reserved; the main flow still uses `xrobot_gen_main` with its default config path `User/xrobot.yaml`.
 
 #### 📤 输出结果 / Output
 
@@ -505,18 +547,26 @@ set(XROBOT_MODULES_DIR YOUR_MODULES_PATH) # eg. ${CMAKE_CURRENT_SOURCE_DIR}/Modu
 ```bash
 Starting XRobot auto-configuration
 
-[INFO] Default config created: ./Modules/modules.yaml
-Please edit the file and rerun.
+[INFO] Created default Modules/modules.yaml
+Please edit this file; each line should be a full module name like:
+  - xrobot-org/BlinkLED
+  - your-namespace/YourModule@dev
+[INFO] Created default Modules/sources.yaml
+Please configure sources index.yaml for official or custom/private mirrors.
+Default official source already included.
 
-[EXEC] xrobot_init_mod --config ./Modules/modules.yaml -d ./Modules
+# edit the generated yaml files, then rerun xrobot_setup
+
+[EXEC] xrobot_init_mod --config Modules/modules.yaml --directory Modules --sources Modules/sources.yaml
 [SUCCESS] All modules and their dependencies processed.
 
-[EXEC] xrobot_gen_main --output ./User/xrobot_main.hpp --config ./User/xrobot.yaml
-[INFO] Constructor config generated: ./User/xrobot.yaml
-Modify the configuration and rerun to apply changes
+[EXEC] xrobot_gen_main --output User/xrobot_main.hpp
+Discovered modules: BlinkLED
+[INFO] Successfully parsed manifest for BlinkLED
+[INFO] Writing configuration to User/xrobot.yaml
+[SUCCESS] Generated entry file: User/xrobot_main.hpp
 
-[EXEC] xrobot_gen_main --output ./User/xrobot_main.hpp --config ./User/xrobot.yaml
-All done! Main function generated at: ./User/xrobot_main.hpp
+All done! Main function generated at: User/xrobot_main.hpp
 ```
 
 ---
