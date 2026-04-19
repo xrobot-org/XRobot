@@ -196,6 +196,7 @@ def extract_constructor_args(
         },
         "modules": []
     }
+    auto_inst_index = {}
 
     for mod in modules:
         hpp_path = module_dir / mod / f"{mod}.hpp"
@@ -249,7 +250,11 @@ def extract_constructor_args(
                 tmpl_ordered.update(d)
 
         # Generate config entry for module
+        idx = auto_inst_index.get(mod, 0)
+        instance_id = f"{mod}_{idx}"
+        auto_inst_index[mod] = idx + 1
         mod_entry = OrderedDict([
+            ("id", instance_id),
             ("name", mod),
             ("constructor_args", args_ordered)
         ])
