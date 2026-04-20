@@ -13,6 +13,7 @@ Usage example:
 """
 
 import re
+import json
 import yaml
 import argparse
 from pathlib import Path
@@ -22,7 +23,7 @@ from yaml.representer import SafeRepresenter
 
 yaml.add_representer(OrderedDict, SafeRepresenter.represent_dict)
 
-CONSTEXPR_NAMESPACE = "XRobotProject"
+DEFAULT_CONSTEXPR_NAMESPACE = "ProjectConstexpr"
 
 def parse_manifest_from_header(header_path: Path) -> Dict:
     """
@@ -74,57 +75,164 @@ def parse_manifest_from_header(header_path: Path) -> Dict:
     print(f"[INFO] Successfully parsed manifest for {header_path.stem}")
     return manifest_data
 
-def _validate_constexpr_ref(name: str) -> str:
+def _validate_cpp_identifier(name: str, field_name: str = "identifier") -> str:
     if not isinstance(name, str) or not re.match(r"^[A-Za-z_]\w*$", name):
-        raise ValueError(f"[ERROR] Invalid constexpr reference: {name!r}")
+        raise ValueError(f"[ERROR] Invalid {field_name}: {name!r}")
     return name
 
 
+def _validate_constexpr_ref(name: str) -> str:
+    return _validate_cpp_identifier(name, "constexpr reference")
+
+
+def _get_constexpr_namespace(config: Dict) -> str:
+    return _validate_cpp_identifier(
+        config.get("constexpr_namespace", DEFAULT_CONSTEXPR_NAMESPACE),
+        "constexpr namespace",
+    )
+
+
+def _is_single_key_mapping(value: object, key: str) -> bool:
+    return isinstance(value, dict) and set(value.keys()) == {key}
+
+
 def _is_constexpr_ref(value: object) -> bool:
-    return isinstance(value, dict) and set(value.keys()) == {"constexpr"}
+    return _is_single_key_mapping(value, "constexpr")
 
 
-def _format_cpp_value(value: Union[dict, list, str, int, float, bool], key: str = "") -> str:
+def _is_expr_value(value: object) -> bool:
+    return _is_single_key_mapping(value, "expr")
+
+
+def _is_string_value(value: object) -> bool:
+    return _is_single_key_mapping(value, "string")
+
+
+def _format_include_directive(header: str) -> str:
+    header = header.strip()
+    if not header:
+        raise ValueError("[ERROR] include header must be a non-empty string")
+    if (header.startswith("<") and header.endswith(">")) or (
+        header.startswith('"') and header.endswith('"')
+    ):
+        return f"#include {header}"
+    return f'#include "{header}"'
+
+
+def _format_raw_expr(value: object) -> str:
+    if isinstance(value, (dict, list)) or value is None:
+        raise TypeError("[ERROR] 'expr' must be a scalar value")
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    expr = str(value).strip()
+    if not expr:
+        raise ValueError("[ERROR] 'expr' must be a non-empty scalar")
+    return expr
+
+
+def _format_string_literal(value: object) -> str:
+    if isinstance(value, (dict, list)) or value is None:
+        raise TypeError("[ERROR] 'string' must be a scalar value")
+    if isinstance(value, bool):
+        return json.dumps("true" if value else "false")
+    return json.dumps(str(value))
+
+
+def _format_cpp_value(
+    value: Union[dict, list, str, int, float, bool],
+    key: str = "",
+    constexpr_namespace: str = DEFAULT_CONSTEXPR_NAMESPACE,
+) -> str:
     """
     Format a value as C++-compliant parameter.
     Supports numbers, bool, identifiers, @instance, {constexpr: Name},
-    string, nested dict as {a,b,c}, and list as {a,b,c}.
+    {expr: RawExpr}, {string: Literal}, nested dict as {a,b,c}, and list as {a,b,c}.
     """
     if isinstance(value, dict):
         if _is_constexpr_ref(value):
-            return f"{CONSTEXPR_NAMESPACE}::{_validate_constexpr_ref(value['constexpr'])}"
-        # 输出为聚合初始化列表，顺序由 yaml/OrderedDict 决定
-        return '{' + ', '.join(_format_cpp_value(v) for v in value.values()) + '}'
-    elif isinstance(value, list):
-        return '{' + ', '.join(_format_cpp_value(v) for v in value) + '}'
-    elif isinstance(value, bool):
+            return f"{constexpr_namespace}::{_validate_constexpr_ref(value['constexpr'])}"
+        if _is_expr_value(value):
+            return _format_raw_expr(value["expr"])
+        if _is_string_value(value):
+            return _format_string_literal(value["string"])
+        return '{' + ', '.join(
+            _format_cpp_value(v, constexpr_namespace=constexpr_namespace)
+            for v in value.values()
+        ) + '}'
+    if isinstance(value, list):
+        return '{' + ', '.join(
+            _format_cpp_value(v, constexpr_namespace=constexpr_namespace)
+            for v in value
+        ) + '}'
+    if isinstance(value, bool):
         return "true" if value else "false"
-    elif isinstance(value, str):
-        # @instance 变量
+    if isinstance(value, str):
         if value.startswith('@'):
             return value[1:]
-        # C++ 枚举、作用域名等
         if re.match(r"^[A-Za-z_][\w:<>\s,]*::[A-Za-z_][\w:]*$", value):
             return value
-        # 纯数字
-        elif re.match(r"^-?\d+(\.\d+)?$", value):
+        if re.match(r"^-?\d+(\.\d+)?$", value):
             return value
-        # 普通字符串
-        else:
-            return f'"{value}"'
-    else:
-        return str(value)
+        return _format_string_literal(value)
+    return str(value)
 
 
-def _format_template_arg(value: Union[dict, list, str, int, float, bool]) -> str:
+def _format_template_arg(
+    value: Union[dict, list, str, int, float, bool],
+    constexpr_namespace: str = DEFAULT_CONSTEXPR_NAMESPACE,
+) -> str:
     """
     Format a template argument while preserving raw type-expression strings.
     """
     if _is_constexpr_ref(value):
-        return f"{CONSTEXPR_NAMESPACE}::{_validate_constexpr_ref(value['constexpr'])}"
+        return f"{constexpr_namespace}::{_validate_constexpr_ref(value['constexpr'])}"
+    if _is_expr_value(value):
+        return _format_raw_expr(value["expr"])
+    if _is_string_value(value):
+        return _format_string_literal(value["string"])
     if isinstance(value, str):
         return value
-    return _format_cpp_value(value)
+    return _format_cpp_value(value, constexpr_namespace=constexpr_namespace)
+
+
+def _format_multiline_template_type(mod: str, tmpl_params: List[str]) -> List[str]:
+    lines = [f"{mod}<"]
+    for idx, param in enumerate(tmpl_params):
+        comma = "," if idx < len(tmpl_params) - 1 else ""
+        lines.append(f"      {param}{comma}")
+    lines.append("  >")
+    return lines
+
+
+def _format_module_instance_statement(
+    mod: str,
+    tmpl_params: List[str],
+    instance_name: str,
+    hw_var: str,
+    args_list: List[str],
+) -> str:
+    call_args = [hw_var, "appmgr", *args_list]
+    type_expr = mod
+    if tmpl_params:
+        type_expr += "<" + ", ".join(tmpl_params) + ">"
+
+    single_line = f"  static {type_expr} {instance_name}(" + ", ".join(call_args) + ");"
+    if len(single_line) <= 100:
+        return single_line
+
+    if tmpl_params and len(type_expr) > 48:
+        type_lines = _format_multiline_template_type(mod, tmpl_params)
+        lines = [f"  static {type_lines[0]}"]
+        lines.extend(type_lines[1:-1])
+        lines.append(f"{type_lines[-1]} {instance_name}(")
+    else:
+        lines = [f"  static {type_expr} {instance_name}("]
+
+    for idx, arg in enumerate(call_args):
+        comma = "," if idx < len(call_args) - 1 else ""
+        lines.append(f"      {arg}{comma}")
+    lines.append("  );")
+    return "\n".join(lines)
 
 
 def _generate_constexpr_header(config: Dict) -> Optional[str]:
@@ -140,12 +248,21 @@ def _generate_constexpr_header(config: Dict) -> Optional[str]:
     if not isinstance(include_headers, list) or not all(isinstance(h, str) for h in include_headers):
         raise TypeError("[ERROR] 'constexpr_includes' must be a list of header strings")
 
+    constexpr_namespace = _get_constexpr_namespace(config)
+
     lines = ["#pragma once", ""]
+    emitted_includes = []
+    seen_includes = set()
     for header in include_headers:
-        lines.append(f'#include "{header}"')
-    if include_headers:
+        directive = _format_include_directive(header)
+        if directive in seen_includes:
+            continue
+        seen_includes.add(directive)
+        emitted_includes.append(directive)
+    lines.extend(emitted_includes)
+    if emitted_includes:
         lines.append("")
-    lines.append(f"namespace {CONSTEXPR_NAMESPACE} {{")
+    lines.append(f"namespace {constexpr_namespace} {{")
 
     for name, spec in constexprs.items():
         _validate_constexpr_ref(name)
@@ -157,10 +274,13 @@ def _generate_constexpr_header(config: Dict) -> Optional[str]:
             raise ValueError(f"[ERROR] constexpr '{name}' missing non-empty 'type'")
         if cpp_value is None:
             raise ValueError(f"[ERROR] constexpr '{name}' missing 'value'")
-        lines.append(f"inline constexpr {cpp_type} {name} = {_format_cpp_value(cpp_value)};")
+        lines.append(
+            f"inline constexpr {cpp_type} {name} = "
+            f"{_format_cpp_value(cpp_value, constexpr_namespace=constexpr_namespace)};"
+        )
 
     lines += [
-        f"}}  // namespace {CONSTEXPR_NAMESPACE}",
+        f"}}  // namespace {constexpr_namespace}",
         "",
     ]
     return "\n".join(lines)
@@ -196,6 +316,7 @@ def extract_constructor_args(
         },
         "modules": []
     }
+    auto_inst_index = {}
 
     for mod in modules:
         hpp_path = module_dir / mod / f"{mod}.hpp"
@@ -249,7 +370,11 @@ def extract_constructor_args(
                 tmpl_ordered.update(d)
 
         # Generate config entry for module
+        idx = auto_inst_index.get(mod, 0)
+        instance_id = f"{mod}_{idx}"
+        auto_inst_index[mod] = idx + 1
         mod_entry = OrderedDict([
+            ("id", instance_id),
             ("name", mod),
             ("constructor_args", args_ordered)
         ])
@@ -277,21 +402,23 @@ def generate_xrobot_main_code(hw_var: str, modules: List[str], config: Dict) -> 
 
     global_settings = _require_mapping(config.get("global_settings", {}), "global_settings")
     sleep_ms = global_settings.get("monitor_sleep_ms", 1000)
+    constexpr_namespace = _get_constexpr_namespace(config)
+
     headers = [
         '#include "app_framework.hpp"',
         '#include "libxr.hpp"',
         "",
-        "// Module headers"
+        "// Module headers",
     ] + [f'#include "{mod}.hpp"' for mod in modules]
     if config.get("constexprs"):
         headers.append('#include "xrobot_constexpr.hpp"')
 
     body = [
         f"static void XRobotMain(LibXR::HardwareContainer &{hw_var}) {{",
-        f"  using namespace LibXR;",
-        f"  ApplicationManager appmgr;",
-        f"",
-        f"  // Auto-generated module instantiations",
+        "  using namespace LibXR;",
+        "  ApplicationManager appmgr;",
+        "",
+        "  // Auto-generated module instantiations",
     ]
 
     module_entries = config.get("modules", [])
@@ -323,29 +450,32 @@ def generate_xrobot_main_code(hw_var: str, modules: List[str], config: Dict) -> 
             print(f"[WARN] Module {mod} not included in the provided list.")
             continue
 
-        args_dict = _require_mapping(entry.get("constructor_args", {}), f"constructor_args for module '{mod}'")
-        args_list = [_format_cpp_value(v, k) for k, v in args_dict.items()]
+        args_dict = _require_mapping(
+            entry.get("constructor_args", {}),
+            f"constructor_args for module '{mod}'",
+        )
+        args_list = [
+            _format_cpp_value(v, k, constexpr_namespace=constexpr_namespace)
+            for k, v in args_dict.items()
+        ]
 
         tmpl_dict = _require_mapping(entry.get("template_args", {}), f"template_args for module '{mod}'")
-        if tmpl_dict:
-            tmpl_params = [_format_template_arg(v) for k, v in tmpl_dict.items()]
-            tmpl_str = "<" + ", ".join(tmpl_params) + ">"
-        else:
-            tmpl_str = ""
+        tmpl_params = [
+            _format_template_arg(v, constexpr_namespace=constexpr_namespace)
+            for _, v in tmpl_dict.items()
+        ]
 
-        instance_line = f"  static {mod}{tmpl_str} {instance_name}({hw_var}, appmgr"
-        if args_list:
-            instance_line += ", " + ", ".join(args_list)
-        instance_line += ");"
-        body.append(instance_line)
+        body.append(
+            _format_module_instance_statement(mod, tmpl_params, instance_name, hw_var, args_list)
+        )
 
     body += [
         "",
-        f"  while (true) {{",
-        f"    appmgr.MonitorAll();",
+        "  while (true) {",
+        "    appmgr.MonitorAll();",
         f"    Thread::Sleep({sleep_ms});",
-        f"  }}",
-        f"}}"
+        "  }",
+        "}",
     ]
 
     return "\n".join(headers + [""] + body)
