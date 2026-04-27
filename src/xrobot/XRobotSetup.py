@@ -65,7 +65,7 @@ def ensure_modules_and_sources():
     if created:
         sys.exit(0)  # Exit after template creation, waiting for user edit
 
-def run_subprocess(cmd: list[str]):
+def run_subprocess(cmd: List[str]):
     """
     Execute an external command, log and catch errors.
     """

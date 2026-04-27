@@ -10,6 +10,7 @@ import argparse
 import sys
 import logging
 from pathlib import Path
+from typing import Optional, Union
 import yaml
 import requests
 
@@ -25,7 +26,7 @@ def extract_name_from_url(url: str) -> str:
         name = name[:-4]
     return name
 
-def load_yaml(source: str | Path) -> dict:
+def load_yaml(source: Union[str, Path]) -> dict:
     """
     Load YAML from a local file or http(s) URL.
     Returns a dict (empty if content is empty or not a dict).
@@ -46,7 +47,7 @@ def load_yaml(source: str | Path) -> dict:
         logging.warning(f"[WARN] Failed to load yaml: {source} ({e})")
         return {}
 
-def save_yaml(path: str | Path, data: dict):
+def save_yaml(path: Union[str, Path], data: dict):
     """
     Save YAML data to a local file.
     """
@@ -136,7 +137,7 @@ class SourceManager:
         if Path(sources_yaml).exists():
             self.load_sources(sources_yaml)
 
-    def load_sources(self, yaml_path: Path | str):
+    def load_sources(self, yaml_path: Union[Path, str]):
         """
         Load all sources from sources.yaml and merge their modules.
         """
@@ -174,7 +175,7 @@ class SourceManager:
         """
         return sorted(self.module_map.keys())
 
-    def get_repo_url(self, modid: str) -> str | None:
+    def get_repo_url(self, modid: str) -> Optional[str]:
         """
         Return the repository URL for the given module.
         """

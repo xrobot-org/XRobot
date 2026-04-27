@@ -125,6 +125,24 @@ jobs:
           name: python-package-${{ matrix.os }}-${{ matrix.arch }}-py${{ matrix.python-version }}
           path: dist/*
 
+      - name: Install built package (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          pip install dist/*.whl || pip install dist/*.tar.gz
+
+      - name: Install built package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $pkg = Get-ChildItem dist\*.whl,dist\*.tar.gz | Select-Object -First 1
+          if ($pkg) {
+            pip install $pkg.FullName
+          }
+
+      - name: Import smoke check (all top-level modules)
+        run: |
+          python ./scripts/ci_import_smoke.py
+
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
