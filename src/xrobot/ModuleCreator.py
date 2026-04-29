@@ -91,7 +91,7 @@ jobs:
 
           int main() {
               LibXR::PlatformInit();
-              LibXR::STDIO::Printf("This is XRobot Module Template Test\\n");
+              LibXR::STDIO::Printf<"This is XRobot Module Template Test\\n">();
               LibXR::HardwareContainer hw;
               XRobotMain(hw);
               return 0;
@@ -102,7 +102,8 @@ jobs:
         run: |
           cat > CMakeLists.txt <<'EOF'
           project(xrobot_mod_test CXX)
-          set(CMAKE_CXX_STANDARD 17)
+          set(CMAKE_CXX_STANDARD 20)
+          set(CMAKE_CXX_STANDARD_REQUIRED ON)
           add_executable(xr_test main.cpp)
           set(XROBOT_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Modules/)
           add_subdirectory(libxr)
