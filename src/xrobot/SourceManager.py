@@ -216,7 +216,7 @@ class SourceManager:
         """
         save_yaml(path, {'sources': [
             {
-                "url": "https://xrobot-org.github.io/xrobot-modules/index.yaml",
+                "url": "https://xrobot.work/xrobot-modules/index.yaml",
                 "priority": 0
             }
         ]})

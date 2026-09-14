@@ -9,7 +9,7 @@
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 [![GitHub Repo](https://img.shields.io/github/stars/xrobot-org/XRobot?style=social)](https://github.com/xrobot-org/XRobot)
-[![Documentation](https://img.shields.io/badge/docs-online-brightgreen)](https://xrobot-org.github.io/)
+[![Documentation](https://img.shields.io/badge/docs-online-brightgreen)](https://xrobot.work/)
 [![GitHub Issues](https://img.shields.io/github/issues/xrobot-org/XRobot)](https://github.com/xrobot-org/XRobot/issues)
 [![CI/CD - Python Package](https://github.com/xrobot-org/XRobot/actions/workflows/python-publish.yml/badge.svg)](https://github.com/xrobot-org/XRobot/actions/workflows/python-publish.yml)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxrobot-org%2FXRobot.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxrobot-org%2FXRobot?ref=badge_shield)
@@ -654,7 +654,7 @@ xrobot_src_man add-index https://github.com/yourorg/MyModule.git --index Modules
 
 ```bash
 Available modules:
-  xrobot-org/BlinkLED               source: https://xrobot-org.github.io/xrobot-modules/index.yaml (actual namespace: xrobot-org)
+  xrobot-org/BlinkLED               source: https://xrobot.work/xrobot-modules/index.yaml (actual namespace: xrobot-org)
   yourns/MyModule                   source: https://mydomain.com/index.yaml (mirror of: xrobot-org) (actual namespace: yourns)
 ```
 
@@ -779,5 +779,5 @@ static void XRobotMain(LibXR::HardwareContainer &hw) {
 ## 📖 更多信息 / More Information
 
 - [GitHub Repository](https://github.com/xrobot-org/XRobot)
-- [Documentation](https://xrobot-org.github.io)
+- [Documentation](https://xrobot.work)
 - [Issue Tracker](https://github.com/xrobot-org/XRobot/issues)

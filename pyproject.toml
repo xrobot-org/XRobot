@@ -33,7 +33,7 @@ cli = ["rich", "click"]
 
 [project.urls]
 Homepage = "https://github.com/xrobot-org"
-Documentation = "https://xrobot-org.github.io"
+Documentation = "https://xrobot.work"
 Repository = "https://github.com/xrobot-org/XRobot"
 "Bug Tracker" = "https://github.com/xrobot-org/XRobot/issues"
 

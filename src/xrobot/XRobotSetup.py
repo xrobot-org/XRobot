@@ -36,7 +36,7 @@ modules:
 SOURCES_YAML_TEMPLATE = """# XRobot sources.yaml template. List your module repository index.yaml files, supports official and custom mirrors.
 # Official example (already filled in by default):
 sources:
-  - url: https://xrobot-org.github.io/xrobot-modules/index.yaml
+  - url: https://xrobot.work/xrobot-modules/index.yaml
     priority: 0
 """
 
