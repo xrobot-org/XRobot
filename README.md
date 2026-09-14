@@ -27,7 +27,7 @@
 
 ## Doc
 
-请阅读我们的[文档](https://xrobot-org.github.io)，学习如何从驱动一个电机开始，搭建起完整的机器人系统。
+请阅读我们的[文档](https://xrobot.work)，学习如何从驱动一个电机开始，搭建起完整的机器人系统。
 
 </div>
 
@@ -71,7 +71,7 @@
 
 * 利用现代化的构建系统(CMake & Clang & Ninja)实现跨平台高速编译
 * VSCode/CLion一键编译调试与ClangTidy代码检查
-* 完善的[文档](https://xrobot-org.github.io)与入门教程
+* 完善的[文档](https://xrobot.work)与入门教程
 * CI/CD自动构建和固件发布
 * 应用层全部使用C++编写，代码复用率高
 * 兼容多开发板和操作系统（Linux/Webots仿真/FreeRTOS/裸机）
@@ -151,10 +151,10 @@ XRobot基本部分是一套开发板与功能模块的管理系统，能够让�
 | MCU         | Board                                                                                                              | Image                                                            |
 | ----------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
 | STM32F407IG | [Robomaster C型开发板](https://www.robomaster.com/zh-CN/products/components/general/development-board-type-c/info) | <img src="./image/rm-c.png" width="500" height="220">            |
-| STM32F302CB | [IMU-DEV-BOARD](https://xrobot-org.github.io/1.hardware/3.IMU-DEV.html)                                            | <img src="./image/IMU-DEV-1.jpg" width="350" height="200">       |
-| STM32F446RE | [C-Mini](https://xrobot-org.github.io/1.hardware/1.C-MINI.html)                                                    | <img src="./image/C-MINI-1.jpg" width="350" height="250">        |
-| STM32F103   | [F103 CAN](https://xrobot-org.github.io/1.hardware/4.F103_CAN.html)                                                | <img src="./image/f103_can.jpeg" width="350" height="250">       |
-| ESP32-C3    | [ESP32C3-Core](https://xrobot-org.github.io/1.hardware/2.ESP32C3-Core.html)                                        | <img src="./image/esp32c3-core-1.jpeg" width="260" height="200"> |
+| STM32F302CB | [IMU-DEV-BOARD](https://xrobot.work/1.hardware/3.IMU-DEV.html)                                            | <img src="./image/IMU-DEV-1.jpg" width="350" height="200">       |
+| STM32F446RE | [C-Mini](https://xrobot.work/1.hardware/1.C-MINI.html)                                                    | <img src="./image/C-MINI-1.jpg" width="350" height="250">        |
+| STM32F103   | [F103 CAN](https://xrobot.work/1.hardware/4.F103_CAN.html)                                                | <img src="./image/f103_can.jpeg" width="350" height="250">       |
+| ESP32-C3    | [ESP32C3-Core](https://xrobot.work/1.hardware/2.ESP32C3-Core.html)                                        | <img src="./image/esp32c3-core-1.jpeg" width="260" height="200"> |
 | Linux x86   | [Intel NUC](https://www.intel.cn/content/www/cn/zh/products/details/nuc.html)                                      | <img src="./image/nuc.jpg" width="350" height="200">             |
 | Linux arm   | [Raspberry pi 4B](https://www.raspberrypi.com/)                                                                    | <img src="./image/raspi.png" width="350" height="200">           |
 | Linux arm   | [mCore-R818](https://mangopi.org/mcorer818)                                                                        | <img src="./image/mCore-R818.jpg" width="200" height="200">      |
