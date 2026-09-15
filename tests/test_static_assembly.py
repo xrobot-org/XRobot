@@ -224,7 +224,7 @@ int main() {
         # compiler-rt UBSan archive. Runtime assertions still exercise the same
         # pointer/cv/base-adjustment contract under clang; add UBSan where the
         # selected toolchain has the runtime available by default.
-        sanitizer = [] if 'clang' in Path(self.cxx).name else [
+        sanitizer = [] if os.name == 'nt' or 'clang' in Path(self.cxx).name else [
             '-fsanitize=undefined', '-fno-sanitize-recover=all']
         self.compile(extra=sanitizer)
 
