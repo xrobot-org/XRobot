@@ -1,0 +1,4 @@
+include MIGRATION.md CI_MIGRATION.md GOVERNANCE.md RELEASE.md
+include tools/check_release.py
+recursive-include tests *.py
+recursive-include .github/workflows *.yml

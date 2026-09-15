@@ -21,6 +21,12 @@ permissions:
 
 jobs:
   test:
+    strategy:
+      fail-fast: false
+      matrix:
+        cxx: [g++, clang++]
+    env:
+      CXX: ${{ matrix.cxx }}
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/xrobot-org/docker-image-linux:main
@@ -33,34 +39,23 @@ jobs:
       run: |
         pip install .
 
-    - name: Compiler Version Check
+    - name: Require and identify the selected C++ compiler
       run: |
-        gcc --version
-        clang --version
+        command -v "$CXX"
+        "$CXX" --version
 
-    # - name: Get Test Project
-    #   uses: actions/checkout@v4
-    #   with:
-    #     repository: xrobot-org/XRobot_stm32_test
-    #     path: test-project
-
-    # - name: Run Tests
-    #   run: |
-    #     cd test-project && ./test.sh
+    - name: Source, Git resolver and generated C++ regression tests
+      run: python3 -m unittest discover -s tests -v
 
   build:
-    name: Build & Test (${{ matrix.os }} - ${{ matrix.arch }})
+    name: Build & Test (${{ matrix.os }} - Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     needs: test
 
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        arch: [x86_64, arm64]
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
-        exclude:
-          - os: windows-latest
-            arch: arm64
 
     steps:
       - name: Checkout Repository
@@ -122,7 +117,7 @@ jobs:
       - name: Upload Built Package
         uses: actions/upload-artifact@v4
         with:
-          name: python-package-${{ matrix.os }}-${{ matrix.arch }}-py${{ matrix.python-version }}
+          name: python-package-${{ matrix.os }}-py${{ matrix.python-version }}
           path: dist/*
 
       - name: Install built package (Linux/macOS)
@@ -138,6 +133,9 @@ jobs:
           if ($pkg) {
             pip install $pkg.FullName
           }
+
+      - name: Candidate source regression tests
+        run: python -m unittest discover -s tests -v
 
       - name: Import smoke check (all top-level modules)
         run: |

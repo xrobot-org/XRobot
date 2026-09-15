@@ -1,364 +1,268 @@
-#!/usr/bin/env python3
-# coding: utf-8
-"""
-xrobot_source_manager.py - XRobot multi-source module repository management/aggregation/lookup/maintenance tool
-
-Supports both command-line and Python package usage.
-"""
-
+"""Federated source catalogs for independent Module and BSP repositories."""
 import argparse
-import sys
-import logging
+import json
+import re
 from pathlib import Path
-from typing import Optional, Union
-import yaml
+from urllib.parse import urljoin
 import requests
+import yaml
 
-DEFAULT_SOURCES = Path("Modules/sources.yaml")
-DEFAULT_INDEX = Path("Modules/index.yaml")
+DEFAULT_SOURCES = Path('Modules/sources.yaml')
+DEFAULT_INDEX = Path('Modules/index.yaml')
+_ID = re.compile(r'^[A-Za-z0-9_][A-Za-z0-9_.-]*/[A-Za-z0-9_][A-Za-z0-9_.-]*$')
 
-def extract_name_from_url(url: str) -> str:
-    """
-    Extract the module name from a repository URL (local or remote).
-    """
-    name = url.rstrip('/').split('/')[-1]
-    if name.endswith('.git'):
-        name = name[:-4]
-    return name
 
-def load_yaml(source: Union[str, Path]) -> dict:
-    """
-    Load YAML from a local file or http(s) URL.
-    Returns a dict (empty if content is empty or not a dict).
-    """
-    src = str(source)
-    try:
-        if src.startswith("http://") or src.startswith("https://"):
-            resp = requests.get(src, timeout=10)
-            resp.raise_for_status()
-            data = yaml.safe_load(resp.text)
-        else:
-            path = Path(src)
-            data = yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else {}
-        if not isinstance(data, dict):
-            return {}
-        return data
-    except Exception as e:
-        logging.warning(f"[WARN] Failed to load yaml: {source} ({e})")
+def validate_id(identity):
+    if not isinstance(identity, str) or not _ID.fullmatch(identity) or any(p in ('.', '..') for p in identity.split('/')):
+        raise ValueError('Expected canonical owner/repo: %r' % identity)
+    return identity
+
+
+def extract_name_from_url(url):
+    name = str(url).rstrip('/').rsplit('/', 1)[-1]
+    return name[:-4] if name.endswith('.git') else name
+
+
+def load_yaml(source):
+    source = str(source)
+    if source.startswith(('http://', 'https://')):
+        response = requests.get(source, timeout=20)
+        response.raise_for_status()
+        text = response.text
+    else:
+        text = Path(source).read_text(encoding='utf-8-sig')
+    data = yaml.safe_load(text)
+    if data is None:
         return {}
+    if not isinstance(data, dict):
+        raise ValueError('%s: expected a YAML mapping' % source)
+    return data
 
-def save_yaml(path: Union[str, Path], data: dict):
-    """
-    Save YAML data to a local file.
-    """
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(yaml.dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8")
+
+def save_yaml(path, data):
+    from xrobot.GenerateMain import atomic_write
+    atomic_write(Path(path), yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
+
+
+def _relative(origin, value):
+    value = str(value)
+    if value.startswith(('https://', 'http://', 'file://', 'git@', 'ssh://')):
+        return value
+    if str(origin).startswith(('https://', 'http://')):
+        return urljoin(str(origin), value)
+    return str((Path(origin).resolve().parent / value).resolve())
+
 
 class ModuleSource:
-    """
-    Single module source object.
-    Handles one index.yaml (local or remote).
-    """
     def __init__(self, url, public_key=None, priority=0):
-        self.url = url
-        self.public_key = public_key
-        self.priority = priority
-        self.namespace = None      # Required
-        self.mirror_of = None      # Optional
+        self.url, self.public_key, self.priority = str(url), public_key, int(priority)
+        self.namespace = None
+        self.mirror_of = None
         self.module_urls = []
         self.module_name_to_url = {}
+        self.entries = {}
+        self.index_data = {}
 
     def load_index(self):
-        """
-        Load index.yaml (supports local and remote).
-        """
-        try:
-            index_data = load_yaml(self.url)
-        except Exception as e:
-            logging.warning(f"[WARN] Failed to load index.yaml: {self.url} ({e})")
-            return False
-
-        ns = index_data.get("namespace")
-        if not ns:
-            logging.error(f"[ERROR] index.yaml is missing the namespace field: {self.url}")
-            return False
-        self.namespace = ns
-        self.mirror_of = index_data.get('mirror_of')
-        self.module_urls = index_data.get('modules', [])
-        for url in self.module_urls:
-            name = extract_name_from_url(url)
-            self.module_name_to_url[name] = url
+        data = load_yaml(self.url)
+        self.index_data = data
+        self.namespace = data.get('namespace')
+        self.mirror_of = data.get('mirror_of')
+        self.entries.clear()
+        for group, kind in (('modules', 'module'), ('bsps', 'bsp'), ('packages', None)):
+            values = data.get(group, [])
+            if not isinstance(values, list):
+                raise ValueError('%s: %s must be a list' % (self.url, group))
+            for value in values:
+                record = {'repo': value} if isinstance(value, str) else dict(value)
+                package_type = record.get('type', kind)
+                if package_type not in ('module', 'bsp') or (kind and package_type != kind):
+                    raise ValueError('Catalog entry requires type module or bsp')
+                repo = record.get('repo', record.get('source'))
+                if not isinstance(repo, str) or not repo:
+                    raise ValueError('Catalog entry is missing repository URL')
+                identity = record.get('id')
+                if identity is None:
+                    match = re.search(r'github\.com[/:]([^/]+/[^/]+?)(?:\.git)?/?$', repo, re.I)
+                    if self.mirror_of:
+                        identity = str(self.mirror_of) + '/' + extract_name_from_url(repo)
+                    elif match:
+                        identity = match.group(1)
+                    elif self.namespace:
+                        identity = str(self.namespace) + '/' + extract_name_from_url(repo)
+                validate_id(identity)
+                status = record.get('status', 'community')
+                if status not in ('community', 'verified', 'official'):
+                    raise ValueError('Unknown package status: %s' % status)
+                if status in ('verified', 'official') and not (record.get('tested_ref') and record.get('tested_libxr')):
+                    raise ValueError('%s: validation label needs tested_ref and tested_libxr' % identity)
+                for field in ('tested_ref', 'tested_libxr', 'tested_xrobot'):
+                    if field in record:
+                        record[field] = str(record[field])
+                record.update(id=identity, type=package_type, repo=_relative(self.url, repo), source=self.url, status=status)
+                if identity.casefold() in {i.casefold() for i in self.entries}:
+                    raise ValueError('Duplicate catalog identity: %s' % identity)
+                self.entries[identity] = record
+        self.module_urls = [r['repo'] for r in self.entries.values() if r['type'] == 'module']
+        self.module_name_to_url = {i: r['repo'] for i, r in self.entries.items() if r['type'] == 'module'}
         return True
 
-    def add_module_url(self, repo_url: str):
-        """
-        Add a repository URL to index.yaml, avoiding duplicates.
-        """
-        if repo_url not in self.module_urls:
-            self.module_urls.append(repo_url)
-            self.module_name_to_url[extract_name_from_url(repo_url)] = repo_url
+    def add_module_url(self, repo_url):
+        values = self.index_data.setdefault('modules', [])
+        if repo_url not in values:
+            values.append(repo_url)
 
     def save_index_yaml(self, path=None):
-        """
-        Save index.yaml to disk.
-        """
-        index_data = {"namespace": self.namespace}
-        if self.mirror_of:
-            index_data['mirror_of'] = self.mirror_of
-        index_data['modules'] = list(self.module_urls)
-        save_yaml(path or self.url, index_data)
+        target = path or self.url
+        if str(target).startswith(('http://', 'https://')):
+            raise ValueError('Saving a remote index requires a local output path')
+        save_yaml(target, self.index_data)
 
     @staticmethod
-    def create_index_yaml(path, namespace="your-namespace", mirror_of=None):
-        """
-        Create a template index.yaml file.
-        """
-        data = {"namespace": namespace, "modules": ["https://github.com/xrobot-org/BlinkLED.git"]}
+    def create_index_yaml(path, namespace='your-namespace', mirror_of=None):
+        data = {'namespace': namespace, 'modules': ['https://github.com/xrobot-org/BlinkLED.git'], 'bsps': []}
         if mirror_of:
-            data["mirror_of"] = mirror_of
+            data['mirror_of'] = mirror_of
         save_yaml(path, data)
 
-def get_primary_namespace(src: 'ModuleSource') -> str:
-    """
-    Use the mirror_of field as the primary namespace if available, otherwise use the namespace field.
-    """
-    return src.mirror_of or src.namespace
+
+def get_primary_namespace(source):
+    return source.mirror_of or source.namespace
+
 
 class SourceManager:
-    """
-    Multi-source aggregator and manager. Can be imported as a package.
-    """
     def __init__(self, sources_yaml=DEFAULT_SOURCES):
         self.sources = []
-        self.module_map = {}            # {modid: repo URL}
-        self.module_source_map = {}     # {modid: ModuleSource object}
-        self.all_module_candidates = {} # {modid: [ (url, ModuleSource) ]}
-        if Path(sources_yaml).exists():
+        self.packages = {}
+        self.module_map = {}
+        self.module_source_map = {}
+        self.all_module_candidates = {}
+        if str(sources_yaml).startswith(('https://', 'http://')) or Path(sources_yaml).exists():
             self.load_sources(sources_yaml)
 
-    def load_sources(self, yaml_path: Union[Path, str]):
-        """
-        Load all sources from sources.yaml and merge their modules.
-        """
-        data = load_yaml(yaml_path)
-        if not isinstance(data, dict):
-            data = {}
-        sources_list = data.get("sources", [])
-        if not isinstance(sources_list, list):
-            sources_list = []
-        for src in sources_list:
-            url = src["url"]
-            public_key = src.get("public_key")
-            priority = int(src.get("priority", 0))
-            ms = ModuleSource(url, public_key, priority)
-            ok = ms.load_index()
-            if ok:
-                self.sources.append(ms)
-        self.sources.sort(key=lambda s: s.priority)
-        seen = set()
-        for src in self.sources:
-            pns = get_primary_namespace(src)
-            for name, repo_url in src.module_name_to_url.items():
-                modid = f"{pns}/{name}"
-                if modid not in self.all_module_candidates:
-                    self.all_module_candidates[modid] = []
-                self.all_module_candidates[modid].append((repo_url, src))
-                if modid not in seen:
-                    self.module_map[modid] = repo_url
-                    self.module_source_map[modid] = src
-                    seen.add(modid)
+    def load_sources(self, path):
+        data = load_yaml(path)
+        sources = data.get('sources', [])
+        if not isinstance(sources, list):
+            raise ValueError('sources must be a list')
+        self.sources, self.packages = [], {}
+        self.module_map, self.module_source_map, self.all_module_candidates = {}, {}, {}
+        for entry in sources:
+            source = ModuleSource(_relative(path, entry['url']), entry.get('public_key'), entry.get('priority', 0))
+            source.load_index()
+            self.sources.append(source)
+        self.sources.sort(key=lambda item: item.priority)
+        normalized = {}
+        selected_priorities = {}
+        for source in self.sources:
+            for identity, record in source.entries.items():
+                key = normalized.setdefault(identity.casefold(), identity)
+                self.all_module_candidates.setdefault(key, []).append((record['repo'], source))
+                if key in self.packages:
+                    if selected_priorities[key] == source.priority and self.packages[key]['repo'] != record['repo']:
+                        raise ValueError('Equal-priority sources disagree about %s; set source priorities explicitly' % key)
+                    continue
+                self.packages[key] = record
+                selected_priorities[key] = source.priority
+                self.module_source_map[key] = source
+                if record['type'] == 'module':
+                    self.module_map[key] = record['repo']
+
+    def resolve_id(self, name, kind=None):
+        candidates = [identity for identity, record in self.packages.items() if (not kind or record['type'] == kind) and (identity.casefold() == name.casefold() if '/' in name else identity.rsplit('/', 1)[-1] == name)]
+        if not candidates:
+            raise ValueError('Package not found: %s' % name)
+        if len(candidates) != 1:
+            raise ValueError('Ambiguous package %s; specify %s' % (name, ', '.join(sorted(candidates))))
+        return candidates[0]
 
     def list_modules(self):
-        """
-        Return all unique module IDs (namespace/ModuleName).
-        """
-        return sorted(self.module_map.keys())
+        return sorted(self.module_map)
 
-    def get_repo_url(self, modid: str) -> Optional[str]:
-        """
-        Return the repository URL for the given module.
-        """
-        return self.module_map.get(modid)
+    def get_repo_url(self, identity):
+        return self.packages[self.resolve_id(identity)]['repo']
 
-    def find_module(self, modid: str) -> list:
-        """
-        Return all candidates (for multi-source/mirror environments).
-        """
-        return self.all_module_candidates.get(modid, [])
+    def find_module(self, identity):
+        return self.all_module_candidates[self.resolve_id(identity)]
 
     def add_source(self, url, public_key=None, priority=0, sources_yaml=DEFAULT_SOURCES):
-        """
-        Add a new source to sources.yaml, avoiding duplicates.
-        """
-        path = Path(sources_yaml)
-        if path.exists():
-            data = load_yaml(path)
-        else:
-            data = {"sources": []}
-        if not isinstance(data, dict):
-            data = {"sources": []}
-        for s in data["sources"]:
-            if s["url"] == url:
-                logging.warning(f"[WARN] Source already exists: {url}")
-                return
-        entry = {"url": url}
-        if public_key:
-            entry["public_key"] = public_key
-        if priority is not None:
-            entry["priority"] = int(priority)
-        data["sources"].append(entry)
-        save_yaml(path, data)
+        data = load_yaml(sources_yaml) if Path(sources_yaml).exists() else {'sources': []}
+        if not any(item['url'] == url for item in data['sources']):
+            entry = {'url': url, 'priority': int(priority)}
+            if public_key:
+                entry['public_key'] = public_key
+            data['sources'].append(entry)
+            save_yaml(sources_yaml, data)
 
     def create_sources_yaml(self, path=DEFAULT_SOURCES):
-        """
-        Create a template sources.yaml.
-        """
-        save_yaml(path, {'sources': [
-            {
-                "url": "https://xrobot.work/xrobot-modules/index.yaml",
-                "priority": 0
-            }
-        ]})
+        save_yaml(path, {'sources': [{'url': 'https://xrobot.work/xrobot-modules/index.yaml', 'priority': 0}]})
 
     def save_sources_yaml(self, path=DEFAULT_SOURCES):
-        """
-        Save the current sources list.
-        """
-        srcs = []
-        for s in self.sources:
-            entry = {"url": s.url, "priority": s.priority}
-            if s.public_key:
-                entry["public_key"] = s.public_key
-            srcs.append(entry)
-        save_yaml(path, {'sources': srcs})
+        save_yaml(path, {'sources': [{'url': s.url, 'priority': s.priority} for s in self.sources]})
 
     def add_index_entry(self, index_yaml, repo_url):
-        """
-        Add a repository to the specified index.yaml, avoiding duplicates.
-        """
-        path = Path(index_yaml)
-        if path.exists():
-            data = load_yaml(path)
-        else:
-            data = {"namespace": "local", "modules": []}
-        if not isinstance(data, dict):
-            data = {"namespace": "local", "modules": []}
-        if "namespace" not in data:
-            data["namespace"] = "local"
-        if "modules" not in data:
-            data["modules"] = []
-        if repo_url in data["modules"]:
-            logging.warning(f"[WARN] Repository already exists: {repo_url}")
-            return
-        data["modules"].append(repo_url)
-        save_yaml(path, data)
+        data = load_yaml(index_yaml) if Path(index_yaml).exists() else {'namespace': 'local', 'modules': []}
+        if repo_url not in data.setdefault('modules', []):
+            data['modules'].append(repo_url)
+            save_yaml(index_yaml, data)
 
-    def create_index_yaml(self, path=DEFAULT_INDEX, namespace="local", mirror_of="xrobot-org"):
-        """
-        Create a template index.yaml (defaults to 'local' mirroring 'xrobot-org').
-        """
-        ModuleSource.create_index_yaml(path, namespace=namespace, mirror_of=mirror_of)
+    def create_index_yaml(self, path=DEFAULT_INDEX, namespace='local', mirror_of=None):
+        ModuleSource.create_index_yaml(path, namespace, mirror_of)
 
-    def save_index_yaml(self, module_source: ModuleSource, path=None):
-        """
-        Save the specified source's index.yaml.
-        """
-        module_source.save_index_yaml(path)
+    def save_index_yaml(self, source, path=None):
+        source.save_index_yaml(path)
 
-# ================= CLI ===================
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="XRobot multi-source module repository aggregator/lookup/maintenance tool (CLI and Python package supported)."
-    )
-    subparsers = parser.add_subparsers(dest="cmd", help="Sub-command help")
-
-    subparsers.add_parser("list", help="List all unique modules and their source")
-    get_parser = subparsers.add_parser("get", help="Get the repository URL and source of a module")
-    get_parser.add_argument("modid", help="Module ID (namespace/ModuleName)")
-
-    find_parser = subparsers.add_parser("find", help="Find all sources for the same module")
-    find_parser.add_argument("modid", help="Module ID (namespace/ModuleName)")
-
-    cs_parser = subparsers.add_parser("create-sources", help="Create a sources.yaml template")
-    cs_parser.add_argument("--output", "-o", help="Output file", default=DEFAULT_SOURCES)
-
-    as_parser = subparsers.add_parser("add-source", help="Add a module source to sources.yaml")
-    as_parser.add_argument("url", help="index.yaml path or url")
-    as_parser.add_argument("--public-key", help="Public key (optional)")
-    as_parser.add_argument("--priority", type=int, help="Priority", default=0)
-    as_parser.add_argument("--sources", help="sources.yaml path", default=DEFAULT_SOURCES)
-
-    ci_parser = subparsers.add_parser("create-index", help="Create an index.yaml template")
-    ci_parser.add_argument("--output", "-o", help="Output file", default=DEFAULT_INDEX)
-    ci_parser.add_argument("--namespace", help="Namespace", default="local")
-    ci_parser.add_argument("--mirror-of", help="Mirror of which source", default="xrobot-org")
-
-    ai_parser = subparsers.add_parser("add-index", help="Add a repository to index.yaml")
-    ai_parser.add_argument("repo_url", help="Git repository URL or local path")
-    ai_parser.add_argument("--index", help="index.yaml path", required=True)
-
-    subparsers.add_parser("verify", help="Signature verification (TODO)")
-
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--sources', default=str(DEFAULT_SOURCES))
+    sub = parser.add_subparsers(dest='command')
+    listing = sub.add_parser('list')
+    listing.add_argument('--type', choices=['module', 'bsp'])
+    search = sub.add_parser('search')
+    search.add_argument('query')
+    search.add_argument('--type', choices=['module', 'bsp'])
+    for verb in ('get', 'find'):
+        sub.add_parser(verb).add_argument('id')
+    cs = sub.add_parser('create-sources')
+    cs.add_argument('--output', '-o', default=str(DEFAULT_SOURCES))
+    ci = sub.add_parser('create-index')
+    ci.add_argument('--output', '-o', default=str(DEFAULT_INDEX))
+    ci.add_argument('--namespace', default='local')
+    ci.add_argument('--mirror-of')
+    ads = sub.add_parser('add-source')
+    ads.add_argument('url')
+    ads.add_argument('--priority', type=int, default=0)
+    ads.add_argument('--public-key')
+    adi = sub.add_parser('add-index')
+    adi.add_argument('repo_url')
+    adi.add_argument('--index', required=True)
     args = parser.parse_args()
-
-    if args.cmd == "list" or args.cmd is None:
-        sm = SourceManager()
-        mods = sm.list_modules()
-        print("Available modules:")
-        for modid in mods:
-            src = sm.module_source_map[modid]
-            mirror_str = (f"(mirror of: {src.mirror_of})" if src.mirror_of else "")
-            nsinfo = f"(actual namespace: {src.namespace})"
-            print(f"  {modid:<32} source: {src.url} {mirror_str} {nsinfo}")
-
-    elif args.cmd == "get":
-        sm = SourceManager()
-        url = sm.get_repo_url(args.modid)
-        if url:
-            src = sm.module_source_map[args.modid]
-            mirror_str = f"(mirror of: {src.mirror_of})" if src.mirror_of else ""
-            nsinfo = f"(actual namespace: {src.namespace})"
-            print(f"{args.modid}\n{url}\nSource: {src.url} {mirror_str} {nsinfo}")
-        else:
-            print(f"[ERROR] Module not found: {args.modid}")
-            sys.exit(1)
-
-    elif args.cmd == "find":
-        sm = SourceManager()
-        candidates = sm.find_module(args.modid)
-        if not candidates:
-            print(f"[ERROR] Module not found: {args.modid}")
-            sys.exit(1)
-        print(f"All sources for module {args.modid}:")
-        for url, src in candidates:
-            mirror_str = f"(mirror of: {src.mirror_of})" if src.mirror_of else ""
-            nsinfo = f"(actual namespace: {src.namespace})"
-            print(f"  {url} source: {src.url} {mirror_str} {nsinfo}")
-
-    elif args.cmd == "create-sources":
-        sm = SourceManager()
-        sm.create_sources_yaml(args.output)
-        print(f"[SUCCESS] Created template: {args.output}")
-
-    elif args.cmd == "add-source":
+    try:
+        if args.command == 'create-index':
+            ModuleSource.create_index_yaml(args.output, args.namespace, args.mirror_of)
+            return
         sm = SourceManager(args.sources)
-        sm.add_source(args.url, args.public_key, args.priority, args.sources)
-        print(f"[SUCCESS] Added source: {args.url} to {args.sources}")
+        if args.command == 'create-sources':
+            sm.create_sources_yaml(args.output)
+        elif args.command == 'add-source':
+            sm.add_source(args.url, args.public_key, args.priority, args.sources)
+        elif args.command == 'add-index':
+            sm.add_index_entry(args.index, args.repo_url)
+        elif args.command in ('get', 'find'):
+            identity = sm.resolve_id(args.id)
+            value = sm.packages[identity] if args.command == 'get' else [{'repo': r, 'source': s.url} for r, s in sm.find_module(identity)]
+            print(yaml.safe_dump(value, sort_keys=False, allow_unicode=True))
+        else:
+            for identity, record in sorted(sm.packages.items()):
+                if getattr(args, 'type', None) and args.type != record['type']:
+                    continue
+                if args.command == 'search' and args.query.casefold() not in json.dumps(record, ensure_ascii=False, default=str).casefold():
+                    continue
+                print('%s [%s] %s' % (identity, record['type'], record['repo']))
+    except (OSError, ValueError, requests.RequestException, yaml.YAMLError) as error:
+        parser.exit(1, str(error) + '\n')
 
-    elif args.cmd == "create-index":
-        ModuleSource.create_index_yaml(args.output, args.namespace, args.mirror_of)
-        print(f"[SUCCESS] Created template: {args.output}, namespace: {args.namespace}")
 
-    elif args.cmd == "add-index":
-        sm = SourceManager()
-        sm.add_index_entry(args.index, args.repo_url)
-        print(f"[SUCCESS] Added repository: {args.repo_url} to {args.index}")
-
-    elif args.cmd == "verify":
-        print("Signature verification feature TODO: not implemented yet.")
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+if __name__ == '__main__':
     main()

@@ -1,582 +1,263 @@
-#!/usr/bin/env python3
-"""
-xrobot_codegen.py - Generate C++ main file and configuration for XRobot modules.
-
-- Parses module manifest from header files.
-- Extracts constructor/template arguments for each module.
-- Auto-generates YAML config if not present.
-- Generates C++ main application code for all modules.
-
-Usage example:
-  python xrobot_codegen.py -m BlinkLED Motor -o User/xrobot_main.hpp
-  python xrobot_codegen.py               # Auto-discover modules, generate config and main
-"""
-
-import re
-import json
-import yaml
+"""Generate an ordered, static C++ application from source interfaces and YAML."""
 import argparse
+import os
+import re
+import tempfile
 from pathlib import Path
-from collections import OrderedDict
-from typing import Union, Dict, List, Optional
-from yaml.representer import SafeRepresenter
-
-yaml.add_representer(OrderedDict, SafeRepresenter.represent_dict)
-
-DEFAULT_CONSTEXPR_NAMESPACE = "ProjectConstexpr"
-
-def parse_manifest_from_header(header_path: Path) -> Dict:
-    """
-    Extract and parse manifest data from the module header file.
-    Supports V1/V2 manifest format auto-detection.
-    """
-    content = header_path.read_text(encoding="utf-8")
-    manifest_block = []
-    in_manifest = False
-
-    for line in content.splitlines():
-        stripped = line.strip()
-        if "=== MODULE MANIFEST" in stripped:
-            in_manifest = True
-            continue
-        if "=== END MANIFEST" in stripped:
-            break
-        if in_manifest:
-            manifest_block.append(line)
-
-    if not manifest_block:
-        print(f"[WARN] No manifest found in {header_path}")
-        return {}
-
-    try:
-        manifest_data = yaml.safe_load("\n".join(manifest_block)) or {}
-    except yaml.YAMLError as e:
-        print(f"[ERROR] YAML parsing failed in {header_path}: {str(e)}")
-        return {}
-
-    # Normalize constructor_args and template_args as List[Dict]
-    for key in ["constructor_args", "template_args"]:
-        val = manifest_data.get(key)
-        if isinstance(val, dict):
-            manifest_data[key] = [{k: v} for k, v in val.items()]
-        elif isinstance(val, list):
-            manifest_data[key] = [
-                {k: v} if isinstance(item, dict) else {str(item): ""}
-                for item in val
-                for k, v in (item.items() if isinstance(item, dict) else [(item, "")])
-            ]
-        elif val is None:
-            manifest_data[key] = []
-        elif isinstance(val, str):
-            manifest_data[key] = [{val: ""}]
-        else:
-            print(f"[WARN] {key} format not recognized: {type(val)}")
-
-    print(f"[INFO] Successfully parsed manifest for {header_path.stem}")
-    return manifest_data
-
-def _validate_cpp_identifier(name: str, field_name: str = "identifier") -> str:
-    if not isinstance(name, str) or not re.match(r"^[A-Za-z_]\w*$", name):
-        raise ValueError(f"[ERROR] Invalid {field_name}: {name!r}")
-    return name
+import yaml
+from xrobot.CppSource import tokens, code_tokens, close_token, split_arguments, bind_identifiers
+from xrobot.ModuleParser import discover_modules, select_module, source_interface
 
 
-def _validate_constexpr_ref(name: str) -> str:
-    return _validate_cpp_identifier(name, "constexpr reference")
+class ConfigLoader(yaml.BaseLoader):
+    """Preserve C++ scalar spelling (including on/off, hex and date-like tokens)."""
 
 
-def _get_constexpr_namespace(config: Dict) -> str:
-    return _validate_cpp_identifier(
-        config.get("constexpr_namespace", DEFAULT_CONSTEXPR_NAMESPACE),
-        "constexpr namespace",
-    )
+def _mapping(loader, node):
+    result = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node)
+        if not isinstance(key, str) or key in result:
+            raise ValueError('Duplicate or non-scalar YAML key at line %d' % (key_node.start_mark.line + 1))
+        result[key] = loader.construct_object(value_node)
+    return result
 
 
-def _is_single_key_mapping(value: object, key: str) -> bool:
-    return isinstance(value, dict) and set(value.keys()) == {key}
+ConfigLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _mapping)
 
 
-def _is_constexpr_ref(value: object) -> bool:
-    return _is_single_key_mapping(value, "constexpr")
+def load_config(path: Path) -> dict:
+    result = yaml.load(Path(path).read_text(encoding='utf-8-sig'), Loader=ConfigLoader)
+    if not isinstance(result, dict):
+        raise ValueError('%s: expected an application configuration mapping' % path)
+    validate_config(result)
+    return result
 
 
-def _is_expr_value(value: object) -> bool:
-    return _is_single_key_mapping(value, "expr")
-
-
-def _is_string_value(value: object) -> bool:
-    return _is_single_key_mapping(value, "string")
-
-
-def _format_include_directive(header: str) -> str:
-    header = header.strip()
-    if not header:
-        raise ValueError("[ERROR] include header must be a non-empty string")
-    if (header.startswith("<") and header.endswith(">")) or (
-        header.startswith('"') and header.endswith('"')
-    ):
-        return f"#include {header}"
-    return f'#include "{header}"'
-
-
-def _format_raw_expr(value: object) -> str:
-    if isinstance(value, (dict, list)) or value is None:
-        raise TypeError("[ERROR] 'expr' must be a scalar value")
+def cpp_text(value, field):
     if isinstance(value, bool):
-        return "true" if value else "false"
-    expr = str(value).strip()
-    if not expr:
-        raise ValueError("[ERROR] 'expr' must be a non-empty scalar")
-    return expr
-
-
-def _format_string_literal(value: object) -> str:
-    if isinstance(value, (dict, list)) or value is None:
-        raise TypeError("[ERROR] 'string' must be a scalar value")
-    if isinstance(value, bool):
-        return json.dumps("true" if value else "false")
-    return json.dumps(str(value))
-
-
-def _format_cpp_value(
-    value: Union[dict, list, str, int, float, bool],
-    key: str = "",
-    constexpr_namespace: str = DEFAULT_CONSTEXPR_NAMESPACE,
-) -> str:
-    """
-    Format a value as C++-compliant parameter.
-    Supports numbers, bool, identifiers, @instance, {constexpr: Name},
-    {expr: RawExpr}, {string: Literal}, nested dict as {a,b,c}, and list as {a,b,c}.
-    """
-    if isinstance(value, dict):
-        if _is_constexpr_ref(value):
-            return f"{constexpr_namespace}::{_validate_constexpr_ref(value['constexpr'])}"
-        if _is_expr_value(value):
-            return _format_raw_expr(value["expr"])
-        if _is_string_value(value):
-            return _format_string_literal(value["string"])
-        return '{' + ', '.join(
-            _format_cpp_value(v, constexpr_namespace=constexpr_namespace)
-            for v in value.values()
-        ) + '}'
-    if isinstance(value, list):
-        return '{' + ', '.join(
-            _format_cpp_value(v, constexpr_namespace=constexpr_namespace)
-            for v in value
-        ) + '}'
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if isinstance(value, str):
-        if value.startswith('@'):
-            return value[1:]
-        if re.match(r"^[A-Za-z_][\w:<>\s,]*::[A-Za-z_][\w:]*$", value):
-            return value
-        if re.match(r"^-?\d+(\.\d+)?$", value):
-            return value
-        return _format_string_literal(value)
-    return str(value)
-
-
-def _format_template_arg(
-    value: Union[dict, list, str, int, float, bool],
-    constexpr_namespace: str = DEFAULT_CONSTEXPR_NAMESPACE,
-) -> str:
-    """
-    Format a template argument while preserving raw type-expression strings.
-    """
-    if _is_constexpr_ref(value):
-        return f"{constexpr_namespace}::{_validate_constexpr_ref(value['constexpr'])}"
-    if _is_expr_value(value):
-        return _format_raw_expr(value["expr"])
-    if _is_string_value(value):
-        return _format_string_literal(value["string"])
-    if isinstance(value, str):
-        return value
-    return _format_cpp_value(value, constexpr_namespace=constexpr_namespace)
-
-
-def _format_multiline_template_type(mod: str, tmpl_params: List[str]) -> List[str]:
-    lines = [f"{mod}<"]
-    for idx, param in enumerate(tmpl_params):
-        comma = "," if idx < len(tmpl_params) - 1 else ""
-        lines.append(f"      {param}{comma}")
-    lines.append("  >")
-    return lines
-
-
-def _format_module_instance_statement(
-    mod: str,
-    tmpl_params: List[str],
-    instance_name: str,
-    hw_var: str,
-    args_list: List[str],
-) -> str:
-    call_args = [hw_var, "appmgr", *args_list]
-    type_expr = mod
-    if tmpl_params:
-        type_expr += "<" + ", ".join(tmpl_params) + ">"
-
-    single_line = f"  static {type_expr} {instance_name}(" + ", ".join(call_args) + ");"
-    if len(single_line) <= 100:
-        return single_line
-
-    if tmpl_params and len(type_expr) > 48:
-        type_lines = _format_multiline_template_type(mod, tmpl_params)
-        lines = [f"  static {type_lines[0]}"]
-        lines.extend(type_lines[1:-1])
-        lines.append(f"{type_lines[-1]} {instance_name}(")
-    else:
-        lines = [f"  static {type_expr} {instance_name}("]
-
-    for idx, arg in enumerate(call_args):
-        comma = "," if idx < len(call_args) - 1 else ""
-        lines.append(f"      {arg}{comma}")
-    lines.append("  );")
-    return "\n".join(lines)
-
-
-def _generate_constexpr_header(config: Dict) -> Optional[str]:
-    constexprs = config.get("constexprs", {})
-    if not constexprs:
-        return None
-    if not isinstance(constexprs, dict):
-        raise TypeError("[ERROR] 'constexprs' must be a mapping")
-
-    include_headers = config.get("constexpr_includes", [])
-    if include_headers is None:
-        include_headers = []
-    if not isinstance(include_headers, list) or not all(isinstance(h, str) for h in include_headers):
-        raise TypeError("[ERROR] 'constexpr_includes' must be a list of header strings")
-
-    constexpr_namespace = _get_constexpr_namespace(config)
-
-    lines = ["#pragma once", ""]
-    emitted_includes = []
-    seen_includes = set()
-    for header in include_headers:
-        directive = _format_include_directive(header)
-        if directive in seen_includes:
-            continue
-        seen_includes.add(directive)
-        emitted_includes.append(directive)
-    lines.extend(emitted_includes)
-    if emitted_includes:
-        lines.append("")
-    lines.append(f"namespace {constexpr_namespace} {{")
-
-    for name, spec in constexprs.items():
-        _validate_constexpr_ref(name)
-        if not isinstance(spec, dict):
-            raise TypeError(f"[ERROR] constexpr '{name}' must be a mapping")
-        cpp_type = spec.get("type")
-        cpp_value = spec.get("value")
-        if not isinstance(cpp_type, str) or not cpp_type:
-            raise ValueError(f"[ERROR] constexpr '{name}' missing non-empty 'type'")
-        if cpp_value is None:
-            raise ValueError(f"[ERROR] constexpr '{name}' missing 'value'")
-        lines.append(
-            f"inline constexpr {cpp_type} {name} = "
-            f"{_format_cpp_value(cpp_value, constexpr_namespace=constexpr_namespace)};"
-        )
-
-    lines += [
-        f"}}  // namespace {constexpr_namespace}",
-        "",
-    ]
-    return "\n".join(lines)
-
-
-def _load_config_file(config_path: Path) -> Dict:
-    try:
-        config_data = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
-    except yaml.YAMLError as e:
-        raise ValueError(f"[ERROR] Failed to parse YAML in {config_path}: {e}") from e
-    if not isinstance(config_data, dict):
-        raise TypeError(f"[ERROR] Top-level config in {config_path} must be a mapping")
-    return config_data
-
-
-def _require_mapping(value: object, field_name: str) -> Dict:
-    if value is None:
-        return {}
-    if not isinstance(value, dict):
-        raise TypeError(f"[ERROR] '{field_name}' must be a mapping")
+        return 'true' if value else 'false'
+    if isinstance(value, (int, float)):
+        return str(value)
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError('%s must contain C++ argument text, not YAML aggregates/null' % field)
+    if value.lstrip().startswith('@'):
+        raise ValueError('%s: use ordinary C++ text instead of @ expressions' % field)
     return value
 
-def extract_constructor_args(
-    modules: List[str], module_dir: Path, config_path: Path
-) -> Dict:
-    """
-    Extract default constructor_args/template_args for each module
-    and save them to a YAML config file in a list format.
-    """
-    output = {
-        "global_settings": {
-            "monitor_sleep_ms": 1000
-        },
-        "modules": []
-    }
-    auto_inst_index = {}
 
-    for mod in modules:
-        hpp_path = module_dir / mod / f"{mod}.hpp"
-        if not hpp_path.exists():
-            print(f"[WARN] Header not found for module: {mod}")
-            continue
+def validate_config(config):
+    extra = set(config) - {'modules', 'settings'}
+    if extra:
+        raise ValueError('Unsupported application fields: %s; migrate to module/id/args and settings' % ', '.join(sorted(extra)))
+    entries = config.get('modules', [])
+    if not isinstance(entries, list):
+        raise ValueError('modules must be an ordered list')
+    used = set()
+    for i, entry in enumerate(entries):
+        if not isinstance(entry, dict) or set(entry) - {'module', 'id', 'args', 'template_args'}:
+            raise ValueError('modules[%d] requires module/id and ordered args/template_args' % i)
+        for key in ('module', 'id'):
+            if not isinstance(entry.get(key), str) or not entry[key]:
+                raise ValueError('modules[%d].%s is required' % (i, key))
+        if entry['id'] in used:
+            raise ValueError('Duplicate instance id: ' + entry['id'])
+        if entry['id'].startswith('xr_') or entry['id'] == 'XRobotMonitorAll':
+            raise ValueError('Instance id collides with generated identifiers: ' + entry['id'])
+        used.add(entry['id'])
+        for key in ('args', 'template_args'):
+            values = entry.get(key, [])
+            if not isinstance(values, list):
+                raise ValueError('modules[%d].%s must be an ordered list' % (i, key))
+            for j, value in enumerate(values):
+                cpp_text(value, 'modules[%d].%s[%d]' % (i, key, j))
+    settings = config.get('settings', {})
+    if not isinstance(settings, dict) or set(settings) - {'monitor_sleep_ms'}:
+        raise ValueError('settings only accepts monitor_sleep_ms')
+    sleep = str(settings.get('monitor_sleep_ms', 1000))
+    if not re.fullmatch(r'\d+', sleep) or int(sleep) > 0xffffffff:
+        raise ValueError('monitor_sleep_ms must be an unsigned 32-bit millisecond count')
 
-        manifest = parse_manifest_from_header(hpp_path)
-        if not manifest:
-            print(f"[ERROR] Failed to parse manifest for {mod}")
-            continue
 
-        # Constructor args
-        args_list = manifest.get("constructor_args", [])
-        if isinstance(args_list, dict):
-            args_list = [{k: v} for k, v in args_list.items()]
-        elif isinstance(args_list, list):
-            normalized = []
-            for item in args_list:
-                if isinstance(item, dict):
-                    normalized.append(item)
-                elif isinstance(item, str):
-                    normalized.append({item: ""})
-            args_list = normalized
+def atomic_write(path: Path, text: str):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists() and path.read_bytes() == text.encode('utf-8'):
+        return
+    handle, temporary = tempfile.mkstemp(prefix=path.name + '.', suffix='.tmp', dir=str(path.parent))
+    try:
+        with os.fdopen(handle, 'w', encoding='utf-8', newline='\n') as stream:
+            stream.write(text)
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
+
+
+def read_registrations(paths):
+    records, names = [], set()
+    for path in paths:
+        path = Path(path)
+        text = path.read_text(encoding='utf-8-sig')
+        items = code_tokens(text)
+        for i, token in enumerate(items):
+            if token.text != 'XR_REGISTER' or i+1 >= len(items) or items[i+1].text != '(':
+                continue
+            end = close_token(items, i+1)
+            parts = split_arguments(text[items[i+1].end:items[end].start])
+            if len(parts) < 2 or not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]*', parts[0]):
+                raise ValueError('%s: XR_REGISTER requires an existing name and explicit object types' % path)
+            name = parts[0]
+            if name in names:
+                raise ValueError('Duplicate XR_REGISTER name: ' + name)
+            if name.startswith('xr_'):
+                raise ValueError('Registration collides with generated identifier prefix: ' + name)
+            if len(set(parts[1:])) != len(parts[1:]):
+                raise ValueError('Duplicate view in XR_REGISTER: ' + name)
+            # Typedefs are deliberately left to C++; this rejects literal T& spellings only.
+            if any(p.rstrip().endswith('&') for p in parts[1:]):
+                raise ValueError('Register object types, not reference types: ' + name)
+            names.add(name)
+            records.append({'name': name, 'types': parts[1:], 'source': str(path), 'line': text.count('\n', 0, token.start)+1})
+    return records
+
+
+HELPERS = r'''namespace xrobot_generated {
+template <typename...> struct TypeList {};
+template <typename Source, typename... Views>
+struct RegistrationMatches
+    : std::bool_constant<(!std::is_reference<Views>::value && ...) &&
+                         (std::is_convertible<Source*, Views*>::value && ...)> {};
+
+template <typename View, typename Source>
+inline void* Erase(Source& source) noexcept {
+  static_assert(!std::is_reference<View>::value, "Register an object type, not T&");
+  // Implicit conversion adjusts base subobjects and rejects pointer covariance.
+  View* view = std::addressof(source);
+  return const_cast<void*>(static_cast<const volatile void*>(view));
+}
+
+template <typename> struct MonitorSignature : std::false_type {};
+template <typename T> struct MonitorSignature<void (T::*)()> : std::true_type {};
+template <typename T> struct MonitorSignature<void (T::*)() noexcept> : std::true_type {};
+template <typename T> struct MonitorSignature<void (T::*)() const> : std::true_type {};
+template <typename T> struct MonitorSignature<void (T::*)() const noexcept> : std::true_type {};
+template <typename T> struct MonitorSignature<void (T::*)() &> : std::true_type {};
+template <typename T> struct MonitorSignature<void (T::*)() & noexcept> : std::true_type {};
+template <typename T, typename = void> struct HasMonitor : std::false_type {};
+template <typename T>
+struct HasMonitor<T, std::void_t<decltype(&T::OnMonitor)>>
+    : MonitorSignature<decltype(&T::OnMonitor)> {};
+
+template <typename T> inline void Monitor(T& instance) {
+  if constexpr (HasMonitor<T>::value) {
+    instance.OnMonitor();
+  }
+}
+'''
+
+
+def generate_xrobot_main_code(config, modules, registrations=None):
+    validate_config(config)
+    registrations = registrations or []
+    views, bindings = [], {}
+    for record in registrations:
+        fields = []
+        for i, cpp_type in enumerate(record['types']):
+            field = 'xr_view_%s_%d' % (record['name'], i)
+            fields.append(field)
+            views.append((record['name'], cpp_type, field))
+        bindings[record['name']] = fields
+    selected, entries = {}, []
+    for i, entry in enumerate(config.get('modules', [])):
+        if entry['id'] in bindings:
+            raise ValueError('Instance id collides with a registered external name: ' + entry['id'])
+        module = select_module(modules, entry['module'])
+        if not module['manifest'].standalone:
+            raise ValueError('%s is a non-standalone library, not an instance' % module['id'])
+        if module['name'] in selected and selected[module['name']]['id'] != module['id']:
+            raise ValueError('Two selected packages define global class %s; choose one implementation' % module['name'])
+        selected[module['name']] = module
+        interface = source_interface(module['header'])
+        args = [bind_identifiers(cpp_text(v, 'args'), bindings) for v in entry.get('args', [])]
+        template_args = [bind_identifiers(cpp_text(v, 'template_args'), bindings) for v in entry.get('template_args', [])]
+        cpp_type = module['name']
+        if template_args or interface['template'] is not None:
+            cpp_type += '<' + ', '.join(template_args) + '>'
+        entries.append((entry['id'], cpp_type, args, i))
+    lines = ['#pragma once', '', '#include <array>', '#include <memory>', '#include <type_traits>', '#include "thread.hpp"']
+    lines += ['#include "%s.hpp"' % name for name in selected]
+    lines += ['', HELPERS]
+    if views:
+        lines.append('template <%s>' % ', '.join('typename XrView%d' % i for i in range(len(views))))
+    lines.append('[[noreturn]] inline void Main(void* const* xr_slots) {')
+    if not views:
+        lines.append('  (void)xr_slots;')
+    for i, (_, _, field) in enumerate(views):
+        lines.append('  [[maybe_unused]] auto& %s = *static_cast<XrView%d*>(xr_slots[%d]);' % (field, i, i))
+    for identity, cpp_type, args, i in entries:
+        lines.append('  // modules[%d]: %s' % (i, identity))
+        if args:
+            lines.append('  %s %s(\n      %s\n  );' % (cpp_type, identity, '\n      , '.join(args)))
         else:
-            args_list = []
+            lines.append('  %s %s;' % (cpp_type, identity))
+    lines.append('  const auto XRobotMonitorAll = [&]() {')
+    lines += ['    Monitor(%s);' % entry[0] for entry in entries]
+    lines += ['  };', '  for (;;) {', '    XRobotMonitorAll();', '    LibXR::Thread::Sleep(%s);' % config.get('settings', {}).get('monitor_sleep_ms', 1000), '  }', '}', '}  // namespace xrobot_generated', '']
+    # Macro arguments are checked at the source declaration, with no runtime table.
+    for record in registrations:
+        lines.append('#define XR_REGISTER_DETAIL_%s(...) \\' % record['name'])
+        lines.append('  static_assert(std::is_same<xrobot_generated::TypeList<__VA_ARGS__>, \\')
+        lines.append('      xrobot_generated::TypeList<%s>>::value && \\' % ', '.join(record['types']))
+        lines.append('      xrobot_generated::RegistrationMatches< \\')
+        lines.append('          std::remove_reference_t<decltype(%s)>, __VA_ARGS__>::value, \\' % record['name'])
+        lines.append('      "XR_REGISTER changed; regenerate xrobot_main.hpp")')
+    lines += ['#define XR_REGISTER(name, ...) XR_REGISTER_DETAIL_##name(__VA_ARGS__)', '', '#define XROBOT_MAIN() \\', '  do { \\']
+    if views:
+        lines.append('    std::array<void*, %d> xr_slots{{ \\' % len(views))
+        for name, cpp_type, _ in views:
+            lines.append('        xrobot_generated::Erase<%s>(%s), \\' % (cpp_type, name))
+        lines.append('    }}; \\')
+        lines.append('    xrobot_generated::Main<%s>(xr_slots.data()); \\' % ', '.join(v[1] for v in views))
+    else:
+        lines.append('    xrobot_generated::Main(nullptr); \\')
+    lines += ['  } while (false)', '']
+    return '\n'.join(lines)
 
-        args_ordered = OrderedDict()
-        for d in args_list:
-            if isinstance(d, dict):
-                args_ordered.update(d)
 
-        # Template args
-        tmpl_list = manifest.get("template_args", [])
-        if isinstance(tmpl_list, dict):
-            tmpl_list = [{k: v} for k, v in tmpl_list.items()]
-        elif isinstance(tmpl_list, list):
-            normalized = []
-            for item in tmpl_list:
-                if isinstance(item, dict):
-                    normalized.append(item)
-                elif isinstance(item, str):
-                    normalized.append({item: ""})
-            tmpl_list = normalized
-        else:
-            tmpl_list = []
+def generate(config_path=Path('User/xrobot.yaml'), modules_dir=Path('Modules'), output=Path('User/xrobot_main.hpp'), register_sources=None, lock_path=None):
+    config = load_config(Path(config_path))
+    sources = list(register_sources or [])
+    if not sources:
+        default = Path(config_path).parent / 'app_main.cpp'
+        if default.exists():
+            sources = [default]
+    if any(Path(p).resolve() == Path(output).resolve() for p in sources):
+        raise ValueError('Registration input must be original source, not the generated header')
+    registrations = read_registrations(sources)
+    modules = discover_modules(Path(modules_dir), lock_path)
+    code = generate_xrobot_main_code(config, modules, registrations)
+    atomic_write(Path(output), code)
+    for record in registrations:
+        fields = ['xr_view_%s_%d' % (record['name'], i) for i in range(len(record['types']))]
+        print('%s: %s' % (record['name'], ', '.join('%s (%s)' % pair for pair in zip(fields, record['types']))))
+    return code
 
-        tmpl_ordered = OrderedDict()
-        for d in tmpl_list:
-            if isinstance(d, dict):
-                tmpl_ordered.update(d)
-
-        # Generate config entry for module
-        idx = auto_inst_index.get(mod, 0)
-        instance_id = f"{mod}_{idx}"
-        auto_inst_index[mod] = idx + 1
-        mod_entry = OrderedDict([
-            ("id", instance_id),
-            ("name", mod),
-            ("constructor_args", args_ordered)
-        ])
-        if tmpl_ordered:
-            mod_entry["template_args"] = tmpl_ordered
-
-        output["modules"].append(mod_entry)
-
-    print(f"[INFO] Writing configuration to {config_path}")
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-    config_path.write_text(
-        yaml.dump(output, sort_keys=False, allow_unicode=True, indent=2),
-        encoding="utf-8"
-    )
-
-    return output
-
-def generate_xrobot_main_code(hw_var: str, modules: List[str], config: Dict) -> str:
-    """
-    Generate the main application code (C++ entry point) with module instantiations,
-    supporting template args and instance id.
-    """
-    if not isinstance(config, dict):
-        raise TypeError("[ERROR] top-level config must be a mapping")
-
-    global_settings = _require_mapping(config.get("global_settings", {}), "global_settings")
-    sleep_ms = global_settings.get("monitor_sleep_ms", 1000)
-    constexpr_namespace = _get_constexpr_namespace(config)
-
-    headers = [
-        '#include "app_framework.hpp"',
-        '#include "libxr.hpp"',
-        "",
-        "// Module headers",
-    ] + [f'#include "{mod}.hpp"' for mod in modules]
-    if config.get("constexprs"):
-        headers.append('#include "xrobot_constexpr.hpp"')
-
-    body = [
-        f"static void XRobotMain(LibXR::HardwareContainer &{hw_var}) {{",
-        "  using namespace LibXR;",
-        "  ApplicationManager appmgr;",
-        "",
-        "  // Auto-generated module instantiations",
-    ]
-
-    module_entries = config.get("modules", [])
-    if not isinstance(module_entries, list):
-        raise TypeError("[ERROR] 'modules' must be a list of module instances")
-
-    auto_inst_index = {}
-
-    for entry in module_entries:
-        if not isinstance(entry, dict):
-            raise TypeError("[ERROR] each item in 'modules' must be a mapping")
-
-        mod = entry.get("name")
-        if not isinstance(mod, str) or not mod.strip():
-            raise ValueError("[ERROR] each module entry requires non-empty string 'name'")
-        mod = mod.strip()
-
-        inst_id = entry.get("id")
-        if inst_id is not None:
-            if not isinstance(inst_id, str) or not inst_id.strip():
-                raise ValueError(f"[ERROR] module '{mod}' has invalid non-empty string 'id'")
-            instance_name = inst_id.strip()
-        else:
-            idx = auto_inst_index.get(mod, 0)
-            instance_name = f"{mod.lower()}{idx}" if idx > 0 else mod.lower()
-            auto_inst_index[mod] = idx + 1
-
-        if mod not in modules:
-            print(f"[WARN] Module {mod} not included in the provided list.")
-            continue
-
-        args_dict = _require_mapping(
-            entry.get("constructor_args", {}),
-            f"constructor_args for module '{mod}'",
-        )
-        args_list = [
-            _format_cpp_value(v, k, constexpr_namespace=constexpr_namespace)
-            for k, v in args_dict.items()
-        ]
-
-        tmpl_dict = _require_mapping(entry.get("template_args", {}), f"template_args for module '{mod}'")
-        tmpl_params = [
-            _format_template_arg(v, constexpr_namespace=constexpr_namespace)
-            for _, v in tmpl_dict.items()
-        ]
-
-        body.append(
-            _format_module_instance_statement(mod, tmpl_params, instance_name, hw_var, args_list)
-        )
-
-    body += [
-        "",
-        "  while (true) {",
-        "    appmgr.MonitorAll();",
-        f"    Thread::Sleep({sleep_ms});",
-        "  }",
-        "}",
-    ]
-
-    return "\n".join(headers + [""] + body)
-
-def auto_discover_modules(modules_dir: Path = Path("Modules")) -> List[str]:
-    """
-    Discover available modules in the Modules directory.
-    Returns a list of module names that have their .hpp files.
-    """
-    discovered_modules = [
-        sub.name for sub in modules_dir.iterdir()
-        if sub.is_dir() and (sub / f"{sub.name}.hpp").exists()
-    ]
-    if not discovered_modules:
-        print("[WARN] No valid modules found in the Modules directory.")
-    return discovered_modules
-
-def extract_modules_from_config(config: Dict) -> List[str]:
-    """
-    Extract a de-duplicated module include list from config["modules"] while
-    preserving declaration order.
-    """
-    if not isinstance(config, dict):
-        raise TypeError("[ERROR] top-level config must be a mapping")
-
-    module_entries = config.get("modules", [])
-    if module_entries is None:
-        return []
-    if not isinstance(module_entries, list):
-        raise TypeError("[ERROR] 'modules' must be a list of module instances")
-
-    selected_modules = []
-    seen_modules = set()
-    for entry in module_entries:
-        if not isinstance(entry, dict):
-            raise TypeError("[ERROR] each item in 'modules' must be a mapping")
-
-        mod = entry.get("name")
-        if not isinstance(mod, str) or not mod.strip():
-            raise ValueError("[ERROR] each module entry requires non-empty string 'name'")
-
-        mod = mod.strip()
-        if mod in seen_modules:
-            continue
-
-        selected_modules.append(mod)
-        seen_modules.add(mod)
-
-    return selected_modules
 
 def main():
-    parser = argparse.ArgumentParser(description="XRobot code generation tool")
-    parser.add_argument("-o", "--output", default='User/xrobot_main.hpp', help="Output C++ file path")
-    parser.add_argument("-m", "--modules", nargs="+", default=[], help="List of modules to include")
-    parser.add_argument("--hw", default="hw", help="Hardware container variable name")
-    parser.add_argument("-c", "--config", help="Configuration YAML file path")
-
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('-c', '--config', default='User/xrobot.yaml')
+    parser.add_argument('-d', '--directory', default='Modules')
+    parser.add_argument('-o', '--output', default='User/xrobot_main.hpp')
+    parser.add_argument('--register-source', action='append', default=[])
+    parser.add_argument('--lock')
     args = parser.parse_args()
-
-    # Configuration handling
-    config_data = {}
-    config_path = Path(args.config) if args.config else Path("User/xrobot.yaml")
-
     try:
-        if config_path.exists():
-            print(f"[INFO] Using existing configuration file: {config_path}")
-            config_data = _load_config_file(config_path)
-        elif args.config:
-            print(f"[WARN] Configuration file not found: {config_path}")
+        generate(args.config, args.directory, args.output, args.register_source, args.lock)
+        print('Generated ' + args.output)
+    except (OSError, ValueError, TypeError, yaml.YAMLError) as error:
+        parser.exit(1, str(error) + '\n')
 
-        # Module selection
-        if not args.modules:
-            args.modules = extract_modules_from_config(config_data)
-            if args.modules:
-                print(f"[INFO] Using modules from configuration: {', '.join(args.modules)}")
-                modules_dir = Path("Modules")
-                for mod in args.modules:
-                    hpp = modules_dir / mod / f"{mod}.hpp"
-                    if not hpp.exists():
-                        print(f"[WARN] Module '{mod}' declared in config but header not found: {hpp}")
-            else:
-                args.modules = auto_discover_modules()
-                print(f"Discovered modules: {', '.join(args.modules) or 'None'}")
 
-        if not config_path.exists():
-            config_data = extract_constructor_args(args.modules, Path("Modules"), config_path)
-
-        # Code generation
-        output_code = generate_xrobot_main_code(args.hw, args.modules, config_data)
-        output_path = Path(args.output)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(output_code, encoding="utf-8")
-        print(f"[SUCCESS] Generated entry file: {args.output}")
-
-        constexpr_code = _generate_constexpr_header(config_data)
-        if constexpr_code is not None:
-            constexpr_path = output_path.with_name("xrobot_constexpr.hpp")
-            constexpr_path.write_text(constexpr_code, encoding="utf-8")
-            print(f"[SUCCESS] Generated constexpr header: {constexpr_path}")
-    except (TypeError, ValueError, FileNotFoundError) as e:
-        parser.exit(1, f"{e}\n")
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

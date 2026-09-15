@@ -1,201 +1,152 @@
-#!/usr/bin/env python3
-"""
-ModuleManifest: Utility to parse and access XRobot module manifest from .hpp header or directory.
-
-Features:
-- Class-based manifest object with property access.
-- Utilities for parsing from header file or folder.
-- Supports V1/V2 manifest in C++ comments.
-- Can be used as both a library and a CLI tool.
-
-Usage as CLI:
-    python module_manifest.py --path Modules/BlinkLED
-    python module_manifest.py --path Modules/BlinkLED/BlinkLED.hpp
-"""
-
+"""Read thin package metadata and display interfaces declared in C++ source."""
+import argparse
+import json
 import re
-import yaml
+import subprocess
 from pathlib import Path
-from collections import OrderedDict
-from typing import Optional, Dict, Union, Any
+from typing import Optional
+import yaml
+from xrobot.CppSource import extract_interface
+
+MANIFEST_PATTERN = re.compile(r'/\*\s*=== MODULE MANIFEST(?: V\d+)? ===\s*(.*?)\s*=== END MANIFEST ===\s*\*/', re.S)
+INTERFACE_FIELDS = {'constructor_args', 'template_args', 'required_hardware'}
+
 
 class ModuleManifest:
-    """
-    XRobot single module manifest parsed object.
-    Supports attribute access, dictionary export, and pretty print.
-    """
     def __init__(self, manifest: dict, path: Optional[Path] = None):
-        self.manifest = manifest or {}
+        self.manifest = manifest
         self.path = path
 
     @property
-    def description(self) -> str:
-        return self.manifest.get("module_description", "")
+    def description(self):
+        return self.manifest.get('module_description', self.manifest.get('description', ''))
 
     @property
-    def constructor_args(self) -> Union[list, dict, str]:
-        return self.manifest.get("constructor_args", [])
+    def depends(self):
+        value = self.manifest.get('depends', [])
+        if isinstance(value, str):
+            return [value]
+        if not isinstance(value, list):
+            raise ValueError('%s: depends must be a list' % self.path)
+        return value
 
     @property
-    def template_args(self) -> Union[list, dict, str]:
-        return self.manifest.get("template_args", [])
+    def standalone(self):
+        return self.manifest.get('standalone', True) is not False
 
-    @property
-    def required_hardware(self) -> list:
-        hw = self.manifest.get("required_hardware", [])
-        if isinstance(hw, str):
-            return [hw]
-        elif hw is None:
-            return []
-        else:
-            return hw
-
-    @property
-    def depends(self) -> list:
-        dep = self.manifest.get("depends", [])
-        if isinstance(dep, str):
-            return [dep]
-        elif dep is None:
-            return []
-        else:
-            return dep
-
-    def as_dict(self) -> dict:
+    def as_dict(self):
         return dict(self.manifest)
 
-    def __repr__(self):
-        return f"<ModuleManifest path={self.path} desc={self.description[:20]}>"
 
-def parse_manifest_from_header(header_path: Path) -> Optional[ModuleManifest]:
-    """
-    Parse manifest block from .hpp file and return a ModuleManifest object.
-    Supports V1/V2 manifest format.
-    """
-    try:
-        content = header_path.read_text(encoding="utf-8-sig")
-    except UnicodeDecodeError:
-        content = header_path.read_text(encoding="utf-8")
-    except Exception as e:
-        print(f"[ERROR] Failed to read {header_path}: {e}")
-        return None
-    # Supports /* === MODULE MANIFEST(V2)? === ... === END MANIFEST === */
-    pattern = re.compile(
-        r"/\*\s*=== MODULE MANIFEST(?: V2)? ===\s*(.*?)\s*=== END MANIFEST ===\s*\*/",
-        re.DOTALL | re.IGNORECASE
-    )
-    match = pattern.search(content)
-    if not match:
-        return None
-    manifest_block = match.group(1)
-    try:
-        data = yaml.safe_load(manifest_block)
-        if not isinstance(data, dict):
-            return None
-        return ModuleManifest(data, path=header_path)
-    except yaml.YAMLError as e:
-        print(f"[ERROR] YAML parse error in {header_path}:\n{e}")
-        return None
+def manifest_from_text(text: str, path=None) -> ModuleManifest:
+    matches = list(MANIFEST_PATTERN.finditer(text))
+    if len(matches) > 1:
+        raise ValueError('%s: multiple package manifests' % path)
+    data = yaml.safe_load(matches[0].group(1)) if matches else {}
+    if data is None:
+        data = {}
+    if not isinstance(data, dict):
+        raise ValueError('%s: package manifest must be a mapping' % path)
+    # These historical fields are never used as a C++ interface or defaults.
+    return ModuleManifest({k: v for k, v in data.items() if k not in INTERFACE_FIELDS}, path)
 
-def parse_module_folder(folder: Path) -> Optional[ModuleManifest]:
-    """
-    Parse a module folder (automatically finds the .hpp file), returns ModuleManifest.
-    """
-    if not folder.is_dir():
-        return None
-    hpp_name = folder.name + ".hpp"
-    hpp_path = folder / hpp_name
-    if not hpp_path.exists():
-        return None
-    return parse_manifest_from_header(hpp_path)
 
-def parse_constructor_args(args: Any) -> OrderedDict:
-    """
-    Convert constructor_args or template_args field to OrderedDict.
-    Supports dict, list, or str YAML formats.
-    """
-    args_ordered = OrderedDict()
-    if isinstance(args, dict):
-        for k, v in args.items():
-            args_ordered[k] = v
-    elif isinstance(args, list):
-        for item in args:
-            if isinstance(item, dict):
-                for k, v in item.items():
-                    args_ordered[k] = v
-            elif isinstance(item, str):
-                args_ordered[item] = ""
-    elif isinstance(args, str):
-        args_ordered[args] = ""
-    return args_ordered
+def parse_manifest_from_header(header_path: Path) -> ModuleManifest:
+    header_path = Path(header_path)
+    return manifest_from_text(header_path.read_text(encoding='utf-8-sig'), header_path)
 
-def load_single_module(path: Path) -> Optional[ModuleManifest]:
-    """
-    Parse a single module (can be a directory or a .hpp file).
-    """
+
+def parse_module_folder(folder: Path) -> ModuleManifest:
+    folder = Path(folder)
+    return parse_manifest_from_header(folder / (folder.name + '.hpp'))
+
+
+def load_single_module(path: Path) -> ModuleManifest:
+    path = Path(path)
+    return parse_module_folder(path) if path.is_dir() else parse_manifest_from_header(path)
+
+
+def source_interface(path: Path) -> dict:
+    path = Path(path)
     if path.is_dir():
-        return parse_module_folder(path)
-    elif path.is_file() and path.suffix == ".hpp":
-        return parse_manifest_from_header(path)
-    else:
-        return None
+        path = path / (path.name + '.hpp')
+    try:
+        return extract_interface(path.read_text(encoding='utf-8-sig'), path.stem)
+    except ValueError as error:
+        raise ValueError('%s: %s' % (path, error)) from error
 
-def print_manifest(manifest: ModuleManifest, name: Optional[str] = None):
-    """
-    Pretty-print manifest info for a single module (terminal-friendly).
-    """
-    title = name or (manifest.path.name if manifest.path else "(unknown)")
-    print(f"\n=== Module: {title} ===")
-    print(f"Description       : {manifest.description or '(no description)'}")
 
-    # Constructor arguments
-    args = manifest.constructor_args
-    print("\nConstructor Args  : ", end="")
-    if isinstance(args, list) and all(isinstance(a, dict) for a in args):
-        for item in args:
-            fields = ", ".join(f"{k}={v}" for k, v in item.items())
-            print(f"\n  - {fields}")
-    elif isinstance(args, dict):
-        for k, v in args.items():
-            print(f"\n  - {k}={v}")
-    elif isinstance(args, str):
-        print(args)
-    else:
-        print("(invalid format or not specified)")
+def _folder_identity(folder: Path) -> str:
+    if (folder / '.git').exists():
+        result = subprocess.run(['git', '-C', str(folder), 'config', '--get', 'remote.origin.url'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=10)
+        match = re.search(r'(?:github\.com[/:])([^/]+/[^/]+?)(?:\.git)?/?$', result.stdout.strip(), re.I)
+        if match:
+            return match.group(1)
+    return 'local/' + folder.name
 
-    # Template arguments
-    template_args = manifest.template_args
-    if template_args:
-        print("\nTemplate Args     : ", end="")
-        if isinstance(template_args, list) and all(isinstance(a, dict) for a in template_args):
-            for item in template_args:
-                fields = ", ".join(f"{k}={v}" for k, v in item.items())
-                print(f"\n  - {fields}")
-        elif isinstance(template_args, dict):
-            for k, v in template_args.items():
-                print(f"\n  - {k}={v}")
-        elif isinstance(template_args, str):
-            print(template_args)
-        else:
-            print("(invalid format)")
-    hardware = manifest.required_hardware
-    print(f"\nRequired Hardware : {', '.join(hardware) if hardware else 'None'}")
-    depends = manifest.depends
-    if depends:
-        print(f"Depends           : {', '.join(depends)}")
-    else:
-        print("Depends           : None")
 
-# Can be used as a CLI tool
+def discover_modules(directory: Path, lock_path=None) -> dict:
+    """Return canonical IDs and local source paths, not instantiated objects."""
+    directory = Path(directory)
+    lock_path = Path(lock_path) if lock_path else directory.parent / 'xrobot.lock'
+    result = {}
+    locked_dirs = {}
+    if lock_path.exists():
+        lock = yaml.safe_load(lock_path.read_text(encoding='utf-8')) or {}
+        for identity, record in lock.get('modules', {}).items():
+            relative = record.get('directory', identity)
+            folder = (directory / relative).resolve()
+            if directory.resolve() not in folder.parents:
+                raise ValueError('Module path leaves directory: %s' % relative)
+            locked_dirs[folder] = identity
+    if not directory.exists():
+        return result
+    folders = sorted(set(directory.glob('*')) | set(directory.glob('*/*')))
+    for folder in folders:
+        if not folder.is_dir() or folder.name.startswith('.'):
+            continue
+        header = folder / (folder.name + '.hpp')
+        if not header.is_file():
+            continue
+        identity = locked_dirs.get(folder.resolve())
+        if identity is None:
+            if not (folder / '.git').exists() and folder.parent != directory:
+                identity = folder.parent.name + '/' + folder.name
+            else:
+                identity = _folder_identity(folder)
+        if identity in result:
+            raise ValueError('Duplicate local package %s' % identity)
+        result[identity] = {'id': identity, 'name': folder.name, 'path': folder, 'header': header, 'manifest': parse_manifest_from_header(header)}
+    return result
+
+
+def select_module(modules: dict, requested: str) -> dict:
+    candidates = [value for key, value in modules.items() if (key.casefold() == requested.casefold() if '/' in requested else value['name'] == requested)]
+    if len(candidates) != 1:
+        if not candidates:
+            raise ValueError('Module not found: %s' % requested)
+        raise ValueError('Ambiguous Module %s; specify %s' % (requested, ', '.join(v['id'] for v in candidates)))
+    return candidates[0]
+
+
+def print_manifest(manifest, name=None):
+    print(json.dumps(manifest.as_dict(), ensure_ascii=False, indent=2))
+    if manifest.standalone and manifest.path:
+        interface = source_interface(manifest.path)
+        if interface['template'] is not None:
+            print('template <%s>' % interface['template'])
+        for declaration in interface['constructors']:
+            print('%s:%s: %s' % (manifest.path, declaration['line'], declaration['declaration']))
+
+
 def main():
-    import argparse
-    parser = argparse.ArgumentParser(description="XRobot module manifest inspection tool")
-    parser.add_argument("--path", "-p", required=True, help="Module directory or .hpp path")
-    args = parser.parse_args()
-    manifest = load_single_module(Path(args.path))
-    if manifest:
-        print_manifest(manifest)
-    else:
-        print("[ERROR] Module manifest not found or invalid.")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--path', '-p', required=True)
+    try:
+        print_manifest(load_single_module(Path(parser.parse_args().path)))
+    except (OSError, ValueError, yaml.YAMLError) as error:
+        parser.exit(1, str(error) + '\n')
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     main()

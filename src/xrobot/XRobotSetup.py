@@ -1,121 +1,47 @@
-#!/usr/bin/env python3
-"""
-xrobot_setup.py - XRobot one-click automation script for initializing modules.yaml, sources.yaml, auto-fetching modules, and generating main C++ code.
-
-This script:
-1. Ensures `Modules/modules.yaml` and `Modules/sources.yaml` exist, generating templates if missing.
-2. Reads module list from modules.yaml.
-3. Invokes the CLI tools to fetch all modules and dependencies.
-4. Invokes code generation for the main C++ file.
-
-Intended for rapid setup of an XRobot project workspace.
-"""
-
+"""Fetch sources and generate C++; configure/build/test remain native BSP steps."""
 import argparse
-import sys
-import subprocess
 from pathlib import Path
-from typing import List
-from xrobot.SourceManager import SourceManager, load_yaml  # Your library
+import yaml
+from xrobot.InitModule import sync_modules_by_config
+from xrobot.GenerateMain import generate, atomic_write
 
-MODULES_DIR = Path("Modules")
-MODULES_CONFIG = MODULES_DIR / "modules.yaml"
-SOURCES_CONFIG = MODULES_DIR / "sources.yaml"
-OUTPUT_CPP = Path("User/xrobot_main.hpp")
-INIT_MODULE_CLI = "xrobot_init_mod"
-GENERATE_MAIN_CLI = "xrobot_gen_main"
+MODULES_YAML_TEMPLATE = 'modules:\n  - xrobot-org/BlinkLED\n'
+SOURCES_YAML_TEMPLATE = 'sources:\n  - url: https://xrobot.work/xrobot-modules/index.yaml\n    priority: 0\n'
 
-MODULES_YAML_TEMPLATE = """# XRobot modules.yaml template. Each line: full module name (namespace/ModuleName[@ref]):
-# Example:
-#   - xrobot-org/BlinkLED
-#   - your-namespace/YourModule@dev
-modules:
-  - xrobot-org/BlinkLED
-"""
 
-SOURCES_YAML_TEMPLATE = """# XRobot sources.yaml template. List your module repository index.yaml files, supports official and custom mirrors.
-# Official example (already filled in by default):
-sources:
-  - url: https://xrobot.work/xrobot-modules/index.yaml
-    priority: 0
-"""
-
-def ensure_modules_and_sources():
-    """
-    Ensure Modules/modules.yaml and Modules/sources.yaml exist, creating templates if missing.
-    Exits after creation, instructing user to edit before proceeding.
-    """
-    created = False
-    if not MODULES_CONFIG.exists():
-        MODULES_CONFIG.parent.mkdir(parents=True, exist_ok=True)
-        MODULES_CONFIG.write_text(MODULES_YAML_TEMPLATE, encoding="utf-8")
-        print(f"[INFO] Created default {MODULES_CONFIG}")
-        print("Please edit this file; each line should be a full module name like:")
-        print("  - xrobot-org/BlinkLED")
-        print("  - your-namespace/YourModule@dev")
-        created = True
-
-    if not SOURCES_CONFIG.exists():
-        SOURCES_CONFIG.parent.mkdir(parents=True, exist_ok=True)
-        SOURCES_CONFIG.write_text(SOURCES_YAML_TEMPLATE, encoding="utf-8")
-        print(f"[INFO] Created default {SOURCES_CONFIG}")
-        print("Please configure sources index.yaml for official or custom/private mirrors.\nDefault official source already included.")
-        created = True
-
+def setup(project=Path('.'), config=None, update=False, frozen=False, offline=False, register_sources=None):
+    project = Path(project)
+    modules = project / 'Modules'
+    created = []
+    for path, text in ((modules / 'modules.yaml', MODULES_YAML_TEMPLATE), (modules / 'sources.yaml', SOURCES_YAML_TEMPLATE), (project / 'User/xrobot.yaml', 'modules: []\nsettings:\n  monitor_sleep_ms: 1000\n')):
+        if not path.exists():
+            atomic_write(path, text)
+            created.append(path)
     if created:
-        sys.exit(0)  # Exit after template creation, waiting for user edit
+        print('Created %s. Select sources and instances before running setup again.' % ', '.join(map(str, created)))
+        return False
+    sync_modules_by_config(modules / 'modules.yaml', modules / 'sources.yaml', modules, project / 'xrobot.lock', update, frozen, offline)
+    config_path = Path(config) if config else project / 'User/xrobot.yaml'
+    generate(config_path, modules, project / 'User/xrobot_main.hpp', register_sources, project / 'xrobot.lock')
+    print('Generated User/xrobot_main.hpp. Build/test with your BSP CMake or native tooling.')
+    return True
 
-def run_subprocess(cmd: List[str]):
-    """
-    Execute an external command, log and catch errors.
-    """
-    print(f"[EXEC] {' '.join(cmd)}")
-    try:
-        subprocess.run(cmd, check=True)
-    except subprocess.CalledProcessError as e:
-        print(f"[ERROR] Command failed: {' '.join(cmd)}\n{e}")
-        sys.exit(e.returncode if hasattr(e, "returncode") else 1)
-
-def extract_modules() -> List[str]:
-    """
-    Extract the list of module full names from modules.yaml.
-    """
-    if not MODULES_CONFIG.exists():
-        return []
-    data = load_yaml(MODULES_CONFIG)
-    return [m for m in data.get("modules", []) if isinstance(m, str) and "/" in m]
 
 def main():
-    print("Starting XRobot auto-configuration...")
-
-    parser = argparse.ArgumentParser(description="XRobot workspace one-click automation")
-    parser.add_argument("--config", help="Path or URL to constructor config YAML")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('-d', '--directory', default='.')
+    parser.add_argument('-c', '--config')
+    parser.add_argument('--register-source', action='append', default=[])
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--update', action='store_true')
+    group.add_argument('--frozen', action='store_true')
+    parser.add_argument('--offline', action='store_true')
     args = parser.parse_args()
+    try:
+        setup(args.directory, args.config, args.update, args.frozen, args.offline, args.register_source)
+    except (OSError, ValueError, yaml.YAMLError) as error:
+        parser.exit(1, str(error) + '\n')
 
-    # Step 0: Ensure the two core config files exist
-    ensure_modules_and_sources()
 
-    # Step 1: Validate and parse the module list
-    modules = extract_modules()
-    if not modules:
-        print(f"[ERROR] No valid modules found in {MODULES_CONFIG}, please edit and retry.")
-        sys.exit(1)
-
-    # Step 2: Fetch repositories and all dependencies recursively
-    run_subprocess([
-        INIT_MODULE_CLI,
-        "--config", str(MODULES_CONFIG),
-        "--directory", str(MODULES_DIR),
-        "--sources", str(SOURCES_CONFIG)
-    ])
-
-    # Step 3: Generate main function code
-    run_subprocess([
-        GENERATE_MAIN_CLI,
-        "--output", str(OUTPUT_CPP)
-    ])
-
-    print(f"\nAll done! Main function generated at: {OUTPUT_CPP}")
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

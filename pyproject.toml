@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "xrobot"
 version = "0.3.1"
-description = "A lightweight application framework for robot module management, lifecycle control, and hardware abstraction."
+description = "Source package resolution and static C++ application assembly for the XRobot ecosystem."
 requires-python = ">=3.8"
 authors = [
     {name = "Xiao", email = "2592509183@qq.com"}
