@@ -5,6 +5,7 @@ from pathlib import Path
 import yaml
 
 
+
 def create_module(class_name, description='', constructor_args=None, template_args=None, depends=None, output_dir=Path('Modules'), includes=None):
     if not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]*', class_name):
         raise ValueError('Module name must be a C++ identifier')
@@ -52,38 +53,13 @@ configuration order. The BSP owns external object lifetimes and native builds.
 
 ## Validation
 
-The generated CI checks that the header builds with LibXR. It does not claim
-instantiation, hardware validation or compatibility of a new implementation.
-Add the module-specific constructor fixture and hardware results before release.
-Dependencies remain in the header manifest; CMake flags/toolchains stay in CMake.
+Keep the Module's existing CI and add behavior or hardware tests only where they
+are meaningful for that Module. Static assembly does not synthesize generic
+runtime or hardware validation. Dependencies remain in the header manifest;
+CMake flags/toolchains stay in CMake.
 ''' % (class_name, description, class_name), encoding='utf-8')
-    # A native fixture is useful from CI and from a plain local CMake invocation.
-    tests = folder / 'tests'
-    tests.mkdir()
-    (tests / 'xrobot_compile.cpp').write_text('#include "%s.hpp"\nint main() { return 0; }\n' % class_name, encoding='utf-8')
-    (tests / 'CMakeLists.txt').write_text('''cmake_minimum_required(VERSION 3.16)
-project(module_header_check LANGUAGES C CXX ASM)
-if(NOT LIBXR_SOURCE_DIR)
-  message(FATAL_ERROR "Set LIBXR_SOURCE_DIR to an existing LibXR checkout")
-endif()
-add_subdirectory("${LIBXR_SOURCE_DIR}" libxr)
-include("${CMAKE_CURRENT_LIST_DIR}/../CMakeLists.txt")
-add_executable(module_header_check xrobot_compile.cpp)
-target_link_libraries(module_header_check PRIVATE xr)
-''', encoding='utf-8')
-    workflow = folder / '.github/workflows'
-    workflow.mkdir(parents=True)
-    (workflow / 'build.yml').write_text('''name: Native Module compile check
-on: [push, pull_request]
-permissions:
-  contents: read
-jobs:
-  compile:
-    uses: xrobot-org/XRobot/.github/workflows/module-build.yml@dev
-    with:
-      libxr_ref: ${{ vars.LIBXR_CANDIDATE_REF || 'dev' }}
-      tooling_ref: ${{ vars.XROBOT_CANDIDATE_REF || 'dev' }}
-''', encoding='utf-8')
+    # Runtime, integration and hardware validation are module-specific. The module
+    # creator deliberately does not synthesize tests or CI for them.
     return folder
 
 

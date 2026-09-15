@@ -251,24 +251,6 @@ class Packages(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'lock.*missing|missing.*lock'):
             self.resolve(offline=True)
 
-    def test_ci_prepares_exact_pr_head_without_build_frontend(self):
-        from prepare_module_check import prepare
-        self.source('team/B')
-        source = self.source('team/A', [{'id': 'team/B', 'ref': 'same-or-dev'}])
-        (source/'tests').mkdir()
-        (source/'tests/xrobot_compile.cpp').write_text('#include "A.hpp"\nint main() { return 0; }\n')
-        self.git(source, 'add', '.')
-        self.git(source, 'commit', '-m', 'compile fixture')
-        sha = self.git(source, 'rev-parse', 'HEAD')
-        directory = prepare(self.root/'ci-work', 'team/A', str(source), sha,
-                            'refs/heads/topic-work', [str(self.index)])
-        lock = yaml.safe_load((directory/'xrobot.lock').read_text())
-        self.assertEqual(lock['modules']['team/A']['commit'], sha)
-        self.assertEqual(lock['modules']['team/B']['resolved_ref'], 'dev')
-        self.assertEqual((directory/'module_check.cpp').read_text(),
-                         (source/'tests/xrobot_compile.cpp').read_text())
-        self.assertIn('add_subdirectory', (directory/'CMakeLists.txt').read_text())
-        self.assertFalse((directory/'build').exists())
 
     def test_setup_uses_selected_instance_config(self):
         self.source('team/A')

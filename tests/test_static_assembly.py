@@ -68,18 +68,17 @@ class TextContracts(unittest.TestCase):
             append_module_instance('Foo', config, modules_dir=root / 'Modules')
             self.assertEqual(load_config(config)['modules'][0]['id'], 'custom')
 
-    def test_creator_keeps_thin_metadata_and_shared_native_ci(self):
+    def test_creator_keeps_thin_metadata_without_forced_module_tests(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             with self.assertRaisesRegex(ValueError, 'owner/repo'):
                 create_module('Bad', depends=['ShortName'], output_dir=root)
             self.assertFalse((root/'Bad').exists())
             path = create_module('Foo', depends=['team/Bar@2026-09-15'], output_dir=root)
-            self.assertTrue((path/'tests/xrobot_compile.cpp').exists())
-            workflow = (path/'.github/workflows/build.yml').read_text()
-            self.assertIn('workflow', workflow)
-            self.assertNotIn('git tag', workflow)
+            self.assertFalse((path/'tests').exists())
+            self.assertFalse((path/'.github').exists())
             self.assertNotIn('HardwareContainer', (path/'Foo.hpp').read_text())
+
 
     def test_yaml_preserves_cpp_scalar_spelling(self):
         with tempfile.TemporaryDirectory() as temporary:

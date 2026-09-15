@@ -62,5 +62,6 @@ commits before relying on a fresh remote checkout.
 
 The generated `Modules/CMakeLists.txt` lists selected nested source repositories.
 The matching LibXR CMake integration includes that file. No build/test command
-moves behind the XRobot CLI. See CI_MIGRATION.md for exact-PR source preparation
-and the order in which new tool and Module branches become available.
+moves behind the XRobot CLI. Existing Module CI remains Module-owned; meaningful
+behavior and hardware validation must be designed per Module rather than inferred
+by this migration.
