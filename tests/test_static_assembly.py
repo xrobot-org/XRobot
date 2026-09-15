@@ -220,7 +220,13 @@ int main() {
 }
 '''
         self.generate([{'module':'Probe','id':'probe0','args':['xr_view_device_1','pointer','configuration','flags','fixed']}], main)
-        self.compile(extra=['-fsanitize=undefined', '-fno-sanitize-recover=all'])
+        # The project CI image includes GCC's UBSan runtime but not clang's
+        # compiler-rt UBSan archive. Runtime assertions still exercise the same
+        # pointer/cv/base-adjustment contract under clang; add UBSan where the
+        # selected toolchain has the runtime available by default.
+        sanitizer = [] if 'clang' in Path(self.cxx).name else [
+            '-fsanitize=undefined', '-fno-sanitize-recover=all']
+        self.compile(extra=sanitizer)
 
     def test_local_registered_type_and_no_runtime_metadata(self):
         self.module('Accept', 'template<class T> class Accept { public: explicit Accept(T& x) { x.value = 2; } };')
