@@ -4,6 +4,8 @@ import os
 import re
 import subprocess
 from pathlib import Path
+from urllib.parse import urlparse
+from urllib.request import url2pathname
 import yaml
 from xrobot.SourceManager import SourceManager, load_yaml, validate_id
 from xrobot.ModuleParser import manifest_from_text
@@ -21,6 +23,40 @@ def git(path, *args, check=True):
     if check and result.returncode:
         raise ValueError('Git failed in %s: %s\n%s' % (path, ' '.join(args), result.stderr.strip()))
     return result.stdout.strip() if result.returncode == 0 else None
+
+
+def local_locator(value):
+    """Return a filesystem locator, leaving network Git URLs untouched."""
+    if value.startswith('file://'):
+        parsed = urlparse(value)
+        if parsed.netloc not in ('', 'localhost'):
+            raise ValueError('Use a network Git URL for a non-local file host')
+        return url2pathname(parsed.path)
+    if re.match(r'^[A-Za-z][A-Za-z0-9+.-]*://', value) or value.startswith('git@'):
+        return None
+    return value
+
+
+def portable_locator(value, lock_directory):
+    local = local_locator(value)
+    if local is None:
+        return value
+    try:
+        return Path(os.path.relpath(Path(local).resolve(), lock_directory)).as_posix()
+    except ValueError as error:
+        raise ValueError('Local source cannot be expressed relative to this lock; use a portable repository URL') from error
+
+
+def expanded_locator(value, lock_directory):
+    local = local_locator(value)
+    return value if local is None else str((lock_directory / local).resolve())
+
+
+def same_repository(left, right):
+    a, b = local_locator(left), local_locator(right)
+    if a is not None and b is not None:
+        return Path(a).resolve() == Path(b).resolve()
+    return left.rstrip('/') == right.rstrip('/')
 
 
 def parse_modid(value):
@@ -80,7 +116,7 @@ class Resolver:
             if not (folder / '.git').exists():
                 raise ValueError('Refusing to overwrite non-Git directory: %s' % folder)
             actual = git(folder, 'remote', 'get-url', 'origin')
-            if actual.rstrip('/') != repo.rstrip('/'):
+            if not same_repository(actual, repo):
                 raise ValueError('Source mismatch for %s: %s != %s' % (identity, actual, repo))
         elif self.offline:
             raise ValueError('Offline source missing: ' + identity)
@@ -145,7 +181,7 @@ class Resolver:
             if previous['commit'] != sha or previous['context'] != list(logical):
                 raise ValueError('Dependency conflict for %s: %s vs %s (%s)' % (identity, previous['commit'], sha, ' -> '.join(self.stack)))
             return
-        self.resolved[identity] = {'repo': package['repo'], 'source': package['source'], 'requested': req['ref'], 'resolved_ref': name, 'ref_kind': kind, 'context': list(logical), 'commit': sha, 'directory': identity}
+        self.resolved[identity] = {'repo': package['repo'], 'source': package['source'], 'requested': req['ref'], 'resolved_ref': name, 'ref_kind': kind, 'context': list(logical), 'commit': sha}
         self.stack.append(identity)
         try:
             header = identity.rsplit('/', 1)[-1] + '.hpp'
@@ -197,7 +233,7 @@ class Resolver:
             raise
 
 
-def validate_locked_graph(resolver, roots):
+def validate_locked_graph(resolver, roots, root_context=None):
     """Validate lock closure from the pinned headers, without resolving moving refs."""
     records = resolver.resolved
     visited, active = set(), []
@@ -247,7 +283,8 @@ def validate_locked_graph(resolver, roots):
         visited.add(identity)
 
     for root in roots:
-        visit(root)
+        parent = context(root["context_ref"]) if root.get("context_ref") else root_context
+        visit(root, parent)
     if visited != set(records):
         raise ValueError('Project lock contains sources outside the declared dependency closure')
 
@@ -256,21 +293,33 @@ def write_cmake(modules_dir, records):
     lines = ['# Generated source list; build with the BSP native CMake entry.', '']
     for identity, entry in sorted(records.items()):
         validate_id(identity)
-        folder = Path(modules_dir) / entry['directory']
+        folder = Path(modules_dir) / identity
         if (folder / 'CMakeLists.txt').exists():
-            lines.append('include("${CMAKE_CURRENT_LIST_DIR}/%s/CMakeLists.txt")' % entry['directory'])
+            lines.append('include("${CMAKE_CURRENT_LIST_DIR}/%s/CMakeLists.txt")' % identity)
         else:
-            lines.append('target_include_directories(xr PUBLIC "${CMAKE_CURRENT_LIST_DIR}/%s")' % entry['directory'])
+            lines.append('target_include_directories(xr PUBLIC "${CMAKE_CURRENT_LIST_DIR}/%s")' % identity)
     atomic_write(Path(modules_dir) / 'CMakeLists.txt', '\n'.join(lines) + '\n')
 
 
-def sync_modules_by_config(config_path, sources_path, modules_dir, lock_path=None, update=False, frozen=False, offline=False):
+def sync_modules_by_config(config_path, sources_path, modules_dir, lock_path=None,
+                           update=False, frozen=False, offline=False, context_ref=None):
     modules_dir = Path(modules_dir)
     lock_path = Path(lock_path) if lock_path else modules_dir.resolve().parent / 'xrobot.lock'
     data = load_yaml(config_path)
     if not isinstance(data.get('modules', []), list):
         raise ValueError('modules.yaml requires a list of direct package requests')
     roots = [request(value) for value in data.get('modules', [])]
+    # Relative roots belong to the ordinary BSP Git checkout. Detached CI checkouts
+    # supply their logical branch/tag explicitly; never infer one from a SHA/tag list.
+    needs_parent = any(req['ref'] in ('same', 'same-or-dev') and not req.get('context_ref')
+                       for req in roots)
+    root_context = None
+    if needs_parent:
+        selected = context_ref or git(modules_dir.resolve().parent, 'symbolic-ref',
+                                      '--quiet', 'HEAD', check=False)
+        if not selected:
+            raise ValueError('Relative root dependencies require a BSP branch or --context-ref refs/heads/... or refs/tags/...')
+        root_context = context(selected)
     if update and (frozen or offline):
         raise ValueError('--update cannot be combined with --frozen or --offline')
     if frozen or offline or (lock_path.exists() and not update):
@@ -279,30 +328,42 @@ def sync_modules_by_config(config_path, sources_path, modules_dir, lock_path=Non
         lock = load_yaml(lock_path)
         if lock.get('version') != 1 or lock.get('requests') != roots:
             raise ValueError('Module requests differ from xrobot.lock; run with --update')
+        if lock.get('root_context') != (list(root_context) if root_context else None):
+            raise ValueError('BSP root context differs from xrobot.lock; run with --update')
         resolver = Resolver(modules_dir, offline=offline)
         entries = lock.get('modules')
         if not isinstance(entries, dict):
             raise ValueError('Invalid project lock module map')
         for identity, entry in entries.items():
             validate_id(identity)
-            if entry.get('directory') != identity or not re.fullmatch(r'[0-9a-f]{40}', str(entry.get('commit', ''))):
-                raise ValueError('Invalid locked source path/commit for ' + identity)
-            folder = resolver.prepare(identity, entry['repo'])
+            if not isinstance(entry, dict) or 'directory' in entry:
+                raise ValueError('Legacy lock directory field; regenerate xrobot.lock with --update: ' + identity)
+            if not re.fullmatch(r'[0-9a-f]{40}', str(entry.get('commit', ''))):
+                raise ValueError('Invalid locked source commit for ' + identity)
+            folder = resolver.prepare(identity, expanded_locator(entry['repo'], lock_path.resolve().parent))
             if git(folder, 'cat-file', '-t', entry['commit'], check=False) != 'commit':
                 if offline:
                     raise ValueError('Offline commit missing for ' + identity)
                 git(folder, 'fetch', 'origin', entry['commit'])
             resolver.resolved[identity] = entry
-        validate_locked_graph(resolver, roots)
+        validate_locked_graph(resolver, roots, root_context)
         resolver.materialize()
         write_cmake(modules_dir, entries)
         return lock
     manager = SourceManager(sources_path)
     resolver = Resolver(modules_dir, manager)
     for root in roots:
-        resolver.visit(root)
+        parent = context(root["context_ref"]) if root.get("context_ref") else root_context
+        resolver.visit(root, parent)
+    records = {}
+    for identity, entry in sorted(resolver.resolved.items()):
+        records[identity] = dict(entry)
+        for field in ('repo', 'source'):
+            records[identity][field] = portable_locator(entry[field], lock_path.resolve().parent)
     resolver.materialize()
-    lock = {'version': 1, 'requests': roots, 'modules': dict(sorted(resolver.resolved.items()))}
+    lock = {'version': 1, 'requests': roots, 'modules': records}
+    if root_context:
+        lock['root_context'] = list(root_context)
     write_cmake(modules_dir, lock['modules'])
     atomic_write(lock_path, yaml.safe_dump(lock, sort_keys=False, allow_unicode=True))
     return lock
@@ -314,13 +375,14 @@ def main():
     parser.add_argument('-s', '--sources', default=str(DEFAULT_SOURCES))
     parser.add_argument('-d', '--directory', default='Modules')
     parser.add_argument('--lock')
+    parser.add_argument('--context-ref', help='Logical BSP branch/tag for relative roots in detached CI checkouts')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--update', action='store_true')
     group.add_argument('--frozen', action='store_true')
     parser.add_argument('--offline', action='store_true')
     args = parser.parse_args()
     try:
-        lock = sync_modules_by_config(args.config, args.sources, args.directory, args.lock, args.update, args.frozen, args.offline)
+        lock = sync_modules_by_config(args.config, args.sources, args.directory, args.lock, args.update, args.frozen, args.offline, args.context_ref)
         print('Resolved %d exact Module commits' % len(lock['modules']))
     except (OSError, ValueError, yaml.YAMLError, subprocess.TimeoutExpired) as error:
         parser.exit(1, str(error) + '\n')

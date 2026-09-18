@@ -91,15 +91,21 @@ class ModuleSource:
                     elif self.namespace:
                         identity = str(self.namespace) + '/' + extract_name_from_url(repo)
                 validate_id(identity)
-                status = record.get('status', 'community')
-                if status not in ('community', 'verified', 'official'):
-                    raise ValueError('Unknown package status: %s' % status)
-                if status in ('verified', 'official') and not (record.get('tested_ref') and record.get('tested_libxr')):
-                    raise ValueError('%s: validation label needs tested_ref and tested_libxr' % identity)
-                for field in ('tested_ref', 'tested_libxr', 'tested_xrobot'):
-                    if field in record:
-                        record[field] = str(record[field])
-                record.update(id=identity, type=package_type, repo=_relative(self.url, repo), source=self.url, status=status)
+                if package_type == 'bsp':
+                    # The Git repository already identifies the BSP. Do not make
+                    # platform, MCU, build or validation labels a use requirement.
+                    record = {'id': identity, 'type': 'bsp',
+                              'repo': _relative(self.url, repo), 'source': self.url}
+                else:
+                    status = record.get('status', 'community')
+                    if status not in ('community', 'verified', 'official'):
+                        raise ValueError('Unknown package status: %s' % status)
+                    if status in ('verified', 'official') and not (record.get('tested_ref') and record.get('tested_libxr')):
+                        raise ValueError('%s: validation label needs tested_ref and tested_libxr' % identity)
+                    for field in ('tested_ref', 'tested_libxr', 'tested_xrobot'):
+                        if field in record:
+                            record[field] = str(record[field])
+                    record.update(id=identity, type=package_type, repo=_relative(self.url, repo), source=self.url, status=status)
                 if identity.casefold() in {i.casefold() for i in self.entries}:
                     raise ValueError('Duplicate catalog identity: %s' % identity)
                 self.entries[identity] = record

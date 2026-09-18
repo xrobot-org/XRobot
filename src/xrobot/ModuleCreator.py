@@ -3,6 +3,7 @@ import argparse
 import re
 from pathlib import Path
 import yaml
+from xrobot.ModuleWorkflow import module_workflow
 
 
 
@@ -45,21 +46,28 @@ target_sources(xr PRIVATE ${MODULE_SOURCES})
 
 The public constructor and template declarations in `%s.hpp` are the interface.
 Use `xrobot_mod_parser --path .` to display them and `xrobot_add_mod` to add an
-instance. Write ordered C++ arguments in the application configuration; defaults
-remain in C++.
+instance. The configuration contains ordered parameter names and explicit source
+defaults. Fill required object bindings before generating a production application.
 
 `void OnMonitor()` is optional. Construction and monitoring follow application
 configuration order. The BSP owns external object lifetimes and native builds.
 
 ## Validation
 
-Keep the Module's existing CI and add behavior or hardware tests only where they
-are meaningful for that Module. Static assembly does not synthesize generic
-runtime or hardware validation. Dependencies remain in the header manifest;
-CMake flags/toolchains stay in CMake.
+The generated workflow compiles a real constructor call and the Module sources.
+Its `void*` dependency placeholders are compile-only: the probe is never linked
+as an application or executed. Required template arguments must be supplied in
+`XR_TEMPLATE_ARGS` using valid C++ values for this Module.
+
+Existing Module-specific behavior and hardware tests remain separate. The workflow
+does not create release tags. Core branch builds select the same branch when
+available, then dev; tag builds require the exact tag. `XROBOT_REF` and `LIBXR_REF`
+repository variables can explicitly select qualified core refs or full commits.
+Dependencies remain in the header manifest; native CMake owns the build.
 ''' % (class_name, description, class_name), encoding='utf-8')
-    # Runtime, integration and hardware validation are module-specific. The module
-    # creator deliberately does not synthesize tests or CI for them.
+    workflow = folder / '.github/workflows/build.yml'
+    workflow.parent.mkdir(parents=True)
+    workflow.write_bytes(module_workflow().encode('utf-8'))
     return folder
 
 

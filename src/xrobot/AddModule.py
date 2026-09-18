@@ -6,6 +6,7 @@ import yaml
 from xrobot.ModuleParser import discover_modules, select_module, source_interface
 from xrobot.GenerateMain import load_config, validate_config, atomic_write
 from xrobot.SourceManager import load_yaml
+from xrobot.ConstructorModel import initial_arguments, template_bindings
 
 DEFAULT_REPO_CONFIG = Path('Modules/modules.yaml')
 DEFAULT_INSTANCE_CONFIG = Path('User/xrobot.yaml')
@@ -17,7 +18,7 @@ def is_repo_id(value):
 
 
 def get_next_instance_id(modules, base_name):
-    prefix = base_name.lower()
+    prefix = base_name.lower() + '_'
     names = {entry.get('id', '') for entry in modules}
     number = 0
     while prefix + str(number) in names:
@@ -42,10 +43,26 @@ def append_module_instance(module_name, config_path=DEFAULT_INSTANCE_CONFIG, ins
     identity = instance_id or get_next_instance_id(config['modules'], module['name'])
     if not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]*', identity):
         raise ValueError('Invalid instance identifier: ' + identity)
-    config['modules'].append({'module': module_name, 'id': identity})
+    entry = {'module': module_name, 'id': identity}
+    template_values = [p['default'] for p in interface['template_parameters']]
+    if template_values:
+        entry['template_args'] = template_values
+    # Required template arguments stay visibly unfilled until the user selects them.
+    if all(v is not None for v in template_values):
+        templates = template_bindings(interface, template_values)
+        cpp_class = module['name'] + ('<' + ', '.join(template_values) + '>' if template_values else '')
+    else:
+        templates, cpp_class = {}, module['name']
+    diagnostics = []
+    arguments = initial_arguments(interface, cpp_class, templates, diagnostics)
+    for message in diagnostics:
+        print('Unfilled default: ' + message)
+    if arguments:
+        entry['args'] = arguments
+    config['modules'].append(entry)
     validate_config(config)
     atomic_write(config_path, yaml.safe_dump(config, sort_keys=False, allow_unicode=True))
-    print('Added %s. Set ordered args in %s; omitted defaults remain in C++.' % (identity, config_path))
+    print('Added %s. Review the named values and fill null entries in %s.' % (identity, config_path))
     return identity
 
 

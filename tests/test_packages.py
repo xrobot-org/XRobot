@@ -144,6 +144,91 @@ class Packages(unittest.TestCase):
         self.configure([{'id':'team/A','ref':sha,'context_ref':'refs/heads/pr-feature'}])
         self.assertEqual(self.resolve()['modules']['team/B']['resolved_ref'],'dev')
 
+    def test_relative_roots_use_the_bsp_branch_and_preserve_it_in_lock(self):
+        a = self.source('team/A')
+        self.git(a, 'branch', 'feature/board')
+        self.git(self.project, 'init', '-b', 'feature/board')
+        self.configure(['team/A@same-or-dev'])
+        first = self.resolve()
+        self.assertEqual(first['modules']['team/A']['resolved_ref'], 'feature/board')
+        self.assertEqual(first['root_context'], ['branch', 'feature/board'])
+        self.assertEqual(self.resolve(offline=True), first)
+        self.git(self.project, 'symbolic-ref', 'HEAD', 'refs/heads/other')
+        with self.assertRaisesRegex(ValueError, 'root context differs'):
+            self.resolve(frozen=True)
+        self.assertEqual(self.resolve(update=True)['modules']['team/A']['resolved_ref'], 'dev')
+
+    def test_relative_root_tag_is_exact_and_never_falls_back(self):
+        a = self.source('team/A')
+        self.configure(['team/A@same-or-dev'])
+        with self.assertRaisesRegex(ValueError, 'same tag is missing'):
+            self.resolve(context_ref='refs/tags/release-check')
+        self.git(a, 'tag', 'release-check')
+        first = self.resolve(context_ref='refs/tags/release-check')
+        self.assertEqual(first['modules']['team/A']['ref_kind'], 'tag')
+        self.assertEqual(self.resolve(context_ref='refs/tags/release-check', offline=True), first)
+
+    def test_relative_root_without_git_requires_explicit_context(self):
+        self.source('team/A')
+        self.configure(['team/A@same-or-dev'])
+        with self.assertRaisesRegex(ValueError, 'Relative root dependencies require'):
+            self.resolve()
+        first = self.resolve(context_ref='refs/heads/review')
+        self.assertEqual(first['modules']['team/A']['resolved_ref'], 'dev')
+        self.assertEqual(first['root_context'], ['branch', 'review'])
+
+    def test_per_root_context_is_supported_without_a_bsp_identity_file(self):
+        self.source('team/A')
+        self.configure([{'id': 'team/A', 'ref': 'same', 'context_ref': 'refs/heads/dev'}])
+        first = self.resolve()
+        self.assertEqual(first['modules']['team/A']['resolved_ref'], 'dev')
+        self.assertNotIn('root_context', first)
+        self.assertEqual(self.resolve(offline=True), first)
+
+    def test_generated_ci_preparation_keeps_pr_head_and_local_index_priority(self):
+        from unittest.mock import patch
+        from xrobot.ModuleWorkflow import _PREPARE_SOURCES
+        b = self.source('team/B')
+        a = self.source('team/A', ['team/B@same-or-dev'])
+        selected = self.git(a, 'rev-parse', 'HEAD')
+        local = self.modules/'team/A'
+        local.parent.mkdir(parents=True)
+        self.git(self.project, 'clone', str(a), str(local))
+        self.git(local, 'checkout', '--detach', selected)
+        self.commit(a, ['team/B@same-or-dev'], 'new remote head')
+        class CatalogResponse:
+            def __init__(self, data):
+                self.text = yaml.safe_dump(data)
+            def raise_for_status(self):
+                pass
+        def catalog(url, **kwargs):
+            if url == 'https://xrobot.work/xrobot-modules/index.yaml':
+                return CatalogResponse({'packages': [
+                    {'id': 'team/A', 'type': 'module', 'repo': (self.root/'wrong-upstream').as_uri()},
+                    {'id': 'team/B', 'type': 'module', 'repo': b.as_uri()},
+                ]})
+            if url == 'https://qdu-robomaster.github.io/qdu-future-modules/index.yaml':
+                return CatalogResponse({'modules': []})
+            raise AssertionError('Unexpected catalog request: ' + url)
+        script = '\n'.join(_PREPARE_SOURCES.splitlines()[1:-1])
+        previous = Path.cwd()
+        try:
+            os.chdir(self.project)
+            with patch.dict(os.environ, XR_MODULE_ID='team/A', XR_REF_KIND='branch',
+                            XR_REF_NAME='feature/ci', XR_TEMPLATE_ARGS='[]'):
+                with patch('xrobot.SourceManager.requests.get', side_effect=catalog):
+                    exec(compile(script, '<generated CI source preparation>', 'exec'), {'__name__': '__ci_test__'})
+        finally:
+            os.chdir(previous)
+        lock = yaml.safe_load((self.project/'xrobot.lock').read_text(encoding='utf-8'))
+        self.assertEqual(lock['modules']['team/A']['commit'], selected)
+        self.assertEqual(lock['modules']['team/A']['context'], ['branch', 'feature/ci'])
+        self.assertEqual(lock['modules']['team/B']['resolved_ref'], 'dev')
+        self.assertEqual(self.git(local, 'rev-parse', 'HEAD'), selected)
+        probe = (self.project/'module_check.cpp').read_text()
+        self.assertIn('void XRobotCompileCheck()', probe)
+        self.assertIn('static A module_0;', probe)
+
     def test_short_names_are_unambiguous_only(self):
         self.source('first/A')
         self.source('second/A')
@@ -214,7 +299,22 @@ class Packages(unittest.TestCase):
         self.write(self.index,{'packages':self.entries})
         self.write(self.sources,{'sources':[{'url':'../../index.yaml'}]})
         self.configure(['team/A'])
-        self.assertEqual(self.resolve()['modules']['team/A']['repo'],str(a.resolve()))
+        first = self.resolve()
+        row = first['modules']['team/A']
+        self.assertEqual(row['repo'], '../upstream/team/A')
+        self.assertEqual(row['source'], '../index.yaml')
+        self.assertNotIn(str(self.root), (self.project/'xrobot.lock').read_text())
+        self.assertEqual(self.resolve(offline=True), first)
+
+    def test_local_file_uri_lock_reopens_without_machine_paths(self):
+        a = self.source('team/A')
+        self.entries[0]['repo'] = a.as_uri()
+        self.write(self.index, {'packages': self.entries})
+        self.configure(['team/A@dev'])
+        first = self.resolve()
+        self.assertEqual(first['modules']['team/A']['repo'], '../upstream/team/A')
+        self.assertEqual(self.resolve(offline=True), first)
+        self.assertNotIn('file://', (self.project/'xrobot.lock').read_text())
 
     def test_catalog_verification_is_version_bound(self):
         self.source('team/A')
@@ -262,6 +362,26 @@ class Packages(unittest.TestCase):
         self.assertTrue(setup(self.project,user/'alternative.yaml'))
         self.assertIn('A a0;', (user/'xrobot_main.hpp').read_text())
         self.assertFalse((self.project/'build').exists())
+
+    def test_lock_directory_is_derived_not_persisted(self):
+        self.source('team/A')
+        self.configure(['team/A'])
+        lock = self.resolve()
+        self.assertNotIn('directory', lock['modules']['team/A'])
+        self.assertEqual(self.resolve(frozen=True), lock)
+        self.assertIn('team/A', (self.project/'Modules/CMakeLists.txt').read_text())
+        lock['modules']['team/A']['directory'] = 'team/A'
+        self.write(self.project/'xrobot.lock', lock)
+        with self.assertRaisesRegex(ValueError, 'Legacy lock directory'):
+            self.resolve(frozen=True)
+
+    def test_bsp_catalog_accepts_only_repository_url(self):
+        self.write(self.index, {'bsps': ['https://github.com/team/board.git']})
+        manager = SourceManager(self.sources)
+        record = manager.packages['team/board']
+        self.assertEqual(record['type'], 'bsp')
+        self.assertEqual(set(record), {'id', 'type', 'repo', 'source'})
+        self.assertEqual(manager.resolve_id('board', 'bsp'), 'team/board')
 
 
 if __name__ == '__main__':

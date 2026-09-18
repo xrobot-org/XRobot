@@ -9,7 +9,7 @@ MODULES_YAML_TEMPLATE = 'modules:\n  - xrobot-org/BlinkLED\n'
 SOURCES_YAML_TEMPLATE = 'sources:\n  - url: https://xrobot.work/xrobot-modules/index.yaml\n    priority: 0\n'
 
 
-def setup(project=Path('.'), config=None, update=False, frozen=False, offline=False, register_sources=None):
+def setup(project=Path('.'), config=None, update=False, frozen=False, offline=False, register_sources=None, context_ref=None):
     project = Path(project)
     modules = project / 'Modules'
     created = []
@@ -20,7 +20,7 @@ def setup(project=Path('.'), config=None, update=False, frozen=False, offline=Fa
     if created:
         print('Created %s. Select sources and instances before running setup again.' % ', '.join(map(str, created)))
         return False
-    sync_modules_by_config(modules / 'modules.yaml', modules / 'sources.yaml', modules, project / 'xrobot.lock', update, frozen, offline)
+    sync_modules_by_config(modules / 'modules.yaml', modules / 'sources.yaml', modules, project / 'xrobot.lock', update, frozen, offline, context_ref)
     config_path = Path(config) if config else project / 'User/xrobot.yaml'
     generate(config_path, modules, project / 'User/xrobot_main.hpp', register_sources, project / 'xrobot.lock')
     print('Generated User/xrobot_main.hpp. Build/test with your BSP CMake or native tooling.')
@@ -36,9 +36,10 @@ def main():
     group.add_argument('--update', action='store_true')
     group.add_argument('--frozen', action='store_true')
     parser.add_argument('--offline', action='store_true')
+    parser.add_argument('--context-ref', help='Logical BSP branch/tag for relative roots in detached CI checkouts')
     args = parser.parse_args()
     try:
-        setup(args.directory, args.config, args.update, args.frozen, args.offline, args.register_source)
+        setup(args.directory, args.config, args.update, args.frozen, args.offline, args.register_source, args.context_ref)
     except (OSError, ValueError, yaml.YAMLError) as error:
         parser.exit(1, str(error) + '\n')
 

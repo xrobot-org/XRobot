@@ -9,8 +9,9 @@ final responsibility for architecture, maintainer appointment and disputes.
 Core maintainers own cross-component contracts and releases. Subsystem
 maintainers review their backend or area; package maintainers own individual
 Modules/BSPs. Existing contributors are not automatically appointed to a role.
-Until further maintainers are explicitly appointed, CODEOWNERS falls back to
-the Project Owner rather than inventing a team or reviewer.
+Review responsibility remains with the Project Owner until further maintainers
+are explicitly appointed. Introducing CODEOWNERS is deferred; this change does
+not invent a reviewer team or modify repository permissions.
 
 Normal core and official Module work targets `dev`. Stable promotion targets
 `master` after the relevant integration acceptance. Third-party packages may use
@@ -27,5 +28,4 @@ Detailed evidence stays in PRs, tests and release notes, not an expanding regist
 database. The current process assumes no hardware farm.
 
 Repository transfer, branch protection, GitHub permissions, public releases and
-package publication are separate administrative operations. This policy and a
-CODEOWNERS file do not by themselves enable or prove any branch protection rule.
+package publication are separate administrative operations. These documents do not by themselves enable or prove any branch protection rule.

@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Optional
 import yaml
 from xrobot.CppSource import extract_interface
+from xrobot.ConstructorModel import enrich_interface
 
 MANIFEST_PATTERN = re.compile(r'/\*\s*=== MODULE MANIFEST(?: V\d+)? ===\s*(.*?)\s*=== END MANIFEST ===\s*\*/', re.S)
 INTERFACE_FIELDS = {'constructor_args', 'template_args', 'required_hardware'}
@@ -71,7 +72,8 @@ def source_interface(path: Path) -> dict:
     if path.is_dir():
         path = path / (path.name + '.hpp')
     try:
-        return extract_interface(path.read_text(encoding='utf-8-sig'), path.stem)
+        source = path.read_text(encoding='utf-8-sig')
+        return enrich_interface(source, extract_interface(source, path.stem))
     except ValueError as error:
         raise ValueError('%s: %s' % (path, error)) from error
 
@@ -94,7 +96,7 @@ def discover_modules(directory: Path, lock_path=None) -> dict:
     if lock_path.exists():
         lock = yaml.safe_load(lock_path.read_text(encoding='utf-8')) or {}
         for identity, record in lock.get('modules', {}).items():
-            relative = record.get('directory', identity)
+            relative = identity
             folder = (directory / relative).resolve()
             if directory.resolve() not in folder.parents:
                 raise ValueError('Module path leaves directory: %s' % relative)
