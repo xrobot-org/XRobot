@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 import yaml
 from xrobot.CppSource import tokens, code_tokens, close_token, split_arguments, bind_identifiers
+from xrobot.SourceSyntax import registrations_from_text
 from xrobot.ModuleParser import discover_modules, select_module, source_interface
 from xrobot.ConstructorModel import (scalar_text, initial_arguments, template_bindings,
                                      construct_arguments)
@@ -201,28 +202,21 @@ def read_registrations(paths):
         path = Path(path)
         text = path.read_text(encoding='utf-8-sig')
         items = code_tokens(text)
-        for i, token in enumerate(items):
-            if token.text != 'XR_REGISTER' or i+1 >= len(items) or items[i+1].text != '(':
-                continue
-            end = close_token(items, i+1)
-            parts = split_arguments(text[items[i+1].end:items[end].start])
-            if len(parts) < 2 or not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]*', parts[0]):
-                raise ValueError('%s: XR_REGISTER requires an existing name and explicit object types' % path)
-            name = parts[0]
+        positions = {token.start: i for i, token in enumerate(items)
+                     if token.text == 'XR_REGISTER'}
+        for record in registrations_from_text(text, str(path)):
+            name = record['name']
             if name in names:
                 raise ValueError('Duplicate XR_REGISTER name: ' + name)
-            if name.startswith('xr_'):
-                raise ValueError('Registration collides with generated identifier prefix: ' + name)
-            if len(set(parts[1:])) != len(parts[1:]):
-                raise ValueError('Duplicate view in XR_REGISTER: ' + name)
-            # Typedefs are deliberately left to C++; this rejects literal T& spellings only.
-            if any(p.rstrip().endswith('&') for p in parts[1:]):
-                raise ValueError('Register object types, not reference types: ' + name)
             names.add(name)
-            local_names = caller_defined_names(items, i)
-            records.append({'name': name, 'types': parts[1:], 'source': str(path),
-                            'line': text.count('\n', 0, token.start)+1,
-                            'caller_views': [typ for typ in parts[1:]
+            token_index = positions.get(record['char_offset'])
+            if token_index is None:
+                raise ValueError('%s:%d: XR_REGISTER token position is inconsistent' %
+                                 (path, record['line']))
+            local_names = caller_defined_names(items, token_index)
+            records.append({'name': name, 'types': record['types'],
+                            'source': str(path), 'line': record['line'],
+                            'caller_views': [typ for typ in record['types']
                                              if caller_scoped_view(typ, local_names)]})
     return records
 

@@ -131,6 +131,10 @@ def registrations_from_text(source: str, source_name: Optional[str] = None) -> L
                 "source": source_name or "<source>",
                 "line": invocation.line,
                 "offset": invocation.span.start,
+                "char_offset": len(
+                    source.encode("utf-8", errors="surrogateescape")[: invocation.span.start]
+                    .decode("utf-8", errors="surrogateescape")
+                ),
             }
         )
     return records

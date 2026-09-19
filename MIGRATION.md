@@ -87,3 +87,13 @@ value configuration still uses real source defaults. It is compiled as an OBJECT
 target, never executed, linked as a runnable fake application or flashed. Existing
 Module-owned tests continue to run through native CMake/CTest. New workflows do
 not create release tags.
+
+
+## Source parsing migration
+
+C++ interface discovery and `XR_REGISTER(...)` invocation scanning move to
+`xr-syntax`. During migration the historical `CppSource` implementation stays
+in the repository as a golden reference for constructor-model lexical helpers.
+The migration branch pins the exact `xr-syntax` commit used by CI; switch that
+pin only together with parity results. Public Module headers and the existing
+static-assembly suite must remain green before removing a legacy source path.

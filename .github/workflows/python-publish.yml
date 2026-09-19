@@ -34,6 +34,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+      with:
+        repository: xrobot-org/xr-source
+        ref: a98f0163af456498c005d912b20d3017f54d7361
+        path: xr-source
+
+    - name: Install xr-syntax candidate
+      run: pip install ./xr-source
+
 
     - name: Install Python Package
       run: |
@@ -61,11 +70,21 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Checkout xr-syntax candidate
+        uses: actions/checkout@v4
+        with:
+          repository: xrobot-org/xr-source
+          ref: a98f0163af456498c005d912b20d3017f54d7361
+          path: xr-source
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
+
+      - name: Install xr-syntax candidate
+        run: python -m pip install ./xr-source
 
       - name: Install dependencies (Linux/macOS)
         if: runner.os != 'Windows'

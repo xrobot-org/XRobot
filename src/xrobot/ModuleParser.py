@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 import yaml
-from xrobot.CppSource import extract_interface
+from xrobot.SourceSyntax import extract_interface
 from xrobot.ConstructorModel import enrich_interface
 
 MANIFEST_PATTERN = re.compile(r'/\*\s*=== MODULE MANIFEST(?: V\d+)? ===\s*(.*?)\s*=== END MANIFEST ===\s*\*/', re.S)
