@@ -20,9 +20,10 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install .
-      - name: Prepare legacy parser
+      - name: Prepare legacy consumers
         run: |
           git show 15bff04ec4a21c2fdb31d4411e2802851e3de4c9:src/xrobot/ModuleParser.py > /tmp/legacy_module_parser.py
+          git show 15bff04ec4a21c2fdb31d4411e2802851e3de4c9:src/xrobot/GenerateMain.py > /tmp/legacy_generate_main.py
       - name: Clone official modules
         run: |
           git clone --depth=1 https://github.com/xrobot-org/xrobot-modules.git /tmp/xrobot-index
@@ -38,24 +39,32 @@ jobs:
             name="$(basename "${url%.git}")"
             git clone --depth=1 "$url" "/tmp/xrobot-modules/$name"
           done </tmp/module-urls.txt
-      - name: Compare legacy and xr-syntax-backed parsers
+      - name: Compare legacy and xr-syntax-backed consumers
         run: |
           python - <<'PY'
           import importlib.util
           import json
           from pathlib import Path
 
+          from xrobot.GenerateMain import parse_manifest_from_header as new_generate_parse
           from xrobot.ModuleParser import (
               parse_constructor_args as new_parse_args,
-              parse_manifest_from_header as new_parse,
+              parse_manifest_from_header as new_module_parse,
           )
 
-          spec = importlib.util.spec_from_file_location(
+          def load_module(name, path):
+              spec = importlib.util.spec_from_file_location(name, path)
+              module = importlib.util.module_from_spec(spec)
+              assert spec.loader is not None
+              spec.loader.exec_module(module)
+              return module
+
+          legacy_module = load_module(
               "legacy_module_parser", "/tmp/legacy_module_parser.py"
           )
-          legacy = importlib.util.module_from_spec(spec)
-          assert spec.loader is not None
-          spec.loader.exec_module(legacy)
+          legacy_generate = load_module(
+              "legacy_generate_main", "/tmp/legacy_generate_main.py"
+          )
 
           rows = []
           mismatches = []
@@ -69,33 +78,52 @@ jobs:
                   rows.append(row)
                   continue
 
-              old = legacy.parse_manifest_from_header(header)
-              new = new_parse(header)
-              old_data = None if old is None else old.as_dict()
-              new_data = None if new is None else new.as_dict()
-              row["old"] = old_data
-              row["new"] = new_data
-
-              if old_data != new_data:
-                  row["status"] = "manifest-mismatch"
+              old_manifest = legacy_module.parse_manifest_from_header(header)
+              new_manifest = new_module_parse(header)
+              old_data = None if old_manifest is None else old_manifest.as_dict()
+              new_data = None if new_manifest is None else new_manifest.as_dict()
+              row["module_parser_equal"] = old_data == new_data
+              if not row["module_parser_equal"]:
+                  row["status"] = "module-parser-mismatch"
                   mismatches.append(row)
                   rows.append(row)
                   continue
 
-              if old is not None and new is not None:
-                  old_ctor = list(legacy.parse_constructor_args(old.constructor_args).items())
-                  new_ctor = list(new_parse_args(new.constructor_args).items())
-                  old_tpl = list(legacy.parse_constructor_args(old.template_args).items())
-                  new_tpl = list(new_parse_args(new.template_args).items())
-                  row["old_constructor_args"] = old_ctor
-                  row["new_constructor_args"] = new_ctor
-                  row["old_template_args"] = old_tpl
-                  row["new_template_args"] = new_tpl
-                  if old_ctor != new_ctor or old_tpl != new_tpl:
-                      row["status"] = "argument-mismatch"
+              if old_manifest is not None and new_manifest is not None:
+                  old_ctor = list(
+                      legacy_module.parse_constructor_args(
+                          old_manifest.constructor_args
+                      ).items()
+                  )
+                  new_ctor = list(
+                      new_parse_args(new_manifest.constructor_args).items()
+                  )
+                  old_tpl = list(
+                      legacy_module.parse_constructor_args(
+                          old_manifest.template_args
+                      ).items()
+                  )
+                  new_tpl = list(
+                      new_parse_args(new_manifest.template_args).items()
+                  )
+                  row["module_args_equal"] = old_ctor == new_ctor
+                  row["template_args_equal"] = old_tpl == new_tpl
+                  if not row["module_args_equal"] or not row["template_args_equal"]:
+                      row["status"] = "module-args-mismatch"
                       mismatches.append(row)
                       rows.append(row)
                       continue
+
+              old_generate = legacy_generate.parse_manifest_from_header(header)
+              new_generate = new_generate_parse(header)
+              row["generate_main_equal"] = old_generate == new_generate
+              if not row["generate_main_equal"]:
+                  row["status"] = "generate-main-mismatch"
+                  row["old_generate"] = old_generate
+                  row["new_generate"] = new_generate
+                  mismatches.append(row)
+                  rows.append(row)
+                  continue
 
               row["status"] = "match"
               rows.append(row)
