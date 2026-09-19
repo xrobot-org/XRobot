@@ -52,3 +52,39 @@ class Demo {};
 def test_generate_main_returns_empty_dict_without_manifest(tmp_path: Path) -> None:
     header = _write(tmp_path, "class Demo {};\n")
     assert parse_manifest_from_header(header) == {}
+
+
+def test_generated_main_is_parser_backed_without_changing_layout() -> None:
+    from xrobot.GenerateMain import generate_xrobot_main_code
+
+    config = {
+        "global_settings": {"monitor_sleep_ms": 250},
+        "modules": [
+            {
+                "id": "BlinkLED_0",
+                "name": "BlinkLED",
+                "constructor_args": {"blink_cycle": 500},
+            }
+        ],
+    }
+    generated = generate_xrobot_main_code("hw", ["BlinkLED"], config)
+    assert generated == (
+        '#include "app_framework.hpp"\n'
+        '#include "libxr.hpp"\n'
+        '\n'
+        '// Module headers\n'
+        '#include "BlinkLED.hpp"\n'
+        '\n'
+        'static void XRobotMain(LibXR::HardwareContainer &hw) {\n'
+        '  using namespace LibXR;\n'
+        '  ApplicationManager appmgr;\n'
+        '\n'
+        '  // Auto-generated module instantiations\n'
+        '  static BlinkLED BlinkLED_0(hw, appmgr, 500);\n'
+        '\n'
+        '  while (true) {\n'
+        '    appmgr.MonitorAll();\n'
+        '    Thread::Sleep(250);\n'
+        '  }\n'
+        '}'
+    )

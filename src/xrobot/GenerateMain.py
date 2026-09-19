@@ -22,6 +22,7 @@ from typing import Union, Dict, List, Optional
 from yaml.representer import SafeRepresenter
 
 from xrobot.ModuleParser import parse_manifest_from_header as _parse_module_manifest
+from xr_syntax.cpp import CppFileBuilder
 
 yaml.add_representer(OrderedDict, SafeRepresenter.represent_dict)
 
@@ -389,15 +390,6 @@ def generate_xrobot_main_code(hw_var: str, modules: List[str], config: Dict) -> 
     sleep_ms = global_settings.get("monitor_sleep_ms", 1000)
     constexpr_namespace = _get_constexpr_namespace(config)
 
-    headers = [
-        '#include "app_framework.hpp"',
-        '#include "libxr.hpp"',
-        "",
-        "// Module headers",
-    ] + [f'#include "{mod}.hpp"' for mod in modules]
-    if config.get("constexprs"):
-        headers.append('#include "xrobot_constexpr.hpp"')
-
     body = [
         f"static void XRobotMain(LibXR::HardwareContainer &{hw_var}) {{",
         "  using namespace LibXR;",
@@ -463,7 +455,20 @@ def generate_xrobot_main_code(hw_var: str, modules: List[str], config: Dict) -> 
         "}",
     ]
 
-    return "\n".join(headers + [""] + body)
+    builder = CppFileBuilder()
+    builder.include("app_framework.hpp")
+    builder.include("libxr.hpp")
+    builder.raw("")
+    builder.comment("Module headers")
+    for mod in modules:
+        builder.include(f"{mod}.hpp")
+    if config.get("constexprs"):
+        builder.include("xrobot_constexpr.hpp")
+    builder.raw("")
+    builder.raw("\n".join(body))
+
+    generated = builder.build().render()
+    return generated[:-1] if generated.endswith("\n") else generated
 
 def auto_discover_modules(modules_dir: Path = Path("Modules")) -> List[str]:
     """
