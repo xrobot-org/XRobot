@@ -21,38 +21,23 @@ from collections import OrderedDict
 from typing import Union, Dict, List, Optional
 from yaml.representer import SafeRepresenter
 
+from xrobot.ModuleParser import parse_manifest_from_header as _parse_module_manifest
+
 yaml.add_representer(OrderedDict, SafeRepresenter.represent_dict)
 
 DEFAULT_CONSTEXPR_NAMESPACE = "ProjectConstexpr"
 
 def parse_manifest_from_header(header_path: Path) -> Dict:
     """
-    Extract and parse manifest data from the module header file.
-    Supports V1/V2 manifest format auto-detection.
+    Extract manifest data through the shared ModuleParser path and normalize
+    constructor/template arguments for the code generator.
     """
-    content = header_path.read_text(encoding="utf-8")
-    manifest_block = []
-    in_manifest = False
-
-    for line in content.splitlines():
-        stripped = line.strip()
-        if "=== MODULE MANIFEST" in stripped:
-            in_manifest = True
-            continue
-        if "=== END MANIFEST" in stripped:
-            break
-        if in_manifest:
-            manifest_block.append(line)
-
-    if not manifest_block:
+    manifest = _parse_module_manifest(header_path)
+    if manifest is None:
         print(f"[WARN] No manifest found in {header_path}")
         return {}
 
-    try:
-        manifest_data = yaml.safe_load("\n".join(manifest_block)) or {}
-    except yaml.YAMLError as e:
-        print(f"[ERROR] YAML parsing failed in {header_path}: {str(e)}")
-        return {}
+    manifest_data = manifest.as_dict()
 
     # Normalize constructor_args and template_args as List[Dict]
     for key in ["constructor_args", "template_args"]:
