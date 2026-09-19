@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   parity:
-    if: github.event.head_commit.message == 'Run ModuleParser parity'
+    if: github.event.head_commit.message == 'Run GenerateMain parity'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -42,11 +42,12 @@ jobs:
       - name: Compare legacy and xr-syntax-backed consumers
         run: |
           python - <<'PY'
+          import copy
           import importlib.util
           import json
           from pathlib import Path
 
-          from xrobot.GenerateMain import parse_manifest_from_header as new_generate_parse
+          from xrobot import GenerateMain as new_generate
           from xrobot.ModuleParser import (
               parse_constructor_args as new_parse_args,
               parse_manifest_from_header as new_module_parse,
@@ -106,21 +107,16 @@ jobs:
                   new_tpl = list(
                       new_parse_args(new_manifest.template_args).items()
                   )
-                  row["module_args_equal"] = old_ctor == new_ctor
-                  row["template_args_equal"] = old_tpl == new_tpl
-                  if not row["module_args_equal"] or not row["template_args_equal"]:
+                  if old_ctor != new_ctor or old_tpl != new_tpl:
                       row["status"] = "module-args-mismatch"
                       mismatches.append(row)
                       rows.append(row)
                       continue
 
-              old_generate = legacy_generate.parse_manifest_from_header(header)
-              new_generate = new_generate_parse(header)
-              row["generate_main_equal"] = old_generate == new_generate
-              if not row["generate_main_equal"]:
-                  row["status"] = "generate-main-mismatch"
-                  row["old_generate"] = old_generate
-                  row["new_generate"] = new_generate
+              old_generate_manifest = legacy_generate.parse_manifest_from_header(header)
+              new_generate_manifest = new_generate.parse_manifest_from_header(header)
+              if old_generate_manifest != new_generate_manifest:
+                  row["status"] = "generate-main-manifest-mismatch"
                   mismatches.append(row)
                   rows.append(row)
                   continue
@@ -128,12 +124,152 @@ jobs:
               row["status"] = "match"
               rows.append(row)
 
+          codegen_cases = [
+              (
+                  "simple",
+                  "hw",
+                  ["BlinkLED"],
+                  {
+                      "global_settings": {"monitor_sleep_ms": 250},
+                      "modules": [
+                          {
+                              "id": "BlinkLED_0",
+                              "name": "BlinkLED",
+                              "constructor_args": {"blink_cycle": 500},
+                          }
+                      ],
+                  },
+              ),
+              (
+                  "auto-instance-and-values",
+                  "board",
+                  ["Demo"],
+                  {
+                      "global_settings": {"monitor_sleep_ms": 7},
+                      "modules": [
+                          {
+                              "name": "Demo",
+                              "constructor_args": {
+                                  "enabled": True,
+                                  "label": {"string": "abc"},
+                                  "raw": {"expr": "Factory::Make(1, 2)"},
+                                  "items": [1, 2, 3],
+                              },
+                          },
+                          {
+                              "name": "Demo",
+                              "constructor_args": {"ref": "@demo"},
+                          },
+                      ],
+                  },
+              ),
+              (
+                  "long-arguments",
+                  "hardware",
+                  ["LongModule"],
+                  {
+                      "modules": [
+                          {
+                              "id": "long_module_instance",
+                              "name": "LongModule",
+                              "constructor_args": {
+                                  "first": "a very long string argument used to force multiline formatting",
+                                  "second": "another long string argument used to force multiline formatting",
+                                  "third": 123456789,
+                              },
+                          }
+                      ],
+                  },
+              ),
+              (
+                  "long-template",
+                  "hw",
+                  ["VeryLongModuleNameForTemplateFormatting"],
+                  {
+                      "modules": [
+                          {
+                              "id": "templated",
+                              "name": "VeryLongModuleNameForTemplateFormatting",
+                              "template_args": {
+                                  "A": "ExtremelyLongTemplateParameterNameOne",
+                                  "B": "ExtremelyLongTemplateParameterNameTwo",
+                              },
+                              "constructor_args": {"value": 42},
+                          }
+                      ],
+                  },
+              ),
+              (
+                  "constexpr",
+                  "hw",
+                  ["Demo"],
+                  {
+                      "constexpr_namespace": "ProjectConfig",
+                      "constexpr_includes": [
+                          "<array>",
+                          '"types.hpp"',
+                          "local.hpp",
+                          "<array>",
+                      ],
+                      "constexprs": {
+                          "Period": {"type": "uint32_t", "value": 250},
+                          "Axes": {"type": "std::array<int, 3>", "value": [1, 2, 3]},
+                      },
+                      "modules": [
+                          {
+                              "id": "demo",
+                              "name": "Demo",
+                              "constructor_args": {
+                                  "period": {"constexpr": "Period"},
+                                  "mode": {"expr": "Mode::FAST"},
+                              },
+                          }
+                      ],
+                  },
+              ),
+          ]
+
+          codegen_rows = []
+          codegen_mismatches = []
+          for name, hw, modules, config in codegen_cases:
+              old_config = copy.deepcopy(config)
+              new_config = copy.deepcopy(config)
+              old_main = legacy_generate.generate_xrobot_main_code(
+                  hw, modules, old_config
+              )
+              new_main = new_generate.generate_xrobot_main_code(
+                  hw, modules, new_config
+              )
+              old_constexpr = legacy_generate._generate_constexpr_header(
+                  copy.deepcopy(config)
+              )
+              new_constexpr = new_generate._generate_constexpr_header(
+                  copy.deepcopy(config)
+              )
+              row = {
+                  "name": name,
+                  "main_equal": old_main == new_main,
+                  "constexpr_equal": old_constexpr == new_constexpr,
+              }
+              if not row["main_equal"]:
+                  row["old_main"] = old_main
+                  row["new_main"] = new_main
+              if not row["constexpr_equal"]:
+                  row["old_constexpr"] = old_constexpr
+                  row["new_constexpr"] = new_constexpr
+              if not row["main_equal"] or not row["constexpr_equal"]:
+                  codegen_mismatches.append(row)
+              codegen_rows.append(row)
+
           result = {
               "modules": len(rows),
               "matches": sum(row["status"] == "match" for row in rows),
               "mismatches": len(mismatches),
+              "codegen_cases": len(codegen_rows),
+              "codegen_mismatches": len(codegen_mismatches),
               "rows": rows,
               "mismatch_rows": mismatches,
+              "codegen_rows": codegen_rows,
           }
           Path("module-parser-parity.json").write_text(
               json.dumps(result, indent=2, ensure_ascii=False),
@@ -141,11 +277,20 @@ jobs:
           )
           print(
               f"modules={result['modules']} matches={result['matches']} "
-              f"mismatches={result['mismatches']}"
+              f"mismatches={result['mismatches']} "
+              f"codegen_cases={result['codegen_cases']} "
+              f"codegen_mismatches={result['codegen_mismatches']}"
           )
           for row in mismatches:
               print("MISMATCH", row["module"], row["status"])
-          if mismatches:
+          for row in codegen_mismatches:
+              print("CODEGEN_MISMATCH", row["name"])
+              if not row["main_equal"]:
+                  print("OLD_MAIN")
+                  print(row["old_main"])
+                  print("NEW_MAIN")
+                  print(row["new_main"])
+          if mismatches or codegen_mismatches:
               raise SystemExit(1)
           PY
       - uses: actions/upload-artifact@v4
