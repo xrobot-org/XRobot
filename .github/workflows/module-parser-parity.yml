@@ -1,0 +1,126 @@
+name: module-parser-parity
+
+on:
+  push:
+    branches:
+      - feat/xr-syntax-module-parser-20260919
+
+permissions:
+  contents: read
+
+jobs:
+  parity:
+    if: github.event.head_commit.message == 'Run ModuleParser parity'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install .
+      - name: Prepare legacy parser
+        run: |
+          git show 15bff04ec4a21c2fdb31d4411e2802851e3de4c9:src/xrobot/ModuleParser.py > /tmp/legacy_module_parser.py
+      - name: Clone official modules
+        run: |
+          git clone --depth=1 https://github.com/xrobot-org/xrobot-modules.git /tmp/xrobot-index
+          mkdir -p /tmp/xrobot-modules
+          python - <<'PY' >/tmp/module-urls.txt
+          import yaml
+          from pathlib import Path
+          data = yaml.safe_load(Path("/tmp/xrobot-index/index.yaml").read_text())
+          for url in data["modules"]:
+              print(url)
+          PY
+          while IFS= read -r url; do
+            name="$(basename "${url%.git}")"
+            git clone --depth=1 "$url" "/tmp/xrobot-modules/$name"
+          done </tmp/module-urls.txt
+      - name: Compare legacy and xr-syntax-backed parsers
+        run: |
+          python - <<'PY'
+          import importlib.util
+          import json
+          from pathlib import Path
+
+          from xrobot.ModuleParser import (
+              parse_constructor_args as new_parse_args,
+              parse_manifest_from_header as new_parse,
+          )
+
+          spec = importlib.util.spec_from_file_location(
+              "legacy_module_parser", "/tmp/legacy_module_parser.py"
+          )
+          legacy = importlib.util.module_from_spec(spec)
+          assert spec.loader is not None
+          spec.loader.exec_module(legacy)
+
+          rows = []
+          mismatches = []
+          root = Path("/tmp/xrobot-modules")
+          for module in sorted(p for p in root.iterdir() if p.is_dir()):
+              header = module / f"{module.name}.hpp"
+              row = {"module": module.name}
+              if not header.exists():
+                  row["status"] = "missing-primary-header"
+                  mismatches.append(row)
+                  rows.append(row)
+                  continue
+
+              old = legacy.parse_manifest_from_header(header)
+              new = new_parse(header)
+              old_data = None if old is None else old.as_dict()
+              new_data = None if new is None else new.as_dict()
+              row["old"] = old_data
+              row["new"] = new_data
+
+              if old_data != new_data:
+                  row["status"] = "manifest-mismatch"
+                  mismatches.append(row)
+                  rows.append(row)
+                  continue
+
+              if old is not None and new is not None:
+                  old_ctor = list(legacy.parse_constructor_args(old.constructor_args).items())
+                  new_ctor = list(new_parse_args(new.constructor_args).items())
+                  old_tpl = list(legacy.parse_constructor_args(old.template_args).items())
+                  new_tpl = list(new_parse_args(new.template_args).items())
+                  row["old_constructor_args"] = old_ctor
+                  row["new_constructor_args"] = new_ctor
+                  row["old_template_args"] = old_tpl
+                  row["new_template_args"] = new_tpl
+                  if old_ctor != new_ctor or old_tpl != new_tpl:
+                      row["status"] = "argument-mismatch"
+                      mismatches.append(row)
+                      rows.append(row)
+                      continue
+
+              row["status"] = "match"
+              rows.append(row)
+
+          result = {
+              "modules": len(rows),
+              "matches": sum(row["status"] == "match" for row in rows),
+              "mismatches": len(mismatches),
+              "rows": rows,
+              "mismatch_rows": mismatches,
+          }
+          Path("module-parser-parity.json").write_text(
+              json.dumps(result, indent=2, ensure_ascii=False),
+              encoding="utf-8",
+          )
+          print(
+              f"modules={result['modules']} matches={result['matches']} "
+              f"mismatches={result['mismatches']}"
+          )
+          for row in mismatches:
+              print("MISMATCH", row["module"], row["status"])
+          if mismatches:
+              raise SystemExit(1)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: module-parser-parity
+          path: module-parser-parity.json
