@@ -19,7 +19,7 @@ keywords = ["code generation", "embedded systems", "automation"]
 dependencies = [
     "pyyaml",
     "requests",
-    "xr-syntax @ git+https://github.com/xrobot-org/xr-source.git@59330ed9a2a7bce671e602ef8685e3c209839ad0"
+    "xr-syntax @ git+https://github.com/xrobot-org/xr-source.git@b8fac9535a4c3ceeab3db10a613a1336760a1098"
 ]
 
 classifiers = [
