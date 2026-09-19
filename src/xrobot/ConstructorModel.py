@@ -4,7 +4,7 @@ Only named, explicit declarations are supported. This is not a C++ type system
 or structure reflection: configuration trees come from initializer expressions.
 """
 import re
-from xrobot.CppSource import code_tokens, close_token, split_arguments, bind_identifiers
+from xrobot.CppSource import code_tokens, close_token\nfrom xrobot.SourceSyntax import split_arguments, bind_identifiers
 
 
 def parameter(declaration):

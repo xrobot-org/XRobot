@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: xrobot-org/xr-source
-          ref: a98f0163af456498c005d912b20d3017f54d7361
+          ref: b6d398aee0b3bc2b76a0078db04a4ef8beff1974
           path: xr-source
       - uses: actions/setup-python@v5
         with:
@@ -38,7 +38,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: xrobot-org/xr-source
-          ref: a98f0163af456498c005d912b20d3017f54d7361
+          ref: b6d398aee0b3bc2b76a0078db04a4ef8beff1974
           path: xr-source
       - uses: actions/setup-python@v5
         with:

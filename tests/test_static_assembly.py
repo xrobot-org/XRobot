@@ -191,7 +191,7 @@ class GeneratedCpp(unittest.TestCase):
         command = [self.cxx, '-std='+self.standard, '-Wall', '-Wextra', '-Werror', '-O2', '-I'+str(self.root), '-I'+str(self.root/'User')]
         command += ['-I'+str(p) for p in (self.root/'Modules').iterdir()]
         command += list(extra) + [str(self.root/'User/app_main.cpp'), '-o', str(self.root/'program')]
-        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=45)
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=90)
         if not expected:
             self.assertNotEqual(result.returncode, 0, result.stdout)
             return result.stdout

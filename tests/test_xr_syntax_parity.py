@@ -4,9 +4,18 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from xrobot.CppSource import extract_interface as legacy_extract_interface
+from xrobot.CppSource import (
+    bind_identifiers as legacy_bind_identifiers,
+    extract_interface as legacy_extract_interface,
+    split_arguments as legacy_split_arguments,
+)
 from xrobot.GenerateMain import read_registrations as legacy_read_registrations
-from xrobot.SourceSyntax import extract_interface, read_registrations
+from xrobot.SourceSyntax import (
+    bind_identifiers,
+    extract_interface,
+    read_registrations,
+    split_arguments,
+)
 
 
 class SourceSyntaxParity(unittest.TestCase):
@@ -77,6 +86,46 @@ class SourceSyntaxParity(unittest.TestCase):
                         legacy_read_registrations([path])
                     with self.assertRaises(ValueError):
                         read_registrations([path])
+
+
+    def test_argument_splitting_matches_legacy(self):
+        cases = (
+            "",
+            "a, b",
+            "std::array<int, 2>, Foo{1, 2}, call(a, b)",
+            "(a < b), std::vector<std::pair<int, float>>",
+            '",", R"tag(a,b)tag", value',
+        )
+        for source in cases:
+            with self.subTest(source=source):
+                self.assertEqual(split_arguments(source), legacy_split_arguments(source))
+        for source in ("std::array<int, 2", "a,"):
+            with self.subTest(source=source):
+                with self.assertRaises(ValueError):
+                    legacy_split_arguments(source)
+                with self.assertRaises(ValueError):
+                    split_arguments(source)
+
+    def test_identifier_binding_matches_legacy(self):
+        cases = (
+            ("dev + other", {"dev": ["port"]}),
+            ("obj.dev + ptr->dev + ns::dev + dev::constant + dev",
+             {"dev": ["port"]}),
+            ('"dev" + dev /* dev */', {"dev": ["port"]}),
+            ('R"tag(dev)tag" + dev + 123', {"dev": ["port"]}),
+            ("/* 中文 */ dev + other", {"dev": ["port"]}),
+        )
+        for expression, bindings in cases:
+            with self.subTest(expression=expression):
+                self.assertEqual(
+                    bind_identifiers(expression, bindings),
+                    legacy_bind_identifiers(expression, bindings),
+                )
+        bindings = {"dev": ["left", "right"]}
+        with self.assertRaises(ValueError):
+            legacy_bind_identifiers("dev", bindings)
+        with self.assertRaises(ValueError):
+            bind_identifiers("dev", bindings)
 
 
 if __name__ == "__main__":

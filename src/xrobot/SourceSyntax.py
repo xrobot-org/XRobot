@@ -153,3 +153,51 @@ def read_registrations(paths) -> List[Dict]:
             names.add(record["name"])
             records.append(record)
     return records
+
+
+def split_arguments(text: str) -> List[str]:
+    """Split a C++ argument/declaration list through xr-syntax."""
+    from xr_syntax.cpp import split_source_list
+
+    if not text.strip():
+        return []
+    try:
+        return list(split_source_list(text, template_angles=True))
+    except ValueError as error:
+        message = str(error)
+        if "unbalanced" in message.lower():
+            raise ValueError(
+                "Unbalanced argument list; parenthesize comparison expressions"
+            ) from error
+        if "empty argument" in message.lower():
+            raise ValueError("Empty argument in C++ declaration") from error
+        raise
+
+
+def bind_identifiers(expression: str, bindings: Dict[str, List[str]]) -> str:
+    """Bind unqualified identifiers while preserving every unrelated source byte."""
+    from xr_syntax.cpp import identifier_occurrences
+
+    encoded = expression.encode("utf-8", errors="surrogateescape")
+    edits = []
+    for occurrence in identifier_occurrences(expression):
+        if occurrence.text not in bindings:
+            continue
+        if occurrence.qualified_left or occurrence.scope_root:
+            continue
+        views = bindings[occurrence.text]
+        if len(views) != 1:
+            raise ValueError(
+                "Ambiguous registered name '%s'; select one of: %s"
+                % (occurrence.text, ", ".join(views))
+            )
+        edits.append(
+            (
+                occurrence.span.start,
+                occurrence.span.end,
+                views[0].encode("utf-8", errors="surrogateescape"),
+            )
+        )
+    for start, end, replacement in reversed(edits):
+        encoded = encoded[:start] + replacement + encoded[end:]
+    return encoded.decode("utf-8", errors="surrogateescape")

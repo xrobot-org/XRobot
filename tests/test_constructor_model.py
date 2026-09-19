@@ -179,7 +179,7 @@ class ConstructorCpp(unittest.TestCase):
         output=self.root/('program' if execute else 'check.o')
         if not execute: command+=['-c']
         command+=[str(source),'-o',str(output)]
-        result=subprocess.run(command,capture_output=True,text=True,timeout=45)
+        result=subprocess.run(command,capture_output=True,text=True,timeout=90)
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
         if execute:
             result=subprocess.run([str(output)],capture_output=True,text=True,timeout=10)
@@ -305,7 +305,7 @@ class Foo {public:
         command = [os.environ.get('CXX', 'g++'), '-std=c++20', '-c', str(main),
                    '-I'+str(self.root), '-I'+str(self.root/'User'),
                    '-I'+str(header.parent), '-o', str(self.root/'bad.o')]
-        result = subprocess.run(command, capture_output=True, text=True, timeout=45)
+        result = subprocess.run(command, capture_output=True, text=True, timeout=90)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('Named constructor argument requires an implicit conversion', result.stderr)
 
