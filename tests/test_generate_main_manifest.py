@@ -88,3 +88,29 @@ def test_generated_main_is_parser_backed_without_changing_layout() -> None:
         '  }\n'
         '}'
     )
+
+
+def test_constexpr_header_layout_is_preserved() -> None:
+    from xrobot.GenerateMain import _generate_constexpr_header
+
+    generated = _generate_constexpr_header(
+        {
+            "constexpr_namespace": "ProjectConfig",
+            "constexpr_includes": ["<array>", '"types.hpp"', "<array>"],
+            "constexprs": {
+                "Period": {"type": "uint32_t", "value": 250},
+                "Axes": {"type": "std::array<int, 3>", "value": [1, 2, 3]},
+            },
+        }
+    )
+    assert generated == (
+        "#pragma once\n"
+        "\n"
+        "#include <array>\n"
+        '#include "types.hpp"\n'
+        "\n"
+        "namespace ProjectConfig {\n"
+        "inline constexpr uint32_t Period = 250;\n"
+        "inline constexpr std::array<int, 3> Axes = {1, 2, 3};\n"
+        "}  // namespace ProjectConfig\n"
+    )

@@ -236,20 +236,23 @@ def _generate_constexpr_header(config: Dict) -> Optional[str]:
 
     constexpr_namespace = _get_constexpr_namespace(config)
 
-    lines = ["#pragma once", ""]
-    emitted_includes = []
+    builder = CppFileBuilder(header=True)
+    builder.raw("")
+
     seen_includes = set()
+    emitted_includes = False
     for header in include_headers:
         directive = _format_include_directive(header)
         if directive in seen_includes:
             continue
         seen_includes.add(directive)
-        emitted_includes.append(directive)
-    lines.extend(emitted_includes)
-    if emitted_includes:
-        lines.append("")
-    lines.append(f"namespace {constexpr_namespace} {{")
+        builder.raw(directive)
+        emitted_includes = True
 
+    if emitted_includes:
+        builder.raw("")
+
+    lines = [f"namespace {constexpr_namespace} {{"]
     for name, spec in constexprs.items():
         _validate_constexpr_ref(name)
         if not isinstance(spec, dict):
@@ -264,13 +267,9 @@ def _generate_constexpr_header(config: Dict) -> Optional[str]:
             f"inline constexpr {cpp_type} {name} = "
             f"{_format_cpp_value(cpp_value, constexpr_namespace=constexpr_namespace)};"
         )
-
-    lines += [
-        f"}}  // namespace {constexpr_namespace}",
-        "",
-    ]
-    return "\n".join(lines)
-
+    lines.append(f"}}  // namespace {constexpr_namespace}")
+    builder.raw("\n".join(lines))
+    return builder.build().render()
 
 def _load_config_file(config_path: Path) -> Dict:
     try:
