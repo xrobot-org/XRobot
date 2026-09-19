@@ -31,7 +31,11 @@ jobs:
 
     - name: Install Python Package
       run: |
-        pip install .
+        pip install . pytest
+
+    - name: Run Python Tests
+      run: |
+        python -m pytest -q
 
     - name: Compiler Version Check
       run: |

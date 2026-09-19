@@ -13,11 +13,20 @@ Usage as CLI:
     python module_manifest.py --path Modules/BlinkLED/BlinkLED.hpp
 """
 
-import re
 import yaml
 from pathlib import Path
 from collections import OrderedDict
 from typing import Optional, Dict, Union, Any
+
+from xr_syntax.cpp import CppDocument
+
+
+_MANIFEST_START_MARKERS = (
+    "=== MODULE MANIFEST V2 ===",
+    "=== MODULE MANIFEST ===",
+)
+_MANIFEST_END_MARKER = "=== END MANIFEST ==="
+
 
 class ModuleManifest:
     """
@@ -66,27 +75,48 @@ class ModuleManifest:
     def __repr__(self):
         return f"<ModuleManifest path={self.path} desc={self.description[:20]}>"
 
+
+def _manifest_block_from_comment(comment: str) -> Optional[str]:
+    """
+    Extract the YAML payload from one C++ comment containing a V1/V2 manifest.
+    """
+    folded = comment.casefold()
+    candidates = []
+    for marker in _MANIFEST_START_MARKERS:
+        index = folded.find(marker.casefold())
+        if index >= 0:
+            candidates.append((index, marker))
+    if not candidates:
+        return None
+
+    start, marker = min(candidates, key=lambda item: item[0])
+    body_start = start + len(marker)
+    body_end = folded.find(_MANIFEST_END_MARKER.casefold(), body_start)
+    if body_end < 0:
+        return None
+    return comment[body_start:body_end].strip()
+
+
 def parse_manifest_from_header(header_path: Path) -> Optional[ModuleManifest]:
     """
-    Parse manifest block from .hpp file and return a ModuleManifest object.
+    Parse a manifest block from C++ comments in a .hpp file.
     Supports V1/V2 manifest format.
     """
     try:
-        content = header_path.read_text(encoding="utf-8-sig")
-    except UnicodeDecodeError:
-        content = header_path.read_text(encoding="utf-8")
+        source = header_path.read_bytes()
     except Exception as e:
         print(f"[ERROR] Failed to read {header_path}: {e}")
         return None
-    # Supports /* === MODULE MANIFEST(V2)? === ... === END MANIFEST === */
-    pattern = re.compile(
-        r"/\*\s*=== MODULE MANIFEST(?: V2)? ===\s*(.*?)\s*=== END MANIFEST ===\s*\*/",
-        re.DOTALL | re.IGNORECASE
-    )
-    match = pattern.search(content)
-    if not match:
+
+    document = CppDocument.parse(source, source_name=str(header_path))
+    manifest_block = None
+    for comment in document.comments():
+        manifest_block = _manifest_block_from_comment(comment.text)
+        if manifest_block is not None:
+            break
+    if manifest_block is None:
         return None
-    manifest_block = match.group(1)
+
     try:
         data = yaml.safe_load(manifest_block)
         if not isinstance(data, dict):
@@ -95,6 +125,7 @@ def parse_manifest_from_header(header_path: Path) -> Optional[ModuleManifest]:
     except yaml.YAMLError as e:
         print(f"[ERROR] YAML parse error in {header_path}:\n{e}")
         return None
+
 
 def parse_module_folder(folder: Path) -> Optional[ModuleManifest]:
     """
@@ -107,6 +138,7 @@ def parse_module_folder(folder: Path) -> Optional[ModuleManifest]:
     if not hpp_path.exists():
         return None
     return parse_manifest_from_header(hpp_path)
+
 
 def parse_constructor_args(args: Any) -> OrderedDict:
     """
@@ -128,6 +160,7 @@ def parse_constructor_args(args: Any) -> OrderedDict:
         args_ordered[args] = ""
     return args_ordered
 
+
 def load_single_module(path: Path) -> Optional[ModuleManifest]:
     """
     Parse a single module (can be a directory or a .hpp file).
@@ -138,6 +171,7 @@ def load_single_module(path: Path) -> Optional[ModuleManifest]:
         return parse_manifest_from_header(path)
     else:
         return None
+
 
 def print_manifest(manifest: ModuleManifest, name: Optional[str] = None):
     """
@@ -185,7 +219,7 @@ def print_manifest(manifest: ModuleManifest, name: Optional[str] = None):
     else:
         print("Depends           : None")
 
-# Can be used as a CLI tool
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="XRobot module manifest inspection tool")
@@ -196,6 +230,7 @@ def main():
         print_manifest(manifest)
     else:
         print("[ERROR] Module manifest not found or invalid.")
+
 
 if __name__ == "__main__":
     main()
