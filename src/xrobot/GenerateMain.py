@@ -5,7 +5,9 @@ import re
 import tempfile
 from pathlib import Path
 import yaml
-from xrobot.CppSource import tokens, code_tokens, close_token, split_arguments, bind_identifiers
+from xr_syntax.cpp import CppDocument, identifier_occurrences
+
+from xrobot.SourceSyntax import code_tokens, close_token, split_arguments, bind_identifiers
 from xrobot.ModuleParser import discover_modules, select_module, source_interface
 from xrobot.ConstructorModel import (scalar_text, initial_arguments, template_bindings,
                                      construct_arguments)
@@ -196,16 +198,24 @@ def caller_scoped_view(cpp_type, names):
 
 
 def read_registrations(paths):
+    """Read XR_REGISTER invocations through xr-syntax while preserving XRobot contracts."""
     records, names = [], set()
     for path in paths:
         path = Path(path)
-        text = path.read_text(encoding='utf-8-sig')
-        items = code_tokens(text)
-        for i, token in enumerate(items):
-            if token.text != 'XR_REGISTER' or i+1 >= len(items) or items[i+1].text != '(':
-                continue
-            end = close_token(items, i+1)
-            parts = split_arguments(text[items[i+1].end:items[end].start])
+        text = path.read_text(encoding='utf-8-sig', errors='surrogateescape')
+        document = CppDocument.parse(text, source_name=str(path))
+        invocations = document.invocation_views('XR_REGISTER', template_angles=True)
+        candidates = [
+            occurrence
+            for occurrence in identifier_occurrences(text)
+            if occurrence.text == 'XR_REGISTER' and occurrence.following == '('
+        ]
+        if len(invocations) != len(candidates):
+            raise ValueError('%s: malformed XR_REGISTER invocation' % path)
+
+        encoded = document.render_bytes()
+        for invocation in invocations:
+            parts = list(invocation.arguments)
             if len(parts) < 2 or not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]*', parts[0]):
                 raise ValueError('%s: XR_REGISTER requires an existing name and explicit object types' % path)
             name = parts[0]
@@ -218,12 +228,23 @@ def read_registrations(paths):
             # Typedefs are deliberately left to C++; this rejects literal T& spellings only.
             if any(p.rstrip().endswith('&') for p in parts[1:]):
                 raise ValueError('Register object types, not reference types: ' + name)
+
             names.add(name)
-            local_names = caller_defined_names(items, i)
-            records.append({'name': name, 'types': parts[1:], 'source': str(path),
-                            'line': text.count('\n', 0, token.start)+1,
-                            'caller_views': [typ for typ in parts[1:]
-                                             if caller_scoped_view(typ, local_names)]})
+            prefix = encoded[:invocation.span.start].decode(
+                'utf-8', errors='surrogateescape'
+            )
+            prefix_tokens = code_tokens(prefix)
+            local_names = caller_defined_names(prefix_tokens, len(prefix_tokens))
+            records.append({
+                'name': name,
+                'types': parts[1:],
+                'source': str(path),
+                'line': invocation.line,
+                'caller_views': [
+                    typ for typ in parts[1:]
+                    if caller_scoped_view(typ, local_names)
+                ],
+            })
     return records
 
 

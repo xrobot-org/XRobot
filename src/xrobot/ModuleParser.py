@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 import yaml
-from xrobot.CppSource import extract_interface
+from xrobot.SourceSyntax import extract_interface
 from xrobot.ConstructorModel import enrich_interface
 
 MANIFEST_PATTERN = re.compile(r'/\*\s*=== MODULE MANIFEST(?: V\d+)? ===\s*(.*?)\s*=== END MANIFEST ===\s*\*/', re.S)
@@ -73,7 +73,10 @@ def source_interface(path: Path) -> dict:
         path = path / (path.name + '.hpp')
     try:
         source = path.read_text(encoding='utf-8-sig')
-        return enrich_interface(source, extract_interface(source, path.stem))
+        return enrich_interface(
+            source,
+            extract_interface(source, path.stem, source_name=str(path)),
+        )
     except ValueError as error:
         raise ValueError('%s: %s' % (path, error)) from error
 

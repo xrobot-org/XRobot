@@ -6,7 +6,7 @@ import tempfile
 import unittest
 import yaml
 
-from xrobot.CppSource import extract_interface
+from xrobot.SourceSyntax import extract_interface
 from xrobot.ConstructorModel import (enrich_interface, initial_arguments, initializer_tree,
     parameter, qualify, template_bindings, view_conversion, bind_value, constructor_for,
     type_shape, compliant_constructors)

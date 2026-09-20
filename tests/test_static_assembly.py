@@ -6,7 +6,12 @@ import tempfile
 import unittest
 import yaml
 
-from xrobot.CppSource import bind_identifiers, extract_interface, split_arguments, tokens
+from xrobot.SourceSyntax import (
+    bind_identifiers,
+    code_tokens,
+    extract_interface,
+    split_arguments,
+)
 from xrobot.GenerateMain import generate, load_config, read_registrations, validate_config
 from xrobot.ModuleParser import discover_modules, select_module
 from xrobot.AddModule import append_module_instance, get_next_instance_id
@@ -28,7 +33,7 @@ class TextContracts(unittest.TestCase):
         text = '0xff+dev+1e-3+u8"dev"+R"tag(\"dev\")tag"+dev'
         self.assertEqual(bind_identifiers(text, {'dev': ['bound']}), '0xff+bound+1e-3+u8"dev"+R"tag(\"dev\")tag"+bound')
         with self.assertRaises(ValueError):
-            tokens('"unfinished')
+            code_tokens('"unfinished')
 
     def test_declaration_extraction(self):
         code = '''// class Foo { Foo(int fake); };
