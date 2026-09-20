@@ -168,3 +168,35 @@ def _is_global_class(node) -> bool:
     if parent is not None and parent.kind == "template_declaration":
         parent = parent.parent
     return parent is not None and parent.kind == "translation_unit"
+
+
+def preserve_regions(existing_source: str | bytes, generated_source: str) -> str:
+    """在重新生成 C++ 文件时保留三类受保护区域的用户内容。
+
+    Preserve User Code, clang-format and NOLINT region bodies while replacing
+    the generated syntax around them. Regions are matched by kind and name in
+    source order; unmatched generated regions retain their generated bodies.
+    """
+    previous = CppDocument.parse(existing_source)
+    current = CppDocument.parse(generated_source)
+    for getter in ("user_regions", "format_regions", "lint_regions"):
+        old_regions = getattr(previous, getter)()
+        new_regions = list(getattr(current, getter)())
+        used: set[int] = set()
+        for old_region in old_regions:
+            match = next(
+                (
+                    (index, candidate)
+                    for index, candidate in enumerate(new_regions)
+                    if index not in used
+                    and candidate.name == old_region.name
+                ),
+                None,
+            )
+            if match is None:
+                continue
+            index, candidate = match
+            current = current.replace_region_body(candidate, old_region.body_text)
+            new_regions = list(getattr(current, getter)())
+            used.add(index)
+    return current.render_bytes().decode("utf-8", errors="surrogateescape")

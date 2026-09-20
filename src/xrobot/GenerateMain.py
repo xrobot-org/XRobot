@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 from xr_syntax.cpp import CppDocument, identifier_occurrences
 
-from xrobot.SourceSyntax import code_tokens, close_token, split_arguments, bind_identifiers
+from xrobot.SourceSyntax import code_tokens, close_token, split_arguments, bind_identifiers, preserve_regions
 from xrobot.ModuleParser import discover_modules, select_module, source_interface
 from xrobot.ConstructorModel import (scalar_text, initial_arguments, template_bindings,
                                      construct_arguments)
@@ -384,6 +384,8 @@ def generate_xrobot_main_code(config, modules, registrations=None, compile_check
     lines += ['    ::xrobot_generated::Monitor(%s);' % entry[0] for entry in entries]
     lines += ['    LibXR::Thread::Sleep(%s);' % config.get('settings', {}).get('monitor_sleep_ms', 1000),
               '  }', '}', '', '#undef XR_XROBOT_MAIN_INLINE', '']
+    lines += ['/* User Code Begin XRobotMain */', '/* User Code End XRobotMain */',
+                  '// clang-format off', '// NOLINTBEGIN']
     for record in registrations:
         lines.append('#define XR_REGISTER_DETAIL_%s(...) \\' % record['name'])
         lines.append('  static_assert(std::is_same<::xrobot_generated::TypeList<__VA_ARGS__>, \\')
@@ -402,6 +404,7 @@ def generate_xrobot_main_code(config, modules, registrations=None, compile_check
                   for i, (name, _, _) in enumerate(views)]
         lines.append('  )')
     lines.append('')
+    lines += ['// NOLINTEND', '// clang-format on', '']
     return '\n'.join(lines)
 
 
@@ -417,6 +420,8 @@ def generate(config_path=Path('User/xrobot.yaml'), modules_dir=Path('Modules'), 
     registrations = read_registrations(sources)
     modules = discover_modules(Path(modules_dir), lock_path)
     code = generate_xrobot_main_code(config, modules, registrations)
+    if Path(output).exists():
+        code = preserve_regions(Path(output).read_bytes(), code)
     atomic_write(Path(output), code)
     for record in registrations:
         print('%s: %s' % (record['name'], ', '.join(record['types'])))
