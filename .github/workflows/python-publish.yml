@@ -37,6 +37,7 @@ jobs:
 
     - name: Install Python Package
       run: |
+        pip install "git+https://github.com/xrobot-org/xr-syntax.git@feat/source-model-20260918"
         pip install .
 
     - name: Require and identify the selected C++ compiler
@@ -123,12 +124,14 @@ jobs:
       - name: Install built package (Linux/macOS)
         if: runner.os != 'Windows'
         run: |
+          pip install "git+https://github.com/xrobot-org/xr-syntax.git@feat/source-model-20260918"
           pip install dist/*.whl || pip install dist/*.tar.gz
 
       - name: Install built package (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          pip install "git+https://github.com/xrobot-org/xr-syntax.git@feat/source-model-20260918"
           $pkg = Get-ChildItem dist\*.whl,dist\*.tar.gz | Select-Object -First 1
           if ($pkg) {
             pip install $pkg.FullName
