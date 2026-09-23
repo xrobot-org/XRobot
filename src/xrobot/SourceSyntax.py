@@ -1,17 +1,14 @@
 """XRobot 对 xr-syntax 的薄适配层。
 
 这里仅保留 XRobot 需要的源码级契约：词法 token、分隔符配对、参数列表切分、
-注册名绑定，以及 Module 构造接口提取。真正的 C++ 解析由 xr-syntax 负责；
-旧 CppSource.py 暂时只用于迁移期 golden parity，不再作为生产读路径。
+注册名绑定，以及 Module 构造接口提取。C++ 解析全部由 xr-syntax 负责。
 
 Thin XRobot adapter over xr-syntax.  It keeps only XRobot-specific source
-contracts while xr-syntax owns C++ parsing.  The legacy CppSource.py remains
-temporarily for golden-parity checks and is no longer a production read path.
+contracts while xr-syntax owns all C++ parsing.
 """
 
 from __future__ import annotations
 
-import re
 from typing import Dict, List, Sequence
 
 from xr_syntax.cpp import (
@@ -83,6 +80,28 @@ def bind_identifiers(expression: str, bindings: Dict[str, List[str]]) -> str:
     return encoded.decode("utf-8", errors="surrogateescape")
 
 
+def _conditional_depth(document: CppDocument, start: int, end: int) -> int:
+    """返回 [start, end) 内尚未闭合的 #if/#ifdef/#ifndef 层数。
+
+    Count conditional directives opened but not closed before ``end`` from
+    xr-syntax preprocessor nodes, so directive spelling stays parser-owned.
+    """
+    directives = []
+    for kind in ("preproc_if", "preproc_ifdef", "preproc_call"):
+        directives.extend(
+            node for node in document.nodes(kind) if start <= node.span.start < end
+        )
+    depth = 0
+    for node in directives:
+        if node.kind != "preproc_call":
+            depth += 1
+            continue
+        significant = [child for child in node.syntax_children if not child.is_trivia]
+        if len(significant) > 1 and significant[1].text == "endif":
+            depth -= 1
+    return depth
+
+
 def extract_interface(source: str, name: str, source_name: str | None = None) -> dict:
     """从全局显式 class/struct 提取 XRobot 所需的构造接口快照。
 
@@ -119,18 +138,10 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
     body = class_view.body
     result = []
     for constructor in constructors:
-        if body is not None:
-            prefix = source_bytes[
-                body.span.start : constructor.node.span.start
-            ].decode("utf-8", errors="surrogateescape")
-            conditional_depth = 0
-            for line in prefix.splitlines():
-                if re.match(r"^\s*#\s*(if|ifdef|ifndef)\b", line):
-                    conditional_depth += 1
-                elif re.match(r"^\s*#\s*endif\b", line):
-                    conditional_depth -= 1
-            if conditional_depth:
-                raise ValueError("%s constructor interface varies under #if" % name)
+        if body is not None and _conditional_depth(
+            document, body.span.start, constructor.node.span.start
+        ):
+            raise ValueError("%s constructor interface varies under #if" % name)
 
         declarator = constructor.declarator
         result.append(
