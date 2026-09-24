@@ -13,7 +13,7 @@ from pathlib import Path
 import yaml
 
 from xrobot.GenerateMain import (load_config, read_registrations, generate_xrobot_main_code,
-                                 stamp_state, _tool_version)
+                                 stamp_state)
 from xrobot.ModuleParser import (discover_modules, locked_modules, lock_error, _module_record,
                                  select_module, source_interface)
 from xrobot.ConstructorModel import (compliant_constructors, initializer_tree, qualify,
@@ -114,11 +114,6 @@ def _describe_module(module, root, types, registrations, instances):
             })
         constructors.append({'line': ctor.get('line'), 'parameters': parameters})
     result['constructors'] = constructors
-    monitor = interface.get('monitor')
-    if not monitor:
-        located = types.index.resolve(module['name'])
-        monitor = types.index.provides_monitor(located) if located is not None else False
-    result['monitor'] = monitor
     return result
 
 
@@ -199,16 +194,13 @@ def describe(project='.', config=None, register_sources=None, lock=None, output=
 
     return {
         'schema': SCHEMA,
-        'tool': 'xrobot ' + _tool_version(),
         'config': _relative(config_path, root),
-        'register_sources': [_relative(p, root) for p in sources],
         'lock': lock_info,
         'entry': entry,
         'registrations': registrations,
         'modules': described,
         'types': types.table,
         'instances': instances,
-        'settings': (config_data or {}).get('settings', {}),
         'diagnostics': diagnostics,
     }
 

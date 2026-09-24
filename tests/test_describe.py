@@ -49,7 +49,6 @@ class Describe(Fixture):
         self.assertEqual(result['registrations'], [{'name': 'led_pin', 'types': ['LibXR::GPIO']},
                                                    {'name': 'uart1', 'types': ['LibXR::UART']}])
         led = result['modules']['Led']
-        self.assertTrue(led['monitor'])
         gpio, param = led['constructors'][0]['parameters']
         self.assertEqual(gpio['candidates'], ['led_pin'])
         self.assertEqual(param['default_fields'], {'cycle': '250', 'inverted': 'false'})
