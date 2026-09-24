@@ -172,6 +172,7 @@ class ConstructorCpp(unittest.TestCase):
         (self.root/'Modules/team/Foo').mkdir(parents=True)
         (self.root/'User').mkdir()
         (self.root/'thread.hpp').write_text('#pragma once\n#include <cstdlib>\nnamespace LibXR {struct Thread {static void Sleep(unsigned) {std::_Exit(0);}};}\n')
+        (self.root/'libxr.hpp').write_text('#pragma once\n')
 
     def build(self, source, execute=False):
         command=[os.environ.get('CXX','g++'),'-std=c++20','-Wall','-Wextra','-Werror','-O1',

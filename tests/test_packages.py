@@ -144,17 +144,52 @@ class Packages(unittest.TestCase):
         self.configure([{'id':'team/A','ref':sha,'context_ref':'refs/heads/pr-feature'}])
         self.assertEqual(self.resolve()['modules']['team/B']['resolved_ref'],'dev')
 
-    def test_relative_roots_use_the_bsp_branch_and_preserve_it_in_lock(self):
+    def test_relative_roots_use_the_bsp_branch_only_when_resolving(self):
         a = self.source('team/A')
         self.git(a, 'branch', 'feature/board')
         self.git(self.project, 'init', '-b', 'feature/board')
         self.configure(['team/A@same-or-dev'])
         first = self.resolve()
         self.assertEqual(first['modules']['team/A']['resolved_ref'], 'feature/board')
-        self.assertEqual(first['root_context'], ['branch', 'feature/board'])
+        self.assertNotIn('root_context', first)
+        self.assertNotIn('context', first['modules']['team/A'])
         self.assertEqual(self.resolve(offline=True), first)
+        # The lock is commit-authoritative: another branch name does not invalidate it.
         self.git(self.project, 'symbolic-ref', 'HEAD', 'refs/heads/other')
-        with self.assertRaisesRegex(ValueError, 'root context differs'):
+        self.assertEqual(self.resolve(frozen=True), first)
+        self.assertEqual(self.resolve(update=True)['modules']['team/A']['resolved_ref'], 'dev')
+
+    def _feature_lock_on_dev(self):
+        a = self.source('team/A')
+        self.git(a, 'checkout', '-b', 'feature/x')
+        feature = self.commit(a, [], 'feature work')
+        self.git(a, 'checkout', 'master')
+        self.git(self.project, 'init', '-b', 'feature/x')
+        self.configure(['team/A@same-or-dev'])
+        lock = self.resolve()
+        self.assertEqual(lock['modules']['team/A']['commit'], feature)
+        self.git(self.project, 'symbolic-ref', 'HEAD', 'refs/heads/dev')
+        return a, feature
+
+    def test_dev_rejects_unreleased_feature_commits(self):
+        self._feature_lock_on_dev()
+        with self.assertRaisesRegex(ValueError, 'not contained in dev.*--update'):
+            self.resolve(frozen=True)
+
+    def test_dev_accepts_feature_commits_merged_into_module_dev(self):
+        a, feature = self._feature_lock_on_dev()
+        self.git(a, 'checkout', 'dev')
+        self.git(a, 'merge', '--no-ff', '-m', 'merge feature', 'feature/x')
+        self.git(a, 'checkout', 'master')
+        self.assertEqual(self.resolve(frozen=True)['modules']['team/A']['commit'], feature)
+
+    def test_dev_reports_squash_merged_feature_commits(self):
+        a, _ = self._feature_lock_on_dev()
+        self.git(a, 'checkout', 'dev')
+        self.git(a, 'merge', '--squash', 'feature/x')
+        self.git(a, 'commit', '-m', 'squash feature')
+        self.git(a, 'checkout', 'master')
+        with self.assertRaisesRegex(ValueError, 'squash/rebase'):
             self.resolve(frozen=True)
         self.assertEqual(self.resolve(update=True)['modules']['team/A']['resolved_ref'], 'dev')
 
@@ -175,7 +210,7 @@ class Packages(unittest.TestCase):
             self.resolve()
         first = self.resolve(context_ref='refs/heads/review')
         self.assertEqual(first['modules']['team/A']['resolved_ref'], 'dev')
-        self.assertEqual(first['root_context'], ['branch', 'review'])
+        self.assertNotIn('root_context', first)
 
     def test_per_root_context_is_supported_without_a_bsp_identity_file(self):
         self.source('team/A')
@@ -222,7 +257,6 @@ class Packages(unittest.TestCase):
             os.chdir(previous)
         lock = yaml.safe_load((self.project/'xrobot.lock').read_text(encoding='utf-8'))
         self.assertEqual(lock['modules']['team/A']['commit'], selected)
-        self.assertEqual(lock['modules']['team/A']['context'], ['branch', 'feature/ci'])
         self.assertEqual(lock['modules']['team/B']['resolved_ref'], 'dev')
         self.assertEqual(self.git(local, 'rev-parse', 'HEAD'), selected)
         probe = (self.project/'module_check.cpp').read_text()

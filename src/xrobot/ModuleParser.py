@@ -1,5 +1,6 @@
 """Read thin package metadata and display interfaces declared in C++ source."""
 import argparse
+import copy
 import json
 import re
 import subprocess
@@ -67,18 +68,26 @@ def load_single_module(path: Path) -> ModuleManifest:
     return parse_module_folder(path) if path.is_dir() else parse_manifest_from_header(path)
 
 
+_INTERFACE_CACHE = {}
+
+
 def source_interface(path: Path) -> dict:
+    """Read a Module's constructor interface; cached per file content state."""
     path = Path(path)
     if path.is_dir():
         path = path / (path.name + '.hpp')
-    try:
-        source = path.read_text(encoding='utf-8-sig')
-        return enrich_interface(
-            source,
-            extract_interface(source, path.stem, source_name=str(path)),
-        )
-    except ValueError as error:
-        raise ValueError('%s: %s' % (path, error)) from error
+    stat = path.stat()
+    key = (str(path.resolve()), stat.st_mtime_ns, stat.st_size)
+    if key not in _INTERFACE_CACHE:
+        try:
+            source = path.read_text(encoding='utf-8-sig')
+            _INTERFACE_CACHE[key] = enrich_interface(
+                source,
+                extract_interface(source, path.stem, source_name=str(path)),
+            )
+        except ValueError as error:
+            raise ValueError('%s: %s' % (path, error)) from error
+    return copy.deepcopy(_INTERFACE_CACHE[key])
 
 
 def _folder_identity(folder: Path) -> str:
@@ -90,38 +99,61 @@ def _folder_identity(folder: Path) -> str:
     return 'local/' + folder.name
 
 
+def _locked_head(folder: Path) -> Optional[str]:
+    result = subprocess.run(['git', '-C', str(folder), 'rev-parse', '--verify', 'HEAD'],
+                            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def _module_record(identity: str, folder: Path) -> dict:
+    header = folder / (folder.name + '.hpp')
+    return {'id': identity, 'name': folder.name, 'path': folder, 'header': header,
+            'manifest': parse_manifest_from_header(header)}
+
+
 def discover_modules(directory: Path, lock_path=None) -> dict:
-    """Return canonical IDs and local source paths, not instantiated objects."""
+    """Return canonical IDs and local source paths, not instantiated objects.
+
+    With a project lock the lock is the only source of truth: unlisted folders
+    (stale caches, manual clones) are ignored and every locked folder must be
+    checked out at its locked commit, so interfaces are read from the sources
+    the build will compile.
+    """
     directory = Path(directory)
     lock_path = Path(lock_path) if lock_path else directory.parent / 'xrobot.lock'
     result = {}
-    locked_dirs = {}
     if lock_path.exists():
         lock = yaml.safe_load(lock_path.read_text(encoding='utf-8')) or {}
-        for identity, record in lock.get('modules', {}).items():
-            relative = identity
-            folder = (directory / relative).resolve()
+        for identity, record in (lock.get('modules') or {}).items():
+            folder = (directory / identity).resolve()
             if directory.resolve() not in folder.parents:
-                raise ValueError('Module path leaves directory: %s' % relative)
-            locked_dirs[folder] = identity
+                raise ValueError('Module path leaves directory: %s' % identity)
+            if not (folder / (folder.name + '.hpp')).is_file():
+                raise ValueError('%s from xrobot.lock is not checked out; run xrobot_setup --frozen' % identity)
+            commit = (record or {}).get('commit')
+            head = _locked_head(folder)
+            if commit and head and head != commit:
+                raise ValueError(
+                    '%s is checked out at %s but xrobot.lock pins %s; run xrobot_setup --frozen to '
+                    'restore the locked sources, or xrobot_setup --update to adopt the new ones'
+                    % (identity, head[:12], commit[:12]))
+            result[identity] = _module_record(identity, folder)
+        return result
     if not directory.exists():
         return result
     folders = sorted(set(directory.glob('*')) | set(directory.glob('*/*')))
     for folder in folders:
         if not folder.is_dir() or folder.name.startswith('.'):
             continue
-        header = folder / (folder.name + '.hpp')
-        if not header.is_file():
+        if not (folder / (folder.name + '.hpp')).is_file():
             continue
-        identity = locked_dirs.get(folder.resolve())
-        if identity is None:
-            if not (folder / '.git').exists() and folder.parent != directory:
-                identity = folder.parent.name + '/' + folder.name
-            else:
-                identity = _folder_identity(folder)
+        if not (folder / '.git').exists() and folder.parent != directory:
+            identity = folder.parent.name + '/' + folder.name
+        else:
+            identity = _folder_identity(folder)
         if identity in result:
             raise ValueError('Duplicate local package %s' % identity)
-        result[identity] = {'id': identity, 'name': folder.name, 'path': folder, 'header': header, 'manifest': parse_manifest_from_header(header)}
+        result[identity] = _module_record(identity, folder)
     return result
 
 

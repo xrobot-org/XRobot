@@ -80,7 +80,7 @@ def bind_identifiers(expression: str, bindings: Dict[str, List[str]]) -> str:
     return encoded.decode("utf-8", errors="surrogateescape")
 
 
-def _conditional_depth(document: CppDocument, start: int, end: int) -> int:
+def conditional_depth(document: CppDocument, start: int, end: int) -> int:
     """返回 [start, end) 内尚未闭合的 #if/#ifdef/#ifndef 层数。
 
     Count conditional directives opened but not closed before ``end`` from
@@ -138,7 +138,7 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
     body = class_view.body
     result = []
     for constructor in constructors:
-        if body is not None and _conditional_depth(
+        if body is not None and conditional_depth(
             document, body.span.start, constructor.node.span.start
         ):
             raise ValueError("%s constructor interface varies under #if" % name)
@@ -158,8 +158,11 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
             }
         )
 
+    monitor = any(function.name == "OnMonitor" and function.access == "public"
+                  for function in class_view.functions())
     return {
         "name": name,
+        "monitor": monitor,
         "template": (
             ", ".join(parameter.text for parameter in template_parameters)
             if template_parameters

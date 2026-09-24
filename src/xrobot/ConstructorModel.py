@@ -1,7 +1,10 @@
 """Source-declared constructor contracts and explicit initializer syntax.
 
-Only named, explicit declarations are supported. This is not a C++ type system
-or structure reflection: configuration trees come from initializer expressions.
+Only named, explicit declarations are supported. This is not a C++ type system:
+configuration trees come from initializer expressions, and a YAML mapping is
+checked against either the parameter's designated default initializer or the
+field list / constructor signatures read from the class definition in a loaded
+Module header (xrobot.TypeIndex). Types are never evaluated.
 """
 import re
 from xrobot.SourceSyntax import code_tokens, close_token, split_arguments, bind_identifiers
@@ -414,21 +417,111 @@ def scalar_text(value, field):
     return value
 
 
-def render_value(value, field, bindings):
-    if isinstance(value, dict):
-        entries = []
-        for key, child in value.items():
+
+def _base_spelling(cpp_type):
+    """Drop outer cv/reference from a type spelling, keeping template arguments."""
+    items = code_tokens(cpp_type)
+    keep = [t for t in items if t.text not in ('const', 'volatile', '&', '&&')]
+    if not keep:
+        return cpp_type.strip()
+    return cpp_type[keep[0].start:keep[-1].end].strip()
+
+
+class ValueChecker:
+    """Render YAML values as C++ while enforcing the mapping completeness rules.
+
+    A mapping must name exactly the fields of its target, in order:
+    the parameter's designated default initializer when it has one, otherwise
+    the aggregate's data members, otherwise the parameter names of one public
+    constructor (which is then called explicitly). A mapping whose target type
+    cannot be located in the loaded Module headers is rejected.
+    """
+
+    def __init__(self, index):
+        self.index = index
+
+    def render(self, value, field, bindings, cpp_type=None, scope=(), default=None):
+        """Return (C++ expression, whether it already names its type)."""
+        if isinstance(value, dict):
+            return self._mapping(value, field, bindings, cpp_type, scope, default)
+        if isinstance(value, list):
+            items = default if isinstance(default, list) and len(default) == len(value) else [None] * len(value)
+            parts = [self.render(v, '%s[%d]' % (field, i), bindings, None, scope, d)[0]
+                     for i, (v, d) in enumerate(zip(value, items))]
+            return ('{\n' + '\n, '.join(parts) + '\n}' if parts else '{}'), False
+        return bind_identifiers(scalar_text(value, field), bindings), False
+
+    @staticmethod
+    def _require(field, keys, expected, what):
+        if keys == expected:
+            return
+        missing = [k for k in expected if k not in keys]
+        extra = [k for k in keys if k not in expected]
+        if missing or extra:
+            detail = []
+            if missing:
+                detail.append('missing ' + ', '.join(missing))
+            if extra:
+                detail.append('unknown ' + ', '.join(extra))
+            raise ValueError('%s: %s (%s); expected: %s' % (field, '; '.join(detail), what, ', '.join(expected)))
+        raise ValueError('%s: fields out of declaration order (%s); expected: %s' % (field, what, ', '.join(expected)))
+
+    def _mapping(self, value, field, bindings, cpp_type, scope, default):
+        for key in value:
             if not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]*', str(key)):
-                raise ValueError(field + ': invalid aggregate field ' + str(key))
-            entries.append('.%s = %s' % (key, render_value(child, field+'.'+key, bindings)))
-        return '{\n' + '\n, '.join(entries) + '\n}' if entries else '{}'
-    if isinstance(value, list):
-        return '{\n' + '\n, '.join(render_value(v, field+'[%d]' % i, bindings) for i, v in enumerate(value)) + '\n}' if value else '{}'
-    return bind_identifiers(scalar_text(value, field), bindings)
+                raise ValueError(field + ': invalid field name ' + str(key))
+        keys = list(value)
+        entry = self.index.resolve(cpp_type, scope) if (self.index and cpp_type) else None
+        spelled = _base_spelling(cpp_type) if cpp_type else None
+        if isinstance(default, dict):
+            self._require(field, keys, list(default), 'from the default initializer')
+            types = {}
+            if entry is not None and entry.is_aggregate():
+                types = {n: self.index.qualify_in(t, entry, spelled) for n, t, _ in entry.fields()}
+            return self._designated(value, field, bindings, types, entry, default), False
+        if entry is None:
+            raise ValueError('%s: cannot verify the fields of %s in the loaded Module headers; '
+                             'write this value as a complete C++ expression'
+                             % (field, cpp_type or 'this value'))
+        if entry.is_aggregate():
+            fields = entry.fields()
+            self._require(field, keys, [n for n, _, _ in fields], 'data members of ' + entry.qualified)
+            types = {n: self.index.qualify_in(t, entry, spelled) for n, t, _ in fields}
+            return self._designated(value, field, bindings, types, entry, None), False
+        ctors = [c for c in entry.constructors() if c]
+        chosen = [c for c in ctors if [p['name'] for p in c] == keys]
+        if len(chosen) != 1:
+            options = ' | '.join(', '.join(p['name'] for p in c) for c in ctors) or 'none'
+            raise ValueError('%s: %s has constructors; the mapping must name one constructor\'s '
+                             'parameters in order. Constructors: %s' % (field, entry.qualified, options))
+        args = []
+        for p in chosen[0]:
+            param_type = self.index.qualify_in(p['type'], entry, spelled)
+            child = value[p['name']]
+            expr, typed = self.render(child, field + '.' + p['name'], bindings, param_type, entry.path, None)
+            if typed:
+                args.append(expr)
+            elif isinstance(child, (dict, list)):
+                args.append('std::remove_cv_t<std::remove_reference_t<%s>>%s' % (param_type, expr))
+            else:
+                # An exact-type argument list makes overload resolution select the
+                # constructor named in YAML, not another one with convertible types.
+                args.append('static_cast<%s>(%s)' % (param_type, expr))
+        return '%s(\n%s\n)' % (spelled, '\n, '.join(args)), True
+
+    def _designated(self, value, field, bindings, types, entry, default):
+        parts = []
+        for key, child in value.items():
+            child_default = default.get(key) if isinstance(default, dict) else None
+            child_type = types.get(key)
+            scope = entry.path if entry is not None else ()
+            expr, _ = self.render(child, field + '.' + key, bindings, child_type, scope, child_default)
+            parts.append('.%s = %s' % (key, expr))
+        return '{\n' + '\n, '.join(parts) + '\n}' if parts else '{}'
 
 
 def construct_arguments(interface, named_values, cpp_class, templates, views,
-                        bindings, identity, compile_check=False):
+                        bindings, identity, compile_check=False, checker=None):
     ctor = constructor_for(interface, named_values, views, cpp_class, templates)
     pin_types = len(compliant_constructors(interface, cpp_class, templates)) > 1
     declarations, arguments = [], []
@@ -443,7 +536,20 @@ def construct_arguments(interface, named_values, cpp_class, templates, views,
         elif isinstance(value, str):
             expr = bind_value(scalar_text(value, field), target, views, bindings)
         else:
-            expr = render_value(value, field, bindings)
+            default = initializer_tree(qualify(p['default'], interface, cpp_class, templates),
+                                       target) if p['default'] is not None else None
+            if checker is None:
+                checker = ValueChecker(None)
+            expr, typed = checker.render(value, field, bindings, target, (), default)
+            if typed:
+                reference = type_shape(target)[3]
+                if reference:
+                    storage = 'xr_arg_%s_%s' % (identity, p['name'])
+                    declarations.append('  static %s %s =\n      %s\n  ;' % (typ, storage, expr))
+                    arguments.append(storage)
+                else:
+                    arguments.append(expr)
+                continue
         # A named dependency already has caller-owned lifetime. Passing its bound
         # view directly avoids a second static reference slot and its guard, while
         # the cast keeps the selected overload's exact reference/cv semantics.

@@ -1,5 +1,6 @@
 """Generate an ordered, static C++ application from source interfaces and YAML."""
 import argparse
+import hashlib
 import os
 import re
 import tempfile
@@ -7,10 +8,12 @@ from pathlib import Path
 import yaml
 from xr_syntax.cpp import CppDocument, identifier_occurrences
 
-from xrobot.SourceSyntax import code_tokens, close_token, split_arguments, bind_identifiers, preserve_regions
+from xrobot.SourceSyntax import (code_tokens, close_token, split_arguments, bind_identifiers,
+                                 preserve_regions, conditional_depth)
+from xrobot.TypeIndex import TypeIndex
 from xrobot.ModuleParser import discover_modules, select_module, source_interface
 from xrobot.ConstructorModel import (scalar_text, initial_arguments, template_bindings,
-                                     construct_arguments)
+                                     construct_arguments, ValueChecker)
 
 
 class ConfigLoader(yaml.BaseLoader):
@@ -62,10 +65,29 @@ def validate_value(value, path):
         cpp_text(value, path)
 
 
+_CPP_NAME = r'[A-Za-z_][A-Za-z_0-9]*'
+
+
 def validate_config(config):
-    extra = set(config) - {'modules', 'settings'}
+    extra = set(config) - {'modules', 'settings', 'constexprs', 'constexpr_namespace', 'constexpr_includes'}
     if extra:
         raise ValueError('Unsupported application fields: %s; migrate to module/id/args and settings' % ', '.join(sorted(extra)))
+    namespace = config.get('constexpr_namespace', 'ProjectConstexpr')
+    if not isinstance(namespace, str) or not re.fullmatch(_CPP_NAME + '(?:::' + _CPP_NAME + ')*', namespace):
+        raise ValueError('constexpr_namespace must be a C++ namespace name')
+    includes = config.get('constexpr_includes', [])
+    if not isinstance(includes, list) or not all(isinstance(i, str) and i.strip() for i in includes):
+        raise ValueError('constexpr_includes must be a list of header names')
+    constants = config.get('constexprs', {})
+    if not isinstance(constants, dict):
+        raise ValueError('constexprs must be a mapping of name to {type, value}')
+    for name, spec in constants.items():
+        if not isinstance(name, str) or not re.fullmatch(_CPP_NAME, name):
+            raise ValueError('Invalid constexpr name: %s' % name)
+        if not isinstance(spec, dict) or set(spec) != {'type', 'value'}:
+            raise ValueError('constexprs.%s requires exactly type and value' % name)
+        cpp_text(spec['type'], 'constexprs.%s.type' % name)
+        validate_value(spec['value'], 'constexprs.%s.value' % name)
     entries = config.get('modules', [])
     if not isinstance(entries, list):
         raise ValueError('modules must be an ordered list')
@@ -215,6 +237,11 @@ def read_registrations(paths):
 
         encoded = document.render_bytes()
         for invocation in invocations:
+            if conditional_depth(document, 0, invocation.span.start):
+                raise ValueError(
+                    '%s:%s: XR_REGISTER inside #if/#ifdef/#ifndef is not supported; the generator '
+                    'cannot evaluate build options. Put hardware sets that differ by build option '
+                    'into separate entry sources or targets' % (path, invocation.line))
             parts = list(invocation.arguments)
             if len(parts) < 2 or not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]*', parts[0]):
                 raise ValueError('%s: XR_REGISTER requires an existing name and explicit object types' % path)
@@ -255,23 +282,6 @@ struct RegistrationMatches
     : std::bool_constant<(!std::is_reference<Views>::value && ...) &&
                          (std::is_convertible<Source*, Views*>::value && ...)> {};
 
-template <typename> struct MonitorSignature : std::false_type {};
-template <typename T> struct MonitorSignature<void (T::*)()> : std::true_type {};
-template <typename T> struct MonitorSignature<void (T::*)() noexcept> : std::true_type {};
-template <typename T> struct MonitorSignature<void (T::*)() const> : std::true_type {};
-template <typename T> struct MonitorSignature<void (T::*)() const noexcept> : std::true_type {};
-template <typename T> struct MonitorSignature<void (T::*)() &> : std::true_type {};
-template <typename T> struct MonitorSignature<void (T::*)() & noexcept> : std::true_type {};
-template <typename T, typename = void> struct HasMonitor : std::false_type {};
-template <typename T>
-struct HasMonitor<T, std::void_t<decltype(&T::OnMonitor)>>
-    : MonitorSignature<decltype(&T::OnMonitor)> {};
-
-template <typename T> inline void Monitor(T& instance) {
-  if constexpr (HasMonitor<T>::value) {
-    instance.OnMonitor();
-  }
-}
 }  // namespace xrobot_generated
 '''
 
@@ -289,6 +299,14 @@ def generate_xrobot_main_code(config, modules, registrations=None, compile_check
         bindings[record['name']] = fields
         typed_views[record['name']] = list(zip(record['types'], fields))
     selected, entries = {}, []
+    checker = ValueChecker(TypeIndex.for_modules(modules))
+    constants = []
+    namespace = config.get('constexpr_namespace', 'ProjectConstexpr')
+    for name, spec in config.get('constexprs', {}).items():
+        cpp_type = cpp_text(spec['type'], 'constexprs.%s.type' % name)
+        expr, _ = checker.render(spec['value'], 'constexprs.' + name, {}, cpp_type, (), None)
+        constants.append('inline constexpr %s %s = %s;' % (cpp_type, name, expr))
+    monitored = set()
     for i, entry in enumerate(config.get('modules', [])):
         if entry['id'] in bindings:
             raise ValueError('Instance id collides with a registered external name: ' + entry['id'])
@@ -305,7 +323,16 @@ def generate_xrobot_main_code(config, modules, registrations=None, compile_check
             cpp_type += '<' + ', '.join(template_args) + '>'
         templates = template_bindings(interface, template_args)
         declarations, args = construct_arguments(interface, entry.get('args', []),
-            cpp_type, templates, typed_views, bindings, entry['id'], compile_check)
+            cpp_type, templates, typed_views, bindings, entry['id'], compile_check, checker)
+        monitor = interface.get('monitor')
+        if not monitor:
+            located = checker.index.resolve(module['name'])
+            monitor = checker.index.provides_monitor(located) if located is not None else False
+            if monitor is None:
+                raise ValueError('%s: cannot tell whether a public base class provides OnMonitor; '
+                                 'its base is not defined in the loaded Module headers' % module['id'])
+        if monitor:
+            monitored.add(entry['id'])
         entries.append((entry['id'], cpp_type, args, i, declarations))
         typed_views[entry['id']] = [(cpp_type, entry['id'])]
     # Only transport consumed views, while checking every XR_REGISTER declaration.
@@ -346,11 +373,14 @@ def generate_xrobot_main_code(config, modules, registrations=None, compile_check
                        else typ + '&')
         parameters.append('%s %s' % (declaration, renamed[field][0]))
     lines = ['#pragma once', '', '#include <memory>', '#include <type_traits>',
-             '#include <utility>', '#include "thread.hpp"']
+             '#include <utility>', '#include "libxr.hpp"', '#include "thread.hpp"']
     lines += ['#include "%s.hpp"' % name for name in selected]
+    lines += ['#include "%s"' % header for header in config.get('constexpr_includes', [])]
     if compile_check:
         lines = lines[2:]
     lines += ['', HELPERS]
+    if constants:
+        lines += ['namespace %s {' % namespace] + constants + ['}  // namespace %s' % namespace, '']
     if compile_check:
         lines += ['namespace xrobot_generated {', 'void XRobotCompileCheck() {',
                   '  // Compilation only: this function must never be invoked.',
@@ -376,12 +406,14 @@ def generate_xrobot_main_code(config, modules, registrations=None, compile_check
             lines.append('  static %s %s(\n      %s\n  );' % (cpp_type, identity, '\n      , '.join(args)))
         else:
             lines.append('  static %s %s;' % (cpp_type, identity))
+    lines += ['  static_assert(std::is_void_v<decltype(%s.OnMonitor())>, "%s.OnMonitor() must return void");'
+              % (entry[0], entry[0]) for entry in entries if entry[0] in monitored]
     if compile_check:
-        lines += ['  Monitor(%s);' % entry[0] for entry in entries]
+        lines += ['  %s.OnMonitor();' % entry[0] for entry in entries if entry[0] in monitored]
         lines += ['}', '}  // namespace xrobot_generated', '']
         return '\n'.join(lines)
     lines += ['  for (;;) {']
-    lines += ['    ::xrobot_generated::Monitor(%s);' % entry[0] for entry in entries]
+    lines += ['    %s.OnMonitor();' % entry[0] for entry in entries if entry[0] in monitored]
     lines += ['    LibXR::Thread::Sleep(%s);' % config.get('settings', {}).get('monitor_sleep_ms', 1000),
               '  }', '}', '', '#undef XR_XROBOT_MAIN_INLINE', '']
     lines += ['/* User Code Begin XRobotMain */', '/* User Code End XRobotMain */',
@@ -408,6 +440,32 @@ def generate_xrobot_main_code(config, modules, registrations=None, compile_check
     return '\n'.join(lines)
 
 
+def _normalized_sha256(path: Path) -> str:
+    """Hash with LF line endings so Windows/Linux checkouts of one file agree."""
+    return hashlib.sha256(Path(path).read_bytes().replace(b'\r\n', b'\n')).hexdigest()
+
+
+def _tool_version() -> str:
+    try:
+        from importlib.metadata import version
+        return version('xrobot')
+    except Exception:  # Running from a source tree without installed metadata.
+        return 'source'
+
+
+def stamp_lines(output: Path, config: Path, lock: Path) -> str:
+    """Record which inputs produced a generated header; paths are relative to it."""
+    base = Path(os.path.abspath(output)).parent
+
+    def relative(path):
+        return Path(os.path.relpath(os.path.abspath(path), base)).as_posix()
+    lines = ['// xrobot-stamp: config=%s sha256=%s' % (relative(config), _normalized_sha256(config))]
+    if lock.is_file():
+        lines.append('// xrobot-stamp: lock=%s sha256=%s' % (relative(lock), _normalized_sha256(lock)))
+    lines.append('// xrobot-stamp: tool=xrobot %s' % _tool_version())
+    return '\n'.join(lines) + '\n'
+
+
 def generate(config_path=Path('User/xrobot.yaml'), modules_dir=Path('Modules'), output=Path('User/xrobot_main.hpp'), register_sources=None, lock_path=None):
     config = load_config(Path(config_path))
     sources = list(register_sources or [])
@@ -420,6 +478,8 @@ def generate(config_path=Path('User/xrobot.yaml'), modules_dir=Path('Modules'), 
     registrations = read_registrations(sources)
     modules = discover_modules(Path(modules_dir), lock_path)
     code = generate_xrobot_main_code(config, modules, registrations)
+    lock = Path(lock_path) if lock_path else Path(modules_dir).parent / 'xrobot.lock'
+    code = code.replace('#pragma once\n', '#pragma once\n' + stamp_lines(Path(output), Path(config_path), lock), 1)
     if Path(output).exists():
         code = preserve_regions(Path(output).read_bytes(), code)
     atomic_write(Path(output), code)

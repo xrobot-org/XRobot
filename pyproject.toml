@@ -19,6 +19,7 @@ keywords = ["code generation", "embedded systems", "automation"]
 dependencies = [
     "pyyaml",
     "requests",
+    "ruamel.yaml>=0.17.21,<0.19",
     "xr-syntax>=0.1.0"
 ]
 

@@ -233,32 +233,25 @@ class Resolver:
             raise
 
 
-def validate_locked_graph(resolver, roots, root_context=None):
-    """Validate lock closure from the pinned headers, without resolving moving refs."""
+def validate_locked_graph(resolver, roots):
+    """Validate lock closure from the pinned headers, without resolving moving refs.
+
+    The lock is commit-authoritative: branch-relative requests (same, same-or-dev)
+    only choose commits when the lock is created or updated, so the branch a lock
+    was resolved on is not a validity condition here.
+    """
     records = resolver.resolved
     visited, active = set(), []
 
-    def visit(req, parent=None):
+    def visit(req):
         candidates = [key for key in records if (key.casefold() == req['id'].casefold() if '/' in req['id'] else key.rsplit('/', 1)[-1] == req['id'])]
         if len(candidates) != 1:
             raise ValueError('Project lock is missing or ambiguous for ' + req['id'])
         identity = candidates[0]
         row = records[identity]
         kind, name = row.get('ref_kind'), row.get('resolved_ref')
-        logical = row.get('context')
-        expected_context = list(context(req['context_ref'])) if req.get('context_ref') else [kind, name]
-        if logical != expected_context:
-            raise ValueError('Invalid logical ref context in lock for ' + identity)
         selector = req.get('ref')
-        if selector in ('same', 'same-or-dev'):
-            if not parent or parent[0] not in ('branch', 'tag'):
-                raise ValueError('Relative dependency has no logical context in lock')
-            allowed = [list(parent)]
-            if selector == 'same-or-dev' and parent[0] == 'branch':
-                allowed.append(['branch', 'dev'])
-            if [kind, name] not in allowed:
-                raise ValueError('Locked relative ref violates manifest for ' + identity)
-        elif selector:
+        if selector and selector not in ('same', 'same-or-dev'):
             if selector.startswith('refs/heads/') or selector.startswith('refs/tags/'):
                 if [kind, name] != list(context(selector)):
                     raise ValueError('Locked ref does not match requested ref for ' + identity)
@@ -278,15 +271,48 @@ def validate_locked_graph(resolver, roots, root_context=None):
         if text is None:
             raise ValueError('Primary header missing from locked commit for ' + identity)
         for dep in manifest_from_text(text, header).depends:
-            visit(request(dep, canonical=True), logical)
+            visit(request(dep, canonical=True))
         active.pop()
         visited.add(identity)
 
     for root in roots:
-        parent = context(root["context_ref"]) if root.get("context_ref") else root_context
-        visit(root, parent)
+        visit(root)
     if visited != set(records):
         raise ValueError('Project lock contains sources outside the declared dependency closure')
+
+
+def check_released_ancestry(resolver, root_context, offline=False):
+    """On dev or a release tag, every branch-relative lock entry must be released.
+
+    A lock resolved on a feature branch may pin module commits that exist only on
+    that feature branch. Once the BSP itself is on dev or a tag, each such commit
+    must already be contained in the module's dev branch (or the same tag).
+    """
+    if root_context is None:
+        return
+    kind, name = root_context
+    if not (kind == 'tag' or (kind == 'branch' and name == 'dev')):
+        return
+    for identity, row in resolver.resolved.items():
+        if row.get('requested') not in ('same', 'same-or-dev'):
+            continue
+        folder = resolver.prepared[identity]['folder']
+        if kind == 'tag':
+            target, spec = 'refs/tags/' + name, '+refs/tags/%s:refs/tags/%s' % (name, name)
+        else:
+            target, spec = 'refs/remotes/origin/dev', '+refs/heads/dev:refs/remotes/origin/dev'
+        if not offline:
+            git(folder, 'fetch', 'origin', spec, check=False)
+        if not git(folder, 'rev-parse', '--verify', target + '^{commit}', check=False):
+            raise ValueError('%s has no %s to check released lock commits against' % (identity, target))
+        contained = subprocess.run(
+            ['git', '-C', str(folder), 'merge-base', '--is-ancestor', row['commit'], target],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+        if not contained:
+            raise ValueError(
+                '%s: locked commit %s is not contained in %s (feature branch not merged, '
+                'or merged by squash/rebase); run xrobot_setup --update on this branch'
+                % (identity, row['commit'][:12], 'tag ' + name if kind == 'tag' else 'dev'))
 
 
 def write_cmake(modules_dir, records):
@@ -314,12 +340,11 @@ def sync_modules_by_config(config_path, sources_path, modules_dir, lock_path=Non
     needs_parent = any(req['ref'] in ('same', 'same-or-dev') and not req.get('context_ref')
                        for req in roots)
     root_context = None
-    if needs_parent:
+    if needs_parent or context_ref:
         selected = context_ref or git(modules_dir.resolve().parent, 'symbolic-ref',
                                       '--quiet', 'HEAD', check=False)
-        if not selected:
-            raise ValueError('Relative root dependencies require a BSP branch or --context-ref refs/heads/... or refs/tags/...')
-        root_context = context(selected)
+        if selected:
+            root_context = context(selected)
     if update and (frozen or offline):
         raise ValueError('--update cannot be combined with --frozen or --offline')
     if frozen or offline or (lock_path.exists() and not update):
@@ -328,8 +353,6 @@ def sync_modules_by_config(config_path, sources_path, modules_dir, lock_path=Non
         lock = load_yaml(lock_path)
         if lock.get('version') != 1 or lock.get('requests') != roots:
             raise ValueError('Module requests differ from xrobot.lock; run with --update')
-        if lock.get('root_context') != (list(root_context) if root_context else None):
-            raise ValueError('BSP root context differs from xrobot.lock; run with --update')
         resolver = Resolver(modules_dir, offline=offline)
         entries = lock.get('modules')
         if not isinstance(entries, dict):
@@ -346,10 +369,13 @@ def sync_modules_by_config(config_path, sources_path, modules_dir, lock_path=Non
                     raise ValueError('Offline commit missing for ' + identity)
                 git(folder, 'fetch', 'origin', entry['commit'])
             resolver.resolved[identity] = entry
-        validate_locked_graph(resolver, roots, root_context)
+        validate_locked_graph(resolver, roots)
+        check_released_ancestry(resolver, root_context, offline)
         resolver.materialize()
         write_cmake(modules_dir, entries)
         return lock
+    if needs_parent and root_context is None:
+        raise ValueError('Relative root dependencies require a BSP branch or --context-ref refs/heads/... or refs/tags/...')
     manager = SourceManager(sources_path)
     resolver = Resolver(modules_dir, manager)
     for root in roots:
@@ -357,13 +383,11 @@ def sync_modules_by_config(config_path, sources_path, modules_dir, lock_path=Non
         resolver.visit(root, parent)
     records = {}
     for identity, entry in sorted(resolver.resolved.items()):
-        records[identity] = dict(entry)
+        records[identity] = {k: v for k, v in entry.items() if k != 'context'}
         for field in ('repo', 'source'):
             records[identity][field] = portable_locator(entry[field], lock_path.resolve().parent)
     resolver.materialize()
     lock = {'version': 1, 'requests': roots, 'modules': records}
-    if root_context:
-        lock['root_context'] = list(root_context)
     write_cmake(modules_dir, lock['modules'])
     atomic_write(lock_path, yaml.safe_dump(lock, sort_keys=False, allow_unicode=True))
     return lock

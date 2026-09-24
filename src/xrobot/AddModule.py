@@ -1,16 +1,39 @@
 """Add a source dependency or an ordered, editable Module instance."""
 import argparse
+import io
 import re
 from pathlib import Path
 import yaml
+from ruamel.yaml import YAML
 from xrobot.ModuleParser import discover_modules, select_module, source_interface
 from xrobot.GenerateMain import load_config, validate_config, atomic_write
-from xrobot.SourceManager import load_yaml
 from xrobot.ConstructorModel import initial_arguments, template_bindings
 
 DEFAULT_REPO_CONFIG = Path('Modules/modules.yaml')
 DEFAULT_INSTANCE_CONFIG = Path('User/xrobot.yaml')
 MODULES_DIR = Path('Modules')
+
+
+def _round_trip():
+    """YAML reader/writer that keeps comments, key order and existing quoting."""
+    document = YAML()
+    document.preserve_quotes = True
+    document.width = 4096
+    document.indent(mapping=2, sequence=4, offset=2)
+    return document
+
+
+def _load_round_trip(path, default):
+    if not Path(path).exists():
+        return default
+    data = _round_trip().load(Path(path).read_text(encoding='utf-8-sig'))
+    return data if data is not None else default
+
+
+def _dump_round_trip(path, data):
+    stream = io.StringIO()
+    _round_trip().dump(data, stream)
+    atomic_write(Path(path), stream.getvalue())
 
 
 def is_repo_id(value):
@@ -38,8 +61,11 @@ def append_module_instance(module_name, config_path=DEFAULT_INSTANCE_CONFIG, ins
         print('template <%s>' % interface['template'])
     for item in interface['constructors']:
         print('  ' + item['declaration'])
-    config = load_config(config_path) if config_path.exists() else {'modules': [], 'settings': {'monitor_sleep_ms': 1000}}
-    config.setdefault('modules', [])
+    if config_path.exists():
+        load_config(config_path)  # validate the existing file before editing it
+    config = _load_round_trip(config_path, {'modules': [], 'settings': {'monitor_sleep_ms': 1000}})
+    if config.get('modules') is None:
+        config['modules'] = []
     identity = instance_id or get_next_instance_id(config['modules'], module['name'])
     if not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]*', identity):
         raise ValueError('Invalid instance identifier: ' + identity)
@@ -61,7 +87,7 @@ def append_module_instance(module_name, config_path=DEFAULT_INSTANCE_CONFIG, ins
         entry['args'] = arguments
     config['modules'].append(entry)
     validate_config(config)
-    atomic_write(config_path, yaml.safe_dump(config, sort_keys=False, allow_unicode=True))
+    _dump_round_trip(config_path, config)
     print('Added %s. Review the named values and fill null entries in %s.' % (identity, config_path))
     return identity
 
@@ -70,12 +96,12 @@ def add_repo_entry(repo_id, config_path=DEFAULT_REPO_CONFIG):
     from xrobot.InitModule import request
     request(repo_id, canonical=True)
     path = Path(config_path)
-    data = load_yaml(path) if path.exists() else {'modules': []}
+    data = _load_round_trip(path, {'modules': []})
     if not isinstance(data.get('modules'), list):
         raise ValueError('modules.yaml requires a list')
     if repo_id not in data['modules']:
         data['modules'].append(repo_id)
-        atomic_write(path, yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
+        _dump_round_trip(path, data)
 
 
 def main():

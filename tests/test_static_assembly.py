@@ -176,6 +176,7 @@ class GeneratedCpp(unittest.TestCase):
         self.cxx = os.environ.get('CXX', 'g++')
         self.standard = os.environ.get('XR_CXX_STANDARD', 'c++20')
         self.write('thread.hpp', '#pragma once\n#include <cstdlib>\nnamespace LibXR { struct Thread { static void Sleep(unsigned) { std::_Exit(0); } }; }\n')
+        self.write('libxr.hpp', '#pragma once\n')
 
     def write(self, name, text):
         path = self.root / name
@@ -294,21 +295,44 @@ template <class T = int> class Choose { public:
         self.assertIn('Choose<> first;',code)
         self.compile()
 
-    def test_order_and_exact_optional_monitor(self):
+    def test_order_and_every_public_monitor_is_called(self):
         self.write('thread.hpp','''#pragma once
 #include <cstdlib>
 #include <cassert>
-inline int stage=0;
-namespace LibXR { struct Thread { static void Sleep(unsigned) { assert(stage == 4); std::_Exit(0); } }; }
+inline int stage=0, extra=0;
+namespace LibXR { struct Thread { static void Sleep(unsigned) { assert(stage == 4); assert(extra == 3); std::_Exit(0); } }; }
 ''')
         self.module('A','''#include "thread.hpp"
 class A { public: A(){assert(stage++ == 0);} void OnMonitor(){assert(stage++ == 2);} };''')
         self.module('B','''#include "thread.hpp"
 class B { public: explicit B(A& a){(void)a;assert(stage++ == 1);} void OnMonitor() noexcept {assert(stage++ == 3);} };''')
-        for name, monitor in [('NoMonitor',''),('Wrong','int OnMonitor(){ std::abort(); }'),('Defaulted','void OnMonitor(int = 0){ std::abort(); }'),('Static','static void OnMonitor(){ std::abort(); }'),('Overloaded','void OnMonitor(){ std::abort(); } void OnMonitor(int){ std::abort(); }')]:
-            self.module(name, 'class %s { public: %s() {} %s };' % (name,name,monitor))
-        entries=[{'module':'A','id':'a'}, {'module':'B','id':'b','args':[{'a':'a'}]}] + [{'module':name,'id':name.lower()+'0'} for name in ['NoMonitor','Wrong','Defaulted','Static','Overloaded']]
-        self.generate(entries)
+        # A public OnMonitor is always called; only a class without one is skipped.
+        for name, monitor in [('NoMonitor',''),('Private','private: void OnMonitor(){ std::abort(); }'),
+                              ('Defaulted','void OnMonitor(int = 0){ ++extra; }'),
+                              ('Static','static void OnMonitor(){ ++extra; }'),
+                              ('Overloaded','void OnMonitor(){ ++extra; } void OnMonitor(int){ std::abort(); }')]:
+            self.module(name, '#include "thread.hpp"\nclass %s { public: %s() {} %s };' % (name,name,monitor))
+        entries=[{'module':'A','id':'a'}, {'module':'B','id':'b','args':[{'a':'a'}]}] + [{'module':name,'id':name.lower()+'0'} for name in ['NoMonitor','Private','Defaulted','Static','Overloaded']]
+        code = self.generate(entries)
+        self.assertNotIn('nomonitor0.OnMonitor', code)
+        self.assertNotIn('private0.OnMonitor', code)
+        self.compile()
+
+    def test_monitor_with_wrong_signature_fails_to_compile(self):
+        self.module('Wrong','class Wrong { public: Wrong() {} int OnMonitor(){ return 1; } };')
+        self.generate([{'module':'Wrong','id':'wrong'}])
+        self.assertIn('must return void', self.compile(expected=False))
+
+    def test_inherited_monitor_is_called(self):
+        self.write('thread.hpp','''#pragma once
+#include <cstdlib>
+inline int calls=0;
+namespace LibXR { struct Thread { static void Sleep(unsigned) { std::_Exit(calls == 1 ? 0 : 3); } }; }
+''')
+        self.module('Derived','''#include "thread.hpp"
+struct DerivedCore { void OnMonitor(){ ++calls; } };
+class Derived : public DerivedCore { public: Derived() {} };''')
+        self.assertIn('derived.OnMonitor();', self.generate([{'module':'Derived','id':'derived'}]))
         self.compile()
 
     def test_forward_instance_fails_in_cpp_not_python(self):
@@ -355,7 +379,7 @@ class B { public: explicit B(A& a){(void)a;assert(stage++ == 1);} void OnMonitor
         self.assertIn('#define XROBOT_MAIN() ::XRobotMain(port)', code)
         for absent in ('void Main(', 'XrView0', 'xr_slots', 'Erase(', 'XRobotMonitorAll', '__INTELLISENSE__', '__clangd__'):
             self.assertNotIn(absent, code)
-        self.assertIn('::xrobot_generated::Monitor(probe_0);', code)
+        self.assertIn('probe_0.OnMonitor();', code)
         self.compile()
         source = self.root/'User/app_main.cpp'
         source.write_text(source.read_text().replace('XROBOT_MAIN();','::XRobotMain(port);'))
