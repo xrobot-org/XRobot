@@ -111,6 +111,31 @@ def _module_record(identity: str, folder: Path) -> dict:
             'manifest': parse_manifest_from_header(header)}
 
 
+def locked_modules(directory: Path, lock_path: Path) -> list:
+    """State of every xrobot.lock entry: ok, missing (not checked out) or mismatch (HEAD differs)."""
+    directory = Path(directory)
+    lock = yaml.safe_load(Path(lock_path).read_text(encoding='utf-8')) or {}
+    states = []
+    for identity, record in (lock.get('modules') or {}).items():
+        folder = (directory / identity).resolve()
+        if directory.resolve() not in folder.parents:
+            raise ValueError('Module path leaves directory: %s' % identity)
+        commit = (record or {}).get('commit')
+        present = (folder / (folder.name + '.hpp')).is_file()
+        head = _locked_head(folder) if present else None
+        status = 'missing' if not present else 'mismatch' if commit and head and head != commit else 'ok'
+        states.append({'id': identity, 'folder': folder, 'commit': commit, 'head': head, 'status': status})
+    return states
+
+
+def lock_error(state: dict) -> str:
+    if state['status'] == 'missing':
+        return '%s from xrobot.lock is not checked out; run xrobot_setup --frozen' % state['id']
+    return ('%s is checked out at %s but xrobot.lock pins %s; run xrobot_setup --frozen to '
+            'restore the locked sources, or xrobot_setup --update to adopt the new ones'
+            % (state['id'], state['head'][:12], state['commit'][:12]))
+
+
 def discover_modules(directory: Path, lock_path=None) -> dict:
     """Return canonical IDs and local source paths, not instantiated objects.
 
@@ -123,21 +148,10 @@ def discover_modules(directory: Path, lock_path=None) -> dict:
     lock_path = Path(lock_path) if lock_path else directory.parent / 'xrobot.lock'
     result = {}
     if lock_path.exists():
-        lock = yaml.safe_load(lock_path.read_text(encoding='utf-8')) or {}
-        for identity, record in (lock.get('modules') or {}).items():
-            folder = (directory / identity).resolve()
-            if directory.resolve() not in folder.parents:
-                raise ValueError('Module path leaves directory: %s' % identity)
-            if not (folder / (folder.name + '.hpp')).is_file():
-                raise ValueError('%s from xrobot.lock is not checked out; run xrobot_setup --frozen' % identity)
-            commit = (record or {}).get('commit')
-            head = _locked_head(folder)
-            if commit and head and head != commit:
-                raise ValueError(
-                    '%s is checked out at %s but xrobot.lock pins %s; run xrobot_setup --frozen to '
-                    'restore the locked sources, or xrobot_setup --update to adopt the new ones'
-                    % (identity, head[:12], commit[:12]))
-            result[identity] = _module_record(identity, folder)
+        for state in locked_modules(directory, lock_path):
+            if state['status'] != 'ok':
+                raise ValueError(lock_error(state))
+            result[state['id']] = _module_record(state['id'], state['folder'])
         return result
     if not directory.exists():
         return result

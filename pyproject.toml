@@ -41,6 +41,8 @@ Repository = "https://github.com/xrobot-org/XRobot"
 
 [project.scripts]
 xrobot_gen_main = "xrobot.GenerateMain:main"
+xrobot_describe = "xrobot.Describe:main"
+xrobot_instance = "xrobot.AddModule:instance_main"
 xrobot_mod_parser = "xrobot.ModuleParser:main"
 xrobot_create_mod = "xrobot.ModuleCreator:main"
 xrobot_init_mod = "xrobot.InitModule:main"

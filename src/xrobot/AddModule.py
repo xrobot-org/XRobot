@@ -1,6 +1,7 @@
 """Add a source dependency or an ordered, editable Module instance."""
 import argparse
 import io
+import json
 import re
 from pathlib import Path
 import yaml
@@ -92,6 +93,41 @@ def append_module_instance(module_name, config_path=DEFAULT_INSTANCE_CONFIG, ins
     return identity
 
 
+def _instance_index(config, instance_id):
+    for index, entry in enumerate(config.get('modules') or []):
+        if entry.get('id') == instance_id:
+            return index
+    raise ValueError('No module instance with id %s' % instance_id)
+
+
+def set_module_instance(instance_id, values, config_path=DEFAULT_INSTANCE_CONFIG):
+    """Replace an instance's id, template_args and/or args; other entries keep their text."""
+    unknown = set(values) - {'id', 'template_args', 'args'}
+    if unknown:
+        raise ValueError('Only id, template_args and args can be set, not ' + ', '.join(sorted(unknown)))
+    config_path = Path(config_path)
+    load_config(config_path)
+    config = _load_round_trip(config_path, {})
+    entry = config['modules'][_instance_index(config, instance_id)]
+    for key in ('id', 'template_args', 'args'):
+        if key not in values:
+            continue
+        if key != 'id' and values[key] in (None, []):
+            entry.pop(key, None)
+        else:
+            entry[key] = values[key]
+    validate_config(config)
+    _dump_round_trip(config_path, config)
+
+
+def remove_module_instance(instance_id, config_path=DEFAULT_INSTANCE_CONFIG):
+    config_path = Path(config_path)
+    load_config(config_path)
+    config = _load_round_trip(config_path, {})
+    del config['modules'][_instance_index(config, instance_id)]
+    _dump_round_trip(config_path, config)
+
+
 def add_repo_entry(repo_id, config_path=DEFAULT_REPO_CONFIG):
     from xrobot.InitModule import request
     request(repo_id, canonical=True)
@@ -117,6 +153,35 @@ def main():
             add_repo_entry(args.target, args.config or DEFAULT_REPO_CONFIG)
         else:
             append_module_instance(args.target, args.config or DEFAULT_INSTANCE_CONFIG, args.instance_id, args.directory)
+    except (ValueError, OSError, yaml.YAMLError) as error:
+        parser.exit(1, str(error) + '\n')
+
+
+def instance_main():
+    """xrobot_instance: add, set or remove one Module instance of an application config."""
+    parser = argparse.ArgumentParser(description=instance_main.__doc__)
+    parser.add_argument('-c', '--config', default=str(DEFAULT_INSTANCE_CONFIG))
+    commands = parser.add_subparsers(dest='command', required=True)
+    add = commands.add_parser('add', help='append an instance filled with the source defaults')
+    add.add_argument('module')
+    add.add_argument('--id')
+    add.add_argument('-d', '--directory', default='Modules')
+    change = commands.add_parser('set', help='replace id, template_args and/or args')
+    change.add_argument('id')
+    change.add_argument('values', help='JSON object, e.g. {"args": [{"led": "LED_B"}]}')
+    remove = commands.add_parser('remove', help='delete an instance')
+    remove.add_argument('id')
+    args = parser.parse_args()
+    try:
+        if args.command == 'add':
+            append_module_instance(args.module, args.config, args.id, args.directory)
+        elif args.command == 'set':
+            values = json.loads(args.values)
+            if not isinstance(values, dict):
+                raise ValueError('values must be a JSON object')
+            set_module_instance(args.id, values, args.config)
+        else:
+            remove_module_instance(args.id, args.config)
     except (ValueError, OSError, yaml.YAMLError) as error:
         parser.exit(1, str(error) + '\n')
 

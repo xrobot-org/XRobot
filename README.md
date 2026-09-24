@@ -92,6 +92,29 @@ The snippet assumes a real BSP object named `LED_R`; XRobot does not create it o
 infer an electrical pin. A first generation scans the original registration
 source, so the generated header need not already exist.
 
+Commit `User/xrobot_main.hpp` with its inputs. Its first lines record the
+LF-normalized SHA-256 of the configuration and `xrobot.lock` it was generated
+from; LibXR's CMake refuses to build once either input changed without
+regenerating (`XROBOT_MAIN_HEADERS` lists additional entry headers). BSP CI
+regenerates every generated file from the committed inputs with
+`xrobot_setup --frozen` and fails when the result differs from the commit.
+
+With a lock, generation reads only the locked Module folders, and each must be
+checked out at its locked commit: `xrobot_setup --frozen` restores the locked
+sources, `xrobot_setup --update` adopts newer ones.
+
+Editors use two further commands. `xrobot_describe` prints, as JSON, what
+generation reads and enforces: locked Module constructor signatures, the fields
+or constructors each YAML mapping must name, registrations with their types and
+the names each parameter can bind, lock and header-stamp state and generation
+diagnostics. `xrobot_instance add|set|remove` edits one instance of a
+configuration while keeping the comments and text of the rest:
+
+```sh
+xrobot_describe --register-source User/app_main.cpp > state.json
+xrobot_instance set blinkled_0 '{"args": [{"led": "LED_B"}, {"blink_cycle": "500"}]}'
+```
+
 ## C++ arguments, instances and defaults
 
 A Module is a plain global C++ class matching its primary header name. It may have
@@ -242,9 +265,13 @@ from different names.
 
 Root `same` / `same-or-dev` requests use the ordinary BSP checkout's current Git
 branch. In detached CI, pass `--context-ref refs/heads/feature/new-api` to
-`xrobot_init_mod` or `xrobot_setup`; tag context must use `refs/tags/...`. The lock
-records this context and rejects reuse after it changes until an explicit update.
-No extra BSP identity file is needed. A detached Module PR SHA can preserve its
+`xrobot_init_mod` or `xrobot_setup`; tag context must use `refs/tags/...`. The
+context only steers resolution: `xrobot.lock` pins exact commits and is
+authoritative afterwards, so the same lock builds on a feature branch, after its
+merge and in CI. When the BSP context is `dev` or a tag, each locked commit must
+be contained in the Module's `dev` or that tag; a commit that was never merged
+(or was merged by squash/rebase) fails with a request to run
+`xrobot_setup --update`. No extra BSP identity file is needed. A detached Module PR SHA can preserve its
 logical dependency branch in the request:
 
 ```yaml

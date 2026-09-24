@@ -466,6 +466,31 @@ def stamp_lines(output: Path, config: Path, lock: Path) -> str:
     return '\n'.join(lines) + '\n'
 
 
+STAMP_INPUT = re.compile(r'^// xrobot-stamp: (config|lock)=(\S+) sha256=([0-9a-f]+)$')
+STAMP_TOOL = re.compile(r'^// xrobot-stamp: tool=(.+)$')
+
+
+def stamp_state(header: Path) -> dict:
+    """Compare a generated header's stamp with its inputs (mirrors XRobotStampCheck.cmake)."""
+    header = Path(header)
+    if not header.is_file():
+        return {'status': 'missing', 'tool': None, 'inputs': []}
+    lines = header.read_text(encoding='utf-8', errors='replace').splitlines()[:8]
+    tool = next((m.group(1) for m in map(STAMP_TOOL.match, lines) if m), None)
+    inputs = []
+    for match in filter(None, map(STAMP_INPUT.match, lines)):
+        kind, relative, recorded = match.groups()
+        path = header.parent / relative
+        current = _normalized_sha256(path) if path.is_file() else None
+        inputs.append({'kind': kind, 'path': relative, 'recorded': recorded, 'current': current,
+                       'status': 'fresh' if current == recorded else 'missing' if current is None else 'stale'})
+    if not inputs:
+        status = 'unstamped'
+    else:
+        status = 'fresh' if all(i['status'] == 'fresh' for i in inputs) else 'stale'
+    return {'status': status, 'tool': tool, 'inputs': inputs}
+
+
 def generate(config_path=Path('User/xrobot.yaml'), modules_dir=Path('Modules'), output=Path('User/xrobot_main.hpp'), register_sources=None, lock_path=None):
     config = load_config(Path(config_path))
     sources = list(register_sources or [])
