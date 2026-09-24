@@ -458,7 +458,10 @@ def stamp_lines(output: Path, config: Path, lock: Path) -> str:
     base = Path(os.path.abspath(output)).parent
 
     def relative(path):
-        return Path(os.path.relpath(os.path.abspath(path), base)).as_posix()
+        try:
+            return Path(os.path.relpath(os.path.abspath(path), base)).as_posix()
+        except ValueError:  # another Windows drive: no relative path exists
+            return Path(os.path.abspath(path)).as_posix()
     lines = ['// xrobot-stamp: config=%s sha256=%s' % (relative(config), _normalized_sha256(config))]
     if lock.is_file():
         lines.append('// xrobot-stamp: lock=%s sha256=%s' % (relative(lock), _normalized_sha256(lock)))

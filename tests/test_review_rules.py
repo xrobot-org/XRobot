@@ -144,6 +144,18 @@ class Stamp(Fixture):
         self.assertIn('// xrobot-stamp: tool=xrobot ', code)
 
 
+    def test_inputs_on_another_drive_are_stamped_by_absolute_path(self):
+        from unittest import mock
+        from xrobot.GenerateMain import stamp_lines, stamp_state
+        config = self.write('User/xrobot.yaml', 'modules: []\n')
+        header = self.root / 'User/xrobot_main.hpp'
+        with mock.patch('xrobot.GenerateMain.os.path.relpath', side_effect=ValueError('path is on mount C:')):
+            stamp = stamp_lines(header, config, self.root / 'xrobot.lock')
+        self.assertIn('config=%s sha256=' % Path(os.path.abspath(config)).as_posix(), stamp)
+        header.write_text('#pragma once\n' + stamp, encoding='utf-8')
+        self.assertEqual(stamp_state(header)['status'], 'fresh')
+
+
 class LockedDiscovery(Fixture):
     def git(self, *args):
         subprocess.run(['git', '-C', str(self.root / 'Modules/team/A'), *args], check=True,
