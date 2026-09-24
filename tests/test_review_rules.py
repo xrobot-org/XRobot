@@ -141,7 +141,8 @@ class Stamp(Fixture):
         self.assertIn('// xrobot-stamp: config=xrobot.yaml sha256=' + digest, code)
         self.assertIn('// xrobot-stamp: lock=../xrobot.lock sha256=' +
                       hashlib.sha256(b'version: 1\nmodules:\n  C: {}\n').hexdigest(), code)
-        self.assertIn('// xrobot-stamp: tool=xrobot ', code)
+        # No tool version: a release that generates the same code leaves committed headers valid.
+        self.assertNotIn('tool=', code)
 
 
     def test_inputs_on_another_drive_are_stamped_by_absolute_path(self):

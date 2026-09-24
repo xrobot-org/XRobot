@@ -445,14 +445,6 @@ def _normalized_sha256(path: Path) -> str:
     return hashlib.sha256(Path(path).read_bytes().replace(b'\r\n', b'\n')).hexdigest()
 
 
-def _tool_version() -> str:
-    try:
-        from importlib.metadata import version
-        return version('xrobot')
-    except Exception:  # Running from a source tree without installed metadata.
-        return 'source'
-
-
 def stamp_lines(output: Path, config: Path, lock: Path) -> str:
     """Record which inputs produced a generated header; paths are relative to it."""
     base = Path(os.path.abspath(output)).parent
@@ -465,21 +457,18 @@ def stamp_lines(output: Path, config: Path, lock: Path) -> str:
     lines = ['// xrobot-stamp: config=%s sha256=%s' % (relative(config), _normalized_sha256(config))]
     if lock.is_file():
         lines.append('// xrobot-stamp: lock=%s sha256=%s' % (relative(lock), _normalized_sha256(lock)))
-    lines.append('// xrobot-stamp: tool=xrobot %s' % _tool_version())
     return '\n'.join(lines) + '\n'
 
 
 STAMP_INPUT = re.compile(r'^// xrobot-stamp: (config|lock)=(\S+) sha256=([0-9a-f]+)$')
-STAMP_TOOL = re.compile(r'^// xrobot-stamp: tool=(.+)$')
 
 
 def stamp_state(header: Path) -> dict:
     """Compare a generated header's stamp with its inputs (mirrors XRobotStampCheck.cmake)."""
     header = Path(header)
     if not header.is_file():
-        return {'status': 'missing', 'tool': None, 'inputs': []}
+        return {'status': 'missing', 'inputs': []}
     lines = header.read_text(encoding='utf-8', errors='replace').splitlines()[:8]
-    tool = next((m.group(1) for m in map(STAMP_TOOL.match, lines) if m), None)
     inputs = []
     for match in filter(None, map(STAMP_INPUT.match, lines)):
         kind, relative, recorded = match.groups()
@@ -491,7 +480,7 @@ def stamp_state(header: Path) -> dict:
         status = 'unstamped'
     else:
         status = 'fresh' if all(i['status'] == 'fresh' for i in inputs) else 'stale'
-    return {'status': status, 'tool': tool, 'inputs': inputs}
+    return {'status': status, 'inputs': inputs}
 
 
 def generate(config_path=Path('User/xrobot.yaml'), modules_dir=Path('Modules'), output=Path('User/xrobot_main.hpp'), register_sources=None, lock_path=None):
