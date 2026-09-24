@@ -501,7 +501,8 @@ class ValueChecker:
             expr, typed = self.render(child, field + '.' + p['name'], bindings, param_type, entry.path, None)
             if typed:
                 args.append(expr)
-            elif isinstance(child, (dict, list)):
+            elif isinstance(child, (dict, list)) or expr.lstrip().startswith('{'):
+                # A braced value cannot be a cast operand; list-initialize the parameter type.
                 args.append('std::remove_cv_t<std::remove_reference_t<%s>>%s' % (param_type, expr))
             else:
                 # An exact-type argument list makes overload resolution select the

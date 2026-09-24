@@ -207,6 +207,35 @@ class GeneratedCpp(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stdout)
         return result.stdout
 
+    def test_constructor_mapping_of_a_nested_template_member_compiles(self):
+        """R6 output as used by CameraFrameSync<Layout>::RuntimeParam (braced and string_view values)."""
+        self.module('Sync', '''#include <string_view>
+#include <cstdlib>
+struct Layout { static constexpr int width = 4; };
+template <typename L>
+class Sync {
+ public:
+  enum class Mode { LATEST, NEAREST };
+  struct RuntimeParam {
+    RuntimeParam() = default;
+    constexpr RuntimeParam(Mode mode, int offset, std::string_view topic, std::string_view raw = {})
+        : mode(mode), offset(offset + L::width), topic(topic), raw(raw) {}
+    constexpr RuntimeParam(Mode mode, unsigned div, int offset, float hz = 1.0F)
+        : mode(mode), offset(offset + static_cast<int>(div)) { (void)hz; }
+    Mode mode = Mode::LATEST;
+    int offset = 0;
+    std::string_view topic{};
+    std::string_view raw{};
+  };
+  explicit Sync(const RuntimeParam& param = {}) {
+    if (param.offset != 7 || param.topic != "cmd" || !param.raw.empty()) std::abort();
+  }
+};
+''')
+        self.generate([{'module': 'Sync', 'id': 'sync', 'template_args': ['Layout'], 'args': [{'param': {
+            'mode': 'Sync<Layout>::Mode::NEAREST', 'offset': '3', 'topic': '"cmd"', 'raw': '{}'}}]}])
+        self.compile()
+
     def test_cv_pointer_storage_base_adjustment_and_monitor_scope(self):
         self.write('thread.hpp', '''#pragma once
 #include <cstdlib>
