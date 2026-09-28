@@ -1,36 +1,43 @@
-# Coordinated core releases
+# Core releases
 
-LibXR, XRobot and LibXR_CppCodeGenerator share one numeric release version.
-Module releases keep their independent exact date tags. No new distribution
-product or BSP package solver is required.
+LibXR, XRobot (`xrobot` on PyPI) and LibXR_CppCodeGenerator (`libxr` on PyPI)
+are versioned independently; for example xrobot 1.0.0 is released together with
+CodeGenerator 6.0.0. Both Python packages pin the same xr-syntax version exactly
+(`xr-syntax==X`), so xr-syntax is released first. Modules keep their own tags.
 
-Freeze exact candidates on the coordinated development line. Validate in order:
-LibXR automatic tests; backend compile matrix; both Python packages and generated
-code; official Module compatibility; documentation; maintained release-blocking
-BSPs and required hardware checks. Test a PR's actual head rather than silently
-substituting a different repository's dev state. Unmaintained third-party BSPs
-do not block a core release.
+Freeze exact candidates on the dev lines and validate them in order: LibXR
+automatic tests; the backend compile matrix; both Python packages and the code
+they generate; the official Module compile matrix; documentation; the
+release-blocking BSPs and their hardware checks. Test a pull request's actual
+head, not another repository's dev state. Unmaintained third-party BSPs do not
+block a release.
 
-Only after acceptance should candidates be promoted to master, tagged and
-published. An unchanged implementation may join a new release, but wheel/sdist
-metadata must contain the new version: a tag on an old commit does not rewrite
-a static pyproject.toml version field.
+Only accepted candidates are promoted to master, tagged and published. A tag does
+not change a package: `pyproject.toml` must already carry the released version.
 
-`tools/check_release.py` checks a small maintainer-produced acceptance record
-against clean committed source identities and both Python package versions:
+`tools/check_release.py` compares a maintainer-written acceptance record with the
+candidate checkouts:
 
 ```sh
-python tools/check_release.py --version 6.0.0 \
-  --libxr ../libxr --xrobot . --codegen ../LibXR_CppCodeGenerator \
-  --record release-acceptance.json
+python tools/check_release.py --libxr ../libxr --xrobot . \
+  --codegen ../LibXR_CppCodeGenerator --record release-acceptance.json
 ```
 
-The version above is an example, not an assigned release. The record contains
-`version`, a `commits` map (`libxr`, `xrobot`, `codegen`) and a `checks` map with
-`automatic`, `backends`, `packages`, `modules`, `docs`, and `bsp` set to `pass`
-only by the responsible acceptance workflow/maintainer. Keep the detailed logs
-with those workflows. The checker validates correspondence; it does not invent
-or independently certify hardware evidence and never builds, tags or publishes.
+```json
+{
+  "xr-syntax": "0.2.0",
+  "repositories": {
+    "libxr":   {"commit": "<40-hex>"},
+    "xrobot":  {"commit": "<40-hex>", "version": "1.0.0"},
+    "codegen": {"commit": "<40-hex>", "version": "6.0.0"}
+  },
+  "checks": {"automatic": "pass", "backends": "pass", "packages": "pass",
+             "modules": "pass", "docs": "pass", "bsp": "pass"}
+}
+```
 
-All public publication actions remain explicit. Never use a successful
-single-module compilation to auto-create a release tag.
+It fails unless every checkout is clean and at the recorded commit, each package's
+`pyproject.toml` version equals its recorded version, both packages pin
+`xr-syntax==` the recorded version, and every check is `pass`. Only the responsible
+workflow or maintainer sets a check to `pass`; logs stay with those workflows. The
+checker validates correspondence only: it never builds, tags or publishes.
