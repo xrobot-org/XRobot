@@ -57,8 +57,11 @@ def portable_locator(value, lock_directory):
     local = local_locator(value)
     if local is None:
         return value
+    path = Path(local)
+    if not path.is_absolute():
+        path = Path(lock_directory) / path  # already relative to the lock
     try:
-        return Path(os.path.relpath(Path(local).resolve(), lock_directory)).as_posix()
+        return Path(os.path.relpath(path.resolve(), lock_directory)).as_posix()
     except ValueError as error:
         raise ValueError('Local source cannot be expressed relative to this lock; use a portable '
                          'repository URL') from error

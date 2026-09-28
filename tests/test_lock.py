@@ -353,8 +353,6 @@ class LockFile(UpstreamTestCase):
         self.assertNotIn(self.tmp.as_posix(), self.lock_bytes().decode('utf-8'))
         self.assertEqual(self.sync(offline=True), first)
 
-    # Locked local sources are re-expressed relative to the working directory instead of the lock.
-    @unittest.expectedFailure
     def test_a_locked_local_source_stays_relative_to_the_lock_when_run_from_a_subdirectory(self):
         self.upstream('team/A')
         self.entries[0]['repo'] = 'upstream/team/A'

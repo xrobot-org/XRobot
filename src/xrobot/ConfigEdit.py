@@ -167,11 +167,16 @@ class ConfigFile:
         self.text, self.config = text, config
 
 
+def _path_tokens(path):
+    tokens = re.findall(r'[A-Za-z_][A-Za-z_0-9]*|\[\d+\]', path)
+    if not tokens or ''.join(t if t.startswith('[') else '.' + t for t in tokens).lstrip('.') != path:
+        raise ConfigError('invalid path %s; use id, template_args[n], args.<param>.<field>..., [n]' % path)
+    return tokens
+
+
 def _set_path(item, path, value):
     """Set ``value`` at a dotted path inside one instance mapping."""
-    tokens = re.findall(r'[A-Za-z_][A-Za-z_0-9]*|\[\d+\]', path)
-    if not tokens or ''.join(t if t.startswith('[') else '.' + t for t in tokens).lstrip('.') != path.replace(' ', ''):
-        raise ConfigError('invalid path %s; use id, template_args[n], args.<param>.<field>..., [n]' % path)
+    tokens = _path_tokens(path)
     node = item
     for position, token in enumerate(tokens):
         last = position == len(tokens) - 1
@@ -250,10 +255,74 @@ def set_value(config_path, instance_id, path, value, if_match=None, source=None)
     if if_match is not None and file_hash(config.path) != if_match:
         raise ConfigError('%s changed since it was read; reload and retry' % config.source)
     k = config.index_of(instance_id)
+    new_value = _to_yaml_value(value)
+    if isinstance(new_value, str):
+        text = _replace_scalar(config.text, k, path, new_value)
+        if text is not None:
+            config.write(text)
+            return
     blocks = config.blocks()
     item, indent = _load_item(blocks.item_text(k))
-    _set_path(item, path, _to_yaml_value(value))
+    _set_path(item, path, new_value)
     config.write(blocks.replace(k, _render_item(item, indent)))
+
+
+def _scalar_text(value, style):
+    """Render ``value`` as a one-line YAML scalar, keeping the old quoting style."""
+    if style == '"':
+        return json.dumps(value, ensure_ascii=False)
+    if style is None and value not in ('', '~', 'null', 'Null', 'NULL') and '\n' not in value:
+        try:
+            node = yaml.compose('k: ' + value, Loader=yaml.BaseLoader)
+            child = node.value[0][1]
+            if isinstance(child, yaml.ScalarNode) and child.style is None and child.value == value:
+                return value
+        except yaml.YAMLError:
+            pass
+    return "'" + value.replace("'", "''") + "'"
+
+
+def _replace_scalar(text, index, path, value):
+    """Replace a one-line scalar in place; None when the path is not such a scalar."""
+    body = text[1:] if text.startswith('\ufeff') else text
+    body = body.replace('\r\n', '\n')
+    root = yaml.compose(body, Loader=yaml.BaseLoader)
+    try:
+        node = dict((k.value, v) for k, v in root.value)['modules'].value[index]
+    except (AttributeError, KeyError, IndexError, TypeError):
+        return None
+    tokens = _path_tokens(path)
+    position = 0
+    while position < len(tokens):
+        token = tokens[position]
+        if token.startswith('['):
+            if not isinstance(node, yaml.SequenceNode) or int(token[1:-1]) >= len(node.value):
+                return None
+            node = node.value[int(token[1:-1])]
+        elif isinstance(node, yaml.MappingNode):
+            children = dict((k.value, v) for k, v in node.value)
+            if token not in children:
+                return None
+            node = children[token]
+            if token == 'args' and position == 0 and position + 1 < len(tokens):
+                name = tokens[position + 1]
+                match = [v for item in node.value if isinstance(item, yaml.MappingNode)
+                         for k, v in item.value if k.value == name]
+                if len(match) != 1:
+                    return None
+                node = match[0]
+                position += 1
+        else:
+            return None
+        position += 1
+    if not isinstance(node, yaml.ScalarNode) or node.style not in (None, "'", '"') or \
+            node.start_mark.line != node.end_mark.line or (node.style is None and not node.value):
+        return None
+    lines = body.split('\n')
+    line = lines[node.start_mark.line]
+    lines[node.start_mark.line] = line[:node.start_mark.column] + _scalar_text(value, node.style) + \
+        line[node.end_mark.column:]
+    return '\n'.join(lines)
 
 
 def remove_instance(config_path, instance_id, source=None):
@@ -263,7 +332,10 @@ def remove_instance(config_path, instance_id, source=None):
     if users:
         raise ConfigError('%s: %s is still used by %s; change those values first'
                           % (config.source, instance_id, ', '.join(users)))
-    config.write(config.blocks().remove(k))
+    text = config.blocks().remove(k)
+    if parse_yaml(text, config.source).get('modules') is None:
+        text = re.sub(r'^modules:[ \t]*$', 'modules: []', text, count=1, flags=re.M)
+    config.write(text)
 
 
 def _values(node):

@@ -51,8 +51,6 @@ class Aggregates(MappingTestCase):
         self.rejected('P', 'param', '{.a = 1}', r'p\.args\.param: missing b')
         self.rejected('P', 'param', '{.b = 1, .a = 2}', 'fields out of declaration order')
 
-    # The type-prefixed designated form is accepted without the completeness check.
-    @unittest.expectedFailure
     def test_type_prefixed_designated_brace_text_is_checked_like_a_mapping(self):
         self.rejected('P', 'param', 'P::Param{.a = 1}', r'p\.args\.param: missing b')
 
@@ -157,7 +155,7 @@ class ConstructorMappings(MappingTestCase):
         code = self.value('S', 'runtime', {'mode': 'S::Mode::A', 'legacy_div': '3', 'level': '1', 'legacy_hz': '100.0F'})
         self.assertIn('S::Runtime(\nstatic_cast<S::Mode>(S::Mode::A)\n, xrobot_generated::Implicit<unsigned>(3)\n'
                       ', xrobot_generated::Implicit<unsigned>(1)\n, xrobot_generated::Implicit<float>(100.0F)\n)', code)
-        self.assertIn('static_assert(std::is_convertible_v<decltype((S::Mode::A)), S::Mode>', code)
+        self.assertIn('std::is_convertible_v<decltype((S::Mode::A)), S::Mode>', code)
 
     def test_the_mapping_must_name_every_parameter_of_one_constructor(self):
         self.rejected('S', 'runtime', {'mode': 'S::Mode::A', 'level': '1'},
@@ -317,7 +315,9 @@ class ConstructorModel(unittest.TestCase):
         self.assertEqual(convert('1', 'float', False, checks)[0], 'xrobot_generated::Implicit<float>(1)')
         self.assertEqual(checks, [])
         self.assertEqual(convert('x', 'const Port&', False, checks, 'p.args.port')[0], 'static_cast<const Port&>(x)')
-        self.assertEqual(checks, ['static_assert(std::is_convertible_v<decltype((x)), const Port&>,\n'
+        self.assertEqual(checks, ['static_assert(std::is_same_v<std::remove_cvref_t<decltype((x))>, '
+                                  'std::remove_cvref_t<const Port&>> ||\n'
+                                  '              std::is_convertible_v<decltype((x)), const Port&>,\n'
                                   '              "p.args.port requires an implicit conversion to const Port&");'])
         self.assertEqual(convert('{1}', 'Foo', False, [])[0], 'std::remove_cv_t<std::remove_reference_t<Foo>>{1}')
         self.assertEqual(convert('Foo(1)', 'Foo', True, [])[0], 'Foo(1)')

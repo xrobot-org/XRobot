@@ -285,7 +285,12 @@ def parser():
 
 
 def main(argv=None):
-    args = parser().parse_args(argv)
+    top = parser()
+    args, extra = top.parse_known_args(argv)
+    if extra and args.verb != 'source':
+        top.error('unrecognized arguments: %s' % ' '.join(extra))
+    if args.verb == 'source':
+        args.rest = extra + list(args.rest)
     try:
         args.run(args)
     except (ConfigError, ProjectError, OSError, ValueError, yaml.YAMLError) as error:

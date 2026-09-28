@@ -375,8 +375,10 @@ def _is_positional_brace(text):
 
 
 def _is_designated_brace(text):
+    """``{.a = 1}`` or ``T{.a = 1}``."""
     ts = code_tokens(text)
-    return len(ts) >= 4 and ts[0].text == '{' and ts[1].text == '.' and close_token(ts, 0) == len(ts) - 1
+    opening = next((i for i, t in enumerate(ts) if t.text == '{'), None)
+    return opening is not None and opening + 1 < len(ts) and ts[opening + 1].text == '.' and         close_token(ts, opening) == len(ts) - 1
 
 
 class ValueChecker:
@@ -507,7 +509,10 @@ def convert(expr, target, exact, checks, message='value'):
         return 'std::remove_cv_t<std::remove_reference_t<%s>>%s' % (target, expr), checks
     if is_arithmetic(target):
         return 'xrobot_generated::Implicit<%s>(%s)' % (value_type, expr), checks
-    checks.append('static_assert(std::is_convertible_v<decltype((%s)), %s>,\n'
+    # The same type (e.g. an immovable factory prvalue) needs no conversion.
+    checks.append('static_assert(std::is_same_v<std::remove_cvref_t<decltype((%s))>, '
+                  'std::remove_cvref_t<%s>> ||\n'
+                  '              std::is_convertible_v<decltype((%s)), %s>,\n'
                   '              "%s requires an implicit conversion to %s");'
-                  % (expr, target, message, target.replace('"', "'")))
+                  % (expr, target, expr, target, message, target.replace('"', "'")))
     return 'static_cast<%s>(%s)' % (target, expr), checks

@@ -58,8 +58,6 @@ class Fields(TypeIndexTestCase):
         self.assertEqual(defaults, {'a': '1', 'b': '{2}', 'ptr': 'nullptr', 'fn': '[] { int k = 0; return k; }',
                                     'computed': '[] { return 1; }()', 'mode': 'Mode::A', 'paren': 'int(4)'})
 
-    # The initializer after a bit-field width is dropped, so seeding would replace it with {}.
-    @unittest.expectedFailure
     def test_bit_field_default_member_initializer(self):
         entry = self.index('struct Bits { unsigned flag : 1 = 1; unsigned mode : 3 {2}; };').resolve('Bits')
         self.assertEqual(entry.layout().field_defaults, {'flag': '1', 'mode': '{2}'})
@@ -175,8 +173,6 @@ class Monitor(TypeIndexTestCase):
         self.assertFalse(self.provides('class M { protected: void OnMonitor(); };'))
         self.assertFalse(self.provides('class M { public: void OnMonitorAll(); };'))
 
-    # A static member function is skipped as a declaration, so it is never reported as a monitor.
-    @unittest.expectedFailure
     def test_public_static_monitor(self):
         self.assertTrue(self.provides('class M { public: static void OnMonitor(); };'))
 

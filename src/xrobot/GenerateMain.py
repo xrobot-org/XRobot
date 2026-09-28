@@ -192,8 +192,8 @@ class _Relation:
         if len(sp) != len(tp):
             return False  # pointer adaptation is decided by the generator's address-of rule
         try:
-            entry = self.index.resolve(source)
-            wanted = self.index.resolve(target)
+            entry = self.index.resolve(sb)
+            wanted = self.index.resolve(tb)
         except ValueError:
             return False
         if entry is None or wanted is None:

@@ -265,6 +265,8 @@ def _classify(header: _Header, member, access: str, layout: _Layout):
         else:
             break
     if 'static' in leading:
+        if 'OnMonitor' in texts and access == 'public' and _is_function(member):
+            layout.monitor = 'conditional' if header.conditional_depth(member[0]) else 'public'
         return
     if _is_function(member):
         if 'OnMonitor' in texts and access == 'public':
@@ -360,6 +362,8 @@ def _record_fields(header: _Header, member, forced_type, access, layout: _Layout
         name = part[name_index].text
         layout.fields.append((name, base_type, access))
         rest = part[name_index + 1:]
+        if rest and rest[0].text == ':':  # bit-field width, then an optional initializer
+            rest = next((rest[k:] for k in range(len(rest)) if rest[k].text in ('=', '{')), [])
         if rest and rest[0].text == '=' and len(rest) > 1:
             layout.field_defaults[name] = header.text[rest[1].start:rest[-1].end].strip()
         elif rest and rest[0].text == '{':

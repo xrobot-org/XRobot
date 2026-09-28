@@ -350,8 +350,6 @@ class Setup(CliMixin, UpstreamTestCase):
         out, _ = self.ok('source', 'get', 'Led')
         self.assertEqual(yaml.safe_load(out)['id'], 'team/Led')
 
-    # Options after `source` are taken by the top-level parser instead of being passed through.
-    @unittest.expectedFailure
     def test_source_options_are_passed_through(self):
         out, _ = self.ok('source', '--sources', self.root / 'Modules/sources.yaml', 'list', cwd=self.tmp)
         self.assertIn('team/Led [module]', out)

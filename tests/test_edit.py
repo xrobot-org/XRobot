@@ -147,14 +147,12 @@ class SetValue(EditTestCase):
             self.assertIn(comment, after)
         self.assertEqual(self.instances()[1]['args'], [{'led': 'status'}, {'backup': '&status'}, {'count': '5'}])
 
-    # Re-rendering the edited instance also rewrites the spacing before comments on its other lines.
-    @unittest.expectedFailure
     def test_only_the_edited_line_changes(self):
         before = self.text().split('\n')
         ConfigEdit.set_value(self.path, 'user', 'args.count', 5)
         after = self.text().split('\n')
         changed = [(a, b) for a, b in zip(before, after) if a != b]
-        self.assertEqual(changed, [('      - count: 3', "      - count: '5'")])
+        self.assertEqual(changed, [('      - count: 3', '      - count: 5')])
         self.assertEqual(len(before), len(after))
 
     def test_paths_reach_arguments_fields_and_template_arguments(self):
@@ -219,8 +217,6 @@ class RemoveAndRename(EditTestCase):
         for comment in ('# robot config', '# the status led', '# board pin', '# trailing comment'):
             self.assertIn(comment, text)
 
-    # Removing the only instance leaves `modules:` without a value, which validation then rejects.
-    @unittest.expectedFailure
     def test_the_last_instance_can_be_removed(self):
         ConfigEdit.remove_instance(self.path, 'user')
         ConfigEdit.remove_instance(self.path, 'status')

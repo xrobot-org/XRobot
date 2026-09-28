@@ -157,7 +157,8 @@ class LineDirectives(GenerationTestCase):
         self.assertIn((7, ', std::remove_cv_t<std::remove_reference_t<Led::Param>>{'), yaml_targets)
         self.assertIn((10, ', xrobot_generated::Implicit<float>(2.5F)'), yaml_targets)
         self.assertIn((11, 'static Probe probe('), yaml_targets)
-        self.assertIn((14, 'static_assert(std::is_convertible_v<decltype((sub)), Port&>,'), yaml_targets)
+        self.assertIn((14, 'static_assert(std::is_same_v<std::remove_cvref_t<decltype((sub))>, '
+                            'std::remove_cvref_t<Port&>> ||'), yaml_targets)
         self.assertIn((15, ', &port'), yaml_targets)
         back = [line for line in lines if line.endswith('"%s"' % header)]
         self.assertEqual(len(back), 2)
@@ -177,7 +178,7 @@ class Conversions(GenerationTestCase):
 
     def test_other_values_get_an_implicit_conversion_check_and_a_cast(self):
         code = self.code(probe(name='"left"'))
-        self.assertIn('static_assert(std::is_convertible_v<decltype(("left")), const char*>,\n'
+        self.assertIn('std::is_convertible_v<decltype(("left")), const char*>,\n'
                       '              "probe.args.name requires an implicit conversion to const char*");', code)
         self.assertIn(', static_cast<const char*>("left")', code)
 
@@ -189,7 +190,7 @@ class Conversions(GenerationTestCase):
 
     def test_a_derived_registration_is_checked_and_cast(self):
         code = self.code(probe(port='sub'))
-        self.assertIn('static_assert(std::is_convertible_v<decltype((sub)), Port&>', code)
+        self.assertIn('std::is_convertible_v<decltype((sub)), Port&>', code)
         self.assertIn('static_cast<Port&>(sub)', code)
 
     def test_a_bare_name_for_a_pointer_parameter_passes_its_address(self):
@@ -237,8 +238,6 @@ class Dependencies(GenerationTestCase):
         message = self.error(led(), {'module': 'Cmd', 'id': 'cmd', 'args': [{'led': 'port'}, {'backup': 'nullptr'}]})
         self.assertIn('cmd.args.led: port is a Port, which does not convert to Led&', message)
 
-    # Pointer spellings are never located, so an unrelated pointer is left to the compiler.
-    @unittest.expectedFailure
     def test_a_located_pointer_without_a_public_base_relation_is_rejected(self):
         for value in ('&hidden', 'hidden'):
             with self.subTest(value=value):
@@ -586,8 +585,6 @@ class Foo { public:
         self.generate({'modules': [{'module': 'Foo', 'id': 'f', 'args': [{'gain': '1'}]}]})
         self.compile()
 
-    # The implicit-conversion check needs a movable type, so an immovable prvalue is rejected.
-    @unittest.expectedFailure
     def test_factory_prvalue_keeps_guaranteed_copy_elision(self):
         self.module('Foo', '''struct Config {
   Config() = default;
