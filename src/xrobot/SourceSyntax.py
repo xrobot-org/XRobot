@@ -1,7 +1,7 @@
 """XRobot 对 xr-syntax 的薄适配层。
 
 这里仅保留 XRobot 需要的源码级契约：词法 token、分隔符配对、参数列表切分、
-注册名绑定，以及 Module 构造接口提取。C++ 解析全部由 xr-syntax 负责。
+预处理条件层数，以及 Module 构造接口提取。C++ 解析全部由 xr-syntax 负责。
 
 Thin XRobot adapter over xr-syntax.  It keeps only XRobot-specific source
 contracts while xr-syntax owns all C++ parsing.
@@ -9,13 +9,12 @@ contracts while xr-syntax owns all C++ parsing.
 
 from __future__ import annotations
 
-from typing import Dict, List, Sequence
+from typing import List, Sequence
 
 from xr_syntax.cpp import (
     CppDocument,
     CppLexicalToken,
     code_tokens as _code_tokens,
-    identifier_occurrences,
     matching_delimiter,
     split_source_list,
 )
@@ -48,36 +47,6 @@ def split_arguments(text: str) -> List[str]:
     template angle brackets as nesting, matching XRobot's historical contract.
     """
     return list(split_source_list(text, template_angles=True))
-
-
-def bind_identifiers(expression: str, bindings: Dict[str, List[str]]) -> str:
-    """替换未限定的注册逻辑名，并保持其余源码字节不变。
-
-    Bind unqualified registered identifiers while leaving member names, scope
-    roots, comments, preprocessor lines, literals, and unrelated spelling intact.
-    """
-    edits = []
-    for occurrence in identifier_occurrences(expression):
-        if occurrence.text not in bindings:
-            continue
-        if occurrence.qualified_left or occurrence.scope_root:
-            continue
-        views = bindings[occurrence.text]
-        if len(views) != 1:
-            raise ValueError(
-                "Ambiguous registered name '%s'; select one of: %s"
-                % (occurrence.text, ", ".join(views))
-            )
-        edits.append((occurrence.span.start, occurrence.span.end, views[0]))
-
-    encoded = expression.encode("utf-8", errors="surrogateescape")
-    for start, end, replacement in reversed(edits):
-        encoded = (
-            encoded[:start]
-            + replacement.encode("utf-8", errors="surrogateescape")
-            + encoded[end:]
-        )
-    return encoded.decode("utf-8", errors="surrogateescape")
 
 
 def conditional_depth(document: CppDocument, start: int, end: int) -> int:
@@ -182,27 +151,3 @@ def _is_global_class(node) -> bool:
     if parent is not None and parent.kind == "template_declaration":
         parent = parent.parent
     return parent is not None and parent.kind == "translation_unit"
-
-
-def preserve_regions(existing_source: str | bytes, generated_source: str) -> str:
-    """Preserve explicit User Code bodies; regenerate format/lint-protected code.
-
-    clang-format and NOLINT control tooling, not ownership of generated code.
-    Markers nested inside User Code remain part of the preserved user body.
-    """
-    previous = CppDocument.parse(existing_source)
-    current = CppDocument.parse(generated_source)
-    used = set()
-    for old_region in previous.user_regions():
-        regions = list(current.user_regions())
-        match = next(
-            ((index, region) for index, region in enumerate(regions)
-             if index not in used and region.name == old_region.name),
-            None,
-        )
-        if match is None:
-            continue
-        index, region = match
-        current = current.replace_region_body(region, old_region.body_text)
-        used.add(index)
-    return current.render_bytes().decode("utf-8", errors="surrogateescape")

@@ -168,11 +168,17 @@ class SourceManager:
                     if selected_priorities[key] == source.priority and self.packages[key]['repo'] != record['repo']:
                         raise ValueError('Equal-priority sources disagree about %s; set source priorities explicitly' % key)
                     continue
-                self.packages[key] = record
+                self.packages[key] = dict(record)
                 selected_priorities[key] = source.priority
                 self.module_source_map[key] = source
                 if record['type'] == 'module':
                     self.module_map[key] = record['repo']
+        # xrobot.lock records the canonical repository; mirror catalogs only change
+        # where sources are fetched from.
+        for key, record in self.packages.items():
+            canonical = [repo for repo, source in self.all_module_candidates.get(key, [])
+                         if not source.mirror_of]
+            record['canonical'] = canonical[0] if canonical else record['repo']
 
     def resolve_id(self, name, kind=None):
         candidates = [identity for identity, record in self.packages.items() if (not kind or record['type'] == kind) and (identity.casefold() == name.casefold() if '/' in name else identity.rsplit('/', 1)[-1] == name)]

@@ -1,13 +1,69 @@
-"""Create a plain C++ Module with thin package metadata and native CMake."""
-import argparse
+"""Create a plain C++ Module with thin package metadata, native CMake and CI."""
 import re
 from pathlib import Path
+
 import yaml
-from xrobot.ModuleWorkflow import module_workflow
+
+CI_WORKFLOW = '''name: Module CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    uses: xrobot-org/XRobot/.github/workflows/module-ci.yml@v1
+    with:
+      template-args: '%s'
+'''
+
+CMAKE = '''target_include_directories(xr PUBLIC "${CMAKE_CURRENT_LIST_DIR}")
+file(GLOB MODULE_SOURCES CONFIGURE_DEPENDS
+     "${CMAKE_CURRENT_LIST_DIR}/*.cpp"
+     "${CMAKE_CURRENT_LIST_DIR}/*.cc"
+     "${CMAKE_CURRENT_LIST_DIR}/*.cxx"
+     "${CMAKE_CURRENT_LIST_DIR}/*.c")
+target_sources(xr PRIVATE ${MODULE_SOURCES})
+'''
+
+README = '''# %(name)s
+
+%(description)s
+
+## Interface
+
+The public constructor in `%(name)s.hpp` is the interface: dependencies (hardware
+or other Modules, as references or pointers without defaults) come first, value
+configuration with explicit defaults after. `xrobot module show .` prints it.
+
+## Use in a BSP
+
+```sh
+xrobot module add <owner>/%(name)s
+xrobot setup
+xrobot instance add <owner>/%(name)s
+```
+
+`xrobot instance add` writes an instance with every parameter and its source
+default; fill the dependencies (`null`) with registered hardware names or
+earlier instance ids, then run `xrobot gen`.
+
+## CI
+
+`.github/workflows/build.yml` calls the shared XRobot Module CI, which compiles
+the Module sources and one generated constructor call. The call uses `void*`
+placeholders for dependencies and is never linked or executed.
+'''
 
 
+def _write(path, text):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(text.encode('utf-8'))
 
-def create_module(class_name, description='', constructor_args=None, template_args=None, depends=None, output_dir=Path('Modules'), includes=None):
+
+def create_module(class_name, description='', constructor_args=None, template_args=None, depends=None,
+                  output_dir=Path('.'), includes=None):
     if not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]*', class_name):
         raise ValueError('Module name must be a C++ identifier')
     folder = Path(output_dir) / class_name
@@ -19,74 +75,25 @@ def create_module(class_name, description='', constructor_args=None, template_ar
         if not isinstance(item, str) or not item.strip():
             raise ValueError('Constructor/template declarations must be C++ text')
     from xrobot.InitModule import request
+    entries = []
     for dependency in depends or []:
-        request(dependency, canonical=True)
-    manifest = yaml.safe_dump({'module_description': description, 'depends': depends or []}, sort_keys=False, allow_unicode=True).rstrip()
-    lines = ['#pragma once', '', '// clang-format off', '/* === MODULE MANIFEST V2 ===', manifest, '=== END MANIFEST === */', '// clang-format on', '']
+        parsed = request(dependency, canonical=True)
+        entries.append({'id': parsed['id'], 'ref': parsed['ref'] or 'same-or-dev'})
+    manifest = yaml.safe_dump({'module_description': description, 'depends': entries},
+                              sort_keys=False, allow_unicode=True).rstrip()
+    lines = ['#pragma once', '', '// clang-format off', '/* === MODULE MANIFEST V2 ===', manifest,
+             '=== END MANIFEST === */', '// clang-format on', '']
     for header in includes or []:
         if '\n' in header or '"' in header:
             raise ValueError('Invalid include name')
         lines.append('#include %s' % (header if header.startswith('<') else '"%s"' % header))
     if templates:
         lines += ['', 'template <%s>' % ', '.join(templates)]
-    lines += ['class %s {' % class_name, ' public:', '  %s(%s) {}' % (class_name, ', '.join(constructors)), '};', '']
+    lines += ['class %s' % class_name, '{', ' public:',
+              '  %s(%s) {}' % (class_name, ', '.join(constructors)), '};', '']
     folder.mkdir(parents=True)
-    (folder / (class_name + '.hpp')).write_text('\n'.join(lines), encoding='utf-8')
-    (folder / 'CMakeLists.txt').write_text('''target_include_directories(xr PUBLIC "${CMAKE_CURRENT_LIST_DIR}")
-file(GLOB MODULE_SOURCES CONFIGURE_DEPENDS
-     "${CMAKE_CURRENT_LIST_DIR}/*.cpp"
-     "${CMAKE_CURRENT_LIST_DIR}/*.cc"
-     "${CMAKE_CURRENT_LIST_DIR}/*.cxx"
-     "${CMAKE_CURRENT_LIST_DIR}/*.c")
-target_sources(xr PRIVATE ${MODULE_SOURCES})
-''', encoding='utf-8')
-    (folder / 'README.md').write_text('''# %s
-
-%s
-
-The public constructor and template declarations in `%s.hpp` are the interface.
-Use `xrobot_mod_parser --path .` to display them and `xrobot_add_mod` to add an
-instance. The configuration contains ordered parameter names and explicit source
-defaults. Fill required object bindings before generating a production application.
-
-`void OnMonitor()` is optional. Construction and monitoring follow application
-configuration order. The BSP owns external object lifetimes and native builds.
-
-## Validation
-
-The generated workflow compiles a real constructor call and the Module sources.
-Its `void*` dependency placeholders are compile-only: the probe is never linked
-as an application or executed. Required template arguments must be supplied in
-`XR_TEMPLATE_ARGS` using valid C++ values for this Module.
-
-Existing Module-specific behavior and hardware tests remain separate. The workflow
-does not create release tags. Core branch builds select the same branch when
-available, then dev; tag builds require the exact tag. `XROBOT_REF` and `LIBXR_REF`
-repository variables can explicitly select qualified core refs or full commits.
-Dependencies remain in the header manifest; native CMake owns the build.
-''' % (class_name, description, class_name), encoding='utf-8')
-    workflow = folder / '.github/workflows/build.yml'
-    workflow.parent.mkdir(parents=True)
-    workflow.write_bytes(module_workflow().encode('utf-8'))
+    _write(folder / (class_name + '.hpp'), '\n'.join(lines))
+    _write(folder / 'CMakeLists.txt', CMAKE)
+    _write(folder / 'README.md', README % {'name': class_name, 'description': description})
+    _write(folder / '.github/workflows/build.yml', CI_WORKFLOW % '[]')
     return folder
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('class_name')
-    parser.add_argument('--desc', default='')
-    parser.add_argument('--constructor', action='append', default=[], help='A C++ parameter declaration; repeat for each parameter')
-    parser.add_argument('--template', action='append', default=[], help='A C++ template parameter declaration')
-    parser.add_argument('--include', action='append', default=[])
-    parser.add_argument('--depends', nargs='*', default=[])
-    parser.add_argument('--out', default='Modules')
-    args = parser.parse_args()
-    try:
-        path = create_module(args.class_name, args.desc, args.constructor, args.template, args.depends, Path(args.out), args.include)
-        print('Created %s' % path)
-    except (OSError, ValueError) as error:
-        parser.exit(1, str(error) + '\n')
-
-
-if __name__ == '__main__':
-    main()

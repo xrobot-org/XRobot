@@ -11,7 +11,7 @@ from xrobot.SourceSyntax import extract_interface
 from xrobot.ConstructorModel import enrich_interface
 
 MANIFEST_PATTERN = re.compile(r'/\*\s*=== MODULE MANIFEST(?: V\d+)? ===\s*(.*?)\s*=== END MANIFEST ===\s*\*/', re.S)
-INTERFACE_FIELDS = {'constructor_args', 'template_args', 'required_hardware'}
+MANIFEST_KEYS = ('module_description', 'description', 'depends', 'standalone')
 
 
 class ModuleManifest:
@@ -49,8 +49,12 @@ def manifest_from_text(text: str, path=None) -> ModuleManifest:
         data = {}
     if not isinstance(data, dict):
         raise ValueError('%s: package manifest must be a mapping' % path)
-    # These historical fields are never used as a C++ interface or defaults.
-    return ModuleManifest({k: v for k, v in data.items() if k not in INTERFACE_FIELDS}, path)
+    unknown = [k for k in data if k not in MANIFEST_KEYS]
+    if unknown:
+        raise ValueError('%s: unsupported manifest key(s) %s; the manifest holds only %s (the '
+                         'constructor in C++ is the interface)' % (path, ', '.join(map(str, unknown)),
+                                                                   ', '.join(MANIFEST_KEYS)))
+    return ModuleManifest(data, path)
 
 
 def parse_manifest_from_header(header_path: Path) -> ModuleManifest:
@@ -59,12 +63,12 @@ def parse_manifest_from_header(header_path: Path) -> ModuleManifest:
 
 
 def parse_module_folder(folder: Path) -> ModuleManifest:
-    folder = Path(folder)
+    folder = Path(folder).resolve()
     return parse_manifest_from_header(folder / (folder.name + '.hpp'))
 
 
 def load_single_module(path: Path) -> ModuleManifest:
-    path = Path(path)
+    path = Path(path).resolve()
     return parse_module_folder(path) if path.is_dir() else parse_manifest_from_header(path)
 
 
@@ -90,19 +94,13 @@ def source_interface(path: Path) -> dict:
     return copy.deepcopy(_INTERFACE_CACHE[key])
 
 
-def _folder_identity(folder: Path) -> str:
-    if (folder / '.git').exists():
-        result = subprocess.run(['git', '-C', str(folder), 'config', '--get', 'remote.origin.url'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=10)
-        match = re.search(r'(?:github\.com[/:])([^/]+/[^/]+?)(?:\.git)?/?$', result.stdout.strip(), re.I)
-        if match:
-            return match.group(1)
-    return 'local/' + folder.name
-
-
-def _locked_head(folder: Path) -> Optional[str]:
+def _locked_head(folder: Path):
+    """HEAD commit of a module checkout; raises when git cannot read it."""
     result = subprocess.run(['git', '-C', str(folder), 'rev-parse', '--verify', 'HEAD'],
-                            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
-    return result.stdout.strip() if result.returncode == 0 else None
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if result.returncode:
+        raise ValueError('cannot read the commit of %s: %s' % (folder, result.stderr.strip()))
+    return result.stdout.strip()
 
 
 def _module_record(identity: str, folder: Path) -> dict:
@@ -112,7 +110,7 @@ def _module_record(identity: str, folder: Path) -> dict:
 
 
 def locked_modules(directory: Path, lock_path: Path) -> list:
-    """State of every xrobot.lock entry: ok, missing (not checked out) or mismatch (HEAD differs)."""
+    """State of every xrobot.lock entry: ok, missing, mismatch or broken (with a reason)."""
     directory = Path(directory)
     lock = yaml.safe_load(Path(lock_path).read_text(encoding='utf-8')) or {}
     states = []
@@ -121,53 +119,59 @@ def locked_modules(directory: Path, lock_path: Path) -> list:
         if directory.resolve() not in folder.parents:
             raise ValueError('Module path leaves directory: %s' % identity)
         commit = (record or {}).get('commit')
-        present = (folder / (folder.name + '.hpp')).is_file()
-        head = _locked_head(folder) if present else None
-        status = 'missing' if not present else 'mismatch' if commit and head and head != commit else 'ok'
-        states.append({'id': identity, 'folder': folder, 'commit': commit, 'head': head, 'status': status})
+        state = {'id': identity, 'folder': folder, 'commit': commit, 'head': None,
+                 'status': 'ok', 'reason': None}
+        if not re.fullmatch(r'[0-9a-f]{40}', str(commit or '')):
+            state.update(status='broken', reason='xrobot.lock has no commit for %s' % identity)
+        elif not (folder / (folder.name + '.hpp')).is_file():
+            state['status'] = 'missing'
+        elif not (folder / '.git').exists():
+            state.update(status='broken', reason='%s is not a git checkout; run xrobot setup --frozen'
+                         % identity)
+        else:
+            try:
+                state['head'] = _locked_head(folder)
+            except ValueError as error:
+                state.update(status='broken', reason=str(error))
+            else:
+                if state['head'] != commit:
+                    state['status'] = 'mismatch'
+        states.append(state)
     return states
 
 
 def lock_error(state: dict) -> str:
+    if state['status'] == 'broken':
+        return state['reason']
     if state['status'] == 'missing':
-        return '%s from xrobot.lock is not checked out; run xrobot_setup --frozen' % state['id']
-    return ('%s is checked out at %s but xrobot.lock pins %s; run xrobot_setup --frozen to '
-            'restore the locked sources, or xrobot_setup --update to adopt the new ones'
-            % (state['id'], state['head'][:12], state['commit'][:12]))
+        return '%s from xrobot.lock is not checked out; run xrobot setup --frozen' % state['id']
+    return ('%s is checked out at %s but xrobot.lock pins %s. While developing a module, keep '
+            'your changes uncommitted; when they are ready, push them to a branch of the module '
+            'and run `xrobot setup --update %s`. To return to the locked sources run '
+            '`xrobot setup --frozen`.' % (state['id'], state['head'][:12], state['commit'][:12],
+                                            state['id']))
 
 
-def discover_modules(directory: Path, lock_path=None) -> dict:
-    """Return canonical IDs and local source paths, not instantiated objects.
+def discover_modules(directory: Path, lock_path) -> dict:
+    """Return canonical IDs and local source paths of the locked Modules.
 
-    With a project lock the lock is the only source of truth: unlisted folders
-    (stale caches, manual clones) are ignored and every locked folder must be
-    checked out at its locked commit, so interfaces are read from the sources
-    the build will compile.
+    The lock is the only source of truth: unlisted folders (stale caches,
+    manual clones) are ignored and every locked folder must be checked out at
+    its locked commit, so interfaces are read from the sources the build
+    compiles.
     """
-    directory = Path(directory)
-    lock_path = Path(lock_path) if lock_path else directory.parent / 'xrobot.lock'
+    lock_path = Path(lock_path)
+    if not lock_path.is_file():
+        raise ValueError('%s does not exist; run `xrobot setup` to resolve the Modules' % lock_path.name)
     result = {}
-    if lock_path.exists():
-        for state in locked_modules(directory, lock_path):
-            if state['status'] != 'ok':
-                raise ValueError(lock_error(state))
-            result[state['id']] = _module_record(state['id'], state['folder'])
-        return result
-    if not directory.exists():
-        return result
-    folders = sorted(set(directory.glob('*')) | set(directory.glob('*/*')))
-    for folder in folders:
-        if not folder.is_dir() or folder.name.startswith('.'):
+    problems = []
+    for state in locked_modules(directory, lock_path):
+        if state['status'] != 'ok':
+            problems.append(lock_error(state))
             continue
-        if not (folder / (folder.name + '.hpp')).is_file():
-            continue
-        if not (folder / '.git').exists() and folder.parent != directory:
-            identity = folder.parent.name + '/' + folder.name
-        else:
-            identity = _folder_identity(folder)
-        if identity in result:
-            raise ValueError('Duplicate local package %s' % identity)
-        result[identity] = _module_record(identity, folder)
+        result[state['id']] = _module_record(state['id'], state['folder'])
+    if problems:
+        raise ValueError('\n'.join(problems))
     return result
 
 
@@ -190,14 +194,3 @@ def print_manifest(manifest, name=None):
             print('%s:%s: %s' % (manifest.path, declaration['line'], declaration['declaration']))
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--path', '-p', required=True)
-    try:
-        print_manifest(load_single_module(Path(parser.parse_args().path)))
-    except (OSError, ValueError, yaml.YAMLError) as error:
-        parser.exit(1, str(error) + '\n')
-
-
-if __name__ == '__main__':
-    main()

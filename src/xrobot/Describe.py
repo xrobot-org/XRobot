@@ -1,33 +1,24 @@
 """Describe a BSP's XRobot state as JSON for editors; reads only, never writes.
 
-The output is what xrobot_gen_main reads and enforces: locked Module sources,
-constructor signatures and the struct fields / constructors a YAML mapping must
-name (the same TypeIndex lookups), XR_REGISTER registrations with their types,
-lock consistency, entry-header stamp freshness and generation diagnostics.
-Editors render and edit from it without parsing C++ or manifests themselves.
+The output is what ``xrobot gen`` reads and enforces: application configs and
+the selected product, the generated header's freshness, tool pins, locked
+Module sources, constructor signatures and the struct fields / constructors a
+YAML mapping must name, XR_REGISTER registrations with their types, binding
+candidates per instance, config constants and generation diagnostics. Editors
+render and edit from it without parsing C++ or manifests themselves.
 """
-import argparse
-import json
-import sys
 from pathlib import Path
-import yaml
 
-from xrobot.GenerateMain import (load_config, read_registrations, generate_xrobot_main_code,
-                                 stamp_state)
-from xrobot.ModuleParser import (discover_modules, locked_modules, lock_error, _module_record,
-                                 select_module, source_interface)
-from xrobot.ConstructorModel import (compliant_constructors, initializer_tree, qualify,
-                                     matching_views, type_shape)
+from xrobot import __version__
+from xrobot.Config import load_config
+from xrobot.ConstructorModel import (compliant_constructors, initializer_tree, is_dependency, qualify,
+                                     type_shape)
+from xrobot.GenerateMain import generate_code, read_registrations
+from xrobot.InitModule import read_modules_yaml
+from xrobot.ModuleParser import locked_modules, lock_error, _module_record, select_module, source_interface
 from xrobot.TypeIndex import TypeIndex
 
 SCHEMA = 1
-
-
-def _relative(path, root):
-    try:
-        return Path(path).resolve().relative_to(Path(root).resolve()).as_posix()
-    except ValueError:
-        return Path(path).as_posix()
 
 
 class _Types:
@@ -47,9 +38,14 @@ class _Types:
         key = entry.qualified
         if key not in self.table:
             self.table[key] = None  # reserve before recursing into member types
-            if entry.is_aggregate():
+            problem = entry.mapping_problem()
+            if problem:
+                self.table[key] = {'kind': 'opaque', 'reason': problem}
+            elif entry.is_aggregate():
+                defaults = entry.layout().field_defaults
                 self.table[key] = {'kind': 'aggregate', 'fields': [
-                    self._member(name, self.index.qualify_in(typ, entry, key), entry)
+                    dict(self._member(name, self.index.qualify_in(typ, entry, key), entry),
+                         default=defaults.get(name))
                     for name, typ, _ in entry.fields()]}
             else:
                 self.table[key] = {'kind': 'class', 'constructors': [
@@ -62,31 +58,36 @@ class _Types:
         return {'name': name, 'type': cpp_type, 'type_ref': self.ref(cpp_type, entry.path)}
 
 
-def _is_a(index, class_name, base, depth=0):
-    """Whether ``class_name`` is ``base`` or publicly derives from it (loaded headers only)."""
-    if class_name == base or class_name.split('::')[-1] == base.split('::')[-1]:
+def _matches(index, source, target):
+    """Whether an object of ``source`` binds to ``target`` (exact, or a located public base)."""
+    sb, tb = type_shape(source)[0], type_shape(target)[0]
+    if sb == tb:
         return True
     try:
-        entry = index.resolve(class_name) if depth < 8 else None
+        entry, wanted = index.resolve(source), index.resolve(target)
     except ValueError:
         return False
-    return entry is not None and any(
-        access == 'public' and _is_a(index, type_shape(spelling)[0].split('<')[0], base, depth + 1)
-        for access, spelling in entry.base_spellings())
+    if entry is None or wanted is None:
+        return False
+    pending, seen = [entry], set()
+    while pending:
+        current = pending.pop()
+        if current.path == wanted.path:
+            return True
+        if current.path in seen:
+            continue
+        seen.add(current.path)
+        for access, base in current.base_spellings():
+            if access == 'public':
+                parent = index.resolve(base, current.path[:-1])
+                if parent is not None:
+                    pending.append(parent)
+    return False
 
 
-def _candidates(target, index, registrations, instances):
-    """Registered names and earlier-configurable instance ids a parameter can bind."""
-    names = [r['name'] for r in registrations
-             if matching_views([(t, r['name']) for t in r['types']], target)]
-    base = type_shape(target)[0].split('<')[0]
-    names += [i['id'] for i in instances if i['class'] and _is_a(index, i['class'], base)]
-    return names
-
-
-def _describe_module(module, root, types, registrations, instances):
+def _describe_module(module, project, types, registrations):
     result = {'id': module['id'], 'class': module['name'],
-              'header': _relative(module['header'], root),
+              'header': project.relative(module['header']),
               'standalone': bool(module['manifest'].standalone)}
     if not result['standalone']:
         return result
@@ -107,119 +108,129 @@ def _describe_module(module, root, types, registrations, instances):
                 tree = default
             parameters.append({
                 'name': p['name'], 'type': target, 'default': default,
-                # A designated default initializer fixes the mapping's fields.
+                'dependency': is_dependency(p),
                 'default_fields': tree if isinstance(tree, dict) else None,
                 'type_ref': types.ref(target),
-                'candidates': _candidates(target, types.index, registrations, instances),
+                'candidates': [r['name'] for r in registrations
+                               if _matches(types.index, r['type'], target)],
             })
         constructors.append({'line': ctor.get('line'), 'parameters': parameters})
     result['constructors'] = constructors
     return result
 
 
-def describe(project='.', config=None, register_sources=None, lock=None, output=None):
-    root = Path(project)
-    config_path = Path(config) if config else root / 'User/xrobot.yaml'
-    lock_path = Path(lock) if lock else root / 'xrobot.lock'
-    header = Path(output) if output else root / 'User/xrobot_main.hpp'
-    modules_dir = root / 'Modules'
+def describe(project, config=None):
+    config_path = Path(config) if config else project.selected_config()
     diagnostics = []
 
     def report(severity, scope, message):
-        diagnostics.append({'severity': severity, 'scope': scope, 'message': str(message)})
+        for line in str(message).splitlines():
+            diagnostics.append({'severity': severity, 'scope': scope, 'message': line})
 
-    # Lock: every entry must be checked out at its commit; only locked sources are read.
-    lock_info = {'path': _relative(lock_path, root), 'present': lock_path.is_file(), 'modules': []}
+    tools = {'xrobot': {'installed': __version__, 'pin': None}}
+    try:
+        _, tools['xrobot']['pin'] = read_modules_yaml(project.modules_yaml)
+    except ValueError as error:
+        report('error', 'Modules/modules.yaml', error)
+    pin = tools['xrobot']['pin']
+    if pin is None:
+        report('warning', 'Modules/modules.yaml', 'XRobot is not pinned; add `xrobot: %s`' % __version__)
+    elif pin != __version__:
+        report('warning', 'Modules/modules.yaml', 'installed XRobot %s differs from the pinned %s'
+               % (__version__, pin))
+
+    lock_info = {'path': project.relative(project.lock), 'present': project.lock.is_file(), 'modules': []}
     modules = {}
-    if lock_path.is_file():
-        for state in locked_modules(modules_dir, lock_path):
+    if project.lock.is_file():
+        for state in locked_modules(project.modules_dir, project.lock):
             lock_info['modules'].append({k: state[k] for k in ('id', 'commit', 'head', 'status')})
             if state['status'] == 'ok':
                 modules[state['id']] = _module_record(state['id'], state['folder'])
             else:
                 report('error', state['id'], lock_error(state))
         statuses = {m['status'] for m in lock_info['modules']}
-        lock_info['status'] = 'ok' if statuses <= {'ok'} else 'missing' if 'missing' in statuses else 'mismatch'
+        lock_info['status'] = 'ok' if statuses <= {'ok'} else sorted(statuses - {'ok'})[0]
     else:
         lock_info['status'] = 'absent'
-        try:
-            modules = discover_modules(modules_dir, lock_path)
-        except ValueError as error:
-            report('error', 'Modules', error)
+        report('error', 'xrobot.lock', 'xrobot.lock does not exist; run `xrobot setup`')
 
-    entry = dict(stamp_state(header), path=_relative(header, root))
-    if entry['status'] == 'stale':
-        changed = ', '.join(i['path'] for i in entry['inputs'] if i['status'] != 'fresh')
-        report('warning', entry['path'], 'generated from older %s; regenerate it' % changed)
+    header = project.header_state()
+    if header['status'] == 'stale':
+        report('warning', header['path'], 'generated from older inputs (%s); run `xrobot gen`'
+               % ', '.join(header['newer'] + header['missing']))
+    elif header['status'] in ('missing', 'unreadable'):
+        report('warning', header['path'], 'not generated; run `xrobot setup`')
 
-    sources = [Path(p) for p in (register_sources or [])]
-    if not sources and (config_path.parent / 'app_main.cpp').is_file():
-        sources = [config_path.parent / 'app_main.cpp']
     records = []
+    entry_path = None
     try:
-        records = read_registrations(sources)
+        entry_path = project.entry()
+        records = read_registrations(entry_path)
     except (OSError, ValueError) as error:
         report('error', 'registrations', error)
-    registrations = [{'name': r['name'], 'types': list(r['types'])} for r in records]
+    registrations = [{'name': r['name'], 'type': r['type']} for r in records]
 
-    config_data, instances = None, []
-    try:
-        config_data = load_config(config_path)
-    except (OSError, ValueError, yaml.YAMLError) as error:
-        report('error', _relative(config_path, root), error)
-    for item in (config_data or {}).get('modules', []):
-        try:
-            module = select_module(modules, item['module'])
-        except ValueError:
-            module = None  # reported by the generation diagnostic below
-        instances.append({'id': item['id'], 'module': item['module'],
-                          'class': module['name'] if module else None,
-                          'template_args': item.get('template_args', []),
-                          'args': item.get('args', [])})
-
-    types = _Types(TypeIndex.for_modules(modules))
+    index = TypeIndex.for_modules(modules)
+    types = _Types(index)
     described = {}
     for identity, module in sorted(modules.items()):
         try:
-            described[identity] = _describe_module(module, root, types, registrations, instances)
+            described[identity] = _describe_module(module, project, types, registrations)
         except (OSError, ValueError) as error:
             described[identity] = {'id': identity, 'class': module['name'], 'error': str(error)}
             report('error', identity, error)
 
-    if config_data is not None and lock_info['status'] in ('ok', 'absent'):
-        try:
-            generate_xrobot_main_code(config_data, modules, records)
-        except (OSError, ValueError) as error:
-            report('error', _relative(config_path, root), error)
+    source = project.relative(config_path)
+    config_data, instances, constants = None, [], []
+    try:
+        config_data = load_config(config_path, source)
+    except (OSError, ValueError) as error:
+        report('error', source, error)
+    if config_data is not None:
+        namespace = config_data.get('constexpr_namespace', 'ProjectConstexpr')
+        constants = [{'name': name, 'qualified': namespace + '::' + name, 'type': spec['type']}
+                     for name, spec in config_data.get('constexprs', {}).items()]
+        earlier = []
+        for item in config_data.get('modules', []):
+            try:
+                module = select_module(modules, item['module'])
+            except ValueError:
+                module = None  # reported by the generation diagnostic below
+            candidates = {}
+            if module is not None and described.get(module['id'], {}).get('constructors'):
+                for ctor in described[module['id']]['constructors']:
+                    for p in ctor['parameters']:
+                        names = list(p['candidates'])
+                        names += [i for i, cls in earlier if cls and _matches(index, cls, p['type'])]
+                        names += [c['qualified'] for c in constants
+                                  if type_shape(c['type'])[0] == type_shape(p['type'])[0]]
+                        candidates.setdefault(p['name'], [])
+                        candidates[p['name']] += [n for n in names if n not in candidates[p['name']]]
+            instances.append({'id': item['id'], 'module': module['id'] if module else item['module'],
+                              'class': module['name'] if module else None,
+                              'template_args': item.get('template_args', []),
+                              'args': item.get('args', []), 'candidates': candidates})
+            earlier.append((item['id'], module['name'] if module else None))
+        if lock_info['status'] == 'ok' and entry_path is not None:
+            try:
+                generate_code(project, config_path, modules, records, index)
+            except (OSError, ValueError) as error:
+                report('error', source, error)
 
     return {
         'schema': SCHEMA,
-        'config': _relative(config_path, root),
+        'root': project.root.as_posix(),
+        'configs': [project.relative(p) for p in project.configs()],
+        'config': source,
+        'selected': project.relative(project.selected_config()),
+        'header': header,
+        'tools': tools,
         'lock': lock_info,
-        'entry': entry,
+        'entry': project.relative(entry_path) if entry_path else None,
         'registrations': registrations,
         'modules': described,
         'types': types.table,
         'instances': instances,
+        'constexprs': constants,
         'diagnostics': diagnostics,
     }
-
-
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('-C', '--project', default='.', help='BSP root (contains Modules/ and xrobot.lock)')
-    parser.add_argument('-c', '--config', help='default: <project>/User/xrobot.yaml')
-    parser.add_argument('-o', '--output', help='generated entry; default: <project>/User/xrobot_main.hpp')
-    parser.add_argument('--register-source', action='append', default=[])
-    parser.add_argument('--lock', help='default: <project>/xrobot.lock')
-    args = parser.parse_args()
-    try:
-        result = describe(args.project, args.config, args.register_source, args.lock, args.output)
-    except (OSError, ValueError, yaml.YAMLError) as error:
-        parser.exit(1, str(error) + '\n')
-    json.dump(result, sys.stdout, indent=2, ensure_ascii=False, default=str)
-    sys.stdout.write('\n')
-
-
-if __name__ == '__main__':
-    main()

@@ -2,12 +2,21 @@
 
 Only named, explicit declarations are supported. This is not a C++ type system:
 configuration trees come from initializer expressions, and a YAML mapping is
-checked against either the parameter's designated default initializer or the
-field list / constructor signatures read from the class definition in a loaded
-Module header (xrobot.TypeIndex). Types are never evaluated.
+checked against the class definition read from a loaded Module header
+(xrobot.TypeIndex) or, for a type the index cannot locate, against the
+parameter's designated default initializer. The generator rejects a value only
+when the problem is certain; everything else is left to the C++ compiler.
 """
 import re
-from xrobot.SourceSyntax import code_tokens, close_token, split_arguments, bind_identifiers
+
+from xrobot.Config import ConfigError, value_text
+from xrobot.SourceSyntax import code_tokens, close_token, split_arguments
+
+ARITHMETIC = frozenset('''
+bool char wchar_t char8_t char16_t char32_t short int long float double
+signed unsigned int8_t int16_t int32_t int64_t uint8_t uint16_t uint32_t uint64_t
+size_t ptrdiff_t intptr_t uintptr_t
+'''.split())
 
 
 def parameter(declaration):
@@ -105,7 +114,6 @@ def enrich_interface(source, interface):
 
 def replace_names(text, replacements):
     # Scope roots such as Mode::VALUE and T::value_type must be qualified here.
-    # This is intentionally different from binding external object identifiers.
     items = code_tokens(text)
     edits = []
     for i, token in enumerate(items):
@@ -163,7 +171,11 @@ def qualify(text, interface, cpp_class, templates=None, expand_aliases=False):
 
 
 def initializer_tree(expression, expected_type=None):
-    """Expand a brace initializer's explicit entries; never inspect a type's fields."""
+    """Expand a brace initializer's explicit entries; never inspect a type's fields.
+
+    Returns a dict for designated initializers, a list for positional ones, and
+    the original text for anything else (named constants, factory calls, casts).
+    """
     if expression is None:
         return None
     ts = code_tokens(expression)
@@ -172,15 +184,11 @@ def initializer_tree(expression, expected_type=None):
     opening = next((i for i, t in enumerate(ts) if t.text == '{'), None)
     if opening is None or close_token(ts, opening) != len(ts)-1:
         return expression
-    # Do not erase an unknown conversion, a lambda, or a nested typed expression.
-    # A typed outer initializer can be expanded only when its explicit type is
-    # the declared parameter type; braced child values need no type reflection.
     prefix = expression[:ts[opening].start].strip()
     if prefix:
-        if expected_type is None or type_shape(prefix)[:3] != type_shape(expected_type)[:3]:
-            # Const on the referred-to configuration does not change its value type.
-            if expected_type is None or type_shape(prefix)[0] != type_shape(expected_type)[0] or type_shape(prefix)[2] or type_shape(expected_type)[2]:
-                return expression
+        if expected_type is None or type_shape(prefix)[0] != type_shape(expected_type)[0] \
+                or type_shape(prefix)[2] or type_shape(expected_type)[2]:
+            return expression
         if any(t.text in ('[', ']', '(', ')', '=', '?', '+', '-') for t in ts[:opening]):
             return expression
     body = expression[ts[opening].end:ts[-1].start].strip().rstrip(',').strip()
@@ -208,7 +216,6 @@ def initializer_tree(expression, expected_type=None):
 
 def compliant_constructors(interface, cpp_class=None, templates=None):
     """Accept the agreed constructor shape: dependencies first, then defaults."""
-    cpp_class = cpp_class or interface['name']
     accepted, rejected = [], []
     for ctor in interface['constructors']:
         config_started = False
@@ -226,25 +233,6 @@ def compliant_constructors(interface, cpp_class=None, templates=None):
         raise ValueError('%s: no compliant constructor; %s' % (
             interface['name'], ' | '.join(rejected)))
     return accepted
-
-
-def initial_arguments(interface, cpp_class=None, templates=None, diagnostics=None):
-    cpp_class = cpp_class or interface['name']
-    result = []
-    ctor = compliant_constructors(interface, cpp_class, templates)[0]
-    for p in ctor['arguments']:
-        try:
-            value = initializer_tree(qualify(p['default'], interface, cpp_class, templates),
-                                     qualify(p['type'], interface, cpp_class, templates))
-        except ValueError as error:
-            message = '%s.%s: %s; original default: %s' % (
-                cpp_class, p['name'], error, p['default'])
-            if diagnostics is None:
-                raise ValueError(message) from error
-            diagnostics.append(message)
-            value = None
-        result.append({p['name']: value})
-    return result
 
 
 def type_shape(cpp_type):
@@ -280,72 +268,25 @@ def type_shape(cpp_type):
     return base, cv, tuple(pointers), reference
 
 
-def view_conversion(view_type, target_type, field):
-    """Return only an explicit same-type/cv or address-of binding, else no match."""
-    vb, vc, vp, _ = type_shape(view_type)
-    tb, tc, tp, ref = type_shape(target_type)
-    if vb != tb or not vc.issubset(tc) or ref == '&&':
-        return None
-    if vp == tp:
-        # A reference to a pointer variable must retain pointee qualifications.
-        if vp and ref == '&' and (vc != tc or vp != tp):
-            return None
-        return field
-    if not vp and len(tp) == 1 and ref != '&':
-        return 'std::addressof(%s)' % field
-    # Adding top-level const to a reference to existing pointer storage is safe.
-    if len(vp) == len(tp) and vp and vc == tc and vp[:-1] == tp[:-1] and vp[-1].issubset(tp[-1]):
-        return field
-    return None
+def is_arithmetic(cpp_type):
+    """Builtin arithmetic types and their <cstdint>/<cstddef> spellings, by value."""
+    base, _, pointers, reference = type_shape(cpp_type)
+    if pointers or reference:
+        return False
+    words = [t.text for t in code_tokens(cpp_type) if t.text not in ('const', 'volatile', '::')]
+    if words and words[0] == 'std':
+        words = words[1:]
+    return bool(words) and all(w in ARITHMETIC for w in words)
 
 
-
-def matching_views(options, target_type):
-    candidates = []
-    tb, tc, tp, _ = type_shape(target_type)
-    for typ, field in options:
-        bound = view_conversion(typ, target_type, field)
-        if bound is None:
-            continue
-        vb, vc, vp, _ = type_shape(typ)
-        score = (0 if vp == tp else 1, len(tc - vc))
-        candidates.append((score, bound))
-    if not candidates:
-        return []
-    best = min(score for score, _ in candidates)
-    return [bound for score, bound in candidates if score == best]
-
-
-def bind_value(expression, target_type, views, bindings):
-    text = expression.strip()
-    if text in views:
-        candidates = matching_views(views[text], target_type)
-        if len(candidates) == 1:
-            return candidates[0]
-        if len(candidates) > 1:
-            raise ValueError('Ambiguous registered name %s for %s' % (text, target_type))
-        # A sole explicit view can still participate in conversions checked by C++.
-        # Multiple views must never silently select an arbitrary first entry.
-        if len(views[text]) == 1:
-            view_type, field = views[text][0]
-            _, _, source_pointer, _ = type_shape(view_type)
-            _, _, target_pointer, reference = type_shape(target_type)
-            if not source_pointer and len(target_pointer) == 1 and reference != '&':
-                return 'std::addressof(%s)' % field
-            return field
-        raise ValueError('No unique registered view of %s for %s' % (text, target_type))
-    return bind_identifiers(expression, bindings)
-
+def is_dependency(p):
+    """A dependency parameter: reference or pointer type without a default (§2.2)."""
+    _, _, pointers, reference = type_shape(p['type'])
+    return p['default'] is None and bool(pointers or reference)
 
 
 def explicit_expression_type(value):
     """Recognize explicit casts/initializers and a small portable literal subset."""
-    if isinstance(value, bool):
-        return 'bool'
-    if isinstance(value, int):
-        return 'int' if -32767 <= value <= 32767 else None
-    if isinstance(value, float):
-        return 'double'
     if not isinstance(value, str):
         return None
     value = value.strip()
@@ -368,7 +309,13 @@ def explicit_expression_type(value):
     return None
 
 
-def constructor_for(interface, named_values, views, cpp_class, templates):
+def constructor_for(interface, named_values, known, cpp_class, templates):
+    """Select the constructor whose parameter names the configuration lists.
+
+    ``known`` maps registration names and earlier instance ids to their types.
+    Several constructors with the same names are told apart by explicit types
+    only (a known name's type, a cast, a typed initializer or a literal).
+    """
     names = [next(iter(v)) for v in named_values]
     candidates = []
     supported = compliant_constructors(interface, cpp_class, templates)
@@ -378,19 +325,20 @@ def constructor_for(interface, named_values, views, cpp_class, templates):
         good = True
         for p, item in zip(ctor['arguments'], named_values):
             value = next(iter(item.values()))
-            if isinstance(value, str) and value.strip() in views:
-                typ = qualify(p['type'], interface, cpp_class, templates, True)
-                options = views[value.strip()]
-                if not any(view_conversion(t, typ, f) is not None for t, f in options):
-                    # Unknown conversions are not a reason to reject the only signature.
+            target = qualify(p['type'], interface, cpp_class, templates, True)
+            text = value.strip() if isinstance(value, str) else None
+            if text is not None and text.lstrip('&') in known:
+                source = known[text.lstrip('&')]
+                if text.startswith('&'):
+                    source += '*'
+                if type_shape(source)[0] != type_shape(target)[0]:
                     good = False
-            else:
-                known = explicit_expression_type(value)
-                if known is not None:
-                    target = qualify(p['type'], interface, cpp_class, templates, True)
-                    source = qualify(known, interface, cpp_class, templates, True)
-                    if type_shape(source)[0] != type_shape(target)[0] or type_shape(source)[2] != type_shape(target)[2]:
-                        good = False
+                continue
+            known_type = explicit_expression_type(value)
+            if known_type is not None:
+                source = qualify(known_type, interface, cpp_class, templates, True)
+                if type_shape(source)[0] != type_shape(target)[0] or type_shape(source)[2] != type_shape(target)[2]:
+                    good = False
         candidates.append((ctor, good))
     if len(candidates) == 1:
         return candidates[0][0]
@@ -398,24 +346,10 @@ def constructor_for(interface, named_values, views, cpp_class, templates):
     if len(typed) == 1:
         return typed[0]
     if not candidates:
-        raise ValueError('%s: named arguments %s do not match any constructor; expected %s' % (
-            interface['name'], ', '.join(names), ' | '.join(', '.join(p['name'] for p in c['arguments']) for c in supported)))
+        raise ValueError('named arguments (%s) do not match any constructor of %s; expected one of: %s' % (
+            ', '.join(names), interface['name'],
+            ' | '.join('(' + ', '.join(p['name'] for p in c['arguments']) + ')' for c in supported)))
     raise ValueError('%s: constructor is ambiguous for the supplied names and explicit types' % interface['name'])
-
-
-def scalar_text(value, field):
-    if value is None:
-        raise ValueError(field + ' is not filled in')
-    if isinstance(value, bool):
-        return 'true' if value else 'false'
-    if isinstance(value, (int, float)):
-        return str(value)
-    if not isinstance(value, str) or not value.strip():
-        raise ValueError(field + ' requires C++ expression text')
-    if value.lstrip().startswith('@'):
-        raise ValueError(field + ': use ordinary C++ expressions, not @ syntax')
-    return value
-
 
 
 def _base_spelling(cpp_type):
@@ -427,29 +361,67 @@ def _base_spelling(cpp_type):
     return cpp_type[keep[0].start:keep[-1].end].strip()
 
 
-class ValueChecker:
-    """Render YAML values as C++ while enforcing the mapping completeness rules.
+def _is_positional_brace(text):
+    """``{a, b}`` or ``T{a, b}`` with elements (not designated, not empty)."""
+    ts = code_tokens(text)
+    opening = next((i for i, t in enumerate(ts) if t.text == '{'), None)
+    if opening is None or close_token(ts, opening) != len(ts) - 1:
+        return False
+    prefix = text[:ts[opening].start].strip()
+    if prefix and not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9:]*(?:\s*<.*>)?', prefix, re.S):
+        return False
+    inner = ts[opening + 1:-1]
+    return bool(inner) and not (len(inner) >= 2 and inner[0].text == '.')
 
-    A mapping must name exactly the fields of its target, in order:
-    the parameter's designated default initializer when it has one, otherwise
-    the aggregate's data members, otherwise the parameter names of one public
-    constructor (which is then called explicitly). A mapping whose target type
-    cannot be located in the loaded Module headers is rejected.
+
+def _is_designated_brace(text):
+    ts = code_tokens(text)
+    return len(ts) >= 4 and ts[0].text == '{' and ts[1].text == '.' and close_token(ts, 0) == len(ts) - 1
+
+
+class ValueChecker:
+    """Render YAML values as C++ while enforcing the mapping rules.
+
+    For a type located in the loaded Module headers a mapping must name exactly
+    its data members in order (aggregates) or one public constructor's
+    parameters (classes); positional lists and positional brace text are
+    rejected. For a type the index cannot locate, a mapping must match the
+    parameter's designated default initializer, otherwise it is rejected and
+    the value must be written as a C++ expression.
     """
 
     def __init__(self, index):
         self.index = index
+        self.checks = []  # static_assert declarations for the value being rendered
 
-    def render(self, value, field, bindings, cpp_type=None, scope=(), default=None):
-        """Return (C++ expression, whether it already names its type)."""
+    def _locate(self, cpp_type, scope):
+        if not (self.index and cpp_type):
+            return None
+        return self.index.resolve(cpp_type, scope)
+
+    def render(self, value, field, cpp_type=None, scope=(), default=None):
+        """Return (C++ expression, whether it is already a typed expression)."""
         if isinstance(value, dict):
-            return self._mapping(value, field, bindings, cpp_type, scope, default)
+            return self._mapping(value, field, cpp_type, scope, default)
+        entry = self._locate(cpp_type, scope) if cpp_type else None
         if isinstance(value, list):
+            if entry is not None:
+                raise ConfigError('%s: positional values are not accepted for %s; write a mapping '
+                                  'with its field names' % (field, entry.qualified))
             items = default if isinstance(default, list) and len(default) == len(value) else [None] * len(value)
-            parts = [self.render(v, '%s[%d]' % (field, i), bindings, None, scope, d)[0]
+            parts = [self.render(v, '%s[%d]' % (field, i), None, scope, d)[0]
                      for i, (v, d) in enumerate(zip(value, items))]
             return ('{\n' + '\n, '.join(parts) + '\n}' if parts else '{}'), False
-        return bind_identifiers(scalar_text(value, field), bindings), False
+        text = value_text(value, field)
+        if entry is not None:
+            if _is_designated_brace(text):
+                tree = initializer_tree(text, cpp_type)
+                if isinstance(tree, dict):
+                    return self._mapping(tree, field, cpp_type, scope, default)
+            if _is_positional_brace(text):
+                raise ConfigError('%s: positional initializer %s is not accepted for %s; write a '
+                                  'mapping with its field names' % (field, text.strip(), entry.qualified))
+        return text, False
 
     @staticmethod
     def _require(field, keys, expected, what):
@@ -463,121 +435,79 @@ class ValueChecker:
                 detail.append('missing ' + ', '.join(missing))
             if extra:
                 detail.append('unknown ' + ', '.join(extra))
-            raise ValueError('%s: %s (%s); expected: %s' % (field, '; '.join(detail), what, ', '.join(expected)))
-        raise ValueError('%s: fields out of declaration order (%s); expected: %s' % (field, what, ', '.join(expected)))
+            raise ConfigError('%s: %s (%s); expected: %s' % (field, '; '.join(detail), what, ', '.join(expected)))
+        raise ConfigError('%s: fields out of declaration order (%s); expected: %s' % (field, what, ', '.join(expected)))
 
-    def _mapping(self, value, field, bindings, cpp_type, scope, default):
+    def _mapping(self, value, field, cpp_type, scope, default):
         for key in value:
             if not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]*', str(key)):
-                raise ValueError(field + ': invalid field name ' + str(key))
+                raise ConfigError(field + ': invalid field name ' + str(key))
         keys = list(value)
-        entry = self.index.resolve(cpp_type, scope) if (self.index and cpp_type) else None
+        entry = self._locate(cpp_type, scope)
         spelled = _base_spelling(cpp_type) if cpp_type else None
-        if isinstance(default, dict):
-            self._require(field, keys, list(default), 'from the default initializer')
-            types = {}
-            if entry is not None and entry.is_aggregate():
-                types = {n: self.index.qualify_in(t, entry, spelled) for n, t, _ in entry.fields()}
-            return self._designated(value, field, bindings, types, entry, default), False
         if entry is None:
-            raise ValueError('%s: cannot verify the fields of %s in the loaded Module headers; '
-                             'write this value as a complete C++ expression'
-                             % (field, cpp_type or 'this value'))
+            if isinstance(default, dict):
+                self._require(field, keys, list(default), 'from the default initializer')
+                return self._designated(value, field, {}, None, default), False
+            raise ConfigError('%s: cannot verify the fields of %s in the loaded Module headers; '
+                              'write this value as a complete C++ expression'
+                              % (field, cpp_type or 'this value'))
+        problem = entry.mapping_problem()
+        if problem:
+            raise ConfigError('%s: %s; write this value as a complete C++ expression' % (field, problem))
         if entry.is_aggregate():
             fields = entry.fields()
             self._require(field, keys, [n for n, _, _ in fields], 'data members of ' + entry.qualified)
             types = {n: self.index.qualify_in(t, entry, spelled) for n, t, _ in fields}
-            return self._designated(value, field, bindings, types, entry, None), False
+            child_defaults = default if isinstance(default, dict) else None
+            return self._designated(value, field, types, entry, child_defaults), False
         ctors = [c for c in entry.constructors() if c]
         chosen = [c for c in ctors if [p['name'] for p in c] == keys]
         if len(chosen) != 1:
             options = ' | '.join(', '.join(p['name'] for p in c) for c in ctors) or 'none'
-            raise ValueError('%s: %s has constructors; the mapping must name one constructor\'s '
-                             'parameters in order. Constructors: %s' % (field, entry.qualified, options))
+            raise ConfigError('%s: %s has constructors; the mapping must name one constructor\'s '
+                              'parameters in order. Constructors: %s' % (field, entry.qualified, options))
         args = []
         for p in chosen[0]:
             param_type = self.index.qualify_in(p['type'], entry, spelled)
             child = value[p['name']]
-            expr, typed = self.render(child, field + '.' + p['name'], bindings, param_type, entry.path, None)
-            if typed:
-                args.append(expr)
-            elif isinstance(child, (dict, list)) or expr.lstrip().startswith('{'):
-                # A braced value cannot be a cast operand; list-initialize the parameter type.
-                args.append('std::remove_cv_t<std::remove_reference_t<%s>>%s' % (param_type, expr))
-            else:
-                # An exact-type argument list makes overload resolution select the
-                # constructor named in YAML, not another one with convertible types.
-                args.append('static_cast<%s>(%s)' % (param_type, expr))
+            expr, typed = self.render(child, field + '.' + p['name'], param_type, entry.path, None)
+            args.append(convert(expr, param_type, typed or isinstance(child, (dict, list)), self.checks,
+                                field + '.' + p['name'])[0])
         return '%s(\n%s\n)' % (spelled, '\n, '.join(args)), True
 
-    def _designated(self, value, field, bindings, types, entry, default):
+    def _designated(self, value, field, types, entry, default):
         parts = []
         for key, child in value.items():
             child_default = default.get(key) if isinstance(default, dict) else None
             child_type = types.get(key)
             scope = entry.path if entry is not None else ()
-            expr, _ = self.render(child, field + '.' + key, bindings, child_type, scope, child_default)
+            expr, _ = self.render(child, field + '.' + key, child_type, scope, child_default)
             parts.append('.%s = %s' % (key, expr))
         return '{\n' + '\n, '.join(parts) + '\n}' if parts else '{}'
 
 
-def construct_arguments(interface, named_values, cpp_class, templates, views,
-                        bindings, identity, compile_check=False, checker=None):
-    ctor = constructor_for(interface, named_values, views, cpp_class, templates)
-    pin_types = len(compliant_constructors(interface, cpp_class, templates)) > 1
-    declarations, arguments = [], []
-    for p, item in zip(ctor['arguments'], named_values):
-        value = next(iter(item.values()))
-        field = identity+'.args.'+p['name']
-        typ = qualify(p['type'], interface, cpp_class, templates)
-        target = qualify(p['type'], interface, cpp_class, templates, True)
-        if value is None and compile_check and p['default'] is None:
-            raw = '*static_cast<std::remove_reference_t<%s>*>(xr_ci_null)' % typ
-            expr = 'static_cast<%s>(%s)' % (typ, raw) if typ.rstrip().endswith('&&') else raw
-        elif isinstance(value, str):
-            expr = bind_value(scalar_text(value, field), target, views, bindings)
-        else:
-            default = initializer_tree(qualify(p['default'], interface, cpp_class, templates),
-                                       target) if p['default'] is not None else None
-            if checker is None:
-                checker = ValueChecker(None)
-            expr, typed = checker.render(value, field, bindings, target, (), default)
-            if typed:
-                reference = type_shape(target)[3]
-                if reference:
-                    storage = 'xr_arg_%s_%s' % (identity, p['name'])
-                    declarations.append('  static %s %s =\n      %s\n  ;' % (typ, storage, expr))
-                    arguments.append(storage)
-                else:
-                    arguments.append(expr)
-                continue
-        # A named dependency already has caller-owned lifetime. Passing its bound
-        # view directly avoids a second static reference slot and its guard, while
-        # the cast keeps the selected overload's exact reference/cv semantics.
-        reference = type_shape(target)[3]
-        if reference and isinstance(value, str) and value.strip() in views:
-            arguments.append('static_cast<%s>(%s)' % (typ, expr))
-            continue
-        # Config temporaries and initializer-list backing arrays still require
-        # lifetime extension. Do not remove storage merely because a type is const.
-        if reference or 'std::initializer_list<' in target.replace(' ', ''):
-            storage = 'xr_arg_%s_%s' % (identity, p['name'])
-            declarations.append('  static %s %s =\n      %s\n  ;' % (typ, storage, expr))
-            arguments.append('static_cast<%s>(%s)' % (typ, storage) if typ.rstrip().endswith('&&') else storage)
-        elif isinstance(value, (dict, list)) or expr.lstrip().startswith('{'):
-            arguments.append('%s%s' % (typ, expr))
-        elif pin_types:
-            # C++ cannot see YAML parameter names. Preserve the chosen overload's
-            # value types without a forwarding helper that would break prvalue
-            # copy elision for immovable configurations. The check still rejects
-            # explicit-only conversions that an ordinary argument would reject.
-            expression_type = 'decltype((\n%s\n))' % expr
-            declarations.append(
-                '  static_assert(std::is_convertible<%s, %s>::value ||\n'
-                '                std::is_same<std::remove_cv_t<%s>, std::remove_cv_t<%s>>::value,\n'
-                '                "Named constructor argument requires an implicit conversion");' %
-                (expression_type, typ, expression_type, typ))
-            arguments.append('static_cast<%s>(\n%s\n)' % (typ, expr))
-        else:
-            arguments.append(expr)
-    return declarations, arguments
+def convert(expr, target, exact, checks, message='value'):
+    """Apply the generator's conversion rule for one value.
+
+    Returns (expression, checks). Generator-built typed expressions and braced
+    initializers are exact and returned unchanged (a braced list is emitted as
+    ``T{...}``). Arithmetic targets go through ``Implicit<P>`` so constant
+    conversions keep the compiler's warnings; every other target gets an
+    implicit-convertibility check plus a ``static_cast`` that keeps prvalue
+    elision and rejects downcasts and explicit-only conversions.
+    """
+    value_type = _base_spelling(target)
+    stripped = expr.lstrip()
+    if exact:
+        if stripped.startswith('{'):
+            return 'std::remove_cv_t<std::remove_reference_t<%s>>%s' % (target, expr), checks
+        return expr, checks
+    if stripped.startswith('{'):
+        return 'std::remove_cv_t<std::remove_reference_t<%s>>%s' % (target, expr), checks
+    if is_arithmetic(target):
+        return 'xrobot_generated::Implicit<%s>(%s)' % (value_type, expr), checks
+    checks.append('static_assert(std::is_convertible_v<decltype((%s)), %s>,\n'
+                  '              "%s requires an implicit conversion to %s");'
+                  % (expr, target, message, target.replace('"', "'")))
+    return 'static_cast<%s>(%s)' % (target, expr), checks

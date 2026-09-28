@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "xrobot"
-version = "0.3.1"
+version = "1.0.0"
 description = "Source package resolution and static C++ application assembly for the XRobot ecosystem."
 requires-python = ">=3.8"
 authors = [
@@ -20,7 +20,7 @@ dependencies = [
     "pyyaml",
     "requests",
     "ruamel.yaml>=0.17.21,<0.19",
-    "xr-syntax>=0.1.0"
+    "xr-syntax==0.2.0"
 ]
 
 classifiers = [
@@ -30,9 +30,6 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-[project.optional-dependencies]
-cli = ["rich", "click"]
-
 [project.urls]
 Homepage = "https://github.com/xrobot-org"
 Documentation = "https://xrobot.work"
@@ -40,15 +37,7 @@ Repository = "https://github.com/xrobot-org/XRobot"
 "Bug Tracker" = "https://github.com/xrobot-org/XRobot/issues"
 
 [project.scripts]
-xrobot_gen_main = "xrobot.GenerateMain:main"
-xrobot_describe = "xrobot.Describe:main"
-xrobot_instance = "xrobot.AddModule:instance_main"
-xrobot_mod_parser = "xrobot.ModuleParser:main"
-xrobot_create_mod = "xrobot.ModuleCreator:main"
-xrobot_init_mod = "xrobot.InitModule:main"
-xrobot_setup = "xrobot.XRobotSetup:main"
-xrobot_add_mod = "xrobot.AddModule:main"
-xrobot_src_man = "xrobot.SourceManager:main"
+xrobot = "xrobot.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
