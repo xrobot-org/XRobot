@@ -296,6 +296,19 @@ class SyncConfig(EditTestCase):
                          {'off_ms': '2', 'on_ms': '1', 'period': '9'})
         self.assertEqual(list(self.instances()[0]['args'][1]['param']['timing']), ['off_ms', 'on_ms', 'period'])
 
+    def test_constructor_keyed_mappings_follow_a_changed_constructor(self):
+        self.module('Clock', 'class Clock { public:\n'
+                    '  class Runtime { public: Runtime(int period, int legacy_div = 3) {} };\n'
+                    '  explicit Clock(Runtime runtime = Runtime(1)) {} };')
+        self.config('modules:\n  - module: team/Clock\n    id: clock\n    args:\n'
+                    '      - runtime: {period: 5, legacy_div: 2}\n')
+        self.module('Clock', 'class Clock { public:\n'
+                    '  class Runtime { public: Runtime(int period, unsigned settle_us = 10U) {} };\n'
+                    '  explicit Clock(Runtime runtime = Runtime(1)) {} };')
+        modules, index = self.modules_and_index()
+        ConfigEdit.sync_config(self.path, modules, index)
+        self.assertEqual(self.instances()[0]['args'][0]['runtime'], {'period': '5', 'settle_us': '10U'})
+
     def test_instances_that_match_no_constructor_are_left_alone(self):
         self.module('User', USER.replace('int count = 1', 'Led* spare, int count = 1'))
         modules, index = self.modules_and_index()

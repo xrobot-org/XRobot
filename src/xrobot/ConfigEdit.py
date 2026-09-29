@@ -626,9 +626,11 @@ def _sync_mapping(value, target, index, scope, defaults=None):
     """Match a mapping to its struct; new fields take the parameter's designated
     default when it names them, else the field's default member initializer."""
     entry = index.resolve(target, scope) if target else None
-    if entry is None or not entry.is_aggregate() or entry.mapping_problem() is not None:
+    if entry is None or entry.mapping_problem() is not None:
         return False
     spelled = re.sub(r'^\s*(const\s+)?', '', target).rstrip('&* ')
+    if not entry.is_aggregate():
+        return _sync_constructor_mapping(value, entry, index, spelled)
     fields = entry.fields()
     wanted = [name for name, _, _ in fields]
     changed = False
@@ -656,6 +658,30 @@ def _sync_mapping(value, target, index, scope, defaults=None):
             value[k] = v
         changed = True
     return changed
+
+
+def _sync_constructor_mapping(value, entry, index, spelled):
+    """A mapping keyed by constructor parameters: when it matches no constructor and
+    the class has exactly one, keep same-named values, add new parameters with
+    their defaults and drop removed ones."""
+    constructors = [c for c in entry.constructors() if c]
+    keys = list(value)
+    if any([p['name'] for p in c] == keys for c in constructors) or len(constructors) != 1:
+        return False
+    parameters = constructors[0]
+    if any(p['default'] is None and p['name'] not in value for p in parameters):
+        return False  # a new parameter without a default cannot be filled in
+    items = []
+    for p in parameters:
+        if p['name'] in value:
+            items.append((p['name'], value[p['name']]))
+        else:
+            items.append((p['name'], index.qualify_in(p['default'], entry, spelled)))
+    for key in list(value):
+        del value[key]
+    for key, child in items:
+        value[key] = child
+    return True
 
 
 # -- modules.yaml ----------------------------------------------------------------
