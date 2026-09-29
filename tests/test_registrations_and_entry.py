@@ -178,6 +178,9 @@ class GeneratedHeaderInputs(BspTestCase):
         self.generate({'modules': []}, name='alt.yaml')
         self.assertEqual(project.selected_config(), (self.root / 'User/alt.yaml').resolve())
         (self.root / 'User/alt.yaml').unlink()
+        with self.assertRaisesRegex(ProjectError, 'generated for User/alt.yaml, which does not exist'):
+            project.selected_config()
+        self.write('User/xrobot_main.hpp', '#pragma once\n')
         self.assertEqual(project.selected_config(), self.root / 'User/xrobot.yaml')
 
     def test_inputs_on_another_drive_are_written_as_absolute_paths(self):

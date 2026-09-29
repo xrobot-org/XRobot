@@ -188,6 +188,16 @@ class Diagnostics(DescribeTestCase):
         self.assertEqual([i['id'] for i in result['instances']], ['m'])
         self.assertEqual(result['configs'], ['User/products/alt.yaml', 'User/xrobot.yaml'])
 
+    def test_a_selected_config_that_no_longer_exists_is_a_diagnostic(self):
+        alt = self.config({'modules': [{'module': 'Motor', 'id': 'm'}]}, name='products/alt.yaml')
+        generate(self.project, alt)
+        alt.unlink()
+        result = describe(self.project)
+        self.assertEqual(result['selected'], 'User/products/alt.yaml')
+        self.assertEqual(result['configs'], ['User/xrobot.yaml'])
+        self.assertIn('User/xrobot_main.hpp was generated for User/products/alt.yaml, which does not exist; '
+                      'select a configuration with `xrobot gen -c <config>`', self.messages(result, 'error'))
+
     def test_tool_pin_warnings(self):
         self.write('Modules/modules.yaml', 'modules: []\n')
         result = describe(self.project)

@@ -9,6 +9,7 @@ from pathlib import Path
 from fixtures import BspTestCase, CXX, CxxMixin, requires_cxx
 from xrobot.Config import ConfigError
 from xrobot.GenerateMain import generate, generate_compile_check, load_modules, validate_all
+from xrobot.Project import ProjectError
 
 MAIN = '#include "xrobot_main.hpp"\nint main() { XROBOT_MAIN(); }\n'
 
@@ -346,6 +347,19 @@ class Selection(GenerationTestCase):
     def test_a_missing_config_is_reported(self):
         with self.assertRaisesRegex(ConfigError, 'User/missing.yaml does not exist'):
             generate(self.project, self.root / 'User/missing.yaml')
+
+    def test_a_selected_config_that_no_longer_exists_is_not_replaced_by_the_default(self):
+        self.config({'modules': [led('default_led')]})
+        alt = self.config({'modules': [led('alt_led')]}, name='alt.yaml')
+        generate(self.project, alt)
+        alt.rename(self.root / 'User/renamed.yaml')
+        with self.assertRaisesRegex(ProjectError, r'User/xrobot_main.hpp was generated for User/alt.yaml, '
+                                                  r'which does not exist; select a configuration with '
+                                                  r'`xrobot gen -c <config>`'):
+            generate(self.project)
+        self.assertIn('alt_led', generate(self.project, self.root / 'User/renamed.yaml'))
+        (self.root / 'User/xrobot_main.hpp').unlink()
+        self.assertIn('default_led', generate(self.project))
 
     def test_validate_all_checks_every_config_and_collects_errors(self):
         self.config({'modules': [led()]})

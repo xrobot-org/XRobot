@@ -110,13 +110,27 @@ class Project:
         state['status'] = 'stale' if state['newer'] or state['missing'] else 'fresh'
         return state
 
+    def header_selection(self):
+        """The configuration named by the generated header, or None without a readable header."""
+        if not self.header.is_file():
+            return None
+        config, _ = read_header_inputs(self.header)
+        return (self.header.parent / config).resolve() if config is not None else None
+
     def selected_config(self):
-        """The product the current header was generated for, else User/xrobot.yaml."""
-        if self.header.is_file():
-            config, _ = read_header_inputs(self.header)
-            if config is not None and (self.header.parent / config).is_file():
-                return (self.header.parent / config).resolve()
-        return self.default_config
+        """The product the current header was generated for, else User/xrobot.yaml.
+
+        A header naming a configuration that no longer exists is an error; the
+        selection is not replaced by the default.
+        """
+        chosen = self.header_selection()
+        if chosen is None:
+            return self.default_config
+        if not chosen.is_file():
+            raise ProjectError('%s was generated for %s, which does not exist; select a configuration '
+                               'with `xrobot gen -c <config>`'
+                               % (self.relative(self.header), self.relative(chosen)))
+        return chosen
 
 
 def _calls_xrobot_main(text, path):

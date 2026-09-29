@@ -114,6 +114,14 @@ class Commands(CliMixin, BspTestCase):
         out, _ = self.ok('gen', cwd=self.root)
         self.assertIn('User/xrobot.yaml', out)
 
+    def test_a_renamed_selected_product_must_be_selected_again(self):
+        self.config({'modules': []}, name='products/alt.yaml')
+        self.ok('gen', '-c', 'User/products/alt.yaml', cwd=self.root)
+        (self.root / 'User/products/alt.yaml').rename(self.root / 'User/products/renamed.yaml')
+        self.fails('gen', cwd=self.root, pattern='generated for User/products/alt.yaml, which does not exist')
+        out, _ = self.ok('gen', '-c', 'User/products/renamed.yaml', cwd=self.root)
+        self.assertEqual(out.strip(), 'Generated User/xrobot_main.hpp for User/products/renamed.yaml')
+
     def test_errors_exit_with_status_1_and_a_message(self):
         self.fails('gen', '-c', 'User/missing.yaml', pattern='User/missing.yaml does not exist')
         self.config({'modules': [{'module': 'Led', 'id': 'led', 'args': [{'gpio': 'other'}]}]})

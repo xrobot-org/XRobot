@@ -16,6 +16,7 @@ from xrobot.ConstructorModel import (compliant_constructors, initializer_tree, i
 from xrobot.GenerateMain import generate_code, read_registrations
 from xrobot.InitModule import read_modules_yaml
 from xrobot.ModuleParser import locked_modules, lock_error, _module_record, select_module, source_interface
+from xrobot.Project import ProjectError
 from xrobot.TypeIndex import TypeIndex
 
 SCHEMA = 1
@@ -120,12 +121,19 @@ def _describe_module(module, project, types, registrations):
 
 
 def describe(project, config=None):
-    config_path = Path(config) if config else project.selected_config()
     diagnostics = []
 
     def report(severity, scope, message):
         for line in str(message).splitlines():
             diagnostics.append({'severity': severity, 'scope': scope, 'message': line})
+
+    try:
+        selected = project.selected_config()
+    except ProjectError as error:
+        # Editors still need the other configurations to select one.
+        selected = project.header_selection()
+        report('error', project.relative(project.header), error)
+    config_path = Path(config) if config else selected
 
     tools = {'xrobot': {'installed': __version__, 'pin': None}}
     try:
@@ -222,7 +230,7 @@ def describe(project, config=None):
         'root': project.root.as_posix(),
         'configs': [project.relative(p) for p in project.configs()],
         'config': source,
-        'selected': project.relative(project.selected_config()),
+        'selected': project.relative(selected),
         'header': header,
         'tools': tools,
         'lock': lock_info,
