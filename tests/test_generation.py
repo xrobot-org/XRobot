@@ -11,7 +11,7 @@ from fixtures import CXX, BspTestCase, CxxMixin, requires_cxx
 
 from xrobot.config import ConfigError
 from xrobot.generate_main import generate, generate_compile_check, load_modules, validate_all
-from xrobot.project import ProjectError
+from xrobot.project import HEADER_NOTICE, ProjectError
 
 MAIN = '#include "xrobot_main.hpp"\nint main() { XROBOT_MAIN(); }\n'
 
@@ -84,6 +84,13 @@ class GenerationTestCase(BspTestCase):
 
 
 class HeaderShape(GenerationTestCase):
+    def test_the_second_line_says_the_header_is_generated(self):
+        lines = self.code(led()).split("\n")
+        self.assertEqual(lines[:2], ["#pragma once", HEADER_NOTICE])
+        self.assertEqual(lines[2], '// xrobot: config "xrobot.yaml"')
+        self.assertEqual(self.project.header_selection(), self.root / "User/xrobot.yaml")
+        self.assertEqual(self.project.header_state()["status"], "fresh")
+
     def test_entry_function_takes_only_consumed_registrations(self):
         code = self.code(led())
         self.assertIn("[[noreturn]] static inline void XRobotMain(\n    LibXR::GPIO& pin)\n{", code)

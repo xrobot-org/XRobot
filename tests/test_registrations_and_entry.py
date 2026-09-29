@@ -9,7 +9,13 @@ from fixtures import BspTestCase, TempDirTestCase
 
 from xrobot.config import ConfigError
 from xrobot.generate_main import read_registrations
-from xrobot.project import Project, ProjectError, find_root, read_header_inputs
+from xrobot.project import (
+    HEADER_NOTICE,
+    Project,
+    ProjectError,
+    find_root,
+    read_header_inputs,
+)
 
 MAIN = '#include "xrobot_main.hpp"\nint main() { XROBOT_MAIN(); }\n'
 
@@ -139,9 +145,10 @@ class GeneratedHeaderInputs(BspTestCase):
         self.generate({"modules": [{"module": "Foo", "id": "foo"}]})
         lines = self.header_lines()
         self.assertEqual(
-            lines[:6],
+            lines[:7],
             [
                 "#pragma once",
+                HEADER_NOTICE,
                 '// xrobot: config "xrobot.yaml"',
                 '// xrobot: depends "../xrobot.lock"',
                 '// xrobot: depends "app_main.cpp"',
@@ -149,7 +156,7 @@ class GeneratedHeaderInputs(BspTestCase):
                 '// xrobot: depends "../Modules/team/Foo/FooTypes.hpp"',
             ],
         )
-        self.assertFalse(lines[6].startswith("// xrobot:"))
+        self.assertFalse(lines[7].startswith("// xrobot:"))
         self.assertEqual(
             read_header_inputs(self.root / "User/xrobot_main.hpp"),
             (
@@ -163,9 +170,21 @@ class GeneratedHeaderInputs(BspTestCase):
             ),
         )
 
+    def test_headers_written_before_the_notice_moved_are_still_read(self):
+        # 早期的头文件没有说明，或把说明放在 // xrobot: 行之后。
+        # Earlier headers had no notice, or had it after the // xrobot: lines.
+        markers = '// xrobot: config "xrobot.yaml"\n// xrobot: depends "app_main.cpp"\n'
+        for text in ("#pragma once\n" + markers, "#pragma once\n" + markers + HEADER_NOTICE):
+            with self.subTest(text=text):
+                self.write("User/xrobot_main.hpp", text + "\n")
+                self.assertEqual(
+                    read_header_inputs(self.root / "User/xrobot_main.hpp"),
+                    ("xrobot.yaml", ["app_main.cpp"]),
+                )
+
     def test_a_product_in_a_subdirectory_is_named_relative_to_the_header(self):
         self.generate({"modules": []}, name="products/hero.yaml")
-        self.assertEqual(self.header_lines()[1], '// xrobot: config "products/hero.yaml"')
+        self.assertEqual(self.header_lines()[2], '// xrobot: config "products/hero.yaml"')
         self.assertEqual(self.project.selected_config(), self.root / "User/products/hero.yaml")
 
     def test_header_state_follows_file_times(self):
