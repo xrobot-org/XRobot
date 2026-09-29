@@ -191,7 +191,13 @@ def _set_path(item, path, value):
             continue
         if node is item and token == 'args':
             if last:
-                raise ConfigError('set a single argument: args.<param>')
+                # The whole argument list, e.g. when switching constructors.
+                if not isinstance(value, list) or not all(
+                        isinstance(v, dict) and len(v) == 1 for v in value):
+                    raise ConfigError('args takes a list of one-parameter mappings, e.g. '
+                                      '[{"led": "LED_B"}, {"cycle": "250"}]')
+                item['args'] = value
+                return
             name = tokens[position + 1]
             args = item.get('args') or []
             for entry in args:
@@ -662,26 +668,74 @@ def _load_document(path, default):
     return data if data is not None else default
 
 
+def _request_lines(text):
+    """(line index, request) of each block-list item under modules:, and the list end."""
+    lines = text.split('\n')
+    root = yaml.compose(text, Loader=yaml.BaseLoader) if text.strip() else None
+    if root is None:
+        return lines, None, [], None
+    key = next((k for k, v in root.value if k.value == 'modules'), None)
+    node = next((v for k, v in root.value if k.value == 'modules'), None)
+    if node is None or not isinstance(node, yaml.SequenceNode):
+        raise ConfigError('modules.yaml: modules must be a list')
+    items = [(child.start_mark.line, child) for child in node.value]
+    return lines, key, items, node
+
+
 def add_module(modules_yaml, request_text):
+    """Append one request line; the rest of modules.yaml is untouched."""
     from xrobot.InitModule import request
     parsed = request(request_text, canonical=True)
-    data = _load_document(modules_yaml, CommentedMap(modules=CommentedSeq()))
-    entries = data.setdefault('modules', CommentedSeq())
-    if any(request(e)['id'].casefold() == parsed['id'].casefold() for e in entries):
-        raise ConfigError('%s is already requested in %s' % (parsed['id'], modules_yaml))
-    entries.append(request_text if '@' in request_text else request_text + '@same-or-dev')
-    atomic_write(Path(modules_yaml), dump_text(data))
+    path = Path(modules_yaml)
+    text = path.read_text(encoding='utf-8-sig').replace('\r\n', '\n') if path.exists() else 'modules: []\n'
+    lines, key, items, node = _request_lines(text)
+    for _, child in items:
+        if isinstance(child, yaml.ScalarNode):
+            existing = request(child.value)
+        else:
+            existing = request({k.value: v.value for k, v in child.value})
+        if existing['id'].casefold() == parsed['id'].casefold():
+            raise ConfigError('%s is already requested in %s' % (parsed['id'], modules_yaml))
+    value = request_text if '@' in request_text else request_text + '@same-or-dev'
+    if key is None:
+        lines = [line for line in lines if line.strip()] + ['modules:', '  - ' + value]
+    elif node.flow_style:
+        if items:
+            raise ConfigError('%s uses a flow list for modules; write it as a block list first' % modules_yaml)
+        line = lines[key.start_mark.line]
+        lines[key.start_mark.line] = line[:key.start_mark.column] + 'modules:'
+        lines.insert(key.start_mark.line + 1, '  - ' + value)
+    else:
+        last_line, last = items[-1]
+        prefix = lines[last_line][:last.start_mark.column]
+        end = last.end_mark.line + (1 if last.end_mark.column else 0)
+        lines.insert(max(end, last_line + 1), prefix + value)
+    atomic_write(path, '\n'.join(lines).rstrip('\n') + '\n')
 
 
 def remove_module(modules_yaml, identity):
+    """Delete one request line; the rest of modules.yaml is untouched."""
     from xrobot.InitModule import request
-    data = _load_document(modules_yaml, None)
-    entries = (data or {}).get('modules') or []
-    matches = [i for i, e in enumerate(entries) if request(e)['id'].casefold() == identity.casefold()]
-    if not matches:
-        raise ConfigError('%s is not requested in %s' % (identity, modules_yaml))
-    del entries[matches[0]]
-    atomic_write(Path(modules_yaml), dump_text(data))
+    path = Path(modules_yaml)
+    text = path.read_text(encoding='utf-8-sig').replace('\r\n', '\n')
+    lines, key, items, node = _request_lines(text)
+    for index, (line, child) in enumerate(items):
+        if isinstance(child, yaml.ScalarNode):
+            existing = request(child.value)
+        else:
+            existing = request({k.value: v.value for k, v in child.value})
+        if existing['id'].casefold() != identity.casefold():
+            continue
+        if node.flow_style:
+            raise ConfigError('%s uses a flow list for modules; write it as a block list first' % modules_yaml)
+        end = items[index + 1][0] if index + 1 < len(items) else child.end_mark.line + (
+            1 if child.end_mark.column else 0)
+        del lines[line:max(end, line + 1)]
+        if len(items) == 1:
+            lines[key.start_mark.line] = lines[key.start_mark.line].rstrip() + ' []'
+        atomic_write(path, '\n'.join(lines).rstrip('\n') + '\n')
+        return
+    raise ConfigError('%s is not requested in %s' % (identity, modules_yaml))
 
 
 def format_files(paths, check=False):

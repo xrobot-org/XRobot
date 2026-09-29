@@ -306,13 +306,16 @@ class Diagnostics(GenerationTestCase):
         self.error(probe(port='missing'))
         self.assertEqual(header.read_bytes(), before)
 
-    def test_regenerating_identical_output_does_not_touch_the_header(self):
+    def test_regenerating_identical_output_keeps_bytes_and_marks_the_header_fresh(self):
         self.code(led())
         header = self.root / 'User/xrobot_main.hpp'
+        before = header.read_bytes()
         past = header.stat().st_mtime - 100
         os.utime(header, (past, past))
         generate(self.project)
-        self.assertEqual(header.stat().st_mtime, past)
+        self.assertEqual(header.read_bytes(), before)
+        self.assertGreater(header.stat().st_mtime, past)
+        self.assertEqual(self.project.header_state()['status'], 'fresh')
 
     @unittest.skipIf(os.name == 'nt', 'POSIX permission bits')
     def test_regeneration_keeps_the_header_permission_bits(self):
@@ -479,13 +482,15 @@ class Foo { public:
         for absent in ('int main(', 'for (;;)', '#pragma once', '// xrobot:', 'XROBOT_MAIN'):
             self.assertNotIn(absent, code)
 
-    def test_probe_refuses_libraries_and_leaves_the_output_alone_on_error(self):
+    def test_library_probe_includes_the_header_and_errors_leave_the_output_alone(self):
         self.module('Lib', 'class Lib { public: Lib() {} };', manifest='/* === MODULE MANIFEST V2 ===\n'
                     'standalone: false\n=== END MANIFEST === */\n')
         self.module('Foo', 'class Foo { static int Secret(); public: Foo(int count = Secret()) {} };')
+        library = self.tmp / 'library.cpp'
+        self.assertEqual(generate_compile_check('team/Lib', load_modules(self.project), library),
+                         '#include "Lib.hpp"\n')
+        self.assertEqual(library.read_text(encoding='utf-8'), '#include "Lib.hpp"\n')
         out = self.write(self.tmp / 'check.cpp', 'original')
-        with self.assertRaisesRegex(ValueError, 'team/Lib is a library'):
-            generate_compile_check('team/Lib', load_modules(self.project), out)
         with self.assertRaisesRegex(ValueError, 'non-public member Foo::Secret'):
             generate_compile_check('team/Foo', load_modules(self.project), out)
         self.assertEqual(out.read_text(encoding='utf-8'), 'original')

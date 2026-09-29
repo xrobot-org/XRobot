@@ -479,9 +479,9 @@ class Generator:
         lines += ['    %s.OnMonitor();' % e['id'] for e in entries if e['id'] in monitored]
         lines += ['    LibXR::Thread::Sleep(%s);' % config.get('settings', {}).get('monitor_sleep_ms', '1000'),
                   '  }', '}', '']
-        lines += ['// XR_REGISTER marks names for the generator and uses the object, so a',
-                  '// registration the selected product does not consume is not an unused',
-                  '// variable; types are checked where XRobotMain binds them.',
+        lines += ['// XR_REGISTER marks names for the generator and references the object, so',
+                  '// registrations the selected product does not consume raise no variable',
+                  '// warnings; types are checked where XRobotMain binds them.',
                   '#define XR_REGISTER(name, ...) static_cast<void>(name)']
         call = '::XRobotMain' + ('<%s>' % ', '.join(actual_types) if actual_types else '')
         arguments = ', '.join(r['name'] for r in views)
@@ -557,7 +557,11 @@ def generate_compile_check(module_name, modules, output, template_args=None):
     from xrobot.ConfigEdit import seed_arguments
     module = select_module(modules, module_name)
     if not module['manifest'].standalone:
-        raise ConfigError(module['id'] + ' is a library, not an instantiable Module')
+        # A library has no Module constructor; its header and .cpp files still
+        # compile into xr through the module list.
+        code = '#include "%s.hpp"\n' % module['name']
+        atomic_write(Path(output), code)
+        return code
     interface = source_interface(module['header'])
     supplied = list(template_args or [])
     templates = template_bindings(interface, supplied)

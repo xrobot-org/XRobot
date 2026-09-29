@@ -155,6 +155,11 @@ class SetValue(EditTestCase):
         self.assertEqual(changed, [('      - count: 3', '      - count: 5')])
         self.assertEqual(len(before), len(after))
 
+    def test_the_whole_argument_list_can_be_replaced(self):
+        ConfigEdit.set_value(self.path, 'user', 'args', [{'led': 'status'}, {'count': 9}])
+        user = load_config(self.path)['modules'][1]
+        self.assertEqual(user['args'], [{'led': 'status'}, {'count': '9'}])
+
     def test_paths_reach_arguments_fields_and_template_arguments(self):
         ConfigEdit.set_value(self.path, 'status', 'args.param.timing.on_ms', 7)
         ConfigEdit.set_value(self.path, 'status', 'args.gain', 2.5)
@@ -188,7 +193,7 @@ class SetValue(EditTestCase):
         self.assertNotIn('\r\n', self.text())
 
     def test_invalid_paths_and_results_are_rejected(self):
-        cases = [('user', 'args', 'set a single argument'), ('user', 'args.missing', 'no argument missing'),
+        cases = [('user', 'args', 'args takes a list of one-parameter mappings'), ('user', 'args.missing', 'no argument missing'),
                  ('status', 'args.param.missing', 'no key missing'), ('status', 'args[9]', 'no argument'),
                  ('user', 'template_args[0]', 'no key template_args'), ('user', 'args..count', 'invalid path'),
                  ('nobody', 'args.count', 'no instance with id nobody')]
