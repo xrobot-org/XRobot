@@ -455,13 +455,30 @@ class LockFile(UpstreamTestCase):
             },
         )
         self.configure(["team/A"])
-        row = self.sync()["modules"]["team/A"]
+        lock = self.sync()
+        row = lock["modules"]["team/A"]
         self.assertEqual(row["repo"], "../upstream/team/A")
         self.assertTrue(
             same_repository(
                 run_git(self.modules / "team/A", "remote", "get-url", "origin"), str(mirror)
             )
         )
+        # 离线时没有源，镜像检出凭 lock 中的 commit 被接受。
+        # Offline there are no Sources; the mirror checkout is accepted by its locked commit.
+        self.assertEqual(self.sync(offline=True), lock)
+
+    def test_offline_rejects_another_origin_without_the_locked_commit(self):
+        self.upstream("team/A")
+        self.configure(["team/A"])
+        self.sync()
+        other = self.tmp / "other"
+        run_git(None, "init", "-q", str(other))
+        run_git(self.modules / "team/A", "remote", "set-url", "origin", str(other))
+        lock = yaml.safe_load((self.root / "xrobot.lock").read_text(encoding="utf-8"))
+        lock["modules"]["team/A"]["commit"] = "0" * 40
+        self.write_yaml(self.root / "xrobot.lock", lock)
+        with self.assertRaisesRegex(ValueError, "Source mismatch for team/A"):
+            self.sync(offline=True)
 
     def test_an_incomplete_or_extended_lock_is_rejected(self):
         self.upstream("team/B")

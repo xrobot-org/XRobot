@@ -196,7 +196,14 @@ class Resolver:
         mirror = self.sources.mirror_url(identity) if self.sources is not None else None
         return mirror or repo
 
-    def prepare(self, identity, repo):
+    def prepare(self, identity, repo, commit=None):
+        """确保 Modules/<identity> 是 repo 的检出，返回该目录。
+        Make sure Modules/<identity> is a checkout of repo and return its folder.
+
+        离线时没有源可用来识别镜像地址；已含有 lock 记录的 commit 的检出，不论 origin 都接受。
+        Offline there are no Sources to recognize a mirror origin; a checkout that already
+        holds the locked commit is accepted whatever its origin.
+        """
         validate_id(identity)
         folder = self.directory / identity
         if self.directory not in folder.resolve().parents:
@@ -212,10 +219,15 @@ class Resolver:
             if not (folder / ".git").exists():
                 raise ValueError(f"Refusing to overwrite non-Git directory: {folder}")
             actual = git(folder, "remote", "get-url", "origin")
-            if not same_repository(actual, repo) and not same_repository(
-                actual, self.fetch_url(identity, repo)
-            ):
-                raise ValueError(f"Source mismatch for {identity}: {actual} != {repo}")
+            if not same_repository(actual, repo):
+                if self.offline:
+                    known = bool(commit) and (
+                        git(folder, "cat-file", "-t", commit, check=False) == "commit"
+                    )
+                else:
+                    known = same_repository(actual, self.fetch_url(identity, repo))
+                if not known:
+                    raise ValueError(f"Source mismatch for {identity}: {actual} != {repo}")
         elif self.offline:
             raise ValueError("Offline source missing: " + identity)
         else:
@@ -658,7 +670,7 @@ def sync_modules(
         )
         resolver = Resolver(project.modules_dir, manager, offline=offline)
         for identity, entry in lock["modules"].items():
-            resolver.prepare(identity, expanded_locator(entry["repo"], lock_dir))
+            resolver.prepare(identity, expanded_locator(entry["repo"], lock_dir), entry["commit"])
             resolver.resolved[identity] = entry
         validate_locked_graph(resolver, roots)
         records = lock["modules"]
