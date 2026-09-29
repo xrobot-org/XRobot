@@ -424,7 +424,7 @@ class ModuleCiPreparation(CliMixin, UpstreamTestCase):
         from fixtures import run_git
 
         b = self.upstream("team/B")
-        a = self.upstream("team/A", ["team/B@same-or-dev"], catalog=False)
+        a = self.upstream("team/A", ["team/B@same-or-dev"], listed=False)
         selected = run_git(a, "rev-parse", "HEAD")
         local = self.modules / "team/A"
         run_git(None, "clone", "-q", str(a), str(local))
@@ -444,16 +444,16 @@ class ModuleCiPreparation(CliMixin, UpstreamTestCase):
         indent = min(len(text) - len(text.lstrip()) for text in lines[start:end] if text.strip())
         script = "\n".join(text[indent:] for text in lines[start:end])
 
-        class Catalog:
+        class Index:
             def __init__(self, data):
                 self.text = yaml.safe_dump(data)
 
             def raise_for_status(self):
                 pass
 
-        def catalog(url, **kwargs):
+        def index(url, **kwargs):
             if url == "https://xrobot.work/xrobot-modules/index.yaml":
-                return Catalog(
+                return Index(
                     {
                         "packages": [
                             {
@@ -466,8 +466,8 @@ class ModuleCiPreparation(CliMixin, UpstreamTestCase):
                     }
                 )
             if url == "https://qdu-robomaster.github.io/qdu-future-modules/index.yaml":
-                return Catalog({"modules": []})
-            raise AssertionError("unexpected catalog request: " + url)
+                return Index({"modules": []})
+            raise AssertionError("unexpected index request: " + url)
 
         previous = os.getcwd()
         os.chdir(str(self.root))
@@ -478,7 +478,7 @@ class ModuleCiPreparation(CliMixin, UpstreamTestCase):
                 exec(compile(script, "<module CI preparation>", "exec"), {"__name__": "__ci__"})
         finally:
             os.chdir(previous)
-        with mock.patch("xrobot.source_manager.requests.get", side_effect=catalog):
+        with mock.patch("xrobot.source_manager.requests.get", side_effect=index):
             self.ok("check-module", "team/A", "-o", self.root / "module_check.cpp")
         lock = yaml.safe_load((self.root / "xrobot.lock").read_text(encoding="utf-8"))
         self.assertEqual(lock["modules"]["team/A"]["commit"], selected)
@@ -586,7 +586,7 @@ class Setup(CliMixin, UpstreamTestCase):
         self.assertIn("Generated", out)
         self.assertIn("static Led module_0;", (self.tmp / "probe.cpp").read_text(encoding="utf-8"))
 
-    def test_source_catalog_queries(self):
+    def test_source_queries(self):
         out, _ = self.ok("source", "list")
         self.assertIn("team/Led [module]", out)
         out, _ = self.ok("source", "get", "Led")

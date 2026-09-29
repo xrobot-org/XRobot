@@ -23,7 +23,6 @@ directory at or above it with Modules/modules.yaml. -C DIR starts the search
 at DIR instead."""
 
 INIT_MODULES = f"xrobot: {__version__}\nmodules: []\n"
-INIT_SOURCES = "sources:\n  - url: https://xrobot.work/xrobot-modules/index.yaml\n    priority: 0\n"
 INIT_CONFIG = "modules: []\nsettings:\n  monitor_sleep_ms: 1000\n"
 IGNORED = ("/User/xrobot_main.hpp", "/Modules/CMakeLists.txt", "/Modules/*/")
 COMMIT = re.compile(r"[0-9a-f]{40}")
@@ -110,12 +109,13 @@ def cmd_init(args: argparse.Namespace) -> None:
     existing files are kept.
     """
     from xrobot.generate_main import atomic_write
+    from xrobot.source_manager import SOURCES_TEMPLATE
 
     root = Path(args.directory).resolve()
     created = []
     for relative, text in (
         ("Modules/modules.yaml", INIT_MODULES),
-        ("Modules/sources.yaml", INIT_SOURCES),
+        ("Modules/sources.yaml", SOURCES_TEMPLATE),
         ("User/xrobot.yaml", INIT_CONFIG),
     ):
         path = root / relative
@@ -371,7 +371,7 @@ def cmd_source(args: argparse.Namespace) -> None:
         source_manager.create_sources_yaml(Path(args.output) if args.output else sources)
         return
     if args.action == "add-source":
-        source_manager.add_source(sources, args.url, args.public_key, args.priority)
+        source_manager.add_source(sources, args.url, args.priority)
         return
     if not sources.is_file():
         raise ProjectError(f"{sources} does not exist; run `xrobot source create-sources`")
@@ -433,7 +433,6 @@ def _source_parser(verbs: argparse._SubParsersAction) -> None:
         default=0,
         help="the lower value wins when Sources list the same package (default: 0)",
     )
-    add.add_argument("--public-key", metavar="KEY", help="public key recorded with the Source")
     index = actions.add_parser("create-index", help="write a new index.yaml")
     index.add_argument(
         "-o", "--output", metavar="FILE", default="Modules/index.yaml", help="default: %(default)s"

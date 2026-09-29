@@ -1,15 +1,24 @@
 """Module resolution and xrobot.lock (xrobot.init_module), locked discovery (xrobot.module_parser)
-and source catalogs (xrobot.source_manager)."""
+and Sources (xrobot.source_manager)."""
 
 import os
 import unittest
+from unittest import mock
 
+import requests
 import yaml
 from fixtures import BspTestCase, UpstreamTestCase, manifest_block, run_git
 
 from xrobot.init_module import read_modules_yaml, repository_identity, same_repository, write_cmake
 from xrobot.module_parser import discover_modules, manifest_from_text, select_module
-from xrobot.source_manager import SourceManager, validate_id
+from xrobot.source_manager import (
+    SourceManager,
+    SourceUnavailable,
+    add_index_entry,
+    add_source,
+    load_yaml,
+    validate_id,
+)
 
 
 class Resolution(UpstreamTestCase):
@@ -88,14 +97,39 @@ class Resolution(UpstreamTestCase):
             ):
                 self.sync(update=[], **flags)
 
-    def test_offline_needs_neither_catalog_nor_remote(self):
+    def test_offline_needs_neither_sources_nor_remote(self):
         a = self.upstream("team/A")
         self.configure(["team/A"])
         old = self.sync()["modules"]["team/A"]["commit"]
         self.index.unlink()
         (self.modules / "sources.yaml").unlink()
         a.rename(a.with_name("unavailable"))
+        with self.assertRaisesRegex(ValueError, r"fetch(.|\n)*`xrobot setup --offline` works"):
+            self.sync()
         self.assertEqual(self.sync(offline=True)["modules"]["team/A"]["commit"], old)
+
+    def test_an_up_to_date_lock_does_not_read_the_sources(self):
+        self.upstream("team/A")
+        self.configure(["team/A"])
+        first = self.sync()
+        self.write_yaml(self.modules / "sources.yaml", {"sources": [{"url": "missing.yaml"}]})
+        self.assertEqual(self.sync(), first)
+
+    def test_a_failed_download_names_the_index_and_the_offline_option(self):
+        self.write_yaml(
+            self.modules / "sources.yaml", {"sources": [{"url": "https://x.invalid/i.yaml"}]}
+        )
+        self.configure(["team/A"])
+        failure = requests.ConnectionError("refused")
+        with (
+            mock.patch("xrobot.source_manager.requests.get", side_effect=failure),
+            self.assertRaisesRegex(
+                SourceUnavailable,
+                r"^https://x\.invalid/i\.yaml: download failed \(cannot connect\); "
+                r"`xrobot setup --offline` works",
+            ),
+        ):
+            self.sync()
 
     def test_requests_use_canonical_ids_and_short_names_must_be_unambiguous(self):
         self.upstream("first/A")
@@ -110,10 +144,10 @@ class Resolution(UpstreamTestCase):
         self.configure(["first/A"])
         self.assertEqual(set(self.sync()["modules"]), {"first/A"})
 
-    def test_bsp_catalog_entries_are_not_dependencies(self):
+    def test_bsp_entries_are_not_dependencies(self):
         self.upstream("team/Board", kind="bsp")
         self.configure(["team/Board"])
-        with self.assertRaisesRegex(ValueError, "BSP catalog entry, not a Module dependency"):
+        with self.assertRaisesRegex(ValueError, "BSP in the Sources, not a Module dependency"):
             self.sync()
         self.assertFalse((self.modules / "team/Board").exists())
 
@@ -369,7 +403,7 @@ class Contexts(UpstreamTestCase):
 
 
 class LockFile(UpstreamTestCase):
-    def test_relative_catalog_and_local_sources_are_stored_relative_to_the_lock(self):
+    def test_relative_index_and_local_sources_are_stored_relative_to_the_lock(self):
         self.upstream("team/A")
         self.entries[0]["repo"] = "upstream/team/A"
         self.write_yaml(self.index, {"packages": self.entries})
@@ -591,7 +625,7 @@ class ToolPins(UpstreamTestCase):
 
     def setUp(self):
         super().setUp()
-        self.tool = self.upstream("xrobot-org/XRobot", catalog=False)
+        self.tool = self.upstream("xrobot-org/XRobot", listed=False)
         self.merged = run_git(self.tool, "rev-parse", "HEAD")
         run_git(self.tool, "checkout", "-q", "dev")
         self.dev_only = self.commit(self.tool, [], "dev work")
@@ -758,6 +792,8 @@ class LockedDiscovery(BspTestCase):
         self.module("A", "class A { public: A() {} };", owner="other")
         modules = discover_modules(self.root / "Modules", self.root / "xrobot.lock")
         self.assertEqual(select_module(modules, "team/a")["id"], "team/A")
+        with self.assertRaisesRegex(ValueError, "Ambiguous Module a; specify"):
+            select_module(modules, "a")
         with self.assertRaisesRegex(ValueError, "Ambiguous Module A; specify"):
             select_module(modules, "A")
         with self.assertRaisesRegex(ValueError, "Module not found: B"):
@@ -803,7 +839,7 @@ class Manifests(unittest.TestCase):
             manifest_from_text(manifest_block() + manifest_block(), "A.hpp")
 
 
-class Catalogs(UpstreamTestCase):
+class Sources(UpstreamTestCase):
     def test_validation_labels_are_bound_to_tested_versions(self):
         self.upstream("team/A")
         self.entries[0]["status"] = "official"
@@ -836,7 +872,6 @@ class Catalogs(UpstreamTestCase):
         record = manager.packages["team/board"]
         self.assertEqual(set(record), {"id", "type", "repo", "source", "canonical"})
         self.assertEqual(manager.resolve_id("board", "bsp"), "team/board")
-        self.assertEqual(manager.list_modules(), [])
 
     def test_equal_priority_sources_must_agree(self):
         self.upstream("team/A")
@@ -848,8 +883,101 @@ class Catalogs(UpstreamTestCase):
             self.modules / "sources.yaml",
             {"sources": [{"url": str(self.index)}, {"url": str(other)}]},
         )
-        with self.assertRaisesRegex(ValueError, "Equal-priority sources disagree about team/A"):
+        with self.assertRaisesRegex(
+            ValueError,
+            r"team/A: .*index\.yaml and .*other\.yaml have the same priority 0 but list "
+            r"different repositories",
+        ):
             SourceManager(self.modules / "sources.yaml")
+
+    def test_short_names_ignore_case(self):
+        self.upstream("team/A")
+        self.assertEqual(SourceManager(self.modules / "sources.yaml").resolve_id("a"), "team/A")
+
+    def test_errors_name_the_index_and_the_entry(self):
+        cases = (
+            (
+                {"modules": ["https://git.example.com/x/Filter.git"]},
+                r"index\.yaml: https://git\.example\.com/x/Filter\.git: cannot derive owner/Repo; "
+                r"add `id: owner/Repo` to the entry or `namespace:` to the index",
+            ),
+            (
+                {"modules": [{"repo": "https://github.com/team/A.git", "type": "bsp"}]},
+                r"index\.yaml: https://github\.com/team/A\.git: type must be module",
+            ),
+            ({"modules": [{"id": "team/A"}]}, r"index\.yaml: team/A: missing repo URL"),
+            (
+                {"modules": [{"id": "team/A", "repo": "a", "status": "gold"}]},
+                r"index\.yaml: team/A: unknown status gold; use community, verified, official",
+            ),
+            (
+                {"modules": ["https://github.com/team/A.git", "https://github.com/Team/a"]},
+                r"index\.yaml: Team/a is listed more than once",
+            ),
+            (
+                {"modules": [{"id": "A", "repo": "a"}]},
+                r"index\.yaml: A: Expected canonical owner/repo: 'A'",
+            ),
+        )
+        for data, pattern in cases:
+            with self.subTest(pattern=pattern):
+                self.write_yaml(self.index, data)
+                with self.assertRaisesRegex(ValueError, pattern):
+                    SourceManager(self.modules / "sources.yaml")
+        self.write_yaml(self.modules / "sources.yaml", {"sources": [{"priority": 0}]})
+        with self.assertRaisesRegex(ValueError, "sources.yaml: every source needs a url"):
+            SourceManager(self.modules / "sources.yaml")
+
+    def test_a_mirror_supplies_the_fetch_url_whatever_its_priority(self):
+        self.upstream("team/A")
+        mirror = self.write_yaml(
+            self.tmp / "mirror.yaml", {"mirror_of": "team", "modules": ["https://m.example/A.git"]}
+        )
+        for priority in (-1, 0, 1):
+            with self.subTest(priority=priority):
+                self.write_yaml(
+                    self.modules / "sources.yaml",
+                    {
+                        "sources": [
+                            {"url": str(self.index)},
+                            {"url": str(mirror), "priority": priority},
+                        ]
+                    },
+                )
+                record = SourceManager(self.modules / "sources.yaml").packages["team/A"]
+                self.assertEqual(
+                    (record["repo"], record["canonical"], record["source"]),
+                    ("https://m.example/A.git", str(self.tmp / "upstream/team/A"), str(self.index)),
+                )
+                self.assertEqual(list(record)[:5], ["id", "type", "repo", "canonical", "source"])
+
+    def test_adding_keeps_comments_layout_and_line_endings(self):
+        sources = self.modules / "sources.yaml"
+        self.write(
+            sources,
+            "# team sources\r\nsources:\r\n  - url: a.yaml  # ours\r\n    priority: 0\r\n",
+        )
+        self.assertTrue(add_source(sources, "https://example.com/index.yaml", 2))
+        self.assertFalse(add_source(sources, "a.yaml"))
+        self.assertEqual(
+            sources.read_bytes(),
+            b"# team sources\r\nsources:\r\n  - url: a.yaml  # ours\r\n    priority: 0\r\n"
+            b"  - url: https://example.com/index.yaml\r\n    priority: 2\r\n",
+        )
+        index = self.tmp / "local.yaml"
+        self.write(index, "namespace: me  # team\nmodules: []\nbsps: []\n")
+        self.assertTrue(add_index_entry(index, "https://git.example.com/me/A.git"))
+        self.assertFalse(add_index_entry(index, "https://git.example.com/me/A.git"))
+        self.assertEqual(
+            self.read(index),
+            "namespace: me  # team\nmodules:\n  - https://git.example.com/me/A.git\nbsps: []\n",
+        )
+        fresh = self.tmp / "fresh.yaml"
+        add_source(fresh, "a.yaml")
+        self.assertEqual(load_yaml(fresh), {"sources": [{"url": "a.yaml", "priority": 0}]})
+        self.write(index, "modules: [a, b]\n")
+        with self.assertRaisesRegex(ValueError, "write modules as a block list"):
+            add_index_entry(index, "c")
 
     def test_traversal_identities_are_rejected(self):
         for identity in (

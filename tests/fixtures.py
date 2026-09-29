@@ -4,8 +4,8 @@
   Modules are real git checkouts committed in place and pinned by an
   ``xrobot.lock`` that points at their commits, as ``xrobot setup`` leaves them.
 - ``UpstreamTestCase``: upstream Module repositories (branches ``master`` and
-  ``dev``) listed in a local catalog index, plus an empty BSP whose
-  ``Modules/sources.yaml`` points at that catalog, for resolution tests.
+  ``dev``) listed in a local index.yaml, plus an empty BSP whose
+  ``Modules/sources.yaml`` points at that index, for resolution tests.
 - ``CxxMixin``: compiles the generated header with ``$CXX`` (default ``g++``)
   against stub ``libxr.hpp``/``thread.hpp``; tests are skipped without it.
 """
@@ -229,7 +229,7 @@ requires_cxx = unittest.skipUnless(HAVE_CXX, f"C++ compiler {CXX} not available 
 
 
 class UpstreamTestCase(TempDirTestCase):
-    """Upstream Module repositories in a local catalog, and an empty BSP using it."""
+    """Upstream Module repositories in a local index, and an empty BSP using it."""
 
     def setUp(self):
         super().setUp()
@@ -249,15 +249,15 @@ class UpstreamTestCase(TempDirTestCase):
     def write_yaml(self, path, value):
         return self.write(path, yaml.safe_dump(value, sort_keys=False))
 
-    def upstream(self, identity, depends=None, kind="module", branches=("dev",), catalog=True):
-        """Create an upstream repository on master (plus ``branches``) and list it in the catalog."""
+    def upstream(self, identity, depends=None, kind="module", branches=("dev",), listed=True):
+        """Create an upstream repository on master (plus ``branches``) and list it in the index."""
         path = self.tmp / "upstream" / identity
         path.mkdir(parents=True)
         run_git(path, "init", "-q", "-b", "master")
         self.commit(path, depends or [], "initial")
         for branch in branches:
             run_git(path, "branch", branch)
-        if catalog:
+        if listed:
             self.entries.append({"id": identity, "repo": str(path), "type": kind})
             self.write_yaml(self.index, {"packages": self.entries})
         return path

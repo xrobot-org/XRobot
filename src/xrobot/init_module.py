@@ -23,7 +23,7 @@ import yaml
 
 from xrobot.generate_main import atomic_write
 from xrobot.module_parser import manifest_from_text
-from xrobot.source_manager import SourceManager, load_yaml, validate_id
+from xrobot.source_manager import SourceManager, SourceUnavailable, load_yaml, validate_id
 
 MODULES_KEYS = ("modules", "xrobot")
 TOOL_REPOSITORIES = {
@@ -32,6 +32,10 @@ TOOL_REPOSITORIES = {
 }
 
 GIT_TIMEOUT = 300
+OFFLINE_HINT = (
+    "`xrobot setup --offline` works without network when xrobot.lock matches "
+    "Modules/modules.yaml and the Modules are checked out"
+)
 
 
 def git(path, *args, check=True):
@@ -171,20 +175,26 @@ def _valid_pin(value):
 class Resolver:
     def __init__(self, modules_dir, source_manager=None, offline=False, pinned=None):
         self.directory = Path(modules_dir).resolve()
-        self.sources = source_manager
+        # 一个 SourceManager，或首次使用时才调用的加载函数。
+        # A SourceManager, or a function that loads it on first use.
+        self._sources = source_manager
         self.offline = offline
         self.pinned = pinned or {}
         self.prepared = {}
         self.resolved = {}
         self.stack = []
 
+    @property
+    def sources(self):
+        """The SourceManager, loaded on first use."""
+        if callable(self._sources):
+            self._sources = self._sources()
+        return self._sources
+
     def fetch_url(self, identity, repo):
         """Fetch from a mirror source when one lists the package, else from ``repo``."""
-        if self.sources is not None:
-            for candidate, source in self.sources.all_module_candidates.get(identity, []):
-                if source.mirror_of:
-                    return candidate
-        return repo
+        mirror = self.sources.mirror_url(identity) if self.sources is not None else None
+        return mirror or repo
 
     def prepare(self, identity, repo):
         validate_id(identity)
@@ -195,20 +205,27 @@ class Resolver:
             if not same_repository(self.prepared[identity]["repo"], repo):
                 raise ValueError("Conflicting source repositories for " + identity)
             return folder
-        url = self.fetch_url(identity, repo)
+        # 只有需要克隆，或 origin 不是原仓库（可能是镜像）时才读取源。
+        # The Sources are read only to clone, or when origin is not the original
+        # repository (it may be a mirror).
         if folder.exists():
             if not (folder / ".git").exists():
                 raise ValueError(f"Refusing to overwrite non-Git directory: {folder}")
             actual = git(folder, "remote", "get-url", "origin")
-            if not same_repository(actual, repo) and not same_repository(actual, url):
+            if not same_repository(actual, repo) and not same_repository(
+                actual, self.fetch_url(identity, repo)
+            ):
                 raise ValueError(f"Source mismatch for {identity}: {actual} != {repo}")
         elif self.offline:
             raise ValueError("Offline source missing: " + identity)
         else:
             folder.parent.mkdir(parents=True, exist_ok=True)
-            git(None, "clone", "--", url, str(folder))
+            git(None, "clone", "--", self.fetch_url(identity, repo), str(folder))
         if not self.offline:
-            git(folder, "fetch", "--prune", "--tags", "origin")
+            try:
+                git(folder, "fetch", "--prune", "--tags", "origin")
+            except ValueError as error:
+                raise ValueError(f"{error}\n{OFFLINE_HINT}") from error
         self.prepared[identity] = {"repo": repo, "folder": folder}
         return folder
 
@@ -276,7 +293,7 @@ class Resolver:
         identity = self.sources.resolve_id(req["id"])
         package = self.sources.packages[identity]
         if package["type"] != "module":
-            raise ValueError(f"{identity} is a BSP catalog entry, not a Module dependency")
+            raise ValueError(f"{identity} is a BSP in the Sources, not a Module dependency")
         if identity in self.stack:
             raise ValueError("Package dependency cycle: " + " -> ".join(self.stack + [identity]))
         pinned = self.pinned.get(identity)
@@ -602,6 +619,14 @@ def _root_context(project, roots, context_ref):
     return context(selected) if selected else None
 
 
+def _load_sources(project):
+    """Read the Sources of the BSP; a failed download adds the --offline hint."""
+    try:
+        return SourceManager(project.sources_yaml)
+    except SourceUnavailable as error:
+        raise SourceUnavailable(f"{error}; {OFFLINE_HINT}") from error
+
+
 def sync_modules(
     project, update=None, frozen=False, offline=False, context_ref=None, release_ref=None
 ):
@@ -627,7 +652,7 @@ def sync_modules(
             )
     if lock is not None and update is None and lock.get("requests") == roots:
         manager = (
-            SourceManager(project.sources_yaml)
+            (lambda: _load_sources(project))
             if not offline and project.sources_yaml.is_file()
             else None
         )
@@ -638,7 +663,7 @@ def sync_modules(
         validate_locked_graph(resolver, roots)
         records = lock["modules"]
     else:
-        manager = SourceManager(project.sources_yaml)
+        manager = _load_sources(project)
         pinned = {}
         if lock is not None and update != []:
             named = set()
@@ -646,7 +671,7 @@ def sync_modules(
                 matches = [
                     k
                     for k in lock["modules"]
-                    if k.casefold() == name.casefold() or k.rsplit("/", 1)[-1] == name
+                    if name.casefold() in (k.casefold(), k.rsplit("/", 1)[-1].casefold())
                 ]
                 if len(matches) != 1:
                     raise ValueError(

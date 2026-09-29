@@ -213,7 +213,7 @@ def select_module(modules: dict, requested: str) -> dict:
         if (
             key.casefold() == requested.casefold()
             if "/" in requested
-            else value["name"] == requested
+            else value["name"].casefold() == requested.casefold()
         )
     ]
     if len(candidates) != 1:
