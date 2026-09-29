@@ -15,7 +15,7 @@ from fixtures import BspTestCase, TempDirTestCase, UpstreamTestCase, manifest_bl
 from xrobot import __version__
 from xrobot.cli import main, parse_value
 from xrobot.config import load_config
-from xrobot.init_module import read_modules_yaml
+from xrobot.lock import read_modules_yaml
 from xrobot.module_parser import parse_manifest_from_header, source_interface
 
 REPOSITORY = Path(__file__).resolve().parents[1]
@@ -541,7 +541,7 @@ class Setup(CliMixin, UpstreamTestCase):
 
     def test_a_git_timeout_is_reported_without_a_traceback(self):
         timeout = subprocess.TimeoutExpired(["git", "fetch"], 300)
-        with mock.patch("xrobot.init_module.subprocess.run", side_effect=timeout):
+        with mock.patch("xrobot.lock.subprocess.run", side_effect=timeout):
             self.fails("setup", pattern=r"Git did not finish within 300 s")
 
     def test_a_different_tool_pin_is_a_warning_and_an_error_when_frozen(self):

@@ -779,7 +779,7 @@ def _request_lines(text):
 
 def add_module(modules_yaml, request_text):
     """Append one request line; the rest of modules.yaml is untouched."""
-    from xrobot.init_module import request
+    from xrobot.lock import request
 
     parsed = request(request_text, canonical=True)
     path = Path(modules_yaml)
@@ -817,7 +817,7 @@ def add_module(modules_yaml, request_text):
 
 def remove_module(modules_yaml, identity):
     """Delete one request line; the rest of modules.yaml is untouched."""
-    from xrobot.init_module import request
+    from xrobot.lock import request
 
     path = Path(modules_yaml)
     text = path.read_text(encoding="utf-8-sig").replace("\r\n", "\n")

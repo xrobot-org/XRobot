@@ -87,7 +87,7 @@ def create_module(
     for item in constructors + templates:
         if not isinstance(item, str) or not item.strip():
             raise ValueError("Constructor/template declarations must be C++ text")
-    from xrobot.init_module import request
+    from xrobot.lock import request
 
     entries = []
     for dependency in depends or []:

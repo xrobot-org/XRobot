@@ -68,7 +68,7 @@ def _check_pin(project: Project, frozen: bool = False) -> None:
         ProjectError: --frozen 下未固定版本或版本不一致。
             With --frozen, XRobot is not pinned or the versions differ.
     """
-    from xrobot.init_module import read_modules_yaml
+    from xrobot.lock import read_modules_yaml
 
     _, pin = read_modules_yaml(project.modules_yaml)
     if pin is None:
@@ -134,7 +134,7 @@ def cmd_setup(args: argparse.Namespace) -> None:
     """
     from xrobot.config_edit import sync_config
     from xrobot.generate_main import generate, load_modules, validate_all
-    from xrobot.init_module import check_tool_pins, sync_modules
+    from xrobot.lock import check_tool_pins, sync_modules
     from xrobot.type_index import TypeIndex
 
     project = _project(args)
@@ -342,7 +342,7 @@ def cmd_check_module(args: argparse.Namespace) -> None:
     Resolve the Modules as setup does, then write the constructor call that Module CI compiles.
     """
     from xrobot.generate_main import generate_compile_check, load_modules
-    from xrobot.init_module import sync_modules
+    from xrobot.lock import sync_modules
 
     project = _project(args)
     sync_modules(project, offline=args.offline)

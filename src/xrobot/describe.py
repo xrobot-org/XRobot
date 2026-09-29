@@ -20,7 +20,7 @@ from xrobot.constructor_model import (
     type_shape,
 )
 from xrobot.generate_main import generate_code, read_registrations
-from xrobot.init_module import read_modules_yaml
+from xrobot.lock import read_modules_yaml
 from xrobot.module_parser import (
     _module_record,
     lock_error,

@@ -1,4 +1,4 @@
-"""Module resolution and xrobot.lock (xrobot.init_module), locked discovery (xrobot.module_parser)
+"""Module resolution and xrobot.lock (xrobot.lock), locked discovery (xrobot.module_parser)
 and Sources (xrobot.source_manager)."""
 
 import os
@@ -9,7 +9,7 @@ import requests
 import yaml
 from fixtures import BspTestCase, UpstreamTestCase, manifest_block, run_git
 
-from xrobot.init_module import read_modules_yaml, repository_identity, same_repository, write_cmake
+from xrobot.lock import read_modules_yaml, repository_identity, same_repository, write_cmake
 from xrobot.module_parser import discover_modules, manifest_from_text, select_module
 from xrobot.source_manager import (
     SourceManager,
@@ -653,7 +653,7 @@ class ToolPins(UpstreamTestCase):
         run_git(None, "clone", "-q", "--bare", str(self.tool), str(self.cache / "xrobot.git"))
 
     def check(self, pin, target, offline=False, generator=None):
-        from xrobot.init_module import check_tool_pins
+        from xrobot.lock import check_tool_pins
 
         self.configure([], pin=pin)
         if generator is not None:

@@ -287,7 +287,7 @@ class UpstreamTestCase(TempDirTestCase):
 
     def sync(self, cwd=None, **kwargs):
         """Run sync_modules from ``cwd`` (default: the BSP root, where `xrobot setup` usually runs)."""
-        from xrobot.init_module import sync_modules
+        from xrobot.lock import sync_modules
 
         previous = os.getcwd()
         os.chdir(str(cwd or self.root))
