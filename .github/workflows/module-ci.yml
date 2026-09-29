@@ -40,6 +40,10 @@ on:
         description: When set, build tests and run the matching CTest tests
         type: string
         default: ''
+      ctest-timeout:
+        description: Per-test CTest timeout in seconds
+        type: number
+        default: 15
 
 permissions:
   contents: read
@@ -90,9 +94,8 @@ jobs:
         run: |
           set -euo pipefail
           git config --global --add safe.directory '*'
-          module="Modules/$XR_MODULE_ID"
           python3 - <<'PYCODE'
-          import json, os, subprocess, yaml
+          import os, subprocess, yaml
           from pathlib import Path
           identity = os.environ['XR_MODULE_ID']
           folder = Path('Modules') / identity
@@ -148,4 +151,4 @@ jobs:
       - name: Run Module tests
         if: inputs.ctest-regex != ''
         shell: bash
-        run: ctest --test-dir build --output-on-failure --no-tests=error -R '${{ inputs.ctest-regex }}'
+        run: ctest --test-dir build --output-on-failure --no-tests=error -R '${{ inputs.ctest-regex }}' --timeout ${{ inputs.ctest-timeout }}
