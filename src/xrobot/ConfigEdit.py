@@ -608,12 +608,17 @@ def _sync_item(item, interface, cpp_class, templates, index):
         value = argument.get(p['name'])
         if isinstance(value, dict):
             target = qualify(p['type'], interface, cpp_class, templates, True)
-            if _sync_mapping(value, target, index, ()):
+            defaults = None
+            if p['default'] is not None:
+                defaults = initializer_tree(qualify(p['default'], interface, cpp_class, templates), target)
+            if _sync_mapping(value, target, index, (), defaults):
                 changed = True
     return changed
 
 
-def _sync_mapping(value, target, index, scope):
+def _sync_mapping(value, target, index, scope, defaults=None):
+    """Match a mapping to its struct; new fields take the parameter's designated
+    default when it names them, else the field's default member initializer."""
     entry = index.resolve(target, scope) if target else None
     if entry is None or not entry.is_aggregate() or entry.mapping_problem() is not None:
         return False
@@ -627,13 +632,14 @@ def _sync_mapping(value, target, index, scope):
             changed = True
     for position, (name, cpp_type, _) in enumerate(fields):
         field_type = index.qualify_in(cpp_type, entry, spelled)
+        given = defaults.get(name) if isinstance(defaults, dict) else None
         if name not in value:
-            default = _field_default(entry, name, index, spelled)
+            default = given if given is not None else _field_default(entry, name, index, spelled)
             value.insert(position, name, seed_value(default if default is not None else '{}',
                                                     field_type, index, entry.path) or '{}')
             changed = True
         elif isinstance(value[name], dict):
-            if _sync_mapping(value[name], field_type, index, entry.path):
+            if _sync_mapping(value[name], field_type, index, entry.path, given):
                 changed = True
     order = [k for k in wanted if k in value]
     if list(value) != order:

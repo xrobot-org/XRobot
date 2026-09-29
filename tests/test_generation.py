@@ -78,7 +78,7 @@ class HeaderShape(GenerationTestCase):
 
     def test_register_macro_expands_to_nothing(self):
         code = self.code(led())
-        self.assertIn('\n#define XR_REGISTER(name, ...)\n', code)
+        self.assertIn('\n#define XR_REGISTER(name, ...) static_cast<void>(name)\n', code)
         self.assertNotIn('XR_REGISTER_DETAIL', code)
         self.assertNotRegex(code, r'static_assert\([^;]*\bpin\b')
 

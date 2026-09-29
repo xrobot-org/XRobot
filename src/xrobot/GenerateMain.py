@@ -479,9 +479,10 @@ class Generator:
         lines += ['    %s.OnMonitor();' % e['id'] for e in entries if e['id'] in monitored]
         lines += ['    LibXR::Thread::Sleep(%s);' % config.get('settings', {}).get('monitor_sleep_ms', '1000'),
                   '  }', '}', '']
-        lines += ['// XR_REGISTER only marks names for the generator; types are checked where',
-                  '// XRobotMain binds them.',
-                  '#define XR_REGISTER(name, ...)']
+        lines += ['// XR_REGISTER marks names for the generator and uses the object, so a',
+                  '// registration the selected product does not consume is not an unused',
+                  '// variable; types are checked where XRobotMain binds them.',
+                  '#define XR_REGISTER(name, ...) static_cast<void>(name)']
         call = '::XRobotMain' + ('<%s>' % ', '.join(actual_types) if actual_types else '')
         arguments = ', '.join(r['name'] for r in views)
         if len(call) + len(arguments) < 72:
@@ -529,6 +530,9 @@ def generate(project, config_path=None):
     registrations = read_registrations(project.entry())
     code = generate_code(project, config_path, modules, registrations)
     atomic_write(project.header, code)
+    # Unchanged content is not rewritten; still mark the header as generated
+    # after its inputs so the build's freshness check accepts it.
+    os.utime(project.header)
     return code
 
 
