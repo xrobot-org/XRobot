@@ -249,7 +249,7 @@ dependencies and compiles the Module sources plus one constructor call written b
 `xrobot check-module` against LibXR on Linux; the call uses `void*` placeholders
 for dependencies and is never executed. Inputs: `xrobot-ref`, `libxr-ref`,
 `dependency-ref`, `template-args` (JSON list), `image`, `apt-packages`,
-`cmake-options`, `ctest-regex`.
+`cmake-options`, `ctest-regex`, `ctest-timeout` (seconds per test, default 15).
 
 ## Catalogs
 
