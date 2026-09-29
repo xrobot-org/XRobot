@@ -13,9 +13,13 @@ Review responsibility remains with the Project Owner until further maintainers
 are explicitly appointed. Introducing CODEOWNERS is deferred; this change does
 not invent a reviewer team or modify repository permissions.
 
-Normal core and official Module work targets `dev`. Stable promotion targets
-`master` after the relevant integration acceptance. Third-party packages may use
-their own branch model. Backend changes must meet the same architecture and
+Core and official Module and BSP repositories share one branch model: `dev`
+receives all changes; `master` is the stable line and is updated only by pull
+requests from `dev` after the relevant integration acceptance. A BSP targeting
+`dev` locks Module commits that are on the Modules' `dev`; a BSP targeting
+`master`/`main` or a tag locks commits on the Modules' `master`
+(`xrobot setup --release-ref`). Third-party packages may use their own branch
+model. Backend changes must meet the same architecture and
 peripheral-test standard regardless of author. Cross-core API changes require
 core review in addition to the affected subsystem review.
 
