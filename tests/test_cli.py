@@ -300,7 +300,7 @@ class Setup(CliMixin, UpstreamTestCase):
     def test_setup_resolves_checks_every_config_and_generates_the_selected_one(self):
         self.write(self.root / 'User/products/alt.yaml', 'modules: []\n')
         out, err = self.ok('setup', cwd=self.root / 'User')
-        self.assertIn('Resolved 1 Module commits', out)
+        self.assertIn('Resolved 1 Module commit\n', out)
         self.assertIn('Checked 2 configs; generated User/xrobot_main.hpp for User/xrobot.yaml', out)
         self.assertEqual(err, '')
         self.assertTrue((self.root / 'xrobot.lock').is_file())

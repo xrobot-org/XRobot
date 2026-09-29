@@ -35,6 +35,10 @@ def _config_path(project, value):
     return path.resolve()
 
 
+def _count(number, noun):
+    return '%d %s%s' % (number, noun, '' if number == 1 else 's')
+
+
 def _pin_warning(project):
     from xrobot.InitModule import read_modules_yaml
     _, pin = read_modules_yaml(project.modules_yaml)
@@ -77,7 +81,7 @@ def cmd_setup(args):
     if args.update is not None:
         update = list(args.update)
     lock = sync_modules(project, update, args.frozen, args.offline, args.context_ref, args.release_ref)
-    print('Resolved %d Module commits' % len(lock['modules']))
+    print('Resolved %s' % _count(len(lock['modules']), 'Module commit'))
     if args.release_ref:
         check_tool_pins(project, args.release_ref, args.offline)
     modules = load_modules(project)
@@ -90,8 +94,8 @@ def cmd_setup(args):
     count = validate_all(project, modules, index)
     selected = project.selected_config()
     generate(project, selected)
-    print('Checked %d configs; generated User/xrobot_main.hpp for %s'
-          % (count, project.relative(selected)))
+    print('Checked %s; generated User/xrobot_main.hpp for %s'
+          % (_count(count, 'config'), project.relative(selected)))
     _pin_warning(project)
 
 
