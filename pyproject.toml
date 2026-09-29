@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "xrobot"
 version = "1.0.0"
 description = "Source package resolution and static C++ application assembly for the XRobot ecosystem."
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 authors = [
     {name = "Xiao", email = "2592509183@qq.com"}
 ]
@@ -26,6 +26,11 @@ dependencies = [
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
@@ -41,3 +46,11 @@ xrobot = "xrobot.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
