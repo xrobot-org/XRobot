@@ -140,8 +140,7 @@ def read_registrations(path):
     label = path.name
     for number, line in enumerate(text.splitlines(), 1):
         if line.lstrip().startswith('#') and re.search(r'\bXR_REGISTER\b', line):
-            raise ConfigError('%s:%d: XR_REGISTER inside a preprocessor directive is not supported'
-                              % (label, number))
+            raise ConfigError(f'{label}:{number}: XR_REGISTER inside a preprocessor directive is not supported')
     document = parse_document(text, str(path))
     invocations = document.invocation_views('XR_REGISTER', template_angles=True)
     candidates = [o for o in identifier_occurrences(text)
@@ -313,7 +312,7 @@ class Generator:
             raise ValueError('two selected packages define global class {}; choose one implementation'.format(module['name']))
         selected[module['name']] = module
         interface = source_interface(module['header'])
-        template_args = [value_text(v, '%s.template_args[%d]' % (identity, j))
+        template_args = [value_text(v, f'{identity}.template_args[{j}]')
                          for j, v in enumerate(entry.get('template_args', []))]
         cpp_type = module['name']
         if template_args or interface['template'] is not None:
@@ -326,7 +325,7 @@ class Generator:
         ctor = constructor_for(interface, named_values, visible, cpp_type, templates)
         args_lines = getattr(entry.get('args'), 'item_lines', None) or []
         declarations, arguments, problems = [], [], []
-        for j, (p, item) in enumerate(zip(ctor['arguments'], named_values)):
+        for j, (p, item) in enumerate(zip(ctor['arguments'], named_values, strict=False)):
             value = next(iter(item.values()))
             line = args_lines[j] if j < len(args_lines) else getattr(entry, 'line', 0)
             try:
@@ -425,7 +424,7 @@ class Generator:
         for i, record in enumerate(views):
             typ = record['type']
             if record['caller_view']:
-                parameter_type = 'XrViewType%d' % i
+                parameter_type = f'XrViewType{i}'
                 while parameter_type in template_names:
                     parameter_type += '_'
                 template_names.add(parameter_type)
@@ -453,7 +452,7 @@ class Generator:
 
         def at(line):
             if directives and line:
-                lines.append('#line %d "%s"' % (line, cfg))
+                lines.append(f'#line {line} "{cfg}"')
 
         if compile_check:
             lines += ['namespace xrobot_generated {', 'void XRobotCompileCheck() {',
@@ -468,7 +467,7 @@ class Generator:
             else:
                 lines += [signature + ')', '{']
         for entry in entries:
-            lines.append('  // modules[%d]: %s' % (entry['index'], entry['id']))
+            lines.append(f"  // modules[{entry['index']}]: {entry['id']}")
             for line, declarations in entry['declarations']:
                 if declarations:
                     at(line)
@@ -512,7 +511,7 @@ class Generator:
             result, number = [], 1  # number: line number of the next emitted line
             for line in lines:
                 if line is back:
-                    line = '#line %d "%s"' % (number + 1, own)
+                    line = f'#line {number + 1} "{own}"'
                 result.append(line)
                 number += line.count('\n') + 1
             lines = result

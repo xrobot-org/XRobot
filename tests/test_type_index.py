@@ -40,7 +40,7 @@ class TypeIndexTestCase(TempDirTestCase):
         self.root = self.tmp
 
     def index(self, *texts):
-        paths = [self.write('H%d.hpp' % i, text) for i, text in enumerate(texts)]
+        paths = [self.write(f'H{i}.hpp', text) for i, text in enumerate(texts)]
         return TypeIndex(paths)
 
 

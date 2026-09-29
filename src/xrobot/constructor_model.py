@@ -25,10 +25,9 @@ def parameter(declaration):
         raise ValueError('Constructor parameters must have explicit names: ' + declaration)
     name = parts[-1].text
     cpp_type = head[:parts[-1].start].strip()
-    if name in ('const', 'volatile') or cpp_type in ('class', 'typename'):
-        # Type template parameters use the same named declaration representation.
-        if cpp_type not in ('class', 'typename'):
-            raise ValueError('Unsupported parameter declaration: ' + declaration)
+    # Type template parameters use the same named declaration representation.
+    if name in ('const', 'volatile') and cpp_type not in ('class', 'typename'):
+        raise ValueError('Unsupported parameter declaration: ' + declaration)
     if not cpp_type or '(' in cpp_type or '[' in cpp_type or '...' in head:
         raise ValueError('Use an explicit named type alias for this declaration: ' + declaration)
     return {'name': name, 'type': cpp_type, 'default': default, 'declaration': declaration}
@@ -319,7 +318,7 @@ def constructor_for(interface, named_values, known, cpp_class, templates):
         if [p['name'] for p in ctor['arguments']] != names:
             continue
         good = True
-        for p, item in zip(ctor['arguments'], named_values):
+        for p, item in zip(ctor['arguments'], named_values, strict=False):
             value = next(iter(item.values()))
             target = qualify(p['type'], interface, cpp_class, templates, True)
             text = value.strip() if isinstance(value, str) else None
@@ -407,8 +406,8 @@ class ValueChecker:
                 raise ConfigError(f'{field}: positional values are not accepted for {entry.qualified}; write a mapping '
                                   'with its field names')
             items = default if isinstance(default, list) and len(default) == len(value) else [None] * len(value)
-            parts = [self.render(v, '%s[%d]' % (field, i), None, scope, d)[0]
-                     for i, (v, d) in enumerate(zip(value, items))]
+            parts = [self.render(v, f'{field}[{i}]', None, scope, d)[0]
+                     for i, (v, d) in enumerate(zip(value, items, strict=True))]
             return ('{\n' + '\n, '.join(parts) + '\n}' if parts else '{}'), False
         text = value_text(value, field)
         if entry is not None:

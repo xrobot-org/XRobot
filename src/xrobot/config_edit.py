@@ -139,8 +139,8 @@ def _render_item(item, indent):
 def _load_item(block_text):
     """Load one instance block (a one-item list) for a round-trip edit."""
     lines = block_text.split('\n')
-    indent = min(len(l) - len(l.lstrip(' ')) for l in lines if l.strip())
-    data = _yaml().load('\n'.join(l[indent:] for l in lines))
+    indent = min(len(line) - len(line.lstrip(' ')) for line in lines if line.strip())
+    data = _yaml().load('\n'.join(line[indent:] for line in lines))
     if not isinstance(data, CommentedSeq) or len(data) != 1:
         raise ConfigError('cannot edit this instance: its YAML block is not a single list item')
     return data[0], indent
@@ -188,7 +188,7 @@ def _set_path(item, path, value):
         if token.startswith('['):
             index = int(token[1:-1])
             if not isinstance(node, list) or index >= len(node):
-                raise ConfigError('path %s: no element %d' % (path, index))
+                raise ConfigError(f'path {path}: no element {index}')
             if last:
                 node[index] = value
                 return
@@ -230,7 +230,7 @@ def _set_path_tail(node, tokens, value, path):
         if token.startswith('['):
             index = int(token[1:-1])
             if not isinstance(node, list) or index >= len(node):
-                raise ConfigError('path %s: no element %d' % (path, index))
+                raise ConfigError(f'path {path}: no element {index}')
             if last:
                 node[index] = value
                 return
@@ -462,10 +462,7 @@ def seed_value(default, target, index, scope=()):
         given = tree if isinstance(tree, dict) else {}
         for name, cpp_type, _ in entry.fields():
             field_type = index.qualify_in(cpp_type, entry, spelled)
-            if name in given:
-                value = given[name]
-            else:
-                value = _field_default(entry, name, index, spelled)
+            value = given[name] if name in given else _field_default(entry, name, index, spelled)
             if isinstance(value, (dict, list)) or value is None or isinstance(value, str):
                 child = seed_value(value if value is not None else '{}', field_type, index, entry.path)
             else:
@@ -541,7 +538,7 @@ def add_instance(config_path, module_name, modules, index, instance_id=None, sou
         if not re.search(r'^modules:', text, flags=re.M):
             text = 'modules:\n' + text
         lines = text.split('\n')
-        at = next(i for i, l in enumerate(lines) if l.startswith('modules:')) + 1
+        at = next(i for i, line in enumerate(lines) if line.startswith('modules:')) + 1
         new_text = '\n'.join(lines[:at] + _render_item(item, indent) + lines[at:]) + '\n'
     else:
         new_text = blocks.append(_render_item(item, indent))
@@ -614,7 +611,7 @@ def _sync_item(item, interface, cpp_class, templates, index):
         changed = True
     else:
         ctor = exact[0]
-    for p, argument in zip(ctor['arguments'], args or []):
+    for p, argument in zip(ctor['arguments'], args or [], strict=False):
         value = argument.get(p['name'])
         if isinstance(value, dict):
             target = qualify(p['type'], interface, cpp_class, templates, True)
@@ -786,4 +783,4 @@ def parse_json_value(text):
     try:
         return json.loads(text)
     except json.JSONDecodeError as error:
-        raise ConfigError(f'value must be JSON (e.g. "\\"LED_B\\"", 1000, {{"a": "1"}}): {error}')
+        raise ConfigError(f'value must be JSON (e.g. "\\"LED_B\\"", 1000, {{"a": "1"}}): {error}') from error

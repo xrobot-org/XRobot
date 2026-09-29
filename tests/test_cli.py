@@ -259,8 +259,8 @@ class ModuleCiPreparation(CliMixin, UpstreamTestCase):
         lines = step['run'].splitlines()
         start = next(i for i, line in enumerate(lines) if "<<'PYCODE'" in line) + 1
         end = next(i for i in range(start, len(lines)) if lines[i].strip() == 'PYCODE')
-        indent = min(len(l) - len(l.lstrip()) for l in lines[start:end] if l.strip())
-        script = '\n'.join(l[indent:] for l in lines[start:end])
+        indent = min(len(text) - len(text.lstrip()) for text in lines[start:end] if text.strip())
+        script = '\n'.join(text[indent:] for text in lines[start:end])
 
         class Catalog:
             def __init__(self, data):

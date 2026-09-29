@@ -69,8 +69,8 @@ def xr_syntax_pin(repo):
 
 
 def git(repo, *args):
-    output = subprocess.run(['git', '-C', str(repo), *args], stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE, encoding='utf-8', timeout=20)
+    output = subprocess.run(['git', '-C', str(repo), *args], capture_output=True,
+                            encoding='utf-8', timeout=20)
     if output.returncode:
         raise ValueError(output.stderr.strip())
     return output.stdout.strip()

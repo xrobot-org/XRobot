@@ -36,7 +36,7 @@ def _config_path(project, value):
 
 
 def _count(number, noun):
-    return '%d %s%s' % (number, noun, '' if number == 1 else 's')
+    return f"{number} {noun}{'' if number == 1 else 's'}"
 
 
 def _pin_warning(project):
@@ -139,7 +139,7 @@ def cmd_format(args):
     for path in changed:
         print(('needs formatting: %s' if args.check else 'formatted: %s') % project.relative(path))
     if args.check and changed:
-        raise ConfigError('%d file(s) are not in the canonical layout; run `xrobot format`' % len(changed))
+        raise ConfigError(f'{len(changed)} file(s) are not in the canonical layout; run `xrobot format`')
 
 
 def cmd_instance(args):

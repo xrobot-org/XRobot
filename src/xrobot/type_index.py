@@ -645,7 +645,7 @@ class TypeIndex:
             return self.resolve(header.text[start:end].strip(), target[:-1], depth + 1), True
         if owner is None:
             return None, True
-        for access, base in owner.base_spellings():
+        for _access, base in owner.base_spellings():
             parent = self.resolve(base, path[:-1], depth + 1)
             if parent is None:
                 return None, False
@@ -670,7 +670,7 @@ class TypeIndex:
             if owner is not None:
                 scopes.append((set(owner.member_types()), spelled))
                 if owner.template_parameters and args is not None:
-                    for name, value in zip(owner.template_parameters, args):
+                    for name, value in zip(owner.template_parameters, args, strict=False):
                         replacements.setdefault(name, value.strip())
             else:
                 scopes.append((self._namespace_types.get(path, set()), '::'.join(path)))

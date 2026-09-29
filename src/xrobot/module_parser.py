@@ -49,8 +49,8 @@ def manifest_from_text(text: str, path=None) -> ModuleManifest:
     if len(matches) > 1:
         raise ValueError(f'{path}: multiple package manifests')
     if matches and matches[0].group(1) and int(matches[0].group(1)) > MANIFEST_VERSION:
-        raise ValueError('%s: MODULE MANIFEST V%s needs a newer xrobot; xrobot %s reads manifests up to V%d'
-                         % (path, matches[0].group(1), __version__, MANIFEST_VERSION))
+        raise ValueError(f'{path}: MODULE MANIFEST V{matches[0].group(1)} needs a newer xrobot; '
+                         f'xrobot {__version__} reads manifests up to V{MANIFEST_VERSION}')
     data = yaml.safe_load(matches[0].group(2)) if matches else {}
     if data is None:
         data = {}
@@ -105,7 +105,7 @@ def source_interface(path: Path) -> dict:
 def _locked_head(folder: Path):
     """HEAD commit of a module checkout; raises when git cannot read it."""
     result = subprocess.run(['git', '-C', str(folder), 'rev-parse', '--verify', 'HEAD'],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                            capture_output=True, text=True)
     if result.returncode:
         raise ValueError(f'cannot read the commit of {folder}: {result.stderr.strip()}')
     return result.stdout.strip()

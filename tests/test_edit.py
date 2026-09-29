@@ -151,7 +151,7 @@ class SetValue(EditTestCase):
         before = self.text().split('\n')
         config_edit.set_value(self.path, 'user', 'args.count', 5)
         after = self.text().split('\n')
-        changed = [(a, b) for a, b in zip(before, after) if a != b]
+        changed = [(a, b) for a, b in zip(before, after, strict=False) if a != b]
         self.assertEqual(changed, [('      - count: 3', '      - count: 5')])
         self.assertEqual(len(before), len(after))
 

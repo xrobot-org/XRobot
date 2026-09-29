@@ -40,7 +40,7 @@ THREAD_STUB = ('#pragma once\n#include <cstdlib>\n'
 def run_git(repo, *args, check=True):
     """Run git with a fixed identity and no user/system configuration influence."""
     command = ['git'] + GIT_OPTIONS + (['-C', str(repo)] if repo is not None else []) + list(args)
-    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8',
+    result = subprocess.run(command, capture_output=True, encoding='utf-8',
                             errors='replace', env=dict(os.environ, **GIT_ENV), timeout=60)
     if check and result.returncode:
         raise AssertionError('git {} failed in {}:\n{}'.format(' '.join(args), repo, result.stderr))

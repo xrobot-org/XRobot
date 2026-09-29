@@ -50,12 +50,11 @@ def _reject_anchors_and_tags(text, source):
     for event in yaml.parse(text, Loader=yaml.BaseLoader):
         line = event.start_mark.line + 1
         if isinstance(event, yaml.AliasEvent) or getattr(event, 'anchor', None):
-            raise ConfigError('%s:%d: YAML anchors and aliases are not allowed; reference '
-                              'instances by id and share values through constexprs' % (source, line))
+            raise ConfigError(f'{source}:{line}: YAML anchors and aliases are not allowed; reference '
+                              'instances by id and share values through constexprs')
         tag = getattr(event, 'tag', None)
         if tag not in (None, '!'):
-            raise ConfigError('%s:%d: YAML tags (%s) are not allowed; write the value as C++ text'
-                              % (source, line, tag))
+            raise ConfigError(f'{source}:{line}: YAML tags ({tag}) are not allowed; write the value as C++ text')
 
 
 def _construct(node, source):
@@ -74,10 +73,10 @@ def _construct(node, source):
     for key_node, value_node in node.value:
         key_line = key_node.start_mark.line + 1
         if not isinstance(key_node, yaml.ScalarNode):
-            raise ConfigError('%s:%d: mapping keys must be plain names' % (source, key_line))
+            raise ConfigError(f'{source}:{key_line}: mapping keys must be plain names')
         key = key_node.value
         if key in result:
-            raise ConfigError('%s:%d: duplicate key %s' % (source, key_line, key))
+            raise ConfigError(f'{source}:{key_line}: duplicate key {key}')
         result.key_lines[key] = key_line
         result[key] = _construct(value_node, source)
     return result
@@ -90,7 +89,7 @@ def parse_yaml(text, source):
         node = yaml.compose(text, Loader=yaml.BaseLoader)
     except yaml.MarkedYAMLError as error:
         mark = error.problem_mark or error.context_mark
-        where = ':%d' % (mark.line + 1) if mark else ''
+        where = f':{mark.line + 1}' if mark else ''
         raise ConfigError(f'{source}{where}: YAML syntax error: {error.problem or error}') from error
     except yaml.YAMLError as error:
         raise ConfigError(f'{source}: YAML error: {error}') from error
@@ -155,7 +154,7 @@ def _check_value(value, field, errors):
             _check_value(child, field + '.' + name, errors)
     elif isinstance(value, list):
         for i, child in enumerate(value):
-            _check_value(child, '%s[%d]' % (field, i), errors)
+            _check_value(child, f'{field}[{i}]', errors)
     else:
         try:
             value_text(value, field)
@@ -185,7 +184,7 @@ def validate_config(config, source='config'):
     else:
         for i, header in enumerate(includes):
             if not isinstance(header, str) or not re.fullmatch(r'<[^<>"\s]+>|[^<>"\s]+', header.strip()):
-                errors.append('constexpr_includes[%d]: write a header name such as Foo.hpp or <vector>' % i)
+                errors.append(f'constexpr_includes[{i}]: write a header name such as Foo.hpp or <vector>')
     constants = config.get('constexprs', {})
     if not isinstance(constants, dict):
         errors.append('constexprs must be a mapping of name to {type, value}')
@@ -205,7 +204,7 @@ def validate_config(config, source='config'):
         entries = []
     used = set()
     for i, entry in enumerate(entries):
-        where = 'modules[%d]' % i
+        where = f'modules[{i}]'
         if not isinstance(entry, dict):
             errors.append(f'{where} requires module/id and ordered args/template_args')
             continue
@@ -220,9 +219,9 @@ def validate_config(config, source='config'):
             where = identity
             problem = identifier_problem(identity)
             if problem:
-                errors.append('modules[%d].id: %s %s' % (i, identity, problem))
+                errors.append(f'modules[{i}].id: {identity} {problem}')
             if identity in used:
-                errors.append('modules[%d].id: duplicate instance id %s' % (i, identity))
+                errors.append(f'modules[{i}].id: duplicate instance id {identity}')
             used.add(identity)
         values = entry.get('args', [])
         if not isinstance(values, list):
@@ -231,11 +230,11 @@ def validate_config(config, source='config'):
         names = set()
         for j, value in enumerate(values):
             if not isinstance(value, dict) or len(value) != 1:
-                errors.append('%s.args[%d] requires one named parameter' % (where, j))
+                errors.append(f'{where}.args[{j}] requires one named parameter')
                 continue
             name, argument = next(iter(value.items()))
             if not re.fullmatch(IDENTIFIER, name) or name in names:
-                errors.append('%s.args[%d]: invalid or duplicate parameter name %s' % (where, j, name))
+                errors.append(f'{where}.args[{j}]: invalid or duplicate parameter name {name}')
             names.add(name)
             _check_value(argument, f'{where}.args.{name}', errors)
         templates = entry.get('template_args', [])
@@ -244,7 +243,7 @@ def validate_config(config, source='config'):
             templates = []
         for j, value in enumerate(templates):
             if value is not None:
-                _check_value(value, '%s.template_args[%d]' % (where, j), errors)
+                _check_value(value, f'{where}.template_args[{j}]', errors)
     settings = config.get('settings', {})
     if not isinstance(settings, dict) or [key for key in settings if key != 'monitor_sleep_ms']:
         errors.append('settings only accepts monitor_sleep_ms')

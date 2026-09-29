@@ -885,7 +885,7 @@ class LineDirectivesInCpp(CxxMixin, BspTestCase):
         code = generate(self.project, config)
         line = next(i for i, text in enumerate(code.split('\n'), 1) if 'wrong.OnMonitor() must return void' in text)
         output = self.compile(expected=False)
-        self.assertRegex(output, r'xrobot_main\.hpp:%d:\d+: error' % line, output)
+        self.assertRegex(output, rf'xrobot_main\.hpp:{line}:\d+: error', output)
 
 
 if __name__ == '__main__':
