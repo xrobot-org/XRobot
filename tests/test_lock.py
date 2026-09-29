@@ -670,6 +670,12 @@ class Manifests(unittest.TestCase):
             with self.subTest(key=key), self.assertRaisesRegex(ValueError, r'unsupported manifest key\(s\) %s' % key):
                 manifest_from_text(manifest_block('d', **{key: []}), 'A.hpp')
 
+    def test_newer_manifest_versions_need_a_newer_tool(self):
+        text = manifest_block('d', ['team/B@dev']).replace('MODULE MANIFEST V2', 'MODULE MANIFEST V3')
+        self.assertIn('MODULE MANIFEST V3', text)
+        with self.assertRaisesRegex(ValueError, r'A\.hpp: MODULE MANIFEST V3 needs a newer xrobot'):
+            manifest_from_text(text, 'A.hpp')
+
     def test_multiple_manifests_are_rejected(self):
         with self.assertRaisesRegex(ValueError, 'multiple package manifests'):
             manifest_from_text(manifest_block() + manifest_block(), 'A.hpp')

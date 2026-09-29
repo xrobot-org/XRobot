@@ -7,10 +7,14 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 import yaml
+from xrobot import __version__
 from xrobot.SourceSyntax import extract_interface
 from xrobot.ConstructorModel import enrich_interface
 
-MANIFEST_PATTERN = re.compile(r'/\*\s*=== MODULE MANIFEST(?: V\d+)? ===\s*(.*?)\s*=== END MANIFEST ===\s*\*/', re.S)
+MANIFEST_PATTERN = re.compile(r'/\*\s*=== MODULE MANIFEST(?: V(\d+))? ===\s*(.*?)\s*=== END MANIFEST ===\s*\*/', re.S)
+# Newest manifest format this version reads; a Module that declares a newer one
+# needs a newer xrobot.
+MANIFEST_VERSION = 2
 MANIFEST_KEYS = ('module_description', 'description', 'depends', 'standalone')
 
 
@@ -44,7 +48,10 @@ def manifest_from_text(text: str, path=None) -> ModuleManifest:
     matches = list(MANIFEST_PATTERN.finditer(text))
     if len(matches) > 1:
         raise ValueError('%s: multiple package manifests' % path)
-    data = yaml.safe_load(matches[0].group(1)) if matches else {}
+    if matches and matches[0].group(1) and int(matches[0].group(1)) > MANIFEST_VERSION:
+        raise ValueError('%s: MODULE MANIFEST V%s needs a newer xrobot; xrobot %s reads manifests up to V%d'
+                         % (path, matches[0].group(1), __version__, MANIFEST_VERSION))
+    data = yaml.safe_load(matches[0].group(2)) if matches else {}
     if data is None:
         data = {}
     if not isinstance(data, dict):
