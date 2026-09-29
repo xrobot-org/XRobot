@@ -5,11 +5,12 @@ import io
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 from unittest import mock
 
 import yaml
-from fixtures import BspTestCase, TempDirTestCase, UpstreamTestCase
+from fixtures import BspTestCase, TempDirTestCase, UpstreamTestCase, manifest_block
 
 from xrobot import __version__
 from xrobot.cli import main, parse_value
@@ -200,6 +201,21 @@ class Commands(CliMixin, BspTestCase):
         self.config("modules: [\n")
         self.fails("gen", pattern=r"User/xrobot.yaml:\d+: YAML syntax error")
         self.assertFalse((self.root / "User/xrobot_main.hpp").exists())
+
+    def test_output_is_utf8_whatever_the_platform_encoding(self):
+        header = self.write(
+            self.tmp / "Zh/Zh.hpp",
+            "#pragma once\n" + manifest_block("闪烁") + "class Zh { public: Zh() {} };\n",
+        )
+        out = io.TextIOWrapper(io.BytesIO(), encoding="gbk")
+        err = io.TextIOWrapper(io.BytesIO(), encoding="gbk")
+        with mock.patch.object(sys, "stdout", out), mock.patch.object(sys, "stderr", err):
+            self.assertEqual(main(["module", "show", str(header)]), 0)
+            self.assertEqual(main(["-C", str(self.root), "gen", "-c", "User/缺失.yaml"]), 1)
+            out.flush()
+            err.flush()
+        self.assertIn("闪烁".encode(), out.buffer.getvalue())
+        self.assertIn("User/缺失.yaml does not exist".encode(), err.buffer.getvalue())
 
     def test_describe_prints_json(self):
         out, _ = self.ok("describe", cwd=self.root / "User")

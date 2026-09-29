@@ -185,11 +185,8 @@ def cmd_describe(args: argparse.Namespace) -> None:
 
     project = _project(args)
     result = describe(project, _config_path(project, args.config))
-    out = sys.stdout
-    if hasattr(out, "reconfigure"):
-        out.reconfigure(encoding="utf-8")
-    json.dump(result, out, indent=2, ensure_ascii=False, default=str)
-    out.write("\n")
+    json.dump(result, sys.stdout, indent=2, ensure_ascii=False, default=str)
+    sys.stdout.write("\n")
 
 
 def cmd_sync(args: argparse.Namespace) -> None:
@@ -636,10 +633,20 @@ def parser() -> argparse.ArgumentParser:
     return top
 
 
+def _utf8_output() -> None:
+    """让 stdout 和 stderr 以 UTF-8 输出，与平台默认编码无关（重定向时也是）。
+    Write stdout and stderr as UTF-8 whatever the platform encoding, also when redirected.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """运行 xrobot 命令；出错时输出一行信息并返回 1。
     Run an xrobot command; on an error print one line and return 1.
     """
+    _utf8_output()
     args = parser().parse_args(argv)
     try:
         args.run(args)
