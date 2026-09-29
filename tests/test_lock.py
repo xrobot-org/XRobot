@@ -197,8 +197,8 @@ class MinimalChange(UpstreamTestCase):
         self.upstream('team/C', ['team/B@v2'])
         before = self.lock_bytes()
         self.configure(['team/A', 'team/C'])
-        with self.assertRaisesRegex(ValueError, r'team/C requires team/B at v2, but xrobot\.lock keeps %s; run '
-                                                r'`xrobot setup --update team/B`' % self.first['team/B']['commit'][:12]):
+        with self.assertRaisesRegex(ValueError, r'team/C requires team/B at v2, but xrobot\.lock keeps {}; run '
+                                                r'`xrobot setup --update team/B`'.format(self.first['team/B']['commit'][:12])):
             self.sync()
         self.assertEqual(self.lock_bytes(), before)
         lock = self.sync(update=['team/B'])['modules']
@@ -237,8 +237,8 @@ class LocalWork(UpstreamTestCase):
         before = self.lock_bytes()
         for flags in ({'update': []}, {'frozen': True}):
             with self.subTest(flags=flags), self.assertRaisesRegex(
-                    ValueError, r'team/A is at local commit %s that is not on any remote branch or tag.*push them '
-                                r'to a branch of the module and run `xrobot setup --update team/A`' % local[:12]):
+                    ValueError, rf'team/A is at local commit {local[:12]} that is not on any remote branch or tag.*push them '
+                                r'to a branch of the module and run `xrobot setup --update team/A`'):
                 self.sync(**flags)
             self.assertEqual(self.head('team/A'), local)
         self.assertEqual(self.lock_bytes(), before)
@@ -248,9 +248,8 @@ class LocalWork(UpstreamTestCase):
         folder = self.modules / 'team/A'
         run_git(folder, 'fetch', '-q', 'origin')
         run_git(folder, 'checkout', '-q', '--detach', 'origin/master')
-        with self.assertRaisesRegex(ValueError, r'team/A is checked out at \w{12} but xrobot.lock pins %s.*'
-                                                r'`xrobot setup --update team/A`.*`xrobot setup --frozen`'
-                                    % self.locked[:12]):
+        with self.assertRaisesRegex(ValueError, rf'team/A is checked out at \w{{12}} but xrobot.lock pins {self.locked[:12]}.*'
+                                                r'`xrobot setup --update team/A`.*`xrobot setup --frozen`'):
             discover_modules(self.modules, Project(self.root).lock)
 
 
@@ -458,8 +457,8 @@ class ReleaseGate(UpstreamTestCase):
     def test_unmerged_feature_commits_are_refused_for_dev(self):
         feature = self.lock_feature()
         before = self.lock_bytes()
-        with self.assertRaisesRegex(ValueError, r'team/A: locked commit %s is not on dev .*run `xrobot setup --update '
-                                                r'team/A --context-ref refs/heads/dev`' % feature[:12]):
+        with self.assertRaisesRegex(ValueError, rf'team/A: locked commit {feature[:12]} is not on dev .*run `xrobot setup --update '
+                                                r'team/A --context-ref refs/heads/dev`'):
             self.sync(frozen=True, release_ref='refs/heads/dev')
         self.assertEqual(self.lock_bytes(), before)
 
@@ -534,7 +533,7 @@ class ToolPins(UpstreamTestCase):
         from xrobot.init_module import check_tool_pins
         self.configure([], pin=pin)
         if generator is not None:
-            self.write(self.root / 'User/libxr_config.yaml', 'generator: %s\n' % generator)
+            self.write(self.root / 'User/libxr_config.yaml', f'generator: {generator}\n')
         check_tool_pins(self.project, target, offline, cache=self.cache)
 
     def test_release_versions_are_released(self):
@@ -549,13 +548,13 @@ class ToolPins(UpstreamTestCase):
     def test_commit_pins_must_be_on_the_target_line(self):
         self.check(self.dev_only, 'refs/heads/dev')
         self.check(self.merged, 'refs/heads/master')
-        with self.assertRaisesRegex(ValueError, "xrobot pin %s is not on the tool's master line" % self.dev_only[:12]):
+        with self.assertRaisesRegex(ValueError, f"xrobot pin {self.dev_only[:12]} is not on the tool's master line"):
             self.check(self.dev_only, 'refs/heads/master')
-        with self.assertRaisesRegex(ValueError, "xrobot pin %s is not on the tool's dev line" % self.feature[:12]):
+        with self.assertRaisesRegex(ValueError, f"xrobot pin {self.feature[:12]} is not on the tool's dev line"):
             self.check(self.feature, 'refs/heads/dev')
 
     def test_commit_pins_cannot_be_checked_offline(self):
-        with self.assertRaisesRegex(ValueError, 'xrobot pin %s cannot be checked offline' % self.merged[:12]):
+        with self.assertRaisesRegex(ValueError, f'xrobot pin {self.merged[:12]} cannot be checked offline'):
             self.check(self.merged, 'refs/heads/master', offline=True)
 
 
@@ -571,11 +570,11 @@ class ModulesYaml(UpstreamTestCase):
         path = self.root / 'Modules/modules.yaml'
         for pin in ('1.0.0', '1.2.3-beta.1', 'a' * 40):
             with self.subTest(pin=pin):
-                self.write(path, 'xrobot: "%s"\nmodules: []\n' % pin)
+                self.write(path, f'xrobot: "{pin}"\nmodules: []\n')
                 self.assertEqual(read_modules_yaml(path)[1], pin)
         for pin in ('master', '1.0', 'A' * 40, 'abc123'):
             with self.subTest(pin=pin), self.assertRaisesRegex(ValueError, 'xrobot must be a release version'):
-                self.write(path, 'xrobot: "%s"\nmodules: []\n' % pin)
+                self.write(path, f'xrobot: "{pin}"\nmodules: []\n')
                 read_modules_yaml(path)
         self.write(path, 'modules: []\n')
         self.assertEqual(read_modules_yaml(path), ([], None))
@@ -587,7 +586,7 @@ class ModulesYaml(UpstreamTestCase):
             {'id': 'team/A', 'ref': 'same-or-dev'}, {'id': 'team/B', 'ref': 'v1', 'context_ref': 'refs/heads/dev'}])
         for request in ('A', 'team/A@-x', '{id: team/A, branch: dev}'):
             with self.subTest(request=request), self.assertRaises(ValueError):
-                self.write(path, 'modules:\n  - %s\n' % request)
+                self.write(path, f'modules:\n  - {request}\n')
                 read_modules_yaml(path)
 
 
@@ -629,8 +628,7 @@ class LockedDiscovery(BspTestCase):
         with self.assertRaises(ValueError) as context:
             discover_modules(self.root / 'Modules', self.root / 'xrobot.lock')
         message = str(context.exception)
-        self.assertIn('team/A is checked out at %s but xrobot.lock pins 000000000000' %
-                      run_git(a, 'rev-parse', 'HEAD')[:12], message)
+        self.assertIn('team/A is checked out at {} but xrobot.lock pins 000000000000'.format(run_git(a, 'rev-parse', 'HEAD')[:12]), message)
         self.assertIn('team/C is not a git checkout; run xrobot setup --frozen', message)
         self.assertIn('team/Gone from xrobot.lock is not checked out; run xrobot setup --frozen', message)
         self.assertNotIn('team/B', message)
@@ -667,7 +665,7 @@ class Manifests(unittest.TestCase):
 
     def test_unknown_keys_are_rejected(self):
         for key in ('constructor_args', 'template_args', 'required_hardware'):
-            with self.subTest(key=key), self.assertRaisesRegex(ValueError, r'unsupported manifest key\(s\) %s' % key):
+            with self.subTest(key=key), self.assertRaisesRegex(ValueError, rf'unsupported manifest key\(s\) {key}'):
                 manifest_from_text(manifest_block('d', **{key: []}), 'A.hpp')
 
     def test_newer_manifest_versions_need_a_newer_tool(self):

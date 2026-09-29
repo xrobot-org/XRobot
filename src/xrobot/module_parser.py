@@ -33,7 +33,7 @@ class ModuleManifest:
         if isinstance(value, str):
             return [value]
         if not isinstance(value, list):
-            raise ValueError('%s: depends must be a list' % self.path)
+            raise ValueError(f'{self.path}: depends must be a list')
         return value
 
     @property
@@ -47,7 +47,7 @@ class ModuleManifest:
 def manifest_from_text(text: str, path=None) -> ModuleManifest:
     matches = list(MANIFEST_PATTERN.finditer(text))
     if len(matches) > 1:
-        raise ValueError('%s: multiple package manifests' % path)
+        raise ValueError(f'{path}: multiple package manifests')
     if matches and matches[0].group(1) and int(matches[0].group(1)) > MANIFEST_VERSION:
         raise ValueError('%s: MODULE MANIFEST V%s needs a newer xrobot; xrobot %s reads manifests up to V%d'
                          % (path, matches[0].group(1), __version__, MANIFEST_VERSION))
@@ -55,11 +55,11 @@ def manifest_from_text(text: str, path=None) -> ModuleManifest:
     if data is None:
         data = {}
     if not isinstance(data, dict):
-        raise ValueError('%s: package manifest must be a mapping' % path)
+        raise ValueError(f'{path}: package manifest must be a mapping')
     unknown = [k for k in data if k not in MANIFEST_KEYS]
     if unknown:
-        raise ValueError('%s: unsupported manifest key(s) %s; the manifest holds only %s (the '
-                         'constructor in C++ is the interface)' % (path, ', '.join(map(str, unknown)),
+        raise ValueError('{}: unsupported manifest key(s) {}; the manifest holds only {} (the '
+                         'constructor in C++ is the interface)'.format(path, ', '.join(map(str, unknown)),
                                                                    ', '.join(MANIFEST_KEYS)))
     return ModuleManifest(data, path)
 
@@ -98,7 +98,7 @@ def source_interface(path: Path) -> dict:
                 extract_interface(source, path.stem, source_name=str(path.resolve())),
             )
         except ValueError as error:
-            raise ValueError('%s: %s' % (path, error)) from error
+            raise ValueError(f'{path}: {error}') from error
     return copy.deepcopy(_INTERFACE_CACHE[key])
 
 
@@ -107,7 +107,7 @@ def _locked_head(folder: Path):
     result = subprocess.run(['git', '-C', str(folder), 'rev-parse', '--verify', 'HEAD'],
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     if result.returncode:
-        raise ValueError('cannot read the commit of %s: %s' % (folder, result.stderr.strip()))
+        raise ValueError(f'cannot read the commit of {folder}: {result.stderr.strip()}')
     return result.stdout.strip()
 
 
@@ -125,17 +125,16 @@ def locked_modules(directory: Path, lock_path: Path) -> list:
     for identity, record in (lock.get('modules') or {}).items():
         folder = (directory / identity).resolve()
         if directory.resolve() not in folder.parents:
-            raise ValueError('Module path leaves directory: %s' % identity)
+            raise ValueError(f'Module path leaves directory: {identity}')
         commit = (record or {}).get('commit')
         state = {'id': identity, 'folder': folder, 'commit': commit, 'head': None,
                  'status': 'ok', 'reason': None}
         if not re.fullmatch(r'[0-9a-f]{40}', str(commit or '')):
-            state.update(status='broken', reason='xrobot.lock has no commit for %s' % identity)
+            state.update(status='broken', reason=f'xrobot.lock has no commit for {identity}')
         elif not (folder / (folder.name + '.hpp')).is_file():
             state['status'] = 'missing'
         elif not (folder / '.git').exists():
-            state.update(status='broken', reason='%s is not a git checkout; run xrobot setup --frozen'
-                         % identity)
+            state.update(status='broken', reason=f'{identity} is not a git checkout; run xrobot setup --frozen')
         else:
             try:
                 state['head'] = _locked_head(folder)
@@ -152,11 +151,11 @@ def lock_error(state: dict) -> str:
     if state['status'] == 'broken':
         return state['reason']
     if state['status'] == 'missing':
-        return '%s from xrobot.lock is not checked out; run xrobot setup --frozen' % state['id']
-    return ('%s is checked out at %s but xrobot.lock pins %s. While developing a module, keep '
+        return '{} from xrobot.lock is not checked out; run xrobot setup --frozen'.format(state['id'])
+    return ('{} is checked out at {} but xrobot.lock pins {}. While developing a module, keep '
             'your changes uncommitted; when they are ready, push them to a branch of the module '
-            'and run `xrobot setup --update %s`. To return to the locked sources run '
-            '`xrobot setup --frozen`.' % (state['id'], state['head'][:12], state['commit'][:12],
+            'and run `xrobot setup --update {}`. To return to the locked sources run '
+            '`xrobot setup --frozen`.'.format(state['id'], state['head'][:12], state['commit'][:12],
                                             state['id']))
 
 
@@ -170,7 +169,7 @@ def discover_modules(directory: Path, lock_path) -> dict:
     """
     lock_path = Path(lock_path)
     if not lock_path.is_file():
-        raise ValueError('%s does not exist; run `xrobot setup` to resolve the Modules' % lock_path.name)
+        raise ValueError(f'{lock_path.name} does not exist; run `xrobot setup` to resolve the Modules')
     result = {}
     problems = []
     for state in locked_modules(directory, lock_path):
@@ -187,8 +186,8 @@ def select_module(modules: dict, requested: str) -> dict:
     candidates = [value for key, value in modules.items() if (key.casefold() == requested.casefold() if '/' in requested else value['name'] == requested)]
     if len(candidates) != 1:
         if not candidates:
-            raise ValueError('Module not found: %s' % requested)
-        raise ValueError('Ambiguous Module %s; specify %s' % (requested, ', '.join(v['id'] for v in candidates)))
+            raise ValueError(f'Module not found: {requested}')
+        raise ValueError('Ambiguous Module {}; specify {}'.format(requested, ', '.join(v['id'] for v in candidates)))
     return candidates[0]
 
 
@@ -197,8 +196,8 @@ def print_manifest(manifest, name=None):
     if manifest.standalone and manifest.path:
         interface = source_interface(manifest.path)
         if interface['template'] is not None:
-            print('template <%s>' % interface['template'])
+            print('template <{}>'.format(interface['template']))
         for declaration in interface['constructors']:
-            print('%s:%s: %s' % (manifest.path, declaration['line'], declaration['declaration']))
+            print('{}:{}: {}'.format(manifest.path, declaration['line'], declaration['declaration']))
 
 

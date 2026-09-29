@@ -37,7 +37,7 @@ def git(path, *args, check=True):
     result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8',
                             errors='replace', env=env, timeout=300)
     if check and result.returncode:
-        raise ValueError('Git failed in %s: %s\n%s' % (path, ' '.join(args), result.stderr.strip()))
+        raise ValueError('Git failed in {}: {}\n{}'.format(path, ' '.join(args), result.stderr.strip()))
     return result.stdout.strip() if result.returncode == 0 else None
 
 
@@ -130,12 +130,12 @@ def read_modules_yaml(path):
     data = load_yaml(path) if Path(path).exists() else {}
     unknown = [key for key in data if key not in MODULES_KEYS]
     if unknown:
-        raise ValueError('%s: unknown key(s) %s; allowed: %s' % (path, ', '.join(unknown), ', '.join(MODULES_KEYS)))
+        raise ValueError('{}: unknown key(s) {}; allowed: {}'.format(path, ', '.join(unknown), ', '.join(MODULES_KEYS)))
     if not isinstance(data.get('modules', []), list):
-        raise ValueError('%s: modules must be a list of package requests' % path)
+        raise ValueError(f'{path}: modules must be a list of package requests')
     pin = data.get('xrobot')
     if pin is not None and not _valid_pin(str(pin)):
-        raise ValueError('%s: xrobot must be a release version (e.g. 1.0.0) or a 40-hex commit' % path)
+        raise ValueError(f'{path}: xrobot must be a release version (e.g. 1.0.0) or a 40-hex commit')
     return [request(value, canonical=True) for value in data.get('modules') or []], \
         (str(pin) if pin is not None else None)
 
@@ -175,10 +175,10 @@ class Resolver:
         url = self.fetch_url(identity, repo)
         if folder.exists():
             if not (folder / '.git').exists():
-                raise ValueError('Refusing to overwrite non-Git directory: %s' % folder)
+                raise ValueError(f'Refusing to overwrite non-Git directory: {folder}')
             actual = git(folder, 'remote', 'get-url', 'origin')
             if not same_repository(actual, repo) and not same_repository(actual, url):
-                raise ValueError('Source mismatch for %s: %s != %s' % (identity, actual, repo))
+                raise ValueError(f'Source mismatch for {identity}: {actual} != {repo}')
         elif self.offline:
             raise ValueError('Offline source missing: ' + identity)
         else:
@@ -192,19 +192,19 @@ class Resolver:
     def resolve_ref(self, folder, ref, parent_context=None):
         if ref in ('same', 'same-or-dev'):
             if not parent_context or parent_context[0] not in ('branch', 'tag'):
-                raise ValueError('%s requires a BSP branch/tag context (run on a branch, or pass '
-                                 '--context-ref refs/heads/<branch>)' % ref)
+                raise ValueError(f'{ref} requires a BSP branch/tag context (run on a branch, or pass '
+                                 '--context-ref refs/heads/<branch>)')
             kind, name = parent_context
             full = ('refs/remotes/origin/' if kind == 'branch' else 'refs/tags/') + name
             sha = git(folder, 'rev-parse', '--verify', full + '^{commit}', check=False)
             if sha:
                 return sha, kind, name
             if kind == 'tag' or ref == 'same':
-                raise ValueError('Required same %s is missing: %s' % (kind, name))
+                raise ValueError(f'Required same {kind} is missing: {name}')
             ref = 'refs/heads/dev'
             if not git(folder, 'rev-parse', '--verify', 'refs/remotes/origin/dev^{commit}', check=False):
-                raise ValueError('%s has no %s branch and no dev branch; request an explicit tag, '
-                                 'commit or branch' % (folder.name, name))
+                raise ValueError(f'{folder.name} has no {name} branch and no dev branch; request an explicit tag, '
+                                 'commit or branch')
         if ref is None:
             symbolic = git(folder, 'symbolic-ref', '--quiet', 'refs/remotes/origin/HEAD', check=False)
             if not symbolic:
@@ -235,7 +235,7 @@ class Resolver:
         identity = self.sources.resolve_id(req['id'])
         package = self.sources.packages[identity]
         if package['type'] != 'module':
-            raise ValueError('%s is a BSP catalog entry, not a Module dependency' % identity)
+            raise ValueError(f'{identity} is a BSP catalog entry, not a Module dependency')
         if identity in self.stack:
             raise ValueError('Package dependency cycle: ' + ' -> '.join(self.stack + [identity]))
         pinned = self.pinned.get(identity)
@@ -245,8 +245,8 @@ class Resolver:
             if explicit:
                 sha, _, _ = self.resolve_ref(folder, req['ref'], parent_context)
                 if sha != pinned['commit']:
-                    raise ValueError('%s requires %s at %s, but xrobot.lock keeps %s; run '
-                                     '`xrobot setup --update %s`' % (
+                    raise ValueError('{} requires {} at {}, but xrobot.lock keeps {}; run '
+                                     '`xrobot setup --update {}`'.format(
                                          ' -> '.join(self.stack) or 'modules.yaml', identity, req['ref'],
                                          pinned['commit'][:12], identity))
             if identity in self.resolved:
@@ -260,7 +260,7 @@ class Resolver:
             if identity in self.resolved:
                 previous = self.resolved[identity]
                 if previous['commit'] != sha:
-                    raise ValueError('Dependency conflict for %s: %s vs %s (%s)' % (
+                    raise ValueError('Dependency conflict for {}: {} vs {} ({})'.format(
                         identity, previous['commit'][:12], sha[:12], ' -> '.join(self.stack)))
                 return
             self.resolved[identity] = {'repo': package.get('canonical', package['repo']),
@@ -272,7 +272,7 @@ class Resolver:
             header = identity.rsplit('/', 1)[-1] + '.hpp'
             text = git(folder, 'show', sha + ':' + header, check=False)
             if text is None:
-                raise ValueError('%s@%s has no primary %s' % (identity, sha[:12], header))
+                raise ValueError(f'{identity}@{sha[:12]} has no primary {header}')
             for dep in manifest_from_text(text, str(folder / header)).depends:
                 self.visit(request(dep, canonical=True), tuple(logical))
         finally:
@@ -285,14 +285,13 @@ class Resolver:
             folder = self.prepared[identity]['folder']
             head = git(folder, 'rev-parse', '--verify', 'HEAD', check=False)
             if git(folder, 'status', '--porcelain'):
-                raise ValueError('%s has uncommitted changes; they are kept, but the lock cannot '
-                                 'move it. Commit and push them, or discard them, first' % identity)
+                raise ValueError(f'{identity} has uncommitted changes; they are kept, but the lock cannot '
+                                 'move it. Commit and push them, or discard them, first')
             if head and head != entry['commit'] and not _published(folder, head):
                 raise ValueError(
-                    '%s is at local commit %s that is not on any remote branch or tag. While '
+                    f'{identity} is at local commit {head[:12]} that is not on any remote branch or tag. While '
                     'developing a module keep your changes uncommitted; when they are ready, push '
-                    'them to a branch of the module and run `xrobot setup --update %s`'
-                    % (identity, head[:12], identity))
+                    f'them to a branch of the module and run `xrobot setup --update {identity}`')
             gitdir = Path(git(folder, 'rev-parse', '--absolute-git-dir'))
             before[identity] = (head, git(folder, 'symbolic-ref', '--quiet', '--short', 'HEAD', check=False),
                                 (gitdir / 'index').exists())
@@ -300,8 +299,8 @@ class Resolver:
         for identity in self.resolved:
             name = identity.rsplit('/', 1)[-1]
             if name in by_name and by_name[name] != identity:
-                raise ValueError('Source packages %s and %s define the same global Module; choose one '
-                                 'implementation' % (by_name[name], identity))
+                raise ValueError(f'Source packages {by_name[name]} and {identity} define the same global Module; choose one '
+                                 'implementation')
             by_name[name] = identity
         applied = []
         try:
@@ -344,7 +343,7 @@ def validate_locked_graph(resolver, roots):
         candidates = [key for key in records if (key.casefold() == req['id'].casefold() if '/' in req['id']
                                                  else key.rsplit('/', 1)[-1] == req['id'])]
         if len(candidates) != 1:
-            raise ValueError('xrobot.lock is missing or ambiguous for %s; run `xrobot setup`' % req['id'])
+            raise ValueError('xrobot.lock is missing or ambiguous for {}; run `xrobot setup`'.format(req['id']))
         identity = candidates[0]
         row = records[identity]
         kind, name = row.get('ref_kind'), row.get('resolved_ref')
@@ -377,8 +376,8 @@ def validate_locked_graph(resolver, roots):
         visit(root)
     if visited != set(records):
         extra = sorted(set(records) - visited)
-        raise ValueError('xrobot.lock contains Modules outside the declared dependency closure: %s; '
-                         'run `xrobot setup`' % ', '.join(extra))
+        raise ValueError('xrobot.lock contains Modules outside the declared dependency closure: {}; '
+                         'run `xrobot setup`'.format(', '.join(extra)))
 
 
 def release_line(release_ref):
@@ -415,19 +414,19 @@ def check_released(resolver, release_ref, offline=False):
         if not offline:
             branches = ['dev'] if line == 'dev' else ['master', 'main']
             for branch in branches:
-                git(folder, 'fetch', 'origin', '+refs/heads/%s:refs/remotes/origin/%s' % (branch, branch), check=False)
+                git(folder, 'fetch', 'origin', f'+refs/heads/{branch}:refs/remotes/origin/{branch}', check=False)
         target = _line_ref(folder, line)
         if target is None:
             if row.get('ref_kind') == 'commit':
                 continue  # third-party Module without the line: explicit commit pins only
-            problems.append('%s has no %s branch; request an explicit tag or commit' % (identity, line))
+            problems.append(f'{identity} has no {line} branch; request an explicit tag or commit')
             continue
         contained = subprocess.run(['git', '-C', str(folder), 'merge-base', '--is-ancestor', row['commit'], target],
                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
         if not contained:
-            problems.append('%s: locked commit %s is not on %s (feature branch not merged, or merged by '
-                            'squash/rebase); after merging the Module, run `xrobot setup --update %s '
-                            '--context-ref refs/heads/%s`' % (identity, row['commit'][:12],
+            problems.append('{}: locked commit {} is not on {} (feature branch not merged, or merged by '
+                            'squash/rebase); after merging the Module, run `xrobot setup --update {} '
+                            '--context-ref refs/heads/{}`'.format(identity, row['commit'][:12],
                                                              target.split('/')[-1], identity,
                                                              'dev' if line == 'dev' else 'master'))
     if problems:
@@ -449,12 +448,12 @@ def check_tool_pins(project, release_ref, offline=False, cache=None):
     cache = Path(cache or os.environ.get('XROBOT_CACHE') or Path.home() / '.cache' / 'xrobot')
     for tool, pin in pins.items():
         if pin is None:
-            problems.append('%s is not pinned; add `%s: <version>`' % (tool, tool))
+            problems.append(f'{tool} is not pinned; add `{tool}: <version>`')
             continue
         if not re.fullmatch(r'[0-9a-f]{40}', pin):
             continue  # a release version is released by definition
         if offline:
-            problems.append('%s pin %s cannot be checked offline' % (tool, pin[:12]))
+            problems.append(f'{tool} pin {pin[:12]} cannot be checked offline')
             continue
         repo = cache / (tool + '.git')
         if not repo.exists():
@@ -465,8 +464,8 @@ def check_tool_pins(project, release_ref, offline=False, cache=None):
                                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
                  for b in branches)
         if not ok:
-            problems.append('%s pin %s is not on the tool\'s %s line; pin a release version or a '
-                            'merged commit' % (tool, pin[:12], branches[0]))
+            problems.append(f'{tool} pin {pin[:12]} is not on the tool\'s {branches[0]} line; pin a release version or a '
+                            'merged commit')
     if problems:
         raise ValueError('\n'.join(problems))
 
@@ -477,9 +476,9 @@ def write_cmake(modules_dir, records):
         validate_id(identity)
         folder = Path(modules_dir) / identity
         if (folder / 'CMakeLists.txt').exists():
-            lines.append('include("${CMAKE_CURRENT_LIST_DIR}/%s/CMakeLists.txt")' % identity)
+            lines.append(f'include("${{CMAKE_CURRENT_LIST_DIR}}/{identity}/CMakeLists.txt")')
         else:
-            lines.append('target_include_directories(xr PUBLIC "${CMAKE_CURRENT_LIST_DIR}/%s")' % identity)
+            lines.append(f'target_include_directories(xr PUBLIC "${{CMAKE_CURRENT_LIST_DIR}}/{identity}")')
     atomic_write(Path(modules_dir) / 'CMakeLists.txt', '\n'.join(lines) + '\n')
 
 
@@ -487,11 +486,11 @@ def _load_lock(lock_path):
     lock = load_yaml(lock_path)
     entries = lock.get('modules')
     if lock.get('version') != 1 or not isinstance(entries, dict):
-        raise ValueError('%s: unsupported lock format; regenerate it with `xrobot setup --update`' % lock_path)
+        raise ValueError(f'{lock_path}: unsupported lock format; regenerate it with `xrobot setup --update`')
     for identity, entry in entries.items():
         validate_id(identity)
         if not isinstance(entry, dict) or 'directory' in entry:
-            raise ValueError('Legacy lock entry for %s; regenerate it with `xrobot setup --update`' % identity)
+            raise ValueError(f'Legacy lock entry for {identity}; regenerate it with `xrobot setup --update`')
         if not re.fullmatch(r'[0-9a-f]{40}', str(entry.get('commit', ''))):
             raise ValueError('Invalid locked commit for ' + identity)
     return lock
@@ -520,8 +519,8 @@ def sync_modules(project, update=None, frozen=False, offline=False, context_ref=
             raise ValueError('xrobot.lock does not exist; run `xrobot setup` once without --frozen')
         if lock.get('requests') != roots:
             changed = _changed_requests(lock.get('requests') or [], roots)
-            raise ValueError('Modules/modules.yaml differs from xrobot.lock (%s); run `xrobot setup` to '
-                             'update the lock' % ', '.join(changed))
+            raise ValueError('Modules/modules.yaml differs from xrobot.lock ({}); run `xrobot setup` to '
+                             'update the lock'.format(', '.join(changed)))
     if lock is not None and update is None and lock.get('requests') == roots:
         manager = SourceManager(project.sources_yaml) if not offline and project.sources_yaml.is_file() else None
         resolver = Resolver(project.modules_dir, manager, offline=offline)
@@ -539,7 +538,7 @@ def sync_modules(project, update=None, frozen=False, offline=False, context_ref=
                 matches = [k for k in lock['modules'] if k.casefold() == name.casefold() or
                            k.rsplit('/', 1)[-1] == name]
                 if len(matches) != 1:
-                    raise ValueError('%s is not in xrobot.lock; `--update` takes Module ids from the lock' % name)
+                    raise ValueError(f'{name} is not in xrobot.lock; `--update` takes Module ids from the lock')
                 named.add(matches[0])
             previous = {r['id']: r.get('ref') for r in lock.get('requests') or []}
             changed = {r['id'] for r in roots if r['id'] in previous and previous[r['id']] != r.get('ref')}

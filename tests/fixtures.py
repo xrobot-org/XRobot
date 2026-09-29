@@ -43,7 +43,7 @@ def run_git(repo, *args, check=True):
     result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8',
                             errors='replace', env=dict(os.environ, **GIT_ENV), timeout=60)
     if check and result.returncode:
-        raise AssertionError('git %s failed in %s:\n%s' % (' '.join(args), repo, result.stderr))
+        raise AssertionError('git {} failed in {}:\n{}'.format(' '.join(args), repo, result.stderr))
     return result.stdout.strip()
 
 
@@ -87,7 +87,7 @@ class BspTestCase(TempDirTestCase):
         super().setUp()
         self.root = self.tmp / 'bsp'
         self.locked = {}
-        self.write('Modules/modules.yaml', 'xrobot: %s\nmodules: []\n' % __version__)
+        self.write('Modules/modules.yaml', f'xrobot: {__version__}\nmodules: []\n')
         (self.root / 'User').mkdir(parents=True)
         self.write_lock()
 
@@ -98,7 +98,7 @@ class BspTestCase(TempDirTestCase):
     def module(self, name, body, owner=None, manifest=None, extra_headers=None):
         """Write Modules/<owner>/<name>/<name>.hpp, commit it and pin it in the lock."""
         owner = owner or self.owner
-        identity = '%s/%s' % (owner, name)
+        identity = f'{owner}/{name}'
         folder = self.root / 'Modules' / owner / name
         text = '#pragma once\n' + (manifest if manifest is not None else '') + body + '\n'
         self.write(folder / (name + '.hpp'), text)
@@ -114,7 +114,7 @@ class BspTestCase(TempDirTestCase):
 
     def write_lock(self):
         data = {'version': 1, 'requests': [{'id': i, 'ref': None} for i in sorted(self.locked)],
-                'modules': {i: {'repo': 'https://example.invalid/%s.git' % i, 'commit': c}
+                'modules': {i: {'repo': f'https://example.invalid/{i}.git', 'commit': c}
                             for i, c in sorted(self.locked.items())}}
         self.write('xrobot.lock', yaml.safe_dump(data, sort_keys=False))
 
@@ -179,7 +179,7 @@ class CxxMixin:
         return result.stdout
 
 
-requires_cxx = unittest.skipUnless(HAVE_CXX, 'C++ compiler %s not available on this host' % CXX)
+requires_cxx = unittest.skipUnless(HAVE_CXX, f'C++ compiler {CXX} not available on this host')
 
 
 class UpstreamTestCase(TempDirTestCase):
@@ -219,7 +219,7 @@ class UpstreamTestCase(TempDirTestCase):
     def commit(self, path, depends, message):
         name = Path(path).name
         text = ('#pragma once\n' + manifest_block(message, depends) +
-                'class %s { public: %s() {} };\n' % (name, name))
+                f'class {name} {{ public: {name}() {{}} }};\n')
         self.write(Path(path) / (name + '.hpp'), text)
         self.write(Path(path) / 'CMakeLists.txt', 'target_include_directories(xr PUBLIC "${CMAKE_CURRENT_LIST_DIR}")\n')
         run_git(path, 'add', '-A')

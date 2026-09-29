@@ -21,7 +21,7 @@ def load(text, source='cfg.yaml'):
 
 def instance(**values):
     return 'modules:\n  - module: Foo\n    id: foo\n    args:\n' + ''.join(
-        '      - %s: %s\n' % item for item in values.items())
+        '      - {}: {}\n'.format(*item) for item in values.items())
 
 
 class Scalars(unittest.TestCase):
@@ -135,19 +135,19 @@ class Identifiers(unittest.TestCase):
     def test_invalid_instance_ids_are_rejected(self):
         for identity in ('CMD2 x', 'ASSERT', 'while', 'xr_led'):
             with self.subTest(identity=identity), self.assertRaisesRegex(ConfigError, r'modules\[0\]\.id'):
-                load('modules:\n  - module: Foo\n    id: %s\n' % identity)
+                load(f'modules:\n  - module: Foo\n    id: {identity}\n')
 
 
 class Structure(unittest.TestCase):
     def test_unknown_top_level_keys_are_rejected(self):
         for key in ('global_settings', 'instances', 'constexpr'):
             with self.subTest(key=key), self.assertRaisesRegex(ConfigError, 'unknown top-level key'):
-                load('%s: {}\n' % key)
+                load(f'{key}: {{}}\n')
 
     def test_unknown_instance_keys_are_rejected(self):
         for key in ('name', 'constructor_args', 'depends'):
             with self.subTest(key=key), self.assertRaisesRegex(ConfigError, r'modules\[0\]: unknown key\(s\) ' + key):
-                load('modules:\n  - module: Foo\n    id: foo\n    %s: []\n' % key)
+                load(f'modules:\n  - module: Foo\n    id: foo\n    {key}: []\n')
 
     def test_instances_need_module_and_id(self):
         with self.assertRaisesRegex(ConfigError, r'modules\[0\]\.module is required'):
@@ -169,7 +169,7 @@ class Structure(unittest.TestCase):
         ]
         for text, pattern in cases:
             with self.subTest(text=text), self.assertRaisesRegex(ConfigError, pattern):
-                load('modules:\n  - module: Foo\n    id: foo\n    %s\n' % text)
+                load(f'modules:\n  - module: Foo\n    id: foo\n    {text}\n')
 
     def test_nested_field_names_must_be_identifiers(self):
         with self.assertRaisesRegex(ConfigError, 'invalid field name 1x'):
@@ -178,10 +178,10 @@ class Structure(unittest.TestCase):
     def test_monitor_sleep_is_a_decimal_u32(self):
         for value in ('0', '1', '1000', '4294967295'):
             with self.subTest(value=value):
-                load('settings:\n  monitor_sleep_ms: %s\n' % value)
+                load(f'settings:\n  monitor_sleep_ms: {value}\n')
         for value in ('4294967296', '-1', '010', '0x10', '1e3', '1.5', "'10ms'", 'null'):
             with self.subTest(value=value), self.assertRaisesRegex(ConfigError, 'monitor_sleep_ms'):
-                load('settings:\n  monitor_sleep_ms: %s\n' % value)
+                load(f'settings:\n  monitor_sleep_ms: {value}\n')
 
     def test_settings_accept_only_monitor_sleep(self):
         with self.assertRaisesRegex(ConfigError, 'settings only accepts monitor_sleep_ms'):
@@ -191,7 +191,7 @@ class Structure(unittest.TestCase):
         load("constexpr_includes: [Foo.hpp, 'sub/Bar.h', '<vector>', ' <array> ']\n")
         for header in ("'\"Foo.hpp\"'", "'a b.hpp'", "'<a\"b>'", '{a: 1}'):
             with self.subTest(header=header), self.assertRaisesRegex(ConfigError, r'constexpr_includes\[0\]'):
-                load('constexpr_includes: [%s]\n' % header)
+                load(f'constexpr_includes: [{header}]\n')
 
     def test_constexpr_names_namespace_and_shape_are_checked(self):
         load('constexpr_namespace: Board::Pins\nconstexprs:\n  Rate: {type: int, value: 250}\n')

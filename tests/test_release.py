@@ -104,7 +104,7 @@ class ReleaseRecord(TempDirTestCase):
             with self.subTest(requirement=requirement):
                 self.recommit('codegen', PYPROJECT % ('libxr', '6.0.0', requirement))
                 self.assertEqual(release.check(self.repos, self.record),
-                                 ['codegen must pin xr-syntax exactly (xr-syntax==X); found %s' % requirement])
+                                 [f'codegen must pin xr-syntax exactly (xr-syntax==X); found {requirement}'])
         self.recommit('codegen', PYPROJECT % ('libxr', '6.0.0', 'XR_Syntax == 0.2.0'))
         self.assertEqual(release.check(self.repos, self.record), [])
         self.recommit('codegen', PYPROJECT % ('libxr', '6.0.0', 'requests'))

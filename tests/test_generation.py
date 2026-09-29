@@ -76,7 +76,7 @@ class HeaderShape(GenerationTestCase):
         self.assertIn('[[noreturn]] static inline void XRobotMain(\n    LibXR::GPIO& pin)\n{', code)
         self.assertIn('\n#define XROBOT_MAIN() ::XRobotMain(pin)\n', code)
         for name in ('uart', 'unused', 'hidden', 'port'):
-            self.assertNotRegex(code, r'\b%s\b' % name)
+            self.assertNotRegex(code, rf'\b{name}\b')
 
     def test_register_macro_expands_to_nothing(self):
         code = self.code(led())
@@ -126,8 +126,7 @@ class HeaderShape(GenerationTestCase):
         loop = code[code.index('for (;;)'):]
         self.assertEqual(re.findall(r'(\w+)\.OnMonitor\(\);', loop), ['first', 'cmd', 'last'])
         for identity in ('first', 'cmd', 'last'):
-            self.assertIn('static_assert(std::is_void_v<decltype(%s.OnMonitor())>, "%s.OnMonitor() must return void");'
-                          % (identity, identity), code)
+            self.assertIn(f'static_assert(std::is_void_v<decltype({identity}.OnMonitor())>, "{identity}.OnMonitor() must return void");', code)
         self.assertNotIn('probe.OnMonitor', code)
 
 
@@ -162,7 +161,7 @@ class LineDirectives(GenerationTestCase):
         self.assertIn((14, 'static_assert(std::is_same_v<std::remove_cvref_t<decltype((sub))>, '
                             'std::remove_cvref_t<Port&>> ||'), yaml_targets)
         self.assertIn((15, ', &port'), yaml_targets)
-        back = [line for line in lines if line.endswith('"%s"' % header)]
+        back = [line for line in lines if line.endswith(f'"{header}"')]
         self.assertEqual(len(back), 2)
 
     def test_the_compile_check_probe_has_no_line_directives(self):
@@ -262,7 +261,7 @@ class Names(GenerationTestCase):
     def test_instance_id_equal_to_a_module_class_name_is_rejected(self):
         for identity in ('Led', 'Port', 'SubPort'):
             with self.subTest(identity=identity):
-                self.assertIn('instance id %s is also a class name in the loaded Modules' % identity,
+                self.assertIn(f'instance id {identity} is also a class name in the loaded Modules',
                               self.error(led(identity)))
 
     def test_instance_id_equal_to_a_registration_is_rejected(self):
@@ -667,7 +666,7 @@ namespace LibXR { struct Thread { static void Sleep(unsigned) { assert(stage == 
                     ('Defaulted', 'void OnMonitor(int = 0) { ++extra; }'),
                     ('Overloaded', 'void OnMonitor() { ++extra; } void OnMonitor(int) { std::abort(); }')]
         for name, monitor in variants:
-            self.module(name, '#include "thread.hpp"\nclass %s { public: %s() {} %s };' % (name, name, monitor))
+            self.module(name, f'#include "thread.hpp"\nclass {name} {{ public: {name}() {{}} {monitor} }};')
         entries = [{'module': 'A', 'id': 'a'}, {'module': 'B', 'id': 'b', 'args': [{'a': 'a'}]}]
         entries += [{'module': name, 'id': name.lower() + '0'} for name, _ in variants]
         code = self.generate({'modules': entries})
@@ -776,7 +775,7 @@ class Probe { public:
         for registration in ('int', 'const int'):
             with self.subTest(registration=registration):
                 self.entry('#include "xrobot_main.hpp"\nint main() { static const int value = 1; '
-                           'XR_REGISTER(value, %s); XROBOT_MAIN(); }\n' % registration)
+                           f'XR_REGISTER(value, {registration}); XROBOT_MAIN(); }}\n')
                 self.generate({'modules': [{'module': 'Probe', 'id': 'p', 'args': [{'value': 'value'}]}]})
                 self.compile(expected=False)
 

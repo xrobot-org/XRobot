@@ -153,10 +153,9 @@ def describe(project, config=None):
         report('error', 'Modules/modules.yaml', error)
     pin = tools['xrobot']['pin']
     if pin is None:
-        report('warning', 'Modules/modules.yaml', 'XRobot is not pinned; add `xrobot: %s`' % __version__)
+        report('warning', 'Modules/modules.yaml', f'XRobot is not pinned; add `xrobot: {__version__}`')
     elif pin != __version__:
-        report('warning', 'Modules/modules.yaml', 'installed XRobot %s differs from the pinned %s'
-               % (__version__, pin))
+        report('warning', 'Modules/modules.yaml', f'installed XRobot {__version__} differs from the pinned {pin}')
 
     lock_info = {'path': project.relative(project.lock), 'present': project.lock.is_file(), 'modules': []}
     modules = {}
@@ -175,8 +174,7 @@ def describe(project, config=None):
 
     header = project.header_state()
     if header['status'] == 'stale':
-        report('warning', header['path'], 'generated from older inputs (%s); run `xrobot gen`'
-               % ', '.join(header['newer'] + header['missing']))
+        report('warning', header['path'], 'generated from older inputs ({}); run `xrobot gen`'.format(', '.join(header['newer'] + header['missing'])))
     elif header['status'] in ('missing', 'unreadable'):
         report('warning', header['path'], 'not generated; run `xrobot setup`')
 

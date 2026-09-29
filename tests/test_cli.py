@@ -195,7 +195,7 @@ class Commands(CliMixin, BspTestCase):
                          '--constructor', 'int period_ms = 500', '--depends', 'team/Timer', 'team/Log@v1',
                          '--include', 'gpio.hpp', '--out', self.tmp / 'out')
         folder = self.tmp / 'out/Blink'
-        self.assertEqual(out.strip(), 'Created %s' % folder)
+        self.assertEqual(out.strip(), f'Created {folder}')
         manifest = parse_manifest_from_header(folder / 'Blink.hpp')
         self.assertEqual(manifest.description, 'Blinks a pin')
         self.assertEqual(manifest.depends, [{'id': 'team/Timer', 'ref': 'same-or-dev'}, {'id': 'team/Log', 'ref': 'v1'}])
@@ -332,10 +332,10 @@ class Setup(CliMixin, UpstreamTestCase):
     def test_a_different_tool_pin_is_a_warning(self):
         self.configure(['team/Led@master'], pin='0.9.0')
         _, err = self.ok('setup')
-        self.assertIn('warning: installed XRobot %s differs from the pinned 0.9.0' % __version__, err)
+        self.assertIn(f'warning: installed XRobot {__version__} differs from the pinned 0.9.0', err)
         self.configure(['team/Led@master'], pin=None)
         _, err = self.ok('setup')
-        self.assertIn('warning: Modules/modules.yaml does not pin XRobot; add `xrobot: %s`' % __version__, err)
+        self.assertIn(f'warning: Modules/modules.yaml does not pin XRobot; add `xrobot: {__version__}`', err)
 
     def test_setup_update_syncs_config_fields(self):
         self.ok('setup')

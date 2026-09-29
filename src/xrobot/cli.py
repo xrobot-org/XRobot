@@ -43,10 +43,10 @@ def _pin_warning(project):
     from xrobot.init_module import read_modules_yaml
     _, pin = read_modules_yaml(project.modules_yaml)
     if pin is None:
-        print('warning: Modules/modules.yaml does not pin XRobot; add `xrobot: %s`' % __version__,
+        print(f'warning: Modules/modules.yaml does not pin XRobot; add `xrobot: {__version__}`',
               file=sys.stderr)
     elif pin != __version__:
-        print('warning: installed XRobot %s differs from the pinned %s' % (__version__, pin),
+        print(f'warning: installed XRobot {__version__} differs from the pinned {pin}',
               file=sys.stderr)
 
 
@@ -81,7 +81,7 @@ def cmd_setup(args):
     if args.update is not None:
         update = list(args.update)
     lock = sync_modules(project, update, args.frozen, args.offline, args.context_ref, args.release_ref)
-    print('Resolved %s' % _count(len(lock['modules']), 'Module commit'))
+    print('Resolved {}'.format(_count(len(lock['modules']), 'Module commit')))
     if args.release_ref:
         check_tool_pins(project, args.release_ref, args.offline)
     modules = load_modules(project)
@@ -94,8 +94,7 @@ def cmd_setup(args):
     count = validate_all(project, modules, index)
     selected = project.selected_config()
     generate(project, selected)
-    print('Checked %s; generated User/xrobot_main.hpp for %s'
-          % (_count(count, 'config'), project.relative(selected)))
+    print('Checked {}; generated User/xrobot_main.hpp for {}'.format(_count(count, 'config'), project.relative(selected)))
     _pin_warning(project)
 
 
@@ -104,7 +103,7 @@ def cmd_gen(args):
     project = _project(args)
     config = _config_path(project, args.config)
     generate(project, config)
-    print('Generated User/xrobot_main.hpp for %s' % project.relative(config or project.selected_config()))
+    print(f'Generated User/xrobot_main.hpp for {project.relative(config or project.selected_config())}')
 
 
 def cmd_describe(args):
@@ -154,7 +153,7 @@ def cmd_instance(args):
         modules = load_modules(project)
         identity = config_edit.add_instance(config, args.module, modules, TypeIndex.for_modules(modules),
                                            args.id, source)
-        print('Added %s to %s; fill the null values (dependencies) before generating' % (identity, source))
+        print(f'Added {identity} to {source}; fill the null values (dependencies) before generating')
     elif args.action == 'set':
         config_edit.set_value(config, args.id, args.path, config_edit.parse_json_value(args.value),
                              args.if_match, source)
@@ -169,11 +168,11 @@ def cmd_module(args):
     if args.action == 'add':
         from xrobot.config_edit import add_module
         add_module(project.modules_yaml, args.request)
-        print('Added %s; run `xrobot setup` to fetch it' % args.request)
+        print(f'Added {args.request}; run `xrobot setup` to fetch it')
     elif args.action == 'remove':
         from xrobot.config_edit import remove_module
         remove_module(project.modules_yaml, args.request)
-        print('Removed %s; run `xrobot setup` to update xrobot.lock' % args.request)
+        print(f'Removed {args.request}; run `xrobot setup` to update xrobot.lock')
     else:
         from xrobot.module_parser import load_single_module, print_manifest
         print_manifest(load_single_module(Path(args.path)))
@@ -183,7 +182,7 @@ def cmd_new_module(args):
     from xrobot.module_creator import create_module
     path = create_module(args.name, args.desc, args.constructor, args.template, args.depends,
                          Path(args.out), args.include)
-    print('Created %s' % path)
+    print(f'Created {path}')
 
 
 def cmd_check_module(args):
@@ -192,7 +191,7 @@ def cmd_check_module(args):
     project = _project(args)
     sync_modules(project, offline=args.offline)
     generate_compile_check(args.module, load_modules(project), args.output, args.template_arg)
-    print('Generated %s' % args.output)
+    print(f'Generated {args.output}')
 
 
 def cmd_source(args):
@@ -292,13 +291,13 @@ def main(argv=None):
     top = parser()
     args, extra = top.parse_known_args(argv)
     if extra and args.verb != 'source':
-        top.error('unrecognized arguments: %s' % ' '.join(extra))
+        top.error('unrecognized arguments: {}'.format(' '.join(extra)))
     if args.verb == 'source':
         args.rest = extra + list(args.rest)
     try:
         args.run(args)
     except (ConfigError, ProjectError, OSError, ValueError, yaml.YAMLError) as error:
-        sys.stderr.write('%s\n' % error)
+        sys.stderr.write(f'{error}\n')
         return 1
     return 0
 

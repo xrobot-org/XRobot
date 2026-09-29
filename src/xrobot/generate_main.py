@@ -147,7 +147,7 @@ def read_registrations(path):
     candidates = [o for o in identifier_occurrences(text)
                   if o.text == 'XR_REGISTER' and o.following == '(']
     if len(invocations) != len(candidates):
-        raise ConfigError('%s: malformed XR_REGISTER invocation' % label)
+        raise ConfigError(f'{label}: malformed XR_REGISTER invocation')
     tokens = code_tokens(text)
     byte_starts, total, cursor = [], 0, 0
     for token in tokens:  # token offsets are characters; invocation spans are bytes
@@ -156,27 +156,27 @@ def read_registrations(path):
         byte_starts.append(total)
     records, errors, names = [], [], set()
     for invocation in invocations:
-        where = '%s:%s' % (label, invocation.line)
+        where = f'{label}:{invocation.line}'
         if conditional_depth(document, 0, invocation.span.start):
-            errors.append('%s: XR_REGISTER inside #if/#ifdef/#ifndef is not supported; the generator '
-                          'cannot evaluate build options' % where)
+            errors.append(f'{where}: XR_REGISTER inside #if/#ifdef/#ifndef is not supported; the generator '
+                          'cannot evaluate build options')
             continue
         parts = [p.strip() for p in invocation.arguments]
         if len(parts) != 2:
-            errors.append('%s: XR_REGISTER registers one type per name: XR_REGISTER(name, Type). To '
+            errors.append(f'{where}: XR_REGISTER registers one type per name: XR_REGISTER(name, Type). To '
                           'expose the object as another type, declare a reference (e.g. '
-                          '`LibXR::CAN& can1 = fdcan1;`) and register that name separately' % where)
+                          '`LibXR::CAN& can1 = fdcan1;`) and register that name separately')
             continue
         name, cpp_type = parts
         problem = identifier_problem(name)
         if problem:
-            errors.append('%s: registration name %s %s' % (where, name, problem))
+            errors.append(f'{where}: registration name {name} {problem}')
             continue
         if name in names:
-            errors.append('%s: duplicate XR_REGISTER name %s' % (where, name))
+            errors.append(f'{where}: duplicate XR_REGISTER name {name}')
             continue
         if cpp_type.endswith('&'):
-            errors.append('%s: register object types, not reference types: %s' % (where, name))
+            errors.append(f'{where}: register object types, not reference types: {name}')
             continue
         names.add(name)
         stop = bisect.bisect_left(byte_starts, invocation.span.start)
@@ -259,13 +259,12 @@ class Generator:
         errors = []
 
         def fail(message):
-            errors.append('%s: %s' % (source, message))
+            errors.append(f'{source}: {message}')
 
         known = {}
         for record in registrations:
             if record['name'] in self.class_names():
-                fail('XR_REGISTER name %s is also a Module class name; rename the object'
-                     % record['name'])
+                fail('XR_REGISTER name {} is also a Module class name; rename the object'.format(record['name']))
             known[record['name']] = record['type']
         entries_config = config.get('modules', [])
         ids = [entry.get('id') for entry in entries_config]
@@ -276,7 +275,7 @@ class Generator:
                 result = self._instance(i, entry, ids, known, earlier, selected, compile_check)
             except ValueError as error:
                 for line in str(error).splitlines():
-                    fail(line if line.startswith(identity) else '%s: %s' % (identity, line))
+                    fail(line if line.startswith(identity) else f'{identity}: {line}')
                 earlier[identity] = None
                 continue
             entries.append(result)
@@ -287,12 +286,12 @@ class Generator:
         namespace = config.get('constexpr_namespace', 'ProjectConstexpr')
         for name, spec in config.get('constexprs', {}).items():
             try:
-                cpp_type = value_text(spec['type'], 'constexprs.%s.type' % name)
+                cpp_type = value_text(spec['type'], f'constexprs.{name}.type')
                 self.checker.checks = []
                 expr, typed = self.checker.render(spec['value'], 'constexprs.' + name, cpp_type, (), None)
                 if expr.lstrip().startswith('{'):
                     expr = cpp_type + expr
-                constants.append('inline constexpr %s %s = %s;' % (cpp_type, name, expr))
+                constants.append(f'inline constexpr {cpp_type} {name} = {expr};')
             except ValueError as error:
                 fail(str(error))
         if errors:
@@ -303,16 +302,15 @@ class Generator:
     def _instance(self, i, entry, ids, known, earlier, selected, compile_check):
         identity = entry['id']
         if identity in known:
-            raise ValueError('instance id %s is also an XR_REGISTER name' % identity)
+            raise ValueError(f'instance id {identity} is also an XR_REGISTER name')
         if identity in self.class_names():
-            raise ValueError('instance id %s is also a class name in the loaded Modules; use a '
-                             'lower-case id such as %s' % (identity, identity.lower()))
+            raise ValueError(f'instance id {identity} is also a class name in the loaded Modules; use a '
+                             f'lower-case id such as {identity.lower()}')
         module = select_module(self.modules, entry['module'])
         if not module['manifest'].standalone:
-            raise ValueError('%s is a non-standalone library, not an instance' % module['id'])
+            raise ValueError('{} is a non-standalone library, not an instance'.format(module['id']))
         if module['name'] in selected and selected[module['name']]['id'] != module['id']:
-            raise ValueError('two selected packages define global class %s; choose one implementation'
-                             % module['name'])
+            raise ValueError('two selected packages define global class {}; choose one implementation'.format(module['name']))
         selected[module['name']] = module
         interface = source_interface(module['header'])
         template_args = [value_text(v, '%s.template_args[%d]' % (identity, j))
@@ -342,8 +340,8 @@ class Generator:
         located = self.index.resolve(module['name'])
         monitor = self.index.provides_monitor(located) if located is not None else None
         if monitor is None:
-            problems.append('%s: cannot tell whether a public base class provides OnMonitor; its '
-                            'base is not defined in the loaded Module headers' % identity)
+            problems.append(f'{identity}: cannot tell whether a public base class provides OnMonitor; its '
+                            'base is not defined in the loaded Module headers')
         if problems:
             raise ValueError('\n'.join(problems))
         return {'id': identity, 'cpp_type': cpp_type, 'arguments': arguments, 'index': i,
@@ -351,14 +349,14 @@ class Generator:
 
     def _argument(self, identity, p, value, interface, cpp_class, templates, visible, later, earlier,
                   compile_check):
-        field = '%s.args.%s' % (identity, p['name'])
+        field = '{}.args.{}'.format(identity, p['name'])
         typ = qualify(p['type'], interface, cpp_class, templates)
         target = qualify(p['type'], interface, cpp_class, templates, True)
         _, _, pointers, reference = type_shape(target)
         checks = []
         if value is None and compile_check and p['default'] is None:
-            raw = '*static_cast<std::remove_reference_t<%s>*>(xr_ci_null)' % typ
-            return [], ('static_cast<%s>(%s)' % (typ, raw) if typ.rstrip().endswith('&&') else raw)
+            raw = f'*static_cast<std::remove_reference_t<{typ}>*>(xr_ci_null)'
+            return [], (f'static_cast<{typ}>({raw})' if typ.rstrip().endswith('&&') else raw)
         default = None
         if p['default'] is not None:
             default = initializer_tree(qualify(p['default'], interface, cpp_class, templates), target)
@@ -369,13 +367,13 @@ class Generator:
             reference_name = name[1:].strip() if name.startswith('&') else name
             if re.fullmatch(IDENTIFIER, reference_name) and (reference_name == name or len(pointers) == 1):
                 if reference_name in later:
-                    raise ValueError('%s: %s is constructed at or after %s; instances are constructed in '
-                                     'list order' % (field, reference_name, identity))
+                    raise ValueError(f'{field}: {reference_name} is constructed at or after {identity}; instances are constructed in '
+                                     'list order')
                 if reference_name in earlier and earlier[reference_name] is None:
-                    raise ValueError('%s: %s has errors of its own' % (field, reference_name))
+                    raise ValueError(f'{field}: {reference_name} has errors of its own')
                 if is_dependency(p) and reference_name not in visible and name != 'nullptr':
-                    raise ValueError('%s: %s is neither an XR_REGISTER name nor an earlier instance id; '
-                                     'candidates of type %s: %s' % (
+                    raise ValueError('{}: {} is neither an XR_REGISTER name nor an earlier instance id; '
+                                     'candidates of type {}: {}'.format(
                                          field, reference_name, target,
                                          ', '.join(self._candidates(target, visible)) or 'none'))
                 if reference_name in visible:
@@ -385,17 +383,16 @@ class Generator:
                         source += '*'
                     elif len(pointers) == 1 and not type_shape(source)[2] and reference != '&':
                         # A bare name bound to a pointer parameter passes the object's address.
-                        expression = 'std::addressof(%s)' % name
+                        expression = f'std::addressof({name})'
                         source += '*'
                     if self.relation.certainly_unrelated(source, target):
-                        raise ValueError('%s: %s is a %s, which does not convert to %s' % (
-                            field, reference_name, visible[reference_name], target))
+                        raise ValueError(f'{field}: {reference_name} is a {visible[reference_name]}, which does not convert to {target}')
                     if type_shape(source)[0] == type_shape(target)[0] and \
                             len(type_shape(source)[2]) == len(pointers):
                         return checks, expression  # the same type binds directly
                     if reference:
                         convert(expression, typ, False, checks, field)
-                        return checks, 'static_cast<%s>(%s)' % (typ, expression)
+                        return checks, f'static_cast<{typ}>({expression})'
                     expr, _ = convert(expression, typ, False, checks, field)
                     return checks, expr
             expr, typed = self.checker.render(text, field, target, (), default)
@@ -404,9 +401,9 @@ class Generator:
         exact = typed or isinstance(value, (dict, list))
         if reference or 'std::initializer_list<' in target.replace(' ', ''):
             # Config temporaries and initializer-list backing arrays need static lifetime.
-            storage = 'xr_arg_%s_%s' % (identity, p['name'])
-            checks.append('static %s %s =\n      %s\n  ;' % (typ, storage, expr))
-            return checks, ('static_cast<%s>(%s)' % (typ, storage) if typ.rstrip().endswith('&&') else storage)
+            storage = 'xr_arg_{}_{}'.format(identity, p['name'])
+            checks.append(f'static {typ} {storage} =\n      {expr}\n  ;')
+            return checks, (f'static_cast<{typ}>({storage})' if typ.rstrip().endswith('&&') else storage)
         expr, _ = convert(expr, typ, exact, checks, field)
         return checks, expr
 
@@ -435,21 +432,21 @@ class Generator:
                 local_templates.append('typename ' + parameter_type)
                 actual_types.append(typ)
                 typ = parameter_type
-            declaration = ('std::add_lvalue_reference_t<%s>' % typ
+            declaration = (f'std::add_lvalue_reference_t<{typ}>'
                            if any(t.text in ('(', '[') for t in code_tokens(typ)) else typ + '&')
-            parameters.append('%s %s' % (declaration, record['name']))
+            parameters.append('{} {}'.format(declaration, record['name']))
         lines = ['#pragma once'] + list(header_lines)
         lines += ['', '#include <memory>', '#include <type_traits>', '#include <utility>',
                   '#include "libxr.hpp"', '#include "thread.hpp"']
-        lines += ['#include "%s.hpp"' % name for name in selected]
+        lines += [f'#include "{name}.hpp"' for name in selected]
         for header in config.get('constexpr_includes', []):
             header = header.strip()
-            lines.append('#include %s' % (header if header.startswith('<') else '"%s"' % header))
+            lines.append('#include %s' % (header if header.startswith('<') else f'"{header}"'))
         if compile_check:
             lines = lines[2:]
         lines += ['', HELPERS]
         if constants:
-            lines += ['namespace %s {' % namespace] + constants + ['}  // namespace %s' % namespace, '']
+            lines += [f'namespace {namespace} {{'] + constants + [f'}}  // namespace {namespace}', '']
         back = object()  # placeholder for "#line back into this header"
         directives = config_path is not None and header_path is not None and not compile_check
         cfg = Path(os.path.abspath(config_path)).as_posix() if directives else None
@@ -464,7 +461,7 @@ class Generator:
                       '  [[maybe_unused]] static void* xr_ci_null = static_cast<void*>(nullptr);']
         else:
             if local_templates:
-                lines.append('template <%s>' % ', '.join(local_templates))
+                lines.append('template <{}>'.format(', '.join(local_templates)))
             signature = '[[noreturn]] static inline void XRobotMain('
             if parameters:
                 lines += [signature, '    ' + ',\n    '.join(parameters) + ')', '{']
@@ -478,36 +475,35 @@ class Generator:
                     lines.extend('  ' + d for d in declarations)
             at(entry['line'])
             if entry['arguments']:
-                lines.append('  static %s %s(' % (entry['cpp_type'], entry['id']))
+                lines.append('  static {} {}('.format(entry['cpp_type'], entry['id']))
                 for k, (line, argument) in enumerate(entry['arguments']):
                     at(line)
-                    lines.append('      %s%s' % (', ' if k else '', argument))
+                    lines.append('      {}{}'.format(', ' if k else '', argument))
                 lines.append('  );')
             else:
-                lines.append('  static %s %s;' % (entry['cpp_type'], entry['id']))
+                lines.append('  static {} {};'.format(entry['cpp_type'], entry['id']))
             if directives:
                 lines.append(back)
-        lines += ['  static_assert(std::is_void_v<decltype(%s.OnMonitor())>, "%s.OnMonitor() must return void");'
-                  % (e['id'], e['id']) for e in entries if e['id'] in monitored]
+        lines += ['  static_assert(std::is_void_v<decltype({}.OnMonitor())>, "{}.OnMonitor() must return void");'.format(e['id'], e['id']) for e in entries if e['id'] in monitored]
         if compile_check:
-            lines += ['  %s.OnMonitor();' % e['id'] for e in entries if e['id'] in monitored]
+            lines += ['  {}.OnMonitor();'.format(e['id']) for e in entries if e['id'] in monitored]
             lines += ['}', '}  // namespace xrobot_generated', '']
             return '\n'.join(lines)
         lines += ['  for (;;)', '  {']
-        lines += ['    %s.OnMonitor();' % e['id'] for e in entries if e['id'] in monitored]
-        lines += ['    LibXR::Thread::Sleep(%s);' % config.get('settings', {}).get('monitor_sleep_ms', '1000'),
+        lines += ['    {}.OnMonitor();'.format(e['id']) for e in entries if e['id'] in monitored]
+        lines += ['    LibXR::Thread::Sleep({});'.format(config.get('settings', {}).get('monitor_sleep_ms', '1000')),
                   '  }', '}', '']
         lines += ['// XR_REGISTER marks names for the generator and references the object, so',
                   '// registrations the selected product does not consume raise no variable',
                   '// warnings; types are checked where XRobotMain binds them.',
                   '#define XR_REGISTER(name, ...) static_cast<void>(name)']
-        call = '::XRobotMain' + ('<%s>' % ', '.join(actual_types) if actual_types else '')
+        call = '::XRobotMain' + ('<{}>'.format(', '.join(actual_types)) if actual_types else '')
         arguments = ', '.join(r['name'] for r in views)
         if len(call) + len(arguments) < 72:
-            lines.append('#define XROBOT_MAIN() %s(%s)' % (call, arguments))
+            lines.append(f'#define XROBOT_MAIN() {call}({arguments})')
         else:
-            lines += ['#define XROBOT_MAIN() \\', '  %s( \\' % call]
-            lines += ['      %s%s \\' % (r['name'], ',' if i + 1 < len(views) else '')
+            lines += ['#define XROBOT_MAIN() \\', f'  {call}( \\']
+            lines += ['      {}{} \\'.format(r['name'], ',' if i + 1 < len(views) else '')
                       for i, r in enumerate(views)]
             lines.append('  )')
         lines.append('')
@@ -543,7 +539,7 @@ def generate(project, config_path=None):
     """Generate User/xrobot_main.hpp for ``config_path`` (default: the selected product)."""
     config_path = Path(config_path) if config_path else project.selected_config()
     if not config_path.is_file():
-        raise ConfigError('%s does not exist' % project.relative(config_path))
+        raise ConfigError(f'{project.relative(config_path)} does not exist')
     modules = load_modules(project)
     registrations = read_registrations(project.entry())
     code = generate_code(project, config_path, modules, registrations)
@@ -577,7 +573,7 @@ def generate_compile_check(module_name, modules, output, template_args=None):
     if not module['manifest'].standalone:
         # A library has no Module constructor; its header and .cpp files still
         # compile into xr through the module list.
-        code = '#include "%s.hpp"\n' % module['name']
+        code = '#include "{}.hpp"\n'.format(module['name'])
         atomic_write(Path(output), code)
         return code
     interface = source_interface(module['header'])

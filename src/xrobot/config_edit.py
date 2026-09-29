@@ -160,7 +160,7 @@ class ConfigFile:
         for k, entry in enumerate(self.config.get('modules') or []):
             if isinstance(entry, dict) and entry.get('id') == instance_id:
                 return k
-        raise ConfigError('%s: no instance with id %s' % (self.source, instance_id))
+        raise ConfigError(f'{self.source}: no instance with id {instance_id}')
 
     def write(self, text, check=True):
         text = canonical_text(text)
@@ -175,7 +175,7 @@ class ConfigFile:
 def _path_tokens(path):
     tokens = re.findall(r'[A-Za-z_][A-Za-z_0-9]*|\[\d+\]', path)
     if not tokens or ''.join(t if t.startswith('[') else '.' + t for t in tokens).lstrip('.') != path:
-        raise ConfigError('invalid path %s; use id, template_args[n], args.<param>.<field>..., [n]' % path)
+        raise ConfigError(f'invalid path {path}; use id, template_args[n], args.<param>.<field>..., [n]')
     return tokens
 
 
@@ -213,11 +213,11 @@ def _set_path(item, path, value):
                     node = entry[name]
                     break
             else:
-                raise ConfigError('path %s: no argument %s' % (path, name))
+                raise ConfigError(f'path {path}: no argument {name}')
             rest = tokens[position + 2:]
             return _set_path_tail(node, rest, value, path)
         if not isinstance(node, dict) or token not in node:
-            raise ConfigError('path %s: no key %s' % (path, token))
+            raise ConfigError(f'path {path}: no key {token}')
         if last:
             node[token] = value
             return
@@ -237,7 +237,7 @@ def _set_path_tail(node, tokens, value, path):
             node = node[index]
         else:
             if not isinstance(node, dict) or token not in node:
-                raise ConfigError('path %s: no key %s' % (path, token))
+                raise ConfigError(f'path {path}: no key {token}')
             if last:
                 node[token] = value
                 return
@@ -264,7 +264,7 @@ def set_value(config_path, instance_id, path, value, if_match=None, source=None)
     """Replace one node of one instance (D7); other text is untouched."""
     config = ConfigFile(config_path, source)
     if if_match is not None and file_hash(config.path) != if_match:
-        raise ConfigError('%s changed since it was read; reload and retry' % config.source)
+        raise ConfigError(f'{config.source} changed since it was read; reload and retry')
     k = config.index_of(instance_id)
     new_value = _to_yaml_value(value)
     if isinstance(new_value, str):
@@ -341,8 +341,7 @@ def remove_instance(config_path, instance_id, source=None):
     k = config.index_of(instance_id)
     users = references_to(config.config, instance_id)
     if users:
-        raise ConfigError('%s: %s is still used by %s; change those values first'
-                          % (config.source, instance_id, ', '.join(users)))
+        raise ConfigError('{}: {} is still used by {}; change those values first'.format(config.source, instance_id, ', '.join(users)))
     text = config.blocks().remove(k)
     if parse_yaml(text, config.source).get('modules') is None:
         text = re.sub(r'^modules:[ \t]*$', 'modules: []', text, count=1, flags=re.M)
@@ -384,10 +383,10 @@ def rename_instance(config_path, instance_id, new_id, source=None):
     """Rename an instance and every reference to it in the same configuration."""
     problem = identifier_problem(new_id)
     if problem:
-        raise ConfigError('%s %s' % (new_id, problem))
+        raise ConfigError(f'{new_id} {problem}')
     config = ConfigFile(config_path, source)
     if any(isinstance(e, dict) and e.get('id') == new_id for e in config.config.get('modules') or []):
-        raise ConfigError('%s: instance id %s already exists' % (config.source, new_id))
+        raise ConfigError(f'{config.source}: instance id {new_id} already exists')
     target = config.index_of(instance_id)
     text = config.text
     blocks = Blocks(text, config.source)
@@ -510,12 +509,12 @@ def add_instance(config_path, module_name, modules, index, instance_id=None, sou
     config = ConfigFile(config_path, source)
     module = select_module(modules, module_name)
     if not module['manifest'].standalone:
-        raise ConfigError('%s is a library dependency, not a Module instance' % module['id'])
+        raise ConfigError('{} is a library dependency, not a Module instance'.format(module['id']))
     interface = source_interface(module['header'])
     identity = instance_id or next_instance_id(config.config.get('modules') or [], module['name'])
     problem = identifier_problem(identity)
     if problem:
-        raise ConfigError('instance id %s %s' % (identity, problem))
+        raise ConfigError(f'instance id {identity} {problem}')
     item = CommentedMap()
     item['module'] = module['id']
     item['id'] = identity
@@ -726,13 +725,13 @@ def add_module(modules_yaml, request_text):
         else:
             existing = request({k.value: v.value for k, v in child.value})
         if existing['id'].casefold() == parsed['id'].casefold():
-            raise ConfigError('%s is already requested in %s' % (parsed['id'], modules_yaml))
+            raise ConfigError('{} is already requested in {}'.format(parsed['id'], modules_yaml))
     value = request_text if '@' in request_text else request_text + '@same-or-dev'
     if key is None:
         lines = [line for line in lines if line.strip()] + ['modules:', '  - ' + value]
     elif node.flow_style:
         if items:
-            raise ConfigError('%s uses a flow list for modules; write it as a block list first' % modules_yaml)
+            raise ConfigError(f'{modules_yaml} uses a flow list for modules; write it as a block list first')
         line = lines[key.start_mark.line]
         lines[key.start_mark.line] = line[:key.start_mark.column] + 'modules:'
         lines.insert(key.start_mark.line + 1, '  - ' + value)
@@ -758,7 +757,7 @@ def remove_module(modules_yaml, identity):
         if existing['id'].casefold() != identity.casefold():
             continue
         if node.flow_style:
-            raise ConfigError('%s uses a flow list for modules; write it as a block list first' % modules_yaml)
+            raise ConfigError(f'{modules_yaml} uses a flow list for modules; write it as a block list first')
         end = items[index + 1][0] if index + 1 < len(items) else child.end_mark.line + (
             1 if child.end_mark.column else 0)
         del lines[line:max(end, line + 1)]
@@ -766,7 +765,7 @@ def remove_module(modules_yaml, identity):
             lines[key.start_mark.line] = lines[key.start_mark.line].rstrip() + ' []'
         atomic_write(path, '\n'.join(lines).rstrip('\n') + '\n')
         return
-    raise ConfigError('%s is not requested in %s' % (identity, modules_yaml))
+    raise ConfigError(f'{identity} is not requested in {modules_yaml}')
 
 
 def format_files(paths, check=False):
@@ -787,4 +786,4 @@ def parse_json_value(text):
     try:
         return json.loads(text)
     except json.JSONDecodeError as error:
-        raise ConfigError('value must be JSON (e.g. "\\"LED_B\\"", 1000, {"a": "1"}): %s' % error)
+        raise ConfigError(f'value must be JSON (e.g. "\\"LED_B\\"", 1000, {{"a": "1"}}): {error}')

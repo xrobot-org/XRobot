@@ -15,7 +15,7 @@ _ID = re.compile(r'^[A-Za-z0-9_][A-Za-z0-9_.-]*/[A-Za-z0-9_][A-Za-z0-9_.-]*$')
 
 def validate_id(identity):
     if not isinstance(identity, str) or not _ID.fullmatch(identity) or any(p in ('.', '..') for p in identity.split('/')):
-        raise ValueError('Expected canonical owner/repo: %r' % identity)
+        raise ValueError(f'Expected canonical owner/repo: {identity!r}')
     return identity
 
 
@@ -36,7 +36,7 @@ def load_yaml(source):
     if data is None:
         return {}
     if not isinstance(data, dict):
-        raise ValueError('%s: expected a YAML mapping' % source)
+        raise ValueError(f'{source}: expected a YAML mapping')
     return data
 
 
@@ -73,7 +73,7 @@ class ModuleSource:
         for group, kind in (('modules', 'module'), ('bsps', 'bsp'), ('packages', None)):
             values = data.get(group, [])
             if not isinstance(values, list):
-                raise ValueError('%s: %s must be a list' % (self.url, group))
+                raise ValueError(f'{self.url}: {group} must be a list')
             for value in values:
                 record = {'repo': value} if isinstance(value, str) else dict(value)
                 package_type = record.get('type', kind)
@@ -100,15 +100,15 @@ class ModuleSource:
                 else:
                     status = record.get('status', 'community')
                     if status not in ('community', 'verified', 'official'):
-                        raise ValueError('Unknown package status: %s' % status)
+                        raise ValueError(f'Unknown package status: {status}')
                     if status in ('verified', 'official') and not (record.get('tested_ref') and record.get('tested_libxr')):
-                        raise ValueError('%s: validation label needs tested_ref and tested_libxr' % identity)
+                        raise ValueError(f'{identity}: validation label needs tested_ref and tested_libxr')
                     for field in ('tested_ref', 'tested_libxr', 'tested_xrobot'):
                         if field in record:
                             record[field] = str(record[field])
                     record.update(id=identity, type=package_type, repo=_relative(self.url, repo), source=self.url, status=status)
                 if identity.casefold() in {i.casefold() for i in self.entries}:
-                    raise ValueError('Duplicate catalog identity: %s' % identity)
+                    raise ValueError(f'Duplicate catalog identity: {identity}')
                 self.entries[identity] = record
         self.module_urls = [r['repo'] for r in self.entries.values() if r['type'] == 'module']
         self.module_name_to_url = {i: r['repo'] for i, r in self.entries.items() if r['type'] == 'module'}
@@ -167,7 +167,7 @@ class SourceManager:
                 self.all_module_candidates.setdefault(key, []).append((record['repo'], source))
                 if key in self.packages:
                     if selected_priorities[key] == source.priority and self.packages[key]['repo'] != record['repo']:
-                        raise ValueError('Equal-priority sources disagree about %s; set source priorities explicitly' % key)
+                        raise ValueError(f'Equal-priority sources disagree about {key}; set source priorities explicitly')
                     continue
                 self.packages[key] = dict(record)
                 selected_priorities[key] = source.priority
@@ -184,9 +184,9 @@ class SourceManager:
     def resolve_id(self, name, kind=None):
         candidates = [identity for identity, record in self.packages.items() if (not kind or record['type'] == kind) and (identity.casefold() == name.casefold() if '/' in name else identity.rsplit('/', 1)[-1] == name)]
         if not candidates:
-            raise ValueError('Package not found: %s' % name)
+            raise ValueError(f'Package not found: {name}')
         if len(candidates) != 1:
-            raise ValueError('Ambiguous package %s; specify %s' % (name, ', '.join(sorted(candidates))))
+            raise ValueError('Ambiguous package {}; specify {}'.format(name, ', '.join(sorted(candidates))))
         return candidates[0]
 
     def list_modules(self):
@@ -272,7 +272,7 @@ def main():
                     continue
                 if args.command == 'search' and args.query.casefold() not in json.dumps(record, ensure_ascii=False, default=str).casefold():
                     continue
-                print('%s [%s] %s' % (identity, record['type'], record['repo']))
+                print('{} [{}] {}'.format(identity, record['type'], record['repo']))
     except (OSError, ValueError, requests.RequestException, yaml.YAMLError) as error:
         parser.exit(1, str(error) + '\n')
 

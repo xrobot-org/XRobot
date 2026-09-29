@@ -91,9 +91,9 @@ def parse_yaml(text, source):
     except yaml.MarkedYAMLError as error:
         mark = error.problem_mark or error.context_mark
         where = ':%d' % (mark.line + 1) if mark else ''
-        raise ConfigError('%s%s: YAML syntax error: %s' % (source, where, error.problem or error)) from error
+        raise ConfigError(f'{source}{where}: YAML syntax error: {error.problem or error}') from error
     except yaml.YAMLError as error:
-        raise ConfigError('%s: YAML error: %s' % (source, error)) from error
+        raise ConfigError(f'{source}: YAML error: {error}') from error
     if node is None:
         return Located(1)
     return _construct(node, source)
@@ -102,8 +102,8 @@ def parse_yaml(text, source):
 def value_text(value, field):
     """Return a scalar's C++ text after the checks shared by every value."""
     if value is None:
-        raise ConfigError('%s is not filled in (null, ~ and empty values mean "not filled in"; '
-                          'write nullptr for a null pointer)' % field)
+        raise ConfigError(f'{field} is not filled in (null, ~ and empty values mean "not filled in"; '
+                          'write nullptr for a null pointer)')
     if not isinstance(value, str) or not value.strip():
         raise ConfigError(field + ' requires C++ expression text')
     if value.lstrip().startswith('@'):
@@ -118,13 +118,13 @@ def check_cpp_text(text, field):
     for token in reversed([t for t in tokens if t.kind == 'literal']):
         code = code[:token.start] + ' ' * (token.end - token.start) + code[token.end:]
     if '//' in code or '/*' in code:
-        raise ConfigError('%s: C++ comments are not allowed inside a value; use a YAML # comment' % field)
+        raise ConfigError(f'{field}: C++ comments are not allowed inside a value; use a YAML # comment')
     for token in tokens:
         if token.kind == 'number' and re.fullmatch(r'0[0-9]+[uUlL]*', token.text):
-            raise ConfigError('%s: %s has a leading zero, which C++ reads as octal; write the '
-                              'decimal value' % (field, token.text))
+            raise ConfigError(f'{field}: {token.text} has a leading zero, which C++ reads as octal; write the '
+                              'decimal value')
     if any(ch.isdigit() and not ch.isascii() for ch in code):
-        raise ConfigError('%s: non-ASCII digits are not C++ numbers' % field)
+        raise ConfigError(f'{field}: non-ASCII digits are not C++ numbers')
 
 
 def identifier_problem(name):
@@ -150,7 +150,7 @@ def _check_value(value, field, errors):
     if isinstance(value, dict):
         for name, child in value.items():
             if not re.fullmatch(IDENTIFIER, name):
-                errors.append('%s: invalid field name %s' % (field, name))
+                errors.append(f'{field}: invalid field name {name}')
                 continue
             _check_value(child, field + '.' + name, errors)
     elif isinstance(value, list):
@@ -167,10 +167,10 @@ def validate_config(config, source='config'):
     """Validate the structure of a loaded configuration; collect every error."""
     errors = []
     if not isinstance(config, dict):
-        raise ConfigError('%s: expected an application configuration mapping' % source)
+        raise ConfigError(f'{source}: expected an application configuration mapping')
     extra = [key for key in config if key not in TOP_LEVEL]
     if extra:
-        errors.append('unknown top-level key(s) %s; allowed: %s' % (', '.join(extra), ', '.join(TOP_LEVEL)))
+        errors.append('unknown top-level key(s) {}; allowed: {}'.format(', '.join(extra), ', '.join(TOP_LEVEL)))
     namespace = config.get('constexpr_namespace', 'ProjectConstexpr')
     if not isinstance(namespace, str) or not re.fullmatch(IDENTIFIER + '(?:::' + IDENTIFIER + ')*', namespace):
         errors.append('constexpr_namespace must be a C++ namespace name')
@@ -178,7 +178,7 @@ def validate_config(config, source='config'):
         for part in namespace.split('::'):
             problem = identifier_problem(part)
             if problem:
-                errors.append('constexpr_namespace: %s %s' % (part, problem))
+                errors.append(f'constexpr_namespace: {part} {problem}')
     includes = config.get('constexpr_includes', [])
     if not isinstance(includes, list):
         errors.append('constexpr_includes must be a list of header names')
@@ -193,12 +193,12 @@ def validate_config(config, source='config'):
     for name, spec in constants.items():
         problem = identifier_problem(name)
         if problem:
-            errors.append('constexprs.%s %s' % (name, problem))
+            errors.append(f'constexprs.{name} {problem}')
         if not isinstance(spec, dict) or set(spec) != {'type', 'value'}:
-            errors.append('constexprs.%s requires exactly type and value' % name)
+            errors.append(f'constexprs.{name} requires exactly type and value')
             continue
-        _check_value(spec['type'], 'constexprs.%s.type' % name, errors)
-        _check_value(spec['value'], 'constexprs.%s.value' % name, errors)
+        _check_value(spec['type'], f'constexprs.{name}.type', errors)
+        _check_value(spec['value'], f'constexprs.{name}.value', errors)
     entries = config.get('modules', [])
     if not isinstance(entries, list):
         errors.append('modules must be an ordered list')
@@ -207,14 +207,14 @@ def validate_config(config, source='config'):
     for i, entry in enumerate(entries):
         where = 'modules[%d]' % i
         if not isinstance(entry, dict):
-            errors.append('%s requires module/id and ordered args/template_args' % where)
+            errors.append(f'{where} requires module/id and ordered args/template_args')
             continue
         unknown = [key for key in entry if key not in ('module', 'id', 'args', 'template_args')]
         if unknown:
-            errors.append('%s: unknown key(s) %s' % (where, ', '.join(unknown)))
+            errors.append('{}: unknown key(s) {}'.format(where, ', '.join(unknown)))
         for key in ('module', 'id'):
             if not isinstance(entry.get(key), str) or not entry[key]:
-                errors.append('%s.%s is required' % (where, key))
+                errors.append(f'{where}.{key} is required')
         identity = entry.get('id')
         if isinstance(identity, str) and identity:
             where = identity
@@ -226,7 +226,7 @@ def validate_config(config, source='config'):
             used.add(identity)
         values = entry.get('args', [])
         if not isinstance(values, list):
-            errors.append('%s.args must be an ordered list' % where)
+            errors.append(f'{where}.args must be an ordered list')
             values = []
         names = set()
         for j, value in enumerate(values):
@@ -237,10 +237,10 @@ def validate_config(config, source='config'):
             if not re.fullmatch(IDENTIFIER, name) or name in names:
                 errors.append('%s.args[%d]: invalid or duplicate parameter name %s' % (where, j, name))
             names.add(name)
-            _check_value(argument, '%s.args.%s' % (where, name), errors)
+            _check_value(argument, f'{where}.args.{name}', errors)
         templates = entry.get('template_args', [])
         if not isinstance(templates, list):
-            errors.append('%s.template_args must be an ordered list' % where)
+            errors.append(f'{where}.template_args must be an ordered list')
             templates = []
         for j, value in enumerate(templates):
             if value is not None:
@@ -253,7 +253,7 @@ def validate_config(config, source='config'):
         if not isinstance(sleep, str) or not re.fullmatch(r'0|[1-9][0-9]*', sleep) or int(sleep) > 0xffffffff:
             errors.append('settings.monitor_sleep_ms must be an unsigned 32-bit decimal millisecond count')
     if errors:
-        raise ConfigError('\n'.join('%s: %s' % (source, error) for error in errors))
+        raise ConfigError('\n'.join(f'{source}: {error}' for error in errors))
 
 
 def load_config(path, source=None):
@@ -262,7 +262,7 @@ def load_config(path, source=None):
     try:
         text = path.read_text(encoding='utf-8-sig')
     except UnicodeDecodeError as error:
-        raise ConfigError('%s: not UTF-8 text' % source) from error
+        raise ConfigError(f'{source}: not UTF-8 text') from error
     config = parse_yaml(text, source)
     validate_config(config, source)
     return config

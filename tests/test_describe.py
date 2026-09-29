@@ -203,9 +203,9 @@ class Diagnostics(DescribeTestCase):
         self.write('Modules/modules.yaml', 'modules: []\n')
         result = describe(self.project)
         self.assertEqual(result['tools']['xrobot']['pin'], None)
-        self.assertIn('XRobot is not pinned; add `xrobot: %s`' % __version__, self.messages(result, 'warning'))
+        self.assertIn(f'XRobot is not pinned; add `xrobot: {__version__}`', self.messages(result, 'warning'))
         self.write('Modules/modules.yaml', 'xrobot: 0.9.0\nmodules: []\n')
-        self.assertIn('installed XRobot %s differs from the pinned 0.9.0' % __version__,
+        self.assertIn(f'installed XRobot {__version__} differs from the pinned 0.9.0',
                       self.messages(describe(self.project), 'warning'))
         self.write('Modules/modules.yaml', 'xrobot: latest\nmodules: []\n')
         self.assertTrue(any('xrobot must be a release version' in m for m in self.messages(describe(self.project), 'error')))

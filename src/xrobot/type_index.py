@@ -472,11 +472,11 @@ class ClassEntry:
         """Why a YAML mapping cannot be checked against this type, or None."""
         layout = self.layout()
         if layout.has_union:
-            return '%s contains a union' % self.qualified
+            return f'{self.qualified} contains a union'
         if layout.conditional_fields:
-            return '%s declares fields under #if (%s)' % (self.qualified, ', '.join(layout.conditional_fields))
+            return '{} declares fields under #if ({})'.format(self.qualified, ', '.join(layout.conditional_fields))
         if not self.declares_constructor() and (self.has_base() or layout.has_virtual):
-            return '%s has base classes or virtual functions and no constructor' % self.qualified
+            return f'{self.qualified} has base classes or virtual functions and no constructor'
         return None
 
     def monitor(self) -> str | None:
@@ -518,7 +518,7 @@ class TypeIndex:
         if name in self._ensured:
             return
         self._ensured.add(name)
-        pattern = re.compile(r'\b%s\b' % re.escape(name))
+        pattern = re.compile(rf'\b{re.escape(name)}\b')
         for path in self.headers:
             if path not in self._parsed and pattern.search(self._text(path)):
                 self._parse(path)
@@ -597,8 +597,7 @@ class TypeIndex:
             return None
         headers = sorted({str(e.header) for e in entries})
         if len(headers) > 1:
-            raise ValueError('Type %s is defined in several Module headers: %s'
-                             % ('::'.join(path), ', '.join(headers)))
+            raise ValueError('Type {} is defined in several Module headers: {}'.format('::'.join(path), ', '.join(headers)))
         return entries[0]
 
     def resolve(self, spelling: str, scope: tuple[str, ...] = (), _depth: int = 0) -> ClassEntry | None:
@@ -701,8 +700,8 @@ class TypeIndex:
         """
         state = entry.monitor()
         if state == 'conditional':
-            raise ValueError('%s declares OnMonitor under #if; the generator cannot evaluate '
-                             'build options' % entry.qualified)
+            raise ValueError(f'{entry.qualified} declares OnMonitor under #if; the generator cannot evaluate '
+                             'build options')
         if state == 'public':
             return True
         if _depth > 8:

@@ -40,7 +40,7 @@ def project_table(repo):
 def package_version(repo):
     match = re.search(r'''^version\s*=\s*["']([^"']+)["']\s*$''', project_table(repo), re.M)
     if not match:
-        raise ValueError('Expected an explicit package version in %s' % repo)
+        raise ValueError(f'Expected an explicit package version in {repo}')
     return match.group(1)
 
 
@@ -62,7 +62,7 @@ def xr_syntax_pin(repo):
     if len(requirements) != 1:
         return None, 'no xr-syntax dependency' if not requirements else 'several xr-syntax dependencies'
     requirement = requirements[0]
-    match = re.fullmatch(r'\s*xr[-_.]syntax\s*==\s*(%s)\s*' % VERSION.pattern, requirement, re.I)
+    match = re.fullmatch(rf'\s*xr[-_.]syntax\s*==\s*({VERSION.pattern})\s*', requirement, re.I)
     if not match:
         return None, requirement
     return match.group(1), requirement
@@ -82,26 +82,26 @@ def check(repositories, record):
     rows = record.get('repositories') or {}
     for name in REPOSITORIES:
         if name not in repositories:
-            failures.append('%s repository path is missing' % name)
+            failures.append(f'{name} repository path is missing')
             continue
         path = repositories[name]
         row = rows.get(name) or {}
         commit = row.get('commit')
         if not isinstance(commit, str) or not COMMIT.fullmatch(commit):
-            failures.append('%s: the record needs the full 40-hex commit' % name)
+            failures.append(f'{name}: the record needs the full 40-hex commit')
         if git(path, 'status', '--porcelain'):
-            failures.append('%s is not a clean committed candidate' % name)
+            failures.append(f'{name} is not a clean committed candidate')
         head = git(path, 'rev-parse', 'HEAD')
         if commit != head:
-            failures.append('%s: recorded commit %s is not HEAD %s' % (name, str(commit)[:12], head[:12]))
+            failures.append(f'{name}: recorded commit {str(commit)[:12]} is not HEAD {head[:12]}')
         if name not in PACKAGES:
             continue
         version = row.get('version')
         if not isinstance(version, str) or not VERSION.fullmatch(version):
-            failures.append('%s: the record needs a release version such as 1.0.0 or 1.0.0rc1' % name)
+            failures.append(f'{name}: the record needs a release version such as 1.0.0 or 1.0.0rc1')
         actual = package_version(path)
         if actual != version:
-            failures.append('%s: pyproject.toml version %s differs from the recorded %s' % (name, actual, version))
+            failures.append(f'{name}: pyproject.toml version {actual} differs from the recorded {version}')
     pinned = record.get('xr-syntax')
     if not isinstance(pinned, str) or not VERSION.fullmatch(pinned):
         failures.append('the record needs the pinned xr-syntax version')
@@ -110,9 +110,9 @@ def check(repositories, record):
             continue
         version, requirement = xr_syntax_pin(repositories[name])
         if version is None:
-            failures.append('%s must pin xr-syntax exactly (xr-syntax==X); found %s' % (name, requirement))
+            failures.append(f'{name} must pin xr-syntax exactly (xr-syntax==X); found {requirement}')
         elif version != pinned:
-            failures.append('%s pins xr-syntax==%s, the record says %s' % (name, version, pinned))
+            failures.append(f'{name} pins xr-syntax=={version}, the record says {pinned}')
     for gate in GATES:
         if (record.get('checks') or {}).get(gate) != 'pass':
             failures.append('Candidate acceptance is missing: ' + gate)

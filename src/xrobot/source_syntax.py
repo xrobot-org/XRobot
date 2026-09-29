@@ -121,11 +121,10 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
     ]
     if not classes:
         raise ValueError(
-            "No explicit global class %s; macro-generated interfaces are not supported"
-            % name
+            f"No explicit global class {name}; macro-generated interfaces are not supported"
         )
     if len(classes) != 1:
-        raise ValueError("Multiple definitions of Module class %s" % name)
+        raise ValueError(f"Multiple definitions of Module class {name}")
 
     class_view = classes[0]
     parent = class_view.node.parent
@@ -136,7 +135,7 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
 
     constructors = class_view.constructors(public_only=True, callable_only=True)
     if not constructors:
-        raise ValueError("No supported explicit public constructor for %s" % name)
+        raise ValueError(f"No supported explicit public constructor for {name}")
 
     source_bytes = document.render_bytes()
     body = class_view.body
@@ -145,7 +144,7 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
         if body is not None and conditional_depth(
             document, body.span.start, constructor.node.span.start
         ):
-            raise ValueError("%s constructor interface varies under #if" % name)
+            raise ValueError(f"{name} constructor interface varies under #if")
 
         declarator = constructor.declarator
         result.append(

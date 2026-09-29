@@ -187,8 +187,8 @@ class GeneratedHeaderInputs(BspTestCase):
     def test_inputs_on_another_drive_are_written_as_absolute_paths(self):
         with mock.patch('xrobot.project.os.path.relpath', side_effect=ValueError('path is on mount C:')):
             lines = self.project.header_lines(self.root / 'User/xrobot.yaml', [self.root / 'xrobot.lock'])
-        self.assertEqual(lines, ['// xrobot: config "%s"' % Path(os.path.abspath(self.root / 'User/xrobot.yaml')).as_posix(),
-                                 '// xrobot: depends "%s"' % Path(os.path.abspath(self.root / 'xrobot.lock')).as_posix()])
+        self.assertEqual(lines, ['// xrobot: config "{}"'.format(Path(os.path.abspath(self.root / 'User/xrobot.yaml')).as_posix()),
+                                 '// xrobot: depends "{}"'.format(Path(os.path.abspath(self.root / 'xrobot.lock')).as_posix())])
 
     def test_generation_without_a_lock_is_refused(self):
         (self.root / 'xrobot.lock').unlink()
@@ -228,7 +228,7 @@ class Registrations(TempDirTestCase):
         for directive in ('#if defined(OPTION)', '#ifdef OPTION', '#ifndef OPTION'):
             with self.subTest(directive=directive), self.assertRaisesRegex(
                     ConfigError, r'app_main\.cpp:3: XR_REGISTER inside #if/#ifdef/#ifndef'):
-                self.read_entry('int x;\n%s\nXR_REGISTER(x, int);\n#endif\n' % directive)
+                self.read_entry(f'int x;\n{directive}\nXR_REGISTER(x, int);\n#endif\n')
 
     def test_registration_after_a_closed_conditional_is_accepted(self):
         records = self.read_entry('#if OPTION\nint y;\n#else\nint z;\n#endif\nint x;\nXR_REGISTER(x, int);\n')
@@ -241,7 +241,7 @@ class Registrations(TempDirTestCase):
     def test_reference_types_are_rejected(self):
         for cpp_type in ('int&', 'LibXR::CAN &', 'int&&'):
             with self.subTest(cpp_type=cpp_type), self.assertRaisesRegex(ConfigError, 'not reference types'):
-                self.read_entry('XR_REGISTER(x, %s);\n' % cpp_type)
+                self.read_entry(f'XR_REGISTER(x, {cpp_type});\n')
 
     def test_duplicate_names_are_rejected(self):
         with self.assertRaisesRegex(ConfigError, r'app_main\.cpp:2: duplicate XR_REGISTER name x'):
@@ -249,8 +249,8 @@ class Registrations(TempDirTestCase):
 
     def test_names_must_be_valid_object_names(self):
         for name, reason in (('class', 'keyword'), ('xr_led', 'prefix reserved'), ('ASSERT', 'macro')):
-            with self.subTest(name=name), self.assertRaisesRegex(ConfigError, 'registration name %s .*%s' % (name, reason)):
-                self.read_entry('XR_REGISTER(%s, int);\n' % name)
+            with self.subTest(name=name), self.assertRaisesRegex(ConfigError, f'registration name {name} .*{reason}'):
+                self.read_entry(f'XR_REGISTER({name}, int);\n')
 
     def test_every_registration_error_is_reported(self):
         with self.assertRaises(ConfigError) as context:

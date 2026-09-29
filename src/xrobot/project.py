@@ -28,8 +28,8 @@ def find_root(start='.'):
     for folder in [start] + list(start.parents):
         if (folder / MODULES_YAML).is_file():
             return folder
-    raise ProjectError('No XRobot BSP found at or above %s (no Modules/modules.yaml); run '
-                       '`xrobot init` in the BSP root to create one' % start)
+    raise ProjectError(f'No XRobot BSP found at or above {start} (no Modules/modules.yaml); run '
+                       '`xrobot init` in the BSP root to create one')
 
 
 class Project:
@@ -78,14 +78,14 @@ class Project:
             raise ProjectError('No source under User/ calls XROBOT_MAIN(); the entry source must '
                                'call it once after registering its hardware with XR_REGISTER')
         if len(callers) > 1:
-            raise ProjectError('Several sources under User/ call XROBOT_MAIN(): %s; a BSP has '
-                               'exactly one entry' % ', '.join(self.relative(p) for p in callers))
+            raise ProjectError('Several sources under User/ call XROBOT_MAIN(): {}; a BSP has '
+                               'exactly one entry'.format(', '.join(self.relative(p) for p in callers)))
         return callers[0]
 
     def header_lines(self, config, depends):
         """The input list written after ``#pragma once``."""
-        lines = ['// xrobot: config "%s"' % _header_relative(config, self.header)]
-        lines += ['// xrobot: depends "%s"' % _header_relative(p, self.header) for p in depends]
+        lines = [f'// xrobot: config "{_header_relative(config, self.header)}"']
+        lines += [f'// xrobot: depends "{_header_relative(p, self.header)}"' for p in depends]
         return lines
 
     def header_state(self):
@@ -127,9 +127,8 @@ class Project:
         if chosen is None:
             return self.default_config
         if not chosen.is_file():
-            raise ProjectError('%s was generated for %s, which does not exist; select a configuration '
-                               'with `xrobot gen -c <config>`'
-                               % (self.relative(self.header), self.relative(chosen)))
+            raise ProjectError(f'{self.relative(self.header)} was generated for {self.relative(chosen)}, which does not exist; select a configuration '
+                               'with `xrobot gen -c <config>`')
         return chosen
 
 

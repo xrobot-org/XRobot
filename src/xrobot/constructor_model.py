@@ -130,7 +130,7 @@ def template_bindings(interface, supplied):
     for i, p in enumerate(parameters):
         value = supplied[i] if i < len(supplied) else p['default']
         if value is None:
-            raise ValueError('Template argument %s.%s must be specified' % (interface['name'], p['name']))
+            raise ValueError('Template argument {}.{} must be specified'.format(interface['name'], p['name']))
         replacements[p['name']] = replace_names(str(value), replacements)
     return replacements
 
@@ -162,7 +162,7 @@ def qualify(text, interface, cpp_class, templates=None, expand_aliases=False):
         previous = items[i-1].text if i else ''
         own_scope = previous == '::' and i >= 2 and items[i-2].text == interface['name']
         if previous not in ('.', '->', '.*', '->*', '::') or own_scope:
-            raise ValueError('Expression uses non-public member %s::%s' % (interface['name'], token.text))
+            raise ValueError('Expression uses non-public member {}::{}'.format(interface['name'], token.text))
     return replace_names(text, substitutions)
 
 
@@ -220,13 +220,13 @@ def compliant_constructors(interface, cpp_class=None, templates=None):
             if p['default'] is not None:
                 config_started = True
             elif config_started:
-                problems.append('%s: dependency without a default appears after value configuration' % p['name'])
+                problems.append('{}: dependency without a default appears after value configuration'.format(p['name']))
         if problems:
-            rejected.append('line %s: %s' % (ctor.get('line', '?'), '; '.join(problems)))
+            rejected.append('line {}: {}'.format(ctor.get('line', '?'), '; '.join(problems)))
         else:
             accepted.append(ctor)
     if not accepted:
-        raise ValueError('%s: no compliant constructor; %s' % (
+        raise ValueError('{}: no compliant constructor; {}'.format(
             interface['name'], ' | '.join(rejected)))
     return accepted
 
@@ -342,10 +342,10 @@ def constructor_for(interface, named_values, known, cpp_class, templates):
     if len(typed) == 1:
         return typed[0]
     if not candidates:
-        raise ValueError('named arguments (%s) do not match any constructor of %s; expected one of: %s' % (
+        raise ValueError('named arguments ({}) do not match any constructor of {}; expected one of: {}'.format(
             ', '.join(names), interface['name'],
             ' | '.join('(' + ', '.join(p['name'] for p in c['arguments']) + ')' for c in supported)))
-    raise ValueError('%s: constructor is ambiguous for the supplied names and explicit types' % interface['name'])
+    raise ValueError('{}: constructor is ambiguous for the supplied names and explicit types'.format(interface['name']))
 
 
 def _base_spelling(cpp_type):
@@ -404,8 +404,8 @@ class ValueChecker:
         entry = self._locate(cpp_type, scope) if cpp_type else None
         if isinstance(value, list):
             if entry is not None:
-                raise ConfigError('%s: positional values are not accepted for %s; write a mapping '
-                                  'with its field names' % (field, entry.qualified))
+                raise ConfigError(f'{field}: positional values are not accepted for {entry.qualified}; write a mapping '
+                                  'with its field names')
             items = default if isinstance(default, list) and len(default) == len(value) else [None] * len(value)
             parts = [self.render(v, '%s[%d]' % (field, i), None, scope, d)[0]
                      for i, (v, d) in enumerate(zip(value, items))]
@@ -417,8 +417,8 @@ class ValueChecker:
                 if isinstance(tree, dict):
                     return self._mapping(tree, field, cpp_type, scope, default)
             if _is_positional_brace(text):
-                raise ConfigError('%s: positional initializer %s is not accepted for %s; write a '
-                                  'mapping with its field names' % (field, text.strip(), entry.qualified))
+                raise ConfigError(f'{field}: positional initializer {text.strip()} is not accepted for {entry.qualified}; write a '
+                                  'mapping with its field names')
         return text, False
 
     @staticmethod
@@ -433,8 +433,8 @@ class ValueChecker:
                 detail.append('missing ' + ', '.join(missing))
             if extra:
                 detail.append('unknown ' + ', '.join(extra))
-            raise ConfigError('%s: %s (%s); expected: %s' % (field, '; '.join(detail), what, ', '.join(expected)))
-        raise ConfigError('%s: fields out of declaration order (%s); expected: %s' % (field, what, ', '.join(expected)))
+            raise ConfigError('{}: {} ({}); expected: {}'.format(field, '; '.join(detail), what, ', '.join(expected)))
+        raise ConfigError('{}: fields out of declaration order ({}); expected: {}'.format(field, what, ', '.join(expected)))
 
     def _mapping(self, value, field, cpp_type, scope, default):
         for key in value:
@@ -447,12 +447,11 @@ class ValueChecker:
             if isinstance(default, dict):
                 self._require(field, keys, list(default), 'from the default initializer')
                 return self._designated(value, field, {}, None, default), False
-            raise ConfigError('%s: cannot verify the fields of %s in the loaded Module headers; '
-                              'write this value as a complete C++ expression'
-                              % (field, cpp_type or 'this value'))
+            raise ConfigError('{}: cannot verify the fields of {} in the loaded Module headers; '
+                              'write this value as a complete C++ expression'.format(field, cpp_type or 'this value'))
         problem = entry.mapping_problem()
         if problem:
-            raise ConfigError('%s: %s; write this value as a complete C++ expression' % (field, problem))
+            raise ConfigError(f'{field}: {problem}; write this value as a complete C++ expression')
         if entry.is_aggregate():
             fields = entry.fields()
             self._require(field, keys, [n for n, _, _ in fields], 'data members of ' + entry.qualified)
@@ -463,8 +462,8 @@ class ValueChecker:
         chosen = [c for c in ctors if [p['name'] for p in c] == keys]
         if len(chosen) != 1:
             options = ' | '.join(', '.join(p['name'] for p in c) for c in ctors) or 'none'
-            raise ConfigError('%s: %s has constructors; the mapping must name one constructor\'s '
-                              'parameters in order. Constructors: %s' % (field, entry.qualified, options))
+            raise ConfigError(f'{field}: {entry.qualified} has constructors; the mapping must name one constructor\'s '
+                              f'parameters in order. Constructors: {options}')
         args = []
         for p in chosen[0]:
             param_type = self.index.qualify_in(p['type'], entry, spelled)
@@ -472,7 +471,7 @@ class ValueChecker:
             expr, typed = self.render(child, field + '.' + p['name'], param_type, entry.path, None)
             args.append(convert(expr, param_type, typed or isinstance(child, (dict, list)), self.checks,
                                 field + '.' + p['name'])[0])
-        return '%s(\n%s\n)' % (spelled, '\n, '.join(args)), True
+        return '{}(\n{}\n)'.format(spelled, '\n, '.join(args)), True
 
     def _designated(self, value, field, types, entry, default):
         parts = []
@@ -481,7 +480,7 @@ class ValueChecker:
             child_type = types.get(key)
             scope = entry.path if entry is not None else ()
             expr, _ = self.render(child, field + '.' + key, child_type, scope, child_default)
-            parts.append('.%s = %s' % (key, expr))
+            parts.append(f'.{key} = {expr}')
         return '{\n' + '\n, '.join(parts) + '\n}' if parts else '{}'
 
 
@@ -499,16 +498,15 @@ def convert(expr, target, exact, checks, message='value'):
     stripped = expr.lstrip()
     if exact:
         if stripped.startswith('{'):
-            return 'std::remove_cv_t<std::remove_reference_t<%s>>%s' % (target, expr), checks
+            return f'std::remove_cv_t<std::remove_reference_t<{target}>>{expr}', checks
         return expr, checks
     if stripped.startswith('{'):
-        return 'std::remove_cv_t<std::remove_reference_t<%s>>%s' % (target, expr), checks
+        return f'std::remove_cv_t<std::remove_reference_t<{target}>>{expr}', checks
     if is_arithmetic(target):
-        return 'xrobot_generated::Implicit<%s>(%s)' % (value_type, expr), checks
+        return f'xrobot_generated::Implicit<{value_type}>({expr})', checks
     # The same type (e.g. an immovable factory prvalue) needs no conversion.
-    checks.append('static_assert(std::is_same_v<std::remove_cvref_t<decltype((%s))>, '
-                  'std::remove_cvref_t<%s>> ||\n'
-                  '              std::is_convertible_v<decltype((%s)), %s>,\n'
-                  '              "%s requires an implicit conversion to %s");'
-                  % (expr, target, expr, target, message, target.replace('"', "'")))
-    return 'static_cast<%s>(%s)' % (target, expr), checks
+    checks.append('static_assert(std::is_same_v<std::remove_cvref_t<decltype(({}))>, '
+                  'std::remove_cvref_t<{}>> ||\n'
+                  '              std::is_convertible_v<decltype(({})), {}>,\n'
+                  '              "{} requires an implicit conversion to {}");'.format(expr, target, expr, target, message, target.replace('"', "'")))
+    return f'static_cast<{target}>({expr})', checks

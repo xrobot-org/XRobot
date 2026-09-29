@@ -68,7 +68,7 @@ def create_module(class_name, description='', constructor_args=None, template_ar
         raise ValueError('Module name must be a C++ identifier')
     folder = Path(output_dir) / class_name
     if folder.exists():
-        raise ValueError('Refusing to overwrite existing module: %s' % folder)
+        raise ValueError(f'Refusing to overwrite existing module: {folder}')
     constructors = list(constructor_args or [])
     templates = list(template_args or [])
     for item in constructors + templates:
@@ -86,11 +86,11 @@ def create_module(class_name, description='', constructor_args=None, template_ar
     for header in includes or []:
         if '\n' in header or '"' in header:
             raise ValueError('Invalid include name')
-        lines.append('#include %s' % (header if header.startswith('<') else '"%s"' % header))
+        lines.append('#include %s' % (header if header.startswith('<') else f'"{header}"'))
     if templates:
-        lines += ['', 'template <%s>' % ', '.join(templates)]
-    lines += ['class %s' % class_name, '{', ' public:',
-              '  %s(%s) {}' % (class_name, ', '.join(constructors)), '};', '']
+        lines += ['', 'template <{}>'.format(', '.join(templates))]
+    lines += [f'class {class_name}', '{', ' public:',
+              '  {}({}) {{}}'.format(class_name, ', '.join(constructors)), '};', '']
     folder.mkdir(parents=True)
     _write(folder / (class_name + '.hpp'), '\n'.join(lines))
     _write(folder / 'CMakeLists.txt', CMAKE)
