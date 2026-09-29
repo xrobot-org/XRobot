@@ -11,14 +11,14 @@ from pathlib import Path
 
 from xr_syntax.cpp import CppDocument, identifier_occurrences
 
-from xrobot.Config import ConfigError, identifier_problem, load_config, value_text, IDENTIFIER
-from xrobot.ConstructorModel import (ValueChecker, constructor_for, convert, initializer_tree,
+from xrobot.config import ConfigError, identifier_problem, load_config, value_text, IDENTIFIER
+from xrobot.constructor_model import (ValueChecker, constructor_for, convert, initializer_tree,
                                      is_dependency, qualify, template_bindings, type_shape)
-from xrobot.ModuleParser import discover_modules, select_module, source_interface
-from xrobot.Project import Project
-from xrobot.SourceSyntax import (code_tokens, close_token, split_arguments, conditional_depth,
+from xrobot.module_parser import discover_modules, select_module, source_interface
+from xrobot.project import Project
+from xrobot.source_syntax import (code_tokens, close_token, split_arguments, conditional_depth,
                                  parse_document)
-from xrobot.TypeIndex import TypeIndex, module_headers
+from xrobot.type_index import TypeIndex, module_headers
 
 HELPERS = '''namespace xrobot_generated {
 // Implicit conversion of a configuration value to an arithmetic parameter type;
@@ -560,7 +560,7 @@ def validate_all(project, modules=None, index=None):
 
 def generate_compile_check(module_name, modules, output, template_args=None):
     """A never-executed constructor call with void* placeholders (module CI probe)."""
-    from xrobot.ConfigEdit import seed_arguments
+    from xrobot.config_edit import seed_arguments
     module = select_module(modules, module_name)
     if not module['manifest'].standalone:
         # A library has no Module constructor; its header and .cpp files still

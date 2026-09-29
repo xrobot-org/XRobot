@@ -10,14 +10,14 @@ render and edit from it without parsing C++ or manifests themselves.
 from pathlib import Path
 
 from xrobot import __version__
-from xrobot.Config import load_config
-from xrobot.ConstructorModel import (compliant_constructors, initializer_tree, is_dependency, qualify,
+from xrobot.config import load_config
+from xrobot.constructor_model import (compliant_constructors, initializer_tree, is_dependency, qualify,
                                      type_shape)
-from xrobot.GenerateMain import generate_code, read_registrations
-from xrobot.InitModule import read_modules_yaml
-from xrobot.ModuleParser import locked_modules, lock_error, _module_record, select_module, source_interface
-from xrobot.Project import ProjectError
-from xrobot.TypeIndex import TypeIndex
+from xrobot.generate_main import generate_code, read_registrations
+from xrobot.init_module import read_modules_yaml
+from xrobot.module_parser import locked_modules, lock_error, _module_record, select_module, source_interface
+from xrobot.project import ProjectError
+from xrobot.type_index import TypeIndex
 
 SCHEMA = 1
 

@@ -20,9 +20,9 @@ from urllib.request import url2pathname
 
 import yaml
 
-from xrobot.GenerateMain import atomic_write
-from xrobot.ModuleParser import manifest_from_text
-from xrobot.SourceManager import SourceManager, load_yaml, validate_id
+from xrobot.generate_main import atomic_write
+from xrobot.module_parser import manifest_from_text
+from xrobot.source_manager import SourceManager, load_yaml, validate_id
 
 MODULES_KEYS = ('modules', 'xrobot')
 TOOL_REPOSITORIES = {

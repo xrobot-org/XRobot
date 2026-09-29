@@ -9,7 +9,7 @@ from pathlib import Path
 
 import yaml
 
-from xrobot.SourceSyntax import code_tokens
+from xrobot.source_syntax import code_tokens
 
 NULL_SCALARS = ('', '~', 'null', 'Null', 'NULL')
 TOP_LEVEL = ('modules', 'settings', 'constexprs', 'constexpr_namespace', 'constexpr_includes')

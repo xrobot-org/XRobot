@@ -7,9 +7,9 @@ import unittest
 from pathlib import Path
 
 from fixtures import BspTestCase, CXX, CxxMixin, requires_cxx
-from xrobot.Config import ConfigError
-from xrobot.GenerateMain import generate, generate_compile_check, load_modules, validate_all
-from xrobot.Project import ProjectError
+from xrobot.config import ConfigError
+from xrobot.generate_main import generate, generate_compile_check, load_modules, validate_all
+from xrobot.project import ProjectError
 
 MAIN = '#include "xrobot_main.hpp"\nint main() { XROBOT_MAIN(); }\n'
 

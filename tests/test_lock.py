@@ -1,14 +1,14 @@
-"""Module resolution and xrobot.lock (xrobot.InitModule), locked discovery (xrobot.ModuleParser)
-and source catalogs (xrobot.SourceManager)."""
+"""Module resolution and xrobot.lock (xrobot.init_module), locked discovery (xrobot.module_parser)
+and source catalogs (xrobot.source_manager)."""
 import os
 import unittest
 
 import yaml
 
 from fixtures import BspTestCase, UpstreamTestCase, manifest_block, run_git
-from xrobot.InitModule import (read_modules_yaml, repository_identity, same_repository, write_cmake)
-from xrobot.ModuleParser import discover_modules, manifest_from_text, select_module
-from xrobot.SourceManager import SourceManager, validate_id
+from xrobot.init_module import (read_modules_yaml, repository_identity, same_repository, write_cmake)
+from xrobot.module_parser import discover_modules, manifest_from_text, select_module
+from xrobot.source_manager import SourceManager, validate_id
 
 
 class Resolution(UpstreamTestCase):
@@ -244,7 +244,7 @@ class LocalWork(UpstreamTestCase):
         self.assertEqual(self.lock_bytes(), before)
 
     def test_generation_rejects_a_checkout_away_from_the_lock_with_the_fix(self):
-        from xrobot.Project import Project
+        from xrobot.project import Project
         folder = self.modules / 'team/A'
         run_git(folder, 'fetch', '-q', 'origin')
         run_git(folder, 'checkout', '-q', '--detach', 'origin/master')
@@ -531,7 +531,7 @@ class ToolPins(UpstreamTestCase):
         run_git(None, 'clone', '-q', '--bare', str(self.tool), str(self.cache / 'xrobot.git'))
 
     def check(self, pin, target, offline=False, generator=None):
-        from xrobot.InitModule import check_tool_pins
+        from xrobot.init_module import check_tool_pins
         self.configure([], pin=pin)
         if generator is not None:
             self.write(self.root / 'User/libxr_config.yaml', 'generator: %s\n' % generator)

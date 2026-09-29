@@ -1,8 +1,8 @@
-"""Reading class definitions from Module headers (xrobot.TypeIndex)."""
+"""Reading class definitions from Module headers (xrobot.type_index)."""
 import unittest
 
 from fixtures import TempDirTestCase
-from xrobot.TypeIndex import TypeIndex
+from xrobot.type_index import TypeIndex
 
 FIELDS = '''#pragma once
 #include <functional>

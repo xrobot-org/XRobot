@@ -5,9 +5,9 @@ from pathlib import Path
 from unittest import mock
 
 from fixtures import BspTestCase, TempDirTestCase
-from xrobot.Config import ConfigError
-from xrobot.GenerateMain import read_registrations
-from xrobot.Project import Project, ProjectError, find_root, read_header_inputs
+from xrobot.config import ConfigError
+from xrobot.generate_main import read_registrations
+from xrobot.project import Project, ProjectError, find_root, read_header_inputs
 
 MAIN = '#include "xrobot_main.hpp"\nint main() { XROBOT_MAIN(); }\n'
 
@@ -184,7 +184,7 @@ class GeneratedHeaderInputs(BspTestCase):
         self.assertEqual(project.selected_config(), self.root / 'User/xrobot.yaml')
 
     def test_inputs_on_another_drive_are_written_as_absolute_paths(self):
-        with mock.patch('xrobot.Project.os.path.relpath', side_effect=ValueError('path is on mount C:')):
+        with mock.patch('xrobot.project.os.path.relpath', side_effect=ValueError('path is on mount C:')):
             lines = self.project.header_lines(self.root / 'User/xrobot.yaml', [self.root / 'xrobot.lock'])
         self.assertEqual(lines, ['// xrobot: config "%s"' % Path(os.path.abspath(self.root / 'User/xrobot.yaml')).as_posix(),
                                  '// xrobot: depends "%s"' % Path(os.path.abspath(self.root / 'xrobot.lock')).as_posix()])

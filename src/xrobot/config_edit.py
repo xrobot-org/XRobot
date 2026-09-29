@@ -16,12 +16,12 @@ import yaml
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
-from xrobot.Config import ConfigError, identifier_problem, load_config, parse_yaml
-from xrobot.ConstructorModel import (compliant_constructors, initializer_tree, is_dependency,
+from xrobot.config import ConfigError, identifier_problem, load_config, parse_yaml
+from xrobot.constructor_model import (compliant_constructors, initializer_tree, is_dependency,
                                      qualify, replace_names, template_bindings)
-from xrobot.GenerateMain import atomic_write
-from xrobot.ModuleParser import select_module, source_interface
-from xrobot.SourceSyntax import code_tokens
+from xrobot.generate_main import atomic_write
+from xrobot.module_parser import select_module, source_interface
+from xrobot.source_syntax import code_tokens
 
 
 def _yaml():
@@ -161,7 +161,7 @@ class ConfigFile:
         text = canonical_text(text)
         config = parse_yaml(text, self.source)
         if check:
-            from xrobot.Config import validate_config
+            from xrobot.config import validate_config
             validate_config(config, self.source)
         atomic_write(self.path, text)
         self.text, self.config = text, config
@@ -550,7 +550,7 @@ def add_instance(config_path, module_name, modules, index, instance_id=None, sou
 def sync_config(config_path, modules, index, source=None):
     """Add new fields/defaulted parameters and drop removed fields; return a diff."""
     import difflib
-    from xrobot.ConstructorModel import constructor_for
+    from xrobot.constructor_model import constructor_for
     config = ConfigFile(config_path, source)
     before = config.text
     text = before
@@ -710,7 +710,7 @@ def _request_lines(text):
 
 def add_module(modules_yaml, request_text):
     """Append one request line; the rest of modules.yaml is untouched."""
-    from xrobot.InitModule import request
+    from xrobot.init_module import request
     parsed = request(request_text, canonical=True)
     path = Path(modules_yaml)
     text = path.read_text(encoding='utf-8-sig').replace('\r\n', '\n') if path.exists() else 'modules: []\n'
@@ -741,7 +741,7 @@ def add_module(modules_yaml, request_text):
 
 def remove_module(modules_yaml, identity):
     """Delete one request line; the rest of modules.yaml is untouched."""
-    from xrobot.InitModule import request
+    from xrobot.init_module import request
     path = Path(modules_yaml)
     text = path.read_text(encoding='utf-8-sig').replace('\r\n', '\n')
     lines, key, items, node = _request_lines(text)

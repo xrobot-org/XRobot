@@ -40,7 +40,7 @@ def load_yaml(source):
 
 
 def save_yaml(path, data):
-    from xrobot.GenerateMain import atomic_write
+    from xrobot.generate_main import atomic_write
     atomic_write(Path(path), yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
 
 

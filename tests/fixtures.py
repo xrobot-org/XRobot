@@ -19,7 +19,7 @@ from pathlib import Path
 import yaml
 
 from xrobot import __version__
-from xrobot.Project import Project
+from xrobot.project import Project
 
 GIT_OPTIONS = ['-c', 'commit.gpgsign=false', '-c', 'tag.gpgsign=false', '-c', 'core.autocrlf=false',
                '-c', 'init.defaultBranch=master', '-c', 'advice.detachedHead=false']
@@ -127,7 +127,7 @@ class BspTestCase(TempDirTestCase):
 
     def generate(self, data=None, entry=None, name='xrobot.yaml'):
         """Write the config (and entry) and generate User/xrobot_main.hpp; return its text."""
-        from xrobot.GenerateMain import generate
+        from xrobot.generate_main import generate
         if entry is not None or not (self.root / 'User/app_main.cpp').exists():
             self.entry(entry if entry is not None else
                        '#include "xrobot_main.hpp"\nint main() { XROBOT_MAIN(); }\n')
@@ -235,7 +235,7 @@ class UpstreamTestCase(TempDirTestCase):
 
     def sync(self, cwd=None, **kwargs):
         """Run sync_modules from ``cwd`` (default: the BSP root, where `xrobot setup` usually runs)."""
-        from xrobot.InitModule import sync_modules
+        from xrobot.init_module import sync_modules
         previous = os.getcwd()
         os.chdir(str(cwd or self.root))
         try:

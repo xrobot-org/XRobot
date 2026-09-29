@@ -3,14 +3,14 @@
 Only named, explicit declarations are supported. This is not a C++ type system:
 configuration trees come from initializer expressions, and a YAML mapping is
 checked against the class definition read from a loaded Module header
-(xrobot.TypeIndex) or, for a type the index cannot locate, against the
+(xrobot.type_index) or, for a type the index cannot locate, against the
 parameter's designated default initializer. The generator rejects a value only
 when the problem is certain; everything else is left to the C++ compiler.
 """
 import re
 
-from xrobot.Config import ConfigError, value_text
-from xrobot.SourceSyntax import code_tokens, close_token, split_arguments
+from xrobot.config import ConfigError, value_text
+from xrobot.source_syntax import code_tokens, close_token, split_arguments
 
 ARITHMETIC = frozenset('''
 bool char wchar_t char8_t char16_t char32_t short int long float double

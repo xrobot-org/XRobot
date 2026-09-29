@@ -11,8 +11,8 @@ from pathlib import Path
 import yaml
 
 from xrobot import __version__
-from xrobot.Config import ConfigError
-from xrobot.Project import Project, ProjectError, find_root
+from xrobot.config import ConfigError
+from xrobot.project import Project, ProjectError, find_root
 
 INIT_MODULES = 'xrobot: %s\nmodules: []\n'
 INIT_SOURCES = ('sources:\n'
@@ -40,7 +40,7 @@ def _count(number, noun):
 
 
 def _pin_warning(project):
-    from xrobot.InitModule import read_modules_yaml
+    from xrobot.init_module import read_modules_yaml
     _, pin = read_modules_yaml(project.modules_yaml)
     if pin is None:
         print('warning: Modules/modules.yaml does not pin XRobot; add `xrobot: %s`' % __version__,
@@ -52,7 +52,7 @@ def _pin_warning(project):
 
 def cmd_init(args):
     root = Path(args.directory).resolve()
-    from xrobot.GenerateMain import atomic_write
+    from xrobot.generate_main import atomic_write
     created = []
     for relative, text in (('Modules/modules.yaml', INIT_MODULES % __version__),
                            ('Modules/sources.yaml', INIT_SOURCES),
@@ -72,10 +72,10 @@ def cmd_init(args):
 
 
 def cmd_setup(args):
-    from xrobot.InitModule import sync_modules, check_tool_pins
-    from xrobot.GenerateMain import generate, validate_all, load_modules
-    from xrobot.TypeIndex import TypeIndex
-    from xrobot.ConfigEdit import sync_config
+    from xrobot.init_module import sync_modules, check_tool_pins
+    from xrobot.generate_main import generate, validate_all, load_modules
+    from xrobot.type_index import TypeIndex
+    from xrobot.config_edit import sync_config
     project = _project(args)
     update = None
     if args.update is not None:
@@ -100,7 +100,7 @@ def cmd_setup(args):
 
 
 def cmd_gen(args):
-    from xrobot.GenerateMain import generate
+    from xrobot.generate_main import generate
     project = _project(args)
     config = _config_path(project, args.config)
     generate(project, config)
@@ -108,7 +108,7 @@ def cmd_gen(args):
 
 
 def cmd_describe(args):
-    from xrobot.Describe import describe
+    from xrobot.describe import describe
     project = _project(args)
     result = describe(project, _config_path(project, args.config))
     out = sys.stdout
@@ -119,9 +119,9 @@ def cmd_describe(args):
 
 
 def cmd_sync(args):
-    from xrobot.ConfigEdit import sync_config
-    from xrobot.GenerateMain import load_modules
-    from xrobot.TypeIndex import TypeIndex
+    from xrobot.config_edit import sync_config
+    from xrobot.generate_main import load_modules
+    from xrobot.type_index import TypeIndex
     project = _project(args)
     modules = load_modules(project)
     index = TypeIndex.for_modules(modules)
@@ -133,7 +133,7 @@ def cmd_sync(args):
 
 
 def cmd_format(args):
-    from xrobot.ConfigEdit import format_files
+    from xrobot.config_edit import format_files
     project = _project(args)
     paths = [_config_path(project, c) for c in args.config] if args.config else project.configs()
     changed = format_files(paths, check=args.check)
@@ -144,51 +144,51 @@ def cmd_format(args):
 
 
 def cmd_instance(args):
-    from xrobot import ConfigEdit
+    from xrobot import config_edit
     project = _project(args)
     config = _config_path(project, args.config) or project.selected_config()
     source = project.relative(config)
     if args.action == 'add':
-        from xrobot.GenerateMain import load_modules
-        from xrobot.TypeIndex import TypeIndex
+        from xrobot.generate_main import load_modules
+        from xrobot.type_index import TypeIndex
         modules = load_modules(project)
-        identity = ConfigEdit.add_instance(config, args.module, modules, TypeIndex.for_modules(modules),
+        identity = config_edit.add_instance(config, args.module, modules, TypeIndex.for_modules(modules),
                                            args.id, source)
         print('Added %s to %s; fill the null values (dependencies) before generating' % (identity, source))
     elif args.action == 'set':
-        ConfigEdit.set_value(config, args.id, args.path, ConfigEdit.parse_json_value(args.value),
+        config_edit.set_value(config, args.id, args.path, config_edit.parse_json_value(args.value),
                              args.if_match, source)
     elif args.action == 'remove':
-        ConfigEdit.remove_instance(config, args.id, source)
+        config_edit.remove_instance(config, args.id, source)
     elif args.action == 'rename':
-        ConfigEdit.rename_instance(config, args.id, args.new_id, source)
+        config_edit.rename_instance(config, args.id, args.new_id, source)
 
 
 def cmd_module(args):
     project = _project(args) if args.action != 'show' else None
     if args.action == 'add':
-        from xrobot.ConfigEdit import add_module
+        from xrobot.config_edit import add_module
         add_module(project.modules_yaml, args.request)
         print('Added %s; run `xrobot setup` to fetch it' % args.request)
     elif args.action == 'remove':
-        from xrobot.ConfigEdit import remove_module
+        from xrobot.config_edit import remove_module
         remove_module(project.modules_yaml, args.request)
         print('Removed %s; run `xrobot setup` to update xrobot.lock' % args.request)
     else:
-        from xrobot.ModuleParser import load_single_module, print_manifest
+        from xrobot.module_parser import load_single_module, print_manifest
         print_manifest(load_single_module(Path(args.path)))
 
 
 def cmd_new_module(args):
-    from xrobot.ModuleCreator import create_module
+    from xrobot.module_creator import create_module
     path = create_module(args.name, args.desc, args.constructor, args.template, args.depends,
                          Path(args.out), args.include)
     print('Created %s' % path)
 
 
 def cmd_check_module(args):
-    from xrobot.GenerateMain import generate_compile_check, load_modules
-    from xrobot.InitModule import sync_modules
+    from xrobot.generate_main import generate_compile_check, load_modules
+    from xrobot.init_module import sync_modules
     project = _project(args)
     sync_modules(project, offline=args.offline)
     generate_compile_check(args.module, load_modules(project), args.output, args.template_arg)
@@ -196,9 +196,9 @@ def cmd_check_module(args):
 
 
 def cmd_source(args):
-    from xrobot import SourceManager
+    from xrobot import source_manager
     sys.argv = ['xrobot source'] + args.rest
-    SourceManager.main()
+    source_manager.main()
 
 
 def parser():

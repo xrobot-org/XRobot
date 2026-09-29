@@ -1,11 +1,11 @@
-"""`describe`: the BSP state as JSON for editors (xrobot.Describe)."""
+"""`describe`: the BSP state as JSON for editors (xrobot.describe)."""
 import json
 import os
 
 from fixtures import BspTestCase
 from xrobot import __version__
-from xrobot.Describe import SCHEMA, describe
-from xrobot.GenerateMain import generate
+from xrobot.describe import SCHEMA, describe
+from xrobot.generate_main import generate
 
 MODULES = {
     'Led': 'namespace LibXR { class GPIO; }\nclass Led { public:\n'

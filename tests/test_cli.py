@@ -10,9 +10,9 @@ import yaml
 
 from fixtures import BspTestCase, TempDirTestCase, UpstreamTestCase
 from xrobot import __version__
-from xrobot.Config import load_config
-from xrobot.InitModule import read_modules_yaml
-from xrobot.ModuleParser import parse_manifest_from_header, source_interface
+from xrobot.config import load_config
+from xrobot.init_module import read_modules_yaml
+from xrobot.module_parser import parse_manifest_from_header, source_interface
 from xrobot.cli import main
 
 REPOSITORY = Path(__file__).resolve().parents[1]
@@ -223,7 +223,7 @@ class Commands(CliMixin, BspTestCase):
 
 class SharedModuleWorkflow(TempDirTestCase):
     def test_the_reusable_workflow_accepts_what_module_repositories_pass(self):
-        from xrobot.ModuleCreator import CI_WORKFLOW
+        from xrobot.module_creator import CI_WORKFLOW
         shared = yaml.safe_load((REPOSITORY / '.github/workflows/module-ci.yml').read_text(encoding='utf-8'))
         trigger = shared.get('on', shared.get(True))
         inputs = trigger['workflow_call']['inputs']
@@ -285,7 +285,7 @@ class ModuleCiPreparation(CliMixin, UpstreamTestCase):
                 exec(compile(script, '<module CI preparation>', 'exec'), {'__name__': '__ci__'})
         finally:
             os.chdir(previous)
-        with mock.patch('xrobot.SourceManager.requests.get', side_effect=catalog):
+        with mock.patch('xrobot.source_manager.requests.get', side_effect=catalog):
             self.ok('check-module', 'team/A', '-o', self.root / 'module_check.cpp')
         lock = yaml.safe_load((self.root / 'xrobot.lock').read_text(encoding='utf-8'))
         self.assertEqual(lock['modules']['team/A']['commit'], selected)

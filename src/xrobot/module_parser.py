@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Optional
 import yaml
 from xrobot import __version__
-from xrobot.SourceSyntax import extract_interface
-from xrobot.ConstructorModel import enrich_interface
+from xrobot.source_syntax import extract_interface
+from xrobot.constructor_model import enrich_interface
 
 MANIFEST_PATTERN = re.compile(r'/\*\s*=== MODULE MANIFEST(?: V(\d+))? ===\s*(.*?)\s*=== END MANIFEST ===\s*\*/', re.S)
 # Newest manifest format this version reads; a Module that declares a newer one

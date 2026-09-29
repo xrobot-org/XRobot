@@ -19,7 +19,7 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 from xr_syntax.cpp import CppClassView, CppDocument
 
-from xrobot.SourceSyntax import code_tokens, close_token, parse_document, split_arguments
+from xrobot.source_syntax import code_tokens, close_token, parse_document, split_arguments
 
 _SCOPES = ('namespace_definition', 'class_specifier', 'struct_specifier')
 _WANTED = frozenset(_SCOPES + ('preproc_if', 'preproc_ifdef', 'preproc_call'))
@@ -448,7 +448,7 @@ class ClassEntry:
     def constructors(self) -> List[List[dict]]:
         if self.view is None:
             return []
-        from xrobot.ConstructorModel import parameter
+        from xrobot.constructor_model import parameter
         return [[parameter(p.text) for p in ctor.parameters if p.text.strip() not in ('', 'void')]
                 for ctor in self.view.constructors(public_only=True, callable_only=True)]
 

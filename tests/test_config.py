@@ -1,8 +1,8 @@
-"""Loading and validating application configurations (xrobot.Config)."""
+"""Loading and validating application configurations (xrobot.config)."""
 import unittest
 
 from fixtures import TempDirTestCase
-from xrobot.Config import (ConfigError, identifier_problem, load_config, parse_yaml, validate_config,
+from xrobot.config import (ConfigError, identifier_problem, load_config, parse_yaml, validate_config,
                            value_text)
 
 
