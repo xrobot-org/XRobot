@@ -9,15 +9,27 @@ import stat
 import tempfile
 from pathlib import Path
 
-from xr_syntax.cpp import CppDocument, identifier_occurrences
+from xr_syntax.cpp import identifier_occurrences
 
-from xrobot.config import ConfigError, identifier_problem, load_config, value_text, IDENTIFIER
-from xrobot.constructor_model import (ValueChecker, constructor_for, convert, initializer_tree,
-                                     is_dependency, qualify, template_bindings, type_shape)
+from xrobot.config import IDENTIFIER, ConfigError, identifier_problem, load_config, value_text
+from xrobot.constructor_model import (
+    ValueChecker,
+    constructor_for,
+    convert,
+    initializer_tree,
+    is_dependency,
+    qualify,
+    template_bindings,
+    type_shape,
+)
 from xrobot.module_parser import discover_modules, select_module, source_interface
-from xrobot.project import Project
-from xrobot.source_syntax import (code_tokens, close_token, split_arguments, conditional_depth,
-                                 parse_document)
+from xrobot.source_syntax import (
+    close_token,
+    code_tokens,
+    conditional_depth,
+    parse_document,
+    split_arguments,
+)
 from xrobot.type_index import TypeIndex, module_headers
 
 HELPERS = '''namespace xrobot_generated {

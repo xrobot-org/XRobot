@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest import mock
 
 from fixtures import BspTestCase, TempDirTestCase
+
 from xrobot.config import ConfigError
 from xrobot.generate_main import read_registrations
 from xrobot.project import Project, ProjectError, find_root, read_header_inputs

@@ -7,8 +7,9 @@ import re
 import unittest
 from pathlib import Path
 
-import xrobot
 from fixtures import TempDirTestCase, run_git
+
+import xrobot
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location('release_checker', REPOSITORY / 'tools/check_release.py')

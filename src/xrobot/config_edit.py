@@ -16,9 +16,14 @@ import yaml
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
-from xrobot.config import ConfigError, identifier_problem, load_config, parse_yaml
-from xrobot.constructor_model import (compliant_constructors, initializer_tree, is_dependency,
-                                     qualify, replace_names, template_bindings)
+from xrobot.config import ConfigError, identifier_problem, parse_yaml
+from xrobot.constructor_model import (
+    compliant_constructors,
+    initializer_tree,
+    qualify,
+    replace_names,
+    template_bindings,
+)
 from xrobot.generate_main import atomic_write
 from xrobot.module_parser import select_module, source_interface
 from xrobot.source_syntax import code_tokens
@@ -550,7 +555,7 @@ def add_instance(config_path, module_name, modules, index, instance_id=None, sou
 def sync_config(config_path, modules, index, source=None):
     """Add new fields/defaulted parameters and drop removed fields; return a diff."""
     import difflib
-    from xrobot.constructor_model import constructor_for
+
     config = ConfigFile(config_path, source)
     before = config.text
     text = before

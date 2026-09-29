@@ -2,6 +2,7 @@
 import unittest
 
 from fixtures import TempDirTestCase
+
 from xrobot.type_index import TypeIndex
 
 FIELDS = '''#pragma once

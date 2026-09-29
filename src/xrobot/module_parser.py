@@ -1,15 +1,15 @@
 """Read thin package metadata and display interfaces declared in C++ source."""
-import argparse
 import copy
 import json
 import re
 import subprocess
 from pathlib import Path
-from typing import Optional
+
 import yaml
+
 from xrobot import __version__
-from xrobot.source_syntax import extract_interface
 from xrobot.constructor_model import enrich_interface
+from xrobot.source_syntax import extract_interface
 
 MANIFEST_PATTERN = re.compile(r'/\*\s*=== MODULE MANIFEST(?: V(\d+))? ===\s*(.*?)\s*=== END MANIFEST ===\s*\*/', re.S)
 # Newest manifest format this version reads; a Module that declares a newer one
@@ -19,7 +19,7 @@ MANIFEST_KEYS = ('module_description', 'description', 'depends', 'standalone')
 
 
 class ModuleManifest:
-    def __init__(self, manifest: dict, path: Optional[Path] = None):
+    def __init__(self, manifest: dict, path: Path | None = None):
         self.manifest = manifest
         self.path = path
 

@@ -3,6 +3,7 @@ import json
 import os
 
 from fixtures import BspTestCase
+
 from xrobot import __version__
 from xrobot.describe import SCHEMA, describe
 from xrobot.generate_main import generate

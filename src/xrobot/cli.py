@@ -72,10 +72,10 @@ def cmd_init(args):
 
 
 def cmd_setup(args):
-    from xrobot.init_module import sync_modules, check_tool_pins
-    from xrobot.generate_main import generate, validate_all, load_modules
-    from xrobot.type_index import TypeIndex
     from xrobot.config_edit import sync_config
+    from xrobot.generate_main import generate, load_modules, validate_all
+    from xrobot.init_module import check_tool_pins, sync_modules
+    from xrobot.type_index import TypeIndex
     project = _project(args)
     update = None
     if args.update is not None:

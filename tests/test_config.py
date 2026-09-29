@@ -2,8 +2,15 @@
 import unittest
 
 from fixtures import TempDirTestCase
-from xrobot.config import (ConfigError, identifier_problem, load_config, parse_yaml, validate_config,
-                           value_text)
+
+from xrobot.config import (
+    ConfigError,
+    identifier_problem,
+    load_config,
+    parse_yaml,
+    validate_config,
+    value_text,
+)
 
 
 def load(text, source='cfg.yaml'):

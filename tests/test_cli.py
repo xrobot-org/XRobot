@@ -3,17 +3,16 @@ import contextlib
 import io
 import json
 import os
-import unittest
 from pathlib import Path
 
 import yaml
-
 from fixtures import BspTestCase, TempDirTestCase, UpstreamTestCase
+
 from xrobot import __version__
+from xrobot.cli import main
 from xrobot.config import load_config
 from xrobot.init_module import read_modules_yaml
 from xrobot.module_parser import parse_manifest_from_header, source_interface
-from xrobot.cli import main
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 LED = ('namespace LibXR { class GPIO; }\nclass Led { public:\n  struct Param { int cycle = 250; };\n'
@@ -244,6 +243,7 @@ class ModuleCiPreparation(CliMixin, UpstreamTestCase):
 
     def test_the_pull_request_head_is_probed_with_dependencies_from_the_context(self):
         from unittest import mock
+
         from fixtures import run_git
         b = self.upstream('team/B')
         a = self.upstream('team/A', ['team/B@same-or-dev'], catalog=False)

@@ -10,13 +10,9 @@ when the problem is certain; everything else is left to the C++ compiler.
 import re
 
 from xrobot.config import ConfigError, value_text
-from xrobot.source_syntax import code_tokens, close_token, split_arguments
+from xrobot.source_syntax import close_token, code_tokens, split_arguments
 
-ARITHMETIC = frozenset('''
-bool char wchar_t char8_t char16_t char32_t short int long float double
-signed unsigned int8_t int16_t int32_t int64_t uint8_t uint16_t uint32_t uint64_t
-size_t ptrdiff_t intptr_t uintptr_t
-'''.split())
+ARITHMETIC = frozenset(['bool', 'char', 'wchar_t', 'char8_t', 'char16_t', 'char32_t', 'short', 'int', 'long', 'float', 'double', 'signed', 'unsigned', 'int8_t', 'int16_t', 'int32_t', 'int64_t', 'uint8_t', 'uint16_t', 'uint32_t', 'uint64_t', 'size_t', 'ptrdiff_t', 'intptr_t', 'uintptr_t'])
 
 
 def parameter(declaration):

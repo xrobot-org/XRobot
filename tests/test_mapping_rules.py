@@ -2,9 +2,21 @@
 import unittest
 
 from fixtures import BspTestCase, CxxMixin, requires_cxx
-from xrobot.constructor_model import (compliant_constructors, constructor_for, convert, enrich_interface,
-                                     explicit_expression_type, initializer_tree, is_arithmetic, is_dependency,
-                                     parameter, qualify, template_bindings, type_shape)
+
+from xrobot.constructor_model import (
+    compliant_constructors,
+    constructor_for,
+    convert,
+    enrich_interface,
+    explicit_expression_type,
+    initializer_tree,
+    is_arithmetic,
+    is_dependency,
+    parameter,
+    qualify,
+    template_bindings,
+    type_shape,
+)
 from xrobot.source_syntax import extract_interface
 
 MAIN = '#include "xrobot_main.hpp"\nint main() { XROBOT_MAIN(); }\n'

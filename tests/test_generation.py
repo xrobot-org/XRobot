@@ -6,7 +6,8 @@ import stat
 import unittest
 from pathlib import Path
 
-from fixtures import BspTestCase, CXX, CxxMixin, requires_cxx
+from fixtures import CXX, BspTestCase, CxxMixin, requires_cxx
+
 from xrobot.config import ConfigError
 from xrobot.generate_main import generate, generate_compile_check, load_modules, validate_all
 from xrobot.project import ProjectError

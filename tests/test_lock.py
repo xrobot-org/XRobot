@@ -4,9 +4,9 @@ import os
 import unittest
 
 import yaml
-
 from fixtures import BspTestCase, UpstreamTestCase, manifest_block, run_git
-from xrobot.init_module import (read_modules_yaml, repository_identity, same_repository, write_cmake)
+
+from xrobot.init_module import read_modules_yaml, repository_identity, same_repository, write_cmake
 from xrobot.module_parser import discover_modules, manifest_from_text, select_module
 from xrobot.source_manager import SourceManager, validate_id
 

@@ -14,12 +14,12 @@ from __future__ import annotations
 
 import bisect
 import re
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
 
-from xr_syntax.cpp import CppClassView, CppDocument
+from xr_syntax.cpp import CppClassView
 
-from xrobot.source_syntax import code_tokens, close_token, parse_document, split_arguments
+from xrobot.source_syntax import close_token, code_tokens, parse_document, split_arguments
 
 _SCOPES = ('namespace_definition', 'class_specifier', 'struct_specifier')
 _WANTED = frozenset(_SCOPES + ('preproc_if', 'preproc_ifdef', 'preproc_call'))
@@ -30,7 +30,7 @@ _SPECIFIERS = {'static', 'inline', 'constexpr', 'consteval', 'constinit', 'mutab
                'thread_local', 'volatile', 'const', 'explicit', 'virtual'}
 
 
-def _strip_type(text: str) -> Optional[Tuple[str, ...]]:
+def _strip_type(text: str) -> tuple[str, ...] | None:
     """Return the name path of a class type spelling, or None for pointers/arrays/functions."""
     items = code_tokens(text)
     names, current, i = [], None, 0
@@ -58,7 +58,7 @@ def _strip_type(text: str) -> Optional[Tuple[str, ...]]:
     return tuple(names) if names else None
 
 
-def _split_last(spelled: str) -> Tuple[str, Optional[List[str]]]:
+def _split_last(spelled: str) -> tuple[str, list[str] | None]:
     """Split ``A<x>::B<y, z>`` into the outer spelling ``A<x>`` and ``['y', 'z']``."""
     items = code_tokens(spelled)
     cut, i, last_open = None, 0, None
@@ -79,7 +79,7 @@ def _split_last(spelled: str) -> Tuple[str, Optional[List[str]]]:
     return outer, args
 
 
-def _replace_identifiers(text: str, replacements: Dict[str, str]) -> str:
+def _replace_identifiers(text: str, replacements: dict[str, str]) -> str:
     items = code_tokens(text)
     edits = []
     for i, token in enumerate(items):
@@ -155,14 +155,14 @@ class _Layout:
     """Data members and aggregate-relevant facts of one class body."""
 
     def __init__(self):
-        self.fields: List[Tuple[str, str, str]] = []  # (name, type spelling, access)
-        self.field_defaults: Dict[str, str] = {}  # default member initializer text
-        self.conditional_fields: List[str] = []
+        self.fields: list[tuple[str, str, str]] = []  # (name, type spelling, access)
+        self.field_defaults: dict[str, str] = {}  # default member initializer text
+        self.conditional_fields: list[str] = []
         self.has_union = False
         self.has_virtual = False
-        self.member_types: Dict[str, str] = {}
-        self.aliases: Dict[str, Tuple[int, int]] = {}
-        self.monitor: Optional[str] = None  # 'public' / 'conditional' / None
+        self.member_types: dict[str, str] = {}
+        self.aliases: dict[str, tuple[int, int]] = {}
+        self.monitor: str | None = None  # 'public' / 'conditional' / None
 
 
 def _scan_body(header: _Header, items, default_access: str) -> _Layout:
@@ -381,9 +381,9 @@ def _record_fields(header: _Header, member, forced_type, access, layout: _Layout
 class ClassEntry:
     """One located class/struct definition."""
 
-    def __init__(self, header: _Header, path: Tuple[str, ...], kind: str, body_range: Tuple[int, int],
-                 view=None, head_range: Optional[Tuple[int, int]] = None,
-                 template_parameters: Optional[List[str]] = None):
+    def __init__(self, header: _Header, path: tuple[str, ...], kind: str, body_range: tuple[int, int],
+                 view=None, head_range: tuple[int, int] | None = None,
+                 template_parameters: list[str] | None = None):
         self.header_info = header
         self.header = header.path
         self.path = path
@@ -420,7 +420,7 @@ class ClassEntry:
     def has_base(self) -> bool:
         return any(t.text == ':' for t in self._head_tokens())
 
-    def base_spellings(self) -> List[Tuple[str, str]]:
+    def base_spellings(self) -> list[tuple[str, str]]:
         """Return (access, type spelling) of each direct base class."""
         head = self._head_tokens()
         colon = next((i for i, t in enumerate(head) if t.text == ':' and
@@ -445,7 +445,7 @@ class ClassEntry:
             i += 1
         return result
 
-    def constructors(self) -> List[List[dict]]:
+    def constructors(self) -> list[list[dict]]:
         if self.view is None:
             return []
         from xrobot.constructor_model import parameter
@@ -455,11 +455,11 @@ class ClassEntry:
     def declares_constructor(self) -> bool:
         return self.view is not None and bool(self.view.constructors())
 
-    def fields(self) -> List[Tuple[str, str, str]]:
+    def fields(self) -> list[tuple[str, str, str]]:
         """Return (name, type spelling, access) of non-static data members in order."""
         return list(self.layout().fields)
 
-    def member_types(self) -> Dict[str, str]:
+    def member_types(self) -> dict[str, str]:
         return dict(self.layout().member_types)
 
     def is_aggregate(self) -> bool:
@@ -468,7 +468,7 @@ class ClassEntry:
             return False
         return all(access == 'public' for _, _, access in layout.fields)
 
-    def mapping_problem(self) -> Optional[str]:
+    def mapping_problem(self) -> str | None:
         """Why a YAML mapping cannot be checked against this type, or None."""
         layout = self.layout()
         if layout.has_union:
@@ -479,7 +479,7 @@ class ClassEntry:
             return '%s has base classes or virtual functions and no constructor' % self.qualified
         return None
 
-    def monitor(self) -> Optional[str]:
+    def monitor(self) -> str | None:
         return self.layout().monitor
 
 
@@ -488,16 +488,16 @@ class TypeIndex:
 
     def __init__(self, headers: Iterable[Path]):
         self.headers = sorted({Path(h).resolve() for h in headers})
-        self._texts: Dict[Path, str] = {}
-        self._parsed: Dict[Path, _Header] = {}
-        self._entries: Dict[Tuple[str, ...], List[ClassEntry]] = {}
-        self._aliases: Dict[Tuple[str, ...], Tuple[_Header, int, int]] = {}
-        self._namespace_types: Dict[Tuple[str, ...], set] = {}
+        self._texts: dict[Path, str] = {}
+        self._parsed: dict[Path, _Header] = {}
+        self._entries: dict[tuple[str, ...], list[ClassEntry]] = {}
+        self._aliases: dict[tuple[str, ...], tuple[_Header, int, int]] = {}
+        self._namespace_types: dict[tuple[str, ...], set] = {}
         self._ensured: set = set()
-        self._resolved: Dict[Tuple[str, Tuple[str, ...]], Optional['ClassEntry']] = {}
+        self._resolved: dict[tuple[str, tuple[str, ...]], ClassEntry | None] = {}
 
     @classmethod
-    def for_modules(cls, modules: dict) -> 'TypeIndex':
+    def for_modules(cls, modules: dict) -> TypeIndex:
         return cls(module_headers(modules))
 
     def _text(self, path: Path) -> str:
@@ -523,7 +523,7 @@ class TypeIndex:
             if path not in self._parsed and pattern.search(self._text(path)):
                 self._parse(path)
 
-    def _scope_of(self, header: _Header, byte_position: int) -> Tuple[str, ...]:
+    def _scope_of(self, header: _Header, byte_position: int) -> tuple[str, ...]:
         """Enclosing namespace/class names of a byte position (outermost first)."""
         if not hasattr(header, 'scopes'):
             header.scopes = []
@@ -591,7 +591,7 @@ class TypeIndex:
 
     # -- lookup -------------------------------------------------------------
 
-    def _class_at(self, path: Tuple[str, ...]) -> Optional[ClassEntry]:
+    def _class_at(self, path: tuple[str, ...]) -> ClassEntry | None:
         entries = self._entries.get(path)
         if not entries:
             return None
@@ -601,7 +601,7 @@ class TypeIndex:
                              % ('::'.join(path), ', '.join(headers)))
         return entries[0]
 
-    def resolve(self, spelling: str, scope: Tuple[str, ...] = (), _depth: int = 0) -> Optional[ClassEntry]:
+    def resolve(self, spelling: str, scope: tuple[str, ...] = (), _depth: int = 0) -> ClassEntry | None:
         """Find the class a type spelling names, searching outward from ``scope``.
 
         Returns None when the name is not found or when it may denote something
@@ -693,7 +693,7 @@ class TypeIndex:
             spelling = spelling[:start] + text + spelling[end:]
         return spelling
 
-    def provides_monitor(self, entry: ClassEntry, _depth: int = 0) -> Optional[bool]:
+    def provides_monitor(self, entry: ClassEntry, _depth: int = 0) -> bool | None:
         """Whether ``entry`` or a public base declares a public OnMonitor.
 
         Raises when OnMonitor is declared under #if; returns None when a public
@@ -762,7 +762,7 @@ def _scan_namespace(header: _Header, items) -> _Layout:
     return layout
 
 
-def module_headers(modules: dict) -> List[Path]:
+def module_headers(modules: dict) -> list[Path]:
     """Every header the generator may read for a set of modules."""
     headers = []
     for module in modules.values():

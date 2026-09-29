@@ -11,11 +11,22 @@ from pathlib import Path
 
 from xrobot import __version__
 from xrobot.config import load_config
-from xrobot.constructor_model import (compliant_constructors, initializer_tree, is_dependency, qualify,
-                                     type_shape)
+from xrobot.constructor_model import (
+    compliant_constructors,
+    initializer_tree,
+    is_dependency,
+    qualify,
+    type_shape,
+)
 from xrobot.generate_main import generate_code, read_registrations
 from xrobot.init_module import read_modules_yaml
-from xrobot.module_parser import locked_modules, lock_error, _module_record, select_module, source_interface
+from xrobot.module_parser import (
+    _module_record,
+    lock_error,
+    locked_modules,
+    select_module,
+    source_interface,
+)
 from xrobot.project import ProjectError
 from xrobot.type_index import TypeIndex
 

@@ -1,8 +1,8 @@
 """Editing configurations and modules.yaml without losing comments (xrobot.config_edit)."""
 import hashlib
-import unittest
 
 from fixtures import BspTestCase, TempDirTestCase
+
 from xrobot import config_edit
 from xrobot.config import ConfigError, load_config
 from xrobot.generate_main import load_modules

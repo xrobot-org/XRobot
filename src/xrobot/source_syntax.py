@@ -11,17 +11,17 @@ from __future__ import annotations
 
 import bisect
 import functools
-
-from typing import List, Sequence
+from collections.abc import Sequence
 
 from xr_syntax.cpp import (
     CppDocument,
     CppLexicalToken,
-    code_tokens as _code_tokens,
     matching_delimiter,
     split_source_list,
 )
-
+from xr_syntax.cpp import (
+    code_tokens as _code_tokens,
+)
 
 Token = CppLexicalToken
 
@@ -31,7 +31,7 @@ def _cached_tokens(source: str):
     return tuple(_code_tokens(source))
 
 
-def code_tokens(source: str) -> List[CppLexicalToken]:
+def code_tokens(source: str) -> list[CppLexicalToken]:
     """返回 XRobot 需要的 C++ 代码 token，并保持旧调用方的 list 接口。
 
     Return public xr-syntax code tokens as a new list (callers may modify it);
@@ -55,7 +55,7 @@ def close_token(items: Sequence[CppLexicalToken], start: int) -> int:
     return matching_delimiter(items, start)
 
 
-def split_arguments(text: str) -> List[str]:
+def split_arguments(text: str) -> list[str]:
     """按顶层逗号切分 C++ 参数，同时保留模板参数中的逗号。
 
     Split a C++ argument/declaration list on top-level commas while treating
