@@ -165,9 +165,7 @@ def template_bindings(interface, supplied):
     for i, p in enumerate(parameters):
         value = supplied[i] if i < len(supplied) else p["default"]
         if value is None:
-            raise ValueError(
-                "Template argument {}.{} must be specified".format(interface["name"], p["name"])
-            )
+            raise ValueError(f"Template argument {interface['name']}.{p['name']} must be specified")
         replacements[p["name"]] = replace_names(str(value), replacements)
     return replacements
 
@@ -201,9 +199,7 @@ def qualify(text, interface, cpp_class, templates=None, expand_aliases=False):
         previous = items[i - 1].text if i else ""
         own_scope = previous == "::" and i >= 2 and items[i - 2].text == interface["name"]
         if previous not in (".", "->", ".*", "->*", "::") or own_scope:
-            raise ValueError(
-                "Expression uses non-public member {}::{}".format(interface["name"], token.text)
-            )
+            raise ValueError(f"Expression uses non-public member {interface['name']}::{token.text}")
     return replace_names(text, substitutions)
 
 
@@ -271,18 +267,14 @@ def compliant_constructors(interface, cpp_class=None, templates=None):
                 config_started = True
             elif config_started:
                 problems.append(
-                    "{}: dependency without a default appears after value configuration".format(
-                        p["name"]
-                    )
+                    f"{p['name']}: dependency without a default appears after value configuration"
                 )
         if problems:
-            rejected.append("line {}: {}".format(ctor.get("line", "?"), "; ".join(problems)))
+            rejected.append(f"line {ctor.get('line', '?')}: {'; '.join(problems)}")
         else:
             accepted.append(ctor)
     if not accepted:
-        raise ValueError(
-            "{}: no compliant constructor; {}".format(interface["name"], " | ".join(rejected))
-        )
+        raise ValueError(f"{interface['name']}: no compliant constructor; {' | '.join(rejected)}")
     return accepted
 
 
@@ -421,18 +413,10 @@ def constructor_for(interface, named_values, known, cpp_class, templates):
         return typed[0]
     if not candidates:
         raise ValueError(
-            "named arguments ({}) do not match any constructor of {}; expected one of: {}".format(
-                ", ".join(names),
-                interface["name"],
-                " | ".join(
-                    "(" + ", ".join(p["name"] for p in c["arguments"]) + ")" for c in supported
-                ),
-            )
+            f"named arguments ({', '.join(names)}) do not match any constructor of {interface['name']}; expected one of: {' | '.join('(' + ', '.join(p['name'] for p in c['arguments']) + ')' for c in supported)}"
         )
     raise ValueError(
-        "{}: constructor is ambiguous for the supplied names and explicit types".format(
-            interface["name"]
-        )
+        f"{interface['name']}: constructor is ambiguous for the supplied names and explicit types"
     )
 
 
@@ -537,14 +521,10 @@ class ValueChecker:
             if extra:
                 detail.append("unknown " + ", ".join(extra))
             raise ConfigError(
-                "{}: {} ({}); expected: {}".format(
-                    field, "; ".join(detail), what, ", ".join(expected)
-                )
+                f"{field}: {'; '.join(detail)} ({what}); expected: {', '.join(expected)}"
             )
         raise ConfigError(
-            "{}: fields out of declaration order ({}); expected: {}".format(
-                field, what, ", ".join(expected)
-            )
+            f"{field}: fields out of declaration order ({what}); expected: {', '.join(expected)}"
         )
 
     def _mapping(self, value, field, cpp_type, scope, default):
@@ -559,10 +539,8 @@ class ValueChecker:
                 self._require(field, keys, list(default), "from the default initializer")
                 return self._designated(value, field, {}, None, default), False
             raise ConfigError(
-                "{}: cannot verify the fields of {} in the loaded Module headers; "
-                "write this value as a complete C++ expression".format(
-                    field, cpp_type or "this value"
-                )
+                f"{field}: cannot verify the fields of {cpp_type or 'this value'} in the loaded Module headers; "
+                "write this value as a complete C++ expression"
             )
         problem = entry.mapping_problem()
         if problem:
@@ -597,7 +575,8 @@ class ValueChecker:
                     field + "." + p["name"],
                 )[0]
             )
-        return "{}(\n{}\n)".format(spelled, "\n, ".join(args)), True
+        joined = "\n, ".join(args)
+        return f"{spelled}(\n{joined}\n)", True
 
     def _designated(self, value, field, types, entry, default):
         parts = []
@@ -631,12 +610,11 @@ def convert(expr, target, exact, checks, message="value"):
     if is_arithmetic(target):
         return f"xrobot_generated::Implicit<{value_type}>({expr})", checks
     # The same type (e.g. an immovable factory prvalue) needs no conversion.
+    quoted_target = target.replace('"', "'")
     checks.append(
-        "static_assert(std::is_same_v<std::remove_cvref_t<decltype(({}))>, "
-        "std::remove_cvref_t<{}>> ||\n"
-        "              std::is_convertible_v<decltype(({})), {}>,\n"
-        '              "{} requires an implicit conversion to {}");'.format(
-            expr, target, expr, target, message, target.replace('"', "'")
-        )
+        f"static_assert(std::is_same_v<std::remove_cvref_t<decltype(({expr}))>, "
+        f"std::remove_cvref_t<{target}>> ||\n"
+        f"              std::is_convertible_v<decltype(({expr})), {target}>,\n"
+        f'              "{message} requires an implicit conversion to {quoted_target}");'
     )
     return f"static_cast<{target}>({expr})", checks

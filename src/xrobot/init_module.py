@@ -39,9 +39,7 @@ def git(path, *args, check=True):
         command, capture_output=True, encoding="utf-8", errors="replace", env=env, timeout=300
     )
     if check and result.returncode:
-        raise ValueError(
-            "Git failed in {}: {}\n{}".format(path, " ".join(args), result.stderr.strip())
-        )
+        raise ValueError(f"Git failed in {path}: {' '.join(args)}\n{result.stderr.strip()}")
     return result.stdout.strip() if result.returncode == 0 else None
 
 
@@ -136,9 +134,7 @@ def read_modules_yaml(path):
     unknown = [key for key in data if key not in MODULES_KEYS]
     if unknown:
         raise ValueError(
-            "{}: unknown key(s) {}; allowed: {}".format(
-                path, ", ".join(unknown), ", ".join(MODULES_KEYS)
-            )
+            f"{path}: unknown key(s) {', '.join(unknown)}; allowed: {', '.join(MODULES_KEYS)}"
         )
     if not isinstance(data.get("modules", []), list):
         raise ValueError(f"{path}: modules must be a list of package requests")
@@ -278,14 +274,8 @@ class Resolver:
                 sha, _, _ = self.resolve_ref(folder, req["ref"], parent_context)
                 if sha != pinned["commit"]:
                     raise ValueError(
-                        "{} requires {} at {}, but xrobot.lock keeps {}; run "
-                        "`xrobot setup --update {}`".format(
-                            " -> ".join(self.stack) or "modules.yaml",
-                            identity,
-                            req["ref"],
-                            pinned["commit"][:12],
-                            identity,
-                        )
+                        f"{' -> '.join(self.stack) or 'modules.yaml'} requires {identity} at {req['ref']}, but xrobot.lock keeps {pinned['commit'][:12]}; run "
+                        f"`xrobot setup --update {identity}`"
                     )
             if identity in self.resolved:
                 return
@@ -301,9 +291,7 @@ class Resolver:
                 previous = self.resolved[identity]
                 if previous["commit"] != sha:
                     raise ValueError(
-                        "Dependency conflict for {}: {} vs {} ({})".format(
-                            identity, previous["commit"][:12], sha[:12], " -> ".join(self.stack)
-                        )
+                        f"Dependency conflict for {identity}: {previous['commit'][:12]} vs {sha[:12]} ({' -> '.join(self.stack)})"
                     )
                 return
             self.resolved[identity] = {
@@ -407,7 +395,7 @@ def validate_locked_graph(resolver, roots):
         ]
         if len(candidates) != 1:
             raise ValueError(
-                "xrobot.lock is missing or ambiguous for {}; run `xrobot setup`".format(req["id"])
+                f"xrobot.lock is missing or ambiguous for {req['id']}; run `xrobot setup`"
             )
         identity = candidates[0]
         row = records[identity]
@@ -444,8 +432,8 @@ def validate_locked_graph(resolver, roots):
     if visited != set(records):
         extra = sorted(set(records) - visited)
         raise ValueError(
-            "xrobot.lock contains Modules outside the declared dependency closure: {}; "
-            "run `xrobot setup`".format(", ".join(extra))
+            f"xrobot.lock contains Modules outside the declared dependency closure: {', '.join(extra)}; "
+            "run `xrobot setup`"
         )
 
 
@@ -506,15 +494,9 @@ def check_released(resolver, release_ref, offline=False):
         )
         if not contained:
             problems.append(
-                "{}: locked commit {} is not on {} (feature branch not merged, or merged by "
-                "squash/rebase); after merging the Module, run `xrobot setup --update {} "
-                "--context-ref refs/heads/{}`".format(
-                    identity,
-                    row["commit"][:12],
-                    target.split("/")[-1],
-                    identity,
-                    "dev" if line == "dev" else "master",
-                )
+                f"{identity}: locked commit {row['commit'][:12]} is not on {target.split('/')[-1]} (feature branch not merged, or merged by "
+                f"squash/rebase); after merging the Module, run `xrobot setup --update {identity} "
+                f"--context-ref refs/heads/{'dev' if line == 'dev' else 'master'}`"
             )
     if problems:
         raise ValueError("\n".join(problems))
@@ -625,8 +607,8 @@ def sync_modules(
         if lock.get("requests") != roots:
             changed = _changed_requests(lock.get("requests") or [], roots)
             raise ValueError(
-                "Modules/modules.yaml differs from xrobot.lock ({}); run `xrobot setup` to "
-                "update the lock".format(", ".join(changed))
+                f"Modules/modules.yaml differs from xrobot.lock ({', '.join(changed)}); run `xrobot setup` to "
+                "update the lock"
             )
     if lock is not None and update is None and lock.get("requests") == roots:
         manager = (

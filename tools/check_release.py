@@ -34,7 +34,7 @@ def project_table(repo):
     text = (Path(repo) / "pyproject.toml").read_text(encoding="utf-8-sig")
     match = re.search(r"^\[project\][ \t]*$(.*?)(?=^\[|\Z)", text, re.M | re.S)
     if not match:
-        raise ValueError("Missing [project] in %s" % (Path(repo) / "pyproject.toml"))
+        raise ValueError(f"Missing [project] in {Path(repo) / 'pyproject.toml'}")
     return match.group(1)
 
 

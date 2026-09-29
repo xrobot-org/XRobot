@@ -65,7 +65,7 @@ def run_git(repo, *args, check=True):
         timeout=60,
     )
     if check and result.returncode:
-        raise AssertionError("git {} failed in {}:\n{}".format(" ".join(args), repo, result.stderr))
+        raise AssertionError(f"git {' '.join(args)} failed in {repo}:\n{result.stderr}")
     return result.stdout.strip()
 
 

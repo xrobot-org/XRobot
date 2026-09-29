@@ -325,7 +325,7 @@ class SharedModuleWorkflow(TempDirTestCase):
         )
         trigger = shared.get("on", shared.get(True))
         inputs = trigger["workflow_call"]["inputs"]
-        caller = yaml.safe_load(CI_WORKFLOW % "[]")
+        caller = yaml.safe_load(CI_WORKFLOW)
         self.assertTrue(set(caller["jobs"]["build"]["with"]) <= set(inputs))
         for name in ("xrobot-ref", "libxr-ref", "dependency-ref", "template-args"):
             self.assertIn(name, inputs)

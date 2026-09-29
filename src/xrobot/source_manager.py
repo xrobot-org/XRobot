@@ -231,9 +231,7 @@ class SourceManager:
         if not candidates:
             raise ValueError(f"Package not found: {name}")
         if len(candidates) != 1:
-            raise ValueError(
-                "Ambiguous package {}; specify {}".format(name, ", ".join(sorted(candidates)))
-            )
+            raise ValueError(f"Ambiguous package {name}; specify {', '.join(sorted(candidates))}")
         return candidates[0]
 
     def list_modules(self):
@@ -334,7 +332,7 @@ def main():
                     not in json.dumps(record, ensure_ascii=False, default=str).casefold()
                 ):
                     continue
-                print("{} [{}] {}".format(identity, record["type"], record["repo"]))
+                print(f"{identity} [{record['type']}] {record['repo']}")
     except (OSError, ValueError, requests.RequestException, yaml.YAMLError) as error:
         parser.exit(1, str(error) + "\n")
 

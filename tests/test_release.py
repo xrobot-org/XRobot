@@ -19,15 +19,20 @@ _spec = importlib.util.spec_from_file_location(
 release = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(release)
 
-PYPROJECT = """[build-system]
+
+def pyproject(name, version, dependency):
+    """夹具包的 pyproject.toml 内容。
+    pyproject.toml text for the fixture packages.
+    """
+    return f"""[build-system]
 requires = ["setuptools"]
 
 [project]
-name = "%s"
-version = "%s"
+name = "{name}"
+version = "{version}"
 dependencies = [
     "pyyaml",
-    "%s",
+    "{dependency}",
 ]
 
 [project.urls]
@@ -61,9 +66,7 @@ class ReleaseRecord(TempDirTestCase):
             self.repos[name] = path
             run_git(path, "init", "-q", "-b", "dev")
             if name in packages:
-                self.write(
-                    path / "pyproject.toml", PYPROJECT % (packages[name] + ("xr-syntax==0.2.0",))
-                )
+                self.write(path / "pyproject.toml", pyproject(*packages[name], "xr-syntax==0.2.0"))
             else:
                 self.write(path / "CMakeLists.txt", "project(xr)\n")
             run_git(path, "add", "-A")
@@ -106,12 +109,12 @@ class ReleaseRecord(TempDirTestCase):
             "xrobot: the record needs a release version such as 1.0.0 or 1.0.0rc1",
             release.check(self.repos, self.record),
         )
-        self.recommit("xrobot", PYPROJECT % ("xrobot", "1.0.0rc1", "xr-syntax==0.2.0"))
+        self.recommit("xrobot", pyproject("xrobot", "1.0.0rc1", "xr-syntax==0.2.0"))
         self.record["repositories"]["xrobot"]["version"] = "1.0.0rc1"
         self.assertEqual(release.check(self.repos, self.record), [])
 
     def test_both_packages_pin_the_recorded_xr_syntax_exactly(self):
-        self.recommit("codegen", PYPROJECT % ("libxr", "6.0.0", "xr-syntax==0.2.1"))
+        self.recommit("codegen", pyproject("libxr", "6.0.0", "xr-syntax==0.2.1"))
         self.assertEqual(
             release.check(self.repos, self.record),
             ["codegen pins xr-syntax==0.2.1, the record says 0.2.0"],
@@ -123,14 +126,14 @@ class ReleaseRecord(TempDirTestCase):
             "xr_syntax",
         ):
             with self.subTest(requirement=requirement):
-                self.recommit("codegen", PYPROJECT % ("libxr", "6.0.0", requirement))
+                self.recommit("codegen", pyproject("libxr", "6.0.0", requirement))
                 self.assertEqual(
                     release.check(self.repos, self.record),
                     [f"codegen must pin xr-syntax exactly (xr-syntax==X); found {requirement}"],
                 )
-        self.recommit("codegen", PYPROJECT % ("libxr", "6.0.0", "XR_Syntax == 0.2.0"))
+        self.recommit("codegen", pyproject("libxr", "6.0.0", "XR_Syntax == 0.2.0"))
         self.assertEqual(release.check(self.repos, self.record), [])
-        self.recommit("codegen", PYPROJECT % ("libxr", "6.0.0", "requests"))
+        self.recommit("codegen", pyproject("libxr", "6.0.0", "requests"))
         self.assertEqual(
             release.check(self.repos, self.record),
             ["codegen must pin xr-syntax exactly (xr-syntax==X); found no xr-syntax dependency"],

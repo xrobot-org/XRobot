@@ -307,9 +307,7 @@ class Generator:
         for record in registrations:
             if record["name"] in self.class_names():
                 fail(
-                    "XR_REGISTER name {} is also a Module class name; rename the object".format(
-                        record["name"]
-                    )
+                    f"XR_REGISTER name {record['name']} is also a Module class name; rename the object"
                 )
             known[record["name"]] = record["type"]
         entries_config = config.get("modules", [])
@@ -369,12 +367,10 @@ class Generator:
             )
         module = select_module(self.modules, entry["module"])
         if not module["manifest"].standalone:
-            raise ValueError("{} is a non-standalone library, not an instance".format(module["id"]))
+            raise ValueError(f"{module['id']} is a non-standalone library, not an instance")
         if module["name"] in selected and selected[module["name"]]["id"] != module["id"]:
             raise ValueError(
-                "two selected packages define global class {}; choose one implementation".format(
-                    module["name"]
-                )
+                f"two selected packages define global class {module['name']}; choose one implementation"
             )
         selected[module["name"]] = module
         interface = source_interface(module["header"])
@@ -446,7 +442,7 @@ class Generator:
         earlier,
         compile_check,
     ):
-        field = "{}.args.{}".format(identity, p["name"])
+        field = f"{identity}.args.{p['name']}"
         typ = qualify(p["type"], interface, cpp_class, templates)
         target = qualify(p["type"], interface, cpp_class, templates, True)
         _, _, pointers, reference = type_shape(target)
@@ -476,13 +472,8 @@ class Generator:
                     raise ValueError(f"{field}: {reference_name} has errors of its own")
                 if is_dependency(p) and reference_name not in visible and name != "nullptr":
                     raise ValueError(
-                        "{}: {} is neither an XR_REGISTER name nor an earlier instance id; "
-                        "candidates of type {}: {}".format(
-                            field,
-                            reference_name,
-                            target,
-                            ", ".join(self._candidates(target, visible)) or "none",
-                        )
+                        f"{field}: {reference_name} is neither an XR_REGISTER name nor an earlier instance id; "
+                        f"candidates of type {target}: {', '.join(self._candidates(target, visible)) or 'none'}"
                     )
                 if reference_name in visible:
                     source = visible[reference_name]
@@ -512,7 +503,7 @@ class Generator:
         exact = typed or isinstance(value, (dict, list))
         if reference or "std::initializer_list<" in target.replace(" ", ""):
             # Config temporaries and initializer-list backing arrays need static lifetime.
-            storage = "xr_arg_{}_{}".format(identity, p["name"])
+            storage = f"xr_arg_{identity}_{p['name']}"
             checks.append(f"static {typ} {storage} =\n      {expr}\n  ;")
             return checks, (
                 f"static_cast<{typ}>({storage})" if typ.rstrip().endswith("&&") else storage
@@ -567,7 +558,7 @@ class Generator:
                 if any(t.text in ("(", "[") for t in code_tokens(typ))
                 else typ + "&"
             )
-            parameters.append("{} {}".format(declaration, record["name"]))
+            parameters.append(f"{declaration} {record['name']}")
         lines = ["#pragma once"] + list(header_lines)
         lines += [
             "",
@@ -580,7 +571,8 @@ class Generator:
         lines += [f'#include "{name}.hpp"' for name in selected]
         for header in config.get("constexpr_includes", []):
             header = header.strip()
-            lines.append("#include %s" % (header if header.startswith("<") else f'"{header}"'))
+            include = header if header.startswith("<") else f'"{header}"'
+            lines.append(f"#include {include}")
         if compile_check:
             lines = lines[2:]
         lines += ["", HELPERS]
@@ -605,7 +597,7 @@ class Generator:
             ]
         else:
             if local_templates:
-                lines.append("template <{}>".format(", ".join(local_templates)))
+                lines.append(f"template <{', '.join(local_templates)}>")
             signature = "[[noreturn]] static inline void XRobotMain("
             if parameters:
                 lines += [signature, "    " + ",\n    ".join(parameters) + ")", "{"]
@@ -619,32 +611,28 @@ class Generator:
                     lines.extend("  " + d for d in declarations)
             at(entry["line"])
             if entry["arguments"]:
-                lines.append("  static {} {}(".format(entry["cpp_type"], entry["id"]))
+                lines.append(f"  static {entry['cpp_type']} {entry['id']}(")
                 for k, (line, argument) in enumerate(entry["arguments"]):
                     at(line)
-                    lines.append("      {}{}".format(", " if k else "", argument))
+                    lines.append(f"      {', ' if k else ''}{argument}")
                 lines.append("  );")
             else:
-                lines.append("  static {} {};".format(entry["cpp_type"], entry["id"]))
+                lines.append(f"  static {entry['cpp_type']} {entry['id']};")
             if directives:
                 lines.append(back)
         lines += [
-            '  static_assert(std::is_void_v<decltype({}.OnMonitor())>, "{}.OnMonitor() must return void");'.format(
-                e["id"], e["id"]
-            )
+            f'  static_assert(std::is_void_v<decltype({e["id"]}.OnMonitor())>, "{e["id"]}.OnMonitor() must return void");'
             for e in entries
             if e["id"] in monitored
         ]
         if compile_check:
-            lines += ["  {}.OnMonitor();".format(e["id"]) for e in entries if e["id"] in monitored]
+            lines += [f"  {e['id']}.OnMonitor();" for e in entries if e["id"] in monitored]
             lines += ["}", "}  // namespace xrobot_generated", ""]
             return "\n".join(lines)
         lines += ["  for (;;)", "  {"]
-        lines += ["    {}.OnMonitor();".format(e["id"]) for e in entries if e["id"] in monitored]
+        lines += [f"    {e['id']}.OnMonitor();" for e in entries if e["id"] in monitored]
         lines += [
-            "    LibXR::Thread::Sleep({});".format(
-                config.get("settings", {}).get("monitor_sleep_ms", "1000")
-            ),
+            f"    LibXR::Thread::Sleep({config.get('settings', {}).get('monitor_sleep_ms', '1000')});",
             "  }",
             "}",
             "",
@@ -655,14 +643,14 @@ class Generator:
             "// warnings; types are checked where XRobotMain binds them.",
             "#define XR_REGISTER(name, ...) static_cast<void>(name)",
         ]
-        call = "::XRobotMain" + ("<{}>".format(", ".join(actual_types)) if actual_types else "")
+        call = "::XRobotMain" + (f"<{', '.join(actual_types)}>" if actual_types else "")
         arguments = ", ".join(r["name"] for r in views)
         if len(call) + len(arguments) < 72:
             lines.append(f"#define XROBOT_MAIN() {call}({arguments})")
         else:
             lines += ["#define XROBOT_MAIN() \\", f"  {call}( \\"]
             lines += [
-                "      {}{} \\".format(r["name"], "," if i + 1 < len(views) else "")
+                f"      {r['name']}{',' if i + 1 < len(views) else ''} \\"
                 for i, r in enumerate(views)
             ]
             lines.append("  )")
@@ -743,7 +731,7 @@ def generate_compile_check(module_name, modules, output, template_args=None):
     if not module["manifest"].standalone:
         # A library has no Module constructor; its header and .cpp files still
         # compile into xr through the module list.
-        code = '#include "{}.hpp"\n'.format(module["name"])
+        code = f'#include "{module["name"]}.hpp"\n'
         atomic_write(Path(output), code)
         return code
     interface = source_interface(module["header"])

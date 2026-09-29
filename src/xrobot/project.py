@@ -84,8 +84,8 @@ class Project:
             )
         if len(callers) > 1:
             raise ProjectError(
-                "Several sources under User/ call XROBOT_MAIN(): {}; a BSP has "
-                "exactly one entry".format(", ".join(self.relative(p) for p in callers))
+                f"Several sources under User/ call XROBOT_MAIN(): {', '.join(self.relative(p) for p in callers)}; a BSP has "
+                "exactly one entry"
             )
         return callers[0]
 

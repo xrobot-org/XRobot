@@ -373,9 +373,7 @@ def remove_instance(config_path, instance_id, source=None):
     users = references_to(config.config, instance_id)
     if users:
         raise ConfigError(
-            "{}: {} is still used by {}; change those values first".format(
-                config.source, instance_id, ", ".join(users)
-            )
+            f"{config.source}: {instance_id} is still used by {', '.join(users)}; change those values first"
         )
     text = config.blocks().remove(k)
     if parse_yaml(text, config.source).get("modules") is None:
@@ -555,7 +553,7 @@ def add_instance(config_path, module_name, modules, index, instance_id=None, sou
     config = ConfigFile(config_path, source)
     module = select_module(modules, module_name)
     if not module["manifest"].standalone:
-        raise ConfigError("{} is a library dependency, not a Module instance".format(module["id"]))
+        raise ConfigError(f"{module['id']} is a library dependency, not a Module instance")
     interface = source_interface(module["header"])
     identity = instance_id or next_instance_id(config.config.get("modules") or [], module["name"])
     problem = identifier_problem(identity)
@@ -797,7 +795,7 @@ def add_module(modules_yaml, request_text):
         else:
             existing = request({k.value: v.value for k, v in child.value})
         if existing["id"].casefold() == parsed["id"].casefold():
-            raise ConfigError("{} is already requested in {}".format(parsed["id"], modules_yaml))
+            raise ConfigError(f"{parsed['id']} is already requested in {modules_yaml}")
     value = request_text if "@" in request_text else request_text + "@same-or-dev"
     if key is None:
         lines = [line for line in lines if line.strip()] + ["modules:", "  - " + value]

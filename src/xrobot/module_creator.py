@@ -16,7 +16,7 @@ jobs:
   build:
     uses: xrobot-org/XRobot/.github/workflows/module-ci.yml@v1
     with:
-      template-args: '%s'
+      template-args: '[]'
 """
 
 CMAKE = """target_include_directories(xr PUBLIC "${CMAKE_CURRENT_LIST_DIR}")
@@ -28,22 +28,27 @@ file(GLOB MODULE_SOURCES CONFIGURE_DEPENDS
 target_sources(xr PRIVATE ${MODULE_SOURCES})
 """
 
-README = """# %(name)s
 
-%(description)s
+def _readme(name, description):
+    """新模块 README 的内容。
+    README text of a new Module.
+    """
+    return f"""# {name}
+
+{description}
 
 ## Interface
 
-The public constructor in `%(name)s.hpp` is the interface: dependencies (hardware
+The public constructor in `{name}.hpp` is the interface: dependencies (hardware
 or other Modules, as references or pointers without defaults) come first, value
 configuration with explicit defaults after. `xrobot module show .` prints it.
 
 ## Use in a BSP
 
 ```sh
-xrobot module add <owner>/%(name)s
+xrobot module add <owner>/{name}
 xrobot setup
-xrobot instance add <owner>/%(name)s
+xrobot instance add <owner>/{name}
 ```
 
 `xrobot instance add` writes an instance with every parameter and its source
@@ -104,20 +109,21 @@ def create_module(
     for header in includes or []:
         if "\n" in header or '"' in header:
             raise ValueError("Invalid include name")
-        lines.append("#include %s" % (header if header.startswith("<") else f'"{header}"'))
+        include = header if header.startswith("<") else f'"{header}"'
+        lines.append(f"#include {include}")
     if templates:
-        lines += ["", "template <{}>".format(", ".join(templates))]
+        lines += ["", f"template <{', '.join(templates)}>"]
     lines += [
         f"class {class_name}",
         "{",
         " public:",
-        "  {}({}) {{}}".format(class_name, ", ".join(constructors)),
+        f"  {class_name}({', '.join(constructors)}) {{}}",
         "};",
         "",
     ]
     folder.mkdir(parents=True)
     _write(folder / (class_name + ".hpp"), "\n".join(lines))
     _write(folder / "CMakeLists.txt", CMAKE)
-    _write(folder / "README.md", README % {"name": class_name, "description": description})
-    _write(folder / ".github/workflows/build.yml", CI_WORKFLOW % "[]")
+    _write(folder / "README.md", _readme(class_name, description))
+    _write(folder / ".github/workflows/build.yml", CI_WORKFLOW)
     return folder

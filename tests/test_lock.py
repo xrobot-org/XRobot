@@ -211,8 +211,8 @@ class MinimalChange(UpstreamTestCase):
         self.configure(["team/A", "team/C"])
         with self.assertRaisesRegex(
             ValueError,
-            r"team/C requires team/B at v2, but xrobot\.lock keeps {}; run "
-            r"`xrobot setup --update team/B`".format(self.first["team/B"]["commit"][:12]),
+            rf"team/C requires team/B at v2, but xrobot\.lock keeps {self.first['team/B']['commit'][:12]}; run "
+            r"`xrobot setup --update team/B`",
         ):
             self.sync()
         self.assertEqual(self.lock_bytes(), before)
@@ -731,9 +731,7 @@ class LockedDiscovery(BspTestCase):
             discover_modules(self.root / "Modules", self.root / "xrobot.lock")
         message = str(context.exception)
         self.assertIn(
-            "team/A is checked out at {} but xrobot.lock pins 000000000000".format(
-                run_git(a, "rev-parse", "HEAD")[:12]
-            ),
+            f"team/A is checked out at {run_git(a, 'rev-parse', 'HEAD')[:12]} but xrobot.lock pins 000000000000",
             message,
         )
         self.assertIn("team/C is not a git checkout; run xrobot setup --frozen", message)
@@ -750,7 +748,7 @@ class LockedDiscovery(BspTestCase):
 
     def test_a_lock_entry_leaving_the_modules_directory_is_rejected(self):
         self.write(
-            "xrobot.lock", 'version: 1\nmodules:\n  ../../outside: {commit: "%s"}\n' % ("0" * 40)
+            "xrobot.lock", f'version: 1\nmodules:\n  ../../outside: {{commit: "{"0" * 40}"}}\n'
         )
         with self.assertRaisesRegex(ValueError, "Module path leaves directory"):
             discover_modules(self.root / "Modules", self.root / "xrobot.lock")

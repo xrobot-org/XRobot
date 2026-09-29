@@ -540,9 +540,7 @@ class ClassEntry:
         if layout.has_union:
             return f"{self.qualified} contains a union"
         if layout.conditional_fields:
-            return "{} declares fields under #if ({})".format(
-                self.qualified, ", ".join(layout.conditional_fields)
-            )
+            return f"{self.qualified} declares fields under #if ({', '.join(layout.conditional_fields)})"
         if not self.declares_constructor() and (self.has_base() or layout.has_virtual):
             return f"{self.qualified} has base classes or virtual functions and no constructor"
         return None
@@ -685,9 +683,7 @@ class TypeIndex:
         headers = sorted({str(e.header) for e in entries})
         if len(headers) > 1:
             raise ValueError(
-                "Type {} is defined in several Module headers: {}".format(
-                    "::".join(path), ", ".join(headers)
-                )
+                f"Type {'::'.join(path)} is defined in several Module headers: {', '.join(headers)}"
             )
         return entries[0]
 

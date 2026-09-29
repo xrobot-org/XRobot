@@ -303,9 +303,7 @@ def validate_config(config, source="config"):
     extra = [key for key in config if key not in TOP_LEVEL]
     if extra:
         errors.append(
-            "unknown top-level key(s) {}; allowed: {}".format(
-                ", ".join(extra), ", ".join(TOP_LEVEL)
-            )
+            f"unknown top-level key(s) {', '.join(extra)}; allowed: {', '.join(TOP_LEVEL)}"
         )
     namespace = config.get("constexpr_namespace", "ProjectConstexpr")
     if not isinstance(namespace, str) or not re.fullmatch(
@@ -353,7 +351,7 @@ def validate_config(config, source="config"):
             continue
         unknown = [key for key in entry if key not in ("module", "id", "args", "template_args")]
         if unknown:
-            errors.append("{}: unknown key(s) {}".format(where, ", ".join(unknown)))
+            errors.append(f"{where}: unknown key(s) {', '.join(unknown)}")
         for key in ("module", "id"):
             if not isinstance(entry.get(key), str) or not entry[key]:
                 errors.append(f"{where}.{key} is required")

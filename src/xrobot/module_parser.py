@@ -64,10 +64,8 @@ def manifest_from_text(text: str, path=None) -> ModuleManifest:
     unknown = [k for k in data if k not in MANIFEST_KEYS]
     if unknown:
         raise ValueError(
-            "{}: unsupported manifest key(s) {}; the manifest holds only {} (the "
-            "constructor in C++ is the interface)".format(
-                path, ", ".join(map(str, unknown)), ", ".join(MANIFEST_KEYS)
-            )
+            f"{path}: unsupported manifest key(s) {', '.join(map(str, unknown))}; the manifest holds only {', '.join(MANIFEST_KEYS)} (the "
+            "constructor in C++ is the interface)"
         )
     return ModuleManifest(data, path)
 
@@ -174,16 +172,12 @@ def lock_error(state: dict) -> str:
     if state["status"] == "broken":
         return state["reason"]
     if state["status"] == "missing":
-        return "{} from xrobot.lock is not checked out; run xrobot setup --frozen".format(
-            state["id"]
-        )
+        return f"{state['id']} from xrobot.lock is not checked out; run xrobot setup --frozen"
     return (
-        "{} is checked out at {} but xrobot.lock pins {}. While developing a module, keep "
+        f"{state['id']} is checked out at {state['head'][:12]} but xrobot.lock pins {state['commit'][:12]}. While developing a module, keep "
         "your changes uncommitted; when they are ready, push them to a branch of the module "
-        "and run `xrobot setup --update {}`. To return to the locked sources run "
-        "`xrobot setup --frozen`.".format(
-            state["id"], state["head"][:12], state["commit"][:12], state["id"]
-        )
+        f"and run `xrobot setup --update {state['id']}`. To return to the locked sources run "
+        "`xrobot setup --frozen`."
     )
 
 
@@ -226,9 +220,7 @@ def select_module(modules: dict, requested: str) -> dict:
         if not candidates:
             raise ValueError(f"Module not found: {requested}")
         raise ValueError(
-            "Ambiguous Module {}; specify {}".format(
-                requested, ", ".join(v["id"] for v in candidates)
-            )
+            f"Ambiguous Module {requested}; specify {', '.join(v['id'] for v in candidates)}"
         )
     return candidates[0]
 
@@ -238,8 +230,6 @@ def print_manifest(manifest, name=None):
     if manifest.standalone and manifest.path:
         interface = source_interface(manifest.path)
         if interface["template"] is not None:
-            print("template <{}>".format(interface["template"]))
+            print(f"template <{interface['template']}>")
         for declaration in interface["constructors"]:
-            print(
-                "{}:{}: {}".format(manifest.path, declaration["line"], declaration["declaration"])
-            )
+            print(f"{manifest.path}:{declaration['line']}: {declaration['declaration']}")

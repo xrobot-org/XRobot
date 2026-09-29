@@ -234,12 +234,8 @@ class GeneratedHeaderInputs(BspTestCase):
         self.assertEqual(
             lines,
             [
-                '// xrobot: config "{}"'.format(
-                    Path(os.path.abspath(self.root / "User/xrobot.yaml")).as_posix()
-                ),
-                '// xrobot: depends "{}"'.format(
-                    Path(os.path.abspath(self.root / "xrobot.lock")).as_posix()
-                ),
+                f'// xrobot: config "{Path(os.path.abspath(self.root / "User/xrobot.yaml")).as_posix()}"',
+                f'// xrobot: depends "{Path(os.path.abspath(self.root / "xrobot.lock")).as_posix()}"',
             ],
         )
 

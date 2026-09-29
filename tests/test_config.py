@@ -22,7 +22,7 @@ def load(text, source="cfg.yaml"):
 
 def instance(**values):
     return "modules:\n  - module: Foo\n    id: foo\n    args:\n" + "".join(
-        "      - {}: {}\n".format(*item) for item in values.items()
+        f"      - {name}: {value}\n" for name, value in values.items()
     )
 
 

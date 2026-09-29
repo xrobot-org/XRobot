@@ -15,7 +15,7 @@ from xrobot import __version__
 from xrobot.config import ConfigError
 from xrobot.project import Project, ProjectError, find_root
 
-INIT_MODULES = "xrobot: %s\nmodules: []\n"
+INIT_MODULES = f"xrobot: {__version__}\nmodules: []\n"
 INIT_SOURCES = "sources:\n  - url: https://xrobot.work/xrobot-modules/index.yaml\n    priority: 0\n"
 INIT_CONFIG = "modules: []\nsettings:\n  monitor_sleep_ms: 1000\n"
 
@@ -60,7 +60,7 @@ def cmd_init(args):
 
     created = []
     for relative, text in (
-        ("Modules/modules.yaml", INIT_MODULES % __version__),
+        ("Modules/modules.yaml", INIT_MODULES),
         ("Modules/sources.yaml", INIT_SOURCES),
         ("User/xrobot.yaml", INIT_CONFIG),
     ):
@@ -75,7 +75,7 @@ def cmd_init(args):
     if missing:
         atomic_write(ignore, "\n".join(lines + missing) + "\n")
         created.append(".gitignore entries")
-    print("Created %s" % (", ".join(created) if created else "nothing (already initialized)"))
+    print(f"Created {', '.join(created) if created else 'nothing (already initialized)'}")
 
 
 def cmd_setup(args):
@@ -91,7 +91,7 @@ def cmd_setup(args):
     lock = sync_modules(
         project, update, args.frozen, args.offline, args.context_ref, args.release_ref
     )
-    print("Resolved {}".format(_count(len(lock["modules"]), "Module commit")))
+    print(f"Resolved {_count(len(lock['modules']), 'Module commit')}")
     if args.release_ref:
         check_tool_pins(project, args.release_ref, args.offline)
     modules = load_modules(project)
@@ -105,9 +105,7 @@ def cmd_setup(args):
     selected = project.selected_config()
     generate(project, selected)
     print(
-        "Checked {}; generated User/xrobot_main.hpp for {}".format(
-            _count(count, "config"), project.relative(selected)
-        )
+        f"Checked {_count(count, 'config')}; generated User/xrobot_main.hpp for {project.relative(selected)}"
     )
     _pin_warning(project)
 
@@ -157,7 +155,8 @@ def cmd_format(args):
     paths = [_config_path(project, c) for c in args.config] if args.config else project.configs()
     changed = format_files(paths, check=args.check)
     for path in changed:
-        print(("needs formatting: %s" if args.check else "formatted: %s") % project.relative(path))
+        label = "needs formatting" if args.check else "formatted"
+        print(f"{label}: {project.relative(path)}")
     if args.check and changed:
         raise ConfigError(
             f"{len(changed)} file(s) are not in the canonical layout; run `xrobot format`"
@@ -362,7 +361,7 @@ def main(argv=None):
     top = parser()
     args, extra = top.parse_known_args(argv)
     if extra and args.verb != "source":
-        top.error("unrecognized arguments: {}".format(" ".join(extra)))
+        top.error(f"unrecognized arguments: {' '.join(extra)}")
     if args.verb == "source":
         args.rest = extra + list(args.rest)
     try:

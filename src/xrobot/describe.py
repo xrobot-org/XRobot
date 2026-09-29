@@ -215,9 +215,7 @@ def describe(project, config=None):
         report(
             "warning",
             header["path"],
-            "generated from older inputs ({}); run `xrobot gen`".format(
-                ", ".join(header["newer"] + header["missing"])
-            ),
+            f"generated from older inputs ({', '.join(header['newer'] + header['missing'])}); run `xrobot gen`",
         )
     elif header["status"] in ("missing", "unreadable"):
         report("warning", header["path"], "not generated; run `xrobot setup`")
