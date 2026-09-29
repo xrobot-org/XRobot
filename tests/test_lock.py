@@ -1,6 +1,8 @@
 """Module resolution and xrobot.lock (xrobot.lock), locked discovery (xrobot.module_parser)
 and Sources (xrobot.source_manager)."""
 
+import contextlib
+import io
 import os
 import unittest
 from unittest import mock
@@ -88,6 +90,18 @@ class Resolution(UpstreamTestCase):
             self.sync(frozen=True)
         self.assertEqual(self.lock_bytes(), before)
 
+    def test_request_order_and_id_case_do_not_change_the_lock(self):
+        self.upstream("team/A")
+        self.upstream("team/B")
+        self.configure(["team/B@dev", "team/A@dev"])
+        first = self.sync()
+        self.assertEqual([r["id"] for r in first["requests"]], ["team/A", "team/B"])
+        self.configure(["team/a@dev", "team/B@dev"])
+        self.assertEqual(self.sync(frozen=True, offline=True)["modules"], first["modules"])
+        self.configure(["team/A@master", "team/B@dev"])
+        with self.assertRaisesRegex(ValueError, r"differs from xrobot\.lock \(~team/A\)"):
+            self.sync(frozen=True)
+
     def test_update_cannot_be_combined_with_frozen_or_offline(self):
         self.configure([])
         for flags in ({"frozen": True}, {"offline": True}):
@@ -101,11 +115,14 @@ class Resolution(UpstreamTestCase):
         a = self.upstream("team/A")
         self.configure(["team/A"])
         old = self.sync()["modules"]["team/A"]["commit"]
+        a.rename(a.with_name("unavailable"))
+        # lock 满足且检出里有锁定的 commit 时，不需要远端。
+        # An up-to-date lock whose commits are checked out needs no remote.
+        self.assertEqual(self.sync()["modules"]["team/A"]["commit"], old)
+        with self.assertRaisesRegex(ValueError, r"fetch(.|\n)*`xrobot setup --offline` works"):
+            self.sync(update=[])
         self.index.unlink()
         (self.modules / "sources.yaml").unlink()
-        a.rename(a.with_name("unavailable"))
-        with self.assertRaisesRegex(ValueError, r"fetch(.|\n)*`xrobot setup --offline` works"):
-            self.sync()
         self.assertEqual(self.sync(offline=True)["modules"]["team/A"]["commit"], old)
 
     def test_an_up_to_date_lock_does_not_read_the_sources(self):
@@ -164,7 +181,11 @@ class Resolution(UpstreamTestCase):
         a = self.upstream("team/A")
         run_git(a, "tag", "dev")
         self.configure(["team/A@dev"])
-        with self.assertRaisesRegex(ValueError, "Ref exists as branch and tag"):
+        with self.assertRaisesRegex(
+            ValueError,
+            r"Modules/modules\.yaml requests team/A@dev: dev is both a branch and a tag; "
+            r"write refs/heads/dev or refs/tags/dev",
+        ):
             self.sync()
         self.configure(["team/A@refs/heads/dev"])
         self.assertEqual(self.sync()["modules"]["team/A"]["ref_kind"], "branch")
@@ -172,7 +193,11 @@ class Resolution(UpstreamTestCase):
     def test_unknown_refs_are_reported(self):
         self.upstream("team/A")
         self.configure(["team/A@missing"])
-        with self.assertRaisesRegex(ValueError, "Unknown dependency ref: missing"):
+        with self.assertRaisesRegex(
+            ValueError,
+            r"Modules/modules\.yaml requests team/A@missing: the repository has no branch, "
+            r"tag or commit missing",
+        ):
             self.sync()
 
     def test_conflicting_dependency_commits_leave_lock_and_checkouts_unchanged(self):
@@ -337,7 +362,9 @@ class Contexts(UpstreamTestCase):
         a = self.upstream("team/A", [{"id": "team/B", "ref": "same-or-dev"}])
         run_git(a, "tag", "2026-09-15")
         self.configure(["team/A@2026-09-15"])
-        with self.assertRaisesRegex(ValueError, "Required same tag is missing: 2026-09-15"):
+        with self.assertRaisesRegex(
+            ValueError, "team/A requests team/B@same-or-dev: the repository has no tag 2026-09-15"
+        ):
             self.sync()
         self.assertFalse((self.root / "xrobot.lock").exists())
         run_git(b, "tag", "2026-09-15")
@@ -349,7 +376,12 @@ class Contexts(UpstreamTestCase):
         a = self.upstream("team/A", [{"id": "team/B", "ref": "same-or-dev"}])
         sha = run_git(a, "rev-parse", "HEAD")
         self.configure(["team/A@" + sha])
-        with self.assertRaisesRegex(ValueError, "same-or-dev requires a BSP branch/tag context"):
+        with self.assertRaisesRegex(
+            ValueError,
+            r"team/A requests team/B@same-or-dev: there is no branch or tag to "
+            r"follow: the BSP checkout is not on a branch, or the requesting Module is "
+            r"pinned to a commit",
+        ):
             self.sync()
         self.configure([{"id": "team/A", "ref": sha, "context_ref": "refs/heads/pr-feature"}])
         self.assertEqual(self.sync()["modules"]["team/B"]["resolved_ref"], "dev")
@@ -370,23 +402,56 @@ class Contexts(UpstreamTestCase):
     def test_a_tag_context_is_exact(self):
         a = self.upstream("team/A")
         self.configure(["team/A@same-or-dev"])
-        with self.assertRaisesRegex(ValueError, "Required same tag is missing: release-check"):
+        with self.assertRaisesRegex(
+            ValueError,
+            "Modules/modules.yaml requests team/A@same-or-dev: the repository has no tag "
+            "release-check",
+        ):
             self.sync(context_ref="refs/tags/release-check")
         run_git(a, "tag", "release-check")
         first = self.sync(context_ref="refs/tags/release-check")
         self.assertEqual(first["modules"]["team/A"]["ref_kind"], "tag")
         self.assertEqual(self.sync(context_ref="refs/tags/release-check", offline=True), first)
 
-    def test_same_or_dev_without_a_bsp_branch_needs_a_context_ref(self):
-        self.upstream("team/A")
+    def test_outside_git_same_or_dev_keeps_the_locked_commit(self):
+        a = self.upstream("team/A")
+        self.upstream("team/C")
         self.configure(["team/A@same-or-dev"])
         with self.assertRaisesRegex(
-            ValueError, "same/same-or-dev requests need a BSP branch; pass --context-ref"
+            ValueError,
+            r"Modules/modules\.yaml requests team/A@same-or-dev, which needs the BSP branch to "
+            r"pick a commit, but the BSP is not a Git repository; request an explicit ref such "
+            r"as team/A@dev, or put the BSP in a Git repository",
         ):
             self.sync()
-        self.assertEqual(
-            self.sync(context_ref="refs/heads/review")["modules"]["team/A"]["resolved_ref"], "dev"
+        first = self.sync(context_ref="refs/heads/review")
+        self.assertEqual(first["modules"]["team/A"]["resolved_ref"], "dev")
+        run_git(a, "checkout", "-q", "dev")
+        self.commit(a, [], "newer dev")
+        self.configure(["team/A@same-or-dev", "team/C@dev"])
+        errors = io.StringIO()
+        with contextlib.redirect_stderr(errors):
+            second = self.sync(update=[])
+        self.assertEqual(second["modules"]["team/A"], first["modules"]["team/A"])
+        self.assertEqual(second["modules"]["team/C"]["resolved_ref"], "dev")
+        self.assertIn(
+            "warning: the BSP is not a Git repository, so team/A@same-or-dev keeps "
+            f"{first['modules']['team/A']['commit'][:12]} from xrobot.lock",
+            errors.getvalue(),
         )
+
+    def test_a_detached_bsp_checkout_needs_a_context_ref(self):
+        self.upstream("team/A")
+        run_git(self.root, "init", "-q")
+        run_git(self.root, "commit", "-q", "--allow-empty", "-m", "bsp")
+        run_git(self.root, "checkout", "-q", "--detach")
+        self.configure(["team/A@same-or-dev"])
+        with self.assertRaisesRegex(
+            ValueError,
+            r"requests team/A@same-or-dev, which follows the BSP branch, but the BSP checkout "
+            r"is not on a branch \(detached HEAD\); pass --context-ref refs/heads/<branch>",
+        ):
+            self.sync()
 
     def test_a_request_can_carry_its_own_context(self):
         self.upstream("team/A")
@@ -555,6 +620,14 @@ class ReleaseGate(UpstreamTestCase):
         run_git(self.a, "checkout", "-q", branch)
         run_git(self.a, "merge", "-q", *options)
         run_git(self.a, "checkout", "-q", "master")
+
+    def test_a_failed_fetch_of_the_release_line_is_reported(self):
+        self.lock_feature()
+        self.a.rename(self.a.with_name("unavailable"))
+        with self.assertRaisesRegex(
+            ValueError, r"Git failed in .*: fetch origin \+refs/heads/\*:refs/remotes/origin/\*"
+        ):
+            self.sync(frozen=True, release_ref="refs/heads/dev")
 
     def test_unmerged_feature_commits_are_refused_for_dev(self):
         feature = self.lock_feature()
