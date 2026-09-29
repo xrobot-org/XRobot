@@ -1,5 +1,5 @@
-"""Module resolution and xrobot.lock (xrobot.lock), locked discovery (xrobot.module_parser)
-and Sources (xrobot.source_manager)."""
+"""Module resolution and xrobot.lock (the xrobot.lock module), locked discovery
+(xrobot.module_parser) and Sources (xrobot.source_manager)."""
 
 import contextlib
 import io

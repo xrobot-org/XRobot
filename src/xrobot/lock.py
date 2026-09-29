@@ -1,21 +1,31 @@
-"""Resolve Module sources to exact commits (xrobot.lock); native CMake owns the build.
+"""把 Modules/modules.yaml 的请求解析为确定的 commit，写入 xrobot.lock 并检出模块。
+Resolve the requests of Modules/modules.yaml to exact commits, write xrobot.lock and check
+out the Modules; the build itself belongs to native CMake.
 
-``Modules/modules.yaml`` lists the requested Modules (and pins the XRobot tool
-version with ``xrobot:``). ``xrobot.lock`` records the exact commit of every
-Module in the dependency closure and is the only source of truth afterwards:
+modules.yaml 列出请求的模块（并用 ``xrobot:`` 固定工具版本）；xrobot.lock 记录依赖闭包中每个
+模块的确切 commit，写出后即为依据：
+modules.yaml lists the requested Modules (and pins the tool with ``xrobot:``); xrobot.lock
+records the exact commit of every Module in the dependency closure and is authoritative
+once written:
 
-- without ``--update``, locked Modules never move; added or removed requests
-  change only the affected entries (minimal change);
-- ``--update <module>...`` re-resolves only the named Modules;
-- ``--update`` without names re-resolves everything;
-- ``--frozen`` restores exactly the lock and fails if requests changed;
-- ``--release-ref`` refuses unreleased commits for the named target line.
+- 不带 ``--update`` 时已锁定的模块不移动；新增、删除或修改的请求只影响对应条目。
+  Without ``--update`` locked Modules do not move; added, removed or changed requests
+  affect only their entries.
+- ``--update <module>...`` 只重新解析指定模块；不带名字时重新解析全部。
+  ``--update <module>...`` re-resolves the named Modules; without names, all of them.
+- ``--frozen`` 严格按 lock 检出，请求变化即报错，从不写 lock。
+  ``--frozen`` checks out exactly the lock, fails on changed requests, never writes it.
+- ``--offline`` 不联网，只用已有的检出。
+  ``--offline`` uses the existing checkouts without network.
+- ``--release-ref`` 拒绝尚未进入目标发布线的 commit。
+  ``--release-ref`` refuses commits that are not on the target release line.
 """
 
 import os
 import re
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import url2pathname
@@ -24,6 +34,7 @@ import yaml
 
 from xrobot.generate_main import atomic_write
 from xrobot.module_parser import manifest_from_text
+from xrobot.project import Project
 from xrobot.source_manager import SourceManager, SourceUnavailable, load_yaml, validate_id
 
 MODULES_KEYS = ("modules", "xrobot")
@@ -43,7 +54,18 @@ OFFLINE_HINT = (
 )
 
 
-def git(path, *args, check=True):
+def git(path: str | Path | None, *args: str, check: bool = True) -> str | None:
+    """在 path 中运行 git（不交互，有超时），返回去掉首尾空白的输出。
+    Run git in path (non-interactive, with a timeout) and return its stripped output.
+
+    Returns:
+        成功时为标准输出；check=False 且失败时为 None。
+        The standard output on success; None on failure with check=False.
+
+    Raises:
+        ValueError: git 失败（check=True 时）或超时。
+            git failed (with check=True) or timed out.
+    """
     env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_OPTIONAL_LOCKS="0")
     command = ["git"] + (["-C", str(path)] if path else []) + list(args)
     where = f" in {path}" if path else ""
@@ -65,21 +87,28 @@ def git(path, *args, check=True):
     return result.stdout.strip() if result.returncode == 0 else None
 
 
-def _fetch(folder, *args):
-    """git fetch; a failure adds the --offline hint."""
+def _fetch(folder: Path, *args: str) -> None:
+    """运行 git fetch；失败时附上 --offline 的提示。
+    Run git fetch; a failure adds the --offline hint.
+    """
     try:
         git(folder, "fetch", *args)
     except ValueError as error:
         raise ValueError(f"{error}\n{OFFLINE_HINT}") from error
 
 
-def _has_commit(folder, commit):
-    """Whether the checkout in folder already holds commit."""
+def _has_commit(folder: Path, commit: str | None) -> bool:
+    """folder 中的检出是否已含有 commit。
+    Whether the checkout in folder already holds commit.
+    """
     return bool(commit) and git(folder, "cat-file", "-t", commit, check=False) == "commit"
 
 
-def _follows_the_bsp(req, parent_context):
-    """A same/same-or-dev request that would follow the branch of a BSP outside Git."""
+def _follows_the_bsp(req: dict, parent_context: tuple | list | None) -> bool:
+    """请求是否为要跟随一个不在 Git 中的 BSP 分支的 same/same-or-dev。
+    Whether the request is a same/same-or-dev one that would follow the branch of a BSP
+    outside Git.
+    """
     return (
         req["ref"] in ("same", "same-or-dev")
         and not req.get("context_ref")
@@ -88,8 +117,14 @@ def _follows_the_bsp(req, parent_context):
     )
 
 
-def local_locator(value):
-    """Return a filesystem locator, leaving network Git URLs untouched."""
+def local_locator(value: str) -> str | None:
+    """本地仓库的路径；网络地址返回 None。
+    The filesystem path of a local repository; None for a network Git URL.
+
+    Raises:
+        ValueError: 指向其他主机的 file:// 地址。
+            A file:// URL with another host.
+    """
     if value.startswith("file://"):
         parsed = urlparse(value)
         if parsed.netloc not in ("", "localhost"):
@@ -100,7 +135,15 @@ def local_locator(value):
     return value
 
 
-def portable_locator(value, lock_directory):
+def portable_locator(value: str, lock_directory: Path) -> str:
+    """写入 lock 的仓库地址：本地仓库写成相对 lock 的路径，网络地址不变。
+    The repository as written to the lock: a local one relative to the lock, a network URL
+    unchanged.
+
+    Raises:
+        ValueError: 本地仓库无法用相对 lock 的路径表示（如在另一个盘符）。
+            The local repository cannot be expressed relative to the lock (another drive).
+    """
     local = local_locator(value)
     if local is None:
         return value
@@ -115,13 +158,18 @@ def portable_locator(value, lock_directory):
         ) from error
 
 
-def expanded_locator(value, lock_directory):
+def expanded_locator(value: str, lock_directory: Path) -> str:
+    """lock 中仓库地址的可用形式：相对路径展开为绝对路径。
+    A usable form of a repository from the lock: relative paths made absolute.
+    """
     local = local_locator(value)
     return value if local is None else str((lock_directory / local).resolve())
 
 
-def repository_identity(value):
-    """Normalize a repository URL for comparison (scheme, host case, .git, slashes)."""
+def repository_identity(value: str) -> str:
+    """用于比较的仓库标识：忽略协议、主机大小写、.git 和斜杠。
+    A repository identity for comparison: scheme, host case, .git and slashes ignored.
+    """
     local = local_locator(value)
     if local is not None:
         return "file:" + str(Path(local).resolve()).casefold()
@@ -141,11 +189,31 @@ def repository_identity(value):
     return host + "/" + path
 
 
-def same_repository(left, right):
+def same_repository(left: str, right: str) -> bool:
+    """两个地址是否指向同一个仓库。
+    Whether two addresses name the same repository.
+    """
     return repository_identity(left) == repository_identity(right)
 
 
-def request(value, canonical=False):
+def request(value: str | dict, canonical: bool = False) -> dict:
+    """解析一条请求：``owner/Repo@ref`` 或 ``{id, ref, context_ref}``。
+    Parse one request: ``owner/Repo@ref`` or ``{id, ref, context_ref}``.
+
+    Args:
+        value: modules.yaml 或模块 manifest 中的一项。
+            One item of modules.yaml or of a Module manifest.
+        canonical: 为真时 id 必须是 owner/Repo。
+            When true the id must be owner/Repo.
+
+    Returns:
+        含 id、ref（未写为 None），以及可选 context_ref 的映射。
+        A mapping with id, ref (None when not written) and an optional context_ref.
+
+    Raises:
+        ValueError: 写法不对。
+            The request is malformed.
+    """
     if isinstance(value, str):
         identity, separator, ref = value.partition("@")
         result = {"id": identity, "ref": ref if separator else None}
@@ -166,7 +234,14 @@ def request(value, canonical=False):
     return result
 
 
-def context(value):
+def context(value: str) -> tuple[str, str]:
+    """把 refs/heads/<name> 或 refs/tags/<name> 转成 ("branch"|"tag", name)。
+    Turn refs/heads/<name> or refs/tags/<name> into ("branch"|"tag", name).
+
+    Raises:
+        ValueError: 不是完整的 refs/heads/ 或 refs/tags/ 引用。
+            Not a full refs/heads/ or refs/tags/ reference.
+    """
     if value.startswith("refs/heads/"):
         return ("branch", value[len("refs/heads/") :])
     if value.startswith("refs/tags/"):
@@ -174,7 +249,18 @@ def context(value):
     raise ValueError("A context/release ref must start with refs/heads/ or refs/tags/")
 
 
-def read_modules_yaml(path):
+def read_modules_yaml(path: str | Path) -> tuple[list[dict], str | None]:
+    """读取 modules.yaml：请求列表和固定的 XRobot 版本。
+    Read modules.yaml: the request list and the pinned XRobot version.
+
+    Returns:
+        (请求列表, 固定版本或 None)。
+        (requests, the pin or None).
+
+    Raises:
+        ValueError: 有未知的键、modules 不是列表，或固定版本格式不对。
+            An unknown key, modules is not a list, or the pin is malformed.
+    """
     data = load_yaml(path) if Path(path).exists() else {}
     unknown = [key for key in data if key not in MODULES_KEYS]
     if unknown:
@@ -193,7 +279,10 @@ def read_modules_yaml(path):
     )
 
 
-def _valid_pin(value):
+def _valid_pin(value: str) -> bool:
+    """固定版本是否为发布版本号或 40 位 commit。
+    Whether a pin is a release version or a 40-hex commit.
+    """
     return bool(
         re.fullmatch(r"\d+\.\d+\.\d+(?:[.\-+][0-9A-Za-z.\-]+)?", value)
         or re.fullmatch(r"[0-9a-f]{40}", value)
@@ -201,49 +290,74 @@ def _valid_pin(value):
 
 
 class Resolver:
+    """把请求解析成 commit 并检出到 Modules/<owner>/<Repo>。
+    Resolves requests to commits and checks them out into Modules/<owner>/<Repo>.
+
+    Attributes:
+        pinned: 保持 lock 中 commit 的条目（未要求更新且请求未变）。
+            Entries that keep their locked commit (not updated, request unchanged).
+        locked: lock 中的全部条目；BSP 不在 Git 中时，跟随分支的请求保持它们。
+            Every lock entry; in a BSP outside Git, branch-following requests keep these.
+        resolved: 已解析的条目，最后写入 lock。
+            The resolved entries, written to the lock at the end.
+        warnings: 需要告诉用户的情况。
+            Things to tell the user.
+    """
+
     def __init__(
         self,
-        modules_dir,
-        source_manager=None,
-        offline=False,
-        pinned=None,
-        locked=None,
-        without_git=False,
-    ):
+        modules_dir: Path,
+        source_manager: SourceManager | Callable[[], SourceManager] | None = None,
+        offline: bool = False,
+        pinned: dict | None = None,
+        locked: dict | None = None,
+        without_git: bool = False,
+    ) -> None:
         self.directory = Path(modules_dir).resolve()
         # 一个 SourceManager，或首次使用时才调用的加载函数。
         # A SourceManager, or a function that loads it on first use.
         self._sources = source_manager
         self.offline = offline
         self.pinned = pinned or {}
-        # 不是 Git 仓库的 BSP：跟随分支的请求保持 lock 中的 commit。
-        # A BSP outside Git: requests that follow its branch keep their locked commit.
         self.locked = locked or {}
         self.without_git = without_git
-        self.warnings = []
-        self.prepared = {}
-        self.resolved = {}
-        self.stack = []
+        self.warnings: list[str] = []
+        self.prepared: dict[str, dict] = {}
+        self.resolved: dict[str, dict] = {}
+        self.stack: list[str] = []
 
     @property
-    def sources(self):
-        """The SourceManager, loaded on first use."""
+    def sources(self) -> SourceManager | None:
+        """源；以加载函数给出时在首次使用时加载。
+        The Sources; loaded on first use when given as a loader.
+        """
         if callable(self._sources):
             self._sources = self._sources()
         return self._sources
 
-    def fetch_url(self, identity, repo):
-        """Fetch from a mirror source when one lists the package, else from ``repo``."""
+    def fetch_url(self, identity: str, repo: str) -> str:
+        """拉取代码的地址：有镜像源时为镜像，否则为 repo。
+        Where to fetch from: the mirror when a mirror Source lists the package, else repo.
+        """
         mirror = self.sources.mirror_url(identity) if self.sources is not None else None
         return mirror or repo
 
-    def prepare(self, identity, repo, commit=None):
+    def prepare(self, identity: str, repo: str, commit: str | None = None) -> Path:
         """确保 Modules/<identity> 是 repo 的检出，返回该目录。
         Make sure Modules/<identity> is a checkout of repo and return its folder.
 
         离线时没有源可用来识别镜像地址；已含有 lock 记录的 commit 的检出，不论 origin 都接受。
         Offline there are no Sources to recognize a mirror origin; a checkout that already
         holds the locked commit is accepted whatever its origin.
+
+        Args:
+            commit: lock 中的 commit；检出里已有它时不 fetch。
+                The locked commit; a checkout that holds it is not fetched.
+
+        Raises:
+            ValueError: 目录不是 Git 检出、origin 不对、离线时缺少检出，或 git 失败。
+                The folder is not a Git checkout, origin is wrong, a checkout is missing
+                offline, or git failed.
         """
         validate_id(identity)
         folder = self.directory / identity
@@ -279,7 +393,29 @@ class Resolver:
         self.prepared[identity] = {"repo": repo, "folder": folder}
         return folder
 
-    def resolve_ref(self, folder, ref, parent_context=None):
+    def resolve_ref(
+        self, folder: Path, ref: str | None, parent_context: tuple | list | None = None
+    ) -> tuple[str, str, str]:
+        """在 folder 的仓库中把 ref 解析成 commit。
+        Resolve ref to a commit in the repository of folder.
+
+        Args:
+            ref: 分支、标签、commit、refs/heads/…、refs/tags/…、same、same-or-dev；
+                None 为仓库的默认分支。
+                A branch, tag, commit, refs/heads/..., refs/tags/..., same or
+                same-or-dev; None is the default branch of the repository.
+            parent_context: same/same-or-dev 跟随的 ("branch"|"tag", 名字)。
+                The ("branch"|"tag", name) that same/same-or-dev follows.
+
+        Returns:
+            (commit, "branch"|"tag"|"commit", 名字)。
+            (commit, "branch"|"tag"|"commit", name).
+
+        Raises:
+            ValueError: 无法解析；信息说明原因，由调用者补上请求者和模块。
+                ref cannot be resolved; the message gives the reason, and the caller adds
+                the requester and the Module.
+        """
         if ref in ("same", "same-or-dev"):
             if not parent_context or parent_context[0] not in ("branch", "tag"):
                 raise ValueError(
@@ -340,20 +476,32 @@ class Resolver:
             raise ValueError(f"the repository has no {ref}")
         return sha, kind, name
 
-    def _requester(self):
-        """Who asks for the Module being resolved: modules.yaml or a chain of Modules."""
+    def _requester(self) -> str:
+        """请求当前模块的一方：modules.yaml 或模块链。
+        Who asks for the Module being resolved: modules.yaml or a chain of Modules.
+        """
         return " -> ".join(self.stack) or "Modules/modules.yaml"
 
-    def _resolve(self, identity, folder, req, parent_context):
-        """resolve_ref, with the requester and the requested Module in its errors."""
+    def _resolve(
+        self, identity: str, folder: Path, req: dict, parent_context: tuple | list | None
+    ) -> tuple[str, str, str]:
+        """resolve_ref，报错时带上请求者和被请求的模块。
+        resolve_ref, with the requester and the requested Module in its errors.
+        """
         try:
             return self.resolve_ref(folder, req["ref"], parent_context)
         except ValueError as error:
             target = identity if req["ref"] is None else f"{identity}@{req['ref']}"
             raise ValueError(f"{self._requester()} requests {target}: {error}") from None
 
-    def _keep_without_branch(self, identity, req):
-        """The locked entry a branch-following request keeps in a BSP outside Git."""
+    def _keep_without_branch(self, identity: str, req: dict) -> dict:
+        """BSP 不在 Git 中时，跟随分支的请求保留的 lock 条目。
+        The locked entry a branch-following request keeps in a BSP outside Git.
+
+        Raises:
+            ValueError: lock 中没有这个模块，无法选择 commit。
+                The Module is not in the lock, so no commit can be picked.
+        """
         kept = self.locked.get(identity)
         target = f"{identity}@{req['ref']}"
         if kept is None:
@@ -368,7 +516,15 @@ class Resolver:
         )
         return kept
 
-    def visit(self, req, parent_context=None):
+    def visit(self, req: dict, parent_context: tuple | list | None = None) -> None:
+        """解析一条请求及其依赖闭包，记入 resolved。
+        Resolve one request and its dependency closure into resolved.
+
+        Raises:
+            ValueError: 请求的是 BSP、依赖成环、同一模块解析到不同 commit，或解析失败。
+                The request names a BSP, dependencies form a cycle, one Module resolves to
+                two commits, or resolution fails.
+        """
         identity = self.sources.resolve_id(req["id"])
         package = self.sources.packages[identity]
         if package["type"] != "module":
@@ -403,7 +559,8 @@ class Resolver:
                 previous = self.resolved[identity]
                 if previous["commit"] != sha:
                     raise ValueError(
-                        f"Dependency conflict for {identity}: {previous['commit'][:12]} vs {sha[:12]} ({' -> '.join(self.stack)})"
+                        f"Dependency conflict for {identity}: {previous['commit'][:12]} vs "
+                        f"{sha[:12]} ({' -> '.join(self.stack)})"
                     )
                 return
             self.resolved[identity] = {
@@ -426,8 +583,16 @@ class Resolver:
         finally:
             self.stack.pop()
 
-    def materialize(self):
-        """Check out every resolved commit; never discard local work."""
+    def materialize(self) -> None:
+        """把每个模块检出到解析出的 commit；不丢弃本地修改，出错时回滚已切换的模块。
+        Check out every resolved commit; local work is never discarded, and Modules already
+        switched are moved back on an error.
+
+        Raises:
+            ValueError: 模块有未提交的修改或未推送的提交、两个包定义同名模块，或检出失败。
+                A Module has uncommitted changes or unpushed commits, two packages define
+                the same Module, or a checkout fails.
+        """
         before = {}
         for identity, entry in self.resolved.items():
             folder = self.prepared[identity]["folder"]
@@ -445,9 +610,10 @@ class Resolver:
                 unpublished = not _published(folder, head)
             if unpublished:
                 raise ValueError(
-                    f"{identity} is at local commit {head[:12]} that is not on any remote branch or tag. While "
-                    "developing a module keep your changes uncommitted; when they are ready, push "
-                    f"them to a branch of the module and run `xrobot setup --update {identity}`"
+                    f"{identity} is at local commit {head[:12]} that is not on any remote "
+                    "branch or tag. While developing a module keep your changes uncommitted; "
+                    "when they are ready, push them to a branch of the module and run "
+                    f"`xrobot setup --update {identity}`"
                 )
             gitdir = Path(git(folder, "rev-parse", "--absolute-git-dir"))
             before[identity] = (
@@ -460,8 +626,8 @@ class Resolver:
             name = identity.rsplit("/", 1)[-1]
             if name in by_name and by_name[name] != identity:
                 raise ValueError(
-                    f"Source packages {by_name[name]} and {identity} define the same global Module; choose one "
-                    "implementation"
+                    f"Source packages {by_name[name]} and {identity} define the same global "
+                    "Module; choose one implementation"
                 )
             by_name[name] = identity
         applied = []
@@ -471,10 +637,10 @@ class Resolver:
                 if before[identity][0] == entry["commit"]:
                     continue
                 applied.append(identity)
-                if git(folder, "cat-file", "-t", entry["commit"], check=False) != "commit":
+                if not _has_commit(folder, entry["commit"]):
                     if self.offline:
                         raise ValueError("Offline commit missing for " + identity)
-                    git(folder, "fetch", "origin", entry["commit"])
+                    _fetch(folder, "origin", entry["commit"])
                 git(folder, "checkout", "--detach", entry["commit"])
                 if (folder / ".gitmodules").exists():
                     args = ["submodule", "update", "--init", "--recursive"]
@@ -489,19 +655,30 @@ class Resolver:
             raise
 
 
-def _published(folder, commit):
+def _published(folder: Path, commit: str) -> bool:
+    """commit 是否已在某个远端分支或标签上。
+    Whether commit is on a remote branch or a tag.
+    """
     remote = git(folder, "branch", "-r", "--contains", commit, check=False)
     if remote:
         return True
     return bool(git(folder, "tag", "--contains", commit, check=False))
 
 
-def validate_locked_graph(resolver, roots):
-    """Validate lock closure from the pinned headers, without resolving moving refs."""
+def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
+    """按锁定 commit 的头文件重走依赖，确认 lock 与依赖闭包一致；不解析移动的 ref。
+    Walk the dependencies from the headers of the locked commits and check that the lock
+    is exactly the dependency closure; moving refs are not resolved.
+
+    Raises:
+        ValueError: lock 缺条目、多条目、ref 与请求不符，或依赖成环。
+            The lock misses or has extra entries, a ref does not match its request, or the
+            dependencies form a cycle.
+    """
     records = resolver.resolved
     visited, active = set(), []
 
-    def visit(req):
+    def visit(req: dict) -> None:
         candidates = [key for key in records if key.casefold() == req["id"].casefold()]
         if len(candidates) != 1:
             raise ValueError(
@@ -542,13 +719,20 @@ def validate_locked_graph(resolver, roots):
     if visited != set(records):
         extra = sorted(set(records) - visited)
         raise ValueError(
-            f"xrobot.lock contains Modules outside the declared dependency closure: {', '.join(extra)}; "
-            "run `xrobot setup`"
+            "xrobot.lock contains Modules outside the declared dependency closure: "
+            f"{', '.join(extra)}; run `xrobot setup`"
         )
 
 
-def release_line(release_ref):
-    """The Module/tool line a BSP target ref requires (G3): dev, or master for master/main/tags."""
+def release_line(release_ref: str) -> str | None:
+    """BSP 目标 ref 要求的发布线（G3）：dev，或 master/main/标签对应的 master。
+    The release line a BSP target ref requires (G3): dev, or master for master, main and
+    tags.
+
+    Returns:
+        "dev"、"master"，或功能分支时的 None。
+        "dev", "master", or None for a feature branch.
+    """
     kind, name = context(release_ref)
     if kind == "branch" and name == "dev":
         return "dev"
@@ -557,8 +741,11 @@ def release_line(release_ref):
     return None
 
 
-def _line_ref(folder, line):
-    """``origin/master`` (or ``origin/main`` for a main-only repository) / ``origin/dev``."""
+def _line_ref(folder: Path, line: str) -> str | None:
+    """发布线在 folder 中的远端引用：origin/dev、origin/master，或仅有 main 时的 origin/main。
+    The remote ref of a release line in folder: origin/dev, origin/master, or origin/main
+    for a main-only repository.
+    """
     names = [line] if line == "dev" else ["master", "main"]
     for name in names:
         ref = "refs/remotes/origin/" + name
@@ -567,8 +754,15 @@ def _line_ref(folder, line):
     return None
 
 
-def check_released(resolver, release_ref, offline=False):
-    """Every locked commit must be on the Module line of the BSP target (G3)."""
+def check_released(resolver: Resolver, release_ref: str, offline: bool = False) -> None:
+    """发布门禁：每个锁定的 commit 都必须在 BSP 目标对应的模块发布线上（G3）。
+    Release gate: every locked commit must be on the Module release line of the BSP target
+    (G3).
+
+    Raises:
+        ValueError: 列出不在发布线上的模块，或拉取失败。
+            Lists the Modules whose commits are not on the line, or a fetch failed.
+    """
     line = release_line(release_ref)
     if line is None:
         return
@@ -592,16 +786,25 @@ def check_released(resolver, release_ref, offline=False):
         )
         if not contained:
             problems.append(
-                f"{identity}: locked commit {row['commit'][:12]} is not on {target.split('/')[-1]} (feature branch not merged, or merged by "
-                f"squash/rebase); after merging the Module, run `xrobot setup --update {identity} "
-                f"--context-ref refs/heads/{'dev' if line == 'dev' else 'master'}`"
+                f"{identity}: locked commit {row['commit'][:12]} is not on "
+                f"{target.split('/')[-1]} (feature branch not merged, or merged by "
+                f"squash/rebase); after merging the Module, run `xrobot setup --update "
+                f"{identity} --context-ref refs/heads/{'dev' if line == 'dev' else 'master'}`"
             )
     if problems:
         raise ValueError("\n".join(problems))
 
 
-def check_tool_pins(project, release_ref, offline=False, cache=None):
-    """Tool pins follow the same released-line rule as Modules (G3)."""
+def check_tool_pins(
+    project: Project, release_ref: str, offline: bool = False, cache: str | Path | None = None
+) -> None:
+    """工具的固定版本遵守与模块相同的发布线规则（G3）。
+    Tool pins follow the same release-line rule as Modules (G3).
+
+    Raises:
+        ValueError: 工具未固定版本，或固定的 commit 不在发布线上。
+            A tool is not pinned, or its pinned commit is not on the line.
+    """
     line = release_line(release_ref)
     if line is None:
         return
@@ -634,14 +837,18 @@ def check_tool_pins(project, release_ref, offline=False, cache=None):
         )
         if not ok:
             problems.append(
-                f"{tool} pin {pin[:12]} is not on the tool's {branches[0]} line; pin a release version or a "
-                "merged commit"
+                f"{tool} pin {pin[:12]} is not on the tool's {branches[0]} line; pin a release "
+                "version or a merged commit"
             )
     if problems:
         raise ValueError("\n".join(problems))
 
 
-def write_cmake(modules_dir, records):
+def write_cmake(modules_dir: Path, records: dict) -> None:
+    """写出 Modules/CMakeLists.txt：模块自带 CMakeLists.txt 时 include 它，否则加 include 目录。
+    Write Modules/CMakeLists.txt: include a Module's own CMakeLists.txt, else add its
+    folder to the include path.
+    """
     lines = ["# Generated by `xrobot setup` from xrobot.lock; do not edit or commit.", ""]
     for identity in sorted(records):
         validate_id(identity)
@@ -655,7 +862,14 @@ def write_cmake(modules_dir, records):
     atomic_write(Path(modules_dir) / "CMakeLists.txt", "\n".join(lines) + "\n")
 
 
-def _load_lock(lock_path):
+def _load_lock(lock_path: Path) -> dict:
+    """读取并检查 xrobot.lock。
+    Read and check xrobot.lock.
+
+    Raises:
+        ValueError: 格式不受支持、是旧格式，或 commit 不是 40 位。
+            An unsupported or legacy format, or a commit that is not 40-hex.
+    """
     lock = load_yaml(lock_path)
     entries = lock.get("modules")
     if lock.get("version") != 1 or not isinstance(entries, dict):
@@ -673,7 +887,15 @@ def _load_lock(lock_path):
     return lock
 
 
-def _root_context(project, roots, context_ref):
+def _root_context(project: Project, roots: list[dict], context_ref: str | None) -> tuple | None:
+    """modules.yaml 中 same/same-or-dev 请求跟随的分支：--context-ref 或 BSP 当前分支。
+    The branch that same/same-or-dev requests of modules.yaml follow: --context-ref or the
+    current branch of the BSP.
+
+    Returns:
+        ("branch"|"tag", 名字)，不在分支上时为 None。
+        ("branch"|"tag", name), or None when not on a branch.
+    """
     needs_parent = any(
         req["ref"] in ("same", "same-or-dev") and not req.get("context_ref") for req in roots
     )
@@ -683,8 +905,10 @@ def _root_context(project, roots, context_ref):
     return context(selected) if selected else None
 
 
-def _load_sources(project):
-    """Read the Sources of the BSP; a failed download adds the --offline hint."""
+def _load_sources(project: Project) -> SourceManager:
+    """读取 BSP 的源；下载失败时附上 --offline 的提示。
+    Read the Sources of the BSP; a failed download adds the --offline hint.
+    """
     try:
         return SourceManager(project.sources_yaml)
     except SourceUnavailable as error:
@@ -692,11 +916,32 @@ def _load_sources(project):
 
 
 def sync_modules(
-    project, update=None, frozen=False, offline=False, context_ref=None, release_ref=None
-):
-    """Resolve and check out Modules; return the lock mapping.
+    project: Project,
+    update: list[str] | None = None,
+    frozen: bool = False,
+    offline: bool = False,
+    context_ref: str | None = None,
+    release_ref: str | None = None,
+) -> dict:
+    """解析并检出模块，按需写 xrobot.lock，返回 lock 的内容。
+    Resolve and check out the Modules, write xrobot.lock when needed, and return its content.
 
-    ``update`` is None (no update), [] (update everything) or a list of Module ids.
+    Args:
+        update: None 不更新，[] 更新全部，或要更新的模块 id 列表。
+            None for no update, [] for all, or the ids of the Modules to update.
+        frozen: 严格按 lock 检出，从不写 lock。
+            Check out exactly the lock and never write it.
+        offline: 不联网。
+            Use no network.
+        context_ref: same/same-or-dev 跟随的分支，代替 BSP 当前分支。
+            The branch for same/same-or-dev to follow instead of the BSP branch.
+        release_ref: 发布门禁的目标 ref。
+            The target ref of the release gate.
+
+    Raises:
+        ValueError: 参数冲突、lock 与请求不符（--frozen/--offline）、解析或检出失败。
+            Conflicting options, a lock that does not match the requests (--frozen or
+            --offline), or a failed resolution or checkout.
     """
     if update is not None and (frozen or offline):
         raise ValueError("--update cannot be combined with --frozen or --offline")
@@ -711,8 +956,8 @@ def sync_modules(
         if not _same_requests(lock.get("requests") or [], roots):
             changed = _changed_requests(lock.get("requests") or [], roots)
             raise ValueError(
-                f"Modules/modules.yaml differs from xrobot.lock ({', '.join(changed)}); run `xrobot setup` to "
-                "update the lock"
+                f"Modules/modules.yaml differs from xrobot.lock ({', '.join(changed)}); run "
+                "`xrobot setup` to update the lock"
             )
     if lock is not None and update is None and _same_requests(lock.get("requests") or [], roots):
         manager = (
@@ -819,17 +1064,24 @@ def sync_modules(
     return result
 
 
-def _request_key(request):
-    """A request compared without the case of its id."""
-    return (request["id"].casefold(), request.get("ref"), request.get("context_ref"))
+def _request_key(req: dict) -> tuple:
+    """比较请求用的键：id 不区分大小写。
+    The key a request is compared by; the id ignores case.
+    """
+    return (req["id"].casefold(), req.get("ref"), req.get("context_ref"))
 
 
-def _same_requests(before, after):
-    """Whether two request lists ask for the same, whatever their order and id case."""
+def _same_requests(before: list[dict], after: list[dict]) -> bool:
+    """两组请求是否相同，不计顺序和 id 的大小写。
+    Whether two request lists ask for the same, whatever their order and id case.
+    """
     return sorted(map(_request_key, before)) == sorted(map(_request_key, after))
 
 
-def _changed_requests(before, after):
+def _changed_requests(before: list[dict], after: list[dict]) -> list[str]:
+    """两组请求的差异：+新增、-删除、~修改。
+    The differences between two request lists: +added, -removed, ~changed.
+    """
     old = {r["id"].casefold(): r for r in before}
     new = {r["id"].casefold(): r for r in after}
     changed = [f"+{new[i]['id']}" for i in new if i not in old]
