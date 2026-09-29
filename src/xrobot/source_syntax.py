@@ -114,11 +114,7 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
     ConstructorModel can migrate independently of the parser implementation.
     """
     document = parse_document(source, source_name)
-    classes = [
-        view
-        for view in document.class_views(name)
-        if _is_global_class(view.node)
-    ]
+    classes = [view for view in document.class_views(name) if _is_global_class(view.node)]
     if not classes:
         raise ValueError(
             f"No explicit global class {name}; macro-generated interfaces are not supported"
@@ -149,20 +145,16 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
         declarator = constructor.declarator
         result.append(
             {
-                "declaration": (
-                    constructor.node.text
-                    if declarator is None
-                    else declarator.text
-                ),
-                "parameters": [
-                    parameter.text.strip() for parameter in constructor.parameters
-                ],
+                "declaration": (constructor.node.text if declarator is None else declarator.text),
+                "parameters": [parameter.text.strip() for parameter in constructor.parameters],
                 "line": source_bytes[: constructor.node.span.start].count(b"\n") + 1,
             }
         )
 
-    monitor = any(function.name == "OnMonitor" and function.access == "public"
-                  for function in class_view.functions())
+    monitor = any(
+        function.name == "OnMonitor" and function.access == "public"
+        for function in class_view.functions()
+    )
     return {
         "name": name,
         "monitor": monitor,

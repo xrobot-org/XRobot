@@ -10,6 +10,7 @@ unrelated outer declaration with the same name.
 Headers are parsed lazily: only files whose text mentions a requested name are
 parsed, and each file is parsed and tokenized once.
 """
+
 from __future__ import annotations
 
 import bisect
@@ -21,13 +22,34 @@ from xr_syntax.cpp import CppClassView
 
 from xrobot.source_syntax import close_token, code_tokens, parse_document, split_arguments
 
-_SCOPES = ('namespace_definition', 'class_specifier', 'struct_specifier')
-_WANTED = frozenset(_SCOPES + ('preproc_if', 'preproc_ifdef', 'preproc_call'))
-_CLASS_KEYS = ('class', 'struct', 'union', 'enum')
-_SKIP_LEADING = {'using', 'typedef', 'friend', 'template', 'static_assert', 'operator', '~',
-                 'public', 'protected', 'private'}
-_SPECIFIERS = {'static', 'inline', 'constexpr', 'consteval', 'constinit', 'mutable',
-               'thread_local', 'volatile', 'const', 'explicit', 'virtual'}
+_SCOPES = ("namespace_definition", "class_specifier", "struct_specifier")
+_WANTED = frozenset(_SCOPES + ("preproc_if", "preproc_ifdef", "preproc_call"))
+_CLASS_KEYS = ("class", "struct", "union", "enum")
+_SKIP_LEADING = {
+    "using",
+    "typedef",
+    "friend",
+    "template",
+    "static_assert",
+    "operator",
+    "~",
+    "public",
+    "protected",
+    "private",
+}
+_SPECIFIERS = {
+    "static",
+    "inline",
+    "constexpr",
+    "consteval",
+    "constinit",
+    "mutable",
+    "thread_local",
+    "volatile",
+    "const",
+    "explicit",
+    "virtual",
+}
 
 
 def _strip_type(text: str) -> tuple[str, ...] | None:
@@ -36,21 +58,21 @@ def _strip_type(text: str) -> tuple[str, ...] | None:
     names, current, i = [], None, 0
     while i < len(items):
         token = items[i]
-        if token.text in ('const', 'volatile', 'typename', 'struct', 'class', '&', '&&'):
+        if token.text in ("const", "volatile", "typename", "struct", "class", "&", "&&"):
             i += 1
             continue
-        if token.text in ('*', '[', '('):
+        if token.text in ("*", "[", "("):
             return None
-        if token.text == '<':
+        if token.text == "<":
             i = close_token(items, i) + 1
             continue
-        if token.text == '::':
+        if token.text == "::":
             if current is not None:
                 names.append(current)
             current = None
             i += 1
             continue
-        if token.kind == 'identifier':
+        if token.kind == "identifier":
             current = token.text
         i += 1
     if current is not None:
@@ -63,19 +85,19 @@ def _split_last(spelled: str) -> tuple[str, list[str] | None]:
     items = code_tokens(spelled)
     cut, i, last_open = None, 0, None
     while i < len(items):
-        if items[i].text == '<':
+        if items[i].text == "<":
             last_open = i
             i = close_token(items, i) + 1
             continue
-        if items[i].text == '::':
+        if items[i].text == "::":
             cut = items[i].start
             last_open = None
         i += 1
-    outer = spelled[:cut].strip() if cut is not None else ''
+    outer = spelled[:cut].strip() if cut is not None else ""
     args = None
     if last_open is not None and (cut is None or items[last_open].start > cut):
         close = close_token(items, last_open)
-        args = split_arguments(spelled[items[last_open].end:items[close].start])
+        args = split_arguments(spelled[items[last_open].end : items[close].start])
     return outer, args
 
 
@@ -83,9 +105,9 @@ def _replace_identifiers(text: str, replacements: dict[str, str]) -> str:
     items = code_tokens(text)
     edits = []
     for i, token in enumerate(items):
-        if token.kind != 'identifier' or token.text not in replacements:
+        if token.kind != "identifier" or token.text not in replacements:
             continue
-        if i and items[i - 1].text in ('::', '.', '->'):
+        if i and items[i - 1].text in ("::", ".", "->"):
             continue
         edits.append((token.start, token.end, replacements[token.text]))
     for start, end, value in reversed(edits):
@@ -108,23 +130,23 @@ class _Header:
         total = 0
         for i, ch in enumerate(text):
             byte_of[i] = total
-            total += len(ch.encode('utf-8', errors='surrogateescape'))
+            total += len(ch.encode("utf-8", errors="surrogateescape"))
         byte_of[len(text)] = total
         self._byte_of = byte_of
         self._starts = [byte_of[t.start] for t in self.tokens]
         # One tree walk collects every node kind the index needs.
         self.nodes = {}
         for element in self.document.root.descendants():
-            if element.kind in _WANTED and hasattr(element, 'child_by_field'):
+            if element.kind in _WANTED and hasattr(element, "child_by_field"):
                 self.nodes.setdefault(element.kind, []).append(element)
         deltas = []
-        for kind in ('preproc_if', 'preproc_ifdef', 'preproc_call'):
+        for kind in ("preproc_if", "preproc_ifdef", "preproc_call"):
             for node in self.nodes.get(kind, []):
-                if kind != 'preproc_call':
+                if kind != "preproc_call":
                     deltas.append((node.span.start, 1))
                     continue
                 significant = [c for c in node.syntax_children if not c.is_trivia]
-                if len(significant) > 1 and significant[1].text == 'endif':
+                if len(significant) > 1 and significant[1].text == "endif":
                     deltas.append((node.span.start, -1))
         deltas.sort()
         self._directive_at = [position for position, _ in deltas]
@@ -173,38 +195,48 @@ def _scan_body(header: _Header, items, default_access: str) -> _Layout:
     while i < end:
         start = i
         first = items[i]
-        if first.text in ('public', 'protected', 'private') and i + 1 < end and items[i + 1].text == ':':
+        if (
+            first.text in ("public", "protected", "private")
+            and i + 1 < end
+            and items[i + 1].text == ":"
+        ):
             access = first.text
             i += 2
             continue
-        if first.text == ';':
+        if first.text == ";":
             i += 1
             continue
         # Collect one member declaration up to its top-level ';' (or a function body).
         j = i
         body_close = None
-        while j < end and items[j].text != ';':
-            if items[j].text == '{':
+        while j < end and items[j].text != ";":
+            if items[j].text == "{":
                 close = close_token(items, j)
                 previous = items[j - 1] if j > i else None
                 # In a function declaration, a brace right after a member name
                 # is a constructor initializer; any other brace opens the body.
-                if previous is not None and _is_function(items[i:j]) and (
-                        previous.kind != 'identifier'
-                        or previous.text in ('const', 'override', 'final', 'noexcept')
-                        or any(t.text == '->' for t in items[i:j])) and previous.text != '>':
+                if (
+                    previous is not None
+                    and _is_function(items[i:j])
+                    and (
+                        previous.kind != "identifier"
+                        or previous.text in ("const", "override", "final", "noexcept")
+                        or any(t.text == "->" for t in items[i:j])
+                    )
+                    and previous.text != ">"
+                ):
                     body_close = close  # function body: the member ends here
                     break
                 j = close + 1
                 continue
-            if items[j].text in ('(', '[', '<') and j + 1 < end:
-                if items[j].text == '<' and not _template_open(items, i, j):
+            if items[j].text in ("(", "[", "<") and j + 1 < end:
+                if items[j].text == "<" and not _template_open(items, i, j):
                     j += 1
                     continue
                 j = close_token(items, j) + 1
                 continue
             j += 1
-        member = items[i:(body_close + 1 if body_close is not None else j)]
+        member = items[i : (body_close + 1 if body_close is not None else j)]
         i = (body_close + 1) if body_close is not None else j + 1
         if not member:
             continue
@@ -217,48 +249,48 @@ def _scan_body(header: _Header, items, default_access: str) -> _Layout:
 def _template_open(items, start, index) -> bool:
     """Whether ``<`` at ``index`` opens template arguments (vs. a comparison)."""
     previous = items[index - 1] if index > start else None
-    return previous is not None and (previous.kind == 'identifier' or previous.text == 'template')
+    return previous is not None and (previous.kind == "identifier" or previous.text == "template")
 
 
 def _classify(header: _Header, member, access: str, layout: _Layout):
     texts = [t.text for t in member]
     first = texts[0]
-    if first == 'using':
-        if len(texts) >= 4 and texts[2] == '=' and member[1].kind == 'identifier':
-            layout.member_types[texts[1]] = 'using'
+    if first == "using":
+        if len(texts) >= 4 and texts[2] == "=" and member[1].kind == "identifier":
+            layout.member_types[texts[1]] = "using"
             layout.aliases[texts[1]] = (member[2].end, member[-1].end)
-        elif 'OnMonitor' in texts and access == 'public':
-            layout.monitor = 'conditional' if header.conditional_depth(member[0]) else 'public'
+        elif "OnMonitor" in texts and access == "public":
+            layout.monitor = "conditional" if header.conditional_depth(member[0]) else "public"
         return
-    if first == 'typedef':
+    if first == "typedef":
         # typedef struct {...} Name; is registered as a class by TypeIndex._parse.
-        if member[-1].kind == 'identifier':
-            layout.member_types[texts[-1]] = 'typedef'
+        if member[-1].kind == "identifier":
+            layout.member_types[texts[-1]] = "typedef"
         return
     if first in _SKIP_LEADING:
         return
     if first in _CLASS_KEYS:
         k = 1
-        if first == 'enum' and k < len(texts) and texts[k] in ('class', 'struct'):
+        if first == "enum" and k < len(texts) and texts[k] in ("class", "struct"):
             k += 1
-        name = texts[k] if k < len(texts) and member[k].kind == 'identifier' else None
-        opening = next((m for m, t in enumerate(texts) if t == '{'), None)
-        if first == 'union':
+        name = texts[k] if k < len(texts) and member[k].kind == "identifier" else None
+        opening = next((m for m, t in enumerate(texts) if t == "{"), None)
+        if first == "union":
             layout.has_union = True
         if name is not None and opening is not None:
             layout.member_types[name] = first
         if opening is None:
             return  # forward declaration or elaborated member type handled below
         close = close_token(member, opening)
-        rest = member[close + 1:]
-        declarators = [t for t in rest if t.text != ';']
-        if declarators and first != 'enum':
+        rest = member[close + 1 :]
+        declarators = [t for t in rest if t.text != ";"]
+        if declarators and first != "enum":
             # `struct T {...} member;` declares a member of the nested type.
-            _record_fields(header, declarators, name or '', access, layout)
-        elif declarators and first == 'enum':
-            _record_fields(header, declarators, name or 'int', access, layout)
+            _record_fields(header, declarators, name or "", access, layout)
+        elif declarators and first == "enum":
+            _record_fields(header, declarators, name or "int", access, layout)
         return
-    if 'virtual' in texts:
+    if "virtual" in texts:
         layout.has_virtual = True
     # Leading specifiers decide static members; functions have a top-level '('
     # before any initializer.
@@ -266,17 +298,17 @@ def _classify(header: _Header, member, access: str, layout: _Layout):
     for t in texts:
         if t in _SPECIFIERS:
             leading.add(t)
-        elif t in ('[', 'alignas', '__attribute__'):
+        elif t in ("[", "alignas", "__attribute__"):
             continue
         else:
             break
-    if 'static' in leading:
-        if 'OnMonitor' in texts and access == 'public' and _is_function(member):
-            layout.monitor = 'conditional' if header.conditional_depth(member[0]) else 'public'
+    if "static" in leading:
+        if "OnMonitor" in texts and access == "public" and _is_function(member):
+            layout.monitor = "conditional" if header.conditional_depth(member[0]) else "public"
         return
     if _is_function(member):
-        if 'OnMonitor' in texts and access == 'public':
-            layout.monitor = 'conditional' if header.conditional_depth(member[0]) else 'public'
+        if "OnMonitor" in texts and access == "public":
+            layout.monitor = "conditional" if header.conditional_depth(member[0]) else "public"
         return
     _record_fields(header, member, None, access, layout)
 
@@ -285,18 +317,22 @@ def _is_function(member) -> bool:
     k = 0
     while k < len(member):
         text = member[k].text
-        if text in ('=', '{', ':'):
+        if text in ("=", "{", ":"):
             return False
-        if text == '[' and k + 1 < len(member) and member[k + 1].text == '[':
+        if text == "[" and k + 1 < len(member) and member[k + 1].text == "[":
             k = close_token(member, k) + 1
             continue
-        if text in ('alignas', '__attribute__', 'decltype') and k + 1 < len(member) and member[k + 1].text == '(':
+        if (
+            text in ("alignas", "__attribute__", "decltype")
+            and k + 1 < len(member)
+            and member[k + 1].text == "("
+        ):
             k = close_token(member, k + 1) + 1
             continue
-        if text == '<':
+        if text == "<":
             k = close_token(member, k) + 1
             continue
-        if text == '(':
+        if text == "(":
             return True
         k += 1
     return False
@@ -306,16 +342,16 @@ def _record_fields(header: _Header, member, forced_type, access, layout: _Layout
     parts, start, k = [], 0, 0
     while k < len(member):
         text = member[k].text
-        if text in ('(', '{', '[', '<'):
-            if text == '<' and not (k and member[k - 1].kind == 'identifier'):
+        if text in ("(", "{", "[", "<"):
+            if text == "<" and not (k and member[k - 1].kind == "identifier"):
                 k += 1
                 continue
             k = close_token(member, k) + 1
             continue
-        if text == ',':
+        if text == ",":
             parts.append(member[start:k])
             start = k + 1
-        if text == ';':
+        if text == ";":
             parts.append(member[start:k])
             start = k + 1
         k += 1
@@ -330,18 +366,22 @@ def _record_fields(header: _Header, member, forced_type, access, layout: _Layout
         m = 0
         while m < len(part):
             token = part[m]
-            if m and token.text in ('{', '=', '[', ':'):
+            if m and token.text in ("{", "=", "[", ":"):
                 break
-            if token.text in ('alignas', '__attribute__') and m + 1 < len(part) and part[m + 1].text == '(':
+            if (
+                token.text in ("alignas", "__attribute__")
+                and m + 1 < len(part)
+                and part[m + 1].text == "("
+            ):
                 m = close_token(part, m + 1) + 1
                 continue
-            if token.text == '[' and m + 1 < len(part) and part[m + 1].text == '[':
+            if token.text == "[" and m + 1 < len(part) and part[m + 1].text == "[":
                 m = close_token(part, m) + 1
                 continue
-            if token.text == '<':
+            if token.text == "<":
                 m = close_token(part, m) + 1
                 continue
-            if token.kind == 'identifier' and token.text not in _SPECIFIERS:
+            if token.kind == "identifier" and token.text not in _SPECIFIERS:
                 name_index = m
             m += 1
         if name_index is None:
@@ -352,28 +392,35 @@ def _record_fields(header: _Header, member, forced_type, access, layout: _Layout
             n = 0
             while n < len(type_tokens):
                 token = type_tokens[n]
-                if token.text in ('alignas', '__attribute__') and n + 1 < len(type_tokens) and \
-                        type_tokens[n + 1].text == '(':
+                if (
+                    token.text in ("alignas", "__attribute__")
+                    and n + 1 < len(type_tokens)
+                    and type_tokens[n + 1].text == "("
+                ):
                     n = close_token(type_tokens, n + 1) + 1
                     continue
-                if token.text == '[' and n + 1 < len(type_tokens) and type_tokens[n + 1].text == '[':
+                if (
+                    token.text == "["
+                    and n + 1 < len(type_tokens)
+                    and type_tokens[n + 1].text == "["
+                ):
                     n = close_token(type_tokens, n) + 1
                     continue
-                if token.text == 'mutable':
+                if token.text == "mutable":
                     n += 1
                     continue
                 spelled.append(token)
                 n += 1
-            base_type = header.text[spelled[0].start:spelled[-1].end].strip() if spelled else ''
+            base_type = header.text[spelled[0].start : spelled[-1].end].strip() if spelled else ""
         name = part[name_index].text
         layout.fields.append((name, base_type, access))
-        rest = part[name_index + 1:]
-        if rest and rest[0].text == ':':  # bit-field width, then an optional initializer
-            rest = next((rest[k:] for k in range(len(rest)) if rest[k].text in ('=', '{')), [])
-        if rest and rest[0].text == '=' and len(rest) > 1:
-            layout.field_defaults[name] = header.text[rest[1].start:rest[-1].end].strip()
-        elif rest and rest[0].text == '{':
-            layout.field_defaults[name] = header.text[rest[0].start:rest[-1].end].strip()
+        rest = part[name_index + 1 :]
+        if rest and rest[0].text == ":":  # bit-field width, then an optional initializer
+            rest = next((rest[k:] for k in range(len(rest)) if rest[k].text in ("=", "{")), [])
+        if rest and rest[0].text == "=" and len(rest) > 1:
+            layout.field_defaults[name] = header.text[rest[1].start : rest[-1].end].strip()
+        elif rest and rest[0].text == "{":
+            layout.field_defaults[name] = header.text[rest[0].start : rest[-1].end].strip()
         if conditional:
             layout.conditional_fields.append(name)
 
@@ -381,9 +428,16 @@ def _record_fields(header: _Header, member, forced_type, access, layout: _Layout
 class ClassEntry:
     """One located class/struct definition."""
 
-    def __init__(self, header: _Header, path: tuple[str, ...], kind: str, body_range: tuple[int, int],
-                 view=None, head_range: tuple[int, int] | None = None,
-                 template_parameters: list[str] | None = None):
+    def __init__(
+        self,
+        header: _Header,
+        path: tuple[str, ...],
+        kind: str,
+        body_range: tuple[int, int],
+        view=None,
+        head_range: tuple[int, int] | None = None,
+        template_parameters: list[str] | None = None,
+    ):
         self.header_info = header
         self.header = header.path
         self.path = path
@@ -396,15 +450,15 @@ class ClassEntry:
 
     @property
     def qualified(self) -> str:
-        return '::'.join(self.path)
+        return "::".join(self.path)
 
     @property
     def default_access(self) -> str:
-        return 'public' if self.kind == 'struct' else 'private'
+        return "public" if self.kind == "struct" else "private"
 
     def body_tokens(self):
         start, end = self._body_range
-        return self.header_info.tokens[start:end + 1]
+        return self.header_info.tokens[start : end + 1]
 
     def _head_tokens(self):
         if self._head_range is None:
@@ -418,29 +472,38 @@ class ClassEntry:
         return self._layout
 
     def has_base(self) -> bool:
-        return any(t.text == ':' for t in self._head_tokens())
+        return any(t.text == ":" for t in self._head_tokens())
 
     def base_spellings(self) -> list[tuple[str, str]]:
         """Return (access, type spelling) of each direct base class."""
         head = self._head_tokens()
-        colon = next((i for i, t in enumerate(head) if t.text == ':' and
-                      not (i + 1 < len(head) and head[i + 1].text == ':') and
-                      not (i and head[i - 1].text == ':')), None)
+        colon = next(
+            (
+                i
+                for i, t in enumerate(head)
+                if t.text == ":"
+                and not (i + 1 < len(head) and head[i + 1].text == ":")
+                and not (i and head[i - 1].text == ":")
+            ),
+            None,
+        )
         if colon is None:
             return []
         result, start, i = [], colon + 1, colon + 1
         while i <= len(head):
-            if i < len(head) and head[i].text == '<':
+            if i < len(head) and head[i].text == "<":
                 i = close_token(head, i) + 1
                 continue
-            if i == len(head) or head[i].text == ',':
-                words = [t for t in head[start:i] if t.text != 'virtual']
+            if i == len(head) or head[i].text == ",":
+                words = [t for t in head[start:i] if t.text != "virtual"]
                 access = self.default_access
-                if words and words[0].text in ('public', 'protected', 'private'):
+                if words and words[0].text in ("public", "protected", "private"):
                     access = words[0].text
                     words = words[1:]
                 if words:
-                    result.append((access, self.header_info.text[words[0].start:words[-1].end].strip()))
+                    result.append(
+                        (access, self.header_info.text[words[0].start : words[-1].end].strip())
+                    )
                 start = i + 1
             i += 1
         return result
@@ -449,8 +512,11 @@ class ClassEntry:
         if self.view is None:
             return []
         from xrobot.constructor_model import parameter
-        return [[parameter(p.text) for p in ctor.parameters if p.text.strip() not in ('', 'void')]
-                for ctor in self.view.constructors(public_only=True, callable_only=True)]
+
+        return [
+            [parameter(p.text) for p in ctor.parameters if p.text.strip() not in ("", "void")]
+            for ctor in self.view.constructors(public_only=True, callable_only=True)
+        ]
 
     def declares_constructor(self) -> bool:
         return self.view is not None and bool(self.view.constructors())
@@ -466,17 +532,19 @@ class ClassEntry:
         layout = self.layout()
         if self.declares_constructor() or self.has_base() or layout.has_virtual:
             return False
-        return all(access == 'public' for _, _, access in layout.fields)
+        return all(access == "public" for _, _, access in layout.fields)
 
     def mapping_problem(self) -> str | None:
         """Why a YAML mapping cannot be checked against this type, or None."""
         layout = self.layout()
         if layout.has_union:
-            return f'{self.qualified} contains a union'
+            return f"{self.qualified} contains a union"
         if layout.conditional_fields:
-            return '{} declares fields under #if ({})'.format(self.qualified, ', '.join(layout.conditional_fields))
+            return "{} declares fields under #if ({})".format(
+                self.qualified, ", ".join(layout.conditional_fields)
+            )
         if not self.declares_constructor() and (self.has_base() or layout.has_virtual):
-            return f'{self.qualified} has base classes or virtual functions and no constructor'
+            return f"{self.qualified} has base classes or virtual functions and no constructor"
         return None
 
     def monitor(self) -> str | None:
@@ -502,13 +570,16 @@ class TypeIndex:
 
     def _text(self, path: Path) -> str:
         if path not in self._texts:
-            self._texts[path] = path.read_text(encoding='utf-8', errors='surrogateescape')
+            self._texts[path] = path.read_text(encoding="utf-8", errors="surrogateescape")
         return self._texts[path]
 
     def global_class_names(self) -> set:
         """Top-level class/struct names in the loaded headers (textual scan)."""
-        pattern = re.compile(r'^(?:template\s*<[^;{]*>\s*)?(?:class|struct)\s+'
-                             r'(?:\[\[[^\]]*\]\]\s*|alignas\s*\([^)]*\)\s*)*([A-Za-z_]\w*)', re.M)
+        pattern = re.compile(
+            r"^(?:template\s*<[^;{]*>\s*)?(?:class|struct)\s+"
+            r"(?:\[\[[^\]]*\]\]\s*|alignas\s*\([^)]*\)\s*)*([A-Za-z_]\w*)",
+            re.M,
+        )
         names = set()
         for path in self.headers:
             names.update(pattern.findall(self._text(path)))
@@ -518,23 +589,28 @@ class TypeIndex:
         if name in self._ensured:
             return
         self._ensured.add(name)
-        pattern = re.compile(rf'\b{re.escape(name)}\b')
+        pattern = re.compile(rf"\b{re.escape(name)}\b")
         for path in self.headers:
             if path not in self._parsed and pattern.search(self._text(path)):
                 self._parse(path)
 
     def _scope_of(self, header: _Header, byte_position: int) -> tuple[str, ...]:
         """Enclosing namespace/class names of a byte position (outermost first)."""
-        if not hasattr(header, 'scopes'):
+        if not hasattr(header, "scopes"):
             header.scopes = []
             for kind in _SCOPES:
                 for node in header.nodes.get(kind, []):
-                    body = node.child_by_field('body')
+                    body = node.child_by_field("body")
                     if body is None:
                         continue
-                    name = node.child_by_field('name')
-                    header.scopes.append((body.span.start, body.span.end,
-                                          name.text.strip() if name is not None else ''))
+                    name = node.child_by_field("name")
+                    header.scopes.append(
+                        (
+                            body.span.start,
+                            body.span.end,
+                            name.text.strip() if name is not None else "",
+                        )
+                    )
             header.scopes.sort()
         return tuple(name for start, end, name in header.scopes if start < byte_position < end)
 
@@ -546,7 +622,7 @@ class TypeIndex:
     def _parse(self, path: Path):
         header = _Header(path, self._text(path))
         self._parsed[path] = header
-        classes = header.nodes.get('class_specifier', []) + header.nodes.get('struct_specifier', [])
+        classes = header.nodes.get("class_specifier", []) + header.nodes.get("struct_specifier", [])
         for view in (CppClassView(node) for node in classes):
             if view.body is None or not view.name:
                 continue
@@ -559,28 +635,39 @@ class TypeIndex:
             close_index = header.index_of(body_tokens[-1])
             head_tokens = header.tokens_in(node.span.start, view.body.span.start)
             head_range = (header.index_of(head_tokens[0]), open_index) if head_tokens else None
-            parameters = [p.name for p in view.template_parameters if getattr(p, 'name', None)]
-            kind = 'struct' if node.kind == 'struct_specifier' else 'class'
-            self._add(ClassEntry(header, scope + (view.name,), kind, (open_index, close_index),
-                                 view=view, head_range=head_range, template_parameters=parameters))
+            parameters = [p.name for p in view.template_parameters if getattr(p, "name", None)]
+            kind = "struct" if node.kind == "struct_specifier" else "class"
+            self._add(
+                ClassEntry(
+                    header,
+                    scope + (view.name,),
+                    kind,
+                    (open_index, close_index),
+                    view=view,
+                    head_range=head_range,
+                    template_parameters=parameters,
+                )
+            )
         # typedef struct {...} Name; at namespace scope (xr-syntax does not model it).
         items = header.tokens
         for k, token in enumerate(items[:-2]):
-            if token.text != 'typedef' or items[k + 1].text not in ('struct', 'class'):
+            if token.text != "typedef" or items[k + 1].text not in ("struct", "class"):
                 continue
-            opening = next((m for m in range(k + 2, min(k + 6, len(items))) if items[m].text == '{'), None)
+            opening = next(
+                (m for m in range(k + 2, min(k + 6, len(items))) if items[m].text == "{"), None
+            )
             if opening is None:
                 continue
             closing = close_token(items, opening)
-            names = [t.text for t in items[closing + 1:closing + 4] if t.kind == 'identifier']
+            names = [t.text for t in items[closing + 1 : closing + 4] if t.kind == "identifier"]
             if not names:
                 continue
             scope = self._scope_of(header, header.byte(token.start))
             if scope + (names[0],) not in self._entries:
-                self._add(ClassEntry(header, scope + (names[0],), 'struct', (opening, closing)))
-        for namespace in header.nodes.get('namespace_definition', []):
-            name = namespace.child_by_field('name')
-            body = namespace.child_by_field('body')
+                self._add(ClassEntry(header, scope + (names[0],), "struct", (opening, closing)))
+        for namespace in header.nodes.get("namespace_definition", []):
+            name = namespace.child_by_field("name")
+            body = namespace.child_by_field("body")
             if name is None or body is None:
                 continue
             scope = self._scope_of(header, namespace.span.start) + (name.text.strip(),)
@@ -597,10 +684,16 @@ class TypeIndex:
             return None
         headers = sorted({str(e.header) for e in entries})
         if len(headers) > 1:
-            raise ValueError('Type {} is defined in several Module headers: {}'.format('::'.join(path), ', '.join(headers)))
+            raise ValueError(
+                "Type {} is defined in several Module headers: {}".format(
+                    "::".join(path), ", ".join(headers)
+                )
+            )
         return entries[0]
 
-    def resolve(self, spelling: str, scope: tuple[str, ...] = (), _depth: int = 0) -> ClassEntry | None:
+    def resolve(
+        self, spelling: str, scope: tuple[str, ...] = (), _depth: int = 0
+    ) -> ClassEntry | None:
         """Find the class a type spelling names, searching outward from ``scope``.
 
         Returns None when the name is not found or when it may denote something
@@ -665,7 +758,7 @@ class TypeIndex:
         replacements = {}
         spelled, path = entry_spelled, entry.path
         while path:
-            outer, args = _split_last(spelled) if spelled else ('', None)
+            outer, args = _split_last(spelled) if spelled else ("", None)
             owner = self._class_at(path)
             if owner is not None:
                 scopes.append((set(owner.member_types()), spelled))
@@ -673,20 +766,20 @@ class TypeIndex:
                     for name, value in zip(owner.template_parameters, args, strict=False):
                         replacements.setdefault(name, value.strip())
             else:
-                scopes.append((self._namespace_types.get(path, set()), '::'.join(path)))
+                scopes.append((self._namespace_types.get(path, set()), "::".join(path)))
             path = path[:-1]
-            spelled = outer or '::'.join(path)
+            spelled = outer or "::".join(path)
         spelling = _replace_identifiers(spelling, replacements)
         items = code_tokens(spelling)
         edits = []
         for i, token in enumerate(items):
-            if token.kind != 'identifier':
+            if token.kind != "identifier":
                 continue
-            if i and items[i - 1].text in ('::', '.', '->'):
+            if i and items[i - 1].text in ("::", ".", "->"):
                 continue
             for names, prefix in scopes:
                 if token.text in names and prefix:
-                    edits.append((token.start, token.end, prefix + '::' + token.text))
+                    edits.append((token.start, token.end, prefix + "::" + token.text))
                     break
         for start, end, text in reversed(edits):
             spelling = spelling[:start] + text + spelling[end:]
@@ -699,18 +792,20 @@ class TypeIndex:
         base cannot be located (LibXR bases never provide OnMonitor).
         """
         state = entry.monitor()
-        if state == 'conditional':
-            raise ValueError(f'{entry.qualified} declares OnMonitor under #if; the generator cannot evaluate '
-                             'build options')
-        if state == 'public':
+        if state == "conditional":
+            raise ValueError(
+                f"{entry.qualified} declares OnMonitor under #if; the generator cannot evaluate "
+                "build options"
+            )
+        if state == "public":
             return True
         if _depth > 8:
             return None
         unknown = False
         for access, base in entry.base_spellings():
-            if access != 'public':
+            if access != "public":
                 continue
-            if base.lstrip(':').startswith('LibXR::'):
+            if base.lstrip(":").startswith("LibXR::"):
                 continue
             parent = self.resolve(base, entry.path[:-1])
             if parent is None:
@@ -730,33 +825,38 @@ def _scan_namespace(header: _Header, items) -> _Layout:
     i, end = 1, len(items) - 1
     while i < end:
         t = items[i]
-        if t.text in ('{', '(', '[', '<'):
+        if t.text in ("{", "(", "[", "<"):
             i = close_token(items, i) + 1
             continue
         if t.text in _CLASS_KEYS:
             j = i + 1
-            if t.text == 'enum' and j < end and items[j].text in ('class', 'struct'):
+            if t.text == "enum" and j < end and items[j].text in ("class", "struct"):
                 j += 1
-            if j < end and items[j].kind == 'identifier':
+            if j < end and items[j].kind == "identifier":
                 layout.member_types[items[j].text] = t.text
-        elif t.text == 'using' and i + 2 < end and items[i + 1].kind == 'identifier' and items[i + 2].text == '=':
+        elif (
+            t.text == "using"
+            and i + 2 < end
+            and items[i + 1].kind == "identifier"
+            and items[i + 2].text == "="
+        ):
             k = i + 3
-            while k < end and items[k].text != ';':
-                if items[k].text in ('{', '(', '[', '<'):
+            while k < end and items[k].text != ";":
+                if items[k].text in ("{", "(", "[", "<"):
                     k = close_token(items, k) + 1
                     continue
                 k += 1
-            layout.member_types[items[i + 1].text] = 'using'
+            layout.member_types[items[i + 1].text] = "using"
             layout.aliases[items[i + 1].text] = (items[i + 2].end, items[k].start)
-        elif t.text == 'typedef':
+        elif t.text == "typedef":
             k = i + 1
-            while k < end and items[k].text != ';':
-                if items[k].text in ('{', '(', '[', '<'):
+            while k < end and items[k].text != ";":
+                if items[k].text in ("{", "(", "[", "<"):
                     k = close_token(items, k) + 1
                     continue
                 k += 1
-            if items[k - 1].kind == 'identifier':
-                layout.member_types[items[k - 1].text] = 'typedef'
+            if items[k - 1].kind == "identifier":
+                layout.member_types[items[k - 1].text] = "typedef"
         i += 1
     return layout
 
@@ -765,5 +865,5 @@ def module_headers(modules: dict) -> list[Path]:
     """Every header the generator may read for a set of modules."""
     headers = []
     for module in modules.values():
-        headers.extend(sorted(Path(module['path']).glob('*.hpp')))
+        headers.extend(sorted(Path(module["path"]).glob("*.hpp")))
     return headers

@@ -6,6 +6,7 @@ instance moves its comments with it. Values inside one instance are edited
 through a comment-preserving YAML round trip of that instance only. Every
 write uses the canonical layout that ``xrobot format`` enforces.
 """
+
 import hashlib
 import io
 import json
@@ -45,37 +46,38 @@ def dump_text(data):
 
 def canonical_text(text):
     """The canonical layout of a YAML document (comments and quoting kept)."""
-    if text.startswith('﻿'):
+    if text.startswith("﻿"):
         text = text[1:]
-    text = text.replace('\r\n', '\n')
+    text = text.replace("\r\n", "\n")
     data = _yaml().load(text)
     if data is None:
-        return text if text.endswith('\n') or not text else text + '\n'
+        return text if text.endswith("\n") or not text else text + "\n"
     return dump_text(data)
 
 
 def file_hash(path):
-    return hashlib.sha256(Path(path).read_bytes().replace(b'\r\n', b'\n')).hexdigest()
+    return hashlib.sha256(Path(path).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
 # -- instance blocks -------------------------------------------------------------
+
 
 class Blocks:
     """Line spans of the ``modules`` list items of one configuration file."""
 
     def __init__(self, text, source):
-        if text.startswith('﻿'):
+        if text.startswith("﻿"):
             text = text[1:]
-        self.text = text.replace('\r\n', '\n')
-        self.lines = self.text.split('\n')
+        self.text = text.replace("\r\n", "\n")
+        self.lines = self.text.split("\n")
         root = yaml.compose(self.text, Loader=yaml.BaseLoader) if self.text.strip() else None
         self.items = []  # (comment_start, start, end) line indices, end exclusive
         self.sequence_end = None
         self.item_indent = None
         if root is None or not isinstance(root, yaml.MappingNode):
             return
-        key = next((k for k, v in root.value if k.value == 'modules'), None)
-        node = next((v for k, v in root.value if k.value == 'modules'), None)
+        key = next((k for k, v in root.value if k.value == "modules"), None)
+        node = next((v for k, v in root.value if k.value == "modules"), None)
         if node is None or not isinstance(node, yaml.SequenceNode) or node.flow_style:
             return
         starts = [child.start_mark.line for child in node.value]
@@ -84,8 +86,11 @@ class Blocks:
         for k, start in enumerate(starts):
             item_end = starts[k + 1] if k + 1 < len(starts) else end
             comment_start = start
-            while comment_start > 0 and self._is_comment_or_blank(comment_start - 1) and \
-                    (k == 0 or comment_start - 1 >= starts[k - 1]):
+            while (
+                comment_start > 0
+                and self._is_comment_or_blank(comment_start - 1)
+                and (k == 0 or comment_start - 1 >= starts[k - 1])
+            ):
                 comment_start -= 1
             if k == 0:
                 comment_start = max(comment_start, key.start_mark.line + 1)
@@ -95,54 +100,57 @@ class Blocks:
             self.items[k][2] = self.items[k + 1][0]
         if starts:
             line = self.lines[starts[0]]
-            self.item_indent = len(line) - len(line.lstrip(' '))
+            self.item_indent = len(line) - len(line.lstrip(" "))
 
     def _is_comment_or_blank(self, index):
         stripped = self.lines[index].strip()
-        return not stripped or stripped.startswith('#')
+        return not stripped or stripped.startswith("#")
 
     def _block_end(self, node):
         end = node.end_mark.line
         # Trailing comment/blank lines at the end of the list stay with the file.
-        while end > node.start_mark.line and end - 1 < len(self.lines) and \
-                self._is_comment_or_blank(end - 1):
+        while (
+            end > node.start_mark.line
+            and end - 1 < len(self.lines)
+            and self._is_comment_or_blank(end - 1)
+        ):
             end -= 1
         return end
 
     def item_text(self, k):
         _, start, end = self.items[k]
-        return '\n'.join(self.lines[start:end])
+        return "\n".join(self.lines[start:end])
 
     def replace(self, k, new_lines, keep_comments=True):
         comment_start, start, end = self.items[k]
         begin = start if keep_comments else comment_start
         lines = self.lines[:begin] + new_lines + self.lines[end:]
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def remove(self, k):
         comment_start, _, end = self.items[k]
-        return '\n'.join(self.lines[:comment_start] + self.lines[end:])
+        return "\n".join(self.lines[:comment_start] + self.lines[end:])
 
     def append(self, new_lines):
         end = self.sequence_end if self.sequence_end is not None else len(self.lines)
-        return '\n'.join(self.lines[:end] + new_lines + self.lines[end:])
+        return "\n".join(self.lines[:end] + new_lines + self.lines[end:])
 
 
 def _render_item(item, indent):
     """Render one instance mapping as a list item at ``indent`` spaces."""
     text = dump_text([item])
-    lines = text.rstrip('\n').split('\n')
-    base = len(lines[0]) - len(lines[0].lstrip(' '))
-    return [' ' * indent + line[base:] if line.strip() else '' for line in lines]
+    lines = text.rstrip("\n").split("\n")
+    base = len(lines[0]) - len(lines[0].lstrip(" "))
+    return [" " * indent + line[base:] if line.strip() else "" for line in lines]
 
 
 def _load_item(block_text):
     """Load one instance block (a one-item list) for a round-trip edit."""
-    lines = block_text.split('\n')
-    indent = min(len(line) - len(line.lstrip(' ')) for line in lines if line.strip())
-    data = _yaml().load('\n'.join(line[indent:] for line in lines))
+    lines = block_text.split("\n")
+    indent = min(len(line) - len(line.lstrip(" ")) for line in lines if line.strip())
+    data = _yaml().load("\n".join(line[indent:] for line in lines))
     if not isinstance(data, CommentedSeq) or len(data) != 1:
-        raise ConfigError('cannot edit this instance: its YAML block is not a single list item')
+        raise ConfigError("cannot edit this instance: its YAML block is not a single list item")
     return data[0], indent
 
 
@@ -150,32 +158,40 @@ class ConfigFile:
     def __init__(self, path, source=None):
         self.path = Path(path)
         self.source = source or self.path.as_posix()
-        self.text = self.path.read_text(encoding='utf-8-sig') if self.path.exists() else 'modules: []\n'
+        self.text = (
+            self.path.read_text(encoding="utf-8-sig") if self.path.exists() else "modules: []\n"
+        )
         self.config = parse_yaml(self.text, self.source)
 
     def blocks(self):
         return Blocks(self.text, self.source)
 
     def index_of(self, instance_id):
-        for k, entry in enumerate(self.config.get('modules') or []):
-            if isinstance(entry, dict) and entry.get('id') == instance_id:
+        for k, entry in enumerate(self.config.get("modules") or []):
+            if isinstance(entry, dict) and entry.get("id") == instance_id:
                 return k
-        raise ConfigError(f'{self.source}: no instance with id {instance_id}')
+        raise ConfigError(f"{self.source}: no instance with id {instance_id}")
 
     def write(self, text, check=True):
         text = canonical_text(text)
         config = parse_yaml(text, self.source)
         if check:
             from xrobot.config import validate_config
+
             validate_config(config, self.source)
         atomic_write(self.path, text)
         self.text, self.config = text, config
 
 
 def _path_tokens(path):
-    tokens = re.findall(r'[A-Za-z_][A-Za-z_0-9]*|\[\d+\]', path)
-    if not tokens or ''.join(t if t.startswith('[') else '.' + t for t in tokens).lstrip('.') != path:
-        raise ConfigError(f'invalid path {path}; use id, template_args[n], args.<param>.<field>..., [n]')
+    tokens = re.findall(r"[A-Za-z_][A-Za-z_0-9]*|\[\d+\]", path)
+    if (
+        not tokens
+        or "".join(t if t.startswith("[") else "." + t for t in tokens).lstrip(".") != path
+    ):
+        raise ConfigError(
+            f"invalid path {path}; use id, template_args[n], args.<param>.<field>..., [n]"
+        )
     return tokens
 
 
@@ -185,26 +201,29 @@ def _set_path(item, path, value):
     node = item
     for position, token in enumerate(tokens):
         last = position == len(tokens) - 1
-        if token.startswith('['):
+        if token.startswith("["):
             index = int(token[1:-1])
             if not isinstance(node, list) or index >= len(node):
-                raise ConfigError(f'path {path}: no element {index}')
+                raise ConfigError(f"path {path}: no element {index}")
             if last:
                 node[index] = value
                 return
             node = node[index]
             continue
-        if node is item and token == 'args':
+        if node is item and token == "args":
             if last:
                 # The whole argument list, e.g. when switching constructors.
                 if not isinstance(value, list) or not all(
-                        isinstance(v, dict) and len(v) == 1 for v in value):
-                    raise ConfigError('args takes a list of one-parameter mappings, e.g. '
-                                      '[{"led": "LED_B"}, {"cycle": "250"}]')
-                item['args'] = value
+                    isinstance(v, dict) and len(v) == 1 for v in value
+                ):
+                    raise ConfigError(
+                        "args takes a list of one-parameter mappings, e.g. "
+                        '[{"led": "LED_B"}, {"cycle": "250"}]'
+                    )
+                item["args"] = value
                 return
             name = tokens[position + 1]
-            args = item.get('args') or []
+            args = item.get("args") or []
             for entry in args:
                 if isinstance(entry, dict) and name in entry:
                     if position + 1 == len(tokens) - 1:
@@ -213,11 +232,11 @@ def _set_path(item, path, value):
                     node = entry[name]
                     break
             else:
-                raise ConfigError(f'path {path}: no argument {name}')
-            rest = tokens[position + 2:]
+                raise ConfigError(f"path {path}: no argument {name}")
+            rest = tokens[position + 2 :]
             return _set_path_tail(node, rest, value, path)
         if not isinstance(node, dict) or token not in node:
-            raise ConfigError(f'path {path}: no key {token}')
+            raise ConfigError(f"path {path}: no key {token}")
         if last:
             node[token] = value
             return
@@ -227,17 +246,17 @@ def _set_path(item, path, value):
 def _set_path_tail(node, tokens, value, path):
     for position, token in enumerate(tokens):
         last = position == len(tokens) - 1
-        if token.startswith('['):
+        if token.startswith("["):
             index = int(token[1:-1])
             if not isinstance(node, list) or index >= len(node):
-                raise ConfigError(f'path {path}: no element {index}')
+                raise ConfigError(f"path {path}: no element {index}")
             if last:
                 node[index] = value
                 return
             node = node[index]
         else:
             if not isinstance(node, dict) or token not in node:
-                raise ConfigError(f'path {path}: no key {token}')
+                raise ConfigError(f"path {path}: no key {token}")
             if last:
                 node[token] = value
                 return
@@ -247,7 +266,7 @@ def _set_path_tail(node, tokens, value, path):
 def _to_yaml_value(value):
     """JSON value -> configuration value (numbers and booleans become C++ text)."""
     if isinstance(value, bool):
-        return 'true' if value else 'false'
+        return "true" if value else "false"
     if isinstance(value, (int, float)):
         return str(value)
     if isinstance(value, dict):
@@ -264,7 +283,7 @@ def set_value(config_path, instance_id, path, value, if_match=None, source=None)
     """Replace one node of one instance (D7); other text is untouched."""
     config = ConfigFile(config_path, source)
     if if_match is not None and file_hash(config.path) != if_match:
-        raise ConfigError(f'{config.source} changed since it was read; reload and retry')
+        raise ConfigError(f"{config.source} changed since it was read; reload and retry")
     k = config.index_of(instance_id)
     new_value = _to_yaml_value(value)
     if isinstance(new_value, str):
@@ -282,9 +301,9 @@ def _scalar_text(value, style):
     """Render ``value`` as a one-line YAML scalar, keeping the old quoting style."""
     if style == '"':
         return json.dumps(value, ensure_ascii=False)
-    if style is None and value not in ('', '~', 'null', 'Null', 'NULL') and '\n' not in value:
+    if style is None and value not in ("", "~", "null", "Null", "NULL") and "\n" not in value:
         try:
-            node = yaml.compose('k: ' + value, Loader=yaml.BaseLoader)
+            node = yaml.compose("k: " + value, Loader=yaml.BaseLoader)
             child = node.value[0][1]
             if isinstance(child, yaml.ScalarNode) and child.style is None and child.value == value:
                 return value
@@ -295,18 +314,18 @@ def _scalar_text(value, style):
 
 def _replace_scalar(text, index, path, value):
     """Replace a one-line scalar in place; None when the path is not such a scalar."""
-    body = text[1:] if text.startswith('\ufeff') else text
-    body = body.replace('\r\n', '\n')
+    body = text[1:] if text.startswith("\ufeff") else text
+    body = body.replace("\r\n", "\n")
     root = yaml.compose(body, Loader=yaml.BaseLoader)
     try:
-        node = dict((k.value, v) for k, v in root.value)['modules'].value[index]
+        node = dict((k.value, v) for k, v in root.value)["modules"].value[index]
     except (AttributeError, KeyError, IndexError, TypeError):
         return None
     tokens = _path_tokens(path)
     position = 0
     while position < len(tokens):
         token = tokens[position]
-        if token.startswith('['):
+        if token.startswith("["):
             if not isinstance(node, yaml.SequenceNode) or int(token[1:-1]) >= len(node.value):
                 return None
             node = node.value[int(token[1:-1])]
@@ -315,10 +334,15 @@ def _replace_scalar(text, index, path, value):
             if token not in children:
                 return None
             node = children[token]
-            if token == 'args' and position == 0 and position + 1 < len(tokens):
+            if token == "args" and position == 0 and position + 1 < len(tokens):
                 name = tokens[position + 1]
-                match = [v for item in node.value if isinstance(item, yaml.MappingNode)
-                         for k, v in item.value if k.value == name]
+                match = [
+                    v
+                    for item in node.value
+                    if isinstance(item, yaml.MappingNode)
+                    for k, v in item.value
+                    if k.value == name
+                ]
                 if len(match) != 1:
                     return None
                 node = match[0]
@@ -326,14 +350,21 @@ def _replace_scalar(text, index, path, value):
         else:
             return None
         position += 1
-    if not isinstance(node, yaml.ScalarNode) or node.style not in (None, "'", '"') or \
-            node.start_mark.line != node.end_mark.line or (node.style is None and not node.value):
+    if (
+        not isinstance(node, yaml.ScalarNode)
+        or node.style not in (None, "'", '"')
+        or node.start_mark.line != node.end_mark.line
+        or (node.style is None and not node.value)
+    ):
         return None
-    lines = body.split('\n')
+    lines = body.split("\n")
     line = lines[node.start_mark.line]
-    lines[node.start_mark.line] = line[:node.start_mark.column] + _scalar_text(value, node.style) + \
-        line[node.end_mark.column:]
-    return '\n'.join(lines)
+    lines[node.start_mark.line] = (
+        line[: node.start_mark.column]
+        + _scalar_text(value, node.style)
+        + line[node.end_mark.column :]
+    )
+    return "\n".join(lines)
 
 
 def remove_instance(config_path, instance_id, source=None):
@@ -341,10 +372,14 @@ def remove_instance(config_path, instance_id, source=None):
     k = config.index_of(instance_id)
     users = references_to(config.config, instance_id)
     if users:
-        raise ConfigError('{}: {} is still used by {}; change those values first'.format(config.source, instance_id, ', '.join(users)))
+        raise ConfigError(
+            "{}: {} is still used by {}; change those values first".format(
+                config.source, instance_id, ", ".join(users)
+            )
+        )
     text = config.blocks().remove(k)
-    if parse_yaml(text, config.source).get('modules') is None:
-        text = re.sub(r'^modules:[ \t]*$', 'modules: []', text, count=1, flags=re.M)
+    if parse_yaml(text, config.source).get("modules") is None:
+        text = re.sub(r"^modules:[ \t]*$", "modules: []", text, count=1, flags=re.M)
     config.write(text)
 
 
@@ -362,20 +397,25 @@ def _values(node):
 def _mentions(text, name):
     items = code_tokens(text)
     for i, token in enumerate(items):
-        if token.kind == 'identifier' and token.text == name and \
-                (not i or items[i - 1].text not in ('.', '->', '::')):
+        if (
+            token.kind == "identifier"
+            and token.text == name
+            and (not i or items[i - 1].text not in (".", "->", "::"))
+        ):
             return True
     return False
 
 
 def references_to(config, instance_id):
     users = []
-    for entry in config.get('modules') or []:
-        if not isinstance(entry, dict) or entry.get('id') == instance_id:
+    for entry in config.get("modules") or []:
+        if not isinstance(entry, dict) or entry.get("id") == instance_id:
             continue
-        values = list(_values(entry.get('args') or [])) + list(_values(entry.get('template_args') or []))
+        values = list(_values(entry.get("args") or [])) + list(
+            _values(entry.get("template_args") or [])
+        )
         if any(_mentions(v, instance_id) for v in values):
-            users.append(entry.get('id'))
+            users.append(entry.get("id"))
     return users
 
 
@@ -383,10 +423,12 @@ def rename_instance(config_path, instance_id, new_id, source=None):
     """Rename an instance and every reference to it in the same configuration."""
     problem = identifier_problem(new_id)
     if problem:
-        raise ConfigError(f'{new_id} {problem}')
+        raise ConfigError(f"{new_id} {problem}")
     config = ConfigFile(config_path, source)
-    if any(isinstance(e, dict) and e.get('id') == new_id for e in config.config.get('modules') or []):
-        raise ConfigError(f'{config.source}: instance id {new_id} already exists')
+    if any(
+        isinstance(e, dict) and e.get("id") == new_id for e in config.config.get("modules") or []
+    ):
+        raise ConfigError(f"{config.source}: instance id {new_id} already exists")
     target = config.index_of(instance_id)
     text = config.text
     blocks = Blocks(text, config.source)
@@ -394,9 +436,9 @@ def rename_instance(config_path, instance_id, new_id, source=None):
         item, indent = _load_item(blocks.item_text(k))
         changed = False
         if k == target:
-            item['id'] = new_id
+            item["id"] = new_id
             changed = True
-        for key in ('args', 'template_args'):
+        for key in ("args", "template_args"):
             if key in item and _rename_values(item[key], instance_id, new_id):
                 changed = True
         if changed:
@@ -438,6 +480,7 @@ def _requote(original, text):
 
 # -- seeding (instance add, module compile probe) ------------------------------
 
+
 def _field_default(entry, name, index, spelled):
     text = entry.layout().field_defaults.get(name)
     return index.qualify_in(text, entry, spelled) if text is not None else None
@@ -455,19 +498,25 @@ def seed_value(default, target, index, scope=()):
         return None
     tree = initializer_tree(default, target) if isinstance(default, str) else default
     entry = index.resolve(target, scope) if index is not None and target else None
-    if entry is not None and entry.is_aggregate() and entry.mapping_problem() is None and \
-            (tree == [] or isinstance(tree, dict)):
-        spelled = re.sub(r'^\s*(const\s+)?', '', target).rstrip('&* ').replace(' const', '')
+    if (
+        entry is not None
+        and entry.is_aggregate()
+        and entry.mapping_problem() is None
+        and (tree == [] or isinstance(tree, dict))
+    ):
+        spelled = re.sub(r"^\s*(const\s+)?", "", target).rstrip("&* ").replace(" const", "")
         result = CommentedMap()
         given = tree if isinstance(tree, dict) else {}
         for name, cpp_type, _ in entry.fields():
             field_type = index.qualify_in(cpp_type, entry, spelled)
             value = given[name] if name in given else _field_default(entry, name, index, spelled)
             if isinstance(value, (dict, list)) or value is None or isinstance(value, str):
-                child = seed_value(value if value is not None else '{}', field_type, index, entry.path)
+                child = seed_value(
+                    value if value is not None else "{}", field_type, index, entry.path
+                )
             else:
                 child = value
-            result[name] = child if child is not None else '{}'
+            result[name] = child if child is not None else "{}"
         return result
     if isinstance(tree, dict):
         result = CommentedMap()
@@ -482,20 +531,20 @@ def seed_value(default, target, index, scope=()):
 def seed_arguments(interface, cpp_class, templates, index):
     ctor = compliant_constructors(interface, cpp_class, templates)[0]
     result = []
-    for p in ctor['arguments']:
-        if p['default'] is None:
+    for p in ctor["arguments"]:
+        if p["default"] is None:
             value = None
         else:
-            default = qualify(p['default'], interface, cpp_class, templates)
-            target = qualify(p['type'], interface, cpp_class, templates, True)
+            default = qualify(p["default"], interface, cpp_class, templates)
+            target = qualify(p["type"], interface, cpp_class, templates, True)
             value = seed_value(default, target, index)
-        result.append({p['name']: value})
+        result.append({p["name"]: value})
     return result
 
 
 def next_instance_id(modules, base_name):
-    prefix = base_name.lower() + '_'
-    names = {entry.get('id', '') for entry in modules if isinstance(entry, dict)}
+    prefix = base_name.lower() + "_"
+    names = {entry.get("id", "") for entry in modules if isinstance(entry, dict)}
     number = 0
     while prefix + str(number) in names:
         number += 1
@@ -505,22 +554,24 @@ def next_instance_id(modules, base_name):
 def add_instance(config_path, module_name, modules, index, instance_id=None, source=None):
     config = ConfigFile(config_path, source)
     module = select_module(modules, module_name)
-    if not module['manifest'].standalone:
-        raise ConfigError('{} is a library dependency, not a Module instance'.format(module['id']))
-    interface = source_interface(module['header'])
-    identity = instance_id or next_instance_id(config.config.get('modules') or [], module['name'])
+    if not module["manifest"].standalone:
+        raise ConfigError("{} is a library dependency, not a Module instance".format(module["id"]))
+    interface = source_interface(module["header"])
+    identity = instance_id or next_instance_id(config.config.get("modules") or [], module["name"])
     problem = identifier_problem(identity)
     if problem:
-        raise ConfigError(f'instance id {identity} {problem}')
+        raise ConfigError(f"instance id {identity} {problem}")
     item = CommentedMap()
-    item['module'] = module['id']
-    item['id'] = identity
-    template_values = [p['default'] for p in interface['template_parameters']]
+    item["module"] = module["id"]
+    item["id"] = identity
+    template_values = [p["default"] for p in interface["template_parameters"]]
     if template_values:
-        item['template_args'] = CommentedSeq(template_values)
+        item["template_args"] = CommentedSeq(template_values)
     if all(v is not None for v in template_values):
         templates = template_bindings(interface, template_values)
-        cpp_class = module['name'] + ('<' + ', '.join(template_values) + '>' if template_values else '')
+        cpp_class = module["name"] + (
+            "<" + ", ".join(template_values) + ">" if template_values else ""
+        )
         arguments = seed_arguments(interface, cpp_class, templates, index)
         if arguments:
             args = CommentedSeq()
@@ -529,17 +580,17 @@ def add_instance(config_path, module_name, modules, index, instance_id=None, sou
                 for key, value in argument.items():
                     mapping[key] = value
                 args.append(mapping)
-            item['args'] = args
+            item["args"] = args
     blocks = config.blocks()
     indent = blocks.item_indent if blocks.item_indent is not None else 2
     if blocks.sequence_end is None:
-        text = config.text.rstrip('\n')
-        text = re.sub(r'^modules:\s*\[\]\s*$', 'modules:', text, flags=re.M)
-        if not re.search(r'^modules:', text, flags=re.M):
-            text = 'modules:\n' + text
-        lines = text.split('\n')
-        at = next(i for i, line in enumerate(lines) if line.startswith('modules:')) + 1
-        new_text = '\n'.join(lines[:at] + _render_item(item, indent) + lines[at:]) + '\n'
+        text = config.text.rstrip("\n")
+        text = re.sub(r"^modules:\s*\[\]\s*$", "modules:", text, flags=re.M)
+        if not re.search(r"^modules:", text, flags=re.M):
+            text = "modules:\n" + text
+        lines = text.split("\n")
+        at = next(i for i, line in enumerate(lines) if line.startswith("modules:")) + 1
+        new_text = "\n".join(lines[:at] + _render_item(item, indent) + lines[at:]) + "\n"
     else:
         new_text = blocks.append(_render_item(item, indent))
     config.write(new_text, check=False)
@@ -547,6 +598,7 @@ def add_instance(config_path, module_name, modules, index, instance_id=None, sou
 
 
 # -- field sync (G5) -------------------------------------------------------------
+
 
 def sync_config(config_path, modules, index, source=None):
     """Add new fields/defaulted parameters and drop removed fields; return a diff."""
@@ -556,21 +608,22 @@ def sync_config(config_path, modules, index, source=None):
     before = config.text
     text = before
     blocks = Blocks(text, config.source)
-    entries = config.config.get('modules') or []
+    entries = config.config.get("modules") or []
     for k in reversed(range(len(blocks.items))):
         entry = entries[k] if k < len(entries) else None
-        if not isinstance(entry, dict) or not entry.get('module'):
+        if not isinstance(entry, dict) or not entry.get("module"):
             continue
         try:
-            module = select_module(modules, entry['module'])
-            interface = source_interface(module['header'])
+            module = select_module(modules, entry["module"])
+            interface = source_interface(module["header"])
         except ValueError:
             continue
-        template_args = [str(v) for v in entry.get('template_args') or [] if v is not None]
-        if len(template_args) != len(entry.get('template_args') or []):
+        template_args = [str(v) for v in entry.get("template_args") or [] if v is not None]
+        if len(template_args) != len(entry.get("template_args") or []):
             continue
-        cpp_class = module['name'] + ('<' + ', '.join(template_args) + '>'
-                                      if interface['template'] is not None else '')
+        cpp_class = module["name"] + (
+            "<" + ", ".join(template_args) + ">" if interface["template"] is not None else ""
+        )
         try:
             templates = template_bindings(interface, template_args)
         except ValueError:
@@ -581,43 +634,55 @@ def sync_config(config_path, modules, index, source=None):
             blocks = Blocks(text, config.source)
     if text != before:
         config.write(text, check=False)
-    return ''.join(difflib.unified_diff(before.splitlines(True), canonical_text(text).splitlines(True),
-                                        config.source, config.source))
+    return "".join(
+        difflib.unified_diff(
+            before.splitlines(True),
+            canonical_text(text).splitlines(True),
+            config.source,
+            config.source,
+        )
+    )
 
 
 def _sync_item(item, interface, cpp_class, templates, index):
-    args = item.get('args')
+    args = item.get("args")
     names = [next(iter(a)) for a in args or [] if isinstance(a, dict) and a]
     ctors = compliant_constructors(interface, cpp_class, templates)
-    exact = [c for c in ctors if [p['name'] for p in c['arguments']] == names]
+    exact = [c for c in ctors if [p["name"] for p in c["arguments"]] == names]
     changed = False
     if not exact:
         # New trailing parameters with defaults: extend when exactly one constructor
         # starts with the configured names.
-        extended = [c for c in ctors if [p['name'] for p in c['arguments']][:len(names)] == names
-                    and all(p['default'] is not None for p in c['arguments'][len(names):])]
+        extended = [
+            c
+            for c in ctors
+            if [p["name"] for p in c["arguments"]][: len(names)] == names
+            and all(p["default"] is not None for p in c["arguments"][len(names) :])
+        ]
         if len(extended) != 1:
             return False
         ctor = extended[0]
         if args is None:
             args = CommentedSeq()
-            item['args'] = args
-        for p in ctor['arguments'][len(names):]:
+            item["args"] = args
+        for p in ctor["arguments"][len(names) :]:
             mapping = CommentedMap()
-            default = qualify(p['default'], interface, cpp_class, templates)
-            target = qualify(p['type'], interface, cpp_class, templates, True)
-            mapping[p['name']] = seed_value(default, target, index)
+            default = qualify(p["default"], interface, cpp_class, templates)
+            target = qualify(p["type"], interface, cpp_class, templates, True)
+            mapping[p["name"]] = seed_value(default, target, index)
             args.append(mapping)
         changed = True
     else:
         ctor = exact[0]
-    for p, argument in zip(ctor['arguments'], args or [], strict=False):
-        value = argument.get(p['name'])
+    for p, argument in zip(ctor["arguments"], args or [], strict=False):
+        value = argument.get(p["name"])
         if isinstance(value, dict):
-            target = qualify(p['type'], interface, cpp_class, templates, True)
+            target = qualify(p["type"], interface, cpp_class, templates, True)
             defaults = None
-            if p['default'] is not None:
-                defaults = initializer_tree(qualify(p['default'], interface, cpp_class, templates), target)
+            if p["default"] is not None:
+                defaults = initializer_tree(
+                    qualify(p["default"], interface, cpp_class, templates), target
+                )
             if _sync_mapping(value, target, index, (), defaults):
                 changed = True
     return changed
@@ -629,7 +694,7 @@ def _sync_mapping(value, target, index, scope, defaults=None):
     entry = index.resolve(target, scope) if target else None
     if entry is None or entry.mapping_problem() is not None:
         return False
-    spelled = re.sub(r'^\s*(const\s+)?', '', target).rstrip('&* ')
+    spelled = re.sub(r"^\s*(const\s+)?", "", target).rstrip("&* ")
     if not entry.is_aggregate():
         return _sync_constructor_mapping(value, entry, index, spelled)
     fields = entry.fields()
@@ -644,8 +709,12 @@ def _sync_mapping(value, target, index, scope, defaults=None):
         given = defaults.get(name) if isinstance(defaults, dict) else None
         if name not in value:
             default = given if given is not None else _field_default(entry, name, index, spelled)
-            value.insert(position, name, seed_value(default if default is not None else '{}',
-                                                    field_type, index, entry.path) or '{}')
+            value.insert(
+                position,
+                name,
+                seed_value(default if default is not None else "{}", field_type, index, entry.path)
+                or "{}",
+            )
             changed = True
         elif isinstance(value[name], dict):
             if _sync_mapping(value[name], field_type, index, entry.path, given):
@@ -667,17 +736,17 @@ def _sync_constructor_mapping(value, entry, index, spelled):
     their defaults and drop removed ones."""
     constructors = [c for c in entry.constructors() if c]
     keys = list(value)
-    if any([p['name'] for p in c] == keys for c in constructors) or len(constructors) != 1:
+    if any([p["name"] for p in c] == keys for c in constructors) or len(constructors) != 1:
         return False
     parameters = constructors[0]
-    if any(p['default'] is None and p['name'] not in value for p in parameters):
+    if any(p["default"] is None and p["name"] not in value for p in parameters):
         return False  # a new parameter without a default cannot be filled in
     items = []
     for p in parameters:
-        if p['name'] in value:
-            items.append((p['name'], value[p['name']]))
+        if p["name"] in value:
+            items.append((p["name"], value[p["name"]]))
         else:
-            items.append((p['name'], index.qualify_in(p['default'], entry, spelled)))
+            items.append((p["name"], index.qualify_in(p["default"], entry, spelled)))
     for key in list(value):
         del value[key]
     for key, child in items:
@@ -687,24 +756,25 @@ def _sync_constructor_mapping(value, entry, index, spelled):
 
 # -- modules.yaml ----------------------------------------------------------------
 
+
 def _load_document(path, default):
     path = Path(path)
     if not path.exists():
         return default
-    data = _yaml().load(path.read_text(encoding='utf-8-sig'))
+    data = _yaml().load(path.read_text(encoding="utf-8-sig"))
     return data if data is not None else default
 
 
 def _request_lines(text):
     """(line index, request) of each block-list item under modules:, and the list end."""
-    lines = text.split('\n')
+    lines = text.split("\n")
     root = yaml.compose(text, Loader=yaml.BaseLoader) if text.strip() else None
     if root is None:
         return lines, None, [], None
-    key = next((k for k, v in root.value if k.value == 'modules'), None)
-    node = next((v for k, v in root.value if k.value == 'modules'), None)
+    key = next((k for k, v in root.value if k.value == "modules"), None)
+    node = next((v for k, v in root.value if k.value == "modules"), None)
     if node is None or not isinstance(node, yaml.SequenceNode):
-        raise ConfigError('modules.yaml: modules must be a list')
+        raise ConfigError("modules.yaml: modules must be a list")
     items = [(child.start_mark.line, child) for child in node.value]
     return lines, key, items, node
 
@@ -712,57 +782,70 @@ def _request_lines(text):
 def add_module(modules_yaml, request_text):
     """Append one request line; the rest of modules.yaml is untouched."""
     from xrobot.init_module import request
+
     parsed = request(request_text, canonical=True)
     path = Path(modules_yaml)
-    text = path.read_text(encoding='utf-8-sig').replace('\r\n', '\n') if path.exists() else 'modules: []\n'
+    text = (
+        path.read_text(encoding="utf-8-sig").replace("\r\n", "\n")
+        if path.exists()
+        else "modules: []\n"
+    )
     lines, key, items, node = _request_lines(text)
     for _, child in items:
         if isinstance(child, yaml.ScalarNode):
             existing = request(child.value)
         else:
             existing = request({k.value: v.value for k, v in child.value})
-        if existing['id'].casefold() == parsed['id'].casefold():
-            raise ConfigError('{} is already requested in {}'.format(parsed['id'], modules_yaml))
-    value = request_text if '@' in request_text else request_text + '@same-or-dev'
+        if existing["id"].casefold() == parsed["id"].casefold():
+            raise ConfigError("{} is already requested in {}".format(parsed["id"], modules_yaml))
+    value = request_text if "@" in request_text else request_text + "@same-or-dev"
     if key is None:
-        lines = [line for line in lines if line.strip()] + ['modules:', '  - ' + value]
+        lines = [line for line in lines if line.strip()] + ["modules:", "  - " + value]
     elif node.flow_style:
         if items:
-            raise ConfigError(f'{modules_yaml} uses a flow list for modules; write it as a block list first')
+            raise ConfigError(
+                f"{modules_yaml} uses a flow list for modules; write it as a block list first"
+            )
         line = lines[key.start_mark.line]
-        lines[key.start_mark.line] = line[:key.start_mark.column] + 'modules:'
-        lines.insert(key.start_mark.line + 1, '  - ' + value)
+        lines[key.start_mark.line] = line[: key.start_mark.column] + "modules:"
+        lines.insert(key.start_mark.line + 1, "  - " + value)
     else:
         last_line, last = items[-1]
-        prefix = lines[last_line][:last.start_mark.column]
+        prefix = lines[last_line][: last.start_mark.column]
         end = last.end_mark.line + (1 if last.end_mark.column else 0)
         lines.insert(max(end, last_line + 1), prefix + value)
-    atomic_write(path, '\n'.join(lines).rstrip('\n') + '\n')
+    atomic_write(path, "\n".join(lines).rstrip("\n") + "\n")
 
 
 def remove_module(modules_yaml, identity):
     """Delete one request line; the rest of modules.yaml is untouched."""
     from xrobot.init_module import request
+
     path = Path(modules_yaml)
-    text = path.read_text(encoding='utf-8-sig').replace('\r\n', '\n')
+    text = path.read_text(encoding="utf-8-sig").replace("\r\n", "\n")
     lines, key, items, node = _request_lines(text)
     for index, (line, child) in enumerate(items):
         if isinstance(child, yaml.ScalarNode):
             existing = request(child.value)
         else:
             existing = request({k.value: v.value for k, v in child.value})
-        if existing['id'].casefold() != identity.casefold():
+        if existing["id"].casefold() != identity.casefold():
             continue
         if node.flow_style:
-            raise ConfigError(f'{modules_yaml} uses a flow list for modules; write it as a block list first')
-        end = items[index + 1][0] if index + 1 < len(items) else child.end_mark.line + (
-            1 if child.end_mark.column else 0)
-        del lines[line:max(end, line + 1)]
+            raise ConfigError(
+                f"{modules_yaml} uses a flow list for modules; write it as a block list first"
+            )
+        end = (
+            items[index + 1][0]
+            if index + 1 < len(items)
+            else child.end_mark.line + (1 if child.end_mark.column else 0)
+        )
+        del lines[line : max(end, line + 1)]
         if len(items) == 1:
-            lines[key.start_mark.line] = lines[key.start_mark.line].rstrip() + ' []'
-        atomic_write(path, '\n'.join(lines).rstrip('\n') + '\n')
+            lines[key.start_mark.line] = lines[key.start_mark.line].rstrip() + " []"
+        atomic_write(path, "\n".join(lines).rstrip("\n") + "\n")
         return
-    raise ConfigError(f'{identity} is not requested in {modules_yaml}')
+    raise ConfigError(f"{identity} is not requested in {modules_yaml}")
 
 
 def format_files(paths, check=False):
@@ -770,7 +853,7 @@ def format_files(paths, check=False):
     changed = []
     for path in paths:
         path = Path(path)
-        original = path.read_bytes().decode('utf-8')
+        original = path.read_bytes().decode("utf-8")
         formatted = canonical_text(original)
         if formatted != original:
             changed.append(path)
@@ -783,4 +866,6 @@ def parse_json_value(text):
     try:
         return json.loads(text)
     except json.JSONDecodeError as error:
-        raise ConfigError(f'value must be JSON (e.g. "\\"LED_B\\"", 1000, {{"a": "1"}}): {error}') from error
+        raise ConfigError(
+            f'value must be JSON (e.g. "\\"LED_B\\"", 1000, {{"a": "1"}}): {error}'
+        ) from error
