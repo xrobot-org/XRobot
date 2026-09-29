@@ -2,6 +2,7 @@
 application configuration, the BSP entry's XR_REGISTER list and the locked
 Module sources.
 """
+import bisect
 import os
 import re
 import stat
@@ -15,7 +16,8 @@ from xrobot.ConstructorModel import (ValueChecker, constructor_for, convert, ini
                                      is_dependency, qualify, template_bindings, type_shape)
 from xrobot.ModuleParser import discover_modules, select_module, source_interface
 from xrobot.Project import Project
-from xrobot.SourceSyntax import code_tokens, close_token, split_arguments, conditional_depth
+from xrobot.SourceSyntax import (code_tokens, close_token, split_arguments, conditional_depth,
+                                 parse_document)
 from xrobot.TypeIndex import TypeIndex, module_headers
 
 HELPERS = '''namespace xrobot_generated {
@@ -128,13 +130,18 @@ def read_registrations(path):
         if line.lstrip().startswith('#') and re.search(r'\bXR_REGISTER\b', line):
             raise ConfigError('%s:%d: XR_REGISTER inside a preprocessor directive is not supported'
                               % (label, number))
-    document = CppDocument.parse(text, source_name=str(path))
+    document = parse_document(text, str(path))
     invocations = document.invocation_views('XR_REGISTER', template_angles=True)
     candidates = [o for o in identifier_occurrences(text)
                   if o.text == 'XR_REGISTER' and o.following == '(']
     if len(invocations) != len(candidates):
         raise ConfigError('%s: malformed XR_REGISTER invocation' % label)
-    encoded = document.render_bytes()
+    tokens = code_tokens(text)
+    byte_starts, total, cursor = [], 0, 0
+    for token in tokens:  # token offsets are characters; invocation spans are bytes
+        total += len(text[cursor:token.start].encode('utf-8', errors='surrogateescape'))
+        cursor = token.start
+        byte_starts.append(total)
     records, errors, names = [], [], set()
     for invocation in invocations:
         where = '%s:%s' % (label, invocation.line)
@@ -160,9 +167,8 @@ def read_registrations(path):
             errors.append('%s: register object types, not reference types: %s' % (where, name))
             continue
         names.add(name)
-        prefix = encoded[:invocation.span.start].decode('utf-8', errors='surrogateescape')
-        prefix_tokens = code_tokens(prefix)
-        local_names = caller_defined_names(prefix_tokens, len(prefix_tokens))
+        stop = bisect.bisect_left(byte_starts, invocation.span.start)
+        local_names = caller_defined_names(tokens, stop)
         identifiers = {t.text for t in code_tokens(cpp_type) if t.kind == 'identifier'}
         records.append({'name': name, 'type': cpp_type, 'line': invocation.line,
                         'caller_view': bool(identifiers & local_names) or 'decltype' in identifiers

@@ -84,10 +84,11 @@ def source_interface(path: Path) -> dict:
     key = (str(path.resolve()), stat.st_mtime_ns, stat.st_size)
     if key not in _INTERFACE_CACHE:
         try:
-            source = path.read_text(encoding='utf-8-sig')
+            # Same text as TypeIndex reads, so both share one parsed document.
+            source = path.read_text(encoding='utf-8', errors='surrogateescape')
             _INTERFACE_CACHE[key] = enrich_interface(
                 source,
-                extract_interface(source, path.stem, source_name=str(path)),
+                extract_interface(source, path.stem, source_name=str(path.resolve())),
             )
         except ValueError as error:
             raise ValueError('%s: %s' % (path, error)) from error

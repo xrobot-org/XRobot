@@ -17,11 +17,12 @@ import re
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
-from xr_syntax.cpp import CppDocument
+from xr_syntax.cpp import CppClassView, CppDocument
 
-from xrobot.SourceSyntax import code_tokens, close_token, split_arguments
+from xrobot.SourceSyntax import code_tokens, close_token, parse_document, split_arguments
 
 _SCOPES = ('namespace_definition', 'class_specifier', 'struct_specifier')
+_WANTED = frozenset(_SCOPES + ('preproc_if', 'preproc_ifdef', 'preproc_call'))
 _CLASS_KEYS = ('class', 'struct', 'union', 'enum')
 _SKIP_LEADING = {'using', 'typedef', 'friend', 'template', 'static_assert', 'operator', '~',
                  'public', 'protected', 'private'}
@@ -101,7 +102,7 @@ class _Header:
     def __init__(self, path: Path, text: str):
         self.path = path
         self.text = text
-        self.document = CppDocument.parse(text, source_name=str(path))
+        self.document = parse_document(text, str(path))
         self.tokens = code_tokens(text)
         byte_of = [0] * (len(text) + 1)
         total = 0
@@ -111,9 +112,14 @@ class _Header:
         byte_of[len(text)] = total
         self._byte_of = byte_of
         self._starts = [byte_of[t.start] for t in self.tokens]
+        # One tree walk collects every node kind the index needs.
+        self.nodes = {}
+        for element in self.document.root.descendants():
+            if element.kind in _WANTED and hasattr(element, 'child_by_field'):
+                self.nodes.setdefault(element.kind, []).append(element)
         deltas = []
         for kind in ('preproc_if', 'preproc_ifdef', 'preproc_call'):
-            for node in self.document.nodes(kind):
+            for node in self.nodes.get(kind, []):
                 if kind != 'preproc_call':
                     deltas.append((node.span.start, 1))
                     continue
@@ -488,6 +494,7 @@ class TypeIndex:
         self._aliases: Dict[Tuple[str, ...], Tuple[_Header, int, int]] = {}
         self._namespace_types: Dict[Tuple[str, ...], set] = {}
         self._ensured: set = set()
+        self._resolved: Dict[Tuple[str, Tuple[str, ...]], Optional['ClassEntry']] = {}
 
     @classmethod
     def for_modules(cls, modules: dict) -> 'TypeIndex':
@@ -521,7 +528,7 @@ class TypeIndex:
         if not hasattr(header, 'scopes'):
             header.scopes = []
             for kind in _SCOPES:
-                for node in header.document.nodes(kind):
+                for node in header.nodes.get(kind, []):
                     body = node.child_by_field('body')
                     if body is None:
                         continue
@@ -539,7 +546,8 @@ class TypeIndex:
     def _parse(self, path: Path):
         header = _Header(path, self._text(path))
         self._parsed[path] = header
-        for view in header.document.class_views():
+        classes = header.nodes.get('class_specifier', []) + header.nodes.get('struct_specifier', [])
+        for view in (CppClassView(node) for node in classes):
             if view.body is None or not view.name:
                 continue
             node = view.node
@@ -570,7 +578,7 @@ class TypeIndex:
             scope = self._scope_of(header, header.byte(token.start))
             if scope + (names[0],) not in self._entries:
                 self._add(ClassEntry(header, scope + (names[0],), 'struct', (opening, closing)))
-        for namespace in header.document.nodes('namespace_definition'):
+        for namespace in header.nodes.get('namespace_definition', []):
             name = namespace.child_by_field('name')
             body = namespace.child_by_field('body')
             if name is None or body is None:
@@ -600,6 +608,15 @@ class TypeIndex:
         outside the index (a template parameter of an enclosing class, or a
         member of a base class that is not in the loaded headers).
         """
+        key = (spelling, tuple(scope))
+        if _depth == 0 and key in self._resolved:
+            return self._resolved[key]
+        result = self._resolve(spelling, tuple(scope), _depth)
+        if _depth == 0:
+            self._resolved[key] = result
+        return result
+
+    def _resolve(self, spelling, scope, _depth):
         names = _strip_type(spelling)
         if not names or _depth > 8:
             return None

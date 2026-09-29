@@ -9,6 +9,9 @@ contracts while xr-syntax owns all C++ parsing.
 
 from __future__ import annotations
 
+import bisect
+import functools
+
 from typing import List, Sequence
 
 from xr_syntax.cpp import (
@@ -23,13 +26,25 @@ from xr_syntax.cpp import (
 Token = CppLexicalToken
 
 
+@functools.lru_cache(maxsize=65536)
+def _cached_tokens(source: str):
+    return tuple(_code_tokens(source))
+
+
 def code_tokens(source: str) -> List[CppLexicalToken]:
     """返回 XRobot 需要的 C++ 代码 token，并保持旧调用方的 list 接口。
 
-    Return public xr-syntax code tokens as a list so existing XRobot algorithms
-    can migrate without changing their collection semantics.
+    Return public xr-syntax code tokens as a new list (callers may modify it);
+    tokenization of a given text is cached because the generator re-reads the
+    same type spellings and headers many times.
     """
-    return list(_code_tokens(source))
+    return list(_cached_tokens(source))
+
+
+@functools.lru_cache(maxsize=256)
+def parse_document(source: str, source_name: str | None = None) -> CppDocument:
+    """Parse C++ source once per (text, name); documents are immutable snapshots."""
+    return CppDocument.parse(source, source_name=source_name)
 
 
 def close_token(items: Sequence[CppLexicalToken], start: int) -> int:
@@ -49,26 +64,46 @@ def split_arguments(text: str) -> List[str]:
     return list(split_source_list(text, template_angles=True))
 
 
+_DEPTH_CACHE: dict = {}
+
+
+def _directive_depths(document: CppDocument):
+    """(positions, running depth) of the #if/#ifdef/#ifndef/#endif directives."""
+    cached = _DEPTH_CACHE.get(id(document))
+    if cached is not None and cached[0] is document:
+        return cached[1], cached[2]
+    deltas = []
+    for node in document.root.descendants():  # one walk for all three kinds
+        if node.kind in ("preproc_if", "preproc_ifdef"):
+            deltas.append((node.span.start, 1))
+        elif node.kind == "preproc_call":
+            significant = [child for child in node.syntax_children if not child.is_trivia]
+            if len(significant) > 1 and significant[1].text == "endif":
+                deltas.append((node.span.start, -1))
+    deltas.sort()
+    positions = [position for position, _ in deltas]
+    running, depths = 0, []
+    for _, delta in deltas:
+        running += delta
+        depths.append(running)
+    if len(_DEPTH_CACHE) > 256:
+        _DEPTH_CACHE.clear()
+    _DEPTH_CACHE[id(document)] = (document, positions, depths)
+    return positions, depths
+
+
 def conditional_depth(document: CppDocument, start: int, end: int) -> int:
     """返回 [start, end) 内尚未闭合的 #if/#ifdef/#ifndef 层数。
 
-    Count conditional directives opened but not closed before ``end`` from
-    xr-syntax preprocessor nodes, so directive spelling stays parser-owned.
+    Count conditional directives opened but not closed between ``start`` and
+    ``end`` from xr-syntax preprocessor nodes, so directive spelling stays
+    parser-owned. Directive positions are computed once per document.
     """
-    directives = []
-    for kind in ("preproc_if", "preproc_ifdef", "preproc_call"):
-        directives.extend(
-            node for node in document.nodes(kind) if start <= node.span.start < end
-        )
-    depth = 0
-    for node in directives:
-        if node.kind != "preproc_call":
-            depth += 1
-            continue
-        significant = [child for child in node.syntax_children if not child.is_trivia]
-        if len(significant) > 1 and significant[1].text == "endif":
-            depth -= 1
-    return depth
+    positions, depths = _directive_depths(document)
+    before = bisect.bisect_left(positions, start)
+    last = bisect.bisect_left(positions, end)
+    base = depths[before - 1] if before else 0
+    return (depths[last - 1] if last else 0) - base if last > before else 0
 
 
 def extract_interface(source: str, name: str, source_name: str | None = None) -> dict:
@@ -78,7 +113,7 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
     views.  This deliberately returns the historical XRobot dictionary shape so
     ConstructorModel can migrate independently of the parser implementation.
     """
-    document = CppDocument.parse(source, source_name=source_name)
+    document = parse_document(source, source_name)
     classes = [
         view
         for view in document.class_views(name)
