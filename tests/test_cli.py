@@ -4,13 +4,15 @@ import contextlib
 import io
 import json
 import os
+import subprocess
 from pathlib import Path
+from unittest import mock
 
 import yaml
 from fixtures import BspTestCase, TempDirTestCase, UpstreamTestCase
 
 from xrobot import __version__
-from xrobot.cli import main
+from xrobot.cli import main, parse_value
 from xrobot.config import load_config
 from xrobot.init_module import read_modules_yaml
 from xrobot.module_parser import parse_manifest_from_header, source_interface
@@ -81,6 +83,14 @@ class Init(CliMixin, TempDirTestCase):
         out, _ = self.ok("-C", self.root, "init")
         self.assertEqual(out.strip(), "Created nothing (already initialized)")
 
+    def test_init_appends_ignore_entries_with_the_file_line_endings(self):
+        self.write(".gitignore", "build/\r\n*.o")
+        self.ok("-C", self.root, "init")
+        self.assertEqual(
+            (self.root / ".gitignore").read_bytes(),
+            b"build/\r\n*.o\r\n/User/xrobot_main.hpp\r\n/Modules/CMakeLists.txt\r\n/Modules/*/\r\n",
+        )
+
     def test_init_keeps_existing_files_and_ignore_entries(self):
         self.write(".gitignore", "build/\n/Modules/CMakeLists.txt\n")
         self.write("User/xrobot.yaml", "modules: []\n")
@@ -94,6 +104,38 @@ class Init(CliMixin, TempDirTestCase):
     def test_version(self):
         out, _ = self.ok("--version")
         self.assertEqual(out.strip(), "xrobot " + __version__)
+
+    def test_help_describes_every_command_and_action(self):
+        out, _ = self.ok("source", "--help")
+        for action in (
+            "list",
+            "search",
+            "get",
+            "find",
+            "create-sources",
+            "add-source",
+            "create-index",
+            "add-index",
+        ):
+            self.assertIn(action, out)
+        out, _ = self.ok("instance", "set", "--help")
+        self.assertIn("VALUE is JSON; text that is not JSON is taken as C++ text.", out)
+        code, _, err = self.run_cli("source")
+        self.assertEqual(code, 2)
+        self.assertIn("the following arguments are required: <action>", err)
+
+    def test_source_needs_a_bsp_or_sources(self):
+        if any((p / "Modules/modules.yaml").is_file() for p in self.tmp.parents):
+            self.skipTest("a directory above the temporary directory is itself a BSP")
+        self.fails("source", "list", cwd=self.root, pattern="No XRobot BSP found")
+        self.fails(
+            "source",
+            "--sources",
+            self.root / "missing.yaml",
+            "list",
+            cwd=self.root,
+            pattern="missing.yaml does not exist; run `xrobot source create-sources`",
+        )
 
     def test_commands_outside_a_bsp_fail_with_a_hint(self):
         if any((p / "Modules/modules.yaml").is_file() for p in self.tmp.parents):
@@ -157,7 +199,6 @@ class Commands(CliMixin, BspTestCase):
         self.fails("gen", pattern="User/xrobot.yaml: led: named arguments")
         self.config("modules: [\n")
         self.fails("gen", pattern=r"User/xrobot.yaml:\d+: YAML syntax error")
-        self.fails("instance", "set", "led", "args.gain", "not json", pattern="value must be JSON")
         self.assertFalse((self.root / "User/xrobot_main.hpp").exists())
 
     def test_describe_prints_json(self):
@@ -189,6 +230,17 @@ class Commands(CliMixin, BspTestCase):
         self.ok("instance", "remove", "backup")
         self.assertEqual(
             [i["id"] for i in load_config(self.root / "User/xrobot.yaml")["modules"]], ["led"]
+        )
+
+    def test_values_that_are_not_json_are_cpp_text(self):
+        self.assertEqual(parse_value('"LED_B"'), "LED_B")
+        self.assertEqual(parse_value('{"a": "1"}'), {"a": "1"})
+        self.assertEqual(parse_value("2.0f"), "2.0f")
+        self.ok("instance", "set", "led", "args.gain", "2.0f")
+        self.ok("instance", "set", "led", "args.param", "{250}")
+        self.assertEqual(
+            load_config(self.root / "User/xrobot.yaml")["modules"][0]["args"],
+            [{"gpio": "pin"}, {"param": "{250}"}, {"gain": "2.0f"}],
         )
 
     def test_instance_add_writes_to_the_selected_product(self):
@@ -226,6 +278,18 @@ class Commands(CliMixin, BspTestCase):
                     r"Led\.hpp:5: Led\(LibXR::GPIO& gpio, Param param = \{\}, float gain = 1\.0f\)",
                 )
 
+    def test_module_show_takes_the_id_of_a_locked_module(self):
+        for target in ("team/Led", "Led"):
+            with self.subTest(target=target):
+                out, _ = self.ok("module", "show", target, cwd=self.root / "User")
+                self.assertRegex(out, r"Led\.hpp:5: Led\(LibXR::GPIO& gpio")
+        self.fails(
+            "module",
+            "show",
+            "team/Missing",
+            pattern="team/Missing: not a file or folder; Module not found: team/Missing",
+        )
+
     def test_format_check_and_rewrite(self):
         self.config(
             "modules:\n- module: Led\n  id: led\n  args:\n  - gpio: pin\n  - param: {cycle: 1}\n  - gain: 1.0f\n"
@@ -233,7 +297,7 @@ class Commands(CliMixin, BspTestCase):
         self.fails(
             "format",
             "--check",
-            pattern="1 file\\(s\\) are not in the canonical layout; run `xrobot format`",
+            pattern="Found 1 file not in the canonical layout; run `xrobot format`",
         )
         out, _ = self.run_cli("format", "--check")[1:]
         self.assertIn("needs formatting: User/xrobot.yaml", out)
@@ -341,8 +405,6 @@ class ModuleCiPreparation(CliMixin, UpstreamTestCase):
     """The shared workflow's preparation script, run against local repositories."""
 
     def test_the_pull_request_head_is_probed_with_dependencies_from_the_context(self):
-        from unittest import mock
-
         from fixtures import run_git
 
         b = self.upstream("team/B")
@@ -452,13 +514,35 @@ class Setup(CliMixin, UpstreamTestCase):
         self.assertIn("User/products/b.yaml: m: Module not found: team/Missing", err)
         self.assertFalse((self.root / "User/xrobot_main.hpp").exists())
 
-    def test_frozen_without_a_lock_fails(self):
-        self.fails("setup", "--frozen", pattern="xrobot.lock does not exist")
+    def test_frozen_or_offline_without_a_lock_fails(self):
+        for option in ("--frozen", "--offline"):
+            self.fails(
+                "setup",
+                option,
+                pattern="xrobot.lock does not exist; run `xrobot setup` once without "
+                "--frozen or --offline",
+            )
 
-    def test_a_different_tool_pin_is_a_warning(self):
+    def test_a_git_timeout_is_reported_without_a_traceback(self):
+        timeout = subprocess.TimeoutExpired(["git", "fetch"], 300)
+        with mock.patch("xrobot.init_module.subprocess.run", side_effect=timeout):
+            self.fails("setup", pattern=r"Git did not finish within 300 s")
+
+    def test_a_different_tool_pin_is_a_warning_and_an_error_when_frozen(self):
         self.configure(["team/Led@master"], pin="0.9.0")
         _, err = self.ok("setup")
-        self.assertIn(f"warning: installed XRobot {__version__} differs from the pinned 0.9.0", err)
+        warning = f"warning: installed XRobot {__version__} differs from the pinned 0.9.0"
+        self.assertIn(warning, err)
+        _, err = self.ok("gen")
+        self.assertIn(warning, err)
+        self.fails(
+            "setup",
+            "--frozen",
+            pattern=r"differs from the pinned 0\.9\.0 \(--frozen requires the pinned version\)",
+        )
+        self.configure(["team/Led@master"], pin="0123456789abcdef0123456789abcdef01234567")
+        _, err = self.ok("setup", "--frozen")
+        self.assertEqual(err, "")
         self.configure(["team/Led@master"], pin=None)
         _, err = self.ok("setup")
         self.assertIn(
@@ -491,6 +575,12 @@ class Setup(CliMixin, UpstreamTestCase):
         self.assertIn("team/Led [module]", out)
         out, _ = self.ok("source", "get", "Led")
         self.assertEqual(yaml.safe_load(out)["id"], "team/Led")
+
+    def test_source_finds_the_bsp_like_other_commands(self):
+        out, _ = self.ok("source", "search", "led", cwd=self.root / "User")
+        self.assertIn("team/Led [module]", out)
+        out, _ = self.ok("-C", self.root / "User", "source", "list", cwd=self.tmp)
+        self.assertIn("team/Led [module]", out)
 
     def test_source_options_are_passed_through(self):
         out, _ = self.ok(

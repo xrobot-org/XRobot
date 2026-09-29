@@ -31,15 +31,28 @@ TOOL_REPOSITORIES = {
     "generator": "https://github.com/xrobot-org/LibXR_CppCodeGenerator.git",
 }
 
+GIT_TIMEOUT = 300
+
 
 def git(path, *args, check=True):
     env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_OPTIONAL_LOCKS="0")
     command = ["git"] + (["-C", str(path)] if path else []) + list(args)
-    result = subprocess.run(
-        command, capture_output=True, encoding="utf-8", errors="replace", env=env, timeout=300
-    )
+    where = f" in {path}" if path else ""
+    try:
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+            env=env,
+            timeout=GIT_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired as error:
+        raise ValueError(
+            f"Git did not finish within {GIT_TIMEOUT} s{where}: {' '.join(args)}"
+        ) from error
     if check and result.returncode:
-        raise ValueError(f"Git failed in {path}: {' '.join(args)}\n{result.stderr.strip()}")
+        raise ValueError(f"Git failed{where}: {' '.join(args)}\n{result.stderr.strip()}")
     return result.stdout.strip() if result.returncode == 0 else None
 
 
@@ -603,7 +616,9 @@ def sync_modules(
     lock = _load_lock(project.lock) if project.lock.is_file() else None
     if frozen or offline:
         if lock is None:
-            raise ValueError("xrobot.lock does not exist; run `xrobot setup` once without --frozen")
+            raise ValueError(
+                "xrobot.lock does not exist; run `xrobot setup` once without --frozen or --offline"
+            )
         if lock.get("requests") != roots:
             changed = _changed_requests(lock.get("requests") or [], roots)
             raise ValueError(

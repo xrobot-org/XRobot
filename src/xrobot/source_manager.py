@@ -1,7 +1,8 @@
-"""Federated source catalogs for independent Module and BSP repositories."""
+"""源：列出模块和 BSP 仓库的 index.yaml，以及选择这些源的 sources.yaml。
+Sources: the index.yaml files that list Module and BSP repositories, and the
+sources.yaml that selects them.
+"""
 
-import argparse
-import json
 import re
 from pathlib import Path
 from urllib.parse import urljoin
@@ -147,17 +148,6 @@ class ModuleSource:
             raise ValueError("Saving a remote index requires a local output path")
         save_yaml(target, self.index_data)
 
-    @staticmethod
-    def create_index_yaml(path, namespace="your-namespace", mirror_of=None):
-        data = {
-            "namespace": namespace,
-            "modules": ["https://github.com/xrobot-org/BlinkLED.git"],
-            "bsps": [],
-        }
-        if mirror_of:
-            data["mirror_of"] = mirror_of
-        save_yaml(path, data)
-
 
 def get_primary_namespace(source):
     return source.mirror_of or source.namespace
@@ -243,99 +233,59 @@ class SourceManager:
     def find_module(self, identity):
         return self.all_module_candidates[self.resolve_id(identity)]
 
-    def add_source(self, url, public_key=None, priority=0, sources_yaml=DEFAULT_SOURCES):
-        data = load_yaml(sources_yaml) if Path(sources_yaml).exists() else {"sources": []}
-        if not any(item["url"] == url for item in data["sources"]):
-            entry = {"url": url, "priority": int(priority)}
-            if public_key:
-                entry["public_key"] = public_key
-            data["sources"].append(entry)
-            save_yaml(sources_yaml, data)
-
-    def create_sources_yaml(self, path=DEFAULT_SOURCES):
-        save_yaml(
-            path,
-            {"sources": [{"url": "https://xrobot.work/xrobot-modules/index.yaml", "priority": 0}]},
-        )
-
     def save_sources_yaml(self, path=DEFAULT_SOURCES):
         save_yaml(path, {"sources": [{"url": s.url, "priority": s.priority} for s in self.sources]})
-
-    def add_index_entry(self, index_yaml, repo_url):
-        data = (
-            load_yaml(index_yaml)
-            if Path(index_yaml).exists()
-            else {"namespace": "local", "modules": []}
-        )
-        if repo_url not in data.setdefault("modules", []):
-            data["modules"].append(repo_url)
-            save_yaml(index_yaml, data)
-
-    def create_index_yaml(self, path=DEFAULT_INDEX, namespace="local", mirror_of=None):
-        ModuleSource.create_index_yaml(path, namespace, mirror_of)
 
     def save_index_yaml(self, source, path=None):
         source.save_index_yaml(path)
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--sources", default=str(DEFAULT_SOURCES))
-    sub = parser.add_subparsers(dest="command")
-    listing = sub.add_parser("list")
-    listing.add_argument("--type", choices=["module", "bsp"])
-    search = sub.add_parser("search")
-    search.add_argument("query")
-    search.add_argument("--type", choices=["module", "bsp"])
-    for verb in ("get", "find"):
-        sub.add_parser(verb).add_argument("id")
-    cs = sub.add_parser("create-sources")
-    cs.add_argument("--output", "-o", default=str(DEFAULT_SOURCES))
-    ci = sub.add_parser("create-index")
-    ci.add_argument("--output", "-o", default=str(DEFAULT_INDEX))
-    ci.add_argument("--namespace", default="local")
-    ci.add_argument("--mirror-of")
-    ads = sub.add_parser("add-source")
-    ads.add_argument("url")
-    ads.add_argument("--priority", type=int, default=0)
-    ads.add_argument("--public-key")
-    adi = sub.add_parser("add-index")
-    adi.add_argument("repo_url")
-    adi.add_argument("--index", required=True)
-    args = parser.parse_args()
-    try:
-        if args.command == "create-index":
-            ModuleSource.create_index_yaml(args.output, args.namespace, args.mirror_of)
-            return
-        sm = SourceManager(args.sources)
-        if args.command == "create-sources":
-            sm.create_sources_yaml(args.output)
-        elif args.command == "add-source":
-            sm.add_source(args.url, args.public_key, args.priority, args.sources)
-        elif args.command == "add-index":
-            sm.add_index_entry(args.index, args.repo_url)
-        elif args.command in ("get", "find"):
-            identity = sm.resolve_id(args.id)
-            value = (
-                sm.packages[identity]
-                if args.command == "get"
-                else [{"repo": r, "source": s.url} for r, s in sm.find_module(identity)]
-            )
-            print(yaml.safe_dump(value, sort_keys=False, allow_unicode=True))
-        else:
-            for identity, record in sorted(sm.packages.items()):
-                if getattr(args, "type", None) and args.type != record["type"]:
-                    continue
-                if (
-                    args.command == "search"
-                    and args.query.casefold()
-                    not in json.dumps(record, ensure_ascii=False, default=str).casefold()
-                ):
-                    continue
-                print(f"{identity} [{record['type']}] {record['repo']}")
-    except (OSError, ValueError, requests.RequestException, yaml.YAMLError) as error:
-        parser.exit(1, str(error) + "\n")
+def add_source(sources_yaml, url, public_key=None, priority=0):
+    """向 sources.yaml 添加一个源；已列出的地址不重复添加。
+    Add a Source to sources.yaml; a URL already listed is not added again.
+    """
+    data = load_yaml(sources_yaml) if Path(sources_yaml).exists() else {"sources": []}
+    if not any(item["url"] == url for item in data["sources"]):
+        entry = {"url": url, "priority": int(priority)}
+        if public_key:
+            entry["public_key"] = public_key
+        data["sources"].append(entry)
+        save_yaml(sources_yaml, data)
 
 
-if __name__ == "__main__":
-    main()
+def create_sources_yaml(path=DEFAULT_SOURCES):
+    """写入只含官方源的 sources.yaml。
+    Write a sources.yaml that lists the official Source only.
+    """
+    save_yaml(
+        path,
+        {"sources": [{"url": "https://xrobot.work/xrobot-modules/index.yaml", "priority": 0}]},
+    )
+
+
+def create_index_yaml(path=DEFAULT_INDEX, namespace="local", mirror_of=None):
+    """写入新的 index.yaml，其中以 BlinkLED 作为示例条目。
+    Write a new index.yaml with BlinkLED as an example entry.
+    """
+    data = {
+        "namespace": namespace,
+        "modules": ["https://github.com/xrobot-org/BlinkLED.git"],
+        "bsps": [],
+    }
+    if mirror_of:
+        data["mirror_of"] = mirror_of
+    save_yaml(path, data)
+
+
+def add_index_entry(index_yaml, repo_url):
+    """向 index.yaml 添加一个模块仓库；文件不存在时新建。
+    Add a Module repository to index.yaml, creating the file when it does not exist.
+    """
+    data = (
+        load_yaml(index_yaml)
+        if Path(index_yaml).exists()
+        else {"namespace": "local", "modules": []}
+    )
+    if repo_url not in data.setdefault("modules", []):
+        data["modules"].append(repo_url)
+        save_yaml(index_yaml, data)

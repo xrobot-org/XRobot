@@ -1,12 +1,12 @@
-"""xrobot: resolve Modules, generate the static entry and edit configurations.
-
-Run from anywhere inside a BSP (the directory tree containing
-Modules/modules.yaml); ``-C DIR`` starts the search at DIR instead.
+"""xrobot 命令行：解析模块、生成静态入口、编辑配置。
+The xrobot command line: resolve Modules, generate the static entry and edit configurations.
 """
 
 import argparse
 import json
+import re
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 
 import yaml
@@ -15,16 +15,32 @@ from xrobot import __version__
 from xrobot.config import ConfigError
 from xrobot.project import Project, ProjectError, find_root
 
+DESCRIPTION = """\
+Resolve Modules, generate the static entry and edit configurations.
+
+Commands work on the BSP that contains the current directory: the nearest
+directory at or above it with Modules/modules.yaml. -C DIR starts the search
+at DIR instead."""
+
 INIT_MODULES = f"xrobot: {__version__}\nmodules: []\n"
 INIT_SOURCES = "sources:\n  - url: https://xrobot.work/xrobot-modules/index.yaml\n    priority: 0\n"
 INIT_CONFIG = "modules: []\nsettings:\n  monitor_sleep_ms: 1000\n"
+IGNORED = ("/User/xrobot_main.hpp", "/Modules/CMakeLists.txt", "/Modules/*/")
+COMMIT = re.compile(r"[0-9a-f]{40}")
 
 
-def _project(args):
+def _project(args: argparse.Namespace) -> Project:
+    """从 -C 目录（默认当前目录）向上找到的 BSP。
+    The BSP found at or above the -C directory (default: the current directory).
+    """
     return Project(find_root(args.directory))
 
 
-def _config_path(project, value):
+def _config_path(project: Project, value: str | None) -> Path | None:
+    """解析 -c 给出的配置路径：先相对当前目录，不存在时相对 BSP 根目录。
+    Resolve a -c configuration path: relative to the current directory when that exists,
+    else relative to the BSP root.
+    """
     if value is None:
         return None
     path = Path(value)
@@ -34,30 +50,68 @@ def _config_path(project, value):
     return path.resolve()
 
 
-def _count(number, noun):
+def _count(number: int, noun: str) -> str:
+    """数量加名词，按数量选择单复数。
+    A count followed by the noun in singular or plural.
+    """
     return f"{number} {noun}{'' if number == 1 else 's'}"
 
 
-def _pin_warning(project):
+def _check_pin(project: Project, frozen: bool = False) -> None:
+    """比较安装的 XRobot 与 Modules/modules.yaml 中固定的版本。
+    Compare the installed XRobot with the version pinned in Modules/modules.yaml.
+
+    不一致时给出警告，--frozen 下报错。固定为提交号时无法与安装的版本比较，不作检查。
+    A difference is a warning, and an error with --frozen. A commit pin cannot be compared
+    with the installed version and is not checked.
+
+    Raises:
+        ProjectError: --frozen 下未固定版本或版本不一致。
+            With --frozen, XRobot is not pinned or the versions differ.
+    """
     from xrobot.init_module import read_modules_yaml
 
     _, pin = read_modules_yaml(project.modules_yaml)
     if pin is None:
-        print(
-            f"warning: Modules/modules.yaml does not pin XRobot; add `xrobot: {__version__}`",
-            file=sys.stderr,
-        )
-    elif pin != __version__:
-        print(
-            f"warning: installed XRobot {__version__} differs from the pinned {pin}",
-            file=sys.stderr,
-        )
+        problem = f"Modules/modules.yaml does not pin XRobot; add `xrobot: {__version__}`"
+    elif pin != __version__ and not COMMIT.fullmatch(pin):
+        problem = f"installed XRobot {__version__} differs from the pinned {pin}"
+    else:
+        return
+    if frozen:
+        raise ProjectError(f"{problem} (--frozen requires the pinned version)")
+    print(f"warning: {problem}", file=sys.stderr)
 
 
-def cmd_init(args):
-    root = Path(args.directory).resolve()
+def _add_ignore_entries(path: Path) -> bool:
+    """把生成的文件追加到 .gitignore，已有内容和换行符保持不变。
+    Append the generated files to .gitignore, keeping the existing content and line endings.
+
+    Returns:
+        是否追加了条目。
+        Whether any entry was appended.
+    """
     from xrobot.generate_main import atomic_write
 
+    text = path.read_bytes().decode("utf-8") if path.exists() else ""
+    missing = [entry for entry in IGNORED if entry not in text.splitlines()]
+    if not missing:
+        return False
+    newline = "\r\n" if "\r\n" in text else "\n"
+    if text and not text.endswith("\n"):
+        text += newline
+    atomic_write(path, text + newline.join(missing) + newline)
+    return True
+
+
+def cmd_init(args: argparse.Namespace) -> None:
+    """在 -C 目录（默认当前目录）创建 BSP 的 XRobot 文件，已有的文件保持不变。
+    Create the XRobot files of a BSP in the -C directory (default: the current directory);
+    existing files are kept.
+    """
+    from xrobot.generate_main import atomic_write
+
+    root = Path(args.directory).resolve()
     created = []
     for relative, text in (
         ("Modules/modules.yaml", INIT_MODULES),
@@ -68,26 +122,24 @@ def cmd_init(args):
         if not path.exists():
             atomic_write(path, text)
             created.append(relative)
-    ignore = root / ".gitignore"
-    lines = ignore.read_text(encoding="utf-8").splitlines() if ignore.exists() else []
-    wanted = ["/User/xrobot_main.hpp", "/Modules/CMakeLists.txt", "/Modules/*/"]
-    missing = [line for line in wanted if line not in lines]
-    if missing:
-        atomic_write(ignore, "\n".join(lines + missing) + "\n")
+    if _add_ignore_entries(root / ".gitignore"):
         created.append(".gitignore entries")
     print(f"Created {', '.join(created) if created else 'nothing (already initialized)'}")
 
 
-def cmd_setup(args):
+def cmd_setup(args: argparse.Namespace) -> None:
+    """解析并检出模块，检查所有配置，为选中的配置重新生成入口。
+    Resolve and check out the Modules, check every configuration and regenerate the entry
+    for the selected one.
+    """
     from xrobot.config_edit import sync_config
     from xrobot.generate_main import generate, load_modules, validate_all
     from xrobot.init_module import check_tool_pins, sync_modules
     from xrobot.type_index import TypeIndex
 
     project = _project(args)
-    update = None
-    if args.update is not None:
-        update = list(args.update)
+    _check_pin(project, args.frozen)
+    update = list(args.update) if args.update is not None else None
     lock = sync_modules(
         project, update, args.frozen, args.offline, args.context_ref, args.release_ref
     )
@@ -105,15 +157,19 @@ def cmd_setup(args):
     selected = project.selected_config()
     generate(project, selected)
     print(
-        f"Checked {_count(count, 'config')}; generated User/xrobot_main.hpp for {project.relative(selected)}"
+        f"Checked {_count(count, 'config')}; generated User/xrobot_main.hpp for "
+        f"{project.relative(selected)}"
     )
-    _pin_warning(project)
 
 
-def cmd_gen(args):
+def cmd_gen(args: argparse.Namespace) -> None:
+    """为一份配置生成 User/xrobot_main.hpp，并将其记为选中的配置。
+    Generate User/xrobot_main.hpp for one configuration, which becomes the selected one.
+    """
     from xrobot.generate_main import generate
 
     project = _project(args)
+    _check_pin(project)
     config = _config_path(project, args.config)
     generate(project, config)
     print(
@@ -121,7 +177,10 @@ def cmd_gen(args):
     )
 
 
-def cmd_describe(args):
+def cmd_describe(args: argparse.Namespace) -> None:
+    """以 JSON 输出 BSP 的状态，供编辑器使用。
+    Print the state of the BSP as JSON for editors.
+    """
     from xrobot.describe import describe
 
     project = _project(args)
@@ -133,7 +192,10 @@ def cmd_describe(args):
     out.write("\n")
 
 
-def cmd_sync(args):
+def cmd_sync(args: argparse.Namespace) -> None:
+    """按模块当前的接口更新配置，并输出改动。
+    Update configurations to the current Module interfaces and print the changes.
+    """
     from xrobot.config_edit import sync_config
     from xrobot.generate_main import load_modules
     from xrobot.type_index import TypeIndex
@@ -148,22 +210,43 @@ def cmd_sync(args):
             sys.stdout.write(diff)
 
 
-def cmd_format(args):
+def cmd_format(args: argparse.Namespace) -> None:
+    """按规范格式重写配置，或用 --check 只报告需要重写的文件。
+    Rewrite configurations in the canonical layout, or with --check only report the files
+    that need it.
+
+    Raises:
+        ConfigError: --check 发现需要重写的文件。
+            --check found files that need formatting.
+    """
     from xrobot.config_edit import format_files
 
     project = _project(args)
     paths = [_config_path(project, c) for c in args.config] if args.config else project.configs()
     changed = format_files(paths, check=args.check)
+    label = "needs formatting" if args.check else "formatted"
     for path in changed:
-        label = "needs formatting" if args.check else "formatted"
         print(f"{label}: {project.relative(path)}")
     if args.check and changed:
         raise ConfigError(
-            f"{len(changed)} file(s) are not in the canonical layout; run `xrobot format`"
+            f"Found {_count(len(changed), 'file')} not in the canonical layout; run `xrobot format`"
         )
 
 
-def cmd_instance(args):
+def parse_value(text: str) -> object:
+    """解析命令行给出的值：JSON，不是 JSON 时作为 C++ 文本。
+    Parse a value given on the command line: JSON, or C++ text when it is not JSON.
+    """
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return text
+
+
+def cmd_instance(args: argparse.Namespace) -> None:
+    """在一份配置中添加、修改、删除或重命名模块实例。
+    Add, set, remove or rename a Module instance in one configuration.
+    """
     from xrobot import config_edit
 
     project = _project(args)
@@ -182,12 +265,7 @@ def cmd_instance(args):
         )
     elif args.action == "set":
         config_edit.set_value(
-            config,
-            args.id,
-            args.path,
-            config_edit.parse_json_value(args.value),
-            args.if_match,
-            source,
+            config, args.id, args.path, parse_value(args.value), args.if_match, source
         )
     elif args.action == "remove":
         config_edit.remove_instance(config, args.id, source)
@@ -195,25 +273,59 @@ def cmd_instance(args):
         config_edit.rename_instance(config, args.id, args.new_id, source)
 
 
-def cmd_module(args):
-    project = _project(args) if args.action != "show" else None
+def _module_target(args: argparse.Namespace) -> Path:
+    """module show 读取的目标：已存在的路径，否则为 BSP 中锁定的同名模块。
+    What `module show` reads: an existing path, else the locked Module of the BSP with that id.
+
+    Raises:
+        ProjectError: 路径不存在，也不在 BSP 中。
+            The path does not exist and there is no BSP to look the id up in.
+        ValueError: BSP 中没有这个模块，或名称有歧义。
+            The BSP has no such Module, or the name is ambiguous.
+    """
+    path = Path(args.module)
+    if path.exists():
+        return path
+    from xrobot.generate_main import load_modules
+    from xrobot.module_parser import select_module
+
+    try:
+        project = _project(args)
+    except ProjectError as error:
+        raise ProjectError(f"{args.module}: not a file or folder; {error}") from error
+    try:
+        return select_module(load_modules(project), args.module)["path"]
+    except ValueError as error:
+        raise ValueError(f"{args.module}: not a file or folder; {error}") from error
+
+
+def cmd_module(args: argparse.Namespace) -> None:
+    """在 modules.yaml 中添加或删除模块请求，或输出一个模块的清单和构造函数。
+    Add or remove a Module request in modules.yaml, or print a Module's manifest and
+    constructors.
+    """
+    if args.action == "show":
+        from xrobot.module_parser import load_single_module, print_manifest
+
+        print_manifest(load_single_module(_module_target(args)))
+        return
+    project = _project(args)
     if args.action == "add":
         from xrobot.config_edit import add_module
 
         add_module(project.modules_yaml, args.request)
         print(f"Added {args.request}; run `xrobot setup` to fetch it")
-    elif args.action == "remove":
+    else:
         from xrobot.config_edit import remove_module
 
         remove_module(project.modules_yaml, args.request)
         print(f"Removed {args.request}; run `xrobot setup` to update xrobot.lock")
-    else:
-        from xrobot.module_parser import load_single_module, print_manifest
-
-        print_manifest(load_single_module(Path(args.path)))
 
 
-def cmd_new_module(args):
+def cmd_new_module(args: argparse.Namespace) -> None:
+    """创建模块骨架。
+    Create a Module skeleton.
+    """
     from xrobot.module_creator import create_module
 
     path = create_module(
@@ -228,7 +340,10 @@ def cmd_new_module(args):
     print(f"Created {path}")
 
 
-def cmd_check_module(args):
+def cmd_check_module(args: argparse.Namespace) -> None:
+    """像 setup 一样解析模块，然后写出模块 CI 编译用的构造调用。
+    Resolve the Modules as setup does, then write the constructor call that Module CI compiles.
+    """
     from xrobot.generate_main import generate_compile_check, load_modules
     from xrobot.init_module import sync_modules
 
@@ -238,23 +353,126 @@ def cmd_check_module(args):
     print(f"Generated {args.output}")
 
 
-def cmd_source(args):
+def cmd_source(args: argparse.Namespace) -> None:
+    """查询或编辑源（sources.yaml 与 index.yaml）。
+    Query or edit Sources (sources.yaml and index.yaml).
+
+    Raises:
+        ProjectError: 未指定 --sources 且不在 BSP 中，或要查询的 sources.yaml 不存在。
+            No --sources outside a BSP, or the sources.yaml to query does not exist.
+    """
     from xrobot import source_manager
 
-    sys.argv = ["xrobot source"] + args.rest
-    source_manager.main()
+    if args.action == "create-index":
+        source_manager.create_index_yaml(args.output, args.namespace, args.mirror_of)
+        return
+    if args.action == "add-index":
+        source_manager.add_index_entry(args.index, args.repo_url)
+        return
+    sources = Path(args.sources) if args.sources else _project(args).sources_yaml
+    if args.action == "create-sources":
+        source_manager.create_sources_yaml(Path(args.output) if args.output else sources)
+        return
+    if args.action == "add-source":
+        source_manager.add_source(sources, args.url, args.public_key, args.priority)
+        return
+    if not sources.is_file():
+        raise ProjectError(f"{sources} does not exist; run `xrobot source create-sources`")
+    manager = source_manager.SourceManager(sources)
+    if args.action in ("get", "find"):
+        identity = manager.resolve_id(args.id)
+        if args.action == "get":
+            value = manager.packages[identity]
+        else:
+            value = [{"repo": r, "source": s.url} for r, s in manager.find_module(identity)]
+        sys.stdout.write(yaml.safe_dump(value, sort_keys=False, allow_unicode=True))
+        return
+    for identity, record in sorted(manager.packages.items()):
+        if args.type and args.type != record["type"]:
+            continue
+        if (
+            args.action == "search"
+            and args.query.casefold()
+            not in json.dumps(record, ensure_ascii=False, default=str).casefold()
+        ):
+            continue
+        print(f"{identity} [{record['type']}] {record['repo']}")
 
 
-def parser():
-    top = argparse.ArgumentParser(
-        prog="xrobot", description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+def _source_parser(verbs: argparse._SubParsersAction) -> None:
+    """添加 source 命令及其子命令。
+    Add the source command and its actions.
+    """
+    source = verbs.add_parser("source", help="query or edit Sources (sources.yaml, index.yaml)")
+    source.add_argument(
+        "--sources", metavar="FILE", help="sources.yaml to use (default: the BSP's)"
     )
-    top.add_argument("--version", action="version", version="xrobot " + __version__)
-    top.add_argument("-C", dest="directory", default=".", help="start the BSP search at DIR")
+    actions = source.add_subparsers(dest="action", required=True, metavar="<action>")
+    for name, text in (
+        ("list", "list the packages of all Sources"),
+        ("search", "list the packages whose entry contains TEXT"),
+    ):
+        action = actions.add_parser(name, help=text)
+        if name == "search":
+            action.add_argument("query", metavar="TEXT")
+        action.add_argument("--type", choices=["module", "bsp"], help="only this kind of package")
+    actions.add_parser("get", help="print the entry of a package").add_argument(
+        "id", help="owner/Repo, or Repo when unique"
+    )
+    actions.add_parser(
+        "find", help="list every Source (mirrors included) that provides a package"
+    ).add_argument("id", help="owner/Repo, or Repo when unique")
+    create = actions.add_parser(
+        "create-sources", help="write a sources.yaml with the official Source"
+    )
+    create.add_argument(
+        "-o", "--output", metavar="FILE", help="default: the sources.yaml of --sources or the BSP"
+    )
+    add = actions.add_parser("add-source", help="add a Source to sources.yaml")
+    add.add_argument("url", help="URL of an index.yaml, or a path relative to sources.yaml")
+    add.add_argument(
+        "--priority",
+        type=int,
+        default=0,
+        help="the lower value wins when Sources list the same package (default: 0)",
+    )
+    add.add_argument("--public-key", metavar="KEY", help="public key recorded with the Source")
+    index = actions.add_parser("create-index", help="write a new index.yaml")
+    index.add_argument(
+        "-o", "--output", metavar="FILE", default="Modules/index.yaml", help="default: %(default)s"
+    )
+    index.add_argument(
+        "--namespace",
+        default="local",
+        help="owner of repositories outside GitHub (default: %(default)s)",
+    )
+    index.add_argument("--mirror-of", metavar="NAMESPACE", help="mark the index as a mirror")
+    entry = actions.add_parser("add-index", help="add a Module repository to an index.yaml")
+    entry.add_argument("repo_url", help="Git URL of the Module repository")
+    entry.add_argument("--index", metavar="FILE", required=True, help="the index.yaml to edit")
+    source.set_defaults(run=cmd_source)
+
+
+def parser() -> argparse.ArgumentParser:
+    """构造 xrobot 的参数解析器。
+    Build the xrobot argument parser.
+    """
+    top = argparse.ArgumentParser(
+        prog="xrobot", description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    top.add_argument("--version", action="version", version=f"xrobot {__version__}")
+    top.add_argument(
+        "-C",
+        dest="directory",
+        metavar="DIR",
+        default=".",
+        help="start the BSP search at DIR (init: create the files in DIR)",
+    )
     verbs = top.add_subparsers(dest="verb", required=True, metavar="<command>")
 
     verbs.add_parser(
-        "init", help="create Modules/modules.yaml, sources.yaml and User/xrobot.yaml here"
+        "init",
+        help="create Modules/modules.yaml, Modules/sources.yaml and User/xrobot.yaml",
     ).set_defaults(run=cmd_init)
 
     setup = verbs.add_parser(
@@ -265,105 +483,164 @@ def parser():
         "--update",
         nargs="*",
         metavar="MODULE",
-        help="re-resolve the named Modules (all when none is named)",
+        help="re-resolve the named Modules (all when none is named) and sync every config",
     )
-    group.add_argument("--frozen", action="store_true", help="restore exactly xrobot.lock")
-    setup.add_argument("--offline", action="store_true")
+    group.add_argument(
+        "--frozen",
+        action="store_true",
+        help="check out exactly xrobot.lock; the installed XRobot must match the pin",
+    )
     setup.add_argument(
-        "--context-ref", help="logical BSP branch/tag (refs/heads/... or refs/tags/...)"
+        "--offline",
+        action="store_true",
+        help="use the Modules already in Modules/ without fetching (needs xrobot.lock)",
     )
-    setup.add_argument("--release-ref", help="refuse unreleased commits for this target ref")
+    setup.add_argument(
+        "--context-ref",
+        metavar="REF",
+        help="logical BSP branch or tag (refs/heads/... or refs/tags/...)",
+    )
+    setup.add_argument(
+        "--release-ref", metavar="REF", help="refuse unreleased commits for this target ref"
+    )
     setup.set_defaults(run=cmd_setup)
 
     gen = verbs.add_parser(
-        "gen", help="generate User/xrobot_main.hpp for one config (select a product)"
+        "gen", help="generate User/xrobot_main.hpp for one config and select that config"
     )
-    gen.add_argument("-c", "--config", help="default: the selected product, else User/xrobot.yaml")
+    gen.add_argument("-c", "--config", help="default: the selected config, else User/xrobot.yaml")
     gen.set_defaults(run=cmd_gen)
 
     desc = verbs.add_parser("describe", help="print the BSP state as JSON for editors")
-    desc.add_argument("-c", "--config")
+    desc.add_argument("-c", "--config", help="default: the selected config")
     desc.set_defaults(run=cmd_describe)
 
-    sync = verbs.add_parser(
-        "sync", help="add new fields/parameters with defaults, drop removed ones"
-    )
-    sync.add_argument("-c", "--config", action="append", default=[])
-    sync.set_defaults(run=cmd_sync)
-
-    fmt = verbs.add_parser("format", help="rewrite configs in the canonical layout")
-    fmt.add_argument("-c", "--config", action="append", default=[])
-    fmt.add_argument("--check", action="store_true", help="only report files that need formatting")
-    fmt.set_defaults(run=cmd_format)
+    for name, run, text in (
+        ("sync", cmd_sync, "add new fields and parameters with defaults, drop removed ones"),
+        ("format", cmd_format, "rewrite configs in the canonical layout"),
+    ):
+        command = verbs.add_parser(name, help=text)
+        command.add_argument(
+            "-c",
+            "--config",
+            action="append",
+            default=[],
+            help="config to process; repeat for several (default: all)",
+        )
+        if name == "format":
+            command.add_argument(
+                "--check", action="store_true", help="only report files that need formatting"
+            )
+        command.set_defaults(run=run)
 
     instance = verbs.add_parser("instance", help="add, set, remove or rename one Module instance")
-    instance.add_argument("-c", "--config")
-    actions = instance.add_subparsers(dest="action", required=True)
-    add = actions.add_parser("add")
-    add.add_argument("module")
-    add.add_argument("--id")
+    instance.add_argument("-c", "--config", help="config to edit (default: the selected config)")
+    actions = instance.add_subparsers(dest="action", required=True, metavar="<action>")
+    add = actions.add_parser("add", help="add an instance with the default values")
+    add.add_argument("module", help="owner/Repo, or Repo when unique")
+    add.add_argument("--id", help="instance id (default: <module>_<n>)")
     change = actions.add_parser(
         "set",
-        help="replace one value: PATH is id, template_args[n] or "
-        "args.<param>[.<field>|[n]]...; VALUE is JSON",
+        help="replace one value",
+        description="PATH is id, template_args[n] or args.<param>[.<field>|[n]]...\n"
+        "VALUE is JSON; text that is not JSON is taken as C++ text.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    change.add_argument("id")
-    change.add_argument("path")
-    change.add_argument("value")
-    change.add_argument("--if-match", help="sha256 of the LF-normalized file the edit was based on")
-    remove = actions.add_parser("remove")
-    remove.add_argument("id")
-    rename = actions.add_parser("rename")
-    rename.add_argument("id")
-    rename.add_argument("new_id")
+    change.add_argument("id", metavar="ID", help="instance id")
+    change.add_argument("path", metavar="PATH", help="value path, e.g. args.param.cycle")
+    change.add_argument("value", metavar="VALUE", help="new value")
+    change.add_argument(
+        "--if-match",
+        metavar="SHA256",
+        help="sha256 of the LF-normalized file the edit was based on",
+    )
+    actions.add_parser("remove", help="remove an instance").add_argument("id", help="instance id")
+    rename = actions.add_parser(
+        "rename", help="rename an instance and the references to it in the config"
+    )
+    rename.add_argument("id", help="instance id")
+    rename.add_argument("new_id", help="new instance id")
     instance.set_defaults(run=cmd_instance)
 
     module = verbs.add_parser(
         "module", help="add/remove a Module request, or show a Module interface"
     )
-    module_actions = module.add_subparsers(dest="action", required=True)
-    module_actions.add_parser("add").add_argument("request", help="owner/Repo[@ref]")
-    module_actions.add_parser("remove").add_argument("request", help="owner/Repo")
-    module_actions.add_parser("show").add_argument("path", help="Module folder or header")
+    module_actions = module.add_subparsers(dest="action", required=True, metavar="<action>")
+    module_actions.add_parser("add", help="request a Module in modules.yaml").add_argument(
+        "request", help="owner/Repo[@ref]"
+    )
+    module_actions.add_parser("remove", help="remove a Module request").add_argument(
+        "request", help="owner/Repo"
+    )
+    module_actions.add_parser(
+        "show", help="print the manifest and constructors of a Module"
+    ).add_argument(
+        "module", help="Module folder or header, or the id of a locked Module (owner/Repo or Repo)"
+    )
     module.set_defaults(run=cmd_module)
 
     new = verbs.add_parser("new-module", help="create a Module skeleton")
-    new.add_argument("name")
-    new.add_argument("--desc", default="")
+    new.add_argument("name", help="class and folder name (a C++ identifier)")
+    new.add_argument("--desc", metavar="TEXT", default="", help="one-line description")
     new.add_argument(
         "--constructor",
+        metavar="DECL",
         action="append",
         default=[],
-        help="a C++ parameter declaration; repeat for each parameter",
+        help="a C++ constructor parameter declaration; repeat for each parameter",
     )
-    new.add_argument("--template", action="append", default=[])
-    new.add_argument("--include", action="append", default=[])
-    new.add_argument("--depends", nargs="*", default=[])
-    new.add_argument("--out", default=".")
+    new.add_argument(
+        "--template",
+        metavar="DECL",
+        action="append",
+        default=[],
+        help="a C++ template parameter declaration; repeat for each parameter",
+    )
+    new.add_argument(
+        "--include",
+        metavar="HEADER",
+        action="append",
+        default=[],
+        help="a header to #include; repeat for each header",
+    )
+    new.add_argument(
+        "--depends",
+        metavar="MODULE",
+        nargs="*",
+        default=[],
+        help="Modules this one depends on (owner/Repo[@ref])",
+    )
+    new.add_argument("--out", metavar="DIR", default=".", help="parent folder (default: .)")
     new.set_defaults(run=cmd_new_module)
 
-    check = verbs.add_parser("check-module", help="write a never-executed constructor call for CI")
-    check.add_argument("module")
-    check.add_argument("-o", "--output", default="module_check.cpp")
-    check.add_argument("--template-arg", action="append", default=[])
-    check.add_argument("--offline", action="store_true")
+    check = verbs.add_parser(
+        "check-module",
+        help="resolve Modules as setup does (updates xrobot.lock and Modules/), then write "
+        "a never-executed constructor call for CI",
+    )
+    check.add_argument("module", help="owner/Repo, or Repo when unique")
+    check.add_argument(
+        "-o", "--output", metavar="FILE", default="module_check.cpp", help="default: %(default)s"
+    )
+    check.add_argument(
+        "--template-arg",
+        metavar="ARG",
+        action="append",
+        default=[],
+        help="a template argument; repeat for each argument",
+    )
+    check.add_argument("--offline", action="store_true", help="use the Modules already in Modules/")
     check.set_defaults(run=cmd_check_module)
 
-    source = verbs.add_parser(
-        "source", help="query or edit module catalogs (sources.yaml, index.yaml)"
-    )
-    source.add_argument("rest", nargs=argparse.REMAINDER)
-    source.set_defaults(run=cmd_source)
+    _source_parser(verbs)
     return top
 
 
-def main(argv=None):
-    top = parser()
-    args, extra = top.parse_known_args(argv)
-    if extra and args.verb != "source":
-        top.error(f"unrecognized arguments: {' '.join(extra)}")
-    if args.verb == "source":
-        args.rest = extra + list(args.rest)
+def main(argv: Sequence[str] | None = None) -> int:
+    """运行 xrobot 命令；出错时输出一行信息并返回 1。
+    Run an xrobot command; on an error print one line and return 1.
+    """
+    args = parser().parse_args(argv)
     try:
         args.run(args)
     except (ConfigError, ProjectError, OSError, ValueError, yaml.YAMLError) as error:

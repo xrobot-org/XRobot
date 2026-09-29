@@ -858,12 +858,3 @@ def format_files(paths, check=False):
             if not check:
                 atomic_write(path, formatted)
     return changed
-
-
-def parse_json_value(text):
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError as error:
-        raise ConfigError(
-            f'value must be JSON (e.g. "\\"LED_B\\"", 1000, {{"a": "1"}}): {error}'
-        ) from error

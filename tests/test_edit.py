@@ -274,12 +274,6 @@ class SetValue(EditTestCase):
             "class is a C\\+\\+ keyword", config_edit.set_value, self.path, "user", "id", "class"
         )
 
-    def test_json_values(self):
-        self.assertEqual(config_edit.parse_json_value('"LED_B"'), "LED_B")
-        self.assertEqual(config_edit.parse_json_value('{"a": "1"}'), {"a": "1"})
-        with self.assertRaisesRegex(ConfigError, "value must be JSON"):
-            config_edit.parse_json_value("LED_B")
-
 
 class RemoveAndRename(EditTestCase):
     def test_a_referenced_instance_cannot_be_removed(self):
