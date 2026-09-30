@@ -381,6 +381,12 @@ class Names(GenerationTestCase):
         self.assertIn("Module not found: Missing", self.error({"module": "Missing", "id": "m"}))
         self.module("Led", "class Led { public: Led() {} };", owner="other")
         self.assertIn("Ambiguous Module Led; specify", self.error({"module": "Led", "id": "m"}))
+        first = led()
+        first["module"] = "team/Led"
+        self.assertIn(
+            "b: team/Led and other/Led both define the global class Led; use only one of them",
+            self.error(first, {"module": "other/Led", "id": "b"}),
+        )
 
     def test_non_standalone_modules_cannot_be_instantiated(self):
         self.module(
@@ -442,6 +448,15 @@ class Diagnostics(GenerationTestCase):
         self.assertEqual(header.read_bytes(), before)
         self.assertGreater(header.stat().st_mtime, past)
         self.assertEqual(self.project.header_state()["status"], "fresh")
+
+    def test_the_header_is_fresh_after_gen_even_when_an_input_is_dated_in_the_future(self):
+        config = self.root / "User/xrobot.yaml"
+        self.code(led())
+        future = config.stat().st_mtime + 120
+        os.utime(config, (future, future))
+        generate(self.project)
+        self.assertEqual(self.project.header_state()["status"], "fresh")
+        self.assertGreater((self.root / "User/xrobot_main.hpp").stat().st_mtime, future)
 
     @unittest.skipIf(os.name == "nt", "POSIX permission bits")
     def test_regeneration_keeps_the_header_permission_bits(self):

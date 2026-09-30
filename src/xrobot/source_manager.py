@@ -108,7 +108,7 @@ def save_yaml(path: str | Path, data: dict) -> None:
     """把映射写成 YAML 文件。
     Write a mapping as a YAML file.
     """
-    from xrobot.generate_main import atomic_write
+    from xrobot.project import atomic_write
 
     atomic_write(Path(path), yaml.safe_dump(data, sort_keys=False, allow_unicode=True))
 
@@ -175,7 +175,7 @@ def _append_item(path: Path, key: str, item: list[str], new_file: str) -> None:
         ValueError: key 不是列表，或是非空的流式列表。
             key is not a list, or is a non-empty flow list.
     """
-    from xrobot.generate_main import atomic_write
+    from xrobot.project import atomic_write
 
     text = path.read_bytes().decode("utf-8-sig") if path.exists() else new_file
     newline = "\r\n" if "\r\n" in text else "\n"
@@ -439,7 +439,7 @@ def create_sources_yaml(path: str | Path) -> None:
     """写入只含官方源的 sources.yaml。
     Write a sources.yaml that lists the official Source only.
     """
-    from xrobot.generate_main import atomic_write
+    from xrobot.project import atomic_write
 
     atomic_write(Path(path), SOURCES_TEMPLATE)
 

@@ -31,10 +31,9 @@ from urllib.request import url2pathname
 
 import yaml
 
-from xrobot.generate_main import atomic_write
 from xrobot.git import git
 from xrobot.module_parser import manifest_from_text
-from xrobot.project import Project
+from xrobot.project import Project, atomic_write
 from xrobot.source_manager import SourceManager, SourceUnavailable, load_yaml, validate_id
 
 MODULES_KEYS = ("modules", "xrobot")

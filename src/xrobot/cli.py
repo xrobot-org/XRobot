@@ -90,7 +90,7 @@ def _add_ignore_entries(path: Path) -> bool:
         是否追加了条目。
         Whether any entry was appended.
     """
-    from xrobot.generate_main import atomic_write
+    from xrobot.project import atomic_write
 
     text = path.read_bytes().decode("utf-8") if path.exists() else ""
     missing = [entry for entry in IGNORED if entry not in text.splitlines()]
@@ -108,7 +108,7 @@ def cmd_init(args: argparse.Namespace) -> None:
     Create the XRobot files of a BSP in the -C directory (default: the current directory);
     existing files are kept.
     """
-    from xrobot.generate_main import atomic_write
+    from xrobot.project import atomic_write
     from xrobot.source_manager import SOURCES_TEMPLATE
 
     root = Path(args.directory).resolve()

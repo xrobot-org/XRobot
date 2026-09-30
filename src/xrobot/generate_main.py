@@ -1,13 +1,15 @@
-"""Generate User/xrobot_main.hpp: an ordered, static C++ application from one
-application configuration, the BSP entry's XR_REGISTER list and the locked
-Module sources.
+"""生成 User/xrobot_main.hpp：由一份应用配置、入口源文件的 XR_REGISTER 和锁定模块的源码，
+得到按顺序静态构造模块实例的 C++ 应用。
+Generate User/xrobot_main.hpp: an ordered, static C++ application built from one
+application configuration, the XR_REGISTER list of the BSP entry and the locked Module
+sources.
 """
+
+from __future__ import annotations
 
 import bisect
 import os
 import re
-import stat
-import tempfile
 from pathlib import Path
 
 from xr_syntax.cpp import identifier_occurrences
@@ -24,15 +26,16 @@ from xrobot.constructor_model import (
     type_shape,
 )
 from xrobot.module_parser import discover_modules, select_module, source_interface
-from xrobot.project import HEADER_NOTICE
+from xrobot.project import HEADER_NOTICE, Project, atomic_write, read_header_inputs
 from xrobot.source_syntax import (
+    Token,
     close_token,
     code_tokens,
     conditional_depth,
     parse_document,
     split_arguments,
 )
-from xrobot.type_index import TypeIndex, module_headers
+from xrobot.type_index import ClassEntry, TypeIndex, module_headers
 
 HELPERS = """namespace xrobot_generated {
 // Implicit conversion of a configuration value to an arithmetic parameter type;
@@ -45,39 +48,23 @@ constexpr P Implicit(std::type_identity_t<P> value)
 }  // namespace xrobot_generated
 """
 
-
-def atomic_write(path, text):
-    """Replace ``path`` atomically, keeping an existing file's permission bits."""
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    data = text.encode("utf-8")
-    if path.exists() and path.read_bytes() == data:
-        return
-    if path.exists():
-        mode = stat.S_IMODE(path.stat().st_mode)
-    else:
-        umask = os.umask(0)
-        os.umask(umask)
-        mode = 0o666 & ~umask
-    handle, temporary = tempfile.mkstemp(
-        prefix=path.name + ".", suffix=".tmp", dir=str(path.parent)
-    )
-    try:
-        with os.fdopen(handle, "wb") as stream:
-            stream.write(data)
-        os.chmod(temporary, mode)
-        os.replace(temporary, path)
-    finally:
-        if os.path.exists(temporary):
-            os.unlink(temporary)
+# FAT 的时间戳精度是 2 秒；头文件至少比最新的输入晚这么多，才不会与输入落在同一时刻。
+# FAT timestamps have a 2-second resolution; the header is at least this much newer than
+# its newest input, so the two never share a timestamp.
+FRESHNESS_MARGIN_NS = 2_000_000_000
 
 
-def caller_defined_names(items, stop):
-    """Conservatively defer names declared by the BSP to the call site.
+def caller_defined_names(items: list[Token], stop: int) -> set[str]:
+    """入口源文件在 stop 之前声明的名字（保守地收集，不做作用域和类型解析）。
+    The names the entry source declares before stop, collected conservatively without
+    C++ scope or type resolution.
 
-    The generated header can be included before these declarations, even at
-    namespace scope. This is name collection, not C++ scope/type resolution;
-    an extra template parameter is safer than an invisible type name.
+    生成的头文件可能在这些声明之前被包含，甚至在命名空间作用域；注册类型用到这些名字时，
+    XRobotMain 把它作为模板参数，由调用处给出。多一个模板参数比看不见的类型名更安全。
+    The generated header can be included before these declarations, even at namespace
+    scope; a registered type that uses such a name becomes a template parameter of
+    XRobotMain, supplied by the call site. An extra template parameter is safer than an
+    invisible type name.
     """
     names = set()
     depth = 0
@@ -153,8 +140,23 @@ def caller_defined_names(items, stop):
     return names
 
 
-def read_registrations(path):
-    """Read the entry's XR_REGISTER(name, Type) invocations (one type per name)."""
+def read_registrations(path: str | Path) -> list[dict]:
+    """读取入口源文件中的 XR_REGISTER(name, Type)，每个名字一个类型。
+    Read the XR_REGISTER(name, Type) invocations of the entry source, one type per name.
+
+    Returns:
+        每个注册一个映射：name、type、line，以及 caller_view（类型用到入口源文件自己声明
+        的名字，XRobotMain 须把它作为模板参数）。
+        One mapping per registration: name, type, line and caller_view (the type uses a
+        name the entry declares itself, so XRobotMain takes it as a template parameter).
+
+    Raises:
+        ConfigError: 写在预处理指令或 #if 中、参数个数不对、名字不合法或重复，或注册了
+            引用类型；全部问题一次列出。
+            An invocation sits in a directive or under #if, has the wrong number of
+            arguments, uses an invalid or repeated name, or registers a reference type;
+            every problem is listed at once.
+    """
     path = Path(path)
     text = path.read_text(encoding="utf-8-sig", errors="surrogateescape")
     label = path.name
@@ -171,11 +173,7 @@ def read_registrations(path):
     if len(invocations) != len(candidates):
         raise ConfigError(f"{label}: malformed XR_REGISTER invocation")
     tokens = code_tokens(text)
-    byte_starts, total, cursor = [], 0, 0
-    for token in tokens:  # token offsets are characters; invocation spans are bytes
-        total += len(text[cursor : token.start].encode("utf-8", errors="surrogateescape"))
-        cursor = token.start
-        byte_starts.append(total)
+    byte_starts = [token.span.start for token in tokens]
     records, errors, names = [], [], set()
     for invocation in invocations:
         where = f"{label}:{invocation.line}"
@@ -223,19 +221,18 @@ def read_registrations(path):
     return records
 
 
-def _line_of(container, key, default):
-    lines = getattr(container, "key_lines", None)
-    return lines.get(key, default) if lines else default
-
-
 class _Relation:
-    """Certain type facts from the loaded Module headers (D9 / G22)."""
+    """由已加载模块头文件能确定的类型关系。
+    Type relations that the loaded Module headers settle for certain.
+    """
 
-    def __init__(self, index):
+    def __init__(self, index: TypeIndex) -> None:
         self.index = index
 
-    def certainly_unrelated(self, source, target):
-        """True only when ``source`` can be shown not to convert to ``target``."""
+    def certainly_unrelated(self, source: str, target: str) -> bool:
+        """只有能确定 source 不能转换为 target 时才为 True。
+        True only when source can be shown not to convert to target.
+        """
         sb, _, sp, _ = type_shape(source)
         tb, _, tp, _ = type_shape(target)
         if sb == tb:
@@ -251,7 +248,10 @@ class _Relation:
             return False
         return self._derives(entry, wanted, 0) is False
 
-    def _derives(self, entry, wanted, depth):
+    def _derives(self, entry: ClassEntry, wanted: ClassEntry, depth: int) -> bool | None:
+        """entry 是否公有派生自 wanted；有基类无法定位时为 None。
+        Whether entry derives publicly from wanted; None when a base cannot be located.
+        """
         if entry.path == wanted.path:
             return True
         if depth > 8:
@@ -273,9 +273,12 @@ class _Relation:
 
 
 class Generator:
-    """Render one configuration; errors are collected, not raised one by one."""
+    """把一份配置渲染成生成头文件；错误收集后一次报出。
+    Render one configuration as the generated header; errors are collected and reported
+    at once.
+    """
 
-    def __init__(self, modules, index=None):
+    def __init__(self, modules: dict, index: TypeIndex | None = None) -> None:
         self.modules = modules
         self.index = index or TypeIndex.for_modules(modules)
         self.checker = ValueChecker(self.index)
@@ -290,17 +293,34 @@ class Generator:
 
     def render(
         self,
-        config,
-        registrations,
-        source,
-        config_path=None,
-        header_path=None,
-        header_lines=(),
-        compile_check=False,
-    ):
+        config: dict,
+        registrations: list[dict],
+        source: str,
+        config_path: Path | None = None,
+        header_path: Path | None = None,
+        header_lines: tuple[str, ...] | list[str] = (),
+        compile_check: bool = False,
+    ) -> str:
+        """一份配置的生成头文件文本。
+        The text of the generated header for one configuration.
+
+        Args:
+            source: 报错时配置的名字。
+                The name of the configuration in error messages.
+            config_path: 配置文件；与 header_path 都给出时生成 #line 指令。
+                The configuration file; with header_path, #line directives are emitted.
+            header_lines: 说明行之后的 // xrobot: 输入清单。
+                The // xrobot: input list after the notice line.
+            compile_check: 生成模块 CI 的编译探针，而不是应用入口。
+                Emit the Module CI compile probe instead of the application entry.
+
+        Raises:
+            ConfigError: 配置有错；每行一条，带配置名前缀。
+                The configuration has errors; one per line, prefixed with its name.
+        """
         errors = []
 
-        def fail(message):
+        def fail(message: str) -> None:
             errors.append(f"{source}: {message}")
 
         known = {}
@@ -356,7 +376,32 @@ class Generator:
             selected,
         )
 
-    def _instance(self, i, entry, ids, known, earlier, selected, compile_check):
+    def _instance(
+        self,
+        i: int,
+        entry: dict,
+        ids: list[str],
+        known: dict[str, str],
+        earlier: dict[str, str | None],
+        selected: dict[str, dict],
+        compile_check: bool,
+    ) -> dict:
+        """渲染一个实例：选构造函数、渲染每个参数、判断是否调用 OnMonitor。
+        Render one instance: select its constructor, render each argument and decide
+        whether its OnMonitor is called.
+
+        Args:
+            known: 注册名到类型的映射。
+                The types of the registration names.
+            earlier: 排在前面的实例 id 到 C++ 类型的映射；有错的实例为 None。
+                The C++ types of earlier instance ids; None for an instance with errors.
+            selected: 已选中的模块，按类名；本实例的模块会加入其中。
+                The selected Modules by class name; this instance's Module is added.
+
+        Raises:
+            ValueError: 实例有错；每行一条。
+                The instance has errors; one per line.
+        """
         identity = entry["id"]
         if identity in known:
             raise ValueError(f"instance id {identity} is also an XR_REGISTER name")
@@ -370,7 +415,8 @@ class Generator:
             raise ValueError(f"{module['id']} is a non-standalone library, not an instance")
         if module["name"] in selected and selected[module["name"]]["id"] != module["id"]:
             raise ValueError(
-                f"two selected packages define global class {module['name']}; choose one implementation"
+                f"{selected[module['name']]['id']} and {module['id']} both define the global "
+                f"class {module['name']}; use only one of them"
             )
         selected[module["name"]] = module
         interface = source_interface(module["header"])
@@ -431,17 +477,34 @@ class Generator:
 
     def _argument(
         self,
-        identity,
-        p,
-        value,
-        interface,
-        cpp_class,
-        templates,
-        visible,
-        later,
-        earlier,
-        compile_check,
-    ):
+        identity: str,
+        p: dict,
+        value: object,
+        interface: dict,
+        cpp_class: str,
+        templates: dict[str, str],
+        visible: dict[str, str],
+        later: set[str],
+        earlier: dict[str, str | None],
+        compile_check: bool,
+    ) -> tuple[list[str], str]:
+        """渲染一个构造参数。
+        Render one constructor argument.
+
+        依赖按名字绑定到注册名或排在前面的实例；值交给 ValueChecker 和 convert。引用参数和
+        std::initializer_list 的值放进 static 变量，使其活得和实例一样久。
+        A dependency binds by name to a registration or an earlier instance; a value goes
+        through ValueChecker and convert. Values for reference and std::initializer_list
+        parameters live in static variables, as long as the instance.
+
+        Returns:
+            (实例之前要写出的声明, 参数表达式)。
+            (declarations to emit before the instance, argument expression).
+
+        Raises:
+            ValueError: 名字无法绑定或值不符合规则。
+                A name cannot be bound or a value breaks a rule.
+        """
         field = f"{identity}.args.{p['name']}"
         typ = qualify(p["type"], interface, cpp_class, templates)
         target = qualify(p["type"], interface, cpp_class, templates, True)
@@ -481,6 +544,7 @@ class Generator:
                     if name.startswith("&"):
                         source += "*"
                     elif len(pointers) == 1 and not type_shape(source)[2] and reference != "&":
+                        # 指针参数写对象名时传对象地址。
                         # A bare name bound to a pointer parameter passes the object's address.
                         expression = f"std::addressof({name})"
                         source += "*"
@@ -502,6 +566,7 @@ class Generator:
             expr, typed = self.checker.render(value, field, target, (), default)
         exact = typed or isinstance(value, (dict, list))
         if reference or "std::initializer_list<" in target.replace(" ", ""):
+            # 配置里的临时值和 initializer_list 的底层数组需要静态生存期。
             # Config temporaries and initializer-list backing arrays need static lifetime.
             storage = f"xr_arg_{identity}_{p['name']}"
             checks.append(f"static {typ} {storage} =\n      {expr}\n  ;")
@@ -511,24 +576,37 @@ class Generator:
         expr, _ = convert(expr, typ, exact, checks, field)
         return checks, expr
 
-    def _candidates(self, target, visible):
+    def _candidates(self, target: str, visible: dict[str, str]) -> list[str]:
+        """可绑定到 target 类型的名字，用于报错提示。
+        The names whose type matches target, for error hints.
+        """
         tb = type_shape(target)[0]
         return [name for name, cpp_type in visible.items() if type_shape(cpp_type)[0] == tb]
 
     def _assemble(
         self,
-        config,
-        registrations,
-        entries,
-        monitored,
-        constants,
-        namespace,
-        config_path,
-        header_path,
-        header_lines,
-        compile_check,
-        selected,
-    ):
+        config: dict,
+        registrations: list[dict],
+        entries: list[dict],
+        monitored: set[str],
+        constants: list[str],
+        namespace: str,
+        config_path: Path | None,
+        header_path: Path | None,
+        header_lines: tuple[str, ...] | list[str],
+        compile_check: bool,
+        selected: dict[str, dict],
+    ) -> str:
+        """拼出头文件：输入清单、include、常量、XRobotMain、主循环和两个宏。
+        Assemble the header: input list, includes, constants, XRobotMain, the monitor loop
+        and the two macros.
+
+        XRobotMain 只接收实例用到的注册；每个实例和参数前的 #line 指回 YAML，实例之后的
+        #line 指回头文件。
+        XRobotMain takes only the registrations the instances use; a #line before each
+        instance and argument points into the YAML, and one after each instance points back
+        into the header.
+        """
         used = set()
         for entry in entries:
             for expression in (
@@ -587,7 +665,7 @@ class Generator:
         directives = config_path is not None and header_path is not None and not compile_check
         cfg = Path(os.path.abspath(config_path)).as_posix() if directives else None
 
-        def at(line):
+        def at(line: int) -> None:
             if directives and line:
                 lines.append(f'#line {line} "{cfg}"')
 
@@ -670,8 +748,20 @@ class Generator:
         return "\n".join(lines)
 
 
-def generate_code(project, config_path, modules, registrations, index=None):
-    """Render the header for one configuration without writing it."""
+def generate_code(
+    project: Project,
+    config_path: str | Path,
+    modules: dict,
+    registrations: list[dict],
+    index: TypeIndex | None = None,
+) -> str:
+    """一份配置的生成头文件文本，不写文件。
+    The generated header for one configuration, without writing it.
+
+    Raises:
+        ConfigError: 配置有错。
+            The configuration has errors.
+    """
     config_path = Path(config_path)
     source = project.relative(config_path)
     config = load_config(config_path, source)
@@ -691,12 +781,47 @@ def generate_code(project, config_path, modules, registrations, index=None):
     )
 
 
-def load_modules(project):
+def load_modules(project: Project) -> dict:
+    """BSP 中锁定的全部模块。
+    Every Module locked in the BSP.
+    """
     return discover_modules(project.modules_dir, project.lock)
 
 
-def generate(project, config_path=None):
-    """Generate User/xrobot_main.hpp for ``config_path`` (default: the selected product)."""
+def _mark_fresh(project: Project) -> None:
+    """把生成头文件的修改时间设在它记录的每个输入之后。
+    Give the generated header a modification time after every input it lists.
+
+    通常是当前时间。输入的修改时间在未来（时钟不一致、网络共享、从别的机器拷来），或文件
+    系统时间精度粗使两者相同时，改为最新输入之后 FRESHNESS_MARGIN_NS；否则 LibXR 的 CMake
+    检查会一直认为头文件过期。
+    Normally the current time. When an input's time lies in the future (clock skew, a
+    network share, files copied from another machine) or a coarse filesystem clock makes
+    the two equal, it becomes FRESHNESS_MARGIN_NS after the newest input; otherwise LibXR's
+    CMake check would keep calling the header stale.
+    """
+    os.utime(project.header)
+    config, depends = read_header_inputs(project.header)
+    base = project.header.parent
+    inputs = [base / p for p in ([config] if config else []) + depends]
+    newest = max((p.stat().st_mtime_ns for p in inputs if p.exists()), default=0)
+    if project.header.stat().st_mtime_ns <= newest:
+        target = newest + FRESHNESS_MARGIN_NS
+        os.utime(project.header, ns=(target, target))
+
+
+def generate(project: Project, config_path: str | Path | None = None) -> str:
+    """为 config_path（缺省为当前选中的产品）生成 User/xrobot_main.hpp。
+    Generate User/xrobot_main.hpp for config_path (default: the selected product).
+
+    内容不变时不重写，但修改时间仍更新到所有输入之后，使构建的检查认为它是最新的。
+    Unchanged content is not rewritten, but the modification time still moves after every
+    input so the build's check accepts the header.
+
+    Raises:
+        ConfigError: 配置不存在或有错。
+            The configuration does not exist or has errors.
+    """
     config_path = Path(config_path) if config_path else project.selected_config()
     if not config_path.is_file():
         raise ConfigError(f"{project.relative(config_path)} does not exist")
@@ -704,14 +829,24 @@ def generate(project, config_path=None):
     registrations = read_registrations(project.entry())
     code = generate_code(project, config_path, modules, registrations)
     atomic_write(project.header, code)
-    # Unchanged content is not rewritten; still mark the header as generated
-    # after its inputs so the build's freshness check accepts it.
-    os.utime(project.header)
+    _mark_fresh(project)
     return code
 
 
-def validate_all(project, modules=None, index=None):
-    """Check every application configuration of the BSP; collect all errors (G32)."""
+def validate_all(
+    project: Project, modules: dict | None = None, index: TypeIndex | None = None
+) -> int:
+    """检查 BSP 的每份应用配置，一次列出全部错误。
+    Check every application configuration of the BSP and report every error at once.
+
+    Returns:
+        检查的配置数。
+        The number of configurations checked.
+
+    Raises:
+        ConfigError: 任何配置有错。
+            Any configuration has errors.
+    """
     modules = modules if modules is not None else load_modules(project)
     index = index or TypeIndex.for_modules(modules)
     registrations = read_registrations(project.entry())
@@ -726,14 +861,22 @@ def validate_all(project, modules=None, index=None):
     return len(project.configs())
 
 
-def generate_compile_check(module_name, modules, output, template_args=None):
-    """A never-executed constructor call with void* placeholders (module CI probe)."""
+def generate_compile_check(
+    module_name: str, modules: dict, output: str | Path, template_args: list[str] | None = None
+) -> str:
+    """模块 CI 的编译探针：一个从不执行的构造调用，依赖参数用 void* 占位。
+    The Module CI compile probe: a constructor call that never runs, with void*
+    placeholders for dependencies.
+
+    库模块（standalone: false）没有模块构造函数，探针只包含它的头文件；它的 .cpp 仍经模块
+    列表编译进 xr。
+    A library (standalone: false) has no Module constructor, so the probe only includes its
+    header; its .cpp files still compile into xr through the Module list.
+    """
     from xrobot.config_edit import seed_arguments
 
     module = select_module(modules, module_name)
     if not module["manifest"].standalone:
-        # A library has no Module constructor; its header and .cpp files still
-        # compile into xr through the module list.
         code = f'#include "{module["name"]}.hpp"\n'
         atomic_write(Path(output), code)
         return code

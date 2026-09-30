@@ -15,6 +15,8 @@ every file the generator read, so LibXR's CMake can refuse a stale header withou
 
 import os
 import re
+import stat
+import tempfile
 from pathlib import Path
 
 from xr_syntax.cpp import identifier_occurrences
@@ -48,6 +50,35 @@ def find_root(start: str | Path = ".") -> Path:
         f"No XRobot BSP found at or above {start} (no Modules/modules.yaml); run "
         "`xrobot init` in the BSP root to create one"
     )
+
+
+def atomic_write(path: str | Path, text: str) -> None:
+    """以 UTF-8 原子地替换文件内容；内容相同时不写，已有文件保留权限位。
+    Replace a file's content atomically as UTF-8; an identical file is not rewritten and
+    an existing file keeps its permission bits.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    data = text.encode("utf-8")
+    if path.exists() and path.read_bytes() == data:
+        return
+    if path.exists():
+        mode = stat.S_IMODE(path.stat().st_mode)
+    else:
+        umask = os.umask(0)
+        os.umask(umask)
+        mode = 0o666 & ~umask
+    handle, temporary = tempfile.mkstemp(
+        prefix=path.name + ".", suffix=".tmp", dir=str(path.parent)
+    )
+    try:
+        with os.fdopen(handle, "wb") as stream:
+            stream.write(data)
+        os.chmod(temporary, mode)
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
 
 
 class Project:

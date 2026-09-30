@@ -45,8 +45,8 @@ from xrobot.constructor_model import (
     replace_names,
     template_bindings,
 )
-from xrobot.generate_main import atomic_write
 from xrobot.module_parser import select_module, source_interface
+from xrobot.project import atomic_write
 from xrobot.source_syntax import code_tokens
 
 
