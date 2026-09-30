@@ -349,9 +349,58 @@ class ConstructorModel(unittest.TestCase):
             (p["name"], p["type"], p["default"]),
             ("gains", "const std::array<float, 2>&", "{1.0f, 0.0f}"),
         )
-        for declaration in ("LibXR::UART&", "int (*fn)(int)", "int values[3]"):
+        for declaration in ("LibXR::UART&", "int (*fn)(int)", "int values[3]", "int x ="):
             with self.subTest(declaration=declaration), self.assertRaises(ValueError):
                 parameter(declaration)
+
+
+class InterfaceExtraction(unittest.TestCase):
+    def test_copy_and_move_constructors_are_not_part_of_the_interface(self):
+        for extra in (
+            "Foo(const Foo&) = default;",
+            "Foo(const Foo& other) = default;",
+            "Foo(Foo&&) noexcept = default;",
+            "Foo(Foo const&) = default;",
+        ):
+            with self.subTest(extra=extra):
+                result = interface(f"class Foo {{ public: Foo(int n = 1) {{}} {extra} }};")
+                self.assertEqual([c["parameters"] for c in result["constructors"]], [["int n = 1"]])
+        result = interface(
+            "template <typename T> class Foo { public: Foo(T n = {}) {} "
+            "Foo(const Foo<T>&) = default; };"
+        )
+        self.assertEqual([c["parameters"] for c in result["constructors"]], [["T n = {}"]])
+        with self.assertRaisesRegex(ValueError, "No supported explicit public constructor"):
+            extract_interface("class Foo { public: Foo(const Foo&) = default; };", "Foo")
+        # 参数类型不是本类的单参数构造函数照常保留。
+        # A one-parameter constructor of another type stays.
+        result = interface("class Foo { public: Foo(const FooConfig& config) {} Foo(Foo* p) {} };")
+        self.assertEqual(
+            [c["parameters"] for c in result["constructors"]],
+            [["const FooConfig& config"], ["Foo* p"]],
+        )
+
+    def test_template_declarations_are_listed_one_by_one(self):
+        result = interface(
+            "template <typename T = std::pair<int, int>, int N = 2>\n"
+            "class Foo { public: Foo(T value = {}) {} };"
+        )
+        self.assertEqual(
+            result["template_declarations"], ["typename T = std::pair<int, int>", "int N = 2"]
+        )
+        self.assertEqual([p["name"] for p in result["template_parameters"]], ["T", "N"])
+
+    def test_a_class_outside_global_scope_names_its_scope(self):
+        for source, message in (
+            ("namespace team { class Foo { public: Foo() {} }; }", "inside namespace team"),
+            ("namespace { class Foo { public: Foo() {} }; }", "inside an anonymous namespace"),
+            ("class Outer { class Foo { public: Foo() {} }; };", "inside class Outer"),
+            ("void f() { class Foo { public: Foo() {} }; }", "inside a function body"),
+        ):
+            with self.subTest(source=source), self.assertRaisesRegex(ValueError, message):
+                extract_interface(source, "Foo")
+        with self.assertRaisesRegex(ValueError, "No global class Foo is declared in this header"):
+            extract_interface("class Bar { public: Bar() {} };", "Foo")
 
     def test_initializer_tree_expands_only_explicit_braces(self):
         self.assertEqual(initializer_tree("{}"), [])

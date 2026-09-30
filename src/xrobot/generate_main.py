@@ -376,7 +376,7 @@ class Generator:
             for j, v in enumerate(entry.get("template_args", []))
         ]
         cpp_type = module["name"]
-        if template_args or interface["template"] is not None:
+        if template_args or interface["template_parameters"]:
             cpp_type += "<" + ", ".join(template_args) + ">"
         templates = template_bindings(interface, template_args)
         named_values = entry.get("args", [])
@@ -857,7 +857,7 @@ def generate_compile_check(
     supplied = list(template_args or [])
     templates = template_bindings(interface, supplied)
     cpp_class = module["name"] + (
-        "<" + ", ".join(supplied) + ">" if interface["template"] is not None else ""
+        "<" + ", ".join(supplied) + ">" if interface["template_parameters"] else ""
     )
     generator = Generator(modules)
     entry = {

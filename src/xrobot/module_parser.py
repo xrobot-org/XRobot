@@ -333,7 +333,7 @@ def print_manifest(manifest: ModuleManifest) -> None:
     print(json.dumps(manifest.as_dict(), ensure_ascii=False, indent=2))
     if manifest.standalone and manifest.path:
         interface = source_interface(manifest.path)
-        if interface["template"] is not None:
-            print(f"template <{interface['template']}>")
+        if interface["template_declarations"]:
+            print(f"template <{', '.join(interface['template_declarations'])}>")
         for declaration in interface["constructors"]:
             print(f"{manifest.path}:{declaration['line']}: {declaration['declaration']}")

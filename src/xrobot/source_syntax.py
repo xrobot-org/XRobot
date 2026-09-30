@@ -1,16 +1,18 @@
 """XRobot 对 xr-syntax 的薄适配层。
+Thin XRobot adapter over xr-syntax.
 
-这里仅保留 XRobot 需要的源码级契约：词法 token、分隔符配对、参数列表切分、
-预处理条件层数，以及 Module 构造接口提取。C++ 解析全部由 xr-syntax 负责。
-
-Thin XRobot adapter over xr-syntax.  It keeps only XRobot-specific source
-contracts while xr-syntax owns all C++ parsing.
+这里只保留 XRobot 需要的源码操作：代码 token、括号配对、参数列表切分、预处理条件层数，以及
+模块构造接口的提取。C++ 解析全部由 xr-syntax 负责。
+It keeps only the source operations XRobot needs: code tokens, delimiter matching,
+argument-list splitting, preprocessor conditional depth and the extraction of a Module's
+constructor interface. xr-syntax does all C++ parsing.
 """
 
 from __future__ import annotations
 
 import bisect
 import functools
+import re
 from collections.abc import Sequence
 
 from xr_syntax.cpp import (
@@ -27,53 +29,56 @@ Token = CppLexicalToken
 
 
 @functools.lru_cache(maxsize=65536)
-def _cached_tokens(source: str):
+def _cached_tokens(source: str) -> tuple[CppLexicalToken, ...]:
+    """source 的代码 token，按文本缓存。
+    The code tokens of source, cached per text.
+    """
     return tuple(_code_tokens(source))
 
 
 def code_tokens(source: str) -> list[CppLexicalToken]:
-    """返回 XRobot 需要的 C++ 代码 token，并保持旧调用方的 list 接口。
+    """source 的代码 token（不含注释和空白），每次返回新的列表，调用方可以修改。
+    The code tokens of source (no comments or whitespace), as a new list each time so
+    callers may modify it.
 
-    Return public xr-syntax code tokens as a new list (callers may modify it);
-    tokenization of a given text is cached because the generator re-reads the
-    same type spellings and headers many times.
+    同一段文本的切分结果有缓存：生成时同样的类型写法和头文件会被反复读取。
+    Tokenizing a given text is cached: generation reads the same type spellings and
+    headers many times.
     """
     return list(_cached_tokens(source))
 
 
 @functools.lru_cache(maxsize=256)
 def parse_document(source: str, source_name: str | None = None) -> CppDocument:
-    """Parse C++ source once per (text, name); documents are immutable snapshots."""
+    """解析 C++ 源码；同样的 (文本, 名字) 只解析一次，文档不可变。
+    Parse C++ source once per (text, name); documents are immutable.
+    """
     return CppDocument.parse(source, source_name=source_name)
 
 
 def close_token(items: Sequence[CppLexicalToken], start: int) -> int:
-    """返回 opening token 对应的 closing token 索引。
-
-    Return the matching closing-token index using xr-syntax delimiter rules.
+    """与 items[start] 这个左括号配对的右括号的下标。
+    The index of the closing delimiter that matches the opening one at items[start].
     """
     return matching_delimiter(items, start)
 
 
 def split_arguments(text: str) -> list[str]:
-    """按顶层逗号切分 C++ 参数，同时保留模板参数中的逗号。
-
-    Split a C++ argument/declaration list on top-level commas while treating
-    template angle brackets as nesting, matching XRobot's historical contract.
+    """按顶层逗号切分 C++ 参数或声明列表；模板尖括号内的逗号不切。
+    Split a C++ argument or declaration list on top-level commas; commas inside template
+    angle brackets do not split.
     """
     return list(split_source_list(text, template_angles=True))
 
 
-_DEPTH_CACHE: dict = {}
-
-
-def _directive_depths(document: CppDocument):
-    """(positions, running depth) of the #if/#ifdef/#ifndef/#endif directives."""
-    cached = _DEPTH_CACHE.get(id(document))
-    if cached is not None and cached[0] is document:
-        return cached[1], cached[2]
+@functools.lru_cache(maxsize=256)
+def _directive_depths(document: CppDocument) -> tuple[list[int], list[int]]:
+    """文档中 #if/#ifdef/#ifndef/#endif 的位置，以及每一处之后的嵌套层数。
+    The positions of the #if/#ifdef/#ifndef/#endif directives of the document, and the
+    nesting depth after each.
+    """
     deltas = []
-    for node in document.root.descendants():  # one walk for all three kinds
+    for node in document.root.descendants():
         if node.kind in ("preproc_if", "preproc_ifdef"):
             deltas.append((node.span.start, 1))
         elif node.kind == "preproc_call":
@@ -86,18 +91,16 @@ def _directive_depths(document: CppDocument):
     for _, delta in deltas:
         running += delta
         depths.append(running)
-    if len(_DEPTH_CACHE) > 256:
-        _DEPTH_CACHE.clear()
-    _DEPTH_CACHE[id(document)] = (document, positions, depths)
     return positions, depths
 
 
 def conditional_depth(document: CppDocument, start: int, end: int) -> int:
-    """返回 [start, end) 内尚未闭合的 #if/#ifdef/#ifndef 层数。
+    """[start, end) 内打开而未关闭的 #if/#ifdef/#ifndef 层数。
+    The number of #if/#ifdef/#ifndef opened but not closed within [start, end).
 
-    Count conditional directives opened but not closed between ``start`` and
-    ``end`` from xr-syntax preprocessor nodes, so directive spelling stays
-    parser-owned. Directive positions are computed once per document.
+    指令由 xr-syntax 的预处理节点识别，每个文档只统计一次。
+    The directives come from xr-syntax's preprocessor nodes and are counted once per
+    document.
     """
     positions, depths = _directive_depths(document)
     before = bisect.bisect_left(positions, start)
@@ -107,18 +110,38 @@ def conditional_depth(document: CppDocument, start: int, end: int) -> int:
 
 
 def extract_interface(source: str, name: str, source_name: str | None = None) -> dict:
-    """从全局显式 class/struct 提取 XRobot 所需的构造接口快照。
+    """头文件中全局类 name 的构造接口：模板参数声明和公有构造函数。
+    The constructor interface of the global class name in a header: its template parameter
+    declarations and public constructors.
 
-    Extract the explicit global Module class interface through xr-syntax typed
-    views.  This deliberately returns the historical XRobot dictionary shape so
-    ConstructorModel can migrate independently of the parser implementation.
+    拷贝构造和移动构造不算接口：配置无法从另一个实例复制出模块。
+    Copy and move constructors are not part of the interface: a configuration cannot copy
+    a Module from another instance.
+
+    Returns:
+        含 name、template_declarations（模板参数声明，非模板类为空）和 constructors
+        （每项含 declaration、parameters、line）的映射。
+        A mapping with name, template_declarations (template parameter declarations, empty
+        for a class that is not a template) and constructors (each with declaration,
+        parameters and line).
+
+    Raises:
+        ValueError: 没有这个全局类或有多个，类是显式特化，没有可调用的公有构造函数，或
+            构造函数在 #if 中。
+            There is no such global class or several, the class is an explicit
+            specialization, it has no callable public constructor, or a constructor is
+            under #if.
     """
     document = parse_document(source, source_name)
-    classes = [view for view in document.class_views(name) if _is_global_class(view.node)]
+    views = document.class_views(name)
+    classes = [view for view in views if _is_global_class(view.node)]
     if not classes:
-        raise ValueError(
-            f"No explicit global class {name}; macro-generated interfaces are not supported"
-        )
+        if views:
+            raise ValueError(
+                f"{name} is declared inside {_scope_of(views[0].node)}; a Module class must "
+                "be declared at global scope"
+            )
+        raise ValueError(f"No global class {name} is declared in this header")
     if len(classes) != 1:
         raise ValueError(f"Multiple definitions of Module class {name}")
 
@@ -129,7 +152,11 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
     if templated and not template_parameters:
         raise ValueError("Explicit Module template specialization is not supported")
 
-    constructors = class_view.constructors(public_only=True, callable_only=True)
+    constructors = [
+        constructor
+        for constructor in class_view.constructors(public_only=True, callable_only=True)
+        if not _copies_or_moves([p.text.strip() for p in constructor.parameters], name)
+    ]
     if not constructors:
         raise ValueError(f"No supported explicit public constructor for {name}")
 
@@ -150,28 +177,56 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
                 "line": source_bytes[: constructor.node.span.start].count(b"\n") + 1,
             }
         )
-
-    monitor = any(
-        function.name == "OnMonitor" and function.access == "public"
-        for function in class_view.functions()
-    )
     return {
         "name": name,
-        "monitor": monitor,
-        "template": (
-            ", ".join(parameter.text for parameter in template_parameters)
-            if template_parameters
-            else None
-        ),
+        "template_declarations": [parameter.text.strip() for parameter in template_parameters],
         "constructors": result,
     }
 
 
-def _is_global_class(node) -> bool:
-    """判断 class/struct 是否直接属于 translation unit（允许 template 包装）。
+def _copies_or_moves(parameters: list[str], name: str) -> bool:
+    """参数表是否是 name 的拷贝构造或移动构造：唯一参数为 [const] name[<...>]& 或 &&。
+    Whether a parameter list makes a copy or move constructor of name: its one parameter
+    is [const] name[<...>]& or &&.
+    """
+    if len(parameters) != 1:
+        return False
+    tokens = code_tokens(parameters[0])
+    texts = [t.text for t in tokens]
+    if "=" in texts:
+        tokens = tokens[: texts.index("=")]
+    if len(tokens) >= 2 and tokens[-1].kind == "identifier" and tokens[-2].text in ("&", "&&"):
+        tokens = tokens[:-1]
+    texts = [t.text for t in tokens if t.text not in ("const", "volatile")]
+    if len(texts) < 2 or texts[-1] not in ("&", "&&") or texts[0] != name:
+        return False
+    rest = texts[1:-1]
+    return not rest or (rest[0] == "<" and rest[-1] == ">")
 
-    Return whether a class/struct is a translation-unit declaration, optionally
-    wrapped directly by a template declaration.
+
+def _scope_of(node) -> str:
+    """包含一个非全局类的作用域的说明，如 namespace team 或 class Outer。
+    A description of the scope that holds a class that is not global, such as
+    namespace team or class Outer.
+    """
+    parent = node.parent
+    while parent is not None:
+        if parent.kind == "namespace_definition":
+            head = " ".join(parent.text.split("{", 1)[0].split())
+            return head if head != "namespace" else "an anonymous namespace"
+        if parent.kind in ("class_specifier", "struct_specifier"):
+            match = re.match(r"\s*(class|struct)\s+(\w+)", parent.text)
+            return f"{match.group(1)} {match.group(2)}" if match else "another class"
+        if parent.kind == "function_definition":
+            return "a function body"
+        parent = parent.parent
+    return "another declaration"
+
+
+def _is_global_class(node) -> bool:
+    """class/struct 是否直接声明在翻译单元中（外面可以有一层 template）。
+    Whether a class/struct is declared directly in the translation unit, optionally inside
+    one template declaration.
     """
     parent = node.parent
     if parent is not None and parent.kind == "template_declaration":

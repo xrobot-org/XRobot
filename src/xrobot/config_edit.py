@@ -850,7 +850,7 @@ def sync_config(
         if len(template_args) != len(entry.get("template_args") or []):
             continue
         cpp_class = module["name"] + (
-            "<" + ", ".join(template_args) + ">" if interface["template"] is not None else ""
+            "<" + ", ".join(template_args) + ">" if interface["template_parameters"] else ""
         )
         try:
             templates = template_bindings(interface, template_args)

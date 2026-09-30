@@ -110,11 +110,7 @@ def enrich_interface(source: str, interface: dict, source_name: str | None = Non
         if declarations == ["void"]:
             declarations = []
         ctor["arguments"] = [parameter(p) for p in declarations]
-    interface["template_parameters"] = (
-        [parameter(p) for p in split_arguments(interface["template"])]
-        if interface["template"]
-        else []
-    )
+    interface["template_parameters"] = [parameter(p) for p in interface["template_declarations"]]
     return interface
 
 
