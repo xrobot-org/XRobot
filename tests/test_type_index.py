@@ -207,17 +207,42 @@ class Lookup(TypeIndexTestCase):
         self.assertEqual(index.qualify_in("other::Mode", entry, "ns::Fields"), "other::Mode")
 
     def test_a_type_defined_in_two_headers_is_an_error(self):
-        index = self.index("struct Twice { int a; };", "struct Twice { int b; };")
-        with self.assertRaisesRegex(ValueError, "Type Twice is defined in several Module headers"):
+        paths = [
+            self.write("a/Twice.hpp", "struct Twice { int a; };"),
+            self.write("b/Twice.hpp", "struct Twice { int b; };"),
+        ]
+        index = TypeIndex(paths, {paths[0]: "team/A/Twice.hpp", paths[1]: "team/B/Twice.hpp"})
+        with self.assertRaisesRegex(
+            ValueError,
+            "Type Twice is defined in several Module headers: team/A/Twice.hpp, team/B/Twice.hpp",
+        ):
             index.resolve("Twice")
 
-    def test_global_class_names(self):
+    def test_classes_local_to_a_function_are_not_indexed(self):
+        index = self.index(
+            "struct Limits { int max = 1; };",
+            "class Other { public: void Run(); };\n"
+            "inline void Other::Run() { struct Limits { int a; }; Limits l{1}; (void)l; }\n"
+            "inline void Free() { auto f = [] { struct Hidden {}; }; (void)f; }\n"
+            "inline void Typedef() { typedef struct { int a; } Local; }\n",
+        )
+        self.assertEqual([name for name, _, _ in index.resolve("Limits").fields()], ["max"])
+        self.assertIsNone(index.resolve("Hidden"))
+        self.assertIsNone(index.resolve("Local"))
+
+    def test_global_classes(self):
         index = self.index(
             "struct A {};\ntemplate <typename T>\nclass B {};\nclass alignas(8) C {};\n"
             "namespace n {\nstruct D {};\n}\nvoid f() { struct Local {}; }\n"
+            "  struct Indented {};\ntypedef struct { int a; } Plain;\nclass Forward;\n",
+            "#pragma once\nnamespace LibXR {\nclass GPIO;\n}\n",
         )
-        self.assertTrue({"A", "B", "C"} <= index.global_class_names())
-        self.assertNotIn("Local", index.global_class_names())
+        for name in ("A", "B", "C", "Indented", "Plain"):
+            with self.subTest(name=name):
+                self.assertTrue(index.is_global_class(name))
+        for name in ("D", "Local", "Forward", "GPIO", "led"):
+            with self.subTest(name=name):
+                self.assertFalse(index.is_global_class(name))
 
 
 class Monitor(TypeIndexTestCase):
@@ -260,6 +285,29 @@ class Monitor(TypeIndexTestCase):
         for text in (
             "class M { public:\n#if FEATURE\n  void OnMonitor();\n#endif\n};",
             "struct B { void X(); };\nclass M : public B { public:\n#ifdef FEATURE\n  using B::OnMonitor;\n#endif\n};",
+        ):
+            with (
+                self.subTest(text=text),
+                self.assertRaisesRegex(ValueError, "M declares OnMonitor under #if"),
+            ):
+                self.provides(text)
+
+    def test_an_include_guard_is_not_a_condition(self):
+        guarded = (
+            "// Led\n#ifndef LED_HPP\n#define LED_HPP\n#include <cstdint>\n"
+            "struct Param { int cycle = 1;\n#if FEATURE\n  int extra;\n#endif\n};\n"
+            "class M { public: void OnMonitor(); };\n#endif  // LED_HPP\n"
+        )
+        index = self.index(guarded)
+        self.assertTrue(index.provides_monitor(index.resolve("M")))
+        self.assertEqual(
+            index.resolve("Param").mapping_problem(), "Param declares fields under #if (extra)"
+        )
+        for text in (
+            guarded.replace("#define LED_HPP", "#define OTHER"),
+            guarded.replace("#endif  // LED_HPP\n", "#endif  // LED_HPP\nint after;\n"),
+            "int before;\n" + guarded,
+            "#ifndef FEATURE\nclass M { public: void OnMonitor(); };\n#endif\n",
         ):
             with (
                 self.subTest(text=text),

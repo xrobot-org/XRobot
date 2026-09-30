@@ -1,29 +1,38 @@
-"""按名称查找模块头文件中的 class/struct，读取字段顺序与构造函数签名。
+"""按名字查找模块头文件中的 class/struct，读取字段顺序、默认值与公有构造函数。
+Find class/struct definitions in loaded Module headers by name, and read their data
+members in declaration order, their defaults and their public constructors.
 
-Read class/struct definitions from loaded Module headers: data-member names in
-declaration order, and public constructor signatures. This backs the YAML
-completeness rules without evaluating types. A name that may denote something
-the index cannot see (a template parameter, a member of a base class that is not
-in the loaded headers) is reported as unknown instead of falling back to an
-unrelated outer declaration with the same name.
-
-Headers are parsed lazily: only files whose text mentions a requested name are
-parsed, and each file is parsed and tokenized once.
+配置中映射写法的完整性检查依据这些信息，不对类型求值。一个名字可能指向索引看不到的东西
+（外层类模板的模板参数、不在已加载头文件中的基类成员）时，结果是"未知"，不会退回到外层
+同名的无关声明。头文件按需解析：只解析文本中出现所查名字的文件，每个文件只解析一次。
+The completeness checks of mapping values rest on this information; types are never
+evaluated. A name that may denote something the index cannot see (a template parameter
+of an enclosing class template, a member of a base class outside the loaded headers) is
+reported as unknown instead of falling back to an unrelated outer declaration with the
+same name. Headers are parsed on demand: only files whose text mentions a requested name,
+each once.
 """
 
 from __future__ import annotations
 
 import bisect
 import re
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 
 from xr_syntax.cpp import CppClassView
 
-from xrobot.source_syntax import close_token, code_tokens, parse_document, split_arguments
+from xrobot.source_syntax import (
+    Token,
+    close_token,
+    code_tokens,
+    parse_document,
+    split_arguments,
+)
 
 _SCOPES = ("namespace_definition", "class_specifier", "struct_specifier")
-_WANTED = frozenset(_SCOPES + ("preproc_if", "preproc_ifdef", "preproc_call"))
+_CONDITIONALS = ("preproc_if", "preproc_ifdef", "preproc_call")
+_WANTED = frozenset(_SCOPES + _CONDITIONALS + ("preproc_def", "compound_statement"))
 _CLASS_KEYS = ("class", "struct", "union", "enum")
 _SKIP_LEADING = {
     "using",
@@ -50,10 +59,13 @@ _SPECIFIERS = {
     "explicit",
     "virtual",
 }
+_ATTRIBUTES = r"(?:\[\[[^\]]*\]\]\s*|alignas\s*\([^)]*\)\s*)*"
 
 
 def _strip_type(text: str) -> tuple[str, ...] | None:
-    """Return the name path of a class type spelling, or None for pointers/arrays/functions."""
+    """类类型写法中的名字路径；指针、数组和函数类型为 None。
+    The name path of a class type spelling; None for pointer, array and function types.
+    """
     items = code_tokens(text)
     names, current, i = [], None, 0
     while i < len(items):
@@ -81,7 +93,10 @@ def _strip_type(text: str) -> tuple[str, ...] | None:
 
 
 def _split_last(spelled: str) -> tuple[str, list[str] | None]:
-    """Split ``A<x>::B<y, z>`` into the outer spelling ``A<x>`` and ``['y', 'z']``."""
+    """把 A<x>::B<y, z> 拆成外层写法 A<x> 和最后一段的模板实参 ['y', 'z']。
+    Split A<x>::B<y, z> into the outer spelling A<x> and the last part's template
+    arguments ['y', 'z'].
+    """
     items = code_tokens(spelled)
     cut, i, last_open = None, 0, None
     while i < len(items):
@@ -102,6 +117,9 @@ def _split_last(spelled: str) -> tuple[str, list[str] | None]:
 
 
 def _replace_identifiers(text: str, replacements: dict[str, str]) -> str:
+    """替换 text 中未加限定的标识符。
+    Replace the unqualified identifiers of text.
+    """
     items = code_tokens(text)
     edits = []
     for i, token in enumerate(items):
@@ -115,68 +133,134 @@ def _replace_identifiers(text: str, replacements: dict[str, str]) -> str:
     return text
 
 
-class _Header:
-    """One parsed header: text, syntax document and a single token list.
+def _directive_words(node) -> list[str]:
+    """预处理指令节点中的词，如 ['#', 'ifndef', 'LED_HPP']。
+    The words of a preprocessor directive node, e.g. ['#', 'ifndef', 'LED_HPP'].
+    """
+    return [child.text for child in node.syntax_children if not child.is_trivia]
 
-    Syntax-node spans are byte offsets; lexical tokens use character offsets.
+
+def _is_include_guard(deltas: list, defines: list, tokens: Sequence[Token]) -> bool:
+    """第一个条件指令和最后一个 #endif 是否构成包住全部代码的 include guard。
+    Whether the first conditional directive and the last #endif form an include guard
+    (#ifndef X, #define X, ..., #endif) around all code of the file.
+
+    Args:
+        deltas: 按位置排序的 (字节位置, +1/-1, 节点)，+1 为 #if/#ifdef/#ifndef，-1 为 #endif。
+            (byte position, +1/-1, node) sorted by position: +1 for #if/#ifdef/#ifndef,
+            -1 for #endif.
+        defines: 文件中的 #define 节点。
+            The #define nodes of the file.
+        tokens: 文件的代码 token。
+            The code tokens of the file.
+    """
+    if len(deltas) < 2 or deltas[0][1] != 1 or deltas[0][2].kind != "preproc_ifdef":
+        return False
+    words = _directive_words(deltas[0][2])
+    if words[1:2] != ["ifndef"] or len(words) < 3:
+        return False
+    start, end = deltas[0][0], deltas[-1][0]
+    following = [node for node in defines if node.span.start > start]
+    if not following:
+        return False
+    define = min(following, key=lambda node: node.span.start)
+    if _directive_words(define)[2:3] != [words[2]]:
+        return False
+    if tokens and (tokens[0].span.start < start or tokens[-1].span.start > end):
+        return False
+    depth = 0
+    for i, (_, delta, _) in enumerate(deltas):
+        depth += delta
+        if depth == 0:
+            return i == len(deltas) - 1
+    return False
+
+
+class _Header:
+    """一个已解析的头文件：文本、语法文档和代码 token。
+    One parsed header: its text, syntax document and code tokens.
+
+    语法节点的 span 是字节位置；token 的 start/end 是字符位置，span 是字节位置。
+    Syntax-node spans are byte offsets; a token's start/end are character offsets and its
+    span is a byte range.
     """
 
-    def __init__(self, path: Path, text: str):
+    def __init__(self, path: Path, text: str) -> None:
         self.path = path
         self.text = text
         self.document = parse_document(text, str(path))
         self.tokens = code_tokens(text)
-        byte_of = [0] * (len(text) + 1)
-        total = 0
-        for i, ch in enumerate(text):
-            byte_of[i] = total
-            total += len(ch.encode("utf-8", errors="surrogateescape"))
-        byte_of[len(text)] = total
-        self._byte_of = byte_of
-        self._starts = [byte_of[t.start] for t in self.tokens]
+        self._starts = [token.span.start for token in self.tokens]
+        self.scopes: list[tuple[int, int, str]] | None = None
+        # 一次遍历收集索引需要的全部节点。
         # One tree walk collects every node kind the index needs.
-        self.nodes = {}
+        self.nodes: dict[str, list] = {}
         for element in self.document.root.descendants():
             if element.kind in _WANTED and hasattr(element, "child_by_field"):
                 self.nodes.setdefault(element.kind, []).append(element)
         deltas = []
-        for kind in ("preproc_if", "preproc_ifdef", "preproc_call"):
+        for kind in _CONDITIONALS:
             for node in self.nodes.get(kind, []):
                 if kind != "preproc_call":
-                    deltas.append((node.span.start, 1))
-                    continue
-                significant = [c for c in node.syntax_children if not c.is_trivia]
-                if len(significant) > 1 and significant[1].text == "endif":
-                    deltas.append((node.span.start, -1))
-        deltas.sort()
-        self._directive_at = [position for position, _ in deltas]
-        depth, running = [], 0
-        for _, delta in deltas:
+                    deltas.append((node.span.start, 1, node))
+                elif _directive_words(node)[1:2] == ["endif"]:
+                    deltas.append((node.span.start, -1, node))
+        deltas.sort(key=lambda delta: delta[0])
+        if _is_include_guard(deltas, self.nodes.get("preproc_def", []), self.tokens):
+            deltas = deltas[1:-1]
+        self._directive_at = [position for position, _, _ in deltas]
+        self._depth = []
+        running = 0
+        for _, delta, _ in deltas:
             running += delta
-            depth.append(running)
-        self._depth = depth
+            self._depth.append(running)
+        # 最外层的函数体（含 lambda）；其中定义的类是局部类，不进入索引。
+        # Outermost function bodies (lambdas included); classes defined in them are local
+        # and stay out of the index.
+        self._bodies = []
+        for start, end in sorted(
+            (node.span.start, node.span.end) for node in self.nodes.get("compound_statement", [])
+        ):
+            if not self._bodies or start >= self._bodies[-1][1]:
+                self._bodies.append((start, end))
+        self._body_starts = [start for start, _ in self._bodies]
 
-    def tokens_in(self, start: int, end: int):
+    def tokens_in(self, start: int, end: int) -> list[Token]:
+        """字节范围 [start, end) 内开始的 token。
+        The tokens starting in the byte range [start, end).
+        """
         lo = bisect.bisect_left(self._starts, start)
         hi = bisect.bisect_left(self._starts, end)
         return self.tokens[lo:hi]
 
-    def index_of(self, token) -> int:
-        return bisect.bisect_left(self._starts, self._byte_of[token.start])
+    def index_of(self, token: Token) -> int:
+        """token 在 self.tokens 中的下标。
+        The index of token in self.tokens.
+        """
+        return bisect.bisect_left(self._starts, token.span.start)
 
-    def conditional_depth(self, token) -> int:
-        """Open #if/#ifdef/#ifndef levels at a token (whole file)."""
-        i = bisect.bisect_right(self._directive_at, self._byte_of[token.start])
+    def conditional_depth(self, token: Token) -> int:
+        """token 处未闭合的 #if/#ifdef/#ifndef 层数，不计 include guard。
+        The open #if/#ifdef/#ifndef levels at token, not counting an include guard.
+        """
+        i = bisect.bisect_right(self._directive_at, token.span.start)
         return self._depth[i - 1] if i else 0
 
-    def byte(self, character_offset: int) -> int:
-        return self._byte_of[character_offset]
+    def in_function_body(self, byte_position: int) -> bool:
+        """字节位置是否在函数体或 lambda 体内。
+        Whether a byte position lies in a function or lambda body.
+        """
+        i = bisect.bisect_right(self._body_starts, byte_position)
+        return bool(i) and self._bodies[i - 1][0] < byte_position < self._bodies[i - 1][1]
 
 
 class _Layout:
-    """Data members and aggregate-relevant facts of one class body."""
+    """一个类体的数据成员，以及判断聚合体所需的信息。
+    The data members of one class body and the facts that decide whether it is an
+    aggregate.
+    """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.fields: list[tuple[str, str, str]] = []  # (name, type spelling, access)
         self.field_defaults: dict[str, str] = {}  # default member initializer text
         self.conditional_fields: list[str] = []
@@ -187,8 +271,10 @@ class _Layout:
         self.monitor: str | None = None  # 'public' / 'conditional' / None
 
 
-def _scan_body(header: _Header, items, default_access: str) -> _Layout:
-    """Scan one class body's tokens (including its braces)."""
+def _scan_body(header: _Header, items: Sequence[Token], default_access: str) -> _Layout:
+    """扫描一个类体的 token（含两侧花括号）。
+    Scan the tokens of one class body, braces included.
+    """
     layout = _Layout()
     access = default_access
     i, end = 1, len(items) - 1
@@ -206,6 +292,7 @@ def _scan_body(header: _Header, items, default_access: str) -> _Layout:
         if first.text == ";":
             i += 1
             continue
+        # 收集一个成员声明，直到顶层的 ';' 或函数体结束。
         # Collect one member declaration up to its top-level ';' (or a function body).
         j = i
         body_close = None
@@ -213,8 +300,9 @@ def _scan_body(header: _Header, items, default_access: str) -> _Layout:
             if items[j].text == "{":
                 close = close_token(items, j)
                 previous = items[j - 1] if j > i else None
-                # In a function declaration, a brace right after a member name
-                # is a constructor initializer; any other brace opens the body.
+                # 函数声明中，紧跟成员名的花括号是构造函数初始化，其他花括号开始函数体。
+                # In a function declaration, a brace right after a member name is a
+                # constructor initializer; any other brace opens the body.
                 if (
                     previous is not None
                     and _is_function(items[i:j])
@@ -246,13 +334,19 @@ def _scan_body(header: _Header, items, default_access: str) -> _Layout:
     return layout
 
 
-def _template_open(items, start, index) -> bool:
-    """Whether ``<`` at ``index`` opens template arguments (vs. a comparison)."""
+def _template_open(items: Sequence[Token], start: int, index: int) -> bool:
+    """index 处的 '<' 是否开始模板实参（而不是比较运算）。
+    Whether the '<' at index opens template arguments rather than a comparison.
+    """
     previous = items[index - 1] if index > start else None
     return previous is not None and (previous.kind == "identifier" or previous.text == "template")
 
 
-def _classify(header: _Header, member, access: str, layout: _Layout):
+def _classify(header: _Header, member: Sequence[Token], access: str, layout: _Layout) -> None:
+    """按一个成员声明更新 layout：数据成员、成员类型、别名或 OnMonitor。
+    Update layout from one member declaration: a data member, a member type, an alias
+    or OnMonitor.
+    """
     texts = [t.text for t in member]
     first = texts[0]
     if first == "using":
@@ -263,6 +357,7 @@ def _classify(header: _Header, member, access: str, layout: _Layout):
             layout.monitor = "conditional" if header.conditional_depth(member[0]) else "public"
         return
     if first == "typedef":
+        # typedef struct {...} Name; 由 TypeIndex._parse 登记为类。
         # typedef struct {...} Name; is registered as a class by TypeIndex._parse.
         if member[-1].kind == "identifier":
             layout.member_types[texts[-1]] = "typedef"
@@ -285,6 +380,7 @@ def _classify(header: _Header, member, access: str, layout: _Layout):
         rest = member[close + 1 :]
         declarators = [t for t in rest if t.text != ";"]
         if declarators and first != "enum":
+            # `struct T {...} member;` 声明一个嵌套类型的成员。
             # `struct T {...} member;` declares a member of the nested type.
             _record_fields(header, declarators, name or "", access, layout)
         elif declarators and first == "enum":
@@ -292,8 +388,9 @@ def _classify(header: _Header, member, access: str, layout: _Layout):
         return
     if "virtual" in texts:
         layout.has_virtual = True
-    # Leading specifiers decide static members; functions have a top-level '('
-    # before any initializer.
+    # 前导说明符决定是否为静态成员；函数在初始化之前有顶层的 '('。
+    # Leading specifiers decide static members; functions have a top-level '(' before
+    # any initializer.
     leading = set()
     for t in texts:
         if t in _SPECIFIERS:
@@ -313,7 +410,11 @@ def _classify(header: _Header, member, access: str, layout: _Layout):
     _record_fields(header, member, None, access, layout)
 
 
-def _is_function(member) -> bool:
+def _is_function(member: Sequence[Token]) -> bool:
+    """成员声明是否声明函数：在 '='、'{' 或 ':' 之前出现顶层的 '('。
+    Whether a member declaration declares a function: a top-level '(' before any '=',
+    '{' or ':'.
+    """
     k = 0
     while k < len(member):
         text = member[k].text
@@ -338,7 +439,22 @@ def _is_function(member) -> bool:
     return False
 
 
-def _record_fields(header: _Header, member, forced_type, access, layout: _Layout):
+def _record_fields(
+    header: _Header,
+    member: Sequence[Token],
+    forced_type: str | None,
+    access: str,
+    layout: _Layout,
+) -> None:
+    """记录一个数据成员声明中的每个字段、类型写法和默认初始化。
+    Record every field of one data-member declaration with its type spelling and
+    default member initializer.
+
+    Args:
+        forced_type: 字段类型已知时（如 struct T {...} member;）的类型写法，否则为 None。
+            The type spelling when it is already known (as in struct T {...} member;),
+            else None.
+    """
     parts, start, k = [], 0, 0
     while k < len(member):
         text = member[k].text
@@ -387,7 +503,7 @@ def _record_fields(header: _Header, member, forced_type, access, layout: _Layout
         if name_index is None:
             continue
         if base_type is None:
-            type_tokens = [t for t in part[:name_index]]
+            type_tokens = list(part[:name_index])
             spelled = []
             n = 0
             while n < len(type_tokens):
@@ -426,7 +542,9 @@ def _record_fields(header: _Header, member, forced_type, access, layout: _Layout
 
 
 class ClassEntry:
-    """One located class/struct definition."""
+    """索引中的一个 class/struct 定义。
+    One located class/struct definition.
+    """
 
     def __init__(
         self,
@@ -434,10 +552,10 @@ class ClassEntry:
         path: tuple[str, ...],
         kind: str,
         body_range: tuple[int, int],
-        view=None,
+        view: CppClassView | None = None,
         head_range: tuple[int, int] | None = None,
         template_parameters: list[str] | None = None,
-    ):
+    ) -> None:
         self.header_info = header
         self.header = header.path
         self.path = path
@@ -446,36 +564,56 @@ class ClassEntry:
         self._body_range = body_range  # token indices of '{' and '}'
         self._head_range = head_range
         self.template_parameters = template_parameters or []
-        self._layout = None
+        self._layout: _Layout | None = None
 
     @property
     def qualified(self) -> str:
+        """带命名空间和外层类的全名。
+        The name qualified with its namespaces and enclosing classes.
+        """
         return "::".join(self.path)
 
     @property
     def default_access(self) -> str:
+        """未写访问说明符时成员的访问权限。
+        The access of members before any access specifier.
+        """
         return "public" if self.kind == "struct" else "private"
 
-    def body_tokens(self):
+    def body_tokens(self) -> list[Token]:
+        """类体的 token，含两侧花括号。
+        The tokens of the class body, braces included.
+        """
         start, end = self._body_range
         return self.header_info.tokens[start : end + 1]
 
-    def _head_tokens(self):
+    def _head_tokens(self) -> list[Token]:
+        """类名到类体之前的 token（含基类列表）。
+        The tokens from the class key to the body, base clause included.
+        """
         if self._head_range is None:
             return []
         start, end = self._head_range
         return self.header_info.tokens[start:end]
 
     def layout(self) -> _Layout:
+        """类体扫描结果，首次调用时扫描。
+        The scanned class body, scanned on first use.
+        """
         if self._layout is None:
             self._layout = _scan_body(self.header_info, self.body_tokens(), self.default_access)
         return self._layout
 
     def has_base(self) -> bool:
+        """是否有基类。
+        Whether the class has base classes.
+        """
         return any(t.text == ":" for t in self._head_tokens())
 
     def base_spellings(self) -> list[tuple[str, str]]:
-        """Return (access, type spelling) of each direct base class."""
+        """每个直接基类的 (访问权限, 类型写法)。
+        The (access, type spelling) of each direct base class.
+        """
         head = self._head_tokens()
         colon = next(
             (
@@ -509,6 +647,9 @@ class ClassEntry:
         return result
 
     def constructors(self) -> list[list[dict]]:
+        """可调用的公有构造函数，每个为参数描述的列表。
+        The callable public constructors, each a list of parameter descriptions.
+        """
         if self.view is None:
             return []
         from xrobot.constructor_model import parameter
@@ -519,23 +660,38 @@ class ClassEntry:
         ]
 
     def declares_constructor(self) -> bool:
+        """是否声明了任何构造函数。
+        Whether the class declares any constructor.
+        """
         return self.view is not None and bool(self.view.constructors())
 
     def fields(self) -> list[tuple[str, str, str]]:
-        """Return (name, type spelling, access) of non-static data members in order."""
+        """非静态数据成员的 (名字, 类型写法, 访问权限)，按声明顺序。
+        The (name, type spelling, access) of the non-static data members in declaration
+        order.
+        """
         return list(self.layout().fields)
 
     def member_types(self) -> dict[str, str]:
+        """类中声明的类型名及其种类（class、enum、using 等）。
+        The type names declared in the class and their kinds (class, enum, using, ...).
+        """
         return dict(self.layout().member_types)
 
     def is_aggregate(self) -> bool:
+        """是否为聚合体：没有构造函数、基类和虚函数，数据成员都是公有的。
+        Whether the class is an aggregate: no constructors, bases or virtual functions,
+        and only public data members.
+        """
         layout = self.layout()
         if self.declares_constructor() or self.has_base() or layout.has_virtual:
             return False
         return all(access == "public" for _, _, access in layout.fields)
 
     def mapping_problem(self) -> str | None:
-        """Why a YAML mapping cannot be checked against this type, or None."""
+        """YAML 映射不能对照此类型检查的原因；可以检查时为 None。
+        Why a YAML mapping cannot be checked against this type, or None when it can.
+        """
         layout = self.layout()
         if layout.has_union:
             return f"{self.qualified} contains a union"
@@ -546,14 +702,30 @@ class ClassEntry:
         return None
 
     def monitor(self) -> str | None:
+        """类自身声明的 OnMonitor：'public'、'conditional'（在 #if 中）或 None。
+        The OnMonitor the class itself declares: 'public', 'conditional' (under #if) or
+        None.
+        """
         return self.layout().monitor
 
 
 class TypeIndex:
-    """Lazy index of class/struct definitions in loaded Module headers."""
+    """已加载模块头文件中 class/struct 定义的按需索引。
+    On-demand index of the class/struct definitions in loaded Module headers.
+    """
 
-    def __init__(self, headers: Iterable[Path]):
+    def __init__(self, headers: Iterable[Path], labels: dict[Path, str] | None = None) -> None:
+        """建立索引；头文件在查询时才解析。
+        Create the index; headers are parsed when a query needs them.
+
+        Args:
+            headers: 要索引的头文件。
+                The headers to index.
+            labels: 报错时头文件的名字，缺省为完整路径。
+                The names of headers in error messages; the full path by default.
+        """
         self.headers = sorted({Path(h).resolve() for h in headers})
+        self._labels = {Path(k).resolve(): v for k, v in (labels or {}).items()}
         self._texts: dict[Path, str] = {}
         self._parsed: dict[Path, _Header] = {}
         self._entries: dict[tuple[str, ...], list[ClassEntry]] = {}
@@ -561,29 +733,60 @@ class TypeIndex:
         self._namespace_types: dict[tuple[str, ...], set] = {}
         self._ensured: set = set()
         self._resolved: dict[tuple[str, tuple[str, ...]], ClassEntry | None] = {}
+        self._class_candidates: set[str] | None = None
 
     @classmethod
     def for_modules(cls, modules: dict) -> TypeIndex:
-        return cls(module_headers(modules))
+        """一组模块全部头文件的索引；报错时头文件写作 owner/Repo/文件名。
+        The index of every header of a set of Modules; error messages name a header as
+        owner/Repo/file.
+        """
+        labels = {}
+        for module in modules.values():
+            for header in _headers_of(module):
+                labels[header] = f"{module['id']}/{header.name}"
+        return cls(list(labels), labels)
 
     def _text(self, path: Path) -> str:
+        """头文件文本，只读取一次。
+        The text of a header, read once.
+        """
         if path not in self._texts:
             self._texts[path] = path.read_text(encoding="utf-8", errors="surrogateescape")
         return self._texts[path]
 
-    def global_class_names(self) -> set:
-        """Top-level class/struct names in the loaded headers (textual scan)."""
-        pattern = re.compile(
-            r"^(?:template\s*<[^;{]*>\s*)?(?:class|struct)\s+"
-            r"(?:\[\[[^\]]*\]\]\s*|alignas\s*\([^)]*\)\s*)*([A-Za-z_]\w*)",
-            re.M,
-        )
-        names = set()
-        for path in self.headers:
-            names.update(pattern.findall(self._text(path)))
-        return names
+    def _label(self, path: Path) -> str:
+        """报错时头文件的名字。
+        The name of a header in error messages.
+        """
+        return self._labels.get(path, path.as_posix())
 
-    def _ensure(self, name: str):
+    def is_global_class(self, name: str) -> bool:
+        """name 是否是已加载头文件在全局作用域定义的 class/struct。
+        Whether name is a class/struct defined at global scope in the loaded headers.
+
+        先扫描一遍文本，收集可能是类定义的名字；name 在其中时再解析相关头文件确认作用域。
+        One text scan collects the names that may be class definitions; only for such a
+        name are the headers that mention it parsed to confirm the scope.
+        """
+        if self._class_candidates is None:
+            pattern = re.compile(
+                rf"\b(?:class|struct)\s+{_ATTRIBUTES}([A-Za-z_]\w*)|\}}\s*([A-Za-z_]\w*)\s*;"
+            )
+            self._class_candidates = {
+                match.group(1) or match.group(2)
+                for path in self.headers
+                for match in pattern.finditer(self._text(path))
+            }
+        if name not in self._class_candidates:
+            return False
+        self._ensure(name)
+        return bool(self._entries.get((name,)))
+
+    def _ensure(self, name: str) -> None:
+        """解析文本中出现 name 的全部头文件。
+        Parse every header whose text mentions name.
+        """
         if name in self._ensured:
             return
         self._ensured.add(name)
@@ -593,8 +796,10 @@ class TypeIndex:
                 self._parse(path)
 
     def _scope_of(self, header: _Header, byte_position: int) -> tuple[str, ...]:
-        """Enclosing namespace/class names of a byte position (outermost first)."""
-        if not hasattr(header, "scopes"):
+        """字节位置所在的命名空间和类名，由外到内。
+        The enclosing namespace and class names of a byte position, outermost first.
+        """
+        if header.scopes is None:
             header.scopes = []
             for kind in _SCOPES:
                 for node in header.nodes.get(kind, []):
@@ -612,12 +817,19 @@ class TypeIndex:
             header.scopes.sort()
         return tuple(name for start, end, name in header.scopes if start < byte_position < end)
 
-    def _add(self, entry: ClassEntry):
+    def _add(self, entry: ClassEntry) -> None:
+        """登记一个类及其成员别名。
+        Register a class and its member aliases.
+        """
         self._entries.setdefault(entry.path, []).append(entry)
         for alias, (start, end) in entry.layout().aliases.items():
             self._aliases.setdefault(entry.path + (alias,), (entry.header_info, start, end))
 
-    def _parse(self, path: Path):
+    def _parse(self, path: Path) -> None:
+        """解析一个头文件，登记其中命名空间和类作用域中的类、别名和类型名。
+        Parse one header and register the classes, aliases and type names of its
+        namespace and class scopes.
+        """
         header = _Header(path, self._text(path))
         self._parsed[path] = header
         classes = header.nodes.get("class_specifier", []) + header.nodes.get("struct_specifier", [])
@@ -625,6 +837,8 @@ class TypeIndex:
             if view.body is None or not view.name:
                 continue
             node = view.node
+            if header.in_function_body(node.span.start):
+                continue
             scope = self._scope_of(header, node.span.start)
             body_tokens = header.tokens_in(view.body.span.start, view.body.span.end)
             if not body_tokens:
@@ -646,10 +860,13 @@ class TypeIndex:
                     template_parameters=parameters,
                 )
             )
+        # 命名空间作用域的 typedef struct {...} Name;（xr-syntax 不把它建模为类）。
         # typedef struct {...} Name; at namespace scope (xr-syntax does not model it).
         items = header.tokens
         for k, token in enumerate(items[:-2]):
             if token.text != "typedef" or items[k + 1].text not in ("struct", "class"):
+                continue
+            if header.in_function_body(token.span.start):
                 continue
             opening = next(
                 (m for m in range(k + 2, min(k + 6, len(items))) if items[m].text == "{"), None
@@ -660,7 +877,7 @@ class TypeIndex:
             names = [t.text for t in items[closing + 1 : closing + 4] if t.kind == "identifier"]
             if not names:
                 continue
-            scope = self._scope_of(header, header.byte(token.start))
+            scope = self._scope_of(header, token.span.start)
             if scope + (names[0],) not in self._entries:
                 self._add(ClassEntry(header, scope + (names[0],), "struct", (opening, closing)))
         for namespace in header.nodes.get("namespace_definition", []):
@@ -669,7 +886,7 @@ class TypeIndex:
             if name is None or body is None:
                 continue
             scope = self._scope_of(header, namespace.span.start) + (name.text.strip(),)
-            layout = _scan_namespace(header, header.tokens_in(body.span.start, body.span.end))
+            layout = _scan_namespace(header.tokens_in(body.span.start, body.span.end))
             self._namespace_types.setdefault(scope, set()).update(layout.member_types)
             for alias, (start, end) in layout.aliases.items():
                 self._aliases.setdefault(scope + (alias,), (header, start, end))
@@ -677,10 +894,17 @@ class TypeIndex:
     # -- lookup -------------------------------------------------------------
 
     def _class_at(self, path: tuple[str, ...]) -> ClassEntry | None:
+        """路径处定义的类。
+        The class defined at path.
+
+        Raises:
+            ValueError: 该类型在多个头文件中定义。
+                The type is defined in several headers.
+        """
         entries = self._entries.get(path)
         if not entries:
             return None
-        headers = sorted({str(e.header) for e in entries})
+        headers = sorted({self._label(e.header) for e in entries})
         if len(headers) > 1:
             raise ValueError(
                 f"Type {'::'.join(path)} is defined in several Module headers: {', '.join(headers)}"
@@ -690,11 +914,14 @@ class TypeIndex:
     def resolve(
         self, spelling: str, scope: tuple[str, ...] = (), _depth: int = 0
     ) -> ClassEntry | None:
-        """Find the class a type spelling names, searching outward from ``scope``.
+        """类型写法指向的类，从 scope 开始向外查找。
+        The class a type spelling names, searching outward from scope.
 
-        Returns None when the name is not found or when it may denote something
-        outside the index (a template parameter of an enclosing class, or a
-        member of a base class that is not in the loaded headers).
+        没有找到，或名字可能指向索引之外的东西（外层类模板的模板参数、不在已加载头文件中的
+        基类成员）时返回 None。
+        None when the name is not found or may denote something outside the index (a
+        template parameter of an enclosing class template, a member of a base class
+        outside the loaded headers).
         """
         key = (spelling, tuple(scope))
         if _depth == 0 and key in self._resolved:
@@ -704,7 +931,10 @@ class TypeIndex:
             self._resolved[key] = result
         return result
 
-    def _resolve(self, spelling, scope, _depth):
+    def _resolve(self, spelling: str, scope: tuple[str, ...], _depth: int) -> ClassEntry | None:
+        """resolve 的实现，不带缓存。
+        The uncached implementation of resolve.
+        """
         names = _strip_type(spelling)
         if not names or _depth > 8:
             return None
@@ -722,8 +952,21 @@ class TypeIndex:
                 return None
         return None
 
-    def _lookup_in(self, path, names, owner, depth):
-        """Look up ``names`` directly inside ``path`` and, for a class, its bases."""
+    def _lookup_in(
+        self,
+        path: tuple[str, ...],
+        names: tuple[str, ...],
+        owner: ClassEntry | None,
+        depth: int,
+    ) -> tuple[ClassEntry | None, bool]:
+        """直接在 path 中查找 names；path 是类时也查找其基类。
+        Look up names directly in path and, when path is a class, in its bases.
+
+        Returns:
+            (找到的类或 None, 结果是否确定)；基类无法定位时不确定。
+            (the class found or None, whether the answer is certain); it is not certain
+            when a base class cannot be located.
+        """
         target = path + names
         entry = self._class_at(target)
         if entry is not None:
@@ -744,14 +987,18 @@ class TypeIndex:
         return None, True
 
     def qualify_in(self, spelling: str, entry: ClassEntry, entry_spelled: str) -> str:
-        """Qualify names in ``spelling`` declared in ``entry``'s class/namespace chain.
+        """给 spelling 中在 entry 所在类/命名空间链上声明的名字加上限定。
+        Qualify the names in spelling that are declared in entry's class/namespace chain.
 
-        ``entry_spelled`` is how generated code names ``entry`` (it may carry
-        template arguments, e.g. ``Outer<T>::Param``). Template parameters of the
-        enclosing class templates are replaced by those arguments.
+        Args:
+            entry_spelled: 生成代码中 entry 的写法，可带模板实参（如 Outer<T>::Param）；
+                外层类模板的模板参数替换为这些实参。
+                How generated code names entry; it may carry template arguments (e.g.
+                Outer<T>::Param), which replace the template parameters of the enclosing
+                class templates.
         """
         scopes = []  # (declared names, spelled prefix), innermost first
-        replacements = {}
+        replacements: dict[str, str] = {}
         spelled, path = entry_spelled, entry.path
         while path:
             outer, args = _split_last(spelled) if spelled else ("", None)
@@ -782,10 +1029,17 @@ class TypeIndex:
         return spelling
 
     def provides_monitor(self, entry: ClassEntry, _depth: int = 0) -> bool | None:
-        """Whether ``entry`` or a public base declares a public OnMonitor.
+        """entry 或其公有基类是否声明了公有的 OnMonitor。
+        Whether entry or a public base declares a public OnMonitor.
 
-        Raises when OnMonitor is declared under #if; returns None when a public
-        base cannot be located (LibXR bases never provide OnMonitor).
+        Returns:
+            公有基类无法定位时为 None（LibXR 基类不提供 OnMonitor，不计入）。
+            None when a public base cannot be located (LibXR bases never provide
+            OnMonitor and are skipped).
+
+        Raises:
+            ValueError: OnMonitor 声明在 #if 中。
+                OnMonitor is declared under #if.
         """
         state = entry.monitor()
         if state == "conditional":
@@ -815,8 +1069,10 @@ class TypeIndex:
         return None if unknown else False
 
 
-def _scan_namespace(header: _Header, items) -> _Layout:
-    """Collect type names and aliases declared directly in a namespace body."""
+def _scan_namespace(items: Sequence[Token]) -> _Layout:
+    """收集直接声明在命名空间体中的类型名和别名。
+    Collect the type names and aliases declared directly in a namespace body.
+    """
     layout = _Layout()
     i, end = 1, len(items) - 1
     while i < end:
@@ -857,9 +1113,18 @@ def _scan_namespace(header: _Header, items) -> _Layout:
     return layout
 
 
+def _headers_of(module: dict) -> list[Path]:
+    """一个模块根目录下的头文件。
+    The headers in the root folder of one Module.
+    """
+    return sorted(Path(module["path"]).glob("*.hpp"))
+
+
 def module_headers(modules: dict) -> list[Path]:
-    """Every header the generator may read for a set of modules."""
+    """生成器对一组模块可能读取的全部头文件。
+    Every header the generator may read for a set of Modules.
+    """
     headers = []
     for module in modules.values():
-        headers.extend(sorted(Path(module["path"]).glob("*.hpp")))
+        headers.extend(_headers_of(module))
     return headers

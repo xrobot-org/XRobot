@@ -280,14 +280,13 @@ class Generator:
         self.index = index or TypeIndex.for_modules(modules)
         self.checker = ValueChecker(self.index)
         self.relation = _Relation(self.index)
-        self._class_names = None
+        self._module_classes = {m["name"] for m in self.modules.values()}
 
-    def class_names(self):
-        if self._class_names is None:
-            self._class_names = self.index.global_class_names() | {
-                m["name"] for m in self.modules.values()
-            }
-        return self._class_names
+    def is_class_name(self, name: str) -> bool:
+        """name 是否是模块类名或已加载头文件中的全局类名。
+        Whether name is a Module class name or a global class name in the loaded headers.
+        """
+        return name in self._module_classes or self.index.is_global_class(name)
 
     def render(
         self,
@@ -306,7 +305,7 @@ class Generator:
 
         known = {}
         for record in registrations:
-            if record["name"] in self.class_names():
+            if self.is_class_name(record["name"]):
                 fail(
                     f"XR_REGISTER name {record['name']} is also a Module class name; rename the object"
                 )
@@ -361,7 +360,7 @@ class Generator:
         identity = entry["id"]
         if identity in known:
             raise ValueError(f"instance id {identity} is also an XR_REGISTER name")
-        if identity in self.class_names():
+        if self.is_class_name(identity):
             raise ValueError(
                 f"instance id {identity} is also a class name in the loaded Modules; use a "
                 f"lower-case id such as {identity.lower()}"

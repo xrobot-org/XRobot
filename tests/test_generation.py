@@ -503,6 +503,14 @@ class Monitors(BspTestCase):
     def test_a_public_monitor_is_called(self):
         self.assertTrue(self.monitored("class M { public: M() {} void OnMonitor() {} };"))
 
+    def test_a_header_with_an_include_guard_is_read_like_any_other(self):
+        self.assertTrue(
+            self.monitored(
+                "#ifndef M_HPP\n#define M_HPP\nclass M { public: M() {} void OnMonitor() {} };\n"
+                "#endif  // M_HPP"
+            )
+        )
+
     def test_a_private_or_missing_monitor_is_not_called(self):
         self.assertFalse(self.monitored("class M { public: M() {} private: void OnMonitor() {} };"))
         self.assertFalse(self.monitored("class M { public: M() {} };"))
