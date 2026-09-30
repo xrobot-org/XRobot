@@ -284,6 +284,10 @@ class Resolver:
         locked: dict | None = None,
         without_git: bool = False,
     ) -> None:
+        """准备解析；modules_dir 是 Modules 目录，其余参数即同名属性。
+        Prepare a resolution; modules_dir is the Modules folder and the other arguments are the
+        attributes of the same names.
+        """
         self.directory = Path(modules_dir).resolve()
         # 一个 SourceManager，或首次使用时才调用的加载函数。
         # A SourceManager, or a function that loads it on first use.
@@ -667,6 +671,10 @@ def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
         texts = dict(zip(known, pool.map(primary_header, known), strict=True))
 
     def visit(req: dict) -> None:
+        """检查一条请求在 lock 中有唯一且相符的条目，再依次检查它的依赖；发现依赖环时报错。
+        Check that a request has exactly one matching lock entry, then check its dependencies; a
+        dependency cycle is an error.
+        """
         candidates = [key for key in records if key.casefold() == req["id"].casefold()]
         if len(candidates) != 1:
             raise ValueError(

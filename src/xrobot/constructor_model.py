@@ -573,6 +573,9 @@ class ValueChecker:
     """
 
     def __init__(self, index: TypeIndex | None) -> None:
+        """在 index 中查找类型；index 为 None 时每个类型都按找不到处理。
+        Look types up in index; with None every type counts as not located.
+        """
         self.index = index
         self.checks: list[str] = []  # static_assert declarations for the value being rendered
 

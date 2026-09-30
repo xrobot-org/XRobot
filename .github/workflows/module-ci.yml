@@ -24,6 +24,10 @@ on:
         description: JSON list of C++ template arguments for the constructor probe
         type: string
         default: '[]'
+      sources:
+        description: Further index URLs, one per line; the official indexes win when both list a package
+        type: string
+        default: ''
       image:
         description: Build container image
         type: string
@@ -58,6 +62,7 @@ jobs:
       XR_MODULE_ID: ${{ github.repository }}
       XR_TEMPLATE_ARGS: ${{ inputs.template-args }}
       XR_DEPENDENCY_REF: ${{ inputs.dependency-ref }}
+      XR_SOURCES: ${{ inputs.sources }}
     steps:
       - name: Checkout the Module
         uses: actions/checkout@v4
@@ -102,9 +107,12 @@ jobs:
           head = subprocess.check_output(['git', '-C', str(folder), 'rev-parse', 'HEAD'], text=True).strip()
           origin = subprocess.check_output(['git', '-C', str(folder), 'remote', 'get-url', 'origin'], text=True).strip()
           Path('ci-index.yaml').write_text(yaml.safe_dump({'modules': [{'id': identity, 'repo': origin}]}))
+          # The Module under test wins (-100), then the official indexes (0), then the caller's (1).
+          extra = [line.strip() for line in os.environ['XR_SOURCES'].splitlines() if line.strip()]
           Path('Modules/sources.yaml').write_text(yaml.safe_dump({'sources': [
               {'url': 'https://xrobot.work/xrobot-modules/index.yaml', 'priority': 0},
               {'url': 'https://qdu-robomaster.github.io/qdu-future-modules/index.yaml', 'priority': 0},
+              *({'url': url, 'priority': 1} for url in extra),
               {'url': '../ci-index.yaml', 'priority': -100}]}))
           Path('Modules/modules.yaml').write_text(yaml.safe_dump({'modules': [
               {'id': identity, 'ref': head, 'context_ref': os.environ['XR_DEPENDENCY_REF']}]}))

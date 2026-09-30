@@ -206,6 +206,9 @@ def _readme(
     ]
 
     def listed(items: list[str]) -> str:
+        """列出的各项；没有时为“无 / None”。
+        The listed items, or the bilingual word for none when there are none.
+        """
         return "\n".join(items) if items else "无 / None"
 
     signature = f"{class_name}({', '.join(p['declaration'] for p in ctor)});"

@@ -601,23 +601,39 @@ class ModuleCiPreparation(CliMixin, UpstreamTestCase):
                                 "type": "module",
                                 "repo": (self.tmp / "wrong-upstream").as_uri(),
                             },
-                            {"id": "team/B", "type": "module", "repo": b.as_uri()},
                         ]
                     }
                 )
             if url == "https://qdu-robomaster.github.io/qdu-future-modules/index.yaml":
                 return Index({"modules": []})
+            # team/B 只在调用方通过 sources 输入给出的 index 中。
+            # team/B is only in the index the caller passes through the sources input.
+            if url == "https://example.com/team/index.yaml":
+                return Index({"packages": [{"id": "team/B", "type": "module", "repo": b.as_uri()}]})
             raise AssertionError("unexpected index request: " + url)
 
         previous = os.getcwd()
         os.chdir(str(self.root))
         try:
             with mock.patch.dict(
-                os.environ, XR_MODULE_ID="team/A", XR_DEPENDENCY_REF="refs/heads/feature/ci"
+                os.environ,
+                XR_MODULE_ID="team/A",
+                XR_DEPENDENCY_REF="refs/heads/feature/ci",
+                XR_SOURCES="\n  https://example.com/team/index.yaml\n",
             ):
                 exec(compile(script, "<module CI preparation>", "exec"), {"__name__": "__ci__"})
         finally:
             os.chdir(previous)
+        sources = yaml.safe_load((self.modules / "sources.yaml").read_text(encoding="utf-8"))
+        self.assertEqual(
+            [(s["url"], s["priority"]) for s in sources["sources"]],
+            [
+                ("https://xrobot.work/xrobot-modules/index.yaml", 0),
+                ("https://qdu-robomaster.github.io/qdu-future-modules/index.yaml", 0),
+                ("https://example.com/team/index.yaml", 1),
+                ("../ci-index.yaml", -100),
+            ],
+        )
         with mock.patch("xrobot.source_manager.requests.get", side_effect=index):
             self.ok("check-module", "team/A", "-o", self.root / "module_check.cpp")
         lock = yaml.safe_load((self.root / "xrobot.lock").read_text(encoding="utf-8"))

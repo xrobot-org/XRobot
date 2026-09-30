@@ -32,6 +32,9 @@ class ModuleManifest:
     """
 
     def __init__(self, manifest: dict, path: Path | None = None) -> None:
+        """manifest 是块中的映射；path 是它所在的头文件，不知道时为 None。
+        manifest is the mapping of the block; path is the header it is in, None when unknown.
+        """
         self.manifest = manifest
         self.path = path
 

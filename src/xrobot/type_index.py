@@ -189,6 +189,9 @@ class _Header:
     """
 
     def __init__(self, path: Path | None, text: str) -> None:
+        """解析 text；path 是它所在的文件，没有文件时为 None。
+        Parse text; path is its file, None for text without a file.
+        """
         self.path = path
         self.text = text
         self.document = parse_document(text, str(path) if path is not None else None)
@@ -328,6 +331,9 @@ class _Layout:
     """
 
     def __init__(self) -> None:
+        """空的声明表，扫描类体或命名空间体时填写。
+        An empty declaration table, filled while a class or namespace body is scanned.
+        """
         self.fields: list[tuple[str, str, str]] = []  # (name, type spelling, access)
         self.field_defaults: dict[str, str] = {}  # default member initializer text
         self.conditional_fields: list[str] = []
@@ -723,6 +729,11 @@ class ClassEntry:
         head_range: tuple[int, int] | None = None,
         template_parameters: list[str] | None = None,
     ) -> None:
+        """header 中的一个定义：path 是外层命名空间和类的名字，kind 是 class 或 struct，body_range 和 head_range 是类体与类头的 token
+        下标。
+        One definition in header: path holds the enclosing namespace and class names, kind is class
+        or struct, and body_range and head_range are the token indices of the body and the head.
+        """
         self.header_info = header
         self.header = header.path
         self.path = path

@@ -49,6 +49,9 @@ class _Types:
     """
 
     def __init__(self, index: TypeIndex) -> None:
+        """空的类型表；类型在 index 中查找。
+        An empty type table; types are looked up in index.
+        """
         self.index = index
         self.table: dict[str, dict | None] = {}
 
@@ -186,6 +189,9 @@ def describe(project: Project, config: str | Path | None = None) -> dict:
     diagnostics = []
 
     def report(severity: str, scope: str, message: object) -> None:
+        """把 message 的每一行记为一条诊断。
+        Record each line of message as one diagnostic.
+        """
         # gen 的报错以文件开头；scope 已经是这个文件，不在 message 中重复。
         # gen's messages start with the file; scope already names it, so message drops it.
         prefix = scope + ": "

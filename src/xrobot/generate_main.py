@@ -229,6 +229,9 @@ class Generator:
     """
 
     def __init__(self, modules: dict, index: TypeIndex | None = None) -> None:
+        """modules 是锁定的模块记录；index 缺省时由这些模块的头文件建立。
+        modules are the locked Module records; index defaults to one built from their headers.
+        """
         self.modules = modules
         self.index = index or TypeIndex.for_modules(modules)
         self.checker = ValueChecker(self.index)
@@ -270,6 +273,9 @@ class Generator:
         errors = []
 
         def fail(message: str) -> None:
+            """记下一条以配置名开头的错误。
+            Record one error prefixed with the configuration's name.
+            """
             errors.append(f"{source}: {message}")
 
         known = {}
@@ -629,6 +635,10 @@ class Generator:
         cfg = Path(os.path.abspath(config_path)).as_posix() if directives else None
 
         def at(line: int) -> None:
+            """写出 #line 指令时，让后面的代码指回配置的第 line 行。
+            When #line directives are written, point the following code back to line of the
+            configuration.
+            """
             if directives and line:
                 lines.append(f'#line {line} "{cfg}"')
 

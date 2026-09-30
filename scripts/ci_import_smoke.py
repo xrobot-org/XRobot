@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Import all top-level xrobot modules from the installed package."""
+"""从已安装的包中导入 xrobot 的每个模块。
+Import every top-level xrobot module from the installed package.
+"""
 
 import importlib
 import sys
@@ -7,6 +9,9 @@ from pathlib import Path
 
 
 def main() -> int:
+    """导入 src/xrobot 下每个文件对应的已安装模块；全部成功时返回 0。
+    Import the installed module of each file under src/xrobot; return 0 when all succeed.
+    """
     repo_root = Path(__file__).resolve().parents[1]
     src_dir = repo_root / "src" / "xrobot"
 

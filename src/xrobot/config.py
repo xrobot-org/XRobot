@@ -169,6 +169,9 @@ class Located(dict):
     """
 
     def __init__(self, line: int) -> None:
+        """建立空映射，记下它在 YAML 中所在的行。
+        Create an empty mapping located at line of the YAML.
+        """
         super().__init__()
         self.line = line
         self.key_lines: dict[str, int] = {}
@@ -180,6 +183,9 @@ class LocatedList(list):
     """
 
     def __init__(self, line: int) -> None:
+        """建立空列表，记下它在 YAML 中所在的行。
+        Create an empty list located at line of the YAML.
+        """
         super().__init__()
         self.line = line
         self.item_lines: list[int] = []

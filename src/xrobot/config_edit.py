@@ -70,6 +70,9 @@ class _TextResolver(VersionedResolver):
     """
 
     def resolve(self, kind, value, implicit):
+        """未加引号的标量一律解析为文本，null、~ 和空值解析为 null。
+        Resolve every plain scalar as text, and null, ~ and empty values as null.
+        """
         if kind is ScalarNode and implicit[0]:
             if value in NULL_SCALARS:
                 return super().resolve(kind, "null", implicit)
@@ -194,7 +197,10 @@ class Blocks:
     last item stay with the file.
     """
 
-    def __init__(self, text: str, source: str) -> None:
+    def __init__(self, text: str) -> None:
+        """找出 text 中 modules 列表每一项所占的行。
+        Find the lines each item of the modules list occupies in text.
+        """
         self.text = _normalized(text)
         self.lines = self.text.split("\n")
         root = yaml.compose(self.text, Loader=yaml.BaseLoader) if self.text.strip() else None
@@ -325,6 +331,9 @@ class ConfigFile:
     """
 
     def __init__(self, path: str | Path, source: str | None = None) -> None:
+        """读取 path；source 是报错中文件的名字，缺省为 path。
+        Read path; source is the file's name in errors, path by default.
+        """
         self.path = Path(path)
         self.source = source or self.path.as_posix()
         self.text = (
@@ -336,7 +345,7 @@ class ConfigFile:
         """当前文本的实例块。
         The instance blocks of the current text.
         """
-        return Blocks(self.text, self.source)
+        return Blocks(self.text)
 
     def index_of(self, instance_id: str) -> int:
         """实例在 modules 列表中的位置。
@@ -591,7 +600,7 @@ def rename_instance(
         raise ConfigError(f"{config.source}: instance id {new_id} already exists")
     target = config.index_of(instance_id)
     text = config.text
-    blocks = Blocks(text, config.source)
+    blocks = Blocks(text)
     for k in reversed(range(len(blocks.items))):
         item, indent = _load_item(blocks.item_text(k))
         changed = False
@@ -603,7 +612,7 @@ def rename_instance(
                 changed = True
         if changed:
             text = blocks.replace(k, _render_item(item, indent))
-            blocks = Blocks(text, config.source)
+            blocks = Blocks(text)
     config.write(text)
 
 
@@ -835,7 +844,7 @@ def sync_config(
     config = ConfigFile(config_path, source)
     before = config.text
     text = before
-    blocks = Blocks(text, config.source)
+    blocks = Blocks(text)
     entries = config.config.get("modules") or []
     for k in reversed(range(len(blocks.items))):
         entry = entries[k] if k < len(entries) else None
@@ -859,7 +868,7 @@ def sync_config(
         item, indent = _load_item(blocks.item_text(k))
         if _sync_item(item, interface, cpp_class, templates, index):
             text = blocks.replace(k, _render_item(item, indent))
-            blocks = Blocks(text, config.source)
+            blocks = Blocks(text)
     if text != before:
         config.write(text, check=False)
     return "".join(

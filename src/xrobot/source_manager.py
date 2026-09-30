@@ -216,6 +216,10 @@ class ModuleSource:
     """
 
     def __init__(self, url: str, priority: int = 0) -> None:
+        """url 是 index.yaml 的地址或路径，priority 数值小的优先；条目由 load_index 读取。
+        url is the URL or path of the index.yaml and a lower priority wins; load_index reads the
+        entries.
+        """
         self.url, self.priority = str(url), int(priority)
         self.namespace = None
         self.mirror_of = None
@@ -333,6 +337,9 @@ class SourceManager:
     """
 
     def __init__(self, sources_yaml: str | Path) -> None:
+        """读取 sources_yaml 列出的全部源；文件不存在时没有源。
+        Read every Source sources_yaml lists; there are none when the file does not exist.
+        """
         self.sources: list[ModuleSource] = []
         self.packages: dict[str, dict] = {}
         self.all_module_candidates: dict[str, list] = {}

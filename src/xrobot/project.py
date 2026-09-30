@@ -87,6 +87,9 @@ class Project:
     """
 
     def __init__(self, root: str | Path) -> None:
+        """root 是 BSP 根目录；这里不检查其中是否有 Modules/modules.yaml。
+        root is the BSP root; it is not checked for Modules/modules.yaml here.
+        """
         self.root = Path(root).resolve()
         self.modules_dir = self.root / "Modules"
         self.modules_yaml = self.modules_dir / "modules.yaml"

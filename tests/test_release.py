@@ -158,6 +158,18 @@ class ReleaseRecord(TempDirTestCase):
             "libxr: the record needs the full 40-hex commit", release.check(self.repos, self.record)
         )
 
+    def test_an_unreadable_repository_is_named_and_the_others_are_still_checked(self):
+        plain = self.tmp / "plain"
+        plain.mkdir()
+        self.repos["libxr"] = plain
+        self.record["repositories"]["codegen"]["version"] = "6.0.1"
+        failures = release.check(self.repos, self.record)
+        self.assertEqual(len(failures), 2, failures)
+        self.assertRegex(failures[0], rf"^libxr \({re.escape(str(plain))}\): fatal: not a git")
+        self.assertEqual(
+            failures[1], "codegen: pyproject.toml version 6.0.0 differs from the recorded 6.0.1"
+        )
+
     def test_every_gate_must_pass(self):
         self.record["checks"]["bsp"] = "not-run"
         del self.record["checks"]["docs"]
