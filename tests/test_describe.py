@@ -279,8 +279,15 @@ class Instances(DescribeTestCase):
                 }
             ],
         )
+        # scope 已经是配置文件，message 不再以它开头。
+        # scope already names the config, so message does not start with it.
         self.assertIn(
-            "User/xrobot.yaml: m: Module not found: Missing", self.messages(result, "error")
+            {
+                "severity": "error",
+                "scope": "User/xrobot.yaml",
+                "message": "m: Module not found: Missing",
+            },
+            result["diagnostics"],
         )
 
 

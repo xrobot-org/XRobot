@@ -186,7 +186,11 @@ def describe(project: Project, config: str | Path | None = None) -> dict:
     diagnostics = []
 
     def report(severity: str, scope: str, message: object) -> None:
+        # gen 的报错以文件开头；scope 已经是这个文件，不在 message 中重复。
+        # gen's messages start with the file; scope already names it, so message drops it.
+        prefix = scope + ": "
         for line in str(message).splitlines():
+            line = line.removeprefix(prefix)
             diagnostics.append({"severity": severity, "scope": scope, "message": line})
 
     try:

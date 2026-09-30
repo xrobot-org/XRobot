@@ -1,5 +1,6 @@
 """The `xrobot` command line (xrobot.cli) and the Module skeleton it creates."""
 
+import argparse
 import contextlib
 import io
 import json
@@ -13,7 +14,7 @@ import yaml
 from fixtures import BspTestCase, TempDirTestCase, UpstreamTestCase, manifest_block
 
 from xrobot import __version__
-from xrobot.cli import main, parse_value
+from xrobot.cli import main, parse_value, parser
 from xrobot.config import ConfigError, load_config
 from xrobot.lock import read_modules_yaml
 from xrobot.module_parser import parse_manifest_from_header, source_interface
@@ -126,6 +127,23 @@ class Init(CliMixin, TempDirTestCase):
         code, _, err = self.run_cli("source")
         self.assertEqual(code, 2)
         self.assertIn("the following arguments are required: <action>", err)
+
+    def test_every_command_help_opens_with_its_summary(self):
+        def commands(words, parent):
+            for action in parent._actions:
+                if isinstance(action, argparse._SubParsersAction):
+                    for choice in action._choices_actions:
+                        yield words + [choice.dest], choice.help
+                        yield from commands(words + [choice.dest], action.choices[choice.dest])
+
+        found = list(commands([], parser()))
+        self.assertEqual(len(found), 26)
+        for words, summary in found:
+            out, _ = self.ok(*words, "--help")
+            opening = out.split("\n\n")[1].replace("\n", " ")
+            self.assertTrue(
+                opening.startswith(summary[0].upper() + summary[1:] + "."), (words, opening)
+            )
 
     def test_source_needs_a_bsp_or_sources(self):
         if any((p / "Modules/modules.yaml").is_file() for p in self.tmp.parents):

@@ -408,11 +408,38 @@ def cmd_source(args: argparse.Namespace) -> None:
         print(f"{identity} [{record['type']}] {record['repo']}")
 
 
+def _command(
+    actions: argparse._SubParsersAction, name: str, text: str, details: str | None = None
+) -> argparse.ArgumentParser:
+    """添加一个子命令；命令列表中的一句话说明也作为它自己 --help 的开头。
+    Add a subcommand; its one-line help in the command list also opens its own --help.
+
+    Args:
+        actions: 所属命令的子命令集合。
+            The subcommands of the parent command.
+        name: 子命令名。
+            The subcommand name.
+        text: 一句话说明，小写开头、不带句号。
+            The one-line help, lowercase and without a period.
+        details: 显示在说明之后的更多内容，按原样换行。
+            More text shown after the help, with its line breaks kept.
+    """
+    description = text[0].upper() + text[1:] + "."
+    if not details:
+        return actions.add_parser(name, help=text, description=description)
+    return actions.add_parser(
+        name,
+        help=text,
+        description=description + "\n\n" + details,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+
 def _source_parser(verbs: argparse._SubParsersAction) -> None:
     """添加 source 命令及其子命令。
     Add the source command and its actions.
     """
-    source = verbs.add_parser("source", help="query or edit Sources (sources.yaml, index.yaml)")
+    source = _command(verbs, "source", "query or edit Sources (sources.yaml, index.yaml)")
     source.add_argument(
         "--sources", metavar="FILE", help="sources.yaml to use (default: the BSP's)"
     )
@@ -421,23 +448,21 @@ def _source_parser(verbs: argparse._SubParsersAction) -> None:
         ("list", "list the packages of all Sources"),
         ("search", "list the packages whose entry contains TEXT"),
     ):
-        action = actions.add_parser(name, help=text)
+        action = _command(actions, name, text)
         if name == "search":
             action.add_argument("query", metavar="TEXT")
         action.add_argument("--type", choices=["module", "bsp"], help="only this kind of package")
-    actions.add_parser("get", help="print the entry of a package").add_argument(
+    _command(actions, "get", "print the entry of a package").add_argument(
         "id", help="owner/Repo, or Repo when unique"
     )
-    actions.add_parser(
-        "find", help="list every Source (mirrors included) that provides a package"
+    _command(
+        actions, "find", "list every Source (mirrors included) that provides a package"
     ).add_argument("id", help="owner/Repo, or Repo when unique")
-    create = actions.add_parser(
-        "create-sources", help="write a sources.yaml with the official Source"
-    )
+    create = _command(actions, "create-sources", "write a sources.yaml with the official Source")
     create.add_argument(
         "-o", "--output", metavar="FILE", help="default: the sources.yaml of --sources or the BSP"
     )
-    add = actions.add_parser("add-source", help="add a Source to sources.yaml")
+    add = _command(actions, "add-source", "add a Source to sources.yaml")
     add.add_argument("url", help="URL of an index.yaml, or a path relative to sources.yaml")
     add.add_argument(
         "--priority",
@@ -445,7 +470,7 @@ def _source_parser(verbs: argparse._SubParsersAction) -> None:
         default=0,
         help="the lower value wins when Sources list the same package (default: 0)",
     )
-    index = actions.add_parser("create-index", help="write a new index.yaml")
+    index = _command(actions, "create-index", "write a new index.yaml")
     index.add_argument(
         "-o", "--output", metavar="FILE", default="Modules/index.yaml", help="default: %(default)s"
     )
@@ -455,7 +480,7 @@ def _source_parser(verbs: argparse._SubParsersAction) -> None:
         help="owner of repositories outside GitHub (default: %(default)s)",
     )
     index.add_argument("--mirror-of", metavar="NAMESPACE", help="mark the index as a mirror")
-    entry = actions.add_parser("add-index", help="add a Module repository to an index.yaml")
+    entry = _command(actions, "add-index", "add a Module repository to an index.yaml")
     entry.add_argument("repo_url", help="Git URL of the Module repository")
     entry.add_argument("--index", metavar="FILE", required=True, help="the index.yaml to edit")
     source.set_defaults(run=cmd_source)
@@ -478,14 +503,13 @@ def parser() -> argparse.ArgumentParser:
     )
     verbs = top.add_subparsers(dest="verb", required=True, metavar="<command>")
 
-    verbs.add_parser(
+    _command(
+        verbs,
         "init",
-        help="create Modules/modules.yaml, Modules/sources.yaml and User/xrobot.yaml",
+        "create Modules/modules.yaml, Modules/sources.yaml and User/xrobot.yaml",
     ).set_defaults(run=cmd_init)
 
-    setup = verbs.add_parser(
-        "setup", help="resolve Modules, check every config, regenerate the entry"
-    )
+    setup = _command(verbs, "setup", "resolve Modules, check every config, regenerate the entry")
     group = setup.add_mutually_exclusive_group()
     group.add_argument(
         "--update",
@@ -513,13 +537,13 @@ def parser() -> argparse.ArgumentParser:
     )
     setup.set_defaults(run=cmd_setup)
 
-    gen = verbs.add_parser(
-        "gen", help="generate User/xrobot_main.hpp for one config and select that config"
+    gen = _command(
+        verbs, "gen", "generate User/xrobot_main.hpp for one config and select that config"
     )
     gen.add_argument("-c", "--config", help="default: the selected config, else User/xrobot.yaml")
     gen.set_defaults(run=cmd_gen)
 
-    desc = verbs.add_parser("describe", help="print the BSP state as JSON for editors")
+    desc = _command(verbs, "describe", "print the BSP state as JSON for editors")
     desc.add_argument("-c", "--config", help="default: the selected config")
     desc.set_defaults(run=cmd_describe)
 
@@ -527,7 +551,7 @@ def parser() -> argparse.ArgumentParser:
         ("sync", cmd_sync, "add new fields and parameters with defaults, drop removed ones"),
         ("format", cmd_format, "rewrite configs in the canonical layout"),
     ):
-        command = verbs.add_parser(name, help=text)
+        command = _command(verbs, name, text)
         command.add_argument(
             "-c",
             "--config",
@@ -541,20 +565,20 @@ def parser() -> argparse.ArgumentParser:
             )
         command.set_defaults(run=run)
 
-    instance = verbs.add_parser("instance", help="add, set, remove or rename one Module instance")
+    instance = _command(verbs, "instance", "add, set, remove or rename one Module instance")
     instance.add_argument("-c", "--config", help="config to edit (default: the selected config)")
     actions = instance.add_subparsers(dest="action", required=True, metavar="<action>")
-    add = actions.add_parser("add", help="add an instance with the default values")
+    add = _command(actions, "add", "add an instance with the default values")
     add.add_argument("module", help="owner/Repo, or Repo when unique")
     add.add_argument("--id", help="instance id (default: <module>_<n>)")
-    change = actions.add_parser(
+    change = _command(
+        actions,
         "set",
-        help="replace one value",
-        description="PATH is template_args[n] or args.<param>[.<field>|[n]]...; change an id\n"
+        "replace one value",
+        details="PATH is template_args[n] or args.<param>[.<field>|[n]]...; change an id\n"
         "with `xrobot instance rename`.\n"
         "VALUE is one YAML value, read like a value in the config: C++ code without quotes\n"
         "or in single quotes, a C++ string in double quotes (e.g. '\"bmi088_gyro\"').",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     change.add_argument("id", metavar="ID", help="instance id")
     change.add_argument("path", metavar="PATH", help="value path, e.g. args.param.cycle")
@@ -567,32 +591,30 @@ def parser() -> argparse.ArgumentParser:
         metavar="SHA256",
         help="sha256 of the LF-normalized file the edit was based on",
     )
-    actions.add_parser("remove", help="remove an instance").add_argument("id", help="instance id")
-    rename = actions.add_parser(
-        "rename", help="rename an instance and the references to it in the config"
+    _command(actions, "remove", "remove an instance").add_argument("id", help="instance id")
+    rename = _command(
+        actions, "rename", "rename an instance and the references to it in the config"
     )
     rename.add_argument("id", help="instance id")
     rename.add_argument("new_id", help="new instance id")
     instance.set_defaults(run=cmd_instance)
 
-    module = verbs.add_parser(
-        "module", help="add/remove a Module request, or show a Module interface"
-    )
+    module = _command(verbs, "module", "add/remove a Module request, or show a Module interface")
     module_actions = module.add_subparsers(dest="action", required=True, metavar="<action>")
-    module_actions.add_parser("add", help="request a Module in modules.yaml").add_argument(
+    _command(module_actions, "add", "request a Module in modules.yaml").add_argument(
         "request", help="owner/Repo[@ref]"
     )
-    module_actions.add_parser("remove", help="remove a Module request").add_argument(
+    _command(module_actions, "remove", "remove a Module request").add_argument(
         "request", help="owner/Repo"
     )
-    module_actions.add_parser(
-        "show", help="print the manifest and constructors of a Module"
+    _command(
+        module_actions, "show", "print the manifest and constructors of a Module"
     ).add_argument(
         "module", help="Module folder or header, or the id of a locked Module (owner/Repo or Repo)"
     )
     module.set_defaults(run=cmd_module)
 
-    new = verbs.add_parser("new-module", help="create a Module skeleton")
+    new = _command(verbs, "new-module", "create a Module skeleton")
     new.add_argument("name", help="class and folder name (a C++ identifier)")
     new.add_argument("--desc", metavar="TEXT", default="", help="one-line description")
     new.add_argument(
@@ -626,9 +648,10 @@ def parser() -> argparse.ArgumentParser:
     new.add_argument("--out", metavar="DIR", default=".", help="parent folder (default: .)")
     new.set_defaults(run=cmd_new_module)
 
-    check = verbs.add_parser(
+    check = _command(
+        verbs,
         "check-module",
-        help="resolve Modules as setup does (updates xrobot.lock and Modules/), then write "
+        "resolve Modules as setup does (updates xrobot.lock and Modules/), then write "
         "a never-executed constructor call for CI",
     )
     check.add_argument("module", help="owner/Repo, or Repo when unique")
