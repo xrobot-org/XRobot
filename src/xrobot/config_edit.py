@@ -708,6 +708,56 @@ def seed_arguments(
     return result
 
 
+def instance_item(
+    module_id: str,
+    identity: str,
+    cpp_class: str,
+    interface: dict,
+    index: TypeIndex | None,
+    template_values: list[str] | None = None,
+) -> CommentedMap:
+    """`instance add` 写入的实例：模板实参和参数取源码默认值，依赖参数留空。
+    The instance `instance add` writes: template arguments and arguments take their source
+    defaults, dependencies are left unfilled.
+
+    有模板参数没有值时只写出 template_args，参数要等模板实参填好后由 sync 补上。
+    When a template parameter has no value only template_args is written; sync adds the
+    arguments once the template arguments are filled in.
+
+    Args:
+        template_values: 按位置给出的模板实参；其余取默认值。
+            Template arguments given by position; the rest take their defaults.
+    """
+    item = CommentedMap()
+    item["module"] = module_id
+    item["id"] = identity
+    given = list(template_values or [])
+    template_values = given + [p["default"] for p in interface["template_parameters"][len(given) :]]
+    if template_values:
+        item["template_args"] = CommentedSeq(template_values)
+    if all(v is not None for v in template_values):
+        templates = template_bindings(interface, template_values)
+        spelled = cpp_class + ("<" + ", ".join(template_values) + ">" if template_values else "")
+        arguments = seed_arguments(interface, spelled, templates, index)
+        if arguments:
+            args = CommentedSeq()
+            for argument in arguments:
+                mapping = CommentedMap()
+                for key, value in argument.items():
+                    mapping[key] = value
+                args.append(mapping)
+            item["args"] = args
+    return item
+
+
+def instance_text(item: CommentedMap) -> str:
+    """只有这一个实例的配置文本，与 `instance add` 写入空配置的结果相同。
+    The configuration text holding only this instance, as `instance add` writes it into an
+    empty configuration.
+    """
+    return "modules:\n" + "\n".join(_render_item(item, _SEQUENCE_OFFSET)) + "\n"
+
+
 def next_instance_id(modules: list, base_name: str) -> str:
     """未被占用的实例 id：<类名小写>_<n>。
     An unused instance id: <lower-case class name>_<n>.
@@ -751,26 +801,7 @@ def add_instance(
     problem = identifier_problem(identity)
     if problem:
         raise ConfigError(f"instance id {identity} {problem}")
-    item = CommentedMap()
-    item["module"] = module["id"]
-    item["id"] = identity
-    template_values = [p["default"] for p in interface["template_parameters"]]
-    if template_values:
-        item["template_args"] = CommentedSeq(template_values)
-    if all(v is not None for v in template_values):
-        templates = template_bindings(interface, template_values)
-        cpp_class = module["name"] + (
-            "<" + ", ".join(template_values) + ">" if template_values else ""
-        )
-        arguments = seed_arguments(interface, cpp_class, templates, index)
-        if arguments:
-            args = CommentedSeq()
-            for argument in arguments:
-                mapping = CommentedMap()
-                for key, value in argument.items():
-                    mapping[key] = value
-                args.append(mapping)
-            item["args"] = args
+    item = instance_item(module["id"], identity, module["name"], interface, index)
     blocks = config.blocks()
     indent = blocks.item_indent if blocks.item_indent is not None else 2
     if blocks.sequence_end is None:

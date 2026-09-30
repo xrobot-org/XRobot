@@ -339,12 +339,13 @@ def cmd_new_module(args: argparse.Namespace) -> None:
 
     path = create_module(
         args.name,
-        args.desc,
-        args.constructor,
-        args.template,
-        args.depends,
-        Path(args.out),
-        args.include,
+        description=args.desc,
+        constructor_args=args.constructor,
+        template_args=args.template,
+        depends=args.depends,
+        output_dir=Path(args.out),
+        includes=args.include,
+        ci_template_args=args.template_arg,
     )
     print(f"Created {path}")
 
@@ -636,14 +637,22 @@ def parser() -> argparse.ArgumentParser:
         metavar="HEADER",
         action="append",
         default=[],
-        help="a header to #include; repeat for each header",
+        help="another header to #include (libxr.hpp and the LibXR driver headers the "
+        "declarations use are always included); repeat for each header",
+    )
+    new.add_argument(
+        "--template-arg",
+        metavar="ARG",
+        action="append",
+        default=[],
+        help="a template argument the Module CI compiles with; repeat for each argument",
     )
     new.add_argument(
         "--depends",
         metavar="MODULE",
-        nargs="*",
+        action="append",
         default=[],
-        help="Modules this one depends on (owner/Repo[@ref])",
+        help="a Module this one depends on (owner/Repo[@ref]); repeat for each Module",
     )
     new.add_argument("--out", metavar="DIR", default=".", help="parent folder (default: .)")
     new.set_defaults(run=cmd_new_module)

@@ -387,9 +387,12 @@ class Commands(CliMixin, BspTestCase):
             "int period_ms = 500",
             "--depends",
             "team/Timer",
+            "--depends",
             "team/Log@v1",
             "--include",
-            "gpio.hpp",
+            "<array>",
+            "--include",
+            "blink_types.hpp",
             "--out",
             self.tmp / "out",
         )
@@ -406,7 +409,14 @@ class Commands(CliMixin, BspTestCase):
             [p["declaration"] for p in interface["constructors"][0]["arguments"]],
             ["LibXR::GPIO& gpio", "int period_ms = 500"],
         )
-        self.assertIn('#include "gpio.hpp"', (folder / "Blink.hpp").read_text(encoding="utf-8"))
+        # libxr.hpp 总被包含；GPIO 是硬件接口，另外包含 gpio.hpp。
+        # libxr.hpp is always included; GPIO is a hardware interface, so gpio.hpp as well.
+        header = (folder / "Blink.hpp").read_text(encoding="utf-8")
+        self.assertIn(
+            '// clang-format on\n\n#include <array>\n\n#include "blink_types.hpp"\n'
+            '#include "gpio.hpp"\n#include "libxr.hpp"\n\nclass Blink\n',
+            header,
+        )
         self.assertIn(
             'target_include_directories(xr PUBLIC "${CMAKE_CURRENT_LIST_DIR}")',
             (folder / "CMakeLists.txt").read_text(encoding="utf-8"),
@@ -417,8 +427,70 @@ class Commands(CliMixin, BspTestCase):
         job = workflow["jobs"]["build"]
         self.assertEqual(job["uses"], "xrobot-org/XRobot/.github/workflows/module-ci.yml@v1")
         self.assertEqual(job["with"], {"template-args": "[]"})
+        readme = (folder / "README.md").read_text(encoding="utf-8")
+        headings = [line for line in readme.splitlines() if line.startswith("#")]
+        self.assertEqual(
+            headings,
+            [
+                "# Blink",
+                "## 1. 模块作用",
+                "## 2. 构造接口",
+                "## 3. Topic",
+                "## 4. 配置示例",
+                "## 5. 依赖与硬件",
+            ],
+        )
+        self.assertIn("```cpp\nBlink(LibXR::GPIO& gpio, int period_ms = 500);\n```", readme)
+        self.assertIn("- `LibXR::GPIO& gpio` <!--", readme)
         self.assertIn(
-            "xrobot module add <owner>/Blink", (folder / "README.md").read_text(encoding="utf-8")
+            "```yaml\nmodules:\n  - module: Blink\n    id: blink_0\n    args:\n"
+            "      - gpio:\n      - period_ms: 500\n```",
+            readme,
+        )
+        self.assertIn("- `team/Timer@same-or-dev`\n- `team/Log@v1`", readme)
+        self.assertIn("- `gpio`: `LibXR::GPIO`", readme)
+
+    def test_new_module_template_arguments_for_ci(self):
+        out = self.tmp / "out"
+        self.fails(
+            "new-module",
+            "Filter",
+            "--template",
+            "int N",
+            "--out",
+            out,
+            pattern="template parameter N of Filter has no default; give the value the Module "
+            "CI compiles with --template-arg",
+        )
+        self.fails(
+            "new-module",
+            "Filter",
+            "--template",
+            "int N",
+            *("--template-arg", "3", "--template-arg", "4"),
+            "--out",
+            out,
+            pattern="Filter has 1 template parameter but 2 --template-arg values were given",
+        )
+        self.assertFalse((out / "Filter").exists())
+        self.ok(
+            "new-module",
+            "Filter",
+            *("--template", "int N", "--template", "typename T = float"),
+            *("--template-arg", "3"),
+            *("--constructor", "T gain = T(1)"),
+            "--out",
+            out,
+        )
+        workflow = yaml.safe_load(
+            (out / "Filter/.github/workflows/build.yml").read_text(encoding="utf-8")
+        )
+        self.assertEqual(workflow["jobs"]["build"]["with"], {"template-args": '["3"]'})
+        # README 的配置示例用 CI 的模板实参，参数也一并写出。
+        # The README example uses the CI template arguments, so the arguments are written.
+        self.assertIn(
+            "    template_args:\n      - 3\n      - float\n    args:\n      - gain: float(1)\n",
+            (out / "Filter/README.md").read_text(encoding="utf-8"),
         )
 
     def test_new_module_refuses_bad_input_without_creating_anything(self):
@@ -433,9 +505,26 @@ class Commands(CliMixin, BspTestCase):
             pattern="Expected canonical owner/repo",
         )
         self.fails(
-            "new-module", "1Blink", "--out", out, pattern="Module name must be a C\\+\\+ identifier"
+            "new-module", "1Blink", "--out", out, pattern="Module name 1Blink is not a C\\+\\+ id"
         )
-        self.assertFalse((out / "Blink").exists())
+        self.fails("new-module", "class", "--out", out, pattern="Module name class is a C\\+\\+ k")
+        invalid = "Blink.hpp would not be a valid Module header: "
+        for declarations, problem in (
+            (["LibXR::GPIO&"], "Constructor parameters must have explicit names: LibXR::GPIO&"),
+            (["int x = "], "Missing default value after '=': int x ="),
+            (
+                ["int x = 1", "LibXR::GPIO& led"],
+                "Blink: no compliant constructor; line \\d+: led: dependency without a "
+                "default appears after value configuration",
+            ),
+            (["int x) {} void f(int y"], "each --constructor and --template must be one"),
+        ):
+            options = [a for d in declarations for a in ("--constructor", d)]
+            self.fails("new-module", "Blink", *options, "--out", out, pattern=invalid + problem)
+        self.fails(
+            "new-module", "Blink", "--include", "<array", "--out", out, pattern="Invalid include"
+        )
+        self.assertFalse(out.exists())
         self.ok("new-module", "Blink", "--out", out)
         self.fails(
             "new-module", "Blink", "--out", out, pattern="Refusing to overwrite existing module"
@@ -444,15 +533,20 @@ class Commands(CliMixin, BspTestCase):
 
 class SharedModuleWorkflow(TempDirTestCase):
     def test_the_reusable_workflow_accepts_what_module_repositories_pass(self):
-        from xrobot.module_creator import CI_WORKFLOW
+        from xrobot.module_creator import ci_workflow
 
         shared = yaml.safe_load(
             (REPOSITORY / ".github/workflows/module-ci.yml").read_text(encoding="utf-8")
         )
         trigger = shared.get("on", shared.get(True))
         inputs = trigger["workflow_call"]["inputs"]
-        caller = yaml.safe_load(CI_WORKFLOW)
+        caller = yaml.safe_load(ci_workflow([]))
         self.assertTrue(set(caller["jobs"]["build"]["with"]) <= set(inputs))
+        # 模板实参是一个 JSON 列表，放在单引号 YAML 字符串中。
+        # The template arguments are a JSON list inside a single-quoted YAML string.
+        values = ["Frame{.name = 'a'}", "3"]
+        caller = yaml.safe_load(ci_workflow(values))
+        self.assertEqual(json.loads(caller["jobs"]["build"]["with"]["template-args"]), values)
         for name in ("xrobot-ref", "libxr-ref", "dependency-ref", "template-args"):
             self.assertIn(name, inputs)
         self.assertEqual(inputs["xrobot-ref"]["default"], "master")

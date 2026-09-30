@@ -63,14 +63,17 @@ def parameter(declaration: str) -> dict:
         A mapping with name, type, default (None when absent) and declaration.
 
     Raises:
-        ValueError: 参数没有名字，或类型需要先定义别名（数组、函数指针、参数包）。
-            The parameter has no name, or its type needs an alias first (arrays,
-            function pointers, packs).
+        ValueError: 参数没有名字、= 后没有默认值，或类型需要先定义别名（数组、函数指针、
+            参数包）。
+            The parameter has no name or nothing after its =, or its type needs an alias
+            first (arrays, function pointers, packs).
     """
     items = code_tokens(declaration)
     split = next((t for t in items if t.text == "="), None)
     head = declaration[: split.start].strip() if split else declaration.strip()
     default = declaration[split.end :].strip() if split else None
+    if default == "":
+        raise ValueError("Missing default value after '=': " + declaration)
     parts = code_tokens(head)
     if not parts or parts[-1].kind != "identifier" or len(parts) < 2:
         raise ValueError("Constructor parameters must have explicit names: " + declaration)
