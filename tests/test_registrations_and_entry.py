@@ -208,6 +208,12 @@ class GeneratedHeaderInputs(BspTestCase):
                 self.assertEqual(state["newer"], [relative])
                 os.utime(path, (header_time - 10, header_time - 10))
         self.assertEqual(project.header_state()["status"], "fresh")
+        # 与 LibXR 的 CMake 检查（IS_NEWER_THAN）一致：时间相等也算过期。
+        # As LibXR's CMake check (IS_NEWER_THAN) decides: equal times are stale too.
+        header_ns = (self.root / "User/xrobot_main.hpp").stat().st_mtime_ns
+        os.utime(self.root / "User/xrobot.yaml", ns=(header_ns, header_ns))
+        state = project.header_state()
+        self.assertEqual((state["status"], state["newer"]), ("stale", ["User/xrobot.yaml"]))
 
     def test_a_missing_input_makes_the_header_stale(self):
         self.generate({"modules": []})

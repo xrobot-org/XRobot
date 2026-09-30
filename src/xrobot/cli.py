@@ -13,7 +13,7 @@ import yaml
 
 from xrobot import __version__
 from xrobot.config import ConfigError
-from xrobot.project import Project, ProjectError, find_root
+from xrobot.project import Project, ProjectError
 
 DESCRIPTION = """\
 Resolve Modules, generate the static entry and edit configurations.
@@ -32,7 +32,7 @@ def _project(args: argparse.Namespace) -> Project:
     """从 -C 目录（默认当前目录）向上找到的 BSP。
     The BSP found at or above the -C directory (default: the current directory).
     """
-    return Project(find_root(args.directory))
+    return Project.discover(args.directory)
 
 
 def _config_path(project: Project, value: str | None) -> Path | None:
