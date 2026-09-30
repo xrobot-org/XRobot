@@ -43,6 +43,10 @@ GIT_ENV = {
     "GIT_CONFIG_NOSYSTEM": "1",
 }
 
+# 测试断言英文输出；中文输出的测试自己设置 XR_LANG。
+# Tests assert English output; tests of Chinese output set XR_LANG themselves.
+os.environ["XR_LANG"] = "en"
+
 CXX = os.environ.get("CXX", "g++")
 HAVE_CXX = shutil.which(CXX) is not None
 

@@ -237,6 +237,23 @@ class Commands(CliMixin, BspTestCase):
         self.assertIn("闪烁".encode(), out.buffer.getvalue())
         self.assertIn("User/缺失.yaml does not exist".encode(), err.buffer.getvalue())
 
+    def test_output_follows_the_language(self):
+        with mock.patch.dict(os.environ, XR_LANG="zh"):
+            out, _ = self.ok("--help")
+            self.assertTrue(out.startswith("用法：xrobot [-h] [--version] [-C DIR] <command> ..."))
+            self.assertIn("解析模块、生成静态入口、编辑配置。", out)
+            self.fails("gen", "-c", "User/缺失.yaml", pattern="^User/缺失.yaml 不存在$")
+            self.fails(
+                "instance",
+                "set",
+                "led",
+                "id",
+                "x",
+                pattern="实例 id 用 `xrobot instance rename` 修改",
+            )
+        out, _ = self.ok("--help")
+        self.assertTrue(out.startswith("usage: xrobot"))
+
     def test_describe_prints_json(self):
         out, _ = self.ok("describe", cwd=self.root / "User")
         result = json.loads(out)

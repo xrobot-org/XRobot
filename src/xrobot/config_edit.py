@@ -32,6 +32,7 @@ from ruamel.yaml.scalarstring import (
     PlainScalarString,
     SingleQuotedScalarString,
 )
+from xr_syntax.i18n import tr
 
 from xrobot.config import (
     NULL_SCALARS,
@@ -320,7 +321,12 @@ def _load_item(block_text: str) -> tuple[CommentedMap, int]:
     shifted = [" " * _SEQUENCE_OFFSET + line[indent:] if line.strip() else "" for line in lines]
     data = _load("\n".join(shifted))
     if not isinstance(data, CommentedSeq) or len(data) != 1:
-        raise ConfigError("cannot edit this instance: its YAML block is not a single list item")
+        raise ConfigError(
+            tr(
+                "cannot edit this instance: its YAML block is not a single list item",
+                "无法编辑这个实例：它的 YAML 块不是单个列表项",
+            )
+        )
     return data[0], indent
 
 
@@ -358,7 +364,12 @@ class ConfigFile:
         for k, entry in enumerate(self.config.get("modules") or []):
             if isinstance(entry, dict) and entry.get("id") == instance_id:
                 return k
-        raise ConfigError(f"{self.source}: no instance with id {instance_id}")
+        raise ConfigError(
+            tr(
+                f"{self.source}: no instance with id {instance_id}",
+                f"{self.source}: 没有 id 为 {instance_id} 的实例",
+            )
+        )
 
     def write(self, text: str, check: bool = True) -> None:
         """按规范写法写入 text。
@@ -384,7 +395,15 @@ class ConfigFile:
 
 # -- instance set / remove / rename ---------------------------------------------
 
-_PATH_HINT = "use template_args[n] or args.<param>[.<field>|[n]]..."
+
+def _path_hint() -> str:
+    """值路径的写法提示。
+    How a value path is written.
+    """
+    return tr(
+        "use template_args[n] or args.<param>[.<field>|[n]]...",
+        "请使用 template_args[n] 或 args.<参数>[.<字段>|[n]]...",
+    )
 
 
 def _path_tokens(path: str) -> list[str]:
@@ -397,20 +416,27 @@ def _path_tokens(path: str) -> list[str]:
             The path is malformed, or points at id or module.
     """
     tokens = re.findall(r"[A-Za-z_][A-Za-z_0-9]*|\[\d+\]", path)
+    invalid = tr(f"invalid path {path}; {_path_hint()}", f"无效的路径 {path}；{_path_hint()}")
     if not tokens or "".join(t if t.startswith("[") else "." + t for t in tokens)[1:] != path:
-        raise ConfigError(f"invalid path {path}; {_PATH_HINT}")
+        raise ConfigError(invalid)
     if tokens[0] == "id":
         raise ConfigError(
-            "an instance id is changed with `xrobot instance rename`, which also updates the "
-            "references to it"
+            tr(
+                "an instance id is changed with `xrobot instance rename`, which also updates the "
+                "references to it",
+                "实例 id 用 `xrobot instance rename` 修改，它会同时更新对该实例的引用",
+            )
         )
     if tokens[0] == "module":
         raise ConfigError(
-            "the Module of an instance cannot be changed; remove the instance and add the "
-            "other Module"
+            tr(
+                "the Module of an instance cannot be changed; remove the instance and add the "
+                "other Module",
+                "实例的模块不能修改；请删除这个实例，再添加另一个模块",
+            )
         )
     if tokens[0] not in ("args", "template_args"):
-        raise ConfigError(f"invalid path {path}; {_PATH_HINT}")
+        raise ConfigError(invalid)
     return tokens
 
 
@@ -436,25 +462,32 @@ def _set_path(item: CommentedMap, path: str, value) -> None:
                 isinstance(v, dict) and len(v) == 1 for v in value
             ):
                 raise ConfigError(
-                    "args takes a list of one-parameter mappings, e.g. "
-                    '[{"led": "LED_B"}, {"cycle": "250"}]'
+                    tr(
+                        "args takes a list of one-parameter mappings, e.g. "
+                        '[{"led": "LED_B"}, {"cycle": "250"}]',
+                        'args 的值是单参数映射的列表，例如 [{"led": "LED_B"}, {"cycle": "250"}]',
+                    )
                 )
             item["args"] = value
             return
         name = tokens[1]
         node = next((e for e in item.get("args") or [] if isinstance(e, dict) and name in e), None)
         if node is None:
-            raise ConfigError(f"path {path}: no argument {name}")
+            raise ConfigError(
+                tr(f"path {path}: no argument {name}", f"路径 {path}：没有参数 {name}")
+            )
         tokens = tokens[1:]
     for position, token in enumerate(tokens):
         if token.startswith("["):
             key = int(token[1:-1])
             if not isinstance(node, list) or key >= len(node):
-                raise ConfigError(f"path {path}: no element {key}")
+                raise ConfigError(
+                    tr(f"path {path}: no element {key}", f"路径 {path}：没有第 {key} 项")
+                )
         else:
             key = token
             if not isinstance(node, dict) or key not in node:
-                raise ConfigError(f"path {path}: no key {key}")
+                raise ConfigError(tr(f"path {path}: no key {key}", f"路径 {path}：没有键 {key}"))
         if position == len(tokens) - 1:
             node[key] = value
             return
@@ -503,7 +536,12 @@ def set_value(
     """
     config = ConfigFile(config_path, source)
     if if_match is not None and file_hash(config.path) != if_match:
-        raise ConfigError(f"{config.source} changed since it was read; reload and retry")
+        raise ConfigError(
+            tr(
+                f"{config.source} changed since it was read; reload and retry",
+                f"{config.source} 在读取之后已被修改；请重新读取后再试",
+            )
+        )
     k = config.index_of(instance_id)
     blocks = config.blocks()
     item, indent = _load_item(blocks.item_text(k))
@@ -524,8 +562,11 @@ def remove_instance(config_path: str | Path, instance_id: str, source: str | Non
     users = references_to(config.config, instance_id)
     if users:
         raise ConfigError(
-            f"{config.source}: {instance_id} is still used by {', '.join(users)}; change those "
-            "values first"
+            tr(
+                f"{config.source}: {instance_id} is still used by {', '.join(users)}; change "
+                "those values first",
+                f"{config.source}: {instance_id} 仍被 {', '.join(users)} 使用；请先修改这些值",
+            )
         )
     text = config.blocks().remove(k)
     if parse_yaml(text, config.source).get("modules") is None:
@@ -597,7 +638,12 @@ def rename_instance(
     if any(
         isinstance(e, dict) and e.get("id") == new_id for e in config.config.get("modules") or []
     ):
-        raise ConfigError(f"{config.source}: instance id {new_id} already exists")
+        raise ConfigError(
+            tr(
+                f"{config.source}: instance id {new_id} already exists",
+                f"{config.source}: 实例 id {new_id} 已经存在",
+            )
+        )
     target = config.index_of(instance_id)
     text = config.text
     blocks = Blocks(text)
@@ -803,13 +849,16 @@ def add_instance(
     module = select_module(modules, module_name)
     if not module["manifest"].standalone:
         raise ConfigError(
-            f"{module['id']} is a library (standalone: false) and cannot be instantiated"
+            tr(
+                f"{module['id']} is a library (standalone: false) and cannot be instantiated",
+                f"{module['id']} 是库（standalone: false），不能创建实例",
+            )
         )
     interface = module_interface(module)
     identity = instance_id or next_instance_id(config.config.get("modules") or [], module["name"])
     problem = identifier_problem(identity)
     if problem:
-        raise ConfigError(f"instance id {identity} {problem}")
+        raise ConfigError(tr(f"instance id {identity} {problem}", f"实例 id {identity} {problem}"))
     item = instance_item(module["id"], identity, module["name"], interface, index)
     blocks = config.blocks()
     indent = blocks.item_indent if blocks.item_indent is not None else 2
@@ -1036,7 +1085,9 @@ def _request_lines(text: str):
     key = next((k for k, v in root.value if k.value == "modules"), None)
     node = next((v for k, v in root.value if k.value == "modules"), None)
     if node is None or not isinstance(node, yaml.SequenceNode):
-        raise ConfigError("modules.yaml: modules must be a list")
+        raise ConfigError(
+            tr("modules.yaml: modules must be a list", "modules.yaml: modules 必须是列表")
+        )
     items = [(child.start_mark.line, child) for child in node.value]
     return lines, key, items, node
 
@@ -1066,14 +1117,22 @@ def add_module(modules_yaml: str | Path, request_text: str) -> None:
         else:
             existing = request({k.value: v.value for k, v in child.value})
         if existing["id"].casefold() == parsed["id"].casefold():
-            raise ConfigError(f"{parsed['id']} is already requested in {modules_yaml}")
+            raise ConfigError(
+                tr(
+                    f"{parsed['id']} is already requested in {modules_yaml}",
+                    f"{modules_yaml} 中已经请求了 {parsed['id']}",
+                )
+            )
     value = request_text if "@" in request_text else request_text + "@same-or-dev"
     if key is None:
         lines = [line for line in lines if line.strip()] + ["modules:", "  - " + value]
     elif node.flow_style:
         if items:
             raise ConfigError(
-                f"{modules_yaml} uses a flow list for modules; write it as a block list first"
+                tr(
+                    f"{modules_yaml} uses a flow list for modules; write it as a block list first",
+                    f"{modules_yaml} 的 modules 是流式列表；请先改写成块列表",
+                )
             )
         line = lines[key.start_mark.line]
         lines[key.start_mark.line] = line[: key.start_mark.column] + "modules:"
@@ -1108,7 +1167,10 @@ def remove_module(modules_yaml: str | Path, identity: str) -> None:
             continue
         if node.flow_style:
             raise ConfigError(
-                f"{modules_yaml} uses a flow list for modules; write it as a block list first"
+                tr(
+                    f"{modules_yaml} uses a flow list for modules; write it as a block list first",
+                    f"{modules_yaml} 的 modules 是流式列表；请先改写成块列表",
+                )
             )
         end = (
             items[index + 1][0]
@@ -1120,7 +1182,12 @@ def remove_module(modules_yaml: str | Path, identity: str) -> None:
             lines[key.start_mark.line] = lines[key.start_mark.line].rstrip() + " []"
         atomic_write(path, "\n".join(lines).rstrip("\n") + "\n")
         return
-    raise ConfigError(f"{identity} is not requested in {modules_yaml}")
+    raise ConfigError(
+        tr(
+            f"{identity} is not requested in {modules_yaml}",
+            f"{modules_yaml} 中没有请求 {identity}",
+        )
+    )
 
 
 def format_files(paths: list[Path], check: bool = False) -> list[Path]:

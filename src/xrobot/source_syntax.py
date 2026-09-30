@@ -24,6 +24,7 @@ from xr_syntax.cpp import (
 from xr_syntax.cpp import (
     code_tokens as _code_tokens,
 )
+from xr_syntax.i18n import tr
 
 Token = CppLexicalToken
 
@@ -137,20 +138,36 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
     classes = [view for view in views if _is_global_class(view.node)]
     if not classes:
         if views:
+            scope = _scope_of(views[0].node)
             raise ValueError(
-                f"{name} is declared inside {_scope_of(views[0].node)}; a Module class must "
-                "be declared at global scope"
+                tr(
+                    f"{name} is declared inside {scope}; a Module class must be declared at "
+                    "global scope",
+                    f"{name} 声明在{scope}中；模块类必须声明在全局作用域",
+                )
             )
-        raise ValueError(f"No global class {name} is declared in this header")
+        raise ValueError(
+            tr(
+                f"No global class {name} is declared in this header",
+                f"这个头文件中没有全局类 {name}",
+            )
+        )
     if len(classes) != 1:
-        raise ValueError(f"Multiple definitions of Module class {name}")
+        raise ValueError(
+            tr(f"Multiple definitions of Module class {name}", f"模块类 {name} 有多个定义")
+        )
 
     class_view = classes[0]
     parent = class_view.node.parent
     templated = parent is not None and parent.kind == "template_declaration"
     template_parameters = class_view.template_parameters
     if templated and not template_parameters:
-        raise ValueError("Explicit Module template specialization is not supported")
+        raise ValueError(
+            tr(
+                "Explicit Module template specialization is not supported",
+                "不支持模块类的显式模板特化",
+            )
+        )
 
     constructors = [
         constructor
@@ -158,7 +175,12 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
         if not _copies_or_moves([p.text.strip() for p in constructor.parameters], name)
     ]
     if not constructors:
-        raise ValueError(f"No supported explicit public constructor for {name}")
+        raise ValueError(
+            tr(
+                f"No supported explicit public constructor for {name}",
+                f"{name} 没有可用的显式公有构造函数",
+            )
+        )
 
     source_bytes = document.render_bytes()
     body = class_view.body
@@ -167,7 +189,12 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
         if body is not None and conditional_depth(
             document, body.span.start, constructor.node.span.start
         ):
-            raise ValueError(f"{name} constructor interface varies under #if")
+            raise ValueError(
+                tr(
+                    f"{name} constructor interface varies under #if",
+                    f"{name} 的构造接口随 #if 变化",
+                )
+            )
 
         declarator = constructor.declarator
         result.append(
@@ -213,14 +240,20 @@ def _scope_of(node) -> str:
     while parent is not None:
         if parent.kind == "namespace_definition":
             head = " ".join(parent.text.split("{", 1)[0].split())
-            return head if head != "namespace" else "an anonymous namespace"
+            if head == "namespace":
+                return tr("an anonymous namespace", "匿名命名空间")
+            return tr(head, f" {head} ")
         if parent.kind in ("class_specifier", "struct_specifier"):
             match = re.match(r"\s*(class|struct)\s+(\w+)", parent.text)
-            return f"{match.group(1)} {match.group(2)}" if match else "another class"
+            if match:
+                return tr(
+                    f"{match.group(1)} {match.group(2)}", f" {match.group(1)} {match.group(2)} "
+                )
+            return tr("another class", "另一个类")
         if parent.kind == "function_definition":
-            return "a function body"
+            return tr("a function body", "函数体")
         parent = parent.parent
-    return "another declaration"
+    return tr("another declaration", "另一个声明")
 
 
 def _is_global_class(node) -> bool:

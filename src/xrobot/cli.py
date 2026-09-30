@@ -11,17 +11,27 @@ from collections.abc import Sequence
 from pathlib import Path
 
 import yaml
+from xr_syntax.i18n import chinese, localize_argparse, tr
 
 from xrobot import __version__
 from xrobot.config import ConfigError, parse_yaml
 from xrobot.project import Project, ProjectError
 
-DESCRIPTION = """\
-Resolve Modules, generate the static entry and edit configurations.
 
-Commands work on the BSP that contains the current directory: the nearest
-directory at or above it with Modules/modules.yaml. -C DIR starts the search
-at DIR instead."""
+def _description() -> str:
+    """xrobot --help 开头的说明。
+    The description that opens xrobot --help.
+    """
+    return tr(
+        "Resolve Modules, generate the static entry and edit configurations.\n\n"
+        "Commands work on the BSP that contains the current directory: the nearest\n"
+        "directory at or above it with Modules/modules.yaml. -C DIR starts the search\n"
+        "at DIR instead.",
+        "解析模块、生成静态入口、编辑配置。\n\n"
+        "命令作用于包含当前目录的 BSP，即当前目录或其上层中最近的含有\n"
+        "Modules/modules.yaml 的目录。-C DIR 改为从 DIR 开始查找。",
+    )
+
 
 INIT_MODULES = f"xrobot: {__version__}\nmodules: []\n"
 INIT_CONFIG = "modules: []\nsettings:\n  monitor_sleep_ms: 1000\n"
@@ -50,11 +60,12 @@ def _config_path(project: Project, value: str | None) -> Path | None:
     return path.resolve()
 
 
-def _count(number: int, noun: str) -> str:
-    """数量加名词，按数量选择单复数。
-    A count followed by the noun in singular or plural.
+def _count(number: int, noun: str, chinese_noun: str) -> str:
+    """数量加名词：英文按数量选择单复数，中文用量词“个”。
+    A count followed by the noun: singular or plural in English, with the measure word 个
+    in Chinese.
     """
-    return f"{number} {noun}{'' if number == 1 else 's'}"
+    return tr(f"{number} {noun}{'' if number == 1 else 's'}", f"{number} 个{chinese_noun}")
 
 
 def _check_pin(project: Project, frozen: bool = False) -> None:
@@ -73,14 +84,25 @@ def _check_pin(project: Project, frozen: bool = False) -> None:
 
     _, pin = read_modules_yaml(project.modules_yaml)
     if pin is None:
-        problem = f"Modules/modules.yaml does not pin XRobot; add `xrobot: {__version__}`"
+        problem = tr(
+            f"Modules/modules.yaml does not pin XRobot; add `xrobot: {__version__}`",
+            f"Modules/modules.yaml 没有固定 XRobot 的版本；请添加 `xrobot: {__version__}`",
+        )
     elif pin != __version__ and not COMMIT.fullmatch(pin):
-        problem = f"installed XRobot {__version__} differs from the pinned {pin}"
+        problem = tr(
+            f"installed XRobot {__version__} differs from the pinned {pin}",
+            f"安装的 XRobot {__version__} 与固定的版本 {pin} 不同",
+        )
     else:
         return
     if frozen:
-        raise ProjectError(f"{problem} (--frozen requires the pinned version)")
-    print(f"warning: {problem}", file=sys.stderr)
+        raise ProjectError(
+            tr(
+                f"{problem} (--frozen requires the pinned version)",
+                f"{problem}（--frozen 要求使用固定的版本）",
+            )
+        )
+    print(tr("warning: ", "警告：") + problem, file=sys.stderr)
 
 
 def _add_ignore_entries(path: Path) -> bool:
@@ -124,8 +146,11 @@ def cmd_init(args: argparse.Namespace) -> None:
             atomic_write(path, text)
             created.append(relative)
     if _add_ignore_entries(root / ".gitignore"):
-        created.append(".gitignore entries")
-    print(f"Created {', '.join(created) if created else 'nothing (already initialized)'}")
+        created.append(tr(".gitignore entries", ".gitignore 条目"))
+    if created:
+        print(tr(f"Created {', '.join(created)}", f"已创建 {'、'.join(created)}"))
+    else:
+        print(tr("Created nothing (already initialized)", "没有需要创建的文件（已经初始化）"))
 
 
 def cmd_setup(args: argparse.Namespace) -> None:
@@ -144,7 +169,8 @@ def cmd_setup(args: argparse.Namespace) -> None:
     lock = sync_modules(
         project, update, args.frozen, args.offline, args.context_ref, args.release_ref
     )
-    print(f"Resolved {_count(len(lock['modules']), 'Module commit')}")
+    count = _count(len(lock["modules"]), "Module commit", "模块提交")
+    print(tr(f"Resolved {count}", f"已解析 {count}"))
     if args.release_ref:
         check_tool_pins(project, args.release_ref, args.offline)
     modules = load_modules(project)
@@ -154,12 +180,15 @@ def cmd_setup(args: argparse.Namespace) -> None:
             diff = sync_config(config_path, modules, index, project.relative(config_path))
             if diff:
                 sys.stdout.write(diff)
-    count = validate_all(project, modules, index)
+    checked = _count(validate_all(project, modules, index), "config", "配置")
     selected = project.selected_config()
     generate(project, selected, modules, index)
+    name = project.relative(selected)
     print(
-        f"Checked {_count(count, 'config')}; generated User/xrobot_main.hpp for "
-        f"{project.relative(selected)}"
+        tr(
+            f"Checked {checked}; generated User/xrobot_main.hpp for {name}",
+            f"已检查 {checked}；已为 {name} 生成 User/xrobot_main.hpp",
+        )
     )
 
 
@@ -173,8 +202,9 @@ def cmd_gen(args: argparse.Namespace) -> None:
     _check_pin(project)
     config = _config_path(project, args.config)
     generate(project, config)
+    name = project.relative(config or project.selected_config())
     print(
-        f"Generated User/xrobot_main.hpp for {project.relative(config or project.selected_config())}"
+        tr(f"Generated User/xrobot_main.hpp for {name}", f"已为 {name} 生成 User/xrobot_main.hpp")
     )
 
 
@@ -222,12 +252,16 @@ def cmd_format(args: argparse.Namespace) -> None:
     project = _project(args)
     paths = [_config_path(project, c) for c in args.config] if args.config else project.configs()
     changed = format_files(paths, check=args.check)
-    label = "needs formatting" if args.check else "formatted"
+    label = tr("needs formatting", "需要格式化") if args.check else tr("formatted", "已格式化")
     for path in changed:
         print(f"{label}: {project.relative(path)}")
     if args.check and changed:
+        files = _count(len(changed), "file", "文件")
         raise ConfigError(
-            f"Found {_count(len(changed), 'file')} not in the canonical layout; run `xrobot format`"
+            tr(
+                f"Found {files} not in the canonical layout; run `xrobot format`",
+                f"有 {files}不符合规范格式；请运行 `xrobot format`",
+            )
         )
 
 
@@ -246,7 +280,9 @@ def parse_value(text: str, as_json: bool = False) -> object:
         try:
             return json.loads(text)
         except json.JSONDecodeError as error:
-            raise ConfigError(f"VALUE is not JSON: {error}") from error
+            raise ConfigError(
+                tr(f"VALUE is not JSON: {error}", f"VALUE 不是 JSON：{error}")
+            ) from error
     if not text.strip():
         return None
     return parse_yaml(text, "VALUE")
@@ -270,7 +306,11 @@ def cmd_instance(args: argparse.Namespace) -> None:
             config, args.module, modules, TypeIndex.for_modules(modules), args.id, source
         )
         print(
-            f"Added {identity} to {source}; fill the null values (dependencies) before generating"
+            tr(
+                f"Added {identity} to {source}; fill the null values (dependencies) before "
+                "generating",
+                f"已将 {identity} 添加到 {source}；生成前请填写值为空的依赖参数",
+            )
         )
     elif args.action == "set":
         config_edit.set_value(
@@ -301,11 +341,21 @@ def _module_target(args: argparse.Namespace) -> Path:
     try:
         project = _project(args)
     except ProjectError as error:
-        raise ProjectError(f"{args.module}: not a file or folder; {error}") from error
+        raise ProjectError(
+            tr(
+                f"{args.module}: not a file or folder; {error}",
+                f"{args.module}: 不是文件或文件夹；{error}",
+            )
+        ) from error
     try:
         return select_module(load_modules(project), args.module)["path"]
     except ValueError as error:
-        raise ValueError(f"{args.module}: not a file or folder; {error}") from error
+        raise ValueError(
+            tr(
+                f"{args.module}: not a file or folder; {error}",
+                f"{args.module}: 不是文件或文件夹；{error}",
+            )
+        ) from error
 
 
 def cmd_module(args: argparse.Namespace) -> None:
@@ -323,12 +373,22 @@ def cmd_module(args: argparse.Namespace) -> None:
         from xrobot.config_edit import add_module
 
         add_module(project.modules_yaml, args.request)
-        print(f"Added {args.request}; run `xrobot setup` to fetch it")
+        print(
+            tr(
+                f"Added {args.request}; run `xrobot setup` to fetch it",
+                f"已添加 {args.request}；请运行 `xrobot setup` 获取它",
+            )
+        )
     else:
         from xrobot.config_edit import remove_module
 
         remove_module(project.modules_yaml, args.request)
-        print(f"Removed {args.request}; run `xrobot setup` to update xrobot.lock")
+        print(
+            tr(
+                f"Removed {args.request}; run `xrobot setup` to update xrobot.lock",
+                f"已删除 {args.request}；请运行 `xrobot setup` 更新 xrobot.lock",
+            )
+        )
 
 
 def cmd_new_module(args: argparse.Namespace) -> None:
@@ -347,7 +407,7 @@ def cmd_new_module(args: argparse.Namespace) -> None:
         includes=args.include,
         ci_template_args=args.template_arg,
     )
-    print(f"Created {path}")
+    print(tr(f"Created {path}", f"已创建 {path}"))
 
 
 def cmd_check_module(args: argparse.Namespace) -> None:
@@ -360,7 +420,7 @@ def cmd_check_module(args: argparse.Namespace) -> None:
     project = _project(args)
     sync_modules(project, offline=args.offline)
     generate_compile_check(args.module, load_modules(project), args.output, args.template_arg)
-    print(f"Generated {args.output}")
+    print(tr(f"Generated {args.output}", f"已生成 {args.output}"))
 
 
 def cmd_source(args: argparse.Namespace) -> None:
@@ -387,7 +447,12 @@ def cmd_source(args: argparse.Namespace) -> None:
         source_manager.add_source(sources, args.url, args.priority)
         return
     if not sources.is_file():
-        raise ProjectError(f"{sources} does not exist; run `xrobot source create-sources`")
+        raise ProjectError(
+            tr(
+                f"{sources} does not exist; run `xrobot source create-sources`",
+                f"{sources} 不存在；请运行 `xrobot source create-sources`",
+            )
+        )
     manager = source_manager.SourceManager(sources)
     if args.action in ("get", "find"):
         identity = manager.resolve_id(args.id)
@@ -425,7 +490,7 @@ def _command(
         details: 显示在说明之后的更多内容，按原样换行。
             More text shown after the help, with its line breaks kept.
     """
-    description = text[0].upper() + text[1:] + "."
+    description = text + "。" if chinese() else text[0].upper() + text[1:] + "."
     if not details:
         return actions.add_parser(name, help=text, description=description)
     return actions.add_parser(
@@ -440,50 +505,116 @@ def _source_parser(verbs: argparse._SubParsersAction) -> None:
     """添加 source 命令及其子命令。
     Add the source command and its actions.
     """
-    source = _command(verbs, "source", "query or edit Sources (sources.yaml, index.yaml)")
+    source = _command(
+        verbs,
+        "source",
+        tr(
+            "query or edit Sources (sources.yaml, index.yaml)",
+            "查询或编辑源（sources.yaml、index.yaml）",
+        ),
+    )
     source.add_argument(
-        "--sources", metavar="FILE", help="sources.yaml to use (default: the BSP's)"
+        "--sources",
+        metavar="FILE",
+        help=tr(
+            "sources.yaml to use (default: the BSP's)", "使用的 sources.yaml（默认：BSP 中的）"
+        ),
     )
     actions = source.add_subparsers(dest="action", required=True, metavar="<action>")
+    package_id = tr("owner/Repo, or Repo when unique", "owner/Repo；唯一时可只写 Repo")
     for name, text in (
-        ("list", "list the packages of all Sources"),
-        ("search", "list the packages whose entry contains TEXT"),
+        ("list", tr("list the packages of all Sources", "列出所有源中的包")),
+        ("search", tr("list the packages whose entry contains TEXT", "列出条目中包含 TEXT 的包")),
     ):
         action = _command(actions, name, text)
         if name == "search":
             action.add_argument("query", metavar="TEXT")
-        action.add_argument("--type", choices=["module", "bsp"], help="only this kind of package")
-    _command(actions, "get", "print the entry of a package").add_argument(
-        "id", help="owner/Repo, or Repo when unique"
+        action.add_argument(
+            "--type",
+            choices=["module", "bsp"],
+            help=tr("only this kind of package", "只列出这一类包"),
+        )
+    _command(actions, "get", tr("print the entry of a package", "输出一个包的条目")).add_argument(
+        "id", help=package_id
     )
     _command(
-        actions, "find", "list every Source (mirrors included) that provides a package"
-    ).add_argument("id", help="owner/Repo, or Repo when unique")
-    create = _command(actions, "create-sources", "write a sources.yaml with the official Source")
-    create.add_argument(
-        "-o", "--output", metavar="FILE", help="default: the sources.yaml of --sources or the BSP"
+        actions,
+        "find",
+        tr(
+            "list every Source (mirrors included) that provides a package",
+            "列出提供某个包的所有源（含镜像）",
+        ),
+    ).add_argument("id", help=package_id)
+    create = _command(
+        actions,
+        "create-sources",
+        tr("write a sources.yaml with the official Source", "写出一份包含官方源的 sources.yaml"),
     )
-    add = _command(actions, "add-source", "add a Source to sources.yaml")
-    add.add_argument("url", help="URL of an index.yaml, or a path relative to sources.yaml")
+    create.add_argument(
+        "-o",
+        "--output",
+        metavar="FILE",
+        help=tr(
+            "default: the sources.yaml of --sources or the BSP",
+            "默认：--sources 指定的或 BSP 中的 sources.yaml",
+        ),
+    )
+    add = _command(
+        actions, "add-source", tr("add a Source to sources.yaml", "向 sources.yaml 添加一个源")
+    )
+    add.add_argument(
+        "url",
+        help=tr(
+            "URL of an index.yaml, or a path relative to sources.yaml",
+            "index.yaml 的 URL，或相对 sources.yaml 的路径",
+        ),
+    )
     add.add_argument(
         "--priority",
         type=int,
         default=0,
-        help="the lower value wins when Sources list the same package (default: 0)",
+        help=tr(
+            "the lower value wins when Sources list the same package (default: 0)",
+            "多个源列出同一个包时，数值小的优先（默认：0）",
+        ),
     )
-    index = _command(actions, "create-index", "write a new index.yaml")
+    index = _command(
+        actions, "create-index", tr("write a new index.yaml", "写出一份新的 index.yaml")
+    )
     index.add_argument(
-        "-o", "--output", metavar="FILE", default="Modules/index.yaml", help="default: %(default)s"
+        "-o",
+        "--output",
+        metavar="FILE",
+        default="Modules/index.yaml",
+        help=tr("default: %(default)s", "默认：%(default)s"),
     )
     index.add_argument(
         "--namespace",
         default="local",
-        help="owner of repositories outside GitHub (default: %(default)s)",
+        help=tr(
+            "owner of repositories outside GitHub (default: %(default)s)",
+            "GitHub 以外仓库的所有者（默认：%(default)s）",
+        ),
     )
-    index.add_argument("--mirror-of", metavar="NAMESPACE", help="mark the index as a mirror")
-    entry = _command(actions, "add-index", "add a Module repository to an index.yaml")
-    entry.add_argument("repo_url", help="Git URL of the Module repository")
-    entry.add_argument("--index", metavar="FILE", required=True, help="the index.yaml to edit")
+    index.add_argument(
+        "--mirror-of",
+        metavar="NAMESPACE",
+        help=tr("mark the index as a mirror", "把这份 index 标记为镜像"),
+    )
+    entry = _command(
+        actions,
+        "add-index",
+        tr("add a Module repository to an index.yaml", "向 index.yaml 添加一个模块仓库"),
+    )
+    entry.add_argument(
+        "repo_url", help=tr("Git URL of the Module repository", "模块仓库的 Git URL")
+    )
+    entry.add_argument(
+        "--index",
+        metavar="FILE",
+        required=True,
+        help=tr("the index.yaml to edit", "要编辑的 index.yaml"),
+    )
     source.set_defaults(run=cmd_source)
 
 
@@ -491,8 +622,11 @@ def parser() -> argparse.ArgumentParser:
     """构造 xrobot 的参数解析器。
     Build the xrobot argument parser.
     """
+    localize_argparse()
     top = argparse.ArgumentParser(
-        prog="xrobot", description=DESCRIPTION, formatter_class=argparse.RawDescriptionHelpFormatter
+        prog="xrobot",
+        description=_description(),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     top.add_argument("--version", action="version", version=f"xrobot {__version__}")
     top.add_argument(
@@ -500,57 +634,109 @@ def parser() -> argparse.ArgumentParser:
         dest="directory",
         metavar="DIR",
         default=".",
-        help="start the BSP search at DIR (init: create the files in DIR)",
+        help=tr(
+            "start the BSP search at DIR (init: create the files in DIR)",
+            "从 DIR 开始查找 BSP（init：在 DIR 中创建文件）",
+        ),
     )
     verbs = top.add_subparsers(dest="verb", required=True, metavar="<command>")
 
+    package_id = tr("owner/Repo, or Repo when unique", "owner/Repo；唯一时可只写 Repo")
+    instance_id = tr("instance id", "实例 id")
     _command(
         verbs,
         "init",
-        "create Modules/modules.yaml, Modules/sources.yaml and User/xrobot.yaml",
+        tr(
+            "create Modules/modules.yaml, Modules/sources.yaml and User/xrobot.yaml",
+            "创建 Modules/modules.yaml、Modules/sources.yaml 和 User/xrobot.yaml",
+        ),
     ).set_defaults(run=cmd_init)
 
-    setup = _command(verbs, "setup", "resolve Modules, check every config, regenerate the entry")
+    setup = _command(
+        verbs,
+        "setup",
+        tr(
+            "resolve Modules, check every config, regenerate the entry",
+            "解析模块，检查所有配置，重新生成入口",
+        ),
+    )
     group = setup.add_mutually_exclusive_group()
     group.add_argument(
         "--update",
         nargs="*",
         metavar="MODULE",
-        help="re-resolve the named Modules (all when none is named) and sync every config",
+        help=tr(
+            "re-resolve the named Modules (all when none is named) and sync every config",
+            "重新解析指定的模块（未指定时为全部模块），并同步所有配置",
+        ),
     )
     group.add_argument(
         "--frozen",
         action="store_true",
-        help="check out exactly xrobot.lock; the installed XRobot must match the pin",
+        help=tr(
+            "check out exactly xrobot.lock; the installed XRobot must match the pin",
+            "严格按 xrobot.lock 检出；安装的 XRobot 必须与固定的版本一致",
+        ),
     )
     setup.add_argument(
         "--offline",
         action="store_true",
-        help="use the Modules already in Modules/ without fetching (needs xrobot.lock)",
+        help=tr(
+            "use the Modules already in Modules/ without fetching (needs xrobot.lock)",
+            "使用 Modules/ 中已有的模块，不联网获取（需要 xrobot.lock）",
+        ),
     )
     setup.add_argument(
         "--context-ref",
         metavar="REF",
-        help="logical BSP branch or tag (refs/heads/... or refs/tags/...)",
+        help=tr(
+            "logical BSP branch or tag (refs/heads/... or refs/tags/...)",
+            "BSP 逻辑上所在的分支或 tag（refs/heads/... 或 refs/tags/...）",
+        ),
     )
     setup.add_argument(
-        "--release-ref", metavar="REF", help="refuse unreleased commits for this target ref"
+        "--release-ref",
+        metavar="REF",
+        help=tr("refuse unreleased commits for this target ref", "拒绝这个目标 ref 上未发布的提交"),
     )
     setup.set_defaults(run=cmd_setup)
 
     gen = _command(
-        verbs, "gen", "generate User/xrobot_main.hpp for one config and select that config"
+        verbs,
+        "gen",
+        tr(
+            "generate User/xrobot_main.hpp for one config and select that config",
+            "为一份配置生成 User/xrobot_main.hpp，并选中这份配置",
+        ),
     )
-    gen.add_argument("-c", "--config", help="default: the selected config, else User/xrobot.yaml")
+    gen.add_argument(
+        "-c",
+        "--config",
+        help=tr(
+            "default: the selected config, else User/xrobot.yaml",
+            "默认：选中的配置，没有时为 User/xrobot.yaml",
+        ),
+    )
     gen.set_defaults(run=cmd_gen)
 
-    desc = _command(verbs, "describe", "print the BSP state as JSON for editors")
-    desc.add_argument("-c", "--config", help="default: the selected config")
+    desc = _command(
+        verbs,
+        "describe",
+        tr("print the BSP state as JSON for editors", "以 JSON 输出 BSP 的状态，供编辑器使用"),
+    )
+    desc.add_argument("-c", "--config", help=tr("default: the selected config", "默认：选中的配置"))
     desc.set_defaults(run=cmd_describe)
 
     for name, run, text in (
-        ("sync", cmd_sync, "add new fields and parameters with defaults, drop removed ones"),
-        ("format", cmd_format, "rewrite configs in the canonical layout"),
+        (
+            "sync",
+            cmd_sync,
+            tr(
+                "add new fields and parameters with defaults, drop removed ones",
+                "按默认值添加新的字段和参数，删除已移除的",
+            ),
+        ),
+        ("format", cmd_format, tr("rewrite configs in the canonical layout", "按规范格式重写配置")),
     ):
         command = _command(verbs, name, text)
         command.add_argument(
@@ -558,123 +744,220 @@ def parser() -> argparse.ArgumentParser:
             "--config",
             action="append",
             default=[],
-            help="config to process; repeat for several (default: all)",
+            help=tr(
+                "config to process; repeat for several (default: all)",
+                "要处理的配置；多份时重复此选项（默认：全部）",
+            ),
         )
         if name == "format":
             command.add_argument(
-                "--check", action="store_true", help="only report files that need formatting"
+                "--check",
+                action="store_true",
+                help=tr("only report files that need formatting", "只报告需要格式化的文件"),
             )
         command.set_defaults(run=run)
 
-    instance = _command(verbs, "instance", "add, set, remove or rename one Module instance")
-    instance.add_argument("-c", "--config", help="config to edit (default: the selected config)")
+    instance = _command(
+        verbs,
+        "instance",
+        tr(
+            "add, set, remove or rename one Module instance", "添加、修改、删除或重命名一个模块实例"
+        ),
+    )
+    instance.add_argument(
+        "-c",
+        "--config",
+        help=tr(
+            "config to edit (default: the selected config)", "要编辑的配置（默认：选中的配置）"
+        ),
+    )
     actions = instance.add_subparsers(dest="action", required=True, metavar="<action>")
-    add = _command(actions, "add", "add an instance with the default values")
-    add.add_argument("module", help="owner/Repo, or Repo when unique")
-    add.add_argument("--id", help="instance id (default: <module>_<n>)")
+    add = _command(
+        actions, "add", tr("add an instance with the default values", "按默认值添加一个实例")
+    )
+    add.add_argument("module", help=package_id)
+    add.add_argument(
+        "--id", help=tr("instance id (default: <module>_<n>)", "实例 id（默认：<模块>_<n>）")
+    )
     change = _command(
         actions,
         "set",
-        "replace one value",
-        details="PATH is template_args[n] or args.<param>[.<field>|[n]]...; change an id\n"
-        "with `xrobot instance rename`.\n"
-        "VALUE is one YAML value, read like a value in the config: C++ code without quotes\n"
-        "or in single quotes, a C++ string in double quotes (e.g. '\"bmi088_gyro\"').",
+        tr("replace one value", "替换一个值"),
+        details=tr(
+            "PATH is template_args[n] or args.<param>[.<field>|[n]]...; change an id\n"
+            "with `xrobot instance rename`.\n"
+            "VALUE is one YAML value, read like a value in the config: C++ code without quotes\n"
+            "or in single quotes, a C++ string in double quotes (e.g. '\"bmi088_gyro\"').",
+            "PATH 是 template_args[n] 或 args.<参数>[.<字段>|[n]]...；实例 id 用\n"
+            "`xrobot instance rename` 修改。\n"
+            "VALUE 是一个 YAML 值，读法与配置中的值相同：不加引号或用单引号的是 C++ 代码，\n"
+            "双引号中的是 C++ 字符串（例如 '\"bmi088_gyro\"'）。",
+        ),
     )
-    change.add_argument("id", metavar="ID", help="instance id")
-    change.add_argument("path", metavar="PATH", help="value path, e.g. args.param.cycle")
-    change.add_argument("value", metavar="VALUE", help="new value")
+    change.add_argument("id", metavar="ID", help=instance_id)
     change.add_argument(
-        "--json", action="store_true", help="VALUE is JSON whose strings are C++ text"
+        "path",
+        metavar="PATH",
+        help=tr("value path, e.g. args.param.cycle", "值的路径，例如 args.param.cycle"),
+    )
+    change.add_argument("value", metavar="VALUE", help=tr("new value", "新的值"))
+    change.add_argument(
+        "--json",
+        action="store_true",
+        help=tr(
+            "VALUE is JSON whose strings are C++ text", "VALUE 是 JSON，其中的字符串是 C++ 文本"
+        ),
     )
     change.add_argument(
         "--if-match",
         metavar="SHA256",
-        help="sha256 of the LF-normalized file the edit was based on",
+        help=tr(
+            "sha256 of the LF-normalized file the edit was based on",
+            "编辑所依据的文件（换行统一为 LF 后）的 sha256",
+        ),
     )
-    _command(actions, "remove", "remove an instance").add_argument("id", help="instance id")
+    _command(actions, "remove", tr("remove an instance", "删除一个实例")).add_argument(
+        "id", help=instance_id
+    )
     rename = _command(
-        actions, "rename", "rename an instance and the references to it in the config"
+        actions,
+        "rename",
+        tr(
+            "rename an instance and the references to it in the config",
+            "重命名一个实例，并更新配置中对它的引用",
+        ),
     )
-    rename.add_argument("id", help="instance id")
-    rename.add_argument("new_id", help="new instance id")
+    rename.add_argument("id", help=instance_id)
+    rename.add_argument("new_id", help=tr("new instance id", "新的实例 id"))
     instance.set_defaults(run=cmd_instance)
 
-    module = _command(verbs, "module", "add/remove a Module request, or show a Module interface")
+    module = _command(
+        verbs,
+        "module",
+        tr(
+            "add/remove a Module request, or show a Module interface",
+            "添加或删除模块请求，或显示模块的接口",
+        ),
+    )
     module_actions = module.add_subparsers(dest="action", required=True, metavar="<action>")
-    _command(module_actions, "add", "request a Module in modules.yaml").add_argument(
-        "request", help="owner/Repo[@ref]"
-    )
-    _command(module_actions, "remove", "remove a Module request").add_argument(
-        "request", help="owner/Repo"
-    )
     _command(
-        module_actions, "show", "print the manifest and constructors of a Module"
+        module_actions,
+        "add",
+        tr("request a Module in modules.yaml", "在 modules.yaml 中请求一个模块"),
+    ).add_argument("request", help="owner/Repo[@ref]")
+    _command(
+        module_actions, "remove", tr("remove a Module request", "删除一个模块请求")
+    ).add_argument("request", help="owner/Repo")
+    _command(
+        module_actions,
+        "show",
+        tr("print the manifest and constructors of a Module", "输出模块的 manifest 和构造函数"),
     ).add_argument(
-        "module", help="Module folder or header, or the id of a locked Module (owner/Repo or Repo)"
+        "module",
+        help=tr(
+            "Module folder or header, or the id of a locked Module (owner/Repo or Repo)",
+            "模块文件夹或头文件，或已锁定模块的 id（owner/Repo 或 Repo）",
+        ),
     )
     module.set_defaults(run=cmd_module)
 
-    new = _command(verbs, "new-module", "create a Module skeleton")
-    new.add_argument("name", help="class and folder name (a C++ identifier)")
-    new.add_argument("--desc", metavar="TEXT", default="", help="one-line description")
+    new = _command(verbs, "new-module", tr("create a Module skeleton", "创建模块骨架"))
+    new.add_argument(
+        "name", help=tr("class and folder name (a C++ identifier)", "类名和文件夹名（C++ 标识符）")
+    )
+    new.add_argument(
+        "--desc", metavar="TEXT", default="", help=tr("one-line description", "一句话说明")
+    )
     new.add_argument(
         "--constructor",
         metavar="DECL",
         action="append",
         default=[],
-        help="a C++ constructor parameter declaration; repeat for each parameter",
+        help=tr(
+            "a C++ constructor parameter declaration; repeat for each parameter",
+            "一个 C++ 构造参数声明；每个参数重复一次",
+        ),
     )
     new.add_argument(
         "--template",
         metavar="DECL",
         action="append",
         default=[],
-        help="a C++ template parameter declaration; repeat for each parameter",
+        help=tr(
+            "a C++ template parameter declaration; repeat for each parameter",
+            "一个 C++ 模板参数声明；每个参数重复一次",
+        ),
     )
     new.add_argument(
         "--include",
         metavar="HEADER",
         action="append",
         default=[],
-        help="another header to #include (libxr.hpp and the LibXR driver headers the "
-        "declarations use are always included); repeat for each header",
+        help=tr(
+            "another header to #include (libxr.hpp and the LibXR driver headers the "
+            "declarations use are always included); repeat for each header",
+            "另外要 #include 的头文件（libxr.hpp 和声明中用到的 LibXR 驱动头文件总会包含）；"
+            "每个头文件重复一次",
+        ),
     )
     new.add_argument(
         "--template-arg",
         metavar="ARG",
         action="append",
         default=[],
-        help="a template argument the Module CI compiles with; repeat for each argument",
+        help=tr(
+            "a template argument the Module CI compiles with; repeat for each argument",
+            "模块 CI 编译时使用的模板实参；每个实参重复一次",
+        ),
     )
     new.add_argument(
         "--depends",
         metavar="MODULE",
         action="append",
         default=[],
-        help="a Module this one depends on (owner/Repo[@ref]); repeat for each Module",
+        help=tr(
+            "a Module this one depends on (owner/Repo[@ref]); repeat for each Module",
+            "依赖的模块（owner/Repo[@ref]）；每个模块重复一次",
+        ),
     )
-    new.add_argument("--out", metavar="DIR", default=".", help="parent folder (default: .)")
+    new.add_argument(
+        "--out",
+        metavar="DIR",
+        default=".",
+        help=tr("parent folder (default: .)", "上级文件夹（默认：.）"),
+    )
     new.set_defaults(run=cmd_new_module)
 
     check = _command(
         verbs,
         "check-module",
-        "resolve Modules as setup does (updates xrobot.lock and Modules/), then write "
-        "a never-executed constructor call for CI",
+        tr(
+            "resolve Modules as setup does (updates xrobot.lock and Modules/), then write "
+            "a never-executed constructor call for CI",
+            "像 setup 一样解析模块（会更新 xrobot.lock 和 Modules/），然后写出一个供 CI 编译、"
+            "从不执行的构造调用",
+        ),
     )
-    check.add_argument("module", help="owner/Repo, or Repo when unique")
+    check.add_argument("module", help=package_id)
     check.add_argument(
-        "-o", "--output", metavar="FILE", default="module_check.cpp", help="default: %(default)s"
+        "-o",
+        "--output",
+        metavar="FILE",
+        default="module_check.cpp",
+        help=tr("default: %(default)s", "默认：%(default)s"),
     )
     check.add_argument(
         "--template-arg",
         metavar="ARG",
         action="append",
         default=[],
-        help="a template argument; repeat for each argument",
+        help=tr("a template argument; repeat for each argument", "一个模板实参；每个实参重复一次"),
     )
-    check.add_argument("--offline", action="store_true", help="use the Modules already in Modules/")
+    check.add_argument(
+        "--offline",
+        action="store_true",
+        help=tr("use the Modules already in Modules/", "使用 Modules/ 中已有的模块"),
+    )
     check.set_defaults(run=cmd_check_module)
 
     _source_parser(verbs)

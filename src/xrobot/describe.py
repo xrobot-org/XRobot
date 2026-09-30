@@ -17,6 +17,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from xr_syntax.i18n import tr
+
 from xrobot import __version__
 from xrobot.config import load_config
 from xrobot.constructor_model import (
@@ -216,13 +218,21 @@ def describe(project: Project, config: str | Path | None = None) -> dict:
     pin = tools["xrobot"]["pin"]
     if pin is None:
         report(
-            "warning", "Modules/modules.yaml", f"XRobot is not pinned; add `xrobot: {__version__}`"
+            "warning",
+            "Modules/modules.yaml",
+            tr(
+                f"XRobot is not pinned; add `xrobot: {__version__}`",
+                f"没有固定 XRobot 的版本；请添加 `xrobot: {__version__}`",
+            ),
         )
     elif pin != __version__:
         report(
             "warning",
             "Modules/modules.yaml",
-            f"installed XRobot {__version__} differs from the pinned {pin}",
+            tr(
+                f"installed XRobot {__version__} differs from the pinned {pin}",
+                f"安装的 XRobot {__version__} 与固定的版本 {pin} 不同",
+            ),
         )
 
     lock_info = {
@@ -242,18 +252,33 @@ def describe(project: Project, config: str | Path | None = None) -> dict:
         lock_info["status"] = "ok" if statuses <= {"ok"} else sorted(statuses - {"ok"})[0]
     else:
         lock_info["status"] = "absent"
-        report("error", "xrobot.lock", "xrobot.lock does not exist; run `xrobot setup`")
+        report(
+            "error",
+            "xrobot.lock",
+            tr(
+                "xrobot.lock does not exist; run `xrobot setup`",
+                "xrobot.lock 不存在；请运行 `xrobot setup`",
+            ),
+        )
 
     header = project.header_state()
     if header["status"] == "stale":
         report(
             "warning",
             header["path"],
-            f"generated from older inputs ({', '.join(header['newer'] + header['missing'])}); "
-            "run `xrobot gen`",
+            tr(
+                f"generated from older inputs ({', '.join(header['newer'] + header['missing'])}); "
+                "run `xrobot gen`",
+                f"生成时用的输入已经过期（{', '.join(header['newer'] + header['missing'])}）；"
+                "请运行 `xrobot gen`",
+            ),
         )
     elif header["status"] in ("missing", "unreadable"):
-        report("warning", header["path"], "not generated; run `xrobot setup`")
+        report(
+            "warning",
+            header["path"],
+            tr("not generated; run `xrobot setup`", "还没有生成；请运行 `xrobot setup`"),
+        )
 
     records = []
     entry_path = None

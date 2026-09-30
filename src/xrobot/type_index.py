@@ -23,6 +23,7 @@ from collections.abc import Iterable, Sequence
 from pathlib import Path
 
 from xr_syntax.cpp import CppClassView
+from xr_syntax.i18n import tr
 
 from xrobot.source_syntax import (
     Token,
@@ -323,7 +324,7 @@ def class_scope_names(
                 for alias, (start, end) in layout.aliases.items()
             }
             return dict(layout.names), aliases
-    raise ValueError(f"No definition of class {name}")
+    raise ValueError(tr(f"No definition of class {name}", f"没有类 {name} 的定义"))
 
 
 class _Layout:
@@ -868,11 +869,18 @@ class ClassEntry:
         """
         layout = self.layout()
         if layout.has_union:
-            return f"{self.qualified} contains a union"
+            return tr(f"{self.qualified} contains a union", f"{self.qualified} 包含 union")
         if layout.conditional_fields:
-            return f"{self.qualified} declares fields under #if ({', '.join(layout.conditional_fields)})"
+            fields = ", ".join(layout.conditional_fields)
+            return tr(
+                f"{self.qualified} declares fields under #if ({fields})",
+                f"{self.qualified} 在 #if 中声明了字段（{fields}）",
+            )
         if not self.declares_constructor() and (self.has_base() or layout.has_virtual):
-            return f"{self.qualified} has base classes or virtual functions and no constructor"
+            return tr(
+                f"{self.qualified} has base classes or virtual functions and no constructor",
+                f"{self.qualified} 有基类或虚函数，但没有构造函数",
+            )
         return None
 
     def monitor(self) -> str | None:
@@ -1060,8 +1068,12 @@ class TypeIndex:
             return None
         headers = sorted({self._label(e.header) for e in entries})
         if len(headers) > 1:
+            name, places = "::".join(path), ", ".join(headers)
             raise ValueError(
-                f"Type {'::'.join(path)} is defined in several Module headers: {', '.join(headers)}"
+                tr(
+                    f"Type {name} is defined in several Module headers: {places}",
+                    f"类型 {name} 在多个模块头文件中都有定义：{places}",
+                )
             )
         return entries[0]
 
@@ -1239,8 +1251,11 @@ class TypeIndex:
         state = entry.monitor()
         if state == "conditional":
             raise ValueError(
-                f"{entry.qualified} declares OnMonitor under #if; the generator cannot evaluate "
-                "build options"
+                tr(
+                    f"{entry.qualified} declares OnMonitor under #if; the generator cannot "
+                    "evaluate build options",
+                    f"{entry.qualified} 在 #if 中声明了 OnMonitor；生成器无法判断编译选项",
+                )
             )
         if state == "public":
             return True

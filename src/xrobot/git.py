@@ -12,6 +12,8 @@ import re
 import subprocess
 from pathlib import Path
 
+from xr_syntax.i18n import tr
+
 GIT_TIMEOUT = 300
 _COMMIT = re.compile(r"[0-9a-f]{40}")
 
@@ -30,7 +32,7 @@ def git(path: str | Path | None, *args: str, check: bool = True) -> str | None:
     """
     env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_OPTIONAL_LOCKS="0")
     command = ["git"] + (["-C", str(path)] if path else []) + list(args)
-    where = f" in {path}" if path else ""
+    where = tr(f" in {path}", f"（位置：{path}）") if path else ""
     try:
         result = subprocess.run(
             command,
@@ -42,10 +44,18 @@ def git(path: str | Path | None, *args: str, check: bool = True) -> str | None:
         )
     except subprocess.TimeoutExpired as error:
         raise ValueError(
-            f"Git did not finish within {GIT_TIMEOUT} s{where}: {' '.join(args)}"
+            tr(
+                f"Git did not finish within {GIT_TIMEOUT} s{where}: {' '.join(args)}",
+                f"Git 没有在 {GIT_TIMEOUT} 秒内完成{where}：{' '.join(args)}",
+            )
         ) from error
     if check and result.returncode:
-        raise ValueError(f"Git failed{where}: {' '.join(args)}\n{result.stderr.strip()}")
+        raise ValueError(
+            tr(
+                f"Git failed{where}: {' '.join(args)}\n{result.stderr.strip()}",
+                f"Git 执行失败{where}：{' '.join(args)}\n{result.stderr.strip()}",
+            )
+        )
     return result.stdout.strip() if result.returncode == 0 else None
 
 

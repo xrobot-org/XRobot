@@ -14,6 +14,7 @@ import re
 from pathlib import Path
 
 import yaml
+from xr_syntax.i18n import tr
 
 from xrobot.config import identifier_problem
 from xrobot.config_edit import instance_item, instance_text
@@ -91,9 +92,9 @@ def _include_lines(declarations: list[str], extra: list[str]) -> list[str]:
     system = set()
     for header in extra:
         if not header or "\n" in header or '"' in header:
-            raise ValueError(f"Invalid include name: {header!r}")
+            raise ValueError(tr(f"Invalid include name: {header!r}", f"无效的头文件名：{header!r}"))
         if header.startswith("<") != header.endswith(">"):
-            raise ValueError(f"Invalid include name: {header!r}")
+            raise ValueError(tr(f"Invalid include name: {header!r}", f"无效的头文件名：{header!r}"))
         (system if header.startswith("<") else quoted).add(header)
     lines = [f"#include {header}" for header in sorted(system)]
     if lines:
@@ -158,7 +159,12 @@ def _interface(text: str, class_name: str, constructors: list[str], templates: l
     arguments = [p["declaration"] for p in interface["constructors"][0]["arguments"]]
     parameters = [p["declaration"] for p in interface["template_parameters"]]
     if len(interface["constructors"]) != 1 or arguments != constructors or parameters != templates:
-        raise ValueError("each --constructor and --template must be one parameter declaration")
+        raise ValueError(
+            tr(
+                "each --constructor and --template must be one parameter declaration",
+                "每个 --constructor 和 --template 必须恰好是一个参数声明",
+            )
+        )
     compliant_constructors(interface)
     return interface
 
@@ -177,13 +183,22 @@ def _ci_template_args(interface: dict, values: list[str]) -> list[str]:
     if len(values) > len(parameters):
         count = f"{len(parameters)} template parameter" + ("" if len(parameters) == 1 else "s")
         raise ValueError(
-            f"{interface['name']} has {count} but {len(values)} --template-arg values were given"
+            tr(
+                f"{interface['name']} has {count} but {len(values)} --template-arg values were "
+                "given",
+                f"{interface['name']} 有 {len(parameters)} 个模板参数，但给出了 {len(values)} 个 "
+                "--template-arg",
+            )
         )
     missing = [p["name"] for p in parameters[len(values) :] if p["default"] is None]
     if missing:
         raise ValueError(
-            f"template parameter {', '.join(missing)} of {interface['name']} has no default; "
-            "give the value the Module CI compiles with --template-arg"
+            tr(
+                f"template parameter {', '.join(missing)} of {interface['name']} has no default; "
+                "give the value the Module CI compiles with --template-arg",
+                f"{interface['name']} 的模板参数 {', '.join(missing)} 没有默认值；请用 "
+                "--template-arg 给出模块 CI 编译时使用的值",
+            )
         )
     return list(values)
 
@@ -311,14 +326,23 @@ def create_module(
     """
     problem = identifier_problem(class_name)
     if problem:
-        raise ValueError(f"Module name {class_name} {problem}")
+        raise ValueError(
+            tr(f"Module name {class_name} {problem}", f"模块名 {class_name} {problem}")
+        )
     folder = Path(output_dir) / class_name
     if folder.exists():
-        raise ValueError(f"Refusing to overwrite existing module: {folder}")
+        raise ValueError(
+            tr(f"Refusing to overwrite existing module: {folder}", f"拒绝覆盖已有的模块：{folder}")
+        )
     constructors = [item.strip() for item in constructor_args or []]
     templates = [item.strip() for item in template_args or []]
     if not all(constructors + templates):
-        raise ValueError("--constructor and --template need a C++ parameter declaration")
+        raise ValueError(
+            tr(
+                "--constructor and --template need a C++ parameter declaration",
+                "--constructor 和 --template 需要一个 C++ 参数声明",
+            )
+        )
     entries = []
     for dependency in depends or []:
         parsed = request(dependency, canonical=True)
@@ -327,7 +351,12 @@ def create_module(
     try:
         interface = _interface(header, class_name, constructors, templates)
     except ValueError as error:
-        raise ValueError(f"{class_name}.hpp would not be a valid Module header: {error}") from None
+        raise ValueError(
+            tr(
+                f"{class_name}.hpp would not be a valid Module header: {error}",
+                f"{class_name}.hpp 不会是有效的模块头文件：{error}",
+            )
+        ) from None
     ci_args = _ci_template_args(interface, list(ci_template_args or []))
 
     files = {

@@ -13,6 +13,7 @@ from urllib.parse import urljoin
 
 import requests
 import yaml
+from xr_syntax.i18n import tr
 
 OFFICIAL_SOURCE = "https://xrobot.work/xrobot-modules/index.yaml"
 SOURCES_TEMPLATE = f"sources:\n  - url: {OFFICIAL_SOURCE}\n    priority: 0\n"
@@ -51,7 +52,12 @@ def validate_id(identity: object) -> str:
         or not _ID.fullmatch(identity)
         or any(p in (".", "..") for p in identity.split("/"))
     ):
-        raise ValueError(f"Expected canonical owner/repo: {identity!r}")
+        raise ValueError(
+            tr(
+                f"Expected canonical owner/repo: {identity!r}",
+                f"应当是规范的 owner/repo：{identity!r}",
+            )
+        )
     return identity
 
 
@@ -70,9 +76,9 @@ def _reason(error: requests.RequestException) -> str:
     if isinstance(error, requests.HTTPError) and error.response is not None:
         return f"HTTP {error.response.status_code}"
     if isinstance(error, requests.Timeout):
-        return "timed out"
+        return tr("timed out", "超时")
     if isinstance(error, requests.ConnectionError):
-        return "cannot connect"
+        return tr("cannot connect", "无法连接")
     return type(error).__name__
 
 
@@ -92,7 +98,12 @@ def load_yaml(source: str | Path) -> dict:
             response = requests.get(source, timeout=20)
             response.raise_for_status()
         except requests.RequestException as error:
-            raise SourceUnavailable(f"{source}: download failed ({_reason(error)})") from error
+            raise SourceUnavailable(
+                tr(
+                    f"{source}: download failed ({_reason(error)})",
+                    f"{source}: 下载失败（{_reason(error)}）",
+                )
+            ) from error
         text = response.text
     else:
         text = Path(source).read_text(encoding="utf-8-sig")
@@ -100,7 +111,7 @@ def load_yaml(source: str | Path) -> dict:
     if data is None:
         return {}
     if not isinstance(data, dict):
-        raise ValueError(f"{source}: expected a YAML mapping")
+        raise ValueError(tr(f"{source}: expected a YAML mapping", f"{source}: 应当是 YAML 映射"))
     return data
 
 
@@ -142,10 +153,10 @@ def _source_entries(path: str | Path) -> list:
     """
     entries = load_yaml(path).get("sources") or []
     if not isinstance(entries, list):
-        raise ValueError(f"{path}: sources must be a list")
+        raise ValueError(tr(f"{path}: sources must be a list", f"{path}: sources 必须是列表"))
     for entry in entries:
         if not isinstance(entry, dict) or not entry.get("url"):
-            raise ValueError(f"{path}: every source needs a url")
+            raise ValueError(tr(f"{path}: every source needs a url", f"{path}: 每个源都需要 url"))
     return entries
 
 
@@ -182,7 +193,7 @@ def _append_item(path: Path, key: str, item: list[str], new_file: str) -> None:
     lines = text.replace("\r\n", "\n").split("\n")
     root = yaml.compose("\n".join(lines), Loader=yaml.BaseLoader)
     if root is not None and not isinstance(root, yaml.MappingNode):
-        raise ValueError(f"{path}: expected a YAML mapping")
+        raise ValueError(tr(f"{path}: expected a YAML mapping", f"{path}: 应当是 YAML 映射"))
     pair = next((p for p in root.value if p[0].value == key), None) if root else None
     if pair is None:
         while lines and not lines[-1].strip():
@@ -206,7 +217,12 @@ def _append_item(path: Path, key: str, item: list[str], new_file: str) -> None:
                 indent + "  " + line for line in item[1:]
             ]
         else:
-            raise ValueError(f"{path}: write {key} as a block list (one '- ' item per line) first")
+            raise ValueError(
+                tr(
+                    f"{path}: write {key} as a block list (one '- ' item per line) first",
+                    f"{path}: 请先把 {key} 改写成块列表（每行一个 '- ' 项）",
+                )
+            )
     atomic_write(path, ("\n".join(lines).rstrip("\n") + "\n").replace("\n", newline))
 
 
@@ -241,11 +257,18 @@ class ModuleSource:
         for group, kind in (("modules", "module"), ("bsps", "bsp"), ("packages", None)):
             values = data.get(group) or []
             if not isinstance(values, list):
-                raise ValueError(f"{self.url}: {group} must be a list")
+                raise ValueError(
+                    tr(f"{self.url}: {group} must be a list", f"{self.url}: {group} 必须是列表")
+                )
             for value in values:
                 record = self._record(value, kind)
                 if record["id"].casefold() in seen:
-                    raise ValueError(f"{self.url}: {record['id']} is listed more than once")
+                    raise ValueError(
+                        tr(
+                            f"{self.url}: {record['id']} is listed more than once",
+                            f"{self.url}: {record['id']} 被列出了不止一次",
+                        )
+                    )
                 seen.add(record["id"].casefold())
                 self.entries[record["id"]] = record
 
@@ -274,20 +297,35 @@ class ModuleSource:
                 The entry is invalid.
         """
         if not isinstance(value, (str, dict)):
-            raise ValueError(f"{self.url}: {value!r}: an entry is a repository URL or a mapping")
+            raise ValueError(
+                tr(
+                    f"{self.url}: {value!r}: an entry is a repository URL or a mapping",
+                    f"{self.url}: {value!r}: 条目应当是仓库地址或映射",
+                )
+            )
         entry = {"repo": value} if isinstance(value, str) else dict(value)
         repo = _entry_repo(entry)
         where = f"{self.url}: {entry.get('id') or repo or value}"
         package_type = entry.get("type", kind)
         if package_type not in ("module", "bsp") or (kind and package_type != kind):
-            raise ValueError(f"{where}: type must be {kind or 'module or bsp'}")
+            allowed = kind or "module / bsp"
+            raise ValueError(
+                tr(
+                    f"{where}: type must be {kind or 'module or bsp'}",
+                    f"{where}: type 必须是 {allowed}",
+                )
+            )
         if not isinstance(repo, str) or not repo:
-            raise ValueError(f"{where}: missing repo URL")
+            raise ValueError(tr(f"{where}: missing repo URL", f"{where}: 缺少 repo 地址"))
         identity = entry.get("id") or self._derive_id(repo)
         if identity is None:
             raise ValueError(
-                f"{where}: cannot derive owner/Repo; add `id: owner/Repo` to the entry or "
-                "`namespace:` to the index"
+                tr(
+                    f"{where}: cannot derive owner/Repo; add `id: owner/Repo` to the entry or "
+                    "`namespace:` to the index",
+                    f"{where}: 无法推断 owner/Repo；请在条目中添加 `id: owner/Repo`，或在 index 中"
+                    "添加 `namespace:`",
+                )
             )
         try:
             validate_id(identity)
@@ -303,9 +341,19 @@ class ModuleSource:
         where = f"{self.url}: {identity}"
         status = entry.get("status", "community")
         if status not in STATUSES:
-            raise ValueError(f"{where}: unknown status {status}; use {', '.join(STATUSES)}")
+            raise ValueError(
+                tr(
+                    f"{where}: unknown status {status}; use {', '.join(STATUSES)}",
+                    f"{where}: 未知的 status {status}；可用：{', '.join(STATUSES)}",
+                )
+            )
         if status != "community" and not (entry.get("tested_ref") and entry.get("tested_libxr")):
-            raise ValueError(f"{where}: status {status} needs tested_ref and tested_libxr")
+            raise ValueError(
+                tr(
+                    f"{where}: status {status} needs tested_ref and tested_libxr",
+                    f"{where}: status {status} 需要 tested_ref 和 tested_libxr",
+                )
+            )
         record["status"] = status
         for field, text in entry.items():
             if field not in ("id", "type", "repo", "source", "status"):
@@ -383,9 +431,15 @@ class SourceManager:
             for other, rival in originals[1:]:
                 if rival.priority == source.priority and other["repo"] != chosen["repo"]:
                     raise ValueError(
-                        f"{key}: {source.url} and {rival.url} have the same priority "
-                        f"{source.priority} but list different repositories ({chosen['repo']}, "
-                        f"{other['repo']}); give one of them another priority in sources.yaml"
+                        tr(
+                            f"{key}: {source.url} and {rival.url} have the same priority "
+                            f"{source.priority} but list different repositories "
+                            f"({chosen['repo']}, {other['repo']}); give one of them another "
+                            "priority in sources.yaml",
+                            f"{key}: {source.url} 和 {rival.url} 的优先级同为 {source.priority}，"
+                            f"但列出的仓库不同（{chosen['repo']}、{other['repo']}）；请在 "
+                            "sources.yaml 中给其中一个换一个优先级",
+                        )
                     )
             record = dict(chosen, canonical=chosen["repo"])
             record["repo"] = self.mirror_url(key) or chosen["repo"]
@@ -407,9 +461,12 @@ class SourceManager:
             and (identity if "/" in name else identity.rsplit("/", 1)[-1]).casefold() == wanted
         ]
         if not candidates:
-            raise ValueError(f"Package not found: {name}")
+            raise ValueError(tr(f"Package not found: {name}", f"找不到包：{name}"))
         if len(candidates) != 1:
-            raise ValueError(f"Ambiguous package {name}; specify {', '.join(sorted(candidates))}")
+            ids = ", ".join(sorted(candidates))
+            raise ValueError(
+                tr(f"Ambiguous package {name}; specify {ids}", f"包 {name} 有歧义；请指定 {ids}")
+            )
         return candidates[0]
 
     def find_module(self, identity: str) -> list:

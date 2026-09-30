@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import re
 
+from xr_syntax.i18n import tr
+
 from xrobot.config import ConfigError, value_text
 from xrobot.source_syntax import close_token, code_tokens, split_arguments
 from xrobot.type_index import ClassEntry, TypeIndex, class_scope_names
@@ -73,18 +75,38 @@ def parameter(declaration: str) -> dict:
     head = declaration[: split.start].strip() if split else declaration.strip()
     default = declaration[split.end :].strip() if split else None
     if default == "":
-        raise ValueError("Missing default value after '=': " + declaration)
+        raise ValueError(
+            tr(
+                "Missing default value after '=': " + declaration,
+                "“=”后面缺少默认值：" + declaration,
+            )
+        )
     parts = code_tokens(head)
     if not parts or parts[-1].kind != "identifier" or len(parts) < 2:
-        raise ValueError("Constructor parameters must have explicit names: " + declaration)
+        raise ValueError(
+            tr(
+                "Constructor parameters must have explicit names: " + declaration,
+                "构造参数必须写出参数名：" + declaration,
+            )
+        )
     name = parts[-1].text
     cpp_type = head[: parts[-1].start].strip()
     # 类型模板参数也用同样的带名字声明表示。
     # Type template parameters use the same named declaration representation.
     if name in ("const", "volatile") and cpp_type not in ("class", "typename"):
-        raise ValueError("Unsupported parameter declaration: " + declaration)
+        raise ValueError(
+            tr(
+                "Unsupported parameter declaration: " + declaration,
+                "不支持的参数声明：" + declaration,
+            )
+        )
     if not cpp_type or "(" in cpp_type or "[" in cpp_type or "..." in head:
-        raise ValueError("Use an explicit named type alias for this declaration: " + declaration)
+        raise ValueError(
+            tr(
+                "Use an explicit named type alias for this declaration: " + declaration,
+                "这个声明需要先定义具名的类型别名：" + declaration,
+            )
+        )
     return {"name": name, "type": cpp_type, "default": default, "declaration": declaration}
 
 
@@ -146,12 +168,22 @@ def template_bindings(interface: dict, supplied: list) -> dict[str, str]:
     """
     parameters = interface["template_parameters"]
     if len(supplied) > len(parameters):
-        raise ValueError("Too many template arguments for " + interface["name"])
+        raise ValueError(
+            tr(
+                "Too many template arguments for " + interface["name"],
+                interface["name"] + " 的模板实参过多",
+            )
+        )
     replacements = {}
     for i, p in enumerate(parameters):
         value = supplied[i] if i < len(supplied) else p["default"]
         if value is None:
-            raise ValueError(f"Template argument {interface['name']}.{p['name']} must be specified")
+            raise ValueError(
+                tr(
+                    f"Template argument {interface['name']}.{p['name']} must be specified",
+                    f"必须给出模板实参 {interface['name']}.{p['name']}",
+                )
+            )
         replacements[p["name"]] = replace_names(str(value), replacements)
     return replacements
 
@@ -204,7 +236,12 @@ def qualify(
         previous = items[i - 1].text if i else ""
         own_scope = previous == "::" and i >= 2 and items[i - 2].text == interface["name"]
         if previous not in (".", "->", ".*", "->*", "::") or own_scope:
-            raise ValueError(f"Expression uses non-public member {interface['name']}::{token.text}")
+            raise ValueError(
+                tr(
+                    f"Expression uses non-public member {interface['name']}::{token.text}",
+                    f"表达式使用了非公开成员 {interface['name']}::{token.text}",
+                )
+            )
     return replace_names(text, substitutions)
 
 
@@ -261,7 +298,9 @@ def initializer_tree(expression: str | None, expected_type: str | None = None) -
         result = {}
         for name, value in fields:
             if name in result:
-                raise ValueError("Duplicate initializer field: " + name)
+                raise ValueError(
+                    tr("Duplicate initializer field: " + name, "初始化器中重复的字段：" + name)
+                )
             result[name] = value
         return result
     if any(f is not None for f in fields):
@@ -298,14 +337,26 @@ def compliant_constructors(interface: dict) -> list[dict]:
                 config_started = True
             elif config_started:
                 problems.append(
-                    f"{p['name']}: dependency without a default appears after value configuration"
+                    tr(
+                        f"{p['name']}: dependency without a default appears after value "
+                        "configuration",
+                        f"{p['name']}: 没有默认值的依赖参数出现在带默认值的参数之后",
+                    )
                 )
         if problems:
-            rejected.append(f"line {ctor.get('line', '?')}: {'; '.join(problems)}")
+            line = ctor.get("line", "?")
+            rejected.append(
+                tr(f"line {line}: {'; '.join(problems)}", f"第 {line} 行：{'；'.join(problems)}")
+            )
         else:
             accepted.append(ctor)
     if not accepted:
-        raise ValueError(f"{interface['name']}: no compliant constructor; {' | '.join(rejected)}")
+        raise ValueError(
+            tr(
+                f"{interface['name']}: no compliant constructor; {' | '.join(rejected)}",
+                f"{interface['name']}: 没有符合约定的构造函数；{' | '.join(rejected)}",
+            )
+        )
     return accepted
 
 
@@ -509,11 +560,19 @@ def constructor_for(
             "(" + ", ".join(p["name"] for p in c["arguments"]) + ")" for c in supported
         )
         raise ValueError(
-            f"named arguments ({', '.join(names)}) do not match any constructor of "
-            f"{interface['name']}; expected one of: {expected}"
+            tr(
+                f"named arguments ({', '.join(names)}) do not match any constructor of "
+                f"{interface['name']}; expected one of: {expected}",
+                f"参数名（{', '.join(names)}）与 {interface['name']} 的任何构造函数都不匹配；"
+                f"可选：{expected}",
+            )
         )
     raise ValueError(
-        f"{interface['name']}: constructor is ambiguous for the supplied names and explicit types"
+        tr(
+            f"{interface['name']}: constructor is ambiguous for the supplied names and explicit "
+            "types",
+            f"{interface['name']}: 按给出的参数名和显式类型无法确定构造函数",
+        )
     )
 
 
@@ -612,8 +671,11 @@ class ValueChecker:
         if isinstance(value, list):
             if entry is not None:
                 raise ConfigError(
-                    f"{field}: positional values are not accepted for {entry.qualified}; write a mapping "
-                    "with its field names"
+                    tr(
+                        f"{field}: positional values are not accepted for {entry.qualified}; "
+                        "write a mapping with its field names",
+                        f"{field}: {entry.qualified} 不接受按位置写的值；请写成带字段名的映射",
+                    )
                 )
             items = (
                 default
@@ -633,8 +695,12 @@ class ValueChecker:
                     return self._mapping(tree, field, cpp_type, scope, default)
             if _is_positional_brace(text):
                 raise ConfigError(
-                    f"{field}: positional initializer {text.strip()} is not accepted for {entry.qualified}; write a "
-                    "mapping with its field names"
+                    tr(
+                        f"{field}: positional initializer {text.strip()} is not accepted for "
+                        f"{entry.qualified}; write a mapping with its field names",
+                        f"{field}: {entry.qualified} 不接受按位置写的初始化器 {text.strip()}；"
+                        "请写成带字段名的映射",
+                    )
                 )
         return text, False
 
@@ -654,14 +720,21 @@ class ValueChecker:
         if missing or extra:
             detail = []
             if missing:
-                detail.append("missing " + ", ".join(missing))
+                detail.append(tr("missing " + ", ".join(missing), "缺少 " + ", ".join(missing)))
             if extra:
-                detail.append("unknown " + ", ".join(extra))
+                detail.append(tr("unknown " + ", ".join(extra), "未知的 " + ", ".join(extra)))
             raise ConfigError(
-                f"{field}: {'; '.join(detail)} ({what}); expected: {', '.join(expected)}"
+                tr(
+                    f"{field}: {'; '.join(detail)} ({what}); expected: {', '.join(expected)}",
+                    f"{field}: {'；'.join(detail)}（{what}）；应为：{', '.join(expected)}",
+                )
             )
         raise ConfigError(
-            f"{field}: fields out of declaration order ({what}); expected: {', '.join(expected)}"
+            tr(
+                f"{field}: fields out of declaration order ({what}); expected: "
+                f"{', '.join(expected)}",
+                f"{field}: 字段顺序与声明顺序不同（{what}）；应为：{', '.join(expected)}",
+            )
         )
 
     def _mapping(
@@ -683,25 +756,48 @@ class ValueChecker:
         """
         for key in value:
             if not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", str(key)):
-                raise ConfigError(field + ": invalid field name " + str(key))
+                raise ConfigError(
+                    tr(
+                        field + ": invalid field name " + str(key),
+                        field + ": 无效的字段名 " + str(key),
+                    )
+                )
         keys = list(value)
         entry = self._locate(cpp_type, scope)
         spelled = _base_spelling(cpp_type) if cpp_type else None
         if entry is None:
             if isinstance(default, dict):
-                self._require(field, keys, list(default), "from the default initializer")
+                self._require(
+                    field,
+                    keys,
+                    list(default),
+                    tr("from the default initializer", "来自默认初始化器"),
+                )
                 return self._designated(value, field, {}, None, default), False
+            subject = cpp_type or tr("this value", "这个值")
             raise ConfigError(
-                f"{field}: cannot verify the fields of {cpp_type or 'this value'} in the loaded Module headers; "
-                "write this value as a complete C++ expression"
+                tr(
+                    f"{field}: cannot verify the fields of {subject} in the loaded Module "
+                    "headers; write this value as a complete C++ expression",
+                    f"{field}: 无法在已加载的模块头文件中核对 {subject} 的字段；"
+                    "请把这个值写成完整的 C++ 表达式",
+                )
             )
         problem = entry.mapping_problem()
         if problem:
-            raise ConfigError(f"{field}: {problem}; write this value as a complete C++ expression")
+            raise ConfigError(
+                tr(
+                    f"{field}: {problem}; write this value as a complete C++ expression",
+                    f"{field}: {problem}；请把这个值写成完整的 C++ 表达式",
+                )
+            )
         if entry.is_aggregate():
             fields = entry.fields()
             self._require(
-                field, keys, [n for n, _, _ in fields], "data members of " + entry.qualified
+                field,
+                keys,
+                [n for n, _, _ in fields],
+                tr("data members of " + entry.qualified, entry.qualified + " 的数据成员"),
             )
             types = {n: self.index.qualify_in(t, entry, spelled) for n, t, _ in fields}
             child_defaults = default if isinstance(default, dict) else None
@@ -709,10 +805,14 @@ class ValueChecker:
         ctors = [c for c in entry.constructors() if c]
         chosen = [c for c in ctors if [p["name"] for p in c] == keys]
         if len(chosen) != 1:
-            options = " | ".join(", ".join(p["name"] for p in c) for c in ctors) or "none"
+            options = " | ".join(", ".join(p["name"] for p in c) for c in ctors) or tr("none", "无")
             raise ConfigError(
-                f"{field}: {entry.qualified} has constructors; the mapping must name one constructor's "
-                f"parameters in order. Constructors: {options}"
+                tr(
+                    f"{field}: {entry.qualified} has constructors; the mapping must name one "
+                    f"constructor's parameters in order. Constructors: {options}",
+                    f"{field}: {entry.qualified} 有构造函数；映射必须按顺序写出其中一个构造函数的"
+                    f"参数。构造函数：{options}",
+                )
             )
         args = []
         for p in chosen[0]:

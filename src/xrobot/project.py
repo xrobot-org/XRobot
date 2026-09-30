@@ -20,6 +20,7 @@ import tempfile
 from pathlib import Path
 
 from xr_syntax.cpp import identifier_occurrences
+from xr_syntax.i18n import tr
 
 MODULES_YAML = Path("Modules/modules.yaml")
 SOURCE_SUFFIXES = (".c", ".cc", ".cpp", ".cxx")
@@ -47,8 +48,12 @@ def find_root(start: str | Path = ".") -> Path:
         if (folder / MODULES_YAML).is_file():
             return folder
     raise ProjectError(
-        f"No XRobot BSP found at or above {start} (no Modules/modules.yaml); run "
-        "`xrobot init` in the BSP root to create one"
+        tr(
+            f"No XRobot BSP found at or above {start} (no Modules/modules.yaml); run "
+            "`xrobot init` in the BSP root to create one",
+            f"在 {start} 及其上层目录中找不到 XRobot BSP（没有 Modules/modules.yaml）；"
+            "请在 BSP 根目录运行 `xrobot init` 创建",
+        )
     )
 
 
@@ -151,13 +156,21 @@ class Project:
                     callers.append(path)
         if not callers:
             raise ProjectError(
-                "No source under User/ calls XROBOT_MAIN(); the entry source must "
-                "call it once after registering its hardware with XR_REGISTER"
+                tr(
+                    "No source under User/ calls XROBOT_MAIN(); the entry source must "
+                    "call it once after registering its hardware with XR_REGISTER",
+                    "User/ 下没有源文件调用 XROBOT_MAIN()；入口源文件应在用 XR_REGISTER "
+                    "登记硬件后调用它一次",
+                )
             )
         if len(callers) > 1:
+            names = ", ".join(self.relative(p) for p in callers)
             raise ProjectError(
-                "Several sources under User/ call XROBOT_MAIN(): "
-                f"{', '.join(self.relative(p) for p in callers)}; a BSP has exactly one entry"
+                tr(
+                    f"Several sources under User/ call XROBOT_MAIN(): {names}; a BSP has exactly "
+                    "one entry",
+                    f"User/ 下有多个源文件调用 XROBOT_MAIN()：{names}；一个 BSP 只能有一个入口",
+                )
             )
         return callers[0]
 
@@ -235,8 +248,12 @@ class Project:
             return self.default_config
         if not chosen.is_file():
             raise ProjectError(
-                f"{self.relative(self.header)} was generated for {self.relative(chosen)}, "
-                "which does not exist; select a configuration with `xrobot gen -c <config>`"
+                tr(
+                    f"{self.relative(self.header)} was generated for {self.relative(chosen)}, "
+                    "which does not exist; select a configuration with `xrobot gen -c <config>`",
+                    f"{self.relative(self.header)} 是为 {self.relative(chosen)} 生成的，但这份配置"
+                    "已不存在；请用 `xrobot gen -c <配置>` 选择一份配置",
+                )
             )
         return chosen
 

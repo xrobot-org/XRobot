@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 
 import yaml
+from xr_syntax.i18n import tr
 
 from xrobot import __version__
 from xrobot.constructor_model import enrich_interface
@@ -78,34 +79,54 @@ def manifest_from_text(text: str, path: str | Path | None = None) -> ModuleManif
     """
     matches = list(MANIFEST_PATTERN.finditer(text))
     if not matches:
-        raise ValueError(f"{path}: no MODULE MANIFEST V{MANIFEST_VERSION} block")
+        raise ValueError(
+            tr(
+                f"{path}: no MODULE MANIFEST V{MANIFEST_VERSION} block",
+                f"{path}: 没有 MODULE MANIFEST V{MANIFEST_VERSION} 块",
+            )
+        )
     if len(matches) > 1:
-        raise ValueError(f"{path}: multiple package manifests")
+        raise ValueError(tr(f"{path}: multiple package manifests", f"{path}: 有多个包 manifest"))
     version = int(matches[0].group(1) or 1)
     if version > MANIFEST_VERSION:
         raise ValueError(
-            f"{path}: MODULE MANIFEST V{version} needs a newer xrobot; "
-            f"xrobot {__version__} reads manifests up to V{MANIFEST_VERSION}"
+            tr(
+                f"{path}: MODULE MANIFEST V{version} needs a newer xrobot; "
+                f"xrobot {__version__} reads manifests up to V{MANIFEST_VERSION}",
+                f"{path}: MODULE MANIFEST V{version} 需要更新版本的 xrobot；"
+                f"xrobot {__version__} 最多读取 V{MANIFEST_VERSION}",
+            )
         )
     if version < MANIFEST_VERSION:
         raise ValueError(
-            f"{path}: this MODULE MANIFEST predates XRobot 1.0; update the Module to "
-            f"MODULE MANIFEST V{MANIFEST_VERSION} with {', '.join(MANIFEST_KEYS)} (the C++ "
-            "constructor is the interface)"
+            tr(
+                f"{path}: this MODULE MANIFEST predates XRobot 1.0; update the Module to "
+                f"MODULE MANIFEST V{MANIFEST_VERSION} with {', '.join(MANIFEST_KEYS)} (the C++ "
+                "constructor is the interface)",
+                f"{path}: 这个 MODULE MANIFEST 早于 XRobot 1.0；请把模块更新为只含 "
+                f"{', '.join(MANIFEST_KEYS)} 的 MODULE MANIFEST V{MANIFEST_VERSION}"
+                "（C++ 构造函数就是接口）",
+            )
         )
     data = yaml.safe_load(matches[0].group(2))
     if data is None:
         data = {}
     if not isinstance(data, dict):
-        raise ValueError(f"{path}: package manifest must be a mapping")
+        raise ValueError(
+            tr(f"{path}: package manifest must be a mapping", f"{path}: 包 manifest 必须是映射")
+        )
     unknown = [k for k in data if k not in MANIFEST_KEYS]
     if unknown:
         raise ValueError(
-            f"{path}: unsupported manifest key(s) {', '.join(map(str, unknown))}; "
-            f"MODULE MANIFEST V{MANIFEST_VERSION} holds only {', '.join(MANIFEST_KEYS)}"
+            tr(
+                f"{path}: unsupported manifest key(s) {', '.join(map(str, unknown))}; "
+                f"MODULE MANIFEST V{MANIFEST_VERSION} holds only {', '.join(MANIFEST_KEYS)}",
+                f"{path}: 不支持的 manifest 键 {', '.join(map(str, unknown))}；"
+                f"MODULE MANIFEST V{MANIFEST_VERSION} 只包含 {', '.join(MANIFEST_KEYS)}",
+            )
         )
     if not isinstance(data.get("depends", []), list):
-        raise ValueError(f"{path}: depends must be a list")
+        raise ValueError(tr(f"{path}: depends must be a list", f"{path}: depends 必须是列表"))
     return ModuleManifest(data, path)
 
 
@@ -182,7 +203,7 @@ def _locked_head(folder: Path) -> str:
     """
     head = head_commit(folder)
     if head is None:
-        raise ValueError(f"cannot read the commit of {folder}")
+        raise ValueError(tr(f"cannot read the commit of {folder}", f"无法读取 {folder} 的 commit"))
     return head
 
 
@@ -214,7 +235,9 @@ def locked_modules(directory: Path, lock_path: Path) -> list[dict]:
     for identity, record in (lock.get("modules") or {}).items():
         folder = (directory / identity).resolve()
         if directory.resolve() not in folder.parents:
-            raise ValueError(f"Module path leaves directory: {identity}")
+            raise ValueError(
+                tr(f"Module path leaves directory: {identity}", f"模块路径超出了目录：{identity}")
+            )
         commit = (record or {}).get("commit")
         state = {
             "id": identity,
@@ -225,14 +248,22 @@ def locked_modules(directory: Path, lock_path: Path) -> list[dict]:
             "reason": None,
         }
         if not re.fullmatch(r"[0-9a-f]{40}", str(commit or "")):
-            state.update(status="broken", reason=f"xrobot.lock has no commit for {identity}")
+            state.update(
+                status="broken",
+                reason=tr(
+                    f"xrobot.lock has no commit for {identity}",
+                    f"xrobot.lock 中没有 {identity} 的 commit",
+                ),
+            )
         elif not (folder / (folder.name + ".hpp")).is_file():
             state["status"] = "missing"
         elif not (folder / ".git").exists():
             state.update(
                 status="broken",
-                reason=f"Modules/{identity} is not a Git checkout; delete it and run "
-                "`xrobot setup`",
+                reason=tr(
+                    f"Modules/{identity} is not a Git checkout; delete it and run `xrobot setup`",
+                    f"Modules/{identity} 不是 Git 检出；请删除它并运行 `xrobot setup`",
+                ),
             )
         else:
             try:
@@ -253,13 +284,20 @@ def lock_error(state: dict) -> str:
     if state["status"] == "broken":
         return state["reason"]
     if state["status"] == "missing":
-        return f"{state['id']} from xrobot.lock is not checked out; run `xrobot setup`"
-    return (
+        return tr(
+            f"{state['id']} from xrobot.lock is not checked out; run `xrobot setup`",
+            f"xrobot.lock 中的 {state['id']} 没有检出；请运行 `xrobot setup`",
+        )
+    return tr(
         f"{state['id']} is checked out at {state['head'][:12]} but xrobot.lock pins "
         f"{state['commit'][:12]}. While developing a module, keep your changes uncommitted; "
         "when they are ready, push them to a branch of the module and run "
         f"`xrobot setup --update {state['id']}`. To return to the locked sources run "
-        "`xrobot setup`."
+        "`xrobot setup`.",
+        f"{state['id']} 检出在 {state['head'][:12]}，但 xrobot.lock 固定的是 "
+        f"{state['commit'][:12]}。开发模块期间请保持修改未提交；准备好后推送到模块的某个分支，"
+        f"再运行 `xrobot setup --update {state['id']}`。要回到锁定的源码，请运行 "
+        "`xrobot setup`。",
     )
 
 
@@ -281,7 +319,10 @@ def discover_modules(directory: Path, lock_path: str | Path) -> dict[str, dict]:
     lock_path = Path(lock_path)
     if not lock_path.is_file():
         raise ValueError(
-            f"{lock_path.name} does not exist; run `xrobot setup` to resolve the Modules"
+            tr(
+                f"{lock_path.name} does not exist; run `xrobot setup` to resolve the Modules",
+                f"{lock_path.name} 不存在；请运行 `xrobot setup` 解析模块",
+            )
         )
     result = {}
     problems = []
@@ -319,11 +360,18 @@ def select_module(modules: dict[str, dict], requested: str) -> dict:
             for v in modules.values()
         }
         close = difflib.get_close_matches(requested.casefold(), list(names), n=3)
-        hint = f"; did you mean {', '.join(names[c] for c in close)}?" if close else ""
-        raise ValueError(f"Module not found: {requested}{hint}")
-    if len(candidates) != 1:
+        suggestions = ", ".join(names[c] for c in close)
+        hint = tr(f"; did you mean {suggestions}?", f"；是否要找 {suggestions}？") if close else ""
         raise ValueError(
-            f"Ambiguous Module {requested}; specify {', '.join(v['id'] for v in candidates)}"
+            tr(f"Module not found: {requested}{hint}", f"找不到模块：{requested}{hint}")
+        )
+    if len(candidates) != 1:
+        ids = ", ".join(v["id"] for v in candidates)
+        raise ValueError(
+            tr(
+                f"Ambiguous Module {requested}; specify {ids}",
+                f"模块 {requested} 有歧义；请指定 {ids}",
+            )
         )
     return candidates[0]
 

@@ -12,6 +12,8 @@ import os
 import re
 from pathlib import Path
 
+from xr_syntax.i18n import tr
+
 from xrobot.config import IDENTIFIER, ConfigError, identifier_problem, load_config, value_text
 from xrobot.constructor_model import (
     ValueChecker,
@@ -162,7 +164,11 @@ def read_registrations(path: str | Path) -> list[dict]:
     for number, line in enumerate(text.splitlines(), 1):
         if line.lstrip().startswith("#") and re.search(r"\bXR_REGISTER\b", line):
             raise ConfigError(
-                f"{label}:{number}: XR_REGISTER inside a preprocessor directive is not supported"
+                tr(
+                    f"{label}:{number}: XR_REGISTER inside a preprocessor directive is not "
+                    "supported",
+                    f"{label}:{number}: 不支持在预处理指令中写 XR_REGISTER",
+                )
             )
     document = parse_document(text, str(path))
     invocations = document.invocation_views("XR_REGISTER", template_angles=True)
@@ -172,7 +178,9 @@ def read_registrations(path: str | Path) -> list[dict]:
         if o.text == "XR_REGISTER" and o.following == "("
     ]
     if len(invocations) != len(candidates):
-        raise ConfigError(f"{label}: malformed XR_REGISTER invocation")
+        raise ConfigError(
+            tr(f"{label}: malformed XR_REGISTER invocation", f"{label}: XR_REGISTER 的写法不正确")
+        )
     tokens = document.code_tokens()
     byte_starts = [token.span.start for token in tokens]
     records, errors, names = [], [], set()
@@ -180,28 +188,51 @@ def read_registrations(path: str | Path) -> list[dict]:
         where = f"{label}:{invocation.line}"
         if conditional_depth(document, 0, invocation.span.start):
             errors.append(
-                f"{where}: XR_REGISTER inside #if/#ifdef/#ifndef is not supported; the generator "
-                "cannot evaluate build options"
+                tr(
+                    f"{where}: XR_REGISTER inside #if/#ifdef/#ifndef is not supported; the "
+                    "generator cannot evaluate build options",
+                    f"{where}: 不支持在 #if/#ifdef/#ifndef 中写 XR_REGISTER；生成器无法判断编译选项",
+                )
             )
             continue
         parts = [p.strip() for p in invocation.arguments]
         if len(parts) != 2:
             errors.append(
-                f"{where}: XR_REGISTER registers one type per name: XR_REGISTER(name, Type). To "
-                "expose the object as another type, declare a reference (e.g. "
-                "`LibXR::CAN& can1 = fdcan1;`) and register that name separately"
+                tr(
+                    f"{where}: XR_REGISTER registers one type per name: XR_REGISTER(name, Type). "
+                    "To expose the object as another type, declare a reference (e.g. "
+                    "`LibXR::CAN& can1 = fdcan1;`) and register that name separately",
+                    f"{where}: 一个 XR_REGISTER 只登记一个名字和一个类型：XR_REGISTER(name, Type)。"
+                    "要以另一种类型提供这个对象，请声明一个引用（例如 "
+                    "`LibXR::CAN& can1 = fdcan1;`）并单独登记它",
+                )
             )
             continue
         name, cpp_type = parts
         problem = identifier_problem(name)
         if problem:
-            errors.append(f"{where}: registration name {name} {problem}")
+            errors.append(
+                tr(
+                    f"{where}: registration name {name} {problem}",
+                    f"{where}: 登记名 {name} {problem}",
+                )
+            )
             continue
         if name in names:
-            errors.append(f"{where}: duplicate XR_REGISTER name {name}")
+            errors.append(
+                tr(
+                    f"{where}: duplicate XR_REGISTER name {name}",
+                    f"{where}: 重复的 XR_REGISTER 名字 {name}",
+                )
+            )
             continue
         if cpp_type.endswith("&"):
-            errors.append(f"{where}: register object types, not reference types: {name}")
+            errors.append(
+                tr(
+                    f"{where}: register object types, not reference types: {name}",
+                    f"{where}: 请登记对象类型，不要登记引用类型：{name}",
+                )
+            )
             continue
         names.add(name)
         stop = bisect.bisect_left(byte_starts, invocation.span.start)
@@ -282,7 +313,11 @@ class Generator:
         for record in registrations:
             if self.is_class_name(record["name"]):
                 fail(
-                    f"XR_REGISTER name {record['name']} is also a Module class name; rename the object"
+                    tr(
+                        f"XR_REGISTER name {record['name']} is also a Module class name; rename the "
+                        "object",
+                        f"XR_REGISTER 名字 {record['name']} 同时也是模块的类名；请给对象改名",
+                    )
                 )
             known[record["name"]] = record["type"]
         entries_config = config.get("modules", [])
@@ -359,21 +394,37 @@ class Generator:
         """
         identity = entry["id"]
         if identity in known:
-            raise ValueError(f"instance id {identity} is also an XR_REGISTER name")
+            raise ValueError(
+                tr(
+                    f"instance id {identity} is also an XR_REGISTER name",
+                    f"实例 id {identity} 同时也是 XR_REGISTER 名字",
+                )
+            )
         if self.is_class_name(identity):
             raise ValueError(
-                f"instance id {identity} is also a class name in the loaded Modules; use a "
-                f"lower-case id such as {identity.lower()}"
+                tr(
+                    f"instance id {identity} is also a class name in the loaded Modules; use a "
+                    f"lower-case id such as {identity.lower()}",
+                    f"实例 id {identity} 同时也是已加载模块中的类名；请用小写的 id，例如 "
+                    f"{identity.lower()}",
+                )
             )
         module = select_module(self.modules, entry["module"])
         if not module["manifest"].standalone:
             raise ValueError(
-                f"{module['id']} is a library (standalone: false) and cannot be instantiated"
+                tr(
+                    f"{module['id']} is a library (standalone: false) and cannot be instantiated",
+                    f"{module['id']} 是库（standalone: false），不能创建实例",
+                )
             )
         if module["name"] in selected and selected[module["name"]]["id"] != module["id"]:
+            first = selected[module["name"]]["id"]
             raise ValueError(
-                f"{selected[module['name']]['id']} and {module['id']} both define the global "
-                f"class {module['name']}; use only one of them"
+                tr(
+                    f"{first} and {module['id']} both define the global class {module['name']}; "
+                    "use only one of them",
+                    f"{first} 和 {module['id']} 都定义了全局类 {module['name']}；只能使用其中一个",
+                )
             )
         selected[module["name"]] = module
         interface = module_interface(module)
@@ -417,8 +468,11 @@ class Generator:
         monitor = self.index.provides_monitor(located) if located is not None else None
         if monitor is None:
             problems.append(
-                f"{identity}: cannot tell whether a public base class provides OnMonitor; its "
-                "base is not defined in the loaded Module headers"
+                tr(
+                    f"{identity}: cannot tell whether a public base class provides OnMonitor; its "
+                    "base is not defined in the loaded Module headers",
+                    f"{identity}: 无法判断公有基类是否提供 OnMonitor；它的基类不在已加载的模块头文件中",
+                )
             )
         if problems:
             raise ValueError("\n".join(problems))
@@ -485,15 +539,29 @@ class Generator:
             ):
                 if reference_name in later:
                     raise ValueError(
-                        f"{field}: {reference_name} is constructed at or after {identity}; instances are constructed in "
-                        "list order"
+                        tr(
+                            f"{field}: {reference_name} is constructed at or after {identity}; "
+                            "instances are constructed in list order",
+                            f"{field}: {reference_name} 在 {identity} 之时或之后才构造；"
+                            "实例按列表顺序构造",
+                        )
                     )
                 if reference_name in earlier and earlier[reference_name] is None:
-                    raise ValueError(f"{field}: {reference_name} has errors of its own")
-                if is_dependency(p) and reference_name not in visible and name != "nullptr":
                     raise ValueError(
-                        f"{field}: {reference_name} is neither an XR_REGISTER name nor an earlier instance id; "
-                        f"candidates of type {target}: {', '.join(self._candidates(target, visible)) or 'none'}"
+                        tr(
+                            f"{field}: {reference_name} has errors of its own",
+                            f"{field}: {reference_name} 本身有错误",
+                        )
+                    )
+                if is_dependency(p) and reference_name not in visible and name != "nullptr":
+                    names = ", ".join(self._candidates(target, visible)) or tr("none", "无")
+                    raise ValueError(
+                        tr(
+                            f"{field}: {reference_name} is neither an XR_REGISTER name nor an "
+                            f"earlier instance id; candidates of type {target}: {names}",
+                            f"{field}: {reference_name} 既不是 XR_REGISTER 名字，也不是前面实例的 "
+                            f"id；类型为 {target} 的候选：{names}",
+                        )
                     )
                 if reference_name in visible:
                     source = visible[reference_name]
@@ -507,7 +575,12 @@ class Generator:
                         source += "*"
                     if self._certainly_unrelated(source, target):
                         raise ValueError(
-                            f"{field}: {reference_name} is a {visible[reference_name]}, which does not convert to {target}"
+                            tr(
+                                f"{field}: {reference_name} is a {visible[reference_name]}, which "
+                                f"does not convert to {target}",
+                                f"{field}: {reference_name} 的类型是 {visible[reference_name]}，"
+                                f"不能转换为 {target}",
+                            )
                         )
                     if type_shape(source)[0] == type_shape(target)[0] and len(
                         type_shape(source)[2]
@@ -807,7 +880,12 @@ def generate(
     """
     config_path = Path(config_path) if config_path else project.selected_config()
     if not config_path.is_file():
-        raise ConfigError(f"{project.relative(config_path)} does not exist")
+        raise ConfigError(
+            tr(
+                f"{project.relative(config_path)} does not exist",
+                f"{project.relative(config_path)} 不存在",
+            )
+        )
     modules = modules if modules is not None else load_modules(project)
     registrations = read_registrations(project.entry())
     code = generate_code(project, config_path, modules, registrations, index)
