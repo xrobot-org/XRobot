@@ -1,8 +1,11 @@
-"""Load and validate XRobot application configurations.
+"""读取和检查 XRobot 应用配置。
+Load and validate XRobot application configurations.
 
-A configuration is plain YAML whose scalars are C++ text. Loading keeps the
-source line of every node so generation errors and the generated header's
-``#line`` directives can point back into the YAML.
+配置是普通 YAML。不加引号或用单引号的值是 C++ 代码，双引号的值是 C++ 字符串；读取时记下每个
+节点的行号，生成时的报错和头文件中的 #line 指令都能指回 YAML。
+A configuration is plain YAML. A value without quotes or in single quotes is C++ code, and a
+double-quoted value is a C++ string. Loading keeps the line of every node, so generation
+errors and the #line directives of the generated header point back into the YAML.
 """
 
 import re
@@ -146,28 +149,106 @@ RESERVED_MACROS = frozenset(
 
 RESERVED_NAMESPACES = frozenset(("std", "LibXR", "xrobot_generated"))
 
+# 只含这些转义的 C++ 字符串字面量才能写成 YAML 双引号值，并能原样读回。
+# A C++ string literal with only these escapes can be written as a YAML double-quoted
+# value and read back unchanged.
+_ESCAPES = {"\\": "\\\\", '"': '\\"', "\n": "\\n", "\t": "\\t", "\r": "\\r"}
+_UNESCAPES = {"\\": "\\", '"': '"', "n": "\n", "t": "\t", "r": "\r"}
+_SIMPLE_LITERAL = re.compile(r'"((?:[^"\\\x00-\x1f\x7f]|\\[\\"ntr])*)"')
+
 
 class ConfigError(ValueError):
-    """A validation error that already carries its ``<config>: <path>`` prefix."""
+    """带有 <配置>: <位置> 前缀的配置错误。
+    A configuration error that already carries its <config>: <path> prefix.
+    """
 
 
 class Located(dict):
-    """A configuration mapping that also records the YAML line of each key."""
+    """记录每个键所在 YAML 行号的配置映射。
+    A configuration mapping that also records the YAML line of each key.
+    """
 
-    def __init__(self, line):
+    def __init__(self, line: int) -> None:
         super().__init__()
         self.line = line
-        self.key_lines = {}
+        self.key_lines: dict[str, int] = {}
 
 
 class LocatedList(list):
-    def __init__(self, line):
+    """记录每一项所在 YAML 行号的配置列表。
+    A configuration list that also records the YAML line of each item.
+    """
+
+    def __init__(self, line: int) -> None:
         super().__init__()
         self.line = line
-        self.item_lines = []
+        self.item_lines: list[int] = []
 
 
-def _reject_anchors_and_tags(text, source):
+def cpp_string_literal(content: str) -> str:
+    """把一段文字写成 C++ 字符串字面量。
+    Write a piece of text as a C++ string literal.
+    """
+    parts = []
+    for char in content:
+        if char in _ESCAPES:
+            parts.append(_ESCAPES[char])
+        elif ord(char) < 0x20 or ord(char) == 0x7F:
+            parts.append(f"\\{ord(char):03o}")
+        else:
+            parts.append(char)
+    return '"' + "".join(parts) + '"'
+
+
+def string_literal_content(text: str) -> str | None:
+    """text 恰好是一个只含简单转义的 C++ 字符串字面量时，返回它表示的文字，否则为 None。
+    The text a C++ string literal stands for when text is exactly one such literal with
+    only simple escapes; None otherwise.
+    """
+    match = _SIMPLE_LITERAL.fullmatch(text)
+    if match is None:
+        return None
+    return re.sub(r"\\(.)", lambda m: _UNESCAPES[m.group(1)], match.group(1))
+
+
+def _reads_back_plain(text: str, flow: bool) -> bool:
+    """text 不加引号写在 YAML 中能否原样读回。
+    Whether text written without quotes reads back unchanged from YAML.
+    """
+    try:
+        node = yaml.compose("{k: " + text + "}" if flow else "k: " + text, Loader=yaml.BaseLoader)
+    except yaml.YAMLError:
+        return False
+    child = node.value[0][1]
+    return isinstance(child, yaml.ScalarNode) and child.style is None and child.value == text
+
+
+def scalar_style(text: str, flow: bool = False) -> str | None:
+    """规范写法中一个值的引号：'"' 为字符串，None 为不加引号的代码，"'" 为需要引号的代码。
+    The quoting of a value in the canonical layout: '"' for a string, None for code
+    without quotes, "'" for code that YAML only accepts in quotes.
+
+    Args:
+        text: 值的 C++ 文本。
+            The C++ text of the value.
+        flow: 值位于 YAML 流式集合（{...} 或 [...]）中。
+            The value sits in a YAML flow collection ({...} or [...]).
+    """
+    if string_literal_content(text) is not None:
+        return '"'
+    if text not in NULL_SCALARS and "\n" not in text and _reads_back_plain(text, flow):
+        return None
+    return "'"
+
+
+def _reject_anchors_and_tags(text: str, source: str) -> None:
+    """拒绝 YAML 锚点、别名和标签。
+    Reject YAML anchors, aliases and tags.
+
+    Raises:
+        ConfigError: 使用了其中之一；报错带行号。
+            One is used; the message names the line.
+    """
     for event in yaml.parse(text, Loader=yaml.BaseLoader):
         line = event.start_mark.line + 1
         if isinstance(event, yaml.AliasEvent) or getattr(event, "anchor", None):
@@ -182,9 +263,19 @@ def _reject_anchors_and_tags(text, source):
             )
 
 
-def _construct(node, source):
+def _construct(node: yaml.Node, source: str) -> "Located | LocatedList | str | None":
+    """把 YAML 节点转成配置值：双引号的值成为 C++ 字符串字面量，其余标量原样作为 C++ 代码。
+    Turn a YAML node into a configuration value: a double-quoted value becomes a C++
+    string literal, any other scalar is C++ code as written.
+
+    Raises:
+        ConfigError: 键不是普通名字，或有重复的键。
+            A key is not a plain name, or a key is repeated.
+    """
     line = node.start_mark.line + 1
     if isinstance(node, yaml.ScalarNode):
+        if node.style == '"':
+            return cpp_string_literal(node.value)
         if node.style is None and node.value in NULL_SCALARS:
             return None
         return node.value
@@ -207,8 +298,14 @@ def _construct(node, source):
     return result
 
 
-def parse_yaml(text, source):
-    """Parse configuration YAML into Located/LocatedList/str/None values."""
+def parse_yaml(text: str, source: str) -> "Located | LocatedList | str | None":
+    """把配置 YAML 解析为带行号的值。
+    Parse configuration YAML into values that carry their line numbers.
+
+    Raises:
+        ConfigError: YAML 语法错误，或使用了不允许的写法。
+            A YAML syntax error, or a construct that is not allowed.
+    """
     try:
         _reject_anchors_and_tags(text, source)
         node = yaml.compose(text, Loader=yaml.BaseLoader)
@@ -225,8 +322,15 @@ def parse_yaml(text, source):
     return _construct(node, source)
 
 
-def value_text(value, field):
-    """Return a scalar's C++ text after the checks shared by every value."""
+def value_text(value: object, field: str) -> str:
+    """一个标量值的 C++ 文本，检查所有值共有的规则。
+    The C++ text of a scalar value, after the checks every value shares.
+
+    Raises:
+        ConfigError: 值未填写、为空、以 @ 开头，或含有不允许的 C++ 写法。
+            The value is not filled in, empty, starts with @, or holds C++ that is not
+            allowed.
+    """
     if value is None:
         raise ConfigError(
             f'{field} is not filled in (null, ~ and empty values mean "not filled in"; '
@@ -235,12 +339,22 @@ def value_text(value, field):
     if not isinstance(value, str) or not value.strip():
         raise ConfigError(field + " requires C++ expression text")
     if value.lstrip().startswith("@"):
-        raise ConfigError(field + ": use ordinary C++ expressions, not @ syntax")
+        raise ConfigError(
+            f"{field}: the @ prefix of XRobot before 1.0 is gone; every value without quotes "
+            "or in single quotes is C++ code, and a double-quoted value is a C++ string"
+        )
     check_cpp_text(value, field)
     return value
 
 
-def check_cpp_text(text, field):
+def check_cpp_text(text: str, field: str) -> None:
+    """检查 C++ 文本：值里不能有 C++ 注释、前导零的整数和非 ASCII 数字。
+    Check C++ text: no C++ comments, integers with a leading zero or non-ASCII digits.
+
+    Raises:
+        ConfigError: 违反其中一条。
+            One of these is found.
+    """
     tokens = code_tokens(text)
     code = text
     for token in reversed([t for t in tokens if t.kind == "literal"]):
@@ -259,8 +373,10 @@ def check_cpp_text(text, field):
         raise ConfigError(f"{field}: non-ASCII digits are not C++ numbers")
 
 
-def identifier_problem(name):
-    """Why ``name`` cannot be a generated C++ object name, or None."""
+def identifier_problem(name: object) -> str | None:
+    """name 不能作为生成的 C++ 对象名的原因；可以时为 None。
+    Why name cannot be a generated C++ object name, or None when it can.
+    """
     if not isinstance(name, str) or not re.fullmatch(IDENTIFIER, name):
         return "is not a C++ identifier"
     if name in CPP_KEYWORDS:
@@ -276,7 +392,10 @@ def identifier_problem(name):
     return None
 
 
-def _check_value(value, field, errors):
+def _check_value(value: object, field: str, errors: list[str]) -> None:
+    """检查一个值及其子值，把错误追加到 errors。
+    Check a value and its children, appending errors to errors.
+    """
     if value is None:
         return  # A saved, unfilled configuration is valid; generation is not.
     if isinstance(value, dict):
@@ -295,21 +414,47 @@ def _check_value(value, field, errors):
             errors.append(str(error))
 
 
-def validate_config(config, source="config"):
-    """Validate the structure of a loaded configuration; collect every error."""
+def _pre_1_0_format(config: dict) -> bool:
+    """配置是否为 XRobot 1.0 以前的格式（global_settings、name/constructor_args）。
+    Whether the configuration uses the format of XRobot before 1.0 (global_settings,
+    name/constructor_args).
+    """
+    if "global_settings" in config:
+        return True
+    entries = config.get("modules")
+    return isinstance(entries, list) and any(
+        isinstance(entry, dict) and ("name" in entry or "constructor_args" in entry)
+        for entry in entries
+    )
+
+
+def validate_config(config: object, source: str = "config") -> None:
+    """检查配置的结构，一次列出全部错误。
+    Check the structure of a configuration and report every error at once.
+
+    Raises:
+        ConfigError: 有任何错误；每行一条，带配置名前缀。
+            Any error; one per line, prefixed with the configuration.
+    """
     errors = []
     if not isinstance(config, dict):
         raise ConfigError(f"{source}: expected an application configuration mapping")
+    if _pre_1_0_format(config):
+        raise ConfigError(
+            f"{source}: this configuration uses the format of XRobot before 1.0 "
+            "(global_settings, name/constructor_args); XRobot 1.0 lists each instance as "
+            "module, id and args; recreate the instances with `xrobot instance add`"
+        )
     extra = [key for key in config if key not in TOP_LEVEL]
     if extra:
         errors.append(
             f"unknown top-level key(s) {', '.join(extra)}; allowed: {', '.join(TOP_LEVEL)}"
         )
     namespace = config.get("constexpr_namespace", "ProjectConstexpr")
-    if not isinstance(namespace, str) or not re.fullmatch(
-        IDENTIFIER + "(?:::" + IDENTIFIER + ")*", namespace
-    ):
+    if not isinstance(namespace, str):
         errors.append("constexpr_namespace must be a C++ namespace name")
+    elif not re.fullmatch(IDENTIFIER + "(?:::" + IDENTIFIER + ")*", namespace):
+        errors.append(f"constexpr_namespace: {namespace} is not a C++ namespace name")
     else:
         for part in namespace.split("::"):
             problem = identifier_problem(part)
@@ -320,11 +465,14 @@ def validate_config(config, source="config"):
         errors.append("constexpr_includes must be a list of header names")
     else:
         for i, header in enumerate(includes):
-            if not isinstance(header, str) or not re.fullmatch(
-                r'<[^<>"\s]+>|[^<>"\s]+', header.strip()
-            ):
+            if not isinstance(header, str):
                 errors.append(
-                    f"constexpr_includes[{i}]: write a header name such as Foo.hpp or <vector>"
+                    f"constexpr_includes[{i}] must be a header name such as Foo.hpp or <vector>"
+                )
+            elif not re.fullmatch(r'<[^<>"\s]+>|[^<>"\s]+', header.strip()):
+                errors.append(
+                    f"constexpr_includes[{i}]: {header} is not a header name such as Foo.hpp "
+                    "or <vector>"
                 )
     constants = config.get("constexprs", {})
     if not isinstance(constants, dict):
@@ -385,24 +533,43 @@ def validate_config(config, source="config"):
         for j, value in enumerate(templates):
             if value is not None:
                 _check_value(value, f"{where}.template_args[{j}]", errors)
-    settings = config.get("settings", {})
-    if not isinstance(settings, dict) or [key for key in settings if key != "monitor_sleep_ms"]:
-        errors.append("settings only accepts monitor_sleep_ms")
-    else:
-        sleep = settings.get("monitor_sleep_ms", "1000")
-        if (
-            not isinstance(sleep, str)
-            or not re.fullmatch(r"0|[1-9][0-9]*", sleep)
-            or int(sleep) > 0xFFFFFFFF
-        ):
-            errors.append(
-                "settings.monitor_sleep_ms must be an unsigned 32-bit decimal millisecond count"
-            )
+    _check_settings(config.get("settings", {}), errors)
     if errors:
         raise ConfigError("\n".join(f"{source}: {error}" for error in errors))
 
 
-def load_config(path, source=None):
+def _check_settings(settings: object, errors: list[str]) -> None:
+    """检查 settings：只有 monitor_sleep_ms，且是 32 位无符号十进制数。
+    Check settings: only monitor_sleep_ms, an unsigned 32-bit decimal number.
+    """
+    if not isinstance(settings, dict):
+        errors.append("settings must be a mapping")
+        return
+    unknown = [key for key in settings if key != "monitor_sleep_ms"]
+    if unknown:
+        errors.append(
+            f"settings: unknown key(s) {', '.join(unknown)}; the only setting is monitor_sleep_ms"
+        )
+    sleep = settings.get("monitor_sleep_ms", "1000")
+    if not isinstance(sleep, str):
+        errors.append(
+            "settings.monitor_sleep_ms must be an unsigned 32-bit decimal millisecond count"
+        )
+    elif not re.fullmatch(r"0|[1-9][0-9]*", sleep) or int(sleep) > 0xFFFFFFFF:
+        errors.append(
+            f"settings.monitor_sleep_ms: {sleep} is not an unsigned 32-bit decimal "
+            "millisecond count"
+        )
+
+
+def load_config(path: str | Path, source: str | None = None) -> "Located":
+    """读取并检查一份应用配置。
+    Read and check an application configuration.
+
+    Raises:
+        ConfigError: 文件不是 UTF-8、YAML 有误，或结构不对。
+            The file is not UTF-8, the YAML is invalid, or the structure is wrong.
+    """
     path = Path(path)
     source = source or path.as_posix()
     try:

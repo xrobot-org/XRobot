@@ -179,10 +179,10 @@ class LineDirectives(GenerationTestCase):
     def test_directives_map_instances_and_arguments_to_yaml_and_back_to_the_header(self):
         config = self.config(
             "# robot\nmodules:\n  - module: Led\n    id: led\n    args:\n      - gpio: pin\n"
-            '      - param:\n          cycle: 100\n          inverted: "true"\n'
-            '      - gain: "2.5F"\n  - module: Probe\n    id: probe\n    args:\n'
-            '      - port: sub\n      - optional: "&port"\n      - count: 2\n'
-            "      - name: '\"p\"'\n"
+            "      - param:\n          cycle: 100\n          inverted: true\n"
+            "      - gain: 2.5F\n  - module: Probe\n    id: probe\n    args:\n"
+            "      - port: sub\n      - optional: '&port'\n      - count: 2\n"
+            '      - name: "p"\n'
         )
         code = generate(self.project, config)
         header = (self.root / "User/xrobot_main.hpp").resolve().as_posix()
@@ -408,7 +408,7 @@ class Diagnostics(GenerationTestCase):
 
     def test_structural_errors_name_the_config_file(self):
         with self.assertRaisesRegex(ConfigError, "User/xrobot.yaml: modules\\[0\\]: unknown key"):
-            self.generate({"modules": [{"module": "Led", "id": "led", "name": "x"}]})
+            self.generate({"modules": [{"module": "Led", "id": "led", "extra": "x"}]})
 
     def test_a_failed_generation_leaves_the_previous_header(self):
         self.code(led())

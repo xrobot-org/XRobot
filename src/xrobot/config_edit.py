@@ -4,7 +4,10 @@ Instances are edited as text blocks: an instance owns its ``- module:`` item
 and the comment lines directly above it, so adding, removing or renaming an
 instance moves its comments with it. Values inside one instance are edited
 through a comment-preserving YAML round trip of that instance only. Every
-write uses the canonical layout that ``xrobot format`` enforces.
+write uses the canonical layout that ``xrobot format`` enforces: C++ code
+without quotes where YAML allows it and in single quotes otherwise, C++
+strings in double quotes, and collections in the block or flow style they
+were written in.
 """
 
 import hashlib
@@ -16,8 +19,24 @@ from pathlib import Path
 import yaml
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
+from ruamel.yaml.compat import ordereddict
+from ruamel.yaml.nodes import ScalarNode
+from ruamel.yaml.resolver import VersionedResolver
+from ruamel.yaml.scalarstring import (
+    DoubleQuotedScalarString,
+    PlainScalarString,
+    SingleQuotedScalarString,
+)
 
-from xrobot.config import ConfigError, identifier_problem, parse_yaml
+from xrobot.config import (
+    NULL_SCALARS,
+    ConfigError,
+    cpp_string_literal,
+    identifier_problem,
+    parse_yaml,
+    scalar_style,
+    string_literal_content,
+)
 from xrobot.constructor_model import (
     compliant_constructors,
     initializer_tree,
@@ -30,26 +49,106 @@ from xrobot.module_parser import select_module, source_interface
 from xrobot.source_syntax import code_tokens
 
 
-def _yaml():
+class _TextResolver(VersionedResolver):
+    """读取时不推断类型：null、~ 和空值表示未填写，其余标量都是文本，与 config.parse_yaml 一致。
+    No implicit types: null, ~ and empty mean not filled in and every other scalar is
+    text, as config.parse_yaml reads them.
+    """
+
+    def resolve(self, kind, value, implicit):
+        if kind is ScalarNode and implicit[0]:
+            if value in NULL_SCALARS:
+                return super().resolve(kind, "null", implicit)
+            return self.DEFAULT_SCALAR_TAG
+        return super().resolve(kind, value, implicit)
+
+
+def _yaml() -> YAML:
+    """配置文件用的 ruamel 往返读写器。
+    The ruamel round-trip reader and writer for configurations.
+    """
     document = YAML()
+    document.Resolver = _TextResolver
     document.preserve_quotes = True
     document.width = 4096
     document.indent(mapping=2, sequence=4, offset=2)
     return document
 
 
-def dump_text(data):
+def _to_code(node):
+    """把读入的值统一为 C++ 文本：双引号的值成为字符串字面量，其余原样。
+    Turn loaded values into C++ text: a double-quoted value becomes a string literal,
+    any other value stays as written.
+    """
+    # 直接赋值：ruamel 的容器赋值时会沿用旧值的引号类型。
+    # Assign directly: ruamel's containers keep the quoting type of the old value.
+    if isinstance(node, CommentedMap):
+        for key in list(node):
+            ordereddict.__setitem__(node, key, _to_code(node[key]))
+    elif isinstance(node, CommentedSeq):
+        for i, child in enumerate(node):
+            list.__setitem__(node, i, _to_code(child))
+    elif isinstance(node, DoubleQuotedScalarString):
+        return cpp_string_literal(str(node))
+    elif isinstance(node, str):
+        return str(node)
+    return node
+
+
+def _restyle(node, flow=False):
+    """按规范写法给每个值定引号；集合保持原来的块格式或流格式。
+    Give every value its canonical quoting; collections keep their block or flow style.
+
+    Args:
+        flow: 值位于流式集合（{...} 或 [...]）中。
+            The value sits in a flow collection ({...} or [...]).
+    """
+    if isinstance(node, (CommentedMap, CommentedSeq)):
+        flow = flow or bool(node.fa.flow_style())
+    if isinstance(node, dict):
+        setter = ordereddict.__setitem__ if isinstance(node, CommentedMap) else dict.__setitem__
+        for key in list(node):
+            setter(node, key, _restyle(node[key], flow))
+        return node
+    if isinstance(node, list):
+        for i, child in enumerate(node):
+            list.__setitem__(node, i, _restyle(child, flow))
+        return node
+    if not isinstance(node, str):
+        return node
+    code = str(node)
+    style = scalar_style(code, flow)
+    if style == '"':
+        return DoubleQuotedScalarString(string_literal_content(code))
+    if style is None:
+        return PlainScalarString(code)
+    return SingleQuotedScalarString(code)
+
+
+def _load(text: str):
+    """读取一段配置 YAML 以便往返编辑，值统一为 C++ 文本。
+    Load configuration YAML for a round-trip edit, with every value as C++ text.
+    """
+    return _to_code(_yaml().load(text))
+
+
+def dump_text(data) -> str:
+    """按规范写法输出 YAML。
+    Write YAML in the canonical layout.
+    """
     stream = io.StringIO()
-    _yaml().dump(data, stream)
+    _yaml().dump(_restyle(data), stream)
     return stream.getvalue()
 
 
-def canonical_text(text):
-    """The canonical layout of a YAML document (comments and quoting kept)."""
+def canonical_text(text: str) -> str:
+    """YAML 文档的规范写法，保留注释。
+    The canonical layout of a YAML document, comments kept.
+    """
     if text.startswith("﻿"):
         text = text[1:]
     text = text.replace("\r\n", "\n")
-    data = _yaml().load(text)
+    data = _load(text)
     if data is None:
         return text if text.endswith("\n") or not text else text + "\n"
     return dump_text(data)
@@ -148,7 +247,7 @@ def _load_item(block_text):
     """Load one instance block (a one-item list) for a round-trip edit."""
     lines = block_text.split("\n")
     indent = min(len(line) - len(line.lstrip(" ")) for line in lines if line.strip())
-    data = _yaml().load("\n".join(line[indent:] for line in lines))
+    data = _load("\n".join(line[indent:] for line in lines))
     if not isinstance(data, CommentedSeq) or len(data) != 1:
         raise ConfigError("cannot edit this instance: its YAML block is not a single list item")
     return data[0], indent
@@ -297,18 +396,15 @@ def set_value(config_path, instance_id, path, value, if_match=None, source=None)
     config.write(blocks.replace(k, _render_item(item, indent)))
 
 
-def _scalar_text(value, style):
-    """Render ``value`` as a one-line YAML scalar, keeping the old quoting style."""
+def _scalar_text(value: str) -> str:
+    """一个值写成单行 YAML 标量的规范写法；也适用于流式集合中的位置。
+    The canonical one-line YAML scalar for a value; also valid inside a flow collection.
+    """
+    style = scalar_style(value, flow=True)
     if style == '"':
-        return json.dumps(value, ensure_ascii=False)
-    if style is None and value not in ("", "~", "null", "Null", "NULL") and "\n" not in value:
-        try:
-            node = yaml.compose("k: " + value, Loader=yaml.BaseLoader)
-            child = node.value[0][1]
-            if isinstance(child, yaml.ScalarNode) and child.style is None and child.value == value:
-                return value
-        except yaml.YAMLError:
-            pass
+        return json.dumps(string_literal_content(value), ensure_ascii=False)
+    if style is None:
+        return value
     return "'" + value.replace("'", "''") + "'"
 
 
@@ -360,9 +456,7 @@ def _replace_scalar(text, index, path, value):
     lines = body.split("\n")
     line = lines[node.start_mark.line]
     lines[node.start_mark.line] = (
-        line[: node.start_mark.column]
-        + _scalar_text(value, node.style)
-        + line[node.end_mark.column :]
+        line[: node.start_mark.column] + _scalar_text(value) + line[node.end_mark.column :]
     )
     return "\n".join(lines)
 
@@ -452,7 +546,7 @@ def _rename_values(node, old, new):
             child = node[key]
             if isinstance(child, str):
                 if _mentions(child, old):
-                    node[key] = _requote(child, replace_names(str(child), {old: new}))
+                    node[key] = replace_names(str(child), {old: new})
                     changed = True
             elif _rename_values(child, old, new):
                 changed = True
@@ -460,20 +554,11 @@ def _rename_values(node, old, new):
         for i, child in enumerate(node):
             if isinstance(child, str):
                 if _mentions(child, old):
-                    node[i] = _requote(child, replace_names(str(child), {old: new}))
+                    node[i] = replace_names(str(child), {old: new})
                     changed = True
             elif _rename_values(child, old, new):
                 changed = True
     return changed
-
-
-def _requote(original, text):
-    """Keep ruamel's quoting style of ``original`` for the replaced text."""
-    cls = type(original)
-    try:
-        return cls(text)
-    except TypeError:
-        return text
 
 
 # -- seeding (instance add, module compile probe) ------------------------------
@@ -753,14 +838,6 @@ def _sync_constructor_mapping(value, entry, index, spelled):
 
 
 # -- modules.yaml ----------------------------------------------------------------
-
-
-def _load_document(path, default):
-    path = Path(path)
-    if not path.exists():
-        return default
-    data = _yaml().load(path.read_text(encoding="utf-8-sig"))
-    return data if data is not None else default
 
 
 def _request_lines(text):

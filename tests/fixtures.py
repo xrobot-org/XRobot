@@ -157,7 +157,11 @@ class BspTestCase(TempDirTestCase):
         return self.write("User/" + name, text)
 
     def config(self, data, name="xrobot.yaml"):
-        text = data if isinstance(data, str) else yaml.safe_dump(data, sort_keys=False)
+        text = (
+            data
+            if isinstance(data, str)
+            else yaml.safe_dump(data, sort_keys=False, allow_unicode=True)
+        )
         return self.write("User/" + name, text)
 
     def generate(self, data=None, entry=None, name="xrobot.yaml"):
@@ -252,7 +256,7 @@ class UpstreamTestCase(TempDirTestCase):
         return Project(self.root)
 
     def write_yaml(self, path, value):
-        return self.write(path, yaml.safe_dump(value, sort_keys=False))
+        return self.write(path, yaml.safe_dump(value, sort_keys=False, allow_unicode=True))
 
     def upstream(self, identity, depends=None, kind="module", branches=("dev",), listed=True):
         """Create an upstream repository on master (plus ``branches``) and list it in the index."""

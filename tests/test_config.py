@@ -6,9 +6,12 @@ from fixtures import TempDirTestCase
 
 from xrobot.config import (
     ConfigError,
+    cpp_string_literal,
     identifier_problem,
     load_config,
     parse_yaml,
+    scalar_style,
+    string_literal_content,
     validate_config,
     value_text,
 )
@@ -46,6 +49,61 @@ class Scalars(unittest.TestCase):
                 {"i": "1.0F"},
             ],
         )
+
+    def test_double_quoted_values_are_cpp_string_literals(self):
+        config = load(
+            'modules:\n- module: Foo\n  id: foo\n  args:\n    - a: "bmi088_gyro"\n'
+            '    - b: "say \\"hi\\"\\tC:\\\\x"\n    - c: "中文"\n    - d: ""\n'
+            '    - e: "null"\n    - f: "\\x01"\n'
+        )
+        self.assertEqual(
+            config["modules"][0]["args"],
+            [
+                {"a": '"bmi088_gyro"'},
+                {"b": '"say \\"hi\\"\\tC:\\\\x"'},
+                {"c": '"中文"'},
+                {"d": '""'},
+                {"e": '"null"'},
+                {"f": '"\\001"'},
+            ],
+        )
+
+    def test_single_quoted_values_are_code_as_written(self):
+        config = load(instance(a="'{0.707, 0.0}'", b="'&ref'", c="'\"x\"'", d="'{}'"))
+        self.assertEqual(
+            config["modules"][0]["args"],
+            [{"a": "{0.707, 0.0}"}, {"b": "&ref"}, {"c": '"x"'}, {"d": "{}"}],
+        )
+
+    def test_string_literals_round_trip_through_their_content(self):
+        for content in ("bmi088_gyro", 'a"b', "tab\there", "nl\nx", "back\\slash", "中文", ""):
+            with self.subTest(content=content):
+                self.assertEqual(string_literal_content(cpp_string_literal(content)), content)
+        for text in ('"a" "b"', '"\\x41"', 'u8"a"', "x"):
+            with self.subTest(text=text):
+                self.assertIsNone(string_literal_content(text))
+
+    def test_canonical_quoting_of_values(self):
+        cases = [
+            ("250", None, None),
+            ("LED_B", None, None),
+            ("BMI088::GyroRange::DEG_2000DPS", None, None),
+            ("LibXR::Terminal<32, 32>", None, "'"),
+            ("-1", None, None),
+            ("nullptr", None, None),
+            ("true", None, None),
+            ('"bmi088_gyro"', '"', '"'),
+            ("{0.707, 0.0}", "'", "'"),
+            ("{}", "'", "'"),
+            ("&ref", "'", "'"),
+            ("null", "'", "'"),
+            ("a: b", "'", "'"),
+            ('"a" "b"', "'", "'"),
+        ]
+        for text, block, flow in cases:
+            with self.subTest(text=text):
+                self.assertEqual(scalar_style(text), block)
+                self.assertEqual(scalar_style(text, flow=True), flow)
 
     def test_null_tilde_and_empty_mean_not_filled_but_quoted_null_is_text(self):
         config = load(instance(a="null", b="~", c="", d="'null'", e="nullptr", f="NULL"))
@@ -148,7 +206,9 @@ class CppText(unittest.TestCase):
                 load(instance(a=value))
 
     def test_at_syntax_is_rejected(self):
-        with self.assertRaisesRegex(ConfigError, "not @ syntax"):
+        with self.assertRaisesRegex(
+            ConfigError, r"foo\.args\.a: the @ prefix of XRobot before 1\.0 is gone"
+        ):
             load(instance(a="'@nullptr'"))
 
 
@@ -195,7 +255,7 @@ class Identifiers(unittest.TestCase):
 
 class Structure(unittest.TestCase):
     def test_unknown_top_level_keys_are_rejected(self):
-        for key in ("global_settings", "instances", "constexpr"):
+        for key in ("instances", "constexpr"):
             with (
                 self.subTest(key=key),
                 self.assertRaisesRegex(ConfigError, "unknown top-level key"),
@@ -203,12 +263,27 @@ class Structure(unittest.TestCase):
                 load(f"{key}: {{}}\n")
 
     def test_unknown_instance_keys_are_rejected(self):
-        for key in ("name", "constructor_args", "depends"):
+        for key in ("depends", "template"):
             with (
                 self.subTest(key=key),
                 self.assertRaisesRegex(ConfigError, r"modules\[0\]: unknown key\(s\) " + key),
             ):
                 load(f"modules:\n  - module: Foo\n    id: foo\n    {key}: []\n")
+
+    def test_configurations_of_xrobot_before_1_0_get_one_error(self):
+        for text in (
+            "global_settings:\n  monitor_sleep_ms: 1000\nmodules: []\n",
+            "modules:\n  - name: BlinkLED\n    constructor_args:\n      blink_cycle: 250\n",
+            "modules:\n  - module: Foo\n    id: foo\n    constructor_args: {}\n",
+        ):
+            with self.subTest(text=text), self.assertRaises(ConfigError) as context:
+                load(text)
+            self.assertEqual(
+                str(context.exception),
+                "cfg.yaml: this configuration uses the format of XRobot before 1.0 "
+                "(global_settings, name/constructor_args); XRobot 1.0 lists each instance as "
+                "module, id and args; recreate the instances with `xrobot instance add`",
+            )
 
     def test_instances_need_module_and_id(self):
         with self.assertRaisesRegex(ConfigError, r"modules\[0\]\.module is required"):
@@ -245,8 +320,23 @@ class Structure(unittest.TestCase):
                 load(f"settings:\n  monitor_sleep_ms: {value}\n")
 
     def test_settings_accept_only_monitor_sleep(self):
-        with self.assertRaisesRegex(ConfigError, "settings only accepts monitor_sleep_ms"):
-            load("settings:\n  stack: 1024\n")
+        cases = [
+            (
+                "settings:\n  stack: 1024\n  heap: 1\n",
+                "cfg.yaml: settings: unknown key(s) stack, heap; "
+                "the only setting is monitor_sleep_ms",
+            ),
+            ("settings: [1]\n", "cfg.yaml: settings must be a mapping"),
+            (
+                'settings:\n  monitor_sleep_ms: "10"\n',
+                'cfg.yaml: settings.monitor_sleep_ms: "10" is not an unsigned 32-bit decimal '
+                "millisecond count",
+            ),
+        ]
+        for text, message in cases:
+            with self.subTest(text=text), self.assertRaises(ConfigError) as context:
+                load(text)
+            self.assertEqual(str(context.exception), message)
 
     def test_constexpr_includes_accept_quoted_and_system_header_names(self):
         load("constexpr_includes: [Foo.hpp, 'sub/Bar.h', '<vector>', ' <array> ']\n")
@@ -256,12 +346,24 @@ class Structure(unittest.TestCase):
                 self.assertRaisesRegex(ConfigError, r"constexpr_includes\[0\]"),
             ):
                 load(f"constexpr_includes: [{header}]\n")
+        with self.assertRaises(ConfigError) as context:
+            load('constexpr_includes: ["Foo.hpp"]\n')
+        self.assertEqual(
+            str(context.exception),
+            'cfg.yaml: constexpr_includes[0]: "Foo.hpp" is not a header name such as Foo.hpp '
+            "or <vector>",
+        )
 
     def test_constexpr_names_namespace_and_shape_are_checked(self):
         load("constexpr_namespace: Board::Pins\nconstexprs:\n  Rate: {type: int, value: 250}\n")
         cases = [
             ("constexpr_namespace: std\n", "std is a reserved namespace"),
-            ("constexpr_namespace: '1a'\n", "constexpr_namespace must be a C\\+\\+ namespace name"),
+            ("constexpr_namespace: '1a'\n", "constexpr_namespace: 1a is not a C\\+\\+ namespace"),
+            (
+                'constexpr_namespace: "Board"\n',
+                'constexpr_namespace: "Board" is not a C\\+\\+ namespace',
+            ),
+            ("constexpr_namespace: [a]\n", "constexpr_namespace must be a C\\+\\+ namespace"),
             ("constexpr_namespace: Board::class\n", "class is a C\\+\\+ keyword"),
             (
                 "constexprs:\n  xr_rate: {type: int, value: 1}\n",
@@ -283,7 +385,7 @@ class Structure(unittest.TestCase):
 
     def test_every_error_is_reported_once_with_the_config_prefix(self):
         text = (
-            "extra: 1\nmodules:\n  - {module: Foo, id: class}\n  - {module: Foo, id: f, name: x}\n"
+            "extra: 1\nmodules:\n  - {module: Foo, id: class}\n  - {module: Foo, id: f, x: 1}\n"
             "  - {module: Foo, id: f}\nsettings: {monitor_sleep_ms: -1}\n"
         )
         with self.assertRaises(ConfigError) as context:

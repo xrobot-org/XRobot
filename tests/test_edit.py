@@ -5,7 +5,7 @@ import hashlib
 from fixtures import BspTestCase, TempDirTestCase
 
 from xrobot import config_edit
-from xrobot.config import ConfigError, load_config
+from xrobot.config import ConfigError, load_config, parse_yaml
 from xrobot.generate_main import load_modules
 from xrobot.type_index import TypeIndex
 
@@ -25,7 +25,7 @@ modules:
     id: status
     args:
       - gpio: pin  # board pin
-      - param: {cycle: 1, inverted: "false", timing: {on_ms: 1, off_ms: 2}, name: '"a"'}
+      - param: {cycle: 1, inverted: false, timing: {on_ms: 1, off_ms: 2}, name: "a"}
       - alt: Led::Defaults()
       - factory: Led::Defaults()
       - gain: 1.0f
@@ -34,7 +34,7 @@ modules:
     id: user
     args:
       - led: status  # bound
-      - backup: "&status"
+      - backup: '&status'
       - count: 3
 # trailing comment
 """
@@ -303,7 +303,8 @@ class RemoveAndRename(EditTestCase):
         self.path.write_text(
             CONFIG.replace(
                 "      - count: 3",
-                '      - count: status.Count() + ns::status + obj.status + sizeof("status")',
+                '      - count: status.Count() + ns::status + obj.status + sizeof("status")\n'
+                '      - label: "status"',
             ),
             encoding="utf-8",
         )
@@ -315,6 +316,9 @@ class RemoveAndRename(EditTestCase):
         self.assertEqual(
             user["args"][2], {"count": 'led.Count() + ns::status + obj.status + sizeof("status")'}
         )
+        self.assertEqual(user["args"][3], {"label": '"status"'})
+        self.assertIn("      - backup: '&led'\n", self.text())
+        self.assertIn('      - label: "status"\n', self.text())
         for comment in ("# the status led", "# bound", "# the user of the led"):
             self.assertIn(comment, self.text())
 
@@ -358,11 +362,32 @@ class Format(TempDirTestCase):
         self.assertEqual(config_edit.format_files([path]), [])
         self.assertEqual(path.read_bytes().decode("utf-8"), text)
 
-    def test_quoting_and_flow_style_are_kept(self):
-        text = 'modules:\n  - module: Led\n    id: a\n    args:\n      - name: \'"x"\'\n      - p: {a: 1, b: "2"}\n'
-        path = self.write("b.yaml", text)
-        self.assertEqual(config_edit.format_files([path], check=True), [])
-        self.assertEqual(config_edit.canonical_text(text), text)
+    def test_code_is_written_without_quotes_where_yaml_allows_and_strings_in_double_quotes(self):
+        text = (
+            "modules:\n  - module: Led\n    id: a\n    args:\n"
+            "      - name: '\"x\"'\n"
+            "      - cycle: '250'\n"
+            "      - rotation: '{0.707, 0.0}'\n"
+            "      - ref: '&a'\n"
+            "      - p: {a: '1', b: '\"2\"', c: '{}', d: 'LibXR::Terminal<32, 32>'}\n"
+            "      - q:\n          e: 'LibXR::Terminal<32, 32>'\n          f: ['\"g\"', 'h']\n"
+            '      - text: "say \\"hi\\" 中文"\n'
+            '      - raw: \'"a" "b"\'\n'
+        )
+        expected = (
+            "modules:\n  - module: Led\n    id: a\n    args:\n"
+            '      - name: "x"\n'
+            "      - cycle: 250\n"
+            "      - rotation: '{0.707, 0.0}'\n"
+            "      - ref: '&a'\n"
+            "      - p: {a: 1, b: \"2\", c: '{}', d: 'LibXR::Terminal<32, 32>'}\n"
+            '      - q:\n          e: LibXR::Terminal<32, 32>\n          f: ["g", h]\n'
+            '      - text: "say \\"hi\\" 中文"\n'
+            '      - raw: \'"a" "b"\'\n'
+        )
+        self.assertEqual(config_edit.canonical_text(text), expected)
+        self.assertEqual(config_edit.canonical_text(expected), expected)
+        self.assertEqual(parse_yaml(expected, "b.yaml"), parse_yaml(text, "b.yaml"))
 
 
 class SyncConfig(EditTestCase):

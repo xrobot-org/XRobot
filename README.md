@@ -145,7 +145,7 @@ modules:
     id: led
     args:
       - led: LED_R
-      - blink_cycle: '250'
+      - blink_cycle: 250
 settings:
   monitor_sleep_ms: 1000
 ```
