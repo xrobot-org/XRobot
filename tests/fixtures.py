@@ -69,6 +69,9 @@ def run_git(repo, *args, check=True):
     return result.stdout.strip()
 
 
+EMPTY_MANIFEST = "/* === MODULE MANIFEST V2 ===\n=== END MANIFEST === */\n"
+
+
 def manifest_block(description="fixture", depends=None, **extra):
     data = {"module_description": description}
     if depends is not None:
@@ -125,7 +128,9 @@ class BspTestCase(TempDirTestCase):
         owner = owner or self.owner
         identity = f"{owner}/{name}"
         folder = self.root / "Modules" / owner / name
-        text = "#pragma once\n" + (manifest if manifest is not None else "") + body + "\n"
+        text = (
+            "#pragma once\n" + (manifest if manifest is not None else EMPTY_MANIFEST) + body + "\n"
+        )
         self.write(folder / (name + ".hpp"), text)
         for header, content in (extra_headers or {}).items():
             self.write(folder / header, content)

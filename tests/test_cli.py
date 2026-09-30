@@ -291,14 +291,22 @@ class Commands(CliMixin, BspTestCase):
                 self.assertIn("{}", out)
                 self.assertRegex(
                     out,
-                    r"Led\.hpp:5: Led\(LibXR::GPIO& gpio, Param param = \{\}, float gain = 1\.0f\)",
+                    r"Led\.hpp:\d+: Led\(LibXR::GPIO& gpio, Param param = \{\}, float gain = 1\.0f\)",
                 )
+
+    def test_a_misspelled_module_gets_the_closest_candidates(self):
+        self.fails(
+            "module",
+            "show",
+            "team/Lde",
+            pattern=r"Module not found: team/Lde; did you mean team/Led\?",
+        )
 
     def test_module_show_takes_the_id_of_a_locked_module(self):
         for target in ("team/Led", "Led"):
             with self.subTest(target=target):
                 out, _ = self.ok("module", "show", target, cwd=self.root / "User")
-                self.assertRegex(out, r"Led\.hpp:5: Led\(LibXR::GPIO& gpio")
+                self.assertRegex(out, r"Led\.hpp:\d+: Led\(LibXR::GPIO& gpio")
         self.fails(
             "module",
             "show",
@@ -541,7 +549,7 @@ class Setup(CliMixin, UpstreamTestCase):
 
     def test_a_git_timeout_is_reported_without_a_traceback(self):
         timeout = subprocess.TimeoutExpired(["git", "fetch"], 300)
-        with mock.patch("xrobot.lock.subprocess.run", side_effect=timeout):
+        with mock.patch("xrobot.git.subprocess.run", side_effect=timeout):
             self.fails("setup", pattern=r"Git did not finish within 300 s")
 
     def test_a_different_tool_pin_is_a_warning_and_an_error_when_frozen(self):
@@ -569,7 +577,9 @@ class Setup(CliMixin, UpstreamTestCase):
         self.ok("setup")
         self.write(
             self.led / "Led.hpp",
-            "#pragma once\nclass Led { public: explicit Led(int period = 5) {} };\n",
+            "#pragma once\n"
+            + manifest_block()
+            + "class Led { public: explicit Led(int period = 5) {} };\n",
         )
         from fixtures import run_git
 

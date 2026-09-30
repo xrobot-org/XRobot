@@ -331,7 +331,7 @@ class LocalWork(UpstreamTestCase):
         with self.assertRaisesRegex(
             ValueError,
             rf"team/A is checked out at \w{{12}} but xrobot.lock pins {self.locked[:12]}.*"
-            r"`xrobot setup --update team/A`.*`xrobot setup --frozen`",
+            r"`xrobot setup --update team/A`\. To return to the locked sources run `xrobot setup`\.",
         ):
             discover_modules(self.modules, Project(self.root).lock)
 
@@ -858,10 +858,10 @@ class LockedDiscovery(BspTestCase):
             f"team/A is checked out at {run_git(a, 'rev-parse', 'HEAD')[:12]} but xrobot.lock pins 000000000000",
             message,
         )
-        self.assertIn("team/C is not a git checkout; run xrobot setup --frozen", message)
         self.assertIn(
-            "team/Gone from xrobot.lock is not checked out; run xrobot setup --frozen", message
+            "Modules/team/C is not a Git checkout; delete it and run `xrobot setup`", message
         )
+        self.assertIn("team/Gone from xrobot.lock is not checked out; run `xrobot setup`", message)
         self.assertNotIn("team/B", message)
 
     def test_a_lock_entry_without_a_commit_is_rejected(self):
@@ -899,14 +899,27 @@ class Manifests(unittest.TestCase):
             (manifest.description, manifest.depends, manifest.standalone),
             ("d", ["team/B@dev"], False),
         )
-        self.assertEqual(
-            manifest_from_text(
-                "/* === MODULE MANIFEST ===\ndescription: old\ndepends: team/B\n"
-                "=== END MANIFEST === */"
-            ).depends,
-            ["team/B"],
+
+    def test_only_the_1_0_manifest_is_read(self):
+        cases = (
+            ("class A {};", r"A\.hpp: no MODULE MANIFEST V2 block"),
+            (
+                "/* === MODULE MANIFEST ===\nmodule_description: old\n=== END MANIFEST === */",
+                r"A\.hpp: this MODULE MANIFEST predates XRobot 1\.0; update the Module to "
+                r"MODULE MANIFEST V2",
+            ),
+            (
+                "/* === MODULE MANIFEST V2 ===\ndescription: old\n=== END MANIFEST === */",
+                r"unsupported manifest key\(s\) description",
+            ),
+            (
+                "/* === MODULE MANIFEST V2 ===\ndepends: team/B\n=== END MANIFEST === */",
+                r"A\.hpp: depends must be a list",
+            ),
         )
-        self.assertTrue(manifest_from_text("class A {};").standalone)
+        for text, pattern in cases:
+            with self.subTest(pattern=pattern), self.assertRaisesRegex(ValueError, pattern):
+                manifest_from_text(text, "A.hpp")
 
     def test_unknown_keys_are_rejected(self):
         for key in ("constructor_args", "template_args", "required_hardware"):
