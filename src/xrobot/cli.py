@@ -3,6 +3,7 @@ The xrobot command line: resolve Modules, generate the static entry and edit con
 """
 
 import argparse
+import gc
 import json
 import re
 import sys
@@ -662,6 +663,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     Run an xrobot command; on an error print one line and return 1.
     """
     _utf8_output()
+    # 解析模块头文件会产生大量一直用到命令结束的对象，按默认阈值频繁回收只是白白扫描它们。
+    # xrobot 是一次运行完就退出的命令，提高年轻代阈值后回收器仍在工作，只是很少触发。
+    # Parsing Module headers creates many objects that live until the command ends, so
+    # collecting at the default threshold only scans them again and again. xrobot runs
+    # once and exits; with a higher young-generation threshold the collector still works,
+    # just rarely.
+    gc.set_threshold(100_000, 50, 100)
     args = parser().parse_args(argv)
     try:
         args.run(args)
