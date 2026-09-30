@@ -1259,9 +1259,14 @@ def _headers_of(module: dict) -> list[Path]:
     引号中的路径先相对包含它的文件所在目录查找，再相对模块根目录查找，与编译器相同。
     A quoted path is looked up next to the including file first and then in the Module
     root, as the compiler does.
+
+    结果记在模块记录中，同一条命令里每个模块只查找一次。
+    The result is kept in the Module record, so each Module is searched once per command.
     """
-    folder = Path(module["path"])
-    root = folder.resolve()
+    cached = module.get("headers")
+    if cached is not None:
+        return list(cached)
+    folder = Path(os.path.normpath(module["path"]))
     pending = sorted(folder.glob("*.hpp"))
     seen: set[Path] = set()
     while pending:
@@ -1274,10 +1279,11 @@ def _headers_of(module: dict) -> list[Path]:
             for base in (path.parent, folder):
                 candidate = Path(os.path.normpath(base / name))
                 if candidate.is_file():
-                    if candidate.resolve().is_relative_to(root):
+                    if candidate.is_relative_to(folder):
                         pending.append(candidate)
                     break
-    return sorted(seen)
+    module["headers"] = sorted(seen)
+    return list(module["headers"])
 
 
 def module_headers(modules: dict) -> list[Path]:

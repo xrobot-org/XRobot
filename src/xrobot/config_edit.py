@@ -52,7 +52,7 @@ from xrobot.constructor_model import (
     replace_names,
     template_bindings,
 )
-from xrobot.module_parser import select_module, source_interface
+from xrobot.module_parser import module_interface, select_module
 from xrobot.project import atomic_write
 from xrobot.source_syntax import code_tokens
 from xrobot.type_index import ClassEntry, TypeIndex
@@ -746,7 +746,7 @@ def add_instance(
         raise ConfigError(
             f"{module['id']} is a library (standalone: false) and cannot be instantiated"
         )
-    interface = source_interface(module["header"])
+    interface = module_interface(module)
     identity = instance_id or next_instance_id(config.config.get("modules") or [], module["name"])
     problem = identifier_problem(identity)
     if problem:
@@ -812,7 +812,7 @@ def sync_config(
             continue
         try:
             module = select_module(modules, entry["module"])
-            interface = source_interface(module["header"])
+            interface = module_interface(module)
         except ValueError:
             continue
         template_args = [str(v) for v in entry.get("template_args") or [] if v is not None]

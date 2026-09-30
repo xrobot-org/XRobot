@@ -26,7 +26,7 @@ from xrobot.constructor_model import (
     template_bindings,
     type_shape,
 )
-from xrobot.module_parser import discover_modules, select_module, source_interface
+from xrobot.module_parser import discover_modules, module_interface, select_module
 from xrobot.project import HEADER_NOTICE, Project, atomic_write, read_header_inputs
 from xrobot.source_syntax import (
     Token,
@@ -370,7 +370,7 @@ class Generator:
                 f"class {module['name']}; use only one of them"
             )
         selected[module["name"]] = module
-        interface = source_interface(module["header"])
+        interface = module_interface(module)
         template_args = [
             value_text(v, f"{identity}.template_args[{j}]")
             for j, v in enumerate(entry.get("template_args", []))
@@ -853,7 +853,7 @@ def generate_compile_check(
         code = f'#include "{module["name"]}.hpp"\n'
         atomic_write(Path(output), code)
         return code
-    interface = source_interface(module["header"])
+    interface = module_interface(module)
     supplied = list(template_args or [])
     templates = template_bindings(interface, supplied)
     cpp_class = module["name"] + (

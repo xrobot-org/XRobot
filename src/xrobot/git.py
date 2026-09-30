@@ -86,3 +86,31 @@ def checkout_state(folder: str | Path) -> tuple[str | None, str | None, bool]:
         elif not line.startswith("#"):
             dirty = True
     return commit, branch, dirty
+
+
+def origin_url(folder: str | Path) -> str:
+    """检出的 origin 地址：先读 .git/config，读不到时调用 git。
+    The origin URL of a checkout: read from .git/config, or from git when that fails.
+
+    读到的是克隆时写入的地址，不经过 url.<base>.insteadOf 改写。
+    The URL is the one the clone wrote, without url.<base>.insteadOf rewriting.
+
+    Raises:
+        ValueError: 没有 origin。
+            There is no origin.
+    """
+    config = Path(folder) / ".git" / "config"
+    if config.is_file():
+        section = None
+        for line in config.read_text(encoding="utf-8", errors="replace").splitlines():
+            stripped = line.strip()
+            if stripped.startswith("["):
+                section = stripped
+            elif section == '[remote "origin"]':
+                key, _, value = stripped.partition("=")
+                value = value.strip()
+                # 带引号、转义或注释的值交给 git 解析。
+                # A value with quotes, escapes or a comment is left to git.
+                if key.strip() == "url" and value and not any(c in value for c in '"\\;#'):
+                    return value
+    return git(folder, "remote", "get-url", "origin")

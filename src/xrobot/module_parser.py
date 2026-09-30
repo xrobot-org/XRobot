@@ -155,6 +155,20 @@ def source_interface(path: str | Path) -> dict:
     return copy.deepcopy(_INTERFACE_CACHE[key])
 
 
+def module_interface(module: dict) -> dict:
+    """模块的构造接口；记在模块记录中，同一条命令里只读取一次。
+    The constructor interface of a Module, kept in the Module record so it is read once
+    per command.
+
+    Raises:
+        ValueError: 头文件无法解析。
+            The header cannot be parsed.
+    """
+    if "interface" not in module:
+        module["interface"] = source_interface(module["header"])
+    return module["interface"]
+
+
 def _locked_head(folder: Path) -> str:
     """模块检出的 HEAD commit。
     The HEAD commit of a Module checkout.

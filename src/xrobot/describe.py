@@ -32,9 +32,9 @@ from xrobot.lock import read_modules_yaml
 from xrobot.module_parser import (
     lock_error,
     locked_modules,
+    module_interface,
     module_record,
     select_module,
-    source_interface,
 )
 from xrobot.project import Project, ProjectError
 from xrobot.type_index import ClassEntry, TypeIndex
@@ -135,7 +135,7 @@ def _describe_module(
     }
     if not result["standalone"]:
         return result
-    interface = source_interface(module["header"])
+    interface = module_interface(module)
     cpp_class = module["name"]
     result["template_parameters"] = [
         {"name": p["name"], "type": p["type"], "default": p["default"]}

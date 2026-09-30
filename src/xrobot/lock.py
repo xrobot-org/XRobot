@@ -25,13 +25,14 @@ import os
 import re
 import sys
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import url2pathname
 
 import yaml
 
-from xrobot.git import checkout_state, git, head_commit
+from xrobot.git import checkout_state, git, head_commit, origin_url
 from xrobot.module_parser import manifest_from_text
 from xrobot.project import Project, atomic_write
 from xrobot.source_manager import SourceManager, SourceUnavailable, load_yaml, validate_id
@@ -343,7 +344,7 @@ class Resolver:
         if folder.exists():
             if not (folder / ".git").exists():
                 raise ValueError(f"Refusing to overwrite non-Git directory: {folder}")
-            actual = git(folder, "remote", "get-url", "origin")
+            actual = origin_url(folder)
             if not same_repository(actual, repo):
                 if self.offline:
                     known = _has_commit(folder, commit)
@@ -650,6 +651,21 @@ def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
     records = resolver.resolved
     visited, active = set(), []
 
+    def primary_header(identity: str) -> str | None:
+        """锁定 commit 上模块主头文件的内容；没有时为 None。
+        The Module's primary header at its locked commit; None when it is missing.
+        """
+        folder = resolver.prepared[identity]["folder"]
+        header = identity.rsplit("/", 1)[-1] + ".hpp"
+        return git(folder, "show", records[identity]["commit"] + ":" + header, check=False)
+
+    # 每次 git show 都要启动一个进程（Windows 上约 20 ms）；先并行读出全部主头文件。
+    # Every git show starts a process (about 20 ms on Windows); read all primary headers
+    # in parallel first.
+    known = [identity for identity in records if identity in resolver.prepared]
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        texts = dict(zip(known, pool.map(primary_header, known), strict=True))
+
     def visit(req: dict) -> None:
         candidates = [key for key in records if key.casefold() == req["id"].casefold()]
         if len(candidates) != 1:
@@ -676,11 +692,10 @@ def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
         if identity in visited:
             return
         active.append(identity)
-        folder = resolver.prepared[identity]["folder"]
-        header = identity.rsplit("/", 1)[-1] + ".hpp"
-        text = git(folder, "show", row["commit"] + ":" + header, check=False)
+        text = texts[identity] if identity in texts else primary_header(identity)
         if text is None:
             raise ValueError("Primary header missing from locked commit for " + identity)
+        header = identity.rsplit("/", 1)[-1] + ".hpp"
         for dep in manifest_from_text(text, header).depends:
             visit(request(dep, canonical=True))
         active.pop()

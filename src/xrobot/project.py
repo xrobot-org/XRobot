@@ -108,11 +108,16 @@ class Project:
         """相对 BSP 根目录的路径（/ 分隔）；在根目录外时为绝对路径。
         The path relative to the BSP root with / separators; absolute outside the root.
         """
-        path = Path(path).resolve()
-        try:
-            return path.relative_to(self.root).as_posix()
-        except ValueError:
-            return path.as_posix()
+        # abspath 只拼接字符串；Windows 上 resolve 要打开文件询问系统，只在路径经过链接时才用。
+        # abspath only joins strings; on Windows resolve opens the file to ask the system, so
+        # it is used only for a path that goes through a link.
+        absolute = Path(os.path.abspath(path))
+        if absolute.is_relative_to(self.root):
+            return absolute.relative_to(self.root).as_posix()
+        resolved = absolute.resolve()
+        if resolved.is_relative_to(self.root):
+            return resolved.relative_to(self.root).as_posix()
+        return resolved.as_posix()
 
     def configs(self) -> list[Path]:
         """BSP 的全部应用配置，按路径排序。
