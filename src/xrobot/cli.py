@@ -549,7 +549,8 @@ def parser() -> argparse.ArgumentParser:
     change = actions.add_parser(
         "set",
         help="replace one value",
-        description="PATH is id, template_args[n] or args.<param>[.<field>|[n]]...\n"
+        description="PATH is template_args[n] or args.<param>[.<field>|[n]]...; change an id\n"
+        "with `xrobot instance rename`.\n"
         "VALUE is one YAML value, read like a value in the config: C++ code without quotes\n"
         "or in single quotes, a C++ string in double quotes (e.g. '\"bmi088_gyro\"').",
         formatter_class=argparse.RawDescriptionHelpFormatter,

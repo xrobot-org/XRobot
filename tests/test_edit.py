@@ -160,7 +160,11 @@ class AddInstance(EditTestCase):
         self.assertUnchangedOnError(
             "instance id class is a C\\+\\+ keyword", self.add, identity="class"
         )
-        self.assertUnchangedOnError("team/Lib is a library dependency", self.add, module="Lib")
+        self.assertUnchangedOnError(
+            r"team/Lib is a library \(standalone: false\) and cannot be instantiated",
+            self.add,
+            module="Lib",
+        )
         with self.assertRaisesRegex(ValueError, "Module not found: Missing"):
             self.add(module="Missing")
 
@@ -247,15 +251,47 @@ class SetValue(EditTestCase):
         )
         self.assertIn("# board pin", self.text())
 
-    def test_template_arguments_and_ids_can_be_set(self):
+    def test_template_arguments_can_be_set(self):
         self.path.write_text(
             "modules:\n  - module: Buf\n    id: buf\n    template_args: [int, 4]\n",
             encoding="utf-8",
         )
         config_edit.set_value(self.path, "buf", "template_args[1]", 8)
-        config_edit.set_value(self.path, "buf", "id", "buffer")
         self.assertEqual(self.instances()[0]["template_args"], ["int", "8"])
-        self.assertEqual(self.instances()[0]["id"], "buffer")
+
+    def test_id_and_module_are_not_set_values(self):
+        self.assertUnchangedOnError(
+            "an instance id is changed with `xrobot instance rename`",
+            config_edit.set_value,
+            self.path,
+            "status",
+            "id",
+            "led",
+        )
+        self.assertUnchangedOnError(
+            "the Module of an instance cannot be changed; remove the instance and add",
+            config_edit.set_value,
+            self.path,
+            "user",
+            "module",
+            "team/Led",
+        )
+
+    def test_comments_inside_an_instance_keep_their_column(self):
+        text = CONFIG.replace(
+            "      - param: {cycle: 1, inverted: false, timing: {on_ms: 1, off_ms: 2}, "
+            'name: "a"}\n',
+            "      - param:\n          # cycle comment\n          cycle: 1\n"
+            "          inverted: false\n          timing: {on_ms: 1, off_ms: 2}\n"
+            '          # name comment\n          name: "a"\n',
+        )
+        self.path.write_text(text, encoding="utf-8")
+        config_edit.set_value(self.path, "status", "args.param.timing", {"on_ms": 3, "off_ms": 4})
+        after = self.text()
+        self.assertIn("          # cycle comment\n          cycle: 1\n", after)
+        self.assertIn('          # name comment\n          name: "a"\n', after)
+        config_edit.rename_instance(self.path, "status", "led")
+        self.assertIn("          # cycle comment\n          cycle: 1\n", self.text())
 
     def test_if_match_protects_against_concurrent_edits(self):
         self.path.write_bytes(self.path.read_bytes().replace(b"\n", b"\r\n"))
@@ -291,7 +327,7 @@ class SetValue(EditTestCase):
                     pattern, config_edit.set_value, self.path, identity, path, 1
                 )
         self.assertUnchangedOnError(
-            "class is a C\\+\\+ keyword", config_edit.set_value, self.path, "user", "id", "class"
+            "invalid path cycle", config_edit.set_value, self.path, "status", "cycle", 1
         )
 
 

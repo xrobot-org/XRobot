@@ -1,18 +1,23 @@
-"""Edit application configurations and modules.yaml without losing comments.
+"""编辑应用配置和 modules.yaml，保留注释。
+Edit application configurations and modules.yaml without losing comments.
 
-Instances are edited as text blocks: an instance owns its ``- module:`` item
-and the comment lines directly above it, so adding, removing or renaming an
-instance moves its comments with it. Values inside one instance are edited
-through a comment-preserving YAML round trip of that instance only. Every
-write uses the canonical layout that ``xrobot format`` enforces: C++ code
-without quotes where YAML allows it and in single quotes otherwise, C++
-strings in double quotes, and collections in the block or flow style they
-were written in.
+实例按文本块编辑：一个实例拥有它的 `- module:` 列表项和紧挨在上方的注释行，增加、删除和
+改名时注释随实例移动。一个实例内的值经这个实例块的 YAML 往返修改。每次写入都使用
+`xrobot format` 的规范写法：YAML 允许时 C++ 代码不加引号，否则加单引号；C++ 字符串用双
+引号；集合保持原来的块格式或流格式。
+Instances are edited as text blocks: an instance owns its `- module:` item and the comment
+lines directly above it, so adding, removing or renaming an instance moves its comments
+with it. Values inside one instance are edited through a YAML round trip of that instance
+block. Every write uses the canonical layout that `xrobot format` enforces: C++ code
+without quotes where YAML allows it and in single quotes otherwise, C++ strings in double
+quotes, and collections in the block or flow style they were written in.
 """
 
+from __future__ import annotations
+
+import difflib
 import hashlib
 import io
-import json
 import re
 from pathlib import Path
 
@@ -31,11 +36,13 @@ from ruamel.yaml.scalarstring import (
 from xrobot.config import (
     NULL_SCALARS,
     ConfigError,
+    Located,
     cpp_string_literal,
     identifier_problem,
     parse_yaml,
     scalar_style,
     string_literal_content,
+    validate_config,
 )
 from xrobot.constructor_model import (
     compliant_constructors,
@@ -48,6 +55,12 @@ from xrobot.constructor_model import (
 from xrobot.module_parser import select_module, source_interface
 from xrobot.project import atomic_write
 from xrobot.source_syntax import code_tokens
+from xrobot.type_index import ClassEntry, TypeIndex
+
+# 顶层列表项的 "- " 在 ruamel 写出时所在的列（indent 的 offset）。
+# The column of a top-level list item's "- " as ruamel writes it (the indent offset).
+_SEQUENCE_OFFSET = 2
+_BOM = "\ufeff"
 
 
 class _TextResolver(VersionedResolver):
@@ -72,7 +85,7 @@ def _yaml() -> YAML:
     document.Resolver = _TextResolver
     document.preserve_quotes = True
     document.width = 4096
-    document.indent(mapping=2, sequence=4, offset=2)
+    document.indent(mapping=2, sequence=4, offset=_SEQUENCE_OFFSET)
     return document
 
 
@@ -96,7 +109,7 @@ def _to_code(node):
     return node
 
 
-def _restyle(node, flow=False):
+def _restyle(node, flow: bool = False):
     """按规范写法给每个值定引号；集合保持原来的块格式或流格式。
     Give every value its canonical quoting; collections keep their block or flow style.
 
@@ -142,20 +155,30 @@ def dump_text(data) -> str:
     return stream.getvalue()
 
 
+def _normalized(text: str) -> str:
+    """去掉 BOM，换行统一为 LF。
+    Drop a BOM and turn line endings into LF.
+    """
+    if text.startswith(_BOM):
+        text = text[1:]
+    return text.replace("\r\n", "\n")
+
+
 def canonical_text(text: str) -> str:
     """YAML 文档的规范写法，保留注释。
     The canonical layout of a YAML document, comments kept.
     """
-    if text.startswith("﻿"):
-        text = text[1:]
-    text = text.replace("\r\n", "\n")
+    text = _normalized(text)
     data = _load(text)
     if data is None:
         return text if text.endswith("\n") or not text else text + "\n"
     return dump_text(data)
 
 
-def file_hash(path):
+def file_hash(path: str | Path) -> str:
+    """文件换行统一为 LF 后内容的 SHA-256，供 --if-match 比较。
+    The SHA-256 of a file's content with LF line endings, compared by --if-match.
+    """
     return hashlib.sha256(Path(path).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
@@ -163,17 +186,21 @@ def file_hash(path):
 
 
 class Blocks:
-    """Line spans of the ``modules`` list items of one configuration file."""
+    """一份配置中 modules 列表各项所占的行。
+    The lines each item of the modules list occupies in one configuration.
 
-    def __init__(self, text, source):
-        if text.startswith("﻿"):
-            text = text[1:]
-        self.text = text.replace("\r\n", "\n")
+    实例拥有紧挨在它上方的注释和空行；列表末尾的注释留在文件里。
+    An instance owns the comment and blank lines directly above it; comments after the
+    last item stay with the file.
+    """
+
+    def __init__(self, text: str, source: str) -> None:
+        self.text = _normalized(text)
         self.lines = self.text.split("\n")
         root = yaml.compose(self.text, Loader=yaml.BaseLoader) if self.text.strip() else None
-        self.items = []  # (comment_start, start, end) line indices, end exclusive
-        self.sequence_end = None
-        self.item_indent = None
+        self.items: list[list[int]] = []  # (comment_start, start, end) line indices, end exclusive
+        self.sequence_end: int | None = None
+        self.item_indent: int | None = None
         if root is None or not isinstance(root, yaml.MappingNode):
             return
         key = next((k for k, v in root.value if k.value == "modules"), None)
@@ -195,6 +222,7 @@ class Blocks:
             if k == 0:
                 comment_start = max(comment_start, key.start_mark.line + 1)
             self.items.append([comment_start, start, item_end])
+        # 一项之后的注释和空行属于下一项。
         # An item's trailing comment/blank lines belong to the next item.
         for k in range(len(self.items) - 1):
             self.items[k][2] = self.items[k + 1][0]
@@ -202,13 +230,18 @@ class Blocks:
             line = self.lines[starts[0]]
             self.item_indent = len(line) - len(line.lstrip(" "))
 
-    def _is_comment_or_blank(self, index):
+    def _is_comment_or_blank(self, index: int) -> bool:
+        """第 index 行是否为注释或空行。
+        Whether line index is a comment or blank.
+        """
         stripped = self.lines[index].strip()
         return not stripped or stripped.startswith("#")
 
-    def _block_end(self, node):
+    def _block_end(self, node: yaml.SequenceNode) -> int:
+        """modules 列表结束的行，不含其后的注释和空行。
+        The line where the modules list ends, excluding comments and blank lines after it.
+        """
         end = node.end_mark.line
-        # Trailing comment/blank lines at the end of the list stay with the file.
         while (
             end > node.start_mark.line
             and end - 1 < len(self.lines)
@@ -217,45 +250,81 @@ class Blocks:
             end -= 1
         return end
 
-    def item_text(self, k):
+    def item_text(self, k: int) -> str:
+        """第 k 个实例的文本，不含上方的注释。
+        The text of instance k, without the comments above it.
+        """
         _, start, end = self.items[k]
         return "\n".join(self.lines[start:end])
 
-    def replace(self, k, new_lines, keep_comments=True):
+    def replace(self, k: int, new_lines: list[str], keep_comments: bool = True) -> str:
+        """把第 k 个实例换成 new_lines 后的文件文本。
+        The file text with instance k replaced by new_lines.
+        """
         comment_start, start, end = self.items[k]
         begin = start if keep_comments else comment_start
         lines = self.lines[:begin] + new_lines + self.lines[end:]
         return "\n".join(lines)
 
-    def remove(self, k):
+    def remove(self, k: int) -> str:
+        """删除第 k 个实例及其上方注释后的文件文本。
+        The file text without instance k and the comments above it.
+        """
         comment_start, _, end = self.items[k]
         return "\n".join(self.lines[:comment_start] + self.lines[end:])
 
-    def append(self, new_lines):
+    def append(self, new_lines: list[str]) -> str:
+        """在 modules 列表末尾加上 new_lines 后的文件文本。
+        The file text with new_lines added at the end of the modules list.
+        """
         end = self.sequence_end if self.sequence_end is not None else len(self.lines)
         return "\n".join(self.lines[:end] + new_lines + self.lines[end:])
 
 
-def _render_item(item, indent):
-    """Render one instance mapping as a list item at ``indent`` spaces."""
+def _render_item(item: CommentedMap, indent: int) -> list[str]:
+    """把一个实例写成缩进 indent 个空格的列表项。
+    Write one instance as a list item indented by indent spaces.
+    """
     text = dump_text([item])
     lines = text.rstrip("\n").split("\n")
     base = len(lines[0]) - len(lines[0].lstrip(" "))
     return [" " * indent + line[base:] if line.strip() else "" for line in lines]
 
 
-def _load_item(block_text):
-    """Load one instance block (a one-item list) for a round-trip edit."""
+def _load_item(block_text: str) -> tuple[CommentedMap, int]:
+    """读取一个实例块（只有一项的列表）以便往返编辑。
+    Load one instance block (a one-item list) for a round-trip edit.
+
+    块按 ruamel 写出顶层列表项的位置读入（"- " 在第 _SEQUENCE_OFFSET 列），注释的列号与
+    写回时的键对齐，往返后注释不会移位。
+    The block is loaded where ruamel writes a top-level list item ("- " at column
+    _SEQUENCE_OFFSET), so comment columns line up with the keys as written back and a
+    round trip does not shift the comments.
+
+    Returns:
+        (实例映射, 原来的缩进)。
+        (instance mapping, original indentation).
+
+    Raises:
+        ConfigError: 块不是单个列表项。
+            The block is not a single list item.
+    """
     lines = block_text.split("\n")
     indent = min(len(line) - len(line.lstrip(" ")) for line in lines if line.strip())
-    data = _load("\n".join(line[indent:] for line in lines))
+    shifted = [" " * _SEQUENCE_OFFSET + line[indent:] if line.strip() else "" for line in lines]
+    data = _load("\n".join(shifted))
     if not isinstance(data, CommentedSeq) or len(data) != 1:
         raise ConfigError("cannot edit this instance: its YAML block is not a single list item")
     return data[0], indent
 
 
 class ConfigFile:
-    def __init__(self, path, source=None):
+    """一份应用配置：文本和解析结果；不存在的文件视为空配置。
+    One application configuration: its text and parsed values; a missing file reads as an
+    empty configuration.
+    """
+
+    def __init__(self, path: str | Path, source: str | None = None) -> None:
         self.path = Path(path)
         self.source = source or self.path.as_posix()
         self.text = (
@@ -263,108 +332,131 @@ class ConfigFile:
         )
         self.config = parse_yaml(self.text, self.source)
 
-    def blocks(self):
+    def blocks(self) -> Blocks:
+        """当前文本的实例块。
+        The instance blocks of the current text.
+        """
         return Blocks(self.text, self.source)
 
-    def index_of(self, instance_id):
+    def index_of(self, instance_id: str) -> int:
+        """实例在 modules 列表中的位置。
+        The position of an instance in the modules list.
+
+        Raises:
+            ConfigError: 没有这个实例。
+                There is no such instance.
+        """
         for k, entry in enumerate(self.config.get("modules") or []):
             if isinstance(entry, dict) and entry.get("id") == instance_id:
                 return k
         raise ConfigError(f"{self.source}: no instance with id {instance_id}")
 
-    def write(self, text, check=True):
+    def write(self, text: str, check: bool = True) -> None:
+        """按规范写法写入 text。
+        Write text in the canonical layout.
+
+        Args:
+            check: 写入前检查配置结构；添加实例和同步时不检查，文件中其他地方的问题不妨碍
+                这两个操作。
+                Check the configuration structure first; adding an instance and syncing
+                skip it, so problems elsewhere in the file do not block them.
+
+        Raises:
+            ConfigError: check 时结构有错；文件不变。
+                With check, the structure has errors; the file is unchanged.
+        """
         text = canonical_text(text)
         config = parse_yaml(text, self.source)
         if check:
-            from xrobot.config import validate_config
-
             validate_config(config, self.source)
         atomic_write(self.path, text)
         self.text, self.config = text, config
 
 
-def _path_tokens(path):
+# -- instance set / remove / rename ---------------------------------------------
+
+_PATH_HINT = "use template_args[n] or args.<param>[.<field>|[n]]..."
+
+
+def _path_tokens(path: str) -> list[str]:
+    """把值路径拆成名字和 [n]，只接受 args 和 template_args 下的路径。
+    Split a value path into names and [n]; only paths under args and template_args are
+    accepted.
+
+    Raises:
+        ConfigError: 路径写法不对，或指向 id、module。
+            The path is malformed, or points at id or module.
+    """
     tokens = re.findall(r"[A-Za-z_][A-Za-z_0-9]*|\[\d+\]", path)
-    if (
-        not tokens
-        or "".join(t if t.startswith("[") else "." + t for t in tokens).lstrip(".") != path
-    ):
+    if not tokens or "".join(t if t.startswith("[") else "." + t for t in tokens)[1:] != path:
+        raise ConfigError(f"invalid path {path}; {_PATH_HINT}")
+    if tokens[0] == "id":
         raise ConfigError(
-            f"invalid path {path}; use id, template_args[n], args.<param>.<field>..., [n]"
+            "an instance id is changed with `xrobot instance rename`, which also updates the "
+            "references to it"
         )
+    if tokens[0] == "module":
+        raise ConfigError(
+            "the Module of an instance cannot be changed; remove the instance and add the "
+            "other Module"
+        )
+    if tokens[0] not in ("args", "template_args"):
+        raise ConfigError(f"invalid path {path}; {_PATH_HINT}")
     return tokens
 
 
-def _set_path(item, path, value):
-    """Set ``value`` at a dotted path inside one instance mapping."""
+def _set_path(item: CommentedMap, path: str, value) -> None:
+    """在一个实例映射中按路径设置值。
+    Set a value at a path inside one instance mapping.
+
+    args.<参数名> 按名字找到 args 列表中的那一项；args 本身可整体替换为一个列表（换用另一个
+    构造函数时）。
+    args.<param> finds that item of the args list by name; args itself can be replaced by
+    a whole list (when switching to another constructor).
+
+    Raises:
+        ConfigError: 路径不存在，或 args 的新值不是单参数映射的列表。
+            The path does not exist, or a new args value is not a list of one-parameter
+            mappings.
+    """
     tokens = _path_tokens(path)
     node = item
-    for position, token in enumerate(tokens):
-        last = position == len(tokens) - 1
-        if token.startswith("["):
-            index = int(token[1:-1])
-            if not isinstance(node, list) or index >= len(node):
-                raise ConfigError(f"path {path}: no element {index}")
-            if last:
-                node[index] = value
-                return
-            node = node[index]
-            continue
-        if node is item and token == "args":
-            if last:
-                # The whole argument list, e.g. when switching constructors.
-                if not isinstance(value, list) or not all(
-                    isinstance(v, dict) and len(v) == 1 for v in value
-                ):
-                    raise ConfigError(
-                        "args takes a list of one-parameter mappings, e.g. "
-                        '[{"led": "LED_B"}, {"cycle": "250"}]'
-                    )
-                item["args"] = value
-                return
-            name = tokens[position + 1]
-            args = item.get("args") or []
-            for entry in args:
-                if isinstance(entry, dict) and name in entry:
-                    if position + 1 == len(tokens) - 1:
-                        entry[name] = value
-                        return
-                    node = entry[name]
-                    break
-            else:
-                raise ConfigError(f"path {path}: no argument {name}")
-            rest = tokens[position + 2 :]
-            return _set_path_tail(node, rest, value, path)
-        if not isinstance(node, dict) or token not in node:
-            raise ConfigError(f"path {path}: no key {token}")
-        if last:
-            node[token] = value
+    if tokens[0] == "args":
+        if len(tokens) == 1:
+            if not isinstance(value, list) or not all(
+                isinstance(v, dict) and len(v) == 1 for v in value
+            ):
+                raise ConfigError(
+                    "args takes a list of one-parameter mappings, e.g. "
+                    '[{"led": "LED_B"}, {"cycle": "250"}]'
+                )
+            item["args"] = value
             return
-        node = node[token]
-
-
-def _set_path_tail(node, tokens, value, path):
+        name = tokens[1]
+        node = next((e for e in item.get("args") or [] if isinstance(e, dict) and name in e), None)
+        if node is None:
+            raise ConfigError(f"path {path}: no argument {name}")
+        tokens = tokens[1:]
     for position, token in enumerate(tokens):
-        last = position == len(tokens) - 1
         if token.startswith("["):
-            index = int(token[1:-1])
-            if not isinstance(node, list) or index >= len(node):
-                raise ConfigError(f"path {path}: no element {index}")
-            if last:
-                node[index] = value
-                return
-            node = node[index]
+            key = int(token[1:-1])
+            if not isinstance(node, list) or key >= len(node):
+                raise ConfigError(f"path {path}: no element {key}")
         else:
-            if not isinstance(node, dict) or token not in node:
-                raise ConfigError(f"path {path}: no key {token}")
-            if last:
-                node[token] = value
-                return
-            node = node[token]
+            key = token
+            if not isinstance(node, dict) or key not in node:
+                raise ConfigError(f"path {path}: no key {key}")
+        if position == len(tokens) - 1:
+            node[key] = value
+            return
+        node = node[key]
 
 
 def _to_yaml_value(value):
-    """JSON value -> configuration value (numbers and booleans become C++ text)."""
+    """命令行给出的值转为配置值：数字和布尔值成为 C++ 文本，映射和列表逐项转换。
+    Turn a value given on the command line into a configuration value: numbers and
+    booleans become C++ text, mappings and lists are converted item by item.
+    """
     if isinstance(value, bool):
         return "true" if value else "false"
     if isinstance(value, (int, float)):
@@ -379,96 +471,52 @@ def _to_yaml_value(value):
     return value
 
 
-def set_value(config_path, instance_id, path, value, if_match=None, source=None):
-    """Replace one node of one instance (D7); other text is untouched."""
+def set_value(
+    config_path: str | Path,
+    instance_id: str,
+    path: str,
+    value,
+    if_match: str | None = None,
+    source: str | None = None,
+) -> None:
+    """替换一个实例中的一个值；其他实例的文本不变。
+    Replace one value of one instance; the text of the other instances is unchanged.
+
+    Args:
+        if_match: 读取文件时的 file_hash；文件此后被改过则拒绝写入。
+            The file_hash when the file was read; the write is refused if the file changed
+            since.
+
+    Raises:
+        ConfigError: 文件已被改过、没有这个实例、路径不对，或结果不是有效配置。
+            The file changed, the instance or path does not exist, or the result is not a
+            valid configuration.
+    """
     config = ConfigFile(config_path, source)
     if if_match is not None and file_hash(config.path) != if_match:
         raise ConfigError(f"{config.source} changed since it was read; reload and retry")
     k = config.index_of(instance_id)
-    new_value = _to_yaml_value(value)
-    if isinstance(new_value, str):
-        text = _replace_scalar(config.text, k, path, new_value)
-        if text is not None:
-            config.write(text)
-            return
     blocks = config.blocks()
     item, indent = _load_item(blocks.item_text(k))
-    _set_path(item, path, new_value)
+    _set_path(item, path, _to_yaml_value(value))
     config.write(blocks.replace(k, _render_item(item, indent)))
 
 
-def _scalar_text(value: str) -> str:
-    """一个值写成单行 YAML 标量的规范写法；也适用于流式集合中的位置。
-    The canonical one-line YAML scalar for a value; also valid inside a flow collection.
+def remove_instance(config_path: str | Path, instance_id: str, source: str | None = None) -> None:
+    """删除一个实例及其上方的注释。
+    Remove an instance and the comments above it.
+
+    Raises:
+        ConfigError: 没有这个实例，或它仍被其他实例引用。
+            There is no such instance, or other instances still refer to it.
     """
-    style = scalar_style(value, flow=True)
-    if style == '"':
-        return json.dumps(string_literal_content(value), ensure_ascii=False)
-    if style is None:
-        return value
-    return "'" + value.replace("'", "''") + "'"
-
-
-def _replace_scalar(text, index, path, value):
-    """Replace a one-line scalar in place; None when the path is not such a scalar."""
-    body = text[1:] if text.startswith("\ufeff") else text
-    body = body.replace("\r\n", "\n")
-    root = yaml.compose(body, Loader=yaml.BaseLoader)
-    try:
-        node = dict((k.value, v) for k, v in root.value)["modules"].value[index]
-    except (AttributeError, KeyError, IndexError, TypeError):
-        return None
-    tokens = _path_tokens(path)
-    position = 0
-    while position < len(tokens):
-        token = tokens[position]
-        if token.startswith("["):
-            if not isinstance(node, yaml.SequenceNode) or int(token[1:-1]) >= len(node.value):
-                return None
-            node = node.value[int(token[1:-1])]
-        elif isinstance(node, yaml.MappingNode):
-            children = dict((k.value, v) for k, v in node.value)
-            if token not in children:
-                return None
-            node = children[token]
-            if token == "args" and position == 0 and position + 1 < len(tokens):
-                name = tokens[position + 1]
-                match = [
-                    v
-                    for item in node.value
-                    if isinstance(item, yaml.MappingNode)
-                    for k, v in item.value
-                    if k.value == name
-                ]
-                if len(match) != 1:
-                    return None
-                node = match[0]
-                position += 1
-        else:
-            return None
-        position += 1
-    if (
-        not isinstance(node, yaml.ScalarNode)
-        or node.style not in (None, "'", '"')
-        or node.start_mark.line != node.end_mark.line
-        or (node.style is None and not node.value)
-    ):
-        return None
-    lines = body.split("\n")
-    line = lines[node.start_mark.line]
-    lines[node.start_mark.line] = (
-        line[: node.start_mark.column] + _scalar_text(value) + line[node.end_mark.column :]
-    )
-    return "\n".join(lines)
-
-
-def remove_instance(config_path, instance_id, source=None):
     config = ConfigFile(config_path, source)
     k = config.index_of(instance_id)
     users = references_to(config.config, instance_id)
     if users:
         raise ConfigError(
-            f"{config.source}: {instance_id} is still used by {', '.join(users)}; change those values first"
+            f"{config.source}: {instance_id} is still used by {', '.join(users)}; change those "
+            "values first"
         )
     text = config.blocks().remove(k)
     if parse_yaml(text, config.source).get("modules") is None:
@@ -477,6 +525,9 @@ def remove_instance(config_path, instance_id, source=None):
 
 
 def _values(node):
+    """一个值树中的全部标量文本。
+    Every scalar text in a value tree.
+    """
     if isinstance(node, dict):
         for child in node.values():
             yield from _values(child)
@@ -487,7 +538,11 @@ def _values(node):
         yield node
 
 
-def _mentions(text, name):
+def _mentions(text: str, name: str) -> bool:
+    """C++ 文本是否以未限定的名字用到 name（成员访问和限定名不算）。
+    Whether C++ text uses name unqualified (member access and qualified names do not
+    count).
+    """
     items = code_tokens(text)
     for i, token in enumerate(items):
         if (
@@ -499,7 +554,10 @@ def _mentions(text, name):
     return False
 
 
-def references_to(config, instance_id):
+def references_to(config: Located, instance_id: str) -> list[str]:
+    """在 args 或 template_args 中用到 instance_id 的其他实例。
+    The other instances whose args or template_args use instance_id.
+    """
     users = []
     for entry in config.get("modules") or []:
         if not isinstance(entry, dict) or entry.get("id") == instance_id:
@@ -512,8 +570,17 @@ def references_to(config, instance_id):
     return users
 
 
-def rename_instance(config_path, instance_id, new_id, source=None):
-    """Rename an instance and every reference to it in the same configuration."""
+def rename_instance(
+    config_path: str | Path, instance_id: str, new_id: str, source: str | None = None
+) -> None:
+    """给实例改名，并替换同一配置中对它的全部引用；字符串内容不变。
+    Rename an instance and every reference to it in the same configuration; string
+    contents are left alone.
+
+    Raises:
+        ConfigError: 新 id 不合法或已存在，或没有这个实例。
+            The new id is invalid or taken, or there is no such instance.
+    """
     problem = identifier_problem(new_id)
     if problem:
         raise ConfigError(f"{new_id} {problem}")
@@ -540,43 +607,50 @@ def rename_instance(config_path, instance_id, new_id, source=None):
     config.write(text)
 
 
-def _rename_values(node, old, new):
+def _rename_values(node, old: str, new: str) -> bool:
+    """把值树中对 old 的引用换成 new；有改动时返回 True。
+    Replace the references to old with new in a value tree; True when anything changed.
+    """
     changed = False
     if isinstance(node, dict):
-        for key in list(node):
-            child = node[key]
-            if isinstance(child, str):
-                if _mentions(child, old):
-                    node[key] = replace_names(str(child), {old: new})
-                    changed = True
-            elif _rename_values(child, old, new):
-                changed = True
+        slots = list(node)
     elif isinstance(node, list):
-        for i, child in enumerate(node):
-            if isinstance(child, str):
-                if _mentions(child, old):
-                    node[i] = replace_names(str(child), {old: new})
-                    changed = True
-            elif _rename_values(child, old, new):
+        slots = range(len(node))
+    else:
+        return False
+    for slot in slots:
+        child = node[slot]
+        if isinstance(child, str):
+            if _mentions(child, old):
+                node[slot] = replace_names(str(child), {old: new})
                 changed = True
+        elif _rename_values(child, old, new):
+            changed = True
     return changed
 
 
-# -- seeding (instance add, module compile probe) ------------------------------
+# -- seeding (instance add, sync, Module compile probe) --------------------------
 
 
-def _field_default(entry, name, index, spelled):
+def _field_default(entry: ClassEntry, name: str, index: TypeIndex, spelled: str) -> str | None:
+    """字段的默认成员初始化，名字已限定；没有时为 None。
+    A field's default member initializer with names qualified; None when it has none.
+    """
     text = entry.layout().field_defaults.get(name)
     return index.qualify_in(text, entry, spelled) if text is not None else None
 
 
-def seed_value(default, target, index, scope=()):
-    """Seed a configuration value from a source default (G5 / C5 corrected).
+def seed_value(default, target: str | None, index: TypeIndex | None, scope: tuple = ()):
+    """由源码中的默认值得到配置值。
+    The configuration value for a default taken from the source.
 
-    A located aggregate whose default is ``{}`` or a designated initializer is
-    written as a complete mapping (fields in order, each with its default
-    member initializer, else ``{}``); every other default (factory calls,
-    constants, casts) is kept verbatim.
+    默认值是 {} 或指定初始化器、类型是索引中的聚合体时，写成完整映射：按顺序列出全部字段，
+    每个字段取给出的值或默认成员初始化，都没有时为 {}。类型不在索引中时，按位置的初始化器
+    写成 C++ 代码，其他默认值（工厂函数、常量、转换）原样保留。
+    For a {} or designated default of an aggregate in the index, the value is a complete
+    mapping: every field in order, each with the given value or its default member
+    initializer, else {}. For a type outside the index, a positional initializer is written
+    as C++ code; any other default (factory calls, constants, casts) is kept as written.
     """
     if default is None:
         return None
@@ -614,7 +688,13 @@ def seed_value(default, target, index, scope=()):
     return default
 
 
-def seed_arguments(interface, cpp_class, templates, index):
+def seed_arguments(
+    interface: dict, cpp_class: str, templates: dict[str, str], index: TypeIndex
+) -> list[dict]:
+    """第一个符合约定的构造函数的参数，值取源码默认值；依赖参数为 None（未填写）。
+    The arguments of the first compliant constructor with their source defaults;
+    dependencies are None (not filled in).
+    """
     ctor = compliant_constructors(interface)[0]
     result = []
     for p in ctor["arguments"]:
@@ -628,7 +708,10 @@ def seed_arguments(interface, cpp_class, templates, index):
     return result
 
 
-def next_instance_id(modules, base_name):
+def next_instance_id(modules: list, base_name: str) -> str:
+    """未被占用的实例 id：<类名小写>_<n>。
+    An unused instance id: <lower-case class name>_<n>.
+    """
     prefix = base_name.lower() + "_"
     names = {entry.get("id", "") for entry in modules if isinstance(entry, dict)}
     number = 0
@@ -637,11 +720,32 @@ def next_instance_id(modules, base_name):
     return prefix + str(number)
 
 
-def add_instance(config_path, module_name, modules, index, instance_id=None, source=None):
+def add_instance(
+    config_path: str | Path,
+    module_name: str,
+    modules: dict,
+    index: TypeIndex,
+    instance_id: str | None = None,
+    source: str | None = None,
+) -> str:
+    """在配置末尾添加一个实例，参数取源码默认值，依赖参数留空。
+    Add an instance at the end of the configuration, with source defaults and the
+    dependencies left unfilled.
+
+    Returns:
+        新实例的 id。
+        The id of the new instance.
+
+    Raises:
+        ConfigError: 模块是库，或 id 不合法。
+            The Module is a library, or the id is invalid.
+    """
     config = ConfigFile(config_path, source)
     module = select_module(modules, module_name)
     if not module["manifest"].standalone:
-        raise ConfigError(f"{module['id']} is a library dependency, not a Module instance")
+        raise ConfigError(
+            f"{module['id']} is a library (standalone: false) and cannot be instantiated"
+        )
     interface = source_interface(module["header"])
     identity = instance_id or next_instance_id(config.config.get("modules") or [], module["name"])
     problem = identifier_problem(identity)
@@ -683,13 +787,20 @@ def add_instance(config_path, module_name, modules, index, instance_id=None, sou
     return identity
 
 
-# -- field sync (G5) -------------------------------------------------------------
+# -- sync ------------------------------------------------------------------------
 
 
-def sync_config(config_path, modules, index, source=None):
-    """Add new fields/defaulted parameters and drop removed fields; return a diff."""
-    import difflib
+def sync_config(
+    config_path: str | Path, modules: dict, index: TypeIndex, source: str | None = None
+) -> str:
+    """按模块当前的构造函数和字段更新配置：补上新字段和带默认值的新参数，去掉已删除的字段。
+    Bring a configuration up to the Modules' current constructors and fields: add new
+    fields and defaulted parameters, drop removed fields.
 
+    Returns:
+        改动的 unified diff；没有改动时为空字符串。
+        A unified diff of the changes; empty when nothing changed.
+    """
     config = ConfigFile(config_path, source)
     before = config.text
     text = before
@@ -730,15 +841,28 @@ def sync_config(config_path, modules, index, source=None):
     )
 
 
-def _sync_item(item, interface, cpp_class, templates, index):
+def _sync_item(
+    item: CommentedMap,
+    interface: dict,
+    cpp_class: str,
+    templates: dict[str, str],
+    index: TypeIndex,
+) -> bool:
+    """同步一个实例；有改动时返回 True。
+    Sync one instance; True when anything changed.
+
+    参数名与任何构造函数都不完全一致时，只有恰好一个构造函数以这些参数名开头、其余参数都有
+    默认值，才在末尾补上其余参数。
+    When the parameter names match no constructor exactly, the remaining parameters are
+    appended only if exactly one constructor starts with these names and gives every
+    remaining parameter a default.
+    """
     args = item.get("args")
     names = [next(iter(a)) for a in args or [] if isinstance(a, dict) and a]
     ctors = compliant_constructors(interface)
     exact = [c for c in ctors if [p["name"] for p in c["arguments"]] == names]
     changed = False
     if not exact:
-        # New trailing parameters with defaults: extend when exactly one constructor
-        # starts with the configured names.
         extended = [
             c
             for c in ctors
@@ -774,9 +898,17 @@ def _sync_item(item, interface, cpp_class, templates, index):
     return changed
 
 
-def _sync_mapping(value, target, index, scope, defaults=None):
-    """Match a mapping to its struct; new fields take the parameter's designated
-    default when it names them, else the field's default member initializer."""
+def _sync_mapping(
+    value: CommentedMap,
+    target: str | None,
+    index: TypeIndex,
+    scope: tuple,
+    defaults=None,
+) -> bool:
+    """让映射与它的结构体一致；新字段取参数默认值中给出的值，否则取字段的默认成员初始化。
+    Match a mapping to its struct; a new field takes the value the parameter's designated
+    default gives it, else the field's default member initializer.
+    """
     entry = index.resolve(target, scope) if target else None
     if entry is None or entry.mapping_problem() is not None:
         return False
@@ -816,10 +948,15 @@ def _sync_mapping(value, target, index, scope, defaults=None):
     return changed
 
 
-def _sync_constructor_mapping(value, entry, index, spelled):
-    """A mapping keyed by constructor parameters: when it matches no constructor and
-    the class has exactly one, keep same-named values, add new parameters with
-    their defaults and drop removed ones."""
+def _sync_constructor_mapping(
+    value: CommentedMap, entry: ClassEntry, index: TypeIndex, spelled: str
+) -> bool:
+    """按构造参数写的映射：与任何构造函数都不一致且类只有一个构造函数时，保留同名的值、
+    补上新参数的默认值、去掉已删除的参数。
+    A mapping keyed by constructor parameters: when it matches no constructor and the class
+    has exactly one, keep same-named values, add new parameters with their defaults and
+    drop removed ones.
+    """
     constructors = [c for c in entry.constructors() if c]
     keys = list(value)
     if any([p["name"] for p in c] == keys for c in constructors) or len(constructors) != 1:
@@ -843,8 +980,15 @@ def _sync_constructor_mapping(value, entry, index, spelled):
 # -- modules.yaml ----------------------------------------------------------------
 
 
-def _request_lines(text):
-    """(line index, request) of each block-list item under modules:, and the list end."""
+def _request_lines(text: str):
+    """modules.yaml 的各行、modules 键、每个块列表项的 (行号, 节点)，以及列表节点。
+    The lines of modules.yaml, the modules key, the (line, node) of each block-list item
+    and the list node.
+
+    Raises:
+        ConfigError: modules 不是列表。
+            modules is not a list.
+    """
     lines = text.split("\n")
     root = yaml.compose(text, Loader=yaml.BaseLoader) if text.strip() else None
     if root is None:
@@ -857,8 +1001,15 @@ def _request_lines(text):
     return lines, key, items, node
 
 
-def add_module(modules_yaml, request_text):
-    """Append one request line; the rest of modules.yaml is untouched."""
+def add_module(modules_yaml: str | Path, request_text: str) -> None:
+    """在 modules.yaml 末尾加一行请求，其余内容不变；没写 ref 时为 @same-or-dev。
+    Append one request line to modules.yaml, leaving the rest unchanged; a request
+    without a ref gets @same-or-dev.
+
+    Raises:
+        ConfigError: 已经请求过这个模块，或 modules 是非空的流式列表。
+            The Module is already requested, or modules is a non-empty flow list.
+    """
     from xrobot.lock import request
 
     parsed = request(request_text, canonical=True)
@@ -895,8 +1046,14 @@ def add_module(modules_yaml, request_text):
     atomic_write(path, "\n".join(lines).rstrip("\n") + "\n")
 
 
-def remove_module(modules_yaml, identity):
-    """Delete one request line; the rest of modules.yaml is untouched."""
+def remove_module(modules_yaml: str | Path, identity: str) -> None:
+    """从 modules.yaml 删除一行请求，其余内容不变。
+    Delete one request line from modules.yaml, leaving the rest unchanged.
+
+    Raises:
+        ConfigError: 没有请求这个模块，或 modules 是流式列表。
+            The Module is not requested, or modules is a flow list.
+    """
     from xrobot.lock import request
 
     path = Path(modules_yaml)
@@ -926,8 +1083,14 @@ def remove_module(modules_yaml, identity):
     raise ConfigError(f"{identity} is not requested in {modules_yaml}")
 
 
-def format_files(paths, check=False):
-    """Rewrite files in the canonical layout; with ``check`` only report them."""
+def format_files(paths: list[Path], check: bool = False) -> list[Path]:
+    """把文件改写为规范写法；check 时只报告，不写。
+    Rewrite files in the canonical layout; with check only report them.
+
+    Returns:
+        不是规范写法的文件。
+        The files that are not in the canonical layout.
+    """
     changed = []
     for path in paths:
         path = Path(path)

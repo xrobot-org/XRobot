@@ -396,7 +396,7 @@ class Names(GenerationTestCase):
             "module_description: library\nstandalone: false\n=== END MANIFEST === */\n",
         )
         self.assertIn(
-            "team/Base is a non-standalone library, not an instance",
+            "team/Base is a library (standalone: false) and cannot be instantiated",
             self.error({"module": "Base", "id": "b"}),
         )
 

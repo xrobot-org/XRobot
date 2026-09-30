@@ -412,7 +412,9 @@ class Generator:
             )
         module = select_module(self.modules, entry["module"])
         if not module["manifest"].standalone:
-            raise ValueError(f"{module['id']} is a non-standalone library, not an instance")
+            raise ValueError(
+                f"{module['id']} is a library (standalone: false) and cannot be instantiated"
+            )
         if module["name"] in selected and selected[module["name"]]["id"] != module["id"]:
             raise ValueError(
                 f"{selected[module['name']]['id']} and {module['id']} both define the global "
