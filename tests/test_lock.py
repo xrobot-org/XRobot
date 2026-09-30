@@ -9,8 +9,9 @@ from unittest import mock
 
 import requests
 import yaml
-from fixtures import BspTestCase, UpstreamTestCase, manifest_block, run_git
+from fixtures import BspTestCase, TempDirTestCase, UpstreamTestCase, manifest_block, run_git
 
+from xrobot.git import checkout_state, head_commit
 from xrobot.lock import read_modules_yaml, repository_identity, same_repository, write_cmake
 from xrobot.module_parser import discover_modules, manifest_from_text, select_module
 from xrobot.source_manager import (
@@ -286,6 +287,37 @@ class MinimalChange(UpstreamTestCase):
         self.assertEqual(self.sync()["modules"]["team/A"]["commit"], self.first["team/A"]["commit"])
 
 
+class GitQueries(TempDirTestCase):
+    def setUp(self):
+        super().setUp()
+        self.repo = self.tmp / "repo"
+        self.repo.mkdir()
+        run_git(self.repo, "init", "-q", "-b", "main")
+        (self.repo / "a.txt").write_text("a\n", encoding="utf-8")
+        run_git(self.repo, "add", "-A")
+        run_git(self.repo, "commit", "-q", "-m", "one")
+        self.commit = run_git(self.repo, "rev-parse", "HEAD")
+
+    def test_head_commit_reads_a_detached_head_and_asks_git_on_a_branch(self):
+        self.assertEqual(head_commit(self.repo), self.commit)  # on branch main: git
+        run_git(self.repo, "checkout", "-q", "--detach")
+        with mock.patch("xrobot.git.subprocess.run") as run:
+            self.assertEqual(head_commit(self.repo), self.commit)
+        run.assert_not_called()
+        empty = self.tmp / "empty"
+        empty.mkdir()
+        run_git(empty, "init", "-q")
+        self.assertIsNone(head_commit(empty))
+
+    def test_checkout_state_reports_commit_branch_and_changes(self):
+        self.assertEqual(checkout_state(self.repo), (self.commit, "main", False))
+        (self.repo / "b.txt").write_text("new\n", encoding="utf-8")
+        self.assertEqual(checkout_state(self.repo), (self.commit, "main", True))
+        (self.repo / "b.txt").unlink()
+        run_git(self.repo, "checkout", "-q", "--detach")
+        self.assertEqual(checkout_state(self.repo), (self.commit, None, False))
+
+
 class LocalWork(UpstreamTestCase):
     def setUp(self):
         super().setUp()
@@ -301,6 +333,33 @@ class LocalWork(UpstreamTestCase):
         with self.assertRaisesRegex(ValueError, "team/A has uncommitted changes; they are kept"):
             self.sync(update=[])
         self.assertEqual(header.read_bytes(), before)
+
+    def test_uncommitted_changes_at_the_locked_commit_are_left_alone(self):
+        header = self.modules / "team/A/A.hpp"
+        header.write_bytes(header.read_bytes() + b"\n// local work\n")
+        before = header.read_bytes()
+        for flags in ({}, {"frozen": True}):
+            with self.subTest(flags=flags):
+                self.assertEqual(self.sync(**flags)["modules"]["team/A"]["commit"], self.locked)
+                self.assertEqual(header.read_bytes(), before)
+
+    def test_a_checkout_at_its_locked_commit_is_not_queried(self):
+        import xrobot.lock as lock_module
+
+        calls = []
+        real = lock_module.git
+
+        def spy(folder, *args, **kwargs):
+            calls.append(args[0])
+            return real(folder, *args, **kwargs)
+
+        with (
+            mock.patch.object(lock_module, "git", spy),
+            mock.patch.object(lock_module, "checkout_state") as state,
+        ):
+            self.sync(frozen=True)
+        state.assert_not_called()
+        self.assertEqual([c for c in calls if c in ("status", "symbolic-ref", "rev-parse")], [])
 
     def test_an_unpushed_local_commit_is_not_moved(self):
         folder = self.modules / "team/A"

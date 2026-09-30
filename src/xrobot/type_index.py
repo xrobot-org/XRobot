@@ -1169,6 +1169,47 @@ class TypeIndex:
             spelling = spelling[:start] + text + spelling[end:]
         return spelling
 
+    def derives_from(self, source: str, target: str) -> bool | None:
+        """类型 source 是否就是 target，或公有派生自 target。
+        Whether type source is target or derives publicly from it.
+
+        Returns:
+            两个类型和中间的基类都在索引中时为 True 或 False；否则为 None（无法判断）。
+            True or False when both types and the bases between them are in the index;
+            None otherwise (it cannot be told).
+        """
+        try:
+            entry, wanted = self.resolve(source), self.resolve(target)
+        except ValueError:
+            return None
+        if entry is None or wanted is None:
+            return None
+        return self._derives(entry, wanted, 0)
+
+    def _derives(self, entry: ClassEntry, wanted: ClassEntry, depth: int) -> bool | None:
+        """entry 是否就是 wanted 或公有派生自它；有基类无法定位时为 None。
+        Whether entry is wanted or derives publicly from it; None when a base cannot be
+        located.
+        """
+        if entry.path == wanted.path:
+            return True
+        if depth > 8:
+            return None
+        unknown = False
+        for access, base in entry.base_spellings():
+            if access != "public":
+                continue
+            parent = self.resolve(base, entry.path[:-1])
+            if parent is None:
+                unknown = True
+                continue
+            found = self._derives(parent, wanted, depth + 1)
+            if found:
+                return True
+            if found is None:
+                unknown = True
+        return None if unknown else False
+
     def provides_monitor(self, entry: ClassEntry, _depth: int = 0) -> bool | None:
         """entry 或其公有基类是否声明了公有的 OnMonitor。
         Whether entry or a public base declares a public OnMonitor.

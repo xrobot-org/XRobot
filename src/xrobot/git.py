@@ -1,12 +1,19 @@
 """xrobot 调用 git 的唯一入口：不交互、有超时、出错时给出一行信息。
 The one way xrobot runs git: non-interactive, with a timeout, and a one-line error.
+
+每启动一次 git 进程约需 20 ms（Windows），而每个模块检出都要查询，所以最常见的查询先读
+.git 中的文件，读不出结果时再调用 git。
+Starting git takes about 20 ms (Windows) and every Module checkout is queried, so the most
+common query reads the file in .git first and runs git only when that gives no answer.
 """
 
 import os
+import re
 import subprocess
 from pathlib import Path
 
 GIT_TIMEOUT = 300
+_COMMIT = re.compile(r"[0-9a-f]{40}")
 
 
 def git(path: str | Path | None, *args: str, check: bool = True) -> str | None:
@@ -40,3 +47,42 @@ def git(path: str | Path | None, *args: str, check: bool = True) -> str | None:
     if check and result.returncode:
         raise ValueError(f"Git failed{where}: {' '.join(args)}\n{result.stderr.strip()}")
     return result.stdout.strip() if result.returncode == 0 else None
+
+
+def head_commit(folder: str | Path) -> str | None:
+    """检出的 HEAD commit；仓库还没有 commit 时为 None。
+    The HEAD commit of a checkout; None while the repository has no commit.
+
+    分离 HEAD（模块检出的常态）直接读 .git/HEAD；在分支上或 .git 是文件时调用 git。
+    A detached HEAD, the usual state of a Module checkout, is read from .git/HEAD; on a
+    branch, or when .git is a file, git is run.
+    """
+    head = Path(folder) / ".git" / "HEAD"
+    if head.is_file():
+        text = head.read_text(encoding="utf-8", errors="replace").strip()
+        if _COMMIT.fullmatch(text):
+            return text
+    return git(folder, "rev-parse", "--verify", "--quiet", "HEAD", check=False) or None
+
+
+def checkout_state(folder: str | Path) -> tuple[str | None, str | None, bool]:
+    """一次 git 调用得到检出的 HEAD commit、所在分支和是否有未提交的修改。
+    The HEAD commit, the branch and whether there are uncommitted changes, from one git run.
+
+    Returns:
+        (commit 或 None, 分支名或 None（分离 HEAD）, 有修改或未跟踪的文件)。
+        (commit or None, branch name or None for a detached HEAD, whether there are
+        changes or untracked files).
+    """
+    output = git(folder, "status", "--porcelain=v2", "--branch")
+    commit, branch, dirty = None, None, False
+    for line in output.splitlines():
+        if line.startswith("# branch.oid "):
+            value = line.split(" ", 2)[2]
+            commit = value if _COMMIT.fullmatch(value) else None
+        elif line.startswith("# branch.head "):
+            value = line.split(" ", 2)[2]
+            branch = None if value == "(detached)" else value
+        elif not line.startswith("#"):
+            dirty = True
+    return commit, branch, dirty

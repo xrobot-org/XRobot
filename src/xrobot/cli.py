@@ -155,7 +155,7 @@ def cmd_setup(args: argparse.Namespace) -> None:
                 sys.stdout.write(diff)
     count = validate_all(project, modules, index)
     selected = project.selected_config()
-    generate(project, selected)
+    generate(project, selected, modules, index)
     print(
         f"Checked {_count(count, 'config')}; generated User/xrobot_main.hpp for "
         f"{project.relative(selected)}"

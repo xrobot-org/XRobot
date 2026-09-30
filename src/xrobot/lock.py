@@ -31,7 +31,7 @@ from urllib.request import url2pathname
 
 import yaml
 
-from xrobot.git import git
+from xrobot.git import checkout_state, git, head_commit
 from xrobot.module_parser import manifest_from_text
 from xrobot.project import Project, atomic_write
 from xrobot.source_manager import SourceManager, SourceUnavailable, load_yaml, validate_id
@@ -63,10 +63,15 @@ def _fetch(folder: Path, *args: str) -> None:
 
 
 def _has_commit(folder: Path, commit: str | None) -> bool:
-    """folder 中的检出是否已含有 commit。
-    Whether the checkout in folder already holds commit.
+    """folder 中的检出是否已含有 commit；检出正在这个 commit 上时不调用 git。
+    Whether the checkout in folder already holds commit; git is not run when the checkout
+    is at that commit.
     """
-    return bool(commit) and git(folder, "cat-file", "-t", commit, check=False) == "commit"
+    if not commit:
+        return False
+    if head_commit(folder) == commit:
+        return True
+    return git(folder, "cat-file", "-t", commit, check=False) == "commit"
 
 
 def _follows_the_bsp(req: dict, parent_context: tuple | list | None) -> bool:
@@ -553,21 +558,28 @@ class Resolver:
         Check out every resolved commit; local work is never discarded, and Modules already
         switched are moved back on an error.
 
+        已在锁定 commit 的检出不动，其中未提交的修改（开发模块时的常态）保持原样。
+        A checkout already at its commit is left alone, and its uncommitted changes (the
+        normal state while developing a Module) stay as they are.
+
         Raises:
-            ValueError: 模块有未提交的修改或未推送的提交、两个包定义同名模块，或检出失败。
-                A Module has uncommitted changes or unpushed commits, two packages define
-                the same Module, or a checkout fails.
+            ValueError: 要移动的模块有未提交的修改或未推送的提交、两个模块定义同名的类，或
+                检出失败。
+                A Module that has to move has uncommitted changes or unpushed commits, two
+                Modules define the same class, or a checkout fails.
         """
         before = {}
         for identity, entry in self.resolved.items():
             folder = self.prepared[identity]["folder"]
-            head = git(folder, "rev-parse", "--verify", "HEAD", check=False)
-            if git(folder, "status", "--porcelain"):
+            if head_commit(folder) == entry["commit"]:
+                continue
+            head, branch, dirty = checkout_state(folder)
+            if dirty:
                 raise ValueError(
                     f"{identity} has uncommitted changes; they are kept, but the lock cannot "
                     "move it. Commit and push them, or discard them, first"
                 )
-            unpublished = head and head != entry["commit"] and not _published(folder, head)
+            unpublished = head and not _published(folder, head)
             if unpublished and not self.offline:
                 # 没有 fetch 过时，远端分支可能还不包含已推送的提交。
                 # Without a fetch the remote branches may not yet show a pushed commit.
@@ -581,26 +593,21 @@ class Resolver:
                     f"`xrobot setup --update {identity}`"
                 )
             gitdir = Path(git(folder, "rev-parse", "--absolute-git-dir"))
-            before[identity] = (
-                head,
-                git(folder, "symbolic-ref", "--quiet", "--short", "HEAD", check=False),
-                (gitdir / "index").exists(),
-            )
+            before[identity] = (head, branch, (gitdir / "index").exists())
         by_name = {}
         for identity in self.resolved:
             name = identity.rsplit("/", 1)[-1]
             if name in by_name and by_name[name] != identity:
                 raise ValueError(
-                    f"Source packages {by_name[name]} and {identity} define the same global "
-                    "Module; choose one implementation"
+                    f"{by_name[name]} and {identity} both define the global class {name}; use "
+                    "only one of them"
                 )
             by_name[name] = identity
         applied = []
         try:
-            for identity, entry in self.resolved.items():
+            for identity in before:
+                entry = self.resolved[identity]
                 folder = self.prepared[identity]["folder"]
-                if before[identity][0] == entry["commit"]:
-                    continue
                 applied.append(identity)
                 if not _has_commit(folder, entry["commit"]):
                     if self.offline:

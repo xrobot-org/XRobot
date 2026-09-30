@@ -13,7 +13,7 @@ import yaml
 
 from xrobot import __version__
 from xrobot.constructor_model import enrich_interface
-from xrobot.git import git
+from xrobot.git import head_commit
 from xrobot.source_syntax import extract_interface
 
 MANIFEST_PATTERN = re.compile(
@@ -163,13 +163,13 @@ def _locked_head(folder: Path) -> str:
         ValueError: git 读不出 HEAD。
             git cannot read HEAD.
     """
-    try:
-        return git(folder, "rev-parse", "--verify", "HEAD")
-    except ValueError as error:
-        raise ValueError(f"cannot read the commit of {folder}: {error}") from error
+    head = head_commit(folder)
+    if head is None:
+        raise ValueError(f"cannot read the commit of {folder}")
+    return head
 
 
-def _module_record(identity: str, folder: Path) -> dict:
+def module_record(identity: str, folder: Path) -> dict:
     """一个已检出模块的记录：id、类名、目录、主头文件和 manifest。
     The record of a checked-out Module: id, class name, folder, main header and manifest.
     """
@@ -272,7 +272,7 @@ def discover_modules(directory: Path, lock_path: str | Path) -> dict[str, dict]:
         if state["status"] != "ok":
             problems.append(lock_error(state))
             continue
-        result[state["id"]] = _module_record(state["id"], state["folder"])
+        result[state["id"]] = module_record(state["id"], state["folder"])
     if problems:
         raise ValueError("\n".join(problems))
     return result

@@ -379,6 +379,36 @@ def is_dependency(p: dict) -> bool:
     return p["default"] is None and bool(pointers or reference)
 
 
+def binding_candidates(
+    index: TypeIndex | None, target: str, named: dict[str, str], dependency: bool = True
+) -> list[str]:
+    """参数可以写的名字：类型与 target 相同或能确定公有派生自它的对象。
+    The names a parameter can take: objects whose type is target's or certainly derives
+    publicly from it.
+
+    指针参数的候选写成 &名字；依赖指针最后加上 nullptr（不使用这个可选依赖）。
+    Candidates of a pointer parameter are written &name; a dependency pointer also gets
+    nullptr last (the optional dependency is not used).
+
+    Args:
+        named: 名字到对象类型的映射（注册名、排在前面的实例），按候选顺序。
+            Object types by name (registrations, earlier instances), in candidate order.
+    """
+    base, _, pointers, _ = type_shape(target)
+    result = []
+    for name, cpp_type in named.items():
+        source, _, source_pointers, _ = type_shape(cpp_type)
+        if source != base and not (index is not None and index.derives_from(source, base)):
+            continue
+        if len(source_pointers) == len(pointers):
+            result.append(name)
+        elif not source_pointers and len(pointers) == 1:
+            result.append("&" + name)
+    if dependency and len(pointers) == 1:
+        result.append("nullptr")
+    return result
+
+
 def explicit_expression_type(value: object) -> str | None:
     """值的写法本身给出的类型：显式转换、带类型的花括号，以及少量可移植的字面量。
     The type a value's spelling states itself: an explicit cast, a typed brace

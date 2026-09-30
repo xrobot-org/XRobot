@@ -17,6 +17,7 @@ from xr_syntax.cpp import identifier_occurrences
 from xrobot.config import IDENTIFIER, ConfigError, identifier_problem, load_config, value_text
 from xrobot.constructor_model import (
     ValueChecker,
+    binding_candidates,
     constructor_for,
     convert,
     initializer_tree,
@@ -35,7 +36,7 @@ from xrobot.source_syntax import (
     parse_document,
     split_arguments,
 )
-from xrobot.type_index import ClassEntry, TypeIndex, module_headers
+from xrobot.type_index import TypeIndex, module_headers
 
 HELPERS = """namespace xrobot_generated {
 // Implicit conversion of a configuration value to an arithmetic parameter type;
@@ -221,57 +222,6 @@ def read_registrations(path: str | Path) -> list[dict]:
     return records
 
 
-class _Relation:
-    """由已加载模块头文件能确定的类型关系。
-    Type relations that the loaded Module headers settle for certain.
-    """
-
-    def __init__(self, index: TypeIndex) -> None:
-        self.index = index
-
-    def certainly_unrelated(self, source: str, target: str) -> bool:
-        """只有能确定 source 不能转换为 target 时才为 True。
-        True only when source can be shown not to convert to target.
-        """
-        sb, _, sp, _ = type_shape(source)
-        tb, _, tp, _ = type_shape(target)
-        if sb == tb:
-            return False
-        if len(sp) != len(tp):
-            return False  # pointer adaptation is decided by the generator's address-of rule
-        try:
-            entry = self.index.resolve(sb)
-            wanted = self.index.resolve(tb)
-        except ValueError:
-            return False
-        if entry is None or wanted is None:
-            return False
-        return self._derives(entry, wanted, 0) is False
-
-    def _derives(self, entry: ClassEntry, wanted: ClassEntry, depth: int) -> bool | None:
-        """entry 是否公有派生自 wanted；有基类无法定位时为 None。
-        Whether entry derives publicly from wanted; None when a base cannot be located.
-        """
-        if entry.path == wanted.path:
-            return True
-        if depth > 8:
-            return None
-        unknown = False
-        for access, base in entry.base_spellings():
-            if access != "public":
-                continue
-            parent = self.index.resolve(base, entry.path[:-1])
-            if parent is None:
-                unknown = True
-                continue
-            found = self._derives(parent, wanted, depth + 1)
-            if found:
-                return True
-            if found is None:
-                unknown = True
-        return None if unknown else False
-
-
 class Generator:
     """把一份配置渲染成生成头文件；错误收集后一次报出。
     Render one configuration as the generated header; errors are collected and reported
@@ -282,7 +232,6 @@ class Generator:
         self.modules = modules
         self.index = index or TypeIndex.for_modules(modules)
         self.checker = ValueChecker(self.index)
-        self.relation = _Relation(self.index)
         self._module_classes = {m["name"] for m in self.modules.values()}
 
     def is_class_name(self, name: str) -> bool:
@@ -550,7 +499,7 @@ class Generator:
                         # A bare name bound to a pointer parameter passes the object's address.
                         expression = f"std::addressof({name})"
                         source += "*"
-                    if self.relation.certainly_unrelated(source, target):
+                    if self._certainly_unrelated(source, target):
                         raise ValueError(
                             f"{field}: {reference_name} is a {visible[reference_name]}, which does not convert to {target}"
                         )
@@ -579,11 +528,23 @@ class Generator:
         return checks, expr
 
     def _candidates(self, target: str, visible: dict[str, str]) -> list[str]:
-        """可绑定到 target 类型的名字，用于报错提示。
-        The names whose type matches target, for error hints.
+        """可绑定到 target 的名字，用于报错提示；规则与 describe 给插件的候选相同。
+        The names that bind to target, for error hints; the same rule as the candidates
+        describe gives the editor.
         """
-        tb = type_shape(target)[0]
-        return [name for name, cpp_type in visible.items() if type_shape(cpp_type)[0] == tb]
+        return binding_candidates(self.index, target, visible)
+
+    def _certainly_unrelated(self, source: str, target: str) -> bool:
+        """只有能确定 source 类型的对象不能转换为 target 时才为 True。
+        True only when an object of type source can be shown not to convert to target.
+        """
+        sb, _, sp, _ = type_shape(source)
+        tb, _, tp, _ = type_shape(target)
+        if sb == tb or len(sp) != len(tp):
+            # 指针的转换由生成器的取地址规则决定。
+            # Pointer adaptation is decided by the generator's address-of rule.
+            return False
+        return self.index.derives_from(sb, tb) is False
 
     def _assemble(
         self,
@@ -812,13 +773,23 @@ def _mark_fresh(project: Project) -> None:
         os.utime(project.header, ns=(target, target))
 
 
-def generate(project: Project, config_path: str | Path | None = None) -> str:
+def generate(
+    project: Project,
+    config_path: str | Path | None = None,
+    modules: dict | None = None,
+    index: TypeIndex | None = None,
+) -> str:
     """为 config_path（缺省为当前选中的产品）生成 User/xrobot_main.hpp。
     Generate User/xrobot_main.hpp for config_path (default: the selected product).
 
     内容不变时不重写，但修改时间仍更新到所有输入之后，使构建的检查认为它是最新的。
     Unchanged content is not rewritten, but the modification time still moves after every
     input so the build's check accepts the header.
+
+    Args:
+        modules, index: 调用方已读取的模块和类型索引（setup 检查全部配置时已建好）。
+            Modules and type index the caller already has (setup builds them to check
+            every configuration).
 
     Raises:
         ConfigError: 配置不存在或有错。
@@ -827,9 +798,9 @@ def generate(project: Project, config_path: str | Path | None = None) -> str:
     config_path = Path(config_path) if config_path else project.selected_config()
     if not config_path.is_file():
         raise ConfigError(f"{project.relative(config_path)} does not exist")
-    modules = load_modules(project)
+    modules = modules if modules is not None else load_modules(project)
     registrations = read_registrations(project.entry())
-    code = generate_code(project, config_path, modules, registrations)
+    code = generate_code(project, config_path, modules, registrations, index)
     atomic_write(project.header, code)
     _mark_fresh(project)
     return code

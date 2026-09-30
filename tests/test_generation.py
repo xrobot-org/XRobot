@@ -305,15 +305,18 @@ class Conversions(GenerationTestCase):
 class Dependencies(GenerationTestCase):
     def test_unknown_name_lists_candidates_of_the_parameter_type(self):
         message = self.error(probe(port="missing"))
+        # sub is a SubPort (public base Port); hidden derives privately and does not bind.
         self.assertIn(
             "xrobot.yaml: probe.args.port: missing is neither an XR_REGISTER name nor an earlier "
-            "instance id; candidates of type Port&: port",
-            message,
+            "instance id; candidates of type Port&: port, sub\n",
+            message + "\n",
         )
 
     def test_unknown_address_for_a_pointer_is_rejected(self):
         self.assertIn(
-            "probe.args.optional: missing is neither", self.error(probe(optional="&missing"))
+            "probe.args.optional: missing is neither an XR_REGISTER name nor an earlier instance "
+            "id; candidates of type Port*: &port, &sub, nullptr\n",
+            self.error(probe(optional="&missing")) + "\n",
         )
 
     def test_self_and_later_instances_are_rejected(self):
