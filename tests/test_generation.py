@@ -91,6 +91,19 @@ class HeaderShape(GenerationTestCase):
         self.assertEqual(self.project.header_selection(), self.root / "User/xrobot.yaml")
         self.assertEqual(self.project.header_state()["status"], "fresh")
 
+    def test_types_from_included_module_headers_are_checked_and_tracked(self):
+        self.module(
+            "Bar",
+            '#include "detail/Config.hpp"\nclass Bar { public:\n'
+            "  explicit Bar(DetailConfig config = {}) { (void)config; } };",
+            extra_headers={"detail/Config.hpp": "#pragma once\nstruct DetailConfig { int rate; };"},
+        )
+        code = self.code({"module": "Bar", "id": "bar", "args": [{"config": {"rate": "200"}}]})
+        self.assertIn(".rate = 200", code)
+        self.assertIn('// xrobot: depends "../Modules/team/Bar/detail/Config.hpp"', code)
+        message = self.error({"module": "Bar", "id": "bar", "args": [{"config": {"speed": "1"}}]})
+        self.assertIn("bar.args.config: missing rate; unknown speed", message)
+
     def test_entry_function_takes_only_consumed_registrations(self):
         code = self.code(led())
         self.assertIn("[[noreturn]] static inline void XRobotMain(\n    LibXR::GPIO& pin)\n{", code)

@@ -16,6 +16,7 @@ each once.
 from __future__ import annotations
 
 import bisect
+import os
 import re
 from collections.abc import Iterable, Sequence
 from pathlib import Path
@@ -60,6 +61,7 @@ _SPECIFIERS = {
     "virtual",
 }
 _ATTRIBUTES = r"(?:\[\[[^\]]*\]\]\s*|alignas\s*\([^)]*\)\s*)*"
+_QUOTED_INCLUDE = re.compile(r'^\s*#\s*include\s*"([^"]+)"', re.M)
 
 
 def _strip_type(text: str) -> tuple[str, ...] | None:
@@ -737,14 +739,15 @@ class TypeIndex:
 
     @classmethod
     def for_modules(cls, modules: dict) -> TypeIndex:
-        """一组模块全部头文件的索引；报错时头文件写作 owner/Repo/文件名。
+        """一组模块全部头文件的索引；报错时头文件写作 owner/Repo/模块内路径。
         The index of every header of a set of Modules; error messages name a header as
-        owner/Repo/file.
+        owner/Repo/<path in the Module>.
         """
         labels = {}
         for module in modules.values():
+            folder = Path(module["path"])
             for header in _headers_of(module):
-                labels[header] = f"{module['id']}/{header.name}"
+                labels[header] = f"{module['id']}/{header.relative_to(folder).as_posix()}"
         return cls(list(labels), labels)
 
     def _text(self, path: Path) -> str:
@@ -1114,10 +1117,32 @@ def _scan_namespace(items: Sequence[Token]) -> _Layout:
 
 
 def _headers_of(module: dict) -> list[Path]:
-    """一个模块根目录下的头文件。
-    The headers in the root folder of one Module.
+    """一个模块的头文件：根目录下的 *.hpp，以及它们经 #include "..." 引入、位于模块目录内的头文件。
+    The headers of one Module: the *.hpp in its root folder and the headers inside the
+    Module folder that they bring in with #include "...".
+
+    引号中的路径先相对包含它的文件所在目录查找，再相对模块根目录查找，与编译器相同。
+    A quoted path is looked up next to the including file first and then in the Module
+    root, as the compiler does.
     """
-    return sorted(Path(module["path"]).glob("*.hpp"))
+    folder = Path(module["path"])
+    root = folder.resolve()
+    pending = sorted(folder.glob("*.hpp"))
+    seen: set[Path] = set()
+    while pending:
+        path = pending.pop()
+        if path in seen:
+            continue
+        seen.add(path)
+        text = path.read_text(encoding="utf-8", errors="surrogateescape")
+        for name in _QUOTED_INCLUDE.findall(text):
+            for base in (path.parent, folder):
+                candidate = Path(os.path.normpath(base / name))
+                if candidate.is_file():
+                    if candidate.resolve().is_relative_to(root):
+                        pending.append(candidate)
+                    break
+    return sorted(seen)
 
 
 def module_headers(modules: dict) -> list[Path]:

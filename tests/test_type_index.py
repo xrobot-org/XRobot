@@ -4,7 +4,7 @@ import unittest
 
 from fixtures import TempDirTestCase
 
-from xrobot.type_index import TypeIndex
+from xrobot.type_index import TypeIndex, module_headers
 
 FIELDS = """#pragma once
 #include <functional>
@@ -217,6 +217,23 @@ class Lookup(TypeIndexTestCase):
             "Type Twice is defined in several Module headers: team/A/Twice.hpp, team/B/Twice.hpp",
         ):
             index.resolve("Twice")
+
+    def test_module_headers_include_the_module_headers_they_bring_in(self):
+        folder = self.tmp / "Modules/team/Bar"
+        self.write(folder / "Bar.hpp", '#include "detail/Config.hpp"\n#include "Motor.hpp"\n')
+        self.write(folder / "detail/Config.hpp", '#include "Common.hpp"\nstruct Config {};\n')
+        self.write(folder / "detail/Common.hpp", '#include "../../Other/Other.hpp"\n')
+        self.write(folder / "detail/Unused.hpp", "struct Unused {};\n")
+        self.write(self.tmp / "Modules/team/Other/Other.hpp", "struct Other {};\n")
+        modules = {"team/Bar": {"id": "team/Bar", "path": folder}}
+        self.assertEqual(
+            [p.relative_to(folder).as_posix() for p in module_headers(modules)],
+            ["Bar.hpp", "detail/Common.hpp", "detail/Config.hpp"],
+        )
+        index = TypeIndex.for_modules(modules)
+        self.assertEqual(index.resolve("Config").header, (folder / "detail/Config.hpp").resolve())
+        self.assertIsNone(index.resolve("Unused"))
+        self.assertIsNone(index.resolve("Other"))
 
     def test_classes_local_to_a_function_are_not_indexed(self):
         index = self.index(
