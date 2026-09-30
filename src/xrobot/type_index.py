@@ -337,8 +337,10 @@ class _Layout:
         """空的声明表，扫描类体或命名空间体时填写。
         An empty declaration table, filled while a class or namespace body is scanned.
         """
-        self.fields: list[tuple[str, str, str]] = []  # (name, type spelling, access)
-        self.field_defaults: dict[str, str] = {}  # default member initializer text
+        # (名字, 类型写法, 访问权限)，以及默认成员初始化器的文本。
+        # (name, type spelling, access), and the text of default member initializers.
+        self.fields: list[tuple[str, str, str]] = []
+        self.field_defaults: dict[str, str] = {}
         self.conditional_fields: list[str] = []
         self.has_union = False
         self.has_virtual = False
@@ -349,7 +351,7 @@ class _Layout:
         # functions.
         self.names: dict[str, str] = {}
         self.aliases: dict[str, tuple[int, int]] = {}
-        self.monitor: str | None = None  # 'public' / 'conditional' / None
+        self.monitor: str | None = None  # 取值 / values: 'public', 'conditional', None
 
 
 def _scan_body(
@@ -414,7 +416,7 @@ def _scan_body(
                     )
                     and previous.text != ">"
                 ):
-                    body_close = close  # function body: the member ends here
+                    body_close = close  # 函数体：成员到此结束 / function body: the member ends here
                     break
                 j = close + 1
                 continue
@@ -480,7 +482,7 @@ def _declared_name(member: Sequence[Token]) -> str | None:
         if token.text == "<" and k and member[k - 1].kind == "identifier":
             k = close_token(member, k) + 1
             continue
-        if token.text == "[":  # [[attribute]]
+        if token.text == "[":  # [[属性]] / [[attribute]]
             k = close_token(member, k) + 1
             continue
         if token.text in ("alignas", "__attribute__") and k + 1 < len(member):
@@ -545,7 +547,7 @@ def _classify(
         if name is not None and opening is not None:
             layout.names[name] = access
         if opening is None:
-            return  # forward declaration or elaborated member type handled below
+            return  # 前向声明，或由下方处理的详述成员类型 / forward declaration or elaborated member type handled below
         close = close_token(member, opening)
         if first == "enum" and texts[1] not in ("class", "struct"):
             # 非限定枚举的枚举值在外层作用域可见。
@@ -707,7 +709,9 @@ def _record_fields(
         name = part[name_index].text
         layout.fields.append((name, base_type, access))
         rest = part[name_index + 1 :]
-        if rest and rest[0].text == ":":  # bit-field width, then an optional initializer
+        # 位域宽度，然后是可选的初始化器。
+        # A bit-field width, then an optional initializer.
+        if rest and rest[0].text == ":":
             rest = next((rest[k:] for k in range(len(rest)) if rest[k].text in ("=", "{")), [])
         if rest and rest[0].text == "=" and len(rest) > 1:
             layout.field_defaults[name] = header.text[rest[1].start : rest[-1].end].strip()
@@ -742,7 +746,7 @@ class ClassEntry:
         self.path = path
         self.kind = kind
         self.view = view
-        self._body_range = body_range  # token indices of '{' and '}'
+        self._body_range = body_range  # '{' 和 '}' 的记号下标 / token indices of '{' and '}'
         self._head_range = head_range
         self.template_parameters = template_parameters or []
         self._layout: _Layout | None = None
@@ -1053,7 +1057,7 @@ class TypeIndex:
             for alias, (start, end) in layout.aliases.items():
                 self._aliases.setdefault(scope + (alias,), (header, start, end))
 
-    # -- lookup -------------------------------------------------------------
+    # -- 查找 / lookup -------------------------------------------------------
 
     def _class_at(self, path: tuple[str, ...]) -> ClassEntry | None:
         """路径处定义的类。
@@ -1163,7 +1167,7 @@ class TypeIndex:
                 Outer<T>::Param), which replace the template parameters of the enclosing
                 class templates.
         """
-        scopes = []  # (declared names, spelled prefix), innermost first
+        scopes = []  # (声明的名字, 写出的前缀)，由内向外 / (declared names, spelled prefix), innermost first
         replacements: dict[str, str] = {}
         spelled, path = entry_spelled, entry.path
         while path:

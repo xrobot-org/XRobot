@@ -20,6 +20,7 @@ NULL_SCALARS = ("", "~", "null", "Null", "NULL")
 TOP_LEVEL = ("modules", "settings", "constexprs", "constexpr_namespace", "constexpr_includes")
 IDENTIFIER = r"[A-Za-z_][A-Za-z_0-9]*"
 
+# C++20 关键字和替代记号；拼写与之相同的实例 id 或登记名不能成为 C++ 对象名。
 # C++20 keywords and alternative tokens; an instance id or registration name
 # spelled like one of these cannot become a C++ object name.
 CPP_KEYWORDS = frozenset(
@@ -123,6 +124,7 @@ CPP_KEYWORDS = frozenset(
     ]
 )
 
+# LibXR、C 库或生成的头文件定义的宏；这些名字的对象经过预处理后不复存在。
 # Macros that LibXR, the C library or the generated header define; an object
 # with one of these names does not survive preprocessing.
 RESERVED_MACROS = frozenset(
@@ -446,7 +448,9 @@ def _check_value(value: object, field: str, errors: list[str]) -> None:
     Check a value and its children, appending errors to errors.
     """
     if value is None:
-        return  # A saved, unfilled configuration is valid; generation is not.
+        # 保存未填完的配置是合法的，生成则不行。
+        # A saved, unfilled configuration is valid; generation is not.
+        return
     if isinstance(value, dict):
         for name, child in value.items():
             if not re.fullmatch(IDENTIFIER, name):

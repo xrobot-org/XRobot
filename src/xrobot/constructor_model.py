@@ -636,7 +636,9 @@ class ValueChecker:
         Look types up in index; with None every type counts as not located.
         """
         self.index = index
-        self.checks: list[str] = []  # static_assert declarations for the value being rendered
+        # 正在渲染的值需要的 static_assert 声明。
+        # static_assert declarations for the value being rendered.
+        self.checks: list[str] = []
 
     def _locate(self, cpp_type: str | None, scope: tuple[str, ...]) -> ClassEntry | None:
         """类型写法指向的已索引的类。

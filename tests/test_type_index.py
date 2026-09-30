@@ -1,4 +1,6 @@
-"""Reading class definitions from Module headers (xrobot.type_index)."""
+"""从模块头文件读取类定义（xrobot.type_index）。
+Reading class definitions from Module headers (xrobot.type_index).
+"""
 
 import unittest
 
@@ -36,16 +38,27 @@ struct Fields {
 
 
 class TypeIndexTestCase(TempDirTestCase):
+    """从给定头文件文本建立类型索引的辅助。
+    Helpers that build a type index from header texts.
+    """
+
     def setUp(self):
         super().setUp()
         self.root = self.tmp
 
     def index(self, *texts):
+        """用这些头文件文本建立类型索引。
+        Build a type index from these header texts.
+        """
         paths = [self.write(f"H{i}.hpp", text) for i, text in enumerate(texts)]
         return TypeIndex(paths)
 
 
 class Fields(TypeIndexTestCase):
+    """数据成员和默认成员初始化。
+    Data members and default member initializers.
+    """
+
     def test_data_members_are_read_in_declaration_order(self):
         entry = self.index(FIELDS).resolve("ns::Fields")
         self.assertEqual(
@@ -119,6 +132,10 @@ class Fields(TypeIndexTestCase):
 
 
 class Aggregates(TypeIndexTestCase):
+    """是否是聚合体，以及映射无法检查的原因。
+    Whether a class is an aggregate, and why a mapping cannot be checked.
+    """
+
     def test_aggregate_and_mapping_problems(self):
         index = self.index("""
 struct Plain { int a; };
@@ -153,6 +170,10 @@ struct Conditional { int a;
 
 
 class Lookup(TypeIndexTestCase):
+    """名字查找、限定和全局类的判断。
+    Name lookup, qualification and global class checks.
+    """
+
     def test_names_resolve_outward_from_a_scope_and_through_aliases(self):
         index = self.index(
             FIELDS + "namespace ns { using Options = Fields; struct Use { Options o; }; }\n"
@@ -232,9 +253,9 @@ class Lookup(TypeIndexTestCase):
             self.write("b/Twice.hpp", "struct Twice { int b; };"),
         ]
         index = TypeIndex(paths, {paths[0]: "team/A/Twice.hpp", paths[1]: "team/B/Twice.hpp"})
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError,
-            "Type Twice is defined in several Module headers: team/A/Twice.hpp, team/B/Twice.hpp",
+            ("Type Twice is defined in several Module headers: team/A/Twice.hpp, team/B/Twice.hpp"),
         ):
             index.resolve("Twice")
 
@@ -283,7 +304,14 @@ class Lookup(TypeIndexTestCase):
 
 
 class Monitor(TypeIndexTestCase):
+    """类是否提供可调用的 OnMonitor。
+    Whether a class provides a callable OnMonitor.
+    """
+
     def provides(self, text, name="M"):
+        """类型索引是否认为这个类提供 OnMonitor。
+        Whether the type index finds that this class provides OnMonitor.
+        """
         index = self.index(text)
         return index.provides_monitor(index.resolve(name))
 
@@ -325,7 +353,10 @@ class Monitor(TypeIndexTestCase):
         ):
             with (
                 self.subTest(text=text),
-                self.assertRaisesRegex(ValueError, "M declares OnMonitor under #if"),
+                self.assertRaisesMessage(
+                    ValueError,
+                    ("M declares OnMonitor under #if; the generator cannot evaluate build options"),
+                ),
             ):
                 self.provides(text)
 
@@ -348,7 +379,10 @@ class Monitor(TypeIndexTestCase):
         ):
             with (
                 self.subTest(text=text),
-                self.assertRaisesRegex(ValueError, "M declares OnMonitor under #if"),
+                self.assertRaisesMessage(
+                    ValueError,
+                    ("M declares OnMonitor under #if; the generator cannot evaluate build options"),
+                ),
             ):
                 self.provides(text)
 

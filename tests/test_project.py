@@ -1,14 +1,14 @@
-"""BSP layout (root, entry, configs, generated header inputs) and XR_REGISTER reading."""
+"""BSP 的组成（xrobot.project）：根目录、入口源文件、配置和生成头文件的输入清单。
+The layout of a BSP (xrobot.project): root, entry source, configurations and the input list of
+the generated header.
+"""
 
 import os
-import unittest
 from pathlib import Path
 from unittest import mock
 
 from fixtures import BspTestCase, TempDirTestCase
 
-from xrobot.config import ConfigError
-from xrobot.generate_main import read_registrations
 from xrobot.project import (
     HEADER_NOTICE,
     Project,
@@ -21,19 +21,24 @@ MAIN = '#include "xrobot_main.hpp"\nint main() { XROBOT_MAIN(); }\n'
 
 
 class RootDiscovery(TempDirTestCase):
+    """查找 BSP 根目录。
+    Finding the BSP root.
+    """
+
     def setUp(self):
         super().setUp()
         self.root = self.tmp / "bsp"
         self.write("Modules/modules.yaml", "modules: []\n")
 
-    def test_root_is_found_from_a_nested_directory(self):
+    def test_the_nearest_directory_with_modules_yaml_is_the_root(self):
         nested = self.root / "User" / "products" / "deep"
         nested.mkdir(parents=True)
+        # User/Modules 没有 modules.yaml，不是根目录。
+        # User/Modules has no modules.yaml, so it is not a root.
+        (self.root / "User" / "Modules").mkdir()
         self.assertEqual(find_root(nested), self.root)
         self.assertEqual(find_root(self.root), self.root)
         self.assertEqual(Project.discover(nested).root, self.root)
-
-    def test_nearest_bsp_wins(self):
         inner = self.root / "third_party" / "other"
         self.write(inner / "Modules/modules.yaml", "modules: []\n")
         (inner / "User").mkdir()
@@ -44,47 +49,55 @@ class RootDiscovery(TempDirTestCase):
         outside.mkdir()
         if any((p / "Modules/modules.yaml").is_file() for p in self.tmp.parents):
             self.skipTest("a directory above the temporary directory is itself a BSP")
-        with self.assertRaisesRegex(
-            ProjectError, r"No XRobot BSP found .*Modules/modules\.yaml.*xrobot init"
-        ):
+        with self.assertRaises(ProjectError) as context:
             find_root(outside)
-
-    def test_a_modules_directory_without_modules_yaml_is_not_a_root(self):
-        (self.root / "User" / "Modules").mkdir(parents=True)
-        self.assertEqual(find_root(self.root / "User"), self.root)
+        self.assertEqual(
+            str(context.exception),
+            f"No XRobot BSP found at or above {outside} (no Modules/modules.yaml); run "
+            "`xrobot init` in the BSP root to create one",
+        )
 
 
 class Entry(TempDirTestCase):
+    """找到调用 XROBOT_MAIN() 的入口源文件。
+    Finding the entry source that calls XROBOT_MAIN().
+    """
+
     def setUp(self):
         super().setUp()
         self.root = self.tmp / "bsp"
         self.write("Modules/modules.yaml", "modules: []\n")
         (self.root / "User").mkdir()
 
-    def test_the_unique_caller_is_the_entry(self):
-        path = self.write("User/app_main.cpp", MAIN)
+    def test_the_one_caller_under_user_is_the_entry(self):
         self.write("User/other.cpp", "void helper() {}\n")
-        self.assertEqual(Project(self.root).entry(), path)
-
-    def test_entry_can_be_any_source_suffix_in_any_subdirectory(self):
-        for name in ("app/main.c", "app/main.cc", "app/main.cxx"):
+        for name in ("app_main.cpp", "app/main.c", "app/main.cc", "app/main.cxx"):
             with self.subTest(name=name):
-                for old in (self.root / "User").rglob("*"):
-                    if old.is_file():
-                        old.unlink()
                 path = self.write("User/" + name, "void f() { XROBOT_MAIN(); }\n")
                 self.assertEqual(Project(self.root).entry(), path)
+                path.unlink()
 
-    def test_no_caller_is_an_error(self):
+    def test_no_caller_or_several_callers_are_errors(self):
+        # Core/ 在 User/ 之外，其中的调用不算入口。
+        # Core/ is outside User/, so its call is no entry.
+        self.write("Core/main.cpp", MAIN)
         self.write("User/app_main.cpp", "int main() {}\n")
-        with self.assertRaisesRegex(ProjectError, "No source under User/ calls XROBOT_MAIN"):
+        with self.assertRaises(ProjectError) as context:
             Project(self.root).entry()
-
-    def test_several_callers_are_an_error_naming_them(self):
+        self.assertEqual(
+            str(context.exception),
+            "No source under User/ calls XROBOT_MAIN(); the entry source must call it once "
+            "after registering its hardware with XR_REGISTER",
+        )
         self.write("User/a.cpp", MAIN)
         self.write("User/b.cpp", MAIN)
-        with self.assertRaisesRegex(ProjectError, "Several sources .*User/a.cpp, User/b.cpp"):
+        with self.assertRaises(ProjectError) as context:
             Project(self.root).entry()
+        self.assertEqual(
+            str(context.exception),
+            "Several sources under User/ call XROBOT_MAIN(): User/a.cpp, User/b.cpp; a BSP has "
+            "exactly one entry",
+        )
 
     def test_comments_strings_directives_and_headers_are_not_calls(self):
         self.write("User/app_main.cpp", MAIN)
@@ -97,13 +110,12 @@ class Entry(TempDirTestCase):
         self.write("User/app.hpp", "inline void Run() { XROBOT_MAIN(); }\n")
         self.assertEqual(Project(self.root).entry(), self.root / "User/app_main.cpp")
 
-    def test_sources_outside_user_are_not_entries(self):
-        self.write("Core/main.cpp", MAIN)
-        with self.assertRaises(ProjectError):
-            Project(self.root).entry()
-
 
 class Configs(TempDirTestCase):
+    """User/ 下的应用配置。
+    The application configurations under User/.
+    """
+
     def setUp(self):
         super().setUp()
         self.root = self.tmp / "bsp"
@@ -129,6 +141,10 @@ class Configs(TempDirTestCase):
 
 
 class GeneratedHeaderInputs(BspTestCase):
+    """生成头文件的输入清单、是否过期，以及选中的配置。
+    The input list of the generated header, its freshness and the selected configuration.
+    """
+
     def setUp(self):
         super().setUp()
         self.module(
@@ -139,6 +155,9 @@ class GeneratedHeaderInputs(BspTestCase):
         self.entry(MAIN)
 
     def header_lines(self):
+        """生成头文件的各行。
+        The lines of the generated header.
+        """
         return self.read("User/xrobot_main.hpp").splitlines()
 
     def test_header_names_its_config_and_every_input_relative_to_itself(self):
@@ -242,8 +261,10 @@ class GeneratedHeaderInputs(BspTestCase):
         self.generate({"modules": []}, name="alt.yaml")
         self.assertEqual(project.selected_config(), (self.root / "User/alt.yaml").resolve())
         (self.root / "User/alt.yaml").unlink()
-        with self.assertRaisesRegex(
-            ProjectError, "generated for User/alt.yaml, which does not exist"
+        with self.assertRaisesMessage(
+            ProjectError,
+            "User/xrobot_main.hpp was generated for User/alt.yaml, which does not exist; "
+            "select a configuration with `xrobot gen -c <config>`",
         ):
             project.selected_config()
         self.write("User/xrobot_main.hpp", "#pragma once\n")
@@ -263,118 +284,3 @@ class GeneratedHeaderInputs(BspTestCase):
                 f'// xrobot: depends "{Path(os.path.abspath(self.root / "xrobot.lock")).as_posix()}"',
             ],
         )
-
-    def test_generation_without_a_lock_is_refused(self):
-        (self.root / "xrobot.lock").unlink()
-        with self.assertRaisesRegex(ValueError, r"xrobot\.lock does not exist; run `xrobot setup`"):
-            self.generate({"modules": []})
-
-
-class Registrations(TempDirTestCase):
-    def setUp(self):
-        super().setUp()
-        self.root = self.tmp
-
-    def read_entry(self, text):
-        return read_registrations(self.write("app_main.cpp", text))
-
-    def test_name_type_and_line_are_read(self):
-        records = self.read_entry(
-            '#include "xrobot_main.hpp"\nvoid f() {\n  XR_REGISTER(led, LibXR::GPIO);\n'
-            "  XR_REGISTER(values, std::array<int, 2>);\n}\n"
-        )
-        self.assertEqual(
-            [(r["name"], r["type"], r["line"]) for r in records],
-            [("led", "LibXR::GPIO", 3), ("values", "std::array<int, 2>", 4)],
-        )
-
-    def test_comments_and_string_literals_are_not_registrations(self):
-        records = self.read_entry(
-            "// XR_REGISTER(fake, Wrong);\n/* XR_REGISTER(a, B); */\n"
-            'const char* s = "XR_REGISTER(x, y)";\nXR_REGISTER(real, int);\n'
-        )
-        self.assertEqual([r["name"] for r in records], ["real"])
-
-    def test_more_than_one_type_is_rejected_with_the_reference_alias_hint(self):
-        with self.assertRaisesRegex(
-            ConfigError,
-            r"app_main\.cpp:1: XR_REGISTER registers one type per name.*"
-            r"declare a reference .*LibXR::CAN& can1 = fdcan1;",
-        ):
-            self.read_entry("XR_REGISTER(dev, Left, Right);\n")
-
-    def test_a_missing_type_is_rejected(self):
-        with self.assertRaisesRegex(ConfigError, "one type per name"):
-            self.read_entry("XR_REGISTER(dev);\n")
-
-    def test_conditional_registration_is_rejected(self):
-        for directive in ("#if defined(OPTION)", "#ifdef OPTION", "#ifndef OPTION"):
-            with (
-                self.subTest(directive=directive),
-                self.assertRaisesRegex(
-                    ConfigError, r"app_main\.cpp:3: XR_REGISTER inside #if/#ifdef/#ifndef"
-                ),
-            ):
-                self.read_entry(f"int x;\n{directive}\nXR_REGISTER(x, int);\n#endif\n")
-
-    def test_registration_after_a_closed_conditional_is_accepted(self):
-        records = self.read_entry(
-            "#if OPTION\nint y;\n#else\nint z;\n#endif\nint x;\nXR_REGISTER(x, int);\n"
-        )
-        self.assertEqual([r["name"] for r in records], ["x"])
-
-    def test_registration_inside_a_macro_definition_is_rejected(self):
-        with self.assertRaisesRegex(
-            ConfigError, "app_main.cpp:1: XR_REGISTER inside a preprocessor directive"
-        ):
-            self.read_entry("#define REGISTER_ALL XR_REGISTER(x, int)\nint x;\n")
-
-    def test_reference_types_are_rejected(self):
-        for cpp_type in ("int&", "LibXR::CAN &", "int&&"):
-            with (
-                self.subTest(cpp_type=cpp_type),
-                self.assertRaisesRegex(ConfigError, "not reference types"),
-            ):
-                self.read_entry(f"XR_REGISTER(x, {cpp_type});\n")
-
-    def test_duplicate_names_are_rejected(self):
-        with self.assertRaisesRegex(ConfigError, r"app_main\.cpp:2: duplicate XR_REGISTER name x"):
-            self.read_entry("XR_REGISTER(x, int);\nXR_REGISTER(x, long);\n")
-
-    def test_names_must_be_valid_object_names(self):
-        for name, reason in (
-            ("class", "keyword"),
-            ("xr_led", "prefix reserved"),
-            ("ASSERT", "macro"),
-        ):
-            with (
-                self.subTest(name=name),
-                self.assertRaisesRegex(ConfigError, f"registration name {name} .*{reason}"),
-            ):
-                self.read_entry(f"XR_REGISTER({name}, int);\n")
-
-    def test_every_registration_error_is_reported(self):
-        with self.assertRaises(ConfigError) as context:
-            self.read_entry(
-                "XR_REGISTER(a, int&);\nXR_REGISTER(b, X, Y);\nXR_REGISTER(class, int);\n"
-            )
-        self.assertEqual(len(str(context.exception).splitlines()), 3)
-
-    def test_malformed_invocation_is_rejected(self):
-        with self.assertRaisesRegex(ConfigError, "malformed XR_REGISTER"):
-            self.read_entry("XR_REGISTER(x, int\n")
-
-    def test_types_declared_by_the_caller_are_marked(self):
-        records = self.read_entry(
-            "struct Global {};\nvoid f() {\n  struct Local {};\n  Local d; Global g; int n;\n"
-            "  XR_REGISTER(d, Local);\n  XR_REGISTER(g, Global);\n  XR_REGISTER(n, int);\n"
-            "  XR_REGISTER(p, LibXR::GPIO);\n}\n"
-        )
-        self.assertEqual(
-            {r["name"]: r["caller_view"] for r in records},
-            {"d": True, "g": True, "n": False, "p": False},
-        )
-
-
-if __name__ == "__main__":
-    unittest.main()

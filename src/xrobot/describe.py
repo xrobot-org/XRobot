@@ -74,7 +74,9 @@ class _Types:
             return None
         key = entry.qualified
         if key not in self.table:
-            self.table[key] = None  # reserve before recursing into member types
+            # 先占位，再递归成员类型。
+            # Reserve the entry before recursing into member types.
+            self.table[key] = None
             problem = entry.mapping_problem()
             if problem:
                 self.table[key] = {"kind": "opaque", "reason": problem}
@@ -319,7 +321,7 @@ def describe(project: Project, config: str | Path | None = None) -> dict:
             try:
                 module = select_module(modules, item["module"])
             except ValueError:
-                module = None  # reported by the generation diagnostic below
+                module = None  # 由下方的生成诊断报告 / reported by the generation diagnostic below
             candidates = {}
             if module is not None and described.get(module["id"], {}).get("constructors"):
                 for ctor in described[module["id"]]["constructors"]:

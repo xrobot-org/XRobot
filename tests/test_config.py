@@ -1,8 +1,10 @@
-"""Loading and validating application configurations (xrobot.config)."""
+"""读取和检查应用配置（xrobot.config）。
+Reading and checking application configurations (xrobot.config).
+"""
 
 import unittest
 
-from fixtures import TempDirTestCase
+from fixtures import TempDirTestCase, TestCase
 
 from xrobot.config import (
     ConfigError,
@@ -18,18 +20,28 @@ from xrobot.config import (
 
 
 def load(text, source="cfg.yaml"):
+    """读取并检查配置文本。
+    Read and check a configuration text.
+    """
     config = parse_yaml(text, source)
     validate_config(config, source)
     return config
 
 
 def instance(**values):
+    """一个 Foo 实例的配置文本，参数按给出的顺序。
+    The configuration text of one Foo instance with the given arguments in order.
+    """
     return "modules:\n  - module: Foo\n    id: foo\n    args:\n" + "".join(
         f"      - {name}: {value}\n" for name, value in values.items()
     )
 
 
-class Scalars(unittest.TestCase):
+class Scalars(TestCase):
+    """标量值如何读成 C++ 文本。
+    How scalar values are read as C++ text.
+    """
+
     def test_scalars_keep_their_cpp_spelling(self):
         config = load(
             "modules:\n- module: Foo\n  id: foo\n  args: [{a: on}, {b: off}, {c: yes}, {d: no},"
@@ -116,7 +128,13 @@ class Scalars(unittest.TestCase):
         load(instance(a="null"))
 
     def test_unfilled_value_is_rejected_when_its_text_is_needed(self):
-        with self.assertRaisesRegex(ConfigError, r"foo\.args\.a is not filled in .*write nullptr"):
+        with self.assertRaisesMessage(
+            ConfigError,
+            (
+                'foo.args.a is not filled in (null, ~ and empty values mean "not filled in"; '
+                "write nullptr for a null pointer)"
+            ),
+        ):
             value_text(None, "foo.args.a")
 
     def test_source_lines_are_recorded_for_keys_and_list_items(self):
@@ -135,53 +153,73 @@ class Scalars(unittest.TestCase):
         self.assertEqual(load(""), {})
 
 
-class YamlFeatures(unittest.TestCase):
+class YamlFeatures(TestCase):
+    """配置中不允许的 YAML 写法和语法错误。
+    The YAML features a configuration rejects, and syntax errors.
+    """
+
     def test_anchors_and_aliases_are_rejected_with_a_hint(self):
-        for text in ("a: &x 1\nb: *x\n", "modules:\n  - &first {module: Foo, id: foo}\n"):
+        for text, line in (
+            ("a: &x 1\nb: *x\n", 1),
+            ("modules:\n  - &first {module: Foo, id: foo}\n", 2),
+        ):
             with (
                 self.subTest(text=text),
-                self.assertRaisesRegex(
+                self.assertRaisesMessage(
                     ConfigError,
-                    r"cfg\.yaml:\d+: YAML anchors and aliases are not allowed.*constexprs",
+                    f"cfg.yaml:{line}: YAML anchors and aliases are not allowed; reference "
+                    "instances by id and share values through constexprs",
                 ),
             ):
                 load(text)
 
     def test_tags_are_rejected(self):
-        for text in (
-            "modules: !!seq []\n",
-            "settings:\n  monitor_sleep_ms: !custom 10\n",
-            "constexprs: {a: {type: int, value: !!str '1'}}\n",
+        for text, where in (
+            ("modules: !!seq []\n", "1: YAML tags (tag:yaml.org,2002:seq)"),
+            ("settings:\n  monitor_sleep_ms: !custom 10\n", "2: YAML tags (!custom)"),
+            (
+                "constexprs: {a: {type: int, value: !!str '1'}}\n",
+                "1: YAML tags (tag:yaml.org,2002:str)",
+            ),
         ):
             with (
                 self.subTest(text=text),
-                self.assertRaisesRegex(ConfigError, r"cfg\.yaml:\d+: YAML tags"),
+                self.assertRaisesMessage(
+                    ConfigError, f"cfg.yaml:{where} are not allowed; write the value as C++ text"
+                ),
             ):
                 load(text)
 
     def test_duplicate_keys_are_rejected_with_their_line(self):
-        with self.assertRaisesRegex(ConfigError, r"cfg\.yaml:2: duplicate key modules"):
+        with self.assertRaisesMessage(ConfigError, "cfg.yaml:2: duplicate key modules"):
             load("modules: []\nmodules: []\n")
-        with self.assertRaisesRegex(ConfigError, r"cfg\.yaml:4: duplicate key id"):
+        with self.assertRaisesMessage(ConfigError, "cfg.yaml:4: duplicate key id"):
             load("modules:\n  - module: Foo\n    id: a\n    id: b\n")
 
     def test_complex_mapping_keys_are_rejected(self):
-        with self.assertRaisesRegex(ConfigError, "mapping keys must be plain names"):
+        with self.assertRaisesMessage(ConfigError, "cfg.yaml:1: mapping keys must be plain names"):
             load("{a: 1}: 2\n")
 
     def test_syntax_errors_carry_file_and_line(self):
-        with self.assertRaisesRegex(ConfigError, r"cfg\.yaml:3: YAML syntax error"):
+        with self.assertRaisesMessage(
+            ConfigError, "cfg.yaml:3: YAML syntax error: expected <block end>, but found '?'"
+        ):
             load("modules:\n  - module: Foo\n  id: [\n")
 
 
-class CppText(unittest.TestCase):
+class CppText(TestCase):
+    """值中 C++ 文本的检查：注释、八进制和数字。
+    Checks of the C++ text in values: comments, octal and digits.
+    """
+
     def test_cpp_comments_inside_a_value_are_rejected(self):
         for value in ("1 // tuned", "'1 /* tuned */'"):
             with (
                 self.subTest(value=value),
-                self.assertRaisesRegex(
+                self.assertRaisesMessage(
                     ConfigError,
-                    r"cfg\.yaml: foo\.args\.a: C\+\+ comments are not allowed.*YAML # comment",
+                    "cfg.yaml: foo.args.a: C++ comments are not allowed inside a value; use a "
+                    "YAML # comment",
                 ),
             ):
                 load(instance(a=value))
@@ -190,10 +228,20 @@ class CppText(unittest.TestCase):
         load(instance(a="'\"http://x\"'", b="'\"/*\"'"))
 
     def test_leading_zero_integers_are_rejected_as_octal(self):
-        for value in ("010", "00", "'0010'", "017u", "'f(07)'"):
+        for value, number in (
+            ("010", "010"),
+            ("00", "00"),
+            ("'0010'", "0010"),
+            ("017u", "017u"),
+            ("'f(07)'", "07"),
+        ):
             with (
                 self.subTest(value=value),
-                self.assertRaisesRegex(ConfigError, "leading zero.*octal"),
+                self.assertRaisesMessage(
+                    ConfigError,
+                    f"cfg.yaml: foo.args.a: {number} has a leading zero, which C++ reads as "
+                    "octal; write the decimal value",
+                ),
             ):
                 load(instance(a=value))
 
@@ -202,63 +250,88 @@ class CppText(unittest.TestCase):
 
     def test_non_ascii_digits_are_rejected(self):
         for value in ("１２", "'f(٣)'"):
-            with self.subTest(value=value), self.assertRaisesRegex(ConfigError, "non-ASCII digits"):
+            with (
+                self.subTest(value=value),
+                self.assertRaisesMessage(
+                    ConfigError, "cfg.yaml: foo.args.a: non-ASCII digits are not C++ numbers"
+                ),
+            ):
                 load(instance(a=value))
 
     def test_at_syntax_is_rejected(self):
-        with self.assertRaisesRegex(
-            ConfigError, r"foo\.args\.a: the @ prefix of XRobot before 1\.0 is gone"
+        with self.assertRaisesMessage(
+            ConfigError,
+            "cfg.yaml: foo.args.a: the @ prefix of XRobot before 1.0 is gone; every value "
+            "without quotes or in single quotes is C++ code, and a double-quoted value is a "
+            "C++ string",
         ):
             load(instance(a="'@nullptr'"))
 
 
-class Identifiers(unittest.TestCase):
-    def test_valid_identifiers(self):
-        for name in ("led", "motor_1", "_private", "Chassis2", "xrobotic", "XRay"):
-            with self.subTest(name=name):
-                self.assertIsNone(identifier_problem(name))
+class Identifiers(TestCase):
+    """生成的 C++ 名字（实例 id、常量名、命名空间）的规则。
+    The rules for generated C++ names (instance ids, constant names, namespaces).
+    """
 
-    def test_invalid_identifiers(self):
+    def test_identifier_rules(self):
         cases = {
-            "1led": "not a C\\+\\+ identifier",
-            "a-b": "not a C\\+\\+ identifier",
-            "": "not a C\\+\\+ identifier",
-            "class": "keyword",
-            "and": "keyword",
-            "final": "keyword",
-            "co_await": "keyword",
-            "ASSERT": "macro",
-            "NULL": "macro",
-            "XR_REGISTER": "macro",
-            "assert": "macro",
-            "std": "reserved namespace",
-            "LibXR": "reserved namespace",
-            "xrobot_generated": "reserved namespace",
-            "xr_led": "prefix reserved",
-            "XR_LED": "prefix reserved",
-            "xrobot_led": "prefix reserved",
-            "__led": "reserved by the C\\+\\+ standard",
-            "_Led": "reserved by the C\\+\\+ standard",
+            "led": None,
+            "motor_1": None,
+            "_private": None,
+            "Chassis2": None,
+            "xrobotic": None,
+            "XRay": None,
+            "1led": "is not a C++ identifier",
+            "a-b": "is not a C++ identifier",
+            "": "is not a C++ identifier",
+            "class": "is a C++ keyword",
+            "and": "is a C++ keyword",
+            "final": "is a C++ keyword",
+            "co_await": "is a C++ keyword",
+            "ASSERT": "is a macro name",
+            "NULL": "is a macro name",
+            "XR_REGISTER": "is a macro name",
+            "assert": "is a macro name",
+            "std": "is a reserved namespace",
+            "LibXR": "is a reserved namespace",
+            "xrobot_generated": "is a reserved namespace",
+            "xr_led": "uses a prefix reserved for generated names",
+            "XR_LED": "uses a prefix reserved for generated names",
+            "xrobot_led": "uses a prefix reserved for generated names",
+            "__led": "is reserved by the C++ standard",
+            "_Led": "is reserved by the C++ standard",
         }
-        for name, reason in cases.items():
+        for name, problem in cases.items():
             with self.subTest(name=name):
-                self.assertRegex(identifier_problem(name) or "", reason)
+                self.assertEqual(identifier_problem(name), problem)
 
     def test_invalid_instance_ids_are_rejected(self):
         for identity in ("CMD2 x", "ASSERT", "while", "xr_led"):
             with (
                 self.subTest(identity=identity),
-                self.assertRaisesRegex(ConfigError, r"modules\[0\]\.id"),
+                self.assertRaisesMessage(
+                    ConfigError,
+                    f"cfg.yaml: modules[0].id: {identity} {identifier_problem(identity)}",
+                ),
             ):
                 load(f"modules:\n  - module: Foo\n    id: {identity}\n")
 
 
-class Structure(unittest.TestCase):
+class Structure(TestCase):
+    """配置的结构：顶层键、实例、参数、常量和设置。
+    The structure of a configuration: top-level keys, instances, arguments, constants and
+    settings.
+    """
+
     def test_unknown_top_level_keys_are_rejected(self):
         for key in ("instances", "constexpr"):
             with (
                 self.subTest(key=key),
-                self.assertRaisesRegex(ConfigError, "unknown top-level key"),
+                self.assertRaisesMessage(
+                    ConfigError,
+                    f"cfg.yaml: unknown top-level key(s) {key}; allowed: modules, settings, "
+                    "constexprs, constexpr_namespace, constexpr_includes",
+                ),
             ):
                 load(f"{key}: {{}}\n")
 
@@ -266,7 +339,9 @@ class Structure(unittest.TestCase):
         for key in ("depends", "template"):
             with (
                 self.subTest(key=key),
-                self.assertRaisesRegex(ConfigError, r"modules\[0\]: unknown key\(s\) " + key),
+                self.assertRaisesMessage(
+                    ConfigError, f"cfg.yaml: modules[0]: unknown key(s) {key}"
+                ),
             ):
                 load(f"modules:\n  - module: Foo\n    id: foo\n    {key}: []\n")
 
@@ -286,38 +361,56 @@ class Structure(unittest.TestCase):
             )
 
     def test_instances_need_module_and_id(self):
-        with self.assertRaisesRegex(ConfigError, r"modules\[0\]\.module is required"):
+        with self.assertRaisesMessage(ConfigError, "cfg.yaml: modules[0].module is required"):
             load("modules:\n  - id: foo\n")
-        with self.assertRaisesRegex(ConfigError, r"modules\[0\]\.id is required"):
+        with self.assertRaisesMessage(ConfigError, "cfg.yaml: modules[0].id is required"):
             load("modules:\n  - module: Foo\n")
 
     def test_duplicate_instance_ids_are_rejected(self):
-        with self.assertRaisesRegex(ConfigError, r"modules\[1\]\.id: duplicate instance id foo"):
+        with self.assertRaisesMessage(
+            ConfigError, "cfg.yaml: modules[1].id: duplicate instance id foo"
+        ):
             load("modules:\n  - {module: Foo, id: foo}\n  - {module: Foo, id: foo}\n")
 
     def test_arguments_are_an_ordered_list_of_single_named_values(self):
         cases = [
-            ("args: {a: 1}", "args must be an ordered list"),
-            ("args: [{a: 1, b: 2}]", r"args\[0\] requires one named parameter"),
-            ("args: [1]", r"args\[0\] requires one named parameter"),
-            ("args: [{a: 1}, {a: 2}]", "invalid or duplicate parameter name a"),
-            ("template_args: int", "template_args must be an ordered list"),
+            ("args: {a: 1}", "foo.args must be an ordered list"),
+            ("args: [{a: 1, b: 2}]", "foo.args[0] requires one named parameter"),
+            ("args: [1]", "foo.args[0] requires one named parameter"),
+            ("args: [{a: 1}, {a: 2}]", "foo.args[1]: invalid or duplicate parameter name a"),
+            ("template_args: int", "foo.template_args must be an ordered list"),
         ]
-        for text, pattern in cases:
-            with self.subTest(text=text), self.assertRaisesRegex(ConfigError, pattern):
+        for text, message in cases:
+            with (
+                self.subTest(text=text),
+                self.assertRaisesMessage(ConfigError, "cfg.yaml: " + message),
+            ):
                 load(f"modules:\n  - module: Foo\n    id: foo\n    {text}\n")
 
     def test_nested_field_names_must_be_identifiers(self):
-        with self.assertRaisesRegex(ConfigError, "invalid field name 1x"):
+        with self.assertRaisesMessage(ConfigError, "cfg.yaml: foo.args.p: invalid field name 1x"):
             load("modules:\n  - module: Foo\n    id: foo\n    args:\n      - p: {'1x': 1}\n")
 
     def test_monitor_sleep_is_a_decimal_u32(self):
         for value in ("0", "1", "1000", "4294967295"):
             with self.subTest(value=value):
                 load(f"settings:\n  monitor_sleep_ms: {value}\n")
-        for value in ("4294967296", "-1", "010", "0x10", "1e3", "1.5", "'10ms'", "null"):
-            with self.subTest(value=value), self.assertRaisesRegex(ConfigError, "monitor_sleep_ms"):
+        for value in ("4294967296", "-1", "010", "0x10", "1e3", "1.5", "'10ms'"):
+            with (
+                self.subTest(value=value),
+                self.assertRaisesMessage(
+                    ConfigError,
+                    f"cfg.yaml: settings.monitor_sleep_ms: {value.strip(chr(39))} is not an "
+                    "unsigned 32-bit decimal millisecond count",
+                ),
+            ):
                 load(f"settings:\n  monitor_sleep_ms: {value}\n")
+        with self.assertRaisesMessage(
+            ConfigError,
+            "cfg.yaml: settings.monitor_sleep_ms must be an unsigned 32-bit decimal millisecond "
+            "count",
+        ):
+            load("settings:\n  monitor_sleep_ms: null\n")
 
     def test_settings_accept_only_monitor_sleep(self):
         cases = [
@@ -340,19 +433,21 @@ class Structure(unittest.TestCase):
 
     def test_constexpr_includes_accept_quoted_and_system_header_names(self):
         load("constexpr_includes: [Foo.hpp, 'sub/Bar.h', '<vector>', ' <array> ']\n")
-        for header in ("'\"Foo.hpp\"'", "'a b.hpp'", "'<a\"b>'", "{a: 1}"):
+        for header, problem in (
+            ("'\"Foo.hpp\"'", ': "Foo.hpp" is not'),
+            ("'a b.hpp'", ": a b.hpp is not"),
+            ("'<a\"b>'", ': <a"b> is not'),
+            ("{a: 1}", " must be"),
+        ):
             with (
                 self.subTest(header=header),
-                self.assertRaisesRegex(ConfigError, r"constexpr_includes\[0\]"),
+                self.assertRaisesMessage(
+                    ConfigError,
+                    f"cfg.yaml: constexpr_includes[0]{problem} a header name such as Foo.hpp or "
+                    "<vector>",
+                ),
             ):
                 load(f"constexpr_includes: [{header}]\n")
-        with self.assertRaises(ConfigError) as context:
-            load('constexpr_includes: ["Foo.hpp"]\n')
-        self.assertEqual(
-            str(context.exception),
-            'cfg.yaml: constexpr_includes[0]: "Foo.hpp" is not a header name such as Foo.hpp '
-            "or <vector>",
-        )
 
     def test_constexpr_names_namespace_and_shape_are_checked(self):
         load("constexpr_namespace: Board::Pins\nconstexprs:\n  Rate: {type: int, value: 250}\n")
@@ -396,6 +491,10 @@ class Structure(unittest.TestCase):
 
 
 class LoadConfig(TempDirTestCase):
+    """读取配置文件：编码和报错中的名字。
+    Reading a configuration file: encoding and the name in errors.
+    """
+
     def setUp(self):
         super().setUp()
         self.root = self.tmp
@@ -407,12 +506,14 @@ class LoadConfig(TempDirTestCase):
     def test_non_utf8_text_is_rejected(self):
         path = self.root / "cfg.yaml"
         path.write_bytes(b"modules: []\n# \xff\xfe\n")
-        with self.assertRaisesRegex(ConfigError, "not UTF-8"):
+        with self.assertRaisesMessage(ConfigError, "cfg.yaml: not UTF-8 text"):
             load_config(path, "cfg.yaml")
 
     def test_errors_use_the_given_source_name(self):
         path = self.write("cfg.yaml", "modules: {}\n")
-        with self.assertRaisesRegex(ConfigError, "^User/cfg.yaml: modules must be an ordered list"):
+        with self.assertRaisesMessage(
+            ConfigError, "User/cfg.yaml: modules must be an ordered list"
+        ):
             load_config(path, "User/cfg.yaml")
 
 

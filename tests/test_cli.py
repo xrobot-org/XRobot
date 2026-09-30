@@ -1,25 +1,24 @@
-"""The `xrobot` command line (xrobot.cli) and the Module skeleton it creates."""
+"""命令行（xrobot.cli）：参数、帮助、输出、退出码，以及命令是否接到实现上。
+The command line (xrobot.cli): arguments, help, output, exit codes and whether each command
+reaches its implementation.
+"""
 
 import argparse
-import contextlib
 import io
 import json
 import os
 import subprocess
 import sys
-from pathlib import Path
 from unittest import mock
 
 import yaml
-from fixtures import BspTestCase, TempDirTestCase, UpstreamTestCase, manifest_block
+from fixtures import BspTestCase, CliMixin, TempDirTestCase, UpstreamTestCase, manifest_block
 
 from xrobot import __version__
 from xrobot.cli import main, parse_value, parser
 from xrobot.config import ConfigError, load_config
 from xrobot.lock import read_modules_yaml
-from xrobot.module_parser import parse_manifest_from_header, source_interface
 
-REPOSITORY = Path(__file__).resolve().parents[1]
 LED = (
     "namespace LibXR { class GPIO; }\nclass Led { public:\n  struct Param { int cycle = 250; };\n"
     "  Led(LibXR::GPIO& gpio, Param param = {}, float gain = 1.0f) {}\n  void OnMonitor() {} };"
@@ -27,35 +26,11 @@ LED = (
 MAIN = '#include "xrobot_main.hpp"\nint main() { XR_REGISTER(pin, LibXR::GPIO); XROBOT_MAIN(); }\n'
 
 
-class CliMixin:
-    def run_cli(self, *argv, cwd=None):
-        out, err = io.StringIO(), io.StringIO()
-        previous = os.getcwd()
-        os.chdir(str(cwd or self.root))
-        try:
-            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
-                try:
-                    code = main([str(a) for a in argv])
-                except SystemExit as exit:
-                    code = exit.code
-        finally:
-            os.chdir(previous)
-        return code, out.getvalue(), err.getvalue()
-
-    def ok(self, *argv, cwd=None):
-        code, out, err = self.run_cli(*argv, cwd=cwd)
-        self.assertEqual(code, 0, out + err)
-        return out, err
-
-    def fails(self, *argv, cwd=None, pattern=None):
-        code, out, err = self.run_cli(*argv, cwd=cwd)
-        self.assertEqual(code, 1, out + err)
-        if pattern:
-            self.assertRegex(err, pattern)
-        return err
-
-
 class Init(CliMixin, TempDirTestCase):
+    """init、版本、帮助，以及在 BSP 外运行的命令。
+    init, the version, help texts, and commands run outside a BSP.
+    """
+
     def setUp(self):
         super().setUp()
         self.root = self.tmp / "new"
@@ -148,24 +123,38 @@ class Init(CliMixin, TempDirTestCase):
     def test_source_needs_a_bsp_or_sources(self):
         if any((p / "Modules/modules.yaml").is_file() for p in self.tmp.parents):
             self.skipTest("a directory above the temporary directory is itself a BSP")
-        self.fails("source", "list", cwd=self.root, pattern="No XRobot BSP found")
+        no_bsp = (
+            f"No XRobot BSP found at or above {self.root} (no Modules/modules.yaml); run "
+            "`xrobot init` in the BSP root to create one"
+        )
+        self.fails("source", "list", cwd=self.root, message=no_bsp)
         self.fails(
             "source",
             "--sources",
             self.root / "missing.yaml",
             "list",
             cwd=self.root,
-            pattern="missing.yaml does not exist; run `xrobot source create-sources`",
+            message=f"{self.root / 'missing.yaml'} does not exist; run "
+            "`xrobot source create-sources`",
         )
 
     def test_commands_outside_a_bsp_fail_with_a_hint(self):
         if any((p / "Modules/modules.yaml").is_file() for p in self.tmp.parents):
             self.skipTest("a directory above the temporary directory is itself a BSP")
-        self.fails("gen", cwd=self.root, pattern=r"No XRobot BSP found at or above .*xrobot init")
+        self.fails(
+            "gen",
+            cwd=self.root,
+            message=f"No XRobot BSP found at or above {self.root} (no Modules/modules.yaml); run "
+            "`xrobot init` in the BSP root to create one",
+        )
         self.assertFalse((self.root / "Modules").exists())
 
 
 class Commands(CliMixin, BspTestCase):
+    """各命令的参数、输出和退出码。
+    The arguments, output and exit codes of the commands.
+    """
+
     def setUp(self):
         super().setUp()
         self.module("Led", LED)
@@ -200,26 +189,20 @@ class Commands(CliMixin, BspTestCase):
         out, _ = self.ok("gen", cwd=self.root)
         self.assertIn("User/xrobot.yaml", out)
 
-    def test_a_renamed_selected_product_must_be_selected_again(self):
-        self.config({"modules": []}, name="products/alt.yaml")
-        self.ok("gen", "-c", "User/products/alt.yaml", cwd=self.root)
-        (self.root / "User/products/alt.yaml").rename(self.root / "User/products/renamed.yaml")
+    def test_errors_exit_with_status_1_and_a_message(self):
+        self.fails("gen", "-c", "User/missing.yaml", message="User/missing.yaml does not exist")
+        self.config({"modules": [{"module": "Led", "id": "led", "args": [{"gpio": "other"}]}]})
         self.fails(
             "gen",
-            cwd=self.root,
-            pattern="generated for User/products/alt.yaml, which does not exist",
+            message="User/xrobot.yaml: led: named arguments (gpio) do not match any constructor of "
+            "Led; expected one of: (gpio, param, gain)",
         )
-        out, _ = self.ok("gen", "-c", "User/products/renamed.yaml", cwd=self.root)
-        self.assertEqual(
-            out.strip(), "Generated User/xrobot_main.hpp for User/products/renamed.yaml"
-        )
-
-    def test_errors_exit_with_status_1_and_a_message(self):
-        self.fails("gen", "-c", "User/missing.yaml", pattern="User/missing.yaml does not exist")
-        self.config({"modules": [{"module": "Led", "id": "led", "args": [{"gpio": "other"}]}]})
-        self.fails("gen", pattern="User/xrobot.yaml: led: named arguments")
         self.config("modules: [\n")
-        self.fails("gen", pattern=r"User/xrobot.yaml:\d+: YAML syntax error")
+        self.fails(
+            "gen",
+            message="User/xrobot.yaml:2: YAML syntax error: expected the node content, but found "
+            "'<stream end>'",
+        )
         self.assertFalse((self.root / "User/xrobot_main.hpp").exists())
 
     def test_output_is_utf8_whatever_the_platform_encoding(self):
@@ -242,14 +225,14 @@ class Commands(CliMixin, BspTestCase):
             out, _ = self.ok("--help")
             self.assertTrue(out.startswith("用法：xrobot [-h] [--version] [-C DIR] <command> ..."))
             self.assertIn("解析模块、生成静态入口、编辑配置。", out)
-            self.fails("gen", "-c", "User/缺失.yaml", pattern="^User/缺失.yaml 不存在$")
+            self.fails("gen", "-c", "User/缺失.yaml", message="User/缺失.yaml 不存在")
             self.fails(
                 "instance",
                 "set",
                 "led",
                 "id",
                 "x",
-                pattern="实例 id 用 `xrobot instance rename` 修改",
+                message="实例 id 用 `xrobot instance rename` 修改，它会同时更新对该实例的引用",
             )
         out, _ = self.ok("--help")
         self.assertTrue(out.startswith("usage: xrobot"))
@@ -277,13 +260,16 @@ class Commands(CliMixin, BspTestCase):
             "3",
             "--if-match",
             "0" * 64,
-            pattern="changed since it was read",
+            message="User/xrobot.yaml changed since it was read; reload and retry",
         )
-        self.ok("instance", "rename", "second", "backup")
-        self.ok("instance", "remove", "backup")
-        self.assertEqual(
-            [i["id"] for i in load_config(self.root / "User/xrobot.yaml")["modules"]], ["led"]
-        )
+        for argv, ids in (
+            (("rename", "second", "backup"), ["led", "backup"]),
+            (("remove", "backup"), ["led"]),
+        ):
+            self.ok("instance", *argv)
+            self.assertEqual(
+                [i["id"] for i in load_config(self.root / "User/xrobot.yaml")["modules"]], ids
+            )
 
     def test_values_are_read_like_config_values_and_json_is_opt_in(self):
         cases = [
@@ -301,9 +287,14 @@ class Commands(CliMixin, BspTestCase):
                 self.assertEqual(parse_value(text), value)
         self.assertEqual(parse_value('"LED_B"', as_json=True), "LED_B")
         self.assertEqual(parse_value('{"a": "\\"x\\""}', as_json=True), {"a": '"x"'})
-        with self.assertRaisesRegex(ConfigError, "VALUE is not JSON"):
+        with self.assertRaisesMessage(
+            ConfigError, "VALUE is not JSON: Expecting value: line 1 column 1 (char 0)"
+        ):
             parse_value("LED_B", as_json=True)
-        with self.assertRaisesRegex(ConfigError, "VALUE:1: YAML syntax error"):
+        with self.assertRaisesMessage(
+            ConfigError,
+            "VALUE:1: YAML syntax error: expected the node content, but found '<stream end>'",
+        ):
             parse_value("[")
         self.ok("instance", "set", "led", "args.gain", "2.0f")
         self.ok("instance", "set", "led", "args.param", "'{250}'")
@@ -312,7 +303,14 @@ class Commands(CliMixin, BspTestCase):
             load_config(self.root / "User/xrobot.yaml")["modules"][0]["args"],
             [{"gpio": "pin2"}, {"param": "{250}"}, {"gain": "2.0f"}],
         )
-        self.fails("instance", "set", "led", "args.gain", "[", pattern="VALUE:1: YAML syntax")
+        self.fails(
+            "instance",
+            "set",
+            "led",
+            "args.gain",
+            "[",
+            message="VALUE:1: YAML syntax error: expected the node content, but found '<stream end>'",
+        )
 
     def test_instance_add_writes_to_the_selected_product(self):
         self.config({"modules": []}, name="products/alt.yaml")
@@ -330,13 +328,19 @@ class Commands(CliMixin, BspTestCase):
 
     def test_module_requests(self):
         out, _ = self.ok("module", "add", "team/Other")
-        self.assertIn("Added team/Other; run `xrobot setup` to fetch it", out)
+        self.assertEqual(out, "Added team/Other; run `xrobot setup` to fetch it\n")
         self.assertEqual(
             read_modules_yaml(self.root / "Modules/modules.yaml"),
             ([{"id": "team/Other", "ref": "same-or-dev"}], __version__),
         )
-        self.fails("module", "add", "team/Other", pattern="already requested")
-        self.ok("module", "remove", "team/Other")
+        self.fails(
+            "module",
+            "add",
+            "team/Other",
+            message=f"team/Other is already requested in {self.root / 'Modules/modules.yaml'}",
+        )
+        out, _ = self.ok("module", "remove", "team/Other")
+        self.assertEqual(out, "Removed team/Other; run `xrobot setup` to update xrobot.lock\n")
         self.assertEqual(read_modules_yaml(self.root / "Modules/modules.yaml")[0], [])
 
     def test_module_show_prints_the_manifest_and_constructors(self):
@@ -354,7 +358,7 @@ class Commands(CliMixin, BspTestCase):
             "module",
             "show",
             "team/Lde",
-            pattern=r"Module not found: team/Lde; did you mean team/Led\?",
+            message="team/Lde: not a file or folder; Module not found: team/Lde; did you mean team/Led?",
         )
 
     def test_module_show_takes_the_id_of_a_locked_module(self):
@@ -366,7 +370,7 @@ class Commands(CliMixin, BspTestCase):
             "module",
             "show",
             "team/Missing",
-            pattern="team/Missing: not a file or folder; Module not found: team/Missing",
+            message="team/Missing: not a file or folder; Module not found: team/Missing",
         )
 
     def test_format_check_and_rewrite(self):
@@ -376,7 +380,7 @@ class Commands(CliMixin, BspTestCase):
         self.fails(
             "format",
             "--check",
-            pattern="Found 1 file not in the canonical layout; run `xrobot format`",
+            message="Found 1 file not in the canonical layout; run `xrobot format`",
         )
         out, _ = self.run_cli("format", "--check")[1:]
         self.assertIn("needs formatting: User/xrobot.yaml", out)
@@ -392,277 +396,12 @@ class Commands(CliMixin, BspTestCase):
         self.assertIn("+          phase:", out.replace("'0'", "").replace(" 0", ""))
         self.assertEqual(self.ok("sync")[0], "")
 
-    def test_new_module_skeleton(self):
-        out, _ = self.ok(
-            "new-module",
-            "Blink",
-            "--desc",
-            "Blinks a pin",
-            "--constructor",
-            "LibXR::GPIO& gpio",
-            "--constructor",
-            "int period_ms = 500",
-            "--depends",
-            "team/Timer",
-            "--depends",
-            "team/Log@v1",
-            "--include",
-            "<array>",
-            "--include",
-            "blink_types.hpp",
-            "--out",
-            self.tmp / "out",
-        )
-        folder = self.tmp / "out/Blink"
-        self.assertEqual(out.strip(), f"Created {folder}")
-        manifest = parse_manifest_from_header(folder / "Blink.hpp")
-        self.assertEqual(manifest.description, "Blinks a pin")
-        self.assertEqual(
-            manifest.depends,
-            [{"id": "team/Timer", "ref": "same-or-dev"}, {"id": "team/Log", "ref": "v1"}],
-        )
-        interface = source_interface(folder / "Blink.hpp")
-        self.assertEqual(
-            [p["declaration"] for p in interface["constructors"][0]["arguments"]],
-            ["LibXR::GPIO& gpio", "int period_ms = 500"],
-        )
-        # libxr.hpp 总被包含；GPIO 是硬件接口，另外包含 gpio.hpp。
-        # libxr.hpp is always included; GPIO is a hardware interface, so gpio.hpp as well.
-        header = (folder / "Blink.hpp").read_text(encoding="utf-8")
-        self.assertIn(
-            '// clang-format on\n\n#include <array>\n\n#include "blink_types.hpp"\n'
-            '#include "gpio.hpp"\n#include "libxr.hpp"\n\nclass Blink\n',
-            header,
-        )
-        self.assertIn(
-            'target_include_directories(xr PUBLIC "${CMAKE_CURRENT_LIST_DIR}")',
-            (folder / "CMakeLists.txt").read_text(encoding="utf-8"),
-        )
-        workflow = yaml.safe_load(
-            (folder / ".github/workflows/build.yml").read_text(encoding="utf-8")
-        )
-        job = workflow["jobs"]["build"]
-        self.assertEqual(job["uses"], "xrobot-org/XRobot/.github/workflows/module-ci.yml@v1")
-        self.assertEqual(job["with"], {"template-args": "[]"})
-        readme = (folder / "README.md").read_text(encoding="utf-8")
-        headings = [line for line in readme.splitlines() if line.startswith("#")]
-        self.assertEqual(
-            headings,
-            [
-                "# Blink",
-                "## 1. 模块作用",
-                "## 2. 构造接口",
-                "## 3. Topic",
-                "## 4. 配置示例",
-                "## 5. 依赖与硬件",
-            ],
-        )
-        self.assertIn("```cpp\nBlink(LibXR::GPIO& gpio, int period_ms = 500);\n```", readme)
-        self.assertIn("- `LibXR::GPIO& gpio` <!--", readme)
-        self.assertIn(
-            "```yaml\nmodules:\n  - module: Blink\n    id: blink_0\n    args:\n"
-            "      - gpio:\n      - period_ms: 500\n```",
-            readme,
-        )
-        self.assertIn("- `team/Timer@same-or-dev`\n- `team/Log@v1`", readme)
-        self.assertIn("- `gpio`: `LibXR::GPIO`", readme)
-
-    def test_new_module_template_arguments_for_ci(self):
-        out = self.tmp / "out"
-        self.fails(
-            "new-module",
-            "Filter",
-            "--template",
-            "int N",
-            "--out",
-            out,
-            pattern="template parameter N of Filter has no default; give the value the Module "
-            "CI compiles with --template-arg",
-        )
-        self.fails(
-            "new-module",
-            "Filter",
-            "--template",
-            "int N",
-            *("--template-arg", "3", "--template-arg", "4"),
-            "--out",
-            out,
-            pattern="Filter has 1 template parameter but 2 --template-arg values were given",
-        )
-        self.assertFalse((out / "Filter").exists())
-        self.ok(
-            "new-module",
-            "Filter",
-            *("--template", "int N", "--template", "typename T = float"),
-            *("--template-arg", "3"),
-            *("--constructor", "T gain = T(1)"),
-            "--out",
-            out,
-        )
-        workflow = yaml.safe_load(
-            (out / "Filter/.github/workflows/build.yml").read_text(encoding="utf-8")
-        )
-        self.assertEqual(workflow["jobs"]["build"]["with"], {"template-args": '["3"]'})
-        # README 的配置示例用 CI 的模板实参，参数也一并写出。
-        # The README example uses the CI template arguments, so the arguments are written.
-        self.assertIn(
-            "    template_args:\n      - 3\n      - float\n    args:\n      - gain: float(1)\n",
-            (out / "Filter/README.md").read_text(encoding="utf-8"),
-        )
-
-    def test_new_module_refuses_bad_input_without_creating_anything(self):
-        out = self.tmp / "out"
-        self.fails(
-            "new-module",
-            "Blink",
-            "--depends",
-            "Timer",
-            "--out",
-            out,
-            pattern="Expected canonical owner/repo",
-        )
-        self.fails(
-            "new-module", "1Blink", "--out", out, pattern="Module name 1Blink is not a C\\+\\+ id"
-        )
-        self.fails("new-module", "class", "--out", out, pattern="Module name class is a C\\+\\+ k")
-        invalid = "Blink.hpp would not be a valid Module header: "
-        for declarations, problem in (
-            (["LibXR::GPIO&"], "Constructor parameters must have explicit names: LibXR::GPIO&"),
-            (["int x = "], "Missing default value after '=': int x ="),
-            (
-                ["int x = 1", "LibXR::GPIO& led"],
-                "Blink: no compliant constructor; line \\d+: led: dependency without a "
-                "default appears after value configuration",
-            ),
-            (["int x) {} void f(int y"], "each --constructor and --template must be one"),
-        ):
-            options = [a for d in declarations for a in ("--constructor", d)]
-            self.fails("new-module", "Blink", *options, "--out", out, pattern=invalid + problem)
-        self.fails(
-            "new-module", "Blink", "--include", "<array", "--out", out, pattern="Invalid include"
-        )
-        self.assertFalse(out.exists())
-        self.ok("new-module", "Blink", "--out", out)
-        self.fails(
-            "new-module", "Blink", "--out", out, pattern="Refusing to overwrite existing module"
-        )
-
-
-class SharedModuleWorkflow(TempDirTestCase):
-    def test_the_reusable_workflow_accepts_what_module_repositories_pass(self):
-        from xrobot.module_creator import ci_workflow
-
-        shared = yaml.safe_load(
-            (REPOSITORY / ".github/workflows/module-ci.yml").read_text(encoding="utf-8")
-        )
-        trigger = shared.get("on", shared.get(True))
-        inputs = trigger["workflow_call"]["inputs"]
-        caller = yaml.safe_load(ci_workflow([]))
-        self.assertTrue(set(caller["jobs"]["build"]["with"]) <= set(inputs))
-        # 模板实参是一个 JSON 列表，放在单引号 YAML 字符串中。
-        # The template arguments are a JSON list inside a single-quoted YAML string.
-        values = ["Frame{.name = 'a'}", "3"]
-        caller = yaml.safe_load(ci_workflow(values))
-        self.assertEqual(json.loads(caller["jobs"]["build"]["with"]["template-args"]), values)
-        for name in ("xrobot-ref", "libxr-ref", "dependency-ref", "template-args"):
-            self.assertIn(name, inputs)
-        self.assertEqual(inputs["xrobot-ref"]["default"], "master")
-        self.assertEqual(inputs["libxr-ref"]["default"], "master")
-        steps = "\n".join(str(step.get("run", "")) for step in shared["jobs"]["build"]["steps"])
-        self.assertIn('xrobot check-module "$XR_MODULE_ID"', steps)
-        self.assertIn("add_library(module_check OBJECT module_check.cpp)", steps)
-        self.assertNotRegex(steps, r"git (tag|push)")
-
-
-class ModuleCiPreparation(CliMixin, UpstreamTestCase):
-    """The shared workflow's preparation script, run against local repositories."""
-
-    def test_the_pull_request_head_is_probed_with_dependencies_from_the_context(self):
-        from fixtures import run_git
-
-        b = self.upstream("team/B")
-        a = self.upstream("team/A", ["team/B@same-or-dev"], listed=False)
-        selected = run_git(a, "rev-parse", "HEAD")
-        local = self.modules / "team/A"
-        run_git(None, "clone", "-q", str(a), str(local))
-        run_git(local, "checkout", "-q", "--detach", selected)
-        self.commit(a, ["team/B@same-or-dev"], "new remote head")
-        (self.modules / "modules.yaml").unlink()
-        (self.modules / "sources.yaml").unlink()
-        shared = yaml.safe_load(
-            (REPOSITORY / ".github/workflows/module-ci.yml").read_text(encoding="utf-8")
-        )
-        step = next(
-            s for s in shared["jobs"]["build"]["steps"] if "PYCODE" in str(s.get("run", ""))
-        )
-        lines = step["run"].splitlines()
-        start = next(i for i, line in enumerate(lines) if "<<'PYCODE'" in line) + 1
-        end = next(i for i in range(start, len(lines)) if lines[i].strip() == "PYCODE")
-        indent = min(len(text) - len(text.lstrip()) for text in lines[start:end] if text.strip())
-        script = "\n".join(text[indent:] for text in lines[start:end])
-
-        class Index:
-            def __init__(self, data):
-                self.text = yaml.safe_dump(data)
-
-            def raise_for_status(self):
-                pass
-
-        def index(url, **kwargs):
-            if url == "https://xrobot.work/xrobot-modules/index.yaml":
-                return Index(
-                    {
-                        "packages": [
-                            {
-                                "id": "team/A",
-                                "type": "module",
-                                "repo": (self.tmp / "wrong-upstream").as_uri(),
-                            },
-                        ]
-                    }
-                )
-            if url == "https://qdu-robomaster.github.io/qdu-future-modules/index.yaml":
-                return Index({"modules": []})
-            # team/B 只在调用方通过 sources 输入给出的 index 中。
-            # team/B is only in the index the caller passes through the sources input.
-            if url == "https://example.com/team/index.yaml":
-                return Index({"packages": [{"id": "team/B", "type": "module", "repo": b.as_uri()}]})
-            raise AssertionError("unexpected index request: " + url)
-
-        previous = os.getcwd()
-        os.chdir(str(self.root))
-        try:
-            with mock.patch.dict(
-                os.environ,
-                XR_MODULE_ID="team/A",
-                XR_DEPENDENCY_REF="refs/heads/feature/ci",
-                XR_SOURCES="\n  https://example.com/team/index.yaml\n",
-            ):
-                exec(compile(script, "<module CI preparation>", "exec"), {"__name__": "__ci__"})
-        finally:
-            os.chdir(previous)
-        sources = yaml.safe_load((self.modules / "sources.yaml").read_text(encoding="utf-8"))
-        self.assertEqual(
-            [(s["url"], s["priority"]) for s in sources["sources"]],
-            [
-                ("https://xrobot.work/xrobot-modules/index.yaml", 0),
-                ("https://qdu-robomaster.github.io/qdu-future-modules/index.yaml", 0),
-                ("https://example.com/team/index.yaml", 1),
-                ("../ci-index.yaml", -100),
-            ],
-        )
-        with mock.patch("xrobot.source_manager.requests.get", side_effect=index):
-            self.ok("check-module", "team/A", "-o", self.root / "module_check.cpp")
-        lock = yaml.safe_load((self.root / "xrobot.lock").read_text(encoding="utf-8"))
-        self.assertEqual(lock["modules"]["team/A"]["commit"], selected)
-        self.assertEqual(lock["modules"]["team/B"]["resolved_ref"], "dev")
-        self.assertEqual(run_git(local, "rev-parse", "HEAD"), selected)
-        probe = (self.root / "module_check.cpp").read_text(encoding="utf-8")
-        self.assertIn("void XRobotCompileCheck()", probe)
-        self.assertIn("static A module_0;", probe)
-
 
 class Setup(CliMixin, UpstreamTestCase):
+    """setup、check-module 和 source 命令。
+    The setup, check-module and source commands.
+    """
+
     def setUp(self):
         super().setUp()
         self.led = self.upstream("team/Led")
@@ -708,14 +447,18 @@ class Setup(CliMixin, UpstreamTestCase):
             self.fails(
                 "setup",
                 option,
-                pattern="xrobot.lock does not exist; run `xrobot setup` once without "
-                "--frozen or --offline",
+                message="xrobot.lock does not exist; run `xrobot setup` once without --frozen or "
+                "--offline",
             )
 
     def test_a_git_timeout_is_reported_without_a_traceback(self):
         timeout = subprocess.TimeoutExpired(["git", "fetch"], 300)
         with mock.patch("xrobot.git.subprocess.run", side_effect=timeout):
-            self.fails("setup", pattern=r"Git did not finish within 300 s")
+            self.fails(
+                "setup",
+                message=f"Git did not finish within 300 s in {self.root}: rev-parse "
+                "--is-inside-work-tree",
+            )
 
     def test_a_different_tool_pin_is_a_warning_and_an_error_when_frozen(self):
         self.configure(["team/Led@master"], pin="0.9.0")
@@ -727,7 +470,8 @@ class Setup(CliMixin, UpstreamTestCase):
         self.fails(
             "setup",
             "--frozen",
-            pattern=r"differs from the pinned 0\.9\.0 \(--frozen requires the pinned version\)",
+            message="installed XRobot 1.0.0 differs from the pinned 0.9.0 (--frozen requires the "
+            "pinned version)",
         )
         self.configure(["team/Led@master"], pin="0123456789abcdef0123456789abcdef01234567")
         _, err = self.ok("setup", "--frozen")

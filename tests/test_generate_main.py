@@ -1,5 +1,7 @@
-"""Generating User/xrobot_main.hpp: header shape, argument binding and conversion, dependency
-rules, diagnostics, and C++ compile/run checks of the generated code."""
+"""生成入口头文件（xrobot.generate_main）：XR_REGISTER、实例、绑定、转换、诊断，以及生成的 C++ 能否编译运行。
+Generating the entry header (xrobot.generate_main): XR_REGISTER, instances, binding, conversions,
+diagnostics, and whether the generated C++ compiles and runs.
+"""
 
 import os
 import re
@@ -7,16 +9,43 @@ import stat
 import unittest
 from pathlib import Path
 
-from fixtures import CXX, BspTestCase, CxxMixin, requires_cxx
+from fixtures import CXX, BspTestCase, CxxMixin, TempDirTestCase, requires_cxx
 
 from xrobot import config_edit
 from xrobot.config import ConfigError
-from xrobot.generate_main import generate, generate_compile_check, load_modules, validate_all
-from xrobot.project import HEADER_NOTICE, ProjectError
+from xrobot.generate_main import (
+    generate,
+    generate_compile_check,
+    load_modules,
+    read_registrations,
+    validate_all,
+)
+from xrobot.project import (
+    HEADER_NOTICE,
+)
 from xrobot.type_index import TypeIndex
 
-MAIN = '#include "xrobot_main.hpp"\nint main() { XROBOT_MAIN(); }\n'
 
+def led(identity="led", gpio="pin", param=None, gain="1.0f"):
+    """一个 Led 实例的配置数据。
+    The configuration data of one Led instance.
+    """
+    return {
+        "module": "Led",
+        "id": identity,
+        "args": [
+            {"gpio": gpio},
+            {"param": param or {"cycle": "250", "inverted": "false"}},
+            {"gain": gain},
+        ],
+    }
+
+
+PROBE = """#include "Led.hpp"
+class Probe {
+ public:
+  Probe(Port& port, Port* optional, int count = 1, const char* name = "probe") {}
+};"""
 LED = """namespace LibXR { class GPIO; class UART; }
 struct Port { int value = 1; };
 struct SubPort : Port {};
@@ -27,11 +56,20 @@ class Led {
   Led(LibXR::GPIO& gpio, Param param = {}, float gain = 1.0f) {}
   void OnMonitor() {}
 };"""
-PROBE = """#include "Led.hpp"
-class Probe {
- public:
-  Probe(Port& port, Port* optional, int count = 1, const char* name = "probe") {}
-};"""
+
+
+def probe(identity="probe", port="port", optional="nullptr", count="1", name='"probe"'):
+    """一个 Probe 实例的配置数据。
+    The configuration data of one Probe instance.
+    """
+    return {
+        "module": "Probe",
+        "id": identity,
+        "args": [{"port": port}, {"optional": optional}, {"count": count}, {"name": name}],
+    }
+
+
+MAIN = '#include "xrobot_main.hpp"\nint main() { XROBOT_MAIN(); }\n'
 CMD = """#include "Led.hpp"
 class Cmd {
  public:
@@ -46,27 +84,11 @@ REGISTERED = (
 )
 
 
-def led(identity="led", gpio="pin", param=None, gain="1.0f"):
-    return {
-        "module": "Led",
-        "id": identity,
-        "args": [
-            {"gpio": gpio},
-            {"param": param or {"cycle": "250", "inverted": "false"}},
-            {"gain": gain},
-        ],
-    }
-
-
-def probe(identity="probe", port="port", optional="nullptr", count="1", name='"probe"'):
-    return {
-        "module": "Probe",
-        "id": identity,
-        "args": [{"port": port}, {"optional": optional}, {"count": count}, {"name": name}],
-    }
-
-
 class GenerationTestCase(BspTestCase):
+    """带常用模块的 BSP，以及生成和取报错的辅助。
+    A BSP with common Modules, and helpers that generate and collect errors.
+    """
+
     def setUp(self):
         super().setUp()
         self.module("Led", LED)
@@ -75,10 +97,16 @@ class GenerationTestCase(BspTestCase):
         self.entry(REGISTERED)
 
     def code(self, *instances, **top):
+        """用这些实例生成头文件并返回其文本。
+        Generate the header with these instances and return its text.
+        """
         top["modules"] = list(instances)
         return self.generate(top)
 
     def error(self, *instances, **top):
+        """用这些实例生成头文件，返回报错文本。
+        Generate the header with these instances and return the error text.
+        """
         top["modules"] = list(instances)
         with self.assertRaises(ValueError) as context:
             self.generate(top)
@@ -86,6 +114,10 @@ class GenerationTestCase(BspTestCase):
 
 
 class HeaderShape(GenerationTestCase):
+    """生成头文件的结构。
+    The structure of the generated header.
+    """
+
     def test_the_second_line_says_the_header_is_generated(self):
         lines = self.code(led()).split("\n")
         self.assertEqual(lines[:2], ["#pragma once", HEADER_NOTICE])
@@ -191,6 +223,10 @@ class HeaderShape(GenerationTestCase):
 
 
 class LineDirectives(GenerationTestCase):
+    """把实例和参数映射回配置的 #line 指令。
+    The #line directives that map instances and arguments back to the configuration.
+    """
+
     def test_directives_map_instances_and_arguments_to_yaml_and_back_to_the_header(self):
         config = self.config(
             "# robot\nmodules:\n  - module: Led\n    id: led\n    args:\n      - gpio: pin\n"
@@ -216,6 +252,7 @@ class LineDirectives(GenerationTestCase):
             else:
                 self.assertEqual(path, yaml_path)
                 yaml_targets.append((target, lines[number].strip()))
+        # 每个实例先有一条实例行的指令，再每个参数一条；每个实例之后头文件恢复自身的行号。
         # instance line, then one directive per argument; the header resumes after each instance.
         self.assertIn((3, "static Led led("), yaml_targets)
         self.assertIn((6, "pin"), yaml_targets)
@@ -241,6 +278,10 @@ class LineDirectives(GenerationTestCase):
 
 
 class Conversions(GenerationTestCase):
+    """值到参数类型的转换。
+    Conversions of values to parameter types.
+    """
+
     def test_arithmetic_parameters_use_implicit(self):
         code = self.code(led(gain="2"), probe(count="3"))
         self.assertIn("xrobot_generated::Implicit<float>(2)", code)
@@ -303,8 +344,13 @@ class Conversions(GenerationTestCase):
 
 
 class Dependencies(GenerationTestCase):
+    """依赖参数的绑定。
+    Binding dependency parameters.
+    """
+
     def test_unknown_name_lists_candidates_of_the_parameter_type(self):
         message = self.error(probe(port="missing"))
+        # sub 是 SubPort（公有基类 Port）；hidden 私有继承，不能绑定。
         # sub is a SubPort (public base Port); hidden derives privately and does not bind.
         self.assertIn(
             "xrobot.yaml: probe.args.port: missing is neither an XR_REGISTER name nor an earlier "
@@ -358,11 +404,12 @@ class Dependencies(GenerationTestCase):
         self.assertIn("led.args.gpio: missing is neither", message)
         self.assertIn("cmd.args.led: led has errors of its own", message)
 
-    def test_unfilled_dependencies_are_reported(self):
-        self.assertIn("probe.args.port is not filled in", self.error(probe(port=None)))
-
 
 class Names(GenerationTestCase):
+    """实例 id、登记名和模块名的冲突。
+    Conflicts between instance ids, registration names and Module names.
+    """
+
     def test_instance_id_equal_to_a_module_class_name_is_rejected(self):
         for identity in ("Led", "Port", "SubPort"):
             with self.subTest(identity=identity):
@@ -415,6 +462,10 @@ class Names(GenerationTestCase):
 
 
 class Diagnostics(GenerationTestCase):
+    """报错的收集方式，以及失败时保留旧的头文件。
+    How errors are collected, and that a failure keeps the previous header.
+    """
+
     def test_errors_of_every_instance_are_collected_with_config_and_path_prefixes(self):
         message = self.error(probe("a", port="missing"), led("b", gpio=None), led("Led"))
         lines = message.splitlines()
@@ -431,7 +482,9 @@ class Diagnostics(GenerationTestCase):
         )
 
     def test_structural_errors_name_the_config_file(self):
-        with self.assertRaisesRegex(ConfigError, "User/xrobot.yaml: modules\\[0\\]: unknown key"):
+        with self.assertRaisesMessage(
+            ConfigError, "User/xrobot.yaml: modules[0]: unknown key(s) extra"
+        ):
             self.generate({"modules": [{"module": "Led", "id": "led", "extra": "x"}]})
 
     def test_a_failed_generation_leaves_the_previous_header(self):
@@ -440,17 +493,6 @@ class Diagnostics(GenerationTestCase):
         before = header.read_bytes()
         self.error(probe(port="missing"))
         self.assertEqual(header.read_bytes(), before)
-
-    def test_regenerating_identical_output_keeps_bytes_and_marks_the_header_fresh(self):
-        self.code(led())
-        header = self.root / "User/xrobot_main.hpp"
-        before = header.read_bytes()
-        past = header.stat().st_mtime - 100
-        os.utime(header, (past, past))
-        generate(self.project)
-        self.assertEqual(header.read_bytes(), before)
-        self.assertGreater(header.stat().st_mtime, past)
-        self.assertEqual(self.project.header_state()["status"], "fresh")
 
     def test_the_header_is_fresh_after_gen_even_when_an_input_is_dated_in_the_future(self):
         config = self.root / "User/xrobot.yaml"
@@ -480,6 +522,10 @@ class Diagnostics(GenerationTestCase):
 
 
 class Selection(GenerationTestCase):
+    """生成哪一份配置。
+    Which configuration is generated.
+    """
+
     def test_generate_uses_the_selected_product_by_default(self):
         self.config({"modules": [led("default_led")]})
         self.config({"modules": [led("alt_led")]}, name="alt.yaml")
@@ -488,24 +534,8 @@ class Selection(GenerationTestCase):
         self.assertIn("alt_led", generate(self.project))
 
     def test_a_missing_config_is_reported(self):
-        with self.assertRaisesRegex(ConfigError, "User/missing.yaml does not exist"):
+        with self.assertRaisesMessage(ConfigError, "User/missing.yaml does not exist"):
             generate(self.project, self.root / "User/missing.yaml")
-
-    def test_a_selected_config_that_no_longer_exists_is_not_replaced_by_the_default(self):
-        self.config({"modules": [led("default_led")]})
-        alt = self.config({"modules": [led("alt_led")]}, name="alt.yaml")
-        generate(self.project, alt)
-        alt.rename(self.root / "User/renamed.yaml")
-        with self.assertRaisesRegex(
-            ProjectError,
-            r"User/xrobot_main.hpp was generated for User/alt.yaml, "
-            r"which does not exist; select a configuration with "
-            r"`xrobot gen -c <config>`",
-        ):
-            generate(self.project)
-        self.assertIn("alt_led", generate(self.project, self.root / "User/renamed.yaml"))
-        (self.root / "User/xrobot_main.hpp").unlink()
-        self.assertIn("default_led", generate(self.project))
 
     def test_validate_all_checks_every_config_and_collects_errors(self):
         self.config({"modules": [led()]})
@@ -524,25 +554,24 @@ class Selection(GenerationTestCase):
 
 
 class Monitors(BspTestCase):
+    """生成的主循环调用哪些 OnMonitor。
+    Which OnMonitor functions the generated main loop calls.
+    """
+
     def setUp(self):
         super().setUp()
         self.entry(MAIN)
 
     def monitored(self, body, name="M"):
+        """生成的主循环是否调用这个类的 OnMonitor。
+        Whether the generated main loop calls OnMonitor of this class.
+        """
         self.module(name, body)
         code = self.generate({"modules": [{"module": name, "id": "m"}]})
         return "m.OnMonitor();" in code
 
     def test_a_public_monitor_is_called(self):
         self.assertTrue(self.monitored("class M { public: M() {} void OnMonitor() {} };"))
-
-    def test_a_header_with_an_include_guard_is_read_like_any_other(self):
-        self.assertTrue(
-            self.monitored(
-                "#ifndef M_HPP\n#define M_HPP\nclass M { public: M() {} void OnMonitor() {} };\n"
-                "#endif  // M_HPP"
-            )
-        )
 
     def test_a_private_or_missing_monitor_is_not_called(self):
         self.assertFalse(self.monitored("class M { public: M() {} private: void OnMonitor() {} };"))
@@ -560,36 +589,30 @@ class Monitors(BspTestCase):
             )
         )
 
-    def test_using_base_monitor_counts(self):
-        self.assertTrue(
-            self.monitored(
-                "class Core { protected: void OnMonitor() {} };\n"
-                "class M : public Core { public: M() {} using Core::OnMonitor; };"
-            )
-        )
-
-    def test_libxr_bases_provide_no_monitor(self):
-        self.assertFalse(
-            self.monitored(
-                "namespace LibXR { class Application {}; }\n"
-                "class M : public LibXR::Application { public: M() {} };"
-            )
-        )
-
     def test_an_unlocatable_public_base_is_an_error(self):
         self.module("M", "class M : public Vendor::Base { public: M() {} };")
-        with self.assertRaisesRegex(
-            ConfigError, "m: cannot tell whether a public base class provides OnMonitor"
+        with self.assertRaisesMessage(
+            ConfigError,
+            "User/xrobot.yaml: m: cannot tell whether a public base class provides OnMonitor; "
+            "its base is not defined in the loaded Module headers",
         ):
             self.generate({"modules": [{"module": "M", "id": "m"}]})
 
     def test_a_conditional_monitor_is_an_error(self):
         self.module("M", "class M { public: M() {}\n#if FEATURE\n  void OnMonitor() {}\n#endif\n};")
-        with self.assertRaisesRegex(ValueError, "M declares OnMonitor under #if"):
+        with self.assertRaisesMessage(
+            ValueError,
+            "User/xrobot.yaml: m: M declares OnMonitor under #if; the generator cannot "
+            "evaluate build options",
+        ):
             self.generate({"modules": [{"module": "M", "id": "m"}]})
 
 
 class Templates(BspTestCase):
+    """类模板模块的模板实参。
+    Template arguments of class-template Modules.
+    """
+
     def setUp(self):
         super().setUp()
         self.entry(MAIN)
@@ -625,21 +648,31 @@ class Templates(BspTestCase):
         self.assertIn("static Def<> c;", code)
 
     def test_instance_id_equal_to_a_class_template_name_is_rejected(self):
-        with self.assertRaisesRegex(
-            ValueError, "instance id Buf is also a class name in the loaded Modules"
+        with self.assertRaisesMessage(
+            ValueError,
+            "User/xrobot.yaml: Buf: instance id Buf is also a class name in the loaded "
+            "Modules; use a lower-case id such as buf",
         ):
             self.generate({"modules": [{"module": "Def", "id": "Buf"}]})
 
     def test_missing_and_extra_template_arguments_are_errors(self):
-        with self.assertRaisesRegex(ValueError, "Template argument Buf.T must be specified"):
+        with self.assertRaisesMessage(
+            ValueError, "User/xrobot.yaml: a: Template argument Buf.T must be specified"
+        ):
             self.generate({"modules": [{"module": "Buf", "id": "a"}]})
-        with self.assertRaisesRegex(ValueError, "Too many template arguments for Def"):
+        with self.assertRaisesMessage(
+            ValueError, "User/xrobot.yaml: a: Too many template arguments for Def"
+        ):
             self.generate(
                 {"modules": [{"module": "Def", "id": "a", "template_args": ["int", "int"]}]}
             )
 
 
 class Overloads(BspTestCase):
+    """按参数名选择重载的构造函数。
+    Selecting an overloaded constructor by parameter names.
+    """
+
     def setUp(self):
         super().setUp()
         self.entry(MAIN)
@@ -671,20 +704,30 @@ class Overloads(BspTestCase):
                 }
             ),
         )
-        with self.assertRaisesRegex(ValueError, "Foo: constructor is ambiguous"):
+        with self.assertRaisesMessage(
+            ValueError,
+            "User/xrobot.yaml: f: Foo: constructor is ambiguous for the supplied names and "
+            "explicit types",
+        ):
             self.generate(
                 {"modules": [{"module": "Foo", "id": "f", "args": [{"value": "Read()"}]}]}
             )
 
     def test_a_dependency_after_a_defaulted_parameter_is_not_a_supported_constructor(self):
         self.module("Foo", "class Foo { public: Foo(int count = 10, Port& port) {} };")
-        with self.assertRaisesRegex(
-            ValueError, "no compliant constructor.*dependency without a default appears after"
+        with self.assertRaisesMessage(
+            ValueError,
+            "User/xrobot.yaml: f: Foo: no compliant constructor; line 4: port: dependency "
+            "without a default appears after value configuration",
         ):
             self.generate({"modules": [{"module": "Foo", "id": "f"}]})
 
 
 class CompileCheckProbe(BspTestCase):
+    """模块 CI 使用的构造探针。
+    The constructor probe the Module CI compiles.
+    """
+
     def test_probe_uses_null_placeholders_and_is_never_a_program(self):
         self.module(
             "Foo",
@@ -727,14 +770,16 @@ class Foo { public:
         )
         self.assertEqual(library.read_text(encoding="utf-8"), '#include "Lib.hpp"\n')
         out = self.write(self.tmp / "check.cpp", "original")
-        with self.assertRaisesRegex(ValueError, "non-public member Foo::Secret"):
+        with self.assertRaisesMessage(ValueError, "Expression uses non-public member Foo::Secret"):
             generate_compile_check("team/Foo", load_modules(self.project), out)
         self.assertEqual(out.read_text(encoding="utf-8"), "original")
 
 
 @requires_cxx
 class GeneratedCpp(CxxMixin, BspTestCase):
-    """The generated header compiles, binds, constructs and monitors as specified."""
+    """生成的头文件能够编译、绑定、构造并调用 OnMonitor。
+    The generated header compiles, binds, constructs and calls OnMonitor.
+    """
 
     def setUp(self):
         super().setUp()
@@ -1292,7 +1337,9 @@ class Foo { public:
 
 @requires_cxx
 class LineDirectivesInCpp(CxxMixin, BspTestCase):
-    """Compiler diagnostics point into the YAML for values and back into the header elsewhere."""
+    """编译器报错指回配置中的行。
+    Compiler errors point back at configuration lines.
+    """
 
     def setUp(self):
         super().setUp()
@@ -1340,5 +1387,116 @@ class LineDirectivesInCpp(CxxMixin, BspTestCase):
         self.assertRegex(output, rf"xrobot_main\.hpp:{line}:\d+: error", output)
 
 
-if __name__ == "__main__":
-    unittest.main()
+class Registrations(TempDirTestCase):
+    """从入口源文件读取 XR_REGISTER。
+    Reading XR_REGISTER from the entry source.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.root = self.tmp
+
+    def read_entry(self, text):
+        """读取入口源文件文本中的 XR_REGISTER。
+        Read the XR_REGISTER calls of an entry source text.
+        """
+        return read_registrations(self.write("app_main.cpp", text))
+
+    def test_name_type_and_line_are_read(self):
+        records = self.read_entry(
+            '#include "xrobot_main.hpp"\nvoid f() {\n  XR_REGISTER(led, LibXR::GPIO);\n'
+            "  XR_REGISTER(values, std::array<int, 2>);\n}\n"
+        )
+        self.assertEqual(
+            [(r["name"], r["type"], r["line"]) for r in records],
+            [("led", "LibXR::GPIO", 3), ("values", "std::array<int, 2>", 4)],
+        )
+
+    def test_comments_and_string_literals_are_not_registrations(self):
+        records = self.read_entry(
+            "// XR_REGISTER(fake, Wrong);\n/* XR_REGISTER(a, B); */\n"
+            'const char* s = "XR_REGISTER(x, y)";\nXR_REGISTER(real, int);\n'
+        )
+        self.assertEqual([r["name"] for r in records], ["real"])
+
+    def test_each_invalid_registration_is_rejected_with_its_line(self):
+        one_type = (
+            "XR_REGISTER registers one type per name: XR_REGISTER(name, Type). To expose the "
+            "object as another type, declare a reference (e.g. `LibXR::CAN& can1 = fdcan1;`) "
+            "and register that name separately"
+        )
+        conditional = (
+            "XR_REGISTER inside #if/#ifdef/#ifndef is not supported; the generator cannot "
+            "evaluate build options"
+        )
+        cases = [
+            ("XR_REGISTER(dev, Left, Right);\n", f"app_main.cpp:1: {one_type}"),
+            ("XR_REGISTER(dev);\n", f"app_main.cpp:1: {one_type}"),
+            (
+                "#define REGISTER_ALL XR_REGISTER(x, int)\nint x;\n",
+                "app_main.cpp:1: XR_REGISTER inside a preprocessor directive is not supported",
+            ),
+            ("XR_REGISTER(x, int\n", "app_main.cpp: malformed XR_REGISTER invocation"),
+            (
+                "XR_REGISTER(x, int);\nXR_REGISTER(x, long);\n",
+                "app_main.cpp:2: duplicate XR_REGISTER name x",
+            ),
+            (
+                "XR_REGISTER(class, int);\n",
+                "app_main.cpp:1: registration name class is a C++ keyword",
+            ),
+            (
+                "XR_REGISTER(xr_led, int);\n",
+                "app_main.cpp:1: registration name xr_led uses a prefix reserved for generated names",
+            ),
+            (
+                "XR_REGISTER(ASSERT, int);\n",
+                "app_main.cpp:1: registration name ASSERT is a macro name",
+            ),
+        ]
+        for directive in ("#if defined(OPTION)", "#ifdef OPTION", "#ifndef OPTION"):
+            cases.append(
+                (
+                    f"int x;\n{directive}\nXR_REGISTER(x, int);\n#endif\n",
+                    f"app_main.cpp:3: {conditional}",
+                )
+            )
+        for cpp_type in ("int&", "LibXR::CAN &", "int&&"):
+            cases.append(
+                (
+                    f"XR_REGISTER(x, {cpp_type});\n",
+                    "app_main.cpp:1: register object types, not reference types: x",
+                )
+            )
+        for text, message in cases:
+            with self.subTest(text=text):
+                with self.assertRaises(ConfigError) as context:
+                    self.read_entry(text)
+                self.assertEqual(str(context.exception), message)
+
+    def test_registration_after_a_closed_conditional_is_accepted(self):
+        records = self.read_entry(
+            "#if OPTION\nint y;\n#else\nint z;\n#endif\nint x;\nXR_REGISTER(x, int);\n"
+        )
+        self.assertEqual([r["name"] for r in records], ["x"])
+
+    def test_every_registration_error_is_reported(self):
+        with self.assertRaises(ConfigError) as context:
+            self.read_entry(
+                "XR_REGISTER(a, int&);\nXR_REGISTER(b, X, Y);\nXR_REGISTER(class, int);\n"
+            )
+        self.assertEqual(
+            [line.split(": ", 1)[0] for line in str(context.exception).splitlines()],
+            ["app_main.cpp:1", "app_main.cpp:2", "app_main.cpp:3"],
+        )
+
+    def test_types_declared_by_the_caller_are_marked(self):
+        records = self.read_entry(
+            "struct Global {};\nvoid f() {\n  struct Local {};\n  Local d; Global g; int n;\n"
+            "  XR_REGISTER(d, Local);\n  XR_REGISTER(g, Global);\n  XR_REGISTER(n, int);\n"
+            "  XR_REGISTER(p, LibXR::GPIO);\n}\n"
+        )
+        self.assertEqual(
+            {r["name"]: r["caller_view"] for r in records},
+            {"d": True, "g": True, "n": False, "p": False},
+        )

@@ -1,8 +1,9 @@
-"""YAML mapping rules for constructor values, and the constructor/initializer model behind them."""
+"""构造参数和值的规则（xrobot.constructor_model）：参数声明、构造函数选择、映射检查和类型转换。
+Constructor parameter and value rules (xrobot.constructor_model): declarations, constructor
+selection, mapping checks and conversions.
+"""
 
-import unittest
-
-from fixtures import BspTestCase, CxxMixin, requires_cxx
+from fixtures import BspTestCase, CxxMixin, TestCase, requires_cxx
 
 from xrobot.constructor_model import (
     compliant_constructors,
@@ -25,25 +26,42 @@ MAIN = '#include "xrobot_main.hpp"\nint main() { XROBOT_MAIN(); }\n'
 
 
 def interface(source, name="Foo"):
+    """头文件文本中一个类的构造接口，含参数形状。
+    The constructor interface of a class in a header text, with parameter shapes.
+    """
     return enrich_interface(source, extract_interface(source, name))
 
 
 class MappingTestCase(BspTestCase):
+    """带结构体参数模块的 BSP，供映射测试使用。
+    A BSP with Modules that take struct parameters, for the mapping tests.
+    """
+
     def setUp(self):
         super().setUp()
         self.entry(MAIN)
 
     def value(self, module, parameter_name, value, identity="p"):
+        """用一个参数值生成头文件并返回其文本。
+        Generate the header with one argument value and return its text.
+        """
         return self.generate(
             {"modules": [{"module": module, "id": identity, "args": [{parameter_name: value}]}]}
         )
 
     def rejected(self, module, parameter_name, value, pattern):
+        """断言这个参数值被拒绝，报错匹配 pattern。
+        Assert that the argument value is rejected with an error matching pattern.
+        """
         with self.assertRaisesRegex(ValueError, pattern):
             self.value(module, parameter_name, value)
 
 
 class Aggregates(MappingTestCase):
+    """聚合体参数的映射：字段、顺序和嵌套。
+    Mappings of aggregate parameters: fields, order and nesting.
+    """
+
     def setUp(self):
         super().setUp()
         self.module(
@@ -147,6 +165,10 @@ class Aggregates(MappingTestCase):
 
 
 class Unmappable(MappingTestCase):
+    """无法检查字段的类型拒绝映射。
+    Types whose fields cannot be checked reject mappings.
+    """
+
     def test_types_that_cannot_be_checked_reject_mappings(self):
         self.module(
             "U",
@@ -182,6 +204,10 @@ class Unmappable(MappingTestCase):
 
 
 class UnlocatableTypes(MappingTestCase):
+    """索引中找不到的类型：映射按默认初始化器检查。
+    Types the index cannot locate: mappings are checked against the default initializer.
+    """
+
     def setUp(self):
         super().setUp()
         self.module(
@@ -191,6 +217,9 @@ class UnlocatableTypes(MappingTestCase):
         )
 
     def generate_x(self, designated="{}", plain="{}"):
+        """用两个参数值生成模块 X 的实例。
+        Generate an instance of Module X with the two argument values.
+        """
         return self.generate(
             {
                 "modules": [
@@ -205,18 +234,24 @@ class UnlocatableTypes(MappingTestCase):
 
     def test_a_mapping_must_match_the_designated_default(self):
         self.assertIn(".x = 3\n, .y = 4", self.generate_x(designated={"x": "3", "y": "4"}))
-        with self.assertRaisesRegex(
-            ValueError, r"x\.args\.designated: missing y \(from the default initializer\)"
+        with self.assertRaisesMessage(
+            ValueError,
+            "User/xrobot.yaml: x.args.designated: missing y (from the default initializer); "
+            "expected: x, y",
         ):
             self.generate_x(designated={"x": "3"})
-        with self.assertRaisesRegex(ValueError, "fields out of declaration order"):
+        with self.assertRaisesMessage(
+            ValueError,
+            "User/xrobot.yaml: x.args.designated: fields out of declaration order (from the "
+            "default initializer); expected: x, y",
+        ):
             self.generate_x(designated={"y": "3", "x": "4"})
 
     def test_without_a_designated_default_a_mapping_is_rejected(self):
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError,
-            r"x\.args\.plain: cannot verify the fields of External::Cfg .*"
-            r"write this value as a complete C\+\+ expression",
+            "User/xrobot.yaml: x.args.plain: cannot verify the fields of External::Cfg in the "
+            "loaded Module headers; write this value as a complete C++ expression",
         ):
             self.generate_x(plain={"x": "1"})
 
@@ -227,6 +262,10 @@ class UnlocatableTypes(MappingTestCase):
 
 
 class ConstructorMappings(MappingTestCase):
+    """有构造函数的类的映射。
+    Mappings of classes with constructors.
+    """
+
     def setUp(self):
         super().setUp()
         self.module(
@@ -275,6 +314,10 @@ class ConstructorMappings(MappingTestCase):
 
 @requires_cxx
 class MappingsInCpp(CxxMixin, MappingTestCase):
+    """映射生成的 C++ 能够编译。
+    The C++ generated from mappings compiles.
+    """
+
     def test_constructor_mapping_of_a_nested_template_member(self):
         self.module(
             "Sync",
@@ -342,7 +385,11 @@ class A { public:
         self.compile()
 
 
-class ConstructorModel(unittest.TestCase):
+class ConstructorModel(TestCase):
+    """参数声明、名字限定、构造函数选择和类型转换规则。
+    Parameter declarations, name qualification, constructor selection and conversion rules.
+    """
+
     def test_parameters_need_explicit_names(self):
         p = parameter("const std::array<float, 2>& gains = {1.0f, 0.0f}")
         self.assertEqual(
@@ -352,55 +399,6 @@ class ConstructorModel(unittest.TestCase):
         for declaration in ("LibXR::UART&", "int (*fn)(int)", "int values[3]", "int x ="):
             with self.subTest(declaration=declaration), self.assertRaises(ValueError):
                 parameter(declaration)
-
-
-class InterfaceExtraction(unittest.TestCase):
-    def test_copy_and_move_constructors_are_not_part_of_the_interface(self):
-        for extra in (
-            "Foo(const Foo&) = default;",
-            "Foo(const Foo& other) = default;",
-            "Foo(Foo&&) noexcept = default;",
-            "Foo(Foo const&) = default;",
-        ):
-            with self.subTest(extra=extra):
-                result = interface(f"class Foo {{ public: Foo(int n = 1) {{}} {extra} }};")
-                self.assertEqual([c["parameters"] for c in result["constructors"]], [["int n = 1"]])
-        result = interface(
-            "template <typename T> class Foo { public: Foo(T n = {}) {} "
-            "Foo(const Foo<T>&) = default; };"
-        )
-        self.assertEqual([c["parameters"] for c in result["constructors"]], [["T n = {}"]])
-        with self.assertRaisesRegex(ValueError, "No supported explicit public constructor"):
-            extract_interface("class Foo { public: Foo(const Foo&) = default; };", "Foo")
-        # 参数类型不是本类的单参数构造函数照常保留。
-        # A one-parameter constructor of another type stays.
-        result = interface("class Foo { public: Foo(const FooConfig& config) {} Foo(Foo* p) {} };")
-        self.assertEqual(
-            [c["parameters"] for c in result["constructors"]],
-            [["const FooConfig& config"], ["Foo* p"]],
-        )
-
-    def test_template_declarations_are_listed_one_by_one(self):
-        result = interface(
-            "template <typename T = std::pair<int, int>, int N = 2>\n"
-            "class Foo { public: Foo(T value = {}) {} };"
-        )
-        self.assertEqual(
-            result["template_declarations"], ["typename T = std::pair<int, int>", "int N = 2"]
-        )
-        self.assertEqual([p["name"] for p in result["template_parameters"]], ["T", "N"])
-
-    def test_a_class_outside_global_scope_names_its_scope(self):
-        for source, message in (
-            ("namespace team { class Foo { public: Foo() {} }; }", "inside namespace team"),
-            ("namespace { class Foo { public: Foo() {} }; }", "inside an anonymous namespace"),
-            ("class Outer { class Foo { public: Foo() {} }; };", "inside class Outer"),
-            ("void f() { class Foo { public: Foo() {} }; }", "inside a function body"),
-        ):
-            with self.subTest(source=source), self.assertRaisesRegex(ValueError, message):
-                extract_interface(source, "Foo")
-        with self.assertRaisesRegex(ValueError, "No global class Foo is declared in this header"):
-            extract_interface("class Bar { public: Bar() {} };", "Foo")
 
     def test_initializer_tree_expands_only_explicit_braces(self):
         self.assertEqual(initializer_tree("{}"), [])
@@ -415,7 +413,7 @@ class InterfaceExtraction(unittest.TestCase):
             initializer_tree("{.inner=Vendor::Options{7}}"), {"inner": "Vendor::Options{7}"}
         )
         self.assertEqual(initializer_tree("{.a = 1, 2}"), "{.a = 1, 2}")
-        with self.assertRaisesRegex(ValueError, "Duplicate initializer field: a"):
+        with self.assertRaisesMessage(ValueError, "Duplicate initializer field: a"):
             initializer_tree("{.a = 1, .a = 2}")
 
     def test_public_names_are_qualified_and_private_ones_rejected(self):
@@ -429,7 +427,9 @@ class InterfaceExtraction(unittest.TestCase):
         for text in ("Foo::Secret()", "Secret()"):
             with (
                 self.subTest(text=text),
-                self.assertRaisesRegex(ValueError, "non-public member Foo::Secret"),
+                self.assertRaisesMessage(
+                    ValueError, "Expression uses non-public member Foo::Secret"
+                ),
             ):
                 qualify(text, model, "Foo")
 
@@ -483,7 +483,7 @@ class InterfaceExtraction(unittest.TestCase):
         )
         self.assertEqual(template_bindings(model, ["float"]), {"T": "float", "N": "4"})
         self.assertEqual(template_bindings(model, ["float", "8"]), {"T": "float", "N": "8"})
-        with self.assertRaisesRegex(ValueError, "Template argument Foo.T must be specified"):
+        with self.assertRaisesMessage(ValueError, "Template argument Foo.T must be specified"):
             template_bindings(model, [])
 
     def test_constructors_list_dependencies_before_configuration(self):
@@ -494,8 +494,10 @@ class InterfaceExtraction(unittest.TestCase):
             [[p["name"] for p in c["arguments"]] for c in compliant_constructors(model)], [["gain"]]
         )
         broken = interface("class Foo { public: Foo(int count = 10, GPIO& gpio); };")
-        with self.assertRaisesRegex(
-            ValueError, "no compliant constructor.*gpio: dependency without a default appears after"
+        with self.assertRaisesMessage(
+            ValueError,
+            "Foo: no compliant constructor; line 1: gpio: dependency without a default appears "
+            "after value configuration",
         ):
             compliant_constructors(broken)
 
@@ -518,12 +520,14 @@ class InterfaceExtraction(unittest.TestCase):
             ][0]["name"],
             "port",
         )
-        with self.assertRaisesRegex(ValueError, "ambiguous"):
+        with self.assertRaisesMessage(
+            ValueError, "Foo: constructor is ambiguous for the supplied names and explicit types"
+        ):
             constructor_for(model, [{"value": "Read()"}], {}, "Foo", {})
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError,
-            r"do not match any constructor of Foo; expected one of: \(value\) \| "
-            r"\(value\) \| \(port\)",
+            "named arguments (gain) do not match any constructor of Foo; expected one of: "
+            "(value) | (value) | (port)",
         ):
             constructor_for(model, [{"gain": "1"}], {}, "Foo", {})
 
@@ -601,7 +605,3 @@ class InterfaceExtraction(unittest.TestCase):
             convert("{1}", "Foo", False, [])[0], "std::remove_cv_t<std::remove_reference_t<Foo>>{1}"
         )
         self.assertEqual(convert("Foo(1)", "Foo", True, [])[0], "Foo(1)")
-
-
-if __name__ == "__main__":
-    unittest.main()

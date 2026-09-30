@@ -134,7 +134,7 @@ def portable_locator(value: str, lock_directory: Path) -> str:
         return value
     path = Path(local)
     if not path.is_absolute():
-        path = Path(lock_directory) / path  # already relative to the lock
+        path = Path(lock_directory) / path  # 已经相对于 lock / already relative to the lock
     try:
         return Path(os.path.relpath(path.resolve(), lock_directory)).as_posix()
     except ValueError as error:
@@ -717,7 +717,7 @@ class Resolver:
                 raise ValueError(
                     tr(
                         f"{identity} is at local commit {head[:12]} that is not on any remote "
-                        "branch or tag. While developing a module keep your changes "
+                        "branch or tag. While developing a module, keep your changes "
                         "uncommitted; when they are ready, push them to a branch of the module "
                         f"and run `xrobot setup --update {identity}`",
                         f"{identity} 位于本地提交 {head[:12]}，它不在任何远端分支或 tag 上。"
@@ -929,13 +929,13 @@ def check_released(resolver: Resolver, release_ref: str, offline: bool = False) 
         folder = resolver.prepared[identity]["folder"]
         requested = row.get("requested")
         if row.get("ref_kind") == "tag" and requested not in (None, "same", "same-or-dev"):
-            continue  # an explicitly requested tag is released by definition
+            continue  # 显式请求的 tag 本身就是发布 / an explicitly requested tag is released by definition
         if not offline:
             _fetch(folder, "origin", "+refs/heads/*:refs/remotes/origin/*")
         target = _line_ref(folder, line)
         if target is None:
             if row.get("ref_kind") == "commit":
-                continue  # third-party Module without the line: explicit commit pins only
+                continue  # 没有发布线的第三方模块只能显式锁定 commit / third-party Module without the line: explicit commit pins only
             problems.append(
                 tr(
                     f"{identity} has no {line} branch; request an explicit tag or commit",
@@ -996,7 +996,7 @@ def check_tool_pins(
             )
             continue
         if not re.fullmatch(r"[0-9a-f]{40}", pin):
-            continue  # a release version is released by definition
+            continue  # 发布版本本身就是发布 / a release version is released by definition
         if offline:
             problems.append(
                 tr(

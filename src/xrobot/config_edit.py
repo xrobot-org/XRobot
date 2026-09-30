@@ -186,7 +186,7 @@ def file_hash(path: str | Path) -> str:
     return hashlib.sha256(Path(path).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
-# -- instance blocks -------------------------------------------------------------
+# -- 实例块 / instance blocks -----------------------------------------------------
 
 
 class Blocks:
@@ -205,7 +205,9 @@ class Blocks:
         self.text = _normalized(text)
         self.lines = self.text.split("\n")
         root = yaml.compose(self.text, Loader=yaml.BaseLoader) if self.text.strip() else None
-        self.items: list[list[int]] = []  # (comment_start, start, end) line indices, end exclusive
+        # 每项为 (注释起点, 起点, 终点) 行号，不含终点。
+        # Each item holds (comment_start, start, end) line indices, end exclusive.
+        self.items: list[list[int]] = []
         self.sequence_end: int | None = None
         self.item_indent: int | None = None
         if root is None or not isinstance(root, yaml.MappingNode):
@@ -393,7 +395,7 @@ class ConfigFile:
         self.text, self.config = text, config
 
 
-# -- instance set / remove / rename ---------------------------------------------
+# -- 实例修改、删除、重命名 / instance set / remove / rename ------------------------------
 
 
 def _path_hint() -> str:
@@ -684,7 +686,7 @@ def _rename_values(node, old: str, new: str) -> bool:
     return changed
 
 
-# -- seeding (instance add, sync, Module compile probe) --------------------------
+# -- 填入默认值 / seeding (instance add, sync, Module compile probe) ----------------
 
 
 def _field_default(entry: ClassEntry, name: str, index: TypeIndex, spelled: str) -> str | None:
@@ -876,7 +878,7 @@ def add_instance(
     return identity
 
 
-# -- sync ------------------------------------------------------------------------
+# -- 同步 / sync -----------------------------------------------------------------
 
 
 def sync_config(
@@ -1052,7 +1054,7 @@ def _sync_constructor_mapping(
         return False
     parameters = constructors[0]
     if any(p["default"] is None and p["name"] not in value for p in parameters):
-        return False  # a new parameter without a default cannot be filled in
+        return False  # 没有默认值的新参数无法填入 / a new parameter without a default cannot be filled in
     items = []
     for p in parameters:
         if p["name"] in value:
@@ -1066,7 +1068,7 @@ def _sync_constructor_mapping(
     return True
 
 
-# -- modules.yaml ----------------------------------------------------------------
+# -- 模块请求 / modules.yaml -------------------------------------------------------
 
 
 def _request_lines(text: str):

@@ -1,30 +1,29 @@
-"""Module resolution and xrobot.lock (the xrobot.lock module), locked discovery
-(xrobot.module_parser) and Sources (xrobot.source_manager)."""
+"""解析模块请求和 xrobot.lock（xrobot.lock）。
+Resolving Module requests and xrobot.lock (xrobot.lock).
+"""
 
 import contextlib
 import io
-import os
 import unittest
 from unittest import mock
 
 import requests
 import yaml
-from fixtures import BspTestCase, TempDirTestCase, UpstreamTestCase, manifest_block, run_git
+from fixtures import TestCase, UpstreamTestCase, run_git
 
-from xrobot.git import checkout_state, head_commit, origin_url
 from xrobot.lock import read_modules_yaml, repository_identity, same_repository, write_cmake
-from xrobot.module_parser import discover_modules, manifest_from_text, select_module
+from xrobot.module_parser import discover_modules
 from xrobot.source_manager import (
     SourceManager,
     SourceUnavailable,
-    add_index_entry,
-    add_source,
-    load_yaml,
-    validate_id,
 )
 
 
 class Resolution(UpstreamTestCase):
+    """把请求解析为 commit，写入 xrobot.lock。
+    Resolving requests to commits written to xrobot.lock.
+    """
+
     def test_dependencies_resolve_to_exact_commits_and_a_module_list(self):
         b = self.upstream("team/B")
         self.upstream("team/A", ["team/B@master"])
@@ -75,19 +74,26 @@ class Resolution(UpstreamTestCase):
         self.upstream("team/A")
         self.upstream("team/C")
         self.configure(["team/A"])
-        with self.assertRaisesRegex(
-            ValueError, "xrobot.lock does not exist; run `xrobot setup` once without --frozen"
+        with self.assertRaisesMessage(
+            ValueError,
+            "xrobot.lock does not exist; run `xrobot setup` once without --frozen or --offline",
         ):
             self.sync(frozen=True)
         self.sync()
         before = self.lock_bytes()
         self.configure(["team/A", "team/C"])
-        with self.assertRaisesRegex(
-            ValueError, r"Modules/modules.yaml differs from xrobot.lock \(\+team/C\)"
+        with self.assertRaisesMessage(
+            ValueError,
+            "Modules/modules.yaml differs from xrobot.lock (+team/C); run `xrobot setup` to "
+            "update the lock",
         ):
             self.sync(frozen=True)
         self.configure(["team/A@dev"])
-        with self.assertRaisesRegex(ValueError, r"differs from xrobot.lock \(~team/A\)"):
+        with self.assertRaisesMessage(
+            ValueError,
+            "Modules/modules.yaml differs from xrobot.lock (~team/A); run `xrobot setup` to "
+            "update the lock",
+        ):
             self.sync(frozen=True)
         self.assertEqual(self.lock_bytes(), before)
 
@@ -100,7 +106,11 @@ class Resolution(UpstreamTestCase):
         self.configure(["team/a@dev", "team/B@dev"])
         self.assertEqual(self.sync(frozen=True, offline=True)["modules"], first["modules"])
         self.configure(["team/A@master", "team/B@dev"])
-        with self.assertRaisesRegex(ValueError, r"differs from xrobot\.lock \(~team/A\)"):
+        with self.assertRaisesMessage(
+            ValueError,
+            "Modules/modules.yaml differs from xrobot.lock (~team/A); run `xrobot setup` to "
+            "update the lock",
+        ):
             self.sync(frozen=True)
 
     def test_update_cannot_be_combined_with_frozen_or_offline(self):
@@ -108,7 +118,9 @@ class Resolution(UpstreamTestCase):
         for flags in ({"frozen": True}, {"offline": True}):
             with (
                 self.subTest(flags=flags),
-                self.assertRaisesRegex(ValueError, "--update cannot be combined"),
+                self.assertRaisesMessage(
+                    ValueError, "--update cannot be combined with --frozen or --offline"
+                ),
             ):
                 self.sync(update=[], **flags)
 
@@ -141,10 +153,11 @@ class Resolution(UpstreamTestCase):
         failure = requests.ConnectionError("refused")
         with (
             mock.patch("xrobot.source_manager.requests.get", side_effect=failure),
-            self.assertRaisesRegex(
+            self.assertRaisesMessage(
                 SourceUnavailable,
-                r"^https://x\.invalid/i\.yaml: download failed \(cannot connect\); "
-                r"`xrobot setup --offline` works",
+                "https://x.invalid/i.yaml: download failed (cannot connect); `xrobot setup "
+                "--offline` works without network when xrobot.lock matches Modules/modules.yaml "
+                "and the Modules are checked out",
             ),
         ):
             self.sync()
@@ -153,10 +166,10 @@ class Resolution(UpstreamTestCase):
         self.upstream("first/A")
         self.upstream("second/A")
         self.configure(["A"])
-        with self.assertRaisesRegex(ValueError, "Expected canonical owner/repo: 'A'"):
+        with self.assertRaisesMessage(ValueError, "Expected canonical owner/repo: 'A'"):
             self.sync()
         manager = SourceManager(self.modules / "sources.yaml")
-        with self.assertRaisesRegex(ValueError, "Ambiguous package A; specify first/A, second/A"):
+        with self.assertRaisesMessage(ValueError, "Ambiguous package A; specify first/A, second/A"):
             manager.resolve_id("A")
         self.assertEqual(manager.resolve_id("first/a"), "first/A")
         self.configure(["first/A"])
@@ -165,7 +178,9 @@ class Resolution(UpstreamTestCase):
     def test_bsp_entries_are_not_dependencies(self):
         self.upstream("team/Board", kind="bsp")
         self.configure(["team/Board"])
-        with self.assertRaisesRegex(ValueError, "BSP in the Sources, not a Module dependency"):
+        with self.assertRaisesMessage(
+            ValueError, "team/Board is a BSP in the Sources, not a Module dependency"
+        ):
             self.sync()
         self.assertFalse((self.modules / "team/Board").exists())
 
@@ -173,7 +188,7 @@ class Resolution(UpstreamTestCase):
         self.upstream("team/A", ["team/B"])
         self.upstream("team/B", ["team/A"])
         self.configure(["team/A"])
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError, "Package dependency cycle: team/A -> team/B -> team/A"
         ):
             self.sync()
@@ -182,10 +197,10 @@ class Resolution(UpstreamTestCase):
         a = self.upstream("team/A")
         run_git(a, "tag", "dev")
         self.configure(["team/A@dev"])
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError,
-            r"Modules/modules\.yaml requests team/A@dev: dev is both a branch and a tag; "
-            r"write refs/heads/dev or refs/tags/dev",
+            "Modules/modules.yaml requests team/A@dev: dev is both a branch and a tag; write "
+            "refs/heads/dev or refs/tags/dev",
         ):
             self.sync()
         self.configure(["team/A@refs/heads/dev"])
@@ -194,10 +209,10 @@ class Resolution(UpstreamTestCase):
     def test_unknown_refs_are_reported(self):
         self.upstream("team/A")
         self.configure(["team/A@missing"])
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError,
-            r"Modules/modules\.yaml requests team/A@missing: the repository has no branch, "
-            r"tag or commit missing",
+            "Modules/modules.yaml requests team/A@missing: the repository has no branch, tag "
+            "or commit missing",
         ):
             self.sync()
 
@@ -205,7 +220,7 @@ class Resolution(UpstreamTestCase):
         b = self.upstream("team/B")
         run_git(b, "tag", "old")
         old = run_git(b, "rev-parse", "HEAD")
-        self.commit(b, [], "new")
+        new = self.commit(b, [], "new")
         run_git(b, "tag", "new")
         self.upstream("team/A", ["team/B@old"])
         self.upstream("team/C", ["team/B@new"])
@@ -213,13 +228,19 @@ class Resolution(UpstreamTestCase):
         self.sync()
         before = self.lock_bytes()
         self.configure(["team/A", "team/C"])
-        with self.assertRaisesRegex(ValueError, "Dependency conflict for team/B"):
+        with self.assertRaisesMessage(
+            ValueError, f"Dependency conflict for team/B: {old[:12]} vs {new[:12]} (team/C)"
+        ):
             self.sync(update=[])
         self.assertEqual(self.lock_bytes(), before)
         self.assertEqual(self.head("team/B"), old)
 
 
 class MinimalChange(UpstreamTestCase):
+    """请求改变时，只重新解析受影响的模块。
+    Only the affected Modules are re-resolved when requests change.
+    """
+
     def setUp(self):
         super().setUp()
         self.b = self.upstream("team/B")
@@ -247,32 +268,34 @@ class MinimalChange(UpstreamTestCase):
         self.assertIn("team/C", (self.modules / "CMakeLists.txt").read_text(encoding="utf-8"))
         self.assertNotIn("team/A", (self.modules / "CMakeLists.txt").read_text(encoding="utf-8"))
 
-    def test_update_of_named_modules_moves_only_them(self):
+    def test_update_moves_the_named_locked_modules_or_all_of_them(self):
         lock = self.sync(update=["team/B"])["modules"]
-        self.assertEqual(lock["team/B"]["commit"], self.moved_b)
-        self.assertEqual(lock["team/A"]["commit"], self.first["team/A"]["commit"])
+        self.assertEqual(
+            (lock["team/A"]["commit"], lock["team/B"]["commit"]),
+            (self.first["team/A"]["commit"], self.moved_b),
+        )
         lock = self.sync(update=["A"])["modules"]
         self.assertEqual(lock["team/A"]["commit"], self.moved_a)
-
-    def test_update_without_names_moves_everything(self):
-        lock = self.sync(update=[])["modules"]
-        self.assertEqual(
-            (lock["team/A"]["commit"], lock["team/B"]["commit"]), (self.moved_a, self.moved_b)
-        )
-
-    def test_update_takes_module_ids_from_the_lock(self):
-        with self.assertRaisesRegex(ValueError, "team/Z is not in xrobot.lock"):
+        with self.assertRaises(ValueError) as context:
             self.sync(update=["team/Z"])
+        self.assertEqual(
+            str(context.exception),
+            "team/Z is not in xrobot.lock; `--update` takes Module ids from the lock",
+        )
+        a = self.commit(self.a, ["team/B"], "a moves again")
+        b = self.commit(self.b, [], "b moves again")
+        lock = self.sync(update=[])["modules"]
+        self.assertEqual((lock["team/A"]["commit"], lock["team/B"]["commit"]), (a, b))
 
     def test_a_new_module_requiring_a_locked_module_elsewhere_suggests_update(self):
         run_git(self.b, "tag", "v2")
         self.upstream("team/C", ["team/B@v2"])
         before = self.lock_bytes()
         self.configure(["team/A", "team/C"])
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError,
-            rf"team/C requires team/B at v2, but xrobot\.lock keeps {self.first['team/B']['commit'][:12]}; run "
-            r"`xrobot setup --update team/B`",
+            f"team/C requires team/B at v2, but xrobot.lock keeps "
+            f"{self.first['team/B']['commit'][:12]}; run `xrobot setup --update team/B`",
         ):
             self.sync()
         self.assertEqual(self.lock_bytes(), before)
@@ -287,58 +310,11 @@ class MinimalChange(UpstreamTestCase):
         self.assertEqual(self.sync()["modules"]["team/A"]["commit"], self.first["team/A"]["commit"])
 
 
-class GitQueries(TempDirTestCase):
-    def setUp(self):
-        super().setUp()
-        self.repo = self.tmp / "repo"
-        self.repo.mkdir()
-        run_git(self.repo, "init", "-q", "-b", "main")
-        (self.repo / "a.txt").write_text("a\n", encoding="utf-8")
-        run_git(self.repo, "add", "-A")
-        run_git(self.repo, "commit", "-q", "-m", "one")
-        self.commit = run_git(self.repo, "rev-parse", "HEAD")
-
-    def test_head_commit_reads_a_detached_head_and_asks_git_on_a_branch(self):
-        self.assertEqual(head_commit(self.repo), self.commit)  # on branch main: git
-        run_git(self.repo, "checkout", "-q", "--detach")
-        with mock.patch("xrobot.git.subprocess.run") as run:
-            self.assertEqual(head_commit(self.repo), self.commit)
-        run.assert_not_called()
-        empty = self.tmp / "empty"
-        empty.mkdir()
-        run_git(empty, "init", "-q")
-        self.assertIsNone(head_commit(empty))
-
-    def test_checkout_state_reports_commit_branch_and_changes(self):
-        self.assertEqual(checkout_state(self.repo), (self.commit, "main", False))
-        (self.repo / "b.txt").write_text("new\n", encoding="utf-8")
-        self.assertEqual(checkout_state(self.repo), (self.commit, "main", True))
-        (self.repo / "b.txt").unlink()
-        run_git(self.repo, "checkout", "-q", "--detach")
-        self.assertEqual(checkout_state(self.repo), (self.commit, None, False))
-
-    def test_origin_url_reads_git_config_and_asks_git_otherwise(self):
-        run_git(self.repo, "remote", "add", "origin", "https://example.com/team/A.git")
-        with mock.patch("xrobot.git.subprocess.run") as run:
-            self.assertEqual(origin_url(self.repo), "https://example.com/team/A.git")
-        run.assert_not_called()
-        # 带引号的值由 git 解析。
-        # git parses a quoted value.
-        config = self.repo / ".git" / "config"
-        text = config.read_text(encoding="utf-8")
-        config.write_text(
-            text.replace("https://example.com/team/A.git", '"D:/Mirror Folder/A"'),
-            encoding="utf-8",
-        )
-        self.assertEqual(origin_url(self.repo), "D:/Mirror Folder/A")
-        # 工作树的 .git 是文件，由 git 回答。
-        # A worktree's .git is a file, so git answers.
-        run_git(self.repo, "worktree", "add", "-q", "--detach", str(self.tmp / "tree"))
-        self.assertTrue((self.tmp / "tree" / ".git").is_file())
-        self.assertEqual(origin_url(self.tmp / "tree"), "D:/Mirror Folder/A")
-
-
 class LocalWork(UpstreamTestCase):
+    """模块检出中的本地修改和本地提交。
+    Local changes and local commits in Module checkouts.
+    """
+
     def setUp(self):
         super().setUp()
         self.a = self.upstream("team/A")
@@ -350,7 +326,11 @@ class LocalWork(UpstreamTestCase):
         header = self.modules / "team/A/A.hpp"
         header.write_bytes(header.read_bytes() + b"\n// local work\n")
         before = header.read_bytes()
-        with self.assertRaisesRegex(ValueError, "team/A has uncommitted changes; they are kept"):
+        with self.assertRaisesMessage(
+            ValueError,
+            "team/A has uncommitted changes; they are kept, but the lock cannot move it. "
+            "Commit and push them, or discard them, first",
+        ):
             self.sync(update=[])
         self.assertEqual(header.read_bytes(), before)
 
@@ -391,10 +371,12 @@ class LocalWork(UpstreamTestCase):
         for flags in ({"update": []}, {"frozen": True}):
             with (
                 self.subTest(flags=flags),
-                self.assertRaisesRegex(
+                self.assertRaisesMessage(
                     ValueError,
-                    rf"team/A is at local commit {local[:12]} that is not on any remote branch or tag.*push them "
-                    r"to a branch of the module and run `xrobot setup --update team/A`",
+                    f"team/A is at local commit {local[:12]} that is not on any remote branch or "
+                    "tag. While developing a module, keep your changes uncommitted; when they are "
+                    "ready, push them to a branch of the module and run "
+                    "`xrobot setup --update team/A`",
                 ),
             ):
                 self.sync(**flags)
@@ -407,15 +389,21 @@ class LocalWork(UpstreamTestCase):
         folder = self.modules / "team/A"
         run_git(folder, "fetch", "-q", "origin")
         run_git(folder, "checkout", "-q", "--detach", "origin/master")
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError,
-            rf"team/A is checked out at \w{{12}} but xrobot.lock pins {self.locked[:12]}.*"
-            r"`xrobot setup --update team/A`\. To return to the locked sources run `xrobot setup`\.",
+            f"team/A is checked out at {run_git(folder, 'rev-parse', 'HEAD')[:12]} but "
+            f"xrobot.lock pins {self.locked[:12]}. While developing a module, keep your changes "
+            "uncommitted; when they are ready, push them to a branch of the module and run "
+            "`xrobot setup --update team/A`. To return to the locked sources run `xrobot setup`.",
         ):
             discover_modules(self.modules, Project(self.root).lock)
 
 
 class Contexts(UpstreamTestCase):
+    """same/same-or-dev 请求跟随的分支或 tag。
+    The branch or tag that same/same-or-dev requests follow.
+    """
+
     def test_same_or_dev_follows_a_stacked_branch_then_falls_back_to_dev(self):
         b = self.upstream("team/B")
         a = self.upstream("team/A", [{"id": "team/B", "ref": "same-or-dev"}])
@@ -441,7 +429,7 @@ class Contexts(UpstreamTestCase):
         a = self.upstream("team/A", [{"id": "team/B", "ref": "same-or-dev"}])
         run_git(a, "tag", "2026-09-15")
         self.configure(["team/A@2026-09-15"])
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError, "team/A requests team/B@same-or-dev: the repository has no tag 2026-09-15"
         ):
             self.sync()
@@ -455,11 +443,11 @@ class Contexts(UpstreamTestCase):
         a = self.upstream("team/A", [{"id": "team/B", "ref": "same-or-dev"}])
         sha = run_git(a, "rev-parse", "HEAD")
         self.configure(["team/A@" + sha])
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError,
-            r"team/A requests team/B@same-or-dev: there is no branch or tag to "
-            r"follow: the BSP checkout is not on a branch, or the requesting Module is "
-            r"pinned to a commit",
+            "team/A requests team/B@same-or-dev: there is no branch or tag to follow: the BSP "
+            "checkout is not on a branch, or the requesting Module is pinned to a commit; pass "
+            "--context-ref refs/heads/<branch>",
         ):
             self.sync()
         self.configure([{"id": "team/A", "ref": sha, "context_ref": "refs/heads/pr-feature"}])
@@ -481,7 +469,7 @@ class Contexts(UpstreamTestCase):
     def test_a_tag_context_is_exact(self):
         a = self.upstream("team/A")
         self.configure(["team/A@same-or-dev"])
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError,
             "Modules/modules.yaml requests team/A@same-or-dev: the repository has no tag "
             "release-check",
@@ -496,11 +484,11 @@ class Contexts(UpstreamTestCase):
         a = self.upstream("team/A")
         self.upstream("team/C")
         self.configure(["team/A@same-or-dev"])
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError,
-            r"Modules/modules\.yaml requests team/A@same-or-dev, which needs the BSP branch to "
-            r"pick a commit, but the BSP is not a Git repository; request an explicit ref such "
-            r"as team/A@dev, or put the BSP in a Git repository",
+            "Modules/modules.yaml requests team/A@same-or-dev, which needs the BSP branch to "
+            "pick a commit, but the BSP is not a Git repository; request an explicit ref such "
+            "as team/A@dev, or put the BSP in a Git repository",
         ):
             self.sync()
         first = self.sync(context_ref="refs/heads/review")
@@ -525,10 +513,11 @@ class Contexts(UpstreamTestCase):
         run_git(self.root, "commit", "-q", "--allow-empty", "-m", "bsp")
         run_git(self.root, "checkout", "-q", "--detach")
         self.configure(["team/A@same-or-dev"])
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError,
-            r"requests team/A@same-or-dev, which follows the BSP branch, but the BSP checkout "
-            r"is not on a branch \(detached HEAD\); pass --context-ref refs/heads/<branch>",
+            "Modules/modules.yaml requests team/A@same-or-dev, which follows the BSP branch, "
+            "but the BSP checkout is not on a branch (detached HEAD); pass --context-ref "
+            "refs/heads/<branch>",
         ):
             self.sync()
 
@@ -542,11 +531,17 @@ class Contexts(UpstreamTestCase):
     def test_context_refs_must_be_qualified(self):
         self.upstream("team/A")
         self.configure(["team/A@same-or-dev"])
-        with self.assertRaisesRegex(ValueError, "must start with refs/heads/ or refs/tags/"):
+        with self.assertRaisesMessage(
+            ValueError, "A context/release ref must start with refs/heads/ or refs/tags/"
+        ):
             self.sync(context_ref="dev")
 
 
 class LockFile(UpstreamTestCase):
+    """xrobot.lock 的写法：可移植的地址和固定的格式。
+    How xrobot.lock is written: portable locations and a fixed layout.
+    """
+
     def test_relative_index_and_local_sources_are_stored_relative_to_the_lock(self):
         self.upstream("team/A")
         self.entries[0]["repo"] = "upstream/team/A"
@@ -621,7 +616,10 @@ class LockFile(UpstreamTestCase):
         lock = yaml.safe_load((self.root / "xrobot.lock").read_text(encoding="utf-8"))
         lock["modules"]["team/A"]["commit"] = "0" * 40
         self.write_yaml(self.root / "xrobot.lock", lock)
-        with self.assertRaisesRegex(ValueError, "Source mismatch for team/A"):
+        with self.assertRaisesMessage(
+            ValueError,
+            f"Source mismatch for team/A: {other} != {self.tmp / 'upstream/team/A'}",
+        ):
             self.sync(offline=True)
 
     def test_an_incomplete_or_extended_lock_is_rejected(self):
@@ -631,7 +629,9 @@ class LockFile(UpstreamTestCase):
         lock = self.sync()
         missing = dict(lock, modules={"team/A": lock["modules"]["team/A"]})
         self.write_yaml(self.root / "xrobot.lock", missing)
-        with self.assertRaisesRegex(ValueError, "xrobot.lock is missing or ambiguous for team/B"):
+        with self.assertRaisesMessage(
+            ValueError, "xrobot.lock is missing or ambiguous for team/B; run `xrobot setup`"
+        ):
             self.sync(offline=True)
         self.upstream("team/C")
         self.configure(["team/C"])
@@ -639,8 +639,10 @@ class LockFile(UpstreamTestCase):
         extended = yaml.safe_load(self.lock_bytes())
         extended["modules"].update(lock["modules"])
         self.write_yaml(self.root / "xrobot.lock", extended)
-        with self.assertRaisesRegex(
-            ValueError, "outside the declared dependency closure: team/A, team/B"
+        with self.assertRaisesMessage(
+            ValueError,
+            "xrobot.lock contains Modules outside the declared dependency closure: team/A, "
+            "team/B; run `xrobot setup`",
         ):
             self.sync(offline=True)
 
@@ -651,15 +653,21 @@ class LockFile(UpstreamTestCase):
         legacy = yaml.safe_load(self.lock_bytes())
         legacy["modules"]["team/A"]["directory"] = "team/A"
         self.write_yaml(self.root / "xrobot.lock", legacy)
-        with self.assertRaisesRegex(ValueError, "Legacy lock entry for team/A"):
+        with self.assertRaisesMessage(
+            ValueError, "Legacy lock entry for team/A; regenerate it with `xrobot setup --update`"
+        ):
             self.sync(frozen=True)
         self.write_yaml(self.root / "xrobot.lock", dict(lock, version=2))
-        with self.assertRaisesRegex(ValueError, "unsupported lock format"):
+        with self.assertRaisesMessage(
+            ValueError,
+            f"{self.root / 'xrobot.lock'}: unsupported lock format; regenerate it with "
+            "`xrobot setup --update`",
+        ):
             self.sync(frozen=True)
         broken = dict(lock)
         broken["modules"] = {"team/A": dict(lock["modules"]["team/A"], commit="abc")}
         self.write_yaml(self.root / "xrobot.lock", broken)
-        with self.assertRaisesRegex(ValueError, "Invalid locked commit for team/A"):
+        with self.assertRaisesMessage(ValueError, "Invalid locked commit for team/A"):
             self.sync(frozen=True)
 
     def test_module_list_includes_or_adds_the_folder(self):
@@ -681,13 +689,18 @@ class LockFile(UpstreamTestCase):
 
 
 class ReleaseGate(UpstreamTestCase):
-    """--release-ref: locked commits must be on the Module line of the BSP target."""
+    """发布线检查（--release-ref）。
+    The release-line check (--release-ref).
+    """
 
     def setUp(self):
         super().setUp()
         self.a = self.upstream("team/A")
 
     def lock_feature(self):
+        """把 team/A 锁定到 feature/x 分支上的提交，返回该提交。
+        Lock team/A to a commit on branch feature/x and return that commit.
+        """
         run_git(self.a, "checkout", "-q", "-b", "feature/x")
         feature = self.commit(self.a, [], "feature work")
         run_git(self.a, "checkout", "-q", "master")
@@ -696,6 +709,9 @@ class ReleaseGate(UpstreamTestCase):
         return feature
 
     def merge(self, branch, *options):
+        """在上游仓库的 branch 分支上执行 git merge。
+        Run git merge on branch of the upstream repository.
+        """
         run_git(self.a, "checkout", "-q", branch)
         run_git(self.a, "merge", "-q", *options)
         run_git(self.a, "checkout", "-q", "master")
@@ -711,10 +727,11 @@ class ReleaseGate(UpstreamTestCase):
     def test_unmerged_feature_commits_are_refused_for_dev(self):
         feature = self.lock_feature()
         before = self.lock_bytes()
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError,
-            rf"team/A: locked commit {feature[:12]} is not on dev .*run `xrobot setup --update "
-            r"team/A --context-ref refs/heads/dev`",
+            f"team/A: locked commit {feature[:12]} is not on dev (feature branch not merged, or "
+            "merged by squash/rebase); after merging the Module, run `xrobot setup --update "
+            "team/A --context-ref refs/heads/dev`",
         ):
             self.sync(frozen=True, release_ref="refs/heads/dev")
         self.assertEqual(self.lock_bytes(), before)
@@ -729,17 +746,27 @@ class ReleaseGate(UpstreamTestCase):
         for target in ("refs/heads/master", "refs/heads/main", "refs/tags/v1.0.0"):
             with (
                 self.subTest(target=target),
-                self.assertRaisesRegex(ValueError, "is not on master"),
+                self.assertRaisesMessage(
+                    ValueError,
+                    f"team/A: locked commit {feature[:12]} is not on master "
+                    "(feature branch not merged, or merged by squash/rebase); after merging the Module, run "
+                    "`xrobot setup --update team/A --context-ref refs/heads/master`",
+                ),
             ):
                 self.sync(frozen=True, release_ref=target)
 
     def test_squash_merged_feature_commits_are_reported(self):
-        self.lock_feature()
+        feature = self.lock_feature()
         run_git(self.a, "checkout", "-q", "dev")
         run_git(self.a, "merge", "-q", "--squash", "feature/x")
         run_git(self.a, "commit", "-q", "-m", "squash feature")
         run_git(self.a, "checkout", "-q", "master")
-        with self.assertRaisesRegex(ValueError, "merged by squash/rebase"):
+        with self.assertRaisesMessage(
+            ValueError,
+            f"team/A: locked commit {feature[:12]} is not on dev "
+            "(feature branch not merged, or merged by squash/rebase); after merging the Module, run "
+            "`xrobot setup --update team/A --context-ref refs/heads/dev`",
+        ):
             self.sync(frozen=True, release_ref="refs/heads/dev")
         self.configure(["team/A@dev"])
         self.assertEqual(
@@ -752,7 +779,12 @@ class ReleaseGate(UpstreamTestCase):
         self.assertEqual(
             self.sync(release_ref="refs/heads/master")["modules"]["team/A"]["commit"], hotfix
         )
-        with self.assertRaisesRegex(ValueError, "is not on dev"):
+        with self.assertRaisesMessage(
+            ValueError,
+            f"team/A: locked commit {hotfix[:12]} is not on dev "
+            "(feature branch not merged, or merged by squash/rebase); after merging the Module, run "
+            "`xrobot setup --update team/A --context-ref refs/heads/dev`",
+        ):
             self.sync(frozen=True, release_ref="refs/heads/dev")
 
     def test_other_targets_are_not_gated(self):
@@ -778,7 +810,7 @@ class ReleaseGate(UpstreamTestCase):
     def test_a_module_without_the_line_needs_a_commit_or_tag_pin(self):
         third = self.upstream("other/T", branches=())
         self.configure(["other/T@master"])
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError, "other/T has no dev branch; request an explicit tag or commit"
         ):
             self.sync(release_ref="refs/heads/dev")
@@ -790,7 +822,9 @@ class ReleaseGate(UpstreamTestCase):
 
 
 class ToolPins(UpstreamTestCase):
-    """Tool pins follow the released-line rule of Modules."""
+    """工具固定版本的发布线检查。
+    The release-line check of tool pins.
+    """
 
     def setUp(self):
         super().setUp()
@@ -805,6 +839,9 @@ class ToolPins(UpstreamTestCase):
         run_git(None, "clone", "-q", "--bare", str(self.tool), str(self.cache / "xrobot.git"))
 
     def check(self, pin, target, offline=False, generator=None):
+        """写入工具版本锁定并运行 check_tool_pins。
+        Write the tool pins and run check_tool_pins.
+        """
         from xrobot.lock import check_tool_pins
 
         self.configure([], pin=pin)
@@ -817,35 +854,45 @@ class ToolPins(UpstreamTestCase):
         self.check("1.0.0", "refs/tags/v1", generator="6.0.0")
 
     def test_missing_pins_are_errors_for_gated_targets(self):
-        with self.assertRaisesRegex(ValueError, "xrobot is not pinned; add `xrobot: <version>`"):
+        with self.assertRaisesMessage(ValueError, "xrobot is not pinned; add `xrobot: <version>`"):
             self.check(None, "refs/heads/dev")
         self.check(None, "refs/heads/feature/board")
 
     def test_commit_pins_must_be_on_the_target_line(self):
         self.check(self.dev_only, "refs/heads/dev")
         self.check(self.merged, "refs/heads/master")
-        with self.assertRaisesRegex(
-            ValueError, f"xrobot pin {self.dev_only[:12]} is not on the tool's master line"
+        with self.assertRaisesMessage(
+            ValueError,
+            f"xrobot pin {self.dev_only[:12]} is not on the tool's master line; pin a release "
+            "version or a merged commit",
         ):
             self.check(self.dev_only, "refs/heads/master")
-        with self.assertRaisesRegex(
-            ValueError, f"xrobot pin {self.feature[:12]} is not on the tool's dev line"
+        with self.assertRaisesMessage(
+            ValueError,
+            f"xrobot pin {self.feature[:12]} is not on the tool's dev line; pin a release "
+            "version or a merged commit",
         ):
             self.check(self.feature, "refs/heads/dev")
 
     def test_commit_pins_cannot_be_checked_offline(self):
-        with self.assertRaisesRegex(
+        with self.assertRaisesMessage(
             ValueError, f"xrobot pin {self.merged[:12]} cannot be checked offline"
         ):
             self.check(self.merged, "refs/heads/master", offline=True)
 
 
 class ModulesYaml(UpstreamTestCase):
+    """读取 modules.yaml。
+    Reading modules.yaml.
+    """
+
     def test_only_modules_and_the_tool_pin_are_allowed(self):
         path = self.write("Modules/modules.yaml", "xrobot: 1.0.0\nmodules: [team/A@dev]\n")
         self.assertEqual(read_modules_yaml(path), ([{"id": "team/A", "ref": "dev"}], "1.0.0"))
         self.write("Modules/modules.yaml", "modules: []\nlock: true\n")
-        with self.assertRaisesRegex(ValueError, r"unknown key\(s\) lock; allowed: modules, xrobot"):
+        with self.assertRaisesMessage(
+            ValueError, f"{path}: unknown key(s) lock; allowed: modules, xrobot"
+        ):
             read_modules_yaml(path)
 
     def test_the_tool_pin_is_a_release_version_or_a_full_commit(self):
@@ -857,7 +904,10 @@ class ModulesYaml(UpstreamTestCase):
         for pin in ("master", "1.0", "A" * 40, "abc123"):
             with (
                 self.subTest(pin=pin),
-                self.assertRaisesRegex(ValueError, "xrobot must be a release version"),
+                self.assertRaisesMessage(
+                    ValueError,
+                    f"{path}: xrobot must be a release version (e.g. 1.0.0) or a 40-hex commit",
+                ),
             ):
                 self.write(path, f'xrobot: "{pin}"\nmodules: []\n')
                 read_modules_yaml(path)
@@ -883,7 +933,11 @@ class ModulesYaml(UpstreamTestCase):
                 read_modules_yaml(path)
 
 
-class RepositoryIdentity(unittest.TestCase):
+class RepositoryIdentity(TestCase):
+    """判断两个地址是否指向同一个仓库。
+    Whether two locations name the same repository.
+    """
+
     def test_urls_are_normalized(self):
         same = [
             "https://github.com/Team/Repo.git",
@@ -903,277 +957,6 @@ class RepositoryIdentity(unittest.TestCase):
             repository_identity("https://github.com/other/repo"),
         )
         self.assertTrue(same_repository("https://github.com/a/b", "git@github.com:A/B.git"))
-
-
-class LockedDiscovery(BspTestCase):
-    def test_only_locked_modules_at_their_commits_are_loaded(self):
-        self.module("A", "class A { public: A() {} };")
-        self.write("Modules/stale/B/B.hpp", "class B { public: B() {} };\n")
-        modules = discover_modules(self.root / "Modules", self.root / "xrobot.lock")
-        self.assertEqual(set(modules), {"team/A"})
-        self.assertEqual(modules["team/A"]["name"], "A")
-
-    def test_a_lock_is_required(self):
-        (self.root / "xrobot.lock").unlink()
-        with self.assertRaisesRegex(ValueError, "xrobot.lock does not exist; run `xrobot setup`"):
-            discover_modules(self.root / "Modules", self.root / "xrobot.lock")
-
-    def test_every_lock_problem_is_reported_with_its_fix(self):
-        a = self.module("A", "class A { public: A() {} };")
-        self.module("B", "class B { public: B() {} };")
-        self.module("C", "class C { public: C() {} };")
-        self.locked["team/A"] = "0" * 40
-        self.locked["team/Gone"] = "1" * 40
-        self.write_lock()
-        import shutil
-
-        shutil.rmtree(
-            self.root / "Modules/team/C/.git", onerror=lambda f, p, e: (os.chmod(p, 0o700), f(p))
-        )
-        with self.assertRaises(ValueError) as context:
-            discover_modules(self.root / "Modules", self.root / "xrobot.lock")
-        message = str(context.exception)
-        self.assertIn(
-            f"team/A is checked out at {run_git(a, 'rev-parse', 'HEAD')[:12]} but xrobot.lock pins 000000000000",
-            message,
-        )
-        self.assertIn(
-            "Modules/team/C is not a Git checkout; delete it and run `xrobot setup`", message
-        )
-        self.assertIn("team/Gone from xrobot.lock is not checked out; run `xrobot setup`", message)
-        self.assertNotIn("team/B", message)
-
-    def test_a_lock_entry_without_a_commit_is_rejected(self):
-        self.module("A", "class A { public: A() {} };")
-        self.write("xrobot.lock", "version: 1\nmodules:\n  team/A: {repo: x}\n")
-        with self.assertRaisesRegex(ValueError, "xrobot.lock has no commit for team/A"):
-            discover_modules(self.root / "Modules", self.root / "xrobot.lock")
-
-    def test_a_lock_entry_leaving_the_modules_directory_is_rejected(self):
-        self.write(
-            "xrobot.lock", f'version: 1\nmodules:\n  ../../outside: {{commit: "{"0" * 40}"}}\n'
-        )
-        with self.assertRaisesRegex(ValueError, "Module path leaves directory"):
-            discover_modules(self.root / "Modules", self.root / "xrobot.lock")
-
-    def test_module_selection_by_short_name_or_id(self):
-        self.module("A", "class A { public: A() {} };")
-        self.module("A", "class A { public: A() {} };", owner="other")
-        modules = discover_modules(self.root / "Modules", self.root / "xrobot.lock")
-        self.assertEqual(select_module(modules, "team/a")["id"], "team/A")
-        with self.assertRaisesRegex(ValueError, "Ambiguous Module a; specify"):
-            select_module(modules, "a")
-        with self.assertRaisesRegex(ValueError, "Ambiguous Module A; specify"):
-            select_module(modules, "A")
-        with self.assertRaisesRegex(ValueError, "Module not found: B"):
-            select_module(modules, "B")
-
-
-class Manifests(unittest.TestCase):
-    def test_allowed_keys(self):
-        manifest = manifest_from_text(
-            manifest_block("d", ["team/B@dev"], standalone=False), "A.hpp"
-        )
-        self.assertEqual(
-            (manifest.description, manifest.depends, manifest.standalone),
-            ("d", ["team/B@dev"], False),
-        )
-
-    def test_only_the_1_0_manifest_is_read(self):
-        cases = (
-            ("class A {};", r"A\.hpp: no MODULE MANIFEST V2 block"),
-            (
-                "/* === MODULE MANIFEST ===\nmodule_description: old\n=== END MANIFEST === */",
-                r"A\.hpp: this MODULE MANIFEST predates XRobot 1\.0; update the Module to "
-                r"MODULE MANIFEST V2",
-            ),
-            (
-                "/* === MODULE MANIFEST V2 ===\ndescription: old\n=== END MANIFEST === */",
-                r"unsupported manifest key\(s\) description",
-            ),
-            (
-                "/* === MODULE MANIFEST V2 ===\ndepends: team/B\n=== END MANIFEST === */",
-                r"A\.hpp: depends must be a list",
-            ),
-        )
-        for text, pattern in cases:
-            with self.subTest(pattern=pattern), self.assertRaisesRegex(ValueError, pattern):
-                manifest_from_text(text, "A.hpp")
-
-    def test_unknown_keys_are_rejected(self):
-        for key in ("constructor_args", "template_args", "required_hardware"):
-            with (
-                self.subTest(key=key),
-                self.assertRaisesRegex(ValueError, rf"unsupported manifest key\(s\) {key}"),
-            ):
-                manifest_from_text(manifest_block("d", **{key: []}), "A.hpp")
-
-    def test_newer_manifest_versions_need_a_newer_tool(self):
-        text = manifest_block("d", ["team/B@dev"]).replace(
-            "MODULE MANIFEST V2", "MODULE MANIFEST V3"
-        )
-        self.assertIn("MODULE MANIFEST V3", text)
-        with self.assertRaisesRegex(ValueError, r"A\.hpp: MODULE MANIFEST V3 needs a newer xrobot"):
-            manifest_from_text(text, "A.hpp")
-
-    def test_multiple_manifests_are_rejected(self):
-        with self.assertRaisesRegex(ValueError, "multiple package manifests"):
-            manifest_from_text(manifest_block() + manifest_block(), "A.hpp")
-
-
-class Sources(UpstreamTestCase):
-    def test_validation_labels_are_bound_to_tested_versions(self):
-        self.upstream("team/A")
-        self.entries[0]["status"] = "official"
-        self.write_yaml(self.index, {"packages": self.entries})
-        with self.assertRaisesRegex(ValueError, "tested_ref and tested_libxr"):
-            SourceManager(self.modules / "sources.yaml")
-        self.entries[0].update(tested_ref="2026-09-15", tested_libxr="6.0.0")
-        self.write_yaml(self.index, {"packages": self.entries})
-        self.assertEqual(
-            SourceManager(self.modules / "sources.yaml").packages["team/A"]["tested_ref"],
-            "2026-09-15",
-        )
-
-    def test_unquoted_date_tags_are_kept_as_text(self):
-        self.upstream("team/A")
-        self.entries[0].update(status="verified", tested_ref="2026-09-15", tested_libxr="6.0.0")
-        self.write_yaml(self.index, {"packages": self.entries})
-        self.index.write_text(
-            self.index.read_text(encoding="utf-8").replace("'2026-09-15'", "2026-09-15"),
-            encoding="utf-8",
-        )
-        self.assertEqual(
-            SourceManager(self.modules / "sources.yaml").packages["team/A"]["tested_ref"],
-            "2026-09-15",
-        )
-
-    def test_bsp_entries_are_discovery_metadata_only(self):
-        self.write_yaml(self.index, {"bsps": ["https://github.com/team/board.git"]})
-        manager = SourceManager(self.modules / "sources.yaml")
-        record = manager.packages["team/board"]
-        self.assertEqual(set(record), {"id", "type", "repo", "source", "canonical"})
-        self.assertEqual(manager.resolve_id("board", "bsp"), "team/board")
-
-    def test_equal_priority_sources_must_agree(self):
-        self.upstream("team/A")
-        other = self.write_yaml(
-            self.tmp / "other.yaml",
-            {"packages": [{"id": "team/A", "type": "module", "repo": "https://x.invalid/A"}]},
-        )
-        self.write_yaml(
-            self.modules / "sources.yaml",
-            {"sources": [{"url": str(self.index)}, {"url": str(other)}]},
-        )
-        with self.assertRaisesRegex(
-            ValueError,
-            r"team/A: .*index\.yaml and .*other\.yaml have the same priority 0 but list "
-            r"different repositories",
-        ):
-            SourceManager(self.modules / "sources.yaml")
-
-    def test_short_names_ignore_case(self):
-        self.upstream("team/A")
-        self.assertEqual(SourceManager(self.modules / "sources.yaml").resolve_id("a"), "team/A")
-
-    def test_errors_name_the_index_and_the_entry(self):
-        cases = (
-            (
-                {"modules": ["https://git.example.com/x/Filter.git"]},
-                r"index\.yaml: https://git\.example\.com/x/Filter\.git: cannot derive owner/Repo; "
-                r"add `id: owner/Repo` to the entry or `namespace:` to the index",
-            ),
-            (
-                {"modules": [{"repo": "https://github.com/team/A.git", "type": "bsp"}]},
-                r"index\.yaml: https://github\.com/team/A\.git: type must be module",
-            ),
-            ({"modules": [{"id": "team/A"}]}, r"index\.yaml: team/A: missing repo URL"),
-            (
-                {"modules": [{"id": "team/A", "repo": "a", "status": "gold"}]},
-                r"index\.yaml: team/A: unknown status gold; use community, verified, official",
-            ),
-            (
-                {"modules": ["https://github.com/team/A.git", "https://github.com/Team/a"]},
-                r"index\.yaml: Team/a is listed more than once",
-            ),
-            (
-                {"modules": [{"id": "A", "repo": "a"}]},
-                r"index\.yaml: A: Expected canonical owner/repo: 'A'",
-            ),
-        )
-        for data, pattern in cases:
-            with self.subTest(pattern=pattern):
-                self.write_yaml(self.index, data)
-                with self.assertRaisesRegex(ValueError, pattern):
-                    SourceManager(self.modules / "sources.yaml")
-        self.write_yaml(self.modules / "sources.yaml", {"sources": [{"priority": 0}]})
-        with self.assertRaisesRegex(ValueError, "sources.yaml: every source needs a url"):
-            SourceManager(self.modules / "sources.yaml")
-
-    def test_a_mirror_supplies_the_fetch_url_whatever_its_priority(self):
-        self.upstream("team/A")
-        mirror = self.write_yaml(
-            self.tmp / "mirror.yaml", {"mirror_of": "team", "modules": ["https://m.example/A.git"]}
-        )
-        for priority in (-1, 0, 1):
-            with self.subTest(priority=priority):
-                self.write_yaml(
-                    self.modules / "sources.yaml",
-                    {
-                        "sources": [
-                            {"url": str(self.index)},
-                            {"url": str(mirror), "priority": priority},
-                        ]
-                    },
-                )
-                record = SourceManager(self.modules / "sources.yaml").packages["team/A"]
-                self.assertEqual(
-                    (record["repo"], record["canonical"], record["source"]),
-                    ("https://m.example/A.git", str(self.tmp / "upstream/team/A"), str(self.index)),
-                )
-                self.assertEqual(list(record)[:5], ["id", "type", "repo", "canonical", "source"])
-
-    def test_adding_keeps_comments_layout_and_line_endings(self):
-        sources = self.modules / "sources.yaml"
-        self.write(
-            sources,
-            "# team sources\r\nsources:\r\n  - url: a.yaml  # ours\r\n    priority: 0\r\n",
-        )
-        self.assertTrue(add_source(sources, "https://example.com/index.yaml", 2))
-        self.assertFalse(add_source(sources, "a.yaml"))
-        self.assertEqual(
-            sources.read_bytes(),
-            b"# team sources\r\nsources:\r\n  - url: a.yaml  # ours\r\n    priority: 0\r\n"
-            b"  - url: https://example.com/index.yaml\r\n    priority: 2\r\n",
-        )
-        index = self.tmp / "local.yaml"
-        self.write(index, "namespace: me  # team\nmodules: []\nbsps: []\n")
-        self.assertTrue(add_index_entry(index, "https://git.example.com/me/A.git"))
-        self.assertFalse(add_index_entry(index, "https://git.example.com/me/A.git"))
-        self.assertEqual(
-            self.read(index),
-            "namespace: me  # team\nmodules:\n  - https://git.example.com/me/A.git\nbsps: []\n",
-        )
-        fresh = self.tmp / "fresh.yaml"
-        add_source(fresh, "a.yaml")
-        self.assertEqual(load_yaml(fresh), {"sources": [{"url": "a.yaml", "priority": 0}]})
-        self.write(index, "modules: [a, b]\n")
-        with self.assertRaisesRegex(ValueError, "write modules as a block list"):
-            add_index_entry(index, "c")
-
-    def test_traversal_identities_are_rejected(self):
-        for identity in (
-            "../../out",
-            "team/../out",
-            "team/.",
-            "team/..",
-            "team/-bad",
-            "/tmp/evil",
-            "A",
-        ):
-            with self.subTest(identity=identity), self.assertRaises(ValueError):
-                validate_id(identity)
-        self.assertEqual(validate_id("team/A.b-c_1"), "team/A.b-c_1")
 
 
 if __name__ == "__main__":

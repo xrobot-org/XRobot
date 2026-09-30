@@ -1,4 +1,6 @@
-"""`describe`: the BSP state as JSON for editors (xrobot.describe)."""
+"""describe：以 JSON 给编辑器的 BSP 状态（xrobot.describe）。
+describe: the BSP state as JSON for editors (xrobot.describe).
+"""
 
 import json
 import os
@@ -55,6 +57,10 @@ CONFIG = {
 
 
 class DescribeTestCase(BspTestCase):
+    """带几个模块和一份配置的 BSP，供 describe 测试使用。
+    A BSP with a few Modules and one configuration for the describe tests.
+    """
+
     def setUp(self):
         super().setUp()
         for name, text in MODULES.items():
@@ -63,10 +69,17 @@ class DescribeTestCase(BspTestCase):
         self.path = self.config(CONFIG)
 
     def messages(self, result, severity=None):
+        """describe 结果中（给定级别的）诊断文本。
+        The diagnostic messages (of one severity) in a describe result.
+        """
         return [d["message"] for d in result["diagnostics"] if severity in (None, d["severity"])]
 
 
 class Shape(DescribeTestCase):
+    """describe 输出的顶层结构，以及它从不写文件。
+    The top-level shape of the describe output, and that it never writes.
+    """
+
     def test_top_level_fields(self):
         result = describe(self.project)
         self.assertEqual(SCHEMA, 1)
@@ -150,6 +163,10 @@ class Shape(DescribeTestCase):
 
 
 class ModulesAndTypes(DescribeTestCase):
+    """模块的构造函数和参数类型的映射形状。
+    Module constructors and the mapping shapes of parameter types.
+    """
+
     def test_constructor_parameters(self):
         modules = describe(self.project)["modules"]
         self.assertEqual(set(modules), {"team/" + n for n in MODULES})
@@ -240,6 +257,10 @@ class ModulesAndTypes(DescribeTestCase):
 
 
 class Instances(DescribeTestCase):
+    """实例和可绑定的候选名字。
+    Instances and the names they can bind.
+    """
+
     def test_instances_use_the_module_keys(self):
         result = describe(self.project)
         self.assertEqual(
@@ -292,6 +313,10 @@ class Instances(DescribeTestCase):
 
 
 class Diagnostics(DescribeTestCase):
+    """describe 报告的问题。
+    The problems describe reports.
+    """
+
     def test_generation_errors_are_reported(self):
         self.config(
             {

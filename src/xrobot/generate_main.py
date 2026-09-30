@@ -73,12 +73,14 @@ def caller_defined_names(items: list[Token], stop: int) -> set[str]:
         text = token.text
         if text == "{":
             if depth and i and items[i - 1].kind == "identifier":
-                names.add(items[i - 1].text)  # Includes constexpr N{2}.
+                names.add(items[i - 1].text)  # 包括 constexpr N{2} / includes constexpr N{2}
             depth += 1
         elif text == "}":
             depth = max(0, depth - 1)
         elif text == "=" and i and items[i - 1].kind == "identifier":
-            names.add(items[i - 1].text)  # Includes enumerators and array extents.
+            # 包括枚举项和数组长度。
+            # Includes enumerators and array extents.
+            names.add(items[i - 1].text)
         elif text in ("class", "struct", "enum", "typename") and i + 1 < stop:
             j = i + 1
             if items[j].text in ("class", "struct") and j + 1 < stop:
@@ -585,7 +587,7 @@ class Generator:
                     if type_shape(source)[0] == type_shape(target)[0] and len(
                         type_shape(source)[2]
                     ) == len(pointers):
-                        return checks, expression  # the same type binds directly
+                        return checks, expression  # 同一类型直接绑定 / the same type binds directly
                     if reference:
                         convert(expression, typ, False, checks, field)
                         return checks, f"static_cast<{typ}>({expression})"
@@ -703,7 +705,7 @@ class Generator:
             lines += (
                 [f"namespace {namespace} {{"] + constants + [f"}}  // namespace {namespace}", ""]
             )
-        back = object()  # placeholder for "#line back into this header"
+        back = object()  # 占位：#line 回到本头文件 / placeholder for "#line back into this header"
         directives = config_path is not None and header_path is not None and not compile_check
         cfg = Path(os.path.abspath(config_path)).as_posix() if directives else None
 
@@ -784,7 +786,7 @@ class Generator:
         lines.append("")
         if directives:
             own = Path(os.path.abspath(header_path)).as_posix()
-            result, number = [], 1  # number: line number of the next emitted line
+            result, number = [], 1  # 下一行输出的行号 / line number of the next emitted line
             for line in lines:
                 if line is back:
                     line = f'#line {number + 1} "{own}"'

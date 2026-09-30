@@ -1,4 +1,7 @@
-"""Editing configurations and modules.yaml without losing comments (xrobot.config_edit)."""
+"""编辑配置和 modules.yaml（xrobot.config_edit）：添加、修改、删除、重命名、格式化和同步。
+Editing configurations and modules.yaml (xrobot.config_edit): add, set, remove, rename, format
+and sync.
+"""
 
 import hashlib
 
@@ -8,15 +11,6 @@ from xrobot import config_edit
 from xrobot.config import ConfigError, load_config, parse_yaml
 from xrobot.generate_main import load_modules
 from xrobot.type_index import TypeIndex
-
-LED = """namespace LibXR { class GPIO; }
-struct Timing { int on_ms = 100; int off_ms{200}; };
-class Led {
- public:
-  struct Param { int cycle = 250; bool inverted{}; Timing timing; const char* name = "led"; };
-  static Param Defaults() { return {}; }
-  Led(LibXR::GPIO& gpio, Param param = {}, Param alt = {.cycle = 5}, Param factory = Defaults(), float gain = 1.0f) {}
-};"""
 
 CONFIG = """# robot config
 modules:
@@ -38,11 +32,22 @@ modules:
       - count: 3
 # trailing comment
 """
-
 USER = '#include "Led.hpp"\nclass User { public: User(Led& led, Led* backup, int count = 1) {} };'
+LED = """namespace LibXR { class GPIO; }
+struct Timing { int on_ms = 100; int off_ms{200}; };
+class Led {
+ public:
+  struct Param { int cycle = 250; bool inverted{}; Timing timing; const char* name = "led"; };
+  static Param Defaults() { return {}; }
+  Led(LibXR::GPIO& gpio, Param param = {}, Param alt = {.cycle = 5}, Param factory = Defaults(), float gain = 1.0f) {}
+};"""
 
 
 class EditTestCase(BspTestCase):
+    """带几个模块和一份配置的 BSP，供编辑测试使用。
+    A BSP with a few Modules and one configuration for the editing tests.
+    """
+
     def setUp(self):
         super().setUp()
         self.module("Led", LED)
@@ -50,22 +55,37 @@ class EditTestCase(BspTestCase):
         self.path = self.config(CONFIG)
 
     def modules_and_index(self):
+        """BSP 的模块和类型索引。
+        The Modules and type index of the BSP.
+        """
         modules = load_modules(self.project)
         return modules, TypeIndex.for_modules(modules)
 
     def add(self, module="Led", identity=None):
+        """向配置添加一个实例，返回它的 id。
+        Add an instance to the configuration and return its id.
+        """
         modules, index = self.modules_and_index()
         return config_edit.add_instance(
             self.path, module, modules, index, identity, "User/xrobot.yaml"
         )
 
     def text(self):
+        """配置的当前文本。
+        The current configuration text.
+        """
         return self.path.read_bytes().decode("utf-8")
 
     def instances(self):
+        """配置中的实例。
+        The instances of the configuration.
+        """
         return load_config(self.path)["modules"]
 
     def assertUnchangedOnError(self, pattern, action, *args, **kwargs):
+        """断言操作报错并且配置文件一个字节也没变。
+        Assert that the action fails and leaves the configuration file byte for byte.
+        """
         before = self.path.read_bytes()
         with self.assertRaisesRegex(ConfigError, pattern):
             action(*args, **kwargs)
@@ -73,6 +93,10 @@ class EditTestCase(BspTestCase):
 
 
 class AddInstance(EditTestCase):
+    """instance add：按源码默认值添加实例。
+    instance add: adding an instance with the source defaults.
+    """
+
     def test_seeded_defaults_are_qualified_and_positional_ones_stay_cpp_code(self):
         self.module(
             "Qux",
@@ -165,7 +189,7 @@ class AddInstance(EditTestCase):
             self.add,
             module="Lib",
         )
-        with self.assertRaisesRegex(ValueError, "Module not found: Missing"):
+        with self.assertRaisesMessage(ValueError, "Module not found: Missing"):
             self.add(module="Missing")
 
     def test_adding_to_an_empty_or_missing_configuration(self):
@@ -201,17 +225,9 @@ class AddInstance(EditTestCase):
 
 
 class SetValue(EditTestCase):
-    def test_other_instances_and_comments_are_kept(self):
-        before = self.text()
-        config_edit.set_value(self.path, "user", "args.count", 5)
-        after = self.text()
-        head = before[: before.index("  # the user of the led")]
-        self.assertTrue(after.startswith(head))
-        for comment in ("# the user of the led", "# bound", "# trailing comment"):
-            self.assertIn(comment, after)
-        self.assertEqual(
-            self.instances()[1]["args"], [{"led": "status"}, {"backup": "&status"}, {"count": "5"}]
-        )
+    """instance set：替换一个值，其余文本不变。
+    instance set: replacing one value while the rest of the text stays.
+    """
 
     def test_only_the_edited_line_changes(self):
         before = self.text().split("\n")
@@ -220,6 +236,9 @@ class SetValue(EditTestCase):
         changed = [(a, b) for a, b in zip(before, after, strict=False) if a != b]
         self.assertEqual(changed, [("      - count: 3", "      - count: 5")])
         self.assertEqual(len(before), len(after))
+        self.assertEqual(
+            self.instances()[1]["args"], [{"led": "status"}, {"backup": "&status"}, {"count": "5"}]
+        )
 
     def test_the_whole_argument_list_can_be_replaced(self):
         config_edit.set_value(self.path, "user", "args", [{"led": "status"}, {"count": 9}])
@@ -332,6 +351,10 @@ class SetValue(EditTestCase):
 
 
 class RemoveAndRename(EditTestCase):
+    """删除和重命名实例，以及对它的引用。
+    Removing and renaming instances, and the references to them.
+    """
+
     def test_a_referenced_instance_cannot_be_removed(self):
         self.assertUnchangedOnError(
             "status is still used by user; change those values first",
@@ -396,6 +419,10 @@ class RemoveAndRename(EditTestCase):
 
 
 class Format(TempDirTestCase):
+    """format：规范格式。
+    format: the canonical layout.
+    """
+
     def setUp(self):
         super().setUp()
         self.root = self.tmp
@@ -447,6 +474,10 @@ class Format(TempDirTestCase):
 
 
 class SyncConfig(EditTestCase):
+    """sync：跟随模块接口的变化更新配置。
+    sync: updating configurations to the Module interfaces.
+    """
+
     def test_new_fields_and_parameters_are_added_and_removed_fields_dropped(self):
         self.module(
             "Led",
@@ -522,6 +553,10 @@ class SyncConfig(EditTestCase):
 
 
 class ModulesYaml(TempDirTestCase):
+    """module add/remove 对 modules.yaml 的编辑。
+    module add/remove editing modules.yaml.
+    """
+
     def setUp(self):
         super().setUp()
         self.root = self.tmp
@@ -539,16 +574,16 @@ class ModulesYaml(TempDirTestCase):
             self.assertIn(kept, text)
 
     def test_duplicates_and_non_canonical_ids_are_rejected(self):
-        with self.assertRaisesRegex(ConfigError, "team/a is already requested"):
+        with self.assertRaisesMessage(ConfigError, f"team/a is already requested in {self.path}"):
             config_edit.add_module(self.path, "team/a@master")
-        with self.assertRaisesRegex(ValueError, "Expected canonical owner/repo"):
+        with self.assertRaisesMessage(ValueError, "Expected canonical owner/repo: 'A'"):
             config_edit.add_module(self.path, "A")
 
     def test_remove(self):
         config_edit.remove_module(self.path, "TEAM/A")
         self.assertNotIn("team/A", self.path.read_text(encoding="utf-8"))
         self.assertIn("xrobot: 1.0.0", self.path.read_text(encoding="utf-8"))
-        with self.assertRaisesRegex(ConfigError, "team/A is not requested"):
+        with self.assertRaisesMessage(ConfigError, f"team/A is not requested in {self.path}"):
             config_edit.remove_module(self.path, "team/A")
 
     def test_a_missing_modules_yaml_is_created(self):

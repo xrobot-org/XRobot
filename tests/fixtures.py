@@ -1,15 +1,20 @@
-"""Shared test fixtures.
+"""测试共用的 BSP、上游仓库、编译和命令行辅助。
+Shared BSP, upstream repository, compiler and command-line fixtures for the tests.
 
-- ``BspTestCase``: a temporary BSP (``Modules/modules.yaml``, ``User/``) whose
-  Modules are real git checkouts committed in place and pinned by an
-  ``xrobot.lock`` that points at their commits, as ``xrobot setup`` leaves them.
-- ``UpstreamTestCase``: upstream Module repositories (branches ``master`` and
-  ``dev``) listed in a local index.yaml, plus an empty BSP whose
-  ``Modules/sources.yaml`` points at that index, for resolution tests.
-- ``CxxMixin``: compiles the generated header with ``$CXX`` (default ``g++``)
-  against stub ``libxr.hpp``/``thread.hpp``; tests are skipped without it.
+BspTestCase 是一个临时 BSP：模块是就地提交的 git 检出，由指向这些提交的 xrobot.lock
+锁定，与 xrobot setup 之后的状态相同。UpstreamTestCase 是列在本地 index.yaml 中的上游
+模块仓库（master 和 dev 分支），以及一个 sources.yaml 指向它的空 BSP。CxxMixin 用
+$CXX（默认 g++）编译生成的头文件，没有编译器时跳过。CliMixin 在进程内运行 xrobot 命令。
+BspTestCase is a temporary BSP whose Modules are git checkouts committed in place and
+pinned by an xrobot.lock pointing at those commits, as xrobot setup leaves them.
+UpstreamTestCase provides upstream Module repositories (branches master and dev) in a
+local index.yaml and an empty BSP whose sources.yaml points at it. CxxMixin compiles the
+generated header with $CXX (default g++) and skips without it. CliMixin runs xrobot
+commands in process.
 """
 
+import contextlib
+import io
 import os
 import shutil
 import subprocess
@@ -20,6 +25,7 @@ from pathlib import Path
 import yaml
 
 from xrobot import __version__
+from xrobot.cli import main as cli_main
 from xrobot.project import Project
 
 GIT_OPTIONS = [
@@ -58,7 +64,9 @@ THREAD_STUB = (
 
 
 def run_git(repo, *args, check=True):
-    """Run git with a fixed identity and no user/system configuration influence."""
+    """以固定身份运行 git，不受用户和系统配置影响；返回去掉首尾空白的输出。
+    Run git with a fixed identity and no user or system configuration; return the stripped output.
+    """
     command = ["git"] + GIT_OPTIONS + (["-C", str(repo)] if repo is not None else []) + list(args)
     result = subprocess.run(
         command,
@@ -77,6 +85,9 @@ EMPTY_MANIFEST = "/* === MODULE MANIFEST V2 ===\n=== END MANIFEST === */\n"
 
 
 def manifest_block(description="fixture", depends=None, **extra):
+    """模块头文件中的 MODULE MANIFEST V2 注释块。
+    The MODULE MANIFEST V2 comment block of a Module header.
+    """
     data = {"module_description": description}
     if depends is not None:
         data["depends"] = depends
@@ -88,7 +99,26 @@ def manifest_block(description="fixture", depends=None, **extra):
     )
 
 
-class TempDirTestCase(unittest.TestCase):
+class TestCase(unittest.TestCase):
+    """unittest.TestCase 加上逐字比较报错文本的断言。
+    unittest.TestCase with an assertion that compares the error text exactly.
+    """
+
+    @contextlib.contextmanager
+    def assertRaisesMessage(self, exception, message):
+        """断言代码块抛出 exception，且报错文本与 message 相同。
+        Assert that the block raises exception whose text equals message.
+        """
+        with self.assertRaises(exception) as context:
+            yield context
+        self.assertEqual(str(context.exception), message)
+
+
+class TempDirTestCase(TestCase):
+    """每个测试一个临时目录，以及按 UTF-8 读写文件的辅助。
+    A temporary directory per test and helpers that read and write UTF-8 files.
+    """
+
     def setUp(self):
         super().setUp()
         self._temporary = tempfile.TemporaryDirectory()
@@ -96,6 +126,9 @@ class TempDirTestCase(unittest.TestCase):
         self.tmp = Path(self._temporary.name).resolve()
 
     def write(self, path, text):
+        """按 UTF-8 写文件（相对路径以 root 为基准），返回路径。
+        Write a UTF-8 file (relative paths are under root) and return its path.
+        """
         path = Path(path)
         if not path.is_absolute():
             path = self.root / path
@@ -104,6 +137,9 @@ class TempDirTestCase(unittest.TestCase):
         return path
 
     def read(self, path):
+        """按 UTF-8 读文件（相对路径以 root 为基准）。
+        Read a UTF-8 file (relative paths are under root).
+        """
         path = Path(path)
         if not path.is_absolute():
             path = self.root / path
@@ -111,7 +147,9 @@ class TempDirTestCase(unittest.TestCase):
 
 
 class BspTestCase(TempDirTestCase):
-    """A BSP whose Modules are git checkouts pinned by xrobot.lock."""
+    """模块为 git 检出、由 xrobot.lock 锁定的临时 BSP。
+    A temporary BSP whose Modules are git checkouts pinned by xrobot.lock.
+    """
 
     owner = "team"
 
@@ -125,10 +163,15 @@ class BspTestCase(TempDirTestCase):
 
     @property
     def project(self):
+        """这个 BSP 的 Project。
+        The Project of this BSP.
+        """
         return Project(self.root)
 
     def module(self, name, body, owner=None, manifest=None, extra_headers=None):
-        """Write Modules/<owner>/<name>/<name>.hpp, commit it and pin it in the lock."""
+        """写入 Modules/<owner>/<name>/<name>.hpp，提交并锁定到 xrobot.lock。
+        Write Modules/<owner>/<name>/<name>.hpp, commit it and pin it in the lock.
+        """
         owner = owner or self.owner
         identity = f"{owner}/{name}"
         folder = self.root / "Modules" / owner / name
@@ -147,6 +190,9 @@ class BspTestCase(TempDirTestCase):
         return folder
 
     def write_lock(self):
+        """按已提交的模块写 xrobot.lock。
+        Write xrobot.lock for the committed Modules.
+        """
         data = {
             "version": 1,
             "requests": [{"id": i, "ref": None} for i in sorted(self.locked)],
@@ -158,9 +204,15 @@ class BspTestCase(TempDirTestCase):
         self.write("xrobot.lock", yaml.safe_dump(data, sort_keys=False))
 
     def entry(self, text, name="app_main.cpp"):
+        """写入 User/ 下的入口源文件。
+        Write an entry source under User/.
+        """
         return self.write("User/" + name, text)
 
     def config(self, data, name="xrobot.yaml"):
+        """写入 User/ 下的配置（文本或数据）。
+        Write a configuration under User/ (text or data).
+        """
         text = (
             data
             if isinstance(data, str)
@@ -169,7 +221,9 @@ class BspTestCase(TempDirTestCase):
         return self.write("User/" + name, text)
 
     def generate(self, data=None, entry=None, name="xrobot.yaml"):
-        """Write the config (and entry) and generate User/xrobot_main.hpp; return its text."""
+        """写入配置（和入口源文件），生成 User/xrobot_main.hpp 并返回其文本。
+        Write the configuration (and entry) and generate User/xrobot_main.hpp; return its text.
+        """
         from xrobot.generate_main import generate
 
         if entry is not None or not (self.root / "User/app_main.cpp").exists():
@@ -183,7 +237,9 @@ class BspTestCase(TempDirTestCase):
 
 
 class CxxMixin:
-    """Compile (and run) the entry against the generated header."""
+    """用生成的头文件编译（并运行）入口源文件。
+    Compile (and run) the entry source against the generated header.
+    """
 
     standard = os.environ.get("XR_CXX_STANDARD", "c++20")
 
@@ -193,9 +249,15 @@ class CxxMixin:
         self.stub("thread.hpp", THREAD_STUB)
 
     def stub(self, name, text):
+        """写入编译时使用的替身头文件（如 libxr.hpp）。
+        Write a stand-in header used when compiling (such as libxr.hpp).
+        """
         self.write(self.tmp / "stub" / name, text)
 
     def include_flags(self):
+        """替身头文件、User/ 和每个模块目录的 -I 参数。
+        The -I flags of the stand-in headers, User/ and every Module folder.
+        """
         flags = ["-I" + str(self.tmp / "stub"), "-I" + str(self.root / "User")]
         modules = self.root / "Modules"
         for owner in sorted(p for p in modules.iterdir() if p.is_dir()):
@@ -203,6 +265,9 @@ class CxxMixin:
         return flags
 
     def compile(self, source=None, expected=True, execute=True, extra=(), warnings=True):
+        """编译入口源文件并按需运行；返回编译器或程序的输出。
+        Compile the entry source and run it if asked; return the compiler or program output.
+        """
         source = Path(source) if source else self.root / "User/app_main.cpp"
         output = self.tmp / ("program.exe" if execute else "object.o")
         command = [CXX, "-std=" + self.standard]
@@ -242,7 +307,9 @@ requires_cxx = unittest.skipUnless(HAVE_CXX, f"C++ compiler {CXX} not available 
 
 
 class UpstreamTestCase(TempDirTestCase):
-    """Upstream Module repositories in a local index, and an empty BSP using it."""
+    """列在本地 index 中的上游模块仓库，以及使用它的空 BSP。
+    Upstream Module repositories in a local index, and an empty BSP using it.
+    """
 
     def setUp(self):
         super().setUp()
@@ -257,13 +324,21 @@ class UpstreamTestCase(TempDirTestCase):
 
     @property
     def project(self):
+        """这个 BSP 的 Project。
+        The Project of this BSP.
+        """
         return Project(self.root)
 
     def write_yaml(self, path, value):
+        """把数据写成 YAML 文件。
+        Write data as a YAML file.
+        """
         return self.write(path, yaml.safe_dump(value, sort_keys=False, allow_unicode=True))
 
     def upstream(self, identity, depends=None, kind="module", branches=("dev",), listed=True):
-        """Create an upstream repository on master (plus ``branches``) and list it in the index."""
+        """在 master（以及 branches）上创建上游仓库，并列入 index。
+        Create an upstream repository on master (plus branches) and list it in the index.
+        """
         path = self.tmp / "upstream" / identity
         path.mkdir(parents=True)
         run_git(path, "init", "-q", "-b", "master")
@@ -276,6 +351,9 @@ class UpstreamTestCase(TempDirTestCase):
         return path
 
     def commit(self, path, depends, message):
+        """在仓库中提交一个依赖给定模块的头文件，返回 commit。
+        Commit a header with the given dependencies to a repository and return the commit.
+        """
         name = Path(path).name
         text = (
             "#pragma once\n"
@@ -292,6 +370,9 @@ class UpstreamTestCase(TempDirTestCase):
         return run_git(path, "rev-parse", "HEAD")
 
     def configure(self, requests, pin=__version__):
+        """写 modules.yaml：模块请求和 xrobot 版本锁定。
+        Write modules.yaml: the Module requests and the xrobot pin.
+        """
         data = {}
         if pin is not None:
             data["xrobot"] = pin
@@ -299,7 +380,9 @@ class UpstreamTestCase(TempDirTestCase):
         self.write_yaml(self.modules / "modules.yaml", data)
 
     def sync(self, cwd=None, **kwargs):
-        """Run sync_modules from ``cwd`` (default: the BSP root, where `xrobot setup` usually runs)."""
+        """在 cwd（默认 BSP 根目录）运行 sync_modules，返回写入的锁。
+        Run sync_modules from cwd (default: the BSP root) and return the written lock.
+        """
         from xrobot.lock import sync_modules
 
         previous = os.getcwd()
@@ -310,7 +393,57 @@ class UpstreamTestCase(TempDirTestCase):
             os.chdir(previous)
 
     def lock_bytes(self):
+        """xrobot.lock 的原始字节。
+        The raw bytes of xrobot.lock.
+        """
         return (self.root / "xrobot.lock").read_bytes()
 
     def head(self, identity):
+        """BSP 中一个模块检出的 HEAD。
+        HEAD of a Module checkout in the BSP.
+        """
         return run_git(self.modules / identity, "rev-parse", "HEAD")
+
+
+class CliMixin:
+    """在进程内运行 xrobot 命令，返回退出码和输出。
+    Run xrobot commands in process and return the exit code and output.
+    """
+
+    def run_cli(self, *argv, cwd=None):
+        """在 cwd 运行 xrobot 命令，返回退出码、标准输出和标准错误。
+        Run an xrobot command from cwd; return the exit code, stdout and stderr.
+        """
+        out, err = io.StringIO(), io.StringIO()
+        previous = os.getcwd()
+        os.chdir(str(cwd or self.root))
+        try:
+            with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                try:
+                    code = cli_main([str(a) for a in argv])
+                except SystemExit as exit:
+                    code = exit.code
+        finally:
+            os.chdir(previous)
+        return code, out.getvalue(), err.getvalue()
+
+    def ok(self, *argv, cwd=None):
+        """运行命令并断言成功，返回输出。
+        Run a command, assert that it succeeds and return its output.
+        """
+        code, out, err = self.run_cli(*argv, cwd=cwd)
+        self.assertEqual(code, 0, out + err)
+        return out, err
+
+    def fails(self, *argv, cwd=None, pattern=None, message=None):
+        """运行命令并断言退出码为 1，标准错误匹配 pattern 或等于 message 加换行。
+        Run a command, assert exit code 1 and that stderr matches pattern or is message plus a
+        newline.
+        """
+        code, out, err = self.run_cli(*argv, cwd=cwd)
+        self.assertEqual(code, 1, out + err)
+        if pattern:
+            self.assertRegex(err, pattern)
+        if message is not None:
+            self.assertEqual(err, message + "\n")
+        return err

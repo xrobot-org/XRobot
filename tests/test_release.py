@@ -1,4 +1,6 @@
-"""Release record checking (tools/check_release.py) and the package's own version metadata."""
+"""发布记录的核对（tools/check_release.py）和包自身的版本信息。
+Release record checking (tools/check_release.py) and the package's own version metadata.
+"""
 
 import contextlib
 import importlib.util
@@ -8,7 +10,7 @@ import re
 import unittest
 from pathlib import Path
 
-from fixtures import TempDirTestCase, run_git
+from fixtures import TempDirTestCase, TestCase, run_git
 
 import xrobot
 
@@ -40,7 +42,11 @@ Homepage = "https://example.invalid"
 """
 
 
-class PackageMetadata(unittest.TestCase):
+class PackageMetadata(TestCase):
+    """包的版本和对 xr-syntax 的锁定。
+    The package version and its xr-syntax pin.
+    """
+
     def test_module_version_equals_the_pyproject_version(self):
         self.assertEqual(xrobot.__version__, release.package_version(REPOSITORY))
 
@@ -50,6 +56,10 @@ class PackageMetadata(unittest.TestCase):
 
 
 class ReleaseRecord(TempDirTestCase):
+    """发布记录与候选仓库的核对。
+    Checking a release record against the candidate repositories.
+    """
+
     def setUp(self):
         super().setUp()
         self.root = self.tmp
@@ -77,6 +87,9 @@ class ReleaseRecord(TempDirTestCase):
             self.record["repositories"][name] = row
 
     def recommit(self, name, text):
+        """提交新的 pyproject.toml，并把记录中的 commit 改为新提交。
+        Commit a new pyproject.toml and record the new commit.
+        """
         self.write(self.repos[name] / "pyproject.toml", text)
         run_git(self.repos[name], "commit", "-q", "-am", "change")
         self.record["repositories"][name]["commit"] = run_git(self.repos[name], "rev-parse", "HEAD")
@@ -203,7 +216,11 @@ class ReleaseRecord(TempDirTestCase):
         self.assertEqual(err.getvalue(), "Candidate acceptance is missing: bsp\n")
 
 
-class ReleaseDocument(unittest.TestCase):
+class ReleaseDocument(TestCase):
+    """RELEASE.md 中的记录示例与检查工具一致。
+    The record example in RELEASE.md matches the checker.
+    """
+
     def test_the_documented_record_is_what_the_checker_reads(self):
         text = (REPOSITORY / "RELEASE.md").read_text(encoding="utf-8")
         example = json.loads(re.search(r"```json\n(.*?)```", text, re.S).group(1))
