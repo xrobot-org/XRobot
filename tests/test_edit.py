@@ -73,6 +73,26 @@ class EditTestCase(BspTestCase):
 
 
 class AddInstance(EditTestCase):
+    def test_seeded_defaults_are_qualified_and_positional_ones_stay_cpp_code(self):
+        self.module(
+            "Qux",
+            "namespace qux { enum Mode { A, B }; inline constexpr int kN = 3;\n"
+            "  struct Param { Mode mode = A; int n = kN; }; }\n"
+            "class Qux { public:\n  explicit Qux(qux::Param param = {},"
+            " LibXR::Vector gains = {1.0f, 2.0f},"
+            " Vendor::Options options = {.gains = {1, 2}, .on = true}) {} };",
+        )
+        self.add("Qux", "qux")
+        self.assertEqual(
+            self.instances()[-1]["args"],
+            [
+                {"param": {"mode": "qux::A", "n": "qux::kN"}},
+                {"gains": "{1.0f, 2.0f}"},
+                {"options": {"gains": "{1, 2}", "on": "true"}},
+            ],
+        )
+        self.assertIn("      - gains: '{1.0f, 2.0f}'\n", self.text())
+
     def test_new_instances_are_seeded_from_source_defaults(self):
         self.assertEqual(self.add(), "led_0")
         added = self.instances()[-1]

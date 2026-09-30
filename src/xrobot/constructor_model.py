@@ -1,17 +1,25 @@
-"""Source-declared constructor contracts and explicit initializer syntax.
+"""模块构造函数的约定、构造函数的选择，以及配置值到 C++ 初始化的渲染。
+Constructor contracts of Modules, constructor selection, and the rendering of
+configuration values as C++ initializers.
 
-Only named, explicit declarations are supported. This is not a C++ type system:
-configuration trees come from initializer expressions, and a YAML mapping is
-checked against the class definition read from a loaded Module header
-(xrobot.type_index) or, for a type the index cannot locate, against the
-parameter's designated default initializer. The generator rejects a value only
-when the problem is certain; everything else is left to the C++ compiler.
+只支持带名字的显式声明，不是 C++ 类型系统：配置的树形结构来自初始化器写法；YAML 映射对照
+已加载模块头文件中的类定义（xrobot.type_index）检查，索引找不到的类型则对照参数默认值中的
+指定初始化器检查。只有确定有错时生成器才拒绝一个值，其余交给 C++ 编译器。
+Only named, explicit declarations are supported; this is not a C++ type system.
+Configuration trees come from initializer expressions, and a YAML mapping is checked
+against the class definition read from a loaded Module header (xrobot.type_index) or, for
+a type the index cannot locate, against the parameter's designated default initializer.
+The generator rejects a value only when the problem is certain; everything else is left
+to the C++ compiler.
 """
+
+from __future__ import annotations
 
 import re
 
 from xrobot.config import ConfigError, value_text
 from xrobot.source_syntax import close_token, code_tokens, split_arguments
+from xrobot.type_index import ClassEntry, TypeIndex, class_scope_names
 
 ARITHMETIC = frozenset(
     [
@@ -43,8 +51,22 @@ ARITHMETIC = frozenset(
     ]
 )
 
+Tree = dict | list | str | None
 
-def parameter(declaration):
+
+def parameter(declaration: str) -> dict:
+    """把一个参数声明拆成名字、类型和默认值。
+    Split one parameter declaration into its name, type and default.
+
+    Returns:
+        含 name、type、default（没有时为 None）和 declaration 的映射。
+        A mapping with name, type, default (None when absent) and declaration.
+
+    Raises:
+        ValueError: 参数没有名字，或类型需要先定义别名（数组、函数指针、参数包）。
+            The parameter has no name, or its type needs an alias first (arrays,
+            function pointers, packs).
+    """
     items = code_tokens(declaration)
     split = next((t for t in items if t.text == "="), None)
     head = declaration[: split.start].strip() if split else declaration.strip()
@@ -54,6 +76,7 @@ def parameter(declaration):
         raise ValueError("Constructor parameters must have explicit names: " + declaration)
     name = parts[-1].text
     cpp_type = head[: parts[-1].start].strip()
+    # 类型模板参数也用同样的带名字声明表示。
     # Type template parameters use the same named declaration representation.
     if name in ("const", "volatile") and cpp_type not in ("class", "typename"):
         raise ValueError("Unsupported parameter declaration: " + declaration)
@@ -62,71 +85,23 @@ def parameter(declaration):
     return {"name": name, "type": cpp_type, "default": default, "declaration": declaration}
 
 
-def class_symbols(source, name):
-    """Read visible names, not aggregate members or arbitrary template semantics."""
-    ts = code_tokens(source)
-    begin = next(
-        i for i, t in enumerate(ts[:-1]) if t.text in ("class", "struct") and ts[i + 1].text == name
+def enrich_interface(source: str, interface: dict, source_name: str | None = None) -> dict:
+    """给模块接口补上可见名字、别名、解析后的构造参数和模板参数。
+    Add the visible names, aliases, parsed constructor arguments and template parameters
+    to a Module interface.
+
+    可见名字由类型索引读取类体的方式得出（xrobot.type_index.class_scope_names）。
+    The visible names come from the way the type index reads class bodies
+    (xrobot.type_index.class_scope_names).
+
+    Args:
+        source_name: 源文件名；与解析接口时相同，以共用一次解析。
+            The source file name; the same as when the interface was extracted, so both
+            share one parse.
+    """
+    interface["symbols"], interface["aliases"] = class_scope_names(
+        source, interface["name"], source_name
     )
-    opening = next(i for i in range(begin + 2, len(ts)) if ts[i].text == "{")
-    ending = close_token(ts, opening)
-    access = "public" if ts[begin].text == "struct" else "private"
-    symbols, aliases = {}, {}
-    i = opening + 1
-    while i < ending:
-        t = ts[i]
-        if t.text in ("public", "protected", "private") and ts[i + 1].text == ":":
-            access = t.text
-            i += 2
-            continue
-        if t.text == "using" and ts[i + 1].kind == "identifier" and ts[i + 2].text == "=":
-            end = next(j for j in range(i + 3, ending) if ts[j].text == ";")
-            symbols[ts[i + 1].text] = access
-            aliases[ts[i + 1].text] = source[ts[i + 2].end : ts[end].start].strip()
-            i = end + 1
-            continue
-        if t.text in ("struct", "class", "enum"):
-            j = i + 1
-            if t.text == "enum" and ts[j].text in ("class", "struct"):
-                j += 1
-            if ts[j].kind == "identifier":
-                symbols[ts[j].text] = access
-            while j < ending and ts[j].text not in ("{", ";"):
-                j += 1
-            if j < ending and ts[j].text == "{":
-                end = close_token(ts, j)
-                if i and ts[i - 1].text == "typedef" and ts[end + 1].kind == "identifier":
-                    symbols[ts[end + 1].text] = access
-                # Names in unscoped enums are also visible in the class scope.
-                if t.text == "enum" and ts[i + 1].text not in ("class", "struct"):
-                    body = source[ts[j].end : ts[end].start]
-                    for item in split_arguments(body.rstrip().rstrip(",")):
-                        ident = code_tokens(item)[0]
-                        if ident.kind == "identifier":
-                            symbols[ident.text] = access
-                i = end + 1
-                continue
-        if t.text == "static":
-            j = i + 1
-            while j < ending and ts[j].text not in (";", "{", "="):
-                if ts[j].text == "(":
-                    if ts[j - 1].kind == "identifier":
-                        symbols[ts[j - 1].text] = access
-                    break
-                j += 1
-            if j < ending and ts[j].text in ("=", "{") and ts[j - 1].kind == "identifier":
-                symbols[ts[j - 1].text] = access
-        if t.text in ("{", "("):
-            i = close_token(ts, i) + 1
-            continue
-        i += 1
-    return symbols, aliases
-
-
-def enrich_interface(source, interface):
-    symbols, aliases = class_symbols(source, interface["name"])
-    interface["symbols"] = symbols
-    interface["aliases"] = aliases
     for ctor in interface["constructors"]:
         declarations = ctor["parameters"]
         if declarations == ["void"]:
@@ -140,8 +115,13 @@ def enrich_interface(source, interface):
     return interface
 
 
-def replace_names(text, replacements):
-    # Scope roots such as Mode::VALUE and T::value_type must be qualified here.
+def replace_names(text: str, replacements: dict[str, str]) -> str:
+    """替换 text 中未加限定的名字。
+    Replace the unqualified names of text.
+
+    作用域的根名（如 Mode::VALUE 中的 Mode、T::value_type 中的 T）也会被替换。
+    Scope roots such as Mode in Mode::VALUE and T in T::value_type are replaced too.
+    """
     items = code_tokens(text)
     edits = []
     for i, token in enumerate(items):
@@ -157,7 +137,14 @@ def replace_names(text, replacements):
     return text
 
 
-def template_bindings(interface, supplied):
+def template_bindings(interface: dict, supplied: list) -> dict[str, str]:
+    """模板参数名到模板实参的映射；没有给出的取默认值。
+    The template arguments by template parameter name; missing ones take their default.
+
+    Raises:
+        ValueError: 实参过多，或缺少没有默认值的实参。
+            Too many arguments, or an argument without a default is missing.
+    """
     parameters = interface["template_parameters"]
     if len(supplied) > len(parameters):
         raise ValueError("Too many template arguments for " + interface["name"])
@@ -170,14 +157,33 @@ def template_bindings(interface, supplied):
     return replacements
 
 
-def qualify(text, interface, cpp_class, templates=None, expand_aliases=False):
+def qualify(
+    text: str | None,
+    interface: dict,
+    cpp_class: str,
+    templates: dict[str, str] | None = None,
+    expand_aliases: bool = False,
+) -> str | None:
+    """给 text 中的模块类成员名加上 cpp_class:: 限定，并代入模板实参。
+    Qualify the Module class members named in text with cpp_class:: and substitute the
+    template arguments.
+
+    Args:
+        expand_aliases: 把公有成员别名替换为它指向的写法。
+            Replace public member aliases with the spellings they stand for.
+
+    Raises:
+        ValueError: text 用到了非公有成员。
+            text uses a member that is not public.
+    """
     if text is None:
         return None
     substitutions = dict(templates or {})
     for symbol, access in interface["symbols"].items():
         if access == "public":
             substitutions[symbol] = cpp_class + "::" + symbol
-    # Explicit type aliases are followed only when their text is available.
+    # 只有别名的写法可读时才展开。
+    # Aliases are followed only when their spelling is available.
     if expand_aliases:
         for _ in range(len(interface["aliases"]) + 1):
             altered = False
@@ -203,11 +209,19 @@ def qualify(text, interface, cpp_class, templates=None, expand_aliases=False):
     return replace_names(text, substitutions)
 
 
-def initializer_tree(expression, expected_type=None):
-    """Expand a brace initializer's explicit entries; never inspect a type's fields.
+def initializer_tree(expression: str | None, expected_type: str | None = None) -> Tree:
+    """展开花括号初始化器中显式写出的项，不查看类型的字段。
+    Expand the explicit entries of a brace initializer without looking at a type's fields.
 
-    Returns a dict for designated initializers, a list for positional ones, and
-    the original text for anything else (named constants, factory calls, casts).
+    Returns:
+        指定初始化器为映射，按位置的初始化器为列表，其他写法（常量名、工厂函数、转换）为
+        原文。
+        A mapping for a designated initializer, a list for a positional one, and the
+        original text for anything else (named constants, factory calls, casts).
+
+    Raises:
+        ValueError: 指定初始化器中字段重复。
+            A designated initializer repeats a field.
     """
     if expression is None:
         return None
@@ -256,8 +270,26 @@ def initializer_tree(expression, expected_type=None):
     return [initializer_tree(p) for p in parts]
 
 
-def compliant_constructors(interface, cpp_class=None, templates=None):
-    """Accept the agreed constructor shape: dependencies first, then defaults."""
+def initializer_text(tree: Tree) -> str | None:
+    """把 initializer_tree 的结果写回 C++ 初始化器。
+    Write a result of initializer_tree back as a C++ initializer.
+    """
+    if isinstance(tree, dict):
+        return "{" + ", ".join(f".{k} = {initializer_text(v)}" for k, v in tree.items()) + "}"
+    if isinstance(tree, list):
+        return "{" + ", ".join(initializer_text(v) or "" for v in tree) + "}"
+    return tree
+
+
+def compliant_constructors(interface: dict) -> list[dict]:
+    """符合约定的构造函数：没有默认值的依赖在前，带默认值的值在后。
+    The constructors that follow the agreed shape: dependencies without defaults first,
+    then values with defaults.
+
+    Raises:
+        ValueError: 没有符合约定的构造函数；报错列出每个构造函数的问题。
+            No constructor follows it; the message lists each constructor's problem.
+    """
     accepted, rejected = [], []
     for ctor in interface["constructors"]:
         config_started = False
@@ -278,8 +310,16 @@ def compliant_constructors(interface, cpp_class=None, templates=None):
     return accepted
 
 
-def type_shape(cpp_type):
-    """Split only outer cv/pointer/ref declarators, never template arguments."""
+def type_shape(cpp_type: str) -> tuple[str, frozenset, tuple, str]:
+    """拆出类型写法最外层的 cv、指针和引用，不拆模板实参。
+    Split the outer cv qualifiers, pointers and reference of a type spelling, never the
+    template arguments.
+
+    Returns:
+        (去掉空白的基本类型, 基本类型的 cv, 每层指针的 cv, 引用 '&'/'&&'/'')。
+        (base type without whitespace, cv of the base type, cv of each pointer level,
+        reference '&'/'&&'/'').
+    """
     text = cpp_type.strip()
     items = code_tokens(text)
     outer = []
@@ -317,8 +357,11 @@ def type_shape(cpp_type):
     return base, cv, tuple(pointers), reference
 
 
-def is_arithmetic(cpp_type):
-    """Builtin arithmetic types and their <cstdint>/<cstddef> spellings, by value."""
+def is_arithmetic(cpp_type: str) -> bool:
+    """按值传递的内置算术类型，含 <cstdint>/<cstddef> 中的写法。
+    Whether a type is a builtin arithmetic type passed by value, <cstdint>/<cstddef>
+    spellings included.
+    """
     base, _, pointers, reference = type_shape(cpp_type)
     if pointers or reference:
         return False
@@ -328,14 +371,19 @@ def is_arithmetic(cpp_type):
     return bool(words) and all(w in ARITHMETIC for w in words)
 
 
-def is_dependency(p):
-    """A dependency parameter: reference or pointer type without a default (§2.2)."""
+def is_dependency(p: dict) -> bool:
+    """是否为依赖参数：没有默认值的引用或指针。
+    Whether a parameter is a dependency: a reference or pointer without a default.
+    """
     _, _, pointers, reference = type_shape(p["type"])
     return p["default"] is None and bool(pointers or reference)
 
 
-def explicit_expression_type(value):
-    """Recognize explicit casts/initializers and a small portable literal subset."""
+def explicit_expression_type(value: object) -> str | None:
+    """值的写法本身给出的类型：显式转换、带类型的花括号，以及少量可移植的字面量。
+    The type a value's spelling states itself: an explicit cast, a typed brace
+    initializer, or one of a few portable literals.
+    """
     if not isinstance(value, str):
         return None
     value = value.strip()
@@ -372,16 +420,32 @@ def explicit_expression_type(value):
     return None
 
 
-def constructor_for(interface, named_values, known, cpp_class, templates):
-    """Select the constructor whose parameter names the configuration lists.
+def constructor_for(
+    interface: dict,
+    named_values: list[dict],
+    known: dict[str, str],
+    cpp_class: str,
+    templates: dict[str, str] | None,
+) -> dict:
+    """按配置列出的参数名选择构造函数。
+    Select the constructor whose parameter names the configuration lists.
 
-    ``known`` maps registration names and earlier instance ids to their types.
-    Several constructors with the same names are told apart by explicit types
-    only (a known name's type, a cast, a typed initializer or a literal).
+    参数名相同的几个构造函数只按显式类型区分：已知名字的类型、显式转换、带类型的花括号或
+    字面量。
+    Several constructors with the same names are told apart by explicit types only: the
+    type of a known name, a cast, a typed brace initializer or a literal.
+
+    Args:
+        known: 注册名和排在前面的实例 id 到其类型的映射。
+            The types of the registration names and earlier instance ids.
+
+    Raises:
+        ValueError: 没有参数名匹配的构造函数，或显式类型不足以区分。
+            No constructor has these names, or the explicit types cannot tell them apart.
     """
     names = [next(iter(v)) for v in named_values]
     candidates = []
-    supported = compliant_constructors(interface, cpp_class, templates)
+    supported = compliant_constructors(interface)
     for ctor in supported:
         if [p["name"] for p in ctor["arguments"]] != names:
             continue
@@ -412,16 +476,23 @@ def constructor_for(interface, named_values, known, cpp_class, templates):
     if len(typed) == 1:
         return typed[0]
     if not candidates:
+        expected = " | ".join(
+            "(" + ", ".join(p["name"] for p in c["arguments"]) + ")" for c in supported
+        )
         raise ValueError(
-            f"named arguments ({', '.join(names)}) do not match any constructor of {interface['name']}; expected one of: {' | '.join('(' + ', '.join(p['name'] for p in c['arguments']) + ')' for c in supported)}"
+            f"named arguments ({', '.join(names)}) do not match any constructor of "
+            f"{interface['name']}; expected one of: {expected}"
         )
     raise ValueError(
         f"{interface['name']}: constructor is ambiguous for the supplied names and explicit types"
     )
 
 
-def _base_spelling(cpp_type):
-    """Drop outer cv/reference from a type spelling, keeping template arguments."""
+def _base_spelling(cpp_type: str) -> str:
+    """去掉类型写法最外层的 cv 和引用，保留模板实参。
+    Drop the outer cv qualifiers and reference of a type spelling, keeping template
+    arguments.
+    """
     items = code_tokens(cpp_type)
     keep = [t for t in items if t.text not in ("const", "volatile", "&", "&&")]
     if not keep:
@@ -429,8 +500,10 @@ def _base_spelling(cpp_type):
     return cpp_type[keep[0].start : keep[-1].end].strip()
 
 
-def _is_positional_brace(text):
-    """``{a, b}`` or ``T{a, b}`` with elements (not designated, not empty)."""
+def _is_positional_brace(text: str) -> bool:
+    """text 是否为有元素的按位置花括号：{a, b} 或 T{a, b}。
+    Whether text is a positional brace initializer with elements: {a, b} or T{a, b}.
+    """
     ts = code_tokens(text)
     opening = next((i for i, t in enumerate(ts) if t.text == "{"), None)
     if opening is None or close_token(ts, opening) != len(ts) - 1:
@@ -442,8 +515,10 @@ def _is_positional_brace(text):
     return bool(inner) and not (len(inner) >= 2 and inner[0].text == ".")
 
 
-def _is_designated_brace(text):
-    """``{.a = 1}`` or ``T{.a = 1}``."""
+def _is_designated_brace(text: str) -> bool:
+    """text 是否为指定初始化器：{.a = 1} 或 T{.a = 1}。
+    Whether text is a designated initializer: {.a = 1} or T{.a = 1}.
+    """
     ts = code_tokens(text)
     opening = next((i for i, t in enumerate(ts) if t.text == "{"), None)
     return (
@@ -455,27 +530,50 @@ def _is_designated_brace(text):
 
 
 class ValueChecker:
-    """Render YAML values as C++ while enforcing the mapping rules.
+    """按映射规则把 YAML 值写成 C++。
+    Render YAML values as C++ while enforcing the mapping rules.
 
-    For a type located in the loaded Module headers a mapping must name exactly
-    its data members in order (aggregates) or one public constructor's
-    parameters (classes); positional lists and positional brace text are
-    rejected. For a type the index cannot locate, a mapping must match the
-    parameter's designated default initializer, otherwise it is rejected and
-    the value must be written as a C++ expression.
+    类型在已加载的模块头文件中时，映射必须按顺序写出它的全部数据成员（聚合体）或某个公有
+    构造函数的全部参数（类），按位置的列表和花括号会被拒绝。类型不在索引中时，映射必须与参数
+    默认值中的指定初始化器一致，否则被拒绝，需要写成 C++ 表达式。
+    For a type located in the loaded Module headers a mapping must name exactly its data
+    members in order (aggregates) or one public constructor's parameters (classes);
+    positional lists and positional brace text are rejected. For a type the index cannot
+    locate, a mapping must match the parameter's designated default initializer, otherwise
+    it is rejected and the value must be written as a C++ expression.
     """
 
-    def __init__(self, index):
+    def __init__(self, index: TypeIndex | None) -> None:
         self.index = index
-        self.checks = []  # static_assert declarations for the value being rendered
+        self.checks: list[str] = []  # static_assert declarations for the value being rendered
 
-    def _locate(self, cpp_type, scope):
+    def _locate(self, cpp_type: str | None, scope: tuple[str, ...]) -> ClassEntry | None:
+        """类型写法指向的已索引的类。
+        The indexed class a type spelling names.
+        """
         if not (self.index and cpp_type):
             return None
         return self.index.resolve(cpp_type, scope)
 
-    def render(self, value, field, cpp_type=None, scope=(), default=None):
-        """Return (C++ expression, whether it is already a typed expression)."""
+    def render(
+        self,
+        value: object,
+        field: str,
+        cpp_type: str | None = None,
+        scope: tuple[str, ...] = (),
+        default: Tree = None,
+    ) -> tuple[str, bool]:
+        """一个配置值的 C++ 表达式。
+        The C++ expression of one configuration value.
+
+        Returns:
+            (表达式, 是否已是带类型的表达式)。
+            (expression, whether it is already a typed expression).
+
+        Raises:
+            ConfigError: 值不符合映射规则。
+                The value breaks a mapping rule.
+        """
         if isinstance(value, dict):
             return self._mapping(value, field, cpp_type, scope, default)
         entry = self._locate(cpp_type, scope) if cpp_type else None
@@ -509,7 +607,14 @@ class ValueChecker:
         return text, False
 
     @staticmethod
-    def _require(field, keys, expected, what):
+    def _require(field: str, keys: list[str], expected: list[str], what: str) -> None:
+        """映射的键必须与 expected 相同且顺序一致。
+        The keys of a mapping must equal expected, in the same order.
+
+        Raises:
+            ConfigError: 缺少、多出或顺序不对。
+                A key is missing, unknown or out of order.
+        """
         if keys == expected:
             return
         missing = [k for k in expected if k not in keys]
@@ -527,7 +632,23 @@ class ValueChecker:
             f"{field}: fields out of declaration order ({what}); expected: {', '.join(expected)}"
         )
 
-    def _mapping(self, value, field, cpp_type, scope, default):
+    def _mapping(
+        self,
+        value: dict,
+        field: str,
+        cpp_type: str | None,
+        scope: tuple[str, ...],
+        default: Tree,
+    ) -> tuple[str, bool]:
+        """一个映射值的 C++ 表达式：聚合体写成指定初始化器，有构造函数的类写成构造调用。
+        The C++ expression of a mapping value: a designated initializer for an aggregate, a
+        constructor call for a class with constructors.
+
+        Raises:
+            ConfigError: 映射与类型或默认值不符，或类型无法检查。
+                The mapping does not match the type or the default, or the type cannot be
+                checked.
+        """
         for key in value:
             if not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", str(key)):
                 raise ConfigError(field + ": invalid field name " + str(key))
@@ -578,7 +699,17 @@ class ValueChecker:
         joined = "\n, ".join(args)
         return f"{spelled}(\n{joined}\n)", True
 
-    def _designated(self, value, field, types, entry, default):
+    def _designated(
+        self,
+        value: dict,
+        field: str,
+        types: dict[str, str],
+        entry: ClassEntry | None,
+        default: Tree,
+    ) -> str:
+        """把映射写成指定初始化器 {.a = …}。
+        Write a mapping as a designated initializer {.a = ...}.
+        """
         parts = []
         for key, child in value.items():
             child_default = default.get(key) if isinstance(default, dict) else None
@@ -589,26 +720,32 @@ class ValueChecker:
         return "{\n" + "\n, ".join(parts) + "\n}" if parts else "{}"
 
 
-def convert(expr, target, exact, checks, message="value"):
-    """Apply the generator's conversion rule for one value.
+def convert(
+    expr: str, target: str, exact: bool, checks: list[str], message: str = "value"
+) -> tuple[str, list[str]]:
+    """按生成器的转换规则写出一个值。
+    Apply the generator's conversion rule to one value.
 
-    Returns (expression, checks). Generator-built typed expressions and braced
-    initializers are exact and returned unchanged (a braced list is emitted as
-    ``T{...}``). Arithmetic targets go through ``Implicit<P>`` so constant
-    conversions keep the compiler's warnings; every other target gets an
-    implicit-convertibility check plus a ``static_cast`` that keeps prvalue
+    花括号写成 std::remove_cv_t<std::remove_reference_t<T>>{…}；生成器构造的带类型表达式原样
+    返回；算术类型经 Implicit<P>，保留编译器对常量转换的警告；其他类型加隐式可转换检查和
+    static_cast，保留纯右值省略，拒绝向下转换和只能显式的转换。
+    A brace initializer becomes std::remove_cv_t<std::remove_reference_t<T>>{...}; a
+    typed expression the generator built is returned unchanged; an arithmetic target goes
+    through Implicit<P>, so constant conversions keep the compiler's warnings; every other
+    target gets an implicit-convertibility check and a static_cast, which keeps prvalue
     elision and rejects downcasts and explicit-only conversions.
+
+    Returns:
+        (表达式, 追加了检查的 checks)。
+        (expression, checks with any new check appended).
     """
-    value_type = _base_spelling(target)
-    stripped = expr.lstrip()
-    if exact:
-        if stripped.startswith("{"):
-            return f"std::remove_cv_t<std::remove_reference_t<{target}>>{expr}", checks
-        return expr, checks
-    if stripped.startswith("{"):
+    if expr.lstrip().startswith("{"):
         return f"std::remove_cv_t<std::remove_reference_t<{target}>>{expr}", checks
+    if exact:
+        return expr, checks
     if is_arithmetic(target):
-        return f"xrobot_generated::Implicit<{value_type}>({expr})", checks
+        return f"xrobot_generated::Implicit<{_base_spelling(target)}>({expr})", checks
+    # 同一类型（如不可移动的工厂函数纯右值）不需要转换。
     # The same type (e.g. an immovable factory prvalue) needs no conversion.
     quoted_target = target.replace('"', "'")
     checks.append(

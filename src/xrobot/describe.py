@@ -132,7 +132,7 @@ def _describe_module(module, project, types, registrations):
         for p in interface["template_parameters"]
     ]
     constructors = []
-    for ctor in compliant_constructors(interface, cpp_class):
+    for ctor in compliant_constructors(interface):
         parameters = []
         for p in ctor["arguments"]:
             target = qualify(p["type"], interface, cpp_class, None, True)

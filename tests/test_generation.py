@@ -9,9 +9,11 @@ from pathlib import Path
 
 from fixtures import CXX, BspTestCase, CxxMixin, requires_cxx
 
+from xrobot import config_edit
 from xrobot.config import ConfigError
 from xrobot.generate_main import generate, generate_compile_check, load_modules, validate_all
 from xrobot.project import HEADER_NOTICE, ProjectError
+from xrobot.type_index import TypeIndex
 
 MAIN = '#include "xrobot_main.hpp"\nint main() { XROBOT_MAIN(); }\n'
 
@@ -719,6 +721,21 @@ class GeneratedCpp(CxxMixin, BspTestCase):
     def setUp(self):
         super().setUp()
         self.entry(MAIN)
+
+    def test_seeded_defaults_that_use_namespace_names_compile(self):
+        self.module(
+            "Qux",
+            "namespace qux { enum Mode { A, B }; inline constexpr int kN = 3;\n"
+            "  struct Param { Mode mode = A; int n = kN; }; }\n"
+            "class Qux { public:\n  explicit Qux(qux::Param param = {}) { (void)param; } };",
+        )
+        config = self.config("modules: []\n")
+        modules = load_modules(self.project)
+        config_edit.add_instance(
+            config, "Qux", modules, TypeIndex.for_modules(modules), "qux", "User/xrobot.yaml"
+        )
+        self.assertIn(".mode = qux::A", generate(self.project, config))
+        self.compile(execute=False)
 
     def test_static_config_lifetime_nested_values_and_pointer_binding(self):
         self.module(

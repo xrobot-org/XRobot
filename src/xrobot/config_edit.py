@@ -39,6 +39,7 @@ from xrobot.config import (
 )
 from xrobot.constructor_model import (
     compliant_constructors,
+    initializer_text,
     initializer_tree,
     qualify,
     replace_names,
@@ -607,12 +608,14 @@ def seed_value(default, target, index, scope=()):
             result[name] = seed_value(value, None, None) if not isinstance(value, str) else value
         return result
     if isinstance(tree, list):
-        return default if isinstance(default, str) else CommentedSeq(tree)
+        # 按位置的初始化器按 C++ 原文写入。
+        # A positional initializer is written as C++ code.
+        return default if isinstance(default, str) else initializer_text(tree)
     return default
 
 
 def seed_arguments(interface, cpp_class, templates, index):
-    ctor = compliant_constructors(interface, cpp_class, templates)[0]
+    ctor = compliant_constructors(interface)[0]
     result = []
     for p in ctor["arguments"]:
         if p["default"] is None:
@@ -730,7 +733,7 @@ def sync_config(config_path, modules, index, source=None):
 def _sync_item(item, interface, cpp_class, templates, index):
     args = item.get("args")
     names = [next(iter(a)) for a in args or [] if isinstance(a, dict) and a]
-    ctors = compliant_constructors(interface, cpp_class, templates)
+    ctors = compliant_constructors(interface)
     exact = [c for c in ctors if [p["name"] for p in c["arguments"]] == names]
     changed = False
     if not exact:

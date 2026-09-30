@@ -16,6 +16,7 @@ each once.
 from __future__ import annotations
 
 import bisect
+import functools
 import os
 import re
 from collections.abc import Iterable, Sequence
@@ -187,10 +188,10 @@ class _Header:
     span is a byte range.
     """
 
-    def __init__(self, path: Path, text: str) -> None:
+    def __init__(self, path: Path | None, text: str) -> None:
         self.path = path
         self.text = text
-        self.document = parse_document(text, str(path))
+        self.document = parse_document(text, str(path) if path is not None else None)
         self.tokens = code_tokens(text)
         self._starts = [token.span.start for token in self.tokens]
         self.scopes: list[tuple[int, int, str]] | None = None
@@ -256,10 +257,74 @@ class _Header:
         return bool(i) and self._bodies[i - 1][0] < byte_position < self._bodies[i - 1][1]
 
 
+@functools.lru_cache(maxsize=256)
+def _parsed_header(source_name: str | None, text: str) -> _Header:
+    """同一文本只解析一次的 _Header；类型索引和模块接口共用。
+    A _Header parsed once per text, shared by the type index and Module interfaces.
+    """
+    return _Header(Path(source_name) if source_name else None, text)
+
+
+def _enclosing_scopes(header: _Header, byte_position: int) -> tuple[str, ...]:
+    """字节位置所在的命名空间和类名，由外到内。
+    The enclosing namespace and class names of a byte position, outermost first.
+    """
+    if header.scopes is None:
+        header.scopes = []
+        for kind in _SCOPES:
+            for node in header.nodes.get(kind, []):
+                body = node.child_by_field("body")
+                if body is None:
+                    continue
+                name = node.child_by_field("name")
+                header.scopes.append(
+                    (body.span.start, body.span.end, name.text.strip() if name is not None else "")
+                )
+        header.scopes.sort()
+    return tuple(name for start, end, name in header.scopes if start < byte_position < end)
+
+
+def class_scope_names(
+    source: str, name: str, source_name: str | None = None
+) -> tuple[dict[str, str], dict[str, str]]:
+    """全局类 name 的作用域中可见的名字及其访问权限，以及成员别名指向的写法。
+    The names visible in the scope of the global class name with their access, and the
+    spellings its member aliases stand for.
+
+    可见的名字是成员类型、别名、非限定枚举的枚举值和静态成员，与类型索引读取类体的方式相同。
+    The visible names are member types, aliases, enumerators of unscoped enums and static
+    members, read the same way the type index reads class bodies.
+
+    Raises:
+        ValueError: 源码中没有这个全局类的定义。
+            The source defines no global class of that name.
+    """
+    header = _parsed_header(source_name, source)
+    for kind in ("class_specifier", "struct_specifier"):
+        for node in header.nodes.get(kind, []):
+            view = CppClassView(node)
+            if view.name != name or view.body is None:
+                continue
+            if header.in_function_body(node.span.start) or _enclosing_scopes(
+                header, node.span.start
+            ):
+                continue
+            tokens = header.tokens_in(view.body.span.start, view.body.span.end)
+            layout = _scan_body(
+                header, tokens, "public" if kind == "struct_specifier" else "private"
+            )
+            aliases = {
+                alias: header.text[start:end].strip()
+                for alias, (start, end) in layout.aliases.items()
+            }
+            return dict(layout.names), aliases
+    raise ValueError(f"No definition of class {name}")
+
+
 class _Layout:
-    """一个类体的数据成员，以及判断聚合体所需的信息。
-    The data members of one class body and the facts that decide whether it is an
-    aggregate.
+    """一个类体或命名空间体中的声明：数据成员、可见的名字，以及判断聚合体所需的信息。
+    The declarations of one class or namespace body: data members, visible names and the
+    facts that decide whether a class is an aggregate.
     """
 
     def __init__(self) -> None:
@@ -268,14 +333,28 @@ class _Layout:
         self.conditional_fields: list[str] = []
         self.has_union = False
         self.has_virtual = False
-        self.member_types: dict[str, str] = {}
+        # 可以不加对象直接用名字引用的声明及其访问权限：类型、别名、枚举值、静态成员；
+        # 命名空间中还有变量和函数。
+        # Declarations referable by name without an object, with their access: types,
+        # aliases, enumerators and static members; in a namespace also variables and
+        # functions.
+        self.names: dict[str, str] = {}
         self.aliases: dict[str, tuple[int, int]] = {}
         self.monitor: str | None = None  # 'public' / 'conditional' / None
 
 
-def _scan_body(header: _Header, items: Sequence[Token], default_access: str) -> _Layout:
-    """扫描一个类体的 token（含两侧花括号）。
-    Scan the tokens of one class body, braces included.
+def _scan_body(
+    header: _Header, items: Sequence[Token], default_access: str, namespace_scope: bool = False
+) -> _Layout:
+    """扫描一个类体或命名空间体的 token（含两侧花括号）。
+    Scan the tokens of one class or namespace body, braces included.
+
+    Args:
+        namespace_scope: 扫描的是命名空间体；其中的变量和函数也是可见的名字，嵌套的命名空间
+            和 extern "C" 块跳过（嵌套命名空间另行扫描）。
+            The body is a namespace body: its variables and functions are visible names too,
+            and nested namespaces and extern "C" blocks are skipped (nested namespaces are
+            scanned on their own).
     """
     layout = _Layout()
     access = default_access
@@ -294,14 +373,25 @@ def _scan_body(header: _Header, items: Sequence[Token], default_access: str) -> 
         if first.text == ";":
             i += 1
             continue
-        # 收集一个成员声明，直到顶层的 ';' 或函数体结束。
-        # Collect one member declaration up to its top-level ';' (or a function body).
+        # 收集一个声明，直到顶层的 ';' 或函数体结束。
+        # Collect one declaration up to its top-level ';' (or a function body).
         j = i
         body_close = None
+        skip = False
         while j < end and items[j].text != ";":
             if items[j].text == "{":
                 close = close_token(items, j)
                 previous = items[j - 1] if j > i else None
+                if namespace_scope and (
+                    any(t.text == "namespace" for t in items[i:j])
+                    or (
+                        first.text == "extern"
+                        and previous is not None
+                        and previous.kind == "literal"
+                    )
+                ):
+                    body_close, skip = close, True
+                    break
                 # 函数声明中，紧跟成员名的花括号是构造函数初始化，其他花括号开始函数体。
                 # In a function declaration, a brace right after a member name is a
                 # constructor initializer; any other brace opens the body.
@@ -328,11 +418,13 @@ def _scan_body(header: _Header, items: Sequence[Token], default_access: str) -> 
             j += 1
         member = items[i : (body_close + 1 if body_close is not None else j)]
         i = (body_close + 1) if body_close is not None else j + 1
-        if not member:
-            continue
-        _classify(header, member, access, layout)
+        if member and not skip:
+            _classify(header, member, access, layout, namespace_scope)
         if start == i:
             i += 1
+    if namespace_scope:
+        for name, _type, field_access in layout.fields:
+            layout.names.setdefault(name, field_access)
     return layout
 
 
@@ -344,16 +436,79 @@ def _template_open(items: Sequence[Token], start: int, index: int) -> bool:
     return previous is not None and (previous.kind == "identifier" or previous.text == "template")
 
 
-def _classify(header: _Header, member: Sequence[Token], access: str, layout: _Layout) -> None:
-    """按一个成员声明更新 layout：数据成员、成员类型、别名或 OnMonitor。
-    Update layout from one member declaration: a data member, a member type, an alias
-    or OnMonitor.
+def _enumerators(tokens: Sequence[Token]) -> list[str]:
+    """枚举体 token（含两侧花括号）中的枚举值名。
+    The enumerator names in the tokens of an enum body, braces included.
+    """
+    names, expect, k = [], True, 1
+    while k < len(tokens) - 1:
+        token = tokens[k]
+        if token.text in ("(", "{", "[", "<"):
+            k = close_token(tokens, k) + 1
+            continue
+        if expect and token.kind == "identifier":
+            names.append(token.text)
+        expect = token.text == ","
+        k += 1
+    return names
+
+
+def _declared_name(member: Sequence[Token]) -> str | None:
+    """声明所引入的名字：第一个顶层 '('、'='、'{'、'['、':' 或 ';' 之前的最后一个标识符；
+    带限定的名字（如 Other::Run）不是新名字，返回 None。
+    The name a declaration introduces: the last identifier before the first top-level
+    '(', '=', '{', '[', ':' or ';'; a qualified name (such as Other::Run) introduces
+    nothing new and gives None.
+    """
+    found = None
+    k = 0
+    while k < len(member):
+        token = member[k]
+        if token.text in ("(", "=", "{", ";", ":") or (
+            token.text == "[" and not (k + 1 < len(member) and member[k + 1].text == "[")
+        ):
+            break
+        if token.text == "<" and k and member[k - 1].kind == "identifier":
+            k = close_token(member, k) + 1
+            continue
+        if token.text == "[":  # [[attribute]]
+            k = close_token(member, k) + 1
+            continue
+        if token.text in ("alignas", "__attribute__") and k + 1 < len(member):
+            k = close_token(member, k + 1) + 1
+            continue
+        if token.text == "operator":
+            return None
+        if token.kind == "identifier" and token.text not in _SPECIFIERS:
+            found = None if k and member[k - 1].text == "::" else token.text
+        k += 1
+    return found
+
+
+def _classify(
+    header: _Header,
+    member: Sequence[Token],
+    access: str,
+    layout: _Layout,
+    namespace_scope: bool = False,
+) -> None:
+    """按一个声明更新 layout：数据成员、可见的名字、别名或 OnMonitor。
+    Update layout from one declaration: a data member, a visible name, an alias or
+    OnMonitor.
     """
     texts = [t.text for t in member]
     first = texts[0]
+    if first == "template":
+        # 模板声明按模板头之后的声明登记。
+        # A template declaration is registered by the declaration after its header.
+        if len(member) > 2 and member[1].text == "<":
+            close = close_token(member, 1)
+            if close + 1 < len(member):
+                _classify(header, member[close + 1 :], access, layout, namespace_scope)
+        return
     if first == "using":
         if len(texts) >= 4 and texts[2] == "=" and member[1].kind == "identifier":
-            layout.member_types[texts[1]] = "using"
+            layout.names[texts[1]] = access
             layout.aliases[texts[1]] = (member[2].end, member[-1].end)
         elif "OnMonitor" in texts and access == "public":
             layout.monitor = "conditional" if header.conditional_depth(member[0]) else "public"
@@ -362,7 +517,11 @@ def _classify(header: _Header, member: Sequence[Token], access: str, layout: _La
         # typedef struct {...} Name; 由 TypeIndex._parse 登记为类。
         # typedef struct {...} Name; is registered as a class by TypeIndex._parse.
         if member[-1].kind == "identifier":
-            layout.member_types[texts[-1]] = "typedef"
+            layout.names[texts[-1]] = access
+        if texts[1:2] == ["enum"] and "{" in texts:
+            opening = texts.index("{")
+            for enumerator in _enumerators(member[opening : close_token(member, opening) + 1]):
+                layout.names[enumerator] = access
         return
     if first in _SKIP_LEADING:
         return
@@ -375,10 +534,15 @@ def _classify(header: _Header, member: Sequence[Token], access: str, layout: _La
         if first == "union":
             layout.has_union = True
         if name is not None and opening is not None:
-            layout.member_types[name] = first
+            layout.names[name] = access
         if opening is None:
             return  # forward declaration or elaborated member type handled below
         close = close_token(member, opening)
+        if first == "enum" and texts[1] not in ("class", "struct"):
+            # 非限定枚举的枚举值在外层作用域可见。
+            # The enumerators of an unscoped enum are visible in the enclosing scope.
+            for enumerator in _enumerators(member[opening : close + 1]):
+                layout.names[enumerator] = access
         rest = member[close + 1 :]
         declarators = [t for t in rest if t.text != ";"]
         if declarators and first != "enum":
@@ -401,12 +565,13 @@ def _classify(header: _Header, member: Sequence[Token], access: str, layout: _La
             continue
         else:
             break
-    if "static" in leading:
-        if "OnMonitor" in texts and access == "public" and _is_function(member):
-            layout.monitor = "conditional" if header.conditional_depth(member[0]) else "public"
-        return
-    if _is_function(member):
-        if "OnMonitor" in texts and access == "public":
+    function = _is_function(member)
+    if "static" in leading or (namespace_scope and function):
+        name = _declared_name(member)
+        if name is not None:
+            layout.names[name] = access
+    if "static" in leading or function:
+        if "OnMonitor" in texts and access == "public" and function:
             layout.monitor = "conditional" if header.conditional_depth(member[0]) else "public"
         return
     _record_fields(header, member, None, access, layout)
@@ -674,12 +839,6 @@ class ClassEntry:
         """
         return list(self.layout().fields)
 
-    def member_types(self) -> dict[str, str]:
-        """类中声明的类型名及其种类（class、enum、using 等）。
-        The type names declared in the class and their kinds (class, enum, using, ...).
-        """
-        return dict(self.layout().member_types)
-
     def is_aggregate(self) -> bool:
         """是否为聚合体：没有构造函数、基类和虚函数，数据成员都是公有的。
         Whether the class is an aggregate: no constructors, bases or virtual functions,
@@ -732,7 +891,7 @@ class TypeIndex:
         self._parsed: dict[Path, _Header] = {}
         self._entries: dict[tuple[str, ...], list[ClassEntry]] = {}
         self._aliases: dict[tuple[str, ...], tuple[_Header, int, int]] = {}
-        self._namespace_types: dict[tuple[str, ...], set] = {}
+        self._namespace_names: dict[tuple[str, ...], set] = {}
         self._ensured: set = set()
         self._resolved: dict[tuple[str, tuple[str, ...]], ClassEntry | None] = {}
         self._class_candidates: set[str] | None = None
@@ -798,28 +957,6 @@ class TypeIndex:
             if path not in self._parsed and pattern.search(self._text(path)):
                 self._parse(path)
 
-    def _scope_of(self, header: _Header, byte_position: int) -> tuple[str, ...]:
-        """字节位置所在的命名空间和类名，由外到内。
-        The enclosing namespace and class names of a byte position, outermost first.
-        """
-        if header.scopes is None:
-            header.scopes = []
-            for kind in _SCOPES:
-                for node in header.nodes.get(kind, []):
-                    body = node.child_by_field("body")
-                    if body is None:
-                        continue
-                    name = node.child_by_field("name")
-                    header.scopes.append(
-                        (
-                            body.span.start,
-                            body.span.end,
-                            name.text.strip() if name is not None else "",
-                        )
-                    )
-            header.scopes.sort()
-        return tuple(name for start, end, name in header.scopes if start < byte_position < end)
-
     def _add(self, entry: ClassEntry) -> None:
         """登记一个类及其成员别名。
         Register a class and its member aliases.
@@ -833,7 +970,7 @@ class TypeIndex:
         Parse one header and register the classes, aliases and type names of its
         namespace and class scopes.
         """
-        header = _Header(path, self._text(path))
+        header = _parsed_header(str(path), self._text(path))
         self._parsed[path] = header
         classes = header.nodes.get("class_specifier", []) + header.nodes.get("struct_specifier", [])
         for view in (CppClassView(node) for node in classes):
@@ -842,7 +979,7 @@ class TypeIndex:
             node = view.node
             if header.in_function_body(node.span.start):
                 continue
-            scope = self._scope_of(header, node.span.start)
+            scope = _enclosing_scopes(header, node.span.start)
             body_tokens = header.tokens_in(view.body.span.start, view.body.span.end)
             if not body_tokens:
                 continue
@@ -880,7 +1017,7 @@ class TypeIndex:
             names = [t.text for t in items[closing + 1 : closing + 4] if t.kind == "identifier"]
             if not names:
                 continue
-            scope = self._scope_of(header, token.span.start)
+            scope = _enclosing_scopes(header, token.span.start)
             if scope + (names[0],) not in self._entries:
                 self._add(ClassEntry(header, scope + (names[0],), "struct", (opening, closing)))
         for namespace in header.nodes.get("namespace_definition", []):
@@ -888,9 +1025,10 @@ class TypeIndex:
             body = namespace.child_by_field("body")
             if name is None or body is None:
                 continue
-            scope = self._scope_of(header, namespace.span.start) + (name.text.strip(),)
-            layout = _scan_namespace(header.tokens_in(body.span.start, body.span.end))
-            self._namespace_types.setdefault(scope, set()).update(layout.member_types)
+            scope = _enclosing_scopes(header, namespace.span.start) + (name.text.strip(),)
+            tokens = header.tokens_in(body.span.start, body.span.end)
+            layout = _scan_body(header, tokens, "public", namespace_scope=True)
+            self._namespace_names.setdefault(scope, set()).update(layout.names)
             for alias, (start, end) in layout.aliases.items():
                 self._aliases.setdefault(scope + (alias,), (header, start, end))
 
@@ -1007,12 +1145,12 @@ class TypeIndex:
             outer, args = _split_last(spelled) if spelled else ("", None)
             owner = self._class_at(path)
             if owner is not None:
-                scopes.append((set(owner.member_types()), spelled))
+                scopes.append((set(owner.layout().names), spelled))
                 if owner.template_parameters and args is not None:
                     for name, value in zip(owner.template_parameters, args, strict=False):
                         replacements.setdefault(name, value.strip())
             else:
-                scopes.append((self._namespace_types.get(path, set()), "::".join(path)))
+                scopes.append((self._namespace_names.get(path, set()), "::".join(path)))
             path = path[:-1]
             spelled = outer or "::".join(path)
         spelling = _replace_identifiers(spelling, replacements)
@@ -1070,50 +1208,6 @@ class TypeIndex:
             if found is None:
                 unknown = True
         return None if unknown else False
-
-
-def _scan_namespace(items: Sequence[Token]) -> _Layout:
-    """收集直接声明在命名空间体中的类型名和别名。
-    Collect the type names and aliases declared directly in a namespace body.
-    """
-    layout = _Layout()
-    i, end = 1, len(items) - 1
-    while i < end:
-        t = items[i]
-        if t.text in ("{", "(", "[", "<"):
-            i = close_token(items, i) + 1
-            continue
-        if t.text in _CLASS_KEYS:
-            j = i + 1
-            if t.text == "enum" and j < end and items[j].text in ("class", "struct"):
-                j += 1
-            if j < end and items[j].kind == "identifier":
-                layout.member_types[items[j].text] = t.text
-        elif (
-            t.text == "using"
-            and i + 2 < end
-            and items[i + 1].kind == "identifier"
-            and items[i + 2].text == "="
-        ):
-            k = i + 3
-            while k < end and items[k].text != ";":
-                if items[k].text in ("{", "(", "[", "<"):
-                    k = close_token(items, k) + 1
-                    continue
-                k += 1
-            layout.member_types[items[i + 1].text] = "using"
-            layout.aliases[items[i + 1].text] = (items[i + 2].end, items[k].start)
-        elif t.text == "typedef":
-            k = i + 1
-            while k < end and items[k].text != ";":
-                if items[k].text in ("{", "(", "[", "<"):
-                    k = close_token(items, k) + 1
-                    continue
-                k += 1
-            if items[k - 1].kind == "identifier":
-                layout.member_types[items[k - 1].text] = "typedef"
-        i += 1
-    return layout
 
 
 def _headers_of(module: dict) -> list[Path]:

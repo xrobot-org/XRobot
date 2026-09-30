@@ -19,6 +19,7 @@ from xrobot.constructor_model import (
     type_shape,
 )
 from xrobot.source_syntax import extract_interface
+from xrobot.type_index import class_scope_names
 
 MAIN = '#include "xrobot_main.hpp"\nint main() { XROBOT_MAIN(); }\n'
 
@@ -382,6 +383,33 @@ class ConstructorModel(unittest.TestCase):
                 self.assertRaisesRegex(ValueError, "non-public member Foo::Secret"),
             ):
                 qualify(text, model, "Foo")
+
+    def test_visible_names_come_from_the_class_definition(self):
+        source = (
+            "struct Helper { enum Level { LOW, HIGH }; };\n"
+            "class Bar { public:\n  enum Speed { SLOW, FAST };\n  union Raw { int i; float f; };\n"
+            "  static constexpr int kTable[2] = {1, 2};\n  typedef enum { ON, OFF } Power;\n"
+            "  template <class T> struct Box { T value; };\n  friend struct Tester;\n"
+            " private:\n  static int Secret();\n  int field;\n"
+            " public:\n  explicit Bar(Speed speed = SLOW) {} };"
+        )
+        names, aliases = class_scope_names(source, "Bar")
+        self.assertEqual(
+            names,
+            {
+                "Speed": "public",
+                "SLOW": "public",
+                "FAST": "public",
+                "Raw": "public",
+                "kTable": "public",
+                "ON": "public",
+                "OFF": "public",
+                "Power": "public",
+                "Box": "public",
+                "Secret": "private",
+            },
+        )
+        self.assertEqual(aliases, {})
 
     def test_aliases_are_followed_only_on_request(self):
         model = interface(

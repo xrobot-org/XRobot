@@ -206,6 +206,26 @@ class Lookup(TypeIndexTestCase):
         self.assertEqual(index.qualify_in("int", entry, "ns::Fields"), "int")
         self.assertEqual(index.qualify_in("other::Mode", entry, "ns::Fields"), "other::Mode")
 
+    def test_qualify_in_names_namespace_and_class_values(self):
+        index = self.index(
+            "namespace qux {\nenum Mode { A, B };\ninline constexpr int kN = 3;\nint Make();\n"
+            "class Other { public: void Run(); static constexpr int kMax = 9; enum Level { LOW };\n"
+            "  struct Param { Mode mode = A; int n = kN; int m = kMax; Level level = LOW; }; };\n"
+            "inline void Other::Run() {}\nnamespace inner { int deep; }\n}\n"
+        )
+        entry = index.resolve("qux::Other::Param")
+        cases = {
+            "A": "qux::A",
+            "kN + Make()": "qux::kN + qux::Make()",
+            "kMax": "qux::Other::kMax",
+            "LOW": "qux::Other::LOW",
+            "Run": "Run",
+            "deep": "deep",
+        }
+        for text, expected in cases.items():
+            with self.subTest(text=text):
+                self.assertEqual(index.qualify_in(text, entry, "qux::Other::Param"), expected)
+
     def test_a_type_defined_in_two_headers_is_an_error(self):
         paths = [
             self.write("a/Twice.hpp", "struct Twice { int a; };"),

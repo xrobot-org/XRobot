@@ -146,9 +146,9 @@ def source_interface(path: str | Path) -> dict:
             # 与 TypeIndex 读取同样的文本，两者共用一次解析。
             # Same text as TypeIndex reads, so both share one parsed document.
             source = path.read_text(encoding="utf-8", errors="surrogateescape")
+            name = str(path.resolve())
             _INTERFACE_CACHE[key] = enrich_interface(
-                source,
-                extract_interface(source, path.stem, source_name=str(path.resolve())),
+                source, extract_interface(source, path.stem, source_name=name), name
             )
         except ValueError as error:
             raise ValueError(f"{path}: {error}") from error
