@@ -14,7 +14,7 @@ from fixtures import BspTestCase, TempDirTestCase, UpstreamTestCase, manifest_bl
 
 from xrobot import __version__
 from xrobot.cli import main, parse_value
-from xrobot.config import load_config
+from xrobot.config import ConfigError, load_config
 from xrobot.lock import read_modules_yaml
 from xrobot.module_parser import parse_manifest_from_header, source_interface
 
@@ -120,7 +120,9 @@ class Init(CliMixin, TempDirTestCase):
         ):
             self.assertIn(action, out)
         out, _ = self.ok("instance", "set", "--help")
-        self.assertIn("VALUE is JSON; text that is not JSON is taken as C++ text.", out)
+        self.assertIn("VALUE is one YAML value, read like a value in the config", out)
+        self.assertIn("--json", out)
+        self.assertIn("VALUE is JSON whose strings are C++ text", out)
         code, _, err = self.run_cli("source")
         self.assertEqual(code, 2)
         self.assertIn("the following arguments are required: <action>", err)
@@ -226,7 +228,7 @@ class Commands(CliMixin, BspTestCase):
     def test_instance_editing(self):
         out, _ = self.ok("instance", "add", "Led", "--id", "second")
         self.assertIn("Added second to User/xrobot.yaml; fill the null values", out)
-        self.ok("instance", "set", "second", "args.gpio", '"pin"')
+        self.ok("instance", "set", "second", "args.gpio", "pin")
         self.ok("instance", "set", "second", "args.gain", "2.5")
         second = load_config(self.root / "User/xrobot.yaml")["modules"][1]
         self.assertEqual(
@@ -248,16 +250,34 @@ class Commands(CliMixin, BspTestCase):
             [i["id"] for i in load_config(self.root / "User/xrobot.yaml")["modules"]], ["led"]
         )
 
-    def test_values_that_are_not_json_are_cpp_text(self):
-        self.assertEqual(parse_value('"LED_B"'), "LED_B")
-        self.assertEqual(parse_value('{"a": "1"}'), {"a": "1"})
-        self.assertEqual(parse_value("2.0f"), "2.0f")
+    def test_values_are_read_like_config_values_and_json_is_opt_in(self):
+        cases = [
+            ("LED_B", "LED_B"),
+            ('"LED_B"', '"LED_B"'),
+            ("2.0f", "2.0f"),
+            ("'{250}'", "{250}"),
+            ("'&led'", "&led"),
+            ('{cycle: 1, name: "a"}', {"cycle": "1", "name": '"a"'}),
+            ("", None),
+            ("null", None),
+        ]
+        for text, value in cases:
+            with self.subTest(text=text):
+                self.assertEqual(parse_value(text), value)
+        self.assertEqual(parse_value('"LED_B"', as_json=True), "LED_B")
+        self.assertEqual(parse_value('{"a": "\\"x\\""}', as_json=True), {"a": '"x"'})
+        with self.assertRaisesRegex(ConfigError, "VALUE is not JSON"):
+            parse_value("LED_B", as_json=True)
+        with self.assertRaisesRegex(ConfigError, "VALUE:1: YAML syntax error"):
+            parse_value("[")
         self.ok("instance", "set", "led", "args.gain", "2.0f")
-        self.ok("instance", "set", "led", "args.param", "{250}")
+        self.ok("instance", "set", "led", "args.param", "'{250}'")
+        self.ok("instance", "set", "led", "args.gpio", '"pin2"', "--json")
         self.assertEqual(
             load_config(self.root / "User/xrobot.yaml")["modules"][0]["args"],
-            [{"gpio": "pin"}, {"param": "{250}"}, {"gain": "2.0f"}],
+            [{"gpio": "pin2"}, {"param": "{250}"}, {"gain": "2.0f"}],
         )
+        self.fails("instance", "set", "led", "args.gain", "[", pattern="VALUE:1: YAML syntax")
 
     def test_instance_add_writes_to_the_selected_product(self):
         self.config({"modules": []}, name="products/alt.yaml")

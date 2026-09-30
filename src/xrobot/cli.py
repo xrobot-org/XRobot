@@ -12,7 +12,7 @@ from pathlib import Path
 import yaml
 
 from xrobot import __version__
-from xrobot.config import ConfigError
+from xrobot.config import ConfigError, parse_yaml
 from xrobot.project import Project, ProjectError
 
 DESCRIPTION = """\
@@ -230,14 +230,25 @@ def cmd_format(args: argparse.Namespace) -> None:
         )
 
 
-def parse_value(text: str) -> object:
-    """解析命令行给出的值：JSON，不是 JSON 时作为 C++ 文本。
-    Parse a value given on the command line: JSON, or C++ text when it is not JSON.
+def parse_value(text: str, as_json: bool = False) -> object:
+    """解析命令行给出的值。默认按配置文件的规则读成一个 YAML 值：不加引号或用单引号的是 C++ 代码，
+    双引号的是 C++ 字符串，空值表示未填写；as_json 时按 JSON 读，JSON 字符串是 C++ 文本。
+    Parse a value given on the command line. By default it is one YAML value read like a
+    configuration value: C++ code without quotes or in single quotes, a C++ string in double
+    quotes, not filled in when empty. With as_json it is JSON whose strings are C++ text.
+
+    Raises:
+        ConfigError: 不是有效的 YAML 值，或 as_json 时不是 JSON。
+            The text is not a valid YAML value, or not JSON with as_json.
     """
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        return text
+    if as_json:
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError as error:
+            raise ConfigError(f"VALUE is not JSON: {error}") from error
+    if not text.strip():
+        return None
+    return parse_yaml(text, "VALUE")
 
 
 def cmd_instance(args: argparse.Namespace) -> None:
@@ -262,7 +273,7 @@ def cmd_instance(args: argparse.Namespace) -> None:
         )
     elif args.action == "set":
         config_edit.set_value(
-            config, args.id, args.path, parse_value(args.value), args.if_match, source
+            config, args.id, args.path, parse_value(args.value, args.json), args.if_match, source
         )
     elif args.action == "remove":
         config_edit.remove_instance(config, args.id, source)
@@ -539,12 +550,16 @@ def parser() -> argparse.ArgumentParser:
         "set",
         help="replace one value",
         description="PATH is id, template_args[n] or args.<param>[.<field>|[n]]...\n"
-        "VALUE is JSON; text that is not JSON is taken as C++ text.",
+        "VALUE is one YAML value, read like a value in the config: C++ code without quotes\n"
+        "or in single quotes, a C++ string in double quotes (e.g. '\"bmi088_gyro\"').",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     change.add_argument("id", metavar="ID", help="instance id")
     change.add_argument("path", metavar="PATH", help="value path, e.g. args.param.cycle")
     change.add_argument("value", metavar="VALUE", help="new value")
+    change.add_argument(
+        "--json", action="store_true", help="VALUE is JSON whose strings are C++ text"
+    )
     change.add_argument(
         "--if-match",
         metavar="SHA256",
