@@ -12,8 +12,6 @@ import os
 import re
 from pathlib import Path
 
-from xr_syntax.cpp import identifier_occurrences
-
 from xrobot.config import IDENTIFIER, ConfigError, identifier_problem, load_config, value_text
 from xrobot.constructor_model import (
     ValueChecker,
@@ -169,11 +167,13 @@ def read_registrations(path: str | Path) -> list[dict]:
     document = parse_document(text, str(path))
     invocations = document.invocation_views("XR_REGISTER", template_angles=True)
     candidates = [
-        o for o in identifier_occurrences(text) if o.text == "XR_REGISTER" and o.following == "("
+        o
+        for o in document.identifier_occurrences()
+        if o.text == "XR_REGISTER" and o.following == "("
     ]
     if len(invocations) != len(candidates):
         raise ConfigError(f"{label}: malformed XR_REGISTER invocation")
-    tokens = code_tokens(text)
+    tokens = document.code_tokens()
     byte_starts = [token.span.start for token in tokens]
     records, errors, names = [], [], set()
     for invocation in invocations:

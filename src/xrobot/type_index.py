@@ -195,7 +195,9 @@ class _Header:
         self.path = path
         self.text = text
         self.document = parse_document(text, str(path) if path is not None else None)
-        self.tokens = code_tokens(text)
+        # 解析时已经切分过一次，这里复用它的结果。
+        # The parse has already lexed the text, so its result is reused.
+        self.tokens = list(self.document.code_tokens())
         self._starts = [token.span.start for token in self.tokens]
         self.scopes: list[tuple[int, int, str]] | None = None
         # 一次遍历收集索引需要的全部节点。
