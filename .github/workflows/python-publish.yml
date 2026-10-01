@@ -95,10 +95,33 @@ jobs:
       - name: Unit tests against the installed wheel
         run: python -m unittest discover -s tests -v
 
+  release-version:
+    name: Check the release tag against the package version
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # tag 是 v 加 pyproject.toml 中的版本号（RELEASE.md）。
+      # The tag is v followed by the version in pyproject.toml (RELEASE.md).
+      - name: Compare the tag with pyproject.toml
+        shell: bash
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version=$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
+          if [ "$TAG" != "v$version" ]; then
+            echo "Release tag $TAG is not v$version from pyproject.toml" >&2
+            exit 1
+          fi
+
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: install
+    needs: [install, release-version]
     if: github.event_name == 'release'
     environment:
       name: XRobot

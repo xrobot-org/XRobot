@@ -16,16 +16,16 @@ maintainers = [
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-keywords = ["code generation", "embedded systems", "automation"]
+keywords = ["LibXR", "embedded", "C++", "code generation", "package manager"]
 dependencies = [
     "pyyaml",
     "requests",
-    "ruamel.yaml>=0.17.21,<0.19",
+    "ruamel.yaml>=0.17.21",
     "xr-syntax==0.2.0"
 ]
 
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -36,8 +36,8 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/xrobot-org"
-Documentation = "https://xrobot.work"
+Homepage = "https://xrobot.work"
+Documentation = "https://xrobot.work/docs/proj_man"
 Repository = "https://github.com/xrobot-org/XRobot"
 "Bug Tracker" = "https://github.com/xrobot-org/XRobot/issues"
 
