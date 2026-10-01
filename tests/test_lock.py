@@ -159,7 +159,7 @@ class Resolution(UpstreamTestCase):
         self.configure(["team/A"])
         failure = requests.ConnectionError("refused")
         with (
-            mock.patch("xrobot.source_manager.requests.get", side_effect=failure),
+            mock.patch("requests.get", side_effect=failure),
             self.assertRaisesMessage(
                 SourceUnavailable,
                 "https://x.invalid/i.yaml: download failed (cannot connect); `xrobot setup "

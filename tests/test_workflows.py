@@ -122,7 +122,7 @@ class ModuleCiPreparation(CliMixin, UpstreamTestCase):
                 ("../ci-index.yaml", -100),
             ],
         )
-        with mock.patch("xrobot.source_manager.requests.get", side_effect=index):
+        with mock.patch("requests.get", side_effect=index):
             self.ok("check-module", "team/A", "-o", self.root / "module_check.cpp")
         lock = yaml.safe_load((self.root / "xrobot.lock").read_text(encoding="utf-8"))
         self.assertEqual(lock["modules"]["team/A"]["commit"], selected)

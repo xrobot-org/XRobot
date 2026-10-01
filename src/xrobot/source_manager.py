@@ -7,13 +7,18 @@ xrobot setup maps owner/Repo to a repository with the package table built here, 
 xrobot source queries and edits the Sources with it.
 """
 
+from __future__ import annotations
+
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.parse import urljoin
 
-import requests
 import yaml
 from xr_syntax.i18n import tr
+
+if TYPE_CHECKING:
+    import requests
 
 OFFICIAL_SOURCE = "https://xrobot.work/xrobot-modules/index.yaml"
 SOURCES_TEMPLATE = f"sources:\n  - url: {OFFICIAL_SOURCE}\n    priority: 0\n"
@@ -73,6 +78,8 @@ def _reason(error: requests.RequestException) -> str:
     """下载失败的简短原因。
     A short reason for a failed download.
     """
+    import requests
+
     if isinstance(error, requests.HTTPError) and error.response is not None:
         return f"HTTP {error.response.status_code}"
     if isinstance(error, requests.Timeout):
@@ -94,6 +101,10 @@ def load_yaml(source: str | Path) -> dict:
     """
     source = str(source)
     if source.startswith(("http://", "https://")):
+        # requests（连同 urllib3）导入要约 0.08 s，只在真正下载时才导入。
+        # Importing requests (with urllib3) takes about 0.08 s, so it happens only for a download.
+        import requests
+
         try:
             response = requests.get(source, timeout=20)
             response.raise_for_status()
