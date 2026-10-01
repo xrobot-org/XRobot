@@ -355,7 +355,7 @@ class ModuleSource:
             raise ValueError(
                 tr(
                     f"{where}: unknown status {status}; use {', '.join(STATUSES)}",
-                    f"{where}: 未知的 status {status}；可用：{', '.join(STATUSES)}",
+                    f"{where}: 未知的 status {status}；可用：{'、'.join(STATUSES)}",
                 )
             )
         if status != "community" and not (entry.get("tested_ref") and entry.get("tested_libxr")):
@@ -474,9 +474,12 @@ class SourceManager:
         if not candidates:
             raise ValueError(tr(f"Package not found: {name}", f"找不到包：{name}"))
         if len(candidates) != 1:
-            ids = ", ".join(sorted(candidates))
+            ids = sorted(candidates)
             raise ValueError(
-                tr(f"Ambiguous package {name}; specify {ids}", f"包 {name} 有歧义；请指定 {ids}")
+                tr(
+                    f"Ambiguous package {name}; specify {', '.join(ids)}",
+                    f"包 {name} 有歧义；请指定 {'、'.join(ids)}",
+                )
             )
         return candidates[0]
 

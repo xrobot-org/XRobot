@@ -164,12 +164,12 @@ class Project:
                 )
             )
         if len(callers) > 1:
-            names = ", ".join(self.relative(p) for p in callers)
+            names = [self.relative(p) for p in callers]
             raise ProjectError(
                 tr(
-                    f"Several sources under User/ call XROBOT_MAIN(): {names}; a BSP has exactly "
+                    f"Several sources under User/ call XROBOT_MAIN(): {', '.join(names)}; a BSP has exactly "
                     "one entry",
-                    f"User/ 下有多个源文件调用 XROBOT_MAIN()：{names}；一个 BSP 只能有一个入口",
+                    f"User/ 下有多个源文件调用 XROBOT_MAIN()：{'、'.join(names)}；一个 BSP 只能有一个入口",
                 )
             )
         return callers[0]

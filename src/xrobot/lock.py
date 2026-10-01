@@ -266,7 +266,7 @@ def read_modules_yaml(path: str | Path) -> tuple[list[dict], str | None]:
         raise ValueError(
             tr(
                 f"{path}: unknown key(s) {', '.join(unknown)}; allowed: {', '.join(MODULES_KEYS)}",
-                f"{path}: 未知的键 {', '.join(unknown)}；允许的键：{', '.join(MODULES_KEYS)}",
+                f"{path}: 未知的键 {'、'.join(unknown)}；允许的键：{'、'.join(MODULES_KEYS)}",
             )
         )
     if not isinstance(data.get("modules", []), list):
@@ -877,7 +877,7 @@ def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
             tr(
                 "xrobot.lock contains Modules outside the declared dependency closure: "
                 f"{', '.join(extra)}; run `xrobot setup`",
-                f"xrobot.lock 中有声明的依赖之外的模块：{', '.join(extra)}；请运行 `xrobot setup`",
+                f"xrobot.lock 中有声明的依赖之外的模块：{'、'.join(extra)}；请运行 `xrobot setup`",
             )
         )
 
@@ -1164,7 +1164,7 @@ def sync_modules(
                 tr(
                     f"Modules/modules.yaml differs from xrobot.lock ({', '.join(changed)}); run "
                     "`xrobot setup` to update the lock",
-                    f"Modules/modules.yaml 与 xrobot.lock 不一致（{', '.join(changed)}）；"
+                    f"Modules/modules.yaml 与 xrobot.lock 不一致（{'、'.join(changed)}）；"
                     "请运行 `xrobot setup` 更新 lock",
                 )
             )

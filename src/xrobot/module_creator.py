@@ -196,7 +196,7 @@ def _ci_template_args(interface: dict, values: list[str]) -> list[str]:
             tr(
                 f"template parameter {', '.join(missing)} of {interface['name']} has no default; "
                 "give the value the Module CI compiles with --template-arg",
-                f"{interface['name']} 的模板参数 {', '.join(missing)} 没有默认值；请用 "
+                f"{interface['name']} 的模板参数 {'、'.join(missing)} 没有默认值；请用 "
                 "--template-arg 给出模块 CI 编译时使用的值",
             )
         )

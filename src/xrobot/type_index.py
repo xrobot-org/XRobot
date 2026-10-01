@@ -877,10 +877,10 @@ class ClassEntry:
         if layout.has_union:
             return tr(f"{self.qualified} contains a union", f"{self.qualified} 包含 union")
         if layout.conditional_fields:
-            fields = ", ".join(layout.conditional_fields)
+            fields = layout.conditional_fields
             return tr(
-                f"{self.qualified} declares fields under #if ({fields})",
-                f"{self.qualified} 在 #if 中声明了字段（{fields}）",
+                f"{self.qualified} declares fields under #if ({', '.join(fields)})",
+                f"{self.qualified} 在 #if 中声明了字段（{'、'.join(fields)}）",
             )
         if not self.declares_constructor() and (self.has_base() or layout.has_virtual):
             return tr(
@@ -1074,11 +1074,11 @@ class TypeIndex:
             return None
         headers = sorted({self._label(e.header) for e in entries})
         if len(headers) > 1:
-            name, places = "::".join(path), ", ".join(headers)
+            name = "::".join(path)
             raise ValueError(
                 tr(
-                    f"Type {name} is defined in several Module headers: {places}",
-                    f"类型 {name} 在多个模块头文件中都有定义：{places}",
+                    f"Type {name} is defined in several Module headers: {', '.join(headers)}",
+                    f"类型 {name} 在多个模块头文件中都有定义：{'、'.join(headers)}",
                 )
             )
         return entries[0]

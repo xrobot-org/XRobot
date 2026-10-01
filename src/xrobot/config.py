@@ -515,7 +515,7 @@ def validate_config(config: object, source: str = "config") -> None:
         errors.append(
             tr(
                 f"unknown top-level key(s) {', '.join(extra)}; allowed: {', '.join(TOP_LEVEL)}",
-                f"未知的顶层键 {', '.join(extra)}；允许的键：{', '.join(TOP_LEVEL)}",
+                f"未知的顶层键 {'、'.join(extra)}；允许的键：{'、'.join(TOP_LEVEL)}",
             )
         )
     namespace = config.get("constexpr_namespace", "ProjectConstexpr")
@@ -607,7 +607,7 @@ def validate_config(config: object, source: str = "config") -> None:
             errors.append(
                 tr(
                     f"{where}: unknown key(s) {', '.join(unknown)}",
-                    f"{where}: 未知的键 {', '.join(unknown)}",
+                    f"{where}: 未知的键 {'、'.join(unknown)}",
                 )
             )
         for key in ("module", "id"):
@@ -683,7 +683,7 @@ def _check_settings(settings: object, errors: list[str]) -> None:
             tr(
                 f"settings: unknown key(s) {', '.join(unknown)}; the only setting is "
                 "monitor_sleep_ms",
-                f"settings: 未知的键 {', '.join(unknown)}；唯一的设置是 monitor_sleep_ms",
+                f"settings: 未知的键 {'、'.join(unknown)}；唯一的设置是 monitor_sleep_ms",
             )
         )
     sleep = settings.get("monitor_sleep_ms", "1000")

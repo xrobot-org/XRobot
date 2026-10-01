@@ -446,10 +446,10 @@ class Dependencies(GenerationTestCase):
             {"module": "Cmd", "id": "cmd", "args": [{"led": "led"}, {"backup": "&cmd"}]}, led()
         )
         self.assertIn(
-            "cmd.args.led: led is constructed at or after cmd; instances are constructed in list order",
+            "cmd.args.led: led is constructed after cmd; instances are constructed in list order",
             message,
         )
-        self.assertIn("cmd.args.backup: cmd is constructed at or after cmd", message)
+        self.assertIn("cmd.args.backup refers to cmd itself", message)
 
     def test_a_located_type_without_a_public_base_relation_is_rejected(self):
         message = self.error(probe(port="hidden"))

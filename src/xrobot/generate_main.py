@@ -541,12 +541,19 @@ class Generator:
             if re.fullmatch(IDENTIFIER, reference_name) and (
                 reference_name == name or len(pointers) == 1
             ):
+                if reference_name == identity:
+                    raise ValueError(
+                        tr(
+                            f"{field} refers to {identity} itself",
+                            f"{field} 引用了 {identity} 自身",
+                        )
+                    )
                 if reference_name in later:
                     raise ValueError(
                         tr(
-                            f"{field}: {reference_name} is constructed at or after {identity}; "
+                            f"{field}: {reference_name} is constructed after {identity}; "
                             "instances are constructed in list order",
-                            f"{field}: {reference_name} 在 {identity} 之时或之后才构造；"
+                            f"{field}: {reference_name} 在 {identity} 之后才构造；"
                             "实例按列表顺序构造",
                         )
                     )
@@ -558,13 +565,14 @@ class Generator:
                         )
                     )
                 if is_dependency(p) and reference_name not in visible and name != "nullptr":
-                    names = ", ".join(self._candidates(target, visible)) or tr("none", "无")
+                    candidates = self._candidates(target, visible)
                     raise ValueError(
                         tr(
                             f"{field}: {reference_name} is neither an XR_REGISTER name nor an "
-                            f"earlier instance id; candidates of type {target}: {names}",
+                            f"earlier instance id; candidates of type {target}: "
+                            f"{', '.join(candidates) or 'none'}",
                             f"{field}: {reference_name} 既不是 XR_REGISTER 名字，也不是前面实例的 "
-                            f"id；类型为 {target} 的候选：{names}",
+                            f"id；类型为 {target} 的候选：{'、'.join(candidates) or '无'}",
                         )
                     )
                 if reference_name in visible:

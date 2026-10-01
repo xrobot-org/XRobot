@@ -556,15 +556,15 @@ def constructor_for(
     if len(typed) == 1:
         return typed[0]
     if not candidates:
-        expected = " | ".join(
-            "(" + ", ".join(p["name"] for p in c["arguments"]) + ")" for c in supported
-        )
+        signatures = [[p["name"] for p in c["arguments"]] for c in supported]
+        expected = " | ".join("(" + ", ".join(s) + ")" for s in signatures)
+        expected_zh = " | ".join("（" + "、".join(s) + "）" for s in signatures)
         raise ValueError(
             tr(
                 f"named arguments ({', '.join(names)}) do not match any constructor of "
                 f"{interface['name']}; expected one of: {expected}",
-                f"参数名（{', '.join(names)}）与 {interface['name']} 的任何构造函数都不匹配；"
-                f"可选：{expected}",
+                f"参数名（{'、'.join(names)}）与 {interface['name']} 的任何构造函数都不匹配；"
+                f"可选：{expected_zh}",
             )
         )
     raise ValueError(
@@ -722,20 +722,20 @@ class ValueChecker:
         if missing or extra:
             detail = []
             if missing:
-                detail.append(tr("missing " + ", ".join(missing), "缺少 " + ", ".join(missing)))
+                detail.append(tr("missing " + ", ".join(missing), "缺少 " + "、".join(missing)))
             if extra:
-                detail.append(tr("unknown " + ", ".join(extra), "未知的 " + ", ".join(extra)))
+                detail.append(tr("unknown " + ", ".join(extra), "未知的 " + "、".join(extra)))
             raise ConfigError(
                 tr(
                     f"{field}: {'; '.join(detail)} ({what}); expected: {', '.join(expected)}",
-                    f"{field}: {'；'.join(detail)}（{what}）；应为：{', '.join(expected)}",
+                    f"{field}: {'；'.join(detail)}（{what}）；应为：{'、'.join(expected)}",
                 )
             )
         raise ConfigError(
             tr(
                 f"{field}: fields out of declaration order ({what}); expected: "
                 f"{', '.join(expected)}",
-                f"{field}: 字段顺序与声明顺序不同（{what}）；应为：{', '.join(expected)}",
+                f"{field}: 字段顺序与声明顺序不同（{what}）；应为：{'、'.join(expected)}",
             )
         )
 
@@ -807,13 +807,15 @@ class ValueChecker:
         ctors = [c for c in entry.constructors() if c]
         chosen = [c for c in ctors if [p["name"] for p in c] == keys]
         if len(chosen) != 1:
-            options = " | ".join(", ".join(p["name"] for p in c) for c in ctors) or tr("none", "无")
+            names = [[p["name"] for p in c] for c in ctors]
+            options = " | ".join(", ".join(n) for n in names) or "none"
+            options_zh = " | ".join("、".join(n) for n in names) or "无"
             raise ConfigError(
                 tr(
                     f"{field}: {entry.qualified} has constructors; the mapping must name one "
                     f"constructor's parameters in order. Constructors: {options}",
                     f"{field}: {entry.qualified} 有构造函数；映射必须按顺序写出其中一个构造函数的"
-                    f"参数。构造函数：{options}",
+                    f"参数。构造函数：{options_zh}",
                 )
             )
         args = []

@@ -277,7 +277,7 @@ def describe(project: Project, config: str | Path | None = None) -> dict:
             tr(
                 f"generated from older inputs ({', '.join(header['newer'] + header['missing'])}); "
                 "run `xrobot gen`",
-                f"生成时用的输入已经过期（{', '.join(header['newer'] + header['missing'])}）；"
+                f"生成时用的输入已经过期（{'、'.join(header['newer'] + header['missing'])}）；"
                 "请运行 `xrobot gen`",
             ),
         )

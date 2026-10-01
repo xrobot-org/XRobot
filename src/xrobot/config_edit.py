@@ -567,7 +567,7 @@ def remove_instance(config_path: str | Path, instance_id: str, source: str | Non
             tr(
                 f"{config.source}: {instance_id} is still used by {', '.join(users)}; change "
                 "those values first",
-                f"{config.source}: {instance_id} 仍被 {', '.join(users)} 使用；请先修改这些值",
+                f"{config.source}: {instance_id} 仍被 {'、'.join(users)} 使用；请先修改这些值",
             )
         )
     text = config.blocks().remove(k)

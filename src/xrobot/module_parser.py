@@ -104,7 +104,7 @@ def manifest_from_text(text: str, path: str | Path | None = None) -> ModuleManif
                 f"MODULE MANIFEST V{MANIFEST_VERSION} with {', '.join(MANIFEST_KEYS)} (the C++ "
                 "constructor is the interface)",
                 f"{path}: 这个 MODULE MANIFEST 早于 XRobot 1.0；请把模块更新为只含 "
-                f"{', '.join(MANIFEST_KEYS)} 的 MODULE MANIFEST V{MANIFEST_VERSION}"
+                f"{'、'.join(MANIFEST_KEYS)} 的 MODULE MANIFEST V{MANIFEST_VERSION}"
                 "（C++ 构造函数就是接口）",
             )
         )
@@ -121,8 +121,8 @@ def manifest_from_text(text: str, path: str | Path | None = None) -> ModuleManif
             tr(
                 f"{path}: unsupported manifest key(s) {', '.join(map(str, unknown))}; "
                 f"MODULE MANIFEST V{MANIFEST_VERSION} holds only {', '.join(MANIFEST_KEYS)}",
-                f"{path}: 不支持的 manifest 键 {', '.join(map(str, unknown))}；"
-                f"MODULE MANIFEST V{MANIFEST_VERSION} 只包含 {', '.join(MANIFEST_KEYS)}",
+                f"{path}: 不支持的 manifest 键 {'、'.join(map(str, unknown))}；"
+                f"MODULE MANIFEST V{MANIFEST_VERSION} 只包含 {'、'.join(MANIFEST_KEYS)}",
             )
         )
     if not isinstance(data.get("depends", []), list):
@@ -360,17 +360,24 @@ def select_module(modules: dict[str, dict], requested: str) -> dict:
             for v in modules.values()
         }
         close = difflib.get_close_matches(requested.casefold(), list(names), n=3)
-        suggestions = ", ".join(names[c] for c in close)
-        hint = tr(f"; did you mean {suggestions}?", f"；是否要找 {suggestions}？") if close else ""
+        suggestions = [names[c] for c in close]
+        hint = (
+            tr(
+                f"; did you mean {', '.join(suggestions)}?",
+                f"；是否要找 {'、'.join(suggestions)}？",
+            )
+            if close
+            else ""
+        )
         raise ValueError(
             tr(f"Module not found: {requested}{hint}", f"找不到模块：{requested}{hint}")
         )
     if len(candidates) != 1:
-        ids = ", ".join(v["id"] for v in candidates)
+        ids = [v["id"] for v in candidates]
         raise ValueError(
             tr(
-                f"Ambiguous Module {requested}; specify {ids}",
-                f"模块 {requested} 有歧义；请指定 {ids}",
+                f"Ambiguous Module {requested}; specify {', '.join(ids)}",
+                f"模块 {requested} 有歧义；请指定 {'、'.join(ids)}",
             )
         )
     return candidates[0]
