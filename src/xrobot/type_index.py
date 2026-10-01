@@ -204,7 +204,7 @@ class _Header:
         # 一次遍历收集索引需要的全部节点。
         # One tree walk collects every node kind the index needs.
         self.nodes: dict[str, list] = {}
-        for element in self.document.root.descendants():
+        for element in self.document.root.descendants(kinds=_WANTED):
             if element.kind in _WANTED and hasattr(element, "child_by_field"):
                 self.nodes.setdefault(element.kind, []).append(element)
         deltas = []

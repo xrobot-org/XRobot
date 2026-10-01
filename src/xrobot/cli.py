@@ -5,10 +5,12 @@ The xrobot command line: resolve Modules, generate the static entry and edit con
 import argparse
 import gc
 import json
+import os
 import re
 import sys
 from collections.abc import Sequence
 from pathlib import Path
+from typing import NoReturn
 
 import yaml
 from xr_syntax.i18n import chinese, localize_argparse, tr
@@ -994,5 +996,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 0
 
 
+def run() -> NoReturn:
+    """xrobot 命令的入口：运行 main，刷新输出后直接结束进程。
+    Entry point of the xrobot command: run main, flush the output and end the process.
+
+    解析留下的大量对象要到进程结束才释放；正常退出时解释器会逐个释放它们，DevC 上约 0.5 s。
+    命令已经写完全部文件、等完全部子线程，所以刷新输出后用 os._exit 结束，不再做这一步。
+    The objects left by parsing live until the process ends, and a normal exit frees them
+    one by one, about 0.5 s on DevC. The command has written all files and joined all
+    threads by then, so after flushing the output os._exit ends it without that step.
+    """
+    code = main()
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(code)
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    run()

@@ -72,6 +72,9 @@ def split_arguments(text: str) -> list[str]:
     return list(split_source_list(text, template_angles=True))
 
 
+_DIRECTIVES = frozenset({"preproc_if", "preproc_ifdef", "preproc_call"})
+
+
 @functools.lru_cache(maxsize=256)
 def _directive_depths(document: CppDocument) -> tuple[list[int], list[int]]:
     """文档中 #if/#ifdef/#ifndef/#endif 的位置，以及每一处之后的嵌套层数。
@@ -79,7 +82,7 @@ def _directive_depths(document: CppDocument) -> tuple[list[int], list[int]]:
     nesting depth after each.
     """
     deltas = []
-    for node in document.root.descendants():
+    for node in document.root.descendants(kinds=_DIRECTIVES):
         if node.kind in ("preproc_if", "preproc_ifdef"):
             deltas.append((node.span.start, 1))
         elif node.kind == "preproc_call":

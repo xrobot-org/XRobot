@@ -15,7 +15,7 @@ import yaml
 from fixtures import BspTestCase, CliMixin, TempDirTestCase, UpstreamTestCase, manifest_block
 
 from xrobot import __version__
-from xrobot.cli import main, parse_value, parser
+from xrobot.cli import main, parse_value, parser, run
 from xrobot.config import ConfigError, load_config
 from xrobot.lock import read_modules_yaml
 
@@ -81,6 +81,14 @@ class Init(CliMixin, TempDirTestCase):
     def test_version(self):
         out, _ = self.ok("--version")
         self.assertEqual(out.strip(), "xrobot " + __version__)
+
+    def test_the_command_ends_the_process_with_the_exit_code_of_main(self):
+        with (
+            mock.patch("xrobot.cli.main", return_value=3),
+            mock.patch("xrobot.cli.os._exit") as exit,
+        ):
+            run()
+        exit.assert_called_once_with(3)
 
     def test_help_describes_every_command_and_action(self):
         out, _ = self.ok("source", "--help")

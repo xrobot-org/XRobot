@@ -42,7 +42,7 @@ Repository = "https://github.com/xrobot-org/XRobot"
 "Bug Tracker" = "https://github.com/xrobot-org/XRobot/issues"
 
 [project.scripts]
-xrobot = "xrobot.cli:main"
+xrobot = "xrobot.cli:run"
 
 [tool.setuptools.packages.find]
 where = ["src"]

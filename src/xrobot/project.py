@@ -263,6 +263,10 @@ def _calls_xrobot_main(text: str) -> bool:
     Whether the code calls XROBOT_MAIN (preprocessor lines, comments and literals do not
     count).
     """
+    # 不含这个词的文件不必做词法分析；User/ 下大多数源文件属于这种情况。
+    # A file without the word needs no lexing; most sources under User/ are like that.
+    if "XROBOT_MAIN" not in text:
+        return False
     return any(o.text == "XROBOT_MAIN" and o.following == "(" for o in identifier_occurrences(text))
 
 
