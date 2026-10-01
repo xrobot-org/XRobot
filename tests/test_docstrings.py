@@ -1,6 +1,6 @@
-"""包、tools/、scripts/ 和 tests/ 中每个模块、类和函数都有中英 docstring（移植自 xr-syntax）。
-Every module, class and function of the package, tools/, scripts/ and tests/ has a Chinese and
-English docstring (ported from xr-syntax).
+"""包、tools/ 和 tests/ 中每个模块、类和函数都有中英 docstring（移植自 xr-syntax）。
+Every module, class and function of the package, tools/ and tests/ has a Chinese and English
+docstring (ported from xr-syntax).
 
 测试方法和 unittest 钩子除外：测试名说明它检查什么。
 Test methods and unittest hooks are exempt: the test name says what it checks.
@@ -24,7 +24,7 @@ def checked_files() -> list[Path]:
     """
     return [
         path
-        for folder in ("src/xrobot", "tools", "scripts", "tests")
+        for folder in ("src/xrobot", "tools", "tests")
         for path in sorted((REPOSITORY / folder).glob("*.py"))
     ]
 

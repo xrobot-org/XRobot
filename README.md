@@ -291,4 +291,4 @@ python -m unittest discover -s tests -v
 - [GitHub Repository](https://github.com/xrobot-org/XRobot)
 - [Documentation](https://xrobot.work)
 - [Issue Tracker](https://github.com/xrobot-org/XRobot/issues)
-- [治理 / Governance](GOVERNANCE.md) · [发版 / Releases](RELEASE.md)
+- [发版 / Releases](RELEASE.md)
