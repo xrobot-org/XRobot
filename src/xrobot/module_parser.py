@@ -203,7 +203,7 @@ def _locked_head(folder: Path) -> str:
     """
     head = head_commit(folder)
     if head is None:
-        raise ValueError(tr(f"cannot read the commit of {folder}", f"无法读取 {folder} 的 commit"))
+        raise ValueError(tr(f"cannot read the commit of {folder}", f"无法读取 {folder} 的提交"))
     return head
 
 
@@ -252,7 +252,7 @@ def locked_modules(directory: Path, lock_path: Path) -> list[dict]:
                 status="broken",
                 reason=tr(
                     f"xrobot.lock has no commit for {identity}",
-                    f"xrobot.lock 中没有 {identity} 的 commit",
+                    f"xrobot.lock 中没有 {identity} 的提交",
                 ),
             )
         elif not (folder / (folder.name + ".hpp")).is_file():

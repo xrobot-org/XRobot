@@ -281,7 +281,7 @@ def read_modules_yaml(path: str | Path) -> tuple[list[dict], str | None]:
         raise ValueError(
             tr(
                 f"{path}: xrobot must be a release version (e.g. 1.0.0) or a 40-hex commit",
-                f"{path}: xrobot 必须是发布版本号（例如 1.0.0）或 40 位 commit",
+                f"{path}: xrobot 必须是发布版本号（例如 1.0.0）或 40 位提交号",
             )
         )
     return [request(value, canonical=True) for value in data.get("modules") or []], (
@@ -457,8 +457,8 @@ class Resolver:
                         "there is no branch or tag to follow: the BSP checkout is not on a "
                         "branch, or the requesting Module is pinned to a commit; pass "
                         "--context-ref refs/heads/<branch>",
-                        "没有可跟随的分支或 tag：BSP 的检出不在分支上，或发出请求的模块固定在某个 "
-                        "commit；请传入 --context-ref refs/heads/<分支>",
+                        "没有可跟随的分支或 tag：BSP 的检出不在分支上，或发出请求的模块固定在某个"
+                        "提交；请传入 --context-ref refs/heads/<分支>",
                     )
                 )
             kind, name = parent_context
@@ -481,7 +481,7 @@ class Resolver:
                     tr(
                         f"the repository has neither a {name} branch nor a dev branch; request "
                         "an explicit tag, commit or branch",
-                        f"仓库中既没有 {name} 分支，也没有 dev 分支；请明确请求一个 tag、commit "
+                        f"仓库中既没有 {name} 分支，也没有 dev 分支；请明确请求一个 tag、提交"
                         "或分支",
                     )
                 )
@@ -528,7 +528,7 @@ class Resolver:
                 raise ValueError(
                     tr(
                         f"the repository has no branch, tag or commit {ref}",
-                        f"仓库中没有名为 {ref} 的分支、tag 或 commit",
+                        f"仓库中没有名为 {ref} 的分支、tag 或提交",
                     )
                 )
             lookup, kind, name = ref, "commit", ref
@@ -576,7 +576,7 @@ class Resolver:
                     f"{self._requester()} requests {target}, which needs the BSP branch to "
                     "pick a commit, but the BSP is not a Git repository; request an explicit "
                     f"ref such as {identity}@dev, or put the BSP in a Git repository",
-                    f"{self._requester()} 请求 {target}，需要根据 BSP 所在的分支选择 commit，"
+                    f"{self._requester()} 请求 {target}，需要根据 BSP 所在的分支选择提交，"
                     f"但 BSP 不是 Git 仓库；请明确请求一个 ref（例如 {identity}@dev），"
                     "或把 BSP 放进 Git 仓库",
                 )
@@ -750,7 +750,7 @@ class Resolver:
                         raise ValueError(
                             tr(
                                 "Offline commit missing for " + identity,
-                                "离线时缺少 " + identity + " 的 commit",
+                                "离线时缺少 " + identity + " 的提交",
                             )
                         )
                     _fetch(folder, "origin", entry["commit"])
@@ -837,7 +837,7 @@ def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
                     raise ValueError(
                         tr(
                             "Locked commit does not match requested SHA for " + identity,
-                            identity + " 锁定的 commit 与请求的 SHA 不一致",
+                            identity + " 锁定的提交与请求的 SHA 不一致",
                         )
                     )
             elif name != selector:
@@ -860,7 +860,7 @@ def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
             raise ValueError(
                 tr(
                     "Primary header missing from locked commit for " + identity,
-                    identity + " 锁定的 commit 中缺少主头文件",
+                    identity + " 锁定的提交中缺少主头文件",
                 )
             )
         header = identity.rsplit("/", 1)[-1] + ".hpp"
@@ -943,7 +943,7 @@ def check_released(resolver: Resolver, release_ref: str, offline: bool = False) 
             problems.append(
                 tr(
                     f"{identity} has no {line} branch; request an explicit tag or commit",
-                    f"{identity} 没有 {line} 分支；请明确请求一个 tag 或 commit",
+                    f"{identity} 没有 {line} 分支；请明确请求一个 tag 或提交",
                 )
             )
             continue
@@ -1078,7 +1078,7 @@ def _load_lock(lock_path: Path) -> dict:
             )
         if not re.fullmatch(r"[0-9a-f]{40}", str(entry.get("commit", ""))):
             raise ValueError(
-                tr("Invalid locked commit for " + identity, identity + " 锁定的 commit 无效")
+                tr("Invalid locked commit for " + identity, identity + " 锁定的提交无效")
             )
     return lock
 
