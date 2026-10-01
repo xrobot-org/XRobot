@@ -3,11 +3,13 @@ The xrobot command line: resolve Modules, generate the static entry and edit con
 """
 
 import argparse
+import atexit
 import gc
 import json
 import os
 import re
 import sys
+import threading
 from collections.abc import Sequence
 from pathlib import Path
 from typing import NoReturn
@@ -997,16 +999,23 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 def run() -> NoReturn:
-    """xrobot 命令的入口：运行 main，刷新输出后直接结束进程。
-    Entry point of the xrobot command: run main, flush the output and end the process.
+    """xrobot 命令的入口：运行 main，做完退出前的收尾后直接结束进程。
+    Entry point of the xrobot command: run main, finish what exiting has to finish and end the
+    process.
 
-    解析留下的大量对象要到进程结束才释放；正常退出时解释器会逐个释放它们，DevC 上约 0.5 s。
-    命令已经写完全部文件、等完全部子线程，所以刷新输出后用 os._exit 结束，不再做这一步。
-    The objects left by parsing live until the process ends, and a normal exit frees them
-    one by one, about 0.5 s on DevC. The command has written all files and joined all
-    threads by then, so after flushing the output os._exit ends it without that step.
+    解析留下的大量对象要到进程结束才释放；正常退出时解释器会逐个释放它们，DevC 上约 0.2 s，
+    autoaim 上约 0.5 s。在那之前解释器还会等非守护线程结束、执行 atexit 回调，这两步这里照做
+    （threading._shutdown 和 atexit._run_exitfuncs 就是解释器退出时调用的函数），然后刷新输出，
+    用 os._exit 结束，只省掉逐个释放对象。
+    The objects left by parsing live until the process ends, and a normal exit frees them one by
+    one, about 0.2 s on DevC and 0.5 s on autoaim. Before that the interpreter waits for
+    non-daemon threads and runs the atexit callbacks; both steps happen here as well
+    (threading._shutdown and atexit._run_exitfuncs are the functions the interpreter calls on
+    exit), then the output is flushed and os._exit ends the process, skipping only the freeing.
     """
     code = main()
+    threading._shutdown()  # type: ignore[attr-defined]
+    atexit._run_exitfuncs()
     sys.stdout.flush()
     sys.stderr.flush()
     os._exit(code)

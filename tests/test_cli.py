@@ -15,7 +15,7 @@ import yaml
 from fixtures import BspTestCase, CliMixin, TempDirTestCase, UpstreamTestCase, manifest_block
 
 from xrobot import __version__
-from xrobot.cli import main, parse_value, parser, run
+from xrobot.cli import main, parse_value, parser
 from xrobot.config import ConfigError, load_config
 from xrobot.lock import read_modules_yaml
 
@@ -82,13 +82,31 @@ class Init(CliMixin, TempDirTestCase):
         out, _ = self.ok("--version")
         self.assertEqual(out.strip(), "xrobot " + __version__)
 
-    def test_the_command_ends_the_process_with_the_exit_code_of_main(self):
-        with (
-            mock.patch("xrobot.cli.main", return_value=3),
-            mock.patch("xrobot.cli.os._exit") as exit,
-        ):
-            run()
-        exit.assert_called_once_with(3)
+    def test_the_command_finishes_threads_and_exit_callbacks_and_ends_with_the_code_of_main(self):
+        # run 结束整个进程，所以在子进程里调用：main 注册一个 atexit 回调，启动一个稍后才写文件的
+        # 非守护线程，返回 5。
+        # run ends the whole process, so it is called in a child process: main registers an
+        # atexit callback, starts a non-daemon thread that writes its file a little later and
+        # returns 5.
+        script = (
+            "import atexit, sys, threading, time\n"
+            "from pathlib import Path\n"
+            "import xrobot.cli as cli\n"
+            "out = Path(sys.argv[1])\n"
+            "def late():\n"
+            "    time.sleep(0.2)\n"
+            "    (out / 'thread').write_text('done')\n"
+            "def main():\n"
+            "    atexit.register(lambda: (out / 'atexit').write_text('done'))\n"
+            "    threading.Thread(target=late).start()\n"
+            "    return 5\n"
+            "cli.main = main\n"
+            "cli.run()\n"
+        )
+        result = subprocess.run([sys.executable, "-c", script, str(self.root)], check=False)
+        self.assertEqual(result.returncode, 5)
+        self.assertEqual((self.root / "atexit").read_text(), "done")
+        self.assertEqual((self.root / "thread").read_text(), "done")
 
     def test_help_describes_every_command_and_action(self):
         out, _ = self.ok("source", "--help")
