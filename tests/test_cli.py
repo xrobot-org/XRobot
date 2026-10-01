@@ -506,10 +506,52 @@ class Setup(CliMixin, UpstreamTestCase):
         self.assertIn("static Led module_0;", (self.tmp / "probe.cpp").read_text(encoding="utf-8"))
 
     def test_source_queries(self):
+        board = self.upstream("team/Board", kind="bsp")
         out, _ = self.ok("source", "list")
-        self.assertIn("team/Led [module]", out)
+        self.assertEqual(out, f"team/Board [bsp] {board}\nteam/Led [module] {self.led}\n")
+        out, _ = self.ok("source", "list", "--type", "module")
+        self.assertEqual(out, f"team/Led [module] {self.led}\n")
         out, _ = self.ok("source", "get", "Led")
         self.assertEqual(yaml.safe_load(out)["id"], "team/Led")
+
+    def test_source_files_are_created_and_extended(self):
+        work = self.tmp / "work"
+        work.mkdir()
+        self.ok("-C", work, "source", "create-index", cwd=work)
+        self.ok(
+            "source",
+            "add-index",
+            "https://git.example.com/me/A.git",
+            "--index",
+            "Modules/index.yaml",
+            cwd=work,
+        )
+        self.assertEqual(
+            yaml.safe_load(self.read(work / "Modules/index.yaml")),
+            {
+                "namespace": "local",
+                "modules": [
+                    "https://github.com/xrobot-org/BlinkLED.git",
+                    "https://git.example.com/me/A.git",
+                ],
+                "bsps": [],
+            },
+        )
+        sources = work / "x/sources.yaml"
+        sources.parent.mkdir()
+        self.ok("source", "--sources", sources, "create-sources", cwd=work)
+        self.ok(
+            "source", "--sources", sources, "add-source", "../Modules/index.yaml", "--priority", "1"
+        )
+        self.assertEqual(
+            yaml.safe_load(self.read(sources)),
+            {
+                "sources": [
+                    {"url": "https://xrobot.work/xrobot-modules/index.yaml", "priority": 0},
+                    {"url": "../Modules/index.yaml", "priority": 1},
+                ]
+            },
+        )
 
     def test_source_finds_the_bsp_like_other_commands(self):
         out, _ = self.ok("source", "search", "led", cwd=self.root / "User")

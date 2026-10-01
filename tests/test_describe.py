@@ -378,24 +378,34 @@ class Diagnostics(DescribeTestCase):
         )
 
     def test_tool_pin_warnings(self):
-        self.write("Modules/modules.yaml", "modules: []\n")
-        result = describe(self.project)
-        self.assertEqual(result["tools"]["xrobot"]["pin"], None)
-        self.assertIn(
-            f"XRobot is not pinned; add `xrobot: {__version__}`", self.messages(result, "warning")
-        )
-        self.write("Modules/modules.yaml", "xrobot: 0.9.0\nmodules: []\n")
-        self.assertIn(
-            f"installed XRobot {__version__} differs from the pinned 0.9.0",
-            self.messages(describe(self.project), "warning"),
-        )
-        self.write("Modules/modules.yaml", "xrobot: latest\nmodules: []\n")
-        self.assertTrue(
-            any(
-                "xrobot must be a release version" in m
-                for m in self.messages(describe(self.project), "error")
-            )
-        )
+        for text, pin, severity, message in (
+            (
+                "modules: []\n",
+                None,
+                "warning",
+                f"XRobot is not pinned; add `xrobot: {__version__}`",
+            ),
+            (
+                "xrobot: 0.9.0\nmodules: []\n",
+                "0.9.0",
+                "warning",
+                f"installed XRobot {__version__} differs from the pinned 0.9.0",
+            ),
+            (
+                "xrobot: latest\nmodules: []\n",
+                None,
+                "error",
+                "xrobot must be a release version (e.g. 1.0.0) or a 40-hex commit",
+            ),
+        ):
+            with self.subTest(text=text):
+                self.write("Modules/modules.yaml", text)
+                result = describe(self.project)
+                self.assertEqual(result["tools"]["xrobot"]["pin"], pin)
+                self.assertEqual(
+                    [d for d in result["diagnostics"] if d["scope"] == "Modules/modules.yaml"],
+                    [{"severity": severity, "scope": "Modules/modules.yaml", "message": message}],
+                )
 
     def test_lock_problems_are_reported_without_reading_those_modules(self):
         self.locked["team/Gone"] = "1" * 40

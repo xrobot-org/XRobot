@@ -196,11 +196,13 @@ def describe(project: Project, config: str | Path | None = None) -> dict:
         """把 message 的每一行记为一条诊断。
         Record each line of message as one diagnostic.
         """
-        # gen 的报错以文件开头；scope 已经是这个文件，不在 message 中重复。
-        # gen's messages start with the file; scope already names it, so message drops it.
-        prefix = scope + ": "
+        # 报错以文件（相对或绝对路径）开头；scope 已经是这个文件，不在 message 中重复。
+        # Messages start with the file, relative or absolute; scope already names it, so
+        # message drops it.
+        prefixes = (scope + ": ", str(project.root / scope) + ": ")
         for line in str(message).splitlines():
-            line = line.removeprefix(prefix)
+            for prefix in prefixes:
+                line = line.removeprefix(prefix)
             diagnostics.append({"severity": severity, "scope": scope, "message": line})
 
     try:
@@ -216,8 +218,12 @@ def describe(project: Project, config: str | Path | None = None) -> dict:
     try:
         _, tools["xrobot"]["pin"] = read_modules_yaml(project.modules_yaml)
     except ValueError as error:
+        # 无效的锁定只报这一条错误，不再报“没有固定版本”。
+        # An invalid pin gives this one error, not also "not pinned".
         report("error", "Modules/modules.yaml", error)
-    pin = tools["xrobot"]["pin"]
+        pin = __version__
+    else:
+        pin = tools["xrobot"]["pin"]
     if pin is None:
         report(
             "warning",

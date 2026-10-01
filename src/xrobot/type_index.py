@@ -547,7 +547,9 @@ def _classify(
         if name is not None and opening is not None:
             layout.names[name] = access
         if opening is None:
-            return  # 前向声明，或由下方处理的详述成员类型 / forward declaration or elaborated member type handled below
+            # 前向声明，或由下方处理的详述成员类型。
+            # A forward declaration, or an elaborated member type handled below.
+            return
         close = close_token(member, opening)
         if first == "enum" and texts[1] not in ("class", "struct"):
             # 非限定枚举的枚举值在外层作用域可见。
@@ -736,8 +738,8 @@ class ClassEntry:
         head_range: tuple[int, int] | None = None,
         template_parameters: list[str] | None = None,
     ) -> None:
-        """header 中的一个定义：path 是外层命名空间和类的名字，kind 是 class 或 struct，body_range 和 head_range 是类体与类头的 token
-        下标。
+        """header 中的一个定义：path 是外层命名空间和类的名字，kind 是 class 或 struct，
+        body_range 和 head_range 是类体与类头的 token 下标。
         One definition in header: path holds the enclosing namespace and class names, kind is class
         or struct, and body_range and head_range are the token indices of the body and the head.
         """
@@ -1167,7 +1169,9 @@ class TypeIndex:
                 Outer<T>::Param), which replace the template parameters of the enclosing
                 class templates.
         """
-        scopes = []  # (声明的名字, 写出的前缀)，由内向外 / (declared names, spelled prefix), innermost first
+        # 每项为 (声明的名字, 写出的前缀)，由内向外。
+        # Each item is (declared names, spelled prefix), innermost first.
+        scopes = []
         replacements: dict[str, str] = {}
         spelled, path = entry_spelled, entry.path
         while path:

@@ -95,6 +95,13 @@ class Resolution(UpstreamTestCase):
             "update the lock",
         ):
             self.sync(frozen=True)
+        self.configure(["team/C"])
+        with self.assertRaisesMessage(
+            ValueError,
+            "Modules/modules.yaml differs from xrobot.lock (+team/C, -team/A); run `xrobot "
+            "setup` to update the lock",
+        ):
+            self.sync(frozen=True)
         self.assertEqual(self.lock_bytes(), before)
 
     def test_request_order_and_id_case_do_not_change_the_lock(self):
@@ -342,6 +349,16 @@ class LocalWork(UpstreamTestCase):
             with self.subTest(flags=flags):
                 self.assertEqual(self.sync(**flags)["modules"]["team/A"]["commit"], self.locked)
                 self.assertEqual(header.read_bytes(), before)
+
+    def test_frozen_fetches_a_locked_commit_the_checkout_lacks(self):
+        # 另一位开发者更新了 lock，本地检出里还没有新的 commit。
+        # Another developer updated the lock; the local checkout does not have the commit yet.
+        newer = self.commit(self.a, [], "newer")
+        lock = yaml.safe_load(self.lock_bytes())
+        lock["modules"]["team/A"]["commit"] = newer
+        self.write_yaml(self.root / "xrobot.lock", lock)
+        self.sync(frozen=True)
+        self.assertEqual(self.head("team/A"), newer)
 
     def test_a_checkout_at_its_locked_commit_is_not_queried(self):
         import xrobot.lock as lock_module
@@ -874,11 +891,16 @@ class ToolPins(UpstreamTestCase):
         ):
             self.check(self.feature, "refs/heads/dev")
 
-    def test_commit_pins_cannot_be_checked_offline(self):
+    def test_commit_pins_of_both_tools_cannot_be_checked_offline(self):
+        # generator 的锁定写在 User/libxr_config.yaml 中。
+        # The generator pin is written in User/libxr_config.yaml.
+        generator = "0123456789abcdef0123456789abcdef01234567"
         with self.assertRaisesMessage(
-            ValueError, f"xrobot pin {self.merged[:12]} cannot be checked offline"
+            ValueError,
+            f"xrobot pin {self.merged[:12]} cannot be checked offline\n"
+            "generator pin 0123456789ab cannot be checked offline",
         ):
-            self.check(self.merged, "refs/heads/master", offline=True)
+            self.check(self.merged, "refs/heads/master", offline=True, generator=generator)
 
 
 class ModulesYaml(UpstreamTestCase):

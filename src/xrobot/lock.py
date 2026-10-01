@@ -625,8 +625,8 @@ class Resolver:
                             f"{self._requester()} requires {identity} at {req['ref']}, but "
                             f"xrobot.lock keeps {pinned['commit'][:12]}; run "
                             f"`xrobot setup --update {identity}`",
-                            f"{self._requester()} 要求 {identity} 位于 {req['ref']}，但 xrobot.lock "
-                            f"保持在 {pinned['commit'][:12]}；请运行 "
+                            f"{self._requester()} 要求 {identity} 位于 {req['ref']}，"
+                            f"但 xrobot.lock 保持在 {pinned['commit'][:12]}；请运行 "
                             f"`xrobot setup --update {identity}`",
                         )
                     )
@@ -929,13 +929,17 @@ def check_released(resolver: Resolver, release_ref: str, offline: bool = False) 
         folder = resolver.prepared[identity]["folder"]
         requested = row.get("requested")
         if row.get("ref_kind") == "tag" and requested not in (None, "same", "same-or-dev"):
-            continue  # 显式请求的 tag 本身就是发布 / an explicitly requested tag is released by definition
+            # 显式请求的 tag 本身就是发布。
+            # An explicitly requested tag is released by definition.
+            continue
         if not offline:
             _fetch(folder, "origin", "+refs/heads/*:refs/remotes/origin/*")
         target = _line_ref(folder, line)
         if target is None:
             if row.get("ref_kind") == "commit":
-                continue  # 没有发布线的第三方模块只能显式锁定 commit / third-party Module without the line: explicit commit pins only
+                # 没有发布线的第三方模块只能显式锁定 commit。
+                # A third-party Module without the line has explicit commit pins only.
+                continue
             problems.append(
                 tr(
                     f"{identity} has no {line} branch; request an explicit tag or commit",

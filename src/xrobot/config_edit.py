@@ -635,7 +635,7 @@ def rename_instance(
     """
     problem = identifier_problem(new_id)
     if problem:
-        raise ConfigError(f"{new_id} {problem}")
+        raise ConfigError(tr(f"instance id {new_id} {problem}", f"实例 id {new_id} {problem}"))
     config = ConfigFile(config_path, source)
     if any(
         isinstance(e, dict) and e.get("id") == new_id for e in config.config.get("modules") or []
@@ -1054,7 +1054,9 @@ def _sync_constructor_mapping(
         return False
     parameters = constructors[0]
     if any(p["default"] is None and p["name"] not in value for p in parameters):
-        return False  # 没有默认值的新参数无法填入 / a new parameter without a default cannot be filled in
+        # 没有默认值的新参数无法填入。
+        # A new parameter without a default cannot be filled in.
+        return False
     items = []
     for p in parameters:
         if p["name"] in value:

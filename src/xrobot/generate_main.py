@@ -193,7 +193,8 @@ def read_registrations(path: str | Path) -> list[dict]:
                 tr(
                     f"{where}: XR_REGISTER inside #if/#ifdef/#ifndef is not supported; the "
                     "generator cannot evaluate build options",
-                    f"{where}: 不支持在 #if/#ifdef/#ifndef 中写 XR_REGISTER；生成器无法判断编译选项",
+                    f"{where}: 不支持在 #if/#ifdef/#ifndef 中写 XR_REGISTER；"
+                    "生成器无法判断编译选项",
                 )
             )
             continue
@@ -473,7 +474,8 @@ class Generator:
                 tr(
                     f"{identity}: cannot tell whether a public base class provides OnMonitor; its "
                     "base is not defined in the loaded Module headers",
-                    f"{identity}: 无法判断公有基类是否提供 OnMonitor；它的基类不在已加载的模块头文件中",
+                    f"{identity}: 无法判断公有基类是否提供 OnMonitor；"
+                    "它的基类不在已加载的模块头文件中",
                 )
             )
         if problems:

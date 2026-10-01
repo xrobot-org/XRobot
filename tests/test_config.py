@@ -387,9 +387,30 @@ class Structure(TestCase):
             ):
                 load(f"modules:\n  - module: Foo\n    id: foo\n    {text}\n")
 
-    def test_nested_field_names_must_be_identifiers(self):
-        with self.assertRaisesMessage(ConfigError, "cfg.yaml: foo.args.p: invalid field name 1x"):
-            load("modules:\n  - module: Foo\n    id: foo\n    args:\n      - p: {'1x': 1}\n")
+    def test_nested_values_are_checked_with_their_path(self):
+        # 名字无效的字段不再检查它的值（'1x' 的 010 不单独报错）。
+        # A field with an invalid name has its value left unchecked (010 of '1x' adds no error).
+        text = (
+            "constexprs:\n"
+            "  Rate: {type: 'int // hz', value: 1}\n"
+            "modules:\n"
+            "  - module: Foo\n"
+            "    id: foo\n"
+            "    args:\n"
+            "      - p: {'1x': 010, inner: {depth: 010}, items: [1, '2 /* two */']}\n"
+            "    template_args: [int, '1 // one']\n"
+        )
+        comment = "C++ comments are not allowed inside a value; use a YAML # comment"
+        with self.assertRaisesMessage(
+            ConfigError,
+            f"cfg.yaml: constexprs.Rate.type: {comment}\n"
+            "cfg.yaml: foo.args.p: invalid field name 1x\n"
+            "cfg.yaml: foo.args.p.inner.depth: 010 has a leading zero, which C++ reads as octal; "
+            "write the decimal value\n"
+            f"cfg.yaml: foo.args.p.items[1]: {comment}\n"
+            f"cfg.yaml: foo.template_args[1]: {comment}",
+        ):
+            load(text)
 
     def test_monitor_sleep_is_a_decimal_u32(self):
         for value in ("0", "1", "1000", "4294967295"):

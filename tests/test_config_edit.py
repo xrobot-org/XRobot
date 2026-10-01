@@ -82,12 +82,12 @@ class EditTestCase(BspTestCase):
         """
         return load_config(self.path)["modules"]
 
-    def assertUnchangedOnError(self, pattern, action, *args, **kwargs):
+    def assertUnchangedOnError(self, message, action, *args, **kwargs):
         """断言操作报错并且配置文件一个字节也没变。
         Assert that the action fails and leaves the configuration file byte for byte.
         """
         before = self.path.read_bytes()
-        with self.assertRaisesRegex(ConfigError, pattern):
+        with self.assertRaisesMessage(ConfigError, message):
             action(*args, **kwargs)
         self.assertEqual(self.path.read_bytes(), before)
 
@@ -182,10 +182,10 @@ class AddInstance(EditTestCase):
             manifest="/* === MODULE MANIFEST V2 ===\nstandalone: false\n=== END MANIFEST === */\n",
         )
         self.assertUnchangedOnError(
-            "instance id class is a C\\+\\+ keyword", self.add, identity="class"
+            "instance id class is a C++ keyword", self.add, identity="class"
         )
         self.assertUnchangedOnError(
-            r"team/Lib is a library \(standalone: false\) and cannot be instantiated",
+            "team/Lib is a library (standalone: false) and cannot be instantiated",
             self.add,
             module="Lib",
         )
@@ -280,7 +280,8 @@ class SetValue(EditTestCase):
 
     def test_id_and_module_are_not_set_values(self):
         self.assertUnchangedOnError(
-            "an instance id is changed with `xrobot instance rename`",
+            "an instance id is changed with `xrobot instance rename`, which also updates the "
+            "references to it",
             config_edit.set_value,
             self.path,
             "status",
@@ -288,7 +289,8 @@ class SetValue(EditTestCase):
             "led",
         )
         self.assertUnchangedOnError(
-            "the Module of an instance cannot be changed; remove the instance and add",
+            "the Module of an instance cannot be changed; remove the instance and add the other "
+            "Module",
             config_edit.set_value,
             self.path,
             "user",
@@ -331,23 +333,27 @@ class SetValue(EditTestCase):
         self.assertNotIn("\r\n", self.text())
 
     def test_invalid_paths_and_results_are_rejected(self):
+        usage = "use template_args[n] or args.<param>[.<field>|[n]]..."
         cases = [
-            ("user", "args", "args takes a list of one-parameter mappings"),
-            ("user", "args.missing", "no argument missing"),
-            ("status", "args.param.missing", "no key missing"),
-            ("status", "args[9]", "no argument"),
-            ("user", "template_args[0]", "no key template_args"),
-            ("user", "args..count", "invalid path"),
-            ("nobody", "args.count", "no instance with id nobody"),
+            (
+                "user",
+                "args",
+                'args takes a list of one-parameter mappings, e.g. [{"led": "LED_B"}, '
+                '{"cycle": "250"}]',
+            ),
+            ("user", "args.missing", "path args.missing: no argument missing"),
+            ("status", "args.param.missing", "path args.param.missing: no key missing"),
+            ("status", "args[9]", "path args[9]: no argument [9]"),
+            ("user", "template_args[0]", "path template_args[0]: no key template_args"),
+            ("user", "args..count", f"invalid path args..count; {usage}"),
+            ("status", "cycle", f"invalid path cycle; {usage}"),
+            ("nobody", "args.count", f"{self.path.as_posix()}: no instance with id nobody"),
         ]
-        for identity, path, pattern in cases:
+        for identity, path, message in cases:
             with self.subTest(path=path):
                 self.assertUnchangedOnError(
-                    pattern, config_edit.set_value, self.path, identity, path, 1
+                    message, config_edit.set_value, self.path, identity, path, 1
                 )
-        self.assertUnchangedOnError(
-            "invalid path cycle", config_edit.set_value, self.path, "status", "cycle", 1
-        )
 
 
 class RemoveAndRename(EditTestCase):
@@ -357,7 +363,7 @@ class RemoveAndRename(EditTestCase):
 
     def test_a_referenced_instance_cannot_be_removed(self):
         self.assertUnchangedOnError(
-            "status is still used by user; change those values first",
+            "User/xrobot.yaml: status is still used by user; change those values first",
             config_edit.remove_instance,
             self.path,
             "status",
@@ -403,7 +409,7 @@ class RemoveAndRename(EditTestCase):
 
     def test_rename_rejects_invalid_and_existing_ids(self):
         self.assertUnchangedOnError(
-            "instance id user already exists",
+            "User/xrobot.yaml: instance id user already exists",
             config_edit.rename_instance,
             self.path,
             "status",
@@ -411,10 +417,18 @@ class RemoveAndRename(EditTestCase):
             "User/xrobot.yaml",
         )
         self.assertUnchangedOnError(
-            "ASSERT is a macro name", config_edit.rename_instance, self.path, "status", "ASSERT"
+            "instance id ASSERT is a macro name",
+            config_edit.rename_instance,
+            self.path,
+            "status",
+            "ASSERT",
         )
         self.assertUnchangedOnError(
-            "no instance with id nobody", config_edit.rename_instance, self.path, "nobody", "x"
+            f"{self.path.as_posix()}: no instance with id nobody",
+            config_edit.rename_instance,
+            self.path,
+            "nobody",
+            "x",
         )
 
 

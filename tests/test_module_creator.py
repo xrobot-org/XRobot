@@ -49,11 +49,33 @@ class NewModule(CliMixin, BspTestCase):
         )
         # libxr.hpp 总被包含；GPIO 是硬件接口，另外包含 gpio.hpp。
         # libxr.hpp is always included; GPIO is a hardware interface, so gpio.hpp as well.
-        header = (folder / "Blink.hpp").read_text(encoding="utf-8")
-        self.assertIn(
-            '// clang-format on\n\n#include <array>\n\n#include "blink_types.hpp"\n'
-            '#include "gpio.hpp"\n#include "libxr.hpp"\n\nclass Blink\n',
-            header,
+        self.assertEqual(
+            (folder / "Blink.hpp").read_text(encoding="utf-8"),
+            """#pragma once
+
+// clang-format off
+/* === MODULE MANIFEST V2 ===
+module_description: Blinks a pin
+depends:
+- id: team/Timer
+  ref: same-or-dev
+- id: team/Log
+  ref: v1
+=== END MANIFEST === */
+// clang-format on
+
+#include <array>
+
+#include "blink_types.hpp"
+#include "gpio.hpp"
+#include "libxr.hpp"
+
+class Blink
+{
+ public:
+  Blink(LibXR::GPIO& gpio, int period_ms = 500) {}
+};
+""",
         )
         self.assertIn(
             'target_include_directories(xr PUBLIC "${CMAKE_CURRENT_LIST_DIR}")',
@@ -65,28 +87,65 @@ class NewModule(CliMixin, BspTestCase):
         job = workflow["jobs"]["build"]
         self.assertEqual(job["uses"], "xrobot-org/XRobot/.github/workflows/module-ci.yml@v1")
         self.assertEqual(job["with"], {"template-args": "[]"})
-        readme = (folder / "README.md").read_text(encoding="utf-8")
-        headings = [line for line in readme.splitlines() if line.startswith("#")]
         self.assertEqual(
-            headings,
-            [
-                "# Blink",
-                "## 1. 模块作用",
-                "## 2. 构造接口",
-                "## 3. Topic",
-                "## 4. 配置示例",
-                "## 5. 依赖与硬件",
-            ],
+            (folder / "README.md").read_text(encoding="utf-8"),
+            """# Blink
+
+## 1. 模块作用
+
+Blinks a pin
+
+<!-- 模块做什么、何时运行：中文一段，英文一段。
+     What the Module does and when it runs: a Chinese paragraph, then an English one. -->
+
+## 2. 构造接口
+
+```cpp
+Blink(LibXR::GPIO& gpio, int period_ms = 500);
+```
+
+依赖参数 / Dependencies:
+
+- `LibXR::GPIO& gpio` <!-- 用途 / purpose -->
+
+配置参数 / Configuration:
+
+- `int period_ms = 500` <!-- 用途 / purpose -->
+
+## 3. Topic
+
+<!-- 发布和订阅的 Topic：名称、类型和用途；没有时写“无 / None”。
+     Topics published and subscribed: name, type and purpose; None when there are none. -->
+
+## 4. 配置示例
+
+`xrobot instance add` 按下面的形式写出实例。依赖参数留空，填为 BSP 中用 `XR_REGISTER` \
+注册的名字或前面实例的 id。
+
+`xrobot instance add` writes the instance in the form below. The dependencies are left empty \
+and take names the BSP registers with `XR_REGISTER` or ids of earlier instances.
+
+```yaml
+modules:
+  - module: Blink
+    id: blink_0
+    args:
+      - gpio:
+      - period_ms: 500
+```
+
+## 5. 依赖与硬件
+
+模块依赖 / Module dependencies:
+
+- `team/Timer@same-or-dev`
+- `team/Log@v1`
+
+硬件 / Hardware:
+
+- `gpio`: `LibXR::GPIO`
+""",
         )
-        self.assertIn("```cpp\nBlink(LibXR::GPIO& gpio, int period_ms = 500);\n```", readme)
-        self.assertIn("- `LibXR::GPIO& gpio` <!--", readme)
-        self.assertIn(
-            "```yaml\nmodules:\n  - module: Blink\n    id: blink_0\n    args:\n"
-            "      - gpio:\n      - period_ms: 500\n```",
-            readme,
-        )
-        self.assertIn("- `team/Timer@same-or-dev`\n- `team/Log@v1`", readme)
-        self.assertIn("- `gpio`: `LibXR::GPIO`", readme)
 
     def test_new_module_template_arguments_for_ci(self):
         out = self.tmp / "out"
