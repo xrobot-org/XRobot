@@ -441,6 +441,17 @@ class Dependencies(GenerationTestCase):
             self.error(probe(optional="&missing")) + "\n",
         )
 
+    def test_an_unfilled_dependency_lists_candidates(self):
+        # 以前只报“没有填写”，可用的名字要另外去找；`instance add` 写入的依赖参数都是空的。
+        # Only "not filled in" used to be reported, and the names to use had to be looked up
+        # elsewhere; `instance add` writes every dependency unfilled.
+        self.assertEqual(
+            self.error(probe("a", port=None), probe("b", optional=None)),
+            "User/xrobot.yaml: a.args.port is not filled in; candidates of type Port&: port, sub\n"
+            "User/xrobot.yaml: b.args.optional is not filled in; candidates of type Port*: "
+            "&port, &sub, nullptr",
+        )
+
     def test_self_and_later_instances_are_rejected(self):
         message = self.error(
             {"module": "Cmd", "id": "cmd", "args": [{"led": "led"}, {"backup": "&cmd"}]}, led()

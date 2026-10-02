@@ -270,8 +270,15 @@ class Commands(CliMixin, BspTestCase):
         self.assertEqual(result["instances"][0]["id"], "led")
 
     def test_instance_editing(self):
+        # 以前只提示填写空值，可以填写的名字要另外去找。
+        # Only the null values used to be pointed out; the names to fill in had to be looked
+        # up elsewhere.
         out, _ = self.ok("instance", "add", "Led", "--id", "second")
-        self.assertIn("Added second to User/xrobot.yaml; fill the null values", out)
+        self.assertEqual(
+            out,
+            "Added second to User/xrobot.yaml; fill the null values (dependencies) before "
+            "generating\n  gpio (LibXR::GPIO&): pin\n",
+        )
         self.ok("instance", "set", "second", "args.gpio", "pin")
         self.ok("instance", "set", "second", "args.gain", "2.5")
         second = load_config(self.root / "User/xrobot.yaml")["modules"][1]

@@ -46,9 +46,11 @@ from xrobot.config import (
     validate_config,
 )
 from xrobot.constructor_model import (
+    binding_candidates,
     compliant_constructors,
     initializer_text,
     initializer_tree,
+    is_dependency,
     qualify,
     replace_names,
     template_bindings,
@@ -876,6 +878,53 @@ def add_instance(
         new_text = blocks.append(_render_item(item, indent))
     config.write(new_text, check=False)
     return identity
+
+
+def unfilled_dependencies(
+    config_path: str | Path,
+    identity: str,
+    modules: dict,
+    index: TypeIndex,
+    registrations: dict[str, str],
+    source: str | None = None,
+) -> list[tuple[str, str, list[str]]]:
+    """实例中未填写的依赖参数，各带可以填写的名字，规则与生成时的候选相同。
+    The unfilled dependencies of an instance, each with the names it can take, by the rule
+    of the candidates generation lists.
+
+    Args:
+        registrations: XR_REGISTER 名字到类型的映射。
+            XR_REGISTER types by name.
+
+    Returns:
+        每个未填写的依赖参数一项：(参数名, 参数类型, 候选)。
+        One entry per unfilled dependency: (parameter name, parameter type, candidates).
+    """
+    named = dict(registrations)
+    item = None
+    for entry in ConfigFile(config_path, source).config.get("modules") or []:
+        if entry["id"] == identity:
+            item = entry
+            break
+        named[entry["id"]] = select_module(modules, entry["module"])["name"]
+    if item is None:
+        return []
+    module = select_module(modules, item["module"])
+    interface = module_interface(module)
+    templates = template_bindings(interface, list(item.get("template_args") or []))
+    types = {
+        p["name"]: p
+        for ctor in compliant_constructors(interface)
+        for p in ctor["arguments"]
+        if is_dependency(p)
+    }
+    result = []
+    for argument in item.get("args") or []:
+        for name, value in argument.items():
+            if value is None and name in types:
+                target = qualify(types[name]["type"], interface, module["name"], templates, True)
+                result.append((name, target, binding_candidates(index, target, named)))
+    return result
 
 
 # -- 同步 / sync -----------------------------------------------------------------

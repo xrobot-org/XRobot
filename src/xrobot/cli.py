@@ -302,13 +302,12 @@ def cmd_instance(args: argparse.Namespace) -> None:
     config = _config_path(project, args.config) or project.selected_config()
     source = project.relative(config)
     if args.action == "add":
-        from xrobot.generate_main import load_modules
+        from xrobot.generate_main import load_modules, read_registrations
         from xrobot.type_index import TypeIndex
 
         modules = load_modules(project)
-        identity = config_edit.add_instance(
-            config, args.module, modules, TypeIndex.for_modules(modules), args.id, source
-        )
+        index = TypeIndex.for_modules(modules)
+        identity = config_edit.add_instance(config, args.module, modules, index, args.id, source)
         print(
             tr(
                 f"Added {identity} to {source}; fill the null values (dependencies) before "
@@ -316,6 +315,19 @@ def cmd_instance(args: argparse.Namespace) -> None:
                 f"已将 {identity} 添加到 {source}；生成前请填写值为空的依赖参数",
             )
         )
+        try:
+            registrations = {r["name"]: r["type"] for r in read_registrations(project.entry())}
+        except (OSError, ValueError):
+            registrations = {}  # gen 报告入口源文件的问题 / gen reports entry problems
+        for name, target, candidates in config_edit.unfilled_dependencies(
+            config, identity, modules, index, registrations, source
+        ):
+            print(
+                tr(
+                    f"  {name} ({target}): {', '.join(candidates) or 'no candidate'}",
+                    f"  {name}（{target}）：{'、'.join(candidates) or '没有候选'}",
+                )
+            )
     elif args.action == "set":
         config_edit.set_value(
             config, args.id, args.path, parse_value(args.value, args.json), args.if_match, source

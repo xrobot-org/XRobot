@@ -89,6 +89,18 @@ class Entry(TempDirTestCase):
             "No source under User/ calls XROBOT_MAIN(); the entry source must call it once "
             "after registering its hardware with XR_REGISTER",
         )
+        # 以前 STM32CubeMX 工程也只得到上面这句，不知道入口源文件由 libxr 生成。
+        # An STM32CubeMX project used to get only the sentence above, without learning that
+        # libxr generates the entry source.
+        self.write("Board.ioc", "")
+        with self.assertRaises(ProjectError) as context:
+            Project(self.root).entry()
+        self.assertEqual(
+            str(context.exception),
+            "No source under User/ calls XROBOT_MAIN(); the entry source must call it once "
+            "after registering its hardware with XR_REGISTER. For this STM32CubeMX project, "
+            "`libxr stm32 setup --xrobot` generates such an entry source, User/app_main.cpp",
+        )
         self.write("User/a.cpp", MAIN)
         self.write("User/b.cpp", MAIN)
         with self.assertRaises(ProjectError) as context:

@@ -534,6 +534,15 @@ class Generator:
                 qualify(p["default"], interface, cpp_class, templates), target
             )
         self.checker.checks = checks
+        if value is None and is_dependency(p):
+            candidates = self._candidates(target, visible)
+            raise ValueError(
+                tr(
+                    f"{field} is not filled in; candidates of type {target}: "
+                    f"{', '.join(candidates) or 'none'}",
+                    f"{field} 没有填写；类型为 {target} 的候选：{'、'.join(candidates) or '无'}",
+                )
+            )
         if isinstance(value, str):
             text = value_text(value, field)
             name = text.strip()

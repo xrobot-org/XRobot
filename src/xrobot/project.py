@@ -155,12 +155,20 @@ class Project:
                 if _calls_xrobot_main(text):
                     callers.append(path)
         if not callers:
+            hint = ("", "")
+            if any(self.root.glob("*.ioc")):
+                hint = (
+                    ". For this STM32CubeMX project, `libxr stm32 setup --xrobot` generates "
+                    "such an entry source, User/app_main.cpp",
+                    "。这是 STM32CubeMX 工程，`libxr stm32 setup --xrobot` 生成这样的入口源文件 "
+                    "User/app_main.cpp",
+                )
             raise ProjectError(
                 tr(
                     "No source under User/ calls XROBOT_MAIN(); the entry source must "
-                    "call it once after registering its hardware with XR_REGISTER",
+                    "call it once after registering its hardware with XR_REGISTER" + hint[0],
                     "User/ 下没有源文件调用 XROBOT_MAIN()；入口源文件应在用 XR_REGISTER "
-                    "登记硬件后调用它一次",
+                    "登记硬件后调用它一次" + hint[1],
                 )
             )
         if len(callers) > 1:
