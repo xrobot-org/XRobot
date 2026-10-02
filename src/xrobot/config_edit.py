@@ -888,9 +888,15 @@ def unfilled_dependencies(
     registrations: dict[str, str],
     source: str | None = None,
 ) -> list[tuple[str, str, list[str]]]:
-    """实例中未填写的依赖参数，各带可以填写的名字，规则与生成时的候选相同。
+    """实例中未填写的依赖参数，各带可以填写的名字，规则与 gen 列出的候选相同。
     The unfilled dependencies of an instance, each with the names it can take, by the rule
-    of the candidates generation lists.
+    gen lists candidates with.
+
+    识别不了的前面的实例（没有 id 或模块不存在）不计入，由 gen 报告。构造函数取参数名与实例
+    args 一致的那个，与 gen 选择的相同。
+    An earlier instance that cannot be resolved (no id or an unknown Module) is left out for
+    gen to report. The constructor is the one whose parameter names are the instance's args,
+    the one gen picks.
 
     Args:
         registrations: XR_REGISTER 名字到类型的映射。
@@ -903,27 +909,37 @@ def unfilled_dependencies(
     named = dict(registrations)
     item = None
     for entry in ConfigFile(config_path, source).config.get("modules") or []:
-        if entry["id"] == identity:
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("id") == identity:
             item = entry
             break
-        named[entry["id"]] = select_module(modules, entry["module"])["name"]
+        try:
+            named[entry["id"]] = select_module(modules, entry["module"])["name"]
+        except (KeyError, ValueError):
+            continue
     if item is None:
         return []
     module = select_module(modules, item["module"])
     interface = module_interface(module)
     templates = template_bindings(interface, list(item.get("template_args") or []))
-    types = {
-        p["name"]: p
-        for ctor in compliant_constructors(interface)
-        for p in ctor["arguments"]
-        if is_dependency(p)
-    }
+    arguments = item.get("args") or []
+    names = [next(iter(argument)) for argument in arguments]
+    ctor = next(
+        (
+            c
+            for c in compliant_constructors(interface)
+            if [p["name"] for p in c["arguments"]] == names
+        ),
+        None,
+    )
+    if ctor is None:
+        return []
     result = []
-    for argument in item.get("args") or []:
-        for name, value in argument.items():
-            if value is None and name in types:
-                target = qualify(types[name]["type"], interface, module["name"], templates, True)
-                result.append((name, target, binding_candidates(index, target, named)))
+    for p, argument in zip(ctor["arguments"], arguments, strict=True):
+        if next(iter(argument.values())) is None and is_dependency(p):
+            target = qualify(p["type"], interface, module["name"], templates, True)
+            result.append((p["name"], target, binding_candidates(index, target, named)))
     return result
 
 

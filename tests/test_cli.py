@@ -269,6 +269,39 @@ class Commands(CliMixin, BspTestCase):
         self.assertEqual((result["schema"], result["config"]), (1, "User/xrobot.yaml"))
         self.assertEqual(result["instances"][0]["id"], "led")
 
+    def test_instance_add_lists_candidates_beside_broken_instances(self):
+        # 以前配置里已有识别不了的实例时，instance add 已经写入文件，却仍以失败退出。
+        # An instance that could not be resolved used to make instance add exit with an
+        # error after it had written the file.
+        self.config(
+            {
+                "modules": [
+                    {"module": "Missing", "id": "ghost"},
+                    {"id": "no_module"},
+                    {"module": "Led", "id": "led", "args": [{"gpio": "pin"}]},
+                ]
+            }
+        )
+        out, _ = self.ok("instance", "add", "Led", "--id", "second")
+        self.assertEqual(
+            out,
+            "Added second to User/xrobot.yaml; fill the null values (dependencies) before "
+            "generating\n  gpio (LibXR::GPIO&): pin\n",
+        )
+
+    def test_instance_add_says_why_candidates_are_missing(self):
+        # 以前读不出入口源文件时，每个依赖参数都显示“没有候选”，看不出原因。
+        # Without a readable entry source every dependency used to show "no candidate",
+        # which did not say why.
+        self.entry("int main() {}\n")
+        out, _ = self.ok("instance", "add", "Led", "--id", "second")
+        self.assertEqual(
+            out,
+            "Added second to User/xrobot.yaml; fill the null values (dependencies) before "
+            "generating\n  Candidates not listed: No source under User/ calls XROBOT_MAIN(); the "
+            "entry source must call it once after registering its hardware with XR_REGISTER\n",
+        )
+
     def test_instance_editing(self):
         # 以前只提示填写空值，可以填写的名字要另外去找。
         # Only the null values used to be pointed out; the names to fill in had to be looked

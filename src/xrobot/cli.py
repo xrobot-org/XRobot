@@ -317,11 +317,19 @@ def cmd_instance(args: argparse.Namespace) -> None:
         )
         try:
             registrations = {r["name"]: r["type"] for r in read_registrations(project.entry())}
-        except (OSError, ValueError):
-            registrations = {}  # gen 报告入口源文件的问题 / gen reports entry problems
-        for name, target, candidates in config_edit.unfilled_dependencies(
+            problem = None
+        except (OSError, ValueError) as error:
+            # 读不出入口源文件时，候选只会是“没有候选”；改为说明原因。
+            # Without the entry source every candidate list would read "no candidate";
+            # say why instead.
+            registrations, problem = {}, str(error)
+        unfilled = config_edit.unfilled_dependencies(
             config, identity, modules, index, registrations, source
-        ):
+        )
+        if unfilled and problem is not None:
+            print(tr(f"  Candidates not listed: {problem}", f"  未列出候选：{problem}"))
+            unfilled = []
+        for name, target, candidates in unfilled:
             print(
                 tr(
                     f"  {name} ({target}): {', '.join(candidates) or 'no candidate'}",
