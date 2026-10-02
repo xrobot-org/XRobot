@@ -893,10 +893,10 @@ def unfilled_dependencies(
     gen lists candidates with.
 
     识别不了的前面的实例（没有 id 或模块不存在）不计入，由 gen 报告。构造函数取参数名与实例
-    args 一致的那个，与 gen 选择的相同。
+    args 一致的那个，与 gen 选择的相同。模板实参还没有填写时不列出任何参数。
     An earlier instance that cannot be resolved (no id or an unknown Module) is left out for
     gen to report. The constructor is the one whose parameter names are the instance's args,
-    the one gen picks.
+    the one gen picks. Nothing is listed while template arguments are not filled in.
 
     Args:
         registrations: XR_REGISTER 名字到类型的映射。
@@ -922,7 +922,10 @@ def unfilled_dependencies(
         return []
     module = select_module(modules, item["module"])
     interface = module_interface(module)
-    templates = template_bindings(interface, list(item.get("template_args") or []))
+    try:
+        templates = template_bindings(interface, list(item.get("template_args") or []))
+    except ValueError:
+        return []  # 模板实参还没有填写，由 gen 报告 / template arguments not filled in yet
     arguments = item.get("args") or []
     names = [next(iter(argument)) for argument in arguments]
     ctor = next(

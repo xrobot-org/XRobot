@@ -301,6 +301,18 @@ class ConstructorMappings(MappingTestCase):
         self.rejected(
             "S", "runtime", {"level": "1", "mode": "S::Mode::A", "settle": "1"}, "Constructors:"
         )
+        # 只有默认构造函数的类没有可以写出的参数。
+        # A class with only a default constructor has no parameters to name.
+        self.module(
+            "Q",
+            "class Q { public:\n  struct Plain { Plain() {} };\n  explicit Q(Plain plain = {}) {} };",
+        )
+        with self.assertRaisesMessage(
+            ValueError,
+            "User/xrobot.yaml: p.args.plain: Q::Plain has constructors; the mapping must name one "
+            "constructor's parameters in order. Constructors: none",
+        ):
+            self.value("Q", "plain", {"x": "1"})
 
     def test_positional_values_are_rejected_for_classes(self):
         self.rejected(

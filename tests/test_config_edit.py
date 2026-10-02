@@ -223,20 +223,23 @@ class AddInstance(EditTestCase):
         self.add()
         self.assertEqual(config_edit.format_files([self.path], check=True), [])
 
-    def test_unfilled_dependencies_use_the_constructor_of_the_args(self):
-        # 以前参数类型取自最后一个有同名参数的构造函数，列出的候选与 gen 的不同。
+    def test_unfilled_dependencies_follow_the_rules_of_gen(self):
+        # 以前参数类型取自最后一个有同名参数的构造函数，列出的候选与 gen 的不同。类内别名展开
+        # 后比较；后面的实例不是候选。
         # A parameter's type used to come from the last constructor with a parameter of that
-        # name, so the listed candidates differed from those of gen.
+        # name, so the listed candidates differed from those of gen. A member alias is
+        # expanded before comparing, and later instances are no candidates.
         self.module(
             "Taker",
-            '#include "Led.hpp"\nclass Taker { public:\n'
-            "  Taker(Led& pin, int n) {}\n"
+            '#include "Led.hpp"\nclass Taker { public:\n  using Pin = Led;\n'
+            "  Taker(Pin& pin, int n) {}\n"
             "  explicit Taker(LibXR::GPIO& pin) {}\n};",
         )
         self.path.write_text(
             "modules:\n"
             "  - module: team/Led\n    id: status\n    args:\n      - gpio: pin\n"
-            "  - module: team/Taker\n    id: taker\n    args:\n      - pin:\n      - n: 1\n",
+            "  - module: team/Taker\n    id: taker\n    args:\n      - pin:\n      - n: 1\n"
+            "  - module: team/Led\n    id: late\n    args:\n      - gpio: pin\n",
             encoding="utf-8",
         )
         modules, index = self.modules_and_index()

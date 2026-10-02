@@ -248,16 +248,26 @@ class Lookup(TypeIndexTestCase):
                 self.assertEqual(index.qualify_in(text, entry, "qux::Other::Param"), expected)
 
     def test_a_type_defined_in_two_headers_is_an_error(self):
-        paths = [
-            self.write("a/Twice.hpp", "struct Twice { int a; };"),
-            self.write("b/Twice.hpp", "struct Twice { int b; };"),
-        ]
-        index = TypeIndex(paths, {paths[0]: "team/A/Twice.hpp", paths[1]: "team/B/Twice.hpp"})
-        with self.assertRaisesMessage(
-            ValueError,
-            ("Type Twice is defined in several Module headers: team/A/Twice.hpp, team/B/Twice.hpp"),
+        # 命名空间中的类型以完整的名字报告。
+        # A type in a namespace is reported by its full name.
+        for name, body in (
+            ("Twice", "struct Twice {{ int {}; }};"),
+            ("ns::Twice", "namespace ns {{ struct Twice {{ int {}; }}; }}"),
         ):
-            index.resolve("Twice")
+            with self.subTest(name=name):
+                paths = [
+                    self.write("a/Twice.hpp", body.format("a")),
+                    self.write("b/Twice.hpp", body.format("b")),
+                ]
+                index = TypeIndex(
+                    paths, {paths[0]: "team/A/Twice.hpp", paths[1]: "team/B/Twice.hpp"}
+                )
+                with self.assertRaisesMessage(
+                    ValueError,
+                    f"Type {name} is defined in several Module headers: team/A/Twice.hpp, "
+                    "team/B/Twice.hpp",
+                ):
+                    index.resolve(name)
 
     def test_module_headers_include_the_module_headers_they_bring_in(self):
         folder = self.tmp / "Modules/team/Bar"

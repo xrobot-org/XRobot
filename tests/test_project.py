@@ -299,6 +299,19 @@ class GeneratedHeaderInputs(BspTestCase):
                 self.assertEqual(project.header_state()["status"], "stale")
                 path.write_bytes(before)
                 self.assertEqual(project.header_state()["status"], "fresh")
+        types = self.root / "Modules/team/Foo/FooTypes.hpp"
+        before = types.read_bytes()
+        types.unlink()
+        self.assertEqual(
+            project.header_state(),
+            {
+                "path": "User/xrobot_main.hpp",
+                "status": "stale",
+                "config": "User/xrobot.yaml",
+                "missing": ["Modules/team/Foo/FooTypes.hpp"],
+            },
+        )
+        types.write_bytes(before)
         # 旧版本生成的头文件没有摘要，要重新生成。
         # A header from an older version has no digest and needs regenerating.
         header = self.root / "User/xrobot_main.hpp"
@@ -310,14 +323,6 @@ class GeneratedHeaderInputs(BspTestCase):
             )
         )
         self.assertEqual(project.header_state()["status"], "stale")
-
-    def test_a_missing_input_makes_the_header_stale(self):
-        self.generate({"modules": []})
-        (self.root / "Modules/team/Foo/FooTypes.hpp").unlink()
-        state = self.project.header_state()
-        self.assertEqual(
-            (state["status"], state["missing"]), ("stale", ["Modules/team/Foo/FooTypes.hpp"])
-        )
 
     def test_unparseable_input_lines_make_the_header_unreadable(self):
         for text in (

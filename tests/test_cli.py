@@ -289,6 +289,24 @@ class Commands(CliMixin, BspTestCase):
             "generating\n  gpio (LibXR::GPIO&): pin\n",
         )
 
+    def test_instance_add_of_a_template_without_default_arguments(self):
+        # 以前模板实参没有默认值时，instance add 写入实例后以失败退出（模板实参必须给出）。
+        # Without default template arguments, instance add used to exit with an error
+        # (the template argument must be specified) after writing the instance.
+        self.module(
+            "Raw", "template <typename T>\nclass Raw { public: explicit Raw(T init = T{}) {} };"
+        )
+        out, _ = self.ok("instance", "add", "Raw", "--id", "raw")
+        self.assertEqual(
+            out,
+            "Added raw to User/xrobot.yaml; fill the null values (dependencies) before "
+            "generating\n",
+        )
+        self.assertEqual(
+            load_config(self.root / "User/xrobot.yaml")["modules"][-1],
+            {"module": "team/Raw", "id": "raw", "template_args": [None]},
+        )
+
     def test_instance_add_says_why_candidates_are_missing(self):
         # 以前读不出入口源文件时，每个依赖参数都显示“没有候选”，看不出原因。
         # Without a readable entry source every dependency used to show "no candidate",

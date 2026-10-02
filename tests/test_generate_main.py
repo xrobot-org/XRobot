@@ -441,17 +441,6 @@ class Dependencies(GenerationTestCase):
             self.error(probe(optional="&missing")) + "\n",
         )
 
-    def test_an_unfilled_dependency_lists_candidates(self):
-        # 以前只报“没有填写”，可用的名字要另外去找；`instance add` 写入的依赖参数都是空的。
-        # Only "not filled in" used to be reported, and the names to use had to be looked up
-        # elsewhere; `instance add` writes every dependency unfilled.
-        self.assertEqual(
-            self.error(probe("a", port=None), probe("b", optional=None)),
-            "User/xrobot.yaml: a.args.port is not filled in; candidates of type Port&: port, sub\n"
-            "User/xrobot.yaml: b.args.optional is not filled in; candidates of type Port*: "
-            "&port, &sub, nullptr",
-        )
-
     def test_self_and_later_instances_are_rejected(self):
         message = self.error(
             {"module": "Cmd", "id": "cmd", "args": [{"led": "led"}, {"backup": "&cmd"}]}, led()
@@ -554,18 +543,32 @@ class Diagnostics(GenerationTestCase):
     """
 
     def test_errors_of_every_instance_are_collected_with_config_and_path_prefixes(self):
-        message = self.error(probe("a", port="missing"), led("b", gpio=None), led("Led"))
-        lines = message.splitlines()
-        self.assertEqual(len(lines), 3, lines)
-        self.assertTrue(
-            lines[0].startswith("User/xrobot.yaml: a.args.port: missing is neither"), lines[0]
+        # 依赖参数没有填写或名字不对时都列出候选（以前没有填写时不列）；没有候选时写 none。
+        # A dependency that is not filled in or names something wrong lists its candidates
+        # (an unfilled one used to list none), and "none" when there is no candidate.
+        self.module(
+            "Lonely", "struct Alone {};\nclass Lonely { public: explicit Lonely(Alone& alone) {} };"
         )
-        self.assertTrue(
-            lines[1].startswith("User/xrobot.yaml: b.args.gpio is not filled in"), lines[1]
+        message = self.error(
+            probe("a", port="missing"),
+            led("b", gpio=None),
+            probe("c", optional=None),
+            {"module": "Lonely", "id": "d", "args": [{"alone": None}]},
+            {"module": "Lonely", "id": "e", "args": [{"alone": "nobody"}]},
+            led("Led"),
         )
-        self.assertTrue(
-            lines[2].startswith("User/xrobot.yaml: Led: instance id Led is also a class name"),
-            lines[2],
+        self.assertEqual(
+            message,
+            "User/xrobot.yaml: a.args.port: missing is neither an XR_REGISTER name nor an earlier "
+            "instance id; candidates of type Port&: port, sub\n"
+            "User/xrobot.yaml: b.args.gpio is not filled in; candidates of type LibXR::GPIO&: pin\n"
+            "User/xrobot.yaml: c.args.optional is not filled in; candidates of type Port*: &port, "
+            "&sub, nullptr\n"
+            "User/xrobot.yaml: d.args.alone is not filled in; candidates of type Alone&: none\n"
+            "User/xrobot.yaml: e.args.alone: nobody is neither an XR_REGISTER name nor an earlier "
+            "instance id; candidates of type Alone&: none\n"
+            "User/xrobot.yaml: Led: instance id Led is also a class name in the loaded Modules; "
+            "use a lower-case id such as led",
         )
 
     def test_structural_errors_name_the_config_file(self):
