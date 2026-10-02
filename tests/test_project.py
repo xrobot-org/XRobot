@@ -11,9 +11,11 @@ from fixtures import BspTestCase, TempDirTestCase
 
 from xrobot.project import (
     HEADER_NOTICE,
+    HeaderInputs,
     Project,
     ProjectError,
     find_root,
+    input_digest,
     read_header_inputs,
 )
 
@@ -175,30 +177,62 @@ class GeneratedHeaderInputs(BspTestCase):
     def test_header_names_its_config_and_every_input_relative_to_itself(self):
         self.generate({"modules": [{"module": "Foo", "id": "foo"}]})
         lines = self.header_lines()
+        inputs = [
+            ("config", "xrobot.yaml"),
+            ("depends", "../xrobot.lock"),
+            ("entry", "app_main.cpp"),
+            ("depends", "../Modules/team/Foo/Foo.hpp"),
+            ("depends", "../Modules/team/Foo/FooTypes.hpp"),
+        ]
+        digest = input_digest(self.root / "User/xrobot_main.hpp", inputs)
         self.assertEqual(
-            lines[:7],
+            lines[:8],
             [
                 "#pragma once",
                 HEADER_NOTICE,
                 '// xrobot: config "xrobot.yaml"',
                 '// xrobot: depends "../xrobot.lock"',
-                '// xrobot: depends "app_main.cpp"',
+                '// xrobot: entry "app_main.cpp"',
                 '// xrobot: depends "../Modules/team/Foo/Foo.hpp"',
                 '// xrobot: depends "../Modules/team/Foo/FooTypes.hpp"',
+                f"// xrobot: digest {digest}",
             ],
         )
-        self.assertFalse(lines[7].startswith("// xrobot:"))
+        self.assertFalse(lines[8].startswith("// xrobot:"))
         self.assertEqual(
             read_header_inputs(self.root / "User/xrobot_main.hpp"),
-            (
-                "xrobot.yaml",
-                [
-                    "../xrobot.lock",
-                    "app_main.cpp",
-                    "../Modules/team/Foo/Foo.hpp",
-                    "../Modules/team/Foo/FooTypes.hpp",
-                ],
-            ),
+            HeaderInputs("xrobot.yaml", inputs, digest),
+        )
+
+    def test_the_digest_matches_the_libxr_check(self):
+        # LibXR 的 test/automatic/cmake/xrobot_freshness.cmake 对同样的文件期望同一个摘要；
+        # 两边算法不同时，构建和 describe 对同一个头文件给出不同的结论。入口源文件只计
+        # XR_REGISTER 调用，回车符不计：CRLF 换行、跨行且带中文注释的调用、类型中的括号，
+        # 注释中的调用也计入。
+        # LibXR's test/automatic/cmake/xrobot_freshness.cmake expects the same digest for the
+        # same files; differing algorithms would make the build and describe disagree about
+        # one header. The entry counts only its XR_REGISTER calls, without carriage returns:
+        # CRLF line ends, a call over two lines with a Chinese comment, parentheses in a type,
+        # and a call inside a comment, which counts too.
+        self.write("User/产品/英雄.yaml", "modules:\n  - module: Foo\n    id: foo\n")
+        self.write("xrobot.lock", "lock: 1\n")
+        self.write(
+            "User/app_main.cpp",
+            '#include "xrobot_main.hpp"\r\n// 入口\r\nint main() {\r\n'
+            "  XR_REGISTER(pin, int);\r\n"
+            "  XR_REGISTER(table, /* 表 */\r\n              decltype(storage[0]));\r\n"
+            "  // XR_REGISTER(old, int);\r\n  XROBOT_MAIN();\r\n}\r\n",
+        )
+        self.write("Modules/team/Foo/Foo.hpp", "class Foo { public: Foo() {} };\n")
+        inputs = [
+            ("config", "产品/英雄.yaml"),
+            ("depends", "../xrobot.lock"),
+            ("entry", "app_main.cpp"),
+            ("depends", "../Modules/team/Foo/Foo.hpp"),
+        ]
+        self.assertEqual(
+            input_digest(self.root / "User/xrobot_main.hpp", inputs),
+            "307fb19f0ca77bf9074ff03a636161f750578e17e6ba30c99e4634fede9a30e2",
         )
 
     def test_headers_written_before_the_notice_moved_are_still_read(self):
@@ -210,7 +244,11 @@ class GeneratedHeaderInputs(BspTestCase):
                 self.write("User/xrobot_main.hpp", text + "\n")
                 self.assertEqual(
                     read_header_inputs(self.root / "User/xrobot_main.hpp"),
-                    ("xrobot.yaml", ["app_main.cpp"]),
+                    HeaderInputs(
+                        "xrobot.yaml",
+                        [("config", "xrobot.yaml"), ("depends", "app_main.cpp")],
+                        None,
+                    ),
                 )
 
     def test_a_product_in_a_subdirectory_is_named_relative_to_the_header(self):
@@ -218,33 +256,60 @@ class GeneratedHeaderInputs(BspTestCase):
         self.assertEqual(self.header_lines()[2], '// xrobot: config "products/hero.yaml"')
         self.assertEqual(self.project.selected_config(), self.root / "User/products/hero.yaml")
 
-    def test_header_state_follows_file_times(self):
+    def test_header_state_follows_content(self):
+        # 以前按修改时间判断：git checkout、复制工程和机器之间的时钟差都会使没有改动的输入显得
+        # 较新，构建因此失败；改动入口源文件中注册以外的代码也是这样。
+        # Freshness used to follow file times: a git checkout, a copied project or clock skew
+        # made unchanged inputs look newer and failed the build, and so did editing code of
+        # the entry source other than the registrations.
         project = self.project
         self.assertEqual(project.header_state()["status"], "missing")
         self.generate({"modules": []})
-        state = project.header_state()
-        self.assertEqual((state["status"], state["config"]), ("fresh", "User/xrobot.yaml"))
-        header_time = (self.root / "User/xrobot_main.hpp").stat().st_mtime
-        for relative in (
+        self.assertEqual(
+            project.header_state(),
+            {
+                "path": "User/xrobot_main.hpp",
+                "status": "fresh",
+                "config": "User/xrobot.yaml",
+                "missing": [],
+            },
+        )
+        inputs = (
             "User/xrobot.yaml",
             "User/app_main.cpp",
             "xrobot.lock",
-            "Modules/team/Foo/FooTypes.hpp",
-        ):
-            with self.subTest(newer=relative):
-                path = self.root / relative
-                os.utime(path, (header_time + 10, header_time + 10))
-                state = project.header_state()
-                self.assertEqual(state["status"], "stale")
-                self.assertEqual(state["newer"], [relative])
-                os.utime(path, (header_time - 10, header_time - 10))
+            "Modules/team/Foo/Foo.hpp",
+        )
+        future = (self.root / "User/xrobot_main.hpp").stat().st_mtime + 3600
+        for relative in inputs:
+            os.utime(self.root / relative, (future, future))
         self.assertEqual(project.header_state()["status"], "fresh")
-        # 与 LibXR 的 CMake 检查（IS_NEWER_THAN）一致：时间相等也算过期。
-        # As LibXR's CMake check (IS_NEWER_THAN) decides: equal times are stale too.
-        header_ns = (self.root / "User/xrobot_main.hpp").stat().st_mtime_ns
-        os.utime(self.root / "User/xrobot.yaml", ns=(header_ns, header_ns))
-        state = project.header_state()
-        self.assertEqual((state["status"], state["newer"]), ("stale", ["User/xrobot.yaml"]))
+        entry = self.root / "User/app_main.cpp"
+        entry.write_bytes(entry.read_bytes() + b"// a note outside the registrations\n")
+        self.assertEqual(project.header_state()["status"], "fresh")
+        for relative, change in zip(
+            inputs,
+            (b"# note\n", b"static int pin;\nXR_REGISTER(pin, int);\n", b"# note\n", b"// note\n"),
+            strict=True,
+        ):
+            with self.subTest(changed=relative):
+                path = self.root / relative
+                before = path.read_bytes()
+                path.write_bytes(before + change)
+                self.assertEqual(project.header_state()["status"], "stale")
+                path.write_bytes(before)
+                self.assertEqual(project.header_state()["status"], "fresh")
+        # 旧版本生成的头文件没有摘要，要重新生成。
+        # A header from an older version has no digest and needs regenerating.
+        header = self.root / "User/xrobot_main.hpp"
+        header.write_bytes(
+            b"".join(
+                line
+                for line in header.read_bytes().splitlines(keepends=True)
+                if not line.startswith(b"// xrobot: digest ")
+            )
+        )
+        self.assertEqual(project.header_state()["status"], "stale")
 
     def test_a_missing_input_makes_the_header_stale(self):
         self.generate({"modules": []})
@@ -261,10 +326,11 @@ class GeneratedHeaderInputs(BspTestCase):
             '#pragma once\n// xrobot: config a.yaml\n// xrobot: depends "b"\n',
             '#pragma once\n// xrobot: config "a"\n// xrobot: config "b"\n// xrobot: depends "c"\n',
             '#pragma once\n// xrobot: config "a"\n// xrobot: input "c"\n',
+            '#pragma once\n// xrobot: config "a"\n// xrobot: depends "c"\n// xrobot: digest 12\n',
         ):
             with self.subTest(text=text):
                 self.write("User/xrobot_main.hpp", text)
-                self.assertEqual(read_header_inputs(self.root / "User/xrobot_main.hpp"), (None, []))
+                self.assertIsNone(read_header_inputs(self.root / "User/xrobot_main.hpp"))
                 self.assertEqual(self.project.header_state()["status"], "unreadable")
 
     def test_selected_config_comes_from_the_header_else_the_default(self):
@@ -283,16 +349,19 @@ class GeneratedHeaderInputs(BspTestCase):
         self.assertEqual(project.selected_config(), self.root / "User/xrobot.yaml")
 
     def test_inputs_on_another_drive_are_written_as_absolute_paths(self):
+        config = self.config({"modules": []})
+        entry = self.root / "User/app_main.cpp"
         with mock.patch(
             "xrobot.project.os.path.relpath", side_effect=ValueError("path is on mount C:")
         ):
-            lines = self.project.header_lines(
-                self.root / "User/xrobot.yaml", [self.root / "xrobot.lock"]
-            )
+            lines = self.project.header_lines(config, [self.root / "xrobot.lock", entry], entry)
+        inputs = [
+            ("config", Path(os.path.abspath(config)).as_posix()),
+            ("depends", Path(os.path.abspath(self.root / "xrobot.lock")).as_posix()),
+            ("entry", Path(os.path.abspath(entry)).as_posix()),
+        ]
         self.assertEqual(
             lines,
-            [
-                f'// xrobot: config "{Path(os.path.abspath(self.root / "User/xrobot.yaml")).as_posix()}"',
-                f'// xrobot: depends "{Path(os.path.abspath(self.root / "xrobot.lock")).as_posix()}"',
-            ],
+            [f'// xrobot: {kind} "{path}"' for kind, path in inputs]
+            + [f"// xrobot: digest {input_digest(self.root / 'User/xrobot_main.hpp', inputs)}"],
         )

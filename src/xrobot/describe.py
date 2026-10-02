@@ -270,15 +270,23 @@ def describe(project: Project, config: str | Path | None = None) -> dict:
         )
 
     header = project.header_state()
-    if header["status"] == "stale":
+    if header["status"] == "stale" and header["missing"]:
         report(
             "warning",
             header["path"],
             tr(
-                f"generated from older inputs ({', '.join(header['newer'] + header['missing'])}); "
+                f"generated from inputs that no longer exist ({', '.join(header['missing'])}); "
                 "run `xrobot gen`",
-                f"生成时用的输入已经过期（{'、'.join(header['newer'] + header['missing'])}）；"
-                "请运行 `xrobot gen`",
+                f"生成时用的输入已不存在（{'、'.join(header['missing'])}）；请运行 `xrobot gen`",
+            ),
+        )
+    elif header["status"] == "stale":
+        report(
+            "warning",
+            header["path"],
+            tr(
+                "its inputs changed after it was generated; run `xrobot gen`",
+                "生成之后输入有改动；请运行 `xrobot gen`",
             ),
         )
     elif header["status"] in ("missing", "unreadable"):

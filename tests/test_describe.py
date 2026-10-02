@@ -345,13 +345,25 @@ class Diagnostics(DescribeTestCase):
         result = describe(self.project)
         self.assertEqual(result["header"]["status"], "fresh")
         self.assertEqual(result["diagnostics"], [])
+        # 只改时间不算改动；以前 git checkout 或复制工程后这里会报过期。
+        # A new file time is no change; this used to be stale after a git checkout or a copy.
         future = (self.root / "User/xrobot_main.hpp").stat().st_mtime + 10
         os.utime(self.path, (future, future))
+        self.assertEqual(describe(self.project)["header"]["status"], "fresh")
+        self.path.write_bytes(self.path.read_bytes() + b"# note\n")
         result = describe(self.project)
         self.assertEqual(result["header"]["status"], "stale")
         self.assertIn(
-            "generated from older inputs (User/xrobot.yaml); run `xrobot gen`",
+            "its inputs changed after it was generated; run `xrobot gen`",
             self.messages(result, "warning"),
+        )
+        self.write(
+            "User/xrobot_main.hpp",
+            '#pragma once\n// xrobot: config "xrobot.yaml"\n// xrobot: depends "gone.hpp"\n',
+        )
+        self.assertIn(
+            "generated from inputs that no longer exist (User/gone.hpp); run `xrobot gen`",
+            self.messages(describe(self.project), "warning"),
         )
 
     def test_another_config_can_be_described_without_changing_the_selection(self):

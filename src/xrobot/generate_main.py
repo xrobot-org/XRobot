@@ -27,7 +27,7 @@ from xrobot.constructor_model import (
     type_shape,
 )
 from xrobot.module_parser import discover_modules, module_interface, select_module
-from xrobot.project import HEADER_NOTICE, Project, atomic_write, read_header_inputs
+from xrobot.project import HEADER_NOTICE, Project, atomic_write
 from xrobot.source_syntax import (
     Token,
     close_token,
@@ -48,11 +48,6 @@ constexpr P Implicit(std::type_identity_t<P> value)
 }
 }  // namespace xrobot_generated
 """
-
-# FAT 的时间戳精度是 2 秒；头文件至少比最新的输入晚这么多，才不会与输入落在同一时刻。
-# FAT timestamps have a 2-second resolution; the header is at least this much newer than
-# its newest input, so the two never share a timestamp.
-FRESHNESS_MARGIN_NS = 2_000_000_000
 
 
 def caller_defined_names(items: list[Token], stop: int) -> set[str]:
@@ -832,9 +827,10 @@ def generate_code(
     config_path = Path(config_path)
     source = project.relative(config_path)
     config = load_config(config_path, source)
+    entry = project.entry()
     depends = (
         ([project.lock] if project.lock.is_file() else [])
-        + [project.entry()]
+        + [entry]
         + sorted(set(module_headers(modules)))
     )
     generator = Generator(modules, index)
@@ -844,7 +840,7 @@ def generate_code(
         source,
         config_path,
         project.header,
-        project.header_lines(config_path, depends),
+        project.header_lines(config_path, depends, entry),
     )
 
 
@@ -853,28 +849,6 @@ def load_modules(project: Project) -> dict:
     Every Module locked in the BSP.
     """
     return discover_modules(project.modules_dir, project.lock)
-
-
-def _mark_fresh(project: Project) -> None:
-    """把生成头文件的修改时间设在它记录的每个输入之后。
-    Give the generated header a modification time after every input it lists.
-
-    通常是当前时间。输入的修改时间在未来（时钟不一致、网络共享、从别的机器拷来），或文件
-    系统时间精度粗使两者相同时，改为最新输入之后 FRESHNESS_MARGIN_NS；否则 LibXR 的 CMake
-    检查会一直认为头文件过期。
-    Normally the current time. When an input's time lies in the future (clock skew, a
-    network share, files copied from another machine) or a coarse filesystem clock makes
-    the two equal, it becomes FRESHNESS_MARGIN_NS after the newest input; otherwise LibXR's
-    CMake check would keep calling the header stale.
-    """
-    os.utime(project.header)
-    config, depends = read_header_inputs(project.header)
-    base = project.header.parent
-    inputs = [base / p for p in ([config] if config else []) + depends]
-    newest = max((p.stat().st_mtime_ns for p in inputs if p.exists()), default=0)
-    if project.header.stat().st_mtime_ns <= newest:
-        target = newest + FRESHNESS_MARGIN_NS
-        os.utime(project.header, ns=(target, target))
 
 
 def generate(
@@ -886,9 +860,8 @@ def generate(
     """为 config_path（缺省为当前选中的产品）生成 User/xrobot_main.hpp。
     Generate User/xrobot_main.hpp for config_path (default: the selected product).
 
-    内容不变时不重写，但修改时间仍更新到所有输入之后，使构建的检查认为它是最新的。
-    Unchanged content is not rewritten, but the modification time still moves after every
-    input so the build's check accepts the header.
+    内容不变时不重写，修改时间保持不变。
+    Unchanged content is not rewritten, and its modification time stays as it was.
 
     Args:
         modules, index: 调用方已读取的模块和类型索引（setup 检查全部配置时已建好）。
@@ -911,7 +884,6 @@ def generate(
     registrations = read_registrations(project.entry())
     code = generate_code(project, config_path, modules, registrations, index)
     atomic_write(project.header, code)
-    _mark_fresh(project)
     return code
 
 
