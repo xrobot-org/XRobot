@@ -124,6 +124,13 @@ class Manifests(TestCase):
                 f"MODULE MANIFEST V2 holds only {keys}",
             ),
             (block("depends: team/B"), "A.hpp: depends must be a list"),
+            (
+                # 以前只报 YAML 的原始错误，不说明是哪个文件、怎么改。
+                # Only the raw YAML error used to be reported, without the file or the fix.
+                block("module_description: IMU / IMU driver: sampling\ndepends: []"),
+                "A.hpp: the MODULE MANIFEST is not valid YAML (mapping values are not allowed "
+                'here); quote a value that contains ": " or "#"',
+            ),
         )
         for text, message in cases:
             with self.subTest(message=message):

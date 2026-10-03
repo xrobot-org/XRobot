@@ -108,7 +108,21 @@ def manifest_from_text(text: str, path: str | Path | None = None) -> ModuleManif
                 "（C++ 构造函数就是接口）",
             )
         )
-    data = yaml.safe_load(matches[0].group(2))
+    try:
+        data = yaml.safe_load(matches[0].group(2))
+    except yaml.YAMLError as error:
+        # 手写的描述里常见 "Name: text"，YAML 把 ": " 当作映射。
+        # Hand-written descriptions often read "Name: text", and YAML takes ": " as a
+        # mapping.
+        detail = str(error).splitlines()[0]
+        raise ValueError(
+            tr(
+                f"{path}: the MODULE MANIFEST is not valid YAML ({detail}); quote a value that "
+                'contains ": " or "#"',
+                f'{path}: MODULE MANIFEST 不是合法的 YAML（{detail}）；含有 ": " 或 "#" 的值'
+                "需要加引号",
+            )
+        ) from None
     if data is None:
         data = {}
     if not isinstance(data, dict):
