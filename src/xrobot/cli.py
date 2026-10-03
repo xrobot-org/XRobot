@@ -40,6 +40,10 @@ def _description() -> str:
 INIT_MODULES = f"xrobot: {__version__}\nmodules: []\n"
 INIT_CONFIG = "modules: []\nsettings:\n  monitor_sleep_ms: 1000\n"
 IGNORED = ("/User/xrobot_main.hpp", "/Modules/CMakeLists.txt", "/Modules/*/")
+# 仓库内统一为 LF，签出时按平台转换；脚本按各自系统的要求固定换行符。
+# Text is LF inside the repository and converted on checkout; scripts keep the line ending
+# their system needs.
+ATTRIBUTES = ("* text=auto", "*.sh text eol=lf", "*.bat text eol=crlf")
 COMMIT = re.compile(r"[0-9a-f]{40}")
 
 
@@ -117,10 +121,22 @@ def _add_ignore_entries(path: Path) -> bool:
         是否追加了条目。
         Whether any entry was appended.
     """
+    return _append_lines(path, IGNORED)
+
+
+def _append_lines(path: Path, entries: Sequence[str]) -> bool:
+    """把 path 中还没有的行追加到文件末尾；文件不存在时新建。已有内容和换行符保持不变。
+    Append the lines of entries that path does not have yet; the file is created when it is
+    missing. Existing content and line endings are kept.
+
+    Returns:
+        是否追加了行。
+        Whether any line was appended.
+    """
     from xrobot.project import atomic_write
 
     text = path.read_bytes().decode("utf-8") if path.exists() else ""
-    missing = [entry for entry in IGNORED if entry not in text.splitlines()]
+    missing = [entry for entry in entries if entry not in text.splitlines()]
     if not missing:
         return False
     newline = "\r\n" if "\r\n" in text else "\n"
@@ -151,6 +167,8 @@ def cmd_init(args: argparse.Namespace) -> None:
             created.append(relative)
     if _add_ignore_entries(root / ".gitignore"):
         created.append(tr(".gitignore entries", ".gitignore 条目"))
+    if _append_lines(root / ".gitattributes", ATTRIBUTES):
+        created.append(tr(".gitattributes entries", ".gitattributes 条目"))
     if created:
         print(tr(f"Created {', '.join(created)}", f"已创建 {'、'.join(created)}"))
     else:
@@ -688,8 +706,10 @@ def parser() -> argparse.ArgumentParser:
         verbs,
         "init",
         tr(
-            "create Modules/modules.yaml, Modules/sources.yaml and User/xrobot.yaml",
-            "创建 Modules/modules.yaml、Modules/sources.yaml 和 User/xrobot.yaml",
+            "create Modules/modules.yaml, Modules/sources.yaml, User/xrobot.yaml and the "
+            ".gitignore and .gitattributes entries",
+            "创建 Modules/modules.yaml、Modules/sources.yaml、User/xrobot.yaml，以及 .gitignore 和 "
+            ".gitattributes 条目",
         ),
     ).set_defaults(run=cmd_init)
 

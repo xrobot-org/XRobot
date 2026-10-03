@@ -41,7 +41,7 @@ class Init(CliMixin, TempDirTestCase):
         self.assertEqual(
             out.strip(),
             "Created Modules/modules.yaml, Modules/sources.yaml, User/xrobot.yaml, "
-            ".gitignore entries",
+            ".gitignore entries, .gitattributes entries",
         )
         self.assertEqual(read_modules_yaml(self.root / "Modules/modules.yaml"), ([], __version__))
         self.assertEqual(
@@ -56,6 +56,10 @@ class Init(CliMixin, TempDirTestCase):
         self.assertEqual(
             (self.root / ".gitignore").read_text(encoding="utf-8").splitlines(),
             ["/User/xrobot_main.hpp", "/Modules/CMakeLists.txt", "/Modules/*/"],
+        )
+        self.assertEqual(
+            (self.root / ".gitattributes").read_text(encoding="utf-8").splitlines(),
+            ["* text=auto", "*.sh text eol=lf", "*.bat text eol=crlf"],
         )
         out, _ = self.ok("-C", self.root, "init")
         self.assertEqual(out.strip(), "Created nothing (already initialized)")
@@ -77,6 +81,26 @@ class Init(CliMixin, TempDirTestCase):
             self.read(".gitignore").splitlines(),
             ["build/", "/Modules/CMakeLists.txt", "/User/xrobot_main.hpp", "/Modules/*/"],
         )
+
+    def test_init_adds_only_the_missing_attribute_lines(self):
+        # 仓库内统一为 LF、签出时转换；已有的行和换行符保持不变。
+        # LF inside the repository, converted on checkout; existing lines and line endings stay.
+        self.write(".gitattributes", "*.png binary\r\n* text=auto\r\n*.bat text eol=lf")
+        out, _ = self.ok("-C", self.root, "init")
+        self.assertIn(".gitattributes entries", out)
+        self.assertEqual(
+            (self.root / ".gitattributes").read_bytes(),
+            b"*.png binary\r\n* text=auto\r\n*.bat text eol=lf\r\n"
+            b"*.sh text eol=lf\r\n*.bat text eol=crlf\r\n",
+        )
+        out, _ = self.ok("-C", self.root, "init")
+        self.assertEqual(out.strip(), "Created nothing (already initialized)")
+
+    def test_init_leaves_a_complete_gitattributes_file_alone(self):
+        text = "* text=auto\n*.sh text eol=lf\n*.bat text eol=crlf\n*.png binary\n"
+        self.write(".gitattributes", text)
+        self.ok("-C", self.root, "init")
+        self.assertEqual(self.read(".gitattributes"), text)
 
     def test_version(self):
         out, _ = self.ok("--version")
