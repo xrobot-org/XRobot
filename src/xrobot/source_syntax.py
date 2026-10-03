@@ -175,7 +175,7 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
     constructors = [
         constructor
         for constructor in class_view.constructors(public_only=True, callable_only=True)
-        if not _copies_or_moves([p.text.strip() for p in constructor.parameters], name)
+        if not copies_or_moves([p.text.strip() for p in constructor.parameters], name)
     ]
     if not constructors:
         raise ValueError(
@@ -211,10 +211,50 @@ def extract_interface(source: str, name: str, source_name: str | None = None) ->
         "name": name,
         "template_declarations": [parameter.text.strip() for parameter in template_parameters],
         "constructors": result,
+        "arities": constructor_arities(class_view, name),
     }
 
 
-def _copies_or_moves(parameters: list[str], name: str) -> bool:
+def parameter_arity(parameters: list[str]) -> tuple[int, int | None]:
+    """参数表接受的实参个数：(没有默认值的参数个数, 最多个数；有可变参数时为 None)。
+    The number of arguments a parameter list accepts: (parameters without a default, the most
+    it takes; None with a pack).
+    """
+    declared = [p for p in parameters if p.strip() not in ("", "void")]
+    packs = [p for p in declared if "..." in p]
+    required = sum(
+        1 for p in declared if p not in packs and not any(t.text == "=" for t in code_tokens(p))
+    )
+    if packs:
+        return required, None
+    return required, len(declared)
+
+
+def constructor_arities(class_view, name: str) -> list[tuple[int, int | None]]:
+    """类声明的每个构造函数（不论访问权限、是否可调用，拷贝和移动构造除外）接受的实参个数。
+    The argument counts of every constructor the class declares, whatever its access or
+    callability, copy and move constructors excepted.
+
+    重载决议会考虑私有和已删除的构造函数，所以生成器看一个调用有几个候选时用这份列表。
+    Overload resolution considers private and deleted constructors too, so the generator
+    counts the candidates of a call from this list.
+    """
+    arities = []
+    for constructor in class_view.constructors():
+        parameters = [p.text.strip() for p in constructor.parameters]
+        if not copies_or_moves(parameters, name):
+            arities.append(parameter_arity(parameters))
+    return arities
+
+
+def viable_constructors(arities: list[tuple[int, int | None]], count: int) -> int:
+    """能接受 count 个实参的构造函数个数。
+    The number of constructors that take count arguments.
+    """
+    return sum(1 for low, high in arities if low <= count and (high is None or count <= high))
+
+
+def copies_or_moves(parameters: list[str], name: str) -> bool:
     """参数表是否是 name 的拷贝构造或移动构造：唯一参数为 [const] name[<...>]& 或 &&。
     Whether a parameter list makes a copy or move constructor of name: its one parameter
     is [const] name[<...>]& or &&.

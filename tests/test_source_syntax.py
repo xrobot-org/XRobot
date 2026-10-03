@@ -7,7 +7,7 @@ from fixtures import TestCase
 from xrobot.constructor_model import (
     enrich_interface,
 )
-from xrobot.source_syntax import extract_interface
+from xrobot.source_syntax import extract_interface, parameter_arity, viable_constructors
 
 
 def interface(source, name="Foo"):
@@ -48,6 +48,27 @@ class InterfaceExtraction(TestCase):
             [c["parameters"] for c in result["constructors"]],
             [["const FooConfig& config"], ["Foo* p"]],
         )
+
+    def test_the_argument_counts_of_every_constructor_are_recorded(self):
+        # 私有和已删除的构造函数也参与重载决议，所以也记录；拷贝和移动构造除外。
+        # Private and deleted constructors take part in overload resolution, so they are
+        # recorded too; copy and move constructors are not.
+        result = extract_interface(
+            "class Foo { public:\n  Foo() {}\n  Foo(int a, float b = 1.0f) {}\n"
+            "  Foo(const char* name, ...) {}\n  Foo(const Foo&) = default;\n  Foo(long) = delete;\n"
+            " private:\n  Foo(void* p, int n, int m = 0) {}\n};",
+            "Foo",
+        )
+        self.assertEqual(result["arities"], [(0, 0), (1, 2), (1, None), (1, 1), (2, 3)])
+        self.assertEqual(
+            [viable_constructors(result["arities"], count) for count in range(5)], [1, 3, 3, 2, 1]
+        )
+
+    def test_parameter_arity_counts_defaults_and_packs(self):
+        self.assertEqual(parameter_arity([]), (0, 0))
+        self.assertEqual(parameter_arity(["void"]), (0, 0))
+        self.assertEqual(parameter_arity(["int a", "std::array<int, 2> b = {}"]), (1, 2))
+        self.assertEqual(parameter_arity(["int a", "Args&&... rest"]), (1, None))
 
     def test_template_declarations_are_listed_one_by_one(self):
         result = interface(

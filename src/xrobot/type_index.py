@@ -352,6 +352,10 @@ class _Layout:
         self.names: dict[str, str] = {}
         self.aliases: dict[str, tuple[int, int]] = {}
         self.monitor: str | None = None  # 取值 / values: 'public', 'conditional', None
+        # 每个公有 OnMonitor 声明的返回类型写法；using 声明和写不出的返回类型为 None。
+        # The return type spelling of each public OnMonitor declaration; None for a
+        # using-declaration or a return type that cannot be read.
+        self.monitor_returns: list[str | None] = []
 
 
 def _scan_body(
@@ -523,6 +527,7 @@ def _classify(
             layout.aliases[texts[1]] = (member[2].end, member[-1].end)
         elif "OnMonitor" in texts and access == "public":
             layout.monitor = "conditional" if header.conditional_depth(member[0]) else "public"
+            layout.monitor_returns.append(None)
         return
     if first == "typedef":
         # typedef struct {...} Name; 由 TypeIndex._parse 登记为类。
@@ -586,8 +591,40 @@ def _classify(
     if "static" in leading or function:
         if "OnMonitor" in texts and access == "public" and function:
             layout.monitor = "conditional" if header.conditional_depth(member[0]) else "public"
+            layout.monitor_returns.append(_return_spelling(header, member))
         return
     _record_fields(header, member, None, access, layout)
+
+
+_DECLARATION_SPECIFIERS = frozenset(
+    ["virtual", "static", "inline", "constexpr", "consteval", "friend", "explicit"]
+)
+
+
+def _return_spelling(header: _Header, member: Sequence[Token]) -> str | None:
+    """OnMonitor 声明的返回类型写法；auto、尾置返回类型和读不出的写法为 None。
+    The return type spelling of an OnMonitor declaration; None for auto, a trailing return
+    type or anything that cannot be read.
+    """
+    stop = next((i for i, t in enumerate(member) if t.text == "OnMonitor"), 0)
+    k = 0
+    while k < stop:
+        text = member[k].text
+        if text == "[" and k + 1 < stop and member[k + 1].text == "[":
+            k = close_token(member, k) + 1
+        elif text in ("alignas", "__attribute__") and k + 1 < stop and member[k + 1].text == "(":
+            k = close_token(member, k + 1) + 1
+        elif text in _DECLARATION_SPECIFIERS:
+            k += 1
+        else:
+            break
+    words = member[k:stop]
+    unreadable = ("auto", "decltype", "->")
+    if not words or any(t.text in unreadable for t in words):
+        return None
+    if any(t.text == "->" for t in member[stop:]):
+        return None
+    return " ".join(header.text[words[0].start : words[-1].end].split())
 
 
 def _is_function(member: Sequence[Token]) -> bool:
@@ -895,6 +932,17 @@ class ClassEntry:
         None.
         """
         return self.layout().monitor
+
+    def constructor_arities(self) -> list[tuple[int, int | None]]:
+        """类声明的每个构造函数接受的实参个数，含私有和已删除的构造函数。
+        The argument counts of every constructor the class declares, private and deleted ones
+        included.
+        """
+        if self.view is None:
+            return []
+        from xrobot.source_syntax import constructor_arities
+
+        return constructor_arities(self.view, self.path[-1])
 
 
 class TypeIndex:
@@ -1285,6 +1333,28 @@ class TypeIndex:
             if found is None:
                 unknown = True
         return None if unknown else False
+
+    def monitor_return(self, entry: ClassEntry, _depth: int = 0) -> str | None:
+        """提供 OnMonitor 的类声明的返回类型写法；该类的所有声明写法一致时才有值。
+        The return type spelling declared by the class that provides OnMonitor; None unless
+        all of its declarations agree on one spelling.
+
+        Raises:
+            ValueError: OnMonitor 声明在 #if 中。
+                OnMonitor is declared under #if.
+        """
+        if entry.monitor() == "public":
+            spellings = set(entry.layout().monitor_returns)
+            return spellings.pop() if len(spellings) == 1 else None
+        if _depth > 8:
+            return None
+        for access, base in entry.base_spellings():
+            if access != "public" or base.lstrip(":").startswith("LibXR::"):
+                continue
+            parent = self.resolve(base, entry.path[:-1])
+            if parent is not None and self.provides_monitor(parent):
+                return self.monitor_return(parent, _depth + 1)
+        return None
 
 
 def _headers_of(module: dict) -> list[Path]:

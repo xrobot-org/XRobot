@@ -370,6 +370,50 @@ class Monitor(TypeIndexTestCase):
             ):
                 self.provides(text)
 
+    def returned(self, text, name="M"):
+        """提供 OnMonitor 的类声明的返回类型写法。
+        The return type spelling declared by the class that provides OnMonitor.
+        """
+        index = self.index(text)
+        return index.monitor_return(index.resolve(name))
+
+    def test_the_return_type_is_the_spelling_of_the_declaration(self):
+        for declaration, expected in (
+            ("void OnMonitor();", "void"),
+            ("virtual void OnMonitor() {}", "void"),
+            ("[[maybe_unused]] static inline void OnMonitor() {}", "void"),
+            ("void OnMonitor() const noexcept {}", "void"),
+            ("int OnMonitor();", "int"),
+            ("const char* OnMonitor();", "const char*"),
+            ("std::uint8_t OnMonitor();", "std::uint8_t"),
+            ("LibXR::ErrorCode OnMonitor();", "LibXR::ErrorCode"),
+            ("auto OnMonitor();", None),
+            ("auto OnMonitor() -> void;", None),
+            ("decltype(auto) OnMonitor();", None),
+        ):
+            with self.subTest(declaration=declaration):
+                self.assertEqual(self.returned(f"class M {{ public: {declaration} }};"), expected)
+
+    def test_declarations_that_disagree_leave_the_return_type_open(self):
+        self.assertEqual(
+            self.returned("class M { public: void OnMonitor(); void OnMonitor(int);  };"), "void"
+        )
+        self.assertIsNone(
+            self.returned("class M { public: void OnMonitor(); int OnMonitor(int); };")
+        )
+
+    def test_the_return_type_comes_from_the_base_that_provides_the_monitor(self):
+        self.assertEqual(
+            self.returned("struct B { int OnMonitor(); };\nclass M : public B {};"), "int"
+        )
+        self.assertIsNone(
+            self.returned(
+                "class B { protected: void OnMonitor(); };\n"
+                "class M : B { public: using B::OnMonitor; };"
+            )
+        )
+        self.assertIsNone(self.returned("class M { public: void Other(); };"))
+
     def test_an_include_guard_is_not_a_condition(self):
         guarded = (
             "// Led\n#ifndef LED_HPP\n#define LED_HPP\n#include <cstdint>\n"
