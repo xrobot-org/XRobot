@@ -38,8 +38,8 @@ Hardware testing of a BSP is arranged by its maintainers.
 3. xr-syntax 版本有变化时先发布 xr-syntax，再发布 CodeGenerator 和 XRobot：在 master 上创建 GitHub
    Release，tag 为 `v` 加版本号（如 `v1.0.0`），发布工作流随即构建并上传到 PyPI。tag 只标记
    提交，`pyproject.toml` 中必须已经是要发布的版本号。
-4. XRobot 把 `v1` 移到同一个提交。模块 CI 通过 `module-ci.yml@v1` 调用本仓库的共享工作流；
-   共享工作流有不兼容的修改时改用 `v2`。
+4. XRobot 把 `v1` 移到同一个提交。模块 CI 通过 `module-ci.yml@v1`、STM32 BSP 的 CI 通过
+   `bsp-stm32-ci.yml@v1` 调用本仓库的共享工作流；共享工作流有不兼容的修改时改用 `v2`。
 
 The release follows these steps once every check has passed:
 
@@ -49,8 +49,9 @@ The release follows these steps once every check has passed:
    GitHub Release on master with the tag `v` plus the version (such as `v1.0.0`) makes the
    publish workflow build the package and upload it to PyPI. The tag only marks the commit,
    so `pyproject.toml` must already carry the released version.
-4. XRobot moves `v1` to the same commit. Module CI calls this repository's shared workflow as
-   `module-ci.yml@v1`; an incompatible change to the shared workflow moves to `v2`.
+4. XRobot moves `v1` to the same commit. Module CI calls this repository's shared workflows as
+   `module-ci.yml@v1` and the CI of STM32 BSPs as `bsp-stm32-ci.yml@v1`; an incompatible change
+   to a shared workflow moves to `v2`.
 
 ```sh
 git tag -f v1 'v1.0.0^{commit}'
