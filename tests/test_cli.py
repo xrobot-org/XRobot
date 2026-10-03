@@ -215,6 +215,13 @@ class Commands(CliMixin, BspTestCase):
         out, _ = self.ok("gen", cwd=self.root)
         self.assertIn("User/xrobot.yaml", out)
 
+    def test_gen_writes_line_directives_unless_told_not_to(self):
+        header = self.root / "User/xrobot_main.hpp"
+        self.ok("gen")
+        self.assertIn('#line 2 "xrobot.yaml"', header.read_text(encoding="utf-8"))
+        self.ok("gen", "--no-line-directives")
+        self.assertNotIn("#line", header.read_text(encoding="utf-8"))
+
     def test_errors_exit_with_status_1_and_a_message(self):
         self.fails("gen", "-c", "User/missing.yaml", message="User/missing.yaml does not exist")
         self.config({"modules": [{"module": "Led", "id": "led", "args": [{"gpio": "other"}]}]})
@@ -544,6 +551,13 @@ class Setup(CliMixin, UpstreamTestCase):
             '// xrobot: config "products/alt.yaml"',
             (self.root / "User/xrobot_main.hpp").read_text(encoding="utf-8"),
         )
+
+    def test_setup_writes_line_directives_unless_told_not_to(self):
+        header = self.root / "User/xrobot_main.hpp"
+        self.ok("setup")
+        self.assertIn('#line 2 "xrobot.yaml"', header.read_text(encoding="utf-8"))
+        self.ok("setup", "--frozen", "--no-line-directives")
+        self.assertNotIn("#line", header.read_text(encoding="utf-8"))
 
     def test_setup_fails_when_any_config_is_invalid(self):
         self.write(

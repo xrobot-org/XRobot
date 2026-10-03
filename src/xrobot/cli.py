@@ -186,7 +186,7 @@ def cmd_setup(args: argparse.Namespace) -> None:
                 sys.stdout.write(diff)
     checked = _count(validate_all(project, modules, index), "config", "配置")
     selected = project.selected_config()
-    generate(project, selected, modules, index)
+    generate(project, selected, modules, index, args.line_directives)
     name = project.relative(selected)
     print(
         tr(
@@ -205,7 +205,7 @@ def cmd_gen(args: argparse.Namespace) -> None:
     project = _project(args)
     _check_pin(project)
     config = _config_path(project, args.config)
-    generate(project, config)
+    generate(project, config, line_directives=args.line_directives)
     name = project.relative(config or project.selected_config())
     print(
         tr(f"Generated User/xrobot_main.hpp for {name}", f"已为 {name} 生成 User/xrobot_main.hpp")
@@ -644,6 +644,21 @@ def _source_parser(verbs: argparse._SubParsersAction) -> None:
     source.set_defaults(run=cmd_source)
 
 
+def _line_directives(command: argparse.ArgumentParser) -> None:
+    """给生成头文件的命令加上 --no-line-directives。
+    Add --no-line-directives to a command that generates the header.
+    """
+    command.add_argument(
+        "--no-line-directives",
+        dest="line_directives",
+        action="store_false",
+        help=tr(
+            "do not write #line directives, which make compiler errors point into the YAML",
+            "不写 #line 指令（它使编译错误指回 YAML）",
+        ),
+    )
+
+
 def parser() -> argparse.ArgumentParser:
     """构造 xrobot 的参数解析器。
     Build the xrobot argument parser.
@@ -725,6 +740,7 @@ def parser() -> argparse.ArgumentParser:
         metavar="REF",
         help=tr("refuse unreleased commits for this target ref", "拒绝这个目标 ref 上未发布的提交"),
     )
+    _line_directives(setup)
     setup.set_defaults(run=cmd_setup)
 
     gen = _command(
@@ -743,6 +759,7 @@ def parser() -> argparse.ArgumentParser:
             "默认：选中的配置，没有时为 User/xrobot.yaml",
         ),
     )
+    _line_directives(gen)
     gen.set_defaults(run=cmd_gen)
 
     desc = _command(
