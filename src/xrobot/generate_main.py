@@ -8,7 +8,6 @@ sources.
 from __future__ import annotations
 
 import bisect
-import os
 import re
 from pathlib import Path
 
@@ -17,17 +16,28 @@ from xr_syntax.i18n import tr
 from xrobot.config import IDENTIFIER, ConfigError, identifier_problem, load_config, value_text
 from xrobot.constructor_model import (
     ValueChecker,
+    argument_text,
+    base_spelling,
     binding_candidates,
     constructor_for,
-    convert,
     initializer_tree,
+    is_arithmetic,
     is_dependency,
     qualify,
     template_bindings,
     type_shape,
 )
+from xrobot.cpp_layout import (
+    INDENT,
+    layout_call,
+    layout_declaration,
+    layout_macro,
+    layout_value,
+    sort_includes,
+    wrap_comment,
+)
 from xrobot.module_parser import discover_modules, module_interface, select_module
-from xrobot.project import HEADER_NOTICE, Project, atomic_write
+from xrobot.project import Project, atomic_write, header_banner, header_relative
 from xrobot.source_syntax import (
     Token,
     close_token,
@@ -35,19 +45,9 @@ from xrobot.source_syntax import (
     conditional_depth,
     parse_document,
     split_arguments,
+    viable_constructors,
 )
 from xrobot.type_index import TypeIndex, module_headers
-
-HELPERS = """namespace xrobot_generated {
-// Implicit conversion of a configuration value to an arithmetic parameter type;
-// constant conversions keep the compiler's value-change warnings.
-template <typename P>
-constexpr P Implicit(std::type_identity_t<P> value)
-{
-  return value;
-}
-}  // namespace xrobot_generated
-"""
 
 
 def caller_defined_names(items: list[Token], stop: int) -> set[str]:
@@ -281,19 +281,26 @@ class Generator:
         header_path: Path | None = None,
         header_lines: tuple[str, ...] | list[str] = (),
         compile_check: bool = False,
+        line_directives: bool = True,
     ) -> str:
         """一份配置的生成头文件文本。
         The text of the generated header for one configuration.
 
         Args:
-            source: 报错时配置的名字。
-                The name of the configuration in error messages.
-            config_path: 配置文件；与 header_path 都给出时生成 #line 指令。
-                The configuration file; with header_path, #line directives are emitted.
-            header_lines: 说明行之后的 // xrobot: 输入清单。
-                The // xrobot: input list after the notice line.
+            source: 报错时配置的名字，也是头文件说明行中的配置路径。
+                The name of the configuration in error messages and in the notice line of the
+                header.
+            config_path: 配置文件；与 header_path 都给出时，每个实例前的注释记录它的行号，
+                并按 line_directives 生成 #line 指令。
+                The configuration file; with header_path, the comment before each instance
+                records its line, and #line directives follow line_directives.
+            header_lines: 文件末尾的 // xrobot: 输入清单。
+                The // xrobot: input list at the end of the file.
             compile_check: 生成模块 CI 的编译探针，而不是应用入口。
                 Emit the Module CI compile probe instead of the application entry.
+            line_directives: 每个实例前写 #line，使编译错误指回 YAML。
+                Write a #line before each instance, so compiler errors point back into the
+                YAML.
 
         Raises:
             ConfigError: 配置有错；每行一条，带配置名前缀。
@@ -320,7 +327,7 @@ class Generator:
             known[record["name"]] = record["type"]
         entries_config = config.get("modules", [])
         ids = [entry.get("id") for entry in entries_config]
-        selected, entries, monitored, earlier = {}, [], set(), {}
+        selected, entries, monitored, earlier, storage_names = {}, [], set(), {}, {}
         for i, entry in enumerate(entries_config):
             identity = entry["id"]
             try:
@@ -330,6 +337,17 @@ class Generator:
                     fail(line if line.startswith(identity) else f"{identity}: {line}")
                 earlier[identity] = None
                 continue
+            for name, origin in result["storage_names"].items():
+                if name in storage_names:
+                    fail(
+                        tr(
+                            f"{origin} and {storage_names[name]} would both be stored as {name}; "
+                            "rename one of the instance ids",
+                            f"{origin} 和 {storage_names[name]} 的存储都会叫 {name}；"
+                            "请给其中一个实例改 id",
+                        )
+                    )
+                storage_names[name] = origin
             entries.append(result)
             earlier[identity] = result["cpp_type"]
             if result["monitor"]:
@@ -339,17 +357,17 @@ class Generator:
         for name, spec in config.get("constexprs", {}).items():
             try:
                 cpp_type = value_text(spec["type"], f"constexprs.{name}.type")
-                self.checker.checks = []
-                expr, typed = self.checker.render(
+                expr, _ = self.checker.render(
                     spec["value"], "constexprs." + name, cpp_type, (), None
                 )
-                if expr.lstrip().startswith("{"):
-                    expr = cpp_type + expr
-                constants.append(f"inline constexpr {cpp_type} {name} = {expr};")
+                constants.append((cpp_type, name, expr))
             except ValueError as error:
                 fail(str(error))
         if errors:
             raise ConfigError("\n".join(errors))
+        location = None
+        if config_path is not None and header_path is not None and not compile_check:
+            location = (header_relative(config_path, header_path), Path(header_path).name)
         return self._assemble(
             config,
             registrations,
@@ -357,8 +375,9 @@ class Generator:
             monitored,
             constants,
             namespace,
-            config_path,
-            header_path,
+            source,
+            location,
+            line_directives,
             header_lines,
             compile_check,
             selected,
@@ -439,13 +458,15 @@ class Generator:
         visible.update({k: v for k, v in earlier.items() if v is not None})
         later = set(ids[i:])
         ctor = constructor_for(interface, named_values, visible, cpp_type, templates)
-        args_lines = getattr(entry.get("args"), "item_lines", None) or []
-        declarations, arguments, problems = [], [], []
-        for j, (p, item) in enumerate(zip(ctor["arguments"], named_values, strict=False)):
+        # 同名参数数的构造函数不止一个时，值要按目标类型转换，才由 YAML 的参数名选定构造函数。
+        # With several constructors that could take this call, values are converted to their
+        # target types so that the YAML's parameter names pick the constructor.
+        selecting = viable_constructors(interface["arities"], len(ctor["arguments"])) > 1
+        storage, arguments, problems, names = [], [], [], {}
+        for p, item in zip(ctor["arguments"], named_values, strict=False):
             value = next(iter(item.values()))
-            line = args_lines[j] if j < len(args_lines) else getattr(entry, "line", 0)
             try:
-                decl, arg = self._argument(
+                stored, argument = self._argument(
                     identity,
                     p,
                     value,
@@ -456,12 +477,15 @@ class Generator:
                     later,
                     earlier,
                     compile_check,
+                    selecting,
                 )
             except ValueError as error:
                 problems.append(str(error))
                 continue
-            declarations.append((line, decl))
-            arguments.append((line, arg))
+            if stored is not None:
+                storage.append(stored)
+                names[stored[0]] = f"{identity}.args.{p['name']}"
+            arguments.append(argument)
         located = self.index.resolve(module["name"])
         monitor = self.index.provides_monitor(located) if located is not None else None
         if monitor is None:
@@ -473,15 +497,37 @@ class Generator:
                     "它的基类不在已加载的模块头文件中",
                 )
             )
+        checked = False
+        if monitor:
+            spelling = self.index.monitor_return(located)
+            if spelling is None:
+                checked = True
+            elif spelling != "void":
+                shape = type_shape(spelling)
+                if shape[2] or shape[3] or is_arithmetic(spelling):
+                    problems.append(
+                        tr(
+                            f"{identity}: OnMonitor of {module['name']} returns {spelling}; it "
+                            "must return void",
+                            f"{identity}: {module['name']} 的 OnMonitor 返回 {spelling}；"
+                            "必须返回 void",
+                        )
+                    )
+                else:
+                    checked = True
         if problems:
             raise ValueError("\n".join(problems))
+        label = module["id"] + ("<" + ", ".join(template_args) + ">" if template_args else "")
         return {
             "id": identity,
             "cpp_type": cpp_type,
+            "label": label,
             "arguments": arguments,
             "index": i,
-            "declarations": declarations,
+            "storage": storage,
+            "storage_names": names,
             "monitor": monitor,
+            "monitor_checked": checked,
             "line": getattr(entry, "line", 0),
         }
 
@@ -497,19 +543,24 @@ class Generator:
         later: set[str],
         earlier: dict[str, str | None],
         compile_check: bool,
-    ) -> tuple[list[str], str]:
+        selecting: bool,
+    ) -> tuple[tuple[str, str, str] | None, str]:
         """渲染一个构造参数。
         Render one constructor argument.
 
-        依赖按名字绑定到注册名或排在前面的实例；值交给 ValueChecker 和 convert。引用参数和
-        std::initializer_list 的值放进 static 变量，使其活得和实例一样久。
+        依赖按名字绑定到注册名或排在前面的实例；值交给 ValueChecker。配置里新建的对象（花括号
+        和映射）、引用参数和 std::initializer_list 的值放进紧邻实例之前的 static 变量，使其和
+        实例活得一样久；标量、依赖名、nullptr 和 &名字 直接写在实参里。
         A dependency binds by name to a registration or an earlier instance; a value goes
-        through ValueChecker and convert. Values for reference and std::initializer_list
-        parameters live in static variables, as long as the instance.
+        through ValueChecker. Objects the configuration creates (braces and mappings) and the
+        values of reference and std::initializer_list parameters live in static variables right
+        before the instance, as long as the instance; scalars, dependency names, nullptr and
+        &name are written in the argument.
 
         Returns:
-            (实例之前要写出的声明, 参数表达式)。
-            (declarations to emit before the instance, argument expression).
+            (要先写出的 static 变量 (名字, 变量名之前的声明, 值) 或 None, 参数表达式)。
+            (the static variable to write first as (name, declaration before the name, value)
+            or None, the argument expression).
 
         Raises:
             ValueError: 名字无法绑定或值不符合规则。
@@ -518,17 +569,15 @@ class Generator:
         field = f"{identity}.args.{p['name']}"
         typ = qualify(p["type"], interface, cpp_class, templates)
         target = qualify(p["type"], interface, cpp_class, templates, True)
-        _, _, pointers, reference = type_shape(target)
-        checks = []
+        _, cv, pointers, reference = type_shape(target)
         if value is None and compile_check and p["default"] is None:
             raw = f"*static_cast<std::remove_reference_t<{typ}>*>(xr_ci_null)"
-            return [], (f"static_cast<{typ}>({raw})" if typ.rstrip().endswith("&&") else raw)
+            return None, (f"static_cast<{typ}>({raw})" if typ.rstrip().endswith("&&") else raw)
         default = None
         if p["default"] is not None:
             default = initializer_tree(
                 qualify(p["default"], interface, cpp_class, templates), target
             )
-        self.checker.checks = checks
         if value is None and is_dependency(p):
             candidates = self._candidates(target, visible)
             raise ValueError(
@@ -601,26 +650,36 @@ class Generator:
                     if type_shape(source)[0] == type_shape(target)[0] and len(
                         type_shape(source)[2]
                     ) == len(pointers):
-                        return checks, expression  # 同一类型直接绑定 / the same type binds directly
-                    if reference:
-                        convert(expression, typ, False, checks, field)
-                        return checks, f"static_cast<{typ}>({expression})"
-                    expr, _ = convert(expression, typ, False, checks, field)
-                    return checks, expr
+                        return None, expression  # 同一类型直接绑定 / the same type binds directly
+                    # 只有同名参数数的构造函数不止一个时才需要写出参数类型，选定要调用的那个。
+                    # The parameter type is named only when several constructors could take
+                    # the call.
+                    return None, argument_text(expression, typ, False, selecting)
             expr, typed = self.checker.render(text, field, target, (), default)
         else:
             expr, typed = self.checker.render(value, field, target, (), default)
-        exact = typed or isinstance(value, (dict, list))
-        if reference or "std::initializer_list<" in target.replace(" ", ""):
-            # 配置里的临时值和 initializer_list 的底层数组需要静态生存期。
-            # Config temporaries and initializer-list backing arrays need static lifetime.
-            storage = f"xr_arg_{identity}_{p['name']}"
-            checks.append(f"static {typ} {storage} =\n      {expr}\n  ;")
-            return checks, (
-                f"static_cast<{typ}>({storage})" if typ.rstrip().endswith("&&") else storage
+        braced = (
+            isinstance(value, (dict, list)) or expr.lstrip().startswith("{") or typed
+        ) and not pointers
+        listed = "std::initializer_list<" in target.replace(" ", "")
+        if not (reference or listed or braced):
+            exact = typed or isinstance(value, (dict, list))
+            return None, argument_text(expr, typ, exact, selecting)
+        # 配置里的临时值和 initializer_list 的底层数组需要静态生存期。
+        # Config temporaries and initializer-list backing arrays need static lifetime.
+        storage = f"xr_{identity}_{p['name']}"
+        moved = reference == "&&"
+        if braced or listed:
+            constant = (
+                "" if reference == "&&" or (reference == "&" and "const" not in cv) else "const "
             )
-        expr, _ = convert(expr, typ, exact, checks, field)
-        return checks, expr
+            declaration = f"static {constant}{base_spelling(typ)}"
+        else:
+            # 名字和表达式按引用绑定：引用同一个对象，而不是复制它。
+            # A name or expression binds by reference: it refers to the object instead of
+            # copying it.
+            declaration = f"static {typ}"
+        return (storage, declaration, expr), (f"std::move({storage})" if moved else storage)
 
     def _candidates(self, target: str, visible: dict[str, str]) -> list[str]:
         """可绑定到 target 的名字，用于报错提示；规则与 describe 给插件的候选相同。
@@ -647,30 +706,32 @@ class Generator:
         registrations: list[dict],
         entries: list[dict],
         monitored: set[str],
-        constants: list[str],
+        constants: list[tuple[str, str, str]],
         namespace: str,
-        config_path: Path | None,
-        header_path: Path | None,
+        source: str,
+        location: tuple[str, str] | None,
+        line_directives: bool,
         header_lines: tuple[str, ...] | list[str],
         compile_check: bool,
         selected: dict[str, dict],
     ) -> str:
-        """拼出头文件：输入清单、include、常量、XRobotMain、主循环和两个宏。
-        Assemble the header: input list, includes, constants, XRobotMain, the monitor loop
-        and the two macros.
+        """拼出头文件：说明、include、常量、XRobotMain、主循环、两个宏和末尾的输入清单。
+        Assemble the header: notice, includes, constants, XRobotMain, the monitor loop, the two
+        macros and the input list at the end.
 
-        XRobotMain 只接收实例用到的注册；每个实例和参数前的 #line 指回 YAML，实例之后的
-        #line 指回头文件。
-        XRobotMain takes only the registrations the instances use; a #line before each
-        instance and argument points into the YAML, and one after each instance points back
-        into the header.
+        XRobotMain 只接收实例用到的注册。每个实例前有一行注释说明它来自配置的哪一行；有
+        #line 时，它在实例的语句之前指向配置，在实例之后指回头文件。
+        XRobotMain takes only the registrations the instances use. A comment before each
+        instance names the line of the configuration it comes from; with #line, one
+        directive before the instance's statements points into the configuration and one
+        after them points back into the header.
         """
         used = set()
         for entry in entries:
             for expression in (
                 [entry["cpp_type"]]
-                + [a for _, a in entry["arguments"]]
-                + [d for _, ds in entry["declarations"] for d in ds]
+                + entry["arguments"]
+                + [f"{declaration} {name} {value}" for name, declaration, value in entry["storage"]]
             ):
                 used.update(t.text for t in code_tokens(expression) if t.kind == "identifier")
         views = [r for r in registrations if r["name"] in used]
@@ -695,119 +756,183 @@ class Generator:
                 else typ + "&"
             )
             parameters.append(f"{declaration} {record['name']}")
-        # 说明在第二行；读取 // xrobot: 行时跳过它（project.read_header_inputs）。
-        # The notice is the second line; readers of the // xrobot: lines skip it.
+        body: list = []  # 各实例的语句 / the statements of the instances
+        back = object()  # 占位：#line 回到本头文件 / placeholder for "#line back into this header"
+        directives = line_directives and location is not None
+        for entry in entries:
+            if body:
+                body.append("")
+            comment = f"{entry['id']}: {entry['label']}"
+            if location is not None:
+                comment += (
+                    f" ({location[0]}:{entry['line']})" if entry["line"] else f" ({location[0]})"
+                )
+            body += wrap_comment(comment, INDENT)
+            if directives and entry["line"]:
+                body.append(f'#line {entry["line"]} "{_c_string(location[0])}"')
+            for name, declaration, value in entry["storage"]:
+                body += layout_declaration(declaration, name, value, ";", INDENT)
+            if entry["arguments"]:
+                body += layout_call(
+                    f"static {entry['cpp_type']} {entry['id']}(",
+                    entry["arguments"],
+                    ");",
+                    INDENT,
+                )
+            else:
+                body.append(f"  static {entry['cpp_type']} {entry['id']};")
+            if directives and entry["line"]:
+                body.append(back)
+        checks = [e["id"] for e in entries if e["id"] in monitored and e["monitor_checked"]]
+        calls = [e["id"] for e in entries if e["id"] in monitored]
         if compile_check:
-            lines = ["// Generated by `xrobot check-module` for Module CI; do not edit by hand."]
+            lines = [
+                "// Generated by `xrobot check-module` for Module CI; do not edit by hand.",
+                "",
+            ]
         else:
-            lines = ["#pragma once", HEADER_NOTICE, *header_lines]
-        lines += [
-            "",
-            "#include <memory>",
-            "#include <type_traits>",
-            "#include <utility>",
-            '#include "libxr.hpp"',
-            '#include "thread.hpp"',
-        ]
-        lines += [f'#include "{name}.hpp"' for name in selected]
+            lines = [header_banner(source if location is not None else None), "#pragma once", ""]
+        constant_lines: list[str] = []
+        if constants:
+            constant_lines += [f"namespace {namespace}", "{"]
+            for cpp_type, name, expr in constants:
+                head = f"inline constexpr {cpp_type} {name}"
+                head += "" if expr.lstrip().startswith("{") else " = "
+                constant_lines += layout_value(head, expr, ";", 0)
+            constant_lines += [f"}}  // namespace {namespace}", ""]
+        # 用到的名字决定要包含的头文件。
+        # The names used decide which headers are included.
+        text = "\n".join(
+            line for line in [*body, *constant_lines, *parameters] if isinstance(line, str)
+        )
+        implicit = "xrobot_generated::Implicit<" in text
+        if implicit:
+            text += " std::type_identity_t"
+        if checks:
+            text += " std::is_void_v"
+        names = [f'"{m["name"]}.hpp"' for m in selected.values()]
+        names += ['"libxr.hpp"', '"thread.hpp"']
         for header in config.get("constexpr_includes", []):
             header = header.strip()
-            include = header if header.startswith("<") else f'"{header}"'
-            lines.append(f"#include {include}")
-        lines += ["", HELPERS]
-        if constants:
-            lines += (
-                [f"namespace {namespace} {{"] + constants + [f"}}  // namespace {namespace}", ""]
-            )
-        back = object()  # 占位：#line 回到本头文件 / placeholder for "#line back into this header"
-        directives = config_path is not None and header_path is not None and not compile_check
-        cfg = Path(os.path.abspath(config_path)).as_posix() if directives else None
-
-        def at(line: int) -> None:
-            """写出 #line 指令时，让后面的代码指回配置的第 line 行。
-            When #line directives are written, point the following code back to line of the
-            configuration.
-            """
-            if directives and line:
-                lines.append(f'#line {line} "{cfg}"')
-
+            names.append(header if header.startswith("<") else f'"{header}"')
+        names += _standard_headers(text)
+        lines += sort_includes(names) + [""]
+        if implicit:
+            lines += [
+                "namespace xrobot_generated",
+                "{",
+                "// Converts implicitly, so the compiler still warns about constants that change value.",
+                "template <typename P>",
+                "constexpr P Implicit(std::type_identity_t<P> value)",
+                "{",
+                "  return value;",
+                "}",
+                "}  // namespace xrobot_generated",
+                "",
+            ]
+        lines += constant_lines
         if compile_check:
             lines += [
-                "namespace xrobot_generated {",
-                "void XRobotCompileCheck() {",
+                "namespace xrobot_generated",
+                "{",
+                "void XRobotCompileCheck()",
+                "{",
                 "  // Compilation only: this function must never be invoked.",
                 "  [[maybe_unused]] static void* xr_ci_null = static_cast<void*>(nullptr);",
             ]
-        else:
-            if local_templates:
-                lines.append(f"template <{', '.join(local_templates)}>")
-            signature = "[[noreturn]] static inline void XRobotMain("
-            if parameters:
-                lines += [signature, "    " + ",\n    ".join(parameters) + ")", "{"]
-            else:
-                lines += [signature + ")", "{"]
-        for entry in entries:
-            lines.append(f"  // modules[{entry['index']}]: {entry['id']}")
-            for line, declarations in entry["declarations"]:
-                if declarations:
-                    at(line)
-                    lines.extend("  " + d for d in declarations)
-            at(entry["line"])
-            if entry["arguments"]:
-                lines.append(f"  static {entry['cpp_type']} {entry['id']}(")
-                for k, (line, argument) in enumerate(entry["arguments"]):
-                    at(line)
-                    lines.append(f"      {', ' if k else ''}{argument}")
-                lines.append("  );")
-            else:
-                lines.append(f"  static {entry['cpp_type']} {entry['id']};")
-            if directives:
-                lines.append(back)
-        lines += [
-            f'  static_assert(std::is_void_v<decltype({e["id"]}.OnMonitor())>, "{e["id"]}.OnMonitor() must return void");'
-            for e in entries
-            if e["id"] in monitored
-        ]
-        if compile_check:
-            lines += [f"  {e['id']}.OnMonitor();" for e in entries if e["id"] in monitored]
+            if body:
+                lines.append("")
+            lines += body
+            lines += self._monitor_checks(checks)
+            lines += [f"  {name}.OnMonitor();" for name in calls]
             lines += ["}", "}  // namespace xrobot_generated", ""]
-            return "\n".join(lines)
+            return self._numbered(lines, back, None)
+        if local_templates:
+            lines.append(f"template <{', '.join(local_templates)}>")
+        lines += layout_call(
+            "[[noreturn]] static inline void XRobotMain(",
+            parameters,
+            ")",
+            0,
+            hang_margin=3,
+        )
+        lines.append("{")
+        lines += body
+        if body:
+            lines.append("")
+        lines += self._monitor_checks(checks)
         lines += ["  for (;;)", "  {"]
-        lines += [f"    {e['id']}.OnMonitor();" for e in entries if e["id"] in monitored]
+        lines += [f"    {name}.OnMonitor();" for name in calls]
+        sleep = config.get("settings", {}).get("monitor_sleep_ms", "1000")
+        lines += [f"    LibXR::Thread::Sleep({sleep});", "  }", "}", ""]
         lines += [
-            f"    LibXR::Thread::Sleep({config.get('settings', {}).get('monitor_sleep_ms', '1000')});",
-            "  }",
-            "}",
-            "",
-        ]
-        lines += [
-            "// XR_REGISTER marks names for the generator and references the object, so",
-            "// registrations the selected product does not consume raise no variable",
-            "// warnings; types are checked where XRobotMain binds them.",
+            "// XR_REGISTER marks a name for the generator; XRobotMain binds and type-checks it.",
             "#define XR_REGISTER(name, ...) static_cast<void>(name)",
         ]
         call = "::XRobotMain" + (f"<{', '.join(actual_types)}>" if actual_types else "")
-        arguments = ", ".join(r["name"] for r in views)
-        if len(call) + len(arguments) < 72:
-            lines.append(f"#define XROBOT_MAIN() {call}({arguments})")
-        else:
-            lines += ["#define XROBOT_MAIN() \\", f"  {call}( \\"]
-            lines += [
-                f"      {r['name']}{',' if i + 1 < len(views) else ''} \\"
-                for i, r in enumerate(views)
-            ]
-            lines.append("  )")
-        lines.append("")
-        if directives:
-            own = Path(os.path.abspath(header_path)).as_posix()
-            result, number = [], 1  # 下一行输出的行号 / line number of the next emitted line
-            for line in lines:
-                if line is back:
-                    line = f'#line {number + 1} "{own}"'
-                result.append(line)
-                number += line.count("\n") + 1
-            lines = result
-        return "\n".join(lines)
+        lines += layout_macro("XROBOT_MAIN", call, [r["name"] for r in views])
+        if header_lines:
+            lines += ["", *header_lines]
+        return self._numbered(lines, back, (location[1] if location else None))
+
+    @staticmethod
+    def _monitor_checks(names: list[str]) -> list[str]:
+        """每个无法在生成时确认 OnMonitor 返回 void 的实例一条 static_assert。
+        One static_assert for each instance whose OnMonitor is not known to return void at
+        generation.
+        """
+        lines = []
+        for name in names:
+            lines += layout_call(
+                "static_assert(",
+                [
+                    f"std::is_void_v<decltype({name}.OnMonitor())>",
+                    f'"{name}.OnMonitor() must return void"',
+                ],
+                ");",
+                INDENT,
+            )
+        return lines
+
+    @staticmethod
+    def _numbered(lines: list, back: object, header_name: str | None) -> str:
+        """把占位换成指回头文件自身的 #line，并拼成文本。
+        Replace the placeholders with #line directives that point back into the header
+        itself, and join the text.
+        """
+        result, number = [], 1  # 下一行输出的行号 / line number of the next emitted line
+        for line in lines:
+            if line is back:
+                line = f'#line {number + 1} "{_c_string(header_name)}"'
+            result.append(line)
+            number += line.count("\n") + 1
+        return "\n".join(result) + ("" if result and result[-1] == "" else "\n")
+
+
+def _c_string(path: str) -> str:
+    """路径写在 #line 的字符串字面量中的样子。
+    A path as it is written in the string literal of a #line.
+    """
+    return path.replace("\\", "\\\\").replace('"', '\\"')
+
+
+_STANDARD_HEADERS = {
+    "addressof": "<memory>",
+    "initializer_list": "<initializer_list>",
+    "move": "<utility>",
+    "forward": "<utility>",
+    "is_void_v": "<type_traits>",
+    "add_lvalue_reference_t": "<type_traits>",
+    "remove_reference_t": "<type_traits>",
+    "type_identity_t": "<type_traits>",
+}
+
+
+def _standard_headers(text: str) -> list[str]:
+    """生成的代码用到的标准库头文件。
+    The standard library headers the generated code uses.
+    """
+    return sorted({h for n, h in _STANDARD_HEADERS.items() if re.search(rf"\bstd::{n}\b", text)})
 
 
 def generate_code(
@@ -816,6 +941,7 @@ def generate_code(
     modules: dict,
     registrations: list[dict],
     index: TypeIndex | None = None,
+    line_directives: bool = True,
 ) -> str:
     """一份配置的生成头文件文本，不写文件。
     The generated header for one configuration, without writing it.
@@ -841,6 +967,7 @@ def generate_code(
         config_path,
         project.header,
         project.header_lines(config_path, depends, entry),
+        line_directives=line_directives,
     )
 
 
@@ -856,6 +983,7 @@ def generate(
     config_path: str | Path | None = None,
     modules: dict | None = None,
     index: TypeIndex | None = None,
+    line_directives: bool = True,
 ) -> str:
     """为 config_path（缺省为当前选中的产品）生成 User/xrobot_main.hpp。
     Generate User/xrobot_main.hpp for config_path (default: the selected product).
@@ -867,6 +995,9 @@ def generate(
         modules, index: 调用方已读取的模块和类型索引（setup 检查全部配置时已建好）。
             Modules and type index the caller already has (setup builds them to check
             every configuration).
+        line_directives: 每个实例前写 #line，使编译错误指回 YAML；False 时省略。
+            Write a #line before each instance so compiler errors point back into the YAML;
+            False omits them.
 
     Raises:
         ConfigError: 配置不存在或有错。
@@ -882,7 +1013,7 @@ def generate(
         )
     modules = modules if modules is not None else load_modules(project)
     registrations = read_registrations(project.entry())
-    code = generate_code(project, config_path, modules, registrations, index)
+    code = generate_code(project, config_path, modules, registrations, index, line_directives)
     atomic_write(project.header, code)
     return code
 

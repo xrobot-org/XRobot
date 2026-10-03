@@ -20,7 +20,7 @@ import re
 from xr_syntax.i18n import tr
 
 from xrobot.config import ConfigError, value_text
-from xrobot.source_syntax import close_token, code_tokens, split_arguments
+from xrobot.source_syntax import close_token, code_tokens, split_arguments, viable_constructors
 from xrobot.type_index import ClassEntry, TypeIndex, class_scope_names
 
 ARITHMETIC = frozenset(
@@ -588,7 +588,7 @@ def constructor_for(
     )
 
 
-def _base_spelling(cpp_type: str) -> str:
+def base_spelling(cpp_type: str) -> str:
     """去掉类型写法最外层的 cv 和引用，保留模板实参。
     Drop the outer cv qualifiers and reference of a type spelling, keeping template
     arguments.
@@ -648,9 +648,6 @@ class ValueChecker:
         Look types up in index; with None every type counts as not located.
         """
         self.index = index
-        # 正在渲染的值需要的 static_assert 声明。
-        # static_assert declarations for the value being rendered.
-        self.checks: list[str] = []
 
     def _locate(self, cpp_type: str | None, scope: tuple[str, ...]) -> ClassEntry | None:
         """类型写法指向的已索引的类。
@@ -700,7 +697,7 @@ class ValueChecker:
                 self.render(v, f"{field}[{i}]", None, scope, d)[0]
                 for i, (v, d) in enumerate(zip(value, items, strict=True))
             ]
-            return ("{\n" + "\n, ".join(parts) + "\n}" if parts else "{}"), False
+            return "{" + ", ".join(parts) + "}", False
         text = value_text(value, field)
         if entry is not None:
             if _is_designated_brace(text):
@@ -778,7 +775,7 @@ class ValueChecker:
                 )
         keys = list(value)
         entry = self._locate(cpp_type, scope)
-        spelled = _base_spelling(cpp_type) if cpp_type else None
+        spelled = base_spelling(cpp_type) if cpp_type else None
         if entry is None:
             if isinstance(default, dict):
                 self._require(
@@ -830,22 +827,16 @@ class ValueChecker:
                     f"参数。构造函数：{options_zh}",
                 )
             )
+        selecting = viable_constructors(entry.constructor_arities(), len(chosen[0])) > 1
         args = []
         for p in chosen[0]:
             param_type = self.index.qualify_in(p["type"], entry, spelled)
             child = value[p["name"]]
             expr, typed = self.render(child, field + "." + p["name"], param_type, entry.path, None)
             args.append(
-                convert(
-                    expr,
-                    param_type,
-                    typed or isinstance(child, (dict, list)),
-                    self.checks,
-                    field + "." + p["name"],
-                )[0]
+                argument_text(expr, param_type, typed or isinstance(child, (dict, list)), selecting)
             )
-        joined = "\n, ".join(args)
-        return f"{spelled}(\n{joined}\n)", True
+        return f"{spelled}({', '.join(args)})", True
 
     def _designated(
         self,
@@ -865,41 +856,36 @@ class ValueChecker:
             scope = entry.path if entry is not None else ()
             expr, _ = self.render(child, field + "." + key, child_type, scope, child_default)
             parts.append(f".{key} = {expr}")
-        return "{\n" + "\n, ".join(parts) + "\n}" if parts else "{}"
+        return "{" + ", ".join(parts) + "}"
 
 
-def convert(
-    expr: str, target: str, exact: bool, checks: list[str], message: str = "value"
-) -> tuple[str, list[str]]:
-    """按生成器的转换规则写出一个值。
-    Apply the generator's conversion rule to one value.
+def argument_text(expr: str, target: str, exact: bool, selecting: bool) -> str:
+    """一个构造参数写在调用中的样子。
+    How one constructor argument is written in the call.
 
-    花括号写成 std::remove_cv_t<std::remove_reference_t<T>>{…}；生成器构造的带类型表达式原样
-    返回；算术类型经 Implicit<P>，保留编译器对常量转换的警告；其他类型加隐式可转换检查和
-    static_cast，保留纯右值省略，拒绝向下转换和只能显式的转换。
-    A brace initializer becomes std::remove_cv_t<std::remove_reference_t<T>>{...}; a
-    typed expression the generator built is returned unchanged; an arithmetic target goes
-    through Implicit<P>, so constant conversions keep the compiler's warnings; every other
-    target gets an implicit-convertibility check and a static_cast, which keeps prvalue
-    elision and rejects downcasts and explicit-only conversions.
-
-    Returns:
-        (表达式, 追加了检查的 checks)。
-        (expression, checks with any new check appended).
+    值照原样传给参数，由 C++ 按隐式转换规则检查类型和取值。花括号写成 T{…}，使构造函数的
+    重载决议只看到这个类型。同名参数的构造函数不止一个（selecting）时，才按目标类型转换
+    来选定要调用的那个：算术类型、指针和引用经 Implicit<P>，保留隐式转换的规则（拒绝向下
+    转换，对改变值的常量给出警告）；其余按值传递的类型用 static_cast，保留纯右值省略。
+    生成器已构造的带类型表达式（exact）不需要。
+    The value is passed as it is, and C++ checks the type and value by its implicit
+    conversion rules. A brace initializer is written T{...}, so overload resolution of the
+    constructor sees that type only. Only when several constructors could take the call
+    (selecting) is the value converted to the target type to pick the one to call: an
+    arithmetic, pointer or reference target goes through Implicit<P>, which keeps the rules of
+    implicit conversion (downcasts are rejected, constants that change value are warned
+    about); any other type passed by value gets a static_cast, which keeps prvalue elision.
+    A typed expression the generator built (exact) needs neither.
     """
     if expr.lstrip().startswith("{"):
-        return f"std::remove_cv_t<std::remove_reference_t<{target}>>{expr}", checks
-    if exact:
-        return expr, checks
+        return base_spelling(target) + expr
+    if exact or not selecting:
+        return expr
+    _, _, pointers, reference = type_shape(target)
+    if reference == "&&":
+        return f"static_cast<{target}>({expr})"
     if is_arithmetic(target):
-        return f"xrobot_generated::Implicit<{_base_spelling(target)}>({expr})", checks
-    # 同一类型（如不可移动的工厂函数纯右值）不需要转换。
-    # The same type (e.g. an immovable factory prvalue) needs no conversion.
-    quoted_target = target.replace('"', "'")
-    checks.append(
-        f"static_assert(std::is_same_v<std::remove_cvref_t<decltype(({expr}))>, "
-        f"std::remove_cvref_t<{target}>> ||\n"
-        f"              std::is_convertible_v<decltype(({expr})), {target}>,\n"
-        f'              "{message} requires an implicit conversion to {quoted_target}");'
-    )
-    return f"static_cast<{target}>({expr})", checks
+        return f"xrobot_generated::Implicit<{base_spelling(target)}>({expr})"
+    if pointers or reference:
+        return f"xrobot_generated::Implicit<{target}>({expr})"
+    return f"static_cast<{target}>({expr})"

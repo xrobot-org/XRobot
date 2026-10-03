@@ -39,8 +39,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install the package
-        run: pip install .
+      - name: Install the package and the pinned clang-format
+        # The version of the format test (tests/test_clang_format.py); it is skipped without it.
+        run: pip install . clang-format==21.1.8
 
       - name: Require and identify the selected C++ compiler
         run: |
@@ -86,9 +87,9 @@ jobs:
           name: python-package
           path: dist
 
-      - name: Install the built wheel
+      - name: Install the built wheel and the pinned clang-format
         shell: bash
-        run: python -m pip install dist/*.whl
+        run: python -m pip install dist/*.whl clang-format==21.1.8
 
       # 源码在 src/ 下，tests 导入的是安装好的 wheel。
       # The sources live under src/, so the tests import the installed wheel.

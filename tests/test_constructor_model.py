@@ -6,9 +6,9 @@ selection, mapping checks and conversions.
 from fixtures import BspTestCase, CxxMixin, TestCase, requires_cxx
 
 from xrobot.constructor_model import (
+    argument_text,
     compliant_constructors,
     constructor_for,
-    convert,
     enrich_interface,
     explicit_expression_type,
     initializer_tree,
@@ -23,6 +23,10 @@ from xrobot.source_syntax import extract_interface
 from xrobot.type_index import class_scope_names
 
 MAIN = '#include "xrobot_main.hpp"\nint main() { XROBOT_MAIN(); }\n'
+# 最外层的结构体值每个字段一行，行尾带逗号。
+# An outermost struct value has one field per line, each followed by a comma.
+FIELDS_A_B = "      .a = 1,\n      .b = 3,\n"
+FIELDS_X_Y = "      .x = 3,\n      .y = 4,\n"
 
 
 def interface(source, name="Foo"):
@@ -72,7 +76,7 @@ class Aggregates(MappingTestCase):
         )
 
     def test_a_mapping_lists_every_data_member_in_order(self):
-        self.assertIn(".a = 1\n, .b = 3", self.value("P", "param", {"a": "1", "b": "3"}))
+        self.assertIn(FIELDS_A_B, self.value("P", "param", {"a": "1", "b": "3"}))
         self.rejected(
             "P",
             "param",
@@ -96,7 +100,7 @@ class Aggregates(MappingTestCase):
                 )
 
     def test_designated_brace_text_is_checked_like_a_mapping(self):
-        self.assertIn(".a = 1\n, .b = 3", self.value("P", "param", "{.a = 1, .b = 3}"))
+        self.assertIn(FIELDS_A_B, self.value("P", "param", "{.a = 1, .b = 3}"))
         self.rejected("P", "param", "{.a = 1}", r"p\.args\.param: missing b")
         self.rejected("P", "param", "{.b = 1, .a = 2}", "fields out of declaration order")
 
@@ -141,7 +145,7 @@ class Aggregates(MappingTestCase):
         code = self.value(
             "R", "cfg", {"inner": {"x": "1"}, "preview": "{.enabled = true, .port = 2}"}
         )
-        self.assertIn(".enabled = true\n, .port = 2", code)
+        self.assertIn(".preview = {.enabled = true, .port = 2}", code)
 
     def test_a_factory_default_does_not_relax_the_struct_definition(self):
         self.module(
@@ -233,7 +237,7 @@ class UnlocatableTypes(MappingTestCase):
         )
 
     def test_a_mapping_must_match_the_designated_default(self):
-        self.assertIn(".x = 3\n, .y = 4", self.generate_x(designated={"x": "3", "y": "4"}))
+        self.assertIn(FIELDS_X_Y, self.generate_x(designated={"x": "3", "y": "4"}))
         with self.assertRaisesMessage(
             ValueError,
             "User/xrobot.yaml: x.args.designated: missing y (from the default initializer); "
@@ -277,18 +281,30 @@ class ConstructorMappings(MappingTestCase):
             "  };\n  explicit S(Runtime runtime = {}) {} };",
         )
 
-    def test_names_select_one_constructor_and_values_are_converted(self):
+    def test_names_select_one_constructor_and_values_are_written_as_they_are(self):
         code = self.value(
             "S",
             "runtime",
             {"mode": "S::Mode::A", "legacy_div": "3", "level": "1", "legacy_hz": "100.0F"},
         )
         self.assertIn(
-            "S::Runtime(\nstatic_cast<S::Mode>(S::Mode::A)\n, xrobot_generated::Implicit<unsigned>(3)\n"
-            ", xrobot_generated::Implicit<unsigned>(1)\n, xrobot_generated::Implicit<float>(100.0F)\n)",
+            "  static const S::Runtime xr_p_runtime = S::Runtime(S::Mode::A, 3, 1, 100.0F);\n",
             code,
         )
-        self.assertIn("std::is_convertible_v<decltype((S::Mode::A)), S::Mode>", code)
+        self.assertNotIn("Implicit", code)
+
+    def test_values_are_converted_when_several_constructors_take_the_call(self):
+        self.module(
+            "T",
+            "class T { public:\n  enum class Mode { A, B };\n  struct Runtime {\n"
+            "    Runtime(Mode mode, unsigned level) {}\n    Runtime(Mode mode, float gain) {}\n"
+            "  };\n  explicit T(Runtime runtime) {} };",
+        )
+        code = self.value("T", "runtime", {"mode": "T::Mode::A", "gain": "1"})
+        self.assertIn(
+            "T::Runtime(static_cast<T::Mode>(T::Mode::A), xrobot_generated::Implicit<float>(1))",
+            " ".join(code.split()),
+        )
 
     def test_the_mapping_must_name_every_parameter_of_one_constructor(self):
         self.rejected(
@@ -594,26 +610,27 @@ class ConstructorModel(TestCase):
             with self.subTest(value=value):
                 self.assertEqual(explicit_expression_type(value), expected)
 
-    def test_conversion_rule(self):
-        checks = []
+    def test_argument_text_rule(self):
+        # 只有几个构造函数能接受这个调用时才转换。
+        # A value is converted only when several constructors could take the call.
+        self.assertEqual(argument_text("1", "float", False, False), "1")
+        self.assertEqual(argument_text("x", "const Port&", False, False), "x")
         self.assertEqual(
-            convert("1", "float", False, checks)[0], "xrobot_generated::Implicit<float>(1)"
-        )
-        self.assertEqual(checks, [])
-        self.assertEqual(
-            convert("x", "const Port&", False, checks, "p.args.port")[0],
-            "static_cast<const Port&>(x)",
+            argument_text("1", "const float", False, True), "xrobot_generated::Implicit<float>(1)"
         )
         self.assertEqual(
-            checks,
-            [
-                "static_assert(std::is_same_v<std::remove_cvref_t<decltype((x))>, "
-                "std::remove_cvref_t<const Port&>> ||\n"
-                "              std::is_convertible_v<decltype((x)), const Port&>,\n"
-                '              "p.args.port requires an implicit conversion to const Port&");'
-            ],
+            argument_text("x", "const Port&", False, True),
+            "xrobot_generated::Implicit<const Port&>(x)",
         )
         self.assertEqual(
-            convert("{1}", "Foo", False, [])[0], "std::remove_cv_t<std::remove_reference_t<Foo>>{1}"
+            argument_text("&x", "Port*", False, True), "xrobot_generated::Implicit<Port*>(&x)"
         )
-        self.assertEqual(convert("Foo(1)", "Foo", True, [])[0], "Foo(1)")
+        self.assertEqual(argument_text("x", "Port&&", False, True), "static_cast<Port&&>(x)")
+        self.assertEqual(argument_text("v", "Mode", False, True), "static_cast<Mode>(v)")
+        self.assertEqual(argument_text("Make()", "Config", True, True), "Make()")
+        # 花括号总是带上类型，不论是否转换。
+        # A brace initializer always carries its type.
+        self.assertEqual(argument_text("{1}", "const Foo&", False, False), "Foo{1}")
+        self.assertEqual(
+            argument_text("{1, 2}", "std::array<int, 2>", False, True), "std::array<int, 2>{1, 2}"
+        )
