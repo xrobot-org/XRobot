@@ -455,6 +455,23 @@ class Contexts(UpstreamTestCase):
         row = self.sync()["modules"]["team/B"]
         self.assertEqual((row["ref_kind"], row["resolved_ref"]), ("tag", "2026-09-15"))
 
+    def test_a_dependency_without_the_branch_or_dev_is_reported(self):
+        self.upstream("team/B", branches=())
+        a = self.upstream("team/A", [{"id": "team/B", "ref": "same-or-dev"}])
+        run_git(a, "branch", "feature/next")
+        for line, missing in (
+            ("feature/next", "neither a feature/next branch nor a dev branch"),
+            ("dev", "no dev branch"),
+        ):
+            with self.subTest(line=line):
+                self.configure(["team/A@" + line])
+                with self.assertRaisesMessage(
+                    ValueError,
+                    f"team/A requests team/B@same-or-dev: the repository has {missing}; request "
+                    "an explicit tag, commit or branch",
+                ):
+                    self.sync()
+
     def test_a_detached_commit_request_needs_a_logical_context_for_its_dependencies(self):
         self.upstream("team/B")
         a = self.upstream("team/A", [{"id": "team/B", "ref": "same-or-dev"}])

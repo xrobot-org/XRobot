@@ -473,6 +473,14 @@ class Resolver:
                         f"仓库中没有{'分支' if kind == 'branch' else ' tag'} {name}",
                     )
                 )
+            if name == "dev":
+                raise ValueError(
+                    tr(
+                        "the repository has no dev branch; request an explicit tag, commit or "
+                        "branch",
+                        "仓库中没有 dev 分支；请明确请求一个 tag、提交或分支",
+                    )
+                )
             ref = "refs/heads/dev"
             if not git(
                 folder, "rev-parse", "--verify", "refs/remotes/origin/dev^{commit}", check=False
