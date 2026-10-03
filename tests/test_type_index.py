@@ -389,6 +389,8 @@ class Monitor(TypeIndexTestCase):
             ("LibXR::ErrorCode OnMonitor();", "LibXR::ErrorCode"),
             ("auto OnMonitor();", None),
             ("auto OnMonitor() -> void;", None),
+            ("void OnMonitor() { if (p_ != nullptr) { p_->Update(); } }", "void"),
+            ("void OnMonitor() const noexcept { q_->Update(); }", "void"),
             ("decltype(auto) OnMonitor();", None),
         ):
             with self.subTest(declaration=declaration):

@@ -622,8 +622,16 @@ def _return_spelling(header: _Header, member: Sequence[Token]) -> str | None:
     unreadable = ("auto", "decltype", "->")
     if not words or any(t.text in unreadable for t in words):
         return None
-    if any(t.text == "->" for t in member[stop:]):
-        return None
+    # 尾置返回类型在参数表之后、函数体之前；函数体里的 -> 不算。
+    # A trailing return type sits between the parameter list and the body; a -> inside the body
+    # does not count.
+    opening = next((i for i in range(stop, len(member)) if member[i].text == "("), None)
+    if opening is not None:
+        for token in member[close_token(member, opening) + 1 :]:
+            if token.text in ("{", ";", "="):
+                break
+            if token.text == "->":
+                return None
     return " ".join(header.text[words[0].start : words[-1].end].split())
 
 
