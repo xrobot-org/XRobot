@@ -559,6 +559,18 @@ def constructor_for(
         signatures = [[p["name"] for p in c["arguments"]] for c in supported]
         expected = " | ".join("(" + ", ".join(s) + ")" for s in signatures)
         expected_zh = " | ".join("（" + "、".join(s) + "）" for s in signatures)
+        if not names:
+            # 实例还没有 args：instance add 在模板实参填写前只写 template_args。
+            # The instance has no args yet: before its template arguments are filled in,
+            # instance add writes only template_args.
+            raise ValueError(
+                tr(
+                    f"{interface['name']} has no args; run `xrobot sync` to add the arguments "
+                    f"of its first constructor, or write one of: {expected}",
+                    f"{interface['name']} 没有 args；运行 `xrobot sync` 补上第一个构造函数的"
+                    f"参数，或写出其中一组：{expected_zh}",
+                )
+            )
         raise ValueError(
             tr(
                 f"named arguments ({', '.join(names)}) do not match any constructor of "

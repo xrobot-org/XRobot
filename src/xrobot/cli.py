@@ -307,7 +307,9 @@ def cmd_instance(args: argparse.Namespace) -> None:
 
         modules = load_modules(project)
         index = TypeIndex.for_modules(modules)
-        identity = config_edit.add_instance(config, args.module, modules, index, args.id, source)
+        identity = config_edit.add_instance(
+            config, args.module, modules, index, args.id, source, args.template_arg
+        )
         print(
             tr(
                 f"Added {identity} to {source}; fill the null values (dependencies) before "
@@ -802,6 +804,16 @@ def parser() -> argparse.ArgumentParser:
     add.add_argument("module", help=package_id)
     add.add_argument(
         "--id", help=tr("instance id (default: <module>_<n>)", "实例 id（默认：<模块>_<n>）")
+    )
+    add.add_argument(
+        "--template-arg",
+        action="append",
+        metavar="VALUE",
+        help=tr(
+            "template argument in order (repeat for each); with all of them the arguments "
+            "are written too",
+            "按顺序给出的模板实参（每个写一次）；给全后参数一并写出",
+        ),
     )
     change = _command(
         actions,

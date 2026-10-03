@@ -307,6 +307,37 @@ class Commands(CliMixin, BspTestCase):
             {"module": "team/Raw", "id": "raw", "template_args": [None]},
         )
 
+    def test_template_instances_get_their_arguments(self):
+        # 以前模板实参填写后 sync 补不出参数，gen 报“参数名 () 与任何构造函数都不匹配”；
+        # instance add 也不能直接给出模板实参。
+        # After the template arguments were filled in, sync used to add no arguments and gen
+        # reported "named arguments () do not match any constructor"; instance add could not
+        # take the template arguments either.
+        self.module(
+            "Raw", "template <typename T>\nclass Raw { public: explicit Raw(T init = T{}) {} };"
+        )
+        self.ok("instance", "add", "Raw", "--id", "given", "--template-arg", "int")
+        self.ok("instance", "add", "Raw", "--id", "later")
+        self.ok("instance", "set", "--json", "later", "template_args[0]", '"float"')
+        self.ok("sync")
+        self.assertEqual(
+            load_config(self.root / "User/xrobot.yaml")["modules"][-2:],
+            [
+                {
+                    "module": "team/Raw",
+                    "id": "given",
+                    "template_args": ["int"],
+                    "args": [{"init": "int{}"}],
+                },
+                {
+                    "module": "team/Raw",
+                    "id": "later",
+                    "template_args": ["float"],
+                    "args": [{"init": "float{}"}],
+                },
+            ],
+        )
+
     def test_instance_add_says_why_candidates_are_missing(self):
         # 以前读不出入口源文件时，每个依赖参数都显示“没有候选”，看不出原因。
         # Without a readable entry source every dependency used to show "no candidate",

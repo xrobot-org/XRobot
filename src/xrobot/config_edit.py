@@ -836,10 +836,16 @@ def add_instance(
     index: TypeIndex,
     instance_id: str | None = None,
     source: str | None = None,
+    template_values: list[str] | None = None,
 ) -> str:
     """在配置末尾添加一个实例，参数取源码默认值，依赖参数留空。
     Add an instance at the end of the configuration, with source defaults and the
     dependencies left unfilled.
+
+    Args:
+        template_values: 按位置给出的模板实参；给全后参数一并写出。
+            Template arguments given by position; once all are given the arguments are
+            written as well.
 
     Returns:
         新实例的 id。
@@ -863,7 +869,16 @@ def add_instance(
     problem = identifier_problem(identity)
     if problem:
         raise ConfigError(tr(f"instance id {identity} {problem}", f"实例 id {identity} {problem}"))
-    item = instance_item(module["id"], identity, module["name"], interface, index)
+    if len(template_values or []) > len(interface["template_parameters"]):
+        raise ConfigError(
+            tr(
+                f"{module['id']} takes {len(interface['template_parameters'])} template "
+                f"argument(s), {len(template_values)} given",
+                f"{module['id']} 有 {len(interface['template_parameters'])} 个模板参数，"
+                f"给出了 {len(template_values)} 个",
+            )
+        )
+    item = instance_item(module["id"], identity, module["name"], interface, index, template_values)
     blocks = config.blocks()
     indent = blocks.item_indent if blocks.item_indent is not None else 2
     if blocks.sequence_end is None:
@@ -1021,6 +1036,19 @@ def _sync_item(
     ctors = compliant_constructors(interface)
     exact = [c for c in ctors if [p["name"] for p in c["arguments"]] == names]
     changed = False
+    if not exact and not names and ctors:
+        # 没有 args 的实例（模板实参填好之前写入的）补上第一个构造函数的参数，与
+        # instance add 相同。
+        # An instance without args (written before its template arguments were filled in)
+        # gets the arguments of the first constructor, as instance add writes them.
+        args = CommentedSeq()
+        for argument in seed_arguments(interface, cpp_class, templates, index):
+            mapping = CommentedMap()
+            for key, value in argument.items():
+                mapping[key] = value
+            args.append(mapping)
+        item["args"] = args
+        return True
     if not exact:
         extended = [
             c
