@@ -1032,9 +1032,11 @@ int main() {
                 ]
             }
         )
+        # MinGW 没有 UBSan 运行库。
+        # MinGW has no UBSan runtime.
         sanitizer = (
             []
-            if "clang" in Path(CXX).name
+            if "clang" in Path(CXX).name or os.name == "nt"
             else ["-fsanitize=undefined", "-fno-sanitize-recover=all"]
         )
         self.compile(extra=sanitizer)

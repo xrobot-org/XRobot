@@ -53,6 +53,13 @@ GIT_ENV = {
 # Tests assert English output; tests of Chinese output set XR_LANG themselves.
 os.environ["XR_LANG"] = "en"
 
+# xrobot 自己运行的 git 也不读系统和用户配置；否则 Windows runner 系统配置里的
+# core.autocrlf=true 让 xrobot 检出 CRLF 文件，run_git 却把它们看成改动。
+# The git that xrobot runs reads no system or user configuration either; otherwise
+# core.autocrlf=true in the system configuration of a Windows runner makes xrobot check out
+# CRLF files that run_git then sees as changes.
+os.environ.update(GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL=os.devnull)
+
 CXX = os.environ.get("CXX", "g++")
 HAVE_CXX = shutil.which(CXX) is not None
 
