@@ -957,7 +957,9 @@ def generate_code(
     depends = (
         ([project.lock] if project.lock.is_file() else [])
         + [entry]
-        + sorted(set(module_headers(modules)))
+        + sorted(
+            set(module_headers(modules)), key=lambda path: header_relative(path, project.header)
+        )
     )
     generator = Generator(modules, index)
     return generator.render(

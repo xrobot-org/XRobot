@@ -25,6 +25,7 @@ from pathlib import Path
 from xr_syntax.cpp import CppClassView
 from xr_syntax.i18n import tr
 
+from xrobot.project import path_order
 from xrobot.source_syntax import (
     Token,
     close_token,
@@ -983,7 +984,7 @@ class TypeIndex:
             labels: 报错时头文件的名字，缺省为完整路径。
                 The names of headers in error messages; the full path by default.
         """
-        self.headers = sorted({Path(h).resolve() for h in headers})
+        self.headers = sorted({Path(h).resolve() for h in headers}, key=path_order)
         self._labels = {Path(k).resolve(): v for k, v in (labels or {}).items()}
         self._texts: dict[Path, str] = {}
         self._parsed: dict[Path, _Header] = {}
@@ -1396,7 +1397,7 @@ def _headers_of(module: dict) -> list[Path]:
     if cached is not None:
         return list(cached)
     folder = Path(os.path.normpath(module["path"]))
-    pending = sorted(folder.glob("*.hpp"))
+    pending = sorted(folder.glob("*.hpp"), key=path_order)
     seen: set[Path] = set()
     while pending:
         path = pending.pop()
@@ -1411,7 +1412,7 @@ def _headers_of(module: dict) -> list[Path]:
                     if candidate.is_relative_to(folder):
                         pending.append(candidate)
                     break
-    module["headers"] = sorted(seen)
+    module["headers"] = sorted(seen, key=path_order)
     return list(module["headers"])
 
 

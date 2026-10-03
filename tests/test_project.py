@@ -16,8 +16,10 @@ from xrobot.project import (
     find_root,
     header_banner,
     input_digest,
+    path_order,
     read_header_inputs,
 )
+from xrobot.type_index import module_headers
 
 MAIN = '#include "xrobot_main.hpp"\nint main() { XROBOT_MAIN(); }\n'
 
@@ -113,6 +115,20 @@ class Entry(TempDirTestCase):
             "exactly one entry",
         )
 
+    def test_several_callers_are_listed_in_plain_case_sensitive_order(self):
+        # Path 的比较在 Windows 上不区分大小写；按 / 分隔的写法比较，两个系统的顺序相同。
+        # Comparing Path objects ignores case on Windows; the / separated spelling gives one
+        # order on both systems.
+        for name in ("a.cpp", "B.cpp", "c.cpp", "A_sub/d.cpp", "Z.cpp"):
+            self.write(f"User/{name}", MAIN)
+        with self.assertRaises(ProjectError) as context:
+            Project(self.root).entry()
+        self.assertEqual(
+            str(context.exception),
+            "Several sources under User/ call XROBOT_MAIN(): User/A_sub/d.cpp, User/B.cpp, "
+            "User/Z.cpp, User/a.cpp, User/c.cpp; a BSP has exactly one entry",
+        )
+
     def test_comments_strings_directives_and_headers_are_not_calls(self):
         self.write("User/app_main.cpp", MAIN)
         self.write(
@@ -205,6 +221,108 @@ class GeneratedHeaderInputs(BspTestCase):
             read_header_inputs(self.root / "User/xrobot_main.hpp"),
             HeaderInputs("xrobot.yaml", inputs, digest),
         )
+
+    def test_the_stamp_lists_inputs_in_plain_case_sensitive_order(self):
+        # 同一个 BSP 在 Windows 和 Linux 上生成同样的头文件和摘要：按相对路径的写法逐字符比较，
+        # 大写字母在小写字母之前，不论文件系统是否区分大小写。
+        # One BSP generates the same header and digest on Windows and Linux: the relative
+        # paths are compared character by character, uppercase before lowercase, whether or
+        # not the filesystem distinguishes case.
+        self.module("CMD", "class CMD { public: CMD() {} };")
+        self.module("Chassis", "class Chassis { public: Chassis() {} };")
+        self.module("alpha", "class alpha { public: alpha() {} };")
+        self.module("Delta", "class Delta { public: Delta() {} };", owner="Zeta")
+        self.module("Echo", "class Echo { public: Echo() {} };", owner="acme")
+        self.module(
+            "Mixed",
+            "class Mixed { public: Mixed() {} };",
+            extra_headers={"ax.hpp": "", "Ax2.hpp": ""},
+        )
+        self.generate({"modules": []})
+        text = self.read("User/xrobot_main.hpp")
+        depends = [line for line in text.splitlines() if line.startswith("// xrobot: depends")]
+        self.assertEqual(
+            depends,
+            [
+                '// xrobot: depends "../xrobot.lock"',
+                '// xrobot: depends "../Modules/Zeta/Delta/Delta.hpp"',
+                '// xrobot: depends "../Modules/acme/Echo/Echo.hpp"',
+                '// xrobot: depends "../Modules/team/CMD/CMD.hpp"',
+                '// xrobot: depends "../Modules/team/Chassis/Chassis.hpp"',
+                '// xrobot: depends "../Modules/team/Foo/Foo.hpp"',
+                '// xrobot: depends "../Modules/team/Foo/FooTypes.hpp"',
+                '// xrobot: depends "../Modules/team/Mixed/Ax2.hpp"',
+                '// xrobot: depends "../Modules/team/Mixed/Mixed.hpp"',
+                '// xrobot: depends "../Modules/team/Mixed/ax.hpp"',
+                '// xrobot: depends "../Modules/team/alpha/alpha.hpp"',
+            ],
+        )
+        recorded = read_header_inputs(self.root / "User/xrobot_main.hpp")
+        paths = [path for kind, path in recorded.inputs if kind == "depends"]
+        self.assertEqual(paths[1:], sorted(paths[1:]))
+        self.assertEqual(
+            recorded.digest, input_digest(self.root / "User/xrobot_main.hpp", recorded.inputs)
+        )
+
+    def test_the_module_headers_are_ordered_by_their_plain_spelling(self):
+        self.module(
+            "Mixed",
+            "class Mixed { public: Mixed() {} };",
+            extra_headers={"ax.hpp": "", "Ax2.hpp": "", "Zed.hpp": ""},
+        )
+        modules = self.load_modules()
+        names = [path.name for path in module_headers({"team/Mixed": modules["team/Mixed"]})]
+        self.assertEqual(names, ["Ax2.hpp", "Mixed.hpp", "Zed.hpp", "ax.hpp"])
+
+    def test_the_sort_key_is_the_slash_spelling_with_case_significant(self):
+        from pathlib import PurePosixPath, PureWindowsPath
+
+        for kind in (PurePosixPath, PureWindowsPath):
+            paths = [kind("Modules/b/x.hpp"), kind("Modules/B/y.hpp"), kind("Modules/a/z.hpp")]
+            with self.subTest(kind=kind.__name__):
+                self.assertEqual(
+                    [path_order(path) for path in sorted(paths, key=path_order)],
+                    ["Modules/B/y.hpp", "Modules/a/z.hpp", "Modules/b/x.hpp"],
+                )
+        self.assertEqual(path_order(PureWindowsPath(r"a\B\c.hpp")), "a/B/c.hpp")
+
+    def test_a_path_type_that_compares_case_blind_does_not_change_the_stamp(self):
+        # 模拟 Windows 上 Path 的比较：生成器不依赖 Path 之间的比较。
+        # Simulate how Path compares on Windows: the generator does not depend on comparing
+        # Path objects.
+        class CaseBlind(type(Path())):
+            """按小写比较的路径，像 Windows 上的 Path。
+            A path that compares in lower case, like Path on Windows.
+            """
+
+            def __lt__(self, other):
+                return str(self).casefold() < str(other).casefold()
+
+        self.module("CMD", "class CMD { public: CMD() {} };")
+        self.module("alpha", "class alpha { public: alpha() {} };")
+        self.module("Chassis", "class Chassis { public: Chassis() {} };")
+        modules = self.load_modules()
+        blind = [CaseBlind(path) for path in module_headers(modules)]
+        with mock.patch("xrobot.generate_main.module_headers", return_value=blind):
+            self.generate({"modules": []})
+        depends = [
+            line
+            for line in self.read("User/xrobot_main.hpp").splitlines()
+            if line.startswith("// xrobot: depends")
+        ]
+        self.assertEqual(depends[1:], sorted(depends[1:]))
+        self.assertLess(
+            depends.index('// xrobot: depends "../Modules/team/CMD/CMD.hpp"'),
+            depends.index('// xrobot: depends "../Modules/team/alpha/alpha.hpp"'),
+        )
+
+    def load_modules(self):
+        """BSP 中锁定的全部模块。
+        Every Module locked in the BSP.
+        """
+        from xrobot.generate_main import load_modules
+
+        return load_modules(self.project)
 
     def test_the_digest_matches_the_libxr_check(self):
         # LibXR 的 test/automatic/cmake/xrobot_freshness.cmake 对同样的文件期望同一个摘要；

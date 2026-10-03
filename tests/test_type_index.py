@@ -313,6 +313,25 @@ class Lookup(TypeIndexTestCase):
                 self.assertFalse(index.is_global_class(name))
 
 
+class HeaderOrder(TypeIndexTestCase):
+    """索引中头文件的顺序。
+    The order of the headers of an index.
+    """
+
+    def test_headers_are_ordered_by_their_plain_case_sensitive_spelling(self):
+        # Path 的比较在 Windows 上不区分大小写，同一个 BSP 在两个系统上会得到不同的顺序。
+        # Comparing Path objects ignores case on Windows, which would order one BSP differently
+        # on the two systems.
+        names = ["alpha.hpp", "Beta.hpp", "a/Zed.hpp", "Alpha2.hpp", "beta2.hpp"]
+        for name in names:
+            self.write(name, "struct S {};" + chr(10))
+        index = TypeIndex([self.root / name for name in names])
+        self.assertEqual(
+            [path.relative_to(self.root.resolve()).as_posix() for path in index.headers],
+            ["Alpha2.hpp", "Beta.hpp", "a/Zed.hpp", "alpha.hpp", "beta2.hpp"],
+        )
+
+
 class Monitor(TypeIndexTestCase):
     """类是否提供可调用的 OnMonitor。
     Whether a class provides a callable OnMonitor.

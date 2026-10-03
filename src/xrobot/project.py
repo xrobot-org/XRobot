@@ -19,7 +19,7 @@ import os
 import re
 import stat
 import tempfile
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import NamedTuple
 
 from xr_syntax.cpp import identifier_occurrences
@@ -37,6 +37,19 @@ DIGEST_LINE = re.compile(r"^// xrobot: digest ([0-9a-f]{64})$")
 # semicolon, after removing every carriage return (CMake's file(READ) reads CRLF as LF on
 # Windows); LibXR's cmake/XRobotFreshness.cmake applies the same rule.
 REGISTRATION = re.compile(rb"XR_REGISTER[^;]*")
+
+
+def path_order(path: str | Path) -> str:
+    """路径的排序依据：/ 分隔的写法，逐字符区分大小写比较。
+    The sort key of a path: its / separated spelling, compared character by character with
+    case significant.
+
+    Path 本身的比较在 Windows 上不区分大小写，同一个 BSP 在 Windows 和 Linux 上会得到不同的顺序，
+    生成的头文件和摘要也随之不同。
+    Comparing Path objects ignores case on Windows, so one BSP would get different orders, and
+    so different generated headers and digests, on Windows and Linux.
+    """
+    return PurePath(path).as_posix()
 
 
 def header_banner(config: str | None) -> str:
@@ -187,7 +200,7 @@ class Project:
         """
         callers = []
         if self.user.is_dir():
-            for path in sorted(self.user.rglob("*")):
+            for path in sorted(self.user.rglob("*"), key=path_order):
                 if path.suffix not in SOURCE_SUFFIXES or not path.is_file():
                     continue
                 text = path.read_text(encoding="utf-8-sig", errors="surrogateescape")
