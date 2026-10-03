@@ -525,7 +525,7 @@ def _classify(
         if len(texts) >= 4 and texts[2] == "=" and member[1].kind == "identifier":
             layout.names[texts[1]] = access
             layout.aliases[texts[1]] = (member[2].end, member[-1].end)
-        elif "OnMonitor" in texts and access == "public":
+        elif access == "public" and _using_names_monitor(member):
             layout.monitor = "conditional" if header.conditional_depth(member[0]) else "public"
             layout.monitor_returns.append(None)
         return
@@ -589,11 +589,26 @@ def _classify(
         if name is not None:
             layout.names[name] = access
     if "static" in leading or function:
-        if "OnMonitor" in texts and access == "public" and function:
+        # 只有名字就是 OnMonitor 的成员函数声明或定义才算；其他成员函数的函数体里调用它不算。
+        # Only a member function whose name is OnMonitor counts; a call to it inside the body
+        # of another member function does not.
+        if access == "public" and function and _declared_name(member) == "OnMonitor":
             layout.monitor = "conditional" if header.conditional_depth(member[0]) else "public"
             layout.monitor_returns.append(_return_spelling(header, member))
         return
     _record_fields(header, member, None, access, layout)
+
+
+def _using_names_monitor(member: Sequence[Token]) -> bool:
+    """using 声明（如 using Base::OnMonitor;）是否引入名为 OnMonitor 的成员。
+    Whether a using-declaration (such as using Base::OnMonitor;) introduces a member named
+    OnMonitor.
+    """
+    texts = [t.text for t in member]
+    return any(
+        text == "OnMonitor" and (k + 1 == len(texts) or texts[k + 1] == ",")
+        for k, text in enumerate(texts)
+    )
 
 
 _DECLARATION_SPECIFIERS = frozenset(

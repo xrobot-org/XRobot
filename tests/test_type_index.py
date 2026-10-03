@@ -335,6 +335,78 @@ class Monitor(TypeIndexTestCase):
     def test_public_static_monitor(self):
         self.assertTrue(self.provides("class M { public: static void OnMonitor(); };"))
 
+    def test_a_call_to_monitor_in_another_member_is_not_a_declaration(self):
+        # 成员函数的函数体里调用成员的 OnMonitor()，不让这个类自己提供 OnMonitor。
+        # Calling the OnMonitor() of a member inside a member function does not make the class
+        # provide OnMonitor itself.
+        for body in (
+            "void Update() { sensor_.OnMonitor(); }",
+            "void Update() const { sensor_->OnMonitor(); }",
+            "int Run() { return sensor_.OnMonitor(); }",
+            "static void Poll(Sensor& s) { s.OnMonitor(); }",
+            "M() { sensor_.OnMonitor(); }",
+            "Sensor sensor_ = Make([this] { OnMonitor(); });",
+            "std::function<void()> callback = [] { Other().OnMonitor(); };",
+            "void Update() { /* OnMonitor() */ }",
+            'const char* Name() { return "OnMonitor"; }',
+        ):
+            with self.subTest(body=body):
+                self.assertFalse(
+                    self.provides(
+                        f"struct Sensor {{ void OnMonitor(); }};\nclass M {{ public: {body} }};"
+                    )
+                )
+        # 访问权限仍然起作用，声明本身就够了。
+        # Access still matters, and the declaration itself is enough.
+        self.assertTrue(
+            self.provides(
+                "struct Sensor { void OnMonitor(); };\n"
+                "class M { public: void Update() { sensor_.OnMonitor(); }\n"
+                "  void OnMonitor() { sensor_.OnMonitor(); }\n  Sensor sensor_; };"
+            )
+        )
+        self.assertFalse(
+            self.provides(
+                "struct Sensor { void OnMonitor(); };\n"
+                "class M { public: void Update() { OnMonitor(); }\n private: void OnMonitor(); };"
+            )
+        )
+
+    def test_the_name_of_the_declaration_must_be_monitor(self):
+        for declaration in (
+            "void OnMonitorAll();",
+            "void Run(int OnMonitor);",
+            "std::function<void()> OnMonitor;",
+            "using Callback = void (*)(OnMonitor);",
+            "friend void OnMonitor(M&);",
+        ):
+            with self.subTest(declaration=declaration):
+                self.assertFalse(self.provides(f"class M {{ public: {declaration} }};"))
+        for declaration in (
+            "void OnMonitor();",
+            "virtual void OnMonitor() = 0;",
+            "[[nodiscard]] static void OnMonitor() {}",
+            "auto OnMonitor() -> void;",
+            "template <typename T> void OnMonitor(T value);",
+            "std::uint8_t OnMonitor() const noexcept { return 0; }",
+        ):
+            with self.subTest(declaration=declaration):
+                self.assertTrue(self.provides(f"class M {{ public: {declaration} }};"))
+
+    def test_only_a_using_declaration_of_monitor_provides_it(self):
+        self.assertTrue(
+            self.provides(
+                "class B { protected: void OnMonitor(); void Other(); };\n"
+                "class M : B { public: using B::Other, B::OnMonitor; };"
+            )
+        )
+        self.assertFalse(
+            self.provides(
+                "class B { protected: void OnMonitor(); void Other(); };\n"
+                "class M : B { public: using B::Other; using Result = decltype(OnMonitor()); };"
+            )
+        )
+
     def test_inherited_and_using_declared_monitors(self):
         self.assertTrue(self.provides("struct B { void OnMonitor(); };\nclass M : public B {};"))
         self.assertFalse(self.provides("struct B { void OnMonitor(); };\nclass M : B {};"))

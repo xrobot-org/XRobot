@@ -826,6 +826,21 @@ class Monitors(BspTestCase):
     def test_a_public_monitor_is_called(self):
         self.assertTrue(self.monitored("class M { public: M() {} void OnMonitor() {} };"))
 
+    def test_calling_a_members_monitor_does_not_make_the_class_monitored(self):
+        # 成员函数里调用成员的 OnMonitor() 不等于类自己声明了 OnMonitor：循环不会调用它，
+        # 也不会为它写 static_assert。
+        # Calling the OnMonitor() of a member inside a member function does not mean the class
+        # declares OnMonitor: the loop does not call it and no static_assert is written.
+        self.module("Sensor", "class Sensor { public: Sensor() {} void OnMonitor() {} };")
+        calling = (
+            '#include "Sensor.hpp"\nclass M { public: M() {}\n'
+            "  void Update() { sensor_.OnMonitor(); }\n private:\n  Sensor sensor_;\n};"
+        )
+        self.assertFalse(self.monitored(calling))
+        declaring = calling.replace("void Update()", "void OnMonitor()")
+        self.assertTrue(self.monitored(declaring))
+        self.assertNotIn("static_assert", self.generate({"modules": [{"module": "M", "id": "m"}]}))
+
     def test_a_private_or_missing_monitor_is_not_called(self):
         self.assertFalse(self.monitored("class M { public: M() {} private: void OnMonitor() {} };"))
         self.assertFalse(self.monitored("class M { public: M() {} };"))
