@@ -1,0 +1,538 @@
+"""从模块头文件读取类定义（xrobot.type_index）。
+Reading class definitions from Module headers (xrobot.type_index).
+"""
+
+import unittest
+
+from fixtures import TempDirTestCase
+
+from xrobot.type_index import TypeIndex, module_headers
+
+FIELDS = """#pragma once
+#include <functional>
+namespace ns {
+struct Fields {
+  alignas(8) int aligned;
+  int bits : 3;
+  inline static int shared = 0;
+  static constexpr int kMax = 4;
+  static int Count();
+  int a = 1, b{2};
+  int arr[3];
+  int* ptr = nullptr;
+  mutable int cache;
+  std::function<int()> fn = [] { int k = 0; return k; };
+  int computed = [] { return 1; }();
+  void Method() { int local = 0; (void)local; }
+  int Get() const { return a; }
+  using Alias = int;
+  Alias alias_field;
+  struct Inner { int y; } inner;
+  enum class Mode { A, B } mode = Mode::A;
+  [[maybe_unused]] int attributed;
+  int paren = int(4);
+  friend struct Other;
+};
+}  // namespace ns
+"""
+
+
+class TypeIndexTestCase(TempDirTestCase):
+    """从给定头文件文本建立类型索引的辅助。
+    Helpers that build a type index from header texts.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.root = self.tmp
+
+    def index(self, *texts):
+        """用这些头文件文本建立类型索引。
+        Build a type index from these header texts.
+        """
+        paths = [self.write(f"H{i}.hpp", text) for i, text in enumerate(texts)]
+        return TypeIndex(paths)
+
+
+class Fields(TypeIndexTestCase):
+    """数据成员和默认成员初始化。
+    Data members and default member initializers.
+    """
+
+    def test_data_members_are_read_in_declaration_order(self):
+        entry = self.index(FIELDS).resolve("ns::Fields")
+        self.assertEqual(
+            [name for name, _, _ in entry.fields()],
+            [
+                "aligned",
+                "bits",
+                "a",
+                "b",
+                "arr",
+                "ptr",
+                "cache",
+                "fn",
+                "computed",
+                "alias_field",
+                "inner",
+                "mode",
+                "attributed",
+                "paren",
+            ],
+        )
+        types = {name: cpp_type for name, cpp_type, _ in entry.fields()}
+        self.assertEqual(
+            (types["aligned"], types["ptr"], types["fn"], types["inner"], types["mode"]),
+            ("int", "int*", "std::function<int()>", "Inner", "Mode"),
+        )
+
+    def test_default_member_initializer_texts(self):
+        defaults = self.index(FIELDS).resolve("ns::Fields").layout().field_defaults
+        self.assertEqual(
+            defaults,
+            {
+                "a": "1",
+                "b": "{2}",
+                "ptr": "nullptr",
+                "fn": "[] { int k = 0; return k; }",
+                "computed": "[] { return 1; }()",
+                "mode": "Mode::A",
+                "paren": "int(4)",
+            },
+        )
+
+    def test_bit_field_default_member_initializer(self):
+        entry = self.index(
+            "struct Bits { unsigned flag : 1 = 1; unsigned mode : 3 {2}; };"
+        ).resolve("Bits")
+        self.assertEqual(entry.layout().field_defaults, {"flag": "1", "mode": "{2}"})
+
+    def test_constructor_bodies_and_initializer_lists_are_not_fields(self):
+        entry = self.index(
+            "class WithCtor {\n public:\n  WithCtor() : a_(1), b_{2} { int z = 3; (void)z; }\n"
+            "  explicit WithCtor(int v) : a_(v) {}\n private:\n  int a_; int b_;\n};\n"
+        ).resolve("WithCtor")
+        self.assertEqual(entry.fields(), [("a_", "int", "private"), ("b_", "int", "private")])
+        self.assertEqual([[p["name"] for p in c] for c in entry.constructors()], [[], ["v"]])
+        self.assertFalse(entry.is_aggregate())
+
+    def test_typedef_struct_at_namespace_scope_is_indexed(self):
+        entry = self.index(
+            "namespace ns { typedef struct { int p; float q = 1.0f; } Plain; }"
+        ).resolve("ns::Plain")
+        self.assertIsNotNone(entry)
+        self.assertEqual(entry.fields(), [("p", "int", "public"), ("q", "float", "public")])
+        self.assertEqual(entry.layout().field_defaults, {"q": "1.0f"})
+        self.assertTrue(entry.is_aggregate())
+
+    def test_attributed_class_name_is_indexed(self):
+        entry = self.index("struct [[nodiscard]] Attr { int a; };").resolve("Attr")
+        self.assertIsNotNone(entry)
+        self.assertEqual(entry.qualified, "Attr")
+
+
+class Aggregates(TypeIndexTestCase):
+    """是否是聚合体，以及映射无法检查的原因。
+    Whether a class is an aggregate, and why a mapping cannot be checked.
+    """
+
+    def test_aggregate_and_mapping_problems(self):
+        index = self.index("""
+struct Plain { int a; };
+struct Pure { virtual void F() = 0; int x; };
+struct Private { private: int hidden; };
+struct Derived : Plain { int b; };
+struct Ctor { Ctor(int a) {} int a; };
+struct WithUnion { union { int i; float f; } u; };
+struct Conditional { int a;
+#ifdef FEATURE
+  int b;
+#endif
+};""")
+        self.assertTrue(index.resolve("Plain").is_aggregate())
+        for name in ("Pure", "Private", "Derived", "Ctor"):
+            with self.subTest(name=name):
+                self.assertFalse(index.resolve(name).is_aggregate())
+        self.assertIsNone(index.resolve("Plain").mapping_problem())
+        self.assertIsNone(index.resolve("Ctor").mapping_problem())
+        self.assertIn("contains a union", index.resolve("WithUnion").mapping_problem())
+        self.assertIn(
+            "declares fields under #if (b)", index.resolve("Conditional").mapping_problem()
+        )
+        self.assertIn(
+            "base classes or virtual functions and no constructor",
+            index.resolve("Derived").mapping_problem(),
+        )
+        self.assertIn(
+            "base classes or virtual functions and no constructor",
+            index.resolve("Pure").mapping_problem(),
+        )
+
+
+class Lookup(TypeIndexTestCase):
+    """名字查找、限定和全局类的判断。
+    Name lookup, qualification and global class checks.
+    """
+
+    def test_names_resolve_outward_from_a_scope_and_through_aliases(self):
+        index = self.index(
+            FIELDS + "namespace ns { using Options = Fields; struct Use { Options o; }; }\n"
+            "struct Fields { int global; };\n"
+        )
+        self.assertEqual(index.resolve("Options", ("ns", "Use")).qualified, "ns::Fields")
+        self.assertEqual(index.resolve("ns::Options").qualified, "ns::Fields")
+        self.assertEqual(index.resolve("Fields", ("ns", "Use")).qualified, "ns::Fields")
+        self.assertEqual(index.resolve("Fields").qualified, "Fields")
+        self.assertEqual(index.resolve("const ns::Fields&").qualified, "ns::Fields")
+        self.assertIsNone(index.resolve("ns::Fields*"))
+        self.assertIsNone(index.resolve("Missing"))
+
+    def test_enclosing_template_parameters_are_not_resolved_to_outer_types(self):
+        index = self.index(
+            "struct T { int x; };\ntemplate <class T> class Outer {\n public:\n"
+            "  struct P { T value; int n; };\n};\n"
+        )
+        self.assertIsNone(index.resolve("T", ("Outer", "P")))
+        self.assertEqual(index.resolve("T").qualified, "T")
+
+    def test_unknown_bases_make_member_lookups_unknown(self):
+        index = self.index(
+            "struct Inner { int x; };\nstruct Known { struct Inner2 { int y; }; };\n"
+            "struct Holder : Vendor::Base { struct Q { Inner value; }; };\n"
+            "struct Child : Known { struct R { Inner2 value; }; };\n"
+        )
+        self.assertIsNone(index.resolve("Inner", ("Holder", "Q")))
+        self.assertEqual(index.resolve("Inner2", ("Child", "R")).qualified, "Known::Inner2")
+
+    def test_qualify_in_substitutes_enclosing_template_arguments(self):
+        index = self.index(
+            "template <class T, int N>\nclass Outer {\n public:\n  enum class Mode { A };\n"
+            "  struct P { T value; Mode mode; int n = N; };\n};\n"
+        )
+        entry = index.resolve("Outer::P")
+        self.assertEqual(index.qualify_in("T", entry, "Outer<Layout, 4>::P"), "Layout")
+        self.assertEqual(
+            index.qualify_in("Mode", entry, "Outer<Layout, 4>::P"), "Outer<Layout, 4>::Mode"
+        )
+        self.assertEqual(
+            index.qualify_in("std::array<T, N>", entry, "Outer<Layout, 4>::P"),
+            "std::array<Layout, 4>",
+        )
+
+    def test_qualify_in_names_member_and_namespace_types(self):
+        index = self.index(FIELDS)
+        entry = index.resolve("ns::Fields")
+        self.assertEqual(index.qualify_in("Mode", entry, "ns::Fields"), "ns::Fields::Mode")
+        self.assertEqual(index.qualify_in("Alias", entry, "ns::Fields"), "ns::Fields::Alias")
+        self.assertEqual(index.qualify_in("int", entry, "ns::Fields"), "int")
+        self.assertEqual(index.qualify_in("other::Mode", entry, "ns::Fields"), "other::Mode")
+
+    def test_qualify_in_names_namespace_and_class_values(self):
+        index = self.index(
+            "namespace qux {\nenum Mode { A, B };\ninline constexpr int kN = 3;\nint Make();\n"
+            "class Other { public: void Run(); static constexpr int kMax = 9; enum Level { LOW };\n"
+            "  struct Param { Mode mode = A; int n = kN; int m = kMax; Level level = LOW; }; };\n"
+            "inline void Other::Run() {}\nnamespace inner { int deep; }\n}\n"
+        )
+        entry = index.resolve("qux::Other::Param")
+        cases = {
+            "A": "qux::A",
+            "kN + Make()": "qux::kN + qux::Make()",
+            "kMax": "qux::Other::kMax",
+            "LOW": "qux::Other::LOW",
+            "Run": "Run",
+            "deep": "deep",
+        }
+        for text, expected in cases.items():
+            with self.subTest(text=text):
+                self.assertEqual(index.qualify_in(text, entry, "qux::Other::Param"), expected)
+
+    def test_a_type_defined_in_two_headers_is_an_error(self):
+        # 命名空间中的类型以完整的名字报告。
+        # A type in a namespace is reported by its full name.
+        for name, body in (
+            ("Twice", "struct Twice {{ int {}; }};"),
+            ("ns::Twice", "namespace ns {{ struct Twice {{ int {}; }}; }}"),
+        ):
+            with self.subTest(name=name):
+                paths = [
+                    self.write("a/Twice.hpp", body.format("a")),
+                    self.write("b/Twice.hpp", body.format("b")),
+                ]
+                index = TypeIndex(
+                    paths, {paths[0]: "team/A/Twice.hpp", paths[1]: "team/B/Twice.hpp"}
+                )
+                with self.assertRaisesMessage(
+                    ValueError,
+                    f"Type {name} is defined in several Module headers: team/A/Twice.hpp, "
+                    "team/B/Twice.hpp",
+                ):
+                    index.resolve(name)
+
+    def test_module_headers_include_the_module_headers_they_bring_in(self):
+        folder = self.tmp / "Modules/team/Bar"
+        self.write(folder / "Bar.hpp", '#include "detail/Config.hpp"\n#include "Motor.hpp"\n')
+        self.write(folder / "detail/Config.hpp", '#include "Common.hpp"\nstruct Config {};\n')
+        self.write(folder / "detail/Common.hpp", '#include "../../Other/Other.hpp"\n')
+        self.write(folder / "detail/Unused.hpp", "struct Unused {};\n")
+        self.write(self.tmp / "Modules/team/Other/Other.hpp", "struct Other {};\n")
+        modules = {"team/Bar": {"id": "team/Bar", "path": folder}}
+        self.assertEqual(
+            [p.relative_to(folder).as_posix() for p in module_headers(modules)],
+            ["Bar.hpp", "detail/Common.hpp", "detail/Config.hpp"],
+        )
+        index = TypeIndex.for_modules(modules)
+        self.assertEqual(index.resolve("Config").header, (folder / "detail/Config.hpp").resolve())
+        self.assertIsNone(index.resolve("Unused"))
+        self.assertIsNone(index.resolve("Other"))
+
+    def test_classes_local_to_a_function_are_not_indexed(self):
+        index = self.index(
+            "struct Limits { int max = 1; };",
+            "class Other { public: void Run(); };\n"
+            "inline void Other::Run() { struct Limits { int a; }; Limits l{1}; (void)l; }\n"
+            "inline void Free() { auto f = [] { struct Hidden {}; }; (void)f; }\n"
+            "inline void Typedef() { typedef struct { int a; } Local; }\n",
+        )
+        self.assertEqual([name for name, _, _ in index.resolve("Limits").fields()], ["max"])
+        self.assertIsNone(index.resolve("Hidden"))
+        self.assertIsNone(index.resolve("Local"))
+
+    def test_global_classes(self):
+        index = self.index(
+            "struct A {};\ntemplate <typename T>\nclass B {};\nclass alignas(8) C {};\n"
+            "namespace n {\nstruct D {};\n}\nvoid f() { struct Local {}; }\n"
+            "  struct Indented {};\ntypedef struct { int a; } Plain;\nclass Forward;\n",
+            "#pragma once\nnamespace LibXR {\nclass GPIO;\n}\n",
+        )
+        for name in ("A", "B", "C", "Indented", "Plain"):
+            with self.subTest(name=name):
+                self.assertTrue(index.is_global_class(name))
+        for name in ("D", "Local", "Forward", "GPIO", "led"):
+            with self.subTest(name=name):
+                self.assertFalse(index.is_global_class(name))
+
+
+class HeaderOrder(TypeIndexTestCase):
+    """索引中头文件的顺序。
+    The order of the headers of an index.
+    """
+
+    def test_headers_are_ordered_by_their_plain_case_sensitive_spelling(self):
+        # Path 的比较在 Windows 上不区分大小写，同一个 BSP 在两个系统上会得到不同的顺序。
+        # Comparing Path objects ignores case on Windows, which would order one BSP differently
+        # on the two systems.
+        names = ["alpha.hpp", "Beta.hpp", "a/Zed.hpp", "Alpha2.hpp", "beta2.hpp"]
+        for name in names:
+            self.write(name, "struct S {};" + chr(10))
+        index = TypeIndex([self.root / name for name in names])
+        self.assertEqual(
+            [path.relative_to(self.root.resolve()).as_posix() for path in index.headers],
+            ["Alpha2.hpp", "Beta.hpp", "a/Zed.hpp", "alpha.hpp", "beta2.hpp"],
+        )
+
+
+class Monitor(TypeIndexTestCase):
+    """类是否提供可调用的 OnMonitor。
+    Whether a class provides a callable OnMonitor.
+    """
+
+    def provides(self, text, name="M"):
+        """类型索引是否认为这个类提供 OnMonitor。
+        Whether the type index finds that this class provides OnMonitor.
+        """
+        index = self.index(text)
+        return index.provides_monitor(index.resolve(name))
+
+    def test_public_monitor(self):
+        self.assertTrue(self.provides("class M { public: void OnMonitor(); };"))
+        self.assertTrue(self.provides("struct M { void OnMonitor() const noexcept {} };"))
+        self.assertFalse(self.provides("class M { void OnMonitor(); };"))
+        self.assertFalse(self.provides("class M { protected: void OnMonitor(); };"))
+        self.assertFalse(self.provides("class M { public: void OnMonitorAll(); };"))
+
+    def test_public_static_monitor(self):
+        self.assertTrue(self.provides("class M { public: static void OnMonitor(); };"))
+
+    def test_a_call_to_monitor_in_another_member_is_not_a_declaration(self):
+        # 成员函数的函数体里调用成员的 OnMonitor()，不让这个类自己提供 OnMonitor。
+        # Calling the OnMonitor() of a member inside a member function does not make the class
+        # provide OnMonitor itself.
+        for body in (
+            "void Update() { sensor_.OnMonitor(); }",
+            "void Update() const { sensor_->OnMonitor(); }",
+            "int Run() { return sensor_.OnMonitor(); }",
+            "static void Poll(Sensor& s) { s.OnMonitor(); }",
+            "M() { sensor_.OnMonitor(); }",
+            "Sensor sensor_ = Make([this] { OnMonitor(); });",
+            "std::function<void()> callback = [] { Other().OnMonitor(); };",
+            "void Update() { /* OnMonitor() */ }",
+            'const char* Name() { return "OnMonitor"; }',
+        ):
+            with self.subTest(body=body):
+                self.assertFalse(
+                    self.provides(
+                        f"struct Sensor {{ void OnMonitor(); }};\nclass M {{ public: {body} }};"
+                    )
+                )
+        # 访问权限仍然起作用，声明本身就够了。
+        # Access still matters, and the declaration itself is enough.
+        self.assertTrue(
+            self.provides(
+                "struct Sensor { void OnMonitor(); };\n"
+                "class M { public: void Update() { sensor_.OnMonitor(); }\n"
+                "  void OnMonitor() { sensor_.OnMonitor(); }\n  Sensor sensor_; };"
+            )
+        )
+        self.assertFalse(
+            self.provides(
+                "struct Sensor { void OnMonitor(); };\n"
+                "class M { public: void Update() { OnMonitor(); }\n private: void OnMonitor(); };"
+            )
+        )
+
+    def test_the_name_of_the_declaration_must_be_monitor(self):
+        for declaration in (
+            "void OnMonitorAll();",
+            "void Run(int OnMonitor);",
+            "std::function<void()> OnMonitor;",
+            "using Callback = void (*)(OnMonitor);",
+            "friend void OnMonitor(M&);",
+        ):
+            with self.subTest(declaration=declaration):
+                self.assertFalse(self.provides(f"class M {{ public: {declaration} }};"))
+        for declaration in (
+            "void OnMonitor();",
+            "virtual void OnMonitor() = 0;",
+            "[[nodiscard]] static void OnMonitor() {}",
+            "auto OnMonitor() -> void;",
+            "template <typename T> void OnMonitor(T value);",
+            "std::uint8_t OnMonitor() const noexcept { return 0; }",
+        ):
+            with self.subTest(declaration=declaration):
+                self.assertTrue(self.provides(f"class M {{ public: {declaration} }};"))
+
+    def test_only_a_using_declaration_of_monitor_provides_it(self):
+        self.assertTrue(
+            self.provides(
+                "class B { protected: void OnMonitor(); void Other(); };\n"
+                "class M : B { public: using B::Other, B::OnMonitor; };"
+            )
+        )
+        self.assertFalse(
+            self.provides(
+                "class B { protected: void OnMonitor(); void Other(); };\n"
+                "class M : B { public: using B::Other; using Result = decltype(OnMonitor()); };"
+            )
+        )
+
+    def test_inherited_and_using_declared_monitors(self):
+        self.assertTrue(self.provides("struct B { void OnMonitor(); };\nclass M : public B {};"))
+        self.assertFalse(self.provides("struct B { void OnMonitor(); };\nclass M : B {};"))
+        self.assertFalse(
+            self.provides("struct B { void OnMonitor(); };\nclass M : protected B {};")
+        )
+        self.assertTrue(
+            self.provides(
+                "class B { protected: void OnMonitor(); };\n"
+                "class M : B { public: using B::OnMonitor; };"
+            )
+        )
+
+    def test_libxr_bases_provide_none_and_unknown_bases_are_unknown(self):
+        self.assertFalse(self.provides("class M : public LibXR::Application { public: M(); };"))
+        self.assertFalse(self.provides("class M : public ::LibXR::Application { public: M(); };"))
+        self.assertIsNone(self.provides("class M : public Vendor::Base { public: M(); };"))
+        self.assertTrue(
+            self.provides("class M : public Vendor::Base { public: void OnMonitor(); };")
+        )
+
+    def test_conditional_monitor_is_an_error(self):
+        for text in (
+            "class M { public:\n#if FEATURE\n  void OnMonitor();\n#endif\n};",
+            "struct B { void X(); };\nclass M : public B { public:\n#ifdef FEATURE\n  using B::OnMonitor;\n#endif\n};",
+        ):
+            with (
+                self.subTest(text=text),
+                self.assertRaisesMessage(
+                    ValueError,
+                    ("M declares OnMonitor under #if; the generator cannot evaluate build options"),
+                ),
+            ):
+                self.provides(text)
+
+    def returned(self, text, name="M"):
+        """提供 OnMonitor 的类声明的返回类型写法。
+        The return type spelling declared by the class that provides OnMonitor.
+        """
+        index = self.index(text)
+        return index.monitor_return(index.resolve(name))
+
+    def test_the_return_type_is_the_spelling_of_the_declaration(self):
+        for declaration, expected in (
+            ("void OnMonitor();", "void"),
+            ("virtual void OnMonitor() {}", "void"),
+            ("[[maybe_unused]] static inline void OnMonitor() {}", "void"),
+            ("void OnMonitor() const noexcept {}", "void"),
+            ("int OnMonitor();", "int"),
+            ("const char* OnMonitor();", "const char*"),
+            ("std::uint8_t OnMonitor();", "std::uint8_t"),
+            ("LibXR::ErrorCode OnMonitor();", "LibXR::ErrorCode"),
+            ("auto OnMonitor();", None),
+            ("auto OnMonitor() -> void;", None),
+            ("void OnMonitor() { if (p_ != nullptr) { p_->Update(); } }", "void"),
+            ("void OnMonitor() const noexcept { q_->Update(); }", "void"),
+            ("decltype(auto) OnMonitor();", None),
+        ):
+            with self.subTest(declaration=declaration):
+                self.assertEqual(self.returned(f"class M {{ public: {declaration} }};"), expected)
+
+    def test_declarations_that_disagree_leave_the_return_type_open(self):
+        self.assertEqual(
+            self.returned("class M { public: void OnMonitor(); void OnMonitor(int);  };"), "void"
+        )
+        self.assertIsNone(
+            self.returned("class M { public: void OnMonitor(); int OnMonitor(int); };")
+        )
+
+    def test_the_return_type_comes_from_the_base_that_provides_the_monitor(self):
+        self.assertEqual(
+            self.returned("struct B { int OnMonitor(); };\nclass M : public B {};"), "int"
+        )
+        self.assertIsNone(
+            self.returned(
+                "class B { protected: void OnMonitor(); };\n"
+                "class M : B { public: using B::OnMonitor; };"
+            )
+        )
+        self.assertIsNone(self.returned("class M { public: void Other(); };"))
+
+    def test_an_include_guard_is_not_a_condition(self):
+        guarded = (
+            "// Led\n#ifndef LED_HPP\n#define LED_HPP\n#include <cstdint>\n"
+            "struct Param { int cycle = 1;\n#if FEATURE\n  int extra;\n#endif\n};\n"
+            "class M { public: void OnMonitor(); };\n#endif  // LED_HPP\n"
+        )
+        index = self.index(guarded)
+        self.assertTrue(index.provides_monitor(index.resolve("M")))
+        self.assertEqual(
+            index.resolve("Param").mapping_problem(), "Param declares fields under #if (extra)"
+        )
+        for text in (
+            guarded.replace("#define LED_HPP", "#define OTHER"),
+            guarded.replace("#endif  // LED_HPP\n", "#endif  // LED_HPP\nint after;\n"),
+            "int before;\n" + guarded,
+            "#ifndef FEATURE\nclass M { public: void OnMonitor(); };\n#endif\n",
+        ):
+            with (
+                self.subTest(text=text),
+                self.assertRaisesMessage(
+                    ValueError,
+                    ("M declares OnMonitor under #if; the generator cannot evaluate build options"),
+                ),
+            ):
+                self.provides(text)
+
+
+if __name__ == "__main__":
+    unittest.main()

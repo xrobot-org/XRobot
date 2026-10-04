@@ -1,0 +1,35 @@
+# Branch rule for official repositories: master (or main) is the stable line and
+# only receives pull requests from the same repository's dev branch. Hotfixes go
+# into dev first.
+# Current state: only XRobot runs this workflow, and nothing requires it, so a
+# failing check does not block a merge. XRobot has no rulesets and its master
+# protection lists no required status checks; libxr's master is not protected.
+name: source-is-dev
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited]
+
+permissions: {}
+
+jobs:
+  source-is-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the source branch
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          case "$BASE_REF" in
+            master|main) ;;
+            *) echo "Target $BASE_REF is not a stable line; nothing to check."; exit 0 ;;
+          esac
+          if [ "$HEAD_REPO" = "$REPO" ] && [ "$HEAD_REF" = "dev" ]; then
+            echo "$REPO:dev -> $BASE_REF"
+            exit 0
+          fi
+          echo "::error::Pull requests into $BASE_REF must come from $REPO:dev, not $HEAD_REPO:$HEAD_REF. Open the pull request against dev instead."
+          exit 1

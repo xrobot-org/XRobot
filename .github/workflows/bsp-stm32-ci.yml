@@ -1,0 +1,539 @@
+# Shared STM32 BSP CI: checks the generated and configuration files of an XRobot BSP, builds
+# every robot configuration (and every CMake preset) in the STM32 container, packages the
+# firmware and publishes it on releases. A BSP calls it with
+#   uses: xrobot-org/XRobot/.github/workflows/bsp-stm32-ci.yml@v1
+#   with:
+#     project: DevC
+#     configs: |
+#       default
+#       debug
+# `project` is the CMake project name, so the firmware is build/<project>.elf. `default` builds
+# User/xrobot.yaml; any other name is a file <config-dir>/<name>.yaml.
+# The tools are installed at the versions pinned in Modules/modules.yaml (xrobot) and
+# User/libxr_config.yaml (generator).
+# A tag `v*` push or a published Release publishes the firmware: `default` when it is the only
+# configuration, otherwise every other configuration, or the ones named by `release-configs`.
+# One job collects all builds and uploads <project>-<config>[-<preset>]-<tag>.{elf,hex,bin},
+# <project>-<config>-<tag>.yaml, <project>-<config>-<tag>.tar.gz, SHA256SUMS and
+# firmware-manifest.json. A tag push creates the Release with a generated description (unless it
+# already has one); a published Release keeps its description. The calling job lets this workflow
+# write its contents (permissions: contents: write).
+name: XRobot STM32 BSP CI
+
+on:
+  workflow_call:
+    inputs:
+      project:
+        description: CMake project name of the BSP, which is the base name of the ELF
+        type: string
+        required: true
+      configs:
+        description: Robot configurations to build, one per line; default is User/xrobot.yaml
+        type: string
+        default: default
+      config-dir:
+        description: Folder of the robot configurations, relative to the BSP root
+        type: string
+        default: User/RobotConfig
+      toolchain:
+        description: CMake toolchain file, relative to the BSP root (not used with presets)
+        type: string
+        default: cmake/starm-clang.cmake
+      build-type:
+        description: CMake build type; empty leaves it unset (not used with presets)
+        type: string
+        default: Release
+      presets:
+        description: CMake presets to configure and build, one per line, for a BSP with several images
+        type: string
+        default: ''
+      release-configs:
+        description: Configurations published on a release, one per line; empty publishes every configuration but default, or default when it is the only one
+        type: string
+        default: ''
+      image:
+        description: Build container image
+        type: string
+        default: ghcr.io/xrobot-org/docker-image-stm32:main
+
+permissions:
+  contents: read
+
+env:
+  XR_CONTEXT_REF: ${{ github.ref_type == 'tag' && format('refs/tags/{0}', github.ref_name) || format('refs/heads/{0}', github.head_ref || github.ref_name) }}
+  # The line this build targets: the PR base branch, or the pushed branch/tag.
+  XR_RELEASE_REF: ${{ github.base_ref && format('refs/heads/{0}', github.base_ref) || (github.ref_type == 'tag' && format('refs/tags/{0}', github.ref_name) || format('refs/heads/{0}', github.ref_name)) }}
+
+jobs:
+  plan:
+    name: plan
+    runs-on: ubuntu-latest
+    outputs:
+      builds: ${{ steps.plan.outputs.builds }}
+      releases: ${{ steps.plan.outputs.releases }}
+    steps:
+      - name: List the builds
+        id: plan
+        shell: bash
+        env:
+          XR_CONFIGS: ${{ inputs.configs }}
+          XR_PRESETS: ${{ inputs.presets }}
+          XR_RELEASE_CONFIGS: ${{ inputs.release-configs }}
+        run: |
+          python3 - <<'PYCODE'
+          import json, os, re, sys
+          from collections import Counter
+          def lines(name):
+              return list(dict.fromkeys(l.strip() for l in os.environ[name].splitlines() if l.strip()))
+          def fail(message):
+              print(f"::error::{message}")
+              sys.exit(1)
+          configs = lines('XR_CONFIGS') or ['default']
+          presets = lines('XR_PRESETS') or ['']
+          chosen = lines('XR_RELEASE_CONFIGS')
+          for value in configs + presets + chosen:
+              if value and not re.fullmatch(r'[A-Za-z0-9_.-]+', value):
+                  fail(f"{value!r} is not a plain name (letters, digits, _ . -)")
+          unbuilt = [c for c in chosen if c not in configs]
+          if unbuilt:
+              fail(f"release-configs lists {', '.join(unbuilt)}, which is not in configs")
+          if chosen:
+              published = chosen
+          elif configs == ['default']:
+              published = ['default']
+          else:
+              published = [c for c in configs if c != 'default']
+          builds = [
+              {
+                  'config': config,
+                  'preset': preset,
+                  'name': '-'.join(p for p in (config, preset) if p),
+                  'release': config in published,
+              }
+              for config in configs for preset in presets
+          ]
+          same = [n for n, count in Counter(b['name'].lower() for b in builds).items() if count > 1]
+          if same:
+              fail(f"configs and presets give the same build name: {', '.join(same)}")
+          releases = [b for b in builds if b['release']]
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              print('builds=' + json.dumps(builds), file=out)
+              print('releases=' + json.dumps(releases), file=out)
+          PYCODE
+
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.image }}
+      options: --user 0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Init submodules
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE" && git submodule update --init --recursive
+      - name: Install pinned XRobot tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          pin() { python3 -c 'import sys, yaml; print((yaml.safe_load(open(sys.argv[1])) or {}).get(sys.argv[2]) or "")' "$1" "$2"; }
+          spec() { if [[ "$3" =~ ^[0-9a-f]{40}$ ]]; then echo "git+$2@$3"; else echo "$1==$3"; fi; }
+          xrobot_pin=$(pin Modules/modules.yaml xrobot)
+          generator_pin=$(pin User/libxr_config.yaml generator)
+          if [[ -z "$xrobot_pin" || -z "$generator_pin" ]]; then
+            echo "::error::Pin xrobot in Modules/modules.yaml and generator in User/libxr_config.yaml"
+            exit 1
+          fi
+          python3 -m pip install \
+            "$(spec xrobot https://github.com/xrobot-org/XRobot.git "$xrobot_pin")" \
+            "$(spec libxr https://github.com/xrobot-org/LibXR_CppCodeGenerator.git "$generator_pin")"
+      - name: Regenerate BSP objects
+        run: |
+          mkdir -p .ci-tools
+          libxr parse -d . -o .ci-tools/cubemx.yaml
+          libxr gen -i .ci-tools/cubemx.yaml -o User/app_main.cpp --xrobot --libxr-config User/libxr_config.yaml
+      - name: Check generated BSP objects are committed
+        shell: bash
+        run: |
+          set -euo pipefail
+          generated=(User/app_main.cpp User/app_main.h User/flash_map.hpp User/libxr_config.yaml)
+          if [[ -n "$(git status --porcelain -- "${generated[@]}")" ]]; then
+            git --no-pager diff -- "${generated[@]}"
+            echo "::error::Generated BSP objects differ from the commit; regenerate and commit them"
+            exit 1
+          fi
+      - name: Check line endings
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Text files are stored with LF. CRLF in the index mixes line endings into the
+          # diffs of every regeneration (CubeMX writes CRLF on Windows).
+          crlf=$(git ls-files --eol | awk -F'\t' '$1 ~ /^i\/crlf/ {print $2}')
+          if [[ -n "$crlf" ]]; then
+            echo "$crlf"
+            echo "::error::Text files are stored with CRLF line endings; add '* text=auto' to .gitattributes and run: git add --renormalize ."
+            exit 1
+          fi
+      - name: Check config layout
+        run: xrobot format --check
+      - name: Resolve locked Modules and check every config
+        run: xrobot setup --frozen --context-ref "$XR_CONTEXT_REF" --release-ref "$XR_RELEASE_REF"
+
+  build:
+    name: build (${{ matrix.name }})
+    needs: plan
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.builds) }}
+    container:
+      image: ${{ inputs.image }}
+      options: --user 0
+    env:
+      XR_PROJECT: ${{ inputs.project }}
+      XR_CONFIG: ${{ matrix.config }}
+      XR_PRESET: ${{ matrix.preset }}
+      XR_NAME: ${{ matrix.name }}
+      XR_CONFIG_DIR: ${{ inputs.config-dir }}
+      XR_TOOLCHAIN: ${{ inputs.toolchain }}
+      XR_BUILD_TYPE: ${{ inputs.build-type }}
+      GCC_TOOLCHAIN_ROOT: /opt/arm-gnu-toolchain-14.2.rel1-x86_64-arm-none-eabi/bin
+      CLANG_GCC_CMSIS_COMPILER: /opt/st-arm-clang
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Init submodules
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE" && git submodule update --init --recursive
+      - name: Install pinned XRobot tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          pin() { python3 -c 'import sys, yaml; print((yaml.safe_load(open(sys.argv[1])) or {}).get(sys.argv[2]) or "")' "$1" "$2"; }
+          spec() { if [[ "$3" =~ ^[0-9a-f]{40}$ ]]; then echo "git+$2@$3"; else echo "$1==$3"; fi; }
+          xrobot_pin=$(pin Modules/modules.yaml xrobot)
+          generator_pin=$(pin User/libxr_config.yaml generator)
+          if [[ -z "$xrobot_pin" || -z "$generator_pin" ]]; then
+            echo "::error::Pin xrobot in Modules/modules.yaml and generator in User/libxr_config.yaml"
+            exit 1
+          fi
+          python3 -m pip install \
+            "$(spec xrobot https://github.com/xrobot-org/XRobot.git "$xrobot_pin")" \
+            "$(spec libxr https://github.com/xrobot-org/LibXR_CppCodeGenerator.git "$generator_pin")"
+      - name: Resolve locked Modules
+        run: xrobot setup --frozen --context-ref "$XR_CONTEXT_REF" --release-ref "$XR_RELEASE_REF"
+      - name: Configure
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "$XR_PRESET" || "$XR_TOOLCHAIN" == *gcc-arm-none-eabi* ]]; then export PATH="$GCC_TOOLCHAIN_ROOT:$PATH"; fi
+          if [[ -n "$XR_PRESET" ]]; then
+            cmake --preset "$XR_PRESET"
+          else
+            options=(-DCMAKE_TOOLCHAIN_FILE:STRING="$XR_TOOLCHAIN")
+            if [[ -n "$XR_BUILD_TYPE" ]]; then options+=(-DCMAKE_BUILD_TYPE:STRING="$XR_BUILD_TYPE"); fi
+            cmake . "${options[@]}" -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -Bbuild -G Ninja
+          fi
+      - name: Build
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "$XR_PRESET" || "$XR_TOOLCHAIN" == *gcc-arm-none-eabi* ]]; then export PATH="$GCC_TOOLCHAIN_ROOT:$PATH"; fi
+          if [[ "$XR_CONFIG" != default ]]; then
+            xrobot gen -c "$XR_CONFIG_DIR/$XR_CONFIG.yaml"
+          fi
+          if [[ -n "$XR_PRESET" ]]; then
+            cmake --build --preset "$XR_PRESET"
+          else
+            cmake --build build
+          fi
+      - name: Package firmware
+        if: matrix.release
+        shell: bash
+        run: |
+          set -euo pipefail
+          elf=$(find build -name "$XR_PROJECT.elf" -print -quit)
+          if [[ -z "$elf" ]]; then
+            echo "::error::build contains no $XR_PROJECT.elf"
+            exit 1
+          fi
+          output=$(dirname "$elf")/$XR_PROJECT
+          stem="$XR_PROJECT-$XR_NAME"
+          mkdir -p "dist/$XR_NAME"
+          for extension in elf hex bin; do
+            cp "$output.$extension" "dist/$XR_NAME/$stem.$extension"
+          done
+          if [[ "$XR_CONFIG" == default ]]; then config_file=User/xrobot.yaml; else config_file="$XR_CONFIG_DIR/$XR_CONFIG.yaml"; fi
+          cp "$config_file" "dist/$XR_NAME/$XR_PROJECT-$XR_CONFIG.yaml"
+          export PATH="$PATH:$GCC_TOOLCHAIN_ROOT"
+          XR_SIZE_OUTPUT=$(arm-none-eabi-size "$output.elf")
+          export XR_SIZE_OUTPUT
+          python3 - <<'INFOCODE'
+          import importlib.metadata as metadata
+          import json, os, re, subprocess, sys
+          import yaml
+          def fail(message):
+              print(f"::error::{message}")
+              sys.exit(1)
+          def git(*args):
+              return subprocess.run(['git', *args], check=True, capture_output=True, text=True).stdout.strip()
+          def load(path):
+              with open(path, encoding='utf-8') as handle:
+                  return yaml.safe_load(handle) or {}
+          env = os.environ
+          project, name, config, preset = env['XR_PROJECT'], env['XR_NAME'], env['XR_CONFIG'], env['XR_PRESET']
+          sizes = re.search(r'^\s*(\d+)\s+(\d+)\s+(\d+)\s+\d+\s+[0-9a-fA-F]+\s', env['XR_SIZE_OUTPUT'], re.M)
+          if not sizes:
+              fail(f"cannot read the section sizes from: {env['XR_SIZE_OUTPUT']!r}")
+          text, data, bss = map(int, sizes.groups())
+          files = {extension: f'{project}-{name}.{extension}' for extension in ('elf', 'hex', 'bin')}
+          files['config'] = f'{project}-{config}.yaml'
+          for file in files.values():
+              if not os.path.isfile(os.path.join('dist', name, file)):
+                  fail(f'dist/{name}/{file} is missing')
+          # The LibXR submodule is the gitlink whose folder is called LibXR; the index holds the
+          # commit the BSP records for it.
+          libxr = None
+          for line in git('ls-files', '--stage').splitlines():
+              meta, path = line.split('\t', 1)
+              mode, commit = meta.split()[:2]
+              if mode == '160000' and path.rsplit('/', 1)[-1].lower() == 'libxr':
+                  libxr = {'path': path, 'commit': commit}
+                  break
+          lock = load('xrobot.lock').get('modules') or {}
+          info = {
+              'name': name,
+              'config': config,
+              'preset': preset,
+              'files': files,
+              'size': {'text': text, 'data': data, 'bss': bss},
+              'commit': git('rev-parse', 'HEAD'),
+              'tools': {
+                  'xrobot': {
+                      'version': metadata.version('xrobot'),
+                      'pin': str(load('Modules/modules.yaml').get('xrobot') or ''),
+                  },
+                  'libxr': {
+                      'version': metadata.version('libxr'),
+                      'pin': str(load('User/libxr_config.yaml').get('generator') or ''),
+                  },
+              },
+              'libxr_submodule': libxr,
+              'modules': {module: (entry or {}).get('commit', '') for module, entry in sorted(lock.items())},
+          }
+          with open(os.path.join('dist', name, 'build-info.json'), 'w', encoding='utf-8', newline='\n') as out:
+              json.dump(info, out, indent=2)
+              out.write('\n')
+          print(json.dumps(info, indent=2))
+          INFOCODE
+      - name: Upload firmware artifact
+        if: matrix.release
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}-firmware
+          path: dist/${{ matrix.name }}
+          if-no-files-found: error
+
+  release:
+    if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v')
+    needs: [plan, check, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      XR_PROJECT: ${{ inputs.project }}
+      XR_TAG: ${{ github.event.release.tag_name || github.ref_name }}
+      XR_REPOSITORY: ${{ github.repository }}
+      XR_RELEASES: ${{ needs.plan.outputs.releases }}
+      XR_TOOLCHAIN: ${{ inputs.toolchain }}
+      XR_BUILD_TYPE: ${{ inputs.build-type }}
+      XR_IMAGE: ${{ inputs.image }}
+    steps:
+      - name: Download firmware artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*-firmware'
+          path: release-artifacts
+      - name: Assemble the release files
+        shell: bash
+        run: |
+          python3 - <<'RELEASECODE'
+          import gzip, hashlib, json, os, re, shutil, sys, tarfile
+          def fail(message):
+              print(f"::error::{message}")
+              sys.exit(1)
+          def digest(path):
+              with open(path, 'rb') as handle:
+                  return hashlib.sha256(handle.read()).hexdigest()
+          env = os.environ
+          project, tag = env['XR_PROJECT'], env['XR_TAG']
+          if not tag:
+              fail('the release has no tag')
+          # The tag is part of every file name; characters a file name should not have become -.
+          label = re.sub(r'[^A-Za-z0-9._-]', '-', tag)
+          def named(*parts):
+              return '-'.join(p for p in (project, *parts, label) if p)
+          builds = json.loads(env['XR_RELEASES'])
+          infos = []
+          for build in builds:
+              folder = os.path.join('release-artifacts', build['name'] + '-firmware')
+              if not os.path.isfile(os.path.join(folder, 'build-info.json')):
+                  fail(f"the artifact {build['name']}-firmware is missing")
+              with open(os.path.join(folder, 'build-info.json'), encoding='utf-8') as handle:
+                  info = json.load(handle)
+              if (info['config'], info['preset']) != (build['config'], build['preset']):
+                  fail(f"the artifact {build['name']}-firmware belongs to another build")
+              infos.append((folder, info))
+          # Every build checks out the same commit and installs the same tools.
+          first = infos[0][1]
+          for _, info in infos[1:]:
+              for key in ('commit', 'tools', 'libxr_submodule', 'modules'):
+                  if info[key] != first[key]:
+                      fail(f"the builds {first['name']} and {info['name']} differ in {key}")
+          taken, sources, groups, entries = set(), {}, {}, []
+          def claim(name):
+              if name.lower() in taken:
+                  fail(f'two release files would be named {name}')
+              taken.add(name.lower())
+          for folder, info in infos:
+              config = info['config']
+              if config not in groups:
+                  groups[config] = {'archive': named(config) + '.tar.gz', 'files': []}
+                  claim(groups[config]['archive'])
+              files = {kind: f"{named(info['name'])}.{kind}" for kind in ('elf', 'hex', 'bin')}
+              files['config'] = f'{named(config)}.yaml'
+              files['archive'] = groups[config]['archive']
+              for kind in ('elf', 'hex', 'bin', 'config'):
+                  source = os.path.join(folder, info['files'][kind])
+                  if not os.path.isfile(source):
+                      fail(f"the artifact {info['name']}-firmware has no {info['files'][kind]}")
+                  if kind == 'config' and files[kind] in sources:
+                      # The builds of a configuration share its configuration file.
+                      if digest(source) != digest(sources[files[kind]]):
+                          fail(f'the builds of {config} use different configuration files')
+                  else:
+                      claim(files[kind])
+                      sources[files[kind]] = source
+                  groups[config]['files'].append(files[kind])
+              entries.append({
+                  'config': config,
+                  'preset': info['preset'] or None,
+                  'files': {kind: files[kind] for kind in ('elf', 'hex', 'bin', 'config', 'archive')},
+                  'size': info['size'],
+              })
+          shutil.rmtree('release', ignore_errors=True)
+          os.makedirs('release')
+          for name, source in sources.items():
+              shutil.copyfile(source, os.path.join('release', name))
+          # The archives hold the same files in a fixed order with fixed times, so equal inputs
+          # give equal archives.
+          for group in groups.values():
+              folder = group['archive'][: -len('.tar.gz')]
+              with (
+                  open(os.path.join('release', group['archive']), 'wb') as raw,
+                  gzip.GzipFile(filename='', mode='wb', fileobj=raw, mtime=0) as packed,
+                  tarfile.open(fileobj=packed, mode='w', format=tarfile.GNU_FORMAT) as tar,
+              ):
+                  for name in sorted(set(group['files'])):
+                      member = tarfile.TarInfo(f'{folder}/{name}')
+                      member.mode = 0o644
+                      member.size = os.path.getsize(os.path.join('release', name))
+                      with open(os.path.join('release', name), 'rb') as content:
+                          tar.addfile(member, content)
+          # With presets, the presets choose the toolchain and the build type.
+          presets = any(build['preset'] for build in builds)
+          toolchain = None if presets else env['XR_TOOLCHAIN']
+          build_type = None if presets else env['XR_BUILD_TYPE'] or None
+          manifest = {
+              'schema': 1,
+              'tag': tag,
+              'commit': first['commit'],
+              'repository': env['XR_REPOSITORY'],
+              'project': project,
+              'build_type': build_type,
+              'toolchain': toolchain,
+              'image': env['XR_IMAGE'],
+              'tools': first['tools'],
+              'libxr_submodule': first['libxr_submodule'],
+              'modules': first['modules'],
+              'builds': entries,
+          }
+          with open(os.path.join('release', 'firmware-manifest.json'), 'w', encoding='utf-8', newline='\n') as out:
+              json.dump(manifest, out, indent=2)
+              out.write('\n')
+          sums = ''.join(f"{digest(os.path.join('release', name))}  {name}\n" for name in sorted(os.listdir('release')))
+          with open(os.path.join('release', 'SHA256SUMS'), 'w', encoding='utf-8', newline='\n') as out:
+              out.write(sums)
+          tools, module = first['tools'], first['libxr_submodule']
+          notes = [
+              f'## {project} {tag}',
+              '',
+              '| Config | Preset | text | data | bss | Archive |',
+              '| --- | --- | ---: | ---: | ---: | --- |',
+          ]
+          for entry in entries:
+              size = entry['size']
+              preset = f"`{entry['preset']}`" if entry['preset'] else '-'
+              notes.append(
+                  f"| `{entry['config']}` | {preset} | {size['text']} | {size['data']} | {size['bss']} "
+                  f"| `{entry['files']['archive']}` |"
+              )
+          built = [f"Image `{env['XR_IMAGE']}`"]
+          if toolchain:
+              built.append(f'toolchain `{toolchain}`')
+          if build_type:
+              built.append(f'build type `{build_type}`')
+          notes += [
+              '',
+              f"- Commit `{first['commit'][:7]}` of {env['XR_REPOSITORY']}",
+              f"- xrobot {tools['xrobot']['version']}, libxr {tools['libxr']['version']}"
+              + (f", LibXR `{module['commit'][:7]}`" if module else ''),
+              '- ' + ', '.join(built),
+              '- `SHA256SUMS` lists every file of this release; `firmware-manifest.json` records the builds and the Module commits',
+          ]
+          with open('release-notes.md', 'w', encoding='utf-8', newline='\n') as out:
+              out.write('\n'.join(notes) + '\n')
+          print(sums, end='')
+          RELEASECODE
+      - name: Keep the description of an existing release
+        id: notes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'NOTESCODE'
+          import os, subprocess, sys
+          # A tag push creates the release with the generated description, unless the release
+          # already exists with one (creating a Release in the web page also pushes the tag).
+          # A published Release keeps its own description.
+          path = ''
+          if os.environ['GITHUB_EVENT_NAME'] != 'release':
+              found = subprocess.run(
+                  ['gh', 'api', f"repos/{os.environ['GITHUB_REPOSITORY']}/releases/tags/{os.environ['XR_TAG']}",
+                   '--jq', '.body // ""'],
+                  capture_output=True, text=True,
+              )
+              if found.returncode == 0:
+                  body = found.stdout
+              elif 'HTTP 404' in found.stderr:
+                  body = ''
+              else:
+                  print(found.stderr)
+                  print('::error::Cannot read the release of the tag')
+                  sys.exit(1)
+              if not body.strip():
+                  path = 'release-notes.md'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              print('path=' + path, file=out)
+          NOTESCODE
+      - name: Publish the release files
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.XR_TAG }}
+          files: release/*
+          body_path: ${{ steps.notes.outputs.path }}
+          fail_on_unmatched_files: true

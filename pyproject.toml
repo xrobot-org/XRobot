@@ -1,12 +1,12 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "xrobot"
-version = "0.3.1"
-description = "A lightweight application framework for robot module management, lifecycle control, and hardware abstraction."
-requires-python = ">=3.8"
+version = "1.0.0"
+description = "Source package resolution and static C++ application assembly for the XRobot ecosystem."
+requires-python = ">=3.10"
 authors = [
     {name = "Xiao", email = "2592509183@qq.com"}
 ]
@@ -14,37 +14,43 @@ maintainers = [
     {name = "Xiao", email = "2592509183@qq.com"}
 ]
 readme = "README.md"
-license = {text = "Apache-2.0"}
-keywords = ["code generation", "embedded systems", "automation"]
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+keywords = ["LibXR", "embedded", "C++", "code generation", "package manager"]
 dependencies = [
     "pyyaml",
-    "requests"
+    "requests",
+    "ruamel.yaml>=0.17.21",
+    "xr-syntax==0.2.0"
 ]
 
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
 ]
 
-[project.optional-dependencies]
-cli = ["rich", "click"]
-
 [project.urls]
-Homepage = "https://github.com/xrobot-org"
-Documentation = "https://xrobot-org.github.io"
+Homepage = "https://xrobot.work"
+Documentation = "https://xrobot.work/docs/proj_man"
 Repository = "https://github.com/xrobot-org/XRobot"
 "Bug Tracker" = "https://github.com/xrobot-org/XRobot/issues"
 
 [project.scripts]
-xrobot_gen_main = "xrobot.GenerateMain:main"
-xrobot_mod_parser = "xrobot.ModuleParser:main"
-xrobot_create_mod = "xrobot.ModuleCreator:main"
-xrobot_init_mod = "xrobot.InitModule:main"
-xrobot_setup = "xrobot.XRobotSetup:main"
-xrobot_add_mod = "xrobot.AddModule:main"
-xrobot_src_man = "xrobot.SourceManager:main"
+xrobot = "xrobot.cli:run"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]

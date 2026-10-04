@@ -1,0 +1,162 @@
+# Shared Module CI: compiles a Module's sources and one generated, never-executed
+# constructor call against LibXR. Module repositories call it with
+#   uses: xrobot-org/XRobot/.github/workflows/module-ci.yml@v1
+# Tools and dependencies default to their master lines; pass the refs to test
+# against dev or a feature branch.
+name: XRobot Module CI
+
+on:
+  workflow_call:
+    inputs:
+      xrobot-ref:
+        description: XRobot branch, tag or commit used for the tools
+        type: string
+        default: master
+      libxr-ref:
+        description: LibXR branch, tag or commit
+        type: string
+        default: master
+      dependency-ref:
+        description: Context for same-or-dev dependencies (refs/heads/... or refs/tags/...)
+        type: string
+        default: refs/heads/master
+      template-args:
+        description: JSON list of C++ template arguments for the constructor probe
+        type: string
+        default: '[]'
+      sources:
+        description: Further index URLs, one per line; the official indexes win when both list a package
+        type: string
+        default: ''
+      image:
+        description: Build container image
+        type: string
+        default: ghcr.io/xrobot-org/docker-image-linux:main
+      apt-packages:
+        description: Extra Debian packages
+        type: string
+        default: ''
+      cmake-options:
+        description: Extra CMake configure options
+        type: string
+        default: ''
+      ctest-regex:
+        description: When set, build tests and run the matching CTest tests
+        type: string
+        default: ''
+      ctest-timeout:
+        description: Per-test CTest timeout in seconds
+        type: number
+        default: 15
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.image }}
+      options: --user 0
+    env:
+      XR_MODULE_ID: ${{ github.repository }}
+      XR_TEMPLATE_ARGS: ${{ inputs.template-args }}
+      XR_DEPENDENCY_REF: ${{ inputs.dependency-ref }}
+      XR_SOURCES: ${{ inputs.sources }}
+    steps:
+      - name: Checkout the Module
+        uses: actions/checkout@v4
+        with:
+          path: Modules/${{ github.repository }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Checkout XRobot
+        uses: actions/checkout@v4
+        with:
+          repository: xrobot-org/XRobot
+          ref: ${{ inputs.xrobot-ref }}
+          path: .tools/XRobot
+
+      - name: Checkout LibXR
+        uses: actions/checkout@v4
+        with:
+          repository: xrobot-org/libxr
+          ref: ${{ inputs.libxr-ref }}
+          path: libxr
+          submodules: recursive
+
+      - name: Install build dependencies
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends libgpiod-dev ${{ inputs.apt-packages }}
+          python3 -m pip install ./.tools/XRobot
+
+      - name: Resolve dependencies and generate the constructor probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory '*'
+          python3 - <<'PYCODE'
+          import os, subprocess, yaml
+          from pathlib import Path
+          identity = os.environ['XR_MODULE_ID']
+          folder = Path('Modules') / identity
+          head = subprocess.check_output(['git', '-C', str(folder), 'rev-parse', 'HEAD'], text=True).strip()
+          origin = subprocess.check_output(['git', '-C', str(folder), 'remote', 'get-url', 'origin'], text=True).strip()
+          Path('ci-index.yaml').write_text(yaml.safe_dump({'modules': [{'id': identity, 'repo': origin}]}))
+          # The Module under test wins (-100), then the official indexes (0), then the caller's (1).
+          extra = [line.strip() for line in os.environ['XR_SOURCES'].splitlines() if line.strip()]
+          Path('Modules/sources.yaml').write_text(yaml.safe_dump({'sources': [
+              {'url': 'https://xrobot.work/xrobot-modules/index.yaml', 'priority': 0},
+              {'url': 'https://qdu-robomaster.github.io/qdu-future-modules/index.yaml', 'priority': 0},
+              *({'url': url, 'priority': 1} for url in extra),
+              {'url': '../ci-index.yaml', 'priority': -100}]}))
+          Path('Modules/modules.yaml').write_text(yaml.safe_dump({'modules': [
+              {'id': identity, 'ref': head, 'context_ref': os.environ['XR_DEPENDENCY_REF']}]}))
+          PYCODE
+          args=()
+          while IFS= read -r value; do args+=(--template-arg "$value"); done < <(
+            python3 -c 'import json, os; [print(v) for v in json.loads(os.environ["XR_TEMPLATE_ARGS"])]')
+          xrobot check-module "$XR_MODULE_ID" -o module_check.cpp "${args[@]}"
+
+      - name: Create the probe project
+        shell: bash
+        run: |
+          cat > CMakeLists.txt <<'CMAKE'
+          cmake_minimum_required(VERSION 3.16)
+          project(xrobot_module_check LANGUAGES C CXX ASM)
+          set(CMAKE_CXX_STANDARD 20)
+          set(CMAKE_CXX_STANDARD_REQUIRED ON)
+          set(LIBXR_SYSTEM linux CACHE STRING "LibXR execution backend")
+          set(LIBXR_DRIVER linux CACHE STRING "LibXR driver backend")
+          set(LIBXR_PRINT_INTEGER_ENABLE_64BIT ON CACHE BOOL "")
+          set(LIBXR_PRINT_FLOAT_ENABLE_DOUBLE ON CACHE BOOL "")
+          set(LIBXR_PRINT_ENABLE_POINTER ON CACHE BOOL "")
+          include(CTest)
+          add_subdirectory(libxr)
+          # The probe is not a BSP: include the module list directly.
+          include(Modules/CMakeLists.txt)
+          get_property(_xr_module_deps GLOBAL PROPERTY XR_MODULE_DEPS)
+          if(_xr_module_deps)
+            list(REMOVE_DUPLICATES _xr_module_deps)
+            target_link_libraries(xr PUBLIC ${_xr_module_deps})
+          endif()
+          add_library(module_check OBJECT module_check.cpp)
+          target_link_libraries(module_check PRIVATE xr)
+          CMAKE
+
+      - name: Compile the Module and the probe
+        shell: bash
+        run: |
+          testing=OFF
+          if [[ -n "${{ inputs.ctest-regex }}" ]]; then testing=ON; fi
+          cmake -S . -B build -DBUILD_TESTING=$testing ${{ inputs.cmake-options }}
+          cmake --build build --parallel 2
+
+      - name: Run Module tests
+        if: inputs.ctest-regex != ''
+        shell: bash
+        run: ctest --test-dir build --output-on-failure --no-tests=error -R '${{ inputs.ctest-regex }}' --timeout ${{ inputs.ctest-timeout }}

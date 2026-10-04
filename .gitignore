@@ -1,11 +1,5 @@
 .history/**
 .idea/**
-*.yaml
-*.ioc
-*.cpp
-*.hpp
-*.c
-*.h
 __pycache__/
 *.pyc
 *.pyo
@@ -42,7 +36,6 @@ pip-delete-this-directory.txt
 *.log
 *.tmp
 *.bak
-*.lock
 
 .DS_Store
 Thumbs.db
