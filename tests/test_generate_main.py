@@ -454,7 +454,11 @@ class LineDirectives(GenerationTestCase):
             "      - param: {cycle: 1, inverted: false}\n      - gain: 1.0f\n"
         )
         where = self.where(generate(self.project, config))
-        for line in ("static const Led::Param xr_led_param = {", ".cycle = 1,", ".inverted = false,"):
+        for line in (
+            "static const Led::Param xr_led_param = {",
+            ".cycle = 1,",
+            ".inverted = false,",
+        ):
             self.assertEqual(where[line], ("User/xrobot.yaml", 6), line)
 
     def test_nested_fields_are_at_their_keys_and_later_fields_follow_again(self):
