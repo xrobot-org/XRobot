@@ -9,6 +9,7 @@ import re
 import stat
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from fixtures import CXX, BspTestCase, CxxMixin, TempDirTestCase, TestCase, requires_cxx
 from xr_syntax.cpp import code_tokens
@@ -874,7 +875,11 @@ class Selection(GenerationTestCase):
         self.assertIn("alt_led", generate(self.project))
 
     def test_a_missing_config_is_reported(self):
-        with self.assertRaisesMessage(ConfigError, "User/missing.yaml does not exist"):
+        with self.assertRaisesMessage(
+            ConfigError,
+            "User/missing.yaml does not exist; create it with "
+            "`xrobot instance -c User/missing.yaml add <owner/Repo>`",
+        ):
             generate(self.project, self.root / "User/missing.yaml")
 
     def test_validate_all_checks_every_config_and_collects_errors(self):
@@ -1941,6 +1946,27 @@ class Registrations(TempDirTestCase):
                 with self.assertRaises(ConfigError) as context:
                     self.read_entry(text)
                 self.assertEqual(str(context.exception), message)
+
+    def test_errors_use_the_given_label_and_the_glossary_terms(self):
+        # 以前报错只写文件名，中文写“登记”而不是术语表的“注册”。
+        # Errors used to give only the file name, and the Chinese ones said 登记 instead of
+        # the glossary term 注册.
+        path = self.write("app_main.cpp", "XR_REGISTER(x, int&);\nXR_REGISTER(class, int);\n")
+        with self.assertRaisesMessage(
+            ConfigError,
+            "User/app_main.cpp:1: register object types, not reference types: x\n"
+            "User/app_main.cpp:2: registration name class is a C++ keyword",
+        ):
+            read_registrations(path, "User/app_main.cpp")
+        with (
+            mock.patch.dict(os.environ, XR_LANG="zh"),
+            self.assertRaisesMessage(
+                ConfigError,
+                "app_main.cpp:1: 请注册对象类型，不要注册引用类型：x\n"
+                "app_main.cpp:2: 注册名 class 是 C++ 关键字",
+            ),
+        ):
+            read_registrations(path)
 
     def test_registration_after_a_closed_conditional_is_accepted(self):
         records = self.read_entry(

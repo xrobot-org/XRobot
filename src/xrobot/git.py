@@ -27,8 +27,8 @@ def git(path: str | Path | None, *args: str, check: bool = True) -> str | None:
         The standard output on success; None on failure with check=False.
 
     Raises:
-        ValueError: git 失败（check=True 时）或超时。
-            git failed (with check=True) or timed out.
+        ValueError: PATH 中没有 git、git 失败（check=True 时）或超时。
+            git is not on PATH, git failed (with check=True) or timed out.
     """
     env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GIT_OPTIONAL_LOCKS="0")
     command = ["git"] + (["-C", str(path)] if path else []) + list(args)
@@ -42,6 +42,17 @@ def git(path: str | Path | None, *args: str, check: bool = True) -> str | None:
             env=env,
             timeout=GIT_TIMEOUT,
         )
+    except FileNotFoundError as error:
+        # 与 libxr 的写法一致；否则只会输出 [Errno 2] No such file or directory: 'git'。
+        # Worded as libxr does; otherwise only [Errno 2] No such file or directory: 'git'
+        # would be printed.
+        raise ValueError(
+            tr(
+                "git was not found on PATH; XRobot fetches the Modules and reads their commits "
+                "with Git",
+                "PATH 中找不到 git；XRobot 用 Git 获取模块并读取它们的提交",
+            )
+        ) from error
     except subprocess.TimeoutExpired as error:
         raise ValueError(
             tr(

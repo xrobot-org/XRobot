@@ -247,7 +247,13 @@ class Commands(CliMixin, BspTestCase):
         self.assertNotIn("#line", header.read_text(encoding="utf-8"))
 
     def test_errors_exit_with_status_1_and_a_message(self):
-        self.fails("gen", "-c", "User/missing.yaml", message="User/missing.yaml does not exist")
+        self.fails(
+            "gen",
+            "-c",
+            "User/missing.yaml",
+            message="User/missing.yaml does not exist; create it with "
+            "`xrobot instance -c User/missing.yaml add <owner/Repo>`",
+        )
         self.config({"modules": [{"module": "Led", "id": "led", "args": [{"gpio": "other"}]}]})
         self.fails(
             "gen",
@@ -281,8 +287,14 @@ class Commands(CliMixin, BspTestCase):
         with mock.patch.dict(os.environ, XR_LANG="zh"):
             out, _ = self.ok("--help")
             self.assertTrue(out.startswith("用法：xrobot [-h] [--version] [-C DIR] <command> ..."))
-            self.assertIn("解析模块、生成静态入口、编辑配置。", out)
-            self.fails("gen", "-c", "User/缺失.yaml", message="User/缺失.yaml 不存在")
+            self.assertIn("解析模块、生成主函数、编辑配置。", out)
+            self.fails(
+                "gen",
+                "-c",
+                "User/缺失.yaml",
+                message="User/缺失.yaml 不存在；请用 "
+                "`xrobot instance -c User/缺失.yaml add <owner/Repo>` 创建",
+            )
             self.fails(
                 "instance",
                 "set",
@@ -392,7 +404,10 @@ class Commands(CliMixin, BspTestCase):
             "Added second to User/xrobot.yaml; fill the null values (dependencies) before "
             "generating\n  gpio (LibXR::GPIO&): pin\n",
         )
-        self.ok("instance", "set", "second", "args.gpio", "pin")
+        out, _ = self.ok("instance", "set", "second", "args.gpio", "pin")
+        # 以前成功时什么也不输出。
+        # Nothing used to be printed on success.
+        self.assertEqual(out, "Set args.gpio of second in User/xrobot.yaml\n")
         self.ok("instance", "set", "second", "args.gain", "2.5")
         second = load_config(self.root / "User/xrobot.yaml")["modules"][1]
         self.assertEqual(
@@ -437,11 +452,20 @@ class Commands(CliMixin, BspTestCase):
             ConfigError, "VALUE is not JSON: Expecting value: line 1 column 1 (char 0)"
         ):
             parse_value("LED_B", as_json=True)
+        quotes = (
+            "; C++ code that starts with {, [, & or * goes in single quotes inside the shell "
+            "quoting, e.g. \"'&grey_0'\""
+        )
         with self.assertRaisesMessage(
             ConfigError,
-            "VALUE:1: YAML syntax error: expected the node content, but found '<stream end>'",
+            "VALUE:1: YAML syntax error: expected the node content, but found '<stream end>'"
+            + quotes,
         ):
             parse_value("[")
+        with self.assertRaisesMessage(
+            ConfigError, "VALUE:1: YAML syntax error: mapping values are not allowed here"
+        ):
+            parse_value("a: b: c")
         self.ok("instance", "set", "led", "args.gain", "2.0f")
         self.ok("instance", "set", "led", "args.param", "'{250}'")
         self.ok("instance", "set", "led", "args.gpio", '"pin2"', "--json")
@@ -455,8 +479,44 @@ class Commands(CliMixin, BspTestCase):
             "led",
             "args.gain",
             "[",
-            message="VALUE:1: YAML syntax error: expected the node content, but found '<stream end>'",
+            message="VALUE:1: YAML syntax error: expected the node content, but found "
+            "'<stream end>'" + quotes,
         )
+
+    def test_code_that_yaml_reads_as_a_collection_or_an_alias_gets_the_quoting_hint(self):
+        # 以前只报 YAML 的错误，看不出要把 C++ 代码放进单引号。
+        # Only the YAML error used to be reported, without saying that the C++ code goes in
+        # single quotes.
+        quotes = (
+            "; C++ code that starts with {, [, & or * goes in single quotes inside the shell "
+            "quoting, e.g. \"'&grey_0'\""
+        )
+        for value, error in (
+            ('{{"topic1", "rx"}, {"topic2", "rx"}}', "VALUE:1: mapping keys must be plain names"),
+            (
+                "&led",
+                "VALUE:1: YAML anchors and aliases are not allowed; reference instances by id "
+                "and share values through constexprs",
+            ),
+            (
+                "*led",
+                "VALUE:1: YAML anchors and aliases are not allowed; reference instances by id "
+                "and share values through constexprs",
+            ),
+        ):
+            with self.subTest(value=value):
+                self.fails("instance", "set", "led", "args.gain", value, message=error + quotes)
+        self.ok("instance", "set", "led", "args.gain", "'&led'")
+        with mock.patch.dict(os.environ, XR_LANG="zh"):
+            self.fails(
+                "instance",
+                "set",
+                "led",
+                "args.param",
+                '{{"topic1", "rx"}}',
+                message="VALUE:1: 映射的键必须是普通名字；以 {、[、&、* 开头的 C++ 代码要放在单引号中，"
+                "单引号写在 shell 的引号之内，例如 \"'&grey_0'\"",
+            )
 
     def test_instance_add_writes_to_the_selected_product(self):
         self.config({"modules": []}, name="products/alt.yaml")
@@ -542,6 +602,103 @@ class Commands(CliMixin, BspTestCase):
         self.assertIn("+          phase:", out.replace("'0'", "").replace(" 0", ""))
         self.assertEqual(self.ok("sync")[0], "")
 
+    def test_editing_commands_refuse_configurations_before_1_0(self):
+        # 以前 format 照样重排旧文件、sync 和 setup --update 输出不写入的改动、instance add 以
+        # traceback 结束。
+        # format used to re-indent old files, sync and setup --update printed changes they
+        # never wrote and instance add ended in a traceback.
+        old = "global_settings:\n  monitor_sleep_ms: 1000\nmodules:\n- id: led\n  name: Led\n"
+        self.config(old, name="products/old.yaml")
+        before = {p: p.read_bytes() for p in (self.root / "User").rglob("*.yaml")}
+        message = (
+            "User/products/old.yaml: this configuration uses the format of XRobot before 1.0 "
+            "(global_settings, name/constructor_args); XRobot 1.0 lists each instance as "
+            "module, id and args; replace the content of the file with `modules: []` (or "
+            "delete the file and run `xrobot init`), then recreate the instances with "
+            "`xrobot instance -c User/products/old.yaml add`"
+        )
+        for argv in (
+            ("format",),
+            ("format", "--check"),
+            ("sync",),
+            ("setup", "--update"),
+            ("instance", "-c", "User/products/old.yaml", "add", "Led", "--id", "second"),
+            ("instance", "-c", "User/products/old.yaml", "set", "led", "args.gpio", "pin"),
+            ("instance", "-c", "User/products/old.yaml", "rename", "led", "other"),
+            ("instance", "-c", "User/products/old.yaml", "remove", "led"),
+        ):
+            with self.subTest(argv=argv):
+                self.fails(*argv, message=message)
+                self.assertEqual({p: p.read_bytes() for p in before}, before)
+        with mock.patch.dict(os.environ, XR_LANG="zh"):
+            self.fails(
+                "format",
+                message="User/products/old.yaml: 这份配置使用的是 XRobot 1.0 以前的格式"
+                "（global_settings、name/constructor_args）；XRobot 1.0 中每个实例写成 module、id "
+                "和 args；请把文件内容换成 `modules: []`（或删除文件后运行 `xrobot init`），再用 "
+                "`xrobot instance -c User/products/old.yaml add` 重新添加实例",
+            )
+
+    def test_format_reports_a_yaml_syntax_error_without_a_traceback(self):
+        # 以前 format 遇到 YAML 语法错误时以 ruamel 的 traceback 结束。
+        # format used to end in a ruamel traceback on a YAML syntax error.
+        self.config("modules: [\n")
+        self.fails(
+            "format",
+            message="User/xrobot.yaml:2: YAML syntax error: expected the node content, but found "
+            "'<stream end>'",
+        )
+
+    def test_gen_says_when_the_header_is_unchanged(self):
+        # 以前内容没变、文件没有重写时也输出 Generated。
+        # Generated used to be printed also when the content was the same and the file was
+        # not rewritten.
+        header = self.root / "User/xrobot_main.hpp"
+        out, _ = self.ok("gen")
+        self.assertEqual(out, "Generated User/xrobot_main.hpp for User/xrobot.yaml\n")
+        written = header.stat().st_mtime_ns
+        out, _ = self.ok("gen")
+        self.assertEqual(out, "User/xrobot_main.hpp for User/xrobot.yaml is unchanged\n")
+        self.assertEqual(header.stat().st_mtime_ns, written)
+        out, _ = self.ok("gen", "--no-line-directives")
+        self.assertEqual(out, "Generated User/xrobot_main.hpp for User/xrobot.yaml\n")
+        with mock.patch.dict(os.environ, XR_LANG="zh"):
+            out, _ = self.ok("gen", "--no-line-directives")
+        self.assertEqual(out, "为 User/xrobot.yaml 生成的 User/xrobot_main.hpp 未变化\n")
+
+    def test_instance_add_asks_to_fill_values_only_when_some_are_null(self):
+        # 以前没有待填的值时也提示“填写值为空的依赖参数”。
+        # The prompt to fill the null values used to appear also when nothing was null.
+        self.module("Probe", "class Probe { public: explicit Probe(int n = 1) {} };")
+        out, _ = self.ok("instance", "add", "Probe", "--id", "probe")
+        self.assertEqual(out, "Added probe to User/xrobot.yaml\n")
+        self.module("Counter", "class Counter { public: explicit Counter(int n) {} };")
+        out, _ = self.ok("instance", "add", "Counter", "--id", "counter")
+        self.assertEqual(
+            out,
+            "Added counter to User/xrobot.yaml; fill the null values (dependencies) before "
+            "generating\n",
+        )
+
+    def test_registration_errors_name_the_entry_source_from_the_root(self):
+        # 以前只写文件名 app_main.cpp，而配置的报错写的是 User/xrobot.yaml。
+        # Only the file name app_main.cpp used to be given, while errors in the configuration
+        # say User/xrobot.yaml.
+        self.entry(
+            '#include "xrobot_main.hpp"\nint main() {\n  XR_REGISTER(pin, LibXR::GPIO);\n'
+            "  XR_REGISTER(pin, LibXR::GPIO);\n  XROBOT_MAIN();\n}\n"
+        )
+        self.fails("gen", message="User/app_main.cpp:4: duplicate XR_REGISTER name pin")
+        out, _ = self.ok("instance", "add", "Led", "--id", "second")
+        self.assertIn(
+            "  Candidates not listed: User/app_main.cpp:4: duplicate XR_REGISTER name pin\n", out
+        )
+        result = json.loads(self.ok("describe")[0])
+        self.assertIn(
+            "User/app_main.cpp:4: duplicate XR_REGISTER name pin",
+            json.dumps(result["diagnostics"]),
+        )
+
 
 class Setup(CliMixin, UpstreamTestCase):
     """setup、check-module 和 source 命令。
@@ -613,6 +770,64 @@ class Setup(CliMixin, UpstreamTestCase):
                 "--is-inside-work-tree",
             )
 
+    def test_setup_says_when_the_header_is_unchanged(self):
+        # 以前内容没变时也输出 generated。
+        # generated used to be printed also when the content was the same.
+        self.ok("setup")
+        out, _ = self.ok("setup")
+        self.assertEqual(
+            out,
+            "Resolved 1 Module commit\nChecked 1 config; User/xrobot_main.hpp for "
+            "User/xrobot.yaml is unchanged\n",
+        )
+
+    def test_missing_git_is_reported_in_one_line(self):
+        # 以前只输出 [Errno 2] No such file or directory: 'git'。
+        # Only [Errno 2] No such file or directory: 'git' used to be printed.
+        missing = FileNotFoundError(2, "No such file or directory", "git")
+        with mock.patch("xrobot.git.subprocess.run", side_effect=missing):
+            self.fails(
+                "setup",
+                message="git was not found on PATH; XRobot fetches the Modules and reads their "
+                "commits with Git",
+            )
+
+    def test_instance_add_of_a_module_outside_the_lock_names_the_commands(self):
+        # 以前报“找不到模块”，并建议另一个模块。
+        # "Module not found" used to be reported, with another Module suggested.
+        self.upstream("team/Imu")
+        self.ok("setup")
+        self.fails(
+            "instance",
+            "add",
+            "team/Imu",
+            message="team/Imu is not in xrobot.lock; run `xrobot module add team/Imu` and "
+            "`xrobot setup` first",
+        )
+        self.ok("module", "add", "team/Imu@master")
+        self.fails(
+            "instance",
+            "add",
+            "Imu",
+            message="team/Imu is requested in Modules/modules.yaml but not in xrobot.lock yet; "
+            "run `xrobot setup` first",
+        )
+        self.fails(
+            "instance", "add", "other/Gyroscope", message="Module not found: other/Gyroscope"
+        )
+        self.assertEqual(
+            self.read(self.root / "User/xrobot.yaml"),
+            "modules:\n  - module: team/Led\n    id: led\n",
+        )
+        with mock.patch.dict(os.environ, XR_LANG="zh"):
+            self.fails(
+                "instance",
+                "add",
+                "team/Imu",
+                message="Modules/modules.yaml 已请求 team/Imu，但它还不在 xrobot.lock 中；"
+                "请先运行 `xrobot setup`",
+            )
+
     def test_a_different_tool_pin_is_a_warning_and_an_error_when_frozen(self):
         self.configure(["team/Led@master"], pin="0.9.0")
         _, err = self.ok("setup")
@@ -668,16 +883,24 @@ class Setup(CliMixin, UpstreamTestCase):
         self.assertEqual(yaml.safe_load(out)["id"], "team/Led")
 
     def test_source_files_are_created_and_extended(self):
+        # 以前 create-index、add-index、add-source 成功时什么也不输出。
+        # create-index, add-index and add-source used to print nothing on success.
         work = self.tmp / "work"
         work.mkdir()
-        self.ok("-C", work, "source", "create-index", cwd=work)
-        self.ok(
+        out, _ = self.ok("-C", work, "source", "create-index", cwd=work)
+        self.assertEqual(out, "Created Modules/index.yaml with BlinkLED as an example entry\n")
+        add_index = (
             "source",
             "add-index",
             "https://git.example.com/me/A.git",
             "--index",
             "Modules/index.yaml",
-            cwd=work,
+        )
+        out, _ = self.ok(*add_index, cwd=work)
+        self.assertEqual(out, "Added https://git.example.com/me/A.git to Modules/index.yaml\n")
+        out, _ = self.ok(*add_index, cwd=work)
+        self.assertEqual(
+            out, "https://git.example.com/me/A.git is already listed in Modules/index.yaml\n"
         )
         self.assertEqual(
             yaml.safe_load(self.read(work / "Modules/index.yaml")),
@@ -693,9 +916,13 @@ class Setup(CliMixin, UpstreamTestCase):
         sources = work / "x/sources.yaml"
         sources.parent.mkdir()
         self.ok("source", "--sources", sources, "create-sources", cwd=work)
-        self.ok(
-            "source", "--sources", sources, "add-source", "../Modules/index.yaml", "--priority", "1"
-        )
+        add_source = ("source", "--sources", sources, "add-source", "../Modules/index.yaml")
+        out, _ = self.ok(*add_source, "--priority", "1")
+        self.assertEqual(out, f"Added ../Modules/index.yaml to {sources}\n")
+        out, _ = self.ok(*add_source)
+        self.assertEqual(out, f"../Modules/index.yaml is already listed in {sources}\n")
+        out, _ = self.ok("source", "add-source", "local/index.yaml")
+        self.assertEqual(out, "Added local/index.yaml to Modules/sources.yaml\n")
         self.assertEqual(
             yaml.safe_load(self.read(sources)),
             {

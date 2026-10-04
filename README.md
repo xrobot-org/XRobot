@@ -237,7 +237,7 @@ $ xrobot gen -c User/configs/debug.yaml
 Generated User/xrobot_main.hpp for User/configs/debug.yaml
 
 $ xrobot gen
-Generated User/xrobot_main.hpp for User/configs/debug.yaml
+User/xrobot_main.hpp for User/configs/debug.yaml is unchanged
 ```
 
 ---

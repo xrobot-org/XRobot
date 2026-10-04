@@ -680,7 +680,8 @@ class Resolver:
                         f"{identity}@{sha[:12]} 中没有主头文件 {header}",
                     )
                 )
-            for dep in manifest_from_text(text, str(folder / header)).depends:
+            manifest = manifest_from_text(text, str(folder / header), f"{identity}@{sha[:12]}")
+            for dep in manifest.depends:
                 self.visit(request(dep, canonical=True), tuple(logical))
         finally:
             self.stack.pop()
@@ -872,7 +873,8 @@ def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
                 )
             )
         header = identity.rsplit("/", 1)[-1] + ".hpp"
-        for dep in manifest_from_text(text, header).depends:
+        module = f"{identity}@{row['commit'][:12]}"
+        for dep in manifest_from_text(text, header, module).depends:
             visit(request(dep, canonical=True))
         active.pop()
         visited.add(identity)

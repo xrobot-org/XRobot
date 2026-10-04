@@ -41,6 +41,7 @@ from xrobot.config import (
     cpp_string_literal,
     identifier_problem,
     parse_yaml,
+    reject_pre_1_0_format,
     scalar_style,
     string_literal_content,
     validate_config,
@@ -115,6 +116,33 @@ def _to_code(node):
     return node
 
 
+_LINE_BREAK = re.compile(r"[ \t\r]*\n[ \t\r\n]*")
+
+
+def _fold_lines(code: str) -> str:
+    """把 C++ 字符串和字符字面量以外的换行（连同两侧的空白）折成一个空格。
+    Fold every line break outside C++ string and character literals, with the whitespace
+    around it, into one space.
+
+    源码中被 clang-format 折成多行的默认值带着换行和缩进；YAML 单引号写不出“换行后跟空格”，
+    ruamel 会改用双引号，而双引号的值是 C++ 字符串。C++ 中换行只是空白，折成一个空格后
+    代码不变，仍按代码写成单引号值。
+    A default that clang-format wrapped in the source carries line breaks and indentation;
+    YAML single quotes cannot hold "a line break followed by spaces", so ruamel would switch
+    to double quotes, and a double-quoted value is a C++ string. In C++ a line break is only
+    whitespace, so folding it into one space keeps the code and the value stays single-quoted
+    code.
+    """
+    parts, position = [], 0
+    for token in code_tokens(code):
+        if token.kind == "literal":
+            parts.append(_LINE_BREAK.sub(" ", code[position : token.start]))
+            parts.append(code[token.start : token.end])
+            position = token.end
+    parts.append(_LINE_BREAK.sub(" ", code[position:]))
+    return "".join(parts)
+
+
 def _restyle(node, flow: bool = False):
     """按规范写法给每个值定引号；集合保持原来的块格式或流格式。
     Give every value its canonical quoting; collections keep their block or flow style.
@@ -137,6 +165,8 @@ def _restyle(node, flow: bool = False):
     if not isinstance(node, str):
         return node
     code = str(node)
+    if "\n" in code:
+        code = _fold_lines(code)
     style = scalar_style(code, flow)
     if style == '"':
         return DoubleQuotedScalarString(string_literal_content(code))
@@ -343,6 +373,10 @@ class ConfigFile:
     def __init__(self, path: str | Path, source: str | None = None) -> None:
         """读取 path；source 是报错中文件的名字，缺省为 path。
         Read path; source is the file's name in errors, path by default.
+
+        Raises:
+            ConfigError: 文件是 XRobot 1.0 以前的格式；编辑不会改动它。
+                The file uses the format of XRobot before 1.0; no edit touches it.
         """
         self.path = Path(path)
         self.source = source or self.path.as_posix()
@@ -350,6 +384,7 @@ class ConfigFile:
             self.path.read_text(encoding="utf-8-sig") if self.path.exists() else "modules: []\n"
         )
         self.config = parse_yaml(self.text, self.source)
+        reject_pre_1_0_format(self.config, self.source)
 
     def blocks(self) -> Blocks:
         """当前文本的实例块。
@@ -852,8 +887,8 @@ def add_instance(
         The id of the new instance.
 
     Raises:
-        ConfigError: 模块是库，或 id 不合法。
-            The Module is a library, or the id is invalid.
+        ConfigError: 模块是库，或 id 不合法或已存在。
+            The Module is a library, or the id is invalid or taken.
     """
     config = ConfigFile(config_path, source)
     module = select_module(modules, module_name)
@@ -865,10 +900,18 @@ def add_instance(
             )
         )
     interface = module_interface(module)
-    identity = instance_id or next_instance_id(config.config.get("modules") or [], module["name"])
+    entries = config.config.get("modules") or []
+    identity = instance_id or next_instance_id(entries, module["name"])
     problem = identifier_problem(identity)
     if problem:
         raise ConfigError(tr(f"instance id {identity} {problem}", f"实例 id {identity} {problem}"))
+    if any(isinstance(e, dict) and e.get("id") == identity for e in entries):
+        raise ConfigError(
+            tr(
+                f"{config.source}: instance id {identity} already exists",
+                f"{config.source}: 实例 id {identity} 已经存在",
+            )
+        )
     if len(template_values or []) > len(interface["template_parameters"]):
         raise ConfigError(
             tr(
@@ -972,8 +1015,8 @@ def sync_config(
     fields and defaulted parameters, drop removed fields.
 
     Returns:
-        改动的 unified diff；没有改动时为空字符串。
-        A unified diff of the changes; empty when nothing changed.
+        写入文件的改动的 unified diff；没有写入时为空字符串。
+        A unified diff of the changes written to the file; empty when nothing was written.
     """
     config = ConfigFile(config_path, source)
     before = config.text
@@ -1005,10 +1048,13 @@ def sync_config(
             blocks = Blocks(text)
     if text != before:
         config.write(text, check=False)
+    # 比较的是实际写入的文本：没有实例改动时文件不写，只是排版不规范也不报改动。
+    # Compare with the text actually written: without an instance change the file is not
+    # written, so a non-canonical layout alone reports no change.
     return "".join(
         difflib.unified_diff(
             before.splitlines(True),
-            canonical_text(text).splitlines(True),
+            config.text.splitlines(True),
             config.source,
             config.source,
         )

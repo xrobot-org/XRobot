@@ -3,6 +3,7 @@ Module manifests and the discovery of locked Modules (xrobot.module_parser).
 """
 
 import os
+from unittest import mock
 
 from fixtures import BspTestCase, TestCase, manifest_block, run_git
 
@@ -117,11 +118,18 @@ class Manifests(TestCase):
             ),
             (block("- a list"), "A.hpp: package manifest must be a mapping"),
             (
-                # 1.0 之前的 manifest 键。
-                # Manifest keys from before 1.0.
+                # 1.0 之前的 manifest 键；以前只列出不支持的键，不说明这是 1.0 以前的模块。
+                # Manifest keys from before 1.0; only the unsupported keys used to be listed,
+                # without saying that the Module predates 1.0.
                 block("description: old\nconstructor_args: []\ntemplate_args: []"),
-                "A.hpp: unsupported manifest key(s) description, constructor_args, template_args; "
-                f"MODULE MANIFEST V2 holds only {keys}",
+                "A.hpp: this Module predates XRobot 1.0 (manifest key(s) description, "
+                "constructor_args, template_args); a BSP has to request a version of the Module "
+                "made for XRobot 1.0, such as `@dev`; the Module author moves these parameters "
+                f"into the C++ constructor and keeps only {keys} in MODULE MANIFEST V2",
+            ),
+            (
+                block("module_description: new\nextra: 1"),
+                f"A.hpp: unsupported manifest key(s) extra; MODULE MANIFEST V2 holds only {keys}",
             ),
             (block("depends: team/B"), "A.hpp: depends must be a list"),
             (
@@ -137,3 +145,29 @@ class Manifests(TestCase):
                 with self.assertRaises(ValueError) as context:
                     manifest_from_text(text, "A.hpp")
                 self.assertEqual(str(context.exception), message)
+
+    def test_a_module_before_1_0_is_named_with_its_commit(self):
+        text = (
+            "/* === MODULE MANIFEST V2 ===\nmodule_description: old\nconstructor_args: []\n"
+            "required_hardware: led\n=== END MANIFEST === */"
+        )
+        keys = "module_description, depends, standalone"
+        with self.assertRaisesMessage(
+            ValueError,
+            "A.hpp: team/A@0123456789ab predates XRobot 1.0 (manifest key(s) constructor_args, "
+            "required_hardware); a BSP has to request a version of the Module made for XRobot "
+            "1.0, such as `@dev`; the Module author moves these parameters into the C++ "
+            f"constructor and keeps only {keys} in MODULE MANIFEST V2",
+        ):
+            manifest_from_text(text, "A.hpp", "team/A@0123456789ab")
+        with (
+            mock.patch.dict(os.environ, XR_LANG="zh"),
+            self.assertRaisesMessage(
+                ValueError,
+                "A.hpp: 这个模块早于 XRobot 1.0（manifest 含有键 constructor_args、"
+                "required_hardware）；BSP 需要请求这个模块适用于 XRobot 1.0 的版本，例如 `@dev`；"
+                "模块作者要把这些参数移到 C++ 构造函数中，MODULE MANIFEST V2 只保留 "
+                "module_description、depends、standalone",
+            ),
+        ):
+            manifest_from_text(text, "A.hpp")

@@ -483,6 +483,31 @@ def _pre_1_0_format(config: dict) -> bool:
     )
 
 
+def reject_pre_1_0_format(config: object, source: str = "config") -> None:
+    """配置为 XRobot 1.0 以前的格式时报错；编辑配置的命令在改动文件之前调用。
+    Raise when a configuration uses the format of XRobot before 1.0; the commands that edit
+    configurations call it before they change a file.
+
+    Raises:
+        ConfigError: 配置使用 1.0 以前的格式。
+            The configuration uses the format before 1.0.
+    """
+    if isinstance(config, dict) and _pre_1_0_format(config):
+        raise ConfigError(
+            tr(
+                f"{source}: this configuration uses the format of XRobot before 1.0 "
+                "(global_settings, name/constructor_args); XRobot 1.0 lists each instance as "
+                "module, id and args; replace the content of the file with `modules: []` (or "
+                "delete the file and run `xrobot init`), then recreate the instances with "
+                f"`xrobot instance -c {source} add`",
+                f"{source}: 这份配置使用的是 XRobot 1.0 以前的格式（global_settings、"
+                "name/constructor_args）；XRobot 1.0 中每个实例写成 module、id 和 args；"
+                "请把文件内容换成 `modules: []`（或删除文件后运行 `xrobot init`），再用 "
+                f"`xrobot instance -c {source} add` 重新添加实例",
+            )
+        )
+
+
 def validate_config(config: object, source: str = "config") -> None:
     """检查配置的结构，一次列出全部错误。
     Check the structure of a configuration and report every error at once.
@@ -499,17 +524,7 @@ def validate_config(config: object, source: str = "config") -> None:
                 f"{source}: 应用配置应当是一个映射",
             )
         )
-    if _pre_1_0_format(config):
-        raise ConfigError(
-            tr(
-                f"{source}: this configuration uses the format of XRobot before 1.0 "
-                "(global_settings, name/constructor_args); XRobot 1.0 lists each instance as "
-                "module, id and args; recreate the instances with `xrobot instance add`",
-                f"{source}: 这份配置使用的是 XRobot 1.0 以前的格式（global_settings、"
-                "name/constructor_args）；XRobot 1.0 中每个实例写成 module、id 和 args；"
-                "请用 `xrobot instance add` 重新添加实例",
-            )
-        )
+    reject_pre_1_0_format(config, source)
     extra = [key for key in config if key not in TOP_LEVEL]
     if extra:
         errors.append(

@@ -1,5 +1,5 @@
-"""xrobot 命令行：解析模块、生成静态入口、编辑配置。
-The xrobot command line: resolve Modules, generate the static entry and edit configurations.
+"""xrobot 命令行：解析模块、生成主函数、编辑配置。
+The xrobot command line: resolve Modules, generate the main function and edit configurations.
 """
 
 import argparse
@@ -27,11 +27,11 @@ def _description() -> str:
     The description that opens xrobot --help.
     """
     return tr(
-        "Resolve Modules, generate the static entry and edit configurations.\n\n"
+        "Resolve Modules, generate the main function and edit configurations.\n\n"
         "Commands work on the BSP that contains the current directory: the nearest\n"
         "directory at or above it with Modules/modules.yaml. -C DIR starts the search\n"
         "at DIR instead.",
-        "解析模块、生成静态入口、编辑配置。\n\n"
+        "解析模块、生成主函数、编辑配置。\n\n"
         "命令作用于包含当前目录的 BSP，即当前目录或其上层中最近的含有\n"
         "Modules/modules.yaml 的目录。-C DIR 改为从 DIR 开始查找。",
     )
@@ -176,9 +176,9 @@ def cmd_init(args: argparse.Namespace) -> None:
 
 
 def cmd_setup(args: argparse.Namespace) -> None:
-    """解析并检出模块，检查所有配置，为选中的配置重新生成入口。
-    Resolve and check out the Modules, check every configuration and regenerate the entry
-    for the selected one.
+    """解析并检出模块，检查所有配置，为选中的配置重新生成 User/xrobot_main.hpp。
+    Resolve and check out the Modules, check every configuration and regenerate
+    User/xrobot_main.hpp for the selected one.
     """
     from xrobot.config_edit import sync_config
     from xrobot.generate_main import generate, load_modules, validate_all
@@ -188,6 +188,10 @@ def cmd_setup(args: argparse.Namespace) -> None:
     project = _project(args)
     _check_pin(project, args.frozen)
     update = list(args.update) if args.update is not None else None
+    if update is not None:
+        # --update 会同步每份配置；有旧格式的配置时先报错，一个文件也不改。
+        # --update syncs every configuration; an old one is reported before any file changes.
+        _reject_pre_1_0(project, project.configs())
     lock = sync_modules(
         project, update, args.frozen, args.offline, args.context_ref, args.release_ref
     )
@@ -204,14 +208,31 @@ def cmd_setup(args: argparse.Namespace) -> None:
                 sys.stdout.write(diff)
     checked = _count(validate_all(project, modules, index), "config", "配置")
     selected = project.selected_config()
+    before = _header_bytes(project)
     generate(project, selected, modules, index, args.line_directives)
     name = project.relative(selected)
+    if _header_bytes(project) == before:
+        print(
+            tr(
+                f"Checked {checked}; User/xrobot_main.hpp for {name} is unchanged",
+                f"已检查 {checked}；为 {name} 生成的 User/xrobot_main.hpp 未变化",
+            )
+        )
+        return
     print(
         tr(
             f"Checked {checked}; generated User/xrobot_main.hpp for {name}",
             f"已检查 {checked}；已为 {name} 生成 User/xrobot_main.hpp",
         )
     )
+
+
+def _header_bytes(project: Project) -> bytes | None:
+    """User/xrobot_main.hpp 当前的内容；不存在时为 None。生成前后比较，内容相同时不重写。
+    The current content of User/xrobot_main.hpp, None when it is missing. Compared before and
+    after generating: identical content is not rewritten.
+    """
+    return project.header.read_bytes() if project.header.is_file() else None
 
 
 def cmd_gen(args: argparse.Namespace) -> None:
@@ -223,8 +244,17 @@ def cmd_gen(args: argparse.Namespace) -> None:
     project = _project(args)
     _check_pin(project)
     config = _config_path(project, args.config)
+    before = _header_bytes(project)
     generate(project, config, line_directives=args.line_directives)
     name = project.relative(config or project.selected_config())
+    if _header_bytes(project) == before:
+        print(
+            tr(
+                f"User/xrobot_main.hpp for {name} is unchanged",
+                f"为 {name} 生成的 User/xrobot_main.hpp 未变化",
+            )
+        )
+        return
     print(
         tr(f"Generated User/xrobot_main.hpp for {name}", f"已为 {name} 生成 User/xrobot_main.hpp")
     )
@@ -242,6 +272,23 @@ def cmd_describe(args: argparse.Namespace) -> None:
     sys.stdout.write("\n")
 
 
+def _reject_pre_1_0(project: Project, paths: Sequence[Path]) -> None:
+    """有配置是 XRobot 1.0 以前的格式时报错，一个文件也不改。
+    Fail without changing any file when a configuration uses the format of XRobot before 1.0.
+
+    Raises:
+        ConfigError: 某份配置使用 1.0 以前的格式，或 YAML 有误。
+            A configuration uses the format before 1.0, or its YAML is invalid.
+    """
+    from xrobot.config import reject_pre_1_0_format
+
+    for path in paths:
+        if path.is_file():
+            source = project.relative(path)
+            text = path.read_text(encoding="utf-8-sig")
+            reject_pre_1_0_format(parse_yaml(text, source), source)
+
+
 def cmd_sync(args: argparse.Namespace) -> None:
     """按模块当前的接口更新配置，并输出改动。
     Update configurations to the current Module interfaces and print the changes.
@@ -251,9 +298,10 @@ def cmd_sync(args: argparse.Namespace) -> None:
     from xrobot.type_index import TypeIndex
 
     project = _project(args)
+    paths = [_config_path(project, c) for c in args.config] if args.config else project.configs()
+    _reject_pre_1_0(project, paths)
     modules = load_modules(project)
     index = TypeIndex.for_modules(modules)
-    paths = [_config_path(project, c) for c in args.config] if args.config else project.configs()
     for path in paths:
         diff = sync_config(path, modules, index, project.relative(path))
         if diff:
@@ -266,13 +314,15 @@ def cmd_format(args: argparse.Namespace) -> None:
     that need it.
 
     Raises:
-        ConfigError: --check 发现需要重写的文件。
-            --check found files that need formatting.
+        ConfigError: 有配置是 1.0 以前的格式（不改任何文件），或 --check 发现需要重写的文件。
+            A configuration uses the format before 1.0 (no file is changed), or --check
+            found files that need formatting.
     """
     from xrobot.config_edit import format_files
 
     project = _project(args)
     paths = [_config_path(project, c) for c in args.config] if args.config else project.configs()
+    _reject_pre_1_0(project, paths)
     changed = format_files(paths, check=args.check)
     label = tr("needs formatting", "需要格式化") if args.check else tr("formatted", "已格式化")
     for path in changed:
@@ -295,8 +345,9 @@ def parse_value(text: str, as_json: bool = False) -> object:
     quotes, not filled in when empty. With as_json it is JSON whose strings are C++ text.
 
     Raises:
-        ConfigError: 不是有效的 YAML 值，或 as_json 时不是 JSON。
-            The text is not a valid YAML value, or not JSON with as_json.
+        ConfigError: 不是有效的 YAML 值，或 as_json 时不是 JSON；以 {、[、&、* 开头时提示加单引号。
+            The text is not a valid YAML value, or not JSON with as_json; for text that
+            starts with {, [, & or * the message says to add single quotes.
     """
     if as_json:
         try:
@@ -307,7 +358,74 @@ def parse_value(text: str, as_json: bool = False) -> object:
             ) from error
     if not text.strip():
         return None
-    return parse_yaml(text, "VALUE")
+    try:
+        return parse_yaml(text, "VALUE")
+    except ConfigError as error:
+        if text.lstrip()[0] not in "{[&*":
+            raise
+        # 这几个字符开头的文本在 YAML 中是映射、列表、锚点或别名，C++ 代码要放在单引号里。
+        # Text starting with one of these is a YAML mapping, list, anchor or alias; C++ code
+        # goes in single quotes.
+        raise ConfigError(
+            tr(
+                f"{error}; C++ code that starts with {{, [, & or * goes in single quotes inside "
+                "the shell quoting, e.g. \"'&grey_0'\"",
+                f"{error}；以 {{、[、&、* 开头的 C++ 代码要放在单引号中，单引号写在 shell 的引号"
+                "之内，例如 \"'&grey_0'\"",
+            )
+        ) from error
+
+
+def _require_locked(project: Project, modules: dict, requested: str) -> None:
+    """instance add 的模块不在 xrobot.lock 中、但已在 modules.yaml 中请求或列在源中时，说明下一步
+    要运行的命令；其他情况由 select_module 报告。
+    When the Module of instance add is not in xrobot.lock but is requested in modules.yaml or
+    listed in a Source, say which commands to run next; anything else is for select_module to
+    report.
+
+    Raises:
+        ValueError: 模块已请求但还没有解析，或列在源中但还没有请求。
+            The Module is requested but not resolved yet, or listed in a Source but not
+            requested yet.
+    """
+    from xrobot.lock import read_modules_yaml
+    from xrobot.source_manager import SourceManager
+
+    def matches(identity: str) -> bool:
+        """identity 是否就是 requested（owner/Repo，或只写 Repo）。
+        Whether identity is the requested one (owner/Repo, or just Repo).
+        """
+        name = identity if "/" in requested else identity.rsplit("/", 1)[-1]
+        return name.casefold() == requested.casefold()
+
+    if any(matches(identity) for identity in modules):
+        return
+    try:
+        requests, _ = read_modules_yaml(project.modules_yaml)
+    except (OSError, ValueError, yaml.YAMLError):
+        requests = []
+    pending = sorted({r["id"] for r in requests if matches(r["id"])})
+    if len(pending) == 1:
+        raise ValueError(
+            tr(
+                f"{pending[0]} is requested in Modules/modules.yaml but not in xrobot.lock yet; "
+                "run `xrobot setup` first",
+                f"Modules/modules.yaml 已请求 {pending[0]}，但它还不在 xrobot.lock 中；"
+                "请先运行 `xrobot setup`",
+            )
+        )
+    try:
+        identity = SourceManager(project.sources_yaml).resolve_id(requested, "module")
+    except (OSError, ValueError, yaml.YAMLError):
+        return  # 源中也没有或源不可用 / not in the Sources either, or they are unavailable
+    raise ValueError(
+        tr(
+            f"{identity} is not in xrobot.lock; run `xrobot module add {identity}` and "
+            "`xrobot setup` first",
+            f"{identity} 不在 xrobot.lock 中；请先运行 `xrobot module add {identity}` 和 "
+            "`xrobot setup`",
+        )
+    )
 
 
 def cmd_instance(args: argparse.Namespace) -> None:
@@ -324,19 +442,16 @@ def cmd_instance(args: argparse.Namespace) -> None:
         from xrobot.type_index import TypeIndex
 
         modules = load_modules(project)
+        _require_locked(project, modules, args.module)
         index = TypeIndex.for_modules(modules)
         identity = config_edit.add_instance(
             config, args.module, modules, index, args.id, source, args.template_arg
         )
-        print(
-            tr(
-                f"Added {identity} to {source}; fill the null values (dependencies) before "
-                "generating",
-                f"已将 {identity} 添加到 {source}；生成前请填写值为空的依赖参数",
-            )
-        )
         try:
-            registrations = {r["name"]: r["type"] for r in read_registrations(project.entry())}
+            entry = project.entry()
+            registrations = {
+                r["name"]: r["type"] for r in read_registrations(entry, project.relative(entry))
+            }
             problem = None
         except (OSError, ValueError) as error:
             # 读不出入口源文件时，候选只会是“没有候选”；改为说明原因。
@@ -346,6 +461,26 @@ def cmd_instance(args: argparse.Namespace) -> None:
         unfilled = config_edit.unfilled_dependencies(
             config, identity, modules, index, registrations, source
         )
+        added = next(
+            (
+                e
+                for e in config_edit.ConfigFile(config, source).config.get("modules") or []
+                if isinstance(e, dict) and e.get("id") == identity
+            ),
+            {},
+        )
+        values = list(added.get("template_args") or [])
+        values += [v for a in added.get("args") or [] if isinstance(a, dict) for v in a.values()]
+        if None in values:
+            print(
+                tr(
+                    f"Added {identity} to {source}; fill the null values (dependencies) before "
+                    "generating",
+                    f"已将 {identity} 添加到 {source}；生成前请填写值为空的依赖参数",
+                )
+            )
+        else:
+            print(tr(f"Added {identity} to {source}", f"已将 {identity} 添加到 {source}"))
         if unfilled and problem is not None:
             print(tr(f"  Candidates not listed: {problem}", f"  未列出候选：{problem}"))
             unfilled = []
@@ -359,6 +494,12 @@ def cmd_instance(args: argparse.Namespace) -> None:
     elif args.action == "set":
         config_edit.set_value(
             config, args.id, args.path, parse_value(args.value, args.json), args.if_match, source
+        )
+        print(
+            tr(
+                f"Set {args.path} of {args.id} in {source}",
+                f"已修改 {source} 中 {args.id} 的 {args.path}",
+            )
         )
     elif args.action == "remove":
         config_edit.remove_instance(config, args.id, source)
@@ -479,16 +620,44 @@ def cmd_source(args: argparse.Namespace) -> None:
 
     if args.action == "create-index":
         source_manager.create_index_yaml(args.output, args.namespace, args.mirror_of)
+        print(
+            tr(
+                f"Created {args.output} with BlinkLED as an example entry",
+                f"已创建 {args.output}，其中有示例条目 BlinkLED",
+            )
+        )
         return
     if args.action == "add-index":
-        source_manager.add_index_entry(args.index, args.repo_url)
+        if source_manager.add_index_entry(args.index, args.repo_url):
+            print(
+                tr(
+                    f"Added {args.repo_url} to {args.index}",
+                    f"已将 {args.repo_url} 添加到 {args.index}",
+                )
+            )
+        else:
+            print(
+                tr(
+                    f"{args.repo_url} is already listed in {args.index}",
+                    f"{args.index} 中已经列出了 {args.repo_url}",
+                )
+            )
         return
-    sources = Path(args.sources) if args.sources else _project(args).sources_yaml
+    if args.sources:
+        sources, label = Path(args.sources), args.sources
+    else:
+        project = _project(args)
+        sources, label = project.sources_yaml, project.relative(project.sources_yaml)
     if args.action == "create-sources":
         source_manager.create_sources_yaml(Path(args.output) if args.output else sources)
         return
     if args.action == "add-source":
-        source_manager.add_source(sources, args.url, args.priority)
+        if source_manager.add_source(sources, args.url, args.priority):
+            print(tr(f"Added {args.url} to {label}", f"已将 {args.url} 添加到 {label}"))
+        else:
+            print(
+                tr(f"{args.url} is already listed in {label}", f"{label} 中已经列出了 {args.url}")
+            )
         return
     if not sources.is_file():
         raise ProjectError(
@@ -717,8 +886,8 @@ def parser() -> argparse.ArgumentParser:
         verbs,
         "setup",
         tr(
-            "resolve Modules, check every config, regenerate the entry",
-            "解析模块，检查所有配置，重新生成入口",
+            "resolve Modules, check every config, regenerate User/xrobot_main.hpp",
+            "解析模块，检查所有配置，重新生成 User/xrobot_main.hpp",
         ),
     )
     group = setup.add_mutually_exclusive_group()

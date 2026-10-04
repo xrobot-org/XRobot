@@ -25,6 +25,10 @@ MANIFEST_PATTERN = re.compile(
 # newer xrobot.
 MANIFEST_VERSION = 2
 MANIFEST_KEYS = ("module_description", "depends", "standalone")
+# XRobot 1.0 以前的 MODULE MANIFEST V2 才有的键；1.0 中这些内容由 C++ 构造函数给出。
+# Keys only the MODULE MANIFEST V2 of XRobot before 1.0 has; in 1.0 the C++ constructor
+# gives this information.
+PRE_1_0_KEYS = ("module_name", "constructor_args", "template_args", "required_hardware")
 
 
 class ModuleManifest:
@@ -68,9 +72,15 @@ class ModuleManifest:
         return dict(self.manifest)
 
 
-def manifest_from_text(text: str, path: str | Path | None = None) -> ModuleManifest:
+def manifest_from_text(
+    text: str, path: str | Path | None = None, module: str | None = None
+) -> ModuleManifest:
     """从头文件文本中读取 MODULE MANIFEST V2。
     Read the MODULE MANIFEST V2 from the text of a header.
+
+    Args:
+        module: 报错中模块的名字，例如 owner/Repo@<commit>；不知道时为 None。
+            The Module in errors, such as owner/Repo@<commit>; None when unknown.
 
     Raises:
         ValueError: 没有 manifest、有多个、格式早于 1.0 或新于本版本，或内容不合法。
@@ -130,6 +140,20 @@ def manifest_from_text(text: str, path: str | Path | None = None) -> ModuleManif
             tr(f"{path}: package manifest must be a mapping", f"{path}: 包 manifest 必须是映射")
         )
     unknown = [k for k in data if k not in MANIFEST_KEYS]
+    if any(k in PRE_1_0_KEYS for k in unknown):
+        raise ValueError(
+            tr(
+                f"{path}: {module or 'this Module'} predates XRobot 1.0 (manifest key(s) "
+                f"{', '.join(map(str, unknown))}); a BSP has to request a version of the Module made for XRobot 1.0, "
+                "such as `@dev`; the Module author moves these parameters into the C++ "
+                f"constructor and keeps only {', '.join(MANIFEST_KEYS)} in MODULE MANIFEST "
+                f"V{MANIFEST_VERSION}",
+                f"{path}: {module + ' ' if module else '这个模块'}早于 XRobot 1.0（manifest 含有键 "
+                f"{'、'.join(map(str, unknown))}）；BSP 需要请求这个模块适用于 XRobot 1.0 的版本，"
+                "例如 `@dev`；模块作者要把这些参数移到 C++ 构造函数中，MODULE MANIFEST "
+                f"V{MANIFEST_VERSION} 只保留 {'、'.join(MANIFEST_KEYS)}",
+            )
+        )
     if unknown:
         raise ValueError(
             tr(

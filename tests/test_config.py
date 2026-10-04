@@ -357,7 +357,9 @@ class Structure(TestCase):
                 str(context.exception),
                 "cfg.yaml: this configuration uses the format of XRobot before 1.0 "
                 "(global_settings, name/constructor_args); XRobot 1.0 lists each instance as "
-                "module, id and args; recreate the instances with `xrobot instance add`",
+                "module, id and args; replace the content of the file with `modules: []` (or "
+                "delete the file and run `xrobot init`), then recreate the instances with "
+                "`xrobot instance -c cfg.yaml add`",
             )
 
     def test_instances_need_module_and_id(self):

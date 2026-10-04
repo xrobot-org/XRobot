@@ -310,7 +310,7 @@ def describe(project: Project, config: str | Path | None = None) -> dict:
     entry_path = None
     try:
         entry_path = project.entry()
-        records = read_registrations(entry_path)
+        records = read_registrations(entry_path, project.relative(entry_path))
     except (OSError, ValueError) as error:
         report("error", "registrations", error)
     registrations = [{"name": r["name"], "type": r["type"]} for r in records]

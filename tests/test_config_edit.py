@@ -192,6 +192,47 @@ class AddInstance(EditTestCase):
         with self.assertRaisesMessage(ValueError, "Module not found: Missing"):
             self.add(module="Missing")
 
+    def test_an_existing_id_is_rejected(self):
+        # 以前照样写入第二个 status，要到 gen 才报重复的 id。
+        # A second status used to be written, and only gen reported the duplicate id.
+        self.assertUnchangedOnError(
+            "User/xrobot.yaml: instance id status already exists", self.add, identity="status"
+        )
+
+    def test_a_wrapped_default_stays_single_quoted_code(self):
+        # 以前 clang-format 折成多行的默认值被写成双引号字符串，gen 把它当作 C++ 字符串。
+        # A default that clang-format had wrapped used to be written as a double-quoted
+        # string, which gen took for a C++ string.
+        self.module(
+            "Topics",
+            "struct Pair { Pair(const char* a) {} Pair(const char* a, const char* b) {} };\n"
+            "class Topics { public:\n"
+            '  explicit Topics(std::initializer_list<Pair> items = {"a  b",\n'
+            "                                                       {\"c\\n\", 'd'},\n"
+            '                                                       {"e",\n'
+            '                                                        "f"}}) {} };',
+        )
+        self.add("Topics", "topics")
+        code = '{"a  b", {"c\\n", \'d\'}, {"e", "f"}}'
+        self.assertEqual(self.instances()[-1]["args"], [{"items": code}])
+        self.assertIn("      - items: '" + code.replace("'", "''") + "'\n", self.text())
+        self.assertEqual(config_edit.format_files([self.path], check=True), [])
+        # sync 写默认值走同一条路径；format 把块标量中的代码同样折成一行。
+        # sync writes defaults the same way; format folds code in a block scalar alike.
+        self.module(
+            "Topics",
+            "struct Pair { Pair(const char* a) {} Pair(const char* a, const char* b) {} };\n"
+            "class Topics { public:\n"
+            "  explicit Topics(std::initializer_list<Pair> items = {},\n"
+            '                  std::initializer_list<Pair> more = {"g",\n'
+            '                                                      "h"}) {} };',
+        )
+        modules, index = self.modules_and_index()
+        config_edit.sync_config(self.path, modules, index)
+        self.assertEqual(self.instances()[-1]["args"][1], {"more": '{"g", "h"}'})
+        self.assertEqual(config_edit.canonical_text("k: |-\n  {1,\n    2}\n"), "k: '{1, 2}'\n")
+        self.assertEqual(config_edit.format_files([self.path], check=True), [])
+
     def test_adding_to_an_empty_or_missing_configuration(self):
         for text in ("modules: []\n", "settings:\n  monitor_sleep_ms: 10\n", None):
             with self.subTest(text=text):
@@ -459,6 +500,43 @@ class RemoveAndRename(EditTestCase):
         )
 
 
+class Pre10Configuration(EditTestCase):
+    """1.0 以前格式的配置：每种编辑都报 gen 的同一条错误，文件不变。
+    A configuration in the format before 1.0: every edit reports the error of gen and leaves
+    the file alone.
+    """
+
+    def test_edits_refuse_the_old_format(self):
+        # 以前 instance add 把新格式的实例追加进旧文件，随后以 KeyError 崩溃；sync 输出改动却
+        # 不写入；set 报“没有参数”。
+        # instance add used to append a new-format instance to the old file and then crash
+        # with a KeyError; sync printed changes it never wrote; set reported a missing
+        # parameter.
+        self.path.write_text(
+            "global_settings:\n  monitor_sleep_ms: 1000\nmodules:\n"
+            "- id: status\n  name: Led\n  constructor_args:\n    cycle: 250\n",
+            encoding="utf-8",
+        )
+        message = (
+            "User/xrobot.yaml: this configuration uses the format of XRobot before 1.0 "
+            "(global_settings, name/constructor_args); XRobot 1.0 lists each instance as "
+            "module, id and args; replace the content of the file with `modules: []` (or "
+            "delete the file and run `xrobot init`), then recreate the instances with "
+            "`xrobot instance -c User/xrobot.yaml add`"
+        )
+        modules, index = self.modules_and_index()
+        source = "User/xrobot.yaml"
+        for action, args in (
+            (self.add, ()),
+            (config_edit.set_value, (self.path, "status", "args.cycle", "1", None, source)),
+            (config_edit.remove_instance, (self.path, "status", source)),
+            (config_edit.rename_instance, (self.path, "status", "led", source)),
+            (config_edit.sync_config, (self.path, modules, index, source)),
+        ):
+            with self.subTest(action=action.__name__):
+                self.assertUnchangedOnError(message, action, *args)
+
+
 class Format(TempDirTestCase):
     """format：规范格式。
     format: the canonical layout.
@@ -587,6 +665,22 @@ class SyncConfig(EditTestCase):
 
     def test_instances_that_match_no_constructor_are_left_alone(self):
         self.module("User", USER.replace("int count = 1", "Led* spare, int count = 1"))
+        modules, index = self.modules_and_index()
+        before = self.text()
+        self.assertEqual(config_edit.sync_config(self.path, modules, index), "")
+        self.assertEqual(self.text(), before)
+
+    def test_only_written_changes_are_reported(self):
+        # 以前没有实例改动时文件不写，却仍按规范写法输出整份文件的 diff。
+        # Without an instance change the file used to stay as it was while the diff of its
+        # canonical layout was still printed.
+        self.path.write_text(
+            "modules:\n- module: team/Led\n  id: status\n  args:\n  - gpio: pin\n"
+            '  - param: {cycle: 1, inverted: false, timing: {on_ms: 1, off_ms: 2}, name: "a"}\n'
+            "  - alt: Led::Defaults()\n  - factory: Led::Defaults()\n  - gain: 1.0f\n",
+            encoding="utf-8",
+        )
+        self.assertEqual(config_edit.format_files([self.path], check=True), [self.path])
         modules, index = self.modules_and_index()
         before = self.text()
         self.assertEqual(config_edit.sync_config(self.path, modules, index), "")
