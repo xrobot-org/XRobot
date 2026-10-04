@@ -1,11 +1,12 @@
 # 发版 / Releases
 
 LibXR、XRobot（PyPI 上的 `xrobot`）和 LibXR_CppCodeGenerator（PyPI 上的 `libxr`）各自有版本号，
-例如 xrobot 1.0.0 与 CodeGenerator 6.0.0 一同发布。两个 Python 包都精确锁定同一个 xr-syntax
+三个仓库总是一起发版，例如 LibXR V2.0.0、xrobot 1.0.0 与 CodeGenerator 6.0.0 一同发布。两个 Python 包都精确锁定同一个 xr-syntax
 版本（`xr-syntax==X`），所以 xr-syntax 先发布。模块使用各自的 tag。
 
 LibXR, XRobot (`xrobot` on PyPI) and LibXR_CppCodeGenerator (`libxr` on PyPI) are versioned
-independently; for example xrobot 1.0.0 is released together with CodeGenerator 6.0.0. Both
+independently and always released together; for example LibXR V2.0.0, xrobot 1.0.0 and
+CodeGenerator 6.0.0 are released together. Both
 Python packages pin the same xr-syntax version exactly (`xr-syntax==X`), so xr-syntax is
 released first. Modules keep their own tags.
 
@@ -35,7 +36,8 @@ Hardware testing of a BSP is arranged by its maintainers.
 依赖的东西都在它之前就位：
 
 1. LibXR：先在 master 上手动运行一次 “Build Docs Image” 工作流，并把 GHCR 上的 `libxr-docs`
-   包设为公开（API 文档的部署任务拉取这个镜像）；然后从 dev 向 master 提交 PR 并合并。
+   包设为公开（API 文档的部署任务拉取这个镜像）；然后从 dev 向 master 提交 PR 并合并，在合并
+   提交上创建 GitHub Release，tag 为 `V` 加版本号（如 `V2.0.0`）。
 2. xr-syntax 版本有变化时发布 xr-syntax。
 3. CodeGenerator 和 XRobot 从 dev 合入 master，在 master 上创建 GitHub Release，tag 为 `v` 加版本号
    （如 `v1.0.0`），发布工作流随即构建并上传到 PyPI。tag 只标记提交，`pyproject.toml` 中必须已经
@@ -55,7 +57,8 @@ what it depends on already in place:
 
 1. LibXR: run the "Build Docs Image" workflow once on master and make the `libxr-docs` package on
    GHCR public (the API documentation deployment pulls this image); then merge a pull request
-   from dev into master.
+   from dev into master and create a GitHub Release on the merge commit with the tag `V` plus
+   the version (such as `V2.0.0`).
 2. xr-syntax is published when its version changed.
 3. CodeGenerator and XRobot merge dev into master; a GitHub Release on master with the tag `v`
    plus the version (such as `v1.0.0`) makes the publish workflow build the package and upload it
