@@ -125,7 +125,7 @@ jobs:
     needs: [install, release-version]
     if: github.event_name == 'release'
     environment:
-      name: XRobot
+      name: TOKEN
       url: https://pypi.org/project/xrobot
     steps:
       - uses: actions/download-artifact@v4
