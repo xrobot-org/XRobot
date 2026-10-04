@@ -115,6 +115,29 @@ class Entry(TempDirTestCase):
             "exactly one entry",
         )
 
+    def test_chinese_entry_errors_use_the_glossary_terms(self):
+        # 以前中文报错写“登记硬件”“一个 BSP 只能有一个入口”，与术语表的“注册”“入口源文件”不同。
+        # The Chinese errors used to say 登记 and 入口 instead of the glossary terms 注册 and
+        # 入口源文件.
+        self.write("User/app_main.cpp", "int main() {}\n")
+        with mock.patch.dict(os.environ, XR_LANG="zh"):
+            with self.assertRaises(ProjectError) as context:
+                Project(self.root).entry()
+            self.assertEqual(
+                str(context.exception),
+                "User/ 下没有源文件调用 XROBOT_MAIN()；入口源文件应在用 XR_REGISTER 注册硬件后"
+                "调用它一次",
+            )
+            self.write("User/a.cpp", MAIN)
+            self.write("User/b.cpp", MAIN)
+            with self.assertRaises(ProjectError) as context:
+                Project(self.root).entry()
+            self.assertEqual(
+                str(context.exception),
+                "User/ 下有多个源文件调用 XROBOT_MAIN()：User/a.cpp、User/b.cpp；一个 BSP 只能有"
+                "一个入口源文件",
+            )
+
     def test_several_callers_are_listed_in_plain_case_sensitive_order(self):
         # Path 的比较在 Windows 上不区分大小写；按 / 分隔的写法比较，两个系统的顺序相同。
         # Comparing Path objects ignores case on Windows; the / separated spelling gives one

@@ -214,6 +214,14 @@ modules:
         invalid = "Blink.hpp would not be a valid Module header: "
         for declarations, problem in (
             (["LibXR::GPIO&"], "Constructor parameters must have explicit names: LibXR::GPIO&"),
+            (
+                # 0.x 的 name=value 写法；以前看不出需要的是 C++ 声明。
+                # The name=value form of 0.x; the message used not to say a C++ declaration
+                # is needed.
+                ["blink_cycle=250"],
+                r"Constructor parameters must have explicit names: blink_cycle=250 \(a C\+\+ "
+                r"declaration with type and name, such as uint32_t blink_cycle = 250\)",
+            ),
             (["int x = "], "Missing default value after '=': int x ="),
             (
                 ["int x = 1", "LibXR::GPIO& led"],

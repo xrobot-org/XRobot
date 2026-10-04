@@ -6,7 +6,7 @@ from unittest import mock
 
 from fixtures import TempDirTestCase, run_git
 
-from xrobot.git import checkout_state, head_commit, origin_url
+from xrobot.git import checkout_state, git, head_commit, origin_url
 
 
 class GitQueries(TempDirTestCase):
@@ -36,6 +36,22 @@ class GitQueries(TempDirTestCase):
         empty.mkdir()
         run_git(empty, "init", "-q")
         self.assertIsNone(head_commit(empty))
+
+    def test_missing_git_is_one_clear_error_even_when_failure_is_allowed(self):
+        # 以前是 OSError：[Errno 2] No such file or directory: 'git'。
+        # It used to be the OSError [Errno 2] No such file or directory: 'git'.
+        missing = FileNotFoundError(2, "No such file or directory", "git")
+        with mock.patch("xrobot.git.subprocess.run", side_effect=missing):
+            for check in (True, False):
+                with (
+                    self.subTest(check=check),
+                    self.assertRaisesMessage(
+                        ValueError,
+                        "git was not found on PATH; XRobot fetches the Modules and reads their "
+                        "commits with Git",
+                    ),
+                ):
+                    git(self.repo, "status", check=check)
 
     def test_checkout_state_reports_commit_branch_and_changes(self):
         self.assertEqual(checkout_state(self.repo), (self.commit, "main", False))

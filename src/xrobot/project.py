@@ -222,7 +222,7 @@ class Project:
                     "No source under User/ calls XROBOT_MAIN(); the entry source must "
                     "call it once after registering its hardware with XR_REGISTER" + hint[0],
                     "User/ 下没有源文件调用 XROBOT_MAIN()；入口源文件应在用 XR_REGISTER "
-                    "登记硬件后调用它一次" + hint[1],
+                    "注册硬件后调用它一次" + hint[1],
                 )
             )
         if len(callers) > 1:
@@ -231,7 +231,7 @@ class Project:
                 tr(
                     f"Several sources under User/ call XROBOT_MAIN(): {', '.join(names)}; a BSP has exactly "
                     "one entry",
-                    f"User/ 下有多个源文件调用 XROBOT_MAIN()：{'、'.join(names)}；一个 BSP 只能有一个入口",
+                    f"User/ 下有多个源文件调用 XROBOT_MAIN()：{'、'.join(names)}；一个 BSP 只能有一个入口源文件",
                 )
             )
         return callers[0]

@@ -31,27 +31,48 @@ Hardware testing of a BSP is arranged by its maintainers.
 
 ## 发布 / Publishing
 
-全部检查通过后按以下步骤发布：
+全部检查通过、并用 `tools/check_release.py` 核对验收记录（见下一节）后，按以下顺序发布。每一步
+依赖的东西都在它之前就位：
 
-1. 每个仓库从 dev 向 master 提交 PR 并合并。
-2. 用 `tools/check_release.py` 核对验收记录（见下一节）。
-3. xr-syntax 版本有变化时先发布 xr-syntax，再发布 CodeGenerator 和 XRobot：在 master 上创建 GitHub
-   Release，tag 为 `v` 加版本号（如 `v1.0.0`），发布工作流随即构建并上传到 PyPI。tag 只标记
-   提交，`pyproject.toml` 中必须已经是要发布的版本号。
+1. LibXR：先在 master 上手动运行一次 “Build Docs Image” 工作流，并把 GHCR 上的 `libxr-docs`
+   包设为公开（API 文档的部署任务拉取这个镜像）；然后从 dev 向 master 提交 PR 并合并。
+2. xr-syntax 版本有变化时发布 xr-syntax。
+3. CodeGenerator 和 XRobot 从 dev 合入 master，在 master 上创建 GitHub Release，tag 为 `v` 加版本号
+   （如 `v1.0.0`），发布工作流随即构建并上传到 PyPI。tag 只标记提交，`pyproject.toml` 中必须已经
+   是要发布的版本号。CodeGenerator 的发布工作流把 LibXR master 当时的提交写成默认检出的提交，
+   所以这一步在 LibXR 合并之后。
 4. XRobot 把 `v1` 移到同一个提交。模块 CI 通过 `module-ci.yml@v1`、STM32 BSP 的 CI 通过
    `bsp-stm32-ci.yml@v1` 调用本仓库的共享工作流；共享工作流有不兼容的修改时改用 `v2`。
+5. 各模块在 dev 上把 CI 改为调用 `module-ci.yml@v1`（删去指向 dev 的 `xrobot-ref`、`libxr-ref`、
+   `dependency-ref`），再从 dev 合入 master；模块源（catalog）随后合入 master 并重新部署。
+6. 各 BSP 在 dev 上把 LibXR 子模块更新到第 1 步合入的提交，CI 改为调用 `bsp-stm32-ci.yml@v1`，
+   按模块的 master 重新解析 `xrobot.lock`，再从 dev 合入 master。模板仓库同样更新 LibXR 子模块。
+7. 文档网站从 dev 合入 master，`master` 的推送触发部署（Pages 的 `github-pages` 环境需允许 `master`）；发布 VS Code 扩展。
 
-The release follows these steps once every check has passed:
+The release follows these steps in this order once every check has passed and
+`tools/check_release.py` has checked the acceptance record (next section); each step finds
+what it depends on already in place:
 
-1. Each repository merges a pull request from dev into master.
-2. `tools/check_release.py` checks the acceptance record (next section).
-3. xr-syntax is published first when its version changed, then CodeGenerator and XRobot: a
-   GitHub Release on master with the tag `v` plus the version (such as `v1.0.0`) makes the
-   publish workflow build the package and upload it to PyPI. The tag only marks the commit,
-   so `pyproject.toml` must already carry the released version.
+1. LibXR: run the "Build Docs Image" workflow once on master and make the `libxr-docs` package on
+   GHCR public (the API documentation deployment pulls this image); then merge a pull request
+   from dev into master.
+2. xr-syntax is published when its version changed.
+3. CodeGenerator and XRobot merge dev into master; a GitHub Release on master with the tag `v`
+   plus the version (such as `v1.0.0`) makes the publish workflow build the package and upload it
+   to PyPI. The tag only marks the commit, so `pyproject.toml` must already carry the released
+   version. The CodeGenerator publish workflow writes the commit LibXR master has at that moment as
+   the default checkout, so this step comes after the LibXR merge.
 4. XRobot moves `v1` to the same commit. Module CI calls this repository's shared workflows as
    `module-ci.yml@v1` and the CI of STM32 BSPs as `bsp-stm32-ci.yml@v1`; an incompatible change
    to a shared workflow moves to `v2`.
+5. Each Module switches its CI on dev to `module-ci.yml@v1` (dropping the `xrobot-ref`,
+   `libxr-ref` and `dependency-ref` that point at dev) and then merges dev into master; the Module
+   Sources (catalogs) then merge into master and are deployed again.
+6. Each BSP updates its LibXR submodule on dev to the commit merged in step 1, switches its CI to
+   `bsp-stm32-ci.yml@v1`, resolves `xrobot.lock` again against the master branches of its
+   Modules, and then merges dev into master. The template repositories update their LibXR
+   submodule as well.
+7. The documentation website merges dev into master, and the push to `master` deploys it (the `github-pages` environment of Pages has to allow `master`); the VS Code extension is published.
 
 ```sh
 git tag -f v1 'v1.0.0^{commit}'

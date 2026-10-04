@@ -472,6 +472,16 @@ class SourceManager:
             and (identity if "/" in name else identity.rsplit("/", 1)[-1]).casefold() == wanted
         ]
         if not candidates:
+            renamed = self._namespace_matches(name, kind)
+            if renamed:
+                raise ValueError(
+                    tr(
+                        f"Package not found: {name}; XRobot 1.0 names packages by the owner of "
+                        f"their GitHub repository, write {', '.join(renamed)}",
+                        f"找不到包：{name}；XRobot 1.0 用 GitHub 仓库的 owner 命名包，请写成 "
+                        f"{'、'.join(renamed)}",
+                    )
+                )
             raise ValueError(tr(f"Package not found: {name}", f"找不到包：{name}"))
         if len(candidates) != 1:
             ids = sorted(candidates)
@@ -482,6 +492,28 @@ class SourceManager:
                 )
             )
         return candidates[0]
+
+    def _namespace_matches(self, name: str, kind: str | None) -> list[str]:
+        """XRobot 1.0 以前的 namespace/Repo 现在的包 id：namespace 或 mirror_of 等于 namespace
+        的 index 中仓库名为 Repo 的包，例如 qdu-future/CMD 对应 QDU-Robomaster/CMD。
+        The package ids that a namespace/Repo of XRobot before 1.0 now has: the packages named
+        Repo in an index whose namespace or mirror_of is namespace, such as QDU-Robomaster/CMD
+        for qdu-future/CMD.
+        """
+        namespace, _, repo = name.casefold().rpartition("/")
+        if not namespace:
+            return []
+        return sorted(
+            {
+                self._keys[identity.casefold()]
+                for source in self.sources
+                if namespace
+                in (str(source.namespace or "").casefold(), str(source.mirror_of or "").casefold())
+                for identity, record in source.entries.items()
+                if (not kind or record["type"] == kind)
+                and identity.rsplit("/", 1)[-1].casefold() == repo
+            }
+        )
 
     def find_module(self, identity: str) -> list:
         """包在各个源中的 (仓库地址, 源)，含镜像。

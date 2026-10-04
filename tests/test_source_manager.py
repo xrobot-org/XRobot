@@ -75,6 +75,41 @@ class Sources(UpstreamTestCase):
         self.upstream("team/A")
         self.assertEqual(SourceManager(self.modules / "sources.yaml").resolve_id("a"), "team/A")
 
+    def test_an_id_spelled_with_the_index_namespace_names_the_new_id(self):
+        # XRobot 1.0 以前的 id 用 index 的 namespace（qdu-future/CMD），1.0 用 GitHub 的 owner；
+        # 以前只报“找不到包”，看不出应该改成什么。
+        # Before XRobot 1.0 an id used the namespace of the index (qdu-future/CMD), and 1.0
+        # uses the GitHub owner; only "Package not found" used to be reported, without the
+        # id to write instead.
+        self.write_yaml(
+            self.index,
+            {"namespace": "qdu-future", "modules": ["https://github.com/QDU-Robomaster/CMD.git"]},
+        )
+        manager = SourceManager(self.modules / "sources.yaml")
+        with self.assertRaisesMessage(
+            ValueError,
+            "Package not found: qdu-future/CMD; XRobot 1.0 names packages by the owner of their "
+            "GitHub repository, write QDU-Robomaster/CMD",
+        ):
+            manager.resolve_id("qdu-future/CMD")
+        with self.assertRaisesMessage(ValueError, "Package not found: qdu-future/Missing"):
+            manager.resolve_id("qdu-future/Missing")
+        with self.assertRaisesMessage(ValueError, "Package not found: qdu-future/CMD"):
+            manager.resolve_id("qdu-future/CMD", "bsp")
+        self.write_yaml(
+            self.index,
+            {
+                "mirror_of": "old-team",
+                "modules": [{"id": "team/Cmd", "repo": "https://git.example.com/m/Cmd.git"}],
+            },
+        )
+        with self.assertRaisesMessage(
+            ValueError,
+            "Package not found: old-team/cmd; XRobot 1.0 names packages by the owner of their "
+            "GitHub repository, write team/Cmd",
+        ):
+            SourceManager(self.modules / "sources.yaml").resolve_id("old-team/cmd")
+
     def test_errors_name_the_index_and_the_entry(self):
         cases = (
             (

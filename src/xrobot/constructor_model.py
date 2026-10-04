@@ -85,8 +85,12 @@ def parameter(declaration: str) -> dict:
     if not parts or parts[-1].kind != "identifier" or len(parts) < 2:
         raise ValueError(
             tr(
-                "Constructor parameters must have explicit names: " + declaration,
-                "构造参数必须写出参数名：" + declaration,
+                "Constructor parameters must have explicit names: "
+                + declaration
+                + " (a C++ declaration with type and name, such as uint32_t blink_cycle = 250)",
+                "构造参数必须写出参数名："
+                + declaration
+                + "（写成带类型和名字的 C++ 声明，例如 uint32_t blink_cycle = 250）",
             )
         )
     name = parts[-1].text

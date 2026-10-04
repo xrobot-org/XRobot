@@ -146,9 +146,14 @@ def caller_defined_names(items: list[Token], stop: int) -> set[str]:
     return names
 
 
-def read_registrations(path: str | Path) -> list[dict]:
+def read_registrations(path: str | Path, label: str | None = None) -> list[dict]:
     """读取入口源文件中的 XR_REGISTER(name, Type)，每个名字一个类型。
     Read the XR_REGISTER(name, Type) invocations of the entry source, one type per name.
+
+    Args:
+        label: 报错中入口源文件的名字，通常是相对 BSP 根目录的路径；缺省为文件名。
+            The name of the entry source in errors, usually its path relative to the BSP
+            root; the file name by default.
 
     Returns:
         每个注册一个映射：name、type、line，以及 caller_view（类型用到入口源文件自己声明
@@ -165,7 +170,7 @@ def read_registrations(path: str | Path) -> list[dict]:
     """
     path = Path(path)
     text = path.read_text(encoding="utf-8-sig", errors="surrogateescape")
-    label = path.name
+    label = label or path.name
     for number, line in enumerate(text.splitlines(), 1):
         if line.lstrip().startswith("#") and re.search(r"\bXR_REGISTER\b", line):
             raise ConfigError(
@@ -208,9 +213,9 @@ def read_registrations(path: str | Path) -> list[dict]:
                     f"{where}: XR_REGISTER registers one type per name: XR_REGISTER(name, Type). "
                     "To expose the object as another type, declare a reference (e.g. "
                     "`LibXR::CAN& can1 = fdcan1;`) and register that name separately",
-                    f"{where}: 一个 XR_REGISTER 只登记一个名字和一个类型：XR_REGISTER(name, Type)。"
+                    f"{where}: 一个 XR_REGISTER 只注册一个名字和一个类型：XR_REGISTER(name, Type)。"
                     "要以另一种类型提供这个对象，请声明一个引用（例如 "
-                    "`LibXR::CAN& can1 = fdcan1;`）并单独登记它",
+                    "`LibXR::CAN& can1 = fdcan1;`）并单独注册它",
                 )
             )
             continue
@@ -220,7 +225,7 @@ def read_registrations(path: str | Path) -> list[dict]:
             errors.append(
                 tr(
                     f"{where}: registration name {name} {problem}",
-                    f"{where}: 登记名 {name} {problem}",
+                    f"{where}: 注册名 {name} {problem}",
                 )
             )
             continue
@@ -236,7 +241,7 @@ def read_registrations(path: str | Path) -> list[dict]:
             errors.append(
                 tr(
                     f"{where}: register object types, not reference types: {name}",
-                    f"{where}: 请登记对象类型，不要登记引用类型：{name}",
+                    f"{where}: 请注册对象类型，不要注册引用类型：{name}",
                 )
             )
             continue
@@ -1162,14 +1167,17 @@ def generate(
     """
     config_path = Path(config_path) if config_path else project.selected_config()
     if not config_path.is_file():
+        name = project.relative(config_path)
         raise ConfigError(
             tr(
-                f"{project.relative(config_path)} does not exist",
-                f"{project.relative(config_path)} 不存在",
+                f"{name} does not exist; create it with `xrobot instance -c {name} add "
+                "<owner/Repo>`",
+                f"{name} 不存在；请用 `xrobot instance -c {name} add <owner/Repo>` 创建",
             )
         )
     modules = modules if modules is not None else load_modules(project)
-    registrations = read_registrations(project.entry())
+    entry = project.entry()
+    registrations = read_registrations(entry, project.relative(entry))
     code = generate_code(project, config_path, modules, registrations, index, line_directives)
     atomic_write(project.header, code)
     return code
@@ -1191,7 +1199,8 @@ def validate_all(
     """
     modules = modules if modules is not None else load_modules(project)
     index = index or TypeIndex.for_modules(modules)
-    registrations = read_registrations(project.entry())
+    entry = project.entry()
+    registrations = read_registrations(entry, project.relative(entry))
     errors = []
     for config_path in project.configs():
         try:

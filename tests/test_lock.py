@@ -191,6 +191,28 @@ class Resolution(UpstreamTestCase):
             self.sync()
         self.assertFalse((self.modules / "team/Board").exists())
 
+    def test_a_module_before_1_0_is_named_with_the_resolved_commit(self):
+        # 以前只列出不支持的 manifest 键，看不出选中的是哪个提交、BSP 该改请求哪个 ref。
+        # Only the unsupported manifest keys used to be listed, without the commit that was
+        # picked or the ref the BSP should request instead.
+        old = self.upstream("team/Old")
+        self.write(
+            old / "Old.hpp",
+            "#pragma once\n/* === MODULE MANIFEST V2 ===\nmodule_description: old\n"
+            "constructor_args:\n  - blink_cycle: 250\n=== END MANIFEST === */\nclass Old {};\n",
+        )
+        run_git(old, "commit", "-q", "-am", "0.x")
+        commit = run_git(old, "rev-parse", "HEAD")
+        self.configure(["team/Old@master"])
+        with self.assertRaises(ValueError) as context:
+            self.sync()
+        self.assertIn(
+            f"Old.hpp: team/Old@{commit[:12]} predates XRobot 1.0 (manifest key(s) "
+            "constructor_args); a BSP has to request a version of the Module made for XRobot "
+            "1.0, such as `@dev`;",
+            str(context.exception),
+        )
+
     def test_dependency_cycles_are_reported(self):
         self.upstream("team/A", ["team/B"])
         self.upstream("team/B", ["team/A"])
