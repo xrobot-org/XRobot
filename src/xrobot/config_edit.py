@@ -375,7 +375,7 @@ class ConfigFile:
         Read path; source is the file's name in errors, path by default.
 
         Raises:
-            ConfigError: 文件是 XRobot 1.0 以前的格式；编辑不会改动它。
+            ConfigError: 文件是 xrobot 1.0 以前的格式；编辑不会改动它。
                 The file uses the format of XRobot before 1.0; no edit touches it.
         """
         self.path = Path(path)

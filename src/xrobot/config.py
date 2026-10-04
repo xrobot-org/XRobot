@@ -379,7 +379,7 @@ def value_text(value: object, field: str) -> str:
             tr(
                 f"{field}: the @ prefix of XRobot before 1.0 is gone; every value without quotes "
                 "or in single quotes is C++ code, and a double-quoted value is a C++ string",
-                f"{field}: XRobot 1.0 以前的 @ 前缀已经取消；不加引号或用单引号的值都是 C++ 代码，"
+                f"{field}: xrobot 1.0 以前的 @ 前缀已经取消；不加引号或用单引号的值都是 C++ 代码，"
                 "双引号中的值是 C++ 字符串",
             )
         )
@@ -470,7 +470,7 @@ def _check_value(value: object, field: str, errors: list[str]) -> None:
 
 
 def _pre_1_0_format(config: dict) -> bool:
-    """配置是否为 XRobot 1.0 以前的格式（global_settings、name/constructor_args）。
+    """配置是否为 xrobot 1.0 以前的格式（global_settings、name/constructor_args）。
     Whether the configuration uses the format of XRobot before 1.0 (global_settings,
     name/constructor_args).
     """
@@ -484,7 +484,7 @@ def _pre_1_0_format(config: dict) -> bool:
 
 
 def reject_pre_1_0_format(config: object, source: str = "config") -> None:
-    """配置为 XRobot 1.0 以前的格式时报错；编辑配置的命令在改动文件之前调用。
+    """配置为 xrobot 1.0 以前的格式时报错；编辑配置的命令在改动文件之前调用。
     Raise when a configuration uses the format of XRobot before 1.0; the commands that edit
     configurations call it before they change a file.
 
@@ -496,12 +496,12 @@ def reject_pre_1_0_format(config: object, source: str = "config") -> None:
         raise ConfigError(
             tr(
                 f"{source}: this configuration uses the format of XRobot before 1.0 "
-                "(global_settings, name/constructor_args); XRobot 1.0 lists each instance as "
+                "(global_settings, name/constructor_args); xrobot 1.0 lists each instance as "
                 "module, id and args; replace the content of the file with `modules: []` (or "
                 "delete the file and run `xrobot init`), then recreate the instances with "
                 f"`xrobot instance -c {source} add`",
-                f"{source}: 这份配置使用的是 XRobot 1.0 以前的格式（global_settings、"
-                "name/constructor_args）；XRobot 1.0 中每个实例写成 module、id 和 args；"
+                f"{source}: 这份配置使用的是 xrobot 1.0 以前的格式（global_settings、"
+                "name/constructor_args）；xrobot 1.0 中每个实例写成 module、id 和 args；"
                 "请把文件内容换成 `modules: []`（或删除文件后运行 `xrobot init`），再用 "
                 f"`xrobot instance -c {source} add` 重新添加实例",
             )

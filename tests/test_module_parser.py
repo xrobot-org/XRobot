@@ -108,7 +108,7 @@ class Manifests(TestCase):
             ),
             (
                 block("module_description: old", version=""),
-                "A.hpp: this MODULE MANIFEST predates XRobot 1.0; update the Module to MODULE "
+                "A.hpp: this MODULE MANIFEST predates xrobot 1.0; update the Module to MODULE "
                 f"MANIFEST V2 with {keys} (the C++ constructor is the interface)",
             ),
             (
@@ -122,9 +122,9 @@ class Manifests(TestCase):
                 # Manifest keys from before 1.0; only the unsupported keys used to be listed,
                 # without saying that the Module predates 1.0.
                 block("description: old\nconstructor_args: []\ntemplate_args: []"),
-                "A.hpp: this Module predates XRobot 1.0 (manifest key(s) description, "
+                "A.hpp: this Module predates xrobot 1.0 (manifest key(s) description, "
                 "constructor_args, template_args); a BSP has to request a version of the Module "
-                "made for XRobot 1.0, such as `@dev`; the Module author moves these parameters "
+                "made for xrobot 1.0, such as its master branch (`@master`); the Module author moves these parameters "
                 f"into the C++ constructor and keeps only {keys} in MODULE MANIFEST V2",
             ),
             (
@@ -154,9 +154,9 @@ class Manifests(TestCase):
         keys = "module_description, depends, standalone"
         with self.assertRaisesMessage(
             ValueError,
-            "A.hpp: team/A@0123456789ab predates XRobot 1.0 (manifest key(s) constructor_args, "
-            "required_hardware); a BSP has to request a version of the Module made for XRobot "
-            "1.0, such as `@dev`; the Module author moves these parameters into the C++ "
+            "A.hpp: team/A@0123456789ab predates xrobot 1.0 (manifest key(s) constructor_args, "
+            "required_hardware); a BSP has to request a version of the Module made for xrobot "
+            "1.0, such as its master branch (`@master`); the Module author moves these parameters into the C++ "
             f"constructor and keeps only {keys} in MODULE MANIFEST V2",
         ):
             manifest_from_text(text, "A.hpp", "team/A@0123456789ab")
@@ -164,8 +164,8 @@ class Manifests(TestCase):
             mock.patch.dict(os.environ, XR_LANG="zh"),
             self.assertRaisesMessage(
                 ValueError,
-                "A.hpp: 这个模块早于 XRobot 1.0（manifest 含有键 constructor_args、"
-                "required_hardware）；BSP 需要请求这个模块适用于 XRobot 1.0 的版本，例如 `@dev`；"
+                "A.hpp: 这个模块早于 xrobot 1.0（manifest 含有键 constructor_args、"
+                "required_hardware）；BSP 需要请求这个模块适用于 xrobot 1.0 的版本，例如模块的 master 分支（`@master`）；"
                 "模块作者要把这些参数移到 C++ 构造函数中，MODULE MANIFEST V2 只保留 "
                 "module_description、depends、standalone",
             ),

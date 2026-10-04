@@ -238,8 +238,8 @@ def describe(project: Project, config: str | Path | None = None) -> dict:
             "warning",
             "Modules/modules.yaml",
             tr(
-                f"installed XRobot {__version__} differs from the pinned {pin}",
-                f"安装的 XRobot {__version__} 与固定的版本 {pin} 不同",
+                f"installed xrobot {__version__} differs from the pinned {pin}",
+                f"安装的 xrobot {__version__} 与固定的版本 {pin} 不同",
             ),
         )
 

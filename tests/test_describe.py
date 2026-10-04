@@ -413,7 +413,7 @@ class Diagnostics(DescribeTestCase):
                 "xrobot: 0.9.0\nmodules: []\n",
                 "0.9.0",
                 "warning",
-                f"installed XRobot {__version__} differs from the pinned 0.9.0",
+                f"installed xrobot {__version__} differs from the pinned 0.9.0",
             ),
             (
                 "xrobot: latest\nmodules: []\n",

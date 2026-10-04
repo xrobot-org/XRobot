@@ -207,9 +207,9 @@ class Resolution(UpstreamTestCase):
         with self.assertRaises(ValueError) as context:
             self.sync()
         self.assertIn(
-            f"Old.hpp: team/Old@{commit[:12]} predates XRobot 1.0 (manifest key(s) "
-            "constructor_args); a BSP has to request a version of the Module made for XRobot "
-            "1.0, such as `@dev`;",
+            f"Old.hpp: team/Old@{commit[:12]} predates xrobot 1.0 (manifest key(s) "
+            "constructor_args); a BSP has to request a version of the Module made for xrobot "
+            "1.0, such as its master branch (`@master`);",
             str(context.exception),
         )
 
@@ -544,7 +544,7 @@ class Contexts(UpstreamTestCase):
             ValueError,
             "Modules/modules.yaml requests team/A@same-or-dev, which needs the BSP branch to "
             "pick a commit, but the BSP is not a Git repository; request an explicit ref such "
-            "as team/A@dev, or put the BSP in a Git repository",
+            "as team/A@master, or put the BSP in a Git repository",
         ):
             self.sync()
         first = self.sync(context_ref="refs/heads/review")

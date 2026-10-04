@@ -106,8 +106,8 @@ def _check_pin(project: Project, frozen: bool = False) -> None:
         )
     elif pin != __version__ and not COMMIT.fullmatch(pin):
         problem = tr(
-            f"installed XRobot {__version__} differs from the pinned {pin}",
-            f"安装的 XRobot {__version__} 与固定的版本 {pin} 不同",
+            f"installed xrobot {__version__} differs from the pinned {pin}",
+            f"安装的 xrobot {__version__} 与固定的版本 {pin} 不同",
         )
     else:
         return
@@ -281,7 +281,7 @@ def cmd_describe(args: argparse.Namespace) -> None:
 
 
 def _reject_pre_1_0(project: Project, paths: Sequence[Path]) -> None:
-    """有配置是 XRobot 1.0 以前的格式时报错，一个文件也不改。
+    """有配置是 xrobot 1.0 以前的格式时报错，一个文件也不改。
     Fail without changing any file when a configuration uses the format of XRobot before 1.0.
 
     Raises:
