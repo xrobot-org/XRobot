@@ -47,7 +47,7 @@ Hardware testing of a BSP is arranged by its maintainers.
    `dependency-ref`），再从 dev 合入 master；模块源（catalog）随后合入 master 并重新部署。
 6. 各 BSP 在 dev 上把 LibXR 子模块更新到第 1 步合入的提交，CI 改为调用 `bsp-stm32-ci.yml@v1`，
    按模块的 master 重新解析 `xrobot.lock`，再从 dev 合入 master。模板仓库同样更新 LibXR 子模块。
-7. 部署文档网站，发布 VS Code 扩展。
+7. 文档网站从 dev 合入 master，`master` 的推送触发部署（Pages 的 `github-pages` 环境需允许 `master`）；发布 VS Code 扩展。
 
 The release follows these steps in this order once every check has passed and
 `tools/check_release.py` has checked the acceptance record (next section); each step finds
@@ -72,7 +72,7 @@ what it depends on already in place:
    `bsp-stm32-ci.yml@v1`, resolves `xrobot.lock` again against the master branches of its
    Modules, and then merges dev into master. The template repositories update their LibXR
    submodule as well.
-7. The documentation website is deployed and the VS Code extension is published.
+7. The documentation website merges dev into master, and the push to `master` deploys it (the `github-pages` environment of Pages has to allow `master`); the VS Code extension is published.
 
 ```sh
 git tag -f v1 'v1.0.0^{commit}'
