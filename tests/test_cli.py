@@ -394,6 +394,45 @@ class Commands(CliMixin, BspTestCase):
             "entry source must call it once after registering its hardware with XR_REGISTER\n",
         )
 
+    def test_instance_add_names_the_setting_that_generates_ramfs_and_database(self):
+        # 以前新生成的 STM32 工程对 RamFS、Database 只显示“没有候选”，要开的设置得另查文档。
+        # A newly generated STM32 project used to show only "no candidate" for RamFS and
+        # Database; the setting to turn on had to be looked up in the documentation.
+        self.module(
+            "Store",
+            "namespace LibXR { class RamFS; class Database; }\nclass Store { public:\n"
+            "  Store(LibXR::RamFS& ramfs, LibXR::Database* database) {}\n"
+            "  void OnMonitor() {} };",
+        )
+        unfilled = (
+            "Added {} to User/xrobot.yaml; fill the null values (dependencies) before "
+            "generating\n  ramfs (LibXR::RamFS&): no candidate\n"
+        )
+        out, _ = self.ok("instance", "add", "Store", "--id", "plain")
+        self.assertEqual(out, unfilled.format("plain") + "  database (LibXR::Database*): nullptr\n")
+        self.write("User/libxr_config.yaml", "terminal_source: ''\n")
+        out, _ = self.ok("instance", "add", "Store", "--id", "generated")
+        self.assertEqual(
+            out,
+            unfilled.format("generated")
+            + "    set terminal_source in User/libxr_config.yaml, then run "
+            "`libxr stm32 setup -d .` to generate and register ramfs\n"
+            "  database (LibXR::Database*): nullptr\n"
+            "    set database.enable: true in User/libxr_config.yaml, then run "
+            "`libxr stm32 setup -d .` to generate and register database\n",
+        )
+        self.entry(
+            '#include "xrobot_main.hpp"\nint main() { XR_REGISTER(ramfs, LibXR::RamFS); '
+            "XR_REGISTER(database, LibXR::Database); XROBOT_MAIN(); }\n"
+        )
+        out, _ = self.ok("instance", "add", "Store", "--id", "registered")
+        self.assertEqual(
+            out,
+            "Added registered to User/xrobot.yaml; fill the null values (dependencies) before "
+            "generating\n  ramfs (LibXR::RamFS&): ramfs\n"
+            "  database (LibXR::Database*): &database, nullptr\n",
+        )
+
     def test_instance_editing(self):
         # 以前只提示填写空值，可以填写的名字要另外去找。
         # Only the null values used to be pointed out; the names to fill in had to be looked
