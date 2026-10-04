@@ -583,9 +583,9 @@ class Resolver:
                 tr(
                     f"{self._requester()} requests {target}, which needs the BSP branch to "
                     "pick a commit, but the BSP is not a Git repository; request an explicit "
-                    f"ref such as {identity}@dev, or put the BSP in a Git repository",
+                    f"ref such as {identity}@master, or put the BSP in a Git repository",
                     f"{self._requester()} 请求 {target}，需要根据 BSP 所在的分支选择提交，"
-                    f"但 BSP 不是 Git 仓库；请明确请求一个 ref（例如 {identity}@dev），"
+                    f"但 BSP 不是 Git 仓库；请明确请求一个 ref（例如 {identity}@master），"
                     "或把 BSP 放进 Git 仓库",
                 )
             )

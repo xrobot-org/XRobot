@@ -25,7 +25,7 @@ MANIFEST_PATTERN = re.compile(
 # newer xrobot.
 MANIFEST_VERSION = 2
 MANIFEST_KEYS = ("module_description", "depends", "standalone")
-# XRobot 1.0 以前的 MODULE MANIFEST V2 才有的键；1.0 中这些内容由 C++ 构造函数给出。
+# xrobot 1.0 以前的 MODULE MANIFEST V2 才有的键；1.0 中这些内容由 C++ 构造函数给出。
 # Keys only the MODULE MANIFEST V2 of XRobot before 1.0 has; in 1.0 the C++ constructor
 # gives this information.
 PRE_1_0_KEYS = ("module_name", "constructor_args", "template_args", "required_hardware")
@@ -110,10 +110,10 @@ def manifest_from_text(
     if version < MANIFEST_VERSION:
         raise ValueError(
             tr(
-                f"{path}: this MODULE MANIFEST predates XRobot 1.0; update the Module to "
+                f"{path}: this MODULE MANIFEST predates xrobot 1.0; update the Module to "
                 f"MODULE MANIFEST V{MANIFEST_VERSION} with {', '.join(MANIFEST_KEYS)} (the C++ "
                 "constructor is the interface)",
-                f"{path}: 这个 MODULE MANIFEST 早于 XRobot 1.0；请把模块更新为只含 "
+                f"{path}: 这个 MODULE MANIFEST 早于 xrobot 1.0；请把模块更新为只含 "
                 f"{'、'.join(MANIFEST_KEYS)} 的 MODULE MANIFEST V{MANIFEST_VERSION}"
                 "（C++ 构造函数就是接口）",
             )
@@ -143,14 +143,14 @@ def manifest_from_text(
     if any(k in PRE_1_0_KEYS for k in unknown):
         raise ValueError(
             tr(
-                f"{path}: {module or 'this Module'} predates XRobot 1.0 (manifest key(s) "
-                f"{', '.join(map(str, unknown))}); a BSP has to request a version of the Module made for XRobot 1.0, "
-                "such as `@dev`; the Module author moves these parameters into the C++ "
+                f"{path}: {module or 'this Module'} predates xrobot 1.0 (manifest key(s) "
+                f"{', '.join(map(str, unknown))}); a BSP has to request a version of the Module made for xrobot 1.0, "
+                "such as its master branch (`@master`); the Module author moves these parameters into the C++ "
                 f"constructor and keeps only {', '.join(MANIFEST_KEYS)} in MODULE MANIFEST "
                 f"V{MANIFEST_VERSION}",
-                f"{path}: {module + ' ' if module else '这个模块'}早于 XRobot 1.0（manifest 含有键 "
-                f"{'、'.join(map(str, unknown))}）；BSP 需要请求这个模块适用于 XRobot 1.0 的版本，"
-                "例如 `@dev`；模块作者要把这些参数移到 C++ 构造函数中，MODULE MANIFEST "
+                f"{path}: {module + ' ' if module else '这个模块'}早于 xrobot 1.0（manifest 含有键 "
+                f"{'、'.join(map(str, unknown))}）；BSP 需要请求这个模块适用于 xrobot 1.0 的版本，"
+                "例如模块的 master 分支（`@master`）；模块作者要把这些参数移到 C++ 构造函数中，MODULE MANIFEST "
                 f"V{MANIFEST_VERSION} 只保留 {'、'.join(MANIFEST_KEYS)}",
             )
         )

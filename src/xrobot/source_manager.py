@@ -469,9 +469,9 @@ class SourceManager:
             if renamed:
                 raise ValueError(
                     tr(
-                        f"Package not found: {name}; XRobot 1.0 names packages by the owner of "
+                        f"Package not found: {name}; xrobot 1.0 names packages by the owner of "
                         f"their GitHub repository, write {', '.join(renamed)}",
-                        f"找不到包：{name}；XRobot 1.0 用 GitHub 仓库的 owner 命名包，请写成 "
+                        f"找不到包：{name}；xrobot 1.0 用 GitHub 仓库的 owner 命名包，请写成 "
                         f"{'、'.join(renamed)}",
                     )
                 )
@@ -487,7 +487,7 @@ class SourceManager:
         return candidates[0]
 
     def _namespace_matches(self, name: str, kind: str | None) -> list[str]:
-        """XRobot 1.0 以前的 namespace/Repo 现在的包 id：namespace 或 mirror_of 等于 namespace
+        """xrobot 1.0 以前的 namespace/Repo 现在的包 id：namespace 或 mirror_of 等于 namespace
         的 index 中仓库名为 Repo 的包，例如 qdu-future/CMD 对应 QDU-Robomaster/CMD。
         The package ids that a namespace/Repo of XRobot before 1.0 now has: the packages named
         Repo in an index whose namespace or mirror_of is namespace, such as QDU-Robomaster/CMD
