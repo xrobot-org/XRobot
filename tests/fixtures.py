@@ -326,7 +326,7 @@ class UpstreamTestCase(TempDirTestCase):
         self.index = self.tmp / "index.yaml"
         self.entries = []
         self.write_yaml(self.modules / "sources.yaml", {"sources": [{"url": str(self.index)}]})
-        self.write_yaml(self.index, {"packages": []})
+        self.write_yaml(self.index, {"modules": []})
         self.configure([])
 
     @property
@@ -342,6 +342,18 @@ class UpstreamTestCase(TempDirTestCase):
         """
         return self.write(path, yaml.safe_dump(value, sort_keys=False, allow_unicode=True))
 
+    def write_index(self):
+        """把 self.entries 按类型写入 index 的 modules 和 bsps。
+        Write self.entries into the modules and bsps groups of the index by their type.
+        """
+        return self.write_yaml(
+            self.index,
+            {
+                group: [e for e in self.entries if e["type"] == kind]
+                for group, kind in (("modules", "module"), ("bsps", "bsp"))
+            },
+        )
+
     def upstream(self, identity, depends=None, kind="module", branches=("dev",), listed=True):
         """在 master（以及 branches）上创建上游仓库，并列入 index。
         Create an upstream repository on master (plus branches) and list it in the index.
@@ -354,7 +366,7 @@ class UpstreamTestCase(TempDirTestCase):
             run_git(path, "branch", branch)
         if listed:
             self.entries.append({"id": identity, "repo": str(path), "type": kind})
-            self.write_yaml(self.index, {"packages": self.entries})
+            self.write_index()
         return path
 
     def commit(self, path, depends, message):

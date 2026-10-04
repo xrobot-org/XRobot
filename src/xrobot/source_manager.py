@@ -32,7 +32,6 @@ FIELDS = (
     "status",
     "tested_ref",
     "tested_libxr",
-    "tested_xrobot",
 )
 _ID = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]*/[A-Za-z0-9_][A-Za-z0-9_.-]*$")
 _GITHUB = re.compile(r"github\.com[/:]([^/]+/[^/]+?)(?:\.git)?/?$", re.I)
@@ -265,7 +264,7 @@ class ModuleSource:
         self.mirror_of = data.get("mirror_of")
         self.entries = {}
         seen = set()
-        for group, kind in (("modules", "module"), ("bsps", "bsp"), ("packages", None)):
+        for group, kind in (("modules", "module"), ("bsps", "bsp")):
             values = data.get(group) or []
             if not isinstance(values, list):
                 raise ValueError(
@@ -298,7 +297,7 @@ class ModuleSource:
             return f"{self.namespace}/{name}"
         return None
 
-    def _record(self, value: object, kind: str | None) -> dict:
+    def _record(self, value: object, kind: str) -> dict:
         """一个条目的记录：包 id、类型、仓库地址，模块另有状态标签。
         The record of one entry: package id, type and repository, plus the status labels of
         a Module.
@@ -318,14 +317,8 @@ class ModuleSource:
         repo = _entry_repo(entry)
         where = f"{self.url}: {entry.get('id') or repo or value}"
         package_type = entry.get("type", kind)
-        if package_type not in ("module", "bsp") or (kind and package_type != kind):
-            allowed = kind or "module / bsp"
-            raise ValueError(
-                tr(
-                    f"{where}: type must be {kind or 'module or bsp'}",
-                    f"{where}: type 必须是 {allowed}",
-                )
-            )
+        if package_type != kind:
+            raise ValueError(tr(f"{where}: type must be {kind}", f"{where}: type 必须是 {kind}"))
         if not isinstance(repo, str) or not repo:
             raise ValueError(tr(f"{where}: missing repo URL", f"{where}: 缺少 repo 地址"))
         identity = entry.get("id") or self._derive_id(repo)
@@ -368,7 +361,7 @@ class ModuleSource:
         record["status"] = status
         for field, text in entry.items():
             if field not in ("id", "type", "repo", "source", "status"):
-                record[field] = str(text) if field.startswith("tested_") else text
+                record[field] = str(text) if field in ("tested_ref", "tested_libxr") else text
         return record
 
 

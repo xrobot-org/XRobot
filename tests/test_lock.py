@@ -601,7 +601,7 @@ class LockFile(UpstreamTestCase):
     def test_relative_index_and_local_sources_are_stored_relative_to_the_lock(self):
         self.upstream("team/A")
         self.entries[0]["repo"] = "upstream/team/A"
-        self.write_yaml(self.index, {"packages": self.entries})
+        self.write_index()
         self.write_yaml(self.modules / "sources.yaml", {"sources": [{"url": "../../index.yaml"}]})
         self.configure(["team/A"])
         first = self.sync()
@@ -614,7 +614,7 @@ class LockFile(UpstreamTestCase):
     def test_a_locked_local_source_stays_relative_to_the_lock_when_run_from_a_subdirectory(self):
         self.upstream("team/A")
         self.entries[0]["repo"] = "upstream/team/A"
-        self.write_yaml(self.index, {"packages": self.entries})
+        self.write_index()
         self.configure(["team/A"])
         self.sync()
         self.upstream("team/B")
@@ -626,7 +626,7 @@ class LockFile(UpstreamTestCase):
     def test_file_urls_are_stored_without_machine_paths(self):
         a = self.upstream("team/A")
         self.entries[0]["repo"] = a.as_uri()
-        self.write_yaml(self.index, {"packages": self.entries})
+        self.write_index()
         self.configure(["team/A@dev"])
         first = self.sync()
         self.assertEqual(first["modules"]["team/A"]["repo"], "../upstream/team/A")

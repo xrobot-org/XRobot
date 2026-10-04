@@ -92,7 +92,7 @@ class ModuleCiPreparation(CliMixin, UpstreamTestCase):
             if url == "https://xrobot.work/xrobot-modules/index.yaml":
                 return Index(
                     {
-                        "packages": [
+                        "modules": [
                             {
                                 "id": "team/A",
                                 "type": "module",
@@ -106,7 +106,7 @@ class ModuleCiPreparation(CliMixin, UpstreamTestCase):
             # team/B 只在调用方通过 sources 输入给出的 index 中。
             # team/B is only in the index the caller passes through the sources input.
             if url == "https://example.com/team/index.yaml":
-                return Index({"packages": [{"id": "team/B", "type": "module", "repo": b.as_uri()}]})
+                return Index({"modules": [{"id": "team/B", "type": "module", "repo": b.as_uri()}]})
             raise AssertionError("unexpected index request: " + url)
 
         previous = os.getcwd()
