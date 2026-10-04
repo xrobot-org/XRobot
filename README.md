@@ -312,12 +312,12 @@ jobs:
 ```
 
 共享流程按固定的版本安装工具、检出锁定的模块并逐份配置构建，打 `v*` tag 或发布 Release 时上传固件。
-检查项、可选输入和发布的文件见文档 [BSP CI](https://xrobot.work/docs/proj_man#bsp-ci)。
+检查项、可选输入和发布的文件见文档 [BSP CI](https://xrobot.work/docs/proj_man/proj-man-ci#bsp-ci)。
 
 The shared workflow installs the pinned tool versions, checks out the locked Modules, builds
 every configuration, and uploads the firmware for a `v*` tag or a published Release. The
 checks, the optional inputs and the published files are described in
-[BSP CI](https://xrobot.work/en/docs/proj_man#bsp-ci).
+[BSP CI](https://xrobot.work/en/docs/proj_man/proj-man-ci#bsp-ci).
 
 ---
 
