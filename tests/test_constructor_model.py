@@ -46,12 +46,14 @@ class MappingTestCase(BspTestCase):
         self.entry(MAIN)
 
     def value(self, module, parameter_name, value, identity="p"):
-        """用一个参数值生成头文件并返回其文本。
-        Generate the header with one argument value and return its text.
+        """用一个参数值生成头文件并返回其文本，不含 #line 指令（它们不属于值的写法）。
+        Generate the header with one argument value and return its text without the #line
+        directives, which are not part of how the value is written.
         """
-        return self.generate(
+        code = self.generate(
             {"modules": [{"module": module, "id": identity, "args": [{parameter_name: value}]}]}
         )
+        return "\n".join(line for line in code.split("\n") if not line.startswith("#line"))
 
     def rejected(self, module, parameter_name, value, pattern):
         """断言这个参数值被拒绝，报错匹配 pattern。

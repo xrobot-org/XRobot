@@ -183,10 +183,10 @@ like hand-written code:
 
 [[noreturn]] static inline void XRobotMain(LibXR::GPIO& LED_R)
 {
-  // led: xrobot-org/BlinkLED (xrobot.yaml:2)
-#line 2 "xrobot.yaml"
+  // led: xrobot-org/BlinkLED (User/xrobot.yaml:2)
+#line 2 "User/xrobot.yaml"
   static BlinkLED led(LED_R, 250);
-#line 14 "xrobot_main.hpp"
+#line 14 "User/xrobot_main.hpp"
 
   for (;;)
   {
@@ -195,13 +195,16 @@ like hand-written code:
 }
 ```
 
-每个实例前的注释写明模块和 YAML 中的行号；其后的 `#line` 指令使编译错误定位到 YAML 中对应的行，
-`xrobot gen --no-line-directives` 可以省略它们。传给引用、`std::initializer_list` 或结构体参数的值
+每个实例前的注释写明模块和 YAML 中的行号；`#line` 指令使实例的每行代码对应到它来自的 YAML 行，编译错误
+因此定位到 YAML 中的那一行，路径相对 BSP 根目录，编辑器可以直接打开。`#line` 只写在编译器自己数出的
+行号对不上的地方，`xrobot gen --no-line-directives` 可以省略它们。传给引用、`std::initializer_list` 或结构体参数的值
 写成紧邻实例之前的 `static const <类型> xr_<实例>_<参数> = {…};`，与实例一样活到程序结束。配置或
 模块修改后若未重新生成，构建会中止，并提示需要执行的命令：
 
-A comment before each instance names its Module and the line of the YAML, and the `#line`
-directive after it makes compiler errors refer to that YAML line (`xrobot gen
+A comment before each instance names its Module and the line of the YAML. The `#line`
+directives map every line of the instance's code to the YAML line it comes from, so a compiler
+error refers to that line, with a path relative to the BSP root that an editor opens directly.
+A `#line` is written only where the line the compiler counts by itself would differ (`xrobot gen
 --no-line-directives` leaves the directives out). Values for reference, `std::initializer_list`
 and struct parameters are written as `static const <type> xr_<instance>_<parameter> = {...};`
 right before the instance and live as long as it does. If a configuration or Module has

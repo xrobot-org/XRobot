@@ -242,7 +242,7 @@ class Commands(CliMixin, BspTestCase):
     def test_gen_writes_line_directives_unless_told_not_to(self):
         header = self.root / "User/xrobot_main.hpp"
         self.ok("gen")
-        self.assertIn('#line 2 "xrobot.yaml"', header.read_text(encoding="utf-8"))
+        self.assertIn('#line 2 "User/xrobot.yaml"', header.read_text(encoding="utf-8"))
         self.ok("gen", "--no-line-directives")
         self.assertNotIn("#line", header.read_text(encoding="utf-8"))
 
@@ -579,7 +579,7 @@ class Setup(CliMixin, UpstreamTestCase):
     def test_setup_writes_line_directives_unless_told_not_to(self):
         header = self.root / "User/xrobot_main.hpp"
         self.ok("setup")
-        self.assertIn('#line 2 "xrobot.yaml"', header.read_text(encoding="utf-8"))
+        self.assertIn('#line 2 "User/xrobot.yaml"', header.read_text(encoding="utf-8"))
         self.ok("setup", "--frozen", "--no-line-directives")
         self.assertNotIn("#line", header.read_text(encoding="utf-8"))
 

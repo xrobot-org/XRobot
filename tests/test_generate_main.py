@@ -142,14 +142,16 @@ inline constexpr int Rate = 1000;
 
 [[noreturn]] static inline void XRobotMain(LibXR::GPIO& pin)
 {{
-  // led: team/Led (xrobot.yaml:8)
-#line 8 "xrobot.yaml"
+  // led: team/Led (User/xrobot.yaml:8)
+#line 12 "User/xrobot.yaml"
   static const Led::Param xr_led_param = {{
       .cycle = 250,
       .inverted = false,
+#line 12 "User/xrobot.yaml"
   }};
+#line 8 "User/xrobot.yaml"
   static Led led(pin, xr_led_param, 1.0f);
-#line 23 "xrobot_main.hpp"
+#line 25 "User/xrobot_main.hpp"
 
   for (;;)
   {{
@@ -206,11 +208,11 @@ inline constexpr int Rate = 1000;
             "    args:\n      - init: 2.0f\n"
         )
         code = generate(self.project, config)
-        self.assertIn("\n  // led: team/Led (xrobot.yaml:2)\n", code)
-        self.assertIn("\n  // buf: team/Buf<float, 8> (xrobot.yaml:8)\n", code)
+        self.assertIn("\n  // led: team/Led (User/xrobot.yaml:2)\n", code)
+        self.assertIn("\n  // buf: team/Buf<float, 8> (User/xrobot.yaml:8)\n", code)
         # 实例之间空一行。
         # One blank line between instances.
-        self.assertRegex(code, r"\n#line \d+ \"xrobot_main\.hpp\"\n\n  // buf: ")
+        self.assertRegex(code, r"\n#line \d+ \"User/xrobot_main\.hpp\"\n\n  // buf: ")
 
     def test_types_from_included_module_headers_are_checked_and_tracked(self):
         self.module(
@@ -388,38 +390,107 @@ class LineDirectives(GenerationTestCase):
         '      - name: "p"\n'
     )
 
-    def test_one_directive_per_instance_points_into_the_yaml_and_one_back_into_the_header(self):
-        config = self.config(self.CONFIG)
-        code = generate(self.project, config)
-        lines = code.split("\n")
-        into, back = [], []
-        for number, line in enumerate(lines, 1):
-            if match := re.fullmatch(r'#line (\d+) "xrobot\.yaml"', line):
-                into.append((int(match.group(1)), lines[number]))
-            elif match := re.fullmatch(r'#line (\d+) "xrobot_main\.hpp"', line):
-                # 指回头文件的指令写的是下一行的行号。
-                # A directive back into the header names the number of the next line.
-                self.assertEqual(int(match.group(1)), number + 1)
-                back.append(number)
-        # 语句（包括实例前的 static 变量）紧跟在指向这个实例的指令之后。
-        # The statements, static variables before the instance included, follow the directive
-        # of their instance.
-        self.assertEqual(
-            into,
-            [
-                (3, "  static const Led::Param xr_led_param = {"),
-                (11, '  static Probe probe(sub, &port, 2, "p");'),
-            ],
-        )
-        self.assertEqual(len(back), 2)
-        for number in back:
-            self.assertEqual(lines[number], "")
+    @staticmethod
+    def located(code: str) -> list[tuple[str, int, str]]:
+        """每行代码在编译器看来的 (文件, 行号, 文本)，按 #line 的规则数出。
+        The (file, line, text) the compiler gives each line of code, counted by the rules of
+        #line.
+        """
+        result, path, number = [], "User/xrobot_main.hpp", 1
+        for text in code.split("\n"):
+            if match := re.fullmatch(r'#line (\d+) "([^"]+)"', text):
+                path, number = match.group(2), int(match.group(1))
+                continue
+            result.append((path, number, text))
+            number += 1
+        return result
 
-    def test_paths_are_relative_to_the_header(self):
+    def where(self, code: str) -> dict[str, tuple[str, int]]:
+        """去掉缩进的代码行到它在编译器看来的位置。
+        Each line of code without its indentation, mapped to where the compiler sees it.
+        """
+        return {text.strip(): (path, number) for path, number, text in self.located(code)}
+
+    def test_every_line_of_an_instance_is_at_the_yaml_line_it_comes_from(self):
+        code = generate(self.project, self.config(self.CONFIG))
+        where = self.where(code)
+        yaml = "User/xrobot.yaml"
+        # static 变量的第一行在参数所在的行，每个字段在它的键所在的行，构造调用在实例所在的行。
+        # The first line of a static variable is at its argument, each field at its key, and
+        # the constructor call at the instance.
+        self.assertEqual(where["static const Led::Param xr_led_param = {"], (yaml, 7))
+        self.assertEqual(where[".cycle = 100,"], (yaml, 8))
+        self.assertEqual(where[".inverted = true,"], (yaml, 9))
+        # GCC 把初始化中的错误报在右花括号上，它对应被闭合的值。
+        # GCC reports errors in an initializer at the closing brace, which belongs to the
+        # value it closes.
+        self.assertEqual(where["};"], (yaml, 7))
+        self.assertEqual(where["static Led led(pin, xr_led_param, 2.5F);"], (yaml, 3))
+        self.assertEqual(where['static Probe probe(sub, &port, 2, "p");'], (yaml, 11))
+        # 只在编译器自己数出的行号对不上时写 #line：字段接着上一行，不再单独写。
+        # A #line is written only where the compiler's own count would differ: the fields
+        # follow on from the line before without one of their own.
+        into = re.findall(r'\n#line (\d+) "User/xrobot\.yaml"\n', code)
+        self.assertEqual(into, ["7", "7", "3", "11"])
+
+    def test_the_header_lines_keep_their_own_numbers(self):
+        # 指回头文件的指令写的是下一行的行号，所以实例之外的每行都在它自己的行号上。
+        # A directive back into the header names the number of the next line, so every line
+        # outside the instances is at its own line number.
+        code = generate(self.project, self.config(self.CONFIG))
+        path, number = "User/xrobot_main.hpp", 1
+        for physical, text in enumerate(code.split("\n"), 1):
+            if match := re.fullmatch(r'#line (\d+) "([^"]+)"', text):
+                path, number = match.group(2), int(match.group(1))
+                continue
+            if path == "User/xrobot_main.hpp":
+                self.assertEqual(number, physical, text)
+            number += 1
+        self.assertEqual(len(re.findall(r'\n#line \d+ "User/xrobot_main\.hpp"\n\n', code)), 2)
+
+    def test_every_line_of_a_value_written_on_one_yaml_line_is_at_that_line(self):
+        config = self.config(
+            "modules:\n  - module: Led\n    id: led\n    args:\n      - gpio: pin\n"
+            "      - param: {cycle: 1, inverted: false}\n      - gain: 1.0f\n"
+        )
+        where = self.where(generate(self.project, config))
+        for line in ("static const Led::Param xr_led_param = {", ".cycle = 1,", ".inverted = false,"):
+            self.assertEqual(where[line], ("User/xrobot.yaml", 6), line)
+
+    def test_nested_fields_are_at_their_keys_and_later_fields_follow_again(self):
+        self.module(
+            "Nest",
+            "class Nest { public:\n"
+            "  struct Inner { int first_value_with_a_long_name; int second_value_with_a_long_name; };\n"
+            "  struct Param { int a; Inner inner; int b; };\n"
+            "  Nest(const Param& param = {.a = 1, .inner = {.first_value_with_a_long_name = 1, "
+            ".second_value_with_a_long_name = 2}, .b = 3}) {} };",
+        )
+        config = self.config(
+            "modules:\n  - module: Nest\n    id: nest\n    args:\n      - param:\n"
+            "          a: 1\n          inner:\n            first_value_with_a_long_name: 100000\n"
+            "            second_value_with_a_long_name: 200000\n          b: 3\n"
+        )
+        code = generate(self.project, config)
+        where = self.where(code)
+        yaml = "User/xrobot.yaml"
+        self.assertEqual(where["static const Nest::Param xr_nest_param = {"], (yaml, 5))
+        self.assertEqual(where[".a = 1,"], (yaml, 6))
+        self.assertEqual(where[".first_value_with_a_long_name = 100000,"], (yaml, 8))
+        self.assertEqual(where[".second_value_with_a_long_name = 200000,"], (yaml, 9))
+        self.assertEqual(where[".b = 3,"], (yaml, 10))
+        self.assertEqual(where["};"], (yaml, 5))
+        self.assertEqual(where["static Nest nest(xr_nest_param);"], (yaml, 2))
+
+    def test_paths_are_relative_to_the_bsp_root(self):
+        # 与 xrobot 的报错写法相同，编辑器从工程目录就能打开编译错误中的位置。
+        # Written as in the errors of xrobot, so an editor opens the location of a compiler
+        # error from the project folder.
         self.config(self.CONFIG, name="products/hero.yaml")
         code = generate(self.project, self.root / "User/products/hero.yaml")
-        self.assertIn('\n#line 3 "products/hero.yaml"\n', code)
-        self.assertIn("(products/hero.yaml:3)", code)
+        self.assertIn('\n#line 3 "User/products/hero.yaml"\n', code)
+        self.assertRegex(code, r'\n#line \d+ "User/xrobot_main\.hpp"\n')
+        self.assertIn("(User/products/hero.yaml:3)", code)
         self.assertNotIn(self.root.as_posix(), code)
         self.assertNotRegex(code, r'#line \d+ "(/|[A-Za-z]:)')
 
@@ -492,8 +563,12 @@ class Conversions(GenerationTestCase):
         # 紧邻实例之前，名字是 xr_<实例>_<参数>，和实例一样活到程序结束。
         # Right before the instance, named xr_<instance>_<parameter>, and as long-lived as it.
         self.assertIn(
-            "  static const Store::Param xr_store_p = {\n      .a = 2,\n  };\n"
+            "  static const Store::Param xr_store_p = {\n      .a = 2,\n"
+            '#line 5 "User/xrobot.yaml"\n'
+            "  };\n"
+            '#line 7 "User/xrobot.yaml"\n'
             "  static const std::initializer_list<int> xr_store_values = {3, 4};\n"
+            '#line 2 "User/xrobot.yaml"\n'
             "  static Store store(xr_store_p, xr_store_values);\n",
             code,
         )
@@ -512,7 +587,10 @@ class Conversions(GenerationTestCase):
             }
         )
         self.assertIn(
-            "  static const Pair::Param xr_pair_param = {\n      .a = 1,\n      .b = 2,\n  };\n"
+            "  static const Pair::Param xr_pair_param = {\n      .a = 1,\n      .b = 2,\n"
+            '#line 5 "User/xrobot.yaml"\n'
+            "  };\n"
+            '#line 2 "User/xrobot.yaml"\n'
             "  static Pair pair(xr_pair_param, 5);\n",
             code,
         )
@@ -534,6 +612,7 @@ class Conversions(GenerationTestCase):
                 )
                 self.assertIn(
                     f"  static const Config& xr_hold_config = {value};\n"
+                    '#line 2 "User/xrobot.yaml"\n'
                     "  static Hold hold(xr_hold_config);\n",
                     code,
                 )
@@ -545,7 +624,10 @@ class Conversions(GenerationTestCase):
         )
         code = self.code({"module": "Sink", "id": "sink", "args": [{"p": {"a": "1"}}]})
         self.assertIn(
-            "  static Sink::Param xr_sink_p = {\n      .a = 1,\n  };\n"
+            "  static Sink::Param xr_sink_p = {\n      .a = 1,\n"
+            '#line 5 "User/xrobot.yaml"\n'
+            "  };\n"
+            '#line 2 "User/xrobot.yaml"\n'
             "  static Sink sink(std::move(xr_sink_p));\n",
             code,
         )
@@ -582,6 +664,7 @@ class Conversions(GenerationTestCase):
         # YAML names, and downcasts stay rejected.
         self.assertIn(
             "  static Pick pick(xrobot_generated::Implicit<Port&>(sub),\n"
+            '#line 6 "User/xrobot.yaml"\n'
             "                   xrobot_generated::Implicit<int>(2));\n",
             code,
         )

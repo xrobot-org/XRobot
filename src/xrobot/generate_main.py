@@ -13,7 +13,15 @@ from pathlib import Path
 
 from xr_syntax.i18n import tr
 
-from xrobot.config import IDENTIFIER, ConfigError, identifier_problem, load_config, value_text
+from xrobot.config import (
+    IDENTIFIER,
+    ConfigError,
+    Located,
+    LocatedList,
+    identifier_problem,
+    load_config,
+    value_text,
+)
 from xrobot.constructor_model import (
     ValueChecker,
     argument_text,
@@ -282,25 +290,30 @@ class Generator:
         header_lines: tuple[str, ...] | list[str] = (),
         compile_check: bool = False,
         line_directives: bool = True,
+        header_source: str | None = None,
     ) -> str:
         """一份配置的生成头文件文本。
         The text of the generated header for one configuration.
 
         Args:
-            source: 报错时配置的名字，也是头文件说明行中的配置路径。
-                The name of the configuration in error messages and in the notice line of the
-                header.
+            source: 报错时配置的名字，也是头文件说明行、实例注释和 #line 中的配置路径。
+                The name of the configuration in error messages, and its path in the notice
+                line of the header, the instance comments and the #line directives.
             config_path: 配置文件；与 header_path 都给出时，每个实例前的注释记录它的行号，
                 并按 line_directives 生成 #line 指令。
                 The configuration file; with header_path, the comment before each instance
                 records its line, and #line directives follow line_directives.
+            header_source: 头文件在 #line 中的路径，与 source 写法相同（相对 BSP 根目录）；
+                缺省为头文件名。
+                The path of the header in the #line directives, written like source
+                (relative to the BSP root); the header's file name by default.
             header_lines: 文件末尾的 // xrobot: 输入清单。
                 The // xrobot: input list at the end of the file.
             compile_check: 生成模块 CI 的编译探针，而不是应用入口。
                 Emit the Module CI compile probe instead of the application entry.
-            line_directives: 每个实例前写 #line，使编译错误指回 YAML。
-                Write a #line before each instance, so compiler errors point back into the
-                YAML.
+            line_directives: 写 #line，使实例的每行代码对应到它来自的 YAML 行，编译错误指回 YAML。
+                Write #line directives that map every line of an instance to the YAML line it
+                comes from, so compiler errors point back into the YAML.
 
         Raises:
             ConfigError: 配置有错；每行一条，带配置名前缀。
@@ -367,7 +380,10 @@ class Generator:
             raise ConfigError("\n".join(errors))
         location = None
         if config_path is not None and header_path is not None and not compile_check:
-            location = (header_relative(config_path, header_path), Path(header_path).name)
+            # 路径与报错一样相对 BSP 根目录：编辑器从工程目录就能打开编译错误中的位置。
+            # Paths are relative to the BSP root, as in error messages, so an editor opens the
+            # location of a compiler error from the project folder.
+            location = (source, header_source or Path(header_path).name)
         return self._assemble(
             config,
             registrations,
@@ -463,8 +479,11 @@ class Generator:
         # target types so that the YAML's parameter names pick the constructor.
         selecting = viable_constructors(interface["arities"], len(ctor["arguments"])) > 1
         storage, arguments, problems, names = [], [], [], {}
-        for p, item in zip(ctor["arguments"], named_values, strict=False):
+        storage_sources, argument_lines = [], []
+        item_lines = getattr(named_values, "item_lines", [])
+        for j, (p, item) in enumerate(zip(ctor["arguments"], named_values, strict=False)):
             value = next(iter(item.values()))
+            item_line = item_lines[j] if j < len(item_lines) else 0
             try:
                 stored, argument = self._argument(
                     identity,
@@ -484,8 +503,10 @@ class Generator:
                 continue
             if stored is not None:
                 storage.append(stored)
+                storage_sources.append((item_line, value))
                 names[stored[0]] = f"{identity}.args.{p['name']}"
             arguments.append(argument)
+            argument_lines.append(item_line)
         located = self.index.resolve(module["name"])
         monitor = self.index.provides_monitor(located) if located is not None else None
         if monitor is None:
@@ -523,8 +544,10 @@ class Generator:
             "cpp_type": cpp_type,
             "label": label,
             "arguments": arguments,
+            "argument_lines": argument_lines,
             "index": i,
             "storage": storage,
+            "storage_sources": storage_sources,
             "storage_names": names,
             "monitor": monitor,
             "monitor_checked": checked,
@@ -720,11 +743,12 @@ class Generator:
         macros and the input list at the end.
 
         XRobotMain 只接收实例用到的注册。每个实例前有一行注释说明它来自配置的哪一行；有
-        #line 时，它在实例的语句之前指向配置，在实例之后指回头文件。
+        #line 时，实例的每行代码都指向它所来自的配置行（见 _with_directives()），实例之后
+        指回头文件。
         XRobotMain takes only the registrations the instances use. A comment before each
-        instance names the line of the configuration it comes from; with #line, one
-        directive before the instance's statements points into the configuration and one
-        after them points back into the header.
+        instance names the line of the configuration it comes from; with #line, every line of
+        the instance's code points to the configuration line it comes from (see
+        _with_directives()), and one directive after the instance points back into the header.
         """
         used = set()
         for entry in entries:
@@ -768,21 +792,30 @@ class Generator:
                     f" ({location[0]}:{entry['line']})" if entry["line"] else f" ({location[0]})"
                 )
             body += wrap_comment(comment, INDENT)
-            if directives and entry["line"]:
-                body.append(f'#line {entry["line"]} "{_c_string(location[0])}"')
-            for name, declaration, value in entry["storage"]:
-                body += layout_declaration(declaration, name, value, ";", INDENT)
+            # 每行代码记下它来自 YAML 的哪一行，只在编译器自己数出的行号对不上时写 #line。
+            # Each line of code records the YAML line it comes from; a #line is written only
+            # where the line the compiler counts by itself would differ.
+            tagged: list[tuple[str, int | None]] = []
+            sources = entry.get("storage_sources") or [(0, None)] * len(entry["storage"])
+            for (name, declaration, value), (line, node) in zip(
+                entry["storage"], sources, strict=True
+            ):
+                tagged += _tag_value(
+                    layout_declaration(declaration, name, value, ";", INDENT), line, node
+                )
+            head = f"static {entry['cpp_type']} {entry['id']}("
             if entry["arguments"]:
-                body += layout_call(
-                    f"static {entry['cpp_type']} {entry['id']}(",
-                    entry["arguments"],
-                    ");",
-                    INDENT,
+                call = layout_call(head, entry["arguments"], ");", INDENT)
+                tagged += _tag_call(
+                    call, head, entry["arguments"], entry["line"], entry.get("argument_lines", [])
                 )
             else:
-                body.append(f"  static {entry['cpp_type']} {entry['id']};")
+                tagged.append((f"  static {entry['cpp_type']} {entry['id']};", entry["line"]))
             if directives and entry["line"]:
+                body += _with_directives(tagged, _c_string(location[0]))
                 body.append(back)
+            else:
+                body += [text for text, _ in tagged]
         checks = [e["id"] for e in entries if e["id"] in monitored and e["monitor_checked"]]
         calls = [e["id"] for e in entries if e["id"] in monitored]
         if compile_check:
@@ -916,6 +949,127 @@ def _c_string(path: str) -> str:
     return path.replace("\\", "\\\\").replace('"', '\\"')
 
 
+# 指定初始化中一个字段的开头，如 ".cycle = "。
+# The start of one field of a designated initializer, such as ".cycle = ".
+_DESIGNATED_FIELD = re.compile(r"\.([A-Za-z_][A-Za-z_0-9]*)\s*=(?!=)")
+
+
+def _tag_value(lines: list[str], line: int, node: object) -> list[tuple[str, int | None]]:
+    """给一个 static 变量声明的每行代码标上它来自的 YAML 行。
+    Tag each line of a static variable declaration with the YAML line it comes from.
+
+    第一行来自参数所在的行（line）。值是映射时，以 ".字段 =" 开头的行来自这个字段的键所在的行，
+    字段的值是映射时按花括号逐层进入，以右花括号开头的行来自它闭合的值所在的行；值来自 YAML 的
+    一个标量时，它的每一行都来自这个标量所在的行。其余的行为 None，可以接在前一行之后。
+    The first line comes from the line of the argument (line). When the value is a mapping, a
+    line that starts with ".field =" comes from the line of that field's key, the braces of a
+    mapping-valued field are entered level by level, and a line that starts with a closing
+    brace comes from the line of the value it closes; when the value comes from one YAML
+    scalar, every line of it comes from that scalar's line. The other lines are None and may
+    follow on from the line before.
+    """
+    if not line:
+        return [(text, None) for text in lines]
+    tagged: list[tuple[str, int | None]] = []
+    stack: list[tuple[object, int]] = []  # 每层花括号的值和行号 / value and line per brace level
+    pending: tuple[object, int] | None = None  # ".字段 =" 之后另起一行的值 / value on the next line
+    for i, text in enumerate(lines):
+        top, top_line = stack[-1] if stack else (node, line)
+        stripped = text.lstrip()
+        desired, opened = None, None
+        if i == 0:
+            desired, opened = line, (node, line)
+        elif isinstance(top, Located):
+            match = _DESIGNATED_FIELD.match(stripped)
+            if match and match.group(1) in top.key_lines:
+                key = match.group(1)
+                desired = top.key_lines[key]
+                opened = (top[key], desired)
+        elif not isinstance(top, LocatedList):
+            # 来自一个 YAML 标量：每一行都是同一个 YAML 行。
+            # From one YAML scalar: every line is the same YAML line.
+            desired, opened = top_line, (top, top_line)
+        braces = [t.text for t in code_tokens(text) if t.text in ("{", "}")]
+        if desired is None and stripped.startswith("}") and stack:
+            # GCC 把初始化中的错误（如不存在的字段）报在右花括号上：这一行对应被闭合的值。
+            # GCC reports errors in an initializer, such as a field that does not exist, at
+            # the closing brace: this line belongs to the value it closes.
+            desired = stack[-1][1]
+        if not braces and opened is not None and stripped.endswith("="):
+            pending = opened
+        for brace in braces:
+            if brace == "}":
+                if stack:
+                    stack.pop()
+                continue
+            if opened is not None:
+                stack.append(opened)
+                opened = None
+            elif pending is not None:
+                stack.append(pending)
+            else:
+                stack.append((top, top_line))
+            pending = None
+        tagged.append((text, desired))
+    return tagged
+
+
+def _tag_call(
+    lines: list[str], head: str, arguments: list[str], line: int, argument_lines: list[int]
+) -> list[tuple[str, int | None]]:
+    """给构造调用的每行代码标上它来自的 YAML 行。
+    Tag each line of a constructor call with the YAML line it comes from.
+
+    第一行来自实例所在的行（line），之后的每一行来自这一行第一个实参所在的行。layout_call()
+    把每个实参写成一行文本，按顺序以 ", " 分开，所以能逐个对出来。
+    The first line comes from the line of the instance (line), and each later line from the
+    line of its first argument. layout_call() writes every argument as one line of text, in
+    order and separated by ", ", so they can be matched one by one.
+    """
+    pieces = [a + ("," if i + 1 < len(arguments) else ");") for i, a in enumerate(arguments)]
+    tagged: list[tuple[str, int | None]] = []
+    k = 0
+    for n, text in enumerate(lines):
+        rest = text.lstrip()
+        if n == 0 and rest.startswith(head):
+            rest = rest[len(head) :]
+        first = None
+        while k < len(pieces) and rest.startswith(pieces[k]):
+            first = k if first is None else first
+            rest = rest[len(pieces[k]) :].lstrip(" ")
+            k += 1
+        if n == 0:
+            desired = line
+        elif first is not None and first < len(argument_lines) and argument_lines[first]:
+            desired = argument_lines[first]
+        else:
+            desired = None
+        tagged.append((text, desired))
+    return tagged
+
+
+def _with_directives(tagged: list[tuple[str, int | None]], path: str) -> list[str]:
+    """在标好 YAML 行号的代码行之间写入 #line，使每行在编译器看来都位于它所来自的 YAML 行。
+    Write #line directives between the tagged lines of code, so that the compiler sees every
+    line at the YAML line it comes from.
+
+    编译器在 #line N 之后把下一行记为 N、再下一行记为 N+1；只有某行来自的行号与此不同时才
+    写一条 #line，标为 None 的行接在前一行之后。
+    After #line N the compiler counts the next line as N and the one after it as N+1; a #line
+    is written only when the line a line comes from differs, and a line tagged None follows
+    on from the line before.
+    """
+    result: list[str] = []
+    expected = None  # 编译器给下一行记的 YAML 行号 / YAML line the compiler gives the next line
+    for text, desired in tagged:
+        if desired is not None and desired != expected:
+            result.append(f'#line {desired} "{path}"')
+            expected = desired
+        result.append(text)
+        expected = expected + 1 if expected is not None else None
+    return result
+
+
 _STANDARD_HEADERS = {
     "addressof": "<memory>",
     "initializer_list": "<initializer_list>",
@@ -970,6 +1124,7 @@ def generate_code(
         project.header,
         project.header_lines(config_path, depends, entry),
         line_directives=line_directives,
+        header_source=project.relative(project.header),
     )
 
 
@@ -997,9 +1152,9 @@ def generate(
         modules, index: 调用方已读取的模块和类型索引（setup 检查全部配置时已建好）。
             Modules and type index the caller already has (setup builds them to check
             every configuration).
-        line_directives: 每个实例前写 #line，使编译错误指回 YAML；False 时省略。
-            Write a #line before each instance so compiler errors point back into the YAML;
-            False omits them.
+        line_directives: 写 #line，使编译错误指回 YAML 中的行；False 时省略。
+            Write #line directives so compiler errors point back to their YAML lines; False
+            omits them.
 
     Raises:
         ConfigError: 配置不存在或有错。
