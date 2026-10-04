@@ -1,6 +1,9 @@
 # Branch rule for official repositories: master (or main) is the stable line and
 # only receives pull requests from the same repository's dev branch. Hotfixes go
-# into dev first. Rulesets require this workflow for pull requests into master.
+# into dev first.
+# Current state: only XRobot runs this workflow, and nothing requires it, so a
+# failing check does not block a merge. XRobot has no rulesets and its master
+# protection lists no required status checks; libxr's master is not protected.
 name: source-is-dev
 
 on:
