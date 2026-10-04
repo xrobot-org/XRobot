@@ -6,9 +6,9 @@
 #     project: DevC
 #     configs: |
 #       default
-#       hero
+#       debug
 # `project` is the CMake project name, so the firmware is build/<project>.elf. `default` builds
-# the configuration the BSP has selected; any other name is a file <config-dir>/<name>.yaml.
+# User/xrobot.yaml; any other name is a file <config-dir>/<name>.yaml.
 # The tools are installed at the versions pinned in Modules/modules.yaml (xrobot) and
 # User/libxr_config.yaml (generator).
 # A tag `v*` push or a published Release publishes the firmware: `default` when it is the only
@@ -28,7 +28,7 @@ on:
         type: string
         required: true
       configs:
-        description: Robot configurations to build, one per line; default is the selected one
+        description: Robot configurations to build, one per line; default is User/xrobot.yaml
         type: string
         default: default
       config-dir:
