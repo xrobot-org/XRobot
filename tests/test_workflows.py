@@ -92,7 +92,7 @@ class ModuleCiPreparation(CliMixin, UpstreamTestCase):
             if url == "https://xrobot.work/xrobot-modules/index.yaml":
                 return Index(
                     {
-                        "packages": [
+                        "modules": [
                             {
                                 "id": "team/A",
                                 "type": "module",
@@ -106,7 +106,7 @@ class ModuleCiPreparation(CliMixin, UpstreamTestCase):
             # team/B 只在调用方通过 sources 输入给出的 index 中。
             # team/B is only in the index the caller passes through the sources input.
             if url == "https://example.com/team/index.yaml":
-                return Index({"packages": [{"id": "team/B", "type": "module", "repo": b.as_uri()}]})
+                return Index({"modules": [{"id": "team/B", "type": "module", "repo": b.as_uri()}]})
             raise AssertionError("unexpected index request: " + url)
 
         previous = os.getcwd()
@@ -800,7 +800,7 @@ class ReleaseJob(TempDirTestCase):
         self.assertIn("| Config | Preset | text | data | bss | Archive |", notes)
         self.assertIn("| `hero` | - | 1004 | 20 | 300 | `DevC-hero-v1.2.0.tar.gz` |", notes)
         self.assertIn("| `sentry` | - | 1006 | 20 | 300 | `DevC-sentry-v1.2.0.tar.gz` |", notes)
-        self.assertIn("XRobot 1.0.0, libxr 6.0.0, LibXR `6c51bf4`", notes)
+        self.assertIn("xrobot 1.0.0, libxr 6.0.0, LibXR `6c51bf4`", notes)
         self.assertIn("Commit `0123456` of xrobot-org/bsp-dev-c", notes)
         self.assertIn(
             "- Image `ghcr.io/xrobot-org/docker-image-stm32:main`, toolchain "

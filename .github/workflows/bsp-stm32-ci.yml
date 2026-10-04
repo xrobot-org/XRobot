@@ -490,7 +490,7 @@ jobs:
           notes += [
               '',
               f"- Commit `{first['commit'][:7]}` of {env['XR_REPOSITORY']}",
-              f"- XRobot {tools['xrobot']['version']}, libxr {tools['libxr']['version']}"
+              f"- xrobot {tools['xrobot']['version']}, libxr {tools['libxr']['version']}"
               + (f", LibXR `{module['commit'][:7]}`" if module else ''),
               '- ' + ', '.join(built),
               '- `SHA256SUMS` lists every file of this release; `firmware-manifest.json` records the builds and the Module commits',

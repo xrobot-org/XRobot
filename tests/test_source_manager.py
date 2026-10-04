@@ -21,13 +21,13 @@ class Sources(UpstreamTestCase):
     def test_validation_labels_are_bound_to_tested_versions(self):
         self.upstream("team/A")
         self.entries[0]["status"] = "official"
-        self.write_yaml(self.index, {"packages": self.entries})
+        self.write_index()
         with self.assertRaisesMessage(
             ValueError, f"{self.index}: team/A: status official needs tested_ref and tested_libxr"
         ):
             SourceManager(self.modules / "sources.yaml")
         self.entries[0].update(tested_ref="2026-09-15", tested_libxr="6.0.0")
-        self.write_yaml(self.index, {"packages": self.entries})
+        self.write_index()
         self.assertEqual(
             SourceManager(self.modules / "sources.yaml").packages["team/A"]["tested_ref"],
             "2026-09-15",
@@ -36,7 +36,7 @@ class Sources(UpstreamTestCase):
     def test_unquoted_date_tags_are_kept_as_text(self):
         self.upstream("team/A")
         self.entries[0].update(status="verified", tested_ref="2026-09-15", tested_libxr="6.0.0")
-        self.write_yaml(self.index, {"packages": self.entries})
+        self.write_index()
         self.index.write_text(
             self.index.read_text(encoding="utf-8").replace("'2026-09-15'", "2026-09-15"),
             encoding="utf-8",
@@ -44,6 +44,21 @@ class Sources(UpstreamTestCase):
         self.assertEqual(
             SourceManager(self.modules / "sources.yaml").packages["team/A"]["tested_ref"],
             "2026-09-15",
+        )
+
+    def test_only_the_modules_and_bsps_groups_list_packages(self):
+        # 以前还读取没有写进文档的 packages 组，条目在其中用 type 区分模块和 BSP。
+        # An undocumented packages group, whose entries told Modules and BSPs apart by type,
+        # used to be read as well.
+        self.write_yaml(
+            self.index,
+            {
+                "packages": [{"id": "team/A", "type": "module", "repo": "https://x.invalid/A"}],
+                "bsps": ["https://github.com/team/board.git"],
+            },
+        )
+        self.assertEqual(
+            list(SourceManager(self.modules / "sources.yaml").packages), ["team/board"]
         )
 
     def test_bsp_entries_are_discovery_metadata_only(self):
@@ -57,7 +72,7 @@ class Sources(UpstreamTestCase):
         self.upstream("team/A")
         other = self.write_yaml(
             self.tmp / "other.yaml",
-            {"packages": [{"id": "team/A", "type": "module", "repo": "https://x.invalid/A"}]},
+            {"modules": [{"id": "team/A", "type": "module", "repo": "https://x.invalid/A"}]},
         )
         self.write_yaml(
             self.modules / "sources.yaml",
