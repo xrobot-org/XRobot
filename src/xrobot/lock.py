@@ -424,8 +424,15 @@ class Resolver:
             # Module checkouts keep the repository's line endings: the generated header's digest
             # covers the bytes of its depends, and the core.autocrlf=true default of Git for
             # Windows would make it differ from the result on Linux.
-            git(None, "clone", "-c", "core.autocrlf=false", "--", self.fetch_url(identity, repo),
-                str(folder))
+            git(
+                None,
+                "clone",
+                "-c",
+                "core.autocrlf=false",
+                "--",
+                self.fetch_url(identity, repo),
+                str(folder),
+            )
         # 检出里已有锁定的 commit 时不必联网。
         # A checkout that already holds the locked commit needs no network.
         if not self.offline and not _has_commit(folder, commit):
