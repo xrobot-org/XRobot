@@ -800,7 +800,7 @@ class ReleaseJob(TempDirTestCase):
         self.assertIn("| Config | Preset | text | data | bss | Archive |", notes)
         self.assertIn("| `hero` | - | 1004 | 20 | 300 | `DevC-hero-v1.2.0.tar.gz` |", notes)
         self.assertIn("| `sentry` | - | 1006 | 20 | 300 | `DevC-sentry-v1.2.0.tar.gz` |", notes)
-        self.assertIn("XRobot 1.0.0, libxr 6.0.0, LibXR `6c51bf4`", notes)
+        self.assertIn("xrobot 1.0.0, libxr 6.0.0, LibXR `6c51bf4`", notes)
         self.assertIn("Commit `0123456` of xrobot-org/bsp-dev-c", notes)
         self.assertIn(
             "- Image `ghcr.io/xrobot-org/docker-image-stm32:main`, toolchain "
