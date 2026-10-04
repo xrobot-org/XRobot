@@ -62,6 +62,14 @@ cd XRobot
 pip install .
 ```
 
+后两种方式使用 pip，适用于 Windows 和虚拟环境。Debian、Ubuntu 的系统 Python 不接受 pip 直接安装的软件包，
+会报 `externally-managed-environment`；在这些系统上使用 pipx，或在虚拟环境中运行 pip。
+
+The last two methods use pip, which suits Windows and virtual environments. The system
+Python of Debian and Ubuntu rejects packages installed directly with pip and reports
+`externally-managed-environment`; on these systems use pipx, or run pip inside a virtual
+environment.
+
 以上三种方式只选其一，不要混用。系统中有多份安装时，命令行实际调用的版本可能与预期不同，而不同版本
 生成的代码并不一致。当前使用的版本可通过 `xrobot --version` 查看。
 
@@ -303,45 +311,13 @@ jobs:
         full
 ```
 
-共享流程按 `Modules/modules.yaml` 与 `User/libxr_config.yaml` 固定的版本安装工具，检查生成的
-文件已提交、仓库内没有 CRLF 的文本文件（否则提示 `git add --renormalize .`）和配置格式
-（`xrobot format --check`），再按 `xrobot setup --frozen` 检出锁定的模块，逐份配置构建
-（`default` 为 `User/xrobot.yaml`，其余是 `<config-dir>/<名字>.yaml`）。
+共享流程按固定的版本安装工具、检出锁定的模块并逐份配置构建，打 `v*` tag 或发布 Release 时上传固件。
+检查项、可选输入和发布的文件见文档 [BSP CI](https://xrobot.work/docs/proj_man#bsp-ci)。
 
-打 `v*` tag 或发布 Release 时，一个作业汇总全部构建并上传固件：BSP 只构建 `default` 时发布
-`default`，否则发布除 `default` 外的每份配置，`release-configs` 可以指定发布哪些配置。文件名为
-`<project>-<config>[-<preset>]-<tag>.elf`（另有 `.hex`、`.bin`），每份配置另有
-`<project>-<config>-<tag>.yaml` 和 `.tar.gz`；`SHA256SUMS` 列出每个文件的校验和，
-`firmware-manifest.json` 记录 tag、提交、XRobot 与 libxr 版本、LibXR 子模块和各模块的提交，
-以及每个构建的 text、data、bss 大小。推送 tag 时创建 Release 并生成含大小和工具版本的说明，发布
-Release 时只附加文件，原有说明保持不变。
-
-可选输入：`config-dir`（默认 `User/RobotConfig`）、`toolchain`（默认 `cmake/starm-clang.cmake`）、
-`build-type`（默认 `Release`）、`presets`（每行一个 CMake preset，用于有多个镜像的 BSP）、
-`release-configs`（每行一个要发布的配置）和 `image`。调用方的任务需要 `permissions: contents: write`。
-
-The shared flow installs the tools at the versions pinned in `Modules/modules.yaml` and
-`User/libxr_config.yaml`, checks that the generated files are committed, that no text file
-is stored with CRLF in the repository (otherwise it suggests `git add --renormalize .`) and
-that the configurations are formatted (`xrobot format --check`), checks out the locked Modules
-with `xrobot setup --frozen`, and builds every configuration (`default` is `User/xrobot.yaml`,
-any other name is `<config-dir>/<name>.yaml`).
-
-For a `v*` tag or a published Release, one job gathers all builds and uploads the firmware:
-`default` when the BSP builds only that, otherwise every configuration except `default`, or
-the ones `release-configs` names. The files are named
-`<project>-<config>[-<preset>]-<tag>.elf` (and `.hex`, `.bin`), plus
-`<project>-<config>-<tag>.yaml` and `.tar.gz` for every configuration; `SHA256SUMS` lists the
-checksum of every file, and `firmware-manifest.json` records the tag, the commit, the versions
-of XRobot and libxr, the LibXR submodule and the commits of the Modules, and the text, data
-and bss sizes of every build. A tag push creates the Release with a generated description
-(sizes and tool versions); a published Release only gets the files attached and keeps its
-description.
-
-Optional inputs: `config-dir` (default `User/RobotConfig`), `toolchain` (default
-`cmake/starm-clang.cmake`), `build-type` (default `Release`), `presets` (one CMake preset per
-line, for a BSP with several images), `release-configs` (one published configuration per line)
-and `image`. The calling job needs `permissions: contents: write`.
+The shared workflow installs the pinned tool versions, checks out the locked Modules, builds
+every configuration, and uploads the firmware for a `v*` tag or a published Release. The
+checks, the optional inputs and the published files are described in
+[BSP CI](https://xrobot.work/en/docs/proj_man#bsp-ci).
 
 ---
 
