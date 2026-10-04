@@ -40,6 +40,13 @@ class Resolution(UpstreamTestCase):
         self.assertIn('include("${CMAKE_CURRENT_LIST_DIR}/team/B/CMakeLists.txt")', cmake)
         self.assertFalse((self.modules / "team/A/xrobot.lock").exists())
 
+    def test_module_checkouts_keep_the_repository_line_endings(self):
+        self.upstream("team/A")
+        self.configure(["team/A"])
+        self.sync()
+        folder = self.modules / "team/A"
+        self.assertEqual(run_git(folder, "config", "--local", "core.autocrlf"), "false")
+
     def test_the_default_branch_is_used_without_a_ref(self):
         self.upstream("team/A")
         self.configure(["team/A"])
