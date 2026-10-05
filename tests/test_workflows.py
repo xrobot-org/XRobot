@@ -239,7 +239,10 @@ class SharedBspWorkflow(TempDirTestCase):
             "GITHUB_OUTPUT": str(output),
         }
         listed = subprocess.CompletedProcess([], 0, stdout=listing, stderr="")
-        with mock.patch.dict(os.environ, environment), mock.patch("subprocess.run", return_value=listed):
+        with (
+            mock.patch.dict(os.environ, environment),
+            mock.patch("subprocess.run", return_value=listed),
+        ):
             with contextlib.redirect_stdout(io.StringIO()):
                 exec(compile(script, "<tag>", "exec"), {"__name__": "__ci__"})
         tag = env_file.read_text(encoding="utf-8").strip().removeprefix("XR_TAG=")
@@ -253,7 +256,12 @@ class SharedBspWorkflow(TempDirTestCase):
         release = self.shared["jobs"]["release"]["if"]
         self.assertIn("github.ref == 'refs/heads/master'", release)
         self.assertEqual(self.choose_tag(), ("v1.0.0", "true"))
-        tags = [("v1.0.0", "a" * 40), ("v1.2.3", "b" * 40), ("v1.10.0", "d" * 40), ("V9.0.0", "e" * 40)]
+        tags = [
+            ("v1.0.0", "a" * 40),
+            ("v1.2.3", "b" * 40),
+            ("v1.10.0", "d" * 40),
+            ("V9.0.0", "e" * 40),
+        ]
         self.assertEqual(self.choose_tag(tags=tags), ("v1.10.1", "true"))
         # 合并提交已有 v tag 时由那个 tag 的运行发布；tag 推送和 Release 发布各自的 tag。
         # A merge commit that already has a v tag is published by the run of that tag; a tag
