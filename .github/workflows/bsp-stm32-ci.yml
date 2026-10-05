@@ -11,7 +11,8 @@
 # User/xrobot.yaml; any other name is a file <config-dir>/<name>.yaml.
 # The tools are installed at the versions pinned in Modules/modules.yaml (xrobot) and
 # User/libxr_config.yaml (generator).
-# A tag `v*` push or a published Release publishes the firmware: `default` when it is the only
+# A tag `v*` push, a published Release or a push to master (or main), which receives dev only at
+# a release and then gets the next patch tag, publishes the firmware: `default` when it is the only
 # configuration, otherwise every other configuration, or the ones named by `release-configs`.
 # One job collects all builds and uploads <project>-<config>[-<preset>]-<tag>.{elf,hex,bin},
 # <project>-<config>-<tag>.yaml, <project>-<config>-<tag>.tar.gz, SHA256SUMS and
@@ -339,26 +340,66 @@ jobs:
           if-no-files-found: error
 
   release:
-    if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v')
+    if: >-
+      github.event_name == 'release' || startsWith(github.ref, 'refs/tags/v') ||
+      (github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'))
     needs: [plan, check, build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
       XR_PROJECT: ${{ inputs.project }}
-      XR_TAG: ${{ github.event.release.tag_name || github.ref_name }}
       XR_REPOSITORY: ${{ github.repository }}
       XR_RELEASES: ${{ needs.plan.outputs.releases }}
       XR_TOOLCHAIN: ${{ inputs.toolchain }}
       XR_BUILD_TYPE: ${{ inputs.build-type }}
       XR_IMAGE: ${{ inputs.image }}
     steps:
+      - name: Choose the tag
+        id: tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          XR_EVENT_TAG: ${{ github.event.release.tag_name || (github.ref_type == 'tag' && github.ref_name) || '' }}
+        run: |
+          python3 - <<'TAGCODE'
+          import os, re, subprocess, sys
+          # A Release or a tag push publishes that tag. A push to master (or main), which only
+          # receives dev at a release, publishes the next tag: the patch number of the highest
+          # vX.Y.Z tag plus one, or v1.0.0 for the first; a commit that already has a v tag is
+          # published by the run of that tag instead.
+          tag, publish = os.environ['XR_EVENT_TAG'], 'true'
+          if not tag:
+              listed = subprocess.run(
+                  ['gh', 'api', '--paginate', f"repos/{os.environ['GITHUB_REPOSITORY']}/tags",
+                   '--jq', '.[] | [.name, .commit.sha] | @tsv'],
+                  capture_output=True, text=True,
+              )
+              if listed.returncode != 0:
+                  print(listed.stderr)
+                  print('::error::Cannot list the tags')
+                  sys.exit(1)
+              rows = [line.split('\t') for line in listed.stdout.splitlines() if line]
+              if any(n.startswith('v') and sha == os.environ['GITHUB_SHA'] for n, sha in rows):
+                  publish = 'false'
+              versions = [tuple(map(int, m.groups())) for n, _ in rows
+                          if (m := re.fullmatch(r'v(\d+)\.(\d+)\.(\d+)', n))]
+              major, minor, patch = max(versions) if versions else (1, 0, -1)
+              tag = f'v{major}.{minor}.{patch + 1}'
+          print(f'tag={tag} publish={publish}')
+          with open(os.environ['GITHUB_ENV'], 'a') as out:
+              print(f'XR_TAG={tag}', file=out)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              print(f'publish={publish}', file=out)
+          TAGCODE
       - name: Download firmware artifacts
+        if: steps.tag.outputs.publish == 'true'
         uses: actions/download-artifact@v4
         with:
           pattern: '*-firmware'
           path: release-artifacts
       - name: Assemble the release files
+        if: steps.tag.outputs.publish == 'true'
         shell: bash
         run: |
           python3 - <<'RELEASECODE'
@@ -500,6 +541,7 @@ jobs:
           print(sums, end='')
           RELEASECODE
       - name: Keep the description of an existing release
+        if: steps.tag.outputs.publish == 'true'
         id: notes
         shell: bash
         env:
@@ -531,9 +573,11 @@ jobs:
               print('path=' + path, file=out)
           NOTESCODE
       - name: Publish the release files
+        if: steps.tag.outputs.publish == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.XR_TAG }}
+          target_commitish: ${{ github.sha }}
           files: release/*
           body_path: ${{ steps.notes.outputs.path }}
           fail_on_unmatched_files: true
