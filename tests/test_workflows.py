@@ -220,6 +220,47 @@ class SharedBspWorkflow(TempDirTestCase):
         )
         return json.loads(values["builds"]), json.loads(values["releases"])
 
+    def choose_tag(self, event_tag="", tags=(), sha="c" * 40):
+        """用这些 tag 运行 release 作业选 tag 的脚本，返回 (tag, publish)。
+        Run the tag choice script of the release job with these tags and return
+        (tag, publish).
+        """
+        step = next(s for s in self.shared["jobs"]["release"]["steps"] if s.get("id") == "tag")
+        script = embedded_script(step, "TAGCODE")
+        env_file, output = self.tmp / "github_env", self.tmp / "github_output"
+        env_file.write_text("", encoding="utf-8")
+        output.write_text("", encoding="utf-8")
+        listing = "".join(f"{name}\t{commit}\n" for name, commit in tags)
+        environment = {
+            "XR_EVENT_TAG": event_tag,
+            "GITHUB_REPOSITORY": "team/bsp",
+            "GITHUB_SHA": sha,
+            "GITHUB_ENV": str(env_file),
+            "GITHUB_OUTPUT": str(output),
+        }
+        listed = subprocess.CompletedProcess([], 0, stdout=listing, stderr="")
+        with mock.patch.dict(os.environ, environment), mock.patch("subprocess.run", return_value=listed):
+            with contextlib.redirect_stdout(io.StringIO()):
+                exec(compile(script, "<tag>", "exec"), {"__name__": "__ci__"})
+        tag = env_file.read_text(encoding="utf-8").strip().removeprefix("XR_TAG=")
+        publish = output.read_text(encoding="utf-8").strip().removeprefix("publish=")
+        return tag, publish
+
+    def test_a_push_to_master_publishes_the_next_patch_tag(self):
+        # 以前只有 tag 推送才发布固件，1.0 发布时没有人给 BSP 打 tag，一个固件也没有发布。
+        # Only a tag push used to publish firmware; nobody tagged the BSPs at the 1.0 release,
+        # so no firmware was published.
+        release = self.shared["jobs"]["release"]["if"]
+        self.assertIn("github.ref == 'refs/heads/master'", release)
+        self.assertEqual(self.choose_tag(), ("v1.0.0", "true"))
+        tags = [("v1.0.0", "a" * 40), ("v1.2.3", "b" * 40), ("v1.10.0", "d" * 40), ("V9.0.0", "e" * 40)]
+        self.assertEqual(self.choose_tag(tags=tags), ("v1.10.1", "true"))
+        # 合并提交已有 v tag 时由那个 tag 的运行发布；tag 推送和 Release 发布各自的 tag。
+        # A merge commit that already has a v tag is published by the run of that tag; a tag
+        # push and a Release publish their own tag.
+        self.assertEqual(self.choose_tag(tags=tags, sha="b" * 40)[1], "false")
+        self.assertEqual(self.choose_tag(event_tag="v2.0.0", tags=tags), ("v2.0.0", "true"))
+
     def test_a_bsp_needs_only_project_and_configs(self):
         inputs = self.inputs()
         self.assertEqual(
@@ -287,6 +328,7 @@ class SharedBspWorkflow(TempDirTestCase):
         self.assertEqual(
             self.steps["release"],
             [
+                "Choose the tag",
                 "Download firmware artifacts",
                 "Assemble the release files",
                 "Keep the description of an existing release",
@@ -321,7 +363,12 @@ class SharedBspWorkflow(TempDirTestCase):
         self.assertIn("github.event_name == 'release'", release["if"])
         self.assertIn("startsWith(github.ref, 'refs/tags/v')", release["if"])
         self.assertEqual(self.shared["permissions"], {"contents": "read"})
-        download, assemble, notes, publish = release["steps"]
+        tag, download, assemble, notes, publish = release["steps"]
+        self.assertEqual(tag["id"], "tag")
+        for step in (download, assemble, notes, publish):
+            self.assertEqual(step["if"], "steps.tag.outputs.publish == 'true'")
+        self.assertEqual(publish["with"]["tag_name"], "${{ env.XR_TAG }}")
+        self.assertEqual(publish["with"]["target_commitish"], "${{ github.sha }}")
         self.assertEqual(download["with"]["pattern"], "*-firmware")
         self.assertEqual(publish["uses"], "softprops/action-gh-release@v2")
         self.assertEqual(publish["with"]["files"], "release/*")

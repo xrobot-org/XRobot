@@ -61,8 +61,9 @@ uppercase `V` tags stay as they are.
 5. 各模块在 dev 上把 CI 改为调用 `module-ci.yml@v1`（删去指向 dev 的 `xrobot-ref`、`libxr-ref`、
    `dependency-ref`），再从 dev 合入 master；模块源（catalog）随后合入 master 并重新部署。
 6. 各 BSP 在 dev 上把 LibXR 子模块更新到第 1 步合入的提交，CI 改为调用 `bsp-stm32-ci.yml@v1`，
-   按模块的 master 重新解析 `xrobot.lock`，再从 dev 合入 master。模板仓库同样在 dev 上更新 LibXR
-   子模块，再从 dev 合入 master。
+   按模块的 master 重新解析 `xrobot.lock`，再从 dev 合入 master。STM32 BSP 的 master 推送由
+   `bsp-stm32-ci.yml` 打下一个补丁号 tag（首次为 `v1.0.0`）并发布固件，合并提交已有 `v` tag 时
+   由那个 tag 发布。模板仓库同样在 dev 上更新 LibXR 子模块，再从 dev 合入 master。
 7. 文档网站从 dev 合入 master，`master` 的推送触发部署（Pages 的 `github-pages` 环境需允许 `master`）。
    VS Code 扩展从 dev 合入 master，在合并提交上推送 tag `v` 加版本号（与 `package.json` 一致），
    Release 工作流打包 `.vsix` 并创建 GitHub Release；扩展随后上架 VS Code Marketplace。
@@ -89,7 +90,9 @@ what it depends on already in place:
    Sources (catalogs) then merge into master and are deployed again.
 6. Each BSP updates its LibXR submodule on dev to the commit merged in step 1, switches its CI to
    `bsp-stm32-ci.yml@v1`, resolves `xrobot.lock` again against the master branches of its
-   Modules, and then merges dev into master. The template repositories update their LibXR
+   Modules, and then merges dev into master. On the push to master of an STM32 BSP,
+   `bsp-stm32-ci.yml` tags the next patch version (`v1.0.0` for the first) and publishes the
+   firmware; when the merge commit already has a `v` tag, that tag publishes it. The template repositories update their LibXR
    submodule on dev as well and then merge dev into master.
 7. The documentation website merges dev into master, and the push to `master` deploys it (the
    `github-pages` environment of Pages has to allow `master`). The VS Code extension merges dev
