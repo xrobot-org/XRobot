@@ -242,9 +242,9 @@ class SharedBspWorkflow(TempDirTestCase):
         with (
             mock.patch.dict(os.environ, environment),
             mock.patch("subprocess.run", return_value=listed),
+            contextlib.redirect_stdout(io.StringIO()),
         ):
-            with contextlib.redirect_stdout(io.StringIO()):
-                exec(compile(script, "<tag>", "exec"), {"__name__": "__ci__"})
+            exec(compile(script, "<tag>", "exec"), {"__name__": "__ci__"})
         tag = env_file.read_text(encoding="utf-8").strip().removeprefix("XR_TAG=")
         publish = output.read_text(encoding="utf-8").strip().removeprefix("publish=")
         return tag, publish
