@@ -470,6 +470,82 @@ class Contexts(UpstreamTestCase):
             first["modules"]["team/A"]["commit"], second["modules"]["team/A"]["commit"]
         )
 
+    def test_same_or_dev_keeps_the_original_context_through_the_chain(self):
+        """三层链上中间层退回 dev 时，下一层仍跟随最初的功能分支。
+        When a middle layer of a three-layer chain falls back to dev, the next layer still
+        follows the original feature branch.
+        """
+        c = self.upstream("team/C")
+        self.upstream("team/B", [{"id": "team/C", "ref": "same-or-dev"}])
+        a = self.upstream("team/A", [{"id": "team/B", "ref": "same-or-dev"}])
+        run_git(c, "checkout", "-q", "-b", "feature/next")
+        feature = self.commit(c, [], "feature of C")
+        # team/A 的功能分支与 master 内容相同，依赖清单不变。
+        # The feature branch of team/A has the content of master, dependencies included.
+        run_git(a, "checkout", "-q", "-b", "feature/next")
+        run_git(self.root, "init", "-q", "-b", "feature/next")
+        self.configure(["team/A@same-or-dev", "team/C@same-or-dev"])
+        result = self.sync()
+        # team/B 没有同名分支，退回 dev；team/C 经两条路径都跟随最初的功能分支。
+        # team/B has no branch of that name and falls back to dev; team/C follows the
+        # original feature branch through both paths.
+        self.assertEqual(result["modules"]["team/B"]["resolved_ref"], "dev")
+        self.assertEqual(result["modules"]["team/C"]["commit"], feature)
+        self.assertEqual(result["modules"]["team/C"]["resolved_ref"], "feature/next")
+        self.assertEqual(result["modules"]["team/A"]["commit"], run_git(a, "rev-parse", "HEAD"))
+
+    def test_an_explicit_tag_or_commit_keeps_the_original_context_for_its_dependencies(self):
+        """显式 tag 或提交号的依赖，其 same-or-dev 依赖仍跟随最初的上下文。
+        The same-or-dev dependencies of an explicitly requested tag or commit still follow
+        the original context.
+        """
+        self.upstream("team/C")
+        b = self.upstream("team/B", [{"id": "team/C", "ref": "same-or-dev"}])
+        a = self.upstream("team/A", [{"id": "team/B", "ref": "same-or-dev"}])
+        # team/A 的功能分支与 master 内容相同并被 tag；team/B 的功能分支有一个新提交。
+        # The feature branch of team/A has the content of master and a tag; the feature
+        # branch of team/B has a new commit.
+        run_git(a, "checkout", "-q", "-b", "feature/next")
+        run_git(b, "checkout", "-q", "-b", "feature/next")
+        feature = self.commit(b, [], "feature of B")
+        run_git(a, "tag", "release-check")
+        run_git(self.root, "init", "-q", "-b", "feature/next")
+        for pinned in ("release-check", run_git(a, "rev-parse", "HEAD")):
+            with self.subTest(pinned=pinned):
+                (self.root / "xrobot.lock").unlink(missing_ok=True)
+                self.configure([f"team/A@{pinned}"])
+                result = self.sync(context_ref="refs/heads/feature/next")
+                self.assertEqual(
+                    result["modules"]["team/A"]["ref_kind"],
+                    "tag" if pinned == "release-check" else "commit",
+                )
+                # team/B 跟随最初的功能分支，而不是去找同名的 tag 或停在提交上。
+                # team/B follows the original feature branch instead of looking for a tag of
+                # the same name or stopping at the commit.
+                self.assertEqual(result["modules"]["team/B"]["commit"], feature)
+                self.assertEqual(result["modules"]["team/B"]["resolved_ref"], "feature/next")
+
+    def test_a_conflict_names_the_repository_that_fell_back_to_dev(self):
+        """依赖冲突的报错写明链上哪个仓库缺同名分支、退回了 dev。
+        The conflict error names the repository in the chain that lacks the branch and fell
+        back to dev.
+        """
+        c = self.upstream("team/C")
+        self.upstream("team/B", [{"id": "team/C", "ref": "same-or-dev"}])
+        a = self.upstream("team/A", [{"id": "team/B", "ref": "same-or-dev"}])
+        dev = run_git(c, "rev-parse", "HEAD")
+        run_git(c, "checkout", "-q", "-b", "feature/next")
+        feature = self.commit(c, [], "feature of C")
+        run_git(a, "checkout", "-q", "-b", "feature/next")
+        run_git(self.root, "init", "-q", "-b", "feature/next")
+        self.configure(["team/C@dev", "team/A@same-or-dev"])
+        with self.assertRaisesMessage(
+            ValueError,
+            f"Dependency conflict for team/C: {dev[:12]} vs {feature[:12]} "
+            "(team/A -> team/B); team/B has no feature/next branch and falls back to dev",
+        ):
+            self.sync()
+
     def test_a_tag_never_falls_back_to_dev(self):
         b = self.upstream("team/B")
         a = self.upstream("team/A", [{"id": "team/B", "ref": "same-or-dev"}])

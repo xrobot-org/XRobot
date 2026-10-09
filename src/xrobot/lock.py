@@ -336,6 +336,9 @@ class Resolver:
         self.locked = locked or {}
         self.without_git = without_git
         self.warnings: list[str] = []
+        # 退回了 dev 的模块：identity -> 缺同名分支的上下文分支名。
+        # Modules that fell back to dev: identity -> the context branch they lack.
+        self.fell_back: dict[str, str] = {}
         self.prepared: dict[str, dict] = {}
         self.resolved: dict[str, dict] = {}
         self.stack: list[str] = []
@@ -660,16 +663,60 @@ class Resolver:
         else:
             folder = self.prepare(identity, package.get("canonical", package["repo"]))
             sha, kind, name = self._resolve(identity, folder, req, parent_context)
-            logical = list(context(req["context_ref"])) if req.get("context_ref") else [kind, name]
+            if req.get("context_ref"):
+                logical = list(context(req["context_ref"]))
+            elif req["ref"] in ("same", "same-or-dev"):
+                # same/same-or-dev 的下一层沿用最初的上下文：每层各自找同名分支、找不到再退
+                # 回 dev，本层退回 dev 不改变传给下一层的上下文。
+                # The next layer of a same/same-or-dev request keeps the original context:
+                # every layer looks for its own branch of that name and falls back to dev,
+                # and this layer's fallback does not change what the next one follows.
+                logical = list(parent_context) if parent_context else [kind, name]
+            elif (
+                kind in ("tag", "commit")
+                and parent_context is not None
+                and parent_context[0] != NO_BRANCH
+            ):
+                # 显式 tag 或提交号：下一层也沿用最初的上下文，不要求依赖仓库有同名 tag。
+                # An explicit tag or commit: the next layer keeps the original context too,
+                # which the dependency repository need not have as a tag of the same name.
+                logical = list(parent_context)
+            else:
+                logical = [kind, name]
+            if (
+                req["ref"] in ("same", "same-or-dev")
+                and name == "dev"
+                and kind == "branch"
+                and parent_context is not None
+                and parent_context[0] == "branch"
+                and parent_context[1] != "dev"
+            ):
+                # 本层退回了 dev；冲突报错要写明链上哪个仓库缺同名分支。
+                # This layer fell back to dev; the conflict error names the repository in
+                # the chain that lacks the branch.
+                self.fell_back[identity] = parent_context[1]
             if identity in self.resolved:
                 previous = self.resolved[identity]
                 if previous["commit"] != sha:
+                    # 冲突报错写明链上哪个仓库缺同名分支、退回了 dev。
+                    # The conflict error names the repositories in the chain that lack the
+                    # branch of the context and fell back to dev.
+                    english = "".join(
+                        f"; {member} has no {self.fell_back[member]} branch and falls back to dev"
+                        for member in dict.fromkeys([*self.stack, identity])
+                        if member in self.fell_back
+                    )
+                    chinese = "；".join(
+                        f"{member} 没有 {self.fell_back[member]} 分支，退回了 dev"
+                        for member in dict.fromkeys([*self.stack, identity])
+                        if member in self.fell_back
+                    )
                     raise ValueError(
                         tr(
                             f"Dependency conflict for {identity}: {previous['commit'][:12]} vs "
-                            f"{sha[:12]} ({' -> '.join(self.stack)})",
+                            f"{sha[:12]} ({' -> '.join(self.stack)})" + english,
                             f"{identity} 的依赖冲突：{previous['commit'][:12]} 与 {sha[:12]}"
-                            f"（{' -> '.join(self.stack)}）",
+                            f"（{' -> '.join(self.stack)}）" + (f"；{chinese}" if chinese else ""),
                         )
                     )
                 return

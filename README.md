@@ -137,10 +137,15 @@ xrobot-org/BMI088 [module] https://github.com/xrobot-org/BMI088.git
 xrobot-org/BMI270 [module] https://github.com/xrobot-org/BMI270.git
 ```
 
-`@same-or-dev` 表示优先使用与 BSP 同名的模块分支，不存在时使用 `dev`。
+`@same-or-dev` 表示优先使用与 BSP 同名的模块分支，不存在时使用 `dev`。依赖链上的 `@same`、
+`@same-or-dev` 请求和显式 tag、提交号都沿用最初的上下文分支：每一层各自查找同名分支、
+找不到再退回 `dev`，中间层退回 `dev` 不改变下一层跟随的分支。
 
 `@same-or-dev` selects the Module branch with the same name as the BSP's branch, falling
-back to `dev`.
+back to `dev`. Along the dependency chain, `@same` and `@same-or-dev` requests and explicit
+tags or commits all keep the original context branch: every layer looks for its own branch
+of that name and falls back to `dev`, and a middle layer's fallback does not change the
+branch the next layer follows.
 
 ---
 
