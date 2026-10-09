@@ -167,6 +167,14 @@ settings:
   monitor_sleep_ms: 1000
 ```
 
+指针参数的裸名由生成器自动取地址；带引号的 `'&名字'` 仍然接受，按写出的地址传递；可选的依赖不使用时写
+`nullptr`。不带引号的 `&名字` 是 YAML 锚点、值为空，报错会建议去掉 `&` 只写名字。
+
+The generator takes the address of a bare name for a pointer parameter automatically; the quoted
+`'&name'` is still accepted and passes the address as written; write `nullptr` to leave an optional
+dependency unused. Without quotes, `&name` is a YAML anchor with an empty value, and the error
+suggests dropping the `&` and writing the bare name.
+
 `LED_R` 由 BSP 在入口源文件中创建并注册，入口源文件最后调用 `XROBOT_MAIN()`：
 
 `LED_R` is created and registered by the BSP in its entry source, which ends by calling
