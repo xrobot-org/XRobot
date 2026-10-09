@@ -322,6 +322,7 @@ class Resolver:
         pinned: dict | None = None,
         locked: dict | None = None,
         without_git: bool = False,
+        discard_local: list[str] | None = None,
     ) -> None:
         """准备解析；modules_dir 是 Modules 目录，其余参数即同名属性。
         Prepare a resolution; modules_dir is the Modules folder and the other arguments are the
@@ -335,6 +336,9 @@ class Resolver:
         self.pinned = pinned or {}
         self.locked = locked or {}
         self.without_git = without_git
+        # --discard-local 点名的模块（完整 id 或末段，比较时忽略大小写）。
+        # The Modules --discard-local names (full ids or last segments, case-insensitive).
+        self.discard_local = {name.casefold() for name in discard_local or []}
         self.warnings: list[str] = []
         # 退回了 dev 的模块：identity -> 缺同名分支的上下文分支名。
         # Modules that fell back to dev: identity -> the context branch they lack.
@@ -567,6 +571,15 @@ class Resolver:
         """
         return " -> ".join(self.stack) or "Modules/modules.yaml"
 
+    def _discards(self, identity: str) -> bool:
+        """--discard-local 是否点名了这个模块（完整 id 或末段，忽略大小写）。
+        Whether --discard-local names this Module (full id or last segment, case-insensitive).
+        """
+        return (
+            identity.casefold() in self.discard_local
+            or identity.rsplit("/", 1)[-1].casefold() in self.discard_local
+        )
+
     def _resolve(
         self, identity: str, folder: Path, req: dict, parent_context: tuple | list | None
     ) -> tuple[str, str, str]:
@@ -752,6 +765,12 @@ class Resolver:
         A checkout already at its commit is left alone, and its uncommitted changes (the
         normal state while developing a Module) stay as they are.
 
+        --discard-local 点名的模块例外：停在未推送的本地提交上时，先打印将丢弃的提交和
+        改动文件，再直接检出目标提交（不建备份分支）；未提交的修改仍然拒绝。
+        A Module named by --discard-local is the exception: at an unpushed local commit, the
+        commits to discard and their files are printed, then the target commit is checked
+        out directly (no backup branch); uncommitted changes are still refused.
+
         Raises:
             ValueError: 要移动的模块有未提交的修改或未推送的提交、两个模块定义同名的类，或
                 检出失败。
@@ -779,16 +798,40 @@ class Resolver:
                 # Without a fetch the remote branches may not yet show a pushed commit.
                 _fetch(folder, "--prune", "--tags", "origin")
                 unpublished = not _published(folder, head)
-            if unpublished:
+            if unpublished and not self._discards(identity):
                 raise ValueError(
                     tr(
                         f"{identity} is at local commit {head[:12]} that is not on any remote "
                         "branch or tag. While developing a module, keep your changes "
                         "uncommitted; when they are ready, push them to a branch of the module "
-                        f"and run `xrobot setup --update {identity}`",
+                        f"and run `xrobot setup --update {identity}`, or run "
+                        f"`xrobot setup --discard-local {identity}` to move it to "
+                        f"{entry['commit'][:12]} and discard the local commits",
                         f"{identity} 位于本地提交 {head[:12]}，它不在任何远端分支或 tag 上。"
                         "开发模块期间请保持修改未提交；准备好后推送到模块的某个分支，"
-                        f"再运行 `xrobot setup --update {identity}`",
+                        f"再运行 `xrobot setup --update {identity}`；或运行 "
+                        f"`xrobot setup --discard-local {identity}` 把它移到 "
+                        f"{entry['commit'][:12]} 并丢弃这些本地提交",
+                    )
+                )
+            if unpublished:
+                # 丢弃前打印将丢弃的提交号和改动文件；检出目标提交，不建备份分支。
+                # Print the commit ids to discard and their files; check out the target
+                # without a backup branch.
+                commits = git(folder, "log", "--format=%h", f"{entry['commit']}..HEAD")
+                files = git(folder, "diff", "--name-only", f"{entry['commit']}..HEAD")
+                print(
+                    tr(
+                        f"Discarding the local commits of {identity} to move it to "
+                        f"{entry['commit'][:12]}: " + ", ".join(commits.splitlines()),
+                        f"丢弃 {identity} 的本地提交，把它移到 {entry['commit'][:12]}："
+                        + "、".join(commits.splitlines()),
+                    )
+                )
+                print(
+                    tr(
+                        "Changed files: " + ", ".join(files.splitlines()),
+                        "改动的文件：" + "、".join(files.splitlines()),
                     )
                 )
             gitdir = Path(git(folder, "rev-parse", "--absolute-git-dir"))
@@ -1185,6 +1228,7 @@ def sync_modules(
     offline: bool = False,
     context_ref: str | None = None,
     release_ref: str | None = None,
+    discard_local: list[str] | None = None,
 ) -> dict:
     """解析并检出模块，按需写 xrobot.lock，返回 lock 的内容。
     Resolve and check out the Modules, write xrobot.lock when needed, and return its content.
@@ -1200,6 +1244,9 @@ def sync_modules(
             The branch for same/same-or-dev to follow instead of the BSP branch.
         release_ref: 发布门禁的目标 ref。
             The target ref of the release gate.
+        discard_local: 允许丢弃未推送本地提交的模块 id 列表（点名的模块直接检出目标提交）。
+            The ids of the Modules whose unpushed local commits may be discarded (a named
+            Module is checked out at its target directly).
 
     Raises:
         ValueError: 参数冲突、lock 与请求不符（--frozen/--offline）、解析或检出失败。
@@ -1216,6 +1263,24 @@ def sync_modules(
     roots, _ = read_modules_yaml(project.modules_yaml)
     lock_dir = project.lock.resolve().parent
     lock = _load_lock(project.lock) if project.lock.is_file() else None
+    if discard_local and lock is not None:
+        # 与 --update 一样按 lock 校验点名，写错的模块 id 在动任何模块之前先报错。
+        # Named Modules are checked against the lock like --update, so a mistyped id fails
+        # before anything is touched.
+        for name in discard_local:
+            matches = [
+                k
+                for k in lock["modules"]
+                if name.casefold() in (k.casefold(), k.rsplit("/", 1)[-1].casefold())
+            ]
+            if len(matches) != 1:
+                raise ValueError(
+                    tr(
+                        f"{name} is not in xrobot.lock; `--discard-local` takes Module ids "
+                        "from the lock",
+                        f"xrobot.lock 中没有 {name}；`--discard-local` 只接受 lock 中的模块 id",
+                    )
+                )
     if frozen or offline:
         if lock is None:
             raise ValueError(
@@ -1241,7 +1306,12 @@ def sync_modules(
             if not offline and project.sources_yaml.is_file()
             else None
         )
-        resolver = Resolver(project.modules_dir, manager, offline=offline)
+        resolver = Resolver(
+            project.modules_dir,
+            manager,
+            offline=offline,
+            discard_local=discard_local,
+        )
         for identity, entry in lock["modules"].items():
             resolver.prepare(identity, expanded_locator(entry["repo"], lock_dir), entry["commit"])
             resolver.resolved[identity] = entry
@@ -1290,6 +1360,7 @@ def sync_modules(
             pinned,
             locked=lock["modules"] if lock is not None else {},
             without_git=without_git,
+            discard_local=discard_local,
         )
         root_context = (
             (NO_BRANCH, "") if without_git else _root_context(project, roots, context_ref)

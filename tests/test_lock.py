@@ -2,6 +2,8 @@
 Resolving Module requests and xrobot.lock (xrobot.lock).
 """
 
+import contextlib
+import io
 import unittest
 from unittest import mock
 
@@ -412,7 +414,15 @@ class LocalWork(UpstreamTestCase):
         run_git(folder, "commit", "-q", "-am", "local")
         local = run_git(folder, "rev-parse", "HEAD")
         before = self.lock_bytes()
-        for flags in ({"update": []}, {"frozen": True}):
+        # 不加 --discard-local 仍然拒绝：报错提示该选项及其后果（丢弃本地提交、
+        # 直接移到目标提交）。frozen 的目标是 lock 的提交，--update 是解析出的提交。
+        # Without --discard-local the refusal stays, with the option and its effect in the
+        # error (the local commits are discarded for a direct move to the target). The
+        # target is the locked commit for --frozen and the resolved one for --update.
+        for flags, target in (
+            ({"update": []}, run_git(self.a, "rev-parse", "master")),
+            ({"frozen": True}, self.locked),
+        ):
             with (
                 self.subTest(flags=flags),
                 self.assertRaisesMessage(
@@ -420,12 +430,83 @@ class LocalWork(UpstreamTestCase):
                     f"team/A is at local commit {local[:12]} that is not on any remote branch or "
                     "tag. While developing a module, keep your changes uncommitted; when they are "
                     "ready, push them to a branch of the module and run "
-                    "`xrobot setup --update team/A`",
+                    f"`xrobot setup --update team/A`, or run `xrobot setup --discard-local "
+                    f"team/A` to move it to {target[:12]} and discard the local commits",
                 ),
             ):
                 self.sync(**flags)
             self.assertEqual(self.head("team/A"), local)
         self.assertEqual(self.lock_bytes(), before)
+
+    def test_discard_local_moves_only_the_named_modules(self):
+        b = self.upstream("team/B")
+        self.configure(["team/A", "team/B"])
+        self.sync()
+        self.commit(self.a, [], "newer A")
+        self.commit(b, [], "newer B")
+        for identity in ("team/A", "team/B"):
+            folder = self.modules / identity
+            name = identity.rsplit("/", 1)[-1]
+            run_git(folder, "checkout", "-q", "-b", "work")
+            (folder / (name + ".hpp")).write_bytes(
+                (folder / (name + ".hpp")).read_bytes() + b"\n// local\n"
+            )
+            run_git(folder, "commit", "-q", "-am", "local")
+        local_a, local_b = self.head("team/A"), self.head("team/B")
+        branches = {
+            identity: run_git(
+                self.modules / identity, "for-each-ref", "refs/heads", "--format=%(refname)"
+            )
+            for identity in ("team/A", "team/B")
+        }
+        # 未点名的模块仍然拒绝，报错提示 --discard-local 及其后果。
+        # An unnamed Module is still refused, with the --discard-local hint and its effect.
+        with self.assertRaisesMessage(
+            ValueError,
+            f"team/B is at local commit {local_b[:12]} that is not on any remote branch or "
+            "tag. While developing a module, keep your changes uncommitted; when they are "
+            "ready, push them to a branch of the module and run "
+            f"`xrobot setup --update team/B`, or run `xrobot setup --discard-local team/B` "
+            f"to move it to {run_git(b, 'rev-parse', 'master')[:12]} and discard the local "
+            "commits",
+        ):
+            self.sync(update=[], discard_local=["team/A"])
+        self.assertEqual(self.head("team/A"), local_a)
+        self.assertEqual(self.head("team/B"), local_b)
+        # 点名的模块直接检出目标提交：先打印丢弃的提交和文件，不建备份分支。
+        # A named Module is checked out at the target directly: the discarded commits and
+        # their files are printed first, without a backup branch.
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            moved = self.sync(update=[], discard_local=["team/A", "team/B"])
+        text = output.getvalue()
+        for identity, local in (("team/A", local_a), ("team/B", local_b)):
+            self.assertNotEqual(moved["modules"][identity]["commit"], local)
+            self.assertEqual(self.head(identity), moved["modules"][identity]["commit"])
+            self.assertIn(local[:7], text)
+            self.assertIn(identity.rsplit("/", 1)[-1] + ".hpp", text)
+            self.assertEqual(
+                run_git(
+                    self.modules / identity, "for-each-ref", "refs/heads", "--format=%(refname)"
+                ),
+                branches[identity],
+            )
+
+    def test_discard_local_still_refuses_uncommitted_changes(self):
+        folder = self.modules / "team/A"
+        run_git(folder, "checkout", "-q", "-b", "work")
+        (folder / "A.hpp").write_bytes((folder / "A.hpp").read_bytes() + b"\n// local\n")
+        run_git(folder, "commit", "-q", "-am", "local")
+        header = folder / "A.hpp"
+        header.write_bytes(header.read_bytes() + b"\n// more work\n")
+        before = header.read_bytes()
+        with self.assertRaisesMessage(
+            ValueError,
+            "team/A has uncommitted changes; they are kept, but the lock cannot move it. "
+            "Commit and push them, or discard them, first",
+        ):
+            self.sync(update=[], discard_local=["team/A"])
+        self.assertEqual(header.read_bytes(), before)
 
     def test_generation_rejects_a_checkout_away_from_the_lock_with_the_fix(self):
         from xrobot.project import Project
