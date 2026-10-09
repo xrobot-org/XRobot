@@ -697,7 +697,7 @@ class Dependencies(GenerationTestCase):
     def test_unknown_address_for_a_pointer_is_rejected(self):
         self.assertIn(
             "probe.args.optional: missing is neither an XR_REGISTER name nor an earlier instance "
-            "id; candidates of type Port*: &port, &sub, nullptr\n",
+            "id; candidates of type Port*: port, sub, nullptr\n",
             self.error(probe(optional="&missing")) + "\n",
         )
 
@@ -822,8 +822,8 @@ class Diagnostics(GenerationTestCase):
             "User/xrobot.yaml: a.args.port: missing is neither an XR_REGISTER name nor an earlier "
             "instance id; candidates of type Port&: port, sub\n"
             "User/xrobot.yaml: b.args.gpio is not filled in; candidates of type LibXR::GPIO&: pin\n"
-            "User/xrobot.yaml: c.args.optional is not filled in; candidates of type Port*: &port, "
-            "&sub, nullptr\n"
+            "User/xrobot.yaml: c.args.optional is not filled in; candidates of type Port*: port, "
+            "sub, nullptr\n"
             "User/xrobot.yaml: d.args.alone is not filled in; candidates of type Alone&: none\n"
             "User/xrobot.yaml: e.args.alone: nobody is neither an XR_REGISTER name nor an earlier "
             "instance id; candidates of type Alone&: none\n"
@@ -1155,6 +1155,19 @@ class Overloads(BspTestCase):
             "without a default appears after value configuration",
         ):
             self.generate({"modules": [{"module": "Foo", "id": "f"}]})
+
+    def test_a_bare_name_and_a_quoted_address_select_the_pointer_overload(self):
+        """裸名和带引号的 '&名字' 都选中指针参数的重载。
+        A bare name and a quoted '&name' both select the overload with the pointer parameter.
+        """
+        self.entry(REGISTERED)
+        self.module("Foo", "class Foo { public: Foo(Port* port) {} Foo(int port = 0) {} };")
+        for value, call in (("port", "std::addressof(port)"), ("&port", "&port")):
+            with self.subTest(value=value):
+                code = self.generate(
+                    {"modules": [{"module": "Foo", "id": "f", "args": [{"port": value}]}]}
+                )
+                self.assertIn(f"  static Foo f({call});\n", code)
 
 
 class CompileCheckProbe(BspTestCase):
