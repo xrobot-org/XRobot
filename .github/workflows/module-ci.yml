@@ -1,25 +1,32 @@
 # Shared Module CI: compiles a Module's sources and one generated, never-executed
 # constructor call against LibXR. Module repositories call it with
 #   uses: xrobot-org/XRobot/.github/workflows/module-ci.yml@v1
-# Tools and dependencies default to their master lines; pass the refs to test
-# against dev or a feature branch.
+# Dependencies, LibXR and the XRobot tools share one context rule: a pull request
+# builds against its target branch, a tag push against master, every other event
+# against the current branch, and a repository without a branch of that name falls
+# back to dev (same-or-dev). The ref inputs default to empty, which follows the
+# rule; fill one in to pin that context.
 name: XRobot Module CI
 
 on:
   workflow_call:
     inputs:
       xrobot-ref:
-        description: XRobot branch, tag or commit used for the tools
+        description: XRobot branch, tag or commit used for the tools; empty follows the event
         type: string
-        default: master
+        default: ''
       libxr-ref:
-        description: LibXR branch, tag or commit
+        description: LibXR branch, tag or commit; empty follows the event
         type: string
-        default: master
+        default: ''
       dependency-ref:
-        description: Context for same-or-dev dependencies (refs/heads/... or refs/tags/...)
+        description: Context for same-or-dev dependencies (refs/heads/... or refs/tags/...); empty is refs/heads/ of the event branch
         type: string
-        default: refs/heads/master
+        default: ''
+      build-type:
+        description: CMake build type; RelWithDebInfo is configured with -O2 -g and LIBXR_DEBUG_BUILD=ON
+        type: string
+        default: RelWithDebInfo
       template-args:
         description: JSON list of C++ template arguments for the constructor probe
         type: string
@@ -61,7 +68,6 @@ jobs:
     env:
       XR_MODULE_ID: ${{ github.repository }}
       XR_TEMPLATE_ARGS: ${{ inputs.template-args }}
-      XR_DEPENDENCY_REF: ${{ inputs.dependency-ref }}
       XR_SOURCES: ${{ inputs.sources }}
     steps:
       - name: Checkout the Module
@@ -72,18 +78,76 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+      - name: Resolve the context refs
+        id: context
+        env:
+          XR_XROBOT_REF: ${{ inputs.xrobot-ref }}
+          XR_LIBXR_REF: ${{ inputs.libxr-ref }}
+          XR_DEPENDENCY_REF: ${{ inputs.dependency-ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # 上下文分支：PR 取目标分支，tag 推送取 master，其余事件（功能分支、dev/master、
+          # 手动触发、定时）取当前分支。
+          # The context branch: a pull request takes its target branch, a tag push takes
+          # master, every other event (feature branches, dev/master, workflow_dispatch,
+          # schedule) takes the current branch.
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            branch=$GITHUB_BASE_REF
+          elif [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            branch=master
+          else
+            branch=$GITHUB_REF_NAME
+          fi
+          resolve() {
+            # $1 = 仓库名，$2 = 请求的 ref；请求为空时解析上下文分支，仓库没有同名分支
+            # 时退回 dev（same-or-dev）。
+            # $1 = repository, $2 = requested ref; an empty request resolves the context
+            # branch, falling back to dev when the repository has no branch of that name
+            # (same-or-dev).
+            if [[ -n "$2" ]]; then
+              printf '%s\n' "$2"
+            elif git ls-remote --exit-code --heads "https://github.com/xrobot-org/$1" "$branch" > /dev/null; then
+              printf '%s\n' "$branch"
+            elif [[ $? == 2 ]]; then
+              printf '%s\n' dev
+            else
+              echo "Cannot list the branches of https://github.com/xrobot-org/$1" >&2
+              return 1
+            fi
+          }
+          xrobot_ref=$(resolve XRobot "$XR_XROBOT_REF")
+          libxr_ref=$(resolve libxr "$XR_LIBXR_REF")
+          if [[ -n "$XR_DEPENDENCY_REF" ]]; then
+            # 依赖模块的 same-or-dev 由 xrobot 工具在解析锁时处理，这里不查远端。
+            # The xrobot tool handles same-or-dev for dependency modules while resolving
+            # the lock; no remote query here.
+            dependency_ref=$XR_DEPENDENCY_REF
+          else
+            dependency_ref=refs/heads/$branch
+          fi
+          {
+            printf 'xrobot=%s\n' "$xrobot_ref"
+            printf 'libxr=%s\n' "$libxr_ref"
+            printf 'dependency=%s\n' "$dependency_ref"
+          } >> "$GITHUB_OUTPUT"
+          echo "Context branch: $branch"
+          echo "XRobot tools: $xrobot_ref"
+          echo "LibXR: $libxr_ref"
+          echo "Dependency modules: $dependency_ref"
+
       - name: Checkout XRobot
         uses: actions/checkout@v4
         with:
           repository: xrobot-org/XRobot
-          ref: ${{ inputs.xrobot-ref }}
+          ref: ${{ steps.context.outputs.xrobot }}
           path: .tools/XRobot
 
       - name: Checkout LibXR
         uses: actions/checkout@v4
         with:
           repository: xrobot-org/libxr
-          ref: ${{ inputs.libxr-ref }}
+          ref: ${{ steps.context.outputs.libxr }}
           path: libxr
           submodules: recursive
 
@@ -95,6 +159,8 @@ jobs:
           python3 -m pip install ./.tools/XRobot
 
       - name: Resolve dependencies and generate the constructor probe
+        env:
+          XR_DEPENDENCY_REF: ${{ steps.context.outputs.dependency }}
         shell: bash
         run: |
           set -euo pipefail
@@ -153,7 +219,20 @@ jobs:
         run: |
           testing=OFF
           if [[ -n "${{ inputs.ctest-regex }}" ]]; then testing=ON; fi
-          cmake -S . -B build -DBUILD_TESTING=$testing ${{ inputs.cmake-options }}
+          type_flags=()
+          if [[ "${{ inputs.build-type }}" == RelWithDebInfo ]]; then
+            # RelWithDebInfo 自带 -DNDEBUG，会关掉 assert()；把该类型的编译选项改成
+            # -O2 -g，让标准 assert() 和 eigen_assert 生效，并打开 LibXR 的调试构建。
+            # RelWithDebInfo implies -DNDEBUG, which turns assert() off; change the
+            # options of this build type to -O2 -g so assert() and eigen_assert stay
+            # active, and turn on the LibXR debug build.
+            type_flags=(
+              -DCMAKE_C_FLAGS_RELWITHDEBINFO='-O2 -g'
+              -DCMAKE_CXX_FLAGS_RELWITHDEBINFO='-O2 -g'
+              -DLIBXR_DEBUG_BUILD=ON
+            )
+          fi
+          cmake -S . -B build -DBUILD_TESTING=$testing "${type_flags[@]}" -DCMAKE_BUILD_TYPE=${{ inputs.build-type }} ${{ inputs.cmake-options }}
           cmake --build build --parallel 2
 
       - name: Run Module tests
