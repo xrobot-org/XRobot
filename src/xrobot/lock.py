@@ -588,6 +588,10 @@ class Resolver:
         """BSP 不在 Git 中时，跟随分支的请求保留的 lock 条目。
         The locked entry a branch-following request keeps in a BSP outside Git.
 
+        不加 ``--update`` 时沿用 lock 是常态，不打警告；``--update`` 由 sync_modules 提前报错。
+        Keeping the lock without ``--update`` is the normal case and stays silent; with
+        ``--update`` sync_modules fails before anything is touched.
+
         Raises:
             ValueError: lock 中没有这个模块，无法选择 commit。
                 The Module is not in the lock, so no commit can be picked.
@@ -605,13 +609,6 @@ class Resolver:
                     "或把 BSP 放进 Git 仓库",
                 )
             )
-        self.warnings.append(
-            tr(
-                f"the BSP is not a Git repository, so {target} keeps {kept['commit'][:12]} "
-                "from xrobot.lock",
-                f"BSP 不是 Git 仓库，因此 {target} 沿用 xrobot.lock 中的 {kept['commit'][:12]}",
-            )
-        )
         return kept
 
     def visit(self, req: dict, parent_context: tuple | list | None = None) -> None:
@@ -1298,6 +1295,27 @@ def sync_modules(
             (NO_BRANCH, "") if without_git else _root_context(project, roots, context_ref)
         )
         pinned_ids = {k.casefold() for k in pinned}
+        following = [
+            f"{req['id']}@{req['ref']}"
+            for req in roots
+            if req["ref"] in ("same", "same-or-dev")
+            and not req.get("context_ref")
+            and req["id"].casefold() not in pinned_ids
+        ]
+        if update is not None and without_git and following:
+            # --update 要按 BSP 所在分支重新解析这些请求；BSP 不在 Git 且没有 --context-ref
+            # 时直接报错，不动任何模块。
+            # --update re-resolves these requests by following the BSP branch; outside Git
+            # and without --context-ref this fails before any Module is touched.
+            raise ValueError(
+                tr(
+                    f"`--update` would resolve {', '.join(following)} by following the BSP "
+                    "branch, but the BSP is not a Git repository; pass --context-ref "
+                    "refs/heads/<branch>",
+                    f"`--update` 需要按 BSP 所在分支解析 {'、'.join(following)}，但 BSP 不是 "
+                    "Git 仓库；请传入 --context-ref refs/heads/<分支>",
+                )
+            )
         for root in roots:
             parent = context(root["context_ref"]) if root.get("context_ref") else root_context
             if (

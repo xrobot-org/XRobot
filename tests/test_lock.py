@@ -2,8 +2,6 @@
 Resolving Module requests and xrobot.lock (xrobot.lock).
 """
 
-import contextlib
-import io
 import unittest
 from unittest import mock
 
@@ -635,16 +633,24 @@ class Contexts(UpstreamTestCase):
         run_git(a, "checkout", "-q", "dev")
         self.commit(a, [], "newer dev")
         self.configure(["team/A@same-or-dev", "team/C@dev"])
-        errors = io.StringIO()
-        with contextlib.redirect_stderr(errors):
-            second = self.sync(update=[])
+        # 不带 --update 沿用 lock，不再打警告。
+        # Without --update the lock is kept and nothing is warned about.
+        second = self.sync()
         self.assertEqual(second["modules"]["team/A"], first["modules"]["team/A"])
         self.assertEqual(second["modules"]["team/C"]["resolved_ref"], "dev")
-        self.assertIn(
-            "warning: the BSP is not a Git repository, so team/A@same-or-dev keeps "
-            f"{first['modules']['team/A']['commit'][:12]} from xrobot.lock",
-            errors.getvalue(),
-        )
+        # --update 要按 BSP 的分支重新解析：报错并且不改动任何文件。
+        # --update would re-resolve by the BSP branch: it fails and changes no file.
+        before = self.lock_bytes()
+        head = self.head("team/A")
+        with self.assertRaisesMessage(
+            ValueError,
+            "`--update` would resolve team/A@same-or-dev by following the BSP branch, but the "
+            "BSP is not a Git repository; pass --context-ref refs/heads/<branch>",
+        ):
+            self.sync(update=[])
+        self.assertEqual(self.lock_bytes(), before)
+        self.assertEqual(self.head("team/A"), head)
+        self.assertEqual(self.sync(update=["team/C"])["modules"]["team/C"]["resolved_ref"], "dev")
 
     def test_a_detached_bsp_checkout_needs_a_context_ref(self):
         self.upstream("team/A")
