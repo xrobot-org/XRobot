@@ -508,6 +508,26 @@ class LocalWork(UpstreamTestCase):
             self.sync(update=[], discard_local=["team/A"])
         self.assertEqual(header.read_bytes(), before)
 
+    def test_a_name_matching_several_locked_modules_is_ambiguous(self):
+        self.upstream("other/a")
+        self.configure(["team/A", "other/a"])
+        self.sync()
+        # 末段匹配忽略大小写：team/A 的短名 A 同时命中 other/a 和 team/A，报歧义并列出
+        # 命中的 id，而不是说 lock 中没有。
+        # The last-segment match folds the case, so the short name A of team/A also matches
+        # other/a: report the match as ambiguous with the ids listed, not as missing.
+        with self.assertRaisesMessage(
+            ValueError, "Ambiguous Module A; specify other/a, team/A"
+        ):
+            self.sync(update=[], discard_local=["A"])
+        # 一个模块都没命中的名字仍然报 lock 中没有。
+        # A name matching no Module still reports that it is not in the lock.
+        with self.assertRaisesMessage(
+            ValueError,
+            "missing is not in xrobot.lock; `--discard-local` takes Module ids from the lock",
+        ):
+            self.sync(update=[], discard_local=["missing"])
+
     def test_generation_rejects_a_checkout_away_from_the_lock_with_the_fix(self):
         from xrobot.project import Project
 

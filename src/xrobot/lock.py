@@ -1273,12 +1273,22 @@ def sync_modules(
                 for k in lock["modules"]
                 if name.casefold() in (k.casefold(), k.rsplit("/", 1)[-1].casefold())
             ]
-            if len(matches) != 1:
+            if not matches:
                 raise ValueError(
                     tr(
                         f"{name} is not in xrobot.lock; `--discard-local` takes Module ids "
                         "from the lock",
                         f"xrobot.lock 中没有 {name}；`--discard-local` 只接受 lock 中的模块 id",
+                    )
+                )
+            if len(matches) > 1:
+                # 与按 Repo 名请求模块/包一样，命中多个模块时报歧义并列出命中的 id。
+                # Like requesting a Module or a Package by its Repo name alone, several
+                # matches are ambiguous, with the matched ids listed.
+                raise ValueError(
+                    tr(
+                        f"Ambiguous Module {name}; specify {', '.join(matches)}",
+                        f"模块 {name} 有歧义；请指定 {'、'.join(matches)}",
                     )
                 )
     if frozen or offline:
