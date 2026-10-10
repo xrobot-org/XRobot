@@ -516,9 +516,7 @@ class LocalWork(UpstreamTestCase):
         # 命中的 id，而不是说 lock 中没有。
         # The last-segment match folds the case, so the short name A of team/A also matches
         # other/a: report the match as ambiguous with the ids listed, not as missing.
-        with self.assertRaisesMessage(
-            ValueError, "Ambiguous Module A; specify other/a, team/A"
-        ):
+        with self.assertRaisesMessage(ValueError, "Ambiguous Module A; specify other/a, team/A"):
             self.sync(update=[], discard_local=["A"])
         # 一个模块都没命中的名字仍然报 lock 中没有。
         # A name matching no Module still reports that it is not in the lock.
@@ -536,9 +534,7 @@ class LocalWork(UpstreamTestCase):
         # 而不是说 lock 中没有。
         # Like --discard-local, --update reports a name matching several locked Modules as
         # ambiguous with the ids listed, not as missing.
-        with self.assertRaisesMessage(
-            ValueError, "Ambiguous Module A; specify other/a, team/A"
-        ):
+        with self.assertRaisesMessage(ValueError, "Ambiguous Module A; specify other/a, team/A"):
             self.sync(update=["A"])
         # 一个模块都没命中的名字仍然报 lock 中没有。
         # A name matching no Module still reports that it is not in the lock.
