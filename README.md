@@ -340,7 +340,7 @@ checks, the optional inputs and the published files are described in
 | --- | --- | --- |
 | `xrobot init` | 创建 BSP 文件（含 `.gitignore` 和 `.gitattributes` 条目） | Create the BSP files, with `.gitignore` and `.gitattributes` entries |
 | `xrobot setup` | 拉取模块，检查所有配置，生成主函数 | Fetch Modules, check all configurations, generate the main function |
-| `xrobot setup --leave-local <模块...>` | 把点名的模块移到解析出的提交；未推送的本地提交保留在原分支或 reflog 中（会先打印）；未提交的修改保留 | Move the named Modules to their resolved commits; their unpushed local commits stay on the original branch or in the reflog (printed first); uncommitted changes are kept |
+| `xrobot setup --leave-local <模块...> [-f]` | 把点名的模块移到解析出的提交；未推送的本地提交保留在原分支或 reflog 中（会先打印）；-f 丢弃需要移动的点名模块的未提交修改（已跟踪的修改和未跟踪的文件，保留被忽略的文件），只作用于点名的模块 | Move the named Modules to their resolved commits; their unpushed local commits stay on the original branch or in the reflog (printed first); -f discards the uncommitted changes of the named Modules that have to move (tracked modifications and untracked files, ignored files are kept) and affects only the named Modules |
 | `xrobot gen [-c CONFIG] [--no-line-directives]` | 生成主函数，可切换配置，可省略 `#line` | Generate the main function, optionally for another configuration, optionally without `#line` |
 | `xrobot sync` | 按默认值补入模块新增的字段和参数，删除已移除的参数 | Add new fields and parameters with defaults and drop removed ones |
 | `xrobot format [--check]` | 整理配置格式 | Format the configurations |

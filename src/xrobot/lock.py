@@ -323,6 +323,7 @@ class Resolver:
         locked: dict | None = None,
         without_git: bool = False,
         leave_local: list[str] | None = None,
+        force: bool = False,
     ) -> None:
         """准备解析；modules_dir 是 Modules 目录，其余参数即同名属性。
         Prepare a resolution; modules_dir is the Modules folder and the other arguments are the
@@ -339,6 +340,9 @@ class Resolver:
         # --leave-local 点名的模块（完整 id 或末段，比较时忽略大小写）。
         # The Modules --leave-local names (full ids or last segments, case-insensitive).
         self.leave_local = {name.casefold() for name in leave_local or []}
+        # --force：丢弃需要移动的点名模块的未提交修改。
+        # --force: discard the uncommitted changes of the named Modules that have to move.
+        self.force = force
         self.warnings: list[str] = []
         # 退回了 dev 的模块：identity -> 缺同名分支的上下文分支名。
         # Modules that fell back to dev: identity -> the context branch they lack.
@@ -758,8 +762,8 @@ class Resolver:
 
     def materialize(self) -> None:
         """把每个模块检出到解析出的 commit；不丢弃本地修改，出错时回滚已切换的模块。
-        Check out every resolved commit; local work is never discarded, and Modules already
-        switched are moved back on an error.
+        Check out every resolved commit; the local work of unnamed Modules is never
+        discarded, and Modules already switched are moved back on an error.
 
         已在锁定 commit 的检出不动，其中未提交的修改（开发模块时的常态）保持原样。
         A checkout already at its commit is left alone, and its uncommitted changes (the
@@ -767,12 +771,19 @@ class Resolver:
 
         --leave-local 点名的模块例外：停在未推送的本地提交上时，先打印这些提交和改动文件，
         再直接检出目标提交（不建备份分支）。本地提交不删除：HEAD 在本地分支上时留在该分支，
-        游离时可用 reflog 找回。未提交的修改仍然拒绝。
+        游离时可用 reflog 找回。点名的模块有未提交的修改时，没有 --force 仍然拒绝；给了
+        --force 则先打印将丢弃的内容，再丢弃已跟踪的修改和未跟踪的文件（子模块里的同样
+        处理；不用 -x，被忽略的文件保留），丢弃后仍有未提交的修改时报错且不移动。已在目标
+        提交上的点名模块即使有 --force 也不动。
         A Module named by --leave-local is the exception: at an unpushed local commit, the
         commits and their files are printed first, then the target commit is checked out
         directly (no backup branch). The local commits are not deleted: on a local branch
-        they stay there, detached they are recoverable through the reflog. Uncommitted
-        changes are still refused.
+        they stay there, detached they are recoverable through the reflog. A named Module
+        with uncommitted changes is still refused without --force; with --force, what will
+        be discarded is printed first, then the tracked modifications and untracked files
+        are discarded (inside submodules too; without -x, so ignored files are kept), and
+        changes left after the discard fail the move. A named Module already at its target
+        keeps its changes even with --force.
 
         Raises:
             ValueError: 要移动的模块有未提交的修改或未推送的提交、两个模块定义同名的类，或
@@ -781,20 +792,39 @@ class Resolver:
                 Modules define the same class, or a checkout fails.
         """
         before = {}
+        discards = {}
         for identity, entry in self.resolved.items():
             folder = self.prepared[identity]["folder"]
             if head_commit(folder) == entry["commit"]:
                 continue
             head, branch, dirty = checkout_state(folder)
             if dirty:
-                raise ValueError(
-                    tr(
-                        f"{identity} has uncommitted changes; they are kept, but the lock cannot "
-                        "move it. Commit and push them, or discard them, first",
-                        f"{identity} 有未提交的修改；修改会保留，但 lock 无法移动它。"
-                        "请先提交并推送这些修改，或者丢弃它们",
+                if not self._leaves_local(identity):
+                    raise ValueError(
+                        tr(
+                            f"{identity} has uncommitted changes; they are kept, but the lock "
+                            "cannot move it. Commit and push them, or discard them, first",
+                            f"{identity} 有未提交的修改；修改会保留，但 lock 无法移动它。"
+                            "请先提交并推送这些修改，或者丢弃它们",
+                        )
                     )
-                )
+                if not self.force:
+                    raise ValueError(
+                        tr(
+                            f"{identity} has uncommitted changes; the lock cannot move it. "
+                            "Commit and push them, or rerun with `--force` to discard the "
+                            "tracked modifications and untracked files (ignored files are kept)",
+                            f"{identity} 有未提交的修改；lock 无法移动它。请提交并推送这些修改，"
+                            "或者加 `--force` 丢弃已跟踪的修改和未跟踪的文件"
+                            "（被忽略的文件保留）",
+                        )
+                    )
+                # --force 只在所有模块都允许移动后丢弃：先记录 git status --porcelain 的输出
+                # （已跟踪的修改和未跟踪的文件，不含被忽略的文件）。
+                # --force discards only after every Module is allowed to move: record the
+                # git status --porcelain output first (tracked modifications and untracked
+                # files, ignored files excluded).
+                discards[identity] = git(folder, "status", "--porcelain")
             unpublished = head and not _published(folder, head)
             if unpublished and not self.offline:
                 # 没有 fetch 过时，远端分支可能还不包含已推送的提交。
@@ -858,6 +888,43 @@ class Resolver:
                 )
             gitdir = Path(git(folder, "rev-parse", "--absolute-git-dir"))
             before[identity] = (head, branch, (gitdir / "index").exists())
+        # 所有模块都允许移动后，丢弃点名模块的未提交修改：已跟踪的修改和未跟踪的文件，
+        # 不含被忽略的文件；子模块里的修改同样处理。
+        # After every Module is allowed to move, discard the uncommitted changes of the
+        # named Modules: tracked modifications and untracked files, ignored files excluded;
+        # changes inside submodules are handled the same way.
+        for identity, status in discards.items():
+            folder = self.prepared[identity]["folder"]
+            print(
+                tr(
+                    f"Discarding the uncommitted changes of {identity} (--force): "
+                    + ", ".join(status.splitlines()),
+                    f"丢弃 {identity} 的未提交修改（--force）：" + "、".join(status.splitlines()),
+                )
+            )
+            # 相当于 git reset --hard 加 git clean -fd；不用 -x，被忽略的文件保留。
+            # The equivalent of git reset --hard and git clean -fd; without -x, ignored
+            # files are kept.
+            git(folder, "reset", "--hard")
+            git(folder, "clean", "-fd")
+            if (folder / ".gitmodules").exists():
+                git(
+                    folder,
+                    "submodule",
+                    "foreach",
+                    "--recursive",
+                    "git reset --hard && git clean -fd",
+                )
+            _, _, dirty = checkout_state(folder)
+            if dirty:
+                raise ValueError(
+                    tr(
+                        f"{identity} still has uncommitted changes after discarding the tracked "
+                        "modifications and untracked files; it is not moved",
+                        f"丢弃已跟踪的修改和未跟踪的文件后，{identity} 仍有未提交的修改；"
+                        "没有移动它",
+                    )
+                )
         by_name = {}
         for identity in self.resolved:
             name = identity.rsplit("/", 1)[-1]
@@ -1251,6 +1318,7 @@ def sync_modules(
     context_ref: str | None = None,
     release_ref: str | None = None,
     leave_local: list[str] | None = None,
+    force: bool = False,
 ) -> dict:
     """解析并检出模块，按需写 xrobot.lock，返回 lock 的内容。
     Resolve and check out the Modules, write xrobot.lock when needed, and return its content.
@@ -1271,12 +1339,27 @@ def sync_modules(
             The ids of the Modules whose unpushed local commits may be left behind (they stay
             on the original branch or in the reflog; a named Module is checked out at its
             target directly).
+        force: 与 leave_local 一起使用时，丢弃需要移动的点名模块的未提交修改。
+            With leave_local, discard the uncommitted changes of the named Modules that have
+            to move.
 
     Raises:
         ValueError: 参数冲突、lock 与请求不符（--frozen/--offline）、解析或检出失败。
             Conflicting options, a lock that does not match the requests (--frozen or
             --offline), or a failed resolution or checkout.
     """
+    if force and not leave_local:
+        # 在动任何模块之前报错：--force 只影响 --leave-local 点名的模块。
+        # Fail before any Module is touched: --force only affects the Modules named by
+        # --leave-local.
+        raise ValueError(
+            tr(
+                "--force only works with --leave-local; it affects only the Modules named by "
+                "`xrobot setup --leave-local <module>`",
+                "--force 只能与 --leave-local 一起使用；它只影响 `xrobot setup --leave-local "
+                "<模块>` 点名的模块",
+            )
+        )
     if update is not None and (frozen or offline):
         raise ValueError(
             tr(
@@ -1345,6 +1428,7 @@ def sync_modules(
             manager,
             offline=offline,
             leave_local=leave_local,
+            force=force,
         )
         for identity, entry in lock["modules"].items():
             resolver.prepare(identity, expanded_locator(entry["repo"], lock_dir), entry["commit"])
@@ -1405,6 +1489,7 @@ def sync_modules(
             locked=lock["modules"] if lock is not None else {},
             without_git=without_git,
             leave_local=leave_local,
+            force=force,
         )
         root_context = (
             (NO_BRANCH, "") if without_git else _root_context(project, roots, context_ref)

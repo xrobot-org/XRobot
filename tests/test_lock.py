@@ -537,7 +537,52 @@ class LocalWork(UpstreamTestCase):
         self.assertIn("reflog", text)
         self.assertIn(local, text)
 
-    def test_leave_local_still_refuses_uncommitted_changes(self):
+    def test_force_alone_is_refused_before_anything_moves(self):
+        folder = self.modules / "team/A"
+        run_git(folder, "checkout", "-q", "-b", "work")
+        (folder / "A.hpp").write_bytes((folder / "A.hpp").read_bytes() + b"\n// local\n")
+        run_git(folder, "commit", "-q", "-am", "local")
+        local = self.head("team/A")
+        # 单独给 --force 在动任何模块之前报错：提示需要配合 --leave-local 点名模块。
+        # --force alone fails before any Module is touched: the hint says to combine it
+        # with --leave-local naming the Modules.
+        with self.assertRaisesMessage(
+            ValueError,
+            "--force only works with --leave-local; it affects only the Modules named by "
+            "`xrobot setup --leave-local <module>`",
+        ):
+            self.sync(update=[], force=True)
+        self.assertEqual(self.head("team/A"), local)
+
+    def test_force_discards_the_uncommitted_changes_of_the_named_module(self):
+        folder = self.modules / "team/A"
+        header = folder / "A.hpp"
+        pristine = header.read_bytes()
+        header.write_bytes(pristine + b"\n// tracked work\n")
+        (folder / "new.txt").write_text("untracked\n", encoding="utf-8")
+        exclude = folder / ".git" / "info" / "exclude"
+        exclude.write_bytes(exclude.read_bytes() + b"ignored.txt\n")
+        (folder / "ignored.txt").write_text("ignored\n", encoding="utf-8")
+        target = run_git(self.a, "rev-parse", "master")
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            moved = self.sync(update=[], leave_local=["team/A"], force=True)
+        # 模块移到锁定提交：已跟踪的修改被还原、未跟踪的新文件被删除、被忽略的文件仍在。
+        # The Module moves to the locked commit: the tracked modification is reverted, the
+        # untracked file is removed, the ignored file is kept.
+        self.assertEqual(moved["modules"]["team/A"]["commit"], target)
+        self.assertEqual(self.head("team/A"), target)
+        self.assertNotIn(b"// tracked work", header.read_bytes())
+        self.assertFalse((folder / "new.txt").exists())
+        self.assertTrue((folder / "ignored.txt").exists())
+        # 打印列出了被丢弃的文件，不含被忽略的文件。
+        # The print lists the discarded files, without the ignored one.
+        text = output.getvalue()
+        self.assertIn("A.hpp", text)
+        self.assertIn("new.txt", text)
+        self.assertNotIn("ignored.txt", text)
+
+    def test_leave_local_refuses_uncommitted_changes_without_force(self):
         folder = self.modules / "team/A"
         run_git(folder, "checkout", "-q", "-b", "work")
         (folder / "A.hpp").write_bytes((folder / "A.hpp").read_bytes() + b"\n// local\n")
@@ -545,12 +590,55 @@ class LocalWork(UpstreamTestCase):
         header = folder / "A.hpp"
         header.write_bytes(header.read_bytes() + b"\n// more work\n")
         before = header.read_bytes()
+        # 点名的模块有修改但没给 --force 时照旧拒绝：提示 --force 会丢弃哪些内容。
+        # A named Module with changes is still refused without --force: the hint says what
+        # --force would discard.
         with self.assertRaisesMessage(
             ValueError,
-            "team/A has uncommitted changes; they are kept, but the lock cannot move it. "
-            "Commit and push them, or discard them, first",
+            "team/A has uncommitted changes; the lock cannot move it. Commit and push them, "
+            "or rerun with `--force` to discard the tracked modifications and untracked files "
+            "(ignored files are kept)",
         ):
             self.sync(update=[], leave_local=["team/A"])
+        self.assertEqual(header.read_bytes(), before)
+
+    def test_force_does_not_touch_the_changes_of_unnamed_modules(self):
+        b = self.upstream("team/B")
+        self.configure(["team/A", "team/B"])
+        self.sync()
+        self.commit(self.a, [], "newer A")
+        self.commit(b, [], "newer B")
+        folder = self.modules / "team/A"
+        run_git(folder, "checkout", "-q", "-b", "work")
+        (folder / "A.hpp").write_bytes((folder / "A.hpp").read_bytes() + b"\n// local\n")
+        run_git(folder, "commit", "-q", "-am", "local")
+        local = self.head("team/A")
+        header = self.modules / "team/B" / "B.hpp"
+        header.write_bytes(header.read_bytes() + b"\n// local work\n")
+        before = header.read_bytes()
+        # --force 只作用于点名的模块：没点名的模块有修改时照旧拒绝，文件不变。
+        # --force affects only the named Modules: an unnamed Module with changes is still
+        # refused, and its files stay as they are.
+        with self.assertRaisesMessage(
+            ValueError,
+            "team/B has uncommitted changes; they are kept, but the lock cannot move it. "
+            "Commit and push them, or discard them, first",
+        ):
+            self.sync(update=[], leave_local=["team/A"], force=True)
+        self.assertEqual(self.head("team/A"), local)
+        self.assertEqual(header.read_bytes(), before)
+
+    def test_force_leaves_a_named_module_at_its_locked_commit_alone(self):
+        header = self.modules / "team/A" / "A.hpp"
+        header.write_bytes(header.read_bytes() + b"\n// local work\n")
+        before = header.read_bytes()
+        # 点名但不需要移动的模块（已在锁定提交上）即使有 --force 也不动它的修改。
+        # A named Module that does not have to move (already at its locked commit) keeps
+        # its changes even with --force.
+        self.assertEqual(
+            self.sync(leave_local=["team/A"], force=True)["modules"]["team/A"]["commit"],
+            self.locked,
+        )
         self.assertEqual(header.read_bytes(), before)
 
     def test_a_name_matching_several_locked_modules_is_ambiguous(self):
