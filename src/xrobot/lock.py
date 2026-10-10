@@ -773,17 +773,19 @@ class Resolver:
         再直接检出目标提交（不建备份分支）。本地提交不删除：HEAD 在本地分支上时留在该分支，
         游离时可用 reflog 找回。点名的模块有未提交的修改时，没有 --force 仍然拒绝；给了
         --force 则先打印将丢弃的内容，再丢弃已跟踪的修改和未跟踪的文件（子模块里的同样
-        处理；不用 -x，被忽略的文件保留），丢弃后仍有未提交的修改时报错且不移动。已在目标
-        提交上的点名模块即使有 --force 也不动。
+        处理；子模块的 HEAD 被切到其他提交时先恢复到父仓库记录的提交；不用 -x，被忽略的
+        文件保留），丢弃后仍有未提交的修改时报错且不移动。已在目标提交上的点名模块即使有
+        --force 也不动。
         A Module named by --leave-local is the exception: at an unpushed local commit, the
         commits and their files are printed first, then the target commit is checked out
         directly (no backup branch). The local commits are not deleted: on a local branch
         they stay there, detached they are recoverable through the reflog. A named Module
         with uncommitted changes is still refused without --force; with --force, what will
         be discarded is printed first, then the tracked modifications and untracked files
-        are discarded (inside submodules too; without -x, so ignored files are kept), and
-        changes left after the discard fail the move. A named Module already at its target
-        keeps its changes even with --force.
+        are discarded (inside submodules too, whose HEADs parked at other commits are first
+        restored to the commits the parent records; without -x, so ignored files are kept),
+        and changes left after the discard fail the move. A named Module already at its
+        target keeps its changes even with --force.
 
         Raises:
             ValueError: 要移动的模块有未提交的修改或未推送的提交、两个模块定义同名的类，或
@@ -908,6 +910,15 @@ class Resolver:
             git(folder, "reset", "--hard")
             git(folder, "clean", "-fd")
             if (folder / ".gitmodules").exists():
+                # 先把子模块的 HEAD 恢复到父仓库记录的提交：reset --hard 和 clean 不切换
+                # 子模块的 HEAD，停在别的提交上的子模块只有这一步能还原（父仓库把它记为
+                # gitlink 修改）；--force 让切换不因子模块里的修改而失败。
+                # First restore the HEADs of the submodules to the commits the parent
+                # records: reset --hard and clean never switch a submodule's HEAD, so a
+                # submodule parked at another commit is only restored here (the parent sees
+                # it as a gitlink modification); --force keeps the switch from failing over
+                # the changes inside the submodules.
+                git(folder, "submodule", "update", "--init", "--recursive", "--force")
                 git(
                     folder,
                     "submodule",

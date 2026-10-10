@@ -4,6 +4,7 @@ Resolving Module requests and xrobot.lock (xrobot.lock).
 
 import contextlib
 import io
+import os
 import unittest
 from unittest import mock
 
@@ -581,6 +582,88 @@ class LocalWork(UpstreamTestCase):
         self.assertIn("A.hpp", text)
         self.assertIn("new.txt", text)
         self.assertNotIn("ignored.txt", text)
+
+    def test_force_restores_the_submodule_of_the_named_module(self):
+        sub = self.tmp / "sub"
+        sub.mkdir()
+        run_git(sub, "init", "-q", "-b", "master")
+        self.write(sub / "sub.txt", "sub\n")
+        run_git(sub, "add", "-A")
+        run_git(sub, "commit", "-q", "-m", "sub initial")
+        first = run_git(sub, "rev-parse", "HEAD")
+        # 本地子模块用 file 协议克隆，较新的 git 默认拒绝：只在测试继承的环境里放行；
+        # 生产的子模块走 https，不给工具的 git 命令全局加这个开关。
+        # A local submodule is cloned over the file protocol, which recent git refuses by
+        # default: allow it only in the environment the test inherits; production
+        # submodules use https, and the git commands of the tool gain no such switch.
+        with mock.patch.dict(
+            os.environ,
+            {
+                "GIT_CONFIG_COUNT": "1",
+                "GIT_CONFIG_KEY_0": "protocol.file.allow",
+                "GIT_CONFIG_VALUE_0": "always",
+            },
+        ):
+            # 上游 team/A 加入子模块；检出移动到这个提交时，工具会运行
+            # git submodule update --init --recursive 初始化它。
+            # The upstream team/A gains the submodule; when the checkout moves to that
+            # commit, the tool runs git submodule update --init --recursive to initialize
+            # it.
+            run_git(
+                self.a,
+                "-c",
+                "protocol.file.allow=always",
+                "submodule",
+                "add",
+                str(sub),
+                "vendor/sub",
+            )
+            self.commit(self.a, [], "add submodule")
+            # 上游子模块仓库的第二个提交：父仓库的 gitlink 不会记录它，用来模拟子模块的
+            # HEAD 被切到别的提交；它必须在加入子模块之后创建，gitlink 才指向第一个提交。
+            # A second commit of the submodule upstream that the gitlink of the parent
+            # never records; it models a submodule HEAD parked at another commit. It must
+            # be created after the submodule is added, so the gitlink keeps the first one.
+            self.write(sub / "sub.txt", "sub\nsecond\n")
+            run_git(sub, "add", "-A")
+            run_git(sub, "commit", "-q", "-m", "sub second")
+            second = run_git(sub, "rev-parse", "HEAD")
+            self.sync(update=[])
+            checkout = self.modules / "team/A"
+            submodule = checkout / "vendor" / "sub"
+            self.assertEqual(run_git(submodule, "rev-parse", "HEAD"), first)
+            # 子模块里放一个被忽略的文件：clean 不带 -x，整个流程都保留它。
+            # An ignored file inside the submodule: clean without -x keeps it through the
+            # whole flow.
+            exclude = checkout / ".git" / "modules" / "vendor" / "sub" / "info" / "exclude"
+            exclude.write_bytes(exclude.read_bytes() + b"ignored.txt\n")
+            self.write(submodule / "ignored.txt", "ignored\n")
+            for case in ("tracked modification", "untracked file", "another commit"):
+                with self.subTest(case=case):
+                    self.commit(self.a, [], f"upstream moves ({case})")
+                    if case == "tracked modification":
+                        self.write(submodule / "sub.txt", "sub\n// local work\n")
+                    elif case == "untracked file":
+                        self.write(submodule / "new.txt", "untracked\n")
+                    else:
+                        run_git(submodule, "checkout", "-q", second)
+                    target = run_git(self.a, "rev-parse", "master")
+                    output = io.StringIO()
+                    with contextlib.redirect_stdout(output):
+                        moved = self.sync(update=[], leave_local=["team/A"], force=True)
+                    # 模块移到解析出的提交，子模块恢复到父仓库记录的提交：HEAD 回到
+                    # gitlink，修改和未跟踪的文件被丢弃，被忽略的文件保留。
+                    # The Module moves to the resolved commit and the submodule is
+                    # restored to the commit the parent records: its HEAD is back at the
+                    # gitlink, the modification and the untracked file are discarded, the
+                    # ignored file is kept.
+                    self.assertEqual(moved["modules"]["team/A"]["commit"], target)
+                    self.assertEqual(self.head("team/A"), target)
+                    self.assertEqual(run_git(submodule, "rev-parse", "HEAD"), first)
+                    self.assertEqual((submodule / "sub.txt").read_bytes(), b"sub\n")
+                    self.assertFalse((submodule / "new.txt").exists())
+                    self.assertTrue((submodule / "ignored.txt").exists())
+                    self.assertIn("vendor/sub", output.getvalue())
 
     def test_leave_local_refuses_uncommitted_changes_without_force(self):
         folder = self.modules / "team/A"
