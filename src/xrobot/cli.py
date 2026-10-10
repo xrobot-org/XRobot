@@ -200,8 +200,16 @@ def cmd_setup(args: argparse.Namespace) -> None:
         # --update 会同步每份配置；有旧格式的配置时先报错，一个文件也不改。
         # --update syncs every configuration; an old one is reported before any file changes.
         _reject_pre_1_0(project, project.configs())
+    leave_local = list(args.leave_local) if args.leave_local is not None else None
     lock = sync_modules(
-        project, update, args.frozen, args.offline, args.context_ref, args.release_ref
+        project,
+        update,
+        args.frozen,
+        args.offline,
+        args.context_ref,
+        args.release_ref,
+        leave_local,
+        args.force,
     )
     count = _count(len(lock["modules"]), "Module commit", "模块提交")
     print(tr(f"Resolved {count}", f"已解析 {count}"))
@@ -948,6 +956,29 @@ def parser() -> argparse.ArgumentParser:
         "--release-ref",
         metavar="REF",
         help=tr("refuse unreleased commits for this target ref", "拒绝这个目标 ref 上未发布的提交"),
+    )
+    setup.add_argument(
+        "--leave-local",
+        nargs="+",
+        metavar="MODULE",
+        help=tr(
+            "move the named Modules to their resolved commits; their unpushed local commits "
+            "stay on the original branch or in the reflog (printed first); uncommitted changes "
+            "are refused without --force",
+            "把点名的模块移到解析出的提交；其未推送的本地提交保留在原分支或 reflog 中（会先"
+            "打印）；未提交的修改没有 --force 时拒绝",
+        ),
+    )
+    setup.add_argument(
+        "-f",
+        "--force",
+        action="store_true",
+        help=tr(
+            "with --leave-local, discard the uncommitted changes of the named Modules that "
+            "have to move (tracked modifications and untracked files; ignored files are kept)",
+            "与 --leave-local 一起使用时，丢弃需要移动的点名模块的未提交修改"
+            "（已跟踪的修改和未跟踪的文件；被忽略的文件保留）",
+        ),
     )
     _line_directives(setup)
     setup.set_defaults(run=cmd_setup)

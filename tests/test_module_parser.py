@@ -136,8 +136,8 @@ class Manifests(TestCase):
                 # 以前只报 YAML 的原始错误，不说明是哪个文件、怎么改。
                 # Only the raw YAML error used to be reported, without the file or the fix.
                 block("module_description: IMU / IMU driver: sampling\ndepends: []"),
-                "A.hpp: the MODULE MANIFEST is not valid YAML (mapping values are not allowed "
-                'here); quote a value that contains ": " or "#"',
+                "A.hpp:2:37: the MODULE MANIFEST is not valid YAML (mapping values are not "
+                'allowed here); quote a value that contains ": " or "#"',
             ),
         )
         for text, message in cases:
@@ -145,6 +145,25 @@ class Manifests(TestCase):
                 with self.assertRaises(ValueError) as context:
                     manifest_from_text(text, "A.hpp")
                 self.assertEqual(str(context.exception), message)
+
+    def test_a_yaml_error_is_reported_at_its_position_in_the_header(self):
+        """manifest 的 YAML 错误报头文件里的真实行列号，指向出错的字符。
+        A YAML error of the manifest is reported at its real line and column in the header,
+        pointing at the offending character.
+        """
+        text = (
+            "#pragma once\n"
+            "/* === MODULE MANIFEST V2 ===\n"
+            "module_description: Camera: the eye\n"
+            "=== END MANIFEST === */\n"
+            "class Camera {};\n"
+        )
+        with self.assertRaisesMessage(
+            ValueError,
+            "Camera.hpp:3:27: the MODULE MANIFEST is not valid YAML (mapping values are not "
+            'allowed here); quote a value that contains ": " or "#"',
+        ):
+            manifest_from_text(text, "Camera.hpp")
 
     def test_a_module_before_1_0_is_named_with_its_commit(self):
         text = (

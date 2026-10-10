@@ -322,6 +322,8 @@ class Resolver:
         pinned: dict | None = None,
         locked: dict | None = None,
         without_git: bool = False,
+        leave_local: list[str] | None = None,
+        force: bool = False,
     ) -> None:
         """准备解析；modules_dir 是 Modules 目录，其余参数即同名属性。
         Prepare a resolution; modules_dir is the Modules folder and the other arguments are the
@@ -335,7 +337,16 @@ class Resolver:
         self.pinned = pinned or {}
         self.locked = locked or {}
         self.without_git = without_git
+        # --leave-local 点名的模块（完整 id 或末段，比较时忽略大小写）。
+        # The Modules --leave-local names (full ids or last segments, case-insensitive).
+        self.leave_local = {name.casefold() for name in leave_local or []}
+        # --force：丢弃需要移动的点名模块的未提交修改。
+        # --force: discard the uncommitted changes of the named Modules that have to move.
+        self.force = force
         self.warnings: list[str] = []
+        # 退回了 dev 的模块：identity -> 缺同名分支的上下文分支名。
+        # Modules that fell back to dev: identity -> the context branch they lack.
+        self.fell_back: dict[str, str] = {}
         self.prepared: dict[str, dict] = {}
         self.resolved: dict[str, dict] = {}
         self.stack: list[str] = []
@@ -564,6 +575,15 @@ class Resolver:
         """
         return " -> ".join(self.stack) or "Modules/modules.yaml"
 
+    def _leaves_local(self, identity: str) -> bool:
+        """--leave-local 是否点名了这个模块（完整 id 或末段，忽略大小写）。
+        Whether --leave-local names this Module (full id or last segment, case-insensitive).
+        """
+        return (
+            identity.casefold() in self.leave_local
+            or identity.rsplit("/", 1)[-1].casefold() in self.leave_local
+        )
+
     def _resolve(
         self, identity: str, folder: Path, req: dict, parent_context: tuple | list | None
     ) -> tuple[str, str, str]:
@@ -585,6 +605,10 @@ class Resolver:
         """BSP 不在 Git 中时，跟随分支的请求保留的 lock 条目。
         The locked entry a branch-following request keeps in a BSP outside Git.
 
+        不加 ``--update`` 时沿用 lock 是常态，不打警告；``--update`` 由 sync_modules 提前报错。
+        Keeping the lock without ``--update`` is the normal case and stays silent; with
+        ``--update`` sync_modules fails before anything is touched.
+
         Raises:
             ValueError: lock 中没有这个模块，无法选择 commit。
                 The Module is not in the lock, so no commit can be picked.
@@ -602,13 +626,6 @@ class Resolver:
                     "或把 BSP 放进 Git 仓库",
                 )
             )
-        self.warnings.append(
-            tr(
-                f"the BSP is not a Git repository, so {target} keeps {kept['commit'][:12]} "
-                "from xrobot.lock",
-                f"BSP 不是 Git 仓库，因此 {target} 沿用 xrobot.lock 中的 {kept['commit'][:12]}",
-            )
-        )
         return kept
 
     def visit(self, req: dict, parent_context: tuple | list | None = None) -> None:
@@ -660,16 +677,60 @@ class Resolver:
         else:
             folder = self.prepare(identity, package.get("canonical", package["repo"]))
             sha, kind, name = self._resolve(identity, folder, req, parent_context)
-            logical = list(context(req["context_ref"])) if req.get("context_ref") else [kind, name]
+            if req.get("context_ref"):
+                logical = list(context(req["context_ref"]))
+            elif req["ref"] in ("same", "same-or-dev"):
+                # same/same-or-dev 的下一层沿用最初的上下文：每层各自找同名分支、找不到再退
+                # 回 dev，本层退回 dev 不改变传给下一层的上下文。
+                # The next layer of a same/same-or-dev request keeps the original context:
+                # every layer looks for its own branch of that name and falls back to dev,
+                # and this layer's fallback does not change what the next one follows.
+                logical = list(parent_context) if parent_context else [kind, name]
+            elif (
+                kind in ("tag", "commit")
+                and parent_context is not None
+                and parent_context[0] != NO_BRANCH
+            ):
+                # 显式 tag 或提交号：下一层也沿用最初的上下文，不要求依赖仓库有同名 tag。
+                # An explicit tag or commit: the next layer keeps the original context too,
+                # which the dependency repository need not have as a tag of the same name.
+                logical = list(parent_context)
+            else:
+                logical = [kind, name]
+            if (
+                req["ref"] in ("same", "same-or-dev")
+                and name == "dev"
+                and kind == "branch"
+                and parent_context is not None
+                and parent_context[0] == "branch"
+                and parent_context[1] != "dev"
+            ):
+                # 本层退回了 dev；冲突报错要写明链上哪个仓库缺同名分支。
+                # This layer fell back to dev; the conflict error names the repository in
+                # the chain that lacks the branch.
+                self.fell_back[identity] = parent_context[1]
             if identity in self.resolved:
                 previous = self.resolved[identity]
                 if previous["commit"] != sha:
+                    # 冲突报错写明链上哪个仓库缺同名分支、退回了 dev。
+                    # The conflict error names the repositories in the chain that lack the
+                    # branch of the context and fell back to dev.
+                    english = "".join(
+                        f"; {member} has no {self.fell_back[member]} branch and falls back to dev"
+                        for member in dict.fromkeys([*self.stack, identity])
+                        if member in self.fell_back
+                    )
+                    chinese = "；".join(
+                        f"{member} 没有 {self.fell_back[member]} 分支，退回了 dev"
+                        for member in dict.fromkeys([*self.stack, identity])
+                        if member in self.fell_back
+                    )
                     raise ValueError(
                         tr(
                             f"Dependency conflict for {identity}: {previous['commit'][:12]} vs "
-                            f"{sha[:12]} ({' -> '.join(self.stack)})",
+                            f"{sha[:12]} ({' -> '.join(self.stack)})" + english,
                             f"{identity} 的依赖冲突：{previous['commit'][:12]} 与 {sha[:12]}"
-                            f"（{' -> '.join(self.stack)}）",
+                            f"（{' -> '.join(self.stack)}）" + (f"；{chinese}" if chinese else ""),
                         )
                     )
                 return
@@ -701,12 +762,30 @@ class Resolver:
 
     def materialize(self) -> None:
         """把每个模块检出到解析出的 commit；不丢弃本地修改，出错时回滚已切换的模块。
-        Check out every resolved commit; local work is never discarded, and Modules already
-        switched are moved back on an error.
+        Check out every resolved commit; the local work of unnamed Modules is never
+        discarded, and Modules already switched are moved back on an error.
 
         已在锁定 commit 的检出不动，其中未提交的修改（开发模块时的常态）保持原样。
         A checkout already at its commit is left alone, and its uncommitted changes (the
         normal state while developing a Module) stay as they are.
+
+        --leave-local 点名的模块例外：停在未推送的本地提交上时，先打印这些提交和改动文件，
+        再直接检出目标提交（不建备份分支）。本地提交不删除：HEAD 在本地分支上时留在该分支，
+        游离时可用 reflog 找回。点名的模块有未提交的修改时，没有 --force 仍然拒绝；给了
+        --force 则先打印将丢弃的内容，再丢弃已跟踪的修改和未跟踪的文件（子模块里的同样
+        处理；子模块的 HEAD 被切到其他提交时先恢复到父仓库记录的提交；不用 -x，被忽略的
+        文件保留），丢弃后仍有未提交的修改时报错且不移动。已在目标提交上的点名模块即使有
+        --force 也不动。
+        A Module named by --leave-local is the exception: at an unpushed local commit, the
+        commits and their files are printed first, then the target commit is checked out
+        directly (no backup branch). The local commits are not deleted: on a local branch
+        they stay there, detached they are recoverable through the reflog. A named Module
+        with uncommitted changes is still refused without --force; with --force, what will
+        be discarded is printed first, then the tracked modifications and untracked files
+        are discarded (inside submodules too, whose HEADs parked at other commits are first
+        restored to the commits the parent records; without -x, so ignored files are kept),
+        and changes left after the discard fail the move. A named Module already at its
+        target keeps its changes even with --force.
 
         Raises:
             ValueError: 要移动的模块有未提交的修改或未推送的提交、两个模块定义同名的类，或
@@ -715,40 +794,148 @@ class Resolver:
                 Modules define the same class, or a checkout fails.
         """
         before = {}
+        discards = {}
         for identity, entry in self.resolved.items():
             folder = self.prepared[identity]["folder"]
             if head_commit(folder) == entry["commit"]:
                 continue
             head, branch, dirty = checkout_state(folder)
             if dirty:
-                raise ValueError(
-                    tr(
-                        f"{identity} has uncommitted changes; they are kept, but the lock cannot "
-                        "move it. Commit and push them, or discard them, first",
-                        f"{identity} 有未提交的修改；修改会保留，但 lock 无法移动它。"
-                        "请先提交并推送这些修改，或者丢弃它们",
+                if not self._leaves_local(identity):
+                    raise ValueError(
+                        tr(
+                            f"{identity} has uncommitted changes; they are kept, but the lock "
+                            "cannot move it. Commit and push them, or discard them, first",
+                            f"{identity} 有未提交的修改；修改会保留，但 lock 无法移动它。"
+                            "请先提交并推送这些修改，或者丢弃它们",
+                        )
                     )
-                )
+                if not self.force:
+                    raise ValueError(
+                        tr(
+                            f"{identity} has uncommitted changes; the lock cannot move it. "
+                            "Commit and push them, or rerun with `--force` to discard the "
+                            "tracked modifications and untracked files (ignored files are kept)",
+                            f"{identity} 有未提交的修改；lock 无法移动它。请提交并推送这些修改，"
+                            "或者加 `--force` 丢弃已跟踪的修改和未跟踪的文件"
+                            "（被忽略的文件保留）",
+                        )
+                    )
+                # --force 只在所有模块都允许移动后丢弃：先记录 git status --porcelain 的输出
+                # （已跟踪的修改和未跟踪的文件，不含被忽略的文件）。
+                # --force discards only after every Module is allowed to move: record the
+                # git status --porcelain output first (tracked modifications and untracked
+                # files, ignored files excluded).
+                discards[identity] = git(folder, "status", "--porcelain")
             unpublished = head and not _published(folder, head)
             if unpublished and not self.offline:
                 # 没有 fetch 过时，远端分支可能还不包含已推送的提交。
                 # Without a fetch the remote branches may not yet show a pushed commit.
                 _fetch(folder, "--prune", "--tags", "origin")
                 unpublished = not _published(folder, head)
-            if unpublished:
+            if unpublished and not self._leaves_local(identity):
                 raise ValueError(
                     tr(
                         f"{identity} is at local commit {head[:12]} that is not on any remote "
                         "branch or tag. While developing a module, keep your changes "
                         "uncommitted; when they are ready, push them to a branch of the module "
-                        f"and run `xrobot setup --update {identity}`",
+                        f"and run `xrobot setup --update {identity}`, or run "
+                        f"`xrobot setup --leave-local {identity}` to move it to "
+                        f"{entry['commit'][:12]}; the local commits stay on the original "
+                        "branch or in the reflog",
                         f"{identity} 位于本地提交 {head[:12]}，它不在任何远端分支或 tag 上。"
                         "开发模块期间请保持修改未提交；准备好后推送到模块的某个分支，"
-                        f"再运行 `xrobot setup --update {identity}`",
+                        f"再运行 `xrobot setup --update {identity}`；或运行 "
+                        f"`xrobot setup --leave-local {identity}` 把它移到 "
+                        f"{entry['commit'][:12]}；本地提交会保留在原分支或 reflog 中",
+                    )
+                )
+            if unpublished:
+                # 打印将移动的提交号和改动文件，以及本地提交的去向；检出目标提交，不建备份分支。
+                # Print the commit ids to move and their files, and where the local commits
+                # end up; check out the target without a backup branch.
+                commits = git(folder, "log", "--format=%h", f"{entry['commit']}..HEAD")
+                files = git(folder, "diff", "--name-only", f"{entry['commit']}..HEAD")
+                if branch:
+                    # HEAD 在本地分支上：提交留在该分支上，检出它即可回去。
+                    # HEAD is on a local branch: the commits stay there, and checking it out
+                    # returns to them.
+                    kept = tr(
+                        f"they stay on the local branch {branch}; `git checkout {branch}` "
+                        "returns to them",
+                        f"它们仍在本地分支 {branch} 上；`git checkout {branch}` 可回到这些提交",
+                    )
+                else:
+                    # HEAD 游离：提交只能从 reflog 找回，给出完整的原 HEAD 提交号。
+                    # HEAD is detached: the commits are only recoverable from the reflog,
+                    # with the full original HEAD commit given.
+                    kept = tr(
+                        f"they are recoverable with `git reflog` (HEAD was at {head})",
+                        f"可用 `git reflog` 找回（原 HEAD 在 {head}）",
+                    )
+                print(
+                    tr(
+                        f"Moving {identity} from local commit {head[:12]} to "
+                        f"{entry['commit'][:12]}: " + ", ".join(commits.splitlines()) + f"; {kept}",
+                        f"把 {identity} 从本地提交 {head[:12]} 移到 {entry['commit'][:12]}："
+                        + "、".join(commits.splitlines())
+                        + f"；{kept}",
+                    )
+                )
+                print(
+                    tr(
+                        "Changed files: " + ", ".join(files.splitlines()),
+                        "改动的文件：" + "、".join(files.splitlines()),
                     )
                 )
             gitdir = Path(git(folder, "rev-parse", "--absolute-git-dir"))
             before[identity] = (head, branch, (gitdir / "index").exists())
+        # 所有模块都允许移动后，丢弃点名模块的未提交修改：已跟踪的修改和未跟踪的文件，
+        # 不含被忽略的文件；子模块里的修改同样处理。
+        # After every Module is allowed to move, discard the uncommitted changes of the
+        # named Modules: tracked modifications and untracked files, ignored files excluded;
+        # changes inside submodules are handled the same way.
+        for identity, status in discards.items():
+            folder = self.prepared[identity]["folder"]
+            print(
+                tr(
+                    f"Discarding the uncommitted changes of {identity} (--force): "
+                    + ", ".join(status.splitlines()),
+                    f"丢弃 {identity} 的未提交修改（--force）：" + "、".join(status.splitlines()),
+                )
+            )
+            # 相当于 git reset --hard 加 git clean -fd；不用 -x，被忽略的文件保留。
+            # The equivalent of git reset --hard and git clean -fd; without -x, ignored
+            # files are kept.
+            git(folder, "reset", "--hard")
+            git(folder, "clean", "-fd")
+            if (folder / ".gitmodules").exists():
+                # 先把子模块的 HEAD 恢复到父仓库记录的提交：reset --hard 和 clean 不切换
+                # 子模块的 HEAD，停在别的提交上的子模块只有这一步能还原（父仓库把它记为
+                # gitlink 修改）；--force 让切换不因子模块里的修改而失败。
+                # First restore the HEADs of the submodules to the commits the parent
+                # records: reset --hard and clean never switch a submodule's HEAD, so a
+                # submodule parked at another commit is only restored here (the parent sees
+                # it as a gitlink modification); --force keeps the switch from failing over
+                # the changes inside the submodules.
+                git(folder, "submodule", "update", "--init", "--recursive", "--force")
+                git(
+                    folder,
+                    "submodule",
+                    "foreach",
+                    "--recursive",
+                    "git reset --hard && git clean -fd",
+                )
+            _, _, dirty = checkout_state(folder)
+            if dirty:
+                raise ValueError(
+                    tr(
+                        f"{identity} still has uncommitted changes after discarding the tracked "
+                        "modifications and untracked files; it is not moved",
+                        f"丢弃已跟踪的修改和未跟踪的文件后，{identity} 仍有未提交的修改；"
+                        "没有移动它",
+                    )
+                )
         by_name = {}
         for identity in self.resolved:
             name = identity.rsplit("/", 1)[-1]
@@ -1141,6 +1328,8 @@ def sync_modules(
     offline: bool = False,
     context_ref: str | None = None,
     release_ref: str | None = None,
+    leave_local: list[str] | None = None,
+    force: bool = False,
 ) -> dict:
     """解析并检出模块，按需写 xrobot.lock，返回 lock 的内容。
     Resolve and check out the Modules, write xrobot.lock when needed, and return its content.
@@ -1156,12 +1345,32 @@ def sync_modules(
             The branch for same/same-or-dev to follow instead of the BSP branch.
         release_ref: 发布门禁的目标 ref。
             The target ref of the release gate.
+        leave_local: 允许移走未推送本地提交的模块 id 列表（提交保留在原分支或 reflog 中，
+            点名的模块直接检出目标提交）。
+            The ids of the Modules whose unpushed local commits may be left behind (they stay
+            on the original branch or in the reflog; a named Module is checked out at its
+            target directly).
+        force: 与 leave_local 一起使用时，丢弃需要移动的点名模块的未提交修改。
+            With leave_local, discard the uncommitted changes of the named Modules that have
+            to move.
 
     Raises:
         ValueError: 参数冲突、lock 与请求不符（--frozen/--offline）、解析或检出失败。
             Conflicting options, a lock that does not match the requests (--frozen or
             --offline), or a failed resolution or checkout.
     """
+    if force and not leave_local:
+        # 在动任何模块之前报错：--force 只影响 --leave-local 点名的模块。
+        # Fail before any Module is touched: --force only affects the Modules named by
+        # --leave-local.
+        raise ValueError(
+            tr(
+                "--force only works with --leave-local; it affects only the Modules named by "
+                "`xrobot setup --leave-local <module>`",
+                "--force 只能与 --leave-local 一起使用；它只影响 `xrobot setup --leave-local "
+                "<模块>` 点名的模块",
+            )
+        )
     if update is not None and (frozen or offline):
         raise ValueError(
             tr(
@@ -1172,6 +1381,34 @@ def sync_modules(
     roots, _ = read_modules_yaml(project.modules_yaml)
     lock_dir = project.lock.resolve().parent
     lock = _load_lock(project.lock) if project.lock.is_file() else None
+    if leave_local and lock is not None:
+        # 与 --update 一样按 lock 校验点名，写错的模块 id 在动任何模块之前先报错。
+        # Named Modules are checked against the lock like --update, so a mistyped id fails
+        # before anything is touched.
+        for name in leave_local:
+            matches = [
+                k
+                for k in lock["modules"]
+                if name.casefold() in (k.casefold(), k.rsplit("/", 1)[-1].casefold())
+            ]
+            if not matches:
+                raise ValueError(
+                    tr(
+                        f"{name} is not in xrobot.lock; `--leave-local` takes Module ids "
+                        "from the lock",
+                        f"xrobot.lock 中没有 {name}；`--leave-local` 只接受 lock 中的模块 id",
+                    )
+                )
+            if len(matches) > 1:
+                # 与按 Repo 名请求模块/包一样，命中多个模块时报歧义并列出命中的 id。
+                # Like requesting a Module or a Package by its Repo name alone, several
+                # matches are ambiguous, with the matched ids listed.
+                raise ValueError(
+                    tr(
+                        f"Ambiguous Module {name}; specify {', '.join(matches)}",
+                        f"模块 {name} 有歧义；请指定 {'、'.join(matches)}",
+                    )
+                )
     if frozen or offline:
         if lock is None:
             raise ValueError(
@@ -1197,7 +1434,13 @@ def sync_modules(
             if not offline and project.sources_yaml.is_file()
             else None
         )
-        resolver = Resolver(project.modules_dir, manager, offline=offline)
+        resolver = Resolver(
+            project.modules_dir,
+            manager,
+            offline=offline,
+            leave_local=leave_local,
+            force=force,
+        )
         for identity, entry in lock["modules"].items():
             resolver.prepare(identity, expanded_locator(entry["repo"], lock_dir), entry["commit"])
             resolver.resolved[identity] = entry
@@ -1214,12 +1457,22 @@ def sync_modules(
                     for k in lock["modules"]
                     if name.casefold() in (k.casefold(), k.rsplit("/", 1)[-1].casefold())
                 ]
-                if len(matches) != 1:
+                if not matches:
                     raise ValueError(
                         tr(
                             f"{name} is not in xrobot.lock; `--update` takes Module ids from the "
                             "lock",
                             f"xrobot.lock 中没有 {name}；`--update` 只接受 lock 中的模块 id",
+                        )
+                    )
+                if len(matches) > 1:
+                    # 与 --leave-local 一样，命中多个模块时报歧义并列出命中的 id。
+                    # Like --leave-local, several matches are ambiguous, with the matched
+                    # ids listed.
+                    raise ValueError(
+                        tr(
+                            f"Ambiguous Module {name}; specify {', '.join(matches)}",
+                            f"模块 {name} 有歧义；请指定 {'、'.join(matches)}",
                         )
                     )
                 named.add(matches[0])
@@ -1246,11 +1499,34 @@ def sync_modules(
             pinned,
             locked=lock["modules"] if lock is not None else {},
             without_git=without_git,
+            leave_local=leave_local,
+            force=force,
         )
         root_context = (
             (NO_BRANCH, "") if without_git else _root_context(project, roots, context_ref)
         )
         pinned_ids = {k.casefold() for k in pinned}
+        following = [
+            f"{req['id']}@{req['ref']}"
+            for req in roots
+            if req["ref"] in ("same", "same-or-dev")
+            and not req.get("context_ref")
+            and req["id"].casefold() not in pinned_ids
+        ]
+        if update is not None and without_git and following:
+            # --update 要按 BSP 所在分支重新解析这些请求；BSP 不在 Git 且没有 --context-ref
+            # 时直接报错，不动任何模块。
+            # --update re-resolves these requests by following the BSP branch; outside Git
+            # and without --context-ref this fails before any Module is touched.
+            raise ValueError(
+                tr(
+                    f"`--update` would resolve {', '.join(following)} by following the BSP "
+                    "branch, but the BSP is not a Git repository; pass --context-ref "
+                    "refs/heads/<branch>",
+                    f"`--update` 需要按 BSP 所在分支解析 {'、'.join(following)}，但 BSP 不是 "
+                    "Git 仓库；请传入 --context-ref refs/heads/<分支>",
+                )
+            )
         for root in roots:
             parent = context(root["context_ref"]) if root.get("context_ref") else root_context
             if (

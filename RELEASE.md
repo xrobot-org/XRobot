@@ -37,6 +37,12 @@ master，两条分支指向同一个提交。BSP 的 `xrobot.lock` 按模块的 
 `--release-ref` 拒绝不在模块 dev 上的提交；squash 和 rebase 在 master 上产生 dev 没有的提交，
 dev 也就无法快进到 master。所有新 tag 都是小写 `v` 加版本号，已有的大写 `V` tag 保留不动。
 
+模块的 PR 同样用 merge commit 合并。功能分支并入 dev（随后随 dev 的快进进入 master）后，它的提交
+成为这些分支的祖先，BSP 锁定在这些提交上的 lock 仍在模块的发布线上，`--frozen --release-ref` 门禁
+自动通过，无需刷新 lock；只有模块以 squash、rebase 等改写历史的方式合并时，锁定的提交才不在发布线上，
+按门禁报错给出的命令刷新 lock，例如 `xrobot setup --update <模块> --context-ref refs/heads/dev`。
+引用上游分支的下游 PR 要等上游合并后手动重跑。
+
 Each repository's master receives merges only from dev. A pull request from dev into master is
 merged with a merge commit, and dev is then fast-forwarded to master, so both branches point at
 the same commit. A BSP's `xrobot.lock` resolves against the master branches of its Modules, and
@@ -44,6 +50,15 @@ the CI on the BSP's dev uses `--release-ref` to refuse commits that are not on a
 squash and rebase create commits on master that dev does not have, so dev cannot be
 fast-forwarded to master. Every new tag is a lowercase `v` plus the version; the existing
 uppercase `V` tags stay as they are.
+
+Module pull requests are merged with merge commits as well. Once a feature branch is merged
+into dev (and carried into master by the fast-forward), its commits are ancestors of those
+branches: a lock locked on them stays on the Module's release line, and the
+`--frozen --release-ref` gate passes without refreshing the lock. Only a merge by squash, rebase
+or another history rewrite leaves the locked commit off the release line; refresh the lock with
+the command the gate error prints, such as
+`xrobot setup --update <Module> --context-ref refs/heads/dev`. A downstream pull request that
+references the upstream branch is re-run manually after the upstream merge.
 
 全部检查通过、并用 `tools/check_release.py` 核对验收记录（见下一节）后，按以下顺序发布。每一步
 依赖的东西都在它之前就位：

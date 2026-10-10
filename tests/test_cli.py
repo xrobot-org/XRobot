@@ -430,7 +430,7 @@ class Commands(CliMixin, BspTestCase):
             out,
             "Added registered to User/xrobot.yaml; fill the null values (dependencies) before "
             "generating\n  ramfs (LibXR::RamFS&): ramfs\n"
-            "  database (LibXR::Database*): &database, nullptr\n",
+            "  database (LibXR::Database*): database, nullptr\n",
         )
 
     def test_instance_editing(self):

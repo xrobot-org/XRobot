@@ -4,6 +4,7 @@ Resolving Module requests and xrobot.lock (xrobot.lock).
 
 import contextlib
 import io
+import os
 import unittest
 from unittest import mock
 
@@ -414,7 +415,16 @@ class LocalWork(UpstreamTestCase):
         run_git(folder, "commit", "-q", "-am", "local")
         local = run_git(folder, "rev-parse", "HEAD")
         before = self.lock_bytes()
-        for flags in ({"update": []}, {"frozen": True}):
+        # 不加 --leave-local 仍然拒绝：报错提示该选项，并说明本地提交的去向
+        # （保留在原分支或 reflog 中，不删除）。
+        # Without --leave-local the refusal stays, with the option in the error and where
+        # the local commits end up (they stay on the original branch or in the reflog, they
+        # are not deleted). The target is the locked commit for --frozen and the resolved
+        # one for --update.
+        for flags, target in (
+            ({"update": []}, run_git(self.a, "rev-parse", "master")),
+            ({"frozen": True}, self.locked),
+        ):
             with (
                 self.subTest(flags=flags),
                 self.assertRaisesMessage(
@@ -422,12 +432,333 @@ class LocalWork(UpstreamTestCase):
                     f"team/A is at local commit {local[:12]} that is not on any remote branch or "
                     "tag. While developing a module, keep your changes uncommitted; when they are "
                     "ready, push them to a branch of the module and run "
-                    "`xrobot setup --update team/A`",
+                    f"`xrobot setup --update team/A`, or run `xrobot setup --leave-local "
+                    f"team/A` to move it to {target[:12]}; the local commits stay on the "
+                    "original branch or in the reflog",
                 ),
             ):
                 self.sync(**flags)
             self.assertEqual(self.head("team/A"), local)
         self.assertEqual(self.lock_bytes(), before)
+
+    def test_leave_local_moves_only_the_named_modules(self):
+        b = self.upstream("team/B")
+        self.configure(["team/A", "team/B"])
+        self.sync()
+        self.commit(self.a, [], "newer A")
+        self.commit(b, [], "newer B")
+        for identity in ("team/A", "team/B"):
+            folder = self.modules / identity
+            name = identity.rsplit("/", 1)[-1]
+            run_git(folder, "checkout", "-q", "-b", "work")
+            (folder / (name + ".hpp")).write_bytes(
+                (folder / (name + ".hpp")).read_bytes() + b"\n// local\n"
+            )
+            run_git(folder, "commit", "-q", "-am", "local")
+        local_a, local_b = self.head("team/A"), self.head("team/B")
+        branches = {
+            identity: run_git(
+                self.modules / identity, "for-each-ref", "refs/heads", "--format=%(refname)"
+            )
+            for identity in ("team/A", "team/B")
+        }
+        # 未点名的模块仍然拒绝，报错提示 --leave-local，并说明本地提交的去向。
+        # An unnamed Module is still refused, with the --leave-local hint and where the
+        # local commits end up.
+        with self.assertRaisesMessage(
+            ValueError,
+            f"team/B is at local commit {local_b[:12]} that is not on any remote branch or "
+            "tag. While developing a module, keep your changes uncommitted; when they are "
+            "ready, push them to a branch of the module and run "
+            f"`xrobot setup --update team/B`, or run `xrobot setup --leave-local team/B` "
+            f"to move it to {run_git(b, 'rev-parse', 'master')[:12]}; the local commits "
+            "stay on the original branch or in the reflog",
+        ):
+            self.sync(update=[], leave_local=["team/A"])
+        self.assertEqual(self.head("team/A"), local_a)
+        self.assertEqual(self.head("team/B"), local_b)
+        # 点名的模块直接检出目标提交：先打印移动的提交、改动文件和本地提交的去向，不建备份分支。
+        # A named Module is checked out at the target directly: the moved commits, their
+        # files and where the local commits end up are printed first, without a backup
+        # branch.
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            moved = self.sync(update=[], leave_local=["team/A", "team/B"])
+        text = output.getvalue()
+        for identity, local in (("team/A", local_a), ("team/B", local_b)):
+            self.assertNotEqual(moved["modules"][identity]["commit"], local)
+            self.assertEqual(self.head(identity), moved["modules"][identity]["commit"])
+            self.assertIn(local[:7], text)
+            self.assertIn(identity.rsplit("/", 1)[-1] + ".hpp", text)
+            self.assertEqual(
+                run_git(
+                    self.modules / identity, "for-each-ref", "refs/heads", "--format=%(refname)"
+                ),
+                branches[identity],
+            )
+
+    def test_leave_local_keeps_the_commits_on_their_local_branch(self):
+        folder = self.modules / "team/A"
+        run_git(folder, "checkout", "-q", "-b", "work")
+        (folder / "A.hpp").write_bytes((folder / "A.hpp").read_bytes() + b"\n// local\n")
+        run_git(folder, "commit", "-q", "-am", "local")
+        local = self.head("team/A")
+        target = run_git(self.a, "rev-parse", "master")
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            moved = self.sync(update=[], leave_local=["team/A"])
+        # 移动后模块停在目标提交上，分支 work 原封不动，仍指向原本地提交。
+        # After the move the Module sits at the target commit, and the branch work is
+        # untouched, still pointing at the original local commit.
+        self.assertEqual(moved["modules"]["team/A"]["commit"], target)
+        self.assertEqual(self.head("team/A"), target)
+        self.assertEqual(run_git(folder, "rev-parse", "work"), local)
+        # 打印提到本地提交留在了哪个分支。
+        # The print names the branch the local commits stay on.
+        self.assertIn("work", output.getvalue())
+
+    def test_leave_local_names_the_reflog_for_a_detached_head(self):
+        folder = self.modules / "team/A"
+        # 克隆留下的检出在 master 分支上；先游离再提交，模拟直接停在提交上的检出。
+        # The checkout left by the clone sits on master; detach before committing to model
+        # a checkout parked directly at a commit.
+        run_git(folder, "checkout", "-q", "--detach")
+        (folder / "A.hpp").write_bytes((folder / "A.hpp").read_bytes() + b"\n// local\n")
+        run_git(folder, "commit", "-q", "-am", "local")
+        local = self.head("team/A")
+        target = run_git(self.a, "rev-parse", "master")
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            moved = self.sync(update=[], leave_local=["team/A"])
+        self.assertEqual(moved["modules"]["team/A"]["commit"], target)
+        # 游离 HEAD 上的本地提交只能从 reflog 找回：打印提到 reflog 和完整的原 HEAD 提交号。
+        # Local commits of a detached HEAD are only recoverable through the reflog: the
+        # print names it and gives the full original HEAD commit.
+        text = output.getvalue()
+        self.assertIn("reflog", text)
+        self.assertIn(local, text)
+
+    def test_force_alone_is_refused_before_anything_moves(self):
+        folder = self.modules / "team/A"
+        run_git(folder, "checkout", "-q", "-b", "work")
+        (folder / "A.hpp").write_bytes((folder / "A.hpp").read_bytes() + b"\n// local\n")
+        run_git(folder, "commit", "-q", "-am", "local")
+        local = self.head("team/A")
+        # 单独给 --force 在动任何模块之前报错：提示需要配合 --leave-local 点名模块。
+        # --force alone fails before any Module is touched: the hint says to combine it
+        # with --leave-local naming the Modules.
+        with self.assertRaisesMessage(
+            ValueError,
+            "--force only works with --leave-local; it affects only the Modules named by "
+            "`xrobot setup --leave-local <module>`",
+        ):
+            self.sync(update=[], force=True)
+        self.assertEqual(self.head("team/A"), local)
+
+    def test_force_discards_the_uncommitted_changes_of_the_named_module(self):
+        folder = self.modules / "team/A"
+        header = folder / "A.hpp"
+        pristine = header.read_bytes()
+        header.write_bytes(pristine + b"\n// tracked work\n")
+        (folder / "new.txt").write_text("untracked\n", encoding="utf-8")
+        exclude = folder / ".git" / "info" / "exclude"
+        exclude.write_bytes(exclude.read_bytes() + b"ignored.txt\n")
+        (folder / "ignored.txt").write_text("ignored\n", encoding="utf-8")
+        target = run_git(self.a, "rev-parse", "master")
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            moved = self.sync(update=[], leave_local=["team/A"], force=True)
+        # 模块移到锁定提交：已跟踪的修改被还原、未跟踪的新文件被删除、被忽略的文件仍在。
+        # The Module moves to the locked commit: the tracked modification is reverted, the
+        # untracked file is removed, the ignored file is kept.
+        self.assertEqual(moved["modules"]["team/A"]["commit"], target)
+        self.assertEqual(self.head("team/A"), target)
+        self.assertNotIn(b"// tracked work", header.read_bytes())
+        self.assertFalse((folder / "new.txt").exists())
+        self.assertTrue((folder / "ignored.txt").exists())
+        # 打印列出了被丢弃的文件，不含被忽略的文件。
+        # The print lists the discarded files, without the ignored one.
+        text = output.getvalue()
+        self.assertIn("A.hpp", text)
+        self.assertIn("new.txt", text)
+        self.assertNotIn("ignored.txt", text)
+
+    def test_force_restores_the_submodule_of_the_named_module(self):
+        sub = self.tmp / "sub"
+        sub.mkdir()
+        run_git(sub, "init", "-q", "-b", "master")
+        self.write(sub / "sub.txt", "sub\n")
+        run_git(sub, "add", "-A")
+        run_git(sub, "commit", "-q", "-m", "sub initial")
+        first = run_git(sub, "rev-parse", "HEAD")
+        # 本地子模块用 file 协议克隆，较新的 git 默认拒绝：只在测试继承的环境里放行；
+        # 生产的子模块走 https，不给工具的 git 命令全局加这个开关。
+        # A local submodule is cloned over the file protocol, which recent git refuses by
+        # default: allow it only in the environment the test inherits; production
+        # submodules use https, and the git commands of the tool gain no such switch.
+        with mock.patch.dict(
+            os.environ,
+            {
+                "GIT_CONFIG_COUNT": "1",
+                "GIT_CONFIG_KEY_0": "protocol.file.allow",
+                "GIT_CONFIG_VALUE_0": "always",
+            },
+        ):
+            # 上游 team/A 加入子模块；检出移动到这个提交时，工具会运行
+            # git submodule update --init --recursive 初始化它。
+            # The upstream team/A gains the submodule; when the checkout moves to that
+            # commit, the tool runs git submodule update --init --recursive to initialize
+            # it.
+            run_git(
+                self.a,
+                "-c",
+                "protocol.file.allow=always",
+                "submodule",
+                "add",
+                str(sub),
+                "vendor/sub",
+            )
+            self.commit(self.a, [], "add submodule")
+            # 上游子模块仓库的第二个提交：父仓库的 gitlink 不会记录它，用来模拟子模块的
+            # HEAD 被切到别的提交；它必须在加入子模块之后创建，gitlink 才指向第一个提交。
+            # A second commit of the submodule upstream that the gitlink of the parent
+            # never records; it models a submodule HEAD parked at another commit. It must
+            # be created after the submodule is added, so the gitlink keeps the first one.
+            self.write(sub / "sub.txt", "sub\nsecond\n")
+            run_git(sub, "add", "-A")
+            run_git(sub, "commit", "-q", "-m", "sub second")
+            second = run_git(sub, "rev-parse", "HEAD")
+            self.sync(update=[])
+            checkout = self.modules / "team/A"
+            submodule = checkout / "vendor" / "sub"
+            self.assertEqual(run_git(submodule, "rev-parse", "HEAD"), first)
+            # 子模块里放一个被忽略的文件：clean 不带 -x，整个流程都保留它。
+            # An ignored file inside the submodule: clean without -x keeps it through the
+            # whole flow.
+            exclude = checkout / ".git" / "modules" / "vendor" / "sub" / "info" / "exclude"
+            exclude.write_bytes(exclude.read_bytes() + b"ignored.txt\n")
+            self.write(submodule / "ignored.txt", "ignored\n")
+            for case in ("tracked modification", "untracked file", "another commit"):
+                with self.subTest(case=case):
+                    self.commit(self.a, [], f"upstream moves ({case})")
+                    if case == "tracked modification":
+                        self.write(submodule / "sub.txt", "sub\n// local work\n")
+                    elif case == "untracked file":
+                        self.write(submodule / "new.txt", "untracked\n")
+                    else:
+                        run_git(submodule, "checkout", "-q", second)
+                    target = run_git(self.a, "rev-parse", "master")
+                    output = io.StringIO()
+                    with contextlib.redirect_stdout(output):
+                        moved = self.sync(update=[], leave_local=["team/A"], force=True)
+                    # 模块移到解析出的提交，子模块恢复到父仓库记录的提交：HEAD 回到
+                    # gitlink，修改和未跟踪的文件被丢弃，被忽略的文件保留。
+                    # The Module moves to the resolved commit and the submodule is
+                    # restored to the commit the parent records: its HEAD is back at the
+                    # gitlink, the modification and the untracked file are discarded, the
+                    # ignored file is kept.
+                    self.assertEqual(moved["modules"]["team/A"]["commit"], target)
+                    self.assertEqual(self.head("team/A"), target)
+                    self.assertEqual(run_git(submodule, "rev-parse", "HEAD"), first)
+                    self.assertEqual((submodule / "sub.txt").read_bytes(), b"sub\n")
+                    self.assertFalse((submodule / "new.txt").exists())
+                    self.assertTrue((submodule / "ignored.txt").exists())
+                    self.assertIn("vendor/sub", output.getvalue())
+
+    def test_leave_local_refuses_uncommitted_changes_without_force(self):
+        folder = self.modules / "team/A"
+        run_git(folder, "checkout", "-q", "-b", "work")
+        (folder / "A.hpp").write_bytes((folder / "A.hpp").read_bytes() + b"\n// local\n")
+        run_git(folder, "commit", "-q", "-am", "local")
+        header = folder / "A.hpp"
+        header.write_bytes(header.read_bytes() + b"\n// more work\n")
+        before = header.read_bytes()
+        # 点名的模块有修改但没给 --force 时照旧拒绝：提示 --force 会丢弃哪些内容。
+        # A named Module with changes is still refused without --force: the hint says what
+        # --force would discard.
+        with self.assertRaisesMessage(
+            ValueError,
+            "team/A has uncommitted changes; the lock cannot move it. Commit and push them, "
+            "or rerun with `--force` to discard the tracked modifications and untracked files "
+            "(ignored files are kept)",
+        ):
+            self.sync(update=[], leave_local=["team/A"])
+        self.assertEqual(header.read_bytes(), before)
+
+    def test_force_does_not_touch_the_changes_of_unnamed_modules(self):
+        b = self.upstream("team/B")
+        self.configure(["team/A", "team/B"])
+        self.sync()
+        self.commit(self.a, [], "newer A")
+        self.commit(b, [], "newer B")
+        folder = self.modules / "team/A"
+        run_git(folder, "checkout", "-q", "-b", "work")
+        (folder / "A.hpp").write_bytes((folder / "A.hpp").read_bytes() + b"\n// local\n")
+        run_git(folder, "commit", "-q", "-am", "local")
+        local = self.head("team/A")
+        header = self.modules / "team/B" / "B.hpp"
+        header.write_bytes(header.read_bytes() + b"\n// local work\n")
+        before = header.read_bytes()
+        # --force 只作用于点名的模块：没点名的模块有修改时照旧拒绝，文件不变。
+        # --force affects only the named Modules: an unnamed Module with changes is still
+        # refused, and its files stay as they are.
+        with self.assertRaisesMessage(
+            ValueError,
+            "team/B has uncommitted changes; they are kept, but the lock cannot move it. "
+            "Commit and push them, or discard them, first",
+        ):
+            self.sync(update=[], leave_local=["team/A"], force=True)
+        self.assertEqual(self.head("team/A"), local)
+        self.assertEqual(header.read_bytes(), before)
+
+    def test_force_leaves_a_named_module_at_its_locked_commit_alone(self):
+        header = self.modules / "team/A" / "A.hpp"
+        header.write_bytes(header.read_bytes() + b"\n// local work\n")
+        before = header.read_bytes()
+        # 点名但不需要移动的模块（已在锁定提交上）即使有 --force 也不动它的修改。
+        # A named Module that does not have to move (already at its locked commit) keeps
+        # its changes even with --force.
+        self.assertEqual(
+            self.sync(leave_local=["team/A"], force=True)["modules"]["team/A"]["commit"],
+            self.locked,
+        )
+        self.assertEqual(header.read_bytes(), before)
+
+    def test_a_name_matching_several_locked_modules_is_ambiguous(self):
+        self.upstream("other/a")
+        self.configure(["team/A", "other/a"])
+        self.sync()
+        # 末段匹配忽略大小写：team/A 的短名 A 同时命中 other/a 和 team/A，报歧义并列出
+        # 命中的 id，而不是说 lock 中没有。
+        # The last-segment match folds the case, so the short name A of team/A also matches
+        # other/a: report the match as ambiguous with the ids listed, not as missing.
+        with self.assertRaisesMessage(ValueError, "Ambiguous Module A; specify other/a, team/A"):
+            self.sync(update=[], leave_local=["A"])
+        # 一个模块都没命中的名字仍然报 lock 中没有。
+        # A name matching no Module still reports that it is not in the lock.
+        with self.assertRaisesMessage(
+            ValueError,
+            "missing is not in xrobot.lock; `--leave-local` takes Module ids from the lock",
+        ):
+            self.sync(update=[], leave_local=["missing"])
+
+    def test_update_a_name_matching_several_locked_modules_is_ambiguous(self):
+        self.upstream("other/a")
+        self.configure(["team/A", "other/a"])
+        self.sync()
+        # 与 --leave-local 一样，--update 点名命中多个模块时报歧义并列出命中的 id，
+        # 而不是说 lock 中没有。
+        # Like --leave-local, --update reports a name matching several locked Modules as
+        # ambiguous with the ids listed, not as missing.
+        with self.assertRaisesMessage(ValueError, "Ambiguous Module A; specify other/a, team/A"):
+            self.sync(update=["A"])
+        # 一个模块都没命中的名字仍然报 lock 中没有。
+        # A name matching no Module still reports that it is not in the lock.
+        with self.assertRaisesMessage(
+            ValueError,
+            "missing is not in xrobot.lock; `--update` takes Module ids from the lock",
+        ):
+            self.sync(update=["missing"])
 
     def test_generation_rejects_a_checkout_away_from_the_lock_with_the_fix(self):
         from xrobot.project import Project
@@ -469,6 +800,82 @@ class Contexts(UpstreamTestCase):
         self.assertEqual(
             first["modules"]["team/A"]["commit"], second["modules"]["team/A"]["commit"]
         )
+
+    def test_same_or_dev_keeps_the_original_context_through_the_chain(self):
+        """三层链上中间层退回 dev 时，下一层仍跟随最初的功能分支。
+        When a middle layer of a three-layer chain falls back to dev, the next layer still
+        follows the original feature branch.
+        """
+        c = self.upstream("team/C")
+        self.upstream("team/B", [{"id": "team/C", "ref": "same-or-dev"}])
+        a = self.upstream("team/A", [{"id": "team/B", "ref": "same-or-dev"}])
+        run_git(c, "checkout", "-q", "-b", "feature/next")
+        feature = self.commit(c, [], "feature of C")
+        # team/A 的功能分支与 master 内容相同，依赖清单不变。
+        # The feature branch of team/A has the content of master, dependencies included.
+        run_git(a, "checkout", "-q", "-b", "feature/next")
+        run_git(self.root, "init", "-q", "-b", "feature/next")
+        self.configure(["team/A@same-or-dev", "team/C@same-or-dev"])
+        result = self.sync()
+        # team/B 没有同名分支，退回 dev；team/C 经两条路径都跟随最初的功能分支。
+        # team/B has no branch of that name and falls back to dev; team/C follows the
+        # original feature branch through both paths.
+        self.assertEqual(result["modules"]["team/B"]["resolved_ref"], "dev")
+        self.assertEqual(result["modules"]["team/C"]["commit"], feature)
+        self.assertEqual(result["modules"]["team/C"]["resolved_ref"], "feature/next")
+        self.assertEqual(result["modules"]["team/A"]["commit"], run_git(a, "rev-parse", "HEAD"))
+
+    def test_an_explicit_tag_or_commit_keeps_the_original_context_for_its_dependencies(self):
+        """显式 tag 或提交号的依赖，其 same-or-dev 依赖仍跟随最初的上下文。
+        The same-or-dev dependencies of an explicitly requested tag or commit still follow
+        the original context.
+        """
+        self.upstream("team/C")
+        b = self.upstream("team/B", [{"id": "team/C", "ref": "same-or-dev"}])
+        a = self.upstream("team/A", [{"id": "team/B", "ref": "same-or-dev"}])
+        # team/A 的功能分支与 master 内容相同并被 tag；team/B 的功能分支有一个新提交。
+        # The feature branch of team/A has the content of master and a tag; the feature
+        # branch of team/B has a new commit.
+        run_git(a, "checkout", "-q", "-b", "feature/next")
+        run_git(b, "checkout", "-q", "-b", "feature/next")
+        feature = self.commit(b, [], "feature of B")
+        run_git(a, "tag", "release-check")
+        run_git(self.root, "init", "-q", "-b", "feature/next")
+        for pinned in ("release-check", run_git(a, "rev-parse", "HEAD")):
+            with self.subTest(pinned=pinned):
+                (self.root / "xrobot.lock").unlink(missing_ok=True)
+                self.configure([f"team/A@{pinned}"])
+                result = self.sync(context_ref="refs/heads/feature/next")
+                self.assertEqual(
+                    result["modules"]["team/A"]["ref_kind"],
+                    "tag" if pinned == "release-check" else "commit",
+                )
+                # team/B 跟随最初的功能分支，而不是去找同名的 tag 或停在提交上。
+                # team/B follows the original feature branch instead of looking for a tag of
+                # the same name or stopping at the commit.
+                self.assertEqual(result["modules"]["team/B"]["commit"], feature)
+                self.assertEqual(result["modules"]["team/B"]["resolved_ref"], "feature/next")
+
+    def test_a_conflict_names_the_repository_that_fell_back_to_dev(self):
+        """依赖冲突的报错写明链上哪个仓库缺同名分支、退回了 dev。
+        The conflict error names the repository in the chain that lacks the branch and fell
+        back to dev.
+        """
+        c = self.upstream("team/C")
+        self.upstream("team/B", [{"id": "team/C", "ref": "same-or-dev"}])
+        a = self.upstream("team/A", [{"id": "team/B", "ref": "same-or-dev"}])
+        dev = run_git(c, "rev-parse", "HEAD")
+        run_git(c, "checkout", "-q", "-b", "feature/next")
+        feature = self.commit(c, [], "feature of C")
+        run_git(a, "checkout", "-q", "-b", "feature/next")
+        run_git(self.root, "init", "-q", "-b", "feature/next")
+        self.configure(["team/C@dev", "team/A@same-or-dev"])
+        with self.assertRaisesMessage(
+            ValueError,
+            f"Dependency conflict for team/C: {dev[:12]} vs {feature[:12]} "
+            "(team/A -> team/B); team/B has no feature/next branch and falls back to dev",
+        ):
+            self.sync()
 
     def test_a_tag_never_falls_back_to_dev(self):
         b = self.upstream("team/B")
@@ -559,16 +966,24 @@ class Contexts(UpstreamTestCase):
         run_git(a, "checkout", "-q", "dev")
         self.commit(a, [], "newer dev")
         self.configure(["team/A@same-or-dev", "team/C@dev"])
-        errors = io.StringIO()
-        with contextlib.redirect_stderr(errors):
-            second = self.sync(update=[])
+        # 不带 --update 沿用 lock，不再打警告。
+        # Without --update the lock is kept and nothing is warned about.
+        second = self.sync()
         self.assertEqual(second["modules"]["team/A"], first["modules"]["team/A"])
         self.assertEqual(second["modules"]["team/C"]["resolved_ref"], "dev")
-        self.assertIn(
-            "warning: the BSP is not a Git repository, so team/A@same-or-dev keeps "
-            f"{first['modules']['team/A']['commit'][:12]} from xrobot.lock",
-            errors.getvalue(),
-        )
+        # --update 要按 BSP 的分支重新解析：报错并且不改动任何文件。
+        # --update would re-resolve by the BSP branch: it fails and changes no file.
+        before = self.lock_bytes()
+        head = self.head("team/A")
+        with self.assertRaisesMessage(
+            ValueError,
+            "`--update` would resolve team/A@same-or-dev by following the BSP branch, but the "
+            "BSP is not a Git repository; pass --context-ref refs/heads/<branch>",
+        ):
+            self.sync(update=[])
+        self.assertEqual(self.lock_bytes(), before)
+        self.assertEqual(self.head("team/A"), head)
+        self.assertEqual(self.sync(update=["team/C"])["modules"]["team/C"]["resolved_ref"], "dev")
 
     def test_a_detached_bsp_checkout_needs_a_context_ref(self):
         self.upstream("team/A")

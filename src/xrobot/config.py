@@ -254,6 +254,11 @@ def _reject_anchors_and_tags(text: str, source: str) -> None:
     """拒绝 YAML 锚点、别名和标签。
     Reject YAML anchors, aliases and tags.
 
+    只有锚点没有值的标量单独说明：跟着旧提示写成 ``gpio: &led`` 的行值是空的，报错建议
+    去掉 & 只写名字。
+    A scalar whose anchor has no value gets its own message: a line like ``gpio: &led``,
+    written after the old hint, holds an empty value, and the bare name is suggested.
+
     Raises:
         ConfigError: 使用了其中之一；报错带行号。
             One is used; the message names the line.
@@ -261,6 +266,26 @@ def _reject_anchors_and_tags(text: str, source: str) -> None:
     for event in yaml.parse(text, Loader=yaml.BaseLoader):
         line = event.start_mark.line + 1
         if isinstance(event, yaml.AliasEvent) or getattr(event, "anchor", None):
+            anchor = getattr(event, "anchor", "")
+            lines = text.splitlines()
+            raw = lines[line - 1] if line <= len(lines) else ""
+            rest = raw[event.start_mark.column :].strip()
+            key = raw[: event.start_mark.column].rpartition(":")[0].strip()
+            if (
+                anchor
+                and key
+                and isinstance(event, yaml.ScalarEvent)
+                and event.value == ""
+                and re.fullmatch(r"&[\w.-]+(?:\s+#.*)?", rest)
+            ):
+                raise ConfigError(
+                    tr(
+                        f"{source}:{line}: &{anchor} makes the value of {key} an empty YAML "
+                        f"anchor; write the name without &, e.g. `{key}: {anchor}`",
+                        f"{source}:{line}: &{anchor} 使 {key} 的值成为空的 YAML 锚点；"
+                        f"请去掉 & 只写名字，例如 `{key}: {anchor}`",
+                    )
+                )
             raise ConfigError(
                 tr(
                     f"{source}:{line}: YAML anchors and aliases are not allowed; reference "

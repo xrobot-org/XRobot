@@ -125,11 +125,26 @@ def manifest_from_text(
         # Hand-written descriptions often read "Name: text", and YAML takes ": " as a
         # mapping.
         detail = str(error).splitlines()[0]
+        # YAML 的行列号相对 manifest 块的内容；换算成头文件里的真实位置。
+        # The line and column of the YAML error are relative to the manifest block; turn
+        # them into the real position in the header.
+        mark = error.problem_mark or error.context_mark
+        position = str(path)
+        if mark is not None:
+            content = matches[0].group(2)
+            offset = min(
+                sum(len(part) + 1 for part in content.split("\n")[: mark.line]) + mark.column,
+                len(content),
+            )
+            before = text[: matches[0].start(2) + offset]
+            line = before.count("\n") + 1
+            column = len(before) - (before.rfind("\n") + 1) + 1
+            position = f"{path}:{line}:{column}"
         raise ValueError(
             tr(
-                f"{path}: the MODULE MANIFEST is not valid YAML ({detail}); quote a value that "
+                f"{position}: the MODULE MANIFEST is not valid YAML ({detail}); quote a value that "
                 'contains ": " or "#"',
-                f'{path}: MODULE MANIFEST 不是合法的 YAML（{detail}）；含有 ": " 或 "#" 的值'
+                f'{position}: MODULE MANIFEST 不是合法的 YAML（{detail}）；含有 ": " 或 "#" 的值'
                 "需要加引号",
             )
         ) from None

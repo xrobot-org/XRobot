@@ -440,9 +440,11 @@ def binding_candidates(
     The names a parameter can take: objects whose type is target's or certainly derives
     publicly from it.
 
-    指针参数的候选写成 &名字；依赖指针最后加上 nullptr（不使用这个可选依赖）。
-    Candidates of a pointer parameter are written &name; a dependency pointer also gets
-    nullptr last (the optional dependency is not used).
+    指针参数的候选写成裸名（生成器对指针参数的裸名自动取地址）；依赖指针最后加上
+    nullptr（不使用这个可选依赖）。
+    Candidates of a pointer parameter are written as bare names (the generator takes the
+    address of a bare name automatically); a dependency pointer also gets nullptr last
+    (the optional dependency is not used).
 
     Args:
         named: 名字到对象类型的映射（注册名、排在前面的实例），按候选顺序。
@@ -454,10 +456,11 @@ def binding_candidates(
         source, _, source_pointers, _ = type_shape(cpp_type)
         if source != base and not (index is not None and index.derives_from(source, base)):
             continue
-        if len(source_pointers) == len(pointers):
+        # 注册的指针直接传，对象由生成器取地址：指针参数的候选一律是裸名。
+        # A registered pointer is passed as it is and an object gets its address taken by
+        # the generator: the candidates of a pointer parameter are always bare names.
+        if len(source_pointers) == len(pointers) or (not source_pointers and len(pointers) == 1):
             result.append(name)
-        elif not source_pointers and len(pointers) == 1:
-            result.append("&" + name)
     if dependency and len(pointers) == 1:
         result.append("nullptr")
     return result
@@ -541,6 +544,15 @@ def constructor_for(
             if text is not None and text.lstrip("&") in known:
                 source = known[text.lstrip("&")]
                 if text.startswith("&"):
+                    source += "*"
+                elif (
+                    len(type_shape(target)[2]) == 1
+                    and not type_shape(source)[2]
+                    and type_shape(target)[3] != "&"
+                ):
+                    # 指针参数的裸名传对象地址：按取地址后的类型匹配。
+                    # A bare name of a pointer parameter passes the object's address; match
+                    # by the type after taking it.
                     source += "*"
                 if type_shape(source)[0] != type_shape(target)[0]:
                     good = False
