@@ -44,12 +44,65 @@ class SharedModuleWorkflow(TempDirTestCase):
         self.assertEqual(json.loads(caller["jobs"]["build"]["with"]["template-args"]), values)
         for name in ("xrobot-ref", "libxr-ref", "dependency-ref", "template-args"):
             self.assertIn(name, inputs)
-        self.assertEqual(inputs["xrobot-ref"]["default"], "master")
-        self.assertEqual(inputs["libxr-ref"]["default"], "master")
+        # 三个 ref 输入默认为空：空 = 按事件自动解析，填值 = 覆盖。
+        # The three ref inputs default to empty: empty = resolve from the event, a value
+        # overrides.
+        self.assertEqual(inputs["xrobot-ref"]["default"], "")
+        self.assertEqual(inputs["libxr-ref"]["default"], "")
+        self.assertEqual(inputs["dependency-ref"]["default"], "")
         steps = "\n".join(str(step.get("run", "")) for step in shared["jobs"]["build"]["steps"])
         self.assertIn('xrobot check-module "$XR_MODULE_ID"', steps)
         self.assertIn("add_library(module_check OBJECT module_check.cpp)", steps)
         self.assertNotRegex(steps, r"git (tag|push)")
+
+    def test_the_context_refs_follow_one_rule_and_the_default_build_keeps_assertions(self):
+        """依赖模块、LibXR、XRobot 工具的 ref 由解析步骤按事件统一求出；默认 RelWithDebInfo
+        构建带断言。
+        The refs of dependency modules, LibXR and the XRobot tools are resolved by one step
+        from the event; the default RelWithDebInfo build keeps the assertions.
+        """
+        shared = yaml.safe_load(
+            (REPOSITORY / ".github/workflows/module-ci.yml").read_text(encoding="utf-8")
+        )
+        inputs = shared.get("on", shared.get(True))["workflow_call"]["inputs"]
+        self.assertEqual(inputs["build-type"]["default"], "RelWithDebInfo")
+        steps = shared["jobs"]["build"]["steps"]
+        resolve = next(s for s in steps if s.get("id") == "context")
+        # 解析步骤对每个仓库 ls-remote 判断同名分支，不存在退回 dev（same-or-dev）。
+        # The resolution step ls-remotes every repository for a branch of the same name and
+        # falls back to dev when it is missing (same-or-dev).
+        self.assertIn("git ls-remote --exit-code --heads", str(resolve.get("run", "")))
+        self.assertLess(
+            steps.index(resolve),
+            steps.index(next(s for s in steps if s.get("name") == "Checkout XRobot")),
+        )
+        for step in steps:
+            if step.get("uses") != "actions/checkout@v4":
+                continue
+            if step["with"]["path"] == ".tools/XRobot":
+                self.assertEqual(step["with"]["ref"], "${{ steps.context.outputs.xrobot }}")
+            elif step["with"]["path"] == "libxr":
+                self.assertEqual(step["with"]["ref"], "${{ steps.context.outputs.libxr }}")
+        probe = next(s for s in steps if "PYCODE" in str(s.get("run", "")))
+        self.assertEqual(
+            probe["env"]["XR_DEPENDENCY_REF"], "${{ steps.context.outputs.dependency }}"
+        )
+        # 默认 RelWithDebInfo 用 -O2 -g（不带 NDEBUG，标准 assert 与 eigen_assert 生效）
+        # 和 LIBXR_DEBUG_BUILD=ON 配置；cmake-options 仍追加在最后。
+        # The default RelWithDebInfo is configured with -O2 -g (no NDEBUG, so assert() and
+        # eigen_assert stay active) and LIBXR_DEBUG_BUILD=ON; cmake-options still come last.
+        build = "\n".join(
+            str(s.get("run", "")) for s in steps if "cmake -S ." in str(s.get("run", ""))
+        )
+        self.assertIn("RELWITHDEBINFO='-O2 -g'", build)
+        self.assertIn("-DLIBXR_DEBUG_BUILD=ON", build)
+        # 注释可以提到 NDEBUG，代码里不能有。
+        # Comments may mention NDEBUG; the code must not.
+        code = "\n".join(line for line in build.splitlines() if not line.strip().startswith("#"))
+        self.assertNotIn("NDEBUG", code)
+        cmake = next(line for line in build.splitlines() if line.strip().startswith("cmake -S ."))
+        self.assertIn("-DCMAKE_BUILD_TYPE=${{ inputs.build-type }}", cmake)
+        self.assertTrue(cmake.rstrip().endswith("${{ inputs.cmake-options }}"))
 
 
 class ModuleCiPreparation(CliMixin, UpstreamTestCase):
