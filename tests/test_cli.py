@@ -877,8 +877,8 @@ class Setup(CliMixin, UpstreamTestCase):
         self.fails(
             "setup",
             "--frozen",
-            message="installed xrobot 1.0.0 differs from the pinned 0.9.0 (--frozen requires the "
-            "pinned version)",
+            message=f"installed xrobot {__version__} differs from the pinned 0.9.0 (--frozen "
+            "requires the pinned version)",
         )
         self.configure(["team/Led@master"], pin="0123456789abcdef0123456789abcdef01234567")
         _, err = self.ok("setup", "--frozen")
