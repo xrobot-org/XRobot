@@ -200,7 +200,7 @@ def cmd_setup(args: argparse.Namespace) -> None:
         # --update 会同步每份配置；有旧格式的配置时先报错，一个文件也不改。
         # --update syncs every configuration; an old one is reported before any file changes.
         _reject_pre_1_0(project, project.configs())
-    discard_local = list(args.discard_local) if args.discard_local is not None else None
+    leave_local = list(args.leave_local) if args.leave_local is not None else None
     lock = sync_modules(
         project,
         update,
@@ -208,7 +208,7 @@ def cmd_setup(args: argparse.Namespace) -> None:
         args.offline,
         args.context_ref,
         args.release_ref,
-        discard_local,
+        leave_local,
     )
     count = _count(len(lock["modules"]), "Module commit", "模块提交")
     print(tr(f"Resolved {count}", f"已解析 {count}"))
@@ -957,14 +957,15 @@ def parser() -> argparse.ArgumentParser:
         help=tr("refuse unreleased commits for this target ref", "拒绝这个目标 ref 上未发布的提交"),
     )
     setup.add_argument(
-        "--discard-local",
+        "--leave-local",
         nargs="+",
         metavar="MODULE",
         help=tr(
-            "move the named Modules to their resolved commits, discarding their unpushed "
-            "local commits (printed first); uncommitted changes are still kept",
-            "把点名的模块移到解析出的提交，丢弃其未推送的本地提交（会先打印）；"
-            "未提交的修改仍然保留",
+            "move the named Modules to their resolved commits; their unpushed local commits "
+            "stay on the original branch or in the reflog (printed first); uncommitted changes "
+            "are kept",
+            "把点名的模块移到解析出的提交；其未推送的本地提交保留在原分支或 reflog 中（会先"
+            "打印）；未提交的修改保留",
         ),
     )
     _line_directives(setup)

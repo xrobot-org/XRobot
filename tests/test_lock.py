@@ -414,11 +414,12 @@ class LocalWork(UpstreamTestCase):
         run_git(folder, "commit", "-q", "-am", "local")
         local = run_git(folder, "rev-parse", "HEAD")
         before = self.lock_bytes()
-        # 不加 --discard-local 仍然拒绝：报错提示该选项及其后果（丢弃本地提交、
-        # 直接移到目标提交）。frozen 的目标是 lock 的提交，--update 是解析出的提交。
-        # Without --discard-local the refusal stays, with the option and its effect in the
-        # error (the local commits are discarded for a direct move to the target). The
-        # target is the locked commit for --frozen and the resolved one for --update.
+        # 不加 --leave-local 仍然拒绝：报错提示该选项，并说明本地提交的去向
+        # （保留在原分支或 reflog 中，不删除）。
+        # Without --leave-local the refusal stays, with the option in the error and where
+        # the local commits end up (they stay on the original branch or in the reflog, they
+        # are not deleted). The target is the locked commit for --frozen and the resolved
+        # one for --update.
         for flags, target in (
             ({"update": []}, run_git(self.a, "rev-parse", "master")),
             ({"frozen": True}, self.locked),
@@ -430,15 +431,16 @@ class LocalWork(UpstreamTestCase):
                     f"team/A is at local commit {local[:12]} that is not on any remote branch or "
                     "tag. While developing a module, keep your changes uncommitted; when they are "
                     "ready, push them to a branch of the module and run "
-                    f"`xrobot setup --update team/A`, or run `xrobot setup --discard-local "
-                    f"team/A` to move it to {target[:12]} and discard the local commits",
+                    f"`xrobot setup --update team/A`, or run `xrobot setup --leave-local "
+                    f"team/A` to move it to {target[:12]}; the local commits stay on the "
+                    "original branch or in the reflog",
                 ),
             ):
                 self.sync(**flags)
             self.assertEqual(self.head("team/A"), local)
         self.assertEqual(self.lock_bytes(), before)
 
-    def test_discard_local_moves_only_the_named_modules(self):
+    def test_leave_local_moves_only_the_named_modules(self):
         b = self.upstream("team/B")
         self.configure(["team/A", "team/B"])
         self.sync()
@@ -459,26 +461,28 @@ class LocalWork(UpstreamTestCase):
             )
             for identity in ("team/A", "team/B")
         }
-        # 未点名的模块仍然拒绝，报错提示 --discard-local 及其后果。
-        # An unnamed Module is still refused, with the --discard-local hint and its effect.
+        # 未点名的模块仍然拒绝，报错提示 --leave-local，并说明本地提交的去向。
+        # An unnamed Module is still refused, with the --leave-local hint and where the
+        # local commits end up.
         with self.assertRaisesMessage(
             ValueError,
             f"team/B is at local commit {local_b[:12]} that is not on any remote branch or "
             "tag. While developing a module, keep your changes uncommitted; when they are "
             "ready, push them to a branch of the module and run "
-            f"`xrobot setup --update team/B`, or run `xrobot setup --discard-local team/B` "
-            f"to move it to {run_git(b, 'rev-parse', 'master')[:12]} and discard the local "
-            "commits",
+            f"`xrobot setup --update team/B`, or run `xrobot setup --leave-local team/B` "
+            f"to move it to {run_git(b, 'rev-parse', 'master')[:12]}; the local commits "
+            "stay on the original branch or in the reflog",
         ):
-            self.sync(update=[], discard_local=["team/A"])
+            self.sync(update=[], leave_local=["team/A"])
         self.assertEqual(self.head("team/A"), local_a)
         self.assertEqual(self.head("team/B"), local_b)
-        # 点名的模块直接检出目标提交：先打印丢弃的提交和文件，不建备份分支。
-        # A named Module is checked out at the target directly: the discarded commits and
-        # their files are printed first, without a backup branch.
+        # 点名的模块直接检出目标提交：先打印移动的提交、改动文件和本地提交的去向，不建备份分支。
+        # A named Module is checked out at the target directly: the moved commits, their
+        # files and where the local commits end up are printed first, without a backup
+        # branch.
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
-            moved = self.sync(update=[], discard_local=["team/A", "team/B"])
+            moved = self.sync(update=[], leave_local=["team/A", "team/B"])
         text = output.getvalue()
         for identity, local in (("team/A", local_a), ("team/B", local_b)):
             self.assertNotEqual(moved["modules"][identity]["commit"], local)
@@ -492,7 +496,48 @@ class LocalWork(UpstreamTestCase):
                 branches[identity],
             )
 
-    def test_discard_local_still_refuses_uncommitted_changes(self):
+    def test_leave_local_keeps_the_commits_on_their_local_branch(self):
+        folder = self.modules / "team/A"
+        run_git(folder, "checkout", "-q", "-b", "work")
+        (folder / "A.hpp").write_bytes((folder / "A.hpp").read_bytes() + b"\n// local\n")
+        run_git(folder, "commit", "-q", "-am", "local")
+        local = self.head("team/A")
+        target = run_git(self.a, "rev-parse", "master")
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            moved = self.sync(update=[], leave_local=["team/A"])
+        # 移动后模块停在目标提交上，分支 work 原封不动，仍指向原本地提交。
+        # After the move the Module sits at the target commit, and the branch work is
+        # untouched, still pointing at the original local commit.
+        self.assertEqual(moved["modules"]["team/A"]["commit"], target)
+        self.assertEqual(self.head("team/A"), target)
+        self.assertEqual(run_git(folder, "rev-parse", "work"), local)
+        # 打印提到本地提交留在了哪个分支。
+        # The print names the branch the local commits stay on.
+        self.assertIn("work", output.getvalue())
+
+    def test_leave_local_names_the_reflog_for_a_detached_head(self):
+        folder = self.modules / "team/A"
+        # 克隆留下的检出在 master 分支上；先游离再提交，模拟直接停在提交上的检出。
+        # The checkout left by the clone sits on master; detach before committing to model
+        # a checkout parked directly at a commit.
+        run_git(folder, "checkout", "-q", "--detach")
+        (folder / "A.hpp").write_bytes((folder / "A.hpp").read_bytes() + b"\n// local\n")
+        run_git(folder, "commit", "-q", "-am", "local")
+        local = self.head("team/A")
+        target = run_git(self.a, "rev-parse", "master")
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            moved = self.sync(update=[], leave_local=["team/A"])
+        self.assertEqual(moved["modules"]["team/A"]["commit"], target)
+        # 游离 HEAD 上的本地提交只能从 reflog 找回：打印提到 reflog 和完整的原 HEAD 提交号。
+        # Local commits of a detached HEAD are only recoverable through the reflog: the
+        # print names it and gives the full original HEAD commit.
+        text = output.getvalue()
+        self.assertIn("reflog", text)
+        self.assertIn(local, text)
+
+    def test_leave_local_still_refuses_uncommitted_changes(self):
         folder = self.modules / "team/A"
         run_git(folder, "checkout", "-q", "-b", "work")
         (folder / "A.hpp").write_bytes((folder / "A.hpp").read_bytes() + b"\n// local\n")
@@ -505,7 +550,7 @@ class LocalWork(UpstreamTestCase):
             "team/A has uncommitted changes; they are kept, but the lock cannot move it. "
             "Commit and push them, or discard them, first",
         ):
-            self.sync(update=[], discard_local=["team/A"])
+            self.sync(update=[], leave_local=["team/A"])
         self.assertEqual(header.read_bytes(), before)
 
     def test_a_name_matching_several_locked_modules_is_ambiguous(self):
@@ -517,22 +562,22 @@ class LocalWork(UpstreamTestCase):
         # The last-segment match folds the case, so the short name A of team/A also matches
         # other/a: report the match as ambiguous with the ids listed, not as missing.
         with self.assertRaisesMessage(ValueError, "Ambiguous Module A; specify other/a, team/A"):
-            self.sync(update=[], discard_local=["A"])
+            self.sync(update=[], leave_local=["A"])
         # 一个模块都没命中的名字仍然报 lock 中没有。
         # A name matching no Module still reports that it is not in the lock.
         with self.assertRaisesMessage(
             ValueError,
-            "missing is not in xrobot.lock; `--discard-local` takes Module ids from the lock",
+            "missing is not in xrobot.lock; `--leave-local` takes Module ids from the lock",
         ):
-            self.sync(update=[], discard_local=["missing"])
+            self.sync(update=[], leave_local=["missing"])
 
     def test_update_a_name_matching_several_locked_modules_is_ambiguous(self):
         self.upstream("other/a")
         self.configure(["team/A", "other/a"])
         self.sync()
-        # 与 --discard-local 一样，--update 点名命中多个模块时报歧义并列出命中的 id，
+        # 与 --leave-local 一样，--update 点名命中多个模块时报歧义并列出命中的 id，
         # 而不是说 lock 中没有。
-        # Like --discard-local, --update reports a name matching several locked Modules as
+        # Like --leave-local, --update reports a name matching several locked Modules as
         # ambiguous with the ids listed, not as missing.
         with self.assertRaisesMessage(ValueError, "Ambiguous Module A; specify other/a, team/A"):
             self.sync(update=["A"])
