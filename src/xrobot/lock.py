@@ -1338,12 +1338,22 @@ def sync_modules(
                     for k in lock["modules"]
                     if name.casefold() in (k.casefold(), k.rsplit("/", 1)[-1].casefold())
                 ]
-                if len(matches) != 1:
+                if not matches:
                     raise ValueError(
                         tr(
                             f"{name} is not in xrobot.lock; `--update` takes Module ids from the "
                             "lock",
                             f"xrobot.lock 中没有 {name}；`--update` 只接受 lock 中的模块 id",
+                        )
+                    )
+                if len(matches) > 1:
+                    # 与 --discard-local 一样，命中多个模块时报歧义并列出命中的 id。
+                    # Like --discard-local, several matches are ambiguous, with the matched
+                    # ids listed.
+                    raise ValueError(
+                        tr(
+                            f"Ambiguous Module {name}; specify {', '.join(matches)}",
+                            f"模块 {name} 有歧义；请指定 {'、'.join(matches)}",
                         )
                     )
                 named.add(matches[0])
