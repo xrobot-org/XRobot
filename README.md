@@ -78,10 +78,10 @@ run a different version than expected, and different versions generate different
 `xrobot --version` shows the version in use.
 
 BSP 使用的 XRobot 版本记录在 `Modules/modules.yaml` 的 `xrobot:` 字段中，安装时应与之一致，例如
-`pipx install xrobot==1.0.0`。
+`pipx install xrobot==1.0.1`。
 
 The XRobot version a BSP uses is recorded in the `xrobot:` field of `Modules/modules.yaml`;
-install the same version, e.g. `pipx install xrobot==1.0.0`.
+install the same version, e.g. `pipx install xrobot==1.0.1`.
 
 ---
 
@@ -120,7 +120,7 @@ in `xrobot.lock`. Later runs check out the locked commits, so the same BSP gets 
 Module code on every machine; `xrobot setup --update` upgrades the Modules.
 
 ```yaml
-xrobot: 1.0.0
+xrobot: 1.0.1
 modules:
   - xrobot-org/BMI088@same-or-dev
   - xrobot-org/MadgwickAHRS@same-or-dev
