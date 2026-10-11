@@ -32,12 +32,40 @@ Hardware testing of a BSP is arranged by its maintainers.
 
 ## 发布 / Publishing
 
+各仓库的 master 只从 dev 合入。dev 向 master 的 PR 用 merge commit 合并，合并后把 dev 快进到
+master，两条分支指向同一个提交。BSP 的 `xrobot.lock` 按模块的 master 解析，BSP dev 上的 CI 用
+`--release-ref` 拒绝不在模块 dev 上的提交；squash 和 rebase 在 master 上产生 dev 没有的提交，
+dev 也就无法快进到 master。所有新 tag 都是小写 `v` 加版本号，已有的大写 `V` tag 保留不动。
+
+模块的 PR 同样用 merge commit 合并。功能分支并入 dev（随后随 dev 的快进进入 master）后，它的提交
+成为这些分支的祖先，BSP 锁定在这些提交上的 lock 仍在模块的发布线上，`--frozen --release-ref` 门禁
+自动通过，无需刷新 lock；只有模块以 squash、rebase 等改写历史的方式合并时，锁定的提交才不在发布线上，
+按门禁报错给出的命令刷新 lock，例如 `xrobot setup --update <模块> --context-ref refs/heads/dev`。
+引用上游分支的下游 PR 要等上游合并后手动重跑。
+
+Each repository's master receives merges only from dev. A pull request from dev into master is
+merged with a merge commit, and dev is then fast-forwarded to master, so both branches point at
+the same commit. A BSP's `xrobot.lock` resolves against the master branches of its Modules, and
+the CI on the BSP's dev uses `--release-ref` to refuse commits that are not on a Module's dev;
+squash and rebase create commits on master that dev does not have, so dev cannot be
+fast-forwarded to master. Every new tag is a lowercase `v` plus the version; the existing
+uppercase `V` tags stay as they are.
+
+Module pull requests are merged with merge commits as well. Once a feature branch is merged
+into dev (and carried into master by the fast-forward), its commits are ancestors of those
+branches: a lock locked on them stays on the Module's release line, and the
+`--frozen --release-ref` gate passes without refreshing the lock. Only a merge by squash, rebase
+or another history rewrite leaves the locked commit off the release line; refresh the lock with
+the command the gate error prints, such as
+`xrobot setup --update <Module> --context-ref refs/heads/dev`. A downstream pull request that
+references the upstream branch is re-run manually after the upstream merge.
+
 全部检查通过、并用 `tools/check_release.py` 核对验收记录（见下一节）后，按以下顺序发布。每一步
 依赖的东西都在它之前就位：
 
 1. LibXR：先在 master 上手动运行一次 “Build Docs Image” 工作流，并把 GHCR 上的 `libxr-docs`
    包设为公开（API 文档的部署任务拉取这个镜像）；然后从 dev 向 master 提交 PR 并合并，在合并
-   提交上创建 GitHub Release，tag 为 `V` 加版本号（如 `V2.0.0`）。
+   提交上创建 GitHub Release，tag 为 `v` 加版本号（如 `v2.0.1`）。
 2. xr-syntax 版本有变化时发布 xr-syntax。
 3. CodeGenerator 和 XRobot 从 dev 合入 master，在 master 上创建 GitHub Release，tag 为 `v` 加版本号
    （如 `v1.0.0`），发布工作流随即构建并上传到 PyPI。tag 只标记提交，`pyproject.toml` 中必须已经
@@ -48,8 +76,12 @@ Hardware testing of a BSP is arranged by its maintainers.
 5. 各模块在 dev 上把 CI 改为调用 `module-ci.yml@v1`（删去指向 dev 的 `xrobot-ref`、`libxr-ref`、
    `dependency-ref`），再从 dev 合入 master；模块源（catalog）随后合入 master 并重新部署。
 6. 各 BSP 在 dev 上把 LibXR 子模块更新到第 1 步合入的提交，CI 改为调用 `bsp-stm32-ci.yml@v1`，
-   按模块的 master 重新解析 `xrobot.lock`，再从 dev 合入 master。模板仓库同样更新 LibXR 子模块。
-7. 文档网站从 dev 合入 master，`master` 的推送触发部署（Pages 的 `github-pages` 环境需允许 `master`）；发布 VS Code 扩展。
+   按模块的 master 重新解析 `xrobot.lock`，再从 dev 合入 master。STM32 BSP 的 master 推送由
+   `bsp-stm32-ci.yml` 打下一个补丁号 tag（首次为 `v1.0.0`）并发布固件，合并提交已有 `v` tag 时
+   由那个 tag 发布。模板仓库同样在 dev 上更新 LibXR 子模块，再从 dev 合入 master。
+7. 文档网站从 dev 合入 master，`master` 的推送触发部署（Pages 的 `github-pages` 环境需允许 `master`）。
+   VS Code 扩展从 dev 合入 master，在合并提交上推送 tag `v` 加版本号（与 `package.json` 一致），
+   Release 工作流打包 `.vsix` 并创建 GitHub Release；扩展随后上架 VS Code Marketplace。
 
 The release follows these steps in this order once every check has passed and
 `tools/check_release.py` has checked the acceptance record (next section); each step finds
@@ -73,9 +105,15 @@ what it depends on already in place:
    Sources (catalogs) then merge into master and are deployed again.
 6. Each BSP updates its LibXR submodule on dev to the commit merged in step 1, switches its CI to
    `bsp-stm32-ci.yml@v1`, resolves `xrobot.lock` again against the master branches of its
-   Modules, and then merges dev into master. The template repositories update their LibXR
-   submodule as well.
-7. The documentation website merges dev into master, and the push to `master` deploys it (the `github-pages` environment of Pages has to allow `master`); the VS Code extension is published.
+   Modules, and then merges dev into master. On the push to master of an STM32 BSP,
+   `bsp-stm32-ci.yml` tags the next patch version (`v1.0.0` for the first) and publishes the
+   firmware; when the merge commit already has a `v` tag, that tag publishes it. The template repositories update their LibXR
+   submodule on dev as well and then merge dev into master.
+7. The documentation website merges dev into master, and the push to `master` deploys it (the
+   `github-pages` environment of Pages has to allow `master`). The VS Code extension merges dev
+   into master and pushes the tag `v` plus the version (matching `package.json`) on the merge
+   commit; the Release workflow packages the `.vsix` and creates the GitHub Release, and the
+   extension is then published to the VS Code Marketplace.
 
 ```sh
 git tag -f v1 'v1.0.0^{commit}'

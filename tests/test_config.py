@@ -173,6 +173,36 @@ class YamlFeatures(TestCase):
             ):
                 load(text)
 
+    def test_an_anchor_without_a_value_suggests_the_bare_name(self):
+        """跟着旧提示写的 ``gpio: &led`` 单独说明是空锚点，建议去掉 & 只写名字。
+        A ``gpio: &led`` line written after the old hint gets its own message about the empty
+        anchor, suggesting the bare name without &.
+        """
+        with self.assertRaisesMessage(
+            ConfigError,
+            "cfg.yaml:1: &led makes the value of gpio an empty YAML anchor; write the name "
+            "without &, e.g. `gpio: led`",
+        ):
+            load("gpio: &led\n")
+        # 有值的锚点、映射上的锚点、别名和不带键的值仍是原来的提示。
+        # An anchor with a value, one on a mapping, an alias and a keyless value keep the
+        # original hint.
+        for text, line in (
+            ("a: &x 1\nb: *x\n", 1),
+            ("modules:\n  - &first {module: Foo, id: foo}\n", 2),
+            ("a: &x\n  b: 1\n", 1),
+            ("&x\n", 1),
+        ):
+            with (
+                self.subTest(text=text),
+                self.assertRaisesMessage(
+                    ConfigError,
+                    f"cfg.yaml:{line}: YAML anchors and aliases are not allowed; reference "
+                    "instances by id and share values through constexprs",
+                ),
+            ):
+                load(text)
+
     def test_tags_are_rejected(self):
         for text, where in (
             ("modules: !!seq []\n", "1: YAML tags (tag:yaml.org,2002:seq)"),
@@ -356,7 +386,7 @@ class Structure(TestCase):
             self.assertEqual(
                 str(context.exception),
                 "cfg.yaml: this configuration uses the format of XRobot before 1.0 "
-                "(global_settings, name/constructor_args); XRobot 1.0 lists each instance as "
+                "(global_settings, name/constructor_args); xrobot 1.0 lists each instance as "
                 "module, id and args; replace the content of the file with `modules: []` (or "
                 "delete the file and run `xrobot init`), then recreate the instances with "
                 "`xrobot instance -c cfg.yaml add`",

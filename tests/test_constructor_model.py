@@ -7,6 +7,7 @@ from fixtures import BspTestCase, CxxMixin, TestCase, requires_cxx
 
 from xrobot.constructor_model import (
     argument_text,
+    binding_candidates,
     compliant_constructors,
     constructor_for,
     enrich_interface,
@@ -560,6 +561,21 @@ class ConstructorModel(TestCase):
             "(value) | (value) | (port)",
         ):
             constructor_for(model, [{"gain": "1"}], {}, "Foo", {})
+
+    def test_pointer_candidates_are_bare_names_and_selection_takes_the_address(self):
+        """指针参数的候选是裸名；构造函数选择按取地址后的类型匹配裸名，'&名字' 仍兼容。
+        The candidates of a pointer parameter are bare names; constructor selection matches a
+        bare name by the type after taking its address, and '&name' still works.
+        """
+        self.assertEqual(
+            binding_candidates(None, "LED*", {"led": "LED", "ledp": "LED*", "other": "Other"}),
+            ["led", "ledp", "nullptr"],
+        )
+        model = interface("class Foo { public: Foo(LED* led) {} Foo(int led = 0) {} };")
+        for value in ("led", "&led"):
+            with self.subTest(value=value):
+                chosen = constructor_for(model, [{"led": value}], {"led": "LED"}, "Foo", {})
+                self.assertEqual(chosen["arguments"][0]["type"], "LED*")
 
     def test_type_shape_splits_only_outer_declarators(self):
         self.assertEqual(

@@ -78,10 +78,10 @@ run a different version than expected, and different versions generate different
 `xrobot --version` shows the version in use.
 
 BSP 使用的 XRobot 版本记录在 `Modules/modules.yaml` 的 `xrobot:` 字段中，安装时应与之一致，例如
-`pipx install xrobot==1.0.0`。
+`pipx install xrobot==1.0.1`。
 
 The XRobot version a BSP uses is recorded in the `xrobot:` field of `Modules/modules.yaml`;
-install the same version, e.g. `pipx install xrobot==1.0.0`.
+install the same version, e.g. `pipx install xrobot==1.0.1`.
 
 ---
 
@@ -120,7 +120,7 @@ in `xrobot.lock`. Later runs check out the locked commits, so the same BSP gets 
 Module code on every machine; `xrobot setup --update` upgrades the Modules.
 
 ```yaml
-xrobot: 1.0.0
+xrobot: 1.0.1
 modules:
   - xrobot-org/BMI088@same-or-dev
   - xrobot-org/MadgwickAHRS@same-or-dev
@@ -137,10 +137,15 @@ xrobot-org/BMI088 [module] https://github.com/xrobot-org/BMI088.git
 xrobot-org/BMI270 [module] https://github.com/xrobot-org/BMI270.git
 ```
 
-`@same-or-dev` 表示优先使用与 BSP 同名的模块分支，不存在时使用 `dev`。
+`@same-or-dev` 表示优先使用与 BSP 同名的模块分支，不存在时使用 `dev`。依赖链上的 `@same`、
+`@same-or-dev` 请求和显式 tag、提交号都沿用最初的上下文分支：每一层各自查找同名分支、
+找不到再退回 `dev`，中间层退回 `dev` 不改变下一层跟随的分支。
 
 `@same-or-dev` selects the Module branch with the same name as the BSP's branch, falling
-back to `dev`.
+back to `dev`. Along the dependency chain, `@same` and `@same-or-dev` requests and explicit
+tags or commits all keep the original context branch: every layer looks for its own branch
+of that name and falls back to `dev`, and a middle layer's fallback does not change the
+branch the next layer follows.
 
 ---
 
@@ -161,6 +166,14 @@ modules:
 settings:
   monitor_sleep_ms: 1000
 ```
+
+指针参数的裸名由生成器自动取地址；带引号的 `'&名字'` 仍然接受，按写出的地址传递；可选的依赖不使用时写
+`nullptr`。不带引号的 `&名字` 是 YAML 锚点、值为空，报错会建议去掉 `&` 只写名字。
+
+The generator takes the address of a bare name for a pointer parameter automatically; the quoted
+`'&name'` is still accepted and passes the address as written; write `nullptr` to leave an optional
+dependency unused. Without quotes, `&name` is a YAML anchor with an empty value, and the error
+suggests dropping the `&` and writing the bare name.
 
 `LED_R` 由 BSP 在入口源文件中创建并注册，入口源文件最后调用 `XROBOT_MAIN()`：
 
@@ -327,6 +340,7 @@ checks, the optional inputs and the published files are described in
 | --- | --- | --- |
 | `xrobot init` | 创建 BSP 文件（含 `.gitignore` 和 `.gitattributes` 条目） | Create the BSP files, with `.gitignore` and `.gitattributes` entries |
 | `xrobot setup` | 拉取模块，检查所有配置，生成主函数 | Fetch Modules, check all configurations, generate the main function |
+| `xrobot setup --leave-local <模块...> [-f]` | 把点名的模块移到解析出的提交；未推送的本地提交保留在原分支或 reflog 中（会先打印）；-f 丢弃需要移动的点名模块的未提交修改（已跟踪的修改和未跟踪的文件，保留被忽略的文件），只作用于点名的模块 | Move the named Modules to their resolved commits; their unpushed local commits stay on the original branch or in the reflog (printed first); -f discards the uncommitted changes of the named Modules that have to move (tracked modifications and untracked files, ignored files are kept) and affects only the named Modules |
 | `xrobot gen [-c CONFIG] [--no-line-directives]` | 生成主函数，可切换配置，可省略 `#line` | Generate the main function, optionally for another configuration, optionally without `#line` |
 | `xrobot sync` | 按默认值补入模块新增的字段和参数，删除已移除的参数 | Add new fields and parameters with defaults and drop removed ones |
 | `xrobot format [--check]` | 整理配置格式 | Format the configurations |

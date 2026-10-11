@@ -519,7 +519,7 @@ class Pre10Configuration(EditTestCase):
         )
         message = (
             "User/xrobot.yaml: this configuration uses the format of XRobot before 1.0 "
-            "(global_settings, name/constructor_args); XRobot 1.0 lists each instance as "
+            "(global_settings, name/constructor_args); xrobot 1.0 lists each instance as "
             "module, id and args; replace the content of the file with `modules: []` (or "
             "delete the file and run `xrobot init`), then recreate the instances with "
             "`xrobot instance -c User/xrobot.yaml add`"
@@ -661,6 +661,92 @@ class SyncConfig(EditTestCase):
         config_edit.sync_config(self.path, modules, index)
         self.assertEqual(
             self.instances()[0]["args"][0]["runtime"], {"period": "5", "settle_us": "10U"}
+        )
+
+    def test_synced_defaults_become_native_yaml_values(self):
+        self.module(
+            "Clock",
+            "class Clock { public:\n"
+            "  class Runtime { public: Runtime(int period, int legacy_div = 3) {} };\n"
+            "  explicit Clock(Runtime runtime = Runtime(1)) {} };",
+        )
+        self.module(
+            "Clock",
+            "class Clock { public:\n"
+            "  class Runtime {\n"
+            "   public:\n"
+            "    struct Keep { int k = 0; bool on = false; };\n"
+            "    Runtime(int period, float ratio = 0.55, bool on = true, LibXR::Vector gains"
+            " = {0.5, 1.5}, int frames = 3, float eps = 0.550,\n"
+            "          Vendor::Options opts = {.k = 1, .on = false}, Keep keep = {.k = 2,"
+            " .on = true}) {} };\n"
+            "  explicit Clock(Runtime runtime = Runtime(1)) {} };",
+        )
+        modules, index = self.modules_and_index()
+        # 流格式的映射保持流格式：花括号初始化器成为原生的列表和带字段名的映射，不再需要
+        # 引号；索引外的 Vendor::Options 和转不了的 0.550 原样保留为字符串（gen 会当 C++
+        # 表达式），也不打提示。
+        # A flow mapping stays flow: brace initializers become native lists and mappings
+        # with field names and need no quotes; Vendor::Options outside the index and the
+        # unconvertible 0.550 stay raw strings that gen reads as C++ code, without a hint.
+        self.config(
+            "modules:\n  - module: team/Clock\n    id: clock\n    args:\n"
+            "      - runtime: {period: 5, legacy_div: 2}\n"
+        )
+        config_edit.sync_config(self.path, modules, index)
+        self.assertIn(
+            "      - runtime: {period: 5, ratio: 0.55, on: true, gains: [0.5, 1.5], frames: 3,"
+            " eps: 0.550, opts: '{.k = 1, .on = false}', keep: {k: 2, on: true}}\n",
+            self.text(),
+        )
+        # 块格式的映射同样写成原生结构。
+        # A block mapping is written in the native shape as well.
+        self.config(
+            "modules:\n  - module: team/Clock\n    id: clock\n    args:\n"
+            "      - runtime:\n          period: 5\n          legacy_div: 2\n"
+        )
+        config_edit.sync_config(self.path, modules, index)
+        self.assertIn(
+            "      - runtime:\n"
+            "          period: 5\n"
+            "          ratio: 0.55\n"
+            "          on: true\n"
+            "          gains:\n"
+            "            - 0.5\n"
+            "            - 1.5\n"
+            "          frames: 3\n"
+            "          eps: 0.550\n"
+            "          opts: '{.k = 1, .on = false}'\n"
+            "          keep:\n"
+            "            k: 2\n"
+            "            on: true\n",
+            self.text(),
+        )
+        runtime = self.instances()[0]["args"][0]["runtime"]
+        self.assertEqual(
+            list(runtime), ["period", "ratio", "on", "gains", "frames", "eps", "opts", "keep"]
+        )
+        self.assertEqual(
+            dict(runtime),
+            {
+                "period": "5",
+                "ratio": "0.55",
+                "on": "true",
+                "gains": ["0.5", "1.5"],
+                "frames": "3",
+                "eps": "0.550",
+                "opts": "{.k = 1, .on = false}",
+                "keep": {"k": "2", "on": "true"},
+            },
+        )
+        self.assertEqual(config_edit.sync_config(self.path, modules, index), "")
+        # gen 读回这份配置生成的 C++ 与默认值原文一致。
+        # The C++ gen writes from the configuration read back spells the defaults as before.
+        header = self.generate()
+        self.assertIn("0.55, true, LibXR::Vector{0.5, 1.5}, 3, 0.550", header)
+        self.assertIn(
+            "Vendor::Options{.k = 1, .on = false}, Clock::Runtime::Keep{.k = 2, .on = true})",
+            header,
         )
 
     def test_instances_that_match_no_constructor_are_left_alone(self):

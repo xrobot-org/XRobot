@@ -254,6 +254,11 @@ def _reject_anchors_and_tags(text: str, source: str) -> None:
     """拒绝 YAML 锚点、别名和标签。
     Reject YAML anchors, aliases and tags.
 
+    只有锚点没有值的标量单独说明：跟着旧提示写成 ``gpio: &led`` 的行值是空的，报错建议
+    去掉 & 只写名字。
+    A scalar whose anchor has no value gets its own message: a line like ``gpio: &led``,
+    written after the old hint, holds an empty value, and the bare name is suggested.
+
     Raises:
         ConfigError: 使用了其中之一；报错带行号。
             One is used; the message names the line.
@@ -261,6 +266,26 @@ def _reject_anchors_and_tags(text: str, source: str) -> None:
     for event in yaml.parse(text, Loader=yaml.BaseLoader):
         line = event.start_mark.line + 1
         if isinstance(event, yaml.AliasEvent) or getattr(event, "anchor", None):
+            anchor = getattr(event, "anchor", "")
+            lines = text.splitlines()
+            raw = lines[line - 1] if line <= len(lines) else ""
+            rest = raw[event.start_mark.column :].strip()
+            key = raw[: event.start_mark.column].rpartition(":")[0].strip()
+            if (
+                anchor
+                and key
+                and isinstance(event, yaml.ScalarEvent)
+                and event.value == ""
+                and re.fullmatch(r"&[\w.-]+(?:\s+#.*)?", rest)
+            ):
+                raise ConfigError(
+                    tr(
+                        f"{source}:{line}: &{anchor} makes the value of {key} an empty YAML "
+                        f"anchor; write the name without &, e.g. `{key}: {anchor}`",
+                        f"{source}:{line}: &{anchor} 使 {key} 的值成为空的 YAML 锚点；"
+                        f"请去掉 & 只写名字，例如 `{key}: {anchor}`",
+                    )
+                )
             raise ConfigError(
                 tr(
                     f"{source}:{line}: YAML anchors and aliases are not allowed; reference "
@@ -379,7 +404,7 @@ def value_text(value: object, field: str) -> str:
             tr(
                 f"{field}: the @ prefix of XRobot before 1.0 is gone; every value without quotes "
                 "or in single quotes is C++ code, and a double-quoted value is a C++ string",
-                f"{field}: XRobot 1.0 以前的 @ 前缀已经取消；不加引号或用单引号的值都是 C++ 代码，"
+                f"{field}: xrobot 1.0 以前的 @ 前缀已经取消；不加引号或用单引号的值都是 C++ 代码，"
                 "双引号中的值是 C++ 字符串",
             )
         )
@@ -470,7 +495,7 @@ def _check_value(value: object, field: str, errors: list[str]) -> None:
 
 
 def _pre_1_0_format(config: dict) -> bool:
-    """配置是否为 XRobot 1.0 以前的格式（global_settings、name/constructor_args）。
+    """配置是否为 xrobot 1.0 以前的格式（global_settings、name/constructor_args）。
     Whether the configuration uses the format of XRobot before 1.0 (global_settings,
     name/constructor_args).
     """
@@ -484,7 +509,7 @@ def _pre_1_0_format(config: dict) -> bool:
 
 
 def reject_pre_1_0_format(config: object, source: str = "config") -> None:
-    """配置为 XRobot 1.0 以前的格式时报错；编辑配置的命令在改动文件之前调用。
+    """配置为 xrobot 1.0 以前的格式时报错；编辑配置的命令在改动文件之前调用。
     Raise when a configuration uses the format of XRobot before 1.0; the commands that edit
     configurations call it before they change a file.
 
@@ -496,12 +521,12 @@ def reject_pre_1_0_format(config: object, source: str = "config") -> None:
         raise ConfigError(
             tr(
                 f"{source}: this configuration uses the format of XRobot before 1.0 "
-                "(global_settings, name/constructor_args); XRobot 1.0 lists each instance as "
+                "(global_settings, name/constructor_args); xrobot 1.0 lists each instance as "
                 "module, id and args; replace the content of the file with `modules: []` (or "
                 "delete the file and run `xrobot init`), then recreate the instances with "
                 f"`xrobot instance -c {source} add`",
-                f"{source}: 这份配置使用的是 XRobot 1.0 以前的格式（global_settings、"
-                "name/constructor_args）；XRobot 1.0 中每个实例写成 module、id 和 args；"
+                f"{source}: 这份配置使用的是 xrobot 1.0 以前的格式（global_settings、"
+                "name/constructor_args）；xrobot 1.0 中每个实例写成 module、id 和 args；"
                 "请把文件内容换成 `modules: []`（或删除文件后运行 `xrobot init`），再用 "
                 f"`xrobot instance -c {source} add` 重新添加实例",
             )

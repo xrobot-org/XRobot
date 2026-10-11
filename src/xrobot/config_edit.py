@@ -375,7 +375,7 @@ class ConfigFile:
         Read path; source is the file's name in errors, path by default.
 
         Raises:
-            ConfigError: 文件是 XRobot 1.0 以前的格式；编辑不会改动它。
+            ConfigError: 文件是 xrobot 1.0 以前的格式；编辑不会改动它。
                 The file uses the format of XRobot before 1.0; no edit touches it.
         """
         self.path = Path(path)
@@ -1181,6 +1181,59 @@ def _sync_mapping(
     return changed
 
 
+def _native_value(
+    value: str | None, index: TypeIndex, target: str | None = None, scope: tuple = ()
+) -> object:
+    """C++ 默认值的 YAML 原生结构：按位置的初始化器写成列表，指定初始化器写成带字段名的
+    映射，元素按字段类型递归转换；其余（字符串字面量、常量、工厂函数、T{…}、空的 {}）保留
+    原文。
+    The native YAML shape of a C++ default: a positional initializer becomes a list and a
+    designated one a mapping with field names, their elements converted by field type;
+    anything else (string literals, constants, factory calls, T{...}, the empty {}) stays as
+    written.
+
+    标量本来就是 C++ 代码文本，按 YAML 允许的原样写出即可；列表和映射写成原生结构后不再
+    需要引号。gen 只核对索引中的类型，指定初始化器只在类型于索引中时才转换，否则保留原文，
+    gen 读回的仍是原来的表达式；解析不了的初始化器（重复字段）也保留原文。
+    A scalar is C++ code text and is written as YAML allows it; native lists and mappings
+    need no quotes. gen verifies only types in the index, so a designated initializer is
+    converted only for a type the index locates and otherwise stays as written for gen to
+    read back one and the same expression; so does an initializer that cannot be parsed (a
+    repeated field).
+    """
+    if not isinstance(value, str):
+        return value
+    try:
+        tree = initializer_tree(value.strip())
+    except ValueError:
+        return value
+    if isinstance(tree, list):
+        # 按位置的空初始化器 {} 不转：写成 YAML 空列表后 gen 会拒绝索引中的类型。
+        # A positional empty initializer {} is not converted: as a YAML list gen would
+        # reject it for a type in the index.
+        return value if not tree else [_native_value(item, index) for item in tree]
+    located = index.resolve(target, scope) if target else None
+    if located is None or located.mapping_problem() is not None:
+        return value
+    if located.is_aggregate():
+        fields = {n: t for n, t, _ in located.fields()}
+    else:
+        ctors = [c for c in located.constructors() if c]
+        matching = [c for c in ctors if [p["name"] for p in c] == list(tree)]
+        if len(matching) != 1:
+            return value
+        fields = {p["name"]: p["type"] for p in matching[0]}
+    return {
+        name: _native_value(
+            item,
+            index,
+            index.qualify_in(fields[name], located, target) if name in fields else None,
+            located.path,
+        )
+        for name, item in tree.items()
+    }
+
+
 def _sync_constructor_mapping(
     value: CommentedMap, entry: ClassEntry, index: TypeIndex, spelled: str
 ) -> bool:
@@ -1204,7 +1257,17 @@ def _sync_constructor_mapping(
         if p["name"] in value:
             items.append((p["name"], value[p["name"]]))
         else:
-            items.append((p["name"], index.qualify_in(p["default"], entry, spelled)))
+            items.append(
+                (
+                    p["name"],
+                    _native_value(
+                        index.qualify_in(p["default"], entry, spelled),
+                        index,
+                        index.qualify_in(p["type"], entry, spelled),
+                        entry.path,
+                    ),
+                )
+            )
     for key in list(value):
         del value[key]
     for key, child in items:

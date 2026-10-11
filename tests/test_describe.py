@@ -281,7 +281,7 @@ class Instances(DescribeTestCase):
         self.assertEqual(instances["base"]["candidates"]["motor"], ["motor0", "wheel"])
         self.assertEqual(instances["base"]["candidates"]["rate"], ["ProjectConstexpr::Rate"])
         self.assertEqual(instances["first"]["candidates"]["previous"], ["nullptr"])
-        self.assertEqual(instances["second"]["candidates"]["previous"], ["&first", "nullptr"])
+        self.assertEqual(instances["second"]["candidates"]["previous"], ["first", "nullptr"])
         self.assertEqual(instances["led"]["candidates"], {"gpio": ["led_pin"], "param": []})
 
     def test_unknown_modules_are_described_as_written(self):
@@ -413,7 +413,7 @@ class Diagnostics(DescribeTestCase):
                 "xrobot: 0.9.0\nmodules: []\n",
                 "0.9.0",
                 "warning",
-                f"installed XRobot {__version__} differs from the pinned 0.9.0",
+                f"installed xrobot {__version__} differs from the pinned 0.9.0",
             ),
             (
                 "xrobot: latest\nmodules: []\n",

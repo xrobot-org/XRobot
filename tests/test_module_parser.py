@@ -108,7 +108,7 @@ class Manifests(TestCase):
             ),
             (
                 block("module_description: old", version=""),
-                "A.hpp: this MODULE MANIFEST predates XRobot 1.0; update the Module to MODULE "
+                "A.hpp: this MODULE MANIFEST predates xrobot 1.0; update the Module to MODULE "
                 f"MANIFEST V2 with {keys} (the C++ constructor is the interface)",
             ),
             (
@@ -122,9 +122,9 @@ class Manifests(TestCase):
                 # Manifest keys from before 1.0; only the unsupported keys used to be listed,
                 # without saying that the Module predates 1.0.
                 block("description: old\nconstructor_args: []\ntemplate_args: []"),
-                "A.hpp: this Module predates XRobot 1.0 (manifest key(s) description, "
+                "A.hpp: this Module predates xrobot 1.0 (manifest key(s) description, "
                 "constructor_args, template_args); a BSP has to request a version of the Module "
-                "made for XRobot 1.0, such as `@dev`; the Module author moves these parameters "
+                "made for xrobot 1.0, such as its master branch (`@master`); the Module author moves these parameters "
                 f"into the C++ constructor and keeps only {keys} in MODULE MANIFEST V2",
             ),
             (
@@ -136,8 +136,8 @@ class Manifests(TestCase):
                 # 以前只报 YAML 的原始错误，不说明是哪个文件、怎么改。
                 # Only the raw YAML error used to be reported, without the file or the fix.
                 block("module_description: IMU / IMU driver: sampling\ndepends: []"),
-                "A.hpp: the MODULE MANIFEST is not valid YAML (mapping values are not allowed "
-                'here); quote a value that contains ": " or "#"',
+                "A.hpp:2:37: the MODULE MANIFEST is not valid YAML (mapping values are not "
+                'allowed here); quote a value that contains ": " or "#"',
             ),
         )
         for text, message in cases:
@@ -145,6 +145,25 @@ class Manifests(TestCase):
                 with self.assertRaises(ValueError) as context:
                     manifest_from_text(text, "A.hpp")
                 self.assertEqual(str(context.exception), message)
+
+    def test_a_yaml_error_is_reported_at_its_position_in_the_header(self):
+        """manifest 的 YAML 错误报头文件里的真实行列号，指向出错的字符。
+        A YAML error of the manifest is reported at its real line and column in the header,
+        pointing at the offending character.
+        """
+        text = (
+            "#pragma once\n"
+            "/* === MODULE MANIFEST V2 ===\n"
+            "module_description: Camera: the eye\n"
+            "=== END MANIFEST === */\n"
+            "class Camera {};\n"
+        )
+        with self.assertRaisesMessage(
+            ValueError,
+            "Camera.hpp:3:27: the MODULE MANIFEST is not valid YAML (mapping values are not "
+            'allowed here); quote a value that contains ": " or "#"',
+        ):
+            manifest_from_text(text, "Camera.hpp")
 
     def test_a_module_before_1_0_is_named_with_its_commit(self):
         text = (
@@ -154,9 +173,9 @@ class Manifests(TestCase):
         keys = "module_description, depends, standalone"
         with self.assertRaisesMessage(
             ValueError,
-            "A.hpp: team/A@0123456789ab predates XRobot 1.0 (manifest key(s) constructor_args, "
-            "required_hardware); a BSP has to request a version of the Module made for XRobot "
-            "1.0, such as `@dev`; the Module author moves these parameters into the C++ "
+            "A.hpp: team/A@0123456789ab predates xrobot 1.0 (manifest key(s) constructor_args, "
+            "required_hardware); a BSP has to request a version of the Module made for xrobot "
+            "1.0, such as its master branch (`@master`); the Module author moves these parameters into the C++ "
             f"constructor and keeps only {keys} in MODULE MANIFEST V2",
         ):
             manifest_from_text(text, "A.hpp", "team/A@0123456789ab")
@@ -164,8 +183,8 @@ class Manifests(TestCase):
             mock.patch.dict(os.environ, XR_LANG="zh"),
             self.assertRaisesMessage(
                 ValueError,
-                "A.hpp: 这个模块早于 XRobot 1.0（manifest 含有键 constructor_args、"
-                "required_hardware）；BSP 需要请求这个模块适用于 XRobot 1.0 的版本，例如 `@dev`；"
+                "A.hpp: 这个模块早于 xrobot 1.0（manifest 含有键 constructor_args、"
+                "required_hardware）；BSP 需要请求这个模块适用于 xrobot 1.0 的版本，例如模块的 master 分支（`@master`）；"
                 "模块作者要把这些参数移到 C++ 构造函数中，MODULE MANIFEST V2 只保留 "
                 "module_description、depends、standalone",
             ),

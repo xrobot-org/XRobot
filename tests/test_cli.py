@@ -430,7 +430,7 @@ class Commands(CliMixin, BspTestCase):
             out,
             "Added registered to User/xrobot.yaml; fill the null values (dependencies) before "
             "generating\n  ramfs (LibXR::RamFS&): ramfs\n"
-            "  database (LibXR::Database*): &database, nullptr\n",
+            "  database (LibXR::Database*): database, nullptr\n",
         )
 
     def test_instance_editing(self):
@@ -651,7 +651,7 @@ class Commands(CliMixin, BspTestCase):
         before = {p: p.read_bytes() for p in (self.root / "User").rglob("*.yaml")}
         message = (
             "User/products/old.yaml: this configuration uses the format of XRobot before 1.0 "
-            "(global_settings, name/constructor_args); XRobot 1.0 lists each instance as "
+            "(global_settings, name/constructor_args); xrobot 1.0 lists each instance as "
             "module, id and args; replace the content of the file with `modules: []` (or "
             "delete the file and run `xrobot init`), then recreate the instances with "
             "`xrobot instance -c User/products/old.yaml add`"
@@ -672,8 +672,8 @@ class Commands(CliMixin, BspTestCase):
         with mock.patch.dict(os.environ, XR_LANG="zh"):
             self.fails(
                 "format",
-                message="User/products/old.yaml: 这份配置使用的是 XRobot 1.0 以前的格式"
-                "（global_settings、name/constructor_args）；XRobot 1.0 中每个实例写成 module、id "
+                message="User/products/old.yaml: 这份配置使用的是 xrobot 1.0 以前的格式"
+                "（global_settings、name/constructor_args）；xrobot 1.0 中每个实例写成 module、id "
                 "和 args；请把文件内容换成 `modules: []`（或删除文件后运行 `xrobot init`），再用 "
                 "`xrobot instance -c User/products/old.yaml add` 重新添加实例",
             )
@@ -870,15 +870,15 @@ class Setup(CliMixin, UpstreamTestCase):
     def test_a_different_tool_pin_is_a_warning_and_an_error_when_frozen(self):
         self.configure(["team/Led@master"], pin="0.9.0")
         _, err = self.ok("setup")
-        warning = f"warning: installed XRobot {__version__} differs from the pinned 0.9.0"
+        warning = f"warning: installed xrobot {__version__} differs from the pinned 0.9.0"
         self.assertIn(warning, err)
         _, err = self.ok("gen")
         self.assertIn(warning, err)
         self.fails(
             "setup",
             "--frozen",
-            message="installed XRobot 1.0.0 differs from the pinned 0.9.0 (--frozen requires the "
-            "pinned version)",
+            message=f"installed xrobot {__version__} differs from the pinned 0.9.0 (--frozen "
+            "requires the pinned version)",
         )
         self.configure(["team/Led@master"], pin="0123456789abcdef0123456789abcdef01234567")
         _, err = self.ok("setup", "--frozen")
