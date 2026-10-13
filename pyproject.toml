@@ -21,7 +21,7 @@ dependencies = [
     "pyyaml",
     "requests",
     "ruamel.yaml>=0.17.21",
-    "xr-syntax==0.2.0"
+    "xr-syntax==0.3.0"
 ]
 
 classifiers = [
