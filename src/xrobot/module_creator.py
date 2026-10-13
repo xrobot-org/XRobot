@@ -14,6 +14,7 @@ import re
 from pathlib import Path
 
 import yaml
+from xr_syntax.cpp import CppFileBuilder
 from xr_syntax.i18n import tr
 
 from xrobot.config import identifier_problem
@@ -119,29 +120,28 @@ def _header(
         sort_keys=False,
         allow_unicode=True,
     ).rstrip()
-    lines = [
-        "#pragma once",
-        "",
-        "// clang-format off",
-        "/* === MODULE MANIFEST V2 ===",
-        manifest,
-        "=== END MANIFEST === */",
-        "// clang-format on",
-        "",
-        *_include_lines(constructors + templates, includes),
-        "",
-    ]
+    builder = CppFileBuilder(header=True)
+    builder.raw("")
+    # manifest 由 clang-format 关闭保护，它的排版由 yaml.safe_dump 决定。
+    # The manifest is protected by clang-format off; yaml.safe_dump decides its layout.
+    builder.format_region(
+        "\n/* === MODULE MANIFEST V2 ===\n" + manifest + "\n=== END MANIFEST === */\n"
+    )
+    builder.raw("")
+    for line in _include_lines(constructors + templates, includes):
+        builder.raw(line)
+    builder.raw("")
     if templates:
-        lines.append(f"template <{', '.join(templates)}>")
-    lines += [
+        builder.raw(f"template <{', '.join(templates)}>")
+    for line in (
         f"class {class_name}",
         "{",
         " public:",
         f"  {class_name}({', '.join(constructors)}) {{}}",
         "};",
-        "",
-    ]
-    return "\n".join(lines)
+    ):
+        builder.raw(line)
+    return builder.build(require_clean=True).render()
 
 
 def _interface(text: str, class_name: str, constructors: list[str], templates: list[str]) -> dict:

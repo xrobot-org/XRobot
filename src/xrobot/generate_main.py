@@ -11,6 +11,16 @@ import bisect
 import re
 from pathlib import Path
 
+from xr_syntax.cpp import CppFileBuilder
+from xr_syntax.format import (
+    INDENT,
+    layout_call,
+    layout_declaration,
+    layout_macro,
+    layout_value,
+    sort_includes,
+    wrap_comment,
+)
 from xr_syntax.i18n import tr
 
 from xrobot.config import (
@@ -34,15 +44,6 @@ from xrobot.constructor_model import (
     qualify,
     template_bindings,
     type_shape,
-)
-from xrobot.cpp_layout import (
-    INDENT,
-    layout_call,
-    layout_declaration,
-    layout_macro,
-    layout_value,
-    sort_includes,
-    wrap_comment,
 )
 from xrobot.module_parser import discover_modules, module_interface, select_module
 from xrobot.project import Project, atomic_write, header_banner, header_relative
@@ -934,9 +935,17 @@ class Generator:
 
     @staticmethod
     def _numbered(lines: list, back: object, header_name: str | None) -> str:
-        """把占位换成指回头文件自身的 #line，并拼成文本。
-        Replace the placeholders with #line directives that point back into the header
-        itself, and join the text.
+        """把占位换成指回头文件自身的 #line，再交给 CppFileBuilder 拼成整份文件。
+        Replace the placeholders with #line directives that point back into the header itself and
+        hand the lines to CppFileBuilder.
+
+        #line 的编号只由它之前已经输出的行数决定，因此先算出全部行再拼装。
+        The number of a #line directive depends only on how many lines were emitted before it, so
+        every line is settled before the file is assembled.
+
+        最后一行是空行时，它就是文件末尾的那个换行，不再补第二个；否则补一个换行，让文件以换行结束。
+        An empty last line is the newline at the end of the file and gets no second one; otherwise
+        one is added, so the file ends with a newline.
         """
         result, number = [], 1  # 下一行输出的行号 / line number of the next emitted line
         for line in lines:
@@ -944,7 +953,15 @@ class Generator:
                 line = f'#line {number + 1} "{_c_string(header_name)}"'
             result.append(line)
             number += line.count("\n") + 1
-        return "\n".join(result) + ("" if result and result[-1] == "" else "\n")
+        if result and result[-1] == "":
+            # build() 逐片段原样拼接：末尾的空片段是一个空行，比 "\n".join(lines) 多出一个换行。
+            # build() joins the chunks as written, so a trailing empty chunk is one blank line more
+            # than "\n".join(lines) gives.
+            result.pop()
+        builder = CppFileBuilder()
+        for line in result:
+            builder.raw(line)
+        return builder.build(require_clean=True).render()
 
 
 def _c_string(path: str) -> str:

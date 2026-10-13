@@ -23,9 +23,8 @@ from pathlib import Path, PurePath
 from typing import NamedTuple
 
 from xr_syntax.cpp import identifier_occurrences
+from xr_syntax.format import wrap_comment
 from xr_syntax.i18n import tr
-
-from xrobot.cpp_layout import wrap_comment
 
 MODULES_YAML = Path("Modules/modules.yaml")
 SOURCE_SUFFIXES = (".c", ".cc", ".cpp", ".cxx")

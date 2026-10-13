@@ -134,7 +134,7 @@ python tools/check_release.py --libxr ../libxr --xrobot . \
 
 ```json
 {
-  "xr-syntax": "0.2.0",
+  "xr-syntax": "0.3.0",
   "repositories": {
     "libxr":   {"commit": "<40-hex>"},
     "xrobot":  {"commit": "<40-hex>", "version": "1.0.0"},
