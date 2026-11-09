@@ -1301,18 +1301,50 @@ def _request_lines(text: str):
     return lines, key, items, node
 
 
-def add_module(modules_yaml: str | Path, request_text: str) -> None:
+def add_module(
+    modules_yaml: str | Path, request_text: str | None = None, local_path: str | None = None
+) -> str:
     """在 modules.yaml 末尾加一行请求，其余内容不变；没写 ref 时为 @same-or-dev。
     Append one request line to modules.yaml, leaving the rest unchanged; a request
     without a ref gets @same-or-dev.
 
+    Args:
+        request_text: owner/Repo[@ref]。
+            owner/Repo[@ref].
+        local_path: 代替 request_text：本地模块的目录，写成 ``path: <目录>``。
+            Instead of request_text: the folder of a local Module, written as
+            ``path: <folder>``.
+
+    Returns:
+        添加的模块 id。
+        The id of the added Module.
+
     Raises:
         ConfigError: 已经请求过这个模块，或 modules 是非空的流式列表。
             The Module is already requested, or modules is a non-empty flow list.
+        ValueError: 请求写法不对，或 owner/Repo 用了保留给本地模块的 owner。
+            The request is malformed, or owner/Repo uses the owner reserved for local Modules.
     """
     from xrobot.lock import request
+    from xrobot.project import LOCAL_OWNER, is_local
 
-    parsed = request(request_text, canonical=True)
+    if local_path is not None:
+        parsed = request({"path": local_path})
+        value = yaml.safe_dump(
+            {"path": parsed["path"]}, default_flow_style=False, allow_unicode=True
+        ).strip()
+    else:
+        parsed = request(request_text, canonical=True)
+        if is_local(parsed["id"]):
+            raise ValueError(
+                tr(
+                    f"{parsed['id']} uses the owner {LOCAL_OWNER}, which is reserved for local "
+                    "Modules; add a local Module with `xrobot module add --path <folder>`",
+                    f"{parsed['id']} 的 owner {LOCAL_OWNER} 保留给本地模块；本地模块请用 "
+                    "`xrobot module add --path <目录>` 添加",
+                )
+            )
+        value = request_text if "@" in request_text else request_text + "@same-or-dev"
     path = Path(modules_yaml)
     text = (
         path.read_text(encoding="utf-8-sig").replace("\r\n", "\n")
@@ -1332,7 +1364,6 @@ def add_module(modules_yaml: str | Path, request_text: str) -> None:
                     f"{modules_yaml} 中已经请求了 {parsed['id']}",
                 )
             )
-    value = request_text if "@" in request_text else request_text + "@same-or-dev"
     if key is None:
         lines = [line for line in lines if line.strip()] + ["modules:", "  - " + value]
     elif node.flow_style:
@@ -1352,6 +1383,7 @@ def add_module(modules_yaml: str | Path, request_text: str) -> None:
         end = last.end_mark.line + (1 if last.end_mark.column else 0)
         lines.insert(max(end, last_line + 1), prefix + value)
     atomic_write(path, "\n".join(lines).rstrip("\n") + "\n")
+    return parsed["id"]
 
 
 def remove_module(modules_yaml: str | Path, identity: str) -> None:

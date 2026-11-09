@@ -36,7 +36,7 @@ from xr_syntax.i18n import tr
 
 from xrobot.git import checkout_state, git, head_commit, origin_url
 from xrobot.module_parser import manifest_from_text
-from xrobot.project import Project, atomic_write
+from xrobot.project import LOCAL_OWNER, Project, atomic_write, in_tree, is_local, local_folder
 from xrobot.source_manager import SourceManager, SourceUnavailable, load_yaml, validate_id
 
 MODULES_KEYS = ("modules", "xrobot")
@@ -187,8 +187,9 @@ def same_repository(left: str, right: str) -> bool:
 
 
 def request(value: str | dict, canonical: bool = False) -> dict:
-    """解析一条请求：``owner/Repo@ref`` 或 ``{id, ref, context_ref}``。
-    Parse one request: ``owner/Repo@ref`` or ``{id, ref, context_ref}``.
+    """解析一条请求：``owner/Repo@ref``、``{id, ref, context_ref}`` 或本地模块的 ``{path}``。
+    Parse one request: ``owner/Repo@ref``, ``{id, ref, context_ref}`` or a local Module's
+    ``{path}``.
 
     Args:
         value: modules.yaml 或模块 manifest 中的一项。
@@ -204,6 +205,8 @@ def request(value: str | dict, canonical: bool = False) -> dict:
         ValueError: 写法不对。
             The request is malformed.
     """
+    if isinstance(value, dict) and "path" in value:
+        return local_request(value)
     if isinstance(value, str):
         identity, separator, ref = value.partition("@")
         result = {"id": identity, "ref": ref if separator else None}
@@ -226,7 +229,76 @@ def request(value: str | dict, canonical: bool = False) -> dict:
         result["ref"] = str(result["ref"])
         if not result["ref"] or result["ref"].startswith("-"):
             raise ValueError(tr("Invalid dependency ref", "无效的依赖 ref"))
+    if is_local(result["id"]) and (result["ref"] is not None or result.get("context_ref")):
+        raise ValueError(
+            tr(
+                f"{result['id']} is a local Module and takes no ref; its source is the folder "
+                "named by its `path:` request",
+                f"{result['id']} 是本地模块，不能带 ref；它的源码就是 `path:` 请求所指的目录",
+            )
+        )
     return result
+
+
+def local_request(value: dict) -> dict:
+    """解析本地模块请求 ``{path}``（lock 中为 ``{id, path}``）。
+    Parse a local Module request ``{path}`` (``{id, path}`` in the lock).
+
+    Returns:
+        含 id（local/<目录名>）、ref（None）和 path（/ 分隔）的映射。
+        A mapping with id (local/<folder name>), ref (None) and path (/-separated).
+
+    Raises:
+        ValueError: 有其他键、path 为空，或目录名不能作为模块名。
+            Other keys, an empty path, or a folder name that cannot name a Module.
+    """
+    if not set(value) <= {"id", "path"}:
+        raise ValueError(
+            tr(
+                "A local Module request is `path: <folder>` and takes no ref",
+                "本地模块请求写成 `path: <目录>`，不能带 ref",
+            )
+        )
+    path = value["path"]
+    if not isinstance(path, str) or not path.strip():
+        raise ValueError(tr("A local Module path is empty", "本地模块的 path 为空"))
+    path = path.strip().replace("\\", "/")
+    trimmed = path.rstrip("/")
+    name = trimmed.rsplit("/", 1)[-1]
+    if not trimmed or name in (".", "..") or name.endswith(":"):
+        raise ValueError(
+            tr(
+                f"Local Module path {path} does not end in a Module folder",
+                f"本地模块路径 {path} 的最后一段不是模块目录",
+            )
+        )
+    identity = f"{LOCAL_OWNER}/{name}"
+    try:
+        validate_id(identity)
+    except ValueError:
+        raise ValueError(
+            tr(
+                f"Local Module path {path}: {name} cannot name a Module",
+                f"本地模块路径 {path}：{name} 不能作为模块名",
+            )
+        ) from None
+    if value.get("id") not in (None, identity):
+        raise ValueError(
+            tr(
+                f"Local Module path {path} names {identity}, not {value['id']}",
+                f"本地模块路径 {path} 对应 {identity}，而不是 {value['id']}",
+            )
+        )
+    return {"id": identity, "ref": None, "path": trimmed}
+
+
+def request_record(req: dict) -> dict:
+    """写入 xrobot.lock 的请求：本地模块写 {id, path}，其他请求原样。
+    A request as written to xrobot.lock: {id, path} for a local Module, others unchanged.
+    """
+    if "path" in req:
+        return {"id": req["id"], "path": req["path"]}
+    return req
 
 
 def context(value: str) -> tuple[str, str]:
@@ -285,9 +357,32 @@ def read_modules_yaml(path: str | Path) -> tuple[list[dict], str | None]:
                 f"{path}: xrobot 必须是发布版本号（例如 1.0.0）或 40 位提交号",
             )
         )
-    return [request(value, canonical=True) for value in data.get("modules") or []], (
-        str(pin) if pin is not None else None
-    )
+    requests = [request(value, canonical=True) for value in data.get("modules") or []]
+    local = {}
+    for req in requests:
+        if not is_local(req["id"]):
+            continue
+        if "path" not in req:
+            raise ValueError(
+                tr(
+                    f"{path}: {req['id']} uses the owner {LOCAL_OWNER}, which is reserved for "
+                    "local Modules; request a local Module with `- path: <folder>`",
+                    f"{path}: {req['id']} 的 owner {LOCAL_OWNER} 保留给本地模块；"
+                    "本地模块请写成 `- path: <目录>`",
+                )
+            )
+        key = req["id"].casefold()
+        if key in local:
+            raise ValueError(
+                tr(
+                    f"{path}: {local[key]} and {req['path']} are both local Module "
+                    f"{req['id']}; a Module folder name must be unique",
+                    f"{path}: {local[key]} 和 {req['path']} 都是本地模块 {req['id']}；"
+                    "模块目录名必须唯一",
+                )
+            )
+        local[key] = req["path"]
+    return requests, (str(pin) if pin is not None else None)
 
 
 def _valid_pin(value: str) -> bool:
@@ -311,6 +406,8 @@ class Resolver:
             Every lock entry; in a BSP outside Git, branch-following requests keep these.
         resolved: 已解析的条目，最后写入 lock。
             The resolved entries, written to the lock at the end.
+        local: 已解析的本地模块：id -> {path}，写入 lock 的 local。
+            The resolved local Modules: id -> {path}, written to the local key of the lock.
         warnings: 需要告诉用户的情况。
             Things to tell the user.
     """
@@ -325,12 +422,20 @@ class Resolver:
         without_git: bool = False,
         leave_local: list[str] | None = None,
         force: bool = False,
+        local_requests: list[dict] | None = None,
     ) -> None:
-        """准备解析；modules_dir 是 Modules 目录，其余参数即同名属性。
-        Prepare a resolution; modules_dir is the Modules folder and the other arguments are the
-        attributes of the same names.
+        """准备解析；modules_dir 是 Modules 目录，local_requests 是 modules.yaml 中的 path 请求，
+        其余参数即同名属性。
+        Prepare a resolution; modules_dir is the Modules folder, local_requests are the path
+        requests of modules.yaml, and the other arguments are the attributes of the same names.
         """
         self.directory = Path(modules_dir).resolve()
+        self.root = self.directory.parent
+        # 本地模块只能由 modules.yaml 的 path 请求声明：小写 id -> 请求。
+        # Local Modules are declared only by path requests of modules.yaml: folded id -> request.
+        self.local_requests = {r["id"].casefold(): r for r in local_requests or []}
+        self.local: dict[str, dict] = {}
+        self.local_folders: dict[str, Path] = {}
         # 一个 SourceManager，或首次使用时才调用的加载函数。
         # A SourceManager, or a function that loads it on first use.
         self._sources = source_manager
@@ -638,6 +743,9 @@ class Resolver:
                 The request names a BSP, dependencies form a cycle, one Module resolves to
                 two commits, or resolution fails.
         """
+        if is_local(req["id"]):
+            self.visit_local(req, parent_context)
+            return
         identity = self.sources.resolve_id(req["id"])
         package = self.sources.packages[identity]
         if package["type"] != "module":
@@ -758,6 +866,115 @@ class Resolver:
             manifest = manifest_from_text(text, str(folder / header), f"{identity}@{sha[:12]}")
             for dep in manifest.depends:
                 self.visit(request(dep, canonical=True), tuple(logical))
+        finally:
+            self.stack.pop()
+
+    def check_local(self, identity: str, path: str) -> Path:
+        """检查本地模块的目录，返回它；不能复现的情况记入 warnings。
+        Check the folder of a local Module and return it; what cannot be reproduced goes to
+        warnings.
+
+        BSP 之内的目录随 BSP 仓库提交：被 .gitignore 忽略时报错，自带 .git 时警告（BSP 仓库
+        不跟踪嵌套仓库的文件）。BSP 之外的目录不受任何提交固定，只警告。
+        A folder inside the BSP is committed with the BSP repository: one ignored by
+        .gitignore fails, and one with its own .git warns (the BSP repository does not track
+        the files of a nested repository). A folder outside the BSP is pinned by no commit
+        and only warns.
+
+        Raises:
+            ValueError: 目录或主头文件不存在，或主头文件被 BSP 的 .gitignore 忽略。
+                The folder or its primary header is missing, or the BSP's .gitignore ignores
+                the primary header.
+        """
+        folder = local_folder(path, self.root)
+        header = folder / (folder.name + ".hpp")
+        if not header.is_file():
+            raise ValueError(
+                tr(
+                    f"Local Module {identity} (path: {path}) has no {header.as_posix()}",
+                    f"本地模块 {identity}（path: {path}）缺少 {header.as_posix()}",
+                )
+            )
+        if not in_tree(folder, self.root):
+            self.warnings.append(
+                tr(
+                    f"local Module {identity} is outside the BSP ({path}); no commit pins it, "
+                    "so other checkouts and CI cannot reproduce it",
+                    f"本地模块 {identity} 在 BSP 之外（{path}）；没有提交固定它，其他检出和 CI "
+                    "无法复现",
+                )
+            )
+        elif (folder / ".git").exists():
+            self.warnings.append(
+                tr(
+                    f"local Module {identity} ({path}) has its own .git; the BSP repository "
+                    "does not track its files, so other checkouts and CI will not have them",
+                    f"本地模块 {identity}（{path}）有自己的 .git；BSP 仓库不跟踪其中的文件，"
+                    "其他检出和 CI 中不会有它们",
+                )
+            )
+        elif (
+            git(self.root, "rev-parse", "--is-inside-work-tree", check=False) == "true"
+            and git(self.root, "check-ignore", "-q", str(header), check=False) is not None
+        ):
+            raise ValueError(
+                tr(
+                    f"Local Module {identity} ({path}) is ignored by the BSP's .gitignore, so "
+                    "it would not be committed; add a `!/<folder>/` line after the rule that "
+                    "ignores it (e.g. `/Modules/*/`)",
+                    f"本地模块 {identity}（{path}）被 BSP 的 .gitignore 忽略，不会被提交；请在"
+                    "忽略它的规则（例如 `/Modules/*/`）之后加一行 `!/<目录>/`",
+                )
+            )
+        return folder
+
+    def visit_local(self, req: dict, parent_context: tuple | list | None) -> None:
+        """解析一个本地模块：检查目录，按工作区中的主头文件解析它的依赖。
+        Resolve a local Module: check its folder and resolve the dependencies of the primary
+        header in the working tree.
+
+        依赖与 modules.yaml 中的请求一样跟随 parent_context（BSP 的分支）。
+        The dependencies follow parent_context (the BSP branch) like the requests of
+        modules.yaml.
+
+        Raises:
+            ValueError: 来自源的模块请求它、modules.yaml 中没有声明它、依赖成环，或目录有误。
+                A Module from the Sources requests it, modules.yaml does not declare it, the
+                dependencies form a cycle, or its folder is wrong.
+        """
+        declared = self.local_requests.get(req["id"].casefold())
+        if self.stack and not is_local(self.stack[-1]):
+            raise ValueError(
+                tr(
+                    f"{self._requester()} requests {req['id']}, but a Module from the Sources "
+                    "cannot depend on a local Module",
+                    f"{self._requester()} 请求 {req['id']}，但来自源的模块不能依赖本地模块",
+                )
+            )
+        if declared is None:
+            raise ValueError(
+                tr(
+                    f"{self._requester()} requests {req['id']}, which Modules/modules.yaml does "
+                    "not declare; add `- path: <folder>` for it",
+                    f"{self._requester()} 请求 {req['id']}，但 Modules/modules.yaml 没有声明它；"
+                    "请为它添加 `- path: <目录>`",
+                )
+            )
+        identity = declared["id"]
+        if identity in self.stack:
+            cycle = " -> ".join(self.stack + [identity])
+            raise ValueError(tr("Package dependency cycle: " + cycle, "包依赖成环：" + cycle))
+        if identity in self.local:
+            return
+        folder = self.check_local(identity, declared["path"])
+        self.local[identity] = {"path": declared["path"]}
+        self.local_folders[identity] = folder
+        header = folder / (folder.name + ".hpp")
+        text = header.read_text(encoding="utf-8", errors="surrogateescape")
+        self.stack.append(identity)
+        try:
+            for dep in manifest_from_text(text, str(header), identity).depends:
+                self.visit(request(dep, canonical=True), parent_context)
         finally:
             self.stack.pop()
 
@@ -938,7 +1155,7 @@ class Resolver:
                     )
                 )
         by_name = {}
-        for identity in self.resolved:
+        for identity in [*self.resolved, *self.local]:
             name = identity.rsplit("/", 1)[-1]
             if name in by_name and by_name[name] != identity:
                 raise ValueError(
@@ -993,6 +1210,9 @@ def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
     Walk the dependencies from the headers of the locked commits and check that the lock
     is exactly the dependency closure; moving refs are not resolved.
 
+    本地模块的头文件从工作区读取（resolver.local_folders）。
+    The headers of local Modules are read from the working tree (resolver.local_folders).
+
     Raises:
         ValueError: lock 缺条目、多条目、ref 与请求不符，或依赖成环。
             The lock misses or has extra entries, a ref does not match its request, or the
@@ -1016,11 +1236,56 @@ def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
     with ThreadPoolExecutor(max_workers=8) as pool:
         texts = dict(zip(known, pool.map(primary_header, known), strict=True))
 
+    def visit_local(req: dict) -> None:
+        """检查一个本地模块在 lock 中，再按工作区中的主头文件检查它的依赖。
+        Check that a local Module is in the lock, then check the dependencies of its primary
+        header in the working tree.
+        """
+        candidates = [key for key in resolver.local if key.casefold() == req["id"].casefold()]
+        if len(candidates) != 1:
+            raise ValueError(
+                tr(
+                    f"xrobot.lock is missing local Module {req['id']}; run `xrobot setup`",
+                    f"xrobot.lock 中缺少本地模块 {req['id']}；请运行 `xrobot setup`",
+                )
+            )
+        identity = candidates[0]
+        if identity in active:
+            cycle = " -> ".join(active + [identity])
+            raise ValueError(
+                tr("Dependency cycle in project lock: " + cycle, "项目 lock 中的依赖成环：" + cycle)
+            )
+        if identity in visited:
+            return
+        active.append(identity)
+        folder = resolver.local_folders[identity]
+        header = folder / (folder.name + ".hpp")
+        text = header.read_text(encoding="utf-8", errors="surrogateescape")
+        for dep in manifest_from_text(text, str(header), identity).depends:
+            dependency = request(dep, canonical=True)
+            if is_local(dependency["id"]) and not any(
+                key.casefold() == dependency["id"].casefold() for key in resolver.local
+            ):
+                raise ValueError(
+                    tr(
+                        f"{identity} requests {dependency['id']}, which Modules/modules.yaml "
+                        "does not declare; add `- path: <folder>` for it",
+                        f"{identity} 请求 {dependency['id']}，但 Modules/modules.yaml 没有声明它；"
+                        "请为它添加 `- path: <目录>`",
+                    )
+                )
+            visit(dependency)
+        active.pop()
+        visited.add(identity)
+
     def visit(req: dict) -> None:
         """检查一条请求在 lock 中有唯一且相符的条目，再依次检查它的依赖；发现依赖环时报错。
         Check that a request has exactly one matching lock entry, then check its dependencies; a
         dependency cycle is an error.
         """
+        if is_local(req["id"]):
+            visit_local(req)
+            return
         candidates = [key for key in records if key.casefold() == req["id"].casefold()]
         if len(candidates) != 1:
             raise ValueError(
@@ -1082,8 +1347,8 @@ def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
 
     for root in roots:
         visit(root)
-    if visited != set(records):
-        extra = sorted(set(records) - visited)
+    if visited != set(records) | set(resolver.local):
+        extra = sorted((set(records) | set(resolver.local)) - visited)
         raise ValueError(
             tr(
                 "xrobot.lock contains Modules outside the declared dependency closure: "
@@ -1243,7 +1508,7 @@ def check_tool_pins(
         raise ValueError("\n".join(problems))
 
 
-def write_cmake(modules_dir: Path, records: dict) -> None:
+def write_cmake(modules_dir: Path, records: dict, local: dict | None = None) -> None:
     """写出 Modules/CMakeLists.txt：模块自带 CMakeLists.txt 时 include 它，否则加 include 目录。
     Write Modules/CMakeLists.txt: include a Module's own CMakeLists.txt, else add its
     folder to the include path.
@@ -1252,21 +1517,35 @@ def write_cmake(modules_dir: Path, records: dict) -> None:
     xr-syntax 自己能读的。
     CMakeFileBuilder writes the file and parses the whole source once in build(), so the CMake it
     writes is always something xr-syntax can read back.
+
+    Args:
+        local: 本地模块 id -> {path}。相对路径写成相对 Modules/ 的路径，绝对路径原样写入。
+            Local Module id -> {path}. A relative path is written relative to Modules/, an
+            absolute one as it is.
     """
+    modules_dir = Path(modules_dir)
+    folders = {}
+    for identity in records:
+        validate_id(identity)
+        folders[identity] = (modules_dir / identity, f"${{CMAKE_CURRENT_LIST_DIR}}/{identity}")
+    for identity, row in (local or {}).items():
+        folder = local_folder(row["path"], modules_dir.parent)
+        if Path(row["path"]).is_absolute():
+            written = folder.as_posix()
+        else:
+            relative = Path(os.path.relpath(folder, modules_dir.resolve())).as_posix()
+            written = f"${{CMAKE_CURRENT_LIST_DIR}}/{relative}"
+        folders[identity] = (folder, written)
     builder = CMakeFileBuilder()
     builder.comment("Generated by `xrobot setup` from xrobot.lock; do not edit or commit.")
     builder.raw("")
-    for identity in sorted(records):
-        validate_id(identity)
-        folder = Path(modules_dir) / identity
+    for identity in sorted(folders):
+        folder, written = folders[identity]
         if (folder / "CMakeLists.txt").exists():
-            builder.command("include", [f'"${{CMAKE_CURRENT_LIST_DIR}}/{identity}/CMakeLists.txt"'])
+            builder.command("include", [f'"{written}/CMakeLists.txt"'])
         else:
-            builder.command(
-                "target_include_directories",
-                ["xr", "PUBLIC", f'"${{CMAKE_CURRENT_LIST_DIR}}/{identity}"'],
-            )
-    atomic_write(Path(modules_dir) / "CMakeLists.txt", builder.build(require_clean=True).render())
+            builder.command("target_include_directories", ["xr", "PUBLIC", f'"{written}"'])
+    atomic_write(modules_dir / "CMakeLists.txt", builder.build(require_clean=True).render())
 
 
 def _load_lock(lock_path: Path) -> dict:
@@ -1299,6 +1578,20 @@ def _load_lock(lock_path: Path) -> dict:
             raise ValueError(
                 tr("Invalid locked commit for " + identity, identity + " 锁定的提交无效")
             )
+    local = lock.get("local", {})
+    if not isinstance(local, dict) or any(
+        not is_local(str(identity))
+        or not isinstance(row, dict)
+        or set(row) != {"path"}
+        or local_request({"id": identity, "path": row["path"]})["id"] != identity
+        for identity, row in local.items()
+    ):
+        raise ValueError(
+            tr(
+                f"{lock_path}: invalid local Modules; regenerate it with `xrobot setup`",
+                f"{lock_path}: 本地模块条目无效；请用 `xrobot setup` 重新生成",
+            )
+        )
     return lock
 
 
@@ -1311,8 +1604,11 @@ def _root_context(project: Project, roots: list[dict], context_ref: str | None) 
         ("branch"|"tag", 名字)，不在分支上时为 None。
         ("branch"|"tag", name), or None when not on a branch.
     """
+    # 本地模块的依赖也跟随 BSP 的分支。
+    # The dependencies of a local Module follow the BSP branch too.
     needs_parent = any(
-        req["ref"] in ("same", "same-or-dev") and not req.get("context_ref") for req in roots
+        (req["ref"] in ("same", "same-or-dev") and not req.get("context_ref")) or "path" in req
+        for req in roots
     )
     selected = context_ref
     if selected is None and needs_parent:
@@ -1390,6 +1686,27 @@ def sync_modules(
     roots, _ = read_modules_yaml(project.modules_yaml)
     lock_dir = project.lock.resolve().parent
     lock = _load_lock(project.lock) if project.lock.is_file() else None
+    local_roots = [r for r in roots if "path" in r]
+
+    def names_local(name: str) -> bool:
+        """name 是否点名了一个本地模块（完整 id 或末段，忽略大小写）。
+        Whether name names a local Module (full id or last segment, ignoring case).
+        """
+        return any(
+            name.casefold() in (r["id"].casefold(), r["id"].rsplit("/", 1)[-1].casefold())
+            for r in local_roots
+        )
+
+    for name in leave_local or []:
+        if names_local(name):
+            raise ValueError(
+                tr(
+                    f"{name} is a local Module; `--leave-local` moves Git checkouts of Modules "
+                    "from the Sources, and a local Module is used from its folder as it is",
+                    f"{name} 是本地模块；`--leave-local` 移动的是来自源的模块的 Git 检出，"
+                    "本地模块直接使用其目录中的内容",
+                )
+            )
     if leave_local and lock is not None:
         # 与 --update 一样按 lock 校验点名，写错的模块 id 在动任何模块之前先报错。
         # Named Modules are checked against the lock like --update, so a mistyped id fails
@@ -1437,7 +1754,10 @@ def sync_modules(
                     "请运行 `xrobot setup` 更新 lock",
                 )
             )
-    if lock is not None and update is None and _same_requests(lock.get("requests") or [], roots):
+    locked = (
+        lock is not None and update is None and _same_requests(lock.get("requests") or [], roots)
+    )
+    if locked:
         manager = (
             (lambda: _load_sources(project))
             if not offline and project.sources_yaml.is_file()
@@ -1449,18 +1769,37 @@ def sync_modules(
             offline=offline,
             leave_local=leave_local,
             force=force,
+            local_requests=local_roots,
         )
         for identity, entry in lock["modules"].items():
             resolver.prepare(identity, expanded_locator(entry["repo"], lock_dir), entry["commit"])
             resolver.resolved[identity] = entry
-        validate_locked_graph(resolver, roots)
+        for identity, row in (lock.get("local") or {}).items():
+            resolver.local_folders[identity] = resolver.check_local(identity, row["path"])
+            resolver.local[identity] = row
+        try:
+            validate_locked_graph(resolver, roots)
+        except ValueError:
+            # 本地模块的依赖随工作区改变，lock 跟不上不是错误：普通 setup 保持已锁定的
+            # commit，重新解析依赖闭包；--frozen 和 --offline 照常报错。
+            # The dependencies of a local Module change with the working tree, so a lock
+            # that lags behind is not an error: a normal setup keeps the locked commits and
+            # resolves the closure again; --frozen and --offline fail as before.
+            if frozen or offline or not local_roots:
+                raise
+            locked = False
         records = lock["modules"]
-    else:
+    if not locked:
         manager = _load_sources(project)
         pinned = {}
         if lock is not None and update != []:
             named = set()
             for name in update or []:
+                if names_local(name):
+                    # 本地模块每次 setup 都按工作区重新解析依赖，点名它不需要做别的。
+                    # A local Module's dependencies are re-resolved from the working tree on
+                    # every setup, so naming it needs nothing more.
+                    continue
                 matches = [
                     k
                     for k in lock["modules"]
@@ -1510,6 +1849,7 @@ def sync_modules(
             without_git=without_git,
             leave_local=leave_local,
             force=force,
+            local_requests=local_roots,
         )
         root_context = (
             (NO_BRANCH, "") if without_git else _root_context(project, roots, context_ref)
@@ -1554,20 +1894,23 @@ def sync_modules(
                     )
                 )
             resolver.visit(root, parent)
-        for warning in resolver.warnings:
-            print(tr("warning: ", "警告：") + warning, file=sys.stderr)
         records = {}
         for identity, entry in sorted(resolver.resolved.items()):
             row = {k: v for k, v in entry.items() if k != "context"}
             for field in ("repo", "source"):
                 row[field] = portable_locator(str(row[field]), lock_dir)
             records[identity] = row
+    for warning in resolver.warnings:
+        print(tr("warning: ", "警告：") + warning, file=sys.stderr)
+    local = {identity: resolver.local[identity] for identity in sorted(resolver.local)}
     if release_ref:
         check_released(resolver, release_ref, offline)
     resolver.materialize()
-    write_cmake(project.modules_dir, records)
-    requests = sorted(roots, key=lambda r: r["id"].casefold())
+    write_cmake(project.modules_dir, records, local)
+    requests = [request_record(r) for r in sorted(roots, key=lambda r: r["id"].casefold())]
     result = {"version": 1, "requests": requests, "modules": records}
+    if local:
+        result["local"] = local
     changed = (
         lock is None
         or not _same_requests(lock.get("requests") or [], requests)
@@ -1596,10 +1939,10 @@ def sync_modules(
 
 
 def _request_key(req: dict) -> tuple:
-    """比较请求用的键：id 不区分大小写。
-    The key a request is compared by; the id ignores case.
+    """比较请求用的键：id 不区分大小写；本地模块还比较 path。
+    The key a request is compared by; the id ignores case, and a local Module's path counts.
     """
-    return (req["id"].casefold(), req.get("ref"), req.get("context_ref"))
+    return (req["id"].casefold(), req.get("ref"), req.get("context_ref"), req.get("path"))
 
 
 def _same_requests(before: list[dict], after: list[dict]) -> bool:

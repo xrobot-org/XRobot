@@ -251,7 +251,10 @@ def describe(project: Project, config: str | Path | None = None) -> dict:
     modules = {}
     if project.lock.is_file():
         for state in locked_modules(project.modules_dir, project.lock):
-            lock_info["modules"].append({k: state[k] for k in ("id", "commit", "head", "status")})
+            fields = ("id", "kind", "commit", "head", "status")
+            if state["kind"] == "local":
+                fields += ("path", "in_tree")
+            lock_info["modules"].append({k: state[k] for k in fields})
             if state["status"] == "ok":
                 modules[state["id"]] = module_record(state["id"], state["folder"])
             else:

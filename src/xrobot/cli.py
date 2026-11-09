@@ -585,6 +585,24 @@ def cmd_module(args: argparse.Namespace) -> None:
     if args.action == "add":
         from xrobot.config_edit import add_module
 
+        if (args.request is None) == (args.path is None):
+            raise ValueError(
+                tr(
+                    "Give either owner/Repo[@ref] or --path <folder>",
+                    "请给出 owner/Repo[@ref] 或 --path <目录> 之一",
+                )
+            )
+        if args.path is not None:
+            identity = add_module(project.modules_yaml, local_path=args.path)
+            print(
+                tr(
+                    f"Added local Module {identity} ({args.path}); run `xrobot setup` to "
+                    "update xrobot.lock",
+                    f"已添加本地模块 {identity}（{args.path}）；请运行 `xrobot setup` 更新 "
+                    "xrobot.lock",
+                )
+            )
+            return
         add_module(project.modules_yaml, args.request)
         print(
             tr(
@@ -1133,14 +1151,24 @@ def parser() -> argparse.ArgumentParser:
         ),
     )
     module_actions = module.add_subparsers(dest="action", required=True, metavar="<action>")
-    _command(
+    module_add = _command(
         module_actions,
         "add",
         tr("request a Module in modules.yaml", "在 modules.yaml 中请求一个模块"),
-    ).add_argument("request", help="owner/Repo[@ref]")
+    )
+    module_add.add_argument("request", nargs="?", help="owner/Repo[@ref]")
+    module_add.add_argument(
+        "--path",
+        help=tr(
+            "request the local Module in this folder (relative to the BSP root, or absolute)",
+            "请求这个目录中的本地模块（相对 BSP 根目录，或绝对路径）",
+        ),
+    )
     _command(
         module_actions, "remove", tr("remove a Module request", "删除一个模块请求")
-    ).add_argument("request", help="owner/Repo")
+    ).add_argument(
+        "request", help=tr("owner/Repo, or local/<folder>", "owner/Repo 或 local/<目录>")
+    )
     _command(
         module_actions,
         "show",

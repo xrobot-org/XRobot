@@ -15,6 +15,7 @@ from xr_syntax.i18n import tr
 from xrobot import __version__
 from xrobot.constructor_model import enrich_interface
 from xrobot.git import head_commit
+from xrobot.project import in_tree, local_folder
 from xrobot.source_syntax import extract_interface
 
 MANIFEST_PATTERN = re.compile(
@@ -294,6 +295,7 @@ def locked_modules(directory: Path, lock_path: Path) -> list[dict]:
         commit = (record or {}).get("commit")
         state = {
             "id": identity,
+            "kind": "git",
             "folder": folder,
             "commit": commit,
             "head": None,
@@ -327,6 +329,24 @@ def locked_modules(directory: Path, lock_path: Path) -> list[dict]:
                 if state["head"] != commit:
                     state["status"] = "mismatch"
         states.append(state)
+    # 本地模块直接使用目录中的内容，没有 commit 可比较。
+    # A local Module is used from its folder as it is, with no commit to compare.
+    root = Path(lock_path).resolve().parent
+    for identity, record in (lock.get("local") or {}).items():
+        folder = local_folder(record["path"], root)
+        states.append(
+            {
+                "id": identity,
+                "kind": "local",
+                "path": record["path"],
+                "in_tree": in_tree(folder, root),
+                "folder": folder,
+                "commit": None,
+                "head": None,
+                "status": "ok" if (folder / (folder.name + ".hpp")).is_file() else "missing",
+                "reason": None,
+            }
+        )
     return states
 
 
@@ -336,6 +356,12 @@ def lock_error(state: dict) -> str:
     """
     if state["status"] == "broken":
         return state["reason"]
+    if state["status"] == "missing" and state.get("kind") == "local":
+        header = state["folder"] / (state["folder"].name + ".hpp")
+        return tr(
+            f"Local Module {state['id']} (path: {state['path']}) has no {header.as_posix()}",
+            f"本地模块 {state['id']}（path: {state['path']}）缺少 {header.as_posix()}",
+        )
     if state["status"] == "missing":
         return tr(
             f"{state['id']} from xrobot.lock is not checked out; run `xrobot setup`",

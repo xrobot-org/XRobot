@@ -36,6 +36,33 @@ DIGEST_LINE = re.compile(r"^// xrobot: digest ([0-9a-f]{64})$")
 # semicolon, after removing every carriage return (CMake's file(READ) reads CRLF as LF on
 # Windows); LibXR's cmake/XRobotFreshness.cmake applies the same rule.
 REGISTRATION = re.compile(rb"XR_REGISTER[^;]*")
+# 本地模块（modules.yaml 中的 `path:` 请求）的 id 为 local/<目录名>；Sources 不能使用这个 owner。
+# A local Module (a `path:` request of modules.yaml) has the id local/<folder name>; the
+# Sources cannot use this owner.
+LOCAL_OWNER = "local"
+
+
+def is_local(identity: str) -> bool:
+    """identity 是否为本地模块的 id（owner 为 local，不区分大小写）。
+    Whether identity is the id of a local Module (owner local, ignoring case).
+    """
+    return identity.split("/", 1)[0].casefold() == LOCAL_OWNER
+
+
+def local_folder(path: str, root: str | Path) -> Path:
+    """本地模块 path 所指的目录：相对路径按 BSP 根目录解析。
+    The folder a local Module path names: a relative path is taken from the BSP root.
+    """
+    folder = Path(path)
+    return (folder if folder.is_absolute() else Path(root) / folder).resolve()
+
+
+def in_tree(folder: Path, root: str | Path) -> bool:
+    """folder 是否在 BSP 根目录之内（随 BSP 仓库一起提交）。
+    Whether folder is inside the BSP root (committed with the BSP repository).
+    """
+    root = Path(root).resolve()
+    return folder == root or root in folder.parents
 
 
 def path_order(path: str | Path) -> str:
