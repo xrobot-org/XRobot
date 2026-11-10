@@ -1205,6 +1205,13 @@ def _published(folder: Path, commit: str) -> bool:
     return bool(git(folder, "tag", "--contains", commit, check=False))
 
 
+class LocalDrift(ValueError):
+    """lock 与本地模块工作区中的依赖不一致；普通 setup 可以重新解析来修复。
+    The lock disagrees with the dependencies a local Module has in the working tree; a plain
+    setup can repair it by resolving again.
+    """
+
+
 def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
     """按锁定 commit 的头文件重走依赖，确认 lock 与依赖闭包一致；不解析移动的 ref。
     Walk the dependencies from the headers of the locked commits and check that the lock
@@ -1274,21 +1281,27 @@ def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
                         "请为它添加 `- path: <目录>`",
                     )
                 )
-            visit(dependency)
+            visit(dependency, from_local=True)
         active.pop()
         visited.add(identity)
 
-    def visit(req: dict) -> None:
+    def visit(req: dict, from_local: bool = False) -> None:
         """检查一条请求在 lock 中有唯一且相符的条目，再依次检查它的依赖；发现依赖环时报错。
         Check that a request has exactly one matching lock entry, then check its dependencies; a
         dependency cycle is an error.
+
+        from_local: 请求是否来自本地模块的 manifest；这样的请求在 lock 中缺失或 ref 不符时
+            抛出 LocalDrift。
+            Whether a local Module's manifest makes the request; when the lock misses it or
+            its ref differs, LocalDrift is raised.
         """
+        problem = LocalDrift if from_local else ValueError
         if is_local(req["id"]):
             visit_local(req)
             return
         candidates = [key for key in records if key.casefold() == req["id"].casefold()]
         if len(candidates) != 1:
-            raise ValueError(
+            raise problem(
                 tr(
                     f"xrobot.lock is missing or ambiguous for {req['id']}; run `xrobot setup`",
                     f"xrobot.lock 中 {req['id']} 缺失或有歧义；请运行 `xrobot setup`",
@@ -1301,7 +1314,7 @@ def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
         if selector and selector not in ("same", "same-or-dev"):
             if selector.startswith("refs/heads/") or selector.startswith("refs/tags/"):
                 if [kind, name] != list(context(selector)):
-                    raise ValueError(
+                    raise problem(
                         tr(
                             "Locked ref does not match requested ref for " + identity,
                             identity + " 锁定的 ref 与请求的 ref 不一致",
@@ -1309,14 +1322,14 @@ def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
                     )
             elif re.fullmatch(r"[0-9a-fA-F]{7,40}", selector) and kind == "commit":
                 if not row["commit"].startswith(selector.lower()):
-                    raise ValueError(
+                    raise problem(
                         tr(
                             "Locked commit does not match requested SHA for " + identity,
                             identity + " 锁定的提交与请求的 SHA 不一致",
                         )
                     )
             elif name != selector:
-                raise ValueError(
+                raise problem(
                     tr(
                         "Locked ref does not match manifest for " + identity,
                         identity + " 锁定的 ref 与 manifest 不一致",
@@ -1349,7 +1362,10 @@ def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
         visit(root)
     if visited != set(records) | set(resolver.local):
         extra = sorted((set(records) | set(resolver.local)) - visited)
-        raise ValueError(
+        # 有本地模块时无法分辨多余的条目是不是原来由本地模块的依赖带入的。
+        # With local Modules, an extra entry cannot be told from one a local Module's
+        # dependency used to bring in.
+        raise (LocalDrift if resolver.local else ValueError)(
             tr(
                 "xrobot.lock contains Modules outside the declared dependency closure: "
                 f"{', '.join(extra)}; run `xrobot setup`",
@@ -1779,13 +1795,16 @@ def sync_modules(
             resolver.local[identity] = row
         try:
             validate_locked_graph(resolver, roots)
-        except ValueError:
+        except LocalDrift:
             # 本地模块的依赖随工作区改变，lock 跟不上不是错误：普通 setup 保持已锁定的
-            # commit，重新解析依赖闭包；--frozen 和 --offline 照常报错。
+            # commit，重新解析依赖闭包；--frozen 和 --offline 照常报错。其他不一致（远程
+            # 根的闭包、ref、环、lock 格式）仍然报错。
             # The dependencies of a local Module change with the working tree, so a lock
             # that lags behind is not an error: a normal setup keeps the locked commits and
-            # resolves the closure again; --frozen and --offline fail as before.
-            if frozen or offline or not local_roots:
+            # resolves the closure again; --frozen and --offline fail as before. Other
+            # inconsistencies (closure or refs of remote roots, cycles, lock format) still
+            # fail.
+            if frozen or offline:
                 raise
             locked = False
         records = lock["modules"]

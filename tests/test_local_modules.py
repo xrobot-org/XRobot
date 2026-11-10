@@ -252,6 +252,55 @@ class Resolution(LocalModuleCase):
             self.sync(frozen=True)
         self.assertIn("team/B", self.sync()["modules"])
 
+    def test_a_plain_setup_keeps_the_locked_commits_when_a_local_dependency_changes(self):
+        self.upstream("team/A")
+        self.upstream("team/B")
+        folder = self.local(self.modules / "local/Chassis")
+        self.configure(["team/A@master", {"path": "Modules/local/Chassis"}])
+        locked = self.sync()["modules"]["team/A"]["commit"]
+        self.local(folder, ["team/B@master"])
+        lock = self.sync()
+        self.assertEqual(lock["modules"]["team/A"]["commit"], locked)
+        self.assertIn("team/B", lock["modules"])
+        self.assertEqual(self.head("team/A"), locked)
+        self.local(folder, [])
+        lock = self.sync()
+        self.assertEqual(set(lock["modules"]), {"team/A"})
+        self.assertEqual(lock["modules"]["team/A"]["commit"], locked)
+
+    def test_a_plain_setup_fails_on_a_lock_that_lacks_a_remote_root(self):
+        self.upstream("team/A")
+        self.local(self.modules / "local/Chassis")
+        self.configure(["team/A@master", {"path": "Modules/local/Chassis"}])
+        data = self.sync()
+        del data["modules"]["team/A"]
+        self.write("xrobot.lock", yaml.safe_dump(data, sort_keys=False))
+        before = self.lock_bytes()
+        for options in ({}, {"frozen": True}):
+            with self.assertRaisesRegex(ValueError, "missing or ambiguous for team/A"):
+                self.sync(**options)
+            self.assertEqual(self.lock_bytes(), before)
+
+    def test_a_plain_setup_fails_on_a_wrong_ref_of_a_remote_root(self):
+        self.upstream("team/A")
+        self.local(self.modules / "local/Chassis")
+        self.configure(["team/A@master", {"path": "Modules/local/Chassis"}])
+        data = self.sync()
+        data["modules"]["team/A"]["resolved_ref"] = "other"
+        self.write("xrobot.lock", yaml.safe_dump(data, sort_keys=False))
+        with self.assertRaisesRegex(ValueError, "Locked ref does not match"):
+            self.sync()
+
+    def test_frozen_fails_when_a_local_module_drops_a_dependency(self):
+        self.upstream("team/B")
+        folder = self.local(self.modules / "local/Chassis", ["team/B@master"])
+        self.configure([{"path": "Modules/local/Chassis"}])
+        self.sync()
+        self.local(folder, [])
+        with self.assertRaisesRegex(ValueError, "outside the declared dependency closure"):
+            self.sync(frozen=True)
+        self.assertNotIn("team/B", self.sync()["modules"])
+
     def test_frozen_fails_when_the_path_changes(self):
         self.local(self.modules / "local/Chassis")
         self.local(self.root / "Other/Chassis")
