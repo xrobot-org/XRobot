@@ -49,6 +49,22 @@ def is_local(identity: str) -> bool:
     return identity.split("/", 1)[0].casefold() == LOCAL_OWNER
 
 
+def module_header(folder: str | Path) -> Path:
+    """模块目录中的主头文件：<目录名>.hpp。
+    The primary header of a Module folder: <folder name>.hpp.
+    """
+    folder = Path(folder)
+    return folder / (folder.name + ".hpp")
+
+
+def last_segment(path: str) -> str:
+    """本地模块 path 的最后一段（反斜杠按 / 处理，忽略末尾的分隔符）；它就是模块的目录名。
+    The last segment of a local Module path (backslashes count as /, trailing separators
+    are ignored); it is the Module's folder name.
+    """
+    return path.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1]
+
+
 def local_folder(path: str, root: str | Path) -> Path:
     """本地模块 path 所指的目录：相对路径按 BSP 根目录解析。
     The folder a local Module path names: a relative path is taken from the BSP root.
@@ -65,7 +81,7 @@ def local_folder(path: str, root: str | Path) -> Path:
     """
     folder = Path(path)
     folder = (folder if folder.is_absolute() else Path(root) / folder).resolve()
-    written = path.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1]
+    written = last_segment(path)
     if written != folder.name:
         raise ValueError(
             tr(

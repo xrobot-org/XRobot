@@ -36,7 +36,16 @@ from xr_syntax.i18n import tr
 
 from xrobot.git import checkout_state, git, head_commit, origin_url
 from xrobot.module_parser import manifest_from_text
-from xrobot.project import LOCAL_OWNER, Project, atomic_write, in_tree, is_local, local_folder
+from xrobot.project import (
+    LOCAL_OWNER,
+    Project,
+    atomic_write,
+    in_tree,
+    is_local,
+    last_segment,
+    local_folder,
+    module_header,
+)
 from xrobot.source_manager import SourceManager, SourceUnavailable, load_yaml, validate_id
 
 MODULES_KEYS = ("modules", "xrobot")
@@ -264,7 +273,7 @@ def local_request(value: dict) -> dict:
         raise ValueError(tr("A local Module path is empty", "本地模块的 path 为空"))
     path = path.strip().replace("\\", "/")
     trimmed = path.rstrip("/")
-    name = trimmed.rsplit("/", 1)[-1]
+    name = last_segment(trimmed)
     if not trimmed or name in (".", "..") or name.endswith(":"):
         raise ValueError(
             tr(
@@ -290,6 +299,30 @@ def local_request(value: dict) -> dict:
             )
         )
     return {"id": identity, "ref": None, "path": trimmed}
+
+
+def local_depends(folder: Path, identity: str) -> list:
+    """本地模块工作区中的主头文件 manifest 的 depends（未解析的原始写法）。
+    The depends of the manifest in the primary header a local Module has in the working tree
+    (the raw entries, not yet parsed).
+    """
+    header = module_header(folder)
+    text = header.read_text(encoding="utf-8", errors="surrogateescape")
+    return manifest_from_text(text, str(header), identity).depends
+
+
+def undeclared_local(requester: str, identity: str) -> ValueError:
+    """requester 请求了 modules.yaml 中没有声明的本地模块 identity。
+    requester requests the local Module identity, which modules.yaml does not declare.
+    """
+    return ValueError(
+        tr(
+            f"{requester} requests {identity}, which Modules/modules.yaml does not declare; "
+            "add `- path: <folder>` for it",
+            f"{requester} 请求 {identity}，但 Modules/modules.yaml 没有声明它；"
+            "请为它添加 `- path: <目录>`",
+        )
+    )
 
 
 def request_record(req: dict) -> dict:
@@ -887,7 +920,7 @@ class Resolver:
                 the primary header.
         """
         folder = local_folder(path, self.root)
-        header = folder / (folder.name + ".hpp")
+        header = module_header(folder)
         if not header.is_file():
             raise ValueError(
                 tr(
@@ -952,14 +985,7 @@ class Resolver:
                 )
             )
         if declared is None:
-            raise ValueError(
-                tr(
-                    f"{self._requester()} requests {req['id']}, which Modules/modules.yaml does "
-                    "not declare; add `- path: <folder>` for it",
-                    f"{self._requester()} 请求 {req['id']}，但 Modules/modules.yaml 没有声明它；"
-                    "请为它添加 `- path: <目录>`",
-                )
-            )
+            raise undeclared_local(self._requester(), req["id"])
         identity = declared["id"]
         if identity in self.stack:
             cycle = " -> ".join(self.stack + [identity])
@@ -969,11 +995,9 @@ class Resolver:
         folder = self.check_local(identity, declared["path"])
         self.local[identity] = {"path": declared["path"]}
         self.local_folders[identity] = folder
-        header = folder / (folder.name + ".hpp")
-        text = header.read_text(encoding="utf-8", errors="surrogateescape")
         self.stack.append(identity)
         try:
-            for dep in manifest_from_text(text, str(header), identity).depends:
+            for dep in local_depends(folder, identity):
                 self.visit(request(dep, canonical=True), parent_context)
         finally:
             self.stack.pop()
@@ -1266,21 +1290,12 @@ def validate_locked_graph(resolver: Resolver, roots: list[dict]) -> None:
             return
         active.append(identity)
         folder = resolver.local_folders[identity]
-        header = folder / (folder.name + ".hpp")
-        text = header.read_text(encoding="utf-8", errors="surrogateescape")
-        for dep in manifest_from_text(text, str(header), identity).depends:
+        for dep in local_depends(folder, identity):
             dependency = request(dep, canonical=True)
             if is_local(dependency["id"]) and not any(
                 key.casefold() == dependency["id"].casefold() for key in resolver.local
             ):
-                raise ValueError(
-                    tr(
-                        f"{identity} requests {dependency['id']}, which Modules/modules.yaml "
-                        "does not declare; add `- path: <folder>` for it",
-                        f"{identity} 请求 {dependency['id']}，但 Modules/modules.yaml 没有声明它；"
-                        "请为它添加 `- path: <目录>`",
-                    )
-                )
+                raise undeclared_local(identity, dependency["id"])
             visit(dependency, from_local=True)
         active.pop()
         visited.add(identity)

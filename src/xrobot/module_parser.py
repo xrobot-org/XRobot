@@ -15,7 +15,7 @@ from xr_syntax.i18n import tr
 from xrobot import __version__
 from xrobot.constructor_model import enrich_interface
 from xrobot.git import head_commit
-from xrobot.project import in_tree, local_folder
+from xrobot.project import in_tree, local_folder, module_header
 from xrobot.source_syntax import extract_interface
 
 MANIFEST_PATTERN = re.compile(
@@ -198,7 +198,7 @@ def load_single_module(path: str | Path) -> ModuleManifest:
     """
     path = Path(path).resolve()
     if path.is_dir():
-        path = path / (path.name + ".hpp")
+        path = module_header(path)
     return parse_manifest_from_header(path)
 
 
@@ -216,7 +216,7 @@ def source_interface(path: str | Path) -> dict:
     """
     path = Path(path)
     if path.is_dir():
-        path = path / (path.name + ".hpp")
+        path = module_header(path)
     stat = path.stat()
     key = (str(path.resolve()), stat.st_mtime_ns, stat.st_size)
     if key not in _INTERFACE_CACHE:
@@ -265,7 +265,7 @@ def module_record(identity: str, folder: Path) -> dict:
     """一个已检出模块的记录：id、类名、目录、主头文件和 manifest。
     The record of a checked-out Module: id, class name, folder, main header and manifest.
     """
-    header = folder / (folder.name + ".hpp")
+    header = module_header(folder)
     return {
         "id": identity,
         "name": folder.name,
@@ -310,7 +310,7 @@ def locked_modules(directory: Path, lock_path: Path) -> list[dict]:
                     f"xrobot.lock 中没有 {identity} 的提交",
                 ),
             )
-        elif not (folder / (folder.name + ".hpp")).is_file():
+        elif not module_header(folder).is_file():
             state["status"] = "missing"
         elif not (folder / ".git").exists():
             state.update(
@@ -343,7 +343,7 @@ def locked_modules(directory: Path, lock_path: Path) -> list[dict]:
                 "folder": folder,
                 "commit": None,
                 "head": None,
-                "status": "ok" if (folder / (folder.name + ".hpp")).is_file() else "missing",
+                "status": "ok" if module_header(folder).is_file() else "missing",
                 "reason": None,
             }
         )
@@ -357,7 +357,7 @@ def lock_error(state: dict) -> str:
     if state["status"] == "broken":
         return state["reason"]
     if state["status"] == "missing" and state.get("kind") == "local":
-        header = state["folder"] / (state["folder"].name + ".hpp")
+        header = module_header(state["folder"])
         return tr(
             f"Local Module {state['id']} (path: {state['path']}) has no {header.as_posix()}",
             f"本地模块 {state['id']}（path: {state['path']}）缺少 {header.as_posix()}",
