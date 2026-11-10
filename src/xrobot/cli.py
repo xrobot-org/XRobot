@@ -76,6 +76,22 @@ def _config_path(project: Project, value: str | None) -> Path | None:
     return path.resolve()
 
 
+def _local_path(project: Project, value: str) -> str:
+    """把 --path 写成 modules.yaml 的 path：相对路径与 -c 一样先相对当前目录，不存在时相对
+    BSP 根目录，再改写成相对 BSP 根目录的路径；绝对路径不变。
+    Turn --path into the path of modules.yaml: a relative path is taken from the current
+    directory when that exists, else from the BSP root, like -c, and is then written relative
+    to the BSP root; an absolute path stays as it is.
+    """
+    path = Path(value)
+    if path.is_absolute() or not (Path.cwd() / path).exists():
+        return value
+    try:
+        return Path(os.path.relpath(Path.cwd() / path, project.root)).as_posix()
+    except ValueError:
+        return Path(os.path.abspath(path)).as_posix()  # 另一个盘符 / another drive
+
+
 def _count(number: int, noun: str, chinese_noun: str) -> str:
     """数量加名词：英文按数量选择单复数，中文用量词“个”。
     A count followed by the noun: singular or plural in English, with the measure word 个
@@ -212,6 +228,9 @@ def cmd_setup(args: argparse.Namespace) -> None:
         args.force,
     )
     count = _count(len(lock["modules"]), "Module commit", "模块提交")
+    if lock.get("local"):
+        local = _count(len(lock["local"]), "local Module", "本地模块")
+        count = tr(f"{count} and {local}", f"{count}和 {local}")
     print(tr(f"Resolved {count}", f"已解析 {count}"))
     if args.release_ref:
         check_tool_pins(project, args.release_ref, args.offline)
@@ -585,20 +604,14 @@ def cmd_module(args: argparse.Namespace) -> None:
     if args.action == "add":
         from xrobot.config_edit import add_module
 
-        if (args.request is None) == (args.path is None):
-            raise ValueError(
-                tr(
-                    "Give either owner/Repo[@ref] or --path <folder>",
-                    "请给出 owner/Repo[@ref] 或 --path <目录> 之一",
-                )
-            )
         if args.path is not None:
-            identity = add_module(project.modules_yaml, local_path=args.path)
+            path = _local_path(project, args.path)
+            identity = add_module(project.modules_yaml, local_path=path)
             print(
                 tr(
-                    f"Added local Module {identity} ({args.path}); run `xrobot setup` to "
+                    f"Added local Module {identity} (path: {path}); run `xrobot setup` to "
                     "update xrobot.lock",
-                    f"已添加本地模块 {identity}（{args.path}）；请运行 `xrobot setup` 更新 "
+                    f"已添加本地模块 {identity}（path: {path}）；请运行 `xrobot setup` 更新 "
                     "xrobot.lock",
                 )
             )
@@ -1156,12 +1169,14 @@ def parser() -> argparse.ArgumentParser:
         "add",
         tr("request a Module in modules.yaml", "在 modules.yaml 中请求一个模块"),
     )
-    module_add.add_argument("request", nargs="?", help="owner/Repo[@ref]")
-    module_add.add_argument(
+    module_request = module_add.add_mutually_exclusive_group(required=True)
+    module_request.add_argument("request", nargs="?", help="owner/Repo[@ref]")
+    module_request.add_argument(
         "--path",
         help=tr(
-            "request the local Module in this folder (relative to the BSP root, or absolute)",
-            "请求这个目录中的本地模块（相对 BSP 根目录，或绝对路径）",
+            "request the local Module in this folder (relative to the current directory or "
+            "the BSP root, or absolute)",
+            "请求这个目录中的本地模块（相对当前目录或 BSP 根目录，或绝对路径）",
         ),
     )
     _command(

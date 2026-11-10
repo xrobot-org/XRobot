@@ -75,24 +75,46 @@ class Requests(LocalModuleCase):
 
     def test_a_path_request_names_local_and_its_folder(self):
         self.assertEqual(
-            request({"path": "Modules\\local\\Chassis/"}),
+            request({"path": "Modules\\local\\Chassis/"}, allow_path=True),
             {"id": "local/Chassis", "ref": None, "path": "Modules/local/Chassis"},
         )
-        self.assertEqual(request({"path": "D:/work/Imu"})["id"], "local/Imu")
+        self.assertEqual(request({"path": "D:/work/Imu"}, allow_path=True)["id"], "local/Imu")
 
     def test_a_path_request_takes_no_ref_or_other_keys(self):
-        with self.assertRaisesRegex(ValueError, "takes no ref"):
-            request({"path": "Modules/local/A", "ref": "master"})
+        for value in (
+            {"path": "Modules/local/A", "ref": "master"},
+            {"id": "local/A", "path": "Modules/local/A"},
+        ):
+            with self.assertRaisesRegex(ValueError, "takes no ref"):
+                request(value, allow_path=True)
         with self.assertRaisesRegex(ValueError, "local Module and takes no ref"):
             request("local/A@master")
         with self.assertRaisesRegex(ValueError, "does not end in a Module folder"):
-            request({"path": ".."})
+            request({"path": ".."}, allow_path=True)
         with self.assertRaisesRegex(ValueError, "empty"):
-            request({"path": " "})
+            request({"path": " "}, allow_path=True)
+
+    def test_a_path_cannot_carry_a_semicolon_or_a_control_character(self):
+        for path in ("a;b/Chassis", "a\nb/Chassis", "a\tb/Chassis"):
+            with self.assertRaisesRegex(ValueError, "semicolon or a control character"):
+                request({"path": path}, allow_path=True)
+
+    def test_only_modules_yaml_writes_a_path(self):
+        with self.assertRaisesRegex(ValueError, "only Modules/modules.yaml writes its path"):
+            request({"path": "Modules/local/A"}, canonical=True)
+        self.local(self.modules / "local/Base")
+        self.local(self.modules / "local/Top", [{"path": "Modules/local/Base"}])
+        self.configure([{"path": "Modules/local/Top"}, {"path": "Modules/local/Base"}])
+        with self.assertRaisesRegex(ValueError, "only Modules/modules.yaml writes its path"):
+            self.sync()
 
     def test_modules_yaml_requests_local_modules_only_by_path(self):
-        self.configure(["local/A"])
-        with self.assertRaisesRegex(ValueError, "reserved for local Modules"):
+        for value in ("local/A", "Local/A@master"):
+            self.configure([value])
+            with self.assertRaisesRegex(ValueError, "reserved for local Modules|takes no ref"):
+                read_modules_yaml(self.modules / "modules.yaml")
+        self.configure(["Local/A"])
+        with self.assertRaisesRegex(ValueError, "Local/A uses the owner local"):
             read_modules_yaml(self.modules / "modules.yaml")
 
     def test_two_paths_with_the_same_folder_name_are_rejected(self):
@@ -101,9 +123,13 @@ class Requests(LocalModuleCase):
             read_modules_yaml(self.modules / "modules.yaml")
 
     def test_the_sources_cannot_use_the_local_owner(self):
-        self.upstream("local/A")
-        self.configure(["local/A"])
-        with self.assertRaisesRegex(ValueError, "reserved for local Modules"):
+        # 只请求 team/B：加载 Source 的 index 时就报错，不是因为请求了 local/A。
+        # Only team/B is requested: loading the index of the Source fails, not a request of
+        # local/A.
+        self.upstream("Local/A")
+        self.upstream("team/B")
+        self.configure(["team/B@master"])
+        with self.assertRaisesRegex(ValueError, "Local/A uses the owner local, which is reserved"):
             self.sync()
 
 
@@ -241,9 +267,32 @@ class Resolution(LocalModuleCase):
         self.write(self.root / ".gitignore", "/Modules/*/\n")
         self.local(self.modules / "local/Chassis")
         self.configure([{"path": "Modules/local/Chassis"}])
-        with self.assertRaisesRegex(ValueError, "ignored by the BSP's .gitignore"):
+        with self.assertRaisesRegex(
+            ValueError,
+            r"ignored by the BSP's .gitignore, so Modules/local/Chassis/Chassis.hpp would not "
+            r"be committed; add `!/Modules/local/` to .gitignore after the rule that ignores "
+            r"it \(.gitignore:1:/Modules/\*/\)",
+        ):
             self.sync()
+        # 照提示加的一行就够了。
+        # The one line the hint names is enough.
         self.write(self.root / ".gitignore", "/Modules/*/\n!/Modules/local/\n")
+        self.assertIn("local/Chassis", self.sync()["local"])
+
+    def test_an_ignored_source_file_fails_like_an_ignored_header(self):
+        run_git(self.root, "init", "-q", "-b", "dev")
+        self.write(self.root / ".gitignore", "*.cpp\n*.log\n")
+        folder = self.local(self.modules / "local/Chassis")
+        self.write(folder / "src/Chassis.cpp", "// source\n")
+        self.write(folder / "build.log", "not built from\n")
+        self.configure([{"path": "Modules/local/Chassis"}])
+        with self.assertRaisesRegex(
+            ValueError,
+            r"so Modules/local/Chassis/src/Chassis.cpp would not be committed; add "
+            r"`!/Modules/local/Chassis/src/Chassis.cpp`",
+        ):
+            self.sync()
+        self.write(self.root / ".gitignore", "*.log\n")
         self.assertIn("local/Chassis", self.sync()["local"])
 
     def git_calls(self, **options):
@@ -259,11 +308,12 @@ class Resolution(LocalModuleCase):
             """
             if isinstance(command, list) and command[:1] == ["git"]:
                 rest = command[1:]
-                calls.append(rest[2:] if rest[:1] == ["-C"] else rest)
+                rest = rest[2:] if rest[:1] == ["-C"] else rest
+                calls.append(rest + ([kwargs["input"]] if kwargs.get("input") else []))
             return real(command, *args, **kwargs)
 
         with mock.patch("subprocess.run", counting):
-            self.sync(**options)
+            self.sync_warnings(**options)
         return calls
 
     def test_the_gitignore_check_costs_the_same_for_any_number_of_local_modules(self):
@@ -306,6 +356,19 @@ class Resolution(LocalModuleCase):
         self.configure([{"path": "Modules/local/Nested"}, {"path": "../shared/Outside"}])
         calls = self.git_calls()
         self.assertEqual([c for c in calls if "check-ignore" in c], [])
+        # 另有一个要检查的本地模块时，git 只被问到它的文件。
+        # With one more local Module that is checked, git is asked about its files only.
+        self.write(self.root / ".gitignore", "/Modules/*/\n!/Modules/local/\n")
+        self.local(self.modules / "local/Checked")
+        self.configure(
+            [
+                {"path": "Modules/local/Nested"},
+                {"path": "../shared/Outside"},
+                {"path": "Modules/local/Checked"},
+            ]
+        )
+        (asked,) = [c for c in self.git_calls() if "check-ignore" in c]
+        self.assertEqual(asked[-1], "Modules/local/Checked/Checked.hpp\0")
 
     def test_a_bsp_outside_git_accepts_local_modules(self):
         self.write(self.root / ".gitignore", "/Modules/*/\n")
@@ -433,25 +496,209 @@ class Resolution(LocalModuleCase):
         with self.assertRaisesRegex(ValueError, "is not on dev"):
             self.sync_warnings(frozen=True, release_ref="refs/heads/dev")
 
-    def test_a_malformed_local_section_of_the_lock_is_rejected(self):
-        self.local(self.modules / "local/Chassis")
+    def test_the_local_section_of_the_lock_follows_modules_yaml(self):
+        # lock 的 local 只是 path 请求的副本：--frozen 拒绝不一致的副本，普通 setup 重写它，
+        # 使用的目录始终是 modules.yaml 写的。
+        # The local key of the lock only copies the path requests: --frozen refuses a copy
+        # that differs, a plain setup rewrites it, and the folder used is always the one
+        # modules.yaml names.
+        self.local(self.modules / "local/Chassis", cmake=True)
+        self.local(self.root / "Other/Chassis", cmake=True)
         self.configure([{"path": "Modules/local/Chassis"}])
         good = self.sync()
+        expected = self.lock_bytes()
         for label, local in (
+            ("missing", None),
+            ("another folder", {"local/Chassis": {"path": "Other/Chassis"}}),
+            ("an extra entry", {**good["local"], "local/Other": {"path": "Other/Chassis"}}),
             ("not a mapping", ["local/Chassis"]),
             ("entry without path", {"local/Chassis": {}}),
             ("entry that is not a mapping", {"local/Chassis": "Modules/local/Chassis"}),
-            ("extra key", {"local/Chassis": {"path": "Modules/local/Chassis", "commit": "x"}}),
-            ("id that does not match the path", {"local/Other": {"path": "Modules/local/Chassis"}}),
             ("id of a remote Module", {"team/Chassis": {"path": "Modules/local/Chassis"}}),
         ):
             with self.subTest(label):
-                self.write("xrobot.lock", yaml.safe_dump({**good, "local": local}, sort_keys=False))
-                for options in ({}, {"frozen": True}):
-                    with self.assertRaisesRegex(
-                        ValueError, "invalid local Modules|names local/Chassis, not local/Other"
-                    ):
-                        self.sync(**options)
+                data = {k: v for k, v in good.items() if k != "local"}
+                if local is not None:
+                    data["local"] = local
+                self.write("xrobot.lock", yaml.safe_dump(data, sort_keys=False))
+                with self.assertRaisesRegex(
+                    ValueError, "local Modules in xrobot.lock differ from the `path:` requests"
+                ):
+                    self.sync(frozen=True)
+                self.assertEqual(self.sync(), good)
+                self.assertEqual(self.lock_bytes(), expected)
+                self.assertIn("/local/Chassis/CMakeLists.txt", self.cmake())
+                self.assertNotIn("Other", self.cmake())
+
+    def test_locked_modules_reports_a_malformed_local_entry(self):
+        self.local(self.modules / "local/Chassis")
+        self.configure([{"path": "Modules/local/Chassis"}])
+        good = self.sync()
+        lock_path = self.root / "xrobot.lock"
+        for local, reason in (
+            ({"local/Chassis": {}}, "no valid path for local/Chassis"),
+            ({"local/Chassis": {"path": 5}}, "no valid path for local/Chassis"),
+            ({"local/Other": {"path": "Modules/local/Chassis"}}, "no valid path for local/Other"),
+            ({"local/Modules": {"path": "Modules"}}, "is the BSP root, Modules/"),
+        ):
+            with self.subTest(local):
+                self.write("xrobot.lock", yaml.safe_dump({**good, "local": local}))
+                (state,) = locked_modules(self.modules, lock_path)
+                self.assertEqual(state["status"], "broken")
+                self.assertRegex(state["reason"], reason)
+                with self.assertRaisesRegex(ValueError, reason):
+                    discover_modules(self.modules, lock_path)
+        self.write("xrobot.lock", yaml.safe_dump({**good, "local": [1]}))
+        with self.assertRaisesRegex(ValueError, "invalid local Modules"):
+            locked_modules(self.modules, lock_path)
+
+    def test_a_local_module_does_not_change_how_remote_requests_resolve(self):
+        # BSP 在 master；team/A 固定在 tag v1，依赖 team/B@same，B 因此取 tag v1。没有依赖的
+        # 本地模块不读取 BSP 分支，B 仍取 v1。
+        # The BSP is on master; team/A is fixed at the tag v1 and depends on team/B@same, so
+        # B takes the tag v1. A local Module without dependencies does not read the BSP
+        # branch, and B still takes v1.
+        b = self.upstream("team/B", branches=())
+        v1 = run_git(b, "rev-parse", "HEAD")
+        run_git(b, "tag", "v1")
+        self.commit(b, [], "newer master")
+        a = self.upstream("team/A", ["team/B@same"], branches=())
+        run_git(a, "tag", "v1")
+        run_git(self.root, "init", "-q", "-b", "master")
+        self.configure(["team/A@refs/tags/v1"])
+        self.assertEqual(self.sync()["modules"]["team/B"]["commit"], v1)
+        (self.root / "xrobot.lock").unlink()
+        self.local(self.modules / "local/Chassis")
+        self.configure(["team/A@refs/tags/v1", {"path": "Modules/local/Chassis"}])
+        self.assertEqual(self.sync()["modules"]["team/B"]["commit"], v1)
+        self.assertEqual(self.sync(update=[])["modules"]["team/B"]["commit"], v1)
+
+    def test_a_dependency_of_a_local_module_counts_as_a_request_of_modules_yaml(self):
+        # 本地模块请求 team/C@same-or-dev，与在 modules.yaml 中写这一行的结果相同。
+        # A local Module that requests team/C@same-or-dev resolves as if modules.yaml had
+        # that line.
+        b = self.upstream("team/B", branches=())
+        run_git(b, "tag", "v1")
+        newer = self.commit(b, [], "newer master")
+        a = self.upstream("team/A", ["team/B@same"], branches=())
+        run_git(a, "tag", "v1")
+        self.upstream("team/C")
+        run_git(self.root, "init", "-q", "-b", "master")
+        self.configure(["team/A@refs/tags/v1", "team/C@same-or-dev"])
+        direct = self.sync()["modules"]
+        (self.root / "xrobot.lock").unlink()
+        self.local(self.modules / "local/Chassis", ["team/C@same-or-dev"])
+        self.configure(["team/A@refs/tags/v1", {"path": "Modules/local/Chassis"}])
+        through_local = self.sync()["modules"]
+        self.assertEqual(direct["team/B"]["commit"], newer)
+        self.assertEqual(
+            {k: v["commit"] for k, v in through_local.items()},
+            {k: v["commit"] for k, v in direct.items()},
+        )
+
+    def test_update_outside_git_fails_for_a_local_dependency_that_follows_the_bsp(self):
+        self.upstream("team/B")
+        self.local(self.modules / "local/Chassis", ["team/B@same-or-dev"])
+        self.local(self.modules / "local/Gimbal", ["team/B@same-or-dev"])
+        self.configure([{"path": "Modules/local/Chassis"}, {"path": "Modules/local/Gimbal"}])
+        self.sync(context_ref="refs/heads/dev")
+        with self.assertRaisesRegex(
+            ValueError, r"`--update` would resolve team/B@same-or-dev by following the BSP"
+        ):
+            self.sync(update=[])
+        self.sync(update=[], context_ref="refs/heads/dev")
+
+    def test_a_branch_dependency_that_moved_upstream_keeps_its_locked_commit(self):
+        # 本地模块新增依赖时重新解析：已锁定、请求未变的 team/B@master 不随上游移动。
+        # A local Module gains a dependency and the closure is resolved again: team/B@master,
+        # locked and requested the same way, does not move with upstream.
+        b = self.upstream("team/B")
+        self.upstream("team/C")
+        folder = self.local(self.modules / "local/Chassis", ["team/B@master"])
+        self.configure([{"path": "Modules/local/Chassis"}])
+        locked = self.sync()["modules"]["team/B"]["commit"]
+        self.commit(b, [], "master moves")
+        self.local(folder, ["team/B@master", "team/C@master"])
+        lock = self.sync()
+        self.assertEqual(lock["modules"]["team/B"]["commit"], locked)
+        self.assertIn("team/C", lock["modules"])
+
+    def test_an_undeclared_local_dependency_fails_on_the_locked_path(self):
+        self.local(self.modules / "local/Base")
+        top = self.local(self.modules / "local/Top")
+        self.configure([{"path": "Modules/local/Top"}, {"path": "Modules/local/Base"}])
+        self.sync()
+        self.local(top, ["local/Other"])
+        for options in ({}, {"frozen": True}):
+            with self.assertRaisesRegex(ValueError, "local/Top requests local/Other, which"):
+                self.sync(**options)
+
+    def test_a_local_module_reached_twice_warns_once(self):
+        self.local(self.tmp / "shared/Base")
+        self.local(self.modules / "local/Left", ["local/Base"])
+        self.local(self.modules / "local/Right", ["local/Base"])
+        self.configure(
+            [
+                {"path": "Modules/local/Left"},
+                {"path": "Modules/local/Right"},
+                {"path": "../shared/Base"},
+            ]
+        )
+        _, err = self.sync_warnings()
+        self.assertEqual(err.count("local/Base is outside the BSP"), 1)
+
+    def test_a_path_cannot_be_the_bsp_root_modules_or_a_folder_around_the_bsp(self):
+        name = self.root.name
+        self.write(self.root / f"{name}.hpp", "#pragma once\n" + manifest_block("x"))
+        self.write(self.modules / "Modules.hpp", "#pragma once\n" + manifest_block("x"))
+        outer = self.root.parent.name
+        self.write(self.root.parent / f"{outer}.hpp", "#pragma once\n" + manifest_block("x"))
+        for path in (f"../{name}", "Modules", f"../../{outer}"):
+            with self.subTest(path):
+                self.configure([{"path": path}])
+                with self.assertRaisesRegex(ValueError, "is the BSP root, Modules/"):
+                    self.sync()
+                with self.assertRaisesRegex(ValueError, "is the BSP root, Modules/"):
+                    add_module(self.modules / "modules.yaml", local_path=path)
+
+    def test_cmake_receives_quotes_and_dollars_escaped(self):
+        folder = self.local(self.tmp / "we ird $dir/a${b}c/Foo", cmake=True)
+        self.configure([{"path": folder.as_posix()}])
+        self.sync_warnings()
+        escaped = folder.resolve().as_posix().replace("$", "\\$")
+        self.assertIn(f'include("{escaped}/CMakeLists.txt")', self.cmake())
+
+    def test_a_folder_on_another_drive_is_written_as_an_absolute_path(self):
+        self.local(self.tmp / "shared/Gimbal")
+        self.configure([{"path": "../shared/Gimbal"}])
+        with mock.patch("xrobot.lock.os.path.relpath", side_effect=ValueError("other drive")):
+            self.sync_warnings()
+        absolute = (self.tmp / "shared/Gimbal").resolve().as_posix()
+        self.assertIn(f'target_include_directories(xr PUBLIC "{absolute}")', self.cmake())
+
+    def test_a_linked_modules_folder_keeps_the_bsp_root(self):
+        real = self.tmp / "store/Modules"
+        real.parent.mkdir(parents=True)
+        self.modules.rename(real)
+        if os.name == "nt":
+            made = subprocess.run(
+                ["cmd", "/c", "mklink", "/J", str(self.modules), str(real)], capture_output=True
+            ).returncode
+        else:
+            os.symlink(str(real), str(self.modules), target_is_directory=True)
+            made = 0
+        if made:
+            self.skipTest("a directory link cannot be created here")
+        self.local(self.root / "Local/Chassis", cmake=True)
+        self.configure([{"path": "Local/Chassis"}])
+        lock, err = self.sync_warnings()
+        self.assertEqual(err, "")
+        self.assertEqual(set(lock["local"]), {"local/Chassis"})
+        self.assertIn(
+            'include("${CMAKE_CURRENT_LIST_DIR}/../Local/Chassis/CMakeLists.txt")', self.cmake()
+        )
+        (state,) = locked_modules(self.modules, self.root / "xrobot.lock")
+        self.assertEqual((state["status"], state["in_tree"]), ("ok", True))
 
     def test_locked_modules_reports_kind_and_path(self):
         self.upstream("team/A")
@@ -476,6 +723,8 @@ class Commands(CliMixin, LocalModuleCase):
     """
 
     def test_module_add_path_and_remove_by_local_id(self):
+        self.local(self.modules / "local/Chassis")
+        self.local(self.root / "x/Chassis")
         out, _ = self.ok("module", "add", "--path", "Modules/local/Chassis")
         self.assertIn("local/Chassis", out)
         requests, _ = read_modules_yaml(self.modules / "modules.yaml")
@@ -484,16 +733,58 @@ class Commands(CliMixin, LocalModuleCase):
         self.ok("module", "remove", "local/Chassis")
         self.assertEqual(read_modules_yaml(self.modules / "modules.yaml")[0], [])
 
+    def test_module_add_path_checks_the_folder(self):
+        self.fails("module", "add", "--path", "does/not/Exist", pattern="has no .*Exist.hpp")
+        (self.modules / "local/Empty").mkdir(parents=True)
+        self.fails("module", "add", "--path", "Modules/local/Empty", pattern="has no .*Empty.hpp")
+        self.assertEqual(read_modules_yaml(self.modules / "modules.yaml")[0], [])
+
+    def test_module_add_path_is_taken_from_the_current_directory(self):
+        self.local(self.modules / "local/Chassis")
+        out, _ = self.ok("module", "add", "--path", "Chassis", cwd=self.modules / "local")
+        self.assertIn("path: Modules/local/Chassis", out)
+        requests, _ = read_modules_yaml(self.modules / "modules.yaml")
+        self.assertEqual(requests[-1]["path"], "Modules/local/Chassis")
+
+    def test_module_add_path_from_another_drive_is_written_absolute(self):
+        self.local(self.modules / "local/Chassis")
+        with mock.patch("xrobot.cli.os.path.relpath", side_effect=ValueError("other drive")):
+            out, _ = self.ok("module", "add", "--path", "Chassis", cwd=self.modules / "local")
+        absolute = (self.modules / "local/Chassis").resolve().as_posix()
+        self.assertEqual(read_modules_yaml(self.modules / "modules.yaml")[0][-1]["path"], absolute)
+
+    def test_setup_counts_local_modules(self):
+        self.local(self.modules / "local/Chassis")
+        self.configure([{"path": "Modules/local/Chassis"}])
+        # setup 在解析模块之后才检查 User/，这里只看解析的输出。
+        # setup checks User/ after resolving the Modules; only the resolution output matters here.
+        _, out, _ = self.run_cli("setup")
+        self.assertIn("Resolved 0 Module commits and 1 local Module\n", out)
+
     def test_module_add_takes_a_request_or_a_path(self):
-        self.fails("module", "add", pattern="either owner/Repo")
-        self.fails("module", "add", "team/A", "--path", "x/A", pattern="either owner/Repo")
+        for argv in (("module", "add"), ("module", "add", "team/A", "--path", "x/A")):
+            code, _, err = self.run_cli(*argv)
+            self.assertEqual(code, 2, err)
+            self.assertIn("request", err)
         self.fails("module", "add", "local/A", pattern="reserved for local Modules")
 
     def test_add_module_quotes_a_path_when_yaml_needs_it(self):
         path = self.modules / "modules.yaml"
-        self.assertEqual(add_module(path, local_path="a: b/Chassis"), "local/Chassis")
-        self.assertEqual(read_modules_yaml(path)[0][-1]["path"], "a: b/Chassis")
+        self.local(self.root / "[a] b/Chassis")
+        self.assertEqual(add_module(path, local_path="[a] b/Chassis"), "local/Chassis")
+        self.assertEqual(read_modules_yaml(path)[0][-1]["path"], "[a] b/Chassis")
         remove_module(path, "local/Chassis")
+
+    def test_add_module_writes_a_long_path_on_one_line(self):
+        path = self.modules / "modules.yaml"
+        folder = self.local(
+            self.tmp / "My Projects/Robot Firmware 2026/Shared Modules/Chassis IO Modules/ChassisIO"
+        )
+        long = folder.resolve().as_posix()
+        self.assertGreater(len(long), 90)
+        add_module(path, local_path=long)
+        self.assertEqual(read_modules_yaml(path)[0][-1]["path"], long)
+        self.assertIn(f"\n  - path: {long}\n", path.read_text(encoding="utf-8"))
 
 
 class Generation(BspTestCase):

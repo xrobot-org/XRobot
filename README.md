@@ -150,29 +150,43 @@ branch the next layer follows.
 ### 本地模块 / Local Modules
 
 只在一个 BSP 中使用的模块可以放在一个目录中，以 `path:` 请求，不需要单独的 Git 仓库和源。路径相对
-BSP 根目录，也可以是绝对路径；模块 id 为 `local/<目录名>`，目录中有同名的主头文件。
+BSP 根目录，也可以是绝对路径；模块 id 为 `local/<目录名>`，目录中有同名的主头文件。本地模块从
+XRobot 1.0.2 起可用。
 
 A Module used by one BSP only can live in a folder and be requested with `path:`, without a
 Git repository or source of its own. The path is relative to the BSP root, or absolute; the
 Module id is `local/<folder name>`, and the folder holds the primary header of the same name.
+Local Modules are available from XRobot 1.0.2.
 
 ```yaml
+xrobot: 1.0.2
 modules:
   - xrobot-org/BlinkLED@same-or-dev
   - path: Modules/local/ChassisIO
 ```
 
+`xrobot module add --path <目录>` 添加这样一行；目录相对当前目录或 BSP 根目录，写入时换算成相对
+BSP 根目录的路径。
+
+`xrobot module add --path <folder>` adds such a line; the folder is taken from the current
+directory or the BSP root and written relative to the BSP root.
+
 本地模块使用目录中的当前内容，lock 只记录它的路径。BSP 目录内的本地模块随 BSP 仓库提交，由 BSP
-的提交固定；`.gitignore` 中有 `/Modules/*/` 时，需在其后加一行 `!/Modules/local/`。BSP 目录外的
-本地模块只在本机可用，`xrobot setup` 对它给出警告。本地模块的依赖与 `modules.yaml` 中的请求一样
-跟随 BSP 的分支；来自源的模块不能依赖本地模块。
+的提交固定；其中的源码、头文件或 CMake 文件被 `.gitignore` 忽略时，`xrobot setup` 报错并给出要加的
+放行行，例如 `/Modules/*/` 之后的 `!/Modules/local/`。BSP 目录外的本地模块只在本机可用，
+`xrobot setup` 对它给出警告。本地模块的依赖与 `modules.yaml` 中的请求一样跟随 BSP 的分支；来自源的
+模块不能依赖本地模块。模块 manifest 用 `local/<目录名>` 依赖另一个本地模块，被依赖的模块同样在
+`modules.yaml` 中以 `path:` 请求。
 
 A local Module is used as its folder currently holds it, and the lock records only its
 path. A local Module inside the BSP is committed with the BSP repository and pinned by the
-BSP's commits; when `.gitignore` has `/Modules/*/`, a `!/Modules/local/` line follows it.
-A local Module outside the BSP is available on that machine only, and `xrobot setup` warns
-about it. The dependencies of a local Module follow the BSP branch like the requests in
-`modules.yaml`; a Module from a source cannot depend on a local Module.
+BSP's commits; when `.gitignore` ignores one of its sources, headers or CMake files,
+`xrobot setup` fails and names the line that lets it through, such as `!/Modules/local/`
+after `/Modules/*/`. A local Module outside the BSP is available on that machine only, and
+`xrobot setup` warns about it. The dependencies of a local Module follow the BSP branch like
+the requests in `modules.yaml`; a Module from a source cannot depend on a local Module. A
+Module manifest depends on another local Module as `local/<folder name>`, and that Module is
+requested with `path:` in `modules.yaml` as well.
 
 ---
 
@@ -372,7 +386,7 @@ checks, the optional inputs and the published files are described in
 | `xrobot sync` | 按默认值补入模块新增的字段和参数，删除已移除的参数 | Add new fields and parameters with defaults and drop removed ones |
 | `xrobot format [--check]` | 整理配置格式 | Format the configurations |
 | `xrobot instance add\|set\|remove\|rename` | 编辑实例 | Edit instances |
-| `xrobot module add\|remove\|show` | 增删模块（`add --path <目录>` 添加本地模块），查看模块接口 | Add or remove Modules (`add --path <folder>` adds a local Module), show a Module's interface |
+| `xrobot module add\|remove\|show` | 增删模块（`add --path <目录>` 添加本地模块，`remove local/<目录名>` 删除它），查看模块接口 | Add or remove Modules (`add --path <folder>` adds a local Module, `remove local/<folder name>` removes it), show a Module's interface |
 | `xrobot new-module NAME` | 新建模块 | Create a Module |
 | `xrobot check-module MODULE` | 生成模块 CI 用的编译检查 | Write the compile check used by Module CI |
 | `xrobot source ...` | 查询和编辑源 | Query and edit sources |

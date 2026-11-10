@@ -1117,12 +1117,15 @@ class LockFile(UpstreamTestCase):
         extended = yaml.safe_load(self.lock_bytes())
         extended["modules"].update(lock["modules"])
         self.write_yaml(self.root / "xrobot.lock", extended)
-        with self.assertRaisesMessage(
-            ValueError,
-            "xrobot.lock contains Modules outside the declared dependency closure: team/A, "
-            "team/B; run `xrobot setup`",
-        ):
-            self.sync(offline=True)
+        # 没有本地模块时，普通 setup 也不替多余的条目重新解析。
+        # Without local Modules a plain setup does not re-resolve over extra entries either.
+        for options in ({"offline": True}, {}):
+            with self.assertRaisesMessage(
+                ValueError,
+                "xrobot.lock contains Modules outside the declared dependency closure: team/A, "
+                "team/B; run `xrobot setup`",
+            ):
+                self.sync(**options)
 
     def test_legacy_and_unknown_lock_formats_are_rejected(self):
         self.upstream("team/A")
