@@ -52,9 +52,31 @@ def is_local(identity: str) -> bool:
 def local_folder(path: str, root: str | Path) -> Path:
     """本地模块 path 所指的目录：相对路径按 BSP 根目录解析。
     The folder a local Module path names: a relative path is taken from the BSP root.
+
+    模块 id 取自 path 的最后一段，主头文件取自解析后的目录名；两者不同（大小写不分的文件
+    系统上写错了大小写，或符号链接指向另一个名字的目录）时报错。
+    The Module id comes from the last segment of path and the primary header from the
+    resolved folder name; a difference (a wrong case on a case-insensitive file system, or a
+    symlink to a folder with another name) is an error.
+
+    Raises:
+        ValueError: path 的最后一段与目录的真实名字不同。
+            The last segment of path differs from the real name of the folder.
     """
     folder = Path(path)
-    return (folder if folder.is_absolute() else Path(root) / folder).resolve()
+    folder = (folder if folder.is_absolute() else Path(root) / folder).resolve()
+    written = path.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1]
+    if written != folder.name:
+        raise ValueError(
+            tr(
+                f"Local Module path {path} names {written}, but the folder is {folder.name} "
+                f"({folder.as_posix()}); write a path whose last segment is "
+                f"{folder.name}",
+                f"本地模块路径 {path} 的最后一段是 {written}，但目录的真实名字是 {folder.name}"
+                f"（{folder.as_posix()}）；请改写成以 {folder.name} 结尾的路径",
+            )
+        )
+    return folder
 
 
 def in_tree(folder: Path, root: str | Path) -> bool:

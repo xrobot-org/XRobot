@@ -4,6 +4,7 @@ Local Modules: the ``path:`` requests of modules.yaml.
 
 import contextlib
 import io
+import os
 from pathlib import Path
 
 import yaml
@@ -199,6 +200,30 @@ class Resolution(LocalModuleCase):
         self.assertIn(f'target_include_directories(xr PUBLIC "{absolute}")', cmake)
         _, err = self.sync_warnings(frozen=True)
         self.assertIn("outside the BSP", err)
+
+    def test_a_path_with_the_wrong_case_is_rejected_on_a_case_insensitive_file_system(self):
+        self.local(self.modules / "local/ChassisIO")
+        if not (self.modules / "local/chassisio").exists():
+            self.skipTest("the file system is case-sensitive")
+        self.configure([{"path": "Modules/local/chassisio"}])
+        with self.assertRaisesRegex(ValueError, "names chassisio, but the folder is ChassisIO"):
+            self.sync()
+        with self.assertRaisesRegex(ValueError, "names chassisio, but the folder is ChassisIO"):
+            add_module(self.modules / "modules.yaml", local_path="Modules/local/chassisio")
+
+    def test_a_symlink_to_a_folder_with_another_name_is_rejected(self):
+        real = self.local(self.tmp / "real/Bar")
+        link = self.modules / "local/Foo"
+        link.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            os.symlink(str(real), str(link), target_is_directory=True)
+        except (OSError, NotImplementedError):
+            self.skipTest("symlinks cannot be created here")
+        self.configure([{"path": "Modules/local/Foo"}])
+        with self.assertRaisesRegex(ValueError, "names Foo, but the folder is Bar"):
+            self.sync()
+        with self.assertRaisesRegex(ValueError, "names Foo, but the folder is Bar"):
+            add_module(self.modules / "modules.yaml", local_path="Modules/local/Foo")
 
     def test_a_nested_repository_inside_the_bsp_warns(self):
         folder = self.local(self.modules / "local/Chassis")

@@ -1326,10 +1326,14 @@ def add_module(
             The request is malformed, or owner/Repo uses the owner reserved for local Modules.
     """
     from xrobot.lock import request
-    from xrobot.project import LOCAL_OWNER, is_local
+    from xrobot.project import LOCAL_OWNER, is_local, local_folder
 
     if local_path is not None:
         parsed = request({"path": local_path})
+        # 目录的真实名字必须与 path 的最后一段一致（目录不存在时不检查）。
+        # The real folder name must match the last segment of path (a missing folder is not
+        # checked here).
+        local_folder(parsed["path"], Path(modules_yaml).resolve().parent.parent)
         value = yaml.safe_dump(
             {"path": parsed["path"]}, default_flow_style=False, allow_unicode=True
         ).strip()
