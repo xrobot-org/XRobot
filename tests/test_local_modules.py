@@ -5,7 +5,9 @@ Local Modules: the ``path:`` requests of modules.yaml.
 import contextlib
 import io
 import os
+import subprocess
 from pathlib import Path
+from unittest import mock
 
 import yaml
 from fixtures import (
@@ -243,6 +245,74 @@ class Resolution(LocalModuleCase):
             self.sync()
         self.write(self.root / ".gitignore", "/Modules/*/\n!/Modules/local/\n")
         self.assertIn("local/Chassis", self.sync()["local"])
+
+    def git_calls(self, **options):
+        """运行 sync，返回它启动的所有 git 命令（去掉 -C 目录后的参数）。
+        Run sync and return every git command it starts (the arguments after -C <folder>).
+        """
+        calls = []
+        real = subprocess.run
+
+        def counting(command, *args, **kwargs):
+            """记录 git 命令，其余照常运行。
+            Record git commands and run everything as usual.
+            """
+            if isinstance(command, list) and command[:1] == ["git"]:
+                rest = command[1:]
+                calls.append(rest[2:] if rest[:1] == ["-C"] else rest)
+            return real(command, *args, **kwargs)
+
+        with mock.patch("subprocess.run", counting):
+            self.sync(**options)
+        return calls
+
+    def test_the_gitignore_check_costs_the_same_for_any_number_of_local_modules(self):
+        run_git(self.root, "init", "-q", "-b", "dev")
+        self.write(self.root / ".gitignore", "/Modules/*/\n!/Modules/local/\n")
+        names = ["A", "B", "C", "D"]
+        for name in names:
+            self.local(self.modules / "local" / name)
+        counts, probes = [], []
+        for count in (1, 4):
+            self.configure([{"path": f"Modules/local/{name}"} for name in names[:count]])
+            for options in ({}, {"frozen": True}):
+                calls = self.git_calls(**options)
+                counts.append(len([c for c in calls if "check-ignore" in c]))
+                probes.append(len([c for c in calls if "--is-inside-work-tree" in c]))
+        self.assertEqual(counts, [1, 1, 1, 1])
+        # 其他代码对 rev-parse 的调用与本地模块的个数无关。
+        # Calls of rev-parse by other code do not depend on the number of local Modules.
+        self.assertEqual(probes[:2], probes[2:])
+
+    def test_the_error_names_the_one_ignored_local_module(self):
+        run_git(self.root, "init", "-q", "-b", "dev")
+        self.write(self.root / ".gitignore", "/Modules/*/\n!/Modules/local/\n/Modules/local/B/\n")
+        for name in "ABC":
+            self.local(self.modules / "local" / name)
+        self.configure([{"path": f"Modules/local/{name}"} for name in "ABC"])
+        with self.assertRaisesRegex(
+            ValueError, r"Local Module local/B \(Modules/local/B\) is ignored"
+        ):
+            self.sync()
+        self.write(self.root / ".gitignore", "/Modules/*/\n!/Modules/local/\n")
+        self.assertEqual(set(self.sync()["local"]), {"local/A", "local/B", "local/C"})
+
+    def test_a_folder_that_is_not_checked_is_not_asked_about(self):
+        run_git(self.root, "init", "-q", "-b", "dev")
+        self.write(self.root / ".gitignore", "/Modules/*/\n")
+        self.local(self.modules / "local/Nested")
+        run_git(self.modules / "local/Nested", "init", "-q")
+        self.local(self.tmp / "shared/Outside")
+        self.configure([{"path": "Modules/local/Nested"}, {"path": "../shared/Outside"}])
+        calls = self.git_calls()
+        self.assertEqual([c for c in calls if "check-ignore" in c], [])
+
+    def test_a_bsp_outside_git_accepts_local_modules(self):
+        self.write(self.root / ".gitignore", "/Modules/*/\n")
+        self.local(self.modules / "local/Chassis")
+        self.configure([{"path": "Modules/local/Chassis"}])
+        self.assertIn("local/Chassis", self.sync()["local"])
+        self.sync(frozen=True)
 
     def test_frozen_fails_when_a_local_module_gains_a_dependency(self):
         self.upstream("team/B")

@@ -325,6 +325,43 @@ def undeclared_local(requester: str, identity: str) -> ValueError:
     )
 
 
+def ignored_paths(root: Path, paths: list[str]) -> set[str]:
+    """paths（相对 root 的 / 路径）中被 root 所在仓库的 .gitignore 忽略的；每批一次 git。
+    Those of paths (/-separated, relative to root) that the .gitignore of the repository
+    around root ignores; one git call per batch.
+
+    不在仓库中时 git 失败，结果为空。
+    Outside a repository git fails and the result is empty.
+    """
+    result = set()
+    batches, batch, size = [], [], 0
+    for path in paths:
+        # Windows 命令行最长约 32 KB。
+        # A Windows command line is at most about 32 KB.
+        if batch and size + len(path) > 20000:
+            batches.append(batch)
+            batch, size = [], 0
+        batch.append(path)
+        size += len(path) + 1
+    if batch:
+        batches.append(batch)
+    for batch in batches:
+        out = git(root, "-c", "core.quotePath=false", "check-ignore", "--", *batch, check=False)
+        if out is None:
+            continue
+        if any(line.startswith('"') for line in out.splitlines()):
+            # git 对含引号、反斜杠或控制字符的名字加引号输出；这种罕见情形逐个问。
+            # git quotes names with quotes, backslashes or control characters; ask one by one.
+            result.update(
+                p
+                for p in batch
+                if git(root, "check-ignore", "-q", "--", p, check=False) is not None
+            )
+        else:
+            result.update(out.splitlines())
+    return result
+
+
 def request_record(req: dict) -> dict:
     """写入 xrobot.lock 的请求：本地模块写 {id, path}，其他请求原样。
     A request as written to xrobot.lock: {id, path} for a local Module, others unchanged.
@@ -469,6 +506,11 @@ class Resolver:
         self.local_requests = {r["id"].casefold(): r for r in local_requests or []}
         self.local: dict[str, dict] = {}
         self.local_folders: dict[str, Path] = {}
+        # 已向 git 查过 .gitignore 的主头文件（相对 BSP 根目录）及其中被忽略的。
+        # The primary headers (relative to the BSP root) already checked against .gitignore, and
+        # those of them that are ignored.
+        self._asked: set[str] = set()
+        self._ignores: set[str] = set()
         # 一个 SourceManager，或首次使用时才调用的加载函数。
         # A SourceManager, or a function that loads it on first use.
         self._sources = source_manager
@@ -902,6 +944,30 @@ class Resolver:
         finally:
             self.stack.pop()
 
+    def _ignored(self, header: Path) -> bool:
+        """BSP 的 .gitignore 是否忽略这个主头文件；第一次调用时一次问完所有已声明的本地模块。
+        Whether the BSP's .gitignore ignores this primary header; the first call asks git once
+        for every declared local Module and the answers are kept.
+
+        BSP 不是 Git 仓库时 git 退出码为 128，与"没有被忽略"同样得到 None。
+        Outside a Git repository git exits with 128, which comes back as None like "not
+        ignored".
+        """
+        key = header.relative_to(self.root).as_posix()
+        if key not in self._asked:
+            batch = {key}
+            if not self._asked:
+                for request_ in self.local_requests.values():
+                    try:
+                        folder = local_folder(request_["path"], self.root)
+                    except ValueError:
+                        continue  # check_local 轮到它时会报错 / reported when check_local reaches it
+                    if in_tree(folder, self.root) and not (folder / ".git").exists():
+                        batch.add(module_header(folder).relative_to(self.root).as_posix())
+            self._asked |= batch
+            self._ignores |= ignored_paths(self.root, sorted(batch))
+        return key in self._ignores
+
     def check_local(self, identity: str, path: str) -> Path:
         """检查本地模块的目录，返回它；不能复现的情况记入 warnings。
         Check the folder of a local Module and return it; what cannot be reproduced goes to
@@ -946,10 +1012,7 @@ class Resolver:
                     "其他检出和 CI 中不会有它们",
                 )
             )
-        elif (
-            git(self.root, "rev-parse", "--is-inside-work-tree", check=False) == "true"
-            and git(self.root, "check-ignore", "-q", str(header), check=False) is not None
-        ):
+        elif self._ignored(header):
             raise ValueError(
                 tr(
                     f"Local Module {identity} ({path}) is ignored by the BSP's .gitignore, so "
