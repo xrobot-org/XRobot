@@ -19,8 +19,10 @@ from fixtures import (
 from test_generate_main import LED, REGISTERED, led
 
 from xrobot.config_edit import add_module, remove_module
+from xrobot.describe import describe
 from xrobot.lock import read_modules_yaml, request
 from xrobot.module_parser import discover_modules, locked_modules
+from xrobot.project import read_header_inputs
 
 
 class LocalModuleCase(UpstreamTestCase):
@@ -319,6 +321,68 @@ class Resolution(LocalModuleCase):
             self.sync(leave_local=["Chassis"])
         self.assertIn("local/Chassis", self.sync(update=["local/Chassis"])["local"])
 
+    def test_update_of_a_local_module_resolves_its_dependencies_again(self):
+        self.upstream("team/A")
+        self.upstream("team/B")
+        folder = self.local(self.modules / "local/Chassis")
+        self.configure(["team/A@master", {"path": "Modules/local/Chassis"}])
+        before = self.sync()
+        self.local(folder, ["team/B@master"])
+        lock = self.sync(update=["local/Chassis"])
+        self.assertEqual(set(lock["modules"]), {"team/A", "team/B"})
+        self.assertEqual(lock["modules"]["team/A"], before["modules"]["team/A"])
+
+    def test_a_dependency_cycle_between_local_modules_is_rejected(self):
+        self.local(self.modules / "local/A", ["local/B"])
+        self.local(self.modules / "local/B", ["local/A"])
+        self.configure([{"path": "Modules/local/A"}, {"path": "Modules/local/B"}])
+        with self.assertRaisesRegex(ValueError, "Package dependency cycle: local/A -> local/B"):
+            self.sync()
+
+    def test_a_dependency_cycle_made_after_locking_is_rejected_by_frozen(self):
+        self.local(self.modules / "local/A")
+        self.local(self.modules / "local/B", ["local/A"])
+        self.configure([{"path": "Modules/local/A"}, {"path": "Modules/local/B"}])
+        self.sync()
+        self.local(self.modules / "local/A", ["local/B"])
+        for options in ({"frozen": True}, {}):
+            with self.assertRaisesRegex(ValueError, "Dependency cycle in project lock: local/A"):
+                self.sync(**options)
+
+    def test_release_ref_checks_the_remote_modules_and_not_the_local_ones(self):
+        a = self.upstream("team/A")
+        self.local(self.tmp / "shared/Gimbal")
+        self.configure(["team/A@master", {"path": "../shared/Gimbal"}])
+        _, err = self.sync_warnings(release_ref="refs/heads/dev")
+        self.assertEqual(err.count("outside the BSP"), 1)
+        run_git(a, "checkout", "-q", "-b", "feature/x")
+        feature = self.commit(a, [], "feature work")
+        run_git(a, "checkout", "-q", "master")
+        self.configure(["team/A@feature/x", {"path": "../shared/Gimbal"}])
+        self.assertEqual(self.sync_warnings()[0]["modules"]["team/A"]["commit"], feature)
+        with self.assertRaisesRegex(ValueError, "is not on dev"):
+            self.sync_warnings(frozen=True, release_ref="refs/heads/dev")
+
+    def test_a_malformed_local_section_of_the_lock_is_rejected(self):
+        self.local(self.modules / "local/Chassis")
+        self.configure([{"path": "Modules/local/Chassis"}])
+        good = self.sync()
+        for label, local in (
+            ("not a mapping", ["local/Chassis"]),
+            ("entry without path", {"local/Chassis": {}}),
+            ("entry that is not a mapping", {"local/Chassis": "Modules/local/Chassis"}),
+            ("extra key", {"local/Chassis": {"path": "Modules/local/Chassis", "commit": "x"}}),
+            ("id that does not match the path", {"local/Other": {"path": "Modules/local/Chassis"}}),
+            ("id of a remote Module", {"team/Chassis": {"path": "Modules/local/Chassis"}}),
+        ):
+            with self.subTest(label):
+                self.write("xrobot.lock", yaml.safe_dump({**good, "local": local}, sort_keys=False))
+                for options in ({}, {"frozen": True}):
+                    with self.assertRaisesRegex(
+                        ValueError, "invalid local Modules|names local/Chassis, not local/Other"
+                    ):
+                        self.sync(**options)
+
     def test_locked_modules_reports_kind_and_path(self):
         self.upstream("team/A")
         self.local(self.tmp / "shared/Gimbal")
@@ -384,6 +448,46 @@ class Generation(BspTestCase):
         code = self.generate({"modules": [led()]})
         self.assertIn("// led: local/Led (User/xrobot.yaml:", code)
         self.assertIn('// xrobot: depends "../Modules/local/Led/Led.hpp"', code)
+
+    def test_editing_a_local_header_makes_the_generated_header_stale(self):
+        self.lock_local("Modules/local/Led")
+        self.generate({"modules": [led()]})
+        self.assertEqual(self.project.header_state()["status"], "fresh")
+        digest = read_header_inputs(self.root / "User/xrobot_main.hpp").digest
+        self.write(
+            self.root / "Modules/local/Led/Led.hpp",
+            "#pragma once" + chr(10) + EMPTY_MANIFEST + LED + chr(10) + "// edited" + chr(10),
+        )
+        self.assertEqual(self.project.header_state()["status"], "stale")
+        self.generate()
+        self.assertEqual(self.project.header_state()["status"], "fresh")
+        self.assertNotEqual(read_header_inputs(self.root / "User/xrobot_main.hpp").digest, digest)
+
+    def test_describe_marks_local_and_git_modules(self):
+        self.module("Motor", "class Motor { public: Motor() {} };")
+        self.lock_local("Modules/local/Led")
+        modules = {m["id"]: m for m in describe(self.project)["lock"]["modules"]}
+        self.assertEqual(
+            modules["local/Led"],
+            {
+                "id": "local/Led",
+                "kind": "local",
+                "commit": None,
+                "head": None,
+                "status": "ok",
+                "path": "Modules/local/Led",
+                "in_tree": True,
+            },
+        )
+        self.assertEqual(modules["team/Motor"]["kind"], "git")
+        self.assertNotIn("path", modules["team/Motor"])
+        self.assertEqual(modules["team/Motor"]["status"], "ok")
+        self.lock_local("../shared/Led")
+        modules = {m["id"]: m for m in describe(self.project)["lock"]["modules"]}
+        self.assertEqual(
+            (modules["local/Led"]["path"], modules["local/Led"]["in_tree"]),
+            ("../shared/Led", False),
+        )
 
     def test_an_instance_of_a_local_module_outside_the_bsp(self):
         self.lock_local("../shared/Led")
