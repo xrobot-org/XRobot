@@ -572,6 +572,21 @@ class Resolution(LocalModuleCase):
         self.configure(["team/A@refs/tags/v1", {"path": "Modules/local/Chassis"}])
         self.assertEqual(self.sync()["modules"]["team/B"]["commit"], v1)
         self.assertEqual(self.sync(update=[])["modules"]["team/B"]["commit"], v1)
+        # 按 lock 检出时，refs/tags/v1 的请求与锁定的 tag 相符。
+        # Checking out the lock, the request refs/tags/v1 matches the locked tag.
+        self.assertEqual(self.sync(frozen=True)["modules"]["team/B"]["commit"], v1)
+
+    def test_a_commit_request_matches_its_locked_commit_in_any_length(self):
+        # lock 记录请求时的写法（7 位）；改写成 12 位的同一提交，lock 仍然相符。
+        # The lock records the spelling of the request (7 digits); the same commit written
+        # with 12 still matches the lock.
+        a = self.upstream("team/A")
+        commit = run_git(a, "rev-parse", "HEAD")
+        folder = self.local(self.modules / "local/Chassis", [f"team/A@{commit[:7]}"])
+        self.configure([{"path": "Modules/local/Chassis"}])
+        self.sync()
+        self.local(folder, [f"team/A@{commit[:12]}"])
+        self.assertEqual(self.sync(frozen=True)["modules"]["team/A"]["commit"], commit)
 
     def test_a_dependency_of_a_local_module_counts_as_a_request_of_modules_yaml(self):
         # 本地模块请求 team/C@same-or-dev，与在 modules.yaml 中写这一行的结果相同。
