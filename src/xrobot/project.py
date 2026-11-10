@@ -36,6 +36,86 @@ DIGEST_LINE = re.compile(r"^// xrobot: digest ([0-9a-f]{64})$")
 # semicolon, after removing every carriage return (CMake's file(READ) reads CRLF as LF on
 # Windows); LibXR's cmake/XRobotFreshness.cmake applies the same rule.
 REGISTRATION = re.compile(rb"XR_REGISTER[^;]*")
+# 本地模块（modules.yaml 中的 `path:` 请求）的 id 为 local/<目录名>；Sources 不能使用这个 owner。
+# A local Module (a `path:` request of modules.yaml) has the id local/<folder name>; the
+# Sources cannot use this owner.
+LOCAL_OWNER = "local"
+
+
+def is_local(identity: str) -> bool:
+    """identity 是否为本地模块的 id（owner 为 local，不区分大小写）。
+    Whether identity is the id of a local Module (owner local, ignoring case).
+    """
+    return identity.split("/", 1)[0].casefold() == LOCAL_OWNER
+
+
+def module_header(folder: str | Path) -> Path:
+    """模块目录中的主头文件：<目录名>.hpp。
+    The primary header of a Module folder: <folder name>.hpp.
+    """
+    folder = Path(folder)
+    return folder / (folder.name + ".hpp")
+
+
+def last_segment(path: str) -> str:
+    """本地模块 path（/ 分隔）的最后一段，忽略末尾的 /；它就是模块的目录名。
+    The last segment of a local Module path (/-separated), ignoring a trailing /; it is the
+    Module's folder name.
+    """
+    return path.rstrip("/").rsplit("/", 1)[-1]
+
+
+def local_folder(path: str, root: str | Path) -> Path:
+    """本地模块 path 所指的目录：相对路径按 BSP 根目录解析。
+    The folder a local Module path names: a relative path is taken from the BSP root.
+
+    模块 id 取自 path 的最后一段，主头文件取自解析后的目录名；两者不同（大小写不分的文件
+    系统上写错了大小写，或符号链接指向另一个名字的目录）时报错。
+    The Module id comes from the last segment of path and the primary header from the
+    resolved folder name; a difference (a wrong case on a case-insensitive file system, or a
+    symlink to a folder with another name) is an error.
+
+    path 不能是 BSP 根目录、Modules/ 或包含 BSP 的目录：生成的 Modules/CMakeLists.txt 会
+    include 它们自己的 CMakeLists.txt。
+    path cannot be the BSP root, Modules/ or a folder that contains the BSP: the generated
+    Modules/CMakeLists.txt would include their own CMakeLists.txt.
+
+    Raises:
+        ValueError: path 的最后一段与目录的真实名字不同，或 path 是上述目录之一。
+            The last segment of path differs from the real name of the folder, or path is
+            one of the folders above.
+    """
+    folder = Path(path)
+    root = Path(root).resolve()
+    folder = (folder if folder.is_absolute() else root / folder).resolve()
+    if folder in (root, (root / "Modules").resolve()) or folder in root.parents:
+        raise ValueError(
+            tr(
+                f"Local Module path {path} is the BSP root, Modules/ or a folder around the "
+                "BSP; a local Module is a folder of its own, such as Modules/local/<Name>",
+                f"本地模块路径 {path} 是 BSP 根目录、Modules/ 或包含 BSP 的目录；本地模块应是"
+                "单独的目录，例如 Modules/local/<Name>",
+            )
+        )
+    written = last_segment(path)
+    if written != folder.name:
+        raise ValueError(
+            tr(
+                f"Local Module path {path} names {written}, but the folder is {folder.name} "
+                f"({folder.as_posix()}); write a path whose last segment is "
+                f"{folder.name}",
+                f"本地模块路径 {path} 的最后一段是 {written}，但目录的真实名字是 {folder.name}"
+                f"（{folder.as_posix()}）；请改写成以 {folder.name} 结尾的路径",
+            )
+        )
+    return folder
+
+
+def in_tree(folder: Path, root: str | Path) -> bool:
+    """folder 是否在 BSP 根目录之内（随 BSP 仓库一起提交）。
+    Whether folder is inside the BSP root (committed with the BSP repository).
+    """
+    return Path(root).resolve() in folder.parents
 
 
 def path_order(path: str | Path) -> str:

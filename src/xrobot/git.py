@@ -18,9 +18,11 @@ GIT_TIMEOUT = 300
 _COMMIT = re.compile(r"[0-9a-f]{40}")
 
 
-def git(path: str | Path | None, *args: str, check: bool = True) -> str | None:
-    """在 path 中运行 git，返回去掉首尾空白的输出。
-    Run git in path and return its stripped output.
+def git(
+    path: str | Path | None, *args: str, check: bool = True, input: str | None = None
+) -> str | None:
+    """在 path 中运行 git，返回去掉首尾空白的输出；input 写入 git 的标准输入。
+    Run git in path and return its stripped output; input goes to the standard input of git.
 
     Returns:
         成功时为标准输出；check=False 且失败时为 None。
@@ -36,6 +38,7 @@ def git(path: str | Path | None, *args: str, check: bool = True) -> str | None:
     try:
         result = subprocess.run(
             command,
+            input=input,
             capture_output=True,
             encoding="utf-8",
             errors="replace",

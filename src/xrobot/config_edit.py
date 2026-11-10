@@ -1301,18 +1301,69 @@ def _request_lines(text: str):
     return lines, key, items, node
 
 
-def add_module(modules_yaml: str | Path, request_text: str) -> None:
+def add_module(
+    modules_yaml: str | Path, request_text: str | None = None, local_path: str | None = None
+) -> str:
     """在 modules.yaml 末尾加一行请求，其余内容不变；没写 ref 时为 @same-or-dev。
     Append one request line to modules.yaml, leaving the rest unchanged; a request
     without a ref gets @same-or-dev.
 
+    Args:
+        request_text: owner/Repo[@ref]。
+            owner/Repo[@ref].
+        local_path: 代替 request_text：本地模块的目录（相对 BSP 根目录，或绝对路径），写成
+            ``path: <目录>``。
+            Instead of request_text: the folder of a local Module (relative to the BSP root,
+            or absolute), written as ``path: <folder>``.
+
+    Returns:
+        添加的模块 id。
+        The id of the added Module.
+
     Raises:
         ConfigError: 已经请求过这个模块，或 modules 是非空的流式列表。
             The Module is already requested, or modules is a non-empty flow list.
+        ValueError: 请求写法不对，owner/Repo 用了保留给本地模块的 owner，或本地模块的目录
+            名不对、缺少主头文件。
+            The request is malformed, owner/Repo uses the owner reserved for local Modules,
+            or the folder of a local Module has the wrong name or no primary header.
     """
     from xrobot.lock import request
+    from xrobot.project import LOCAL_OWNER, is_local, local_folder, module_header
 
-    parsed = request(request_text, canonical=True)
+    if local_path is not None:
+        parsed = request({"path": local_path}, allow_path=True)
+        root = Path(modules_yaml).resolve().parent.parent
+        header = module_header(local_folder(parsed["path"], root))
+        if not header.is_file():
+            raise ValueError(
+                tr(
+                    f"Local Module {parsed['id']} (path: {parsed['path']}) has no "
+                    f"{header.as_posix()}",
+                    f"本地模块 {parsed['id']}（path: {parsed['path']}）缺少 {header.as_posix()}",
+                )
+            )
+        # 一行写完：默认在 80 列折行，续行的缩进会破坏列表。
+        # One line: the default fold at 80 columns would indent the continuation out of the
+        # list.
+        value = yaml.safe_dump(
+            {"path": parsed["path"]},
+            default_flow_style=False,
+            allow_unicode=True,
+            width=float("inf"),
+        ).strip()
+    else:
+        parsed = request(request_text, canonical=True)
+        if is_local(parsed["id"]):
+            raise ValueError(
+                tr(
+                    f"{parsed['id']} uses the owner {LOCAL_OWNER}, which is reserved for local "
+                    "Modules; add a local Module with `xrobot module add --path <folder>`",
+                    f"{parsed['id']} 的 owner {LOCAL_OWNER} 保留给本地模块；本地模块请用 "
+                    "`xrobot module add --path <目录>` 添加",
+                )
+            )
+        value = request_text if "@" in request_text else request_text + "@same-or-dev"
     path = Path(modules_yaml)
     text = (
         path.read_text(encoding="utf-8-sig").replace("\r\n", "\n")
@@ -1324,7 +1375,7 @@ def add_module(modules_yaml: str | Path, request_text: str) -> None:
         if isinstance(child, yaml.ScalarNode):
             existing = request(child.value)
         else:
-            existing = request({k.value: v.value for k, v in child.value})
+            existing = request({k.value: v.value for k, v in child.value}, allow_path=True)
         if existing["id"].casefold() == parsed["id"].casefold():
             raise ConfigError(
                 tr(
@@ -1332,7 +1383,6 @@ def add_module(modules_yaml: str | Path, request_text: str) -> None:
                     f"{modules_yaml} 中已经请求了 {parsed['id']}",
                 )
             )
-    value = request_text if "@" in request_text else request_text + "@same-or-dev"
     if key is None:
         lines = [line for line in lines if line.strip()] + ["modules:", "  - " + value]
     elif node.flow_style:
@@ -1352,6 +1402,7 @@ def add_module(modules_yaml: str | Path, request_text: str) -> None:
         end = last.end_mark.line + (1 if last.end_mark.column else 0)
         lines.insert(max(end, last_line + 1), prefix + value)
     atomic_write(path, "\n".join(lines).rstrip("\n") + "\n")
+    return parsed["id"]
 
 
 def remove_module(modules_yaml: str | Path, identity: str) -> None:
@@ -1371,7 +1422,7 @@ def remove_module(modules_yaml: str | Path, identity: str) -> None:
         if isinstance(child, yaml.ScalarNode):
             existing = request(child.value)
         else:
-            existing = request({k.value: v.value for k, v in child.value})
+            existing = request({k.value: v.value for k, v in child.value}, allow_path=True)
         if existing["id"].casefold() != identity.casefold():
             continue
         if node.flow_style:

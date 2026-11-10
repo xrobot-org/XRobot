@@ -78,10 +78,10 @@ run a different version than expected, and different versions generate different
 `xrobot --version` shows the version in use.
 
 BSP 使用的 XRobot 版本记录在 `Modules/modules.yaml` 的 `xrobot:` 字段中，安装时应与之一致，例如
-`pipx install xrobot==1.0.1`。
+`pipx install xrobot==1.0.2`。
 
 The XRobot version a BSP uses is recorded in the `xrobot:` field of `Modules/modules.yaml`;
-install the same version, e.g. `pipx install xrobot==1.0.1`.
+install the same version, e.g. `pipx install xrobot==1.0.2`.
 
 ---
 
@@ -120,7 +120,7 @@ in `xrobot.lock`. Later runs check out the locked commits, so the same BSP gets 
 Module code on every machine; `xrobot setup --update` upgrades the Modules.
 
 ```yaml
-xrobot: 1.0.1
+xrobot: 1.0.2
 modules:
   - xrobot-org/BMI088@same-or-dev
   - xrobot-org/MadgwickAHRS@same-or-dev
@@ -146,6 +146,35 @@ back to `dev`. Along the dependency chain, `@same` and `@same-or-dev` requests a
 tags or commits all keep the original context branch: every layer looks for its own branch
 of that name and falls back to `dev`, and a middle layer's fallback does not change the
 branch the next layer follows.
+
+### 本地模块 / Local Modules
+
+只在一个 BSP 中使用的模块可以直接放在 BSP 的目录里，在 `modules.yaml` 中用 `path:` 指向该目录。
+模块 id 为 `local/<目录名>`，目录结构与普通模块相同。
+
+A Module used by a single BSP can live in a folder of the BSP and be requested in
+`modules.yaml` with `path:` pointing to that folder. Its id is `local/<folder name>`, and the
+folder is laid out like any other Module.
+
+```yaml
+xrobot: 1.0.2
+modules:
+  - xrobot-org/BlinkLED@same-or-dev
+  - path: Modules/local/Heartbeat
+```
+
+```bash
+$ xrobot setup
+Resolved 1 Module commit and 1 local Module
+Checked 1 config; generated User/xrobot_main.hpp for User/xrobot.yaml
+```
+
+本地模块的源码随 BSP 仓库一起提交，`xrobot.lock` 只记录它的路径。BSP 的 `.gitignore` 中有
+`/Modules/*/` 时，在其后加一行 `!/Modules/local/`。
+
+A local Module's sources are committed with the BSP repository, and `xrobot.lock` records
+only its path. When the BSP's `.gitignore` contains `/Modules/*/`, a `!/Modules/local/` line
+follows it.
 
 ---
 
@@ -345,7 +374,7 @@ checks, the optional inputs and the published files are described in
 | `xrobot sync` | 按默认值补入模块新增的字段和参数，删除已移除的参数 | Add new fields and parameters with defaults and drop removed ones |
 | `xrobot format [--check]` | 整理配置格式 | Format the configurations |
 | `xrobot instance add\|set\|remove\|rename` | 编辑实例 | Edit instances |
-| `xrobot module add\|remove\|show` | 增删模块，查看模块接口 | Add or remove Modules, show a Module's interface |
+| `xrobot module add\|remove\|show` | 增删模块（`--path` 添加本地模块），查看模块接口 | Add or remove Modules (`--path` adds a local Module), show a Module's interface |
 | `xrobot new-module NAME` | 新建模块 | Create a Module |
 | `xrobot check-module MODULE` | 生成模块 CI 用的编译检查 | Write the compile check used by Module CI |
 | `xrobot source ...` | 查询和编辑源 | Query and edit sources |

@@ -15,6 +15,7 @@ from xr_syntax.i18n import tr
 from xrobot import __version__
 from xrobot.constructor_model import enrich_interface
 from xrobot.git import head_commit
+from xrobot.project import in_tree, last_segment, local_folder, module_header
 from xrobot.source_syntax import extract_interface
 
 MANIFEST_PATTERN = re.compile(
@@ -197,7 +198,7 @@ def load_single_module(path: str | Path) -> ModuleManifest:
     """
     path = Path(path).resolve()
     if path.is_dir():
-        path = path / (path.name + ".hpp")
+        path = module_header(path)
     return parse_manifest_from_header(path)
 
 
@@ -215,7 +216,7 @@ def source_interface(path: str | Path) -> dict:
     """
     path = Path(path)
     if path.is_dir():
-        path = path / (path.name + ".hpp")
+        path = module_header(path)
     stat = path.stat()
     key = (str(path.resolve()), stat.st_mtime_ns, stat.st_size)
     if key not in _INTERFACE_CACHE:
@@ -264,7 +265,7 @@ def module_record(identity: str, folder: Path) -> dict:
     """一个已检出模块的记录：id、类名、目录、主头文件和 manifest。
     The record of a checked-out Module: id, class name, folder, main header and manifest.
     """
-    header = folder / (folder.name + ".hpp")
+    header = module_header(folder)
     return {
         "id": identity,
         "name": folder.name,
@@ -279,8 +280,9 @@ def locked_modules(directory: Path, lock_path: Path) -> list[dict]:
     The state of every xrobot.lock entry: ok, missing, mismatch or broken (with a reason).
 
     Raises:
-        ValueError: lock 中的 id 会让路径离开 Modules/。
-            An id in the lock would lead out of Modules/.
+        ValueError: lock 中的 id 会让路径离开 Modules/，或 lock 的 local 不是映射。
+            An id in the lock would lead out of Modules/, or the local key of the lock is not
+            a mapping.
     """
     directory = Path(directory)
     lock = yaml.safe_load(Path(lock_path).read_text(encoding="utf-8")) or {}
@@ -294,6 +296,7 @@ def locked_modules(directory: Path, lock_path: Path) -> list[dict]:
         commit = (record or {}).get("commit")
         state = {
             "id": identity,
+            "kind": "git",
             "folder": folder,
             "commit": commit,
             "head": None,
@@ -308,7 +311,7 @@ def locked_modules(directory: Path, lock_path: Path) -> list[dict]:
                     f"xrobot.lock 中没有 {identity} 的提交",
                 ),
             )
-        elif not (folder / (folder.name + ".hpp")).is_file():
+        elif not module_header(folder).is_file():
             state["status"] = "missing"
         elif not (folder / ".git").exists():
             state.update(
@@ -327,6 +330,51 @@ def locked_modules(directory: Path, lock_path: Path) -> list[dict]:
                 if state["head"] != commit:
                     state["status"] = "mismatch"
         states.append(state)
+    # 本地模块直接使用目录中的内容，没有 commit 可比较。
+    # A local Module is used from its folder as it is, with no commit to compare.
+    root = Path(lock_path).resolve().parent
+    local = lock.get("local") or {}
+    if not isinstance(local, dict):
+        raise ValueError(
+            tr(
+                f"{lock_path}: invalid local Modules; regenerate it with `xrobot setup`",
+                f"{lock_path}: 本地模块条目无效；请用 `xrobot setup` 重新生成",
+            )
+        )
+    for identity, record in local.items():
+        identity = str(identity)
+        path = record.get("path") if isinstance(record, dict) else None
+        state = {
+            "id": identity,
+            "kind": "local",
+            "path": path,
+            "in_tree": None,
+            "folder": None,
+            "commit": None,
+            "head": None,
+            "status": "broken",
+            "reason": tr(
+                f"xrobot.lock has no valid path for {identity}; run `xrobot setup`",
+                f"xrobot.lock 中 {identity} 的 path 无效；请运行 `xrobot setup`",
+            ),
+        }
+        if (
+            isinstance(path, str)
+            and identity.casefold() == f"local/{last_segment(path)}".casefold()
+        ):
+            try:
+                folder = local_folder(path, root)
+            except ValueError as error:
+                state["reason"] = str(error)
+            else:
+                ok = module_header(folder).is_file()
+                state.update(
+                    folder=folder,
+                    in_tree=in_tree(folder, root),
+                    status="ok" if ok else "missing",
+                    reason=None,
+                )
+        states.append(state)
     return states
 
 
@@ -336,6 +384,12 @@ def lock_error(state: dict) -> str:
     """
     if state["status"] == "broken":
         return state["reason"]
+    if state["status"] == "missing" and state.get("kind") == "local":
+        header = module_header(state["folder"])
+        return tr(
+            f"Local Module {state['id']} (path: {state['path']}) has no {header.as_posix()}",
+            f"本地模块 {state['id']}（path: {state['path']}）缺少 {header.as_posix()}",
+        )
     if state["status"] == "missing":
         return tr(
             f"{state['id']} from xrobot.lock is not checked out; run `xrobot setup`",

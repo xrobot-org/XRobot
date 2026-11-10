@@ -17,6 +17,8 @@ from urllib.parse import urljoin
 import yaml
 from xr_syntax.i18n import tr
 
+from xrobot.project import LOCAL_OWNER, is_local
+
 if TYPE_CHECKING:
     import requests
 
@@ -335,6 +337,15 @@ class ModuleSource:
             validate_id(identity)
         except ValueError as error:
             raise ValueError(f"{where}: {error}") from None
+        if is_local(identity):
+            raise ValueError(
+                tr(
+                    f"{where}: {identity} uses the owner {LOCAL_OWNER}, which is reserved for "
+                    "local Modules (`path:` requests in Modules/modules.yaml)",
+                    f"{where}: {identity} 的 owner {LOCAL_OWNER} 保留给本地模块"
+                    "（Modules/modules.yaml 中的 `path:` 请求）",
+                )
+            )
         record = {"id": identity, "type": package_type, "repo": _relative(self.url, repo)}
         record["source"] = self.url
         if package_type == "bsp":
