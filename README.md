@@ -397,5 +397,7 @@ python -m unittest discover -s tests -v
 
 - [GitHub Repository](https://github.com/xrobot-org/XRobot)
 - [Documentation](https://xrobot.work)
+- [介绍视频 / Introduction Video (Bilibili)](https://www.bilibili.com/video/BV1BzWS6AEDb/)
+- [介绍视频 / Introduction Video (YouTube)](https://www.youtube.com/watch?v=-JPeltB-Vt0)
 - [Issue Tracker](https://github.com/xrobot-org/XRobot/issues)
 - [发版 / Releases](https://github.com/xrobot-org/XRobot/blob/master/RELEASE.md)
