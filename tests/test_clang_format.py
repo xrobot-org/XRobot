@@ -223,3 +223,15 @@ class GeneratedHeadersNeedNoFormatting(GenerationTestCase):
 
     def test_no_instances(self):
         self.check(modules=[])
+
+    def test_stoppable_main_loop(self):
+        self.entry(
+            '#include <atomic>\n#include "xrobot_main.hpp"\n'
+            "int main() {\n"
+            "  XR_REGISTER(pin, LibXR::GPIO);\n"
+            "  std::atomic<bool> running{true};\n"
+            "  XROBOT_MAIN(running);\n"
+            "}\n"
+        )
+        self.check(modules=[led()], settings={"monitor_sleep_ms": "1000", "stoppable": "true"})
+        self.check(modules=[led()], settings={"monitor_sleep_ms": "10", "stoppable": "true"})

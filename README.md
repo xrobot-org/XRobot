@@ -194,6 +194,10 @@ modules:
       - blink_cycle: 250
 settings:
   monitor_sleep_ms: 1000
+  # 可选：Linux 上位机可设 stoppable: true，生成非 [[noreturn]]、栈对象逆序析构的主循环，
+  # 入口改为 XROBOT_MAIN(running)（running 为 std::atomic<bool>）。
+  # Optional: set stoppable: true on Linux hosts to generate a non-[[noreturn]] loop with
+  # stack-allocated instances (reverse-order destruction) invoked via XROBOT_MAIN(running).
 ```
 
 指针参数的裸名由生成器自动取地址；带引号的 `'&名字'` 仍然接受，按写出的地址传递；可选的依赖不使用时写

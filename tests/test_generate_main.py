@@ -2062,3 +2062,89 @@ class CallerDefinedNames(TestCase):
         self.assertEqual(
             names & {"Count", "Local", "*", "Alias", "Speed", "Buffer", "T", "Size"}, set()
         )
+
+
+class StoppableMainTest(CxxMixin, GenerationTestCase):
+    """settings.stoppable: true 生成可退出主循环与按作用域逆序析构的实例。
+    settings.stoppable: true generates a stoppable main loop and stack-allocated instances.
+    """
+
+    def test_stoppable_generates_non_noreturn_stack_instances(self):
+        self.entry(
+            '#include <atomic>\n#include "xrobot_main.hpp"\n'
+            "int main() {\n"
+            "  XR_REGISTER(pin, LibXR::GPIO);\n"
+            "  std::atomic<bool> running{true};\n"
+            "  XROBOT_MAIN(running);\n"
+            "}\n"
+        )
+        header = self.code(led(), settings={"monitor_sleep_ms": "100", "stoppable": "true"})
+        self.assertIn("#include <atomic>", header)
+        self.assertNotIn("[[noreturn]]", header)
+        self.assertIn("static inline void XRobotMain(", header)
+        self.assertIn("const std::atomic<bool>& xrobot_running", header)
+        self.assertNotIn("static Led led(", header)
+        self.assertNotIn("static const Led::Param led_param", header)
+        self.assertIn("Led led(", header)
+        self.assertIn("while (xrobot_running.load(std::memory_order_acquire))", header)
+        self.assertIn("#define XROBOT_MAIN(running) ::XRobotMain(pin, running)", header)
+
+    def test_default_remains_noreturn_and_static(self):
+        header = self.code(led(), settings={"monitor_sleep_ms": "100"})
+        self.assertIn("[[noreturn]] static inline void XRobotMain(", header)
+        self.assertIn("static Led led(", header)
+        self.assertIn("for (;;)", header)
+        self.assertIn("#define XROBOT_MAIN() ::XRobotMain(pin)", header)
+
+    @requires_cxx
+    def test_stoppable_exits_and_destructs_in_reverse_order(self):
+        self.module(
+            "Step",
+            """#include <atomic>
+#include <string>
+class Step {
+ public:
+  Step(std::string& log, std::atomic<bool>& flag, const char* name, int stop_on = 0)
+      : log_(log), flag_(flag), name_(name), stop_on_(stop_on) {
+    log_ += "ctor:" + name_ + ";";
+  }
+  ~Step() { log_ += "dtor:" + name_ + ";"; }
+  void OnMonitor() {
+    ++ticks_;
+    log_ += "mon:" + name_ + ";";
+    if (stop_on_ > 0 && ticks_ >= stop_on_) flag_.store(false);
+  }
+ private:
+  std::string& log_;
+  std::atomic<bool>& flag_;
+  std::string name_;
+  int stop_on_;
+  int ticks_{0};
+};""",
+        )
+        self.entry(
+            '#include <atomic>\n#include <cassert>\n#include <string>\n#include "xrobot_main.hpp"\n'
+            "int main() {\n"
+            "  std::string log;\n"
+            "  std::atomic<bool> running{true};\n"
+            "  XR_REGISTER(log, std::string);\n"
+            "  XR_REGISTER(running, std::atomic<bool>);\n"
+            "  XROBOT_MAIN(running);\n"
+            '  assert(log == "ctor:a;ctor:b;mon:a;mon:b;dtor:b;dtor:a;");\n'
+            "  return 0;\n"
+            "}\n"
+        )
+        self.code(
+            {
+                "module": "Step",
+                "id": "a",
+                "args": [{"log": "log"}, {"flag": "running"}, {"name": '"a"'}, {"stop_on": "0"}],
+            },
+            {
+                "module": "Step",
+                "id": "b",
+                "args": [{"log": "log"}, {"flag": "running"}, {"name": '"b"'}, {"stop_on": "1"}],
+            },
+            settings={"monitor_sleep_ms": "25", "stoppable": "true"},
+        )
+        self.compile(execute=True)

@@ -711,19 +711,22 @@ def validate_config(config: object, source: str = "config") -> None:
 
 
 def _check_settings(settings: object, errors: list[str]) -> None:
-    """检查 settings：只有 monitor_sleep_ms，且是 32 位无符号十进制数。
-    Check settings: only monitor_sleep_ms, an unsigned 32-bit decimal number.
+    """检查 settings：支持 monitor_sleep_ms（32 位无符号十进制毫秒数）与 stoppable（true/false）。
+    Check settings: monitor_sleep_ms (unsigned 32-bit decimal milliseconds) and stoppable
+    (true/false).
     """
     if not isinstance(settings, dict):
         errors.append(tr("settings must be a mapping", "settings 必须是映射"))
         return
-    unknown = [key for key in settings if key != "monitor_sleep_ms"]
+    allowed = {"monitor_sleep_ms", "stoppable"}
+    unknown = [key for key in settings if key not in allowed]
     if unknown:
         errors.append(
             tr(
-                f"settings: unknown key(s) {', '.join(unknown)}; the only setting is "
-                "monitor_sleep_ms",
-                f"settings: 未知的键 {'、'.join(unknown)}；唯一的设置是 monitor_sleep_ms",
+                f"settings: unknown key(s) {', '.join(unknown)}; allowed settings are "
+                "monitor_sleep_ms, stoppable",
+                f"settings: 未知的键 {'、'.join(unknown)}；允许的设置为 "
+                "monitor_sleep_ms、stoppable",
             )
         )
     sleep = settings.get("monitor_sleep_ms", "1000")
@@ -740,6 +743,21 @@ def _check_settings(settings: object, errors: list[str]) -> None:
                 f"settings.monitor_sleep_ms: {sleep} is not an unsigned 32-bit decimal "
                 "millisecond count",
                 f"settings.monitor_sleep_ms: {sleep} 不是 32 位无符号十进制毫秒数",
+            )
+        )
+    stoppable = settings.get("stoppable", "false")
+    if not isinstance(stoppable, str):
+        errors.append(
+            tr(
+                "settings.stoppable must be true or false",
+                "settings.stoppable 必须是 true 或 false",
+            )
+        )
+    elif stoppable not in ("true", "false"):
+        errors.append(
+            tr(
+                f"settings.stoppable: {stoppable} is not true or false",
+                f"settings.stoppable: {stoppable} 不是 true 或 false",
             )
         )
 

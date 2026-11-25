@@ -786,9 +786,14 @@ class Generator:
                 else typ + "&"
             )
             parameters.append(f"{declaration} {record['name']}")
+        stoppable = (
+            not compile_check
+            and config.get("settings", {}).get("stoppable", "false") == "true"
+        )
         body: list = []  # 各实例的语句 / the statements of the instances
         back = object()  # 占位：#line 回到本头文件 / placeholder for "#line back into this header"
         directives = line_directives and location is not None
+        storage_prefix = "" if stoppable else "static "
         for entry in entries:
             if body:
                 body.append("")
@@ -806,17 +811,21 @@ class Generator:
             for (name, declaration, value), (line, node) in zip(
                 entry["storage"], sources, strict=True
             ):
+                if stoppable and declaration.startswith("static "):
+                    declaration = declaration[len("static ") :]
                 tagged += _tag_value(
                     layout_declaration(declaration, name, value, ";", INDENT), line, node
                 )
-            head = f"static {entry['cpp_type']} {entry['id']}("
+            head = f"{storage_prefix}{entry['cpp_type']} {entry['id']}("
             if entry["arguments"]:
                 call = layout_call(head, entry["arguments"], ");", INDENT)
                 tagged += _tag_call(
                     call, head, entry["arguments"], entry["line"], entry.get("argument_lines", [])
                 )
             else:
-                tagged.append((f"  static {entry['cpp_type']} {entry['id']};", entry["line"]))
+                tagged.append(
+                    (f"  {storage_prefix}{entry['cpp_type']} {entry['id']};", entry["line"])
+                )
             if directives and entry["line"]:
                 body += _with_directives(tagged, _c_string(location[0]))
                 body.append(back)
@@ -851,6 +860,8 @@ class Generator:
             text += " std::is_void_v"
         names = [f'"{m["name"]}.hpp"' for m in selected.values()]
         names += ['"libxr.hpp"', '"thread.hpp"']
+        if stoppable:
+            names += ["<atomic>", "<cstdint>"]
         for header in config.get("constexpr_includes", []):
             header = header.strip()
             names.append(header if header.startswith("<") else f'"{header}"')
@@ -888,9 +899,29 @@ class Generator:
             return self._numbered(lines, back, None)
         if local_templates:
             lines.append(f"template <{', '.join(local_templates)}>")
+        fn_params = list(parameters)
+        running_name = "xrobot_running"
+        waited_name = "xrobot_waited"
+        rem_name = "xrobot_rem"
+        if stoppable:
+            while running_name in template_names:
+                running_name += "_"
+            template_names.add(running_name)
+            while waited_name in template_names:
+                waited_name += "_"
+            template_names.add(waited_name)
+            while rem_name in template_names:
+                rem_name += "_"
+            template_names.add(rem_name)
+            fn_params.append(f"const std::atomic<bool>& {running_name}")
+        fn_prefix = (
+            "static inline void XRobotMain("
+            if stoppable
+            else "[[noreturn]] static inline void XRobotMain("
+        )
         lines += layout_call(
-            "[[noreturn]] static inline void XRobotMain(",
-            parameters,
+            fn_prefix,
+            fn_params,
             ")",
             0,
             hang_margin=3,
@@ -900,16 +931,46 @@ class Generator:
         if body:
             lines.append("")
         lines += self._monitor_checks(checks)
-        lines += ["  for (;;)", "  {"]
-        lines += [f"    {name}.OnMonitor();" for name in calls]
         sleep = config.get("settings", {}).get("monitor_sleep_ms", "1000")
-        lines += [f"    LibXR::Thread::Sleep({sleep});", "  }", "}", ""]
+        if stoppable:
+            lines += [f"  while ({running_name}.load(std::memory_order_acquire))", "  {"]
+            lines += [f"    {name}.OnMonitor();" for name in calls]
+            if int(sleep) > 20:
+                lines += [
+                    f"    for (uint32_t {waited_name} = 0; {waited_name} < {sleep}; {waited_name} += 20)",
+                    "    {",
+                    f"      if (!{running_name}.load(std::memory_order_acquire))",
+                    "      {",
+                    "        break;",
+                    "      }",
+                    f"      const uint32_t {rem_name} = {sleep} - {waited_name};",
+                    f"      LibXR::Thread::Sleep({rem_name} < 20 ? {rem_name} : 20);",
+                    "    }",
+                ]
+            else:
+                lines += [f"    LibXR::Thread::Sleep({sleep});"]
+            lines += ["  }", "}", ""]
+        else:
+            lines += ["  for (;;)", "  {"]
+            lines += [f"    {name}.OnMonitor();" for name in calls]
+            lines += [f"    LibXR::Thread::Sleep({sleep});", "  }", "}", ""]
         lines += [
             "// XR_REGISTER marks a name for the generator; XRobotMain binds and type-checks it.",
             "#define XR_REGISTER(name, ...) static_cast<void>(name)",
         ]
         call = "::XRobotMain" + (f"<{', '.join(actual_types)}>" if actual_types else "")
-        lines += layout_macro("XROBOT_MAIN", call, [r["name"] for r in views])
+        if stoppable:
+            macro_args = [r["name"] for r in views] + ["running"]
+            one_line = f"#define XROBOT_MAIN(running) {call}({', '.join(macro_args)})"
+            if len(one_line) <= 90:
+                lines.append(one_line)
+            else:
+                body_lines = layout_call(call + "(", macro_args, ")", INDENT, extra=2)
+                wrapped = ["#define XROBOT_MAIN(running)"] + body_lines
+                width = max(len(line) for line in wrapped[:-1]) + 1
+                lines += [line.ljust(width) + "\\" for line in wrapped[:-1]] + [wrapped[-1]]
+        else:
+            lines += layout_macro("XROBOT_MAIN", call, [r["name"] for r in views])
         if header_lines:
             lines += ["", *header_lines]
         return self._numbered(lines, back, (location[1] if location else None))
