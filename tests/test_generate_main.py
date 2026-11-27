@@ -2065,11 +2065,12 @@ class CallerDefinedNames(TestCase):
 
 
 class StoppableMainTest(CxxMixin, GenerationTestCase):
-    """settings.stoppable: true 生成可退出主循环与按作用域逆序析构的实例。
-    settings.stoppable: true generates a stoppable main loop and stack-allocated instances.
+    """settings.stoppable: true 生成可退出主循环、静态对齐存储与显式逆序析构。
+    settings.stoppable: true generates a stoppable main loop with static aligned storage
+    and explicit reverse-order destruction.
     """
 
-    def test_stoppable_generates_non_noreturn_stack_instances(self):
+    def test_stoppable_generates_static_storage_and_reverse_destroy(self):
         self.entry(
             '#include <atomic>\n#include "xrobot_main.hpp"\n'
             "int main() {\n"
@@ -2080,14 +2081,21 @@ class StoppableMainTest(CxxMixin, GenerationTestCase):
         )
         header = self.code(led(), settings={"monitor_sleep_ms": "100", "stoppable": "true"})
         self.assertIn("#include <atomic>", header)
+        self.assertIn("#include <cstdint>", header)
+        self.assertIn("#include <memory>", header)
+        self.assertIn("#include <new>", header)
         self.assertNotIn("[[noreturn]]", header)
         self.assertIn("static inline void XRobotMain(", header)
         self.assertIn("const std::atomic<bool>& xrobot_running", header)
-        self.assertNotIn("static Led led(", header)
-        self.assertNotIn("static const Led::Param led_param", header)
-        self.assertIn("Led led(", header)
+        self.assertNotIn("static const Led::Param xr_led_param", header)
+        self.assertIn("alignas(Led) static uint8_t xr_storage_led[sizeof(Led)];", header)
+        self.assertIn("::new (xr_storage_led) Led(pin, xr_led_param, 1.0f);", header)
+        self.assertIn("auto& led = *std::launder(reinterpret_cast<Led*>(xr_storage_led));", header)
         self.assertIn("while (xrobot_running.load(std::memory_order_acquire))", header)
-        self.assertIn("#define XROBOT_MAIN(running) ::XRobotMain(pin, running)", header)
+        self.assertIn("std::destroy_at(std::addressof(led));", header)
+        self.assertIn(
+            "#define XROBOT_MAIN(xrobot_running) ::XRobotMain(pin, xrobot_running)", header
+        )
 
     def test_default_remains_noreturn_and_static(self):
         header = self.code(led(), settings={"monitor_sleep_ms": "100"})
@@ -2096,8 +2104,46 @@ class StoppableMainTest(CxxMixin, GenerationTestCase):
         self.assertIn("for (;;)", header)
         self.assertIn("#define XROBOT_MAIN() ::XRobotMain(pin)", header)
 
+    def test_stoppable_avoids_running_macro_shadowing_and_uint32_overflow(self):
+        self.entry(
+            '#include <atomic>\n#include "xrobot_main.hpp"\n'
+            "int main() {\n"
+            "  XR_REGISTER(running, LibXR::GPIO);\n"
+            "  std::atomic<bool> keep_running{true};\n"
+            "  XROBOT_MAIN(keep_running);\n"
+            "}\n"
+        )
+        header = self.code(
+            led(gpio="running"),
+            settings={"monitor_sleep_ms": "4294967295", "stoppable": "true"},
+        )
+        self.assertIn(
+            "#define XROBOT_MAIN(xrobot_running) ::XRobotMain(running, xrobot_running)",
+            header,
+        )
+        self.assertNotIn("xrobot_waited += 20", header)
+        self.assertIn("const uint32_t xrobot_step = xrobot_rem < 20 ? xrobot_rem : 20;", header)
+        self.assertIn("xrobot_waited += xrobot_step;", header)
+
+    def test_entry_xrobot_main_arity_must_match_stoppable_setting(self):
+        with self.assertRaises(ConfigError) as mismatch_true:
+            self.code(led(), settings={"monitor_sleep_ms": "100", "stoppable": "true"})
+        self.assertIn("settings.stoppable true", str(mismatch_true.exception))
+
+        self.entry(
+            '#include <atomic>\n#include "xrobot_main.hpp"\n'
+            "int main() {\n"
+            "  XR_REGISTER(pin, LibXR::GPIO);\n"
+            "  std::atomic<bool> flag{true};\n"
+            "  XROBOT_MAIN(flag);\n"
+            "}\n"
+        )
+        with self.assertRaises(ConfigError) as mismatch_false:
+            self.code(led(), settings={"monitor_sleep_ms": "100"})
+        self.assertIn("settings.stoppable false", str(mismatch_false.exception))
+
     @requires_cxx
-    def test_stoppable_exits_and_destructs_in_reverse_order(self):
+    def test_stoppable_exits_destructs_in_reverse_order_and_reenters(self):
         self.module(
             "Step",
             """#include <atomic>
@@ -2125,12 +2171,16 @@ class Step {
         self.entry(
             '#include <atomic>\n#include <cassert>\n#include <string>\n#include "xrobot_main.hpp"\n'
             "int main() {\n"
-            "  std::string log;\n"
-            "  std::atomic<bool> running{true};\n"
-            "  XR_REGISTER(log, std::string);\n"
-            "  XR_REGISTER(running, std::atomic<bool>);\n"
-            "  XROBOT_MAIN(running);\n"
-            '  assert(log == "ctor:a;ctor:b;mon:a;mon:b;dtor:b;dtor:a;");\n'
+            "  std::string running;\n"
+            "  std::atomic<bool> keep_running{true};\n"
+            "  XR_REGISTER(running, std::string);\n"
+            "  XR_REGISTER(keep_running, std::atomic<bool>);\n"
+            "  XROBOT_MAIN(keep_running);\n"
+            '  assert(running == "ctor:a;ctor:b;mon:a;mon:b;dtor:b;dtor:a;");\n'
+            "  running.clear();\n"
+            "  keep_running.store(true);\n"
+            "  XROBOT_MAIN(keep_running);\n"
+            '  assert(running == "ctor:a;ctor:b;mon:a;mon:b;dtor:b;dtor:a;");\n'
             "  return 0;\n"
             "}\n"
         )
@@ -2138,13 +2188,23 @@ class Step {
             {
                 "module": "Step",
                 "id": "a",
-                "args": [{"log": "log"}, {"flag": "running"}, {"name": '"a"'}, {"stop_on": "0"}],
+                "args": [
+                    {"log": "running"},
+                    {"flag": "keep_running"},
+                    {"name": '"a"'},
+                    {"stop_on": "0"},
+                ],
             },
             {
                 "module": "Step",
                 "id": "b",
-                "args": [{"log": "log"}, {"flag": "running"}, {"name": '"b"'}, {"stop_on": "1"}],
+                "args": [
+                    {"log": "running"},
+                    {"flag": "keep_running"},
+                    {"name": '"b"'},
+                    {"stop_on": "1"},
+                ],
             },
-            settings={"monitor_sleep_ms": "25", "stoppable": "true"},
+            settings={"monitor_sleep_ms": "4294967295", "stoppable": "true"},
         )
         self.compile(execute=True)

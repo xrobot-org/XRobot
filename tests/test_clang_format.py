@@ -235,3 +235,39 @@ class GeneratedHeadersNeedNoFormatting(GenerationTestCase):
         )
         self.check(modules=[led()], settings={"monitor_sleep_ms": "1000", "stoppable": "true"})
         self.check(modules=[led()], settings={"monitor_sleep_ms": "10", "stoppable": "true"})
+
+        # 多注册折行宏、长类型与长实例名的 placement new / launder / destroy_at
+        # Multi-line wrapped macro, long instance id and placement new / launder / destroy_at
+        names = [f"gpio_{i}" for i in range(14)]
+        self.entry(
+            '#include <atomic>\n#include "xrobot_main.hpp"\nint main() {\n'
+            + "".join(f"  XR_REGISTER({name}, LibXR::GPIO);\n" for name in names)
+            + "  XR_REGISTER(port, Port);\n"
+            + "  std::atomic<bool> running{true};\n"
+            + "  XROBOT_MAIN(running);\n}\n"
+        )
+        items = ", ".join(f'{{"{name}", {i}}}' for i, name in enumerate(NAMES))
+        self.check(
+            modules=[led(f"led_{i}", gpio=name) for i, name in enumerate(names)]
+            + [
+                {
+                    "module": "Values",
+                    "id": "a_very_long_instance_identifier_for_the_second_values",
+                    "args": [
+                        {"port": "port"},
+                        {
+                            "param": {
+                                "limits": {"low": "0.5f", "high": "99.5f", "steps": "128"},
+                                "gains": {"kp": "1.0f", "ki": "0.25f", "kd": "0.001f"},
+                                "count": "3",
+                                "name": '"nested"',
+                            }
+                        },
+                        {"items": "{" + items + "}"},
+                        {"names": [f'"{name}"' for name in NAMES]},
+                        {"rate": "250"},
+                    ],
+                }
+            ],
+            settings={"monitor_sleep_ms": "4294967295", "stoppable": "true"},
+        )

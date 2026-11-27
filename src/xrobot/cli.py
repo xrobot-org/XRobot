@@ -38,7 +38,7 @@ def _description() -> str:
 
 
 INIT_MODULES = f"xrobot: {__version__}\nmodules: []\n"
-INIT_CONFIG = "modules: []\nsettings:\n  monitor_sleep_ms: 1000\n"
+INIT_CONFIG = "modules: []\nsettings:\n  monitor_sleep_ms: 1000\n  stoppable: false\n"
 IGNORED = ("/User/xrobot_main.hpp", "/Modules/CMakeLists.txt", "/Modules/*/")
 # 仓库内统一为 LF，签出时按平台转换；脚本按各自系统的要求固定换行符。
 # Text is LF inside the repository and converted on checkout; scripts keep the line ending
