@@ -768,7 +768,12 @@ class Generator:
         template_names = {
             t.text for r in views for t in code_tokens(r["type"]) if t.kind == "identifier"
         }
-        template_names |= set(selected) | {e["id"] for e in entries} | {r["name"] for r in views}
+        template_names |= (
+            set(selected)
+            | {e["id"] for e in entries}
+            | {r["name"] for r in views}
+            | {name for e in entries for name, _, _ in e["storage"]}
+        )
         local_templates, parameters, actual_types = [], [], []
         for i, record in enumerate(views):
             typ = record["type"]
@@ -786,6 +791,9 @@ class Generator:
                 else typ + "&"
             )
             parameters.append(f"{declaration} {record['name']}")
+        stoppable = (
+            not compile_check and config.get("settings", {}).get("stoppable", "false") == "true"
+        )
         body: list = []  # 各实例的语句 / the statements of the instances
         back = object()  # 占位：#line 回到本头文件 / placeholder for "#line back into this header"
         directives = line_directives and location is not None
@@ -806,17 +814,74 @@ class Generator:
             for (name, declaration, value), (line, node) in zip(
                 entry["storage"], sources, strict=True
             ):
+                if stoppable and declaration.startswith("static "):
+                    declaration = declaration[len("static ") :]
                 tagged += _tag_value(
                     layout_declaration(declaration, name, value, ";", INDENT), line, node
                 )
-            head = f"static {entry['cpp_type']} {entry['id']}("
-            if entry["arguments"]:
-                call = layout_call(head, entry["arguments"], ");", INDENT)
-                tagged += _tag_call(
-                    call, head, entry["arguments"], entry["line"], entry.get("argument_lines", [])
-                )
+            if stoppable:
+                mem_name = f"xr_storage_{entry['id']}"
+                while mem_name in template_names:
+                    mem_name += "_"
+                template_names.add(mem_name)
+                storage_type = entry["cpp_type"]
+                if len(storage_type) > 36 and (
+                    len(
+                        f"  alignas({storage_type}) static uint8_t {mem_name}[sizeof({storage_type})];"
+                    )
+                    > 90
+                    or len(f"      *std::launder(reinterpret_cast<{storage_type}*>({mem_name}));")
+                    > 90
+                ):
+                    alias_name = f"XrT{entry['index']}"
+                    while alias_name in template_names:
+                        alias_name += "_"
+                    template_names.add(alias_name)
+                    for line in layout_declaration("using", alias_name, storage_type, ";", INDENT):
+                        tagged.append((line, entry["line"]))
+                    storage_type = alias_name
+                for line in _layout_storage_array(storage_type, mem_name):
+                    tagged.append((line, entry["line"]))
+                if entry["arguments"]:
+                    one_line = (
+                        f"  ::new ({mem_name}) {storage_type}("
+                        + ", ".join(entry["arguments"])
+                        + ");"
+                    )
+                    if len(one_line) <= 90 and "\n" not in one_line:
+                        tagged.append((one_line, entry["line"]))
+                    else:
+                        tagged.append((f"  ::new ({mem_name})", entry["line"]))
+                        call = layout_call(f"{storage_type}(", entry["arguments"], ");", 6)
+                        tagged += _tag_call(
+                            call,
+                            f"{storage_type}(",
+                            entry["arguments"],
+                            entry["line"],
+                            entry.get("argument_lines", []),
+                        )
+                else:
+                    one_line = f"  ::new ({mem_name}) {storage_type}();"
+                    if len(one_line) <= 90:
+                        tagged.append((one_line, entry["line"]))
+                    else:
+                        tagged.append((f"  ::new ({mem_name})", entry["line"]))
+                        tagged.append((f"      {storage_type}();", None))
+                for line in _layout_launder(entry["id"], storage_type, mem_name):
+                    tagged.append((line, None))
             else:
-                tagged.append((f"  static {entry['cpp_type']} {entry['id']};", entry["line"]))
+                head = f"static {entry['cpp_type']} {entry['id']}("
+                if entry["arguments"]:
+                    call = layout_call(head, entry["arguments"], ");", INDENT)
+                    tagged += _tag_call(
+                        call,
+                        head,
+                        entry["arguments"],
+                        entry["line"],
+                        entry.get("argument_lines", []),
+                    )
+                else:
+                    tagged.append((f"  static {entry['cpp_type']} {entry['id']};", entry["line"]))
             if directives and entry["line"]:
                 body += _with_directives(tagged, _c_string(location[0]))
                 body.append(back)
@@ -841,8 +906,24 @@ class Generator:
             constant_lines += [f"}}  // namespace {namespace}", ""]
         # 用到的名字决定要包含的头文件。
         # The names used decide which headers are included.
+        destroy_lines = (
+            [
+                line
+                for entry in reversed(entries)
+                for line in layout_call(
+                    "std::destroy_at(",
+                    [f"std::addressof({entry['id']})"],
+                    ");",
+                    INDENT,
+                )
+            ]
+            if stoppable
+            else []
+        )
         text = "\n".join(
-            line for line in [*body, *constant_lines, *parameters] if isinstance(line, str)
+            line
+            for line in [*body, *destroy_lines, *constant_lines, *parameters]
+            if isinstance(line, str)
         )
         implicit = "xrobot_generated::Implicit<" in text
         if implicit:
@@ -851,6 +932,13 @@ class Generator:
             text += " std::is_void_v"
         names = [f'"{m["name"]}.hpp"' for m in selected.values()]
         names += ['"libxr.hpp"', '"thread.hpp"']
+        sleep = config.get("settings", {}).get("monitor_sleep_ms", "1000")
+        if stoppable:
+            names.append("<atomic>")
+            if entries or int(sleep) > 20:
+                names.append("<cstdint>")
+            if entries:
+                names.append("<new>")
         for header in config.get("constexpr_includes", []):
             header = header.strip()
             names.append(header if header.startswith("<") else f'"{header}"')
@@ -888,9 +976,33 @@ class Generator:
             return self._numbered(lines, back, None)
         if local_templates:
             lines.append(f"template <{', '.join(local_templates)}>")
+        fn_params = list(parameters)
+        running_name = "xrobot_running"
+        waited_name = "xrobot_waited"
+        rem_name = "xrobot_rem"
+        step_name = "xrobot_step"
+        if stoppable:
+            while running_name in template_names:
+                running_name += "_"
+            template_names.add(running_name)
+            while waited_name in template_names:
+                waited_name += "_"
+            template_names.add(waited_name)
+            while rem_name in template_names:
+                rem_name += "_"
+            template_names.add(rem_name)
+            while step_name in template_names:
+                step_name += "_"
+            template_names.add(step_name)
+            fn_params.append(f"std::atomic<bool>& {running_name}")
+        fn_prefix = (
+            "static inline void XRobotMain("
+            if stoppable
+            else "[[noreturn]] static inline void XRobotMain("
+        )
         lines += layout_call(
-            "[[noreturn]] static inline void XRobotMain(",
-            parameters,
+            fn_prefix,
+            fn_params,
             ")",
             0,
             hang_margin=3,
@@ -900,16 +1012,56 @@ class Generator:
         if body:
             lines.append("")
         lines += self._monitor_checks(checks)
-        lines += ["  for (;;)", "  {"]
-        lines += [f"    {name}.OnMonitor();" for name in calls]
-        sleep = config.get("settings", {}).get("monitor_sleep_ms", "1000")
-        lines += [f"    LibXR::Thread::Sleep({sleep});", "  }", "}", ""]
+        if stoppable:
+            lines += [f"  while ({running_name}.load(std::memory_order_acquire))", "  {"]
+            lines += [f"    {name}.OnMonitor();" for name in calls]
+            if int(sleep) > 20:
+                cond_one = (
+                    f"    while ({waited_name} < {sleep}U && "
+                    f"{running_name}.load(std::memory_order_acquire))"
+                )
+                lines.append(f"    uint32_t {waited_name} = 0;")
+                if len(cond_one) <= 90:
+                    lines.append(cond_one)
+                else:
+                    lines += [
+                        f"    while ({waited_name} < {sleep}U &&",
+                        f"           {running_name}.load(std::memory_order_acquire))",
+                    ]
+                lines += [
+                    "    {",
+                    f"      const uint32_t {rem_name} = {sleep}U - {waited_name};",
+                    f"      const uint32_t {step_name} = {rem_name} < 20U ? {rem_name} : 20U;",
+                    f"      LibXR::Thread::Sleep({step_name});",
+                    f"      {waited_name} += {step_name};",
+                    "    }",
+                ]
+            else:
+                lines += [
+                    f"    if ({running_name}.load(std::memory_order_acquire))",
+                    "    {",
+                    f"      LibXR::Thread::Sleep({sleep}U);",
+                    "    }",
+                ]
+            lines.append("  }")
+            if destroy_lines:
+                lines += ["", *destroy_lines]
+            lines += ["}", ""]
+        else:
+            lines += ["  for (;;)", "  {"]
+            lines += [f"    {name}.OnMonitor();" for name in calls]
+            lines += [f"    LibXR::Thread::Sleep({sleep});", "  }", "}", ""]
         lines += [
             "// XR_REGISTER marks a name for the generator; XRobotMain binds and type-checks it.",
             "#define XR_REGISTER(name, ...) static_cast<void>(name)",
         ]
         call = "::XRobotMain" + (f"<{', '.join(actual_types)}>" if actual_types else "")
-        lines += layout_macro("XROBOT_MAIN", call, [r["name"] for r in views])
+        if stoppable:
+            lines += _layout_stoppable_macro(
+                call, [r["name"] for r in views] + [running_name], running_name
+            )
+        else:
+            lines += layout_macro("XROBOT_MAIN", call, [r["name"] for r in views])
         if header_lines:
             lines += ["", *header_lines]
         return self._numbered(lines, back, (location[1] if location else None))
@@ -1094,6 +1246,8 @@ def _with_directives(tagged: list[tuple[str, int | None]], path: str) -> list[st
 
 _STANDARD_HEADERS = {
     "addressof": "<memory>",
+    "atomic": "<atomic>",
+    "destroy_at": "<memory>",
     "initializer_list": "<initializer_list>",
     "move": "<utility>",
     "forward": "<utility>",
@@ -1109,6 +1263,115 @@ def _standard_headers(text: str) -> list[str]:
     The standard library headers the generated code uses.
     """
     return sorted({h for n, h in _STANDARD_HEADERS.items() if re.search(rf"\bstd::{n}\b", text)})
+
+
+def _layout_storage_array(cpp_type: str, mem_name: str) -> list[str]:
+    """对齐静态字节数组声明，超过列宽时按 clang-format 折行。
+    Format an aligned static byte-array declaration, wrapping to clang-format within 90 columns.
+    """
+    decl = f"alignas({cpp_type}) static uint8_t"
+    tail = f"{mem_name}[sizeof({cpp_type})];"
+    one = f"  {decl} {tail}"
+    if len(one) <= 90:
+        return [one]
+    head_lines = (
+        [f"  {decl}"]
+        if len(f"  {decl}") <= 90
+        else ["  alignas(", f"      {cpp_type}) static uint8_t"]
+    )
+    tail_lines = (
+        [f"      {tail}"]
+        if len(f"      {tail}") <= 90
+        else [f"      {mem_name}[sizeof(", f"          {cpp_type})];"]
+    )
+    return head_lines + tail_lines
+
+
+def _layout_launder(identity: str, cpp_type: str, mem_name: str) -> list[str]:
+    """placement new 后的引用绑定声明，超过列宽时按 clang-format 折行。
+    Format the reference binding after placement new, wrapping to clang-format within 90 columns.
+    """
+    cast = f"reinterpret_cast<{cpp_type}*>({mem_name})"
+    one = f"  auto& {identity} = *std::launder({cast});"
+    if len(one) <= 90:
+        return [one]
+    rhs = f"*std::launder({cast});"
+    if len(f"      {rhs}") <= 90:
+        return [f"  auto& {identity} =", f"      {rhs}"]
+    head = f"  auto& {identity} = *std::launder("
+    if len(head) <= 90 and len(f"      {cast});") <= 90:
+        return [head, f"      {cast});"]
+    if len(f"      *std::launder(reinterpret_cast<{cpp_type}*>(") <= 90:
+        return [
+            f"  auto& {identity} =",
+            f"      *std::launder(reinterpret_cast<{cpp_type}*>(",
+            f"          {mem_name}));",
+        ]
+    if len(head) <= 90 and len(f"      reinterpret_cast<{cpp_type}*>(") <= 90:
+        return [
+            head,
+            f"      reinterpret_cast<{cpp_type}*>(",
+            f"          {mem_name}));",
+        ]
+    return [
+        f"  auto& {identity} =",
+        "      *std::launder(reinterpret_cast<",
+        f"                    {cpp_type}*>(",
+        f"          {mem_name}));",
+    ]
+
+
+def _layout_stoppable_macro(call: str, macro_args: list[str], param_name: str) -> list[str]:
+    """带退出标志参数的 XROBOT_MAIN 宏定义，超过列宽时按 layout_macro 风格折行。
+    Format the stoppable XROBOT_MAIN macro definition, wrapping like layout_macro past 90 columns.
+    """
+    one_line = f"#define XROBOT_MAIN({param_name}) {call}({', '.join(macro_args)})"
+    if len(one_line) <= 90:
+        return [one_line]
+    body_lines = layout_call(call + "(", macro_args, ")", INDENT, extra=2)
+    wrapped = [f"#define XROBOT_MAIN({param_name})"] + body_lines
+    width = max(len(line) for line in wrapped[:-1]) + 1
+    return [line.ljust(width) + "\\" for line in wrapped[:-1]] + [wrapped[-1]]
+
+
+def _check_main_arity(entry: Path, entry_label: str, source: str, stoppable: bool) -> None:
+    """检查入口源文件中 XROBOT_MAIN 调用的参数个数是否与 settings.stoppable 一致。
+    Check that the XROBOT_MAIN argument count in the entry source matches settings.stoppable.
+    """
+    text = entry.read_text(encoding="utf-8-sig", errors="surrogateescape")
+    document = parse_document(text, str(entry))
+    invocations = document.invocation_views("XROBOT_MAIN")
+    expected = 1 if stoppable else 0
+    if all(len(inv.arguments) == expected for inv in invocations):
+        return
+    if any(conditional_depth(document, 0, inv.span.start) > 0 for inv in invocations) and any(
+        len(inv.arguments) == expected for inv in invocations
+    ):
+        return
+    for inv in invocations:
+        argc = len(inv.arguments)
+        if not stoppable and argc != 0:
+            raise ConfigError(
+                tr(
+                    f"{entry_label}:{inv.line}: XROBOT_MAIN takes no arguments when {source} has "
+                    f"settings.stoppable false (got {argc}); call XROBOT_MAIN() or set "
+                    "settings.stoppable: true",
+                    f"{entry_label}:{inv.line}: {source} 的 settings.stoppable 为 false 时 "
+                    f"XROBOT_MAIN 不接受参数（当前 {argc} 个）；请改为 XROBOT_MAIN() 或设置 "
+                    "settings.stoppable: true",
+                )
+            )
+        if stoppable and argc != 1:
+            raise ConfigError(
+                tr(
+                    f"{entry_label}:{inv.line}: XROBOT_MAIN takes 1 std::atomic<bool> argument "
+                    f"when {source} has settings.stoppable true (got {argc}); call "
+                    "XROBOT_MAIN(running)",
+                    f"{entry_label}:{inv.line}: {source} 的 settings.stoppable 为 true 时 "
+                    f"XROBOT_MAIN 需要 1 个 std::atomic<bool> 参数（当前 {argc} 个）；请改为 "
+                    "XROBOT_MAIN(running)",
+                )
+            )
 
 
 def generate_code(
@@ -1130,6 +1393,8 @@ def generate_code(
     source = project.relative(config_path)
     config = load_config(config_path, source)
     entry = project.entry()
+    stoppable = config.get("settings", {}).get("stoppable", "false") == "true"
+    _check_main_arity(entry, project.relative(entry), source, stoppable)
     depends = (
         ([project.lock] if project.lock.is_file() else [])
         + [entry]

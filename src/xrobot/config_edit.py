@@ -1046,6 +1046,20 @@ def sync_config(
         if _sync_item(item, interface, cpp_class, templates, index):
             text = blocks.replace(k, _render_item(item, indent))
             blocks = Blocks(text)
+    if (
+        isinstance(config.config.get("settings"), dict)
+        and "stoppable" not in config.config["settings"]
+    ):
+        data = _load(text)
+        if (
+            isinstance(data, CommentedMap)
+            and isinstance(data.get("settings"), CommentedMap)
+            and "stoppable" not in data["settings"]
+        ):
+            if not data["settings"]:
+                data["settings"].fa.set_block_style()
+            data["settings"]["stoppable"] = "false"
+            text = dump_text(data)
     if text != before:
         config.write(text, check=False)
     # 比较的是实际写入的文本：没有实例改动时文件不写，只是排版不规范也不报改动。

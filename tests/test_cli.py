@@ -46,7 +46,7 @@ class Init(CliMixin, TempDirTestCase):
         self.assertEqual(read_modules_yaml(self.root / "Modules/modules.yaml"), ([], __version__))
         self.assertEqual(
             load_config(self.root / "User/xrobot.yaml"),
-            {"modules": [], "settings": {"monitor_sleep_ms": "1000"}},
+            {"modules": [], "settings": {"monitor_sleep_ms": "1000", "stoppable": "false"}},
         )
         sources = yaml.safe_load((self.root / "Modules/sources.yaml").read_text(encoding="utf-8"))
         self.assertEqual(
