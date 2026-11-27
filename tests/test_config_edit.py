@@ -783,6 +783,9 @@ class SyncConfig(EditTestCase):
         self.assertIn("# top", self.text())
         self.assertIn("monitor_sleep_ms: 500  # keep", self.text())
         self.assertEqual(config_edit.sync_config(self.path, modules, index, "User/xrobot.yaml"), "")
+        self.path.write_text("modules: []\nsettings: {}\n", encoding="utf-8")
+        config_edit.sync_config(self.path, modules, index, "User/xrobot.yaml")
+        self.assertEqual(self.text(), "modules: []\nsettings:\n  stoppable: false\n")
         self.path.write_text(
             "modules: []\nsettings:\n  monitor_sleep_ms: 500\n  stoppable: true\n",
             encoding="utf-8",

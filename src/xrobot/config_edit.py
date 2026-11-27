@@ -1056,6 +1056,8 @@ def sync_config(
             and isinstance(data.get("settings"), CommentedMap)
             and "stoppable" not in data["settings"]
         ):
+            if not data["settings"]:
+                data["settings"].fa.set_block_style()
             data["settings"]["stoppable"] = "false"
             text = dump_text(data)
     if text != before:

@@ -824,11 +824,27 @@ class Generator:
                 while mem_name in template_names:
                     mem_name += "_"
                 template_names.add(mem_name)
-                for line in _layout_storage_array(entry["cpp_type"], mem_name):
+                storage_type = entry["cpp_type"]
+                if len(storage_type) > 36 and (
+                    len(
+                        f"  alignas({storage_type}) static uint8_t {mem_name}[sizeof({storage_type})];"
+                    )
+                    > 90
+                    or len(f"      *std::launder(reinterpret_cast<{storage_type}*>({mem_name}));")
+                    > 90
+                ):
+                    alias_name = f"XrT{entry['index']}"
+                    while alias_name in template_names:
+                        alias_name += "_"
+                    template_names.add(alias_name)
+                    for line in layout_declaration("using", alias_name, storage_type, ";", INDENT):
+                        tagged.append((line, entry["line"]))
+                    storage_type = alias_name
+                for line in _layout_storage_array(storage_type, mem_name):
                     tagged.append((line, entry["line"]))
                 if entry["arguments"]:
                     one_line = (
-                        f"  ::new ({mem_name}) {entry['cpp_type']}("
+                        f"  ::new ({mem_name}) {storage_type}("
                         + ", ".join(entry["arguments"])
                         + ");"
                     )
@@ -836,22 +852,22 @@ class Generator:
                         tagged.append((one_line, entry["line"]))
                     else:
                         tagged.append((f"  ::new ({mem_name})", entry["line"]))
-                        call = layout_call(f"{entry['cpp_type']}(", entry["arguments"], ");", 6)
+                        call = layout_call(f"{storage_type}(", entry["arguments"], ");", 6)
                         tagged += _tag_call(
                             call,
-                            f"{entry['cpp_type']}(",
+                            f"{storage_type}(",
                             entry["arguments"],
                             entry["line"],
                             entry.get("argument_lines", []),
                         )
                 else:
-                    one_line = f"  ::new ({mem_name}) {entry['cpp_type']}();"
+                    one_line = f"  ::new ({mem_name}) {storage_type}();"
                     if len(one_line) <= 90:
                         tagged.append((one_line, entry["line"]))
                     else:
                         tagged.append((f"  ::new ({mem_name})", entry["line"]))
-                        tagged.append((f"      {entry['cpp_type']}();", None))
-                for line in _layout_launder(entry["id"], entry["cpp_type"], mem_name):
+                        tagged.append((f"      {storage_type}();", None))
+                for line in _layout_launder(entry["id"], storage_type, mem_name):
                     tagged.append((line, None))
             else:
                 head = f"static {entry['cpp_type']} {entry['id']}("
@@ -978,7 +994,7 @@ class Generator:
             while step_name in template_names:
                 step_name += "_"
             template_names.add(step_name)
-            fn_params.append(f"const std::atomic<bool>& {running_name}")
+            fn_params.append(f"std::atomic<bool>& {running_name}")
         fn_prefix = (
             "static inline void XRobotMain("
             if stoppable
@@ -1001,7 +1017,7 @@ class Generator:
             lines += [f"    {name}.OnMonitor();" for name in calls]
             if int(sleep) > 20:
                 cond_one = (
-                    f"    while ({waited_name} < {sleep} && "
+                    f"    while ({waited_name} < {sleep}U && "
                     f"{running_name}.load(std::memory_order_acquire))"
                 )
                 lines.append(f"    uint32_t {waited_name} = 0;")
@@ -1009,13 +1025,13 @@ class Generator:
                     lines.append(cond_one)
                 else:
                     lines += [
-                        f"    while ({waited_name} < {sleep} &&",
+                        f"    while ({waited_name} < {sleep}U &&",
                         f"           {running_name}.load(std::memory_order_acquire))",
                     ]
                 lines += [
                     "    {",
-                    f"      const uint32_t {rem_name} = {sleep} - {waited_name};",
-                    f"      const uint32_t {step_name} = {rem_name} < 20 ? {rem_name} : 20;",
+                    f"      const uint32_t {rem_name} = {sleep}U - {waited_name};",
+                    f"      const uint32_t {step_name} = {rem_name} < 20U ? {rem_name} : 20U;",
                     f"      LibXR::Thread::Sleep({step_name});",
                     f"      {waited_name} += {step_name};",
                     "    }",
@@ -1024,7 +1040,7 @@ class Generator:
                 lines += [
                     f"    if ({running_name}.load(std::memory_order_acquire))",
                     "    {",
-                    f"      LibXR::Thread::Sleep({sleep});",
+                    f"      LibXR::Thread::Sleep({sleep}U);",
                     "    }",
                 ]
             lines.append("  }")
@@ -1258,11 +1274,17 @@ def _layout_storage_array(cpp_type: str, mem_name: str) -> list[str]:
     one = f"  {decl} {tail}"
     if len(one) <= 90:
         return [one]
-    if len(f"  {decl}") <= 90:
-        if len(f"      {tail}") <= 90:
-            return [f"  {decl}", f"      {tail}"]
-        return [f"  {decl}", f"      {mem_name}[sizeof(", f"          {cpp_type})];"]
-    return [f"  alignas({cpp_type})", f"      static uint8_t {tail}"]
+    head_lines = (
+        [f"  {decl}"]
+        if len(f"  {decl}") <= 90
+        else ["  alignas(", f"      {cpp_type}) static uint8_t"]
+    )
+    tail_lines = (
+        [f"      {tail}"]
+        if len(f"      {tail}") <= 90
+        else [f"      {mem_name}[sizeof(", f"          {cpp_type})];"]
+    )
+    return head_lines + tail_lines
 
 
 def _layout_launder(identity: str, cpp_type: str, mem_name: str) -> list[str]:
@@ -1285,9 +1307,17 @@ def _layout_launder(identity: str, cpp_type: str, mem_name: str) -> list[str]:
             f"      *std::launder(reinterpret_cast<{cpp_type}*>(",
             f"          {mem_name}));",
         ]
+    if len(head) <= 90 and len(f"      reinterpret_cast<{cpp_type}*>(") <= 90:
+        return [
+            head,
+            f"      reinterpret_cast<{cpp_type}*>(",
+            f"          {mem_name}));",
+        ]
     return [
-        f"  auto& {identity} = *std::launder(",
-        f"      reinterpret_cast<{cpp_type}*>({mem_name}));",
+        f"  auto& {identity} =",
+        "      *std::launder(reinterpret_cast<",
+        f"                    {cpp_type}*>(",
+        f"          {mem_name}));",
     ]
 
 
@@ -1309,7 +1339,16 @@ def _check_main_arity(entry: Path, entry_label: str, source: str, stoppable: boo
     Check that the XROBOT_MAIN argument count in the entry source matches settings.stoppable.
     """
     text = entry.read_text(encoding="utf-8-sig", errors="surrogateescape")
-    for inv in parse_document(text, str(entry)).invocation_views("XROBOT_MAIN"):
+    document = parse_document(text, str(entry))
+    invocations = document.invocation_views("XROBOT_MAIN")
+    expected = 1 if stoppable else 0
+    if all(len(inv.arguments) == expected for inv in invocations):
+        return
+    if any(conditional_depth(document, 0, inv.span.start) > 0 for inv in invocations) and any(
+        len(inv.arguments) == expected for inv in invocations
+    ):
+        return
+    for inv in invocations:
         argc = len(inv.arguments)
         if not stoppable and argc != 0:
             raise ConfigError(

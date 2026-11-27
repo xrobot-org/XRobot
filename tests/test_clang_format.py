@@ -236,6 +236,61 @@ class GeneratedHeadersNeedNoFormatting(GenerationTestCase):
         self.check(modules=[led()], settings={"monitor_sleep_ms": "1000", "stoppable": "true"})
         self.check(modules=[led()], settings={"monitor_sleep_ms": "10", "stoppable": "true"})
 
+        # 短实例名 + 多参数超 90 列构造，以及长模板类型（>65 字符）兜底折行
+        # Short instance id with >90-col constructor call and long template type (>65 chars)
+        items = ", ".join(f'{{"{name}", {i}}}' for i, name in enumerate(NAMES))
+        self.module(
+            "LongTpl",
+            "template <typename A, typename B, typename C, typename D, typename E, typename F>\n"
+            "class LongTpl {\n"
+            " public:\n"
+            "  LongTpl(Port& port, int rate = 1) {}\n"
+            "  void OnMonitor() {}\n"
+            "};",
+        )
+        self.entry(
+            '#include <atomic>\n#include "xrobot_main.hpp"\nint main() {\n'
+            "  XR_REGISTER(port, Port);\n"
+            "  std::atomic<bool> running{true};\n"
+            "  XROBOT_MAIN(running);\n}\n"
+        )
+        self.check(
+            modules=[
+                {
+                    "module": "Values",
+                    "id": "values",
+                    "args": [
+                        {"port": "port"},
+                        {
+                            "param": {
+                                "limits": {"low": "0.5f", "high": "99.5f", "steps": "128"},
+                                "gains": {"kp": "1.0f", "ki": "0.25f", "kd": "0.001f"},
+                                "count": "3",
+                                "name": '"nested"',
+                            }
+                        },
+                        {"items": "{" + items + "}"},
+                        {"names": [f'"{name}"' for name in NAMES]},
+                        {"rate": "250"},
+                    ],
+                },
+                {
+                    "module": "LongTpl",
+                    "id": "mod",
+                    "template_args": [
+                        "int",
+                        "double",
+                        "unsigned long",
+                        "long long",
+                        "unsigned long long",
+                        "char",
+                    ],
+                    "args": [{"port": "port"}, {"rate": "1"}],
+                },
+            ],
+            settings={"monitor_sleep_ms": "1000", "stoppable": "true"},
+        )
+
         # 多注册折行宏、长类型与长实例名的 placement new / launder / destroy_at
         # Multi-line wrapped macro, long instance id and placement new / launder / destroy_at
         names = [f"gpio_{i}" for i in range(14)]
@@ -246,7 +301,6 @@ class GeneratedHeadersNeedNoFormatting(GenerationTestCase):
             + "  std::atomic<bool> running{true};\n"
             + "  XROBOT_MAIN(running);\n}\n"
         )
-        items = ", ".join(f'{{"{name}", {i}}}' for i, name in enumerate(NAMES))
         self.check(
             modules=[led(f"led_{i}", gpio=name) for i, name in enumerate(names)]
             + [

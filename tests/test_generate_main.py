@@ -2086,7 +2086,8 @@ class StoppableMainTest(CxxMixin, GenerationTestCase):
         self.assertIn("#include <new>", header)
         self.assertNotIn("[[noreturn]]", header)
         self.assertIn("static inline void XRobotMain(", header)
-        self.assertIn("const std::atomic<bool>& xrobot_running", header)
+        self.assertIn("std::atomic<bool>& xrobot_running", header)
+        self.assertNotIn("const std::atomic<bool>& xrobot_running", header)
         self.assertNotIn("static const Led::Param xr_led_param", header)
         self.assertIn("alignas(Led) static uint8_t xr_storage_led[sizeof(Led)];", header)
         self.assertIn("::new (xr_storage_led) Led(pin, xr_led_param, 1.0f);", header)
@@ -2122,7 +2123,8 @@ class StoppableMainTest(CxxMixin, GenerationTestCase):
             header,
         )
         self.assertNotIn("xrobot_waited += 20", header)
-        self.assertIn("const uint32_t xrobot_step = xrobot_rem < 20 ? xrobot_rem : 20;", header)
+        self.assertIn("4294967295U - xrobot_waited;", header)
+        self.assertIn("const uint32_t xrobot_step = xrobot_rem < 20U ? xrobot_rem : 20U;", header)
         self.assertIn("xrobot_waited += xrobot_step;", header)
 
     def test_entry_xrobot_main_arity_must_match_stoppable_setting(self):
@@ -2141,6 +2143,53 @@ class StoppableMainTest(CxxMixin, GenerationTestCase):
         with self.assertRaises(ConfigError) as mismatch_false:
             self.code(led(), settings={"monitor_sleep_ms": "100"})
         self.assertIn("settings.stoppable false", str(mismatch_false.exception))
+
+    def test_conditional_xrobot_main_branches_are_accepted(self):
+        self.entry(
+            '#include <atomic>\n#include "xrobot_main.hpp"\n'
+            "int main() {\n"
+            "  XR_REGISTER(pin, LibXR::GPIO);\n"
+            "#ifdef HOST_BUILD\n"
+            "  std::atomic<bool> flag{true};\n"
+            "  XROBOT_MAIN(flag);\n"
+            "#else\n"
+            "  XROBOT_MAIN();\n"
+            "#endif\n"
+            "}\n"
+        )
+        self.assertIn(
+            "#define XROBOT_MAIN(xrobot_running)",
+            self.code(led(), settings={"monitor_sleep_ms": "100", "stoppable": "true"}),
+        )
+        self.assertIn(
+            "#define XROBOT_MAIN()",
+            self.code(led(), settings={"monitor_sleep_ms": "100"}),
+        )
+        self.entry(
+            '#include "xrobot_main.hpp"\n'
+            "int main() {\n"
+            "  XR_REGISTER(pin, LibXR::GPIO);\n"
+            "#ifdef HOST_BUILD\n"
+            "  XROBOT_MAIN(a, b);\n"
+            "#endif\n"
+            "}\n"
+        )
+        with self.assertRaises(ConfigError):
+            self.code(led(), settings={"monitor_sleep_ms": "100", "stoppable": "true"})
+
+    @requires_cxx
+    def test_stoppable_rejects_non_atomic_bool_flag(self):
+        for decl in ("bool running = true;", "volatile sig_atomic_t running = 1;"):
+            with self.subTest(decl=decl):
+                self.entry(
+                    '#include <atomic>\n#include <csignal>\n#include "xrobot_main.hpp"\n'
+                    "int main() {\n"
+                    f"  {decl}\n"
+                    "  XROBOT_MAIN(running);\n"
+                    "}\n"
+                )
+                self.code(settings={"monitor_sleep_ms": "10", "stoppable": "true"})
+                self.compile(expected=False, execute=False)
 
     @requires_cxx
     def test_stoppable_exits_destructs_in_reverse_order_and_reenters(self):

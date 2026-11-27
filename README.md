@@ -257,7 +257,7 @@ statically in configuration order. The layout follows LibXR's `.clang-format`:
 每个实例前的注释写明模块和 YAML 中的行号；`#line` 指令使实例的每行代码对应到它来自的 YAML 行，编译错误
 因此定位到 YAML 中的那一行，路径相对 BSP 根目录，编辑器可以直接打开。`#line` 只写在编译器自己数出的
 行号对不上的地方，`xrobot gen --no-line-directives` 可以省略它们。传给引用、`std::initializer_list` 或结构体参数的值
-写成紧邻实例之前的 `static const <类型> xr_<实例>_<参数> = {…};`，与实例同为静态存储期。配置或
+写成紧邻实例之前的 `static const <类型> xr_<实例>_<参数> = {…};`，与实例同为静态存储期（设 `settings.stoppable: true` 时改为函数局部自动存储期，每次重入 `XRobotMain` 重新求值，而模块实例仍驻留在静态对齐字节数组中并在退出循环后逆序析构）。配置或
 模块修改后若未重新生成，构建会中止，并提示需要执行的命令：
 
 A comment before each instance names its Module and the line of the YAML. The `#line`
@@ -266,7 +266,10 @@ error refers to that line, with a path relative to the BSP root that an editor o
 A `#line` is written only where the line the compiler counts by itself would differ (`xrobot gen
 --no-line-directives` leaves the directives out). Values for reference, `std::initializer_list`
 and struct parameters are written as `static const <type> xr_<instance>_<parameter> = {...};`
-right before the instance and, like the instance, have static storage duration. If a
+right before the instance and, like the instance, have static storage duration (with
+`settings.stoppable: true`, parameter temporaries use automatic storage duration so re-entry
+re-evaluates them while module instances remain in static aligned storage and destruct in
+reverse order on exit). If a
 configuration or Module has changed without regenerating the code, the build stops and
 reports the command to run:
 
