@@ -124,6 +124,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [install, release-version]
     if: github.event_name == 'release'
+    permissions:
+      id-token: write
     environment:
       name: TOKEN
       url: https://pypi.org/project/xrobot
@@ -136,4 +138,4 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          password: ${{ secrets.TOKEN }}
+          packages-dir: dist/
